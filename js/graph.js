@@ -661,12 +661,11 @@
 
     /* ---------- seguimiento en vivo, zoom y foco ---------- */
 
+    /** Lo último: el extremo derecho del tiempo y las primeras filas, donde quedan las ramas más activas. */
     followTarget() {
       const S = SPACING * this.t.k;
       const x = Math.min(this.padLeft, this.W - this.labelPad - this.maxX * S);
-      const ch = this.contentH();
-      const y = ch <= this.H ? 0 : clamp(this.t.y, this.H - ch, 0);
-      return d3.zoomIdentity.translate(x, y).scale(this.t.k);
+      return d3.zoomIdentity.translate(x, 0).scale(this.t.k);
     }
 
     follow(animate) {

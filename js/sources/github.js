@@ -3,8 +3,9 @@
    Pensada para repos de cualquier tamaño (también con miles de ramas). Nunca
    lista todas las ramas en cada ciclo; elige uno de tres modos:
 
-   - graphql (con token): una consulta por ciclo trae las N ramas con commits
-     más recientes, el total de ramas, los PRs abiertos y las ramas fijadas.
+   - graphql (con token): la API de actividad del repo dice qué ramas recibieron
+     pushes y cuándo (casi al instante); una consulta GraphQL por ciclo trae la
+     cabeza de esas ramas, el total de ramas, los PRs abiertos y las fijadas.
    - list   (sin token, hasta 100 ramas): lista las ramas por REST con ETag.
    - events (sin token, más de 100 ramas): sigue el feed de eventos del repo
      (pushes, ramas creadas y borradas). Llega con algo de retraso.
@@ -52,13 +53,16 @@
         loaded: false,
       };
       this.seenHeads = new Map(); // toda rama observada alguna vez: nombre -> sha
+      this.pushedAt = new Map(); // último push o borrado conocido por rama: nombre -> { time, deleted }
+      this.freshRefs = new Set(); // ramas con actividad nueva desde el ciclo anterior
+      this.seenActivity = new Set();
+      this.activityOk = true;
       this.remoteHeads = new Map(); // modo list: todas las ramas
       this.refLatest = new Map(); // último tipo de evento por rama (para el modo events)
       this.recentRefs = [];
       this.seenEvents = new Set();
       this.etags = new Map();
       this.lastPoll = {};
-      this.prevCutoff = -Infinity;
       this.eventsInterval = 60;
       this.actionsEnabled = true;
       this.rate = null;
@@ -393,16 +397,26 @@
 
     async syncGraphQL(acts, quiet) {
       const tracked = this.data.branches;
-      const check = [...new Set([...tracked.keys(), ...this.pins])].filter((n) => n !== this.data.repo.defaultBranch);
+      const def = this.data.repo.defaultBranch;
+      const n = Math.max(1, Math.min(100, this.maxBranches));
+      await this.syncActivity(quiet, n);
+      // GitHub no ordena ramas por fecha (TAG_COMMIT_DATE solo sirve para tags): las
+      // candidatas salen de los últimos pushes conocidos y de las ramas ya visibles
+      const recent = [...this.pushedAt]
+        .filter(([name, p]) => !p.deleted && name !== def && U.matches(name, this.filter))
+        .sort((a, b) => b[1].time - a[1].time)
+        .slice(0, n + 10)
+        .map(([name]) => name);
+      const check = [...new Set([...tracked.keys(), ...this.pins, ...recent])].filter((name) => name !== def);
       const aliases = check
-        .map((n, i) => `t${i}: ref(qualifiedName: ${JSON.stringify('refs/heads/' + n)}) { target { oid ... on Commit { committedDate } } }`)
+        .map((name, i) => `t${i}: ref(qualifiedName: ${JSON.stringify('refs/heads/' + name)}) { target { oid ... on Commit { committedDate } } }`)
         .join('\n');
-      const query = `query($owner: String!, $name: String!, $n: Int!, $q: String) {
+      const query = `query($owner: String!, $name: String!, $q: String) {
         rateLimit { cost remaining limit resetAt }
         repository(owner: $owner, name: $name) {
           defaultBranchRef { name target { oid ... on Commit { committedDate } } }
           ${this.filter ? 'all: refs(refPrefix: "refs/heads/", first: 1) { totalCount }' : ''}
-          top: refs(refPrefix: "refs/heads/", first: $n, query: $q, orderBy: {field: TAG_COMMIT_DATE, direction: DESC}) {
+          top: refs(refPrefix: "refs/heads/", first: 100, query: $q) {
             totalCount
             nodes { name target { oid ... on Commit { committedDate } } }
           }
@@ -413,31 +427,40 @@
           ${aliases}
         }
       }`;
-      const n = Math.max(1, Math.min(100, this.maxBranches));
-      const data = await this.gql(query, { n, q: this.filter || null });
+      const data = await this.gql(query, { q: this.filter || null });
       const repo = data?.repository;
       if (!repo) throw this.notFound();
 
-      const def = repo.defaultBranchRef?.name || this.data.repo.defaultBranch;
-      this.data.repo.defaultBranch = def;
-      const want = new Map();
+      const defName = repo.defaultBranchRef?.name || def;
+      this.data.repo.defaultBranch = defName;
+      const heads = new Map(); // ramas que existen: nombre -> { sha, date }
       const add = (name, target) => {
-        if (target?.oid) want.set(name, { sha: target.oid, date: Date.parse(target.committedDate) || 0 });
+        if (target?.oid) heads.set(name, { sha: target.oid, date: Date.parse(target.committedDate) || 0 });
       };
-      if (repo.defaultBranchRef) add(def, repo.defaultBranchRef.target);
+      if (repo.defaultBranchRef) add(defName, repo.defaultBranchRef.target);
       const top = repo.top || { totalCount: 0, nodes: [] };
-      for (const r of top.nodes) add(r.name, r.target);
+      for (const r of top.nodes) add(r.name, r.target); // relleno (orden alfabético) para repos con poca actividad registrada
       const gone = [];
       check.forEach((name, i) => {
         const r = repo['t' + i];
-        if (!r) gone.push(name);
-        else if (this.pins.has(name)) add(name, r.target);
+        if (r) add(name, r.target);
+        else gone.push(name);
       });
       this.data.totalBranches = this.filter ? repo.all?.totalCount || 0 : top.totalCount;
       this.data.matchingBranches = this.filter ? top.totalCount : null;
       this.data.totalExact = true;
 
+      /* visibles: la por defecto, las fijadas y las N con actividad más reciente (push visto o commit más nuevo) */
+      const score = (name) => Math.max(this.pushedAt.get(name)?.time || 0, tracked.get(name)?.movedAt || 0, heads.get(name).date);
+      const others = [...heads.keys()]
+        .filter((name) => name !== defName && !this.pins.has(name) && U.matches(name, this.filter))
+        .sort((a, b) => score(b) - score(a));
+      const want = new Map();
+      for (const name of [defName, ...this.pins, ...others.slice(0, n)]) if (heads.has(name)) want.set(name, heads.get(name));
+
       for (const name of gone) {
+        const p = this.pushedAt.get(name);
+        if (p && !p.deleted) p.deleted = true; // no volver a preguntar por ella
         const b = tracked.get(name);
         this.seenHeads.delete(name);
         if (!b) continue;
@@ -464,21 +487,22 @@
           }
           continue;
         }
-        const nb = { name, sha: w.sha, isDefault: name === def, protected: false, movedAt: 0 };
+        const nb = { name, sha: w.sha, isDefault: name === defName, protected: false, movedAt: this.pushedAt.get(name)?.time || 0 };
         tracked.set(name, nb);
         if (quiet) continue;
         if (seen && seen !== w.sha) {
           nb.movedAt = now;
           const a = await this.branchMoved(name, seen, w.sha);
           if (a) acts.push(a);
-        } else if (!seen && w.date > this.prevCutoff) {
-          // entró a las N más recientes por actividad nueva (no porque se liberó un lugar)
+        } else if (this.freshRefs.has(name)) {
+          // entró a las N más activas por un push nuevo (no porque se liberó un lugar)
           nb.movedAt = now;
           acts.push(this.branchAppeared(name, w.sha));
         }
       }
-      const nodes = top.nodes;
-      this.prevCutoff = nodes.length < n ? -Infinity : Date.parse(nodes[nodes.length - 1].target?.committedDate) || -Infinity;
+      // recuerda también las cabezas que no se muestran: si una de ellas se mueve y entra, es un push
+      for (const [name, h] of heads) if (!want.has(name)) this.seenHeads.set(name, h.sha);
+      this.freshRefs.clear();
       if (this.seenHeads.size > 20000) this.seenHeads = new Map([...this.seenHeads].slice(-10000));
 
       const prs = repo.pullRequests || { totalCount: 0, nodes: [] }; // null si el token no tiene permiso de PRs
@@ -495,6 +519,49 @@
       }));
       await this.applyPulls(acts, quiet, pulls, prs.totalCount);
       this.lastPoll.pulls = Date.now();
+    }
+
+    /** Registra actividad de una rama (push, creación o borrado) con su hora. */
+    notePush(name, time, deleted, live) {
+      const p = this.pushedAt.get(name);
+      if (p && p.time >= time) return;
+      this.pushedAt.set(name, { time, deleted });
+      if (live && !deleted && this.mode === 'graphql') this.freshRefs.add(name);
+      if (this.pushedAt.size > 6000) this.pushedAt = new Map([...this.pushedAt].sort((a, b) => b[1].time - a[1].time).slice(0, 4000));
+    }
+
+    /**
+     * Últimos pushes del repo según su API de actividad: qué ramas se movieron y
+     * cuándo, casi al instante y en una sola consulta (con ETag). Al cargar sigue
+     * unas páginas hacia atrás hasta conocer suficientes ramas para llenar el grafo.
+     * Si el token no puede leerla, quedan los eventos del repo (llegan con retraso).
+     */
+    async syncActivity(deep, need) {
+      if (!this.activityOk) return;
+      let path = `${this.base}/activity?per_page=100`;
+      for (let page = 0; path && page < (deep ? 5 : 1); page++) {
+        let res;
+        try {
+          res = await this.api(path, { cacheKey: page ? null : 'activity' });
+        } catch (err) {
+          if (['rate', 'network', 'auth'].includes(err.kind)) throw err;
+          this.activityOk = false;
+          console.warn('No se pudo leer la API de actividad; se usan los eventos del repo:', err.message);
+          return;
+        }
+        if (!res.fresh && !deep) return;
+        for (const it of res.data || []) {
+          if (!it.ref?.startsWith('refs/heads/')) continue;
+          const live = !deep && !this.seenActivity.has(it.id);
+          this.seenActivity.add(it.id);
+          this.notePush(it.ref.slice(11), Date.parse(it.timestamp) || 0, it.activity_type === 'branch_deletion', live);
+        }
+        if (this.seenActivity.size > 5000) this.seenActivity = new Set([...this.seenActivity].slice(-2000));
+        const known = [...this.pushedAt].filter(([name, p]) => !p.deleted && U.matches(name, this.filter)).length;
+        if (known >= need + 10) return;
+        const next = (res.headers?.get('Link') || '').match(/<([^>]+)>;\s*rel="next"/);
+        path = next ? next[1].replace(API, '') : null;
+      }
     }
 
     /* ---------- modos REST ---------- */
@@ -999,11 +1066,12 @@
       for (const ev of res.data || []) {
         if (this.seenEvents.has(ev.id)) continue;
         this.seenEvents.add(ev.id);
+        const p = ev.payload || {};
+        let ref = null;
+        if (ev.type === 'PushEvent' && p.ref?.startsWith('refs/heads/')) ref = p.ref.slice(11);
+        if ((ev.type === 'CreateEvent' || ev.type === 'DeleteEvent') && p.ref_type === 'branch') ref = p.ref;
+        if (ref) this.notePush(ref, Date.parse(ev.created_at) || 0, ev.type === 'DeleteEvent', !initial);
         if (initial) {
-          const p = ev.payload || {};
-          let ref = null;
-          if (ev.type === 'PushEvent' && p.ref?.startsWith('refs/heads/')) ref = p.ref.slice(11);
-          if ((ev.type === 'CreateEvent' || ev.type === 'DeleteEvent') && p.ref_type === 'branch') ref = p.ref;
           if (ref && !this.refLatest.has(ref)) {
             this.refLatest.set(ref, ev.type); // la API entrega primero lo más reciente
             if (ev.type !== 'DeleteEvent') this.recentRefs.push(ref);

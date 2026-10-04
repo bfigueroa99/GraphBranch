@@ -26,7 +26,7 @@ También puedes abrir un repo directo con `index.html?repo=owner/repo`.
 
 Sin token GitHub permite 60 consultas por hora, así que la vista se actualiza cada pocos minutos. Con un token se actualiza cada 10 segundos, ves repos privados y se activa el modo para repos grandes.
 
-Crea un token *fine-grained* de solo lectura en <https://github.com/settings/personal-access-tokens/new> con acceso al repositorio y estos permisos (todos *Read-only*): **Metadata**, **Contents**, **Pull requests** y **Actions**.
+Crea un token *fine-grained* de solo lectura en <https://github.com/settings/personal-access-tokens/new> con acceso al repositorio y estos permisos (todos *Read-only*): **Metadata** (incluye la actividad del repo: pushes y ramas creadas o borradas), **Contents**, **Pull requests** y **Actions**.
 
 El token se guarda solo en el `localStorage` de tu navegador y se envía únicamente a `api.github.com`.
 
@@ -36,7 +36,7 @@ GraphBranch nunca lista todas las ramas en cada ciclo (con 10.000 ramas serían 
 
 | Modo | Cuándo | Cómo detecta el movimiento |
 |---|---|---|
-| **GraphQL** | Con token | Una sola consulta por ciclo trae las *N* ramas con commits más recientes, el total de ramas, los PRs abiertos y las ramas fijadas. Cuesta ~1 punto de los 5.000/hora. |
+| **GraphQL** | Con token | La API de actividad del repo dice qué ramas recibieron pushes y cuándo, casi al instante (una consulta con ETag: si no hubo cambios no gasta cuota). Con eso elige las *N* ramas más activas, y una consulta GraphQL por ciclo trae sus cabezas, el total de ramas, los PRs abiertos y las ramas fijadas. Cuesta ~1 punto de los 5.000/hora. Si el token no puede leer la actividad, usa el feed de eventos, que llega con unos minutos de retraso. |
 | **Lista** | Sin token y hasta 100 ramas | Lista las ramas por REST con ETag y compara. |
 | **Eventos** | Sin token y más de 100 ramas | Sigue el feed de eventos del repo (pushes, ramas creadas y borradas). GitHub lo entrega con algunos minutos de retraso. |
 

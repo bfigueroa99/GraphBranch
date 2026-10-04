@@ -23,6 +23,11 @@
     repoBadge: $('#repo-badge'),
     repoDesc: $('#repo-desc'),
     graph: $('#graph'),
+    graph3d: $('#graph3d'),
+    view3d: $('#view-3d'),
+    view2d: $('#view-2d'),
+    spinBtn: $('#spin-btn'),
+    hint: $('#hint'),
     overlay: $('#overlay'),
     zoomIn: $('#zoom-in'),
     zoomOut: $('#zoom-out'),
@@ -63,14 +68,47 @@
   let status = null;
   let paused = false;
 
-  const graph = new GB.Graph(el.graph, {
-    onFollowChange: (v) => {
-      el.followBtn.setAttribute('aria-pressed', v);
-      el.followBtn.querySelector('.follow-label').textContent = v ? 'En vivo' : 'Ir a lo último';
-      el.followBtn.title = v ? 'La vista sigue los commits nuevos. Arrastra para recorrer la historia.' : 'Volver a los commits más recientes y seguirlos';
-    },
+  /* dos vistas del mismo layout: 3D (Three.js) y 2D (SVG) */
+  function followUI(v) {
+    el.followBtn.setAttribute('aria-pressed', v);
+    el.followBtn.querySelector('.follow-label').textContent = v ? 'En vivo' : 'Ir a lo último';
+    el.followBtn.title = v ? 'La vista sigue los commits nuevos. Arrastra para recorrer la historia.' : 'Volver a los commits más recientes y seguirlos';
+  }
+  const graph2d = new GB.Graph(el.graph, {
+    onFollowChange: (v) => graph === graph2d && followUI(v),
     onTogglePin: (name) => togglePin(name),
   });
+  let graph3d = null;
+  try {
+    if (GB.Graph3D?.supported()) {
+      graph3d = new GB.Graph3D(el.graph3d, {
+        onFollowChange: (v) => graph === graph3d && followUI(v),
+        onTogglePin: (name) => togglePin(name),
+      });
+    }
+  } catch (err) {
+    console.warn('La vista 3D no está disponible:', err);
+  }
+  let graph = graph2d;
+
+  const HINTS = {
+    '3d': 'Arrastra para girar · clic derecho o <kbd>Mayús</kbd> + arrastrar para desplazar · rueda o pellizco para acercar · clic en un commit para ver el detalle',
+    '2d': 'Arrastra para moverte · rueda para recorrer la historia · <kbd>Ctrl</kbd> + rueda o pellizco para zoom · clic en un commit para ver el detalle',
+  };
+
+  function setView(v) {
+    if (v === '3d' && !graph3d) v = '2d';
+    graph = v === '3d' ? graph3d : graph2d;
+    el.graph3d.hidden = v !== '3d';
+    el.graph.hidden = v !== '2d';
+    graph3d?.setActive(v === '3d');
+    setPressed(el.view3d, v === '3d');
+    setPressed(el.view2d, v === '2d');
+    el.spinBtn.hidden = v !== '3d';
+    el.hint.innerHTML = HINTS[v];
+    followUI(graph.following);
+    U.store.set('view', v);
+  }
 
   /* ramas fijadas y filtro: se recuerdan por repositorio */
   const repoKey = () => (source ? `${source.owner || 'demo'}/${source.name || ''}`.toLowerCase() : '');
@@ -104,7 +142,9 @@
     if (source) source.stop();
     source = src;
     layout = new GB.Layout();
-    graph.clear();
+    graph2d.clear();
+    graph3d?.clear();
+    followUI(true);
     feed.clear();
     paused = false;
     setPressed(el.pauseBtn, false);
@@ -163,13 +203,15 @@
   function onUpdate({ activities, initial }) {
     const data = source.view ? source.view() : source.data;
     const L = layout.compute(data);
-    graph.update(L, {
+    const gctx = {
       initial,
       ci: ciByBranch(data),
       prs: prsByBranch(data),
       pins: data.repo.demo ? new Set() : getPins(),
       canPin: !data.repo.demo,
-    });
+    };
+    graph2d.update(L, gctx);
+    graph3d?.update(L, gctx);
     feed.add(activities, { live: !initial });
     renderRepo(data.repo);
     renderStats(data, L);
@@ -431,6 +473,19 @@
   el.zoomIn.addEventListener('click', () => graph.zoomBy(1.4));
   el.zoomOut.addEventListener('click', () => graph.zoomBy(1 / 1.4));
   el.followBtn.addEventListener('click', () => graph.setFollowing(!graph.following));
+
+  el.view3d.addEventListener('click', () => setView('3d'));
+  el.view2d.addEventListener('click', () => setView('2d'));
+  if (!graph3d) {
+    el.view3d.disabled = true;
+    el.view3d.title = 'Tu navegador no tiene WebGL activado; la vista 3D no está disponible.';
+  }
+  setPressed(el.spinBtn, !!graph3d?.spin);
+  el.spinBtn.addEventListener('click', () => {
+    graph3d?.setSpin(!graph3d.spin);
+    setPressed(el.spinBtn, !!graph3d?.spin);
+  });
+  setView(U.store.get('view', '3d'));
 
   /* ---------- ajustes ---------- */
 

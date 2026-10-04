@@ -512,9 +512,10 @@ kbd {
 }
 .panel-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px 12px;
   padding: 12px 14px 10px;
 }
 .repo-title {
@@ -522,6 +523,7 @@ kbd {
   align-items: baseline;
   flex-wrap: wrap;
   gap: 2px 10px;
+  flex: 1 1 240px;
   min-width: 0;
 }
 .repo-title h1,
@@ -561,9 +563,12 @@ kbd {
 }
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: 4px;
-  flex: none;
+  flex: 0 0 auto;
+  max-width: 100%;
 }
 .btn-follow {
   height: 32px;
@@ -597,7 +602,7 @@ kbd {
   color: var(--ink-2);
 }
 
-.graph-wrap {
+.graph-stage {
   position: relative;
   flex: 1;
   min-height: 0;
@@ -605,8 +610,16 @@ kbd {
   border-radius: 9px;
   overflow: hidden;
   background: var(--surface);
+}
+.graph-wrap,
+.graph3d-wrap {
+  position: absolute;
+  inset: 0;
   cursor: grab;
   touch-action: none;
+}
+.graph-wrap {
+  background: var(--surface);
 }
 .graph-wrap:active {
   cursor: grabbing;
@@ -660,6 +673,38 @@ kbd {
   animation: spin 0.8s linear infinite;
 }
 
+/* selector de vista */
+.view-switch {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  margin-right: 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+}
+.view-switch button {
+  height: 26px;
+  min-width: 34px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-3);
+  font: 600 12px var(--font-ui);
+  cursor: pointer;
+}
+.view-switch button:hover {
+  color: var(--ink);
+}
+.view-switch button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--surface);
+}
+.view-switch button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* filtro de ramas */
 .filter-field {
   display: flex;
@@ -678,7 +723,7 @@ kbd {
   border-color: var(--ink-2);
 }
 .filter-field input {
-  width: 150px;
+  width: 118px;
   min-width: 0;
   border: 0;
   background: transparent;
@@ -917,6 +962,118 @@ kbd {
 }
 .exit {
   animation: fadeout 0.4s ease-in forwards !important;
+}
+
+/* ---------- vista 3D ---------- */
+.graph3d-wrap {
+  background:
+    radial-gradient(110% 85% at 50% 30%, var(--band), transparent 70%),
+    var(--surface);
+}
+.g3-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.g3-labels {
+  position: absolute;
+  inset: 0;
+  z-index: 1; /* capa propia: el detalle del commit (z-index 5) queda siempre encima */
+  overflow: hidden;
+  pointer-events: none;
+}
+.g3-head {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 9px 0 8px;
+  border: 1.5px solid var(--c);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  color: var(--ink);
+  font: 500 12px var(--font-mono);
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: pointer;
+  will-change: transform;
+}
+.g3-head.default {
+  font-weight: 600;
+}
+.g3-head:hover {
+  background: var(--surface-2);
+}
+.g3-head.moved {
+  animation: glow3 2.6s ease-out;
+}
+.g3-head.exit {
+  animation: fadeout 0.4s ease-in forwards;
+}
+.h3-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c);
+  flex: none;
+}
+.h3-pr {
+  color: var(--ink-2);
+  font-size: 11px;
+}
+.h3-pr.draft {
+  color: var(--ink-3);
+}
+.h3-pin {
+  width: 7px;
+  height: 7px;
+  background: var(--ink-3);
+  transform: rotate(45deg);
+}
+.h3-ci {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.h3-ci.ci-ok {
+  stroke: var(--good);
+}
+.h3-ci.ci-fail {
+  stroke: var(--bad);
+}
+.h3-ci.ci-cancel {
+  stroke: var(--ink-3);
+}
+.h3-ci.ci-running {
+  stroke: var(--warn);
+  stroke-dasharray: 18 10;
+  animation: spin 1s linear infinite;
+}
+.g3-day {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  color: var(--ink-3);
+  font: 500 11px var(--font-mono);
+  white-space: nowrap;
+}
+@keyframes glow3 {
+  0%,
+  25% {
+    background: color-mix(in srgb, var(--c) 22%, var(--surface));
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 30%, transparent);
+  }
 }
 
 /* tooltip */
@@ -1572,11 +1729,19 @@ button.act-main:hover {
   .toolbar {
     width: 100%;
   }
+  .toolbar {
+    justify-content: flex-start;
+  }
   .filter-field {
-    flex: 1;
+    order: 10;
+    flex: 1 1 100%;
+    margin: 4px 0 0;
   }
   .filter-field input {
     width: 100%;
+  }
+  .btn-follow {
+    margin-left: auto;
   }
   .grid2 {
     grid-template-columns: 1fr;

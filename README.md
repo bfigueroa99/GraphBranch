@@ -1,16 +1,18 @@
 # GraphBranch
 
-Grafo en vivo de las ramas de un repositorio de GitHub, con alertas de toda su actividad: commits, force-push, ramas creadas y borradas, pull requests, revisiones, CI (GitHub Actions), issues, releases, estrellas y forks.
+Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas de toda su actividad: commits, force-push, ramas creadas y borradas, pull requests, revisiones, CI (GitHub Actions), issues, releases, estrellas y forks.
 
-![GraphBranch mostrando el repositorio de demostración](docs/captura.png)
+![GraphBranch en 3D mostrando el repositorio de demostración](docs/captura-3d.png)
 
-- **Grafo tipo metro**: cada rama es un carril con color propio; los commits avanzan a la derecha, las bifurcaciones y merges se dibujan como curvas. Las ramas ya fusionadas y borradas quedan en gris.
+- **Vista 3D**: la rama por defecto es el tronco central y las demás se reparten a su alrededor en espiral; el tiempo avanza hacia ti y la historia se pierde en el fondo. Puedes girar, acercar y desplazarte; la cámara sigue lo último y gira lento cuando no la tocas.
+- **Vista 2D tipo metro**: cada rama es un carril con color propio; los commits avanzan a la derecha. Cambia entre 3D y 2D con el selector del grafo.
+- En ambas, las bifurcaciones y merges se dibujan como curvas y las ramas ya fusionadas y borradas quedan en gris.
 - **En vivo**: los commits nuevos aparecen con una onda, la etiqueta de la rama se desliza hasta su nueva cabeza y la vista sigue lo último (o te deja recorrer la historia).
 - **Alertas**: panel de actividad filtrable, avisos emergentes, sonido opcional, notificaciones del sistema cuando la pestaña está en segundo plano y contador en el título de la pestaña.
 - **Estado en cada rama**: CI en curso / aprobado / fallido y número de PR abierto, directamente en la etiqueta.
 - **Repos enormes**: funciona con repositorios de miles de ramas (ver más abajo).
 
-No necesita servidor ni compilación: es HTML, CSS y JavaScript que llama directo a `api.github.com` desde tu navegador.
+No necesita servidor ni compilación: es HTML, CSS y JavaScript que llama directo a `api.github.com` desde tu navegador. La vista 3D usa WebGL; si el navegador no lo tiene, la app abre la 2D.
 
 ## Uso
 
@@ -48,9 +50,19 @@ Las alertas y la cuota siguen la misma lógica: cuando una rama fuera de las vis
 
 ## Controles
 
+En 3D:
+
+- Arrastrar: girar alrededor. Clic derecho o `Mayús` + arrastrar: desplazarse. Rueda o pellizco: acercar.
+- Botón de giro: activa o pausa el giro lento automático.
+
+En 2D:
+
 - Arrastrar: moverse por la historia y entre carriles.
 - Rueda: recorrer la historia. `Ctrl` + rueda o pellizco: zoom del eje de tiempo.
-- Clic en un commit: detalle con autor, mensaje, PR, estado de CI y enlace a GitHub.
+
+En las dos:
+
+- Clic en un commit o en el nombre de una rama: detalle con autor, mensaje, PR, estado de CI y enlace a GitHub.
 - Clic en un nombre de la leyenda o en un elemento del panel de actividad: lleva a esa rama o commit.
 - **En vivo** / **Ir a lo último**: sigue (o vuelve a seguir) los commits nuevos.
 - Los chips del panel de actividad filtran la lista y también los avisos emergentes.
@@ -68,7 +80,8 @@ js/util.js            utilidades compartidas
 js/sources/github.js  datos en vivo desde la API de GitHub (modos GraphQL, lista y eventos)
 js/sources/demo.js    repositorio simulado para la demo
 js/layout.js          asignación de carriles y orden de los commits
-js/graph.js           dibujo del grafo en SVG (D3 solo para zoom y arrastre)
+js/graph.js           vista 2D en SVG (D3 solo para zoom y arrastre)
+js/graph3d.js         vista 3D con Three.js
 js/feed.js            panel de actividad, avisos, sonido y notificaciones
 js/app.js             conecta todo
 ```

@@ -51,6 +51,49 @@
 
   const CI_LABEL = { running: 'CI en curso', ok: 'CI aprobado', fail: 'CI falló', cancel: 'CI cancelado' };
 
+  /** Contenido del detalle de un commit (lo usan las vistas 2D y 3D). */
+  function tipHTML(node, ctx, { pin = false, branchName = null, ghostNames = null } = {}) {
+    const c = node.commit;
+    const heads = node.heads;
+    const parents = c.parents.length;
+    const rows = [];
+    if (heads.length) rows.push(`<span class="tip-refs">${heads.map((h) => `<code>${U.esc(h)}</code>`).join(' ')}</span>`);
+    if (node.chain.startsWith('g:')) {
+      const gname = ghostNames?.get(node.chain);
+      rows.push(`<span>${gname ? `De la rama <code>${U.esc(gname)}</code>, ya fusionada y eliminada` : 'De una rama ya fusionada y eliminada'}</span>`);
+    }
+    const branch = branchName || heads[0];
+    if (branch) {
+      const pr = ctx.prs?.get(branch);
+      const ci = ctx.ci?.get(branch);
+      if (pr) rows.push(`<span>PR #${pr.number}${pr.draft ? ' (borrador)' : ''} → <code>${U.esc(pr.base)}</code>${pr.url ? ` · <a href="${U.esc(pr.url)}" target="_blank" rel="noopener">ver PR</a>` : ''}</span>`);
+      if (ci) rows.push(`<span class="tip-ci ci-${ci.state}">${CI_LABEL[ci.state]}${ci.name ? ` · ${U.esc(ci.name)}` : ''}${ci.url ? ` · <a href="${U.esc(ci.url)}" target="_blank" rel="noopener">ver ejecución</a>` : ''}</span>`);
+    }
+    return `
+      <div class="tip-head">${U.avatarHTML(c.author, 22)}<span class="tip-author">${U.esc(c.author.name)}</span><span class="tip-time" title="${U.esc(U.fmtDateTime(c.date))}">${U.timeAgo(c.date)}</span></div>
+      <p class="tip-msg">${U.esc(U.firstLine(c.message))}</p>
+      <p class="tip-meta"><code>${U.shortSha(c.sha)}</code>${parents > 1 ? ` · merge de ${parents} padres` : ''}</p>
+      ${rows.length ? `<p class="tip-extra">${rows.join('')}</p>` : ''}
+      ${pin && (c.url || (branch && ctx.canPin)) ? `<div class="tip-actions">
+        ${c.url ? `<a class="tip-link" href="${U.esc(c.url)}" target="_blank" rel="noopener">Abrir commit en GitHub ↗</a>` : ''}
+        ${branch && ctx.canPin ? pinButtonHTML(branch, !!ctx.pins?.has(branch)) : ''}
+      </div>` : ''}`;
+  }
+
+  function pinButtonHTML(branch, on) {
+    return `<button type="button" class="tip-pin" data-branch="${U.esc(branch)}" aria-pressed="${on}">${on ? 'Dejar de fijar' : 'Fijar'} <code>${U.esc(U.truncate(branch, 28))}</code></button>`;
+  }
+
+  /** Conecta el botón "Fijar" de un tooltip con la acción de la app. */
+  function wirePinButton(tip, onTogglePin) {
+    tip.addEventListener('click', (ev) => {
+      const b = ev.target.closest('.tip-pin');
+      if (!b) return;
+      const on = !!onTogglePin?.(b.dataset.branch);
+      b.outerHTML = pinButtonHTML(b.dataset.branch, on);
+    });
+  }
+
   class Graph {
     constructor(wrap, opts = {}) {
       this.wrap = wrap;
@@ -94,6 +137,10 @@
       this.zoom = d3
         .zoom()
         .scaleExtent([0.2, 3])
+        .extent(() => [
+          [0, 0],
+          [this.W, this.H],
+        ])
         .filter((ev) => (ev.type === 'wheel' ? ev.ctrlKey || ev.metaKey : !ev.button))
         .constrain((t) => this.constrain(t))
         .on('zoom', (ev) => {
@@ -129,14 +176,7 @@
       this.wrap.addEventListener('keydown', (ev) => {
         if (ev.key === 'Escape') this.unpin();
       });
-      this.tip.addEventListener('click', (ev) => {
-        const b = ev.target.closest('.tip-pin');
-        if (!b) return;
-        const name = b.dataset.branch;
-        const on = this.opts.onTogglePin?.(name);
-        b.setAttribute('aria-pressed', !!on);
-        b.innerHTML = `${on ? 'Dejar de fijar' : 'Fijar'} <code>${U.esc(U.truncate(name, 28))}</code>`;
-      });
+      wirePinButton(this.tip, (name) => this.opts.onTogglePin?.(name));
 
       new ResizeObserver(() => this.resize()).observe(wrap);
       document.fonts?.ready.then(() => this.relabel());
@@ -631,7 +671,7 @@
 
     follow(animate) {
       const target = this.followTarget();
-      if (animate) this.sel.transition().duration(700).ease(d3.easeCubicOut).call(this.zoom.transform, target);
+      if (animate && this.wrap.clientWidth) this.sel.transition().duration(700).ease(d3.easeCubicOut).call(this.zoom.transform, target);
       else this.sel.interrupt().call(this.zoom.transform, target);
     }
 
@@ -691,32 +731,7 @@
     showTip(sha, pin, branchName) {
       const it = this.nodes.get(sha);
       if (!it) return;
-      const c = it.data.commit;
-      const ctx = this.ctx || {};
-      const heads = it.data.heads;
-      const parents = c.parents.length;
-      const rows = [];
-      if (heads.length) rows.push(`<span class="tip-refs">${heads.map((h) => `<code>${U.esc(h)}</code>`).join(' ')}</span>`);
-      if (it.data.chain.startsWith('g:')) {
-        const gname = this.ghostNames?.get(it.data.chain);
-        rows.push(`<span>${gname ? `De la rama <code>${U.esc(gname)}</code>, ya fusionada y eliminada` : 'De una rama ya fusionada y eliminada'}</span>`);
-      }
-      const branch = branchName || heads[0];
-      if (branch) {
-        const pr = ctx.prs?.get(branch);
-        const ci = ctx.ci?.get(branch);
-        if (pr) rows.push(`<span>PR #${pr.number}${pr.draft ? ' (borrador)' : ''} → <code>${U.esc(pr.base)}</code>${pr.url ? ` · <a href="${U.esc(pr.url)}" target="_blank" rel="noopener">ver PR</a>` : ''}</span>`);
-        if (ci) rows.push(`<span class="tip-ci ci-${ci.state}">${CI_LABEL[ci.state]}${ci.name ? ` · ${U.esc(ci.name)}` : ''}${ci.url ? ` · <a href="${U.esc(ci.url)}" target="_blank" rel="noopener">ver ejecución</a>` : ''}</span>`);
-      }
-      this.tip.innerHTML = `
-        <div class="tip-head">${U.avatarHTML(c.author, 22)}<span class="tip-author">${U.esc(c.author.name)}</span><span class="tip-time" title="${U.esc(U.fmtDateTime(c.date))}">${U.timeAgo(c.date)}</span></div>
-        <p class="tip-msg">${U.esc(U.firstLine(c.message))}</p>
-        <p class="tip-meta"><code>${U.shortSha(c.sha)}</code>${parents > 1 ? ` · merge de ${parents} padres` : ''}</p>
-        ${rows.length ? `<p class="tip-extra">${rows.join('')}</p>` : ''}
-        ${pin && (c.url || (branch && ctx.canPin)) ? `<div class="tip-actions">
-          ${c.url ? `<a class="tip-link" href="${U.esc(c.url)}" target="_blank" rel="noopener">Abrir commit en GitHub ↗</a>` : ''}
-          ${branch && ctx.canPin ? `<button type="button" class="tip-pin" data-branch="${U.esc(branch)}" aria-pressed="${!!ctx.pins?.has(branch)}">${ctx.pins?.has(branch) ? 'Dejar de fijar' : 'Fijar'} <code>${U.esc(U.truncate(branch, 28))}</code></button>` : ''}
-        </div>` : ''}`;
+      this.tip.innerHTML = tipHTML(it.data, this.ctx || {}, { pin, branchName, ghostNames: this.ghostNames });
       this.tip.hidden = false;
       this.tip.classList.toggle('pinned', !!pin);
       this.tipSha = sha;
@@ -767,4 +782,5 @@
   }
 
   GB.Graph = Graph;
+  GB.graphShared = { tipHTML, wirePinButton, CI_LABEL, measure, fitText, LABEL_FONT, SMALL_FONT };
 })(window.GB);

@@ -57,7 +57,7 @@ Las alertas y la cuota siguen la misma lógica: cuando una rama fuera de las vis
 
 ## Publicar en GitHub Pages
 
-El flujo `.github/workflows/pages.yml` publica el sitio en cada push a `main`. Solo hay que activarlo una vez: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+El flujo `.github/workflows/pages.yml` publica el sitio en cada push a `master`. Solo hay que activarlo una vez: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 
 ## Estructura
 

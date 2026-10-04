@@ -1,8 +1,9 @@
 /* GraphBranch — layout del grafo.
    Eje X: orden de commits (padres antes que hijos, luego por fecha).
-   Eje Y: carriles. Cada rama visible tiene su carril estable mientras exista;
-   los commits que solo alcanza una rama ya borrada (fusionada) forman cadenas
-   "fantasma" que se acomodan en los huecos libres de los carriles. */
+   Eje Y: carriles. La rama por defecto va arriba y las demás se ordenan por su
+   última actividad (la más reciente primero), así que se reordenan solas en
+   cada push; los commits que solo alcanza una rama ya borrada (fusionada)
+   forman cadenas "fantasma" que se acomodan en los huecos libres de los carriles. */
 (function (GB) {
   'use strict';
   const { U } = GB;
@@ -16,8 +17,10 @@
     }
 
     reset() {
-      this.slotOf = new Map(); // rama -> carril persistente
+      this.slotOf = new Map(); // rama -> carril del último cálculo (desempata el orden)
+      this.seqOf = new Map(); // rama -> orden de aparición (quién se queda los commits compartidos)
       this.colorOf = new Map(); // rama -> color 1..8 (0 = "otras")
+      this.seq = 0;
     }
 
     compute(data) {
@@ -60,14 +63,33 @@
       }
       const xOf = new Map(order.map((c, i) => [c.sha, i]));
 
-      /* 3. dueño de cada commit: primero la rama por defecto y las de larga vida */
+      /* 3. ramas nuevas: orden de aparición y color, que las acompañan mientras existan */
       const rank = (b) => (b.name === def ? 0 : b.protected || LONG_LIVED.test(b.name) ? 1 : 2);
-      const prio = [...heads].sort(
-        (a, b) =>
-          rank(a) - rank(b) ||
-          (this.slotOf.get(a.name) ?? 1e9) - (this.slotOf.get(b.name) ?? 1e9) ||
-          (commits.get(a.sha).date || 0) - (commits.get(b.sha).date || 0),
-      );
+      const live = new Set(heads.map((b) => b.name));
+      for (const m of [this.slotOf, this.seqOf, this.colorOf]) for (const n of [...m.keys()]) if (!live.has(n)) m.delete(n);
+      const fresh = heads
+        .filter((b) => !this.seqOf.has(b.name))
+        .sort((a, b) => rank(a) - rank(b) || (commits.get(b.sha).date || 0) - (commits.get(a.sha).date || 0));
+      for (const b of fresh) {
+        this.seqOf.set(b.name, this.seq++);
+        let color = 0;
+        if (b.name === def) color = 1;
+        else {
+          const usedC = new Set(this.colorOf.values());
+          for (let k = 2; k <= COLOR_SLOTS; k++)
+            if (!usedC.has(k)) {
+              color = k;
+              break;
+            }
+          if (!color && !usedC.has(1) && !live.has(def)) color = 1;
+        }
+        this.colorOf.set(b.name, color);
+      }
+
+      /* 4. dueño de cada commit: primero la rama por defecto y las de larga vida; entre
+         las demás, la que apareció antes. No depende del carril, así reordenar las filas
+         no cambia la forma del grafo. */
+      const prio = [...heads].sort((a, b) => rank(a) - rank(b) || this.seqOf.get(a.name) - this.seqOf.get(b.name));
       const owner = new Map();
       const chains = new Map();
       const claim = (key, sha, branch) => {
@@ -89,36 +111,20 @@
       const children = new Map();
       for (const c of order) for (const p of c.parents) if (reach.has(p)) (children.get(p) || children.set(p, []).get(p)).push(c.sha);
 
-      /* 4. carriles persistentes y colores para ramas visibles */
-      const live = new Set(heads.map((b) => b.name));
-      for (const n of [...this.slotOf.keys()]) if (!live.has(n)) this.slotOf.delete(n);
-      for (const n of [...this.colorOf.keys()]) if (!live.has(n)) this.colorOf.delete(n);
-      const fresh = heads
-        .filter((b) => !this.slotOf.has(b.name))
-        .sort((a, b) => rank(a) - rank(b) || (commits.get(b.sha).date || 0) - (commits.get(a.sha).date || 0));
-      for (const b of fresh) {
-        let slot = 0;
-        if (b.name !== def) {
-          const used = new Set(this.slotOf.values());
-          slot = 1;
-          while (used.has(slot)) slot++;
-        }
-        this.slotOf.set(b.name, slot);
-        let color = 0;
-        if (b.name === def) color = 1;
-        else {
-          const usedC = new Set(this.colorOf.values());
-          for (let k = 2; k <= COLOR_SLOTS; k++)
-            if (!usedC.has(k)) {
-              color = k;
-              break;
-            }
-          if (!color && !usedC.has(1) && !live.has(def)) color = 1;
-        }
-        this.colorOf.set(b.name, color);
-      }
+      /* 5. carriles: la rama por defecto arriba y el resto por última actividad
+         (commit más nuevo o último movimiento visto, lo que sea más reciente) */
+      const activity = (b) => Math.max(commits.get(b.sha).date || 0, b.movedAt || 0);
+      const prevSlot = this.slotOf;
+      const byActivity = heads
+        .filter((b) => b.name !== def)
+        .sort(
+          (a, b) =>
+            activity(b) - activity(a) || (prevSlot.get(a.name) ?? 1e9) - (prevSlot.get(b.name) ?? 1e9) || (a.name < b.name ? -1 : 1),
+        );
+      this.slotOf = new Map(byActivity.map((b, i) => [b.name, i + 1]));
+      if (live.has(def)) this.slotOf.set(def, 0);
 
-      /* 5. ocupación de carriles: ramas hasta el infinito, fantasmas en los huecos */
+      /* 6. ocupación de carriles: ramas hasta el infinito, fantasmas en los huecos */
       const occ = new Map();
       const occupy = (slot, a, b) => (occ.get(slot) || occ.set(slot, []).get(slot)).push([a, b]);
       const fits = (slot, a, b) => !(occ.get(slot) || []).some(([s, e]) => a <= e + 0.6 && s <= b + 0.6);
@@ -159,7 +165,7 @@
         chainSlot.set(g.key, slot);
       }
 
-      /* 6. compactar carriles vacíos en filas consecutivas */
+      /* 7. compactar carriles vacíos en filas consecutivas */
       const slots = [...new Set(chainSlot.values())].sort((a, b) => a - b);
       const rowOfSlot = new Map(slots.map((s, i) => [s, i]));
       const rowOfChain = (key) => rowOfSlot.get(chainSlot.get(key));
@@ -168,7 +174,7 @@
         return ch.branch ? 'c' + this.colorOf.get(ch.branch.name) : 'ghost';
       };
 
-      /* 7. nodos, aristas, cabezas */
+      /* 8. nodos, aristas, cabezas */
       const headsBySha = new Map();
       for (const b of heads) (headsBySha.get(b.sha) || headsBySha.set(b.sha, []).get(b.sha)).push(b.name);
 
@@ -228,7 +234,7 @@
         .filter((g) => g.name)
         .map((g) => ({ id: g.key, name: g.name, x: xOf.get(g.newest), row: rowOfChain(g.key), chain: g.key }));
 
-      /* 8. filas para la leyenda */
+      /* 9. filas para la leyenda */
       const rows = slots.map((slot, row) => {
         const b = heads.find((h) => this.slotOf.get(h.name) === slot);
         return b
@@ -236,7 +242,7 @@
           : { row, id: 'g-row:' + slot, name: 'fusionadas', color: 'ghost', chain: null, ghost: true };
       });
 
-      /* 9. marcas de día para el eje */
+      /* 10. marcas de día para el eje */
       const days = [];
       let prev = null;
       for (const c of order) {

@@ -4,10 +4,10 @@ Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas
 
 ![GraphBranch en 3D mostrando el repositorio de demostración](docs/captura-3d.png)
 
-- **Vista 3D**: la rama por defecto es el tronco central y las demás se reparten a su alrededor en espiral; el tiempo avanza hacia ti y la historia se pierde en el fondo. Puedes girar, acercar y desplazarte; la cámara sigue lo último y gira lento cuando no la tocas.
-- **Vista 2D tipo metro**: cada rama es un carril con color propio; los commits avanzan a la derecha. Cambia entre 3D y 2D con el selector del grafo.
+- **Vista 3D**: la rama por defecto es el tronco central y las demás se reparten a su alrededor en espiral, las más activas más cerca del tronco; el tiempo avanza hacia ti y la historia se pierde en el fondo. Puedes girar, acercar y desplazarte; la cámara sigue lo último y gira lento cuando no la tocas.
+- **Vista 2D tipo metro**: cada rama es un carril con color propio; los commits avanzan a la derecha. La rama por defecto va arriba y debajo las demás, de la más reciente a la menos activa. Cambia entre 3D y 2D con el selector del grafo.
 - En ambas, las bifurcaciones y merges se dibujan como curvas y las ramas ya fusionadas y borradas quedan en gris.
-- **En vivo**: los commits nuevos aparecen con una onda, la etiqueta de la rama se desliza hasta su nueva cabeza y la vista sigue lo último (o te deja recorrer la historia).
+- **En vivo**: los commits nuevos aparecen con una onda, la etiqueta de la rama se desliza hasta su nueva cabeza, la rama sube justo bajo la rama por defecto (los carriles se reordenan según su última actividad) y la vista sigue lo último (o te deja recorrer la historia).
 - **Alertas**: panel de actividad filtrable, avisos emergentes, sonido opcional, notificaciones del sistema cuando la pestaña está en segundo plano y contador en el título de la pestaña.
 - **Estado en cada rama**: CI en curso / aprobado / fallido y número de PR abierto, directamente en la etiqueta.
 - **Repos enormes**: funciona con repositorios de miles de ramas (ver más abajo).

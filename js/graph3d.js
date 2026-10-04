@@ -1,8 +1,9 @@
 /* GraphBranch — vista 3D con Three.js.
    El tiempo avanza hacia la cámara (eje Z): lo más nuevo queda adelante y la
    historia se pierde en la niebla. La rama por defecto es el tronco central;
-   las demás se reparten a su alrededor en una espiral (girasol), así caben
-   decenas de ramas sin taparse. Recibe el mismo layout que la vista 2D. */
+   las demás se reparten a su alrededor en una espiral (girasol), las más
+   activas más cerca del tronco, así caben decenas de ramas sin taparse.
+   Recibe el mismo layout que la vista 2D. */
 (function (GB) {
   'use strict';
   const { U } = GB;

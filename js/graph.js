@@ -4,7 +4,8 @@
    Cada elemento anima desde su posición actual a la nueva en cada actualización. */
 (function (GB) {
   'use strict';
-  const { U } = GB;
+  const { U, i18n } = GB;
+  const tr = i18n.t; // `t` ya se usa aquí para otras cosas (transformaciones, textos SVG)
   const NS = 'http://www.w3.org/2000/svg';
   const SPACING = 28;
   const LANE_MIN = 34;
@@ -58,28 +59,28 @@
     if (heads.length) rows.push(`<span class="tip-refs">${heads.map((h) => `<code>${U.esc(h)}</code>`).join(' ')}</span>`);
     if (node.chain.startsWith('g:')) {
       const gname = ghostNames?.get(node.chain);
-      rows.push(`<span>${gname ? `De la rama <code>${U.esc(gname)}</code>, ya fusionada y eliminada` : 'De una rama ya fusionada y eliminada'}</span>`);
+      rows.push(`<span>${gname ? i18n.html('tip.fromBranch', { name: gname }) : U.esc(tr('tip.fromGhost'))}</span>`);
     } else if (node.color === 'ghost') {
-      rows.push(`<span>De la rama <code>${U.esc(node.chain.slice(2))}</code>, ya fusionada (sigue existiendo)</span>`);
+      rows.push(`<span>${i18n.html('tip.fromMerged', { name: node.chain.slice(2) })}</span>`);
     }
     const branch = branchName || heads[0];
     if (branch) {
       const pr = ctx.prs?.get(branch);
-      if (pr) rows.push(`<span>PR #${pr.number}${pr.draft ? ' (borrador)' : ''} → <code>${U.esc(pr.base)}</code>${pr.url ? ` · <a href="${U.esc(pr.url)}" target="_blank" rel="noopener">ver PR</a>` : ''}</span>`);
+      if (pr) rows.push(`<span>${i18n.html(pr.draft ? 'tip.prDraft' : 'tip.pr', { num: pr.number, base: pr.base })}${pr.url ? ` · <a href="${U.esc(pr.url)}" target="_blank" rel="noopener">${U.esc(tr('tip.viewPr'))}</a>` : ''}</span>`);
     }
     return `
-      <div class="tip-head">${U.avatarHTML(c.author, 22)}<span class="tip-author">${U.esc(c.author.name)}</span><span class="tip-time" title="${U.esc(U.fmtDateTime(c.date))}">${U.timeAgo(c.date)}</span></div>
+      <div class="tip-head">${U.avatarHTML(c.author, 22)}<span class="tip-author">${U.esc(c.author.name || tr('author.unknown'))}</span><span class="tip-time" title="${U.esc(U.fmtDateTime(c.date))}">${U.timeAgo(c.date)}</span></div>
       <p class="tip-msg">${U.esc(U.firstLine(c.message))}</p>
-      <p class="tip-meta"><code>${U.shortSha(c.sha)}</code>${parents > 1 ? ` · merge de ${parents} padres` : ''}</p>
+      <p class="tip-meta"><code>${U.shortSha(c.sha)}</code>${parents > 1 ? ` · ${U.esc(tr('tip.mergeOf', { n: parents }))}` : ''}</p>
       ${rows.length ? `<p class="tip-extra">${rows.join('')}</p>` : ''}
       ${pin && (c.url || (branch && ctx.canPin)) ? `<div class="tip-actions">
-        ${c.url ? `<a class="tip-link" href="${U.esc(c.url)}" target="_blank" rel="noopener">Abrir commit en GitHub ↗</a>` : ''}
+        ${c.url ? `<a class="tip-link" href="${U.esc(c.url)}" target="_blank" rel="noopener">${U.esc(tr('tip.openCommit'))} ↗</a>` : ''}
         ${branch && ctx.canPin ? pinButtonHTML(branch, !!ctx.pins?.has(branch)) : ''}
       </div>` : ''}`;
   }
 
   function pinButtonHTML(branch, on) {
-    return `<button type="button" class="tip-pin" data-branch="${U.esc(branch)}" aria-pressed="${on}">${on ? 'Dejar de fijar' : 'Fijar'} <code>${U.esc(U.truncate(branch, 28))}</code></button>`;
+    return `<button type="button" class="tip-pin" data-branch="${U.esc(branch)}" aria-pressed="${on}">${i18n.html(on ? 'tip.unpin' : 'tip.pin', { branch: U.truncate(branch, 28) })}</button>`;
   }
 
   /** Conecta el botón "Fijar" de un tooltip con la acción de la app. */
@@ -96,7 +97,7 @@
     constructor(wrap, opts = {}) {
       this.wrap = wrap;
       this.opts = opts;
-      this.svg = mk('svg', { class: 'graph-svg', 'aria-label': 'Grafo de ramas y commits' }, wrap);
+      this.svg = mk('svg', { class: 'graph-svg', 'aria-label': tr('graph.aria2d') }, wrap);
       this.gBands = mk('g', { class: 'bands' }, this.svg);
       this.gDays = mk('g', { class: 'days' }, this.svg);
       this.gEdges = mk('g', { class: 'edges' }, this.svg);
@@ -112,7 +113,7 @@
       this.tip.className = 'tip';
       this.tip.hidden = true;
       this.tip.setAttribute('role', 'dialog');
-      this.tip.setAttribute('aria-label', 'Detalle del commit');
+      this.tip.setAttribute('aria-label', tr('tip.aria'));
       wrap.appendChild(this.tip);
 
       this.nodes = new Map();
@@ -422,12 +423,7 @@
     }
 
     dayText(ms) {
-      const today = U.dayKey(Date.now());
-      const yest = U.dayKey(Date.now() - 864e5);
-      const k = U.dayKey(ms);
-      if (k === today) return 'hoy';
-      if (k === yest) return 'ayer';
-      return new Date(ms).toLocaleDateString('es', { weekday: 'short', day: 'numeric', month: 'short' });
+      return i18n.dayLabel(ms);
     }
 
     makeNode(n) {
@@ -477,20 +473,20 @@
       const t = mk('text', { class: 'h-name', x, y: 0, dy: '0.35em' }, g);
       t.textContent = name;
       x += measure(name, LABEL_FONT) + 8;
-      const aria = [`Rama ${h.name}${h.isDefault ? ' (por defecto)' : ''}`];
+      const aria = [tr(h.isDefault ? 'branch.ariaDefault' : 'branch.aria', { name: h.name })];
       if (ctx.pins?.has(h.name)) {
         const pg = mk('g', { class: 'h-pin', transform: `translate(${x + 4},0)` }, g);
         mk('path', { d: 'M0,-4L4,0L0,4L-4,0Z' }, pg);
-        mk('title', null, pg).textContent = 'Rama fijada';
+        mk('title', null, pg).textContent = tr('branch.pinned');
         x += 13;
-        aria.push('fijada');
+        aria.push(tr('branch.pinned'));
       }
       if (pr) {
         const label = `#${pr.number}`;
         const pt = mk('text', { class: `h-pr${pr.draft ? ' draft' : ''}`, x, y: 0, dy: '0.35em' }, g);
         pt.textContent = label;
         x += measure(label, SMALL_FONT) + 8;
-        aria.push(`PR #${pr.number}${pr.draft ? ' borrador' : ''} hacia ${pr.base}`);
+        aria.push(tr(pr.draft ? 'branch.prDraftAria' : 'branch.prAria', { num: pr.number, base: pr.base }));
       }
       bg.setAttribute('width', Math.round(x + 2));
       g.setAttribute('aria-label', aria.join(', '));
@@ -506,6 +502,15 @@
       const t = mk('text', { class: 'l-name', x: 19, y: 0, dy: '0.35em' }, g);
       t.textContent = fitText(r.name, SMALL_FONT, this.legendW - 26);
       if (!r.ghost) mk('title', null, g).textContent = r.name;
+    }
+
+    /** Cambio de idioma: etiquetas accesibles, días del eje y rótulos de las ramas. */
+    relocalize() {
+      this.svg.setAttribute('aria-label', tr('graph.aria2d'));
+      this.tip.setAttribute('aria-label', tr('tip.aria'));
+      this.unpin();
+      for (const d of this.days.values()) d.label.textContent = this.dayText(d.data.time);
+      this.relabel();
     }
 
     relabel() {

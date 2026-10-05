@@ -1,8 +1,11 @@
 /* GraphBranch — conecta fuente de datos, layout, grafo y feed. */
-(function (GB) {
+(async function (GB) {
   'use strict';
-  const { U } = GB;
+  const { U, i18n } = GB;
+  const { t } = i18n;
   const $ = U.$;
+
+  await i18n.ready; // el idioma (y su diccionario) antes de dibujar nada
 
   const el = {
     repoForm: $('#repo-form'),
@@ -18,6 +21,8 @@
     refreshBtn: $('#refresh-btn'),
     soundBtn: $('#sound-btn'),
     notifyBtn: $('#notify-btn'),
+    langBtn: $('#lang-btn'),
+    langSelect: $('#lang-select'),
     settingsBtn: $('#settings-btn'),
     repoLink: $('#repo-link'),
     repoBadge: $('#repo-badge'),
@@ -69,8 +74,8 @@
   /* dos vistas del mismo layout: 3D (Three.js) y 2D (SVG) */
   function followUI(v) {
     el.followBtn.setAttribute('aria-pressed', v);
-    el.followBtn.querySelector('.follow-label').textContent = v ? 'En vivo' : 'Ir a lo último';
-    el.followBtn.title = v ? 'La vista sigue los commits nuevos. Arrastra para recorrer la historia.' : 'Volver a los commits más recientes y seguirlos';
+    el.followBtn.querySelector('.follow-label').textContent = v ? t('follow.live') : t('follow.jump');
+    el.followBtn.title = v ? t('follow.live.title') : t('follow.jump.title');
   }
   const graph2d = new GB.Graph(el.graph, {
     onFollowChange: (v) => graph === graph2d && followUI(v),
@@ -89,13 +94,11 @@
   }
   let graph = graph2d;
 
-  const HINTS = {
-    '3d': 'Arrastra para girar · clic derecho o <kbd>Mayús</kbd> + arrastrar para desplazar · rueda o pellizco para acercar · clic en un commit para ver el detalle',
-    '2d': 'Arrastra para moverte · rueda para recorrer la historia · <kbd>Ctrl</kbd> + rueda o pellizco para zoom · clic en un commit para ver el detalle',
-  };
+  let view = '2d';
 
   function setView(v) {
     if (v === '3d' && !graph3d) v = '2d';
+    view = v;
     graph = v === '3d' ? graph3d : graph2d;
     el.graph3d.hidden = v !== '3d';
     el.graph.hidden = v !== '2d';
@@ -103,7 +106,7 @@
     setPressed(el.view3d, v === '3d');
     setPressed(el.view2d, v === '2d');
     el.spinBtn.hidden = v !== '3d';
-    el.hint.innerHTML = HINTS[v];
+    el.hint.innerHTML = i18n.html('hint.' + v);
     followUI(graph.following);
     U.store.set('view', v);
   }
@@ -147,7 +150,7 @@
     paused = false;
     setPressed(el.pauseBtn, false);
     renderRepo(src.data.repo);
-    showOverlay('loading', src.data.repo.demo ? 'Preparando la simulación…' : `Cargando ${src.data.repo.owner}/${src.data.repo.name}…`);
+    showOverlay('loading', src.data.repo.demo ? i18n.msg('overlay.demoLoading') : i18n.msg('overlay.loading', { repo: `${src.data.repo.owner}/${src.data.repo.name}` }));
     src.on('update', (u) => src === source && onUpdate(u));
     src.on('status', (s) => src === source && onStatus(s));
     src.start();
@@ -156,7 +159,7 @@
   function connectRepo(input, { save = true } = {}) {
     const parsed = U.parseRepo(input);
     if (!parsed) {
-      el.repoInput.setCustomValidity('Escribe el repositorio como owner/nombre o pega su URL de GitHub.');
+      el.repoInput.setCustomValidity(t('repo.invalid'));
       el.repoInput.reportValidity();
       return;
     }
@@ -198,9 +201,12 @@
     }
   }
 
+  let lastRender = null;
+
   function onUpdate({ activities, initial }) {
     const data = source.view ? source.view() : source.data;
     const L = layout.compute(data);
+    lastRender = { data, L };
     const gctx = {
       initial,
       prs: prsByBranch(data),
@@ -235,11 +241,9 @@
       el.repoLink.setAttribute('aria-disabled', 'true');
     }
     el.repoBadge.hidden = !repo.demo && !repo.private;
-    el.repoBadge.textContent = repo.demo ? 'simulación' : 'privado';
+    el.repoBadge.textContent = repo.demo ? t('badge.demo') : t('badge.private');
     el.repoBadge.className = `badge${repo.demo ? ' demo' : ''}`;
-    el.repoDesc.textContent = repo.demo
-      ? 'Datos ficticios que cambian solos cada pocos segundos. Escribe owner/repo arriba para ver uno real.'
-      : repo.description || '';
+    el.repoDesc.textContent = repo.demo ? t('repo.demoDesc') : repo.description || '';
     el.repoDesc.hidden = !el.repoDesc.textContent;
     feed.setBaseTitle(`${full} · GraphBranch`);
     renderTokenBanner();
@@ -251,9 +255,7 @@
     el.tokenBanner.hidden = !show;
     if (!show) return;
     el.tokenBannerText.textContent =
-      data.mode === 'events'
-        ? `Este repositorio tiene ${U.fmtNum(data.totalBranches)} ramas. Sin token, GraphBranch solo ve las que aparecen en el feed de eventos de GitHub, que llega con minutos de retraso. Con un token verás las ramas más activas casi en tiempo real.`
-        : 'Sin token, GitHub permite 60 consultas por hora: la vista se actualiza cada pocos minutos.';
+      data.mode === 'events' ? t('banner.events', { total: U.fmtNum(data.totalBranches) }) : t('banner.anon');
   }
 
   function renderStats(data, L) {
@@ -261,46 +263,47 @@
     const total = data.totalBranches || visible;
     el.st.branches.textContent = U.fmtNum(visible);
     let sub;
+    const totalText = U.fmtNum(total);
     if (data.matchingBranches != null) {
-      sub = `${U.fmtNum(data.matchingBranches)} coinciden con “${U.truncate(source.filter || '', 18)}” de ${U.fmtNum(total)}`;
+      sub = t('stats.branches.matching', { n: data.matchingBranches, filter: U.truncate(source.filter || '', 18), total: totalText });
     } else if (total <= visible) {
-      sub = visible === 1 ? 'la única del repo' : 'todas las del repo';
+      sub = visible === 1 ? t('stats.branches.only') : t('stats.branches.all');
     } else if (data.mode === 'events') {
-      sub = `con actividad reciente, de ${U.fmtNum(total)}`;
+      sub = t('stats.branches.recent', { total: totalText });
     } else if (data.mode === 'graphql') {
-      sub = `las más activas de ${U.fmtNum(total)}`;
-    } else sub = `de ${U.fmtNum(total)} en el repo`;
+      sub = t('stats.branches.top', { total: totalText });
+    } else sub = t('stats.branches.of', { total: totalText });
     el.st.branchesSub.textContent = sub;
     el.st.branchesSub.title = sub;
 
     el.st.commits.textContent = U.fmtNum(L.nodes.length);
     const merges = L.nodes.filter((n) => n.merge).length;
-    el.st.commitsSub.textContent = merges ? U.plural(merges, 'merge', 'merges') : 'sin merges';
+    el.st.commitsSub.textContent = merges ? t('stats.merges', { n: merges }) : t('stats.noMerges');
 
     const prs = [...data.pulls.values()];
     el.st.prs.textContent = U.fmtNum(Math.max(data.totalPulls || 0, prs.length));
     const drafts = prs.filter((p) => p.draft).length;
-    el.st.prsSub.textContent = prs.length ? (drafts ? U.plural(drafts, 'borrador', 'borradores') : 'listos para revisión') : 'ninguno abierto';
+    el.st.prsSub.textContent = prs.length ? (drafts ? t('stats.drafts', { n: drafts }) : t('stats.readyForReview')) : t('stats.noneOpen');
 
     renderLast();
     renderTokenBanner();
   }
 
   function renderLast() {
-    const t = feed.lastTime();
-    el.st.last.textContent = t ? U.timeAgo(t) : '–';
-    el.st.lastSub.textContent = t ? U.fmtDateTime(t) : 'sin eventos';
+    const last = feed.lastTime();
+    el.st.last.textContent = last ? U.timeAgo(last) : '–';
+    el.st.lastSub.textContent = last ? U.fmtDateTime(last) : t('stats.noEvents');
   }
 
   /* ---------- estado de conexión ---------- */
 
   const STATE_TEXT = {
-    loading: 'Cargando',
-    syncing: 'En vivo',
-    live: 'En vivo',
-    limited: 'En vivo, más lento',
-    paused: 'En pausa',
-    error: 'Sin conexión',
+    loading: 'status.loading',
+    syncing: 'status.live',
+    live: 'status.live',
+    limited: 'status.limited',
+    paused: 'status.paused',
+    error: 'status.error',
   };
 
   function onStatus(s) {
@@ -317,23 +320,24 @@
     const s = status;
     const shown = s.state === 'syncing' ? 'live' : s.state;
     el.status.dataset.state = shown;
-    el.statusText.textContent = s.demo && shown === 'live' ? 'Simulación en vivo' : STATE_TEXT[s.state] || s.state;
+    el.statusText.textContent = s.demo && shown === 'live' ? t('status.demoLive') : STATE_TEXT[s.state] ? t(STATE_TEXT[s.state]) : s.state;
     const now = Date.now();
     let sub = '';
+    const secsTo = (at) => i18n.fmtSeconds(Math.max(0, Math.ceil((at - now) / 1000)));
     if (s.state === 'error') {
-      sub = s.nextAt ? `reintento en ${Math.max(0, Math.ceil((s.nextAt - now) / 1000))} s` : 'detenido';
-      el.status.title = s.message || '';
+      sub = s.nextAt ? t('status.retryIn', { time: secsTo(s.nextAt) }) : t('status.stopped');
+      el.status.title = i18n.text(s.message);
     } else if (s.state === 'paused') {
-      sub = 'reanuda para seguir';
+      sub = t('status.resumeHint');
       el.status.title = '';
     } else if (s.state === 'loading') {
       sub = '';
     } else {
       const parts = [];
-      if (s.lastOk) parts.push(`actualizado ${U.timeAgo(s.lastOk, now)}`);
-      if (s.nextAt && !s.demo) parts.push(`próxima en ${Math.max(0, Math.ceil((s.nextAt - now) / 1000))} s`);
+      if (s.lastOk) parts.push(t('status.updated', { ago: U.timeAgo(s.lastOk, now) }));
+      if (s.nextAt && !s.demo) parts.push(t('status.nextIn', { time: secsTo(s.nextAt) }));
       sub = parts.join(' · ');
-      el.status.title = s.state === 'limited' ? 'GraphBranch espacia las consultas para no agotar la cuota de la API de GitHub.' : '';
+      el.status.title = s.state === 'limited' ? t('status.throttled') : '';
     }
     el.statusSub.textContent = sub;
 
@@ -344,7 +348,7 @@
       el.rateText.textContent = `${U.fmtNum(s.rate.remaining)} / ${U.fmtNum(s.rate.limit)}`;
       el.rateBar.style.setProperty('--pct', pct);
       el.rate.dataset.level = pct < 0.1 ? 'bad' : pct < 0.3 ? 'warn' : 'ok';
-      el.rate.title = `Consultas restantes a la API de GitHub; se renueva a las ${new Date(s.rate.reset * 1000).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}`;
+      el.rate.title = t('status.rateTitle', { time: i18n.fmtTime(s.rate.reset * 1000) });
     } else el.rate.hidden = true;
   }
 
@@ -355,28 +359,33 @@
 
   /* ---------- capa sobre el grafo ---------- */
 
+  /* `message` puede ser un mensaje diferido (i18n.msg): se traduce al dibujar, así sigue el idioma activo */
+  let overlayState = null;
+
   function showOverlay(kind, message, fatal) {
+    overlayState = { kind, message, fatal };
     const o = el.overlay;
     o.hidden = false;
     o.dataset.kind = kind;
     if (kind === 'loading') {
-      o.innerHTML = `<div class="ov-card"><span class="spinner" aria-hidden="true"></span><p>${U.esc(message)}</p></div>`;
+      o.innerHTML = `<div class="ov-card"><span class="spinner" aria-hidden="true"></span><p>${U.esc(i18n.text(message))}</p></div>`;
     } else if (kind === 'empty') {
-      o.innerHTML = `<div class="ov-card"><p class="ov-title">Este repositorio todavía no tiene commits</p><p>Cuando alguien haga el primer push, aparecerá aquí.</p></div>`;
+      o.innerHTML = `<div class="ov-card"><p class="ov-title">${U.esc(t('overlay.empty.title'))}</p><p>${U.esc(t('overlay.empty.body'))}</p></div>`;
     } else {
       o.innerHTML = `<div class="ov-card" role="alert">
-          <p class="ov-title">No se pudo cargar el repositorio</p>
-          <p>${U.esc(message)}</p>
+          <p class="ov-title">${U.esc(t('overlay.error.title'))}</p>
+          <p>${U.esc(i18n.text(message))}</p>
           <div class="ov-actions">
-            ${fatal && /token/i.test(message) ? '<button type="button" class="btn btn-primary" data-ov="settings">Abrir ajustes</button>' : ''}
-            <button type="button" class="btn ${fatal && /token/i.test(message) ? 'btn-ghost' : 'btn-primary'}" data-ov="retry">Reintentar</button>
-            <button type="button" class="btn btn-ghost" data-ov="demo">Ver la demo</button>
+            ${fatal ? `<button type="button" class="btn btn-primary" data-ov="settings">${U.esc(t('overlay.openSettings'))}</button>` : ''}
+            <button type="button" class="btn ${fatal ? 'btn-ghost' : 'btn-primary'}" data-ov="retry">${U.esc(t('overlay.retry'))}</button>
+            <button type="button" class="btn btn-ghost" data-ov="demo">${U.esc(t('overlay.viewDemo'))}</button>
           </div>
         </div>`;
     }
   }
 
   function hideOverlay() {
+    overlayState = null;
     el.overlay.hidden = true;
     el.overlay.textContent = '';
   }
@@ -384,7 +393,7 @@
   el.overlay.addEventListener('click', (ev) => {
     const action = ev.target.closest('[data-ov]')?.dataset.ov;
     if (action === 'retry') {
-      showOverlay('loading', 'Reintentando…');
+      showOverlay('loading', i18n.msg('status.retrying'));
       source.refreshNow();
     } else if (action === 'demo') startDemo();
     else if (action === 'settings') openSettings();
@@ -403,11 +412,15 @@
   el.repoInput.addEventListener('input', () => el.repoInput.setCustomValidity(''));
   el.demoBtn.addEventListener('click', startDemo);
 
+  function renderPause() {
+    el.pauseBtn.title = paused ? t('ctl.resume') : t('ctl.pause');
+    el.pauseBtn.setAttribute('aria-label', el.pauseBtn.title);
+  }
+
   el.pauseBtn.addEventListener('click', () => {
     paused = !paused;
     setPressed(el.pauseBtn, paused);
-    el.pauseBtn.title = paused ? 'Reanudar' : 'Pausar';
-    el.pauseBtn.setAttribute('aria-label', el.pauseBtn.title);
+    renderPause();
     source?.setPaused(paused);
   });
   el.refreshBtn.addEventListener('click', () => {
@@ -427,7 +440,7 @@
     const on = await feed.setNotify(!feed.notify);
     setPressed(el.notifyBtn, on);
     if (!on && Notification.permission === 'denied') {
-      feed.toast({ kind: 'other', title: 'Notificaciones bloqueadas', detail: 'Permítelas para este sitio en la configuración del navegador.', time: Date.now() });
+      feed.toast({ kind: 'other', title: i18n.msg('notify.blockedTitle'), detail: i18n.msg('notify.blockedBody'), time: Date.now() });
     }
   });
 
@@ -437,9 +450,9 @@
 
   el.view3d.addEventListener('click', () => setView('3d'));
   el.view2d.addEventListener('click', () => setView('2d'));
-  if (!graph3d) {
-    el.view3d.disabled = true;
-    el.view3d.title = 'Tu navegador no tiene WebGL activado; la vista 3D no está disponible.';
+  if (!graph3d) el.view3d.disabled = true;
+  function renderWebglNote() {
+    el.view3d.title = graph3d ? '' : t('webgl.missing');
   }
   setPressed(el.spinBtn, !!graph3d?.spin);
   el.spinBtn.addEventListener('click', () => {
@@ -447,13 +460,15 @@
     setPressed(el.spinBtn, !!graph3d?.spin);
   });
   setView(U.store.get('view', '3d'));
+  renderPause();
+  renderWebglNote();
 
   /* ---------- ajustes ---------- */
 
   function openSettings() {
     el.tokenInput.value = settings.token;
     el.tokenInput.type = 'password';
-    el.tokenToggle.textContent = 'Mostrar';
+    el.tokenToggle.textContent = t('settings.show');
     el.maxBranches.value = settings.maxBranches;
     el.depth.value = settings.depth;
     if (typeof el.dialog.showModal === 'function') el.dialog.showModal();
@@ -472,7 +487,7 @@
   el.tokenToggle.addEventListener('click', () => {
     const show = el.tokenInput.type === 'password';
     el.tokenInput.type = show ? 'text' : 'password';
-    el.tokenToggle.textContent = show ? 'Ocultar' : 'Mostrar';
+    el.tokenToggle.textContent = show ? t('settings.hide') : t('settings.show');
   });
   el.tokenClear.addEventListener('click', () => {
     el.tokenInput.value = '';
@@ -500,6 +515,40 @@
       if (source && !source.data.repo.demo) U.store.set('filter:' + repoKey(), q || null);
       source?.setFilter(q);
     }, 450);
+  });
+
+  /* ---------- idioma ---------- */
+
+  function fillLanguages() {
+    el.langSelect.innerHTML = i18n.locales
+      .map((l) => `<option value="${U.esc(l.code)}" lang="${U.esc(l.code)}">${U.esc(l.name)}</option>`)
+      .join('');
+    el.langSelect.value = i18n.locale;
+    const current = i18n.locales.find((l) => l.code === i18n.locale);
+    el.langBtn.title = `${t('ctl.language')}: ${current ? current.name : i18n.locale}`;
+  }
+
+  fillLanguages();
+  el.langSelect.addEventListener('change', () => i18n.setLocale(el.langSelect.value));
+
+  /* al cambiar de idioma se vuelve a dibujar todo lo que tiene texto (lo estático ya lo tradujo i18n.apply) */
+  i18n.onChange(() => {
+    fillLanguages();
+    setView(view);
+    renderPause();
+    renderWebglNote();
+    el.tokenToggle.textContent = el.tokenInput.type === 'password' ? t('settings.show') : t('settings.hide');
+    el.repoInput.setCustomValidity('');
+    graph2d.relocalize();
+    graph3d?.relocalize();
+    feed.relocalize();
+    if (!source) return;
+    // la demo inventa mensajes, incidencias y comentarios en el idioma activo: se reinicia para no mezclarlos
+    if (source.data.repo.demo) return startDemo();
+    renderRepo(source.data.repo);
+    if (lastRender) renderStats(lastRender.data, lastRender.L);
+    renderStatus();
+    if (overlayState) showOverlay(overlayState.kind, overlayState.message, overlayState.fatal);
   });
 
   /* ---------- arranque ---------- */

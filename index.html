@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -20,12 +20,14 @@
   base-uri 'none';
   form-action 'none'">
 <title>GraphBranch</title>
-<meta name="description" content="Grafo en vivo de las ramas de un repositorio de GitHub, con alertas de commits, pull requests e issues.">
+<meta name="description" content="Live graph of a GitHub repository's branches, with alerts for commits, pull requests and issues." data-i18n-attr="content:meta.description">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23121917'/%3E%3Cpath d='M8 24V8M8 15c0-4 4-5 8-5h3M8 19c0 3 3 4 7 4h9' stroke='%233987e5' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='8' cy='8' r='3' fill='%233987e5'/%3E%3Ccircle cx='22' cy='10' r='3' fill='%23d95926'/%3E%3Ccircle cx='24' cy='23' r='3' fill='%23199e70'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,500&display=swap">
 <link rel="stylesheet" href="css/styles.css">
+<noscript><style>html:not([data-lang]) .app, html:not([data-lang]) .toasts { visibility: visible; }</style></noscript>
+<script src="js/i18n.js"></script>
 </head>
 <body>
 <div class="app">
@@ -43,20 +45,20 @@
     </div>
 
     <form class="repo-form" id="repo-form" autocomplete="off" novalidate>
-      <label class="sr-only" for="repo-input">Repositorio de GitHub</label>
+      <label class="sr-only" for="repo-input" data-i18n="repo.label">GitHub repository</label>
       <div class="repo-field">
         <span class="repo-prefix" aria-hidden="true">github.com/</span>
         <input id="repo-input" name="repo" type="text" placeholder="owner/repo" spellcheck="false" autocapitalize="off" autocorrect="off">
       </div>
-      <button class="btn btn-primary" type="submit">Conectar</button>
-      <button class="btn btn-ghost" type="button" id="demo-btn">Demo</button>
+      <button class="btn btn-primary" type="submit" data-i18n="repo.connect">Connect</button>
+      <button class="btn btn-ghost" type="button" id="demo-btn" data-i18n="repo.demo">Demo</button>
     </form>
 
     <div class="status-group">
       <div class="status" id="status" data-state="loading" aria-live="polite">
         <span class="status-dot" aria-hidden="true"></span>
         <span class="status-texts">
-          <span class="status-text" id="status-text">Cargando</span>
+          <span class="status-text" id="status-text" data-i18n="status.loading">Loading</span>
           <span class="status-sub" id="status-sub"></span>
         </span>
       </div>
@@ -68,43 +70,47 @@
     </div>
 
     <div class="controls">
-      <button class="icon-btn" type="button" id="pause-btn" aria-pressed="false" title="Pausar" aria-label="Pausar">
+      <button class="icon-btn" type="button" id="pause-btn" aria-pressed="false" title="Pause" aria-label="Pause" data-i18n-attr="title:ctl.pause;aria-label:ctl.pause">
         <svg class="ico when-off" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.5v9M10.5 3.5v9"/></svg>
         <svg class="ico when-on" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6L12.5 8z"/></svg>
       </button>
-      <button class="icon-btn" type="button" id="refresh-btn" title="Actualizar ahora" aria-label="Actualizar ahora">
+      <button class="icon-btn" type="button" id="refresh-btn" title="Refresh now" aria-label="Refresh now" data-i18n-attr="title:ctl.refresh;aria-label:ctl.refresh">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v3h-3"/></svg>
       </button>
-      <button class="icon-btn" type="button" id="sound-btn" aria-pressed="false" title="Sonido en cada alerta" aria-label="Sonido en cada alerta">
+      <button class="icon-btn" type="button" id="sound-btn" aria-pressed="false" title="Sound on every alert" aria-label="Sound on every alert" data-i18n-attr="title:ctl.sound;aria-label:ctl.sound">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 6h2.5l3.5-3v10L5 10H2.5z"/><path class="when-on" d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.8a6 6 0 0 1 0 8.4"/><path class="when-off" d="m11 6 3.5 4M14.5 6 11 10"/></svg>
       </button>
-      <button class="icon-btn" type="button" id="notify-btn" aria-pressed="false" title="Notificaciones del sistema cuando la pestaña está en segundo plano" aria-label="Notificaciones del sistema">
+      <button class="icon-btn" type="button" id="notify-btn" aria-pressed="false" title="System notifications when the tab is in the background" aria-label="System notifications" data-i18n-attr="title:ctl.notify.title;aria-label:ctl.notify.label">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 11.5V7.2a4 4 0 0 1 8 0v4.3l1.3 1.2H2.7zM6.6 14h2.8"/><path class="when-off" d="M2.5 2.5l11 11"/></svg>
       </button>
-      <button class="icon-btn" type="button" id="settings-btn" title="Ajustes y token" aria-label="Ajustes y token">
+      <label class="icon-btn lang-btn" id="lang-btn" title="Language" data-i18n-attr="title:ctl.language">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c1.8 1.7 2.7 3.7 2.7 6S9.8 12.3 8 14M8 2C6.2 3.7 5.3 5.7 5.3 8S6.2 12.3 8 14"/></svg>
+        <select id="lang-select" aria-label="Language" data-i18n-attr="aria-label:ctl.language"></select>
+      </label>
+      <button class="icon-btn" type="button" id="settings-btn" title="Settings and token" aria-label="Settings and token" data-i18n-attr="title:ctl.settings;aria-label:ctl.settings">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.8M8 12.4v1.8M14.2 8h-1.8M3.6 8H1.8M12.4 3.6l-1.3 1.3M4.9 11.1l-1.3 1.3M12.4 12.4l-1.3-1.3M4.9 4.9 3.6 3.6"/></svg>
       </button>
     </div>
   </header>
 
-  <section class="stats" aria-label="Resumen del repositorio">
+  <section class="stats" aria-label="Repository summary" data-i18n-attr="aria-label:stats.aria">
     <div class="stat">
-      <span class="stat-label">Ramas visibles</span>
+      <span class="stat-label" data-i18n="stats.branches">Visible branches</span>
       <span class="stat-value" id="st-branches">–</span>
       <span class="stat-sub" id="st-branches-sub"></span>
     </div>
     <div class="stat">
-      <span class="stat-label">Commits en el grafo</span>
+      <span class="stat-label" data-i18n="stats.commits">Commits in the graph</span>
       <span class="stat-value" id="st-commits">–</span>
       <span class="stat-sub" id="st-commits-sub"></span>
     </div>
     <div class="stat">
-      <span class="stat-label">PRs abiertos</span>
+      <span class="stat-label" data-i18n="stats.prs">Open PRs</span>
       <span class="stat-value" id="st-prs">–</span>
       <span class="stat-sub" id="st-prs-sub"></span>
     </div>
     <div class="stat">
-      <span class="stat-label">Última actividad</span>
+      <span class="stat-label" data-i18n="stats.last">Last activity</span>
       <span class="stat-value" id="st-last">–</span>
       <span class="stat-sub" id="st-last-sub"></span>
     </div>
@@ -115,36 +121,36 @@
       <div class="panel-head">
         <div class="repo-title">
           <h1 id="graph-title"><a id="repo-link" target="_blank" rel="noopener">acme/orbita</a></h1>
-          <span class="badge demo" id="repo-badge">simulación</span>
+          <span class="badge demo" id="repo-badge">simulation</span>
           <p class="repo-desc" id="repo-desc" hidden></p>
         </div>
         <div class="toolbar">
-          <div class="view-switch" role="group" aria-label="Tipo de vista">
+          <div class="view-switch" role="group" aria-label="View type" data-i18n-attr="aria-label:view.aria">
             <button type="button" id="view-3d" aria-pressed="true">3D</button>
             <button type="button" id="view-2d" aria-pressed="false">2D</button>
           </div>
           <div class="filter-field">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
-            <label class="sr-only" for="branch-filter">Filtrar ramas por nombre</label>
-            <input id="branch-filter" type="search" placeholder="Filtrar ramas…" spellcheck="false" autocapitalize="off" autocomplete="off">
+            <label class="sr-only" for="branch-filter" data-i18n="filter.label">Filter branches by name</label>
+            <input id="branch-filter" type="search" placeholder="Filter branches…" data-i18n-attr="placeholder:filter.placeholder" spellcheck="false" autocapitalize="off" autocomplete="off">
           </div>
-          <button class="icon-btn" type="button" id="zoom-out" title="Alejar (Ctrl + rueda)" aria-label="Alejar">
+          <button class="icon-btn" type="button" id="zoom-out" title="Zoom out (Ctrl + wheel)" aria-label="Zoom out" data-i18n-attr="title:zoom.out.title;aria-label:zoom.out.label">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h9"/></svg>
           </button>
-          <button class="icon-btn" type="button" id="zoom-in" title="Acercar (Ctrl + rueda)" aria-label="Acercar">
+          <button class="icon-btn" type="button" id="zoom-in" title="Zoom in (Ctrl + wheel)" aria-label="Zoom in" data-i18n-attr="title:zoom.in.title;aria-label:zoom.in.label">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h9M8 3.5v9"/></svg>
           </button>
-          <button class="icon-btn" type="button" id="spin-btn" aria-pressed="true" title="Girar la vista lentamente cuando no la tocas" aria-label="Girar la vista">
+          <button class="icon-btn" type="button" id="spin-btn" aria-pressed="true" title="Slowly rotate the view while you are not touching it" aria-label="Rotate the view" data-i18n-attr="title:spin.title;aria-label:spin.label">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.2 6.2A5.5 5.5 0 0 0 3 5.3M2.8 9.8A5.5 5.5 0 0 0 13 10.7M3 2.5v2.8h2.8M13 13.5v-2.8h-2.8"/></svg>
           </button>
           <button class="btn btn-follow" type="button" id="follow-btn" aria-pressed="true">
-            <span class="live-dot" aria-hidden="true"></span><span class="follow-label">En vivo</span>
+            <span class="live-dot" aria-hidden="true"></span><span class="follow-label">Live</span>
           </button>
         </div>
       </div>
       <p class="token-banner" id="token-banner" hidden>
         <span id="token-banner-text"></span>
-        <button type="button" class="link-btn" id="token-banner-btn">Agregar un token</button>
+        <button type="button" class="link-btn" id="token-banner-btn" data-i18n="banner.add">Add a token</button>
       </p>
       <div class="graph-stage">
         <div class="graph3d-wrap" id="graph3d" hidden></div>
@@ -156,12 +162,12 @@
 
     <aside class="panel feed-panel" aria-labelledby="feed-title">
       <div class="panel-head">
-        <h2 id="feed-title">Actividad</h2>
+        <h2 id="feed-title" data-i18n="feed.title">Activity</h2>
         <span class="feed-count" id="feed-count"></span>
       </div>
-      <div class="chips" id="chips" role="group" aria-label="Filtrar actividad por tipo"></div>
-      <ol class="feed" id="feed" aria-label="Actividad reciente"></ol>
-      <p class="feed-empty" id="feed-empty">La actividad del repositorio aparecerá aquí.</p>
+      <div class="chips" id="chips" role="group" aria-label="Filter activity by type" data-i18n-attr="aria-label:feed.filterAria"></div>
+      <ol class="feed" id="feed" aria-label="Recent activity" data-i18n-attr="aria-label:feed.listAria"></ol>
+      <p class="feed-empty" id="feed-empty">The repository's activity will show up here.</p>
     </aside>
   </main>
 </div>
@@ -170,35 +176,36 @@
 
 <dialog class="settings" id="settings" aria-labelledby="settings-title">
   <form id="settings-form">
-    <h2 id="settings-title">Ajustes</h2>
+    <h2 id="settings-title" data-i18n="settings.title">Settings</h2>
     <div class="field">
-      <label for="token-input">Token de GitHub <span class="opt">opcional</span></label>
+      <label for="token-input"><span data-i18n="settings.token">GitHub token</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
       <div class="field-row">
         <input id="token-input" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
-        <button type="button" class="btn btn-ghost" id="token-toggle">Mostrar</button>
+        <button type="button" class="btn btn-ghost" id="token-toggle">Show</button>
       </div>
-      <p class="help">Sin token, GitHub permite 60 consultas por hora. Con un token <em>fine-grained</em> de solo lectura (permisos Metadata, Contents y Pull requests) la vista se actualiza cada 10 segundos, funciona con repositorios de miles de ramas y puedes ver repos privados. El token se guarda solo en este navegador y se envía únicamente a api.github.com.</p>
+      <p class="help" data-i18n-html="settings.tokenHelp">Without a token, GitHub allows 60 requests per hour. With a read-only <em>fine-grained</em> token (Metadata, Contents and Pull requests permissions) the view refreshes every 10 seconds, works with repositories that have thousands of branches, and you can see private repos. The token is stored only in this browser and is sent only to api.github.com.</p>
     </div>
     <div class="grid2">
       <div class="field">
-        <label for="max-branches">Ramas más activas a mostrar</label>
+        <label for="max-branches" data-i18n="settings.maxBranches">Most active branches to show</label>
         <input id="max-branches" type="number" min="2" max="60" inputmode="numeric">
       </div>
       <div class="field">
-        <label for="depth">Commits por rama</label>
+        <label for="depth" data-i18n="settings.depth">Commits per branch</label>
         <input id="depth" type="number" min="10" max="100" step="5" inputmode="numeric">
       </div>
     </div>
-    <p class="help">En repos grandes GraphBranch no lista todas las ramas: muestra la rama por defecto, las que fijes (clic en una rama → <strong>Fijar</strong>) y las que tienen commits más recientes. Usa el filtro del grafo para concentrarte en un prefijo, por ejemplo <code>release/</code>.</p>
+    <p class="help" data-i18n-html="settings.branchesHelp">On large repos GraphBranch does not list every branch: it shows the default branch, the ones you pin (click a branch → <strong>Pin</strong>) and those with the most recent commits. Use the graph filter to focus on a prefix, for example <code>release/</code>.</p>
     <div class="dialog-actions">
-      <button type="button" class="btn btn-ghost" id="token-clear">Borrar token</button>
+      <button type="button" class="btn btn-ghost" id="token-clear" data-i18n="settings.clearToken">Delete token</button>
       <span class="spacer"></span>
-      <button type="button" class="btn btn-ghost" id="settings-cancel">Cancelar</button>
-      <button type="submit" class="btn btn-primary">Guardar y reconectar</button>
+      <button type="button" class="btn btn-ghost" id="settings-cancel" data-i18n="settings.cancel">Cancel</button>
+      <button type="submit" class="btn btn-primary" data-i18n="settings.save">Save and reconnect</button>
     </div>
   </form>
 </dialog>
 
+<script src="js/i18n-apply.js"></script>
 <!-- SRI: el navegador rechaza estos scripts si el CDN entrega algo distinto a lo verificado.
      Al cambiar de versión hay que recalcular el hash (ver "Seguridad" en el README). -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"
@@ -209,6 +216,7 @@
         integrity="sha384-wagZhIFgY4hD+7awjQjR4e2E294y6J2HSnd8eTNc15ZubTeQeVRZwhQJ+W6hnBsf" crossorigin="anonymous"></script>
 <script src="js/util.js"></script>
 <script src="js/sources/github.js"></script>
+<script src="js/sources/demo-content.js"></script>
 <script src="js/sources/demo.js"></script>
 <script src="js/palette.js"></script>
 <script src="js/layout.js"></script>

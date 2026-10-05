@@ -6,7 +6,8 @@
    Recibe el mismo layout que la vista 2D. */
 (function (GB) {
   'use strict';
-  const { U } = GB;
+  const { U, i18n } = GB;
+  const tr = i18n.t;
   const SP = 2.0; // distancia entre commits en el eje del tiempo
   const LANE_C = 3.0; // escala de la espiral de carriles
   const GOLDEN = 2.399963229728653;
@@ -57,7 +58,7 @@
       this.canvas = this.renderer.domElement;
       this.canvas.className = 'g3-canvas';
       this.canvas.setAttribute('role', 'img');
-      this.canvas.setAttribute('aria-label', 'Vista 3D de ramas y commits');
+      this.canvas.setAttribute('aria-label', tr('graph.aria3d'));
       wrap.appendChild(this.canvas);
 
       this.labelLayer = document.createElement('div');
@@ -68,7 +69,7 @@
       this.tip.className = 'tip';
       this.tip.hidden = true;
       this.tip.setAttribute('role', 'dialog');
-      this.tip.setAttribute('aria-label', 'Detalle del commit');
+      this.tip.setAttribute('aria-label', tr('tip.aria'));
       wrap.appendChild(this.tip);
       GB.graphShared.wirePinButton(this.tip, (name) => this.opts.onTogglePin?.(name));
 
@@ -415,17 +416,17 @@
       const pinned = ctx.pins?.has(h.name);
       const moved = it.el.classList.contains('moved') ? ' moved' : '';
       it.el.className = `g3-head ${h.color}${h.isDefault ? ' default' : ''}${moved}`;
-      const aria = [`Rama ${h.name}${h.isDefault ? ' (por defecto)' : ''}`];
-      if (ci) aria.push(GB.graphShared.CI_LABEL[ci.state]);
-      if (pr) aria.push(`PR #${pr.number}`);
-      if (pinned) aria.push('fijada');
+      const aria = [tr(h.isDefault ? 'branch.ariaDefault' : 'branch.aria', { name: h.name })];
+      if (ci) aria.push(GB.graphShared.ciLabel(ci.state));
+      if (pr) aria.push(tr(pr.draft ? 'branch.prDraftAria' : 'branch.prAria', { num: pr.number, base: pr.base }));
+      if (pinned) aria.push(tr('branch.pinned'));
       it.el.setAttribute('aria-label', aria.join(', '));
       it.w = 0;
       it.el.innerHTML =
         `<span class="h3-dot" aria-hidden="true"></span><span class="h3-name">${U.esc(U.truncate(h.name, 34))}</span>` +
         (ci ? CI_SVG[ci.state] : '') +
         (pr ? `<span class="h3-pr${pr.draft ? ' draft' : ''}">#${pr.number}</span>` : '') +
-        (pinned ? '<span class="h3-pin" title="Rama fijada" aria-hidden="true"></span>' : '');
+        (pinned ? `<span class="h3-pin" title="${U.esc(tr('branch.pinned'))}" aria-hidden="true"></span>` : '');
     }
 
     updateDays(L) {
@@ -439,8 +440,6 @@
         for (const d of this.days.values()) d.mesh.geometry = this.dayGeo;
         this.dayR = R;
       }
-      const today = U.dayKey(Date.now());
-      const yest = U.dayKey(Date.now() - 864e5);
       const seen = new Set();
       for (const d of L.days) {
         seen.add(d.id);
@@ -454,8 +453,7 @@
         }
         it.data = d;
         it.mesh.position.set(0, 0, (d.x - 0.5) * SP);
-        const k = U.dayKey(d.time);
-        it.el.textContent = k === today ? 'hoy' : k === yest ? 'ayer' : new Date(d.time).toLocaleDateString('es', { weekday: 'short', day: 'numeric', month: 'short' });
+        it.el.textContent = i18n.dayLabel(d.time);
       }
       for (const [id, it] of this.days) {
         if (seen.has(id)) continue;
@@ -645,6 +643,15 @@
     unpin() {
       this.pinned = null;
       this.hideTip();
+    }
+
+    /** Cambio de idioma: etiquetas accesibles, días del eje y rótulos de las ramas. */
+    relocalize() {
+      this.canvas.setAttribute('aria-label', tr('graph.aria3d'));
+      this.tip.setAttribute('aria-label', tr('tip.aria'));
+      this.unpin();
+      for (const d of this.days.values()) if (d.data) d.el.textContent = i18n.dayLabel(d.data.time);
+      for (const it of this.heads.values()) if (it.data) this.buildHead(it, it.data, this.ctx || {});
     }
 
     project(v) {

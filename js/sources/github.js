@@ -14,14 +14,17 @@
    "actividades" (alertas). Con token, las respuestas 304 no gastan cuota. */
 (function (GB) {
   'use strict';
-  const { U } = GB;
+  const { U, i18n } = GB;
+  /* mensaje diferido: se traduce al mostrarlo, no al crearlo (ver i18n.js) */
+  const M = i18n.msg;
   const API = 'https://api.github.com';
   const GQL_COMMIT =
     'oid url committedDate messageHeadline author { name user { login avatarUrl } } parents(first: 4) { nodes { oid } }';
 
   class ApiError extends Error {
     constructor(message, { status = 0, kind = 'http', resetAt = 0 } = {}) {
-      super(message);
+      super(i18n.text(message));
+      this.msg = message; // el mensaje diferido, para mostrarlo en el idioma activo
       this.status = status;
       this.kind = kind;
       this.resetAt = resetAt;
@@ -86,7 +89,7 @@
 
     start() {
       this.running = true;
-      this.emitStatus('loading', 'Conectando con GitHub…');
+      this.emitStatus('loading', M('status.connecting'));
       this.loop();
     }
 
@@ -105,7 +108,7 @@
     refreshNow() {
       if (!this.running) {
         this.running = true;
-        this.emitStatus('loading', 'Reintentando…');
+        this.emitStatus('loading', M('status.retrying'));
       }
       clearTimeout(this.timer);
       if (this.busy) this.again = true;
@@ -132,7 +135,7 @@
       let delay = null;
       try {
         const initial = !this.data.loaded;
-        this.emitStatus(initial ? 'loading' : 'syncing', initial ? 'Cargando ramas e historial…' : null);
+        this.emitStatus(initial ? 'loading' : 'syncing', initial ? M('status.loadingBranches') : null);
         const activities = await this.poll(initial);
         this.data.loaded = true;
         this.failures = 0;
@@ -148,7 +151,7 @@
         if (err.kind === 'rate') delay = Math.max(5000, err.resetAt - Date.now() + 2000);
         else delay = Math.min(300000, 5000 * 2 ** Math.min(this.failures, 6));
         if (!(err instanceof ApiError)) console.error(err);
-        this.emitStatus('error', err.message, fatal ? null : delay, err);
+        this.emitStatus('error', err.msg || err.message, fatal ? null : delay, err);
         if (fatal) this.running = false;
       } finally {
         this.busy = false;
@@ -233,11 +236,11 @@
         const e = body.errors[0];
         if (e.type === 'NOT_FOUND') throw this.notFound();
         if (e.type === 'RATE_LIMITED')
-          throw new ApiError('Se agotó la cuota de GraphQL de GitHub. GraphBranch retomará solo cuando se renueve.', {
+          throw new ApiError(M('err.rateGraphql'), {
             kind: 'rate',
             resetAt: (this.gqlRate?.reset || Date.now() / 1000 + 60) * 1000,
           });
-        throw new ApiError(`GitHub GraphQL: ${e.message}`, { kind: 'graphql' });
+        throw new ApiError(M('err.graphql', { message: e.message }), { kind: 'graphql' });
       }
       return body.data;
     }
@@ -246,10 +249,7 @@
       try {
         return await fetch(url, opts);
       } catch {
-        throw new ApiError(
-          'No se pudo conectar con api.github.com. Revisa la conexión; si abriste GraphBranch dentro de un visor que bloquea la red, usa la versión de GitHub Pages o el archivo local.',
-          { kind: 'network' },
-        );
+        throw new ApiError(M('err.network'), { kind: 'network' });
       }
     }
 
@@ -265,31 +265,26 @@
     }
 
     notFound() {
-      return new ApiError(
-        `No se encontró ${this.owner}/${this.name}. Si el repositorio es privado, agrega un token con permiso de lectura en Ajustes.`,
-        { status: 404, kind: 'notfound' },
-      );
+      return new ApiError(M('err.notFound', { repo: `${this.owner}/${this.name}` }), { status: 404, kind: 'notfound' });
     }
 
     toError(res, body) {
-      const msg = body?.message || res.statusText || 'error desconocido';
+      const msg = body?.message || res.statusText || '';
       if (res.status === 401) {
-        return new ApiError('El token no es válido o expiró. Revísalo en Ajustes.', { status: 401, kind: 'auth' });
+        return new ApiError(M('err.auth'), { status: 401, kind: 'auth' });
       }
       const limited = (this.rate?.remaining === 0 && res.headers.get('X-RateLimit-Resource') !== 'graphql') || /rate limit/i.test(msg);
       if ((res.status === 403 || res.status === 429) && limited) {
         const retryAfter = Number(res.headers.get('Retry-After'));
         const reset = Number(res.headers.get('X-RateLimit-Reset'));
         const resetAt = retryAfter ? Date.now() + retryAfter * 1000 : reset ? reset * 1000 : Date.now() + 60000;
-        return new ApiError(
-          this.token
-            ? 'Se agotó la cuota de la API de GitHub. GraphBranch retomará solo cuando se renueve.'
-            : 'Se agotaron las 60 consultas por hora que GitHub permite sin token. Agrega un token en Ajustes para seguir en tiempo real.',
-          { status: res.status, kind: 'rate', resetAt },
-        );
+        return new ApiError(M(this.token ? 'err.rate' : 'err.rateAnon'), { status: res.status, kind: 'rate', resetAt });
       }
       if (res.status === 404) return this.notFound();
-      return new ApiError(`GitHub respondió ${res.status}: ${msg}`, { status: res.status, kind: 'http' });
+      return new ApiError(msg ? M('err.http', { status: res.status, message: msg }) : M('err.httpNoMessage', { status: res.status }), {
+        status: res.status,
+        kind: 'http',
+      });
     }
 
     /* ---------- sondeo ---------- */
@@ -748,7 +743,7 @@
         parents: (c.parents || []).map((p) => p.sha),
         message: c.commit?.message || '',
         author: {
-          name: c.commit?.author?.name || c.author?.login || 'desconocido',
+          name: c.commit?.author?.name || c.author?.login || '',
           login: c.author?.login || null,
           avatar: c.author?.avatar_url || null,
         },
@@ -764,7 +759,7 @@
         parents: (c.parents?.nodes || []).map((p) => p.oid),
         message: c.messageHeadline || '',
         author: {
-          name: c.author?.name || c.author?.user?.login || 'desconocido',
+          name: c.author?.name || c.author?.user?.login || '',
           login: c.author?.user?.login || null,
           avatar: c.author?.user?.avatarUrl || null,
         },
@@ -806,8 +801,8 @@
       const from = this.branchContaining(sha, name);
       const c = this.data.commits.get(sha);
       return this.activity('branch-create', {
-        title: `Rama ${name} creada`,
-        detail: from ? `Sale de ${from} en ${U.shortSha(sha)}` : c ? U.firstLine(c.message) : `En ${U.shortSha(sha)}`,
+        title: M('act.branchCreated', { name }),
+        detail: from ? M('act.branchFrom', { from, sha: U.shortSha(sha) }) : c ? U.firstLine(c.message) : M('act.branchAt', { sha: U.shortSha(sha) }),
         actor: this.authorOf(sha),
         branch: name,
         sha,
@@ -820,7 +815,7 @@
       if (this.branchContaining(sha, name)) return this.branchCreated(name, sha);
       const c = this.data.commits.get(sha);
       return this.activity('push', {
-        title: `Nuevos commits en ${name}`,
+        title: M('act.pushNewIn', { name }),
         detail: c ? U.firstLine(c.message) : '',
         actor: this.authorOf(sha),
         branch: name,
@@ -832,10 +827,8 @@
     branchDeleted(name, sha) {
       const into = this.branchContaining(sha, name);
       return this.activity(into ? 'branch-delete' : 'branch-delete-unmerged', {
-        title: `Rama ${name} eliminada`,
-        detail: into
-          ? `Sus cambios ya estaban en ${into}`
-          : `Tenía commits que no están en ninguna rama visible (última: ${U.shortSha(sha)})`,
+        title: M('act.branchDeleted', { name }),
+        detail: into ? M('act.branchDeletedMerged', { into }) : M('act.branchDeletedUnmerged', { sha: U.shortSha(sha) }),
         branch: name,
         sha: into ? sha : null,
       });
@@ -869,18 +862,18 @@
       if (force) {
         return this.activity('force', {
           ...base,
-          title: `Force-push en ${name}`,
-          detail: `Historia reescrita${behind ? `: ${U.plural(behind, 'commit descartado', 'commits descartados')}` : ''} · ahora en ${U.shortSha(to)}`,
+          title: M('act.force', { name }),
+          detail: behind ? M('act.forceDetailDropped', { n: behind, sha: U.shortSha(to) }) : M('act.forceDetail', { sha: U.shortSha(to) }),
           url: `${this.data.repo.url}/commits/${encodeURIComponent(name)}`,
         });
       }
       if (head && head.parents.length > 1) {
-        return this.activity('merge', { ...base, title: `Merge en ${name}`, url: head.url });
+        return this.activity('merge', { ...base, title: M('act.merge', { name }), url: head.url });
       }
       const n = count || 1;
       return this.activity('push', {
         ...base,
-        title: `${U.plural(n, 'commit nuevo', 'commits nuevos')} en ${name}`,
+        title: M('act.pushNew', { n, name }),
         url: n > 1 ? `${this.data.repo.url}/compare/${from.slice(0, 12)}...${to.slice(0, 12)}` : head?.url,
       });
     }
@@ -922,7 +915,7 @@
           if (this.data.pulls.has(n) || pr.createdAt < since) continue; // solo entró a la página, no es nuevo
           acts.push(
             this.activity('pr-open', {
-              title: pr.draft ? `PR #${n} abierto como borrador` : `PR #${n} abierto`,
+              title: pr.draft ? M('act.prOpenedDraft', { num: n }) : M('act.prOpened', { num: n }),
               detail: pr.title,
               ref: `${pr.head} → ${pr.base}`,
               branch: pr.sameRepo ? pr.head : null,
@@ -939,7 +932,7 @@
           if (!s || s.state === 'open') continue; // sigue abierto, solo salió de la página
           acts.push(
             this.activity(s.merged ? 'pr-merge' : 'pr-close', {
-              title: s.merged ? `PR #${pr.number} fusionado en ${pr.base}` : `PR #${pr.number} cerrado sin fusionar`,
+              title: s.merged ? M('act.prMergedInto', { num: pr.number, base: pr.base }) : M('act.prClosed', { num: pr.number }),
               detail: pr.title,
               ref: `${pr.head} → ${pr.base}`,
               branch: s.merged ? pr.base : null,
@@ -1017,12 +1010,12 @@
         actor: run.actor,
         url: run.url,
       };
-      if (started) return this.activity('ci-start', { ...fields, title: `CI en curso: ${run.name}` });
+      if (started) return this.activity('ci-start', { ...fields, title: M('act.ciRunning', { name: run.name }) });
       const c = run.conclusion;
-      if (c === 'success') return this.activity('ci-ok', { ...fields, title: `CI aprobado: ${run.name}` });
+      if (c === 'success') return this.activity('ci-ok', { ...fields, title: M('act.ciOk', { name: run.name }) });
       if (c === 'failure' || c === 'timed_out' || c === 'startup_failure')
-        return this.activity('ci-fail', { ...fields, title: `CI falló: ${run.name}` });
-      if (c === 'cancelled') return this.activity('ci-cancel', { ...fields, title: `CI cancelado: ${run.name}` });
+        return this.activity('ci-fail', { ...fields, title: M('act.ciFail', { name: run.name }) });
+      if (c === 'cancelled') return this.activity('ci-cancel', { ...fields, title: M('act.ciCancel', { name: run.name }) });
       return null;
     }
 
@@ -1096,12 +1089,12 @@
       switch (ev.type) {
         case 'PushEvent': {
           const ref = p.ref || '';
-          if (ref.startsWith('refs/tags/')) return mk('tag', { title: `Push del tag ${ref.slice(10)}`, url: repoUrl });
+          if (ref.startsWith('refs/tags/')) return mk('tag', { title: M('act.tagPushed', { name: ref.slice(10) }), url: repoUrl });
           const branch = ref.replace('refs/heads/', '');
           const n = p.size ?? p.distinct_size ?? p.commits?.length;
           const last = p.commits?.[p.commits.length - 1];
           return mk('push', {
-            title: n ? `${U.plural(n, 'commit', 'commits')} en ${branch}` : `Push a ${branch}`,
+            title: n ? M('act.pushCommits', { n, name: branch }) : M('act.pushTo', { name: branch }),
             detail: last ? U.firstLine(last.message) : '',
             branch,
             sha: p.head || null,
@@ -1113,55 +1106,56 @@
         }
         case 'CreateEvent':
           if (p.ref_type === 'branch')
-            return mk('branch-create', { title: `Rama ${p.ref} creada`, branch: p.ref, url: `${repoUrl}/tree/${encodeURIComponent(p.ref)}` });
+            return mk('branch-create', { title: M('act.branchCreated', { name: p.ref }), branch: p.ref, url: `${repoUrl}/tree/${encodeURIComponent(p.ref)}` });
           if (p.ref_type === 'tag')
-            return mk('tag', { title: `Tag ${p.ref} creado`, url: `${repoUrl}/releases/tag/${encodeURIComponent(p.ref)}` });
-          return mk('other', { title: 'Repositorio creado', url: repoUrl });
+            return mk('tag', { title: M('act.tagCreated', { name: p.ref }), url: `${repoUrl}/releases/tag/${encodeURIComponent(p.ref)}` });
+          return mk('other', { title: M('act.repoCreated'), url: repoUrl });
         case 'DeleteEvent':
-          if (p.ref_type === 'branch') return mk('branch-delete', { title: `Rama ${p.ref} eliminada`, branch: p.ref });
-          return mk('tag', { title: `Tag ${p.ref} eliminado` });
+          if (p.ref_type === 'branch') return mk('branch-delete', { title: M('act.branchDeleted', { name: p.ref }), branch: p.ref });
+          return mk('tag', { title: M('act.tagDeleted', { name: p.ref }) });
         case 'PullRequestEvent': {
           const merged = pr.merged === true || !!pr.merged_at;
           const fields = { detail: pr.title || '', ref: prRef, url: prUrl, number: prNum, branch: pr.head?.ref || null };
-          if (p.action === 'opened') return mk('pr-open', { ...fields, title: `PR #${prNum} abierto` });
-          if (p.action === 'reopened') return mk('pr-open', { ...fields, title: `PR #${prNum} reabierto` });
-          if (p.action === 'ready_for_review') return mk('pr-open', { ...fields, title: `PR #${prNum} listo para revisión` });
+          const num = { num: prNum };
+          if (p.action === 'opened') return mk('pr-open', { ...fields, title: M('act.prOpened', num) });
+          if (p.action === 'reopened') return mk('pr-open', { ...fields, title: M('act.prReopened', num) });
+          if (p.action === 'ready_for_review') return mk('pr-open', { ...fields, title: M('act.prReady', num) });
           if (p.action === 'closed' && merged)
-            return mk('pr-merge', { ...fields, title: `PR #${prNum} fusionado${pr.base?.ref ? ` en ${pr.base.ref}` : ''}` });
-          if (p.action === 'closed') return mk('pr-close', { ...fields, title: `PR #${prNum} cerrado sin fusionar` });
-          if (p.action === 'review_requested') return mk('review', { ...fields, title: `Revisión solicitada en PR #${prNum}` });
+            return mk('pr-merge', { ...fields, title: pr.base?.ref ? M('act.prMergedInto', { num: prNum, base: pr.base.ref }) : M('act.prMerged', num) });
+          if (p.action === 'closed') return mk('pr-close', { ...fields, title: M('act.prClosed', num) });
+          if (p.action === 'review_requested') return mk('review', { ...fields, title: M('act.reviewRequested', num) });
           return null;
         }
         case 'PullRequestReviewEvent': {
           const state = (p.review?.state || '').toLowerCase();
           const fields = { detail: U.firstLine(p.review?.body) || pr.title || '', url: p.review?.html_url || prUrl, number: prNum };
-          if (state === 'approved') return mk('review-ok', { ...fields, title: `PR #${prNum} aprobado` });
-          if (state === 'changes_requested') return mk('review-changes', { ...fields, title: `Cambios solicitados en PR #${prNum}` });
-          return mk('review', { ...fields, title: `Revisión en PR #${prNum}` });
+          if (state === 'approved') return mk('review-ok', { ...fields, title: M('act.prApproved', { num: prNum }) });
+          if (state === 'changes_requested') return mk('review-changes', { ...fields, title: M('act.prChanges', { num: prNum }) });
+          return mk('review', { ...fields, title: M('act.prReview', { num: prNum }) });
         }
         case 'PullRequestReviewCommentEvent':
           return mk('comment', {
-            title: `Comentario de código en PR #${prNum}`,
+            title: M('act.prCodeComment', { num: prNum }),
             detail: U.truncate(U.firstLine(p.comment?.body), 160),
             url: p.comment?.html_url || prUrl,
           });
         case 'IssuesEvent': {
           const n = issue.number;
           const fields = { detail: issue.title || '', url: issue.html_url || `${repoUrl}/issues/${n}`, number: n };
-          if (p.action === 'opened') return mk('issue-open', { ...fields, title: `Issue #${n} abierto` });
-          if (p.action === 'reopened') return mk('issue-open', { ...fields, title: `Issue #${n} reabierto` });
-          if (p.action === 'closed') return mk('issue-close', { ...fields, title: `Issue #${n} cerrado` });
+          if (p.action === 'opened') return mk('issue-open', { ...fields, title: M('act.issueOpened', { num: n }) });
+          if (p.action === 'reopened') return mk('issue-open', { ...fields, title: M('act.issueReopened', { num: n }) });
+          if (p.action === 'closed') return mk('issue-close', { ...fields, title: M('act.issueClosed', { num: n }) });
           return null;
         }
         case 'IssueCommentEvent':
           return mk('comment', {
-            title: `Comentario en ${issue.pull_request ? 'PR' : 'issue'} #${issue.number}`,
+            title: M(issue.pull_request ? 'act.commentPr' : 'act.commentIssue', { num: issue.number }),
             detail: U.truncate(U.firstLine(p.comment?.body), 160),
             url: p.comment?.html_url || issue.html_url || repoUrl,
           });
         case 'CommitCommentEvent':
           return mk('comment', {
-            title: `Comentario en el commit ${U.shortSha(p.comment?.commit_id)}`,
+            title: M('act.commentCommit', { sha: U.shortSha(p.comment?.commit_id) }),
             detail: U.truncate(U.firstLine(p.comment?.body), 160),
             sha: p.comment?.commit_id || null,
             url: p.comment?.html_url || repoUrl,
@@ -1169,29 +1163,29 @@
         case 'ReleaseEvent':
           if (p.action && !['published', 'released', 'created'].includes(p.action)) return null;
           return mk('release', {
-            title: `Release ${p.release?.tag_name || p.release?.name || ''} publicada`.replace('  ', ' '),
+            title: p.release?.tag_name || p.release?.name ? M('act.release', { tag: p.release.tag_name || p.release.name }) : M('act.releaseNoTag'),
             detail: p.release?.name || '',
             url: p.release?.html_url || `${repoUrl}/releases`,
           });
         case 'WatchEvent':
-          return mk('star', { title: 'Nueva estrella', detail: actor ? `${actor.login} marcó el repositorio` : '', url: repoUrl });
+          return mk('star', { title: M('act.star'), detail: actor ? M('act.starDetail', { login: actor.login }) : '', url: repoUrl });
         case 'ForkEvent':
-          return mk('fork', { title: 'Nuevo fork', detail: p.forkee?.full_name || '', url: p.forkee?.html_url || repoUrl });
+          return mk('fork', { title: M('act.fork'), detail: p.forkee?.full_name || '', url: p.forkee?.html_url || repoUrl });
         case 'MemberEvent':
-          return mk('other', { title: `Colaborador ${p.member?.login || ''} agregado`.replace('  ', ' '), url: repoUrl });
+          return mk('other', { title: p.member?.login ? M('act.member', { login: p.member.login }) : M('act.memberNoName'), url: repoUrl });
         case 'PublicEvent':
-          return mk('other', { title: 'El repositorio ahora es público', url: repoUrl });
+          return mk('other', { title: M('act.public'), url: repoUrl });
         case 'GollumEvent':
           return mk('other', {
-            title: 'Wiki actualizada',
+            title: M('act.wiki'),
             detail: (p.pages || []).map((pg) => pg.title).join(', '),
             url: `${repoUrl}/wiki`,
           });
         case 'DiscussionEvent':
-          return mk('comment', { title: 'Nueva discusión', detail: p.discussion?.title || '', url: p.discussion?.html_url || repoUrl });
+          return mk('comment', { title: M('act.discussionNew'), detail: p.discussion?.title || '', url: p.discussion?.html_url || repoUrl });
         case 'DiscussionCommentEvent':
           return mk('comment', {
-            title: 'Comentario en una discusión',
+            title: M('act.discussionComment'),
             detail: U.truncate(U.firstLine(p.comment?.body), 160),
             url: p.comment?.html_url || repoUrl,
           });

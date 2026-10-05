@@ -336,7 +336,7 @@ kbd {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 .status {
   display: flex;
@@ -452,7 +452,7 @@ kbd {
   min-width: 0;
 }
 .stat + .stat {
-  border-left: 1px solid var(--line);
+  border-inline-start: 1px solid var(--line);
 }
 .stat-label {
   font-size: 11px;
@@ -572,7 +572,7 @@ kbd {
 }
 .btn-follow {
   height: 32px;
-  margin-left: 4px;
+  margin-inline-start: 4px;
   font-size: 13px;
 }
 .btn-follow[aria-pressed="true"] {
@@ -678,7 +678,7 @@ kbd {
   display: inline-flex;
   gap: 2px;
   padding: 2px;
-  margin-right: 4px;
+  margin-inline-end: 4px;
   border: 1px solid var(--line-strong);
   border-radius: 9px;
 }
@@ -712,7 +712,7 @@ kbd {
   gap: 6px;
   height: 32px;
   padding: 0 8px;
-  margin-right: 4px;
+  margin-inline-end: 4px;
   border: 1px solid var(--line-strong);
   border-radius: 9px;
   background: var(--surface);
@@ -723,8 +723,9 @@ kbd {
   border-color: var(--ink-2);
 }
 .filter-field input {
-  width: 118px;
+  width: 140px;
   min-width: 0;
+  text-overflow: ellipsis; /* el rótulo cambia de largo según el idioma */
   border: 0;
   background: transparent;
   font: 500 12.5px var(--font-mono);
@@ -1116,8 +1117,8 @@ kbd {
 .tip-time {
   color: var(--ink-3);
   font-size: 12px;
-  margin-left: auto;
-  padding-left: 8px;
+  margin-inline-start: auto;
+  padding-inline-start: 8px;
 }
 .tip-msg {
   font-weight: 500;
@@ -1151,7 +1152,7 @@ kbd {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  margin-right: 6px;
+  margin-inline-end: 6px;
   vertical-align: 1px;
   background: var(--ink-3);
 }
@@ -1290,10 +1291,11 @@ kbd {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 10px 6px 10px 14px;
+  padding-block: 10px;
+  padding-inline: 14px 6px;
   border: 0;
   background: transparent;
-  text-align: left;
+  text-align: start;
 }
 button.act-main {
   cursor: pointer;
@@ -1371,7 +1373,8 @@ button.act-main:hover {
   place-items: center;
   width: 32px;
   height: 32px;
-  margin: 8px 8px 0 0;
+  margin: 8px 0 0;
+  margin-inline-end: 8px;
   border-radius: 8px;
   color: var(--ink-3);
   flex: none;
@@ -1384,7 +1387,7 @@ button.act-main:hover {
 /* ---------- avisos emergentes ---------- */
 .toasts {
   position: fixed;
-  right: max(calc(var(--gutter) + 8px), env(safe-area-inset-right, 0px));
+  inset-inline-end: max(calc(var(--gutter) + 8px), env(safe-area-inset-right, 0px));
   bottom: calc(var(--gutter) + 8px + env(safe-area-inset-bottom, 0px));
   z-index: 20;
   display: flex;
@@ -1414,10 +1417,11 @@ button.act-main:hover {
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  padding: 9px 4px 11px 11px;
+  padding-block: 9px 11px;
+  padding-inline: 11px 4px;
   border: 0;
   background: transparent;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 }
 .toast-body {
@@ -1444,7 +1448,8 @@ button.act-main:hover {
   place-items: center;
   width: 30px;
   height: 30px;
-  margin: 6px 6px 0 0;
+  margin: 6px 0 0;
+  margin-inline-end: 6px;
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -1458,7 +1463,7 @@ button.act-main:hover {
 }
 .toast-timer {
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   bottom: 0;
   height: 2px;
   width: 100%;
@@ -1648,7 +1653,7 @@ button.act-main:hover {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .stat:nth-child(4) {
-    border-left: 0;
+    border-inline-start: 0;
   }
   .stat:nth-child(n + 4) {
     border-top: 1px solid var(--line);
@@ -1677,7 +1682,7 @@ button.act-main:hover {
     max-height: 80vh;
   }
   .status-group {
-    margin-left: 0;
+    margin-inline-start: 0;
     order: 3;
   }
   .repo-form {
@@ -1686,7 +1691,7 @@ button.act-main:hover {
     max-width: none;
   }
   .controls {
-    margin-left: auto;
+    margin-inline-start: auto;
   }
   .hint {
     display: none;
@@ -1704,11 +1709,11 @@ button.act-main:hover {
     padding: 8px 12px 9px;
   }
   .stat:nth-child(n) {
-    border-left: 0;
+    border-inline-start: 0;
     border-top: 0;
   }
   .stat:nth-child(even) {
-    border-left: 1px solid var(--line);
+    border-inline-start: 1px solid var(--line);
   }
   .stat:nth-child(n + 3) {
     border-top: 1px solid var(--line);
@@ -1746,9 +1751,76 @@ button.act-main:hover {
     width: 100%;
   }
   .btn-follow {
-    margin-left: auto;
+    margin-inline-start: auto;
   }
   .grid2 {
     grid-template-columns: 1fr;
   }
+}
+
+/* ---------- idiomas ---------- */
+
+/* la interfaz aparece ya traducida (i18n.js marca <html data-lang>): así no parpadea otro idioma */
+html:not([data-lang]) .app,
+html:not([data-lang]) .toasts {
+  visibility: hidden;
+}
+
+/* selector de idioma: un botón con el globo encima de un <select> transparente */
+.lang-btn {
+  position: relative;
+}
+.lang-btn select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+  appearance: none;
+  font: inherit;
+  color: var(--ink);
+}
+.lang-btn:focus-within {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* la URL (github.com/owner/repo) y el tiempo del grafo se leen siempre de izquierda a derecha */
+.repo-field,
+.graph-stage {
+  direction: ltr;
+}
+/* …pero el texto que aparece sobre el grafo sigue el idioma de la página */
+[dir="rtl"] .tip,
+[dir="rtl"] .overlay {
+  direction: rtl;
+}
+[dir="rtl"] .toast-timer {
+  transform-origin: right;
+}
+/* fragmentos de código (ramas, prefijos como release/) no se desordenan dentro de texto RTL */
+code,
+kbd {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* en escrituras conectadas, con marcas combinantes o sin mayúsculas, el espaciado entre letras
+   las rompe o no aporta nada */
+:lang(ar),
+:lang(fa),
+:lang(ur),
+:lang(he),
+:lang(hi),
+:lang(bn),
+:lang(ta),
+:lang(th),
+:lang(ja),
+:lang(ko),
+:lang(zh) {
+  letter-spacing: 0 !important;
 }

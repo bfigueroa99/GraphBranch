@@ -2,7 +2,8 @@
    sonido opcional, notificaciones del sistema y contador en la pestaña. */
 (function (GB) {
   'use strict';
-  const { U } = GB;
+  const { U, i18n } = GB;
+  const { t } = i18n;
 
   const ICONS = {
     commit: '<circle cx="8" cy="8" r="2.6"/><path d="M1.5 8h3.9M10.6 8h3.9"/>',
@@ -31,41 +32,38 @@
     `<svg class="ico ${cls}" viewBox="0 0 16 16" aria-hidden="true" focusable="false">${ICONS[name] || ICONS.dot}</svg>`;
 
   const KINDS = {
-    push: { cat: 'commits', sev: 'info', icon: 'commit', label: 'Push' },
-    merge: { cat: 'commits', sev: 'good', icon: 'merge', label: 'Merge' },
-    force: { cat: 'commits', sev: 'warn', icon: 'force', label: 'Force-push' },
-    'branch-create': { cat: 'branches', sev: 'info', icon: 'branch', label: 'Rama nueva' },
-    'branch-delete': { cat: 'branches', sev: 'info', icon: 'trash', label: 'Rama eliminada' },
-    'branch-delete-unmerged': { cat: 'branches', sev: 'warn', icon: 'trash', label: 'Rama eliminada sin fusionar' },
-    'pr-open': { cat: 'prs', sev: 'info', icon: 'pr', label: 'Pull request' },
-    'pr-merge': { cat: 'prs', sev: 'good', icon: 'merge', label: 'PR fusionado' },
-    'pr-close': { cat: 'prs', sev: 'info', icon: 'prClosed', label: 'PR cerrado' },
-    review: { cat: 'prs', sev: 'info', icon: 'review', label: 'Revisión' },
-    'review-ok': { cat: 'prs', sev: 'good', icon: 'review', label: 'Aprobado' },
-    'review-changes': { cat: 'prs', sev: 'warn', icon: 'review', label: 'Cambios solicitados' },
-    'ci-start': { cat: 'ci', sev: 'info', icon: 'run', label: 'CI en curso', quiet: true },
-    'ci-ok': { cat: 'ci', sev: 'good', icon: 'check', label: 'CI aprobado' },
-    'ci-fail': { cat: 'ci', sev: 'bad', icon: 'x', label: 'CI falló' },
-    'ci-cancel': { cat: 'ci', sev: 'info', icon: 'cancel', label: 'CI cancelado' },
-    'issue-open': { cat: 'issues', sev: 'info', icon: 'issue', label: 'Issue' },
-    'issue-close': { cat: 'issues', sev: 'good', icon: 'issueClosed', label: 'Issue cerrado' },
-    comment: { cat: 'issues', sev: 'info', icon: 'comment', label: 'Comentario' },
-    release: { cat: 'other', sev: 'good', icon: 'tag', label: 'Release' },
-    tag: { cat: 'other', sev: 'info', icon: 'tag', label: 'Tag' },
-    star: { cat: 'other', sev: 'info', icon: 'star', label: 'Estrella' },
-    fork: { cat: 'other', sev: 'info', icon: 'fork', label: 'Fork' },
-    other: { cat: 'other', sev: 'info', icon: 'dot', label: 'Actividad' },
+    push: { cat: 'commits', sev: 'info', icon: 'commit' },
+    merge: { cat: 'commits', sev: 'good', icon: 'merge' },
+    force: { cat: 'commits', sev: 'warn', icon: 'force' },
+    'branch-create': { cat: 'branches', sev: 'info', icon: 'branch' },
+    'branch-delete': { cat: 'branches', sev: 'info', icon: 'trash' },
+    'branch-delete-unmerged': { cat: 'branches', sev: 'warn', icon: 'trash' },
+    'pr-open': { cat: 'prs', sev: 'info', icon: 'pr' },
+    'pr-merge': { cat: 'prs', sev: 'good', icon: 'merge' },
+    'pr-close': { cat: 'prs', sev: 'info', icon: 'prClosed' },
+    review: { cat: 'prs', sev: 'info', icon: 'review' },
+    'review-ok': { cat: 'prs', sev: 'good', icon: 'review' },
+    'review-changes': { cat: 'prs', sev: 'warn', icon: 'review' },
+    'ci-start': { cat: 'ci', sev: 'info', icon: 'run', quiet: true },
+    'ci-ok': { cat: 'ci', sev: 'good', icon: 'check' },
+    'ci-fail': { cat: 'ci', sev: 'bad', icon: 'x' },
+    'ci-cancel': { cat: 'ci', sev: 'info', icon: 'cancel' },
+    'issue-open': { cat: 'issues', sev: 'info', icon: 'issue' },
+    'issue-close': { cat: 'issues', sev: 'good', icon: 'issueClosed' },
+    comment: { cat: 'issues', sev: 'info', icon: 'comment' },
+    release: { cat: 'other', sev: 'good', icon: 'tag' },
+    tag: { cat: 'other', sev: 'info', icon: 'tag' },
+    star: { cat: 'other', sev: 'info', icon: 'star' },
+    fork: { cat: 'other', sev: 'info', icon: 'fork' },
+    other: { cat: 'other', sev: 'info', icon: 'dot' },
   };
-  const CATS = [
-    ['commits', 'Commits'],
-    ['branches', 'Ramas'],
-    ['prs', 'Pull requests'],
-    ['ci', 'CI'],
-    ['issues', 'Issues'],
-    ['other', 'Otros'],
-  ];
+  const CATS = ['commits', 'branches', 'prs', 'ci', 'issues', 'other'];
   const SEV_RANK = { bad: 3, warn: 2, good: 1, info: 0 };
   const meta = (a) => KINDS[a.kind] || KINDS.other;
+  const kindLabel = (a) => t('kind.' + (KINDS[a.kind] ? a.kind : 'other'));
+  /* titulo y detalle pueden ser texto de GitHub o mensajes diferidos (i18n.msg): se traducen al mostrar */
+  const titleOf = (a) => i18n.text(a.title);
+  const detailOf = (a) => i18n.text(a.detail);
 
   class Feed {
     constructor({ list, empty, chips, toasts, count, onSelect }) {
@@ -77,7 +75,7 @@
       this.onSelect = onSelect;
       this.items = [];
       this.els = new Map();
-      this.filters = new Set(U.store.get('filters', CATS.map((c) => c[0])));
+      this.filters = new Set(U.store.get('filters', CATS));
       this.sound = !!U.store.get('sound', false);
       this.notifySupported = typeof window.Notification === 'function';
       this.notify = this.notifySupported && U.store.get('notify', false) && Notification.permission === 'granted';
@@ -129,10 +127,7 @@
     /* ---------- lista ---------- */
 
     renderChips() {
-      this.chipsEl.innerHTML = CATS.map(
-        ([key, label]) =>
-          `<button type="button" class="chip cat-${key}" data-cat="${key}" aria-pressed="${this.filters.has(key)}">${U.esc(label)}<span class="chip-n" data-n="${key}">0</span></button>`,
-      ).join('');
+      this.drawChips();
       this.chipsEl.addEventListener('click', (ev) => {
         const b = ev.target.closest('.chip');
         if (!b) return;
@@ -145,8 +140,23 @@
       });
     }
 
+    drawChips() {
+      this.chipsEl.innerHTML = CATS.map(
+        (key) =>
+          `<button type="button" class="chip cat-${key}" data-cat="${key}" aria-pressed="${this.filters.has(key)}">${U.esc(t('cat.' + key))}<span class="chip-n" data-n="${key}">0</span></button>`,
+      ).join('');
+    }
+
+    /** Vuelve a dibujar todo con el idioma activo (los textos de cada actividad se arman al mostrarlos). */
+    relocalize() {
+      this.drawChips();
+      this.els.clear();
+      this.list.textContent = '';
+      this.render();
+    }
+
     render() {
-      const counts = Object.fromEntries(CATS.map(([k]) => [k, 0]));
+      const counts = Object.fromEntries(CATS.map((k) => [k, 0]));
       for (const a of this.items) counts[meta(a).cat]++;
       for (const [k, n] of Object.entries(counts)) {
         const el = this.chipsEl.querySelector(`[data-n="${k}"]`);
@@ -168,7 +178,7 @@
       }
       for (const li of [...this.list.children]) if (!shown.has(li)) li.remove();
       this.empty.hidden = visible.length > 0;
-      this.empty.textContent = this.items.length ? 'Ninguna actividad coincide con los filtros activos.' : 'La actividad del repositorio aparecerá aquí.';
+      this.empty.textContent = this.items.length ? t('feed.emptyFiltered') : t('feed.empty');
       this.countEl.textContent = this.items.length ? U.fmtNum(this.items.length) : '';
     }
 
@@ -178,22 +188,22 @@
       li.className = `act sev-${m.sev}${a.live ? ' fresh' : ''}`;
       const focusable = !!(a.sha || a.branch);
       const metaParts = [];
-      if (a.actor) metaParts.push(`${U.avatarHTML(a.actor, 16)}<span>${U.esc(a.actor.login || a.actor.name)}</span>`);
+      if (a.actor) metaParts.push(`${U.avatarHTML(a.actor, 16)}<span>${U.esc(a.actor.login || a.actor.name || t('author.unknown'))}</span>`);
       if (a.ref || a.branch) metaParts.push(`<code>${U.esc(a.ref || a.branch)}</code>`);
       metaParts.push(`<time datetime="${new Date(a.time).toISOString()}" title="${U.esc(U.fmtDateTime(a.time))}" data-t="${a.time}">${U.timeAgo(a.time)}</time>`);
       const inner = `
         <span class="act-icon">${icon(m.icon)}</span>
         <span class="act-body">
-          <span class="act-kind">${U.esc(m.label)}</span>
-          <span class="act-title">${U.esc(a.title)}</span>
-          ${a.detail ? `<span class="act-detail">${U.esc(a.detail)}</span>` : ''}
+          <span class="act-kind">${U.esc(kindLabel(a))}</span>
+          <span class="act-title">${U.esc(titleOf(a))}</span>
+          ${detailOf(a) ? `<span class="act-detail">${U.esc(detailOf(a))}</span>` : ''}
           <span class="act-meta">${metaParts.join('<span class="sep" aria-hidden="true">·</span>')}</span>
         </span>`;
       li.innerHTML =
         (focusable
-          ? `<button type="button" class="act-main" title="Ubicar en el grafo">${inner}</button>`
+          ? `<button type="button" class="act-main" title="${U.esc(t('feed.locate'))}">${inner}</button>`
           : `<div class="act-main">${inner}</div>`) +
-        (a.url ? `<a class="act-link" href="${U.esc(a.url)}" target="_blank" rel="noopener" title="Abrir en GitHub" aria-label="Abrir en GitHub">${icon('link')}</a>` : '');
+        (a.url ? `<a class="act-link" href="${U.esc(a.url)}" target="_blank" rel="noopener" title="${U.esc(t('feed.openGithub'))}" aria-label="${U.esc(t('feed.openGithub'))}">${icon('link')}</a>` : '');
       if (focusable) li.querySelector('.act-main').addEventListener('click', () => this.onSelect?.(a));
       if (a.live) setTimeout(() => li.classList.remove('fresh'), 6000);
       return li;
@@ -201,7 +211,7 @@
 
     refreshTimes() {
       const now = Date.now();
-      for (const t of this.list.querySelectorAll('time[data-t]')) t.textContent = U.timeAgo(Number(t.dataset.t), now);
+      for (const el of this.list.querySelectorAll('time[data-t]')) el.textContent = U.timeAgo(Number(el.dataset.t), now);
     }
 
     /* ---------- alertas ---------- */
@@ -229,12 +239,12 @@
         <button type="button" class="toast-main">
           <span class="act-icon">${icon(m.icon)}</span>
           <span class="toast-body">
-            <span class="act-kind">${U.esc(m.label)}</span>
-            <span class="toast-title">${U.esc(a.title)}</span>
-            ${a.detail ? `<span class="toast-detail">${U.esc(U.truncate(a.detail, 120))}</span>` : ''}
+            <span class="act-kind">${U.esc(kindLabel(a))}</span>
+            <span class="toast-title">${U.esc(titleOf(a))}</span>
+            ${detailOf(a) ? `<span class="toast-detail">${U.esc(U.truncate(detailOf(a), 120))}</span>` : ''}
           </span>
         </button>
-        <button type="button" class="toast-close" aria-label="Cerrar aviso">${icon('close')}</button>
+        <button type="button" class="toast-close" aria-label="${U.esc(t('toast.close'))}">${icon('close')}</button>
         <span class="toast-timer" aria-hidden="true"></span>`;
       const ttl = m.sev === 'bad' ? 14000 : m.sev === 'warn' ? 10000 : 6000;
       el.style.setProperty('--ttl', ttl + 'ms');
@@ -267,15 +277,15 @@
     }
 
     summaryToast(n) {
-      this.toast({ kind: 'other', title: `${U.plural(n, 'novedad más', 'novedades más')}`, detail: 'Revisa el panel de actividad', time: Date.now() });
+      this.toast({ kind: 'other', title: i18n.msg('toast.more', { n }), detail: i18n.msg('toast.moreDetail'), time: Date.now() });
     }
 
     updateTitle() {
       document.title = this.unread ? `(${this.unread}) ${this.baseTitle}` : this.baseTitle;
     }
 
-    setBaseTitle(t) {
-      this.baseTitle = t;
+    setBaseTitle(title) {
+      this.baseTitle = title;
       this.updateTitle();
     }
 
@@ -338,8 +348,8 @@
     systemNotify(ranked) {
       try {
         const top = ranked[0];
-        const body = ranked.length > 1 ? `${top.detail || ''}\n+${ranked.length - 1} más` : top.detail || '';
-        const n = new Notification(top.title, { body, tag: 'graphbranch', renotify: true, silent: !this.sound });
+        const body = ranked.length > 1 ? `${detailOf(top)}\n${t('notify.more', { n: ranked.length - 1 })}` : detailOf(top);
+        const n = new Notification(titleOf(top), { body, tag: 'graphbranch', renotify: true, silent: !this.sound });
         n.onclick = () => {
           window.focus();
           this.onSelect?.(top);

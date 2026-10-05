@@ -3,7 +3,9 @@
    movimiento sin conexión ni token. Todo lo que muestra es ficticio. */
 (function (GB) {
   'use strict';
-  const { U } = GB;
+  const { U, i18n } = GB;
+  /* mensaje diferido: se traduce al mostrarlo (ver i18n.js) */
+  const MSG = i18n.msg;
 
   const AUTHORS = [
     { name: 'Valentina Rojas', login: 'vrojas' },
@@ -14,64 +16,20 @@
     { name: 'Tomás Araya', login: 'taraya' },
   ];
 
-  const MESSAGES = {
-    feature: [
-      'feat({s}): primera versión del componente',
-      'feat({s}): estados de carga y vacío',
-      'feat({s}): validación en el cliente',
-      'feat({s}): atajos de teclado',
-      'refactor({s}): separa la lógica del renderizado',
-      'test({s}): casos para entradas inválidas',
-      'fix({s}): corrige el foco al cerrar el diálogo',
-      'style({s}): ajusta espaciados en móvil',
-      'docs({s}): documenta las opciones',
-      'perf({s}): memoriza el cálculo de totales',
-      'chore({s}): limpia imports sin uso',
-    ],
-    fix: [
-      'fix({s}): maneja la respuesta vacía del servidor',
-      'fix({s}): evita doble envío del formulario',
-      'test({s}): reproduce el error reportado',
-      'fix({s}): zona horaria en las fechas',
-    ],
-    develop: [
-      'chore(deps): actualiza dependencias menores',
-      'ci: cachea node_modules entre ejecuciones',
-      'refactor(core): unifica el cliente HTTP',
-      'docs: actualiza el README',
-      'build: divide el bundle por ruta',
-    ],
-    hotfix: ['fix(api): reintenta cuando la base de datos no responde', 'fix(auth): cookie segura en producción'],
-  };
-
+  /* ramas de ejemplo: [nombre, ámbito]. Son identificadores, así que van en inglés para cualquier idioma */
   const NEW_BRANCHES = [
-    ['feature/notificaciones', 'notif'],
-    ['feature/busqueda', 'search'],
-    ['feature/exportar-csv', 'export'],
-    ['feature/perfil', 'profile'],
+    ['feature/notifications', 'notif'],
+    ['feature/search', 'search'],
+    ['feature/export-csv', 'export'],
+    ['feature/profile', 'profile'],
     ['feature/i18n', 'i18n'],
     ['feature/onboarding', 'onboarding'],
-    ['fix/paginacion', 'pager'],
-    ['fix/timeout-login', 'auth'],
-    ['fix/scroll-ios', 'ui'],
+    ['fix/pagination', 'pager'],
+    ['fix/login-timeout', 'auth'],
+    ['fix/ios-scroll', 'ui'],
     ['feature/webhooks', 'hooks'],
-    ['feature/graficos', 'charts'],
-    ['fix/memoria-worker', 'worker'],
-  ];
-
-  const ISSUES = [
-    'El botón de guardar no responde en Safari',
-    'Agregar exportación a PDF',
-    'Error 500 al subir imágenes grandes',
-    'La sesión expira demasiado rápido',
-    'Mejorar el contraste del modo oscuro',
-    'Documentar la API de webhooks',
-  ];
-  const COMMENTS = [
-    '¿Podemos agregar una prueba para este caso?',
-    'Lo reviso hoy en la tarde.',
-    'Se ve bien, solo un detalle de nombres.',
-    'Confirmo que se reproduce en producción.',
+    ['feature/charts', 'charts'],
+    ['fix/worker-memory', 'worker'],
   ];
 
   function mulberry32(seed) {
@@ -97,6 +55,7 @@
         totalBranches: 0,
         loaded: false,
       };
+      this.C = GB.demoContent[i18n.locale] || GB.demoContent[i18n.locale.split('-')[0]] || GB.demoContent.en;
       this.rnd = mulberry32(Date.now() % 100000);
       this.prSeq = 30;
       this.issueSeq = 85;
@@ -174,7 +133,7 @@
     }
 
     message(b) {
-      const pool = b.name === 'develop' ? MESSAGES.develop : b.name.startsWith('fix/') ? MESSAGES.fix : MESSAGES.feature;
+      const pool = b.name === 'develop' ? this.C.develop : b.name.startsWith('fix/') ? this.C.fix : this.C.feature;
       return this.pick(pool).replace('{s}', b.scope || 'app');
     }
 
@@ -206,9 +165,9 @@
 
     runAct(run, started) {
       const fields = { detail: run.title, ref: `#${run.number} · ${run.event}`, branch: run.branch, sha: run.sha, actor: run.actor };
-      if (started) return this.act('ci-start', { ...fields, title: `CI en curso: ${run.name}` });
-      if (run.conclusion === 'success') return this.act('ci-ok', { ...fields, title: `CI aprobado: ${run.name}` });
-      return this.act('ci-fail', { ...fields, title: `CI falló: ${run.name}` });
+      if (started) return this.act('ci-start', { ...fields, title: MSG('act.ciRunning', { name: run.name }) });
+      if (run.conclusion === 'success') return this.act('ci-ok', { ...fields, title: MSG('act.ciOk', { name: run.name }) });
+      return this.act('ci-fail', { ...fields, title: MSG('act.ciFail', { name: run.name }) });
     }
 
     /** Lanza CI y programa su resultado unos segundos después. */
@@ -226,63 +185,64 @@
 
     seed() {
       const H = this.history;
+      const S = this.C.seed;
       const [V, M, C, D, J, T] = AUTHORS;
       let t = Date.now() - 3.1 * 864e5;
       const step = (min = 35, max = 140) => (t += (min + this.rnd() * (max - min)) * 60e3);
       const push = (branch, author, msg) => {
         const c = this.commit(branch, msg, author, step());
-        H.push(this.act('push', { title: `1 commit en ${branch}`, detail: msg, branch, sha: c.sha, actor: this.actor(author) }, c.date));
+        H.push(this.act('push', { title: MSG('act.pushCommits', { n: 1, name: branch }), detail: msg, branch, sha: c.sha, actor: this.actor(author) }, c.date));
         return c;
       };
       const create = (name, from, scope, author) => {
         this.createBranch(name, from, scope, step(10, 30));
-        H.push(this.act('branch-create', { title: `Rama ${name} creada`, detail: `Sale de ${from}`, branch: name, actor: this.actor(author) }, t));
+        H.push(this.act('branch-create', { title: MSG('act.branchCreated', { name }), detail: MSG('act.branchFromOnly', { from }), branch: name, actor: this.actor(author) }, t));
       };
       const merge = (head, base, num, author, del) => {
         const hb = this.data.branches.get(head);
         const msg = `Merge pull request #${num} from acme/${head}`;
         const c = this.commit(base, msg, author, step(), [hb.sha]);
-        H.push(this.act('pr-merge', { title: `PR #${num} fusionado en ${base}`, detail: hb.prTitle || msg, ref: `${head} → ${base}`, branch: base, sha: c.sha, actor: this.actor(author) }, c.date));
+        H.push(this.act('pr-merge', { title: MSG('act.prMergedInto', { num, base }), detail: hb.prTitle || msg, ref: `${head} → ${base}`, branch: base, sha: c.sha, actor: this.actor(author) }, c.date));
         if (del) {
           this.data.branches.delete(head);
-          H.push(this.act('branch-delete', { title: `Rama ${head} eliminada`, detail: `Sus cambios ya estaban en ${base}`, branch: head }, t + 20e3));
+          H.push(this.act('branch-delete', { title: MSG('act.branchDeleted', { name: head }), detail: MSG('act.branchDeletedMerged', { into: base }), branch: head }, t + 20e3));
         }
         return c;
       };
 
       this.data.branches.set('main', { name: 'main', sha: null, isDefault: true, protected: true, movedAt: t, scope: 'core', own: 0 });
-      push('main', V, 'chore: estructura inicial del proyecto');
-      push('main', M, 'feat(api): endpoint de salud /healthz');
-      push('main', V, 'docs: guía de instalación');
+      push('main', V, S.initial);
+      push('main', M, S.health);
+      push('main', V, S.install);
       create('develop', 'main', 'core', V);
       this.data.branches.get('develop').protected = true;
-      push('develop', C, 'feat(ui): layout base con barra lateral');
-      push('develop', D, 'feat(auth): modelo de usuario y sesiones');
-      create('fix/payload-vacio', 'main', 'api', M);
-      push('fix/payload-vacio', M, 'fix(api): evita el crash con payload vacío');
-      this.data.branches.get('fix/payload-vacio').prTitle = 'Evita el crash con payload vacío';
-      merge('fix/payload-vacio', 'main', 31, V, true);
-      push('develop', D, 'test(auth): pruebas de expiración de sesión');
+      push('develop', C, S.layout);
+      push('develop', D, S.userModel);
+      create('fix/empty-payload', 'main', 'api', M);
+      push('fix/empty-payload', M, S.emptyPayload);
+      this.data.branches.get('fix/empty-payload').prTitle = S.emptyPayloadPr;
+      merge('fix/empty-payload', 'main', 31, V, true);
+      push('develop', D, S.sessionTests);
       create('feature/login', 'develop', 'login', J);
-      push('feature/login', J, 'feat(login): formulario con validación');
-      push('develop', C, 'refactor(ui): tokens de color y tipografía');
-      create('feature/modo-oscuro', 'develop', 'theme', T);
-      push('feature/login', J, 'feat(login): callback OAuth de GitHub');
-      push('feature/modo-oscuro', T, 'feat(theme): variables para modo oscuro');
+      push('feature/login', J, S.loginForm);
+      push('develop', C, S.tokens);
+      create('feature/dark-mode', 'develop', 'theme', T);
+      push('feature/login', J, S.oauth);
+      push('feature/dark-mode', T, S.darkVars);
       this.data.branches.get('develop').prTitle = 'Release 1.4';
       const rel = merge('develop', 'main', 34, V, false);
       this.startRun('main', rel.sha, 'Deploy', t, 'success');
-      H.push(this.act('release', { title: 'Release v1.4.0 publicada', detail: 'Login con GitHub y layout nuevo', actor: this.actor(V) }, t + 60e3));
-      push('feature/login', J, 'fix(login): mensaje de error accesible');
-      push('feature/modo-oscuro', T, 'feat(theme): interruptor en el encabezado');
-      H.push(this.act('issue-open', { title: `Issue #${++this.issueSeq} abierto`, detail: ISSUES[0], actor: this.actor(C) }, step(5, 20)));
+      H.push(this.act('release', { title: MSG('act.release', { tag: 'v1.4.0' }), detail: S.releaseNotes, actor: this.actor(V) }, t + 60e3));
+      push('feature/login', J, S.loginA11y);
+      push('feature/dark-mode', T, S.darkToggle);
+      H.push(this.act('issue-open', { title: MSG('act.issueOpened', { num: ++this.issueSeq }), detail: this.C.issues[0], actor: this.actor(C) }, step(5, 20)));
       this.openIssues.push(this.issueSeq);
-      const dev = push('develop', D, 'chore(deps): actualiza vite a 6.2');
+      const dev = push('develop', D, S.vite);
       this.startRun('develop', dev.sha, 'Tests', t, 'success');
       create('fix/rate-limit', 'main', 'api', M);
-      const rl = push('fix/rate-limit', M, 'fix(api): respeta el header Retry-After');
+      const rl = push('fix/rate-limit', M, S.retryAfter);
       const failed = this.startRun('fix/rate-limit', rl.sha, 'Tests', t, 'failure');
-      const lg = push('feature/login', J, 'test(login): flujo completo con OAuth simulado');
+      const lg = push('feature/login', J, S.loginE2e);
       this.startRun('feature/login', lg.sha, 'Tests', t, 'success');
 
       const openPR = (head, base, title, user, draft = false) => {
@@ -291,12 +251,12 @@
         this.data.pulls.set(n, { number: n, title, head, base, sameRepo: true, url: null, draft, user: this.actor(user), createdAt: t });
       };
       this.prSeq = 35;
-      openPR('feature/login', 'develop', 'Login con GitHub', J);
-      openPR('feature/modo-oscuro', 'develop', 'Modo oscuro', T, true);
-      openPR('fix/rate-limit', 'main', 'Respeta Retry-After en el cliente', M);
+      openPR('feature/login', 'develop', S.prLogin, J);
+      openPR('feature/dark-mode', 'develop', S.prDark, T, true);
+      openPR('fix/rate-limit', 'main', S.prRetry, M);
       H.push({ ...this.runAct(failed, false), time: t + 90e3 });
-      H.push(this.act('comment', { title: `Comentario en PR #38`, detail: COMMENTS[0], actor: this.actor(V) }, t + 120e3));
-      H.push(this.act('star', { title: 'Nueva estrella', detail: 'pgarrido marcó el repositorio' }, t + 140e3));
+      H.push(this.act('comment', { title: MSG('act.commentPr', { num: 38 }), detail: this.C.comments[0], actor: this.actor(V) }, t + 120e3));
+      H.push(this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login: 'pgarrido' }) }, t + 140e3));
       this.data.totalBranches = this.data.branches.size;
     }
 
@@ -314,7 +274,7 @@
         [7, prs.length > 0, () => this.doReview()],
         [9, prs.some((p) => !p.draft && this.data.branches.get(p.head)?.own >= 2), () => this.doMerge()],
         [6, true, () => this.doIssue()],
-        [3, true, () => [this.act(this.chance(0.7) ? 'star' : 'fork', this.chance(0.7) ? { title: 'Nueva estrella', detail: `${this.pick(['pgarrido', 'nlagos', 'fvera', 'icortes'])} marcó el repositorio` } : { title: 'Nuevo fork', detail: `${this.pick(['nlagos', 'fvera'])}/orbita` })]],
+        [3, true, () => [this.chance(0.7) ? this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login: this.pick(['pgarrido', 'nlagos', 'fvera', 'icortes']) }) }) : this.act('fork', { title: MSG('act.fork'), detail: `${this.pick(['nlagos', 'fvera'])}/orbita` })]],
         [2, topics.some((x) => x.own >= 2), () => this.doForcePush()],
         [2, true, () => this.doHotfix()],
         [3, prs.every((p) => p.head !== 'develop') && this.data.branches.get('develop').own >= 3, () => this.doReleasePR()],
@@ -331,7 +291,7 @@
       const author = this.pick(AUTHORS);
       let c;
       for (let i = 0; i < n; i++) c = this.commit(b.name, this.message(b), author, Date.now() - (n - 1 - i) * 1500);
-      acts.push(this.act('push', { title: `${U.plural(n, 'commit nuevo', 'commits nuevos')} en ${b.name}`, detail: U.firstLine(c.message), branch: b.name, sha: c.sha, actor: this.actor(author) }));
+      acts.push(this.act('push', { title: MSG('act.pushNew', { n, name: b.name }), detail: U.firstLine(c.message), branch: b.name, sha: c.sha, actor: this.actor(author) }));
       if (b.pr || b.name === 'develop') acts.push(this.runCI(b.name, c.sha));
       return acts;
     }
@@ -344,7 +304,7 @@
       this.createBranch(name, from, scope, Date.now());
       const author = this.pick(AUTHORS);
       const b = this.data.branches.get(name);
-      const acts = [this.act('branch-create', { title: `Rama ${name} creada`, detail: `Sale de ${from} en ${U.shortSha(b.sha)}`, branch: name, sha: b.sha, actor: this.actor(author) })];
+      const acts = [this.act('branch-create', { title: MSG('act.branchCreated', { name }), detail: MSG('act.branchFrom', { from, sha: U.shortSha(b.sha) }), branch: name, sha: b.sha, actor: this.actor(author) })];
       if (this.chance(0.5)) {
         this.later(1800, () => this.publish(this.doCommit(this.data.branches.get(name) || b)));
       }
@@ -360,7 +320,7 @@
       b.pr = n;
       this.data.pulls.set(n, { number: n, title: title[0].toUpperCase() + title.slice(1), head: b.name, base: b.base, sameRepo: true, url: null, draft, user: this.actor(user), createdAt: Date.now() });
       return [
-        this.act('pr-open', { title: draft ? `PR #${n} abierto como borrador` : `PR #${n} abierto`, detail: this.data.pulls.get(n).title, ref: `${b.name} → ${b.base}`, branch: b.name, sha: b.sha, actor: this.actor(user), number: n }),
+        this.act('pr-open', { title: MSG(draft ? 'act.prOpenedDraft' : 'act.prOpened', { num: n }), detail: this.data.pulls.get(n).title, ref: `${b.name} → ${b.base}`, branch: b.name, sha: b.sha, actor: this.actor(user), number: n }),
         this.runCI(b.name, b.sha),
       ];
     }
@@ -371,11 +331,11 @@
       const r = this.rnd();
       if (pr.draft && this.chance(0.5)) {
         pr.draft = false;
-        return [this.act('pr-open', { title: `PR #${pr.number} listo para revisión`, detail: pr.title, ref: `${pr.head} → ${pr.base}`, branch: pr.head, actor: pr.user, number: pr.number })];
+        return [this.act('pr-open', { title: MSG('act.prReady', { num: pr.number }), detail: pr.title, ref: `${pr.head} → ${pr.base}`, branch: pr.head, actor: pr.user, number: pr.number })];
       }
-      if (r < 0.55) return [this.act('review-ok', { title: `PR #${pr.number} aprobado`, detail: pr.title, branch: pr.head, actor: who, number: pr.number })];
-      if (r < 0.8) return [this.act('review-changes', { title: `Cambios solicitados en PR #${pr.number}`, detail: this.pick(COMMENTS), branch: pr.head, actor: who, number: pr.number })];
-      return [this.act('comment', { title: `Comentario en PR #${pr.number}`, detail: this.pick(COMMENTS), branch: pr.head, actor: who, number: pr.number })];
+      if (r < 0.55) return [this.act('review-ok', { title: MSG('act.prApproved', { num: pr.number }), detail: pr.title, branch: pr.head, actor: who, number: pr.number })];
+      if (r < 0.8) return [this.act('review-changes', { title: MSG('act.prChanges', { num: pr.number }), detail: this.pick(this.C.comments), branch: pr.head, actor: who, number: pr.number })];
+      return [this.act('comment', { title: MSG('act.commentPr', { num: pr.number }), detail: this.pick(this.C.comments), branch: pr.head, actor: who, number: pr.number })];
     }
 
     doMerge() {
@@ -385,7 +345,7 @@
       const c = this.commit(pr.base, `Merge pull request #${pr.number} from acme/${pr.head}`, author, Date.now(), [head.sha]);
       this.data.pulls.delete(pr.number);
       head.pr = null;
-      const acts = [this.act('pr-merge', { title: `PR #${pr.number} fusionado en ${pr.base}`, detail: pr.title, ref: `${pr.head} → ${pr.base}`, branch: pr.base, sha: c.sha, actor: this.actor(author), number: pr.number })];
+      const acts = [this.act('pr-merge', { title: MSG('act.prMergedInto', { num: pr.number, base: pr.base }), detail: pr.title, ref: `${pr.head} → ${pr.base}`, branch: pr.base, sha: c.sha, actor: this.actor(author), number: pr.number })];
       head.own = 0;
       if (!head.protected) {
         head.merged = true;
@@ -393,7 +353,7 @@
           if (!this.data.branches.has(pr.head)) return;
           this.data.branches.delete(pr.head);
           this.data.totalBranches = this.data.branches.size;
-          this.publish([this.act('branch-delete', { title: `Rama ${pr.head} eliminada`, detail: `Sus cambios ya estaban en ${pr.base}`, branch: pr.head, sha: c.sha, actor: this.actor(author) })]);
+          this.publish([this.act('branch-delete', { title: MSG('act.branchDeleted', { name: pr.head }), detail: MSG('act.branchDeletedMerged', { into: pr.base }), branch: pr.head, sha: c.sha, actor: this.actor(author) })]);
         });
       }
       acts.push(this.runCI(pr.base, c.sha));
@@ -401,7 +361,7 @@
         this.later(4000, () => {
           this.release[1]++;
           this.release[2] = 0;
-          this.publish([this.act('release', { title: `Release v${this.release.join('.')} publicada`, detail: 'Nueva versión estable', actor: this.actor(author), sha: c.sha })]);
+          this.publish([this.act('release', { title: MSG('act.release', { tag: `v${this.release.join('.')}` }), detail: this.C.seed.releaseNext, actor: this.actor(author), sha: c.sha })]);
         });
       }
       return acts;
@@ -416,22 +376,22 @@
       const title = `Release ${this.release[0]}.${this.release[1] + 1}`;
       this.data.pulls.set(n, { number: n, title, head: 'develop', base: 'main', sameRepo: true, url: null, draft: false, user, createdAt: Date.now() });
       dev.own = Math.max(dev.own, 2);
-      return [this.act('pr-open', { title: `PR #${n} abierto`, detail: title, ref: 'develop → main', branch: 'develop', sha: dev.sha, actor: user, number: n })];
+      return [this.act('pr-open', { title: MSG('act.prOpened', { num: n }), detail: title, ref: 'develop → main', branch: 'develop', sha: dev.sha, actor: user, number: n })];
     }
 
     doIssue() {
       const who = this.actor(this.pick(AUTHORS));
       if (this.openIssues.length && this.chance(0.4)) {
         const n = this.openIssues.shift();
-        return [this.act('issue-close', { title: `Issue #${n} cerrado`, detail: 'Resuelto en la última versión', actor: who, number: n })];
+        return [this.act('issue-close', { title: MSG('act.issueClosed', { num: n }), detail: this.C.seed.resolved, actor: who, number: n })];
       }
       if (this.openIssues.length && this.chance(0.3)) {
         const n = this.pick(this.openIssues);
-        return [this.act('comment', { title: `Comentario en issue #${n}`, detail: this.pick(COMMENTS), actor: who, number: n })];
+        return [this.act('comment', { title: MSG('act.commentIssue', { num: n }), detail: this.pick(this.C.comments), actor: who, number: n })];
       }
       const n = ++this.issueSeq;
       this.openIssues.push(n);
-      return [this.act('issue-open', { title: `Issue #${n} abierto`, detail: this.pick(ISSUES), actor: who, number: n })];
+      return [this.act('issue-open', { title: MSG('act.issueOpened', { num: n }), detail: this.pick(this.C.issues), actor: who, number: n })];
     }
 
     doForcePush() {
@@ -440,17 +400,17 @@
       b.sha = old.parents[0];
       b.own -= 1;
       const author = this.pick(AUTHORS);
-      const c = this.commit(b.name, U.firstLine(old.message) + ' (corregido)', author, Date.now());
-      return [this.act('force', { title: `Force-push en ${b.name}`, detail: `Historia reescrita: 1 commit descartado · ahora en ${U.shortSha(c.sha)}`, branch: b.name, sha: c.sha, actor: this.actor(author) })];
+      const c = this.commit(b.name, U.firstLine(old.message) + ' ' + this.C.seed.amended, author, Date.now());
+      return [this.act('force', { title: MSG('act.force', { name: b.name }), detail: MSG('act.forceDetailDropped', { n: 1, sha: U.shortSha(c.sha) }), branch: b.name, sha: c.sha, actor: this.actor(author) })];
     }
 
     doHotfix() {
       const main = this.data.branches.get('main');
       const author = this.pick(AUTHORS);
-      const c = this.commit('main', this.pick(MESSAGES.hotfix), author, Date.now());
+      const c = this.commit('main', this.pick(this.C.hotfix), author, Date.now());
       main.own = 0;
       return [
-        this.act('push', { title: `1 commit nuevo en main`, detail: c.message, branch: 'main', sha: c.sha, actor: this.actor(author) }),
+        this.act('push', { title: MSG('act.pushNew', { n: 1, name: 'main' }), detail: c.message, branch: 'main', sha: c.sha, actor: this.actor(author) }),
         this.runCI('main', c.sha),
       ];
     }

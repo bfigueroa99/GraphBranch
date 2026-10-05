@@ -15,27 +15,19 @@ window.GB = window.GB || {};
 
   U.shortSha = (sha) => (sha || '').slice(0, 7);
   U.firstLine = (msg) => String(msg || '').split('\n')[0].trim();
-  U.truncate = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
-  U.plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-
-  U.timeAgo = (ms, now = Date.now()) => {
-    if (!ms) return '';
-    const s = Math.max(0, Math.round((now - ms) / 1000));
-    if (s < 5) return 'ahora';
-    if (s < 60) return `hace ${s} s`;
-    const m = Math.round(s / 60);
-    if (m < 60) return `hace ${m} min`;
-    const h = Math.round(m / 60);
-    if (h < 24) return `hace ${h} h`;
-    const d = Math.round(h / 24);
-    if (d < 30) return `hace ${d} d`;
-    return U.fmtDate(ms);
+  U.truncate = (s, n) => {
+    if (s.length <= n) return s;
+    let end = n - 1;
+    const c = s.charCodeAt(end - 1);
+    if (c >= 0xd800 && c <= 0xdbff) end--; // no partir un par sustituto (emoji, kanji raros)
+    return s.slice(0, end) + '…';
   };
 
-  U.fmtDate = (ms) => new Date(ms).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' });
-  U.fmtDateTime = (ms) =>
-    new Date(ms).toLocaleString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-  U.fmtNum = (n) => Number(n).toLocaleString('es');
+  /* fechas, números y tiempos relativos según el idioma activo (ver i18n.js) */
+  U.timeAgo = (ms, now) => GB.i18n.timeAgo(ms, now);
+  U.fmtDate = (ms) => GB.i18n.fmtDate(ms);
+  U.fmtDateTime = (ms) => GB.i18n.fmtDateTime(ms);
+  U.fmtNum = (n) => GB.i18n.fmtNum(n);
   U.dayKey = (ms) => {
     const d = new Date(ms);
     return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
@@ -69,8 +61,9 @@ window.GB = window.GB || {};
   };
 
   U.initials = (name) => {
-    const parts = String(name || '?').replace(/[^\p{L}\p{N} ]/gu, ' ').trim().split(/\s+/);
-    return ((parts[0] || '?')[0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+    const parts = String(name || '?').replace(/[^\p{L}\p{M}\p{N} ]/gu, ' ').trim().split(/\s+/);
+    const first = (w) => Array.from(w || '?')[0]; // por carácter, no por unidad UTF-16
+    return (first(parts[0]) + (parts.length > 1 ? first(parts[parts.length - 1]) : '')).toUpperCase();
   };
 
   U.hash = (s) => {

@@ -164,7 +164,7 @@
       const cs = getComputedStyle(document.documentElement);
       const v = (n, fb) => cs.getPropertyValue(n).trim() || fb;
       this.colors = { ghost: v('--ghost', '#b4bdb9') };
-      for (let i = 0; i <= 8; i++) this.colors['c' + i] = v('--s' + i, '#888888');
+      for (let i = 1; i <= 8; i++) this.colors['c' + i] = v('--s' + i, '#888888');
       const bg = new THREE.Color(v('--surface', '#ffffff'));
       const hsl = {};
       bg.getHSL(hsl);
@@ -179,7 +179,7 @@
     }
 
     paint(key, m) {
-      const col = new THREE.Color(this.colors[key] || this.colors.c0);
+      const col = new THREE.Color(this.colors[key] || this.colors.ghost);
       const ghost = key === 'ghost';
       m.node.color.copy(col);
       m.node.emissive.copy(col);

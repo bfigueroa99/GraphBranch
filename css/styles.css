@@ -22,8 +22,7 @@
   --bad: #d03b3b;
   --info: var(--ink-2);
 
-  /* ramas: paleta categórica validada (orden fijo, nunca se recicla) */
-  --s0: #8b9692;
+  /* ramas vivas: paleta categórica validada; el gris (--ghost) es solo de las ramas muertas */
   --s1: #2a78d6;
   --s2: #eb6834;
   --s3: #1baf7a;
@@ -57,7 +56,6 @@
     --good: #0ca30c;
     --warn: #fab219;
     --bad: #e05252;
-    --s0: #6d7975;
     --s1: #3987e5;
     --s2: #d95926;
     --s3: #199e70;
@@ -84,7 +82,6 @@
   --good: #0ca30c;
   --warn: #fab219;
   --bad: #e05252;
-  --s0: #6d7975;
   --s1: #3987e5;
   --s2: #d95926;
   --s3: #199e70;
@@ -743,7 +740,6 @@ kbd {
   user-select: none;
   -webkit-user-select: none;
 }
-.c0 { --c: var(--s0); }
 .c1 { --c: var(--s1); }
 .c2 { --c: var(--s2); }
 .c3 { --c: var(--s3); }

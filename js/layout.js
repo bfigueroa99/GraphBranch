@@ -19,7 +19,7 @@
     reset() {
       this.slotOf = new Map(); // rama -> carril del último cálculo (desempata el orden)
       this.seqOf = new Map(); // rama -> orden de aparición (quién se queda los commits compartidos)
-      this.colorOf = new Map(); // rama -> color 1..8 (0 = gris: fuera de las más activas)
+      this.colorOf = new Map(); // rama viva -> color 1..8 (el gris queda para las ramas fusionadas y borradas)
       this.seq = 0;
     }
 
@@ -110,9 +110,11 @@
       this.slotOf = new Map(byActivity.map((b, i) => [b.name, i + 1]));
       if (live.has(def)) this.slotOf.set(def, 0);
 
-      /* colores: la rama por defecto y las más activas. Cada una conserva el suyo mientras
-         siga entre ellas; una rama nueva o gris que recibe un push toma el que deja libre
-         la menos activa, que pasa a gris. */
+      /* colores: el gris es solo de lo muerto (las ramas ya fusionadas y borradas); toda rama
+         viva lleva color. La rama por defecto y las más activas tienen uno propio, que
+         conservan mientras sigan entre ellas; si aparece una rama o una menos activa recibe
+         un push, toma el color de la que deja de estar entre las más activas. Las demás
+         ramas vivas reparten los mismos colores (siempre el menos repetido) y lo conservan. */
       const palette = [];
       for (let k = 2; k <= COLOR_SLOTS; k++) palette.push(k);
       if (!live.has(def)) palette.push(1);
@@ -125,7 +127,15 @@
       }
       const free = palette.filter((c) => ![...colorOf.values()].includes(c));
       for (const b of top) if (!colorOf.has(b.name)) colorOf.set(b.name, free.shift());
-      for (const b of byActivity) if (!colorOf.has(b.name)) colorOf.set(b.name, 0);
+      const uses = new Map(palette.map((c) => [c, 0]));
+      for (const c of colorOf.values()) if (uses.has(c)) uses.set(c, uses.get(c) + 1);
+      for (const b of byActivity) {
+        if (colorOf.has(b.name)) continue;
+        let c = this.colorOf.get(b.name);
+        if (!palette.includes(c)) c = palette.reduce((best, k) => (uses.get(k) < uses.get(best) ? k : best));
+        colorOf.set(b.name, c);
+        uses.set(c, uses.get(c) + 1);
+      }
       this.colorOf = colorOf;
 
       /* 6. ocupación de carriles: ramas hasta el infinito, fantasmas en los huecos */

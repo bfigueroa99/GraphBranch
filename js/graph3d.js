@@ -178,8 +178,18 @@
       this.needsRender = true;
     }
 
+    /** Color de una clase ('ghost' o 'c<n>'): del 1 al 8 los del CSS, del 9 en adelante la paleta generada. */
+    colorHex(key) {
+      let hex = this.colors[key];
+      if (!hex) {
+        const n = Number(/^c(\d+)$/.exec(key)?.[1]);
+        hex = this.colors[key] = n > GB.palette.base ? GB.palette.hex(n, this.dark) : this.colors.ghost;
+      }
+      return hex;
+    }
+
     paint(key, m) {
-      const col = new THREE.Color(this.colors[key] || this.colors.ghost);
+      const col = new THREE.Color(this.colorHex(key));
       const ghost = key === 'ghost';
       m.node.color.copy(col);
       m.node.emissive.copy(col);

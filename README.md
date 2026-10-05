@@ -6,7 +6,7 @@ Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas
 
 - **Vista 3D**: la rama por defecto es el tronco central y las demás se reparten a su alrededor en espiral, las más activas más cerca del tronco; el tiempo avanza hacia ti y la historia se pierde en el fondo. Puedes girar, acercar y desplazarte; la cámara sigue lo último y gira lento cuando no la tocas.
 - **Vista 2D tipo metro**: cada rama es un carril; los commits avanzan a la derecha. La rama por defecto va arriba y debajo las demás, de la más reciente a la menos activa. Cambia entre 3D y 2D con el selector del grafo.
-- **Colores**: el gris es solo de las ramas muertas: las ya fusionadas y borradas, y las ya fusionadas que siguen existiendo (su cabeza ya está en la rama por defecto). Toda rama viva lleva color. La rama por defecto y las 7 más activas tienen color propio, que conservan mientras sigan entre las más activas; si aparece una rama o una menos activa recibe un push, toma el color de la que deja de estar entre ellas. Las demás ramas vivas reparten esos mismos colores. Las ramas de larga vida (`develop`, `release/…`, protegidas) y las recién creadas sobre la cabeza de la rama por defecto no se dan por muertas; una rama fusionada que recibe commits nuevos vuelve a tener color.
+- **Colores**: toda rama viva tiene un color propio, de una paleta de más de 8.000: los 8 primeros están elegidos a mano y el resto se genera repartido lo más lejos posible entre sí, en el tema claro y en el oscuro, así que cada rama nueva toma un color distinto sin importar cuántas haya. La rama por defecto lleva siempre el primero, cada una conserva el suyo mientras exista y la que se borra lo deja libre. El gris es solo de las ramas muertas: las ya fusionadas y borradas, y las ya fusionadas que siguen existiendo (su cabeza ya está en la rama por defecto). Las ramas de larga vida (`develop`, `release/…`, protegidas) y las recién creadas sobre la cabeza de la rama por defecto no se dan por muertas; una rama fusionada que recibe commits nuevos vuelve a tener color.
 - En ambas, las bifurcaciones y merges se dibujan como curvas y las ramas muertas quedan en gris.
 - **En vivo**: los commits nuevos aparecen con una onda, la etiqueta de la rama se desliza hasta su nueva cabeza, la rama sube justo bajo la rama por defecto (los carriles se reordenan según su última actividad) y la vista sigue lo último (o te deja recorrer la historia).
 - **Alertas**: panel de actividad filtrable, avisos emergentes, sonido opcional, notificaciones del sistema cuando la pestaña está en segundo plano y contador en el título de la pestaña.
@@ -80,7 +80,8 @@ css/styles.css        estilos (tema claro y oscuro)
 js/util.js            utilidades compartidas
 js/sources/github.js  datos en vivo desde la API de GitHub (modos GraphQL, lista y eventos)
 js/sources/demo.js    repositorio simulado para la demo
-js/layout.js          asignación de carriles y orden de los commits
+js/palette.js         paleta de colores de las ramas, sin tope
+js/layout.js          asignación de carriles, colores y orden de los commits
 js/graph.js           vista 2D en SVG (D3 solo para zoom y arrastre)
 js/graph3d.js         vista 3D con Three.js
 js/feed.js            panel de actividad, avisos, sonido y notificaciones

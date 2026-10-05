@@ -6,10 +6,9 @@
    forman cadenas "fantasma" que se acomodan en los huecos libres de los carriles. */
 (function (GB) {
   'use strict';
-  const { U } = GB;
+  const { U, palette: P } = GB;
 
   const LONG_LIVED = /^(main|master|trunk|develop|development|dev|staging|stage|next|beta|production|prod|release(\/.*)?|releases?\/.*)$/i;
-  const COLOR_SLOTS = 8;
 
   class Layout {
     constructor() {
@@ -19,7 +18,7 @@
     reset() {
       this.slotOf = new Map(); // rama -> carril del último cálculo (desempata el orden)
       this.seqOf = new Map(); // rama -> orden de aparición (quién se queda los commits compartidos)
-      this.colorOf = new Map(); // rama viva -> color 1..8 (el gris queda para las ramas muertas: fusionadas o borradas)
+      this.colorOf = new Map(); // rama viva -> color 1, 2, 3… de la paleta (el gris queda para las ramas muertas)
       this.seq = 0;
     }
 
@@ -122,33 +121,29 @@
       );
 
       /* colores: el gris es solo de lo muerto (ramas fusionadas, borradas o no); toda rama viva
-         lleva color. La rama por defecto y las más activas tienen uno propio, que conservan
-         mientras sigan entre ellas; si aparece una rama o una menos activa recibe un push, toma
-         el color de la que deja de estar entre las más activas. Las demás ramas vivas reparten
-         los mismos colores (siempre el menos repetido) y lo conservan. */
-      const palette = [];
-      for (let k = 2; k <= COLOR_SLOTS; k++) palette.push(k);
-      if (!live.has(def)) palette.push(1);
-      const active = byActivity.filter((b) => !dead.has(b.name));
-      const top = active.slice(0, palette.length);
+         tiene un color propio de la paleta sin tope (ver palette.js), que conserva mientras
+         exista. La rama por defecto toma el 1 y cada rama nueva, el menor que esté libre: así
+         las primeras usan los colores validados a mano y las siguientes los generados. */
       const colorOf = new Map();
-      if (live.has(def)) colorOf.set(def, 1);
-      for (const b of top) {
+      const taken = new Set();
+      const give = (name, c) => {
+        colorOf.set(name, c);
+        taken.add(c);
+      };
+      if (live.has(def)) give(def, 1);
+      const active = byActivity.filter((b) => !dead.has(b.name));
+      for (const b of active) {
         const c = this.colorOf.get(b.name);
-        if (palette.includes(c) && ![...colorOf.values()].includes(c)) colorOf.set(b.name, c);
+        if (c && !taken.has(c)) give(b.name, c);
       }
-      const free = palette.filter((c) => ![...colorOf.values()].includes(c));
-      for (const b of top) if (!colorOf.has(b.name)) colorOf.set(b.name, free.shift());
-      const uses = new Map(palette.map((c) => [c, 0]));
-      for (const c of colorOf.values()) if (uses.has(c)) uses.set(c, uses.get(c) + 1);
+      let next = 1;
       for (const b of active) {
         if (colorOf.has(b.name)) continue;
-        let c = this.colorOf.get(b.name);
-        if (!palette.includes(c)) c = palette.reduce((best, k) => (uses.get(k) < uses.get(best) ? k : best));
-        colorOf.set(b.name, c);
-        uses.set(c, uses.get(c) + 1);
+        while (taken.has(next)) next++;
+        give(b.name, next);
       }
       this.colorOf = colorOf;
+      P.ensure(Math.max(0, ...colorOf.values()));
       const colorOfBranch = (name) => (dead.has(name) ? 'ghost' : 'c' + colorOf.get(name));
 
       /* 6. ocupación de carriles: ramas hasta el infinito, fantasmas en los huecos */

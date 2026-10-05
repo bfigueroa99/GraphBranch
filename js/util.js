@@ -87,9 +87,19 @@ window.GB = window.GB || {};
     const fallback = `<span class="avatar avatar-i t${tint}" style="--sz:${size}px" aria-hidden="true">${init}</span>`;
     if (!actor?.avatar) return fallback;
     const src = actor.avatar + (actor.avatar.includes('?') ? '&' : '?') + 's=' + size * 2;
-    return `<img class="avatar" style="--sz:${size}px" src="${U.esc(src)}" alt="" loading="lazy"
-      onerror="this.outerHTML=this.dataset.fb" data-fb="${U.esc(fallback)}">`;
+    return `<img class="avatar" style="--sz:${size}px" src="${U.esc(src)}" alt="" loading="lazy" data-fb="${U.esc(fallback)}">`;
   };
+
+  /* El CSP de index.html no permite manejadores en línea (onerror=…). Los errores de carga de
+     una imagen no burbujean, pero sí se capturan en el documento: así sirve para todas. */
+  document.addEventListener(
+    'error',
+    (ev) => {
+      const img = ev.target;
+      if (img instanceof HTMLImageElement && img.dataset.fb && img.parentNode) img.outerHTML = img.dataset.fb;
+    },
+    true,
+  );
 
   /** Emisor mínimo de eventos para las fuentes de datos. */
   class Emitter {

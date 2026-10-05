@@ -162,6 +162,9 @@ kbd {
 .app {
   height: 100%;
   display: grid;
+  /* sin esto la columna toma el ancho de lo más ancho que contenga (p. ej. un botón "Conectar"
+     largo en otro idioma) y la página se desborda en pantallas angostas */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto minmax(0, 1fr);
   gap: 12px;
   padding-inline: var(--gutter);
@@ -464,7 +467,9 @@ kbd {
   display: flex;
   align-items: center;
   gap: 7px;
-  white-space: nowrap;
+  /* "hace 2 d" es corto, pero "2 araw ang nakalipas" (filipino) no: que parta la línea en vez de salirse */
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .stat-sub {
   color: var(--ink-3);

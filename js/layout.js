@@ -19,7 +19,7 @@
     reset() {
       this.slotOf = new Map(); // rama -> carril del último cálculo (desempata el orden)
       this.seqOf = new Map(); // rama -> orden de aparición (quién se queda los commits compartidos)
-      this.colorOf = new Map(); // rama viva -> color 1..8 (el gris queda para las ramas fusionadas y borradas)
+      this.colorOf = new Map(); // rama viva -> color 1..8 (el gris queda para las ramas muertas: fusionadas o borradas)
       this.seq = 0;
     }
 
@@ -110,15 +110,27 @@
       this.slotOf = new Map(byActivity.map((b, i) => [b.name, i + 1]));
       if (live.has(def)) this.slotOf.set(def, 0);
 
-      /* colores: el gris es solo de lo muerto (las ramas ya fusionadas y borradas); toda rama
-         viva lleva color. La rama por defecto y las más activas tienen uno propio, que
-         conservan mientras sigan entre ellas; si aparece una rama o una menos activa recibe
-         un push, toma el color de la que deja de estar entre las más activas. Las demás
-         ramas vivas reparten los mismos colores (siempre el menos repetido) y lo conservan. */
+      /* ramas muertas: ya fusionadas en la rama por defecto pero que nadie borró. No cuentan las
+         de larga vida (develop, release/…), que siguen vivas aunque main las haya absorbido, ni
+         las que apuntan justo a la cabeza de la rama por defecto (una rama recién creada). */
+      const defHead = heads.find((b) => b.name === def)?.sha;
+      const inDef = defHead ? U.reachable(commits, [defHead]).set : new Set();
+      const dead = new Set(
+        heads
+          .filter((b) => b.name !== def && b.sha !== defHead && inDef.has(b.sha) && !(b.protected || LONG_LIVED.test(b.name)))
+          .map((b) => b.name),
+      );
+
+      /* colores: el gris es solo de lo muerto (ramas fusionadas, borradas o no); toda rama viva
+         lleva color. La rama por defecto y las más activas tienen uno propio, que conservan
+         mientras sigan entre ellas; si aparece una rama o una menos activa recibe un push, toma
+         el color de la que deja de estar entre las más activas. Las demás ramas vivas reparten
+         los mismos colores (siempre el menos repetido) y lo conservan. */
       const palette = [];
       for (let k = 2; k <= COLOR_SLOTS; k++) palette.push(k);
       if (!live.has(def)) palette.push(1);
-      const top = byActivity.slice(0, palette.length);
+      const active = byActivity.filter((b) => !dead.has(b.name));
+      const top = active.slice(0, palette.length);
       const colorOf = new Map();
       if (live.has(def)) colorOf.set(def, 1);
       for (const b of top) {
@@ -129,7 +141,7 @@
       for (const b of top) if (!colorOf.has(b.name)) colorOf.set(b.name, free.shift());
       const uses = new Map(palette.map((c) => [c, 0]));
       for (const c of colorOf.values()) if (uses.has(c)) uses.set(c, uses.get(c) + 1);
-      for (const b of byActivity) {
+      for (const b of active) {
         if (colorOf.has(b.name)) continue;
         let c = this.colorOf.get(b.name);
         if (!palette.includes(c)) c = palette.reduce((best, k) => (uses.get(k) < uses.get(best) ? k : best));
@@ -137,6 +149,7 @@
         uses.set(c, uses.get(c) + 1);
       }
       this.colorOf = colorOf;
+      const colorOfBranch = (name) => (dead.has(name) ? 'ghost' : 'c' + colorOf.get(name));
 
       /* 6. ocupación de carriles: ramas hasta el infinito, fantasmas en los huecos */
       const occ = new Map();
@@ -185,7 +198,7 @@
       const rowOfChain = (key) => rowOfSlot.get(chainSlot.get(key));
       const colorOfChain = (key) => {
         const ch = chains.get(key);
-        return ch.branch ? 'c' + this.colorOf.get(ch.branch.name) : 'ghost';
+        return ch.branch ? colorOfBranch(ch.branch.name) : 'ghost';
       };
 
       /* 8. nodos, aristas, cabezas */
@@ -238,7 +251,7 @@
           x: node.x,
           row: rowOfChain('b:' + b.name),
           own: info.own,
-          color: 'c' + this.colorOf.get(b.name),
+          color: colorOfBranch(b.name),
           chain: 'b:' + b.name,
           movedAt: b.movedAt || 0,
         };
@@ -252,7 +265,7 @@
       const rows = slots.map((slot, row) => {
         const b = heads.find((h) => this.slotOf.get(h.name) === slot);
         return b
-          ? { row, id: 'b:' + b.name, name: b.name, color: 'c' + this.colorOf.get(b.name), chain: 'b:' + b.name, ghost: false }
+          ? { row, id: 'b:' + b.name, name: b.name, color: colorOfBranch(b.name), chain: 'b:' + b.name, ghost: false }
           : { row, id: 'g-row:' + slot, name: 'fusionadas', color: 'ghost', chain: null, ghost: true };
       });
 

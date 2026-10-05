@@ -61,6 +61,8 @@
     if (node.chain.startsWith('g:')) {
       const gname = ghostNames?.get(node.chain);
       rows.push(`<span>${gname ? `De la rama <code>${U.esc(gname)}</code>, ya fusionada y eliminada` : 'De una rama ya fusionada y eliminada'}</span>`);
+    } else if (node.color === 'ghost') {
+      rows.push(`<span>De la rama <code>${U.esc(node.chain.slice(2))}</code>, ya fusionada (sigue existiendo)</span>`);
     }
     const branch = branchName || heads[0];
     if (branch) {

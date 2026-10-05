@@ -44,7 +44,6 @@
         branches: new Map(), // ramas visibles
         commits: new Map(),
         pulls: new Map(),
-        runs: new Map(),
         mode: null,
         totalBranches: 0,
         totalExact: true,
@@ -64,7 +63,6 @@
       this.etags = new Map();
       this.lastPoll = {};
       this.eventsInterval = 60;
-      this.actionsEnabled = true;
       this.rate = null;
       this.gqlRate = null;
       this.cost = 0;
@@ -297,7 +295,6 @@
     due(name) {
       const period = {
         pulls: this.token ? 10000 : 180000,
-        runs: this.token ? 10000 : 180000,
         events: Math.max(this.eventsInterval * 1000, this.token ? 30000 : 120000),
         count: 15 * 60000,
       }[name];
@@ -325,7 +322,6 @@
       else if (this.mode === 'events') await this.syncFromEvents(acts, initial, quiet);
 
       if (this.mode !== 'graphql' && (initial || this.due('pulls'))) await this.syncPulls(acts, initial);
-      if (this.actionsEnabled && (initial || this.due('runs'))) await this.syncRuns(acts, initial);
       if (!initial && this.mode !== 'events' && this.due('events')) await this.syncEvents(acts, false);
       if (this.mode === 'events' && this.due('count')) await this.countBranches();
 
@@ -987,65 +983,6 @@
         if (err.kind === 'rate' || err.kind === 'network') throw err;
       }
       return out;
-    }
-
-    /* ---------- GitHub Actions ---------- */
-
-    mapRun(r) {
-      return {
-        id: r.id,
-        name: r.name || 'Workflow',
-        title: r.display_title || '',
-        branch: r.head_branch,
-        sha: r.head_sha,
-        status: r.status,
-        conclusion: r.conclusion,
-        url: r.html_url,
-        number: r.run_number,
-        event: r.event,
-        actor: r.actor ? { login: r.actor.login, avatar: r.actor.avatar_url } : null,
-        createdAt: Date.parse(r.created_at) || Date.now(),
-      };
-    }
-
-    runActivity(run, started) {
-      const fields = {
-        detail: run.title,
-        ref: `#${run.number} · ${run.event}`,
-        branch: run.branch,
-        sha: run.sha,
-        actor: run.actor,
-        url: run.url,
-      };
-      if (started) return this.activity('ci-start', { ...fields, title: `CI en curso: ${run.name}` });
-      const c = run.conclusion;
-      if (c === 'success') return this.activity('ci-ok', { ...fields, title: `CI aprobado: ${run.name}` });
-      if (c === 'failure' || c === 'timed_out' || c === 'startup_failure')
-        return this.activity('ci-fail', { ...fields, title: `CI falló: ${run.name}` });
-      if (c === 'cancelled') return this.activity('ci-cancel', { ...fields, title: `CI cancelado: ${run.name}` });
-      return null;
-    }
-
-    async syncRuns(acts, initial) {
-      const res = await this.api(`${this.base}/actions/runs?per_page=30`, { cacheKey: 'runs', allow: [403, 404] });
-      this.lastPoll.runs = Date.now();
-      if (res.data === null) {
-        this.actionsEnabled = false;
-        return;
-      }
-      if (!res.fresh && !initial) return;
-      const next = new Map((res.data.workflow_runs || []).map((r) => [r.id, this.mapRun(r)]));
-      if (!initial) {
-        for (const [id, run] of next) {
-          if (!U.matches(run.branch || '', this.filter) && !this.data.branches.has(run.branch)) continue;
-          const prev = this.data.runs.get(id);
-          let a = null;
-          if (!prev) a = this.runActivity(run, run.status !== 'completed');
-          else if (prev.status !== 'completed' && run.status === 'completed') a = this.runActivity(run, false);
-          if (a) acts.push(a);
-        }
-      }
-      this.data.runs = next;
     }
 
     /* ---------- eventos del repositorio ---------- */

@@ -1,4 +1,4 @@
-/* GraphBranch — repositorio simulado. Genera historia, ramas, PRs, CI e issues
+/* GraphBranch — repositorio simulado. Genera historia, ramas, PRs e issues
    con la misma forma de datos que la fuente de GitHub, para ver la app en
    movimiento sin conexión ni token. Todo lo que muestra es ficticio. */
 (function (GB) {
@@ -93,14 +93,12 @@
         branches: new Map(),
         commits: new Map(),
         pulls: new Map(),
-        runs: new Map(),
         totalBranches: 0,
         loaded: false,
       };
       this.rnd = mulberry32(Date.now() % 100000);
       this.prSeq = 30;
       this.issueSeq = 85;
-      this.runSeq = 1180;
       this.release = [1, 4, 0];
       this.openIssues = [];
       this.timers = new Set();
@@ -178,50 +176,6 @@
       return this.pick(pool).replace('{s}', b.scope || 'app');
     }
 
-    startRun(branch, sha, name, time, outcome) {
-      const id = ++this.runSeq;
-      const c = this.data.commits.get(sha);
-      const run = {
-        id,
-        name,
-        title: c ? U.firstLine(c.message) : '',
-        branch,
-        sha,
-        status: 'in_progress',
-        conclusion: null,
-        url: null,
-        number: id - 1000,
-        event: 'push',
-        actor: c ? c.author : null,
-        createdAt: time,
-      };
-      this.data.runs.set(id, run);
-      if (this.data.runs.size > 20) this.data.runs.delete(Math.min(...this.data.runs.keys()));
-      if (outcome) {
-        run.status = 'completed';
-        run.conclusion = outcome;
-      }
-      return run;
-    }
-
-    runAct(run, started) {
-      const fields = { detail: run.title, ref: `#${run.number} · ${run.event}`, branch: run.branch, sha: run.sha, actor: run.actor };
-      if (started) return this.act('ci-start', { ...fields, title: `CI en curso: ${run.name}` });
-      if (run.conclusion === 'success') return this.act('ci-ok', { ...fields, title: `CI aprobado: ${run.name}` });
-      return this.act('ci-fail', { ...fields, title: `CI falló: ${run.name}` });
-    }
-
-    /** Lanza CI y programa su resultado unos segundos después. */
-    runCI(branch, sha) {
-      const run = this.startRun(branch, sha, branch === 'main' ? 'Deploy' : 'Tests', Date.now());
-      this.later(6000 + this.rnd() * 9000, () => {
-        run.status = 'completed';
-        run.conclusion = this.chance(0.8) ? 'success' : 'failure';
-        this.publish([this.runAct(run, false)]);
-      });
-      return this.runAct(run, true);
-    }
-
     /* ---------- historia inicial ---------- */
 
     seed() {
@@ -270,20 +224,16 @@
       push('feature/login', J, 'feat(login): callback OAuth de GitHub');
       push('feature/modo-oscuro', T, 'feat(theme): variables para modo oscuro');
       this.data.branches.get('develop').prTitle = 'Release 1.4';
-      const rel = merge('develop', 'main', 34, V, false);
-      this.startRun('main', rel.sha, 'Deploy', t, 'success');
+      merge('develop', 'main', 34, V, false);
       H.push(this.act('release', { title: 'Release v1.4.0 publicada', detail: 'Login con GitHub y layout nuevo', actor: this.actor(V) }, t + 60e3));
       push('feature/login', J, 'fix(login): mensaje de error accesible');
       push('feature/modo-oscuro', T, 'feat(theme): interruptor en el encabezado');
       H.push(this.act('issue-open', { title: `Issue #${++this.issueSeq} abierto`, detail: ISSUES[0], actor: this.actor(C) }, step(5, 20)));
       this.openIssues.push(this.issueSeq);
-      const dev = push('develop', D, 'chore(deps): actualiza vite a 6.2');
-      this.startRun('develop', dev.sha, 'Tests', t, 'success');
+      push('develop', D, 'chore(deps): actualiza vite a 6.2');
       create('fix/rate-limit', 'main', 'api', M);
-      const rl = push('fix/rate-limit', M, 'fix(api): respeta el header Retry-After');
-      const failed = this.startRun('fix/rate-limit', rl.sha, 'Tests', t, 'failure');
-      const lg = push('feature/login', J, 'test(login): flujo completo con OAuth simulado');
-      this.startRun('feature/login', lg.sha, 'Tests', t, 'success');
+      push('fix/rate-limit', M, 'fix(api): respeta el header Retry-After');
+      push('feature/login', J, 'test(login): flujo completo con OAuth simulado');
 
       const openPR = (head, base, title, user, draft = false) => {
         const n = ++this.prSeq;
@@ -294,7 +244,6 @@
       openPR('feature/login', 'develop', 'Login con GitHub', J);
       openPR('feature/modo-oscuro', 'develop', 'Modo oscuro', T, true);
       openPR('fix/rate-limit', 'main', 'Respeta Retry-After en el cliente', M);
-      H.push({ ...this.runAct(failed, false), time: t + 90e3 });
       H.push(this.act('comment', { title: `Comentario en PR #38`, detail: COMMENTS[0], actor: this.actor(V) }, t + 120e3));
       H.push(this.act('star', { title: 'Nueva estrella', detail: 'pgarrido marcó el repositorio' }, t + 140e3));
       this.data.totalBranches = this.data.branches.size;
@@ -332,7 +281,6 @@
       let c;
       for (let i = 0; i < n; i++) c = this.commit(b.name, this.message(b), author, Date.now() - (n - 1 - i) * 1500);
       acts.push(this.act('push', { title: `${U.plural(n, 'commit nuevo', 'commits nuevos')} en ${b.name}`, detail: U.firstLine(c.message), branch: b.name, sha: c.sha, actor: this.actor(author) }));
-      if (b.pr || b.name === 'develop') acts.push(this.runCI(b.name, c.sha));
       return acts;
     }
 
@@ -359,10 +307,7 @@
       const user = this.pick(AUTHORS);
       b.pr = n;
       this.data.pulls.set(n, { number: n, title: title[0].toUpperCase() + title.slice(1), head: b.name, base: b.base, sameRepo: true, url: null, draft, user: this.actor(user), createdAt: Date.now() });
-      return [
-        this.act('pr-open', { title: draft ? `PR #${n} abierto como borrador` : `PR #${n} abierto`, detail: this.data.pulls.get(n).title, ref: `${b.name} → ${b.base}`, branch: b.name, sha: b.sha, actor: this.actor(user), number: n }),
-        this.runCI(b.name, b.sha),
-      ];
+      return [this.act('pr-open', { title: draft ? `PR #${n} abierto como borrador` : `PR #${n} abierto`, detail: this.data.pulls.get(n).title, ref: `${b.name} → ${b.base}`, branch: b.name, sha: b.sha, actor: this.actor(user), number: n })];
     }
 
     doReview() {
@@ -396,7 +341,6 @@
           this.publish([this.act('branch-delete', { title: `Rama ${pr.head} eliminada`, detail: `Sus cambios ya estaban en ${pr.base}`, branch: pr.head, sha: c.sha, actor: this.actor(author) })]);
         });
       }
-      acts.push(this.runCI(pr.base, c.sha));
       if (pr.base === 'main' && pr.head === 'develop') {
         this.later(4000, () => {
           this.release[1]++;
@@ -449,10 +393,7 @@
       const author = this.pick(AUTHORS);
       const c = this.commit('main', this.pick(MESSAGES.hotfix), author, Date.now());
       main.own = 0;
-      return [
-        this.act('push', { title: `1 commit nuevo en main`, detail: c.message, branch: 'main', sha: c.sha, actor: this.actor(author) }),
-        this.runCI('main', c.sha),
-      ];
+      return [this.act('push', { title: `1 commit nuevo en main`, detail: c.message, branch: 'main', sha: c.sha, actor: this.actor(author) })];
     }
 
     /** Mantiene acotada la historia en memoria. */

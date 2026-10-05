@@ -1,6 +1,6 @@
 # GraphBranch
 
-Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas de toda su actividad: commits, force-push, ramas creadas y borradas, pull requests, revisiones, CI (GitHub Actions), issues, releases, estrellas y forks.
+Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas de toda su actividad: commits, force-push, ramas creadas y borradas, pull requests, revisiones, issues, releases, estrellas y forks.
 
 ![GraphBranch en 3D mostrando el repositorio de demostración](docs/captura-3d.png)
 
@@ -10,7 +10,7 @@ Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas
 - En ambas, las bifurcaciones y merges se dibujan como curvas y las ramas muertas quedan en gris.
 - **En vivo**: los commits nuevos aparecen con una onda, la etiqueta de la rama se desliza hasta su nueva cabeza, la rama sube justo bajo la rama por defecto (los carriles se reordenan según su última actividad) y la vista sigue lo último (o te deja recorrer la historia).
 - **Alertas**: panel de actividad filtrable, avisos emergentes, sonido opcional, notificaciones del sistema cuando la pestaña está en segundo plano y contador en el título de la pestaña.
-- **Estado en cada rama**: CI en curso / aprobado / fallido y número de PR abierto, directamente en la etiqueta.
+- **Estado en cada rama**: número de PR abierto, directamente en la etiqueta.
 - **Repos enormes**: funciona con repositorios de miles de ramas (ver más abajo).
 
 No necesita servidor ni compilación: es HTML, CSS y JavaScript que llama directo a `api.github.com` desde tu navegador. La vista 3D usa WebGL; si el navegador no lo tiene, la app abre la 2D.
@@ -27,7 +27,7 @@ También puedes abrir un repo directo con `index.html?repo=owner/repo`.
 
 Sin token GitHub permite 60 consultas por hora, así que la vista se actualiza cada pocos minutos. Con un token se actualiza cada 10 segundos, ves repos privados y se activa el modo para repos grandes.
 
-Crea un token *fine-grained* de solo lectura en <https://github.com/settings/personal-access-tokens/new> con acceso al repositorio y estos permisos (todos *Read-only*): **Metadata** (incluye la actividad del repo: pushes y ramas creadas o borradas), **Contents**, **Pull requests** y **Actions**.
+Crea un token *fine-grained* de solo lectura en <https://github.com/settings/personal-access-tokens/new> con acceso al repositorio y estos permisos (todos *Read-only*): **Metadata** (incluye la actividad del repo: pushes y ramas creadas o borradas), **Contents** y **Pull requests**.
 
 El token se guarda solo en el `localStorage` de tu navegador y se envía únicamente a `api.github.com`.
 
@@ -63,7 +63,7 @@ En 2D:
 
 En las dos:
 
-- Clic en un commit o en el nombre de una rama: detalle con autor, mensaje, PR, estado de CI y enlace a GitHub.
+- Clic en un commit o en el nombre de una rama: detalle con autor, mensaje, PR y enlace a GitHub.
 - Clic en un nombre de la leyenda o en un elemento del panel de actividad: lleva a esa rama o commit.
 - **En vivo** / **Ir a lo último**: sigue (o vuelve a seguir) los commits nuevos.
 - Los chips del panel de actividad filtran la lista y también los avisos emergentes.
@@ -90,6 +90,6 @@ js/app.js             conecta todo
 
 ## Límites conocidos
 
-- El feed de eventos de GitHub (issues, comentarios, revisiones, estrellas) llega con retraso de 30 segundos a algunos minutos; los commits, ramas, PRs y CI se detectan antes porque se consultan directamente.
+- El feed de eventos de GitHub (issues, comentarios, revisiones, estrellas) llega con retraso de 30 segundos a algunos minutos; los commits, ramas y PRs se detectan antes porque se consultan directamente.
 - Se cargan los últimos commits de cada rama (40 por defecto, configurable). Las líneas punteadas a la izquierda indican que la historia sigue más atrás.
 - Los PRs se siguen entre los 50 actualizados más recientemente.

@@ -16,13 +16,6 @@
   const easeOutBack = (p) => 1 + 2.2 * Math.pow(p - 1, 3) + 1.2 * Math.pow(p - 1, 2);
   const reduceMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-  const CI_SVG = {
-    running: '<svg class="h3-ci ci-running" viewBox="-6 -6 12 12" aria-hidden="true"><circle r="4.5"/></svg>',
-    ok: '<svg class="h3-ci ci-ok" viewBox="-6 -6 12 12" aria-hidden="true"><path d="M-4,0.2L-1.3,2.9L4,-2.6"/></svg>',
-    fail: '<svg class="h3-ci ci-fail" viewBox="-6 -6 12 12" aria-hidden="true"><path d="M-3.4,-3.4L3.4,3.4M3.4,-3.4L-3.4,3.4"/></svg>',
-    cancel: '<svg class="h3-ci ci-cancel" viewBox="-6 -6 12 12" aria-hidden="true"><path d="M-3.6,0H3.6"/></svg>',
-  };
-
   function lane(row) {
     if (row <= 0) return [0, 0];
     const r = LANE_C * Math.sqrt(row);
@@ -420,20 +413,17 @@
     }
 
     buildHead(it, h, ctx) {
-      const ci = ctx.ci?.get(h.name);
       const pr = ctx.prs?.get(h.name);
       const pinned = ctx.pins?.has(h.name);
       const moved = it.el.classList.contains('moved') ? ' moved' : '';
       it.el.className = `g3-head ${h.color}${h.isDefault ? ' default' : ''}${moved}`;
       const aria = [`Rama ${h.name}${h.isDefault ? ' (por defecto)' : ''}`];
-      if (ci) aria.push(GB.graphShared.CI_LABEL[ci.state]);
       if (pr) aria.push(`PR #${pr.number}`);
       if (pinned) aria.push('fijada');
       it.el.setAttribute('aria-label', aria.join(', '));
       it.w = 0;
       it.el.innerHTML =
         `<span class="h3-dot" aria-hidden="true"></span><span class="h3-name">${U.esc(U.truncate(h.name, 34))}</span>` +
-        (ci ? CI_SVG[ci.state] : '') +
         (pr ? `<span class="h3-pr${pr.draft ? ' draft' : ''}">#${pr.number}</span>` : '') +
         (pinned ? '<span class="h3-pin" title="Rama fijada" aria-hidden="true"></span>' : '');
     }

@@ -100,6 +100,7 @@ index.html            página y controles
 css/styles.css        estilos (tema claro y oscuro)
 js/i18n.js            idiomas: detección, traducción, plurales y formatos de fecha y número
 js/locales/*.js       un archivo de textos por idioma (en.js es la base)
+js/i18n-apply.js      vuelve a traducir el HTML estático cuando la página ya está completa
 js/util.js            utilidades compartidas
 js/sources/github.js  datos en vivo desde la API de GitHub (modos GraphQL, lista y eventos)
 js/sources/demo.js    repositorio simulado para la demo
@@ -118,6 +119,23 @@ tools/check-i18n.mjs  verifica las traducciones contra el inglés
 - El feed de eventos de GitHub (issues, comentarios, revisiones, estrellas) llega con retraso de 30 segundos a algunos minutos; los commits, ramas y PRs se detectan antes porque se consultan directamente.
 - Se cargan los últimos commits de cada rama (40 por defecto, configurable). Las líneas punteadas a la izquierda indican que la historia sigue más atrás.
 - Los PRs se siguen entre los 50 actualizados más recientemente.
+
+## Seguridad
+
+`index.html` lleva una política de seguridad de contenido (CSP) y verificación de integridad (SRI):
+
+- **CSP**: solo se ejecutan los scripts propios y los tres de CDN que se nombran con su ruta exacta (d3, Three.js y OrbitControls); no se permite `eval` ni scripts o manejadores en línea. Las conexiones salen únicamente a `api.github.com` y las imágenes solo pueden ser avatares de GitHub. Así, aunque algún texto de un repositorio lograra colarse en la página, no podría ejecutar código ni enviar tu token a otro servidor.
+- **SRI**: esos tres scripts llevan su hash; el navegador no los ejecuta si el CDN entrega algo distinto.
+
+Si cambias la versión de una librería, actualiza su ruta en el CSP y su hash en la etiqueta `<script>`. Calcula el hash y compáralo con el que publica el CDN (cdnjs lo muestra en su ficha; jsDelivr, en `data.jsdelivr.com`):
+
+```
+curl -s URL_DEL_SCRIPT | openssl dgst -sha384 -binary | openssl base64 -A
+```
+
+Si agregas un servidor externo (otro script, imagen o API), súmalo a la directiva que corresponda del `<meta http-equiv="Content-Security-Policy">`; lo que no se nombra allí queda bloqueado.
+
+Limitaciones: la hoja de Google Fonts no admite SRI (su contenido cambia según el navegador), y los estilos necesitan `style-src 'unsafe-inline'` (colores generados y `style="--sz"` de los avatares); no es un riesgo de scripts, y con `img-src`, `font-src` y `connect-src` cerrados un estilo inyectado no tiene adónde enviar datos.
 
 ## Licencia
 

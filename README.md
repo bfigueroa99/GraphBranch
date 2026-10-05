@@ -1,16 +1,16 @@
 # GraphBranch
 
-Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas de toda su actividad: commits, force-push, ramas creadas y borradas, pull requests, revisiones, CI (GitHub Actions), issues, releases, estrellas y forks.
+Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas de toda su actividad: commits, force-push, ramas creadas y borradas, pull requests, revisiones, issues, releases, estrellas y forks.
 
 ![GraphBranch en 3D mostrando el repositorio de demostración](docs/captura-3d.png)
 
 - **Vista 3D**: la rama por defecto es el tronco central y las demás se reparten a su alrededor en espiral, las más activas más cerca del tronco; el tiempo avanza hacia ti y la historia se pierde en el fondo. Puedes girar, acercar y desplazarte; la cámara sigue lo último y gira lento cuando no la tocas.
 - **Vista 2D tipo metro**: cada rama es un carril; los commits avanzan a la derecha. La rama por defecto va arriba y debajo las demás, de la más reciente a la menos activa. Cambia entre 3D y 2D con el selector del grafo.
-- **Colores**: la rama por defecto y las 7 más activas llevan color propio, que conservan mientras sigan entre las más activas; el resto va en gris. Si aparece una rama o una gris recibe un push, toma el color de la menos activa, que pasa a gris.
-- En ambas, las bifurcaciones y merges se dibujan como curvas y las ramas ya fusionadas y borradas quedan en gris.
+- **Colores**: toda rama viva tiene un color propio, de una paleta de más de 8.000: los 8 primeros están elegidos a mano y el resto se genera repartido lo más lejos posible entre sí, en el tema claro y en el oscuro, así que cada rama nueva toma un color distinto sin importar cuántas haya. La rama por defecto lleva siempre el primero, cada una conserva el suyo mientras exista y la que se borra lo deja libre. El gris es solo de las ramas muertas: las ya fusionadas y borradas, y las ya fusionadas que siguen existiendo (su cabeza ya está en la rama por defecto). Las ramas de larga vida (`develop`, `release/…`, protegidas) y las recién creadas sobre la cabeza de la rama por defecto no se dan por muertas; una rama fusionada que recibe commits nuevos vuelve a tener color.
+- En ambas, las bifurcaciones y merges se dibujan como curvas y las ramas muertas quedan en gris.
 - **En vivo**: los commits nuevos aparecen con una onda, la etiqueta de la rama se desliza hasta su nueva cabeza, la rama sube justo bajo la rama por defecto (los carriles se reordenan según su última actividad) y la vista sigue lo último (o te deja recorrer la historia).
 - **Alertas**: panel de actividad filtrable, avisos emergentes, sonido opcional, notificaciones del sistema cuando la pestaña está en segundo plano y contador en el título de la pestaña.
-- **Estado en cada rama**: CI en curso / aprobado / fallido y número de PR abierto, directamente en la etiqueta.
+- **Estado en cada rama**: número de PR abierto, directamente en la etiqueta.
 - **Repos enormes**: funciona con repositorios de miles de ramas (ver más abajo).
 
 No necesita servidor ni compilación: es HTML, CSS y JavaScript que llama directo a `api.github.com` desde tu navegador. La vista 3D usa WebGL; si el navegador no lo tiene, la app abre la 2D.
@@ -27,7 +27,7 @@ También puedes abrir un repo directo con `index.html?repo=owner/repo`.
 
 Sin token GitHub permite 60 consultas por hora, así que la vista se actualiza cada pocos minutos. Con un token se actualiza cada 10 segundos, ves repos privados y se activa el modo para repos grandes.
 
-Crea un token *fine-grained* de solo lectura en <https://github.com/settings/personal-access-tokens/new> con acceso al repositorio y estos permisos (todos *Read-only*): **Metadata** (incluye la actividad del repo: pushes y ramas creadas o borradas), **Contents**, **Pull requests** y **Actions**.
+Crea un token *fine-grained* de solo lectura en <https://github.com/settings/personal-access-tokens/new> con acceso al repositorio y estos permisos (todos *Read-only*): **Metadata** (incluye la actividad del repo: pushes y ramas creadas o borradas), **Contents** y **Pull requests**.
 
 El token se guarda solo en el `localStorage` de tu navegador y se envía únicamente a `api.github.com`.
 
@@ -63,7 +63,7 @@ En 2D:
 
 En las dos:
 
-- Clic en un commit o en el nombre de una rama: detalle con autor, mensaje, PR, estado de CI y enlace a GitHub.
+- Clic en un commit o en el nombre de una rama: detalle con autor, mensaje, PR y enlace a GitHub.
 - Clic en un nombre de la leyenda o en un elemento del panel de actividad: lleva a esa rama o commit.
 - **En vivo** / **Ir a lo último**: sigue (o vuelve a seguir) los commits nuevos.
 - Los chips del panel de actividad filtran la lista y también los avisos emergentes.
@@ -80,7 +80,8 @@ css/styles.css        estilos (tema claro y oscuro)
 js/util.js            utilidades compartidas
 js/sources/github.js  datos en vivo desde la API de GitHub (modos GraphQL, lista y eventos)
 js/sources/demo.js    repositorio simulado para la demo
-js/layout.js          asignación de carriles y orden de los commits
+js/palette.js         paleta de colores de las ramas, sin tope
+js/layout.js          asignación de carriles, colores y orden de los commits
 js/graph.js           vista 2D en SVG (D3 solo para zoom y arrastre)
 js/graph3d.js         vista 3D con Three.js
 js/feed.js            panel de actividad, avisos, sonido y notificaciones
@@ -89,6 +90,6 @@ js/app.js             conecta todo
 
 ## Límites conocidos
 
-- El feed de eventos de GitHub (issues, comentarios, revisiones, estrellas) llega con retraso de 30 segundos a algunos minutos; los commits, ramas, PRs y CI se detectan antes porque se consultan directamente.
+- El feed de eventos de GitHub (issues, comentarios, revisiones, estrellas) llega con retraso de 30 segundos a algunos minutos; los commits, ramas y PRs se detectan antes porque se consultan directamente.
 - Se cargan los últimos commits de cada rama (40 por defecto, configurable). Las líneas punteadas a la izquierda indican que la historia sigue más atrás.
 - Los PRs se siguen entre los 50 actualizados más recientemente.

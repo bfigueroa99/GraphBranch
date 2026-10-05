@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>GraphBranch</title>
-<meta name="description" content="Grafo en vivo de las ramas de un repositorio de GitHub, con alertas de commits, pull requests, CI e issues.">
+<meta name="description" content="Grafo en vivo de las ramas de un repositorio de GitHub, con alertas de commits, pull requests e issues.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23121917'/%3E%3Cpath d='M8 24V8M8 15c0-4 4-5 8-5h3M8 19c0 3 3 4 7 4h9' stroke='%233987e5' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='8' cy='8' r='3' fill='%233987e5'/%3E%3Ccircle cx='22' cy='10' r='3' fill='%23d95926'/%3E%3Ccircle cx='24' cy='23' r='3' fill='%23199e70'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -88,11 +88,6 @@
       <span class="stat-sub" id="st-prs-sub"></span>
     </div>
     <div class="stat">
-      <span class="stat-label">Último CI</span>
-      <span class="stat-value ci" id="st-ci">–</span>
-      <span class="stat-sub" id="st-ci-sub"></span>
-    </div>
-    <div class="stat">
       <span class="stat-label">Última actividad</span>
       <span class="stat-value" id="st-last">–</span>
       <span class="stat-sub" id="st-last-sub"></span>
@@ -166,7 +161,7 @@
         <input id="token-input" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
         <button type="button" class="btn btn-ghost" id="token-toggle">Mostrar</button>
       </div>
-      <p class="help">Sin token, GitHub permite 60 consultas por hora. Con un token <em>fine-grained</em> de solo lectura (permisos Metadata, Contents, Pull requests y Actions) la vista se actualiza cada 10 segundos, funciona con repositorios de miles de ramas y puedes ver repos privados. El token se guarda solo en este navegador y se envía únicamente a api.github.com.</p>
+      <p class="help">Sin token, GitHub permite 60 consultas por hora. Con un token <em>fine-grained</em> de solo lectura (permisos Metadata, Contents y Pull requests) la vista se actualiza cada 10 segundos, funciona con repositorios de miles de ramas y puedes ver repos privados. El token se guarda solo en este navegador y se envía únicamente a api.github.com.</p>
     </div>
     <div class="grid2">
       <div class="field">
@@ -194,6 +189,7 @@
 <script src="js/util.js"></script>
 <script src="js/sources/github.js"></script>
 <script src="js/sources/demo.js"></script>
+<script src="js/palette.js"></script>
 <script src="js/layout.js"></script>
 <script src="js/graph.js"></script>
 <script src="js/graph3d.js"></script>

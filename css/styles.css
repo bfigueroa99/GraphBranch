@@ -22,8 +22,7 @@
   --bad: #d03b3b;
   --info: var(--ink-2);
 
-  /* ramas: paleta categórica validada (orden fijo, nunca se recicla) */
-  --s0: #8b9692;
+  /* ramas vivas: paleta categórica validada; el gris (--ghost) es solo de las ramas muertas */
   --s1: #2a78d6;
   --s2: #eb6834;
   --s3: #1baf7a;
@@ -57,7 +56,6 @@
     --good: #0ca30c;
     --warn: #fab219;
     --bad: #e05252;
-    --s0: #6d7975;
     --s1: #3987e5;
     --s2: #d95926;
     --s3: #199e70;
@@ -84,7 +82,6 @@
   --good: #0ca30c;
   --warn: #fab219;
   --bad: #e05252;
-  --s0: #6d7975;
   --s1: #3987e5;
   --s2: #d95926;
   --s3: #199e70;
@@ -440,7 +437,7 @@ kbd {
 /* ---------- franja de resumen ---------- */
 .stats {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -468,23 +465,6 @@ kbd {
   align-items: center;
   gap: 7px;
   white-space: nowrap;
-}
-.stat-value .ico {
-  width: 18px;
-  height: 18px;
-  stroke-width: 1.8;
-}
-.stat-value.ci-ok .ico {
-  color: var(--good);
-}
-.stat-value.ci-fail .ico {
-  color: var(--bad);
-}
-.stat-value.ci-running .ico {
-  color: var(--warn);
-}
-.stat-value.ci-cancel .ico {
-  color: var(--ink-3);
 }
 .stat-sub {
   color: var(--ink-3);
@@ -743,7 +723,6 @@ kbd {
   user-select: none;
   -webkit-user-select: none;
 }
-.c0 { --c: var(--s0); }
 .c1 { --c: var(--s1); }
 .c2 { --c: var(--s2); }
 .c3 { --c: var(--s3); }
@@ -899,31 +878,6 @@ kbd {
 .h-pin path {
   fill: var(--ink-3);
 }
-.h-ci path {
-  fill: none;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.h-ci.ci-ok path {
-  stroke: var(--good);
-}
-.h-ci.ci-fail path {
-  stroke: var(--bad);
-}
-.h-ci.ci-cancel path {
-  stroke: var(--ink-3);
-}
-.h-ci .spin {
-  fill: none;
-  stroke: var(--warn);
-  stroke-width: 2;
-  stroke-dasharray: 18 10;
-  stroke-linecap: round;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: spin 1s linear infinite;
-}
 
 .legend-bg {
   fill: var(--surface);
@@ -1040,28 +994,6 @@ kbd {
   background: var(--ink-3);
   transform: rotate(45deg);
 }
-.h3-ci {
-  width: 12px;
-  height: 12px;
-  fill: none;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.h3-ci.ci-ok {
-  stroke: var(--good);
-}
-.h3-ci.ci-fail {
-  stroke: var(--bad);
-}
-.h3-ci.ci-cancel {
-  stroke: var(--ink-3);
-}
-.h3-ci.ci-running {
-  stroke: var(--warn);
-  stroke-dasharray: 18 10;
-  animation: spin 1s linear infinite;
-}
 .g3-day {
   position: absolute;
   top: 0;
@@ -1141,28 +1073,6 @@ kbd {
   padding: 1px 5px;
   border-radius: 5px;
   background: var(--surface-2);
-}
-.tip-ci.ci-ok::before,
-.tip-ci.ci-fail::before,
-.tip-ci.ci-running::before,
-.tip-ci.ci-cancel::before {
-  content: "";
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  margin-right: 6px;
-  vertical-align: 1px;
-  background: var(--ink-3);
-}
-.tip-ci.ci-ok::before {
-  background: var(--good);
-}
-.tip-ci.ci-fail::before {
-  background: var(--bad);
-}
-.tip-ci.ci-running::before {
-  background: var(--warn);
 }
 .tip-actions {
   display: flex;
@@ -1644,15 +1554,6 @@ button.act-main:hover {
 
 /* ---------- pantallas medianas y pequeñas ---------- */
 @media (max-width: 1180px) {
-  .stats {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .stat:nth-child(4) {
-    border-left: 0;
-  }
-  .stat:nth-child(n + 4) {
-    border-top: 1px solid var(--line);
-  }
   .rate {
     display: none;
   }
@@ -1693,15 +1594,9 @@ button.act-main:hover {
   }
 }
 
-@media (max-width: 560px) {
-  :root {
-    --gutter: 12px;
-  }
+@media (max-width: 720px) {
   .stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .stat {
-    padding: 8px 12px 9px;
   }
   .stat:nth-child(n) {
     border-left: 0;
@@ -1713,8 +1608,14 @@ button.act-main:hover {
   .stat:nth-child(n + 3) {
     border-top: 1px solid var(--line);
   }
-  .stat:last-child {
-    grid-column: 1 / -1;
+}
+
+@media (max-width: 560px) {
+  :root {
+    --gutter: 12px;
+  }
+  .stat {
+    padding: 8px 12px 9px;
   }
   .stat-value {
     font-size: 19px;

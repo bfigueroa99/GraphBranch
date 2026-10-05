@@ -19,7 +19,7 @@
     reset() {
       this.slotOf = new Map(); // rama -> carril del último cálculo (desempata el orden)
       this.seqOf = new Map(); // rama -> orden de aparición (quién se queda los commits compartidos)
-      this.colorOf = new Map(); // rama -> color 1..8 (0 = "otras")
+      this.colorOf = new Map(); // rama -> color 1..8 (0 = gris: fuera de las más activas)
       this.seq = 0;
     }
 
@@ -63,28 +63,14 @@
       }
       const xOf = new Map(order.map((c, i) => [c.sha, i]));
 
-      /* 3. ramas nuevas: orden de aparición y color, que las acompañan mientras existan */
+      /* 3. ramas nuevas: orden de aparición, que las acompaña mientras existan */
       const rank = (b) => (b.name === def ? 0 : b.protected || LONG_LIVED.test(b.name) ? 1 : 2);
       const live = new Set(heads.map((b) => b.name));
-      for (const m of [this.slotOf, this.seqOf, this.colorOf]) for (const n of [...m.keys()]) if (!live.has(n)) m.delete(n);
+      for (const m of [this.slotOf, this.seqOf]) for (const n of [...m.keys()]) if (!live.has(n)) m.delete(n);
       const fresh = heads
         .filter((b) => !this.seqOf.has(b.name))
         .sort((a, b) => rank(a) - rank(b) || (commits.get(b.sha).date || 0) - (commits.get(a.sha).date || 0));
-      for (const b of fresh) {
-        this.seqOf.set(b.name, this.seq++);
-        let color = 0;
-        if (b.name === def) color = 1;
-        else {
-          const usedC = new Set(this.colorOf.values());
-          for (let k = 2; k <= COLOR_SLOTS; k++)
-            if (!usedC.has(k)) {
-              color = k;
-              break;
-            }
-          if (!color && !usedC.has(1) && !live.has(def)) color = 1;
-        }
-        this.colorOf.set(b.name, color);
-      }
+      for (const b of fresh) this.seqOf.set(b.name, this.seq++);
 
       /* 4. dueño de cada commit: primero la rama por defecto y las de larga vida; entre
          las demás, la que apareció antes. No depende del carril, así reordenar las filas
@@ -123,6 +109,24 @@
         );
       this.slotOf = new Map(byActivity.map((b, i) => [b.name, i + 1]));
       if (live.has(def)) this.slotOf.set(def, 0);
+
+      /* colores: la rama por defecto y las más activas. Cada una conserva el suyo mientras
+         siga entre ellas; una rama nueva o gris que recibe un push toma el que deja libre
+         la menos activa, que pasa a gris. */
+      const palette = [];
+      for (let k = 2; k <= COLOR_SLOTS; k++) palette.push(k);
+      if (!live.has(def)) palette.push(1);
+      const top = byActivity.slice(0, palette.length);
+      const colorOf = new Map();
+      if (live.has(def)) colorOf.set(def, 1);
+      for (const b of top) {
+        const c = this.colorOf.get(b.name);
+        if (palette.includes(c) && ![...colorOf.values()].includes(c)) colorOf.set(b.name, c);
+      }
+      const free = palette.filter((c) => ![...colorOf.values()].includes(c));
+      for (const b of top) if (!colorOf.has(b.name)) colorOf.set(b.name, free.shift());
+      for (const b of byActivity) if (!colorOf.has(b.name)) colorOf.set(b.name, 0);
+      this.colorOf = colorOf;
 
       /* 6. ocupación de carriles: ramas hasta el infinito, fantasmas en los huecos */
       const occ = new Map();

@@ -1,7 +1,7 @@
 /* GraphBranch — suomi. */
 GB.i18n.define('fi', {
   /* ---------- sivu ---------- */
-  'meta.description': 'Reaaliaikainen kaavio GitHub-repositorion haaroista sekä ilmoitukset commiteista, pull requesteista, CI:stä ja issueista.',
+  'meta.description': 'Reaaliaikainen kaavio GitHub-repositorion haaroista sekä ilmoitukset commiteista, pull requesteista ja issueista.',
 
   /* ---------- yläpalkki ---------- */
   'repo.label': 'GitHub-repositorio',
@@ -44,7 +44,6 @@ GB.i18n.define('fi', {
   'stats.branches': 'Näkyvät haarat',
   'stats.commits': 'Commitit kaaviossa',
   'stats.prs': 'Avoimet PR:t',
-  'stats.ci': 'Viimeisin CI',
   'stats.last': 'Viimeisin toiminta',
   'stats.branches.only': 'ainoa repositoriossa',
   'stats.branches.all': 'kaikki repositoriossa',
@@ -57,13 +56,7 @@ GB.i18n.define('fi', {
   'stats.drafts': { one: '{n} luonnos', other: '{n} luonnosta' },
   'stats.readyForReview': 'valmiina katselmoitavaksi',
   'stats.noneOpen': 'ei avoimia',
-  'stats.actionsOff': 'Actions ei ole käytössä',
-  'stats.noRuns': 'ei ajoja',
   'stats.noEvents': 'ei tapahtumia',
-  'ci.running': 'Käynnissä',
-  'ci.ok': 'Läpäisty',
-  'ci.fail': 'Epäonnistui',
-  'ci.cancel': 'Peruttu',
 
   /* ---------- kaavion työkalupalkki ---------- */
   'view.aria': 'Näkymän tyyppi',
@@ -98,10 +91,10 @@ GB.i18n.define('fi', {
   'tip.aria': 'Commitin tiedot',
   'tip.fromBranch': 'Haarasta <code>{name}</code>, joka on jo yhdistetty ja poistettu',
   'tip.fromGhost': 'Haarasta, joka on jo yhdistetty ja poistettu',
+  'tip.fromMerged': 'Haarasta <code>{name}</code>, joka on jo yhdistetty (se on yhä olemassa)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (luonnos) → <code>{base}</code>',
   'tip.viewPr': 'näytä PR',
-  'tip.viewRun': 'näytä ajo',
   'tip.mergeOf': { one: '{n} vanhemman yhdistäminen', other: '{n} vanhemman yhdistäminen' },
   'tip.openCommit': 'Avaa commit GitHubissa',
   'tip.pin': 'Kiinnitä <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('fi', {
   'cat.commits': 'Commitit',
   'cat.branches': 'Haarat',
   'cat.prs': 'Pull requestit',
-  'cat.ci': 'CI',
   'cat.issues': 'Issuet',
   'cat.other': 'Muut',
 
@@ -152,10 +144,6 @@ GB.i18n.define('fi', {
   'kind.review': 'Katselmointi',
   'kind.review-ok': 'Hyväksytty',
   'kind.review-changes': 'Muutoksia pyydetty',
-  'kind.ci-start': 'CI käynnissä',
-  'kind.ci-ok': 'CI läpäisty',
-  'kind.ci-fail': 'CI epäonnistui',
-  'kind.ci-cancel': 'CI peruttu',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue suljettu',
   'kind.comment': 'Kommentti',
@@ -205,10 +193,6 @@ GB.i18n.define('fi', {
   'act.commentCommit': 'Commitin {sha} kommentti',
   'act.discussionNew': 'Uusi keskustelu',
   'act.discussionComment': 'Kommentti keskustelussa',
-  'act.ciRunning': 'CI käynnissä: {name}',
-  'act.ciOk': 'CI läpäisty: {name}',
-  'act.ciFail': 'CI epäonnistui: {name}',
-  'act.ciCancel': 'CI peruttu: {name}',
   'act.release': 'Uusi julkaisu: {tag}',
   'act.releaseNoTag': 'Uusi julkaisu',
   'act.star': 'Uusi tähti',
@@ -236,7 +220,7 @@ GB.i18n.define('fi', {
   'settings.optional': 'valinnainen',
   'settings.show': 'Näytä',
   'settings.hide': 'Piilota',
-  'settings.tokenHelp': 'Ilman tokenia GitHub sallii 60 pyyntöä tunnissa. Vain luku -oikeuksilla varustetulla <em>fine-grained</em>-tokenilla (oikeudet Metadata, Contents, Pull requests ja Actions) näkymä päivittyy 10 sekunnin välein, toimii repositorioiden kanssa, joissa on tuhansia haaroja, ja voit nähdä yksityiset repositoriot. Token tallennetaan vain tähän selaimeen, ja se lähetetään vain osoitteeseen api.github.com.',
+  'settings.tokenHelp': 'Ilman tokenia GitHub sallii 60 pyyntöä tunnissa. Vain luku -oikeuksilla varustetulla <em>fine-grained</em>-tokenilla (oikeudet Metadata, Contents ja Pull requests) näkymä päivittyy 10 sekunnin välein, toimii repositorioiden kanssa, joissa on tuhansia haaroja, ja voit nähdä yksityiset repositoriot. Token tallennetaan vain tähän selaimeen, ja se lähetetään vain osoitteeseen api.github.com.',
   'settings.maxBranches': 'Näytettävien aktiivisimpien haarojen määrä',
   'settings.depth': 'Committeja haaraa kohti',
   'settings.branchesHelp': 'Suurissa repositorioissa GraphBranch ei listaa kaikkia haaroja: se näyttää oletushaaran, kiinnittämäsi haarat (napsauta haaraa → <strong>Kiinnitä</strong>) ja haarat, joissa on tuoreimmat commitit. Keskity tiettyyn etuliitteeseen kaavion suodattimella, esimerkiksi <code>release/</code>.',

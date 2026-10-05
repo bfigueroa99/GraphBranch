@@ -13,10 +13,6 @@
     pr: '<circle cx="4.5" cy="3.5" r="1.8"/><circle cx="4.5" cy="12.5" r="1.8"/><circle cx="11.5" cy="12.5" r="1.8"/><path d="M4.5 5.3v5.4M11.5 10.7V6.5a2 2 0 0 0-2-2H7.4M9 2.9 7.4 4.5 9 6.1"/>',
     prClosed: '<circle cx="4.5" cy="3.5" r="1.8"/><circle cx="4.5" cy="12.5" r="1.8"/><circle cx="11.5" cy="12.5" r="1.8"/><path d="M4.5 5.3v5.4M11.5 10.7V8M9.8 2.3l3.4 3.4M13.2 2.3 9.8 5.7"/>',
     trash: '<path d="M2.8 4.5h10.4M6.3 4.5V2.8h3.4v1.7M4.3 4.5l.7 8.7h6l.7-8.7"/>',
-    check: '<circle cx="8" cy="8" r="6"/><path d="m5.3 8.2 1.9 1.9 3.6-3.8"/>',
-    x: '<circle cx="8" cy="8" r="6"/><path d="m5.9 5.9 4.2 4.2M10.1 5.9l-4.2 4.2"/>',
-    run: '<circle cx="8" cy="8" r="6"/><path d="M8 4.6V8l2.3 1.6"/>',
-    cancel: '<circle cx="8" cy="8" r="6"/><path d="M3.8 12.2 12.2 3.8"/>',
     issue: '<circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="1.3"/>',
     issueClosed: '<circle cx="8" cy="8" r="6"/><path d="m5.3 8.2 1.9 1.9 3.6-3.8"/>',
     comment: '<path d="M2.5 3h11v7.3H8l-3.2 2.7v-2.7H2.5z"/>',
@@ -44,10 +40,6 @@
     review: { cat: 'prs', sev: 'info', icon: 'review' },
     'review-ok': { cat: 'prs', sev: 'good', icon: 'review' },
     'review-changes': { cat: 'prs', sev: 'warn', icon: 'review' },
-    'ci-start': { cat: 'ci', sev: 'info', icon: 'run', quiet: true },
-    'ci-ok': { cat: 'ci', sev: 'good', icon: 'check' },
-    'ci-fail': { cat: 'ci', sev: 'bad', icon: 'x' },
-    'ci-cancel': { cat: 'ci', sev: 'info', icon: 'cancel' },
     'issue-open': { cat: 'issues', sev: 'info', icon: 'issue' },
     'issue-close': { cat: 'issues', sev: 'good', icon: 'issueClosed' },
     comment: { cat: 'issues', sev: 'info', icon: 'comment' },
@@ -57,7 +49,7 @@
     fork: { cat: 'other', sev: 'info', icon: 'fork' },
     other: { cat: 'other', sev: 'info', icon: 'dot' },
   };
-  const CATS = ['commits', 'branches', 'prs', 'ci', 'issues', 'other'];
+  const CATS = ['commits', 'branches', 'prs', 'issues', 'other'];
   const SEV_RANK = { bad: 3, warn: 2, good: 1, info: 0 };
   const meta = (a) => KINDS[a.kind] || KINDS.other;
   const kindLabel = (a) => t('kind.' + (KINDS[a.kind] ? a.kind : 'other'));
@@ -218,7 +210,7 @@
 
     alert(acts) {
       const ranked = [...acts].sort((a, b) => SEV_RANK[meta(b).sev] - SEV_RANK[meta(a).sev] || b.time - a.time);
-      const loud = ranked.filter((a) => !meta(a).quiet && this.filters.has(meta(a).cat));
+      const loud = ranked.filter((a) => this.filters.has(meta(a).cat));
       const shown = loud.length > 3 ? loud.slice(0, 2) : loud;
       for (const a of shown.reverse()) this.toast(a);
       if (loud.length > 3) this.summaryToast(loud.length - 2);

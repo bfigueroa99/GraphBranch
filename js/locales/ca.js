@@ -1,7 +1,7 @@
 /* GraphBranch — català. */
 GB.i18n.define('ca', {
   /* ---------- pàgina ---------- */
-  'meta.description': "Graf en directe de les branques d'un repositori de GitHub, amb alertes de commits, pull requests, CI i issues.",
+  'meta.description': "Graf en directe de les branques d'un repositori de GitHub, amb alertes de commits, pull requests i issues.",
 
   /* ---------- barra superior ---------- */
   'repo.label': 'Repositori de GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('ca', {
   'stats.branches': 'Branques visibles',
   'stats.commits': 'Commits al graf',
   'stats.prs': 'PR oberts',
-  'stats.ci': 'Darrer CI',
   'stats.last': 'Darrera activitat',
   'stats.branches.only': "l'única del repo",
   'stats.branches.all': 'totes les del repo',
@@ -57,13 +56,7 @@ GB.i18n.define('ca', {
   'stats.drafts': { one: '{n} esborrany', other: '{n} esborranys' },
   'stats.readyForReview': 'llestos per revisar',
   'stats.noneOpen': "cap d'obert",
-  'stats.actionsOff': 'Actions desactivat',
-  'stats.noRuns': 'sense execucions',
   'stats.noEvents': 'sense esdeveniments',
-  'ci.running': 'En curs',
-  'ci.ok': 'Aprovat',
-  'ci.fail': 'Ha fallat',
-  'ci.cancel': 'Cancel·lat',
 
   /* ---------- barra del graf ---------- */
   'view.aria': 'Tipus de vista',
@@ -98,10 +91,10 @@ GB.i18n.define('ca', {
   'tip.aria': 'Detall del commit',
   'tip.fromBranch': 'De la branca <code>{name}</code>, ja fusionada i eliminada',
   'tip.fromGhost': "D'una branca ja fusionada i eliminada",
+  'tip.fromMerged': 'De la branca <code>{name}</code>, ja fusionada (encara existeix)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (esborrany) → <code>{base}</code>',
   'tip.viewPr': 'veure PR',
-  'tip.viewRun': 'veure execució',
   'tip.mergeOf': { one: 'merge de {n} pare', other: 'merge de {n} pares' },
   'tip.openCommit': 'Obre el commit a GitHub',
   'tip.pin': 'Fixa <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('ca', {
   'cat.commits': 'Commits',
   'cat.branches': 'Branques',
   'cat.prs': 'Pull requests',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'Altres',
 
@@ -152,10 +144,6 @@ GB.i18n.define('ca', {
   'kind.review': 'Revisió',
   'kind.review-ok': 'Aprovat',
   'kind.review-changes': 'Canvis sol·licitats',
-  'kind.ci-start': 'CI en curs',
-  'kind.ci-ok': 'CI aprovat',
-  'kind.ci-fail': 'CI ha fallat',
-  'kind.ci-cancel': 'CI cancel·lat',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue tancat',
   'kind.comment': 'Comentari',
@@ -205,10 +193,6 @@ GB.i18n.define('ca', {
   'act.commentCommit': 'Comentari al commit {sha}',
   'act.discussionNew': 'Nova discussió',
   'act.discussionComment': 'Comentari en una discussió',
-  'act.ciRunning': 'CI en curs: {name}',
-  'act.ciOk': 'CI aprovat: {name}',
-  'act.ciFail': 'CI ha fallat: {name}',
-  'act.ciCancel': 'CI cancel·lat: {name}',
   'act.release': 'Release {tag} publicada',
   'act.releaseNoTag': 'Release publicada',
   'act.star': 'Estrella nova',
@@ -236,7 +220,7 @@ GB.i18n.define('ca', {
   'settings.optional': 'opcional',
   'settings.show': 'Mostra',
   'settings.hide': 'Amaga',
-  'settings.tokenHelp': "Sense token, GitHub permet 60 consultes per hora. Amb un token <em>fine-grained</em> de només lectura (permisos Metadata, Contents, Pull requests i Actions) la vista s'actualitza cada 10 segons, funciona amb repositoris de milers de branques i pots veure repos privats. El token només es desa en aquest navegador i només s'envia a api.github.com.",
+  'settings.tokenHelp': "Sense token, GitHub permet 60 consultes per hora. Amb un token <em>fine-grained</em> de només lectura (permisos Metadata, Contents i Pull requests) la vista s'actualitza cada 10 segons, funciona amb repositoris de milers de branques i pots veure repos privats. El token només es desa en aquest navegador i només s'envia a api.github.com.",
   'settings.maxBranches': 'Branques més actives a mostrar',
   'settings.depth': 'Commits per branca',
   'settings.branchesHelp': "En repos grans GraphBranch no llista totes les branques: mostra la branca per defecte, les que fixis (clic en una branca → <strong>Fixa</strong>) i les que tenen els commits més recents. Fes servir el filtre del graf per centrar-te en un prefix, per exemple <code>release/</code>.",

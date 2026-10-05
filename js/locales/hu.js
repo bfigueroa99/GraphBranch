@@ -1,7 +1,7 @@
 /* GraphBranch — magyar. */
 GB.i18n.define('hu', {
   /* ---------- oldal ---------- */
-  'meta.description': 'Egy GitHub-repozitórium ágainak élő gráfja értesítésekkel: commitok, pull requestek, CI és issue-k.',
+  'meta.description': 'Egy GitHub-repozitórium ágainak élő gráfja értesítésekkel: commitok, pull requestek és issue-k.',
 
   /* ---------- felső sáv ---------- */
   'repo.label': 'GitHub-repozitórium',
@@ -44,7 +44,6 @@ GB.i18n.define('hu', {
   'stats.branches': 'Látható ágak',
   'stats.commits': 'Commitok a gráfban',
   'stats.prs': 'Nyitott PR-ok',
-  'stats.ci': 'Legutóbbi CI',
   'stats.last': 'Utolsó aktivitás',
   'stats.branches.only': 'az egyetlen a repóban',
   'stats.branches.all': 'mind a repóban',
@@ -57,13 +56,7 @@ GB.i18n.define('hu', {
   'stats.drafts': { one: '{n} piszkozat', other: '{n} piszkozat' },
   'stats.readyForReview': 'review-ra kész',
   'stats.noneOpen': 'nincs nyitott',
-  'stats.actionsOff': 'Az Actions ki van kapcsolva',
-  'stats.noRuns': 'nincs futás',
   'stats.noEvents': 'nincs esemény',
-  'ci.running': 'Fut',
-  'ci.ok': 'Sikeres',
-  'ci.fail': 'Sikertelen',
-  'ci.cancel': 'Megszakítva',
 
   /* ---------- gráf eszköztára ---------- */
   'view.aria': 'Nézet típusa',
@@ -98,10 +91,10 @@ GB.i18n.define('hu', {
   'tip.aria': 'A commit részletei',
   'tip.fromBranch': 'Ágból: <code>{name}</code> (már beolvasztva és törölve)',
   'tip.fromGhost': 'Egy már beolvasztott és törölt ágból',
+  'tip.fromMerged': 'Ágból: <code>{name}</code> (már beolvasztva, még létezik)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (piszkozat) → <code>{base}</code>',
   'tip.viewPr': 'PR megtekintése',
-  'tip.viewRun': 'futás megtekintése',
   'tip.mergeOf': { one: 'merge, {n} szülővel', other: 'merge, {n} szülővel' },
   'tip.openCommit': 'Commit megnyitása a GitHubon',
   'tip.pin': 'Kitűzés: <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('hu', {
   'cat.commits': 'Commitok',
   'cat.branches': 'Ágak',
   'cat.prs': 'Pull requestek',
-  'cat.ci': 'CI',
   'cat.issues': 'Issue-k',
   'cat.other': 'Egyéb',
 
@@ -152,10 +144,6 @@ GB.i18n.define('hu', {
   'kind.review': 'Review',
   'kind.review-ok': 'Jóváhagyva',
   'kind.review-changes': 'Változtatások kérve',
-  'kind.ci-start': 'CI fut',
-  'kind.ci-ok': 'CI sikeres',
-  'kind.ci-fail': 'CI sikertelen',
-  'kind.ci-cancel': 'CI megszakítva',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue lezárva',
   'kind.comment': 'Hozzászólás',
@@ -205,10 +193,6 @@ GB.i18n.define('hu', {
   'act.commentCommit': 'Hozzászólás a commithoz: {sha}',
   'act.discussionNew': 'Új beszélgetés',
   'act.discussionComment': 'Hozzászólás egy beszélgetéshez',
-  'act.ciRunning': 'CI fut: {name}',
-  'act.ciOk': 'CI sikeres: {name}',
-  'act.ciFail': 'CI sikertelen: {name}',
-  'act.ciCancel': 'CI megszakítva: {name}',
   'act.release': 'Release közzétéve: {tag}',
   'act.releaseNoTag': 'Release közzétéve',
   'act.star': 'Új csillag',
@@ -236,7 +220,7 @@ GB.i18n.define('hu', {
   'settings.optional': 'nem kötelező',
   'settings.show': 'Mutatás',
   'settings.hide': 'Elrejtés',
-  'settings.tokenHelp': 'Token nélkül a GitHub óránként 60 kérést enged. Egy csak olvasható <em>fine-grained</em> tokennel (Metadata, Contents, Pull requests és Actions jogosultságok) a nézet 10 másodpercenként frissül, működik több ezer ágat tartalmazó repozitóriumokkal is, és a privát repókat is láthatod. A token csak ebben a böngészőben van tárolva, és kizárólag az api.github.com kapja meg.',
+  'settings.tokenHelp': 'Token nélkül a GitHub óránként 60 kérést enged. Egy csak olvasható <em>fine-grained</em> tokennel (Metadata, Contents és Pull requests jogosultságok) a nézet 10 másodpercenként frissül, működik több ezer ágat tartalmazó repozitóriumokkal is, és a privát repókat is láthatod. A token csak ebben a böngészőben van tárolva, és kizárólag az api.github.com kapja meg.',
   'settings.maxBranches': 'Megjelenítendő legaktívabb ágak',
   'settings.depth': 'Commitok ágonként',
   'settings.branchesHelp': 'Nagy repozitóriumoknál a GraphBranch nem listázza az összes ágat: az alapértelmezett ágat, a kitűzötteket (kattints egy ágra → <strong>Kitűzés</strong>) és a legfrissebb commitokkal rendelkezőket mutatja. A gráf szűrőjével egy előtagra fókuszálhatsz, például <code>release/</code>.',

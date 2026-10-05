@@ -1,7 +1,7 @@
 /* GraphBranch — العربية (Arabic). */
 GB.i18n.define('ar', {
   /* ---------- page ---------- */
-  'meta.description': 'رسم بياني مباشر لفروع مستودع GitHub، مع تنبيهات بخصوص commits وPull requests وCI وIssues.',
+  'meta.description': 'رسم بياني مباشر لفروع مستودع GitHub، مع تنبيهات بخصوص commits وPull requests وIssues.',
 
   /* ---------- top bar ---------- */
   'repo.label': 'مستودع GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('ar', {
   'stats.branches': 'الفروع المعروضة',
   'stats.commits': 'Commits في الرسم البياني',
   'stats.prs': 'PR المفتوحة',
-  'stats.ci': 'آخر CI',
   'stats.last': 'آخر نشاط',
   'stats.branches.only': 'الفرع الوحيد في المستودع',
   'stats.branches.all': 'كل فروع المستودع',
@@ -78,13 +77,7 @@ GB.i18n.define('ar', {
   },
   'stats.readyForReview': 'جاهزة للمراجعة',
   'stats.noneOpen': 'لا شيء مفتوح',
-  'stats.actionsOff': 'Actions معطّل',
-  'stats.noRuns': 'لا عمليات تشغيل',
   'stats.noEvents': 'لا أحداث',
-  'ci.running': 'قيد التشغيل',
-  'ci.ok': 'ناجح',
-  'ci.fail': 'فاشل',
-  'ci.cancel': 'ملغى',
 
   /* ---------- graph toolbar ---------- */
   'view.aria': 'نوع العرض',
@@ -119,10 +112,10 @@ GB.i18n.define('ar', {
   'tip.aria': 'تفاصيل الـ commit',
   'tip.fromBranch': 'من الفرع <code>{name}</code>، الذي تم دمجه وحذفه',
   'tip.fromGhost': 'من فرع تم دمجه وحذفه',
+  'tip.fromMerged': 'من الفرع <code>{name}</code>، الذي تم دمجه (ولا يزال موجودًا)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} → <code>{base}</code> (مسودة)',
   'tip.viewPr': 'عرض PR',
-  'tip.viewRun': 'عرض التشغيل',
   'tip.mergeOf': {
     zero: 'دمج بلا commits أصلية',
     one: 'دمج لـ commit أصلي واحد',
@@ -171,7 +164,6 @@ GB.i18n.define('ar', {
   'cat.commits': 'Commits',
   'cat.branches': 'الفروع',
   'cat.prs': 'Pull requests',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'أخرى',
 
@@ -188,10 +180,6 @@ GB.i18n.define('ar', {
   'kind.review': 'مراجعة',
   'kind.review-ok': 'تمت الموافقة',
   'kind.review-changes': 'طُلبت تعديلات',
-  'kind.ci-start': 'CI قيد التشغيل',
-  'kind.ci-ok': 'نجح CI',
-  'kind.ci-fail': 'فشل CI',
-  'kind.ci-cancel': 'أُلغي CI',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue مغلق',
   'kind.comment': 'تعليق',
@@ -262,10 +250,6 @@ GB.i18n.define('ar', {
   'act.commentCommit': 'تعليق على commit {sha}',
   'act.discussionNew': 'نقاش جديد',
   'act.discussionComment': 'تعليق على نقاش',
-  'act.ciRunning': 'CI قيد التشغيل: {name}',
-  'act.ciOk': 'نجح CI: {name}',
-  'act.ciFail': 'فشل CI: {name}',
-  'act.ciCancel': 'تم إلغاء CI: {name}',
   'act.release': 'تم نشر Release {tag}',
   'act.releaseNoTag': 'تم نشر Release',
   'act.star': 'نجمة جديدة',
@@ -293,7 +277,7 @@ GB.i18n.define('ar', {
   'settings.optional': 'اختياري',
   'settings.show': 'إظهار',
   'settings.hide': 'إخفاء',
-  'settings.tokenHelp': 'بدون رمز وصول، يسمح GitHub بـ 60 طلبًا في الساعة. أما مع رمز وصول <em>fine-grained</em> للقراءة فقط (بصلاحيات Metadata وContents وPull requests وActions) فيتحدّث العرض كل 10 ثوانٍ، ويعمل مع المستودعات التي تضم آلاف الفروع، ويمكنك عرض المستودعات الخاصة. يُحفظ الرمز في هذا المتصفح فقط ولا يُرسل إلا إلى api.github.com.',
+  'settings.tokenHelp': 'بدون رمز وصول، يسمح GitHub بـ 60 طلبًا في الساعة. أما مع رمز وصول <em>fine-grained</em> للقراءة فقط (بصلاحيات Metadata وContents وPull requests) فيتحدّث العرض كل 10 ثوانٍ، ويعمل مع المستودعات التي تضم آلاف الفروع، ويمكنك عرض المستودعات الخاصة. يُحفظ الرمز في هذا المتصفح فقط ولا يُرسل إلا إلى api.github.com.',
   'settings.maxBranches': 'عدد الفروع الأكثر نشاطًا المعروضة',
   'settings.depth': 'عدد الـ commits لكل فرع',
   'settings.branchesHelp': 'في المستودعات الكبيرة لا يعرض GraphBranch كل الفروع، بل الفرع الافتراضي، والفروع التي تثبّتها (انقر على فرع ثم على <strong>تثبيت</strong>)، والفروع ذات أحدث الـ commits. استخدم عامل تصفية الرسم البياني للتركيز على بادئة معيّنة، مثل <code>release/</code>.',

@@ -1,7 +1,7 @@
 /* GraphBranch — 简体中文. */
 GB.i18n.define('zh-Hans', {
   /* ---------- 页面 ---------- */
-  'meta.description': '实时展示 GitHub 仓库的分支关系图，并提醒提交、Pull Request、CI 和 Issue 的动态。',
+  'meta.description': '实时展示 GitHub 仓库的分支关系图，并提醒提交、Pull Request 和 Issue 的动态。',
 
   /* ---------- 顶部栏 ---------- */
   'repo.label': 'GitHub 仓库',
@@ -44,7 +44,6 @@ GB.i18n.define('zh-Hans', {
   'stats.branches': '可见分支',
   'stats.commits': '图中的提交',
   'stats.prs': '打开的 PR',
-  'stats.ci': '最近一次 CI',
   'stats.last': '最近活动',
   'stats.branches.only': '仓库中仅此一个',
   'stats.branches.all': '仓库中的全部分支',
@@ -57,13 +56,7 @@ GB.i18n.define('zh-Hans', {
   'stats.drafts': '{n} 个草稿',
   'stats.readyForReview': '均可供审查',
   'stats.noneOpen': '没有打开的',
-  'stats.actionsOff': 'Actions 已停用',
-  'stats.noRuns': '无运行记录',
   'stats.noEvents': '无事件',
-  'ci.running': '运行中',
-  'ci.ok': '通过',
-  'ci.fail': '失败',
-  'ci.cancel': '已取消',
 
   /* ---------- 图形工具栏 ---------- */
   'view.aria': '视图类型',
@@ -98,10 +91,10 @@ GB.i18n.define('zh-Hans', {
   'tip.aria': '提交详情',
   'tip.fromBranch': '来自分支 <code>{name}</code>，已合并并删除',
   'tip.fromGhost': '来自已合并并删除的分支',
+  'tip.fromMerged': '来自分支 <code>{name}</code>，已合并（仍然存在）',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num}（草稿）→ <code>{base}</code>',
   'tip.viewPr': '查看 PR',
-  'tip.viewRun': '查看运行',
   'tip.mergeOf': '合并了 {n} 个父提交',
   'tip.openCommit': '在 GitHub 上打开提交',
   'tip.pin': '固定 <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('zh-Hans', {
   'cat.commits': '提交',
   'cat.branches': '分支',
   'cat.prs': 'Pull Request',
-  'cat.ci': 'CI',
   'cat.issues': 'Issue',
   'cat.other': '其他',
 
@@ -152,10 +144,6 @@ GB.i18n.define('zh-Hans', {
   'kind.review': '审查',
   'kind.review-ok': '已批准',
   'kind.review-changes': '请求更改',
-  'kind.ci-start': 'CI 运行中',
-  'kind.ci-ok': 'CI 通过',
-  'kind.ci-fail': 'CI 失败',
-  'kind.ci-cancel': 'CI 已取消',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue 已关闭',
   'kind.comment': '评论',
@@ -205,10 +193,6 @@ GB.i18n.define('zh-Hans', {
   'act.commentCommit': '提交 {sha} 的评论',
   'act.discussionNew': '新讨论',
   'act.discussionComment': '讨论中的评论',
-  'act.ciRunning': 'CI 运行中：{name}',
-  'act.ciOk': 'CI 通过：{name}',
-  'act.ciFail': 'CI 失败：{name}',
-  'act.ciCancel': 'CI 已取消：{name}',
   'act.release': 'Release {tag} 已发布',
   'act.releaseNoTag': 'Release 已发布',
   'act.star': '新增星标',
@@ -236,7 +220,7 @@ GB.i18n.define('zh-Hans', {
   'settings.optional': '可选',
   'settings.show': '显示',
   'settings.hide': '隐藏',
-  'settings.tokenHelp': '没有令牌时，GitHub 每小时只允许 60 次请求。使用只读的 <em>fine-grained</em> 令牌（需要 Metadata、Contents、Pull requests 和 Actions 权限），视图每 10 秒刷新一次，可以处理拥有数千个分支的仓库，还能查看私有仓库。令牌仅保存在此浏览器中，并且只会发送到 api.github.com。',
+  'settings.tokenHelp': '没有令牌时，GitHub 每小时只允许 60 次请求。使用只读的 <em>fine-grained</em> 令牌（需要 Metadata、Contents 和 Pull requests 权限），视图每 10 秒刷新一次，可以处理拥有数千个分支的仓库，还能查看私有仓库。令牌仅保存在此浏览器中，并且只会发送到 api.github.com。',
   'settings.maxBranches': '显示的最活跃分支数',
   'settings.depth': '每个分支的提交数',
   'settings.branchesHelp': '在大型仓库中，GraphBranch 不会列出全部分支：只显示默认分支、已固定的分支（点击某个分支 → <strong>固定</strong>）以及最近有提交的分支。可使用图上的筛选框聚焦某个前缀，例如 <code>release/</code>。',

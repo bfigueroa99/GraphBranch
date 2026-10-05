@@ -1,7 +1,7 @@
 /* GraphBranch — français. */
 GB.i18n.define('fr', {
   /* ---------- page ---------- */
-  'meta.description': 'Graphe en direct des branches d’un dépôt GitHub, avec des alertes pour les commits, les pull requests, la CI et les issues.',
+  'meta.description': 'Graphe en direct des branches d’un dépôt GitHub, avec des alertes pour les commits, les pull requests et les issues.',
 
   /* ---------- barre supérieure ---------- */
   'repo.label': 'Dépôt GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('fr', {
   'stats.branches': 'Branches visibles',
   'stats.commits': 'Commits dans le graphe',
   'stats.prs': 'PR ouvertes',
-  'stats.ci': 'Dernière CI',
   'stats.last': 'Dernière activité',
   'stats.branches.only': 'la seule du dépôt',
   'stats.branches.all': 'toutes celles du dépôt',
@@ -57,13 +56,7 @@ GB.i18n.define('fr', {
   'stats.drafts': { one: '{n} brouillon', other: '{n} brouillons' },
   'stats.readyForReview': 'prêtes pour la revue',
   'stats.noneOpen': 'aucune ouverte',
-  'stats.actionsOff': 'Actions désactivées',
-  'stats.noRuns': 'aucune exécution',
   'stats.noEvents': 'aucun événement',
-  'ci.running': 'En cours',
-  'ci.ok': 'Réussie',
-  'ci.fail': 'Échec',
-  'ci.cancel': 'Annulée',
 
   /* ---------- barre du graphe ---------- */
   'view.aria': 'Type de vue',
@@ -98,10 +91,10 @@ GB.i18n.define('fr', {
   'tip.aria': 'Détails du commit',
   'tip.fromBranch': 'Depuis la branche <code>{name}</code>, déjà fusionnée et supprimée',
   'tip.fromGhost': 'Depuis une branche déjà fusionnée et supprimée',
+  'tip.fromMerged': 'Depuis la branche <code>{name}</code>, déjà fusionnée (elle existe toujours)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (brouillon) → <code>{base}</code>',
   'tip.viewPr': 'voir la PR',
-  'tip.viewRun': 'voir l’exécution',
   'tip.mergeOf': { one: 'fusion de {n} parent', other: 'fusion de {n} parents' },
   'tip.openCommit': 'Ouvrir le commit sur GitHub',
   'tip.pin': 'Épingler <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('fr', {
   'cat.commits': 'Commits',
   'cat.branches': 'Branches',
   'cat.prs': 'Pull requests',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'Autres',
 
@@ -153,10 +145,6 @@ GB.i18n.define('fr', {
   'kind.review': 'Revue',
   'kind.review-ok': 'Approuvée',
   'kind.review-changes': 'Modifications demandées',
-  'kind.ci-start': 'CI en cours',
-  'kind.ci-ok': 'CI réussie',
-  'kind.ci-fail': 'CI en échec',
-  'kind.ci-cancel': 'CI annulée',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue fermée',
   'kind.comment': 'Commentaire',
@@ -206,10 +194,6 @@ GB.i18n.define('fr', {
   'act.commentCommit': 'Commentaire sur le commit {sha}',
   'act.discussionNew': 'Nouvelle discussion',
   'act.discussionComment': 'Commentaire dans une discussion',
-  'act.ciRunning': 'CI en cours : {name}',
-  'act.ciOk': 'CI réussie : {name}',
-  'act.ciFail': 'CI en échec : {name}',
-  'act.ciCancel': 'CI annulée : {name}',
   'act.release': 'Release {tag} publiée',
   'act.releaseNoTag': 'Release publiée',
   'act.star': 'Nouvelle étoile',
@@ -237,7 +221,7 @@ GB.i18n.define('fr', {
   'settings.optional': 'facultatif',
   'settings.show': 'Afficher',
   'settings.hide': 'Masquer',
-  'settings.tokenHelp': 'Sans jeton, GitHub autorise 60 requêtes par heure. Avec un jeton <em>fine-grained</em> en lecture seule (permissions Metadata, Contents, Pull requests et Actions), la vue est actualisée toutes les 10 secondes, fonctionne avec des dépôts de plusieurs milliers de branches et vous pouvez consulter les dépôts privés. Le jeton est conservé uniquement dans ce navigateur et n’est envoyé qu’à api.github.com.',
+  'settings.tokenHelp': 'Sans jeton, GitHub autorise 60 requêtes par heure. Avec un jeton <em>fine-grained</em> en lecture seule (permissions Metadata, Contents et Pull requests), la vue est actualisée toutes les 10 secondes, fonctionne avec des dépôts de plusieurs milliers de branches et vous pouvez consulter les dépôts privés. Le jeton est conservé uniquement dans ce navigateur et n’est envoyé qu’à api.github.com.',
   'settings.maxBranches': 'Nombre de branches les plus actives à afficher',
   'settings.depth': 'Commits par branche',
   'settings.branchesHelp': 'Sur les gros dépôts, GraphBranch ne liste pas toutes les branches : il affiche la branche par défaut, celles que vous épinglez (clic sur une branche → <strong>Épingler</strong>) et celles dont les commits sont les plus récents. Utilisez le filtre du graphe pour vous concentrer sur un préfixe, par exemple <code>release/</code>.',

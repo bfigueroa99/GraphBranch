@@ -1,7 +1,7 @@
 /* GraphBranch — Deutsch. */
 GB.i18n.define('de', {
   /* ---------- Seite ---------- */
-  'meta.description': 'Live-Graph der Branches eines GitHub-Repositorys mit Hinweisen zu Commits, Pull Requests, CI und Issues.',
+  'meta.description': 'Live-Graph der Branches eines GitHub-Repositorys mit Hinweisen zu Commits, Pull Requests und Issues.',
 
   /* ---------- obere Leiste ---------- */
   'repo.label': 'GitHub-Repository',
@@ -44,7 +44,6 @@ GB.i18n.define('de', {
   'stats.branches': 'Sichtbare Branches',
   'stats.commits': 'Commits im Graph',
   'stats.prs': 'Offene PRs',
-  'stats.ci': 'Letzte CI',
   'stats.last': 'Letzte Aktivität',
   'stats.branches.only': 'der einzige im Repository',
   'stats.branches.all': 'alle im Repository',
@@ -57,13 +56,7 @@ GB.i18n.define('de', {
   'stats.drafts': { one: '{n} Entwurf', other: '{n} Entwürfe' },
   'stats.readyForReview': 'bereit zum Review',
   'stats.noneOpen': 'keine offen',
-  'stats.actionsOff': 'Actions deaktiviert',
-  'stats.noRuns': 'keine Ausführungen',
   'stats.noEvents': 'keine Ereignisse',
-  'ci.running': 'Läuft',
-  'ci.ok': 'Erfolgreich',
-  'ci.fail': 'Fehlgeschlagen',
-  'ci.cancel': 'Abgebrochen',
 
   /* ---------- Graph-Leiste ---------- */
   'view.aria': 'Ansichtstyp',
@@ -98,10 +91,10 @@ GB.i18n.define('de', {
   'tip.aria': 'Commit-Details',
   'tip.fromBranch': 'Vom Branch <code>{name}</code>, bereits gemergt und gelöscht',
   'tip.fromGhost': 'Von einem bereits gemergten und gelöschten Branch',
+  'tip.fromMerged': 'Vom Branch <code>{name}</code>, bereits gemergt (er existiert noch)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (Entwurf) → <code>{base}</code>',
   'tip.viewPr': 'PR ansehen',
-  'tip.viewRun': 'Ausführung ansehen',
   'tip.mergeOf': { one: 'Merge von {n} Eltern-Commit', other: 'Merge von {n} Eltern-Commits' },
   'tip.openCommit': 'Commit auf GitHub öffnen',
   'tip.pin': '<code>{branch}</code> anheften',
@@ -136,7 +129,6 @@ GB.i18n.define('de', {
   'cat.commits': 'Commits',
   'cat.branches': 'Branches',
   'cat.prs': 'Pull Requests',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'Sonstiges',
 
@@ -153,10 +145,6 @@ GB.i18n.define('de', {
   'kind.review': 'Review',
   'kind.review-ok': 'Genehmigt',
   'kind.review-changes': 'Änderungen angefordert',
-  'kind.ci-start': 'CI läuft',
-  'kind.ci-ok': 'CI erfolgreich',
-  'kind.ci-fail': 'CI fehlgeschlagen',
-  'kind.ci-cancel': 'CI abgebrochen',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue geschlossen',
   'kind.comment': 'Kommentar',
@@ -206,10 +194,6 @@ GB.i18n.define('de', {
   'act.commentCommit': 'Kommentar zu Commit {sha}',
   'act.discussionNew': 'Neue Diskussion',
   'act.discussionComment': 'Kommentar in einer Diskussion',
-  'act.ciRunning': 'CI läuft: {name}',
-  'act.ciOk': 'CI erfolgreich: {name}',
-  'act.ciFail': 'CI fehlgeschlagen: {name}',
-  'act.ciCancel': 'CI abgebrochen: {name}',
   'act.release': 'Release {tag} veröffentlicht',
   'act.releaseNoTag': 'Release veröffentlicht',
   'act.star': 'Neuer Stern',
@@ -237,7 +221,7 @@ GB.i18n.define('de', {
   'settings.optional': 'optional',
   'settings.show': 'Anzeigen',
   'settings.hide': 'Verbergen',
-  'settings.tokenHelp': 'Ohne Token erlaubt GitHub 60 Anfragen pro Stunde. Mit einem schreibgeschützten <em>Fine-grained</em>-Token (Berechtigungen Metadata, Contents, Pull requests und Actions) wird die Ansicht alle 10 Sekunden aktualisiert, funktioniert mit Repositorys mit Tausenden von Branches und du kannst private Repositorys sehen. Der Token wird nur in diesem Browser gespeichert und ausschließlich an api.github.com gesendet.',
+  'settings.tokenHelp': 'Ohne Token erlaubt GitHub 60 Anfragen pro Stunde. Mit einem schreibgeschützten <em>Fine-grained</em>-Token (Berechtigungen Metadata, Contents und Pull requests) wird die Ansicht alle 10 Sekunden aktualisiert, funktioniert mit Repositorys mit Tausenden von Branches und du kannst private Repositorys sehen. Der Token wird nur in diesem Browser gespeichert und ausschließlich an api.github.com gesendet.',
   'settings.maxBranches': 'Anzahl der aktivsten Branches',
   'settings.depth': 'Commits pro Branch',
   'settings.branchesHelp': 'Bei großen Repositorys listet GraphBranch nicht alle Branches auf: Es zeigt den Standard-Branch, die angehefteten (Branch anklicken → <strong>Anheften</strong>) und die mit den neuesten Commits. Mit dem Graph-Filter kannst du dich auf ein Präfix konzentrieren, zum Beispiel <code>release/</code>.',

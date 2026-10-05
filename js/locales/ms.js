@@ -1,7 +1,7 @@
 /* GraphBranch — Bahasa Melayu. */
 GB.i18n.define('ms', {
   /* ---------- halaman ---------- */
-  'meta.description': 'Graf langsung bagi branch sebuah repositori GitHub, dengan amaran untuk commit, pull request, CI dan issue.',
+  'meta.description': 'Graf langsung bagi branch sebuah repositori GitHub, dengan amaran untuk commit, pull request dan issue.',
 
   /* ---------- bar atas ---------- */
   'repo.label': 'Repositori GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('ms', {
   'stats.branches': 'Branch kelihatan',
   'stats.commits': 'Commit dalam graf',
   'stats.prs': 'PR terbuka',
-  'stats.ci': 'CI terkini',
   'stats.last': 'Aktiviti terakhir',
   'stats.branches.only': 'satu-satunya dalam repo',
   'stats.branches.all': 'semua dalam repo',
@@ -57,13 +56,7 @@ GB.i18n.define('ms', {
   'stats.drafts': '{n} draf',
   'stats.readyForReview': 'sedia untuk disemak',
   'stats.noneOpen': 'tiada yang terbuka',
-  'stats.actionsOff': 'Actions dilumpuhkan',
-  'stats.noRuns': 'tiada larian',
   'stats.noEvents': 'tiada peristiwa',
-  'ci.running': 'Sedang berjalan',
-  'ci.ok': 'Lulus',
-  'ci.fail': 'Gagal',
-  'ci.cancel': 'Dibatalkan',
 
   /* ---------- bar alat graf ---------- */
   'view.aria': 'Jenis paparan',
@@ -98,10 +91,10 @@ GB.i18n.define('ms', {
   'tip.aria': 'Butiran commit',
   'tip.fromBranch': 'Daripada branch <code>{name}</code>, yang telah di-merge dan dipadam',
   'tip.fromGhost': 'Daripada sebuah branch yang telah di-merge dan dipadam',
+  'tip.fromMerged': 'Daripada branch <code>{name}</code>, yang telah di-merge (masih wujud)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (draf) → <code>{base}</code>',
   'tip.viewPr': 'lihat PR',
-  'tip.viewRun': 'lihat larian',
   'tip.mergeOf': 'merge bagi {n} parent',
   'tip.openCommit': 'Buka commit di GitHub',
   'tip.pin': 'Sematkan <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('ms', {
   'cat.commits': 'Commit',
   'cat.branches': 'Branch',
   'cat.prs': 'Pull request',
-  'cat.ci': 'CI',
   'cat.issues': 'Issue',
   'cat.other': 'Lain-lain',
 
@@ -152,10 +144,6 @@ GB.i18n.define('ms', {
   'kind.review': 'Semakan',
   'kind.review-ok': 'Diluluskan',
   'kind.review-changes': 'Perubahan diminta',
-  'kind.ci-start': 'CI sedang berjalan',
-  'kind.ci-ok': 'CI lulus',
-  'kind.ci-fail': 'CI gagal',
-  'kind.ci-cancel': 'CI dibatalkan',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue ditutup',
   'kind.comment': 'Komen',
@@ -205,10 +193,6 @@ GB.i18n.define('ms', {
   'act.commentCommit': 'Komen pada commit {sha}',
   'act.discussionNew': 'Perbincangan baharu',
   'act.discussionComment': 'Komen pada satu perbincangan',
-  'act.ciRunning': 'CI sedang berjalan: {name}',
-  'act.ciOk': 'CI lulus: {name}',
-  'act.ciFail': 'CI gagal: {name}',
-  'act.ciCancel': 'CI dibatalkan: {name}',
   'act.release': 'Release {tag} diterbitkan',
   'act.releaseNoTag': 'Release diterbitkan',
   'act.star': 'Bintang baharu',
@@ -236,7 +220,7 @@ GB.i18n.define('ms', {
   'settings.optional': 'pilihan',
   'settings.show': 'Tunjuk',
   'settings.hide': 'Sembunyi',
-  'settings.tokenHelp': 'Tanpa token, GitHub membenarkan 60 permintaan sejam. Dengan token <em>fine-grained</em> baca sahaja (kebenaran Metadata, Contents, Pull requests dan Actions), paparan dimuat semula setiap 10 saat, berfungsi dengan repositori yang mempunyai beribu-ribu branch, dan anda boleh melihat repo peribadi. Token hanya disimpan dalam pelayar ini dan hanya dihantar ke api.github.com.',
+  'settings.tokenHelp': 'Tanpa token, GitHub membenarkan 60 permintaan sejam. Dengan token <em>fine-grained</em> baca sahaja (kebenaran Metadata, Contents dan Pull requests), paparan dimuat semula setiap 10 saat, berfungsi dengan repositori yang mempunyai beribu-ribu branch, dan anda boleh melihat repo peribadi. Token hanya disimpan dalam pelayar ini dan hanya dihantar ke api.github.com.',
   'settings.maxBranches': 'Bilangan branch paling aktif untuk dipaparkan',
   'settings.depth': 'Commit bagi setiap branch',
   'settings.branchesHelp': 'Pada repo besar, GraphBranch tidak menyenaraikan semua branch: ia memaparkan branch lalai, branch yang anda sematkan (klik pada branch → <strong>Sematkan</strong>) dan branch yang mempunyai commit paling baharu. Gunakan penapis graf untuk menumpukan pada satu awalan, contohnya <code>release/</code>.',

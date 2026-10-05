@@ -1,7 +1,7 @@
 /* GraphBranch — ไทย. */
 GB.i18n.define('th', {
   /* ---------- page ---------- */
-  'meta.description': 'กราฟสดของ branch ใน GitHub repository พร้อมการแจ้งเตือนเกี่ยวกับ commit, pull request, CI และ issue',
+  'meta.description': 'กราฟสดของ branch ใน GitHub repository พร้อมการแจ้งเตือนเกี่ยวกับ commit, pull request และ issue',
 
   /* ---------- top bar ---------- */
   'repo.label': 'repository บน GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('th', {
   'stats.branches': 'branch ที่แสดง',
   'stats.commits': 'commit ในกราฟ',
   'stats.prs': 'PR ที่เปิดอยู่',
-  'stats.ci': 'CI ล่าสุด',
   'stats.last': 'กิจกรรมล่าสุด',
   'stats.branches.only': 'มีเพียงอันเดียวใน repo',
   'stats.branches.all': 'ทั้งหมดใน repo',
@@ -57,13 +56,7 @@ GB.i18n.define('th', {
   'stats.drafts': '{n} draft',
   'stats.readyForReview': 'พร้อมให้รีวิว',
   'stats.noneOpen': 'ไม่มีที่เปิดอยู่',
-  'stats.actionsOff': 'ปิดใช้งาน Actions',
-  'stats.noRuns': 'ไม่มีการรัน',
   'stats.noEvents': 'ไม่มีเหตุการณ์',
-  'ci.running': 'กำลังรัน',
-  'ci.ok': 'ผ่าน',
-  'ci.fail': 'ไม่ผ่าน',
-  'ci.cancel': 'ยกเลิกแล้ว',
 
   /* ---------- graph toolbar ---------- */
   'view.aria': 'ประเภทมุมมอง',
@@ -98,10 +91,10 @@ GB.i18n.define('th', {
   'tip.aria': 'รายละเอียด commit',
   'tip.fromBranch': 'มาจาก branch <code>{name}</code> ที่ merge และลบไปแล้ว',
   'tip.fromGhost': 'มาจาก branch ที่ merge และลบไปแล้ว',
+  'tip.fromMerged': 'มาจาก branch <code>{name}</code> ที่ merge ไปแล้ว (ยังคงอยู่)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (draft) → <code>{base}</code>',
   'tip.viewPr': 'ดู PR',
-  'tip.viewRun': 'ดูการรัน',
   'tip.mergeOf': 'merge จาก parent {n} รายการ',
   'tip.openCommit': 'เปิด commit บน GitHub',
   'tip.pin': 'ปักหมุด <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('th', {
   'cat.commits': 'Commit',
   'cat.branches': 'Branch',
   'cat.prs': 'Pull request',
-  'cat.ci': 'CI',
   'cat.issues': 'Issue',
   'cat.other': 'อื่น ๆ',
 
@@ -153,10 +145,6 @@ GB.i18n.define('th', {
   'kind.review': 'รีวิว',
   'kind.review-ok': 'อนุมัติแล้ว',
   'kind.review-changes': 'ขอให้แก้ไข',
-  'kind.ci-start': 'CI กำลังรัน',
-  'kind.ci-ok': 'CI ผ่าน',
-  'kind.ci-fail': 'CI ไม่ผ่าน',
-  'kind.ci-cancel': 'CI ถูกยกเลิก',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'ปิด issue แล้ว',
   'kind.comment': 'ความคิดเห็น',
@@ -206,10 +194,6 @@ GB.i18n.define('th', {
   'act.commentCommit': 'ความคิดเห็นใน commit {sha}',
   'act.discussionNew': 'Discussion ใหม่',
   'act.discussionComment': 'ความคิดเห็นใน discussion',
-  'act.ciRunning': 'CI กำลังรัน: {name}',
-  'act.ciOk': 'CI ผ่าน: {name}',
-  'act.ciFail': 'CI ไม่ผ่าน: {name}',
-  'act.ciCancel': 'CI ถูกยกเลิก: {name}',
   'act.release': 'เผยแพร่ release {tag} แล้ว',
   'act.releaseNoTag': 'เผยแพร่ release แล้ว',
   'act.star': 'ดาวใหม่',
@@ -237,7 +221,7 @@ GB.i18n.define('th', {
   'settings.optional': 'ไม่บังคับ',
   'settings.show': 'แสดง',
   'settings.hide': 'ซ่อน',
-  'settings.tokenHelp': 'หากไม่มี token GitHub อนุญาตให้ส่งคำขอได้ 60 ครั้งต่อชั่วโมง เมื่อใช้ token แบบ <em>fine-grained</em> ที่อ่านได้อย่างเดียว (สิทธิ์ Metadata, Contents, Pull requests และ Actions) มุมมองจะรีเฟรชทุก 10 วินาที ใช้ได้กับ repository ที่มีหลายพัน branch และดู repo ส่วนตัวได้ โดย token จะถูกเก็บไว้ในเบราว์เซอร์นี้เท่านั้น และส่งไปที่ api.github.com เท่านั้น',
+  'settings.tokenHelp': 'หากไม่มี token GitHub อนุญาตให้ส่งคำขอได้ 60 ครั้งต่อชั่วโมง เมื่อใช้ token แบบ <em>fine-grained</em> ที่อ่านได้อย่างเดียว (สิทธิ์ Metadata, Contents และ Pull requests) มุมมองจะรีเฟรชทุก 10 วินาที ใช้ได้กับ repository ที่มีหลายพัน branch และดู repo ส่วนตัวได้ โดย token จะถูกเก็บไว้ในเบราว์เซอร์นี้เท่านั้น และส่งไปที่ api.github.com เท่านั้น',
   'settings.maxBranches': 'จำนวน branch ที่มีความเคลื่อนไหวมากที่สุดที่จะแสดง',
   'settings.depth': 'จำนวน commit ต่อ branch',
   'settings.branchesHelp': 'ใน repo ขนาดใหญ่ GraphBranch จะไม่แสดง branch ทั้งหมด แต่จะแสดง branch เริ่มต้น branch ที่คุณปักหมุดไว้ (คลิก branch → <strong>ปักหมุด</strong>) และ branch ที่มี commit ล่าสุด ใช้ตัวกรองของกราฟเพื่อโฟกัสที่คำนำหน้า เช่น <code>release/</code>',

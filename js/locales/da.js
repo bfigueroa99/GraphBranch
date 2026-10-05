@@ -1,7 +1,7 @@
 /* GraphBranch — dansk. */
 GB.i18n.define('da', {
   /* ---------- side ---------- */
-  'meta.description': 'Live-graf over branches i et GitHub-repository, med notifikationer om commits, pull requests, CI og issues.',
+  'meta.description': 'Live-graf over branches i et GitHub-repository, med notifikationer om commits, pull requests og issues.',
 
   /* ---------- topbar ---------- */
   'repo.label': 'GitHub-repository',
@@ -44,7 +44,6 @@ GB.i18n.define('da', {
   'stats.branches': 'Synlige branches',
   'stats.commits': 'Commits i grafen',
   'stats.prs': "Åbne PR'er",
-  'stats.ci': 'Seneste CI',
   'stats.last': 'Seneste aktivitet',
   'stats.branches.only': 'den eneste i repoet',
   'stats.branches.all': 'alle i repoet',
@@ -57,13 +56,7 @@ GB.i18n.define('da', {
   'stats.drafts': { one: '{n} kladde', other: '{n} kladder' },
   'stats.readyForReview': 'klar til review',
   'stats.noneOpen': 'ingen åbne',
-  'stats.actionsOff': 'Actions er deaktiveret',
-  'stats.noRuns': 'ingen kørsler',
   'stats.noEvents': 'ingen hændelser',
-  'ci.running': 'Kører',
-  'ci.ok': 'Bestået',
-  'ci.fail': 'Fejlede',
-  'ci.cancel': 'Annulleret',
 
   /* ---------- grafens værktøjslinje ---------- */
   'view.aria': 'Visningstype',
@@ -98,10 +91,10 @@ GB.i18n.define('da', {
   'tip.aria': 'Commit-detaljer',
   'tip.fromBranch': 'Fra branchen <code>{name}</code>, allerede merged og slettet',
   'tip.fromGhost': 'Fra en branch, der allerede er merged og slettet',
+  'tip.fromMerged': 'Fra branchen <code>{name}</code>, allerede merged (den findes stadig)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (kladde) → <code>{base}</code>',
   'tip.viewPr': 'se PR',
-  'tip.viewRun': 'se kørsel',
   'tip.mergeOf': { one: 'merge af {n} forælder', other: 'merge af {n} forældre' },
   'tip.openCommit': 'Åbn commit på GitHub',
   'tip.pin': 'Fastgør <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('da', {
   'cat.commits': 'Commits',
   'cat.branches': 'Branches',
   'cat.prs': 'Pull requests',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'Andet',
 
@@ -152,10 +144,6 @@ GB.i18n.define('da', {
   'kind.review': 'Review',
   'kind.review-ok': 'Godkendt',
   'kind.review-changes': 'Ændringer anmodet',
-  'kind.ci-start': 'CI kører',
-  'kind.ci-ok': 'CI bestået',
-  'kind.ci-fail': 'CI fejlede',
-  'kind.ci-cancel': 'CI annulleret',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue lukket',
   'kind.comment': 'Kommentar',
@@ -205,10 +193,6 @@ GB.i18n.define('da', {
   'act.commentCommit': 'Kommentar på commit {sha}',
   'act.discussionNew': 'Ny diskussion',
   'act.discussionComment': 'Kommentar til en diskussion',
-  'act.ciRunning': 'CI kører: {name}',
-  'act.ciOk': 'CI bestået: {name}',
-  'act.ciFail': 'CI fejlede: {name}',
-  'act.ciCancel': 'CI annulleret: {name}',
   'act.release': 'Release {tag} udgivet',
   'act.releaseNoTag': 'Release udgivet',
   'act.star': 'Ny stjerne',
@@ -236,7 +220,7 @@ GB.i18n.define('da', {
   'settings.optional': 'valgfrit',
   'settings.show': 'Vis',
   'settings.hide': 'Skjul',
-  'settings.tokenHelp': 'Uden token tillader GitHub 60 forespørgsler i timen. Med et skrivebeskyttet <em>fine-grained</em> token (tilladelserne Metadata, Contents, Pull requests og Actions) opdateres visningen hvert 10. sekund, den virker med repositories med tusindvis af branches, og du kan se private repos. Tokenet gemmes kun i denne browser og sendes kun til api.github.com.',
+  'settings.tokenHelp': 'Uden token tillader GitHub 60 forespørgsler i timen. Med et skrivebeskyttet <em>fine-grained</em> token (tilladelserne Metadata, Contents og Pull requests) opdateres visningen hvert 10. sekund, den virker med repositories med tusindvis af branches, og du kan se private repos. Tokenet gemmes kun i denne browser og sendes kun til api.github.com.',
   'settings.maxBranches': 'Antal mest aktive branches, der vises',
   'settings.depth': 'Commits pr. branch',
   'settings.branchesHelp': 'I store repos viser GraphBranch ikke alle branches: den viser standardbranchen, dem du fastgør (klik på en branch → <strong>Fastgør</strong>) og dem med de nyeste commits. Brug grafens filter til at fokusere på et præfiks, for eksempel <code>release/</code>.',

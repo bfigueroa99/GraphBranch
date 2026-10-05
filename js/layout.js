@@ -6,10 +6,9 @@
    forman cadenas "fantasma" que se acomodan en los huecos libres de los carriles. */
 (function (GB) {
   'use strict';
-  const { U } = GB;
+  const { U, palette: P } = GB;
 
   const LONG_LIVED = /^(main|master|trunk|develop|development|dev|staging|stage|next|beta|production|prod|release(\/.*)?|releases?\/.*)$/i;
-  const COLOR_SLOTS = 8;
 
   class Layout {
     constructor() {
@@ -19,7 +18,7 @@
     reset() {
       this.slotOf = new Map(); // rama -> carril del último cálculo (desempata el orden)
       this.seqOf = new Map(); // rama -> orden de aparición (quién se queda los commits compartidos)
-      this.colorOf = new Map(); // rama -> color 1..8 (0 = gris: fuera de las más activas)
+      this.colorOf = new Map(); // rama viva -> color 1, 2, 3… de la paleta (el gris queda para las ramas muertas)
       this.seq = 0;
     }
 
@@ -110,23 +109,42 @@
       this.slotOf = new Map(byActivity.map((b, i) => [b.name, i + 1]));
       if (live.has(def)) this.slotOf.set(def, 0);
 
-      /* colores: la rama por defecto y las más activas. Cada una conserva el suyo mientras
-         siga entre ellas; una rama nueva o gris que recibe un push toma el que deja libre
-         la menos activa, que pasa a gris. */
-      const palette = [];
-      for (let k = 2; k <= COLOR_SLOTS; k++) palette.push(k);
-      if (!live.has(def)) palette.push(1);
-      const top = byActivity.slice(0, palette.length);
+      /* ramas muertas: ya fusionadas en la rama por defecto pero que nadie borró. No cuentan las
+         de larga vida (develop, release/…), que siguen vivas aunque main las haya absorbido, ni
+         las que apuntan justo a la cabeza de la rama por defecto (una rama recién creada). */
+      const defHead = heads.find((b) => b.name === def)?.sha;
+      const inDef = defHead ? U.reachable(commits, [defHead]).set : new Set();
+      const dead = new Set(
+        heads
+          .filter((b) => b.name !== def && b.sha !== defHead && inDef.has(b.sha) && !(b.protected || LONG_LIVED.test(b.name)))
+          .map((b) => b.name),
+      );
+
+      /* colores: el gris es solo de lo muerto (ramas fusionadas, borradas o no); toda rama viva
+         tiene un color propio de la paleta sin tope (ver palette.js), que conserva mientras
+         exista. La rama por defecto toma el 1 y cada rama nueva, el menor que esté libre: así
+         las primeras usan los colores validados a mano y las siguientes los generados. */
       const colorOf = new Map();
-      if (live.has(def)) colorOf.set(def, 1);
-      for (const b of top) {
+      const taken = new Set();
+      const give = (name, c) => {
+        colorOf.set(name, c);
+        taken.add(c);
+      };
+      if (live.has(def)) give(def, 1);
+      const active = byActivity.filter((b) => !dead.has(b.name));
+      for (const b of active) {
         const c = this.colorOf.get(b.name);
-        if (palette.includes(c) && ![...colorOf.values()].includes(c)) colorOf.set(b.name, c);
+        if (c && !taken.has(c)) give(b.name, c);
       }
-      const free = palette.filter((c) => ![...colorOf.values()].includes(c));
-      for (const b of top) if (!colorOf.has(b.name)) colorOf.set(b.name, free.shift());
-      for (const b of byActivity) if (!colorOf.has(b.name)) colorOf.set(b.name, 0);
+      let next = 1;
+      for (const b of active) {
+        if (colorOf.has(b.name)) continue;
+        while (taken.has(next)) next++;
+        give(b.name, next);
+      }
       this.colorOf = colorOf;
+      P.ensure(Math.max(0, ...colorOf.values()));
+      const colorOfBranch = (name) => (dead.has(name) ? 'ghost' : 'c' + colorOf.get(name));
 
       /* 6. ocupación de carriles: ramas hasta el infinito, fantasmas en los huecos */
       const occ = new Map();
@@ -175,7 +193,7 @@
       const rowOfChain = (key) => rowOfSlot.get(chainSlot.get(key));
       const colorOfChain = (key) => {
         const ch = chains.get(key);
-        return ch.branch ? 'c' + this.colorOf.get(ch.branch.name) : 'ghost';
+        return ch.branch ? colorOfBranch(ch.branch.name) : 'ghost';
       };
 
       /* 8. nodos, aristas, cabezas */
@@ -228,7 +246,7 @@
           x: node.x,
           row: rowOfChain('b:' + b.name),
           own: info.own,
-          color: 'c' + this.colorOf.get(b.name),
+          color: colorOfBranch(b.name),
           chain: 'b:' + b.name,
           movedAt: b.movedAt || 0,
         };
@@ -242,7 +260,7 @@
       const rows = slots.map((slot, row) => {
         const b = heads.find((h) => this.slotOf.get(h.name) === slot);
         return b
-          ? { row, id: 'b:' + b.name, name: b.name, color: 'c' + this.colorOf.get(b.name), chain: 'b:' + b.name, ghost: false }
+          ? { row, id: 'b:' + b.name, name: b.name, color: colorOfBranch(b.name), chain: 'b:' + b.name, ghost: false }
           : { row, id: 'g-row:' + slot, name: 'fusionadas', color: 'ghost', chain: null, ghost: true };
       });
 

@@ -50,9 +50,6 @@
     return `M${r1(x1)},${r1(y1)}L${r1(xm)},${r1(y1)}C${r1(xm + d * 0.6)},${r1(y1)} ${r1(x2 - d * 0.6)},${r1(y2)} ${r1(x2)},${r1(y2)}`;
   }
 
-  const CI_KIND = { running: 'kind.ci-start', ok: 'kind.ci-ok', fail: 'kind.ci-fail', cancel: 'kind.ci-cancel' };
-  const ciLabel = (state) => tr(CI_KIND[state]);
-
   /** Contenido del detalle de un commit (lo usan las vistas 2D y 3D). */
   function tipHTML(node, ctx, { pin = false, branchName = null, ghostNames = null } = {}) {
     const c = node.commit;
@@ -63,13 +60,13 @@
     if (node.chain.startsWith('g:')) {
       const gname = ghostNames?.get(node.chain);
       rows.push(`<span>${gname ? i18n.html('tip.fromBranch', { name: gname }) : U.esc(tr('tip.fromGhost'))}</span>`);
+    } else if (node.color === 'ghost') {
+      rows.push(`<span>${i18n.html('tip.fromMerged', { name: node.chain.slice(2) })}</span>`);
     }
     const branch = branchName || heads[0];
     if (branch) {
       const pr = ctx.prs?.get(branch);
-      const ci = ctx.ci?.get(branch);
       if (pr) rows.push(`<span>${i18n.html(pr.draft ? 'tip.prDraft' : 'tip.pr', { num: pr.number, base: pr.base })}${pr.url ? ` · <a href="${U.esc(pr.url)}" target="_blank" rel="noopener">${U.esc(tr('tip.viewPr'))}</a>` : ''}</span>`);
-      if (ci) rows.push(`<span class="tip-ci ci-${ci.state}">${U.esc(ciLabel(ci.state))}${ci.name ? ` · ${U.esc(ci.name)}` : ''}${ci.url ? ` · <a href="${U.esc(ci.url)}" target="_blank" rel="noopener">${U.esc(tr('tip.viewRun'))}</a>` : ''}</span>`);
     }
     return `
       <div class="tip-head">${U.avatarHTML(c.author, 22)}<span class="tip-author">${U.esc(c.author.name || tr('author.unknown'))}</span><span class="tip-time" title="${U.esc(U.fmtDateTime(c.date))}">${U.timeAgo(c.date)}</span></div>
@@ -272,7 +269,7 @@
 
     /**
      * @param L     resultado de Layout.compute
-     * @param ctx   { initial, ci: Map rama->estado, prs: Map rama->PR, repoUrl }
+     * @param ctx   { initial, prs: Map rama->PR, repoUrl }
      */
     update(L, ctx = {}) {
       const now = performance.now();
@@ -468,7 +465,6 @@
       g.setAttribute('class', `head ${h.color}${h.isDefault ? ' default' : ''}${h.own ? '' : ' pointer-head'}${keep}${enter}`);
       g.dataset.chain = h.chain;
       g.textContent = '';
-      const ci = ctx.ci?.get(h.name);
       const pr = ctx.prs?.get(h.name);
       const bg = mk('rect', { class: 'h-bg', x: 0, y: -11, height: 22, rx: 11 }, g);
       mk('circle', { class: 'h-dot', cx: 11, cy: 0, r: 3.5 }, g);
@@ -478,16 +474,6 @@
       t.textContent = name;
       x += measure(name, LABEL_FONT) + 8;
       const aria = [tr(h.isDefault ? 'branch.ariaDefault' : 'branch.aria', { name: h.name })];
-      if (ci) {
-        const ig = mk('g', { class: `h-ci ci-${ci.state}`, transform: `translate(${x + 6},0)` }, g);
-        mk('title', null, ig).textContent = ciLabel(ci.state);
-        if (ci.state === 'running') mk('circle', { class: 'spin', r: 4.5 }, ig);
-        else if (ci.state === 'ok') mk('path', { d: 'M-4,0.2L-1.3,2.9L4,-2.6' }, ig);
-        else if (ci.state === 'fail') mk('path', { d: 'M-3.4,-3.4L3.4,3.4M3.4,-3.4L-3.4,3.4' }, ig);
-        else mk('path', { d: 'M-3.6,0H3.6' }, ig);
-        x += 18;
-        aria.push(ciLabel(ci.state));
-      }
       if (ctx.pins?.has(h.name)) {
         const pg = mk('g', { class: 'h-pin', transform: `translate(${x + 4},0)` }, g);
         mk('path', { d: 'M0,-4L4,0L0,4L-4,0Z' }, pg);
@@ -787,5 +773,5 @@
   }
 
   GB.Graph = Graph;
-  GB.graphShared = { tipHTML, wirePinButton, ciLabel, measure, fitText, LABEL_FONT, SMALL_FONT };
+  GB.graphShared = { tipHTML, wirePinButton, measure, fitText, LABEL_FONT, SMALL_FONT };
 })(window.GB);

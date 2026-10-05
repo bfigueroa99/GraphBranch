@@ -1,7 +1,7 @@
 /* GraphBranch — polski. */
 GB.i18n.define('pl', {
   /* ---------- strona ---------- */
-  'meta.description': 'Graf gałęzi repozytorium GitHub na żywo, z alertami o commitach, pull requestach, CI i issue.',
+  'meta.description': 'Graf gałęzi repozytorium GitHub na żywo, z alertami o commitach, pull requestach i issue.',
 
   /* ---------- górny pasek ---------- */
   'repo.label': 'Repozytorium GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('pl', {
   'stats.branches': 'Widoczne gałęzie',
   'stats.commits': 'Commity w grafie',
   'stats.prs': 'Otwarte PR-y',
-  'stats.ci': 'Ostatnie CI',
   'stats.last': 'Ostatnia aktywność',
   'stats.branches.only': 'jedyna w repozytorium',
   'stats.branches.all': 'wszystkie w repozytorium',
@@ -62,13 +61,7 @@ GB.i18n.define('pl', {
   'stats.drafts': { one: '{n} szkic', few: '{n} szkice', many: '{n} szkiców', other: '{n} szkicu' },
   'stats.readyForReview': 'gotowe do review',
   'stats.noneOpen': 'brak otwartych',
-  'stats.actionsOff': 'Actions wyłączone',
-  'stats.noRuns': 'brak uruchomień',
   'stats.noEvents': 'brak zdarzeń',
-  'ci.running': 'W toku',
-  'ci.ok': 'Sukces',
-  'ci.fail': 'Błąd',
-  'ci.cancel': 'Anulowano',
 
   /* ---------- pasek grafu ---------- */
   'view.aria': 'Typ widoku',
@@ -103,10 +96,10 @@ GB.i18n.define('pl', {
   'tip.aria': 'Szczegóły commita',
   'tip.fromBranch': 'Z gałęzi <code>{name}</code>, już scalonej i usuniętej',
   'tip.fromGhost': 'Z gałęzi, która została już scalona i usunięta',
+  'tip.fromMerged': 'Z gałęzi <code>{name}</code>, już scalonej (nadal istnieje)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (szkic) → <code>{base}</code>',
   'tip.viewPr': 'zobacz PR',
-  'tip.viewRun': 'zobacz uruchomienie',
   'tip.mergeOf': { one: 'scalenie {n} rodzica', few: 'scalenie {n} rodziców', many: 'scalenie {n} rodziców', other: 'scalenie {n} rodzica' },
   'tip.openCommit': 'Otwórz commit na GitHubie',
   'tip.pin': 'Przypnij <code>{branch}</code>',
@@ -141,7 +134,6 @@ GB.i18n.define('pl', {
   'cat.commits': 'Commity',
   'cat.branches': 'Gałęzie',
   'cat.prs': 'Pull requesty',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'Inne',
 
@@ -158,10 +150,6 @@ GB.i18n.define('pl', {
   'kind.review': 'Review',
   'kind.review-ok': 'Zatwierdzono',
   'kind.review-changes': 'Zażądano zmian',
-  'kind.ci-start': 'CI w toku',
-  'kind.ci-ok': 'CI: sukces',
-  'kind.ci-fail': 'CI: błąd',
-  'kind.ci-cancel': 'CI anulowane',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Zamknięcie issue',
   'kind.comment': 'Komentarz',
@@ -216,10 +204,6 @@ GB.i18n.define('pl', {
   'act.commentCommit': 'Komentarz do commita {sha}',
   'act.discussionNew': 'Nowa dyskusja',
   'act.discussionComment': 'Komentarz w dyskusji',
-  'act.ciRunning': 'CI w toku: {name}',
-  'act.ciOk': 'CI zakończone sukcesem: {name}',
-  'act.ciFail': 'CI zakończone błędem: {name}',
-  'act.ciCancel': 'CI anulowane: {name}',
   'act.release': 'Opublikowano wydanie {tag}',
   'act.releaseNoTag': 'Opublikowano wydanie',
   'act.star': 'Nowa gwiazdka',
@@ -247,7 +231,7 @@ GB.i18n.define('pl', {
   'settings.optional': 'opcjonalnie',
   'settings.show': 'Pokaż',
   'settings.hide': 'Ukryj',
-  'settings.tokenHelp': 'Bez tokena GitHub zezwala na 60 zapytań na godzinę. Z tokenem <em>fine-grained</em> tylko do odczytu (uprawnienia Metadata, Contents, Pull requests i Actions) widok odświeża się co 10 sekund, działa z repozytoriami mającymi tysiące gałęzi i pozwala zobaczyć prywatne repozytoria. Token jest przechowywany tylko w tej przeglądarce i wysyłany wyłącznie do api.github.com.',
+  'settings.tokenHelp': 'Bez tokena GitHub zezwala na 60 zapytań na godzinę. Z tokenem <em>fine-grained</em> tylko do odczytu (uprawnienia Metadata, Contents i Pull requests) widok odświeża się co 10 sekund, działa z repozytoriami mającymi tysiące gałęzi i pozwala zobaczyć prywatne repozytoria. Token jest przechowywany tylko w tej przeglądarce i wysyłany wyłącznie do api.github.com.',
   'settings.maxBranches': 'Liczba najaktywniejszych gałęzi do wyświetlenia',
   'settings.depth': 'Commity na gałąź',
   'settings.branchesHelp': 'W dużych repozytoriach GraphBranch nie wyświetla wszystkich gałęzi: pokazuje gałąź domyślną, te przypięte ręcznie (kliknij gałąź → <strong>Przypnij</strong>) oraz gałęzie z najnowszymi commitami. Użyj filtra grafu, aby skupić się na prefiksie, na przykład <code>release/</code>.',

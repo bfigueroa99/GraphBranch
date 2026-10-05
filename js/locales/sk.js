@@ -1,7 +1,7 @@
 /* GraphBranch — slovenčina. */
 GB.i18n.define('sk', {
   /* ---------- page ---------- */
-  'meta.description': 'Živý graf vetiev repozitára GitHub s upozorneniami na commity, pull requesty, CI a issues.',
+  'meta.description': 'Živý graf vetiev repozitára GitHub s upozorneniami na commity, pull requesty a issues.',
 
   /* ---------- top bar ---------- */
   'repo.label': 'Repozitár GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('sk', {
   'stats.branches': 'Viditeľné vetvy',
   'stats.commits': 'Commity v grafe',
   'stats.prs': 'Otvorené PR',
-  'stats.ci': 'Posledné CI',
   'stats.last': 'Posledná aktivita',
   'stats.branches.only': 'jediná v repozitári',
   'stats.branches.all': 'všetky v repozitári',
@@ -62,13 +61,7 @@ GB.i18n.define('sk', {
   'stats.drafts': { one: '{n} koncept', few: '{n} koncepty', many: '{n} konceptu', other: '{n} konceptov' },
   'stats.readyForReview': 'pripravené na revíziu',
   'stats.noneOpen': 'žiadne otvorené',
-  'stats.actionsOff': 'Actions vypnuté',
-  'stats.noRuns': 'žiadne spustenia',
   'stats.noEvents': 'žiadne udalosti',
-  'ci.running': 'Beží',
-  'ci.ok': 'Úspešné',
-  'ci.fail': 'Zlyhalo',
-  'ci.cancel': 'Zrušené',
 
   /* ---------- graph toolbar ---------- */
   'view.aria': 'Typ zobrazenia',
@@ -103,10 +96,10 @@ GB.i18n.define('sk', {
   'tip.aria': 'Podrobnosti commitu',
   'tip.fromBranch': 'Z vetvy <code>{name}</code>, ktorá už bola zlúčená a odstránená',
   'tip.fromGhost': 'Z vetvy, ktorá už bola zlúčená a odstránená',
+  'tip.fromMerged': 'Z vetvy <code>{name}</code>, ktorá už bola zlúčená (stále existuje)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (koncept) → <code>{base}</code>',
   'tip.viewPr': 'zobraziť PR',
-  'tip.viewRun': 'zobraziť spustenie',
   'tip.mergeOf': { one: 'zlúčenie {n} rodiča', few: 'zlúčenie {n} rodičov', many: 'zlúčenie {n} rodiča', other: 'zlúčenie {n} rodičov' },
   'tip.openCommit': 'Otvoriť commit na GitHube',
   'tip.pin': 'Pripnúť <code>{branch}</code>',
@@ -141,7 +134,6 @@ GB.i18n.define('sk', {
   'cat.commits': 'Commity',
   'cat.branches': 'Vetvy',
   'cat.prs': 'Pull requesty',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'Iné',
 
@@ -158,10 +150,6 @@ GB.i18n.define('sk', {
   'kind.review': 'Revízia',
   'kind.review-ok': 'Schválené',
   'kind.review-changes': 'Vyžiadané zmeny',
-  'kind.ci-start': 'CI beží',
-  'kind.ci-ok': 'CI úspešné',
-  'kind.ci-fail': 'CI zlyhalo',
-  'kind.ci-cancel': 'CI zrušené',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue zatvorený',
   'kind.comment': 'Komentár',
@@ -216,10 +204,6 @@ GB.i18n.define('sk', {
   'act.commentCommit': 'Komentár ku commitu {sha}',
   'act.discussionNew': 'Nová diskusia',
   'act.discussionComment': 'Komentár v diskusii',
-  'act.ciRunning': 'CI beží: {name}',
-  'act.ciOk': 'CI úspešné: {name}',
-  'act.ciFail': 'CI zlyhalo: {name}',
-  'act.ciCancel': 'CI zrušené: {name}',
   'act.release': 'Release {tag} publikovaný',
   'act.releaseNoTag': 'Release publikovaný',
   'act.star': 'Nová hviezdička',
@@ -247,7 +231,7 @@ GB.i18n.define('sk', {
   'settings.optional': 'voliteľné',
   'settings.show': 'Zobraziť',
   'settings.hide': 'Skryť',
-  'settings.tokenHelp': 'Bez tokenu povoľuje GitHub 60 požiadaviek za hodinu. S tokenom <em>fine-grained</em> len na čítanie (oprávnenia Metadata, Contents, Pull requests a Actions) sa zobrazenie obnovuje každých 10 sekúnd, funguje s repozitármi s tisíckami vetiev a zobrazia sa aj súkromné repozitáre. Token sa ukladá iba v tomto prehliadači a odosiela sa výlučne na api.github.com.',
+  'settings.tokenHelp': 'Bez tokenu povoľuje GitHub 60 požiadaviek za hodinu. S tokenom <em>fine-grained</em> len na čítanie (oprávnenia Metadata, Contents a Pull requests) sa zobrazenie obnovuje každých 10 sekúnd, funguje s repozitármi s tisíckami vetiev a zobrazia sa aj súkromné repozitáre. Token sa ukladá iba v tomto prehliadači a odosiela sa výlučne na api.github.com.',
   'settings.maxBranches': 'Počet najaktívnejších vetiev na zobrazenie',
   'settings.depth': 'Commity na vetvu',
   'settings.branchesHelp': 'Vo veľkých repozitároch GraphBranch nevypisuje všetky vetvy: zobrazuje predvolenú vetvu, tie, ktoré pripnete (kliknite na vetvu → <strong>Pripnúť</strong>), a vetvy s najnovšími commitmi. Filter grafu použite na zameranie na predponu, napríklad <code>release/</code>.',

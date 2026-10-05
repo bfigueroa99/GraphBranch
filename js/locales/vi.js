@@ -1,7 +1,7 @@
 /* GraphBranch — Tiếng Việt. */
 GB.i18n.define('vi', {
   /* ---------- trang ---------- */
-  'meta.description': 'Biểu đồ trực tiếp các nhánh của một kho lưu trữ GitHub, kèm cảnh báo về commit, pull request, CI và issue.',
+  'meta.description': 'Biểu đồ trực tiếp các nhánh của một kho lưu trữ GitHub, kèm cảnh báo về commit, pull request và issue.',
 
   /* ---------- thanh trên cùng ---------- */
   'repo.label': 'Kho lưu trữ GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('vi', {
   'stats.branches': 'Nhánh hiển thị',
   'stats.commits': 'Commit trong biểu đồ',
   'stats.prs': 'PR đang mở',
-  'stats.ci': 'CI gần nhất',
   'stats.last': 'Hoạt động gần nhất',
   'stats.branches.only': 'nhánh duy nhất trong repo',
   'stats.branches.all': 'tất cả nhánh trong repo',
@@ -57,13 +56,7 @@ GB.i18n.define('vi', {
   'stats.drafts': '{n} bản nháp',
   'stats.readyForReview': 'sẵn sàng để review',
   'stats.noneOpen': 'không có cái nào đang mở',
-  'stats.actionsOff': 'Actions đã tắt',
-  'stats.noRuns': 'chưa có lần chạy nào',
   'stats.noEvents': 'chưa có sự kiện nào',
-  'ci.running': 'Đang chạy',
-  'ci.ok': 'Thành công',
-  'ci.fail': 'Thất bại',
-  'ci.cancel': 'Đã hủy',
 
   /* ---------- thanh công cụ biểu đồ ---------- */
   'view.aria': 'Kiểu hiển thị',
@@ -98,10 +91,10 @@ GB.i18n.define('vi', {
   'tip.aria': 'Chi tiết commit',
   'tip.fromBranch': 'Từ nhánh <code>{name}</code>, đã được merge và xóa',
   'tip.fromGhost': 'Từ một nhánh đã được merge và xóa',
+  'tip.fromMerged': 'Từ nhánh <code>{name}</code>, đã được merge (vẫn còn tồn tại)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (nháp) → <code>{base}</code>',
   'tip.viewPr': 'xem PR',
-  'tip.viewRun': 'xem lần chạy',
   'tip.mergeOf': 'merge của {n} commit cha',
   'tip.openCommit': 'Mở commit trên GitHub',
   'tip.pin': 'Ghim <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('vi', {
   'cat.commits': 'Commit',
   'cat.branches': 'Nhánh',
   'cat.prs': 'Pull request',
-  'cat.ci': 'CI',
   'cat.issues': 'Issue',
   'cat.other': 'Khác',
 
@@ -152,10 +144,6 @@ GB.i18n.define('vi', {
   'kind.review': 'Review',
   'kind.review-ok': 'Đã duyệt',
   'kind.review-changes': 'Yêu cầu thay đổi',
-  'kind.ci-start': 'CI đang chạy',
-  'kind.ci-ok': 'CI thành công',
-  'kind.ci-fail': 'CI thất bại',
-  'kind.ci-cancel': 'CI đã hủy',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue đã đóng',
   'kind.comment': 'Bình luận',
@@ -205,10 +193,6 @@ GB.i18n.define('vi', {
   'act.commentCommit': 'Bình luận trong commit {sha}',
   'act.discussionNew': 'Thảo luận mới',
   'act.discussionComment': 'Bình luận trong một thảo luận',
-  'act.ciRunning': 'CI đang chạy: {name}',
-  'act.ciOk': 'CI thành công: {name}',
-  'act.ciFail': 'CI thất bại: {name}',
-  'act.ciCancel': 'CI đã hủy: {name}',
   'act.release': 'Đã phát hành release {tag}',
   'act.releaseNoTag': 'Đã phát hành release',
   'act.star': 'Sao mới',
@@ -236,7 +220,7 @@ GB.i18n.define('vi', {
   'settings.optional': 'tùy chọn',
   'settings.show': 'Hiện',
   'settings.hide': 'Ẩn',
-  'settings.tokenHelp': 'Khi không có token, GitHub cho phép 60 yêu cầu mỗi giờ. Với token <em>fine-grained</em> chỉ đọc (quyền Metadata, Contents, Pull requests và Actions), chế độ xem làm mới sau mỗi 10 giây, hoạt động với các kho có hàng nghìn nhánh và bạn có thể xem các repo riêng tư. Token chỉ được lưu trong trình duyệt này và chỉ được gửi tới api.github.com.',
+  'settings.tokenHelp': 'Khi không có token, GitHub cho phép 60 yêu cầu mỗi giờ. Với token <em>fine-grained</em> chỉ đọc (quyền Metadata, Contents và Pull requests), chế độ xem làm mới sau mỗi 10 giây, hoạt động với các kho có hàng nghìn nhánh và bạn có thể xem các repo riêng tư. Token chỉ được lưu trong trình duyệt này và chỉ được gửi tới api.github.com.',
   'settings.maxBranches': 'Số nhánh hoạt động nhiều nhất để hiển thị',
   'settings.depth': 'Số commit mỗi nhánh',
   'settings.branchesHelp': 'Với các repo lớn, GraphBranch không liệt kê mọi nhánh: nó hiển thị nhánh mặc định, các nhánh bạn ghim (nhấp vào một nhánh → <strong>Ghim</strong>) và các nhánh có commit gần đây nhất. Hãy dùng bộ lọc của biểu đồ để tập trung vào một tiền tố, ví dụ <code>release/</code>.',

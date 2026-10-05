@@ -1,7 +1,7 @@
 /* GraphBranch — বাংলা. */
 GB.i18n.define('bn', {
   /* ---------- পেজ ---------- */
-  'meta.description': 'GitHub রিপোজিটরির ব্রাঞ্চের লাইভ গ্রাফ, যেখানে কমিট, pull request, CI ও issue-এর অ্যালার্ট পাওয়া যায়।',
+  'meta.description': 'GitHub রিপোজিটরির ব্রাঞ্চের লাইভ গ্রাফ, যেখানে কমিট, pull request ও issue-এর অ্যালার্ট পাওয়া যায়।',
 
   /* ---------- উপরের বার ---------- */
   'repo.label': 'GitHub রিপোজিটরি',
@@ -44,7 +44,6 @@ GB.i18n.define('bn', {
   'stats.branches': 'দৃশ্যমান ব্রাঞ্চ',
   'stats.commits': 'গ্রাফে কমিট',
   'stats.prs': 'খোলা PR',
-  'stats.ci': 'সর্বশেষ CI',
   'stats.last': 'সর্বশেষ কার্যকলাপ',
   'stats.branches.only': 'রিপোতে এটিই একমাত্র',
   'stats.branches.all': 'রিপোর সবগুলো',
@@ -57,13 +56,7 @@ GB.i18n.define('bn', {
   'stats.drafts': { one: '{n}টি খসড়া', other: '{n}টি খসড়া' },
   'stats.readyForReview': 'রিভিউয়ের জন্য প্রস্তুত',
   'stats.noneOpen': 'কোনোটি খোলা নেই',
-  'stats.actionsOff': 'Actions বন্ধ',
-  'stats.noRuns': 'কোনো রান নেই',
   'stats.noEvents': 'কোনো ইভেন্ট নেই',
-  'ci.running': 'চলছে',
-  'ci.ok': 'সফল',
-  'ci.fail': 'ব্যর্থ',
-  'ci.cancel': 'বাতিল',
 
   /* ---------- গ্রাফের টুলবার ---------- */
   'view.aria': 'ভিউয়ের ধরন',
@@ -98,10 +91,10 @@ GB.i18n.define('bn', {
   'tip.aria': 'কমিটের বিবরণ',
   'tip.fromBranch': '<code>{name}</code> ব্রাঞ্চ থেকে, যেটি আগেই মার্জ হয়ে মুছে ফেলা হয়েছে',
   'tip.fromGhost': 'এমন একটি ব্রাঞ্চ থেকে, যেটি আগেই মার্জ হয়ে মুছে ফেলা হয়েছে',
+  'tip.fromMerged': '<code>{name}</code> ব্রাঞ্চ থেকে, যেটি আগেই মার্জ হয়েছে (সেটি এখনও আছে)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (খসড়া) → <code>{base}</code>',
   'tip.viewPr': 'PR দেখুন',
-  'tip.viewRun': 'রান দেখুন',
   'tip.mergeOf': { one: '{n}টি প্যারেন্টের মার্জ', other: '{n}টি প্যারেন্টের মার্জ' },
   'tip.openCommit': 'GitHub-এ কমিট খুলুন',
   'tip.pin': 'পিন করুন: <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('bn', {
   'cat.commits': 'কমিট',
   'cat.branches': 'ব্রাঞ্চ',
   'cat.prs': 'Pull request',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'অন্যান্য',
 
@@ -152,10 +144,6 @@ GB.i18n.define('bn', {
   'kind.review': 'রিভিউ',
   'kind.review-ok': 'অনুমোদিত',
   'kind.review-changes': 'পরিবর্তন চাওয়া হয়েছে',
-  'kind.ci-start': 'CI চলছে',
-  'kind.ci-ok': 'CI সফল',
-  'kind.ci-fail': 'CI ব্যর্থ',
-  'kind.ci-cancel': 'CI বাতিল',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue বন্ধ',
   'kind.comment': 'মন্তব্য',
@@ -205,10 +193,6 @@ GB.i18n.define('bn', {
   'act.commentCommit': 'কমিটে মন্তব্য: {sha}',
   'act.discussionNew': 'নতুন আলোচনা',
   'act.discussionComment': 'একটি আলোচনায় মন্তব্য',
-  'act.ciRunning': 'CI চলছে: {name}',
-  'act.ciOk': 'CI সফল: {name}',
-  'act.ciFail': 'CI ব্যর্থ: {name}',
-  'act.ciCancel': 'CI বাতিল: {name}',
   'act.release': 'রিলিজ {tag} প্রকাশিত হয়েছে',
   'act.releaseNoTag': 'রিলিজ প্রকাশিত হয়েছে',
   'act.star': 'নতুন স্টার',
@@ -236,7 +220,7 @@ GB.i18n.define('bn', {
   'settings.optional': 'ঐচ্ছিক',
   'settings.show': 'দেখান',
   'settings.hide': 'লুকান',
-  'settings.tokenHelp': 'টোকেন ছাড়া GitHub ঘণ্টায় ৬০টি অনুরোধের অনুমতি দেয়। শুধু-পড়া <em>fine-grained</em> টোকেন (Metadata, Contents, Pull requests ও Actions অনুমতি) থাকলে ভিউ প্রতি ১০ সেকেন্ডে রিফ্রেশ হয়, হাজার হাজার ব্রাঞ্চের রিপোজিটরিতেও কাজ করে, এবং আপনি প্রাইভেট রিপোও দেখতে পারেন। টোকেনটি শুধু এই ব্রাউজারে সংরক্ষিত থাকে এবং কেবল api.github.com সার্ভারে পাঠানো হয়।',
+  'settings.tokenHelp': 'টোকেন ছাড়া GitHub ঘণ্টায় ৬০টি অনুরোধের অনুমতি দেয়। শুধু-পড়া <em>fine-grained</em> টোকেন (Metadata, Contents ও Pull requests অনুমতি) থাকলে ভিউ প্রতি ১০ সেকেন্ডে রিফ্রেশ হয়, হাজার হাজার ব্রাঞ্চের রিপোজিটরিতেও কাজ করে, এবং আপনি প্রাইভেট রিপোও দেখতে পারেন। টোকেনটি শুধু এই ব্রাউজারে সংরক্ষিত থাকে এবং কেবল api.github.com সার্ভারে পাঠানো হয়।',
   'settings.maxBranches': 'সবচেয়ে সক্রিয় কতগুলো ব্রাঞ্চ দেখাবে',
   'settings.depth': 'প্রতি ব্রাঞ্চে কমিট',
   'settings.branchesHelp': 'বড় রিপোতে GraphBranch সব ব্রাঞ্চের তালিকা দেখায় না: এটি ডিফল্ট ব্রাঞ্চ, আপনার পিন করা ব্রাঞ্চ (কোনো ব্রাঞ্চে ক্লিক করুন → <strong>পিন করুন</strong>) এবং সবচেয়ে সাম্প্রতিক কমিটওয়ালা ব্রাঞ্চগুলো দেখায়। কোনো প্রিফিক্সে মনোযোগ দিতে গ্রাফ ফিল্টার ব্যবহার করুন, যেমন <code>release/</code>।',

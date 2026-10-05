@@ -1,7 +1,7 @@
 /* GraphBranch — русский. */
 GB.i18n.define('ru', {
   /* ---------- страница ---------- */
-  'meta.description': 'Граф веток репозитория GitHub в реальном времени с оповещениями о коммитах, pull requests, CI и issues.',
+  'meta.description': 'Граф веток репозитория GitHub в реальном времени с оповещениями о коммитах, pull requests и issues.',
 
   /* ---------- верхняя панель ---------- */
   'repo.label': 'Репозиторий GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('ru', {
   'stats.branches': 'Видимые ветки',
   'stats.commits': 'Коммиты в графе',
   'stats.prs': 'Открытые PR',
-  'stats.ci': 'Последний CI',
   'stats.last': 'Последняя активность',
   'stats.branches.only': 'единственная в репозитории',
   'stats.branches.all': 'все ветки репозитория',
@@ -62,13 +61,7 @@ GB.i18n.define('ru', {
   'stats.drafts': { one: '{n} черновик', few: '{n} черновика', many: '{n} черновиков', other: '{n} черновика' },
   'stats.readyForReview': 'готовы к ревью',
   'stats.noneOpen': 'нет открытых',
-  'stats.actionsOff': 'Actions отключены',
-  'stats.noRuns': 'нет запусков',
   'stats.noEvents': 'нет событий',
-  'ci.running': 'Выполняется',
-  'ci.ok': 'Успешно',
-  'ci.fail': 'Сбой',
-  'ci.cancel': 'Отменено',
 
   /* ---------- панель графа ---------- */
   'view.aria': 'Тип отображения',
@@ -103,10 +96,10 @@ GB.i18n.define('ru', {
   'tip.aria': 'Сведения о коммите',
   'tip.fromBranch': 'Из ветки <code>{name}</code>, уже влитой и удалённой',
   'tip.fromGhost': 'Из ветки, которая уже влита и удалена',
+  'tip.fromMerged': 'Из ветки <code>{name}</code>, уже влитой (она ещё существует)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (черновик) → <code>{base}</code>',
   'tip.viewPr': 'смотреть PR',
-  'tip.viewRun': 'смотреть запуск',
   'tip.mergeOf': {
     one: 'слияние: {n} родительский коммит',
     few: 'слияние: {n} родительских коммита',
@@ -146,7 +139,6 @@ GB.i18n.define('ru', {
   'cat.commits': 'Коммиты',
   'cat.branches': 'Ветки',
   'cat.prs': 'Pull requests',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'Прочее',
 
@@ -163,10 +155,6 @@ GB.i18n.define('ru', {
   'kind.review': 'Ревью',
   'kind.review-ok': 'Одобрено',
   'kind.review-changes': 'Запрошены изменения',
-  'kind.ci-start': 'CI выполняется',
-  'kind.ci-ok': 'CI пройден',
-  'kind.ci-fail': 'Сбой CI',
-  'kind.ci-cancel': 'CI отменён',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue закрыт',
   'kind.comment': 'Комментарий',
@@ -221,10 +209,6 @@ GB.i18n.define('ru', {
   'act.commentCommit': 'Комментарий к коммиту {sha}',
   'act.discussionNew': 'Новое обсуждение',
   'act.discussionComment': 'Комментарий в обсуждении',
-  'act.ciRunning': 'CI выполняется: {name}',
-  'act.ciOk': 'CI пройден: {name}',
-  'act.ciFail': 'Сбой CI: {name}',
-  'act.ciCancel': 'CI отменён: {name}',
   'act.release': 'Опубликован релиз {tag}',
   'act.releaseNoTag': 'Опубликован релиз',
   'act.star': 'Новая звезда',
@@ -252,7 +236,7 @@ GB.i18n.define('ru', {
   'settings.optional': 'необязательно',
   'settings.show': 'Показать',
   'settings.hide': 'Скрыть',
-  'settings.tokenHelp': 'Без токена GitHub разрешает 60 запросов в час. С <em>fine-grained</em> токеном только для чтения (права Metadata, Contents, Pull requests и Actions) вид обновляется каждые 10 секунд, работает с репозиториями, где тысячи веток, и вы можете видеть приватные репозитории. Токен хранится только в этом браузере и отправляется только на api.github.com.',
+  'settings.tokenHelp': 'Без токена GitHub разрешает 60 запросов в час. С <em>fine-grained</em> токеном только для чтения (права Metadata, Contents и Pull requests) вид обновляется каждые 10 секунд, работает с репозиториями, где тысячи веток, и вы можете видеть приватные репозитории. Токен хранится только в этом браузере и отправляется только на api.github.com.',
   'settings.maxBranches': 'Сколько самых активных веток показывать',
   'settings.depth': 'Коммитов на ветку',
   'settings.branchesHelp': 'В больших репозиториях GraphBranch показывает не все ветки: только ветку по умолчанию, закреплённые вами (щёлкните ветку → <strong>Закрепить</strong>) и ветки с самыми свежими коммитами. Чтобы сосредоточиться на префиксе, например <code>release/</code>, используйте фильтр графа.',

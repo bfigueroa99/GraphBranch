@@ -1,7 +1,7 @@
 /* GraphBranch — svenska. */
 GB.i18n.define('sv', {
   /* ---------- sida ---------- */
-  'meta.description': 'Levande graf över brancherna i ett GitHub-repository, med aviseringar om commits, pull requests, CI och issues.',
+  'meta.description': 'Levande graf över brancherna i ett GitHub-repository, med aviseringar om commits, pull requests och issues.',
 
   /* ---------- överdel ---------- */
   'repo.label': 'GitHub-repository',
@@ -44,7 +44,6 @@ GB.i18n.define('sv', {
   'stats.branches': 'Synliga brancher',
   'stats.commits': 'Commits i grafen',
   'stats.prs': 'Öppna PR',
-  'stats.ci': 'Senaste CI',
   'stats.last': 'Senaste aktivitet',
   'stats.branches.only': 'den enda i repot',
   'stats.branches.all': 'alla i repot',
@@ -57,13 +56,7 @@ GB.i18n.define('sv', {
   'stats.drafts': { one: '{n} utkast', other: '{n} utkast' },
   'stats.readyForReview': 'redo för granskning',
   'stats.noneOpen': 'inga öppna',
-  'stats.actionsOff': 'Actions är inaktiverat',
-  'stats.noRuns': 'inga körningar',
   'stats.noEvents': 'inga händelser',
-  'ci.running': 'Körs',
-  'ci.ok': 'Godkänd',
-  'ci.fail': 'Misslyckades',
-  'ci.cancel': 'Avbruten',
 
   /* ---------- grafens verktygsfält ---------- */
   'view.aria': 'Vytyp',
@@ -98,10 +91,10 @@ GB.i18n.define('sv', {
   'tip.aria': 'Commit-detaljer',
   'tip.fromBranch': 'Från branchen <code>{name}</code>, redan mergad och raderad',
   'tip.fromGhost': 'Från en branch som redan har mergats och raderats',
+  'tip.fromMerged': 'Från branchen <code>{name}</code>, redan mergad (finns kvar)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (utkast) → <code>{base}</code>',
   'tip.viewPr': 'visa PR',
-  'tip.viewRun': 'visa körning',
   'tip.mergeOf': { one: 'merge av {n} förälder', other: 'merge av {n} föräldrar' },
   'tip.openCommit': 'Öppna commit på GitHub',
   'tip.pin': 'Fäst <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('sv', {
   'cat.commits': 'Commits',
   'cat.branches': 'Brancher',
   'cat.prs': 'Pull requests',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'Övrigt',
 
@@ -152,10 +144,6 @@ GB.i18n.define('sv', {
   'kind.review': 'Granskning',
   'kind.review-ok': 'Godkänd',
   'kind.review-changes': 'Ändringar begärda',
-  'kind.ci-start': 'CI körs',
-  'kind.ci-ok': 'CI godkänd',
-  'kind.ci-fail': 'CI misslyckades',
-  'kind.ci-cancel': 'CI avbruten',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue stängt',
   'kind.comment': 'Kommentar',
@@ -205,10 +193,6 @@ GB.i18n.define('sv', {
   'act.commentCommit': 'Kommentar på commit {sha}',
   'act.discussionNew': 'Ny diskussion',
   'act.discussionComment': 'Kommentar i en diskussion',
-  'act.ciRunning': 'CI körs: {name}',
-  'act.ciOk': 'CI godkänd: {name}',
-  'act.ciFail': 'CI misslyckades: {name}',
-  'act.ciCancel': 'CI avbruten: {name}',
   'act.release': 'Release {tag} publicerad',
   'act.releaseNoTag': 'Release publicerad',
   'act.star': 'Ny stjärna',
@@ -236,7 +220,7 @@ GB.i18n.define('sv', {
   'settings.optional': 'valfri',
   'settings.show': 'Visa',
   'settings.hide': 'Dölj',
-  'settings.tokenHelp': 'Utan token tillåter GitHub 60 anrop per timme. Med en skrivskyddad <em>fine-grained</em>-token (behörigheterna Metadata, Contents, Pull requests och Actions) uppdateras vyn var 10:e sekund, fungerar med repon som har tusentals brancher och du kan se privata repon. Token sparas bara i den här webbläsaren och skickas bara till api.github.com.',
+  'settings.tokenHelp': 'Utan token tillåter GitHub 60 anrop per timme. Med en skrivskyddad <em>fine-grained</em>-token (behörigheterna Metadata, Contents och Pull requests) uppdateras vyn var 10:e sekund, fungerar med repon som har tusentals brancher och du kan se privata repon. Token sparas bara i den här webbläsaren och skickas bara till api.github.com.',
   'settings.maxBranches': 'Antal mest aktiva brancher att visa',
   'settings.depth': 'Commits per branch',
   'settings.branchesHelp': 'I stora repon listar GraphBranch inte alla brancher: den visar standardbranchen, de du fäster (klicka på en branch → <strong>Fäst</strong>) och de med de senaste commits. Använd grafens filter för att fokusera på ett prefix, till exempel <code>release/</code>.',

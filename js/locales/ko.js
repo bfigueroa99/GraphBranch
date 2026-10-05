@@ -1,7 +1,7 @@
 /* GraphBranch — 한국어. */
 GB.i18n.define('ko', {
   /* ---------- 페이지 ---------- */
-  'meta.description': 'GitHub 저장소의 브랜치를 실시간 그래프로 보여 주고, 커밋·풀 리퀘스트·CI·이슈 알림을 제공합니다.',
+  'meta.description': 'GitHub 저장소의 브랜치를 실시간 그래프로 보여 주고, 커밋·풀 리퀘스트·이슈 알림을 제공합니다.',
 
   /* ---------- 상단 바 ---------- */
   'repo.label': 'GitHub 저장소',
@@ -44,7 +44,6 @@ GB.i18n.define('ko', {
   'stats.branches': '표시 중인 브랜치',
   'stats.commits': '그래프의 커밋',
   'stats.prs': '열린 PR',
-  'stats.ci': '최근 CI',
   'stats.last': '마지막 활동',
   'stats.branches.only': '저장소의 유일한 브랜치',
   'stats.branches.all': '저장소의 모든 브랜치',
@@ -57,13 +56,7 @@ GB.i18n.define('ko', {
   'stats.drafts': '초안 {n}건',
   'stats.readyForReview': '모두 리뷰 가능',
   'stats.noneOpen': '열린 항목 없음',
-  'stats.actionsOff': 'Actions 비활성화됨',
-  'stats.noRuns': '실행 기록 없음',
   'stats.noEvents': '이벤트 없음',
-  'ci.running': '실행 중',
-  'ci.ok': '성공',
-  'ci.fail': '실패',
-  'ci.cancel': '취소됨',
 
   /* ---------- 그래프 도구 모음 ---------- */
   'view.aria': '보기 유형',
@@ -98,10 +91,10 @@ GB.i18n.define('ko', {
   'tip.aria': '커밋 상세 정보',
   'tip.fromBranch': '브랜치 <code>{name}</code>에서 온 커밋, 이미 머지 후 삭제됨',
   'tip.fromGhost': '이미 머지 후 삭제된 브랜치에서 온 커밋',
+  'tip.fromMerged': '브랜치 <code>{name}</code>에서 온 커밋, 이미 머지됨 (아직 존재함)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (초안) → <code>{base}</code>',
   'tip.viewPr': 'PR 보기',
-  'tip.viewRun': '실행 보기',
   'tip.mergeOf': '부모 {n}개의 머지',
   'tip.openCommit': 'GitHub에서 커밋 열기',
   'tip.pin': '<code>{branch}</code> 고정',
@@ -136,7 +129,6 @@ GB.i18n.define('ko', {
   'cat.commits': '커밋',
   'cat.branches': '브랜치',
   'cat.prs': '풀 리퀘스트',
-  'cat.ci': 'CI',
   'cat.issues': '이슈',
   'cat.other': '기타',
 
@@ -152,10 +144,6 @@ GB.i18n.define('ko', {
   'kind.review': '리뷰',
   'kind.review-ok': '승인됨',
   'kind.review-changes': '변경 요청됨',
-  'kind.ci-start': 'CI 실행 중',
-  'kind.ci-ok': 'CI 성공',
-  'kind.ci-fail': 'CI 실패',
-  'kind.ci-cancel': 'CI 취소됨',
   'kind.issue-open': '이슈',
   'kind.issue-close': '이슈 닫힘',
   'kind.comment': '댓글',
@@ -205,10 +193,6 @@ GB.i18n.define('ko', {
   'act.commentCommit': '커밋 {sha} 댓글',
   'act.discussionNew': '새 토론',
   'act.discussionComment': '토론 댓글',
-  'act.ciRunning': 'CI 실행 중: {name}',
-  'act.ciOk': 'CI 성공: {name}',
-  'act.ciFail': 'CI 실패: {name}',
-  'act.ciCancel': 'CI 취소됨: {name}',
   'act.release': '릴리스 {tag} 게시됨',
   'act.releaseNoTag': '릴리스 게시됨',
   'act.star': '새 스타',
@@ -236,7 +220,7 @@ GB.i18n.define('ko', {
   'settings.optional': '선택 사항',
   'settings.show': '표시',
   'settings.hide': '숨기기',
-  'settings.tokenHelp': '토큰이 없으면 GitHub는 시간당 60회 요청만 허용합니다. 읽기 전용 <em>fine-grained</em> 토큰(Metadata, Contents, Pull requests, Actions 권한)을 사용하면 화면이 10초마다 갱신되고, 브랜치가 수천 개인 저장소에서도 동작하며, 비공개 저장소도 볼 수 있습니다. 토큰은 이 브라우저에만 저장되고 api.github.com으로만 전송됩니다.',
+  'settings.tokenHelp': '토큰이 없으면 GitHub는 시간당 60회 요청만 허용합니다. 읽기 전용 <em>fine-grained</em> 토큰(Metadata, Contents, Pull requests 권한)을 사용하면 화면이 10초마다 갱신되고, 브랜치가 수천 개인 저장소에서도 동작하며, 비공개 저장소도 볼 수 있습니다. 토큰은 이 브라우저에만 저장되고 api.github.com으로만 전송됩니다.',
   'settings.maxBranches': '표시할 가장 활발한 브랜치 수',
   'settings.depth': '브랜치당 커밋 수',
   'settings.branchesHelp': '대규모 저장소에서 GraphBranch는 모든 브랜치를 나열하지 않고, 기본 브랜치와 고정한 브랜치(브랜치 클릭 → <strong>고정</strong>), 가장 최근에 커밋된 브랜치만 표시합니다. 그래프 필터를 사용하면 <code>release/</code> 같은 접두사로 좁혀 볼 수 있습니다.',

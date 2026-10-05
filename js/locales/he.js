@@ -1,7 +1,7 @@
 /* GraphBranch — עברית (Hebrew). */
 GB.i18n.define('he', {
   /* ---------- page ---------- */
-  'meta.description': 'גרף חי של הענפים במאגר GitHub, עם התראות על commits, Pull requests, CI ו-Issues.',
+  'meta.description': 'גרף חי של הענפים במאגר GitHub, עם התראות על commits, Pull requests ו-Issues.',
 
   /* ---------- top bar ---------- */
   'repo.label': 'מאגר GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('he', {
   'stats.branches': 'ענפים גלויים',
   'stats.commits': 'Commits בגרף',
   'stats.prs': 'PR פתוחים',
-  'stats.ci': 'CI אחרון',
   'stats.last': 'פעילות אחרונה',
   'stats.branches.only': 'היחיד במאגר',
   'stats.branches.all': 'כל הענפים במאגר',
@@ -69,13 +68,7 @@ GB.i18n.define('he', {
   },
   'stats.readyForReview': 'מוכנים לסקירה',
   'stats.noneOpen': 'אין פתוחים',
-  'stats.actionsOff': 'Actions מושבת',
-  'stats.noRuns': 'אין הרצות',
   'stats.noEvents': 'אין אירועים',
-  'ci.running': 'רץ',
-  'ci.ok': 'עבר',
-  'ci.fail': 'נכשל',
-  'ci.cancel': 'בוטל',
 
   /* ---------- graph toolbar ---------- */
   'view.aria': 'סוג תצוגה',
@@ -110,10 +103,10 @@ GB.i18n.define('he', {
   'tip.aria': 'פרטי commit',
   'tip.fromBranch': 'מהענף <code>{name}</code>, שכבר עבר merge ונמחק',
   'tip.fromGhost': 'מענף שכבר עבר merge ונמחק',
+  'tip.fromMerged': 'מהענף <code>{name}</code>, שכבר עבר merge (הוא עדיין קיים)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} → <code>{base}</code> (טיוטה)',
   'tip.viewPr': 'הצג PR',
-  'tip.viewRun': 'הצג הרצה',
   'tip.mergeOf': {
     one: 'merge של commit הורה אחד',
     two: 'merge של שני commits הורים',
@@ -156,7 +149,6 @@ GB.i18n.define('he', {
   'cat.commits': 'Commits',
   'cat.branches': 'ענפים',
   'cat.prs': 'Pull requests',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'אחר',
 
@@ -173,10 +165,6 @@ GB.i18n.define('he', {
   'kind.review': 'סקירה',
   'kind.review-ok': 'אושר',
   'kind.review-changes': 'התבקשו שינויים',
-  'kind.ci-start': 'CI רץ',
-  'kind.ci-ok': 'CI עבר',
-  'kind.ci-fail': 'CI נכשל',
-  'kind.ci-cancel': 'CI בוטל',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue נסגר',
   'kind.comment': 'תגובה',
@@ -238,10 +226,6 @@ GB.i18n.define('he', {
   'act.commentCommit': 'תגובה על commit {sha}',
   'act.discussionNew': 'דיון חדש',
   'act.discussionComment': 'תגובה בדיון',
-  'act.ciRunning': 'CI רץ: {name}',
-  'act.ciOk': 'CI עבר: {name}',
-  'act.ciFail': 'CI נכשל: {name}',
-  'act.ciCancel': 'CI בוטל: {name}',
   'act.release': 'Release {tag} פורסם',
   'act.releaseNoTag': 'Release פורסם',
   'act.star': 'כוכב חדש',
@@ -269,7 +253,7 @@ GB.i18n.define('he', {
   'settings.optional': 'אופציונלי',
   'settings.show': 'הצג',
   'settings.hide': 'הסתר',
-  'settings.tokenHelp': 'ללא token, GitHub מאפשר 60 בקשות בשעה. עם token <em>fine-grained</em> לקריאה בלבד (הרשאות Metadata, Contents, Pull requests ו-Actions) התצוגה מתרעננת כל 10 שניות, עובדת עם מאגרים שיש בהם אלפי ענפים, ואפשר לראות גם מאגרים פרטיים. ה-token נשמר רק בדפדפן הזה ונשלח רק אל api.github.com.',
+  'settings.tokenHelp': 'ללא token, GitHub מאפשר 60 בקשות בשעה. עם token <em>fine-grained</em> לקריאה בלבד (הרשאות Metadata, Contents ו-Pull requests) התצוגה מתרעננת כל 10 שניות, עובדת עם מאגרים שיש בהם אלפי ענפים, ואפשר לראות גם מאגרים פרטיים. ה-token נשמר רק בדפדפן הזה ונשלח רק אל api.github.com.',
   'settings.maxBranches': 'מספר הענפים הפעילים ביותר להצגה',
   'settings.depth': 'Commits לכל ענף',
   'settings.branchesHelp': 'במאגרים גדולים GraphBranch לא מציג את כל הענפים: הוא מציג את ענף ברירת המחדל, את הענפים שהצמדת (לחץ על ענף ואז על <strong>הצמד</strong>) ואת הענפים עם ה-commits העדכניים ביותר. השתמש במסנן הגרף כדי להתמקד בקידומת, למשל <code>release/</code>.',

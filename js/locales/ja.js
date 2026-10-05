@@ -1,7 +1,7 @@
 /* GraphBranch — 日本語. */
 GB.i18n.define('ja', {
   /* ---------- ページ ---------- */
-  'meta.description': 'GitHub リポジトリのブランチをリアルタイムでグラフ表示し、コミット・プルリクエスト・CI・Issue の動きを通知します。',
+  'meta.description': 'GitHub リポジトリのブランチをリアルタイムでグラフ表示し、コミット・プルリクエスト・Issue の動きを通知します。',
 
   /* ---------- 上部バー ---------- */
   'repo.label': 'GitHub リポジトリ',
@@ -44,7 +44,6 @@ GB.i18n.define('ja', {
   'stats.branches': '表示中のブランチ',
   'stats.commits': 'グラフ内のコミット',
   'stats.prs': 'オープンな PR',
-  'stats.ci': '最新の CI',
   'stats.last': '最終アクティビティ',
   'stats.branches.only': 'リポジトリ内で唯一',
   'stats.branches.all': 'リポジトリ内のすべて',
@@ -57,13 +56,7 @@ GB.i18n.define('ja', {
   'stats.drafts': '{n} 件がドラフト',
   'stats.readyForReview': 'すべてレビュー可能',
   'stats.noneOpen': 'オープンなものなし',
-  'stats.actionsOff': 'Actions は無効',
-  'stats.noRuns': '実行なし',
   'stats.noEvents': 'イベントなし',
-  'ci.running': '実行中',
-  'ci.ok': '成功',
-  'ci.fail': '失敗',
-  'ci.cancel': 'キャンセル',
 
   /* ---------- グラフのツールバー ---------- */
   'view.aria': '表示形式',
@@ -98,10 +91,10 @@ GB.i18n.define('ja', {
   'tip.aria': 'コミットの詳細',
   'tip.fromBranch': 'ブランチ <code>{name}</code> 由来（マージ済みで削除済み）',
   'tip.fromGhost': 'マージ済みで削除されたブランチ由来',
+  'tip.fromMerged': 'ブランチ <code>{name}</code> 由来（マージ済み、まだ存在）',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num}（ドラフト）→ <code>{base}</code>',
   'tip.viewPr': 'PR を表示',
-  'tip.viewRun': '実行を表示',
   'tip.mergeOf': '{n} 個の親をマージ',
   'tip.openCommit': 'GitHub でコミットを開く',
   'tip.pin': '<code>{branch}</code> をピン留め',
@@ -136,7 +129,6 @@ GB.i18n.define('ja', {
   'cat.commits': 'コミット',
   'cat.branches': 'ブランチ',
   'cat.prs': 'プルリクエスト',
-  'cat.ci': 'CI',
   'cat.issues': 'Issue',
   'cat.other': 'その他',
 
@@ -152,10 +144,6 @@ GB.i18n.define('ja', {
   'kind.review': 'レビュー',
   'kind.review-ok': '承認',
   'kind.review-changes': '変更を要求',
-  'kind.ci-start': 'CI 実行中',
-  'kind.ci-ok': 'CI 成功',
-  'kind.ci-fail': 'CI 失敗',
-  'kind.ci-cancel': 'CI キャンセル',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue クローズ',
   'kind.comment': 'コメント',
@@ -205,10 +193,6 @@ GB.i18n.define('ja', {
   'act.commentCommit': 'コミット {sha} へのコメント',
   'act.discussionNew': '新しいディスカッション',
   'act.discussionComment': 'ディスカッションへのコメント',
-  'act.ciRunning': 'CI 実行中: {name}',
-  'act.ciOk': 'CI 成功: {name}',
-  'act.ciFail': 'CI 失敗: {name}',
-  'act.ciCancel': 'CI キャンセル: {name}',
   'act.release': 'リリース {tag} を公開',
   'act.releaseNoTag': 'リリースを公開',
   'act.star': '新しいスター',
@@ -236,7 +220,7 @@ GB.i18n.define('ja', {
   'settings.optional': '任意',
   'settings.show': '表示',
   'settings.hide': '非表示',
-  'settings.tokenHelp': 'トークンがない場合、GitHub が許可するのは 1 時間あたり 60 リクエストです。読み取り専用の <em>fine-grained</em> トークン（Metadata、Contents、Pull requests、Actions の権限）を使うと、表示は 10 秒ごとに更新され、数千のブランチを持つリポジトリにも対応し、プライベートリポジトリも表示できます。トークンはこのブラウザーにのみ保存され、api.github.com にのみ送信されます。',
+  'settings.tokenHelp': 'トークンがない場合、GitHub が許可するのは 1 時間あたり 60 リクエストです。読み取り専用の <em>fine-grained</em> トークン（Metadata、Contents、Pull requests の権限）を使うと、表示は 10 秒ごとに更新され、数千のブランチを持つリポジトリにも対応し、プライベートリポジトリも表示できます。トークンはこのブラウザーにのみ保存され、api.github.com にのみ送信されます。',
   'settings.maxBranches': '表示する最もアクティブなブランチ数',
   'settings.depth': 'ブランチごとのコミット数',
   'settings.branchesHelp': '大規模なリポジトリでは、GraphBranch はすべてのブランチを一覧表示せず、デフォルトブランチ、ピン留めしたブランチ（ブランチをクリック → <strong>ピン留め</strong>）、直近にコミットのあったブランチを表示します。グラフのフィルターを使うと、たとえば <code>release/</code> のようなプレフィックスに絞り込めます。',

@@ -1,7 +1,7 @@
 /* GraphBranch — Kiswahili. */
 GB.i18n.define('sw', {
   /* ---------- ukurasa ---------- */
-  'meta.description': 'Mchoro wa moja kwa moja wa matawi ya hazina ya GitHub, wenye arifa za commit, pull request, CI na issue.',
+  'meta.description': 'Mchoro wa moja kwa moja wa matawi ya hazina ya GitHub, wenye arifa za commit, pull request na issue.',
 
   /* ---------- upau wa juu ---------- */
   'repo.label': 'Hazina ya GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('sw', {
   'stats.branches': 'Matawi yanayoonekana',
   'stats.commits': 'Commit kwenye mchoro',
   'stats.prs': 'PR zilizo wazi',
-  'stats.ci': 'CI ya hivi karibuni',
   'stats.last': 'Shughuli ya mwisho',
   'stats.branches.only': 'ndilo pekee kwenye hazina',
   'stats.branches.all': 'yote kwenye hazina',
@@ -57,13 +56,7 @@ GB.i18n.define('sw', {
   'stats.drafts': { one: 'rasimu {n}', other: 'rasimu {n}' },
   'stats.readyForReview': 'tayari kwa ukaguzi',
   'stats.noneOpen': 'hakuna iliyo wazi',
-  'stats.actionsOff': 'Actions imezimwa',
-  'stats.noRuns': 'hakuna uendeshaji',
   'stats.noEvents': 'hakuna matukio',
-  'ci.running': 'Inaendeshwa',
-  'ci.ok': 'Imefaulu',
-  'ci.fail': 'Imeshindwa',
-  'ci.cancel': 'Imeghairiwa',
 
   /* ---------- upau wa mchoro ---------- */
   'view.aria': 'Aina ya mwonekano',
@@ -98,10 +91,10 @@ GB.i18n.define('sw', {
   'tip.aria': 'Maelezo ya commit',
   'tip.fromBranch': 'Kutoka tawi <code>{name}</code>, lililokwisha unganishwa na kufutwa',
   'tip.fromGhost': 'Kutoka tawi lililokwisha unganishwa na kufutwa',
+  'tip.fromMerged': 'Kutoka tawi <code>{name}</code>, lililokwisha unganishwa (bado lipo)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (rasimu) → <code>{base}</code>',
   'tip.viewPr': 'tazama PR',
-  'tip.viewRun': 'tazama uendeshaji',
   'tip.mergeOf': { one: 'merge ya mzazi {n}', other: 'merge ya wazazi {n}' },
   'tip.openCommit': 'Fungua commit kwenye GitHub',
   'tip.pin': 'Bandika <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('sw', {
   'cat.commits': 'Commit',
   'cat.branches': 'Matawi',
   'cat.prs': 'Pull request',
-  'cat.ci': 'CI',
   'cat.issues': 'Issue',
   'cat.other': 'Nyingine',
 
@@ -152,10 +144,6 @@ GB.i18n.define('sw', {
   'kind.review': 'Ukaguzi',
   'kind.review-ok': 'Imekubaliwa',
   'kind.review-changes': 'Mabadiliko yameombwa',
-  'kind.ci-start': 'CI inaendeshwa',
-  'kind.ci-ok': 'CI imefaulu',
-  'kind.ci-fail': 'CI imeshindwa',
-  'kind.ci-cancel': 'CI imeghairiwa',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue imefungwa',
   'kind.comment': 'Maoni',
@@ -205,10 +193,6 @@ GB.i18n.define('sw', {
   'act.commentCommit': 'Maoni kwenye commit {sha}',
   'act.discussionNew': 'Mjadala mpya',
   'act.discussionComment': 'Maoni kwenye mjadala',
-  'act.ciRunning': 'CI inaendeshwa: {name}',
-  'act.ciOk': 'CI imefaulu: {name}',
-  'act.ciFail': 'CI imeshindwa: {name}',
-  'act.ciCancel': 'CI imeghairiwa: {name}',
   'act.release': 'Release {tag} imechapishwa',
   'act.releaseNoTag': 'Release imechapishwa',
   'act.star': 'Nyota mpya',
@@ -236,7 +220,7 @@ GB.i18n.define('sw', {
   'settings.optional': 'si lazima',
   'settings.show': 'Onyesha',
   'settings.hide': 'Ficha',
-  'settings.tokenHelp': 'Bila token, GitHub huruhusu maombi 60 kwa saa. Ukiwa na token ya kusoma tu ya aina ya <em>fine-grained</em> (ruhusa za Metadata, Contents, Pull requests na Actions), mwonekano husasishwa kila sekunde 10, hufanya kazi na hazina zenye maelfu ya matawi, na unaweza kuona hazina za faragha. Token huhifadhiwa kwenye kivinjari hiki pekee na hutumwa kwa api.github.com pekee.',
+  'settings.tokenHelp': 'Bila token, GitHub huruhusu maombi 60 kwa saa. Ukiwa na token ya kusoma tu ya aina ya <em>fine-grained</em> (ruhusa za Metadata, Contents na Pull requests), mwonekano husasishwa kila sekunde 10, hufanya kazi na hazina zenye maelfu ya matawi, na unaweza kuona hazina za faragha. Token huhifadhiwa kwenye kivinjari hiki pekee na hutumwa kwa api.github.com pekee.',
   'settings.maxBranches': 'Matawi yenye shughuli nyingi zaidi ya kuonyesha',
   'settings.depth': 'Commit kwa kila tawi',
   'settings.branchesHelp': 'Kwenye hazina kubwa GraphBranch haorodheshi matawi yote: huonyesha tawi chaguomsingi, yale uliyoyabandika (bofya tawi → <strong>Bandika</strong>) na yale yenye commit za hivi karibuni zaidi. Tumia kichujio cha mchoro ili kulenga kiambishi awali, kwa mfano <code>release/</code>.',

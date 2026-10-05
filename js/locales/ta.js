@@ -1,7 +1,7 @@
 /* GraphBranch — தமிழ். */
 GB.i18n.define('ta', {
   /* ---------- பக்கம் ---------- */
-  'meta.description': 'GitHub களஞ்சியத்தின் கிளைகளின் நேரலை வரைபடம்; கமிட், pull request, CI, issue ஆகியவற்றுக்கான எச்சரிக்கைகளுடன்.',
+  'meta.description': 'GitHub களஞ்சியத்தின் கிளைகளின் நேரலை வரைபடம்; கமிட், pull request, issue ஆகியவற்றுக்கான எச்சரிக்கைகளுடன்.',
 
   /* ---------- மேல் பட்டி ---------- */
   'repo.label': 'GitHub களஞ்சியம்',
@@ -44,7 +44,6 @@ GB.i18n.define('ta', {
   'stats.branches': 'தெரியும் கிளைகள்',
   'stats.commits': 'வரைபடத்தில் கமிட்கள்',
   'stats.prs': 'திறந்துள்ள PR',
-  'stats.ci': 'சமீபத்திய CI',
   'stats.last': 'கடைசி செயல்பாடு',
   'stats.branches.only': 'களஞ்சியத்தில் இது மட்டுமே',
   'stats.branches.all': 'களஞ்சியத்தில் உள்ள அனைத்தும்',
@@ -57,13 +56,7 @@ GB.i18n.define('ta', {
   'stats.drafts': { one: '{n} வரைவு', other: '{n} வரைவுகள்' },
   'stats.readyForReview': 'மதிப்பாய்வுக்குத் தயார்',
   'stats.noneOpen': 'எதுவும் திறக்கப்படவில்லை',
-  'stats.actionsOff': 'Actions முடக்கப்பட்டுள்ளது',
-  'stats.noRuns': 'ரன்கள் இல்லை',
   'stats.noEvents': 'நிகழ்வுகள் இல்லை',
-  'ci.running': 'இயங்குகிறது',
-  'ci.ok': 'வெற்றி',
-  'ci.fail': 'தோல்வி',
-  'ci.cancel': 'ரத்து செய்யப்பட்டது',
 
   /* ---------- வரைபடக் கருவிப்பட்டி ---------- */
   'view.aria': 'காட்சி வகை',
@@ -98,10 +91,10 @@ GB.i18n.define('ta', {
   'tip.aria': 'கமிட் விவரங்கள்',
   'tip.fromBranch': '<code>{name}</code> கிளையிலிருந்து; அது ஏற்கெனவே மெர்ஜ் செய்யப்பட்டு நீக்கப்பட்டுவிட்டது',
   'tip.fromGhost': 'ஏற்கெனவே மெர்ஜ் செய்யப்பட்டு நீக்கப்பட்ட ஒரு கிளையிலிருந்து',
+  'tip.fromMerged': '<code>{name}</code> கிளையிலிருந்து; அது ஏற்கெனவே மெர்ஜ் செய்யப்பட்டுவிட்டது (அது இன்னும் உள்ளது)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (வரைவு) → <code>{base}</code>',
   'tip.viewPr': 'PR-ஐப் பார்க்கவும்',
-  'tip.viewRun': 'ரன்னைப் பார்க்கவும்',
   'tip.mergeOf': { one: '{n} பேரன்ட்டின் மெர்ஜ்', other: '{n} பேரன்ட்களின் மெர்ஜ்' },
   'tip.openCommit': 'GitHub-இல் கமிட்டைத் திறக்கவும்',
   'tip.pin': 'பின் செய்யவும்: <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('ta', {
   'cat.commits': 'கமிட்கள்',
   'cat.branches': 'கிளைகள்',
   'cat.prs': 'Pull request',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'பிற',
 
@@ -152,10 +144,6 @@ GB.i18n.define('ta', {
   'kind.review': 'மதிப்பாய்வு',
   'kind.review-ok': 'அங்கீகரிக்கப்பட்டது',
   'kind.review-changes': 'மாற்றங்கள் கோரப்பட்டன',
-  'kind.ci-start': 'CI இயங்குகிறது',
-  'kind.ci-ok': 'CI வெற்றி',
-  'kind.ci-fail': 'CI தோல்வி',
-  'kind.ci-cancel': 'CI ரத்து',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue மூடப்பட்டது',
   'kind.comment': 'கருத்து',
@@ -205,10 +193,6 @@ GB.i18n.define('ta', {
   'act.commentCommit': 'கமிட்டில் கருத்து: {sha}',
   'act.discussionNew': 'புதிய விவாதம்',
   'act.discussionComment': 'ஒரு விவாதத்தில் கருத்து',
-  'act.ciRunning': 'CI இயங்குகிறது: {name}',
-  'act.ciOk': 'CI வெற்றி: {name}',
-  'act.ciFail': 'CI தோல்வி: {name}',
-  'act.ciCancel': 'CI ரத்து: {name}',
   'act.release': 'ரிலீஸ் {tag} வெளியிடப்பட்டது',
   'act.releaseNoTag': 'ரிலீஸ் வெளியிடப்பட்டது',
   'act.star': 'புதிய ஸ்டார்',
@@ -236,7 +220,7 @@ GB.i18n.define('ta', {
   'settings.optional': 'விருப்பத்திற்குரியது',
   'settings.show': 'காட்டவும்',
   'settings.hide': 'மறைக்கவும்',
-  'settings.tokenHelp': 'டோக்கன் இல்லாமல், GitHub மணிக்கு 60 கோரிக்கைகளை அனுமதிக்கிறது. படிக்க-மட்டும் <em>fine-grained</em> டோக்கனுடன் (Metadata, Contents, Pull requests, Actions அனுமதிகள்) காட்சி ஒவ்வொரு 10 விநாடிகளுக்கும் புதுப்பிக்கப்படும், ஆயிரக்கணக்கான கிளைகள் உள்ள களஞ்சியங்களிலும் வேலை செய்யும், மேலும் தனிப்பட்ட களஞ்சியங்களையும் பார்க்கலாம். டோக்கன் இந்த உலாவியில் மட்டுமே சேமிக்கப்படும்; api.github.com சேவையகத்திற்கு மட்டுமே அனுப்பப்படும்.',
+  'settings.tokenHelp': 'டோக்கன் இல்லாமல், GitHub மணிக்கு 60 கோரிக்கைகளை அனுமதிக்கிறது. படிக்க-மட்டும் <em>fine-grained</em> டோக்கனுடன் (Metadata, Contents, Pull requests அனுமதிகள்) காட்சி ஒவ்வொரு 10 விநாடிகளுக்கும் புதுப்பிக்கப்படும், ஆயிரக்கணக்கான கிளைகள் உள்ள களஞ்சியங்களிலும் வேலை செய்யும், மேலும் தனிப்பட்ட களஞ்சியங்களையும் பார்க்கலாம். டோக்கன் இந்த உலாவியில் மட்டுமே சேமிக்கப்படும்; api.github.com சேவையகத்திற்கு மட்டுமே அனுப்பப்படும்.',
   'settings.maxBranches': 'காட்ட வேண்டிய மிகவும் செயல்பாடுள்ள கிளைகள்',
   'settings.depth': 'ஒரு கிளைக்கு கமிட்கள்',
   'settings.branchesHelp': 'பெரிய களஞ்சியங்களில் GraphBranch எல்லாக் கிளைகளையும் பட்டியலிடாது: இயல்புநிலைக் கிளை, நீங்கள் பின் செய்தவை (ஒரு கிளையைக் கிளிக் செய்து → <strong>பின் செய்யவும்</strong>) மற்றும் மிகச் சமீபத்திய கமிட்கள் உள்ளவற்றை மட்டும் காட்டும். ஒரு முன்னொட்டில் கவனம் செலுத்த வரைபட வடிகட்டியைப் பயன்படுத்தவும், எடுத்துக்காட்டாக <code>release/</code>.',

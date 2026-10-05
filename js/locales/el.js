@@ -1,7 +1,7 @@
 /* GraphBranch — Ελληνικά. */
 GB.i18n.define('el', {
   /* ---------- σελίδα ---------- */
-  'meta.description': 'Ζωντανό γράφημα των branches ενός αποθετηρίου GitHub, με ειδοποιήσεις για commits, pull requests, CI και issues.',
+  'meta.description': 'Ζωντανό γράφημα των branches ενός αποθετηρίου GitHub, με ειδοποιήσεις για commits, pull requests και issues.',
 
   /* ---------- επάνω γραμμή ---------- */
   'repo.label': 'Αποθετήριο GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('el', {
   'stats.branches': 'Ορατά branches',
   'stats.commits': 'Commits στο γράφημα',
   'stats.prs': 'Ανοιχτά PR',
-  'stats.ci': 'Τελευταίο CI',
   'stats.last': 'Τελευταία δραστηριότητα',
   'stats.branches.only': 'το μοναδικό στο αποθετήριο',
   'stats.branches.all': 'όλα στο αποθετήριο',
@@ -57,13 +56,7 @@ GB.i18n.define('el', {
   'stats.drafts': { one: '{n} πρόχειρο', other: '{n} πρόχειρα' },
   'stats.readyForReview': 'έτοιμα για review',
   'stats.noneOpen': 'κανένα ανοιχτό',
-  'stats.actionsOff': 'Τα Actions είναι απενεργοποιημένα',
-  'stats.noRuns': 'χωρίς εκτελέσεις',
   'stats.noEvents': 'χωρίς συμβάντα',
-  'ci.running': 'Σε εκτέλεση',
-  'ci.ok': 'Επιτυχία',
-  'ci.fail': 'Αποτυχία',
-  'ci.cancel': 'Ακυρώθηκε',
 
   /* ---------- γραμμή εργαλείων γραφήματος ---------- */
   'view.aria': 'Τύπος προβολής',
@@ -98,10 +91,10 @@ GB.i18n.define('el', {
   'tip.aria': 'Λεπτομέρειες commit',
   'tip.fromBranch': 'Από το branch <code>{name}</code>, για το οποίο έγινε ήδη merge και διαγράφηκε',
   'tip.fromGhost': 'Από ένα branch για το οποίο έγινε ήδη merge και διαγράφηκε',
+  'tip.fromMerged': 'Από το branch <code>{name}</code>, για το οποίο έγινε ήδη merge (υπάρχει ακόμη)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (πρόχειρο) → <code>{base}</code>',
   'tip.viewPr': 'προβολή PR',
-  'tip.viewRun': 'προβολή εκτέλεσης',
   'tip.mergeOf': { one: 'merge από {n} γονέα', other: 'merge από {n} γονείς' },
   'tip.openCommit': 'Άνοιγμα του commit στο GitHub',
   'tip.pin': 'Καρφίτσωμα του <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('el', {
   'cat.commits': 'Commits',
   'cat.branches': 'Branches',
   'cat.prs': 'Pull requests',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'Άλλα',
 
@@ -152,10 +144,6 @@ GB.i18n.define('el', {
   'kind.review': 'Review',
   'kind.review-ok': 'Έγκριση',
   'kind.review-changes': 'Αίτημα αλλαγών',
-  'kind.ci-start': 'CI σε εκτέλεση',
-  'kind.ci-ok': 'CI επιτυχές',
-  'kind.ci-fail': 'CI απέτυχε',
-  'kind.ci-cancel': 'CI ακυρώθηκε',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Κλείσιμο issue',
   'kind.comment': 'Σχόλιο',
@@ -205,10 +193,6 @@ GB.i18n.define('el', {
   'act.commentCommit': 'Σχόλιο στο commit {sha}',
   'act.discussionNew': 'Νέα συζήτηση',
   'act.discussionComment': 'Σχόλιο σε συζήτηση',
-  'act.ciRunning': 'CI σε εκτέλεση: {name}',
-  'act.ciOk': 'CI επιτυχές: {name}',
-  'act.ciFail': 'CI απέτυχε: {name}',
-  'act.ciCancel': 'CI ακυρώθηκε: {name}',
   'act.release': 'Δημοσιεύθηκε το release {tag}',
   'act.releaseNoTag': 'Δημοσιεύθηκε νέο release',
   'act.star': 'Νέο αστέρι',
@@ -236,7 +220,7 @@ GB.i18n.define('el', {
   'settings.optional': 'προαιρετικό',
   'settings.show': 'Εμφάνιση',
   'settings.hide': 'Απόκρυψη',
-  'settings.tokenHelp': 'Χωρίς token, το GitHub επιτρέπει 60 αιτήματα ανά ώρα. Με ένα token <em>fine-grained</em> μόνο για ανάγνωση (δικαιώματα Metadata, Contents, Pull requests και Actions) η προβολή ανανεώνεται κάθε 10 δευτερόλεπτα, λειτουργεί με αποθετήρια που έχουν χιλιάδες branches και μπορείτε να δείτε ιδιωτικά αποθετήρια. Το token αποθηκεύεται μόνο σε αυτό το πρόγραμμα περιήγησης και στέλνεται μόνο στο api.github.com.',
+  'settings.tokenHelp': 'Χωρίς token, το GitHub επιτρέπει 60 αιτήματα ανά ώρα. Με ένα token <em>fine-grained</em> μόνο για ανάγνωση (δικαιώματα Metadata, Contents και Pull requests) η προβολή ανανεώνεται κάθε 10 δευτερόλεπτα, λειτουργεί με αποθετήρια που έχουν χιλιάδες branches και μπορείτε να δείτε ιδιωτικά αποθετήρια. Το token αποθηκεύεται μόνο σε αυτό το πρόγραμμα περιήγησης και στέλνεται μόνο στο api.github.com.',
   'settings.maxBranches': 'Πλήθος πιο ενεργών branches προς εμφάνιση',
   'settings.depth': 'Commits ανά branch',
   'settings.branchesHelp': 'Στα μεγάλα αποθετήρια το GraphBranch δεν εμφανίζει όλα τα branches: δείχνει το προεπιλεγμένο branch, αυτά που καρφιτσώνετε (κλικ σε ένα branch → <strong>Καρφίτσωμα</strong>) και αυτά με τα πιο πρόσφατα commits. Χρησιμοποιήστε το φίλτρο του γραφήματος για να εστιάσετε σε ένα πρόθεμα, για παράδειγμα <code>release/</code>.',

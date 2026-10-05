@@ -1,7 +1,7 @@
 /* GraphBranch — فارسی (Persian). */
 GB.i18n.define('fa', {
   /* ---------- page ---------- */
-  'meta.description': 'نمودار زنده شاخه‌های یک مخزن GitHub، همراه با هشدار برای commit‌ها، Pull request‌ها، CI و Issue‌ها.',
+  'meta.description': 'نمودار زنده شاخه‌های یک مخزن GitHub، همراه با هشدار برای commit‌ها، Pull request‌ها و Issue‌ها.',
 
   /* ---------- top bar ---------- */
   'repo.label': 'مخزن GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('fa', {
   'stats.branches': 'شاخه‌های قابل مشاهده',
   'stats.commits': 'Commit در نمودار',
   'stats.prs': 'PR باز',
-  'stats.ci': 'آخرین CI',
   'stats.last': 'آخرین فعالیت',
   'stats.branches.only': 'تنها شاخه مخزن',
   'stats.branches.all': 'همه شاخه‌های مخزن',
@@ -66,13 +65,7 @@ GB.i18n.define('fa', {
   },
   'stats.readyForReview': 'آماده بازبینی',
   'stats.noneOpen': 'هیچ‌کدام باز نیست',
-  'stats.actionsOff': 'Actions غیرفعال است',
-  'stats.noRuns': 'بدون اجرا',
   'stats.noEvents': 'بدون رویداد',
-  'ci.running': 'در حال اجرا',
-  'ci.ok': 'موفق',
-  'ci.fail': 'ناموفق',
-  'ci.cancel': 'لغو شد',
 
   /* ---------- graph toolbar ---------- */
   'view.aria': 'نوع نما',
@@ -107,10 +100,10 @@ GB.i18n.define('fa', {
   'tip.aria': 'جزئیات commit',
   'tip.fromBranch': 'از شاخه <code>{name}</code>، که قبلاً merge و حذف شده است',
   'tip.fromGhost': 'از شاخه‌ای که قبلاً merge و حذف شده است',
+  'tip.fromMerged': 'از شاخه <code>{name}</code>، که قبلاً merge شده است (هنوز وجود دارد)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} → <code>{base}</code> (پیش‌نویس)',
   'tip.viewPr': 'مشاهده PR',
-  'tip.viewRun': 'مشاهده اجرا',
   'tip.mergeOf': {
     one: 'merge از یک والد',
     other: 'merge از {n} والد',
@@ -151,7 +144,6 @@ GB.i18n.define('fa', {
   'cat.commits': 'Commits',
   'cat.branches': 'شاخه‌ها',
   'cat.prs': 'Pull requests',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'سایر',
 
@@ -168,10 +160,6 @@ GB.i18n.define('fa', {
   'kind.review': 'بازبینی',
   'kind.review-ok': 'تأیید شد',
   'kind.review-changes': 'درخواست تغییرات',
-  'kind.ci-start': 'CI در حال اجرا',
-  'kind.ci-ok': 'CI موفق',
-  'kind.ci-fail': 'CI ناموفق',
-  'kind.ci-cancel': 'CI لغو شد',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue بسته شد',
   'kind.comment': 'نظر',
@@ -230,10 +218,6 @@ GB.i18n.define('fa', {
   'act.commentCommit': 'نظر روی commit {sha}',
   'act.discussionNew': 'بحث جدید',
   'act.discussionComment': 'نظر در یک بحث',
-  'act.ciRunning': 'CI در حال اجرا: {name}',
-  'act.ciOk': 'CI موفق: {name}',
-  'act.ciFail': 'CI ناموفق: {name}',
-  'act.ciCancel': 'CI لغو شد: {name}',
   'act.release': 'Release {tag} منتشر شد',
   'act.releaseNoTag': 'Release منتشر شد',
   'act.star': 'ستاره جدید',
@@ -261,7 +245,7 @@ GB.i18n.define('fa', {
   'settings.optional': 'اختیاری',
   'settings.show': 'نمایش',
   'settings.hide': 'پنهان کردن',
-  'settings.tokenHelp': 'بدون توکن، GitHub فقط ۶۰ درخواست در ساعت مجاز می‌داند. با یک توکن <em>fine-grained</em> با دسترسی فقط خواندنی (دسترسی‌های Metadata، Contents، Pull requests و Actions) نما هر ۱۰ ثانیه به‌روز می‌شود، با مخزن‌هایی که هزاران شاخه دارند کار می‌کند و می‌توانید مخزن‌های خصوصی را هم ببینید. توکن فقط در همین مرورگر ذخیره می‌شود و فقط به api.github.com ارسال می‌شود.',
+  'settings.tokenHelp': 'بدون توکن، GitHub فقط ۶۰ درخواست در ساعت مجاز می‌داند. با یک توکن <em>fine-grained</em> با دسترسی فقط خواندنی (دسترسی‌های Metadata، Contents و Pull requests) نما هر ۱۰ ثانیه به‌روز می‌شود، با مخزن‌هایی که هزاران شاخه دارند کار می‌کند و می‌توانید مخزن‌های خصوصی را هم ببینید. توکن فقط در همین مرورگر ذخیره می‌شود و فقط به api.github.com ارسال می‌شود.',
   'settings.maxBranches': 'تعداد فعال‌ترین شاخه‌ها برای نمایش',
   'settings.depth': 'Commit در هر شاخه',
   'settings.branchesHelp': 'در مخزن‌های بزرگ، GraphBranch همه شاخه‌ها را فهرست نمی‌کند: شاخه پیش‌فرض، شاخه‌هایی که سنجاق می‌کنید (روی یک شاخه کلیک کنید و سپس <strong>سنجاق کردن</strong> را بزنید) و شاخه‌هایی را که جدیدترین commit‌ها را دارند نشان می‌دهد. برای تمرکز روی یک پیشوند از فیلتر نمودار استفاده کنید، مثلاً <code>release/</code>.',

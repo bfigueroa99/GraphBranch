@@ -1,7 +1,7 @@
 /* GraphBranch — 繁體中文（台灣）. */
 GB.i18n.define('zh-Hant', {
   /* ---------- 頁面 ---------- */
-  'meta.description': '即時顯示 GitHub 儲存庫的分支關係圖，並針對提交、Pull Request、CI 與 Issue 提供提醒。',
+  'meta.description': '即時顯示 GitHub 儲存庫的分支關係圖，並針對提交、Pull Request 與 Issue 提供提醒。',
 
   /* ---------- 頂端列 ---------- */
   'repo.label': 'GitHub 儲存庫',
@@ -44,7 +44,6 @@ GB.i18n.define('zh-Hant', {
   'stats.branches': '可見分支',
   'stats.commits': '圖中的提交',
   'stats.prs': '開啟中的 PR',
-  'stats.ci': '最近一次 CI',
   'stats.last': '最近活動',
   'stats.branches.only': '儲存庫中僅此一個',
   'stats.branches.all': '儲存庫中的全部分支',
@@ -57,13 +56,7 @@ GB.i18n.define('zh-Hant', {
   'stats.drafts': '{n} 個草稿',
   'stats.readyForReview': '皆可供審查',
   'stats.noneOpen': '沒有開啟中的',
-  'stats.actionsOff': 'Actions 已停用',
-  'stats.noRuns': '無執行記錄',
   'stats.noEvents': '無事件',
-  'ci.running': '執行中',
-  'ci.ok': '通過',
-  'ci.fail': '失敗',
-  'ci.cancel': '已取消',
 
   /* ---------- 圖形工具列 ---------- */
   'view.aria': '檢視類型',
@@ -98,10 +91,10 @@ GB.i18n.define('zh-Hant', {
   'tip.aria': '提交詳細資料',
   'tip.fromBranch': '來自分支 <code>{name}</code>，已合併並刪除',
   'tip.fromGhost': '來自已合併並刪除的分支',
+  'tip.fromMerged': '來自分支 <code>{name}</code>，已合併（仍然存在）',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num}（草稿）→ <code>{base}</code>',
   'tip.viewPr': '檢視 PR',
-  'tip.viewRun': '檢視執行',
   'tip.mergeOf': '合併了 {n} 個父提交',
   'tip.openCommit': '在 GitHub 上開啟提交',
   'tip.pin': '釘選 <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('zh-Hant', {
   'cat.commits': '提交',
   'cat.branches': '分支',
   'cat.prs': 'Pull Request',
-  'cat.ci': 'CI',
   'cat.issues': 'Issue',
   'cat.other': '其他',
 
@@ -152,10 +144,6 @@ GB.i18n.define('zh-Hant', {
   'kind.review': '審查',
   'kind.review-ok': '已核准',
   'kind.review-changes': '要求變更',
-  'kind.ci-start': 'CI 執行中',
-  'kind.ci-ok': 'CI 通過',
-  'kind.ci-fail': 'CI 失敗',
-  'kind.ci-cancel': 'CI 已取消',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue 已關閉',
   'kind.comment': '留言',
@@ -205,10 +193,6 @@ GB.i18n.define('zh-Hant', {
   'act.commentCommit': '提交 {sha} 的留言',
   'act.discussionNew': '新討論',
   'act.discussionComment': '討論中的留言',
-  'act.ciRunning': 'CI 執行中：{name}',
-  'act.ciOk': 'CI 通過：{name}',
-  'act.ciFail': 'CI 失敗：{name}',
-  'act.ciCancel': 'CI 已取消：{name}',
   'act.release': 'Release {tag} 已發布',
   'act.releaseNoTag': 'Release 已發布',
   'act.star': '新增星號',
@@ -236,7 +220,7 @@ GB.i18n.define('zh-Hant', {
   'settings.optional': '選填',
   'settings.show': '顯示',
   'settings.hide': '隱藏',
-  'settings.tokenHelp': '沒有權杖時，GitHub 每小時只允許 60 次請求。使用唯讀的 <em>fine-grained</em> 權杖（需要 Metadata、Contents、Pull requests 與 Actions 權限），檢視會每 10 秒重新整理，可處理擁有數千個分支的儲存庫，也能查看私人儲存庫。權杖只會儲存在此瀏覽器中，並且只會傳送到 api.github.com。',
+  'settings.tokenHelp': '沒有權杖時，GitHub 每小時只允許 60 次請求。使用唯讀的 <em>fine-grained</em> 權杖（需要 Metadata、Contents 與 Pull requests 權限），檢視會每 10 秒重新整理，可處理擁有數千個分支的儲存庫，也能查看私人儲存庫。權杖只會儲存在此瀏覽器中，並且只會傳送到 api.github.com。',
   'settings.maxBranches': '顯示的最活躍分支數',
   'settings.depth': '每個分支的提交數',
   'settings.branchesHelp': '在大型儲存庫中，GraphBranch 不會列出所有分支：只顯示預設分支、已釘選的分支（按一下分支 → <strong>釘選</strong>），以及最近有提交的分支。可使用圖上的篩選功能聚焦於某個前綴，例如 <code>release/</code>。',

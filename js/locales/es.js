@@ -1,7 +1,7 @@
 /* GraphBranch — español. */
 GB.i18n.define('es', {
   /* ---------- página ---------- */
-  'meta.description': 'Grafo en vivo de las ramas de un repositorio de GitHub, con alertas de commits, pull requests, CI e issues.',
+  'meta.description': 'Grafo en vivo de las ramas de un repositorio de GitHub, con alertas de commits, pull requests e issues.',
 
   /* ---------- barra superior ---------- */
   'repo.label': 'Repositorio de GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('es', {
   'stats.branches': 'Ramas visibles',
   'stats.commits': 'Commits en el grafo',
   'stats.prs': 'PRs abiertos',
-  'stats.ci': 'Último CI',
   'stats.last': 'Última actividad',
   'stats.branches.only': 'la única del repo',
   'stats.branches.all': 'todas las del repo',
@@ -57,13 +56,7 @@ GB.i18n.define('es', {
   'stats.drafts': { one: '{n} borrador', other: '{n} borradores' },
   'stats.readyForReview': 'listos para revisión',
   'stats.noneOpen': 'ninguno abierto',
-  'stats.actionsOff': 'Actions desactivado',
-  'stats.noRuns': 'sin ejecuciones',
   'stats.noEvents': 'sin eventos',
-  'ci.running': 'En curso',
-  'ci.ok': 'Aprobado',
-  'ci.fail': 'Falló',
-  'ci.cancel': 'Cancelado',
 
   /* ---------- barra del grafo ---------- */
   'view.aria': 'Tipo de vista',
@@ -98,10 +91,10 @@ GB.i18n.define('es', {
   'tip.aria': 'Detalle del commit',
   'tip.fromBranch': 'De la rama <code>{name}</code>, ya fusionada y eliminada',
   'tip.fromGhost': 'De una rama ya fusionada y eliminada',
+  'tip.fromMerged': 'De la rama <code>{name}</code>, ya fusionada (sigue existiendo)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (borrador) → <code>{base}</code>',
   'tip.viewPr': 'ver PR',
-  'tip.viewRun': 'ver ejecución',
   'tip.mergeOf': { one: 'merge de {n} padre', other: 'merge de {n} padres' },
   'tip.openCommit': 'Abrir commit en GitHub',
   'tip.pin': 'Fijar <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('es', {
   'cat.commits': 'Commits',
   'cat.branches': 'Ramas',
   'cat.prs': 'Pull requests',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'Otros',
 
@@ -152,10 +144,6 @@ GB.i18n.define('es', {
   'kind.review': 'Revisión',
   'kind.review-ok': 'Aprobado',
   'kind.review-changes': 'Cambios solicitados',
-  'kind.ci-start': 'CI en curso',
-  'kind.ci-ok': 'CI aprobado',
-  'kind.ci-fail': 'CI falló',
-  'kind.ci-cancel': 'CI cancelado',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue cerrado',
   'kind.comment': 'Comentario',
@@ -205,10 +193,6 @@ GB.i18n.define('es', {
   'act.commentCommit': 'Comentario en el commit {sha}',
   'act.discussionNew': 'Nueva discusión',
   'act.discussionComment': 'Comentario en una discusión',
-  'act.ciRunning': 'CI en curso: {name}',
-  'act.ciOk': 'CI aprobado: {name}',
-  'act.ciFail': 'CI falló: {name}',
-  'act.ciCancel': 'CI cancelado: {name}',
   'act.release': 'Release {tag} publicada',
   'act.releaseNoTag': 'Release publicada',
   'act.star': 'Nueva estrella',
@@ -236,7 +220,7 @@ GB.i18n.define('es', {
   'settings.optional': 'opcional',
   'settings.show': 'Mostrar',
   'settings.hide': 'Ocultar',
-  'settings.tokenHelp': 'Sin token, GitHub permite 60 consultas por hora. Con un token <em>fine-grained</em> de solo lectura (permisos Metadata, Contents, Pull requests y Actions) la vista se actualiza cada 10 segundos, funciona con repositorios de miles de ramas y puedes ver repos privados. El token se guarda solo en este navegador y se envía únicamente a api.github.com.',
+  'settings.tokenHelp': 'Sin token, GitHub permite 60 consultas por hora. Con un token <em>fine-grained</em> de solo lectura (permisos Metadata, Contents y Pull requests) la vista se actualiza cada 10 segundos, funciona con repositorios de miles de ramas y puedes ver repos privados. El token se guarda solo en este navegador y se envía únicamente a api.github.com.',
   'settings.maxBranches': 'Ramas más activas a mostrar',
   'settings.depth': 'Commits por rama',
   'settings.branchesHelp': 'En repos grandes GraphBranch no lista todas las ramas: muestra la rama por defecto, las que fijes (clic en una rama → <strong>Fijar</strong>) y las que tienen commits más recientes. Usa el filtro del grafo para concentrarte en un prefijo, por ejemplo <code>release/</code>.',

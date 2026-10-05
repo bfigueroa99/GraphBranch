@@ -1,7 +1,7 @@
 /* GraphBranch — اردو (Urdu). */
 GB.i18n.define('ur', {
   /* ---------- page ---------- */
-  'meta.description': 'GitHub ریپوزٹری کی برانچز کا لائیو گراف، جس میں commits، Pull requests، CI اور Issues کے الرٹس شامل ہیں۔',
+  'meta.description': 'GitHub ریپوزٹری کی برانچز کا لائیو گراف، جس میں commits، Pull requests اور Issues کے الرٹس شامل ہیں۔',
 
   /* ---------- top bar ---------- */
   'repo.label': 'GitHub ریپوزٹری',
@@ -44,7 +44,6 @@ GB.i18n.define('ur', {
   'stats.branches': 'نظر آنے والی برانچز',
   'stats.commits': 'گراف میں commits',
   'stats.prs': 'کھلے PRs',
-  'stats.ci': 'تازہ ترین CI',
   'stats.last': 'آخری سرگرمی',
   'stats.branches.only': 'ریپوزٹری کی واحد برانچ',
   'stats.branches.all': 'ریپوزٹری کی تمام برانچز',
@@ -66,13 +65,7 @@ GB.i18n.define('ur', {
   },
   'stats.readyForReview': 'جائزے کے لیے تیار',
   'stats.noneOpen': 'کوئی کھلا نہیں',
-  'stats.actionsOff': 'Actions غیر فعال',
-  'stats.noRuns': 'کوئی رن نہیں',
   'stats.noEvents': 'کوئی ایونٹ نہیں',
-  'ci.running': 'جاری',
-  'ci.ok': 'کامیاب',
-  'ci.fail': 'ناکام',
-  'ci.cancel': 'منسوخ',
 
   /* ---------- graph toolbar ---------- */
   'view.aria': 'ویو کی قسم',
@@ -107,10 +100,10 @@ GB.i18n.define('ur', {
   'tip.aria': 'commit کی تفصیل',
   'tip.fromBranch': 'برانچ <code>{name}</code> سے، جو پہلے ہی merge ہو کر حذف ہو چکی ہے',
   'tip.fromGhost': 'ایسی برانچ سے جو پہلے ہی merge ہو کر حذف ہو چکی ہے',
+  'tip.fromMerged': 'برانچ <code>{name}</code> سے، جو پہلے ہی merge ہو چکی ہے (وہ اب بھی موجود ہے)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} → <code>{base}</code> (مسودہ)',
   'tip.viewPr': 'PR دیکھیں',
-  'tip.viewRun': 'رن دیکھیں',
   'tip.mergeOf': {
     one: '{n} پیرنٹ کا merge',
     other: '{n} پیرنٹس کا merge',
@@ -151,7 +144,6 @@ GB.i18n.define('ur', {
   'cat.commits': 'Commits',
   'cat.branches': 'برانچز',
   'cat.prs': 'Pull requests',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'دیگر',
 
@@ -168,10 +160,6 @@ GB.i18n.define('ur', {
   'kind.review': 'جائزہ',
   'kind.review-ok': 'منظور',
   'kind.review-changes': 'تبدیلیوں کی درخواست',
-  'kind.ci-start': 'CI جاری',
-  'kind.ci-ok': 'CI کامیاب',
-  'kind.ci-fail': 'CI ناکام',
-  'kind.ci-cancel': 'CI منسوخ',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue بند',
   'kind.comment': 'تبصرہ',
@@ -230,10 +218,6 @@ GB.i18n.define('ur', {
   'act.commentCommit': 'commit {sha} پر تبصرہ',
   'act.discussionNew': 'نئی بحث',
   'act.discussionComment': 'ایک بحث پر تبصرہ',
-  'act.ciRunning': 'CI جاری: {name}',
-  'act.ciOk': 'CI کامیاب: {name}',
-  'act.ciFail': 'CI ناکام: {name}',
-  'act.ciCancel': 'CI منسوخ: {name}',
   'act.release': 'Release {tag} شائع ہوئی',
   'act.releaseNoTag': 'Release شائع ہوئی',
   'act.star': 'نیا اسٹار',
@@ -261,7 +245,7 @@ GB.i18n.define('ur', {
   'settings.optional': 'اختیاری',
   'settings.show': 'دکھائیں',
   'settings.hide': 'چھپائیں',
-  'settings.tokenHelp': 'ٹوکن کے بغیر GitHub فی گھنٹہ 60 درخواستوں کی اجازت دیتا ہے۔ صرف پڑھنے والے <em>fine-grained</em> ٹوکن (Metadata، Contents، Pull requests اور Actions کی اجازتوں کے ساتھ) سے ویو ہر 10 سیکنڈ میں ریفریش ہوتا ہے، ہزاروں برانچز والی ریپوزٹریز کے ساتھ کام کرتا ہے، اور آپ نجی ریپوزٹریز بھی دیکھ سکتے ہیں۔ ٹوکن صرف اسی براؤزر میں محفوظ رہتا ہے اور صرف api.github.com کو بھیجا جاتا ہے۔',
+  'settings.tokenHelp': 'ٹوکن کے بغیر GitHub فی گھنٹہ 60 درخواستوں کی اجازت دیتا ہے۔ صرف پڑھنے والے <em>fine-grained</em> ٹوکن (Metadata، Contents اور Pull requests کی اجازتوں کے ساتھ) سے ویو ہر 10 سیکنڈ میں ریفریش ہوتا ہے، ہزاروں برانچز والی ریپوزٹریز کے ساتھ کام کرتا ہے، اور آپ نجی ریپوزٹریز بھی دیکھ سکتے ہیں۔ ٹوکن صرف اسی براؤزر میں محفوظ رہتا ہے اور صرف api.github.com کو بھیجا جاتا ہے۔',
   'settings.maxBranches': 'دکھانے کے لیے سب سے زیادہ فعال برانچز',
   'settings.depth': 'ہر برانچ میں commits',
   'settings.branchesHelp': 'بڑی ریپوزٹریز میں GraphBranch تمام برانچز کی فہرست نہیں دکھاتا: وہ ڈیفالٹ برانچ، آپ کی پن کی ہوئی برانچز (کسی برانچ پر کلک کریں، پھر <strong>پن کریں</strong>) اور سب سے حالیہ commits والی برانچز دکھاتا ہے۔ کسی پریفکس پر توجہ دینے کے لیے گراف کا فلٹر استعمال کریں، مثلاً <code>release/</code>۔',

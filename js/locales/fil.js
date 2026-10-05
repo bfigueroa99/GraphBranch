@@ -1,7 +1,7 @@
 /* GraphBranch — Filipino. */
 GB.i18n.define('fil', {
   /* ---------- page ---------- */
-  'meta.description': 'Live na graph ng mga branch ng isang GitHub repository, na may mga alerto para sa mga commit, pull request, CI, at issue.',
+  'meta.description': 'Live na graph ng mga branch ng isang GitHub repository, na may mga alerto para sa mga commit, pull request, at issue.',
 
   /* ---------- top bar ---------- */
   'repo.label': 'Repository sa GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('fil', {
   'stats.branches': 'Mga nakikitang branch',
   'stats.commits': 'Mga commit sa graph',
   'stats.prs': 'Mga bukas na PR',
-  'stats.ci': 'Pinakabagong CI',
   'stats.last': 'Huling aktibidad',
   'stats.branches.only': 'ang tanging branch sa repo',
   'stats.branches.all': 'lahat ng nasa repo',
@@ -57,13 +56,7 @@ GB.i18n.define('fil', {
   'stats.drafts': { one: '{n} draft', other: '{n} draft' },
   'stats.readyForReview': 'handa na para sa review',
   'stats.noneOpen': 'walang bukas',
-  'stats.actionsOff': 'Naka-disable ang Actions',
-  'stats.noRuns': 'walang run',
   'stats.noEvents': 'walang event',
-  'ci.running': 'Tumatakbo',
-  'ci.ok': 'Pumasa',
-  'ci.fail': 'Nabigo',
-  'ci.cancel': 'Kinansela',
 
   /* ---------- graph toolbar ---------- */
   'view.aria': 'Uri ng view',
@@ -98,10 +91,10 @@ GB.i18n.define('fil', {
   'tip.aria': 'Mga detalye ng commit',
   'tip.fromBranch': 'Mula sa branch <code>{name}</code> na na-merge at nabura na',
   'tip.fromGhost': 'Mula sa branch na na-merge at nabura na',
+  'tip.fromMerged': 'Mula sa branch <code>{name}</code> na na-merge na (nandiyan pa rin)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (draft) → <code>{base}</code>',
   'tip.viewPr': 'tingnan ang PR',
-  'tip.viewRun': 'tingnan ang run',
   'tip.mergeOf': { one: 'merge ng {n} parent', other: 'merge ng {n} parent' },
   'tip.openCommit': 'Buksan ang commit sa GitHub',
   'tip.pin': 'I-pin ang <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('fil', {
   'cat.commits': 'Mga commit',
   'cat.branches': 'Mga branch',
   'cat.prs': 'Mga pull request',
-  'cat.ci': 'CI',
   'cat.issues': 'Mga issue',
   'cat.other': 'Iba pa',
 
@@ -153,10 +145,6 @@ GB.i18n.define('fil', {
   'kind.review': 'Review',
   'kind.review-ok': 'Inaprubahan',
   'kind.review-changes': 'Hiniling ang mga pagbabago',
-  'kind.ci-start': 'Tumatakbo ang CI',
-  'kind.ci-ok': 'Pumasa ang CI',
-  'kind.ci-fail': 'Nabigo ang CI',
-  'kind.ci-cancel': 'Kinansela ang CI',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Sinara ang issue',
   'kind.comment': 'Komento',
@@ -206,10 +194,6 @@ GB.i18n.define('fil', {
   'act.commentCommit': 'Komento sa commit {sha}',
   'act.discussionNew': 'Bagong discussion',
   'act.discussionComment': 'Komento sa isang discussion',
-  'act.ciRunning': 'Tumatakbo ang CI: {name}',
-  'act.ciOk': 'Pumasa ang CI: {name}',
-  'act.ciFail': 'Nabigo ang CI: {name}',
-  'act.ciCancel': 'Kinansela ang CI: {name}',
   'act.release': 'Na-publish ang release {tag}',
   'act.releaseNoTag': 'Na-publish ang release',
   'act.star': 'Bagong star',
@@ -237,7 +221,7 @@ GB.i18n.define('fil', {
   'settings.optional': 'opsyonal',
   'settings.show': 'Ipakita',
   'settings.hide': 'Itago',
-  'settings.tokenHelp': 'Kapag walang token, 60 request kada oras ang pinapayagan ng GitHub. Sa read-only na <em>fine-grained</em> token (mga permission na Metadata, Contents, Pull requests at Actions), nagre-refresh ang view kada 10 segundo, gumagana ito sa mga repository na may libo-libong branch, at makikita mo ang mga pribadong repo. Sa browser na ito lang naka-store ang token at sa api.github.com lang ito ipinapadala.',
+  'settings.tokenHelp': 'Kapag walang token, 60 request kada oras ang pinapayagan ng GitHub. Sa read-only na <em>fine-grained</em> token (mga permission na Metadata, Contents at Pull requests), nagre-refresh ang view kada 10 segundo, gumagana ito sa mga repository na may libo-libong branch, at makikita mo ang mga pribadong repo. Sa browser na ito lang naka-store ang token at sa api.github.com lang ito ipinapadala.',
   'settings.maxBranches': 'Dami ng pinakaaktibong branch na ipapakita',
   'settings.depth': 'Mga commit kada branch',
   'settings.branchesHelp': 'Sa malalaking repo, hindi inililista ng GraphBranch ang lahat ng branch: ipinapakita nito ang default branch, ang mga pini-pin mo (i-click ang isang branch → <strong>I-pin</strong>) at ang mga may pinakabagong commit. Gamitin ang filter ng graph para mag-focus sa isang prefix, halimbawa <code>release/</code>.',

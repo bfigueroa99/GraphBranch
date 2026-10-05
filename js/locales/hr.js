@@ -1,7 +1,7 @@
 /* GraphBranch — hrvatski. */
 GB.i18n.define('hr', {
   /* ---------- stranica ---------- */
-  'meta.description': 'Graf grana GitHub repozitorija uživo, s upozorenjima: commitovi, pull requestovi, CI i issues.',
+  'meta.description': 'Graf grana GitHub repozitorija uživo, s upozorenjima: commitovi, pull requestovi i issues.',
 
   /* ---------- gornja traka ---------- */
   'repo.label': 'GitHub repozitorij',
@@ -44,7 +44,6 @@ GB.i18n.define('hr', {
   'stats.branches': 'Vidljive grane',
   'stats.commits': 'Commitovi u grafu',
   'stats.prs': 'Otvoreni PR-ovi',
-  'stats.ci': 'Zadnji CI',
   'stats.last': 'Zadnja aktivnost',
   'stats.branches.only': 'jedina u repozitoriju',
   'stats.branches.all': 'sve u repozitoriju',
@@ -61,13 +60,7 @@ GB.i18n.define('hr', {
   'stats.drafts': { one: '{n} nacrt', few: '{n} nacrta', other: '{n} nacrta' },
   'stats.readyForReview': 'spremni za pregled',
   'stats.noneOpen': 'nijedan otvoren',
-  'stats.actionsOff': 'Actions je isključen',
-  'stats.noRuns': 'nema pokretanja',
   'stats.noEvents': 'nema događaja',
-  'ci.running': 'U tijeku',
-  'ci.ok': 'Uspješno',
-  'ci.fail': 'Neuspješno',
-  'ci.cancel': 'Otkazano',
 
   /* ---------- traka grafa ---------- */
   'view.aria': 'Vrsta prikaza',
@@ -102,10 +95,10 @@ GB.i18n.define('hr', {
   'tip.aria': 'Detalji commita',
   'tip.fromBranch': 'Iz grane <code>{name}</code>, već spojene i obrisane',
   'tip.fromGhost': 'Iz grane koja je već spojena i obrisana',
+  'tip.fromMerged': 'Iz grane <code>{name}</code>, već spojene (još postoji)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (nacrt) → <code>{base}</code>',
   'tip.viewPr': 'prikažite PR',
-  'tip.viewRun': 'prikažite pokretanje',
   'tip.mergeOf': { one: 'spajanje, {n} roditelj', few: 'spajanje, {n} roditelja', other: 'spajanje, {n} roditelja' },
   'tip.openCommit': 'Otvorite commit na GitHubu',
   'tip.pin': 'Prikvačite <code>{branch}</code>',
@@ -140,7 +133,6 @@ GB.i18n.define('hr', {
   'cat.commits': 'Commitovi',
   'cat.branches': 'Grane',
   'cat.prs': 'Pull requestovi',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'Ostalo',
 
@@ -156,10 +148,6 @@ GB.i18n.define('hr', {
   'kind.review': 'Pregled',
   'kind.review-ok': 'Odobreno',
   'kind.review-changes': 'Zatražene izmjene',
-  'kind.ci-start': 'CI u tijeku',
-  'kind.ci-ok': 'CI uspješan',
-  'kind.ci-fail': 'CI neuspješan',
-  'kind.ci-cancel': 'CI otkazan',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue zatvoren',
   'kind.comment': 'Komentar',
@@ -213,10 +201,6 @@ GB.i18n.define('hr', {
   'act.commentCommit': 'Komentar na commit {sha}',
   'act.discussionNew': 'Nova rasprava',
   'act.discussionComment': 'Komentar na raspravu',
-  'act.ciRunning': 'CI u tijeku: {name}',
-  'act.ciOk': 'CI uspješan: {name}',
-  'act.ciFail': 'CI neuspješan: {name}',
-  'act.ciCancel': 'CI otkazan: {name}',
   'act.release': 'Release {tag} objavljen',
   'act.releaseNoTag': 'Release objavljen',
   'act.star': 'Nova zvjezdica',
@@ -244,7 +228,7 @@ GB.i18n.define('hr', {
   'settings.optional': 'neobavezno',
   'settings.show': 'Prikažite',
   'settings.hide': 'Sakrijte',
-  'settings.tokenHelp': 'Bez tokena GitHub dopušta 60 zahtjeva na sat. S <em>fine-grained</em> tokenom samo za čitanje (dozvole Metadata, Contents, Pull requests i Actions) prikaz se osvježava svakih 10 sekundi, radi s repozitorijima koji imaju tisuće grana i možete vidjeti privatne repozitorije. Token se sprema samo u ovom pregledniku i šalje se isključivo na api.github.com.',
+  'settings.tokenHelp': 'Bez tokena GitHub dopušta 60 zahtjeva na sat. S <em>fine-grained</em> tokenom samo za čitanje (dozvole Metadata, Contents i Pull requests) prikaz se osvježava svakih 10 sekundi, radi s repozitorijima koji imaju tisuće grana i možete vidjeti privatne repozitorije. Token se sprema samo u ovom pregledniku i šalje se isključivo na api.github.com.',
   'settings.maxBranches': 'Broj najaktivnijih grana za prikaz',
   'settings.depth': 'Commitova po grani',
   'settings.branchesHelp': 'U velikim repozitorijima GraphBranch ne prikazuje sve grane: prikazuje zadanu granu, one koje prikvačite (kliknite granu → <strong>Prikvačite</strong>) i one s najnovijim commitovima. Filtrom grafa usredotočite se na prefiks, na primjer <code>release/</code>.',

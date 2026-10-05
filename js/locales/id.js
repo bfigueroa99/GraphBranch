@@ -1,7 +1,7 @@
 /* GraphBranch — Bahasa Indonesia. */
 GB.i18n.define('id', {
   /* ---------- halaman ---------- */
-  'meta.description': 'Grafik langsung branch sebuah repositori GitHub, dengan peringatan untuk commit, pull request, CI, dan issue.',
+  'meta.description': 'Grafik langsung branch sebuah repositori GitHub, dengan peringatan untuk commit, pull request, dan issue.',
 
   /* ---------- bilah atas ---------- */
   'repo.label': 'Repositori GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('id', {
   'stats.branches': 'Branch yang terlihat',
   'stats.commits': 'Commit di grafik',
   'stats.prs': 'PR terbuka',
-  'stats.ci': 'CI terbaru',
   'stats.last': 'Aktivitas terakhir',
   'stats.branches.only': 'satu-satunya di repo',
   'stats.branches.all': 'semua di repo',
@@ -57,13 +56,7 @@ GB.i18n.define('id', {
   'stats.drafts': '{n} draf',
   'stats.readyForReview': 'siap di-review',
   'stats.noneOpen': 'tidak ada yang terbuka',
-  'stats.actionsOff': 'Actions dinonaktifkan',
-  'stats.noRuns': 'belum ada eksekusi',
   'stats.noEvents': 'belum ada event',
-  'ci.running': 'Berjalan',
-  'ci.ok': 'Lulus',
-  'ci.fail': 'Gagal',
-  'ci.cancel': 'Dibatalkan',
 
   /* ---------- bilah alat grafik ---------- */
   'view.aria': 'Jenis tampilan',
@@ -98,10 +91,10 @@ GB.i18n.define('id', {
   'tip.aria': 'Detail commit',
   'tip.fromBranch': 'Dari branch <code>{name}</code>, yang sudah di-merge dan dihapus',
   'tip.fromGhost': 'Dari sebuah branch yang sudah di-merge dan dihapus',
+  'tip.fromMerged': 'Dari branch <code>{name}</code>, yang sudah di-merge (masih ada)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (draf) → <code>{base}</code>',
   'tip.viewPr': 'lihat PR',
-  'tip.viewRun': 'lihat eksekusi',
   'tip.mergeOf': 'merge dari {n} parent',
   'tip.openCommit': 'Buka commit di GitHub',
   'tip.pin': 'Sematkan <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('id', {
   'cat.commits': 'Commit',
   'cat.branches': 'Branch',
   'cat.prs': 'Pull request',
-  'cat.ci': 'CI',
   'cat.issues': 'Issue',
   'cat.other': 'Lainnya',
 
@@ -152,10 +144,6 @@ GB.i18n.define('id', {
   'kind.review': 'Review',
   'kind.review-ok': 'Disetujui',
   'kind.review-changes': 'Perubahan diminta',
-  'kind.ci-start': 'CI berjalan',
-  'kind.ci-ok': 'CI lulus',
-  'kind.ci-fail': 'CI gagal',
-  'kind.ci-cancel': 'CI dibatalkan',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue ditutup',
   'kind.comment': 'Komentar',
@@ -205,10 +193,6 @@ GB.i18n.define('id', {
   'act.commentCommit': 'Komentar pada commit {sha}',
   'act.discussionNew': 'Diskusi baru',
   'act.discussionComment': 'Komentar pada sebuah diskusi',
-  'act.ciRunning': 'CI berjalan: {name}',
-  'act.ciOk': 'CI lulus: {name}',
-  'act.ciFail': 'CI gagal: {name}',
-  'act.ciCancel': 'CI dibatalkan: {name}',
   'act.release': 'Release {tag} dipublikasikan',
   'act.releaseNoTag': 'Release dipublikasikan',
   'act.star': 'Bintang baru',
@@ -236,7 +220,7 @@ GB.i18n.define('id', {
   'settings.optional': 'opsional',
   'settings.show': 'Tampilkan',
   'settings.hide': 'Sembunyikan',
-  'settings.tokenHelp': 'Tanpa token, GitHub mengizinkan 60 permintaan per jam. Dengan token <em>fine-grained</em> hanya-baca (izin Metadata, Contents, Pull requests, dan Actions), tampilan dimuat ulang setiap 10 detik, berfungsi dengan repositori yang memiliki ribuan branch, dan Anda dapat melihat repo privat. Token hanya disimpan di browser ini dan hanya dikirim ke api.github.com.',
+  'settings.tokenHelp': 'Tanpa token, GitHub mengizinkan 60 permintaan per jam. Dengan token <em>fine-grained</em> hanya-baca (izin Metadata, Contents, dan Pull requests), tampilan dimuat ulang setiap 10 detik, berfungsi dengan repositori yang memiliki ribuan branch, dan Anda dapat melihat repo privat. Token hanya disimpan di browser ini dan hanya dikirim ke api.github.com.',
   'settings.maxBranches': 'Jumlah branch paling aktif yang ditampilkan',
   'settings.depth': 'Commit per branch',
   'settings.branchesHelp': 'Pada repo besar, GraphBranch tidak menampilkan semua branch: yang tampil adalah branch default, branch yang Anda sematkan (klik sebuah branch → <strong>Sematkan</strong>), dan branch dengan commit paling baru. Gunakan filter grafik untuk berfokus pada sebuah awalan, misalnya <code>release/</code>.',

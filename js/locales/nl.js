@@ -1,7 +1,7 @@
 /* GraphBranch — Nederlands. */
 GB.i18n.define('nl', {
   /* ---------- page ---------- */
-  'meta.description': 'Live graaf van de branches van een GitHub-repository, met meldingen voor commits, pull requests, CI en issues.',
+  'meta.description': 'Live graaf van de branches van een GitHub-repository, met meldingen voor commits, pull requests en issues.',
 
   /* ---------- top bar ---------- */
   'repo.label': 'GitHub-repository',
@@ -44,7 +44,6 @@ GB.i18n.define('nl', {
   'stats.branches': 'Zichtbare branches',
   'stats.commits': 'Commits in de graaf',
   'stats.prs': 'Open PR’s',
-  'stats.ci': 'Laatste CI',
   'stats.last': 'Laatste activiteit',
   'stats.branches.only': 'de enige in de repo',
   'stats.branches.all': 'alle in de repo',
@@ -57,13 +56,7 @@ GB.i18n.define('nl', {
   'stats.drafts': { one: '{n} concept', other: '{n} concepten' },
   'stats.readyForReview': 'klaar voor review',
   'stats.noneOpen': 'geen open',
-  'stats.actionsOff': 'Actions uitgeschakeld',
-  'stats.noRuns': 'geen runs',
   'stats.noEvents': 'geen gebeurtenissen',
-  'ci.running': 'Bezig',
-  'ci.ok': 'Geslaagd',
-  'ci.fail': 'Mislukt',
-  'ci.cancel': 'Geannuleerd',
 
   /* ---------- graph toolbar ---------- */
   'view.aria': 'Weergavetype',
@@ -98,10 +91,10 @@ GB.i18n.define('nl', {
   'tip.aria': 'Commitdetails',
   'tip.fromBranch': 'Van branch <code>{name}</code>, al gemerged en verwijderd',
   'tip.fromGhost': 'Van een branch die al is gemerged en verwijderd',
+  'tip.fromMerged': 'Van branch <code>{name}</code>, al gemerged (bestaat nog)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (concept) → <code>{base}</code>',
   'tip.viewPr': 'PR bekijken',
-  'tip.viewRun': 'run bekijken',
   'tip.mergeOf': { one: 'merge van {n} parent', other: 'merge van {n} parents' },
   'tip.openCommit': 'Commit openen op GitHub',
   'tip.pin': '<code>{branch}</code> vastzetten',
@@ -136,7 +129,6 @@ GB.i18n.define('nl', {
   'cat.commits': 'Commits',
   'cat.branches': 'Branches',
   'cat.prs': 'Pull requests',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'Overig',
 
@@ -153,10 +145,6 @@ GB.i18n.define('nl', {
   'kind.review': 'Review',
   'kind.review-ok': 'Goedgekeurd',
   'kind.review-changes': 'Wijzigingen gevraagd',
-  'kind.ci-start': 'CI bezig',
-  'kind.ci-ok': 'CI geslaagd',
-  'kind.ci-fail': 'CI mislukt',
-  'kind.ci-cancel': 'CI geannuleerd',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue gesloten',
   'kind.comment': 'Reactie',
@@ -206,10 +194,6 @@ GB.i18n.define('nl', {
   'act.commentCommit': 'Reactie op commit {sha}',
   'act.discussionNew': 'Nieuwe discussie',
   'act.discussionComment': 'Reactie op een discussie',
-  'act.ciRunning': 'CI bezig: {name}',
-  'act.ciOk': 'CI geslaagd: {name}',
-  'act.ciFail': 'CI mislukt: {name}',
-  'act.ciCancel': 'CI geannuleerd: {name}',
   'act.release': 'Release {tag} gepubliceerd',
   'act.releaseNoTag': 'Release gepubliceerd',
   'act.star': 'Nieuwe ster',
@@ -237,7 +221,7 @@ GB.i18n.define('nl', {
   'settings.optional': 'optioneel',
   'settings.show': 'Tonen',
   'settings.hide': 'Verbergen',
-  'settings.tokenHelp': 'Zonder token staat GitHub 60 verzoeken per uur toe. Met een alleen-lezen <em>fine-grained</em> token (rechten voor Metadata, Contents, Pull requests en Actions) wordt de weergave elke 10 seconden vernieuwd, werkt het met repositories met duizenden branches en kun je privérepo’s zien. Het token wordt alleen in deze browser opgeslagen en alleen naar api.github.com verzonden.',
+  'settings.tokenHelp': 'Zonder token staat GitHub 60 verzoeken per uur toe. Met een alleen-lezen <em>fine-grained</em> token (rechten voor Metadata, Contents en Pull requests) wordt de weergave elke 10 seconden vernieuwd, werkt het met repositories met duizenden branches en kun je privérepo’s zien. Het token wordt alleen in deze browser opgeslagen en alleen naar api.github.com verzonden.',
   'settings.maxBranches': 'Aantal meest actieve branches om te tonen',
   'settings.depth': 'Commits per branch',
   'settings.branchesHelp': 'Bij grote repo’s toont GraphBranch niet alle branches: het toont de standaardbranch, de branches die je vastzet (klik op een branch → <strong>Vastzetten</strong>) en die met de meest recente commits. Gebruik het filter van de graaf om je op een prefix te richten, bijvoorbeeld <code>release/</code>.',

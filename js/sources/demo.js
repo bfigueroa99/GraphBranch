@@ -1,4 +1,4 @@
-/* GraphBranch — repositorio simulado. Genera historia, ramas, PRs, CI e issues
+/* GraphBranch — repositorio simulado. Genera historia, ramas, PRs e issues
    con la misma forma de datos que la fuente de GitHub, para ver la app en
    movimiento sin conexión ni token. Todo lo que muestra es ficticio. */
 (function (GB) {
@@ -51,7 +51,6 @@
         branches: new Map(),
         commits: new Map(),
         pulls: new Map(),
-        runs: new Map(),
         totalBranches: 0,
         loaded: false,
       };
@@ -59,7 +58,6 @@
       this.rnd = mulberry32(Date.now() % 100000);
       this.prSeq = 30;
       this.issueSeq = 85;
-      this.runSeq = 1180;
       this.release = [1, 4, 0];
       this.openIssues = [];
       this.timers = new Set();
@@ -137,50 +135,6 @@
       return this.pick(pool).replace('{s}', b.scope || 'app');
     }
 
-    startRun(branch, sha, name, time, outcome) {
-      const id = ++this.runSeq;
-      const c = this.data.commits.get(sha);
-      const run = {
-        id,
-        name,
-        title: c ? U.firstLine(c.message) : '',
-        branch,
-        sha,
-        status: 'in_progress',
-        conclusion: null,
-        url: null,
-        number: id - 1000,
-        event: 'push',
-        actor: c ? c.author : null,
-        createdAt: time,
-      };
-      this.data.runs.set(id, run);
-      if (this.data.runs.size > 20) this.data.runs.delete(Math.min(...this.data.runs.keys()));
-      if (outcome) {
-        run.status = 'completed';
-        run.conclusion = outcome;
-      }
-      return run;
-    }
-
-    runAct(run, started) {
-      const fields = { detail: run.title, ref: `#${run.number} · ${run.event}`, branch: run.branch, sha: run.sha, actor: run.actor };
-      if (started) return this.act('ci-start', { ...fields, title: MSG('act.ciRunning', { name: run.name }) });
-      if (run.conclusion === 'success') return this.act('ci-ok', { ...fields, title: MSG('act.ciOk', { name: run.name }) });
-      return this.act('ci-fail', { ...fields, title: MSG('act.ciFail', { name: run.name }) });
-    }
-
-    /** Lanza CI y programa su resultado unos segundos después. */
-    runCI(branch, sha) {
-      const run = this.startRun(branch, sha, branch === 'main' ? 'Deploy' : 'Tests', Date.now());
-      this.later(6000 + this.rnd() * 9000, () => {
-        run.status = 'completed';
-        run.conclusion = this.chance(0.8) ? 'success' : 'failure';
-        this.publish([this.runAct(run, false)]);
-      });
-      return this.runAct(run, true);
-    }
-
     /* ---------- historia inicial ---------- */
 
     seed() {
@@ -230,20 +184,16 @@
       push('feature/login', J, S.oauth);
       push('feature/dark-mode', T, S.darkVars);
       this.data.branches.get('develop').prTitle = 'Release 1.4';
-      const rel = merge('develop', 'main', 34, V, false);
-      this.startRun('main', rel.sha, 'Deploy', t, 'success');
+      merge('develop', 'main', 34, V, false);
       H.push(this.act('release', { title: MSG('act.release', { tag: 'v1.4.0' }), detail: S.releaseNotes, actor: this.actor(V) }, t + 60e3));
       push('feature/login', J, S.loginA11y);
       push('feature/dark-mode', T, S.darkToggle);
       H.push(this.act('issue-open', { title: MSG('act.issueOpened', { num: ++this.issueSeq }), detail: this.C.issues[0], actor: this.actor(C) }, step(5, 20)));
       this.openIssues.push(this.issueSeq);
-      const dev = push('develop', D, S.vite);
-      this.startRun('develop', dev.sha, 'Tests', t, 'success');
+      push('develop', D, S.vite);
       create('fix/rate-limit', 'main', 'api', M);
-      const rl = push('fix/rate-limit', M, S.retryAfter);
-      const failed = this.startRun('fix/rate-limit', rl.sha, 'Tests', t, 'failure');
-      const lg = push('feature/login', J, S.loginE2e);
-      this.startRun('feature/login', lg.sha, 'Tests', t, 'success');
+      push('fix/rate-limit', M, S.retryAfter);
+      push('feature/login', J, S.loginE2e);
 
       const openPR = (head, base, title, user, draft = false) => {
         const n = ++this.prSeq;
@@ -254,7 +204,6 @@
       openPR('feature/login', 'develop', S.prLogin, J);
       openPR('feature/dark-mode', 'develop', S.prDark, T, true);
       openPR('fix/rate-limit', 'main', S.prRetry, M);
-      H.push({ ...this.runAct(failed, false), time: t + 90e3 });
       H.push(this.act('comment', { title: MSG('act.commentPr', { num: 38 }), detail: this.C.comments[0], actor: this.actor(V) }, t + 120e3));
       H.push(this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login: 'pgarrido' }) }, t + 140e3));
       this.data.totalBranches = this.data.branches.size;
@@ -292,7 +241,6 @@
       let c;
       for (let i = 0; i < n; i++) c = this.commit(b.name, this.message(b), author, Date.now() - (n - 1 - i) * 1500);
       acts.push(this.act('push', { title: MSG('act.pushNew', { n, name: b.name }), detail: U.firstLine(c.message), branch: b.name, sha: c.sha, actor: this.actor(author) }));
-      if (b.pr || b.name === 'develop') acts.push(this.runCI(b.name, c.sha));
       return acts;
     }
 
@@ -319,10 +267,7 @@
       const user = this.pick(AUTHORS);
       b.pr = n;
       this.data.pulls.set(n, { number: n, title: title[0].toUpperCase() + title.slice(1), head: b.name, base: b.base, sameRepo: true, url: null, draft, user: this.actor(user), createdAt: Date.now() });
-      return [
-        this.act('pr-open', { title: MSG(draft ? 'act.prOpenedDraft' : 'act.prOpened', { num: n }), detail: this.data.pulls.get(n).title, ref: `${b.name} → ${b.base}`, branch: b.name, sha: b.sha, actor: this.actor(user), number: n }),
-        this.runCI(b.name, b.sha),
-      ];
+      return [this.act('pr-open', { title: MSG(draft ? 'act.prOpenedDraft' : 'act.prOpened', { num: n }), detail: this.data.pulls.get(n).title, ref: `${b.name} → ${b.base}`, branch: b.name, sha: b.sha, actor: this.actor(user), number: n })];
     }
 
     doReview() {
@@ -356,7 +301,6 @@
           this.publish([this.act('branch-delete', { title: MSG('act.branchDeleted', { name: pr.head }), detail: MSG('act.branchDeletedMerged', { into: pr.base }), branch: pr.head, sha: c.sha, actor: this.actor(author) })]);
         });
       }
-      acts.push(this.runCI(pr.base, c.sha));
       if (pr.base === 'main' && pr.head === 'develop') {
         this.later(4000, () => {
           this.release[1]++;
@@ -409,10 +353,7 @@
       const author = this.pick(AUTHORS);
       const c = this.commit('main', this.pick(this.C.hotfix), author, Date.now());
       main.own = 0;
-      return [
-        this.act('push', { title: MSG('act.pushNew', { n: 1, name: 'main' }), detail: c.message, branch: 'main', sha: c.sha, actor: this.actor(author) }),
-        this.runCI('main', c.sha),
-      ];
+      return [this.act('push', { title: MSG('act.pushNew', { n: 1, name: 'main' }), detail: c.message, branch: 'main', sha: c.sha, actor: this.actor(author) })];
     }
 
     /** Mantiene acotada la historia en memoria. */

@@ -47,8 +47,6 @@
       commitsSub: $('#st-commits-sub'),
       prs: $('#st-prs'),
       prsSub: $('#st-prs-sub'),
-      ci: $('#st-ci'),
-      ciSub: $('#st-ci-sub'),
       last: $('#st-last'),
       lastSub: $('#st-last-sub'),
     },
@@ -211,7 +209,6 @@
     lastRender = { data, L };
     const gctx = {
       initial,
-      ci: ciByBranch(data),
       prs: prsByBranch(data),
       pins: data.repo.demo ? new Set() : getPins(),
       canPin: !data.repo.demo,
@@ -223,29 +220,6 @@
     renderStats(data, L);
     if (!L.nodes.length) showOverlay('empty');
     else hideOverlay();
-  }
-
-  function ciState(run) {
-    if (!run) return null;
-    if (run.status !== 'completed') return 'running';
-    if (run.conclusion === 'success') return 'ok';
-    if (['failure', 'timed_out', 'startup_failure'].includes(run.conclusion)) return 'fail';
-    if (run.conclusion === 'cancelled') return 'cancel';
-    return null;
-  }
-
-  function latestRuns(data) {
-    return [...data.runs.values()].sort((a, b) => b.createdAt - a.createdAt || b.id - a.id);
-  }
-
-  function ciByBranch(data) {
-    const map = new Map();
-    for (const r of latestRuns(data)) {
-      if (map.has(r.branch)) continue;
-      const state = ciState(r);
-      if (state) map.set(r.branch, { state, name: r.name, url: r.url });
-    }
-    return map;
   }
 
   function prsByBranch(data) {
@@ -311,18 +285,6 @@
     const drafts = prs.filter((p) => p.draft).length;
     el.st.prsSub.textContent = prs.length ? (drafts ? t('stats.drafts', { n: drafts }) : t('stats.readyForReview')) : t('stats.noneOpen');
 
-    const run = latestRuns(data)[0];
-    const state = ciState(run);
-    const icons = { running: 'run', ok: 'check', fail: 'x', cancel: 'cancel' };
-    if (state) {
-      el.st.ci.innerHTML = `${GB.Feed.icon(icons[state])}<span>${U.esc(t('ci.' + state))}</span>`;
-      el.st.ci.className = `stat-value ci ci-${state}`;
-      el.st.ciSub.textContent = `${run.name} · ${run.branch}`;
-    } else {
-      el.st.ci.textContent = '–';
-      el.st.ci.className = 'stat-value ci';
-      el.st.ciSub.textContent = source && source.actionsEnabled === false ? t('stats.actionsOff') : t('stats.noRuns');
-    }
     renderLast();
     renderTokenBanner();
   }

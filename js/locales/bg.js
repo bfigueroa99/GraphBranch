@@ -1,7 +1,7 @@
 /* GraphBranch — български. */
 GB.i18n.define('bg', {
   /* ---------- страница ---------- */
-  'meta.description': 'Графика на клоновете на GitHub хранилище на живо, със сигнали за комити, pull request-и, CI и issues.',
+  'meta.description': 'Графика на клоновете на GitHub хранилище на живо, със сигнали за комити, pull request-и и issues.',
 
   /* ---------- горна лента ---------- */
   'repo.label': 'GitHub хранилище',
@@ -44,7 +44,6 @@ GB.i18n.define('bg', {
   'stats.branches': 'Видими клонове',
   'stats.commits': 'Комити в графиката',
   'stats.prs': 'Отворени PR-и',
-  'stats.ci': 'Последен CI',
   'stats.last': 'Последна активност',
   'stats.branches.only': 'единственият в хранилището',
   'stats.branches.all': 'всички в хранилището',
@@ -57,13 +56,7 @@ GB.i18n.define('bg', {
   'stats.drafts': { one: '{n} чернова', other: '{n} чернови' },
   'stats.readyForReview': 'готови за преглед',
   'stats.noneOpen': 'няма отворени',
-  'stats.actionsOff': 'Actions е изключен',
-  'stats.noRuns': 'няма изпълнения',
   'stats.noEvents': 'няма събития',
-  'ci.running': 'Изпълнява се',
-  'ci.ok': 'Успешно',
-  'ci.fail': 'Неуспешно',
-  'ci.cancel': 'Отменено',
 
   /* ---------- лента на графиката ---------- */
   'view.aria': 'Тип изглед',
@@ -98,10 +91,10 @@ GB.i18n.define('bg', {
   'tip.aria': 'Подробности за комита',
   'tip.fromBranch': 'От клон <code>{name}</code>, вече слят и изтрит',
   'tip.fromGhost': 'От клон, който вече е слят и изтрит',
+  'tip.fromMerged': 'От клон <code>{name}</code>, вече слят (все още съществува)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (чернова) → <code>{base}</code>',
   'tip.viewPr': 'вижте PR',
-  'tip.viewRun': 'вижте изпълнението',
   'tip.mergeOf': { one: 'сливане на {n} родител', other: 'сливане на {n} родителя' },
   'tip.openCommit': 'Отваряне на комита в GitHub',
   'tip.pin': 'Закрепване на <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('bg', {
   'cat.commits': 'Комити',
   'cat.branches': 'Клонове',
   'cat.prs': 'Pull request-и',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'Други',
 
@@ -152,10 +144,6 @@ GB.i18n.define('bg', {
   'kind.review': 'Преглед',
   'kind.review-ok': 'Одобрено',
   'kind.review-changes': 'Заявени промени',
-  'kind.ci-start': 'CI се изпълнява',
-  'kind.ci-ok': 'CI успешен',
-  'kind.ci-fail': 'CI неуспешен',
-  'kind.ci-cancel': 'CI отменен',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue затворен',
   'kind.comment': 'Коментар',
@@ -205,10 +193,6 @@ GB.i18n.define('bg', {
   'act.commentCommit': 'Коментар към комит {sha}',
   'act.discussionNew': 'Нова дискусия',
   'act.discussionComment': 'Коментар към дискусия',
-  'act.ciRunning': 'CI се изпълнява: {name}',
-  'act.ciOk': 'CI успешен: {name}',
-  'act.ciFail': 'CI неуспешен: {name}',
-  'act.ciCancel': 'CI отменен: {name}',
   'act.release': 'Release {tag} публикуван',
   'act.releaseNoTag': 'Release публикуван',
   'act.star': 'Нова звезда',
@@ -236,7 +220,7 @@ GB.i18n.define('bg', {
   'settings.optional': 'по избор',
   'settings.show': 'Показване',
   'settings.hide': 'Скриване',
-  'settings.tokenHelp': 'Без токен GitHub позволява 60 заявки на час. С токен <em>fine-grained</em> само за четене (права Metadata, Contents, Pull requests и Actions) изгледът се обновява на всеки 10 секунди, работи с хранилища с хиляди клонове и можете да виждате частни хранилища. Токенът се съхранява само в този браузър и се изпраща единствено към api.github.com.',
+  'settings.tokenHelp': 'Без токен GitHub позволява 60 заявки на час. С токен <em>fine-grained</em> само за четене (права Metadata, Contents и Pull requests) изгледът се обновява на всеки 10 секунди, работи с хранилища с хиляди клонове и можете да виждате частни хранилища. Токенът се съхранява само в този браузър и се изпраща единствено към api.github.com.',
   'settings.maxBranches': 'Най-активни клонове за показване',
   'settings.depth': 'Комити на клон',
   'settings.branchesHelp': 'При големи хранилища GraphBranch не изброява всички клонове: показва клона по подразбиране, закрепените от вас (щракнете върху клон → <strong>Закрепване</strong>) и тези с най-скорошни комити. Използвайте филтъра на графиката, за да се фокусирате върху префикс, например <code>release/</code>.',

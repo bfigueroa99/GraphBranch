@@ -1,7 +1,7 @@
 /* GraphBranch — română. */
 GB.i18n.define('ro', {
   /* ---------- pagină ---------- */
-  'meta.description': 'Graf în timp real al ramurilor unui depozit GitHub, cu alerte pentru commit-uri, pull request-uri, CI și issue-uri.',
+  'meta.description': 'Graf în timp real al ramurilor unui depozit GitHub, cu alerte pentru commit-uri, pull request-uri și issue-uri.',
 
   /* ---------- bara de sus ---------- */
   'repo.label': 'Depozit GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('ro', {
   'stats.branches': 'Ramuri vizibile',
   'stats.commits': 'Commit-uri în graf',
   'stats.prs': 'PR-uri deschise',
-  'stats.ci': 'Ultimul CI',
   'stats.last': 'Ultima activitate',
   'stats.branches.only': 'singura din depozit',
   'stats.branches.all': 'toate din depozit',
@@ -61,13 +60,7 @@ GB.i18n.define('ro', {
   'stats.drafts': { one: '{n} draft', few: '{n} draft-uri', other: '{n} de draft-uri' },
   'stats.readyForReview': 'gata pentru review',
   'stats.noneOpen': 'niciunul deschis',
-  'stats.actionsOff': 'Actions dezactivat',
-  'stats.noRuns': 'fără rulări',
   'stats.noEvents': 'fără evenimente',
-  'ci.running': 'În execuție',
-  'ci.ok': 'Reușit',
-  'ci.fail': 'Eșuat',
-  'ci.cancel': 'Anulat',
 
   /* ---------- bara grafului ---------- */
   'view.aria': 'Tipul de vizualizare',
@@ -102,10 +95,10 @@ GB.i18n.define('ro', {
   'tip.aria': 'Detaliile commit-ului',
   'tip.fromBranch': 'Din ramura <code>{name}</code>, deja îmbinată și ștearsă',
   'tip.fromGhost': 'Dintr-o ramură deja îmbinată și ștearsă',
+  'tip.fromMerged': 'Din ramura <code>{name}</code>, deja îmbinată (încă există)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (draft) → <code>{base}</code>',
   'tip.viewPr': 'vezi PR',
-  'tip.viewRun': 'vezi rularea',
   'tip.mergeOf': { one: 'merge cu {n} părinte', few: 'merge cu {n} părinți', other: 'merge cu {n} de părinți' },
   'tip.openCommit': 'Deschideți commit-ul pe GitHub',
   'tip.pin': 'Fixați <code>{branch}</code>',
@@ -140,7 +133,6 @@ GB.i18n.define('ro', {
   'cat.commits': 'Commit-uri',
   'cat.branches': 'Ramuri',
   'cat.prs': 'Pull request-uri',
-  'cat.ci': 'CI',
   'cat.issues': 'Issue-uri',
   'cat.other': 'Altele',
 
@@ -156,10 +148,6 @@ GB.i18n.define('ro', {
   'kind.review': 'Review',
   'kind.review-ok': 'Aprobat',
   'kind.review-changes': 'Modificări solicitate',
-  'kind.ci-start': 'CI în execuție',
-  'kind.ci-ok': 'CI reușit',
-  'kind.ci-fail': 'CI eșuat',
-  'kind.ci-cancel': 'CI anulat',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue închis',
   'kind.comment': 'Comentariu',
@@ -213,10 +201,6 @@ GB.i18n.define('ro', {
   'act.commentCommit': 'Comentariu la commit-ul {sha}',
   'act.discussionNew': 'Discuție nouă',
   'act.discussionComment': 'Comentariu la o discuție',
-  'act.ciRunning': 'CI în execuție: {name}',
-  'act.ciOk': 'CI reușit: {name}',
-  'act.ciFail': 'CI eșuat: {name}',
-  'act.ciCancel': 'CI anulat: {name}',
   'act.release': 'Release {tag} publicat',
   'act.releaseNoTag': 'Release publicat',
   'act.star': 'Stea nouă',
@@ -244,7 +228,7 @@ GB.i18n.define('ro', {
   'settings.optional': 'opțional',
   'settings.show': 'Afișare',
   'settings.hide': 'Ascundere',
-  'settings.tokenHelp': 'Fără token, GitHub permite 60 de cereri pe oră. Cu un token <em>fine-grained</em> doar pentru citire (permisiuni Metadata, Contents, Pull requests și Actions), vizualizarea se actualizează la fiecare 10 secunde, funcționează cu depozite care au mii de ramuri și puteți vedea depozite private. Tokenul este stocat doar în acest browser și este trimis exclusiv către api.github.com.',
+  'settings.tokenHelp': 'Fără token, GitHub permite 60 de cereri pe oră. Cu un token <em>fine-grained</em> doar pentru citire (permisiuni Metadata, Contents și Pull requests), vizualizarea se actualizează la fiecare 10 secunde, funcționează cu depozite care au mii de ramuri și puteți vedea depozite private. Tokenul este stocat doar în acest browser și este trimis exclusiv către api.github.com.',
   'settings.maxBranches': 'Cele mai active ramuri de afișat',
   'settings.depth': 'Commit-uri per ramură',
   'settings.branchesHelp': 'În depozitele mari, GraphBranch nu listează toate ramurile: afișează ramura implicită, pe cele fixate (clic pe o ramură → <strong>Fixați</strong>) și pe cele cu cele mai recente commit-uri. Folosiți filtrul grafului pentru a vă concentra pe un prefix, de exemplu <code>release/</code>.',

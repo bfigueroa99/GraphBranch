@@ -1,7 +1,7 @@
 /* GraphBranch — čeština. */
 GB.i18n.define('cs', {
   /* ---------- stránka ---------- */
-  'meta.description': 'Živý graf větví repozitáře GitHub s upozorněními na commity, pull requesty, CI a issue.',
+  'meta.description': 'Živý graf větví repozitáře GitHub s upozorněními na commity, pull requesty a issue.',
 
   /* ---------- horní lišta ---------- */
   'repo.label': 'Repozitář GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('cs', {
   'stats.branches': 'Viditelné větve',
   'stats.commits': 'Commity v grafu',
   'stats.prs': 'Otevřené PR',
-  'stats.ci': 'Poslední CI',
   'stats.last': 'Poslední aktivita',
   'stats.branches.only': 'jediná v repozitáři',
   'stats.branches.all': 'všechny v repozitáři',
@@ -62,13 +61,7 @@ GB.i18n.define('cs', {
   'stats.drafts': { one: '{n} koncept', few: '{n} koncepty', many: '{n} konceptu', other: '{n} konceptů' },
   'stats.readyForReview': 'připravené k review',
   'stats.noneOpen': 'žádné otevřené',
-  'stats.actionsOff': 'Actions vypnuto',
-  'stats.noRuns': 'žádné běhy',
   'stats.noEvents': 'žádné události',
-  'ci.running': 'Běží',
-  'ci.ok': 'Úspěšné',
-  'ci.fail': 'Selhalo',
-  'ci.cancel': 'Zrušeno',
 
   /* ---------- lišta grafu ---------- */
   'view.aria': 'Typ zobrazení',
@@ -103,10 +96,10 @@ GB.i18n.define('cs', {
   'tip.aria': 'Podrobnosti commitu',
   'tip.fromBranch': 'Z větve <code>{name}</code>, která už byla sloučena a smazána',
   'tip.fromGhost': 'Z větve, která už byla sloučena a smazána',
+  'tip.fromMerged': 'Z větve <code>{name}</code>, která už byla sloučena (stále existuje)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (koncept) → <code>{base}</code>',
   'tip.viewPr': 'zobrazit PR',
-  'tip.viewRun': 'zobrazit běh',
   'tip.mergeOf': { one: 'sloučení: {n} rodič', few: 'sloučení: {n} rodiče', many: 'sloučení: {n} rodiče', other: 'sloučení: {n} rodičů' },
   'tip.openCommit': 'Otevřít commit na GitHubu',
   'tip.pin': 'Připnout <code>{branch}</code>',
@@ -141,7 +134,6 @@ GB.i18n.define('cs', {
   'cat.commits': 'Commity',
   'cat.branches': 'Větve',
   'cat.prs': 'Pull requesty',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'Ostatní',
 
@@ -158,10 +150,6 @@ GB.i18n.define('cs', {
   'kind.review': 'Review',
   'kind.review-ok': 'Schváleno',
   'kind.review-changes': 'Vyžádány změny',
-  'kind.ci-start': 'CI běží',
-  'kind.ci-ok': 'CI úspěšné',
-  'kind.ci-fail': 'CI selhalo',
-  'kind.ci-cancel': 'CI zrušeno',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Uzavření issue',
   'kind.comment': 'Komentář',
@@ -216,10 +204,6 @@ GB.i18n.define('cs', {
   'act.commentCommit': 'Komentář ke commitu {sha}',
   'act.discussionNew': 'Nová diskuze',
   'act.discussionComment': 'Komentář v diskuzi',
-  'act.ciRunning': 'CI běží: {name}',
-  'act.ciOk': 'CI úspěšné: {name}',
-  'act.ciFail': 'CI selhalo: {name}',
-  'act.ciCancel': 'CI zrušeno: {name}',
   'act.release': 'Publikováno vydání {tag}',
   'act.releaseNoTag': 'Publikováno vydání',
   'act.star': 'Nová hvězdička',
@@ -247,7 +231,7 @@ GB.i18n.define('cs', {
   'settings.optional': 'volitelné',
   'settings.show': 'Zobrazit',
   'settings.hide': 'Skrýt',
-  'settings.tokenHelp': 'Bez tokenu GitHub povoluje 60 požadavků za hodinu. S tokenem <em>fine-grained</em> jen pro čtení (oprávnění Metadata, Contents, Pull requests a Actions) se zobrazení obnovuje každých 10 sekund, funguje s repozitáři s tisíci větvemi a uvidíte i soukromé repozitáře. Token se ukládá jen v tomto prohlížeči a odesílá se pouze na api.github.com.',
+  'settings.tokenHelp': 'Bez tokenu GitHub povoluje 60 požadavků za hodinu. S tokenem <em>fine-grained</em> jen pro čtení (oprávnění Metadata, Contents a Pull requests) se zobrazení obnovuje každých 10 sekund, funguje s repozitáři s tisíci větvemi a uvidíte i soukromé repozitáře. Token se ukládá jen v tomto prohlížeči a odesílá se pouze na api.github.com.',
   'settings.maxBranches': 'Počet nejaktivnějších větví k zobrazení',
   'settings.depth': 'Commitů na větev',
   'settings.branchesHelp': 'U velkých repozitářů GraphBranch nezobrazuje všechny větve: ukáže výchozí větev, ty, které připnete (klikněte na větev → <strong>Připnout</strong>), a větve s nejnovějšími commity. Pomocí filtru grafu se zaměříte na prefix, například <code>release/</code>.',

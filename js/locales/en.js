@@ -6,7 +6,7 @@
    - <kbd> <em> <strong> <code>  inline HTML in a few messages: keep the tags, translate the text. */
 GB.i18n.define('en', {
   /* ---------- page ---------- */
-  'meta.description': "Live graph of a GitHub repository's branches, with alerts for commits, pull requests, CI and issues.",
+  'meta.description': "Live graph of a GitHub repository's branches, with alerts for commits, pull requests and issues.",
 
   /* ---------- top bar ---------- */
   'repo.label': 'GitHub repository',
@@ -49,7 +49,6 @@ GB.i18n.define('en', {
   'stats.branches': 'Visible branches',
   'stats.commits': 'Commits in the graph',
   'stats.prs': 'Open PRs',
-  'stats.ci': 'Latest CI',
   'stats.last': 'Last activity',
   'stats.branches.only': 'the only one in the repo',
   'stats.branches.all': 'all in the repo',
@@ -62,13 +61,7 @@ GB.i18n.define('en', {
   'stats.drafts': { one: '{n} draft', other: '{n} drafts' },
   'stats.readyForReview': 'ready for review',
   'stats.noneOpen': 'none open',
-  'stats.actionsOff': 'Actions disabled',
-  'stats.noRuns': 'no runs',
   'stats.noEvents': 'no events',
-  'ci.running': 'Running',
-  'ci.ok': 'Passed',
-  'ci.fail': 'Failed',
-  'ci.cancel': 'Cancelled',
 
   /* ---------- graph toolbar ---------- */
   'view.aria': 'View type',
@@ -103,10 +96,10 @@ GB.i18n.define('en', {
   'tip.aria': 'Commit details',
   'tip.fromBranch': 'From branch <code>{name}</code>, already merged and deleted',
   'tip.fromGhost': 'From a branch that was already merged and deleted',
+  'tip.fromMerged': 'From branch <code>{name}</code>, already merged (it still exists)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (draft) → <code>{base}</code>',
   'tip.viewPr': 'view PR',
-  'tip.viewRun': 'view run',
   'tip.mergeOf': { one: 'merge of {n} parent', other: 'merge of {n} parents' },
   'tip.openCommit': 'Open commit on GitHub',
   'tip.pin': 'Pin <code>{branch}</code>',
@@ -141,7 +134,6 @@ GB.i18n.define('en', {
   'cat.commits': 'Commits',
   'cat.branches': 'Branches',
   'cat.prs': 'Pull requests',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'Other',
 
@@ -158,10 +150,6 @@ GB.i18n.define('en', {
   'kind.review': 'Review',
   'kind.review-ok': 'Approved',
   'kind.review-changes': 'Changes requested',
-  'kind.ci-start': 'CI running',
-  'kind.ci-ok': 'CI passed',
-  'kind.ci-fail': 'CI failed',
-  'kind.ci-cancel': 'CI cancelled',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue closed',
   'kind.comment': 'Comment',
@@ -211,10 +199,6 @@ GB.i18n.define('en', {
   'act.commentCommit': 'Comment on commit {sha}',
   'act.discussionNew': 'New discussion',
   'act.discussionComment': 'Comment on a discussion',
-  'act.ciRunning': 'CI running: {name}',
-  'act.ciOk': 'CI passed: {name}',
-  'act.ciFail': 'CI failed: {name}',
-  'act.ciCancel': 'CI cancelled: {name}',
   'act.release': 'Release {tag} published',
   'act.releaseNoTag': 'Release published',
   'act.star': 'New star',
@@ -242,7 +226,7 @@ GB.i18n.define('en', {
   'settings.optional': 'optional',
   'settings.show': 'Show',
   'settings.hide': 'Hide',
-  'settings.tokenHelp': 'Without a token, GitHub allows 60 requests per hour. With a read-only <em>fine-grained</em> token (Metadata, Contents, Pull requests and Actions permissions) the view refreshes every 10 seconds, works with repositories that have thousands of branches, and you can see private repos. The token is stored only in this browser and is sent only to api.github.com.',
+  'settings.tokenHelp': 'Without a token, GitHub allows 60 requests per hour. With a read-only <em>fine-grained</em> token (Metadata, Contents and Pull requests permissions) the view refreshes every 10 seconds, works with repositories that have thousands of branches, and you can see private repos. The token is stored only in this browser and is sent only to api.github.com.',
   'settings.maxBranches': 'Most active branches to show',
   'settings.depth': 'Commits per branch',
   'settings.branchesHelp': 'On large repos GraphBranch does not list every branch: it shows the default branch, the ones you pin (click a branch → <strong>Pin</strong>) and those with the most recent commits. Use the graph filter to focus on a prefix, for example <code>release/</code>.',

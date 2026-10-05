@@ -1,7 +1,7 @@
 /* GraphBranch — українська. */
 GB.i18n.define('uk', {
   /* ---------- сторінка ---------- */
-  'meta.description': 'Живий граф гілок репозиторію GitHub зі сповіщеннями про коміти, pull requests, CI та issues.',
+  'meta.description': 'Живий граф гілок репозиторію GitHub зі сповіщеннями про коміти, pull requests та issues.',
 
   /* ---------- верхня панель ---------- */
   'repo.label': 'Репозиторій GitHub',
@@ -44,7 +44,6 @@ GB.i18n.define('uk', {
   'stats.branches': 'Видимі гілки',
   'stats.commits': 'Коміти на графі',
   'stats.prs': 'Відкриті PR',
-  'stats.ci': 'Останній CI',
   'stats.last': 'Остання активність',
   'stats.branches.only': 'єдина в репозиторії',
   'stats.branches.all': 'усі гілки репозиторію',
@@ -62,13 +61,7 @@ GB.i18n.define('uk', {
   'stats.drafts': { one: '{n} чернетка', few: '{n} чернетки', many: '{n} чернеток', other: '{n} чернетки' },
   'stats.readyForReview': "готові до рев'ю",
   'stats.noneOpen': 'немає відкритих',
-  'stats.actionsOff': 'Actions вимкнено',
-  'stats.noRuns': 'немає запусків',
   'stats.noEvents': 'немає подій',
-  'ci.running': 'Виконується',
-  'ci.ok': 'Успішно',
-  'ci.fail': 'Збій',
-  'ci.cancel': 'Скасовано',
 
   /* ---------- панель графа ---------- */
   'view.aria': 'Тип вигляду',
@@ -103,10 +96,10 @@ GB.i18n.define('uk', {
   'tip.aria': 'Подробиці коміта',
   'tip.fromBranch': 'З гілки <code>{name}</code>, яку вже злито й видалено',
   'tip.fromGhost': 'З гілки, яку вже злито й видалено',
+  'tip.fromMerged': 'З гілки <code>{name}</code>, яку вже злито (вона досі існує)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (чернетка) → <code>{base}</code>',
   'tip.viewPr': 'відкрити PR',
-  'tip.viewRun': 'відкрити запуск',
   'tip.mergeOf': {
     one: 'злиття: {n} батьківський коміт',
     few: 'злиття: {n} батьківські коміти',
@@ -146,7 +139,6 @@ GB.i18n.define('uk', {
   'cat.commits': 'Коміти',
   'cat.branches': 'Гілки',
   'cat.prs': 'Pull requests',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'Інше',
 
@@ -163,10 +155,6 @@ GB.i18n.define('uk', {
   'kind.review': "Рев'ю",
   'kind.review-ok': 'Схвалено',
   'kind.review-changes': 'Запрошено зміни',
-  'kind.ci-start': 'CI виконується',
-  'kind.ci-ok': 'CI пройдено',
-  'kind.ci-fail': 'Збій CI',
-  'kind.ci-cancel': 'CI скасовано',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue закрито',
   'kind.comment': 'Коментар',
@@ -221,10 +209,6 @@ GB.i18n.define('uk', {
   'act.commentCommit': 'Коментар до коміта {sha}',
   'act.discussionNew': 'Нове обговорення',
   'act.discussionComment': 'Коментар в обговоренні',
-  'act.ciRunning': 'CI виконується: {name}',
-  'act.ciOk': 'CI пройдено: {name}',
-  'act.ciFail': 'Збій CI: {name}',
-  'act.ciCancel': 'CI скасовано: {name}',
   'act.release': 'Опубліковано реліз {tag}',
   'act.releaseNoTag': 'Опубліковано реліз',
   'act.star': 'Нова зірка',
@@ -252,7 +236,7 @@ GB.i18n.define('uk', {
   'settings.optional': "необов'язково",
   'settings.show': 'Показати',
   'settings.hide': 'Сховати',
-  'settings.tokenHelp': 'Без токена GitHub дозволяє 60 запитів на годину. З токеном <em>fine-grained</em> лише для читання (дозволи Metadata, Contents, Pull requests і Actions) вигляд оновлюється кожні 10 секунд, працює з репозиторіями, що мають тисячі гілок, і ви можете бачити приватні репозиторії. Токен зберігається лише в цьому браузері й надсилається лише на api.github.com.',
+  'settings.tokenHelp': 'Без токена GitHub дозволяє 60 запитів на годину. З токеном <em>fine-grained</em> лише для читання (дозволи Metadata, Contents і Pull requests) вигляд оновлюється кожні 10 секунд, працює з репозиторіями, що мають тисячі гілок, і ви можете бачити приватні репозиторії. Токен зберігається лише в цьому браузері й надсилається лише на api.github.com.',
   'settings.maxBranches': 'Кількість найактивніших гілок для показу',
   'settings.depth': 'Комітів на гілку',
   'settings.branchesHelp': 'У великих репозиторіях GraphBranch показує не всі гілки: лише гілку за замовчуванням, закріплені вами (клацніть гілку → <strong>Закріпити</strong>) та гілки з найновішими комітами. Щоб зосередитися на префіксі, наприклад <code>release/</code>, скористайтеся фільтром графа.',

@@ -1,7 +1,7 @@
 /* GraphBranch — हिन्दी. */
 GB.i18n.define('hi', {
   /* ---------- पेज ---------- */
-  'meta.description': 'किसी GitHub रिपॉज़िटरी की ब्रांच का लाइव ग्राफ़, जिसमें कमिट, pull request, CI और issue के अलर्ट शामिल हैं।',
+  'meta.description': 'किसी GitHub रिपॉज़िटरी की ब्रांच का लाइव ग्राफ़, जिसमें कमिट, pull request और issue के अलर्ट शामिल हैं।',
 
   /* ---------- ऊपरी बार ---------- */
   'repo.label': 'GitHub रिपॉज़िटरी',
@@ -44,7 +44,6 @@ GB.i18n.define('hi', {
   'stats.branches': 'दिखती ब्रांच',
   'stats.commits': 'ग्राफ़ में कमिट',
   'stats.prs': 'खुले PR',
-  'stats.ci': 'नवीनतम CI',
   'stats.last': 'अंतिम गतिविधि',
   'stats.branches.only': 'रेपो में केवल यही',
   'stats.branches.all': 'रेपो की सभी',
@@ -57,13 +56,7 @@ GB.i18n.define('hi', {
   'stats.drafts': { one: '{n} ड्राफ़्ट', other: '{n} ड्राफ़्ट' },
   'stats.readyForReview': 'रिव्यू के लिए तैयार',
   'stats.noneOpen': 'कोई खुला नहीं',
-  'stats.actionsOff': 'Actions बंद हैं',
-  'stats.noRuns': 'कोई रन नहीं',
   'stats.noEvents': 'कोई इवेंट नहीं',
-  'ci.running': 'चल रहा है',
-  'ci.ok': 'सफल',
-  'ci.fail': 'विफल',
-  'ci.cancel': 'रद्द',
 
   /* ---------- ग्राफ़ टूलबार ---------- */
   'view.aria': 'व्यू का प्रकार',
@@ -98,10 +91,10 @@ GB.i18n.define('hi', {
   'tip.aria': 'कमिट का विवरण',
   'tip.fromBranch': '<code>{name}</code> ब्रांच से, जो पहले ही मर्ज होकर हटाई जा चुकी है',
   'tip.fromGhost': 'एक ऐसी ब्रांच से, जो पहले ही मर्ज होकर हटाई जा चुकी है',
+  'tip.fromMerged': '<code>{name}</code> ब्रांच से, जो पहले ही मर्ज हो चुकी है (वह अब भी मौजूद है)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (ड्राफ़्ट) → <code>{base}</code>',
   'tip.viewPr': 'PR देखें',
-  'tip.viewRun': 'रन देखें',
   'tip.mergeOf': { one: '{n} पैरेंट का मर्ज', other: '{n} पैरेंट का मर्ज' },
   'tip.openCommit': 'GitHub पर कमिट खोलें',
   'tip.pin': 'पिन करें: <code>{branch}</code>',
@@ -136,7 +129,6 @@ GB.i18n.define('hi', {
   'cat.commits': 'कमिट',
   'cat.branches': 'ब्रांच',
   'cat.prs': 'Pull request',
-  'cat.ci': 'CI',
   'cat.issues': 'Issues',
   'cat.other': 'अन्य',
 
@@ -152,10 +144,6 @@ GB.i18n.define('hi', {
   'kind.review': 'रिव्यू',
   'kind.review-ok': 'स्वीकृत',
   'kind.review-changes': 'बदलाव माँगे गए',
-  'kind.ci-start': 'CI चल रहा है',
-  'kind.ci-ok': 'CI सफल',
-  'kind.ci-fail': 'CI विफल',
-  'kind.ci-cancel': 'CI रद्द',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue बंद',
   'kind.comment': 'टिप्पणी',
@@ -205,10 +193,6 @@ GB.i18n.define('hi', {
   'act.commentCommit': 'कमिट {sha} पर टिप्पणी',
   'act.discussionNew': 'नई चर्चा',
   'act.discussionComment': 'एक चर्चा पर टिप्पणी',
-  'act.ciRunning': 'CI चल रहा है: {name}',
-  'act.ciOk': 'CI सफल: {name}',
-  'act.ciFail': 'CI विफल: {name}',
-  'act.ciCancel': 'CI रद्द: {name}',
   'act.release': 'रिलीज़ {tag} प्रकाशित हुई',
   'act.releaseNoTag': 'रिलीज़ प्रकाशित हुई',
   'act.star': 'नया स्टार',
@@ -236,7 +220,7 @@ GB.i18n.define('hi', {
   'settings.optional': 'वैकल्पिक',
   'settings.show': 'दिखाएँ',
   'settings.hide': 'छिपाएँ',
-  'settings.tokenHelp': 'टोकन के बिना GitHub प्रति घंटे 60 अनुरोध की अनुमति देता है। केवल-पढ़ने वाले <em>fine-grained</em> टोकन (Metadata, Contents, Pull requests और Actions अनुमतियाँ) के साथ व्यू हर 10 सेकंड में रीफ़्रेश होता है, हज़ारों ब्रांच वाली रिपॉज़िटरी के साथ भी काम करता है, और आप निजी रेपो भी देख सकते हैं। टोकन केवल इसी ब्राउज़र में सहेजा जाता है और सिर्फ़ api.github.com को भेजा जाता है।',
+  'settings.tokenHelp': 'टोकन के बिना GitHub प्रति घंटे 60 अनुरोध की अनुमति देता है। केवल-पढ़ने वाले <em>fine-grained</em> टोकन (Metadata, Contents और Pull requests अनुमतियाँ) के साथ व्यू हर 10 सेकंड में रीफ़्रेश होता है, हज़ारों ब्रांच वाली रिपॉज़िटरी के साथ भी काम करता है, और आप निजी रेपो भी देख सकते हैं। टोकन केवल इसी ब्राउज़र में सहेजा जाता है और सिर्फ़ api.github.com को भेजा जाता है।',
   'settings.maxBranches': 'दिखाने के लिए सबसे सक्रिय ब्रांच',
   'settings.depth': 'प्रति ब्रांच कमिट',
   'settings.branchesHelp': 'बड़े रेपो में GraphBranch सभी ब्रांच की सूची नहीं दिखाता: वह डिफ़ॉल्ट ब्रांच, आपकी पिन की हुई ब्रांच (किसी ब्रांच पर क्लिक करें → <strong>पिन करें</strong>) और सबसे हाल के कमिट वाली ब्रांच दिखाता है। किसी प्रीफ़िक्स पर ध्यान देने के लिए ग्राफ़ फ़िल्टर इस्तेमाल करें, जैसे <code>release/</code>।',

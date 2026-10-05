@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>GraphBranch</title>
-<meta name="description" content="Live graph of a GitHub repository's branches, with alerts for commits, pull requests, CI and issues." data-i18n-attr="content:meta.description">
+<meta name="description" content="Live graph of a GitHub repository's branches, with alerts for commits, pull requests and issues." data-i18n-attr="content:meta.description">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23121917'/%3E%3Cpath d='M8 24V8M8 15c0-4 4-5 8-5h3M8 19c0 3 3 4 7 4h9' stroke='%233987e5' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='8' cy='8' r='3' fill='%233987e5'/%3E%3Ccircle cx='22' cy='10' r='3' fill='%23d95926'/%3E%3Ccircle cx='24' cy='23' r='3' fill='%23199e70'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -94,11 +94,6 @@
       <span class="stat-sub" id="st-prs-sub"></span>
     </div>
     <div class="stat">
-      <span class="stat-label" data-i18n="stats.ci">Latest CI</span>
-      <span class="stat-value ci" id="st-ci">–</span>
-      <span class="stat-sub" id="st-ci-sub"></span>
-    </div>
-    <div class="stat">
       <span class="stat-label" data-i18n="stats.last">Last activity</span>
       <span class="stat-value" id="st-last">–</span>
       <span class="stat-sub" id="st-last-sub"></span>
@@ -172,7 +167,7 @@
         <input id="token-input" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
         <button type="button" class="btn btn-ghost" id="token-toggle">Show</button>
       </div>
-      <p class="help" data-i18n-html="settings.tokenHelp">Without a token, GitHub allows 60 requests per hour. With a read-only <em>fine-grained</em> token (Metadata, Contents, Pull requests and Actions permissions) the view refreshes every 10 seconds, works with repositories that have thousands of branches, and you can see private repos. The token is stored only in this browser and is sent only to api.github.com.</p>
+      <p class="help" data-i18n-html="settings.tokenHelp">Without a token, GitHub allows 60 requests per hour. With a read-only <em>fine-grained</em> token (Metadata, Contents and Pull requests permissions) the view refreshes every 10 seconds, works with repositories that have thousands of branches, and you can see private repos. The token is stored only in this browser and is sent only to api.github.com.</p>
     </div>
     <div class="grid2">
       <div class="field">
@@ -202,6 +197,7 @@
 <script src="js/sources/github.js"></script>
 <script src="js/sources/demo-content.js"></script>
 <script src="js/sources/demo.js"></script>
+<script src="js/palette.js"></script>
 <script src="js/layout.js"></script>
 <script src="js/graph.js"></script>
 <script src="js/graph3d.js"></script>

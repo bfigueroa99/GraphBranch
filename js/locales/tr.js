@@ -1,7 +1,7 @@
 /* GraphBranch — Türkçe. */
 GB.i18n.define('tr', {
   /* ---------- sayfa ---------- */
-  'meta.description': 'Bir GitHub deposunun dallarının canlı grafiği; commit, pull request, CI ve issue uyarılarıyla birlikte.',
+  'meta.description': 'Bir GitHub deposunun dallarının canlı grafiği; commit, pull request ve issue uyarılarıyla birlikte.',
 
   /* ---------- üst çubuk ---------- */
   'repo.label': 'GitHub deposu',
@@ -44,7 +44,6 @@ GB.i18n.define('tr', {
   'stats.branches': 'Görünen dallar',
   'stats.commits': 'Grafikteki commit’ler',
   'stats.prs': 'Açık PR',
-  'stats.ci': 'Son CI',
   'stats.last': 'Son etkinlik',
   'stats.branches.only': 'depodaki tek dal',
   'stats.branches.all': 'depodaki tüm dallar',
@@ -57,13 +56,7 @@ GB.i18n.define('tr', {
   'stats.drafts': { one: '{n} taslak', other: '{n} taslak' },
   'stats.readyForReview': 'incelemeye hazır',
   'stats.noneOpen': 'açık olan yok',
-  'stats.actionsOff': 'Actions devre dışı',
-  'stats.noRuns': 'çalıştırma yok',
   'stats.noEvents': 'olay yok',
-  'ci.running': 'Çalışıyor',
-  'ci.ok': 'Başarılı',
-  'ci.fail': 'Başarısız',
-  'ci.cancel': 'İptal edildi',
 
   /* ---------- grafik araç çubuğu ---------- */
   'view.aria': 'Görünüm türü',
@@ -98,10 +91,10 @@ GB.i18n.define('tr', {
   'tip.aria': 'Commit ayrıntıları',
   'tip.fromBranch': 'Zaten birleştirilip silinmiş <code>{name}</code> dalından',
   'tip.fromGhost': 'Zaten birleştirilip silinmiş bir daldan',
+  'tip.fromMerged': 'Zaten birleştirilmiş <code>{name}</code> dalından (hâlâ mevcut)',
   'tip.pr': 'PR #{num} → <code>{base}</code>',
   'tip.prDraft': 'PR #{num} (taslak) → <code>{base}</code>',
   'tip.viewPr': 'PR sayfası',
-  'tip.viewRun': 'çalıştırma sayfası',
   'tip.mergeOf': { one: '{n} ebeveynli birleştirme', other: '{n} ebeveynli birleştirme' },
   'tip.openCommit': 'Commit’i GitHub’da aç',
   'tip.pin': '<code>{branch}</code> dalını sabitle',
@@ -136,7 +129,6 @@ GB.i18n.define('tr', {
   'cat.commits': 'Commit’ler',
   'cat.branches': 'Dallar',
   'cat.prs': 'Pull request',
-  'cat.ci': 'CI',
   'cat.issues': 'Issue',
   'cat.other': 'Diğer',
 
@@ -152,10 +144,6 @@ GB.i18n.define('tr', {
   'kind.review': 'İnceleme',
   'kind.review-ok': 'Onaylandı',
   'kind.review-changes': 'Değişiklik istendi',
-  'kind.ci-start': 'CI çalışıyor',
-  'kind.ci-ok': 'CI başarılı',
-  'kind.ci-fail': 'CI başarısız',
-  'kind.ci-cancel': 'CI iptal edildi',
   'kind.issue-open': 'Issue',
   'kind.issue-close': 'Issue kapatıldı',
   'kind.comment': 'Yorum',
@@ -205,10 +193,6 @@ GB.i18n.define('tr', {
   'act.commentCommit': '{sha} commit’i üzerinde yorum',
   'act.discussionNew': 'Yeni tartışma',
   'act.discussionComment': 'Bir tartışmada yorum',
-  'act.ciRunning': 'CI çalışıyor: {name}',
-  'act.ciOk': 'CI başarılı: {name}',
-  'act.ciFail': 'CI başarısız: {name}',
-  'act.ciCancel': 'CI iptal edildi: {name}',
   'act.release': '{tag} release’i yayınlandı',
   'act.releaseNoTag': 'Release yayınlandı',
   'act.star': 'Yeni yıldız',
@@ -236,7 +220,7 @@ GB.i18n.define('tr', {
   'settings.optional': 'isteğe bağlı',
   'settings.show': 'Göster',
   'settings.hide': 'Gizle',
-  'settings.tokenHelp': 'Token olmadan GitHub saatte 60 isteğe izin verir. Salt okunur bir <em>fine-grained</em> token ile (Metadata, Contents, Pull requests ve Actions izinleri) görünüm 10 saniyede bir yenilenir, binlerce dalı olan depolarla çalışır ve özel depoları görebilirsiniz. Token yalnızca bu tarayıcıda saklanır ve yalnızca api.github.com adresine gönderilir.',
+  'settings.tokenHelp': 'Token olmadan GitHub saatte 60 isteğe izin verir. Salt okunur bir <em>fine-grained</em> token ile (Metadata, Contents ve Pull requests izinleri) görünüm 10 saniyede bir yenilenir, binlerce dalı olan depolarla çalışır ve özel depoları görebilirsiniz. Token yalnızca bu tarayıcıda saklanır ve yalnızca api.github.com adresine gönderilir.',
   'settings.maxBranches': 'Gösterilecek en etkin dal sayısı',
   'settings.depth': 'Dal başına commit sayısı',
   'settings.branchesHelp': 'Büyük depolarda GraphBranch tüm dalları listelemez: varsayılan dalı, sabitlediklerinizi (bir dala tıklayın → <strong>Sabitle</strong>) ve en yeni commit’leri olanları gösterir. Bir önek üzerine odaklanmak için grafik filtresini kullanın, örneğin <code>release/</code>.',

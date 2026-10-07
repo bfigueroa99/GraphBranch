@@ -83,6 +83,11 @@ GB.i18n.define('en', {
   'fly.lock': 'Click to steer with the mouse',
   'fly.touch': 'Move with the joystick and drag to look around',
   'ride.label': 'Ride this branch',
+  'director.label': 'Camera director',
+  'director.title': 'Camera director: the camera follows the most important activity on its own. Move the view to take over.',
+  'tv.label': 'TV mode',
+  'tv.title': 'TV mode: for a shared screen, with automatic camera and the screen kept on',
+  'tv.exit': 'Exit TV mode',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'Trophies',

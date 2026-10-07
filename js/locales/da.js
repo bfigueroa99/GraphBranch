@@ -78,6 +78,11 @@ GB.i18n.define('da', {
   'fly.lock': 'Klik for at styre med musen',
   'fly.touch': 'Bevæg dig med joysticket, og træk for at se dig omkring',
   'ride.label': 'Kør gennem branchen',
+  'director.label': 'Kamerainstruktør',
+  'director.title': 'Kamerainstruktør: kameraet følger selv den vigtigste aktivitet. Flyt visningen for at tage over.',
+  'tv.label': 'TV-tilstand',
+  'tv.title': 'TV-tilstand: til en delt skærm, med automatisk kamera og skærmen altid tændt',
+  'tv.exit': 'Afslut TV-tilstand',
 
   /* ---------- spillag: repositoriets præstationer, niveau og dagens mission ---------- */
   'game.trophies': 'Trofæer',

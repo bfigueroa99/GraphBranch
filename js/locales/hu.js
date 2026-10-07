@@ -78,6 +78,11 @@ GB.i18n.define('hu', {
   'fly.lock': 'Kattints, és irányíts egérrel',
   'fly.touch': 'Mozogj a joystickkal, és húzással nézz körül',
   'ride.label': 'Utazás az ágon',
+  'director.label': 'Kamerarendező',
+  'director.title': 'Kamerarendező: a kamera magától követi a legfontosabb eseményt. Mozdítsd meg a nézetet, ha át akarod venni az irányítást.',
+  'tv.label': 'TV mód',
+  'tv.title': 'TV mód: közös kijelzőre, automatikus kamerával és mindig bekapcsolva maradó képernyővel',
+  'tv.exit': 'Kilépés a TV módból',
 
   /* ---------- játékréteg: a repozitórium eredményei, szintje és a nap küldetése ---------- */
   'game.trophies': 'Trófeák',

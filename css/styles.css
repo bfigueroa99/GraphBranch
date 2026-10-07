@@ -1407,6 +1407,40 @@ kbd {
     opacity: 0;
   }
 }
+/* un aviso breve bajo la mira (por ejemplo, que no hay a dónde saltar) */
+.fl-msg {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 58px);
+  translate: -50% 0;
+  max-width: calc(100% - 32px);
+  margin: 0;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 84%, transparent);
+  color: var(--ink-2);
+  font: 500 12px var(--font-mono);
+  text-align: center;
+  opacity: 0;
+}
+.fl-msg.show {
+  animation: fl-msg 2.6s ease forwards;
+}
+@keyframes fl-msg {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  10%,
+  75% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+  }
+}
 /* joystick táctil */
 .fl-stick {
   display: none;
@@ -1503,6 +1537,13 @@ kbd {
 }
 .fl-roll button:active {
   background: color-mix(in srgb, var(--ink) 22%, transparent);
+}
+/* el hiperimpulsor solo existe en el espacio */
+.fl-roll [data-jump] {
+  display: none;
+}
+.graph3d-wrap.space .fl-roll [data-jump] {
+  display: grid;
 }
 /* ---------- mundo abierto: brújula, minimapa y rótulos del vuelo (world.js) ---------- */
 .wd-ui {
@@ -2185,17 +2226,250 @@ kbd {
 .graph3d-wrap:has(.wd-ui.small:not([hidden])) .gx-a-name {
   font-size: 20px;
 }
+/* la mira del vuelo fija lo que apunta: un recuadro de esquinas que se cierra sobre el planeta o la galaxia,
+   y debajo su nombre, qué es y a qué distancia está */
+.gx-lock {
+  --s: 60px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  pointer-events: none;
+  will-change: transform;
+}
+.gx-lock-box {
+  width: var(--s);
+  height: var(--s);
+  margin: calc(var(--s) / -2) 0 0 0;
+  translate: 0 calc(var(--s) / 2);
+  --l: 12px;
+  --t: 1.5px;
+  background:
+    linear-gradient(var(--c), var(--c)) top left / var(--l) var(--t) no-repeat,
+    linear-gradient(var(--c), var(--c)) top left / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) top right / var(--l) var(--t) no-repeat,
+    linear-gradient(var(--c), var(--c)) top right / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom left / var(--l) var(--t) no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom left / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom right / var(--l) var(--t) no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom right / var(--t) var(--l) no-repeat;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--c) 70%, transparent));
+  opacity: 0.9;
+}
+.gx-lock-box.lock {
+  animation: gx-lock 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes gx-lock {
+  from {
+    opacity: 0;
+    scale: 1.8;
+  }
+  to {
+    opacity: 0.9;
+    scale: 1;
+  }
+}
+.gx-lock-label {
+  display: grid;
+  justify-items: center;
+  row-gap: 1px;
+  margin-top: calc(var(--s) / 2 + 8px);
+  padding: 3px 9px 4px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--surface) 62%, transparent);
+  color: var(--ink);
+  font: 600 12px var(--font-mono);
+  white-space: nowrap;
+}
+.gx-lock-sub {
+  color: var(--ink-3);
+  font: 500 10px var(--font-ui);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.gx-lock-hint {
+  display: none;
+  margin-top: 2px;
+  color: var(--c);
+  font: 600 10px var(--font-ui);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.gx-lock-hint kbd {
+  display: inline-block;
+  min-width: 1.3em;
+  padding: 0 3px;
+  border: 1px solid var(--c);
+  border-radius: 3px;
+  font: inherit;
+  text-align: center;
+}
+.gx-lock.galaxy .gx-lock-hint {
+  display: block;
+}
+.graph3d-wrap:has(.fl-ui.touch) .gx-lock-hint kbd {
+  display: none; /* en el celular salta el botón de la flecha, no una tecla */
+}
+/* el hiperimpulsor cargando: un rótulo con la galaxia a la que se va y una barra que se llena */
+.gx-charge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 3;
+  width: min(300px, calc(100% - 48px));
+  translate: -50% -50%;
+  margin: 0;
+  padding: 10px 16px 12px;
+  border: 1px solid color-mix(in srgb, var(--c, var(--ink)) 50%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-36px) scale(0.96);
+  transition:
+    opacity 0.25s,
+    transform 0.3s;
+}
+.gx-charge.on {
+  opacity: 1;
+  transform: translateY(-36px);
+}
+.gx-charge p {
+  margin: 0;
+}
+.gx-charge-k {
+  color: var(--ink-2);
+  font: 600 10.5px var(--font-ui);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+.gx-charge-name {
+  overflow: hidden;
+  margin-top: 2px !important;
+  color: var(--ink);
+  font: 600 15px var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gx-charge-bar {
+  height: 3px;
+  margin-top: 9px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--ink) 14%, transparent);
+  overflow: hidden;
+}
+.gx-charge-bar i {
+  display: block;
+  height: 100%;
+  background: var(--c, var(--ink));
+  box-shadow: 0 0 8px var(--c, var(--ink));
+  transform: scaleX(0);
+  transform-origin: left;
+}
+/* el túnel del salto: anillos de luz que vienen de frente y pasan de largo, en el color de la galaxia */
+.gx-tunnel {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+}
+.gx-tunnel::before,
+.gx-tunnel::after {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  opacity: 0;
+}
+.gx-tunnel::before {
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--c, #fff) 60%, #fff) 0 0.25deg, transparent 0.25deg 2.8deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 12%, #000 55%);
+  mask-image: radial-gradient(circle, transparent 12%, #000 55%);
+}
+.gx-tunnel::after {
+  background: repeating-radial-gradient(circle, transparent 0 18px, color-mix(in srgb, var(--c, #fff) 45%, #fff) 18px 20px, transparent 20px 44px);
+  -webkit-mask-image: radial-gradient(circle, #000 8%, transparent 50%);
+  mask-image: radial-gradient(circle, #000 8%, transparent 50%);
+}
+.gx-tunnel.on {
+  animation: gx-tunnel var(--dur, 2s) ease-in-out forwards;
+}
+.gx-tunnel.on::before {
+  animation: gx-tunnel-lines var(--dur, 2s) linear forwards;
+}
+.gx-tunnel.on::after {
+  animation: gx-tunnel-rings 0.55s linear infinite;
+}
+@keyframes gx-tunnel {
+  0% {
+    opacity: 0;
+  }
+  15%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes gx-tunnel-lines {
+  0% {
+    opacity: 0;
+    transform: scale(1.6) rotate(0deg);
+  }
+  20% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 0.55;
+    transform: scale(1) rotate(14deg);
+  }
+}
+@keyframes gx-tunnel-rings {
+  from {
+    opacity: 0.5;
+    transform: scale(0.35);
+  }
+  to {
+    opacity: 0.5;
+    transform: scale(1.4);
+  }
+}
+/* entrada atmosférica: al rozar un planeta a toda velocidad, el borde se enciende */
+.gx-heat {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  background: radial-gradient(ellipse at 50% 50%, transparent 48%, rgba(255, 150, 60, 0.45) 82%, rgba(255, 90, 30, 0.85) 100%);
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: screen;
+}
+.gx-heat.on {
+  display: block;
+}
 @media (prefers-reduced-motion: reduce) {
   .gx-arrive {
     transition: none;
   }
-  .gx-warp {
-    display: none;
+  .gx-warp,
+  .gx-tunnel,
+  .gx-heat {
+    display: none !important;
   }
-  .g3-world {
+  .g3-world,
+  .gx-lock-box.lock {
     animation: none;
   }
-  .gx-chev {
+  .gx-chev,
+  .gx-charge {
     transition: none;
   }
 }

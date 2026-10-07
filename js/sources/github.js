@@ -17,7 +17,12 @@
    llega a lo ya cargado, el resto desde donde quedó.
 
    En todos los modos compara cada respuesta con la anterior y emite
-   "actividades" (alertas). Con token, las respuestas 304 no gastan cuota. */
+   "actividades" (alertas). Con token, las respuestas 304 no gastan cuota.
+
+   El ciclo (loop) se cuida solo: cada consulta tiene un tope de tiempo, tras un error reintenta cada
+   vez más espaciado (o justo cuando GitHub dice, si fue la cuota), sin red espera a que vuelva, y si
+   la pestaña vuelve al frente con el ciclo vencido consulta al momento. Detener la fuente corta las
+   consultas en curso. */
 (function (GB) {
   'use strict';
   const { U, i18n } = GB;
@@ -31,6 +36,11 @@
   const FIRST = 10; // commits que pide primero cada rama nueva; casi siempre bastan para tocar lo ya cargado
   const BATCH_MS = 4000; // tiempo por ciclo para listar ramas y traer historia; el resto, en el ciclo siguiente
   const FIRST_MS = 1500; // el primer ciclo es corto: que el grafo aparezca rápido
+  const REQUEST_MS = 30000; // tope por consulta: una conexión colgada no deja el ciclo trabado para siempre
+  const OFFLINE_MS = 30000; // sin red se espera al aviso del navegador; esto es por si no llega
+  /** Errores que cortan el ciclo entero: una consulta secundaria que falla así no los tapa. */
+  const HARD = new Set(['rate', 'network', 'auth', 'aborted']);
+  const hard = (err) => HARD.has(err?.kind);
 
   class ApiError extends Error {
     constructor(message, { status = 0, kind = 'http', resetAt = 0 } = {}) {
@@ -99,6 +109,17 @@
       this.more = false; // quedan ramas por cargar: el próximo ciclo va enseguida
       this.calm = false; // el ciclo sumó ramas que esperaban: el grafo las agrega sin efectos de llegada
       this.timer = null;
+      this.nextAt = null; // cuándo toca el próximo ciclo: para adelantarlo si vuelve la red o la pestaña
+      this.lastTry = 0;
+      this.limitedUntil = 0; // cuota agotada hasta entonces: no vale la pena insistir antes
+      this.offline = false;
+      this.avgRest = 1; // gasto REST por ciclo en modo GraphQL (actividad, eventos, comparaciones)
+      this.halt = null; // AbortController de esta conexión: stop() corta las consultas en curso
+      this.watching = false;
+      this.onWake = (ev) => {
+        if (ev.type === 'visibilitychange' && document.hidden) return;
+        this.nudge(ev.type);
+      };
     }
 
     get base() {
@@ -108,33 +129,61 @@
     /* ---------- ciclo de vida ---------- */
 
     start() {
-      this.running = true;
+      this.wake();
       this.emitStatus('loading', M('status.connecting'));
-      // al volver la conexión se reintenta enseguida, sin esperar el próximo reintento (que llega a 5 min)
-      this.onOnline = () => this.running && !this.paused && this.failures && this.refreshNow();
-      window.addEventListener('online', this.onOnline);
       this.loop();
     }
 
     stop() {
       this.running = false;
+      this.unschedule();
+      this.halt?.abort(); // las consultas en curso se cortan: nadie va a usar su respuesta
+      this.watch(false);
+    }
+
+    /** Deja la fuente lista para consultar: al arrancar y al revivirla tras detenerla o tras un error fatal. */
+    wake() {
+      this.running = true;
+      if (!this.halt || this.halt.signal.aborted) this.halt = new AbortController();
+      this.watch(true);
+    }
+
+    /** Avisos del navegador que adelantan el ciclo: volvió la red, la pestaña volvió al frente o la descongeló. */
+    watch(on) {
+      if (this.watching === on) return;
+      this.watching = on;
+      const fn = on ? 'addEventListener' : 'removeEventListener';
+      for (const type of ['online', 'pageshow']) window[fn](type, this.onWake);
+      for (const type of ['visibilitychange', 'resume']) document[fn](type, this.onWake);
+    }
+
+    unschedule() {
       clearTimeout(this.timer);
-      window.removeEventListener('online', this.onOnline);
+      this.timer = null;
+      this.nextAt = null;
+    }
+
+    schedule(delay) {
+      this.unschedule();
+      this.nextAt = Date.now() + delay;
+      this.timer = setTimeout(() => this.loop(), delay);
     }
 
     setPaused(paused) {
       this.paused = paused;
-      clearTimeout(this.timer);
+      this.unschedule();
       if (paused) this.emitStatus('paused');
+      else if (!this.running) this.refreshNow(); // se había detenido por un error fatal: reanudar es reintentar
+      else if (this.busy) this.emitStatus(this.throttled ? 'limited' : 'live', null, null, null, { syncing: true }); // el ciclo en curso programa el siguiente
       else this.loop();
     }
 
     refreshNow() {
       if (!this.running) {
-        this.running = true;
+        this.wake();
         this.emitStatus('loading', M('status.retrying'));
       }
-      clearTimeout(this.timer);
+      this.unschedule();
       if (this.busy) this.again = true;
       else this.loop();
     }
@@ -152,62 +201,107 @@
       if (this.data.loaded) this.refreshNow();
     }
 
+    /**
+     * Si ya tocaba consultar (el navegador frena los temporizadores de las pestañas de atrás) o se
+     * estaba esperando para reintentar tras un error, se consulta ahora. Con la cuota agotada no:
+     * hasta que se renueve no hay nada que hacer.
+     */
+    nudge(type) {
+      if (!this.running || this.paused || this.busy) return;
+      const now = Date.now();
+      if (now < this.limitedUntil) return;
+      const waiting = this.status?.state === 'error' && navigator.onLine !== false;
+      // volvió la red: se reintenta ya; el freno de 2 s es para los demás avisos, que llegan en cadena
+      const reconnect = waiting && (type === 'online' || this.offline);
+      if (!reconnect && now - this.lastTry < 2000) return;
+      const due = this.nextAt != null && this.nextAt - now <= 1000;
+      if (due || waiting) this.loop();
+    }
+
+    /**
+     * Un ciclo: consulta, avisa lo nuevo y deja programado el siguiente. Si algo falla, reintenta
+     * cada vez más espaciado (salvo que GitHub diga cuánto esperar); sin red, espera a que vuelva.
+     */
     async loop() {
-      clearTimeout(this.timer);
+      this.unschedule();
       if (!this.running || this.paused || this.busy) return;
       this.busy = true;
       this.again = false;
+      this.lastTry = Date.now();
       let delay = null;
       try {
         const initial = !this.data.loaded;
-        this.emitStatus(initial ? 'loading' : 'syncing', initial ? M('status.loadingBranches') : null);
+        if (initial) this.emitStatus('loading', M('status.loadingBranches'));
+        else this.emitStatus(this.throttled ? 'limited' : 'live', null, null, null, { syncing: true });
         const activities = await this.poll(initial);
         this.data.loaded = true;
         this.failures = 0;
+        this.offline = false;
+        this.limitedUntil = 0;
         this.lastOk = Date.now();
         if (!this.running) return;
         this.emit('update', { activities, initial, calm: this.calm });
-        delay = this.again ? 0 : this.nextDelay();
-        // mientras queden ramas por cargar se sigue enseguida, salvo que la cuota no alcance
-        if (this.more && !this.throttled) delay = Math.min(delay, 250);
-        this.emitStatus(this.throttled ? 'limited' : 'live', null, delay);
+        delay = this.nextDelay();
+        if (this.again && !this.exhausted) delay = 0; // pidieron actualizar durante el ciclo (botón, filtro, fijadas)
+        else if (this.more && !this.throttled) delay = Math.min(delay, 250); // quedan ramas por cargar: se sigue enseguida
+        // si pausaron a mitad del ciclo, el estado lo pone el final
+        if (!this.paused) this.emitStatus(this.throttled ? 'limited' : 'live', null, delay, null, { syncing: delay < 1000 });
       } catch (err) {
         if (!this.running) return;
-        this.failures++;
-        const fatal = !this.data.loaded && (err.kind === 'notfound' || err.kind === 'auth');
-        if (err.kind === 'rate') delay = Math.max(5000, err.resetAt - Date.now() + 2000);
-        else delay = Math.min(300000, 5000 * 2 ** Math.min(this.failures, 6));
-        if (!(err instanceof ApiError)) console.error(err);
-        this.emitStatus('error', err.msg || err.message, fatal ? null : delay, err);
-        if (fatal) this.running = false;
+        if (err.kind === 'aborted') delay = 0; // stop() cortó el ciclo y refreshNow() revivió la fuente: se empieza de nuevo
+        else {
+          const offline = navigator.onLine === false;
+          const fatal = !this.data.loaded && (err.kind === 'notfound' || err.kind === 'auth');
+          if (err.kind === 'rate') {
+            // la cuota se agotó: se espera justo hasta que se renueve, y no cuenta como fallo
+            this.limitedUntil = err.resetAt;
+            delay = Math.max(5000, err.resetAt - Date.now() + 2000);
+          } else if (offline) delay = OFFLINE_MS; // sin red no se insiste: el aviso del navegador adelanta el reintento
+          else {
+            // cada fallo seguido espera el doble (5 s, 10 s… hasta 5 min), con algo de azar: que no reintenten todos a la vez
+            this.failures++;
+            delay = Math.min(300000, Math.round(2500 * 2 ** Math.min(this.failures, 7) * (0.8 + 0.4 * Math.random())));
+          }
+          this.offline = offline;
+          if (!(err instanceof ApiError)) console.error(err);
+          this.emitStatus('error', err.msg || err.message, fatal ? null : delay, err, { offline });
+          if (fatal) this.running = false;
+        }
       } finally {
         this.busy = false;
       }
       if (this.paused) this.emitStatus('paused');
-      else if (this.running && delay != null) this.timer = setTimeout(() => this.loop(), delay);
+      else if (this.running && delay != null) this.schedule(delay);
     }
 
-    /** Espacia las consultas para no agotar la cuota antes del próximo reinicio. */
+    /**
+     * Espacia los ciclos para que la cuota alcance hasta su próximo reinicio: la de GraphQL y la
+     * de REST, cada una con lo que gasta un ciclo normal (sin lo de cargar ramas que esperaban).
+     */
     nextDelay() {
       const base = this.token ? 10000 : 60000;
       const gql = this.mode === 'graphql';
-      const rate = gql ? this.gqlRate : this.rate;
-      const cost = (gql ? this.gqlCost : this.cost) - this.bulkCost;
-      this.avgCost = this.avgCost * 0.6 + Math.max(1, cost) * 0.4;
-      this.throttled = false;
-      if (!rate) return base;
-      const secsLeft = Math.max(1, rate.reset - Date.now() / 1000);
-      const usable = rate.remaining - (this.token ? 50 : 2);
-      if (usable <= 0) {
-        this.throttled = true;
-        return secsLeft * 1000 + 2000;
-      }
-      const budget = (secsLeft / (usable / this.avgCost)) * 1000;
-      this.throttled = budget > base * 1.5;
-      return Math.min(Math.max(base, budget), secsLeft * 1000 + 2000);
+      this.avgCost = this.avgCost * 0.6 + Math.max(1, (gql ? this.gqlCost : this.cost) - this.bulkCost) * 0.4;
+      if (gql) this.avgRest = this.avgRest * 0.6 + this.cost * 0.4;
+      this.exhausted = false;
+      let delay = base;
+      const fit = (rate, avg, reserve) => {
+        if (!rate) return;
+        const secsLeft = rate.reset - Date.now() / 1000;
+        if (secsLeft <= 1) return; // ya se renovó (o está por hacerlo): el próximo ciclo trae la cuota nueva
+        const usable = rate.remaining - reserve;
+        if (usable <= 0) {
+          this.exhausted = true;
+          delay = Math.max(delay, secsLeft * 1000 + 2000);
+        } else delay = Math.max(delay, Math.min((secsLeft / (usable / avg)) * 1000, secsLeft * 1000 + 2000));
+      };
+      fit(gql ? this.gqlRate : this.rate, this.avgCost, this.token ? 50 : 2);
+      if (gql) fit(this.rate, this.avgRest, 50);
+      this.throttled = delay > base * 1.5;
+      return delay;
     }
 
-    emitStatus(state, message = null, delay = null, error = null) {
+    emitStatus(state, message = null, delay = null, error = null, extra = null) {
       const gql = this.mode === 'graphql';
       this.status = {
         state,
@@ -219,6 +313,9 @@
         lastOk: this.lastOk || null,
         authenticated: !!this.token,
         mode: this.mode,
+        syncing: false, // hay un ciclo en curso (o empieza enseguida): "actualizando…"
+        offline: false, // el navegador dice que no hay red: se espera a que vuelva
+        ...extra,
       };
       this.emit('status', this.status);
     }
@@ -231,7 +328,7 @@
       const cached = cacheKey ? this.etags.get(cacheKey) : null;
       if (cached) headers['If-None-Match'] = cached.etag;
 
-      const res = await this.fetch(API + path, { headers, cache: 'no-store' });
+      const { res, body } = await this.request(API + path, { headers, cache: 'no-store' });
       this.readRate(res);
       if (res.status === 304 && cached) {
         if (!this.token) this.cost++; // sin token, los 304 sí cuentan
@@ -239,27 +336,25 @@
       }
       this.cost++;
       if (allow.includes(res.status)) return { data: null, fresh: true, status: res.status, headers: res.headers };
-      if (!res.ok) throw this.toError(res, await res.json().catch(() => null));
-      const data = await res.json();
+      if (!res.ok) throw this.toError(res, body);
       const etag = res.headers.get('ETag');
-      if (cacheKey && etag) this.etags.set(cacheKey, { etag, data });
-      return { data, fresh: true, headers: res.headers };
+      if (cacheKey && etag) this.etags.set(cacheKey, { etag, data: body });
+      return { data: body, fresh: true, headers: res.headers };
     }
 
     async gql(query, variables = {}) {
-      const res = await this.fetch(API + '/graphql', {
+      const { res, body } = await this.request(API + '/graphql', {
         method: 'POST',
         headers: { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ query, variables: { owner: this.owner, name: this.name, ...variables } }),
         cache: 'no-store',
       });
       this.readRate(res);
-      if (!res.ok) throw this.toError(res, await res.json().catch(() => null));
-      const body = await res.json();
-      const rl = body.data?.rateLimit;
+      if (!res.ok) throw this.toError(res, body);
+      const rl = body?.data?.rateLimit;
       if (rl) this.gqlRate = { limit: rl.limit, remaining: rl.remaining, reset: Date.parse(rl.resetAt) / 1000 };
       this.gqlCost += rl?.cost || 1;
-      if (body.errors?.length && !body.data?.repository) {
+      if (body?.errors?.length && !body.data?.repository) {
         const e = body.errors[0];
         if (e.type === 'NOT_FOUND') throw this.notFound();
         if (e.type === 'RATE_LIMITED')
@@ -269,14 +364,46 @@
           });
         throw new ApiError(M('err.graphql', { message: e.message }), { kind: 'graphql' });
       }
-      return body.data;
+      return body?.data;
     }
 
-    async fetch(url, opts) {
+    /**
+     * Una consulta a GitHub con su respuesta ya leída. Si no llega entera en REQUEST_MS se corta y
+     * cuenta como fallo de red (se reintenta); si la fuente se detuvo mientras tanto, se corta y no
+     * cuenta como nada.
+     */
+    async request(url, opts) {
+      const halt = this.halt || (this.halt = new AbortController());
+      const stopped = () => new ApiError(M('err.network'), { kind: 'aborted' });
+      if (halt.signal.aborted) throw stopped();
+      const ctl = new AbortController();
+      const onHalt = () => ctl.abort();
+      halt.signal.addEventListener('abort', onHalt, { once: true });
+      let late = false;
+      const timer = setTimeout(() => {
+        late = true;
+        ctl.abort();
+      }, REQUEST_MS);
       try {
-        return await fetch(url, opts);
-      } catch {
-        throw new ApiError(M('err.network'), { kind: 'network' });
+        const res = await fetch(url, { ...opts, signal: ctl.signal });
+        let body = null;
+        if (res.status !== 204 && res.status !== 304) {
+          const text = await res.text(); // el cuerpo también entra en el tope de tiempo
+          try {
+            body = text ? JSON.parse(text) : null;
+          } catch {
+            body = undefined;
+          }
+          if (res.ok && !body) throw new ApiError(M('err.network'), { kind: 'network' }); // llegó vacía o cortada
+        }
+        return { res, body };
+      } catch (err) {
+        if (err instanceof ApiError) throw err;
+        if (halt.signal.aborted) throw stopped();
+        throw new ApiError(M(late ? 'err.timeout' : 'err.network'), { kind: 'network' });
+      } finally {
+        clearTimeout(timer);
+        halt.signal.removeEventListener('abort', onHalt);
       }
     }
 
@@ -300,11 +427,12 @@
       if (res.status === 401) {
         return new ApiError(M('err.auth'), { status: 401, kind: 'auth' });
       }
-      const limited = (this.rate?.remaining === 0 && res.headers.get('X-RateLimit-Resource') !== 'graphql') || /rate limit/i.test(msg);
+      const retryAfter = Number(res.headers.get('Retry-After')); // límite secundario: GitHub dice cuánto esperar
+      const secondary = /secondary rate limit/i.test(msg); // y si no lo dice, pide esperar un minuto
+      const limited = retryAfter > 0 || secondary || (this.rate?.remaining === 0 && res.headers.get('X-RateLimit-Resource') !== 'graphql') || /rate limit/i.test(msg);
       if ((res.status === 403 || res.status === 429) && limited) {
-        const retryAfter = Number(res.headers.get('Retry-After'));
         const reset = Number(res.headers.get('X-RateLimit-Reset'));
-        const resetAt = retryAfter ? Date.now() + retryAfter * 1000 : reset ? reset * 1000 : Date.now() + 60000;
+        const resetAt = retryAfter ? Date.now() + retryAfter * 1000 : !secondary && reset ? reset * 1000 : Date.now() + 60000;
         return new ApiError(M(this.token ? 'err.rate' : 'err.rateAnon'), { status: res.status, kind: 'rate', resetAt });
       }
       if (res.status === 404) return this.notFound();
@@ -381,7 +509,7 @@
       try {
         await this.syncEvents(acts, true); // historial del feed + qué ramas se movieron hace poco
       } catch (err) {
-        if (err.kind === 'rate' || err.kind === 'network') throw err;
+        if (hard(err)) throw err;
       }
     }
 
@@ -644,7 +772,7 @@
             );
             page = more?.repository?.page;
           } catch (err) {
-            if (['rate', 'network', 'auth'].includes(err.kind)) throw err;
+            if (hard(err)) throw err;
             this.listing = null; // se vuelve a empezar en el próximo turno
             break;
           }
@@ -798,7 +926,7 @@
         try {
           res = await this.api(path, { cacheKey: page ? null : 'activity' });
         } catch (err) {
-          if (['rate', 'network', 'auth'].includes(err.kind)) throw err;
+          if (hard(err)) throw err;
           this.activityOk = false;
           console.warn('No se pudo leer la API de actividad; se usan los eventos del repo:', err.message);
           return;
@@ -921,6 +1049,7 @@
         this.seenEvents.add(ev.id);
         await this.applyEvent(ev, acts);
       }
+      this.forgetOldEvents();
     }
 
     async applyEvent(ev, acts) {
@@ -1197,7 +1326,7 @@
             behind = data.behind_by;
           }
         } catch (err) {
-          if (err.kind === 'rate' || err.kind === 'network') throw err;
+          if (hard(err)) throw err;
           force = true;
         }
       }
@@ -1320,7 +1449,7 @@
           }
         }
       } catch (err) {
-        if (err.kind === 'rate' || err.kind === 'network') throw err;
+        if (hard(err)) throw err;
       }
       return out;
     }
@@ -1332,6 +1461,11 @@
       if (ev.type === 'PushEvent' || ev.type === 'PullRequestEvent') return true;
       if ((ev.type === 'CreateEvent' || ev.type === 'DeleteEvent') && ev.payload?.ref_type === 'branch') return true;
       return false;
+    }
+
+    /** Los eventos ya procesados del feed (una página trae 50): acotado, que hay sesiones de días. */
+    forgetOldEvents() {
+      if (this.seenEvents.size > 2000) this.seenEvents = new Set([...this.seenEvents].slice(-1000));
     }
 
     async syncEvents(acts, initial) {
@@ -1358,6 +1492,7 @@
         const a = this.mapEvent(ev);
         if (a) acts.push(a);
       }
+      this.forgetOldEvents();
     }
 
     /* Desde octubre de 2025 GitHub recorta los payloads de la API de eventos: un PushEvent ya no trae
@@ -1391,7 +1526,7 @@
             });
             return;
           } catch (err) {
-            if (err.kind === 'rate' || err.kind === 'network') throw err; // si no, se intenta por REST
+            if (hard(err)) throw err; // si no, se intenta por REST
           }
         }
         // sin GraphQL: la página de PRs actualizados hace poco (abiertos o no) cubre casi siempre el feed
@@ -1399,7 +1534,7 @@
         for (const p of data || []) this.prInfo.set(p.number, { title: p.title || '', draft: !!p.draft });
         for (const n of nums) if (!this.prInfo.has(n)) this.prInfo.set(n, null); // no volver a buscarlo
       } catch (err) {
-        if (err.kind === 'rate' || err.kind === 'network') throw err;
+        if (hard(err)) throw err;
       }
     }
 
@@ -1427,7 +1562,7 @@
             const { data } = await this.api(`${this.base}/compare/${from}...${a.sha}?per_page=1`, { allow: [404, 422] });
             n = data?.ahead_by ?? null;
           } catch (err) {
-            if (err.kind === 'rate' || err.kind === 'network') throw err;
+            if (hard(err)) throw err;
           }
         }
         if (n) a.title = M('act.pushCommits', { n, name: a.branch });

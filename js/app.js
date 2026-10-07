@@ -137,6 +137,10 @@
         loadFiles: (q) => (source?.files ? source.files(q) : null),
         onGalaxyChange: (on) => setPressed(el.galaxyBtn, on),
         onScan: () => feed.sound && feed.synth.discover('scan', null, 0),
+        // el espacio tiene su zumbido de fondo, en la nota de la galaxia en la que se está
+        onAmbience: (level, name) => feed.synth.drone(feed.sound ? level : 0, name),
+        // el hiperimpulsor: la carga que sube y el golpe del salto
+        onJump: (kind, name) => feed.sound && feed.synth.hyper(kind, name),
       });
     }
   } catch (err) {
@@ -540,7 +544,6 @@
 
   const STATE_TEXT = {
     loading: 'status.loading',
-    syncing: 'status.live',
     live: 'status.live',
     limited: 'status.limited',
     paused: 'status.paused',
@@ -559,14 +562,13 @@
   function renderStatus() {
     if (!status) return;
     const s = status;
-    const shown = s.state === 'syncing' ? 'live' : s.state;
-    el.status.dataset.state = shown;
-    el.statusText.textContent = s.demo && shown === 'live' ? t('status.demoLive') : STATE_TEXT[s.state] ? t(STATE_TEXT[s.state]) : s.state;
+    el.status.dataset.state = s.state;
+    el.statusText.textContent = s.demo && s.state === 'live' ? t('status.demoLive') : STATE_TEXT[s.state] ? t(STATE_TEXT[s.state]) : s.state;
     const now = Date.now();
     let sub = '';
     const secsTo = (at) => i18n.fmtSeconds(Math.max(0, Math.ceil((at - now) / 1000)));
     if (s.state === 'error') {
-      sub = s.nextAt ? t('status.retryIn', { time: secsTo(s.nextAt) }) : t('status.stopped');
+      sub = s.offline ? t('status.offline') : s.nextAt ? t('status.retryIn', { time: secsTo(s.nextAt) }) : t('status.stopped');
       el.status.title = i18n.text(s.message);
     } else if (s.state === 'paused') {
       sub = t('status.resumeHint');
@@ -576,7 +578,8 @@
     } else {
       const parts = [];
       if (s.lastOk) parts.push(t('status.updated', { ago: U.timeAgo(s.lastOk, now) }));
-      if (s.nextAt && !s.demo) parts.push(t('status.nextIn', { time: secsTo(s.nextAt) }));
+      if (s.syncing) parts.push(t('status.syncing')); // un ciclo en curso o a punto de empezar
+      else if (s.nextAt && !s.demo) parts.push(t('status.nextIn', { time: secsTo(s.nextAt) }));
       sub = parts.join(' · ');
       el.status.title = s.state === 'limited' ? t('status.throttled') : '';
     }
@@ -686,6 +689,7 @@
   el.soundBtn.addEventListener('click', () => {
     feed.setSound(!feed.sound);
     setPressed(el.soundBtn, feed.sound);
+    graph3d?.gx?.pokeAmbience(); // el zumbido del espacio arranca o se apaga con el sonido
   });
 
   if (!feed.notifySupported) el.notifyBtn.hidden = true;
@@ -888,6 +892,7 @@
     if (feed.sound) feed.synth.preview();
     setPressed(el.tvSound, feed.sound);
     setPressed(el.soundBtn, feed.sound);
+    graph3d?.gx?.pokeAmbience();
   });
   window.addEventListener('resize', tvScale);
   document.addEventListener('visibilitychange', () => !document.hidden && lockScreen());

@@ -62,6 +62,7 @@
           <span class="status-sub" id="status-sub"></span>
         </span>
       </div>
+      <span class="tv-clock" id="tv-clock" aria-hidden="true"></span>
       <div class="rate" id="rate" hidden>
         <span class="rate-label">API</span>
         <span class="rate-bar" id="rate-bar" aria-hidden="true"></span>
@@ -147,11 +148,17 @@
           <button class="icon-btn" type="button" id="spin-btn" aria-pressed="true" title="Slowly rotate the view while you are not touching it" aria-label="Rotate the view" data-i18n-attr="title:spin.title;aria-label:spin.label">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.2 6.2A5.5 5.5 0 0 0 3 5.3M2.8 9.8A5.5 5.5 0 0 0 13 10.7M3 2.5v2.8h2.8M13 13.5v-2.8h-2.8"/></svg>
           </button>
+          <button class="icon-btn director-btn" type="button" id="director-btn" aria-pressed="false" title="Camera director" aria-label="Camera director" data-i18n-attr="title:director.title;aria-label:director.label">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="6" width="9" height="7" rx="1.3"/><path d="m10.5 8.4 4-2v6.2l-4-2"/><circle cx="3.9" cy="3.6" r="1.7"/><circle cx="8.1" cy="3.6" r="1.7"/></svg>
+          </button>
           <button class="icon-btn" type="button" id="fly-btn" aria-pressed="false" title="Flight mode" aria-label="Flight mode" data-i18n-attr="title:fly.label;aria-label:fly.label">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M14 2 2 7.2l4.6 1.7L8.3 14z"/><path d="M6.6 8.9 14 2"/></svg>
           </button>
           <button class="icon-btn" type="button" id="fullscreen-btn" aria-pressed="false" title="Full screen" aria-label="Full screen" data-i18n-attr="title:fullscreen.label;aria-label:fullscreen.label">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path class="when-off" d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/><path class="when-on" d="M6 2.5V6H2.5M10 2.5V6h3.5M13.5 10H10v3.5M6 13.5V10H2.5"/></svg>
+          </button>
+          <button class="icon-btn" type="button" id="tv-btn" aria-pressed="false" title="TV mode" aria-label="TV mode" data-i18n-attr="title:tv.title;aria-label:tv.label">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="9" rx="1.4"/><path d="M5.5 14h5M8 11.5V14"/></svg>
           </button>
           <button class="icon-btn" type="button" id="replay-btn" aria-pressed="false" title="Replay the history" aria-label="Replay the history" data-i18n-attr="title:replay.label;aria-label:replay.label">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 8a5.4 5.4 0 1 0 1.7-3.9M2.4 2.6v3h3"/><path d="M7 5.9v4.2L10.2 8z"/></svg>
@@ -183,6 +190,23 @@
         <div class="graph-wrap" id="graph" hidden></div>
         <div class="overlay" id="overlay" hidden></div>
         <div class="combo" id="combo" aria-hidden="true"></div>
+        <!-- rótulo del director de cámara: qué se está filmando (ya se anuncia en el panel de actividad) -->
+        <div class="lower" id="lower" aria-hidden="true"></div>
+        <div class="tv-bar" id="tv-bar">
+          <button class="icon-btn" type="button" id="tv-pause" aria-pressed="false" title="Pause" aria-label="Pause" data-i18n-attr="title:ctl.pause;aria-label:ctl.pause">
+            <svg class="ico when-off" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.5v9M10.5 3.5v9"/></svg>
+            <svg class="ico when-on" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6L12.5 8z"/></svg>
+          </button>
+          <button class="icon-btn" type="button" id="tv-sound" aria-pressed="false" title="Sound on every alert" aria-label="Sound on every alert" data-i18n-attr="title:ctl.sound;aria-label:ctl.sound">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 6h2.5l3.5-3v10L5 10H2.5z"/><path class="when-on" d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.8a6 6 0 0 1 0 8.4"/><path class="when-off" d="m11 6 3.5 4M14.5 6 11 10"/></svg>
+          </button>
+          <button class="icon-btn" type="button" id="tv-fs" aria-pressed="false" title="Full screen" aria-label="Full screen" data-i18n-attr="title:fullscreen.label;aria-label:fullscreen.label">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path class="when-off" d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/><path class="when-on" d="M6 2.5V6H2.5M10 2.5V6h3.5M13.5 10H10v3.5M6 13.5V10H2.5"/></svg>
+          </button>
+          <button class="btn tv-exit" type="button" id="tv-exit">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg><span data-i18n="tv.exit">Exit TV mode</span>
+          </button>
+        </div>
         <div class="replay" id="replay" hidden>
           <div class="rp-clock" aria-hidden="true"><span class="rp-date"></span><span class="rp-time"></span></div>
           <p class="rp-caption" role="status" aria-live="polite"></p>
@@ -288,6 +312,7 @@
 <script src="js/layout.js"></script>
 <script src="js/graph.js"></script>
 <script src="js/flight.js"></script>
+<script src="js/director.js"></script>
 <script src="js/graph3d.js"></script>
 <script src="js/sound.js"></script>
 <script src="js/replay.js"></script>

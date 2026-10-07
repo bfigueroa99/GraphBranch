@@ -78,6 +78,11 @@ GB.i18n.define('nl', {
   'fly.lock': 'Klik om met de muis te sturen',
   'fly.touch': 'Beweeg met de joystick en sleep om rond te kijken',
   'ride.label': 'Branch doorrijden',
+  'director.label': 'Cameraregisseur',
+  'director.title': 'Cameraregisseur: de camera volgt zelf de belangrijkste activiteit. Beweeg de weergave om het over te nemen.',
+  'tv.label': 'Tv-modus',
+  'tv.title': 'Tv-modus: voor een gedeeld scherm, met automatische camera en een scherm dat aan blijft',
+  'tv.exit': 'Tv-modus verlaten',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'Trofeeën',

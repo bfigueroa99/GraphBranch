@@ -9,6 +9,8 @@ Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas
 - **Cada evento con su efecto**: un PR fusionado viaja como un cometa en arco desde su rama hasta la base; un PR abierto levanta un faro de luz sobre su rama; un release lanza fuegos artificiales; una estrella o un fork nuevos cruzan el cielo como estrella fugaz; una rama borrada se deshace en polvo; las aprobaciones, los cambios pedidos y los force-push hacen ondas de color sobre su rama. Cada tipo tiene un tope por tanda, así una ráfaga no satura la escena. Con **pantalla completa** (botón o tecla `F`) el grafo ocupa toda la pantalla y los avisos lo acompañan. Si el sistema pide reducir el movimiento, la escena queda quieta.
 - **Modo vuelo**: el botón del avión te deja volar libre por el grafo en primera persona, con inercia: `W` `A` `S` `D` para moverte, `Q` `E` para bajar y subir, `Mayús` para acelerar y el ratón para mirar (un clic bloquea el puntero y aparece una mira: el commit que está en el centro muestra su detalle y un clic lo fija). La cámara se inclina en las curvas, el campo de visión se abre a toda velocidad y, con el sonido activado, suena un motor que sube con la velocidad. En el celular aparece un joystick y se mira arrastrando; con un mando de juego, los sticks mueven y miran, los gatillos bajan y suben, y Start entra o sale del vuelo.
 - **Recorrer la rama**: en el detalle de un commit o de una rama, **Recorrer la rama** lleva la cámara como una montaña rusa por toda la rama, desde el commit del que nace hasta su cabeza. Doble clic en un commit vuela hasta él.
+- **Director de cámara**: el botón de la cámara de cine deja que la cámara se dirija sola, como en una transmisión. Elige qué mirar según el interés de lo que acaba de pasar (un release pesa más que un PR fusionado, que pesa más que un PR abierto, que pesa más que un commit), encuadra el arco entero de un merge o los fuegos de un release, sostiene cada plano unos segundos sin volver a la misma rama antes de 30 s (salvo por algo grande) y, cada tres planos de detalle, abre un plano general. Un rótulo abajo a la izquierda dice qué se está viendo. Los saltos largos son un corte con fundido y no un vuelo, para no marear; mientras dura un plano la cámara gira o se acerca despacio. Cuando no pasa nada rueda planos tranquilos: el presente, la vista general o un paseo por una rama. Basta mover la vista para tomar el control: el director lo cede al instante (el botón lo marca con un punto) y lo retoma tras unos segundos sin tocar nada. Con movimiento reducido solo hay cortes.
+- **Modo TV**: el botón de la pantalla (o abrir la página con `?tv=1`, por ejemplo `index.html?repo=owner/repo&tv=1`) la convierte en un panel para una pantalla compartida: solo quedan el grafo 3D con el director de cámara, el resumen, el panel de actividad y un reloj, todo con letra que crece con la pantalla, y la pantalla no se apaga (Screen Wake Lock, donde el navegador lo permite). El sonido arranca apagado, porque en un espacio compartido llega a todos, y la capa de juego no hace fiestas. Una barra arriba a la derecha (se esconde con el puntero tras unos segundos quieto) tiene **Pausar** (también la barra espaciadora: detiene las novedades, la cámara y la animación de fondo), sonido, pantalla completa (`F`) y **Salir del modo TV**. Si pasan unos minutos sin novedades, reproduce la historia con el Replay y vuelve sola al presente; cualquier actividad nueva la interrumpe.
 - **Replay**: el botón de la flecha circular reproduce la historia del repo como un time-lapse, al estilo de Gource: los commits llegan en orden, las ramas nacen, crecen y se fusionan (las ya borradas reaparecen mientras existieron, con el nombre que dejó su merge), una fecha grande marca el tiempo y unos rótulos cuentan los hitos (ramas nuevas, PRs fusionados, releases), con sus efectos y su sonido. Los periodos sin actividad se comprimen, así que toda la historia dura menos de un minuto; la línea de tiempo marca los merges y las releases, se puede arrastrar, pausar (también con la barra espaciadora) y acelerar hasta 4×. Usa lo que ya está cargado, sin consultas extra: para una historia más larga, sube los **Commits por rama** en Ajustes. Mientras tanto lo nuevo sigue llegando al panel de actividad, y **Volver al presente** lo muestra.
 - **Logros, nivel y misión del día**: el repo sube de nivel con lo que el equipo consigue (merges, revisiones aprobadas, releases, issues cerrados, ramas fusionadas que se limpian; un commit suma poco), cumple una misión distinta cada día ("Fusionar 3 pull requests", "Cerrar 2 issues"…) y desbloquea 14 logros, como *Primer merge*, *Día de merges*, *¡A producción!*, *Bandeja vacía*, *Día récord*, *Bosque* o *Viajero del tiempo*. Cada logro, nivel o misión se celebra con un aviso dorado, fuegos artificiales y fanfarria, y cuando el equipo encadena varias cosas seguidas aparece un **combo**. El trofeo de la barra superior abre la vitrina, con el criterio de cada logro y un interruptor para apagar todo. Celebra al repo y al equipo, nunca a personas: no hay rankings, rachas personales ni contadores por autor, porque empujan a trabajar de más (GitHub quitó sus rachas en 2016 por eso). Se guarda solo en el navegador, por repositorio.
 - **Vista 2D tipo metro**: cada rama es un carril; los commits avanzan a la derecha. La rama por defecto va arriba y debajo las demás, de la más reciente a la menos activa. Cambia entre 3D y 2D con el selector del grafo.
@@ -30,7 +32,7 @@ No necesita servidor ni compilación: es HTML, CSS y JavaScript que llama direct
 2. Escribe `owner/repo` o pega la URL del repositorio y pulsa **Conectar**. Sin repositorio arranca una **demo** simulada.
 3. Opcional pero recomendado: en **Ajustes** (engranaje) agrega un token de GitHub.
 
-También puedes abrir un repo directo con `index.html?repo=owner/repo`.
+También puedes abrir un repo directo con `index.html?repo=owner/repo`, y en modo TV con `index.html?repo=owner/repo&tv=1`.
 
 ### Token
 
@@ -70,6 +72,7 @@ En 3D:
 - Modo vuelo (avión): `W` `A` `S` `D` moverse, `Q` `E` bajar y subir, `Mayús` acelerar, ratón para mirar, `Esc` para salir. En el celular, joystick y arrastrar; también funciona con mando de juego.
 - Pasar el puntero por un commit o por el nombre de una rama lo resalta.
 - Botón de giro: activa o pausa el giro lento automático.
+- Director de cámara (cámara de cine): la cámara se dirige sola; arrastrar, la rueda, las flechas o un clic le quitan el mando hasta que dejas de tocar.
 
 En 2D:
 
@@ -84,6 +87,8 @@ En las dos:
 - **Pantalla completa** (botón o `F`): el grafo ocupa toda la pantalla; `Esc` o `F` para salir.
 - **Trofeos** (barra superior, o la franja de nivel y misión bajo el título del grafo): abre la vitrina de logros; ahí se apaga o enciende la capa de juego.
 - **Replay** (flecha circular): reproduce la historia; barra espaciadora para pausar, arrastra la línea de tiempo para saltar y **Volver al presente** para salir.
+- **Modo TV** (pantalla): barra espaciadora para pausar todo, `F` para pantalla completa y **Salir del modo TV** en la barra de arriba a la derecha.
+- **Pausar** (barra superior): deja de traer novedades y detiene todo lo que se mueve solo (giro, director, fondo).
 - Los chips del panel de actividad filtran la lista y también los avisos emergentes.
 
 ## Idiomas
@@ -126,6 +131,7 @@ js/layout.js          asignación de carriles, colores y orden de los commits
 js/graph.js           vista 2D en SVG (D3 solo para zoom y arrastre)
 js/graph3d.js         vista 3D con Three.js (instanciada: pocas llamadas de dibujo aunque haya miles de commits)
 js/flight.js          modo vuelo de la vista 3D: teclado y ratón, joystick táctil y mando de juego
+js/director.js        director de cámara: qué mirar, cuánto tiempo y cómo pasar de un plano a otro
 js/sound.js           sonido de la actividad (Web Audio, escala pentatónica)
 js/replay.js          modo Replay: la historia como time-lapse
 js/game.js            logros del repo, nivel y misión del día
@@ -142,6 +148,7 @@ tools/*.test.mjs      pruebas de la lógica contra una API de GitHub simulada (`
 - Desde octubre de 2025 GitHub recorta lo que trae ese feed (un push ya no dice cuántos commits trae y un PR llega sin título). GraphBranch lo completa: el número de commits sale del grafo ya cargado (con token, también de una comparación) y los títulos, de una sola consulta de PRs por ciclo.
 - Se cargan los últimos commits de cada rama (40 por defecto, configurable). Las líneas punteadas a la izquierda indican que la historia sigue más atrás.
 - Los PRs se siguen entre los 50 actualizados más recientemente.
+- El modo TV pide al navegador que no apague la pantalla (Screen Wake Lock: Chrome y Edge 84+, Safari 16.4+, Firefox 126+). Si no lo permite (sin soporte, o con batería baja), la pantalla se apaga según el sistema; para un panel fijo conviene desactivar también el ahorro de energía del equipo. El navegador solo deja pasar a pantalla completa tras un gesto del usuario, así que con `?tv=1` hay que pulsar `F` o el botón.
 
 ## Seguridad
 

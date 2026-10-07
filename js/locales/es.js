@@ -78,6 +78,11 @@ GB.i18n.define('es', {
   'fly.lock': 'Haz clic para mirar con el ratón',
   'fly.touch': 'Muévete con el joystick y arrastra para mirar',
   'ride.label': 'Recorrer la rama',
+  'director.label': 'Director de cámara',
+  'director.title': 'Director de cámara: la cámara sigue sola lo más importante. Mueve la vista para tomar el control.',
+  'tv.label': 'Modo TV',
+  'tv.title': 'Modo TV: para una pantalla compartida, con cámara automática y la pantalla siempre encendida',
+  'tv.exit': 'Salir del modo TV',
 
   /* ---------- capa de juego: logros del repositorio, nivel y misión del día ---------- */
   'game.trophies': 'Trofeos',

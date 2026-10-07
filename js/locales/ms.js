@@ -73,6 +73,11 @@ GB.i18n.define('ms', {
   'replay.exit': 'Kembali ke masa kini',
   'replay.speed': 'Kelajuan main semula',
   'replay.position': 'Kedudukan dalam sejarah',
+  'fly.label': 'Mod terbang',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> bergerak · <kbd>Q</kbd> <kbd>E</kbd> turun dan naik · <kbd>Shift</kbd> pecut · tetikus untuk melihat · <kbd>Esc</kbd> untuk keluar',
+  'fly.lock': 'Klik untuk mengemudi dengan tetikus',
+  'fly.touch': 'Bergerak dengan joystick dan seret untuk melihat sekeliling',
+  'ride.label': 'Jelajah branch ini',
 
   /* ---------- lapisan permainan: pencapaian repositori, tahap dan misi hari ini ---------- */
   'game.trophies': 'Trofi',

@@ -73,6 +73,11 @@ GB.i18n.define('ca', {
   'replay.exit': 'Torna al present',
   'replay.speed': 'Velocitat de reproducció',
   'replay.position': "Posició a l'historial",
+  'fly.label': 'Mode de vol',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> moure’s · <kbd>Q</kbd> <kbd>E</kbd> baixar i pujar · <kbd>Maj</kbd> accelerar · ratolí per mirar · <kbd>Esc</kbd> per sortir',
+  'fly.lock': 'Fes clic per mirar amb el ratolí',
+  'fly.touch': 'Mou-te amb el joystick i arrossega per mirar al voltant',
+  'ride.label': 'Recorre la branca',
 
   /* ---------- capa de joc: assoliments del repositori, nivell i missió del dia ---------- */
   'game.trophies': 'Trofeus',

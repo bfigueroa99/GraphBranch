@@ -78,6 +78,11 @@ GB.i18n.define('pl', {
   'replay.exit': 'Powrót do teraźniejszości',
   'replay.speed': 'Prędkość odtwarzania',
   'replay.position': 'Pozycja w historii',
+  'fly.label': 'Tryb lotu',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> ruch · <kbd>Q</kbd> <kbd>E</kbd> w dół i w górę · <kbd>Shift</kbd> przyspieszenie · myszą się rozglądasz · <kbd>Esc</kbd> wyjście',
+  'fly.lock': 'Kliknij, aby sterować myszą',
+  'fly.touch': 'Poruszaj się joystickiem i przeciągaj, aby się rozejrzeć',
+  'ride.label': 'Przejedź gałąź',
 
   /* ---------- warstwa gry: osiągnięcia repozytorium, poziom i misja dnia ---------- */
   'game.trophies': 'Trofea',

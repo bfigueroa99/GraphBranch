@@ -82,6 +82,11 @@ GB.i18n.define('fa', {
   'replay.exit': 'بازگشت به اکنون',
   'replay.speed': 'سرعت بازپخش',
   'replay.position': 'موقعیت در تاریخچه',
+  'fly.label': 'حالت پرواز',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> حرکت · <kbd>Q</kbd> <kbd>E</kbd> پایین و بالا · <kbd>Shift</kbd> شتاب · ماوس برای نگاه کردن · <kbd>Esc</kbd> برای خروج',
+  'fly.lock': 'برای هدایت با ماوس کلیک کنید',
+  'fly.touch': 'با جوی‌استیک حرکت کنید و برای نگاه به اطراف بکشید',
+  'ride.label': 'گشتی روی این شاخه',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'افتخارات',

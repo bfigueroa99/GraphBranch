@@ -73,6 +73,11 @@ GB.i18n.define('de', {
   'replay.exit': 'Zurück in die Gegenwart',
   'replay.speed': 'Wiedergabegeschwindigkeit',
   'replay.position': 'Position im Verlauf',
+  'fly.label': 'Flugmodus',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> bewegen · <kbd>Q</kbd> <kbd>E</kbd> runter und hoch · <kbd>Umschalt</kbd> beschleunigen · Maus zum Umsehen · <kbd>Esc</kbd> beenden',
+  'fly.lock': 'Klicken, um mit der Maus zu steuern',
+  'fly.touch': 'Mit dem Joystick bewegen, zum Umsehen ziehen',
+  'ride.label': 'Branch abfahren',
 
   /* ---------- Spielebene: Erfolge des Repositorys, Level und Mission des Tages ---------- */
   'game.trophies': 'Trophäen',

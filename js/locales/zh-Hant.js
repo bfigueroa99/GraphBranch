@@ -73,6 +73,11 @@ GB.i18n.define('zh-Hant', {
   'replay.exit': '回到現在',
   'replay.speed': '重播速度',
   'replay.position': '在歷程記錄中的位置',
+  'fly.label': '飛行模式',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移動 · <kbd>Q</kbd> <kbd>E</kbd> 下降與上升 · <kbd>Shift</kbd> 加速 · 滑鼠環顧 · <kbd>Esc</kbd> 離開',
+  'fly.lock': '按一下以滑鼠操控',
+  'fly.touch': '用搖桿移動，拖曳環顧四周',
+  'ride.label': '沿此分支遊覽',
 
   /* ---------- 遊戲層：儲存庫成就、等級與每日任務 ---------- */
   'game.trophies': '獎盃',

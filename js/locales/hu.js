@@ -73,6 +73,11 @@ GB.i18n.define('hu', {
   'replay.exit': 'Vissza a jelenbe',
   'replay.speed': 'Visszajátszás sebessége',
   'replay.position': 'Pozíció az előzményekben',
+  'fly.label': 'Repülés mód',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> mozgás · <kbd>Q</kbd> <kbd>E</kbd> le és fel · <kbd>Shift</kbd> gyorsítás · egérrel nézel · <kbd>Esc</kbd> kilépés',
+  'fly.lock': 'Kattints, és irányíts egérrel',
+  'fly.touch': 'Mozogj a joystickkal, és húzással nézz körül',
+  'ride.label': 'Utazás az ágon',
 
   /* ---------- játékréteg: a repozitórium eredményei, szintje és a nap küldetése ---------- */
   'game.trophies': 'Trófeák',

@@ -73,6 +73,11 @@ GB.i18n.define('vi', {
   'replay.exit': 'Trở về hiện tại',
   'replay.speed': 'Tốc độ phát lại',
   'replay.position': 'Vị trí trong lịch sử',
+  'fly.label': 'Chế độ bay',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> di chuyển · <kbd>Q</kbd> <kbd>E</kbd> xuống và lên · <kbd>Shift</kbd> tăng tốc · chuột để nhìn · <kbd>Esc</kbd> để thoát',
+  'fly.lock': 'Nhấp để điều khiển bằng chuột',
+  'fly.touch': 'Di chuyển bằng cần điều khiển và kéo để nhìn xung quanh',
+  'ride.label': 'Đi dọc nhánh này',
 
   /* ---------- lớp trò chơi: thành tích của kho lưu trữ, cấp độ và nhiệm vụ trong ngày ---------- */
   'game.trophies': 'Cúp',

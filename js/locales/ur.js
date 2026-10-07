@@ -82,6 +82,11 @@ GB.i18n.define('ur', {
   'replay.exit': 'حال میں واپس جائیں',
   'replay.speed': 'ری پلے کی رفتار',
   'replay.position': 'ہسٹری میں مقام',
+  'fly.label': 'پرواز موڈ',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> حرکت · <kbd>Q</kbd> <kbd>E</kbd> نیچے اور اوپر · <kbd>Shift</kbd> رفتار بڑھائیں · دیکھنے کے لیے ماؤس · <kbd>Esc</kbd> باہر نکلیں',
+  'fly.lock': 'ماؤس سے چلانے کے لیے کلک کریں',
+  'fly.touch': 'جوائے اسٹک سے حرکت کریں اور اردگرد دیکھنے کے لیے ڈریگ کریں',
+  'ride.label': 'اس برانچ کی سیر کریں',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'ٹرافیاں',

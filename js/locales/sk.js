@@ -78,6 +78,11 @@ GB.i18n.define('sk', {
   'replay.exit': 'Späť do prítomnosti',
   'replay.speed': 'Rýchlosť prehrávania',
   'replay.position': 'Pozícia v histórii',
+  'fly.label': 'Režim letu',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> pohyb · <kbd>Q</kbd> <kbd>E</kbd> dole a hore · <kbd>Shift</kbd> zrýchlenie · myšou sa rozhliadate · <kbd>Esc</kbd> koniec',
+  'fly.lock': 'Kliknite a riaďte myšou',
+  'fly.touch': 'Pohybujte sa joystickom a ťahaním sa rozhliadajte',
+  'ride.label': 'Prejsť vetvou',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'Trofeje',

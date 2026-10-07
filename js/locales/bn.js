@@ -73,6 +73,11 @@ GB.i18n.define('bn', {
   'replay.exit': 'বর্তমানে ফিরুন',
   'replay.speed': 'রিপ্লের গতি',
   'replay.position': 'ইতিহাসে অবস্থান',
+  'fly.label': 'উড়ান মোড',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> চলাচল · <kbd>Q</kbd> <kbd>E</kbd> নিচে ও উপরে · <kbd>Shift</kbd> গতি বাড়ান · দেখতে মাউস · <kbd>Esc</kbd> বেরোতে',
+  'fly.lock': 'মাউস দিয়ে চালাতে ক্লিক করুন',
+  'fly.touch': 'জয়স্টিক দিয়ে চলুন, চারপাশ দেখতে টানুন',
+  'ride.label': 'এই ব্রাঞ্চ ধরে ঘুরুন',
 
   /* ---------- গেম স্তর: রিপোজিটরির অর্জন, লেভেল ও আজকের মিশন ---------- */
   'game.trophies': 'ট্রফি',

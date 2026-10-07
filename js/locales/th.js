@@ -73,6 +73,11 @@ GB.i18n.define('th', {
   'replay.exit': 'กลับสู่ปัจจุบัน',
   'replay.speed': 'ความเร็วในการเล่น',
   'replay.position': 'ตำแหน่งในประวัติ',
+  'fly.label': 'โหมดบิน',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> เคลื่อนที่ · <kbd>Q</kbd> <kbd>E</kbd> ลงและขึ้น · <kbd>Shift</kbd> เร่งความเร็ว · ใช้เมาส์มอง · <kbd>Esc</kbd> เพื่อออก',
+  'fly.lock': 'คลิกเพื่อบังคับด้วยเมาส์',
+  'fly.touch': 'เคลื่อนที่ด้วยจอยสติ๊กและลากเพื่อมองรอบ ๆ',
+  'ride.label': 'นั่งไปตาม branch นี้',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'ถ้วยรางวัล',

@@ -78,6 +78,11 @@ GB.i18n.define('en', {
   'replay.exit': 'Back to the present',
   'replay.speed': 'Replay speed',
   'replay.position': 'Position in the history',
+  'fly.label': 'Flight mode',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> move · <kbd>Q</kbd> <kbd>E</kbd> down and up · <kbd>Shift</kbd> boost · mouse to look · <kbd>Esc</kbd> to leave',
+  'fly.lock': 'Click to steer with the mouse',
+  'fly.touch': 'Move with the joystick and drag to look around',
+  'ride.label': 'Ride this branch',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'Trophies',

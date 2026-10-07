@@ -73,6 +73,11 @@ GB.i18n.define('tr', {
   'replay.exit': 'Şimdiye dön',
   'replay.speed': 'Oynatma hızı',
   'replay.position': 'Geçmişteki konum',
+  'fly.label': 'Uçuş modu',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> hareket · <kbd>Q</kbd> <kbd>E</kbd> aşağı ve yukarı · <kbd>Shift</kbd> hızlan · fareyle bak · <kbd>Esc</kbd> çıkış',
+  'fly.lock': 'Fareyle yönlendirmek için tıklayın',
+  'fly.touch': 'Joystick ile hareket edin, etrafa bakmak için sürükleyin',
+  'ride.label': 'Bu dalda gezin',
 
   /* ---------- oyun katmanı: depo başarımları, seviye ve günün görevi ---------- */
   'game.trophies': 'Kupalar',

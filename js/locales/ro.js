@@ -77,6 +77,11 @@ GB.i18n.define('ro', {
   'replay.exit': 'Înapoi în prezent',
   'replay.speed': 'Viteza redării',
   'replay.position': 'Poziția în istoric',
+  'fly.label': 'Mod zbor',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> mișcare · <kbd>Q</kbd> <kbd>E</kbd> jos și sus · <kbd>Shift</kbd> accelerare · mouse-ul privește · <kbd>Esc</kbd> ieșire',
+  'fly.lock': 'Faceți clic pentru a pilota cu mouse-ul',
+  'fly.touch': 'Deplasați-vă cu joystickul și trageți pentru a privi în jur',
+  'ride.label': 'Parcurgeți ramura',
 
   /* ---------- stratul de joc: realizările depozitului, nivelul și misiunea zilei ---------- */
   'game.trophies': 'Trofee',

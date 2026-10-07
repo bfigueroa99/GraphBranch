@@ -246,6 +246,36 @@
       }
     }
 
+    /** Zumbido del modo vuelo: sube de tono y de volumen con la velocidad (de 0 a 1). */
+    engine(level) {
+      if (!this.hum && level <= 0) return;
+      const ctx = this.ensure();
+      if (!ctx) return;
+      if (!this.hum) {
+        const gain = ctx.createGain();
+        gain.gain.value = 0;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 180;
+        filter.Q.value = 3;
+        const oscs = [55, 55.7].map((f) => {
+          const o = ctx.createOscillator();
+          o.type = 'sawtooth';
+          o.frequency.value = f;
+          o.connect(filter);
+          o.start();
+          return o;
+        });
+        filter.connect(gain).connect(this.master);
+        this.hum = { gain, filter, oscs };
+      }
+      const t = ctx.currentTime;
+      const h = this.hum;
+      h.gain.gain.setTargetAtTime(level * 0.05, t, 0.15);
+      h.filter.frequency.setTargetAtTime(160 + level * 900, t, 0.2);
+      h.oscs.forEach((o, i) => o.frequency.setTargetAtTime(48 + i * 0.6 + level * 30, t, 0.3));
+    }
+
     /** Al activar el sonido: una frase corta que confirma que funciona. */
     preview() {
       const ctx = this.ensure();

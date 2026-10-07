@@ -1319,6 +1319,129 @@ kbd {
   cursor: pointer;
 }
 
+/* ---------- modo vuelo (vista 3D) ---------- */
+.fl-ui {
+  position: absolute;
+  inset: 0;
+  z-index: 4; /* sobre las etiquetas, bajo el detalle del commit */
+  pointer-events: none;
+}
+.fl-cross {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.fl-cross::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  margin: -1.5px 0 0 -1.5px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+.fl-ui.locked .fl-cross,
+.fl-ui.touch .fl-cross {
+  opacity: 0.55;
+}
+.fl-prompt,
+.fl-hint {
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  max-width: calc(100% - 32px);
+  margin: 0;
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  text-align: center;
+}
+.fl-prompt {
+  top: calc(50% + 26px);
+  color: var(--ink);
+  font-weight: 600;
+}
+.fl-ui.locked .fl-prompt,
+.fl-ui.touch .fl-prompt {
+  display: none;
+}
+.fl-hint {
+  top: 56px;
+  opacity: 0;
+}
+.fl-hint.show {
+  animation: fl-hint 8s ease forwards;
+}
+@keyframes fl-hint {
+  0% {
+    opacity: 0;
+  }
+  6%,
+  82% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* joystick táctil */
+.fl-stick {
+  display: none;
+  position: absolute;
+  left: 20px;
+  bottom: 24px;
+  width: 116px;
+  height: 116px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 45%, transparent);
+  pointer-events: auto;
+  touch-action: none;
+}
+.fl-ui.touch .fl-stick {
+  display: block;
+}
+.fl-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px;
+  border: 1.5px solid var(--ink-3);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ink) 25%, transparent);
+}
+/* recorrer la rama, desde el detalle del commit */
+.tip-ride {
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 13px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tip-ride:hover {
+  border-color: var(--ink-3);
+}
+
 /* ---------- modo Replay ---------- */
 .replay {
   position: absolute;

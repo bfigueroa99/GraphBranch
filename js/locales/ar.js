@@ -94,6 +94,11 @@ GB.i18n.define('ar', {
   'replay.exit': 'العودة إلى الحاضر',
   'replay.speed': 'سرعة الإعادة',
   'replay.position': 'الموضع في السجل',
+  'fly.label': 'وضع الطيران',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> للتحرك · <kbd>Q</kbd> <kbd>E</kbd> للنزول والصعود · <kbd>Shift</kbd> للتسريع · الفأرة للنظر · <kbd>Esc</kbd> للخروج',
+  'fly.lock': 'انقر للتوجيه بالفأرة',
+  'fly.touch': 'تحرّك بعصا التحكم واسحب للنظر حولك',
+  'ride.label': 'جولة على هذا الفرع',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'الجوائز',

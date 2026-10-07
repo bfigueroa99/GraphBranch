@@ -77,6 +77,11 @@ GB.i18n.define('hr', {
   'replay.exit': 'Natrag u sadašnjost',
   'replay.speed': 'Brzina reprodukcije',
   'replay.position': 'Položaj u povijesti',
+  'fly.label': 'Način leta',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> kretanje · <kbd>Q</kbd> <kbd>E</kbd> dolje i gore · <kbd>Shift</kbd> ubrzanje · mišem gledate · <kbd>Esc</kbd> izlaz',
+  'fly.lock': 'Kliknite za upravljanje mišem',
+  'fly.touch': 'Krećite se joystickom i povucite za razgledavanje',
+  'ride.label': 'Provozaj se granom',
 
   /* ---------- sloj igre: postignuća repozitorija, razina i misija dana ---------- */
   'game.trophies': 'Trofeji',

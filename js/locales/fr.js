@@ -73,6 +73,11 @@ GB.i18n.define('fr', {
   'replay.exit': 'Revenir au présent',
   'replay.speed': 'Vitesse de lecture',
   'replay.position': 'Position dans l’historique',
+  'fly.label': 'Mode vol',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> se déplacer · <kbd>Q</kbd> <kbd>E</kbd> descendre et monter · <kbd>Maj</kbd> accélérer · souris pour regarder · <kbd>Esc</kbd> pour quitter',
+  'fly.lock': 'Cliquez pour piloter à la souris',
+  'fly.touch': 'Déplacez-vous avec le joystick et faites glisser pour regarder autour',
+  'ride.label': 'Parcourir la branche',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'Trophées',

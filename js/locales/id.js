@@ -73,6 +73,11 @@ GB.i18n.define('id', {
   'replay.exit': 'Kembali ke masa kini',
   'replay.speed': 'Kecepatan putar ulang',
   'replay.position': 'Posisi dalam riwayat',
+  'fly.label': 'Mode terbang',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> bergerak · <kbd>Q</kbd> <kbd>E</kbd> turun dan naik · <kbd>Shift</kbd> percepat · mouse untuk melihat · <kbd>Esc</kbd> untuk keluar',
+  'fly.lock': 'Klik untuk mengarahkan dengan mouse',
+  'fly.touch': 'Bergerak dengan joystick dan seret untuk melihat sekeliling',
+  'ride.label': 'Telusuri branch ini',
 
   /* ---------- lapisan permainan: pencapaian repositori, level, dan misi hari ini ---------- */
   'game.trophies': 'Trofi',

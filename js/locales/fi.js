@@ -73,6 +73,11 @@ GB.i18n.define('fi', {
   'replay.exit': 'Takaisin nykyhetkeen',
   'replay.speed': 'Toistonopeus',
   'replay.position': 'Kohta historiassa',
+  'fly.label': 'Lentotila',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> liiku · <kbd>Q</kbd> <kbd>E</kbd> alas ja ylös · <kbd>Vaihto</kbd> kiihdytä · katso hiirellä · <kbd>Esc</kbd> lopeta',
+  'fly.lock': 'Napsauta ja ohjaa hiirellä',
+  'fly.touch': 'Liiku ohjaimella ja katsele ympärillesi vetämällä',
+  'ride.label': 'Aja haara läpi',
 
   /* ---------- pelikerros: repositorion saavutukset, taso ja päivän tehtävä ---------- */
   'game.trophies': 'Pokaalit',

@@ -73,6 +73,11 @@ GB.i18n.define('es', {
   'replay.exit': 'Volver al presente',
   'replay.speed': 'Velocidad de reproducción',
   'replay.position': 'Posición en la historia',
+  'fly.label': 'Modo vuelo',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> moverse · <kbd>Q</kbd> <kbd>E</kbd> bajar y subir · <kbd>Mayús</kbd> acelerar · ratón para mirar · <kbd>Esc</kbd> para salir',
+  'fly.lock': 'Haz clic para mirar con el ratón',
+  'fly.touch': 'Muévete con el joystick y arrastra para mirar',
+  'ride.label': 'Recorrer la rama',
 
   /* ---------- capa de juego: logros del repositorio, nivel y misión del día ---------- */
   'game.trophies': 'Trofeos',

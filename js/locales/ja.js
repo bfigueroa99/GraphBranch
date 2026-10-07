@@ -73,6 +73,11 @@ GB.i18n.define('ja', {
   'replay.exit': '現在に戻る',
   'replay.speed': '再生速度',
   'replay.position': '履歴内の位置',
+  'fly.label': '飛行モード',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移動 · <kbd>Q</kbd> <kbd>E</kbd> 下降・上昇 · <kbd>Shift</kbd> 加速 · マウスで見回す · <kbd>Esc</kbd> 終了',
+  'fly.lock': 'クリックするとマウスで操縦できます',
+  'fly.touch': 'ジョイスティックで移動し、ドラッグで見回します',
+  'ride.label': 'このブランチを走る',
 
   /* ---------- ゲーム要素: リポジトリの実績、レベル、今日のミッション ---------- */
   'game.trophies': 'トロフィー',

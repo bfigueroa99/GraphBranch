@@ -34,6 +34,7 @@
     spinBtn: $('#spin-btn'),
     fullscreenBtn: $('#fullscreen-btn'),
     replayBtn: $('#replay-btn'),
+    flyBtn: $('#fly-btn'),
     trophyBtn: $('#trophy-btn'),
     trophyCount: $('#trophy-count'),
     gameStrip: $('#game-strip'),
@@ -110,6 +111,9 @@
       graph3d = new GB.Graph3D(el.graph3d, {
         onFollowChange: (v) => graph === graph3d && followUI(v),
         onTogglePin: (name) => togglePin(name),
+        onFlightChange: (on) => setPressed(el.flyBtn, on),
+        // zumbido del motor mientras se vuela (solo con el sonido activado)
+        onFlightSpeed: (level) => feed.synth.engine(feed.sound ? level : 0),
       });
     }
   } catch (err) {
@@ -130,6 +134,7 @@
     setPressed(el.view3d, v === '3d');
     setPressed(el.view2d, v === '2d');
     el.spinBtn.hidden = v !== '3d';
+    el.flyBtn.hidden = v !== '3d' || !graph3d?.flight;
     // los atajos de teclado solo se anuncian donde hay teclado y ratón
     const keys = v === '3d' && window.matchMedia?.('(pointer: fine)').matches;
     el.hint.innerHTML = i18n.html('hint.' + v) + (keys ? ' · ' + i18n.html('hint.keys') : '');
@@ -660,6 +665,7 @@
   document.addEventListener('webkitfullscreenchange', onFullscreen);
   el.fullscreenBtn.addEventListener('click', toggleFullscreen);
   el.replayBtn.addEventListener('click', toggleReplay);
+  el.flyBtn.addEventListener('click', () => graph3d?.flight?.toggle());
   el.graphPanel.addEventListener('keydown', (ev) => {
     // espacio: pausar o seguir el Replay (los botones y controles ya manejan su propio espacio)
     if (ev.key === ' ' && replay.active && !ev.target.closest('button, input, select, textarea, a, [contenteditable]')) {

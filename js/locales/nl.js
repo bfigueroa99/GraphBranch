@@ -73,6 +73,11 @@ GB.i18n.define('nl', {
   'replay.exit': 'Terug naar het heden',
   'replay.speed': 'Afspeelsnelheid',
   'replay.position': 'Positie in de geschiedenis',
+  'fly.label': 'Vliegmodus',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> bewegen · <kbd>Q</kbd> <kbd>E</kbd> omlaag en omhoog · <kbd>Shift</kbd> versnellen · muis om rond te kijken · <kbd>Esc</kbd> om te stoppen',
+  'fly.lock': 'Klik om met de muis te sturen',
+  'fly.touch': 'Beweeg met de joystick en sleep om rond te kijken',
+  'ride.label': 'Branch doorrijden',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'Trofeeën',

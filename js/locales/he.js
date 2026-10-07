@@ -85,6 +85,11 @@ GB.i18n.define('he', {
   'replay.exit': 'חזרה להווה',
   'replay.speed': 'מהירות ההפעלה',
   'replay.position': 'מיקום בהיסטוריה',
+  'fly.label': 'מצב טיסה',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> תנועה · <kbd>Q</kbd> <kbd>E</kbd> למטה ולמעלה · <kbd>Shift</kbd> האצה · העכבר מסתכל · <kbd>Esc</kbd> יציאה',
+  'fly.lock': 'לחצו כדי לנווט עם העכבר',
+  'fly.touch': 'זוזו עם הג׳ויסטיק וגררו כדי להסתכל מסביב',
+  'ride.label': 'נסיעה לאורך הענף',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'גביעים',

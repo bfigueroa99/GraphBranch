@@ -73,6 +73,11 @@ GB.i18n.define('sv', {
   'replay.exit': 'Tillbaka till nuet',
   'replay.speed': 'Uppspelningshastighet',
   'replay.position': 'Position i historiken',
+  'fly.label': 'Flygläge',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> rör dig · <kbd>Q</kbd> <kbd>E</kbd> ner och upp · <kbd>Skift</kbd> öka farten · musen tittar · <kbd>Esc</kbd> för att avsluta',
+  'fly.lock': 'Klicka för att styra med musen',
+  'fly.touch': 'Rör dig med joysticken och dra för att se dig omkring',
+  'ride.label': 'Åk genom branchen',
 
   /* ---------- spellager: repots prestationer, nivå och dagens uppdrag ---------- */
   'game.trophies': 'Troféer',

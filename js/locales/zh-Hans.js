@@ -73,6 +73,11 @@ GB.i18n.define('zh-Hans', {
   'replay.exit': '回到现在',
   'replay.speed': '回放速度',
   'replay.position': '在历史记录中的位置',
+  'fly.label': '飞行模式',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移动 · <kbd>Q</kbd> <kbd>E</kbd> 下降和上升 · <kbd>Shift</kbd> 加速 · 鼠标环顾 · <kbd>Esc</kbd> 退出',
+  'fly.lock': '点击后用鼠标操控',
+  'fly.touch': '用摇杆移动，拖动环顾四周',
+  'ride.label': '沿此分支游览',
 
   /* ---------- 游戏层：仓库成就、等级与每日任务 ---------- */
   'game.trophies': '奖杯',

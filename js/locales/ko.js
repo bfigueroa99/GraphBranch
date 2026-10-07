@@ -73,6 +73,11 @@ GB.i18n.define('ko', {
   'replay.exit': '현재로 돌아가기',
   'replay.speed': '재생 속도',
   'replay.position': '히스토리 내 위치',
+  'fly.label': '비행 모드',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 이동 · <kbd>Q</kbd> <kbd>E</kbd> 하강·상승 · <kbd>Shift</kbd> 가속 · 마우스로 둘러보기 · <kbd>Esc</kbd> 나가기',
+  'fly.lock': '클릭하면 마우스로 조종합니다',
+  'fly.touch': '조이스틱으로 이동하고 드래그해서 둘러보세요',
+  'ride.label': '이 브랜치 따라가기',
 
   /* ---------- 게임 요소: 저장소 업적, 레벨, 오늘의 미션 ---------- */
   'game.trophies': '트로피',

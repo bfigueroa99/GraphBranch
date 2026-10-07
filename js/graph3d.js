@@ -611,6 +611,9 @@
 
       this.bindPointer();
       this.bindKeys();
+      this.flight = GB.Flight ? new GB.Flight(this) : null;
+      this.ride = null;
+      window.addEventListener('gamepadconnected', () => (this.padSeen = true));
       new ResizeObserver(() => this.resize()).observe(wrap);
       // fuera de pantalla (por ejemplo, al bajar en el celular) no se dibuja
       new IntersectionObserver((entries) => {
@@ -812,6 +815,9 @@
         cancelAnimationFrame(this.raf);
         this.raf = 0;
         this.keys.clear();
+        this.flight?.exit();
+        this.ride = null;
+        this.controls.enabled = true;
         this.unpin();
       }
     }
@@ -1089,6 +1095,10 @@
     }
 
     setFollowing(v) {
+      if (v) {
+        this.flight?.exit();
+        if (this.ride) this.endRide();
+      }
       if (this.following === v) return;
       this.following = v;
       this.opts.onFollowChange?.(v);
@@ -1112,12 +1122,14 @@
       this.flyTo(this.controls.target.clone(), this.controls.target.clone().add(off), 350);
     }
 
-    focusSha(sha) {
+    focusSha(sha, dist = 15) {
       const it = this.nodes.get(sha);
       if (!it) return false;
+      this.flight?.exit();
+      if (this.ride) this.endRide();
       this.setFollowing(false);
       const t = it.toV.clone();
-      const off = this.camera.position.clone().sub(this.controls.target).setLength(15);
+      const off = this.camera.position.clone().sub(this.controls.target).setLength(dist);
       this.flyTo(t, t.clone().add(off));
       if (this.motion) this.ripple(it.toV, this.col(it.data.color));
       return true;
@@ -1140,6 +1152,7 @@
     bindPointer() {
       let down = null;
       this.canvas.addEventListener('pointermove', (ev) => {
+        if (this.flight?.on) return; // en vuelo apunta la mira
         const r = this.canvas.getBoundingClientRect();
         this.mouse = { x: ev.clientX - r.left, y: ev.clientY - r.top, moved: true };
       });
@@ -1150,10 +1163,12 @@
         this.canvas.style.cursor = '';
       });
       this.canvas.addEventListener('pointerdown', (ev) => {
+        if (this.ride) this.endRide();
         down = { x: ev.clientX, y: ev.clientY };
         this.wrap.focus({ preventScroll: true }); // así funcionan las flechas y la tecla F
       });
       this.canvas.addEventListener('pointerup', (ev) => {
+        if (this.flight?.on) return (down = null);
         if (!down || Math.hypot(ev.clientX - down.x, ev.clientY - down.y) > 5) return (down = null);
         down = null;
         const r = this.canvas.getBoundingClientRect();
@@ -1161,13 +1176,23 @@
         if (sha) this.showTip(sha, true);
         else this.unpin();
       });
+      // doble clic: volar de cerca hasta ese commit
+      this.canvas.addEventListener('dblclick', (ev) => {
+        if (this.flight?.on) return;
+        const r = this.canvas.getBoundingClientRect();
+        const sha = this.pick(ev.clientX - r.left, ev.clientY - r.top);
+        if (sha) this.focusSha(sha, 7);
+      });
+      this.canvas.addEventListener('wheel', () => this.ride && this.endRide(), { passive: true });
     }
 
     /** Flechas ← → giran, ↑ ↓ viajan por la historia, + y − acercan; se mantienen pulsadas. */
     bindKeys() {
       const KEYS = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', '+': 'in', '=': 'in', '-': 'out', _: 'out' };
       this.wrap.addEventListener('keydown', (ev) => {
+        if (this.ride && !ev.target.closest?.('.tip')) this.endRide();
         if (ev.key === 'Escape') return this.unpin();
+        if (this.flight?.on) return; // en vuelo, las teclas las maneja flight.js
         const k = KEYS[ev.key];
         if (!k || ev.ctrlKey || ev.metaKey || ev.altKey || ev.target.closest?.('.tip')) return;
         ev.preventDefault();
@@ -1224,6 +1249,21 @@
       const it = this.nodes.get(sha);
       if (!it) return;
       this.tip.innerHTML = GB.graphShared.tipHTML(it.data, this.ctx || {}, { pin, branchName, ghostNames: this.ghostNames });
+      const ride = branchName || (it.data.chain.startsWith('b:') ? it.data.chain.slice(2) : null);
+      if (pin && ride && this.motion) {
+        let actions = this.tip.querySelector('.tip-actions');
+        if (!actions) {
+          actions = document.createElement('div');
+          actions.className = 'tip-actions';
+          this.tip.appendChild(actions);
+        }
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'tip-ride';
+        b.textContent = tr('ride.label');
+        b.addEventListener('click', () => this.rideBranch(ride));
+        actions.appendChild(b);
+      }
       this.tip.hidden = false;
       this.tip.classList.toggle('pinned', !!pin);
       this.tipSha = sha;
@@ -1258,6 +1298,7 @@
 
     /** Cambio de idioma: etiquetas accesibles, días del eje y rótulos de las ramas. */
     relocalize() {
+      this.flight?.relocalize();
       this.wrap.setAttribute('aria-label', tr('graph.aria3d'));
       this.tip.setAttribute('aria-label', tr('tip.aria'));
       this.unpin();
@@ -1273,6 +1314,71 @@
       const p = this.tmpP.copy(v).project(this.camera);
       if (p.z > 1 || p.z < -1) return null;
       return { x: (p.x + 1) * 0.5 * this.W, y: (1 - p.y) * 0.5 * this.H };
+    }
+
+    /* ---------- recorrer una rama ---------- */
+
+    /** Recorre una rama en primera persona, desde el commit del que nace hasta su cabeza, como una montaña rusa. */
+    rideBranch(name) {
+      const L = this.layout;
+      if (!L) return;
+      const key = 'b:' + name;
+      let list = L.nodes.filter((n) => n.chain === key).sort((a, b) => a.x - b.x);
+      const head = L.heads.find((h) => h.name === name);
+      if (!list.length && head) list = [L.nodeOf.get(head.sha)].filter(Boolean);
+      if (!list.length) return;
+      const fork = L.nodeOf.get(list[0].commit.parents[0]);
+      if (fork) list.unshift(fork);
+      const lift = new THREE.Vector3(0, 0.9, 0);
+      const pts = list.map((n) => this.nodes.get(n.sha)?.toV).filter(Boolean).map((v) => v.clone().add(lift));
+      if (!pts.length) return;
+      // un tramo de entrada desde el pasado, para subirse a la vía en marcha
+      pts.unshift(pts[0].clone().add(new THREE.Vector3(0, 1.2, -SP * 3)));
+      const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+      this.flight?.exit();
+      this.fly = null;
+      this.setFollowing(false);
+      this.unpin();
+      this.controls.enabled = false;
+      this.ride = { curve, t0: performance.now(), dur: clamp(curve.getLength() / 7, 3, 20) * 1000 };
+    }
+
+    stepRide(now) {
+      const r = this.ride;
+      const cam = this.camera;
+      const p = clamp((now - r.t0) / r.dur, 0, 1);
+      const e = p < 0.5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2;
+      r.curve.getPointAt(e, cam.position);
+      if (e < 0.995) r.curve.getPointAt(Math.min(1, e + 0.035), this.tmpB);
+      else this.tmpB.copy(cam.position).add(this.tmpA.set(0, -0.25, 1)); // al final, mirar al presente
+      cam.lookAt(this.tmpB);
+      if (p >= 1) {
+        this.endRide();
+        const t = this.controls.target;
+        this.flyTo(t.clone(), t.clone().add(new THREE.Vector3(5, 3.5, 10)), 1400);
+      }
+      return true;
+    }
+
+    /** Termina el recorrido: la cámara vuelve a orbitar alrededor de lo que tiene delante. */
+    endRide() {
+      if (!this.ride) return;
+      this.ride = null;
+      const fwd = this.tmpA.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
+      this.controls.target.copy(this.camera.position).addScaledVector(fwd, 8);
+      this.controls.enabled = true;
+      this.controls.update();
+      this.needsRender = true;
+    }
+
+    /** Start en el mando: entra o sale del modo vuelo. */
+    padToggle() {
+      if (!this.padSeen || !this.flight) return;
+      const pads = navigator.getGamepads?.() || [];
+      let pressed = false;
+      for (const p of pads) if (p?.connected && p.buttons[9]?.pressed) pressed = true;
+      if (pressed && !this.padStart) this.flight.toggle();
+      this.padStart = pressed;
     }
 
     /* ---------- cuadro a cuadro ---------- */
@@ -1308,6 +1414,9 @@
       const c = this.controls;
       const cam = this.camera;
       let moved = false;
+      this.padToggle();
+      if (this.ride) return this.stepRide(now);
+      if (this.flight?.on) return this.flight.step(dt);
       if (this.fly) {
         const f = this.fly;
         const p = ease(clamp((now - f.t0) / f.dur, 0, 1));
@@ -1945,8 +2054,9 @@
 
     beforeRender() {
       const c = this.controls;
+      const free = this.flight?.on || this.ride; // la cámara va suelta: niebla y polvo la siguen a ella
       // la niebla acompaña al zoom: lo que miras queda nítido y la historia se pierde detrás
-      const near = this.camera.position.distanceTo(c.target) * 0.8 + 6;
+      const near = (free ? 14 : this.camera.position.distanceTo(c.target)) * 0.8 + 6;
       const far = near + 70 + this.radius * 2.5;
       this.scene.fog.near = near;
       this.scene.fog.far = far;
@@ -1961,7 +2071,7 @@
         this.portal.material.uniforms.uOpacity.value = this.portalAlpha * clamp((near - 1.1) / 1.2, 0, 1) * clamp(edgeOn * 3, 0.25, 1);
       }
       const du = this.dust.material.uniforms;
-      du.uZ0.value = c.target.z - 120;
+      du.uZ0.value = (free ? this.camera.position.z - 25 : c.target.z) - 120;
       du.uR.value = this.radius;
     }
 
@@ -2075,6 +2185,9 @@
       this.portalTarget = null;
       this.portalZ = null;
       this.nodeAnim = this.edgeAnim = false;
+      this.flight?.exit();
+      this.ride = null;
+      this.controls.enabled = true;
       this.unpin();
       this.following = true;
       this.opts.onFollowChange?.(true);

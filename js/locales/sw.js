@@ -73,6 +73,11 @@ GB.i18n.define('sw', {
   'replay.exit': 'Rudi kwa sasa',
   'replay.speed': 'Kasi ya kurudia',
   'replay.position': 'Mahali katika historia',
+  'fly.label': 'Hali ya kuruka',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> songa · <kbd>Q</kbd> <kbd>E</kbd> chini na juu · <kbd>Shift</kbd> ongeza kasi · kipanya kutazama · <kbd>Esc</kbd> kutoka',
+  'fly.lock': 'Bofya ili kuongoza kwa kipanya',
+  'fly.touch': 'Songa kwa joystick na buruta ili kutazama pande zote',
+  'ride.label': 'Safiri kwenye tawi hili',
 
   /* ---------- safu ya mchezo: mafanikio ya hazina, kiwango na jukumu la leo ---------- */
   'game.trophies': 'Vikombe',

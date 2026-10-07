@@ -78,6 +78,11 @@ GB.i18n.define('cs', {
   'replay.exit': 'Zpět do přítomnosti',
   'replay.speed': 'Rychlost přehrávání',
   'replay.position': 'Pozice v historii',
+  'fly.label': 'Režim letu',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> pohyb · <kbd>Q</kbd> <kbd>E</kbd> dolů a nahoru · <kbd>Shift</kbd> zrychlení · myší se díváte · <kbd>Esc</kbd> konec',
+  'fly.lock': 'Klikněte a řiďte myší',
+  'fly.touch': 'Pohybujte se joystickem a tažením se rozhlížejte',
+  'ride.label': 'Projet větev',
 
   /* ---------- herní vrstva: úspěchy repozitáře, úroveň a mise dne ---------- */
   'game.trophies': 'Trofeje',

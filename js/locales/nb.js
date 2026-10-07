@@ -73,6 +73,11 @@ GB.i18n.define('nb', {
   'replay.exit': 'Tilbake til nåtiden',
   'replay.speed': 'Avspillingshastighet',
   'replay.position': 'Posisjon i historikken',
+  'fly.label': 'Flymodus',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> beveg deg · <kbd>Q</kbd> <kbd>E</kbd> ned og opp · <kbd>Shift</kbd> øk farten · musen ser · <kbd>Esc</kbd> for å avslutte',
+  'fly.lock': 'Klikk for å styre med musen',
+  'fly.touch': 'Beveg deg med joysticken, og dra for å se deg rundt',
+  'ride.label': 'Kjør gjennom branchen',
 
   /* ---------- spillag: repoets prestasjoner, nivå og dagens oppdrag ---------- */
   'game.trophies': 'Troféer',

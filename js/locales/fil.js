@@ -73,6 +73,11 @@ GB.i18n.define('fil', {
   'replay.exit': 'Bumalik sa kasalukuyan',
   'replay.speed': 'Bilis ng replay',
   'replay.position': 'Posisyon sa history',
+  'fly.label': 'Flight mode',
+  'fly.hint': '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> gumalaw · <kbd>Q</kbd> <kbd>E</kbd> pababa at pataas · <kbd>Shift</kbd> bumilis · mouse para tumingin · <kbd>Esc</kbd> para lumabas',
+  'fly.lock': 'I-click para gumabay gamit ang mouse',
+  'fly.touch': 'Gumalaw gamit ang joystick at i-drag para tumingin sa paligid',
+  'ride.label': 'Libutin ang branch na ito',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'Mga tropeo',

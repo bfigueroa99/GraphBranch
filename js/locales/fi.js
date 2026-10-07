@@ -68,6 +68,7 @@ GB.i18n.define('fi', {
   'zoom.in.title': 'Lähennä (Ctrl + rulla)',
   'spin.label': 'Pyöritä näkymää',
   'spin.title': 'Pyöritä näkymää hitaasti, kun et koske siihen',
+  'fullscreen.label': 'Koko näyttö',
   'follow.live': 'Live',
   'follow.jump': 'Siirry uusimpaan',
   'follow.live.title': 'Näkymä seuraa uusia committeja. Selaa historiaa vetämällä.',
@@ -75,6 +76,7 @@ GB.i18n.define('fi', {
   'webgl.missing': 'Selaimesi WebGL on pois päältä; 3D-näkymä ei ole käytettävissä.',
   'hint.3d': 'Pyöritä vetämällä · siirrä näkymää hiiren oikealla painikkeella tai <kbd>Vaihto</kbd> + veto · zoomaa rullalla tai nipistämällä · katso lisätiedot napsauttamalla committia',
   'hint.2d': 'Siirrä vetämällä · selaa historiaa rullalla · zoomaa <kbd>Ctrl</kbd> + rulla tai nipistämällä · katso lisätiedot napsauttamalla committia',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> pyöritä · <kbd>↑</kbd> <kbd>↓</kbd> liiku historiassa · <kbd>F</kbd> koko näyttö',
   'graph.aria2d': 'Haarojen ja committien kaavio',
   'graph.aria3d': 'Haarojen ja committien 3D-näkymä',
 

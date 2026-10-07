@@ -68,6 +68,7 @@ GB.i18n.define('zh-Hant', {
   'zoom.in.title': '放大（Ctrl + 滾輪）',
   'spin.label': '旋轉檢視',
   'spin.title': '未操作時緩慢旋轉檢視',
+  'fullscreen.label': '全螢幕',
   'follow.live': '即時',
   'follow.jump': '跳到最新',
   'follow.live.title': '檢視會跟隨新的提交。拖曳即可瀏覽歷程記錄。',
@@ -75,6 +76,7 @@ GB.i18n.define('zh-Hant', {
   'webgl.missing': '瀏覽器已關閉 WebGL，無法使用 3D 檢視。',
   'hint.3d': '拖曳旋轉 · 按右鍵或 <kbd>Shift</kbd> + 拖曳平移 · 滾輪或雙指縮放 · 按一下提交查看詳細資料',
   'hint.2d': '拖曳移動 · 滾輪瀏覽歷程記錄 · <kbd>Ctrl</kbd> + 滾輪或雙指縮放 · 按一下提交查看詳細資料',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> 旋轉 · <kbd>↑</kbd> <kbd>↓</kbd> 穿越歷程記錄 · <kbd>F</kbd> 全螢幕',
   'graph.aria2d': '分支與提交關係圖',
   'graph.aria3d': '分支與提交的 3D 檢視',
 

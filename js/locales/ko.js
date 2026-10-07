@@ -68,6 +68,7 @@ GB.i18n.define('ko', {
   'zoom.in.title': '확대 (Ctrl + 휠)',
   'spin.label': '보기 회전',
   'spin.title': '만지지 않을 때 보기를 천천히 회전',
+  'fullscreen.label': '전체 화면',
   'follow.live': '실시간',
   'follow.jump': '최신으로 이동',
   'follow.live.title': '화면이 새 커밋을 따라갑니다. 드래그하여 히스토리를 둘러보세요.',
@@ -75,6 +76,7 @@ GB.i18n.define('ko', {
   'webgl.missing': '브라우저에서 WebGL이 꺼져 있어 3D 보기를 사용할 수 없습니다.',
   'hint.3d': '드래그하여 회전 · 마우스 오른쪽 버튼 또는 <kbd>Shift</kbd> + 드래그로 이동 · 휠 또는 핀치로 확대/축소 · 커밋을 클릭하면 상세 정보 표시',
   'hint.2d': '드래그하여 이동 · 휠로 히스토리 스크롤 · <kbd>Ctrl</kbd> + 휠 또는 핀치로 확대/축소 · 커밋을 클릭하면 상세 정보 표시',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> 회전 · <kbd>↑</kbd> <kbd>↓</kbd> 히스토리 탐색 · <kbd>F</kbd> 전체 화면',
   'graph.aria2d': '브랜치와 커밋 그래프',
   'graph.aria3d': '브랜치와 커밋 3D 보기',
 

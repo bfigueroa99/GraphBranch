@@ -73,6 +73,7 @@ GB.i18n.define('en', {
   'zoom.in.title': 'Zoom in (Ctrl + wheel)',
   'spin.label': 'Rotate the view',
   'spin.title': 'Slowly rotate the view while you are not touching it',
+  'fullscreen.label': 'Full screen',
   'follow.live': 'Live',
   'follow.jump': 'Jump to latest',
   'follow.live.title': 'The view follows new commits. Drag to browse the history.',
@@ -80,6 +81,7 @@ GB.i18n.define('en', {
   'webgl.missing': 'Your browser has WebGL turned off; the 3D view is not available.',
   'hint.3d': 'Drag to rotate · right-click or <kbd>Shift</kbd> + drag to pan · wheel or pinch to zoom · click a commit for details',
   'hint.2d': 'Drag to move · wheel to scroll through history · <kbd>Ctrl</kbd> + wheel or pinch to zoom · click a commit for details',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> rotate · <kbd>↑</kbd> <kbd>↓</kbd> travel through history · <kbd>F</kbd> full screen',
   'graph.aria2d': 'Graph of branches and commits',
   'graph.aria3d': '3D view of branches and commits',
 

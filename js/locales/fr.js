@@ -68,6 +68,7 @@ GB.i18n.define('fr', {
   'zoom.in.title': 'Zoomer (Ctrl + molette)',
   'spin.label': 'Faire pivoter la vue',
   'spin.title': 'Faire pivoter lentement la vue tant que vous n’y touchez pas',
+  'fullscreen.label': 'Plein écran',
   'follow.live': 'En direct',
   'follow.jump': 'Aller au plus récent',
   'follow.live.title': 'La vue suit les nouveaux commits. Faites glisser pour parcourir l’historique.',
@@ -75,6 +76,7 @@ GB.i18n.define('fr', {
   'webgl.missing': 'WebGL est désactivé dans votre navigateur ; la vue 3D n’est pas disponible.',
   'hint.3d': 'Faites glisser pour pivoter · clic droit ou <kbd>Maj</kbd> + glisser pour déplacer · molette ou pincement pour zoomer · cliquez sur un commit pour voir les détails',
   'hint.2d': 'Faites glisser pour vous déplacer · molette pour parcourir l’historique · <kbd>Ctrl</kbd> + molette ou pincement pour zoomer · cliquez sur un commit pour voir les détails',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> pivoter · <kbd>↑</kbd> <kbd>↓</kbd> voyager dans l’historique · <kbd>F</kbd> plein écran',
   'graph.aria2d': 'Graphe des branches et des commits',
   'graph.aria3d': 'Vue 3D des branches et des commits',
 

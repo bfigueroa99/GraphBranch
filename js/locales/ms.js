@@ -68,6 +68,7 @@ GB.i18n.define('ms', {
   'zoom.in.title': 'Zum masuk (Ctrl + roda)',
   'spin.label': 'Putar paparan',
   'spin.title': 'Putar paparan dengan perlahan apabila anda tidak menyentuhnya',
+  'fullscreen.label': 'Skrin penuh',
   'follow.live': 'Langsung',
   'follow.jump': 'Ke terkini',
   'follow.live.title': 'Paparan mengikuti commit baharu. Seret untuk menyemak imbas sejarah.',
@@ -75,6 +76,7 @@ GB.i18n.define('ms', {
   'webgl.missing': 'WebGL dimatikan pada pelayar anda; paparan 3D tidak tersedia.',
   'hint.3d': 'Seret untuk memutar · klik kanan atau <kbd>Shift</kbd> + seret untuk menganjak · roda atau cubit untuk zum · klik commit untuk melihat butiran',
   'hint.2d': 'Seret untuk menggerakkan · roda untuk menatal sejarah · <kbd>Ctrl</kbd> + roda atau cubit untuk zum · klik commit untuk melihat butiran',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> putar · <kbd>↑</kbd> <kbd>↓</kbd> jelajah sejarah · <kbd>F</kbd> skrin penuh',
   'graph.aria2d': 'Graf branch dan commit',
   'graph.aria3d': 'Paparan 3D branch dan commit',
 

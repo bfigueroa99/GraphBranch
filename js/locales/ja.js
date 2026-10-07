@@ -68,6 +68,7 @@ GB.i18n.define('ja', {
   'zoom.in.title': '拡大（Ctrl + ホイール）',
   'spin.label': 'ビューを回転',
   'spin.title': '操作していないときにビューをゆっくり回転させる',
+  'fullscreen.label': '全画面表示',
   'follow.live': 'ライブ',
   'follow.jump': '最新へ移動',
   'follow.live.title': 'ビューは新しいコミットに追従します。ドラッグして履歴を閲覧できます。',
@@ -75,6 +76,7 @@ GB.i18n.define('ja', {
   'webgl.missing': 'ブラウザーで WebGL が無効になっているため、3D 表示は利用できません。',
   'hint.3d': 'ドラッグで回転 · 右クリックまたは <kbd>Shift</kbd> + ドラッグで移動 · ホイールまたはピンチで拡大縮小 · コミットをクリックで詳細表示',
   'hint.2d': 'ドラッグで移動 · ホイールで履歴をスクロール · <kbd>Ctrl</kbd> + ホイールまたはピンチで拡大縮小 · コミットをクリックで詳細表示',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> 回転 · <kbd>↑</kbd> <kbd>↓</kbd> 履歴を移動 · <kbd>F</kbd> 全画面表示',
   'graph.aria2d': 'ブランチとコミットのグラフ',
   'graph.aria3d': 'ブランチとコミットの 3D 表示',
 

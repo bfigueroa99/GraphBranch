@@ -72,6 +72,7 @@ GB.i18n.define('ro', {
   'zoom.in.title': 'Mărire (Ctrl + rotiță)',
   'spin.label': 'Rotirea vizualizării',
   'spin.title': 'Rotire lentă a vizualizării cât timp nu o atingeți',
+  'fullscreen.label': 'Ecran complet',
   'follow.live': 'În direct',
   'follow.jump': 'Salt la ultimul',
   'follow.live.title': 'Vizualizarea urmărește commit-urile noi. Trageți pentru a parcurge istoricul.',
@@ -79,6 +80,7 @@ GB.i18n.define('ro', {
   'webgl.missing': 'WebGL este dezactivat în browser; vizualizarea 3D nu este disponibilă.',
   'hint.3d': 'Trageți pentru a roti · clic dreapta sau <kbd>Shift</kbd> + tragere pentru a deplasa · rotiță sau ciupire pentru zoom · clic pe un commit pentru detalii',
   'hint.2d': 'Trageți pentru a muta · rotiță pentru a parcurge istoricul · <kbd>Ctrl</kbd> + rotiță sau ciupire pentru zoom · clic pe un commit pentru detalii',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> rotire · <kbd>↑</kbd> <kbd>↓</kbd> călătorie prin istoric · <kbd>F</kbd> ecran complet',
   'graph.aria2d': 'Graful ramurilor și al commit-urilor',
   'graph.aria3d': 'Vizualizare 3D a ramurilor și a commit-urilor',
 

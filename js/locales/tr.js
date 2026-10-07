@@ -68,6 +68,7 @@ GB.i18n.define('tr', {
   'zoom.in.title': 'Yakınlaştır (Ctrl + tekerlek)',
   'spin.label': 'Görünümü döndür',
   'spin.title': 'Görünüme dokunmadığınızda onu yavaşça döndür',
+  'fullscreen.label': 'Tam ekran',
   'follow.live': 'Canlı',
   'follow.jump': 'En yeniye git',
   'follow.live.title': 'Görünüm yeni commit’leri takip eder. Geçmişe göz atmak için sürükleyin.',
@@ -75,6 +76,7 @@ GB.i18n.define('tr', {
   'webgl.missing': 'Tarayıcınızda WebGL kapalı; 3B görünüm kullanılamıyor.',
   'hint.3d': 'Döndürmek için sürükleyin · kaydırmak için sağ tıklayın veya <kbd>Shift</kbd> + sürükleyin · yakınlaştırmak için tekerlek veya çimdik hareketi · ayrıntılar için bir commit’e tıklayın',
   'hint.2d': 'Taşımak için sürükleyin · geçmişte gezinmek için tekerlek · yakınlaştırmak için <kbd>Ctrl</kbd> + tekerlek veya çimdik hareketi · ayrıntılar için bir commit’e tıklayın',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> döndür · <kbd>↑</kbd> <kbd>↓</kbd> geçmişte gezin · <kbd>F</kbd> tam ekran',
   'graph.aria2d': 'Dalların ve commit’lerin grafiği',
   'graph.aria3d': 'Dalların ve commit’lerin 3B görünümü',
 

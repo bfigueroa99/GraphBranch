@@ -68,6 +68,7 @@ GB.i18n.define('vi', {
   'zoom.in.title': 'Phóng to (Ctrl + con lăn)',
   'spin.label': 'Xoay chế độ xem',
   'spin.title': 'Tự động xoay chậm chế độ xem khi bạn không chạm vào',
+  'fullscreen.label': 'Toàn màn hình',
   'follow.live': 'Trực tiếp',
   'follow.jump': 'Đến mới nhất',
   'follow.live.title': 'Chế độ xem theo dõi các commit mới. Kéo để duyệt lịch sử.',
@@ -75,6 +76,7 @@ GB.i18n.define('vi', {
   'webgl.missing': 'Trình duyệt của bạn đã tắt WebGL; chế độ xem 3D không khả dụng.',
   'hint.3d': 'Kéo để xoay · nhấp chuột phải hoặc <kbd>Shift</kbd> + kéo để di chuyển · con lăn hoặc chụm hai ngón để phóng to/thu nhỏ · nhấp vào commit để xem chi tiết',
   'hint.2d': 'Kéo để di chuyển · con lăn để cuộn lịch sử · <kbd>Ctrl</kbd> + con lăn hoặc chụm hai ngón để phóng to/thu nhỏ · nhấp vào commit để xem chi tiết',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> xoay · <kbd>↑</kbd> <kbd>↓</kbd> du hành qua lịch sử · <kbd>F</kbd> toàn màn hình',
   'graph.aria2d': 'Biểu đồ các nhánh và commit',
   'graph.aria3d': 'Chế độ xem 3D của các nhánh và commit',
 

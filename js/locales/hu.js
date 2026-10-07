@@ -68,6 +68,7 @@ GB.i18n.define('hu', {
   'zoom.in.title': 'Nagyítás (Ctrl + görgetés)',
   'spin.label': 'A nézet forgatása',
   'spin.title': 'A nézet lassú forgatása, amíg nem érintesz hozzá',
+  'fullscreen.label': 'Teljes képernyő',
   'follow.live': 'Élő',
   'follow.jump': 'Ugrás a legújabbra',
   'follow.live.title': 'A nézet követi az új commitokat. Húzással böngészheted az előzményeket.',
@@ -75,6 +76,7 @@ GB.i18n.define('hu', {
   'webgl.missing': 'A böngésződben ki van kapcsolva a WebGL, ezért a 3D nézet nem érhető el.',
   'hint.3d': 'Húzással forgathatsz · jobb kattintás vagy <kbd>Shift</kbd> + húzás az eltoláshoz · görgetés vagy csipetés a nagyításhoz · kattints egy commitra a részletekért',
   'hint.2d': 'Húzással mozgathatod · görgetéssel lapozhatsz az előzményekben · <kbd>Ctrl</kbd> + görgetés vagy csipetés a nagyításhoz · kattints egy commitra a részletekért',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> forgatás · <kbd>↑</kbd> <kbd>↓</kbd> utazás az előzményekben · <kbd>F</kbd> teljes képernyő',
   'graph.aria2d': 'Ágak és commitok gráfja',
   'graph.aria3d': 'Ágak és commitok 3D nézete',
 

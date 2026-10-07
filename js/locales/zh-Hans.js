@@ -68,6 +68,7 @@ GB.i18n.define('zh-Hans', {
   'zoom.in.title': '放大（Ctrl + 滚轮）',
   'spin.label': '旋转视图',
   'spin.title': '无操作时缓慢旋转视图',
+  'fullscreen.label': '全屏',
   'follow.live': '实时',
   'follow.jump': '回到最新',
   'follow.live.title': '视图会跟随新提交。拖动可浏览历史记录。',
@@ -75,6 +76,7 @@ GB.i18n.define('zh-Hans', {
   'webgl.missing': '浏览器已关闭 WebGL，无法使用 3D 视图。',
   'hint.3d': '拖动旋转 · 右键或 <kbd>Shift</kbd> + 拖动平移 · 滚轮或双指捏合缩放 · 点击提交查看详情',
   'hint.2d': '拖动移动 · 滚轮浏览历史记录 · <kbd>Ctrl</kbd> + 滚轮或双指捏合缩放 · 点击提交查看详情',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> 旋转 · <kbd>↑</kbd> <kbd>↓</kbd> 穿越历史记录 · <kbd>F</kbd> 全屏',
   'graph.aria2d': '分支与提交关系图',
   'graph.aria3d': '分支与提交的 3D 视图',
 

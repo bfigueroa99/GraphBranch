@@ -68,6 +68,7 @@ GB.i18n.define('sv', {
   'zoom.in.title': 'Zooma in (Ctrl + mushjul)',
   'spin.label': 'Rotera vyn',
   'spin.title': 'Rotera vyn långsamt när du inte rör den',
+  'fullscreen.label': 'Helskärm',
   'follow.live': 'Live',
   'follow.jump': 'Hoppa till senaste',
   'follow.live.title': 'Vyn följer nya commits. Dra för att bläddra i historiken.',
@@ -75,6 +76,7 @@ GB.i18n.define('sv', {
   'webgl.missing': 'WebGL är avstängt i din webbläsare; 3D-vyn är inte tillgänglig.',
   'hint.3d': 'Dra för att rotera · högerklicka eller <kbd>Skift</kbd> + dra för att panorera · hjul eller nypa för att zooma · klicka på en commit för detaljer',
   'hint.2d': 'Dra för att flytta · hjul för att bläddra i historiken · <kbd>Ctrl</kbd> + hjul eller nypa för att zooma · klicka på en commit för detaljer',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> rotera · <kbd>↑</kbd> <kbd>↓</kbd> res genom historiken · <kbd>F</kbd> helskärm',
   'graph.aria2d': 'Graf över brancher och commits',
   'graph.aria3d': '3D-vy över brancher och commits',
 

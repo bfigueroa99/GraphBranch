@@ -32,6 +32,9 @@
     view3d: $('#view-3d'),
     view2d: $('#view-2d'),
     spinBtn: $('#spin-btn'),
+    fullscreenBtn: $('#fullscreen-btn'),
+    graphPanel: $('.graph-panel'),
+    toasts: $('#toasts'),
     hint: $('#hint'),
     overlay: $('#overlay'),
     zoomIn: $('#zoom-in'),
@@ -106,7 +109,9 @@
     setPressed(el.view3d, v === '3d');
     setPressed(el.view2d, v === '2d');
     el.spinBtn.hidden = v !== '3d';
-    el.hint.innerHTML = i18n.html('hint.' + v);
+    // los atajos de teclado solo se anuncian donde hay teclado y ratón
+    const keys = v === '3d' && window.matchMedia?.('(pointer: fine)').matches;
+    el.hint.innerHTML = i18n.html('hint.' + v) + (keys ? ' · ' + i18n.html('hint.keys') : '');
     followUI(graph.following);
     U.store.set('view', v);
   }
@@ -447,6 +452,37 @@
   el.zoomIn.addEventListener('click', () => graph.zoomBy(1.4));
   el.zoomOut.addEventListener('click', () => graph.zoomBy(1 / 1.4));
   el.followBtn.addEventListener('click', () => graph.setFollowing(!graph.following));
+
+  /* pantalla completa: el panel del grafo ocupa toda la pantalla y los avisos lo acompañan
+     (dentro de pantalla completa solo se ve ese elemento) */
+  const fullscreenEl = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+  const fullscreenOK = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  el.fullscreenBtn.hidden = !fullscreenOK;
+
+  function toggleFullscreen() {
+    const p = el.graphPanel;
+    const go = fullscreenEl()
+      ? (document.exitFullscreen || document.webkitExitFullscreen).call(document)
+      : (p.requestFullscreen || p.webkitRequestFullscreen).call(p);
+    Promise.resolve(go).catch(() => {}); // Safari antiguo no devuelve promesa; el navegador puede negarse
+  }
+
+  function onFullscreen() {
+    const on = fullscreenEl() === el.graphPanel;
+    setPressed(el.fullscreenBtn, on);
+    (on ? el.graphPanel : document.body).appendChild(el.toasts);
+    if (on && view === '3d') el.graph3d.focus({ preventScroll: true }); // las flechas funcionan de inmediato
+  }
+
+  document.addEventListener('fullscreenchange', onFullscreen);
+  document.addEventListener('webkitfullscreenchange', onFullscreen);
+  el.fullscreenBtn.addEventListener('click', toggleFullscreen);
+  el.graphPanel.addEventListener('keydown', (ev) => {
+    if ((ev.key || '').toLowerCase() !== 'f' || ev.ctrlKey || ev.metaKey || ev.altKey || !fullscreenOK) return;
+    if (ev.target.closest('input, textarea, select, [contenteditable]')) return;
+    ev.preventDefault();
+    toggleFullscreen();
+  });
 
   el.view3d.addEventListener('click', () => setView('3d'));
   el.view2d.addEventListener('click', () => setView('2d'));

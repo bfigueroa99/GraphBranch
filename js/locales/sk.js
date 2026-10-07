@@ -73,6 +73,7 @@ GB.i18n.define('sk', {
   'zoom.in.title': 'Priblížiť (Ctrl + koliesko)',
   'spin.label': 'Otáčať zobrazenie',
   'spin.title': 'Pomaly otáčať zobrazenie, kým sa ho nedotýkate',
+  'fullscreen.label': 'Celá obrazovka',
   'follow.live': 'Naživo',
   'follow.jump': 'Prejsť na najnovšie',
   'follow.live.title': 'Zobrazenie sleduje nové commity. Ťahaním prechádzate históriu.',
@@ -80,6 +81,7 @@ GB.i18n.define('sk', {
   'webgl.missing': 'Váš prehliadač má vypnutý WebGL; 3D zobrazenie nie je dostupné.',
   'hint.3d': 'Ťahaním otáčate · pravé tlačidlo alebo <kbd>Shift</kbd> + ťahanie posúva · koliesko alebo štipnutie približuje · kliknutím na commit zobrazíte podrobnosti',
   'hint.2d': 'Ťahaním sa pohybujete · kolieskom prechádzate históriou · <kbd>Ctrl</kbd> + koliesko alebo štipnutie mení priblíženie · kliknutím na commit zobrazíte podrobnosti',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> otáčanie · <kbd>↑</kbd> <kbd>↓</kbd> cesta históriou · <kbd>F</kbd> celá obrazovka',
   'graph.aria2d': 'Graf vetiev a commitov',
   'graph.aria3d': '3D zobrazenie vetiev a commitov',
 

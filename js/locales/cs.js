@@ -73,6 +73,7 @@ GB.i18n.define('cs', {
   'zoom.in.title': 'Přiblížit (Ctrl + kolečko)',
   'spin.label': 'Otáčet zobrazení',
   'spin.title': 'Pomalu otáčet zobrazení, když se ho nedotýkáte',
+  'fullscreen.label': 'Celá obrazovka',
   'follow.live': 'Živě',
   'follow.jump': 'K nejnovějším commitům',
   'follow.live.title': 'Zobrazení sleduje nové commity. Tažením procházejte historii.',
@@ -80,6 +81,7 @@ GB.i18n.define('cs', {
   'webgl.missing': 'Váš prohlížeč má vypnuté WebGL; 3D zobrazení není k dispozici.',
   'hint.3d': 'Tažením otáčíte · pravé tlačítko myši nebo <kbd>Shift</kbd> + tažení posouvá · kolečko nebo sevření prsty přibližuje · kliknutím na commit zobrazíte podrobnosti',
   'hint.2d': 'Tažením se pohybujete · kolečkem procházíte historii · <kbd>Ctrl</kbd> + kolečko nebo sevření prsty mění měřítko · kliknutím na commit zobrazíte podrobnosti',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> otáčení · <kbd>↑</kbd> <kbd>↓</kbd> cesta historií · <kbd>F</kbd> celá obrazovka',
   'graph.aria2d': 'Graf větví a commitů',
   'graph.aria3d': '3D zobrazení větví a commitů',
 

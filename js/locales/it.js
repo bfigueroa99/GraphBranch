@@ -68,6 +68,7 @@ GB.i18n.define('it', {
   'zoom.in.title': 'Aumenta zoom (Ctrl + rotellina)',
   'spin.label': 'Ruota la vista',
   'spin.title': 'Ruota lentamente la vista mentre non la tocchi',
+  'fullscreen.label': 'Schermo intero',
   'follow.live': 'Live',
   'follow.jump': 'Vai ai più recenti',
   'follow.live.title': 'La vista segue i nuovi commit. Trascina per scorrere la cronologia.',
@@ -75,6 +76,7 @@ GB.i18n.define('it', {
   'webgl.missing': 'Nel tuo browser WebGL è disattivato; la vista 3D non è disponibile.',
   'hint.3d': 'Trascina per ruotare · clic destro o <kbd>Maiusc</kbd> + trascina per spostare · rotellina o pizzico per lo zoom · clic su un commit per i dettagli',
   'hint.2d': 'Trascina per spostarti · rotellina per scorrere la cronologia · <kbd>Ctrl</kbd> + rotellina o pizzico per lo zoom · clic su un commit per i dettagli',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> ruota · <kbd>↑</kbd> <kbd>↓</kbd> viaggia nella cronologia · <kbd>F</kbd> schermo intero',
   'graph.aria2d': 'Grafo di branch e commit',
   'graph.aria3d': 'Vista 3D di branch e commit',
 

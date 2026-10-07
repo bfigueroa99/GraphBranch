@@ -68,6 +68,7 @@ GB.i18n.define('fil', {
   'zoom.in.title': 'I-zoom in (Ctrl + wheel)',
   'spin.label': 'Paikutin ang view',
   'spin.title': 'Dahan-dahang paikutin ang view habang hindi mo ito ginagalaw',
+  'fullscreen.label': 'Buong screen',
   'follow.live': 'Live',
   'follow.jump': 'Pumunta sa pinakabago',
   'follow.live.title': 'Sinusundan ng view ang mga bagong commit. I-drag para mag-browse sa history.',
@@ -75,6 +76,7 @@ GB.i18n.define('fil', {
   'webgl.missing': 'Naka-off ang WebGL sa iyong browser; hindi available ang 3D view.',
   'hint.3d': 'I-drag para umikot · i-right-click o <kbd>Shift</kbd> + drag para mag-pan · wheel o pinch para mag-zoom · i-click ang commit para sa mga detalye',
   'hint.2d': 'I-drag para gumalaw · wheel para mag-scroll sa history · <kbd>Ctrl</kbd> + wheel o pinch para mag-zoom · i-click ang commit para sa mga detalye',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> paikutin · <kbd>↑</kbd> <kbd>↓</kbd> maglakbay sa history · <kbd>F</kbd> buong screen',
   'graph.aria2d': 'Graph ng mga branch at commit',
   'graph.aria3d': '3D view ng mga branch at commit',
 

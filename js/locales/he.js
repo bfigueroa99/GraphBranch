@@ -80,6 +80,7 @@ GB.i18n.define('he', {
   'zoom.in.title': 'התקרב (Ctrl + גלגלת)',
   'spin.label': 'סובב את התצוגה',
   'spin.title': 'סובב את התצוגה לאט כשאינך נוגע בה',
+  'fullscreen.label': 'מסך מלא',
   'follow.live': 'חי',
   'follow.jump': 'קפוץ לאחרון',
   'follow.live.title': 'התצוגה עוקבת אחר commits חדשים. גרור כדי לעיין בהיסטוריה.',
@@ -87,6 +88,7 @@ GB.i18n.define('he', {
   'webgl.missing': 'WebGL כבוי בדפדפן שלך; התצוגה התלת-ממדית אינה זמינה.',
   'hint.3d': 'גרור כדי לסובב · לחצן ימני או <kbd>Shift</kbd> + גרירה כדי להזיז · גלגלת או צביטה כדי להתקרב · לחץ על commit לפרטים',
   'hint.2d': 'גרור כדי לזוז · גלגלת כדי לגלול בהיסטוריה · <kbd>Ctrl</kbd> + גלגלת או צביטה כדי להתקרב · לחץ על commit לפרטים',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> סיבוב · <kbd>↑</kbd> <kbd>↓</kbd> מסע בהיסטוריה · <kbd>F</kbd> מסך מלא',
   'graph.aria2d': 'גרף של ענפים ו-commits',
   'graph.aria3d': 'תצוגה תלת-ממדית של ענפים ו-commits',
 

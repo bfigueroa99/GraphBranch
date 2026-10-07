@@ -73,6 +73,7 @@ GB.i18n.define('pl', {
   'zoom.in.title': 'Przybliż (Ctrl + kółko)',
   'spin.label': 'Obracaj widok',
   'spin.title': 'Powoli obracaj widok, gdy go nie dotykasz',
+  'fullscreen.label': 'Pełny ekran',
   'follow.live': 'Na żywo',
   'follow.jump': 'Do najnowszych commitów',
   'follow.live.title': 'Widok podąża za nowymi commitami. Przeciągnij, aby przeglądać historię.',
@@ -80,6 +81,7 @@ GB.i18n.define('pl', {
   'webgl.missing': 'Przeglądarka ma wyłączony WebGL; widok 3D jest niedostępny.',
   'hint.3d': 'Przeciągnij, aby obracać · prawy przycisk myszy lub <kbd>Shift</kbd> + przeciągnięcie, aby przesuwać · kółko lub szczypnięcie, aby przybliżać · kliknij commit, aby zobaczyć szczegóły',
   'hint.2d': 'Przeciągnij, aby przesuwać · kółko, aby przewijać historię · <kbd>Ctrl</kbd> + kółko lub szczypnięcie, aby przybliżać · kliknij commit, aby zobaczyć szczegóły',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> obracanie · <kbd>↑</kbd> <kbd>↓</kbd> podróż przez historię · <kbd>F</kbd> pełny ekran',
   'graph.aria2d': 'Graf gałęzi i commitów',
   'graph.aria3d': 'Widok 3D gałęzi i commitów',
 

@@ -1,9 +1,16 @@
 /* GraphBranch — vista 3D con Three.js.
-   El tiempo avanza hacia la cámara (eje Z): lo más nuevo queda adelante y la
-   historia se pierde en la niebla. La rama por defecto es el tronco central;
-   las demás se reparten a su alrededor en una espiral (girasol), las más
-   activas más cerca del tronco, así caben decenas de ramas sin taparse.
-   Recibe el mismo layout que la vista 2D. */
+   El tiempo avanza hacia la cámara (eje Z): lo más nuevo queda adelante, junto
+   al anillo del presente, y la historia se pierde en la niebla. La rama por
+   defecto es el tronco central; las demás se reparten a su alrededor en una
+   espiral (girasol), las más activas más cerca del tronco, así caben decenas
+   de ramas sin taparse. Recibe el mismo layout que la vista 2D.
+
+   Rendimiento: los commits y las aristas rectas se dibujan con InstancedMesh
+   (unas pocas llamadas de dibujo aunque haya miles), los halos son cuadrados
+   instanciados y solo las curvas de bifurcación y merge tienen malla propia.
+   Las matrices se reescriben solo mientras algo se mueve; en reposo cada
+   cuadro solo avanza los uniformes de los efectos (pulsos, polvo, estrellas)
+   y se dibuja a ~30 fps, o nada si el sistema pide reducir el movimiento. */
 (function (GB) {
   'use strict';
   const { U, i18n } = GB;
@@ -11,11 +18,23 @@
   const SP = 2.0; // distancia entre commits en el eje del tiempo
   const LANE_C = 3.0; // escala de la espiral de carriles
   const GOLDEN = 2.399963229728653;
-  const DUR = 700;
+  const DUR = 700; // reacomodo de commits y etiquetas
+  const ARRIVE = 650; // vuelo de un commit nuevo desde el presente hasta su lugar
+  const ARRIVE_Z = 7; // desde cuán lejos (hacia la cámara) llega
+  const NODE_R = 0.42;
+  const HEAD_SCALE = 1.55;
+  const EDGE_R = 0.11;
+  const GHOST_R = 0.07;
+  const RADIAL = 8; // lados de los tubos
+  const AMBIENT_MS = 31; // en reposo, los efectos se dibujan a ~30 fps
+  const MAX_PIXELS = 4.6e6; // tope de píxeles del lienzo (pantallas 4K a pantalla completa)
+  const SPIN_SPEED = 0.037; // rad/s del giro lento
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const ease = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+  const easeOut = (p) => 1 - Math.pow(1 - p, 3);
   const easeOutBack = (p) => 1 + 2.2 * Math.pow(p - 1, 3) + 1.2 * Math.pow(p - 1, 2);
-  const reduceMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  const reduceMotion = () => !!motionQuery?.matches;
 
   function lane(row) {
     if (row <= 0) return [0, 0];
@@ -24,12 +43,341 @@
     return [Math.cos(a) * r, Math.sin(a) * r];
   }
 
-  function spriteTexture(draw) {
-    const c = document.createElement('canvas');
-    c.width = c.height = 128;
-    draw(c.getContext('2d'));
-    const t = new THREE.CanvasTexture(c);
-    return t;
+  /* ---------- shaders ---------- */
+
+  /* Materiales estándar retocados: el emisivo toma el color de cada instancia, los commits
+     tienen un brillo de borde (parecen esferas de vidrio) y las ramas vivas llevan pulsos de
+     luz que viajan hacia el presente. Los pulsos dependen de la posición en el mundo, así
+     que recorren igual las rectas instanciadas y las curvas. */
+  const EMISSIVE = '#include <emissivemap_fragment>';
+  const TINT_GLSL = `
+    #ifdef USE_COLOR
+      totalEmissiveRadiance *= vColor;
+    #endif`;
+  /* lo que ya se perdió en la niebla no se dibuja: se saca del recorte la instancia entera
+     (por su extremo más cercano, así ningún tubo queda a medias) */
+  const FOG_CULL_GLSL = `
+    #ifdef USE_INSTANCING
+      float gbNear = min( -( modelViewMatrix * instanceMatrix[ 3 ] ).z, -( modelViewMatrix * ( instanceMatrix[ 3 ] + instanceMatrix[ 2 ] ) ).z );
+      if ( gbNear > gbFog.y + 2.0 ) gl_Position = vec4( 0.0, 0.0, 2.0, 1.0 );
+    #endif`;
+
+  function nodeHook(uniforms) {
+    return (sh) => {
+      sh.uniforms.gbRim = uniforms.rim;
+      sh.uniforms.gbFog = uniforms.fog;
+      sh.vertexShader = 'uniform vec2 gbFog;\n' + sh.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>${FOG_CULL_GLSL}`);
+      sh.fragmentShader =
+        'uniform float gbRim;\n' +
+        sh.fragmentShader.replace(
+          EMISSIVE,
+          `${EMISSIVE}${TINT_GLSL}
+          float gbF = 1.0 - abs( dot( normal, normalize( vViewPosition ) ) );
+          totalEmissiveRadiance += diffuseColor.rgb * gbF * gbF * gbF * gbRim;`,
+        );
+    };
+  }
+
+  function flowHook(flow, time, fog) {
+    return (sh) => {
+      sh.uniforms.gbFlow = flow;
+      sh.uniforms.gbTime = time;
+      sh.uniforms.gbFog = fog;
+      sh.vertexShader =
+        'uniform vec2 gbFog;\nvarying vec3 vGbPos;\n' +
+        sh.vertexShader.replace(
+          '#include <project_vertex>',
+          `#include <project_vertex>${FOG_CULL_GLSL}
+          vec4 gbW = vec4( transformed, 1.0 );
+          #ifdef USE_INSTANCING
+            gbW = instanceMatrix * gbW;
+          #endif
+          vGbPos = ( modelMatrix * gbW ).xyz;`,
+        );
+      sh.fragmentShader =
+        'uniform float gbFlow;\nuniform float gbTime;\nvarying vec3 vGbPos;\n' +
+        sh.fragmentShader.replace(
+          EMISSIVE,
+          `${EMISSIVE}${TINT_GLSL}
+          float gbQ = fract( vGbPos.z * 0.11 - gbTime * 0.24 + length( vGbPos.xy ) * 0.37 );
+          float gbP = gbQ * gbQ; gbP *= gbP; gbP *= gbP;
+          totalEmissiveRadiance += mix( diffuseColor.rgb, vec3( 1.0 ), 0.35 ) * gbP * gbFlow;`,
+        );
+    };
+  }
+
+  /* halos: cuadrados que miran a la cámara; se desvanecen con la misma niebla de la escena */
+  const GLOW_VS = `
+    attribute vec3 iPos;
+    attribute vec4 iColor;
+    attribute vec2 iSize;
+    uniform float uTime;
+    uniform vec2 uFog;
+    varying vec2 vUv;
+    varying vec4 vColor;
+    void main() {
+      float beat = iSize.y * sin( uTime * 2.4 + iPos.z * 0.45 );
+      vec4 mv = modelViewMatrix * vec4( iPos, 1.0 );
+      mv.xy += position.xy * iSize.x * ( 1.0 + 0.14 * beat );
+      gl_Position = projectionMatrix * mv;
+      vUv = uv;
+      float fade = 1.0 - smoothstep( uFog.x, uFog.y, -mv.z );
+      vColor = vec4( iColor.rgb, iColor.a * fade * ( 1.0 + 0.25 * beat ) );
+      if ( vColor.a < 0.004 ) gl_Position = vec4( 0.0, 0.0, 2.0, 1.0 ); // perdido en la niebla: fuera del recorte
+    }`;
+  const GLOW_FS = `
+    varying vec2 vUv;
+    varying vec4 vColor;
+    void main() {
+      float d = length( vUv - 0.5 ) * 2.0;
+      if ( d >= 1.0 ) discard;
+      float a = 1.0 - d;
+      a = a * a * 0.7 + pow( a, 6.0 ) * 0.3;
+      gl_FragColor = vec4( vColor.rgb, a * vColor.a );
+    }`;
+
+  /* anillo del presente: línea fina, halo que respira y marcas que giran despacio */
+  const PORTAL_VS = `
+    varying vec2 vP;
+    void main() {
+      vP = position.xy;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+    }`;
+  const PORTAL_FS = `
+    uniform vec3 uColor;
+    uniform float uTime;
+    uniform float uOpacity;
+    uniform float uFlash;
+    varying vec2 vP;
+    void main() {
+      vec2 p = vP;
+      float r = length( p );
+      float dl = ( r - 1.0 ) / 0.006;
+      float dh = ( r - 1.0 ) / 0.04;
+      float line = exp( -dl * dl );
+      float halo = exp( -dh * dh );
+      float ang = atan( p.y, p.x ) / 6.2831853 + uTime * 0.006;
+      float ticks = step( 0.9, fract( ang * 120.0 ) ) * step( 1.018, r ) * step( r, 1.034 );
+      float major = step( 0.985, fract( ang * 12.0 ) ) * step( 1.018, r ) * step( r, 1.05 );
+      float inner = smoothstep( 0.9, 1.0, r ) * ( 1.0 - step( 1.0, r ) ) * 0.05;
+      float k = line * 0.6 + halo * ( 0.1 + 0.05 * sin( uTime * 1.3 ) ) + ticks * 0.16 + major * 0.3 + inner;
+      k += uFlash * ( halo * 0.7 + line * 0.4 + inner * 3.0 );
+      gl_FragColor = vec4( uColor, clamp( k, 0.0, 1.0 ) * uOpacity );
+    }`;
+
+  /* estrellas lejanas: siguen a la cámara (solo giran con la vista) y titilan */
+  const STAR_VS = `
+    attribute float aSeed;
+    uniform float uTime;
+    uniform float uPx;
+    varying float vA;
+    void main() {
+      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+      gl_PointSize = ( 0.9 + aSeed * aSeed * 2.3 ) * uPx;
+      vA = ( 0.3 + 0.7 * aSeed ) * ( 0.75 + 0.25 * sin( uTime * ( 0.5 + aSeed * 1.9 ) + aSeed * 91.0 ) );
+    }`;
+  /* polvo alrededor de las ramas: deriva despacio hacia el pasado, en una ventana que sigue a la vista */
+  const DUST_VS = `
+    attribute float aSeed;
+    uniform float uTime;
+    uniform float uR;
+    uniform float uZ0;
+    uniform float uLen;
+    uniform float uScale;
+    uniform vec2 uFog;
+    varying float vA;
+    void main() {
+      float z = uZ0 + mod( position.z * uLen - uTime * 0.35 - uZ0, uLen );
+      float ang = position.x + sin( uTime * 0.07 + aSeed * 6.2831 ) * 0.04;
+      float r = uR * position.y;
+      vec4 mv = modelViewMatrix * vec4( cos( ang ) * r, sin( ang ) * r, z, 1.0 );
+      gl_Position = projectionMatrix * mv;
+      gl_PointSize = max( 1.0, ( 0.09 + aSeed * 0.15 ) * uScale / max( 0.1, -mv.z ) );
+      float u = ( z - uZ0 ) / uLen;
+      vA = ( 1.0 - smoothstep( uFog.x, uFog.y, -mv.z ) ) * smoothstep( 0.0, 0.1, u ) * smoothstep( 1.0, 0.9, u ) * ( 0.35 + 0.65 * aSeed );
+    }`;
+  const POINT_FS = `
+    uniform vec3 uColor;
+    uniform float uOpacity;
+    varying float vA;
+    void main() {
+      float d = length( gl_PointCoord - 0.5 ) * 2.0;
+      float a = 1.0 - smoothstep( 0.0, 1.0, d );
+      gl_FragColor = vec4( uColor, a * a * vA * uOpacity );
+    }`;
+
+  /* ---------- lotes instanciados ---------- */
+
+  const nextCap = (n) => Math.max(64, 2 ** Math.ceil(Math.log2(Math.max(1, n))));
+
+  /** InstancedMesh que crece según haga falta. Se rellena entero en cada pasada: begin(n), point/segment…, end(). */
+  class Instances {
+    constructor(parent, geo, mat) {
+      this.parent = parent;
+      this.geo = geo;
+      this.mat = mat;
+      this.cap = 0;
+      this.n = 0;
+      this.mesh = null;
+    }
+
+    setGeometry(geo) {
+      if (geo === this.geo) return;
+      this.geo = geo;
+      if (this.mesh) this.mesh.geometry = geo;
+    }
+
+    begin(max) {
+      if (!this.mesh || max > this.cap) this.alloc(nextCap(max));
+      this.n = 0;
+      this.m = this.mesh.instanceMatrix.array;
+      this.c = this.mesh.instanceColor.array;
+    }
+
+    alloc(cap) {
+      const mesh = new THREE.InstancedMesh(this.geo, this.mat, cap);
+      mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3);
+      mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
+      mesh.frustumCulled = false; // las instancias se reparten por toda la escena
+      mesh.count = 0;
+      if (this.mesh) {
+        this.parent.remove(this.mesh);
+        this.mesh.dispose();
+      }
+      this.parent.add(mesh);
+      this.mesh = mesh;
+      this.cap = cap;
+    }
+
+    color(col) {
+      const o = this.n * 3;
+      this.c[o] = col.r;
+      this.c[o + 1] = col.g;
+      this.c[o + 2] = col.b;
+      this.n++;
+    }
+
+    /** Esfera o toro: escala uniforme, sin rotación. */
+    point(x, y, z, s, col) {
+      const m = this.m;
+      const o = this.n * 16;
+      m.fill(0, o, o + 16);
+      m[o] = m[o + 5] = m[o + 10] = s;
+      m[o + 12] = x;
+      m[o + 13] = y;
+      m[o + 14] = z;
+      m[o + 15] = 1;
+      this.color(col);
+    }
+
+    /** Tubo recto de a a b con radio r (el cilindro unitario va de z = 0 a z = 1). */
+    segment(ax, ay, az, bx, by, bz, r, col) {
+      let dx = bx - ax;
+      let dy = by - ay;
+      let dz = bz - az;
+      const len = Math.hypot(dx, dy, dz);
+      if (len < 1e-4) return;
+      dx /= len;
+      dy /= len;
+      dz /= len;
+      // base ortonormal (u, v, d): u = d × eje Y, o d × eje X si d es casi vertical
+      let ux = -dz;
+      let uy = 0;
+      let uz = dx;
+      if (Math.abs(dy) > 0.9) (ux = 0), (uy = dz), (uz = -dy);
+      const ul = Math.hypot(ux, uy, uz);
+      ux /= ul;
+      uy /= ul;
+      uz /= ul;
+      const m = this.m;
+      const o = this.n * 16;
+      m[o] = ux * r;
+      m[o + 1] = uy * r;
+      m[o + 2] = uz * r;
+      m[o + 3] = 0;
+      m[o + 4] = (dy * uz - dz * uy) * r;
+      m[o + 5] = (dz * ux - dx * uz) * r;
+      m[o + 6] = (dx * uy - dy * ux) * r;
+      m[o + 7] = 0;
+      m[o + 8] = dx * len;
+      m[o + 9] = dy * len;
+      m[o + 10] = dz * len;
+      m[o + 11] = 0;
+      m[o + 12] = ax;
+      m[o + 13] = ay;
+      m[o + 14] = az;
+      m[o + 15] = 1;
+      this.color(col);
+    }
+
+    end() {
+      this.mesh.count = this.n;
+      this.mesh.visible = this.n > 0;
+      this.mesh.instanceMatrix.needsUpdate = true;
+      this.mesh.instanceColor.needsUpdate = true;
+    }
+  }
+
+  /** Halos: cuadrados instanciados que miran a la cámara (sin el tope de tamaño de los puntos de WebGL). */
+  class GlowLayer {
+    constructor(parent, material) {
+      this.parent = parent;
+      this.material = material;
+      this.cap = 0;
+      this.n = 0;
+      this.mesh = null;
+    }
+
+    begin(max) {
+      if (!this.mesh || max > this.cap) this.alloc(nextCap(max));
+      this.n = 0;
+    }
+
+    alloc(cap) {
+      const base = new THREE.PlaneGeometry(1, 1);
+      const g = new THREE.InstancedBufferGeometry();
+      g.index = base.index;
+      g.setAttribute('position', base.attributes.position);
+      g.setAttribute('uv', base.attributes.uv);
+      const attr = (size) => new THREE.InstancedBufferAttribute(new Float32Array(cap * size), size).setUsage(THREE.DynamicDrawUsage);
+      g.setAttribute('iPos', (this.pos = attr(3)));
+      g.setAttribute('iColor', (this.col = attr(4)));
+      g.setAttribute('iSize', (this.size = attr(2)));
+      g.instanceCount = 0;
+      if (this.mesh) {
+        this.mesh.geometry.dispose();
+        this.mesh.geometry = g;
+      } else {
+        this.mesh = new THREE.Mesh(g, this.material);
+        this.mesh.frustumCulled = false;
+        this.parent.add(this.mesh);
+      }
+      this.cap = cap;
+    }
+
+    push(x, y, z, col, alpha, size, pulse) {
+      if (this.n >= this.cap) return;
+      const i = this.n++;
+      const p = this.pos.array;
+      const c = this.col.array;
+      const s = this.size.array;
+      p[i * 3] = x;
+      p[i * 3 + 1] = y;
+      p[i * 3 + 2] = z;
+      c[i * 4] = col.r;
+      c[i * 4 + 1] = col.g;
+      c[i * 4 + 2] = col.b;
+      c[i * 4 + 3] = alpha;
+      s[i * 2] = size;
+      s[i * 2 + 1] = pulse;
+    }
+
+    end() {
+      this.mesh.geometry.instanceCount = this.n;
+      this.mesh.visible = this.n > 0;
+      this.pos.needsUpdate = this.col.needsUpdate = this.size.needsUpdate = true;
+    }
   }
 
   class Graph3D {
@@ -46,13 +394,18 @@
     constructor(wrap, opts = {}) {
       this.wrap = wrap;
       this.opts = opts;
+      this.dprMax = Math.min(window.devicePixelRatio || 1, 2);
+      this.dprLimit = this.dprMax; // baja sola si el equipo no da abasto
+      this.dpr = this.dprMax;
       this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      this.renderer.setPixelRatio(this.dpr);
       this.canvas = this.renderer.domElement;
       this.canvas.className = 'g3-canvas';
-      this.canvas.setAttribute('role', 'img');
-      this.canvas.setAttribute('aria-label', tr('graph.aria3d'));
+      this.canvas.setAttribute('aria-hidden', 'true');
       wrap.appendChild(this.canvas);
+      wrap.tabIndex = 0;
+      wrap.setAttribute('role', 'group');
+      wrap.setAttribute('aria-label', tr('graph.aria3d'));
 
       this.labelLayer = document.createElement('div');
       this.labelLayer.className = 'g3-labels';
@@ -66,8 +419,18 @@
       wrap.appendChild(this.tip);
       GB.graphShared.wirePinButton(this.tip, (name) => this.opts.onTogglePin?.(name));
 
+      /* vectores de trabajo: el cuadro a cuadro no crea objetos */
+      this.Y = new THREE.Vector3(0, 1, 0);
+      this.tmpA = new THREE.Vector3();
+      this.tmpB = new THREE.Vector3();
+      this.tmpP = new THREE.Vector3();
+      this.tmp2 = new THREE.Vector2();
+      this.tmpCol = new THREE.Color();
+      this.sph = new THREE.Spherical();
+
       this.scene = new THREE.Scene();
-      this.camera = new THREE.PerspectiveCamera(46, 1, 0.1, 800);
+      this.scene.fog = new THREE.Fog(0xffffff, 34, 130);
+      this.camera = new THREE.PerspectiveCamera(46, 1, 0.1, 900);
       this.camera.position.set(16, 11, 22);
       this.controls = new THREE.OrbitControls(this.camera, this.canvas);
       Object.assign(this.controls, {
@@ -79,7 +442,6 @@
         screenSpacePanning: true,
         minDistance: 4,
         maxDistance: 220,
-        autoRotateSpeed: 0.35,
       });
       this.controls.addEventListener('start', () => {
         this.interacting = true;
@@ -92,10 +454,13 @@
         if (this.dragFrom && this.dragFrom.distanceTo(this.controls.target) > 0.4) this.setFollowing(false);
       });
 
-      this.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-      const sun = new THREE.DirectionalLight(0xffffff, 0.75);
-      sun.position.set(12, 24, 18);
-      this.scene.add(sun);
+      /* luz: cielo y suelo para dar volumen, un sol fijo y una luz cálida en el presente
+         (lo nuevo queda iluminado; el pasado, en penumbra) */
+      this.hemi = new THREE.HemisphereLight(0xffffff, 0x808080, 0.55);
+      this.sun = new THREE.DirectionalLight(0xffffff, 0.7);
+      this.sun.position.set(12, 24, 18);
+      this.nowLight = new THREE.PointLight(0xffffff, 0.6, 60, 1.4);
+      this.scene.add(this.hemi, this.sun, this.nowLight);
 
       this.gEdges = new THREE.Group();
       this.gNodes = new THREE.Group();
@@ -103,26 +468,68 @@
       this.gDays = new THREE.Group();
       this.scene.add(this.gDays, this.gEdges, this.gNodes, this.gFx);
 
-      this.geo = {
-        sphere: new THREE.SphereGeometry(0.42, 22, 16),
-        torus: new THREE.TorusGeometry(0.48, 0.13, 10, 30),
+      /* uniformes compartidos por todos los materiales */
+      this.u = {
+        time: { value: 0 },
+        fog: { value: new THREE.Vector2(34, 130) },
+        flow: { value: 0 },
+        noFlow: { value: 0 },
+        rim: { value: 0.8 },
       };
-      this.glowTex = spriteTexture((g) => {
-        const grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
-        grd.addColorStop(0, 'rgba(255,255,255,1)');
-        grd.addColorStop(0.25, 'rgba(255,255,255,0.55)');
-        grd.addColorStop(1, 'rgba(255,255,255,0)');
-        g.fillStyle = grd;
-        g.fillRect(0, 0, 128, 128);
-      });
-      this.ringTex = spriteTexture((g) => {
-        g.strokeStyle = '#fff';
-        g.lineWidth = 7;
-        g.beginPath();
-        g.arc(64, 64, 52, 0, Math.PI * 2);
-        g.stroke();
-      });
+
+      this.geo = {
+        sphere: new THREE.SphereGeometry(NODE_R, 20, 14),
+        sphereLo: new THREE.SphereGeometry(NODE_R, 12, 9),
+        torus: new THREE.TorusGeometry(0.48, 0.13, 10, 30),
+        tube: new THREE.CylinderGeometry(1, 1, 1, RADIAL, 1, true).rotateX(Math.PI / 2).translate(0, 0, 0.5),
+        ring: new THREE.RingGeometry(0.94, 1, 72),
+        portal: new THREE.RingGeometry(0.9, 1.1, 160, 1), // solo el anillo: el sombreador no corre en toda la pantalla
+      };
+
+      this.flowLive = flowHook(this.u.flow, this.u.time, this.u.fog);
+      this.nodeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, roughness: 0.32, metalness: 0.1 });
+      this.nodeMat.onBeforeCompile = nodeHook(this.u);
+      this.lineMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, roughness: 0.5, metalness: 0.05 });
+      this.lineMat.onBeforeCompile = this.flowLive;
+      this.ghostMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, roughness: 0.55, metalness: 0.05, transparent: true, opacity: 0.5 });
+      this.ghostMat.onBeforeCompile = flowHook(this.u.noFlow, this.u.time, this.u.fog);
+      this.stubMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+      this.iSphere = new Instances(this.gNodes, this.geo.sphere, this.nodeMat);
+      this.iTorus = new Instances(this.gNodes, this.geo.torus, this.nodeMat);
+      this.iLine = new Instances(this.gEdges, this.geo.tube, this.lineMat);
+      this.iGhost = new Instances(this.gEdges, this.geo.tube, this.ghostMat);
+      this.iStub = new Instances(this.gEdges, this.geo.tube, this.stubMat);
+
+      const glowMat = () =>
+        new THREE.ShaderMaterial({
+          uniforms: { uTime: this.u.time, uFog: this.u.fog },
+          vertexShader: GLOW_VS,
+          fragmentShader: GLOW_FS,
+          transparent: true,
+          depthWrite: false,
+        });
+      this.halos = new GlowLayer(this.gNodes, glowMat());
+      this.sparks = new GlowLayer(this.gFx, glowMat());
+
+      this.portal = new THREE.Mesh(
+        this.geo.portal,
+        new THREE.ShaderMaterial({
+          uniforms: { uColor: { value: new THREE.Color() }, uTime: this.u.time, uOpacity: { value: 1 }, uFlash: { value: 0 } },
+          vertexShader: PORTAL_VS,
+          fragmentShader: PORTAL_FS,
+          transparent: true,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+        }),
+      );
+      this.portal.visible = false;
+      this.scene.add(this.portal);
+
+      this.makeStars();
+      this.makeDust();
       this.mats = new Map();
+      this.colorObjs = new Map();
 
       this.nodes = new Map();
       this.edges = new Map();
@@ -130,26 +537,103 @@
       this.pointers = new Map();
       this.days = new Map();
       this.ripples = [];
+      this.sparkList = [];
+      this.pending = [];
       this.dying = [];
-      this.pickables = [];
+      this.keys = new Set();
       this.maxX = 0;
       this.radius = 4;
       this.following = true;
       this.spin = !!U.store.get('spin3d', true);
+      this.spinAmt = 0;
+      this.flashAmt = 0;
       this.active = false;
+      this.onScreen = true;
       this.placed = false;
       this.lastInteract = 0;
+      this.lastRender = 0;
       this.mouse = null;
+      this.hoverSha = null;
       this.raycaster = new THREE.Raycaster();
 
       this.readTheme();
       const onTheme = () => this.readTheme();
       window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', onTheme);
       new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+      motionQuery?.addEventListener?.('change', () => this.applyMotion());
 
       this.bindPointer();
+      this.bindKeys();
       new ResizeObserver(() => this.resize()).observe(wrap);
+      // fuera de pantalla (por ejemplo, al bajar en el celular) no se dibuja
+      new IntersectionObserver((entries) => {
+        this.onScreen = entries[entries.length - 1].isIntersecting;
+        this.needsRender = true;
+      }).observe(wrap);
       this.frame = this.frame.bind(this);
+    }
+
+    makeStars() {
+      const N = 900;
+      const pos = new Float32Array(N * 3);
+      const seed = new Float32Array(N);
+      for (let i = 0; i < N; i++) {
+        const z = Math.random() * 2 - 1;
+        const a = Math.random() * Math.PI * 2;
+        const r = Math.sqrt(1 - z * z) * 380;
+        pos.set([Math.cos(a) * r, Math.sin(a) * r, z * 380], i * 3);
+        seed[i] = Math.random();
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      g.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
+      this.stars = new THREE.Points(
+        g,
+        new THREE.ShaderMaterial({
+          uniforms: { uTime: this.u.time, uPx: { value: this.dpr }, uColor: { value: new THREE.Color() }, uOpacity: { value: 1 } },
+          vertexShader: STAR_VS,
+          fragmentShader: POINT_FS,
+          transparent: true,
+          depthWrite: false,
+        }),
+      );
+      this.stars.frustumCulled = false;
+      this.stars.renderOrder = -1;
+      this.scene.add(this.stars);
+    }
+
+    makeDust() {
+      const N = 1400;
+      const pos = new Float32Array(N * 3);
+      const seed = new Float32Array(N);
+      for (let i = 0; i < N; i++) {
+        pos.set([Math.random() * Math.PI * 2, 0.9 + Math.random() * 1.5, Math.random()], i * 3);
+        seed[i] = Math.random();
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      g.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
+      this.dust = new THREE.Points(
+        g,
+        new THREE.ShaderMaterial({
+          uniforms: {
+            uTime: this.u.time,
+            uFog: this.u.fog,
+            uR: { value: 4 },
+            uZ0: { value: -120 },
+            uLen: { value: 175 },
+            uScale: { value: 800 },
+            uColor: { value: new THREE.Color() },
+            uOpacity: { value: 1 },
+          },
+          vertexShader: DUST_VS,
+          fragmentShader: POINT_FS,
+          transparent: true,
+          depthWrite: false,
+        }),
+      );
+      this.dust.frustumCulled = false;
+      this.scene.add(this.dust);
     }
 
     /* ---------- tema y materiales ---------- */
@@ -159,16 +643,54 @@
       const v = (n, fb) => cs.getPropertyValue(n).trim() || fb;
       this.colors = { ghost: v('--ghost', '#b4bdb9') };
       for (let i = 1; i <= 8; i++) this.colors['c' + i] = v('--s' + i, '#888888');
-      const bg = new THREE.Color(v('--surface', '#ffffff'));
+      this.colorObjs = new Map();
+      this.bg = new THREE.Color(v('--surface', '#ffffff'));
       const hsl = {};
-      bg.getHSL(hsl);
-      this.dark = hsl.l < 0.5;
-      this.inkMuted = new THREE.Color(v('--ink-3', '#78837f'));
+      this.bg.getHSL(hsl);
+      const dark = (this.dark = hsl.l < 0.5);
+      const ink = new THREE.Color(v('--ink', '#101614'));
+      const ink2 = new THREE.Color(v('--ink-2', '#48534f'));
+      const ink3 = new THREE.Color(v('--ink-3', '#78837f'));
       this.lineColor = new THREE.Color(v('--line-strong', '#c9d1cd'));
-      this.scene.fog = new THREE.Fog(bg, 34, 130);
+      this.scene.fog.color.copy(this.bg);
+
+      this.hemi.color.set(dark ? 0xdfe8ff : 0xffffff);
+      this.hemi.groundColor.set(dark ? 0x1c1712 : 0x9a948c);
+      this.hemi.intensity = dark ? 0.6 : 0.62;
+      this.sun.intensity = dark ? 0.6 : 0.62;
+      this.nowLight.color.set(dark ? 0xfff1dc : 0xffffff);
+      this.nodeMat.emissiveIntensity = dark ? 0.5 : 0.2;
+      this.u.rim.value = dark ? 0.85 : 0.28;
+      this.lineMat.emissiveIntensity = dark ? 0.42 : 0.14;
+      this.ghostMat.emissiveIntensity = dark ? 0.45 : 0.15;
+
+      const blend = dark ? THREE.AdditiveBlending : THREE.NormalBlending;
+      for (const m of [this.halos.material, this.sparks.material, this.portal.material, this.stars.material, this.dust.material]) {
+        m.blending = blend;
+        m.needsUpdate = true;
+      }
+      const su = this.stars.material.uniforms;
+      su.uColor.value.copy(dark ? ink : ink3);
+      su.uOpacity.value = dark ? 0.8 : 0.32;
+      const du = this.dust.material.uniforms;
+      du.uColor.value.copy(dark ? ink2 : ink3);
+      du.uOpacity.value = dark ? 0.6 : 0.5;
+      const pu = this.portal.material.uniforms;
+      pu.uColor.value.copy(dark ? ink2 : ink3).lerp(new THREE.Color(this.colors.c1), 0.4);
+      this.portalAlpha = dark ? 0.9 : 0.55;
+
       for (const [key, m] of this.mats) this.paint(key, m);
       if (this.dayMat) this.dayMat.color.copy(this.lineColor);
-      if (this.dust) this.dust.material.color.copy(this.inkMuted);
+      for (const r of this.ripples) r.mesh.material.blending = blend;
+      this.applyMotion();
+      this.dirtyNodes = this.dirtyEdges = true;
+      this.needsRender = true;
+    }
+
+    /** Con "reducir movimiento" no hay pulsos, deriva ni giro: la escena queda quieta. */
+    applyMotion() {
+      this.motion = !reduceMotion();
+      this.u.flow.value = this.motion ? (this.dark ? 0.9 : 0.45) : 0;
       this.needsRender = true;
     }
 
@@ -182,36 +704,32 @@
       return hex;
     }
 
+    col(key) {
+      let c = this.colorObjs.get(key);
+      if (!c) this.colorObjs.set(key, (c = new THREE.Color(this.colorHex(key))));
+      return c;
+    }
+
     paint(key, m) {
-      const col = new THREE.Color(this.colorHex(key));
+      const col = this.col(key);
       const ghost = key === 'ghost';
-      m.node.color.copy(col);
-      m.node.emissive.copy(col);
-      m.node.emissiveIntensity = this.dark ? 0.55 : 0.22;
       m.edge.color.copy(col);
       m.edge.emissive.copy(col);
-      m.edge.emissiveIntensity = this.dark ? 0.45 : 0.15;
+      m.edge.emissiveIntensity = ghost ? (this.dark ? 0.45 : 0.15) : this.dark ? 0.42 : 0.14;
       m.edge.opacity = ghost ? 0.5 : 1;
-      m.stub.color.copy(col);
-      m.halo.color.copy(col);
-      m.halo.opacity = this.dark ? 0.7 : 0.4;
-      m.halo.blending = this.dark ? THREE.AdditiveBlending : THREE.NormalBlending;
-      m.halo.needsUpdate = true;
-      m.ring.color.copy(col);
       m.line.color.copy(col);
     }
 
+    /** Materiales por color para lo que no va instanciado: curvas y líneas punteadas. */
     mat(key) {
       let m = this.mats.get(key);
       if (m) return m;
+      const ghost = key === 'ghost';
       m = {
-        node: new THREE.MeshStandardMaterial({ roughness: 0.35, metalness: 0.1 }),
-        edge: new THREE.MeshStandardMaterial({ roughness: 0.55, metalness: 0.05, transparent: key === 'ghost' }),
-        stub: new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.3, depthWrite: false }),
-        halo: new THREE.SpriteMaterial({ map: this.glowTex, transparent: true, depthWrite: false }),
-        ring: new THREE.SpriteMaterial({ map: this.ringTex, transparent: true, depthWrite: false }),
+        edge: new THREE.MeshStandardMaterial({ roughness: 0.5, metalness: 0.05, transparent: ghost }),
         line: new THREE.LineDashedMaterial({ dashSize: 0.3, gapSize: 0.22, transparent: true, opacity: 0.85 }),
       };
+      if (!ghost) m.edge.onBeforeCompile = this.flowLive;
       this.mats.set(key, m);
       this.paint(key, m);
       return m;
@@ -225,9 +743,14 @@
       if (!W || !H) return;
       this.W = W;
       this.H = H;
+      // en pantallas enormes no hace falta dibujar más de ~4,6 millones de píxeles
+      this.dpr = Math.min(this.dprLimit, Math.max(1, Math.sqrt(MAX_PIXELS / (W * H))));
+      this.renderer.setPixelRatio(this.dpr);
       this.renderer.setSize(W, H, false);
       this.camera.aspect = W / H;
       this.camera.updateProjectionMatrix();
+      this.stars.material.uniforms.uPx.value = this.dpr;
+      this.dust.material.uniforms.uScale.value = (H * this.dpr) / (2 * Math.tan((this.camera.fov * Math.PI) / 360));
       this.needsRender = true;
     }
 
@@ -235,10 +758,12 @@
       this.active = on;
       if (on) {
         this.resize();
+        this.lastNow = 0;
         if (!this.raf) this.raf = requestAnimationFrame(this.frame);
       } else {
         cancelAnimationFrame(this.raf);
         this.raf = 0;
+        this.keys.clear();
         this.unpin();
       }
     }
@@ -248,23 +773,15 @@
       return new THREE.Vector3(lx, ly, x * SP);
     }
 
-    cur(it, now) {
-      if (!it.t0) return it.toV;
-      const p = clamp((now - it.t0) / DUR, 0, 1);
-      if (p >= 1) {
-        it.t0 = 0;
-        return it.toV;
-      }
-      this.needsRender = true;
-      return it.fromV.clone().lerp(it.toV, ease(p));
-    }
-
-    retarget(it, x, row, now, animate) {
-      const to = this.pos(x, row);
-      if (it.toV && it.toV.distanceTo(to) < 1e-6) return false;
-      it.fromV = it.curV ? it.curV.clone() : to;
+    /** Mueve un commit o una etiqueta hacia `to`, con animación o de golpe. */
+    retarget(it, to, now, animate) {
+      if (it.toV.equals(to)) return false;
+      it.fromV.copy(it.curV);
       it.toV = to;
-      it.t0 = animate && it.curV ? now : 0;
+      it.dur = DUR;
+      it.easing = ease;
+      it.t0 = animate ? now : 0;
+      if (!animate) it.curV.copy(to);
       return true;
     }
 
@@ -272,39 +789,42 @@
 
     update(L, ctx = {}) {
       const now = performance.now();
-      const fx = !ctx.initial && !reduceMotion();
+      const fx = !ctx.initial && this.motion;
       this.layout = L;
       this.ctx = ctx;
       this.maxX = L.maxX;
       this.ghostNames = new Map(L.ghostLabels.map((g) => [g.id, g.name]));
       this.radius = LANE_C * Math.sqrt(Math.max(1, L.rows.length - 1)) + 2.4;
 
-      /* nodos */
+      /* nodos: los nuevos llegan volando desde el presente */
       const seen = new Set();
+      const arrivals = [];
       for (const n of L.nodes) {
         seen.add(n.sha);
         let it = this.nodes.get(n.sha);
+        const to = this.pos(n.x, n.row);
         if (!it) {
-          it = { group: new THREE.Group() };
-          this.retarget(it, n.x, n.row, now, false);
+          it = { sha: n.sha, curV: to.clone(), fromV: to.clone(), toV: to, t0: 0, dur: DUR, easing: ease, born: 0, hov: 0 };
           this.nodes.set(n.sha, it);
-          this.gNodes.add(it.group);
           if (fx) {
-            it.born = now;
-            this.ripple(it, n.color);
+            it.fromV.z += ARRIVE_Z;
+            it.curV.copy(it.fromV);
+            it.t0 = it.born = now;
+            it.dur = ARRIVE;
+            it.easing = easeOut;
+            arrivals.push(it);
           }
-        } else this.retarget(it, n.x, n.row, now, fx);
-        const kind = `${n.color}|${n.merge}|${n.heads.length > 0}`;
-        if (it.kind !== kind) this.styleNode(it, n);
-        it.kind = kind;
+        } else this.retarget(it, to, now, fx);
         it.data = n;
       }
       for (const [sha, it] of this.nodes) {
         if (seen.has(sha)) continue;
         this.nodes.delete(sha);
-        this.dying.push({ obj: it.group, t0: now, from: it.group.scale.x });
+        if (fx) this.dying.push({ it, t0: now });
       }
-      this.pickables = [...this.nodes.values()].map((it) => it.mesh);
+      // la onda y las chispas, solo para los más nuevos (una rama que aparece trae toda su historia)
+      arrivals.sort((a, b) => b.data.x - a.data.x);
+      for (const it of arrivals.slice(0, 8)) this.pending.push({ at: now + ARRIVE * 0.9, it });
 
       /* aristas */
       const seenE = new Set();
@@ -312,17 +832,15 @@
         seenE.add(e.id);
         let it = this.edges.get(e.id);
         if (!it) {
-          it = { mesh: null, key: '' };
+          it = { mesh: null, born: fx && e.kind !== 'stub' ? now : 0 };
           this.edges.set(e.id, it);
-          if (fx && e.kind !== 'stub') it.born = now;
-        }
-        if (it.data && it.data.color !== e.color) it.key = ''; // repintar
+        } else if (it.data.kind !== e.kind) it.ax = NaN; // rehacer la curva
         it.data = e;
       }
       for (const [id, it] of this.edges) {
         if (seenE.has(id)) continue;
         this.edges.delete(id);
-        this.disposeMesh(it.mesh);
+        this.dropCurve(it);
       }
 
       /* cabezas de rama: etiqueta HTML + línea punteada si la rama no tiene commits propios */
@@ -330,21 +848,26 @@
       for (const h of L.heads) {
         seenH.add(h.name);
         let it = this.heads.get(h.name);
-        const isNew = !it;
+        const to = this.pos(h.x, h.row);
         if (!it) {
-          it = { el: document.createElement('button') };
+          it = { el: document.createElement('button'), curV: to.clone(), fromV: to.clone(), toV: to, t0: 0, dur: DUR, easing: ease };
           it.el.type = 'button';
           it.el.addEventListener('click', (ev) => {
             ev.stopPropagation();
             this.showTip(it.data.sha, true, it.data.name);
           });
+          it.el.addEventListener('pointerenter', () => this.setHover(it.data.sha));
+          it.el.addEventListener('pointerleave', () => this.hoverSha === it.data.sha && this.setHover(null));
           this.labelLayer.appendChild(it.el);
           this.heads.set(h.name, it);
-          this.retarget(it, h.x, h.row, now, false);
-        } else if (this.retarget(it, h.x, h.row, now, fx) && fx && it.data.sha !== h.sha) this.flash(it.el);
-        it.data = h;
-        this.buildHead(it, h, ctx);
-        if (isNew && fx) this.flash(it.el);
+          it.data = h;
+          this.buildHead(it, h, ctx);
+          if (fx) this.flash(it.el);
+        } else {
+          if (this.retarget(it, to, now, fx) && fx && it.data.sha !== h.sha) this.flash(it.el);
+          it.data = h;
+          this.buildHead(it, h, ctx);
+        }
 
         let p = this.pointers.get(h.name);
         if (!h.own) {
@@ -370,39 +893,16 @@
       }
 
       this.updateDays(L);
-      this.updateDust();
+      this.portalTarget = L.nodes.length ? { z: (L.maxX + 1.4) * SP, r: this.radius + 1.2 } : null;
 
       if (this.pinned && !this.nodes.has(this.pinned)) this.unpin();
+      if (this.hoverSha && !this.nodes.has(this.hoverSha)) this.hoverSha = null;
       if (!this.placed && L.nodes.length) {
-        this.placeCamera();
+        this.placeCamera(true);
         this.placed = true;
       }
+      this.dirtyNodes = this.dirtyEdges = true;
       this.needsRender = true;
-    }
-
-    styleNode(it, n) {
-      if (it.mesh) it.group.remove(it.mesh);
-      if (it.halo) it.group.remove(it.halo);
-      const m = this.mat(n.color);
-      it.mesh = new THREE.Mesh(n.merge ? this.geo.torus : this.geo.sphere, m.node);
-      it.mesh.userData.sha = n.sha;
-      it.group.add(it.mesh);
-      const isHead = n.heads.length > 0;
-      it.mesh.scale.setScalar(isHead ? 1.55 : 1);
-      it.halo = null;
-      if (isHead) {
-        it.halo = new THREE.Sprite(m.halo);
-        it.halo.scale.setScalar(3.2);
-        it.group.add(it.halo);
-      }
-    }
-
-    ripple(it, color) {
-      const s = new THREE.Sprite(this.mat(color).ring.clone());
-      s.position.copy(it.toV);
-      s.scale.setScalar(1);
-      this.gFx.add(s);
-      this.ripples.push({ sprite: s, t0: performance.now() });
     }
 
     flash(el) {
@@ -417,16 +917,23 @@
       const pr = ctx.prs?.get(h.name);
       const pinned = ctx.pins?.has(h.name);
       const moved = it.el.classList.contains('moved') ? ' moved' : '';
-      it.el.className = `g3-head ${h.color}${h.isDefault ? ' default' : ''}${moved}`;
+      const cls = `g3-head ${h.color}${h.isDefault ? ' default' : ''}${moved}`;
+      if (it.el.className !== cls) it.el.className = cls;
       const aria = [tr(h.isDefault ? 'branch.ariaDefault' : 'branch.aria', { name: h.name })];
       if (pr) aria.push(tr(pr.draft ? 'branch.prDraftAria' : 'branch.prAria', { num: pr.number, base: pr.base }));
       if (pinned) aria.push(tr('branch.pinned'));
-      it.el.setAttribute('aria-label', aria.join(', '));
-      it.w = 0;
-      it.el.innerHTML =
+      const html =
         `<span class="h3-dot" aria-hidden="true"></span><span class="h3-name">${U.esc(U.truncate(h.name, 34))}</span>` +
         (pr ? `<span class="h3-pr${pr.draft ? ' draft' : ''}">#${pr.number}</span>` : '') +
         (pinned ? `<span class="h3-pin" title="${U.esc(tr('branch.pinned'))}" aria-hidden="true"></span>` : '');
+      // en cada sondeo llegan las mismas ramas: solo se toca el DOM (y se vuelve a medir) si algo cambió
+      const label = aria.join(', ');
+      if (it.html === html && it.label === label) return;
+      it.html = html;
+      it.label = label;
+      it.el.setAttribute('aria-label', label);
+      it.el.innerHTML = html;
+      it.w = 0;
     }
 
     updateDays(L) {
@@ -463,41 +970,23 @@
       }
     }
 
-    /** Polvo tenue alrededor del tronco: da profundidad y sensación de espacio. */
-    updateDust() {
-      const len = (this.maxX + 30) * SP;
-      if (this.dust && this.dustLen >= len - 20 && this.dustR === this.radius) return;
-      if (this.dust) (this.scene.remove(this.dust), this.dust.geometry.dispose());
-      const n = Math.min(1600, Math.round(len * 4));
-      const pts = new Float32Array(n * 3);
-      for (let i = 0; i < n; i++) {
-        const a = Math.random() * Math.PI * 2;
-        const r = this.radius * (0.9 + Math.random() * 1.4);
-        pts[i * 3] = Math.cos(a) * r;
-        pts[i * 3 + 1] = Math.sin(a) * r;
-        pts[i * 3 + 2] = Math.random() * len - 15 * SP;
-      }
-      const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.BufferAttribute(pts, 3));
-      this.dust = new THREE.Points(
-        g,
-        new THREE.PointsMaterial({ color: this.inkMuted, map: this.glowTex, size: 0.22, transparent: true, opacity: 0.5, depthWrite: false }),
-      );
-      this.dustLen = len;
-      this.dustR = this.radius;
-      this.scene.add(this.dust);
-    }
-
     disposeMesh(obj) {
       if (!obj) return;
       obj.parent?.remove(obj);
       obj.geometry?.dispose();
     }
 
+    dropCurve(it) {
+      if (!it.mesh) return;
+      this.disposeMesh(it.mesh);
+      it.mesh = null;
+      it.ax = NaN;
+    }
+
     /* ---------- cámara ---------- */
 
-    followPoint() {
-      return new THREE.Vector3(0, 0, Math.max(0, this.maxX * SP - 7));
+    followPoint(out) {
+      return out.set(0, 0, Math.max(0, this.maxX * SP - 7));
     }
 
     defaultOffset() {
@@ -507,21 +996,41 @@
       return new THREE.Vector3(0.55, 0.4, 0.74).normalize().multiplyScalar(d);
     }
 
-    placeCamera() {
-      const t = this.followPoint();
+    /** Primera vista: con movimiento, la cámara entra desde lejos y en arco hasta su lugar. */
+    placeCamera(intro) {
+      const t = this.followPoint(new THREE.Vector3());
+      const off = this.defaultOffset();
       this.controls.target.copy(t);
-      this.camera.position.copy(t).add(this.defaultOffset());
-      this.controls.update();
+      if (intro && this.motion) {
+        const from = off.clone().applyAxisAngle(this.Y, 1.1).multiplyScalar(2.6);
+        from.y += off.length() * 0.8;
+        this.camera.position.copy(t).add(from);
+        this.controls.update();
+        this.flyTo(t, t.clone().add(off), 2600);
+      } else {
+        this.camera.position.copy(t).add(off);
+        this.controls.update();
+      }
     }
 
+    /** Vuelo de cámara: el objetivo avanza en línea recta y la cámara orbita a su alrededor
+        (interpolación esférica); en saltos largos se aleja un poco a mitad de camino. */
     flyTo(target, camPos, dur = 900) {
+      const c = this.controls;
+      const s0 = new THREE.Spherical().setFromVector3(this.tmpA.copy(this.camera.position).sub(c.target));
+      const s1 = new THREE.Spherical().setFromVector3(this.tmpA.copy(camPos).sub(target));
+      let dth = (s1.theta - s0.theta) % (Math.PI * 2);
+      if (dth > Math.PI) dth -= Math.PI * 2;
+      else if (dth < -Math.PI) dth += Math.PI * 2;
       this.fly = {
         t0: performance.now(),
-        dur: reduceMotion() ? 1 : dur,
-        fromT: this.controls.target.clone(),
-        toT: target,
-        fromC: this.camera.position.clone(),
-        toC: camPos,
+        dur: this.motion ? dur : 1,
+        fromT: c.target.clone(),
+        toT: target.clone(),
+        s0,
+        s1,
+        dth,
+        hop: clamp(c.target.distanceTo(target) / 80, 0, 1) * 0.4,
       };
     }
 
@@ -530,7 +1039,7 @@
       this.following = v;
       this.opts.onFollowChange?.(v);
       if (v) {
-        const t = this.followPoint();
+        const t = this.followPoint(new THREE.Vector3());
         const off = this.camera.position.clone().sub(this.controls.target);
         if (off.length() > 90 || off.length() < 6) off.copy(this.defaultOffset());
         this.flyTo(t, t.clone().add(off));
@@ -545,8 +1054,7 @@
 
     zoomBy(f) {
       const off = this.camera.position.clone().sub(this.controls.target).multiplyScalar(1 / f);
-      const len = clamp(off.length(), this.controls.minDistance, this.controls.maxDistance);
-      off.setLength(len);
+      off.setLength(clamp(off.length(), this.controls.minDistance, this.controls.maxDistance));
       this.flyTo(this.controls.target.clone(), this.controls.target.clone().add(off), 350);
     }
 
@@ -557,7 +1065,7 @@
       const t = it.toV.clone();
       const off = this.camera.position.clone().sub(this.controls.target).setLength(15);
       this.flyTo(t, t.clone().add(off));
-      if (!reduceMotion()) this.ripple(it, it.data.color);
+      if (this.motion) this.ripple(it.toV, this.col(it.data.color));
       return true;
     }
 
@@ -573,7 +1081,7 @@
       return this.heads.has(name);
     }
 
-    /* ---------- puntero: hover y clic ---------- */
+    /* ---------- puntero y teclado ---------- */
 
     bindPointer() {
       let down = null;
@@ -583,11 +1091,13 @@
       });
       this.canvas.addEventListener('pointerleave', () => {
         this.mouse = null;
+        this.setHover(null);
         if (!this.pinned) this.hideTip();
         this.canvas.style.cursor = '';
       });
       this.canvas.addEventListener('pointerdown', (ev) => {
         down = { x: ev.clientX, y: ev.clientY };
+        this.wrap.focus({ preventScroll: true }); // así funcionan las flechas y la tecla F
       });
       this.canvas.addEventListener('pointerup', (ev) => {
         if (!down || Math.hypot(ev.clientX - down.x, ev.clientY - down.y) > 5) return (down = null);
@@ -597,16 +1107,63 @@
         if (sha) this.showTip(sha, true);
         else this.unpin();
       });
+    }
+
+    /** Flechas ← → giran, ↑ ↓ viajan por la historia, + y − acercan; se mantienen pulsadas. */
+    bindKeys() {
+      const KEYS = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', '+': 'in', '=': 'in', '-': 'out', _: 'out' };
       this.wrap.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Escape') this.unpin();
+        if (ev.key === 'Escape') return this.unpin();
+        const k = KEYS[ev.key];
+        if (!k || ev.ctrlKey || ev.metaKey || ev.altKey || ev.target.closest?.('.tip')) return;
+        ev.preventDefault();
+        this.keys.add(k);
+        this.fly = null;
       });
+      this.wrap.addEventListener('keyup', (ev) => this.keys.delete(KEYS[ev.key]));
+      this.wrap.addEventListener('focusout', () => this.keys.clear());
+    }
+
+    stepKeys(dt) {
+      const k = this.keys;
+      const c = this.controls;
+      const off = this.tmpB.copy(this.camera.position).sub(c.target);
+      const turn = (k.has('right') ? 1 : 0) - (k.has('left') ? 1 : 0);
+      const zoom = (k.has('out') ? 1 : 0) - (k.has('in') ? 1 : 0);
+      const go = (k.has('up') ? 1 : 0) - (k.has('down') ? 1 : 0);
+      if (turn) off.applyAxisAngle(this.Y, turn * 1.2 * dt);
+      if (zoom) off.setLength(clamp(off.length() * Math.exp(zoom * 1.3 * dt), c.minDistance, c.maxDistance));
+      if (go) {
+        // ↑ avanza hacia donde mira la cámara (de frente al pasado, hacia lo antiguo)
+        const dz = go * (off.z >= 0 ? -1 : 1) * (6 + off.length() * 0.5) * dt;
+        c.target.z = clamp(c.target.z + dz, -SP * 4, this.maxX * SP + SP * 4);
+        this.setFollowing(false);
+      }
+      this.camera.position.copy(c.target).add(off);
+      this.lastInteract = performance.now();
     }
 
     pick(x, y) {
       if (!this.W) return null;
-      this.raycaster.setFromCamera({ x: (x / this.W) * 2 - 1, y: -(y / this.H) * 2 + 1 }, this.camera);
-      const hit = this.raycaster.intersectObjects(this.pickables, false)[0];
-      return hit ? hit.object.userData.sha : null;
+      this.raycaster.setFromCamera(this.tmp2.set((x / this.W) * 2 - 1, -(y / this.H) * 2 + 1), this.camera);
+      const ray = this.raycaster.ray;
+      const far = this.scene.fog.far;
+      let best = null;
+      let bestT = Infinity;
+      // prueba rayo-esfera contra el centro de cada commit: sin recorrer triángulos
+      for (const it of this.nodes.values()) {
+        const r = (it.data.merge ? 0.61 : NODE_R) * (it.data.heads.length ? HEAD_SCALE : 1) + 0.12;
+        if (ray.distanceSqToPoint(it.curV) > r * r) continue;
+        const t = this.tmpP.copy(it.curV).sub(ray.origin).dot(ray.direction);
+        if (t > 0 && t < bestT && t < far) (bestT = t), (best = it.sha);
+      }
+      return best;
+    }
+
+    setHover(sha) {
+      if (this.hoverSha === sha) return;
+      this.hoverSha = sha;
+      this.dirtyNodes = true;
     }
 
     showTip(sha, pin, branchName) {
@@ -622,7 +1179,7 @@
 
     placeTip() {
       const it = this.nodes.get(this.tipSha);
-      if (!it || !it.curV) return this.hideTip();
+      if (!it) return this.hideTip();
       const p = this.project(it.curV);
       if (!p) return;
       const w = this.tip.offsetWidth;
@@ -647,244 +1204,521 @@
 
     /** Cambio de idioma: etiquetas accesibles, días del eje y rótulos de las ramas. */
     relocalize() {
-      this.canvas.setAttribute('aria-label', tr('graph.aria3d'));
+      this.wrap.setAttribute('aria-label', tr('graph.aria3d'));
       this.tip.setAttribute('aria-label', tr('tip.aria'));
       this.unpin();
       for (const d of this.days.values()) if (d.data) d.el.textContent = i18n.dayLabel(d.data.time);
-      for (const it of this.heads.values()) if (it.data) this.buildHead(it, it.data, this.ctx || {});
+      for (const it of this.heads.values()) {
+        if (!it.data) continue;
+        it.html = null;
+        this.buildHead(it, it.data, this.ctx || {});
+      }
     }
 
     project(v) {
-      const p = v.clone().project(this.camera);
+      const p = this.tmpP.copy(v).project(this.camera);
       if (p.z > 1 || p.z < -1) return null;
       return { x: (p.x + 1) * 0.5 * this.W, y: (1 - p.y) * 0.5 * this.H };
     }
 
     /* ---------- cuadro a cuadro ---------- */
 
+    frame(now) {
+      this.raf = this.active ? requestAnimationFrame(this.frame) : 0;
+      if (!this.active || !this.W || !this.onScreen) {
+        this.lastNow = 0;
+        return;
+      }
+      const dt = this.lastNow ? Math.min(0.1, (now - this.lastNow) / 1000) : 0;
+      this.lastNow = now;
+      if (this.motion) this.u.time.value += dt;
+
+      const camMoved = this.stepCamera(now, dt);
+      const sceneMoved = this.stepScene(now, dt);
+      const full = this.needsRender || camMoved || sceneMoved;
+      // en reposo los pulsos, el polvo y las estrellas siguen vivos, pero a ~30 fps
+      const ambient = this.motion && this.nodes.size > 0 && now - this.lastRender >= AMBIENT_MS;
+      if (full || ambient) {
+        this.beforeRender();
+        this.renderer.render(this.scene, this.camera);
+        if (full) this.placeLabels();
+        if (full && this.prevFull) this.adapt(now - this.lastRender, now);
+        this.lastRender = now;
+        this.needsRender = false;
+      }
+      this.prevFull = full;
+      this.hover();
+    }
+
+    stepCamera(now, dt) {
+      const c = this.controls;
+      const cam = this.camera;
+      let moved = false;
+      if (this.fly) {
+        const f = this.fly;
+        const p = ease(clamp((now - f.t0) / f.dur, 0, 1));
+        c.target.lerpVectors(f.fromT, f.toT, p);
+        const r = f.s0.radius * Math.pow(f.s1.radius / f.s0.radius, p) * (1 + f.hop * Math.sin(Math.PI * p));
+        this.sph.set(r, f.s0.phi + (f.s1.phi - f.s0.phi) * p, f.s0.theta + f.dth * p);
+        cam.position.setFromSpherical(this.sph).add(c.target);
+        if (p >= 1) this.fly = null;
+        moved = true;
+      } else {
+        if (this.keys.size) {
+          this.stepKeys(dt);
+          moved = true;
+        }
+        if (this.following && !this.interacting) {
+          // seguimiento suave, igual a 60 o a 144 Hz
+          const d = this.followPoint(this.tmpA).sub(c.target).multiplyScalar(1 - Math.exp(-dt * 3.6));
+          if (d.lengthSq() > 1e-8) {
+            c.target.add(d);
+            cam.position.add(d);
+            moved = true;
+          }
+        }
+        const spin =
+          this.spin && this.following && this.motion && !this.interacting && !this.keys.size && !this.pinned && !this.tipSha && now - this.lastInteract > 4000;
+        // el giro arranca y se detiene con suavidad
+        this.spinAmt = clamp(this.spinAmt + (spin ? dt : -dt * 3) / 1.5, 0, 1);
+        if (this.spinAmt > 0) {
+          const off = this.tmpB.copy(cam.position).sub(c.target).applyAxisAngle(this.Y, -SPIN_SPEED * ease(this.spinAmt) * dt);
+          cam.position.copy(c.target).add(off);
+          moved = true;
+        }
+      }
+      if (c.update()) moved = true;
+      return moved;
+    }
+
+    stepScene(now, dt) {
+      let changed = false;
+      if (this.dirtyNodes || this.dirtyEdges || this.nodeAnim || this.edgeAnim) {
+        const { moving, anim } = this.stepNodes(now, dt);
+        this.writeNodes(now);
+        if (this.dirtyEdges || moving || this.edgeAnim) {
+          this.edgeAnim = this.writeEdges(now);
+          this.writePointers();
+        }
+        this.nodeAnim = anim;
+        this.dirtyNodes = this.dirtyEdges = false;
+        changed = true;
+      }
+      if (this.stepFx(now, dt)) changed = true;
+      if (this.stepPortal(dt)) changed = true;
+      return changed;
+    }
+
+    lerpItem(it, now) {
+      if (!it.t0) return false;
+      const p = clamp((now - it.t0) / it.dur, 0, 1);
+      it.curV.lerpVectors(it.fromV, it.toV, it.easing(p));
+      if (p >= 1) it.t0 = 0;
+      return true;
+    }
+
+    stepNodes(now, dt) {
+      let moving = this.dying.length > 0;
+      let anim = moving;
+      const k = 1 - Math.exp(-dt * 14);
+      for (const it of this.nodes.values()) {
+        if (this.lerpItem(it, now)) moving = true;
+        if (it.born && now - it.born >= 550) it.born = 0;
+        if (it.born) anim = true;
+        const hov = it.sha === this.hoverSha ? 1 : 0;
+        if (Math.abs(it.hov - hov) > 0.01) {
+          it.hov += (hov - it.hov) * k;
+          anim = true;
+        } else it.hov = hov;
+      }
+      for (const it of this.heads.values()) if (this.lerpItem(it, now)) moving = true;
+      for (let i = this.dying.length - 1; i >= 0; i--) if (now - this.dying[i].t0 >= 350) this.dying.splice(i, 1);
+      return { moving, anim: anim || moving };
+    }
+
+    writeNodes(now) {
+      const n = this.nodes.size + this.dying.length;
+      // con miles de commits, esferas más sencillas: a esa distancia no se nota
+      this.iSphere.setGeometry(n > 1500 ? this.geo.sphereLo : this.geo.sphere);
+      this.iSphere.begin(n);
+      this.iTorus.begin(n);
+      this.halos.begin(n);
+      const dark = this.dark;
+      const put = (it, s) => {
+        const d = it.data;
+        const v = it.curV;
+        const col = this.col(d.color);
+        const head = d.heads.length > 0;
+        const k = s * (1 + 0.3 * it.hov);
+        (d.merge ? this.iTorus : this.iSphere).point(v.x, v.y, v.z, (head ? HEAD_SCALE : 1) * k, col);
+        if (head) this.halos.push(v.x, v.y, v.z, col, (dark ? 0.72 : 0.4) + 0.2 * it.hov, 3.3 * k, 1);
+        else if (dark && d.color !== 'ghost') this.halos.push(v.x, v.y, v.z, col, 0.26 + 0.4 * it.hov, 1.7 * k, 0);
+        else if (it.hov > 0.01) this.halos.push(v.x, v.y, v.z, col, 0.4 * it.hov, 2.2 * k, 0);
+      };
+      for (const it of this.nodes.values()) put(it, it.born ? Math.max(0.001, easeOutBack(clamp((now - it.born) / 550, 0, 1))) : 1);
+      for (const d of this.dying) put(d.it, Math.max(0.001, 1 - clamp((now - d.t0) / 350, 0, 1)));
+      this.iSphere.end();
+      this.iTorus.end();
+      this.halos.end();
+    }
+
+    /** Rectas al lote instanciado; curvas con malla propia, rehechas solo si sus extremos se movieron. */
+    writeEdges(now) {
+      let anim = false;
+      const n = this.edges.size;
+      this.iLine.begin(n);
+      this.iGhost.begin(n);
+      this.iStub.begin(n * 3);
+      // reacomodar muchas ramas a la vez rehace muchas curvas: se reparten entre cuadros
+      const budget = performance.now() + 5;
+      for (const it of this.edges.values()) {
+        const e = it.data;
+        const b = this.nodes.get(e.to)?.curV;
+        if (!b) {
+          this.dropCurve(it);
+          continue;
+        }
+        const col = this.col(e.color);
+        if (e.kind === 'stub') {
+          this.stub(b, col);
+          continue;
+        }
+        const a = this.nodes.get(e.from)?.curV;
+        if (!a) {
+          this.dropCurve(it);
+          continue;
+        }
+        let p = 1;
+        if (it.born) {
+          p = clamp((now - it.born) / DUR, 0, 1);
+          if (p >= 1) it.born = 0;
+          else anim = true;
+        }
+        const ghost = e.color === 'ghost';
+        const r = ghost ? GHOST_R : EDGE_R;
+        if (e.kind === 'line' || (Math.abs(a.x - b.x) < 1e-3 && Math.abs(a.y - b.y) < 1e-3)) {
+          this.dropCurve(it);
+          (ghost ? this.iGhost : this.iLine).segment(a.x, a.y, a.z, a.x + (b.x - a.x) * p, a.y + (b.y - a.y) * p, a.z + (b.z - a.z) * p, r, col);
+          continue;
+        }
+        if (it.ax !== a.x || it.ay !== a.y || it.az !== a.z || it.bx !== b.x || it.by !== b.y || it.bz !== b.z || it.r !== r) {
+          if (!it.mesh || performance.now() < budget) this.buildCurve(it, a, b, r);
+          else anim = true;
+        }
+        it.mesh.material = this.mat(e.color).edge;
+        it.mesh.geometry.setDrawRange(0, p < 1 ? Math.ceil(p * it.segs) * RADIAL * 6 : Infinity);
+      }
+      this.iLine.end();
+      this.iGhost.end();
+      this.iStub.end();
+      return anim;
+    }
+
+    /** La historia sigue más atrás: tres trazos que se funden con el fondo. */
+    stub(b, col) {
+      const c = this.tmpCol;
+      const dash = (from, to, fade) => {
+        c.copy(col).lerp(this.bg, fade);
+        this.iStub.segment(b.x, b.y, b.z - SP * to, b.x, b.y, b.z - SP * from, 0.06, c);
+      };
+      dash(0.12, 0.42, 0.35);
+      dash(0.55, 0.8, 0.6);
+      dash(0.93, 1.12, 0.82);
+    }
+
     edgeCurve(kind, a, b) {
-      if (kind === 'line' || (Math.abs(a.x - b.x) < 1e-3 && Math.abs(a.y - b.y) < 1e-3)) return new THREE.LineCurve3(a, b);
       const V = THREE.Vector3;
       const d = Math.max(0.4, Math.min(SP * 1.7, b.z - a.z));
       const path = new THREE.CurvePath();
       if (kind === 'fork') {
         const m = new V(b.x, b.y, a.z + d);
-        path.add(new THREE.CubicBezierCurve3(a, new V(a.x, a.y, a.z + d * 0.6), new V(b.x, b.y, a.z + d * 0.4), m));
-        if (b.z - m.z > 0.01) path.add(new THREE.LineCurve3(m, b));
+        path.add(new THREE.CubicBezierCurve3(a.clone(), new V(a.x, a.y, a.z + d * 0.6), new V(b.x, b.y, a.z + d * 0.4), m));
+        if (b.z - m.z > 0.01) path.add(new THREE.LineCurve3(m, b.clone()));
       } else {
         const m = new V(a.x, a.y, b.z - d);
-        if (m.z - a.z > 0.01) path.add(new THREE.LineCurve3(a, m));
-        path.add(new THREE.CubicBezierCurve3(m, new V(a.x, a.y, b.z - d * 0.4), new V(b.x, b.y, b.z - d * 0.6), b));
+        if (m.z - a.z > 0.01) path.add(new THREE.LineCurve3(a.clone(), m));
+        path.add(new THREE.CubicBezierCurve3(m, new V(a.x, a.y, b.z - d * 0.4), new V(b.x, b.y, b.z - d * 0.6), b.clone()));
       }
       return path;
     }
 
-    buildEdge(it, a, b) {
-      const e = it.data;
-      const m = this.mat(e.color);
-      let curve;
-      let segs;
-      let radius = e.color === 'ghost' ? 0.07 : 0.11;
-      let material = m.edge;
-      if (e.kind === 'stub') {
-        curve = new THREE.LineCurve3(b.clone().setZ(b.z - SP * 0.9), b);
-        segs = 1;
-        radius = 0.06;
-        material = m.stub;
-      } else {
-        curve = this.edgeCurve(e.kind, a, b);
-        segs = curve.isLineCurve3 ? 1 : clamp(Math.ceil(curve.getLength() / 0.22), 14, 160);
-      }
-      const geo = new THREE.TubeGeometry(curve, segs, radius, 6, false);
+    buildCurve(it, a, b, r) {
+      const curve = this.edgeCurve(it.data.kind, a, b);
+      const segs = clamp(Math.ceil(curve.getLength() / 0.22), 14, 160);
+      const geo = new THREE.TubeGeometry(curve, segs, r, RADIAL, false);
       if (it.mesh) {
         it.mesh.geometry.dispose();
         it.mesh.geometry = geo;
-        it.mesh.material = material;
       } else {
-        it.mesh = new THREE.Mesh(geo, material);
+        it.mesh = new THREE.Mesh(geo, this.mat(it.data.color).edge);
         this.gEdges.add(it.mesh);
       }
       it.segs = segs;
+      it.r = r;
+      it.ax = a.x;
+      it.ay = a.y;
+      it.az = a.z;
+      it.bx = b.x;
+      it.by = b.y;
+      it.bz = b.z;
     }
 
-    frame(now) {
-      this.raf = this.active ? requestAnimationFrame(this.frame) : 0;
-      if (!this.active || !this.W) return;
-
-      /* cámara: vuelo animado, seguimiento de lo último y giro lento */
-      if (this.fly) {
-        const f = this.fly;
-        const p = ease(clamp((now - f.t0) / f.dur, 0, 1));
-        this.controls.target.lerpVectors(f.fromT, f.toT, p);
-        this.camera.position.lerpVectors(f.fromC, f.toC, p);
-        if (p >= 1) this.fly = null;
-        this.needsRender = true;
-      } else if (this.following && !this.interacting) {
-        const t = this.followPoint();
-        const delta = t.sub(this.controls.target).multiplyScalar(0.06);
-        if (delta.lengthSq() > 1e-8) {
-          this.controls.target.add(delta);
-          this.camera.position.add(delta);
-          this.needsRender = true;
-        }
+    writePointers() {
+      for (const [name, p] of this.pointers) {
+        const h = this.heads.get(name);
+        const node = h && this.nodes.get(h.data.sha)?.curV;
+        if (!node) continue;
+        const pos = p.line.geometry.attributes.position;
+        pos.setXYZ(0, node.x, node.y, node.z);
+        pos.setXYZ(1, h.curV.x, h.curV.y, h.curV.z);
+        pos.needsUpdate = true;
+        p.line.computeLineDistances();
       }
-      const idle = now - this.lastInteract > 4000;
-      this.controls.autoRotate = this.spin && this.following && idle && !this.interacting && !this.pinned && !this.tipSha && !reduceMotion();
-      if (this.controls.update() || this.controls.autoRotate) this.needsRender = true;
+    }
 
-      /* nodos */
-      for (const it of this.nodes.values()) {
-        const v = this.cur(it, now);
-        if (!it.curV || !it.curV.equals(v)) {
-          it.curV = v.clone();
-          it.group.position.copy(v);
-          this.needsRender = true;
-        }
-        if (it.born) {
-          const p = clamp((now - it.born) / 550, 0, 1);
-          it.group.scale.setScalar(Math.max(0.001, easeOutBack(p)));
-          if (p >= 1) it.born = 0;
-          this.needsRender = true;
-        }
-      }
-      for (const d of this.dying.splice(0)) {
-        const p = clamp((now - d.t0) / 350, 0, 1);
-        d.obj.scale.setScalar(Math.max(0.001, d.from * (1 - p)));
-        if (p < 1) this.dying.push(d);
-        else this.gNodes.remove(d.obj);
-        this.needsRender = true;
-      }
+    /* ---------- efectos ---------- */
 
-      /* aristas: se reconstruyen solo si sus extremos se movieron */
-      for (const it of this.edges.values()) {
-        const e = it.data;
-        const b = this.nodes.get(e.to)?.curV;
-        const a = e.from ? this.nodes.get(e.from)?.curV : b;
-        if (!a || !b) continue;
-        const key = `${a.x.toFixed(3)},${a.y.toFixed(3)},${a.z.toFixed(3)}|${b.x.toFixed(3)},${b.y.toFixed(3)},${b.z.toFixed(3)}`;
-        if (key !== it.key) {
-          this.buildEdge(it, a, b);
-          it.key = key;
-          this.needsRender = true;
-        }
-        if (it.born) {
-          const p = clamp((now - it.born) / DUR, 0, 1);
-          it.mesh.geometry.setDrawRange(0, Math.ceil(p * it.segs) * 6 * 6);
-          if (p >= 1) {
-            it.born = 0;
-            it.mesh.geometry.setDrawRange(0, Infinity);
-          }
-          this.needsRender = true;
-        }
-      }
+    /** Onda que se expande en el plano del commit (perpendicular al tiempo). */
+    ripple(v, col) {
+      const mesh = new THREE.Mesh(
+        this.geo.ring,
+        new THREE.MeshBasicMaterial({
+          color: col,
+          transparent: true,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+          blending: this.dark ? THREE.AdditiveBlending : THREE.NormalBlending,
+        }),
+      );
+      mesh.position.copy(v);
+      mesh.scale.setScalar(0.6);
+      this.gFx.add(mesh);
+      this.ripples.push({ mesh, t0: performance.now() });
+    }
 
-      /* ondas de commits nuevos */
+    /** Llegada de un commit: onda, chispas y un destello del presente. */
+    burst(v, col) {
+      this.ripple(v, col);
+      const spark = col.clone().lerp(new THREE.Color(0xffffff), this.dark ? 0.45 : 0.1);
+      for (let i = 0; i < 16; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const sp = 2.5 + Math.random() * 4.5;
+        this.sparkList.push({
+          x: v.x,
+          y: v.y,
+          z: v.z,
+          vx: Math.cos(a) * sp,
+          vy: Math.sin(a) * sp,
+          vz: (Math.random() - 0.35) * 3,
+          t: 0,
+          life: 0.6 + Math.random() * 0.5,
+          size: 0.35 + Math.random() * 0.35,
+          col: spark,
+        });
+      }
+      if (this.sparkList.length > 480) this.sparkList.splice(0, this.sparkList.length - 480);
+      this.flashAmt = Math.min(1, this.flashAmt + 0.6);
+    }
+
+    stepFx(now, dt) {
+      let changed = false;
+      for (let i = this.pending.length - 1; i >= 0; i--) {
+        const f = this.pending[i];
+        if (now < f.at) continue;
+        this.pending.splice(i, 1);
+        if (this.nodes.get(f.it.sha) === f.it) this.burst(f.it.toV, this.col(f.it.data.color));
+      }
       for (let i = this.ripples.length - 1; i >= 0; i--) {
         const r = this.ripples[i];
-        const p = clamp((now - r.t0) / 1500, 0, 1);
-        r.sprite.scale.setScalar(1 + p * 9);
-        r.sprite.material.opacity = 0.9 * (1 - p);
+        const p = clamp((now - r.t0) / 1300, 0, 1);
+        r.mesh.scale.setScalar(0.6 + 7 * easeOut(p));
+        r.mesh.material.opacity = (this.dark ? 0.85 : 0.55) * Math.pow(1 - p, 1.5);
         if (p >= 1) {
-          this.gFx.remove(r.sprite);
-          r.sprite.material.dispose();
+          this.gFx.remove(r.mesh);
+          r.mesh.material.dispose();
           this.ripples.splice(i, 1);
         }
-        this.needsRender = true;
+        changed = true;
       }
-
-      /* cabezas: posición animada (la etiqueta viaja al nuevo commit) */
-      for (const [name, it] of this.heads) {
-        const v = this.cur(it, now);
-        it.curV = v.clone();
-        const p = this.pointers.get(name);
-        if (p) {
-          const node = this.nodes.get(it.data.sha)?.curV;
-          if (node) {
-            const pos = p.line.geometry.attributes.position;
-            pos.setXYZ(0, node.x, node.y, node.z);
-            pos.setXYZ(1, v.x, v.y, v.z);
-            pos.needsUpdate = true;
-            p.line.computeLineDistances();
+      if (this.sparkList.length || this.sparks.n) {
+        const drag = Math.exp(-2.8 * dt);
+        this.sparks.begin(this.sparkList.length);
+        for (let i = this.sparkList.length - 1; i >= 0; i--) {
+          const s = this.sparkList[i];
+          s.t += dt;
+          if (s.t >= s.life) {
+            this.sparkList.splice(i, 1);
+            continue;
           }
+          s.vx *= drag;
+          s.vy *= drag;
+          s.vz *= drag;
+          s.x += s.vx * dt;
+          s.y += s.vy * dt;
+          s.z += s.vz * dt;
+          const q = 1 - s.t / s.life;
+          this.sparks.push(s.x, s.y, s.z, s.col, q * q, s.size * (0.6 + 0.4 * q), 0);
         }
+        this.sparks.end();
+        changed = true;
       }
-
-      if (this.needsRender) {
-        this.renderer.render(this.scene, this.camera);
-        this.needsRender = false;
-        this.placeLabels();
+      if (this.flashAmt > 0) {
+        this.flashAmt = Math.max(0, this.flashAmt - dt * 1.4);
+        changed = true;
       }
+      this.nowLight.intensity = (this.dark ? 0.75 : 0.45) + this.flashAmt * 1.1;
+      this.portal.material.uniforms.uFlash.value = this.flashAmt;
+      return changed;
+    }
 
-      /* hover */
-      if (this.mouse?.moved && !this.interacting) {
-        this.mouse.moved = false;
-        const sha = this.pick(this.mouse.x, this.mouse.y);
-        this.canvas.style.cursor = sha ? 'pointer' : '';
-        if (!this.pinned) {
-          if (sha && sha !== this.tipSha) this.showTip(sha, false);
-          else if (!sha && this.tipSha) this.hideTip();
-        }
+    /** El anillo del presente avanza con suavidad cuando llegan commits. */
+    stepPortal(dt) {
+      const t = this.portalTarget;
+      this.portal.visible = !!t;
+      if (!t) return false;
+      if (this.portalZ == null) (this.portalZ = t.z), (this.portalR = t.r);
+      const dz = t.z - this.portalZ;
+      const dr = t.r - this.portalR;
+      const moving = Math.abs(dz) > 1e-3 || Math.abs(dr) > 1e-3;
+      if (moving) {
+        const k = this.motion ? 1 - Math.exp(-dt * 4) : 1;
+        this.portalZ += dz * k;
+        this.portalR += dr * k;
+      }
+      this.portal.position.set(0, 0, this.portalZ);
+      this.portal.scale.setScalar(this.portalR);
+      this.nowLight.position.set(this.portalR * 0.4, this.portalR * 0.7, this.portalZ + 4);
+      return moving;
+    }
+
+    beforeRender() {
+      const c = this.controls;
+      // la niebla acompaña al zoom: lo que miras queda nítido y la historia se pierde detrás
+      const near = this.camera.position.distanceTo(c.target) * 0.8 + 6;
+      const far = near + 70 + this.radius * 2.5;
+      this.scene.fog.near = near;
+      this.scene.fog.far = far;
+      this.u.fog.value.set(near, far);
+      this.stars.position.copy(this.camera.position);
+      // el anillo del presente se desvanece cuando la cámara lo atraviesa o queda de canto
+      if (this.portal.visible) {
+        const cam = this.camera.position;
+        const r = this.portalR;
+        const near = Math.hypot(cam.x, cam.y, cam.z - this.portalZ) / r;
+        const edgeOn = Math.abs(cam.z - this.portalZ) / Math.max(1e-3, Math.hypot(cam.x, cam.y, cam.z - this.portalZ));
+        this.portal.material.uniforms.uOpacity.value = this.portalAlpha * clamp((near - 1.1) / 1.2, 0, 1) * clamp(edgeOn * 3, 0.25, 1);
+      }
+      const du = this.dust.material.uniforms;
+      du.uZ0.value = c.target.z - 120;
+      du.uR.value = this.radius;
+    }
+
+    /** Si los cuadros tardan de más con la cámara en movimiento, baja la resolución (nunca de 1×). */
+    adapt(ft, now) {
+      if (ft > 80 || this.dpr <= 1) return; // pestaña recién vuelta o ya al mínimo
+      this.ftAvg = this.ftAvg ? this.ftAvg * 0.94 + ft * 0.06 : ft;
+      if (this.ftAvg > 27 && now - (this.dprAt || 0) > 2500) {
+        this.dprLimit = Math.max(1, this.dpr - 0.25);
+        this.dprAt = now;
+        this.ftAvg = 0;
+        this.resize();
+      }
+    }
+
+    hover() {
+      if (!this.mouse?.moved || this.interacting) return;
+      this.mouse.moved = false;
+      const sha = this.pick(this.mouse.x, this.mouse.y);
+      this.canvas.style.cursor = sha ? 'pointer' : '';
+      this.setHover(sha);
+      if (!this.pinned) {
+        if (sha && sha !== this.tipSha) this.showTip(sha, false);
+        else if (!sha && this.tipSha) this.hideTip();
       }
     }
 
     placeLabels() {
       const camPos = this.camera.position;
-      const axis = new THREE.Vector3();
+      const axis = this.tmpA;
+      const shown = [];
       for (const it of this.heads.values()) {
-        if (!it.curV) continue;
         const p = this.project(it.curV);
         const dist = camPos.distanceTo(it.curV);
         const vis = p && p.x > -40 && p.x < this.W + 40 && p.y > -20 && p.y < this.H + 20 && dist < 160;
-        it.el.style.display = vis ? '' : 'none';
+        this.setStyle(it, 'display', vis ? '' : 'none');
         if (!vis) continue;
         // la etiqueta se aleja del tronco en pantalla, así las ramas vecinas no se pisan
+        const px = p.x;
+        const py = p.y;
         const q = this.project(axis.set(0, 0, it.curV.z));
-        let dx = q ? p.x - q.x : 1;
-        let dy = q ? p.y - q.y : -0.4;
+        let dx = q ? px - q.x : 1;
+        let dy = q ? py - q.y : -0.4;
         const len = Math.hypot(dx, dy);
         if (len < 4) (dx = 0.7), (dy = -0.7);
         else (dx /= len), (dy /= len);
         const off = it.data.own ? 18 : 12;
         const w = it.w || (it.w = it.el.offsetWidth);
-        const x = clamp(p.x + dx * off - (dx < -0.2 ? w : 0), 4, Math.max(4, this.W - w - 4));
-        const y = p.y + dy * off - 11;
-        it.el.style.transform = `translate(${Math.round(x)}px,${Math.round(y)}px)`;
-        it.el.style.opacity = clamp(1.15 - (dist - 30) / 80, 0.3, 1).toFixed(2);
-        it.el.style.zIndex = String(1000 - Math.round(dist));
+        const x = clamp(px + dx * off - (dx < -0.2 ? w : 0), 4, Math.max(4, this.W - w - 4));
+        const y = py + dy * off - 11;
+        shown.push({ it, x, y, w, dist });
       }
-      const top = new THREE.Vector3();
+      // las más cercanas (y la rama por defecto) primero; las que quedan tapadas se atenúan
+      shown.sort((a, b) => b.it.data.isDefault - a.it.data.isDefault || a.dist - b.dist);
+      const placed = [];
+      for (const s of shown) {
+        const hit = placed.some((r) => s.x < r.x + r.w + 4 && r.x < s.x + s.w + 4 && s.y < r.y + 24 && r.y < s.y + 24);
+        if (!hit) placed.push(s);
+        const fade = clamp(1.15 - (s.dist - 30) / 80, 0.3, 1);
+        this.setStyle(s.it, 'transform', `translate(${Math.round(s.x)}px,${Math.round(s.y)}px)`);
+        this.setStyle(s.it, 'opacity', (hit ? fade * 0.22 : fade).toFixed(2));
+        this.setStyle(s.it, 'zIndex', String(hit ? 100 : 1000 - Math.round(s.dist)));
+      }
+      const top = this.tmpB;
       for (const d of this.days.values()) {
         top.set(0, (this.dayR || this.radius) + 0.7, d.mesh.position.z);
         const p = this.project(top);
         const dist = camPos.distanceTo(top);
         const vis = p && p.x > 0 && p.x < this.W - 40 && p.y > 4 && p.y < this.H - 10 && dist < 120;
-        d.el.style.display = vis ? '' : 'none';
+        this.setStyle(d, 'display', vis ? '' : 'none');
         if (vis) {
-          d.el.style.transform = `translate(${Math.round(p.x)}px,${Math.round(p.y)}px) translate(-50%,-100%)`;
-          d.el.style.opacity = clamp(1.1 - (dist - 30) / 80, 0.25, 1).toFixed(2);
+          this.setStyle(d, 'transform', `translate(${Math.round(p.x)}px,${Math.round(p.y)}px) translate(-50%,-100%)`);
+          this.setStyle(d, 'opacity', clamp(1.1 - (dist - 30) / 80, 0.25, 1).toFixed(2));
         }
       }
       if (this.tipSha && !this.tip.hidden) this.placeTip();
     }
 
+    /** Escribe un estilo solo si cambió: decenas de etiquetas por cuadro sin trabajo de más. */
+    setStyle(it, prop, value) {
+      const cache = it.st || (it.st = {});
+      if (cache[prop] === value) return;
+      cache[prop] = value;
+      it.el.style[prop] = value;
+    }
+
     clear() {
-      for (const it of this.nodes.values()) this.gNodes.remove(it.group);
-      for (const it of this.edges.values()) this.disposeMesh(it.mesh);
+      for (const it of this.edges.values()) this.dropCurve(it);
       for (const p of this.pointers.values()) this.disposeMesh(p.line);
       for (const it of this.heads.values()) it.el.remove();
       for (const d of this.days.values()) (this.gDays.remove(d.mesh), d.el.remove());
-      for (const r of this.ripples) this.gFx.remove(r.sprite);
+      for (const r of this.ripples) (this.gFx.remove(r.mesh), r.mesh.material.dispose());
       for (const m of [this.nodes, this.edges, this.heads, this.pointers, this.days]) m.clear();
       this.ripples = [];
+      this.sparkList = [];
+      this.pending = [];
       this.dying = [];
-      this.pickables = [];
       this.layout = null;
       this.maxX = 0;
       this.placed = false;
       this.fly = null;
+      this.hoverSha = null;
+      this.portalTarget = null;
+      this.portalZ = null;
+      this.nodeAnim = this.edgeAnim = false;
       this.unpin();
       this.following = true;
       this.opts.onFollowChange?.(true);
+      this.dirtyNodes = this.dirtyEdges = true;
       this.needsRender = true;
     }
   }

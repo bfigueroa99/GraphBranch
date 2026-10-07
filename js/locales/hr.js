@@ -72,6 +72,7 @@ GB.i18n.define('hr', {
   'zoom.in.title': 'Povećajte (Ctrl + kotačić)',
   'spin.label': 'Rotirajte prikaz',
   'spin.title': 'Polako rotirajte prikaz dok ga ne dodirujete',
+  'fullscreen.label': 'Cijeli zaslon',
   'follow.live': 'Uživo',
   'follow.jump': 'Idite na najnovije',
   'follow.live.title': 'Prikaz prati nove commitove. Povucite za pregled povijesti.',
@@ -79,6 +80,7 @@ GB.i18n.define('hr', {
   'webgl.missing': 'WebGL je isključen u pregledniku; 3D prikaz nije dostupan.',
   'hint.3d': 'Povucite za rotiranje · desni klik ili <kbd>Shift</kbd> + povlačenje za pomicanje · kotačić ili štipanje za zumiranje · kliknite commit za detalje',
   'hint.2d': 'Povucite za pomicanje · kotačić za listanje povijesti · <kbd>Ctrl</kbd> + kotačić ili štipanje za zumiranje · kliknite commit za detalje',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> rotiranje · <kbd>↑</kbd> <kbd>↓</kbd> putovanje kroz povijest · <kbd>F</kbd> cijeli zaslon',
   'graph.aria2d': 'Graf grana i commitova',
   'graph.aria3d': '3D prikaz grana i commitova',
 

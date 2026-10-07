@@ -68,6 +68,7 @@ GB.i18n.define('es', {
   'zoom.in.title': 'Acercar (Ctrl + rueda)',
   'spin.label': 'Girar la vista',
   'spin.title': 'Girar la vista lentamente cuando no la tocas',
+  'fullscreen.label': 'Pantalla completa',
   'follow.live': 'En vivo',
   'follow.jump': 'Ir a lo último',
   'follow.live.title': 'La vista sigue los commits nuevos. Arrastra para recorrer la historia.',
@@ -75,6 +76,7 @@ GB.i18n.define('es', {
   'webgl.missing': 'Tu navegador no tiene WebGL activado; la vista 3D no está disponible.',
   'hint.3d': 'Arrastra para girar · clic derecho o <kbd>Mayús</kbd> + arrastrar para desplazar · rueda o pellizco para acercar · clic en un commit para ver el detalle',
   'hint.2d': 'Arrastra para moverte · rueda para recorrer la historia · <kbd>Ctrl</kbd> + rueda o pellizco para zoom · clic en un commit para ver el detalle',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> girar · <kbd>↑</kbd> <kbd>↓</kbd> recorrer la historia · <kbd>F</kbd> pantalla completa',
   'graph.aria2d': 'Grafo de ramas y commits',
   'graph.aria3d': 'Vista 3D de ramas y commits',
 

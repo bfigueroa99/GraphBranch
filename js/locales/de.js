@@ -68,6 +68,7 @@ GB.i18n.define('de', {
   'zoom.in.title': 'Vergrößern (Strg + Mausrad)',
   'spin.label': 'Ansicht drehen',
   'spin.title': 'Ansicht langsam drehen, solange du sie nicht berührst',
+  'fullscreen.label': 'Vollbild',
   'follow.live': 'Live',
   'follow.jump': 'Zum Neuesten springen',
   'follow.live.title': 'Die Ansicht folgt neuen Commits. Ziehen, um den Verlauf zu durchsuchen.',
@@ -75,6 +76,7 @@ GB.i18n.define('de', {
   'webgl.missing': 'In deinem Browser ist WebGL deaktiviert; die 3D-Ansicht ist nicht verfügbar.',
   'hint.3d': 'Ziehen zum Drehen · Rechtsklick oder <kbd>Umschalt</kbd> + Ziehen zum Verschieben · Mausrad oder Pinch-Geste zum Zoomen · Commit anklicken für Details',
   'hint.2d': 'Ziehen zum Bewegen · Mausrad zum Durchblättern des Verlaufs · <kbd>Strg</kbd> + Mausrad oder Pinch-Geste zum Zoomen · Commit anklicken für Details',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> drehen · <kbd>↑</kbd> <kbd>↓</kbd> durch den Verlauf reisen · <kbd>F</kbd> Vollbild',
   'graph.aria2d': 'Graph der Branches und Commits',
   'graph.aria3d': '3D-Ansicht der Branches und Commits',
 

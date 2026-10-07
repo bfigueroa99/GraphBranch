@@ -68,6 +68,7 @@ GB.i18n.define('ca', {
   'zoom.in.title': 'Acosta (Ctrl + roda)',
   'spin.label': 'Gira la vista',
   'spin.title': 'Gira la vista lentament quan no la toques',
+  'fullscreen.label': 'Pantalla completa',
   'follow.live': 'En directe',
   'follow.jump': "Ves a l'últim",
   'follow.live.title': "La vista segueix els commits nous. Arrossega per recórrer l'historial.",
@@ -75,6 +76,7 @@ GB.i18n.define('ca', {
   'webgl.missing': 'El teu navegador té el WebGL desactivat; la vista 3D no està disponible.',
   'hint.3d': "Arrossega per girar · clic dret o <kbd>Maj</kbd> + arrossega per desplaçar · roda o pessic per fer zoom · clic en un commit per veure'n el detall",
   'hint.2d': "Arrossega per moure't · roda per recórrer l'historial · <kbd>Ctrl</kbd> + roda o pessic per fer zoom · clic en un commit per veure'n el detall",
+  'hint.keys': "<kbd>←</kbd> <kbd>→</kbd> gira · <kbd>↑</kbd> <kbd>↓</kbd> recorre l'historial · <kbd>F</kbd> pantalla completa",
   'graph.aria2d': 'Graf de branques i commits',
   'graph.aria3d': 'Vista 3D de branques i commits',
 

@@ -68,6 +68,7 @@ GB.i18n.define('nb', {
   'zoom.in.title': 'Zoom inn (Ctrl + hjul)',
   'spin.label': 'Roter visningen',
   'spin.title': 'Roter visningen sakte når du ikke rører den',
+  'fullscreen.label': 'Fullskjerm',
   'follow.live': 'Live',
   'follow.jump': 'Gå til siste',
   'follow.live.title': 'Visningen følger nye commits. Dra for å bla gjennom historikken.',
@@ -75,6 +76,7 @@ GB.i18n.define('nb', {
   'webgl.missing': 'Nettleseren din har WebGL slått av; 3D-visningen er ikke tilgjengelig.',
   'hint.3d': 'Dra for å rotere · høyreklikk eller <kbd>Shift</kbd> + dra for å panorere · hjul eller klyp for å zoome · klikk på en commit for detaljer',
   'hint.2d': 'Dra for å flytte · hjul for å bla gjennom historikken · <kbd>Ctrl</kbd> + hjul eller klyp for å zoome · klikk på en commit for detaljer',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> roter · <kbd>↑</kbd> <kbd>↓</kbd> reis gjennom historikken · <kbd>F</kbd> fullskjerm',
   'graph.aria2d': 'Graf over branches og commits',
   'graph.aria3d': '3D-visning av branches og commits',
 

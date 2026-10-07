@@ -68,6 +68,7 @@ GB.i18n.define('nl', {
   'zoom.in.title': 'Inzoomen (Ctrl + scrollwiel)',
   'spin.label': 'De weergave roteren',
   'spin.title': 'De weergave langzaam roteren zolang je er niet aan zit',
+  'fullscreen.label': 'Volledig scherm',
   'follow.live': 'Live',
   'follow.jump': 'Naar de nieuwste',
   'follow.live.title': 'De weergave volgt nieuwe commits. Sleep om door de geschiedenis te bladeren.',
@@ -75,6 +76,7 @@ GB.i18n.define('nl', {
   'webgl.missing': 'WebGL staat uit in je browser; de 3D-weergave is niet beschikbaar.',
   'hint.3d': 'Sleep om te roteren · klik met rechts of <kbd>Shift</kbd> + slepen om te verschuiven · scrollwiel of knijpen om te zoomen · klik op een commit voor details',
   'hint.2d': 'Sleep om te bewegen · scrollwiel om door de geschiedenis te scrollen · <kbd>Ctrl</kbd> + scrollwiel of knijpen om te zoomen · klik op een commit voor details',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> roteren · <kbd>↑</kbd> <kbd>↓</kbd> door de geschiedenis reizen · <kbd>F</kbd> volledig scherm',
   'graph.aria2d': 'Graaf van branches en commits',
   'graph.aria3d': '3D-weergave van branches en commits',
 

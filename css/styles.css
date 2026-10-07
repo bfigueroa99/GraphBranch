@@ -33,6 +33,10 @@
   --s8: #e34948;
   --ghost: #b4bdb9;
 
+  /* cielo de la vista 3D: tinte de los colores de rama y viñeta en los bordes */
+  --nebula: 4%;
+  --vignette: rgb(16 22 20 / 0.07);
+
   --font-display: "Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif;
   --font-ui: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -65,6 +69,8 @@
     --s7: #9085e9;
     --s8: #e66767;
     --ghost: #3d4945;
+    --nebula: 7%;
+    --vignette: rgb(0 0 0 / 0.38);
     color-scheme: dark;
   }
 }
@@ -91,6 +97,8 @@
   --s7: #9085e9;
   --s8: #e66767;
   --ghost: #3d4945;
+  --nebula: 7%;
+  --vignette: rgb(0 0 0 / 0.38);
   color-scheme: dark;
 }
 
@@ -616,6 +624,20 @@ kbd {
   font-size: 11.5px;
 }
 
+/* pantalla completa (botón o tecla F): el panel del grafo ocupa toda la pantalla.
+   Reglas separadas: un selector que el navegador no conoce anularía la lista entera. */
+.graph-panel:fullscreen {
+  border: 0;
+  border-radius: 0;
+}
+.graph-panel:-webkit-full-screen {
+  border: 0;
+  border-radius: 0;
+}
+.graph-panel::backdrop {
+  background: var(--bg);
+}
+
 /* capa de carga / error */
 .overlay {
   position: absolute;
@@ -930,9 +952,24 @@ kbd {
 
 /* ---------- vista 3D ---------- */
 .graph3d-wrap {
+  /* un cielo apenas teñido con dos colores de rama: da profundidad sin competir con el grafo */
   background:
+    radial-gradient(55% 45% at 72% 22%, color-mix(in srgb, var(--s1) var(--nebula), transparent), transparent 70%),
+    radial-gradient(50% 45% at 18% 82%, color-mix(in srgb, var(--s7) var(--nebula), transparent), transparent 70%),
     radial-gradient(110% 85% at 50% 30%, var(--band), transparent 70%),
     var(--surface);
+}
+/* viñeta: los bordes se apagan un poco y la mirada va al centro */
+.graph3d-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 95% at 50% 45%, transparent 58%, var(--vignette));
+}
+.graph3d-wrap:focus-visible {
+  outline: 2px solid var(--ink-3);
+  outline-offset: -2px;
 }
 .g3-canvas {
   display: block;
@@ -973,6 +1010,12 @@ kbd {
 }
 .g3-head:hover {
   background: var(--surface-2);
+}
+/* las etiquetas tapadas por otra se atenúan; al pasar el puntero o con el foco vuelven al frente */
+.g3-head:hover,
+.g3-head:focus-visible {
+  opacity: 1 !important;
+  z-index: 2000 !important;
 }
 .g3-head.moved {
   animation: glow3 2.6s ease-out;

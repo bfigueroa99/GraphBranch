@@ -68,6 +68,7 @@ GB.i18n.define('sw', {
   'zoom.in.title': 'Kuza (Ctrl + gurudumu)',
   'spin.label': 'Zungusha mwonekano',
   'spin.title': 'Zungusha mwonekano polepole usipougusa',
+  'fullscreen.label': 'Skrini nzima',
   'follow.live': 'Moja kwa moja',
   'follow.jump': 'Nenda kwenye ya hivi karibuni',
   'follow.live.title': 'Mwonekano unafuata commit mpya. Buruta ili kuvinjari historia.',
@@ -75,6 +76,7 @@ GB.i18n.define('sw', {
   'webgl.missing': 'Kivinjari chako kimezima WebGL; mwonekano wa 3D haupatikani.',
   'hint.3d': 'Buruta ili kuzungusha · bofya kulia au <kbd>Shift</kbd> + buruta ili kusogeza · zungusha gurudumu au bana ili kukuza · bofya commit ili kuona maelezo',
   'hint.2d': 'Buruta ili kusogeza · zungusha gurudumu ili kupitia historia · <kbd>Ctrl</kbd> + gurudumu au bana ili kukuza · bofya commit ili kuona maelezo',
+  'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> zungusha · <kbd>↑</kbd> <kbd>↓</kbd> safiri kupitia historia · <kbd>F</kbd> skrini nzima',
   'graph.aria2d': 'Mchoro wa matawi na commit',
   'graph.aria3d': 'Mwonekano wa 3D wa matawi na commit',
 

@@ -32,11 +32,11 @@
   const ARRIVE_Z = 7; // desde cuán lejos (hacia la cámara) llega
   const NODE_R = 0.42;
   const HEAD_SCALE = 1.55;
-  const EDGE_R = 0.11;
-  const GHOST_R = 0.07;
+  const EDGE_R = 0.055; // radio de las aristas: finas, como líneas
+  const GHOST_R = 0.035;
   const RADIAL = 12; // lados de los tubos (de cerca, menos se ven como facetas)
   const RADIAL_MID = 8; // con miles de tramos
-  const THIN_D = 8; // a menos de esta distancia de la cámara los tubos se afinan: tope de grosor aparente
+  const THIN_D = 12; // a menos de esta distancia de la cámara los tubos se afinan: tope de grosor aparente
   const AMBIENT_MS = 31; // en reposo, los efectos se dibujan a ~30 fps
   const MAX_PIXELS = 4.6e6; // tope de píxeles del lienzo (pantallas 4K a pantalla completa)
   const SPIN_SPEED = 0.037; // rad/s del giro lento
@@ -1941,8 +1941,8 @@
       const c = this.tmpCol;
       const dash = (from, to, fade) => {
         c.copy(col).lerp(this.galaxy ? this.spaceCol : this.bg, fade);
-        if (dir) this.iStub.segment(b.x + dir.x * SP * from, b.y + dir.y * SP * from, b.z + dir.z * SP * from, b.x + dir.x * SP * to, b.y + dir.y * SP * to, b.z + dir.z * SP * to, 0.06, c);
-        else this.iStub.segment(b.x, b.y, b.z - SP * to, b.x, b.y, b.z - SP * from, 0.06, c);
+        if (dir) this.iStub.segment(b.x + dir.x * SP * from, b.y + dir.y * SP * from, b.z + dir.z * SP * from, b.x + dir.x * SP * to, b.y + dir.y * SP * to, b.z + dir.z * SP * to, 0.035, c);
+        else this.iStub.segment(b.x, b.y, b.z - SP * to, b.x, b.y, b.z - SP * from, 0.035, c);
       };
       dash(0.12, 0.42, 0.35);
       dash(0.55, 0.8, 0.6);

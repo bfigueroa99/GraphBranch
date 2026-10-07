@@ -142,7 +142,27 @@ npm run dist                            # el instalador para este sistema, en di
 - Cerrar la ventana no cierra la app: queda en la bandeja del sistema (en macOS, en la barra de menús) y sigue revisando el repositorio. Avisa con notificaciones del sistema si las activaste (campana de la barra superior), y el ícono muestra al pasar el cursor cuántas novedades llegaron. Para volver, usa el ícono o abre la app otra vez; para salir del todo, **Salir** en el menú del ícono (o `Ctrl+Q`; en macOS, `Cmd+Q`). En GNOME sin la extensión AppIndicator no se ve la bandeja: la app sigue corriendo y vuelve al abrirla otra vez.
 - Con la ventana oculta o minimizada la vista sigue al día. Chromium espacia los temporizadores de una página oculta a uno por minuto después de 5 minutos (*intensive wake-up throttling*); la app desactiva esa regla, pero no dibuja mientras no se ve.
 - Funciona sin conexión: todo lo que necesita va dentro de la app. Sin red abre la demo; un repositorio real muestra que no hay conexión y se vuelve a conectar apenas vuelve la red, sin esperar el próximo reintento.
-- `npm run dist` arma el instalador del sistema donde lo corres: `.dmg` en macOS, `.exe` en Windows y `.AppImage` en Linux. No van firmados, así que macOS y Windows avisan al abrirlos la primera vez.
+- `npm run dist` arma el instalador del sistema donde lo corres: `.dmg` en macOS, `.exe` en Windows y `.AppImage` en Linux. Para publicarlos, mejor el release de abajo, que arma los tres.
+
+### Publicar la app de escritorio
+
+Publica un release en GitHub (**Releases → Draft a new release**) con un tag de versión, como `v0.2.0`. El flujo `.github/workflows/desktop.yml` arma los instaladores y los adjunta al release en unos minutos:
+
+| Sistema | Archivo |
+| --- | --- |
+| Linux | `GraphBranch-0.2.0-linux-x86_64.AppImage` |
+| Windows | `GraphBranch-0.2.0-win-x64.exe` |
+| macOS (Apple Silicon e Intel) | `GraphBranch-0.2.0-mac-arm64.dmg`, `GraphBranch-0.2.0-mac-x64.dmg` |
+
+La versión sale del tag, no hace falta cambiar `package.json`. Para probar sin publicar nada: **Actions → App de escritorio → Run workflow**; los instaladores quedan como artefactos de esa ejecución.
+
+Los instaladores no van firmados con un certificado, así que el sistema avisa la primera vez:
+
+- **Windows**: SmartScreen dice que la app no es reconocida → **Más información → Ejecutar de todas formas**.
+- **macOS**: la app lleva firma *ad-hoc* (sin ella, en Apple Silicon no abre). La primera vez macOS no la deja abrir: ve a **Ajustes del Sistema → Privacidad y seguridad → Abrir igualmente**.
+- **Linux**: el AppImage se marca como ejecutable (`chmod +x`) y se abre. Como todo AppImage de Electron, corre sin el sandbox de Chromium (`--no-sandbox`), porque un AppImage no puede instalar el ayudante que lo necesita.
+
+Para firmarlos de verdad hacen falta un certificado de Apple Developer (y notarizar) y uno de firma de código para Windows: electron-builder los toma de variables de entorno (`CSC_LINK`, `CSC_KEY_PASSWORD`, `APPLE_ID`…) que el flujo tendría que recibir como secretos, y en macOS hay que quitar `"identity": "-"` de `package.json`.
 
 ## Estructura
 

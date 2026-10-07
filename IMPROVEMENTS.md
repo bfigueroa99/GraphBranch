@@ -17,39 +17,41 @@ node tools/smoke.mjs --langs   # además los 40 idiomas en pantalla de celular
 
 Ordenados por impacto. Salen de dos auditorías del código (datos y lógica; vistas y accesibilidad)
 hechas en la primera iteración; cada uno se verificó leyendo el código, y los marcados con
-*reproducido* también se probaron.
+*reproducido* también se probaron. Los números de línea son de cuando se auditó: con los cambios
+posteriores pueden haberse movido.
 
 ### Alta
 
-1. **El estado le habla al lector de pantalla cada segundo.** `aria-live` envuelve todo `#status`
-   (`index.html:58`) y `#status-sub` ("actualizado hace 5 s · próximo en 7 s") se reescribe cada
-   segundo (`app.js:547`). Arreglo: dejar `aria-live` solo en `#status-text`.
-2. **Un filtro o una rama fijada que cambian durante un ciclo se pierden** (modos lista y eventos,
+1. **Un filtro o una rama fijada que cambian durante un ciclo se pierden** (modos lista y eventos,
    *reproducido*). El ciclo en curso apaga `reseed` al terminar (`github.js:326`) y el siguiente recibe
    304. Arreglo: copiar `reseed` a una variable al empezar `poll()` y apagarlo ahí; restaurarlo si falla.
-3. **Al cambiar de repo quedan los datos del anterior.** `connect()` no limpia `lastRender` ni las
+2. **Al cambiar de repo quedan los datos del anterior.** `connect()` no limpia `lastRender` ni las
    cifras (`app.js:175`): con un repo que da 404 se ven las cifras del anterior y Replay reproduce su
    grafo. Arreglo: `lastRender = null` y cifras en "–".
 
 ### Media
 
-4. **Reloj adelantado → sondeo cada 3 s** (*reproducido*). Si `rate.reset` ya pasó según el reloj
+3. **Reloj adelantado → sondeo cada 3 s** (*reproducido*). Si `rate.reset` ya pasó según el reloj
    local, `nextDelay` devuelve 3000 ms y la cuota sin token se agota (`github.js:171`). Arreglo:
    `Math.max(base, …)` o calcular el desfase con la cabecera `Date`.
-5. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
+4. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
    `update()` y `celebrate()` siguen encolando ráfagas (`graph3d.js:846`, `:1691`) y al volver salen
    todas juntas. Arreglo: `fx` también exige `this.active`; descartar efectos con más de 1 s de atraso.
-6. **El zumbido del modo vuelo sigue sonando en segundo plano** y sus osciladores nunca se detienen
+5. **El zumbido del modo vuelo sigue sonando en segundo plano** y sus osciladores nunca se detienen
    (`flight.js:290`, `sound.js:261`). Arreglo: silenciar en `visibilitychange` y `stop()` al llegar a 0.
-7. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
+6. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
    `--surface` (`styles.css:14`). Arreglo: `#636e6a` (5,1:1).
-8. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
+7. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
    (`role=status` dentro de un contenedor `aria-live`; `feed.js:232`, `:254`). Arreglo: pausar en
    `focusin`/`focusout` y dejar una sola región viva.
-9. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
+8. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
    una sola consulta a `pulls?state=all&sort=updated` (la clave `pulls-all` ya existe).
-10. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
+9. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
     caída permanente de GraphQL a REST, `:311`). Arreglo: degradar solo con 403/404/410.
+
+10. **El modo TV y el director de cámara (llegaron con #13) no tienen pruebas ni auditoría.** Sumar
+    `?tv=1` al smoke test (carga, director activo, salida) y revisar `js/director.js` y el modo TV como
+    se hizo con el resto.
 
 ### Baja
 
@@ -95,3 +97,16 @@ hechas en la primera iteración; cada uno se verificó leyendo el código, y los
   terminar bien el ciclo, el feed se vuelve a pedir entero tras un fallo y `seenEvents` tiene tope.
   Validado: las dos pruebas nuevas fallaban antes del arreglo y pasan después; smoke e i18n en verde.
 - **Siguiente:** pendiente 1 (`aria-live` del estado), luego 2 y 3.
+
+### 2026-10-07 · Iteración 2
+
+- **Sincronización.** Master trajo #13 (director de cámara y modo TV); se fusionó en la rama sin
+  conflictos y las pruebas, el smoke y el chequeo de idiomas siguieron en verde.
+- **Arreglo: el estado ya no se le anuncia al lector de pantalla cada segundo.** `aria-live` envolvía
+  todo `#status`, incluida la línea "actualizado hace 5 s · próximo en 7 s" que se reescribe cada
+  segundo; además el texto del estado se reescribía cada segundo aunque no cambiara. Ahora la región
+  viva es solo `#status-text` y se escribe solo cuando cambia (al pasar a "Error", "Pausado"…).
+- **Prueba nueva en el smoke:** observa la región viva del estado 3,5 s y falla si cambia más de una
+  vez. Antes del arreglo marcaba 10 cambios; después, ninguno.
+- **Siguiente:** pendiente 1 (filtro o fijada que se pierden durante un ciclo), luego 2 (datos del repo
+  anterior al cambiar de repo).

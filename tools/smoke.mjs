@@ -129,6 +129,21 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#feed > li', { timeout: 30000 });
   });
 
+  await step(page, 'el estado no se anuncia cada segundo', async () => {
+    // lo que cambie dentro de una región viva lo lee el lector de pantalla
+    const changes = await page.evaluate(
+      () =>
+        new Promise((ok) => {
+          let n = 0;
+          const mo = new MutationObserver((list) => (n += list.length));
+          for (const r of document.querySelectorAll('#status[aria-live], #status [aria-live]'))
+            mo.observe(r, { subtree: true, childList: true, characterData: true });
+          setTimeout(() => (mo.disconnect(), ok(n)), 3500);
+        }),
+    );
+    if (changes > 1) throw new Error(`la región viva del estado cambió ${changes} veces en 3,5 s`);
+  });
+
   await step(page, 'vista 2D', async () => {
     await page.click('#view-2d');
     await page.waitForSelector('#graph svg .node', { timeout: 10000 });

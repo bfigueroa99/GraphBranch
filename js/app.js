@@ -542,7 +542,9 @@
     const s = status;
     const shown = s.state === 'syncing' ? 'live' : s.state;
     el.status.dataset.state = shown;
-    el.statusText.textContent = s.demo && shown === 'live' ? t('status.demoLive') : STATE_TEXT[s.state] ? t(STATE_TEXT[s.state]) : s.state;
+    const text = s.demo && shown === 'live' ? t('status.demoLive') : STATE_TEXT[s.state] ? t(STATE_TEXT[s.state]) : s.state;
+    // es región viva y esto corre cada segundo: reescribir el mismo texto podría volver a anunciarlo
+    if (el.statusText.textContent !== text) el.statusText.textContent = text;
     const now = Date.now();
     let sub = '';
     const secsTo = (at) => i18n.fmtSeconds(Math.max(0, Math.ceil((at - now) / 1000)));

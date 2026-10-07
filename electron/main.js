@@ -7,9 +7,10 @@
      npm start                         abre la demo o el último repositorio
      npm start -- --repo=owner/repo    abre ese repositorio
      npm start -- --tv                 entra en modo TV (también --lang=es) */
-const { app, BrowserWindow, nativeTheme, net, protocol, session, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, nativeTheme, net, protocol, session, shell } = require('electron');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
+const token = require('./token');
 
 const SCHEME = 'app';
 const HOST = 'graphbranch';
@@ -82,6 +83,7 @@ function createWindow() {
     backgroundColor: nativeTheme.shouldUseDarkColors ? BG.dark : BG.light,
     icon: process.platform === 'linux' ? path.join(__dirname, 'icon.png') : undefined,
     webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
@@ -121,6 +123,22 @@ if (!app.requestSingleInstanceLock()) {
     session.defaultSession.setPermissionRequestHandler((wc, permission, done, details) => done(allow(permission, details.requestingUrl)));
     session.defaultSession.setPermissionCheckHandler((wc, permission, origin) => allow(permission, origin));
     nativeTheme.on('updated', () => win?.setBackgroundColor(nativeTheme.shouldUseDarkColors ? BG.dark : BG.light));
+
+    // el token solo se entrega a la propia página (electron/preload.js)
+    const fromApp = (ev) => {
+      if (!isApp(ev.senderFrame?.url)) throw new Error('origen no permitido');
+    };
+    ipcMain.handle('token:get', async (ev) => {
+      fromApp(ev);
+      const [value, where] = await Promise.all([token.read(), token.where()]);
+      return { token: value, where };
+    });
+    ipcMain.handle('token:set', async (ev, value) => {
+      fromApp(ev);
+      if (typeof value !== 'string' || value.length > 1000) throw new Error('token inválido');
+      await token.write(value.trim());
+      return token.where();
+    });
 
     createWindow();
     app.on('activate', () => BrowserWindow.getAllWindows().length || createWindow());

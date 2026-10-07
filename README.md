@@ -42,7 +42,7 @@ Sin token GitHub permite 60 consultas por hora, así que la vista se actualiza c
 
 Crea un token *fine-grained* de solo lectura en <https://github.com/settings/personal-access-tokens/new> con acceso al repositorio y estos permisos (todos *Read-only*): **Metadata** (incluye la actividad del repo: pushes y ramas creadas o borradas), **Contents** y **Pull requests**.
 
-El token se guarda solo en el `localStorage` de tu navegador (en la app de escritorio, en los datos de la app) y se envía únicamente a `api.github.com`.
+El token se guarda solo en el `localStorage` de tu navegador (en la app de escritorio, cifrado con el llavero del sistema) y se envía únicamente a `api.github.com`.
 
 ## Repositorios con miles de ramas
 
@@ -136,7 +136,8 @@ npm run dist                            # el instalador para este sistema, en di
 ```
 
 - Es la misma app: `electron/main.js` solo abre `index.html` en una ventana, así que lo que cambies en `js/` o `css/` vale para las dos versiones (en la de escritorio se recarga con `Ctrl+R` o `Cmd+R`).
-- La página se sirve desde `app://graphbranch/`, un origen propio en vez de `file://`: el CSP funciona igual que en la web, y el token y los ajustes quedan en los datos de la app, aparte de los del navegador.
+- La página se sirve desde `app://graphbranch/`, un origen propio en vez de `file://`: el CSP funciona igual que en la web, y los ajustes quedan en los datos de la app, aparte de los del navegador.
+- El token no va a `localStorage`: se guarda cifrado con el llavero del sistema (Llavero en macOS, DPAPI en Windows, el llavero de GNOME o KWallet en Linux), en un archivo de los datos de la app. La primera vez, macOS puede pedir permiso para usar el llavero. En Linux sin llavero (escritorios que Chromium no reconoce, como i3 o Sway) se guarda sin cifrar y **Ajustes** lo avisa; si tienes uno, abre la app con `--password-store=gnome-libsecret` (o `kwallet6`).
 - Los enlaces a GitHub se abren en el navegador del sistema. La ventana no puede navegar a otro sitio ni usar Node, y solo tiene los permisos que la app usa: notificaciones, pantalla completa, captura del puntero (modo vuelo) y pantalla siempre encendida (modo TV).
 - Funciona sin conexión: todo lo que necesita va dentro de la app. Sin red abre la demo; un repositorio real muestra que no hay conexión y se vuelve a conectar apenas vuelve la red, sin esperar el próximo reintento.
 - `npm run dist` arma el instalador del sistema donde lo corres: `.dmg` en macOS, `.exe` en Windows y `.AppImage` en Linux. No van firmados, así que macOS y Windows avisan al abrirlos la primera vez.
@@ -170,6 +171,8 @@ vendor/               copias locales de d3, Three.js, OrbitControls y las fuente
 tools/check-i18n.mjs  verifica las traducciones contra el inglés
 tools/vendor.mjs      descarga a vendor/ las librerías (comprobando su hash) y las fuentes
 electron/main.js      app de escritorio: la ventana de Electron que abre index.html
+electron/preload.js   lo único que la página ve de la app de escritorio: leer y guardar el token
+electron/token.js     el token de la app de escritorio, cifrado con el llavero del sistema
 electron/icon.png     ícono de la app de escritorio
 package.json          Electron y los scripts (npm start, npm run dist, npm run vendor)
 ```

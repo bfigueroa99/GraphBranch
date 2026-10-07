@@ -88,12 +88,16 @@
     tokenInput: $('#token-input'),
     tokenToggle: $('#token-toggle'),
     tokenClear: $('#token-clear'),
+    tokenWhere: $('#token-where'),
     depth: $('#depth'),
     settingsCancel: $('#settings-cancel'),
   };
 
+  /* el token: en la web, en localStorage; en la app de escritorio, cifrado con el llavero del sistema
+     (electron/preload.js expone GBDesktop) y se lee antes de conectar, ver el arranque */
+  const desktop = window.GBDesktop;
   const settings = {
-    token: U.store.get('token', ''),
+    token: desktop ? '' : U.store.get('token', ''),
     depth: U.store.get('depth', 40),
   };
   U.store.set('maxBranches', null); // ya no hay tope: se muestran todas las ramas
@@ -952,12 +956,31 @@
     ev.preventDefault();
     settings.token = el.tokenInput.value.trim();
     settings.depth = Math.max(10, Math.min(100, Number(el.depth.value) || 40));
-    U.store.set('token', settings.token || null);
+    if (desktop) desktop.setToken(settings.token).then(showTokenWhere, (err) => console.error('No se pudo guardar el token:', err));
+    else U.store.set('token', settings.token || null);
     U.store.set('depth', settings.depth);
     closeSettings();
     if (source && !source.data.repo.demo) connectRepo(`${source.owner}/${source.name}`);
     else el.tokenBanner.hidden = true;
   });
+
+  /** En la app de escritorio, el aviso de Ajustes dice si el token quedó cifrado ('keychain') o no ('plain'). */
+  function showTokenWhere(where) {
+    el.tokenWhere.dataset.i18n = where === 'keychain' ? 'settings.tokenWhereKeychain' : 'settings.tokenWherePlain';
+    el.tokenWhere.textContent = t(el.tokenWhere.dataset.i18n);
+  }
+
+  async function loadDesktopToken() {
+    let { token, where } = await desktop.getToken();
+    // la primera versión de escritorio lo dejaba en localStorage, sin cifrar: pasa al llavero y se borra de ahí
+    const legacy = U.store.get('token', '');
+    if (legacy) {
+      if (!token) where = await desktop.setToken((token = legacy));
+      U.store.set('token', null);
+    }
+    settings.token = token;
+    showTokenWhere(where);
+  }
 
   /* filtro de ramas: en repos grandes se aplica en GitHub (con token) */
   let filterTimer = null;
@@ -1020,7 +1043,11 @@
     /* sin query string */
   }
   initialRepo ||= U.store.get('repo', null);
-  if (initialRepo && U.parseRepo(initialRepo)) connectRepo(initialRepo);
-  else startDemo();
-  if (initialTV) setTV(true); // ?tv=1: pensado para dejar la URL abierta en una pantalla
+  function start() {
+    if (initialRepo && U.parseRepo(initialRepo)) connectRepo(initialRepo);
+    else startDemo();
+    if (initialTV) setTV(true); // ?tv=1: pensado para dejar la URL abierta en una pantalla
+  }
+  if (desktop) loadDesktopToken().catch((err) => console.error('No se pudo leer el token:', err)).finally(start);
+  else start();
 })(window.GB);

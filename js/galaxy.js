@@ -20,7 +20,12 @@
    bandas de gigante gaseoso o roca con cráteres, según el archivo), atmósfera que brilla en el
    borde, gira sobre sí mismo y algunos llevan anillos; el cielo es de nebulosas de colores que se
    tiñen con la galaxia en la que se está; al acelerar en vuelo las estrellas pasan como estelas y
-   la tecla X lanza una onda de escáner que revela los nombres de los planetas que alcanza. */
+   la tecla X lanza una onda de escáner que revela los nombres de los planetas que alcanza.
+
+   Entrar en una galaxia es una llegada, como al salir del salto a otro sistema: líneas de velocidad
+   y un destello de su color, el cielo que cambia de golpe a ese color, un rótulo grande con su nombre
+   que se decodifica letra a letra y sus datos (commits, planetas, asteroides, líneas cambiadas,
+   última actividad), una onda de escáner que va revelando los planetas y, con sonido, un acorde. */
 (function (GB) {
   'use strict';
   const { U, i18n } = GB;
@@ -47,6 +52,9 @@
   const SCAN_MS = 7000; // lo que dura el escáner (X)
   const SCAN_SPEED = 55; // la onda del escáner, en unidades por segundo
   const SCAN_RANGE = 90;
+  const ARRIVE_MS = 5200; // lo que dura el rótulo de llegada
+  const ARRIVE_AGAIN = 40000; // la misma galaxia no vuelve a anunciarse antes de esto
+  const GLYPHS = '▓▒░/\\|_-+<>=*#%01'; // lo que muestra el nombre antes de decodificarse
   const RETRY_MS = 60000;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const easeOutBack = (p) => 1 + 2.2 * Math.pow(p - 1, 3) + 1.2 * Math.pow(p - 1, 2);
@@ -517,6 +525,8 @@
       this.near = [];
       this.nearKey = '';
       this.focus = null;
+      this.arrived = new Map(); // galaxia → cuándo se anunció su llegada
+      this.arrival = null;
       this.sys = null; // sistema planetario a la vista
       this.old = null; // el que se va
       this.scanAt = 0;
@@ -716,15 +726,137 @@
     }
 
     /** Escáner (X en vuelo): una onda sale de la nave; los planetas que alcanza destellan y muestran su nombre. */
-    pulseScan() {
+    pulseScan(quiet = false) {
       const g = this.g;
       const now = performance.now();
       if (this.scanning && now - this.scanning.t0 < 900) return; // una onda a la vez
       this.scanning = { t0: now, from: g.camera.position.clone() };
       this.pulse.position.copy(g.camera.position);
       this.pulse.visible = g.motion;
-      g.opts.onScan?.();
+      if (!quiet) g.opts.onScan?.(); // la de la llegada suena con su propio acorde
       g.needsRender = true;
+    }
+
+    /* ---------- llegada a una galaxia ---------- */
+
+    /** Se entró en una galaxia: salto, cielo de su color, rótulo, escáner y acorde. Con el director
+        filmando solo el rótulo (sin destellos ni sonido); con "reducir movimiento", sin animaciones. */
+    arrive(G, now) {
+      const g = this.g;
+      if (now - (this.arrived.get(G.name) || -1e9) < ARRIVE_AGAIN) return;
+      this.arrived.set(G.name, now);
+      const auto = !!g.director?.rolling;
+      const col = g.col(G.color);
+      // el cielo cambia de golpe al color de la galaxia
+      this.tint.copy(col);
+      this.tintK = Math.max(this.tintK, 0.6);
+      if (g.motion && !auto) {
+        this.warpAt = now;
+        this.warpDir = (this.warpDirV || (this.warpDirV = new THREE.Vector3())).subVectors(G.c, g.camera.position).normalize();
+        this.streaks.material.uniforms.uColor.value.copy(col).lerp(g.white, 0.55);
+        const w = this.el.warp;
+        w.style.setProperty('--c', g.colorHex(G.color));
+        w.classList.remove('on');
+        void w.offsetWidth;
+        w.classList.add('on');
+        clearTimeout(this.warpTimer);
+        this.warpTimer = setTimeout(() => w.classList.remove('on'), 1600);
+      }
+      if (!auto) {
+        this.scanSoon = now + (g.motion ? 650 : 0); // la onda sale cuando el destello ya pasó
+        g.opts.onExplore?.({ kind: 'enter', name: G.name });
+      }
+      this.showArrival(G, now);
+    }
+
+    /** Rótulo de llegada: qué galaxia es y qué tiene. El nombre se decodifica letra a letra. */
+    showArrival(G, now, found = null) {
+      const g = this.g;
+      const box = this.el.arrive;
+      this.arrival = { name: G.name, t0: now, until: now + ARRIVE_MS, found };
+      box.className = `gx-arrive ${G.color}${found ? ' found' : ''}`;
+      this.el.aKick.textContent = tr(found ? 'galaxy.discovered' : 'galaxy.entering');
+      g.flight?.el.hint.classList.remove('show'); // la ayuda de los controles deja lugar al rótulo
+      this.el.aName.textContent = g.motion ? this.scramble(G.name, 0) : G.name;
+      this.renderArrival();
+      box.classList.remove('show');
+      void box.offsetWidth;
+      box.classList.add('show');
+      g.needsRender = true;
+    }
+
+    /** Lo que se ve del nombre a los `p` (0..1) de la decodificación: letras ya resueltas y glifos. */
+    scramble(name, p) {
+      const n = Math.floor(name.length * p);
+      let out = name.slice(0, n);
+      for (let i = n; i < name.length; i++) out += name[i] === '/' || name[i] === ' ' ? name[i] : GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+      return out;
+    }
+
+    /** Primera vez que se entra en esta galaxia (world.js): el rótulo de llegada lo dice y suma cuánto
+        del mapa está explorado. Si el rótulo ya se fue, vuelve a aparecer. */
+    announceDiscovery(name, ex) {
+      const now = performance.now();
+      const a = this.arrival;
+      if (a && a.name === name) {
+        a.found = ex;
+        a.until = Math.max(a.until, now + 3500);
+        this.el.arrive.classList.add('found');
+        this.el.aKick.textContent = tr('galaxy.discovered');
+        this.renderArrival();
+      } else {
+        const G = this.gals.get(name);
+        if (G) this.showArrival(G, now, ex);
+      }
+    }
+
+    /** Datos del rótulo: commits propios, planetas y asteroides (cuando llegan sus archivos), líneas
+        cambiadas y la última actividad de la rama. */
+    renderArrival() {
+      const a = this.arrival;
+      if (!a) return;
+      const G = this.gals.get(a.name);
+      if (!G) return;
+      const g = this.g;
+      const parts = [];
+      if (G.n) parts.push(tr('galaxy.commits', { n: G.n }));
+      const s = this.sys && this.sys.name === a.name ? this.sys : null;
+      if (s) {
+        const rocks = s.planets.filter((p) => p.rock).length;
+        parts.push(tr('galaxy.planets', { n: s.planets.length - rocks }));
+        if (rocks) parts.push(tr('galaxy.asteroids', { n: rocks }));
+        if (s.data.kind === 'diff') {
+          let add = 0;
+          let del = 0;
+          for (const f of s.data.files) (add += f.add || 0), (del += f.del || 0);
+          if (add || del) parts.push(`+${i18n.fmtNum(add)} −${i18n.fmtNum(del)}`);
+        }
+      }
+      const date = g.nodes.get(G.sha)?.data?.commit?.date;
+      if (date) parts.push(U.timeAgo(date));
+      const text = parts.join(' · ');
+      if (this.el.aMeta.textContent !== text) this.el.aMeta.textContent = text;
+      this.el.aEx.textContent = a.found ? tr('world.explored', { n: a.found.n, total: i18n.fmtNum(a.found.total) }) : '';
+    }
+
+    /** Cuadro a cuadro: la decodificación del nombre, el fin del rótulo y la onda de escáner de la llegada. */
+    stepArrival(now) {
+      const a = this.arrival;
+      if (this.scanSoon && now >= this.scanSoon) {
+        this.scanSoon = 0;
+        if (this.on && this.focus) this.pulseScan(true);
+      }
+      if (!a) return;
+      // con cuadros lentos la decodificación puede saltarse el final: al terminar, siempre el nombre entero
+      if (!a.decoded) {
+        const p = this.g.motion ? (now - a.t0) / 800 : 1;
+        a.decoded = p >= 1;
+        this.el.aName.textContent = a.decoded ? a.name : this.scramble(a.name, p);
+      }
+      if (now > a.until) {
+        this.arrival = null;
+        this.el.arrive.classList.remove('show');
+      }
     }
 
     /** Radio que alcanzó la onda (o null si no hay escaneo en curso). */
@@ -741,7 +873,25 @@
       card.setAttribute('role', 'status');
       card.innerHTML = '<span class="gx-dot" aria-hidden="true"></span><span class="gx-text"><span class="gx-name"></span><span class="gx-sub"></span></span>';
       this.g.wrap.appendChild(card);
-      this.el = { name: card.querySelector('.gx-name'), sub: card.querySelector('.gx-sub') };
+      // llegada: líneas de velocidad y destello, y el rótulo con el nombre de la galaxia
+      const warp = document.createElement('div');
+      warp.className = 'gx-warp';
+      warp.setAttribute('aria-hidden', 'true');
+      const arrive = document.createElement('div');
+      arrive.className = 'gx-arrive';
+      arrive.setAttribute('role', 'status');
+      arrive.innerHTML = '<p class="gx-a-k"></p><p class="gx-a-name"></p><p class="gx-a-meta"></p><p class="gx-a-ex"></p>';
+      this.g.wrap.append(warp, arrive);
+      this.el = {
+        name: card.querySelector('.gx-name'),
+        sub: card.querySelector('.gx-sub'),
+        warp,
+        arrive,
+        aKick: arrive.querySelector('.gx-a-k'),
+        aName: arrive.querySelector('.gx-a-name'),
+        aMeta: arrive.querySelector('.gx-a-meta'),
+        aEx: arrive.querySelector('.gx-a-ex'),
+      };
       this.fileLabels = []; // botones de archivo, se reusan
       this.dirLabels = [];
       // un oyente para todas las etiquetas de archivo
@@ -786,6 +936,8 @@
       this.group.visible = on;
       this.card.hidden = true;
       this.streaks.visible = false;
+      this.arrival = null;
+      this.el.arrive.classList.remove('show');
       if (!on) {
         this.dropSystem(true);
         this.hideLabels();
@@ -1065,14 +1217,22 @@
       const su = this.sky.material.uniforms;
       const near = this.near[0];
       const want = near ? clamp(1 - near.d / NEAR_RANGE, 0, 1) * 0.8 : 0;
-      if (near) this.tint.lerp(g.col(near.G.color), 1 - Math.exp(-dt * 2));
+      if (near && !(this.warpAt && now - this.warpAt < 2500)) this.tint.lerp(g.col(near.G.color), 1 - Math.exp(-dt * 2));
       this.tintK += (want - this.tintK) * (1 - Math.exp(-dt * 1.5));
       if (Math.abs(su.uTintK.value - this.tintK) > 0.002 || !su.uTint.value.equals(this.tint)) {
         su.uTintK.value = this.tintK;
         su.uTint.value.copy(this.tint);
         changed = true;
       }
-      if (this.stepStreaks(dt)) changed = true;
+      if (this.stepStreaks(dt, now)) changed = true;
+      this.stepArrival(now);
+      // al llegar, la nebulosa se enciende un momento
+      const flare = this.warpAt ? clamp(1 - (now - this.warpAt) / 2600, 0, 1) : 0;
+      const glow = 1 + 0.8 * flare * flare;
+      if (Math.abs(su.uGlow.value - glow) > 0.002) {
+        su.uGlow.value = glow;
+        changed = true;
+      }
       if (this.old) {
         changed = true;
         if (now - this.old.dying > 320) this.old = null;
@@ -1093,21 +1253,31 @@
     }
 
     /** Estelas del "pulse drive": aparecen al volar rápido por el espacio. */
-    stepStreaks(dt) {
+    stepStreaks(dt, now) {
       const g = this.g;
       const f = g.flight;
       const level = f?.on && g.motion ? f.level || 0 : 0;
-      const amt = clamp((level - 0.35) / 0.45, 0, 1);
+      // al llegar a una galaxia, un golpe de estelas hacia ella: la salida del salto
+      const burst = this.warpAt ? clamp(1 - (now - this.warpAt) / 1300, 0, 1) : 0;
+      const amt = Math.max(clamp((level - 0.35) / 0.45, 0, 1), burst);
       const u = this.streaks.material.uniforms;
       const was = u.uAmt.value;
-      u.uAmt.value += (amt - was) * (1 - Math.exp(-dt * 5));
+      u.uAmt.value = burst > 0 ? amt : u.uAmt.value + (amt - was) * (1 - Math.exp(-dt * 5));
       if (u.uAmt.value < 0.003) u.uAmt.value = 0;
       this.streaks.visible = u.uAmt.value > 0;
-      if (!this.streaks.visible) return was > 0;
+      if (!this.streaks.visible) {
+        if (was > 0) u.uColor.value.setRGB(0.85, 0.92, 1);
+        return was > 0;
+      }
       u.uCam.value.copy(g.camera.position);
-      const v = f.vel.length();
-      if (v > 1e-3) u.uDir.value.copy(f.vel).multiplyScalar(1 / v);
-      u.uLen.value = Math.min(14, v * 0.1);
+      const v = f?.on ? f.vel.length() : 0;
+      if (burst > 0.02) {
+        u.uDir.value.copy(this.warpDir);
+        u.uLen.value = Math.max(Math.min(14, v * 0.1), 16 * burst * burst);
+      } else {
+        if (v > 1e-3) u.uDir.value.copy(f.vel).multiplyScalar(1 / v);
+        u.uLen.value = Math.min(14, v * 0.1);
+      }
       return true;
     }
 
@@ -1217,7 +1387,9 @@
     /* ---------- archivos: los planetas ---------- */
 
     setFocus(G, now = performance.now()) {
+      const prev = this.focus;
       this.focus = G;
+      if (G && G.name !== prev?.name) this.arrive(G, now);
       if (!G) {
         this.dropSystem();
         this.renderCard();
@@ -1241,6 +1413,10 @@
       this.sys = this.buildSystem(G, data);
       if (same) this.sys.born -= 5000;
       this.dirty = true;
+      if (this.arrival?.name === G.name) {
+        this.renderArrival(); // llegaron sus archivos: el rótulo suma planetas y asteroides
+        if (!same && !this.scanSoon && performance.now() - this.arrival.t0 < 4000 && !this.g.director?.rolling) this.pulseScan(true);
+      }
     }
 
     ensureFiles(G, now) {
@@ -1690,6 +1866,10 @@
 
     relocalize() {
       this.renderCard();
+      if (this.arrival) {
+        this.el.aKick.textContent = tr(this.arrival.found ? 'galaxy.discovered' : 'galaxy.entering');
+        this.renderArrival();
+      }
     }
 
     /** Detalle de un archivo (el planeta) para la ficha. */

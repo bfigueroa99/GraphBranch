@@ -606,7 +606,9 @@
         this.syncMarks();
         this.mapDirty = true;
         const ex = this.explored();
-        this.banner(this.space ? 'galaxy.discovered' : 'world.discovered', name, h.liveColor || h.data.color, ex);
+        // en el espacio lo anuncia el rótulo de llegada de la galaxia (galaxy.js), no un cartel aparte
+        if (this.space && g.gx) g.gx.announceDiscovery(name, ex);
+        else this.banner('world.discovered', name, h.liveColor || h.data.color, ex);
         if (now - (this.lastSound || -1e9) > SOUND_MS) {
           this.lastSound = now;
           g.opts.onExplore?.({ kind: 'discover', name });

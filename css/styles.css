@@ -1874,6 +1874,152 @@ kbd {
   color: var(--s1);
 }
 
+/* llegada a una galaxia: líneas de velocidad y un destello de su color, como al salir de un salto */
+.gx-warp {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+.gx-warp::before,
+.gx-warp::after {
+  content: "";
+  position: absolute;
+  opacity: 0;
+}
+.gx-warp::before {
+  inset: -40%;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--c, #fff) 55%, #fff) 0 0.35deg, transparent 0.35deg 4.2deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 16%, #000 58%);
+  mask-image: radial-gradient(circle, transparent 16%, #000 58%);
+}
+.gx-warp::after {
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, transparent 22%, color-mix(in srgb, var(--c, #fff) 70%, transparent) 100%);
+}
+.gx-warp.on::before {
+  animation: gx-lines 1.1s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+.gx-warp.on::after {
+  animation: gx-flash 1.5s ease-out forwards;
+}
+@keyframes gx-lines {
+  0% {
+    opacity: 0;
+    transform: scale(2.4) rotate(0deg);
+  }
+  25% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1) rotate(6deg);
+  }
+}
+@keyframes gx-flash {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* el rótulo de llegada: a qué galaxia se entró y qué tiene */
+.gx-arrive {
+  position: absolute;
+  left: 50%;
+  bottom: 13%;
+  z-index: 3;
+  max-width: calc(100% - 32px);
+  translate: -50% 0;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.6s,
+    transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.gx-arrive.show {
+  opacity: 1;
+  transform: none;
+}
+.gx-arrive p {
+  margin: 0;
+}
+.gx-a-k {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink-2);
+  font: 600 11px var(--font-ui);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+.gx-a-k::before,
+.gx-a-k::after {
+  content: "";
+  width: 48px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--c));
+}
+.gx-a-k::after {
+  transform: scaleX(-1);
+}
+.gx-a-name {
+  overflow: hidden;
+  color: var(--ink);
+  font: 600 clamp(22px, 3.8vw, 38px) / 1.2 var(--font-mono);
+  letter-spacing: 0.03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow:
+    0 0 18px color-mix(in srgb, var(--c) 75%, transparent),
+    0 0 3px var(--surface);
+}
+.gx-a-ex {
+  margin-top: 2px !important;
+  color: var(--c);
+  font: 500 11.5px var(--font-mono);
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 8px var(--surface);
+}
+.gx-a-ex:empty {
+  display: none;
+}
+.gx-a-meta {
+  margin-top: 4px !important;
+  color: var(--ink-2);
+  font: 500 12px var(--font-mono);
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 8px var(--surface);
+}
+/* primera vez en esta galaxia: el encabezado se enciende con su color */
+.gx-arrive.found .gx-a-k {
+  color: var(--c);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--c) 60%, transparent);
+}
+/* en vuelo en paneles bajos (el celular), arriba, bajo la brújula: abajo están los controles */
+.graph3d-wrap:has(.wd-ui.small:not([hidden])) .gx-arrive {
+  top: 84px;
+  bottom: auto;
+}
+.graph3d-wrap:has(.wd-ui.small:not([hidden])) .gx-a-name {
+  font-size: 20px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gx-arrive {
+    transition: none;
+  }
+  .gx-warp {
+    display: none;
+  }
+}
+
 /* recorrer la rama, desde el detalle del commit */
 .tip-ride {
   height: 26px;

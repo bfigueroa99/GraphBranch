@@ -50,10 +50,11 @@
     </form>
 
     <div class="status-group">
-      <div class="status" id="status" data-state="loading" aria-live="polite">
+      <div class="status" id="status" data-state="loading">
         <span class="status-dot" aria-hidden="true"></span>
         <span class="status-texts">
-          <span class="status-text" id="status-text" data-i18n="status.loading">Loading</span>
+          <!-- solo el estado es región viva: la línea de abajo cambia cada segundo y no debe leerse -->
+          <span class="status-text" id="status-text" data-i18n="status.loading" aria-live="polite">Loading</span>
           <span class="status-sub" id="status-sub"></span>
         </span>
       </div>

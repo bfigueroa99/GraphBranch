@@ -214,6 +214,9 @@
     graph3d?.gx?.reset(); // los archivos que se habían pedido eran del repo anterior
     followUI(true);
     feed.clear();
+    // nada del repo anterior: ni sus cifras ni su grafo (el Replay lo reproduciría si el nuevo no carga)
+    lastRender = null;
+    clearStats();
     paused = false;
     setPressed(el.pauseBtn, false);
     setPressed(el.tvPause, false);
@@ -534,6 +537,12 @@
     renderTokenBanner();
   }
 
+  /** Cifras en blanco hasta que el repo recién conectado traiga las suyas. */
+  function clearStats() {
+    for (const [key, node] of Object.entries(el.st)) node.textContent = key.endsWith('Sub') ? '' : '–';
+    el.st.branchesSub.title = '';
+  }
+
   function renderLast() {
     const last = feed.lastTime();
     el.st.last.textContent = last ? U.timeAgo(last) : '–';
@@ -563,7 +572,9 @@
     if (!status) return;
     const s = status;
     el.status.dataset.state = s.state;
-    el.statusText.textContent = s.demo && s.state === 'live' ? t('status.demoLive') : STATE_TEXT[s.state] ? t(STATE_TEXT[s.state]) : s.state;
+    const text = s.demo && s.state === 'live' ? t('status.demoLive') : STATE_TEXT[s.state] ? t(STATE_TEXT[s.state]) : s.state;
+    // es región viva y esto corre cada segundo: reescribir el mismo texto podría volver a anunciarlo
+    if (el.statusText.textContent !== text) el.statusText.textContent = text;
     const now = Date.now();
     let sub = '';
     const secsTo = (at) => i18n.fmtSeconds(Math.max(0, Math.ceil((at - now) / 1000)));

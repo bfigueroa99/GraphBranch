@@ -184,7 +184,10 @@ GB.i18n.define('fr', {
   'hint.3d': 'Faites glisser pour pivoter · clic droit ou <kbd>Maj</kbd> + glisser pour déplacer · molette ou pincement pour zoomer · cliquez sur un commit pour voir les détails',
   'hint.2d': 'Faites glisser pour vous déplacer · molette pour parcourir l’historique · <kbd>Ctrl</kbd> + molette ou pincement pour zoomer · cliquez sur un commit pour voir les détails',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> pivoter · <kbd>↑</kbd> <kbd>↓</kbd> voyager dans l’historique · <kbd>F</kbd> plein écran',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> se déplacer · <kbd>F</kbd> plein écran',
   'graph.aria2d': 'Graphe des branches et des commits',
+  'legend.merged': 'fusionnées',
+  'minimap.title': 'Vue d’ensemble : cliquez ou faites glisser pour vous déplacer',
   'graph.aria3d': 'Vue 3D des branches et des commits',
 
   'banner.events': 'Ce dépôt compte {total} branches. Sans jeton, GraphBranch ne voit que celles qui apparaissent dans le flux d’événements de GitHub, qui arrive avec quelques minutes de retard. Avec un jeton, vous les verrez toutes presque en temps réel.',

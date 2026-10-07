@@ -189,7 +189,10 @@ GB.i18n.define('sk', {
   'hint.3d': 'Ťahaním otáčate · pravé tlačidlo alebo <kbd>Shift</kbd> + ťahanie posúva · koliesko alebo štipnutie približuje · kliknutím na commit zobrazíte podrobnosti',
   'hint.2d': 'Ťahaním sa pohybujete · kolieskom prechádzate históriou · <kbd>Ctrl</kbd> + koliesko alebo štipnutie mení priblíženie · kliknutím na commit zobrazíte podrobnosti',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> otáčanie · <kbd>↑</kbd> <kbd>↓</kbd> cesta históriou · <kbd>F</kbd> celá obrazovka',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> pohyb · <kbd>F</kbd> celá obrazovka',
   'graph.aria2d': 'Graf vetiev a commitov',
+  'legend.merged': 'zlúčené',
+  'minimap.title': 'Prehľad: kliknutím alebo ťahaním sa presuniete',
   'graph.aria3d': '3D zobrazenie vetiev a commitov',
 
   'banner.events': 'Počet vetiev v tomto repozitári: {total}. Bez tokenu GraphBranch vidí iba tie, ktoré sa objavia v GitHub feede udalostí, ktorý prichádza s oneskorením niekoľkých minút. S tokenom uvidíte všetky takmer v reálnom čase.',

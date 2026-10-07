@@ -184,7 +184,10 @@ GB.i18n.define('sw', {
   'hint.3d': 'Buruta ili kuzungusha · bofya kulia au <kbd>Shift</kbd> + buruta ili kusogeza · zungusha gurudumu au bana ili kukuza · bofya commit ili kuona maelezo',
   'hint.2d': 'Buruta ili kusogeza · zungusha gurudumu ili kupitia historia · <kbd>Ctrl</kbd> + gurudumu au bana ili kukuza · bofya commit ili kuona maelezo',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> zungusha · <kbd>↑</kbd> <kbd>↓</kbd> safiri kupitia historia · <kbd>F</kbd> skrini nzima',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> sogea · <kbd>F</kbd> skrini nzima',
   'graph.aria2d': 'Mchoro wa matawi na commit',
+  'legend.merged': 'yaliyounganishwa',
+  'minimap.title': 'Muhtasari: bofya au buruta ili kusogea',
   'graph.aria3d': 'Mwonekano wa 3D wa matawi na commit',
 
   'banner.events': 'Hazina hii ina matawi {total}. Bila token, GraphBranch huona tu yale yanayoonekana kwenye mtiririko wa matukio wa GitHub, ambao hufika kwa kuchelewa kwa dakika chache. Ukiwa na token utayaona yote karibu papo hapo.',

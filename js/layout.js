@@ -296,9 +296,10 @@
         };
       });
 
+      // x0..x1: el tramo que la cadena ocupa en su carril, de donde nace a su merge (ahí cabe su nombre)
       const ghostLabels = ghosts
         .filter((g) => g.name)
-        .map((g) => ({ id: g.key, name: g.name, x: xOf.get(g.newest), row: rowOfChain(g.key), chain: g.key }));
+        .map((g) => ({ id: g.key, name: g.name, x: xOf.get(g.newest), x0: g.start, x1: g.end, row: rowOfChain(g.key), chain: g.key }));
 
       /* 9. filas para la leyenda */
       const headOfSlot = new Map(heads.map((h) => [this.slotOf.get(h.name), h]));
@@ -306,7 +307,7 @@
         const b = headOfSlot.get(slot);
         return b
           ? { row, id: 'b:' + b.name, name: b.name, color: colorOfBranch(b.name), chain: 'b:' + b.name, ghost: false }
-          : { row, id: 'g-row:' + slot, name: 'fusionadas', color: 'ghost', chain: null, ghost: true };
+          : { row, id: 'g-row:' + slot, name: '', color: 'ghost', chain: null, ghost: true }; // la vista la rotula en su idioma
       });
 
       /* 10. marcas de día para el eje */

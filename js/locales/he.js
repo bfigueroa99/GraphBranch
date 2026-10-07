@@ -220,7 +220,10 @@ GB.i18n.define('he', {
   'hint.3d': 'גרור כדי לסובב · לחצן ימני או <kbd>Shift</kbd> + גרירה כדי להזיז · גלגלת או צביטה כדי להתקרב · לחץ על commit לפרטים',
   'hint.2d': 'גרור כדי לזוז · גלגלת כדי לגלול בהיסטוריה · <kbd>Ctrl</kbd> + גלגלת או צביטה כדי להתקרב · לחץ על commit לפרטים',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> סיבוב · <kbd>↑</kbd> <kbd>↓</kbd> מסע בהיסטוריה · <kbd>F</kbd> מסך מלא',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> תנועה · <kbd>F</kbd> מסך מלא',
   'graph.aria2d': 'גרף של ענפים ו-commits',
+  'legend.merged': 'ממוזגים',
+  'minimap.title': 'מבט כולל: לחץ או גרור כדי לזוז',
   'graph.aria3d': 'תצוגה תלת-ממדית של ענפים ו-commits',
 
   'banner.events': 'במאגר הזה יש {total} ענפים. ללא token, GraphBranch רואה רק את הענפים שמופיעים בפיד האירועים של GitHub, שמגיע באיחור של כמה דקות. עם token תראה את כולם כמעט בזמן אמת.',

@@ -184,7 +184,10 @@ GB.i18n.define('th', {
   'hint.3d': 'ลากเพื่อหมุน · คลิกขวาหรือ <kbd>Shift</kbd> + ลากเพื่อเลื่อน · ใช้ลูกกลิ้งเมาส์หรือบีบนิ้วเพื่อซูม · คลิก commit เพื่อดูรายละเอียด',
   'hint.2d': 'ลากเพื่อเลื่อน · ใช้ลูกกลิ้งเมาส์เพื่อเลื่อนดูประวัติ · <kbd>Ctrl</kbd> + ลูกกลิ้งเมาส์หรือบีบนิ้วเพื่อซูม · คลิก commit เพื่อดูรายละเอียด',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> หมุน · <kbd>↑</kbd> <kbd>↓</kbd> เดินทางผ่านประวัติ · <kbd>F</kbd> เต็มหน้าจอ',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> เลื่อนไปมา · <kbd>F</kbd> เต็มหน้าจอ',
   'graph.aria2d': 'กราฟของ branch และ commit',
+  'legend.merged': 'merge แล้ว',
+  'minimap.title': 'ภาพรวม: คลิกหรือลากเพื่อเลื่อนไป',
   'graph.aria3d': 'มุมมอง 3D ของ branch และ commit',
 
   'banner.events': 'repository นี้มี branch {total} รายการ หากไม่มี token GraphBranch จะเห็นเฉพาะ branch ที่ปรากฏใน event feed ของ GitHub ซึ่งมาช้าไปหลายนาที หากมี token คุณจะเห็น branch ทั้งหมดแบบเกือบเรียลไทม์',

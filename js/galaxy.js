@@ -1100,11 +1100,16 @@
         g.needsRender = true;
       }
 
-      // ¿estamos dentro de una galaxia? (con un margen para no entrar y salir en el borde)
+      // ¿en qué galaxia estamos? Hay que estar cerca de su núcleo (con un margen para no entrar y salir
+      // en el borde). Entre varias, en órbita gana la que se está mirando (la más cercana al punto que
+      // mira la cámara: una galaxia chica junto a una grande no queda tapada por ella) y en vuelo, la más
+      // cercana a la nave según su tamaño.
+      const ref = g.flight?.on || g.ride ? cam : g.controls.target;
       let best = null;
-      let bestK = 1;
+      let bestK = Infinity;
       for (const { G } of near) {
-        const k = cam.distanceTo(G.c) / this.enterDist(G); // < 1: dentro; entre varias, la más metida
+        if (cam.distanceTo(G.c) >= this.enterDist(G)) continue;
+        const k = ref.distanceTo(G.c) / (G.R + 6) - (this.focus === G ? 0.15 : 0);
         if (k < bestK) (best = G), (bestK = k);
       }
       if (g.ctx?.replay) best = null; // en el Replay se ve el pasado: los archivos son de ahora
@@ -1302,9 +1307,9 @@
       planets.forEach((p, i) => {
         p.i = i;
         p.seed = h01(p.path);
-        // algunos llevan anillos: casi todos los gigantes gaseosos y uno que otro más
+        // algunos llevan anillos: un tercio de los gigantes gaseosos y uno que otro más
         const gas = (p.seed * 7.31) % 1 < 0.36;
-        if ((gas && (p.seed * 3.7) % 1 < 0.6) || (p.seed * 5.1) % 1 < 0.07) {
+        if ((gas && (p.seed * 3.7) % 1 < 0.33) || (p.seed * 5.1) % 1 < 0.04) {
           p.ringQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2 + ((p.seed * 13.7) % 1 - 0.5) * 1.1, ((p.seed * 29.3) % 1) * Math.PI * 2, 0));
         }
       });

@@ -184,7 +184,10 @@ GB.i18n.define('tr', {
   'hint.3d': 'Döndürmek için sürükleyin · kaydırmak için sağ tıklayın veya <kbd>Shift</kbd> + sürükleyin · yakınlaştırmak için tekerlek veya çimdik hareketi · ayrıntılar için bir commit’e tıklayın',
   'hint.2d': 'Taşımak için sürükleyin · geçmişte gezinmek için tekerlek · yakınlaştırmak için <kbd>Ctrl</kbd> + tekerlek veya çimdik hareketi · ayrıntılar için bir commit’e tıklayın',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> döndür · <kbd>↑</kbd> <kbd>↓</kbd> geçmişte gezin · <kbd>F</kbd> tam ekran',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> gezin · <kbd>F</kbd> tam ekran',
   'graph.aria2d': 'Dalların ve commit’lerin grafiği',
+  'legend.merged': 'birleştirilmiş',
+  'minimap.title': 'Genel bakış: gezinmek için tıklayın veya sürükleyin',
   'graph.aria3d': 'Dalların ve commit’lerin 3B görünümü',
 
   'banner.events': 'Bu depoda {total} dal var. Token olmadan GraphBranch yalnızca GitHub’ın olay akışında görünen dalları görebilir; bu akış birkaç dakika gecikmeyle gelir. Token ile hepsini neredeyse gerçek zamanlı görürsünüz.',

@@ -184,7 +184,10 @@ GB.i18n.define('nl', {
   'hint.3d': 'Sleep om te roteren · klik met rechts of <kbd>Shift</kbd> + slepen om te verschuiven · scrollwiel of knijpen om te zoomen · klik op een commit voor details',
   'hint.2d': 'Sleep om te bewegen · scrollwiel om door de geschiedenis te scrollen · <kbd>Ctrl</kbd> + scrollwiel of knijpen om te zoomen · klik op een commit voor details',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> roteren · <kbd>↑</kbd> <kbd>↓</kbd> door de geschiedenis reizen · <kbd>F</kbd> volledig scherm',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> bewegen · <kbd>F</kbd> volledig scherm',
   'graph.aria2d': 'Graaf van branches en commits',
+  'legend.merged': 'gemerged',
+  'minimap.title': 'Overzicht: klik of sleep om te bewegen',
   'graph.aria3d': '3D-weergave van branches en commits',
 
   'banner.events': 'Deze repository heeft {total} branches. Zonder token ziet GraphBranch alleen de branches die in de eventfeed van GitHub verschijnen, die een paar minuten achterloopt. Met een token zie je ze allemaal bijna in realtime.',

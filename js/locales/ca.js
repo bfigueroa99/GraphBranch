@@ -184,7 +184,10 @@ GB.i18n.define('ca', {
   'hint.3d': "Arrossega per girar · clic dret o <kbd>Maj</kbd> + arrossega per desplaçar · roda o pessic per fer zoom · clic en un commit per veure'n el detall",
   'hint.2d': "Arrossega per moure't · roda per recórrer l'historial · <kbd>Ctrl</kbd> + roda o pessic per fer zoom · clic en un commit per veure'n el detall",
   'hint.keys': "<kbd>←</kbd> <kbd>→</kbd> gira · <kbd>↑</kbd> <kbd>↓</kbd> recorre l'historial · <kbd>F</kbd> pantalla completa",
+  'hint.keys2d': "<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> moure't · <kbd>F</kbd> pantalla completa",
   'graph.aria2d': 'Graf de branques i commits',
+  'legend.merged': 'fusionades',
+  'minimap.title': "Vista general: fes clic o arrossega per moure't",
   'graph.aria3d': 'Vista 3D de branques i commits',
 
   'banner.events': "Aquest repositori té {total} branques. Sense token, GraphBranch només veu les que apareixen al feed d'esdeveniments de GitHub, que arriba amb uns minuts de retard. Amb un token les veuràs totes gairebé en temps real.",

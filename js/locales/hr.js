@@ -188,7 +188,10 @@ GB.i18n.define('hr', {
   'hint.3d': 'Povucite za rotiranje · desni klik ili <kbd>Shift</kbd> + povlačenje za pomicanje · kotačić ili štipanje za zumiranje · kliknite commit za detalje',
   'hint.2d': 'Povucite za pomicanje · kotačić za listanje povijesti · <kbd>Ctrl</kbd> + kotačić ili štipanje za zumiranje · kliknite commit za detalje',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> rotiranje · <kbd>↑</kbd> <kbd>↓</kbd> putovanje kroz povijest · <kbd>F</kbd> cijeli zaslon',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> kretanje · <kbd>F</kbd> cijeli zaslon',
   'graph.aria2d': 'Graf grana i commitova',
+  'legend.merged': 'spojene',
+  'minimap.title': 'Pregled: kliknite ili povucite za pomicanje',
   'graph.aria3d': '3D prikaz grana i commitova',
 
   'banner.events': 'Ovaj repozitorij ima mnogo grana ({total}). Bez tokena GraphBranch vidi samo grane koje se pojavljuju u feedu događaja na GitHubu, koji kasni nekoliko minuta. S tokenom ćete ih vidjeti sve gotovo u stvarnom vremenu.',

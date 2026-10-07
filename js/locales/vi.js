@@ -184,7 +184,10 @@ GB.i18n.define('vi', {
   'hint.3d': 'Kéo để xoay · nhấp chuột phải hoặc <kbd>Shift</kbd> + kéo để di chuyển · con lăn hoặc chụm hai ngón để phóng to/thu nhỏ · nhấp vào commit để xem chi tiết',
   'hint.2d': 'Kéo để di chuyển · con lăn để cuộn lịch sử · <kbd>Ctrl</kbd> + con lăn hoặc chụm hai ngón để phóng to/thu nhỏ · nhấp vào commit để xem chi tiết',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> xoay · <kbd>↑</kbd> <kbd>↓</kbd> du hành qua lịch sử · <kbd>F</kbd> toàn màn hình',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> di chuyển · <kbd>F</kbd> toàn màn hình',
   'graph.aria2d': 'Biểu đồ các nhánh và commit',
+  'legend.merged': 'đã merge',
+  'minimap.title': 'Tổng quan: nhấp hoặc kéo để di chuyển',
   'graph.aria3d': 'Chế độ xem 3D của các nhánh và commit',
 
   'banner.events': 'Kho lưu trữ này có {total} nhánh. Khi không có token, GraphBranch chỉ thấy các nhánh xuất hiện trong luồng sự kiện của GitHub, vốn đến chậm vài phút. Với token, bạn sẽ thấy tất cả các nhánh gần như theo thời gian thực.',

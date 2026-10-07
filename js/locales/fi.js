@@ -184,7 +184,10 @@ GB.i18n.define('fi', {
   'hint.3d': 'Pyöritä vetämällä · siirrä näkymää hiiren oikealla painikkeella tai <kbd>Vaihto</kbd> + veto · zoomaa rullalla tai nipistämällä · katso lisätiedot napsauttamalla committia',
   'hint.2d': 'Siirrä vetämällä · selaa historiaa rullalla · zoomaa <kbd>Ctrl</kbd> + rulla tai nipistämällä · katso lisätiedot napsauttamalla committia',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> pyöritä · <kbd>↑</kbd> <kbd>↓</kbd> liiku historiassa · <kbd>F</kbd> koko näyttö',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> liiku · <kbd>F</kbd> koko näyttö',
   'graph.aria2d': 'Haarojen ja committien kaavio',
+  'legend.merged': 'yhdistetyt',
+  'minimap.title': 'Yleiskuva: siirry napsauttamalla tai vetämällä',
   'graph.aria3d': 'Haarojen ja committien 3D-näkymä',
 
   'banner.events': 'Tässä repositoriossa on {total} haaraa. Ilman tokenia GraphBranch näkee vain ne, jotka näkyvät GitHubin tapahtumasyötteessä, joka saapuu muutaman minuutin myöhässä. Tokenin avulla näet ne kaikki lähes reaaliaikaisesti.',

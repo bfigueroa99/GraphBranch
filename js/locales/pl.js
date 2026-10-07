@@ -189,7 +189,10 @@ GB.i18n.define('pl', {
   'hint.3d': 'Przeciągnij, aby obracać · prawy przycisk myszy lub <kbd>Shift</kbd> + przeciągnięcie, aby przesuwać · kółko lub szczypnięcie, aby przybliżać · kliknij commit, aby zobaczyć szczegóły',
   'hint.2d': 'Przeciągnij, aby przesuwać · kółko, aby przewijać historię · <kbd>Ctrl</kbd> + kółko lub szczypnięcie, aby przybliżać · kliknij commit, aby zobaczyć szczegóły',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> obracanie · <kbd>↑</kbd> <kbd>↓</kbd> podróż przez historię · <kbd>F</kbd> pełny ekran',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> poruszanie się · <kbd>F</kbd> pełny ekran',
   'graph.aria2d': 'Graf gałęzi i commitów',
+  'legend.merged': 'scalone',
+  'minimap.title': 'Podgląd całości: kliknij lub przeciągnij, aby się przesunąć',
   'graph.aria3d': 'Widok 3D gałęzi i commitów',
 
   'banner.events': 'Liczba gałęzi w tym repozytorium: {total}. Bez tokena GraphBranch widzi tylko te, które pojawiają się w kanale zdarzeń GitHub, a ten dociera z kilkuminutowym opóźnieniem. Z tokenem zobaczysz wszystkie niemal w czasie rzeczywistym.',

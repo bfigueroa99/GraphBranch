@@ -184,7 +184,10 @@ GB.i18n.define('fil', {
   'hint.3d': 'I-drag para umikot · i-right-click o <kbd>Shift</kbd> + drag para mag-pan · wheel o pinch para mag-zoom · i-click ang commit para sa mga detalye',
   'hint.2d': 'I-drag para gumalaw · wheel para mag-scroll sa history · <kbd>Ctrl</kbd> + wheel o pinch para mag-zoom · i-click ang commit para sa mga detalye',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> paikutin · <kbd>↑</kbd> <kbd>↓</kbd> maglakbay sa history · <kbd>F</kbd> buong screen',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> gumalaw · <kbd>F</kbd> buong screen',
   'graph.aria2d': 'Graph ng mga branch at commit',
+  'legend.merged': 'na-merge',
+  'minimap.title': 'Kabuuang tanaw: i-click o i-drag para gumalaw',
   'graph.aria3d': '3D view ng mga branch at commit',
 
   'banner.events': 'May {total} na branch ang repository na ito. Kapag walang token, ang mga branch lang na lumalabas sa event feed ng GitHub ang nakikita ng GraphBranch, at ilang minuto itong huli. Kapag may token, makikita mo ang lahat ng ito nang halos real time.',

@@ -184,7 +184,10 @@ GB.i18n.define('ko', {
   'hint.3d': '드래그하여 회전 · 마우스 오른쪽 버튼 또는 <kbd>Shift</kbd> + 드래그로 이동 · 휠 또는 핀치로 확대/축소 · 커밋을 클릭하면 상세 정보 표시',
   'hint.2d': '드래그하여 이동 · 휠로 히스토리 스크롤 · <kbd>Ctrl</kbd> + 휠 또는 핀치로 확대/축소 · 커밋을 클릭하면 상세 정보 표시',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> 회전 · <kbd>↑</kbd> <kbd>↓</kbd> 히스토리 탐색 · <kbd>F</kbd> 전체 화면',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> 이동 · <kbd>F</kbd> 전체 화면',
   'graph.aria2d': '브랜치와 커밋 그래프',
+  'legend.merged': '머지됨',
+  'minimap.title': '전체 보기: 클릭하거나 드래그하여 이동',
   'graph.aria3d': '브랜치와 커밋 3D 보기',
 
   'banner.events': '이 저장소에는 브랜치가 {total}개 있습니다. 토큰이 없으면 GraphBranch는 GitHub 이벤트 피드에 나타나는 브랜치만 볼 수 있으며, 이 피드는 몇 분 늦게 도착합니다. 토큰을 사용하면 모든 브랜치를 거의 실시간으로 볼 수 있습니다.',

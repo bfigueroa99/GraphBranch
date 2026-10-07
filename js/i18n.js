@@ -237,6 +237,7 @@ window.GB = window.GB || {};
   const fmtTime = (ms) => intl('DateTimeFormat', { hour: '2-digit', minute: '2-digit' }).format(ms);
   const fmtWeekdayDate = (ms) => intl('DateTimeFormat', { weekday: 'short', day: 'numeric', month: 'short' }).format(ms);
   const fmtSeconds = (s) => intl('NumberFormat', { style: 'unit', unit: 'second', unitDisplay: 'narrow' }).format(s);
+  const fmtUnit = (n, unit) => intl('NumberFormat', { style: 'unit', unit, unitDisplay: 'short' }).format(n);
 
   /** "ahora", "hace 5 min", "5 minutes ago", "5分前"…; pasado un mes, la fecha. */
   function timeAgo(ms, now = Date.now()) {
@@ -342,6 +343,7 @@ window.GB = window.GB || {};
     fmtDateTime,
     fmtTime,
     fmtSeconds,
+    fmtUnit,
     timeAgo,
     dayLabel,
     get locale() {

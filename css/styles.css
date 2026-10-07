@@ -1178,6 +1178,10 @@ kbd {
   pointer-events: none;
   opacity: 0;
 }
+/* en vuelo, bajo la brújula */
+.graph3d-wrap:has(.wd-ui:not([hidden])) ~ .combo {
+  top: 84px;
+}
 .combo.pop {
   animation: combo 2.2s cubic-bezier(0.2, 1.4, 0.4, 1) forwards;
 }
@@ -1380,7 +1384,7 @@ kbd {
   display: none;
 }
 .fl-hint {
-  top: 56px;
+  top: 88px; /* bajo la brújula */
   opacity: 0;
 }
 .fl-hint.show {
@@ -1426,6 +1430,255 @@ kbd {
   border-radius: 50%;
   background: color-mix(in srgb, var(--ink) 25%, transparent);
 }
+/* ---------- mundo abierto: brújula, minimapa y rótulos del vuelo (world.js) ---------- */
+.wd-ui {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+.wd-compass {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  translate: -50% 0;
+  width: min(520px, calc(100% - 32px));
+  height: 34px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+/* una marca cada 15° y una mayor cada 45°; world.js las desplaza con la mirada */
+.wd-ticks {
+  --tick: 20px;
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(90deg, var(--ink-3) 0 1px, transparent 1px),
+    linear-gradient(90deg, var(--ink-2) 0 1.5px, transparent 1.5px);
+  background-size:
+    var(--tick) 5px,
+    calc(var(--tick) * 3) 9px;
+  background-position:
+    0 100%,
+    0 100%;
+  background-repeat: repeat-x;
+  opacity: 0.7;
+}
+.wd-dir {
+  position: absolute;
+  top: 3px;
+  left: 0;
+  translate: -50% 0;
+  color: var(--ink);
+  font: 600 10.5px/1 var(--font-ui);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+.wd-past {
+  color: var(--ink-3);
+}
+.wd-marks {
+  position: absolute;
+  inset: 0;
+}
+.wd-mark {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.wd-mark i {
+  display: block;
+  width: 8px;
+  height: 8px;
+  margin: 5px;
+  border: 1.5px solid var(--c);
+  border-radius: 1px;
+  background: var(--c);
+  transform: rotate(45deg);
+}
+.wd-mark.home i {
+  border-radius: 50%;
+  transform: none;
+}
+/* aún sin descubrir: hueca */
+.wd-mark.unk i {
+  background: transparent;
+}
+.wd-mark.dest i {
+  width: 10px;
+  height: 10px;
+  margin: 4px;
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 3.5px var(--ink);
+}
+/* la rama queda muy arriba o muy abajo */
+.wd-mark.up::after,
+.wd-mark.down::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  margin-left: -3px;
+  border: 3px solid transparent;
+}
+.wd-mark.up::after {
+  top: -4px;
+  border-bottom-color: var(--c);
+}
+.wd-mark.down::after {
+  bottom: -4px;
+  border-top-color: var(--c);
+}
+.wd-caret {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  margin-left: -4px;
+  border: 4px solid transparent;
+  border-top-color: var(--ink);
+}
+.wd-target {
+  position: absolute;
+  top: 52px;
+  left: 50%;
+  translate: -50% 0;
+  max-width: calc(100% - 32px);
+  overflow: hidden;
+  margin: 0;
+  padding: 3px 10px;
+  border: 1.5px solid var(--c, var(--line));
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  color: var(--ink);
+  font: 500 12px var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.wd-target.on {
+  opacity: 1;
+}
+.wd-map {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.wd-radar {
+  display: block;
+  width: 148px;
+  height: 148px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  box-shadow: var(--shadow);
+}
+.wd-gauges {
+  margin: 0;
+  padding: 2px 9px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  color: var(--ink-2);
+  font: 500 11px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* rama descubierta, mapa completo o destino alcanzado: un rótulo grande que aparece y se va */
+.wd-found {
+  position: absolute;
+  top: max(150px, 26%); /* bajo la brújula y la ayuda del vuelo */
+  left: 50%;
+  z-index: 4;
+  max-width: calc(100% - 32px);
+  translate: -50% 0;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.45s,
+    transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.wd-found.show {
+  opacity: 1;
+  transform: none;
+}
+.wd-found p {
+  margin: 0;
+}
+.wd-found-k {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-2);
+  font: 600 11.5px var(--font-ui);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.wd-found-k::before,
+.wd-found-k::after {
+  content: "";
+  width: 34px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--ink-3));
+}
+.wd-found-k::after {
+  transform: scaleX(-1);
+}
+.wd-found-name {
+  overflow: hidden;
+  color: var(--c, var(--ink));
+  font: 700 clamp(20px, 3.4vw, 32px) / 1.25 var(--font-display);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow:
+    0 0 14px var(--surface),
+    0 0 3px var(--surface);
+}
+.wd-found-n {
+  color: var(--ink-3);
+  font: 500 11.5px var(--font-mono);
+  text-shadow: 0 0 8px var(--surface);
+}
+.wd-ui.small .wd-map {
+  right: 10px;
+  bottom: 10px;
+  gap: 4px;
+}
+.wd-ui.small .wd-radar {
+  width: 88px;
+  height: 88px;
+}
+.wd-ui.small .wd-gauges {
+  font-size: 10px;
+}
+/* muy bajos: solo la altura y la velocidad */
+.wd-ui.tiny .wd-radar {
+  display: none;
+}
+
 /* recorrer la rama, desde el detalle del commit */
 .tip-ride {
   height: 26px;

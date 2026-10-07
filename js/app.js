@@ -121,6 +121,11 @@
         onFlightChange: (on) => setPressed(el.flyBtn, on),
         // zumbido del motor mientras se vuela (solo con el sonido activado)
         onFlightSpeed: (level) => feed.synth.engine(feed.sound ? level : 0),
+        // mundo abierto: cada rama descubierta suena; descubrirlas todas es un logro (ver world.js)
+        onExplore: (e) => {
+          if (feed.sound) feed.synth.discover(e.kind, e.name, e.name ? graph3d.panOf(e.name) : 0);
+          if (e.kind === 'complete') game.mapped();
+        },
         onShot: (a) => lowerThird(a),
         onDirector: (st) => renderDirector(st),
       });
@@ -191,6 +196,7 @@
     layout = new GB.Layout();
     graph2d.clear();
     graph3d?.clear();
+    graph3d?.world?.load(repoKey()); // y sus ramas descubiertas en el modo vuelo
     followUI(true);
     feed.clear();
     paused = false;

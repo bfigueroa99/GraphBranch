@@ -276,6 +276,28 @@
       h.oscs.forEach((o, i) => o.frequency.setTargetAtTime(48 + i * 0.6 + level * 30, t, 0.3));
     }
 
+    /** Mundo abierto: el motivo de una rama descubierta (su nota), del destino alcanzado o del mapa completo. */
+    discover(kind, branch, pan = 0) {
+      const ctx = this.ensure();
+      if (!ctx) return;
+      const t = ctx.currentTime + 0.04;
+      const h = STEP / 2;
+      const d = this.degreeOf(branch);
+      if (kind === 'complete') {
+        for (let i = 0; i < 4; i++) this.bell(t + i * h, note(7 + i * 2), 0, 0.12, 1.4);
+        this.pad(t + 4 * h, [note(0), note(4), note(7)], 0, 0.06, 2.4);
+      } else if (kind === 'arrive') {
+        this.bell(t, note(d + 7), pan, 0.13, 1.3);
+        this.bell(t + h, note(d + 5), pan, 0.11, 1.6);
+        this.pad(t + h, [note(d), note(d + 2)], pan, 0.05, 1.6);
+      } else {
+        // tres notas que suben, como al encontrar un lugar nuevo
+        this.bell(t, note(d + 5), pan, 0.1, 1.1);
+        this.bell(t + h, note(d + 7), pan, 0.1, 1.2);
+        this.bell(t + 2 * h, note(d + 10), pan, 0.11, 1.8);
+      }
+    }
+
     /** Al activar el sonido: una frase corta que confirma que funciona. */
     preview() {
       const ctx = this.ensure();

@@ -275,6 +275,12 @@
       this.vel.lerp(this.want, 1 - Math.exp(-dt * (this.want.lengthSq() ? 5 : 3.5)));
       if (this.vel.lengthSq() < 1e-6) this.vel.set(0, 0, 0);
       cam.position.addScaledVector(this.vel, dt);
+      // el suelo es sólido: se puede rozar, no atravesar
+      const floor = g.world ? g.world.heightAt(cam.position.x, cam.position.z) + 1.5 : -Infinity;
+      if (cam.position.y < floor) {
+        cam.position.y = floor;
+        if (this.vel.y < 0) this.vel.y = 0;
+      }
 
       // sensación de vuelo: se inclina en las curvas y el campo de visión se abre a toda velocidad
       const calm = !g.motion;

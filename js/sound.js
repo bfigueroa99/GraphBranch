@@ -286,6 +286,12 @@
       if (kind === 'complete') {
         for (let i = 0; i < 4; i++) this.bell(t + i * h, note(7 + i * 2), 0, 0.12, 1.4);
         this.pad(t + 4 * h, [note(0), note(4), note(7)], 0, 0.06, 2.4);
+      } else if (kind === 'enter') {
+        // llegada a una galaxia: un acorde grave que crece y un brillo que sube
+        this.pad(t, [note(d - 7), note(d - 3), note(d)], pan, 0.07, 3.2);
+        this.bell(t + h, note(d + 7), pan, 0.06, 2.2);
+        this.bell(t + 2 * h, note(d + 9), pan, 0.06, 2.2);
+        this.bell(t + 3 * h, note(d + 14), pan, 0.07, 2.8);
       } else if (kind === 'scan') {
         // el escáner: un ping que se aleja
         this.pluck(t, note(d + 12), pan, 0.14, 0.7);

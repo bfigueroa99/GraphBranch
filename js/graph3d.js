@@ -118,7 +118,9 @@
     void main() {
       float beat = iSize.y * sin( uTime * 2.4 + iPos.z * 0.45 );
       vec4 mv = modelViewMatrix * vec4( iPos, 1.0 );
-      mv.xy += position.xy * iSize.x * ( 1.0 + 0.14 * beat );
+      // tamaño aparente con tope: un halo que pasa junto a la cámara no tapa la vista
+      float size = min( iSize.x, max( 0.05, -mv.z ) * 0.16 );
+      mv.xy += position.xy * size * ( 1.0 + 0.14 * beat );
       gl_Position = projectionMatrix * mv;
       vUv = uv;
       float fade = 1.0 - smoothstep( uFog.x, uFog.y, -mv.z );
@@ -870,7 +872,8 @@
       }
       // la onda y las chispas, solo para los más nuevos (una rama que aparece trae toda su historia)
       arrivals.sort((a, b) => b.data.x - a.data.x);
-      for (const it of arrivals.slice(0, 8)) this.later(ARRIVE * 0.9, () => this.nodes.get(it.sha) === it && this.burst(it.toV, this.col(it.data.color)));
+      // en el Replay llegan commits sin parar: una sola onda por tanda
+      for (const it of arrivals.slice(0, ctx.replay ? 1 : 8)) this.later(ARRIVE * 0.9, () => this.nodes.get(it.sha) === it && this.burst(it.toV, this.col(it.data.color)));
 
       /* aristas */
       const seenE = new Set();
@@ -1866,7 +1869,7 @@
       for (let i = this.ripples.length - 1; i >= 0; i--) {
         const r = this.ripples[i];
         const p = clamp((now - r.t0) / 1300, 0, 1);
-        r.mesh.scale.setScalar((0.6 + 7 * easeOut(p)) * r.k);
+        r.mesh.scale.setScalar((0.6 + 7 * easeOut(p)) * r.k * clamp(this.radius / 8, 0.5, 1.2)); // proporcional al grafo
         r.mesh.material.opacity = (this.dark ? 0.85 : 0.55) * Math.pow(1 - p, 1.5);
         if (p >= 1) {
           this.gFx.remove(r.mesh);

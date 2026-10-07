@@ -161,6 +161,7 @@
     play(acts, panOf) {
       const ctx = this.ensure();
       if (!ctx || !acts.length) return;
+      if (this.nextFree > ctx.currentTime + 1.5) return; // ya hay frase en cola: no acumular atraso
       // en la rejilla global de corcheas: lo que llega junto se encadena como una frase
       let t = Math.max(ctx.currentTime + 0.06, this.nextFree);
       t = Math.ceil(t / STEP) * STEP;

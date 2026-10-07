@@ -146,6 +146,9 @@
           <button class="icon-btn" type="button" id="fullscreen-btn" aria-pressed="false" title="Full screen" aria-label="Full screen" data-i18n-attr="title:fullscreen.label;aria-label:fullscreen.label">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path class="when-off" d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/><path class="when-on" d="M6 2.5V6H2.5M10 2.5V6h3.5M13.5 10H10v3.5M6 13.5V10H2.5"/></svg>
           </button>
+          <button class="icon-btn" type="button" id="replay-btn" aria-pressed="false" title="Replay the history" aria-label="Replay the history" data-i18n-attr="title:replay.label;aria-label:replay.label">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 8a5.4 5.4 0 1 0 1.7-3.9M2.4 2.6v3h3"/><path d="M7 5.9v4.2L10.2 8z"/></svg>
+          </button>
           <button class="btn btn-follow" type="button" id="follow-btn" aria-pressed="true">
             <span class="live-dot" aria-hidden="true"></span><span class="follow-label">Live</span>
           </button>
@@ -159,6 +162,24 @@
         <div class="graph3d-wrap" id="graph3d" hidden></div>
         <div class="graph-wrap" id="graph" hidden></div>
         <div class="overlay" id="overlay" hidden></div>
+        <div class="replay" id="replay" hidden>
+          <div class="rp-clock" aria-hidden="true"><span class="rp-date"></span><span class="rp-time"></span></div>
+          <p class="rp-caption" role="status" aria-live="polite"></p>
+          <div class="rp-bar">
+            <button type="button" class="icon-btn rp-play" aria-pressed="false">
+              <svg class="ico when-off" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.5v9M10.5 3.5v9"/></svg>
+              <svg class="ico when-on" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6L12.5 8z"/></svg>
+            </button>
+            <div class="rp-track">
+              <div class="rp-marks" aria-hidden="true"></div>
+              <input type="range" class="rp-range" min="0" max="1000" step="1" value="0" aria-label="Position in the history" data-i18n-attr="aria-label:replay.position">
+            </div>
+            <button type="button" class="btn btn-ghost rp-speed" title="Replay speed" data-i18n-attr="title:replay.speed">1×</button>
+            <button type="button" class="btn rp-exit" aria-label="Back to the present" data-i18n-attr="aria-label:replay.exit">
+              <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9.5M9 4.5 12.5 8 9 11.5"/></svg><span data-i18n="replay.exit">Back to the present</span>
+            </button>
+          </div>
+        </div>
       </div>
       <p class="hint" id="hint"></p>
     </section>
@@ -226,6 +247,7 @@
 <script src="js/graph.js"></script>
 <script src="js/graph3d.js"></script>
 <script src="js/sound.js"></script>
+<script src="js/replay.js"></script>
 <script src="js/feed.js"></script>
 <script src="js/app.js"></script>
 </body>

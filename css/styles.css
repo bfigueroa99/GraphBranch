@@ -1062,6 +1062,152 @@ kbd {
   }
 }
 
+/* ---------- modo Replay ---------- */
+.replay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none; /* el grafo sigue respondiendo; solo la barra recibe clics */
+}
+.rp-clock {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  color: var(--ink);
+  text-shadow: 0 1px 14px var(--surface), 0 0 2px var(--surface);
+}
+.rp-date {
+  font: 700 clamp(20px, 3vw, 32px) / 1.1 var(--font-display);
+  letter-spacing: -0.01em;
+}
+.rp-time {
+  color: var(--ink-3);
+  font: 500 13px var(--font-mono);
+}
+.rp-caption {
+  position: absolute;
+  top: calc(14px + clamp(20px, 3vw, 32px) * 1.1 + 28px);
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: min(420px, calc(100% - 32px));
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.35s, transform 0.35s;
+}
+.rp-caption.show {
+  opacity: 1;
+  transform: none;
+}
+.rp-caption:empty {
+  display: none;
+}
+.rp-cap-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+.rp-cap-detail {
+  color: var(--ink-2);
+  font-size: 12.5px;
+}
+.rp-bar {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow);
+  pointer-events: auto;
+}
+.rp-track {
+  position: relative;
+  flex: 1;
+  min-width: 60px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+.rp-range {
+  width: 100%;
+  margin: 0;
+  accent-color: var(--s1);
+  cursor: pointer;
+}
+/* merges y releases sobre la línea de tiempo (el pulgar del control deja ~8 px a cada lado) */
+.rp-marks {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 2px;
+  height: 8px;
+  pointer-events: none;
+}
+.rp-mark {
+  position: absolute;
+  top: 2px;
+  width: 2px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--ink-3);
+  opacity: 0.6;
+  transform: translateX(-1px);
+}
+.rp-mark.release {
+  top: 0;
+  height: 8px;
+  background: var(--warn);
+  opacity: 1;
+}
+.rp-speed {
+  min-width: 48px;
+  height: 32px;
+  font: 600 12.5px var(--font-mono);
+}
+.rp-exit {
+  height: 32px;
+  gap: 6px;
+  white-space: nowrap;
+}
+/* en 2D la leyenda de ramas ocupa la izquierda: la fecha y los rótulos van a la derecha */
+.graph-stage[data-view="2d"] .rp-clock {
+  left: auto;
+  right: 16px;
+  align-items: flex-end;
+}
+.graph-stage[data-view="2d"] .rp-caption {
+  top: auto;
+  bottom: 64px; /* sobre la barra: los carriles se llenan desde arriba */
+  left: auto;
+  right: 16px;
+}
+/* la fecha y los rótulos se leen en el idioma de la página */
+[dir="rtl"] .rp-caption {
+  direction: rtl;
+}
+@media (max-width: 560px) {
+  .rp-exit span {
+    display: none;
+  }
+}
+
 /* tooltip */
 .tip {
   position: absolute;

@@ -33,6 +33,7 @@
     view2d: $('#view-2d'),
     spinBtn: $('#spin-btn'),
     fullscreenBtn: $('#fullscreen-btn'),
+    replayBtn: $('#replay-btn'),
     graphPanel: $('.graph-panel'),
     toasts: $('#toasts'),
     hint: $('#hint'),
@@ -105,6 +106,7 @@
     graph = v === '3d' ? graph3d : graph2d;
     el.graph3d.hidden = v !== '3d';
     el.graph.hidden = v !== '2d';
+    el.graph.parentElement.dataset.view = v; // el Replay acomoda su fecha según la vista
     graph3d?.setActive(v === '3d');
     setPressed(el.view3d, v === '3d');
     setPressed(el.view2d, v === '2d');
@@ -147,6 +149,7 @@
   /* ---------- fuente de datos ---------- */
 
   function connect(src) {
+    replay.stop(true);
     if (source) source.stop();
     source = src;
     layout = new GB.Layout();
@@ -210,25 +213,64 @@
 
   let lastRender = null;
 
+  const liveCtx = (data, initial) => ({
+    initial,
+    prs: prsByBranch(data),
+    pins: data.repo.demo ? new Set() : getPins(),
+    canPin: !data.repo.demo,
+  });
+
   function onUpdate({ activities, initial }) {
     const data = source.view ? source.view() : source.data;
     const L = layout.compute(data);
     lastRender = { data, L };
-    const gctx = {
-      initial,
-      prs: prsByBranch(data),
-      pins: data.repo.demo ? new Set() : getPins(),
-      canPin: !data.repo.demo,
-    };
-    graph2d.update(L, gctx);
-    graph3d?.update(L, gctx);
+    // durante el Replay el grafo muestra el pasado; lo nuevo sigue llegando al panel y se dibuja al volver
+    if (!replay.active) {
+      const gctx = liveCtx(data, initial);
+      graph2d.update(L, gctx);
+      graph3d?.update(L, gctx);
+    }
     feed.setDefaultBranch(data.repo.defaultBranch);
     feed.add(activities, { live: !initial });
-    if (!initial) graph3d?.celebrate(activities); // cada tipo de evento con su efecto
+    if (!initial && !replay.active) graph3d?.celebrate(activities); // cada tipo de evento con su efecto
     renderRepo(data.repo);
     renderStats(data, L);
     if (!L.nodes.length) showOverlay('empty');
     else hideOverlay();
+  }
+
+  /* ---------- Replay: la historia como time-lapse ---------- */
+
+  const replay = new GB.Replay({
+    root: $('#replay'),
+    onFrame: (data, L, { jump, acts, quiet }) => {
+      const gctx = { initial: jump || quiet, replay: true, prs: new Map(), pins: new Set(), canPin: false };
+      graph2d.update(L, gctx);
+      graph3d?.update(L, gctx);
+      if (!acts.length) return;
+      graph3d?.celebrate(acts);
+      if (feed.sound) feed.synth.play(acts, feed.panOf);
+    },
+    onExit: () => showLive(),
+    onState: (on) => setPressed(el.replayBtn, on),
+  });
+
+  function toggleReplay() {
+    if (replay.active) return replay.stop();
+    if (!lastRender) return;
+    graph2d.clear();
+    graph3d?.clear();
+    if (!replay.start(lastRender.data, feed.items)) showLive();
+  }
+
+  /** Vuelve a dibujar el repo tal como está ahora (al salir del Replay). */
+  function showLive() {
+    graph2d.clear();
+    graph3d?.clear();
+    if (!lastRender) return;
+    const gctx = liveCtx(lastRender.data, true);
+    graph2d.update(lastRender.L, gctx);
+    graph3d?.update(lastRender.L, gctx);
   }
 
   function prsByBranch(data) {
@@ -481,6 +523,14 @@
   document.addEventListener('fullscreenchange', onFullscreen);
   document.addEventListener('webkitfullscreenchange', onFullscreen);
   el.fullscreenBtn.addEventListener('click', toggleFullscreen);
+  el.replayBtn.addEventListener('click', toggleReplay);
+  el.graphPanel.addEventListener('keydown', (ev) => {
+    // espacio: pausar o seguir el Replay (los botones y controles ya manejan su propio espacio)
+    if (ev.key === ' ' && replay.active && !ev.target.closest('button, input, select, textarea, a, [contenteditable]')) {
+      ev.preventDefault();
+      replay.toggle();
+    }
+  });
   el.graphPanel.addEventListener('keydown', (ev) => {
     if ((ev.key || '').toLowerCase() !== 'f' || ev.ctrlKey || ev.metaKey || ev.altKey || !fullscreenOK) return;
     if (ev.target.closest('input, textarea, select, [contenteditable]')) return;
@@ -581,6 +631,7 @@
     el.repoInput.setCustomValidity('');
     graph2d.relocalize();
     graph3d?.relocalize();
+    replay.relocalize();
     feed.relocalize();
     if (!source) return;
     // la demo inventa mensajes, incidencias y comentarios en el idioma activo: se reinicia para no mezclarlos

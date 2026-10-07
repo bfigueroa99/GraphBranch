@@ -101,7 +101,7 @@ GraphBranch elige el idioma en este orden: `?lang=` en la URL (para esa visita),
 1. Copia `js/locales/en.js` a `js/locales/<código>.js` (código BCP 47: `fr`, `pt`, `zh-Hant`…), cambia el código en `GB.i18n.define('<código>', …)` y traduce los valores. Las claves, los `{parámetros}` y las etiquetas HTML (`<kbd>`, `<em>`…) no se tocan.
 2. Los textos con número (`{ one: …, other: … }`) llevan una forma por categoría plural del idioma; para saber cuáles: `node tools/check-i18n.mjs --plurals <código>`.
 3. Súmalo a `LOCALES` en `js/i18n.js` con su nombre en el propio idioma (y `rtl: true` si se escribe de derecha a izquierda).
-4. Comprueba: `node tools/check-i18n.mjs <código>` avisa de claves que faltan o sobran, parámetros o etiquetas cambiados y formas plurales incompletas.
+4. Comprueba: `node tools/check-i18n.mjs <código>` avisa de claves que faltan o sobran, parámetros o etiquetas cambiados y formas plurales incompletas, y `node tools/smoke.mjs --langs` abre la app en cada idioma en pantalla de celular y avisa si algo desborda.
 
 Opcional: si quieres que la demo hable tu idioma, agrega un bloque en `js/sources/demo-content.js`.
 
@@ -132,6 +132,7 @@ js/game.js            logros del repo, nivel y misión del día
 js/feed.js            panel de actividad, avisos, sonido y notificaciones
 js/app.js             conecta todo
 tools/check-i18n.mjs  verifica las traducciones contra el inglés
+tools/smoke.mjs       prueba de humo: abre la demo en Chromium y recorre lo principal
 ```
 
 ## Límites conocidos

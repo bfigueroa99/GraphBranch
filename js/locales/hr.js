@@ -38,6 +38,8 @@ GB.i18n.define('hr', {
   'status.connecting': 'Povezivanje s GitHubom…',
   'status.retrying': 'Ponovni pokušaj…',
   'status.loadingBranches': 'Učitavanje grana i povijesti…',
+  'status.syncing': 'ažuriranje…',
+  'status.offline': 'čeka se veza',
 
   /* ---------- sažetak ---------- */
   'stats.aria': 'Sažetak repozitorija',
@@ -323,6 +325,7 @@ GB.i18n.define('hr', {
   'err.rateGraphql': 'Potrošena je kvota za GitHub GraphQL. GraphBranch će se sam nastaviti kad se obnovi.',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'Nije moguće doći do api.github.com. Provjerite vezu; ako ste GraphBranch otvorili u pregledniku sadržaja koji blokira mrežu, upotrijebite verziju na GitHub Pages ili lokalnu datoteku.',
+  'err.timeout': 'GitHub je predugo odgovarao. GraphBranch će sam pokušati ponovno.',
   'err.notFound': 'Repozitorij {repo} nije pronađen. Ako je privatan, dodajte u Postavkama token s pravom čitanja.',
   'err.auth': 'Token nije valjan ili je istekao. Provjerite ga u Postavkama.',
   'err.rateAnon': 'Potrošeno je 60 zahtjeva na sat koje GitHub dopušta bez tokena. Dodajte token u Postavkama za nastavak u stvarnom vremenu.',

@@ -38,6 +38,8 @@ GB.i18n.define('ro', {
   'status.connecting': 'Se conectează la GitHub…',
   'status.retrying': 'Se reîncearcă…',
   'status.loadingBranches': 'Se încarcă ramurile și istoricul…',
+  'status.syncing': 'se actualizează…',
+  'status.offline': 'se așteaptă conexiunea',
 
   /* ---------- rezumat ---------- */
   'stats.aria': 'Rezumatul depozitului',
@@ -323,6 +325,7 @@ GB.i18n.define('ro', {
   'err.rateGraphql': 'Cota GraphQL de la GitHub a fost epuizată. GraphBranch va relua singur când aceasta se reînnoiește.',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'Nu s-a putut contacta api.github.com. Verificați conexiunea; dacă ați deschis GraphBranch într-un vizualizator care blochează rețeaua, folosiți versiunea de pe GitHub Pages sau fișierul local.',
+  'err.timeout': 'GitHub a răspuns prea târziu. GraphBranch va încerca din nou singur.',
   'err.notFound': 'Depozitul {repo} nu a fost găsit. Dacă este privat, adăugați în Setări un token cu acces de citire.',
   'err.auth': 'Tokenul nu este valid sau a expirat. Verificați-l în Setări.',
   'err.rateAnon': 'Cele 60 de cereri pe oră permise de GitHub fără token au fost epuizate. Adăugați un token în Setări pentru a continua în timp real.',

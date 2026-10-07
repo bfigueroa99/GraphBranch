@@ -38,6 +38,8 @@ GB.i18n.define('th', {
   'status.connecting': 'กำลังเชื่อมต่อกับ GitHub…',
   'status.retrying': 'กำลังลองใหม่…',
   'status.loadingBranches': 'กำลังโหลด branch และประวัติ…',
+  'status.syncing': 'กำลังอัปเดต…',
+  'status.offline': 'กำลังรอการเชื่อมต่อ',
 
   /* ---------- summary strip ---------- */
   'stats.aria': 'สรุปของ repository',
@@ -316,6 +318,7 @@ GB.i18n.define('th', {
   'err.rateGraphql': 'โควตา GitHub GraphQL หมดแล้ว GraphBranch จะกลับมาทำงานเองเมื่อโควตาถูกรีเซ็ต',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'เชื่อมต่อ api.github.com ไม่ได้ โปรดตรวจสอบการเชื่อมต่อของคุณ หากเปิด GraphBranch ในตัวแสดงผลที่บล็อกเครือข่าย ให้ใช้เวอร์ชัน GitHub Pages หรือไฟล์ในเครื่องแทน',
+  'err.timeout': 'GitHub ตอบสนองช้าเกินไป GraphBranch จะลองใหม่เองโดยอัตโนมัติ',
   'err.notFound': 'ไม่พบ {repo} หาก repository เป็นแบบส่วนตัว ให้เพิ่ม token ที่มีสิทธิ์อ่านในการตั้งค่า',
   'err.auth': 'token ไม่ถูกต้องหรือหมดอายุแล้ว ตรวจสอบได้ในการตั้งค่า',
   'err.rateAnon': 'คำขอ 60 ครั้งต่อชั่วโมงที่ GitHub อนุญาตเมื่อไม่มี token หมดแล้ว เพิ่ม token ในการตั้งค่าเพื่อใช้งานแบบเรียลไทม์ต่อไป',

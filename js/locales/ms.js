@@ -38,6 +38,8 @@ GB.i18n.define('ms', {
   'status.connecting': 'Menyambung ke GitHub…',
   'status.retrying': 'Mencuba semula…',
   'status.loadingBranches': 'Memuatkan branch dan sejarah…',
+  'status.syncing': 'mengemas kini…',
+  'status.offline': 'menunggu sambungan',
 
   /* ---------- ringkasan ---------- */
   'stats.aria': 'Ringkasan repositori',
@@ -315,6 +317,7 @@ GB.i18n.define('ms', {
   'err.rateGraphql': 'Kuota GraphQL GitHub telah habis. GraphBranch akan menyambung semula dengan sendirinya apabila kuota dibaharui.',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'Tidak dapat mencapai api.github.com. Semak sambungan anda; jika anda membuka GraphBranch dalam pemapar yang menyekat rangkaian, gunakan versi GitHub Pages atau fail setempat.',
+  'err.timeout': 'GitHub mengambil masa terlalu lama untuk membalas. GraphBranch akan mencuba semula sendiri.',
   'err.notFound': '{repo} tidak dijumpai. Jika repositori itu peribadi, tambah token dengan akses baca dalam Tetapan.',
   'err.auth': 'Token tidak sah atau telah tamat tempoh. Semaknya dalam Tetapan.',
   'err.rateAnon': '60 permintaan sejam yang dibenarkan GitHub tanpa token telah habis. Tambah token dalam Tetapan untuk meneruskan dalam masa nyata.',

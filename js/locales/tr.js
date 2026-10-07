@@ -38,6 +38,8 @@ GB.i18n.define('tr', {
   'status.connecting': 'GitHub’a bağlanılıyor…',
   'status.retrying': 'Yeniden deneniyor…',
   'status.loadingBranches': 'Dallar ve geçmiş yükleniyor…',
+  'status.syncing': 'güncelleniyor…',
+  'status.offline': 'bağlantı bekleniyor',
 
   /* ---------- özet ---------- */
   'stats.aria': 'Depo özeti',
@@ -315,6 +317,7 @@ GB.i18n.define('tr', {
   'err.rateGraphql': 'GitHub GraphQL kotası doldu. GraphBranch, kota yenilendiğinde kendiliğinden devam edecek.',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'api.github.com adresine ulaşılamadı. Bağlantınızı kontrol edin; GraphBranch’i ağı engelleyen bir görüntüleyicide açtıysanız GitHub Pages sürümünü veya yerel dosyayı kullanın.',
+  'err.timeout': 'GitHub yanıt vermekte çok gecikti. GraphBranch kendiliğinden yeniden deneyecek.',
   'err.notFound': '{repo} bulunamadı. Depo özelse Ayarlar’dan okuma erişimi olan bir token ekleyin.',
   'err.auth': 'Token geçerli değil veya süresi dolmuş. Ayarlar’dan kontrol edin.',
   'err.rateAnon': 'GitHub’ın token olmadan izin verdiği saatte 60 istek doldu. Gerçek zamanlı devam etmek için Ayarlar’dan bir token ekleyin.',

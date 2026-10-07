@@ -38,6 +38,8 @@ GB.i18n.define('zh-Hans', {
   'status.connecting': '正在连接 GitHub…',
   'status.retrying': '正在重试…',
   'status.loadingBranches': '正在加载分支和历史记录…',
+  'status.syncing': '正在更新…',
+  'status.offline': '等待网络连接',
 
   /* ---------- 概览 ---------- */
   'stats.aria': '仓库概览',
@@ -315,6 +317,7 @@ GB.i18n.define('zh-Hans', {
   'err.rateGraphql': 'GitHub GraphQL 配额已用完。配额重置后，GraphBranch 将自动恢复。',
   'err.graphql': 'GitHub GraphQL：{message}',
   'err.network': '无法连接 api.github.com。请检查网络连接；如果是在会屏蔽网络的查看器中打开 GraphBranch，请改用 GitHub Pages 版本或本地文件。',
+  'err.timeout': 'GitHub 响应超时。GraphBranch 会自动重试。',
   'err.notFound': '未找到 {repo}。如果该仓库是私有的，请在“设置”中添加具有读取权限的令牌。',
   'err.auth': '令牌无效或已过期。请在“设置”中检查。',
   'err.rateAnon': 'GitHub 在没有令牌时每小时允许的 60 次请求已用完。请在“设置”中添加令牌，以便继续实时更新。',

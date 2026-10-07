@@ -38,6 +38,8 @@ GB.i18n.define('ca', {
   'status.connecting': 'Connectant amb GitHub…',
   'status.retrying': 'Reintentant…',
   'status.loadingBranches': "Carregant branques i historial…",
+  'status.syncing': 'actualitzant…',
+  'status.offline': 'esperant la connexió',
 
   /* ---------- resum ---------- */
   'stats.aria': 'Resum del repositori',
@@ -315,6 +317,7 @@ GB.i18n.define('ca', {
   'err.rateGraphql': "S'ha esgotat la quota de GraphQL de GitHub. GraphBranch es reprendrà sol quan es renovi.",
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': "No s'ha pogut connectar amb api.github.com. Revisa la connexió; si has obert GraphBranch dins d'un visor que bloqueja la xarxa, fes servir la versió de GitHub Pages o el fitxer local.",
+  'err.timeout': 'GitHub ha trigat massa a respondre. GraphBranch ho tornarà a provar sol.',
   'err.notFound': "No s'ha trobat {repo}. Si el repositori és privat, afegeix un token amb permís de lectura a Configuració.",
   'err.auth': "El token no és vàlid o ha caducat. Revisa'l a Configuració.",
   'err.rateAnon': "S'han esgotat les 60 consultes per hora que GitHub permet sense token. Afegeix un token a Configuració per continuar en temps real.",

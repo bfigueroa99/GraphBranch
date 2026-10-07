@@ -38,6 +38,8 @@ GB.i18n.define('fi', {
   'status.connecting': 'Muodostetaan yhteyttä GitHubiin…',
   'status.retrying': 'Yritetään uudelleen…',
   'status.loadingBranches': 'Ladataan haaroja ja historiaa…',
+  'status.syncing': 'päivitetään…',
+  'status.offline': 'odotetaan yhteyttä',
 
   /* ---------- yhteenveto ---------- */
   'stats.aria': 'Repositorion yhteenveto',
@@ -315,6 +317,7 @@ GB.i18n.define('fi', {
   'err.rateGraphql': 'GitHubin GraphQL-kiintiö on käytetty loppuun. GraphBranch jatkaa itsestään, kun kiintiö uusiutuu.',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'Osoitteeseen api.github.com ei saatu yhteyttä. Tarkista verkkoyhteytesi; jos avasit GraphBranchin katselimessa, joka estää verkon, käytä GitHub Pages -versiota tai paikallista tiedostoa.',
+  'err.timeout': 'GitHub vastasi liian hitaasti. GraphBranch yrittää uudelleen itsestään.',
   'err.notFound': 'Repositoriota {repo} ei löytynyt. Jos repositorio on yksityinen, lisää Asetuksissa token, jolla on lukuoikeus.',
   'err.auth': 'Token ei kelpaa tai se on vanhentunut. Tarkista se Asetuksissa.',
   'err.rateAnon': 'GitHubin ilman tokenia sallimat 60 pyyntöä tunnissa on käytetty. Lisää token Asetuksissa, niin päivitys jatkuu reaaliaikaisena.',

@@ -38,6 +38,8 @@ GB.i18n.define('zh-Hant', {
   'status.connecting': '正在連線至 GitHub…',
   'status.retrying': '正在重試…',
   'status.loadingBranches': '正在載入分支與歷程記錄…',
+  'status.syncing': '更新中…',
+  'status.offline': '等待網路連線',
 
   /* ---------- 摘要 ---------- */
   'stats.aria': '儲存庫摘要',
@@ -315,6 +317,7 @@ GB.i18n.define('zh-Hant', {
   'err.rateGraphql': 'GitHub GraphQL 配額已用完。配額重設後，GraphBranch 會自動恢復。',
   'err.graphql': 'GitHub GraphQL：{message}',
   'err.network': '無法連線至 api.github.com。請檢查網路連線；如果是在會封鎖網路的檢視器中開啟 GraphBranch，請改用 GitHub Pages 版本或本機檔案。',
+  'err.timeout': 'GitHub 回應逾時。GraphBranch 會自動重試。',
   'err.notFound': '找不到 {repo}。如果該儲存庫是私人的，請在「設定」中新增具有讀取權限的權杖。',
   'err.auth': '權杖無效或已過期。請在「設定」中檢查。',
   'err.rateAnon': '沒有權杖時 GitHub 每小時允許的 60 次請求已用完。請在「設定」中新增權杖，以便繼續即時更新。',

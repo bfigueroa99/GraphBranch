@@ -38,6 +38,8 @@ GB.i18n.define('ar', {
   'status.connecting': 'جارٍ الاتصال بـ GitHub…',
   'status.retrying': 'جارٍ إعادة المحاولة…',
   'status.loadingBranches': 'جارٍ تحميل الفروع والسجل…',
+  'status.syncing': 'جارٍ التحديث…',
+  'status.offline': 'في انتظار الاتصال',
 
   /* ---------- summary strip ---------- */
   'stats.aria': 'ملخص المستودع',
@@ -414,6 +416,7 @@ GB.i18n.define('ar', {
   'err.rateGraphql': 'استُنفدت حصة GraphQL في GitHub. سيستأنف GraphBranch العمل تلقائيًا عند تجديدها.',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'تعذّر الوصول إلى api.github.com. تحقق من اتصالك؛ وإذا فتحت GraphBranch داخل عارض يحظر الشبكة، فاستخدم نسخة GitHub Pages أو الملف المحلي.',
+  'err.timeout': 'استغرق GitHub وقتًا طويلًا للرد. سيعيد GraphBranch المحاولة تلقائيًا.',
   'err.notFound': 'لم يتم العثور على {repo}. إذا كان المستودع خاصًا، فأضف في الإعدادات رمز وصول بصلاحية القراءة.',
   'err.auth': 'رمز الوصول غير صالح أو انتهت صلاحيته. تحقق منه في الإعدادات.',
   'err.rateAnon': 'استُنفد حد الـ 60 طلبًا في الساعة الذي يسمح به GitHub بدون رمز وصول. أضف رمز وصول في الإعدادات لمتابعة التحديث المباشر.',

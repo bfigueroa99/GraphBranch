@@ -38,6 +38,8 @@ GB.i18n.define('ja', {
   'status.connecting': 'GitHub に接続しています…',
   'status.retrying': '再試行しています…',
   'status.loadingBranches': 'ブランチと履歴を読み込んでいます…',
+  'status.syncing': '更新中…',
+  'status.offline': '接続を待っています',
 
   /* ---------- 概要 ---------- */
   'stats.aria': 'リポジトリの概要',
@@ -315,6 +317,7 @@ GB.i18n.define('ja', {
   'err.rateGraphql': 'GitHub GraphQL のクォータを使い切りました。クォータが更新されると、GraphBranch は自動的に再開します。',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'api.github.com に接続できませんでした。ネットワーク接続を確認してください。ネットワークをブロックするビューアー内で GraphBranch を開いている場合は、GitHub Pages 版またはローカルファイルを使用してください。',
+  'err.timeout': 'GitHub の応答に時間がかかりすぎました。GraphBranch が自動的に再試行します。',
   'err.notFound': '{repo} が見つかりませんでした。リポジトリがプライベートの場合は、「設定」で読み取り権限のあるトークンを追加してください。',
   'err.auth': 'トークンが無効か、有効期限が切れています。「設定」で確認してください。',
   'err.rateAnon': 'トークンなしで GitHub が許可している 1 時間あたり 60 リクエストを使い切りました。リアルタイムで更新を続けるには、「設定」でトークンを追加してください。',

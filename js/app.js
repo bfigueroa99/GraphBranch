@@ -35,6 +35,7 @@
     fullscreenBtn: $('#fullscreen-btn'),
     replayBtn: $('#replay-btn'),
     flyBtn: $('#fly-btn'),
+    galaxyBtn: $('#galaxy-btn'),
     directorBtn: $('#director-btn'),
     tvBtn: $('#tv-btn'),
     tvClock: $('#tv-clock'),
@@ -128,6 +129,14 @@
         },
         onShot: (a) => lowerThird(a),
         onDirector: (st) => renderDirector(st),
+        // modo galaxias: los archivos de una rama (los planetas) se piden al acercarse a su galaxia
+        loadFiles: (q) => (source?.files ? source.files(q) : null),
+        onGalaxyChange: (on) => setPressed(el.galaxyBtn, on),
+        onScan: () => feed.sound && feed.synth.discover('scan', null, 0),
+        // el espacio tiene su zumbido de fondo, en la nota de la galaxia en la que se está
+        onAmbience: (level, name) => feed.synth.drone(feed.sound ? level : 0, name),
+        // el hiperimpulsor: la carga que sube y el golpe del salto
+        onJump: (kind, name) => feed.sound && feed.synth.hyper(kind, name),
       });
     }
   } catch (err) {
@@ -150,6 +159,7 @@
     setPressed(el.view2d, v === '2d');
     el.spinBtn.hidden = v !== '3d';
     el.flyBtn.hidden = v !== '3d' || !graph3d?.flight;
+    el.galaxyBtn.hidden = v !== '3d' || !graph3d?.gx;
     el.directorBtn.hidden = v !== '3d' || !director;
     // los atajos de teclado solo se anuncian donde hay teclado y ratón
     const keys = v === '3d' && window.matchMedia?.('(pointer: fine)').matches;
@@ -197,6 +207,7 @@
     graph2d.clear();
     graph3d?.clear();
     graph3d?.world?.load(repoKey()); // y sus ramas descubiertas en el modo vuelo
+    graph3d?.gx?.reset(); // los archivos que se habían pedido eran del repo anterior
     followUI(true);
     feed.clear();
     // nada del repo anterior: ni sus cifras ni su grafo (el Replay lo reproduciría si el nuevo no carga)
@@ -538,7 +549,6 @@
 
   const STATE_TEXT = {
     loading: 'status.loading',
-    syncing: 'status.live',
     live: 'status.live',
     limited: 'status.limited',
     paused: 'status.paused',
@@ -557,16 +567,15 @@
   function renderStatus() {
     if (!status) return;
     const s = status;
-    const shown = s.state === 'syncing' ? 'live' : s.state;
-    el.status.dataset.state = shown;
-    const text = s.demo && shown === 'live' ? t('status.demoLive') : STATE_TEXT[s.state] ? t(STATE_TEXT[s.state]) : s.state;
+    el.status.dataset.state = s.state;
+    const text = s.demo && s.state === 'live' ? t('status.demoLive') : STATE_TEXT[s.state] ? t(STATE_TEXT[s.state]) : s.state;
     // es región viva y esto corre cada segundo: reescribir el mismo texto podría volver a anunciarlo
     if (el.statusText.textContent !== text) el.statusText.textContent = text;
     const now = Date.now();
     let sub = '';
     const secsTo = (at) => i18n.fmtSeconds(Math.max(0, Math.ceil((at - now) / 1000)));
     if (s.state === 'error') {
-      sub = s.nextAt ? t('status.retryIn', { time: secsTo(s.nextAt) }) : t('status.stopped');
+      sub = s.offline ? t('status.offline') : s.nextAt ? t('status.retryIn', { time: secsTo(s.nextAt) }) : t('status.stopped');
       el.status.title = i18n.text(s.message);
     } else if (s.state === 'paused') {
       sub = t('status.resumeHint');
@@ -576,7 +585,8 @@
     } else {
       const parts = [];
       if (s.lastOk) parts.push(t('status.updated', { ago: U.timeAgo(s.lastOk, now) }));
-      if (s.nextAt && !s.demo) parts.push(t('status.nextIn', { time: secsTo(s.nextAt) }));
+      if (s.syncing) parts.push(t('status.syncing')); // un ciclo en curso o a punto de empezar
+      else if (s.nextAt && !s.demo) parts.push(t('status.nextIn', { time: secsTo(s.nextAt) }));
       sub = parts.join(' · ');
       el.status.title = s.state === 'limited' ? t('status.throttled') : '';
     }
@@ -686,6 +696,7 @@
   el.soundBtn.addEventListener('click', () => {
     feed.setSound(!feed.sound);
     setPressed(el.soundBtn, feed.sound);
+    graph3d?.gx?.pokeAmbience(); // el zumbido del espacio arranca o se apaga con el sonido
   });
 
   if (!feed.notifySupported) el.notifyBtn.hidden = true;
@@ -734,6 +745,8 @@
   el.fullscreenBtn.addEventListener('click', toggleFullscreen);
   el.replayBtn.addEventListener('click', toggleReplay);
   el.flyBtn.addEventListener('click', () => graph3d?.flight?.toggle());
+  setPressed(el.galaxyBtn, !!graph3d?.galaxy);
+  el.galaxyBtn.addEventListener('click', () => graph3d?.setGalaxy(!graph3d.galaxy));
   el.graphPanel.addEventListener('keydown', (ev) => {
     // espacio: pausar o seguir el Replay (los botones y controles ya manejan su propio espacio;
     // en modo TV el espacio pausa todo, ver más abajo)
@@ -886,6 +899,7 @@
     if (feed.sound) feed.synth.preview();
     setPressed(el.tvSound, feed.sound);
     setPressed(el.soundBtn, feed.sound);
+    graph3d?.gx?.pokeAmbience();
   });
   window.addEventListener('resize', tvScale);
   document.addEventListener('visibilitychange', () => !document.hidden && lockScreen());

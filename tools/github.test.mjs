@@ -23,9 +23,13 @@ function load(gh) {
     setTimeout,
     clearTimeout,
     URL,
+    AbortController,
     fetch: gh.fetch,
-    document: { addEventListener() {} },
+    navigator: { onLine: true },
+    document: { hidden: false, addEventListener() {}, removeEventListener() {} },
     localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+    addEventListener() {},
+    removeEventListener() {},
   });
   ctx.window = ctx;
   vm.runInContext(code('util.js'), ctx, { filename: 'util.js' });
@@ -111,7 +115,13 @@ function fakeGitHub() {
     const inm = opts.headers?.['If-None-Match'];
     const res = (st, b, h) => {
       const hs = new Map(Object.entries(h).map(([k, v]) => [k.toLowerCase(), String(v)]));
-      return { status: st, ok: st >= 200 && st < 300, headers: { get: (k) => hs.get(k.toLowerCase()) ?? null }, json: async () => JSON.parse(b) };
+      return {
+        status: st,
+        ok: st >= 200 && st < 300,
+        headers: { get: (k) => hs.get(k.toLowerCase()) ?? null },
+        text: async () => b,
+        json: async () => JSON.parse(b),
+      };
     };
     if (status === 200 && inm === etag) return res(304, 'null', headers);
     return res(status, json, status === 200 ? { ...headers, ETag: etag } : headers);

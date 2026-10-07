@@ -447,7 +447,73 @@
       this.publish(this.actions() || []);
       this.schedule();
     }
+
+    /* ---------- archivos (los planetas del modo galaxias) ---------- */
+
+    /** Archivos de una rama, como los de GitHub: el árbol de la rama por defecto, o lo que cambió
+        cada rama respecto de ella. Inventados, pero siempre los mismos para la misma rama. */
+    files({ name, isDefault }) {
+      const b = this.data.branches.get(name);
+      const rnd = mulberry32([...name].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) | 0, 7));
+      const size = (path) => 300 + Math.floor(Math.abs(Math.sin([...path].reduce((h, c) => h + c.charCodeAt(0), 0)) * 9e3)) * 3;
+      let out;
+      if (isDefault || !b) {
+        out = { kind: 'tree', files: DEMO_TREE.map((path) => ({ path, size: size(path) })) };
+      } else {
+        const s = b.scope || 'app';
+        const Cap = s[0].toUpperCase() + s.slice(1);
+        const fix = name.startsWith('fix/');
+        const own = b.own || 0;
+        const list = [];
+        const add = (path, status, k = 1) =>
+          !list.some((f) => f.path === path) &&
+          list.push({ path, status, add: status === 'removed' ? 0 : Math.round((4 + rnd() * 90) * k), del: status === 'added' ? 0 : Math.round(rnd() * 30 * k) });
+        if (name === 'develop') {
+          for (let i = 0; i < 9 + Math.min(8, own); i++) add(DEMO_TREE[Math.floor(rnd() * DEMO_TREE.length)], 'modified');
+          add('src/hooks/useSession.ts', 'added');
+          add('docs/upgrading.md', 'added');
+          add('src/utils/legacy.ts', 'removed', 0.5);
+        } else if (own > 0) {
+          if (!fix) {
+            add(`src/${s}/index.ts`, 'added', 0.4);
+            add(`src/${s}/${Cap}.tsx`, 'added', 1.6);
+            if (own > 1) add(`src/${s}/${s}.css`, 'added');
+            if (own > 2) add(`tests/${s}/${s}.test.ts`, 'added', 1.2);
+            if (own > 3) add(`src/${s}/use${Cap}.ts`, 'added');
+            add('src/router.ts', 'modified', 0.15);
+          } else {
+            add(`src/api/${s}.ts`, 'modified', 0.4);
+            add(`tests/${s}.test.ts`, 'added', 0.6);
+          }
+          for (let i = 0; i < Math.min(4, Math.floor(own / 2)); i++) add(DEMO_TREE[Math.floor(rnd() * DEMO_TREE.length)], 'modified', 0.3);
+          if (own > 4 && rnd() < 0.5) add('package.json', 'modified', 0.05);
+        }
+        out = { kind: 'diff', base: this.data.repo.defaultBranch, files: list };
+      }
+      // como si viniera de la red, para ver cómo llegan
+      return new Promise((resolve) => setTimeout(() => resolve(out), 350 + Math.random() * 450));
+    }
   }
+
+  /* el árbol del repo de la demo: identificadores, así que en inglés para cualquier idioma */
+  const DEMO_TREE = [
+    'README.md', 'LICENSE', 'CHANGELOG.md', 'package.json', 'package-lock.json', '.gitignore', '.editorconfig', 'tsconfig.json', 'vite.config.ts', 'Dockerfile',
+    '.github/workflows/ci.yml', '.github/workflows/release.yml', '.github/dependabot.yml', '.github/CODEOWNERS',
+    'docs/install.md', 'docs/api.md', 'docs/architecture.md', 'docs/contributing.md', 'docs/img/diagram.svg',
+    'public/index.html', 'public/favicon.svg', 'public/robots.txt', 'public/logo.png',
+    'src/main.ts', 'src/App.tsx', 'src/router.ts', 'src/env.d.ts',
+    'src/styles/base.css', 'src/styles/theme.css', 'src/styles/layout.css', 'src/styles/forms.css',
+    'src/api/client.ts', 'src/api/health.ts', 'src/api/users.ts', 'src/api/errors.ts', 'src/api/retry.ts',
+    'src/auth/session.ts', 'src/auth/tokens.ts', 'src/auth/user.ts', 'src/auth/guard.ts',
+    'src/components/Button.tsx', 'src/components/Dialog.tsx', 'src/components/Sidebar.tsx', 'src/components/Table.tsx', 'src/components/Toast.tsx', 'src/components/Avatar.tsx',
+    'src/hooks/useFetch.ts', 'src/hooks/useTheme.ts', 'src/hooks/useMedia.ts',
+    'src/utils/dates.ts', 'src/utils/format.ts', 'src/utils/storage.ts', 'src/utils/legacy.ts',
+    'src/i18n/en.json', 'src/i18n/es.json',
+    'tests/auth/session.test.ts', 'tests/api/client.test.ts', 'tests/utils/dates.test.ts', 'tests/setup.ts',
+    'server/index.js', 'server/routes/health.js', 'server/routes/users.js', 'server/routes/auth.js', 'server/middleware/rateLimit.js',
+    'server/db/schema.sql', 'server/db/migrations/001_init.sql', 'server/db/migrations/002_sessions.sql',
+    'scripts/release.sh', 'scripts/seed.js', 'scripts/check-env.sh',
+  ];
 
   GB.DemoSource = DemoSource;
 })(window.GB);

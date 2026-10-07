@@ -151,7 +151,7 @@
       for (let k = made + 1; k <= n; k++) {
         css += `.c${k}{--c:${P.hex(k)}}`;
         css += `@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .c${k}{--c:${P.hex(k, true)}}}`;
-        css += `:root[data-theme="dark"] .c${k}{--c:${P.hex(k, true)}}`;
+        css += `:root[data-theme="dark"] .c${k},.space .c${k}{--c:${P.hex(k, true)}}`;
       }
       if (!styleEl) {
         styleEl = document.createElement('style');

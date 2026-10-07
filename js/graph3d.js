@@ -13,7 +13,12 @@
    se mueve; en reposo cada cuadro solo avanza los uniformes de los efectos
    (pulsos, polvo, estrellas) y se dibuja a ~30 fps, o nada si el sistema pide
    reducir el movimiento. Las etiquetas de rama son HTML: se crean al
-   mostrarse y, con muchas ramas, solo se ven las más cercanas que no se pisan. */
+   mostrarse y, con muchas ramas, solo se ven las más cercanas que no se pisan.
+
+   Modo galaxias (galaxy.js): el mismo layout, en otro lugar. Cada rama es una galaxia, sus
+   commits un brazo en espiral y sus archivos, planetas que aparecen al acercarse; el valle,
+   el anillo del presente y los días dejan paso al espacio. Todo lo demás (efectos, director,
+   vuelo, Replay) sigue igual: solo cambian las posiciones de destino y las curvas. */
 (function (GB) {
   'use strict';
   const { U, i18n } = GB;
@@ -22,13 +27,16 @@
   const LANE_C = 3.0; // escala de la espiral de carriles
   const GOLDEN = 2.399963229728653;
   const DUR = 700; // reacomodo de commits y etiquetas
+  const MORPH = 1500; // al cambiar entre el valle y las galaxias, cada commit vuela a su lugar nuevo
   const ARRIVE = 650; // vuelo de un commit nuevo desde el presente hasta su lugar
   const ARRIVE_Z = 7; // desde cuán lejos (hacia la cámara) llega
   const NODE_R = 0.42;
   const HEAD_SCALE = 1.55;
-  const EDGE_R = 0.11;
-  const GHOST_R = 0.07;
-  const RADIAL = 8; // lados de los tubos
+  const EDGE_R = 0.055; // radio de las aristas: finas, como líneas
+  const GHOST_R = 0.035;
+  const RADIAL = 12; // lados de los tubos (de cerca, menos se ven como facetas)
+  const RADIAL_MID = 8; // con miles de tramos
+  const THIN_D = 12; // a menos de esta distancia de la cámara los tubos se afinan: tope de grosor aparente
   const AMBIENT_MS = 31; // en reposo, los efectos se dibujan a ~30 fps
   const MAX_PIXELS = 4.6e6; // tope de píxeles del lienzo (pantallas 4K a pantalla completa)
   const SPIN_SPEED = 0.037; // rad/s del giro lento
@@ -84,21 +92,41 @@
     };
   }
 
-  function flowHook(flow, time, fog) {
+  /* Tope de grosor aparente: un tubo que pasa junto a la cámara se afina (como una línea de ancho
+     fijo en pantalla) en vez de volverse una cañería que tapa la vista. El cilindro unitario va por
+     z de 0 a 1, así que (0, 0, position.z) es el punto del eje bajo cada vértice. */
+  const THIN_GLSL = `
+    #include <begin_vertex>
+    #ifdef USE_INSTANCING
+      vec3 gbAxis = ( instanceMatrix * vec4( 0.0, 0.0, position.z, 1.0 ) ).xyz;
+      float gbDepth = -( modelViewMatrix * vec4( gbAxis, 1.0 ) ).z;
+      transformed.xy *= clamp( gbDepth / gbThin, 0.05, 1.0 );
+    #else
+      vec3 gbAxis = transformed;
+    #endif`;
+
+  /** Tubos sin pulsos (tramos de la historia que sigue): solo el afinado junto a la cámara. */
+  function thinHook(thin) {
+    return (sh) => {
+      sh.uniforms.gbThin = thin;
+      sh.vertexShader = 'uniform float gbThin;\n' + sh.vertexShader.replace('#include <begin_vertex>', THIN_GLSL);
+    };
+  }
+
+  function flowHook(flow, time, fog, thin) {
     return (sh) => {
       sh.uniforms.gbFlow = flow;
       sh.uniforms.gbTime = time;
       sh.uniforms.gbFog = fog;
+      sh.uniforms.gbThin = thin;
+      // el pulso se mide sobre el eje del tubo, no sobre su superficie: así su frente es
+      // perpendicular al tubo y no una cuña (de cerca se veía como una punta de flecha)
       sh.vertexShader =
-        'uniform vec2 gbFog;\nvarying vec3 vGbPos;\n' +
-        sh.vertexShader.replace(
+        'uniform vec2 gbFog;\nuniform float gbThin;\nvarying vec3 vGbPos;\n' +
+        sh.vertexShader.replace('#include <begin_vertex>', THIN_GLSL).replace(
           '#include <project_vertex>',
           `#include <project_vertex>${FOG_CULL_GLSL}
-          vec4 gbW = vec4( transformed, 1.0 );
-          #ifdef USE_INSTANCING
-            gbW = instanceMatrix * gbW;
-          #endif
-          vGbPos = ( modelMatrix * gbW ).xyz;`,
+          vGbPos = ( modelMatrix * vec4( gbAxis, 1.0 ) ).xyz;`,
         );
       sh.fragmentShader =
         'uniform float gbFlow;\nuniform float gbTime;\nvarying vec3 vGbPos;\n' +
@@ -106,7 +134,8 @@
           EMISSIVE,
           `${EMISSIVE}${TINT_GLSL}
           float gbQ = fract( vGbPos.z * 0.11 - gbTime * 0.24 + length( vGbPos.xy ) * 0.37 );
-          float gbP = gbQ * gbQ; gbP *= gbP; gbP *= gbP;
+          // cometa: la cola sube despacio y el frente se apaga suave, sin corte seco
+          float gbP = smoothstep( 0.6, 0.93, gbQ ) * ( 1.0 - smoothstep( 0.93, 1.0, gbQ ) );
           totalEmissiveRadiance += mix( diffuseColor.rgb, vec3( 1.0 ), 0.35 ) * gbP * gbFlow;`,
         );
     };
@@ -217,12 +246,13 @@
     attribute float aSeed;
     uniform float uTime;
     uniform float uPx;
+    uniform float uAll;
     varying float vA;
     void main() {
       gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
       gl_PointSize = ( 0.9 + aSeed * aSeed * 2.3 ) * uPx;
       vA = ( 0.3 + 0.7 * aSeed ) * ( 0.75 + 0.25 * sin( uTime * ( 0.5 + aSeed * 1.9 ) + aSeed * 91.0 ) );
-      vA *= smoothstep( -0.02, 0.12, normalize( position ).y ); // bajo el horizonte está el suelo
+      vA *= mix( smoothstep( -0.02, 0.12, normalize( position ).y ), 1.0, uAll ); // bajo el horizonte está el suelo (en el espacio, no)
     }`;
   /* polvo alrededor de las ramas: deriva despacio hacia el pasado, en una ventana que sigue a la vista */
   const DUST_VS = `
@@ -570,6 +600,7 @@
         flow: { value: 0 },
         noFlow: { value: 0 },
         rim: { value: 0.8 },
+        thin: { value: THIN_D },
       };
 
       this.geo = {
@@ -578,21 +609,24 @@
         sphereMin: new THREE.SphereGeometry(NODE_R, 8, 6),
         torus: new THREE.TorusGeometry(0.48, 0.13, 10, 30),
         torusLo: new THREE.TorusGeometry(0.48, 0.13, 6, 16),
-        tube: new THREE.CylinderGeometry(1, 1, 1, RADIAL, 1, true).rotateX(Math.PI / 2).translate(0, 0, 0.5),
+        // con tapas: de cerca, una punta que sobresale en un codo o mira a la cámara no se ve hueca
+        tube: new THREE.CylinderGeometry(1, 1, 1, RADIAL, 1, false).rotateX(Math.PI / 2).translate(0, 0, 0.5),
+        tubeMid: new THREE.CylinderGeometry(1, 1, 1, RADIAL_MID, 1, true).rotateX(Math.PI / 2).translate(0, 0, 0.5),
         tubeLo: new THREE.CylinderGeometry(1, 1, 1, 5, 1, true).rotateX(Math.PI / 2).translate(0, 0, 0.5),
         ring: new THREE.RingGeometry(0.94, 1, 72),
         portal: new THREE.RingGeometry(0.9, 1.1, 160, 1), // solo el anillo: el sombreador no corre en toda la pantalla
         beam: new THREE.CylinderGeometry(0.22, 0.6, 1, 18, 1, true).translate(0, 0.5, 0),
       };
 
-      this.flowLive = flowHook(this.u.flow, this.u.time, this.u.fog);
+      this.flowLive = flowHook(this.u.flow, this.u.time, this.u.fog, this.u.thin);
       this.nodeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, roughness: 0.32, metalness: 0.1 });
       this.nodeMat.onBeforeCompile = nodeHook(this.u);
       this.lineMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, roughness: 0.5, metalness: 0.05 });
       this.lineMat.onBeforeCompile = this.flowLive;
       this.ghostMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, roughness: 0.55, metalness: 0.05, transparent: true, opacity: 0.5 });
-      this.ghostMat.onBeforeCompile = flowHook(this.u.noFlow, this.u.time, this.u.fog);
+      this.ghostMat.onBeforeCompile = flowHook(this.u.noFlow, this.u.time, this.u.fog, this.u.thin);
       this.stubMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      this.stubMat.onBeforeCompile = thinHook(this.u.thin);
       // líneas punteadas de las ramas sin commits propios: todas en un solo objeto, con color por vértice
       this.pointerLines = new THREE.LineSegments(
         new THREE.BufferGeometry(),
@@ -616,14 +650,14 @@
       this.iGround = new Instances(this.gGround, this.geo.tubeLo, this.groundMat);
       this.gEdges.add(this.pointerLines);
 
-      const glowMat = () =>
+      const glowMat = (this.glowMat = () =>
         new THREE.ShaderMaterial({
           uniforms: { uTime: this.u.time, uFog: this.u.fog },
           vertexShader: GLOW_VS,
           fragmentShader: GLOW_FS,
           transparent: true,
           depthWrite: false,
-        });
+        }));
       this.halos = new GlowLayer(this.gNodes, glowMat());
       this.sparks = new GlowLayer(this.gFx, glowMat());
 
@@ -644,6 +678,8 @@
       this.makeStars();
       this.makeDust();
       this.world = GB.World ? new GB.World(this) : null; // valle, cielo, nubes y lo del vuelo (world.js)
+      this.galaxy = false; // modo galaxias: cada rama, una galaxia; sus archivos, planetas (galaxy.js)
+      this.gx = GB.Galaxy ? new GB.Galaxy(this) : null;
       this.colorObjs = new Map();
 
       this.nodes = new Map();
@@ -696,10 +732,11 @@
         this.needsRender = true;
       }).observe(wrap);
       this.frame = this.frame.bind(this);
+      if (U.store.get('galaxy3d', false)) this.setGalaxy(true);
     }
 
     makeStars() {
-      const N = 900;
+      const N = 1600;
       const pos = new Float32Array(N * 3);
       const seed = new Float32Array(N);
       for (let i = 0; i < N; i++) {
@@ -715,7 +752,7 @@
       this.stars = new THREE.Points(
         g,
         new THREE.ShaderMaterial({
-          uniforms: { uTime: this.u.time, uPx: { value: this.dpr }, uColor: { value: new THREE.Color() }, uOpacity: { value: 1 } },
+          uniforms: { uTime: this.u.time, uPx: { value: this.dpr }, uAll: { value: 0 }, uColor: { value: new THREE.Color() }, uOpacity: { value: 1 } },
           vertexShader: STAR_VS,
           fragmentShader: POINT_FS,
           transparent: true,
@@ -764,7 +801,8 @@
     /* ---------- tema y materiales ---------- */
 
     readTheme() {
-      const cs = getComputedStyle(document.documentElement);
+      // del contenedor: en el modo galaxias trae los colores del tema oscuro (el espacio es oscuro)
+      const cs = getComputedStyle(this.wrap);
       const v = (n, fb) => cs.getPropertyValue(n).trim() || fb;
       this.colors = { ghost: v('--ghost', '#b4bdb9') };
       for (let i = 1; i <= 8; i++) this.colors['c' + i] = v('--s' + i, '#888888');
@@ -779,6 +817,9 @@
       this.lineColor = new THREE.Color(v('--line-strong', '#c9d1cd'));
       this.sevCol = { good: new THREE.Color(v('--good', '#0a8f0a')), warn: new THREE.Color(v('--warn', '#c98a00')), bad: new THREE.Color(v('--bad', '#d03b3b')) };
       this.scene.fog.color.copy(this.bg);
+      // el espacio: más oscuro que el fondo, para que lo lejano se pierda en la noche
+      this.spaceCol = this.bg.clone().lerp(new THREE.Color(0x020409), 0.62);
+      if (this.galaxy) this.scene.fog.color.copy(this.spaceCol);
 
       this.hemi.color.set(dark ? 0xdfe8ff : 0xffffff);
       this.hemi.groundColor.set(dark ? 0x1c1712 : 0x9a948c);
@@ -797,7 +838,8 @@
       }
       const su = this.stars.material.uniforms;
       su.uColor.value.copy(dark ? ink : ink3);
-      su.uOpacity.value = dark ? 0.8 : 0.32;
+      su.uOpacity.value = this.galaxy ? 0.95 : dark ? 0.8 : 0.32;
+      su.uAll.value = this.galaxy ? 1 : 0;
       const du = this.dust.material.uniforms;
       du.uColor.value.copy(dark ? ink2 : ink3);
       du.uOpacity.value = dark ? 0.6 : 0.5;
@@ -809,6 +851,7 @@
       for (const r of this.ripples) r.mesh.material.blending = blend;
       this.groundMat.uniforms.uOpacity.value = dark ? 0.32 : 0.22;
       this.world?.readTheme();
+      this.gx?.readTheme();
       this.applyMotion();
       this.dirtyNodes = this.dirtyEdges = true;
       this.needsRender = true;
@@ -854,11 +897,13 @@
       this.stars.material.uniforms.uPx.value = this.dpr;
       this.dust.material.uniforms.uScale.value = (H * this.dpr) / (2 * Math.tan((this.camera.fov * Math.PI) / 360));
       this.world?.resize();
+      this.gx?.resize();
       this.needsRender = true;
     }
 
     setActive(on) {
       this.active = on;
+      this.syncSpace();
       if (on) {
         this.resize();
         this.lastNow = 0;
@@ -871,6 +916,8 @@
         this.world?.showHud(false);
         this.director?.end();
         this.ride = null;
+        this.gx?.endHyper();
+        this.gx?.sleep(); // el zumbido del espacio se apaga con la vista
         this.controls.enabled = true;
         this.unpin();
       }
@@ -898,11 +945,17 @@
     update(L, ctx = {}) {
       const now = performance.now();
       const fx = !ctx.initial && !ctx.calm && this.motion; // las ramas que esperaban su historia llegan sin efectos
+      const morph = !!ctx.morph; // cambio de modo: todo vuela a su lugar nuevo, sin efectos de llegada
       this.layout = L;
       this.ctx = ctx;
       this.maxX = L.maxX;
       this.ghostNames = new Map(L.ghostLabels.map((g) => [g.id, g.name]));
-      this.radius = LANE_C * Math.sqrt(Math.max(1, L.rows.length - 1)) + 2.4;
+      const gal = this.galaxy ? this.gx : null;
+      this.radius = gal ? gal.layout(L) : LANE_C * Math.sqrt(Math.max(1, L.rows.length - 1)) + 2.4;
+      const slow = (it) => {
+        it.dur = MORPH + Math.random() * 500;
+        it.easing = ease;
+      };
       // con miles de ramas la espiral es grande: la cámara puede alejarse lo necesario para verla entera
       this.controls.maxDistance = Math.max(220, this.radius * 3 + 60);
       const far = Math.max(900, this.radius * 6 + 400, this.world ? this.world.reach(this.radius) : 0); // y el valle hasta el horizonte
@@ -917,7 +970,7 @@
       for (const n of L.nodes) {
         seen.add(n.sha);
         let it = this.nodes.get(n.sha);
-        const to = this.pos(n.x, n.row);
+        const to = gal?.posOf.get(n.sha) || this.pos(n.x, n.row);
         if (!it) {
           it = { sha: n.sha, curV: to.clone(), fromV: to.clone(), toV: to, t0: 0, dur: DUR, easing: ease, born: 0, hov: 0 };
           this.nodes.set(n.sha, it);
@@ -929,7 +982,7 @@
             it.easing = easeOut;
             arrivals.push(it);
           }
-        } else this.retarget(it, to, now, fx);
+        } else if (this.retarget(it, to, now, fx || morph) && morph) slow(it);
         it.data = n;
       }
       for (const [sha, it] of this.nodes) {
@@ -960,7 +1013,7 @@
       for (const h of L.heads) {
         seenH.add(h.name);
         let it = this.heads.get(h.name);
-        const to = this.pos(h.x, h.row);
+        const to = gal?.headPos.get(h.name) || this.pos(h.x, h.row);
         if (!it) {
           it = { el: null, curV: to.clone(), fromV: to.clone(), toV: to, t0: 0, dur: DUR, easing: ease };
           this.heads.set(h.name, it);
@@ -969,7 +1022,10 @@
           this.buildHead(it, h, ctx);
           if (fx) this.flash(it);
         } else {
-          if (this.retarget(it, to, now, fx) && fx && it.data.sha !== h.sha) this.flash(it);
+          const moved = this.retarget(it, to, now, fx || morph);
+          if (moved && morph) slow(it);
+          // en el modo galaxias la etiqueta queda en el núcleo: destella igual con cada push
+          else if ((moved || gal) && fx && it.data.sha !== h.sha) this.flash(it);
           it.data = h;
           this.buildHead(it, h, ctx);
         }
@@ -992,7 +1048,7 @@
       }
 
       this.updateDays(L);
-      this.portalTarget = L.nodes.length ? { z: (L.maxX + 1.4) * SP, r: this.radius + 1.2 } : null;
+      this.portalTarget = L.nodes.length && !gal ? { z: (L.maxX + 1.4) * SP, r: this.radius + 1.2 } : null;
 
       if (this.pinned && !this.nodes.has(this.pinned)) this.unpin();
       if (this.hoverSha && !this.nodes.has(this.hoverSha)) this.hoverSha = null;
@@ -1119,12 +1175,18 @@
     /* ---------- cámara ---------- */
 
     followPoint(out) {
+      if (this.galaxy) return this.gx.home(out); // en el espacio, el centro del universo
       return out.set(0, 0, Math.max(0, this.maxX * SP - 7));
     }
 
     defaultOffset() {
       // más lejos en paneles angostos (celular) para que la escena no se corte
       const aspect = this.W && this.H ? this.W / this.H : 1.6;
+      if (this.galaxy) {
+        // el universo desde arriba y de lado: se ven las galaxias de frente y sus puentes
+        const d = (16 + Math.min(this.radius, 420) * 1.7) * clamp(1.6 / aspect, 1, 1.9);
+        return new THREE.Vector3(0.5, 0.68, 0.62).normalize().multiplyScalar(d);
+      }
       const d = (13 + this.radius * 1.6) * clamp(1.6 / aspect, 1, 1.9);
       return new THREE.Vector3(0.55, 0.3, 0.78).normalize().multiplyScalar(d); // un poco baja: se ve el horizonte
     }
@@ -1181,6 +1243,47 @@
         if (off.length() > 90 || off.length() < 6) off.copy(this.defaultOffset());
         this.flyTo(t, t.clone().add(off));
       }
+    }
+
+    /** Modo galaxias: cada rama, una galaxia. Con movimiento, cada commit vuela a su lugar nuevo y la
+        cámara, a la vista general del modo. */
+    setGalaxy(on) {
+      on = !!on && !!this.gx;
+      if (on === this.galaxy) return;
+      this.galaxy = on;
+      U.store.set('galaxy3d', on);
+      this.syncSpace();
+      if (this.ride) this.endRide();
+      this.unpin();
+      this.gx.setOn(on);
+      this.world?.setSpace(on);
+      this.flight?.relocalize(); // la ayuda del vuelo nombra el hiperimpulsor solo en el espacio
+      for (const e of this.edges.values()) e.pts = null; // las curvas se rehacen con la forma del modo
+      this.readTheme();
+      if (this.layout) {
+        this.update(this.layout, { ...this.ctx, initial: true, morph: this.motion });
+        if (!this.flight?.on) {
+          const t = this.followPoint(new THREE.Vector3());
+          this.flyTo(t, t.clone().add(this.defaultOffset()), 2200);
+          if (!this.following) {
+            this.following = true;
+            this.opts.onFollowChange?.(true);
+          }
+        }
+      }
+      this.needsRender = true;
+      this.opts.onGalaxyChange?.(on);
+    }
+
+    /** El espacio es oscuro: la vista y lo que flota sobre ella (fecha del Replay, rótulos) toman el tema oscuro. */
+    syncSpace() {
+      this.wrap.classList.toggle('space', this.galaxy);
+      this.wrap.parentElement?.classList.toggle('space', this.galaxy && this.active);
+    }
+
+    /** Escala de los efectos (faros, ondas, cometas): en el espacio, la de una galaxia. */
+    get fxR() {
+      return this.galaxy ? 12 : this.radius;
     }
 
     setSpin(on) {
@@ -1245,6 +1348,22 @@
     focusBranch(name) {
       const h = this.heads.get(name);
       if (!h) return false;
+      const G = this.galaxy && this.gx.galaxyOf(name);
+      if (G) {
+        // entrar en la galaxia: su sistema entero desde el mirador (fuera de la última órbita, algo por
+        // encima de su plano, del lado donde ya estaba la cámara); si sus archivos llegan después, se reencuadra
+        this.touch();
+        this.flight?.exit();
+        if (this.ride) this.endRide();
+        this.setFollowing(false);
+        const t = G.c.clone();
+        const dir = new THREE.Vector3();
+        const dist = this.gx.vantage(G, dir);
+        this.flyTo(t, t.clone().addScaledVector(dir, dist), 1400);
+        this.gx.park(G);
+        this.flash(h);
+        return true;
+      }
       this.focusSha(h.data.sha);
       this.flash(h);
       return true;
@@ -1280,16 +1399,18 @@
         if (!down || Math.hypot(ev.clientX - down.x, ev.clientY - down.y) > 5) return (down = null);
         down = null;
         const r = this.canvas.getBoundingClientRect();
-        const sha = this.pick(ev.clientX - r.left, ev.clientY - r.top);
-        if (sha) this.showTip(sha, true);
-        else this.unpin();
+        this.openAt(ev.clientX - r.left, ev.clientY - r.top);
       });
-      // doble clic: volar de cerca hasta ese commit
+      // doble clic: volar de cerca hasta ese commit (en el espacio, si es de otra galaxia, entrar en ella)
       this.canvas.addEventListener('dblclick', (ev) => {
         if (this.flight?.on) return;
         const r = this.canvas.getBoundingClientRect();
-        const sha = this.pick(ev.clientX - r.left, ev.clientY - r.top);
-        if (sha) this.focusSha(sha, 7);
+        const hit = this.pickAny(ev.clientX - r.left, ev.clientY - r.top);
+        if (hit?.sha) {
+          const G = this.galaxy ? this.gx.galOf.get(hit.sha) : null;
+          if (G && this.gx.focus !== G && this.heads.has(G.name)) this.focusBranch(G.name);
+          else this.focusSha(hit.sha, 7);
+        } else if (hit?.file) this.focusPoint(hit.file.pos, 6);
       });
       this.canvas.addEventListener(
         'wheel',
@@ -1328,7 +1449,11 @@
       const go = (k.has('up') ? 1 : 0) - (k.has('down') ? 1 : 0);
       if (turn) off.applyAxisAngle(this.Y, turn * 1.2 * dt);
       if (zoom) off.setLength(clamp(off.length() * Math.exp(zoom * 1.3 * dt), c.minDistance, c.maxDistance));
-      if (go) {
+      if (go && this.galaxy) {
+        // en el espacio no hay eje del tiempo: ↑ avanza hacia donde mira la cámara
+        c.target.addScaledVector(this.tmpA.copy(off).normalize(), -go * (6 + off.length() * 0.5) * dt);
+        this.setFollowing(false);
+      } else if (go) {
         // ↑ avanza hacia donde mira la cámara (de frente al pasado, hacia lo antiguo)
         const dz = go * (off.z >= 0 ? -1 : 1) * (6 + off.length() * 0.5) * dt;
         c.target.z = clamp(c.target.z + dz, -SP * 4, this.maxX * SP + SP * 4);
@@ -1352,7 +1477,34 @@
         const t = this.tmpP.copy(it.curV).sub(ray.origin).dot(ray.direction);
         if (t > 0 && t < bestT && t < far) (bestT = t), (best = it.sha);
       }
+      this.pickT = bestT;
       return best;
+    }
+
+    /** Lo que está bajo el puntero: un commit ({ sha }) o, en el modo galaxias, un planeta ({ file }). */
+    pickAny(x, y) {
+      if (!this.W) return null;
+      const sha = this.pick(x, y);
+      const hit = this.galaxy ? this.gx.pick(this.raycaster.ray, this.scene.fog.far) : null;
+      if (hit && (!sha || hit.t < this.pickT)) return { file: hit.p };
+      return sha ? { sha } : null;
+    }
+
+    /** Clic: abre el detalle de lo que haya ahí (o cierra el que estaba abierto). */
+    openAt(x, y) {
+      const hit = this.pickAny(x, y);
+      if (hit?.sha) this.showTip(hit.sha, true);
+      else if (hit?.file) this.showFileTip(hit.file, true);
+      else this.unpin();
+    }
+
+    /** Vuela de cerca hasta un punto (un planeta: sigue girando, la cámara se queda donde pasaba). */
+    focusPoint(v, dist) {
+      this.touch();
+      this.setFollowing(false);
+      const t = v.clone();
+      const off = this.camera.position.clone().sub(this.controls.target).setLength(dist);
+      this.flyTo(t, t.clone().add(off));
     }
 
     setHover(sha) {
@@ -1364,6 +1516,9 @@
     showTip(sha, pin, branchName) {
       const it = this.nodes.get(sha);
       if (!it) return;
+      this.tipFile = null;
+      this.pinFile = false;
+      this.tip.setAttribute('aria-label', tr('tip.aria'));
       this.tip.innerHTML = GB.graphShared.tipHTML(it.data, this.ctx || {}, { pin, branchName, ghostNames: this.ghostNames });
       const ride = branchName || (it.data.chain.startsWith('b:') ? it.data.chain.slice(2) : null);
       const action = (text, fn) => {
@@ -1381,6 +1536,9 @@
         actions.appendChild(b);
       };
       if (pin && ride && this.motion) action(tr('ride.label'), () => this.rideBranch(ride));
+      // en el espacio, saltar con el hiperimpulsor hasta la galaxia de la rama (si no se está ya en ella)
+      const G = pin && ride && this.galaxy ? this.gx.galaxyOf(ride) : null;
+      if (G && G !== this.gx.focus) action(tr('galaxy.jump'), () => this.gx.jumpTo(G));
       // marcar la rama como destino: una columna de luz la señala y la brújula del vuelo lleva hasta ella
       const mark = () => tr(this.world.waypoint === ride ? 'world.unmark' : 'world.mark');
       if (pin && ride && this.world && this.heads.has(ride))
@@ -1395,10 +1553,26 @@
       this.placeTip();
     }
 
+    /** Detalle de un archivo (un planeta del modo galaxias). */
+    showFileTip(file, pin) {
+      if (!this.gx) return;
+      this.tip.innerHTML = this.gx.tipHTML(file, pin);
+      this.tip.setAttribute('aria-label', tr('file.aria'));
+      this.tip.hidden = false;
+      this.tip.classList.toggle('pinned', !!pin);
+      this.tipSha = null;
+      this.tipFile = file;
+      if (pin) {
+        this.pinned = null;
+        this.pinFile = true;
+      }
+      this.placeTip();
+    }
+
     placeTip() {
-      const it = this.nodes.get(this.tipSha);
-      if (!it) return this.hideTip();
-      const p = this.project(it.curV);
+      const v = this.tipFile ? this.tipFile.pos : this.nodes.get(this.tipSha)?.curV;
+      if (!v) return this.hideTip();
+      const p = this.project(v);
       if (!p) return;
       const w = this.tip.offsetWidth;
       const h = this.tip.offsetHeight;
@@ -1413,10 +1587,12 @@
     hideTip() {
       this.tip.hidden = true;
       this.tipSha = null;
+      this.tipFile = null;
     }
 
     unpin() {
       this.pinned = null;
+      this.pinFile = false;
       this.hideTip();
     }
 
@@ -1424,6 +1600,7 @@
     relocalize() {
       this.flight?.relocalize();
       this.world?.relocalize();
+      this.gx?.relocalize();
       this.wrap.setAttribute('aria-label', tr('graph.aria3d'));
       this.tip.setAttribute('aria-label', tr('tip.aria'));
       this.unpin();
@@ -1458,8 +1635,9 @@
       const lift = new THREE.Vector3(0, 0.9, 0);
       const pts = list.map((n) => this.nodes.get(n.sha)?.toV).filter(Boolean).map((v) => v.clone().add(lift));
       if (!pts.length) return;
-      // un tramo de entrada desde el pasado, para subirse a la vía en marcha
-      pts.unshift(pts[0].clone().add(new THREE.Vector3(0, 1.2, -SP * 3)));
+      // un tramo de entrada desde el pasado, para subirse a la vía en marcha (en el espacio, desde atrás del primer tramo)
+      const back = this.galaxy && pts.length > 1 ? pts[0].clone().sub(pts[1]).setLength(SP * 3) : new THREE.Vector3(0, 0, -SP * 3);
+      pts.unshift(pts[0].clone().add(back).add(new THREE.Vector3(0, 1.2, 0)));
       const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
       if (!auto) this.touch();
       this.flight?.exit();
@@ -1467,7 +1645,7 @@
       this.setFollowing(false);
       this.unpin();
       this.controls.enabled = false;
-      this.ride = { curve, auto, t0: performance.now(), dur: clamp(curve.getLength() / 7, 3, 20) * 1000 };
+      this.ride = { name, curve, auto, t0: performance.now(), dur: clamp(curve.getLength() / 7, 3, 20) * 1000 };
     }
 
     stepRide(now) {
@@ -1476,13 +1654,21 @@
       const p = clamp((now - r.t0) / r.dur, 0, 1);
       const e = p < 0.5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2;
       r.curve.getPointAt(e, cam.position);
-      if (e < 0.995) r.curve.getPointAt(Math.min(1, e + 0.035), this.tmpB);
-      else this.tmpB.copy(cam.position).add(this.tmpA.set(0, -0.25, 1)); // al final, mirar al presente
-      cam.lookAt(this.tmpB);
+      if (e < 0.995) {
+        r.curve.getPointAt(Math.min(1, e + 0.035), this.tmpB);
+        cam.lookAt(this.tmpB);
+      } else if (!this.galaxy) cam.lookAt(this.tmpB.copy(cam.position).add(this.tmpA.set(0, -0.25, 1))); // al final, mirar al presente
       if (p >= 1) {
         this.endRide();
-        const t = this.controls.target;
-        this.flyTo(t.clone(), t.clone().add(new THREE.Vector3(5, 3.5, 10)), 1400);
+        const G = this.galaxy && this.gx.galaxyOf(r.name);
+        if (G) {
+          // llegó al núcleo: la cámara se aleja hasta ver la galaxia entera
+          const t = G.c.clone();
+          this.flyTo(t, t.clone().addScaledVector(G.w, G.R * 2 + 8).addScaledVector(G.u, G.R * 0.8), 1600);
+        } else {
+          const t = this.controls.target;
+          this.flyTo(t.clone(), t.clone().add(new THREE.Vector3(5, 3.5, 10)), 1400);
+        }
       }
       return true;
     }
@@ -1523,7 +1709,8 @@
       const camMoved = this.stepCamera(now, dt);
       const sceneMoved = this.stepScene(now, dt);
       const worldMoved = !!this.world?.step(now, dt);
-      const full = this.needsRender || camMoved || sceneMoved || worldMoved;
+      const spaceMoved = !!this.gx?.step(now, dt);
+      const full = this.needsRender || camMoved || sceneMoved || worldMoved || spaceMoved;
       // en reposo los pulsos, el polvo y las estrellas siguen vivos, pero a ~30 fps
       const ambient = this.motion && !this.hold && this.nodes.size > 0 && now - this.lastRender >= AMBIENT_MS;
       if (full || ambient) {
@@ -1543,7 +1730,7 @@
         const fly = !!this.flight?.on;
         if (fly !== !!w.hudOn) w.showHud(fly);
         if (fly) w.hud(now);
-        if ((fly || (this.ride && !this.ride.auto)) && this.nodes.size) w.explore(now);
+        if ((fly || (this.ride && !this.ride.auto)) && this.nodes.size && !this.gx?.hyper) w.explore(now); // en el túnel no se descubre nada
       }
     }
 
@@ -1552,6 +1739,7 @@
       const cam = this.camera;
       let moved = false;
       this.padToggle();
+      if (this.gx?.hyper) return true; // en pleno salto hiperespacial la cámara la lleva galaxy.js
       // el director decide el plano antes que nada: puede lanzar un vuelo, un corte o un paseo
       const directed = this.director ? this.director.step(now, dt) : false;
       if (this.ride) return this.stepRide(now);
@@ -1589,6 +1777,7 @@
           !this.keys.size &&
           !this.pinned &&
           !this.tipSha &&
+          !this.tipFile &&
           now - this.lastInteract > 4000;
         // el giro arranca y se detiene con suavidad
         this.spinAmt = clamp(this.spinAmt + (spin ? dt : -dt * 3) / 1.5, 0, 1);
@@ -1653,10 +1842,19 @@
       // con miles de commits, esferas y anillos más sencillos: a esa distancia no se nota
       this.iSphere.setGeometry(n > 6000 ? this.geo.sphereMin : n > 1500 ? this.geo.sphereLo : this.geo.sphere);
       this.iTorus.setGeometry(n > 1500 ? this.geo.torusLo : this.geo.torus);
+      const gals = this.galaxy ? this.gx.gals : null;
       this.iSphere.begin(n);
       this.iTorus.begin(n);
-      this.halos.begin(n);
+      this.halos.begin(n + (gals ? gals.size : 0));
       const dark = this.dark;
+      // el núcleo de cada galaxia brilla, también de canto
+      if (gals) {
+        const c = this.tmpCol;
+        for (const G of gals.values()) {
+          c.copy(this.col(G.color)).lerp(this.warmWhite, 0.45);
+          this.halos.push(G.c.x, G.c.y, G.c.z, c, G.color === 'ghost' ? 0.25 : 0.5, 3.2 + G.R * 0.45, 0.35);
+        }
+      }
       const put = (it, s) => {
         const d = it.data;
         const v = it.curV;
@@ -1682,10 +1880,11 @@
       for (const it of this.edges.values()) {
         const e = it.data;
         count[e.kind === 'stub' ? 'stub' : e.color === 'ghost' ? 'ghost' : 'line'] += e.kind === 'fork' || e.kind === 'merge' ? CURVE_SEGS + 1 : 1;
-        if (e.kind !== 'stub') count.ground++; // su sombra en el suelo: un tramo recto
+        if (e.kind !== 'stub' && !this.galaxy) count.ground++; // su sombra en el suelo: un tramo recto (en el espacio no hay suelo)
       }
-      // con decenas de miles de tramos, tubos de cinco lados
-      const tube = count.line + count.ghost > 20000 ? this.geo.tubeLo : this.geo.tube;
+      // con miles de tramos, tubos de ocho lados y sin tapas; con decenas de miles, de cinco
+      const segs = count.line + count.ghost;
+      const tube = segs > 20000 ? this.geo.tubeLo : segs > 6000 ? this.geo.tubeMid : this.geo.tube;
       this.iLine.setGeometry(tube);
       this.iGhost.setGeometry(tube);
       this.iLine.begin(count.line);
@@ -1698,7 +1897,7 @@
         if (!b) continue;
         const col = this.col(e.color);
         if (e.kind === 'stub') {
-          this.stub(b, col);
+          this.stub(b, col, this.galaxy ? this.gx.stubDir(e.to, this.tmpP) : null);
           continue;
         }
         const a = this.nodes.get(e.from)?.curV;
@@ -1711,9 +1910,9 @@
         }
         const ghost = e.color === 'ghost';
         const r = ghost ? GHOST_R : EDGE_R;
-        this.iGround.segment(a.x, 0, a.z, a.x + (b.x - a.x) * p, 0, a.z + (b.z - a.z) * p, ghost ? 0.08 : 0.14, col);
+        if (!this.galaxy) this.iGround.segment(a.x, 0, a.z, a.x + (b.x - a.x) * p, 0, a.z + (b.z - a.z) * p, ghost ? 0.08 : 0.14, col);
         const lot = ghost ? this.iGhost : this.iLine;
-        if (e.kind === 'line' || (Math.abs(a.x - b.x) < 1e-3 && Math.abs(a.y - b.y) < 1e-3)) {
+        if (e.kind === 'line' || (!this.galaxy && Math.abs(a.x - b.x) < 1e-3 && Math.abs(a.y - b.y) < 1e-3)) {
           lot.segment(a.x, a.y, a.z, a.x + (b.x - a.x) * p, a.y + (b.y - a.y) * p, a.z + (b.z - a.z) * p, r, col);
           continue;
         }
@@ -1744,12 +1943,13 @@
       return anim;
     }
 
-    /** La historia sigue más atrás: tres trazos que se funden con el fondo. */
-    stub(b, col) {
+    /** La historia sigue más atrás: tres trazos que se funden con el fondo (en el espacio, brazo afuera). */
+    stub(b, col, dir) {
       const c = this.tmpCol;
       const dash = (from, to, fade) => {
-        c.copy(col).lerp(this.bg, fade);
-        this.iStub.segment(b.x, b.y, b.z - SP * to, b.x, b.y, b.z - SP * from, 0.06, c);
+        c.copy(col).lerp(this.galaxy ? this.spaceCol : this.bg, fade);
+        if (dir) this.iStub.segment(b.x + dir.x * SP * from, b.y + dir.y * SP * from, b.z + dir.z * SP * from, b.x + dir.x * SP * to, b.y + dir.y * SP * to, b.z + dir.z * SP * to, 0.035, c);
+        else this.iStub.segment(b.x, b.y, b.z - SP * to, b.x, b.y, b.z - SP * from, 0.035, c);
       };
       dash(0.12, 0.42, 0.35);
       dash(0.55, 0.8, 0.6);
@@ -1763,6 +1963,18 @@
      */
     curvePoints(it, a, b) {
       if (it.pts && it.ax === a.x && it.ay === a.y && it.az === a.z && it.bx === b.x && it.by === b.y && it.bz === b.z) return it.pts;
+      const pts = this.galaxy ? this.gx.curve(it, a, b) : this.laneCurve(it, a, b);
+      it.pts = pts;
+      it.ax = a.x;
+      it.ay = a.y;
+      it.az = a.z;
+      it.bx = b.x;
+      it.by = b.y;
+      it.bz = b.z;
+      return pts;
+    }
+
+    laneCurve(it, a, b) {
       const fork = it.data.kind === 'fork';
       const d = Math.max(0.4, Math.min(SP * 1.7, b.z - a.z));
       // P0..P3 de la Bézier; la recta va después (bifurcación) o antes (merge)
@@ -1795,13 +2007,6 @@
         );
       }
       if (straight && fork) put(b.x, b.y, b.z);
-      it.pts = pts;
-      it.ax = a.x;
-      it.ay = a.y;
-      it.az = a.z;
-      it.bx = b.x;
-      it.by = b.y;
-      it.bz = b.z;
       return pts;
     }
 
@@ -1856,6 +2061,7 @@
       );
       mesh.position.copy(v);
       mesh.scale.setScalar(0.6);
+      if (this.galaxy) mesh.quaternion.copy(this.camera.quaternion); // en el espacio no hay eje del tiempo: de frente
       this.gFx.add(mesh);
       this.ripples.push({ mesh, t0: performance.now(), k });
     }
@@ -1941,6 +2147,7 @@
         vez si se acaba de borrar. */
     branchPos(name) {
       const h = name && this.heads.get(name);
+      if (h && this.galaxy) return { pos: h.curV, toV: h.toV, color: h.liveColor || h.data.color }; // el núcleo de su galaxia
       if (h) {
         const node = this.nodes.get(h.data.sha);
         return { pos: node?.curV || h.curV, toV: node?.toV || h.toV, color: h.liveColor || h.data.color };
@@ -1982,12 +2189,12 @@
         // la rama del PR no está en el grafo: el cometa llega desde fuera de la espiral
         const out = this.tmpA.set(B.x, B.y, 0);
         if (out.lengthSq() < 0.01) out.set(0, 1, 0);
-        out.normalize().multiplyScalar(this.radius * 0.9 + 3);
+        out.normalize().multiplyScalar(this.fxR * 0.9 + 3);
         A = B.clone().add(out).setZ(B.z - 8);
       }
       if (A.distanceTo(B) < 0.5) A.y += 3;
       // el arco se abre hacia afuera del tronco, más alto cuanto más lejos están los extremos
-      const lift = this.tmpA.set((A.x + B.x) / 2, (A.y + B.y) / 2, 0);
+      const lift = this.galaxy ? this.tmpA.set(0, 1, 0) : this.tmpA.set((A.x + B.x) / 2, (A.y + B.y) / 2, 0);
       if (lift.lengthSq() < 0.01) lift.set(0, 1, 0);
       lift.normalize().multiplyScalar(3 + A.distanceTo(B) * 0.35);
       const curve = new THREE.CubicBezierCurve3(A, A.clone().add(lift), B.clone().add(lift), B);
@@ -2057,7 +2264,7 @@
       this.gFx.add(mesh);
       this.ripple(at.pos, col);
       const top = col.clone().lerp(this.white, 0.4);
-      const H = 7 + this.radius * 0.3;
+      const H = 7 + this.fxR * 0.3;
       const peak = this.dark ? 1 : 0.65;
       const t0 = performance.now();
       this.fx.push({
@@ -2180,7 +2387,7 @@
       for (let i = this.ripples.length - 1; i >= 0; i--) {
         const r = this.ripples[i];
         const p = clamp((now - r.t0) / 1300, 0, 1);
-        r.mesh.scale.setScalar((0.6 + 7 * easeOut(p)) * r.k * clamp(this.radius / 8, 0.5, 1.2)); // proporcional al grafo
+        r.mesh.scale.setScalar((0.6 + 7 * easeOut(p)) * r.k * clamp(this.fxR / 8, 0.5, 1.2)); // proporcional al grafo
         r.mesh.material.opacity = (this.dark ? 0.85 : 0.55) * Math.pow(1 - p, 1.5);
         if (p >= 1) {
           this.gFx.remove(r.mesh);
@@ -2258,12 +2465,17 @@
       const c = this.controls;
       const free = this.flight?.on || this.ride; // la cámara va suelta: niebla y polvo la siguen a ella
       // la niebla acompaña al zoom: lo que miras queda nítido y la historia se pierde detrás
-      const near = (free ? 14 : this.camera.position.distanceTo(c.target)) * 0.8 + 6;
-      const far = near + 70 + this.radius * 2.5;
+      const space = this.galaxy;
+      // en el espacio, la niebla deja ver los commits de las galaxias vecinas; las lejanas son solo su disco
+      const near = (free ? (space ? 20 : 14) : this.camera.position.distanceTo(c.target)) * 0.8 + (space ? 12 : 6);
+      const far = near + (space ? 170 : 70 + this.radius * 2.5);
       this.scene.fog.near = near;
       this.scene.fog.far = far;
       this.u.fog.value.set(near, far);
       this.stars.position.copy(this.camera.position);
+      this.dust.visible = !space;
+      this.gGround.visible = !space;
+      this.gDays.visible = !space;
       if (this.world) {
         this.world.beforeRender();
         this.gGround.position.y = this.world.groundY + 0.12;
@@ -2296,12 +2508,16 @@
     hover() {
       if (!this.mouse?.moved || this.interacting) return;
       this.mouse.moved = false;
-      const sha = this.pick(this.mouse.x, this.mouse.y);
-      this.canvas.style.cursor = sha ? 'pointer' : '';
+      const hit = this.pickAny(this.mouse.x, this.mouse.y);
+      const sha = hit?.sha || null;
+      const file = hit?.file || null;
+      this.canvas.style.cursor = hit ? 'pointer' : '';
       this.setHover(sha);
-      if (!this.pinned) {
+      this.gx?.setHover(file);
+      if (!this.pinned && !this.pinFile) {
         if (sha && sha !== this.tipSha) this.showTip(sha, false);
-        else if (!sha && this.tipSha) this.hideTip();
+        else if (file && file !== this.tipFile) this.showFileTip(file, false);
+        else if (!hit && (this.tipSha || this.tipFile)) this.hideTip();
       }
     }
 
@@ -2314,8 +2530,9 @@
     placeLabels() {
       const camPos = this.camera.position;
       const axis = this.tmpA;
-      const reach = Math.max(160, this.radius * 1.3); // en grafos enormes la cámara está más lejos
-      const range = Math.max(80, this.radius * 2);
+      const space = this.galaxy;
+      const reach = space ? Math.max(260, this.radius * 2.4) : Math.max(160, this.radius * 1.3); // en grafos enormes la cámara está más lejos
+      const range = space ? Math.max(140, this.radius * 2) : Math.max(80, this.radius * 2);
       const z = this.labelScale();
       const cand = [];
       for (const it of this.heads.values()) {
@@ -2343,11 +2560,13 @@
           continue;
         }
         // la etiqueta se aleja del tronco en pantalla, así las ramas vecinas no se pisan
-        const q = this.project(axis.set(0, 0, it.curV.z));
+        // (en el espacio, sobre el núcleo de su galaxia, un poco arriba a la derecha)
+        const q = space ? null : this.project(axis.set(0, 0, it.curV.z));
         let dx = q ? s.px - q.x : 1;
         let dy = q ? s.py - q.y : -0.4;
         const len = Math.hypot(dx, dy);
-        if (len < 4) (dx = 0.7), (dy = -0.7);
+        if (space) (dx = 0.62), (dy = -0.78);
+        else if (len < 4) (dx = 0.7), (dy = -0.7);
         else (dx /= len), (dy /= len);
         const off = it.data.own ? 18 : 12;
         s.w = Math.ceil(it.w * z);
@@ -2373,7 +2592,7 @@
       const top = this.tmpB;
       for (const d of this.days.values()) {
         top.set(0, (this.dayR || this.radius) + 0.7, d.mesh.position.z);
-        const p = this.project(top);
+        const p = space ? null : this.project(top);
         const dist = camPos.distanceTo(top);
         const vis = p && p.x > 0 && p.x < this.W - 40 && p.y > 4 && p.y < this.H - 10 && dist < reach * 0.75;
         this.setStyle(d, 'display', vis ? '' : 'none');
@@ -2382,7 +2601,8 @@
           this.setStyle(d, 'opacity', clamp(1.1 - (dist - 30) / range, 0.25, 1).toFixed(2));
         }
       }
-      if (this.tipSha && !this.tip.hidden) this.placeTip();
+      if (space) this.gx.placeLabels();
+      if ((this.tipSha || this.tipFile) && !this.tip.hidden) this.placeTip();
     }
 
     /** Escribe un estilo solo si cambió: decenas de etiquetas por cuadro sin trabajo de más. */
@@ -2423,6 +2643,7 @@
       this.setFade(false);
       this.ride = null;
       this.world?.clear();
+      this.gx?.clear();
       this.controls.enabled = true;
       this.unpin();
       this.following = true;
@@ -2432,5 +2653,7 @@
     }
   }
 
+  Graph3D.Instances = Instances; // los usa galaxy.js para sus planetas
+  Graph3D.GlowLayer = GlowLayer;
   GB.Graph3D = Graph3D;
 })(window.GB);

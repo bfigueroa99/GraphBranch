@@ -14,6 +14,8 @@
    (pulsos, polvo, estrellas) y se dibuja a ~30 fps, o nada si el sistema pide
    reducir el movimiento. Las etiquetas de rama son HTML: se crean al
    mostrarse y, con muchas ramas, solo se ven las más cercanas que no se pisan.
+   Al pasar el puntero por una etiqueta su rama se resalta y lo demás se funde
+   con el fondo; de cerca, cada commit muestra su mensaje.
 
    Modo galaxias (galaxy.js): el mismo layout, en otro lugar. Cada rama es una galaxia, sus
    commits un brazo en espiral y sus archivos, planetas que aparecen al acercarse; el valle,
@@ -40,9 +42,15 @@
   const AMBIENT_MS = 31; // en reposo, los efectos se dibujan a ~30 fps
   const MAX_PIXELS = 4.6e6; // tope de píxeles del lienzo (pantallas 4K a pantalla completa)
   const SPIN_SPEED = 0.037; // rad/s del giro lento
+  const SWAY = 0.55; // en el valle el giro es un vaivén: hasta tantos radianes a cada lado…
+  const SWAY_T = 95; // …en tantos segundos de ida y vuelta (a la misma velocidad que el giro)
   const CURVE_SEGS = 18; // tramos de una curva lejana (las cortas, menos)
   const MAX_LABELS = 160; // etiquetas de rama a la vez, como mucho
   const FADE_MAX = 60; // hasta tantas ramas a la vista las tapadas se atenúan; con más, se ocultan
+  const NOTE_D = 19; // a menos de esta distancia de la cámara (en la vista general, más), cada commit muestra su mensaje
+  const MAX_NOTES = 14; // mensajes a la vez, como mucho
+  const DIM = 0.82; // con una rama resaltada, cuánto se funde lo demás con el fondo
+  const HL_MS = 220; // lo que tarda en apagarse o volver
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const ease = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
   const easeOut = (p) => 1 - Math.pow(1 - p, 3);
@@ -547,6 +555,7 @@
       this.tmpP = new THREE.Vector3();
       this.tmp2 = new THREE.Vector2();
       this.tmpCol = new THREE.Color();
+      this.tmpDim = new THREE.Color();
       this.white = new THREE.Color(1, 1, 1);
       this.warmWhite = new THREE.Color(1, 0.93, 0.78);
       this.sph = new THREE.Spherical();
@@ -702,6 +711,13 @@
       this.hold = false; // pausa: sin giro, sin director y con el fondo quieto
       this.spin = !!U.store.get('spin3d', true);
       this.spinAmt = 0;
+      this.swayT = 0; // reloj del vaivén: solo corre mientras la vista se mece
+      this.hlHover = null; // rama (cadena) con la etiqueta bajo el puntero…
+      this.hlFocus = null; // …o con el foco del teclado…
+      this.hlPin = null; // …o la de la ficha abierta desde su etiqueta
+      this.hlChain = null; // la resaltada ahora (sigue mientras se apaga)
+      this.hlAmt = 0;
+      this.notes = []; // mensajes de los commits cercanos: elementos que se reusan
       this.flashAmt = 0;
       this.active = false;
       this.onScreen = true;
@@ -1126,16 +1142,27 @@
         this.touch(); // quien abre una ficha quiere leerla: el director espera
         this.showTip(it.data.sha, true, it.data.name);
       });
-      this.labelLayer.addEventListener('pointerover', (ev) => {
+      // pasar por una etiqueta (o llegar con el teclado) resalta su rama entera, como en la vista 2D
+      const enter = (ev) => {
         const it = headOf(ev);
-        if (it) this.setHover(it.data.sha);
-      });
-      this.labelLayer.addEventListener('pointerout', (ev) => {
+        if (!it) return;
+        // el foco cuenta si llegó con el teclado: tras un clic, la rama queda resaltada solo mientras su ficha esté abierta
+        if (ev.type === 'focusin') return void (this.hlFocus = ev.target.matches?.(':focus-visible') ? it.data.chain : null);
+        this.setHover(it.data.sha);
+        this.hlHover = it.data.chain;
+      };
+      const leave = (ev) => {
+        if (ev.type === 'focusout') return void (this.hlFocus = null);
         const el = ev.target.closest?.('.g3-head');
         if (!el || el.contains(ev.relatedTarget)) return;
         const it = this.heads.get(el.__name);
         if (it && this.hoverSha === it.data.sha) this.setHover(null);
-      });
+        this.hlHover = null;
+      };
+      this.labelLayer.addEventListener('pointerover', enter);
+      this.labelLayer.addEventListener('focusin', enter);
+      this.labelLayer.addEventListener('pointerout', leave);
+      this.labelLayer.addEventListener('focusout', leave);
     }
 
     updateDays(L) {
@@ -1162,7 +1189,7 @@
         }
         it.data = d;
         it.mesh.position.set(0, 0, (d.x - 0.5) * SP);
-        it.el.textContent = i18n.dayLabel(d.time);
+        this.dayText(it);
       }
       for (const [id, it] of this.days) {
         if (seen.has(id)) continue;
@@ -1170,6 +1197,14 @@
         it.el.remove();
         this.days.delete(id);
       }
+    }
+
+    /** Texto de la fecha de un día y su ancho estimado (mismo tipo y rellenos que el CSS), para que no se pisen. */
+    dayText(it) {
+      const text = i18n.dayLabel(it.data.time);
+      if (it.el.textContent === text) return;
+      it.el.textContent = text;
+      it.w = Math.ceil(GB.graphShared.measure(text, GB.graphShared.SMALL_FONT) + 12);
     }
 
     /* ---------- cámara ---------- */
@@ -1187,17 +1222,19 @@
         const d = (16 + Math.min(this.radius, 420) * 1.7) * clamp(1.6 / aspect, 1, 1.9);
         return new THREE.Vector3(0.5, 0.68, 0.62).normalize().multiplyScalar(d);
       }
+      // de tres cuartos y desde la izquierda: el pasado queda a la izquierda y el presente a la derecha,
+      // como en la vista 2D, y las ramas se ven abrirse y volver; un poco baja: se ve el horizonte
       const d = (13 + this.radius * 1.6) * clamp(1.6 / aspect, 1, 1.9);
-      return new THREE.Vector3(0.55, 0.3, 0.78).normalize().multiplyScalar(d); // un poco baja: se ve el horizonte
+      return new THREE.Vector3(-0.68, 0.34, 0.64).normalize().multiplyScalar(d);
     }
 
-    /** Primera vista: con movimiento, la cámara entra desde lejos y en arco hasta su lugar. */
+    /** Primera vista: con movimiento, la cámara entra desde lejos y en arco, desde el pasado hasta su lugar. */
     placeCamera(intro) {
       const t = this.followPoint(new THREE.Vector3());
       const off = this.defaultOffset();
       this.controls.target.copy(t);
       if (intro && this.motion) {
-        const from = off.clone().applyAxisAngle(this.Y, 1.1).multiplyScalar(2.6);
+        const from = off.clone().applyAxisAngle(this.Y, this.galaxy ? 1.1 : -1.1).multiplyScalar(2.6);
         from.y += off.length() * 0.8;
         this.camera.position.copy(t).add(from);
         this.controls.update();
@@ -1378,6 +1415,7 @@
     bindPointer() {
       let down = null;
       this.canvas.addEventListener('pointermove', (ev) => {
+        this.hlHover = null; // el puntero ya no está sobre una etiqueta
         if (this.flight?.on) return; // en vuelo apunta la mira
         const r = this.canvas.getBoundingClientRect();
         this.mouse = { x: ev.clientX - r.left, y: ev.clientY - r.top, moved: true };
@@ -1550,6 +1588,8 @@
       this.tip.classList.toggle('pinned', !!pin);
       this.tipSha = sha;
       if (pin) this.pinned = sha;
+      // abierta desde la etiqueta de una rama (también con un toque, sin puntero): la rama queda resaltada
+      this.hlPin = pin && branchName ? this.heads.get(branchName)?.data.chain || null : null;
       this.placeTip();
     }
 
@@ -1588,6 +1628,7 @@
       this.tip.hidden = true;
       this.tipSha = null;
       this.tipFile = null;
+      this.hlPin = null;
     }
 
     unpin() {
@@ -1604,7 +1645,7 @@
       this.wrap.setAttribute('aria-label', tr('graph.aria3d'));
       this.tip.setAttribute('aria-label', tr('tip.aria'));
       this.unpin();
-      for (const d of this.days.values()) if (d.data) d.el.textContent = i18n.dayLabel(d.data.time);
+      for (const d of this.days.values()) if (d.data) this.dayText(d);
       for (const it of this.heads.values()) {
         if (!it.data) continue;
         it.html = null;
@@ -1782,7 +1823,16 @@
         // el giro arranca y se detiene con suavidad
         this.spinAmt = clamp(this.spinAmt + (spin ? dt : -dt * 3) / 1.5, 0, 1);
         if (this.spinAmt > 0) {
-          const off = this.tmpB.copy(cam.position).sub(c.target).applyAxisAngle(this.Y, -SPIN_SPEED * ease(this.spinAmt) * dt);
+          const e = ease(this.spinAmt);
+          let w = SPIN_SPEED;
+          if (!this.galaxy) {
+            // en el valle, un vaivén alrededor de donde se dejó la vista: no termina mirando la historia
+            // desde atrás y el tiempo se sigue leyendo de un lado al otro (en el espacio, giro entero)
+            const k = (Math.PI * 2) / SWAY_T;
+            w = SWAY * k * Math.cos(this.swayT * k);
+            this.swayT += dt * e;
+          }
+          const off = this.tmpB.copy(cam.position).sub(c.target).applyAxisAngle(this.Y, -w * e * dt);
           cam.position.copy(c.target).add(off);
           moved = true;
         }
@@ -1793,7 +1843,7 @@
     }
 
     stepScene(now, dt) {
-      let changed = false;
+      let changed = this.stepHighlight(dt);
       if (this.dirtyNodes || this.dirtyEdges || this.nodeAnim || this.edgeAnim) {
         const { moving, anim } = this.stepNodes(now, dt);
         this.writeNodes(now);
@@ -1808,6 +1858,34 @@
       if (this.stepFx(now, dt)) changed = true;
       if (this.stepPortal(dt)) changed = true;
       return changed;
+    }
+
+    /** Rama resaltada: lo demás se funde con el fondo con suavidad y vuelve igual; de una rama a otra
+        cambia sin pasar por el apagado. En el espacio cada rama ya es su propia galaxia: no hace falta. */
+    stepHighlight(dt) {
+      let want = this.galaxy ? null : this.hlHover || this.hlFocus || this.hlPin;
+      if (want && !this.heads.has(want.slice(2))) want = null; // la rama ya no está: nada se queda apagado
+      let changed = false;
+      if (want && want !== this.hlChain) {
+        this.hlChain = want;
+        changed = this.hlAmt > 0;
+      }
+      const to = want ? 1 : 0;
+      if (this.hlAmt !== to) {
+        this.hlAmt = this.motion ? clamp(this.hlAmt + ((to ? 1 : -1) * dt * 1000) / HL_MS, 0, 1) : to;
+        if (!this.hlAmt) this.hlChain = null;
+        changed = true;
+      }
+      if (changed) this.dirtyNodes = this.dirtyEdges = true;
+      return changed;
+    }
+
+    /** Color de una clase: apagado hacia el fondo si hay una rama resaltada y esto no es de ella (`lit`).
+        Devuelve un color de trabajo: hay que usarlo antes de pedir otro. */
+    tint(key, lit) {
+      const c = this.col(key);
+      if (!this.hlAmt || lit) return c;
+      return this.tmpDim.copy(c).lerp(this.bg, this.hlAmt * DIM);
     }
 
     lerpItem(it, now) {
@@ -1858,13 +1936,16 @@
       const put = (it, s) => {
         const d = it.data;
         const v = it.curV;
-        const col = this.col(d.color);
         const head = d.heads.length > 0;
+        // de la rama resaltada: sus commits y su cabeza, aunque no tenga commits propios
+        const lit = !this.hlAmt || d.chain === this.hlChain || (head && d.heads.includes(this.hlChain.slice(2)));
+        const col = this.tint(d.color, lit);
+        const a = lit ? 1 : 1 - this.hlAmt * 0.9; // los halos de lo apagado casi se van
         const k = s * (1 + 0.3 * it.hov);
         (d.merge ? this.iTorus : this.iSphere).point(v.x, v.y, v.z, (head ? HEAD_SCALE : 1) * k, col);
-        if (head) this.halos.push(v.x, v.y, v.z, col, (dark ? 0.72 : 0.4) + 0.2 * it.hov, 3.3 * k, 1);
-        else if (dark && d.color !== 'ghost') this.halos.push(v.x, v.y, v.z, col, 0.26 + 0.4 * it.hov, 1.7 * k, 0);
-        else if (it.hov > 0.01) this.halos.push(v.x, v.y, v.z, col, 0.4 * it.hov, 2.2 * k, 0);
+        if (head) this.halos.push(v.x, v.y, v.z, col, ((dark ? 0.72 : 0.4) + 0.2 * it.hov) * a, 3.3 * k, 1);
+        else if (dark && d.color !== 'ghost') this.halos.push(v.x, v.y, v.z, col, (0.26 + 0.4 * it.hov) * a, 1.7 * k, 0);
+        else if (it.hov > 0.01) this.halos.push(v.x, v.y, v.z, col, 0.4 * it.hov * a, 2.2 * k, 0);
       };
       for (const it of this.nodes.values()) put(it, it.born ? Math.max(0.001, easeOutBack(clamp((now - it.born) / 550, 0, 1))) : 1);
       for (const d of this.dying) put(d.it, Math.max(0.001, 1 - clamp((now - d.t0) / 350, 0, 1)));
@@ -1895,7 +1976,7 @@
         const e = it.data;
         const b = this.nodes.get(e.to)?.curV;
         if (!b) continue;
-        const col = this.col(e.color);
+        const col = this.tint(e.color, e.chain === this.hlChain);
         if (e.kind === 'stub') {
           this.stub(b, col, this.galaxy ? this.gx.stubDir(e.to, this.tmpP) : null);
           continue;
@@ -2030,7 +2111,7 @@
         const h = this.heads.get(name);
         const node = h && this.nodes.get(h.data.sha)?.curV;
         if (!node) continue;
-        const col = this.col(h.data.color);
+        const col = this.tint(h.data.color, h.data.chain === this.hlChain);
         const v = h.curV;
         pos.set([node.x, node.y, node.z, v.x, v.y, v.z], k * 3);
         colors.set([col.r, col.g, col.b, col.r, col.g, col.b], k * 3);
@@ -2541,7 +2622,9 @@
         if (p && p.x > -40 && p.x < this.W + 40 && p.y > -20 && p.y < this.H + 20) cand.push({ it, px: p.x, py: p.y, dist });
         else if (it.el) this.setStyle(it, 'display', 'none');
       }
-      cand.sort((a, b) => b.it.data.isDefault - a.it.data.isDefault || a.dist - b.dist);
+      const hl = this.hlAmt ? this.hlChain : null;
+      // la etiqueta de la rama resaltada se ubica primero: nunca queda tapada ni oculta
+      cand.sort((a, b) => (b.it.data.chain === hl) - (a.it.data.chain === hl) || b.it.data.isDefault - a.it.data.isDefault || a.dist - b.dist);
       const crowd = cand.length > FADE_MAX;
       const CELL = 96;
       const grid = new Map();
@@ -2584,25 +2667,96 @@
         }
         if (!it.el) this.makeHead(it);
         const fade = clamp(1.15 - (s.dist - 30) / range, 0.3, 1);
+        let op = hit ? fade * 0.22 : fade;
+        // con una rama resaltada, su etiqueta pasa al frente y las demás se apagan
+        const lit = hl && it.data.chain === hl;
+        if (hl) op = lit ? op + (1 - op) * this.hlAmt : op * (1 - 0.75 * this.hlAmt);
         this.setStyle(it, 'display', '');
         this.setStyle(it, 'transform', `translate(${Math.round(s.x)}px,${Math.round(s.y)}px)`);
-        this.setStyle(it, 'opacity', (hit ? fade * 0.22 : fade).toFixed(2));
-        this.setStyle(it, 'zIndex', String(hit ? 100 : Math.max(101, 1000 - Math.round(s.dist))));
+        this.setStyle(it, 'opacity', op.toFixed(2));
+        this.setStyle(it, 'zIndex', String(lit ? 1999 : hit ? 100 : Math.max(101, 1000 - Math.round(s.dist))));
       }
+      // fechas del eje: del presente al pasado, sin pisarse entre ellas ni a las etiquetas de rama
       const top = this.tmpB;
-      for (const d of this.days.values()) {
+      const days = space ? [] : [...this.days.values()].sort((a, b) => b.mesh.position.z - a.mesh.position.z);
+      for (const d of days) {
         top.set(0, (this.dayR || this.radius) + 0.7, d.mesh.position.z);
-        const p = space ? null : this.project(top);
+        const p = this.project(top);
         const dist = camPos.distanceTo(top);
-        const vis = p && p.x > 0 && p.x < this.W - 40 && p.y > 4 && p.y < this.H - 10 && dist < reach * 0.75;
+        let vis = p && p.x > 0 && p.x < this.W - 40 && p.y > 4 && p.y < this.H - 10 && dist < reach * 0.75;
+        if (vis) {
+          const r = { w: Math.ceil(d.w * z), h: Math.ceil(17 * z) };
+          r.x = p.x - r.w / 2;
+          r.y = p.y - r.h;
+          vis = !hits(r);
+          if (vis) cells(r, (key) => void (grid.get(key) || grid.set(key, []).get(key)).push(r));
+        }
         this.setStyle(d, 'display', vis ? '' : 'none');
         if (vis) {
           this.setStyle(d, 'transform', `translate(${Math.round(p.x)}px,${Math.round(p.y)}px) translate(-50%,-100%)`);
           this.setStyle(d, 'opacity', clamp(1.1 - (dist - 30) / range, 0.25, 1).toFixed(2));
         }
       }
+      if (space) for (const d of this.days.values()) this.setStyle(d, 'display', 'none');
+      this.placeNotes(hits, cells, grid, hl);
       if (space) this.gx.placeLabels();
       if ((this.tipSha || this.tipFile) && !this.tip.hidden) this.placeTip();
+    }
+
+    /**
+     * De cerca, cada commit muestra su mensaje (la primera línea) a su derecha: los más cercanos
+     * primero, sin pisar las etiquetas ni a los demás y con un tope. Solo en el valle: en el
+     * espacio los rótulos son de las galaxias y los planetas.
+     */
+    placeNotes(hits, cells, grid, hl) {
+      let n = 0;
+      if (!this.galaxy && this.nodes.size) {
+        const cam = this.camera.position;
+        const near = [];
+        for (const it of this.nodes.values()) {
+          const d2 = it.curV.distanceToSquared(cam);
+          if (d2 < NOTE_D * NOTE_D && it.sha !== this.tipSha) near.push({ it, d2 }); // el de la ficha ya lo dice
+        }
+        near.sort((a, b) => a.d2 - b.d2);
+        const z = this.labelScale();
+        const px = this.H / (2 * Math.tan((this.camera.fov * Math.PI) / 360)); // píxeles por unidad, a distancia 1
+        for (const { it, d2 } of near) {
+          if (n >= MAX_NOTES) break;
+          const p = this.project(it.curV);
+          if (!p || p.x < 0 || p.y < 8 || p.y > this.H - 8) continue;
+          const c = it.data.commit;
+          if (it.noteOf !== c) {
+            it.noteOf = c;
+            it.note = U.truncate(U.firstLine(c?.message), 48);
+            it.noteW = Math.ceil(GB.graphShared.measure(it.note, GB.graphShared.SMALL_FONT) + 12);
+          }
+          if (!it.note) continue;
+          const dist = Math.sqrt(d2);
+          const r = (NODE_R * (it.data.heads.length ? HEAD_SCALE : 1) * px) / dist; // radio del commit en pantalla
+          const s = { x: p.x + r + 6, w: Math.ceil(it.noteW * z), h: Math.ceil(17 * z) };
+          s.y = p.y - s.h / 2;
+          if (s.x + s.w > this.W - 4 || hits(s)) continue;
+          cells(s, (key) => void (grid.get(key) || grid.set(key, []).get(key)).push(s));
+          const note = this.notes[n] || (this.notes[n] = this.makeNote());
+          n++;
+          if (note.text !== it.note) note.el.textContent = note.text = it.note;
+          // aparece al acercarse; con otra rama resaltada, se apaga como ella
+          let op = clamp((NOTE_D - dist) / (NOTE_D * 0.25), 0, 1);
+          if (hl && it.data.chain !== hl) op *= 1 - 0.8 * this.hlAmt;
+          this.setStyle(note, 'display', '');
+          this.setStyle(note, 'transform', `translate(${Math.round(s.x)}px,${Math.round(s.y)}px)`);
+          this.setStyle(note, 'opacity', op.toFixed(2));
+        }
+      }
+      for (let i = n; i < this.notes.length; i++) this.setStyle(this.notes[i], 'display', 'none');
+    }
+
+    makeNote() {
+      const el = document.createElement('span');
+      el.className = 'g3-note';
+      el.setAttribute('aria-hidden', 'true'); // la ficha del commit dice lo mismo, y más
+      this.labelLayer.appendChild(el);
+      return { el, text: null, st: {} };
     }
 
     /** Escribe un estilo solo si cambió: decenas de etiquetas por cuadro sin trabajo de más. */
@@ -2635,6 +2789,8 @@
       this.placed = false;
       this.fly = null;
       this.hoverSha = null;
+      this.hlHover = this.hlFocus = this.hlPin = this.hlChain = null;
+      this.hlAmt = 0;
       this.portalTarget = null;
       this.portalZ = null;
       this.nodeAnim = this.edgeAnim = false;

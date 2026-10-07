@@ -257,15 +257,11 @@
     </div>
     <div class="grid2">
       <div class="field">
-        <label for="max-branches" data-i18n="settings.maxBranches">Most active branches to show</label>
-        <input id="max-branches" type="number" min="2" max="60" inputmode="numeric">
-      </div>
-      <div class="field">
         <label for="depth" data-i18n="settings.depth">Commits per branch</label>
         <input id="depth" type="number" min="10" max="100" step="5" inputmode="numeric">
       </div>
     </div>
-    <p class="help" data-i18n-html="settings.branchesHelp">On large repos GraphBranch does not list every branch: it shows the default branch, the ones you pin (click a branch → <strong>Pin</strong>) and those with the most recent commits. Use the graph filter to focus on a prefix, for example <code>release/</code>.</p>
+    <p class="help" data-i18n-html="settings.branchesHelp">GraphBranch shows every branch of the repo, the most active ones closest to the default branch. On large repos they appear gradually, most active first. Pinned branches (click a branch → <strong>Pin</strong>) go right below the default branch, even with a filter. Use the graph filter to focus on a prefix, for example <code>release/</code>.</p>
     <div class="dialog-actions">
       <button type="button" class="btn btn-ghost" id="token-clear" data-i18n="settings.clearToken">Delete token</button>
       <span class="spacer"></span>

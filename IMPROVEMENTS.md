@@ -59,9 +59,9 @@ posteriores pueden haberse movido.
 12. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
     rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
 13. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-14. Trabajo por cuadro en 3D: `computeLineDistances()` en cada cuadro (`graph3d.js:1638`), lecturas de
-    tamaño que fuerzan maquetación (`:2122`, `:1279`, `graph.js:736`), `Intl.DateTimeFormat` nuevo por
-    cuadro (`replay.js:343`).
+14. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
+    `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
+    buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro).
 15. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
     `aria-pressed` y el texto, leyenda 2D sin acceso por teclado, el botón de pausa del Replay sin nombre
     accesible (`index.html:190`).
@@ -120,3 +120,15 @@ posteriores pueden haberse movido.
 - **Pruebas:** dos nuevas en `tools/github.test.mjs` (filtro y fijadas cambiados mientras el ciclo
   espera la lista de ramas). Fallaban antes del arreglo y pasan después; smoke e i18n en verde.
 - **Siguiente:** pendiente 1 (datos del repo anterior al cambiar de repo), luego 2 (reloj adelantado).
+
+### 2026-10-07 · Fusión de #15 antes de abrir el PR
+
+- Master trajo #15 (todas las ramas, sin tope; carga por lotes). Hubo conflicto en
+  `js/sources/github.js` con los arreglos de las iteraciones 1 y 3: se combinaron los dos lados y el
+  nuevo `if (this.reseed) this.prune()` pasó a usar el contador de pedidos.
+- Con #15 el modo lista recorre la lista completa de ramas en cada ciclo, así que allí el filtro
+  cambiado a mitad de ciclo ya se aplicaba; en el modo events, no. Las pruebas de filtro y fijadas se
+  rehicieron para la lógica nueva (ya no hay tope de ramas) y ahora cubren los dos modos: las de modo
+  events fallan con el `github.js` de master y pasan con el arreglo; las de modo lista quedan como
+  regresión.
+- Validado: 7 pruebas, smoke (incluidos los 40 idiomas en celular) e i18n en verde.

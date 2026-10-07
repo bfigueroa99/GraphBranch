@@ -195,32 +195,40 @@ test('un ciclo normal no repite eventos ya mostrados', async () => {
 
 /* Un filtro o una rama fijada que cambian a mitad de un ciclo se aplican en el siguiente. */
 
-for (const [what, change] of [
-  ['filtro', (src) => src.setFilter('zet')],
-  ['fijadas', (src) => src.setPins(['zeta'])],
-]) {
-  test(`modo lista: cambiar ${what} durante un ciclo se aplica en el siguiente`, async () => {
-    const gh = fakeGitHub();
-    gh.commit('a1');
-    gh.commit('b1', 'a1');
-    gh.commit('c1', 'a1');
-    gh.branches.set('main', 'a1').set('feat-x', 'b1').set('zeta', 'c1');
-    const { src } = connect(gh);
-    src.maxBranches = 2; // se ven main y una más
-    await src.cycle();
-    assert.equal(src.mode, 'list');
-    const before = [...src.data.branches.keys()].sort();
+const changes = [
+  { what: 'el filtro', setup: () => {}, change: (src) => src.setFilter('zet'), before: ['feat-x', 'main', 'zeta'], after: ['main', 'zeta'] },
+  // con un filtro puesto, fijar una rama que no lo pasa la hace visible
+  { what: 'las fijadas', setup: (src) => src.setFilter('feat'), change: (src) => src.setPins(['zeta']), before: ['feat-x', 'main'], after: ['feat-x', 'main', 'zeta'] },
+];
+const modes = [
+  { mode: 'list', many: false, during: '/repos/o/r/branches' }, // mientras espera la lista de ramas
+  { mode: 'events', many: true, during: '/repos/o/r/events' }, // mientras espera el feed
+];
 
-    gh.onFetch = (path) => {
-      if (!path.startsWith('/repos/o/r/branches')) return;
-      gh.onFetch = null;
-      change(src); // el usuario lo cambia mientras el ciclo espera la lista de ramas
-    };
-    await src.cycle();
-    await src.cycle();
-    const after = [...src.data.branches.keys()].sort();
-    assert.deepEqual(before, ['feat-x', 'main']);
-    if (what === 'filtro') assert.deepEqual(after, ['main', 'zeta']);
-    else assert.ok(after.includes('zeta'), `zeta fijada no aparece: ${after}`);
-  });
+for (const { mode, many, during } of modes) {
+  for (const { what, setup, change, before, after } of changes) {
+    test(`modo ${mode}: cambiar ${what} durante un ciclo se aplica en el siguiente`, async () => {
+      const gh = fakeGitHub();
+      gh.manyBranches = many;
+      gh.push('main', 'a1');
+      gh.push('feat-x', 'b1', 'a1');
+      gh.push('zeta', 'c1', 'a1');
+      const { src } = connect(gh);
+      setup(src);
+      await src.cycle();
+      await src.cycle(); // la historia de las ramas puede llegar en el ciclo siguiente
+      assert.equal(src.mode, mode);
+      assert.deepEqual([...src.data.branches.keys()].sort(), before);
+
+      gh.onFetch = (path) => {
+        if (!path.startsWith(during)) return;
+        gh.onFetch = null;
+        change(src); // el usuario lo cambia a mitad del ciclo
+      };
+      await src.cycle();
+      await src.cycle();
+      await src.cycle();
+      assert.deepEqual([...src.data.branches.keys()].sort(), after);
+    });
+  }
 }

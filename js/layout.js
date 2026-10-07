@@ -1,14 +1,34 @@
 /* GraphBranch — layout del grafo.
    Eje X: orden de commits (padres antes que hijos, luego por fecha).
-   Eje Y: carriles. La rama por defecto va arriba y las demás se ordenan por su
-   última actividad (la más reciente primero), así que se reordenan solas en
-   cada push; los commits que solo alcanza una rama ya borrada (fusionada)
-   forman cadenas "fantasma" que se acomodan en los huecos libres de los carriles. */
+   Eje Y: carriles. La rama por defecto va arriba, luego las fijadas y después las
+   demás por su última actividad (la más reciente primero), así que se reordenan
+   solas en cada push; los commits que solo alcanza una rama ya borrada (fusionada)
+   forman cadenas "fantasma" que se acomodan en los huecos libres de los carriles.
+   Escala a miles de ramas: cada paso es lineal o casi (n log n). */
 (function (GB) {
   'use strict';
   const { U, palette: P } = GB;
 
   const LONG_LIVED = /^(main|master|trunk|develop|development|dev|staging|stage|next|beta|production|prod|release(\/.*)?|releases?\/.*)$/i;
+  const NONE = new Set();
+
+  /** Árbol de máximos sobre el inicio de cada carril de rama (1..n): da en O(log n) el primer
+      carril, desde `lo`, cuya rama empieza después de `x`. Ahí puede caber una cadena fantasma. */
+  function startTree(starts) {
+    let size = 1;
+    while (size < starts.length) size *= 2;
+    const t = new Float64Array(2 * size).fill(-Infinity);
+    starts.forEach((v, i) => (t[size + i] = v));
+    for (let i = size - 1; i > 0; i--) t[i] = Math.max(t[2 * i], t[2 * i + 1]);
+    const find = (node, a, b, lo, x) => {
+      if (b < lo || t[node] <= x) return -1;
+      if (a === b) return a;
+      const mid = (a + b) >> 1;
+      const left = find(2 * node, a, mid, lo, x);
+      return left !== -1 ? left : find(2 * node + 1, mid + 1, b, lo, x);
+    };
+    return (lo, x) => find(1, 0, size - 1, lo, x);
+  }
 
   class Layout {
     constructor() {
@@ -96,15 +116,19 @@
       const children = new Map();
       for (const c of order) for (const p of c.parents) if (reach.has(p)) (children.get(p) || children.set(p, []).get(p)).push(c.sha);
 
-      /* 5. carriles: la rama por defecto arriba y el resto por última actividad
-         (commit más nuevo o último movimiento visto, lo que sea más reciente) */
-      const activity = (b) => Math.max(commits.get(b.sha).date || 0, b.movedAt || 0);
+      /* 5. carriles: la rama por defecto arriba, luego las fijadas y el resto por última
+         actividad (commit más nuevo o último movimiento visto, lo que sea más reciente) */
+      const pins = data.pins || NONE;
+      const activity = new Map(heads.map((b) => [b.name, Math.max(commits.get(b.sha).date || 0, b.movedAt || 0)]));
       const prevSlot = this.slotOf;
       const byActivity = heads
         .filter((b) => b.name !== def)
         .sort(
           (a, b) =>
-            activity(b) - activity(a) || (prevSlot.get(a.name) ?? 1e9) - (prevSlot.get(b.name) ?? 1e9) || (a.name < b.name ? -1 : 1),
+            pins.has(b.name) - pins.has(a.name) ||
+            activity.get(b.name) - activity.get(a.name) ||
+            (prevSlot.get(a.name) ?? 1e9) - (prevSlot.get(b.name) ?? 1e9) ||
+            (a.name < b.name ? -1 : 1),
         );
       this.slotOf = new Map(byActivity.map((b, i) => [b.name, i + 1]));
       if (live.has(def)) this.slotOf.set(def, 0);
@@ -143,7 +167,9 @@
         give(b.name, next);
       }
       this.colorOf = colorOf;
-      P.ensure(Math.max(0, ...colorOf.values()));
+      let maxColor = 0;
+      for (const c of colorOf.values()) if (c > maxColor) maxColor = c;
+      P.ensure(maxColor);
       const colorOfBranch = (name) => (dead.has(name) ? 'ghost' : 'c' + colorOf.get(name));
 
       /* 6. ocupación de carriles: ramas hasta el infinito, fantasmas en los huecos */
@@ -152,6 +178,7 @@
       const fits = (slot, a, b) => !(occ.get(slot) || []).some(([s, e]) => a <= e + 0.6 && s <= b + 0.6);
       const chainSlot = new Map();
       const headInfo = new Map();
+      const branchStart = [-Infinity]; // inicio del carril de cada rama, por carril (el 0 es la por defecto)
 
       for (const b of heads) {
         const chain = chains.get('b:' + b.name);
@@ -164,6 +191,7 @@
           start = p && xOf.has(p) ? xOf.get(p) : xOf.get(oldest.sha);
         } else start = xOf.get(b.sha);
         occupy(slot, start, Infinity);
+        branchStart[slot] = start;
         headInfo.set(b.name, { own: chain.shas.length > 0, start });
       }
 
@@ -180,9 +208,25 @@
         g.newest = newest;
       }
       ghosts.sort((a, b) => b.end - a.end);
+      // el carril libre más alto: entre los de rama, solo miran los que empiezan después del
+      // fantasma (el árbol los encuentra sin recorrerlos todos); si no, los de solo fantasmas
+      const lanes = branchStart.length - 1;
+      const freeAfter = ghosts.length && lanes ? startTree(branchStart) : null;
       for (const g of ghosts) {
-        let slot = 1;
-        while (!fits(slot, g.start, g.end)) slot++;
+        let slot = 0;
+        for (let from = 1; freeAfter && from <= lanes; ) {
+          const s = freeAfter(from, g.end + 0.6);
+          if (s === -1) break;
+          if (fits(s, g.start, g.end)) {
+            slot = s;
+            break;
+          }
+          from = s + 1;
+        }
+        if (!slot) {
+          slot = lanes + 1;
+          while (!fits(slot, g.start, g.end)) slot++;
+        }
         occupy(slot, g.start, g.end);
         chainSlot.set(g.key, slot);
       }
@@ -257,8 +301,9 @@
         .map((g) => ({ id: g.key, name: g.name, x: xOf.get(g.newest), row: rowOfChain(g.key), chain: g.key }));
 
       /* 9. filas para la leyenda */
+      const headOfSlot = new Map(heads.map((h) => [this.slotOf.get(h.name), h]));
       const rows = slots.map((slot, row) => {
-        const b = heads.find((h) => this.slotOf.get(h.name) === slot);
+        const b = headOfSlot.get(slot);
         return b
           ? { row, id: 'b:' + b.name, name: b.name, color: colorOfBranch(b.name), chain: 'b:' + b.name, ghost: false }
           : { row, id: 'g-row:' + slot, name: 'fusionadas', color: 'ghost', chain: null, ghost: true };

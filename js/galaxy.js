@@ -16,6 +16,11 @@
    y, si no, un cinturón por carpeta, más lento cuanto más lejos, como en un sistema solar. Lo
    usa graph3d.js.
 
+   La nave es diminuta frente a los planetas y las galaxias, y eso se siente en el vuelo: entre
+   galaxias cruza el universo en segundos, al acercarse a una galaxia frena a la escala de su sistema
+   y junto a un planeta va cada vez más despacio cuanto más cerca de su superficie, hasta rozarlo
+   (ver `cruise`). En el espacio las distancias se miden en kilómetros a esa escala (world.js).
+
    El espacio se inspira en No Man's Sky: cada planeta tiene su superficie (continentes y océanos,
    bandas de gigante gaseoso o roca con cráteres, según el archivo), atmósfera que brilla en el
    borde, gira sobre sí mismo y algunos llevan anillos; el cielo es de nebulosas de colores que se
@@ -1349,12 +1354,13 @@
       }
       u.uCam.value.copy(g.camera.position);
       const v = f?.on ? f.vel.length() : 0;
+      const len = Math.min(14, Math.max(v * 0.1, 12 * level)); // largas según lo rápido que se va aquí, no en unidades: la nave es diminuta
       if (burst > 0.02) {
         u.uDir.value.copy(this.warpDir);
-        u.uLen.value = Math.max(Math.min(14, v * 0.1), 16 * burst * burst);
+        u.uLen.value = Math.max(len, 16 * burst * burst);
       } else {
         if (v > 1e-3) u.uDir.value.copy(f.vel).multiplyScalar(1 / v);
-        u.uLen.value = Math.min(14, v * 0.1);
+        u.uLen.value = len;
       }
       return true;
     }
@@ -1783,20 +1789,33 @@
       return sys;
     }
 
-    /** Cerca de los planetas la nave va más despacio, para pasar entre ellos con calma (Mayús sigue acelerando). */
-    nearFactor(pos) {
+    /** Velocidad de crucero de la nave en el espacio (unidades por segundo, sin Mayús). La nave es
+        diminuta frente a todo lo demás, y eso se siente en cuánto tarda en recorrerlo: entre galaxias
+        cruza el universo en unos segundos con Mayús; al acercarse a una galaxia frena a la escala de
+        su sistema (cruzarlo de lado a lado lleva varios segundos) y junto a un planeta, a la del
+        planeta: cuanto más cerca de su superficie, más despacio, así que al llegar crece hasta
+        llenar la vista y darle la vuelta lleva un rato, como entrar en la atmósfera en No Man's Sky.
+        Mayús sigue acelerando en cualquier parte. */
+    cruise(pos) {
+      const g = this.g;
+      const deep = clamp(g.radius / 6, 6, 24); // entre galaxias
+      let v = deep;
+      for (const { G } of this.near || []) {
+        // en el sistema de una galaxia, a su escala; alrededor, en transición hasta dos veces su radio
+        const outer = Math.max(this.outerOf.get(G.name) || 0, G.R * 2.2 + 6);
+        const sysV = clamp(outer / 7, 1.6, 5);
+        const out = clamp((pos.distanceTo(G.c) - outer) / outer, 0, 1);
+        v = Math.min(v, sysV + (deep - sysV) * out * out);
+      }
       const s = this.sys;
-      if (!s || !this.on) return 1;
-      const dc = pos.distanceTo(s.G.c);
-      if (dc > s.outer + 10) return 1;
+      if (!s || !this.on) return v;
       let near = Infinity;
       for (const p of s.planets) {
-        if (p.rock) continue;
-        const d = pos.distanceTo(p.pos) - p.size;
+        // a la distancia a la superficie; los asteroides, chicos, frenan menos
+        const d = (pos.distanceTo(p.pos) - p.size * (p.k ?? 1)) * (p.rock ? 2.5 : 1);
         if (d < near) near = d;
       }
-      const inside = clamp((dc - s.outer) / 10, 0, 1); // 0 dentro del sistema, 1 fuera
-      return Math.max(0.15, Math.min(0.45 + 0.55 * inside, near / 5));
+      return Math.min(v, Math.max(0.35, near * 0.9));
     }
 
     /** Los planetas y los asteroides son sólidos: la nave los roza, no los atraviesa. */
@@ -1805,7 +1824,7 @@
       if (!s || !this.on) return;
       const n = this.v;
       for (const p of s.planets) {
-        const min = p.size * (p.k ?? 1) + (p.rock ? 0.3 : 0.5);
+        const min = p.size * (p.k ?? 1) + (p.rock ? 0.1 : 0.14); // casi a ras: el planeta llena la vista
         n.subVectors(pos, p.pos);
         const d = n.length();
         if (d >= min || d < 1e-6) continue;

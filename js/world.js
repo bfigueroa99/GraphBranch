@@ -18,6 +18,7 @@
   const SEGS = 150; // terreno de 150 × 150 facetas…
   const CELL = 6; // …de 6 unidades: 900 de lado
   const METERS = 5; // metros por unidad de la escena (los commits quedan a 10 m)
+  const SPACE_KM = 100; // kilómetros por unidad en el espacio: un planeta mide decenas de km, un sistema miles
   const DISCOVER = 8; // a esta distancia de su cabeza, una rama queda descubierta
   const ARRIVE = 6; // a esta distancia del destino, se llega
   const FOV = Math.PI * 0.9; // ancho de la brújula, en radianes
@@ -760,8 +761,12 @@
       }
     }
 
-    /** Distancia en metros o kilómetros, según el idioma. */
+    /** Distancia en metros o kilómetros, según el idioma (en el espacio, a escala de planetas: kilómetros). */
     fmtDist(units) {
+      if (this.space) {
+        const km = units * SPACE_KM;
+        return i18n.fmtUnit(km < 100 ? Math.round(km) : Math.round(km / 10) * 10, 'kilometer');
+      }
       const m = units * METERS;
       return m < 1000 ? i18n.fmtUnit(Math.round(m / 5) * 5, 'meter') : i18n.fmtUnit(Math.round(m / 100) / 10, 'kilometer');
     }
@@ -790,8 +795,9 @@
       if (now - (this.lastGauge || 0) > 120) {
         this.lastGauge = now;
         const alt = Math.max(0, (cam.y - this.heightAt(cam.x, cam.z)) * METERS);
-        const kmh = f.vel.length() * METERS * 3.6;
-        const speed = i18n.fmtUnit(Math.round(kmh), 'kilometer-per-hour');
+        const v = f.vel.length();
+        // en el espacio, kilómetros por segundo a escala de planetas; en el valle, km/h
+        const speed = this.space ? i18n.fmtUnit(Math.round(v * SPACE_KM * 10) / 10, 'kilometer-per-second') : i18n.fmtUnit(Math.round(v * METERS * 3.6), 'kilometer-per-hour');
         const text = this.space ? speed : `↑ ${i18n.fmtUnit(Math.round(alt), 'meter')} · ${speed}`; // en el espacio no hay altura
         if (this.el.gauges.textContent !== text) this.el.gauges.textContent = text;
       }

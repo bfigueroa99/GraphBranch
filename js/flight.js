@@ -336,14 +336,18 @@
       this.yaw = Math.atan2(-h.x, -h.z);
 
       // moverse: hacia donde apunta la nave, con inercia
-      const scale = clamp(0.6 + g.radius / 14, 0.8, space ? 3.4 : 2.2); // grafos grandes, vuelo más rápido
-      // entre los planetas de una galaxia, más despacio: se pasa entre ellos con calma
-      const calmK = space && g.gx ? g.gx.nearFactor(cam.position) : 1;
-      const speed = SPEED * (boost ? BOOST : 1) * scale * calmK;
+      const scale = clamp(0.6 + g.radius / 14, 0.8, 2.2); // grafos grandes, vuelo más rápido
+      // en el espacio la velocidad va con la escala de lo que hay cerca (el universo, una galaxia, un
+      // planeta): la nave es diminuta y tarda lo que corresponde en recorrer cada cosa
+      const cruise = space && g.gx ? g.gx.cruise(cam.position) : SPEED * scale;
+      const top = cruise * BOOST;
+      const speed = boost ? top : cruise;
       this.want.set(0, 0, 0).addScaledVector(this.fwd, clamp(f, -1, 1)).addScaledVector(this.right, clamp(s, -1, 1)).addScaledVector(this.up, clamp(u, -1, 1));
       if (this.want.lengthSq() > 1) this.want.normalize();
       this.want.multiplyScalar(speed);
-      this.vel.lerp(this.want, 1 - Math.exp(-dt * (this.want.lengthSq() ? 5 : 3.5)));
+      // frena más rápido de lo que arranca: al llegar a un planeta no se pasa de largo
+      const rate = !this.want.lengthSq() ? 3.5 : this.want.lengthSq() < this.vel.lengthSq() ? 8 : 5;
+      this.vel.lerp(this.want, 1 - Math.exp(-dt * rate));
       if (this.vel.lengthSq() < 1e-6) this.vel.set(0, 0, 0);
       cam.position.addScaledVector(this.vel, dt);
       if (space) g.gx?.collide(cam.position, this.vel); // los planetas y los asteroides tampoco se atraviesan
@@ -360,13 +364,14 @@
       const bank = calm ? 0 : clamp((yawRate / Math.max(dt, 1e-3)) * 0.06 + -s * 0.05 * (v / speed), -0.35, 0.35);
       this.bank += (bank - this.bank) * (1 - Math.exp(-dt * 4));
       cam.quaternion.copy(q).multiply(this.dq.setFromAxisAngle(AZ, this.bank));
-      const fov = calm ? this.baseFov : this.baseFov + clamp(v / (SPEED * BOOST), 0, 1) * 14;
+      const level = clamp(v / top, 0, 1); // respecto de lo más rápido que se puede ir aquí
+      const fov = calm ? this.baseFov : this.baseFov + level * 14;
       if (Math.abs(cam.fov - fov) > 0.01) {
         cam.fov += (fov - cam.fov) * (1 - Math.exp(-dt * 3));
         cam.updateProjectionMatrix();
       }
-      g.opts.onFlightSpeed?.(clamp(v / (SPEED * BOOST), 0, 1));
-      this.level = clamp(v / (SPEED * BOOST * scale), 0, 1); // para las estelas del espacio
+      g.opts.onFlightSpeed?.(level);
+      this.level = level; // para las estelas del espacio
       // horizonte junto a la mira: cuánto está inclinada la nave respecto del "suelo" del mundo
       const tilt = Math.atan2(this.right.y, this.up.y);
       if (Math.abs(tilt - (this.shownTilt ?? 9)) > 0.003) {

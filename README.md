@@ -26,11 +26,11 @@ Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas
 
 - **Todos los idiomas**: la interfaz está traducida a 40 idiomas (incluidos árabe, hebreo, persa y urdu, de derecha a izquierda), se elige sola según el navegador y se puede cambiar en vivo desde el globo de la barra superior. Fechas, números y "hace 5 min" salen de `Intl`, así que también se ven bien en idiomas sin traducción (ver [Idiomas](#idiomas)).
 
-No necesita servidor ni compilación: es HTML, CSS y JavaScript que llama directo a `api.github.com` desde tu navegador. La vista 3D usa WebGL; si el navegador no lo tiene, la app abre la 2D.
+No necesita servidor ni compilación: es HTML, CSS y JavaScript que llama directo a `api.github.com` desde tu navegador. La vista 3D usa WebGL; si el navegador no lo tiene, la app abre la 2D. También corre como [aplicación de escritorio](#aplicación-de-escritorio) con Electron.
 
 ## Uso
 
-1. Abre `index.html` (doble clic sirve), o publícalo con GitHub Pages (abajo).
+1. Abre `index.html` (doble clic sirve), publícalo con GitHub Pages o usa la [aplicación de escritorio](#aplicación-de-escritorio) (abajo).
 2. Escribe `owner/repo` o pega la URL del repositorio y pulsa **Conectar**. Sin repositorio arranca una **demo** simulada.
 3. Opcional pero recomendado: en **Ajustes** (engranaje) agrega un token de GitHub.
 
@@ -42,7 +42,7 @@ Sin token GitHub permite 60 consultas por hora, así que la vista se actualiza c
 
 Crea un token *fine-grained* de solo lectura en <https://github.com/settings/personal-access-tokens/new> con acceso al repositorio y estos permisos (todos *Read-only*): **Metadata** (incluye la actividad del repo: pushes y ramas creadas o borradas), **Contents** y **Pull requests**.
 
-El token se guarda solo en el `localStorage` de tu navegador y se envía únicamente a `api.github.com`.
+El token se guarda solo en el `localStorage` de tu navegador (en la app de escritorio, en los datos de la app) y se envía únicamente a `api.github.com`.
 
 ## Repositorios con miles de ramas
 
@@ -124,6 +124,23 @@ Opcional: si quieres que la demo hable tu idioma, agrega un bloque en `js/source
 
 El flujo `.github/workflows/pages.yml` publica el sitio en cada push a `master`. Solo hay que activarlo una vez: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 
+## Aplicación de escritorio
+
+La misma página corre como aplicación de escritorio con [Electron](https://www.electronjs.org/), en Windows, macOS y Linux. Hace falta Node.js 22.12 o superior.
+
+```
+npm install
+npm start                               # la demo o el último repositorio
+npm start -- --repo=owner/repo --tv     # un repo directo y en modo TV (también --lang=es)
+npm run dist                            # el instalador para este sistema, en dist/
+```
+
+- Es la misma app: `electron/main.js` solo abre `index.html` en una ventana, así que lo que cambies en `js/` o `css/` vale para las dos versiones (en la de escritorio se recarga con `Ctrl+R` o `Cmd+R`).
+- La página se sirve desde `app://graphbranch/`, un origen propio en vez de `file://`: el CSP funciona igual que en la web, y el token y los ajustes quedan en los datos de la app, aparte de los del navegador.
+- Los enlaces a GitHub se abren en el navegador del sistema. La ventana no puede navegar a otro sitio ni usar Node, y solo tiene los permisos que la app usa: notificaciones, pantalla completa, captura del puntero (modo vuelo) y pantalla siempre encendida (modo TV).
+- Por ahora necesita conexión al arrancar: d3, Three.js y las fuentes siguen llegando de su CDN, como en la web.
+- `npm run dist` arma el instalador del sistema donde lo corres: `.dmg` en macOS, `.exe` en Windows y `.AppImage` en Linux. No van firmados, así que macOS y Windows avisan al abrirlos la primera vez.
+
 ## Estructura
 
 ```
@@ -150,6 +167,9 @@ js/game.js            logros del repo, nivel y misión del día
 js/feed.js            panel de actividad, avisos, sonido y notificaciones
 js/app.js             conecta todo
 tools/check-i18n.mjs  verifica las traducciones contra el inglés
+electron/main.js      app de escritorio: la ventana de Electron que abre index.html
+electron/icon.png     ícono de la app de escritorio
+package.json          Electron y sus scripts (npm start, npm run dist)
 ```
 
 ## Límites conocidos

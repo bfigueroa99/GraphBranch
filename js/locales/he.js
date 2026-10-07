@@ -48,8 +48,8 @@ GB.i18n.define('he', {
   'stats.branches.only': 'היחיד במאגר',
   'stats.branches.all': 'כל הענפים במאגר',
   'stats.branches.recent': 'עם פעילות לאחרונה, מתוך {total}',
-  'stats.branches.top': 'הפעילים ביותר מתוך {total}',
   'stats.branches.of': 'מתוך {total} במאגר',
+  'stats.branches.loading': 'מתוך {total} · טוען את השאר',
   'stats.branches.matching': {
     one: 'ענף אחד תואם ל-“{filter}” מתוך {total}',
     two: 'שני ענפים תואמים ל-“{filter}” מתוך {total}',
@@ -179,7 +179,7 @@ GB.i18n.define('he', {
   'graph.aria2d': 'גרף של ענפים ו-commits',
   'graph.aria3d': 'תצוגה תלת-ממדית של ענפים ו-commits',
 
-  'banner.events': 'במאגר הזה יש {total} ענפים. ללא token, GraphBranch רואה רק את הענפים שמופיעים בפיד האירועים של GitHub, שמגיע באיחור של כמה דקות. עם token תראה את הענפים הפעילים ביותר כמעט בזמן אמת.',
+  'banner.events': 'במאגר הזה יש {total} ענפים. ללא token, GraphBranch רואה רק את הענפים שמופיעים בפיד האירועים של GitHub, שמגיע באיחור של כמה דקות. עם token תראה את כולם כמעט בזמן אמת.',
   'banner.anon': 'ללא token, GitHub מאפשר 60 בקשות בשעה: התצוגה מתרעננת כל כמה דקות.',
   'banner.add': 'הוסף token',
 
@@ -344,9 +344,8 @@ GB.i18n.define('he', {
   'settings.show': 'הצג',
   'settings.hide': 'הסתר',
   'settings.tokenHelp': 'ללא token, GitHub מאפשר 60 בקשות בשעה. עם token <em>fine-grained</em> לקריאה בלבד (הרשאות Metadata, Contents ו-Pull requests) התצוגה מתרעננת כל 10 שניות, עובדת עם מאגרים שיש בהם אלפי ענפים, ואפשר לראות גם מאגרים פרטיים. ה-token נשמר רק בדפדפן הזה ונשלח רק אל api.github.com.',
-  'settings.maxBranches': 'מספר הענפים הפעילים ביותר להצגה',
   'settings.depth': 'Commits לכל ענף',
-  'settings.branchesHelp': 'במאגרים גדולים GraphBranch לא מציג את כל הענפים: הוא מציג את ענף ברירת המחדל, את הענפים שהצמדת (לחץ על ענף ואז על <strong>הצמד</strong>) ואת הענפים עם ה-commits העדכניים ביותר. השתמש במסנן הגרף כדי להתמקד בקידומת, למשל <code>release/</code>.',
+  'settings.branchesHelp': 'GraphBranch מציג את כל הענפים של המאגר, והפעילים ביותר קרובים יותר לענף ברירת המחדל. במאגרים גדולים הם מופיעים בהדרגה, הפעילים ביותר קודם. ענפים מוצמדים (לחץ על ענף ואז על <strong>הצמד</strong>) מופיעים מיד מתחת לענף ברירת המחדל, גם כשיש מסנן. השתמש במסנן הגרף כדי להתמקד בקידומת, למשל <code>release/</code>.',
   'settings.clearToken': 'מחק token',
   'settings.cancel': 'ביטול',
   'settings.save': 'שמור והתחבר מחדש',

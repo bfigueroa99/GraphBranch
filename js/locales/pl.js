@@ -48,8 +48,8 @@ GB.i18n.define('pl', {
   'stats.branches.only': 'jedyna w repozytorium',
   'stats.branches.all': 'wszystkie w repozytorium',
   'stats.branches.recent': 'z niedawną aktywnością, spośród {total}',
-  'stats.branches.top': 'najaktywniejsze spośród {total}',
   'stats.branches.of': 'z {total} w repozytorium',
+  'stats.branches.loading': 'z {total} · wczytywanie pozostałych',
   'stats.branches.matching': {
     one: '{n} z {total} pasuje do „{filter}”',
     few: '{n} z {total} pasują do „{filter}”',
@@ -148,7 +148,7 @@ GB.i18n.define('pl', {
   'graph.aria2d': 'Graf gałęzi i commitów',
   'graph.aria3d': 'Widok 3D gałęzi i commitów',
 
-  'banner.events': 'Liczba gałęzi w tym repozytorium: {total}. Bez tokena GraphBranch widzi tylko te, które pojawiają się w kanale zdarzeń GitHub, a ten dociera z kilkuminutowym opóźnieniem. Z tokenem zobaczysz najaktywniejsze gałęzie niemal w czasie rzeczywistym.',
+  'banner.events': 'Liczba gałęzi w tym repozytorium: {total}. Bez tokena GraphBranch widzi tylko te, które pojawiają się w kanale zdarzeń GitHub, a ten dociera z kilkuminutowym opóźnieniem. Z tokenem zobaczysz wszystkie niemal w czasie rzeczywistym.',
   'banner.anon': 'Bez tokena GitHub zezwala na 60 zapytań na godzinę: widok odświeża się co kilka minut.',
   'banner.add': 'Dodaj token',
 
@@ -298,9 +298,8 @@ GB.i18n.define('pl', {
   'settings.show': 'Pokaż',
   'settings.hide': 'Ukryj',
   'settings.tokenHelp': 'Bez tokena GitHub zezwala na 60 zapytań na godzinę. Z tokenem <em>fine-grained</em> tylko do odczytu (uprawnienia Metadata, Contents i Pull requests) widok odświeża się co 10 sekund, działa z repozytoriami mającymi tysiące gałęzi i pozwala zobaczyć prywatne repozytoria. Token jest przechowywany tylko w tej przeglądarce i wysyłany wyłącznie do api.github.com.',
-  'settings.maxBranches': 'Liczba najaktywniejszych gałęzi do wyświetlenia',
   'settings.depth': 'Commity na gałąź',
-  'settings.branchesHelp': 'W dużych repozytoriach GraphBranch nie wyświetla wszystkich gałęzi: pokazuje gałąź domyślną, te przypięte ręcznie (kliknij gałąź → <strong>Przypnij</strong>) oraz gałęzie z najnowszymi commitami. Użyj filtra grafu, aby skupić się na prefiksie, na przykład <code>release/</code>.',
+  'settings.branchesHelp': 'GraphBranch pokazuje wszystkie gałęzie repozytorium, a najaktywniejsze najbliżej gałęzi domyślnej. W dużych repozytoriach pojawiają się stopniowo, najpierw najaktywniejsze. Przypięte gałęzie (kliknij gałąź → <strong>Przypnij</strong>) są tuż pod gałęzią domyślną, nawet przy włączonym filtrze. Użyj filtra grafu, aby skupić się na prefiksie, na przykład <code>release/</code>.',
   'settings.clearToken': 'Usuń token',
   'settings.cancel': 'Anuluj',
   'settings.save': 'Zapisz i połącz ponownie',

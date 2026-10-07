@@ -93,6 +93,10 @@
     });
   }
 
+  /* Con miles de ramas el SVG tendría decenas de miles de elementos: cada commit, arista,
+     etiqueta y fila de la leyenda crea su elemento recién la primera vez que entra en pantalla
+     (fuera de ella solo existe como dato), los eventos se escuchan una vez por grupo y no por
+     elemento, y las bandas de fondo son solo las de las filas a la vista. */
   class Graph {
     constructor(wrap, opts = {}) {
       this.wrap = wrap;
@@ -122,6 +126,8 @@
       this.pointers = new Map();
       this.legend = new Map();
       this.days = new Map();
+      this.byChain = new Map(); // cadena -> elementos, para resaltar una rama sin recorrer todo
+      this.hlChain = null;
       this.bands = [];
       this.maxX = 0;
       this.rowCount = 0;
@@ -176,9 +182,68 @@
         if (ev.key === 'Escape') this.unpin();
       });
       wirePinButton(this.tip, (name) => this.opts.onTogglePin?.(name));
+      this.bindGroups();
 
       new ResizeObserver(() => this.resize()).observe(wrap);
       document.fonts?.ready.then(() => this.relabel());
+    }
+
+    /** Un oyente por grupo (commits, etiquetas, leyenda) en vez de uno por elemento. */
+    bindGroups() {
+      const within = (ev, sel) => {
+        const el = ev.target.closest?.(sel);
+        return el && !el.contains(ev.relatedTarget) ? el : null; // entrar o salir de verdad, no pasar de un hijo a otro
+      };
+      this.gNodes.addEventListener('pointerover', (ev) => {
+        const g = within(ev, '.node');
+        if (g && !this.pinned) this.showTip(g.__sha, false);
+      });
+      this.gNodes.addEventListener('pointerout', (ev) => {
+        if (within(ev, '.node') && !this.pinned) this.hideTip();
+      });
+      this.gNodes.addEventListener('click', (ev) => {
+        const g = ev.target.closest('.node');
+        if (!g) return;
+        ev.stopPropagation();
+        this.showTip(g.__sha, true);
+      });
+
+      const head = (ev) => this.heads.get(ev.target.closest('.head')?.__name);
+      this.gHeads.addEventListener('click', (ev) => {
+        const it = head(ev);
+        if (!it) return;
+        ev.stopPropagation();
+        this.showTip(it.data.sha, true, it.data.name);
+      });
+      this.gHeads.addEventListener('keydown', (ev) => {
+        const it = head(ev);
+        if (!it || (ev.key !== 'Enter' && ev.key !== ' ')) return;
+        ev.preventDefault();
+        this.showTip(it.data.sha, true, it.data.name);
+      });
+      this.gHeads.addEventListener('pointerover', (ev) => {
+        const g = within(ev, '.head');
+        if (g) this.highlight(this.heads.get(g.__name)?.data.chain || null);
+      });
+      this.gHeads.addEventListener('pointerout', (ev) => {
+        if (within(ev, '.head')) this.highlight(null);
+      });
+
+      const row = (ev) => this.legend.get(ev.target.closest('.legend-item')?.__id);
+      this.gLegend.addEventListener('pointerover', (ev) => {
+        const g = within(ev, '.legend-item');
+        const chain = g && this.legend.get(g.__id)?.data.chain;
+        if (chain) this.highlight(chain);
+      });
+      this.gLegend.addEventListener('pointerout', (ev) => {
+        if (within(ev, '.legend-item')) this.highlight(null);
+      });
+      this.gLegend.addEventListener('click', (ev) => {
+        const it = row(ev);
+        if (!it) return;
+        ev.stopPropagation();
+        if (!it.data.ghost) this.focusBranch(it.data.name);
+      });
     }
 
     /* ---------- geometría ---------- */
@@ -239,48 +304,87 @@
       this.requestDraw();
     }
 
-    cur(it, now) {
-      if (it.t0 <= 0) return { x: it.to.x, row: it.to.row, moving: false };
-      const p = clamp((now - it.t0) / DUR, 0, 1);
-      if (p >= 1) {
+    /** Posición actual de un elemento animado (en it.cx, it.cr); devuelve si sigue moviéndose. */
+    step(it, now) {
+      if (it.t0 > 0) {
+        const p = clamp((now - it.t0) / DUR, 0, 1);
+        if (p < 1) {
+          const e = ease(p);
+          it.cx = it.from.x + (it.to.x - it.from.x) * e;
+          it.cr = it.from.row + (it.to.row - it.from.row) * e;
+          return true;
+        }
         it.t0 = 0;
-        return { x: it.to.x, row: it.to.row, moving: false };
       }
-      const e = ease(p);
-      return { x: it.from.x + (it.to.x - it.from.x) * e, row: it.from.row + (it.to.row - it.from.row) * e, moving: true };
+      it.cx = it.to.x;
+      it.cr = it.to.row;
+      return false;
     }
 
     retarget(it, x, row, now, animate) {
-      const c = this.cur(it, now);
-      if (Math.abs(c.x - x) < 1e-6 && Math.abs(c.row - row) < 1e-6) return false;
-      it.from = { x: c.x, row: c.row };
+      this.step(it, now);
+      if (Math.abs(it.cx - x) < 1e-6 && Math.abs(it.cr - row) < 1e-6) return false;
+      it.from = { x: it.cx, row: it.cr };
       it.to = { x, row };
       it.t0 = animate ? now : 0;
       return true;
     }
 
     exit(el) {
+      if (!el) return;
       el.classList.add('exit');
       el.style.pointerEvents = 'none';
       setTimeout(() => el.remove(), 450);
+    }
+
+    /** Clase temporal (`enter`, `moved`) que dura `ms` desde `since`; si el elemento aún no existe, se aplica al crearlo. */
+    mark(it, cls, ms, since = performance.now()) {
+      (it.marks ||= {})[cls] = since + ms;
+      if (it.el) this.applyMark(it, cls, true);
+    }
+
+    applyMark(it, cls, restart) {
+      const el = it.el;
+      const left = it.marks[cls] - performance.now();
+      clearTimeout(el['__t' + cls]);
+      if (left <= 0) {
+        delete it.marks[cls];
+        el.classList.remove(cls);
+        return;
+      }
+      if (restart) {
+        el.classList.remove(cls);
+        void el.getBoundingClientRect(); // vuelve a empezar la animación
+      }
+      el.classList.add(cls);
+      el['__t' + cls] = setTimeout(() => el.classList.remove(cls), left);
+    }
+
+    /** Al crear un elemento: sus clases temporales pendientes y el resaltado de su rama. */
+    dress(it, chain) {
+      for (const cls in it.marks || {}) this.applyMark(it, cls, false);
+      if (this.hlChain && chain === this.hlChain) it.el.classList.add('hl');
     }
 
     /* ---------- actualización de datos ---------- */
 
     /**
      * @param L     resultado de Layout.compute
-     * @param ctx   { initial, prs: Map rama->PR, repoUrl }
+     * @param ctx   { initial, calm, prs: Map rama->PR, pins, canPin }
      */
     update(L, ctx = {}) {
       const now = performance.now();
-      const animate = !ctx.initial && !reduceMotion();
-      const fx = !ctx.initial && !reduceMotion();
+      const still = ctx.initial || ctx.calm || reduceMotion(); // sin animación: carga inicial o ramas que esperaban
+      const animate = !still;
+      const fx = !still;
       this.layout = L;
       this.ctx = ctx;
       this.maxX = L.maxX;
       this.rowCount = L.rows.length;
       this.fitLanes(animate);
       this.ghostNames = new Map(L.ghostLabels.map((g) => [g.id, g.name]));
+      const byChain = new Map();
+      const index = (it, chain) => (byChain.get(chain) || byChain.set(chain, []).get(chain)).push(it);
 
       /* nodos */
       const seen = new Set();
@@ -288,17 +392,17 @@
         seen.add(n.sha);
         let it = this.nodes.get(n.sha);
         if (!it) {
-          it = { el: this.makeNode(n), from: { x: n.x, row: n.row }, to: { x: n.x, row: n.row }, t0: 0 };
+          it = { el: null, from: { x: n.x, row: n.row }, to: { x: n.x, row: n.row }, t0: 0, cx: n.x, cr: n.row };
           this.nodes.set(n.sha, it);
           if (fx) {
-            it.el.classList.add('enter');
-            setTimeout(() => it.el.classList.remove('enter'), 900);
-            this.ripple(it);
+            it.ripple = now;
+            this.mark(it, 'enter', 900, now);
           }
         } else this.retarget(it, n.x, n.row, now, animate);
         it.data = n;
-        it.el.setAttribute('class', `node ${n.color}${n.merge ? ' merge' : ''}${n.heads.length ? ' is-head' : ''}${it.el.classList.contains('enter') ? ' enter' : ''}`);
-        it.el.dataset.chain = n.chain;
+        it.cls = `node ${n.color}${n.merge ? ' merge' : ''}${n.heads.length ? ' is-head' : ''}`;
+        if (it.el) this.paintNode(it);
+        index(it, n.chain);
       }
       for (const [id, it] of this.nodes) if (!seen.has(id)) (this.exit(it.el), this.nodes.delete(id));
 
@@ -308,16 +412,18 @@
         seenE.add(e.id);
         let it = this.edges.get(e.id);
         if (!it) {
-          it = { el: mk('path', e.kind === 'stub' ? null : { pathLength: 1 }, this.gEdges) };
+          it = { el: null };
           this.edges.set(e.id, it);
-          if (fx && e.kind !== 'stub') {
-            it.el.classList.add('enter');
-            setTimeout(() => it.el.classList.remove('enter'), 900);
-          }
+          if (fx && e.kind !== 'stub') this.mark(it, 'enter', 900, now);
+        } else if (it.el && it.data.kind !== e.kind && (it.data.kind === 'stub') !== (e.kind === 'stub')) {
+          it.el.remove(); // de recta a línea punteada (o al revés) cambia el elemento: se rehace al dibujar
+          it.el = null;
+          it.vis = false;
         }
         it.data = e;
-        it.el.setAttribute('class', `edge ${e.kind} ${e.color}${it.el.classList.contains('enter') ? ' enter' : ''}`);
-        it.el.dataset.chain = e.chain;
+        it.cls = `edge ${e.kind} ${e.color}`;
+        if (it.el) this.paintEdge(it);
+        index(it, e.chain);
       }
       for (const [id, it] of this.edges) if (!seenE.has(id)) (this.exit(it.el), this.edges.delete(id));
 
@@ -326,40 +432,28 @@
       for (const h of L.heads) {
         seenH.add(h.name);
         let it = this.heads.get(h.name);
-        const isNew = !it;
         if (!it) {
-          const el = mk('g', { class: 'head', tabindex: 0, role: 'button' }, this.gHeads);
-          it = { el, from: { x: h.x, row: h.row }, to: { x: h.x, row: h.row }, t0: 0 };
-          el.addEventListener('click', (ev) => {
-            ev.stopPropagation();
-            this.showTip(it.data.sha, true, it.data.name);
-          });
-          el.addEventListener('keydown', (ev) => {
-            if (ev.key === 'Enter' || ev.key === ' ') {
-              ev.preventDefault();
-              this.showTip(it.data.sha, true, it.data.name);
-            }
-          });
-          el.addEventListener('pointerenter', () => this.highlight(it.data.chain));
-          el.addEventListener('pointerleave', () => this.highlight(null));
+          it = { el: null, from: { x: h.x, row: h.row }, to: { x: h.x, row: h.row }, t0: 0, cx: h.x, cr: h.row };
           this.heads.set(h.name, it);
-          if (fx) el.classList.add('enter');
+          if (fx) {
+            this.mark(it, 'enter', 600, now);
+            this.mark(it, 'moved', 2600, now);
+          }
         } else {
           const moved = this.retarget(it, h.x, h.row, now, animate);
-          if (moved && fx && it.data.sha !== h.sha) this.flash(it.el, 'moved', 2600);
+          if (moved && fx && it.data.sha !== h.sha) this.mark(it, 'moved', 2600, now);
         }
         it.data = h;
-        this.buildHead(it, h, ctx);
-        if (isNew && fx) this.flash(it.el, 'moved', 2600);
+        if (it.el) this.buildHead(it, h, ctx);
+        index(it, h.chain);
 
         let p = this.pointers.get(h.name);
         if (!h.own) {
-          if (!p) {
-            p = { el: mk('path', { class: 'pointer' }, this.gPointers) };
-            this.pointers.set(h.name, p);
-          }
-          p.el.setAttribute('class', `pointer ${h.color}`);
-          p.el.dataset.chain = h.chain;
+          if (!p) this.pointers.set(h.name, (p = { el: null }));
+          p.cls = `pointer ${h.color}`;
+          p.chain = h.chain;
+          if (p.el) p.el.setAttribute('class', p.cls);
+          index(p, h.chain);
         } else if (p) {
           this.exit(p.el);
           this.pointers.delete(h.name);
@@ -379,25 +473,18 @@
         seenL.add(r.id);
         let it = this.legend.get(r.id);
         if (!it) {
-          const el = mk('g', { class: 'legend-item' }, this.gLegend);
-          it = { el, from: { x: 0, row: r.row }, to: { x: 0, row: r.row }, t0: 0 };
-          el.addEventListener('pointerenter', () => it.data.chain && this.highlight(it.data.chain));
-          el.addEventListener('pointerleave', () => this.highlight(null));
-          el.addEventListener('click', (ev) => {
-            ev.stopPropagation();
-            if (!it.data.ghost) this.focusBranch(it.data.name);
-          });
+          it = { el: null, from: { x: 0, row: r.row }, to: { x: 0, row: r.row }, t0: 0, cx: 0, cr: r.row };
           this.legend.set(r.id, it);
         } else this.retarget(it, 0, r.row, now, animate);
         it.data = r;
-        this.buildLegend(it, r);
+        if (it.el) this.buildLegend(it, r);
+        if (r.chain) index(it, r.chain);
       }
       for (const [id, it] of this.legend) if (!seenL.has(id)) (this.exit(it.el), this.legend.delete(id));
 
-      /* bandas de fondo por fila */
-      while (this.bands.length < this.rowCount) this.bands.push(mk('rect', { class: 'band' }, this.gBands));
-      while (this.bands.length > this.rowCount) this.bands.pop().remove();
-      this.bands.forEach((b, i) => b.setAttribute('class', i % 2 ? 'band odd' : 'band'));
+      if (this.hlChain) for (const it of this.byChain.get(this.hlChain) || []) it.el?.classList.remove('hl');
+      this.byChain = byChain;
+      if (this.hlChain) this.highlight(this.hlChain, true);
 
       /* días */
       const seenD = new Set();
@@ -409,7 +496,7 @@
           this.days.set(d.id, it);
         }
         it.data = d;
-        it.label.textContent = this.dayText(d.time);
+        this.dayLabel(it);
       }
       for (const [id, it] of this.days) if (!seenD.has(id)) (it.line.remove(), it.label.remove(), this.days.delete(id));
 
@@ -417,7 +504,7 @@
 
       if (ctx.initial) {
         this.sel.call(this.zoom.transform, this.followTarget());
-      } else if (this.following) this.follow(!reduceMotion());
+      } else if (this.following) this.follow(animate);
       else this.sel.call(this.zoom.transform, this.constrain(this.t));
       this.requestDraw();
     }
@@ -426,46 +513,77 @@
       return i18n.dayLabel(ms);
     }
 
-    makeNode(n) {
-      const g = mk('g', { class: 'node' }, this.gNodes);
+    dayLabel(it) {
+      const text = this.dayText(it.data.time);
+      if (it.text === text) return;
+      it.text = it.label.textContent = text;
+      it.w = measure(text, SMALL_FONT); // se mide una vez, no en cada cuadro
+    }
+
+    /* ---------- elementos (se crean al entrar en pantalla) ---------- */
+
+    makeNode(it) {
+      const g = mk('g', null, this.gNodes);
       mk('circle', { class: 'halo', r: 10 }, g);
       mk('circle', { class: 'dot', r: 4.5 }, g);
       mk('circle', { class: 'hit', r: 12 }, g);
-      g.addEventListener('pointerenter', () => {
-        if (!this.pinned) this.showTip(g.__sha, false);
-      });
-      g.addEventListener('pointerleave', () => {
-        if (!this.pinned) this.hideTip();
-      });
-      g.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        this.showTip(g.__sha, true);
-      });
-      g.__sha = n.sha;
-      return g;
+      g.__sha = it.data.sha;
+      it.el = g;
+      this.paintNode(it);
+      this.dress(it, it.data.chain);
+      if (it.ripple && performance.now() - it.ripple < 600) this.ripple(it);
+      if (it.focus && performance.now() - it.focus < 1200) this.ripple(it, true);
+      it.ripple = it.focus = 0;
     }
 
-    ripple(it) {
-      const c = mk('circle', { class: 'ripple', r: 5 }, it.el);
+    paintNode(it) {
+      const cls = it.cls + (it.el.classList.contains('enter') ? ' enter' : '') + (it.el.classList.contains('hl') ? ' hl' : '');
+      if (it.el.getAttribute('class') !== cls) it.el.setAttribute('class', cls);
+    }
+
+    makeEdge(it) {
+      it.el = mk('path', it.data.kind === 'stub' ? null : { pathLength: 1 }, this.gEdges);
+      this.paintEdge(it);
+      this.dress(it, it.data.chain);
+    }
+
+    paintEdge(it) {
+      const cls = it.cls + (it.el.classList.contains('enter') ? ' enter' : '') + (it.el.classList.contains('hl') ? ' hl' : '');
+      if (it.el.getAttribute('class') !== cls) it.el.setAttribute('class', cls);
+    }
+
+    makeHead(it) {
+      const el = mk('g', { class: 'head', tabindex: 0, role: 'button' }, this.gHeads);
+      el.__name = it.data.name;
+      it.el = el;
+      this.buildHead(it, it.data, this.ctx || {});
+      this.dress(it, it.data.chain);
+    }
+
+    makeLegend(it) {
+      it.el = mk('g', { class: 'legend-item' }, this.gLegend);
+      it.el.__id = it.data.id;
+      this.buildLegend(it, it.data);
+      this.dress(it, it.data.chain);
+    }
+
+    ripple(it, focus) {
+      const c = mk('circle', { class: focus ? 'ripple focus' : 'ripple', r: focus ? 6 : 5 }, it.el);
       setTimeout(() => c.remove(), 1700);
     }
 
-    flash(el, cls, ms) {
-      el.classList.remove(cls);
-      void el.getBBox?.();
-      el.classList.add(cls);
-      clearTimeout(el['__t' + cls]);
-      el['__t' + cls] = setTimeout(() => el.classList.remove(cls), ms);
-    }
-
+    /** Etiqueta de rama: se rehace solo si cambió lo que muestra (en cada sondeo llegan las mismas ramas). */
     buildHead(it, h, ctx) {
       const g = it.el;
-      const keep = g.classList.contains('moved') ? ' moved' : '';
-      const enter = g.classList.contains('enter') ? ' enter' : '';
-      g.setAttribute('class', `head ${h.color}${h.isDefault ? ' default' : ''}${h.own ? '' : ' pointer-head'}${keep}${enter}`);
-      g.dataset.chain = h.chain;
-      g.textContent = '';
       const pr = ctx.prs?.get(h.name);
+      const pinned = !!ctx.pins?.has(h.name);
+      const hl = g.classList.contains('hl') ? ' hl' : '';
+      const keep = ['moved', 'enter'].filter((c) => g.classList.contains(c)).map((c) => ' ' + c).join('');
+      g.setAttribute('class', `head ${h.color}${h.isDefault ? ' default' : ''}${h.own ? '' : ' pointer-head'}${keep}${hl}`);
+      const key = `${h.name}\n${h.isDefault}\n${pinned}\n${pr ? `${pr.number}:${pr.draft}:${pr.base}` : ''}\n${i18n.locale}`;
+      if (it.key === key) return;
+      it.key = key;
+      g.textContent = '';
       const bg = mk('rect', { class: 'h-bg', x: 0, y: -11, height: 22, rx: 11 }, g);
       mk('circle', { class: 'h-dot', cx: 11, cy: 0, r: 3.5 }, g);
       let x = 20;
@@ -474,7 +592,7 @@
       t.textContent = name;
       x += measure(name, LABEL_FONT) + 8;
       const aria = [tr(h.isDefault ? 'branch.ariaDefault' : 'branch.aria', { name: h.name })];
-      if (ctx.pins?.has(h.name)) {
+      if (pinned) {
         const pg = mk('g', { class: 'h-pin', transform: `translate(${x + 4},0)` }, g);
         mk('path', { d: 'M0,-4L4,0L0,4L-4,0Z' }, pg);
         mk('title', null, pg).textContent = tr('branch.pinned');
@@ -495,7 +613,11 @@
 
     buildLegend(it, r) {
       const g = it.el;
-      g.setAttribute('class', `legend-item ${r.color}${r.ghost ? ' ghost-row' : ''}`);
+      const hl = g.classList.contains('hl') ? ' hl' : '';
+      g.setAttribute('class', `legend-item ${r.color}${r.ghost ? ' ghost-row' : ''}${hl}`);
+      const key = `${r.name}\n${r.ghost}\n${this.legendW}`;
+      if (it.key === key) return;
+      it.key = key;
       g.textContent = '';
       mk('rect', { class: 'l-bg', x: 0, y: -10, height: 20, rx: 10, width: this.legendW }, g);
       mk('circle', { class: 'l-dot', cx: 10, cy: 0, r: 3.5 }, g);
@@ -509,14 +631,22 @@
       this.svg.setAttribute('aria-label', tr('graph.aria2d'));
       this.tip.setAttribute('aria-label', tr('tip.aria'));
       this.unpin();
-      for (const d of this.days.values()) d.label.textContent = this.dayText(d.data.time);
+      for (const d of this.days.values()) this.dayLabel(d);
       this.relabel();
     }
 
+    /** Vuelve a medir y escribir los rótulos (fuentes recién cargadas, otro ancho u otro idioma). */
     relabel() {
       if (!this.layout) return;
-      for (const it of this.heads.values()) this.buildHead(it, it.data, this.ctx || {});
-      for (const it of this.legend.values()) this.buildLegend(it, it.data);
+      for (const it of this.heads.values()) {
+        it.key = null;
+        if (it.el) this.buildHead(it, it.data, this.ctx || {});
+      }
+      for (const it of this.legend.values()) {
+        it.key = null;
+        if (it.el) this.buildLegend(it, it.data);
+      }
+      for (const d of this.days.values()) (d.text = null), this.dayLabel(d);
       this.requestDraw();
     }
 
@@ -530,6 +660,18 @@
       });
     }
 
+    /** Muestra u oculta un elemento; lo crea la primera vez que hace falta. */
+    show(it, vis, make) {
+      if (vis && !it.el) {
+        make.call(this, it);
+        it.vis = true;
+        return;
+      }
+      if (it.vis === vis || !it.el) return;
+      it.vis = vis;
+      it.el.style.display = vis ? '' : 'none';
+    }
+
     draw(now) {
       let active = false;
       const t = this.t;
@@ -541,18 +683,12 @@
 
       // solo se tocan en el DOM los elementos que caen dentro (o cerca) de la vista
       const M = 40;
-      const show = (it, vis) => {
-        if (it.vis === vis) return;
-        it.vis = vis;
-        it.el.style.display = vis ? '' : 'none';
-      };
       for (const it of this.nodes.values()) {
-        const c = this.cur(it, now);
-        if (c.moving) active = true;
-        it.px = X(c.x);
-        it.py = Y(c.row);
+        if (this.step(it, now)) active = true;
+        it.px = X(it.cx);
+        it.py = Y(it.cr);
         const vis = it.px > -M && it.px < this.W + M && it.py > -M && it.py < this.H + M;
-        show(it, vis);
+        this.show(it, vis, this.makeNode);
         if (vis) it.el.setAttribute('transform', `translate(${r1(it.px)},${r1(it.py)})`);
       }
 
@@ -561,7 +697,7 @@
         const b = this.nodes.get(e.to);
         if (!b) continue;
         if (e.kind === 'stub') {
-          show(it, b.vis);
+          this.show(it, b.vis, this.makeEdge);
           if (b.vis) it.el.setAttribute('d', `M${r1(b.px)},${r1(b.py)}h${-r1(Math.min(S * 0.85, 24))}`);
           continue;
         }
@@ -569,55 +705,48 @@
         if (!a) continue;
         const vis =
           Math.max(a.px, b.px) > -M && Math.min(a.px, b.px) < this.W + M && Math.max(a.py, b.py) > -M && Math.min(a.py, b.py) < this.H + M;
-        show(it, vis);
+        this.show(it, vis, this.makeEdge);
         if (vis) it.el.setAttribute('d', edgePath(e.kind, a.px, a.py, b.px, b.py, S));
       }
 
       for (const [name, it] of this.heads) {
-        const c = this.cur(it, now);
-        if (c.moving) active = true;
-        const hx = X(c.x);
-        const hy = Y(c.row);
+        if (this.step(it, now)) active = true;
+        const hx = X(it.cx);
+        const hy = Y(it.cr);
         let lx = hx + 11;
-        if (!it.data.own) {
-          const node = this.nodes.get(it.data.sha);
-          lx = hx + Math.max(16, S * 0.8);
-          const p = this.pointers.get(name);
-          if (node && p) {
-            const x1 = node.px;
-            const y1 = node.py;
-            p.el.setAttribute(
-              'd',
-              Math.abs(y1 - hy) < 0.5
-                ? `M${r1(x1)},${r1(y1)}L${r1(lx)},${r1(hy)}`
-                : `M${r1(x1)},${r1(y1)}C${r1(x1 + (lx - x1) * 0.7)},${r1(y1)} ${r1(x1 + (lx - x1) * 0.2)},${r1(hy)} ${r1(lx)},${r1(hy)}`,
-            );
-          }
-        }
+        const p = this.pointers.get(name);
+        if (!it.data.own) lx = hx + Math.max(16, S * 0.8);
         it.lx = lx;
         it.ly = hy;
         // bajo la leyenda no se dibuja: la leyenda ya nombra la fila y lleva a la rama
         const vis = lx > this.padLeft - 4 && lx < this.W + M && hy > -M && hy < this.H + M;
-        show(it, vis);
-        const p = this.pointers.get(name);
-        if (p) show(p, vis);
+        this.show(it, vis, this.makeHead);
         if (vis) it.el.setAttribute('transform', `translate(${r1(lx)},${r1(hy)})`);
+        if (!p) continue;
+        const node = this.nodes.get(it.data.sha);
+        this.show(p, vis && !!node, this.makePointer);
+        if (!vis || !node) continue;
+        const x1 = node.px;
+        const y1 = node.py;
+        p.el.setAttribute(
+          'd',
+          Math.abs(y1 - hy) < 0.5
+            ? `M${r1(x1)},${r1(y1)}L${r1(lx)},${r1(hy)}`
+            : `M${r1(x1)},${r1(y1)}C${r1(x1 + (lx - x1) * 0.7)},${r1(y1)} ${r1(x1 + (lx - x1) * 0.2)},${r1(hy)} ${r1(lx)},${r1(hy)}`,
+        );
       }
 
       this.legendBg.setAttribute('width', this.padLeft - 8);
       this.legendBg.setAttribute('height', this.H);
       for (const it of this.legend.values()) {
-        const c = this.cur(it, now);
-        if (c.moving) active = true;
-        it.el.setAttribute('transform', `translate(8,${r1(Y(c.row))})`);
+        if (this.step(it, now)) active = true;
+        const y = Y(it.cr);
+        const vis = y > -M && y < this.H + M;
+        this.show(it, vis, this.makeLegend);
+        if (vis) it.el.setAttribute('transform', `translate(8,${r1(y)})`);
       }
 
-      this.bands.forEach((b, i) => {
-        b.setAttribute('x', 0);
-        b.setAttribute('width', this.W);
-        b.setAttribute('y', r1(t.y + TOP + i * lane));
-        b.setAttribute('height', r1(lane));
-      });
+      this.drawBands(t.y, lane);
 
       this.axisBg.setAttribute('width', this.W);
       // etiquetas de día: gana la más reciente; el día que ya empezó fuera de vista queda fijo a la izquierda
@@ -631,7 +760,6 @@
         d.line.setAttribute('y1', TOP - 6);
         d.line.setAttribute('y2', this.H);
         d.line.style.display = x > this.padLeft - 6 ? '' : 'none';
-        const w = measure(d.label.textContent, SMALL_FONT);
         let lx = x + 6;
         if (x <= this.padLeft) {
           lx = this.padLeft + 6;
@@ -641,7 +769,7 @@
           }
           stuck = true;
         }
-        const ok = lx + w < minLeft;
+        const ok = lx + d.w < minLeft;
         d.label.setAttribute('x', r1(lx));
         d.label.style.display = ok ? '' : 'none';
         if (ok) minLeft = lx - 12;
@@ -649,6 +777,27 @@
 
       if (this.tipSha && !this.tip.hidden) this.placeTip();
       return active;
+    }
+
+    makePointer(p) {
+      p.el = mk('path', { class: p.cls }, this.gPointers);
+      this.dress(p, p.chain);
+    }
+
+    /** Bandas de fondo: solo las de las filas a la vista (con miles de ramas, unas pocas decenas). */
+    drawBands(ty, lane) {
+      const first = Math.max(0, Math.floor((-ty - TOP) / lane));
+      const last = Math.min(this.rowCount - 1, Math.ceil((this.H - ty - TOP) / lane));
+      const n = Math.max(0, last - first + 1);
+      while (this.bands.length < n) this.bands.push(mk('rect', { class: 'band', x: 0 }, this.gBands));
+      while (this.bands.length > n) this.bands.pop().remove();
+      this.bands.forEach((b, k) => {
+        const i = first + k;
+        b.setAttribute('class', i % 2 ? 'band odd' : 'band');
+        b.setAttribute('width', this.W);
+        b.setAttribute('y', r1(ty + TOP + i * lane));
+        b.setAttribute('height', r1(lane));
+      });
     }
 
     /* ---------- seguimiento en vivo, zoom y foco ---------- */
@@ -693,8 +842,9 @@
       const target = this.constrain(d3.zoomIdentity.translate(this.W * 0.45 - it.to.x * S, y).scale(this.t.k));
       this.sel.transition().duration(reduceMotion() ? 0 : 600).ease(d3.easeCubicInOut).call(this.zoom.transform, target);
       if (!reduceMotion()) {
-        const c = mk('circle', { class: 'ripple focus', r: 6 }, it.el);
-        setTimeout(() => c.remove(), 1700);
+        // el commit puede estar lejos: si aún no tiene elemento, la onda sale cuando llegue a la vista
+        if (it.el) this.ripple(it, true);
+        else it.focus = performance.now();
       }
       return true;
     }
@@ -703,7 +853,7 @@
       const h = this.heads.get(name);
       if (!h) return false;
       this.focusSha(h.data.sha);
-      this.flash(h.el, 'moved', 1800);
+      this.mark(h, 'moved', 1800);
       return true;
     }
 
@@ -711,10 +861,16 @@
       return this.heads.has(name);
     }
 
-    highlight(chain) {
+    /** Resalta una cadena (rama): solo se tocan sus elementos y los del resaltado anterior. */
+    highlight(chain, force) {
+      if (chain === this.hlChain && !force) return;
+      const set = (c, on) => {
+        for (const it of this.byChain.get(c) || []) it.el?.classList.toggle('hl', on);
+      };
+      if (this.hlChain && this.hlChain !== chain) set(this.hlChain, false);
+      this.hlChain = chain;
       this.svg.classList.toggle('dimmed', !!chain);
-      const all = [this.nodes, this.edges, this.heads, this.pointers, this.legend];
-      for (const m of all) for (const it of m.values()) it.el.classList.toggle('hl', !!chain && it.el.dataset.chain === chain);
+      if (chain) set(chain, true);
     }
 
     /* ---------- tooltip ---------- */
@@ -754,12 +910,13 @@
     }
 
     clear() {
-      for (const m of [this.nodes, this.edges, this.heads, this.pointers, this.legend])
-        for (const it of m.values()) it.el.remove();
+      for (const m of [this.nodes, this.edges, this.heads, this.pointers, this.legend]) for (const it of m.values()) it.el?.remove();
       for (const d of this.days.values()) (d.line.remove(), d.label.remove());
-      for (const m of [this.nodes, this.edges, this.heads, this.pointers, this.legend, this.days]) m.clear();
+      for (const m of [this.nodes, this.edges, this.heads, this.pointers, this.legend, this.days, this.byChain]) m.clear();
       this.bands.forEach((b) => b.remove());
       this.bands = [];
+      this.hlChain = null;
+      this.svg.classList.remove('dimmed');
       this.layout = null;
       this.maxX = 0;
       this.rowCount = 0;

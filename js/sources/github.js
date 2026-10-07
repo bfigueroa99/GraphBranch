@@ -76,7 +76,10 @@
       this.running = false;
       this.paused = false;
       this.busy = false;
-      this.reseed = false;
+      // pedidos de volver a elegir las ramas visibles (filtro o fijadas nuevos) y hasta cuál se atendió:
+      // así un cambio que llega a mitad de un ciclo, o un ciclo que falla, no se pierden
+      this.reseed = 0;
+      this.reseeded = 0;
       this.timer = null;
     }
 
@@ -116,13 +119,13 @@
 
     setFilter(filter) {
       this.filter = filter.trim();
-      this.reseed = true;
+      this.reseed++;
       if (this.data.loaded) this.refreshNow();
     }
 
     setPins(pins) {
       this.pins = new Set(pins);
-      this.reseed = true;
+      this.reseed++;
       if (this.data.loaded) this.refreshNow();
     }
 
@@ -141,7 +144,7 @@
         this.lastOk = Date.now();
         if (!this.running) return;
         this.emit('update', { activities, initial });
-        delay = this.again ? 0 : this.nextDelay();
+        delay = this.again || this.reseed !== this.reseeded ? 0 : this.nextDelay();
         this.emitStatus(this.throttled ? 'limited' : 'live', null, delay);
       } catch (err) {
         if (!this.running) return;
@@ -304,7 +307,8 @@
       this.gqlCost = 0;
       this.seenNow = []; // eventos leídos en este ciclo: se dan por vistos solo si el ciclo termina bien
       const acts = [];
-      const quiet = initial || this.reseed;
+      const reseed = this.reseed;
+      const quiet = initial || reseed !== this.reseeded;
       if (initial) await this.loadRepo(acts);
 
       if (this.mode === 'graphql') {
@@ -328,7 +332,7 @@
       for (const id of this.seenNow) this.seenEvents.add(id);
       if (this.seenEvents.size > 5000) this.seenEvents = new Set([...this.seenEvents].slice(-2000));
       this.data.mode = this.mode;
-      this.reseed = false;
+      this.reseeded = reseed;
       this.gc();
       return acts;
     }

@@ -22,62 +22,59 @@ posteriores pueden haberse movido.
 
 ### Alta
 
-1. **Un filtro o una rama fijada que cambian durante un ciclo se pierden** (modos lista y eventos,
-   *reproducido*). El ciclo en curso apaga `reseed` al terminar (`github.js:326`) y el siguiente recibe
-   304. Arreglo: copiar `reseed` a una variable al empezar `poll()` y apagarlo ahí; restaurarlo si falla.
-2. **Al cambiar de repo quedan los datos del anterior.** `connect()` no limpia `lastRender` ni las
+1. **Al cambiar de repo quedan los datos del anterior.** `connect()` no limpia `lastRender` ni las
    cifras (`app.js:175`): con un repo que da 404 se ven las cifras del anterior y Replay reproduce su
    grafo. Arreglo: `lastRender = null` y cifras en "–".
 
 ### Media
 
-3. **Reloj adelantado → sondeo cada 3 s** (*reproducido*). Si `rate.reset` ya pasó según el reloj
+2. **Reloj adelantado → sondeo cada 3 s** (*reproducido*). Si `rate.reset` ya pasó según el reloj
    local, `nextDelay` devuelve 3000 ms y la cuota sin token se agota (`github.js:171`). Arreglo:
    `Math.max(base, …)` o calcular el desfase con la cabecera `Date`.
-4. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
+3. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
    `update()` y `celebrate()` siguen encolando ráfagas (`graph3d.js:846`, `:1691`) y al volver salen
    todas juntas. Arreglo: `fx` también exige `this.active`; descartar efectos con más de 1 s de atraso.
-5. **El zumbido del modo vuelo sigue sonando en segundo plano** y sus osciladores nunca se detienen
+4. **El zumbido del modo vuelo sigue sonando en segundo plano** y sus osciladores nunca se detienen
    (`flight.js:290`, `sound.js:261`). Arreglo: silenciar en `visibilitychange` y `stop()` al llegar a 0.
-6. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
+5. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
    `--surface` (`styles.css:14`). Arreglo: `#636e6a` (5,1:1).
-7. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
+6. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
    (`role=status` dentro de un contenedor `aria-live`; `feed.js:232`, `:254`). Arreglo: pausar en
    `focusin`/`focusout` y dejar una sola región viva.
-8. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
+7. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
    una sola consulta a `pulls?state=all&sort=updated` (la clave `pulls-all` ya existe).
-9. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
+8. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
     caída permanente de GraphQL a REST, `:311`). Arreglo: degradar solo con 403/404/410.
 
-10. **El modo TV y el director de cámara (llegaron con #13) no tienen pruebas ni auditoría.** Sumar
+9. **El modo TV y el director de cámara (llegaron con #13) no tienen pruebas ni auditoría.** Sumar
     `?tv=1` al smoke test (carga, director activo, salida) y revisar `js/director.js` y el modo TV como
     se hizo con el resto.
 
 ### Baja
 
-11. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
+10. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
     recibe foco al abrirse desde el teclado.
-12. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
+11. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
     `:2121`): su animación termina en opacidad 0.
-13. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
+12. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
     rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-14. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-15. Trabajo por cuadro en 3D: `computeLineDistances()` en cada cuadro (`graph3d.js:1638`), lecturas de
+13. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+14. Trabajo por cuadro en 3D: `computeLineDistances()` en cada cuadro (`graph3d.js:1638`), lecturas de
     tamaño que fuerzan maquetación (`:2122`, `:1279`, `graph.js:736`), `Intl.DateTimeFormat` nuevo por
     cuadro (`replay.js:343`).
-16. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
+15. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
     `aria-pressed` y el texto, leyenda 2D sin acceso por teclado, el botón de pausa del Replay sin nombre
     accesible (`index.html:190`).
-17. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-18. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-19. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
-20. `stop()` no cancela la consulta en curso al cambiar de repo (usar `AbortController`).
-21. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
-22. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
+16. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+17. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+18. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
+19. `stop()` no cancela la consulta en curso al cambiar de repo (usar `AbortController`).
+20. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
+21. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
     blanco al arrancar.
-23. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
+22. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
     Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-24. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
+23. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
     (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
 
 ## Bitácora
@@ -110,3 +107,16 @@ posteriores pueden haberse movido.
   vez. Antes del arreglo marcaba 10 cambios; después, ninguno.
 - **Siguiente:** pendiente 1 (filtro o fijada que se pierden durante un ciclo), luego 2 (datos del repo
   anterior al cambiar de repo).
+
+### 2026-10-07 · Iteración 3
+
+- **Arreglo: un filtro o una rama fijada que cambian a mitad de un ciclo ya no se pierden.** El ciclo
+  en curso apagaba `reseed` al terminar aunque el cambio hubiera llegado durante él; el siguiente
+  recibía 304 por la lista de ramas y no volvía a elegirlas, así que el filtro no se aplicaba hasta que
+  alguna rama cambiara (modos lista y eventos; con la carga inicial, que hace más de diez consultas,
+  pasaba seguido). Ahora `reseed` cuenta pedidos y cada ciclo da por atendido solo el que vio al
+  empezar: un cambio a mitad de camino o un ciclo que falla dejan el pedido pendiente, y el siguiente
+  ciclo corre enseguida.
+- **Pruebas:** dos nuevas en `tools/github.test.mjs` (filtro y fijadas cambiados mientras el ciclo
+  espera la lista de ramas). Fallaban antes del arreglo y pasan después; smoke e i18n en verde.
+- **Siguiente:** pendiente 1 (datos del repo anterior al cambiar de repo), luego 2 (reloj adelantado).

@@ -47,6 +47,7 @@ function fakeGitHub() {
     events: [], // lo más reciente primero, como la API
     manyBranches: false, // la lista de ramas dice que hay más páginas (modo events)
     failOnce: null, // (ruta) => true: esa consulta falla por red una vez
+    onFetch: null, // (ruta) => …: corre justo antes de responder, para simular algo a mitad de un ciclo
     calls: [],
   };
   let n = 0;
@@ -99,6 +100,7 @@ function fakeGitHub() {
   gh.fetch = async (url, opts = {}) => {
     const path = url.replace('https://api.github.com', '');
     gh.calls.push(path);
+    gh.onFetch?.(path);
     if (gh.failOnce?.(path)) {
       gh.failOnce = null;
       throw new TypeError('Failed to fetch');
@@ -190,3 +192,35 @@ test('un ciclo normal no repite eventos ya mostrados', async () => {
   await src.cycle();
   assert.deepEqual(ids(updates[2]), []);
 });
+
+/* Un filtro o una rama fijada que cambian a mitad de un ciclo se aplican en el siguiente. */
+
+for (const [what, change] of [
+  ['filtro', (src) => src.setFilter('zet')],
+  ['fijadas', (src) => src.setPins(['zeta'])],
+]) {
+  test(`modo lista: cambiar ${what} durante un ciclo se aplica en el siguiente`, async () => {
+    const gh = fakeGitHub();
+    gh.commit('a1');
+    gh.commit('b1', 'a1');
+    gh.commit('c1', 'a1');
+    gh.branches.set('main', 'a1').set('feat-x', 'b1').set('zeta', 'c1');
+    const { src } = connect(gh);
+    src.maxBranches = 2; // se ven main y una más
+    await src.cycle();
+    assert.equal(src.mode, 'list');
+    const before = [...src.data.branches.keys()].sort();
+
+    gh.onFetch = (path) => {
+      if (!path.startsWith('/repos/o/r/branches')) return;
+      gh.onFetch = null;
+      change(src); // el usuario lo cambia mientras el ciclo espera la lista de ramas
+    };
+    await src.cycle();
+    await src.cycle();
+    const after = [...src.data.branches.keys()].sort();
+    assert.deepEqual(before, ['feat-x', 'main']);
+    if (what === 'filtro') assert.deepEqual(after, ['main', 'zeta']);
+    else assert.ok(after.includes('zeta'), `zeta fijada no aparece: ${after}`);
+  });
+}

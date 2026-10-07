@@ -31,7 +31,14 @@
    un marcador en pantalla con su nombre, qué clase de mundo son y a qué distancia están, visible desde
    cualquier punto del sistema; el rótulo de la galaxia se despliega en un panel con la lista de esos
    mundos (pasar el puntero por uno lo resalta; un clic lleva hasta él); y al entrar con doble clic o
-   desde la lista de ramas la cámara se acomoda en un mirador desde donde caben todas las órbitas. */
+   desde la lista de ramas la cámara se acomoda en un mirador desde donde caben todas las órbitas.
+
+   Y lo de la nave: el hiperimpulsor (J en vuelo, o "Saltar" en el detalle de una rama) carga unos
+   instantes y lanza la nave por un túnel de luz hasta la galaxia apuntada o la marcada como destino,
+   de donde sale con la llegada de siempre; en vuelo, la mira fija lo que apunta (un planeta o una
+   galaxia) con un recuadro que dice qué es y a qué distancia está; cerca de un planeta y a toda
+   velocidad el borde de la pantalla se enciende como al entrar en una atmósfera; y, con el sonido
+   activado, el espacio tiene su zumbido de fondo, en la nota de la galaxia en la que se está. */
 (function (GB) {
   'use strict';
   const { U, i18n } = GB;
@@ -64,6 +71,12 @@
   const SYS_OPEN_MS = 11000; // el panel del sistema se abre solo al llegar y se pliega pasado esto
   const VIEW_ELEV = 0.5; // el mirador del sistema: tanto por encima del plano de las órbitas (radianes)
   const GLYPHS = '▓▒░/\\|_-+<>=*#%01'; // lo que muestra el nombre antes de decodificarse
+  const CHARGE_MS = 1100; // el hiperimpulsor carga esto antes de saltar
+  const JUMP_MIN_MS = 1500; // el túnel dura entre esto…
+  const JUMP_MAX_MS = 3200; // …y esto, según la distancia
+  const AIM_RANGE = 2600; // hasta dónde fija la mira una galaxia
+  const LOCK_MS = 280; // lo que tarda la mira en cerrarse sobre un objetivo nuevo
+  const HEAT_SPEED = 1.1; // por encima de tantas veces el paso tranquilo junto a un planeta, su atmósfera arde
   const WORLD_FONT = '600 12px "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace'; // para medir los marcadores
   const WORLD_SUB_FONT = '500 10px "Instrument Sans", system-ui, sans-serif';
   const RETRY_MS = 60000;
@@ -554,6 +567,11 @@
       this.sysOpenAt = 0;
       this.sysCloseAt = 0;
       this.scanAt = 0;
+      this.hyper = null; // salto en curso: { G, t0, from, to, … }
+      this.aimed = null; // lo que apunta la mira en vuelo: { kind: 'planet' | 'galaxy', … }
+      this.aimAt = 0;
+      this.heat = 0; // entrada atmosférica: cuánto se enciende el borde de la pantalla
+      this.amb = { name: null, level: -1, at: 0 }; // el zumbido del espacio: la galaxia y cuánto suena
       this.version = 0;
       this.group = new THREE.Group();
       this.group.visible = false;
@@ -940,8 +958,38 @@
       arrive.className = 'gx-arrive';
       arrive.setAttribute('role', 'status');
       arrive.innerHTML = '<p class="gx-a-k"></p><p class="gx-a-name"></p><p class="gx-a-meta"></p><p class="gx-a-ex"></p>';
-      this.g.wrap.append(warp, arrive);
+      // la mira del vuelo fija lo que apunta: un recuadro de esquinas con su nombre y su distancia
+      const lock = document.createElement('div');
+      lock.className = 'gx-lock';
+      lock.setAttribute('aria-hidden', 'true');
+      lock.innerHTML = '<div class="gx-lock-box"></div><div class="gx-lock-label"><span class="gx-lock-name"></span><span class="gx-lock-sub"></span><span class="gx-lock-hint"><kbd>J</kbd> <span></span></span></div>';
+      lock.style.display = 'none';
+      // el hiperimpulsor: la carga (un rótulo con su barra) y el túnel de luz del salto
+      const charge = document.createElement('div');
+      charge.className = 'gx-charge';
+      charge.setAttribute('role', 'status');
+      charge.innerHTML = '<p class="gx-charge-k"></p><p class="gx-charge-name"></p><div class="gx-charge-bar" aria-hidden="true"><i></i></div>';
+      const tunnel = document.createElement('div');
+      tunnel.className = 'gx-tunnel';
+      tunnel.setAttribute('aria-hidden', 'true');
+      // entrada atmosférica: el borde de la pantalla se enciende al rozar un planeta a toda velocidad
+      const heat = document.createElement('div');
+      heat.className = 'gx-heat';
+      heat.setAttribute('aria-hidden', 'true');
+      this.g.wrap.append(warp, arrive, heat, tunnel, charge, lock);
       this.el = {
+        lock,
+        lockBox: lock.querySelector('.gx-lock-box'),
+        lockName: lock.querySelector('.gx-lock-name'),
+        lockSub: lock.querySelector('.gx-lock-sub'),
+        lockHint: lock.querySelector('.gx-lock-hint'),
+        lockHintText: lock.querySelector('.gx-lock-hint span'),
+        charge,
+        chargeK: charge.querySelector('.gx-charge-k'),
+        chargeName: charge.querySelector('.gx-charge-name'),
+        chargeBar: charge.querySelector('.gx-charge-bar i'),
+        tunnel,
+        heat,
         name: card.querySelector('.gx-name'),
         sub: card.querySelector('.gx-sub'),
         head,
@@ -953,6 +1001,7 @@
         aMeta: arrive.querySelector('.gx-a-meta'),
         aEx: arrive.querySelector('.gx-a-ex'),
       };
+      this.el.lockHintText.textContent = tr('galaxy.jump');
       this.fileLabels = []; // botones de archivo, se reusan
       this.dirLabels = [];
       this.worldLabels = []; // marcadores de los mundos principales
@@ -1004,8 +1053,12 @@
       this.sysPin = null;
       this.sysOpenAt = this.sysCloseAt = 0;
       this.el.arrive.classList.remove('show');
+      this.endHyper();
+      this.setAim(null, 0);
+      this.setHeat(0);
       if (!on) {
         this.dropSystem(true);
+        this.sleep();
         this.hideLabels();
         this.near = [];
         this.nearKey = '';
@@ -1292,6 +1345,13 @@
       }
       if (this.stepStreaks(dt, now)) changed = true;
       this.stepArrival(now);
+      if (this.hyper && this.stepHyper(now, dt)) changed = true;
+      // en vuelo, la mira fija lo que apunta; al rozar un planeta a toda velocidad, la atmósfera
+      const fly = !!g.flight?.on && !this.hyper;
+      if (fly) this.aim(now);
+      else if (this.aimed) this.setAim(null, now);
+      this.stepHeat(now, dt, fly);
+      this.stepAmbience(now);
       // el panel del sistema: se abre al llegar y se pliega solo, salvo que el usuario lo haya tocado o lo esté mirando
       if (this.sysOpenAt && now >= this.sysOpenAt) {
         this.sysOpenAt = 0;
@@ -1337,10 +1397,12 @@
       const level = f?.on && g.motion ? f.level || 0 : 0;
       // al llegar a una galaxia, un golpe de estelas hacia ella: la salida del salto
       const burst = this.warpAt ? clamp(1 - (now - this.warpAt) / 1300, 0, 1) : 0;
-      const amt = Math.max(clamp((level - 0.35) / 0.45, 0, 1), burst);
+      const h = this.hyper;
+      const tunnel = h?.inTunnel ? 1 : 0; // en el túnel del salto, estelas a tope
+      const amt = Math.max(clamp((level - 0.35) / 0.45, 0, 1), burst, tunnel);
       const u = this.streaks.material.uniforms;
       const was = u.uAmt.value;
-      u.uAmt.value = burst > 0 ? amt : u.uAmt.value + (amt - was) * (1 - Math.exp(-dt * 5));
+      u.uAmt.value = burst > 0 || tunnel ? amt : u.uAmt.value + (amt - was) * (1 - Math.exp(-dt * 5));
       if (u.uAmt.value < 0.003) u.uAmt.value = 0;
       this.streaks.visible = u.uAmt.value > 0;
       if (!this.streaks.visible) {
@@ -1349,7 +1411,10 @@
       }
       u.uCam.value.copy(g.camera.position);
       const v = f?.on ? f.vel.length() : 0;
-      if (burst > 0.02) {
+      if (tunnel) {
+        u.uDir.value.copy(h.dir);
+        u.uLen.value = 34;
+      } else if (burst > 0.02) {
         u.uDir.value.copy(this.warpDir);
         u.uLen.value = Math.max(Math.min(14, v * 0.1), 16 * burst * burst);
       } else {
@@ -1405,8 +1470,12 @@
       let best = null;
       let bestK = Infinity;
       for (const { G } of near) {
-        if (cam.distanceTo(G.c) >= this.enterDist(G)) continue;
-        const k = ref.distanceTo(G.c) / (G.R + 6) - (this.focus === G ? 0.15 : 0);
+        const dc = cam.distanceTo(G.c);
+        if (dc >= this.enterDist(G)) continue;
+        let k = ref.distanceTo(G.c) / (G.R + 6) - (this.focus === G ? 0.15 : 0);
+        // dentro del sistema en el que ya se está (entre sus planetas) no se cambia de galaxia aunque
+        // una vecina quede más cerca: se sale de un sistema por su borde, como en No Man's Sky
+        if (this.focus === G && this.sys?.name === G.name && dc < this.sys.outer + 4) k = -1;
         if (k < bestK) (best = G), (bestK = k);
       }
       if (g.ctx?.replay) best = null; // en el Replay se ve el pasado: los archivos son de ahora
@@ -1419,6 +1488,301 @@
     enterDist(G) {
       const outer = this.outerOf.get(G.name) || 0;
       return Math.max(G.R * 1.6 + 16, outer * 1.5 + 8) + (this.focus === G ? 6 : 0);
+    }
+
+    /* ---------- el hiperimpulsor ---------- */
+
+    /** A qué galaxia saltaría la nave: la que apunta la mira o, si no, la marcada como destino. */
+    jumpTarget() {
+      const a = this.aimed;
+      if (a?.kind === 'galaxy' && this.gals.has(a.name)) return this.gals.get(a.name);
+      const w = this.g.world?.waypoint;
+      const G = w ? this.gals.get(w) : null;
+      return G && G !== this.focus ? G : null;
+    }
+
+    /** J en vuelo (o el botón del celular, o Y en el mando): salta a lo que apunta la mira o al destino. */
+    jumpAim() {
+      if (!this.on || this.hyper) return;
+      const G = this.jumpTarget();
+      if (!G) return void this.g.flight?.say(tr('galaxy.noJump'));
+      this.jumpTo(G);
+    }
+
+    /** Salto hiperespacial hasta una galaxia: la nave carga unos instantes mirando hacia ella, cruza un
+        túnel de luz y sale al mirador de su sistema, con la llegada de siempre (destello, rótulo, escáner).
+        Con "reducir movimiento" es un corte. Funciona en vuelo y en órbita. */
+    jumpTo(G) {
+      const g = this.g;
+      if (!G || !this.on || this.hyper || G === this.focus) return;
+      const now = performance.now();
+      g.touch();
+      if (g.ride) g.endRide();
+      g.fly = null;
+      g.unpin();
+      g.setFollowing(false);
+      const cam = g.camera;
+      const from = cam.position.clone();
+      const dir = new THREE.Vector3();
+      const dist = this.vantage(G, dir);
+      const to = G.c.clone().addScaledVector(dir, dist);
+      const travel = to.clone().sub(from);
+      const len = travel.length();
+      if (len < 1e-3) travel.set(0, 0, -1);
+      else travel.multiplyScalar(1 / len);
+      const up = new THREE.Vector3(0, 1, 0).applyQuaternion(cam.quaternion); // la nave no da una vuelta de más
+      const m = new THREE.Matrix4();
+      const qT = new THREE.Quaternion().setFromRotationMatrix(m.lookAt(from, to, up)); // mirando por el túnel
+      const qL = new THREE.Quaternion().setFromRotationMatrix(m.lookAt(to, G.c, up)); // al llegar, al núcleo
+      const h = (this.hyper = { G, t0: now, from, to, dir: travel, len, q0: cam.quaternion.clone(), qT, qL, fov0: cam.fov, dur: clamp(900 + len * 4, JUMP_MIN_MS, JUMP_MAX_MS), inTunnel: false });
+      this.arrived.delete(G.name); // la llegada se anuncia aunque se haya estado hace poco
+      this.setAim(null, now);
+      g.controls.enabled = false;
+      if (!g.motion) return this.land(h);
+      const col = g.col(G.color);
+      this.streaks.material.uniforms.uColor.value.copy(col).lerp(g.white, 0.6);
+      const hex = g.colorHex(G.color);
+      const c = this.el.charge;
+      c.style.setProperty('--c', hex);
+      this.el.chargeK.textContent = tr('galaxy.charging');
+      this.el.chargeName.textContent = G.name;
+      this.el.chargeBar.style.transform = 'scaleX(0)';
+      c.classList.add('on');
+      this.el.tunnel.style.setProperty('--c', hex);
+      this.el.tunnel.style.setProperty('--dur', `${h.dur}ms`);
+      g.opts.onJump?.('charge', G.name);
+      g.needsRender = true;
+    }
+
+    /** Cuadro a cuadro del salto: carga, túnel y aterrizaje. Devuelve true (la cámara cambió). */
+    stepHyper(now, dt) {
+      const g = this.g;
+      const h = this.hyper;
+      const cam = g.camera;
+      const t = now - h.t0;
+      g.lastInteract = now; // el director no retoma la cámara en pleno salto
+      let fov = h.fov0;
+      if (t < CHARGE_MS) {
+        const p = t / CHARGE_MS;
+        cam.quaternion.slerpQuaternions(h.q0, h.qT, 1 - Math.pow(1 - p, 3));
+        fov = h.fov0 - 5 * p; // se tensa un poco antes del salto
+        this.el.chargeBar.style.transform = `scaleX(${p.toFixed(3)})`;
+      } else if (t < CHARGE_MS + h.dur) {
+        if (!h.inTunnel) {
+          h.inTunnel = true;
+          this.el.charge.classList.remove('on');
+          const tu = this.el.tunnel;
+          tu.classList.remove('on');
+          void tu.offsetWidth;
+          tu.classList.add('on');
+          g.opts.onJump?.('jump', h.G.name);
+        }
+        const p = (t - CHARGE_MS) / h.dur;
+        const e = 0.5 - 0.5 * Math.cos(Math.PI * p);
+        cam.position.lerpVectors(h.from, h.to, e);
+        if (p < 0.7) cam.quaternion.copy(h.qT);
+        else {
+          const q = (p - 0.7) / 0.3;
+          cam.quaternion.slerpQuaternions(h.qT, h.qL, q * q * (3 - 2 * q));
+        }
+        fov = h.fov0 + 24 * Math.sin(Math.PI * p);
+        // el cielo va tomando el color de la galaxia a la que se llega
+        this.tint.lerp(g.col(h.G.color), 1 - Math.exp(-dt * 3));
+        this.tintK = Math.max(this.tintK, 0.55 * p);
+      } else return this.land(h), true;
+      if (Math.abs(cam.fov - fov) > 0.01) {
+        cam.fov = fov;
+        cam.updateProjectionMatrix();
+      }
+      return true;
+    }
+
+    /** Fin del salto: la nave queda en el mirador mirando al núcleo, y la galaxia la recibe. */
+    land(h) {
+      const g = this.g;
+      const cam = g.camera;
+      cam.position.copy(h.to);
+      cam.quaternion.copy(h.qL);
+      if (cam.fov !== h.fov0) {
+        cam.fov = h.fov0;
+        cam.updateProjectionMatrix();
+      }
+      this.endHyper();
+      const f = g.flight;
+      if (f?.on) {
+        f.q.copy(cam.quaternion);
+        f.vel.set(0, 0, 0);
+        f.bank = 0;
+        f.rollVel = 0;
+      } else {
+        g.controls.target.copy(h.G.c);
+        g.controls.enabled = true;
+        g.controls.update();
+        this.park(h.G);
+      }
+      g.lastInteract = performance.now();
+      if (g.world?.waypoint === h.G.name) g.world.setWaypoint(null); // se llegó al destino: la columna de luz se apaga
+      this.survey(performance.now()); // la llegada, ya mismo: destello, rótulo y escáner
+      g.needsRender = true;
+    }
+
+    endHyper() {
+      if (!this.hyper) return;
+      this.hyper = null;
+      this.el.charge.classList.remove('on');
+      this.el.tunnel.classList.remove('on');
+      if (!this.g.flight?.on) this.g.controls.enabled = true;
+    }
+
+    /* ---------- la mira ---------- */
+
+    /** Qué apunta la nave: un planeta del sistema en el que se está o, si no, una galaxia a la vista. */
+    aim(now) {
+      const g = this.g;
+      const cam = g.camera;
+      const origin = cam.position;
+      const fwd = this.v.set(0, 0, -1).applyQuaternion(cam.quaternion);
+      let best = null;
+      let score = Infinity;
+      const s = this.sys;
+      if (s) {
+        for (const p of s.planets) {
+          const r = p.size * (p.k ?? 1) + (p.rock ? 0.25 : 0.4);
+          const to = this.w.subVectors(p.pos, origin);
+          const t = to.dot(fwd);
+          if (t <= 0.2) continue;
+          const off = Math.sqrt(Math.max(0, to.lengthSq() - t * t));
+          if (off > r || t >= score) continue;
+          score = t;
+          best = { kind: 'planet', p, name: p.name, pos: p.pos, r: p.size * (p.k ?? 1), hex: p.hex };
+        }
+      }
+      if (!best) {
+        for (const G of this.gals.values()) {
+          if (G === this.focus) continue;
+          const to = this.w.subVectors(G.c, origin);
+          const d = to.length();
+          if (d > AIM_RANGE || d < 1e-3) continue;
+          const ang = Math.acos(clamp(to.dot(fwd) / d, -1, 1));
+          const cone = Math.atan2(Math.max(G.R * 1.2, 3), d) + 0.035;
+          if (ang > cone) continue;
+          const k = ang / cone + d / AIM_RANGE; // entre varias, la más centrada y cercana
+          if (k < score) {
+            score = k;
+            best = { kind: 'galaxy', G, name: G.name, pos: G.c, r: G.R, hex: g.colorHex(G.color) };
+          }
+        }
+      }
+      const same = best && this.aimed && best.kind === this.aimed.kind && (best.kind === 'planet' ? best.p === this.aimed.p : best.G === this.aimed.G);
+      if (!same) this.setAim(best, now);
+    }
+
+    setAim(a, now) {
+      if (!a && !this.aimed) return;
+      this.aimed = a;
+      this.aimAt = now;
+      const el = this.el.lock;
+      if (!a) {
+        el.style.display = 'none';
+        this.g.needsRender = true;
+        return;
+      }
+      el.style.setProperty('--c', a.hex);
+      el.classList.toggle('galaxy', a.kind === 'galaxy');
+      const box = this.el.lockBox;
+      box.classList.remove('lock');
+      void box.offsetWidth;
+      box.classList.add('lock');
+      this.el.lockName.textContent = U.truncate(a.name, 32);
+      this.el.lockHintText.textContent = tr('galaxy.jump');
+      this.g.needsRender = true;
+    }
+
+    /** Dibuja la mira sobre lo apuntado: el recuadro crece con lo que ocupa en pantalla, y debajo su nombre y
+        su distancia (en una galaxia, también sus commits y el aviso de que J salta hasta ella). */
+    placeLock() {
+      const a = this.aimed;
+      const el = this.el.lock;
+      if (!a || !this.on) return void (el.style.display !== 'none' && (el.style.display = 'none'));
+      const g = this.g;
+      const q = g.project(a.pos);
+      if (!q) return void (el.style.display = 'none');
+      const d = g.camera.position.distanceTo(a.pos);
+      const focal = g.H / (2 * Math.tan((g.camera.fov * Math.PI) / 360));
+      const px = clamp((a.r * focal) / Math.max(1, d), 13, Math.min(g.W, g.H) * 0.3);
+      const size = Math.round(px * 2 + 18);
+      const dist = g.world ? g.world.fmtDist(Math.max(0, d - a.r)) : Math.round(d);
+      const sub = a.kind === 'planet' ? `${this.kindText(a.p)} · ${dist}` : `${tr('galaxy.commits', { n: a.G.n })} · ${dist}`;
+      if (el.__s !== sub) {
+        el.__s = sub;
+        this.el.lockSub.textContent = sub;
+      }
+      el.style.display = '';
+      el.style.setProperty('--s', `${size}px`);
+      el.style.transform = `translate(${Math.round(q.x)}px,${Math.round(q.y)}px)`;
+    }
+
+    /* ---------- entrada atmosférica ---------- */
+
+    /** Cerca de la superficie de un planeta y a velocidad, el borde de la pantalla se enciende. */
+    stepHeat(now, dt, fly) {
+      const g = this.g;
+      let want = 0;
+      const s = this.sys;
+      if (fly && s && g.motion) {
+        const f = g.flight;
+        const v = f.vel.length();
+        const pos = g.camera.position;
+        let near = 0;
+        for (const p of s.planets) {
+          if (p.rock) continue;
+          const gap = pos.distanceTo(p.pos) - p.size * (p.k ?? 1);
+          const k = clamp(1 - gap / (p.size * 2.2 + 1), 0, 1);
+          if (k > near) near = k;
+        }
+        // más rápido que el paso tranquilo de ahí (la nave frena sola junto a los planetas): hace falta
+        // acelerar, o venir lanzado desde fuera
+        const calm = 9 * clamp(0.6 + g.radius / 14, 0.8, 3.4) * Math.max(0.1, this.nearFactor(pos));
+        want = near * clamp((v / calm - HEAT_SPEED) / 1.2, 0, 1);
+      }
+      // se enciende rápido y se apaga despacio, como el metal que se enfría
+      const heat = want > this.heat ? this.heat + (want - this.heat) * (1 - Math.exp(-dt * 14)) : this.heat + (want - this.heat) * (1 - Math.exp(-dt * 2.2));
+      this.setHeat(heat < 0.004 ? 0 : heat);
+    }
+
+    setHeat(v) {
+      if (Math.abs(v - this.heat) < 0.003 && !(v === 0 && this.heat)) return;
+      this.heat = v;
+      this.el.heat.style.opacity = v.toFixed(3);
+      this.el.heat.classList.toggle('on', v > 0);
+    }
+
+    /* ---------- el zumbido del espacio ---------- */
+
+    /** Con el sonido activado, el espacio tiene un fondo grave en la nota de la galaxia en la que se está
+        (más tenue entre galaxias). Se avisa solo cuando cambia. */
+    stepAmbience(now) {
+      if (now - this.amb.at < 250) return;
+      this.amb.at = now;
+      const name = this.focus?.name || null;
+      const level = !this.on ? 0 : this.focus ? 1 : 0.55 + 0.45 * this.tintK;
+      if (name === this.amb.name && Math.abs(level - this.amb.level) < 0.03) return;
+      this.amb.name = name;
+      this.amb.level = level;
+      this.g.opts.onAmbience?.(level, name);
+    }
+
+    /** Cambió el sonido (se activó o se apagó): el zumbido se vuelve a pedir con el próximo cuadro. */
+    pokeAmbience() {
+      this.amb.level = -1;
+      this.amb.at = 0;
+    }
+
+    /** La vista 3D se oculta o se sale del espacio: el zumbido se apaga. */
+    sleep() {
+      if (this.amb.level > 0) this.g.opts.onAmbience?.(0, null);
+      this.amb.level = -1;
+      this.amb.name = null;
     }
 
     /* ---------- el mirador del sistema ---------- */
@@ -1960,6 +2324,7 @@
     placeLabels() {
       const g = this.g;
       const s = this.sys;
+      this.placeLock();
       if (!s || !this.on) return this.hideLabels();
       const cam = g.camera.position;
       const boxes = [];
@@ -2113,6 +2478,8 @@
     relocalize() {
       this.renderCard();
       this.renderWorlds();
+      this.el.chargeK.textContent = tr('galaxy.charging');
+      this.el.lockHintText.textContent = tr('galaxy.jump');
       if (this.arrival) {
         this.el.aKick.textContent = tr(this.arrival.found ? 'galaxy.discovered' : 'galaxy.entering');
         this.renderArrival();
@@ -2136,6 +2503,8 @@
     }
 
     clear() {
+      this.endHyper();
+      this.setAim(null, 0);
       this.slots.clear();
       this.gals = new Map();
       this.posOf = new Map();

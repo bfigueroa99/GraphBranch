@@ -4,7 +4,9 @@
    dentro de una escala pentatónica, cuantizado a un pulso tranquilo: varios eventos juntos forman
    una frase en vez de ruido, como en "Listen to Wikipedia". La rama por defecto es la tónica y
    cada rama tiene su propia nota; con la vista 3D, el sonido sale del lado de la pantalla donde
-   está la rama. Solo Web Audio: sin archivos ni librerías, así que la CSP no cambia. */
+   está la rama. En el modo galaxias el espacio tiene su zumbido de fondo, grave y lento, en la nota
+   de la galaxia en la que se está, y el hiperimpulsor suena al cargar y al saltar. Solo Web Audio:
+   sin archivos ni librerías, así que la CSP no cambia. */
 (function (GB) {
   'use strict';
   const { U } = GB;
@@ -274,6 +276,115 @@
       h.gain.gain.setTargetAtTime(level * 0.05, t, 0.15);
       h.filter.frequency.setTargetAtTime(160 + level * 900, t, 0.2);
       h.oscs.forEach((o, i) => o.frequency.setTargetAtTime(48 + i * 0.6 + level * 30, t, 0.3));
+    }
+
+    /** El zumbido del espacio: un fondo grave en la tónica de la galaxia en la que se está (cambia de nota
+        al pasar a otra, deslizándose), con un filtro que respira despacio. `level` de 0 (apagado) a 1. */
+    drone(level, branch) {
+      if (!this.space && level <= 0) return;
+      const ctx = this.ensure();
+      if (!ctx) return;
+      if (!this.space) {
+        const gain = ctx.createGain();
+        gain.gain.value = 0;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 240;
+        filter.Q.value = 1.2;
+        // la respiración del filtro: un LFO muy lento
+        const lfo = ctx.createOscillator();
+        lfo.type = 'sine';
+        lfo.frequency.value = 0.07;
+        const depth = ctx.createGain();
+        depth.gain.value = 110;
+        lfo.connect(depth).connect(filter.frequency);
+        lfo.start();
+        const voices = [
+          ['sine', -14, 0, 1], // dos octavas abajo
+          ['triangle', -7, 0, 0.5], // la octava
+          ['sawtooth', -2, -6, 0.22], // la quinta, apenas desafinada en dos voces
+          ['sawtooth', -2, 6, 0.22],
+        ].map(([type, off, detune, amp]) => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = type;
+          o.detune.value = detune;
+          g.gain.value = amp;
+          o.connect(g).connect(filter);
+          o.start();
+          return { o, off };
+        });
+        filter.connect(gain).connect(this.master);
+        this.space = { gain, filter, voices, lfo, degree: null };
+      }
+      const t = ctx.currentTime;
+      const sp = this.space;
+      const d = this.degreeOf(branch);
+      if (sp.degree !== d) {
+        sp.degree = d;
+        for (const v of sp.voices) v.o.frequency.setTargetAtTime(hz(note(d + v.off)), t, 0.9); // se desliza a la nota nueva
+      }
+      sp.gain.gain.setTargetAtTime(clamp(level, 0, 1) * 0.05, t, level > 0 ? 1.4 : 0.6);
+    }
+
+    /** El hiperimpulsor: al cargar, un tono que sube y se tensa; al saltar, un golpe de aire y un barrido. */
+    hyper(kind, branch) {
+      const ctx = this.ensure();
+      if (!ctx) return;
+      const t = ctx.currentTime + 0.02;
+      const d = this.degreeOf(branch);
+      if (kind === 'charge') {
+        const o = ctx.createOscillator();
+        const f = ctx.createBiquadFilter();
+        const g = ctx.createGain();
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(hz(note(d - 14)), t);
+        o.frequency.exponentialRampToValueAtTime(hz(note(d + 6)), t + 1.1);
+        f.type = 'bandpass';
+        f.Q.value = 6;
+        f.frequency.setValueAtTime(200, t);
+        f.frequency.exponentialRampToValueAtTime(2400, t + 1.1);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.11, t + 0.9);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 1.25);
+        o.connect(f).connect(g).connect(this.bus);
+        o.start(t);
+        o.stop(t + 1.3);
+        return;
+      }
+      // el salto: ruido blanco que se abre y se cierra, un golpe grave y un brillo que sube
+      if (!this.noise) {
+        const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+        this.noise = buf;
+      }
+      const n = ctx.createBufferSource();
+      n.buffer = this.noise;
+      const nf = ctx.createBiquadFilter();
+      nf.type = 'bandpass';
+      nf.Q.value = 0.8;
+      nf.frequency.setValueAtTime(400, t);
+      nf.frequency.exponentialRampToValueAtTime(3600, t + 0.35);
+      nf.frequency.exponentialRampToValueAtTime(240, t + 1.8);
+      const ng = ctx.createGain();
+      ng.gain.setValueAtTime(0.0001, t);
+      ng.gain.exponentialRampToValueAtTime(0.16, t + 0.12);
+      ng.gain.exponentialRampToValueAtTime(0.0001, t + 1.9);
+      n.connect(nf).connect(ng).connect(this.master);
+      n.start(t);
+      n.stop(t + 2);
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(hz(note(d - 9)), t);
+      o.frequency.exponentialRampToValueAtTime(hz(note(d - 19)), t + 0.6);
+      this.env(g, t, 0.2, 0.01, 0.7);
+      o.connect(g).connect(this.master);
+      o.start(t);
+      o.stop(t + 0.8);
+      this.bell(t + 0.25, note(d + 12), 0, 0.07, 2.2);
+      this.bell(t + 0.5, note(d + 14), 0, 0.05, 2.4);
     }
 
     /** Mundo abierto: el motivo de una rama descubierta (su nota), del destino alcanzado o del mapa completo. */

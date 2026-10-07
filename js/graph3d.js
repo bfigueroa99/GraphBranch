@@ -889,6 +889,8 @@
         this.world?.showHud(false);
         this.director?.end();
         this.ride = null;
+        this.gx?.endHyper();
+        this.gx?.sleep(); // el zumbido del espacio se apaga con la vista
         this.controls.enabled = true;
         this.unpin();
       }
@@ -1228,6 +1230,7 @@
       this.unpin();
       this.gx.setOn(on);
       this.world?.setSpace(on);
+      this.flight?.relocalize(); // la ayuda del vuelo nombra el hiperimpulsor solo en el espacio
       for (const e of this.edges.values()) e.pts = null; // las curvas se rehacen con la forma del modo
       this.readTheme();
       if (this.layout) {
@@ -1506,6 +1509,9 @@
         actions.appendChild(b);
       };
       if (pin && ride && this.motion) action(tr('ride.label'), () => this.rideBranch(ride));
+      // en el espacio, saltar con el hiperimpulsor hasta la galaxia de la rama (si no se está ya en ella)
+      const G = pin && ride && this.galaxy ? this.gx.galaxyOf(ride) : null;
+      if (G && G !== this.gx.focus) action(tr('galaxy.jump'), () => this.gx.jumpTo(G));
       // marcar la rama como destino: una columna de luz la señala y la brújula del vuelo lleva hasta ella
       const mark = () => tr(this.world.waypoint === ride ? 'world.unmark' : 'world.mark');
       if (pin && ride && this.world && this.heads.has(ride))
@@ -1697,7 +1703,7 @@
         const fly = !!this.flight?.on;
         if (fly !== !!w.hudOn) w.showHud(fly);
         if (fly) w.hud(now);
-        if ((fly || (this.ride && !this.ride.auto)) && this.nodes.size) w.explore(now);
+        if ((fly || (this.ride && !this.ride.auto)) && this.nodes.size && !this.gx?.hyper) w.explore(now); // en el túnel no se descubre nada
       }
     }
 
@@ -1706,6 +1712,7 @@
       const cam = this.camera;
       let moved = false;
       this.padToggle();
+      if (this.gx?.hyper) return true; // en pleno salto hiperespacial la cámara la lleva galaxy.js
       // el director decide el plano antes que nada: puede lanzar un vuelo, un corte o un paseo
       const directed = this.director ? this.director.step(now, dt) : false;
       if (this.ride) return this.stepRide(now);

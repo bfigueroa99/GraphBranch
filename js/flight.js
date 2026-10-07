@@ -1,6 +1,7 @@
 /* GraphBranch — modo vuelo de la vista 3D: moverse libre por el grafo en primera persona, como
    en una nave. Teclado y ratón (WASD para moverse, Q/E para inclinar la nave, Espacio/C para subir
-   y bajar, Mayús para acelerar, X para el escáner; el puntero queda bloqueado y el ratón mira),
+   y bajar, Mayús para acelerar, X para el escáner, J para el hiperimpulsor en el espacio; el puntero
+   queda bloqueado y el ratón mira),
    joystick táctil en el celular y mando de juego. Una línea de horizonte junto a la mira muestra
    cuánto está inclinada la nave. La nave gira libre en los tres ejes: el ratón la orienta respecto de
    ella misma, así que inclinada también se mira "hacia arriba" de la nave. En el valle, sin tocar
@@ -34,6 +35,7 @@
     Space: 'u',
     KeyC: 'd',
     KeyX: 'scan',
+    KeyJ: 'jump',
     ShiftLeft: 'boost',
     ShiftRight: 'boost',
   };
@@ -79,16 +81,19 @@
         <div class="fl-horizon" aria-hidden="true"></div>
         <p class="fl-prompt"></p>
         <p class="fl-hint"></p>
+        <p class="fl-msg" aria-live="polite"></p>
         <div class="fl-stick" aria-hidden="true"><div class="fl-knob"></div></div>
         <div class="fl-roll" aria-hidden="true">
           <button type="button" data-roll="1" tabindex="-1"><svg viewBox="0 0 16 16"><path d="M3.2 9.5a5 5 0 1 0 1.6-5.2M4.6 1.8v2.8h2.8"/></svg></button>
           <button type="button" data-roll="-1" tabindex="-1"><svg viewBox="0 0 16 16"><path d="M12.8 9.5a5 5 0 1 1-1.6-5.2M11.4 1.8v2.8H8.6"/></svg></button>
           <button type="button" data-scan tabindex="-1"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="1.4"/><path d="M4.6 11.4a4.8 4.8 0 0 1 0-6.8M11.4 4.6a4.8 4.8 0 0 1 0 6.8M2.4 13.6a7.9 7.9 0 0 1 0-11.2M13.6 2.4a7.9 7.9 0 0 1 0 11.2"/></svg></button>
+          <button type="button" data-jump tabindex="-1"><svg viewBox="0 0 16 16"><path d="M2.5 8h8M8 4.5 11.5 8 8 11.5"/><path d="M13.5 3.5v9"/></svg></button>
         </div>`;
       this.g.wrap.appendChild(ui);
       this.el = {
         prompt: ui.querySelector('.fl-prompt'),
         hint: ui.querySelector('.fl-hint'),
+        msg: ui.querySelector('.fl-msg'),
         stick: ui.querySelector('.fl-stick'),
         knob: ui.querySelector('.fl-knob'),
         roll: ui.querySelector('.fl-roll'),
@@ -100,7 +105,19 @@
     relocalize() {
       const { i18n } = GB;
       this.el.prompt.textContent = i18n.t('fly.lock');
-      this.el.hint.innerHTML = touchFirst() ? GB.U.esc(i18n.t('fly.touch')) : i18n.html('fly.hint');
+      let hint = i18n.html('fly.hint');
+      if (!this.g.galaxy) hint = hint.replace(/<kbd>J<\/kbd>[^·]*·\s*/, ''); // el hiperimpulsor solo existe en el espacio
+      this.el.hint.innerHTML = touchFirst() ? GB.U.esc(i18n.t('fly.touch')) : hint;
+      this.el.roll.querySelector('[data-jump]').title = i18n.t('galaxy.jump');
+    }
+
+    /** Un aviso breve bajo la mira (por ejemplo, que no hay a dónde saltar). */
+    say(text) {
+      const m = this.el.msg;
+      m.textContent = text;
+      m.classList.remove('show');
+      void m.offsetWidth;
+      m.classList.add('show');
     }
 
     showHint() {
@@ -181,6 +198,7 @@
         ev.preventDefault();
         ev.stopImmediatePropagation(); // las flechas vuelan, no orbitan
         if (k === 'scan') return ev.repeat || g.gx?.pulseScan();
+        if (k === 'jump') return ev.repeat || (g.galaxy && g.gx?.jumpAim());
         this.keys.add(k);
       });
       g.wrap.addEventListener('keyup', (ev) => this.keys.delete(KEYS[ev.code]));
@@ -256,6 +274,7 @@
       const roll = this.el.roll;
       roll.addEventListener('pointerdown', (ev) => {
         if (ev.target.closest('[data-scan]')) return g.gx?.pulseScan();
+        if (ev.target.closest('[data-jump]')) return g.gx?.jumpAim();
         const b = ev.target.closest('[data-roll]');
         if (!b) return;
         ev.preventDefault();
@@ -281,6 +300,13 @@
     step(dt) {
       const g = this.g;
       const cam = g.camera;
+      // en pleno salto hiperespacial la cámara la lleva galaxy.js; la nave sale quieta del túnel
+      if (g.gx?.hyper) {
+        this.vel.set(0, 0, 0);
+        this.level = 0;
+        g.opts.onFlightSpeed?.(0);
+        return true;
+      }
       const k = this.keys;
       const pad = this.gamepad();
       let f = (k.has('f') ? 1 : 0) - (k.has('b') ? 1 : 0) - this.stick.y;
@@ -299,6 +325,9 @@
         const scan = !!pad.buttons[2]?.pressed; // X (o cuadrado): el escáner
         if (scan && !this.padScan) g.gx?.pulseScan();
         this.padScan = scan;
+        const jump = !!pad.buttons[3]?.pressed; // Y (o triángulo): el hiperimpulsor
+        if (jump && !this.padJump && g.galaxy) g.gx?.jumpAim();
+        this.padJump = jump;
       }
       r = clamp(r, -1, 1);
 

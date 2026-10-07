@@ -133,6 +133,10 @@
         loadFiles: (q) => (source?.files ? source.files(q) : null),
         onGalaxyChange: (on) => setPressed(el.galaxyBtn, on),
         onScan: () => feed.sound && feed.synth.discover('scan', null, 0),
+        // el espacio tiene su zumbido de fondo, en la nota de la galaxia en la que se está
+        onAmbience: (level, name) => feed.synth.drone(feed.sound ? level : 0, name),
+        // el hiperimpulsor: la carga que sube y el golpe del salto
+        onJump: (kind, name) => feed.sound && feed.synth.hyper(kind, name),
       });
     }
   } catch (err) {
@@ -682,6 +686,7 @@
   el.soundBtn.addEventListener('click', () => {
     feed.setSound(!feed.sound);
     setPressed(el.soundBtn, feed.sound);
+    graph3d?.gx?.pokeAmbience(); // el zumbido del espacio arranca o se apaga con el sonido
   });
 
   if (!feed.notifySupported) el.notifyBtn.hidden = true;
@@ -884,6 +889,7 @@
     if (feed.sound) feed.synth.preview();
     setPressed(el.tvSound, feed.sound);
     setPressed(el.soundBtn, feed.sound);
+    graph3d?.gx?.pokeAmbience();
   });
   window.addEventListener('resize', tvScale);
   document.addEventListener('visibilitychange', () => !document.hidden && lockScreen());

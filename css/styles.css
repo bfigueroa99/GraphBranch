@@ -1059,6 +1059,20 @@ kbd {
   font: 500 11px var(--font-mono);
   white-space: nowrap;
 }
+/* de cerca, el mensaje de cada commit, a su derecha (por debajo de las etiquetas de rama) */
+.g3-note {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
+  color: var(--ink-2);
+  font: 500 11px var(--font-mono);
+  white-space: nowrap;
+  will-change: transform;
+}
 @keyframes glow3 {
   0%,
   25% {
@@ -3354,7 +3368,9 @@ html.tv .h3-dot {
 html.tv .h3-pr {
   font-size: calc(11px * var(--tvz, 1));
 }
-html.tv .g3-day {
+html.tv .g3-day,
+html.tv .g3-note {
+  padding: calc(1px * var(--tvz, 1)) calc(6px * var(--tvz, 1));
   font-size: calc(11px * var(--tvz, 1));
 }
 /* sin tocar el ratón un rato: fuera el puntero y los controles (con el teclado vuelven) */

@@ -34,6 +34,25 @@
     spinBtn: $('#spin-btn'),
     fullscreenBtn: $('#fullscreen-btn'),
     replayBtn: $('#replay-btn'),
+    trophyBtn: $('#trophy-btn'),
+    trophyCount: $('#trophy-count'),
+    gameStrip: $('#game-strip'),
+    gsLevel: $('#gs-level'),
+    gsLv: $('#gs-lv'),
+    gsFill: $('#gs-fill'),
+    gsXp: $('#gs-xp'),
+    gsMission: $('#gs-mission'),
+    gsMtext: $('#gs-mtext'),
+    gsMprog: $('#gs-mprog'),
+    combo: $('#combo'),
+    trophies: $('#trophies'),
+    trLv: $('#tr-lv'),
+    trFill: $('#tr-fill'),
+    trXp: $('#tr-xp'),
+    trMission: $('#tr-mission'),
+    trProgress: $('#tr-progress'),
+    trGrid: $('#tr-grid'),
+    gameEnable: $('#game-enable'),
     graphPanel: $('.graph-panel'),
     toasts: $('#toasts'),
     hint: $('#hint'),
@@ -152,6 +171,7 @@
     replay.stop(true);
     if (source) source.stop();
     source = src;
+    game.load(repoKey()); // cada repo tiene sus logros, su nivel y su misión
     layout = new GB.Layout();
     graph2d.clear();
     graph3d?.clear();
@@ -232,6 +252,13 @@
     }
     feed.setDefaultBranch(data.repo.defaultBranch);
     feed.add(activities, { live: !initial });
+    if (!initial && activities.length) {
+      game.observe(activities, {
+        openPrs: Math.max(data.totalPulls || 0, data.pulls.size),
+        liveBranches: L.heads.filter((h) => h.color !== 'ghost').length,
+        recordDay: activities.some((a) => a.kind === 'push') && isRecordDay(data),
+      });
+    }
     if (!initial && !replay.active) graph3d?.celebrate(activities); // cada tipo de evento con su efecto
     renderRepo(data.repo);
     renderStats(data, L);
@@ -253,6 +280,7 @@
     },
     onExit: () => showLive(),
     onState: (on) => setPressed(el.replayBtn, on),
+    onEnd: () => game.replayDone(),
   });
 
   function toggleReplay() {
@@ -272,6 +300,114 @@
     graph2d.update(lastRender.L, gctx);
     graph3d?.update(lastRender.L, gctx);
   }
+
+  /* ---------- capa de juego: logros del repo, nivel y misión del día (ver game.js) ---------- */
+
+  const game = new GB.Game({
+    onUnlock: (a) => celebrate(`${a.icon} ${t('ach.' + a.id)}`, i18n.msg(`ach.${a.id}.d`)),
+    onLevel: (n) => {
+      celebrate(i18n.msg('game.levelUp', { n }), i18n.msg('game.levelUpDetail'));
+      flashClass(el.gsLevel, 'up');
+    },
+    onMission: (m) => celebrate(i18n.msg('game.missionDone'), i18n.msg('mission.' + m.id, { n: m.n })),
+    onCombo: (n) => {
+      if (!game.enabled) return;
+      el.combo.textContent = t('game.combo', { n });
+      flashClass(el.combo, 'pop');
+    },
+    onChange: (v) => renderGame(v),
+  });
+
+  /** Logro, nivel o misión: aviso dorado, fuegos artificiales y fanfarria (como mucho una fiesta cada 6 s). */
+  let lastParty = 0;
+  function celebrate(title, detail) {
+    if (!game.enabled) return;
+    feed.toast({ kind: 'achievement', title, detail, time: Date.now() });
+    const now = Date.now();
+    if (now - lastParty < 6000) return;
+    lastParty = now;
+    if (graph === graph3d && graph3d.motion && !replay.active) graph3d.fireworks();
+    if (feed.sound) feed.synth.play([{ kind: 'release', time: now }]);
+  }
+
+  function flashClass(node, cls) {
+    node.classList.remove(cls);
+    void node.offsetWidth;
+    node.classList.add(cls);
+  }
+
+  /** ¿Hoy hay más commits que cualquier otro día del grafo? (al menos 5) */
+  function isRecordDay(data) {
+    const today = U.dayKey(Date.now());
+    const perDay = new Map();
+    for (const c of data.commits.values()) {
+      const k = U.dayKey(c.date);
+      perDay.set(k, (perDay.get(k) || 0) + 1);
+    }
+    const n = perDay.get(today) || 0;
+    perDay.delete(today);
+    return n >= 5 && n > Math.max(0, ...perDay.values());
+  }
+
+  function renderGame(v = game.view()) {
+    el.trophyCount.hidden = !v?.count;
+    if (v) el.trophyCount.textContent = U.fmtNum(v.count);
+    el.gameStrip.hidden = !v?.enabled;
+    if (!v) return;
+    const pct = `${Math.round(Math.min(1, (v.xp - v.floor) / Math.max(1, v.next - v.floor)) * 100)}%`;
+    const lv = t('game.level', { n: v.level });
+    const xp = t('game.xp', { xp: U.fmtNum(v.xp), next: U.fmtNum(v.next) });
+    el.gsLv.textContent = lv;
+    el.gsXp.textContent = xp;
+    el.gsFill.style.width = pct;
+    const m = v.mission;
+    el.gsMission.hidden = !m;
+    if (m) {
+      el.gsMtext.textContent = t('mission.' + m.id, { n: m.n });
+      el.gsMprog.textContent = m.done ? '✓' : `${m.progress}/${m.n}`;
+      el.gsMission.classList.toggle('done', m.done);
+    }
+    if (el.trophies.open) renderTrophies(v, { lv, xp, pct });
+  }
+
+  function renderTrophies(v = game.view(), pre) {
+    if (!v) return;
+    el.trLv.textContent = pre?.lv || t('game.level', { n: v.level });
+    el.trXp.textContent = pre?.xp || t('game.xp', { xp: U.fmtNum(v.xp), next: U.fmtNum(v.next) });
+    el.trFill.style.width = pre?.pct || `${Math.round(Math.min(1, (v.xp - v.floor) / Math.max(1, v.next - v.floor)) * 100)}%`;
+    const m = v.mission;
+    el.trMission.hidden = !m;
+    if (m) {
+      el.trMission.textContent = `🎯 ${t('game.mission')}: ${t('mission.' + m.id, { n: m.n })} · ${m.done ? '✓' : `${m.progress}/${m.n}`}`;
+      el.trMission.classList.toggle('done', m.done);
+    }
+    el.trProgress.textContent = t('game.progress', { n: v.count, total: v.total });
+    el.trGrid.innerHTML = GB.Game.achievements
+      .map((a) => {
+        const at = v.unlocked[a.id];
+        const when = at ? t('game.unlockedOn', { date: U.fmtDate(at) }) : t('game.locked');
+        return `<li class="tr-card${at ? ' on' : ''}">
+            <span class="tr-icon" aria-hidden="true">${a.icon}</span>
+            <span class="tr-text">
+              <span class="tr-name">${U.esc(t('ach.' + a.id))}</span>
+              <span class="tr-desc">${U.esc(t(`ach.${a.id}.d`))}</span>
+              <span class="tr-when">${U.esc(when)}</span>
+            </span>
+          </li>`;
+      })
+      .join('');
+    el.gameEnable.checked = v.enabled;
+  }
+
+  function openTrophies() {
+    renderTrophies();
+    if (typeof el.trophies.showModal === 'function') el.trophies.showModal();
+    else el.trophies.setAttribute('open', '');
+  }
+
+  for (const b of [el.trophyBtn, el.gsLevel, el.gsMission]) b.addEventListener('click', openTrophies);
+  $('#trophies-close').addEventListener('click', () => (typeof el.trophies.close === 'function' ? el.trophies.close() : el.trophies.removeAttribute('open')));
+  el.gameEnable.addEventListener('change', () => game.setEnabled(el.gameEnable.checked));
 
   function prsByBranch(data) {
     const map = new Map();
@@ -632,6 +768,7 @@
     graph2d.relocalize();
     graph3d?.relocalize();
     replay.relocalize();
+    renderGame();
     feed.relocalize();
     if (!source) return;
     // la demo inventa mensajes, incidencias y comentarios en el idioma activo: se reinicia para no mezclarlos

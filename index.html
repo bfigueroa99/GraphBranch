@@ -87,6 +87,10 @@
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c1.8 1.7 2.7 3.7 2.7 6S9.8 12.3 8 14M8 2C6.2 3.7 5.3 5.7 5.3 8S6.2 12.3 8 14"/></svg>
         <select id="lang-select" aria-label="Language" data-i18n-attr="aria-label:ctl.language"></select>
       </label>
+      <button class="icon-btn trophy-btn" type="button" id="trophy-btn" title="Trophies" aria-label="Trophies" data-i18n-attr="title:game.trophies;aria-label:game.trophies">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 2.5h6v3.4a3 3 0 0 1-6 0zM5 3.6H2.7v.9a2.3 2.3 0 0 0 2.6 2.3M11 3.6h2.3v.9a2.3 2.3 0 0 1-2.6 2.3M8 8.9v2.2M5.6 13.5h4.8M6.5 13.5l.4-2.4h2.2l.4 2.4"/></svg>
+        <span class="trophy-count" id="trophy-count" aria-hidden="true" hidden></span>
+      </button>
       <button class="icon-btn" type="button" id="settings-btn" title="Settings and token" aria-label="Settings and token" data-i18n-attr="title:ctl.settings;aria-label:ctl.settings">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.8M8 12.4v1.8M14.2 8h-1.8M3.6 8H1.8M12.4 3.6l-1.3 1.3M4.9 11.1l-1.3 1.3M12.4 12.4l-1.3-1.3M4.9 4.9 3.6 3.6"/></svg>
       </button>
@@ -154,6 +158,19 @@
           </button>
         </div>
       </div>
+      <div class="game-strip" id="game-strip" hidden>
+        <button type="button" class="gs-chip gs-level" id="gs-level">
+          <span class="gs-lv" id="gs-lv"></span>
+          <span class="gs-bar" aria-hidden="true"><span class="gs-fill" id="gs-fill"></span></span>
+          <span class="gs-xp" id="gs-xp"></span>
+        </button>
+        <button type="button" class="gs-chip gs-mission" id="gs-mission">
+          <span class="gs-target" aria-hidden="true">🎯</span>
+          <span class="gs-mlabel" data-i18n="game.mission">Mission of the day</span>
+          <span class="gs-mtext" id="gs-mtext"></span>
+          <span class="gs-mprog" id="gs-mprog"></span>
+        </button>
+      </div>
       <p class="token-banner" id="token-banner" hidden>
         <span id="token-banner-text"></span>
         <button type="button" class="link-btn" id="token-banner-btn" data-i18n="banner.add">Add a token</button>
@@ -162,6 +179,7 @@
         <div class="graph3d-wrap" id="graph3d" hidden></div>
         <div class="graph-wrap" id="graph" hidden></div>
         <div class="overlay" id="overlay" hidden></div>
+        <div class="combo" id="combo" aria-hidden="true"></div>
         <div class="replay" id="replay" hidden>
           <div class="rp-clock" aria-hidden="true"><span class="rp-date"></span><span class="rp-time"></span></div>
           <p class="rp-caption" role="status" aria-live="polite"></p>
@@ -229,6 +247,27 @@
   </form>
 </dialog>
 
+<dialog class="settings trophies" id="trophies" aria-labelledby="trophies-title">
+  <div class="tr-wrap">
+    <div class="tr-head">
+      <h2 id="trophies-title" data-i18n="game.trophies">Trophies</h2>
+      <button type="button" class="icon-btn" id="trophies-close" title="Close" aria-label="Close" data-i18n-attr="title:toast.close;aria-label:toast.close">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <div class="tr-level">
+      <span class="tr-lv" id="tr-lv"></span>
+      <span class="gs-bar tr-bar" aria-hidden="true"><span class="gs-fill" id="tr-fill"></span></span>
+      <span class="tr-xp" id="tr-xp"></span>
+    </div>
+    <p class="tr-mission" id="tr-mission"></p>
+    <p class="tr-progress" id="tr-progress"></p>
+    <ul class="tr-grid" id="tr-grid"></ul>
+    <p class="help" data-i18n="game.help">Achievements celebrate what the repository and the team accomplish, never individual people. They are saved only in this browser.</p>
+    <label class="tr-toggle"><input type="checkbox" id="game-enable"> <span data-i18n="game.enable">Show achievements and challenges</span></label>
+  </div>
+</dialog>
+
 <script src="js/i18n-apply.js"></script>
 <!-- SRI: el navegador rechaza estos scripts si el CDN entrega algo distinto a lo verificado.
      Al cambiar de versión hay que recalcular el hash (ver "Seguridad" en el README). -->
@@ -248,6 +287,7 @@
 <script src="js/graph3d.js"></script>
 <script src="js/sound.js"></script>
 <script src="js/replay.js"></script>
+<script src="js/game.js"></script>
 <script src="js/feed.js"></script>
 <script src="js/app.js"></script>
 </body>

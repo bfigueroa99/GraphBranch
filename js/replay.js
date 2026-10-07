@@ -47,11 +47,12 @@
   };
 
   class Replay {
-    constructor({ root, onFrame, onExit, onState }) {
+    constructor({ root, onFrame, onExit, onState, onEnd }) {
       this.root = root;
       this.onFrame = onFrame;
       this.onExit = onExit;
       this.onState = onState;
+      this.onEnd = onEnd;
       this.active = false;
       this.playing = false;
       this.speedIdx = 1;
@@ -303,7 +304,10 @@
         this.seek(false);
       }
       this.renderClock();
-      if (this.u >= this.U) return this.pause();
+      if (this.u >= this.U) {
+        this.pause();
+        return this.onEnd?.(); // la historia completa, de punta a punta
+      }
       this.raf = requestAnimationFrame(this.tick);
     }
 

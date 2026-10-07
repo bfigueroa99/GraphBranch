@@ -1,6 +1,6 @@
 # GraphBranch: notas para Claude
 
-App estática (HTML, CSS y JavaScript, sin compilación) que dibuja en vivo las ramas de un repo de GitHub. Commits, pull requests y textos de la interfaz van en español, como el historial. Comprobaciones rápidas antes de subir algo: `node --check` de los archivos tocados y `node tools/check-i18n.mjs` (todo texto nuevo va en los 40 idiomas de `js/locales/`).
+App estática (HTML, CSS y JavaScript, sin compilación) que dibuja en vivo las ramas de un repo de GitHub. Commits, pull requests y textos de la interfaz van en español, como el historial. Comprobaciones rápidas antes de subir algo: `node --check` de los archivos tocados y `node tools/check-i18n.mjs` (todo texto nuevo va en los 40 idiomas de `js/locales/`). Si el cambio toca la página o la app de escritorio, también `npm run test:e2e` (en Linux sin pantalla, con `xvfb-run`; `--grep-invert @lento` salta la prueba de 2 minutos). No hay CI: las pruebas y los instaladores se corren a mano, no en GitHub Actions.
 
 ## Pull requests y merge
 

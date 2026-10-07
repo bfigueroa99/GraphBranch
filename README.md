@@ -146,6 +146,7 @@ npm install
 npm start                               # la demo o el último repositorio
 npm start -- --repo=owner/repo --tv     # un repo directo y en modo TV (también --lang=es)
 npm run dist                            # el instalador para este sistema, en dist/
+npm run test:e2e                        # las pruebas de punta a punta (ver Pruebas)
 ```
 
 - Es la misma app: `electron/main.js` solo abre `index.html` en una ventana, así que lo que cambies en `js/` o `css/` vale para las dos versiones (en la de escritorio se recarga con `Ctrl+R` o `Cmd+R`).
@@ -155,19 +156,23 @@ npm run dist                            # el instalador para este sistema, en di
 - Cerrar la ventana no cierra la app: queda en la bandeja del sistema (en macOS, en la barra de menús) y sigue revisando el repositorio. Avisa con notificaciones del sistema si las activaste (campana de la barra superior), y el ícono muestra al pasar el cursor cuántas novedades llegaron. Para volver, usa el ícono o abre la app otra vez; para salir del todo, **Salir** en el menú del ícono (o `Ctrl+Q`; en macOS, `Cmd+Q`). En GNOME sin la extensión AppIndicator no se ve la bandeja: la app sigue corriendo y vuelve al abrirla otra vez.
 - Con la ventana oculta o minimizada la vista sigue al día. Chromium espacia los temporizadores de una página oculta a uno por minuto después de 5 minutos (*intensive wake-up throttling*); la app desactiva esa regla, pero no dibuja mientras no se ve.
 - Funciona sin conexión: todo lo que necesita va dentro de la app. Sin red abre la demo; un repositorio real muestra que no hay conexión y se vuelve a conectar apenas vuelve la red, sin esperar el próximo reintento.
-- `npm run dist` arma el instalador del sistema donde lo corres: `.dmg` en macOS, `.exe` en Windows y `.AppImage` en Linux. Para publicarlos, mejor el release de abajo, que arma los tres.
+- `npm run dist` arma el instalador del sistema donde lo corres: `.dmg` en macOS, `.exe` en Windows y `.AppImage` en Linux.
 
 ### Publicar la app de escritorio
 
-Publica un release en GitHub (**Releases → Draft a new release**) con un tag de versión, como `v0.2.0`. El flujo `.github/workflows/desktop.yml` arma los instaladores y los adjunta al release en unos minutos:
+Los instaladores se arman en cada sistema, sin GitHub Actions:
 
-| Sistema | Archivo |
-| --- | --- |
-| Linux | `GraphBranch-0.2.0-linux-x86_64.AppImage` |
-| Windows | `GraphBranch-0.2.0-win-x64.exe` |
-| macOS (Apple Silicon e Intel) | `GraphBranch-0.2.0-mac-arm64.dmg`, `GraphBranch-0.2.0-mac-x64.dmg` |
+1. Sube la versión: `npm version 0.2.0 --no-git-tag-version` (cambia `package.json`).
+2. Corre las pruebas: `npm run test:e2e`.
+3. En cada sistema, `npm run dist` deja el instalador en `dist/`:
 
-La versión sale del tag, no hace falta cambiar `package.json`. Para probar sin publicar nada: **Actions → App de escritorio → Run workflow**; los instaladores quedan como artefactos de esa ejecución.
+   | Sistema | Comando | Archivo |
+   | --- | --- | --- |
+   | Linux | `npm run dist` | `GraphBranch-0.2.0-linux-x86_64.AppImage` |
+   | Windows | `npm run dist` | `GraphBranch-0.2.0-win-x64.exe` |
+   | macOS | `npm run dist -- --arm64 --x64` | `GraphBranch-0.2.0-mac-arm64.dmg` (Apple Silicon) y `GraphBranch-0.2.0-mac-x64.dmg` (Intel) |
+
+4. Crea un release en GitHub con el tag `v0.2.0` y adjunta los archivos (o `gh release create v0.2.0 dist/GraphBranch-0.2.0-*`).
 
 Los instaladores no van firmados con un certificado, así que el sistema avisa la primera vez:
 
@@ -175,7 +180,21 @@ Los instaladores no van firmados con un certificado, así que el sistema avisa l
 - **macOS**: la app lleva firma *ad-hoc* (sin ella, en Apple Silicon no abre). La primera vez macOS no la deja abrir: ve a **Ajustes del Sistema → Privacidad y seguridad → Abrir igualmente**.
 - **Linux**: el AppImage se marca como ejecutable (`chmod +x`) y se abre. Como todo AppImage de Electron, corre sin el sandbox de Chromium (`--no-sandbox`), porque un AppImage no puede instalar el ayudante que lo necesita.
 
-Para firmarlos de verdad hacen falta un certificado de Apple Developer (y notarizar) y uno de firma de código para Windows: electron-builder los toma de variables de entorno (`CSC_LINK`, `CSC_KEY_PASSWORD`, `APPLE_ID`…) que el flujo tendría que recibir como secretos, y en macOS hay que quitar `"identity": "-"` de `package.json`.
+Para firmarlos de verdad hacen falta un certificado de Apple Developer (y notarizar) y uno de firma de código para Windows: electron-builder los toma de variables de entorno (`CSC_LINK`, `CSC_KEY_PASSWORD`, `APPLE_ID`…), y en macOS hay que quitar `"identity": "-"` de `package.json`.
+
+## Pruebas
+
+`npm run test:e2e` abre la app de escritorio y la web como las usa una persona (con [Playwright](https://playwright.dev/)) y revisa:
+
+- **App de escritorio, sin red**: la demo, las librerías y las fuentes van dentro de la app; `app://` no sirve nada más del proyecto; los enlaces van al navegador del sistema y la ventana no navega a otro sitio; un repositorio real avisa que no hay conexión.
+- **Token**: se guarda cifrado y fuera de `localStorage`, vuelve al reabrir, se borra, y pasa al llavero el que la primera versión dejaba en `localStorage`.
+- **Bandeja**: cerrar esconde la ventana, la página lo sabe y sigue contando novedades, el aviso sale una vez y en su idioma, y una notificación o abrir la app otra vez traen la ventana.
+- **Ventana oculta**: Chromium no espacia los temporizadores a uno por minuto. Tarda 2 minutos; `npx playwright test --grep-invert @lento` corre todo lo demás.
+- **Web**, por http y con doble clic sin red: sin errores, sin violaciones de CSP y sin pedir nada a otros sitios; el token queda en el navegador.
+
+Las pruebas nunca usan la red: la app se abre con un proxy que no existe y con una carpeta de datos propia en cada prueba. La primera vez hace falta el Chromium de Playwright para las de la web: `npx playwright install chromium`. En Linux sin pantalla: `xvfb-run npm run test:e2e`.
+
+Además, `node --test` prueba la lógica de `js/sources/github.js` contra una API de GitHub simulada, y `node tools/smoke.mjs` es una prueba de humo rápida de la web (con `--langs`, en los 40 idiomas y en pantalla de celular).
 
 ## Estructura
 
@@ -207,12 +226,13 @@ tools/check-i18n.mjs  verifica las traducciones contra el inglés
 tools/vendor.mjs      descarga a vendor/ las librerías (comprobando su hash) y las fuentes
 tools/smoke.mjs       prueba de humo: abre la demo en Chromium y recorre lo principal
 tools/*.test.mjs      pruebas de la lógica contra una API de GitHub simulada (`node --test`)
+e2e/                  pruebas de punta a punta de la app de escritorio y la web (npm run test:e2e)
 electron/main.js      app de escritorio: la ventana de Electron que abre index.html
 electron/preload.js   lo único que la página ve de la app de escritorio: el token, los textos de la bandeja y traer la ventana
 electron/token.js     el token de la app de escritorio, cifrado con el llavero del sistema
 electron/tray.js      ícono en la bandeja del sistema y aviso al cerrar la ventana (tray*.png: sus íconos)
 electron/icon.png     ícono de la app de escritorio
-package.json          Electron y los scripts (npm start, npm run dist, npm run vendor)
+package.json          Electron, Playwright y los scripts (npm start, npm run dist, npm run test:e2e…)
 ```
 
 ## Límites conocidos

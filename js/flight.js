@@ -337,13 +337,16 @@
 
       // moverse: hacia donde apunta la nave, con inercia
       const scale = clamp(0.6 + g.radius / 14, 0.8, space ? 3.4 : 2.2); // grafos grandes, vuelo más rápido
-      const speed = SPEED * (boost ? BOOST : 1) * scale;
+      // entre los planetas de una galaxia, más despacio: se pasa entre ellos con calma
+      const calmK = space && g.gx ? g.gx.nearFactor(cam.position) : 1;
+      const speed = SPEED * (boost ? BOOST : 1) * scale * calmK;
       this.want.set(0, 0, 0).addScaledVector(this.fwd, clamp(f, -1, 1)).addScaledVector(this.right, clamp(s, -1, 1)).addScaledVector(this.up, clamp(u, -1, 1));
       if (this.want.lengthSq() > 1) this.want.normalize();
       this.want.multiplyScalar(speed);
       this.vel.lerp(this.want, 1 - Math.exp(-dt * (this.want.lengthSq() ? 5 : 3.5)));
       if (this.vel.lengthSq() < 1e-6) this.vel.set(0, 0, 0);
       cam.position.addScaledVector(this.vel, dt);
+      if (space) g.gx?.collide(cam.position, this.vel); // los planetas y los asteroides tampoco se atraviesan
       // el suelo es sólido: se puede rozar, no atravesar
       const floor = g.world ? g.world.heightAt(cam.position.x, cam.position.z) + 1.5 : -Infinity;
       if (cam.position.y < floor) {

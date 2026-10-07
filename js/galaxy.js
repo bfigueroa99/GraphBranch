@@ -34,8 +34,12 @@
   const NEAR_GALAXIES = 5; // galaxias que se resuelven en estrellas a la vez
   const NEAR_STARS = 650;
   const NEAR_RANGE = 75; // desde esta distancia empiezan a verse sus estrellas
-  const MAX_PLANETS = 360;
-  const SOLO_ORBITS = 14; // con hasta tantos archivos, cada uno tiene su órbita
+  const MAX_PLANETS = 360; // archivos a la vista, entre planetas y asteroides
+  const MAX_BIG = 120; // planetas, como mucho: el resto, asteroides
+  const ROCK_SHARE = 0.4; // con muchos archivos, los más chicos (este tanto) son asteroides
+  const SOLO_ALL = 8; // con hasta tantos archivos, todos son planetas
+  const SOLO_ORBITS = 8; // con hasta tantos planetas, cada uno tiene su órbita
+  const PLANET_GAP = 2.4; // aire entre planetas de una misma órbita, para pasar volando
   const MAX_FILE_LABELS = 16;
   const MAX_DIR_LABELS = 10;
   const PLANET_TILT = 0.38; // el plano de las órbitas cruza el disco de la galaxia, apenas inclinado
@@ -234,8 +238,12 @@
       vec4 w = m * vec4( position, 1.0 );
       vW = w.xyz;
       vN = normalize( mat3( m ) * normal );
-      float a = uTime * ( 0.12 + aSeed * 0.3 );
-      vL = vec3( cos( a ) * position.x + sin( a ) * position.z, position.y, cos( a ) * position.z - sin( a ) * position.x );
+      #ifdef ROCK
+        vL = position; // los asteroides giran con su propia matriz
+      #else
+        float a = uTime * ( 0.12 + aSeed * 0.3 );
+        vL = vec3( cos( a ) * position.x + sin( a ) * position.z, position.y, cos( a ) * position.z - sin( a ) * position.x );
+      #endif
       vC = vec3( 1.0 );
       #ifdef USE_INSTANCING_COLOR
         vC = instanceColor;
@@ -294,6 +302,42 @@
       float fog = smoothstep( uFog.x, uFog.y, distance( vW, cameraPosition ) );
       gl_FragColor = vec4( mix( lit, uFogCol, fog ), 1.0 );
     }`;
+
+  /* asteroides: roca gris teñida apenas con el color del archivo, con cráteres y sin atmósfera */
+  const ROCK_FS = `
+    uniform vec3 uSun;
+    uniform vec3 uFogCol;
+    uniform vec2 uFog;
+    varying vec3 vN;
+    varying vec3 vW;
+    varying vec3 vL;
+    varying vec3 vC;
+    varying float vS;
+    ${NOISE3_GLSL}
+    void main() {
+      vec3 N = normalize( vN );
+      vec3 L = normalize( uSun - vW );
+      vec3 p = vL * 3.0 + vS * 17.0;
+      vec3 rock = mix( vec3( 0.38, 0.35, 0.32 ), vC, 0.3 ) * ( 0.6 + 0.7 * gbFbm( p ) );
+      rock -= smoothstep( 0.64, 0.67, gbN3( p * 2.2 ) ) * 0.12;
+      vec3 lit = rock * ( 0.15 + 1.0 * max( dot( N, L ), 0.0 ) );
+      float fog = smoothstep( uFog.x, uFog.y, distance( vW, cameraPosition ) );
+      gl_FragColor = vec4( mix( lit, uFogCol, fog ), 1.0 );
+    }`;
+
+  /** Roca irregular: un icosaedro abollado, de caras planas. */
+  function rockGeometry() {
+    const geo = new THREE.IcosahedronGeometry(1, 1);
+    const pos = geo.attributes.position;
+    const v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).normalize();
+      const r = 1 + 0.2 * Math.sin(v.x * 3.1 + 1.7) * Math.cos(v.y * 2.3 + 0.4) + 0.14 * Math.sin(v.z * 4.7 + 2.1) + 0.08 * Math.cos(v.x * 6.3 - v.y * 5.1);
+      pos.setXYZ(i, v.x * r, v.y * r, v.z * r);
+    }
+    geo.computeVertexNormals();
+    return geo;
+  }
 
   /* anillos de algunos planetas: bandas finas, transparentes */
   const RING_VS = `
@@ -437,11 +481,11 @@
       this.cap = cap;
     }
 
-    /** pos y escala; `q` (opcional) gira la instancia. */
-    put(pos, scale, col, seed, q) {
+    /** pos y escala; `q` (opcional) gira la instancia y `sv` (opcional) la estira en cada eje. */
+    put(pos, scale, col, seed, q, sv) {
       if (this.n >= this.cap) return;
       const i = this.n++;
-      if (q) this.m.compose(pos, q, this.s.setScalar(scale));
+      if (q) this.m.compose(pos, q, sv ? this.s.copy(sv).multiplyScalar(scale) : this.s.setScalar(scale));
       else this.m.makeScale(scale, scale, scale).setPosition(pos);
       this.m.toArray(this.mesh.instanceMatrix.array, i * 16);
       col.toArray(this.mesh.instanceColor.array, i * 3);
@@ -586,6 +630,11 @@
       this.iPlanets = new SeededLayer(this.group, new THREE.SphereGeometry(1, 32, 20), this.planetMat);
       this.iPlanets.begin(1);
       this.iPlanets.end();
+      this.rockMat = new THREE.ShaderMaterial({ uniforms: this.planetU, vertexShader: PLANET_VS, fragmentShader: ROCK_FS, defines: { ROCK: '' } });
+      this.iRocks = new SeededLayer(this.group, rockGeometry(), this.rockMat);
+      this.iRocks.begin(1);
+      this.iRocks.end();
+      this.rq = new THREE.Quaternion();
       this.ringMat = new THREE.ShaderMaterial({
         uniforms: { uFog: g.u.fog },
         vertexShader: RING_VS,
@@ -1224,19 +1273,20 @@
         });
     }
 
-    /** Qué archivos entran (con miles, los más cerca de la raíz) y cómo se reparten en órbitas. */
+    /** Qué archivos entran (con miles, los más cerca de la raíz) y cómo se reparten. Los más grandes
+        son planetas, con aire entre ellos para pasar volando; los más chicos, asteroides que giran en
+        cinturones, uno por carpeta. */
     buildSystem(G, data) {
-      const g = this.g;
       let files = data.files || [];
       const total = files.length;
       if (files.length > MAX_PLANETS) {
         const depth = (p) => (p.match(/\//g) || []).length;
         files = [...files].sort((a, b) => depth(a.path) - depth(b.path) || (a.path < b.path ? -1 : 1)).slice(0, MAX_PLANETS);
       }
+      const diff = data.kind === 'diff';
       const planets = files.map((f) => {
         const slash = f.path.lastIndexOf('/');
         const ext = extOf(f.path);
-        const diff = data.kind === 'diff';
         const changes = (f.add || 0) + (f.del || 0);
         return {
           path: f.path,
@@ -1251,73 +1301,146 @@
           bytes: diff ? null : f.size ?? null,
           from: f.from || null,
           url: f.url || null,
-          size: diff ? clamp(0.15 + 0.065 * Math.log2(1 + changes), 0.15, 0.6) : clamp(0.12 + 0.045 * Math.log2(1 + (f.size || 0) / 200), 0.12, 0.5),
+          weight: diff ? changes : f.size || 0,
+          dr: 0,
+          dh: 0,
           pos: new THREE.Vector3(),
           col: new THREE.Color(),
           glow: new THREE.Color(),
         };
       });
+      // los más chicos son asteroides (con pocos archivos, todos planetas)
+      const n = planets.length;
+      const rocks = n > SOLO_ALL ? Math.max(Math.round(n * ROCK_SHARE), n - MAX_BIG) : 0;
+      [...planets].sort((a, b) => a.weight - b.weight || (a.path < b.path ? -1 : 1)).slice(0, rocks).forEach((p) => (p.rock = true));
+      for (const p of planets) {
+        const w = Math.log2(1 + (diff ? p.weight : p.weight / 200));
+        p.size = p.rock ? clamp(0.06 + 0.022 * w, 0.06, 0.17) : diff ? clamp(0.3 + 0.1 * w, 0.3, 0.85) : clamp(0.28 + 0.07 * w, 0.28, 0.8);
+      }
       planets.sort((a, b) => (a.top === b.top ? (a.path < b.path ? -1 : 1) : a.top === '' ? -1 : b.top === '' ? 1 : a.top < b.top ? -1 : 1));
+
       const rand = rng(G.seed ^ 0x51ed270b);
       const rings = [];
-      let rad = 1.7; // fuera del núcleo
-      if (planets.length <= SOLO_ORBITS) {
-        // pocos: cada uno en su órbita, como un sistema solar
-        for (const p of planets) {
-          rad += p.size + 0.32;
-          rings.push({ r: rad, list: [p], label: null, phase: rand() * Math.PI * 2 });
-          rad += p.size + 0.32;
+      const labels = []; // nombre de cada carpeta, junto a su primer planeta (gira con él)
+      let rad = 3.2; // fuera del núcleo, con aire
+      const big = planets.filter((p) => !p.rock);
+      const small = planets.filter((p) => p.rock);
+      const belt = (list) => {
+        // un cinturón de asteroides: ancho según cuántos son, cada uno con su desvío, su eje y su giro
+        if (!list.length) return;
+        const w = Math.min(4.5, 1 + Math.sqrt(list.length) * 0.38);
+        rad += 0.6;
+        const ring = { r: rad + w / 2, list, belt: true };
+        for (const p of list) {
+          p.a0 = rand() * Math.PI * 2;
+          p.dr = (rand() + rand() - 1) * w * 0.5;
+          p.dh = (rand() + rand() - 1) * w * 0.16;
+          p.axis = new THREE.Vector3(rand() - 0.5, rand() - 0.5, rand() - 0.5).normalize();
+          p.spin = 0.4 + rand() * 1.4;
+          p.stretch = new THREE.Vector3(0.7 + rand() * 0.6, 0.6 + rand() * 0.5, 0.8 + rand() * 0.4);
+          p.ring = ring;
         }
+        rings.push(ring);
+        rad += w + 1.4;
+      };
+      // con muchos asteroides, dos cinturones: uno entre las primeras órbitas y otro en el borde
+      const inner = small.length > 60 ? small.filter((_, i) => i % 2 === 0) : small;
+      const outer = small.length > 60 ? small.filter((_, i) => i % 2 === 1) : [];
+      if (big.length <= SOLO_ORBITS) {
+        // pocos planetas: cada uno en su órbita, como un sistema solar, con los asteroides a mitad de camino
+        big.forEach((p, i) => {
+          if (i === Math.ceil(big.length / 2)) belt(inner);
+          rad += p.size + 0.9;
+          rings.push({ r: rad, list: [p], phase: rand() * Math.PI * 2 });
+          rad += p.size + 0.9;
+        });
+        if (big.length < 2) belt(inner);
       } else {
-        // muchos: un cinturón por carpeta (si no cabe en una vuelta, sigue en la de afuera)
-        let i = 0;
-        while (i < planets.length) {
-          const top = planets[i].top;
-          let first = true;
-          while (i < planets.length && planets[i].top === top) {
-            const ring = { r: rad, list: [], label: first ? top || null : null, root: top === '', phase: rand() * Math.PI * 2, used: 0, max: 0 };
-            first = false;
-            const cap = Math.PI * 2 * rad;
-            while (i < planets.length && planets[i].top === top) {
-              const p = planets[i];
-              const need = p.size * 2 + 0.22;
-              if (ring.list.length && ring.used + need > cap) break;
-              ring.list.push(p);
-              ring.used += need;
-              ring.max = Math.max(ring.max, p.size);
-              i++;
-            }
-            rings.push(ring);
-            rad += ring.max * 2 + 0.35;
+        // muchos: las carpetas, una tras otra, llenan órbitas con aire entre planetas
+        let j = 0;
+        let n = 0;
+        while (j < big.length) {
+          const ring = { r: rad, list: [], phase: rand() * Math.PI * 2, used: 0, max: 0 };
+          const cap = Math.PI * 2 * rad;
+          while (j < big.length) {
+            const need = big[j].size * 2 + PLANET_GAP;
+            if (ring.list.length && ring.used + need > cap) break;
+            ring.list.push(big[j++]);
+            ring.used += need;
+            ring.max = Math.max(ring.max, ring.list[ring.list.length - 1].size);
           }
-          rad += 0.3; // entre carpetas, un poco más de aire
+          rings.push(ring);
+          rad += ring.max * 2 + 2.2;
+          if (++n === 1) belt(inner); // el cinturón principal, tras la primera órbita
         }
       }
+      belt(outer);
       for (const ring of rings) {
         ring.omega = 0.55 / Math.pow(ring.r, 1.5); // más lento cuanto más lejos
+        if (ring.belt) continue;
         let acc = 0;
-        const used = ring.list.reduce((s, p) => s + p.size * 2 + 0.22, 0);
+        const used = ring.list.reduce((s, p) => s + p.size * 2 + PLANET_GAP, 0);
         for (const p of ring.list) {
-          const need = p.size * 2 + 0.22;
+          const need = p.size * 2 + PLANET_GAP;
           p.a0 = ring.phase + (Math.PI * 2 * (acc + need / 2)) / Math.max(used, 1e-3);
           acc += need;
           p.ring = ring;
         }
       }
+      // la carpeta de cada tramo, junto a su primer planeta (las de solo asteroides no llevan rótulo)
+      let last = null;
+      for (const p of big) {
+        if (p.top !== last && p.top) labels.push({ p, text: p.top + '/' });
+        last = p.top;
+      }
       planets.forEach((p, i) => {
         p.i = i;
         p.seed = h01(p.path);
+        if (p.rock) return;
         // algunos llevan anillos: un tercio de los gigantes gaseosos y uno que otro más
         const gas = (p.seed * 7.31) % 1 < 0.36;
         if ((gas && (p.seed * 3.7) % 1 < 0.33) || (p.seed * 5.1) % 1 < 0.04) {
           p.ringQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2 + ((p.seed * 13.7) % 1 - 0.5) * 1.1, ((p.seed * 29.3) % 1) * Math.PI * 2, 0));
         }
       });
-      const sys = { name: G.name, sha: G.sha, G, data, planets, rings, total, born: performance.now(), dying: 0, outer: rad };
+      const sys = { name: G.name, sha: G.sha, G, data, planets, rings, labels, total, born: performance.now(), dying: 0, outer: rad };
       for (const p of planets) p.sys = sys;
       this.paintSystem(sys);
       this.writeOrbits(sys);
       return sys;
+    }
+
+    /** Cerca de los planetas la nave va más despacio, para pasar entre ellos con calma (Mayús sigue acelerando). */
+    nearFactor(pos) {
+      const s = this.sys;
+      if (!s || !this.on) return 1;
+      const dc = pos.distanceTo(s.G.c);
+      if (dc > s.outer + 10) return 1;
+      let near = Infinity;
+      for (const p of s.planets) {
+        if (p.rock) continue;
+        const d = pos.distanceTo(p.pos) - p.size;
+        if (d < near) near = d;
+      }
+      const inside = clamp((dc - s.outer) / 10, 0, 1); // 0 dentro del sistema, 1 fuera
+      return Math.max(0.15, Math.min(0.45 + 0.55 * inside, near / 5));
+    }
+
+    /** Los planetas y los asteroides son sólidos: la nave los roza, no los atraviesa. */
+    collide(pos, vel) {
+      const s = this.sys;
+      if (!s || !this.on) return;
+      const n = this.v;
+      for (const p of s.planets) {
+        const min = p.size * (p.k ?? 1) + (p.rock ? 0.3 : 0.5);
+        n.subVectors(pos, p.pos);
+        const d = n.length();
+        if (d >= min || d < 1e-6) continue;
+        n.multiplyScalar(1 / d);
+        pos.copy(p.pos).addScaledVector(n, min);
+        const vn = vel.dot(n);
+        if (vn < 0) vel.addScaledVector(n, -vn);
+      }
     }
 
     paintSystem(sys) {
@@ -1335,16 +1458,18 @@
       const t = PLANET_TILT;
       const pu = G.u;
       const pv = this.w.copy(G.v).multiplyScalar(Math.cos(t)).addScaledVector(G.w, Math.sin(t));
-      return { pu, pv };
+      const pn = (this.pn || (this.pn = new THREE.Vector3())).copy(G.w).multiplyScalar(Math.cos(t)).addScaledVector(G.v, -Math.sin(t));
+      return { pu, pv, pn };
     }
 
     writeOrbits(sys) {
       const { pu, pv } = this.basis(sys.G);
       const SEG = 96;
-      const pos = new Float32Array(sys.rings.length * SEG * 6);
+      const rings = sys.rings.filter((r) => !r.belt); // los cinturones se ven solos
+      const pos = new Float32Array(rings.length * SEG * 6);
       let o = 0;
       const c = sys.G.c;
-      for (const ring of sys.rings) {
+      for (const ring of rings) {
         for (let i = 0; i < SEG; i++) {
           for (const j of [i, i + 1]) {
             const a = (j / SEG) * Math.PI * 2;
@@ -1383,29 +1508,34 @@
       let n = 0;
       for (const s of list) n += s.planets.length;
       this.iPlanets.begin(n);
+      this.iRocks.begin(n);
       this.iRings.begin(n);
       this.glows.begin(n);
       const t = g.u.time.value;
       const scanR = this.scanRadius(now);
       const from = this.scanning?.from;
       for (const s of list) {
-        const { pu, pv } = this.basis(s.G);
+        const { pu, pv, pn } = this.basis(s.G);
         const c = s.G.c;
         const out = s.dying ? 1 - clamp((now - s.dying) / 300, 0, 1) : 1;
         for (const p of s.planets) {
           const a = p.a0 + (g.motion ? p.ring.omega * t : 0);
-          const r = p.ring.r;
+          const r = p.ring.r + p.dr;
           const ca = Math.cos(a) * r;
           const sa = Math.sin(a) * r;
-          p.pos.set(c.x + pu.x * ca + pv.x * sa, c.y + pu.y * ca + pv.y * sa, c.z + pu.z * ca + pv.z * sa);
+          p.pos.set(c.x + pu.x * ca + pv.x * sa + pn.x * p.dh, c.y + pu.y * ca + pv.y * sa + pn.y * p.dh, c.z + pu.z * ca + pv.z * sa + pn.z * p.dh);
           // aparecen de adentro hacia afuera
           const grow = g.motion ? clamp((now - s.born - p.ring.r * 40) / 650, 0, 1) : 1;
           const k = (grow < 1 ? Math.max(0.001, easeOutBack(grow)) : 1) * Math.max(0.001, out);
           p.k = k;
-          const hov = this.hover === p ? 1.25 : 1;
-          this.iPlanets.put(p.pos, p.size * k * hov, p.col, p.seed);
+          const hov = this.hover === p ? (p.rock ? 1.6 : 1.25) : 1;
+          if (p.rock) {
+            // los asteroides dan tumbos, cada uno sobre su eje
+            this.rq.setFromAxisAngle(p.axis, g.motion ? t * p.spin : p.spin);
+            this.iRocks.put(p.pos, p.size * k * hov, p.col, p.seed, this.rq, p.stretch);
+          } else this.iPlanets.put(p.pos, p.size * k * hov, p.col, p.seed);
           if (p.ringQ) this.iRings.put(p.pos, p.size * k * hov, p.col, p.seed, p.ringQ);
-          let ga = p.status === 'added' || p.status === 'removed' ? 0.5 : 0.14;
+          let ga = p.status === 'added' || p.status === 'removed' ? 0.5 : p.rock ? 0 : 0.14;
           // el escáner: destella cuando la onda pasa por el planeta
           if (scanR != null) {
             const off = scanR - from.distanceTo(p.pos);
@@ -1415,6 +1545,7 @@
         }
       }
       this.iPlanets.end();
+      this.iRocks.end();
       this.iRings.end();
       this.glows.end();
       if (!this.sys && !this.old) this.orbits.visible = false;
@@ -1428,7 +1559,7 @@
       let best = null;
       let bestT = Infinity;
       for (const p of s.planets) {
-        const r = p.size * (p.k ?? 1) + 0.12;
+        const r = p.size * (p.k ?? 1) + (p.rock ? 0.2 : 0.12);
         if (ray.distanceSqToPoint(p.pos) > r * r) continue;
         const t = this.v.copy(p.pos).sub(ray.origin).dot(ray.direction);
         if (t > 0 && t < bestT && t < far) (bestT = t), (best = p);
@@ -1464,7 +1595,7 @@
       for (const p of s.planets) {
         if ((p.k ?? 0) < 0.6) continue;
         const d = cam.distanceTo(p.pos);
-        if (d > (scanR != null && from.distanceTo(p.pos) < scanR ? reach : 22)) continue;
+        if (d > (scanR != null && from.distanceTo(p.pos) < scanR ? reach : p.rock ? 9 : 22)) continue;
         const q = g.project(p.pos);
         if (q && q.x > 0 && q.x < g.W && q.y > 0 && q.y < g.H) cand.push({ p, d, x: q.x, y: q.y });
       }
@@ -1496,17 +1627,15 @@
       }
       for (let i = n; i < this.fileLabels.length; i++) if (this.fileLabels[i].style.display !== 'none') this.fileLabels[i].style.display = 'none';
 
-      // carpetas: el nombre sobre su cinturón, fijo en un punto de la órbita
+      // carpetas: su nombre por fuera de su primer planeta, que lo lleva consigo en la órbita
       let m = 0;
-      const { pu, pv } = this.basis(s.G);
-      for (const ring of s.rings) {
-        if (!ring.label || m >= MAX_DIR_LABELS) continue;
-        const at = this.v.copy(s.G.c).addScaledVector(pv, ring.r).addScaledVector(pu, 0);
+      for (const { p, text } of s.labels) {
+        if (m >= MAX_DIR_LABELS || (p.k ?? 0) < 0.6) continue;
+        const at = this.v.subVectors(p.pos, s.G.c).setLength(p.ring.r + p.size + 1.3).add(s.G.c);
         const d = cam.distanceTo(at);
         if (d > 40) continue;
         const q = g.project(at);
         if (!q || q.x < 0 || q.x > g.W || q.y < 0 || q.y > g.H) continue;
-        const text = ring.label + '/';
         const b = { x: q.x - 20, y: q.y - 8, w: Math.ceil(measure(text, SMALL_FONT) + 12), h: 16 };
         if (hit(b)) continue;
         boxes.push(b);

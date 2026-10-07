@@ -12,6 +12,8 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+  push: # TEMPORAL: probar el flujo antes de que llegue a master
+    branches: [claude/affectionate-brown-ukpmn6]
 
 permissions:
   contents: read

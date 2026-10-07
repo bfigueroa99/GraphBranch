@@ -25,7 +25,13 @@
    Entrar en una galaxia es una llegada, como al salir del salto a otro sistema: líneas de velocidad
    y un destello de su color, el cielo que cambia de golpe a ese color, un rótulo grande con su nombre
    que se decodifica letra a letra y sus datos (commits, planetas, asteroides, líneas cambiadas,
-   última actividad), una onda de escáner que va revelando los planetas y, con sonido, un acorde. */
+   última actividad), una onda de escáner que va revelando los planetas y, con sonido, un acorde.
+
+   Y una vez dentro se ve el sistema entero: los mundos principales (los planetas más grandes) llevan
+   un marcador en pantalla con su nombre, qué clase de mundo son y a qué distancia están, visible desde
+   cualquier punto del sistema; el rótulo de la galaxia se despliega en un panel con la lista de esos
+   mundos (pasar el puntero por uno lo resalta; un clic lleva hasta él); y al entrar con doble clic o
+   desde la lista de ramas la cámara se acomoda en un mirador desde donde caben todas las órbitas. */
 (function (GB) {
   'use strict';
   const { U, i18n } = GB;
@@ -54,7 +60,12 @@
   const SCAN_RANGE = 90;
   const ARRIVE_MS = 5200; // lo que dura el rótulo de llegada
   const ARRIVE_AGAIN = 40000; // la misma galaxia no vuelve a anunciarse antes de esto
+  const MAX_WORLDS = 8; // mundos principales: los planetas más grandes, con marcador y en el panel del sistema
+  const SYS_OPEN_MS = 11000; // el panel del sistema se abre solo al llegar y se pliega pasado esto
+  const VIEW_ELEV = 0.5; // el mirador del sistema: tanto por encima del plano de las órbitas (radianes)
   const GLYPHS = '▓▒░/\\|_-+<>=*#%01'; // lo que muestra el nombre antes de decodificarse
+  const WORLD_FONT = '600 12px "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace'; // para medir los marcadores
+  const WORLD_SUB_FONT = '500 10px "Instrument Sans", system-ui, sans-serif';
   const RETRY_MS = 60000;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const easeOutBack = (p) => 1 + 2.2 * Math.pow(p - 1, 3) + 1.2 * Math.pow(p - 1, 2);
@@ -110,6 +121,13 @@
     const h = h01(ext || '?') * 360; // tipos raros: un tono estable por extensión
     return `hsl(${h.toFixed(0)}, 45%, 62%)`;
   }
+  /** Qué clase de mundo es un planeta, por su semilla (la misma cuenta que hace el sombreador de su superficie). */
+  function kindOf(p) {
+    if (p.rock) return 'asteroid';
+    const k = (p.seed * 7.31) % 1;
+    return k < 0.36 ? 'gas' : k < 0.78 ? 'ocean' : 'rock';
+  }
+  const KIND_KEY = { gas: 'galaxy.kind.gas', ocean: 'galaxy.kind.ocean', rock: 'galaxy.kind.rock', asteroid: 'galaxy.kind.asteroid' };
 
   /* ---------- sombreadores ---------- */
 
@@ -529,6 +547,12 @@
       this.arrival = null;
       this.sys = null; // sistema planetario a la vista
       this.old = null; // el que se va
+      this.outerOf = new Map(); // galaxia → radio de su última órbita (de la última vez que se vio su sistema)
+      this.parked = null; // la cámara fue al mirador de esta galaxia y nadie la movió: { name, at }
+      this.sysOpen = false; // el panel del sistema, desplegado
+      this.sysPin = null; // el usuario lo abrió o cerró a mano (manda sobre el pliegue automático)
+      this.sysOpenAt = 0;
+      this.sysCloseAt = 0;
       this.scanAt = 0;
       this.version = 0;
       this.group = new THREE.Group();
@@ -765,6 +789,9 @@
       if (!auto) {
         this.scanSoon = now + (g.motion ? 650 : 0); // la onda sale cuando el destello ya pasó
         g.opts.onExplore?.({ kind: 'enter', name: G.name });
+        // el panel del sistema se despliega cuando pasó el destello y se pliega solo a los segundos
+        this.sysOpenAt = now + (g.motion ? 1200 : 0);
+        this.sysCloseAt = this.sysOpenAt + SYS_OPEN_MS;
       }
       this.showArrival(G, now);
     }
@@ -867,12 +894,44 @@
     }
 
     buildUI() {
+      // el rótulo de la galaxia en la que se está, que se despliega en el panel del sistema: sus mundos principales
       const card = (this.card = document.createElement('div'));
       card.className = 'gx-card';
       card.hidden = true;
-      card.setAttribute('role', 'status');
-      card.innerHTML = '<span class="gx-dot" aria-hidden="true"></span><span class="gx-text"><span class="gx-name"></span><span class="gx-sub"></span></span>';
+      card.innerHTML =
+        '<button type="button" class="gx-head" aria-expanded="false"><span class="gx-dot" aria-hidden="true"></span><span class="gx-text" aria-live="polite"><span class="gx-name"></span><span class="gx-sub"></span></span><span class="gx-chev" aria-hidden="true"></span></button><ul class="gx-worlds"></ul>';
       this.g.wrap.appendChild(card);
+      const head = card.querySelector('.gx-head');
+      head.addEventListener('click', () => {
+        this.g.touch();
+        this.setSysOpen(!this.sysOpen);
+        this.sysPin = this.sysOpen; // lo que elige el usuario queda, mientras esté en esta galaxia
+      });
+      const worlds = card.querySelector('.gx-worlds');
+      const rowOf = (ev) => {
+        const el = ev.target.closest?.('.gx-world');
+        return el && this.sys ? this.sys.planets[el.__i] : null;
+      };
+      worlds.addEventListener('click', (ev) => {
+        const p = rowOf(ev);
+        if (p) this.visit(p);
+      });
+      worlds.addEventListener('pointerover', (ev) => {
+        const p = rowOf(ev);
+        if (!p) return;
+        this.setHover(p);
+        if (!this.g.pinned && !this.g.pinFile) this.g.showFileTip(p, false);
+      });
+      worlds.addEventListener('pointerout', (ev) => {
+        const el = ev.target.closest?.('.gx-world');
+        if (!el || el.contains(ev.relatedTarget)) return;
+        if (this.hover && this.hover === this.sys?.planets[el.__i]) this.setHover(null);
+        if (!this.g.pinned && !this.g.pinFile && this.g.tipFile) this.g.hideTip();
+      });
+      // "Visitar" en la ficha de un planeta: la cámara vuela hasta él
+      this.g.tip.addEventListener('click', (ev) => {
+        if (ev.target.closest?.('.gx-visit') && this.g.tipFile) this.visit(this.g.tipFile);
+      });
       // llegada: líneas de velocidad y destello, y el rótulo con el nombre de la galaxia
       const warp = document.createElement('div');
       warp.className = 'gx-warp';
@@ -885,6 +944,8 @@
       this.el = {
         name: card.querySelector('.gx-name'),
         sub: card.querySelector('.gx-sub'),
+        head,
+        worlds,
         warp,
         arrive,
         aKick: arrive.querySelector('.gx-a-k'),
@@ -894,10 +955,11 @@
       };
       this.fileLabels = []; // botones de archivo, se reusan
       this.dirLabels = [];
-      // un oyente para todas las etiquetas de archivo
+      this.worldLabels = []; // marcadores de los mundos principales
+      // un oyente para todas las etiquetas de archivo y los marcadores
       const layer = this.g.labelLayer;
       const planetOf = (ev) => {
-        const el = ev.target.closest?.('.g3-file');
+        const el = ev.target.closest?.('.g3-file, .g3-world');
         return el && this.sys ? this.sys.planets[el.__i] : null;
       };
       layer.addEventListener('click', (ev) => {
@@ -937,6 +999,10 @@
       this.card.hidden = true;
       this.streaks.visible = false;
       this.arrival = null;
+      this.parked = null;
+      this.setSysOpen(false);
+      this.sysPin = null;
+      this.sysOpenAt = this.sysCloseAt = 0;
       this.el.arrive.classList.remove('show');
       if (!on) {
         this.dropSystem(true);
@@ -1226,6 +1292,18 @@
       }
       if (this.stepStreaks(dt, now)) changed = true;
       this.stepArrival(now);
+      // el panel del sistema: se abre al llegar y se pliega solo, salvo que el usuario lo haya tocado o lo esté mirando
+      if (this.sysOpenAt && now >= this.sysOpenAt) {
+        this.sysOpenAt = 0;
+        if (this.sysPin == null && this.sys && this.roomy()) this.setSysOpen(true);
+      }
+      if (this.sysCloseAt && now >= this.sysCloseAt) {
+        if (this.card.matches(':hover')) this.sysCloseAt = now + 2000;
+        else {
+          this.sysCloseAt = 0;
+          if (this.sysPin == null) this.setSysOpen(false);
+        }
+      }
       // al llegar, la nebulosa se enciende un momento
       const flare = this.warpAt ? clamp(1 - (now - this.warpAt) / 2600, 0, 1) : 0;
       const glow = 1 + 0.8 * flare * flare;
@@ -1336,9 +1414,112 @@
       else if (best) this.ensureFiles(best, now);
     }
 
-    /** Desde qué distancia de su núcleo se "entra" en una galaxia (y aparecen sus planetas). */
+    /** Desde qué distancia de su núcleo se "entra" en una galaxia (y aparecen sus planetas). Si ya se
+        conoce su sistema, desde donde se lo ve entero: el mirador queda dentro. */
     enterDist(G) {
-      return G.R * 1.6 + 16 + (this.focus === G ? 6 : 0);
+      const outer = this.outerOf.get(G.name) || 0;
+      return Math.max(G.R * 1.6 + 16, outer * 1.5 + 8) + (this.focus === G ? 6 : 0);
+    }
+
+    /* ---------- el mirador del sistema ---------- */
+
+    /** Desde dónde se ve el sistema entero: fuera de la última órbita, algo por encima de su plano y del
+        lado desde el que venía la cámara, mirando al núcleo. Deja la dirección en `out` y devuelve la
+        distancia al núcleo (con la que caben todas las órbitas en el cuadro, sin salirse de la galaxia). */
+    vantage(G, out) {
+      const g = this.g;
+      const outer = this.outerOf.get(G.name) || G.R * 2.2 + 6;
+      const { pu, pv, pn } = this.basis(G);
+      const d = this.v.subVectors(g.camera.position, G.c);
+      let x = d.dot(pu);
+      let y = d.dot(pv);
+      const len = Math.hypot(x, y);
+      if (len < 1e-3) (x = 1), (y = 0);
+      else (x /= len), (y /= len);
+      const side = d.dot(pn) >= 0 ? 1 : -1; // por encima o por debajo del plano, según venía
+      out.copy(pu).multiplyScalar(x).addScaledVector(pv, y).multiplyScalar(Math.cos(VIEW_ELEV)).addScaledVector(pn, Math.sin(VIEW_ELEV) * side).normalize();
+      const tan = Math.tan((g.camera.fov * Math.PI) / 360);
+      const aspect = g.W && g.H ? g.W / g.H : 1.6;
+      // a lo ancho se ve la órbita entera; a lo alto, aplastada por la inclinación
+      const fit = Math.max((outer + 1.5) / (tan * aspect), ((outer + 1.5) * Math.sin(VIEW_ELEV) + 2) / tan) * 1.15;
+      return clamp(fit, G.R * 2 + 9, this.enterDist(G) - 3);
+    }
+
+    /** La cámara acaba de ir al mirador de esta galaxia: si llegan sus archivos antes de que nadie la
+        mueva, se vuelve a encuadrar con el tamaño real del sistema. */
+    park(G) {
+      this.parked = { name: G.name, at: performance.now() };
+    }
+
+    reframe(G) {
+      const g = this.g;
+      const p = this.parked;
+      if (!p || p.name !== G.name || g.lastInteract > p.at || g.flight?.on || g.ride || g.director?.rolling || g.following) return;
+      const dir = this.v2 || (this.v2 = new THREE.Vector3());
+      const dist = this.vantage(G, dir);
+      const t = G.c.clone();
+      g.flyTo(t, t.clone().addScaledVector(dir, dist), 1300);
+      p.at = performance.now();
+    }
+
+    /** Volar hasta un planeta (desde la lista del sistema o su ficha): de cerca, desde el lado en que se estaba. */
+    visit(p) {
+      const g = this.g;
+      g.touch();
+      g.flight?.exit();
+      if (g.ride) g.endRide();
+      g.focusPoint(p.pos, p.rock ? 2.2 : p.size * 5 + 2.5);
+      g.showFileTip(p, true);
+    }
+
+    /** Despliega o pliega el panel del sistema (la lista de los mundos principales). */
+    setSysOpen(open) {
+      open = !!open && !!this.sys;
+      if (open === this.sysOpen) return;
+      this.sysOpen = open;
+      this.card.classList.toggle('open', open);
+      this.el.head.setAttribute('aria-expanded', String(open));
+      this.g.needsRender = true;
+    }
+
+    kindText(p) {
+      return tr(KIND_KEY[kindOf(p)]);
+    }
+
+    /** La lista del panel: los mundos principales (punto de su color, nombre, clase y tamaño o líneas) y cuántos más hay. */
+    renderWorlds() {
+      const s = this.sys;
+      const ul = this.el.worlds;
+      if (!s) {
+        ul.replaceChildren();
+        this.setSysOpen(false);
+        return;
+      }
+      const frag = document.createDocumentFragment();
+      for (const p of s.worlds) {
+        const li = document.createElement('li');
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'gx-world';
+        b.__i = p.i;
+        b.style.setProperty('--c', p.hex);
+        b.title = p.path;
+        let stat = '';
+        if (p.status) stat = (p.add ? `+${i18n.fmtNum(p.add)}` : '') + (p.add && p.del ? ' ' : '') + (p.del ? `−${i18n.fmtNum(p.del)}` : '');
+        else if (p.bytes != null) stat = p.bytes < 1000 ? i18n.fmtUnit(p.bytes, 'byte') : p.bytes < 1e6 ? i18n.fmtUnit(Math.round(p.bytes / 100) / 10, 'kilobyte') : i18n.fmtUnit(Math.round(p.bytes / 1e5) / 10, 'megabyte');
+        b.innerHTML = `<span class="gx-w-dot" aria-hidden="true"></span><span class="gx-w-name">${U.esc(p.name)}</span><span class="gx-w-kind">${U.esc(this.kindText(p))}</span><span class="gx-w-stat">${U.esc(stat)}</span>`;
+        li.appendChild(b);
+        frag.appendChild(li);
+      }
+      const rocks = s.planets.filter((p) => p.rock).length;
+      const rest = s.planets.length - rocks - s.worlds.length;
+      if (rest > 0 || rocks > 0) {
+        const li = document.createElement('li');
+        li.className = 'gx-rest';
+        li.textContent = [rest > 0 ? '+' + tr('galaxy.planets', { n: rest }) : '', rocks > 0 ? tr('galaxy.asteroids', { n: rocks }) : ''].filter(Boolean).join(' · ');
+        frag.appendChild(li);
+      }
+      ul.replaceChildren(frag);
     }
 
     fillStars(list) {
@@ -1389,6 +1570,10 @@
     setFocus(G, now = performance.now()) {
       const prev = this.focus;
       this.focus = G;
+      if (G?.name !== prev?.name) {
+        this.sysPin = null; // en otra galaxia, el panel vuelve a decidir solo
+        if (!G) this.sysOpenAt = this.sysCloseAt = 0;
+      }
       if (G && G.name !== prev?.name) this.arrive(G, now);
       if (!G) {
         this.dropSystem();
@@ -1413,10 +1598,18 @@
       this.sys = this.buildSystem(G, data);
       if (same) this.sys.born -= 5000;
       this.dirty = true;
+      this.renderWorlds();
+      if (!same) this.reframe(G); // la cámara, aparcada en el mirador: ahora que se sabe el tamaño del sistema, que quepa entero
       if (this.arrival?.name === G.name) {
         this.renderArrival(); // llegaron sus archivos: el rótulo suma planetas y asteroides
         if (!same && !this.scanSoon && performance.now() - this.arrival.t0 < 4000 && !this.g.director?.rolling) this.pulseScan(true);
       }
+      if (!same && this.sysOpenAt === 0 && this.sysCloseAt > performance.now() && this.sysPin == null && this.roomy()) this.setSysOpen(true); // llegaron tarde: el panel igual se abre
+    }
+
+    /** Si hay lugar para que el panel del sistema se abra solo (en un celular taparía la vista: ahí se abre a mano). */
+    roomy() {
+      return this.g.W >= 560 && this.g.H >= 420;
     }
 
     ensureFiles(G, now) {
@@ -1579,8 +1772,12 @@
           p.ringQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2 + ((p.seed * 13.7) % 1 - 0.5) * 1.1, ((p.seed * 29.3) % 1) * Math.PI * 2, 0));
         }
       });
-      const sys = { name: G.name, sha: G.sha, G, data, planets, rings, labels, total, born: performance.now(), dying: 0, outer: rad };
+      // los mundos principales: los planetas más grandes, con marcador en pantalla y en el panel del sistema
+      const worlds = [...big].sort((a, b) => b.weight - a.weight || (a.path < b.path ? -1 : 1)).slice(0, MAX_WORLDS);
+      for (const p of worlds) p.world = true;
+      const sys = { name: G.name, sha: G.sha, G, data, planets, rings, labels, worlds, total, born: performance.now(), dying: 0, outer: rad };
       for (const p of planets) p.sys = sys;
+      this.outerOf.set(G.name, rad);
       this.paintSystem(sys);
       this.writeOrbits(sys);
       return sys;
@@ -1675,6 +1872,7 @@
       this.dirty = true;
       if (!this.old) this.orbits.visible = false;
       this.hideLabels();
+      this.renderWorlds();
     }
 
     /** Mueve los planetas por sus órbitas (con movimiento) y los escribe en su lote. */
@@ -1755,6 +1953,7 @@
     hideLabels() {
       for (const el of this.fileLabels) if (el.style.display !== 'none') el.style.display = 'none';
       for (const el of this.dirLabels) if (el.style.display !== 'none') el.style.display = 'none';
+      for (const el of this.worldLabels) if (el.style.display !== 'none') el.style.display = 'none';
     }
 
     /** Nombres de los planetas más cercanos que no se pisan, y de las carpetas de cada cinturón. */
@@ -1763,28 +1962,72 @@
       const s = this.sys;
       if (!s || !this.on) return this.hideLabels();
       const cam = g.camera.position;
+      const boxes = [];
+      const hit = (b) => boxes.some((o) => b.x < o.x + o.w + 4 && o.x < b.x + b.w + 4 && b.y < o.y + o.h + 2 && o.y < b.y + b.h + 2);
+      const { measure, SMALL_FONT } = GB.graphShared;
+      const focal = g.H / (2 * Math.tan((g.camera.fov * Math.PI) / 360)); // píxeles por unidad a distancia 1
+
+      // los mundos principales llevan su marcador (nombre, clase y distancia) desde cualquier punto del sistema
+      const marked = new Set();
+      const wreach = s.outer * 2.6 + 40;
+      const wc = [];
+      for (const p of s.worlds) {
+        if ((p.k ?? 0) < 0.6) continue;
+        const d = cam.distanceTo(p.pos);
+        if (d > wreach) continue;
+        const q = g.project(p.pos);
+        if (q && q.x > -20 && q.x < g.W + 20 && q.y > 0 && q.y < g.H + 40) wc.push({ p, d, x: q.x, y: q.y });
+      }
+      wc.sort((a, b) => a.d - b.d);
+      let m = 0;
+      for (const c of wc) {
+        const p = c.p;
+        const name = U.truncate(p.name, 26);
+        const sub = `${this.kindText(p)} · ${g.world ? g.world.fmtDist(Math.max(0, c.d - p.size)) : Math.round(c.d)}`;
+        const w = Math.ceil(Math.max(measure(name, WORLD_FONT), measure(sub, WORLD_SUB_FONT) * 1.06) + 18);
+        const lift = Math.min(70, (p.size * (p.k ?? 1) * focal) / Math.max(1, c.d)) + 6 + 14; // sobre el planeta, con la guía
+        const b = { x: c.x - w / 2, y: c.y - lift - 44, w, h: 44 + 14 };
+        if (hit(b)) continue;
+        boxes.push(b);
+        marked.add(p);
+        const el = this.worldLabels[m] || this.makeLabel(this.worldLabels, 'g3-world');
+        el.__i = p.i;
+        if (el.__t !== name) {
+          el.__t = name;
+          el.firstChild.textContent = name;
+          el.title = p.path;
+        }
+        if (el.__s !== sub) {
+          el.__s = sub;
+          el.lastChild.textContent = sub;
+        }
+        el.style.setProperty('--c', p.hex);
+        el.style.display = '';
+        el.style.opacity = clamp(1.3 - c.d / wreach, 0.5, 1).toFixed(2);
+        el.style.transform = `translate(${Math.round(c.x)}px,${Math.round(c.y - lift)}px) translate(-50%,-100%)`;
+        m++;
+      }
+      for (let i = m; i < this.worldLabels.length; i++) if (this.worldLabels[i].style.display !== 'none') this.worldLabels[i].style.display = 'none';
+
       const cand = [];
       // con el escáner, se ven los nombres de todos los planetas que alcanzó la onda
       const scanR = this.scanRadius(performance.now());
       const from = this.scanning?.from;
       const reach = scanR != null ? SCAN_RANGE : 22;
       for (const p of s.planets) {
-        if ((p.k ?? 0) < 0.6) continue;
+        if ((p.k ?? 0) < 0.6 || marked.has(p)) continue;
         const d = cam.distanceTo(p.pos);
         if (d > (scanR != null && from.distanceTo(p.pos) < scanR ? reach : p.rock ? 9 : 22)) continue;
         const q = g.project(p.pos);
         if (q && q.x > 0 && q.x < g.W && q.y > 0 && q.y < g.H) cand.push({ p, d, x: q.x, y: q.y });
       }
       cand.sort((a, b) => a.d - b.d);
-      const boxes = [];
-      const hit = (b) => boxes.some((o) => b.x < o.x + o.w + 4 && o.x < b.x + b.w + 4 && b.y < o.y + o.h + 2 && o.y < b.y + b.h + 2);
       let n = 0;
-      const { measure, SMALL_FONT } = GB.graphShared;
       const most = scanR != null ? MAX_FILE_LABELS * 3 : MAX_FILE_LABELS;
       for (const c of cand) {
         if (n >= most) break;
         const name = U.truncate(c.p.name, 28);
-        const off = 6 + c.p.size * (g.H / (2 * Math.tan((g.camera.fov * Math.PI) / 360))) / Math.max(1, c.d); // al costado del planeta
+        const off = 6 + (c.p.size * focal) / Math.max(1, c.d); // al costado del planeta
         const b = { x: c.x + Math.min(off, 60), y: c.y - 9, w: Math.ceil(measure(name, SMALL_FONT) + 18), h: 18 };
         if (hit(b)) continue;
         boxes.push(b);
@@ -1804,7 +2047,7 @@
       for (let i = n; i < this.fileLabels.length; i++) if (this.fileLabels[i].style.display !== 'none') this.fileLabels[i].style.display = 'none';
 
       // carpetas: su nombre por fuera de su primer planeta, que lo lleva consigo en la órbita
-      let m = 0;
+      m = 0;
       for (const { p, text } of s.labels) {
         if (m >= MAX_DIR_LABELS || (p.k ?? 0) < 0.6) continue;
         const at = this.v.subVectors(p.pos, s.G.c).setLength(p.ring.r + p.size + 1.3).add(s.G.c);
@@ -1829,9 +2072,11 @@
     }
 
     makeLabel(pool, cls) {
-      const el = document.createElement(cls === 'g3-file' ? 'button' : 'span');
-      if (cls === 'g3-file') el.type = 'button';
+      const button = cls !== 'g3-dir';
+      const el = document.createElement(button ? 'button' : 'span');
+      if (button) el.type = 'button';
       el.className = cls;
+      if (cls === 'g3-world') el.innerHTML = '<span class="g3-w-name"></span><span class="g3-w-sub"></span>';
       el.style.display = 'none';
       this.g.labelLayer.appendChild(el);
       pool.push(el);
@@ -1859,13 +2104,15 @@
         if (data.truncated) sub += ' +';
       }
       card.hidden = false;
-      card.className = `gx-card ${G.color}`;
+      card.className = `gx-card ${G.color}${this.sysOpen ? ' open' : ''}`;
+      this.el.head.title = tr('galaxy.system');
       if (this.el.name.textContent !== G.name) this.el.name.textContent = G.name;
       if (this.el.sub.textContent !== sub) this.el.sub.textContent = sub;
     }
 
     relocalize() {
       this.renderCard();
+      this.renderWorlds();
       if (this.arrival) {
         this.el.aKick.textContent = tr(this.arrival.found ? 'galaxy.discovered' : 'galaxy.entering');
         this.renderArrival();
@@ -1874,7 +2121,7 @@
 
     /** Detalle de un archivo (el planeta) para la ficha. */
     tipHTML(p, pin) {
-      const meta = [];
+      const meta = [U.esc(this.kindText(p))];
       if (p.status) {
         const lines = (p.add ? ` <span class="fs-add">+${i18n.fmtNum(p.add)}</span>` : '') + (p.del ? ` <span class="fs-del">−${i18n.fmtNum(p.del)}</span>` : '');
         meta.push(`<span class="fs fs-${U.esc(p.status)}">${U.esc(tr('file.' + (['added', 'removed', 'renamed', 'copied'].includes(p.status) ? p.status : 'modified')))}</span>${lines}`);
@@ -1885,7 +2132,7 @@
         ${p.dir ? `<p class="tip-meta"><code>${U.esc(p.dir)}/</code></p>` : ''}
         ${meta.length ? `<p class="tip-meta">${meta.join(' · ')}</p>` : ''}
         ${p.from ? `<p class="tip-extra"><span>${i18n.html('file.renamedFrom', { path: p.from })}</span></p>` : ''}
-        ${pin && p.url ? `<div class="tip-actions"><a class="tip-link" href="${U.esc(p.url)}" target="_blank" rel="noopener">${U.esc(tr('file.open'))} ↗</a></div>` : ''}`;
+        ${pin ? `<div class="tip-actions"><button type="button" class="tip-ride gx-visit">${U.esc(tr('galaxy.visit'))}</button>${p.url ? `<a class="tip-link" href="${U.esc(p.url)}" target="_blank" rel="noopener">${U.esc(tr('file.open'))} ↗</a>` : ''}</div>` : ''}`;
     }
 
     clear() {
@@ -1894,6 +2141,7 @@
       this.posOf = new Map();
       this.galOf = new Map();
       this.focus = null;
+      this.parked = null;
       this.dropSystem(true);
       this.renderCard();
       this.near = [];
@@ -1906,6 +2154,7 @@
     reset() {
       this.cache.clear();
       this.lastData.clear();
+      this.outerOf.clear();
       this.clear();
     }
   }

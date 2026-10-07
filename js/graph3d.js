@@ -1320,14 +1320,17 @@
       if (!h) return false;
       const G = this.galaxy && this.gx.galaxyOf(name);
       if (G) {
-        // la galaxia entera, casi de frente, desde el lado donde ya estaba la cámara
+        // entrar en la galaxia: su sistema entero desde el mirador (fuera de la última órbita, algo por
+        // encima de su plano, del lado donde ya estaba la cámara); si sus archivos llegan después, se reencuadra
         this.touch();
         this.flight?.exit();
         if (this.ride) this.endRide();
         this.setFollowing(false);
         const t = G.c.clone();
-        const dir = this.tmpA.copy(this.camera.position).sub(t).normalize().multiplyScalar(0.5).addScaledVector(G.w, 0.85).normalize();
-        this.flyTo(t, t.clone().addScaledVector(dir, G.R * 2 + 9));
+        const dir = new THREE.Vector3();
+        const dist = this.gx.vantage(G, dir);
+        this.flyTo(t, t.clone().addScaledVector(dir, dist), 1400);
+        this.gx.park(G);
         this.flash(h);
         return true;
       }
@@ -1368,13 +1371,16 @@
         const r = this.canvas.getBoundingClientRect();
         this.openAt(ev.clientX - r.left, ev.clientY - r.top);
       });
-      // doble clic: volar de cerca hasta ese commit
+      // doble clic: volar de cerca hasta ese commit (en el espacio, si es de otra galaxia, entrar en ella)
       this.canvas.addEventListener('dblclick', (ev) => {
         if (this.flight?.on) return;
         const r = this.canvas.getBoundingClientRect();
         const hit = this.pickAny(ev.clientX - r.left, ev.clientY - r.top);
-        if (hit?.sha) this.focusSha(hit.sha, 7);
-        else if (hit?.file) this.focusPoint(hit.file.pos, 6);
+        if (hit?.sha) {
+          const G = this.galaxy ? this.gx.galOf.get(hit.sha) : null;
+          if (G && this.gx.focus !== G && this.heads.has(G.name)) this.focusBranch(G.name);
+          else this.focusSha(hit.sha, 7);
+        } else if (hit?.file) this.focusPoint(hit.file.pos, 6);
       });
       this.canvas.addEventListener(
         'wheel',

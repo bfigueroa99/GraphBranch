@@ -133,6 +133,7 @@ js/feed.js            panel de actividad, avisos, sonido y notificaciones
 js/app.js             conecta todo
 tools/check-i18n.mjs  verifica las traducciones contra el inglés
 tools/smoke.mjs       prueba de humo: abre la demo en Chromium y recorre lo principal
+tools/*.test.mjs      pruebas de la lógica contra una API de GitHub simulada (`node --test`)
 ```
 
 ## Límites conocidos

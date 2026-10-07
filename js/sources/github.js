@@ -146,6 +146,8 @@
       } catch (err) {
         if (!this.running) return;
         this.failures++;
+        // el ciclo se cortó: el feed se vuelve a pedir entero, así sus eventos aún no vistos no se pierden tras un 304
+        this.etags.delete('events');
         const fatal = !this.data.loaded && (err.kind === 'notfound' || err.kind === 'auth');
         if (err.kind === 'rate') delay = Math.max(5000, err.resetAt - Date.now() + 2000);
         else delay = Math.min(300000, 5000 * 2 ** Math.min(this.failures, 6));
@@ -300,6 +302,7 @@
     async poll(initial) {
       this.cost = 0;
       this.gqlCost = 0;
+      this.seenNow = []; // eventos leídos en este ciclo: se dan por vistos solo si el ciclo termina bien
       const acts = [];
       const quiet = initial || this.reseed;
       if (initial) await this.loadRepo(acts);
@@ -322,6 +325,8 @@
       if (this.mode === 'events' && this.due('count')) await this.countBranches();
 
       await this.completePushes(acts);
+      for (const id of this.seenNow) this.seenEvents.add(id);
+      if (this.seenEvents.size > 5000) this.seenEvents = new Set([...this.seenEvents].slice(-2000));
       this.data.mode = this.mode;
       this.reseed = false;
       this.gc();
@@ -657,7 +662,7 @@
       const fresh = (res.data || []).filter((ev) => !this.seenEvents.has(ev.id)).reverse(); // más antiguos primero
       await this.enrichPulls(fresh);
       for (const ev of fresh) {
-        this.seenEvents.add(ev.id);
+        this.seenNow.push(ev.id);
         await this.applyEvent(ev, acts);
       }
     }
@@ -999,7 +1004,7 @@
       await this.enrichPulls((res.data || []).filter((ev) => !this.seenEvents.has(ev.id) && (initial || !this.coveredLive(ev))));
       for (const ev of res.data || []) {
         if (this.seenEvents.has(ev.id)) continue;
-        this.seenEvents.add(ev.id);
+        this.seenNow.push(ev.id);
         const p = ev.payload || {};
         let ref = null;
         if (ev.type === 'PushEvent' && p.ref?.startsWith('refs/heads/')) ref = p.ref.slice(11);

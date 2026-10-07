@@ -48,8 +48,8 @@ GB.i18n.define('cs', {
   'stats.branches.only': 'jediná v repozitáři',
   'stats.branches.all': 'všechny v repozitáři',
   'stats.branches.recent': 's nedávnou aktivitou, z {total}',
-  'stats.branches.top': 'nejaktivnější z {total}',
   'stats.branches.of': 'z {total} v repozitáři',
+  'stats.branches.loading': 'z {total} · načítám zbytek',
   'stats.branches.matching': {
     one: '{n} z {total} odpovídá „{filter}“',
     few: '{n} z {total} odpovídají „{filter}“',
@@ -143,7 +143,7 @@ GB.i18n.define('cs', {
   'graph.aria2d': 'Graf větví a commitů',
   'graph.aria3d': '3D zobrazení větví a commitů',
 
-  'banner.events': 'Počet větví v tomto repozitáři: {total}. Bez tokenu GraphBranch vidí jen ty, které se objeví ve feedu událostí GitHubu, jenž přichází s několikaminutovým zpožděním. S tokenem uvidíte nejaktivnější větve téměř v reálném čase.',
+  'banner.events': 'Počet větví v tomto repozitáři: {total}. Bez tokenu GraphBranch vidí jen ty, které se objeví ve feedu událostí GitHubu, jenž přichází s několikaminutovým zpožděním. S tokenem uvidíte všechny téměř v reálném čase.',
   'banner.anon': 'Bez tokenu GitHub povoluje 60 požadavků za hodinu: zobrazení se obnovuje každých pár minut.',
   'banner.add': 'Přidat token',
 
@@ -293,9 +293,8 @@ GB.i18n.define('cs', {
   'settings.show': 'Zobrazit',
   'settings.hide': 'Skrýt',
   'settings.tokenHelp': 'Bez tokenu GitHub povoluje 60 požadavků za hodinu. S tokenem <em>fine-grained</em> jen pro čtení (oprávnění Metadata, Contents a Pull requests) se zobrazení obnovuje každých 10 sekund, funguje s repozitáři s tisíci větvemi a uvidíte i soukromé repozitáře. Token se ukládá jen v tomto prohlížeči a odesílá se pouze na api.github.com.',
-  'settings.maxBranches': 'Počet nejaktivnějších větví k zobrazení',
   'settings.depth': 'Commitů na větev',
-  'settings.branchesHelp': 'U velkých repozitářů GraphBranch nezobrazuje všechny větve: ukáže výchozí větev, ty, které připnete (klikněte na větev → <strong>Připnout</strong>), a větve s nejnovějšími commity. Pomocí filtru grafu se zaměříte na prefix, například <code>release/</code>.',
+  'settings.branchesHelp': 'GraphBranch zobrazuje všechny větve repozitáře, nejaktivnější nejblíže výchozí větvi. U velkých repozitářů se objevují postupně, nejaktivnější jako první. Připnuté větve (klikněte na větev → <strong>Připnout</strong>) jsou hned pod výchozí větví, i když je zapnutý filtr. Pomocí filtru grafu se zaměříte na prefix, například <code>release/</code>.',
   'settings.clearToken': 'Smazat token',
   'settings.cancel': 'Zrušit',
   'settings.save': 'Uložit a znovu připojit',

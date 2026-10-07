@@ -5,12 +5,15 @@
    espiral (girasol), las más activas más cerca del tronco, así caben decenas
    de ramas sin taparse. Recibe el mismo layout que la vista 2D.
 
-   Rendimiento: los commits y las aristas rectas se dibujan con InstancedMesh
-   (unas pocas llamadas de dibujo aunque haya miles), los halos son cuadrados
-   instanciados y solo las curvas de bifurcación y merge tienen malla propia.
-   Las matrices se reescriben solo mientras algo se mueve; en reposo cada
-   cuadro solo avanza los uniformes de los efectos (pulsos, polvo, estrellas)
-   y se dibuja a ~30 fps, o nada si el sistema pide reducir el movimiento. */
+   Rendimiento: los commits y todas las aristas se dibujan con InstancedMesh
+   (unas pocas llamadas de dibujo aunque haya miles de ramas): las curvas de
+   bifurcación y merge son tramos rectos instanciados, más densos donde la
+   curva dobla, y las líneas punteadas van todas en un solo objeto. Los halos
+   son cuadrados instanciados. Las matrices se reescriben solo mientras algo
+   se mueve; en reposo cada cuadro solo avanza los uniformes de los efectos
+   (pulsos, polvo, estrellas) y se dibuja a ~30 fps, o nada si el sistema pide
+   reducir el movimiento. Las etiquetas de rama son HTML: se crean al
+   mostrarse y, con muchas ramas, solo se ven las más cercanas que no se pisan. */
 (function (GB) {
   'use strict';
   const { U, i18n } = GB;
@@ -29,6 +32,9 @@
   const AMBIENT_MS = 31; // en reposo, los efectos se dibujan a ~30 fps
   const MAX_PIXELS = 4.6e6; // tope de píxeles del lienzo (pantallas 4K a pantalla completa)
   const SPIN_SPEED = 0.037; // rad/s del giro lento
+  const CURVE_SEGS = 18; // tramos de una curva lejana (las cortas, menos)
+  const MAX_LABELS = 160; // etiquetas de rama a la vez, como mucho
+  const FADE_MAX = 60; // hasta tantas ramas a la vista las tapadas se atenúan; con más, se ocultan
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const ease = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
   const easeOut = (p) => 1 - Math.pow(1 - p, 3);
@@ -251,6 +257,13 @@
 
   const nextCap = (n) => Math.max(64, 2 ** Math.ceil(Math.log2(Math.max(1, n))));
 
+  /** Marca para subir a la GPU solo los primeros `count` valores del atributo. */
+  function upload(attr, count) {
+    attr.updateRange.offset = 0;
+    attr.updateRange.count = Math.max(1, count);
+    attr.needsUpdate = true;
+  }
+
   /** InstancedMesh que crece según haga falta. Se rellena entero en cada pasada: begin(n), point/segment…, end(). */
   class Instances {
     constructor(parent, geo, mat) {
@@ -301,6 +314,7 @@
 
     /** Esfera o toro: escala uniforme, sin rotación. */
     point(x, y, z, s, col) {
+      if (this.n >= this.cap) return;
       const m = this.m;
       const o = this.n * 16;
       m.fill(0, o, o + 16);
@@ -312,16 +326,24 @@
       this.color(col);
     }
 
-    /** Tubo recto de a a b con radio r (el cilindro unitario va de z = 0 a z = 1). */
-    segment(ax, ay, az, bx, by, bz, r, col) {
+    /** Tubo recto de a a b con radio r (el cilindro unitario va de z = 0 a z = 1), alargado `ext`
+        por cada punta: así los tramos de una curva se solapan y no dejan huecos en los codos. */
+    segment(ax, ay, az, bx, by, bz, r, col, ext = 0) {
+      if (this.n >= this.cap) return;
       let dx = bx - ax;
       let dy = by - ay;
       let dz = bz - az;
-      const len = Math.hypot(dx, dy, dz);
+      let len = Math.hypot(dx, dy, dz);
       if (len < 1e-4) return;
       dx /= len;
       dy /= len;
       dz /= len;
+      if (ext) {
+        ax -= dx * ext;
+        ay -= dy * ext;
+        az -= dz * ext;
+        len += ext * 2;
+      }
       // base ortonormal (u, v, d): u = d × eje Y, o d × eje X si d es casi vertical
       let ux = -dz;
       let uy = 0;
@@ -355,8 +377,9 @@
     end() {
       this.mesh.count = this.n;
       this.mesh.visible = this.n > 0;
-      this.mesh.instanceMatrix.needsUpdate = true;
-      this.mesh.instanceColor.needsUpdate = true;
+      // a la GPU sube solo lo usado, no toda la capacidad (con miles de ramas son megas por cuadro)
+      upload(this.mesh.instanceMatrix, this.n * 16);
+      upload(this.mesh.instanceColor, this.n * 3);
     }
   }
 
@@ -417,7 +440,9 @@
     end() {
       this.mesh.geometry.instanceCount = this.n;
       this.mesh.visible = this.n > 0;
-      this.pos.needsUpdate = this.col.needsUpdate = this.size.needsUpdate = true;
+      upload(this.pos, this.n * 3);
+      upload(this.col, this.n * 4);
+      upload(this.size, this.n * 2);
     }
   }
 
@@ -523,8 +548,11 @@
       this.geo = {
         sphere: new THREE.SphereGeometry(NODE_R, 20, 14),
         sphereLo: new THREE.SphereGeometry(NODE_R, 12, 9),
+        sphereMin: new THREE.SphereGeometry(NODE_R, 8, 6),
         torus: new THREE.TorusGeometry(0.48, 0.13, 10, 30),
+        torusLo: new THREE.TorusGeometry(0.48, 0.13, 6, 16),
         tube: new THREE.CylinderGeometry(1, 1, 1, RADIAL, 1, true).rotateX(Math.PI / 2).translate(0, 0, 0.5),
+        tubeLo: new THREE.CylinderGeometry(1, 1, 1, 5, 1, true).rotateX(Math.PI / 2).translate(0, 0, 0.5),
         ring: new THREE.RingGeometry(0.94, 1, 72),
         portal: new THREE.RingGeometry(0.9, 1.1, 160, 1), // solo el anillo: el sombreador no corre en toda la pantalla
         beam: new THREE.CylinderGeometry(0.22, 0.6, 1, 18, 1, true).translate(0, 0.5, 0),
@@ -538,12 +566,20 @@
       this.ghostMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, roughness: 0.55, metalness: 0.05, transparent: true, opacity: 0.5 });
       this.ghostMat.onBeforeCompile = flowHook(this.u.noFlow, this.u.time, this.u.fog);
       this.stubMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      // líneas punteadas de las ramas sin commits propios: todas en un solo objeto, con color por vértice
+      this.pointerLines = new THREE.LineSegments(
+        new THREE.BufferGeometry(),
+        new THREE.LineDashedMaterial({ vertexColors: true, dashSize: 0.3, gapSize: 0.22, transparent: true, opacity: 0.85 }),
+      );
+      this.pointerLines.frustumCulled = false;
+      this.pointerCap = 0;
 
       this.iSphere = new Instances(this.gNodes, this.geo.sphere, this.nodeMat);
       this.iTorus = new Instances(this.gNodes, this.geo.torus, this.nodeMat);
       this.iLine = new Instances(this.gEdges, this.geo.tube, this.lineMat);
       this.iGhost = new Instances(this.gEdges, this.geo.tube, this.ghostMat);
       this.iStub = new Instances(this.gEdges, this.geo.tube, this.stubMat);
+      this.gEdges.add(this.pointerLines);
 
       const glowMat = () =>
         new THREE.ShaderMaterial({
@@ -572,13 +608,12 @@
 
       this.makeStars();
       this.makeDust();
-      this.mats = new Map();
       this.colorObjs = new Map();
 
       this.nodes = new Map();
       this.edges = new Map();
       this.heads = new Map();
-      this.pointers = new Map();
+      this.pointers = new Set(); // ramas sin commits propios: una línea punteada de su cabeza a la etiqueta
       this.days = new Map();
       this.ripples = [];
       this.sparkList = [];
@@ -611,6 +646,7 @@
 
       this.bindPointer();
       this.bindKeys();
+      this.bindLabels();
       this.flight = GB.Flight ? new GB.Flight(this) : null;
       this.ride = null;
       window.addEventListener('gamepadconnected', () => (this.padSeen = true));
@@ -730,7 +766,6 @@
       pu.uColor.value.copy(dark ? ink2 : ink3).lerp(new THREE.Color(this.colors.c1), 0.4);
       this.portalAlpha = dark ? 0.9 : 0.55;
 
-      for (const [key, m] of this.mats) this.paint(key, m);
       if (this.dayMat) this.dayMat.color.copy(this.lineColor);
       for (const r of this.ripples) r.mesh.material.blending = blend;
       this.applyMotion();
@@ -759,31 +794,6 @@
       let c = this.colorObjs.get(key);
       if (!c) this.colorObjs.set(key, (c = new THREE.Color(this.colorHex(key))));
       return c;
-    }
-
-    paint(key, m) {
-      const col = this.col(key);
-      const ghost = key === 'ghost';
-      m.edge.color.copy(col);
-      m.edge.emissive.copy(col);
-      m.edge.emissiveIntensity = ghost ? (this.dark ? 0.45 : 0.15) : this.dark ? 0.42 : 0.14;
-      m.edge.opacity = ghost ? 0.5 : 1;
-      m.line.color.copy(col);
-    }
-
-    /** Materiales por color para lo que no va instanciado: curvas y líneas punteadas. */
-    mat(key) {
-      let m = this.mats.get(key);
-      if (m) return m;
-      const ghost = key === 'ghost';
-      m = {
-        edge: new THREE.MeshStandardMaterial({ roughness: 0.5, metalness: 0.05, transparent: ghost }),
-        line: new THREE.LineDashedMaterial({ dashSize: 0.3, gapSize: 0.22, transparent: true, opacity: 0.85 }),
-      };
-      if (!ghost) m.edge.onBeforeCompile = this.flowLive;
-      this.mats.set(key, m);
-      this.paint(key, m);
-      return m;
     }
 
     /* ---------- tamaño y ciclo de dibujo ---------- */
@@ -843,12 +853,19 @@
 
     update(L, ctx = {}) {
       const now = performance.now();
-      const fx = !ctx.initial && this.motion;
+      const fx = !ctx.initial && !ctx.calm && this.motion; // las ramas que esperaban su historia llegan sin efectos
       this.layout = L;
       this.ctx = ctx;
       this.maxX = L.maxX;
       this.ghostNames = new Map(L.ghostLabels.map((g) => [g.id, g.name]));
       this.radius = LANE_C * Math.sqrt(Math.max(1, L.rows.length - 1)) + 2.4;
+      // con miles de ramas la espiral es grande: la cámara puede alejarse lo necesario para verla entera
+      this.controls.maxDistance = Math.max(220, this.radius * 3 + 60);
+      const far = Math.max(900, this.radius * 6 + 400);
+      if (this.camera.far !== far) {
+        this.camera.far = far;
+        this.camera.updateProjectionMatrix();
+      }
 
       /* nodos: los nuevos llegan volando desde el presente */
       const seen = new Set();
@@ -887,69 +904,47 @@
         seenE.add(e.id);
         let it = this.edges.get(e.id);
         if (!it) {
-          it = { mesh: null, born: fx && e.kind !== 'stub' ? now : 0 };
+          it = { pts: null, born: fx && e.kind !== 'stub' ? now : 0 };
           this.edges.set(e.id, it);
-        } else if (it.data.kind !== e.kind) it.ax = NaN; // rehacer la curva
+        } else if (it.data.kind !== e.kind) it.pts = null; // rehacer la curva
         it.data = e;
       }
-      for (const [id, it] of this.edges) {
-        if (seenE.has(id)) continue;
-        this.edges.delete(id);
-        this.dropCurve(it);
-      }
+      for (const id of [...this.edges.keys()]) if (!seenE.has(id)) this.edges.delete(id);
 
-      /* cabezas de rama: etiqueta HTML + línea punteada si la rama no tiene commits propios */
+      /* cabezas de rama: etiqueta HTML (se crea al mostrarse) + línea punteada si la rama no tiene commits propios */
       const seenH = new Set();
       for (const h of L.heads) {
         seenH.add(h.name);
         let it = this.heads.get(h.name);
         const to = this.pos(h.x, h.row);
         if (!it) {
-          it = { el: document.createElement('button'), curV: to.clone(), fromV: to.clone(), toV: to, t0: 0, dur: DUR, easing: ease };
-          it.el.type = 'button';
-          it.el.addEventListener('click', (ev) => {
-            ev.stopPropagation();
-            this.showTip(it.data.sha, true, it.data.name);
-          });
-          it.el.addEventListener('pointerenter', () => this.setHover(it.data.sha));
-          it.el.addEventListener('pointerleave', () => this.hoverSha === it.data.sha && this.setHover(null));
-          this.labelLayer.appendChild(it.el);
+          it = { el: null, curV: to.clone(), fromV: to.clone(), toV: to, t0: 0, dur: DUR, easing: ease };
           this.heads.set(h.name, it);
           this.goneHeads.delete(h.name);
           it.data = h;
           this.buildHead(it, h, ctx);
-          if (fx) this.flash(it.el);
+          if (fx) this.flash(it);
         } else {
-          if (this.retarget(it, to, now, fx) && fx && it.data.sha !== h.sha) this.flash(it.el);
+          if (this.retarget(it, to, now, fx) && fx && it.data.sha !== h.sha) this.flash(it);
           it.data = h;
           this.buildHead(it, h, ctx);
         }
 
         if (h.color !== 'ghost') it.liveColor = h.color; // al fusionarse se vuelve gris; los efectos usan su color de antes
-
-        let p = this.pointers.get(h.name);
-        if (!h.own) {
-          if (!p) {
-            const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
-            p = { line: new THREE.Line(g, this.mat(h.color).line) };
-            this.pointers.set(h.name, p);
-            this.gEdges.add(p.line);
-          }
-          p.line.material = this.mat(h.color).line;
-        } else if (p) {
-          this.disposeMesh(p.line);
-          this.pointers.delete(h.name);
-        }
+        if (h.own) this.pointers.delete(h.name);
+        else this.pointers.add(h.name);
       }
       for (const [name, g] of this.goneHeads) if (now - g.t > 60000) this.goneHeads.delete(name);
       for (const [name, it] of this.heads) {
         if (seenH.has(name)) continue;
         this.goneHeads.set(name, { pos: it.curV.clone(), color: it.liveColor || it.data.color, t: now });
-        it.el.classList.add('exit');
-        setTimeout(() => it.el.remove(), 420);
+        const el = it.el;
+        if (el) {
+          el.classList.add('exit');
+          setTimeout(() => el.remove(), 420);
+        }
         this.heads.delete(name);
-        const p = this.pointers.get(name);
-        if (p) (this.disposeMesh(p.line), this.pointers.delete(name));
+        this.pointers.delete(name);
       }
 
       this.updateDays(L);
@@ -965,7 +960,11 @@
       this.needsRender = true;
     }
 
-    flash(el) {
+    /** Destello de una etiqueta que se movió o llegó; si aún no se muestra, destella al aparecer. */
+    flash(it) {
+      it.flashAt = performance.now();
+      const el = it.el;
+      if (!el) return;
       el.classList.remove('moved');
       void el.offsetWidth;
       el.classList.add('moved');
@@ -973,27 +972,68 @@
       el.__flash = setTimeout(() => el.classList.remove('moved'), 2600);
     }
 
+    /** Contenido de la etiqueta de una rama. Se arma como texto y se escribe en el DOM solo si cambió
+        y la etiqueta existe (en cada sondeo llegan las mismas ramas). */
     buildHead(it, h, ctx) {
       const pr = ctx.prs?.get(h.name);
       const pinned = ctx.pins?.has(h.name);
-      const moved = it.el.classList.contains('moved') ? ' moved' : '';
-      const cls = `g3-head ${h.color}${h.isDefault ? ' default' : ''}${moved}`;
-      if (it.el.className !== cls) it.el.className = cls;
+      it.cls = `g3-head ${h.color}${h.isDefault ? ' default' : ''}`;
+      if (it.el) {
+        const cls = it.cls + (it.el.classList.contains('moved') ? ' moved' : '');
+        if (it.el.className !== cls) it.el.className = cls;
+      }
       const aria = [tr(h.isDefault ? 'branch.ariaDefault' : 'branch.aria', { name: h.name })];
       if (pr) aria.push(tr(pr.draft ? 'branch.prDraftAria' : 'branch.prAria', { num: pr.number, base: pr.base }));
       if (pinned) aria.push(tr('branch.pinned'));
+      const name = U.truncate(h.name, 34);
       const html =
-        `<span class="h3-dot" aria-hidden="true"></span><span class="h3-name">${U.esc(U.truncate(h.name, 34))}</span>` +
+        `<span class="h3-dot" aria-hidden="true"></span><span class="h3-name">${U.esc(name)}</span>` +
         (pr ? `<span class="h3-pr${pr.draft ? ' draft' : ''}">#${pr.number}</span>` : '') +
         (pinned ? `<span class="h3-pin" title="${U.esc(tr('branch.pinned'))}" aria-hidden="true"></span>` : '');
-      // en cada sondeo llegan las mismas ramas: solo se toca el DOM (y se vuelve a medir) si algo cambió
       const label = aria.join(', ');
       if (it.html === html && it.label === label) return;
       it.html = html;
       it.label = label;
+      // ancho estimado (fuente monoespaciada, mismos rellenos que el CSS): sirve para ver qué etiquetas se pisan sin medir el DOM
+      const { measure, LABEL_FONT, SMALL_FONT } = GB.graphShared;
+      it.w = Math.ceil(33 + measure(name, LABEL_FONT) * (h.isDefault ? 1.04 : 1) + (pr ? 6 + measure('#' + pr.number, SMALL_FONT) : 0) + (pinned ? 13 : 0));
+      if (!it.el) return;
       it.el.setAttribute('aria-label', label);
       it.el.innerHTML = html;
-      it.w = 0;
+    }
+
+    makeHead(it) {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.__name = it.data.name;
+      el.className = it.cls;
+      el.setAttribute('aria-label', it.label);
+      el.innerHTML = it.html;
+      this.labelLayer.appendChild(el);
+      it.el = el;
+      it.st = {};
+      if (performance.now() - (it.flashAt || -1e9) < 2000) this.flash(it);
+    }
+
+    /** Un oyente para todas las etiquetas de rama (se crean y se van a medida que se muestran). */
+    bindLabels() {
+      const headOf = (ev) => this.heads.get(ev.target.closest?.('.g3-head')?.__name);
+      this.labelLayer.addEventListener('click', (ev) => {
+        const it = headOf(ev);
+        if (!it) return;
+        ev.stopPropagation();
+        this.showTip(it.data.sha, true, it.data.name);
+      });
+      this.labelLayer.addEventListener('pointerover', (ev) => {
+        const it = headOf(ev);
+        if (it) this.setHover(it.data.sha);
+      });
+      this.labelLayer.addEventListener('pointerout', (ev) => {
+        const el = ev.target.closest?.('.g3-head');
+        if (!el || el.contains(ev.relatedTarget)) return;
+        const it = this.heads.get(el.__name);
+        if (it && this.hoverSha === it.data.sha) this.setHover(null);
+      });
     }
 
     updateDays(L) {
@@ -1028,19 +1068,6 @@
         it.el.remove();
         this.days.delete(id);
       }
-    }
-
-    disposeMesh(obj) {
-      if (!obj) return;
-      obj.parent?.remove(obj);
-      obj.geometry?.dispose();
-    }
-
-    dropCurve(it) {
-      if (!it.mesh) return;
-      this.disposeMesh(it.mesh);
-      it.mesh = null;
-      it.ax = NaN;
     }
 
     /* ---------- cámara ---------- */
@@ -1139,7 +1166,7 @@
       const h = this.heads.get(name);
       if (!h) return false;
       this.focusSha(h.data.sha);
-      this.flash(h.el);
+      this.flash(h);
       return true;
     }
 
@@ -1501,8 +1528,9 @@
 
     writeNodes(now) {
       const n = this.nodes.size + this.dying.length;
-      // con miles de commits, esferas más sencillas: a esa distancia no se nota
-      this.iSphere.setGeometry(n > 1500 ? this.geo.sphereLo : this.geo.sphere);
+      // con miles de commits, esferas y anillos más sencillos: a esa distancia no se nota
+      this.iSphere.setGeometry(n > 6000 ? this.geo.sphereMin : n > 1500 ? this.geo.sphereLo : this.geo.sphere);
+      this.iTorus.setGeometry(n > 1500 ? this.geo.torusLo : this.geo.torus);
       this.iSphere.begin(n);
       this.iTorus.begin(n);
       this.halos.begin(n);
@@ -1525,32 +1553,32 @@
       this.halos.end();
     }
 
-    /** Rectas al lote instanciado; curvas con malla propia, rehechas solo si sus extremos se movieron. */
+    /** Todas las aristas al lote instanciado: las rectas, un tramo; las curvas, varios (ver curvePoints). */
     writeEdges(now) {
       let anim = false;
-      const n = this.edges.size;
-      this.iLine.begin(n);
-      this.iGhost.begin(n);
-      this.iStub.begin(n * 3);
-      // reacomodar muchas ramas a la vez rehace muchas curvas: se reparten entre cuadros
-      const budget = performance.now() + 5;
+      const count = { line: 0, ghost: 0, stub: 0 }; // tramos de cada lote, para reservar lo justo
+      for (const it of this.edges.values()) {
+        const e = it.data;
+        count[e.kind === 'stub' ? 'stub' : e.color === 'ghost' ? 'ghost' : 'line'] += e.kind === 'fork' || e.kind === 'merge' ? CURVE_SEGS + 1 : 1;
+      }
+      // con decenas de miles de tramos, tubos de cinco lados
+      const tube = count.line + count.ghost > 20000 ? this.geo.tubeLo : this.geo.tube;
+      this.iLine.setGeometry(tube);
+      this.iGhost.setGeometry(tube);
+      this.iLine.begin(count.line);
+      this.iGhost.begin(count.ghost);
+      this.iStub.begin(count.stub * 3);
       for (const it of this.edges.values()) {
         const e = it.data;
         const b = this.nodes.get(e.to)?.curV;
-        if (!b) {
-          this.dropCurve(it);
-          continue;
-        }
+        if (!b) continue;
         const col = this.col(e.color);
         if (e.kind === 'stub') {
           this.stub(b, col);
           continue;
         }
         const a = this.nodes.get(e.from)?.curV;
-        if (!a) {
-          this.dropCurve(it);
-          continue;
-        }
+        if (!a) continue;
         let p = 1;
         if (it.born) {
           p = clamp((now - it.born) / DUR, 0, 1);
@@ -1559,17 +1587,30 @@
         }
         const ghost = e.color === 'ghost';
         const r = ghost ? GHOST_R : EDGE_R;
+        const lot = ghost ? this.iGhost : this.iLine;
         if (e.kind === 'line' || (Math.abs(a.x - b.x) < 1e-3 && Math.abs(a.y - b.y) < 1e-3)) {
-          this.dropCurve(it);
-          (ghost ? this.iGhost : this.iLine).segment(a.x, a.y, a.z, a.x + (b.x - a.x) * p, a.y + (b.y - a.y) * p, a.z + (b.z - a.z) * p, r, col);
+          lot.segment(a.x, a.y, a.z, a.x + (b.x - a.x) * p, a.y + (b.y - a.y) * p, a.z + (b.z - a.z) * p, r, col);
           continue;
         }
-        if (it.ax !== a.x || it.ay !== a.y || it.az !== a.z || it.bx !== b.x || it.by !== b.y || it.bz !== b.z || it.r !== r) {
-          if (!it.mesh || performance.now() < budget) this.buildCurve(it, a, b, r);
-          else anim = true;
+        // la curva crece desde su origen mientras nace
+        const pts = this.curvePoints(it, a, b);
+        const segs = pts.length / 3 - 1;
+        const upto = p * segs;
+        for (let s = 0; s < segs && s < upto; s++) {
+          const f = Math.min(1, upto - s);
+          const o = s * 3;
+          lot.segment(
+            pts[o],
+            pts[o + 1],
+            pts[o + 2],
+            pts[o] + (pts[o + 3] - pts[o]) * f,
+            pts[o + 1] + (pts[o + 4] - pts[o + 1]) * f,
+            pts[o + 2] + (pts[o + 5] - pts[o + 2]) * f,
+            r,
+            col,
+            r * 0.6,
+          );
         }
-        it.mesh.material = this.mat(e.color).edge;
-        it.mesh.geometry.setDrawRange(0, p < 1 ? Math.ceil(p * it.segs) * RADIAL * 6 : Infinity);
       }
       this.iLine.end();
       this.iGhost.end();
@@ -1589,54 +1630,88 @@
       dash(0.93, 1.12, 0.82);
     }
 
-    edgeCurve(kind, a, b) {
-      const V = THREE.Vector3;
+    /**
+     * Puntos de una curva de bifurcación (sale de `a` y se abre hasta el carril de `b`) o de merge
+     * (deja su carril y entra en `b`): una Bézier cúbica con muestras más juntas en las puntas, donde
+     * dobla, más el tramo recto hasta el otro extremo. Se recalcula solo si los extremos se movieron.
+     */
+    curvePoints(it, a, b) {
+      if (it.pts && it.ax === a.x && it.ay === a.y && it.az === a.z && it.bx === b.x && it.by === b.y && it.bz === b.z) return it.pts;
+      const fork = it.data.kind === 'fork';
       const d = Math.max(0.4, Math.min(SP * 1.7, b.z - a.z));
-      const path = new THREE.CurvePath();
-      if (kind === 'fork') {
-        const m = new V(b.x, b.y, a.z + d);
-        path.add(new THREE.CubicBezierCurve3(a.clone(), new V(a.x, a.y, a.z + d * 0.6), new V(b.x, b.y, a.z + d * 0.4), m));
-        if (b.z - m.z > 0.01) path.add(new THREE.LineCurve3(m, b.clone()));
-      } else {
-        const m = new V(a.x, a.y, b.z - d);
-        if (m.z - a.z > 0.01) path.add(new THREE.LineCurve3(a.clone(), m));
-        path.add(new THREE.CubicBezierCurve3(m, new V(a.x, a.y, b.z - d * 0.4), new V(b.x, b.y, b.z - d * 0.6), b.clone()));
+      // P0..P3 de la Bézier; la recta va después (bifurcación) o antes (merge)
+      const p0 = fork ? a : this.tmpA.set(a.x, a.y, b.z - d);
+      const p3 = fork ? this.tmpB.set(b.x, b.y, a.z + d) : b;
+      const z1 = fork ? a.z + d * 0.6 : b.z - d * 0.4;
+      const z2 = fork ? a.z + d * 0.4 : b.z - d * 0.6;
+      const straight = fork ? b.z - p3.z > 0.01 : p0.z - a.z > 0.01;
+      const N = clamp(Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 0.8) + 6, 8, CURVE_SEGS);
+      const pts = new Float32Array((N + 1 + (straight ? 1 : 0)) * 3);
+      let o = 0;
+      const put = (x, y, z) => {
+        pts[o++] = x;
+        pts[o++] = y;
+        pts[o++] = z;
+      };
+      if (straight && !fork) put(a.x, a.y, a.z);
+      for (let i = 0; i <= N; i++) {
+        const t = 0.5 - 0.5 * Math.cos((Math.PI * i) / N);
+        const u = 1 - t;
+        const w0 = u * u * u;
+        const w1 = 3 * u * u * t;
+        const w2 = 3 * u * t * t;
+        const w3 = t * t * t;
+        // P1 está sobre el carril de a y P2 sobre el de b: solo cambia su z
+        put(
+          (w0 + w1) * a.x + (w2 + w3) * b.x,
+          (w0 + w1) * a.y + (w2 + w3) * b.y,
+          w0 * p0.z + w1 * z1 + w2 * z2 + w3 * p3.z,
+        );
       }
-      return path;
-    }
-
-    buildCurve(it, a, b, r) {
-      const curve = this.edgeCurve(it.data.kind, a, b);
-      const segs = clamp(Math.ceil(curve.getLength() / 0.22), 14, 160);
-      const geo = new THREE.TubeGeometry(curve, segs, r, RADIAL, false);
-      if (it.mesh) {
-        it.mesh.geometry.dispose();
-        it.mesh.geometry = geo;
-      } else {
-        it.mesh = new THREE.Mesh(geo, this.mat(it.data.color).edge);
-        this.gEdges.add(it.mesh);
-      }
-      it.segs = segs;
-      it.r = r;
+      if (straight && fork) put(b.x, b.y, b.z);
+      it.pts = pts;
       it.ax = a.x;
       it.ay = a.y;
       it.az = a.z;
       it.bx = b.x;
       it.by = b.y;
       it.bz = b.z;
+      return pts;
     }
 
+    /** Líneas punteadas de la cabeza de cada rama sin commits propios hasta su etiqueta, en un solo objeto. */
     writePointers() {
-      for (const [name, p] of this.pointers) {
+      const geo = this.pointerLines.geometry;
+      const need = this.pointers.size * 2;
+      if (need > this.pointerCap) {
+        this.pointerCap = Math.max(64, 2 ** Math.ceil(Math.log2(need)));
+        const attr = (size) => new THREE.BufferAttribute(new Float32Array(this.pointerCap * size), size).setUsage(THREE.DynamicDrawUsage);
+        geo.setAttribute('position', attr(3));
+        geo.setAttribute('color', attr(3));
+        geo.setAttribute('lineDistance', attr(1));
+      }
+      if (!this.pointerCap) return;
+      const pos = geo.attributes.position.array;
+      const colors = geo.attributes.color.array;
+      const dist = geo.attributes.lineDistance.array;
+      let k = 0;
+      for (const name of this.pointers) {
         const h = this.heads.get(name);
         const node = h && this.nodes.get(h.data.sha)?.curV;
         if (!node) continue;
-        const pos = p.line.geometry.attributes.position;
-        pos.setXYZ(0, node.x, node.y, node.z);
-        pos.setXYZ(1, h.curV.x, h.curV.y, h.curV.z);
-        pos.needsUpdate = true;
-        p.line.computeLineDistances();
+        const col = this.col(h.data.color);
+        const v = h.curV;
+        pos.set([node.x, node.y, node.z, v.x, v.y, v.z], k * 3);
+        colors.set([col.r, col.g, col.b, col.r, col.g, col.b], k * 3);
+        dist[k] = 0;
+        dist[k + 1] = node.distanceTo(v);
+        k += 2;
       }
+      geo.setDrawRange(0, k);
+      upload(geo.attributes.position, k * 3);
+      upload(geo.attributes.color, k * 3);
+      upload(geo.attributes.lineDistance, k);
+      this.pointerLines.visible = k > 0;
     }
 
     /* ---------- efectos ---------- */
@@ -2099,52 +2174,79 @@
       }
     }
 
+    /**
+     * Etiquetas de rama: se proyectan todas (es solo cálculo), se ordenan por cercanía (la rama por
+     * defecto primero) y se ubican mientras no se pisen, con una grilla para no comparar cada una
+     * con todas. Con pocas ramas las tapadas se atenúan; con muchas se ocultan y hay un tope, así
+     * miles de ramas no llenan la pantalla ni el DOM.
+     */
     placeLabels() {
       const camPos = this.camera.position;
       const axis = this.tmpA;
-      const shown = [];
+      const reach = Math.max(160, this.radius * 1.3); // en grafos enormes la cámara está más lejos
+      const range = Math.max(80, this.radius * 2);
+      const cand = [];
       for (const it of this.heads.values()) {
-        const p = this.project(it.curV);
         const dist = camPos.distanceTo(it.curV);
-        const vis = p && p.x > -40 && p.x < this.W + 40 && p.y > -20 && p.y < this.H + 20 && dist < 160;
-        this.setStyle(it, 'display', vis ? '' : 'none');
-        if (!vis) continue;
+        const p = dist < reach ? this.project(it.curV) : null;
+        if (p && p.x > -40 && p.x < this.W + 40 && p.y > -20 && p.y < this.H + 20) cand.push({ it, px: p.x, py: p.y, dist });
+        else if (it.el) this.setStyle(it, 'display', 'none');
+      }
+      cand.sort((a, b) => b.it.data.isDefault - a.it.data.isDefault || a.dist - b.dist);
+      const crowd = cand.length > FADE_MAX;
+      const CELL = 96;
+      const grid = new Map();
+      const cells = (r, fn) => {
+        for (let cx = Math.floor((r.x - 4) / CELL); cx <= Math.floor((r.x + r.w + 4) / CELL); cx++)
+          for (let cy = Math.floor(r.y / CELL); cy <= Math.floor((r.y + 24) / CELL); cy++) if (fn(cx * 4099 + cy)) return true;
+        return false;
+      };
+      const hits = (s) =>
+        cells(s, (key) => (grid.get(key) || []).some((r) => s.x < r.x + r.w + 4 && r.x < s.x + s.w + 4 && s.y < r.y + 24 && r.y < s.y + 24));
+      let shown = 0;
+      for (const s of cand) {
+        const it = s.it;
+        if (shown >= MAX_LABELS) {
+          if (it.el) this.setStyle(it, 'display', 'none');
+          continue;
+        }
         // la etiqueta se aleja del tronco en pantalla, así las ramas vecinas no se pisan
-        const px = p.x;
-        const py = p.y;
         const q = this.project(axis.set(0, 0, it.curV.z));
-        let dx = q ? px - q.x : 1;
-        let dy = q ? py - q.y : -0.4;
+        let dx = q ? s.px - q.x : 1;
+        let dy = q ? s.py - q.y : -0.4;
         const len = Math.hypot(dx, dy);
         if (len < 4) (dx = 0.7), (dy = -0.7);
         else (dx /= len), (dy /= len);
         const off = it.data.own ? 18 : 12;
-        const w = it.w || (it.w = it.el.offsetWidth);
-        const x = clamp(px + dx * off - (dx < -0.2 ? w : 0), 4, Math.max(4, this.W - w - 4));
-        const y = py + dy * off - 11;
-        shown.push({ it, x, y, w, dist });
-      }
-      // las más cercanas (y la rama por defecto) primero; las que quedan tapadas se atenúan
-      shown.sort((a, b) => b.it.data.isDefault - a.it.data.isDefault || a.dist - b.dist);
-      const placed = [];
-      for (const s of shown) {
-        const hit = placed.some((r) => s.x < r.x + r.w + 4 && r.x < s.x + s.w + 4 && s.y < r.y + 24 && r.y < s.y + 24);
-        if (!hit) placed.push(s);
-        const fade = clamp(1.15 - (s.dist - 30) / 80, 0.3, 1);
-        this.setStyle(s.it, 'transform', `translate(${Math.round(s.x)}px,${Math.round(s.y)}px)`);
-        this.setStyle(s.it, 'opacity', (hit ? fade * 0.22 : fade).toFixed(2));
-        this.setStyle(s.it, 'zIndex', String(hit ? 100 : 1000 - Math.round(s.dist)));
+        s.w = it.w;
+        s.x = clamp(s.px + dx * off - (dx < -0.2 ? s.w : 0), 4, Math.max(4, this.W - s.w - 4));
+        s.y = s.py + dy * off - 11;
+        const hit = hits(s);
+        if (hit && crowd) {
+          if (it.el) this.setStyle(it, 'display', 'none');
+          continue;
+        }
+        if (!hit) {
+          cells(s, (key) => void (grid.get(key) || grid.set(key, []).get(key)).push(s));
+          shown++;
+        }
+        if (!it.el) this.makeHead(it);
+        const fade = clamp(1.15 - (s.dist - 30) / range, 0.3, 1);
+        this.setStyle(it, 'display', '');
+        this.setStyle(it, 'transform', `translate(${Math.round(s.x)}px,${Math.round(s.y)}px)`);
+        this.setStyle(it, 'opacity', (hit ? fade * 0.22 : fade).toFixed(2));
+        this.setStyle(it, 'zIndex', String(hit ? 100 : Math.max(101, 1000 - Math.round(s.dist))));
       }
       const top = this.tmpB;
       for (const d of this.days.values()) {
         top.set(0, (this.dayR || this.radius) + 0.7, d.mesh.position.z);
         const p = this.project(top);
         const dist = camPos.distanceTo(top);
-        const vis = p && p.x > 0 && p.x < this.W - 40 && p.y > 4 && p.y < this.H - 10 && dist < 120;
+        const vis = p && p.x > 0 && p.x < this.W - 40 && p.y > 4 && p.y < this.H - 10 && dist < reach * 0.75;
         this.setStyle(d, 'display', vis ? '' : 'none');
         if (vis) {
           this.setStyle(d, 'transform', `translate(${Math.round(p.x)}px,${Math.round(p.y)}px) translate(-50%,-100%)`);
-          this.setStyle(d, 'opacity', clamp(1.1 - (dist - 30) / 80, 0.25, 1).toFixed(2));
+          this.setStyle(d, 'opacity', clamp(1.1 - (dist - 30) / range, 0.25, 1).toFixed(2));
         }
       }
       if (this.tipSha && !this.tip.hidden) this.placeTip();
@@ -2159,9 +2261,7 @@
     }
 
     clear() {
-      for (const it of this.edges.values()) this.dropCurve(it);
-      for (const p of this.pointers.values()) this.disposeMesh(p.line);
-      for (const it of this.heads.values()) it.el.remove();
+      for (const it of this.heads.values()) it.el?.remove();
       for (const d of this.days.values()) (this.gDays.remove(d.mesh), d.el.remove());
       for (const r of this.ripples) (this.gFx.remove(r.mesh), r.mesh.material.dispose());
       for (const m of [this.nodes, this.edges, this.heads, this.pointers, this.days]) m.clear();

@@ -11,14 +11,14 @@ Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas
 - **Recorrer la rama**: en el detalle de un commit o de una rama, **Recorrer la rama** lleva la cámara como una montaña rusa por toda la rama, desde el commit del que nace hasta su cabeza. Doble clic en un commit vuela hasta él.
 - **Replay**: el botón de la flecha circular reproduce la historia del repo como un time-lapse, al estilo de Gource: los commits llegan en orden, las ramas nacen, crecen y se fusionan (las ya borradas reaparecen mientras existieron, con el nombre que dejó su merge), una fecha grande marca el tiempo y unos rótulos cuentan los hitos (ramas nuevas, PRs fusionados, releases), con sus efectos y su sonido. Los periodos sin actividad se comprimen, así que toda la historia dura menos de un minuto; la línea de tiempo marca los merges y las releases, se puede arrastrar, pausar (también con la barra espaciadora) y acelerar hasta 4×. Usa lo que ya está cargado, sin consultas extra: para una historia más larga, sube los **Commits por rama** en Ajustes. Mientras tanto lo nuevo sigue llegando al panel de actividad, y **Volver al presente** lo muestra.
 - **Logros, nivel y misión del día**: el repo sube de nivel con lo que el equipo consigue (merges, revisiones aprobadas, releases, issues cerrados, ramas fusionadas que se limpian; un commit suma poco), cumple una misión distinta cada día ("Fusionar 3 pull requests", "Cerrar 2 issues"…) y desbloquea 14 logros, como *Primer merge*, *Día de merges*, *¡A producción!*, *Bandeja vacía*, *Día récord*, *Bosque* o *Viajero del tiempo*. Cada logro, nivel o misión se celebra con un aviso dorado, fuegos artificiales y fanfarria, y cuando el equipo encadena varias cosas seguidas aparece un **combo**. El trofeo de la barra superior abre la vitrina, con el criterio de cada logro y un interruptor para apagar todo. Celebra al repo y al equipo, nunca a personas: no hay rankings, rachas personales ni contadores por autor, porque empujan a trabajar de más (GitHub quitó sus rachas en 2016 por eso). Se guarda solo en el navegador, por repositorio.
-- **Vista 2D tipo metro**: cada rama es un carril; los commits avanzan a la derecha. La rama por defecto va arriba y debajo las demás, de la más reciente a la menos activa. Cambia entre 3D y 2D con el selector del grafo.
+- **Vista 2D tipo metro**: cada rama es un carril; los commits avanzan a la derecha. La rama por defecto va arriba, debajo las fijadas y luego las demás, de la más reciente a la menos activa. Cambia entre 3D y 2D con el selector del grafo.
 - **Colores**: toda rama viva tiene un color propio, de una paleta de más de 8.000: los 8 primeros están elegidos a mano y el resto se genera repartido lo más lejos posible entre sí, en el tema claro y en el oscuro, así que cada rama nueva toma un color distinto sin importar cuántas haya. La rama por defecto lleva siempre el primero, cada una conserva el suyo mientras exista y la que se borra lo deja libre. El gris es solo de las ramas muertas: las ya fusionadas y borradas, y las ya fusionadas que siguen existiendo (su cabeza ya está en la rama por defecto). Las ramas de larga vida (`develop`, `release/…`, protegidas) y las recién creadas sobre la cabeza de la rama por defecto no se dan por muertas; una rama fusionada que recibe commits nuevos vuelve a tener color.
 - En ambas, las bifurcaciones y merges se dibujan como curvas y las ramas muertas quedan en gris.
 - **En vivo**: los commits nuevos aparecen con una onda, la etiqueta de la rama se desliza hasta su nueva cabeza, la rama sube justo bajo la rama por defecto (los carriles se reordenan según su última actividad) y la vista sigue lo último (o te deja recorrer la historia).
 - **Alertas**: panel de actividad filtrable, avisos emergentes, sonido opcional, notificaciones del sistema cuando la pestaña está en segundo plano y contador en el título de la pestaña.
 - **Sonido**: cada tipo de evento tiene su timbre (pulsación para los commits, campana para los PRs, acorde para los merges, arpegio para los releases) y todo suena en una escala pentatónica, a un pulso tranquilo: varios eventos juntos forman una frase. La rama por defecto es la tónica y cada rama tiene su nota; en 3D el sonido sale del lado de la pantalla donde está la rama. Viene apagado; se activa con el altavoz de la barra superior.
 - **Estado en cada rama**: número de PR abierto, directamente en la etiqueta.
-- **Repos enormes**: funciona con repositorios de miles de ramas (ver más abajo).
+- **Todas las ramas**: se ven todas las ramas del repo, sin tope, también con miles: aparecen de a poco, las más activas primero, y el grafo sigue fluido (ver más abajo).
 
 - **Todos los idiomas**: la interfaz está traducida a 40 idiomas (incluidos árabe, hebreo, persa y urdu, de derecha a izquierda), se elige sola según el navegador y se puede cambiar en vivo desde el globo de la barra superior. Fechas, números y "hace 5 min" salen de `Intl`, así que también se ven bien en idiomas sin traducción (ver [Idiomas](#idiomas)).
 
@@ -34,7 +34,7 @@ También puedes abrir un repo directo con `index.html?repo=owner/repo`.
 
 ### Token
 
-Sin token GitHub permite 60 consultas por hora, así que la vista se actualiza cada pocos minutos. Con un token se actualiza cada 10 segundos, ves repos privados y se activa el modo para repos grandes.
+Sin token GitHub permite 60 consultas por hora, así que la vista se actualiza cada pocos minutos y las ramas llegan de a poco. Con un token se actualiza cada 10 segundos, ves repos privados y todas las ramas cargan en segundos, aunque sean miles.
 
 Crea un token *fine-grained* de solo lectura en <https://github.com/settings/personal-access-tokens/new> con acceso al repositorio y estos permisos (todos *Read-only*): **Metadata** (incluye la actividad del repo: pushes y ramas creadas o borradas), **Contents** y **Pull requests**.
 
@@ -42,23 +42,28 @@ El token se guarda solo en el `localStorage` de tu navegador y se envía únicam
 
 ## Repositorios con miles de ramas
 
-GraphBranch nunca lista todas las ramas en cada ciclo (con 10.000 ramas serían 100 consultas cada vez). Según lo que tenga disponible, usa uno de tres modos:
+GraphBranch muestra todas las ramas, pero no las vuelve a pedir todas en cada ciclo (con 10.000 ramas serían 100 consultas cada vez). Según lo que tenga disponible, usa uno de tres modos:
 
 | Modo | Cuándo | Cómo detecta el movimiento |
 |---|---|---|
-| **GraphQL** | Con token | La API de actividad del repo dice qué ramas recibieron pushes y cuándo, casi al instante (una consulta con ETag: si no hubo cambios no gasta cuota). Con eso elige las *N* ramas más activas, y una consulta GraphQL por ciclo trae sus cabezas, el total de ramas, los PRs abiertos y las ramas fijadas. Cuesta ~1 punto de los 5.000/hora. Si el token no puede leer la actividad, usa el feed de eventos, que llega con unos minutos de retraso. |
-| **Lista** | Sin token y hasta 100 ramas | Lista las ramas por REST con ETag y compara. |
-| **Eventos** | Sin token y más de 100 ramas | Sigue el feed de eventos del repo (pushes, ramas creadas y borradas). GitHub lo entrega con algunos minutos de retraso. |
+| **GraphQL** | Con token | Lista todas las ramas de a 100 por consulta: en cada ciclo si caben en una, y si no al cargar y cada unos minutos (más espaciado cuantas más páginas). Entre medio, la API de actividad del repo dice qué ramas recibieron pushes, se crearon o se borraron, casi al instante (una consulta con ETag: si no hubo cambios no gasta cuota), y solo esas se consultan, junto con los PRs abiertos y las ramas fijadas, en una consulta GraphQL por ciclo. Cuesta ~1 punto de los 5.000/hora. Si el token no puede leer la actividad, usa el feed de eventos, que llega con unos minutos de retraso, y mira en cada ciclo las 50 ramas más activas. |
+| **Lista** | Sin token y hasta 100 ramas | Lista las ramas por REST con ETag y compara. La historia de cada rama cuesta una consulta, así que llegan de a 12 por ciclo, cuidando la cuota. |
+| **Eventos** | Sin token y más de 100 ramas | Sigue el feed de eventos del repo (pushes, ramas creadas y borradas). GitHub lo entrega con algunos minutos de retraso, y sin token solo se ven las ramas que aparecen en él: para verlas todas hace falta un token. |
+
+En un repo grande las ramas aparecen de a poco: el primer dibujo llega en un par de segundos con la rama por defecto, las fijadas y las de actividad más reciente, y el resto se suma en los ciclos siguientes, por orden de actividad (el resumen dice "cargando el resto" mientras tanto). Esas ramas entran sin avisos ni efectos de llegada, que quedan para lo que pasa en vivo. Cada rama pide solo su historia: unos pocos commits y, si con eso no llega a lo ya cargado, el resto desde donde quedó, así que cargar 5.000 ramas costó unos 700 puntos de GraphQL en nuestras pruebas, una sola vez.
 
 Para concentrarte en lo que te importa:
 
-- **Ramas más activas a mostrar** (Ajustes): cuántas ramas recientes dibujar (hasta 60). La rama por defecto siempre está.
-- **Fijar ramas**: clic en una rama del grafo → **Fijar**. Las ramas fijadas se muestran siempre, aunque no sean de las más activas. Se recuerdan por repositorio.
-- **Filtrar ramas**: el campo del grafo filtra por nombre, por ejemplo `release/` o `equipo-pagos/`. En modo GraphQL el filtro se aplica en GitHub, así que busca entre todas las ramas, no solo las visibles.
+- **Fijar ramas**: clic en una rama del grafo → **Fijar**. Las ramas fijadas van justo debajo de la rama por defecto (en 3D, las primeras de la espiral) y se muestran aunque no pasen el filtro. Se recuerdan por repositorio.
+- **Filtrar ramas**: el campo del grafo filtra por nombre, por ejemplo `release/` o `equipo-pagos/`. En modo GraphQL el filtro se aplica en GitHub, así que con miles de ramas solo se listan y cargan las que coinciden.
 
-La vista 3D también aguanta grafos grandes: los commits y las aristas rectas se dibujan con instancias (unas pocas llamadas de dibujo aunque haya miles), lo perdido en la niebla no se dibuja, en reposo solo se animan los efectos a ~30 fps, no dibuja nada mientras el grafo está fuera de pantalla y, si el equipo no da abasto, baja la resolución sola.
+Las vistas aguantan miles de ramas:
 
-Las alertas y la cuota siguen la misma lógica: cuando una rama fuera de las visibles recibe un push, entra al grafo y genera su alerta; las ramas que solo pierden su lugar salen sin avisar.
+- **3D**: los commits y todas las aristas, también las curvas de bifurcación y merge, se dibujan con instancias (unas pocas llamadas de dibujo aunque haya miles de ramas), y las líneas punteadas van todas en un solo objeto. A la GPU sube solo la parte usada de cada lote, lo perdido en la niebla no se dibuja y con decenas de miles de commits las esferas y los tubos se simplifican. Las etiquetas se crean al mostrarse: con muchas ramas solo se ven las más cercanas que no se pisan (hasta 160 a la vez). En reposo solo se animan los efectos a ~30 fps, no dibuja nada mientras el grafo está fuera de pantalla y, si el equipo no da abasto, baja la resolución sola.
+- **2D**: cada commit, arista, etiqueta y fila de la leyenda crea su elemento recién cuando entra en pantalla, y los eventos se escuchan una vez por grupo. Con 2.000 ramas y 8.000 commits el SVG tiene solo unas decenas de commits dibujados.
+- **Layout**: sin pasos cuadráticos, sigue rápido con miles de ramas (también en el Replay, que lo recalcula a cada momento).
+
+Las alertas siguen la misma lógica: una rama nueva o que recibe un push aparece en el grafo con su alerta en el siguiente ciclo, y una borrada sale con la suya.
 
 ## Controles
 
@@ -123,7 +128,7 @@ js/sources/demo.js    repositorio simulado para la demo
 js/sources/demo-content.js  mensajes, issues y comentarios inventados de la demo
 js/palette.js         paleta de colores de las ramas, sin tope
 js/layout.js          asignación de carriles, colores y orden de los commits
-js/graph.js           vista 2D en SVG (D3 solo para zoom y arrastre)
+js/graph.js           vista 2D en SVG (D3 solo para zoom y arrastre; solo crea lo que está a la vista)
 js/graph3d.js         vista 3D con Three.js (instanciada: pocas llamadas de dibujo aunque haya miles de commits)
 js/flight.js          modo vuelo de la vista 3D: teclado y ratón, joystick táctil y mando de juego
 js/sound.js           sonido de la actividad (Web Audio, escala pentatónica)
@@ -138,7 +143,8 @@ tools/check-i18n.mjs  verifica las traducciones contra el inglés
 
 - El feed de eventos de GitHub (issues, comentarios, revisiones, estrellas) llega con retraso de 30 segundos a algunos minutos; los commits, ramas y PRs se detectan antes porque se consultan directamente.
 - Desde octubre de 2025 GitHub recorta lo que trae ese feed (un push ya no dice cuántos commits trae y un PR llega sin título). GraphBranch lo completa: el número de commits sale del grafo ya cargado (con token, también de una comparación) y los títulos, de una sola consulta de PRs por ciclo.
-- Se cargan los últimos commits de cada rama (40 por defecto, configurable). Las líneas punteadas a la izquierda indican que la historia sigue más atrás.
+- Se cargan los últimos commits de cada rama (40 por defecto, configurable) o hasta donde se junta con lo ya cargado. Las líneas punteadas a la izquierda indican que la historia sigue más atrás.
+- Sin token, la historia de cada rama cuesta una de las 60 consultas por hora: en un repo de 100 ramas tardan un rato en aparecer todas, y con más de 100 solo se ven las que pasan por el feed de eventos. Con un token no hay ese límite.
 - Los PRs se siguen entre los 50 actualizados más recientemente.
 
 ## Seguridad

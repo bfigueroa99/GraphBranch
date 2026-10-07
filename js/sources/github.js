@@ -1,14 +1,20 @@
 /* GraphBranch — fuente de datos en vivo desde la API de GitHub.
 
-   Pensada para repos de cualquier tamaño (también con miles de ramas). Nunca
-   lista todas las ramas en cada ciclo; elige uno de tres modos:
+   Muestra todas las ramas del repo (o todas las que pasan el filtro), también con miles. Nunca
+   consulta todas en cada ciclo; según lo que tenga disponible usa uno de tres modos:
 
-   - graphql (con token): la API de actividad del repo dice qué ramas recibieron
-     pushes y cuándo (casi al instante); una consulta GraphQL por ciclo trae la
-     cabeza de esas ramas, el total de ramas, los PRs abiertos y las fijadas.
+   - graphql (con token): lista todas las ramas por GraphQL, de a 100 por consulta, al cargar y
+     cada unos minutos (en cada ciclo si caben en una consulta). Entre medio, la API de actividad
+     del repo dice qué ramas recibieron pushes, se crearon o se borraron (casi al instante) y
+     solo esas se consultan.
    - list   (sin token, hasta 100 ramas): lista las ramas por REST con ETag.
    - events (sin token, más de 100 ramas): sigue el feed de eventos del repo
      (pushes, ramas creadas y borradas). Llega con algo de retraso.
+
+   La historia de las ramas llega de a poco y por prioridad (la por defecto, las fijadas y las de
+   actividad más reciente primero): el grafo aparece enseguida y se completa en unos ciclos, sin
+   agotar la cuota. Con GraphQL cada rama pide solo lo suyo: unos pocos commits y, si con eso no
+   llega a lo ya cargado, el resto desde donde quedó.
 
    En todos los modos compara cada respuesta con la anterior y emite
    "actividades" (alertas). Con token, las respuestas 304 no gastan cuota. */
@@ -20,6 +26,11 @@
   const API = 'https://api.github.com';
   const GQL_COMMIT =
     'oid url committedDate messageHeadline author { name user { login avatarUrl } } parents(first: 4) { nodes { oid } }';
+  const GQL_TARGET = 'target { oid ... on Commit { committedDate } }';
+  const PAGE = 100; // ramas por consulta al listarlas (el máximo de GitHub)
+  const FIRST = 10; // commits que pide primero cada rama nueva; casi siempre bastan para tocar lo ya cargado
+  const BATCH_MS = 4000; // tiempo por ciclo para listar ramas y traer historia; el resto, en el ciclo siguiente
+  const FIRST_MS = 1500; // el primer ciclo es corto: que el grafo aparezca rápido
 
   class ApiError extends Error {
     constructor(message, { status = 0, kind = 'http', resetAt = 0 } = {}) {
@@ -32,31 +43,36 @@
   }
 
   class GitHubSource extends U.Emitter {
-    constructor({ owner, name, token = '', maxBranches = 15, depth = 40, filter = '', pins = [] }) {
+    constructor({ owner, name, token = '', depth = 40, filter = '', pins = [] }) {
       super();
       this.owner = owner;
       this.name = name;
       this.token = token;
-      this.maxBranches = maxBranches;
       this.depth = depth;
       this.filter = filter.trim();
       this.pins = new Set(pins);
       this.mode = token ? 'graphql' : null;
       this.data = {
         repo: { owner, name, defaultBranch: null, url: `https://github.com/${owner}/${name}`, demo: false },
-        branches: new Map(), // ramas visibles
+        branches: new Map(), // ramas dibujadas: las que ya tienen su historia
         commits: new Map(),
         pulls: new Map(),
+        pins: this.pins, // van justo debajo de la rama por defecto (ver layout.js)
         mode: null,
         totalBranches: 0,
         totalExact: true,
         matchingBranches: null,
+        pending: 0, // ramas que existen y esperan su historia para dibujarse
         totalPulls: 0,
         loaded: false,
       };
-      this.seenHeads = new Map(); // toda rama observada alguna vez: nombre -> sha
+      this.known = new Map(); // ramas que existen y se quieren mostrar: nombre -> { sha, date, at, fresh, miss }
+      this.listing = null; // listado de todas las ramas en curso (modo graphql): { after, startedAt, pages }
+      this.listedAt = 0;
+      this.listedOnce = false;
+      this.listPages = 1;
       this.pushedAt = new Map(); // último push o borrado conocido por rama: nombre -> { time, deleted }
-      this.freshRefs = new Set(); // ramas con actividad nueva desde el ciclo anterior
+      this.freshRefs = new Set(); // ramas con actividad nueva (push, creación o borrado) desde el ciclo anterior
       this.seenActivity = new Set();
       this.activityOk = true;
       this.remoteHeads = new Map(); // modo list: todas las ramas
@@ -64,6 +80,8 @@
       this.recentRefs = [];
       this.seenEvents = new Set();
       this.prInfo = new Map(); // número -> { title, draft } de PRs que solo conocemos por eventos (o null)
+      this.prHeads = new Set();
+      this.kids = null; // commit -> hijos, para saber qué ramas contienen un commit (se rehace al cambiar los commits)
       this.etags = new Map();
       this.lastPoll = {};
       this.eventsInterval = 60;
@@ -71,12 +89,15 @@
       this.gqlRate = null;
       this.cost = 0;
       this.gqlCost = 0;
+      this.bulkCost = 0; // lo gastado en traer ramas que esperaban o en listarlas: no marca el ritmo de los ciclos
       this.avgCost = 3;
       this.failures = 0;
       this.running = false;
       this.paused = false;
       this.busy = false;
       this.reseed = false;
+      this.more = false; // quedan ramas por cargar: el próximo ciclo va enseguida
+      this.calm = false; // el ciclo sumó ramas que esperaban: el grafo las agrega sin efectos de llegada
       this.timer = null;
     }
 
@@ -122,6 +143,7 @@
 
     setPins(pins) {
       this.pins = new Set(pins);
+      this.data.pins = this.pins;
       this.reseed = true;
       if (this.data.loaded) this.refreshNow();
     }
@@ -140,8 +162,10 @@
         this.failures = 0;
         this.lastOk = Date.now();
         if (!this.running) return;
-        this.emit('update', { activities, initial });
+        this.emit('update', { activities, initial, calm: this.calm });
         delay = this.again ? 0 : this.nextDelay();
+        // mientras queden ramas por cargar se sigue enseguida, salvo que la cuota no alcance
+        if (this.more && !this.throttled) delay = Math.min(delay, 250);
         this.emitStatus(this.throttled ? 'limited' : 'live', null, delay);
       } catch (err) {
         if (!this.running) return;
@@ -164,7 +188,7 @@
       const base = this.token ? 10000 : 60000;
       const gql = this.mode === 'graphql';
       const rate = gql ? this.gqlRate : this.rate;
-      const cost = gql ? this.gqlCost : this.cost;
+      const cost = (gql ? this.gqlCost : this.cost) - this.bulkCost;
       this.avgCost = this.avgCost * 0.6 + Math.max(1, cost) * 0.4;
       this.throttled = false;
       if (!rate) return base;
@@ -297,16 +321,24 @@
       return Date.now() - (this.lastPoll[name] || 0) >= period - 500;
     }
 
+    spent() {
+      return this.mode === 'graphql' ? this.gqlCost : this.cost;
+    }
+
     async poll(initial) {
       this.cost = 0;
       this.gqlCost = 0;
+      this.bulkCost = 0;
+      this.calm = false;
       const acts = [];
       const quiet = initial || this.reseed;
+      const deadline = Date.now() + (initial ? FIRST_MS : BATCH_MS);
       if (initial) await this.loadRepo(acts);
+      if (this.reseed) this.prune();
 
       if (this.mode === 'graphql') {
         try {
-          await this.syncGraphQL(acts, quiet);
+          await this.syncGraphQL(acts, quiet, deadline);
         } catch (err) {
           if (this.data.loaded || !['graphql', 'http'].includes(err.kind)) throw err;
           console.warn('GraphQL no disponible, se usa REST:', err.message);
@@ -318,6 +350,9 @@
       else if (this.mode === 'events') await this.syncFromEvents(acts, initial, quiet);
 
       if (this.mode !== 'graphql' && (initial || this.due('pulls'))) await this.syncPulls(acts, initial);
+      const before = this.spent();
+      await this.fillBacklog(deadline);
+      this.bulkCost += this.spent() - before;
       if (!initial && this.mode !== 'events' && this.due('events')) await this.syncEvents(acts, false);
       if (this.mode === 'events' && this.due('count')) await this.countBranches();
 
@@ -325,6 +360,7 @@
       this.data.mode = this.mode;
       this.reseed = false;
       this.gc();
+      this.countPending();
       return acts;
     }
 
@@ -358,145 +394,282 @@
       return name === this.data.repo.defaultBranch || this.pins.has(name) || U.matches(name, this.filter);
     }
 
-    /** Cuántas ramas mostrar (además de las fijadas). Sin token se limita para cuidar la cuota. */
-    visibleCap() {
-      return this.token ? this.maxBranches : Math.min(this.maxBranches, 8);
+    /** Filtro o fijadas nuevos: fuera lo que ya no se quiere mostrar. */
+    prune() {
+      for (const m of [this.known, this.data.branches]) for (const name of [...m.keys()]) if (!this.wanted(name)) m.delete(name);
+      if (!this.filter) this.data.matchingBranches = null;
     }
 
-    /** Agrega una rama visible; si no cabe, saca la menos activa (nunca la por defecto ni las fijadas). */
-    addTracked(name, sha) {
-      const tracked = this.data.branches;
-      const cap = this.visibleCap() + this.pins.size;
-      while (tracked.size >= cap) {
-        let victim = null;
-        let oldest = Infinity;
-        for (const b of tracked.values()) {
-          if (b.isDefault || this.pins.has(b.name)) continue;
-          const t = Math.max(this.data.commits.get(b.sha)?.date || 0, b.movedAt);
-          if (t < oldest) {
-            oldest = t;
-            victim = b;
-          }
-        }
-        if (!victim) break;
-        tracked.delete(victim.name);
-      }
-      const b = { name, sha, isDefault: name === this.data.repo.defaultBranch, protected: false, movedAt: Date.now() };
-      tracked.set(name, b);
+    /* ---------- ramas que esperan su historia ---------- */
+
+    /** Rama ya cargada que pasa a dibujarse. */
+    admit(name, e) {
+      const b = {
+        name,
+        sha: e.sha,
+        isDefault: name === this.data.repo.defaultBranch,
+        protected: !!e.protected,
+        movedAt: this.pushedAt.get(name)?.time || 0,
+      };
+      this.data.branches.set(name, b);
       return b;
+    }
+
+    /** No se pudo traer la historia de esa cabeza: no se insiste hasta que la rama se mueva. */
+    missed(e) {
+      return !!e.sha && e.miss === e.sha;
+    }
+
+    /** Prioridad para traer la historia: la por defecto, las fijadas y luego la actividad más reciente. */
+    score(name, e) {
+      if (name === this.data.repo.defaultBranch) return Infinity;
+      if (this.pins.has(name)) return 1e15;
+      return Math.max(this.pushedAt.get(name)?.time || 0, e.date || 0) + (this.prHeads.has(name) ? 1 : 0);
+    }
+
+    /** Consultas REST que se pueden gastar en historia en este ciclo (sin token la cuota es de 60 por hora). */
+    restBudget() {
+      const left = (this.rate?.remaining ?? 60) - (this.token ? 100 : 12);
+      return Math.max(0, Math.min(this.token ? 60 : 12, left));
+    }
+
+    canLoad() {
+      return this.mode === 'graphql' ? (this.gqlRate?.remaining ?? 5000) > 300 : this.restBudget() > 0;
+    }
+
+    /**
+     * Trae la historia de las ramas que esperan, las más importantes primero, hasta que se acabe el
+     * tiempo del ciclo (GraphQL) o las consultas que se pueden gastar (REST). Lo que quede, en el
+     * ciclo siguiente: el grafo se completa de a poco en vez de hacer esperar al primero.
+     */
+    async fillBacklog(deadline) {
+      const { branches: tracked, commits } = this.data;
+      const waiting = [];
+      for (const [name, e] of this.known) {
+        if (tracked.has(name) || this.missed(e)) continue;
+        if (e.sha && commits.has(e.sha)) {
+          this.admit(name, e); // su cabeza ya está en el grafo: entra sin consultar nada
+          this.calm = true;
+        } else waiting.push(name);
+      }
+      if (!waiting.length) return;
+      this.prHeads = new Set([...this.data.pulls.values()].filter((p) => p.sameRepo).map((p) => p.head));
+      const score = new Map(waiting.map((name) => [name, this.score(name, this.known.get(name))]));
+      waiting.sort((a, b) => score.get(b) - score.get(a));
+
+      if (this.mode !== 'graphql') {
+        let budget = this.restBudget();
+        for (let i = 0; i < waiting.length && budget > 0 && (i === 0 || Date.now() < deadline); i++, budget--) {
+          const name = waiting[i];
+          const e = this.known.get(name);
+          const sha = await this.fetchBranch(e.sha || name); // modo events: el nombre basta, y así se sabe su cabeza
+          if (!e.sha) {
+            if (!sha) {
+              this.known.delete(name); // ya no existe
+              continue;
+            }
+            e.sha = sha;
+          }
+          this.settle(name);
+        }
+        return;
+      }
+
+      let i = 0;
+      // la por defecto primero y entera: así las demás solo piden lo suyo, hasta tocarla
+      if (waiting[0] === this.data.repo.defaultBranch) {
+        await this.ensureHistory([this.known.get(waiting[0]).sha], this.depth);
+        this.settle(waiting[i++]);
+      }
+      // al menos una tanda por ciclo, aunque el tiempo ya se haya ido en listar
+      for (let n = 0; i < waiting.length && (!n || (Date.now() < deadline && this.canLoad())); n++) {
+        const slice = waiting.slice(i, (i += 60));
+        await this.ensureHistory(slice.map((name) => this.known.get(name).sha));
+        for (const name of slice) this.settle(name);
+      }
+    }
+
+    settle(name) {
+      const e = this.known.get(name);
+      if (!e?.sha || this.data.branches.has(name)) return;
+      if (this.data.commits.has(e.sha)) {
+        this.admit(name, e);
+        this.calm = true;
+      } else e.miss = e.sha;
+    }
+
+    countPending() {
+      let pending = 0;
+      for (const [name, e] of this.known) if (!this.data.branches.has(name) && !this.missed(e)) pending++;
+      this.data.pending = pending;
+      this.more = !!this.listing || (pending > 0 && this.canLoad());
     }
 
     /* ---------- modo graphql ---------- */
 
-    async syncGraphQL(acts, quiet) {
-      const tracked = this.data.branches;
-      const def = this.data.repo.defaultBranch;
-      const n = Math.max(1, Math.min(100, this.maxBranches));
-      await this.syncActivity(quiet, n);
-      // GitHub no ordena ramas por fecha (TAG_COMMIT_DATE solo sirve para tags): las
-      // candidatas salen de los últimos pushes conocidos y de las ramas ya visibles
-      const recent = [...this.pushedAt]
-        .filter(([name, p]) => !p.deleted && name !== def && U.matches(name, this.filter))
-        .sort((a, b) => b[1].time - a[1].time)
-        .slice(0, n + 10)
-        .map(([name]) => name);
-      const check = [...new Set([...tracked.keys(), ...this.pins, ...recent])].filter((name) => name !== def);
-      const aliases = check
-        .map((name, i) => `t${i}: ref(qualifiedName: ${JSON.stringify('refs/heads/' + name)}) { target { oid ... on Commit { committedDate } } }`)
-        .join('\n');
-      const query = `query($owner: String!, $name: String!, $q: String) {
+    async syncGraphQL(acts, quiet, deadline) {
+      const { branches: tracked, commits } = this.data;
+      await this.syncActivity(quiet, PAGE);
+      const now = Date.now();
+      if (quiet) {
+        this.listing = null; // filtro nuevo o primera carga: se lista todo desde el principio
+        this.listedOnce = false;
+      }
+      if (!this.listing && (quiet || now - this.listedAt >= this.listPeriod())) this.listing = { after: null, startedAt: now, pages: 0 };
+
+      /* ramas que se consultan una por una: las de actividad nueva (pushes, creadas o borradas),
+         las fijadas (pueden no pasar el filtro) y, al cargar, las de pushes recientes, así lo más
+         activo aparece antes de que el listado llegue a ellas */
+      const def0 = this.data.repo.defaultBranch;
+      const fresh = new Set([...this.freshRefs].filter((name) => this.wanted(name)));
+      this.freshRefs.clear();
+      const check = new Set([...this.pins, ...fresh]);
+      if (quiet) for (const name of this.recentPushes(PAGE)) check.add(name);
+      // sin la API de actividad los cambios llegan tarde por el feed: las más activas se miran en cada ciclo
+      if (!this.activityOk) for (const name of this.mostActive(50)) check.add(name);
+      check.delete(def0);
+      const names = [...check];
+
+      const gone = [];
+      const absent = []; // no aparecieron en un listado completo: se confirma una por una antes de darlas por borradas
+      const see = (name, target) => {
+        if (!target?.oid) return;
+        const date = Date.parse(target.committedDate) || 0;
+        const e = this.known.get(name);
+        if (!e) {
+          // nueva desde el último listado completo (o con un push recién visto): llega con su aviso
+          this.known.set(name, { sha: target.oid, date, at: now, fresh: !quiet && (this.listedOnce || fresh.has(name)) });
+          return;
+        }
+        e.at = now;
+        if (e.sha !== target.oid) Object.assign(e, { sha: target.oid, date });
+        if (!quiet && fresh.has(name) && !tracked.has(name)) e.fresh = true;
+      };
+      const readRefs = (repo, list) =>
+        list.forEach((name, i) => {
+          const r = repo?.['t' + i];
+          if (r) see(name, r.target);
+          else gone.push(name);
+        });
+      const aliases = (list) =>
+        list.map((name, i) => `t${i}: ref(qualifiedName: ${JSON.stringify('refs/heads/' + name)}) { ${GQL_TARGET} }`).join('\n');
+
+      const listing = this.listing;
+      const first = names.slice(0, PAGE);
+      const query = `query($owner: String!, $name: String!${listing ? ', $q: String, $after: String' : ''}) {
         rateLimit { cost remaining limit resetAt }
         repository(owner: $owner, name: $name) {
-          defaultBranchRef { name target { oid ... on Commit { committedDate } } }
-          ${this.filter ? 'all: refs(refPrefix: "refs/heads/", first: 1) { totalCount }' : ''}
-          top: refs(refPrefix: "refs/heads/", first: 100, query: $q) {
-            totalCount
-            nodes { name target { oid ... on Commit { committedDate } } }
-          }
+          defaultBranchRef { name ${GQL_TARGET} }
+          all: refs(refPrefix: "refs/heads/", first: 1) { totalCount }
+          ${listing ? `page: ${this.refsPage()}` : ''}
           pullRequests(states: OPEN, first: 50, orderBy: {field: UPDATED_AT, direction: DESC}) {
             totalCount
             nodes { number title isDraft url headRefName baseRefName isCrossRepository createdAt author { login avatarUrl } }
           }
-          ${aliases}
+          ${aliases(first)}
         }
       }`;
-      const data = await this.gql(query, { q: this.filter || null });
+      let data;
+      try {
+        data = await this.gql(query, listing ? { q: this.filter || null, after: listing.after } : {});
+      } catch (err) {
+        if (listing?.after && err.kind === 'graphql') this.listing = null; // un cursor vencido no traba el ciclo: se vuelve a listar
+        throw err;
+      }
       const repo = data?.repository;
       if (!repo) throw this.notFound();
 
-      const defName = repo.defaultBranchRef?.name || def;
-      this.data.repo.defaultBranch = defName;
-      const heads = new Map(); // ramas que existen: nombre -> { sha, date }
-      const add = (name, target) => {
-        if (target?.oid) heads.set(name, { sha: target.oid, date: Date.parse(target.committedDate) || 0 });
-      };
-      if (repo.defaultBranchRef) add(defName, repo.defaultBranchRef.target);
-      const top = repo.top || { totalCount: 0, nodes: [] };
-      for (const r of top.nodes) add(r.name, r.target); // relleno (orden alfabético) para repos con poca actividad registrada
-      const gone = [];
-      check.forEach((name, i) => {
-        const r = repo['t' + i];
-        if (r) add(name, r.target);
-        else gone.push(name);
-      });
-      this.data.totalBranches = this.filter ? repo.all?.totalCount || 0 : top.totalCount;
-      this.data.matchingBranches = this.filter ? top.totalCount : null;
+      const def = repo.defaultBranchRef?.name || def0;
+      this.data.repo.defaultBranch = def;
+      if (repo.defaultBranchRef) see(def, repo.defaultBranchRef.target);
+      if (repo.all) this.data.totalBranches = repo.all.totalCount;
       this.data.totalExact = true;
+      readRefs(repo, first);
+      const checkRefs = async (list) => {
+        for (let i = 0; i < list.length; i += PAGE) {
+          const chunk = list.slice(i, i + PAGE);
+          const more = await this.gql(`query($owner: String!, $name: String!) {
+            rateLimit { cost remaining limit resetAt }
+            repository(owner: $owner, name: $name) { ${aliases(chunk)} }
+          }`);
+          readRefs(more?.repository, chunk);
+        }
+      };
+      await checkRefs(names.slice(PAGE));
 
-      /* visibles: la por defecto, las fijadas y las N con actividad más reciente (push visto o commit más nuevo) */
-      const score = (name) => Math.max(this.pushedAt.get(name)?.time || 0, tracked.get(name)?.movedAt || 0, heads.get(name).date);
-      const others = [...heads.keys()]
-        .filter((name) => name !== defName && !this.pins.has(name) && U.matches(name, this.filter))
-        .sort((a, b) => score(b) - score(a));
-      const want = new Map();
-      for (const name of [defName, ...this.pins, ...others.slice(0, n)]) if (heads.has(name)) want.set(name, heads.get(name));
+      if (listing) {
+        this.readPage(repo.page, see, absent);
+        // el resto del listado mientras quede tiempo (la mitad del ciclo: la otra es para la historia)
+        const until = now + (deadline - now) / 2;
+        const before = this.spent();
+        while (this.listing && Date.now() < until) {
+          let page;
+          try {
+            const more = await this.gql(
+              `query($owner: String!, $name: String!, $q: String, $after: String) {
+                rateLimit { cost remaining limit resetAt }
+                repository(owner: $owner, name: $name) { page: ${this.refsPage()} }
+              }`,
+              { q: this.filter || null, after: this.listing.after },
+            );
+            page = more?.repository?.page;
+          } catch (err) {
+            if (['rate', 'network', 'auth'].includes(err.kind)) throw err;
+            this.listing = null; // se vuelve a empezar en el próximo turno
+            break;
+          }
+          this.readPage(page, see, absent);
+        }
+        // el listado pagina sobre una lista que puede cambiar mientras tanto: una rama que falta no
+        // necesariamente se borró, así que se pregunta por ella antes de avisar
+        await checkRefs(absent.filter((name) => name !== def));
+        this.bulkCost += this.spent() - before;
+      }
 
-      for (const name of gone) {
+      for (const name of new Set(gone)) {
+        if (name === def) continue;
+        this.known.delete(name);
         const p = this.pushedAt.get(name);
         if (p && !p.deleted) p.deleted = true; // no volver a preguntar por ella
         const b = tracked.get(name);
-        this.seenHeads.delete(name);
         if (!b) continue;
         tracked.delete(name);
         if (!quiet) acts.push(this.branchDeleted(name, b.sha));
       }
-      for (const name of [...tracked.keys()]) if (!want.has(name)) tracked.delete(name);
 
-      await this.ensureHistory([...want.values()].map((w) => w.sha));
-
-      const now = Date.now();
-      for (const [name, w] of want) {
+      /* ramas dibujadas que se movieron y ramas nuevas con actividad: su historia va antes que la del resto */
+      const moved = [];
+      const arrived = [];
+      for (const [name, e] of this.known) {
+        if (this.missed(e)) continue;
         const b = tracked.get(name);
-        const seen = this.seenHeads.get(name);
-        this.seenHeads.set(name, w.sha);
-        if (b) {
-          if (b.sha === w.sha) continue;
-          const from = b.sha;
-          b.sha = w.sha;
-          b.movedAt = now;
-          if (!quiet) {
-            const a = await this.branchMoved(name, from, w.sha);
-            if (a) acts.push(a);
-          }
+        if (b ? b.sha !== e.sha : e.fresh) (b ? moved : arrived).push(name);
+      }
+      await this.ensureHistory([...moved, ...arrived].map((name) => this.known.get(name).sha));
+      for (const name of moved) {
+        const b = tracked.get(name);
+        const e = this.known.get(name);
+        if (!commits.has(e.sha)) {
+          e.miss = e.sha;
           continue;
         }
-        const nb = { name, sha: w.sha, isDefault: name === defName, protected: false, movedAt: this.pushedAt.get(name)?.time || 0 };
-        tracked.set(name, nb);
+        const from = b.sha;
+        b.sha = e.sha;
         if (quiet) continue;
-        if (seen && seen !== w.sha) {
-          nb.movedAt = now;
-          const a = await this.branchMoved(name, seen, w.sha);
-          if (a) acts.push(a);
-        } else if (this.freshRefs.has(name)) {
-          // entró a las N más activas por un push nuevo (no porque se liberó un lugar)
-          nb.movedAt = now;
-          acts.push(this.branchAppeared(name, w.sha));
-        }
+        b.movedAt = now;
+        const a = await this.branchMoved(name, from, e.sha);
+        if (a) acts.push(a);
       }
-      // recuerda también las cabezas que no se muestran: si una de ellas se mueve y entra, es un push
-      for (const [name, h] of heads) if (!want.has(name)) this.seenHeads.set(name, h.sha);
-      this.freshRefs.clear();
-      if (this.seenHeads.size > 20000) this.seenHeads = new Map([...this.seenHeads].slice(-10000));
+      for (const name of arrived) {
+        const e = this.known.get(name);
+        e.fresh = false;
+        if (!commits.has(e.sha)) {
+          e.miss = e.sha;
+          continue;
+        }
+        this.admit(name, e).movedAt = now;
+        acts.push(this.branchAppeared(name, e.sha));
+      }
 
       const prs = repo.pullRequests || { totalCount: 0, nodes: [] }; // null si el token no tiene permiso de PRs
       const pulls = prs.nodes.map((p) => ({
@@ -514,19 +687,77 @@
       this.lastPoll.pulls = Date.now();
     }
 
+    /** Una página del listado de ramas (en orden alfabético, con el filtro aplicado en GitHub). */
+    refsPage() {
+      return `refs(refPrefix: "refs/heads/", first: ${PAGE}, after: $after, query: $q) {
+        totalCount
+        pageInfo { hasNextPage endCursor }
+        nodes { name ${GQL_TARGET} }
+      }`;
+    }
+
+    readPage(page, see, absent) {
+      const l = this.listing;
+      if (!l) return;
+      if (!page) {
+        this.listing = null;
+        return;
+      }
+      for (const r of page.nodes) see(r.name, r.target);
+      if (this.filter) this.data.matchingBranches = page.totalCount;
+      l.pages++;
+      if (page.pageInfo?.hasNextPage) {
+        l.after = page.pageInfo.endCursor;
+        return;
+      }
+      // listado completo: lo que no apareció en él ni se vio de otra forma desde que empezó, quizás ya no existe
+      for (const [name, e] of this.known) if (e.at < l.startedAt) absent.push(name);
+      this.listing = null;
+      this.listedAt = Date.now();
+      this.listedOnce = true;
+      this.listPages = l.pages;
+    }
+
+    /** Cada cuánto se vuelve a listar todo: en cada ciclo si cabe en una consulta; si no, cada unos
+        minutos (los cambios del medio los trae la API de actividad, que dice qué ramas mirar). */
+    listPeriod() {
+      if (this.listPages <= 1) return 0;
+      return Math.max((this.activityOk ? 5 : 1) * 60000, this.listPages * 6000);
+    }
+
+    /** Las n ramas con pushes más recientes según la actividad conocida (que pasan el filtro). */
+    recentPushes(n) {
+      return [...this.pushedAt]
+        .filter(([name, p]) => !p.deleted && U.matches(name, this.filter))
+        .sort((a, b) => b[1].time - a[1].time)
+        .slice(0, n)
+        .map(([name]) => name);
+    }
+
+    /** Las n ramas dibujadas con actividad más reciente. */
+    mostActive(n) {
+      const { commits } = this.data;
+      const t = (b) => Math.max(commits.get(b.sha)?.date || 0, b.movedAt || 0);
+      return [...this.data.branches.values()]
+        .filter((b) => !b.isDefault)
+        .sort((a, b) => t(b) - t(a))
+        .slice(0, n)
+        .map((b) => b.name);
+    }
+
     /** Registra actividad de una rama (push, creación o borrado) con su hora. */
     notePush(name, time, deleted, live) {
       const p = this.pushedAt.get(name);
       if (p && p.time >= time) return;
       this.pushedAt.set(name, { time, deleted });
-      if (live && !deleted && this.mode === 'graphql') this.freshRefs.add(name);
-      if (this.pushedAt.size > 6000) this.pushedAt = new Map([...this.pushedAt].sort((a, b) => b[1].time - a[1].time).slice(0, 4000));
+      if (live && this.mode === 'graphql') this.freshRefs.add(name);
+      if (this.pushedAt.size > 20000) this.pushedAt = new Map([...this.pushedAt].sort((a, b) => b[1].time - a[1].time).slice(0, 15000));
     }
 
     /**
      * Últimos pushes del repo según su API de actividad: qué ramas se movieron y
      * cuándo, casi al instante y en una sola consulta (con ETag). Al cargar sigue
-     * unas páginas hacia atrás hasta conocer suficientes ramas para llenar el grafo.
+     * unas páginas hacia atrás, así las ramas más activas se cargan primero.
      * Si el token no puede leerla, quedan los eventos del repo (llegan con retraso).
      */
     async syncActivity(deep, need) {
@@ -564,6 +795,7 @@
       const more = /rel="next"/.test(res.headers?.get('Link') || '');
       this.mode = more ? 'events' : 'list';
       if (more) await this.countBranches();
+      else this.branchList = res; // syncBranchList la usa en este mismo ciclo: sin token, repetirla gasta cuota
     }
 
     /** Total de ramas sin listarlas: con per_page=1, la última página es el total. */
@@ -576,79 +808,78 @@
     }
 
     async syncBranchList(acts, quiet) {
-      const res = await this.api(`${this.base}/branches?per_page=100`, { cacheKey: 'branches' });
-      if (!res.fresh && !quiet && !this.pendingBranches) return;
-      this.pendingBranches = true;
+      const res = this.branchList || (await this.api(`${this.base}/branches?per_page=100`, { cacheKey: 'branches' }));
+      this.branchList = null;
       if (/rel="next"/.test(res.headers?.get('Link') || '')) this.mode = 'events'; // creció: desde el próximo ciclo
 
       const remote = new Map(res.data.map((b) => [b.name, { sha: b.commit.sha, protected: !!b.protected }]));
       this.data.totalBranches = remote.size;
       this.data.matchingBranches = this.filter ? [...remote.keys()].filter((n) => U.matches(n, this.filter)).length : null;
-      const tracked = this.data.branches;
+      const { branches: tracked, commits } = this.data;
+      const prev = this.remoteHeads;
+      this.remoteHeads = remote;
 
-      if (quiet) {
-        const keep = new Set(this.rankBranches(remote).slice(0, this.visibleCap() + this.pins.size));
-        for (const name of [...tracked.keys()]) if (!keep.has(name)) tracked.delete(name);
-        for (const name of keep) {
-          const info = remote.get(name);
-          await this.ensureHistory([info.sha]);
-          const b = tracked.get(name) || this.addTracked(name, info.sha);
-          Object.assign(b, { sha: info.sha, protected: info.protected });
-          if (!this.data.loaded) b.movedAt = 0;
+      // todas las que se quieren mostrar; las que aún no tienen su historia esperan turno (fillBacklog)
+      const known = new Map();
+      for (const [name, info] of remote) {
+        if (!this.wanted(name)) continue;
+        const old = this.known.get(name);
+        known.set(name, old && old.sha === info.sha ? Object.assign(old, { protected: info.protected }) : { sha: info.sha, protected: info.protected, date: 0 });
+      }
+      this.known = known;
+
+      for (const [name, info] of prev) {
+        if (remote.has(name)) continue;
+        const was = tracked.delete(name);
+        if (!quiet && (was || this.wanted(name))) acts.push(this.branchDeleted(name, info.sha));
+      }
+      for (const name of [...tracked.keys()]) if (!known.has(name)) tracked.delete(name); // ya no pasa el filtro
+
+      /* ramas dibujadas que se movieron y, en vivo, ramas nuevas o que se movieron: van antes que el resto */
+      const changed = []; // [nombre, sha anterior o null si es nueva]
+      for (const [name, e] of known) {
+        const b = tracked.get(name);
+        if (b) {
+          b.protected = e.protected;
+          if (b.sha !== e.sha && !this.missed(e)) changed.push([name, b.sha]);
+          continue;
         }
-      } else {
-        const prev = this.remoteHeads;
-        for (const [name, info] of prev) {
-          if (remote.has(name)) continue;
-          if (tracked.delete(name) || this.wanted(name)) acts.push(this.branchDeleted(name, info.sha));
+        const before = prev.get(name);
+        if (!quiet && prev.size && (!before || before.sha !== e.sha)) changed.push([name, before?.sha || null]);
+      }
+      if (!changed.length) return;
+      await this.ensureHistory(changed.map(([name]) => known.get(name).sha));
+      for (const [name, from] of changed) {
+        const e = known.get(name);
+        if (!commits.has(e.sha)) {
+          e.miss = e.sha;
+          continue;
         }
-        for (const [name, info] of remote) {
-          if (prev.has(name) || !this.wanted(name)) continue;
-          await this.ensureHistory([info.sha]);
-          this.addTracked(name, info.sha).protected = info.protected;
-          acts.push(this.branchCreated(name, info.sha));
-        }
-        for (const [name, info] of remote) {
-          const before = prev.get(name);
-          if (!before || before.sha === info.sha || !this.wanted(name)) continue;
-          await this.ensureHistory([info.sha]);
-          const b = tracked.get(name) || this.addTracked(name, info.sha);
-          Object.assign(b, { sha: info.sha, protected: info.protected, movedAt: Date.now() });
-          const a = await this.branchMoved(name, before.sha, info.sha);
+        let b = tracked.get(name);
+        if (b) b.sha = e.sha;
+        else b = this.admit(name, e);
+        if (quiet) continue;
+        b.movedAt = Date.now();
+        if (!from) acts.push(this.branchCreated(name, e.sha));
+        else {
+          const a = await this.branchMoved(name, from, e.sha);
           if (a) acts.push(a);
         }
       }
-      this.remoteHeads = remote;
-      this.pendingBranches = false;
-    }
-
-    /** Orden al elegir ramas: por defecto, fijadas, actividad reciente, con PR abierto, resto. */
-    rankBranches(remote) {
-      const order = [];
-      const add = (n) => {
-        if (n && remote.has(n) && !order.includes(n) && this.wanted(n)) order.push(n);
-      };
-      add(this.data.repo.defaultBranch);
-      this.pins.forEach(add);
-      this.recentRefs.forEach(add);
-      [...this.data.pulls.values()].filter((p) => p.sameRepo).forEach((p) => add(p.head));
-      [...remote.keys()].sort((a, b) => a.localeCompare(b)).forEach(add);
-      return order;
     }
 
     async syncFromEvents(acts, initial, quiet) {
       if (quiet) {
+        // las que se conocen por el feed (sin token no se pueden listar miles de ramas)
         const def = this.data.repo.defaultBranch;
-        const names = [def, ...this.pins, ...this.recentRefs.filter((n) => U.matches(n, this.filter))];
-        const pick = [...new Set(names)].filter((n) => n && this.refLatest.get(n) !== 'DeleteEvent');
-        const cap = this.visibleCap() + this.pins.size;
-        const keep = new Map();
-        for (const name of pick.slice(0, cap)) {
-          const old = this.data.branches.get(name);
-          const sha = old ? old.sha : await this.fetchBranch(name);
-          if (sha) keep.set(name, old || { name, sha, isDefault: name === def, protected: false, movedAt: 0 });
+        const names = new Set([def, ...this.pins, ...this.recentRefs.filter((n) => U.matches(n, this.filter))]);
+        const known = new Map();
+        for (const name of names) {
+          if (!name || this.refLatest.get(name) === 'DeleteEvent') continue;
+          known.set(name, this.known.get(name) || { sha: this.data.branches.get(name)?.sha || null, date: 0 });
         }
-        this.data.branches = keep;
+        this.known = known;
+        for (const name of [...this.data.branches.keys()]) if (!known.has(name)) this.data.branches.delete(name);
         if (initial) return; // los eventos iniciales ya se leyeron en loadRepo
       }
       const res = await this.api(`${this.base}/events?per_page=50`, { cacheKey: 'events' });
@@ -680,6 +911,7 @@
       if (ev.type === 'DeleteEvent') {
         const b = tracked.get(ref);
         tracked.delete(ref);
+        this.known.delete(ref);
         if (b && a) {
           const d = this.branchDeleted(ref, b.sha);
           Object.assign(a, { kind: d.kind, detail: d.detail, sha: d.sha });
@@ -687,7 +919,8 @@
       } else {
         const sha = p.head && this.data.commits.has(p.head) ? p.head : await this.fetchBranch(p.head || ref);
         if (sha) {
-          const b = tracked.get(ref) || this.addTracked(ref, sha);
+          this.known.set(ref, { sha, date: 0 });
+          const b = tracked.get(ref) || this.admit(ref, { sha });
           b.sha = sha;
           b.movedAt = Date.now();
           if (a) {
@@ -712,31 +945,78 @@
 
     /* ---------- commits ---------- */
 
-    async ensureHistory(shas) {
-      let missing = [...new Set(shas)].filter((s) => s && !this.data.commits.has(s));
+    /**
+     * Trae la historia que falta de esas cabezas. Por REST, `depth` commits por rama (una consulta
+     * cada una). Con GraphQL, de a poco y muchas ramas por consulta: primero `first` commits por
+     * rama y, si su línea principal aún no llega a lo que ya estaba cargado, el resto hasta `depth`,
+     * desde el primer commit que falta. Una rama nueva casi nunca pide más de una vuelta.
+     */
+    async ensureHistory(shas, first = FIRST) {
+      const { commits } = this.data;
+      const missing = [...new Set(shas)].filter((s) => s && !commits.has(s));
       if (!missing.length) return;
       if (this.mode !== 'graphql') {
-        for (const sha of missing) if (!this.data.commits.has(sha)) await this.fetchBranch(sha);
+        for (const sha of missing) if (!commits.has(sha)) await this.fetchBranch(sha);
         return;
       }
-      while (missing.length) {
-        const chunk = missing.slice(0, 12);
-        const query = `query($owner: String!, $name: String!) {
-          rateLimit { cost remaining limit resetAt }
-          repository(owner: $owner, name: $name) {
-            ${chunk.map((s, i) => `h${i}: object(oid: "${s}") { ... on Commit { history(first: ${this.depth}) { nodes { ${GQL_COMMIT} } } } }`).join('\n')}
+      const added = new Set(); // lo traído en esta llamada; lo de antes es "lo ya cargado"
+      let jobs = missing.map((sha) => ({ head: sha, from: sha, n: Math.min(first, this.depth) }));
+      for (let round = 0; jobs.length && round < 8; round++) {
+        await this.fetchHistories(jobs, added);
+        const next = new Map(); // desde -> pedido (dos ramas que siguen por el mismo camino piden una vez)
+        for (const job of jobs) {
+          if (!commits.has(job.head)) continue; // GitHub no la encontró
+          let sha = job.head;
+          let steps = 0;
+          while (steps < this.depth && added.has(sha)) {
+            sha = commits.get(sha).parents[0];
+            steps++;
           }
-        }`;
-        const data = await this.gql(query);
-        chunk.forEach((_, i) => {
-          for (const c of data?.repository?.['h' + i]?.history?.nodes || []) this.addGqlCommit(c);
-        });
-        missing = missing.slice(chunk.length).filter((s) => !this.data.commits.has(s));
+          // llegó al tope, a la raíz o a lo ya cargado; o se trabó en el mismo commit (no hay más que pedir)
+          if (steps >= this.depth || !sha || commits.has(sha) || sha === job.from) continue;
+          const n = this.depth - steps;
+          if ((next.get(sha)?.n || 0) < n) next.set(sha, { head: job.head, from: sha, n });
+        }
+        jobs = [...next.values()];
       }
     }
 
+    /** Historia de varias ramas, en consultas de unos cientos de commits. */
+    async fetchHistories(jobs, added) {
+      for (let i = 0; i < jobs.length; ) {
+        const size = Math.max(4, Math.min(40, Math.floor(400 / jobs[i].n)));
+        await this.historyQuery(jobs.slice(i, (i += size)), added);
+      }
+    }
+
+    /** Si GitHub no alcanza a resolver la consulta (demasiado pesada), se parte en dos, hasta dos veces. */
+    async historyQuery(chunk, added, tries = 2) {
+      const query = `query($owner: String!, $name: String!) {
+        rateLimit { cost remaining limit resetAt }
+        repository(owner: $owner, name: $name) {
+          ${chunk.map((j, i) => `h${i}: object(oid: "${j.from}") { ... on Commit { history(first: ${j.n}) { nodes { ${GQL_COMMIT} } } } }`).join('\n')}
+        }
+      }`;
+      let data;
+      try {
+        data = await this.gql(query);
+      } catch (err) {
+        const heavy = err.kind === 'graphql' || err.status === 502 || err.status === 504;
+        if (!heavy) throw err;
+        if (chunk.length === 1) return console.warn('No se pudo traer la historia de', chunk[0].from, err.message);
+        if (!tries) throw err;
+        const half = Math.ceil(chunk.length / 2);
+        await this.historyQuery(chunk.slice(0, half), added, tries - 1);
+        await this.historyQuery(chunk.slice(half), added, tries - 1);
+        return;
+      }
+      chunk.forEach((_, i) => {
+        for (const c of data?.repository?.['h' + i]?.history?.nodes || []) if (this.addGqlCommit(c)) added.add(c.oid);
+      });
+    }
+
     addCommit(c) {
-      if (this.data.commits.has(c.sha)) return;
+      if (this.data.commits.has(c.sha)) return false;
       this.data.commits.set(c.sha, {
         sha: c.sha,
         parents: (c.parents || []).map((p) => p.sha),
@@ -749,10 +1029,12 @@
         date: Date.parse(c.commit?.committer?.date || c.commit?.author?.date) || Date.now(),
         url: c.html_url || `${this.data.repo.url}/commit/${c.sha}`,
       });
+      this.kids = null;
+      return true;
     }
 
     addGqlCommit(c) {
-      if (!c?.oid || this.data.commits.has(c.oid)) return;
+      if (!c?.oid || this.data.commits.has(c.oid)) return false;
       this.data.commits.set(c.oid, {
         sha: c.oid,
         parents: (c.parents?.nodes || []).map((p) => p.oid),
@@ -765,6 +1047,8 @@
         date: Date.parse(c.committedDate) || Date.now(),
         url: c.url || `${this.data.repo.url}/commit/${c.oid}`,
       });
+      this.kids = null;
+      return true;
     }
 
     /** Descarta commits que ya no alcanza ninguna rama visible y limita el total. */
@@ -772,13 +1056,15 @@
       const { commits, branches } = this.data;
       const heads = [...branches.values()].map((b) => b.sha);
       const keep = U.reachable(commits, heads).set;
+      const before = commits.size;
       for (const sha of [...commits.keys()]) if (!keep.has(sha)) commits.delete(sha);
-      const cap = Math.max(600, this.depth * (this.maxBranches + this.pins.size) * 2);
+      const cap = Math.max(600, this.depth * (branches.size + 10) * 2);
       if (commits.size > cap) {
         const headSet = new Set(heads);
         const old = [...commits.values()].filter((c) => !headSet.has(c.sha)).sort((a, b) => a.date - b.date);
         for (const c of old.slice(0, commits.size - cap)) commits.delete(c.sha);
       }
+      if (commits.size !== before) this.kids = null;
     }
 
     authorOf(sha) {
@@ -786,13 +1072,41 @@
       return c ? { name: c.author.name, login: c.author.login, avatar: c.author.avatar } : null;
     }
 
-    /** Rama visible que contiene `sha` (prefiere la que lo tiene como cabeza, luego la por defecto). */
+    /** Hijos de cada commit cargado (se rehace solo cuando cambian los commits). */
+    childIndex() {
+      if (this.kids) return this.kids;
+      const kids = new Map();
+      for (const c of this.data.commits.values()) for (const p of c.parents) (kids.get(p) || kids.set(p, []).get(p)).push(c.sha);
+      return (this.kids = kids);
+    }
+
+    /**
+     * Rama visible que contiene `sha`: la que lo tiene como cabeza, la por defecto o la más cercana
+     * hacia adelante. Recorre los descendientes del commit (unos pocos) en vez de la historia de
+     * cada rama, así no cuesta más con miles de ramas.
+     */
     branchContaining(sha, exclude) {
-      const list = [...this.data.branches.values()].filter((b) => b.name !== exclude);
-      const head = list.find((b) => b.sha === sha);
-      if (head) return head.name;
-      list.sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0));
-      for (const b of list) if (U.ancestors(this.data.commits, b.sha).set.has(sha)) return b.name;
+      const { branches, commits } = this.data;
+      const heads = new Map();
+      let def = null;
+      for (const b of branches.values()) {
+        if (b.name === exclude) continue;
+        if (b.sha === sha) return b.name;
+        if (b.isDefault) def = b;
+        if (!heads.has(b.sha)) heads.set(b.sha, b.name);
+      }
+      if (def && U.ancestors(commits, def.sha).set.has(sha)) return def.name;
+      const kids = this.childIndex();
+      const queue = [sha];
+      const seen = new Set(queue);
+      for (let i = 0; i < queue.length; i++) {
+        for (const k of kids.get(queue[i]) || []) {
+          if (seen.has(k)) continue;
+          if (heads.has(k)) return heads.get(k);
+          seen.add(k);
+          queue.push(k);
+        }
+      }
       return null;
     }
 

@@ -1,0 +1,97 @@
+# Mejora continua
+
+Bitácora y lista de pendientes de las iteraciones de mejora (una cada 4 horas). Cada iteración toma
+la tarea de mayor impacto que quede en **Pendientes**, la resuelve de forma acotada, la valida y la
+anota en **Bitácora**.
+
+## Cómo validar un cambio
+
+```sh
+node --test                    # lógica contra una API de GitHub simulada (tools/*.test.mjs)
+node tools/check-i18n.mjs      # traducciones contra el inglés
+node tools/smoke.mjs           # la demo en Chromium: 3D, 2D, vuelo, Replay, diálogos, RTL, celular
+node tools/smoke.mjs --langs   # además los 40 idiomas en pantalla de celular
+```
+
+## Pendientes
+
+Ordenados por impacto. Salen de dos auditorías del código (datos y lógica; vistas y accesibilidad)
+hechas en la primera iteración; cada uno se verificó leyendo el código, y los marcados con
+*reproducido* también se probaron.
+
+### Alta
+
+1. **El estado le habla al lector de pantalla cada segundo.** `aria-live` envuelve todo `#status`
+   (`index.html:58`) y `#status-sub` ("actualizado hace 5 s · próximo en 7 s") se reescribe cada
+   segundo (`app.js:547`). Arreglo: dejar `aria-live` solo en `#status-text`.
+2. **Un filtro o una rama fijada que cambian durante un ciclo se pierden** (modos lista y eventos,
+   *reproducido*). El ciclo en curso apaga `reseed` al terminar (`github.js:326`) y el siguiente recibe
+   304. Arreglo: copiar `reseed` a una variable al empezar `poll()` y apagarlo ahí; restaurarlo si falla.
+3. **Al cambiar de repo quedan los datos del anterior.** `connect()` no limpia `lastRender` ni las
+   cifras (`app.js:175`): con un repo que da 404 se ven las cifras del anterior y Replay reproduce su
+   grafo. Arreglo: `lastRender = null` y cifras en "–".
+
+### Media
+
+4. **Reloj adelantado → sondeo cada 3 s** (*reproducido*). Si `rate.reset` ya pasó según el reloj
+   local, `nextDelay` devuelve 3000 ms y la cuota sin token se agota (`github.js:171`). Arreglo:
+   `Math.max(base, …)` o calcular el desfase con la cabecera `Date`.
+5. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
+   `update()` y `celebrate()` siguen encolando ráfagas (`graph3d.js:846`, `:1691`) y al volver salen
+   todas juntas. Arreglo: `fx` también exige `this.active`; descartar efectos con más de 1 s de atraso.
+6. **El zumbido del modo vuelo sigue sonando en segundo plano** y sus osciladores nunca se detienen
+   (`flight.js:290`, `sound.js:261`). Arreglo: silenciar en `visibilitychange` y `stop()` al llegar a 0.
+7. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
+   `--surface` (`styles.css:14`). Arreglo: `#636e6a` (5,1:1).
+8. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
+   (`role=status` dentro de un contenedor `aria-live`; `feed.js:232`, `:254`). Arreglo: pausar en
+   `focusin`/`focusout` y dejar una sola región viva.
+9. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
+   una sola consulta a `pulls?state=all&sort=updated` (la clave `pulls-all` ya existe).
+10. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
+    caída permanente de GraphQL a REST, `:311`). Arreglo: degradar solo con 403/404/410.
+
+### Baja
+
+11. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
+    recibe foco al abrirse desde el teclado.
+12. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
+    `:2121`): su animación termina en opacidad 0.
+13. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
+    rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
+14. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+15. Trabajo por cuadro en 3D: `computeLineDistances()` en cada cuadro (`graph3d.js:1638`), lecturas de
+    tamaño que fuerzan maquetación (`:2122`, `:1279`, `graph.js:736`), `Intl.DateTimeFormat` nuevo por
+    cuadro (`replay.js:343`).
+16. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
+    `aria-pressed` y el texto, leyenda 2D sin acceso por teclado, el botón de pausa del Replay sin nombre
+    accesible (`index.html:190`).
+17. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+18. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+19. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
+20. `stop()` no cancela la consulta en curso al cambiar de repo (usar `AbortController`).
+21. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
+22. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
+    blanco al arrancar.
+23. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
+    Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
+24. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
+    (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
+
+## Bitácora
+
+### 2026-10-07 · Iteración 1
+
+- **Red de pruebas.** `tools/smoke.mjs` abre la demo en Chromium sin ventana (WebGL por software) y
+  recorre 3D, 2D, modo vuelo, Replay, ajustes, logros, cambio a árabe en vivo y la pantalla de celular;
+  falla ante cualquier excepción o error de consola, si la demo consulta `api.github.com` o si la página
+  desborda. Con `--langs`, los 40 idiomas. Se comprobó que detecta un error inyectado a propósito.
+- **Pruebas de la fuente de GitHub.** `tools/github.test.mjs` (`node --test`) carga `github.js` en un
+  contexto aislado con una API de GitHub simulada (ETag, 304, fallos de red a pedido).
+- **Arreglo: un ciclo cortado ya no pierde actividad.** Los eventos se daban por vistos y el ETag del
+  feed se guardaba antes de que el ciclo terminara; si algo fallaba después (red, cuota), el reintento
+  recibía 304 o los saltaba como vistos. Pasaba en la carga inicial (el panel arrancaba vacío) y en el
+  modo events (los pushes de ese ciclo nunca avisaban). Ahora los eventos se marcan vistos solo al
+  terminar bien el ciclo, el feed se vuelve a pedir entero tras un fallo y `seenEvents` tiene tope.
+  Validado: las dos pruebas nuevas fallaban antes del arreglo y pasan después; smoke e i18n en verde.
+- **Siguiente:** pendiente 1 (`aria-live` del estado), luego 2 y 3.

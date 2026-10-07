@@ -7,6 +7,10 @@ Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas
 - **Vista 3D**: la rama por defecto es el tronco central y las demás se reparten a su alrededor en espiral, las más activas más cerca del tronco; el tiempo avanza hacia ti, hasta el anillo del presente, y la historia se pierde en la niebla. Puedes girar, acercar y desplazarte con el ratón o el teclado; la cámara entra en escena con un vuelo, sigue lo último y gira lento cuando no la tocas.
 - **Inmersiva**: cada commit nuevo llega volando desde el presente y se posa con una onda y chispas; las cabezas de rama laten con un halo, pulsos de luz recorren las ramas vivas hacia el presente, y el grafo flota entre estrellas y polvo que deriva hacia el pasado.
 - **Cada evento con su efecto**: un PR fusionado viaja como un cometa en arco desde su rama hasta la base; un PR abierto levanta un faro de luz sobre su rama; un release lanza fuegos artificiales; una estrella o un fork nuevos cruzan el cielo como estrella fugaz; una rama borrada se deshace en polvo; las aprobaciones, los cambios pedidos y los force-push hacen ondas de color sobre su rama. Cada tipo tiene un tope por tanda, así una ráfaga no satura la escena. Con **pantalla completa** (botón o tecla `F`) el grafo ocupa toda la pantalla y los avisos lo acompañan. Si el sistema pide reducir el movimiento, la escena queda quieta.
+- **Modo vuelo**: el botón del avión te deja volar libre por el grafo en primera persona, con inercia: `W` `A` `S` `D` para moverte, `Q` `E` para bajar y subir, `Mayús` para acelerar y el ratón para mirar (un clic bloquea el puntero y aparece una mira: el commit que está en el centro muestra su detalle y un clic lo fija). La cámara se inclina en las curvas, el campo de visión se abre a toda velocidad y, con el sonido activado, suena un motor que sube con la velocidad. En el celular aparece un joystick y se mira arrastrando; con un mando de juego, los sticks mueven y miran, los gatillos bajan y suben, y Start entra o sale del vuelo.
+- **Recorrer la rama**: en el detalle de un commit o de una rama, **Recorrer la rama** lleva la cámara como una montaña rusa por toda la rama, desde el commit del que nace hasta su cabeza. Doble clic en un commit vuela hasta él.
+- **Replay**: el botón de la flecha circular reproduce la historia del repo como un time-lapse, al estilo de Gource: los commits llegan en orden, las ramas nacen, crecen y se fusionan (las ya borradas reaparecen mientras existieron, con el nombre que dejó su merge), una fecha grande marca el tiempo y unos rótulos cuentan los hitos (ramas nuevas, PRs fusionados, releases), con sus efectos y su sonido. Los periodos sin actividad se comprimen, así que toda la historia dura menos de un minuto; la línea de tiempo marca los merges y las releases, se puede arrastrar, pausar (también con la barra espaciadora) y acelerar hasta 4×. Usa lo que ya está cargado, sin consultas extra: para una historia más larga, sube los **Commits por rama** en Ajustes. Mientras tanto lo nuevo sigue llegando al panel de actividad, y **Volver al presente** lo muestra.
+- **Logros, nivel y misión del día**: el repo sube de nivel con lo que el equipo consigue (merges, revisiones aprobadas, releases, issues cerrados, ramas fusionadas que se limpian; un commit suma poco), cumple una misión distinta cada día ("Fusionar 3 pull requests", "Cerrar 2 issues"…) y desbloquea 14 logros, como *Primer merge*, *Día de merges*, *¡A producción!*, *Bandeja vacía*, *Día récord*, *Bosque* o *Viajero del tiempo*. Cada logro, nivel o misión se celebra con un aviso dorado, fuegos artificiales y fanfarria, y cuando el equipo encadena varias cosas seguidas aparece un **combo**. El trofeo de la barra superior abre la vitrina, con el criterio de cada logro y un interruptor para apagar todo. Celebra al repo y al equipo, nunca a personas: no hay rankings, rachas personales ni contadores por autor, porque empujan a trabajar de más (GitHub quitó sus rachas en 2016 por eso). Se guarda solo en el navegador, por repositorio.
 - **Vista 2D tipo metro**: cada rama es un carril; los commits avanzan a la derecha. La rama por defecto va arriba y debajo las demás, de la más reciente a la menos activa. Cambia entre 3D y 2D con el selector del grafo.
 - **Colores**: toda rama viva tiene un color propio, de una paleta de más de 8.000: los 8 primeros están elegidos a mano y el resto se genera repartido lo más lejos posible entre sí, en el tema claro y en el oscuro, así que cada rama nueva toma un color distinto sin importar cuántas haya. La rama por defecto lleva siempre el primero, cada una conserva el suyo mientras exista y la que se borra lo deja libre. El gris es solo de las ramas muertas: las ya fusionadas y borradas, y las ya fusionadas que siguen existiendo (su cabeza ya está en la rama por defecto). Las ramas de larga vida (`develop`, `release/…`, protegidas) y las recién creadas sobre la cabeza de la rama por defecto no se dan por muertas; una rama fusionada que recibe commits nuevos vuelve a tener color.
 - En ambas, las bifurcaciones y merges se dibujan como curvas y las ramas muertas quedan en gris.
@@ -62,6 +66,8 @@ En 3D:
 
 - Arrastrar: girar alrededor. Clic derecho o `Mayús` + arrastrar: desplazarse. Rueda o pellizco: acercar.
 - Teclado (después de hacer clic en el grafo): `←` `→` girar, `↑` `↓` viajar por la historia, `+` `-` acercar o alejar. Se mantienen pulsadas.
+- Doble clic en un commit: volar hasta él.
+- Modo vuelo (avión): `W` `A` `S` `D` moverse, `Q` `E` bajar y subir, `Mayús` acelerar, ratón para mirar, `Esc` para salir. En el celular, joystick y arrastrar; también funciona con mando de juego.
 - Pasar el puntero por un commit o por el nombre de una rama lo resalta.
 - Botón de giro: activa o pausa el giro lento automático.
 
@@ -76,6 +82,8 @@ En las dos:
 - Clic en un nombre de la leyenda o en un elemento del panel de actividad: lleva a esa rama o commit.
 - **En vivo** / **Ir a lo último**: sigue (o vuelve a seguir) los commits nuevos.
 - **Pantalla completa** (botón o `F`): el grafo ocupa toda la pantalla; `Esc` o `F` para salir.
+- **Trofeos** (barra superior, o la franja de nivel y misión bajo el título del grafo): abre la vitrina de logros; ahí se apaga o enciende la capa de juego.
+- **Replay** (flecha circular): reproduce la historia; barra espaciadora para pausar, arrastra la línea de tiempo para saltar y **Volver al presente** para salir.
 - Los chips del panel de actividad filtran la lista y también los avisos emergentes.
 
 ## Idiomas
@@ -117,7 +125,10 @@ js/palette.js         paleta de colores de las ramas, sin tope
 js/layout.js          asignación de carriles, colores y orden de los commits
 js/graph.js           vista 2D en SVG (D3 solo para zoom y arrastre)
 js/graph3d.js         vista 3D con Three.js (instanciada: pocas llamadas de dibujo aunque haya miles de commits)
+js/flight.js          modo vuelo de la vista 3D: teclado y ratón, joystick táctil y mando de juego
 js/sound.js           sonido de la actividad (Web Audio, escala pentatónica)
+js/replay.js          modo Replay: la historia como time-lapse
+js/game.js            logros del repo, nivel y misión del día
 js/feed.js            panel de actividad, avisos, sonido y notificaciones
 js/app.js             conecta todo
 tools/check-i18n.mjs  verifica las traducciones contra el inglés

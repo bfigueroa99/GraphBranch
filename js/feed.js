@@ -23,6 +23,7 @@
     dot: '<circle cx="8" cy="8" r="3"/>',
     link: '<path d="M6.5 3.5h-3v9h9v-3M9.5 2.5h4v4M13.5 2.5 7.5 8.5"/>',
     close: '<path d="m4 4 8 8M12 4l-8 8"/>',
+    trophy: '<path d="M5 2.5h6v3.4a3 3 0 0 1-6 0zM5 3.6H2.7v.9a2.3 2.3 0 0 0 2.6 2.3M11 3.6h2.3v.9a2.3 2.3 0 0 1-2.6 2.3M8 8.9v2.2M5.6 13.5h4.8"/>',
   };
   const icon = (name, cls = '') =>
     `<svg class="ico ${cls}" viewBox="0 0 16 16" aria-hidden="true" focusable="false">${ICONS[name] || ICONS.dot}</svg>`;
@@ -48,6 +49,7 @@
     star: { cat: 'other', sev: 'info', icon: 'star' },
     fork: { cat: 'other', sev: 'info', icon: 'fork' },
     other: { cat: 'other', sev: 'info', icon: 'dot' },
+    achievement: { cat: 'other', sev: 'good', icon: 'trophy' }, // logros del repo (ver game.js): solo como aviso
   };
   const CATS = ['commits', 'branches', 'prs', 'issues', 'other'];
   const SEV_RANK = { bad: 3, warn: 2, good: 1, info: 0 };
@@ -226,7 +228,7 @@
     toast(a) {
       const m = meta(a);
       const el = document.createElement('div');
-      el.className = `toast sev-${m.sev}`;
+      el.className = `toast sev-${m.sev}${a.kind === 'achievement' ? ' toast-ach' : ''}`;
       el.setAttribute('role', m.sev === 'bad' ? 'alert' : 'status');
       el.innerHTML = `
         <button type="button" class="toast-main">

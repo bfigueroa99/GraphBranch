@@ -1062,6 +1062,532 @@ kbd {
   }
 }
 
+/* ---------- capa de juego: trofeos, nivel del repo y misión del día ---------- */
+.trophy-btn {
+  position: relative;
+}
+.trophy-count {
+  position: absolute;
+  top: 1px;
+  inset-inline-end: 0;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--warn);
+  color: #1a1300;
+  font: 700 10px/16px var(--font-ui);
+  text-align: center;
+}
+.game-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: -2px;
+  padding: 0 14px 10px;
+}
+.gs-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.gs-chip:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+.gs-lv {
+  color: var(--ink);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.gs-bar {
+  position: relative;
+  flex: none;
+  width: 72px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--line);
+}
+.gs-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--s1), var(--s7));
+  transition: width 0.6s ease;
+}
+[dir="rtl"] .gs-fill {
+  inset: 0 0 0 auto;
+}
+.gs-xp,
+.gs-mprog {
+  color: var(--ink-3);
+  font: 500 11.5px var(--font-mono);
+  white-space: nowrap;
+}
+.gs-mlabel {
+  color: var(--ink);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.gs-mtext {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gs-mission.done {
+  border-color: color-mix(in srgb, var(--good) 50%, var(--line));
+  background: color-mix(in srgb, var(--good) 10%, var(--surface-2));
+}
+.gs-mission.done .gs-mprog {
+  color: var(--good);
+}
+.gs-level.up {
+  animation: level-up 1.8s ease-out;
+}
+@keyframes level-up {
+  0%,
+  35% {
+    border-color: var(--warn);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--warn) 35%, transparent);
+  }
+}
+/* combo: el equipo encadena varias cosas seguidas */
+.combo {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 7;
+  color: var(--warn);
+  font: 800 clamp(18px, 2.6vw, 28px) var(--font-display);
+  text-shadow: 0 2px 16px color-mix(in srgb, var(--warn) 45%, transparent), 0 0 2px var(--surface);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+}
+.combo.pop {
+  animation: combo 2.2s cubic-bezier(0.2, 1.4, 0.4, 1) forwards;
+}
+@keyframes combo {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) rotate(-8deg);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1.15) rotate(3deg);
+  }
+  30% {
+    transform: none;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+}
+/* aviso de logro desbloqueado */
+.toast.toast-ach {
+  border-color: color-mix(in srgb, var(--warn) 55%, var(--line));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--warn) 16%, var(--surface)), var(--surface) 70%);
+}
+.toast.toast-ach .act-icon {
+  color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 16%, var(--surface));
+}
+.toast.toast-ach.sev-good .toast-timer {
+  background: var(--warn);
+}
+/* vitrina de trofeos */
+.trophies {
+  width: min(660px, calc(100vw - 2 * var(--gutter)));
+}
+.tr-wrap {
+  display: grid;
+  gap: 12px;
+  max-height: min(82vh, 780px);
+  overflow: auto;
+  padding: 20px;
+}
+.tr-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tr-level {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tr-lv {
+  font: 700 22px var(--font-display);
+  white-space: nowrap;
+}
+.tr-bar {
+  flex: 1;
+  width: auto;
+  height: 8px;
+  border-radius: 4px;
+}
+.tr-xp {
+  color: var(--ink-3);
+  font: 500 12.5px var(--font-mono);
+  white-space: nowrap;
+}
+.tr-mission {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-size: 13.5px;
+}
+.tr-mission.done {
+  background: color-mix(in srgb, var(--good) 12%, var(--surface-2));
+}
+.tr-progress {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 12.5px;
+}
+.tr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tr-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.tr-icon {
+  font-size: 24px;
+  line-height: 1;
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+.tr-card.on {
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--line));
+  background: color-mix(in srgb, var(--warn) 7%, var(--surface));
+}
+.tr-card.on .tr-icon {
+  opacity: 1;
+  filter: none;
+}
+.tr-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.tr-name {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.tr-desc {
+  color: var(--ink-2);
+  font-size: 12px;
+}
+.tr-when {
+  color: var(--ink-3);
+  font-size: 11.5px;
+}
+.tr-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* ---------- modo vuelo (vista 3D) ---------- */
+.fl-ui {
+  position: absolute;
+  inset: 0;
+  z-index: 4; /* sobre las etiquetas, bajo el detalle del commit */
+  pointer-events: none;
+}
+.fl-cross {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.fl-cross::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  margin: -1.5px 0 0 -1.5px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+.fl-ui.locked .fl-cross,
+.fl-ui.touch .fl-cross {
+  opacity: 0.55;
+}
+.fl-prompt,
+.fl-hint {
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  max-width: calc(100% - 32px);
+  margin: 0;
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  text-align: center;
+}
+.fl-prompt {
+  top: calc(50% + 26px);
+  color: var(--ink);
+  font-weight: 600;
+}
+.fl-ui.locked .fl-prompt,
+.fl-ui.touch .fl-prompt {
+  display: none;
+}
+.fl-hint {
+  top: 56px;
+  opacity: 0;
+}
+.fl-hint.show {
+  animation: fl-hint 8s ease forwards;
+}
+@keyframes fl-hint {
+  0% {
+    opacity: 0;
+  }
+  6%,
+  82% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* joystick táctil */
+.fl-stick {
+  display: none;
+  position: absolute;
+  left: 20px;
+  bottom: 24px;
+  width: 116px;
+  height: 116px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 45%, transparent);
+  pointer-events: auto;
+  touch-action: none;
+}
+.fl-ui.touch .fl-stick {
+  display: block;
+}
+.fl-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px;
+  border: 1.5px solid var(--ink-3);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ink) 25%, transparent);
+}
+/* recorrer la rama, desde el detalle del commit */
+.tip-ride {
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 13px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tip-ride:hover {
+  border-color: var(--ink-3);
+}
+
+/* ---------- modo Replay ---------- */
+.replay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none; /* el grafo sigue respondiendo; solo la barra recibe clics */
+}
+.rp-clock {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  color: var(--ink);
+  text-shadow: 0 1px 14px var(--surface), 0 0 2px var(--surface);
+}
+.rp-date {
+  font: 700 clamp(20px, 3vw, 32px) / 1.1 var(--font-display);
+  letter-spacing: -0.01em;
+}
+.rp-time {
+  color: var(--ink-3);
+  font: 500 13px var(--font-mono);
+}
+.rp-caption {
+  position: absolute;
+  top: calc(14px + clamp(20px, 3vw, 32px) * 1.1 + 28px);
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: min(420px, calc(100% - 32px));
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.35s, transform 0.35s;
+}
+.rp-caption.show {
+  opacity: 1;
+  transform: none;
+}
+.rp-caption:empty {
+  display: none;
+}
+.rp-cap-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+.rp-cap-detail {
+  color: var(--ink-2);
+  font-size: 12.5px;
+}
+.rp-bar {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow);
+  pointer-events: auto;
+}
+.rp-track {
+  position: relative;
+  flex: 1;
+  min-width: 60px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+.rp-range {
+  width: 100%;
+  margin: 0;
+  accent-color: var(--s1);
+  cursor: pointer;
+}
+/* merges y releases sobre la línea de tiempo (el pulgar del control deja ~8 px a cada lado) */
+.rp-marks {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 2px;
+  height: 8px;
+  pointer-events: none;
+}
+.rp-mark {
+  position: absolute;
+  top: 2px;
+  width: 2px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--ink-3);
+  opacity: 0.6;
+  transform: translateX(-1px);
+}
+.rp-mark.release {
+  top: 0;
+  height: 8px;
+  background: var(--warn);
+  opacity: 1;
+}
+.rp-speed {
+  min-width: 48px;
+  height: 32px;
+  font: 600 12.5px var(--font-mono);
+}
+.rp-exit {
+  height: 32px;
+  gap: 6px;
+  white-space: nowrap;
+}
+/* en 2D la leyenda de ramas ocupa la izquierda: la fecha y los rótulos van a la derecha */
+.graph-stage[data-view="2d"] .rp-clock {
+  left: auto;
+  right: 16px;
+  align-items: flex-end;
+}
+.graph-stage[data-view="2d"] .rp-caption {
+  top: auto;
+  bottom: 64px; /* sobre la barra: los carriles se llenan desde arriba */
+  left: auto;
+  right: 16px;
+}
+/* la fecha y los rótulos se leen en el idioma de la página */
+[dir="rtl"] .rp-caption {
+  direction: rtl;
+}
+@media (max-width: 560px) {
+  .rp-exit span {
+    display: none;
+  }
+}
+
 /* tooltip */
 .tip {
   position: absolute;

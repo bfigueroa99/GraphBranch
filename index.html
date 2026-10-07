@@ -87,6 +87,10 @@
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c1.8 1.7 2.7 3.7 2.7 6S9.8 12.3 8 14M8 2C6.2 3.7 5.3 5.7 5.3 8S6.2 12.3 8 14"/></svg>
         <select id="lang-select" aria-label="Language" data-i18n-attr="aria-label:ctl.language"></select>
       </label>
+      <button class="icon-btn trophy-btn" type="button" id="trophy-btn" title="Trophies" aria-label="Trophies" data-i18n-attr="title:game.trophies;aria-label:game.trophies">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 2.5h6v3.4a3 3 0 0 1-6 0zM5 3.6H2.7v.9a2.3 2.3 0 0 0 2.6 2.3M11 3.6h2.3v.9a2.3 2.3 0 0 1-2.6 2.3M8 8.9v2.2M5.6 13.5h4.8M6.5 13.5l.4-2.4h2.2l.4 2.4"/></svg>
+        <span class="trophy-count" id="trophy-count" aria-hidden="true" hidden></span>
+      </button>
       <button class="icon-btn" type="button" id="settings-btn" title="Settings and token" aria-label="Settings and token" data-i18n-attr="title:ctl.settings;aria-label:ctl.settings">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.8M8 12.4v1.8M14.2 8h-1.8M3.6 8H1.8M12.4 3.6l-1.3 1.3M4.9 11.1l-1.3 1.3M12.4 12.4l-1.3-1.3M4.9 4.9 3.6 3.6"/></svg>
       </button>
@@ -143,13 +147,32 @@
           <button class="icon-btn" type="button" id="spin-btn" aria-pressed="true" title="Slowly rotate the view while you are not touching it" aria-label="Rotate the view" data-i18n-attr="title:spin.title;aria-label:spin.label">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.2 6.2A5.5 5.5 0 0 0 3 5.3M2.8 9.8A5.5 5.5 0 0 0 13 10.7M3 2.5v2.8h2.8M13 13.5v-2.8h-2.8"/></svg>
           </button>
+          <button class="icon-btn" type="button" id="fly-btn" aria-pressed="false" title="Flight mode" aria-label="Flight mode" data-i18n-attr="title:fly.label;aria-label:fly.label">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M14 2 2 7.2l4.6 1.7L8.3 14z"/><path d="M6.6 8.9 14 2"/></svg>
+          </button>
           <button class="icon-btn" type="button" id="fullscreen-btn" aria-pressed="false" title="Full screen" aria-label="Full screen" data-i18n-attr="title:fullscreen.label;aria-label:fullscreen.label">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path class="when-off" d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/><path class="when-on" d="M6 2.5V6H2.5M10 2.5V6h3.5M13.5 10H10v3.5M6 13.5V10H2.5"/></svg>
+          </button>
+          <button class="icon-btn" type="button" id="replay-btn" aria-pressed="false" title="Replay the history" aria-label="Replay the history" data-i18n-attr="title:replay.label;aria-label:replay.label">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 8a5.4 5.4 0 1 0 1.7-3.9M2.4 2.6v3h3"/><path d="M7 5.9v4.2L10.2 8z"/></svg>
           </button>
           <button class="btn btn-follow" type="button" id="follow-btn" aria-pressed="true">
             <span class="live-dot" aria-hidden="true"></span><span class="follow-label">Live</span>
           </button>
         </div>
+      </div>
+      <div class="game-strip" id="game-strip" hidden>
+        <button type="button" class="gs-chip gs-level" id="gs-level">
+          <span class="gs-lv" id="gs-lv"></span>
+          <span class="gs-bar" aria-hidden="true"><span class="gs-fill" id="gs-fill"></span></span>
+          <span class="gs-xp" id="gs-xp"></span>
+        </button>
+        <button type="button" class="gs-chip gs-mission" id="gs-mission">
+          <span class="gs-target" aria-hidden="true">🎯</span>
+          <span class="gs-mlabel" data-i18n="game.mission">Mission of the day</span>
+          <span class="gs-mtext" id="gs-mtext"></span>
+          <span class="gs-mprog" id="gs-mprog"></span>
+        </button>
       </div>
       <p class="token-banner" id="token-banner" hidden>
         <span id="token-banner-text"></span>
@@ -159,6 +182,25 @@
         <div class="graph3d-wrap" id="graph3d" hidden></div>
         <div class="graph-wrap" id="graph" hidden></div>
         <div class="overlay" id="overlay" hidden></div>
+        <div class="combo" id="combo" aria-hidden="true"></div>
+        <div class="replay" id="replay" hidden>
+          <div class="rp-clock" aria-hidden="true"><span class="rp-date"></span><span class="rp-time"></span></div>
+          <p class="rp-caption" role="status" aria-live="polite"></p>
+          <div class="rp-bar">
+            <button type="button" class="icon-btn rp-play" aria-pressed="false">
+              <svg class="ico when-off" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.5v9M10.5 3.5v9"/></svg>
+              <svg class="ico when-on" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6L12.5 8z"/></svg>
+            </button>
+            <div class="rp-track">
+              <div class="rp-marks" aria-hidden="true"></div>
+              <input type="range" class="rp-range" min="0" max="1000" step="1" value="0" aria-label="Position in the history" data-i18n-attr="aria-label:replay.position">
+            </div>
+            <button type="button" class="btn btn-ghost rp-speed" title="Replay speed" data-i18n-attr="title:replay.speed">1×</button>
+            <button type="button" class="btn rp-exit" aria-label="Back to the present" data-i18n-attr="aria-label:replay.exit">
+              <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9.5M9 4.5 12.5 8 9 11.5"/></svg><span data-i18n="replay.exit">Back to the present</span>
+            </button>
+          </div>
+        </div>
       </div>
       <p class="hint" id="hint"></p>
     </section>
@@ -208,6 +250,27 @@
   </form>
 </dialog>
 
+<dialog class="settings trophies" id="trophies" aria-labelledby="trophies-title">
+  <div class="tr-wrap">
+    <div class="tr-head">
+      <h2 id="trophies-title" data-i18n="game.trophies">Trophies</h2>
+      <button type="button" class="icon-btn" id="trophies-close" title="Close" aria-label="Close" data-i18n-attr="title:toast.close;aria-label:toast.close">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <div class="tr-level">
+      <span class="tr-lv" id="tr-lv"></span>
+      <span class="gs-bar tr-bar" aria-hidden="true"><span class="gs-fill" id="tr-fill"></span></span>
+      <span class="tr-xp" id="tr-xp"></span>
+    </div>
+    <p class="tr-mission" id="tr-mission"></p>
+    <p class="tr-progress" id="tr-progress"></p>
+    <ul class="tr-grid" id="tr-grid"></ul>
+    <p class="help" data-i18n="game.help">Achievements celebrate what the repository and the team accomplish, never individual people. They are saved only in this browser.</p>
+    <label class="tr-toggle"><input type="checkbox" id="game-enable"> <span data-i18n="game.enable">Show achievements and challenges</span></label>
+  </div>
+</dialog>
+
 <script src="js/i18n-apply.js"></script>
 <!-- SRI: el navegador rechaza estos scripts si el CDN entrega algo distinto a lo verificado.
      Al cambiar de versión hay que recalcular el hash (ver "Seguridad" en el README). -->
@@ -224,8 +287,11 @@
 <script src="js/palette.js"></script>
 <script src="js/layout.js"></script>
 <script src="js/graph.js"></script>
+<script src="js/flight.js"></script>
 <script src="js/graph3d.js"></script>
 <script src="js/sound.js"></script>
+<script src="js/replay.js"></script>
+<script src="js/game.js"></script>
 <script src="js/feed.js"></script>
 <script src="js/app.js"></script>
 </body>

@@ -161,6 +161,7 @@
     play(acts, panOf) {
       const ctx = this.ensure();
       if (!ctx || !acts.length) return;
+      if (this.nextFree > ctx.currentTime + 1.5) return; // ya hay frase en cola: no acumular atraso
       // en la rejilla global de corcheas: lo que llega junto se encadena como una frase
       let t = Math.max(ctx.currentTime + 0.06, this.nextFree);
       t = Math.ceil(t / STEP) * STEP;
@@ -243,6 +244,36 @@
           this.pluck(t, note(d + 8), pan, 0.08, 0.35);
           return { steps: 1, notes: 1 };
       }
+    }
+
+    /** Zumbido del modo vuelo: sube de tono y de volumen con la velocidad (de 0 a 1). */
+    engine(level) {
+      if (!this.hum && level <= 0) return;
+      const ctx = this.ensure();
+      if (!ctx) return;
+      if (!this.hum) {
+        const gain = ctx.createGain();
+        gain.gain.value = 0;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 180;
+        filter.Q.value = 3;
+        const oscs = [55, 55.7].map((f) => {
+          const o = ctx.createOscillator();
+          o.type = 'sawtooth';
+          o.frequency.value = f;
+          o.connect(filter);
+          o.start();
+          return o;
+        });
+        filter.connect(gain).connect(this.master);
+        this.hum = { gain, filter, oscs };
+      }
+      const t = ctx.currentTime;
+      const h = this.hum;
+      h.gain.gain.setTargetAtTime(level * 0.05, t, 0.15);
+      h.filter.frequency.setTargetAtTime(160 + level * 900, t, 0.2);
+      h.oscs.forEach((o, i) => o.frequency.setTargetAtTime(48 + i * 0.6 + level * 30, t, 0.3));
     }
 
     /** Al activar el sonido: una frase corta que confirma que funciona. */

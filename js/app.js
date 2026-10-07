@@ -140,6 +140,8 @@
       if (a.sha && graph.focusSha(a.sha)) return;
       if (a.branch) graph.focusBranch(a.branch);
     },
+    // con la vista 3D, cada sonido sale del lado de la pantalla donde está su rama
+    panOf: (a) => (graph === graph3d ? graph3d.panOf(a.branch) : 0),
   });
 
   /* ---------- fuente de datos ---------- */
@@ -220,7 +222,9 @@
     };
     graph2d.update(L, gctx);
     graph3d?.update(L, gctx);
+    feed.setDefaultBranch(data.repo.defaultBranch);
     feed.add(activities, { live: !initial });
+    if (!initial) graph3d?.celebrate(activities); // cada tipo de evento con su efecto
     renderRepo(data.repo);
     renderStats(data, L);
     if (!L.nodes.length) showOverlay('empty');

@@ -165,6 +165,45 @@
       gl_FragColor = vec4( uColor, clamp( k, 0.0, 1.0 ) * uOpacity );
     }`;
 
+  /* PR fusionado: un cometa recorre el tubo del arco y deja una estela que se apaga */
+  const ARC_VS = `
+    varying float vU;
+    void main() {
+      vU = uv.x;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+    }`;
+  const ARC_FS = `
+    uniform vec3 uColor;
+    uniform float uHead;
+    uniform float uOpacity;
+    varying float vU;
+    uniform float uPath;
+    void main() {
+      float d = uHead - vU;
+      // por delante del cometa, el trayecto apenas insinuado; por detrás, la estela que se apaga
+      float a = ( d < 0.0 ? uPath : exp( -d * 2.5 ) ) * uOpacity;
+      if ( a < 0.004 ) discard;
+      gl_FragColor = vec4( mix( uColor, vec3( 1.0 ), d < 0.0 ? 0.0 : exp( -d * 30.0 ) * 0.7 ), a );
+    }`;
+
+  /* PR abierto: un haz vertical que se desvanece hacia arriba, con bandas de luz que suben */
+  const BEAM_VS = `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+    }`;
+  const BEAM_FS = `
+    uniform vec3 uColor;
+    uniform float uOpacity;
+    uniform float uTime;
+    varying vec2 vUv;
+    void main() {
+      float fall = pow( 1.0 - vUv.y, 1.5 );
+      float bands = 0.72 + 0.28 * sin( vUv.y * 24.0 - uTime * 6.0 );
+      gl_FragColor = vec4( mix( uColor, vec3( 1.0 ), 0.2 ), fall * bands * uOpacity );
+    }`;
+
   /* estrellas lejanas: siguen a la cámara (solo giran con la vista) y titilan */
   const STAR_VS = `
     attribute float aSeed;
@@ -426,6 +465,8 @@
       this.tmpP = new THREE.Vector3();
       this.tmp2 = new THREE.Vector2();
       this.tmpCol = new THREE.Color();
+      this.white = new THREE.Color(1, 1, 1);
+      this.warmWhite = new THREE.Color(1, 0.93, 0.78);
       this.sph = new THREE.Spherical();
 
       this.scene = new THREE.Scene();
@@ -484,6 +525,7 @@
         tube: new THREE.CylinderGeometry(1, 1, 1, RADIAL, 1, true).rotateX(Math.PI / 2).translate(0, 0, 0.5),
         ring: new THREE.RingGeometry(0.94, 1, 72),
         portal: new THREE.RingGeometry(0.9, 1.1, 160, 1), // solo el anillo: el sombreador no corre en toda la pantalla
+        beam: new THREE.CylinderGeometry(0.22, 0.6, 1, 18, 1, true).translate(0, 0.5, 0),
       };
 
       this.flowLive = flowHook(this.u.flow, this.u.time, this.u.fog);
@@ -538,7 +580,10 @@
       this.days = new Map();
       this.ripples = [];
       this.sparkList = [];
-      this.pending = [];
+      this.pending = []; // efectos programados: { at, fn }
+      this.fx = []; // efectos en curso (arcos, faros): { mesh, step(now) → sigue vivo }
+      this.fxGlows = []; // halos que los efectos piden en este cuadro
+      this.goneHeads = new Map(); // ramas recién borradas: dónde estaban, para sus efectos
       this.dying = [];
       this.keys = new Set();
       this.maxX = 0;
@@ -652,6 +697,7 @@
       const ink2 = new THREE.Color(v('--ink-2', '#48534f'));
       const ink3 = new THREE.Color(v('--ink-3', '#78837f'));
       this.lineColor = new THREE.Color(v('--line-strong', '#c9d1cd'));
+      this.sevCol = { good: new THREE.Color(v('--good', '#0a8f0a')), warn: new THREE.Color(v('--warn', '#c98a00')), bad: new THREE.Color(v('--bad', '#d03b3b')) };
       this.scene.fog.color.copy(this.bg);
 
       this.hemi.color.set(dark ? 0xdfe8ff : 0xffffff);
@@ -824,7 +870,7 @@
       }
       // la onda y las chispas, solo para los más nuevos (una rama que aparece trae toda su historia)
       arrivals.sort((a, b) => b.data.x - a.data.x);
-      for (const it of arrivals.slice(0, 8)) this.pending.push({ at: now + ARRIVE * 0.9, it });
+      for (const it of arrivals.slice(0, 8)) this.later(ARRIVE * 0.9, () => this.nodes.get(it.sha) === it && this.burst(it.toV, this.col(it.data.color)));
 
       /* aristas */
       const seenE = new Set();
@@ -860,6 +906,7 @@
           it.el.addEventListener('pointerleave', () => this.hoverSha === it.data.sha && this.setHover(null));
           this.labelLayer.appendChild(it.el);
           this.heads.set(h.name, it);
+          this.goneHeads.delete(h.name);
           it.data = h;
           this.buildHead(it, h, ctx);
           if (fx) this.flash(it.el);
@@ -868,6 +915,8 @@
           it.data = h;
           this.buildHead(it, h, ctx);
         }
+
+        if (h.color !== 'ghost') it.liveColor = h.color; // al fusionarse se vuelve gris; los efectos usan su color de antes
 
         let p = this.pointers.get(h.name);
         if (!h.own) {
@@ -883,8 +932,10 @@
           this.pointers.delete(h.name);
         }
       }
+      for (const [name, g] of this.goneHeads) if (now - g.t > 60000) this.goneHeads.delete(name);
       for (const [name, it] of this.heads) {
         if (seenH.has(name)) continue;
+        this.goneHeads.set(name, { pos: it.curV.clone(), color: it.liveColor || it.data.color, t: now });
         it.el.classList.add('exit');
         setTimeout(() => it.el.remove(), 420);
         this.heads.delete(name);
@@ -1479,7 +1530,7 @@
     /* ---------- efectos ---------- */
 
     /** Onda que se expande en el plano del commit (perpendicular al tiempo). */
-    ripple(v, col) {
+    ripple(v, col, k = 1) {
       const mesh = new THREE.Mesh(
         this.geo.ring,
         new THREE.MeshBasicMaterial({
@@ -1493,7 +1544,7 @@
       mesh.position.copy(v);
       mesh.scale.setScalar(0.6);
       this.gFx.add(mesh);
-      this.ripples.push({ mesh, t0: performance.now() });
+      this.ripples.push({ mesh, t0: performance.now(), k });
     }
 
     /** Llegada de un commit: onda, chispas y un destello del presente. */
@@ -1520,18 +1571,302 @@
       this.flashAmt = Math.min(1, this.flashAmt + 0.6);
     }
 
+    /* ---------- celebraciones: cada tipo de evento con su efecto ---------- */
+
+    /** Efectos de las actividades que acaban de llegar: solo en vivo, con la vista 3D activa y con
+        movimiento. Cada tipo tiene un tope por tanda, así una ráfaga no satura la escena. */
+    celebrate(acts) {
+      if (!this.active || !this.motion || !this.nodes.size || !acts?.length) return;
+      const now = performance.now();
+      const prHead = new Map([...(this.ctx?.prs?.values() || [])].map((p) => [p.number, p.head]));
+      const count = {};
+      const room = (kind, max) => (count[kind] = (count[kind] || 0) + 1) <= max;
+      let delay = 0;
+      for (const a of [...acts].sort((x, y) => x.time - y.time)) {
+        const [head, base] = String(a.ref || '').split(' → ');
+        const branch = a.branch || prHead.get(a.number) || null;
+        switch (a.kind) {
+          case 'pr-merge':
+            if (room('arc', 4)) this.later((delay += 200), () => this.mergeArc(head, base || a.branch));
+            break;
+          case 'pr-open':
+            if (room('beacon', 4)) this.later((delay += 150), () => this.beacon(a.branch || head));
+            break;
+          case 'release':
+            if (now - (this.lastFireworks ?? -1e9) > 15000) {
+              this.lastFireworks = now;
+              this.later(delay, () => this.fireworks());
+            }
+            break;
+          case 'star':
+          case 'fork':
+            if (room('star', 2)) this.later((delay += 400), () => this.shootingStar(a.kind === 'fork'));
+            break;
+          case 'force':
+            this.alarm(branch, this.sevCol.bad, false);
+            break;
+          case 'review-ok':
+            this.alarm(branch, this.sevCol.good, true);
+            break;
+          case 'review-changes':
+            this.alarm(branch, this.sevCol.warn, false);
+            break;
+          case 'branch-delete':
+          case 'branch-delete-unmerged':
+            if (room('puff', 6)) this.puff(a.branch);
+            break;
+        }
+      }
+    }
+
+    later(ms, fn) {
+      this.pending.push({ at: performance.now() + ms, fn });
+    }
+
+    /** Dónde está una rama: su commit cabeza (posición actual y final), o dónde se la vio por última
+        vez si se acaba de borrar. */
+    branchPos(name) {
+      const h = name && this.heads.get(name);
+      if (h) {
+        const node = this.nodes.get(h.data.sha);
+        return { pos: node?.curV || h.curV, toV: node?.toV || h.toV, color: h.liveColor || h.data.color };
+      }
+      const g = name && this.goneHeads.get(name);
+      return g ? { pos: g.pos, toV: g.pos, color: g.color } : null;
+    }
+
+    defaultHead() {
+      for (const h of this.heads.values()) if (h.data.isDefault) return h.data.name;
+      return null;
+    }
+
+    /** Lado de la pantalla donde está una rama, de -1 a 1: el sonido sale de ahí. */
+    panOf(name) {
+      const at = this.active && this.W ? this.branchPos(name) : null;
+      if (!at) return 0;
+      const p = this.tmpP.copy(at.pos).project(this.camera);
+      return p.z > 1 ? 0 : clamp(p.x, -1, 1);
+    }
+
+    /** Una chispa suelta en una dirección al azar. */
+    spark(v, col, size, life, speed, extra) {
+      const a = Math.random() * Math.PI * 2;
+      const y = Math.random() * 2 - 1;
+      const r = Math.sqrt(1 - y * y) * speed;
+      this.sparkList.push({ x: v.x, y: v.y, z: v.z, vx: Math.cos(a) * r, vy: y * speed, vz: Math.sin(a) * r, t: 0, life, size, col, ...extra });
+    }
+
+    /** PR fusionado: un cometa viaja en arco desde la rama del PR hasta su base y aterriza con una onda. */
+    mergeArc(head, base) {
+      const to = this.branchPos(base) || this.branchPos(this.defaultHead());
+      if (!to) return;
+      const from = this.branchPos(head);
+      const B = to.toV.clone();
+      let A;
+      if (from) A = from.pos.clone();
+      else {
+        // la rama del PR no está en el grafo: el cometa llega desde fuera de la espiral
+        const out = this.tmpA.set(B.x, B.y, 0);
+        if (out.lengthSq() < 0.01) out.set(0, 1, 0);
+        out.normalize().multiplyScalar(this.radius * 0.9 + 3);
+        A = B.clone().add(out).setZ(B.z - 8);
+      }
+      if (A.distanceTo(B) < 0.5) A.y += 3;
+      // el arco se abre hacia afuera del tronco, más alto cuanto más lejos están los extremos
+      const lift = this.tmpA.set((A.x + B.x) / 2, (A.y + B.y) / 2, 0);
+      if (lift.lengthSq() < 0.01) lift.set(0, 1, 0);
+      lift.normalize().multiplyScalar(3 + A.distanceTo(B) * 0.35);
+      const curve = new THREE.CubicBezierCurve3(A, A.clone().add(lift), B.clone().add(lift), B);
+      const col = this.col(from && from.color !== 'ghost' ? from.color : to.color).clone();
+      const mesh = new THREE.Mesh(
+        new THREE.TubeGeometry(curve, 72, 0.12, 6, false),
+        new THREE.ShaderMaterial({
+          uniforms: { uColor: { value: col }, uHead: { value: 0 }, uOpacity: { value: 1 }, uPath: { value: this.dark ? 0.14 : 0.2 } },
+          vertexShader: ARC_VS,
+          fragmentShader: ARC_FS,
+          transparent: true,
+          depthWrite: false,
+          blending: this.dark ? THREE.AdditiveBlending : THREE.NormalBlending,
+        }),
+      );
+      this.gFx.add(mesh);
+      const glow = col.clone().lerp(this.white, 0.5);
+      const u = mesh.material.uniforms;
+      const t0 = performance.now();
+      const dur = 1400;
+      let landed = false;
+      this.fx.push({
+        mesh,
+        step: (now) => {
+          const p = (now - t0) / dur;
+          if (p < 1) {
+            const e = 1 - (1 - clamp(p, 0, 1)) ** 2; // sale disparado y frena al aterrizar
+            u.uHead.value = e;
+            const c = curve.getPoint(e, this.tmpP);
+            this.fxGlows.push({ x: c.x, y: c.y, z: c.z, col: glow, a: 1, size: 2.4 });
+            if (Math.random() < 0.8) this.spark(c, glow, 0.5, 0.6, 0.6);
+            return true;
+          }
+          if (!landed) {
+            landed = true;
+            this.burst(B, col);
+            this.ripple(B, col, 1.7);
+          }
+          const q = (now - t0 - dur) / 700; // la estela entra en la base y se apaga
+          u.uHead.value = 1 + q * 0.8;
+          u.uPath.value = 0;
+          u.uOpacity.value = Math.max(0, 1 - q);
+          return q < 1;
+        },
+      });
+    }
+
+    /** PR abierto: un faro de luz se levanta sobre la rama y la sigue si se mueve. */
+    beacon(name) {
+      const at = this.branchPos(name);
+      if (!at) return;
+      const col = this.col(at.color).clone();
+      const mesh = new THREE.Mesh(
+        this.geo.beam,
+        new THREE.ShaderMaterial({
+          uniforms: { uColor: { value: col }, uOpacity: { value: 0 }, uTime: this.u.time },
+          vertexShader: BEAM_VS,
+          fragmentShader: BEAM_FS,
+          transparent: true,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+          blending: this.dark ? THREE.AdditiveBlending : THREE.NormalBlending,
+        }),
+      );
+      mesh.position.copy(at.pos);
+      mesh.scale.set(1, 0.01, 1);
+      this.gFx.add(mesh);
+      this.ripple(at.pos, col);
+      const top = col.clone().lerp(this.white, 0.4);
+      const H = 7 + this.radius * 0.3;
+      const peak = this.dark ? 1 : 0.65;
+      const t0 = performance.now();
+      this.fx.push({
+        mesh,
+        step: (now) => {
+          const s = (now - t0) / 1000;
+          const here = this.branchPos(name);
+          if (here) mesh.position.copy(here.pos);
+          mesh.scale.y = H * easeOut(clamp(s / 0.6, 0, 1));
+          const o = clamp(s / 0.25, 0, 1) * clamp((3.4 - s) / 0.9, 0, 1);
+          mesh.material.uniforms.uOpacity.value = peak * o;
+          this.fxGlows.push({ x: mesh.position.x, y: mesh.position.y + mesh.scale.y, z: mesh.position.z, col: top, a: 0.7 * o, size: 1.5 });
+          return s < 3.4;
+        },
+      });
+    }
+
+    /** Release publicado: fuegos artificiales sobre la rama por defecto. */
+    fireworks() {
+      const at = this.branchPos(this.defaultHead());
+      if (!at) return;
+      const from = at.pos.clone();
+      for (let i = 0; i < 4; i++) this.later(i * 420, () => this.rocket(from));
+      this.flashAmt = 1;
+    }
+
+    rocket(from) {
+      const a = Math.random() * Math.PI * 2;
+      const out = 1.5 + Math.random() * 2;
+      this.sparkList.push({
+        x: from.x,
+        y: from.y,
+        z: from.z,
+        vx: Math.cos(a) * out,
+        vy: 10 + Math.random() * 4,
+        vz: Math.sin(a) * out + 1.5,
+        t: 0,
+        life: 0.95 + Math.random() * 0.3,
+        size: 0.6,
+        col: this.warmWhite,
+        g: 7,
+        drag: 0.4,
+        trail: 0.025,
+        boom: true,
+      });
+    }
+
+    /** El cohete estalla en una esfera de chispas de dos colores de la paleta, que caen y titilan. */
+    explode(s) {
+      const pick = () => this.col('c' + (1 + Math.floor(Math.random() * 8))).clone().lerp(this.white, this.dark ? 0.25 : 0);
+      const cols = [pick(), pick()];
+      for (let i = 0; i < 90; i++) {
+        this.spark(s, cols[i % 2], 0.55 + Math.random() * 0.35, 1.3 + Math.random() * 0.7, 4.5 + Math.random() * 3.5, {
+          g: 2.6,
+          drag: 1.3,
+          twinkle: Math.random() * 10,
+        });
+      }
+      this.spark(s, this.warmWhite, 4, 0.35, 0); // el fogonazo del estallido
+      this.flashAmt = Math.min(1, this.flashAmt + 0.4);
+    }
+
+    /** Estrella o fork nuevos: una estrella fugaz cruza el cielo, delante de la cámara. */
+    shootingStar(fork) {
+      const e = this.camera.matrixWorld.elements;
+      const right = new THREE.Vector3(e[0], e[1], e[2]);
+      const up = new THREE.Vector3(e[4], e[5], e[6]);
+      const fwd = new THREE.Vector3(-e[8], -e[9], -e[10]);
+      const D = 42;
+      const side = Math.random() < 0.5 ? -1 : 1;
+      const p = this.camera.position
+        .clone()
+        .addScaledVector(fwd, D)
+        .addScaledVector(up, D * (0.22 + Math.random() * 0.12))
+        .addScaledVector(right, -side * D * 0.7);
+      const v = right.multiplyScalar(side * D * 1.1).addScaledVector(up, -D * 0.25);
+      const col = fork ? this.col('c2').clone().lerp(this.white, 0.45) : this.warmWhite;
+      this.sparkList.push({ x: p.x, y: p.y, z: p.z, vx: v.x, vy: v.y, vz: v.z, t: 0, life: 1.25, size: 1.1, col, drag: 0, trail: 0.01, trailLife: 0.55, env: 1 });
+    }
+
+    /** Rama borrada: se deshace en polvo de su color que sube despacio. */
+    puff(name) {
+      const at = this.branchPos(name);
+      if (!at) return;
+      const col = this.col(at.color);
+      for (let i = 0; i < 28; i++) this.spark(at.pos, col, 0.3 + Math.random() * 0.25, 1.3 + Math.random() * 0.9, 0.6 + Math.random() * 1.6, { g: -0.5, drag: 1.1 });
+    }
+
+    /** Revisión o force-push: dos ondas del color del estado sobre la rama (y chispas si es una aprobación). */
+    alarm(name, col, cheer) {
+      const at = this.branchPos(name);
+      if (!at) return;
+      const pos = at.pos.clone();
+      this.ripple(pos, col);
+      this.later(180, () => this.ripple(pos, col, 0.7));
+      if (cheer) {
+        const c = col.clone().lerp(this.white, 0.4);
+        for (let i = 0; i < 14; i++) this.spark(pos, c, 0.35, 0.8 + Math.random() * 0.4, 2.5 + Math.random() * 2, { g: -2 });
+      }
+    }
+
     stepFx(now, dt) {
       let changed = false;
       for (let i = this.pending.length - 1; i >= 0; i--) {
         const f = this.pending[i];
         if (now < f.at) continue;
         this.pending.splice(i, 1);
-        if (this.nodes.get(f.it.sha) === f.it) this.burst(f.it.toV, this.col(f.it.data.color));
+        f.fn();
+      }
+      for (let i = this.fx.length - 1; i >= 0; i--) {
+        const f = this.fx[i];
+        if (!f.step(now)) {
+          this.gFx.remove(f.mesh);
+          if (f.mesh.geometry !== this.geo.beam) f.mesh.geometry.dispose();
+          f.mesh.material.dispose();
+          this.fx.splice(i, 1);
+        }
+        changed = true;
       }
       for (let i = this.ripples.length - 1; i >= 0; i--) {
         const r = this.ripples[i];
         const p = clamp((now - r.t0) / 1300, 0, 1);
-        r.mesh.scale.setScalar(0.6 + 7 * easeOut(p));
+        r.mesh.scale.setScalar((0.6 + 7 * easeOut(p)) * r.k);
         r.mesh.material.opacity = (this.dark ? 0.85 : 0.55) * Math.pow(1 - p, 1.5);
         if (p >= 1) {
           this.gFx.remove(r.mesh);
@@ -1540,25 +1875,39 @@
         }
         changed = true;
       }
-      if (this.sparkList.length || this.sparks.n) {
-        const drag = Math.exp(-2.8 * dt);
-        this.sparks.begin(this.sparkList.length);
-        for (let i = this.sparkList.length - 1; i >= 0; i--) {
-          const s = this.sparkList[i];
+      if (this.sparkList.length || this.fxGlows.length || this.sparks.n) {
+        const list = this.sparkList;
+        this.sparks.begin(list.length + this.fxGlows.length);
+        // hacia atrás: lo que se agrega en el cuadro (estelas, explosiones) se mueve desde el siguiente
+        for (let i = list.length - 1; i >= 0; i--) {
+          const s = list[i];
           s.t += dt;
           if (s.t >= s.life) {
-            this.sparkList.splice(i, 1);
+            list[i] = list[list.length - 1]; // el orden no importa: se quita sin desplazar
+            list.pop();
+            if (s.boom) this.explode(s);
             continue;
           }
+          const drag = Math.exp(-(s.drag ?? 2.8) * dt);
+          if (s.g) s.vy -= s.g * dt;
           s.vx *= drag;
           s.vy *= drag;
           s.vz *= drag;
           s.x += s.vx * dt;
           s.y += s.vy * dt;
           s.z += s.vz * dt;
+          if (s.trail) {
+            for (s.acc = (s.acc || 0) + dt; s.acc >= s.trail; s.acc -= s.trail)
+              list.push({ x: s.x, y: s.y, z: s.z, vx: 0, vy: 0, vz: 0, t: 0, life: s.trailLife || 0.35, size: s.size * 0.55, col: s.col });
+          }
           const q = 1 - s.t / s.life;
-          this.sparks.push(s.x, s.y, s.z, s.col, q * q, s.size * (0.6 + 0.4 * q), 0);
+          let a = s.env ? Math.sin(Math.PI * (1 - q)) : q * q;
+          if (s.twinkle) a *= 0.55 + 0.45 * Math.sin(s.t * 38 + s.twinkle);
+          this.sparks.push(s.x, s.y, s.z, s.col, a, s.size * (0.6 + 0.4 * q), 0);
         }
+        for (const g of this.fxGlows) this.sparks.push(g.x, g.y, g.z, g.col, g.a, g.size, 0);
+        this.fxGlows.length = 0;
+        if (list.length > 1600) list.splice(0, list.length - 1600);
         this.sparks.end();
         changed = true;
       }
@@ -1703,6 +2052,14 @@
       for (const d of this.days.values()) (this.gDays.remove(d.mesh), d.el.remove());
       for (const r of this.ripples) (this.gFx.remove(r.mesh), r.mesh.material.dispose());
       for (const m of [this.nodes, this.edges, this.heads, this.pointers, this.days]) m.clear();
+      for (const f of this.fx) {
+        this.gFx.remove(f.mesh);
+        if (f.mesh.geometry !== this.geo.beam) f.mesh.geometry.dispose();
+        f.mesh.material.dispose();
+      }
+      this.fx = [];
+      this.fxGlows = [];
+      this.goneHeads.clear();
       this.ripples = [];
       this.sparkList = [];
       this.pending = [];

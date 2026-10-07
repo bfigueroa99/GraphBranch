@@ -83,6 +83,11 @@ GB.i18n.define('pl', {
   'fly.lock': 'Kliknij, aby sterować myszą',
   'fly.touch': 'Poruszaj się joystickiem i przeciągaj, aby się rozejrzeć',
   'ride.label': 'Przejedź gałąź',
+  'director.label': 'Reżyser kamery',
+  'director.title': 'Reżyser kamery: kamera sama śledzi najważniejszą aktywność. Porusz widokiem, aby przejąć sterowanie.',
+  'tv.label': 'Tryb TV',
+  'tv.title': 'Tryb TV: na wspólny ekran, z automatyczną kamerą i stale włączonym ekranem',
+  'tv.exit': 'Wyjdź z trybu TV',
 
   /* ---------- warstwa gry: osiągnięcia repozytorium, poziom i misja dnia ---------- */
   'game.trophies': 'Trofea',

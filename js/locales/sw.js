@@ -78,6 +78,11 @@ GB.i18n.define('sw', {
   'fly.lock': 'Bofya ili kuongoza kwa kipanya',
   'fly.touch': 'Songa kwa joystick na buruta ili kutazama pande zote',
   'ride.label': 'Safiri kwenye tawi hili',
+  'director.label': 'Mwongozaji wa kamera',
+  'director.title': 'Mwongozaji wa kamera: kamera hufuata yenyewe shughuli muhimu zaidi. Sogeza mwonekano ili uchukue udhibiti.',
+  'tv.label': 'Hali ya TV',
+  'tv.title': 'Hali ya TV: kwa skrini ya pamoja, yenye kamera ya kiotomatiki na skrini inayobaki ikiwaka',
+  'tv.exit': 'Toka kwenye hali ya TV',
 
   /* ---------- safu ya mchezo: mafanikio ya hazina, kiwango na jukumu la leo ---------- */
   'game.trophies': 'Vikombe',

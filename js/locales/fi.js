@@ -78,6 +78,11 @@ GB.i18n.define('fi', {
   'fly.lock': 'Napsauta ja ohjaa hiirellä',
   'fly.touch': 'Liiku ohjaimella ja katsele ympärillesi vetämällä',
   'ride.label': 'Aja haara läpi',
+  'director.label': 'Kameraohjaaja',
+  'director.title': 'Kameraohjaaja: kamera seuraa itse tärkeintä tapahtumaa. Liikuta näkymää ottaaksesi ohjauksen.',
+  'tv.label': 'TV-tila',
+  'tv.title': 'TV-tila: jaetulle näytölle, automaattisella kameralla ja näyttö aina päällä',
+  'tv.exit': 'Poistu TV-tilasta',
 
   /* ---------- pelikerros: repositorion saavutukset, taso ja päivän tehtävä ---------- */
   'game.trophies': 'Pokaalit',

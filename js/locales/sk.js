@@ -83,6 +83,11 @@ GB.i18n.define('sk', {
   'fly.lock': 'Kliknite a riaďte myšou',
   'fly.touch': 'Pohybujte sa joystickom a ťahaním sa rozhliadajte',
   'ride.label': 'Prejsť vetvou',
+  'director.label': 'Režisér kamery',
+  'director.title': 'Režisér kamery: kamera sama sleduje najdôležitejšie dianie. Pohnite zobrazením a prevezmete ovládanie.',
+  'tv.label': 'Režim TV',
+  'tv.title': 'Režim TV: na zdieľanú obrazovku, s automatickou kamerou a stále zapnutou obrazovkou',
+  'tv.exit': 'Ukončiť režim TV',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'Trofeje',

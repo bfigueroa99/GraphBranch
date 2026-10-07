@@ -78,6 +78,11 @@ GB.i18n.define('sv', {
   'fly.lock': 'Klicka för att styra med musen',
   'fly.touch': 'Rör dig med joysticken och dra för att se dig omkring',
   'ride.label': 'Åk genom branchen',
+  'director.label': 'Kameraregissör',
+  'director.title': 'Kameraregissör: kameran följer själv den viktigaste aktiviteten. Flytta vyn för att ta över.',
+  'tv.label': 'TV-läge',
+  'tv.title': 'TV-läge: för en delad skärm, med automatisk kamera och skärmen alltid på',
+  'tv.exit': 'Avsluta TV-läge',
 
   /* ---------- spellager: repots prestationer, nivå och dagens uppdrag ---------- */
   'game.trophies': 'Troféer',

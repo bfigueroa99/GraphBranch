@@ -78,6 +78,11 @@ GB.i18n.define('nb', {
   'fly.lock': 'Klikk for å styre med musen',
   'fly.touch': 'Beveg deg med joysticken, og dra for å se deg rundt',
   'ride.label': 'Kjør gjennom branchen',
+  'director.label': 'Kamerainstruktør',
+  'director.title': 'Kamerainstruktør: kameraet følger selv den viktigste aktiviteten. Flytt visningen for å ta over.',
+  'tv.label': 'TV-modus',
+  'tv.title': 'TV-modus: for en delt skjerm, med automatisk kamera og skjermen alltid på',
+  'tv.exit': 'Avslutt TV-modus',
 
   /* ---------- spillag: repoets prestasjoner, nivå og dagens oppdrag ---------- */
   'game.trophies': 'Troféer',

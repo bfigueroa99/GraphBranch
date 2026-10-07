@@ -78,6 +78,11 @@ GB.i18n.define('de', {
   'fly.lock': 'Klicken, um mit der Maus zu steuern',
   'fly.touch': 'Mit dem Joystick bewegen, zum Umsehen ziehen',
   'ride.label': 'Branch abfahren',
+  'director.label': 'Kameraregie',
+  'director.title': 'Kameraregie: Die Kamera folgt von selbst der wichtigsten Aktivität. Bewege die Ansicht, um zu übernehmen.',
+  'tv.label': 'TV-Modus',
+  'tv.title': 'TV-Modus: für einen gemeinsamen Bildschirm, mit automatischer Kamera und eingeschaltet bleibendem Bildschirm',
+  'tv.exit': 'TV-Modus beenden',
 
   /* ---------- Spielebene: Erfolge des Repositorys, Level und Mission des Tages ---------- */
   'game.trophies': 'Trophäen',

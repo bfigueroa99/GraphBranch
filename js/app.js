@@ -35,6 +35,14 @@
     fullscreenBtn: $('#fullscreen-btn'),
     replayBtn: $('#replay-btn'),
     flyBtn: $('#fly-btn'),
+    directorBtn: $('#director-btn'),
+    tvBtn: $('#tv-btn'),
+    tvClock: $('#tv-clock'),
+    tvPause: $('#tv-pause'),
+    tvSound: $('#tv-sound'),
+    tvFs: $('#tv-fs'),
+    tvExit: $('#tv-exit'),
+    lower: $('#lower'),
     trophyBtn: $('#trophy-btn'),
     trophyCount: $('#trophy-count'),
     gameStrip: $('#game-strip'),
@@ -113,16 +121,19 @@
         onFlightChange: (on) => setPressed(el.flyBtn, on),
         // zumbido del motor mientras se vuela (solo con el sonido activado)
         onFlightSpeed: (level) => feed.synth.engine(feed.sound ? level : 0),
+        onShot: (a) => lowerThird(a),
+        onDirector: (st) => renderDirector(st),
       });
     }
   } catch (err) {
     console.warn('La vista 3D no está disponible:', err);
   }
   let graph = graph2d;
+  const director = graph3d?.director || null;
 
   let view = '2d';
 
-  function setView(v) {
+  function setView(v, save = true) {
     if (v === '3d' && !graph3d) v = '2d';
     view = v;
     graph = v === '3d' ? graph3d : graph2d;
@@ -134,11 +145,12 @@
     setPressed(el.view2d, v === '2d');
     el.spinBtn.hidden = v !== '3d';
     el.flyBtn.hidden = v !== '3d' || !graph3d?.flight;
+    el.directorBtn.hidden = v !== '3d' || !director;
     // los atajos de teclado solo se anuncian donde hay teclado y ratón
     const keys = v === '3d' && window.matchMedia?.('(pointer: fine)').matches;
     el.hint.innerHTML = i18n.html('hint.' + v) + (keys ? ' · ' + i18n.html('hint.keys') : '');
     followUI(graph.following);
-    U.store.set('view', v);
+    if (save) U.store.set('view', v);
   }
 
   /* ramas fijadas y filtro: se recuerdan por repositorio */
@@ -183,6 +195,9 @@
     feed.clear();
     paused = false;
     setPressed(el.pauseBtn, false);
+    setPressed(el.tvPause, false);
+    graph3d?.setHold(false);
+    renderPause();
     renderRepo(src.data.repo);
     showOverlay('loading', src.data.repo.demo ? i18n.msg('overlay.demoLoading') : i18n.msg('overlay.loading', { repo: `${src.data.repo.owner}/${src.data.repo.name}` }));
     src.on('update', (u) => src === source && onUpdate(u));
@@ -223,16 +238,17 @@
     connect(new GB.DemoSource());
   }
 
-  function setUrlRepo(repo) {
+  function setUrlParam(key, value) {
     try {
       const url = new URL(location.href);
-      if (repo) url.searchParams.set('repo', repo);
-      else url.searchParams.delete('repo');
+      if (value) url.searchParams.set(key, value);
+      else url.searchParams.delete(key);
       history.replaceState(null, '', url);
     } catch {
       /* algunos visores no permiten cambiar la URL */
     }
   }
+  const setUrlRepo = (repo) => setUrlParam('repo', repo);
 
   let lastRender = null;
 
@@ -247,6 +263,10 @@
   });
 
   function onUpdate({ activities, initial, calm }) {
+    const news = !initial && activities.length > 0;
+    // en modo TV lo que pasa ahora manda: el Replay de ambiente deja paso al presente
+    if (news && tv.attract && replay.active) replay.stop();
+    if (news) tv.lastNews = Date.now();
     const data = source.view ? source.view() : source.data;
     const L = layout.compute(data);
     lastRender = { data, L };
@@ -284,9 +304,19 @@
       graph3d?.celebrate(acts);
       if (feed.sound) feed.synth.play(acts, feed.panOf);
     },
-    onExit: () => showLive(),
-    onState: (on) => setPressed(el.replayBtn, on),
-    onEnd: () => game.replayDone(),
+    onExit: () => {
+      tv.attract = false;
+      showLive();
+    },
+    onState: (on) => {
+      setPressed(el.replayBtn, on);
+      if (on) lowerThird(null); // el Replay trae sus propios rótulos
+    },
+    onEnd: () => {
+      if (!tv.attract) return game.replayDone();
+      // el Replay de ambiente (modo TV) se queda un momento en el final y vuelve al presente
+      setTimeout(() => tv.attract && replay.active && !paused && replay.stop(), 6000);
+    },
   });
 
   function toggleReplay() {
@@ -327,7 +357,7 @@
   /** Logro, nivel o misión: aviso dorado, fuegos artificiales y fanfarria (como mucho una fiesta cada 6 s). */
   let lastParty = 0;
   function celebrate(title, detail) {
-    if (!game.enabled) return;
+    if (!game.enabled || tv.on) return; // en modo TV, pantalla profesional: sin fiestas
     feed.toast({ kind: 'achievement', title, detail, time: Date.now() });
     const now = Date.now();
     if (now - lastParty < 6000) return;
@@ -549,6 +579,7 @@
   setInterval(() => {
     renderStatus();
     renderLast();
+    tvTick();
   }, 1000);
 
   /* ---------- capa sobre el grafo ---------- */
@@ -607,16 +638,28 @@
   el.demoBtn.addEventListener('click', startDemo);
 
   function renderPause() {
-    el.pauseBtn.title = paused ? t('ctl.resume') : t('ctl.pause');
-    el.pauseBtn.setAttribute('aria-label', el.pauseBtn.title);
+    for (const b of [el.pauseBtn, el.tvPause]) {
+      b.title = paused ? t('ctl.resume') : t('ctl.pause');
+      b.setAttribute('aria-label', b.title);
+    }
   }
 
-  el.pauseBtn.addEventListener('click', () => {
-    paused = !paused;
-    setPressed(el.pauseBtn, paused);
+  /** Pausa: no llegan novedades y tampoco se mueve nada solo (giro, director, fondo, Replay de ambiente). */
+  function setPaused(v) {
+    paused = v;
+    setPressed(el.pauseBtn, v);
+    setPressed(el.tvPause, v);
     renderPause();
-    source?.setPaused(paused);
-  });
+    source?.setPaused(v);
+    graph3d?.setHold(v);
+    if (tv.attract && replay.active) {
+      if (v) replay.pause();
+      else if (replay.u >= replay.U) replay.stop();
+      else replay.play();
+    }
+  }
+
+  el.pauseBtn.addEventListener('click', () => setPaused(!paused));
   el.refreshBtn.addEventListener('click', () => {
     if (paused) el.pauseBtn.click();
     else source?.refreshNow();
@@ -640,7 +683,10 @@
 
   el.zoomIn.addEventListener('click', () => graph.zoomBy(1.4));
   el.zoomOut.addEventListener('click', () => graph.zoomBy(1 / 1.4));
-  el.followBtn.addEventListener('click', () => graph.setFollowing(!graph.following));
+  el.followBtn.addEventListener('click', () => {
+    if (graph === graph3d) graph3d.touch(); // el director de cámara cede el mando
+    graph.setFollowing(!graph.following);
+  });
 
   /* pantalla completa: el panel del grafo ocupa toda la pantalla y los avisos lo acompañan
      (dentro de pantalla completa solo se ve ese elemento) */
@@ -648,17 +694,20 @@
   const fullscreenOK = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
   el.fullscreenBtn.hidden = !fullscreenOK;
 
+  /* Safari antiguo no devuelve promesa; el navegador puede negarse */
+  const requestFs = (node) => Promise.resolve((node.requestFullscreen || node.webkitRequestFullscreen).call(node)).catch(() => {});
+  const exitFs = () => Promise.resolve((document.exitFullscreen || document.webkitExitFullscreen).call(document)).catch(() => {});
+
+  /** En modo TV la pantalla completa es la página entera; si no, solo el panel del grafo. */
   function toggleFullscreen() {
-    const p = el.graphPanel;
-    const go = fullscreenEl()
-      ? (document.exitFullscreen || document.webkitExitFullscreen).call(document)
-      : (p.requestFullscreen || p.webkitRequestFullscreen).call(p);
-    Promise.resolve(go).catch(() => {}); // Safari antiguo no devuelve promesa; el navegador puede negarse
+    if (fullscreenEl()) exitFs();
+    else requestFs(tv.on ? document.documentElement : el.graphPanel);
   }
 
   function onFullscreen() {
     const on = fullscreenEl() === el.graphPanel;
     setPressed(el.fullscreenBtn, on);
+    setPressed(el.tvFs, !!fullscreenEl());
     (on ? el.graphPanel : document.body).appendChild(el.toasts);
     if (on && view === '3d') el.graph3d.focus({ preventScroll: true }); // las flechas funcionan de inmediato
   }
@@ -669,8 +718,9 @@
   el.replayBtn.addEventListener('click', toggleReplay);
   el.flyBtn.addEventListener('click', () => graph3d?.flight?.toggle());
   el.graphPanel.addEventListener('keydown', (ev) => {
-    // espacio: pausar o seguir el Replay (los botones y controles ya manejan su propio espacio)
-    if (ev.key === ' ' && replay.active && !ev.target.closest('button, input, select, textarea, a, [contenteditable]')) {
+    // espacio: pausar o seguir el Replay (los botones y controles ya manejan su propio espacio;
+    // en modo TV el espacio pausa todo, ver más abajo)
+    if (ev.key === ' ' && replay.active && !tv.on && !ev.target.closest('button, input, select, textarea, a, [contenteditable]')) {
       ev.preventDefault();
       replay.toggle();
     }
@@ -680,6 +730,161 @@
     if (ev.target.closest('input, textarea, select, [contenteditable]')) return;
     ev.preventDefault();
     toggleFullscreen();
+  });
+
+  /* ---------- director de cámara (ver director.js) ---------- */
+
+  function renderDirector(st = director) {
+    setPressed(el.directorBtn, !!st?.on);
+    // cedió la cámara: el botón lo muestra hasta que la retome
+    el.directorBtn.classList.toggle('waiting', !!(st?.on && st.manual));
+  }
+
+  el.directorBtn.addEventListener('click', () => {
+    if (!director) return;
+    U.store.set('director', !director.on);
+    director.setOn(!director.on);
+  });
+
+  /** Rótulo inferior, como en una transmisión: qué está filmando el director. */
+  let lowerTimer = 0;
+  function lowerThird(a) {
+    const box = el.lower;
+    clearTimeout(lowerTimer);
+    box.classList.remove('show');
+    if (!a || replay.active) return;
+    const K = GB.Feed.KINDS;
+    const m = K[a.kind] || K.other;
+    const title = i18n.text(a.title);
+    const detail = i18n.text(a.detail);
+    const where = a.ref || a.branch;
+    const who = a.actor ? `${U.avatarHTML(a.actor, 18)}<span>${U.esc(a.actor.login || a.actor.name || '')}</span>` : '';
+    box.className = `lower sev-${m.sev}`;
+    box.innerHTML = `<span class="act-icon">${GB.Feed.icon(m.icon)}</span>
+      <span class="lt-body">
+        <span class="act-kind">${U.esc(t('kind.' + (K[a.kind] ? a.kind : 'other')))}</span>
+        <span class="lt-title">${U.esc(U.truncate(title, 90))}</span>
+        ${detail ? `<span class="lt-detail">${U.esc(U.truncate(detail, 110))}</span>` : ''}
+        ${who || where ? `<span class="lt-meta">${who}${where ? `<code>${U.esc(where)}</code>` : ''}</span>` : ''}
+      </span>`;
+    lowerTimer = setTimeout(() => box.classList.add('show'), 450); // entra cuando la cámara ya va en camino
+  }
+
+  /* ---------- modo TV: una pantalla compartida que informa sola ---------- */
+
+  const ATTRACT_IDLE = 3 * 60e3; // sin novedades durante este tiempo…
+  const ATTRACT_EVERY = 10 * 60e3; // …se reproduce la historia, como mucho una vez cada tanto
+  const tv = { on: false, prevView: null, lock: null, locking: false, attract: false, lastNews: 0, lastAttract: 0, idleTimer: 0 };
+
+  /** Entra o sale del modo TV. `user`: viene de un clic (solo así se puede pedir pantalla completa). */
+  function setTV(on, user = false) {
+    if (tv.on === on) return;
+    tv.on = on;
+    const root = document.documentElement;
+    root.classList.toggle('tv', on);
+    setPressed(el.tvBtn, on);
+    if (on) {
+      tv.prevView = view;
+      tv.lastNews = tv.lastAttract = Date.now();
+      if (graph3d) setView('3d', false);
+      feed.sound = false; // en un espacio compartido el sonido llega a todos: se enciende a mano
+      director?.setTV(true);
+      director?.setOn(true);
+      if (user && fullscreenOK && !fullscreenEl()) requestFs(root);
+      tvScale();
+      lockScreen();
+    } else {
+      if (tv.attract && replay.active) replay.stop();
+      tv.attract = false;
+      feed.sound = !!U.store.get('sound', false);
+      director?.setTV(false);
+      director?.setOn(!!U.store.get('director', false));
+      if (fullscreenEl() === root) exitFs();
+      setView(tv.prevView || view, false);
+      tv.lock?.release().catch(() => {});
+      tv.lock = null;
+      root.style.removeProperty('--tvz');
+    }
+    setPressed(el.soundBtn, feed.sound);
+    setPressed(el.tvSound, feed.sound);
+    setUrlParam('tv', on ? '1' : null);
+    graph3d?.restyle();
+    wake();
+    tvTick();
+  }
+
+  /** Letra más grande cuanto más grande es la pantalla (una TV se mira desde lejos). */
+  function tvScale() {
+    if (!tv.on) return;
+    const z = Math.min(2.2, Math.max(1, Math.min(innerWidth / 1500, innerHeight / 860)));
+    document.documentElement.style.setProperty('--tvz', z.toFixed(3));
+    graph3d?.restyle();
+  }
+
+  /** Pantalla siempre encendida (Screen Wake Lock); el navegador la suelta al ocultar la pestaña. */
+  async function lockScreen() {
+    if (!tv.on || tv.lock || tv.locking || document.hidden || !navigator.wakeLock) return;
+    tv.locking = true;
+    try {
+      const lock = await navigator.wakeLock.request('screen');
+      if (!tv.on) lock.release().catch(() => {});
+      else {
+        tv.lock = lock;
+        lock.addEventListener('release', () => tv.lock === lock && (tv.lock = null));
+      }
+    } catch {
+      /* sin permiso, sin batería o sin soporte: la pantalla puede apagarse */
+    }
+    tv.locking = false;
+  }
+
+  /** Sin mover el ratón un rato, se esconden el puntero y los controles (con el teclado siguen a mano). */
+  function wake() {
+    const root = document.documentElement;
+    root.classList.remove('tv-idle');
+    clearTimeout(tv.idleTimer);
+    if (tv.on) tv.idleTimer = setTimeout(() => root.classList.add('tv-idle'), 3500);
+  }
+
+  /** Cada segundo: el reloj y, si hace rato que no pasa nada, el Replay de ambiente. */
+  function tvTick() {
+    if (!tv.on) return;
+    const now = Date.now();
+    el.tvClock.textContent = i18n.fmtTime(now);
+    if (paused || replay.active || !lastRender || lastRender.L.nodes.length < 8) return;
+    if (now - tv.lastNews < ATTRACT_IDLE || now - tv.lastAttract < ATTRACT_EVERY) return;
+    tv.lastAttract = now;
+    tv.attract = true;
+    toggleReplay();
+    if (!replay.active) tv.attract = false;
+  }
+
+  el.tvBtn.addEventListener('click', () => setTV(!tv.on, true));
+  el.tvExit.addEventListener('click', () => setTV(false));
+  el.tvFs.addEventListener('click', toggleFullscreen);
+  el.tvFs.hidden = !fullscreenOK;
+  el.tvPause.addEventListener('click', () => setPaused(!paused));
+  el.tvSound.addEventListener('click', () => {
+    feed.sound = !feed.sound; // solo mientras dura el modo TV: no cambia la preferencia guardada
+    if (feed.sound) feed.synth.preview();
+    setPressed(el.tvSound, feed.sound);
+    setPressed(el.soundBtn, feed.sound);
+  });
+  window.addEventListener('resize', tvScale);
+  document.addEventListener('visibilitychange', () => !document.hidden && lockScreen());
+  for (const type of ['pointermove', 'pointerdown', 'keydown']) document.addEventListener(type, () => tv.on && wake(), { passive: true });
+  // en modo TV: espacio pausa todo y F pone la página entera en pantalla completa
+  document.addEventListener('keydown', (ev) => {
+    if (!tv.on || ev.defaultPrevented || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+    if (ev.target.closest?.('button, input, select, textarea, a, [contenteditable], dialog')) return;
+    const k = (ev.key || '').toLowerCase();
+    if (k === ' ') {
+      ev.preventDefault();
+      setPaused(!paused);
+    } else if (k === 'f' && fullscreenOK) {
+      ev.preventDefault();
+      toggleFullscreen();
+    }
   });
 
   el.view3d.addEventListener('click', () => setView('3d'));
@@ -694,6 +899,8 @@
     setPressed(el.spinBtn, !!graph3d?.spin);
   });
   setView(U.store.get('view', '3d'));
+  director?.setOn(!!U.store.get('director', false));
+  renderDirector();
   renderPause();
   renderWebglNote();
 
@@ -765,7 +972,7 @@
   /* al cambiar de idioma se vuelve a dibujar todo lo que tiene texto (lo estático ya lo tradujo i18n.apply) */
   i18n.onChange(() => {
     fillLanguages();
-    setView(view);
+    setView(view, !tv.on);
     renderPause();
     renderWebglNote();
     el.tokenToggle.textContent = el.tokenInput.type === 'password' ? t('settings.show') : t('settings.hide');
@@ -773,6 +980,8 @@
     graph2d.relocalize();
     graph3d?.relocalize();
     replay.relocalize();
+    lowerThird(null);
+    tvTick();
     renderGame();
     feed.relocalize();
     if (!source) return;
@@ -787,12 +996,16 @@
   /* ---------- arranque ---------- */
 
   let initialRepo = null;
+  let initialTV = false;
   try {
-    initialRepo = new URLSearchParams(location.search).get('repo');
+    const q = new URLSearchParams(location.search);
+    initialRepo = q.get('repo');
+    initialTV = q.has('tv') && !/^(0|false|no|off)$/i.test(q.get('tv'));
   } catch {
     /* sin query string */
   }
   initialRepo ||= U.store.get('repo', null);
   if (initialRepo && U.parseRepo(initialRepo)) connectRepo(initialRepo);
   else startDemo();
+  if (initialTV) setTV(true); // ?tv=1: pensado para dejar la URL abierta en una pantalla
 })(window.GB);

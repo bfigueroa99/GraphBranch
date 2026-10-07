@@ -78,6 +78,11 @@ GB.i18n.define('fr', {
   'fly.lock': 'Cliquez pour piloter à la souris',
   'fly.touch': 'Déplacez-vous avec le joystick et faites glisser pour regarder autour',
   'ride.label': 'Parcourir la branche',
+  'director.label': 'Réalisateur caméra',
+  'director.title': 'Réalisateur caméra : la caméra suit d’elle-même l’activité la plus importante. Déplacez la vue pour reprendre la main.',
+  'tv.label': 'Mode TV',
+  'tv.title': 'Mode TV : pour un écran partagé, avec caméra automatique et écran toujours allumé',
+  'tv.exit': 'Quitter le mode TV',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'Trophées',

@@ -477,6 +477,11 @@
       this.labelLayer.className = 'g3-labels';
       wrap.appendChild(this.labelLayer);
 
+      // fundido para los cortes del director de cámara (va debajo de la ficha)
+      this.fadeEl = document.createElement('div');
+      this.fadeEl.className = 'g3-fade';
+      wrap.appendChild(this.fadeEl);
+
       this.tip = document.createElement('div');
       this.tip.className = 'tip';
       this.tip.hidden = true;
@@ -512,6 +517,7 @@
         maxDistance: 220,
       });
       this.controls.addEventListener('start', () => {
+        this.touch();
         this.interacting = true;
         this.dragFrom = this.controls.target.clone();
         this.fly = null;
@@ -624,8 +630,10 @@
       this.dying = [];
       this.keys = new Set();
       this.maxX = 0;
+      this.sp = SP;
       this.radius = 4;
       this.following = true;
+      this.hold = false; // pausa: sin giro, sin director y con el fondo quieto
       this.spin = !!U.store.get('spin3d', true);
       this.spinAmt = 0;
       this.flashAmt = 0;
@@ -648,6 +656,7 @@
       this.bindKeys();
       this.bindLabels();
       this.flight = GB.Flight ? new GB.Flight(this) : null;
+      this.director = GB.Director ? new GB.Director(this) : null;
       this.ride = null;
       window.addEventListener('gamepadconnected', () => (this.padSeen = true));
       new ResizeObserver(() => this.resize()).observe(wrap);
@@ -826,6 +835,7 @@
         this.raf = 0;
         this.keys.clear();
         this.flight?.exit();
+        this.director?.end();
         this.ride = null;
         this.controls.enabled = true;
         this.unpin();
@@ -1022,6 +1032,7 @@
         const it = headOf(ev);
         if (!it) return;
         ev.stopPropagation();
+        this.touch(); // quien abre una ficha quiere leerla: el director espera
         this.showTip(it.data.sha, true, it.data.name);
       });
       this.labelLayer.addEventListener('pointerover', (ev) => {
@@ -1143,7 +1154,40 @@
       this.lastInteract = 0;
     }
 
+    /** El usuario movió la cámara: el director se la cede (y la retoma cuando vuelve la calma). */
+    touch() {
+      this.lastInteract = performance.now();
+      this.director?.yieldControl();
+    }
+
+    /** Pausa (WCAG 2.2.2): se detienen el giro, el director y la animación de fondo. */
+    setHold(on) {
+      this.hold = on;
+      this.director?.setPaused(on);
+      this.needsRender = true;
+    }
+
+    setFade(on) {
+      this.fadeEl.classList.toggle('on', on);
+    }
+
+    /** Cambió el tamaño del texto (modo TV): las etiquetas se vuelven a ubicar con la escala nueva. */
+    restyle() {
+      this.labelZ = 0;
+      this.needsRender = true;
+    }
+
+    /** Cuánto crece el texto de las etiquetas (en modo TV, con la pantalla); el ancho estimado es a escala 1. */
+    labelScale() {
+      if (!this.labelZ) {
+        const root = document.documentElement;
+        this.labelZ = (root.classList.contains('tv') && Number(getComputedStyle(root).getPropertyValue('--tvz'))) || 1;
+      }
+      return this.labelZ;
+    }
+
     zoomBy(f) {
+      this.touch();
       const off = this.camera.position.clone().sub(this.controls.target).multiplyScalar(1 / f);
       off.setLength(clamp(off.length(), this.controls.minDistance, this.controls.maxDistance));
       this.flyTo(this.controls.target.clone(), this.controls.target.clone().add(off), 350);
@@ -1152,6 +1196,7 @@
     focusSha(sha, dist = 15) {
       const it = this.nodes.get(sha);
       if (!it) return false;
+      this.touch();
       this.flight?.exit();
       if (this.ride) this.endRide();
       this.setFollowing(false);
@@ -1190,6 +1235,7 @@
         this.canvas.style.cursor = '';
       });
       this.canvas.addEventListener('pointerdown', (ev) => {
+        this.touch();
         if (this.ride) this.endRide();
         down = { x: ev.clientX, y: ev.clientY };
         this.wrap.focus({ preventScroll: true }); // así funcionan las flechas y la tecla F
@@ -1210,7 +1256,14 @@
         const sha = this.pick(ev.clientX - r.left, ev.clientY - r.top);
         if (sha) this.focusSha(sha, 7);
       });
-      this.canvas.addEventListener('wheel', () => this.ride && this.endRide(), { passive: true });
+      this.canvas.addEventListener(
+        'wheel',
+        () => {
+          this.touch();
+          if (this.ride) this.endRide();
+        },
+        { passive: true },
+      );
     }
 
     /** Flechas ← → giran, ↑ ↓ viajan por la historia, + y − acercan; se mantienen pulsadas. */
@@ -1223,6 +1276,7 @@
         const k = KEYS[ev.key];
         if (!k || ev.ctrlKey || ev.metaKey || ev.altKey || ev.target.closest?.('.tip')) return;
         ev.preventDefault();
+        this.touch();
         this.keys.add(k);
         this.fly = null;
       });
@@ -1345,8 +1399,9 @@
 
     /* ---------- recorrer una rama ---------- */
 
-    /** Recorre una rama en primera persona, desde el commit del que nace hasta su cabeza, como una montaña rusa. */
-    rideBranch(name) {
+    /** Recorre una rama en primera persona, desde el commit del que nace hasta su cabeza, como una
+        montaña rusa. `auto`: lo pide el director de cámara (no el usuario). */
+    rideBranch(name, auto = false) {
       const L = this.layout;
       if (!L) return;
       const key = 'b:' + name;
@@ -1362,12 +1417,13 @@
       // un tramo de entrada desde el pasado, para subirse a la vía en marcha
       pts.unshift(pts[0].clone().add(new THREE.Vector3(0, 1.2, -SP * 3)));
       const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+      if (!auto) this.touch();
       this.flight?.exit();
       this.fly = null;
       this.setFollowing(false);
       this.unpin();
       this.controls.enabled = false;
-      this.ride = { curve, t0: performance.now(), dur: clamp(curve.getLength() / 7, 3, 20) * 1000 };
+      this.ride = { curve, auto, t0: performance.now(), dur: clamp(curve.getLength() / 7, 3, 20) * 1000 };
     }
 
     stepRide(now) {
@@ -1418,13 +1474,13 @@
       }
       const dt = this.lastNow ? Math.min(0.1, (now - this.lastNow) / 1000) : 0;
       this.lastNow = now;
-      if (this.motion) this.u.time.value += dt;
+      if (this.motion && !this.hold) this.u.time.value += dt;
 
       const camMoved = this.stepCamera(now, dt);
       const sceneMoved = this.stepScene(now, dt);
       const full = this.needsRender || camMoved || sceneMoved;
       // en reposo los pulsos, el polvo y las estrellas siguen vivos, pero a ~30 fps
-      const ambient = this.motion && this.nodes.size > 0 && now - this.lastRender >= AMBIENT_MS;
+      const ambient = this.motion && !this.hold && this.nodes.size > 0 && now - this.lastRender >= AMBIENT_MS;
       if (full || ambient) {
         this.beforeRender();
         this.renderer.render(this.scene, this.camera);
@@ -1442,8 +1498,11 @@
       const cam = this.camera;
       let moved = false;
       this.padToggle();
+      // el director decide el plano antes que nada: puede lanzar un vuelo, un corte o un paseo
+      const directed = this.director ? this.director.step(now, dt) : false;
       if (this.ride) return this.stepRide(now);
       if (this.flight?.on) return this.flight.step(dt);
+      if (directed) moved = true;
       if (this.fly) {
         const f = this.fly;
         const p = ease(clamp((now - f.t0) / f.dur, 0, 1));
@@ -1468,7 +1527,15 @@
           }
         }
         const spin =
-          this.spin && this.following && this.motion && !this.interacting && !this.keys.size && !this.pinned && !this.tipSha && now - this.lastInteract > 4000;
+          this.spin &&
+          this.following &&
+          this.motion &&
+          !this.hold &&
+          !this.interacting &&
+          !this.keys.size &&
+          !this.pinned &&
+          !this.tipSha &&
+          now - this.lastInteract > 4000;
         // el giro arranca y se detiene con suavidad
         this.spinAmt = clamp(this.spinAmt + (spin ? dt : -dt * 3) / 1.5, 0, 1);
         if (this.spinAmt > 0) {
@@ -1763,6 +1830,7 @@
     /** Efectos de las actividades que acaban de llegar: solo en vivo, con la vista 3D activa y con
         movimiento. Cada tipo tiene un tope por tanda, así una ráfaga no satura la escena. */
     celebrate(acts) {
+      this.director?.push(acts); // el director decide qué filmar (también sin movimiento: con cortes)
       if (!this.active || !this.motion || !this.nodes.size || !acts?.length) return;
       const now = performance.now();
       const prHead = new Map([...(this.ctx?.prs?.values() || [])].map((p) => [p.number, p.head]));
@@ -2185,6 +2253,7 @@
       const axis = this.tmpA;
       const reach = Math.max(160, this.radius * 1.3); // en grafos enormes la cámara está más lejos
       const range = Math.max(80, this.radius * 2);
+      const z = this.labelScale();
       const cand = [];
       for (const it of this.heads.values()) {
         const dist = camPos.distanceTo(it.curV);
@@ -2198,11 +2267,11 @@
       const grid = new Map();
       const cells = (r, fn) => {
         for (let cx = Math.floor((r.x - 4) / CELL); cx <= Math.floor((r.x + r.w + 4) / CELL); cx++)
-          for (let cy = Math.floor(r.y / CELL); cy <= Math.floor((r.y + 24) / CELL); cy++) if (fn(cx * 4099 + cy)) return true;
+          for (let cy = Math.floor(r.y / CELL); cy <= Math.floor((r.y + r.h + 2) / CELL); cy++) if (fn(cx * 4099 + cy)) return true;
         return false;
       };
       const hits = (s) =>
-        cells(s, (key) => (grid.get(key) || []).some((r) => s.x < r.x + r.w + 4 && r.x < s.x + s.w + 4 && s.y < r.y + 24 && r.y < s.y + 24));
+        cells(s, (key) => (grid.get(key) || []).some((r) => s.x < r.x + r.w + 4 && r.x < s.x + s.w + 4 && s.y < r.y + r.h + 2 && r.y < s.y + s.h + 2));
       let shown = 0;
       for (const s of cand) {
         const it = s.it;
@@ -2218,9 +2287,10 @@
         if (len < 4) (dx = 0.7), (dy = -0.7);
         else (dx /= len), (dy /= len);
         const off = it.data.own ? 18 : 12;
-        s.w = it.w;
+        s.w = Math.ceil(it.w * z);
+        s.h = Math.ceil(22 * z);
         s.x = clamp(s.px + dx * off - (dx < -0.2 ? s.w : 0), 4, Math.max(4, this.W - s.w - 4));
-        s.y = s.py + dy * off - 11;
+        s.y = s.py + dy * off - s.h / 2;
         const hit = hits(s);
         if (hit && crowd) {
           if (it.el) this.setStyle(it, 'display', 'none');
@@ -2286,6 +2356,8 @@
       this.portalZ = null;
       this.nodeAnim = this.edgeAnim = false;
       this.flight?.exit();
+      this.director?.reset();
+      this.setFade(false);
       this.ride = null;
       this.controls.enabled = true;
       this.unpin();

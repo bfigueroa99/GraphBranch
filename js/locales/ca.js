@@ -78,6 +78,11 @@ GB.i18n.define('ca', {
   'fly.lock': 'Fes clic per mirar amb el ratolí',
   'fly.touch': 'Mou-te amb el joystick i arrossega per mirar al voltant',
   'ride.label': 'Recorre la branca',
+  'director.label': 'Director de càmera',
+  'director.title': 'Director de càmera: la càmera segueix sola el més important. Mou la vista per prendre el control.',
+  'tv.label': 'Mode TV',
+  'tv.title': 'Mode TV: per a una pantalla compartida, amb càmera automàtica i la pantalla sempre encesa',
+  'tv.exit': 'Surt del mode TV',
 
   /* ---------- capa de joc: assoliments del repositori, nivell i missió del dia ---------- */
   'game.trophies': 'Trofeus',

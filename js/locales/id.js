@@ -78,6 +78,11 @@ GB.i18n.define('id', {
   'fly.lock': 'Klik untuk mengarahkan dengan mouse',
   'fly.touch': 'Bergerak dengan joystick dan seret untuk melihat sekeliling',
   'ride.label': 'Telusuri branch ini',
+  'director.label': 'Sutradara kamera',
+  'director.title': 'Sutradara kamera: kamera mengikuti aktivitas terpenting dengan sendirinya. Gerakkan tampilan untuk mengambil alih.',
+  'tv.label': 'Mode TV',
+  'tv.title': 'Mode TV: untuk layar bersama, dengan kamera otomatis dan layar tetap menyala',
+  'tv.exit': 'Keluar dari mode TV',
 
   /* ---------- lapisan permainan: pencapaian repositori, level, dan misi hari ini ---------- */
   'game.trophies': 'Trofi',

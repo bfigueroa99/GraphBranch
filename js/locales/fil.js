@@ -78,6 +78,11 @@ GB.i18n.define('fil', {
   'fly.lock': 'I-click para gumabay gamit ang mouse',
   'fly.touch': 'Gumalaw gamit ang joystick at i-drag para tumingin sa paligid',
   'ride.label': 'Libutin ang branch na ito',
+  'director.label': 'Direktor ng kamera',
+  'director.title': 'Direktor ng kamera: kusang sinusundan ng kamera ang pinakamahalagang aktibidad. Igalaw ang view para ikaw ang humawak.',
+  'tv.label': 'TV mode',
+  'tv.title': 'TV mode: para sa shared na screen, may awtomatikong kamera at laging nakabukas ang screen',
+  'tv.exit': 'Lumabas sa TV mode',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'Mga tropeo',

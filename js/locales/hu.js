@@ -334,4 +334,10 @@ GB.i18n.define('hu', {
   'settings.clearToken': 'Token törlése',
   'settings.cancel': 'Mégse',
   'settings.save': 'Mentés és újracsatlakozás',
+
+  /* ---------- asztali alkalmazás: rendszertálca ---------- */
+  'tray.show': 'GraphBranch megjelenítése',
+  'tray.quit': 'Kilépés a GraphBranch-ből',
+  'tray.hiddenTitle': 'A GraphBranch tovább fut',
+  'tray.hiddenBody': 'A háttérben tovább figyeli a repozitóriumot. A rendszertálcán vagy a menüsorban lévő ikonjáról újra megnyithatod, vagy teljesen kiléphetsz belőle.',
 });

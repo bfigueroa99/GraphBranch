@@ -335,4 +335,10 @@ GB.i18n.define('it', {
   'settings.clearToken': 'Elimina token',
   'settings.cancel': 'Annulla',
   'settings.save': 'Salva e riconnetti',
+
+  /* ---------- app desktop: area di notifica ---------- */
+  'tray.show': 'Mostra GraphBranch',
+  'tray.quit': 'Esci da GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch è ancora aperto',
+  'tray.hiddenBody': "Continua a seguire il repository in background. Riaprilo o chiudilo del tutto dalla sua icona nell'area di notifica o nella barra dei menu.",
 });

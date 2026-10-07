@@ -377,4 +377,10 @@ GB.i18n.define('fa', {
   'settings.clearToken': 'حذف توکن',
   'settings.cancel': 'لغو',
   'settings.save': 'ذخیره و اتصال دوباره',
+
+  /* ---------- برنامهٔ دسکتاپ: سینی سیستم ---------- */
+  'tray.show': 'نمایش GraphBranch',
+  'tray.quit': 'خروج از GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch همچنان در حال اجراست',
+  'tray.hiddenBody': 'همچنان مخزن را در پس‌زمینه دنبال می‌کند. از نماد آن در سینی سیستم یا نوار منو می‌توانید دوباره بازش کنید یا کاملاً ببندیدش.',
 });

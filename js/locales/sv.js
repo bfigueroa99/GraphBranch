@@ -334,4 +334,10 @@ GB.i18n.define('sv', {
   'settings.clearToken': 'Ta bort token',
   'settings.cancel': 'Avbryt',
   'settings.save': 'Spara och anslut igen',
+
+  /* ---------- skrivbordsapp: systemfältet ---------- */
+  'tray.show': 'Visa GraphBranch',
+  'tray.quit': 'Avsluta GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch körs fortfarande',
+  'tray.hiddenBody': 'Det fortsätter att bevaka repot i bakgrunden. Öppna det igen eller avsluta det helt via ikonen i systemfältet eller menyraden.',
 });

@@ -334,4 +334,10 @@ GB.i18n.define('nb', {
   'settings.clearToken': 'Slett token',
   'settings.cancel': 'Avbryt',
   'settings.save': 'Lagre og koble til på nytt',
+
+  /* ---------- skrivebordsapp: systemstatusfeltet ---------- */
+  'tray.show': 'Vis GraphBranch',
+  'tray.quit': 'Avslutt GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch kjører fortsatt',
+  'tray.hiddenBody': 'Det fortsetter å følge med på repoet i bakgrunnen. Åpne det igjen eller avslutt det helt fra ikonet i systemstatusfeltet eller menylinjen.',
 });

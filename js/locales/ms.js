@@ -334,4 +334,10 @@ GB.i18n.define('ms', {
   'settings.clearToken': 'Padam token',
   'settings.cancel': 'Batal',
   'settings.save': 'Simpan dan sambung semula',
+
+  /* ---------- aplikasi desktop: dulang sistem ---------- */
+  'tray.show': 'Tunjukkan GraphBranch',
+  'tray.quit': 'Keluar daripada GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch masih berjalan',
+  'tray.hiddenBody': 'Aplikasi ini terus memantau repositori di latar belakang. Buka semula atau tutup sepenuhnya melalui ikonnya dalam dulang sistem atau bar menu.',
 });

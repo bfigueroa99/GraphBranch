@@ -334,4 +334,10 @@ GB.i18n.define('bn', {
   'settings.clearToken': 'টোকেন মুছুন',
   'settings.cancel': 'বাতিল করুন',
   'settings.save': 'সংরক্ষণ করে আবার সংযুক্ত করুন',
+
+  /* ---------- ডেস্কটপ অ্যাপ: সিস্টেম ট্রে ---------- */
+  'tray.show': 'GraphBranch দেখান',
+  'tray.quit': 'GraphBranch থেকে বেরিয়ে যান',
+  'tray.hiddenTitle': 'GraphBranch এখনও চলছে',
+  'tray.hiddenBody': 'এটি ব্যাকগ্রাউন্ডে রিপোজিটরির উপর নজর রাখছে। সিস্টেম ট্রে বা মেনু বারে এর আইকন থেকে এটি আবার খুলুন বা পুরোপুরি বন্ধ করুন।',
 });

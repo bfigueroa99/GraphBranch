@@ -6,11 +6,15 @@
 
      npm start                         abre la demo o el último repositorio
      npm start -- --repo=owner/repo    abre ese repositorio
-     npm start -- --tv                 entra en modo TV (también --lang=es) */
+     npm start -- --tv                 entra en modo TV (también --lang=es)
+
+   Cerrar la ventana la esconde en la bandeja del sistema (electron/tray.js) y la app sigue
+   revisando el repositorio; para salir del todo está "Salir" en el menú del ícono. */
 const { app, BrowserWindow, ipcMain, nativeTheme, net, protocol, session, shell } = require('electron');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const token = require('./token');
+const tray = require('./tray');
 
 const SCHEME = 'app';
 const HOST = 'graphbranch';
@@ -24,6 +28,12 @@ const PERMISSIONS = new Set(['notifications', 'fullscreen', 'pointerLock', 'scre
 const BG = { light: '#eef1ef', dark: '#0a0f0e' };
 
 protocol.registerSchemesAsPrivileged([{ scheme: SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true } }]);
+// Con la ventana oculta o minimizada, Chromium espacia los temporizadores de la página a uno por minuto
+// después de 5 minutos; así la vista seguiría al día solo cada minuto. Sin esa regla (IntensiveWakeUpThrottling)
+// se siguen espaciando a uno por segundo, y la página sigue sabiendo que está oculta: no dibuja y avisa.
+app.commandLine.appendSwitch('disable-features', 'IntensiveWakeUpThrottling');
+// En Windows, las notificaciones del sistema necesitan el mismo id que el instalador (build.appId en package.json).
+if (process.platform === 'win32') app.setAppUserModelId('io.github.bfigueroa99.graphbranch');
 
 /** Responde app://graphbranch/... con el archivo del proyecto, sin salir de PUBLIC. */
 async function serve(request) {
@@ -71,6 +81,15 @@ function openOutside(url) {
 }
 
 let win = null;
+/** Mientras no se pide salir (menú del ícono, Cmd+Q, apagar el equipo), cerrar la ventana solo la esconde. */
+let quitting = false;
+
+function showWindow() {
+  if (!win) return createWindow();
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
+}
 
 function createWindow() {
   win = new BrowserWindow({
@@ -91,6 +110,13 @@ function createWindow() {
     },
   });
   win.once('ready-to-show', () => win.show());
+  win.on('close', (ev) => {
+    if (quitting) return;
+    ev.preventDefault();
+    win.hide();
+    tray.noticeOnce();
+  });
+  win.on('session-end', () => (quitting = true)); // Windows: el equipo se apaga o se cierra la sesión
   win.on('closed', () => (win = null));
 
   const { webContents } = win;
@@ -104,6 +130,7 @@ function createWindow() {
     openOutside(url);
   });
   webContents.on('will-attach-webview', (ev) => ev.preventDefault());
+  webContents.on('page-title-updated', (ev, title) => tray.setToolTip(title));
 
   win.loadURL(startUrl(process.argv));
 }
@@ -111,11 +138,9 @@ function createWindow() {
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on('second-instance', () => {
-    if (!win) return;
-    if (win.isMinimized()) win.restore();
-    win.focus();
-  });
+  // abrir la app otra vez trae la ventana, también si estaba en la bandeja
+  app.on('second-instance', showWindow);
+  app.on('before-quit', () => (quitting = true));
 
   app.whenReady().then(() => {
     protocol.handle(SCHEME, serve);
@@ -139,9 +164,13 @@ if (!app.requestSingleInstanceLock()) {
       await token.write(value.trim());
       return token.where();
     });
+    // los textos de la bandeja, en el idioma de la página
+    ipcMain.on('labels', (ev, labels) => isApp(ev.senderFrame?.url) && tray.setLabels(labels));
+    ipcMain.on('show', (ev) => isApp(ev.senderFrame?.url) && showWindow());
 
     createWindow();
-    app.on('activate', () => BrowserWindow.getAllWindows().length || createWindow());
+    tray.create(showWindow);
+    app.on('activate', showWindow); // macOS: clic en el ícono del Dock
   });
 
   app.on('window-all-closed', () => process.platform === 'darwin' || app.quit());

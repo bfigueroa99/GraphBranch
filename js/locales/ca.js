@@ -334,4 +334,10 @@ GB.i18n.define('ca', {
   'settings.clearToken': 'Esborra el token',
   'settings.cancel': 'Cancel·la',
   'settings.save': 'Desa i reconnecta',
+
+  /* ---------- aplicació d’escriptori: safata del sistema ---------- */
+  'tray.show': 'Mostra GraphBranch',
+  'tray.quit': 'Surt de GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch continua obert',
+  'tray.hiddenBody': "Continua revisant el repositori en segon pla. Torna'l a obrir o tanca'l del tot des de la seva icona a la safata del sistema o a la barra de menús.",
 });

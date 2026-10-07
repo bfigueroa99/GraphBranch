@@ -334,4 +334,10 @@ GB.i18n.define('fi', {
   'settings.clearToken': 'Poista token',
   'settings.cancel': 'Peruuta',
   'settings.save': 'Tallenna ja muodosta yhteys uudelleen',
+
+  /* ---------- työpöytäsovellus: ilmoitusalue ---------- */
+  'tray.show': 'Näytä GraphBranch',
+  'tray.quit': 'Lopeta GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch on yhä käynnissä',
+  'tray.hiddenBody': 'Se seuraa repositoriota edelleen taustalla. Avaa se uudelleen tai sulje se kokonaan sen kuvakkeesta ilmoitusalueella tai valikkorivillä.',
 });

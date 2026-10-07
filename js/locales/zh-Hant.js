@@ -334,4 +334,10 @@ GB.i18n.define('zh-Hant', {
   'settings.clearToken': '刪除權杖',
   'settings.cancel': '取消',
   'settings.save': '儲存並重新連線',
+
+  /* ---------- 桌面應用程式：系統匣 ---------- */
+  'tray.show': '顯示 GraphBranch',
+  'tray.quit': '結束 GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch 仍在執行',
+  'tray.hiddenBody': '它會繼續在背景關注這個儲存庫。可以從系統匣或選單列中的圖示重新開啟它，或完全結束。',
 });

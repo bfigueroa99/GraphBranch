@@ -334,4 +334,10 @@ GB.i18n.define('sw', {
   'settings.clearToken': 'Futa token',
   'settings.cancel': 'Ghairi',
   'settings.save': 'Hifadhi na uunganishe tena',
+
+  /* ---------- programu ya kompyuta: trei ya mfumo ---------- */
+  'tray.show': 'Onyesha GraphBranch',
+  'tray.quit': 'Funga GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch bado inafanya kazi',
+  'tray.hiddenBody': 'Inaendelea kufuatilia hazina chinichini. Ifungue tena au uifunge kabisa kupitia aikoni yake kwenye trei ya mfumo au upau wa menyu.',
 });

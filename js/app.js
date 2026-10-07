@@ -970,6 +970,11 @@
     el.tokenWhere.textContent = t(el.tokenWhere.dataset.i18n);
   }
 
+  /** En la app de escritorio, el ícono de la bandeja y su aviso van en el idioma de la página. */
+  function sendDesktopLabels() {
+    desktop?.setLabels({ show: t('tray.show'), quit: t('tray.quit'), hiddenTitle: t('tray.hiddenTitle'), hiddenBody: t('tray.hiddenBody') });
+  }
+
   async function loadDesktopToken() {
     let { token, where } = await desktop.getToken();
     // la primera versión de escritorio lo dejaba en localStorage, sin cifrar: pasa al llavero y se borra de ahí
@@ -1009,6 +1014,7 @@
 
   /* al cambiar de idioma se vuelve a dibujar todo lo que tiene texto (lo estático ya lo tradujo i18n.apply) */
   i18n.onChange(() => {
+    sendDesktopLabels();
     fillLanguages();
     setView(view, !tv.on);
     renderPause();
@@ -1048,6 +1054,8 @@
     else startDemo();
     if (initialTV) setTV(true); // ?tv=1: pensado para dejar la URL abierta en una pantalla
   }
-  if (desktop) loadDesktopToken().catch((err) => console.error('No se pudo leer el token:', err)).finally(start);
-  else start();
+  if (desktop) {
+    sendDesktopLabels();
+    loadDesktopToken().catch((err) => console.error('No se pudo leer el token:', err)).finally(start);
+  } else start();
 })(window.GB);

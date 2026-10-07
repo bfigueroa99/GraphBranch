@@ -345,4 +345,10 @@ GB.i18n.define('pl', {
   'settings.clearToken': 'Usuń token',
   'settings.cancel': 'Anuluj',
   'settings.save': 'Zapisz i połącz ponownie',
+
+  /* ---------- aplikacja na komputer: zasobnik systemowy ---------- */
+  'tray.show': 'Pokaż GraphBranch',
+  'tray.quit': 'Zakończ GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch nadal działa',
+  'tray.hiddenBody': 'Nadal śledzi repozytorium w tle. Otwórz go ponownie lub zamknij całkowicie za pomocą ikony w zasobniku systemowym lub na pasku menu.',
 });

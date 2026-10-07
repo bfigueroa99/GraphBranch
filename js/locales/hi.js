@@ -334,4 +334,10 @@ GB.i18n.define('hi', {
   'settings.clearToken': 'टोकन हटाएँ',
   'settings.cancel': 'रद्द करें',
   'settings.save': 'सहेजें और फिर कनेक्ट करें',
+
+  /* ---------- डेस्कटॉप ऐप: सिस्टम ट्रे ---------- */
+  'tray.show': 'GraphBranch दिखाएँ',
+  'tray.quit': 'GraphBranch से बाहर निकलें',
+  'tray.hiddenTitle': 'GraphBranch अभी भी चल रहा है',
+  'tray.hiddenBody': 'यह बैकग्राउंड में रिपॉज़िटरी पर नज़र रखता रहता है। सिस्टम ट्रे या मेन्यू बार में इसके आइकन से इसे फिर से खोलें या पूरी तरह बंद करें।',
 });

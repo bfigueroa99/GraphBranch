@@ -334,4 +334,10 @@ GB.i18n.define('ko', {
   'settings.clearToken': '토큰 삭제',
   'settings.cancel': '취소',
   'settings.save': '저장 후 다시 연결',
+
+  /* ---------- 데스크톱 앱: 시스템 트레이 ---------- */
+  'tray.show': 'GraphBranch 보기',
+  'tray.quit': 'GraphBranch 종료',
+  'tray.hiddenTitle': 'GraphBranch가 계속 실행 중입니다',
+  'tray.hiddenBody': '백그라운드에서 저장소를 계속 지켜봅니다. 시스템 트레이나 메뉴 막대의 아이콘에서 다시 열거나 완전히 종료할 수 있습니다.',
 });

@@ -335,4 +335,10 @@ GB.i18n.define('fr', {
   'settings.clearToken': 'Supprimer le jeton',
   'settings.cancel': 'Annuler',
   'settings.save': 'Enregistrer et reconnecter',
+
+  /* ---------- application de bureau : zone de notification ---------- */
+  'tray.show': 'Afficher GraphBranch',
+  'tray.quit': 'Quitter GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch reste ouvert',
+  'tray.hiddenBody': 'Il continue de surveiller le dépôt en arrière-plan. Rouvrez-le ou quittez-le depuis son icône dans la zone de notification ou la barre des menus.',
 });

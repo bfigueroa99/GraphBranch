@@ -334,4 +334,10 @@ GB.i18n.define('da', {
   'settings.clearToken': 'Slet token',
   'settings.cancel': 'Annuller',
   'settings.save': 'Gem og forbind igen',
+
+  /* ---------- skrivebordsapp: systembakken ---------- */
+  'tray.show': 'Vis GraphBranch',
+  'tray.quit': 'Afslut GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch kører stadig',
+  'tray.hiddenBody': 'Det holder fortsat øje med repositoriet i baggrunden. Åbn det igen, eller afslut det helt via ikonet i systembakken eller menulinjen.',
 });

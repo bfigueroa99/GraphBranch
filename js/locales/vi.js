@@ -334,4 +334,10 @@ GB.i18n.define('vi', {
   'settings.clearToken': 'Xóa token',
   'settings.cancel': 'Hủy',
   'settings.save': 'Lưu và kết nối lại',
+
+  /* ---------- ứng dụng máy tính: khay hệ thống ---------- */
+  'tray.show': 'Hiện GraphBranch',
+  'tray.quit': 'Thoát GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch vẫn đang chạy',
+  'tray.hiddenBody': 'Ứng dụng vẫn theo dõi kho ở chế độ nền. Mở lại hoặc thoát hẳn từ biểu tượng của nó trong khay hệ thống hoặc thanh menu.',
 });

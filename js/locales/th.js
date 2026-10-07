@@ -335,4 +335,10 @@ GB.i18n.define('th', {
   'settings.clearToken': 'ลบ token',
   'settings.cancel': 'ยกเลิก',
   'settings.save': 'บันทึกและเชื่อมต่อใหม่',
+
+  /* ---------- แอปเดสก์ท็อป: ถาดระบบ ---------- */
+  'tray.show': 'แสดง GraphBranch',
+  'tray.quit': 'ออกจาก GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch ยังทำงานอยู่',
+  'tray.hiddenBody': 'ยังคงติดตาม repository อยู่เบื้องหลัง เปิดอีกครั้งหรือออกจากโปรแกรมได้จากไอคอนในถาดระบบหรือแถบเมนู',
 });

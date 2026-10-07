@@ -334,4 +334,10 @@ GB.i18n.define('tr', {
   'settings.clearToken': 'Token’ı sil',
   'settings.cancel': 'İptal',
   'settings.save': 'Kaydet ve yeniden bağlan',
+
+  /* ---------- masaüstü uygulaması: sistem tepsisi ---------- */
+  'tray.show': "GraphBranch'i göster",
+  'tray.quit': "GraphBranch'ten çık",
+  'tray.hiddenTitle': 'GraphBranch çalışmaya devam ediyor',
+  'tray.hiddenBody': 'Depoyu arka planda izlemeye devam ediyor. Sistem tepsisindeki veya menü çubuğundaki simgesinden yeniden açabilir ya da tamamen kapatabilirsiniz.',
 });

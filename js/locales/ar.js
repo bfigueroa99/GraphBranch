@@ -433,4 +433,10 @@ GB.i18n.define('ar', {
   'settings.clearToken': 'حذف رمز الوصول',
   'settings.cancel': 'إلغاء',
   'settings.save': 'حفظ وإعادة الاتصال',
+
+  /* ---------- تطبيق سطح المكتب: علبة النظام ---------- */
+  'tray.show': 'إظهار GraphBranch',
+  'tray.quit': 'إنهاء GraphBranch',
+  'tray.hiddenTitle': 'لا يزال GraphBranch يعمل',
+  'tray.hiddenBody': 'يواصل متابعة المستودع في الخلفية. افتحه من جديد أو أغلقه تمامًا من أيقونته في علبة النظام أو في شريط القوائم.',
 });

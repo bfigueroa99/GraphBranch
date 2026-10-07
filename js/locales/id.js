@@ -334,4 +334,10 @@ GB.i18n.define('id', {
   'settings.clearToken': 'Hapus token',
   'settings.cancel': 'Batal',
   'settings.save': 'Simpan dan hubungkan ulang',
+
+  /* ---------- aplikasi desktop: baki sistem ---------- */
+  'tray.show': 'Tampilkan GraphBranch',
+  'tray.quit': 'Keluar dari GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch masih berjalan',
+  'tray.hiddenBody': 'Aplikasi ini tetap memantau repositori di latar belakang. Buka lagi atau tutup sepenuhnya dari ikonnya di baki sistem atau bilah menu.',
 });

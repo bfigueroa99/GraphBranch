@@ -342,4 +342,10 @@ GB.i18n.define('hr', {
   'settings.clearToken': 'Obrišite token',
   'settings.cancel': 'Odustanite',
   'settings.save': 'Spremite i ponovno povežite',
+
+  /* ---------- aplikacija za računalo: sistemska traka ---------- */
+  'tray.show': 'Prikaži GraphBranch',
+  'tray.quit': 'Zatvori GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch i dalje radi',
+  'tray.hiddenBody': 'I dalje prati repozitorij u pozadini. Ponovno ga otvorite ili potpuno zatvorite putem njegove ikone u sistemskoj traci ili traci izbornika.',
 });

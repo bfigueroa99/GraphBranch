@@ -345,4 +345,10 @@ GB.i18n.define('sk', {
   'settings.clearToken': 'Odstrániť token',
   'settings.cancel': 'Zrušiť',
   'settings.save': 'Uložiť a znova pripojiť',
+
+  /* ---------- desktopová aplikácia: oblasť oznámení ---------- */
+  'tray.show': 'Zobraziť GraphBranch',
+  'tray.quit': 'Ukončiť GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch stále beží',
+  'tray.hiddenBody': 'Ďalej sleduje repozitár na pozadí. Znova ho otvoríte alebo úplne ukončíte pomocou jeho ikony v oblasti oznámení alebo na lište ponúk.',
 });

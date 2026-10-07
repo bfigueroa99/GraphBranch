@@ -377,4 +377,10 @@ GB.i18n.define('ur', {
   'settings.clearToken': 'ٹوکن حذف کریں',
   'settings.cancel': 'منسوخ کریں',
   'settings.save': 'محفوظ کریں اور دوبارہ کنیکٹ کریں',
+
+  /* ---------- ڈیسک ٹاپ ایپ: سسٹم ٹرے ---------- */
+  'tray.show': 'GraphBranch دکھائیں',
+  'tray.quit': 'GraphBranch سے باہر نکلیں',
+  'tray.hiddenTitle': 'GraphBranch ابھی بھی چل رہا ہے',
+  'tray.hiddenBody': 'یہ پس منظر میں ریپوزٹری پر نظر رکھے ہوئے ہے۔ سسٹم ٹرے یا مینو بار میں اس کے آئیکن سے اسے دوبارہ کھولیں یا مکمل طور پر بند کریں۔',
 });

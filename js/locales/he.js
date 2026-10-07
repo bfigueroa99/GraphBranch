@@ -391,4 +391,10 @@ GB.i18n.define('he', {
   'settings.clearToken': 'מחק token',
   'settings.cancel': 'ביטול',
   'settings.save': 'שמור והתחבר מחדש',
+
+  /* ---------- אפליקציית שולחן העבודה: מגש המערכת ---------- */
+  'tray.show': 'הצגת GraphBranch',
+  'tray.quit': 'יציאה מ-GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch עדיין פועל',
+  'tray.hiddenBody': 'הוא ממשיך לעקוב אחרי המאגר ברקע. אפשר לפתוח אותו שוב או לסגור אותו לגמרי מהסמל שלו במגש המערכת או בשורת התפריטים.',
 });

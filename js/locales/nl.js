@@ -335,4 +335,10 @@ GB.i18n.define('nl', {
   'settings.clearToken': 'Token verwijderen',
   'settings.cancel': 'Annuleren',
   'settings.save': 'Opslaan en opnieuw verbinden',
+
+  /* ---------- desktop-app: systeemvak ---------- */
+  'tray.show': 'GraphBranch tonen',
+  'tray.quit': 'GraphBranch afsluiten',
+  'tray.hiddenTitle': 'GraphBranch draait nog',
+  'tray.hiddenBody': 'Het blijft de repository op de achtergrond volgen. Open het opnieuw of sluit het helemaal af via het pictogram in het systeemvak of de menubalk.',
 });

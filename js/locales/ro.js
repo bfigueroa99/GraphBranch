@@ -342,4 +342,10 @@ GB.i18n.define('ro', {
   'settings.clearToken': 'Ștergeți tokenul',
   'settings.cancel': 'Anulare',
   'settings.save': 'Salvați și reconectați',
+
+  /* ---------- aplicația desktop: bara de sistem ---------- */
+  'tray.show': 'Afișare GraphBranch',
+  'tray.quit': 'Ieșire din GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch rulează în continuare',
+  'tray.hiddenBody': 'Continuă să urmărească depozitul în fundal. Redeschideți-l sau închideți-l complet din pictograma sa din bara de sistem sau din bara de meniu.',
 });

@@ -335,4 +335,10 @@ GB.i18n.define('de', {
   'settings.clearToken': 'Token löschen',
   'settings.cancel': 'Abbrechen',
   'settings.save': 'Speichern und neu verbinden',
+
+  /* ---------- Desktop-App: Infobereich ---------- */
+  'tray.show': 'GraphBranch anzeigen',
+  'tray.quit': 'GraphBranch beenden',
+  'tray.hiddenTitle': 'GraphBranch läuft weiter',
+  'tray.hiddenBody': 'Es beobachtet das Repository im Hintergrund weiter. Über sein Symbol im Infobereich oder in der Menüleiste kannst du es wieder öffnen oder ganz beenden.',
 });

@@ -340,4 +340,10 @@ GB.i18n.define('en', {
   'settings.clearToken': 'Delete token',
   'settings.cancel': 'Cancel',
   'settings.save': 'Save and reconnect',
+
+  /* ---------- desktop app: system tray ---------- */
+  'tray.show': 'Show GraphBranch',
+  'tray.quit': 'Quit GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch is still running',
+  'tray.hiddenBody': 'It keeps watching the repository in the background. Open it again or quit it for good from its icon in the system tray or menu bar.',
 });

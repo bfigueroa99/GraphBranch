@@ -334,4 +334,10 @@ GB.i18n.define('ja', {
   'settings.clearToken': 'トークンを削除',
   'settings.cancel': 'キャンセル',
   'settings.save': '保存して再接続',
+
+  /* ---------- デスクトップアプリ: システムトレイ ---------- */
+  'tray.show': 'GraphBranch を表示',
+  'tray.quit': 'GraphBranch を終了',
+  'tray.hiddenTitle': 'GraphBranch は実行中です',
+  'tray.hiddenBody': 'バックグラウンドでリポジトリの監視を続けています。システムトレイまたはメニューバーのアイコンから、再び開くか完全に終了できます。',
 });

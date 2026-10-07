@@ -335,4 +335,10 @@ GB.i18n.define('pt', {
   'settings.clearToken': 'Excluir token',
   'settings.cancel': 'Cancelar',
   'settings.save': 'Salvar e reconectar',
+
+  /* ---------- app para desktop: bandeja do sistema ---------- */
+  'tray.show': 'Mostrar o GraphBranch',
+  'tray.quit': 'Sair do GraphBranch',
+  'tray.hiddenTitle': 'O GraphBranch continua aberto',
+  'tray.hiddenBody': 'Ele continua acompanhando o repositório em segundo plano. Abra-o de novo ou feche-o de vez pelo ícone na bandeja do sistema ou na barra de menus.',
 });

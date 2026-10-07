@@ -334,4 +334,10 @@ GB.i18n.define('zh-Hans', {
   'settings.clearToken': '删除令牌',
   'settings.cancel': '取消',
   'settings.save': '保存并重新连接',
+
+  /* ---------- 桌面应用：系统托盘 ---------- */
+  'tray.show': '显示 GraphBranch',
+  'tray.quit': '退出 GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch 仍在运行',
+  'tray.hiddenBody': '它会继续在后台关注这个仓库。可以通过系统托盘或菜单栏中的图标重新打开它，或彻底退出。',
 });

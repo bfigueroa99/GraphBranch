@@ -12,9 +12,11 @@
     "start": "electron .",
     "dist": "electron-builder",
     "check:i18n": "node tools/check-i18n.mjs",
-    "vendor": "node tools/vendor.mjs"
+    "vendor": "node tools/vendor.mjs",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "electron": "44.4.5",
     "electron-builder": "26.15.3"
   },

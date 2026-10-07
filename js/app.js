@@ -199,6 +199,9 @@
     graph3d?.world?.load(repoKey()); // y sus ramas descubiertas en el modo vuelo
     followUI(true);
     feed.clear();
+    // nada del repo anterior: ni sus cifras ni su grafo (el Replay lo reproduciría si el nuevo no carga)
+    lastRender = null;
+    clearStats();
     paused = false;
     setPressed(el.pauseBtn, false);
     setPressed(el.tvPause, false);
@@ -517,6 +520,12 @@
 
     renderLast();
     renderTokenBanner();
+  }
+
+  /** Cifras en blanco hasta que el repo recién conectado traiga las suyas. */
+  function clearStats() {
+    for (const [key, node] of Object.entries(el.st)) node.textContent = key.endsWith('Sub') ? '' : '–';
+    el.st.branchesSub.title = '';
   }
 
   function renderLast() {

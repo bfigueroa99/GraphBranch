@@ -22,9 +22,10 @@ posteriores pueden haberse movido.
 
 ### Alta
 
-1. **Al cambiar de repo quedan los datos del anterior.** `connect()` no limpia `lastRender` ni las
-   cifras (`app.js:175`): con un repo que da 404 se ven las cifras del anterior y Replay reproduce su
-   grafo. Arreglo: `lastRender = null` y cifras en "–".
+1. **Lo que llegó de master después de la auditoría no tiene pruebas ni revisión:** el director de
+   cámara y el modo TV (#13, `js/director.js`) y el mundo abierto de la vista 3D (#14, `js/world.js`,
+   unas 1.000 líneas). Auditarlos como se hizo con el resto y sumar al smoke test `?tv=1` (carga,
+   director activo, salida) y el vuelo por el mundo abierto.
 
 ### Media
 
@@ -46,35 +47,31 @@ posteriores pueden haberse movido.
 8. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
     caída permanente de GraphQL a REST, `:311`). Arreglo: degradar solo con 403/404/410.
 
-9. **El modo TV y el director de cámara (llegaron con #13) no tienen pruebas ni auditoría.** Sumar
-    `?tv=1` al smoke test (carga, director activo, salida) y revisar `js/director.js` y el modo TV como
-    se hizo con el resto.
-
 ### Baja
 
-10. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
+9. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
     recibe foco al abrirse desde el teclado.
-11. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
+10. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
     `:2121`): su animación termina en opacidad 0.
-12. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
+11. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
     rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-13. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-14. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
+12. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+13. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
     `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro).
-15. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
+14. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
     `aria-pressed` y el texto, leyenda 2D sin acceso por teclado, el botón de pausa del Replay sin nombre
     accesible (`index.html:190`).
-16. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-17. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-18. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
-19. `stop()` no cancela la consulta en curso al cambiar de repo (usar `AbortController`).
-20. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
-21. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
+15. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+16. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+17. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
+18. `stop()` no cancela la consulta en curso al cambiar de repo (usar `AbortController`).
+19. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
+20. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
     blanco al arrancar.
-22. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
+21. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
     Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-23. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
+22. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
     (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
 
 ## Bitácora
@@ -132,3 +129,17 @@ posteriores pueden haberse movido.
   events fallan con el `github.js` de master y pasan con el arreglo; las de modo lista quedan como
   regresión.
 - Validado: 7 pruebas, smoke (incluidos los 40 idiomas en celular) e i18n en verde.
+
+### 2026-10-07 · Iteración 4
+
+- **Sincronización.** El PR #16 sigue abierto. Master trajo #14 (mundo abierto en la vista 3D); se
+  fusionó sin conflictos y todo siguió en verde.
+- **Arreglo: cambiar de repo ya no deja datos del anterior.** `connect()` no limpiaba `lastRender` ni
+  las cifras: al pasar a un repo que da 404 (o mientras el nuevo cargaba) se veían las ramas, commits y
+  PRs del anterior, y el botón de Replay, o el Replay de ambiente del modo TV, reproducían el grafo del
+  repo anterior. Ahora `connect()` olvida el último dibujo y deja las cifras en "–" hasta que el repo
+  nuevo traiga las suyas.
+- **Prueba nueva en el smoke:** tras la demo conecta a `nadie/no-existe` con la API respondiendo 404 y
+  comprueba que las cifras quedan en "–" y que el Replay no arranca. Antes del arreglo mostraba las de la
+  demo (5, 18, 3).
+- **Siguiente:** pendiente 1 (auditar y probar lo que llegó con #13 y #14), luego 2 (reloj adelantado).

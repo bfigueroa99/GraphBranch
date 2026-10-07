@@ -95,7 +95,8 @@ async function openPage(contextOptions = {}) {
   return page;
 }
 
-async function step(page, name, fn) {
+/** `allow`: errores de consola que el paso provoca a propósito (por ejemplo, un 404 de la API simulada). */
+async function step(page, name, fn, { allow = null } = {}) {
   const before = page.errors.length;
   const errs = [];
   try {
@@ -103,7 +104,8 @@ async function step(page, name, fn) {
   } catch (e) {
     errs.push(e.message.split('\n')[0]);
   }
-  errs.unshift(...page.errors.slice(before)); // la excepción de la app explica mejor que el timeout
+  // la excepción de la app explica mejor que el timeout
+  errs.unshift(...page.errors.slice(before).filter((e) => !allow?.test(e)));
   if (errs.length) fail(`${name}: ${errs.join(' | ')}`);
   else console.log(`  ✓ ${name}`);
 }
@@ -195,6 +197,26 @@ console.log('Escritorio (1280×800)');
     await page.waitForFunction(() => document.documentElement.dir !== 'rtl', null, { timeout: 5000 });
     await loaded(page);
   });
+
+  await step(
+    page,
+    'cambiar a un repo que no existe no deja datos de la demo',
+    async () => {
+      await page.unroute('https://api.github.com/**');
+      await page.route('https://api.github.com/**', (r) => r.fulfill({ status: 404, json: { message: 'Not Found' } }));
+      await page.fill('#repo-input', 'nadie/no-existe');
+      await page.press('#repo-input', 'Enter');
+      await page.waitForSelector('#overlay:not([hidden])', { timeout: 5000 });
+      await page.waitForFunction(() => document.querySelector('#status')?.dataset.state === 'error', null, { timeout: 10000 });
+      const stats = await page.$$eval('.stat-value', (els) => els.map((e) => e.textContent.trim()));
+      if (stats.slice(0, 3).some((v) => v !== '–')) throw new Error(`quedan cifras del repo anterior: ${stats.join(', ')}`);
+      // sin datos propios, el Replay no tiene nada que reproducir (antes reproducía la demo)
+      await page.click('#replay-btn');
+      await page.waitForTimeout(500);
+      if (await page.locator('#replay').isVisible()) throw new Error('el Replay reproduce el repo anterior');
+    },
+    { allow: /status of 404/ },
+  );
 
   await page.context().close();
 }

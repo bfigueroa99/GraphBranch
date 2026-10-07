@@ -184,7 +184,10 @@ GB.i18n.define('vi', {
   'hint.3d': 'Kéo để xoay · nhấp chuột phải hoặc <kbd>Shift</kbd> + kéo để di chuyển · con lăn hoặc chụm hai ngón để phóng to/thu nhỏ · nhấp vào commit để xem chi tiết',
   'hint.2d': 'Kéo để di chuyển · con lăn để cuộn lịch sử · <kbd>Ctrl</kbd> + con lăn hoặc chụm hai ngón để phóng to/thu nhỏ · nhấp vào commit để xem chi tiết',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> xoay · <kbd>↑</kbd> <kbd>↓</kbd> du hành qua lịch sử · <kbd>F</kbd> toàn màn hình',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> di chuyển · <kbd>F</kbd> toàn màn hình',
   'graph.aria2d': 'Biểu đồ các nhánh và commit',
+  'legend.merged': 'đã merge',
+  'minimap.title': 'Tổng quan: nhấp hoặc kéo để di chuyển',
   'graph.aria3d': 'Chế độ xem 3D của các nhánh và commit',
 
   'banner.events': 'Kho lưu trữ này có {total} nhánh. Khi không có token, GraphBranch chỉ thấy các nhánh xuất hiện trong luồng sự kiện của GitHub, vốn đến chậm vài phút. Với token, bạn sẽ thấy tất cả các nhánh gần như theo thời gian thực.',
@@ -331,10 +334,19 @@ GB.i18n.define('vi', {
   'settings.optional': 'tùy chọn',
   'settings.show': 'Hiện',
   'settings.hide': 'Ẩn',
-  'settings.tokenHelp': 'Khi không có token, GitHub cho phép 60 yêu cầu mỗi giờ. Với token <em>fine-grained</em> chỉ đọc (quyền Metadata, Contents và Pull requests), chế độ xem làm mới sau mỗi 10 giây, hoạt động với các kho có hàng nghìn nhánh và bạn có thể xem các repo riêng tư. Token chỉ được lưu trong trình duyệt này và chỉ được gửi tới api.github.com.',
+  'settings.tokenHelp': 'Khi không có token, GitHub cho phép 60 yêu cầu mỗi giờ. Với token <em>fine-grained</em> chỉ đọc (quyền Metadata, Contents và Pull requests), chế độ xem làm mới sau mỗi 10 giây, hoạt động với các kho có hàng nghìn nhánh và bạn có thể xem các repo riêng tư.',
+  'settings.tokenWhere': 'Token chỉ được lưu trong trình duyệt này và chỉ được gửi tới api.github.com.',
+  'settings.tokenWhereKeychain': 'Token chỉ được lưu trên máy tính này, được mã hóa bằng chuỗi khóa của hệ thống, và chỉ được gửi tới api.github.com.',
+  'settings.tokenWherePlain': 'Token chỉ được lưu trên máy tính này nhưng không được mã hóa: hệ thống không có chuỗi khóa nào khả dụng. Token chỉ được gửi tới api.github.com.',
   'settings.depth': 'Số commit mỗi nhánh',
   'settings.branchesHelp': 'GraphBranch hiển thị mọi nhánh của repo, nhánh càng hoạt động nhiều càng gần nhánh mặc định. Với các repo lớn, các nhánh xuất hiện dần dần, nhánh hoạt động nhiều nhất trước. Các nhánh đã ghim (nhấp vào một nhánh → <strong>Ghim</strong>) nằm ngay dưới nhánh mặc định, kể cả khi đang lọc. Hãy dùng bộ lọc của biểu đồ để tập trung vào một tiền tố, ví dụ <code>release/</code>.',
   'settings.clearToken': 'Xóa token',
   'settings.cancel': 'Hủy',
   'settings.save': 'Lưu và kết nối lại',
+
+  /* ---------- ứng dụng máy tính: khay hệ thống ---------- */
+  'tray.show': 'Hiện GraphBranch',
+  'tray.quit': 'Thoát GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch vẫn đang chạy',
+  'tray.hiddenBody': 'Ứng dụng vẫn theo dõi kho ở chế độ nền. Mở lại hoặc thoát hẳn từ biểu tượng của nó trong khay hệ thống hoặc thanh menu.',
 });

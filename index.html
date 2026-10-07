@@ -5,16 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- CSP: todo lo que no se nombra aquí queda prohibido. Si agregas un servidor externo (script,
      imagen o API), añádelo a la directiva que corresponda. Va antes que cualquier recurso.
-     Los scripts de CDN se nombran con su ruta completa (no el dominio entero, que aloja miles de
-     librerías); al cambiar de versión hay que actualizar aquí la ruta y abajo el hash SRI. -->
+     Las librerías y las fuentes son copias locales en vendor/ (tools/vendor.mjs), así que
+     scripts, estilos y fuentes solo pueden venir del propio sitio. -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'none';
-  script-src 'self'
-    https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js
-    https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
-    https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js;
-  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-  font-src https://fonts.gstatic.com;
+  script-src 'self';
+  style-src 'self' 'unsafe-inline';
+  font-src 'self';
   img-src data: https://avatars.githubusercontent.com;
   connect-src https://api.github.com;
   base-uri 'none';
@@ -22,9 +19,7 @@
 <title>GraphBranch</title>
 <meta name="description" content="Live graph of a GitHub repository's branches, with alerts for commits, pull requests and issues." data-i18n-attr="content:meta.description">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23121917'/%3E%3Cpath d='M8 24V8M8 15c0-4 4-5 8-5h3M8 19c0 3 3 4 7 4h9' stroke='%233987e5' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='8' cy='8' r='3' fill='%233987e5'/%3E%3Ccircle cx='22' cy='10' r='3' fill='%23d95926'/%3E%3Ccircle cx='24' cy='23' r='3' fill='%23199e70'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,500&display=swap">
+<link rel="stylesheet" href="vendor/fonts.css">
 <link rel="stylesheet" href="css/styles.css">
 <noscript><style>html:not([data-lang]) .app, html:not([data-lang]) .toasts { visibility: visible; }</style></noscript>
 <script src="js/i18n.js"></script>
@@ -55,10 +50,11 @@
     </form>
 
     <div class="status-group">
-      <div class="status" id="status" data-state="loading" aria-live="polite">
+      <div class="status" id="status" data-state="loading">
         <span class="status-dot" aria-hidden="true"></span>
         <span class="status-texts">
-          <span class="status-text" id="status-text" data-i18n="status.loading">Loading</span>
+          <!-- solo el estado es región viva: la línea de abajo cambia cada segundo y no debe leerse -->
+          <span class="status-text" id="status-text" data-i18n="status.loading" aria-live="polite">Loading</span>
           <span class="status-sub" id="status-sub"></span>
         </span>
       </div>
@@ -255,7 +251,8 @@
         <input id="token-input" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
         <button type="button" class="btn btn-ghost" id="token-toggle">Show</button>
       </div>
-      <p class="help" data-i18n-html="settings.tokenHelp">Without a token, GitHub allows 60 requests per hour. With a read-only <em>fine-grained</em> token (Metadata, Contents and Pull requests permissions) the view refreshes every 10 seconds, works with repositories that have thousands of branches, and you can see private repos. The token is stored only in this browser and is sent only to api.github.com.</p>
+      <p class="help" data-i18n-html="settings.tokenHelp">Without a token, GitHub allows 60 requests per hour. With a read-only <em>fine-grained</em> token (Metadata, Contents and Pull requests permissions) the view refreshes every 10 seconds, works with repositories that have thousands of branches, and you can see private repos.</p>
+      <p class="help" id="token-where" data-i18n="settings.tokenWhere">The token is stored only in this browser and is sent only to api.github.com.</p>
     </div>
     <div class="grid2">
       <div class="field">
@@ -295,14 +292,11 @@
 </dialog>
 
 <script src="js/i18n-apply.js"></script>
-<!-- SRI: el navegador rechaza estos scripts si el CDN entrega algo distinto a lo verificado.
-     Al cambiar de versión hay que recalcular el hash (ver "Seguridad" en el README). -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"
-        integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
-        integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"
-        integrity="sha384-wagZhIFgY4hD+7awjQjR4e2E294y6J2HSnd8eTNc15ZubTeQeVRZwhQJ+W6hnBsf" crossorigin="anonymous"></script>
+<!-- Copias locales de d3, Three.js y OrbitControls; sus versiones y los hashes con que se
+     verificaron al descargarlas están en tools/vendor.mjs. -->
+<script src="vendor/d3.min.js"></script>
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
 <script src="js/util.js"></script>
 <script src="js/sources/github.js"></script>
 <script src="js/sources/demo-content.js"></script>

@@ -184,7 +184,10 @@ GB.i18n.define('da', {
   'hint.3d': 'Træk for at rotere · højreklik eller <kbd>Skift</kbd> + træk for at panorere · hjul eller knib for at zoome · klik på en commit for detaljer',
   'hint.2d': 'Træk for at flytte · hjul for at rulle gennem historikken · <kbd>Ctrl</kbd> + hjul eller knib for at zoome · klik på en commit for detaljer',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> roter · <kbd>↑</kbd> <kbd>↓</kbd> rejs gennem historikken · <kbd>F</kbd> fuld skærm',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> flyt rundt · <kbd>F</kbd> fuld skærm',
   'graph.aria2d': 'Graf over branches og commits',
+  'legend.merged': 'flettede',
+  'minimap.title': 'Overblik: klik eller træk for at flytte rundt',
   'graph.aria3d': '3D-visning af branches og commits',
 
   'banner.events': 'Dette repository har {total} branches. Uden token ser GraphBranch kun dem, der vises i GitHubs hændelsesfeed, som kommer nogle minutter forsinket. Med et token ser du dem alle næsten i realtid.',
@@ -331,10 +334,19 @@ GB.i18n.define('da', {
   'settings.optional': 'valgfrit',
   'settings.show': 'Vis',
   'settings.hide': 'Skjul',
-  'settings.tokenHelp': 'Uden token tillader GitHub 60 forespørgsler i timen. Med et skrivebeskyttet <em>fine-grained</em> token (tilladelserne Metadata, Contents og Pull requests) opdateres visningen hvert 10. sekund, den virker med repositories med tusindvis af branches, og du kan se private repos. Tokenet gemmes kun i denne browser og sendes kun til api.github.com.',
+  'settings.tokenHelp': 'Uden token tillader GitHub 60 forespørgsler i timen. Med et skrivebeskyttet <em>fine-grained</em> token (tilladelserne Metadata, Contents og Pull requests) opdateres visningen hvert 10. sekund, den virker med repositories med tusindvis af branches, og du kan se private repos.',
+  'settings.tokenWhere': 'Tokenet gemmes kun i denne browser og sendes kun til api.github.com.',
+  'settings.tokenWhereKeychain': 'Tokenet gemmes kun på denne computer, krypteret med systemets nøglering, og sendes kun til api.github.com.',
+  'settings.tokenWherePlain': 'Tokenet gemmes kun på denne computer, men ukrypteret: systemet har ingen nøglering til rådighed. Det sendes kun til api.github.com.',
   'settings.depth': 'Commits pr. branch',
   'settings.branchesHelp': 'GraphBranch viser alle branches i repoet, de mest aktive tættest på standardbranchen. I store repos dukker de op lidt efter lidt, de mest aktive først. Fastgjorte branches (klik på en branch → <strong>Fastgør</strong>) ligger lige under standardbranchen, også med et filter. Brug grafens filter til at fokusere på et præfiks, for eksempel <code>release/</code>.',
   'settings.clearToken': 'Slet token',
   'settings.cancel': 'Annuller',
   'settings.save': 'Gem og forbind igen',
+
+  /* ---------- skrivebordsapp: systembakken ---------- */
+  'tray.show': 'Vis GraphBranch',
+  'tray.quit': 'Afslut GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch kører stadig',
+  'tray.hiddenBody': 'Det holder fortsat øje med repositoriet i baggrunden. Åbn det igen, eller afslut det helt via ikonet i systembakken eller menulinjen.',
 });

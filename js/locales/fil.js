@@ -184,7 +184,10 @@ GB.i18n.define('fil', {
   'hint.3d': 'I-drag para umikot · i-right-click o <kbd>Shift</kbd> + drag para mag-pan · wheel o pinch para mag-zoom · i-click ang commit para sa mga detalye',
   'hint.2d': 'I-drag para gumalaw · wheel para mag-scroll sa history · <kbd>Ctrl</kbd> + wheel o pinch para mag-zoom · i-click ang commit para sa mga detalye',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> paikutin · <kbd>↑</kbd> <kbd>↓</kbd> maglakbay sa history · <kbd>F</kbd> buong screen',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> gumalaw · <kbd>F</kbd> buong screen',
   'graph.aria2d': 'Graph ng mga branch at commit',
+  'legend.merged': 'na-merge',
+  'minimap.title': 'Kabuuang tanaw: i-click o i-drag para gumalaw',
   'graph.aria3d': '3D view ng mga branch at commit',
 
   'banner.events': 'May {total} na branch ang repository na ito. Kapag walang token, ang mga branch lang na lumalabas sa event feed ng GitHub ang nakikita ng GraphBranch, at ilang minuto itong huli. Kapag may token, makikita mo ang lahat ng ito nang halos real time.',
@@ -332,10 +335,19 @@ GB.i18n.define('fil', {
   'settings.optional': 'opsyonal',
   'settings.show': 'Ipakita',
   'settings.hide': 'Itago',
-  'settings.tokenHelp': 'Kapag walang token, 60 request kada oras ang pinapayagan ng GitHub. Sa read-only na <em>fine-grained</em> token (mga permission na Metadata, Contents at Pull requests), nagre-refresh ang view kada 10 segundo, gumagana ito sa mga repository na may libo-libong branch, at makikita mo ang mga pribadong repo. Sa browser na ito lang naka-store ang token at sa api.github.com lang ito ipinapadala.',
+  'settings.tokenHelp': 'Kapag walang token, 60 request kada oras ang pinapayagan ng GitHub. Sa read-only na <em>fine-grained</em> token (mga permission na Metadata, Contents at Pull requests), nagre-refresh ang view kada 10 segundo, gumagana ito sa mga repository na may libo-libong branch, at makikita mo ang mga pribadong repo.',
+  'settings.tokenWhere': 'Sa browser na ito lang naka-store ang token at sa api.github.com lang ito ipinapadala.',
+  'settings.tokenWhereKeychain': 'Sa computer na ito lang naka-store ang token, naka-encrypt gamit ang keychain ng system, at sa api.github.com lang ito ipinapadala.',
+  'settings.tokenWherePlain': 'Sa computer na ito lang naka-store ang token, pero hindi naka-encrypt: walang available na keychain ang system. Sa api.github.com lang ito ipinapadala.',
   'settings.depth': 'Mga commit kada branch',
   'settings.branchesHelp': 'Ipinapakita ng GraphBranch ang lahat ng branch ng repo, at ang mga pinakaaktibo ang pinakamalapit sa default branch. Sa malalaking repo, unti-unti silang lumalabas, una ang mga pinakaaktibo. Ang mga naka-pin na branch (i-click ang isang branch → <strong>I-pin</strong>) ay nasa mismong ilalim ng default branch, kahit may filter. Gamitin ang filter ng graph para mag-focus sa isang prefix, halimbawa <code>release/</code>.',
   'settings.clearToken': 'Burahin ang token',
   'settings.cancel': 'Kanselahin',
   'settings.save': 'I-save at kumonekta muli',
+
+  /* ---------- desktop app: system tray ---------- */
+  'tray.show': 'Ipakita ang GraphBranch',
+  'tray.quit': 'Umalis sa GraphBranch',
+  'tray.hiddenTitle': 'Tumatakbo pa rin ang GraphBranch',
+  'tray.hiddenBody': 'Patuloy nitong binabantayan ang repository sa background. Buksan itong muli o isara nang tuluyan mula sa icon nito sa system tray o menu bar.',
 });

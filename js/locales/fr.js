@@ -184,7 +184,10 @@ GB.i18n.define('fr', {
   'hint.3d': 'Faites glisser pour pivoter · clic droit ou <kbd>Maj</kbd> + glisser pour déplacer · molette ou pincement pour zoomer · cliquez sur un commit pour voir les détails',
   'hint.2d': 'Faites glisser pour vous déplacer · molette pour parcourir l’historique · <kbd>Ctrl</kbd> + molette ou pincement pour zoomer · cliquez sur un commit pour voir les détails',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> pivoter · <kbd>↑</kbd> <kbd>↓</kbd> voyager dans l’historique · <kbd>F</kbd> plein écran',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> se déplacer · <kbd>F</kbd> plein écran',
   'graph.aria2d': 'Graphe des branches et des commits',
+  'legend.merged': 'fusionnées',
+  'minimap.title': 'Vue d’ensemble : cliquez ou faites glisser pour vous déplacer',
   'graph.aria3d': 'Vue 3D des branches et des commits',
 
   'banner.events': 'Ce dépôt compte {total} branches. Sans jeton, GraphBranch ne voit que celles qui apparaissent dans le flux d’événements de GitHub, qui arrive avec quelques minutes de retard. Avec un jeton, vous les verrez toutes presque en temps réel.',
@@ -332,10 +335,19 @@ GB.i18n.define('fr', {
   'settings.optional': 'facultatif',
   'settings.show': 'Afficher',
   'settings.hide': 'Masquer',
-  'settings.tokenHelp': 'Sans jeton, GitHub autorise 60 requêtes par heure. Avec un jeton <em>fine-grained</em> en lecture seule (permissions Metadata, Contents et Pull requests), la vue est actualisée toutes les 10 secondes, fonctionne avec des dépôts de plusieurs milliers de branches et vous pouvez consulter les dépôts privés. Le jeton est conservé uniquement dans ce navigateur et n’est envoyé qu’à api.github.com.',
+  'settings.tokenHelp': 'Sans jeton, GitHub autorise 60 requêtes par heure. Avec un jeton <em>fine-grained</em> en lecture seule (permissions Metadata, Contents et Pull requests), la vue est actualisée toutes les 10 secondes, fonctionne avec des dépôts de plusieurs milliers de branches et vous pouvez consulter les dépôts privés.',
+  'settings.tokenWhere': 'Le jeton est conservé uniquement dans ce navigateur et n’est envoyé qu’à api.github.com.',
+  'settings.tokenWhereKeychain': 'Le jeton est conservé uniquement sur cet ordinateur, chiffré avec le trousseau du système, et n’est envoyé qu’à api.github.com.',
+  'settings.tokenWherePlain': 'Le jeton est conservé uniquement sur cet ordinateur, mais sans chiffrement : le système n’a pas de trousseau disponible. Il n’est envoyé qu’à api.github.com.',
   'settings.depth': 'Commits par branche',
   'settings.branchesHelp': 'GraphBranch affiche toutes les branches du dépôt, les plus actives au plus près de la branche par défaut. Sur les gros dépôts, elles apparaissent peu à peu, les plus actives d’abord. Les branches épinglées (clic sur une branche → <strong>Épingler</strong>) se placent juste sous la branche par défaut, même avec un filtre. Utilisez le filtre du graphe pour vous concentrer sur un préfixe, par exemple <code>release/</code>.',
   'settings.clearToken': 'Supprimer le jeton',
   'settings.cancel': 'Annuler',
   'settings.save': 'Enregistrer et reconnecter',
+
+  /* ---------- application de bureau : zone de notification ---------- */
+  'tray.show': 'Afficher GraphBranch',
+  'tray.quit': 'Quitter GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch reste ouvert',
+  'tray.hiddenBody': 'Il continue de surveiller le dépôt en arrière-plan. Rouvrez-le ou quittez-le depuis son icône dans la zone de notification ou la barre des menus.',
 });

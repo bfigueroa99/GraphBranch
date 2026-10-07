@@ -184,7 +184,10 @@ GB.i18n.define('nl', {
   'hint.3d': 'Sleep om te roteren · klik met rechts of <kbd>Shift</kbd> + slepen om te verschuiven · scrollwiel of knijpen om te zoomen · klik op een commit voor details',
   'hint.2d': 'Sleep om te bewegen · scrollwiel om door de geschiedenis te scrollen · <kbd>Ctrl</kbd> + scrollwiel of knijpen om te zoomen · klik op een commit voor details',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> roteren · <kbd>↑</kbd> <kbd>↓</kbd> door de geschiedenis reizen · <kbd>F</kbd> volledig scherm',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> bewegen · <kbd>F</kbd> volledig scherm',
   'graph.aria2d': 'Graaf van branches en commits',
+  'legend.merged': 'gemerged',
+  'minimap.title': 'Overzicht: klik of sleep om te bewegen',
   'graph.aria3d': '3D-weergave van branches en commits',
 
   'banner.events': 'Deze repository heeft {total} branches. Zonder token ziet GraphBranch alleen de branches die in de eventfeed van GitHub verschijnen, die een paar minuten achterloopt. Met een token zie je ze allemaal bijna in realtime.',
@@ -332,10 +335,19 @@ GB.i18n.define('nl', {
   'settings.optional': 'optioneel',
   'settings.show': 'Tonen',
   'settings.hide': 'Verbergen',
-  'settings.tokenHelp': 'Zonder token staat GitHub 60 verzoeken per uur toe. Met een alleen-lezen <em>fine-grained</em> token (rechten voor Metadata, Contents en Pull requests) wordt de weergave elke 10 seconden vernieuwd, werkt het met repositories met duizenden branches en kun je privérepo’s zien. Het token wordt alleen in deze browser opgeslagen en alleen naar api.github.com verzonden.',
+  'settings.tokenHelp': 'Zonder token staat GitHub 60 verzoeken per uur toe. Met een alleen-lezen <em>fine-grained</em> token (rechten voor Metadata, Contents en Pull requests) wordt de weergave elke 10 seconden vernieuwd, werkt het met repositories met duizenden branches en kun je privérepo’s zien.',
+  'settings.tokenWhere': 'Het token wordt alleen in deze browser opgeslagen en alleen naar api.github.com verzonden.',
+  'settings.tokenWhereKeychain': 'Het token wordt alleen op deze computer opgeslagen, versleuteld met de sleutelhanger van het systeem, en alleen naar api.github.com verzonden.',
+  'settings.tokenWherePlain': 'Het token wordt alleen op deze computer opgeslagen, maar onversleuteld: het systeem heeft geen sleutelhanger beschikbaar. Het wordt alleen naar api.github.com verzonden.',
   'settings.depth': 'Commits per branch',
   'settings.branchesHelp': 'GraphBranch toont alle branches van de repo, de meest actieve het dichtst bij de standaardbranch. Bij grote repo’s verschijnen ze geleidelijk, de meest actieve eerst. Vastgezette branches (klik op een branch → <strong>Vastzetten</strong>) staan direct onder de standaardbranch, ook met een filter. Gebruik het filter van de graaf om je op een prefix te richten, bijvoorbeeld <code>release/</code>.',
   'settings.clearToken': 'Token verwijderen',
   'settings.cancel': 'Annuleren',
   'settings.save': 'Opslaan en opnieuw verbinden',
+
+  /* ---------- desktop-app: systeemvak ---------- */
+  'tray.show': 'GraphBranch tonen',
+  'tray.quit': 'GraphBranch afsluiten',
+  'tray.hiddenTitle': 'GraphBranch draait nog',
+  'tray.hiddenBody': 'Het blijft de repository op de achtergrond volgen. Open het opnieuw of sluit het helemaal af via het pictogram in het systeemvak of de menubalk.',
 });

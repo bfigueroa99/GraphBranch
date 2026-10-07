@@ -324,7 +324,9 @@
         const body = ranked.length > 1 ? `${detailOf(top)}\n${t('notify.more', { n: ranked.length - 1 })}` : detailOf(top);
         const n = new Notification(titleOf(top), { body, tag: 'graphbranch', renotify: true, silent: !this.sound });
         n.onclick = () => {
-          window.focus();
+          // en la app de escritorio la ventana puede estar escondida en la bandeja, y window.focus() no la muestra
+          if (window.GBDesktop) window.GBDesktop.show();
+          else window.focus();
           this.onSelect?.(top);
           n.close();
         };

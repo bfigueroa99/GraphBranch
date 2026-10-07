@@ -184,7 +184,10 @@ GB.i18n.define('id', {
   'hint.3d': 'Seret untuk memutar · klik kanan atau <kbd>Shift</kbd> + seret untuk menggeser · roda mouse atau cubit untuk zoom · klik commit untuk melihat detail',
   'hint.2d': 'Seret untuk memindahkan · roda mouse untuk menggulir riwayat · <kbd>Ctrl</kbd> + roda mouse atau cubit untuk zoom · klik commit untuk melihat detail',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> putar · <kbd>↑</kbd> <kbd>↓</kbd> jelajahi riwayat · <kbd>F</kbd> layar penuh',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> bergerak · <kbd>F</kbd> layar penuh',
   'graph.aria2d': 'Grafik branch dan commit',
+  'legend.merged': 'sudah di-merge',
+  'minimap.title': 'Ikhtisar: klik atau seret untuk berpindah',
   'graph.aria3d': 'Tampilan 3D branch dan commit',
 
   'banner.events': 'Repositori ini memiliki {total} branch. Tanpa token, GraphBranch hanya melihat branch yang muncul di feed event GitHub, yang terlambat beberapa menit. Dengan token, Anda akan melihat semuanya hampir secara real time.',
@@ -331,10 +334,19 @@ GB.i18n.define('id', {
   'settings.optional': 'opsional',
   'settings.show': 'Tampilkan',
   'settings.hide': 'Sembunyikan',
-  'settings.tokenHelp': 'Tanpa token, GitHub mengizinkan 60 permintaan per jam. Dengan token <em>fine-grained</em> hanya-baca (izin Metadata, Contents, dan Pull requests), tampilan dimuat ulang setiap 10 detik, berfungsi dengan repositori yang memiliki ribuan branch, dan Anda dapat melihat repo privat. Token hanya disimpan di browser ini dan hanya dikirim ke api.github.com.',
+  'settings.tokenHelp': 'Tanpa token, GitHub mengizinkan 60 permintaan per jam. Dengan token <em>fine-grained</em> hanya-baca (izin Metadata, Contents, dan Pull requests), tampilan dimuat ulang setiap 10 detik, berfungsi dengan repositori yang memiliki ribuan branch, dan Anda dapat melihat repo privat.',
+  'settings.tokenWhere': 'Token hanya disimpan di browser ini dan hanya dikirim ke api.github.com.',
+  'settings.tokenWhereKeychain': 'Token hanya disimpan di komputer ini, dienkripsi dengan keychain sistem, dan hanya dikirim ke api.github.com.',
+  'settings.tokenWherePlain': 'Token hanya disimpan di komputer ini, tetapi tanpa enkripsi: sistem tidak memiliki keychain yang tersedia. Token hanya dikirim ke api.github.com.',
   'settings.depth': 'Commit per branch',
   'settings.branchesHelp': 'GraphBranch menampilkan semua branch di repo, dengan yang paling aktif paling dekat ke branch default. Pada repo besar, branch muncul bertahap, yang paling aktif lebih dulu. Branch yang disematkan (klik sebuah branch → <strong>Sematkan</strong>) berada tepat di bawah branch default, bahkan saat filter aktif. Gunakan filter grafik untuk berfokus pada sebuah awalan, misalnya <code>release/</code>.',
   'settings.clearToken': 'Hapus token',
   'settings.cancel': 'Batal',
   'settings.save': 'Simpan dan hubungkan ulang',
+
+  /* ---------- aplikasi desktop: baki sistem ---------- */
+  'tray.show': 'Tampilkan GraphBranch',
+  'tray.quit': 'Keluar dari GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch masih berjalan',
+  'tray.hiddenBody': 'Aplikasi ini tetap memantau repositori di latar belakang. Buka lagi atau tutup sepenuhnya dari ikonnya di baki sistem atau bilah menu.',
 });

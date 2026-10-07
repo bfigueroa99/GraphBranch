@@ -184,7 +184,10 @@ GB.i18n.define('ca', {
   'hint.3d': "Arrossega per girar · clic dret o <kbd>Maj</kbd> + arrossega per desplaçar · roda o pessic per fer zoom · clic en un commit per veure'n el detall",
   'hint.2d': "Arrossega per moure't · roda per recórrer l'historial · <kbd>Ctrl</kbd> + roda o pessic per fer zoom · clic en un commit per veure'n el detall",
   'hint.keys': "<kbd>←</kbd> <kbd>→</kbd> gira · <kbd>↑</kbd> <kbd>↓</kbd> recorre l'historial · <kbd>F</kbd> pantalla completa",
+  'hint.keys2d': "<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> moure't · <kbd>F</kbd> pantalla completa",
   'graph.aria2d': 'Graf de branques i commits',
+  'legend.merged': 'fusionades',
+  'minimap.title': "Vista general: fes clic o arrossega per moure't",
   'graph.aria3d': 'Vista 3D de branques i commits',
 
   'banner.events': "Aquest repositori té {total} branques. Sense token, GraphBranch només veu les que apareixen al feed d'esdeveniments de GitHub, que arriba amb uns minuts de retard. Amb un token les veuràs totes gairebé en temps real.",
@@ -331,10 +334,19 @@ GB.i18n.define('ca', {
   'settings.optional': 'opcional',
   'settings.show': 'Mostra',
   'settings.hide': 'Amaga',
-  'settings.tokenHelp': "Sense token, GitHub permet 60 consultes per hora. Amb un token <em>fine-grained</em> de només lectura (permisos Metadata, Contents i Pull requests) la vista s'actualitza cada 10 segons, funciona amb repositoris de milers de branques i pots veure repos privats. El token només es desa en aquest navegador i només s'envia a api.github.com.",
+  'settings.tokenHelp': "Sense token, GitHub permet 60 consultes per hora. Amb un token <em>fine-grained</em> de només lectura (permisos Metadata, Contents i Pull requests) la vista s'actualitza cada 10 segons, funciona amb repositoris de milers de branques i pots veure repos privats.",
+  'settings.tokenWhere': "El token només es desa en aquest navegador i només s'envia a api.github.com.",
+  'settings.tokenWhereKeychain': "El token només es desa en aquest ordinador, xifrat amb el clauer del sistema, i només s'envia a api.github.com.",
+  'settings.tokenWherePlain': "El token només es desa en aquest ordinador, però sense xifrar: el sistema no té cap clauer disponible. Només s'envia a api.github.com.",
   'settings.depth': 'Commits per branca',
   'settings.branchesHelp': 'GraphBranch mostra totes les branques del repo, les més actives més a prop de la branca per defecte. En repos grans van apareixent de mica en mica, primer les més actives. Les branques fixades (clic en una branca → <strong>Fixa</strong>) van just a sota de la branca per defecte, fins i tot amb un filtre. Fes servir el filtre del graf per centrar-te en un prefix, per exemple <code>release/</code>.',
   'settings.clearToken': 'Esborra el token',
   'settings.cancel': 'Cancel·la',
   'settings.save': 'Desa i reconnecta',
+
+  /* ---------- aplicació d’escriptori: safata del sistema ---------- */
+  'tray.show': 'Mostra GraphBranch',
+  'tray.quit': 'Surt de GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch continua obert',
+  'tray.hiddenBody': "Continua revisant el repositori en segon pla. Torna'l a obrir o tanca'l del tot des de la seva icona a la safata del sistema o a la barra de menús.",
 });

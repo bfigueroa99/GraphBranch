@@ -184,7 +184,10 @@ GB.i18n.define('th', {
   'hint.3d': 'ลากเพื่อหมุน · คลิกขวาหรือ <kbd>Shift</kbd> + ลากเพื่อเลื่อน · ใช้ลูกกลิ้งเมาส์หรือบีบนิ้วเพื่อซูม · คลิก commit เพื่อดูรายละเอียด',
   'hint.2d': 'ลากเพื่อเลื่อน · ใช้ลูกกลิ้งเมาส์เพื่อเลื่อนดูประวัติ · <kbd>Ctrl</kbd> + ลูกกลิ้งเมาส์หรือบีบนิ้วเพื่อซูม · คลิก commit เพื่อดูรายละเอียด',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> หมุน · <kbd>↑</kbd> <kbd>↓</kbd> เดินทางผ่านประวัติ · <kbd>F</kbd> เต็มหน้าจอ',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> เลื่อนไปมา · <kbd>F</kbd> เต็มหน้าจอ',
   'graph.aria2d': 'กราฟของ branch และ commit',
+  'legend.merged': 'merge แล้ว',
+  'minimap.title': 'ภาพรวม: คลิกหรือลากเพื่อเลื่อนไป',
   'graph.aria3d': 'มุมมอง 3D ของ branch และ commit',
 
   'banner.events': 'repository นี้มี branch {total} รายการ หากไม่มี token GraphBranch จะเห็นเฉพาะ branch ที่ปรากฏใน event feed ของ GitHub ซึ่งมาช้าไปหลายนาที หากมี token คุณจะเห็น branch ทั้งหมดแบบเกือบเรียลไทม์',
@@ -332,10 +335,19 @@ GB.i18n.define('th', {
   'settings.optional': 'ไม่บังคับ',
   'settings.show': 'แสดง',
   'settings.hide': 'ซ่อน',
-  'settings.tokenHelp': 'หากไม่มี token GitHub อนุญาตให้ส่งคำขอได้ 60 ครั้งต่อชั่วโมง เมื่อใช้ token แบบ <em>fine-grained</em> ที่อ่านได้อย่างเดียว (สิทธิ์ Metadata, Contents และ Pull requests) มุมมองจะรีเฟรชทุก 10 วินาที ใช้ได้กับ repository ที่มีหลายพัน branch และดู repo ส่วนตัวได้ โดย token จะถูกเก็บไว้ในเบราว์เซอร์นี้เท่านั้น และส่งไปที่ api.github.com เท่านั้น',
+  'settings.tokenHelp': 'หากไม่มี token GitHub อนุญาตให้ส่งคำขอได้ 60 ครั้งต่อชั่วโมง เมื่อใช้ token แบบ <em>fine-grained</em> ที่อ่านได้อย่างเดียว (สิทธิ์ Metadata, Contents และ Pull requests) มุมมองจะรีเฟรชทุก 10 วินาที ใช้ได้กับ repository ที่มีหลายพัน branch และดู repo ส่วนตัวได้',
+  'settings.tokenWhere': 'token จะถูกเก็บไว้ในเบราว์เซอร์นี้เท่านั้น และส่งไปที่ api.github.com เท่านั้น',
+  'settings.tokenWhereKeychain': 'token จะถูกเก็บไว้ในคอมพิวเตอร์เครื่องนี้เท่านั้น โดยเข้ารหัสด้วยพวงกุญแจของระบบ และส่งไปที่ api.github.com เท่านั้น',
+  'settings.tokenWherePlain': 'token จะถูกเก็บไว้ในคอมพิวเตอร์เครื่องนี้เท่านั้น แต่ไม่ได้เข้ารหัส เพราะระบบไม่มีพวงกุญแจให้ใช้ และส่งไปที่ api.github.com เท่านั้น',
   'settings.depth': 'จำนวน commit ต่อ branch',
   'settings.branchesHelp': 'GraphBranch แสดง branch ทั้งหมดของ repo โดย branch ที่มีความเคลื่อนไหวมากที่สุดจะอยู่ใกล้ branch เริ่มต้นที่สุด ใน repo ขนาดใหญ่ branch จะค่อย ๆ ปรากฏ โดยเริ่มจากที่เคลื่อนไหวมากที่สุด branch ที่ปักหมุดไว้ (คลิก branch → <strong>ปักหมุด</strong>) จะอยู่ใต้ branch เริ่มต้นทันที แม้จะใช้ตัวกรองอยู่ ใช้ตัวกรองของกราฟเพื่อโฟกัสที่คำนำหน้า เช่น <code>release/</code>',
   'settings.clearToken': 'ลบ token',
   'settings.cancel': 'ยกเลิก',
   'settings.save': 'บันทึกและเชื่อมต่อใหม่',
+
+  /* ---------- แอปเดสก์ท็อป: ถาดระบบ ---------- */
+  'tray.show': 'แสดง GraphBranch',
+  'tray.quit': 'ออกจาก GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch ยังทำงานอยู่',
+  'tray.hiddenBody': 'ยังคงติดตาม repository อยู่เบื้องหลัง เปิดอีกครั้งหรือออกจากโปรแกรมได้จากไอคอนในถาดระบบหรือแถบเมนู',
 });

@@ -184,7 +184,10 @@ GB.i18n.define('fi', {
   'hint.3d': 'Pyöritä vetämällä · siirrä näkymää hiiren oikealla painikkeella tai <kbd>Vaihto</kbd> + veto · zoomaa rullalla tai nipistämällä · katso lisätiedot napsauttamalla committia',
   'hint.2d': 'Siirrä vetämällä · selaa historiaa rullalla · zoomaa <kbd>Ctrl</kbd> + rulla tai nipistämällä · katso lisätiedot napsauttamalla committia',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> pyöritä · <kbd>↑</kbd> <kbd>↓</kbd> liiku historiassa · <kbd>F</kbd> koko näyttö',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> liiku · <kbd>F</kbd> koko näyttö',
   'graph.aria2d': 'Haarojen ja committien kaavio',
+  'legend.merged': 'yhdistetyt',
+  'minimap.title': 'Yleiskuva: siirry napsauttamalla tai vetämällä',
   'graph.aria3d': 'Haarojen ja committien 3D-näkymä',
 
   'banner.events': 'Tässä repositoriossa on {total} haaraa. Ilman tokenia GraphBranch näkee vain ne, jotka näkyvät GitHubin tapahtumasyötteessä, joka saapuu muutaman minuutin myöhässä. Tokenin avulla näet ne kaikki lähes reaaliaikaisesti.',
@@ -331,10 +334,19 @@ GB.i18n.define('fi', {
   'settings.optional': 'valinnainen',
   'settings.show': 'Näytä',
   'settings.hide': 'Piilota',
-  'settings.tokenHelp': 'Ilman tokenia GitHub sallii 60 pyyntöä tunnissa. Vain luku -oikeuksilla varustetulla <em>fine-grained</em>-tokenilla (oikeudet Metadata, Contents ja Pull requests) näkymä päivittyy 10 sekunnin välein, toimii repositorioiden kanssa, joissa on tuhansia haaroja, ja voit nähdä yksityiset repositoriot. Token tallennetaan vain tähän selaimeen, ja se lähetetään vain osoitteeseen api.github.com.',
+  'settings.tokenHelp': 'Ilman tokenia GitHub sallii 60 pyyntöä tunnissa. Vain luku -oikeuksilla varustetulla <em>fine-grained</em>-tokenilla (oikeudet Metadata, Contents ja Pull requests) näkymä päivittyy 10 sekunnin välein, toimii repositorioiden kanssa, joissa on tuhansia haaroja, ja voit nähdä yksityiset repositoriot.',
+  'settings.tokenWhere': 'Token tallennetaan vain tähän selaimeen, ja se lähetetään vain osoitteeseen api.github.com.',
+  'settings.tokenWhereKeychain': 'Token tallennetaan vain tälle tietokoneelle, salattuna järjestelmän avainnipun avulla, ja se lähetetään vain osoitteeseen api.github.com.',
+  'settings.tokenWherePlain': 'Token tallennetaan vain tälle tietokoneelle, mutta salaamattomana: järjestelmässä ei ole käytettävissä avainnippua. Se lähetetään vain osoitteeseen api.github.com.',
   'settings.depth': 'Committeja haaraa kohti',
   'settings.branchesHelp': 'GraphBranch näyttää repositorion kaikki haarat, aktiivisimmat lähimpänä oletushaaraa. Suurissa repositorioissa ne ilmestyvät vähitellen, aktiivisimmat ensin. Kiinnitetyt haarat (napsauta haaraa → <strong>Kiinnitä</strong>) näkyvät heti oletushaaran alla, myös suodattimen kanssa. Keskity tiettyyn etuliitteeseen kaavion suodattimella, esimerkiksi <code>release/</code>.',
   'settings.clearToken': 'Poista token',
   'settings.cancel': 'Peruuta',
   'settings.save': 'Tallenna ja muodosta yhteys uudelleen',
+
+  /* ---------- työpöytäsovellus: ilmoitusalue ---------- */
+  'tray.show': 'Näytä GraphBranch',
+  'tray.quit': 'Lopeta GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch on yhä käynnissä',
+  'tray.hiddenBody': 'Se seuraa repositoriota edelleen taustalla. Avaa se uudelleen tai sulje se kokonaan sen kuvakkeesta ilmoitusalueella tai valikkorivillä.',
 });

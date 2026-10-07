@@ -184,7 +184,10 @@ GB.i18n.define('zh-Hans', {
   'hint.3d': '拖动旋转 · 右键或 <kbd>Shift</kbd> + 拖动平移 · 滚轮或双指捏合缩放 · 点击提交查看详情',
   'hint.2d': '拖动移动 · 滚轮浏览历史记录 · <kbd>Ctrl</kbd> + 滚轮或双指捏合缩放 · 点击提交查看详情',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> 旋转 · <kbd>↑</kbd> <kbd>↓</kbd> 穿越历史记录 · <kbd>F</kbd> 全屏',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> 移动 · <kbd>F</kbd> 全屏',
   'graph.aria2d': '分支与提交关系图',
+  'legend.merged': '已合并',
+  'minimap.title': '概览：点击或拖动以移动',
   'graph.aria3d': '分支与提交的 3D 视图',
 
   'banner.events': '此仓库共有 {total} 个分支。没有令牌时，GraphBranch 只能看到出现在 GitHub 事件流中的分支，而事件流会延迟几分钟。使用令牌后，几乎可以实时看到所有分支。',
@@ -331,10 +334,19 @@ GB.i18n.define('zh-Hans', {
   'settings.optional': '可选',
   'settings.show': '显示',
   'settings.hide': '隐藏',
-  'settings.tokenHelp': '没有令牌时，GitHub 每小时只允许 60 次请求。使用只读的 <em>fine-grained</em> 令牌（需要 Metadata、Contents 和 Pull requests 权限），视图每 10 秒刷新一次，可以处理拥有数千个分支的仓库，还能查看私有仓库。令牌仅保存在此浏览器中，并且只会发送到 api.github.com。',
+  'settings.tokenHelp': '没有令牌时，GitHub 每小时只允许 60 次请求。使用只读的 <em>fine-grained</em> 令牌（需要 Metadata、Contents 和 Pull requests 权限），视图每 10 秒刷新一次，可以处理拥有数千个分支的仓库，还能查看私有仓库。',
+  'settings.tokenWhere': '令牌仅保存在此浏览器中，并且只会发送到 api.github.com。',
+  'settings.tokenWhereKeychain': '令牌仅保存在这台电脑上，并由系统钥匙串加密，只会发送到 api.github.com。',
+  'settings.tokenWherePlain': '令牌仅保存在这台电脑上，但未加密：系统没有可用的钥匙串。它只会发送到 api.github.com。',
   'settings.depth': '每个分支的提交数',
   'settings.branchesHelp': 'GraphBranch 会显示仓库的全部分支，越活跃的分支离默认分支越近。在大型仓库中，分支会逐步出现，最活跃的最先显示。已固定的分支（点击某个分支 → <strong>固定</strong>）始终位于默认分支正下方，即使使用了筛选也是如此。可使用图上的筛选框聚焦某个前缀，例如 <code>release/</code>。',
   'settings.clearToken': '删除令牌',
   'settings.cancel': '取消',
   'settings.save': '保存并重新连接',
+
+  /* ---------- 桌面应用：系统托盘 ---------- */
+  'tray.show': '显示 GraphBranch',
+  'tray.quit': '退出 GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch 仍在运行',
+  'tray.hiddenBody': '它会继续在后台关注这个仓库。可以通过系统托盘或菜单栏中的图标重新打开它，或彻底退出。',
 });

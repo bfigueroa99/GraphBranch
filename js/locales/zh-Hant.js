@@ -184,7 +184,10 @@ GB.i18n.define('zh-Hant', {
   'hint.3d': '拖曳旋轉 · 按右鍵或 <kbd>Shift</kbd> + 拖曳平移 · 滾輪或雙指縮放 · 按一下提交查看詳細資料',
   'hint.2d': '拖曳移動 · 滾輪瀏覽歷程記錄 · <kbd>Ctrl</kbd> + 滾輪或雙指縮放 · 按一下提交查看詳細資料',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> 旋轉 · <kbd>↑</kbd> <kbd>↓</kbd> 穿越歷程記錄 · <kbd>F</kbd> 全螢幕',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> 移動 · <kbd>F</kbd> 全螢幕',
   'graph.aria2d': '分支與提交關係圖',
+  'legend.merged': '已合併',
+  'minimap.title': '概覽：按一下或拖曳以移動',
   'graph.aria3d': '分支與提交的 3D 檢視',
 
   'banner.events': '此儲存庫共有 {total} 個分支。沒有權杖時，GraphBranch 只能看到出現在 GitHub 事件動態中的分支，而事件動態會延遲幾分鐘。使用權杖後，幾乎可以即時看到所有分支。',
@@ -331,10 +334,19 @@ GB.i18n.define('zh-Hant', {
   'settings.optional': '選填',
   'settings.show': '顯示',
   'settings.hide': '隱藏',
-  'settings.tokenHelp': '沒有權杖時，GitHub 每小時只允許 60 次請求。使用唯讀的 <em>fine-grained</em> 權杖（需要 Metadata、Contents 與 Pull requests 權限），檢視會每 10 秒重新整理，可處理擁有數千個分支的儲存庫，也能查看私人儲存庫。權杖只會儲存在此瀏覽器中，並且只會傳送到 api.github.com。',
+  'settings.tokenHelp': '沒有權杖時，GitHub 每小時只允許 60 次請求。使用唯讀的 <em>fine-grained</em> 權杖（需要 Metadata、Contents 與 Pull requests 權限），檢視會每 10 秒重新整理，可處理擁有數千個分支的儲存庫，也能查看私人儲存庫。',
+  'settings.tokenWhere': '權杖只會儲存在此瀏覽器中，並且只會傳送到 api.github.com。',
+  'settings.tokenWhereKeychain': '權杖只會儲存在這台電腦上，並由系統鑰匙圈加密，只會傳送到 api.github.com。',
+  'settings.tokenWherePlain': '權杖只會儲存在這台電腦上，但不會加密：系統沒有可用的鑰匙圈。它只會傳送到 api.github.com。',
   'settings.depth': '每個分支的提交數',
   'settings.branchesHelp': 'GraphBranch 會顯示儲存庫的所有分支，越活躍的分支離預設分支越近。在大型儲存庫中，分支會逐步出現，最活躍的最先顯示。已釘選的分支（按一下分支 → <strong>釘選</strong>）一律位於預設分支正下方，即使正在篩選也一樣。可使用圖上的篩選功能聚焦於某個前綴，例如 <code>release/</code>。',
   'settings.clearToken': '刪除權杖',
   'settings.cancel': '取消',
   'settings.save': '儲存並重新連線',
+
+  /* ---------- 桌面應用程式：系統匣 ---------- */
+  'tray.show': '顯示 GraphBranch',
+  'tray.quit': '結束 GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch 仍在執行',
+  'tray.hiddenBody': '它會繼續在背景關注這個儲存庫。可以從系統匣或選單列中的圖示重新開啟它，或完全結束。',
 });

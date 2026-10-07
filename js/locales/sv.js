@@ -184,7 +184,10 @@ GB.i18n.define('sv', {
   'hint.3d': 'Dra för att rotera · högerklicka eller <kbd>Skift</kbd> + dra för att panorera · hjul eller nypa för att zooma · klicka på en commit för detaljer',
   'hint.2d': 'Dra för att flytta · hjul för att bläddra i historiken · <kbd>Ctrl</kbd> + hjul eller nypa för att zooma · klicka på en commit för detaljer',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> rotera · <kbd>↑</kbd> <kbd>↓</kbd> res genom historiken · <kbd>F</kbd> helskärm',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> flytta runt · <kbd>F</kbd> helskärm',
   'graph.aria2d': 'Graf över brancher och commits',
+  'legend.merged': 'mergade',
+  'minimap.title': 'Översikt: klicka eller dra för att flytta dig',
   'graph.aria3d': '3D-vy över brancher och commits',
 
   'banner.events': 'Det här repot har {total} brancher. Utan token ser GraphBranch bara de som visas i GitHubs händelseflöde, som kommer några minuter försenat. Med en token ser du alla nästan i realtid.',
@@ -331,10 +334,19 @@ GB.i18n.define('sv', {
   'settings.optional': 'valfri',
   'settings.show': 'Visa',
   'settings.hide': 'Dölj',
-  'settings.tokenHelp': 'Utan token tillåter GitHub 60 anrop per timme. Med en skrivskyddad <em>fine-grained</em>-token (behörigheterna Metadata, Contents och Pull requests) uppdateras vyn var 10:e sekund, fungerar med repon som har tusentals brancher och du kan se privata repon. Token sparas bara i den här webbläsaren och skickas bara till api.github.com.',
+  'settings.tokenHelp': 'Utan token tillåter GitHub 60 anrop per timme. Med en skrivskyddad <em>fine-grained</em>-token (behörigheterna Metadata, Contents och Pull requests) uppdateras vyn var 10:e sekund, fungerar med repon som har tusentals brancher och du kan se privata repon.',
+  'settings.tokenWhere': 'Token sparas bara i den här webbläsaren och skickas bara till api.github.com.',
+  'settings.tokenWhereKeychain': 'Token sparas bara på den här datorn, krypterad med systemets nyckelring, och skickas bara till api.github.com.',
+  'settings.tokenWherePlain': 'Token sparas bara på den här datorn, men okrypterad: systemet har ingen nyckelring tillgänglig. Den skickas bara till api.github.com.',
   'settings.depth': 'Commits per branch',
   'settings.branchesHelp': 'GraphBranch visar alla brancher i repot, de mest aktiva närmast standardbranchen. I stora repon dyker de upp lite i taget, de mest aktiva först. Fästa brancher (klicka på en branch → <strong>Fäst</strong>) hamnar direkt under standardbranchen, även med ett filter. Använd grafens filter för att fokusera på ett prefix, till exempel <code>release/</code>.',
   'settings.clearToken': 'Ta bort token',
   'settings.cancel': 'Avbryt',
   'settings.save': 'Spara och anslut igen',
+
+  /* ---------- skrivbordsapp: systemfältet ---------- */
+  'tray.show': 'Visa GraphBranch',
+  'tray.quit': 'Avsluta GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch körs fortfarande',
+  'tray.hiddenBody': 'Det fortsätter att bevaka repot i bakgrunden. Öppna det igen eller avsluta det helt via ikonen i systemfältet eller menyraden.',
 });

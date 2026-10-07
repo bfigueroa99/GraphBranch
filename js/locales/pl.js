@@ -189,7 +189,10 @@ GB.i18n.define('pl', {
   'hint.3d': 'Przeciągnij, aby obracać · prawy przycisk myszy lub <kbd>Shift</kbd> + przeciągnięcie, aby przesuwać · kółko lub szczypnięcie, aby przybliżać · kliknij commit, aby zobaczyć szczegóły',
   'hint.2d': 'Przeciągnij, aby przesuwać · kółko, aby przewijać historię · <kbd>Ctrl</kbd> + kółko lub szczypnięcie, aby przybliżać · kliknij commit, aby zobaczyć szczegóły',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> obracanie · <kbd>↑</kbd> <kbd>↓</kbd> podróż przez historię · <kbd>F</kbd> pełny ekran',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> poruszanie się · <kbd>F</kbd> pełny ekran',
   'graph.aria2d': 'Graf gałęzi i commitów',
+  'legend.merged': 'scalone',
+  'minimap.title': 'Podgląd całości: kliknij lub przeciągnij, aby się przesunąć',
   'graph.aria3d': 'Widok 3D gałęzi i commitów',
 
   'banner.events': 'Liczba gałęzi w tym repozytorium: {total}. Bez tokena GraphBranch widzi tylko te, które pojawiają się w kanale zdarzeń GitHub, a ten dociera z kilkuminutowym opóźnieniem. Z tokenem zobaczysz wszystkie niemal w czasie rzeczywistym.',
@@ -342,10 +345,19 @@ GB.i18n.define('pl', {
   'settings.optional': 'opcjonalnie',
   'settings.show': 'Pokaż',
   'settings.hide': 'Ukryj',
-  'settings.tokenHelp': 'Bez tokena GitHub zezwala na 60 zapytań na godzinę. Z tokenem <em>fine-grained</em> tylko do odczytu (uprawnienia Metadata, Contents i Pull requests) widok odświeża się co 10 sekund, działa z repozytoriami mającymi tysiące gałęzi i pozwala zobaczyć prywatne repozytoria. Token jest przechowywany tylko w tej przeglądarce i wysyłany wyłącznie do api.github.com.',
+  'settings.tokenHelp': 'Bez tokena GitHub zezwala na 60 zapytań na godzinę. Z tokenem <em>fine-grained</em> tylko do odczytu (uprawnienia Metadata, Contents i Pull requests) widok odświeża się co 10 sekund, działa z repozytoriami mającymi tysiące gałęzi i pozwala zobaczyć prywatne repozytoria.',
+  'settings.tokenWhere': 'Token jest przechowywany tylko w tej przeglądarce i wysyłany wyłącznie do api.github.com.',
+  'settings.tokenWhereKeychain': 'Token jest przechowywany tylko na tym komputerze, zaszyfrowany za pomocą systemowego pęku kluczy, i wysyłany wyłącznie do api.github.com.',
+  'settings.tokenWherePlain': 'Token jest przechowywany tylko na tym komputerze, ale bez szyfrowania: system nie ma dostępnego pęku kluczy. Jest wysyłany wyłącznie do api.github.com.',
   'settings.depth': 'Commity na gałąź',
   'settings.branchesHelp': 'GraphBranch pokazuje wszystkie gałęzie repozytorium, a najaktywniejsze najbliżej gałęzi domyślnej. W dużych repozytoriach pojawiają się stopniowo, najpierw najaktywniejsze. Przypięte gałęzie (kliknij gałąź → <strong>Przypnij</strong>) są tuż pod gałęzią domyślną, nawet przy włączonym filtrze. Użyj filtra grafu, aby skupić się na prefiksie, na przykład <code>release/</code>.',
   'settings.clearToken': 'Usuń token',
   'settings.cancel': 'Anuluj',
   'settings.save': 'Zapisz i połącz ponownie',
+
+  /* ---------- aplikacja na komputer: zasobnik systemowy ---------- */
+  'tray.show': 'Pokaż GraphBranch',
+  'tray.quit': 'Zakończ GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch nadal działa',
+  'tray.hiddenBody': 'Nadal śledzi repozytorium w tle. Otwórz go ponownie lub zamknij całkowicie za pomocą ikony w zasobniku systemowym lub na pasku menu.',
 });

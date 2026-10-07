@@ -189,7 +189,10 @@ GB.i18n.define('cs', {
   'hint.3d': 'Tažením otáčíte · pravé tlačítko myši nebo <kbd>Shift</kbd> + tažení posouvá · kolečko nebo sevření prsty přibližuje · kliknutím na commit zobrazíte podrobnosti',
   'hint.2d': 'Tažením se pohybujete · kolečkem procházíte historii · <kbd>Ctrl</kbd> + kolečko nebo sevření prsty mění měřítko · kliknutím na commit zobrazíte podrobnosti',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> otáčení · <kbd>↑</kbd> <kbd>↓</kbd> cesta historií · <kbd>F</kbd> celá obrazovka',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> pohyb · <kbd>F</kbd> celá obrazovka',
   'graph.aria2d': 'Graf větví a commitů',
+  'legend.merged': 'sloučené',
+  'minimap.title': 'Přehled: kliknutím nebo tažením se přesunete',
   'graph.aria3d': '3D zobrazení větví a commitů',
 
   'banner.events': 'Počet větví v tomto repozitáři: {total}. Bez tokenu GraphBranch vidí jen ty, které se objeví ve feedu událostí GitHubu, jenž přichází s několikaminutovým zpožděním. S tokenem uvidíte všechny téměř v reálném čase.',
@@ -342,10 +345,19 @@ GB.i18n.define('cs', {
   'settings.optional': 'volitelné',
   'settings.show': 'Zobrazit',
   'settings.hide': 'Skrýt',
-  'settings.tokenHelp': 'Bez tokenu GitHub povoluje 60 požadavků za hodinu. S tokenem <em>fine-grained</em> jen pro čtení (oprávnění Metadata, Contents a Pull requests) se zobrazení obnovuje každých 10 sekund, funguje s repozitáři s tisíci větvemi a uvidíte i soukromé repozitáře. Token se ukládá jen v tomto prohlížeči a odesílá se pouze na api.github.com.',
+  'settings.tokenHelp': 'Bez tokenu GitHub povoluje 60 požadavků za hodinu. S tokenem <em>fine-grained</em> jen pro čtení (oprávnění Metadata, Contents a Pull requests) se zobrazení obnovuje každých 10 sekund, funguje s repozitáři s tisíci větvemi a uvidíte i soukromé repozitáře.',
+  'settings.tokenWhere': 'Token se ukládá jen v tomto prohlížeči a odesílá se pouze na api.github.com.',
+  'settings.tokenWhereKeychain': 'Token se ukládá jen v tomto počítači, zašifrovaný pomocí systémové klíčenky, a odesílá se pouze na api.github.com.',
+  'settings.tokenWherePlain': 'Token se ukládá jen v tomto počítači, ale nešifrovaný: systém nemá k dispozici klíčenku. Odesílá se pouze na api.github.com.',
   'settings.depth': 'Commitů na větev',
   'settings.branchesHelp': 'GraphBranch zobrazuje všechny větve repozitáře, nejaktivnější nejblíže výchozí větvi. U velkých repozitářů se objevují postupně, nejaktivnější jako první. Připnuté větve (klikněte na větev → <strong>Připnout</strong>) jsou hned pod výchozí větví, i když je zapnutý filtr. Pomocí filtru grafu se zaměříte na prefix, například <code>release/</code>.',
   'settings.clearToken': 'Smazat token',
   'settings.cancel': 'Zrušit',
   'settings.save': 'Uložit a znovu připojit',
+
+  /* ---------- desktopová aplikace: oznamovací oblast ---------- */
+  'tray.show': 'Zobrazit GraphBranch',
+  'tray.quit': 'Ukončit GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch stále běží',
+  'tray.hiddenBody': 'Dál sleduje repozitář na pozadí. Znovu ho otevřete nebo úplně ukončete pomocí jeho ikony v oznamovací oblasti nebo na řádku nabídek.',
 });

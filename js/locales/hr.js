@@ -188,7 +188,10 @@ GB.i18n.define('hr', {
   'hint.3d': 'Povucite za rotiranje · desni klik ili <kbd>Shift</kbd> + povlačenje za pomicanje · kotačić ili štipanje za zumiranje · kliknite commit za detalje',
   'hint.2d': 'Povucite za pomicanje · kotačić za listanje povijesti · <kbd>Ctrl</kbd> + kotačić ili štipanje za zumiranje · kliknite commit za detalje',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> rotiranje · <kbd>↑</kbd> <kbd>↓</kbd> putovanje kroz povijest · <kbd>F</kbd> cijeli zaslon',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> kretanje · <kbd>F</kbd> cijeli zaslon',
   'graph.aria2d': 'Graf grana i commitova',
+  'legend.merged': 'spojene',
+  'minimap.title': 'Pregled: kliknite ili povucite za pomicanje',
   'graph.aria3d': '3D prikaz grana i commitova',
 
   'banner.events': 'Ovaj repozitorij ima mnogo grana ({total}). Bez tokena GraphBranch vidi samo grane koje se pojavljuju u feedu događaja na GitHubu, koji kasni nekoliko minuta. S tokenom ćete ih vidjeti sve gotovo u stvarnom vremenu.',
@@ -339,10 +342,19 @@ GB.i18n.define('hr', {
   'settings.optional': 'neobavezno',
   'settings.show': 'Prikažite',
   'settings.hide': 'Sakrijte',
-  'settings.tokenHelp': 'Bez tokena GitHub dopušta 60 zahtjeva na sat. S <em>fine-grained</em> tokenom samo za čitanje (dozvole Metadata, Contents i Pull requests) prikaz se osvježava svakih 10 sekundi, radi s repozitorijima koji imaju tisuće grana i možete vidjeti privatne repozitorije. Token se sprema samo u ovom pregledniku i šalje se isključivo na api.github.com.',
+  'settings.tokenHelp': 'Bez tokena GitHub dopušta 60 zahtjeva na sat. S <em>fine-grained</em> tokenom samo za čitanje (dozvole Metadata, Contents i Pull requests) prikaz se osvježava svakih 10 sekundi, radi s repozitorijima koji imaju tisuće grana i možete vidjeti privatne repozitorije.',
+  'settings.tokenWhere': 'Token se sprema samo u ovom pregledniku i šalje se isključivo na api.github.com.',
+  'settings.tokenWhereKeychain': 'Token se sprema samo na ovom računalu, šifriran pomoću sustavskog privjeska za ključeve, i šalje se isključivo na api.github.com.',
+  'settings.tokenWherePlain': 'Token se sprema samo na ovom računalu, ali nešifriran: sustav nema dostupan privjesak za ključeve. Šalje se isključivo na api.github.com.',
   'settings.depth': 'Commitova po grani',
   'settings.branchesHelp': 'GraphBranch prikazuje sve grane repozitorija, a najaktivnije su najbliže zadanoj grani. U velikim repozitorijima pojavljuju se postupno, najprije najaktivnije. Prikvačene grane (kliknite granu → <strong>Prikvačite</strong>) stoje odmah ispod zadane grane, čak i uz filtar. Filtrom grafa usredotočite se na prefiks, na primjer <code>release/</code>.',
   'settings.clearToken': 'Obrišite token',
   'settings.cancel': 'Odustanite',
   'settings.save': 'Spremite i ponovno povežite',
+
+  /* ---------- aplikacija za računalo: sistemska traka ---------- */
+  'tray.show': 'Prikaži GraphBranch',
+  'tray.quit': 'Zatvori GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch i dalje radi',
+  'tray.hiddenBody': 'I dalje prati repozitorij u pozadini. Ponovno ga otvorite ili potpuno zatvorite putem njegove ikone u sistemskoj traci ili traci izbornika.',
 });

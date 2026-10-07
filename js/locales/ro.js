@@ -188,7 +188,10 @@ GB.i18n.define('ro', {
   'hint.3d': 'Trageți pentru a roti · clic dreapta sau <kbd>Shift</kbd> + tragere pentru a deplasa · rotiță sau ciupire pentru zoom · clic pe un commit pentru detalii',
   'hint.2d': 'Trageți pentru a muta · rotiță pentru a parcurge istoricul · <kbd>Ctrl</kbd> + rotiță sau ciupire pentru zoom · clic pe un commit pentru detalii',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> rotire · <kbd>↑</kbd> <kbd>↓</kbd> călătorie prin istoric · <kbd>F</kbd> ecran complet',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> deplasare · <kbd>F</kbd> ecran complet',
   'graph.aria2d': 'Graful ramurilor și al commit-urilor',
+  'legend.merged': 'îmbinate',
+  'minimap.title': 'Privire de ansamblu: clic sau trageți pentru a vă deplasa',
   'graph.aria3d': 'Vizualizare 3D a ramurilor și a commit-urilor',
 
   'banner.events': 'Acest depozit are multe ramuri ({total}). Fără token, GraphBranch vede doar ramurile care apar în fluxul de evenimente GitHub, care ajunge cu câteva minute întârziere. Cu un token le veți vedea pe toate aproape în timp real.',
@@ -339,10 +342,19 @@ GB.i18n.define('ro', {
   'settings.optional': 'opțional',
   'settings.show': 'Afișare',
   'settings.hide': 'Ascundere',
-  'settings.tokenHelp': 'Fără token, GitHub permite 60 de cereri pe oră. Cu un token <em>fine-grained</em> doar pentru citire (permisiuni Metadata, Contents și Pull requests), vizualizarea se actualizează la fiecare 10 secunde, funcționează cu depozite care au mii de ramuri și puteți vedea depozite private. Tokenul este stocat doar în acest browser și este trimis exclusiv către api.github.com.',
+  'settings.tokenHelp': 'Fără token, GitHub permite 60 de cereri pe oră. Cu un token <em>fine-grained</em> doar pentru citire (permisiuni Metadata, Contents și Pull requests), vizualizarea se actualizează la fiecare 10 secunde, funcționează cu depozite care au mii de ramuri și puteți vedea depozite private.',
+  'settings.tokenWhere': 'Tokenul este stocat doar în acest browser și este trimis exclusiv către api.github.com.',
+  'settings.tokenWhereKeychain': 'Tokenul este stocat doar pe acest computer, criptat cu portcheiul sistemului, și este trimis exclusiv către api.github.com.',
+  'settings.tokenWherePlain': 'Tokenul este stocat doar pe acest computer, dar necriptat: sistemul nu are un portchei disponibil. Este trimis exclusiv către api.github.com.',
   'settings.depth': 'Commit-uri per ramură',
   'settings.branchesHelp': 'GraphBranch afișează toate ramurile depozitului, cele mai active cel mai aproape de ramura implicită. În depozitele mari apar treptat, întâi cele mai active. Ramurile fixate (clic pe o ramură → <strong>Fixați</strong>) stau imediat sub ramura implicită, chiar și cu un filtru. Folosiți filtrul grafului pentru a vă concentra pe un prefix, de exemplu <code>release/</code>.',
   'settings.clearToken': 'Ștergeți tokenul',
   'settings.cancel': 'Anulare',
   'settings.save': 'Salvați și reconectați',
+
+  /* ---------- aplicația desktop: bara de sistem ---------- */
+  'tray.show': 'Afișare GraphBranch',
+  'tray.quit': 'Ieșire din GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch rulează în continuare',
+  'tray.hiddenBody': 'Continuă să urmărească depozitul în fundal. Redeschideți-l sau închideți-l complet din pictograma sa din bara de sistem sau din bara de meniu.',
 });

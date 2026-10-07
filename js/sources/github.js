@@ -63,6 +63,7 @@
       this.refLatest = new Map(); // último tipo de evento por rama (para el modo events)
       this.recentRefs = [];
       this.seenEvents = new Set();
+      this.prInfo = new Map(); // número -> { title, draft } de PRs que solo conocemos por eventos (o null)
       this.etags = new Map();
       this.lastPoll = {};
       this.eventsInterval = 60;
@@ -320,6 +321,7 @@
       if (!initial && this.mode !== 'events' && this.due('events')) await this.syncEvents(acts, false);
       if (this.mode === 'events' && this.due('count')) await this.countBranches();
 
+      await this.completePushes(acts);
       this.data.mode = this.mode;
       this.reseed = false;
       this.gc();
@@ -653,6 +655,7 @@
       this.lastPoll.events = Date.now();
       if (!res.fresh) return;
       const fresh = (res.data || []).filter((ev) => !this.seenEvents.has(ev.id)).reverse(); // más antiguos primero
+      await this.enrichPulls(fresh);
       for (const ev of fresh) {
         this.seenEvents.add(ev.id);
         await this.applyEvent(ev, acts);
@@ -993,6 +996,7 @@
       const pi = Number(res.headers?.get('X-Poll-Interval'));
       if (pi) this.eventsInterval = pi;
       if (!res.fresh && !initial) return;
+      await this.enrichPulls((res.data || []).filter((ev) => !this.seenEvents.has(ev.id) && (initial || !this.coveredLive(ev))));
       for (const ev of res.data || []) {
         if (this.seenEvents.has(ev.id)) continue;
         this.seenEvents.add(ev.id);
@@ -1012,6 +1016,81 @@
       }
     }
 
+    /* Desde octubre de 2025 GitHub recorta los payloads de la API de eventos: un PushEvent ya no trae
+       sus commits (ni cuántos son) y el pull_request de los eventos de PR solo trae número, ramas y
+       url; además los merges llegan con action "merged". Lo que falta se completa aparte. */
+
+    /** Títulos de los PRs que solo conocemos por eventos: una consulta por ciclo, y solo si hace falta. */
+    async enrichPulls(events) {
+      const need = new Set();
+      for (const ev of events) {
+        if (!String(ev.type).startsWith('PullRequest')) continue;
+        const pr = ev.payload?.pull_request;
+        const n = ev.payload?.number ?? pr?.number;
+        if (n && !pr?.title && !this.prInfo.has(n) && !this.data.pulls.has(n)) need.add(n);
+      }
+      if (!need.size) return;
+      const nums = [...need].slice(0, 25);
+      try {
+        if (this.token) {
+          try {
+            const query = `query($owner: String!, $name: String!) {
+              rateLimit { cost remaining limit resetAt }
+              repository(owner: $owner, name: $name) {
+                ${nums.map((n, i) => `p${i}: pullRequest(number: ${Number(n)}) { title isDraft }`).join('\n')}
+              }
+            }`;
+            const data = await this.gql(query);
+            nums.forEach((n, i) => {
+              const p = data?.repository?.['p' + i];
+              this.prInfo.set(n, p ? { title: p.title || '', draft: !!p.isDraft } : null);
+            });
+            return;
+          } catch (err) {
+            if (err.kind === 'rate' || err.kind === 'network') throw err; // si no, se intenta por REST
+          }
+        }
+        // sin GraphQL: la página de PRs actualizados hace poco (abiertos o no) cubre casi siempre el feed
+        const { data } = await this.api(`${this.base}/pulls?state=all&sort=updated&direction=desc&per_page=50`, { cacheKey: 'pulls-all' });
+        for (const p of data || []) this.prInfo.set(p.number, { title: p.title || '', draft: !!p.draft });
+        for (const n of nums) if (!this.prInfo.has(n)) this.prInfo.set(n, null); // no volver a buscarlo
+      } catch (err) {
+        if (err.kind === 'rate' || err.kind === 'network') throw err;
+      }
+    }
+
+    /** Cuántos commits trajo cada push del feed y su mensaje: del grafo ya cargado o, con token,
+        de la comparación de GitHub (pocas por ciclo). */
+    async completePushes(acts) {
+      const { commits } = this.data;
+      let budget = this.token ? 6 : 0;
+      for (const a of acts) {
+        if (a.kind !== 'push' || !('pushFrom' in a)) continue;
+        const from = a.pushFrom;
+        delete a.pushFrom;
+        const created = !from || /^0+$/.test(from); // rama nueva: no hay con qué comparar
+        let n = null;
+        if (!created && commits.has(from) && commits.has(a.sha)) {
+          const now = U.ancestors(commits, a.sha).set;
+          if (now.has(from)) {
+            const before = U.ancestors(commits, from).set;
+            n = [...now].filter((sha) => !before.has(sha)).length;
+          }
+        }
+        if (n == null && !created && budget > 0) {
+          budget--;
+          try {
+            const { data } = await this.api(`${this.base}/compare/${from}...${a.sha}?per_page=1`, { allow: [404, 422] });
+            n = data?.ahead_by ?? null;
+          } catch (err) {
+            if (err.kind === 'rate' || err.kind === 'network') throw err;
+          }
+        }
+        if (n) a.title = M('act.pushCommits', { n, name: a.branch });
+        if (!a.detail) a.detail = U.firstLine(commits.get(a.sha)?.message);
+      }
+    }
+
     mapEvent(ev) {
       const p = ev.payload || {};
       const repoUrl = this.data.repo.url;
@@ -1021,6 +1100,8 @@
       const prNum = p.number ?? pr.number;
       const prUrl = pr.html_url || (prNum ? `${repoUrl}/pull/${prNum}` : repoUrl);
       const prRef = pr.head?.ref && pr.base?.ref ? `${pr.head.ref} → ${pr.base.ref}` : null;
+      const prInfo = this.prInfo.get(prNum) || this.data.pulls.get(prNum);
+      const prTitle = pr.title || prInfo?.title || '';
       const issue = p.issue || {};
 
       switch (ev.type) {
@@ -1028,13 +1109,14 @@
           const ref = p.ref || '';
           if (ref.startsWith('refs/tags/')) return mk('tag', { title: M('act.tagPushed', { name: ref.slice(10) }), url: repoUrl });
           const branch = ref.replace('refs/heads/', '');
-          const n = p.size ?? p.distinct_size ?? p.commits?.length;
+          const n = p.size ?? p.distinct_size ?? p.commits?.length; // formato anterior a oct-2025
           const last = p.commits?.[p.commits.length - 1];
           return mk('push', {
             title: n ? M('act.pushCommits', { n, name: branch }) : M('act.pushTo', { name: branch }),
-            detail: last ? U.firstLine(last.message) : '',
+            detail: last ? U.firstLine(last.message) : U.firstLine(this.data.commits.get(p.head)?.message),
             branch,
             sha: p.head || null,
+            ...(n == null && p.head ? { pushFrom: p.before || null } : {}), // lo completa completePushes
             url:
               p.before && p.head && !/^0+$/.test(p.before)
                 ? `${repoUrl}/compare/${p.before.slice(0, 12)}...${p.head.slice(0, 12)}`
@@ -1051,21 +1133,26 @@
           if (p.ref_type === 'branch') return mk('branch-delete', { title: M('act.branchDeleted', { name: p.ref }), branch: p.ref });
           return mk('tag', { title: M('act.tagDeleted', { name: p.ref }) });
         case 'PullRequestEvent': {
-          const merged = pr.merged === true || !!pr.merged_at;
-          const fields = { detail: pr.title || '', ref: prRef, url: prUrl, number: prNum, branch: pr.head?.ref || null };
+          // hoy un merge llega como "merged"; antes, como "closed" con merged: true
+          const merged = p.action === 'merged' || (p.action === 'closed' && (pr.merged === true || !!pr.merged_at));
+          const fields = { detail: prTitle, ref: prRef, url: prUrl, number: prNum, branch: pr.head?.ref || null };
           const num = { num: prNum };
-          if (p.action === 'opened') return mk('pr-open', { ...fields, title: M('act.prOpened', num) });
+          if (p.action === 'opened') return mk('pr-open', { ...fields, title: M(prInfo?.draft ? 'act.prOpenedDraft' : 'act.prOpened', num) });
           if (p.action === 'reopened') return mk('pr-open', { ...fields, title: M('act.prReopened', num) });
           if (p.action === 'ready_for_review') return mk('pr-open', { ...fields, title: M('act.prReady', num) });
-          if (p.action === 'closed' && merged)
-            return mk('pr-merge', { ...fields, title: pr.base?.ref ? M('act.prMergedInto', { num: prNum, base: pr.base.ref }) : M('act.prMerged', num) });
+          if (merged)
+            return mk('pr-merge', {
+              ...fields,
+              branch: pr.base?.ref || null, // la rama del PR suele borrarse al fusionar; el merge vive en la base
+              title: pr.base?.ref ? M('act.prMergedInto', { num: prNum, base: pr.base.ref }) : M('act.prMerged', num),
+            });
           if (p.action === 'closed') return mk('pr-close', { ...fields, title: M('act.prClosed', num) });
           if (p.action === 'review_requested') return mk('review', { ...fields, title: M('act.reviewRequested', num) });
           return null;
         }
         case 'PullRequestReviewEvent': {
           const state = (p.review?.state || '').toLowerCase();
-          const fields = { detail: U.firstLine(p.review?.body) || pr.title || '', url: p.review?.html_url || prUrl, number: prNum };
+          const fields = { detail: U.firstLine(p.review?.body) || prTitle, url: p.review?.html_url || prUrl, number: prNum };
           if (state === 'approved') return mk('review-ok', { ...fields, title: M('act.prApproved', { num: prNum }) });
           if (state === 'changes_requested') return mk('review-changes', { ...fields, title: M('act.prChanges', { num: prNum }) });
           return mk('review', { ...fields, title: M('act.prReview', { num: prNum }) });

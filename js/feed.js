@@ -58,7 +58,7 @@
   const detailOf = (a) => i18n.text(a.detail);
 
   class Feed {
-    constructor({ list, empty, chips, toasts, count, onSelect }) {
+    constructor({ list, empty, chips, toasts, count, onSelect, panOf }) {
       this.list = list;
       this.empty = empty;
       this.chipsEl = chips;
@@ -73,7 +73,8 @@
       this.notify = this.notifySupported && U.store.get('notify', false) && Notification.permission === 'granted';
       this.unread = 0;
       this.baseTitle = document.title;
-      this.lastChime = 0;
+      this.synth = new GB.Synth();
+      this.panOf = panOf; // lado de la pantalla de cada actividad, para el sonido
       this.renderChips();
       setInterval(() => this.refreshTimes(), 20000);
       document.addEventListener('visibilitychange', () => {
@@ -214,7 +215,7 @@
       const shown = loud.length > 3 ? loud.slice(0, 2) : loud;
       for (const a of shown.reverse()) this.toast(a);
       if (loud.length > 3) this.summaryToast(loud.length - 2);
-      if (this.sound && loud.length) this.chime(meta(loud[0]).sev);
+      if (this.sound && loud.length) this.synth.play(loud, this.panOf);
       if (document.hidden) {
         this.unread += acts.length;
         this.updateTitle();
@@ -286,34 +287,12 @@
     setSound(on) {
       this.sound = on;
       U.store.set('sound', on);
-      if (on) this.chime('good', true);
+      if (on) this.synth.preview();
     }
 
-    chime(sev, force) {
-      const now = Date.now();
-      if (!force && now - this.lastChime < 1200) return;
-      this.lastChime = now;
-      try {
-        this.audio ||= new (window.AudioContext || window.webkitAudioContext)();
-        const ctx = this.audio;
-        if (ctx.state === 'suspended') ctx.resume();
-        const notes = { info: [740], good: [660, 990], warn: [520, 520], bad: [440, 330] }[sev] || [740];
-        notes.forEach((f, i) => {
-          const t0 = ctx.currentTime + i * 0.13;
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.value = f;
-          gain.gain.setValueAtTime(0.0001, t0);
-          gain.gain.exponentialRampToValueAtTime(0.07, t0 + 0.015);
-          gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.22);
-          osc.connect(gain).connect(ctx.destination);
-          osc.start(t0);
-          osc.stop(t0 + 0.25);
-        });
-      } catch {
-        /* audio no disponible */
-      }
+    /** Rama por defecto: es la tónica de la escala (ver sound.js). */
+    setDefaultBranch(name) {
+      this.synth.defaultBranch = name;
     }
 
     /* ---------- notificaciones del sistema ---------- */

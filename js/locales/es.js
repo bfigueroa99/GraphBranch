@@ -331,10 +331,19 @@ GB.i18n.define('es', {
   'settings.optional': 'opcional',
   'settings.show': 'Mostrar',
   'settings.hide': 'Ocultar',
-  'settings.tokenHelp': 'Sin token, GitHub permite 60 consultas por hora. Con un token <em>fine-grained</em> de solo lectura (permisos Metadata, Contents y Pull requests) la vista se actualiza cada 10 segundos, funciona con repositorios de miles de ramas y puedes ver repos privados. El token se guarda solo en este navegador y se envía únicamente a api.github.com.',
+  'settings.tokenHelp': 'Sin token, GitHub permite 60 consultas por hora. Con un token <em>fine-grained</em> de solo lectura (permisos Metadata, Contents y Pull requests) la vista se actualiza cada 10 segundos, funciona con repositorios de miles de ramas y puedes ver repos privados.',
+  'settings.tokenWhere': 'El token se guarda solo en este navegador y se envía únicamente a api.github.com.',
+  'settings.tokenWhereKeychain': 'El token se guarda solo en este equipo, cifrado con el llavero del sistema, y se envía únicamente a api.github.com.',
+  'settings.tokenWherePlain': 'El token se guarda solo en este equipo, pero sin cifrar: el sistema no tiene un llavero disponible. Se envía únicamente a api.github.com.',
   'settings.depth': 'Commits por rama',
   'settings.branchesHelp': 'GraphBranch muestra todas las ramas del repo, las más activas más cerca de la rama por defecto. En repos grandes van apareciendo de a poco, las más activas primero. Las ramas fijadas (clic en una rama → <strong>Fijar</strong>) van justo debajo de la rama por defecto, incluso con un filtro. Usa el filtro del grafo para concentrarte en un prefijo, por ejemplo <code>release/</code>.',
   'settings.clearToken': 'Borrar token',
   'settings.cancel': 'Cancelar',
   'settings.save': 'Guardar y reconectar',
+
+  /* ---------- app de escritorio: bandeja del sistema ---------- */
+  'tray.show': 'Mostrar GraphBranch',
+  'tray.quit': 'Salir de GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch sigue abierto',
+  'tray.hiddenBody': 'Sigue revisando el repositorio en segundo plano. Vuelve a abrirlo o ciérralo del todo desde su ícono en la bandeja del sistema o en la barra de menús.',
 });

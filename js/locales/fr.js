@@ -332,10 +332,19 @@ GB.i18n.define('fr', {
   'settings.optional': 'facultatif',
   'settings.show': 'Afficher',
   'settings.hide': 'Masquer',
-  'settings.tokenHelp': 'Sans jeton, GitHub autorise 60 requêtes par heure. Avec un jeton <em>fine-grained</em> en lecture seule (permissions Metadata, Contents et Pull requests), la vue est actualisée toutes les 10 secondes, fonctionne avec des dépôts de plusieurs milliers de branches et vous pouvez consulter les dépôts privés. Le jeton est conservé uniquement dans ce navigateur et n’est envoyé qu’à api.github.com.',
+  'settings.tokenHelp': 'Sans jeton, GitHub autorise 60 requêtes par heure. Avec un jeton <em>fine-grained</em> en lecture seule (permissions Metadata, Contents et Pull requests), la vue est actualisée toutes les 10 secondes, fonctionne avec des dépôts de plusieurs milliers de branches et vous pouvez consulter les dépôts privés.',
+  'settings.tokenWhere': 'Le jeton est conservé uniquement dans ce navigateur et n’est envoyé qu’à api.github.com.',
+  'settings.tokenWhereKeychain': 'Le jeton est conservé uniquement sur cet ordinateur, chiffré avec le trousseau du système, et n’est envoyé qu’à api.github.com.',
+  'settings.tokenWherePlain': 'Le jeton est conservé uniquement sur cet ordinateur, mais sans chiffrement : le système n’a pas de trousseau disponible. Il n’est envoyé qu’à api.github.com.',
   'settings.depth': 'Commits par branche',
   'settings.branchesHelp': 'GraphBranch affiche toutes les branches du dépôt, les plus actives au plus près de la branche par défaut. Sur les gros dépôts, elles apparaissent peu à peu, les plus actives d’abord. Les branches épinglées (clic sur une branche → <strong>Épingler</strong>) se placent juste sous la branche par défaut, même avec un filtre. Utilisez le filtre du graphe pour vous concentrer sur un préfixe, par exemple <code>release/</code>.',
   'settings.clearToken': 'Supprimer le jeton',
   'settings.cancel': 'Annuler',
   'settings.save': 'Enregistrer et reconnecter',
+
+  /* ---------- application de bureau : zone de notification ---------- */
+  'tray.show': 'Afficher GraphBranch',
+  'tray.quit': 'Quitter GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch reste ouvert',
+  'tray.hiddenBody': 'Il continue de surveiller le dépôt en arrière-plan. Rouvrez-le ou quittez-le depuis son icône dans la zone de notification ou la barre des menus.',
 });

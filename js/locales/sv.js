@@ -331,10 +331,19 @@ GB.i18n.define('sv', {
   'settings.optional': 'valfri',
   'settings.show': 'Visa',
   'settings.hide': 'Dölj',
-  'settings.tokenHelp': 'Utan token tillåter GitHub 60 anrop per timme. Med en skrivskyddad <em>fine-grained</em>-token (behörigheterna Metadata, Contents och Pull requests) uppdateras vyn var 10:e sekund, fungerar med repon som har tusentals brancher och du kan se privata repon. Token sparas bara i den här webbläsaren och skickas bara till api.github.com.',
+  'settings.tokenHelp': 'Utan token tillåter GitHub 60 anrop per timme. Med en skrivskyddad <em>fine-grained</em>-token (behörigheterna Metadata, Contents och Pull requests) uppdateras vyn var 10:e sekund, fungerar med repon som har tusentals brancher och du kan se privata repon.',
+  'settings.tokenWhere': 'Token sparas bara i den här webbläsaren och skickas bara till api.github.com.',
+  'settings.tokenWhereKeychain': 'Token sparas bara på den här datorn, krypterad med systemets nyckelring, och skickas bara till api.github.com.',
+  'settings.tokenWherePlain': 'Token sparas bara på den här datorn, men okrypterad: systemet har ingen nyckelring tillgänglig. Den skickas bara till api.github.com.',
   'settings.depth': 'Commits per branch',
   'settings.branchesHelp': 'GraphBranch visar alla brancher i repot, de mest aktiva närmast standardbranchen. I stora repon dyker de upp lite i taget, de mest aktiva först. Fästa brancher (klicka på en branch → <strong>Fäst</strong>) hamnar direkt under standardbranchen, även med ett filter. Använd grafens filter för att fokusera på ett prefix, till exempel <code>release/</code>.',
   'settings.clearToken': 'Ta bort token',
   'settings.cancel': 'Avbryt',
   'settings.save': 'Spara och anslut igen',
+
+  /* ---------- skrivbordsapp: systemfältet ---------- */
+  'tray.show': 'Visa GraphBranch',
+  'tray.quit': 'Avsluta GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch körs fortfarande',
+  'tray.hiddenBody': 'Det fortsätter att bevaka repot i bakgrunden. Öppna det igen eller avsluta det helt via ikonen i systemfältet eller menyraden.',
 });

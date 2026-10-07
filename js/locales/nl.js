@@ -332,10 +332,19 @@ GB.i18n.define('nl', {
   'settings.optional': 'optioneel',
   'settings.show': 'Tonen',
   'settings.hide': 'Verbergen',
-  'settings.tokenHelp': 'Zonder token staat GitHub 60 verzoeken per uur toe. Met een alleen-lezen <em>fine-grained</em> token (rechten voor Metadata, Contents en Pull requests) wordt de weergave elke 10 seconden vernieuwd, werkt het met repositories met duizenden branches en kun je privérepo’s zien. Het token wordt alleen in deze browser opgeslagen en alleen naar api.github.com verzonden.',
+  'settings.tokenHelp': 'Zonder token staat GitHub 60 verzoeken per uur toe. Met een alleen-lezen <em>fine-grained</em> token (rechten voor Metadata, Contents en Pull requests) wordt de weergave elke 10 seconden vernieuwd, werkt het met repositories met duizenden branches en kun je privérepo’s zien.',
+  'settings.tokenWhere': 'Het token wordt alleen in deze browser opgeslagen en alleen naar api.github.com verzonden.',
+  'settings.tokenWhereKeychain': 'Het token wordt alleen op deze computer opgeslagen, versleuteld met de sleutelhanger van het systeem, en alleen naar api.github.com verzonden.',
+  'settings.tokenWherePlain': 'Het token wordt alleen op deze computer opgeslagen, maar onversleuteld: het systeem heeft geen sleutelhanger beschikbaar. Het wordt alleen naar api.github.com verzonden.',
   'settings.depth': 'Commits per branch',
   'settings.branchesHelp': 'GraphBranch toont alle branches van de repo, de meest actieve het dichtst bij de standaardbranch. Bij grote repo’s verschijnen ze geleidelijk, de meest actieve eerst. Vastgezette branches (klik op een branch → <strong>Vastzetten</strong>) staan direct onder de standaardbranch, ook met een filter. Gebruik het filter van de graaf om je op een prefix te richten, bijvoorbeeld <code>release/</code>.',
   'settings.clearToken': 'Token verwijderen',
   'settings.cancel': 'Annuleren',
   'settings.save': 'Opslaan en opnieuw verbinden',
+
+  /* ---------- desktop-app: systeemvak ---------- */
+  'tray.show': 'GraphBranch tonen',
+  'tray.quit': 'GraphBranch afsluiten',
+  'tray.hiddenTitle': 'GraphBranch draait nog',
+  'tray.hiddenBody': 'Het blijft de repository op de achtergrond volgen. Open het opnieuw of sluit het helemaal af via het pictogram in het systeemvak of de menubalk.',
 });

@@ -332,10 +332,19 @@ GB.i18n.define('it', {
   'settings.optional': 'facoltativo',
   'settings.show': 'Mostra',
   'settings.hide': 'Nascondi',
-  'settings.tokenHelp': 'Senza token, GitHub consente 60 richieste all’ora. Con un token <em>fine-grained</em> di sola lettura (permessi Metadata, Contents e Pull requests) la vista si aggiorna ogni 10 secondi, funziona con repository da migliaia di branch e puoi vedere i repository privati. Il token viene salvato solo in questo browser e inviato esclusivamente a api.github.com.',
+  'settings.tokenHelp': 'Senza token, GitHub consente 60 richieste all’ora. Con un token <em>fine-grained</em> di sola lettura (permessi Metadata, Contents e Pull requests) la vista si aggiorna ogni 10 secondi, funziona con repository da migliaia di branch e puoi vedere i repository privati.',
+  'settings.tokenWhere': 'Il token viene salvato solo in questo browser e inviato esclusivamente a api.github.com.',
+  'settings.tokenWhereKeychain': 'Il token viene salvato solo su questo computer, cifrato con il portachiavi di sistema, e inviato esclusivamente a api.github.com.',
+  'settings.tokenWherePlain': 'Il token viene salvato solo su questo computer, ma non cifrato: il sistema non ha un portachiavi disponibile. Viene inviato esclusivamente a api.github.com.',
   'settings.depth': 'Commit per branch',
   'settings.branchesHelp': 'GraphBranch mostra tutti i branch del repository, i più attivi più vicini al branch predefinito. Nei repository grandi compaiono man mano, prima i più attivi. I branch fissati (clic su un branch → <strong>Fissa</strong>) stanno subito sotto il branch predefinito, anche con un filtro. Usa il filtro del grafo per concentrarti su un prefisso, ad esempio <code>release/</code>.',
   'settings.clearToken': 'Elimina token',
   'settings.cancel': 'Annulla',
   'settings.save': 'Salva e riconnetti',
+
+  /* ---------- app desktop: area di notifica ---------- */
+  'tray.show': 'Mostra GraphBranch',
+  'tray.quit': 'Esci da GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch è ancora aperto',
+  'tray.hiddenBody': "Continua a seguire il repository in background. Riaprilo o chiudilo del tutto dalla sua icona nell'area di notifica o nella barra dei menu.",
 });

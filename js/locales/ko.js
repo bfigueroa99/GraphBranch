@@ -331,10 +331,19 @@ GB.i18n.define('ko', {
   'settings.optional': '선택 사항',
   'settings.show': '표시',
   'settings.hide': '숨기기',
-  'settings.tokenHelp': '토큰이 없으면 GitHub는 시간당 60회 요청만 허용합니다. 읽기 전용 <em>fine-grained</em> 토큰(Metadata, Contents, Pull requests 권한)을 사용하면 화면이 10초마다 갱신되고, 브랜치가 수천 개인 저장소에서도 동작하며, 비공개 저장소도 볼 수 있습니다. 토큰은 이 브라우저에만 저장되고 api.github.com으로만 전송됩니다.',
+  'settings.tokenHelp': '토큰이 없으면 GitHub는 시간당 60회 요청만 허용합니다. 읽기 전용 <em>fine-grained</em> 토큰(Metadata, Contents, Pull requests 권한)을 사용하면 화면이 10초마다 갱신되고, 브랜치가 수천 개인 저장소에서도 동작하며, 비공개 저장소도 볼 수 있습니다.',
+  'settings.tokenWhere': '토큰은 이 브라우저에만 저장되고 api.github.com으로만 전송됩니다.',
+  'settings.tokenWhereKeychain': '토큰은 시스템 키체인으로 암호화되어 이 컴퓨터에만 저장되고 api.github.com으로만 전송됩니다.',
+  'settings.tokenWherePlain': '토큰은 이 컴퓨터에만 저장되지만, 시스템에 사용할 수 있는 키체인이 없어 암호화되지 않습니다. api.github.com으로만 전송됩니다.',
   'settings.depth': '브랜치당 커밋 수',
   'settings.branchesHelp': 'GraphBranch는 저장소의 모든 브랜치를 표시하며, 활발한 브랜치일수록 기본 브랜치 가까이에 놓습니다. 대규모 저장소에서는 가장 활발한 브랜치부터 차례로 나타납니다. 고정한 브랜치(브랜치 클릭 → <strong>고정</strong>)는 필터를 사용 중이어도 기본 브랜치 바로 아래에 표시됩니다. 그래프 필터를 사용하면 <code>release/</code> 같은 접두사로 좁혀 볼 수 있습니다.',
   'settings.clearToken': '토큰 삭제',
   'settings.cancel': '취소',
   'settings.save': '저장 후 다시 연결',
+
+  /* ---------- 데스크톱 앱: 시스템 트레이 ---------- */
+  'tray.show': 'GraphBranch 보기',
+  'tray.quit': 'GraphBranch 종료',
+  'tray.hiddenTitle': 'GraphBranch가 계속 실행 중입니다',
+  'tray.hiddenBody': '백그라운드에서 저장소를 계속 지켜봅니다. 시스템 트레이나 메뉴 막대의 아이콘에서 다시 열거나 완전히 종료할 수 있습니다.',
 });

@@ -331,10 +331,19 @@ GB.i18n.define('nb', {
   'settings.optional': 'valgfritt',
   'settings.show': 'Vis',
   'settings.hide': 'Skjul',
-  'settings.tokenHelp': 'Uten token tillater GitHub 60 forespørsler per time. Med et skrivebeskyttet <em>fine-grained</em> token (tillatelsene Metadata, Contents og Pull requests) oppdateres visningen hvert 10. sekund, fungerer med repoer som har tusenvis av branches, og du kan se private repoer. Tokenet lagres bare i denne nettleseren og sendes bare til api.github.com.',
+  'settings.tokenHelp': 'Uten token tillater GitHub 60 forespørsler per time. Med et skrivebeskyttet <em>fine-grained</em> token (tillatelsene Metadata, Contents og Pull requests) oppdateres visningen hvert 10. sekund, fungerer med repoer som har tusenvis av branches, og du kan se private repoer.',
+  'settings.tokenWhere': 'Tokenet lagres bare i denne nettleseren og sendes bare til api.github.com.',
+  'settings.tokenWhereKeychain': 'Tokenet lagres bare på denne datamaskinen, kryptert med systemets nøkkelring, og sendes bare til api.github.com.',
+  'settings.tokenWherePlain': 'Tokenet lagres bare på denne datamaskinen, men ukryptert: systemet har ingen nøkkelring tilgjengelig. Det sendes bare til api.github.com.',
   'settings.depth': 'Commits per branch',
   'settings.branchesHelp': 'GraphBranch viser alle branches i repoet, de mest aktive nærmest standardbranchen. I store repoer dukker de opp litt etter litt, de mest aktive først. Festede branches (klikk på en branch → <strong>Fest</strong>) ligger rett under standardbranchen, også med et filter. Bruk filteret i grafen for å fokusere på et prefiks, for eksempel <code>release/</code>.',
   'settings.clearToken': 'Slett token',
   'settings.cancel': 'Avbryt',
   'settings.save': 'Lagre og koble til på nytt',
+
+  /* ---------- skrivebordsapp: systemstatusfeltet ---------- */
+  'tray.show': 'Vis GraphBranch',
+  'tray.quit': 'Avslutt GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch kjører fortsatt',
+  'tray.hiddenBody': 'Det fortsetter å følge med på repoet i bakgrunnen. Åpne det igjen eller avslutt det helt fra ikonet i systemstatusfeltet eller menylinjen.',
 });

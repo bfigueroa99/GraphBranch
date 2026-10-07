@@ -26,11 +26,11 @@ Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas
 
 - **Todos los idiomas**: la interfaz está traducida a 40 idiomas (incluidos árabe, hebreo, persa y urdu, de derecha a izquierda), se elige sola según el navegador y se puede cambiar en vivo desde el globo de la barra superior. Fechas, números y "hace 5 min" salen de `Intl`, así que también se ven bien en idiomas sin traducción (ver [Idiomas](#idiomas)).
 
-No necesita servidor ni compilación: es HTML, CSS y JavaScript que llama directo a `api.github.com` desde tu navegador. La vista 3D usa WebGL; si el navegador no lo tiene, la app abre la 2D.
+No necesita servidor ni compilación: es HTML, CSS y JavaScript que llama directo a `api.github.com` desde tu navegador. Las librerías (d3 y Three.js) y las fuentes van incluidas en `vendor/`, así que solo sale a internet para hablar con GitHub. La vista 3D usa WebGL; si el navegador no lo tiene, la app abre la 2D. También corre como [aplicación de escritorio](#aplicación-de-escritorio) con Electron.
 
 ## Uso
 
-1. Abre `index.html` (doble clic sirve), o publícalo con GitHub Pages (abajo).
+1. Abre `index.html` (doble clic sirve), publícalo con GitHub Pages o usa la [aplicación de escritorio](#aplicación-de-escritorio) (abajo).
 2. Escribe `owner/repo` o pega la URL del repositorio y pulsa **Conectar**. Sin repositorio arranca una **demo** simulada.
 3. Opcional pero recomendado: en **Ajustes** (engranaje) agrega un token de GitHub.
 
@@ -42,7 +42,7 @@ Sin token GitHub permite 60 consultas por hora, así que la vista se actualiza c
 
 Crea un token *fine-grained* de solo lectura en <https://github.com/settings/personal-access-tokens/new> con acceso al repositorio y estos permisos (todos *Read-only*): **Metadata** (incluye la actividad del repo: pushes y ramas creadas o borradas), **Contents** y **Pull requests**.
 
-El token se guarda solo en el `localStorage` de tu navegador y se envía únicamente a `api.github.com`.
+El token se guarda solo en el `localStorage` de tu navegador (en la app de escritorio, cifrado con el llavero del sistema) y se envía únicamente a `api.github.com`.
 
 ### Ciclo de actualización
 
@@ -134,6 +134,46 @@ Opcional: si quieres que la demo hable tu idioma, agrega un bloque en `js/source
 
 El flujo `.github/workflows/pages.yml` publica el sitio en cada push a `master`. Solo hay que activarlo una vez: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 
+## Aplicación de escritorio
+
+La misma página corre como aplicación de escritorio con [Electron](https://www.electronjs.org/), en Windows, macOS y Linux. Hace falta Node.js 22.12 o superior.
+
+```
+npm install
+npm start                               # la demo o el último repositorio
+npm start -- --repo=owner/repo --tv     # un repo directo y en modo TV (también --lang=es)
+npm run dist                            # el instalador para este sistema, en dist/
+```
+
+- Es la misma app: `electron/main.js` solo abre `index.html` en una ventana, así que lo que cambies en `js/` o `css/` vale para las dos versiones (en la de escritorio se recarga con `Ctrl+R` o `Cmd+R`).
+- La página se sirve desde `app://graphbranch/`, un origen propio en vez de `file://`: el CSP funciona igual que en la web, y los ajustes quedan en los datos de la app, aparte de los del navegador.
+- El token no va a `localStorage`: se guarda cifrado con el llavero del sistema (Llavero en macOS, DPAPI en Windows, el llavero de GNOME o KWallet en Linux), en un archivo de los datos de la app. La primera vez, macOS puede pedir permiso para usar el llavero. En Linux sin llavero (escritorios que Chromium no reconoce, como i3 o Sway) se guarda sin cifrar y **Ajustes** lo avisa; si tienes uno, abre la app con `--password-store=gnome-libsecret` (o `kwallet6`).
+- Los enlaces a GitHub se abren en el navegador del sistema. La ventana no puede navegar a otro sitio ni usar Node, y solo tiene los permisos que la app usa: notificaciones, pantalla completa, captura del puntero (modo vuelo) y pantalla siempre encendida (modo TV).
+- Cerrar la ventana no cierra la app: queda en la bandeja del sistema (en macOS, en la barra de menús) y sigue revisando el repositorio. Avisa con notificaciones del sistema si las activaste (campana de la barra superior), y el ícono muestra al pasar el cursor cuántas novedades llegaron. Para volver, usa el ícono o abre la app otra vez; para salir del todo, **Salir** en el menú del ícono (o `Ctrl+Q`; en macOS, `Cmd+Q`). En GNOME sin la extensión AppIndicator no se ve la bandeja: la app sigue corriendo y vuelve al abrirla otra vez.
+- Con la ventana oculta o minimizada la vista sigue al día. Chromium espacia los temporizadores de una página oculta a uno por minuto después de 5 minutos (*intensive wake-up throttling*); la app desactiva esa regla, pero no dibuja mientras no se ve.
+- Funciona sin conexión: todo lo que necesita va dentro de la app. Sin red abre la demo; un repositorio real muestra que no hay conexión y se vuelve a conectar apenas vuelve la red, sin esperar el próximo reintento.
+- `npm run dist` arma el instalador del sistema donde lo corres: `.dmg` en macOS, `.exe` en Windows y `.AppImage` en Linux. Para publicarlos, mejor el release de abajo, que arma los tres.
+
+### Publicar la app de escritorio
+
+Publica un release en GitHub (**Releases → Draft a new release**) con un tag de versión, como `v0.2.0`. El flujo `.github/workflows/desktop.yml` arma los instaladores y los adjunta al release en unos minutos:
+
+| Sistema | Archivo |
+| --- | --- |
+| Linux | `GraphBranch-0.2.0-linux-x86_64.AppImage` |
+| Windows | `GraphBranch-0.2.0-win-x64.exe` |
+| macOS (Apple Silicon e Intel) | `GraphBranch-0.2.0-mac-arm64.dmg`, `GraphBranch-0.2.0-mac-x64.dmg` |
+
+La versión sale del tag, no hace falta cambiar `package.json`. Para probar sin publicar nada: **Actions → App de escritorio → Run workflow**; los instaladores quedan como artefactos de esa ejecución.
+
+Los instaladores no van firmados con un certificado, así que el sistema avisa la primera vez:
+
+- **Windows**: SmartScreen dice que la app no es reconocida → **Más información → Ejecutar de todas formas**.
+- **macOS**: la app lleva firma *ad-hoc* (sin ella, en Apple Silicon no abre). La primera vez macOS no la deja abrir: ve a **Ajustes del Sistema → Privacidad y seguridad → Abrir igualmente**.
+- **Linux**: el AppImage se marca como ejecutable (`chmod +x`) y se abre. Como todo AppImage de Electron, corre sin el sandbox de Chromium (`--no-sandbox`), porque un AppImage no puede instalar el ayudante que lo necesita.
+
+Para firmarlos de verdad hacen falta un certificado de Apple Developer (y notarizar) y uno de firma de código para Windows: electron-builder los toma de variables de entorno (`CSC_LINK`, `CSC_KEY_PASSWORD`, `APPLE_ID`…) que el flujo tendría que recibir como secretos, y en macOS hay que quitar `"identity": "-"` de `package.json`.
+
 ## Estructura
 
 ```
@@ -159,9 +199,17 @@ js/replay.js          modo Replay: la historia como time-lapse
 js/game.js            logros del repo, nivel y misión del día
 js/feed.js            panel de actividad, avisos, sonido y notificaciones
 js/app.js             conecta todo
+vendor/               copias locales de d3, Three.js, OrbitControls y las fuentes, con sus licencias (las genera tools/vendor.mjs)
 tools/check-i18n.mjs  verifica las traducciones contra el inglés
+tools/vendor.mjs      descarga a vendor/ las librerías (comprobando su hash) y las fuentes
 tools/smoke.mjs       prueba de humo: abre la demo en Chromium y recorre lo principal
 tools/*.test.mjs      pruebas de la lógica contra una API de GitHub simulada (`node --test`)
+electron/main.js      app de escritorio: la ventana de Electron que abre index.html
+electron/preload.js   lo único que la página ve de la app de escritorio: el token, los textos de la bandeja y traer la ventana
+electron/token.js     el token de la app de escritorio, cifrado con el llavero del sistema
+electron/tray.js      ícono en la bandeja del sistema y aviso al cerrar la ventana (tray*.png: sus íconos)
+electron/icon.png     ícono de la app de escritorio
+package.json          Electron y los scripts (npm start, npm run dist, npm run vendor)
 ```
 
 ## Límites conocidos
@@ -176,20 +224,16 @@ tools/*.test.mjs      pruebas de la lógica contra una API de GitHub simulada (`
 
 ## Seguridad
 
-`index.html` lleva una política de seguridad de contenido (CSP) y verificación de integridad (SRI):
+`index.html` lleva una política de seguridad de contenido (CSP):
 
-- **CSP**: solo se ejecutan los scripts propios y los tres de CDN que se nombran con su ruta exacta (d3, Three.js y OrbitControls); no se permite `eval` ni scripts o manejadores en línea. Las conexiones salen únicamente a `api.github.com` y las imágenes solo pueden ser avatares de GitHub. Así, aunque algún texto de un repositorio lograra colarse en la página, no podría ejecutar código ni enviar tu token a otro servidor.
-- **SRI**: esos tres scripts llevan su hash; el navegador no los ejecuta si el CDN entrega algo distinto.
+- **CSP**: scripts, estilos y fuentes solo pueden venir del propio sitio; no se permite `eval` ni scripts o manejadores en línea. Las conexiones salen únicamente a `api.github.com` y las imágenes solo pueden ser avatares de GitHub. Así, aunque algún texto de un repositorio lograra colarse en la página, no podría ejecutar código ni enviar tu token a otro servidor.
+- **Librerías y fuentes locales**: d3, Three.js, OrbitControls y las fuentes son copias en `vendor/`, junto a sus licencias. La página no depende de ningún CDN, y tampoco le cuenta a Google Fonts quién la abre.
 
-Si cambias la versión de una librería, actualiza su ruta en el CSP y su hash en la etiqueta `<script>`. Calcula el hash y compáralo con el que publica el CDN (cdnjs lo muestra en su ficha; jsDelivr, en `data.jsdelivr.com`):
-
-```
-curl -s URL_DEL_SCRIPT | openssl dgst -sha384 -binary | openssl base64 -A
-```
+`vendor/` lo genera `npm run vendor` (`tools/vendor.mjs`): descarga las librerías y comprueba que cada una coincida con el hash SRI que publica su CDN (cdnjs lo muestra en su ficha; jsDelivr, en `data.jsdelivr.com`); si algo no coincide, no escribe nada. Las fuentes las baja de Google Fonts con todos sus subconjuntos (latin, cyrillic, greek…), y el navegador carga solo los que pide el texto en pantalla. Para cambiar de versión una librería, actualiza su URL y su hash en ese script y vuelve a correrlo.
 
 Si agregas un servidor externo (otro script, imagen o API), súmalo a la directiva que corresponda del `<meta http-equiv="Content-Security-Policy">`; lo que no se nombra allí queda bloqueado.
 
-Limitaciones: la hoja de Google Fonts no admite SRI (su contenido cambia según el navegador), y los estilos necesitan `style-src 'unsafe-inline'` (colores generados y `style="--sz"` de los avatares); no es un riesgo de scripts, y con `img-src`, `font-src` y `connect-src` cerrados un estilo inyectado no tiene adónde enviar datos.
+Limitaciones: los estilos necesitan `style-src 'unsafe-inline'` (colores generados y `style="--sz"` de los avatares); no es un riesgo de scripts, y con `img-src`, `font-src` y `connect-src` cerrados un estilo inyectado no tiene adónde enviar datos.
 
 ## Licencia
 

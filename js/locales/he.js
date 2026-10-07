@@ -388,10 +388,19 @@ GB.i18n.define('he', {
   'settings.optional': 'אופציונלי',
   'settings.show': 'הצג',
   'settings.hide': 'הסתר',
-  'settings.tokenHelp': 'ללא token, GitHub מאפשר 60 בקשות בשעה. עם token <em>fine-grained</em> לקריאה בלבד (הרשאות Metadata, Contents ו-Pull requests) התצוגה מתרעננת כל 10 שניות, עובדת עם מאגרים שיש בהם אלפי ענפים, ואפשר לראות גם מאגרים פרטיים. ה-token נשמר רק בדפדפן הזה ונשלח רק אל api.github.com.',
+  'settings.tokenHelp': 'ללא token, GitHub מאפשר 60 בקשות בשעה. עם token <em>fine-grained</em> לקריאה בלבד (הרשאות Metadata, Contents ו-Pull requests) התצוגה מתרעננת כל 10 שניות, עובדת עם מאגרים שיש בהם אלפי ענפים, ואפשר לראות גם מאגרים פרטיים.',
+  'settings.tokenWhere': 'ה-token נשמר רק בדפדפן הזה ונשלח רק אל api.github.com.',
+  'settings.tokenWhereKeychain': 'ה-token נשמר רק במחשב הזה, מוצפן באמצעות מחזיק המפתחות של המערכת, ונשלח רק אל api.github.com.',
+  'settings.tokenWherePlain': 'ה-token נשמר רק במחשב הזה, אבל ללא הצפנה: אין במערכת מחזיק מפתחות זמין. הוא נשלח רק אל api.github.com.',
   'settings.depth': 'Commits לכל ענף',
   'settings.branchesHelp': 'GraphBranch מציג את כל הענפים של המאגר, והפעילים ביותר קרובים יותר לענף ברירת המחדל. במאגרים גדולים הם מופיעים בהדרגה, הפעילים ביותר קודם. ענפים מוצמדים (לחץ על ענף ואז על <strong>הצמד</strong>) מופיעים מיד מתחת לענף ברירת המחדל, גם כשיש מסנן. השתמש במסנן הגרף כדי להתמקד בקידומת, למשל <code>release/</code>.',
   'settings.clearToken': 'מחק token',
   'settings.cancel': 'ביטול',
   'settings.save': 'שמור והתחבר מחדש',
+
+  /* ---------- אפליקציית שולחן העבודה: מגש המערכת ---------- */
+  'tray.show': 'הצגת GraphBranch',
+  'tray.quit': 'יציאה מ-GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch עדיין פועל',
+  'tray.hiddenBody': 'הוא ממשיך לעקוב אחרי המאגר ברקע. אפשר לפתוח אותו שוב או לסגור אותו לגמרי מהסמל שלו במגש המערכת או בשורת התפריטים.',
 });

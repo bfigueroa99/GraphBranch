@@ -331,10 +331,19 @@ GB.i18n.define('ms', {
   'settings.optional': 'pilihan',
   'settings.show': 'Tunjuk',
   'settings.hide': 'Sembunyi',
-  'settings.tokenHelp': 'Tanpa token, GitHub membenarkan 60 permintaan sejam. Dengan token <em>fine-grained</em> baca sahaja (kebenaran Metadata, Contents dan Pull requests), paparan dimuat semula setiap 10 saat, berfungsi dengan repositori yang mempunyai beribu-ribu branch, dan anda boleh melihat repo peribadi. Token hanya disimpan dalam pelayar ini dan hanya dihantar ke api.github.com.',
+  'settings.tokenHelp': 'Tanpa token, GitHub membenarkan 60 permintaan sejam. Dengan token <em>fine-grained</em> baca sahaja (kebenaran Metadata, Contents dan Pull requests), paparan dimuat semula setiap 10 saat, berfungsi dengan repositori yang mempunyai beribu-ribu branch, dan anda boleh melihat repo peribadi.',
+  'settings.tokenWhere': 'Token hanya disimpan dalam pelayar ini dan hanya dihantar ke api.github.com.',
+  'settings.tokenWhereKeychain': 'Token hanya disimpan dalam komputer ini, disulitkan dengan rantai kunci sistem, dan hanya dihantar ke api.github.com.',
+  'settings.tokenWherePlain': 'Token hanya disimpan dalam komputer ini, tetapi tidak disulitkan: sistem tidak mempunyai rantai kunci yang tersedia. Token hanya dihantar ke api.github.com.',
   'settings.depth': 'Commit bagi setiap branch',
   'settings.branchesHelp': 'GraphBranch memaparkan semua branch dalam repo, dengan yang paling aktif paling hampir dengan branch lalai. Pada repo besar, branch muncul sedikit demi sedikit, yang paling aktif dahulu. Branch yang disematkan (klik pada branch → <strong>Sematkan</strong>) berada tepat di bawah branch lalai, walaupun dengan penapis. Gunakan penapis graf untuk menumpukan pada satu awalan, contohnya <code>release/</code>.',
   'settings.clearToken': 'Padam token',
   'settings.cancel': 'Batal',
   'settings.save': 'Simpan dan sambung semula',
+
+  /* ---------- aplikasi desktop: dulang sistem ---------- */
+  'tray.show': 'Tunjukkan GraphBranch',
+  'tray.quit': 'Keluar daripada GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch masih berjalan',
+  'tray.hiddenBody': 'Aplikasi ini terus memantau repositori di latar belakang. Buka semula atau tutup sepenuhnya melalui ikonnya dalam dulang sistem atau bar menu.',
 });

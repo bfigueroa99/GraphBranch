@@ -339,10 +339,19 @@ GB.i18n.define('ro', {
   'settings.optional': 'opțional',
   'settings.show': 'Afișare',
   'settings.hide': 'Ascundere',
-  'settings.tokenHelp': 'Fără token, GitHub permite 60 de cereri pe oră. Cu un token <em>fine-grained</em> doar pentru citire (permisiuni Metadata, Contents și Pull requests), vizualizarea se actualizează la fiecare 10 secunde, funcționează cu depozite care au mii de ramuri și puteți vedea depozite private. Tokenul este stocat doar în acest browser și este trimis exclusiv către api.github.com.',
+  'settings.tokenHelp': 'Fără token, GitHub permite 60 de cereri pe oră. Cu un token <em>fine-grained</em> doar pentru citire (permisiuni Metadata, Contents și Pull requests), vizualizarea se actualizează la fiecare 10 secunde, funcționează cu depozite care au mii de ramuri și puteți vedea depozite private.',
+  'settings.tokenWhere': 'Tokenul este stocat doar în acest browser și este trimis exclusiv către api.github.com.',
+  'settings.tokenWhereKeychain': 'Tokenul este stocat doar pe acest computer, criptat cu portcheiul sistemului, și este trimis exclusiv către api.github.com.',
+  'settings.tokenWherePlain': 'Tokenul este stocat doar pe acest computer, dar necriptat: sistemul nu are un portchei disponibil. Este trimis exclusiv către api.github.com.',
   'settings.depth': 'Commit-uri per ramură',
   'settings.branchesHelp': 'GraphBranch afișează toate ramurile depozitului, cele mai active cel mai aproape de ramura implicită. În depozitele mari apar treptat, întâi cele mai active. Ramurile fixate (clic pe o ramură → <strong>Fixați</strong>) stau imediat sub ramura implicită, chiar și cu un filtru. Folosiți filtrul grafului pentru a vă concentra pe un prefix, de exemplu <code>release/</code>.',
   'settings.clearToken': 'Ștergeți tokenul',
   'settings.cancel': 'Anulare',
   'settings.save': 'Salvați și reconectați',
+
+  /* ---------- aplicația desktop: bara de sistem ---------- */
+  'tray.show': 'Afișare GraphBranch',
+  'tray.quit': 'Ieșire din GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch rulează în continuare',
+  'tray.hiddenBody': 'Continuă să urmărească depozitul în fundal. Redeschideți-l sau închideți-l complet din pictograma sa din bara de sistem sau din bara de meniu.',
 });

@@ -1,0 +1,51 @@
+{
+  "name": "graphbranch",
+  "productName": "GraphBranch",
+  "desktopName": "graphbranch.desktop",
+  "version": "0.1.0",
+  "description": "Grafo en vivo de las ramas de un repositorio de GitHub, con alertas de toda su actividad.",
+  "author": "Benjamin Figueroa Guzman",
+  "license": "MIT",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "check:i18n": "node tools/check-i18n.mjs",
+    "vendor": "node tools/vendor.mjs"
+  },
+  "devDependencies": {
+    "electron": "44.4.5",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "io.github.bfigueroa99.graphbranch",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "publish": null,
+    "files": [
+      "index.html",
+      "css/**",
+      "js/**",
+      "vendor/**",
+      "electron/**",
+      "LICENSE"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "electron/icon.png",
+      "target": "dmg",
+      "identity": "-",
+      "hardenedRuntime": false
+    },
+    "win": {
+      "icon": "electron/icon.png",
+      "target": "nsis"
+    },
+    "linux": {
+      "category": "Development",
+      "icon": "electron/icon.png",
+      "target": "AppImage",
+      "syncDesktopName": true
+    }
+  }
+}

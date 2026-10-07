@@ -15,8 +15,8 @@ const SCHEME = 'app';
 const HOST = 'graphbranch';
 const ORIGIN = `${SCHEME}://${HOST}`;
 const ROOT = path.join(__dirname, '..');
-/** Lo único que se sirve de la carpeta del proyecto: la página y sus estilos y scripts. */
-const PUBLIC = new Set(['index.html', 'css', 'js']);
+/** Lo único que se sirve de la carpeta del proyecto: la página, sus estilos y scripts, y las librerías y fuentes. */
+const PUBLIC = new Set(['index.html', 'css', 'js', 'vendor']);
 /** Permisos que la página usa; los demás se niegan. */
 const PERMISSIONS = new Set(['notifications', 'fullscreen', 'pointerLock', 'screen-wake-lock']);
 /** Fondo de la ventana mientras carga, igual al --bg de css/styles.css, para que no destelle en blanco. */

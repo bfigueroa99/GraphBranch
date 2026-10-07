@@ -26,7 +26,7 @@ Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas
 
 - **Todos los idiomas**: la interfaz está traducida a 40 idiomas (incluidos árabe, hebreo, persa y urdu, de derecha a izquierda), se elige sola según el navegador y se puede cambiar en vivo desde el globo de la barra superior. Fechas, números y "hace 5 min" salen de `Intl`, así que también se ven bien en idiomas sin traducción (ver [Idiomas](#idiomas)).
 
-No necesita servidor ni compilación: es HTML, CSS y JavaScript que llama directo a `api.github.com` desde tu navegador. La vista 3D usa WebGL; si el navegador no lo tiene, la app abre la 2D. También corre como [aplicación de escritorio](#aplicación-de-escritorio) con Electron.
+No necesita servidor ni compilación: es HTML, CSS y JavaScript que llama directo a `api.github.com` desde tu navegador. Las librerías (d3 y Three.js) y las fuentes van incluidas en `vendor/`, así que solo sale a internet para hablar con GitHub. La vista 3D usa WebGL; si el navegador no lo tiene, la app abre la 2D. También corre como [aplicación de escritorio](#aplicación-de-escritorio) con Electron.
 
 ## Uso
 
@@ -138,7 +138,7 @@ npm run dist                            # el instalador para este sistema, en di
 - Es la misma app: `electron/main.js` solo abre `index.html` en una ventana, así que lo que cambies en `js/` o `css/` vale para las dos versiones (en la de escritorio se recarga con `Ctrl+R` o `Cmd+R`).
 - La página se sirve desde `app://graphbranch/`, un origen propio en vez de `file://`: el CSP funciona igual que en la web, y el token y los ajustes quedan en los datos de la app, aparte de los del navegador.
 - Los enlaces a GitHub se abren en el navegador del sistema. La ventana no puede navegar a otro sitio ni usar Node, y solo tiene los permisos que la app usa: notificaciones, pantalla completa, captura del puntero (modo vuelo) y pantalla siempre encendida (modo TV).
-- Por ahora necesita conexión al arrancar: d3, Three.js y las fuentes siguen llegando de su CDN, como en la web.
+- Funciona sin conexión: todo lo que necesita va dentro de la app. Sin red abre la demo; un repositorio real muestra que no hay conexión y se vuelve a conectar apenas vuelve la red, sin esperar el próximo reintento.
 - `npm run dist` arma el instalador del sistema donde lo corres: `.dmg` en macOS, `.exe` en Windows y `.AppImage` en Linux. No van firmados, así que macOS y Windows avisan al abrirlos la primera vez.
 
 ## Estructura
@@ -166,10 +166,12 @@ js/replay.js          modo Replay: la historia como time-lapse
 js/game.js            logros del repo, nivel y misión del día
 js/feed.js            panel de actividad, avisos, sonido y notificaciones
 js/app.js             conecta todo
+vendor/               copias locales de d3, Three.js, OrbitControls y las fuentes, con sus licencias (las genera tools/vendor.mjs)
 tools/check-i18n.mjs  verifica las traducciones contra el inglés
+tools/vendor.mjs      descarga a vendor/ las librerías (comprobando su hash) y las fuentes
 electron/main.js      app de escritorio: la ventana de Electron que abre index.html
 electron/icon.png     ícono de la app de escritorio
-package.json          Electron y sus scripts (npm start, npm run dist)
+package.json          Electron y los scripts (npm start, npm run dist, npm run vendor)
 ```
 
 ## Límites conocidos
@@ -184,20 +186,16 @@ package.json          Electron y sus scripts (npm start, npm run dist)
 
 ## Seguridad
 
-`index.html` lleva una política de seguridad de contenido (CSP) y verificación de integridad (SRI):
+`index.html` lleva una política de seguridad de contenido (CSP):
 
-- **CSP**: solo se ejecutan los scripts propios y los tres de CDN que se nombran con su ruta exacta (d3, Three.js y OrbitControls); no se permite `eval` ni scripts o manejadores en línea. Las conexiones salen únicamente a `api.github.com` y las imágenes solo pueden ser avatares de GitHub. Así, aunque algún texto de un repositorio lograra colarse en la página, no podría ejecutar código ni enviar tu token a otro servidor.
-- **SRI**: esos tres scripts llevan su hash; el navegador no los ejecuta si el CDN entrega algo distinto.
+- **CSP**: scripts, estilos y fuentes solo pueden venir del propio sitio; no se permite `eval` ni scripts o manejadores en línea. Las conexiones salen únicamente a `api.github.com` y las imágenes solo pueden ser avatares de GitHub. Así, aunque algún texto de un repositorio lograra colarse en la página, no podría ejecutar código ni enviar tu token a otro servidor.
+- **Librerías y fuentes locales**: d3, Three.js, OrbitControls y las fuentes son copias en `vendor/`, junto a sus licencias. La página no depende de ningún CDN, y tampoco le cuenta a Google Fonts quién la abre.
 
-Si cambias la versión de una librería, actualiza su ruta en el CSP y su hash en la etiqueta `<script>`. Calcula el hash y compáralo con el que publica el CDN (cdnjs lo muestra en su ficha; jsDelivr, en `data.jsdelivr.com`):
-
-```
-curl -s URL_DEL_SCRIPT | openssl dgst -sha384 -binary | openssl base64 -A
-```
+`vendor/` lo genera `npm run vendor` (`tools/vendor.mjs`): descarga las librerías y comprueba que cada una coincida con el hash SRI que publica su CDN (cdnjs lo muestra en su ficha; jsDelivr, en `data.jsdelivr.com`); si algo no coincide, no escribe nada. Las fuentes las baja de Google Fonts con todos sus subconjuntos (latin, cyrillic, greek…), y el navegador carga solo los que pide el texto en pantalla. Para cambiar de versión una librería, actualiza su URL y su hash en ese script y vuelve a correrlo.
 
 Si agregas un servidor externo (otro script, imagen o API), súmalo a la directiva que corresponda del `<meta http-equiv="Content-Security-Policy">`; lo que no se nombra allí queda bloqueado.
 
-Limitaciones: la hoja de Google Fonts no admite SRI (su contenido cambia según el navegador), y los estilos necesitan `style-src 'unsafe-inline'` (colores generados y `style="--sz"` de los avatares); no es un riesgo de scripts, y con `img-src`, `font-src` y `connect-src` cerrados un estilo inyectado no tiene adónde enviar datos.
+Limitaciones: los estilos necesitan `style-src 'unsafe-inline'` (colores generados y `style="--sz"` de los avatares); no es un riesgo de scripts, y con `img-src`, `font-src` y `connect-src` cerrados un estilo inyectado no tiene adónde enviar datos.
 
 ## Licencia
 

@@ -9,7 +9,8 @@
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder",
-    "check:i18n": "node tools/check-i18n.mjs"
+    "check:i18n": "node tools/check-i18n.mjs",
+    "vendor": "node tools/vendor.mjs"
   },
   "devDependencies": {
     "electron": "44.4.5",
@@ -21,6 +22,7 @@
       "index.html",
       "css/**",
       "js/**",
+      "vendor/**",
       "electron/**",
       "LICENSE"
     ],

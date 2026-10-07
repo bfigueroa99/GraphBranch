@@ -38,7 +38,7 @@
     star: 'stars',
     fork: 'forks',
   };
-  const COUNTERS = ['merges', 'approvals', 'issuesClosed', 'branches', 'releases', 'cleaned', 'stars', 'forks', 'replays'];
+  const COUNTERS = ['merges', 'approvals', 'issuesClosed', 'branches', 'releases', 'cleaned', 'stars', 'forks', 'replays', 'maps'];
 
   /* logros del repo: el criterio de cada uno se explica en la vitrina */
   const ACHIEVEMENTS = [
@@ -56,6 +56,7 @@
     { id: 'recordDay', icon: '🏆', test: (s, ctx) => !!ctx.recordDay },
     { id: 'forest', icon: '🌳', test: (s, ctx) => (ctx.liveBranches || 0) >= 10 },
     { id: 'timeTraveler', icon: '⏳', test: (s) => s.total.replays >= 1 },
+    { id: 'cartographer', icon: '🧭', test: (s) => s.total.maps >= 1 },
   ];
 
   /* misiones del día: metas de equipo, una por día y por repo */
@@ -167,9 +168,18 @@
 
     /** Un Replay que llegó hasta el final. */
     replayDone() {
+      this.tally('replays');
+    }
+
+    /** El mapa completo: todas las ramas a la vista descubiertas en el modo vuelo. */
+    mapped() {
+      this.tally('maps');
+    }
+
+    tally(counter) {
       if (!this.state) return;
       const before = levelOf(this.state.xp);
-      this.state.total.replays++;
+      this.state.total[counter]++;
       this.check({});
       this.finish(before);
     }

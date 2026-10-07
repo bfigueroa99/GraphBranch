@@ -216,6 +216,7 @@
       gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
       gl_PointSize = ( 0.9 + aSeed * aSeed * 2.3 ) * uPx;
       vA = ( 0.3 + 0.7 * aSeed ) * ( 0.75 + 0.25 * sin( uTime * ( 0.5 + aSeed * 1.9 ) + aSeed * 91.0 ) );
+      vA *= smoothstep( -0.02, 0.12, normalize( position ).y ); // bajo el horizonte está el suelo
     }`;
   /* polvo alrededor de las ramas: deriva despacio hacia el pasado, en una ventana que sigue a la vista */
   const DUST_VS = `
@@ -245,6 +246,25 @@
       float d = length( gl_PointCoord - 0.5 ) * 2.0;
       float a = 1.0 - smoothstep( 0.0, 1.0, d );
       gl_FragColor = vec4( uColor, a * a * vA * uOpacity );
+    }`;
+
+  /* el mapa del repo pintado en el fondo del valle: la sombra de cada rama, que se pierde con la niebla */
+  const GROUND_VS = `
+    uniform vec2 uFog;
+    varying vec3 vC;
+    varying float vA;
+    void main() {
+      vec4 mv = modelViewMatrix * instanceMatrix * vec4( position, 1.0 );
+      gl_Position = projectionMatrix * mv;
+      vC = instanceColor;
+      vA = 1.0 - smoothstep( uFog.x, uFog.y * 1.3, -mv.z );
+    }`;
+  const GROUND_FS = `
+    uniform float uOpacity;
+    varying vec3 vC;
+    varying float vA;
+    void main() {
+      gl_FragColor = vec4( vC, vA * uOpacity );
     }`;
 
   /* ---------- lotes instanciados ---------- */
@@ -509,7 +529,8 @@
       this.gNodes = new THREE.Group();
       this.gFx = new THREE.Group();
       this.gDays = new THREE.Group();
-      this.scene.add(this.gDays, this.gEdges, this.gNodes, this.gFx);
+      this.gGround = new THREE.Group();
+      this.scene.add(this.gGround, this.gDays, this.gEdges, this.gNodes, this.gFx);
 
       /* uniformes compartidos por todos los materiales */
       this.u = {
@@ -544,6 +565,14 @@
       this.iLine = new Instances(this.gEdges, this.geo.tube, this.lineMat);
       this.iGhost = new Instances(this.gEdges, this.geo.tube, this.ghostMat);
       this.iStub = new Instances(this.gEdges, this.geo.tube, this.stubMat);
+      this.groundMat = new THREE.ShaderMaterial({
+        uniforms: { uFog: this.u.fog, uOpacity: { value: 0.3 } },
+        vertexShader: GROUND_VS,
+        fragmentShader: GROUND_FS,
+        transparent: true,
+        depthWrite: false,
+      });
+      this.iGround = new Instances(this.gGround, this.geo.tube, this.groundMat);
 
       const glowMat = () =>
         new THREE.ShaderMaterial({
@@ -572,6 +601,7 @@
 
       this.makeStars();
       this.makeDust();
+      this.world = GB.World ? new GB.World(this) : null; // valle, cielo, nubes y lo del vuelo (world.js)
       this.mats = new Map();
       this.colorObjs = new Map();
 
@@ -733,6 +763,8 @@
       for (const [key, m] of this.mats) this.paint(key, m);
       if (this.dayMat) this.dayMat.color.copy(this.lineColor);
       for (const r of this.ripples) r.mesh.material.blending = blend;
+      this.groundMat.uniforms.uOpacity.value = dark ? 0.32 : 0.22;
+      this.world?.readTheme();
       this.applyMotion();
       this.dirtyNodes = this.dirtyEdges = true;
       this.needsRender = true;
@@ -802,6 +834,7 @@
       this.camera.updateProjectionMatrix();
       this.stars.material.uniforms.uPx.value = this.dpr;
       this.dust.material.uniforms.uScale.value = (H * this.dpr) / (2 * Math.tan((this.camera.fov * Math.PI) / 360));
+      this.world?.resize();
       this.needsRender = true;
     }
 
@@ -816,6 +849,7 @@
         this.raf = 0;
         this.keys.clear();
         this.flight?.exit();
+        this.world?.showHud(false);
         this.ride = null;
         this.controls.enabled = true;
         this.unpin();
@@ -957,6 +991,7 @@
 
       if (this.pinned && !this.nodes.has(this.pinned)) this.unpin();
       if (this.hoverSha && !this.nodes.has(this.hoverSha)) this.hoverSha = null;
+      this.world?.onLayout();
       if (!this.placed && L.nodes.length) {
         this.placeCamera(true);
         this.placed = true;
@@ -1053,7 +1088,7 @@
       // más lejos en paneles angostos (celular) para que la escena no se corte
       const aspect = this.W && this.H ? this.W / this.H : 1.6;
       const d = (13 + this.radius * 1.6) * clamp(1.6 / aspect, 1, 1.9);
-      return new THREE.Vector3(0.55, 0.4, 0.74).normalize().multiplyScalar(d);
+      return new THREE.Vector3(0.55, 0.3, 0.78).normalize().multiplyScalar(d); // un poco baja: se ve el horizonte
     }
 
     /** Primera vista: con movimiento, la cámara entra desde lejos y en arco hasta su lugar. */
@@ -1250,7 +1285,7 @@
       if (!it) return;
       this.tip.innerHTML = GB.graphShared.tipHTML(it.data, this.ctx || {}, { pin, branchName, ghostNames: this.ghostNames });
       const ride = branchName || (it.data.chain.startsWith('b:') ? it.data.chain.slice(2) : null);
-      if (pin && ride && this.motion) {
+      const action = (text, fn) => {
         let actions = this.tip.querySelector('.tip-actions');
         if (!actions) {
           actions = document.createElement('div');
@@ -1260,10 +1295,18 @@
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'tip-ride';
-        b.textContent = tr('ride.label');
-        b.addEventListener('click', () => this.rideBranch(ride));
+        b.textContent = text;
+        b.addEventListener('click', () => fn(b));
         actions.appendChild(b);
-      }
+      };
+      if (pin && ride && this.motion) action(tr('ride.label'), () => this.rideBranch(ride));
+      // marcar la rama como destino: una columna de luz la señala y la brújula del vuelo lleva hasta ella
+      const mark = () => tr(this.world.waypoint === ride ? 'world.unmark' : 'world.mark');
+      if (pin && ride && this.world && this.heads.has(ride))
+        action(mark(), (b) => {
+          this.world.setWaypoint(ride);
+          b.textContent = mark();
+        });
       this.tip.hidden = false;
       this.tip.classList.toggle('pinned', !!pin);
       this.tipSha = sha;
@@ -1299,6 +1342,7 @@
     /** Cambio de idioma: etiquetas accesibles, días del eje y rótulos de las ramas. */
     relocalize() {
       this.flight?.relocalize();
+      this.world?.relocalize();
       this.wrap.setAttribute('aria-label', tr('graph.aria3d'));
       this.tip.setAttribute('aria-label', tr('tip.aria'));
       this.unpin();
@@ -1395,7 +1439,8 @@
 
       const camMoved = this.stepCamera(now, dt);
       const sceneMoved = this.stepScene(now, dt);
-      const full = this.needsRender || camMoved || sceneMoved;
+      const worldMoved = !!this.world?.step(now, dt);
+      const full = this.needsRender || camMoved || sceneMoved || worldMoved;
       // en reposo los pulsos, el polvo y las estrellas siguen vivos, pero a ~30 fps
       const ambient = this.motion && this.nodes.size > 0 && now - this.lastRender >= AMBIENT_MS;
       if (full || ambient) {
@@ -1408,6 +1453,14 @@
       }
       this.prevFull = full;
       this.hover();
+      const w = this.world;
+      if (w) {
+        // en vuelo: brújula, minimapa e indicadores; volando o recorriendo una rama, se descubre el mapa
+        const fly = !!this.flight?.on;
+        if (fly !== !!w.hudOn) w.showHud(fly);
+        if (fly) w.hud(now);
+        if ((fly || this.ride) && this.nodes.size) w.explore();
+      }
     }
 
     stepCamera(now, dt) {
@@ -1450,6 +1503,7 @@
           moved = true;
         }
       }
+      this.world?.limitOrbit(c, cam);
       if (c.update()) moved = true;
       return moved;
     }
@@ -1532,6 +1586,7 @@
       this.iLine.begin(n);
       this.iGhost.begin(n);
       this.iStub.begin(n * 3);
+      this.iGround.begin(n);
       // reacomodar muchas ramas a la vez rehace muchas curvas: se reparten entre cuadros
       const budget = performance.now() + 5;
       for (const it of this.edges.values()) {
@@ -1559,6 +1614,7 @@
         }
         const ghost = e.color === 'ghost';
         const r = ghost ? GHOST_R : EDGE_R;
+        this.iGround.segment(a.x, 0, a.z, a.x + (b.x - a.x) * p, 0, a.z + (b.z - a.z) * p, ghost ? 0.08 : 0.14, col);
         if (e.kind === 'line' || (Math.abs(a.x - b.x) < 1e-3 && Math.abs(a.y - b.y) < 1e-3)) {
           this.dropCurve(it);
           (ghost ? this.iGhost : this.iLine).segment(a.x, a.y, a.z, a.x + (b.x - a.x) * p, a.y + (b.y - a.y) * p, a.z + (b.z - a.z) * p, r, col);
@@ -1574,6 +1630,7 @@
       this.iLine.end();
       this.iGhost.end();
       this.iStub.end();
+      this.iGround.end();
       return anim;
     }
 
@@ -2062,6 +2119,10 @@
       this.scene.fog.far = far;
       this.u.fog.value.set(near, far);
       this.stars.position.copy(this.camera.position);
+      if (this.world) {
+        this.world.beforeRender();
+        this.gGround.position.y = this.world.groundY + 0.12;
+      }
       // el anillo del presente se desvanece cuando la cámara lo atraviesa o queda de canto
       if (this.portal.visible) {
         const cam = this.camera.position;
@@ -2187,6 +2248,7 @@
       this.nodeAnim = this.edgeAnim = false;
       this.flight?.exit();
       this.ride = null;
+      this.world?.clear();
       this.controls.enabled = true;
       this.unpin();
       this.following = true;

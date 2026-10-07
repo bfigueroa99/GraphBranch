@@ -18,7 +18,8 @@
    Modo galaxias (galaxy.js): el mismo layout, en otro lugar. Cada rama es una galaxia, sus
    commits un brazo en espiral y sus archivos, planetas que aparecen al acercarse; el valle,
    el anillo del presente y los días dejan paso al espacio. Todo lo demás (efectos, director,
-   vuelo, Replay) sigue igual: solo cambian las posiciones de destino y las curvas. */
+   vuelo, Replay) sigue igual: solo cambian las posiciones de destino y las curvas, y las aristas
+   se apagan junto a la cámara (del todo al entrar en una galaxia). */
 (function (GB) {
   'use strict';
   const { U, i18n } = GB;
@@ -37,6 +38,7 @@
   const RADIAL = 12; // lados de los tubos (de cerca, menos se ven como facetas)
   const RADIAL_MID = 8; // con miles de tramos
   const THIN_D = 12; // a menos de esta distancia de la cámara los tubos se afinan: tope de grosor aparente
+  const CLEAR_D = 10; // en el espacio, fuera de las galaxias, las aristas se apagan a menos de esto de la cámara
   const AMBIENT_MS = 31; // en reposo, los efectos se dibujan a ~30 fps
   const MAX_PIXELS = 4.6e6; // tope de píxeles del lienzo (pantallas 4K a pantalla completa)
   const SPIN_SPEED = 0.037; // rad/s del giro lento
@@ -105,15 +107,34 @@
       vec3 gbAxis = transformed;
     #endif`;
 
+  /* En el espacio las aristas se apagan junto a la cámara: al entrar en una galaxia, su brazo y los
+     puentes que la cruzan dejan paso a las estrellas y los planetas (ver beforeRender). gbNear es
+     (invisible hasta, entera desde); con 0 no se apaga nada: en el valle las aristas son el grafo. Lo
+     que se apagó del todo no escribe profundidad, así no recorta lo que queda detrás. */
+  const NEAR_FS = `
+    if ( gbNear.y > 0.0 ) {
+      diffuseColor.a *= smoothstep( gbNear.x, gbNear.y, vGbDist );
+      if ( diffuseColor.a < 0.004 ) discard;
+    }
+    #include <alphatest_fragment>`;
+
+  function nearFade(sh, near) {
+    sh.uniforms.gbNear = near;
+    sh.vertexShader =
+      'varying float vGbDist;\n' + sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\n      vGbDist = length( mvPosition.xyz );');
+    sh.fragmentShader = 'uniform vec2 gbNear;\nvarying float vGbDist;\n' + sh.fragmentShader.replace('#include <alphatest_fragment>', NEAR_FS);
+  }
+
   /** Tubos sin pulsos (tramos de la historia que sigue): solo el afinado junto a la cámara. */
-  function thinHook(thin) {
+  function thinHook(thin, near) {
     return (sh) => {
       sh.uniforms.gbThin = thin;
       sh.vertexShader = 'uniform float gbThin;\n' + sh.vertexShader.replace('#include <begin_vertex>', THIN_GLSL);
+      nearFade(sh, near);
     };
   }
 
-  function flowHook(flow, time, fog, thin) {
+  function flowHook(flow, time, fog, thin, near) {
     return (sh) => {
       sh.uniforms.gbFlow = flow;
       sh.uniforms.gbTime = time;
@@ -138,6 +159,7 @@
           float gbP = smoothstep( 0.6, 0.93, gbQ ) * ( 1.0 - smoothstep( 0.93, 1.0, gbQ ) );
           totalEmissiveRadiance += mix( diffuseColor.rgb, vec3( 1.0 ), 0.35 ) * gbP * gbFlow;`,
         );
+      nearFade(sh, near);
     };
   }
 
@@ -601,6 +623,7 @@
         noFlow: { value: 0 },
         rim: { value: 0.8 },
         thin: { value: THIN_D },
+        near: { value: new THREE.Vector2(0, 0) }, // en el espacio, las aristas se apagan junto a la cámara (ver NEAR_FS)
       };
 
       this.geo = {
@@ -618,15 +641,15 @@
         beam: new THREE.CylinderGeometry(0.22, 0.6, 1, 18, 1, true).translate(0, 0.5, 0),
       };
 
-      this.flowLive = flowHook(this.u.flow, this.u.time, this.u.fog, this.u.thin);
+      this.flowLive = flowHook(this.u.flow, this.u.time, this.u.fog, this.u.thin, this.u.near);
       this.nodeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, roughness: 0.32, metalness: 0.1 });
       this.nodeMat.onBeforeCompile = nodeHook(this.u);
       this.lineMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, roughness: 0.5, metalness: 0.05 });
       this.lineMat.onBeforeCompile = this.flowLive;
       this.ghostMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, roughness: 0.55, metalness: 0.05, transparent: true, opacity: 0.5 });
-      this.ghostMat.onBeforeCompile = flowHook(this.u.noFlow, this.u.time, this.u.fog, this.u.thin);
+      this.ghostMat.onBeforeCompile = flowHook(this.u.noFlow, this.u.time, this.u.fog, this.u.thin, this.u.near);
       this.stubMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      this.stubMat.onBeforeCompile = thinHook(this.u.thin);
+      this.stubMat.onBeforeCompile = thinHook(this.u.thin, this.u.near);
       // líneas punteadas de las ramas sin commits propios: todas en un solo objeto, con color por vértice
       this.pointerLines = new THREE.LineSegments(
         new THREE.BufferGeometry(),
@@ -640,6 +663,7 @@
       this.iLine = new Instances(this.gEdges, this.geo.tube, this.lineMat);
       this.iGhost = new Instances(this.gEdges, this.geo.tube, this.ghostMat);
       this.iStub = new Instances(this.gEdges, this.geo.tube, this.stubMat);
+      this.edgeLots = [this.iLine, this.iGhost, this.iStub];
       this.groundMat = new THREE.ShaderMaterial({
         uniforms: { uFog: this.u.fog, uOpacity: { value: 0.3 } },
         vertexShader: GROUND_VS,
@@ -2472,6 +2496,14 @@
       this.scene.fog.near = near;
       this.scene.fog.far = far;
       this.u.fog.value.set(near, far);
+      // en el espacio las aristas se apagan junto a la cámara (NEAR_FS): en el espacio abierto solo las que
+      // pasan rozando; dentro de una galaxia, todas hasta donde se pierden en la niebla, así su brazo y la
+      // maraña de puentes que la cruzan dejan ver sus estrellas y sus planetas. Para eso van con transparencia
+      // y se dibujan antes que los planetas y los halos, que así quedan bien tapados por las que siguen enteras.
+      const clear = space ? CLEAR_D + (far - CLEAR_D) * this.gx.within : 0;
+      this.u.near.value.set(clear * 0.35, clear);
+      this.lineMat.transparent = this.stubMat.transparent = space;
+      for (const lot of this.edgeLots) if (lot.mesh) lot.mesh.renderOrder = space ? -1 : 0;
       this.stars.position.copy(this.camera.position);
       this.dust.visible = !space;
       this.gGround.visible = !space;

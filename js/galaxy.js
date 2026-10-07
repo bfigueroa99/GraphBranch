@@ -3,18 +3,20 @@
    Cada rama es una galaxia. Sus commits son las estrellas de un brazo en espiral, con la cabeza
    en el núcleo: cada commit nuevo empuja a los demás brazo afuera, así que la galaxia gira un
    paso con cada push. La rama por defecto está en el centro del universo y las demás alrededor,
-   en una espiral girasol algo desordenada en altura, las primeras en aparecer (las más activas)
-   más cerca; cada una conserva su lugar mientras exista. Los commits de ramas ya fusionadas y
+   en capas esféricas algo desordenadas (arriba, abajo y a los lados: el universo ocupa el espacio,
+   no un plano) y con mucho aire entre vecinas, las primeras en aparecer (las más activas) más
+   cerca; cada una conserva su lugar mientras exista. Los commits de ramas ya fusionadas y
    borradas forman corrientes de estrellas que orbitan la galaxia donde se fusionaron, y las
    bifurcaciones y los merges son puentes entre galaxias.
 
    De lejos, cada galaxia es un disco con dos brazos (un solo cuadro por galaxia, dibujado en el
    sombreador, todas en una llamada). Al acercarse se resuelve en estrellas sueltas y aparecen sus
-   planetas: los archivos. En la rama por defecto son los del repo; en las demás, los que la rama
-   cambió respecto de la rama por defecto. Se piden recién al acercarse (una consulta por rama,
-   que se recuerda mientras la rama no se mueva) y giran en órbitas: una por archivo si son pocos
-   y, si no, un cinturón por carpeta, más lento cuanto más lejos, como en un sistema solar. Lo
-   usa graph3d.js.
+   planetas: los archivos; las aristas (su brazo y los puentes) se ven de lejos y se apagan al
+   entrar en ella, así no tapan sus estrellas ni sus planetas. En la rama por defecto son los del
+   repo; en las demás, los que la rama cambió respecto de la rama por defecto. Se piden recién al
+   acercarse (una consulta por rama, que se recuerda mientras la rama no se mueva) y giran en
+   órbitas: una por archivo si son pocos y, si no, un cinturón por carpeta, más lento cuanto más
+   lejos, como en un sistema solar. Lo usa graph3d.js.
 
    El espacio se inspira en No Man's Sky: cada planeta tiene su superficie (continentes y océanos,
    bandas de gigante gaseoso o roca con cráteres, según el archivo), atmósfera que brilla en el
@@ -46,8 +48,9 @@
   const ARM_A = 0.55; // el brazo es una espiral de Arquímedes r = A·θ: vueltas separadas 2πA
   const STEP = 1.35; // distancia entre commits a lo largo del brazo
   const GOLDEN = 2.399963229728653;
-  const SLOT_MIN = 11; // escala de la espiral de galaxias: vecinas a ~1,8 veces esto…
-  const SLOT_MAX = 30; // …según el tamaño de las galaxias grandes (no de la más grande: una sola no estira el universo)
+  const GAP_MIN = 50; // entre galaxias vecinas, de centro a centro: al menos esto…
+  const GAP_MAX = 160; // …y como mucho esto, según el tamaño de las galaxias grandes (no de la más grande: una sola no estira el universo)
+  const SHELL = 0.9; // entre una capa de galaxias y la siguiente, en distancias entre vecinas
   const SAT_GAP = 1.7; // entre anillos de corrientes fusionadas
   const NEAR_GALAXIES = 5; // galaxias que se resuelven en estrellas a la vez
   const NEAR_STARS = 650;
@@ -101,6 +104,29 @@
       t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
+  }
+
+  const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+  /** Cuántas galaxias caben en la capa k: siempre las mismas, sin importar su tamaño, así ninguna
+      cambia de capa (ni de lugar) cuando el universo crece o se achica. */
+  const shellCap = (k) => Math.floor((4 * Math.PI * (1 + k * SHELL) ** 2) / 1.1);
+  /** Lugar `slot` (1, 2, …) del universo: deja en `out` su dirección desde el centro y devuelve su capa.
+      Cada capa es una esfera de Fibonacci recorrida a saltos de proporción áurea desde el ecuador: las
+      primeras en llegar quedan repartidas por toda la esfera, arriba, abajo y a los lados, aunque la
+      capa no se llene. */
+  function slotDir(slot, out) {
+    let t = slot - 1;
+    let k = 0;
+    while (t >= shellCap(k)) t -= shellCap(k++);
+    const n = shellCap(k);
+    let s = Math.round(n * 0.381966);
+    while (gcd(s, n) !== 1) s++;
+    const i = (Math.floor(n / 2) + t * s) % n;
+    const y = 1 - (2 * i + 1) / n;
+    const r = Math.sqrt(1 - y * y);
+    const a = i * GOLDEN + k * 2; // cada capa girada: las de capas vecinas no quedan en fila
+    out.set(Math.cos(a) * r, y, Math.sin(a) * r);
+    return k;
   }
 
   /** Radio del brazo en el commit k (0 = la cabeza, en el núcleo). */
@@ -555,6 +581,8 @@
       this.lastData = new Map(); // rama → últimos archivos que llegaron (se muestran mientras llegan los nuevos)
       this.near = [];
       this.nearKey = '';
+      this.within = 0; // cuánto está la cámara dentro de una galaxia (0 a 1): ahí no se ven las aristas (graph3d.js)
+      this.withinTo = 0;
       this.focus = null;
       this.arrived = new Map(); // galaxia → cuándo se anunció su llegada
       this.arrival = null;
@@ -1101,8 +1129,9 @@
       const def = heads.find((h) => h.isDefault);
       const sizes = heads.filter((h) => !h.isDefault).map((h) => radiusFor((chains.get(h.chain) || []).length)).sort((a, b) => a - b);
       const big = sizes.length ? sizes[Math.floor((sizes.length - 1) * 0.9)] : 4;
-      const C = clamp(big * 2.4, SLOT_MIN, SLOT_MAX);
-      const R0 = (def ? radiusFor((chains.get(def.chain) || []).length) : 0) + big + 6;
+      const D = clamp(big * 5 + 30, GAP_MIN, GAP_MAX);
+      // la primera capa, a una distancia entre vecinas como mínimo (así en ella también caben con aire)
+      const R0 = Math.max(D, (def ? radiusFor((chains.get(def.chain) || []).length) : 0) + big + D * 0.5);
       const gals = new Map();
       let reach = 10;
       for (const h of heads) {
@@ -1112,9 +1141,9 @@
         const [ry, rt, ra, rth] = [rand(), rand(), rand(), rand()];
         const c = new THREE.Vector3();
         if (slot > 0) {
-          const r = R0 + C * Math.sqrt(slot - 1);
-          const a = slot * GOLDEN;
-          c.set(Math.cos(a) * r, (ry - 0.5) * (C * 0.6 + r * 0.2), Math.sin(a) * r);
+          // en capas esféricas alrededor de la rama por defecto, algo desordenadas en profundidad
+          const k = slotDir(slot, c);
+          c.multiplyScalar(R0 + k * SHELL * D + (ry - 0.5) * D * 0.2);
         }
         // cada disco inclinado a su manera, pero siempre igual para la misma rama
         const tilt = slot === 0 ? 0.42 : 0.25 + rt * 0.85;
@@ -1330,6 +1359,12 @@
         this.scanAt = now;
         this.survey(now);
       }
+      // al entrar en una galaxia las aristas se apagan de a poco, y al salir vuelven igual
+      if (this.within !== this.withinTo) {
+        this.within += (this.withinTo - this.within) * (1 - Math.exp(-dt * 3));
+        if (Math.abs(this.withinTo - this.within) < 0.003) this.within = this.withinTo;
+        changed = true;
+      }
       // el cielo acompaña a la nave y se tiñe con la galaxia en la que se está
       const cam = g.camera.position;
       this.sky.position.copy(cam);
@@ -1446,12 +1481,21 @@
     survey(now) {
       const g = this.g;
       const cam = g.camera.position;
-      // las más cercanas, para sus estrellas sueltas
+      // las más cercanas, para sus estrellas sueltas; y cuánto se está dentro de una (por todo su sistema,
+      // hasta el doble de donde se entra en ella): ahí las aristas se apagan
       const near = [];
+      let within = 0;
       for (const G of this.gals.values()) {
-        const d = cam.distanceTo(G.c) - G.R;
+        const dc = cam.distanceTo(G.c);
+        const d = dc - G.R;
         if (d < NEAR_RANGE) near.push({ G, d });
+        const e = this.enterDist(G);
+        if (dc < e * 2) {
+          const t = clamp(dc / e - 1, 0, 1);
+          within = Math.max(within, 1 - t * t * (3 - 2 * t));
+        }
       }
+      this.withinTo = within;
       near.sort((a, b) => a.d - b.d);
       if (near.length > NEAR_GALAXIES) near.length = NEAR_GALAXIES;
       this.near = near;

@@ -9,7 +9,8 @@
    ramas; minimapa que gira con la mirada; altura y velocidad; cada rama se descubre al pasar cerca
    (con su rótulo y su sonido, y el mapa se va completando; se recuerda por repositorio) y una rama
    se puede marcar como destino: una columna de luz la señala desde lejos y la brújula da la
-   distancia. Lo usa graph3d.js. */
+   distancia. En el modo galaxias (galaxy.js) no hay valle ni cielo de día: el mundo es el espacio,
+   sin suelo, y la brújula y el minimapa llevan a las galaxias. Lo usa graph3d.js. */
 (function (GB) {
   'use strict';
   const { U, i18n } = GB;
@@ -258,8 +259,9 @@
       this.buildUI();
     }
 
-    /** Altura del suelo en (x, z): la misma del sombreador del terreno. */
+    /** Altura del suelo en (x, z): la misma del sombreador del terreno. En el espacio no hay suelo. */
     heightAt(x, z) {
+      if (this.space) return -Infinity;
       const V = this.valley;
       const k = this.k;
       const w = Math.abs(x);
@@ -409,7 +411,7 @@
       const g = this.g;
       const dark = g.dark;
       const bg = g.bg;
-      const cs = getComputedStyle(document.documentElement);
+      const cs = getComputedStyle(g.wrap);
       const v = (n, fb) => cs.getPropertyValue(n).trim() || fb;
       const ink3 = new THREE.Color(v('--ink-3', '#78837f'));
       const C = (hex) => new THREE.Color(hex);
@@ -424,6 +426,15 @@
       s.uSunCol.value.copy(C(dark ? 0xdde6f2 : 0xffe9bf));
       s.uSunGlow.value = dark ? 0.16 : 0.5;
       s.uDisk.value = Math.cos(dark ? 0.016 : 0.024);
+      if (this.space) {
+        // el espacio: casi negro, sin sol, con dos nebulosas de color de rama
+        s.uHorizon.value.copy(g.spaceCol);
+        s.uZenith.value.copy(g.spaceCol).lerp(C(0x000000), 0.35);
+        s.uGlow.value.setRGB(0, 0, 0);
+        s.uNebA.value = 0.24;
+        s.uSunGlow.value = 0;
+        s.uDisk.value = 2;
+      }
 
       const t = this.terrainU;
       t.uHaze.value.copy(bg);
@@ -469,6 +480,21 @@
       this.mapDirty = true;
     }
 
+    /** Modo galaxias: sin valle, sin nubes y sin el presente ni el pasado en la brújula. */
+    setSpace(on) {
+      this.space = on;
+      this.terrain.visible = this.clouds.visible = this.sky.visible = !on; // el cielo del espacio lo pone galaxy.js
+      this.el.now.hidden = this.el.past.hidden = on;
+      this.readTheme();
+      this.syncMarks();
+      this.mapDirty = true;
+    }
+
+    /** Dónde está una rama: su cabeza o, en el espacio, el núcleo de su galaxia. */
+    headAt(h) {
+      return this.space ? h.curV : this.g.nodes.get(h.data.sha)?.curV || h.curV;
+    }
+
     /** Cuadro a cuadro: el suelo baja o sube con suavidad si el grafo cambió de tamaño. */
     step(now, dt) {
       let changed = false;
@@ -482,7 +508,7 @@
         const at = this.g.branchPos(this.waypoint);
         if (at) {
           const base = this.pillar.material.uniforms.uBase.value;
-          const y = this.heightAt(at.pos.x, at.pos.z);
+          const y = this.space ? at.pos.y - 40 : this.heightAt(at.pos.x, at.pos.z);
           if (base.x !== at.pos.x || base.z !== at.pos.z || base.y !== y) (base.set(at.pos.x, y, at.pos.z), (changed = true));
         }
       }
@@ -499,6 +525,10 @@
 
     /** La órbita no baja del suelo: el ángulo máximo depende de la distancia al objetivo. */
     limitOrbit(c, cam) {
+      if (this.space) {
+        c.maxPolarAngle = Math.PI; // en el espacio se puede mirar desde abajo
+        return;
+      }
       const dist = Math.max(1e-3, cam.position.distanceTo(c.target));
       const lift = c.target.y - (this.groundY + 2.5);
       c.maxPolarAngle = Math.PI / 2 + Math.asin(clamp(lift / dist, -1, 1));
@@ -523,7 +553,7 @@
       const u = this.pillar.material.uniforms;
       u.uColor.value.copy(this.g.col(at.color)).lerp(this.g.white, this.g.dark ? 0.15 : 0);
       u.uOpacity.value = this.g.dark ? 0.85 : 0.7;
-      u.uBase.value.set(at.pos.x, this.heightAt(at.pos.x, at.pos.z), at.pos.z);
+      u.uBase.value.set(at.pos.x, this.space ? at.pos.y - 40 : this.heightAt(at.pos.x, at.pos.z), at.pos.z);
     }
 
     /* ---------- descubrir ramas ---------- */
@@ -561,21 +591,22 @@
       const g = this.g;
       const cam = g.camera.position;
       for (const [name, h] of g.heads) {
-        const node = g.nodes.get(h.data.sha)?.curV || h.curV;
+        const node = this.headAt(h);
         const d = cam.distanceTo(node);
+        const near = this.space ? (g.gx.galaxyOf(name)?.R || 4) + 8 : DISCOVER; // una galaxia, al entrar en ella
         if (name === this.waypoint && d < ARRIVE) {
           this.banner('world.arrived', name, h.liveColor || h.data.color);
           if (g.motion) g.ripple(node, g.col(h.liveColor || h.data.color), 1.6);
           g.opts.onExplore?.({ kind: 'arrive', name });
           this.setWaypoint(null);
         }
-        if (d >= DISCOVER || this.found.has(name)) continue;
+        if (d >= near || this.found.has(name)) continue;
         this.found.add(name);
         this.save();
         this.syncMarks();
         this.mapDirty = true;
         const ex = this.explored();
-        this.banner('world.discovered', name, h.liveColor || h.data.color, ex);
+        this.banner(this.space ? 'galaxy.discovered' : 'world.discovered', name, h.liveColor || h.data.color, ex);
         if (now - (this.lastSound || -1e9) > SOUND_MS) {
           this.lastSound = now;
           g.opts.onExplore?.({ kind: 'discover', name });
@@ -683,7 +714,7 @@
       const near = [];
       for (const [name, h] of g.heads) {
         if (name === this.waypoint) continue;
-        const p = g.nodes.get(h.data.sha)?.curV || h.curV;
+        const p = this.headAt(h);
         const dx = p.x - cam.x;
         const dz = p.z - cam.z;
         if (Math.abs(wrapAngle(Math.atan2(-dx, -dz) - yaw)) > half) continue;
@@ -758,7 +789,8 @@
         this.lastGauge = now;
         const alt = Math.max(0, (cam.y - this.heightAt(cam.x, cam.z)) * METERS);
         const kmh = f.vel.length() * METERS * 3.6;
-        const text = `↑ ${i18n.fmtUnit(Math.round(alt), 'meter')} · ${i18n.fmtUnit(Math.round(kmh), 'kilometer-per-hour')}`;
+        const speed = i18n.fmtUnit(Math.round(kmh), 'kilometer-per-hour');
+        const text = this.space ? speed : `↑ ${i18n.fmtUnit(Math.round(alt), 'meter')} · ${speed}`; // en el espacio no hay altura
         if (this.el.gauges.textContent !== text) this.el.gauges.textContent = text;
       }
     }
@@ -783,8 +815,10 @@
         el.style.opacity = vis ? '' : '0';
         el.style.transform = `translateX(${x.toFixed(1)}px)`;
       };
-      place(this.el.past, 0);
-      place(this.el.now, Math.PI);
+      if (!this.space) {
+        place(this.el.past, 0);
+        place(this.el.now, Math.PI);
+      }
 
       // ramas: su rumbo, y la más centrada (o el destino) muestra nombre y distancia
       let focus = null;
@@ -793,7 +827,7 @@
       for (const [name, m] of this.marks) {
         const h = this.g.heads.get(name);
         if (!h) continue;
-        const p = this.g.nodes.get(h.data.sha)?.curV || h.curV;
+        const p = this.headAt(h);
         const dx = p.x - cam.x;
         const dz = p.z - cam.z;
         let x = at(Math.atan2(-dx, -dz));
@@ -841,7 +875,7 @@
       ctx.beginPath();
       ctx.arc(0, 0, R - 1, 0, Math.PI * 2);
       ctx.clip();
-      const range = clamp(g.radius * 5, 60, 2500);
+      const range = this.space ? clamp(g.radius * 0.9, 50, 2500) : clamp(g.radius * 5, 60, 2500);
       const k = (R - 4) / range;
       const cs = Math.cos(yaw);
       const sn = Math.sin(yaw);
@@ -854,12 +888,14 @@
       const far = range * 6;
 
       // el fondo del valle, por donde corre el tiempo
-      ctx.globalAlpha = C.dark ? 0.1 : 0.07;
       ctx.strokeStyle = C.ink3;
-      ctx.lineWidth = 2 * this.valley.y * k;
-      ctx.beginPath();
-      line(0, cam.z - far, 0, cam.z + far);
-      ctx.stroke();
+      if (!this.space) {
+        ctx.globalAlpha = C.dark ? 0.1 : 0.07;
+        ctx.lineWidth = 2 * this.valley.y * k;
+        ctx.beginPath();
+        line(0, cam.z - far, 0, cam.z + far);
+        ctx.stroke();
+      }
       ctx.globalAlpha = 0.35;
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -905,7 +941,7 @@
 
       // cabezas de rama: llenas si ya se descubrieron, huecas si no
       for (const [name, h] of g.heads) {
-        const p = g.nodes.get(h.data.sha)?.curV || h.curV;
+        const p = this.headAt(h);
         let x = mx(p.x, p.z);
         let y = my(p.x, p.z);
         const dest = name === this.waypoint;

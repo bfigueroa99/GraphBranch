@@ -286,6 +286,11 @@
       if (kind === 'complete') {
         for (let i = 0; i < 4; i++) this.bell(t + i * h, note(7 + i * 2), 0, 0.12, 1.4);
         this.pad(t + 4 * h, [note(0), note(4), note(7)], 0, 0.06, 2.4);
+      } else if (kind === 'scan') {
+        // el escáner: un ping que se aleja
+        this.pluck(t, note(d + 12), pan, 0.14, 0.7);
+        this.bell(t + h * 0.5, note(d + 14), pan, 0.07, 1.6);
+        this.bell(t + h * 1.5, note(d + 14), pan, 0.04, 1.6);
       } else if (kind === 'arrive') {
         this.bell(t, note(d + 7), pan, 0.13, 1.3);
         this.bell(t + h, note(d + 5), pan, 0.11, 1.6);

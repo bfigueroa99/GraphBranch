@@ -319,6 +319,16 @@
       shot.glide = 0; // avance del objetivo por el eje del tiempo
       shot.track = null;
 
+      if (shot.type === 'overview' && g.galaxy) {
+        // el universo entero, desde arriba y de lado
+        const target = new THREE.Vector3();
+        const d = (16 + Math.min(g.radius, 420) * 1.6) * wide;
+        const dir = new THREE.Vector3(side * 0.7, 0.75, 0.5).normalize();
+        shot.spin = side * 0.03;
+        shot.push = -0.006;
+        return { target, cam: target.clone().addScaledVector(dir, d) };
+      }
+
       if (shot.type === 'overview') {
         const span = clamp(zTop, 12, 70);
         const target = new THREE.Vector3(0, 0, zTop - span * 0.45);
@@ -332,14 +342,22 @@
       const at = (shot.type === 'event' || shot.type === 'tour') && g.branchPos(shot.branch);
       if (at) {
         const P = at.toV.clone();
-        // desde afuera de la espiral, algo por encima y del lado del presente, mirando hacia su historia
-        const out = new THREE.Vector3(P.x, P.y, 0);
-        if (out.lengthSq() < 0.5) out.set(side * 0.8, 0.6, 0);
-        out.normalize();
-        const reverse = shot.type === 'event' && shot.kind !== 'release' && Math.random() < 0.25; // contraplano desde el pasado
-        const dir = out.multiplyScalar(0.6).add(this.v.set(0, 0.42, reverse ? -0.7 : 0.75)).normalize();
+        const G = g.galaxy && g.gx.galaxyOf(shot.branch);
+        let dir;
+        if (G) {
+          // la galaxia casi de frente, un poco ladeada: se ven el brazo y el núcleo
+          const tilt = new THREE.Vector3().copy(G.u).multiplyScalar(side * 0.55).addScaledVector(G.v, (Math.random() - 0.5) * 0.6);
+          dir = tilt.addScaledVector(G.w, 1).normalize();
+        } else {
+          // desde afuera de la espiral, algo por encima y del lado del presente, mirando hacia su historia
+          const out = new THREE.Vector3(P.x, P.y, 0);
+          if (out.lengthSq() < 0.5) out.set(side * 0.8, 0.6, 0);
+          out.normalize();
+          const reverse = shot.type === 'event' && shot.kind !== 'release' && Math.random() < 0.25; // contraplano desde el pasado
+          dir = out.multiplyScalar(0.6).add(this.v.set(0, 0.42, reverse ? -0.7 : 0.75)).normalize();
+        }
         const target = P.clone();
-        let d = 12;
+        let d = G ? G.R * 2.2 + 8 : 12;
         if (shot.kind === 'release') {
           target.y += 3.5; // los fuegos suben: se mira un poco más arriba y desde más lejos
           d = 24;
@@ -350,8 +368,8 @@
             d = Math.max(13, from.toV.distanceTo(P) * 1.1 + 8);
           } else d = 16;
         } else if (shot.type === 'tour') {
-          d = 9.5;
-          shot.glide = -0.7; // la cámara viaja despacio hacia el pasado de la rama
+          d = G ? G.R * 1.6 + 6 : 9.5;
+          shot.glide = G ? 0 : -0.7; // la cámara viaja despacio hacia el pasado de la rama (en el espacio, gira)
           shot.spin = side * 0.025;
         }
         if (shot.type === 'event') {

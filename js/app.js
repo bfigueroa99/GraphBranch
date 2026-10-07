@@ -35,6 +35,7 @@
     fullscreenBtn: $('#fullscreen-btn'),
     replayBtn: $('#replay-btn'),
     flyBtn: $('#fly-btn'),
+    galaxyBtn: $('#galaxy-btn'),
     directorBtn: $('#director-btn'),
     tvBtn: $('#tv-btn'),
     tvClock: $('#tv-clock'),
@@ -128,6 +129,10 @@
         },
         onShot: (a) => lowerThird(a),
         onDirector: (st) => renderDirector(st),
+        // modo galaxias: los archivos de una rama (los planetas) se piden al acercarse a su galaxia
+        loadFiles: (q) => (source?.files ? source.files(q) : null),
+        onGalaxyChange: (on) => setPressed(el.galaxyBtn, on),
+        onScan: () => feed.sound && feed.synth.discover('scan', null, 0),
       });
     }
   } catch (err) {
@@ -150,6 +155,7 @@
     setPressed(el.view2d, v === '2d');
     el.spinBtn.hidden = v !== '3d';
     el.flyBtn.hidden = v !== '3d' || !graph3d?.flight;
+    el.galaxyBtn.hidden = v !== '3d' || !graph3d?.gx;
     el.directorBtn.hidden = v !== '3d' || !director;
     // los atajos de teclado solo se anuncian donde hay teclado y ratón
     const keys = v === '3d' && window.matchMedia?.('(pointer: fine)').matches;
@@ -197,6 +203,7 @@
     graph2d.clear();
     graph3d?.clear();
     graph3d?.world?.load(repoKey()); // y sus ramas descubiertas en el modo vuelo
+    graph3d?.gx?.reset(); // los archivos que se habían pedido eran del repo anterior
     followUI(true);
     feed.clear();
     paused = false;
@@ -723,6 +730,8 @@
   el.fullscreenBtn.addEventListener('click', toggleFullscreen);
   el.replayBtn.addEventListener('click', toggleReplay);
   el.flyBtn.addEventListener('click', () => graph3d?.flight?.toggle());
+  setPressed(el.galaxyBtn, !!graph3d?.galaxy);
+  el.galaxyBtn.addEventListener('click', () => graph3d?.setGalaxy(!graph3d.galaxy));
   el.graphPanel.addEventListener('keydown', (ev) => {
     // espacio: pausar o seguir el Replay (los botones y controles ya manejan su propio espacio;
     // en modo TV el espacio pausa todo, ver más abajo)

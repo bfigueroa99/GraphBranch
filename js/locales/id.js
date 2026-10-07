@@ -184,7 +184,10 @@ GB.i18n.define('id', {
   'hint.3d': 'Seret untuk memutar · klik kanan atau <kbd>Shift</kbd> + seret untuk menggeser · roda mouse atau cubit untuk zoom · klik commit untuk melihat detail',
   'hint.2d': 'Seret untuk memindahkan · roda mouse untuk menggulir riwayat · <kbd>Ctrl</kbd> + roda mouse atau cubit untuk zoom · klik commit untuk melihat detail',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> putar · <kbd>↑</kbd> <kbd>↓</kbd> jelajahi riwayat · <kbd>F</kbd> layar penuh',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> bergerak · <kbd>F</kbd> layar penuh',
   'graph.aria2d': 'Grafik branch dan commit',
+  'legend.merged': 'sudah di-merge',
+  'minimap.title': 'Ikhtisar: klik atau seret untuk berpindah',
   'graph.aria3d': 'Tampilan 3D branch dan commit',
 
   'banner.events': 'Repositori ini memiliki {total} branch. Tanpa token, GraphBranch hanya melihat branch yang muncul di feed event GitHub, yang terlambat beberapa menit. Dengan token, Anda akan melihat semuanya hampir secara real time.',

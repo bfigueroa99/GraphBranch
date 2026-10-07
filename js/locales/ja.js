@@ -184,7 +184,10 @@ GB.i18n.define('ja', {
   'hint.3d': 'ドラッグで回転 · 右クリックまたは <kbd>Shift</kbd> + ドラッグで移動 · ホイールまたはピンチで拡大縮小 · コミットをクリックで詳細表示',
   'hint.2d': 'ドラッグで移動 · ホイールで履歴をスクロール · <kbd>Ctrl</kbd> + ホイールまたはピンチで拡大縮小 · コミットをクリックで詳細表示',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> 回転 · <kbd>↑</kbd> <kbd>↓</kbd> 履歴を移動 · <kbd>F</kbd> 全画面表示',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> 移動 · <kbd>F</kbd> 全画面表示',
   'graph.aria2d': 'ブランチとコミットのグラフ',
+  'legend.merged': 'マージ済み',
+  'minimap.title': '全体図：クリックまたはドラッグで移動',
   'graph.aria3d': 'ブランチとコミットの 3D 表示',
 
   'banner.events': 'このリポジトリには {total} 個のブランチがあります。トークンがない場合、GraphBranch が認識できるのは GitHub のイベントフィードに現れるブランチだけで、そのフィードは数分遅れで届きます。トークンを使うと、すべてのブランチをほぼリアルタイムで確認できます。',

@@ -184,7 +184,10 @@ GB.i18n.define('da', {
   'hint.3d': 'Træk for at rotere · højreklik eller <kbd>Skift</kbd> + træk for at panorere · hjul eller knib for at zoome · klik på en commit for detaljer',
   'hint.2d': 'Træk for at flytte · hjul for at rulle gennem historikken · <kbd>Ctrl</kbd> + hjul eller knib for at zoome · klik på en commit for detaljer',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> roter · <kbd>↑</kbd> <kbd>↓</kbd> rejs gennem historikken · <kbd>F</kbd> fuld skærm',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> flyt rundt · <kbd>F</kbd> fuld skærm',
   'graph.aria2d': 'Graf over branches og commits',
+  'legend.merged': 'flettede',
+  'minimap.title': 'Overblik: klik eller træk for at flytte rundt',
   'graph.aria3d': '3D-visning af branches og commits',
 
   'banner.events': 'Dette repository har {total} branches. Uden token ser GraphBranch kun dem, der vises i GitHubs hændelsesfeed, som kommer nogle minutter forsinket. Med et token ser du dem alle næsten i realtid.',

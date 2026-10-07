@@ -189,7 +189,10 @@ GB.i18n.define('en', {
   'hint.3d': 'Drag to rotate · right-click or <kbd>Shift</kbd> + drag to pan · wheel or pinch to zoom · click a commit for details',
   'hint.2d': 'Drag to move · wheel to scroll through history · <kbd>Ctrl</kbd> + wheel or pinch to zoom · click a commit for details',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> rotate · <kbd>↑</kbd> <kbd>↓</kbd> travel through history · <kbd>F</kbd> full screen',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> move around · <kbd>F</kbd> full screen',
   'graph.aria2d': 'Graph of branches and commits',
+  'legend.merged': 'merged',
+  'minimap.title': 'Overview: click or drag to move around',
   'graph.aria3d': '3D view of branches and commits',
 
   'banner.events': "This repository has {total} branches. Without a token, GraphBranch only sees the ones that appear in GitHub's event feed, which arrives a few minutes late. With a token you will see all of them almost in real time.",

@@ -184,7 +184,10 @@ GB.i18n.define('zh-Hans', {
   'hint.3d': '拖动旋转 · 右键或 <kbd>Shift</kbd> + 拖动平移 · 滚轮或双指捏合缩放 · 点击提交查看详情',
   'hint.2d': '拖动移动 · 滚轮浏览历史记录 · <kbd>Ctrl</kbd> + 滚轮或双指捏合缩放 · 点击提交查看详情',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> 旋转 · <kbd>↑</kbd> <kbd>↓</kbd> 穿越历史记录 · <kbd>F</kbd> 全屏',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> 移动 · <kbd>F</kbd> 全屏',
   'graph.aria2d': '分支与提交关系图',
+  'legend.merged': '已合并',
+  'minimap.title': '概览：点击或拖动以移动',
   'graph.aria3d': '分支与提交的 3D 视图',
 
   'banner.events': '此仓库共有 {total} 个分支。没有令牌时，GraphBranch 只能看到出现在 GitHub 事件流中的分支，而事件流会延迟几分钟。使用令牌后，几乎可以实时看到所有分支。',

@@ -184,7 +184,10 @@ GB.i18n.define('hu', {
   'hint.3d': 'Húzással forgathatsz · jobb kattintás vagy <kbd>Shift</kbd> + húzás az eltoláshoz · görgetés vagy csipetés a nagyításhoz · kattints egy commitra a részletekért',
   'hint.2d': 'Húzással mozgathatod · görgetéssel lapozhatsz az előzményekben · <kbd>Ctrl</kbd> + görgetés vagy csipetés a nagyításhoz · kattints egy commitra a részletekért',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> forgatás · <kbd>↑</kbd> <kbd>↓</kbd> utazás az előzményekben · <kbd>F</kbd> teljes képernyő',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> mozgás · <kbd>F</kbd> teljes képernyő',
   'graph.aria2d': 'Ágak és commitok gráfja',
+  'legend.merged': 'beolvasztott',
+  'minimap.title': 'Áttekintés: kattints vagy húzd a mozgáshoz',
   'graph.aria3d': 'Ágak és commitok 3D nézete',
 
   'banner.events': 'Ennek a repozitóriumnak {total} ága van. Token nélkül a GraphBranch csak azokat az ágakat látja, amelyek megjelennek a GitHub eseményfolyamában, ez néhány perc késéssel érkezik. Tokennel mindet szinte valós időben láthatod.',

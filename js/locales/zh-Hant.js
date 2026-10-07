@@ -184,7 +184,10 @@ GB.i18n.define('zh-Hant', {
   'hint.3d': '拖曳旋轉 · 按右鍵或 <kbd>Shift</kbd> + 拖曳平移 · 滾輪或雙指縮放 · 按一下提交查看詳細資料',
   'hint.2d': '拖曳移動 · 滾輪瀏覽歷程記錄 · <kbd>Ctrl</kbd> + 滾輪或雙指縮放 · 按一下提交查看詳細資料',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> 旋轉 · <kbd>↑</kbd> <kbd>↓</kbd> 穿越歷程記錄 · <kbd>F</kbd> 全螢幕',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> 移動 · <kbd>F</kbd> 全螢幕',
   'graph.aria2d': '分支與提交關係圖',
+  'legend.merged': '已合併',
+  'minimap.title': '概覽：按一下或拖曳以移動',
   'graph.aria3d': '分支與提交的 3D 檢視',
 
   'banner.events': '此儲存庫共有 {total} 個分支。沒有權杖時，GraphBranch 只能看到出現在 GitHub 事件動態中的分支，而事件動態會延遲幾分鐘。使用權杖後，幾乎可以即時看到所有分支。',

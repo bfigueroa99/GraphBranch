@@ -188,7 +188,10 @@ GB.i18n.define('ro', {
   'hint.3d': 'Trageți pentru a roti · clic dreapta sau <kbd>Shift</kbd> + tragere pentru a deplasa · rotiță sau ciupire pentru zoom · clic pe un commit pentru detalii',
   'hint.2d': 'Trageți pentru a muta · rotiță pentru a parcurge istoricul · <kbd>Ctrl</kbd> + rotiță sau ciupire pentru zoom · clic pe un commit pentru detalii',
   'hint.keys': '<kbd>←</kbd> <kbd>→</kbd> rotire · <kbd>↑</kbd> <kbd>↓</kbd> călătorie prin istoric · <kbd>F</kbd> ecran complet',
+  'hint.keys2d': '<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> deplasare · <kbd>F</kbd> ecran complet',
   'graph.aria2d': 'Graful ramurilor și al commit-urilor',
+  'legend.merged': 'îmbinate',
+  'minimap.title': 'Privire de ansamblu: clic sau trageți pentru a vă deplasa',
   'graph.aria3d': 'Vizualizare 3D a ramurilor și a commit-urilor',
 
   'banner.events': 'Acest depozit are multe ramuri ({total}). Fără token, GraphBranch vede doar ramurile care apar în fluxul de evenimente GitHub, care ajunge cu câteva minute întârziere. Cu un token le veți vedea pe toate aproape în timp real.',

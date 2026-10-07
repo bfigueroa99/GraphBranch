@@ -166,8 +166,8 @@
     el.galaxyBtn.hidden = v !== '3d' || !graph3d?.gx;
     el.directorBtn.hidden = v !== '3d' || !director;
     // los atajos de teclado solo se anuncian donde hay teclado y ratón
-    const keys = v === '3d' && window.matchMedia?.('(pointer: fine)').matches;
-    el.hint.innerHTML = i18n.html('hint.' + v) + (keys ? ' · ' + i18n.html('hint.keys') : '');
+    const keys = window.matchMedia?.('(pointer: fine)').matches;
+    el.hint.innerHTML = i18n.html('hint.' + v) + (keys ? ' · ' + i18n.html(v === '3d' ? 'hint.keys' : 'hint.keys2d') : '');
     followUI(graph.following);
     if (save) U.store.set('view', v);
   }
@@ -309,7 +309,11 @@
         recordDay: activities.some((a) => a.kind === 'push') && isRecordDay(data),
       });
     }
-    if (!initial && !replay.active) graph3d?.celebrate(activities); // cada tipo de evento con su efecto
+    // cada tipo de evento con su efecto, en la vista que esté a la vista
+    if (!initial && !replay.active) {
+      graph3d?.celebrate(activities);
+      graph2d.celebrate(activities);
+    }
     renderRepo(data.repo);
     renderStats(data, L);
     if (!L.nodes.length) showOverlay('empty');
@@ -326,6 +330,7 @@
       graph3d?.update(L, gctx);
       if (!acts.length) return;
       graph3d?.celebrate(acts);
+      graph2d.celebrate(acts);
       if (feed.sound) feed.synth.play(acts, feed.panOf);
     },
     onExit: () => {
@@ -741,7 +746,7 @@
     setPressed(el.fullscreenBtn, on);
     setPressed(el.tvFs, !!fullscreenEl());
     (on ? el.graphPanel : document.body).appendChild(el.toasts);
-    if (on && view === '3d') el.graph3d.focus({ preventScroll: true }); // las flechas funcionan de inmediato
+    if (on) (view === '3d' ? el.graph3d : el.graph).focus({ preventScroll: true }); // las flechas funcionan de inmediato
   }
 
   document.addEventListener('fullscreenchange', onFullscreen);

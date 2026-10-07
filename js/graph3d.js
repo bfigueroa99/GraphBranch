@@ -34,7 +34,9 @@
   const HEAD_SCALE = 1.55;
   const EDGE_R = 0.11;
   const GHOST_R = 0.07;
-  const RADIAL = 8; // lados de los tubos
+  const RADIAL = 12; // lados de los tubos (de cerca, menos se ven como facetas)
+  const RADIAL_MID = 8; // con miles de tramos
+  const THIN_D = 8; // a menos de esta distancia de la cámara los tubos se afinan: tope de grosor aparente
   const AMBIENT_MS = 31; // en reposo, los efectos se dibujan a ~30 fps
   const MAX_PIXELS = 4.6e6; // tope de píxeles del lienzo (pantallas 4K a pantalla completa)
   const SPIN_SPEED = 0.037; // rad/s del giro lento
@@ -90,21 +92,41 @@
     };
   }
 
-  function flowHook(flow, time, fog) {
+  /* Tope de grosor aparente: un tubo que pasa junto a la cámara se afina (como una línea de ancho
+     fijo en pantalla) en vez de volverse una cañería que tapa la vista. El cilindro unitario va por
+     z de 0 a 1, así que (0, 0, position.z) es el punto del eje bajo cada vértice. */
+  const THIN_GLSL = `
+    #include <begin_vertex>
+    #ifdef USE_INSTANCING
+      vec3 gbAxis = ( instanceMatrix * vec4( 0.0, 0.0, position.z, 1.0 ) ).xyz;
+      float gbDepth = -( modelViewMatrix * vec4( gbAxis, 1.0 ) ).z;
+      transformed.xy *= clamp( gbDepth / gbThin, 0.05, 1.0 );
+    #else
+      vec3 gbAxis = transformed;
+    #endif`;
+
+  /** Tubos sin pulsos (tramos de la historia que sigue): solo el afinado junto a la cámara. */
+  function thinHook(thin) {
+    return (sh) => {
+      sh.uniforms.gbThin = thin;
+      sh.vertexShader = 'uniform float gbThin;\n' + sh.vertexShader.replace('#include <begin_vertex>', THIN_GLSL);
+    };
+  }
+
+  function flowHook(flow, time, fog, thin) {
     return (sh) => {
       sh.uniforms.gbFlow = flow;
       sh.uniforms.gbTime = time;
       sh.uniforms.gbFog = fog;
+      sh.uniforms.gbThin = thin;
+      // el pulso se mide sobre el eje del tubo, no sobre su superficie: así su frente es
+      // perpendicular al tubo y no una cuña (de cerca se veía como una punta de flecha)
       sh.vertexShader =
-        'uniform vec2 gbFog;\nvarying vec3 vGbPos;\n' +
-        sh.vertexShader.replace(
+        'uniform vec2 gbFog;\nuniform float gbThin;\nvarying vec3 vGbPos;\n' +
+        sh.vertexShader.replace('#include <begin_vertex>', THIN_GLSL).replace(
           '#include <project_vertex>',
           `#include <project_vertex>${FOG_CULL_GLSL}
-          vec4 gbW = vec4( transformed, 1.0 );
-          #ifdef USE_INSTANCING
-            gbW = instanceMatrix * gbW;
-          #endif
-          vGbPos = ( modelMatrix * gbW ).xyz;`,
+          vGbPos = ( modelMatrix * vec4( gbAxis, 1.0 ) ).xyz;`,
         );
       sh.fragmentShader =
         'uniform float gbFlow;\nuniform float gbTime;\nvarying vec3 vGbPos;\n' +
@@ -112,7 +134,8 @@
           EMISSIVE,
           `${EMISSIVE}${TINT_GLSL}
           float gbQ = fract( vGbPos.z * 0.11 - gbTime * 0.24 + length( vGbPos.xy ) * 0.37 );
-          float gbP = gbQ * gbQ; gbP *= gbP; gbP *= gbP;
+          // cometa: la cola sube despacio y el frente se apaga suave, sin corte seco
+          float gbP = smoothstep( 0.6, 0.93, gbQ ) * ( 1.0 - smoothstep( 0.93, 1.0, gbQ ) );
           totalEmissiveRadiance += mix( diffuseColor.rgb, vec3( 1.0 ), 0.35 ) * gbP * gbFlow;`,
         );
     };
@@ -577,6 +600,7 @@
         flow: { value: 0 },
         noFlow: { value: 0 },
         rim: { value: 0.8 },
+        thin: { value: THIN_D },
       };
 
       this.geo = {
@@ -585,21 +609,24 @@
         sphereMin: new THREE.SphereGeometry(NODE_R, 8, 6),
         torus: new THREE.TorusGeometry(0.48, 0.13, 10, 30),
         torusLo: new THREE.TorusGeometry(0.48, 0.13, 6, 16),
-        tube: new THREE.CylinderGeometry(1, 1, 1, RADIAL, 1, true).rotateX(Math.PI / 2).translate(0, 0, 0.5),
+        // con tapas: de cerca, una punta que sobresale en un codo o mira a la cámara no se ve hueca
+        tube: new THREE.CylinderGeometry(1, 1, 1, RADIAL, 1, false).rotateX(Math.PI / 2).translate(0, 0, 0.5),
+        tubeMid: new THREE.CylinderGeometry(1, 1, 1, RADIAL_MID, 1, true).rotateX(Math.PI / 2).translate(0, 0, 0.5),
         tubeLo: new THREE.CylinderGeometry(1, 1, 1, 5, 1, true).rotateX(Math.PI / 2).translate(0, 0, 0.5),
         ring: new THREE.RingGeometry(0.94, 1, 72),
         portal: new THREE.RingGeometry(0.9, 1.1, 160, 1), // solo el anillo: el sombreador no corre en toda la pantalla
         beam: new THREE.CylinderGeometry(0.22, 0.6, 1, 18, 1, true).translate(0, 0.5, 0),
       };
 
-      this.flowLive = flowHook(this.u.flow, this.u.time, this.u.fog);
+      this.flowLive = flowHook(this.u.flow, this.u.time, this.u.fog, this.u.thin);
       this.nodeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, roughness: 0.32, metalness: 0.1 });
       this.nodeMat.onBeforeCompile = nodeHook(this.u);
       this.lineMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, roughness: 0.5, metalness: 0.05 });
       this.lineMat.onBeforeCompile = this.flowLive;
       this.ghostMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, roughness: 0.55, metalness: 0.05, transparent: true, opacity: 0.5 });
-      this.ghostMat.onBeforeCompile = flowHook(this.u.noFlow, this.u.time, this.u.fog);
+      this.ghostMat.onBeforeCompile = flowHook(this.u.noFlow, this.u.time, this.u.fog, this.u.thin);
       this.stubMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      this.stubMat.onBeforeCompile = thinHook(this.u.thin);
       // líneas punteadas de las ramas sin commits propios: todas en un solo objeto, con color por vértice
       this.pointerLines = new THREE.LineSegments(
         new THREE.BufferGeometry(),
@@ -1848,8 +1875,9 @@
         count[e.kind === 'stub' ? 'stub' : e.color === 'ghost' ? 'ghost' : 'line'] += e.kind === 'fork' || e.kind === 'merge' ? CURVE_SEGS + 1 : 1;
         if (e.kind !== 'stub' && !this.galaxy) count.ground++; // su sombra en el suelo: un tramo recto (en el espacio no hay suelo)
       }
-      // con decenas de miles de tramos, tubos de cinco lados
-      const tube = count.line + count.ghost > 20000 ? this.geo.tubeLo : this.geo.tube;
+      // con miles de tramos, tubos de ocho lados y sin tapas; con decenas de miles, de cinco
+      const segs = count.line + count.ghost;
+      const tube = segs > 20000 ? this.geo.tubeLo : segs > 6000 ? this.geo.tubeMid : this.geo.tube;
       this.iLine.setGeometry(tube);
       this.iGhost.setGeometry(tube);
       this.iLine.begin(count.line);

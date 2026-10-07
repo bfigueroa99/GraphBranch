@@ -48,8 +48,8 @@ GB.i18n.define('hr', {
   'stats.branches.only': 'jedina u repozitoriju',
   'stats.branches.all': 'sve u repozitoriju',
   'stats.branches.recent': 's nedavnom aktivnošću, od {total}',
-  'stats.branches.top': 'najaktivnije od {total}',
   'stats.branches.of': 'od {total} u repozitoriju',
+  'stats.branches.loading': 'od {total} · učitavam ostatak',
   'stats.branches.matching': {
     one: '{n} podudaranje s „{filter}” (od {total})',
     few: '{n} podudaranja s „{filter}” (od {total})',
@@ -159,7 +159,7 @@ GB.i18n.define('hr', {
   'graph.aria2d': 'Graf grana i commitova',
   'graph.aria3d': '3D prikaz grana i commitova',
 
-  'banner.events': 'Ovaj repozitorij ima mnogo grana ({total}). Bez tokena GraphBranch vidi samo grane koje se pojavljuju u feedu događaja na GitHubu, koji kasni nekoliko minuta. S tokenom ćete vidjeti najaktivnije grane gotovo u stvarnom vremenu.',
+  'banner.events': 'Ovaj repozitorij ima mnogo grana ({total}). Bez tokena GraphBranch vidi samo grane koje se pojavljuju u feedu događaja na GitHubu, koji kasni nekoliko minuta. S tokenom ćete ih vidjeti sve gotovo u stvarnom vremenu.',
   'banner.anon': 'Bez tokena GitHub dopušta 60 zahtjeva na sat: prikaz se osvježava svakih nekoliko minuta.',
   'banner.add': 'Dodajte token',
 
@@ -307,9 +307,8 @@ GB.i18n.define('hr', {
   'settings.show': 'Prikažite',
   'settings.hide': 'Sakrijte',
   'settings.tokenHelp': 'Bez tokena GitHub dopušta 60 zahtjeva na sat. S <em>fine-grained</em> tokenom samo za čitanje (dozvole Metadata, Contents i Pull requests) prikaz se osvježava svakih 10 sekundi, radi s repozitorijima koji imaju tisuće grana i možete vidjeti privatne repozitorije. Token se sprema samo u ovom pregledniku i šalje se isključivo na api.github.com.',
-  'settings.maxBranches': 'Broj najaktivnijih grana za prikaz',
   'settings.depth': 'Commitova po grani',
-  'settings.branchesHelp': 'U velikim repozitorijima GraphBranch ne prikazuje sve grane: prikazuje zadanu granu, one koje prikvačite (kliknite granu → <strong>Prikvačite</strong>) i one s najnovijim commitovima. Filtrom grafa usredotočite se na prefiks, na primjer <code>release/</code>.',
+  'settings.branchesHelp': 'GraphBranch prikazuje sve grane repozitorija, a najaktivnije su najbliže zadanoj grani. U velikim repozitorijima pojavljuju se postupno, najprije najaktivnije. Prikvačene grane (kliknite granu → <strong>Prikvačite</strong>) stoje odmah ispod zadane grane, čak i uz filtar. Filtrom grafa usredotočite se na prefiks, na primjer <code>release/</code>.',
   'settings.clearToken': 'Obrišite token',
   'settings.cancel': 'Odustanite',
   'settings.save': 'Spremite i ponovno povežite',

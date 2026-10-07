@@ -48,8 +48,8 @@ GB.i18n.define('ro', {
   'stats.branches.only': 'singura din depozit',
   'stats.branches.all': 'toate din depozit',
   'stats.branches.recent': 'cu activitate recentă, din {total}',
-  'stats.branches.top': 'cele mai active din {total}',
   'stats.branches.of': 'din {total} în depozit',
+  'stats.branches.loading': 'din {total} · se încarcă restul',
   'stats.branches.matching': {
     one: '{n} se potrivește cu „{filter}” din {total}',
     few: '{n} se potrivesc cu „{filter}” din {total}',
@@ -159,7 +159,7 @@ GB.i18n.define('ro', {
   'graph.aria2d': 'Graful ramurilor și al commit-urilor',
   'graph.aria3d': 'Vizualizare 3D a ramurilor și a commit-urilor',
 
-  'banner.events': 'Acest depozit are multe ramuri ({total}). Fără token, GraphBranch vede doar ramurile care apar în fluxul de evenimente GitHub, care ajunge cu câteva minute întârziere. Cu un token veți vedea cele mai active ramuri aproape în timp real.',
+  'banner.events': 'Acest depozit are multe ramuri ({total}). Fără token, GraphBranch vede doar ramurile care apar în fluxul de evenimente GitHub, care ajunge cu câteva minute întârziere. Cu un token le veți vedea pe toate aproape în timp real.',
   'banner.anon': 'Fără token, GitHub permite 60 de cereri pe oră: vizualizarea se actualizează la câteva minute.',
   'banner.add': 'Adăugați un token',
 
@@ -307,9 +307,8 @@ GB.i18n.define('ro', {
   'settings.show': 'Afișare',
   'settings.hide': 'Ascundere',
   'settings.tokenHelp': 'Fără token, GitHub permite 60 de cereri pe oră. Cu un token <em>fine-grained</em> doar pentru citire (permisiuni Metadata, Contents și Pull requests), vizualizarea se actualizează la fiecare 10 secunde, funcționează cu depozite care au mii de ramuri și puteți vedea depozite private. Tokenul este stocat doar în acest browser și este trimis exclusiv către api.github.com.',
-  'settings.maxBranches': 'Cele mai active ramuri de afișat',
   'settings.depth': 'Commit-uri per ramură',
-  'settings.branchesHelp': 'În depozitele mari, GraphBranch nu listează toate ramurile: afișează ramura implicită, pe cele fixate (clic pe o ramură → <strong>Fixați</strong>) și pe cele cu cele mai recente commit-uri. Folosiți filtrul grafului pentru a vă concentra pe un prefix, de exemplu <code>release/</code>.',
+  'settings.branchesHelp': 'GraphBranch afișează toate ramurile depozitului, cele mai active cel mai aproape de ramura implicită. În depozitele mari apar treptat, întâi cele mai active. Ramurile fixate (clic pe o ramură → <strong>Fixați</strong>) stau imediat sub ramura implicită, chiar și cu un filtru. Folosiți filtrul grafului pentru a vă concentra pe un prefix, de exemplu <code>release/</code>.',
   'settings.clearToken': 'Ștergeți tokenul',
   'settings.cancel': 'Anulare',
   'settings.save': 'Salvați și reconectați',

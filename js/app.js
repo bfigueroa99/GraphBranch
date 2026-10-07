@@ -87,16 +87,15 @@
     tokenInput: $('#token-input'),
     tokenToggle: $('#token-toggle'),
     tokenClear: $('#token-clear'),
-    maxBranches: $('#max-branches'),
     depth: $('#depth'),
     settingsCancel: $('#settings-cancel'),
   };
 
   const settings = {
     token: U.store.get('token', ''),
-    maxBranches: U.store.get('maxBranches', 15),
     depth: U.store.get('depth', 40),
   };
+  U.store.set('maxBranches', null); // ya no hay tope: se muestran todas las ramas
 
   let source = null;
   let layout = new GB.Layout();
@@ -230,7 +229,6 @@
       new GB.GitHubSource({
         ...parsed,
         token: settings.token,
-        maxBranches: settings.maxBranches,
         depth: settings.depth,
         filter,
         pins: U.store.get('pins:' + key, []),
@@ -260,14 +258,17 @@
 
   let lastRender = null;
 
-  const liveCtx = (data, initial) => ({
+  /* `calm`: llegan ramas que esperaban su historia (la carga de a poco de un repo grande): se
+     suman sin efectos de llegada, que son para lo nuevo */
+  const liveCtx = (data, initial, calm = false) => ({
     initial,
+    calm,
     prs: prsByBranch(data),
     pins: data.repo.demo ? new Set() : getPins(),
     canPin: !data.repo.demo,
   });
 
-  function onUpdate({ activities, initial }) {
+  function onUpdate({ activities, initial, calm }) {
     const news = !initial && activities.length > 0;
     // en modo TV lo que pasa ahora manda: el Replay de ambiente deja paso al presente
     if (news && tv.attract && replay.active) replay.stop();
@@ -277,7 +278,7 @@
     lastRender = { data, L };
     // durante el Replay el grafo muestra el pasado; lo nuevo sigue llegando al panel y se dibuja al volver
     if (!replay.active) {
-      const gctx = liveCtx(data, initial);
+      const gctx = liveCtx(data, initial, calm);
       graph2d.update(L, gctx);
       graph3d?.update(L, gctx);
     }
@@ -492,14 +493,15 @@
     el.st.branches.textContent = U.fmtNum(visible);
     let sub;
     const totalText = U.fmtNum(total);
-    if (data.matchingBranches != null) {
+    if (data.pending > 0) {
+      // un repo grande se dibuja de a poco: las ramas que faltan llegan en los próximos ciclos
+      sub = t('stats.branches.loading', { total: U.fmtNum(visible + data.pending) });
+    } else if (data.matchingBranches != null) {
       sub = t('stats.branches.matching', { n: data.matchingBranches, filter: U.truncate(source.filter || '', 18), total: totalText });
     } else if (total <= visible) {
       sub = visible === 1 ? t('stats.branches.only') : t('stats.branches.all');
     } else if (data.mode === 'events') {
       sub = t('stats.branches.recent', { total: totalText });
-    } else if (data.mode === 'graphql') {
-      sub = t('stats.branches.top', { total: totalText });
     } else sub = t('stats.branches.of', { total: totalText });
     el.st.branchesSub.textContent = sub;
     el.st.branchesSub.title = sub;
@@ -914,7 +916,6 @@
     el.tokenInput.value = settings.token;
     el.tokenInput.type = 'password';
     el.tokenToggle.textContent = t('settings.show');
-    el.maxBranches.value = settings.maxBranches;
     el.depth.value = settings.depth;
     if (typeof el.dialog.showModal === 'function') el.dialog.showModal();
     else el.dialog.setAttribute('open', '');
@@ -941,10 +942,8 @@
   el.settingsForm.addEventListener('submit', (ev) => {
     ev.preventDefault();
     settings.token = el.tokenInput.value.trim();
-    settings.maxBranches = Math.max(2, Math.min(60, Number(el.maxBranches.value) || 15));
     settings.depth = Math.max(10, Math.min(100, Number(el.depth.value) || 40));
     U.store.set('token', settings.token || null);
-    U.store.set('maxBranches', settings.maxBranches);
     U.store.set('depth', settings.depth);
     closeSettings();
     if (source && !source.data.repo.demo) connectRepo(`${source.owner}/${source.name}`);

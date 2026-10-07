@@ -24,6 +24,11 @@
   const PUFFS = 4; // copos por nube
   const CLOUD_TILE = 720; // las nubes se repiten en un mosaico alrededor de la cámara
   const BANNER_MS = 2800;
+  const MAX_MARKS = 40; // ramas en la brújula a la vez: las más cercanas de las que quedan a la vista
+  const PICK_MS = 250; // cada cuánto se vuelven a elegir (moverlas es cada cuadro)
+  const SOUND_MS = 600; // al cruzar una zona densa, un motivo cada tanto, no una ráfaga
+  /** Escala del mundo: con miles de ramas la espiral es enorme y el valle, las montañas y la bruma crecen con ella. */
+  const scaleFor = (radius) => Math.max(1, radius / 30);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const fract = (x) => x - Math.floor(x);
   const smooth = (a, b, x) => {
@@ -62,10 +67,11 @@
 
   /* El fondo del valle es plano bajo el grafo; más afuera, una llanura con lomas, y desde las
      paredes, colinas que crecen hasta montañas con crestas. `valley`: (fondo plano, pie de las
-     montañas, cumbres). */
+     montañas, cumbres); `uK`: escala del mundo (relieve más ancho y más alto con espirales enormes). */
   const HEIGHT_GLSL = `
     uniform float uGround;
     uniform vec3 uValley;
+    uniform float uK;
     float gbHash( vec2 p ) {
       vec3 p3 = fract( vec3( p.xyx ) * 0.1031 );
       p3 += dot( p3, p3.yzx + 33.33 );
@@ -79,12 +85,13 @@
     }
     float gbHeight( vec2 p ) {
       float w = abs( p.x );
-      float hills = gbNoise( p * 0.011 ) * 0.55 + gbNoise( p * 0.027 + 17.0 ) * 0.3 + gbNoise( p * 0.063 + 41.0 ) * 0.15;
-      float ridge = 1.0 - abs( 2.0 * gbNoise( p * 0.018 + 5.0 ) - 1.0 );
+      vec2 q = p / uK;
+      float hills = gbNoise( q * 0.011 ) * 0.55 + gbNoise( q * 0.027 + 17.0 ) * 0.3 + gbNoise( q * 0.063 + 41.0 ) * 0.15;
+      float ridge = 1.0 - abs( 2.0 * gbNoise( q * 0.018 + 5.0 ) - 1.0 );
       float side = smoothstep( uValley.y, uValley.z, w );
       float plain = smoothstep( uValley.x, uValley.y, w );
-      float dunes = plain * ( gbNoise( p * 0.08 + 3.0 ) * 1.8 + gbNoise( p * 0.026 + 9.0 ) * plain * 7.0 );
-      return uGround + dunes + side * side * ( hills * hills * 95.0 + ridge * ridge * ridge * 40.0 );
+      float dunes = plain * ( gbNoise( q * 0.08 + 3.0 ) * 1.8 + gbNoise( q * 0.026 + 9.0 ) * plain * 7.0 );
+      return uGround + uK * ( dunes + side * side * ( hills * hills * 95.0 + ridge * ridge * ridge * 40.0 ) );
     }`;
 
   /* terreno: facetas planas iluminadas por el sol, curvas de nivel y bruma hacia el horizonte */
@@ -106,11 +113,12 @@
     uniform vec2 uFogW;
     uniform float uLineA;
     uniform float uShade;
+    uniform float uK;
     varying vec3 vW;
     void main() {
       vec3 n = normalize( cross( dFdx( vW ), dFdy( vW ) ) );
       if ( n.y < 0.0 ) n = -n;
-      float h = vW.y - uGround;
+      float h = ( vW.y - uGround ) / uK;
       vec3 col = mix( uLow, uHigh, smoothstep( 2.0, 70.0, h ) );
       col *= 1.0 + uShade * ( dot( n, uSun ) - uSun.y ); // el suelo plano es la referencia
       // curvas de nivel cada 3 unidades, más marcadas cada 15; ninguna en el fondo del valle
@@ -120,7 +128,7 @@
       float major = 1.0 - step( 0.5, abs( mod( floor( c + 0.5 ), 5.0 ) ) );
       line *= smoothstep( 0.6, 2.5, h ) * ( 1.0 - smoothstep( 0.25, 0.6, fw ) ) * ( 0.65 + 0.7 * major );
       float d = distance( vW, cameraPosition );
-      col = mix( col, uLine, clamp( line * uLineA * ( 1.0 - smoothstep( 80.0, 320.0, d ) ), 0.0, 1.0 ) );
+      col = mix( col, uLine, clamp( line * uLineA * ( 1.0 - smoothstep( 80.0 * uK, 320.0 * uK, d ) ), 0.0, 1.0 ) );
       gl_FragColor = vec4( mix( col, uHaze, smoothstep( uFogW.x, uFogW.y, d ) ), 1.0 );
     }`;
 
@@ -166,21 +174,22 @@
     uniform float uTime;
     uniform float uTile;
     uniform float uBase;
+    uniform float uK;
     uniform vec2 uFade;
     varying vec2 vUv;
     varying float vA;
     varying float vShade;
     void main() {
-      vec3 c = vec3( aCloud.x + uTime * 0.9, uBase + aCloud.y, aCloud.z + uTime * 0.3 );
+      vec3 c = vec3( aCloud.x * uK + uTime * 0.9, uBase + aCloud.y * uK, aCloud.z * uK + uTime * 0.3 );
       c.x = cameraPosition.x + mod( c.x - cameraPosition.x + uTile * 0.5, uTile ) - uTile * 0.5;
       c.z = cameraPosition.z + mod( c.z - cameraPosition.z + uTile * 0.5, uTile ) - uTile * 0.5;
       vec4 mv = viewMatrix * vec4( c, 1.0 );
-      float s = aCloud.w * ( 0.55 + 0.5 * aPuff.z );
-      mv.xy += aPuff.xy * aCloud.w * vec2( 1.5, 1.0 ) + position.xy * s * vec2( 1.7, 1.0 ); // más anchas que altas
+      float s = aCloud.w * uK * ( 0.55 + 0.5 * aPuff.z );
+      mv.xy += aPuff.xy * aCloud.w * uK * vec2( 1.5, 1.0 ) + position.xy * s * vec2( 1.7, 1.0 ); // más anchas que altas
       gl_Position = projectionMatrix * mv;
       vUv = uv;
       float d = length( mv.xyz );
-      vA = ( 1.0 - smoothstep( uFade.x, uFade.y, d ) ) * smoothstep( 8.0, 30.0, d );
+      vA = ( 1.0 - smoothstep( uFade.x, uFade.y, d ) ) * smoothstep( 8.0 * uK, 30.0 * uK, d );
       vShade = aPuff.y + position.y * 0.6;
       if ( vA < 0.004 ) gl_Position = vec4( 0.0, 0.0, 2.0, 1.0 );
     }`;
@@ -233,13 +242,15 @@
       this.g = g;
       this.valley = new THREE.Vector3(12, 25, 145);
       this.groundY = this.groundTo = -12;
-      this.u = { ground: { value: this.groundY }, valley: { value: this.valley } };
+      this.k = 1;
+      this.u = { ground: { value: this.groundY }, valley: { value: this.valley }, k: { value: 1 } };
       this.sunDir = new THREE.Vector3(-0.42, 0.3, -0.86).normalize();
       this.found = new Set(); // ramas descubiertas, por nombre
       this.key = null;
       this.waypoint = null;
       this.queue = [];
-      this.marks = new Map();
+      this.marks = new Map(); // ramas en la brújula ahora: nombre → { el }
+      this.pool = []; // botones de la brújula libres, para reusar
       this.makeSky();
       this.makeTerrain();
       this.makeClouds();
@@ -250,13 +261,21 @@
     /** Altura del suelo en (x, z): la misma del sombreador del terreno. */
     heightAt(x, z) {
       const V = this.valley;
+      const k = this.k;
       const w = Math.abs(x);
-      const hills = noise(x * 0.011, z * 0.011) * 0.55 + noise(x * 0.027 + 17, z * 0.027 + 17) * 0.3 + noise(x * 0.063 + 41, z * 0.063 + 41) * 0.15;
-      const ridge = 1 - Math.abs(2 * noise(x * 0.018 + 5, z * 0.018 + 5) - 1);
+      const qx = x / k;
+      const qz = z / k;
+      const hills = noise(qx * 0.011, qz * 0.011) * 0.55 + noise(qx * 0.027 + 17, qz * 0.027 + 17) * 0.3 + noise(qx * 0.063 + 41, qz * 0.063 + 41) * 0.15;
+      const ridge = 1 - Math.abs(2 * noise(qx * 0.018 + 5, qz * 0.018 + 5) - 1);
       const side = smooth(V.y, V.z, w);
       const plain = smooth(V.x, V.y, w);
-      const dunes = plain * (noise(x * 0.08 + 3, z * 0.08 + 3) * 1.8 + noise(x * 0.026 + 9, z * 0.026 + 9) * plain * 7);
-      return this.groundY + dunes + side * side * (hills * hills * 95 + ridge * ridge * ridge * 40);
+      const dunes = plain * (noise(qx * 0.08 + 3, qz * 0.08 + 3) * 1.8 + noise(qx * 0.026 + 9, qz * 0.026 + 9) * plain * 7);
+      return this.groundY + k * (dunes + side * side * (hills * hills * 95 + ridge * ridge * ridge * 40));
+    }
+
+    /** Hasta dónde llega el mundo desde la cámara: graph3d alarga el plano lejano para verlo entero. */
+    reach(radius) {
+      return 470 * scaleFor(radius);
     }
 
     /* ---------- escena ---------- */
@@ -296,6 +315,7 @@
       this.terrainU = {
         uGround: this.u.ground,
         uValley: this.u.valley,
+        uK: this.u.k,
         uLow: { value: new THREE.Color() },
         uHigh: { value: new THREE.Color() },
         uLine: { value: new THREE.Color() },
@@ -345,6 +365,7 @@
             uTime: this.g.u.time,
             uTile: { value: CLOUD_TILE },
             uBase: { value: 30 },
+            uK: this.u.k,
             uFade: { value: new THREE.Vector2(170, 340) },
             uColor: { value: new THREE.Color() },
             uBelly: { value: new THREE.Color() },
@@ -427,13 +448,21 @@
     /** El grafo cambió: el valle se ensancha con él y el destino sigue a su rama (o se borra con ella). */
     onLayout() {
       const r = this.g.radius;
+      const k = (this.k = this.u.k.value = scaleFor(r));
       this.groundTo = -(r + 5);
-      this.valley.set(r + 5, r + 110, r + 330);
+      this.valley.set(r + 5, r + 110 * k, r + 330 * k);
       if (!this.placed) {
         this.groundY = this.groundTo; // la primera vez, de golpe
         this.placed = true;
       }
-      this.clouds.material.uniforms.uBase.value = r + 16;
+      this.terrain.scale.set(k, 1, k);
+      this.terrainU.uFogW.value.set(30 * k, 450 * k);
+      const cu = this.clouds.material.uniforms;
+      cu.uBase.value = r + 16 * k;
+      cu.uTile.value = CLOUD_TILE * k;
+      cu.uFade.value.set(170 * k, 340 * k);
+      this.pillar.material.uniforms.uH.value = 160 * k;
+      if (this.complete && this.explored().n < this.g.heads.size) this.complete = false; // apareció una rama nueva
       if (this.waypoint && !this.g.heads.has(this.waypoint)) this.setWaypoint(null);
       this.paintPillar();
       this.syncMarks();
@@ -464,7 +493,8 @@
     beforeRender() {
       const cam = this.g.camera.position;
       this.sky.position.copy(cam);
-      this.terrain.position.set(Math.round(cam.x / CELL) * CELL, 0, Math.round(cam.z / CELL) * CELL);
+      const cell = CELL * this.k; // de a una celda: las facetas no "nadan"
+      this.terrain.position.set(Math.round(cam.x / cell) * cell, 0, Math.round(cam.z / cell) * cell);
     }
 
     /** La órbita no baja del suelo: el ángulo máximo depende de la distancia al objetivo. */
@@ -508,8 +538,14 @@
       this.mapDirty = true;
     }
 
+    /** Se guarda como mucho una vez por segundo (al cruzar una zona densa se descubren varias seguidas). */
     save() {
-      if (this.key) U.store.set('explored:' + this.key, [...this.found].slice(-400));
+      if (this.saveTimer) return;
+      const key = this.key;
+      this.saveTimer = setTimeout(() => {
+        this.saveTimer = 0;
+        if (key && key === this.key) U.store.set('explored:' + key, [...this.found].slice(-5000));
+      }, 1000);
     }
 
     explored() {
@@ -519,8 +555,9 @@
     }
 
     /** En vuelo o recorriendo una rama: lo que pasa cerca queda descubierto y el destino, alcanzado.
-        Se mira en cada cuadro (son pocas ramas): a toda velocidad no se pasa de largo. */
-    explore() {
+        Se mira en cada cuadro (unas distancias por rama, poco aun con miles): a toda velocidad no se
+        pasa de largo. */
+    explore(now) {
       const g = this.g;
       const cam = g.camera.position;
       for (const [name, h] of g.heads) {
@@ -539,14 +576,16 @@
         this.mapDirty = true;
         const ex = this.explored();
         this.banner('world.discovered', name, h.liveColor || h.data.color, ex);
-        g.opts.onExplore?.({ kind: 'discover', name });
+        if (now - (this.lastSound || -1e9) > SOUND_MS) {
+          this.lastSound = now;
+          g.opts.onExplore?.({ kind: 'discover', name });
+        }
         if (ex.total >= 3 && ex.n === ex.total && !this.complete) {
           this.complete = true;
           this.banner('world.complete', null, null, ex);
           g.opts.onExplore?.({ kind: 'complete' });
         }
       }
-      if (this.complete && this.explored().n < this.g.heads.size) this.complete = false; // apareció una rama nueva
     }
 
     /* ---------- interfaz: brújula, minimapa, indicadores y rótulos ---------- */
@@ -619,29 +658,63 @@
       this.mapDirty = true;
     }
 
-    /** Un botón por rama en la brújula: se crean y se quitan según las ramas del grafo. */
+    /** Algo cambió en las ramas (llegaron, se fueron, se descubrió una, cambió el destino): la brújula
+        vuelve a elegir y a pintar sus marcas en el próximo cuadro. */
     syncMarks() {
-      const heads = this.g.heads;
+      this.marksDirty = true;
+      this.pickAt = 0;
+    }
+
+    /** Aspecto de la marca de una rama: su color, hueca si falta descubrirla, el destino resaltado. */
+    paintMark(m, name, h) {
+      const cls = `wd-mark ${h.liveColor || h.data.color}${this.found.has(name) ? '' : ' unk'}${name === this.waypoint ? ' dest' : ''}${h.data.isDefault ? ' home' : ''}`;
+      if (m.base !== cls) {
+        m.base = cls;
+        m.el.className = cls + (m.tilt || '');
+      }
+      const title = `${name} · ${tr(name === this.waypoint ? 'world.unmark' : 'world.mark')}`;
+      if (m.el.title !== title) m.el.title = title;
+    }
+
+    /** Elige qué ramas van en la brújula: las más cercanas de las que quedan dentro de ella (con miles de
+        ramas serían miles de botones) y siempre el destino. Los botones se reusan. */
+    pickMarks(cam, yaw, half) {
+      const g = this.g;
+      const near = [];
+      for (const [name, h] of g.heads) {
+        if (name === this.waypoint) continue;
+        const p = g.nodes.get(h.data.sha)?.curV || h.curV;
+        const dx = p.x - cam.x;
+        const dz = p.z - cam.z;
+        if (Math.abs(wrapAngle(Math.atan2(-dx, -dz) - yaw)) > half) continue;
+        near.push({ name, d: dx * dx + (p.y - cam.y) ** 2 + dz * dz });
+      }
+      if (near.length > MAX_MARKS) near.sort((a, b) => a.d - b.d).length = MAX_MARKS;
+      const want = new Set(near.map((n) => n.name));
+      if (this.waypoint && g.heads.has(this.waypoint)) want.add(this.waypoint);
       for (const [name, m] of this.marks) {
-        if (heads.has(name)) continue;
-        m.el.remove();
+        if (want.has(name)) continue;
+        m.el.style.display = 'none';
+        this.pool.push(m);
         this.marks.delete(name);
       }
-      for (const [name, h] of heads) {
+      for (const name of want) {
         let m = this.marks.get(name);
         if (!m) {
-          const el = document.createElement('button');
-          el.type = 'button';
-          el.dataset.name = name;
-          el.innerHTML = '<i></i>';
-          this.el.marks.appendChild(el);
-          this.marks.set(name, (m = { el }));
+          m = this.pool.pop();
+          if (!m) {
+            const el = document.createElement('button');
+            el.type = 'button';
+            el.innerHTML = '<i></i>';
+            this.el.marks.appendChild(el);
+            m = { el };
+          }
+          m.el.dataset.name = name;
+          m.base = m.tilt = '';
+          this.marks.set(name, m);
         }
-        const cls = `wd-mark ${h.liveColor || h.data.color}${this.found.has(name) ? '' : ' unk'}${name === this.waypoint ? ' dest' : ''}${h.data.isDefault ? ' home' : ''}`;
-        if (m.el.className !== cls) m.el.className = cls;
-        m.el.title = `${name} · ${tr(name === this.waypoint ? 'world.unmark' : 'world.mark')}`;
+        this.paintMark(m, name, g.heads.get(name));
       }
-      this.marksDirty = true;
     }
 
     /** Muestra u oculta la interfaz del vuelo. */
@@ -672,10 +745,11 @@
         this.lastCam = (this.lastCam || new THREE.Vector3()).copy(cam);
         this.lastYaw = yaw;
         this.marksDirty = false;
-        this.drawCompass(cam, yaw);
+        this.drawCompass(cam, yaw, now);
         this.mapDirty = true;
       }
-      if (this.mapDirty && now - (this.lastMap || 0) > 50) {
+      // con miles de aristas el minimapa se redibuja menos seguido
+      if (this.mapDirty && now - (this.lastMap || 0) > 50 + g.edges.size / 40) {
         this.lastMap = now;
         this.mapDirty = false;
         this.drawMap(cam, yaw);
@@ -689,10 +763,14 @@
       }
     }
 
-    drawCompass(cam, yaw) {
+    drawCompass(cam, yaw, now) {
       const W = this.cw || (this.cw = this.el.compass.offsetWidth);
       if (!W) return;
       const ppr = W / FOV; // píxeles por radián
+      if (now - (this.pickAt || 0) > PICK_MS) {
+        this.pickAt = now;
+        this.pickMarks(cam, yaw, (W / 2 - 10) / ppr);
+      }
       const tick = ppr * (Math.PI / 12); // una marca cada 15°, una mayor cada 45°
       const x0 = W / 2 + yaw * ppr; // dónde cae el rumbo 0 (hacia el pasado)
       const t = this.el.ticks.style;
@@ -728,8 +806,10 @@
         }
         const dy = p.y - cam.y;
         const tilt = Math.abs(dy) > 6 && Math.abs(dy) > d * 0.35 ? (dy > 0 ? ' up' : ' down') : '';
-        const cls = m.el.className.replace(/ (up|down)$/, '') + tilt;
-        if (m.el.className !== cls) m.el.className = cls;
+        if (m.tilt !== tilt) {
+          m.tilt = tilt;
+          m.el.className = m.base + tilt;
+        }
         m.el.style.display = vis ? '' : 'none';
         if (!vis) continue;
         m.el.style.transform = `translateX(${x.toFixed(1)}px)`;
@@ -761,7 +841,7 @@
       ctx.beginPath();
       ctx.arc(0, 0, R - 1, 0, Math.PI * 2);
       ctx.clip();
-      const range = clamp(g.radius * 5, 60, 220);
+      const range = clamp(g.radius * 5, 60, 2500);
       const k = (R - 4) / range;
       const cs = Math.cos(yaw);
       const sn = Math.sin(yaw);
@@ -906,8 +986,9 @@
       this.setWaypoint(null);
       this.queue = [];
       this.nextBanner();
-      for (const m of this.marks.values()) m.el.remove();
+      for (const m of [...this.marks.values(), ...this.pool]) m.el.remove();
       this.marks.clear();
+      this.pool = [];
       this.complete = false;
       this.placed = false;
       this.groundY = this.groundTo = -12;

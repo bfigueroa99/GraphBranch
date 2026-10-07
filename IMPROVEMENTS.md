@@ -22,56 +22,52 @@ posteriores pueden haberse movido.
 
 ### Alta
 
-1. **Lo que llegó de master después de la auditoría no tiene pruebas ni revisión:** el director de
-   cámara y el modo TV (#13, `js/director.js`) y el mundo abierto de la vista 3D (#14, `js/world.js`,
-   unas 1.000 líneas). Auditarlos como se hizo con el resto y sumar al smoke test `?tv=1` (carga,
-   director activo, salida) y el vuelo por el mundo abierto.
+1. **Auditar el código nuevo de master:** el director de cámara y el modo TV (#13, `js/director.js`),
+   el mundo abierto (#14, `js/world.js`) y el modo galaxias (#17–#22). Ya tienen pasos en el smoke test
+   (iteración 5); falta revisarlos como se hizo con el resto: fugas al entrar y salir, escuchas,
+   accesibilidad, trabajo por cuadro.
 
 ### Media
 
-2. **Reloj adelantado → sondeo cada 3 s** (*reproducido*). Si `rate.reset` ya pasó según el reloj
-   local, `nextDelay` devuelve 3000 ms y la cuota sin token se agota (`github.js:171`). Arreglo:
-   `Math.max(base, …)` o calcular el desfase con la cabecera `Date`.
-3. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
+2. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
    `update()` y `celebrate()` siguen encolando ráfagas (`graph3d.js:846`, `:1691`) y al volver salen
    todas juntas. Arreglo: `fx` también exige `this.active`; descartar efectos con más de 1 s de atraso.
-4. **El zumbido del modo vuelo sigue sonando en segundo plano** y sus osciladores nunca se detienen
+3. **El zumbido del modo vuelo sigue sonando en segundo plano** y sus osciladores nunca se detienen
    (`flight.js:290`, `sound.js:261`). Arreglo: silenciar en `visibilitychange` y `stop()` al llegar a 0.
-5. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
+4. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
    `--surface` (`styles.css:14`). Arreglo: `#636e6a` (5,1:1).
-6. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
+5. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
    (`role=status` dentro de un contenedor `aria-live`; `feed.js:232`, `:254`). Arreglo: pausar en
    `focusin`/`focusout` y dejar una sola región viva.
-7. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
+6. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
    una sola consulta a `pulls?state=all&sort=updated` (la clave `pulls-all` ya existe).
-8. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
+7. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
     caída permanente de GraphQL a REST, `:311`). Arreglo: degradar solo con 403/404/410.
 
 ### Baja
 
-9. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
+8. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
     recibe foco al abrirse desde el teclado.
-10. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
+9. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
     `:2121`): su animación termina en opacidad 0.
-11. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
+10. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
     rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-12. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-13. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
+11. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+12. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
     `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro).
-14. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
+13. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
     `aria-pressed` y el texto, leyenda 2D sin acceso por teclado, el botón de pausa del Replay sin nombre
     accesible (`index.html:190`).
-15. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-16. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-17. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
-18. `stop()` no cancela la consulta en curso al cambiar de repo (usar `AbortController`).
-19. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
-20. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
+14. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+15. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+16. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
+17. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
+18. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
     blanco al arrancar.
-21. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
+19. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
     Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-22. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
+20. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
     (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
 
 ## Bitácora
@@ -143,3 +139,24 @@ posteriores pueden haberse movido.
   comprueba que las cifras quedan en "–" y que el Replay no arranca. Antes del arreglo mostraba las de la
   demo (5, 18, 3).
 - **Siguiente:** pendiente 1 (auditar y probar lo que llegó con #13 y #14), luego 2 (reloj adelantado).
+
+### 2026-10-07 · Iteración 5
+
+- **Sincronización.** El PR #16 sigue abierto. Master trajo #17–#22 (modo galaxias, aristas finas y
+  #19, que rehízo el loop de sondeo). Hubo conflictos con #19 en `github.js` y `app.js`: se tomó la
+  estructura nueva y se reaplicaron los arreglos de esta rama (ETag del feed borrado al cortarse un
+  ciclo, también por `stop()`; pedido de filtro o fijadas pendiente adelanta el ciclo; texto de la
+  región viva del estado escrito solo si cambia). Los eventos vistos se recortan con el
+  `forgetOldEvents()` de master, una vez y tras confirmarlos.
+- **Arnés de pruebas** adaptado a #19 (`navigator`, `AbortController`, escuchas, respuestas con
+  `text()`). Las 4 pruebas de los arreglos siguen fallando con el `github.js` de master y pasan con la
+  rama.
+- **#19 resolvió dos pendientes:** el sondeo cada 3 s con el reloj adelantado (`nextDelay` ya no baja
+  de la base si el reinicio ya pasó) y `stop()` sin cortar la consulta en curso (ahora usa
+  `AbortController`). Se quitaron de la lista.
+- **Mejora: el smoke test cubre lo que llegó sin pruebas.** Nuevos pasos en 3D: modo galaxias, director
+  de cámara y modo TV (entrar, unos segundos de director, salir y que la URL pierda `?tv`), y una carga
+  directa con `?tv=1` a 1920×1080. Se comprobó que detectan un error inyectado en `setGalaxy` y en
+  `setTV`. Todo en verde, también los 40 idiomas.
+- **Siguiente:** pendiente 1 (auditar director, modo TV, mundo abierto y galaxias), luego 2 (efectos 3D
+  acumulados mientras la vista no dibuja).

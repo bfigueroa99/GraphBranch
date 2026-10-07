@@ -165,6 +165,28 @@ console.log('Escritorio (1280×800)');
       await page.keyboard.press('Escape');
       await page.waitForTimeout(300);
     });
+
+    // un botón con aria-pressed que entra y sale de un modo, con unos segundos de animación entre medio
+    const toggles = async (sel, ms) => {
+      const pressed = () => page.getAttribute(sel, 'aria-pressed');
+      await page.click(sel);
+      await page.waitForFunction((s) => document.querySelector(s)?.getAttribute('aria-pressed') === 'true', sel, { timeout: 5000 });
+      await page.waitForTimeout(ms);
+      await page.click(sel);
+      if ((await pressed()) !== 'false') throw new Error(`${sel} no se apagó`);
+    };
+
+    await step(page, 'modo galaxias', () => toggles('#galaxy-btn', 3000));
+    await step(page, 'director de cámara', () => toggles('#director-btn', 3000));
+
+    await step(page, 'modo TV (entra y sale)', async () => {
+      await page.click('#tv-btn');
+      await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: 5000 });
+      await page.waitForTimeout(3000); // el director elige planos
+      await page.click('#tv-exit');
+      await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: 5000 });
+      if (new URL(page.url()).searchParams.has('tv')) throw new Error('la URL sigue con ?tv');
+    });
   }
 
   await step(page, 'replay', async () => {
@@ -227,6 +249,19 @@ const phone = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch:
 const langs = allLangs
   ? [...readFileSync(join(root, 'js', 'i18n.js'), 'utf8').matchAll(/\{ code: '([^']+)', name:/g)].map((m) => m[1])
   : ['es', 'de', 'ar'];
+
+console.log('Modo TV directo (?tv=1)');
+{
+  const page = await openPage({ viewport: { width: 1920, height: 1080 } });
+  await step(page, 'abre en modo TV y el director toma la cámara', async () => {
+    await page.goto(`${base}/index.html?lang=es&tv=1`);
+    await loaded(page);
+    await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: 5000 });
+    await page.waitForTimeout(4000);
+    if (!(await page.locator('#graph3d').isVisible())) throw new Error('el modo TV no muestra la vista 3D');
+  });
+  await page.context().close();
+}
 
 console.log(`Celular (390×844), ${langs.length} idiomas`);
 {

@@ -118,7 +118,7 @@
       this.watching = false;
       this.onWake = (ev) => {
         if (ev.type === 'visibilitychange' && document.hidden) return;
-        this.nudge();
+        this.nudge(ev.type);
       };
     }
 
@@ -174,6 +174,7 @@
       this.unschedule();
       if (paused) this.emitStatus('paused');
       else if (!this.running) this.refreshNow(); // se había detenido por un error fatal: reanudar es reintentar
+      else if (this.busy) this.emitStatus(this.throttled ? 'limited' : 'live', null, null, null, { syncing: true }); // el ciclo en curso programa el siguiente
       else this.loop();
     }
 
@@ -205,12 +206,15 @@
      * estaba esperando para reintentar tras un error, se consulta ahora. Con la cuota agotada no:
      * hasta que se renueve no hay nada que hacer.
      */
-    nudge() {
+    nudge(type) {
       if (!this.running || this.paused || this.busy) return;
       const now = Date.now();
-      if (now - this.lastTry < 2000 || now < this.limitedUntil) return;
-      const due = this.nextAt != null && this.nextAt - now <= 1000;
+      if (now < this.limitedUntil) return;
       const waiting = this.status?.state === 'error' && navigator.onLine !== false;
+      // volvió la red: se reintenta ya; el freno de 2 s es para los demás avisos, que llegan en cadena
+      const reconnect = waiting && (type === 'online' || this.offline);
+      if (!reconnect && now - this.lastTry < 2000) return;
+      const due = this.nextAt != null && this.nextAt - now <= 1000;
       if (due || waiting) this.loop();
     }
 
@@ -388,8 +392,9 @@
           try {
             body = text ? JSON.parse(text) : null;
           } catch {
-            if (res.ok) throw new ApiError(M('err.network'), { kind: 'network' }); // llegó cortada
+            body = undefined;
           }
+          if (res.ok && !body) throw new ApiError(M('err.network'), { kind: 'network' }); // llegó vacía o cortada
         }
         return { res, body };
       } catch (err) {
@@ -423,10 +428,11 @@
         return new ApiError(M('err.auth'), { status: 401, kind: 'auth' });
       }
       const retryAfter = Number(res.headers.get('Retry-After')); // límite secundario: GitHub dice cuánto esperar
-      const limited = retryAfter > 0 || (this.rate?.remaining === 0 && res.headers.get('X-RateLimit-Resource') !== 'graphql') || /rate limit/i.test(msg);
+      const secondary = /secondary rate limit/i.test(msg); // y si no lo dice, pide esperar un minuto
+      const limited = retryAfter > 0 || secondary || (this.rate?.remaining === 0 && res.headers.get('X-RateLimit-Resource') !== 'graphql') || /rate limit/i.test(msg);
       if ((res.status === 403 || res.status === 429) && limited) {
         const reset = Number(res.headers.get('X-RateLimit-Reset'));
-        const resetAt = retryAfter ? Date.now() + retryAfter * 1000 : reset ? reset * 1000 : Date.now() + 60000;
+        const resetAt = retryAfter ? Date.now() + retryAfter * 1000 : !secondary && reset ? reset * 1000 : Date.now() + 60000;
         return new ApiError(M(this.token ? 'err.rate' : 'err.rateAnon'), { status: res.status, kind: 'rate', resetAt });
       }
       if (res.status === 404) return this.notFound();

@@ -48,7 +48,7 @@ El token se guarda solo en el `localStorage` de tu navegador y se envía únicam
 GraphBranch consulta GitHub en ciclos: cada 10 segundos con token y cada minuto sin él, o más espaciado si la cuota no alcanza hasta su próximo reinicio (el indicador dice **En vivo, más lento**; con token cuida la cuota de GraphQL y también la de REST). El indicador de la barra superior cuenta qué pasa: "actualizando…" mientras dura un ciclo y "próxima en 10 s" entre uno y otro. El ciclo se cuida solo:
 
 - Si una consulta no llega entera en 30 segundos se corta y se reintenta, así una conexión colgada no deja la vista congelada.
-- Tras un error los reintentos se espacian (5 s, 10 s, 20 s… hasta 5 minutos, con algo de azar para que muchas pantallas no reintenten a la vez). Si GitHub pide esperar (cuota agotada o límite secundario con `Retry-After`), espera justo lo que pide y no lo cuenta como fallo.
+- Tras un error los reintentos se espacian (5 s, 10 s, 20 s… hasta 5 minutos, con algo de azar para que muchas pantallas no reintenten a la vez). Si GitHub pide esperar (cuota agotada, o límite secundario: lo que diga `Retry-After`, o un minuto si no lo dice), espera justo eso y no lo cuenta como fallo.
 - Sin red no insiste: espera a que el navegador avise que volvió la conexión ("esperando la conexión") y consulta enseguida.
 - Al volver a la pestaña, o cuando el navegador la descongela, si ya tocaba consultar lo hace al momento (en segundo plano los navegadores frenan los temporizadores; igual sigue consultando, para poder avisar).
 - **Actualizar ahora**, cambiar el filtro o fijar una rama adelantan el ciclo (si hay uno en curso, el siguiente va enseguida); **Pausar** lo detiene, y al cambiar de repositorio se cortan las consultas en curso.

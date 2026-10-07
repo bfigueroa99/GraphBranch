@@ -110,12 +110,16 @@
     start() {
       this.running = true;
       this.emitStatus('loading', M('status.connecting'));
+      // al volver la conexión se reintenta enseguida, sin esperar el próximo reintento (que llega a 5 min)
+      this.onOnline = () => this.running && !this.paused && this.failures && this.refreshNow();
+      window.addEventListener('online', this.onOnline);
       this.loop();
     }
 
     stop() {
       this.running = false;
       clearTimeout(this.timer);
+      window.removeEventListener('online', this.onOnline);
     }
 
     setPaused(paused) {

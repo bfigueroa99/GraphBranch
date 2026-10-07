@@ -97,6 +97,11 @@ GB.i18n.define('ur', {
   'world.explored': 'دریافت شدہ نقشہ: {n}/{total}',
   'world.complete': 'نقشہ مکمل',
   'world.arrived': 'آپ منزل پر پہنچ گئے',
+  'director.label': 'کیمرہ ڈائریکٹر',
+  'director.title': 'کیمرہ ڈائریکٹر: کیمرہ خود سب سے اہم سرگرمی کے پیچھے چلتا ہے۔ کنٹرول لینے کے لیے ویو کو ہلائیں۔',
+  'tv.label': 'ٹی وی موڈ',
+  'tv.title': 'ٹی وی موڈ: مشترکہ اسکرین کے لیے، خودکار کیمرے اور ہمیشہ آن رہنے والی اسکرین کے ساتھ',
+  'tv.exit': 'ٹی وی موڈ سے باہر نکلیں',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'ٹرافیاں',

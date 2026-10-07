@@ -88,6 +88,11 @@ GB.i18n.define('sw', {
   'world.explored': 'Ramani iliyochunguzwa: {n}/{total}',
   'world.complete': 'Ramani imekamilika',
   'world.arrived': 'Umefika',
+  'director.label': 'Mwongozaji wa kamera',
+  'director.title': 'Mwongozaji wa kamera: kamera hufuata yenyewe shughuli muhimu zaidi. Sogeza mwonekano ili uchukue udhibiti.',
+  'tv.label': 'Hali ya TV',
+  'tv.title': 'Hali ya TV: kwa skrini ya pamoja, yenye kamera ya kiotomatiki na skrini inayobaki ikiwaka',
+  'tv.exit': 'Toka kwenye hali ya TV',
 
   /* ---------- safu ya mchezo: mafanikio ya hazina, kiwango na jukumu la leo ---------- */
   'game.trophies': 'Vikombe',

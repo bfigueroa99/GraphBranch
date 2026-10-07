@@ -97,6 +97,7 @@
     enter() {
       if (this.on) return;
       const g = this.g;
+      g.touch(); // el director de cámara cede el mando
       g.ride = null;
       g.fly = null;
       g.setFollowing(false);

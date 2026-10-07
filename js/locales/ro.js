@@ -92,6 +92,11 @@ GB.i18n.define('ro', {
   'world.explored': 'Hartă explorată: {n}/{total}',
   'world.complete': 'Hartă completă',
   'world.arrived': 'Ați ajuns la destinație',
+  'director.label': 'Regizor de cameră',
+  'director.title': 'Regizor de cameră: camera urmărește singură cea mai importantă activitate. Mișcați vizualizarea pentru a prelua controlul.',
+  'tv.label': 'Mod TV',
+  'tv.title': 'Mod TV: pentru un ecran comun, cu cameră automată și ecranul mereu aprins',
+  'tv.exit': 'Ieșiți din modul TV',
 
   /* ---------- stratul de joc: realizările depozitului, nivelul și misiunea zilei ---------- */
   'game.trophies': 'Trofee',

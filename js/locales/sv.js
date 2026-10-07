@@ -88,6 +88,11 @@ GB.i18n.define('sv', {
   'world.explored': 'Utforskad karta: {n}/{total}',
   'world.complete': 'Kartan är komplett',
   'world.arrived': 'Du är framme',
+  'director.label': 'Kameraregissör',
+  'director.title': 'Kameraregissör: kameran följer själv den viktigaste aktiviteten. Flytta vyn för att ta över.',
+  'tv.label': 'TV-läge',
+  'tv.title': 'TV-läge: för en delad skärm, med automatisk kamera och skärmen alltid på',
+  'tv.exit': 'Avsluta TV-läge',
 
   /* ---------- spellager: repots prestationer, nivå och dagens uppdrag ---------- */
   'game.trophies': 'Troféer',

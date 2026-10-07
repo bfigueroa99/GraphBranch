@@ -88,6 +88,11 @@ GB.i18n.define('th', {
   'world.explored': 'สำรวจแผนที่แล้ว: {n}/{total}',
   'world.complete': 'แผนที่สมบูรณ์',
   'world.arrived': 'ถึงจุดหมายแล้ว',
+  'director.label': 'ผู้กำกับกล้อง',
+  'director.title': 'ผู้กำกับกล้อง: กล้องจะติดตามกิจกรรมที่สำคัญที่สุดเอง เลื่อนมุมมองเพื่อควบคุมเอง',
+  'tv.label': 'โหมดทีวี',
+  'tv.title': 'โหมดทีวี: สำหรับหน้าจอที่ใช้ร่วมกัน กล้องอัตโนมัติและหน้าจอเปิดค้างไว้',
+  'tv.exit': 'ออกจากโหมดทีวี',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'ถ้วยรางวัล',

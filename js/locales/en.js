@@ -93,6 +93,11 @@ GB.i18n.define('en', {
   'world.explored': 'Map explored: {n}/{total}',
   'world.complete': 'Map complete',
   'world.arrived': 'Destination reached',
+  'director.label': 'Camera director',
+  'director.title': 'Camera director: the camera follows the most important activity on its own. Move the view to take over.',
+  'tv.label': 'TV mode',
+  'tv.title': 'TV mode: for a shared screen, with automatic camera and the screen kept on',
+  'tv.exit': 'Exit TV mode',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'Trophies',

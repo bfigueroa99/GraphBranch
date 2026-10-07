@@ -93,6 +93,11 @@ GB.i18n.define('cs', {
   'world.explored': 'Prozkoumaná mapa: {n}/{total}',
   'world.complete': 'Mapa je kompletní',
   'world.arrived': 'Jste v cíli',
+  'director.label': 'Režisér kamery',
+  'director.title': 'Režisér kamery: kamera sama sleduje nejdůležitější dění. Pohněte pohledem a převezmete ovládání.',
+  'tv.label': 'Režim TV',
+  'tv.title': 'Režim TV: pro sdílenou obrazovku, s automatickou kamerou a stále zapnutou obrazovkou',
+  'tv.exit': 'Ukončit režim TV',
 
   /* ---------- herní vrstva: úspěchy repozitáře, úroveň a mise dne ---------- */
   'game.trophies': 'Trofeje',

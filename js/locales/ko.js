@@ -88,6 +88,11 @@ GB.i18n.define('ko', {
   'world.explored': '탐험한 지도: {n}/{total}',
   'world.complete': '지도 완성',
   'world.arrived': '목적지 도착',
+  'director.label': '카메라 감독',
+  'director.title': '카메라 감독: 카메라가 가장 중요한 활동을 알아서 따라갑니다. 보기를 움직이면 직접 조작할 수 있습니다.',
+  'tv.label': 'TV 모드',
+  'tv.title': 'TV 모드: 공유 화면용으로, 카메라가 자동으로 움직이고 화면이 계속 켜져 있습니다',
+  'tv.exit': 'TV 모드 종료',
 
   /* ---------- 게임 요소: 저장소 업적, 레벨, 오늘의 미션 ---------- */
   'game.trophies': '트로피',

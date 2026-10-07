@@ -88,6 +88,11 @@ GB.i18n.define('nb', {
   'world.explored': 'Utforsket kart: {n}/{total}',
   'world.complete': 'Kartet er komplett',
   'world.arrived': 'Du er fremme',
+  'director.label': 'Kamerainstruktør',
+  'director.title': 'Kamerainstruktør: kameraet følger selv den viktigste aktiviteten. Flytt visningen for å ta over.',
+  'tv.label': 'TV-modus',
+  'tv.title': 'TV-modus: for en delt skjerm, med automatisk kamera og skjermen alltid på',
+  'tv.exit': 'Avslutt TV-modus',
 
   /* ---------- spillag: repoets prestasjoner, nivå og dagens oppdrag ---------- */
   'game.trophies': 'Troféer',

@@ -92,6 +92,11 @@ GB.i18n.define('hr', {
   'world.explored': 'Istražena karta: {n}/{total}',
   'world.complete': 'Karta je potpuna',
   'world.arrived': 'Stigli ste na odredište',
+  'director.label': 'Redatelj kamere',
+  'director.title': 'Redatelj kamere: kamera sama prati najvažniju aktivnost. Pomaknite prikaz da preuzmete upravljanje.',
+  'tv.label': 'TV način',
+  'tv.title': 'TV način: za zajednički zaslon, s automatskom kamerom i uvijek uključenim zaslonom',
+  'tv.exit': 'Izađi iz TV načina',
 
   /* ---------- sloj igre: postignuća repozitorija, razina i misija dana ---------- */
   'game.trophies': 'Trofeji',

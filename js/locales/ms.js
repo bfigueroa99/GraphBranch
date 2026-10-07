@@ -88,6 +88,11 @@ GB.i18n.define('ms', {
   'world.explored': 'Peta diterokai: {n}/{total}',
   'world.complete': 'Peta lengkap',
   'world.arrived': 'Anda telah tiba',
+  'director.label': 'Pengarah kamera',
+  'director.title': 'Pengarah kamera: kamera mengikut aktiviti paling penting dengan sendirinya. Gerakkan paparan untuk mengambil alih.',
+  'tv.label': 'Mod TV',
+  'tv.title': 'Mod TV: untuk skrin kongsi, dengan kamera automatik dan skrin sentiasa menyala',
+  'tv.exit': 'Keluar dari mod TV',
 
   /* ---------- lapisan permainan: pencapaian repositori, tahap dan misi hari ini ---------- */
   'game.trophies': 'Trofi',

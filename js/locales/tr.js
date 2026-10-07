@@ -88,6 +88,11 @@ GB.i18n.define('tr', {
   'world.explored': 'Keşfedilen harita: {n}/{total}',
   'world.complete': 'Harita tamamlandı',
   'world.arrived': 'Hedefe ulaştın',
+  'director.label': 'Kamera yönetmeni',
+  'director.title': 'Kamera yönetmeni: Kamera en önemli etkinliği kendiliğinden takip eder. Kontrolü almak için görünümü hareket ettirin.',
+  'tv.label': 'TV modu',
+  'tv.title': 'TV modu: Ortak ekran için, otomatik kamera ve sürekli açık kalan ekranla',
+  'tv.exit': 'TV modundan çık',
 
   /* ---------- oyun katmanı: depo başarımları, seviye ve günün görevi ---------- */
   'game.trophies': 'Kupalar',

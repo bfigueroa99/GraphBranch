@@ -88,6 +88,11 @@ GB.i18n.define('ca', {
   'world.explored': 'Mapa explorat: {n}/{total}',
   'world.complete': 'Mapa complet',
   'world.arrived': 'Has arribat a la destinació',
+  'director.label': 'Director de càmera',
+  'director.title': 'Director de càmera: la càmera segueix sola el més important. Mou la vista per prendre el control.',
+  'tv.label': 'Mode TV',
+  'tv.title': 'Mode TV: per a una pantalla compartida, amb càmera automàtica i la pantalla sempre encesa',
+  'tv.exit': 'Surt del mode TV',
 
   /* ---------- capa de joc: assoliments del repositori, nivell i missió del dia ---------- */
   'game.trophies': 'Trofeus',

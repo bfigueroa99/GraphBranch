@@ -88,6 +88,11 @@ GB.i18n.define('de', {
   'world.explored': 'Karte erkundet: {n}/{total}',
   'world.complete': 'Karte vollständig',
   'world.arrived': 'Ziel erreicht',
+  'director.label': 'Kameraregie',
+  'director.title': 'Kameraregie: Die Kamera folgt von selbst der wichtigsten Aktivität. Bewege die Ansicht, um zu übernehmen.',
+  'tv.label': 'TV-Modus',
+  'tv.title': 'TV-Modus: für einen gemeinsamen Bildschirm, mit automatischer Kamera und eingeschaltet bleibendem Bildschirm',
+  'tv.exit': 'TV-Modus beenden',
 
   /* ---------- Spielebene: Erfolge des Repositorys, Level und Mission des Tages ---------- */
   'game.trophies': 'Trophäen',

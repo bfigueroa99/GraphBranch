@@ -93,6 +93,11 @@ GB.i18n.define('pl', {
   'world.explored': 'Zbadana mapa: {n}/{total}',
   'world.complete': 'Mapa ukończona',
   'world.arrived': 'Cel osiągnięty',
+  'director.label': 'Reżyser kamery',
+  'director.title': 'Reżyser kamery: kamera sama śledzi najważniejszą aktywność. Porusz widokiem, aby przejąć sterowanie.',
+  'tv.label': 'Tryb TV',
+  'tv.title': 'Tryb TV: na wspólny ekran, z automatyczną kamerą i stale włączonym ekranem',
+  'tv.exit': 'Wyjdź z trybu TV',
 
   /* ---------- warstwa gry: osiągnięcia repozytorium, poziom i misja dnia ---------- */
   'game.trophies': 'Trofea',

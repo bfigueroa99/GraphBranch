@@ -88,6 +88,11 @@ GB.i18n.define('fi', {
   'world.explored': 'Kartta tutkittu: {n}/{total}',
   'world.complete': 'Kartta valmis',
   'world.arrived': 'Olet perillä',
+  'director.label': 'Kameraohjaaja',
+  'director.title': 'Kameraohjaaja: kamera seuraa itse tärkeintä tapahtumaa. Liikuta näkymää ottaaksesi ohjauksen.',
+  'tv.label': 'TV-tila',
+  'tv.title': 'TV-tila: jaetulle näytölle, automaattisella kameralla ja näyttö aina päällä',
+  'tv.exit': 'Poistu TV-tilasta',
 
   /* ---------- pelikerros: repositorion saavutukset, taso ja päivän tehtävä ---------- */
   'game.trophies': 'Pokaalit',

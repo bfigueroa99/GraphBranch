@@ -88,6 +88,11 @@ GB.i18n.define('da', {
   'world.explored': 'Udforsket kort: {n}/{total}',
   'world.complete': 'Kortet er komplet',
   'world.arrived': 'Du er fremme',
+  'director.label': 'Kamerainstruktør',
+  'director.title': 'Kamerainstruktør: kameraet følger selv den vigtigste aktivitet. Flyt visningen for at tage over.',
+  'tv.label': 'TV-tilstand',
+  'tv.title': 'TV-tilstand: til en delt skærm, med automatisk kamera og skærmen altid tændt',
+  'tv.exit': 'Afslut TV-tilstand',
 
   /* ---------- spillag: repositoriets præstationer, niveau og dagens mission ---------- */
   'game.trophies': 'Trofæer',

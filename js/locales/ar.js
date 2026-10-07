@@ -109,6 +109,11 @@ GB.i18n.define('ar', {
   'world.explored': 'الخريطة المستكشفة: {n}/{total}',
   'world.complete': 'اكتملت الخريطة',
   'world.arrived': 'وصلت إلى الوجهة',
+  'director.label': 'مخرج الكاميرا',
+  'director.title': 'مخرج الكاميرا: تتابع الكاميرا تلقائيًا أهم نشاط. حرّك العرض لتتولى التحكم.',
+  'tv.label': 'وضع التلفاز',
+  'tv.title': 'وضع التلفاز: لشاشة مشتركة، مع كاميرا تلقائية وإبقاء الشاشة قيد التشغيل',
+  'tv.exit': 'الخروج من وضع التلفاز',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'الجوائز',

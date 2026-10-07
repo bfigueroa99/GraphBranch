@@ -88,6 +88,11 @@ GB.i18n.define('vi', {
   'world.explored': 'Bản đồ đã khám phá: {n}/{total}',
   'world.complete': 'Bản đồ hoàn tất',
   'world.arrived': 'Đã đến nơi',
+  'director.label': 'Đạo diễn máy quay',
+  'director.title': 'Đạo diễn máy quay: máy quay tự theo dõi hoạt động quan trọng nhất. Di chuyển chế độ xem để tự điều khiển.',
+  'tv.label': 'Chế độ TV',
+  'tv.title': 'Chế độ TV: dành cho màn hình dùng chung, với máy quay tự động và màn hình luôn bật',
+  'tv.exit': 'Thoát chế độ TV',
 
   /* ---------- lớp trò chơi: thành tích của kho lưu trữ, cấp độ và nhiệm vụ trong ngày ---------- */
   'game.trophies': 'Cúp',

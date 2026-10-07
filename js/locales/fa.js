@@ -97,6 +97,11 @@ GB.i18n.define('fa', {
   'world.explored': 'نقشهٔ کاوش‌شده: {n}/{total}',
   'world.complete': 'نقشه کامل شد',
   'world.arrived': 'به مقصد رسیدید',
+  'director.label': 'کارگردان دوربین',
+  'director.title': 'کارگردان دوربین: دوربین خودش مهم‌ترین فعالیت را دنبال می‌کند. برای در دست گرفتن کنترل، نما را جابه‌جا کنید.',
+  'tv.label': 'حالت تلویزیون',
+  'tv.title': 'حالت تلویزیون: برای صفحهٔ مشترک، با دوربین خودکار و صفحه‌ای که همیشه روشن می‌ماند',
+  'tv.exit': 'خروج از حالت تلویزیون',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'افتخارات',

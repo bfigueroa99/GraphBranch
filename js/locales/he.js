@@ -100,6 +100,11 @@ GB.i18n.define('he', {
   'world.explored': 'המפה שנחקרה: {n}/{total}',
   'world.complete': 'המפה הושלמה',
   'world.arrived': 'הגעת ליעד',
+  'director.label': 'במאי מצלמה',
+  'director.title': 'במאי מצלמה: המצלמה עוקבת בעצמה אחרי הפעילות החשובה ביותר. הזז את התצוגה כדי לקחת שליטה.',
+  'tv.label': 'מצב טלוויזיה',
+  'tv.title': 'מצב טלוויזיה: למסך משותף, עם מצלמה אוטומטית ומסך שנשאר דולק',
+  'tv.exit': 'יציאה ממצב טלוויזיה',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'גביעים',

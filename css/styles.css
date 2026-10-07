@@ -2371,6 +2371,206 @@ button.act-main:hover {
   }
 }
 
+/* ---------- director de cámara ---------- */
+/* fundido para los cortes largos: un vuelo de punta a punta del grafo marearía */
+.g3-fade {
+  position: absolute;
+  inset: 0;
+  background: var(--surface);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.26s ease-in-out;
+}
+.g3-fade.on {
+  opacity: 1;
+}
+.director-btn {
+  position: relative;
+}
+/* cedió la cámara al usuario: la retoma cuando deja de tocarla */
+.director-btn.waiting::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  inset-inline-end: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--warn);
+}
+/* rótulo inferior, como en una transmisión: qué se está filmando */
+.lower {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 4;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: min(460px, calc(100% - 28px));
+  padding: 10px 14px 10px 11px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--sev, var(--info));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-14px);
+  transition: opacity 0.35s, transform 0.35s;
+}
+.lower.show {
+  opacity: 1;
+  transform: none;
+}
+.lower:empty {
+  display: none;
+}
+.lower.sev-good {
+  --sev: var(--good);
+}
+.lower.sev-warn {
+  --sev: var(--warn);
+}
+.lower.sev-bad {
+  --sev: var(--bad);
+}
+.lt-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.lt-title {
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.3;
+}
+.lt-detail,
+.lt-meta code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lt-detail {
+  color: var(--ink-2);
+  font-size: 12.5px;
+}
+.lt-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 2px;
+  color: var(--ink-3);
+  font-size: 12px;
+}
+[dir="rtl"] .lower {
+  direction: rtl;
+}
+
+/* ---------- modo TV: pantalla compartida, se mira desde lejos ---------- */
+.tv-bar,
+.tv-clock {
+  display: none;
+}
+.tv-bar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 8;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 84%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  transition: opacity 0.4s;
+}
+.tv-exit {
+  height: 32px;
+  gap: 6px;
+  font-size: 13px;
+}
+html.tv .tv-bar {
+  display: flex;
+}
+html.tv .tv-clock {
+  display: block;
+  font: 650 26px/1 var(--font-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+html.tv .repo-form,
+html.tv .controls,
+html.tv .rate,
+html.tv .toolbar,
+html.tv .hint,
+html.tv .token-banner,
+html.tv .game-strip,
+html.tv .chips,
+html.tv .act-link,
+html.tv .feed-count,
+html.tv .toasts,
+html.tv .rp-bar {
+  display: none !important;
+}
+html.tv .app {
+  max-width: none;
+}
+/* la interfaz entera crece con la pantalla (--tvz lo calcula app.js); el lienzo 3D no, que ya la llena */
+html.tv .topbar,
+html.tv .stats,
+html.tv .graph-panel > .panel-head,
+html.tv .feed-panel,
+html.tv .lower,
+html.tv .tv-bar,
+html.tv .rp-clock,
+html.tv .rp-caption {
+  zoom: var(--tvz, 1);
+}
+@media (min-width: 861px) {
+  html.tv .main {
+    grid-template-columns: minmax(0, 1fr) clamp(300px, 26vw, 760px);
+  }
+}
+html.tv .repo-title h1 {
+  font-size: 22px;
+}
+html.tv .feed {
+  overflow: hidden;
+}
+html.tv .graph-stage {
+  margin-bottom: 8px;
+}
+html.tv .g3-head {
+  height: calc(22px * var(--tvz, 1));
+  padding: 0 calc(9px * var(--tvz, 1)) 0 calc(8px * var(--tvz, 1));
+  border-radius: calc(11px * var(--tvz, 1));
+  font-size: calc(12px * var(--tvz, 1));
+}
+html.tv .h3-dot {
+  width: calc(7px * var(--tvz, 1));
+  height: calc(7px * var(--tvz, 1));
+}
+html.tv .h3-pr {
+  font-size: calc(11px * var(--tvz, 1));
+}
+html.tv .g3-day {
+  font-size: calc(11px * var(--tvz, 1));
+}
+/* sin tocar el ratón un rato: fuera el puntero y los controles (con el teclado vuelven) */
+html.tv-idle,
+html.tv-idle * {
+  cursor: none !important;
+}
+html.tv-idle .tv-bar:not(:focus-within) {
+  opacity: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

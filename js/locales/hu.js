@@ -88,6 +88,11 @@ GB.i18n.define('hu', {
   'world.explored': 'Felfedezett térkép: {n}/{total}',
   'world.complete': 'A térkép teljes',
   'world.arrived': 'Megérkeztél',
+  'director.label': 'Kamerarendező',
+  'director.title': 'Kamerarendező: a kamera magától követi a legfontosabb eseményt. Mozdítsd meg a nézetet, ha át akarod venni az irányítást.',
+  'tv.label': 'TV mód',
+  'tv.title': 'TV mód: közös kijelzőre, automatikus kamerával és mindig bekapcsolva maradó képernyővel',
+  'tv.exit': 'Kilépés a TV módból',
 
   /* ---------- játékréteg: a repozitórium eredményei, szintje és a nap küldetése ---------- */
   'game.trophies': 'Trófeák',

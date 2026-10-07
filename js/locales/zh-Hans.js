@@ -88,6 +88,11 @@ GB.i18n.define('zh-Hans', {
   'world.explored': '已探索：{n}/{total}',
   'world.complete': '地图已完成',
   'world.arrived': '已到达目的地',
+  'director.label': '镜头导演',
+  'director.title': '镜头导演：镜头会自动跟随最重要的动态。移动视图即可接管。',
+  'tv.label': '电视模式',
+  'tv.title': '电视模式：适合共享屏幕，镜头自动运行，屏幕保持常亮',
+  'tv.exit': '退出电视模式',
 
   /* ---------- 游戏层：仓库成就、等级与每日任务 ---------- */
   'game.trophies': '奖杯',

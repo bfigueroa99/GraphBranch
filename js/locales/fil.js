@@ -88,6 +88,11 @@ GB.i18n.define('fil', {
   'world.explored': 'Na-explore na mapa: {n}/{total}',
   'world.complete': 'Kumpleto na ang mapa',
   'world.arrived': 'Nakarating ka na',
+  'director.label': 'Direktor ng kamera',
+  'director.title': 'Direktor ng kamera: kusang sinusundan ng kamera ang pinakamahalagang aktibidad. Igalaw ang view para ikaw ang humawak.',
+  'tv.label': 'TV mode',
+  'tv.title': 'TV mode: para sa shared na screen, may awtomatikong kamera at laging nakabukas ang screen',
+  'tv.exit': 'Lumabas sa TV mode',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'Mga tropeo',

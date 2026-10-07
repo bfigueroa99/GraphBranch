@@ -88,6 +88,11 @@ GB.i18n.define('es', {
   'world.explored': 'Mapa explorado: {n}/{total}',
   'world.complete': 'Mapa completo',
   'world.arrived': 'Llegaste a destino',
+  'director.label': 'Director de cámara',
+  'director.title': 'Director de cámara: la cámara sigue sola lo más importante. Mueve la vista para tomar el control.',
+  'tv.label': 'Modo TV',
+  'tv.title': 'Modo TV: para una pantalla compartida, con cámara automática y la pantalla siempre encendida',
+  'tv.exit': 'Salir del modo TV',
 
   /* ---------- capa de juego: logros del repositorio, nivel y misión del día ---------- */
   'game.trophies': 'Trofeos',

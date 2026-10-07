@@ -88,6 +88,11 @@ GB.i18n.define('id', {
   'world.explored': 'Peta dijelajahi: {n}/{total}',
   'world.complete': 'Peta lengkap',
   'world.arrived': 'Tujuan tercapai',
+  'director.label': 'Sutradara kamera',
+  'director.title': 'Sutradara kamera: kamera mengikuti aktivitas terpenting dengan sendirinya. Gerakkan tampilan untuk mengambil alih.',
+  'tv.label': 'Mode TV',
+  'tv.title': 'Mode TV: untuk layar bersama, dengan kamera otomatis dan layar tetap menyala',
+  'tv.exit': 'Keluar dari mode TV',
 
   /* ---------- lapisan permainan: pencapaian repositori, level, dan misi hari ini ---------- */
   'game.trophies': 'Trofi',

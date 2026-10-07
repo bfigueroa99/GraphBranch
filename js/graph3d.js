@@ -472,6 +472,11 @@
       this.labelLayer.className = 'g3-labels';
       wrap.appendChild(this.labelLayer);
 
+      // fundido para los cortes del director de cámara (va debajo de la ficha)
+      this.fadeEl = document.createElement('div');
+      this.fadeEl.className = 'g3-fade';
+      wrap.appendChild(this.fadeEl);
+
       this.tip = document.createElement('div');
       this.tip.className = 'tip';
       this.tip.hidden = true;
@@ -507,6 +512,7 @@
         maxDistance: 220,
       });
       this.controls.addEventListener('start', () => {
+        this.touch();
         this.interacting = true;
         this.dragFrom = this.controls.target.clone();
         this.fly = null;
@@ -619,8 +625,10 @@
       this.dying = [];
       this.keys = new Set();
       this.maxX = 0;
+      this.sp = SP;
       this.radius = 4;
       this.following = true;
+      this.hold = false; // pausa: sin giro, sin director y con el fondo quieto
       this.spin = !!U.store.get('spin3d', true);
       this.spinAmt = 0;
       this.flashAmt = 0;
@@ -642,6 +650,7 @@
       this.bindPointer();
       this.bindKeys();
       this.flight = GB.Flight ? new GB.Flight(this) : null;
+      this.director = GB.Director ? new GB.Director(this) : null;
       this.ride = null;
       window.addEventListener('gamepadconnected', () => (this.padSeen = true));
       new ResizeObserver(() => this.resize()).observe(wrap);
@@ -850,6 +859,7 @@
         this.keys.clear();
         this.flight?.exit();
         this.world?.showHud(false);
+        this.director?.end();
         this.ride = null;
         this.controls.enabled = true;
         this.unpin();
@@ -943,6 +953,7 @@
           it.el.type = 'button';
           it.el.addEventListener('click', (ev) => {
             ev.stopPropagation();
+            this.touch(); // quien abre una ficha quiere leerla: el director espera
             this.showTip(it.data.sha, true, it.data.name);
           });
           it.el.addEventListener('pointerenter', () => this.setHover(it.data.sha));
@@ -1028,7 +1039,7 @@
       it.label = label;
       it.el.setAttribute('aria-label', label);
       it.el.innerHTML = html;
-      it.w = 0;
+      it.w = it.h = 0;
     }
 
     updateDays(L) {
@@ -1151,7 +1162,31 @@
       this.lastInteract = 0;
     }
 
+    /** El usuario movió la cámara: el director se la cede (y la retoma cuando vuelve la calma). */
+    touch() {
+      this.lastInteract = performance.now();
+      this.director?.yieldControl();
+    }
+
+    /** Pausa (WCAG 2.2.2): se detienen el giro, el director y la animación de fondo. */
+    setHold(on) {
+      this.hold = on;
+      this.director?.setPaused(on);
+      this.needsRender = true;
+    }
+
+    setFade(on) {
+      this.fadeEl.classList.toggle('on', on);
+    }
+
+    /** Cambió el tamaño del texto (modo TV): las etiquetas se vuelven a medir. */
+    restyle() {
+      for (const it of this.heads.values()) it.w = it.h = 0;
+      this.needsRender = true;
+    }
+
     zoomBy(f) {
+      this.touch();
       const off = this.camera.position.clone().sub(this.controls.target).multiplyScalar(1 / f);
       off.setLength(clamp(off.length(), this.controls.minDistance, this.controls.maxDistance));
       this.flyTo(this.controls.target.clone(), this.controls.target.clone().add(off), 350);
@@ -1160,6 +1195,7 @@
     focusSha(sha, dist = 15) {
       const it = this.nodes.get(sha);
       if (!it) return false;
+      this.touch();
       this.flight?.exit();
       if (this.ride) this.endRide();
       this.setFollowing(false);
@@ -1198,6 +1234,7 @@
         this.canvas.style.cursor = '';
       });
       this.canvas.addEventListener('pointerdown', (ev) => {
+        this.touch();
         if (this.ride) this.endRide();
         down = { x: ev.clientX, y: ev.clientY };
         this.wrap.focus({ preventScroll: true }); // así funcionan las flechas y la tecla F
@@ -1218,7 +1255,14 @@
         const sha = this.pick(ev.clientX - r.left, ev.clientY - r.top);
         if (sha) this.focusSha(sha, 7);
       });
-      this.canvas.addEventListener('wheel', () => this.ride && this.endRide(), { passive: true });
+      this.canvas.addEventListener(
+        'wheel',
+        () => {
+          this.touch();
+          if (this.ride) this.endRide();
+        },
+        { passive: true },
+      );
     }
 
     /** Flechas ← → giran, ↑ ↓ viajan por la historia, + y − acercan; se mantienen pulsadas. */
@@ -1231,6 +1275,7 @@
         const k = KEYS[ev.key];
         if (!k || ev.ctrlKey || ev.metaKey || ev.altKey || ev.target.closest?.('.tip')) return;
         ev.preventDefault();
+        this.touch();
         this.keys.add(k);
         this.fly = null;
       });
@@ -1362,8 +1407,9 @@
 
     /* ---------- recorrer una rama ---------- */
 
-    /** Recorre una rama en primera persona, desde el commit del que nace hasta su cabeza, como una montaña rusa. */
-    rideBranch(name) {
+    /** Recorre una rama en primera persona, desde el commit del que nace hasta su cabeza, como una
+        montaña rusa. `auto`: lo pide el director de cámara (no el usuario). */
+    rideBranch(name, auto = false) {
       const L = this.layout;
       if (!L) return;
       const key = 'b:' + name;
@@ -1379,12 +1425,13 @@
       // un tramo de entrada desde el pasado, para subirse a la vía en marcha
       pts.unshift(pts[0].clone().add(new THREE.Vector3(0, 1.2, -SP * 3)));
       const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+      if (!auto) this.touch();
       this.flight?.exit();
       this.fly = null;
       this.setFollowing(false);
       this.unpin();
       this.controls.enabled = false;
-      this.ride = { curve, t0: performance.now(), dur: clamp(curve.getLength() / 7, 3, 20) * 1000 };
+      this.ride = { curve, auto, t0: performance.now(), dur: clamp(curve.getLength() / 7, 3, 20) * 1000 };
     }
 
     stepRide(now) {
@@ -1435,14 +1482,14 @@
       }
       const dt = this.lastNow ? Math.min(0.1, (now - this.lastNow) / 1000) : 0;
       this.lastNow = now;
-      if (this.motion) this.u.time.value += dt;
+      if (this.motion && !this.hold) this.u.time.value += dt;
 
       const camMoved = this.stepCamera(now, dt);
       const sceneMoved = this.stepScene(now, dt);
       const worldMoved = !!this.world?.step(now, dt);
       const full = this.needsRender || camMoved || sceneMoved || worldMoved;
       // en reposo los pulsos, el polvo y las estrellas siguen vivos, pero a ~30 fps
-      const ambient = this.motion && this.nodes.size > 0 && now - this.lastRender >= AMBIENT_MS;
+      const ambient = this.motion && !this.hold && this.nodes.size > 0 && now - this.lastRender >= AMBIENT_MS;
       if (full || ambient) {
         this.beforeRender();
         this.renderer.render(this.scene, this.camera);
@@ -1456,10 +1503,11 @@
       const w = this.world;
       if (w) {
         // en vuelo: brújula, minimapa e indicadores; volando o recorriendo una rama, se descubre el mapa
+        // (el recorrido que pide el director de cámara no cuenta: nadie está explorando)
         const fly = !!this.flight?.on;
         if (fly !== !!w.hudOn) w.showHud(fly);
         if (fly) w.hud(now);
-        if ((fly || this.ride) && this.nodes.size) w.explore();
+        if ((fly || (this.ride && !this.ride.auto)) && this.nodes.size) w.explore();
       }
     }
 
@@ -1468,8 +1516,11 @@
       const cam = this.camera;
       let moved = false;
       this.padToggle();
+      // el director decide el plano antes que nada: puede lanzar un vuelo, un corte o un paseo
+      const directed = this.director ? this.director.step(now, dt) : false;
       if (this.ride) return this.stepRide(now);
       if (this.flight?.on) return this.flight.step(dt);
+      if (directed) moved = true;
       if (this.fly) {
         const f = this.fly;
         const p = ease(clamp((now - f.t0) / f.dur, 0, 1));
@@ -1494,7 +1545,15 @@
           }
         }
         const spin =
-          this.spin && this.following && this.motion && !this.interacting && !this.keys.size && !this.pinned && !this.tipSha && now - this.lastInteract > 4000;
+          this.spin &&
+          this.following &&
+          this.motion &&
+          !this.hold &&
+          !this.interacting &&
+          !this.keys.size &&
+          !this.pinned &&
+          !this.tipSha &&
+          now - this.lastInteract > 4000;
         // el giro arranca y se detiene con suavidad
         this.spinAmt = clamp(this.spinAmt + (spin ? dt : -dt * 3) / 1.5, 0, 1);
         if (this.spinAmt > 0) {
@@ -1745,6 +1804,7 @@
     /** Efectos de las actividades que acaban de llegar: solo en vivo, con la vista 3D activa y con
         movimiento. Cada tipo tiene un tope por tanda, así una ráfaga no satura la escena. */
     celebrate(acts) {
+      this.director?.push(acts); // el director decide qué filmar (también sin movimiento: con cortes)
       if (!this.active || !this.motion || !this.nodes.size || !acts?.length) return;
       const now = performance.now();
       const prHead = new Map([...(this.ctx?.prs?.values() || [])].map((p) => [p.number, p.head]));
@@ -2181,15 +2241,16 @@
         else (dx /= len), (dy /= len);
         const off = it.data.own ? 18 : 12;
         const w = it.w || (it.w = it.el.offsetWidth);
+        const h = it.h || (it.h = it.el.offsetHeight || 22);
         const x = clamp(px + dx * off - (dx < -0.2 ? w : 0), 4, Math.max(4, this.W - w - 4));
-        const y = py + dy * off - 11;
-        shown.push({ it, x, y, w, dist });
+        const y = py + dy * off - h / 2;
+        shown.push({ it, x, y, w, h, dist });
       }
       // las más cercanas (y la rama por defecto) primero; las que quedan tapadas se atenúan
       shown.sort((a, b) => b.it.data.isDefault - a.it.data.isDefault || a.dist - b.dist);
       const placed = [];
       for (const s of shown) {
-        const hit = placed.some((r) => s.x < r.x + r.w + 4 && r.x < s.x + s.w + 4 && s.y < r.y + 24 && r.y < s.y + 24);
+        const hit = placed.some((r) => s.x < r.x + r.w + 4 && r.x < s.x + s.w + 4 && s.y < r.y + r.h + 2 && r.y < s.y + s.h + 2);
         if (!hit) placed.push(s);
         const fade = clamp(1.15 - (s.dist - 30) / 80, 0.3, 1);
         this.setStyle(s.it, 'transform', `translate(${Math.round(s.x)}px,${Math.round(s.y)}px)`);
@@ -2247,6 +2308,8 @@
       this.portalZ = null;
       this.nodeAnim = this.edgeAnim = false;
       this.flight?.exit();
+      this.director?.reset();
+      this.setFade(false);
       this.ride = null;
       this.world?.clear();
       this.controls.enabled = true;

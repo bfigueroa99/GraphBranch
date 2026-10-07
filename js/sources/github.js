@@ -400,6 +400,32 @@
       if (!this.filter) this.data.matchingBranches = null;
     }
 
+    /* ---------- archivos (los planetas del modo galaxias) ---------- */
+
+    /** Archivos de una rama, una consulta: en la rama por defecto, su árbol completo; en las demás,
+        lo que cambió respecto de la rama por defecto (desde donde se separaron, hasta 300 archivos).
+        Lo pide la vista 3D recién cuando la cámara se acerca a la galaxia de la rama. */
+    async files({ name, sha, isDefault }) {
+      const repoUrl = this.data.repo.url;
+      const blob = (path) => `${repoUrl}/blob/${sha}/${path.split('/').map(encodeURIComponent).join('/')}`;
+      const def = this.data.branches.get(this.data.repo.defaultBranch);
+      if (isDefault || !def) {
+        const { data } = await this.api(`${this.base}/git/trees/${sha}?recursive=1`);
+        const files = (data?.tree || []).filter((e) => e.type === 'blob').map((e) => ({ path: e.path, size: e.size || 0, url: blob(e.path) }));
+        return { kind: 'tree', files, truncated: !!data?.truncated };
+      }
+      const { data } = await this.api(`${this.base}/compare/${def.sha}...${sha}`);
+      const files = (data?.files || []).map((f) => ({
+        path: f.filename,
+        status: f.status,
+        add: f.additions || 0,
+        del: f.deletions || 0,
+        from: f.previous_filename || null,
+        url: f.status === 'removed' ? f.blob_url || null : blob(f.filename),
+      }));
+      return { kind: 'diff', base: def.name, files, truncated: files.length >= 300 };
+    }
+
     /* ---------- ramas que esperan su historia ---------- */
 
     /** Rama ya cargada que pasa a dibujarse. */

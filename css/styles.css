@@ -74,7 +74,9 @@
     color-scheme: dark;
   }
 }
-:root[data-theme="dark"] {
+/* el modo galaxias es el espacio: la vista 3D (y lo que flota sobre ella) usa siempre los colores del tema oscuro */
+:root[data-theme="dark"],
+.space {
   --bg: #0a0f0e;
   --surface: #111816;
   --surface-2: #18211e;
@@ -959,6 +961,9 @@ kbd {
     radial-gradient(110% 85% at 50% 30%, var(--band), transparent 70%),
     var(--surface);
 }
+.space {
+  color: var(--ink);
+}
 /* viñeta: los bordes se apagan un poco y la mirada va al centro */
 .graph3d-wrap::after {
   content: "";
@@ -1430,6 +1435,75 @@ kbd {
   border-radius: 50%;
   background: color-mix(in srgb, var(--ink) 25%, transparent);
 }
+/* horizonte: una línea partida que cruza la mira y gira con la inclinación de la nave */
+.fl-horizon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 200px;
+  height: 1.5px;
+  margin: -0.75px 0 0 -100px;
+  background: linear-gradient(90deg, var(--ink) 0 30%, transparent 30% 70%, var(--ink) 70%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.fl-horizon::before,
+.fl-horizon::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 1.5px;
+  height: 7px;
+  background: var(--ink);
+}
+.fl-horizon::before {
+  left: 0;
+}
+.fl-horizon::after {
+  right: 0;
+}
+.fl-ui.locked .fl-horizon,
+.fl-ui.touch .fl-horizon {
+  opacity: 0.4;
+}
+/* inclinar la nave en el celular: se mantienen pulsados, junto al joystick */
+.fl-roll {
+  display: none;
+  position: absolute;
+  left: 148px;
+  bottom: 58px;
+  flex-wrap: wrap-reverse; /* las dos de inclinar abajo, el escáner encima */
+  width: 102px;
+  gap: 10px;
+}
+.fl-ui.touch .fl-roll {
+  display: flex;
+}
+.fl-roll button {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 45%, transparent);
+  color: var(--ink-2);
+  pointer-events: auto;
+  touch-action: none;
+}
+.fl-roll svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.fl-roll button:active {
+  background: color-mix(in srgb, var(--ink) 22%, transparent);
+}
 /* ---------- mundo abierto: brújula, minimapa y rótulos del vuelo (world.js) ---------- */
 .wd-ui {
   position: absolute;
@@ -1677,6 +1751,127 @@ kbd {
 /* muy bajos: solo la altura y la velocidad */
 .wd-ui.tiny .wd-radar {
   display: none;
+}
+
+/* ---------- modo galaxias: rótulo de la galaxia, planetas (archivos) y sus carpetas (galaxy.js) ---------- */
+.gx-card {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  max-width: min(380px, calc(100% - 32px));
+  padding: 7px 12px 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+/* en vuelo, bajo la brújula; en paneles bajos (el celular) deja lugar a los controles */
+.graph3d-wrap:has(.wd-ui:not([hidden])) .gx-card {
+  top: 84px;
+}
+.graph3d-wrap:has(.wd-ui.small:not([hidden])) .gx-card {
+  display: none;
+}
+.gx-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 10px var(--c);
+}
+.gx-text {
+  display: grid;
+  min-width: 0;
+}
+.gx-name {
+  overflow: hidden;
+  font: 600 13px var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gx-sub {
+  overflow: hidden;
+  color: var(--ink-3);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.g3-file {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 18px;
+  padding: 0 7px 0 6px;
+  border: 0;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--ink-2);
+  font: 500 11px var(--font-mono);
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.g3-file::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c);
+}
+.g3-file:hover,
+.g3-file:focus-visible {
+  background: var(--surface-2);
+  color: var(--ink);
+  opacity: 1 !important;
+}
+.g3-dir {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0 6px;
+  color: var(--ink-3);
+  font: 600 10.5px var(--font-mono);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  text-shadow: 0 0 6px var(--surface);
+}
+.tip-fdot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 25%, transparent);
+}
+.tip-file {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+.fs {
+  font-weight: 600;
+}
+.fs-added,
+.fs-add {
+  color: var(--good);
+}
+.fs-removed,
+.fs-del {
+  color: var(--bad);
+}
+.fs-renamed,
+.fs-copied {
+  color: var(--s1);
 }
 
 /* recorrer la rama, desde el detalle del commit */

@@ -38,6 +38,8 @@ GB.i18n.define('fr', {
   'status.connecting': 'Connexion à GitHub…',
   'status.retrying': 'Nouvelle tentative…',
   'status.loadingBranches': 'Chargement des branches et de l’historique…',
+  'status.syncing': 'mise à jour…',
+  'status.offline': 'en attente de la connexion',
 
   /* ---------- résumé ---------- */
   'stats.aria': 'Résumé du dépôt',
@@ -286,6 +288,7 @@ GB.i18n.define('fr', {
   'err.rateGraphql': 'Le quota GraphQL de GitHub est épuisé. GraphBranch reprendra tout seul dès son renouvellement.',
   'err.graphql': 'GitHub GraphQL : {message}',
   'err.network': 'Impossible de joindre api.github.com. Vérifiez votre connexion ; si vous avez ouvert GraphBranch dans un lecteur qui bloque le réseau, utilisez la version GitHub Pages ou le fichier local.',
+  'err.timeout': 'GitHub a mis trop de temps à répondre. GraphBranch réessaiera tout seul.',
   'err.notFound': '{repo} est introuvable. Si le dépôt est privé, ajoutez un jeton avec accès en lecture dans les Paramètres.',
   'err.auth': 'Le jeton n’est pas valide ou a expiré. Vérifiez-le dans les Paramètres.',
   'err.rateAnon': 'Les 60 requêtes par heure autorisées par GitHub sans jeton sont épuisées. Ajoutez un jeton dans les Paramètres pour continuer en temps réel.',

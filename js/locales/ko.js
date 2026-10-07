@@ -38,6 +38,8 @@ GB.i18n.define('ko', {
   'status.connecting': 'GitHub에 연결하는 중…',
   'status.retrying': '다시 시도하는 중…',
   'status.loadingBranches': '브랜치와 히스토리를 불러오는 중…',
+  'status.syncing': '업데이트 중…',
+  'status.offline': '연결 대기 중',
 
   /* ---------- 요약 ---------- */
   'stats.aria': '저장소 요약',
@@ -285,6 +287,7 @@ GB.i18n.define('ko', {
   'err.rateGraphql': 'GitHub GraphQL 할당량을 모두 사용했습니다. 할당량이 갱신되면 GraphBranch가 자동으로 다시 시작합니다.',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'api.github.com에 연결할 수 없습니다. 인터넷 연결을 확인하세요. 네트워크를 차단하는 뷰어에서 GraphBranch를 열었다면 GitHub Pages 버전이나 로컬 파일을 사용하세요.',
+  'err.timeout': 'GitHub의 응답이 너무 오래 걸렸습니다. GraphBranch가 자동으로 다시 시도합니다.',
   'err.notFound': '{repo} 저장소를 찾을 수 없습니다. 비공개 저장소라면 설정에서 읽기 권한이 있는 토큰을 추가하세요.',
   'err.auth': '토큰이 유효하지 않거나 만료되었습니다. 설정에서 확인하세요.',
   'err.rateAnon': 'GitHub가 토큰 없이 허용하는 시간당 60회 요청을 모두 사용했습니다. 실시간으로 계속 보려면 설정에서 토큰을 추가하세요.',

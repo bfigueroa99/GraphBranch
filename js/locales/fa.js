@@ -38,6 +38,8 @@ GB.i18n.define('fa', {
   'status.connecting': 'در حال اتصال به GitHub…',
   'status.retrying': 'در حال تلاش دوباره…',
   'status.loadingBranches': 'در حال بارگذاری شاخه‌ها و تاریخچه…',
+  'status.syncing': 'در حال به‌روزرسانی…',
+  'status.offline': 'در انتظار اتصال',
 
   /* ---------- summary strip ---------- */
   'stats.aria': 'خلاصه مخزن',
@@ -328,6 +330,7 @@ GB.i18n.define('fa', {
   'err.rateGraphql': 'سهمیه GraphQL در GitHub تمام شده است. GraphBranch پس از تجدید سهمیه، خودش دوباره ادامه می‌دهد.',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'دسترسی به api.github.com ممکن نشد. اتصال خود را بررسی کنید؛ اگر GraphBranch را در نمایشگری باز کرده‌اید که شبکه را مسدود می‌کند، از نسخه GitHub Pages یا فایل محلی استفاده کنید.',
+  'err.timeout': 'پاسخ GitHub بیش از حد طول کشید. GraphBranch خودش دوباره تلاش می‌کند.',
   'err.notFound': '{repo} پیدا نشد. اگر مخزن خصوصی است، در تنظیمات یک توکن با دسترسی خواندن اضافه کنید.',
   'err.auth': 'توکن معتبر نیست یا منقضی شده است. آن را در تنظیمات بررسی کنید.',
   'err.rateAnon': 'سهمیه ۶۰ درخواست در ساعت که GitHub بدون توکن مجاز می‌داند تمام شده است. برای ادامه به‌صورت لحظه‌ای، در تنظیمات یک توکن اضافه کنید.',

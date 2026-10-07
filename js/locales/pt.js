@@ -38,6 +38,8 @@ GB.i18n.define('pt', {
   'status.connecting': 'Conectando ao GitHub…',
   'status.retrying': 'Tentando novamente…',
   'status.loadingBranches': 'Carregando branches e histórico…',
+  'status.syncing': 'atualizando…',
+  'status.offline': 'aguardando a conexão',
 
   /* ---------- resumo ---------- */
   'stats.aria': 'Resumo do repositório',
@@ -286,6 +288,7 @@ GB.i18n.define('pt', {
   'err.rateGraphql': 'A cota do GraphQL do GitHub foi esgotada. O GraphBranch retomará sozinho quando ela for renovada.',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'Não foi possível acessar api.github.com. Verifique sua conexão; se você abriu o GraphBranch dentro de um visualizador que bloqueia a rede, use a versão do GitHub Pages ou o arquivo local.',
+  'err.timeout': 'O GitHub demorou demais para responder. O GraphBranch tentará de novo sozinho.',
   'err.notFound': '{repo} não foi encontrado. Se o repositório for privado, adicione um token com permissão de leitura em Configurações.',
   'err.auth': 'O token não é válido ou expirou. Verifique-o em Configurações.',
   'err.rateAnon': 'As 60 requisições por hora que o GitHub permite sem token foram esgotadas. Adicione um token em Configurações para continuar em tempo real.',

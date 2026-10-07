@@ -38,6 +38,8 @@ GB.i18n.define('he', {
   'status.connecting': 'מתחבר ל-GitHub…',
   'status.retrying': 'מנסה שוב…',
   'status.loadingBranches': 'טוען ענפים והיסטוריה…',
+  'status.syncing': 'מתעדכן…',
+  'status.offline': 'ממתין לחיבור',
 
   /* ---------- summary strip ---------- */
   'stats.aria': 'סיכום המאגר',
@@ -342,6 +344,7 @@ GB.i18n.define('he', {
   'err.rateGraphql': 'מכסת ה-GraphQL של GitHub אזלה. GraphBranch יחזור לפעול מעצמו כשהיא תתחדש.',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'לא ניתן להגיע אל api.github.com. בדוק את החיבור; אם פתחת את GraphBranch בתוך מציג שחוסם את הרשת, השתמש בגרסת GitHub Pages או בקובץ המקומי.',
+  'err.timeout': 'GitHub לא הגיב בזמן. GraphBranch ינסה שוב בעצמו.',
   'err.notFound': 'לא נמצא {repo}. אם המאגר פרטי, הוסף בהגדרות token עם הרשאת קריאה.',
   'err.auth': 'ה-token אינו תקין או שפג תוקפו. בדוק אותו בהגדרות.',
   'err.rateAnon': '60 הבקשות לשעה ש-GitHub מאפשר ללא token אזלו. הוסף token בהגדרות כדי להמשיך בזמן אמת.',

@@ -38,6 +38,8 @@ GB.i18n.define('hu', {
   'status.connecting': 'Csatlakozás a GitHubhoz…',
   'status.retrying': 'Újrapróbálkozás…',
   'status.loadingBranches': 'Ágak és előzmények betöltése…',
+  'status.syncing': 'frissítés…',
+  'status.offline': 'várakozás a kapcsolatra',
 
   /* ---------- összegzés ---------- */
   'stats.aria': 'A repozitórium összegzése',
@@ -285,6 +287,7 @@ GB.i18n.define('hu', {
   'err.rateGraphql': 'A GitHub GraphQL-kvóta elfogyott. A GraphBranch magától folytatja, amikor megújul.',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'Nem érhető el az api.github.com. Ellenőrizd a kapcsolatot; ha a GraphBranch-et olyan megjelenítőben nyitottad meg, amely blokkolja a hálózatot, használd a GitHub Pages verziót vagy a helyi fájlt.',
+  'err.timeout': 'A GitHub túl sokáig nem válaszolt. A GraphBranch magától újrapróbálja.',
   'err.notFound': 'Nem található a repozitórium: {repo}. Ha privát, adj hozzá a Beállításokban olvasási jogosultságú tokent.',
   'err.auth': 'A token érvénytelen vagy lejárt. Ellenőrizd a Beállításokban.',
   'err.rateAnon': 'Elfogyott az a 60 kérés óránként, amelyet a GitHub token nélkül engedélyez. Adj hozzá tokent a Beállításokban, hogy valós időben folytathasd.',

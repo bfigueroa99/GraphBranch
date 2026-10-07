@@ -38,6 +38,8 @@ GB.i18n.define('fil', {
   'status.connecting': 'Kumokonekta sa GitHub…',
   'status.retrying': 'Sinusubukan muli…',
   'status.loadingBranches': 'Nilo-load ang mga branch at history…',
+  'status.syncing': 'ina-update…',
+  'status.offline': 'naghihintay ng koneksyon',
 
   /* ---------- summary strip ---------- */
   'stats.aria': 'Buod ng repository',
@@ -286,6 +288,7 @@ GB.i18n.define('fil', {
   'err.rateGraphql': 'Ubos na ang quota ng GitHub GraphQL. Kusang magpapatuloy ang GraphBranch kapag nag-renew ito.',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'Hindi maabot ang api.github.com. Suriin ang iyong koneksyon; kung binuksan mo ang GraphBranch sa isang viewer na nagba-block ng network, gamitin ang bersyon sa GitHub Pages o ang lokal na file.',
+  'err.timeout': 'Masyadong natagalan ang GitHub sa pagsagot. Kusang susubukan ulit ng GraphBranch.',
   'err.notFound': 'Hindi nakita ang {repo}. Kung pribado ang repository, magdagdag ng token na may read access sa mga setting.',
   'err.auth': 'Hindi valid o expired na ang token. Suriin ito sa mga setting.',
   'err.rateAnon': 'Ubos na ang 60 request kada oras na pinapayagan ng GitHub kapag walang token. Magdagdag ng token sa mga setting para magpatuloy nang real time.',

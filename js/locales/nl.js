@@ -38,6 +38,8 @@ GB.i18n.define('nl', {
   'status.connecting': 'Verbinden met GitHub…',
   'status.retrying': 'Opnieuw proberen…',
   'status.loadingBranches': 'Branches en geschiedenis laden…',
+  'status.syncing': 'bijwerken…',
+  'status.offline': 'wacht op verbinding',
 
   /* ---------- summary strip ---------- */
   'stats.aria': 'Samenvatting van de repository',
@@ -286,6 +288,7 @@ GB.i18n.define('nl', {
   'err.rateGraphql': 'Het GitHub GraphQL-quotum is op. GraphBranch hervat vanzelf zodra het wordt vernieuwd.',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'Kan api.github.com niet bereiken. Controleer je verbinding; als je GraphBranch hebt geopend in een viewer die het netwerk blokkeert, gebruik dan de GitHub Pages-versie of het lokale bestand.',
+  'err.timeout': 'GitHub deed er te lang over om te antwoorden. GraphBranch probeert het vanzelf opnieuw.',
   'err.notFound': '{repo} is niet gevonden. Als de repository privé is, voeg dan in Instellingen een token met leestoegang toe.',
   'err.auth': 'Het token is ongeldig of verlopen. Controleer het in Instellingen.',
   'err.rateAnon': 'De 60 verzoeken per uur die GitHub zonder token toestaat zijn op. Voeg een token toe in Instellingen om in realtime door te gaan.',

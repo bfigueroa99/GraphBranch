@@ -38,6 +38,8 @@ GB.i18n.define('sk', {
   'status.connecting': 'Pripájanie na GitHub…',
   'status.retrying': 'Opakovaný pokus…',
   'status.loadingBranches': 'Načítavajú sa vetvy a história…',
+  'status.syncing': 'aktualizuje sa…',
+  'status.offline': 'čaká sa na pripojenie',
 
   /* ---------- summary strip ---------- */
   'stats.aria': 'Súhrn repozitára',
@@ -296,6 +298,7 @@ GB.i18n.define('sk', {
   'err.rateGraphql': 'Kvóta GitHub GraphQL sa vyčerpala. GraphBranch bude pokračovať sám, keď sa obnoví.',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'S api.github.com sa nepodarilo spojiť. Skontrolujte pripojenie; ak ste GraphBranch otvorili v zobrazovači, ktorý blokuje sieť, použite verziu na GitHub Pages alebo lokálny súbor.',
+  'err.timeout': 'GitHub odpovedal príliš dlho. GraphBranch to skúsi znova sám.',
   'err.notFound': 'Repozitár {repo} sa nenašiel. Ak je repozitár súkromný, pridajte v nastaveniach token s prístupom na čítanie.',
   'err.auth': 'Token nie je platný alebo mu skončila platnosť. Skontrolujte ho v nastaveniach.',
   'err.rateAnon': 'Vyčerpalo sa 60 požiadaviek za hodinu, ktoré GitHub povoľuje bez tokenu. Ak chcete pokračovať v reálnom čase, pridajte token v nastaveniach.',

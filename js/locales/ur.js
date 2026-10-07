@@ -38,6 +38,8 @@ GB.i18n.define('ur', {
   'status.connecting': 'GitHub سے کنیکٹ ہو رہا ہے…',
   'status.retrying': 'دوبارہ کوشش کی جا رہی ہے…',
   'status.loadingBranches': 'برانچز اور ہسٹری لوڈ ہو رہی ہیں…',
+  'status.syncing': 'اپ ڈیٹ ہو رہا ہے…',
+  'status.offline': 'کنکشن کا انتظار ہے',
 
   /* ---------- summary strip ---------- */
   'stats.aria': 'ریپوزٹری کا خلاصہ',
@@ -328,6 +330,7 @@ GB.i18n.define('ur', {
   'err.rateGraphql': 'GitHub GraphQL کا کوٹا ختم ہو گیا ہے۔ کوٹا بحال ہوتے ہی GraphBranch خود دوبارہ شروع ہو جائے گا۔',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'api.github.com تک رسائی نہیں ہو سکی۔ اپنا کنکشن چیک کریں؛ اگر آپ نے GraphBranch کو کسی ایسے ویور میں کھولا ہے جو نیٹ ورک بلاک کرتا ہے تو GitHub Pages والا ورژن یا مقامی فائل استعمال کریں۔',
+  'err.timeout': 'GitHub نے جواب دینے میں بہت دیر لگائی۔ GraphBranch خود دوبارہ کوشش کرے گا۔',
   'err.notFound': '{repo} نہیں ملی۔ اگر ریپوزٹری نجی ہے تو سیٹنگز میں پڑھنے کی اجازت والا ٹوکن شامل کریں۔',
   'err.auth': 'ٹوکن درست نہیں ہے یا اس کی میعاد ختم ہو چکی ہے۔ سیٹنگز میں اسے چیک کریں۔',
   'err.rateAnon': 'ٹوکن کے بغیر GitHub جو فی گھنٹہ 60 درخواستیں دیتا ہے وہ ختم ہو چکی ہیں۔ ریئل ٹائم میں جاری رکھنے کے لیے سیٹنگز میں ٹوکن شامل کریں۔',

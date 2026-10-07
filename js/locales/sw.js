@@ -38,6 +38,8 @@ GB.i18n.define('sw', {
   'status.connecting': 'Inaunganisha na GitHub…',
   'status.retrying': 'Inajaribu tena…',
   'status.loadingBranches': 'Inapakia matawi na historia…',
+  'status.syncing': 'inasasisha…',
+  'status.offline': 'inasubiri muunganisho',
 
   /* ---------- muhtasari ---------- */
   'stats.aria': 'Muhtasari wa hazina',
@@ -285,6 +287,7 @@ GB.i18n.define('sw', {
   'err.rateGraphql': 'Kiwango cha GraphQL cha GitHub kimeisha. GraphBranch itaendelea yenyewe kitakapowekwa upya.',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'Imeshindwa kufikia api.github.com. Angalia muunganisho wako; ukifungua GraphBranch ndani ya kitazamaji kinachozuia mtandao, tumia toleo la GitHub Pages au faili ya ndani.',
+  'err.timeout': 'GitHub ilichukua muda mrefu sana kujibu. GraphBranch itajaribu tena yenyewe.',
   'err.notFound': '{repo} haikupatikana. Ikiwa hazina ni ya faragha, ongeza token yenye ruhusa ya kusoma kwenye Mipangilio.',
   'err.auth': 'Token si halali au imeisha muda wake. Iangalie kwenye Mipangilio.',
   'err.rateAnon': 'Maombi 60 kwa saa ambayo GitHub huruhusu bila token yameisha. Ongeza token kwenye Mipangilio ili kuendelea kwa wakati halisi.',

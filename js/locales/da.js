@@ -38,6 +38,8 @@ GB.i18n.define('da', {
   'status.connecting': 'Forbinder til GitHub…',
   'status.retrying': 'Prøver igen…',
   'status.loadingBranches': 'Indlæser branches og historik…',
+  'status.syncing': 'opdaterer…',
+  'status.offline': 'venter på forbindelse',
 
   /* ---------- oversigt ---------- */
   'stats.aria': 'Oversigt over repositoriet',
@@ -285,6 +287,7 @@ GB.i18n.define('da', {
   'err.rateGraphql': 'GitHubs GraphQL-kvote er brugt op. GraphBranch fortsætter af sig selv, når den fornyes.',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'Kunne ikke nå api.github.com. Tjek din forbindelse; hvis du åbnede GraphBranch i en viser, der blokerer netværket, så brug GitHub Pages-versionen eller den lokale fil.',
+  'err.timeout': 'GitHub var for længe om at svare. GraphBranch prøver igen af sig selv.',
   'err.notFound': '{repo} blev ikke fundet. Hvis repositoriet er privat, så tilføj et token med læseadgang under Indstillinger.',
   'err.auth': 'Tokenet er ugyldigt eller udløbet. Tjek det under Indstillinger.',
   'err.rateAnon': 'De 60 forespørgsler i timen, som GitHub tillader uden token, er brugt op. Tilføj et token under Indstillinger for at fortsætte i realtid.',

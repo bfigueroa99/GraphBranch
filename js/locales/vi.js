@@ -38,6 +38,8 @@ GB.i18n.define('vi', {
   'status.connecting': 'Đang kết nối với GitHub…',
   'status.retrying': 'Đang thử lại…',
   'status.loadingBranches': 'Đang tải các nhánh và lịch sử…',
+  'status.syncing': 'đang cập nhật…',
+  'status.offline': 'đang chờ kết nối',
 
   /* ---------- tóm tắt ---------- */
   'stats.aria': 'Tóm tắt kho lưu trữ',
@@ -285,6 +287,7 @@ GB.i18n.define('vi', {
   'err.rateGraphql': 'Đã dùng hết hạn mức GraphQL của GitHub. GraphBranch sẽ tự tiếp tục khi hạn mức được làm mới.',
   'err.graphql': 'GitHub GraphQL: {message}',
   'err.network': 'Không thể kết nối tới api.github.com. Hãy kiểm tra kết nối mạng; nếu bạn mở GraphBranch trong một trình xem chặn mạng, hãy dùng phiên bản GitHub Pages hoặc tệp cục bộ.',
+  'err.timeout': 'GitHub phản hồi quá lâu. GraphBranch sẽ tự thử lại.',
   'err.notFound': 'Không tìm thấy {repo}. Nếu kho lưu trữ ở chế độ riêng tư, hãy thêm token có quyền đọc trong Cài đặt.',
   'err.auth': 'Token không hợp lệ hoặc đã hết hạn. Hãy kiểm tra trong Cài đặt.',
   'err.rateAnon': 'Đã dùng hết 60 yêu cầu mỗi giờ mà GitHub cho phép khi không có token. Hãy thêm token trong Cài đặt để tiếp tục theo thời gian thực.',

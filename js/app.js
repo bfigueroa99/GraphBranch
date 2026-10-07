@@ -88,12 +88,16 @@
     tokenInput: $('#token-input'),
     tokenToggle: $('#token-toggle'),
     tokenClear: $('#token-clear'),
+    tokenWhere: $('#token-where'),
     depth: $('#depth'),
     settingsCancel: $('#settings-cancel'),
   };
 
+  /* el token: en la web, en localStorage; en la app de escritorio, cifrado con el llavero del sistema
+     (electron/preload.js expone GBDesktop) y se lee antes de conectar, ver el arranque */
+  const desktop = window.GBDesktop;
   const settings = {
-    token: U.store.get('token', ''),
+    token: desktop ? '' : U.store.get('token', ''),
     depth: U.store.get('depth', 40),
   };
   U.store.set('maxBranches', null); // ya no hay tope: se muestran todas las ramas
@@ -210,6 +214,9 @@
     graph3d?.gx?.reset(); // los archivos que se habían pedido eran del repo anterior
     followUI(true);
     feed.clear();
+    // nada del repo anterior: ni sus cifras ni su grafo (el Replay lo reproduciría si el nuevo no carga)
+    lastRender = null;
+    clearStats();
     paused = false;
     setPressed(el.pauseBtn, false);
     setPressed(el.tvPause, false);
@@ -535,6 +542,12 @@
     renderTokenBanner();
   }
 
+  /** Cifras en blanco hasta que el repo recién conectado traiga las suyas. */
+  function clearStats() {
+    for (const [key, node] of Object.entries(el.st)) node.textContent = key.endsWith('Sub') ? '' : '–';
+    el.st.branchesSub.title = '';
+  }
+
   function renderLast() {
     const last = feed.lastTime();
     el.st.last.textContent = last ? U.timeAgo(last) : '–';
@@ -564,7 +577,9 @@
     if (!status) return;
     const s = status;
     el.status.dataset.state = s.state;
-    el.statusText.textContent = s.demo && s.state === 'live' ? t('status.demoLive') : STATE_TEXT[s.state] ? t(STATE_TEXT[s.state]) : s.state;
+    const text = s.demo && s.state === 'live' ? t('status.demoLive') : STATE_TEXT[s.state] ? t(STATE_TEXT[s.state]) : s.state;
+    // es región viva y esto corre cada segundo: reescribir el mismo texto podría volver a anunciarlo
+    if (el.statusText.textContent !== text) el.statusText.textContent = text;
     const now = Date.now();
     let sub = '';
     const secsTo = (at) => i18n.fmtSeconds(Math.max(0, Math.ceil((at - now) / 1000)));
@@ -962,12 +977,36 @@
     ev.preventDefault();
     settings.token = el.tokenInput.value.trim();
     settings.depth = Math.max(10, Math.min(100, Number(el.depth.value) || 40));
-    U.store.set('token', settings.token || null);
+    if (desktop) desktop.setToken(settings.token).then(showTokenWhere, (err) => console.error('No se pudo guardar el token:', err));
+    else U.store.set('token', settings.token || null);
     U.store.set('depth', settings.depth);
     closeSettings();
     if (source && !source.data.repo.demo) connectRepo(`${source.owner}/${source.name}`);
     else el.tokenBanner.hidden = true;
   });
+
+  /** En la app de escritorio, el aviso de Ajustes dice si el token quedó cifrado ('keychain') o no ('plain'). */
+  function showTokenWhere(where) {
+    el.tokenWhere.dataset.i18n = where === 'keychain' ? 'settings.tokenWhereKeychain' : 'settings.tokenWherePlain';
+    el.tokenWhere.textContent = t(el.tokenWhere.dataset.i18n);
+  }
+
+  /** En la app de escritorio, el ícono de la bandeja y su aviso van en el idioma de la página. */
+  function sendDesktopLabels() {
+    desktop?.setLabels({ show: t('tray.show'), quit: t('tray.quit'), hiddenTitle: t('tray.hiddenTitle'), hiddenBody: t('tray.hiddenBody') });
+  }
+
+  async function loadDesktopToken() {
+    let { token, where } = await desktop.getToken();
+    // la primera versión de escritorio lo dejaba en localStorage, sin cifrar: pasa al llavero y se borra de ahí
+    const legacy = U.store.get('token', '');
+    if (legacy) {
+      if (!token) where = await desktop.setToken((token = legacy));
+      U.store.set('token', null);
+    }
+    settings.token = token;
+    showTokenWhere(where);
+  }
 
   /* filtro de ramas: en repos grandes se aplica en GitHub (con token) */
   let filterTimer = null;
@@ -996,6 +1035,7 @@
 
   /* al cambiar de idioma se vuelve a dibujar todo lo que tiene texto (lo estático ya lo tradujo i18n.apply) */
   i18n.onChange(() => {
+    sendDesktopLabels();
     fillLanguages();
     setView(view, !tv.on);
     renderPause();
@@ -1030,7 +1070,13 @@
     /* sin query string */
   }
   initialRepo ||= U.store.get('repo', null);
-  if (initialRepo && U.parseRepo(initialRepo)) connectRepo(initialRepo);
-  else startDemo();
-  if (initialTV) setTV(true); // ?tv=1: pensado para dejar la URL abierta en una pantalla
+  function start() {
+    if (initialRepo && U.parseRepo(initialRepo)) connectRepo(initialRepo);
+    else startDemo();
+    if (initialTV) setTV(true); // ?tv=1: pensado para dejar la URL abierta en una pantalla
+  }
+  if (desktop) {
+    sendDesktopLabels();
+    loadDesktopToken().catch((err) => console.error('No se pudo leer el token:', err)).finally(start);
+  } else start();
 })(window.GB);

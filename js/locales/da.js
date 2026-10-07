@@ -334,10 +334,19 @@ GB.i18n.define('da', {
   'settings.optional': 'valgfrit',
   'settings.show': 'Vis',
   'settings.hide': 'Skjul',
-  'settings.tokenHelp': 'Uden token tillader GitHub 60 forespørgsler i timen. Med et skrivebeskyttet <em>fine-grained</em> token (tilladelserne Metadata, Contents og Pull requests) opdateres visningen hvert 10. sekund, den virker med repositories med tusindvis af branches, og du kan se private repos. Tokenet gemmes kun i denne browser og sendes kun til api.github.com.',
+  'settings.tokenHelp': 'Uden token tillader GitHub 60 forespørgsler i timen. Med et skrivebeskyttet <em>fine-grained</em> token (tilladelserne Metadata, Contents og Pull requests) opdateres visningen hvert 10. sekund, den virker med repositories med tusindvis af branches, og du kan se private repos.',
+  'settings.tokenWhere': 'Tokenet gemmes kun i denne browser og sendes kun til api.github.com.',
+  'settings.tokenWhereKeychain': 'Tokenet gemmes kun på denne computer, krypteret med systemets nøglering, og sendes kun til api.github.com.',
+  'settings.tokenWherePlain': 'Tokenet gemmes kun på denne computer, men ukrypteret: systemet har ingen nøglering til rådighed. Det sendes kun til api.github.com.',
   'settings.depth': 'Commits pr. branch',
   'settings.branchesHelp': 'GraphBranch viser alle branches i repoet, de mest aktive tættest på standardbranchen. I store repos dukker de op lidt efter lidt, de mest aktive først. Fastgjorte branches (klik på en branch → <strong>Fastgør</strong>) ligger lige under standardbranchen, også med et filter. Brug grafens filter til at fokusere på et præfiks, for eksempel <code>release/</code>.',
   'settings.clearToken': 'Slet token',
   'settings.cancel': 'Annuller',
   'settings.save': 'Gem og forbind igen',
+
+  /* ---------- skrivebordsapp: systembakken ---------- */
+  'tray.show': 'Vis GraphBranch',
+  'tray.quit': 'Afslut GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch kører stadig',
+  'tray.hiddenBody': 'Det holder fortsat øje med repositoriet i baggrunden. Åbn det igen, eller afslut det helt via ikonet i systembakken eller menulinjen.',
 });

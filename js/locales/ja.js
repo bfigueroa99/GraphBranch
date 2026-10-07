@@ -334,10 +334,19 @@ GB.i18n.define('ja', {
   'settings.optional': '任意',
   'settings.show': '表示',
   'settings.hide': '非表示',
-  'settings.tokenHelp': 'トークンがない場合、GitHub が許可するのは 1 時間あたり 60 リクエストです。読み取り専用の <em>fine-grained</em> トークン（Metadata、Contents、Pull requests の権限）を使うと、表示は 10 秒ごとに更新され、数千のブランチを持つリポジトリにも対応し、プライベートリポジトリも表示できます。トークンはこのブラウザーにのみ保存され、api.github.com にのみ送信されます。',
+  'settings.tokenHelp': 'トークンがない場合、GitHub が許可するのは 1 時間あたり 60 リクエストです。読み取り専用の <em>fine-grained</em> トークン（Metadata、Contents、Pull requests の権限）を使うと、表示は 10 秒ごとに更新され、数千のブランチを持つリポジトリにも対応し、プライベートリポジトリも表示できます。',
+  'settings.tokenWhere': 'トークンはこのブラウザーにのみ保存され、api.github.com にのみ送信されます。',
+  'settings.tokenWhereKeychain': 'トークンはシステムのキーチェーンで暗号化されてこのコンピューターにのみ保存され、api.github.com にのみ送信されます。',
+  'settings.tokenWherePlain': 'トークンはこのコンピューターにのみ保存されますが、システムで利用できるキーチェーンがないため暗号化されません。api.github.com にのみ送信されます。',
   'settings.depth': 'ブランチごとのコミット数',
   'settings.branchesHelp': 'GraphBranch はリポジトリのすべてのブランチを表示し、アクティブなブランチほどデフォルトブランチの近くに置きます。大規模なリポジトリでは、アクティブなものから順に少しずつ表示されます。ピン留めしたブランチ（ブランチをクリック → <strong>ピン留め</strong>）は、フィルター中でもデフォルトブランチのすぐ下に表示されます。グラフのフィルターを使うと、たとえば <code>release/</code> のようなプレフィックスに絞り込めます。',
   'settings.clearToken': 'トークンを削除',
   'settings.cancel': 'キャンセル',
   'settings.save': '保存して再接続',
+
+  /* ---------- デスクトップアプリ: システムトレイ ---------- */
+  'tray.show': 'GraphBranch を表示',
+  'tray.quit': 'GraphBranch を終了',
+  'tray.hiddenTitle': 'GraphBranch は実行中です',
+  'tray.hiddenBody': 'バックグラウンドでリポジトリの監視を続けています。システムトレイまたはメニューバーのアイコンから、再び開くか完全に終了できます。',
 });

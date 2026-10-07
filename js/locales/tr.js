@@ -334,10 +334,19 @@ GB.i18n.define('tr', {
   'settings.optional': 'isteğe bağlı',
   'settings.show': 'Göster',
   'settings.hide': 'Gizle',
-  'settings.tokenHelp': 'Token olmadan GitHub saatte 60 isteğe izin verir. Salt okunur bir <em>fine-grained</em> token ile (Metadata, Contents ve Pull requests izinleri) görünüm 10 saniyede bir yenilenir, binlerce dalı olan depolarla çalışır ve özel depoları görebilirsiniz. Token yalnızca bu tarayıcıda saklanır ve yalnızca api.github.com adresine gönderilir.',
+  'settings.tokenHelp': 'Token olmadan GitHub saatte 60 isteğe izin verir. Salt okunur bir <em>fine-grained</em> token ile (Metadata, Contents ve Pull requests izinleri) görünüm 10 saniyede bir yenilenir, binlerce dalı olan depolarla çalışır ve özel depoları görebilirsiniz.',
+  'settings.tokenWhere': 'Token yalnızca bu tarayıcıda saklanır ve yalnızca api.github.com adresine gönderilir.',
+  'settings.tokenWhereKeychain': 'Token yalnızca bu bilgisayarda, sistemin anahtar zinciriyle şifrelenmiş olarak saklanır ve yalnızca api.github.com adresine gönderilir.',
+  'settings.tokenWherePlain': 'Token yalnızca bu bilgisayarda saklanır, ancak şifrelenmeden: sistemde kullanılabilir bir anahtar zinciri yok. Yalnızca api.github.com adresine gönderilir.',
   'settings.depth': 'Dal başına commit sayısı',
   'settings.branchesHelp': 'GraphBranch deponun tüm dallarını gösterir; en etkin olanlar varsayılan dala en yakındır. Büyük depolarda dallar yavaş yavaş görünür, önce en etkin olanlar. Sabitlenen dallar (bir dala tıklayın → <strong>Sabitle</strong>) filtre varken bile varsayılan dalın hemen altında yer alır. Bir önek üzerine odaklanmak için grafik filtresini kullanın, örneğin <code>release/</code>.',
   'settings.clearToken': 'Token’ı sil',
   'settings.cancel': 'İptal',
   'settings.save': 'Kaydet ve yeniden bağlan',
+
+  /* ---------- masaüstü uygulaması: sistem tepsisi ---------- */
+  'tray.show': "GraphBranch'i göster",
+  'tray.quit': "GraphBranch'ten çık",
+  'tray.hiddenTitle': 'GraphBranch çalışmaya devam ediyor',
+  'tray.hiddenBody': 'Depoyu arka planda izlemeye devam ediyor. Sistem tepsisindeki veya menü çubuğundaki simgesinden yeniden açabilir ya da tamamen kapatabilirsiniz.',
 });

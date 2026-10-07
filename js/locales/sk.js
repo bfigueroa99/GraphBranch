@@ -345,10 +345,19 @@ GB.i18n.define('sk', {
   'settings.optional': 'voliteľné',
   'settings.show': 'Zobraziť',
   'settings.hide': 'Skryť',
-  'settings.tokenHelp': 'Bez tokenu povoľuje GitHub 60 požiadaviek za hodinu. S tokenom <em>fine-grained</em> len na čítanie (oprávnenia Metadata, Contents a Pull requests) sa zobrazenie obnovuje každých 10 sekúnd, funguje s repozitármi s tisíckami vetiev a zobrazia sa aj súkromné repozitáre. Token sa ukladá iba v tomto prehliadači a odosiela sa výlučne na api.github.com.',
+  'settings.tokenHelp': 'Bez tokenu povoľuje GitHub 60 požiadaviek za hodinu. S tokenom <em>fine-grained</em> len na čítanie (oprávnenia Metadata, Contents a Pull requests) sa zobrazenie obnovuje každých 10 sekúnd, funguje s repozitármi s tisíckami vetiev a zobrazia sa aj súkromné repozitáre.',
+  'settings.tokenWhere': 'Token sa ukladá iba v tomto prehliadači a odosiela sa výlučne na api.github.com.',
+  'settings.tokenWhereKeychain': 'Token sa ukladá iba v tomto počítači, zašifrovaný pomocou systémovej kľúčenky, a odosiela sa výlučne na api.github.com.',
+  'settings.tokenWherePlain': 'Token sa ukladá iba v tomto počítači, ale nezašifrovaný: systém nemá k dispozícii kľúčenku. Odosiela sa výlučne na api.github.com.',
   'settings.depth': 'Commity na vetvu',
   'settings.branchesHelp': 'GraphBranch zobrazuje všetky vetvy repozitára, najaktívnejšie najbližšie k predvolenej vetve. Vo veľkých repozitároch sa objavujú postupne, najaktívnejšie ako prvé. Pripnuté vetvy (kliknite na vetvu → <strong>Pripnúť</strong>) sú hneď pod predvolenou vetvou, aj keď je zapnutý filter. Filter grafu použite na zameranie na predponu, napríklad <code>release/</code>.',
   'settings.clearToken': 'Odstrániť token',
   'settings.cancel': 'Zrušiť',
   'settings.save': 'Uložiť a znova pripojiť',
+
+  /* ---------- desktopová aplikácia: oblasť oznámení ---------- */
+  'tray.show': 'Zobraziť GraphBranch',
+  'tray.quit': 'Ukončiť GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch stále beží',
+  'tray.hiddenBody': 'Ďalej sleduje repozitár na pozadí. Znova ho otvoríte alebo úplne ukončíte pomocou jeho ikony v oblasti oznámení alebo na lište ponúk.',
 });

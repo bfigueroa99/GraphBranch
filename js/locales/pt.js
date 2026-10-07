@@ -335,10 +335,19 @@ GB.i18n.define('pt', {
   'settings.optional': 'opcional',
   'settings.show': 'Mostrar',
   'settings.hide': 'Ocultar',
-  'settings.tokenHelp': 'Sem token, o GitHub permite 60 requisições por hora. Com um token <em>fine-grained</em> somente leitura (permissões Metadata, Contents e Pull requests), a visualização é atualizada a cada 10 segundos, funciona com repositórios de milhares de branches e você pode ver repositórios privados. O token é armazenado apenas neste navegador e enviado somente para api.github.com.',
+  'settings.tokenHelp': 'Sem token, o GitHub permite 60 requisições por hora. Com um token <em>fine-grained</em> somente leitura (permissões Metadata, Contents e Pull requests), a visualização é atualizada a cada 10 segundos, funciona com repositórios de milhares de branches e você pode ver repositórios privados.',
+  'settings.tokenWhere': 'O token é armazenado apenas neste navegador e enviado somente para api.github.com.',
+  'settings.tokenWhereKeychain': 'O token é armazenado apenas neste computador, criptografado com o chaveiro do sistema, e enviado somente para api.github.com.',
+  'settings.tokenWherePlain': 'O token é armazenado apenas neste computador, mas sem criptografia: o sistema não tem um chaveiro disponível. Ele é enviado somente para api.github.com.',
   'settings.depth': 'Commits por branch',
   'settings.branchesHelp': 'O GraphBranch mostra todos os branches do repositório, com os mais ativos mais perto do branch padrão. Em repositórios grandes, eles vão aparecendo aos poucos, os mais ativos primeiro. Os branches fixados (clique em um branch → <strong>Fixar</strong>) ficam logo abaixo do branch padrão, mesmo com um filtro. Use o filtro do grafo para focar em um prefixo, por exemplo <code>release/</code>.',
   'settings.clearToken': 'Excluir token',
   'settings.cancel': 'Cancelar',
   'settings.save': 'Salvar e reconectar',
+
+  /* ---------- app para desktop: bandeja do sistema ---------- */
+  'tray.show': 'Mostrar o GraphBranch',
+  'tray.quit': 'Sair do GraphBranch',
+  'tray.hiddenTitle': 'O GraphBranch continua aberto',
+  'tray.hiddenBody': 'Ele continua acompanhando o repositório em segundo plano. Abra-o de novo ou feche-o de vez pelo ícone na bandeja do sistema ou na barra de menus.',
 });

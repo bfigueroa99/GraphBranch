@@ -334,10 +334,19 @@ GB.i18n.define('zh-Hant', {
   'settings.optional': '選填',
   'settings.show': '顯示',
   'settings.hide': '隱藏',
-  'settings.tokenHelp': '沒有權杖時，GitHub 每小時只允許 60 次請求。使用唯讀的 <em>fine-grained</em> 權杖（需要 Metadata、Contents 與 Pull requests 權限），檢視會每 10 秒重新整理，可處理擁有數千個分支的儲存庫，也能查看私人儲存庫。權杖只會儲存在此瀏覽器中，並且只會傳送到 api.github.com。',
+  'settings.tokenHelp': '沒有權杖時，GitHub 每小時只允許 60 次請求。使用唯讀的 <em>fine-grained</em> 權杖（需要 Metadata、Contents 與 Pull requests 權限），檢視會每 10 秒重新整理，可處理擁有數千個分支的儲存庫，也能查看私人儲存庫。',
+  'settings.tokenWhere': '權杖只會儲存在此瀏覽器中，並且只會傳送到 api.github.com。',
+  'settings.tokenWhereKeychain': '權杖只會儲存在這台電腦上，並由系統鑰匙圈加密，只會傳送到 api.github.com。',
+  'settings.tokenWherePlain': '權杖只會儲存在這台電腦上，但不會加密：系統沒有可用的鑰匙圈。它只會傳送到 api.github.com。',
   'settings.depth': '每個分支的提交數',
   'settings.branchesHelp': 'GraphBranch 會顯示儲存庫的所有分支，越活躍的分支離預設分支越近。在大型儲存庫中，分支會逐步出現，最活躍的最先顯示。已釘選的分支（按一下分支 → <strong>釘選</strong>）一律位於預設分支正下方，即使正在篩選也一樣。可使用圖上的篩選功能聚焦於某個前綴，例如 <code>release/</code>。',
   'settings.clearToken': '刪除權杖',
   'settings.cancel': '取消',
   'settings.save': '儲存並重新連線',
+
+  /* ---------- 桌面應用程式：系統匣 ---------- */
+  'tray.show': '顯示 GraphBranch',
+  'tray.quit': '結束 GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch 仍在執行',
+  'tray.hiddenBody': '它會繼續在背景關注這個儲存庫。可以從系統匣或選單列中的圖示重新開啟它，或完全結束。',
 });

@@ -340,10 +340,19 @@ GB.i18n.define('en', {
   'settings.optional': 'optional',
   'settings.show': 'Show',
   'settings.hide': 'Hide',
-  'settings.tokenHelp': 'Without a token, GitHub allows 60 requests per hour. With a read-only <em>fine-grained</em> token (Metadata, Contents and Pull requests permissions) the view refreshes every 10 seconds, works with repositories that have thousands of branches, and you can see private repos. The token is stored only in this browser and is sent only to api.github.com.',
+  'settings.tokenHelp': 'Without a token, GitHub allows 60 requests per hour. With a read-only <em>fine-grained</em> token (Metadata, Contents and Pull requests permissions) the view refreshes every 10 seconds, works with repositories that have thousands of branches, and you can see private repos.',
+  'settings.tokenWhere': 'The token is stored only in this browser and is sent only to api.github.com.',
+  'settings.tokenWhereKeychain': 'The token is stored only on this computer, encrypted with the system keychain, and is sent only to api.github.com.',
+  'settings.tokenWherePlain': 'The token is stored only on this computer, but unencrypted: the system has no keychain available. It is sent only to api.github.com.',
   'settings.depth': 'Commits per branch',
   'settings.branchesHelp': 'GraphBranch shows every branch of the repo, the most active ones closest to the default branch. On large repos they appear gradually, most active first. Pinned branches (click a branch → <strong>Pin</strong>) go right below the default branch, even with a filter. Use the graph filter to focus on a prefix, for example <code>release/</code>.',
   'settings.clearToken': 'Delete token',
   'settings.cancel': 'Cancel',
   'settings.save': 'Save and reconnect',
+
+  /* ---------- desktop app: system tray ---------- */
+  'tray.show': 'Show GraphBranch',
+  'tray.quit': 'Quit GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch is still running',
+  'tray.hiddenBody': 'It keeps watching the repository in the background. Open it again or quit it for good from its icon in the system tray or menu bar.',
 });

@@ -345,10 +345,19 @@ GB.i18n.define('pl', {
   'settings.optional': 'opcjonalnie',
   'settings.show': 'Pokaż',
   'settings.hide': 'Ukryj',
-  'settings.tokenHelp': 'Bez tokena GitHub zezwala na 60 zapytań na godzinę. Z tokenem <em>fine-grained</em> tylko do odczytu (uprawnienia Metadata, Contents i Pull requests) widok odświeża się co 10 sekund, działa z repozytoriami mającymi tysiące gałęzi i pozwala zobaczyć prywatne repozytoria. Token jest przechowywany tylko w tej przeglądarce i wysyłany wyłącznie do api.github.com.',
+  'settings.tokenHelp': 'Bez tokena GitHub zezwala na 60 zapytań na godzinę. Z tokenem <em>fine-grained</em> tylko do odczytu (uprawnienia Metadata, Contents i Pull requests) widok odświeża się co 10 sekund, działa z repozytoriami mającymi tysiące gałęzi i pozwala zobaczyć prywatne repozytoria.',
+  'settings.tokenWhere': 'Token jest przechowywany tylko w tej przeglądarce i wysyłany wyłącznie do api.github.com.',
+  'settings.tokenWhereKeychain': 'Token jest przechowywany tylko na tym komputerze, zaszyfrowany za pomocą systemowego pęku kluczy, i wysyłany wyłącznie do api.github.com.',
+  'settings.tokenWherePlain': 'Token jest przechowywany tylko na tym komputerze, ale bez szyfrowania: system nie ma dostępnego pęku kluczy. Jest wysyłany wyłącznie do api.github.com.',
   'settings.depth': 'Commity na gałąź',
   'settings.branchesHelp': 'GraphBranch pokazuje wszystkie gałęzie repozytorium, a najaktywniejsze najbliżej gałęzi domyślnej. W dużych repozytoriach pojawiają się stopniowo, najpierw najaktywniejsze. Przypięte gałęzie (kliknij gałąź → <strong>Przypnij</strong>) są tuż pod gałęzią domyślną, nawet przy włączonym filtrze. Użyj filtra grafu, aby skupić się na prefiksie, na przykład <code>release/</code>.',
   'settings.clearToken': 'Usuń token',
   'settings.cancel': 'Anuluj',
   'settings.save': 'Zapisz i połącz ponownie',
+
+  /* ---------- aplikacja na komputer: zasobnik systemowy ---------- */
+  'tray.show': 'Pokaż GraphBranch',
+  'tray.quit': 'Zakończ GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch nadal działa',
+  'tray.hiddenBody': 'Nadal śledzi repozytorium w tle. Otwórz go ponownie lub zamknij całkowicie za pomocą ikony w zasobniku systemowym lub na pasku menu.',
 });

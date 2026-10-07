@@ -334,10 +334,19 @@ GB.i18n.define('hu', {
   'settings.optional': 'nem kötelező',
   'settings.show': 'Mutatás',
   'settings.hide': 'Elrejtés',
-  'settings.tokenHelp': 'Token nélkül a GitHub óránként 60 kérést enged. Egy csak olvasható <em>fine-grained</em> tokennel (Metadata, Contents és Pull requests jogosultságok) a nézet 10 másodpercenként frissül, működik több ezer ágat tartalmazó repozitóriumokkal is, és a privát repókat is láthatod. A token csak ebben a böngészőben van tárolva, és kizárólag az api.github.com kapja meg.',
+  'settings.tokenHelp': 'Token nélkül a GitHub óránként 60 kérést enged. Egy csak olvasható <em>fine-grained</em> tokennel (Metadata, Contents és Pull requests jogosultságok) a nézet 10 másodpercenként frissül, működik több ezer ágat tartalmazó repozitóriumokkal is, és a privát repókat is láthatod.',
+  'settings.tokenWhere': 'A token csak ebben a böngészőben van tárolva, és kizárólag az api.github.com kapja meg.',
+  'settings.tokenWhereKeychain': 'A token csak ezen a számítógépen van tárolva, a rendszer kulcskarikájával titkosítva, és kizárólag az api.github.com kapja meg.',
+  'settings.tokenWherePlain': 'A token csak ezen a számítógépen van tárolva, de titkosítatlanul: a rendszerben nincs elérhető kulcskarika. Kizárólag az api.github.com kapja meg.',
   'settings.depth': 'Commitok ágonként',
   'settings.branchesHelp': 'A GraphBranch a repó összes ágát megmutatja, a legaktívabbakat az alapértelmezett ághoz legközelebb. Nagy repozitóriumoknál fokozatosan jelennek meg, elsőként a legaktívabbak. A kitűzött ágak (kattints egy ágra → <strong>Kitűzés</strong>) közvetlenül az alapértelmezett ág alatt vannak, szűrő mellett is. A gráf szűrőjével egy előtagra fókuszálhatsz, például <code>release/</code>.',
   'settings.clearToken': 'Token törlése',
   'settings.cancel': 'Mégse',
   'settings.save': 'Mentés és újracsatlakozás',
+
+  /* ---------- asztali alkalmazás: rendszertálca ---------- */
+  'tray.show': 'GraphBranch megjelenítése',
+  'tray.quit': 'Kilépés a GraphBranch-ből',
+  'tray.hiddenTitle': 'A GraphBranch tovább fut',
+  'tray.hiddenBody': 'A háttérben tovább figyeli a repozitóriumot. A rendszertálcán vagy a menüsorban lévő ikonjáról újra megnyithatod, vagy teljesen kiléphetsz belőle.',
 });

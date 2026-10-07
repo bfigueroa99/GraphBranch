@@ -335,10 +335,19 @@ GB.i18n.define('de', {
   'settings.optional': 'optional',
   'settings.show': 'Anzeigen',
   'settings.hide': 'Verbergen',
-  'settings.tokenHelp': 'Ohne Token erlaubt GitHub 60 Anfragen pro Stunde. Mit einem schreibgeschützten <em>Fine-grained</em>-Token (Berechtigungen Metadata, Contents und Pull requests) wird die Ansicht alle 10 Sekunden aktualisiert, funktioniert mit Repositorys mit Tausenden von Branches und du kannst private Repositorys sehen. Der Token wird nur in diesem Browser gespeichert und ausschließlich an api.github.com gesendet.',
+  'settings.tokenHelp': 'Ohne Token erlaubt GitHub 60 Anfragen pro Stunde. Mit einem schreibgeschützten <em>Fine-grained</em>-Token (Berechtigungen Metadata, Contents und Pull requests) wird die Ansicht alle 10 Sekunden aktualisiert, funktioniert mit Repositorys mit Tausenden von Branches und du kannst private Repositorys sehen.',
+  'settings.tokenWhere': 'Der Token wird nur in diesem Browser gespeichert und ausschließlich an api.github.com gesendet.',
+  'settings.tokenWhereKeychain': 'Der Token wird nur auf diesem Computer gespeichert, verschlüsselt mit dem Schlüsselbund des Systems, und ausschließlich an api.github.com gesendet.',
+  'settings.tokenWherePlain': 'Der Token wird nur auf diesem Computer gespeichert, aber unverschlüsselt: Das System hat keinen Schlüsselbund zur Verfügung. Er wird ausschließlich an api.github.com gesendet.',
   'settings.depth': 'Commits pro Branch',
   'settings.branchesHelp': 'GraphBranch zeigt alle Branches des Repositorys, die aktivsten am nächsten am Standard-Branch. Bei großen Repositorys erscheinen sie nach und nach, die aktivsten zuerst. Angeheftete Branches (Branch anklicken → <strong>Anheften</strong>) stehen direkt unter dem Standard-Branch, auch mit Filter. Mit dem Graph-Filter kannst du dich auf ein Präfix konzentrieren, zum Beispiel <code>release/</code>.',
   'settings.clearToken': 'Token löschen',
   'settings.cancel': 'Abbrechen',
   'settings.save': 'Speichern und neu verbinden',
+
+  /* ---------- Desktop-App: Infobereich ---------- */
+  'tray.show': 'GraphBranch anzeigen',
+  'tray.quit': 'GraphBranch beenden',
+  'tray.hiddenTitle': 'GraphBranch läuft weiter',
+  'tray.hiddenBody': 'Es beobachtet das Repository im Hintergrund weiter. Über sein Symbol im Infobereich oder in der Menüleiste kannst du es wieder öffnen oder ganz beenden.',
 });

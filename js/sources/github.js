@@ -105,7 +105,10 @@
       this.running = false;
       this.paused = false;
       this.busy = false;
-      this.reseed = false;
+      // pedidos de volver a elegir las ramas visibles (filtro o fijadas nuevos) y hasta cuál se atendió:
+      // así un cambio que llega a mitad de un ciclo, o un ciclo que falla, no se pierden
+      this.reseed = 0;
+      this.reseeded = 0;
       this.more = false; // quedan ramas por cargar: el próximo ciclo va enseguida
       this.calm = false; // el ciclo sumó ramas que esperaban: el grafo las agrega sin efectos de llegada
       this.timer = null;
@@ -190,14 +193,14 @@
 
     setFilter(filter) {
       this.filter = filter.trim();
-      this.reseed = true;
+      this.reseed++;
       if (this.data.loaded) this.refreshNow();
     }
 
     setPins(pins) {
       this.pins = new Set(pins);
       this.data.pins = this.pins;
-      this.reseed = true;
+      this.reseed++;
       if (this.data.loaded) this.refreshNow();
     }
 
@@ -242,12 +245,15 @@
         if (!this.running) return;
         this.emit('update', { activities, initial, calm: this.calm });
         delay = this.nextDelay();
-        if (this.again && !this.exhausted) delay = 0; // pidieron actualizar durante el ciclo (botón, filtro, fijadas)
+        // pidieron actualizar durante el ciclo (botón, filtro, fijadas), o queda un cambio de filtro o fijadas sin atender
+        if ((this.again || this.reseed !== this.reseeded) && !this.exhausted) delay = 0;
         else if (this.more && !this.throttled) delay = Math.min(delay, 250); // quedan ramas por cargar: se sigue enseguida
         // si pausaron a mitad del ciclo, el estado lo pone el final
         if (!this.paused) this.emitStatus(this.throttled ? 'limited' : 'live', null, delay, null, { syncing: delay < 1000 });
       } catch (err) {
         if (!this.running) return;
+        // el ciclo se cortó: el feed se vuelve a pedir entero, así sus eventos aún no vistos no se pierden tras un 304
+        this.etags.delete('events');
         if (err.kind === 'aborted') delay = 0; // stop() cortó el ciclo y refreshNow() revivió la fuente: se empieza de nuevo
         else {
           const offline = navigator.onLine === false;
@@ -462,11 +468,13 @@
       this.gqlCost = 0;
       this.bulkCost = 0;
       this.calm = false;
+      this.seenNow = []; // eventos leídos en este ciclo: se dan por vistos solo si el ciclo termina bien
       const acts = [];
-      const quiet = initial || this.reseed;
+      const reseed = this.reseed;
+      const quiet = initial || reseed !== this.reseeded;
       const deadline = Date.now() + (initial ? FIRST_MS : BATCH_MS);
       if (initial) await this.loadRepo(acts);
-      if (this.reseed) this.prune();
+      if (reseed !== this.reseeded) this.prune();
 
       if (this.mode === 'graphql') {
         try {
@@ -489,8 +497,10 @@
       if (this.mode === 'events' && this.due('count')) await this.countBranches();
 
       await this.completePushes(acts);
+      for (const id of this.seenNow) this.seenEvents.add(id);
+      this.forgetOldEvents();
       this.data.mode = this.mode;
-      this.reseed = false;
+      this.reseeded = reseed;
       this.gc();
       this.countPending();
       return acts;
@@ -1046,10 +1056,9 @@
       const fresh = (res.data || []).filter((ev) => !this.seenEvents.has(ev.id)).reverse(); // más antiguos primero
       await this.enrichPulls(fresh);
       for (const ev of fresh) {
-        this.seenEvents.add(ev.id);
+        this.seenNow.push(ev.id);
         await this.applyEvent(ev, acts);
       }
-      this.forgetOldEvents();
     }
 
     async applyEvent(ev, acts) {
@@ -1477,7 +1486,7 @@
       await this.enrichPulls((res.data || []).filter((ev) => !this.seenEvents.has(ev.id) && (initial || !this.coveredLive(ev))));
       for (const ev of res.data || []) {
         if (this.seenEvents.has(ev.id)) continue;
-        this.seenEvents.add(ev.id);
+        this.seenNow.push(ev.id);
         const p = ev.payload || {};
         let ref = null;
         if (ev.type === 'PushEvent' && p.ref?.startsWith('refs/heads/')) ref = p.ref.slice(11);
@@ -1492,7 +1501,6 @@
         const a = this.mapEvent(ev);
         if (a) acts.push(a);
       }
-      this.forgetOldEvents();
     }
 
     /* Desde octubre de 2025 GitHub recorta los payloads de la API de eventos: un PushEvent ya no trae

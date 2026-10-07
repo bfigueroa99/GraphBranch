@@ -334,10 +334,19 @@ GB.i18n.define('ca', {
   'settings.optional': 'opcional',
   'settings.show': 'Mostra',
   'settings.hide': 'Amaga',
-  'settings.tokenHelp': "Sense token, GitHub permet 60 consultes per hora. Amb un token <em>fine-grained</em> de només lectura (permisos Metadata, Contents i Pull requests) la vista s'actualitza cada 10 segons, funciona amb repositoris de milers de branques i pots veure repos privats. El token només es desa en aquest navegador i només s'envia a api.github.com.",
+  'settings.tokenHelp': "Sense token, GitHub permet 60 consultes per hora. Amb un token <em>fine-grained</em> de només lectura (permisos Metadata, Contents i Pull requests) la vista s'actualitza cada 10 segons, funciona amb repositoris de milers de branques i pots veure repos privats.",
+  'settings.tokenWhere': "El token només es desa en aquest navegador i només s'envia a api.github.com.",
+  'settings.tokenWhereKeychain': "El token només es desa en aquest ordinador, xifrat amb el clauer del sistema, i només s'envia a api.github.com.",
+  'settings.tokenWherePlain': "El token només es desa en aquest ordinador, però sense xifrar: el sistema no té cap clauer disponible. Només s'envia a api.github.com.",
   'settings.depth': 'Commits per branca',
   'settings.branchesHelp': 'GraphBranch mostra totes les branques del repo, les més actives més a prop de la branca per defecte. En repos grans van apareixent de mica en mica, primer les més actives. Les branques fixades (clic en una branca → <strong>Fixa</strong>) van just a sota de la branca per defecte, fins i tot amb un filtre. Fes servir el filtre del graf per centrar-te en un prefix, per exemple <code>release/</code>.',
   'settings.clearToken': 'Esborra el token',
   'settings.cancel': 'Cancel·la',
   'settings.save': 'Desa i reconnecta',
+
+  /* ---------- aplicació d’escriptori: safata del sistema ---------- */
+  'tray.show': 'Mostra GraphBranch',
+  'tray.quit': 'Surt de GraphBranch',
+  'tray.hiddenTitle': 'GraphBranch continua obert',
+  'tray.hiddenBody': "Continua revisant el repositori en segon pla. Torna'l a obrir o tanca'l del tot des de la seva icona a la safata del sistema o a la barra de menús.",
 });

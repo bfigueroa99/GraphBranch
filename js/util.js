@@ -138,6 +138,29 @@ window.GB = window.GB || {};
 
   U.matches = (name, filter) => !filter || name.toLowerCase().includes(filter.toLowerCase());
 
+  /** Clases de <html> que no cambian colores: tv-idle solo esconde el puntero y la barra del modo TV. */
+  const NOT_THEME = new Set(['tv-idle']);
+  const themeClasses = (s) => new Set(String(s || '').split(/\s+/).filter((c) => c && !NOT_THEME.has(c)));
+
+  /**
+   * Avisa cuando cambia el tema: el del sistema, `data-theme` o una clase de <html> que pueda
+   * cambiar colores. Lo que no cambia nada (reescribir la misma clase, tv-idle) no avisa: el modo TV
+   * toca tv-idle en cada movimiento del ratón y releer el tema redibuja el grafo entero.
+   */
+  U.onThemeChange = (fn) => {
+    window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', fn);
+    const root = document.documentElement;
+    new MutationObserver((list) => {
+      const now = themeClasses(root.className);
+      const changed = list.some((m) => {
+        if (m.attributeName !== 'class') return m.oldValue !== root.getAttribute(m.attributeName);
+        const before = themeClasses(m.oldValue);
+        return before.size !== now.size || [...before].some((c) => !now.has(c));
+      });
+      if (changed) fn();
+    }).observe(root, { attributes: true, attributeFilter: ['data-theme', 'class'], attributeOldValue: true });
+  };
+
   /** Extrae el nombre de rama de un mensaje de merge típico de GitHub o git. */
   U.mergedBranchName = (message) => {
     const line = U.firstLine(message);

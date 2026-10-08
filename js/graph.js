@@ -291,9 +291,7 @@
       this.bindMini();
 
       this.readTheme();
-      const onTheme = () => this.readTheme();
-      window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', onTheme);
-      new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+      U.onThemeChange(() => this.readTheme());
 
       new ResizeObserver(() => this.resize()).observe(wrap);
       document.fonts?.ready.then(() => this.relabel());

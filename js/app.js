@@ -881,7 +881,7 @@
   /** Sin mover el ratón un rato, se esconden el puntero y los controles (con el teclado siguen a mano). */
   function wake() {
     const root = document.documentElement;
-    root.classList.remove('tv-idle');
+    if (root.classList.contains('tv-idle')) root.classList.remove('tv-idle'); // corre en cada movimiento del ratón
     clearTimeout(tv.idleTimer);
     if (tv.on) tv.idleTimer = setTimeout(() => root.classList.add('tv-idle'), 3500);
   }

@@ -729,9 +729,7 @@
       this.raycaster = new THREE.Raycaster();
 
       this.readTheme();
-      const onTheme = () => this.readTheme();
-      window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', onTheme);
-      new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+      U.onThemeChange(() => this.readTheme());
       motionQuery?.addEventListener?.('change', () => this.applyMotion());
 
       this.bindPointer();

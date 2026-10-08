@@ -306,7 +306,10 @@
         if (!this.wrap.contains(document.activeElement) && !ev.target.closest('.tip')) this.wrap.focus({ preventScroll: true });
       });
       this.wrap.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Escape') return this.unpin();
+        if (ev.key === 'Escape') {
+          if (this.pinned) ev.preventDefault(); // Esc cerró la ficha: no hace nada más (salir del modo TV)
+          return this.unpin();
+        }
         if (ev.ctrlKey || ev.metaKey || ev.altKey || ev.target.closest?.('.tip')) return;
         const lane = this.lane.to;
         const page = Math.max(lane, Math.floor((this.viewH - TOP) / lane - 1) * lane);

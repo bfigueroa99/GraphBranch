@@ -27,55 +27,53 @@ posteriores pueden haberse movido.
 
 ### Alta
 
-1. **El foco se pierde al entrar y salir del modo TV** (*reproducido*), y no hay `Esc` para salir
-   (`app.js:819`). Arreglo: foco al grafo al entrar y al botón TV al salir.
-2. **El zumbido del espacio no se apaga** al entrar al modo TV (`app.js:829` no llama a
-   `pokeAmbience()`) ni con la pestaña oculta; lo mismo que el motor del vuelo (pendiente 5).
-3. **Una consulta de archivos del repo anterior escribe en las galaxias del nuevo** (`galaxy.js:1989`):
+1. **El zumbido del espacio no se apaga** al entrar al modo TV (`app.js:829` no llama a
+   `pokeAmbience()`) ni con la pestaña oculta; lo mismo que el motor del vuelo (pendiente 4).
+2. **Una consulta de archivos del repo anterior escribe en las galaxias del nuevo** (`galaxy.js:1989`):
    cambiar de repo mientras cargan deja los planetas del anterior en la rama del mismo nombre.
    Arreglo: contador de generación que `reset()` incrementa.
 
 ### Media
 
-4. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
+3. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
    `update()` y `celebrate()` siguen encolando ráfagas (`graph3d.js:846`, `:1691`) y al volver salen
    todas juntas. Arreglo: `fx` también exige `this.active`; descartar efectos con más de 1 s de atraso.
-5. **El zumbido del modo vuelo sigue sonando en segundo plano** y sus osciladores nunca se detienen
+4. **El zumbido del modo vuelo sigue sonando en segundo plano** y sus osciladores nunca se detienen
    (`flight.js:290`, `sound.js:261`). Arreglo: silenciar en `visibilitychange` y `stop()` al llegar a 0.
-6. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
+5. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
    `--surface` (`styles.css:14`). Arreglo: `#636e6a` (5,1:1).
-7. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
+6. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
    (`role=status` dentro de un contenedor `aria-live`; `feed.js:232`, `:254`). Arreglo: pausar en
    `focusin`/`focusout` y dejar una sola región viva.
-8. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
+7. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
    una sola consulta a `pulls?state=all&sort=updated` (la clave `pulls-all` ya existe).
-9. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
+8. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
     caída permanente de GraphQL a REST, `:311`). Arreglo: degradar solo con 403/404/410.
 
 ### Baja
 
-10. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
+9. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
     recibe foco al abrirse desde el teclado.
-11. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
+10. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
     `:2121`): su animación termina en opacidad 0.
-12. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
+11. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
     rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-13. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-14. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
+12. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+13. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
     `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro).
-15. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
+14. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
     `aria-pressed` y el texto, leyenda 2D sin acceso por teclado, el botón de pausa del Replay sin nombre
     accesible (`index.html:190`).
-16. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-17. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-18. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
-19. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
-20. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
+15. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+16. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+17. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
+18. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
+19. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
     blanco al arrancar.
-21. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
+20. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
     Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-22. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
+21. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
     (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
@@ -239,3 +237,19 @@ posteriores pueden haberse movido.
 - Validado: 7 pruebas, smoke (40 idiomas), i18n y 11 e2e en verde.
 - **Siguiente:** pendiente 1 (foco al entrar y salir del modo TV), luego 2 (zumbido del espacio en modo
   TV y con la pestaña oculta).
+
+### 2026-10-08 · Iteración 10
+
+- **Arreglo: el modo TV ya no pierde el foco del teclado, y `Esc` sale.** El botón TV está en la barra
+  que el modo esconde y el de salir en la barra del modo, que se esconde al volver: al entrar o salir
+  con el teclado el foco caía al `<body>`, y no había tecla para salir. Ahora, al entrar, el foco pasa
+  al grafo (donde están los atajos: espacio, `F`, `Esc`); al salir con el botón de la barra, vuelve al
+  botón TV; y `Esc` sale del modo. Si `Esc` cerró antes una ficha del grafo o aterrizó el vuelo, no
+  hace nada más (esos manejadores ahora lo marcan con `preventDefault`). README: `Esc` en los controles
+  del modo TV.
+- **Prueba nueva en el smoke:** entra al modo TV con Enter sobre el botón (el foco debe quedar en el
+  grafo), sale con `Esc`, y vuelve a entrar y sale con el botón de la barra (el foco debe volver al
+  botón TV). Antes del arreglo el foco quedaba en `BODY`.
+- Validado: 7 pruebas, smoke (40 idiomas), i18n y 11 e2e en verde.
+- **Siguiente:** pendiente 1 (zumbido del espacio en modo TV y con la pestaña oculta), luego 2
+  (consulta de archivos del repo anterior en las galaxias del nuevo).

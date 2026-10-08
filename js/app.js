@@ -43,6 +43,7 @@
     tvSound: $('#tv-sound'),
     tvFs: $('#tv-fs'),
     tvExit: $('#tv-exit'),
+    tvBar: $('#tv-bar'),
     lower: $('#lower'),
     trophyBtn: $('#trophy-btn'),
     trophyCount: $('#trophy-count'),
@@ -820,6 +821,8 @@
     if (tv.on === on) return;
     tv.on = on;
     const root = document.documentElement;
+    // el botón TV (en la barra que el modo esconde) o el de salir (en la barra del modo) tenía el foco
+    const lostFocus = (on ? el.tvBtn : el.tvBar).contains(document.activeElement);
     root.classList.toggle('tv', on);
     setPressed(el.tvBtn, on);
     if (on) {
@@ -833,6 +836,9 @@
       if (user && fullscreenOK && !fullscreenEl()) requestFs(root);
       tvScale();
       lockScreen();
+      // el foco pasa al grafo, donde están los atajos del modo (espacio, F, Esc); no a la barra, que
+      // no se escondería mientras tenga el foco
+      if (lostFocus || document.activeElement === document.body) (graph3d ? el.graph3d : el.graph).focus({ preventScroll: true });
     } else {
       if (tv.attract && replay.active) replay.stop();
       tv.attract = false;
@@ -844,6 +850,7 @@
       tv.lock?.release().catch(() => {});
       tv.lock = null;
       root.style.removeProperty('--tvz');
+      if (lostFocus) el.tvBtn.focus({ preventScroll: true });
     }
     setPressed(el.soundBtn, feed.sound);
     setPressed(el.tvSound, feed.sound);
@@ -914,9 +921,14 @@
   window.addEventListener('resize', tvScale);
   document.addEventListener('visibilitychange', () => !document.hidden && lockScreen());
   for (const type of ['pointermove', 'pointerdown', 'keydown']) document.addEventListener(type, () => tv.on && wake(), { passive: true });
-  // en modo TV: espacio pausa todo y F pone la página entera en pantalla completa
+  // en modo TV: espacio pausa todo, F pone la página entera en pantalla completa y Esc sale del modo
   document.addEventListener('keydown', (ev) => {
     if (!tv.on || ev.defaultPrevented || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+    // Esc sirve también con el foco en un botón; si el grafo la usó para cerrar una ficha, ya lo marcó
+    if (ev.key === 'Escape' && !ev.target.closest?.('input, select, textarea, [contenteditable], dialog')) {
+      ev.preventDefault();
+      return setTV(false);
+    }
     if (ev.target.closest?.('button, input, select, textarea, a, [contenteditable], dialog')) return;
     const k = (ev.key || '').toLowerCase();
     if (k === ' ') {

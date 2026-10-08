@@ -413,6 +413,58 @@ console.log('Galaxias: cortar un salto hiperespacial');
   await page.context().close();
 }
 
+console.log('Zumbido del espacio');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  // el último volumen que se le pidió al zumbido del espacio
+  await page.addInitScript(() => {
+    const hook = () => {
+      const S = window.GB?.Synth?.prototype;
+      if (!S) return setTimeout(hook, 5);
+      const drone = S.drone;
+      S.drone = function (level, ...rest) {
+        window.__drone = level;
+        return drone.call(this, level, ...rest);
+      };
+    };
+    hook();
+  });
+  const drone = () => page.evaluate(() => window.__drone ?? null);
+  const humming = (on) =>
+    page.waitForFunction((v) => (window.__drone > 0) === v, on, { timeout: 4000 }).then(
+      () => true,
+      () => false,
+    );
+  await step(page, 'se calla con la pestaña oculta y al entrar al modo TV, y vuelve', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    if (!(await page.locator('#graph3d canvas').count())) return console.log('    (sin WebGL: se salta)');
+    await page.click('#sound-btn');
+    await page.click('#galaxy-btn');
+    if (!(await humming(true))) throw new Error(`con sonido y galaxias no suena el zumbido (${await drone()})`);
+    const setHidden = (h) =>
+      page.evaluate((hidden) => {
+        Object.defineProperty(document, 'hidden', { value: hidden, configurable: true });
+        Object.defineProperty(document, 'visibilityState', { value: hidden ? 'hidden' : 'visible', configurable: true });
+        document.dispatchEvent(new Event('visibilitychange'));
+      }, h);
+    await setHidden(true);
+    const hiddenOff = await humming(false);
+    await setHidden(false);
+    const back = await humming(true);
+    await page.click('#tv-btn');
+    const tvOff = await humming(false);
+    await page.click('#tv-exit');
+    const tvBack = await humming(true);
+    await page.click('#galaxy-btn');
+    if (!hiddenOff) throw new Error('con la pestaña oculta el zumbido sigue sonando');
+    if (!back) throw new Error('al volver a la pestaña el zumbido no vuelve');
+    if (!tvOff) throw new Error('al entrar al modo TV (sin sonido) el zumbido sigue sonando');
+    if (!tvBack) throw new Error('al salir del modo TV el zumbido no vuelve');
+  });
+  await page.context().close();
+}
+
 console.log('Modo TV directo (?tv=1)');
 {
   const page = await openPage({ viewport: { width: 1920, height: 1080 } });

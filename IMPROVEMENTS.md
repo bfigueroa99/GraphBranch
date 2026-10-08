@@ -27,53 +27,53 @@ posteriores pueden haberse movido.
 
 ### Alta
 
-1. **El zumbido del espacio no se apaga** al entrar al modo TV (`app.js:829` no llama a
-   `pokeAmbience()`) ni con la pestaña oculta; lo mismo que el motor del vuelo (pendiente 4).
-2. **Una consulta de archivos del repo anterior escribe en las galaxias del nuevo** (`galaxy.js:1989`):
+1. **Una consulta de archivos del repo anterior escribe en las galaxias del nuevo** (`galaxy.js:1989`):
    cambiar de repo mientras cargan deja los planetas del anterior en la rama del mismo nombre.
    Arreglo: contador de generación que `reset()` incrementa.
 
 ### Media
 
-3. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
+2. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
    `update()` y `celebrate()` siguen encolando ráfagas (`graph3d.js:846`, `:1691`) y al volver salen
    todas juntas. Arreglo: `fx` también exige `this.active`; descartar efectos con más de 1 s de atraso.
-4. **El zumbido del modo vuelo sigue sonando en segundo plano** y sus osciladores nunca se detienen
-   (`flight.js:290`, `sound.js:261`). Arreglo: silenciar en `visibilitychange` y `stop()` al llegar a 0.
-5. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
+3. **Los osciladores de los zumbidos nunca se detienen** (`sound.js`, `engine` y `drone`): tras el
+   primer vuelo o la primera visita a las galaxias, quedan sonando en silencio y el contexto de audio
+   sigue trabajando. Arreglo: `stop()` cuando el volumen llega a 0 tras el desvanecido, y crearlos de
+   nuevo al volver a sonar.
+4. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
    `--surface` (`styles.css:14`). Arreglo: `#636e6a` (5,1:1).
-6. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
+5. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
    (`role=status` dentro de un contenedor `aria-live`; `feed.js:232`, `:254`). Arreglo: pausar en
    `focusin`/`focusout` y dejar una sola región viva.
-7. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
+6. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
    una sola consulta a `pulls?state=all&sort=updated` (la clave `pulls-all` ya existe).
-8. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
+7. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
     caída permanente de GraphQL a REST, `:311`). Arreglo: degradar solo con 403/404/410.
 
 ### Baja
 
-9. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
+8. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
     recibe foco al abrirse desde el teclado.
-10. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
+9. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
     `:2121`): su animación termina en opacidad 0.
-11. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
+10. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
     rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-12. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-13. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
+11. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+12. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
     `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro).
-14. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
+13. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
     `aria-pressed` y el texto, leyenda 2D sin acceso por teclado, el botón de pausa del Replay sin nombre
     accesible (`index.html:190`).
-15. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-16. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-17. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
-18. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
-19. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
+14. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+15. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+16. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
+17. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
+18. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
     blanco al arrancar.
-20. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
+19. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
     Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-21. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
+20. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
     (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
@@ -253,3 +253,21 @@ posteriores pueden haberse movido.
 - Validado: 7 pruebas, smoke (40 idiomas), i18n y 11 e2e en verde.
 - **Siguiente:** pendiente 1 (zumbido del espacio en modo TV y con la pestaña oculta), luego 2
   (consulta de archivos del repo anterior en las galaxias del nuevo).
+
+### 2026-10-08 · Iteración 11
+
+- **Arreglo: los zumbidos se callan con la pestaña oculta y al entrar al modo TV.** El zumbido del
+  espacio (galaxias) y el motor del vuelo solo bajan de volumen desde el cuadro a cuadro, que se detiene
+  con la pestaña en segundo plano: quedaban sonando indefinidamente. Ahora, al ocultarse la pestaña, los
+  dos se callan, y al volver se vuelven a pedir; los avisos de actividad siguen sonando en segundo
+  plano. Además, el modo TV apaga el sonido pero no avisaba a las galaxias (sus botones de sonido sí):
+  ahora llama a `pokeAmbience()`, así el zumbido sigue al sonido al instante y no recién cuando la
+  cámara cambia de galaxia.
+- **Prueba nueva en el smoke** (página propia, registra el volumen pedido al zumbido): con sonido y
+  galaxias, ocultar la pestaña lo calla y volver lo recupera; entrar al modo TV lo calla y salir lo
+  recupera. La parte de la pestaña oculta fallaba antes del arreglo. La del modo TV no alcanza a
+  distinguirlo en la demo, porque el director mueve la cámara enseguida y eso ya vuelve a pedir el
+  zumbido; queda como guarda.
+- Validado: 7 pruebas, smoke (40 idiomas), i18n y 11 e2e en verde.
+- **Siguiente:** pendiente 1 (consulta de archivos del repo anterior en las galaxias del nuevo), luego 2
+  (efectos 3D acumulados mientras la vista no dibuja).

@@ -854,6 +854,7 @@
     }
     setPressed(el.soundBtn, feed.sound);
     setPressed(el.tvSound, feed.sound);
+    graph3d?.gx?.pokeAmbience(); // el zumbido del espacio sigue al sonido, como con sus botones
     setUrlParam('tv', on ? '1' : null);
     graph3d?.restyle();
     wake();
@@ -920,6 +921,14 @@
   });
   window.addEventListener('resize', tvScale);
   document.addEventListener('visibilitychange', () => !document.hidden && lockScreen());
+  // en segundo plano no hay cuadros que bajen los zumbidos (el motor del vuelo y el del espacio): se
+  // callan al ocultarse y se vuelven a pedir al volver. Los avisos de actividad siguen sonando.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      feed.synth.engine(0);
+      feed.synth.drone(0);
+    } else graph3d?.gx?.pokeAmbience();
+  });
   for (const type of ['pointermove', 'pointerdown', 'keydown']) document.addEventListener(type, () => tv.on && wake(), { passive: true });
   // en modo TV: espacio pausa todo, F pone la página entera en pantalla completa y Esc sale del modo
   document.addEventListener('keydown', (ev) => {

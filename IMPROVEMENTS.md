@@ -11,64 +11,88 @@ node --test                    # lógica contra una API de GitHub simulada (tool
 node tools/check-i18n.mjs      # traducciones contra el inglés
 node tools/smoke.mjs           # la demo en Chromium: 3D, 2D, vuelo, Replay, diálogos, RTL, celular
 node tools/smoke.mjs --langs   # además los 40 idiomas en pantalla de celular
+xvfb-run -a npm run test:e2e -- --grep-invert @lento   # app de escritorio y web (tras npm ci)
 ```
+
+Si el Playwright del proyecto no encuentra su Chromium, `PLAYWRIGHT_CHROMIUM_PATH` apunta a otro (lo
+leen el smoke y las e2e).
 
 ## Pendientes
 
-Ordenados por impacto. Salen de dos auditorías del código (datos y lógica; vistas y accesibilidad)
-hechas en la primera iteración; cada uno se verificó leyendo el código, y los marcados con
-*reproducido* también se probaron. Los números de línea son de cuando se auditó: con los cambios
+Ordenados por impacto. Salen de las auditorías del código: datos y lógica, y vistas y accesibilidad
+(iteración 1), y el código que llegó después: director, modo TV, mundo abierto, galaxias, 2D y 3D de
+#26 y #27 (iteración 6). Cada uno se verificó leyendo el código, y los marcados con *reproducido*
+también se probaron. Los números de línea son de cuando se auditó: con los cambios
 posteriores pueden haberse movido.
 
 ### Alta
 
-1. **Auditar el código nuevo de master:** el director de cámara y el modo TV (#13, `js/director.js`),
-   el mundo abierto (#14, `js/world.js`) y el modo galaxias (#17–#22). Ya tienen pasos en el smoke test
-   (iteración 5); falta revisarlos como se hizo con el resto: fugas al entrar y salir, escuchas,
-   accesibilidad, trabajo por cuadro.
+1. **En modo TV, mover el ratón vuelve a leer todo el tema en cada evento** (*reproducido*). `wake()`
+   quita la clase `tv-idle` aunque no esté, y eso igual despierta los MutationObserver de 3D y 2D
+   (`app.js:883`, `graph3d.js:734`, `graph.js:296`): 30 movimientos dieron 30 `readTheme` y 30
+   redibujos del grafo 2D oculto. Arreglo: tocar la clase solo si está.
+2. **Cortar un salto hiperespacial deja mal el campo de visión** (*reproducido*). Pasar a 2D, apagar
+   las galaxias o cambiar de repo durante el salto deja la cámara en 50–70° hasta salir del vuelo
+   (`galaxy.js:1629`, `endHyper`). Arreglo: restaurar `fov` a `hyper.fov0`.
+3. **El rótulo de llegada a una galaxia le lee al lector de pantalla el nombre "descifrándose"**
+   (*reproducido*): unas 48 escrituras con caracteres al azar en una región `role=status`
+   (`galaxy.js:959`, `:825`). Arreglo: `aria-hidden` en el efecto y el nombre real, una vez, en un
+   texto solo para lectores.
+4. **El foco se pierde al entrar y salir del modo TV** (*reproducido*), y no hay `Esc` para salir
+   (`app.js:819`). Arreglo: foco al grafo al entrar y al botón TV al salir.
+5. **El zumbido del espacio no se apaga** al entrar al modo TV (`app.js:829` no llama a
+   `pokeAmbience()`) ni con la pestaña oculta; lo mismo que el motor del vuelo (pendiente 8).
+6. **Una consulta de archivos del repo anterior escribe en las galaxias del nuevo** (`galaxy.js:1989`):
+   cambiar de repo mientras cargan deja los planetas del anterior en la rama del mismo nombre.
+   Arreglo: contador de generación que `reset()` incrementa.
 
 ### Media
 
-2. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
+7. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
    `update()` y `celebrate()` siguen encolando ráfagas (`graph3d.js:846`, `:1691`) y al volver salen
    todas juntas. Arreglo: `fx` también exige `this.active`; descartar efectos con más de 1 s de atraso.
-3. **El zumbido del modo vuelo sigue sonando en segundo plano** y sus osciladores nunca se detienen
+8. **El zumbido del modo vuelo sigue sonando en segundo plano** y sus osciladores nunca se detienen
    (`flight.js:290`, `sound.js:261`). Arreglo: silenciar en `visibilitychange` y `stop()` al llegar a 0.
-4. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
+9. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
    `--surface` (`styles.css:14`). Arreglo: `#636e6a` (5,1:1).
-5. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
+10. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
    (`role=status` dentro de un contenedor `aria-live`; `feed.js:232`, `:254`). Arreglo: pausar en
    `focusin`/`focusout` y dejar una sola región viva.
-6. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
+11. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
    una sola consulta a `pulls?state=all&sort=updated` (la clave `pulls-all` ya existe).
-7. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
+12. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
     caída permanente de GraphQL a REST, `:311`). Arreglo: degradar solo con 403/404/410.
 
 ### Baja
 
-8. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
+13. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
     recibe foco al abrirse desde el teclado.
-9. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
+14. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
     `:2121`): su animación termina en opacidad 0.
-10. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
+15. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
     rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-11. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-12. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
+16. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+17. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
     `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro).
-13. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
+18. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
     `aria-pressed` y el texto, leyenda 2D sin acceso por teclado, el botón de pausa del Replay sin nombre
     accesible (`index.html:190`).
-14. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-15. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-16. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
-17. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
-18. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
+19. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+20. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+21. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
+22. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
+23. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
     blanco al arrancar.
-19. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
+24. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
     Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-20. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
+25. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
     (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
+
+- Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
+  entradas y no tamaño (`galaxy.js:1987`); `placeLabels`/`placeNotes` crean arreglos por cuadro
+  (`graph3d.js:2611`); el contenedor 2D enfocable no tiene rol ni nombre (`graph.js:306`); las marcas
+  de la brújula del mundo abierto son botones que se mueven y ocultan cada cuadro (`world.js:849`).
 
 ## Bitácora
 
@@ -160,3 +184,25 @@ posteriores pueden haberse movido.
   `setTV`. Todo en verde, también los 40 idiomas.
 - **Siguiente:** pendiente 1 (auditar director, modo TV, mundo abierto y galaxias), luego 2 (efectos 3D
   acumulados mientras la vista no dibuja).
+
+### 2026-10-08 · Iteración 6
+
+- **Sincronización.** El PR #16 se fusionó; la rama se reinició desde master y luego avanzó hasta #28
+  (vista 2D con efectos y minimapa, línea de tiempo 3D, pruebas e2e locales). Con `npm ci` se instaló
+  Electron y las 11 pruebas e2e (sin la lenta) pasaron antes y después del cambio.
+- **Auditoría** del código que había llegado sin revisar (director, modo TV, mundo abierto, galaxias y
+  las vistas de #26 y #27): sin problemas de seguridad ni escuchas duplicadas; 7 hallazgos, 5 de ellos
+  reproducidos en Chromium. Quedan como pendientes 1–6.
+- **Arreglo: el director de cámara ya no le quita la nave al piloto.** Encenderlo en pleno vuelo lo
+  dejaba al mando: sus cortes teletransportaban la nave y su deriva la movía cada cuadro. Entrar al modo
+  TV volando dejaba la pantalla congelada en primera persona con la interfaz del vuelo. Además, en modo
+  TV echaba del vuelo a quien pilotaba activamente, porque volar no contaba como interacción. Ahora el
+  director se enciende a la espera si hay vuelo, el modo TV sale del vuelo al entrar y pilotar cuenta
+  como usar la cámara.
+- **Pruebas nuevas en el smoke:** encender el director volando (el botón debe quedar "a la espera") y
+  entrar al modo TV volando (el vuelo debe terminar). Las dos fallaban antes del arreglo.
+- **Herramientas:** el smoke acepta `PLAYWRIGHT_CHROMIUM_PATH`, como las e2e: con `node_modules`
+  instalado toma el Playwright del proyecto, que busca otro Chromium.
+- Validado: 7 pruebas, smoke (40 idiomas), i18n y 11 e2e en verde.
+- **Siguiente:** pendiente 1 (`readTheme` en cada movimiento del ratón en modo TV), luego 2 (campo de
+  visión tras cortar un salto).

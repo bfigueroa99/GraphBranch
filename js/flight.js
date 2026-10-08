@@ -330,6 +330,8 @@
         this.padJump = jump;
       }
       r = clamp(r, -1, 1);
+      // quien pilota está usando la cámara: el director (en modo TV) no se la quita
+      if (f || s || u || r || boost || this.look.x || this.look.y) g.lastInteract = performance.now();
 
       // mirar: guiñada y cabeceo respecto de la nave (inclinada, "arriba" es el techo de la nave)
       const q = this.q;

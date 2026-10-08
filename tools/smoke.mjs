@@ -191,6 +191,36 @@ console.log('Escritorio (1280×800)');
       if (new URL(page.url()).searchParams.has('tv')) throw new Error('la URL sigue con ?tv');
     });
 
+    await step(page, 'en modo TV, mover el ratón no vuelve a leer el tema', async () => {
+      await page.click('#tv-btn');
+      await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: 5000 });
+      // readTheme (3D, 2D y mundo abierto) es lo único que pide el estilo calculado de los contenedores
+      await page.evaluate(() => {
+        const orig = window.getComputedStyle;
+        window.__themeReads = 0;
+        window.getComputedStyle = function (node, ...rest) {
+          if (node?.id === 'graph3d' || node?.id === 'graph') window.__themeReads++;
+          return orig.call(this, node, ...rest);
+        };
+      });
+      for (let i = 0; i < 30; i++) await page.mouse.move(300 + i * 15, 400 + (i % 5) * 10);
+      await page.waitForTimeout(300);
+      const reads = await page.evaluate(() => window.__themeReads);
+      // un cambio de tema de verdad sí se relee
+      const themed = await page.evaluate(async () => {
+        const before = window.__themeReads;
+        document.documentElement.dataset.theme = 'dark';
+        await new Promise((r) => setTimeout(r, 100));
+        delete document.documentElement.dataset.theme;
+        await new Promise((r) => setTimeout(r, 100));
+        return window.__themeReads - before;
+      });
+      await page.click('#tv-exit');
+      await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: 5000 });
+      if (reads > 4) throw new Error(`30 movimientos del ratón leyeron el tema ${reads} veces`);
+      if (themed < 2) throw new Error('cambiar data-theme ya no relee el tema');
+    });
+
     const flying = (on) =>
       page.waitForFunction((v) => document.querySelector('#fly-btn')?.getAttribute('aria-pressed') === v, String(on), { timeout: 5000 });
 

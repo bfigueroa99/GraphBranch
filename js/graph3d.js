@@ -1463,7 +1463,10 @@
       const KEYS = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', '+': 'in', '=': 'in', '-': 'out', _: 'out' };
       this.wrap.addEventListener('keydown', (ev) => {
         if (this.ride && !ev.target.closest?.('.tip')) this.endRide();
-        if (ev.key === 'Escape') return this.unpin();
+        if (ev.key === 'Escape') {
+          if (this.pinned) ev.preventDefault(); // Esc cerró la ficha: no hace nada más (salir del modo TV)
+          return this.unpin();
+        }
         if (this.flight?.on) return; // en vuelo, las teclas las maneja flight.js
         const k = KEYS[ev.key];
         if (!k || ev.ctrlKey || ev.metaKey || ev.altKey || ev.target.closest?.('.tip')) return;

@@ -192,7 +192,10 @@
       const canvas = g.canvas;
       g.wrap.addEventListener('keydown', (ev) => {
         if (!this.on) return;
-        if (ev.key === 'Escape' && !this.locked) return this.exit();
+        if (ev.key === 'Escape' && !this.locked) {
+          ev.preventDefault(); // Esc aterrizó: no hace nada más (salir del modo TV)
+          return this.exit();
+        }
         const k = KEYS[ev.code];
         if (!k || ev.ctrlKey || ev.metaKey || ev.altKey || ev.target.closest?.('.tip')) return;
         ev.preventDefault();

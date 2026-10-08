@@ -191,6 +191,34 @@ console.log('Escritorio (1280×800)');
       if (new URL(page.url()).searchParams.has('tv')) throw new Error('la URL sigue con ?tv');
     });
 
+    await step(page, 'modo TV con teclado: el foco no se pierde y Esc sale', async () => {
+      const active = () => page.evaluate(() => document.activeElement?.id || document.activeElement?.tagName);
+      const tvOn = (v) => page.waitForFunction((on) => document.documentElement.classList.contains('tv') === on, v, { timeout: 5000 });
+      await page.focus('#tv-btn');
+      await page.keyboard.press('Enter');
+      await tvOn(true);
+      await page.waitForTimeout(200);
+      const onEnter = await active();
+      await page.keyboard.press('Escape');
+      const escOk = await tvOn(false).then(() => true, () => false);
+      if (!escOk) {
+        await page.click('#tv-exit');
+        await tvOn(false);
+      }
+      // salir con el botón de la barra del modo TV, que se esconde: el foco vuelve al botón TV
+      await page.focus('#tv-btn');
+      await page.keyboard.press('Enter');
+      await tvOn(true);
+      await page.focus('#tv-exit');
+      await page.keyboard.press('Enter');
+      await tvOn(false);
+      await page.waitForTimeout(200);
+      const onExit = await active();
+      if (onEnter !== 'graph3d') throw new Error(`al entrar, el foco quedó en ${onEnter} (no en el grafo)`);
+      if (!escOk) throw new Error('Esc no sale del modo TV');
+      if (onExit !== 'tv-btn') throw new Error(`al salir, el foco quedó en ${onExit} (no en el botón TV)`);
+    });
+
     await step(page, 'en modo TV, mover el ratón no vuelve a leer el tema', async () => {
       await page.click('#tv-btn');
       await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: 5000 });

@@ -350,6 +350,38 @@ console.log('Galaxias: cortar un salto hiperespacial');
     if (Math.abs(mid - fov0) < 1) throw new Error(`el salto no llegó al túnel (campo de visión ${mid.toFixed(1)}°)`);
     if (Math.abs(after - fov0) > 0.01) throw new Error(`el campo de visión quedó en ${after.toFixed(1)}° (era ${fov0.toFixed(1)}°)`);
   });
+
+  await step(page, 'al llegar a una galaxia, el lector de pantalla oye el nombre una vez y sin glifos', async () => {
+    if (!(await page.locator('#graph3d canvas').count())) return;
+    await page.click('#galaxy-btn');
+    await page.waitForTimeout(2500);
+    const said = await page.evaluate(async () => {
+      const g = window.__g3;
+      // lo que leería un lector del rótulo de llegada: sus regiones vivas que no estén escondidas
+      const live = () =>
+        [...g.wrap.querySelectorAll('[class^=gx-arrive]')]
+          .filter((el) => el.matches('[role=status], [role=alert], [aria-live]') && !el.closest('[aria-hidden=true]'))
+          .map((el) => el.textContent.trim())
+          .join(' | ');
+      const out = [];
+      const mo = new MutationObserver(() => {
+        const t = live();
+        if (t && t !== out[out.length - 1]) out.push(t);
+      });
+      mo.observe(g.wrap, { subtree: true, childList: true, characterData: true });
+      const name = [...g.gx.gals.keys()].find((n) => n !== g.gx.focus?.name);
+      g.focusBranch(name);
+      await new Promise((r) => setTimeout(r, 4000));
+      mo.disconnect();
+      return { name, out };
+    });
+    await page.click('#galaxy-btn');
+    const glyphs = said.out.filter((t) => /[▓▒░]/.test(t));
+    if (glyphs.length) throw new Error(`se leyeron ${glyphs.length} versiones a medio descifrar, como «${glyphs[0]}»`);
+    // una vez al llegar; puede sumar los planetas cuando llegan los archivos de la rama
+    if (said.out.length > 3) throw new Error(`lo que se lee cambió ${said.out.length} veces: ${said.out.map((t) => `«${t}»`).join(', ')}`);
+    if (!said.out.some((t) => t.includes(said.name))) throw new Error(`no se lee el nombre de la galaxia (${said.name})`);
+  });
   await page.context().close();
 }
 

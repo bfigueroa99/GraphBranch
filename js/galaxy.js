@@ -882,6 +882,8 @@
       const text = parts.join(' · ');
       if (this.el.aMeta.textContent !== text) this.el.aMeta.textContent = text;
       this.el.aEx.textContent = a.found ? tr('world.explored', { n: a.found.n, total: i18n.fmtNum(a.found.total) }) : '';
+      const said = [`${this.el.aKick.textContent} ${a.name}`.trim(), text, this.el.aEx.textContent].filter(Boolean).join('. ');
+      if (this.el.say.textContent !== said) this.el.say.textContent = said;
     }
 
     /** Cuadro a cuadro: la decodificación del nombre, el fin del rótulo y la onda de escáner de la llegada. */
@@ -956,8 +958,13 @@
       warp.setAttribute('aria-hidden', 'true');
       const arrive = document.createElement('div');
       arrive.className = 'gx-arrive';
-      arrive.setAttribute('role', 'status');
+      // el rótulo se ve, pero no se lee: su nombre se "descifra" cuadro a cuadro con glifos al azar.
+      // Lo que oye un lector de pantalla va aparte, entero y una sola vez (renderArrival)
+      arrive.setAttribute('aria-hidden', 'true');
       arrive.innerHTML = '<p class="gx-a-k"></p><p class="gx-a-name"></p><p class="gx-a-meta"></p><p class="gx-a-ex"></p>';
+      const say = document.createElement('p');
+      say.className = 'gx-arrive-say sr-only';
+      say.setAttribute('role', 'status');
       // la mira del vuelo fija lo que apunta: un recuadro de esquinas con su nombre y su distancia
       const lock = document.createElement('div');
       lock.className = 'gx-lock';
@@ -976,7 +983,7 @@
       const heat = document.createElement('div');
       heat.className = 'gx-heat';
       heat.setAttribute('aria-hidden', 'true');
-      this.g.wrap.append(warp, arrive, heat, tunnel, charge, lock);
+      this.g.wrap.append(warp, arrive, say, heat, tunnel, charge, lock);
       this.el = {
         lock,
         lockBox: lock.querySelector('.gx-lock-box'),
@@ -1000,6 +1007,7 @@
         aName: arrive.querySelector('.gx-a-name'),
         aMeta: arrive.querySelector('.gx-a-meta'),
         aEx: arrive.querySelector('.gx-a-ex'),
+        say,
       };
       this.el.lockHintText.textContent = tr('galaxy.jump');
       this.fileLabels = []; // botones de archivo, se reusan

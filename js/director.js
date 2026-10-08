@@ -74,10 +74,11 @@
 
     setOn(on) {
       if (this.on === on) return;
-      this.on = on;
-      this.manual = false;
-      this.end();
       const g = this.g;
+      this.on = on;
+      // si lo encienden en pleno vuelo, el piloto sigue al mando hasta que aterrice y vuelva la calma
+      this.manual = !!(on && g.flight?.on);
+      this.end();
       // al apagarlo, la cámara vuelve a seguir el presente (si nadie está volando o paseando)
       if (!on && !g.flight?.on && !g.ride) g.setFollowing(true);
       this.emit();

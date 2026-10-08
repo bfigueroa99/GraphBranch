@@ -827,6 +827,7 @@
       tv.lastNews = tv.lastAttract = Date.now();
       if (graph3d) setView('3d', false);
       feed.sound = false; // en un espacio compartido el sonido llega a todos: se enciende a mano
+      graph3d?.flight?.exit(); // la pantalla compartida la lleva el director, no un piloto
       director?.setTV(true);
       director?.setOn(true);
       if (user && fullscreenOK && !fullscreenEl()) requestFs(root);

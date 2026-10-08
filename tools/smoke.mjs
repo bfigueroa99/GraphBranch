@@ -9,7 +9,8 @@
    api.github.com durante la demo (no debería hacer ninguna), un paso que no llega a su
    estado esperado o una página más ancha que la pantalla del celular.
 
-   Necesita Playwright con Chromium: `npm i -g playwright && npx playwright install chromium`.
+   Necesita Playwright con Chromium: `npm i -g playwright && npx playwright install chromium`
+   (o el del proyecto, tras `npm ci`). PLAYWRIGHT_CHROMIUM_PATH elige otro Chromium, como en las e2e.
    Los scripts de CDN vienen de internet; detrás de un proxy, Chromium toma el del entorno
    (HTTPS_PROXY y NO_PROXY), así el servidor local no pasa por él. */
 import http from 'node:http';
@@ -68,6 +69,8 @@ const server = await serve();
 const base = `http://127.0.0.1:${server.address().port}`;
 const { chromium } = await loadPlaywright();
 const browser = await chromium.launch({
+  // como en las pruebas e2e: otro Chromium que el de esta versión de Playwright
+  executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
   // WebGL por software, para que la vista 3D también se pruebe sin GPU
   args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
 });
@@ -186,6 +189,35 @@ console.log('Escritorio (1280×800)');
       await page.click('#tv-exit');
       await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: 5000 });
       if (new URL(page.url()).searchParams.has('tv')) throw new Error('la URL sigue con ?tv');
+    });
+
+    const flying = (on) =>
+      page.waitForFunction((v) => document.querySelector('#fly-btn')?.getAttribute('aria-pressed') === v, String(on), { timeout: 5000 });
+
+    await step(page, 'volando, el director espera al piloto', async () => {
+      await page.click('#fly-btn');
+      await flying(true);
+      await page.click('#director-btn');
+      await page.waitForTimeout(500);
+      const waiting = await page.locator('#director-btn.waiting').count();
+      await page.click('#director-btn');
+      await page.click('#fly-btn');
+      await flying(false);
+      if (!waiting) throw new Error('el director tomó la cámara en pleno vuelo');
+    });
+
+    await step(page, 'volando, entrar al modo TV deja la cámara al director', async () => {
+      await page.click('#fly-btn');
+      await flying(true);
+      await page.click('#tv-btn');
+      await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: 5000 });
+      const left = await flying(false).then(() => true, () => false);
+      await page.click('#tv-exit');
+      await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: 5000 });
+      if (!left) {
+        await page.click('#fly-btn');
+        throw new Error('el modo TV quedó congelado en el vuelo');
+      }
     });
   }
 

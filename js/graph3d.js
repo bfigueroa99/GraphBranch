@@ -926,11 +926,11 @@
         cancelAnimationFrame(this.raf);
         this.raf = 0;
         this.keys.clear();
+        this.gx?.endHyper(); // antes que el vuelo: el campo de visión que queda es el de la órbita
         this.flight?.exit();
         this.world?.showHud(false);
         this.director?.end();
         this.ride = null;
-        this.gx?.endHyper();
         this.gx?.sleep(); // el zumbido del espacio se apaga con la vista
         this.controls.enabled = true;
         this.unpin();

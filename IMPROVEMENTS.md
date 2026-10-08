@@ -27,62 +27,59 @@ posteriores pueden haberse movido.
 
 ### Alta
 
-1. **Cortar un salto hiperespacial deja mal el campo de visión** (*reproducido*). Pasar a 2D, apagar
-   las galaxias o cambiar de repo durante el salto deja la cámara en 50–70° hasta salir del vuelo
-   (`galaxy.js:1629`, `endHyper`). Arreglo: restaurar `fov` a `hyper.fov0`.
-2. **El rótulo de llegada a una galaxia le lee al lector de pantalla el nombre "descifrándose"**
+1. **El rótulo de llegada a una galaxia le lee al lector de pantalla el nombre "descifrándose"**
    (*reproducido*): unas 48 escrituras con caracteres al azar en una región `role=status`
    (`galaxy.js:959`, `:825`). Arreglo: `aria-hidden` en el efecto y el nombre real, una vez, en un
    texto solo para lectores.
-3. **El foco se pierde al entrar y salir del modo TV** (*reproducido*), y no hay `Esc` para salir
+2. **El foco se pierde al entrar y salir del modo TV** (*reproducido*), y no hay `Esc` para salir
    (`app.js:819`). Arreglo: foco al grafo al entrar y al botón TV al salir.
-4. **El zumbido del espacio no se apaga** al entrar al modo TV (`app.js:829` no llama a
-   `pokeAmbience()`) ni con la pestaña oculta; lo mismo que el motor del vuelo (pendiente 7).
-5. **Una consulta de archivos del repo anterior escribe en las galaxias del nuevo** (`galaxy.js:1989`):
+3. **El zumbido del espacio no se apaga** al entrar al modo TV (`app.js:829` no llama a
+   `pokeAmbience()`) ni con la pestaña oculta; lo mismo que el motor del vuelo (pendiente 6).
+4. **Una consulta de archivos del repo anterior escribe en las galaxias del nuevo** (`galaxy.js:1989`):
    cambiar de repo mientras cargan deja los planetas del anterior en la rama del mismo nombre.
    Arreglo: contador de generación que `reset()` incrementa.
 
 ### Media
 
-6. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
+5. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
    `update()` y `celebrate()` siguen encolando ráfagas (`graph3d.js:846`, `:1691`) y al volver salen
    todas juntas. Arreglo: `fx` también exige `this.active`; descartar efectos con más de 1 s de atraso.
-7. **El zumbido del modo vuelo sigue sonando en segundo plano** y sus osciladores nunca se detienen
+6. **El zumbido del modo vuelo sigue sonando en segundo plano** y sus osciladores nunca se detienen
    (`flight.js:290`, `sound.js:261`). Arreglo: silenciar en `visibilitychange` y `stop()` al llegar a 0.
-8. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
+7. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
    `--surface` (`styles.css:14`). Arreglo: `#636e6a` (5,1:1).
-9. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
+8. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
    (`role=status` dentro de un contenedor `aria-live`; `feed.js:232`, `:254`). Arreglo: pausar en
    `focusin`/`focusout` y dejar una sola región viva.
-10. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
+9. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
    una sola consulta a `pulls?state=all&sort=updated` (la clave `pulls-all` ya existe).
-11. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
+10. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
     caída permanente de GraphQL a REST, `:311`). Arreglo: degradar solo con 403/404/410.
 
 ### Baja
 
-12. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
+11. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
     recibe foco al abrirse desde el teclado.
-13. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
+12. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
     `:2121`): su animación termina en opacidad 0.
-14. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
+13. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
     rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-15. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-16. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
+14. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+15. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
     `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro).
-17. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
+16. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
     `aria-pressed` y el texto, leyenda 2D sin acceso por teclado, el botón de pausa del Replay sin nombre
     accesible (`index.html:190`).
-18. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-19. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-20. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
-21. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
-22. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
+17. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+18. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+19. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
+20. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
+21. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
     blanco al arrancar.
-23. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
+22. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
     Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-24. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
+23. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
     (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
@@ -217,3 +214,17 @@ posteriores pueden haberse movido.
 - Validado: 7 pruebas, smoke (40 idiomas), i18n y 11 e2e en verde.
 - **Siguiente:** pendiente 1 (campo de visión tras cortar un salto hiperespacial), luego 2 (rótulo de
   llegada a una galaxia para lectores de pantalla).
+
+### 2026-10-08 · Iteración 8
+
+- **Arreglo: cortar un salto hiperespacial ya no deja mal el campo de visión.** El túnel del salto abre
+  el campo de visión hasta 70°, y solo el aterrizaje lo devolvía. Si se cortaba a mitad (pasar a 2D,
+  apagar las galaxias, cambiar de repo), la cámara se quedaba así hasta salir del modo vuelo. Ahora lo
+  restaura `endHyper()`, por donde pasan el aterrizaje y todos los cortes; y al desactivar la vista 3D
+  el salto se corta antes de salir del vuelo, para que quede el campo de visión de la órbita.
+- **Prueba nueva en el smoke** (página propia, toma la instancia 3D desde la prueba): salta a otra
+  galaxia, pasa a 2D en pleno túnel, vuelve a 3D y compara el campo de visión. Antes del arreglo
+  quedaba en 68,9° (era 46°); después, igual al de antes del salto.
+- Validado: 7 pruebas, smoke (40 idiomas), i18n y 11 e2e en verde.
+- **Siguiente:** pendiente 1 (rótulo de llegada a una galaxia para lectores de pantalla), luego 2
+  (foco al entrar y salir del modo TV).

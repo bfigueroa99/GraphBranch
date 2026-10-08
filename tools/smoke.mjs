@@ -312,6 +312,47 @@ const langs = allLangs
   ? [...readFileSync(join(root, 'js', 'i18n.js'), 'utf8').matchAll(/\{ code: '([^']+)', name:/g)].map((m) => m[1])
   : ['es', 'de', 'ar'];
 
+console.log('Galaxias: cortar un salto hiperespacial');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  // la vista 3D no se expone: se toma la instancia del primer cuadro que dibuja
+  await page.addInitScript(() => {
+    const hook = () => {
+      const G3 = window.GB?.Graph3D?.prototype;
+      if (!G3) return setTimeout(hook, 5);
+      const step = G3.stepCamera;
+      G3.stepCamera = function (...args) {
+        window.__g3 = this;
+        return step.apply(this, args);
+      };
+    };
+    hook();
+  });
+  await step(page, 'pasar a 2D en pleno salto no deja mal el campo de visión', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    if (!(await page.locator('#graph3d canvas').count())) return console.log('    (sin WebGL: se salta)');
+    await page.click('#galaxy-btn');
+    await page.waitForTimeout(2500);
+    const fov0 = await page.evaluate(() => {
+      const g = window.__g3;
+      const to = [...g.gx.gals.values()].find((G) => G !== g.gx.focus);
+      g.gx.jumpTo(to);
+      return g.camera.fov;
+    });
+    await page.waitForTimeout(1900); // carga (1,1 s) y un poco de túnel, donde el campo de visión se abre
+    const mid = await page.evaluate(() => window.__g3.camera.fov);
+    await page.click('#view-2d');
+    await page.click('#view-3d');
+    await page.waitForTimeout(300);
+    const after = await page.evaluate(() => window.__g3.camera.fov);
+    await page.click('#galaxy-btn');
+    if (Math.abs(mid - fov0) < 1) throw new Error(`el salto no llegó al túnel (campo de visión ${mid.toFixed(1)}°)`);
+    if (Math.abs(after - fov0) > 0.01) throw new Error(`el campo de visión quedó en ${after.toFixed(1)}° (era ${fov0.toFixed(1)}°)`);
+  });
+  await page.context().close();
+}
+
 console.log('Modo TV directo (?tv=1)');
 {
   const page = await openPage({ viewport: { width: 1920, height: 1080 } });

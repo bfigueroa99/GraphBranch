@@ -1603,10 +1603,6 @@
       const cam = g.camera;
       cam.position.copy(h.to);
       cam.quaternion.copy(h.qL);
-      if (cam.fov !== h.fov0) {
-        cam.fov = h.fov0;
-        cam.updateProjectionMatrix();
-      }
       this.endHyper();
       const f = g.flight;
       if (f?.on) {
@@ -1627,8 +1623,16 @@
     }
 
     endHyper() {
-      if (!this.hyper) return;
+      const h = this.hyper;
+      if (!h) return;
       this.hyper = null;
+      // al aterrizar o si lo cortan a mitad (2D, salir de las galaxias, otro repo): el túnel abre el
+      // campo de visión hasta 70° y la cámara tiene que recuperar el suyo
+      const cam = this.g.camera;
+      if (cam.fov !== h.fov0) {
+        cam.fov = h.fov0;
+        cam.updateProjectionMatrix();
+      }
       this.el.charge.classList.remove('on');
       this.el.tunnel.classList.remove('on');
       if (!this.g.flight?.on) this.g.controls.enabled = true;

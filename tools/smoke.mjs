@@ -492,6 +492,22 @@ console.log('Zumbido del espacio');
     };
     hook();
   });
+  // osciladores vivos: iniciados menos detenidos (los sonidos de cada aviso se detienen solos)
+  await page.addInitScript(() => {
+    window.__osc = 0;
+    const P = window.OscillatorNode?.prototype;
+    if (!P) return;
+    const start = P.start;
+    const stop = P.stop;
+    P.start = function (...args) {
+      window.__osc++;
+      return start.apply(this, args);
+    };
+    P.stop = function (...args) {
+      window.__osc--;
+      return stop.apply(this, args);
+    };
+  });
   const drone = () => page.evaluate(() => window.__drone ?? null);
   const humming = (on) =>
     page.waitForFunction((v) => (window.__drone > 0) === v, on, { timeout: 4000 }).then(
@@ -524,6 +540,31 @@ console.log('Zumbido del espacio');
     if (!back) throw new Error('al volver a la pestaña el zumbido no vuelve');
     if (!tvOff) throw new Error('al entrar al modo TV (sin sonido) el zumbido sigue sonando');
     if (!tvBack) throw new Error('al salir del modo TV el zumbido no vuelve');
+  });
+  await step(page, 'apagado, el zumbido deja de generar audio', async () => {
+    if (!(await page.locator('#graph3d canvas').count())) return;
+    await page.click('#galaxy-btn');
+    if (!(await humming(true))) throw new Error('el zumbido no arrancó');
+    const live = await page.evaluate(() => window.__osc);
+    await page.click('#galaxy-btn'); // fuera del espacio el zumbido se apaga
+    await page.waitForTimeout(5000); // lo que tarda en desvanecerse
+    const after = await page.evaluate(() => window.__osc);
+    if (live <= 0) throw new Error(`con el zumbido sonando no se contaron osciladores (${live})`);
+    if (after > 0) throw new Error(`apagado, quedan ${after} osciladores generando audio en silencio`);
+  });
+  await step(page, 'al aterrizar, el motor del vuelo deja de generar audio', async () => {
+    if (!(await page.locator('#graph3d canvas').count())) return;
+    const before = await page.evaluate(() => window.__osc);
+    await page.click('#fly-btn');
+    await page.keyboard.down('w'); // acelerar: el motor suena
+    await page.waitForTimeout(1200);
+    await page.keyboard.up('w');
+    const flying = await page.evaluate(() => window.__osc);
+    await page.click('#fly-btn');
+    await page.waitForTimeout(3000);
+    const after = await page.evaluate(() => window.__osc);
+    if (flying <= before) throw new Error('el motor no sonó al acelerar');
+    if (after > before) throw new Error(`tras aterrizar quedan ${after - before} osciladores del motor`);
   });
   await page.context().close();
 }

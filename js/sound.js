@@ -25,6 +25,7 @@
       this.ctx = null;
       this.nextFree = 0;
       this.defaultBranch = null;
+      this.off = { hum: 0, space: 0 }; // zumbidos en silencio a punto de soltarse (ver letGo)
     }
 
     /** El contexto de audio nace con el primer uso; si el navegador lo deja suspendido (política
@@ -276,6 +277,8 @@
       h.gain.gain.setTargetAtTime(level * 0.05, t, 0.15);
       h.filter.frequency.setTargetAtTime(160 + level * 900, t, 0.2);
       h.oscs.forEach((o, i) => o.frequency.setTargetAtTime(48 + i * 0.6 + level * 30, t, 0.3));
+      if (level > 0) this.keep('hum');
+      else this.letGo('hum', 1500);
     }
 
     /** El zumbido del espacio: un fondo grave en la tónica de la galaxia en la que se está (cambia de nota
@@ -315,7 +318,7 @@
           return { o, off };
         });
         filter.connect(gain).connect(this.master);
-        this.space = { gain, filter, voices, lfo, degree: null };
+        this.space = { gain, filter, voices, lfo, degree: null, oscs: [lfo, ...voices.map((v) => v.o)] };
       }
       const t = ctx.currentTime;
       const sp = this.space;
@@ -325,6 +328,27 @@
         for (const v of sp.voices) v.o.frequency.setTargetAtTime(hz(note(d + v.off)), t, 0.9); // se desliza a la nota nueva
       }
       sp.gain.gain.setTargetAtTime(clamp(level, 0, 1) * 0.05, t, level > 0 ? 1.4 : 0.6);
+      if (level > 0) this.keep('space');
+      else this.letGo('space', 4000);
+    }
+
+    /** Un zumbido (`hum` o `space`) que quedó en silencio se suelta cuando termina de desvanecerse: sus
+        osciladores dejan de generar audio. Si vuelve a sonar antes, sigue; si suena después, se crea de nuevo. */
+    letGo(key, ms) {
+      if (this.off[key]) return;
+      this.off[key] = setTimeout(() => {
+        this.off[key] = 0;
+        const v = this[key];
+        if (!v) return;
+        this[key] = null;
+        for (const o of v.oscs) o.stop();
+        v.gain.disconnect();
+      }, ms);
+    }
+
+    keep(key) {
+      clearTimeout(this.off[key]);
+      this.off[key] = 0;
     }
 
     /** El hiperimpulsor: al cargar, un tono que sube y se tensa; al saltar, un golpe de aire y un barrido. */

@@ -228,8 +228,8 @@
     toast(a) {
       const m = meta(a);
       const el = document.createElement('div');
+      // sin rol propio: el contenedor ya es la región viva (anidadas, algunos lectores lo anuncian dos veces)
       el.className = `toast sev-${m.sev}${a.kind === 'achievement' ? ' toast-ach' : ''}`;
-      el.setAttribute('role', m.sev === 'bad' ? 'alert' : 'status');
       el.innerHTML = `
         <button type="button" class="toast-main">
           <span class="act-icon">${icon(m.icon)}</span>
@@ -245,30 +245,46 @@
       el.style.setProperty('--ttl', ttl + 'ms');
       const close = () => {
         if (el.classList.contains('leaving')) return;
+        // si tenía el foco (se cerró con el teclado), pasa al aviso siguiente en vez de perderse
+        if (el.contains(document.activeElement)) {
+          const next = [...this.toastsEl.querySelectorAll('.toast:not(.leaving)')].find((x) => x !== el);
+          next?.querySelector('.toast-main').focus({ preventScroll: true });
+        }
         el.classList.add('leaving');
         setTimeout(() => el.remove(), 260);
       };
       let timer = setTimeout(close, ttl);
       let remaining = ttl;
       let started = Date.now();
-      el.addEventListener('pointerenter', () => {
-        clearTimeout(timer);
-        remaining -= Date.now() - started;
-        el.classList.add('paused');
-      });
-      el.addEventListener('pointerleave', () => {
-        started = Date.now();
-        timer = setTimeout(close, Math.max(1500, remaining));
-        el.classList.remove('paused');
-      });
+      // con el puntero encima o el foco adentro, el aviso espera a que se lo termine de leer
+      let hover = false;
+      let focus = false;
+      let held = false;
+      const hold = () => {
+        if (held === (hover || focus)) return;
+        held = hover || focus;
+        if (held) {
+          clearTimeout(timer);
+          remaining -= Date.now() - started;
+        } else {
+          started = Date.now();
+          timer = setTimeout(close, Math.max(1500, remaining));
+        }
+        el.classList.toggle('paused', held);
+      };
+      el.addEventListener('pointerenter', () => ((hover = true), hold()));
+      el.addEventListener('pointerleave', () => ((hover = false), hold()));
+      el.addEventListener('focusin', () => ((focus = true), hold()));
+      el.addEventListener('focusout', (ev) => !el.contains(ev.relatedTarget) && ((focus = false), hold()));
       el.querySelector('.toast-close').addEventListener('click', close);
       el.querySelector('.toast-main').addEventListener('click', () => {
         this.onSelect?.(a);
         close();
       });
       this.toastsEl.appendChild(el);
+      // más de tres: se va el más viejo, salvo los que se están leyendo
       const all = this.toastsEl.querySelectorAll('.toast:not(.leaving)');
-      if (all.length > 3) all[0].querySelector('.toast-close').click();
+      if (all.length > 3) this.toastsEl.querySelector('.toast:not(.leaving):not(.paused)')?.querySelector('.toast-close').click();
     }
 
     summaryToast(n) {

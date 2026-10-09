@@ -27,38 +27,35 @@ posteriores pueden haberse movido.
 
 ### Media
 
-1. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
-   (`role=status` dentro de un contenedor `aria-live`; `feed.js:232`, `:254`). Arreglo: pausar en
-   `focusin`/`focusout` y dejar una sola región viva.
-2. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
+1. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
    una sola consulta a `pulls?state=all&sort=updated` (la clave `pulls-all` ya existe).
-3. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
+2. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
     caída permanente de GraphQL a REST, `:311`). Arreglo: degradar solo con 403/404/410.
 
 ### Baja
 
-4. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
+3. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
     recibe foco al abrirse desde el teclado.
-5. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
+4. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
     `:2121`): su animación termina en opacidad 0.
-6. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
+5. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
     rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-7. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-8. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
+6. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+7. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
     `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro).
-9. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
+8. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
     `aria-pressed` y el texto, leyenda 2D sin acceso por teclado, el botón de pausa del Replay sin nombre
     accesible (`index.html:190`).
-10. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-11. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-12. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
-13. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
-14. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
+9. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+10. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+11. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
+12. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
+13. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
     blanco al arrancar.
-15. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
+14. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
     Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-16. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
+15. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
     (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
@@ -318,3 +315,18 @@ posteriores pueden haberse movido.
 - Validado: 7 pruebas, smoke (40 idiomas), i18n y 11 e2e en verde.
 - **Siguiente:** pendiente 1 (avisos que no se pueden retener con el teclado), luego 2 (sin GraphQL, una
   consulta por cada PR que sale de la página).
+
+### 2026-10-09 · Iteración 16
+
+- **Arreglo: los avisos se retienen también con el teclado y se anuncian una sola vez.** La pausa del
+  aviso solo respondía al puntero: con el foco adentro se cerraba igual a los 6 s y el foco caía al
+  `<body>`. Además cada aviso era `role=status`/`alert` dentro del contenedor `aria-live`: regiones
+  vivas anidadas, que algunos lectores anuncian dos veces. Ahora el aviso espera con el puntero encima
+  o con el foco adentro (un solo estado para los dos); si se cierra con el teclado, el foco pasa al
+  aviso siguiente; cuando hay más de tres, se va el más viejo que no se esté leyendo; y la única región
+  viva es el contenedor.
+- **Prueba nueva en el smoke:** con un aviso en pantalla comprueba que no haya regiones vivas anidadas y
+  que, con el foco adentro, siga ahí pasados 7 s. Las dos partes fallaban por separado sin el arreglo.
+- Validado: 7 pruebas, smoke (40 idiomas), i18n y 11 e2e en verde.
+- **Siguiente:** pendiente 1 (sin GraphQL, una consulta por cada PR que sale de la página), luego 2 (un
+  error 5xx suelto apaga funciones para toda la sesión).

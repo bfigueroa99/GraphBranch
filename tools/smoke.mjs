@@ -149,6 +149,22 @@ console.log('Escritorio (1280×800)');
     if (changes > 1) throw new Error(`la región viva del estado cambió ${changes} veces en 3,5 s`);
   });
 
+  await step(page, 'los avisos se retienen con el foco y se anuncian una sola vez', async () => {
+    const t = await page.waitForSelector('#toasts .toast:not(.leaving)', { timeout: 30000 });
+    // regiones vivas anidadas: algunos lectores anuncian dos veces cada aviso
+    const nested = await page.evaluate(() =>
+      document.querySelector('#toasts')?.hasAttribute('aria-live')
+        ? document.querySelectorAll('#toasts [role=status], #toasts [role=alert], #toasts [aria-live]').length
+        : 0,
+    );
+    await t.evaluate((el) => el.querySelector('.toast-main').focus());
+    await page.waitForTimeout(7000); // un aviso común dura 6 s
+    const kept = await t.evaluate((el) => el.isConnected && !el.classList.contains('leaving'));
+    await page.evaluate(() => document.activeElement?.blur());
+    if (nested) throw new Error(`${nested} avisos son regiones vivas dentro de otra`);
+    if (!kept) throw new Error('el aviso con el foco se cerró solo');
+  });
+
   await step(page, 'vista 2D', async () => {
     await page.click('#view-2d');
     await page.waitForSelector('#graph svg .node', { timeout: 10000 });

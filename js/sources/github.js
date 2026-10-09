@@ -1448,8 +1448,16 @@
               });
           });
         } else {
+          // sin GraphQL, una sola consulta: los PRs actualizados hace poco, abiertos o no. Uno que se fusionó
+          // o se cerró acaba de actualizarse y está ahí; el que no está sigue abierto (solo lo desplazaron
+          // otros de la página de abiertos). Antes era una consulta por PR, y sin token la cuota es de 60/h
+          const { data } = await this.api(`${this.base}/pulls?state=all&sort=updated&direction=desc&per_page=50`, { cacheKey: 'pulls-all' });
+          const page = new Map((data || []).map((p) => [p.number, p]));
           for (const n of numbers) {
-            const { data: p } = await this.api(`${this.base}/pulls/${n}`);
+            let p = page.get(n);
+            if (!p) continue;
+            // la lista no dice quién fusionó: eso se pide solo para los fusionados, que son pocos
+            if (p.merged_at && !p.merged_by) p = (await this.api(`${this.base}/pulls/${n}`)).data || p;
             out.set(n, {
               state: p.state,
               merged: !!p.merged_at,

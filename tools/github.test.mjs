@@ -52,6 +52,7 @@ function fakeGitHub() {
     manyBranches: false, // la lista de ramas dice que hay más páginas (modo events)
     failOnce: null, // (ruta) => true: esa consulta falla por red una vez
     onFetch: null, // (ruta) => …: corre justo antes de responder, para simular algo a mitad de un ciclo
+    pulls: [], // PRs como los da la API (los más recién actualizados, primero en la lista)
     calls: [],
   };
   let n = 0;
@@ -96,7 +97,21 @@ function fakeGitHub() {
       }
       return { body: out };
     }
-    if (p.startsWith('/repos/o/r/pulls')) return { body: [] };
+    const one = p.match(/^\/repos\/o\/r\/pulls\/(\d+)$/);
+    if (one) {
+      const pr = gh.pulls.find((x) => x.number === Number(one[1]));
+      return pr ? { body: pr } : { status: 404, body: { message: 'Not Found' } };
+    }
+    if (p === '/repos/o/r/pulls') {
+      // como la API: sin merged_by en las listas, ordenados por la última actualización
+      const state = u.searchParams.get('state') || 'open';
+      const list = gh.pulls
+        .filter((x) => state === 'all' || x.state === state)
+        .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at))
+        .slice(0, Number(u.searchParams.get('per_page')) || 30)
+        .map(({ merged_by, ...x }) => x);
+      return { body: list };
+    }
     if (p.startsWith('/repos/o/r/compare/')) return { body: { total_commits: 1, ahead_by: 1, commits: [] } };
     return { status: 404, body: { message: 'Not Found' } };
   }
@@ -242,3 +257,44 @@ for (const { mode, many, during } of modes) {
     });
   }
 }
+
+/* Sin token: los PRs que salen de la página de abiertos porque otros se actualizaron no cuestan una
+   consulta cada uno; los que de verdad se fusionaron o cerraron se avisan igual. */
+
+test('modo lista: los PRs que solo salen de la página de abiertos no se consultan uno por uno', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const at = (min) => new Date(Date.UTC(2026, 9, 1) + min * 60000).toISOString();
+  for (let n = 1; n <= 60; n++)
+    gh.pulls.push({
+      number: n,
+      state: 'open',
+      title: `PR ${n}`,
+      head: { ref: `feat-${n}`, repo: { full_name: 'o/r' } },
+      base: { ref: 'main' },
+      user: { login: 'ana' },
+      html_url: `https://github.com/o/r/pull/${n}`,
+      created_at: at(n),
+      updated_at: at(n),
+      merged_at: null,
+      merged_by: null,
+    });
+  const { src, updates } = connect(gh);
+  await src.cycle();
+  assert.equal(src.data.pulls.size, 50); // la página de los 50 actualizados más recientemente
+
+  // tres PRs viejos se actualizan (entran a la página y desplazan a otros tres, que siguen abiertos),
+  // uno de la página se fusiona y otro se cierra
+  for (const n of [1, 2, 3]) gh.pulls[n - 1].updated_at = at(100 + n);
+  Object.assign(gh.pulls[59], { state: 'closed', merged_at: at(200), updated_at: at(200), merged_by: { login: 'beto' } });
+  Object.assign(gh.pulls[58], { state: 'closed', updated_at: at(201) }); // y otro se cierra sin fusionar
+  gh.calls.length = 0;
+  src.lastPoll.pulls = 0; // ya toca revisar los PRs
+  await src.cycle();
+
+  const single = gh.calls.filter((c) => /\/pulls\/\d+$/.test(c));
+  assert.deepEqual(single, ['/repos/o/r/pulls/60'], 'solo se pide el fusionado, para saber quién lo fusionó');
+  const prs = Array.from(updates.at(-1).activities, (a) => `${a.kind} #${a.number}`).filter((k) => /^pr-/.test(k));
+  assert.deepEqual(prs.sort(), ['pr-close #59', 'pr-merge #60']);
+  assert.equal(updates.at(-1).activities.find((a) => a.kind === 'pr-merge').actor.login, 'beto');
+});

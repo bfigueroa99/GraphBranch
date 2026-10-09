@@ -569,6 +569,65 @@ console.log('Zumbido del espacio');
   await page.context().close();
 }
 
+console.log('Contraste del texto (WCAG AA)');
+for (const colorScheme of ['light', 'dark']) {
+  const page = await openPage({ viewport: { width: 1280, height: 900 }, colorScheme });
+  await step(page, `tema ${colorScheme === 'light' ? 'claro' : 'oscuro'}: todo el texto visible se lee`, async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    await page.waitForSelector('#feed > li', { timeout: 30000 });
+    // contraste de cada texto visible contra su fondo efectivo: 4,5:1, o 3:1 si es grande (los grafos y
+    // lo escondido quedan fuera: sus colores son los de cada rama, sobre un lienzo)
+    const bad = await page.evaluate(() => {
+      const parse = (c) => {
+        const m = c.match(/rgba?\(([^)]+)\)/);
+        if (!m) return null;
+        const [r, g, b, a = 1] = m[1].split(/[ ,/]+/).filter(Boolean).map(Number);
+        return { r, g, b, a };
+      };
+      const lin = (v) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+      const lum = ({ r, g, b }) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+      const over = (fg, bg) => ({ r: fg.r * fg.a + bg.r * (1 - fg.a), g: fg.g * fg.a + bg.g * (1 - fg.a), b: fg.b * fg.a + bg.b * (1 - fg.a), a: 1 });
+      const backdrop = (el) => {
+        const layers = [];
+        for (let n = el; n; n = n.parentElement) {
+          const cs = getComputedStyle(n);
+          if (cs.backgroundImage !== 'none') return null; // degradados o imágenes: no se puede calcular
+          const c = parse(cs.backgroundColor);
+          if (c && c.a > 0) {
+            layers.push(c);
+            if (c.a >= 1) break;
+          }
+        }
+        return layers.reverse().reduce((bg, c) => over(c, bg), { r: 255, g: 255, b: 255, a: 1 });
+      };
+      const out = [];
+      const seen = new Set();
+      const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      while (walk.nextNode()) {
+        const el = walk.currentNode.parentElement;
+        if (!el || seen.has(el) || !walk.currentNode.textContent.trim()) continue;
+        seen.add(el);
+        const cs = getComputedStyle(el);
+        const box = el.getBoundingClientRect();
+        if (!box.width || !box.height || cs.visibility === 'hidden' || +cs.opacity === 0) continue;
+        if (el.closest('[hidden], .sr-only, [aria-hidden=true], #graph3d, #graph')) continue;
+        const fg = parse(cs.color);
+        const bg = backdrop(el);
+        if (!fg || !bg) continue;
+        const [hi, lo] = [lum(over(fg, bg)), lum(bg)].sort((x, y) => y - x);
+        const ratio = (hi + 0.05) / (lo + 0.05);
+        const size = parseFloat(cs.fontSize);
+        const large = size >= 24 || (+cs.fontWeight >= 700 && size >= 18.66);
+        if (ratio < (large ? 3 : 4.5)) out.push(`${ratio.toFixed(2)}:1 «${walk.currentNode.textContent.trim().slice(0, 24)}» (${el.className || el.tagName.toLowerCase()})`);
+      }
+      return out;
+    });
+    if (bad.length) throw new Error(`${bad.length} textos con poco contraste, como ${bad.slice(0, 3).join(', ')}`);
+  });
+  await page.context().close();
+}
+
 console.log('Modo TV directo (?tv=1)');
 {
   const page = await openPage({ viewport: { width: 1920, height: 1080 } });

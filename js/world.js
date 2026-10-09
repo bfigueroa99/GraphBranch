@@ -413,7 +413,7 @@
       const bg = g.bg;
       const cs = getComputedStyle(g.wrap);
       const v = (n, fb) => cs.getPropertyValue(n).trim() || fb;
-      const ink3 = new THREE.Color(v('--ink-3', '#78837f'));
+      const ink3 = new THREE.Color(v('--ink-3', '#636e6a'));
       const C = (hex) => new THREE.Color(hex);
 
       const s = this.sky.material.uniforms;
@@ -451,7 +451,7 @@
 
       this.pillar.material.blending = dark ? THREE.AdditiveBlending : THREE.NormalBlending;
       this.pillar.material.needsUpdate = true;
-      this.mapCol = { ink: v('--ink', '#101614'), ink3: v('--ink-3', '#78837f'), line: v('--line-strong', '#c9d1cd'), surface: v('--surface', '#fbfcfb'), dark };
+      this.mapCol = { ink: v('--ink', '#101614'), ink3: v('--ink-3', '#636e6a'), line: v('--line-strong', '#c9d1cd'), surface: v('--surface', '#fbfcfb'), dark };
       this.paintPillar();
       this.mapDirty = true;
     }

@@ -1159,11 +1159,11 @@
       this.pal = {
         surface,
         ink2: v('--ink-2', '#48534f'),
-        ink3: v('--ink-3', '#78837f'),
+        ink3: v('--ink-3', '#636e6a'),
         good: v('--good', '#0a8f0a'),
         warn: v('--warn', '#c98a00'),
         bad: v('--bad', '#d03b3b'),
-        spark: this.dark ? '#fff1dc' : v('--ink-3', '#78837f'), // la luz de un cohete o de una estrella fugaz
+        spark: this.dark ? '#fff1dc' : v('--ink-3', '#636e6a'), // la luz de un cohete o de una estrella fugaz
       };
       this.miniDirty = true;
       this.requestDraw();

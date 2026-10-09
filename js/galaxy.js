@@ -553,6 +553,7 @@
       this.galOf = new Map(); // commit → galaxia (o corriente) donde está
       this.cache = new Map(); // `${rama}@${sha}` → { state, data, err, at }
       this.lastData = new Map(); // rama → últimos archivos que llegaron (se muestran mientras llegan los nuevos)
+      this.gen = 0; // sube con cada reset(): lo que llega de una consulta anterior ya no se guarda
       this.near = [];
       this.nearKey = '';
       this.focus = null;
@@ -1998,12 +1999,14 @@
       this.cache.set(key, entry);
       if (this.cache.size > 300) this.cache.delete(this.cache.keys().next().value);
       this.renderCard();
+      const gen = this.gen;
       Promise.resolve()
         .then(() => load({ name: G.name, sha: G.sha, isDefault: G.isDefault }))
         .then((data) => {
           entry.state = data ? 'ok' : 'error';
           entry.data = data;
-          if (data) this.lastData.set(G.name, data);
+          // si entre tanto se cambió de repo, son archivos del anterior: la rama del mismo nombre no los muestra
+          if (data && gen === this.gen) this.lastData.set(G.name, data);
         })
         .catch((err) => {
           entry.state = 'error';
@@ -2011,7 +2014,7 @@
           entry.at = performance.now();
         })
         .then(() => {
-          if (!this.on || this.focus?.name !== G.name || this.focus.sha !== G.sha) return;
+          if (gen !== this.gen || !this.on || this.focus?.name !== G.name || this.focus.sha !== G.sha) return;
           if (entry.state === 'ok') this.showSystem(G, entry.data);
           this.renderCard();
           this.g.needsRender = true;
@@ -2533,6 +2536,7 @@
 
     /** Cambió de repositorio: lo que se sabía de sus archivos ya no sirve. */
     reset() {
+      this.gen++;
       this.cache.clear();
       this.lastData.clear();
       this.outerOf.clear();

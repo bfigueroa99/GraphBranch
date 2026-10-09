@@ -27,35 +27,33 @@ posteriores pueden haberse movido.
 
 ### Media
 
-1. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
-   una sola consulta a `pulls?state=all&sort=updated` (la clave `pulls-all` ya existe).
-2. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
+1. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
     caída permanente de GraphQL a REST, `:311`). Arreglo: degradar solo con 403/404/410.
 
 ### Baja
 
-3. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
+2. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
     recibe foco al abrirse desde el teclado.
-4. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
+3. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
     `:2121`): su animación termina en opacidad 0.
-5. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
+4. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
     rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-6. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-7. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
+5. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+6. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
     `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro).
-8. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
+7. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
     `aria-pressed` y el texto, leyenda 2D sin acceso por teclado, el botón de pausa del Replay sin nombre
     accesible (`index.html:190`).
-9. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-10. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-11. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
-12. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
-13. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
+8. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+9. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+10. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
+11. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
+12. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
     blanco al arrancar.
-14. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
+13. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
     Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-15. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
+14. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
     (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
@@ -330,3 +328,20 @@ posteriores pueden haberse movido.
 - Validado: 7 pruebas, smoke (40 idiomas), i18n y 11 e2e en verde.
 - **Siguiente:** pendiente 1 (sin GraphQL, una consulta por cada PR que sale de la página), luego 2 (un
   error 5xx suelto apaga funciones para toda la sesión).
+
+### 2026-10-09 · Iteración 17
+
+- **Arreglo: sin token, los PRs que solo salen de la página de abiertos ya no cuestan una consulta
+  cada uno.** Se siguen los 50 PRs abiertos actualizados más recientemente; cuando otros se actualizan,
+  algunos salen de esa página aunque sigan abiertos, y para saber si se cerraron se pedía cada uno
+  (hasta 20 por ciclo, con una cuota de 60 por hora sin token). Ahora es una sola consulta a la página
+  de PRs actualizados hace poco, abiertos o no (`pulls-all`, la misma que ya usaba el feed): uno que se
+  fusionó o cerró acaba de actualizarse y está ahí; el que no está sigue abierto. Solo para los
+  fusionados se pide el PR, porque la lista no dice quién lo fusionó.
+- **Prueba nueva** en `tools/github.test.mjs` (la API simulada ahora sirve PRs como GitHub, sin
+  `merged_by` en las listas): con 60 PRs abiertos, tres viejos se actualizan y desplazan a otros tres,
+  uno se fusiona y otro se cierra. Se avisan la fusión (con quien fusionó) y el cierre, y solo se pide
+  el PR fusionado. Antes del arreglo se pedían los cuatro que salieron de la página.
+- Validado: 8 pruebas, smoke, i18n y 11 e2e en verde.
+- **Siguiente:** pendiente 1 (un error 5xx suelto apaga funciones para toda la sesión), luego 2 (el foco
+  al pulsar **Fijar** en el detalle).

@@ -25,55 +25,49 @@ Ordenados por impacto. Salen de las auditorías del código: datos y lógica, y 
 también se probaron. Los números de línea son de cuando se auditó: con los cambios
 posteriores pueden haberse movido.
 
-### Alta
-
-1. **Una consulta de archivos del repo anterior escribe en las galaxias del nuevo** (`galaxy.js:1989`):
-   cambiar de repo mientras cargan deja los planetas del anterior en la rama del mismo nombre.
-   Arreglo: contador de generación que `reset()` incrementa.
-
 ### Media
 
-2. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
+1. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
    `update()` y `celebrate()` siguen encolando ráfagas (`graph3d.js:846`, `:1691`) y al volver salen
    todas juntas. Arreglo: `fx` también exige `this.active`; descartar efectos con más de 1 s de atraso.
-3. **Los osciladores de los zumbidos nunca se detienen** (`sound.js`, `engine` y `drone`): tras el
+2. **Los osciladores de los zumbidos nunca se detienen** (`sound.js`, `engine` y `drone`): tras el
    primer vuelo o la primera visita a las galaxias, quedan sonando en silencio y el contexto de audio
    sigue trabajando. Arreglo: `stop()` cuando el volumen llega a 0 tras el desvanecido, y crearlos de
    nuevo al volver a sonar.
-4. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
+3. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
    `--surface` (`styles.css:14`). Arreglo: `#636e6a` (5,1:1).
-5. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
+4. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
    (`role=status` dentro de un contenedor `aria-live`; `feed.js:232`, `:254`). Arreglo: pausar en
    `focusin`/`focusout` y dejar una sola región viva.
-6. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
+5. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
    una sola consulta a `pulls?state=all&sort=updated` (la clave `pulls-all` ya existe).
-7. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
+6. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
     caída permanente de GraphQL a REST, `:311`). Arreglo: degradar solo con 403/404/410.
 
 ### Baja
 
-8. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
+7. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
     recibe foco al abrirse desde el teclado.
-9. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
+8. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
     `:2121`): su animación termina en opacidad 0.
-10. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
+9. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
     rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-11. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-12. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
+10. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+11. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
     `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro).
-13. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
+12. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
     `aria-pressed` y el texto, leyenda 2D sin acceso por teclado, el botón de pausa del Replay sin nombre
     accesible (`index.html:190`).
-14. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-15. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-16. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
-17. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
-18. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
+13. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+14. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+15. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
+16. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
+17. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
     blanco al arrancar.
-19. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
+18. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
     Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-20. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
+19. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
     (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
@@ -271,3 +265,19 @@ posteriores pueden haberse movido.
 - Validado: 7 pruebas, smoke (40 idiomas), i18n y 11 e2e en verde.
 - **Siguiente:** pendiente 1 (consulta de archivos del repo anterior en las galaxias del nuevo), luego 2
   (efectos 3D acumulados mientras la vista no dibuja).
+
+### 2026-10-09 · Iteración 12
+
+- **Arreglo: cambiar de repo mientras cargan los archivos de una galaxia ya no los deja en el nuevo.**
+  La consulta pendiente guardaba sus archivos en `lastData` aunque `reset()` ya hubiera limpiado todo al
+  cambiar de repo; y `lastData` es lo que se muestra mientras llegan los archivos nuevos. La rama del
+  mismo nombre en el repo nuevo (típicamente `main`) mostraba los planetas y enlaces del anterior hasta
+  que llegaran los suyos, o para siempre si su consulta fallaba (por ejemplo, un 403 sin token). Ahora
+  `reset()` sube un contador de generación y las respuestas de una generación anterior no se guardan
+  ni se muestran.
+- **Prueba nueva en el smoke** (página de galaxias): retiene la respuesta de archivos de la demo, llama a
+  `reset()` como hace `connect()` al cambiar de repo, la suelta y comprueba que no quede nada. Antes del
+  arreglo quedaban los archivos de `main`.
+- Validado: 7 pruebas, smoke (40 idiomas), i18n y 11 e2e en verde.
+- **Siguiente:** pendiente 1 (efectos 3D acumulados mientras la vista no dibuja), luego 2 (osciladores de
+  los zumbidos que nunca se detienen).

@@ -410,6 +410,37 @@ console.log('Galaxias: cortar un salto hiperespacial');
     if (said.out.length > 3) throw new Error(`lo que se lee cambió ${said.out.length} veces: ${said.out.map((t) => `«${t}»`).join(', ')}`);
     if (!said.out.some((t) => t.includes(said.name))) throw new Error(`no se lee el nombre de la galaxia (${said.name})`);
   });
+
+  await step(page, 'cambiar de repo mientras cargan los archivos de una galaxia no los deja en el nuevo', async () => {
+    if (!(await page.locator('#graph3d canvas').count())) return;
+    await page.click('#galaxy-btn');
+    await page.waitForTimeout(2500);
+    const r = await page.evaluate(async () => {
+      const gx = window.__g3.gx;
+      const P = window.GB.DemoSource.prototype;
+      const files = P.files;
+      let release;
+      const gate = new Promise((ok) => (release = ok));
+      P.files = function (...args) {
+        const out = files.apply(this, args);
+        return gate.then(() => out); // la respuesta queda retenida hasta después del cambio de repo
+      };
+      try {
+        gx.cache.clear();
+        gx.lastData.clear();
+        const G = [...gx.gals.values()][0];
+        gx.ensureFiles(G, performance.now());
+        gx.reset(); // lo que hace connect() al cambiar de repositorio
+        release();
+        await new Promise((ok) => setTimeout(ok, 1200)); // la demo tarda 350–800 ms, como si viniera de la red
+        return { name: G.name, leaked: gx.lastData.has(G.name) };
+      } finally {
+        P.files = files;
+      }
+    });
+    await page.click('#galaxy-btn');
+    if (r.leaked) throw new Error(`los archivos de «${r.name}» del repo anterior quedaron para el nuevo`);
+  });
   await page.context().close();
 }
 

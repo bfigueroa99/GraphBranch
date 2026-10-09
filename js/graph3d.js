@@ -958,7 +958,9 @@
 
     update(L, ctx = {}) {
       const now = performance.now();
-      const fx = !ctx.initial && !ctx.calm && this.motion; // las ramas que esperaban su historia llegan sin efectos
+      // las ramas que esperaban su historia llegan sin efectos; y si la vista no se ve (2D, pestaña oculta)
+      // tampoco: sus efectos esperarían en cola a que vuelva y saldrían todos juntos
+      const fx = this.active && !document.hidden && !ctx.initial && !ctx.calm && this.motion;
       const morph = !!ctx.morph; // cambio de modo: todo vuela a su lugar nuevo, sin efectos de llegada
       this.layout = L;
       this.ctx = ctx;
@@ -2454,7 +2456,7 @@
         const f = this.pending[i];
         if (now < f.at) continue;
         this.pending.splice(i, 1);
-        f.fn();
+        if (now - f.at < 1000) f.fn(); // uno muy atrasado (la vista estuvo quieta) ya no viene a cuento
       }
       for (let i = this.fx.length - 1; i >= 0; i--) {
         const f = this.fx[i];

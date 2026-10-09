@@ -27,47 +27,44 @@ posteriores pueden haberse movido.
 
 ### Media
 
-1. **Efectos 3D acumulados mientras la vista 3D no dibuja.** En 2D o con la pestaña oculta,
-   `update()` y `celebrate()` siguen encolando ráfagas (`graph3d.js:846`, `:1691`) y al volver salen
-   todas juntas. Arreglo: `fx` también exige `this.active`; descartar efectos con más de 1 s de atraso.
-2. **Los osciladores de los zumbidos nunca se detienen** (`sound.js`, `engine` y `drone`): tras el
+1. **Los osciladores de los zumbidos nunca se detienen** (`sound.js`, `engine` y `drone`): tras el
    primer vuelo o la primera visita a las galaxias, quedan sonando en silencio y el contexto de audio
    sigue trabajando. Arreglo: `stop()` cuando el volumen llega a 0 tras el desvanecido, y crearlos de
    nuevo al volver a sonar.
-3. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
+2. **Contraste insuficiente del texto secundario en el tema claro.** `--ink-3: #78837f` da 3,8:1 sobre
    `--surface` (`styles.css:14`). Arreglo: `#636e6a` (5,1:1).
-4. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
+3. **Los avisos no se pueden retener con el teclado** y algunos lectores los anuncian dos veces
    (`role=status` dentro de un contenedor `aria-live`; `feed.js:232`, `:254`). Arreglo: pausar en
    `focusin`/`focusout` y dejar una sola región viva.
-5. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
+4. **Sin GraphQL, cada PR que sale de la página de 50 cuesta una consulta** (`github.js:927`). Arreglo:
    una sola consulta a `pulls?state=all&sort=updated` (la clave `pulls-all` ya existe).
-6. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
+5. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
     caída permanente de GraphQL a REST, `:311`). Arreglo: degradar solo con 403/404/410.
 
 ### Baja
 
-7. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
+6. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
     recibe foco al abrirse desde el teclado.
-8. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
+7. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
     `:2121`): su animación termina en opacidad 0.
-9. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
+8. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
     rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-10. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-11. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
+9. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+10. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
     `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro).
-12. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
+11. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
     `aria-pressed` y el texto, leyenda 2D sin acceso por teclado, el botón de pausa del Replay sin nombre
     accesible (`index.html:190`).
-13. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-14. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-15. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
-16. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
-17. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
+12. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+13. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+14. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
+15. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
+16. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
     blanco al arrancar.
-18. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
+17. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
     Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-19. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
+18. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
     (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
@@ -281,3 +278,19 @@ posteriores pueden haberse movido.
 - Validado: 7 pruebas, smoke (40 idiomas), i18n y 11 e2e en verde.
 - **Siguiente:** pendiente 1 (efectos 3D acumulados mientras la vista no dibuja), luego 2 (osciladores de
   los zumbidos que nunca se detienen).
+
+### 2026-10-09 · Iteración 13
+
+- **Arreglo: lo que llega mientras la vista 3D no se ve ya no se acumula para cuando vuelve.** En 2D o
+  con la pestaña oculta, `update()` seguía preparando efectos de llegada (ondas y chispas en la cola
+  `pending`, commits por desvanecer en `dying`). Esas colas solo se vacían cuadro a cuadro, que no corre
+  en esos casos: al volver a la 3D salían todas juntas, cada una con su malla y su material. Ahora
+  `update()` no prepara efectos si la vista no está activa o la pestaña está oculta (los commits
+  aparecen ya en su lugar), y `stepFx` descarta los efectos programados que se atrasaron más de un
+  segundo.
+- **Prueba nueva en el smoke** (página propia, toma la instancia 3D): con la vista en 2D espera a que la
+  demo traiga commits y comprueba que la 3D no dejó nada en cola. Antes del arreglo quedaba un efecto
+  por cada tanda.
+- Validado: 7 pruebas, smoke (40 idiomas), i18n y 11 e2e en verde.
+- **Siguiente:** pendiente 1 (osciladores de los zumbidos que nunca se detienen), luego 2 (contraste del
+  texto secundario en el tema claro).

@@ -444,6 +444,38 @@ console.log('Galaxias: cortar un salto hiperespacial');
   await page.context().close();
 }
 
+console.log('Efectos 3D con la vista 2D');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.addInitScript(() => {
+    const hook = () => {
+      const G3 = window.GB?.Graph3D?.prototype;
+      if (!G3) return setTimeout(hook, 5);
+      const step = G3.stepCamera;
+      G3.stepCamera = function (...args) {
+        window.__g3 = this;
+        return step.apply(this, args);
+      };
+    };
+    hook();
+  });
+  await step(page, 'lo que llega mientras se ve la 2D no se acumula para la 3D', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    if (!(await page.locator('#graph3d canvas').count())) return console.log('    (sin WebGL: se salta)');
+    await page.waitForFunction(() => window.__g3, null, { timeout: 5000 });
+    await page.click('#view-2d');
+    const before = await page.evaluate(() => window.__g3.nodes.size);
+    // la demo trae commits cada 3 a 7 s: se espera a que llegue alguno con la 3D escondida
+    await page.waitForFunction((n) => window.__g3.nodes.size > n, before, { timeout: 30000 });
+    await page.waitForTimeout(500);
+    const q = await page.evaluate(() => ({ pending: window.__g3.pending.length, dying: window.__g3.dying.length }));
+    await page.click('#view-3d');
+    if (q.pending || q.dying) throw new Error(`la vista 3D escondida acumuló ${q.pending} efectos y ${q.dying} commits por desvanecer`);
+  });
+  await page.context().close();
+}
+
 console.log('Zumbido del espacio');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

@@ -827,7 +827,7 @@
       const dark = (this.dark = hsl.l < 0.5);
       const ink = new THREE.Color(v('--ink', '#101614'));
       const ink2 = new THREE.Color(v('--ink-2', '#48534f'));
-      const ink3 = new THREE.Color(v('--ink-3', '#78837f'));
+      const ink3 = new THREE.Color(v('--ink-3', '#636e6a'));
       this.lineColor = new THREE.Color(v('--line-strong', '#c9d1cd'));
       this.sevCol = { good: new THREE.Color(v('--good', '#0a8f0a')), warn: new THREE.Color(v('--warn', '#c98a00')), bad: new THREE.Color(v('--bad', '#d03b3b')) };
       this.scene.fog.color.copy(this.bg);

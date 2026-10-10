@@ -1,8 +1,170 @@
 # Mejora continua
 
-Bitácora y lista de pendientes de las iteraciones de mejora (una cada 4 horas). Cada iteración toma
-la tarea de mayor impacto que quede en **Pendientes**, la resuelve de forma acotada, la valida y la
-anota en **Bitácora**.
+Hoja de ruta, pendientes y bitácora de las iteraciones del loop (una cada 4 horas).
+
+## Directiva vigente: ampliar el alcance
+
+Pedido de Benjamin, 2026-10-10: **que el loop amplíe lo más posible el alcance del proyecto.** Desde
+la iteración 20, el trabajo principal del loop es que GraphBranch sirva para algo, para alguien o en
+algún lugar que antes no cubría. Arreglar y pulir sigue, pero en segundo plano: una iteración de cada
+cuatro. Esta directiva manda sobre la regla anterior ("tomar el pendiente de mayor impacto") y sobre
+el **Siguiente** de las entradas de la bitácora anteriores a ella.
+
+Cuenta como ampliar el alcance una capacidad nueva que alguien pueda usar apenas se fusiona el PR:
+otra fuente de datos, otro tipo de dato en el grafo, otra plataforma donde corre, más repos a la vez,
+otra forma de sacar la información (exportar, compartir, integrar), otro análisis o un público nuevo.
+No lo amplían los arreglos, el pulido, las refactorizaciones ni las pruebas por sí solas: eso es
+mantenimiento.
+
+### Cómo elige cada iteración
+
+1. **Sincronizar** con `master`. Si algo está roto (pruebas en rojo, una regresión de la iteración
+   anterior), se arregla primero: no se amplía sobre algo roto.
+2. **Tipo de iteración** según su número `N`:
+   - `N mod 4 = 3` (23, 27, 31…): **mantenimiento**. Toma el primer pendiente de
+     [Mantenimiento](#mantenimiento-pendientes), como hasta ahora.
+   - Las demás: **expansión**. Toma el primer ítem de la [Hoja de ruta](#hoja-de-ruta) que no esté
+     hecho, salvo que sea del mismo eje que la expansión anterior y haya otro de un eje distinto entre
+     los tres primeros: entonces ese. Así el proyecto crece a lo ancho y no solo en un frente.
+   - Un pendiente marcado **Alta** (seguridad, datos perdidos, la app en blanco) va antes que todo.
+3. **Tamaño:** una capacidad entera, de punta a punta, no una tarea acotada. Si no cabe en una
+   iteración, se parte en entregas que dejan algo usable cada una: se hace la primera (la versión
+   mínima que ya sirve) y las demás quedan en la hoja de ruta, en el lugar del ítem original.
+4. **Si sobra tiempo**, con la primera capacidad ya fusionada y validada, se sigue con el ítem
+   siguiente en otro PR. Una capacidad por PR, nunca dos mezcladas.
+5. **Reponer la hoja de ruta:** al cerrar, si quedan menos de 10 ítems sin hacer, se agregan ideas
+   hasta llegar a 15. Salen de lo aprendido en la iteración, de los ejes con menos cobertura en el
+   [Mapa de alcance](#mapa-de-alcance) y de comparar con herramientas parecidas (Gource, gitk,
+   GitKraken, GitLens, Sourcetree, la red de ramas de GitHub, Learn Git Branching). La hoja de ruta
+   nunca queda vacía: al loop no se le acaba el alcance por ganar.
+6. **Registrar:** la entrada de la bitácora dice el tipo y el eje (`Iteración 20 · Expansión ·
+   Plataformas`), y una expansión actualiza su fila del Mapa de alcance y marca su ítem como hecho:
+   tachado y con el número del PR (`~~**Instalable…**~~ hecho en #N`).
+
+### Lo que trae cada expansión
+
+- La capacidad funcionando en la web y, si aplica, en la app de escritorio; si la web no puede (CORS,
+  sistema de archivos), la primera entrega puede ser solo de escritorio, dicho en el README.
+- Visible en la **demo** cuando se pueda, para que se vea sin token ni conexión.
+- Sus textos en los 40 idiomas (`node tools/check-i18n.mjs`).
+- Una prueba que falle sin la capacidad: `node --test` con una API simulada, un paso del smoke o una
+  e2e. Las pruebas de siempre siguen en verde (ver [Cómo validar](#cómo-validar-un-cambio)).
+- README: la función en la lista de arriba, su sección si hace falta, y **Límites conocidos** y
+  **Seguridad** al día.
+
+### Lo que no cambia, por mucho alcance que dé
+
+- App estática, sin compilación y sin servidor propio. Lo que el navegador no permite (leer un repo
+  local, llamar a un webhook sin CORS) va en la app de escritorio.
+- La CSP sigue cerrada: un servidor nuevo se suma a `connect-src` (o a la directiva que toque) solo
+  si es la API que la función necesita. Sin CDN y sin telemetría.
+- El token de cada servicio va solo a la API de ese servicio, guardado como el de GitHub (en
+  escritorio, cifrado con el llavero del sistema).
+- Lo nuevo no hace más lenta la carga de quien no lo usa, ni gasta cuota de GitHub si está apagado.
+- Publicar en tiendas o registros (Chrome Web Store, Marketplace de VS Code, Flathub) lo hace
+  Benjamin: el loop deja el paquete listo y las instrucciones en el README.
+
+## Mapa de alcance
+
+Lo que cubre hoy cada eje y lo que viene en la hoja de ruta. Cada expansión pasa lo suyo de la
+segunda columna a la primera.
+
+| Eje | Hoy | Siguiente |
+| --- | --- | --- |
+| Fuentes | GitHub.com (GraphQL, lista y eventos), demo | GitLab, repos locales, GitHub Enterprise, Gitea/Forgejo, Bitbucket |
+| Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias) | CI, tags, despliegues |
+| Plataformas | web estática (GitHub Pages), escritorio (Windows, macOS, Linux), modo TV | instalable y sin conexión (PWA), widget y capa para streaming, VS Code |
+| Escala | hasta 10 repos, miles de ramas por repo | una organización o un usuario entero |
+| Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir | imagen y video, Slack y Discord, resumen de la semana |
+| Análisis | resumen de cifras, logros, misión del día | salud del repo, choques entre ramas, comparar ramas, búsqueda |
+| Público | devs y equipos, 40 idiomas, teclado | quien enseña o aprende git, quien usa lector de pantalla |
+
+## Hoja de ruta
+
+Ordenada por alcance ganado frente a esfuerzo. Cada ítem dice su eje, la primera entrega (la mínima
+que ya sirve) y cómo comprobarla. Las notas técnicas son un punto de partida: se comprueban antes de
+construir sobre ellas.
+
+1. **Instalable y sin conexión (PWA)** · Plataformas. `manifest.webmanifest` con íconos (sale de
+   `electron/icon.png`) y un service worker que guarda la página, `css/`, `js/` y `vendor/`, así se
+   instala en el celular o el escritorio sin Electron y abre sin red (con la demo y el aviso de sin
+   conexión). Nunca guarda respuestas de la API: llevan datos privados si hay token. CSP: hace falta
+   `manifest-src 'self'` (con `default-src 'none'` el manifiesto queda bloqueado). Registrar el worker
+   solo en `https:` o `localhost`, no en `app://` de la app de escritorio. Comprobar: una e2e web que
+   carga, pasa a sin conexión, recarga y ve la demo.
+2. **Exportar imagen y video** · Salidas. Un botón guarda la vista tal como se ve: en 3D, el canvas
+   (renderizar y leer en la misma tarea, porque el búfer no se conserva); en 2D, el SVG con los colores
+   de las variables CSS ya resueltos, pasado a PNG. Segunda entrega: grabar el Replay a WebM con
+   `canvas.captureStream()` y `MediaRecorder`. CSP: `img-src` necesita `blob:` para dibujar el SVG.
+   Comprobar: el smoke descarga el archivo y verifica la firma PNG y el tamaño.
+3. **GitLab** · Fuentes. `js/sources/gitlab.js` con la interfaz de `GitHubSource` y `DemoSource`
+   (`data`, `start`, `stop`, `setPaused`, `setFilter`, `setPins`, `refreshNow`, `files`, los eventos
+   `update` y `status`, y `view()` si filtra por su cuenta), sobre la API REST v4 de gitlab.com:
+   ramas, commits por rama, merge requests y eventos del proyecto. `U.parseRepo` acepta URLs de GitLab con subgrupos; token propio en ajustes;
+   `connect-src` suma `https://gitlab.com`. Primero comprobar que la API responde con CORS desde la
+   página. Primera entrega: ramas, commits y MRs con sondeo. Comprobar: `tools/gitlab.test.mjs` con una
+   API simulada, como `github.test.mjs`.
+4. **Una organización o un usuario entero** · Escala. Conectar `org:nombre` o `@usuario` sigue sus
+   repos con push más reciente (`/orgs/{org}/repos?sort=pushed`, `/users/{u}/repos?sort=pushed`)
+   hasta el tope de pestañas, y el panel de actividad suma los eventos de la organización
+   (`/orgs/{org}/events`). Segunda entrega: una vista de constelación (cada repo, una galaxia) para
+   ver más repos de los que caben en pestañas. Comprobar: prueba de cuota con la API simulada.
+5. **CI en el grafo** · Datos. El estado de los checks de la cabeza de cada rama y de cada PR (✓, ✗,
+   en curso) en su etiqueta y en el detalle, y un aviso cuando se pone en rojo la rama por defecto. Con
+   token, en la misma consulta GraphQL (`statusCheckRollup`); sin token, solo la rama por defecto y las
+   fijadas, para no gastar cuota. La demo simula checks. Comprobar: `node --test` con rollups
+   simulados.
+6. **Repos locales en la app de escritorio** · Fuentes. `LocalGitSource`: elegir una carpeta (diálogo
+   del sistema), leer ramas y commits con `git` desde el proceso principal (`execFile`, sin shell) y
+   vigilar `.git/HEAD`, `.git/refs` y `packed-refs` para ver cada commit al instante. Sin GitHub y sin
+   cuota: sirve para repos privados, sin conexión y de cualquier servidor, incluidas las ramas que no
+   se han publicado. `preload.js` expone lo mínimo y solo para carpetas elegidas por el usuario.
+   Comprobar: una e2e de escritorio sobre un repo creado en la prueba que hace un commit y lo ve llegar.
+7. **Widget embebible y capa para streaming** · Plataformas. `?embed=1`: solo el grafo y los avisos,
+   sin barra, para un iframe en documentación, wikis o Notion (el README trae el código para pegar).
+   Con `&bg=transparent`, fondo transparente para OBS al transmitir mientras se programa. Sin token por
+   defecto: pensado para repos públicos. Comprobar: el smoke abre `?embed=1` y verifica que no hay
+   barras y que no desborda.
+8. **Salud del repo** · Análisis. Un panel con lo que ya está cargado, sin consultas nuevas: ramas sin
+   actividad hace más de 30 días y sin PR, PRs abiertos por edad, tiempo de abierto a fusionado de los
+   últimos PRs, ritmo de merges y releases. Cada fila lleva a su rama o PR en el grafo. Comprobar:
+   `node --test` sobre los cálculos con datos fijos.
+9. **GitHub Enterprise Server** · Fuentes. `GitHubSource` con la URL de la API configurable
+   (`https://host/api/v3` y `/api/graphql`). En la web, el host tiene que estar en la CSP: el README
+   explica cómo sumarlo al servirlo uno mismo; en la app de escritorio, `--api-url`. Comprobar: las
+   pruebas de `github.test.mjs` corridas también con otra URL base.
+10. **Choques entre ramas** · Análisis. Archivos tocados a la vez por varias ramas abiertas (de las
+    comparaciones con la rama por defecto, que ya pide el modo galaxias): "feature/a y feature/b tocan
+    `src/pagos.js`", en el detalle de cada rama y como aviso al aparecer uno nuevo. Comprobar: prueba
+    con comparaciones simuladas.
+11. **Avisos a Slack y Discord** · Salidas. En la app de escritorio (las URL de webhook no aceptan
+    llamadas desde una página): elegir qué eventos se envían (release, merge a la rama por defecto, CI
+    en rojo, force-push en la rama por defecto) y a qué webhook, guardado cifrado como el token.
+    Comprobar: una e2e de escritorio con un servidor local que hace de webhook.
+12. **Aprender git** · Público. Un repo de práctica donde se escriben comandos (`commit`, `branch`,
+    `checkout`, `merge`, `rebase`, `reset`) y el grafo 2D o 3D responde al instante, con ejercicios
+    guiados ("crea una rama, haz dos commits y fusiónala"). Reutiliza la maquinaria de `DemoSource`.
+    Para quien enseña o aprende git. Comprobar: `node --test` sobre el intérprete de comandos.
+13. **Tags y despliegues** · Datos. Los tags como marcas en sus commits (banderín en 2D, obelisco en
+    3D) y dónde está cada entorno de despliegue (producción, staging) según `/deployments`. Comprobar:
+    la demo con tags y entornos, y un paso del smoke.
+14. **Vista de texto accesible** · Público. Las ramas y sus commits como un árbol navegable con el
+    teclado (`role=tree`), con lo mismo que dicen los grafos, para quien usa lector de pantalla.
+    Comprobar: un paso del smoke recorre el árbol con el teclado y lee los nombres accesibles.
+15. **Búsqueda y filtro por autor** · Análisis. Buscar un commit por mensaje, SHA o autor y volar
+    hasta él; filtrar el grafo por autor ("mis ramas"). Comprobar: un paso del smoke en la demo.
+16. **Comparar dos ramas** · Análisis. Elegir dos ramas: cuántos commits lleva cada una por delante,
+    desde dónde se separaron y qué archivos cambian, resaltado en el grafo. Comprobar: prueba con la
+    API simulada.
+17. **Gitea, Forgejo y Codeberg** · Fuentes. Con la interfaz de fuente de GitLab ya hecha; su API se
+    parece a la de GitHub. Comprobar CORS de codeberg.org primero; si no lo hay, solo escritorio.
+18. **Bitbucket Cloud** · Fuentes. `api.bitbucket.org/2.0`: ramas, commits y pull requests.
+19. **Resumen de la semana** · Salidas. Una ficha con lo que pasó en los últimos 7 días (PRs
+    fusionados, releases, quién aportó, la rama más activa), para copiar como Markdown o guardar como
+    imagen.
+20. **Extensión de VS Code** · Plataformas. Un webview con la app y el token de la sesión de GitHub
+    que ya tiene VS Code (`vscode.authentication`), abierta en el repo del espacio de trabajo. El loop
+    deja el paquete; publicarlo en el Marketplace lo hace Benjamin.
 
 ## Cómo validar un cambio
 
@@ -17,8 +179,9 @@ xvfb-run -a npm run test:e2e -- --grep-invert @lento   # app de escritorio y web
 Si el Playwright del proyecto no encuentra su Chromium, `PLAYWRIGHT_CHROMIUM_PATH` apunta a otro (lo
 leen el smoke y las e2e).
 
-## Pendientes
+## Mantenimiento: pendientes
 
+Los toman las iteraciones de mantenimiento (una de cada cuatro) y, si son **Alta**, cualquiera.
 Ordenados por impacto. Salen de las auditorías del código: datos y lógica, y vistas y accesibilidad
 (iteración 1), y el código que llegó después: director, modo TV, mundo abierto, galaxias, 2D y 3D de
 #26 y #27 (iteración 6). Cada uno se verificó leyendo el código, y los marcados con *reproducido*
@@ -371,3 +534,15 @@ posteriores pueden haberse movido.
 - Validado: 11 pruebas, smoke (40 idiomas), i18n y 12 e2e en verde.
 - **Siguiente:** pendiente 1 (foco a la ficha al abrirse con el teclado), luego 2 (con movimiento
   reducido, la ayuda del vuelo no se ve).
+
+### 2026-10-10 · Cambio de objetivo: ampliar el alcance
+
+- **Pedido de Benjamin:** que el loop amplíe lo más posible el alcance del proyecto. Las iteraciones
+  pasan a ser de **expansión** (una capacidad nueva por PR) salvo una de cada cuatro, de
+  mantenimiento. Las reglas están en [Directiva vigente](#directiva-vigente-ampliar-el-alcance); el
+  punto de partida, en el [Mapa de alcance](#mapa-de-alcance) y la [Hoja de ruta](#hoja-de-ruta), que
+  sale de recorrer lo que hay hoy (una sola fuente de datos, solo web y escritorio, hasta 10 repos, sin
+  salidas fuera de la app) y de los huecos frente a herramientas parecidas.
+- Los pendientes de mantenimiento quedan como estaban, con su orden.
+- **Siguiente:** iteración 20, expansión: ítem 1 de la hoja de ruta (instalable y sin conexión). La
+  21 y la 22 también son de expansión; la 23, de mantenimiento (pendiente 1).

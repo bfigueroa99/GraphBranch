@@ -2,6 +2,10 @@
 
 App estática (HTML, CSS y JavaScript, sin compilación) que dibuja en vivo las ramas de un repo de GitHub. Commits, pull requests y textos de la interfaz van en español, como el historial. Comprobaciones rápidas antes de subir algo: `node --check` de los archivos tocados y `node tools/check-i18n.mjs` (todo texto nuevo va en los 40 idiomas de `js/locales/`). Si el cambio toca la página o la app de escritorio, también `npm run test:e2e` (en Linux sin pantalla, con `xvfb-run`; `--grep-invert @lento` salta la prueba de 2 minutos). No hay CI: las pruebas y los instaladores se corren a mano, no en GitHub Actions.
 
+## Loop de mejora continua
+
+Las iteraciones del loop siguen `IMPROVEMENTS.md`. Desde la iteración 20 su objetivo es **ampliar lo más posible el alcance del proyecto**: tres de cada cuatro iteraciones suman una capacidad nueva de la hoja de ruta y la cuarta es de mantenimiento. Las reglas de la sección "Directiva vigente" de ese archivo mandan sobre lo que diga el prompt del loop acerca de qué tarea tomar.
+
 ## Pull requests y merge
 
 El dueño del repositorio autorizó que Claude abra pull requests y los fusione por su cuenta, sin pedir permiso cada vez:

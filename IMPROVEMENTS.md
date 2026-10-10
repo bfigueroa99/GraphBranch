@@ -73,7 +73,7 @@ segunda columna a la primera.
 | --- | --- | --- |
 | Fuentes | GitHub.com (GraphQL, lista y eventos), demo | GitLab, repos locales, GitHub Enterprise, Gitea/Forgejo, Bitbucket |
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias) | CI, tags, despliegues |
-| Plataformas | web estática (GitHub Pages), escritorio (Windows, macOS, Linux), modo TV | instalable y sin conexión (PWA), widget y capa para streaming, VS Code |
+| Plataformas | web estática (GitHub Pages), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV | widget y capa para streaming, VS Code |
 | Escala | hasta 10 repos, miles de ramas por repo | una organización o un usuario entero |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir | imagen y video, Slack y Discord, resumen de la semana |
 | Análisis | resumen de cifras, logros, misión del día | salud del repo, choques entre ramas, comparar ramas, búsqueda |
@@ -85,7 +85,7 @@ Ordenada por alcance ganado frente a esfuerzo. Cada ítem dice su eje, la primer
 que ya sirve) y cómo comprobarla. Las notas técnicas son un punto de partida: se comprueban antes de
 construir sobre ellas.
 
-1. **Instalable y sin conexión (PWA)** · Plataformas. `manifest.webmanifest` con íconos (sale de
+1. ~~**Instalable y sin conexión (PWA)**~~ hecho en #45 · Plataformas. `manifest.webmanifest` con íconos (sale de
    `electron/icon.png`) y un service worker que guarda la página, `css/`, `js/` y `vendor/`, así se
    instala en el celular o el escritorio sin Electron y abre sin red (con la demo y el aviso de sin
    conexión). Nunca guarda respuestas de la API: llevan datos privados si hay token. CSP: hace falta
@@ -169,7 +169,7 @@ construir sobre ellas.
 ## Cómo validar un cambio
 
 ```sh
-node --test                    # lógica contra una API de GitHub simulada (tools/*.test.mjs)
+node --test                    # lógica contra una API de GitHub simulada y el service worker (tools/*.test.mjs)
 node tools/check-i18n.mjs      # traducciones contra el inglés
 node tools/smoke.mjs           # la demo en Chromium: 3D, 2D, vuelo, Replay, diálogos, RTL, celular
 node tools/smoke.mjs --langs   # además los 40 idiomas en pantalla de celular
@@ -546,3 +546,44 @@ posteriores pueden haberse movido.
 - Los pendientes de mantenimiento quedan como estaban, con su orden.
 - **Siguiente:** iteración 20, expansión: ítem 1 de la hoja de ruta (instalable y sin conexión). La
   21 y la 22 también son de expansión; la 23, de mantenimiento (pendiente 1).
+
+### 2026-10-10 · Iteración 20 · Expansión · Plataformas
+
+- **Capacidad nueva: la web se instala y abre sin red** (ítem 1 de la hoja de ruta). En el celular o
+  el escritorio se instala como una app más, sin Electron, y después de la primera visita abre aunque
+  no haya red: la demo entera, y los repos de GitHub con el aviso de que esperan la conexión (siguen
+  solos cuando vuelve, como ya hacían).
+  - `manifest.webmanifest`: nombre, colores e íconos de `icons/` (192 y 512, uno adaptable para
+    Android y el de iOS), sacados de `electron/icon.png`. `index.html` suma `theme-color` para el tema
+    claro y el oscuro.
+  - `sw.js`: al instalarse guarda la página, el manifiesto, los íconos y todo `css/`, `js/` y
+    `vendor/` (93 archivos, ~950 KB comprimidos, la mayoría ya en la caché HTTP). Con red pide primero
+    a la red y pone al día la copia, así que quien está conectado siempre ve la última versión y
+    publicar no exige subir un número de versión; sin red sirve la copia. La query string no cuenta
+    (`?repo=` abre igual). Usa *navigation preload* para que el arranque del worker no demore la
+    página. Nunca toca `api.github.com`, los avatares ni otro sitio: esas peticiones no pasan por él.
+  - `js/pwa.js` lo registra después de cargar la página y solo por `http(s)` (en la práctica, https o
+    localhost): ni `file://` ni `app://` de la app de escritorio.
+  - CSP: `manifest-src 'self'`, `worker-src 'self'` e `img-src 'self'`. Lo último no estaba previsto:
+    Chromium carga los íconos del manifiesto como imágenes de la página y, sin `'self'`, el CSP los
+    bloqueaba y la página dejaba de ser instalable (`no-acceptable-icon`).
+- **Pruebas que fallan sin la capacidad:**
+  - `tools/pwa.test.mjs` (8 pruebas, `node --test`): `sw.js` en un contexto aislado con caché y red
+    falsas. `FILES` coincide con los archivos de `icons/`, `css/`, `js/` y `vendor/` (si alguien suma
+    un archivo y no lo agrega, falla); la instalación guarda todo revalidando; nunca responde por la
+    API, los avatares, otro sitio, un POST ni el propio worker; con red pone al día la copia y sin red
+    la sirve; un 404 no pisa la copia buena; al activarse borra lo que ya no está. Además, el
+    manifiesto (tamaños reales de los PNG) y las directivas del CSP. Comprobado que fallan quitando el
+    filtro de origen o un archivo de la lista.
+  - e2e web: con un servidor propio carga la página, espera a que el worker la controle, pregunta a
+    Chromium si es instalable (`Page.getInstallabilityErrors`: ningún error, salvo el de incógnito
+    propio de las pruebas), apaga el servidor, pasa a sin conexión, recarga y ve la demo con sus
+    librerías y fuentes, abre `?repo=` y ve el aviso de sin conexión, y comprueba que en la caché no
+    hay nada de otro sitio. Sin `js/pwa.js`, falla.
+  - `e2e/serve.mjs` exporta `serve(port)` para esa prueba y sirve `.webmanifest` y `.txt` con su tipo.
+- README: la función en la lista, cómo se instala, la lista `FILES` al publicar, la estructura,
+  Límites conocidos (solo https o localhost, la primera visita necesita red, sin red solo la demo) y
+  Seguridad (qué guarda el worker y qué no, y las directivas nuevas del CSP).
+- Validado: 19 pruebas (`node --test`), smoke, i18n (sin textos nuevos) y 13 e2e en verde.
+- **Siguiente:** iteración 21, expansión: ítem 2 (exportar imagen y video, eje Salidas). La 22 también
+  es de expansión; la 23, de mantenimiento (pendiente 1).

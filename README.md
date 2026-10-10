@@ -25,13 +25,14 @@ Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas
 - **Estado en cada rama**: número de PR abierto, directamente en la etiqueta.
 - **Todas las ramas**: se ven todas las ramas del repo, sin tope, también con miles: aparecen de a poco, las más activas primero, y el grafo sigue fluido (ver más abajo).
 
+- **Instalable y sin conexión**: la versión web se instala como una app más, en el celular o en el escritorio, sin Electron: con su ícono, en su propia ventana y sin la barra del navegador (en Chrome y Edge, el botón de instalar de la barra de direcciones; en el iPhone, **Compartir → Agregar a inicio**). Después de la primera visita abre aunque no haya red: la demo funciona entera y los repos de GitHub dicen que esperan la conexión, y siguen solos en cuanto vuelve. Con red siempre carga la última versión.
 - **Todos los idiomas**: la interfaz está traducida a 40 idiomas (incluidos árabe, hebreo, persa y urdu, de derecha a izquierda), se elige sola según el navegador y se puede cambiar en vivo desde el globo de la barra superior. Fechas, números y "hace 5 min" salen de `Intl`, así que también se ven bien en idiomas sin traducción (ver [Idiomas](#idiomas)).
 
 No necesita servidor ni compilación: es HTML, CSS y JavaScript que llama directo a `api.github.com` desde tu navegador. Las librerías (d3 y Three.js) y las fuentes van incluidas en `vendor/`, así que solo sale a internet para hablar con GitHub. La vista 3D usa WebGL; si el navegador no lo tiene, la app abre la 2D. También corre como [aplicación de escritorio](#aplicación-de-escritorio) con Electron.
 
 ## Uso
 
-1. Abre `index.html` (doble clic sirve), publícalo con GitHub Pages o usa la [aplicación de escritorio](#aplicación-de-escritorio) (abajo).
+1. Abre `index.html` (doble clic sirve), publícalo con GitHub Pages (y desde ahí, instálalo) o usa la [aplicación de escritorio](#aplicación-de-escritorio) (abajo).
 2. Escribe `owner/repo` o pega la URL del repositorio y pulsa **Conectar**. Sin repositorio arranca una **demo** simulada. Para seguir otro repo a la vez, conéctalo igual: se suma en una pestaña y el anterior sigue en vivo detrás (ver [Varios repos a la vez](#varios-repos-a-la-vez)).
 3. Opcional pero recomendado: en **Ajustes** (engranaje) agrega un token de GitHub.
 
@@ -153,6 +154,8 @@ Opcional: si quieres que la demo hable tu idioma, agrega un bloque en `js/source
 
 El flujo `.github/workflows/pages.yml` publica el sitio en cada push a `master`. Solo hay que activarlo una vez: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 
+Publicada así, la página se puede instalar y abre sin red: `manifest.webmanifest` la describe como app (nombre, colores e íconos de `icons/`, que salen de `electron/icon.png`) y `sw.js`, un service worker, guarda la página, `css/`, `js/`, `vendor/` y los íconos. Con red, cada archivo se pide a la red como siempre y la copia guardada se pone al día, así que publicar una versión nueva no exige nada más. Si agregas, borras o renombras un archivo en esas carpetas, actualiza la lista `FILES` de `sw.js`: `node --test` avisa si no coincide.
+
 ## Aplicación de escritorio
 
 La misma página corre como aplicación de escritorio con [Electron](https://www.electronjs.org/), en Windows, macOS y Linux. Hace falta Node.js 22.12 o superior.
@@ -207,16 +210,18 @@ Para firmarlos de verdad hacen falta un certificado de Apple Developer (y notari
 - **Token**: se guarda cifrado y fuera de `localStorage`, vuelve al reabrir, se borra, y pasa al llavero el que la primera versión dejaba en `localStorage`.
 - **Bandeja**: cerrar esconde la ventana, la página lo sabe y sigue contando novedades, el aviso sale una vez y en su idioma, y una notificación o abrir la app otra vez traen la ventana.
 - **Ventana oculta**: Chromium no espacia los temporizadores a uno por minuto. Tarda 2 minutos; `npx playwright test --grep-invert @lento` corre todo lo demás.
-- **Web**, por http y con doble clic sin red: sin errores, sin violaciones de CSP y sin pedir nada a otros sitios; el token queda en el navegador.
+- **Web**, por http y con doble clic sin red: sin errores, sin violaciones de CSP y sin pedir nada a otros sitios; el token queda en el navegador; el navegador la ofrece para instalar y, ya abierta una vez, vuelve a abrir con el servidor apagado y sin red (la demo entera, y un repo de GitHub con el aviso de que no hay conexión).
 
 Las pruebas nunca usan la red: la app se abre con un proxy que no existe y con una carpeta de datos propia en cada prueba. La primera vez hace falta el Chromium de Playwright para las de la web: `npx playwright install chromium`. En Linux sin pantalla: `xvfb-run npm run test:e2e`.
 
-Además, `node --test` prueba la lógica de `js/sources/github.js` contra una API de GitHub simulada, y `node tools/smoke.mjs` es una prueba de humo rápida de la web (la demo y, con una API de GitHub simulada, varios repos a la vez) (con `--langs`, en los 40 idiomas y en pantalla de celular).
+Además, `node --test` prueba la lógica de `js/sources/github.js` contra una API de GitHub simulada y el service worker (`sw.js`) con una caché y una red falsas (guarda la página entera, nunca la API, y sin red sirve la copia), y `node tools/smoke.mjs` es una prueba de humo rápida de la web (la demo y, con una API de GitHub simulada, varios repos a la vez) (con `--langs`, en los 40 idiomas y en pantalla de celular).
 
 ## Estructura
 
 ```
 index.html            página y controles
+manifest.webmanifest  la página como app instalable: nombre, colores e íconos (icons/)
+sw.js                 service worker de la web: guarda la página para abrirla sin red (nunca la API)
 css/styles.css        estilos (tema claro y oscuro)
 js/i18n.js            idiomas: detección, traducción, plurales y formatos de fecha y número
 js/locales/*.js       un archivo de textos por idioma (en.js es la base)
@@ -238,6 +243,7 @@ js/replay.js          modo Replay: la historia como time-lapse
 js/game.js            logros del repo, nivel y misión del día
 js/feed.js            panel de actividad, avisos, sonido y notificaciones
 js/app.js             conecta todo y lleva los repos seguidos (una pestaña por repo)
+js/pwa.js             registra sw.js (solo en la web por https o localhost)
 vendor/               copias locales de d3, Three.js, OrbitControls y las fuentes, con sus licencias (las genera tools/vendor.mjs)
 tools/check-i18n.mjs  verifica las traducciones contra el inglés
 tools/vendor.mjs      descarga a vendor/ las librerías (comprobando su hash) y las fuentes
@@ -261,13 +267,15 @@ package.json          Electron, Playwright y los scripts (npm start, npm run dis
 - Los PRs se siguen entre los 50 actualizados más recientemente.
 - Se siguen hasta 10 repos a la vez, y todos comparten la cuota de GitHub: sin token, con varios repos cada uno se actualiza cada varios minutos.
 - Modo galaxias: los archivos de una rama salen de una consulta a GitHub al acercarse a su galaxia (sin token, gasta una de las 60 por hora). Para la rama por defecto es el árbol completo del repo (GitHub lo corta en repos enormes); para las demás, la comparación con la rama por defecto, que trae como mucho 300 archivos.
+- Instalar y abrir sin red es de la versión web publicada por https (o servida en `localhost`): con doble clic (`file://`) los navegadores no admiten service workers, y la app de escritorio ya lleva todo dentro. La primera visita necesita red. Sin red solo funciona la demo: los datos de GitHub nunca se guardan, así que un repo espera a que vuelva la conexión. Cómo se instala depende del navegador; donde no se ofrece, la página funciona igual sin instalar.
 - El modo TV pide al navegador que no apague la pantalla (Screen Wake Lock: Chrome y Edge 84+, Safari 16.4+, Firefox 126+). Si no lo permite (sin soporte, o con batería baja), la pantalla se apaga según el sistema; para un panel fijo conviene desactivar también el ahorro de energía del equipo. El navegador solo deja pasar a pantalla completa tras un gesto del usuario, así que con `?tv=1` hay que pulsar `F` o el botón.
 
 ## Seguridad
 
 `index.html` lleva una política de seguridad de contenido (CSP):
 
-- **CSP**: scripts, estilos y fuentes solo pueden venir del propio sitio; no se permite `eval` ni scripts o manejadores en línea. Las conexiones salen únicamente a `api.github.com` y las imágenes solo pueden ser avatares de GitHub. Así, aunque algún texto de un repositorio lograra colarse en la página, no podría ejecutar código ni enviar tu token a otro servidor.
+- **CSP**: scripts, estilos y fuentes solo pueden venir del propio sitio; no se permite `eval` ni scripts o manejadores en línea. Las conexiones salen únicamente a `api.github.com` y las imágenes solo pueden ser avatares de GitHub o del propio sitio (los íconos). Así, aunque algún texto de un repositorio lograra colarse en la página, no podría ejecutar código ni enviar tu token a otro servidor.
+- **Sin conexión, sin datos guardados**: el service worker (`sw.js`) solo guarda los archivos de la propia página. Nunca guarda respuestas de `api.github.com` (con token llevan datos privados) ni avatares: esas peticiones ni siquiera pasan por él. El CSP le suma solo lo del propio sitio: `manifest-src 'self'`, `worker-src 'self'` e `img-src 'self'` (los íconos del manifiesto).
 - **Librerías y fuentes locales**: d3, Three.js, OrbitControls y las fuentes son copias en `vendor/`, junto a sus licencias. La página no depende de ningún CDN, y tampoco le cuenta a Google Fonts quién la abre.
 
 `vendor/` lo genera `npm run vendor` (`tools/vendor.mjs`): descarga las librerías y comprueba que cada una coincida con el hash SRI que publica su CDN (cdnjs lo muestra en su ficha; jsDelivr, en `data.jsdelivr.com`); si algo no coincide, no escribe nada. Las fuentes las baja de Google Fonts con todos sus subconjuntos (latin, cyrillic, greek…), y el navegador carga solo los que pide el texto en pantalla. Para cambiar de versión una librería, actualiza su URL y su hash en ese script y vuelve a correrlo.

@@ -166,6 +166,24 @@
   const MR_KEYS = { 'tip.pr': 'tip.mr', 'tip.prDraft': 'tip.mrDraft', 'tip.viewPr': 'tip.viewMr', 'branch.prAria': 'branch.mrAria', 'branch.prDraftAria': 'branch.mrDraftAria' };
   const prKey = (pr, key) => (pr.mr && MR_KEYS[key]) || key;
 
+  /** Abierta con el teclado, la ficha recibe el foco: sus botones quedan a un Tab, y no detrás de
+      todas las etiquetas del grafo. Al cerrarse, el foco vuelve a quien la abrió (ver returnFocus). */
+  function focusTip(view, opener) {
+    view.tipOpener = opener || null;
+    view.tip.tabIndex = -1;
+    view.tip.focus({ preventScroll: true });
+  }
+
+  /** Antes de esconder la ficha: si tenía el foco, vuelve a quien la abrió (o al grafo, si esa
+      etiqueta ya no está), en vez de perderse en la página. */
+  function returnFocus(view) {
+    if (view.tip.contains(document.activeElement)) {
+      const to = view.tipOpener?.isConnected ? view.tipOpener : view.wrap;
+      to.focus({ preventScroll: true });
+    }
+    view.tipOpener = null;
+  }
+
   /** Conecta el botón "Fijar" de un tooltip con la acción de la app. */
   function wirePinButton(tip, onTogglePin) {
     tip.addEventListener('click', (ev) => {
@@ -417,6 +435,7 @@
         if (!it || (ev.key !== 'Enter' && ev.key !== ' ')) return;
         ev.preventDefault();
         this.showTip(it.data.sha, true, it.data.name);
+        focusTip(this, ev.target.closest('.head'));
       });
       this.gHeads.addEventListener('pointerover', (ev) => {
         const g = within(ev, '.head');
@@ -1771,6 +1790,7 @@
     }
 
     hideTip() {
+      returnFocus(this);
       this.tip.hidden = true;
       this.tipSha = null;
     }
@@ -1805,5 +1825,5 @@
   }
 
   GB.Graph = Graph;
-  GB.graphShared = { tipHTML, wirePinButton, measure, fitText, prRef, prKey, LABEL_FONT, SMALL_FONT };
+  GB.graphShared = { tipHTML, wirePinButton, focusTip, returnFocus, measure, fitText, prRef, prKey, LABEL_FONT, SMALL_FONT };
 })(window.GB);

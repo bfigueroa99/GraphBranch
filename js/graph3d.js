@@ -1142,6 +1142,8 @@
         ev.stopPropagation();
         this.touch(); // quien abre una ficha quiere leerla: el director espera
         this.showTip(it.data.sha, true, it.data.name);
+        // con Enter o Espacio (un clic sin puntero), la ficha recibe el foco
+        if (ev.detail === 0) GB.graphShared.focusTip(this, ev.target.closest('.g3-head'));
       });
       // pasar por una etiqueta (o llegar con el teclado) resalta su rama entera, como en la vista 2D
       const enter = (ev) => {
@@ -1629,6 +1631,7 @@
     }
 
     hideTip() {
+      GB.graphShared.returnFocus(this);
       this.tip.hidden = true;
       this.tipSha = null;
       this.tipFile = null;

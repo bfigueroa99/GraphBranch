@@ -4,12 +4,12 @@
    origen fijo: el CSP de index.html ('self') funciona igual que en la web, localStorage queda
    aparte del resto del sistema y el contexto es seguro (notificaciones, Wake Lock).
 
-     npm start                         abre la demo o el último repositorio
-     npm start -- --repo=owner/repo    abre ese repositorio
+     npm start                         abre la demo o los repositorios que se seguían
+     npm start -- --repo=owner/repo    abre ese repositorio (repetido, sigue varios)
      npm start -- --tv                 entra en modo TV (también --lang=es)
 
    Cerrar la ventana la esconde en la bandeja del sistema (electron/tray.js) y la app sigue
-   revisando el repositorio; para salir del todo está "Salir" en el menú del ícono. */
+   revisando los repositorios; para salir del todo está "Salir" en el menú del ícono. */
 const { app, BrowserWindow, ipcMain, nativeTheme, net, protocol, session, shell } = require('electron');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -50,12 +50,13 @@ async function serve(request) {
   return net.fetch(pathToFileURL(file).toString());
 }
 
-/** Los argumentos --repo, --tv y --lang pasan a la página como en la web (?repo=, ?tv=1, ?lang=). */
+/** Los argumentos --repo, --tv y --lang pasan a la página como en la web (?repo=, ?tv=1, ?lang=).
+    --repo se puede repetir para seguir varios repos (el primero queda a la vista). */
 function startUrl(argv) {
   const url = new URL(`${ORIGIN}/index.html`);
   for (const arg of argv) {
     const m = /^--(repo|lang)=(.+)$/.exec(arg);
-    if (m) url.searchParams.set(m[1], m[2]);
+    if (m) url.searchParams[m[1] === 'repo' ? 'append' : 'set'](m[1], m[2]);
     else if (arg === '--tv') url.searchParams.set('tv', '1');
   }
   return url.toString();

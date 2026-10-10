@@ -9,6 +9,11 @@ GB.i18n.define('fi', {
   'repo.demo': 'Demo',
   'repo.invalid': 'Kirjoita repositorio muodossa owner/name tai liitä sen GitHub-URL.',
   'repo.demoDesc': 'Keksittyä dataa, joka muuttuu itsestään muutaman sekunnin välein. Kirjoita owner/repo yllä nähdäksesi oikean repositorion.',
+  'repo.connectTitle': 'Näyttää sen tässä; muut seuraamasi repositoriot päivittyvät edelleen',
+  'repo.limit': 'Seuraat jo enimmäismäärää repositorioita. Sulje yksi, niin voit lisätä toisen.',
+  'tabs.aria': 'Seuratut repositoriot',
+  'tabs.close': 'Lopeta repositorion {repo} seuraaminen',
+  'tabs.unread': { one: '{n} uusi päivitys', other: '{n} uutta päivitystä' },
   'badge.demo': 'simulaatio',
   'badge.private': 'yksityinen',
 

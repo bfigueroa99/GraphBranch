@@ -9,6 +9,11 @@ GB.i18n.define('ko', {
   'repo.demo': '데모',
   'repo.invalid': '저장소를 owner/name 형식으로 입력하거나 GitHub URL을 붙여넣으세요.',
   'repo.demoDesc': '몇 초마다 저절로 바뀌는 가상의 데이터입니다. 위 입력란에 owner/repo 형식으로 입력하면 실제 저장소를 볼 수 있습니다.',
+  'repo.connectTitle': '여기에 표시합니다. 팔로우 중인 다른 저장소도 계속 업데이트됩니다',
+  'repo.limit': '팔로우할 수 있는 저장소 수가 최대입니다. 하나를 닫은 뒤 추가하세요.',
+  'tabs.aria': '팔로우 중인 저장소',
+  'tabs.close': '{repo} 팔로우 중지',
+  'tabs.unread': '새 업데이트 {n}건',
   'badge.demo': '시뮬레이션',
   'badge.private': '비공개',
 

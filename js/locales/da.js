@@ -9,6 +9,11 @@ GB.i18n.define('da', {
   'repo.demo': 'Demo',
   'repo.invalid': 'Angiv repositoriet som owner/name, eller indsæt dets GitHub-URL.',
   'repo.demoDesc': 'Opdigtede data, der ændrer sig af sig selv med få sekunders mellemrum. Skriv owner/repo ovenfor for at se et rigtigt.',
+  'repo.connectTitle': 'Viser det her; de andre repositories, du følger, bliver ved med at blive opdateret',
+  'repo.limit': 'Du følger allerede så mange repositories som muligt. Luk et for at tilføje et andet.',
+  'tabs.aria': 'Repositories, du følger',
+  'tabs.close': 'Stop med at følge {repo}',
+  'tabs.unread': { one: '{n} ny opdatering', other: '{n} nye opdateringer' },
   'badge.demo': 'simulation',
   'badge.private': 'privat',
 

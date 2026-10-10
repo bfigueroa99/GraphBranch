@@ -9,6 +9,11 @@ GB.i18n.define('id', {
   'repo.demo': 'Demo',
   'repo.invalid': 'Masukkan repositori sebagai owner/name atau tempel URL GitHub-nya.',
   'repo.demoDesc': 'Data rekaan yang berubah sendiri setiap beberapa detik. Ketik owner/repo di atas untuk melihat repositori sungguhan.',
+  'repo.connectTitle': 'Menampilkannya di sini; repositori lain yang Anda ikuti tetap diperbarui',
+  'repo.limit': 'Anda sudah mengikuti jumlah repositori maksimum. Tutup satu untuk menambahkan yang lain.',
+  'tabs.aria': 'Repositori yang diikuti',
+  'tabs.close': 'Berhenti mengikuti {repo}',
+  'tabs.unread': '{n} pembaruan baru',
   'badge.demo': 'simulasi',
   'badge.private': 'privat',
 

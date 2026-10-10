@@ -9,6 +9,11 @@ GB.i18n.define('tr', {
   'repo.demo': 'Demo',
   'repo.invalid': 'Depoyu owner/name biçiminde girin veya GitHub URL’sini yapıştırın.',
   'repo.demoDesc': 'Birkaç saniyede bir kendiliğinden değişen uydurma veriler. Gerçek bir depoyu görmek için yukarıya owner/repo yazın.',
+  'repo.connectTitle': 'Burada gösterir; takip ettiğiniz diğer depolar güncellenmeye devam eder',
+  'repo.limit': 'Zaten olabilecek en fazla sayıda depoyu takip ediyorsunuz. Başka bir depo eklemek için birini kapatın.',
+  'tabs.aria': 'Takip edilen depolar',
+  'tabs.close': '{repo} deposunu takip etmeyi bırak',
+  'tabs.unread': { one: '{n} yeni güncelleme', other: '{n} yeni güncelleme' },
   'badge.demo': 'simülasyon',
   'badge.private': 'özel',
 

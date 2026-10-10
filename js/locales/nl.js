@@ -9,6 +9,11 @@ GB.i18n.define('nl', {
   'repo.demo': 'Demo',
   'repo.invalid': 'Voer de repository in als owner/name of plak de GitHub-URL ervan.',
   'repo.demoDesc': 'Verzonnen gegevens die om de paar seconden vanzelf veranderen. Typ hierboven owner/repo om een echte te zien.',
+  'repo.connectTitle': 'Toont hem hier; de andere repository’s die je volgt, worden verder bijgewerkt',
+  'repo.limit': 'Je volgt al het maximale aantal repository’s. Sluit er een om een andere toe te voegen.',
+  'tabs.aria': 'Gevolgde repository’s',
+  'tabs.close': '{repo} niet meer volgen',
+  'tabs.unread': { one: '{n} nieuwe update', other: '{n} nieuwe updates' },
   'badge.demo': 'simulatie',
   'badge.private': 'privé',
 

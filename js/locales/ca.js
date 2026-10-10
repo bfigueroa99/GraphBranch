@@ -9,6 +9,11 @@ GB.i18n.define('ca', {
   'repo.demo': 'Demo',
   'repo.invalid': "Escriu el repositori com a owner/name o enganxa'n l'URL de GitHub.",
   'repo.demoDesc': "Dades fictícies que canvien soles cada pocs segons. Escriu owner/repo a dalt per veure'n un de real.",
+  'repo.connectTitle': 'El mostra aquí; els altres repositoris que segueixes continuen actualitzant-se',
+  'repo.limit': "Ja segueixes el màxim de repositoris. Tanca'n un per afegir-ne un altre.",
+  'tabs.aria': 'Repositoris seguits',
+  'tabs.close': 'Deixa de seguir {repo}',
+  'tabs.unread': { one: '{n} novetat', other: '{n} novetats' },
   'badge.demo': 'simulació',
   'badge.private': 'privat',
 

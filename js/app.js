@@ -1,4 +1,4 @@
-/* GraphBranch — conecta fuente de datos, layout, grafo y feed. */
+/* GraphBranch — conecta fuente de datos, layout, grafo y feed, con uno o varios repos seguidos a la vez. */
 (async function (GB) {
   'use strict';
   const { U, i18n } = GB;
@@ -65,6 +65,7 @@
     trGrid: $('#tr-grid'),
     gameEnable: $('#game-enable'),
     graphPanel: $('.graph-panel'),
+    repoTabs: $('#repo-tabs'),
     toasts: $('#toasts'),
     hint: $('#hint'),
     overlay: $('#overlay'),
@@ -103,8 +104,15 @@
   };
   U.store.set('maxBranches', null); // ya no hay tope: se muestran todas las ramas
 
-  let source = null;
-  let layout = new GB.Layout();
+  /* repos seguidos: cada uno en su pestaña, con su fuente, que sigue consultando GitHub aunque no
+     esté a la vista; así sus novedades llegan al panel de actividad, a los avisos y a la pestaña.
+     El grafo, las cifras, el Replay y los logros que se ven son del repo a la vista (`active`). */
+  const MAX_REPOS = 10;
+  const tabs = []; // { key, demo, source, layout, game, unread, status, el, startTimer }
+  let active = null;
+  let source = null; // la fuente del repo a la vista
+  let layout = null; // y su layout (colores y carriles estables)
+  let game = null; // y sus logros
   let status = null;
   let paused = false;
 
@@ -130,7 +138,7 @@
         // mundo abierto: cada rama descubierta suena; descubrirlas todas es un logro (ver world.js)
         onExplore: (e) => {
           if (feed.sound) feed.synth.discover(e.kind, e.name, e.name ? graph3d.panOf(e.name) : 0);
-          if (e.kind === 'complete') game.mapped();
+          if (e.kind === 'complete') game?.mapped();
         },
         onShot: (a) => lowerThird(a),
         onDirector: (st) => renderDirector(st),
@@ -174,7 +182,7 @@
   }
 
   /* ramas fijadas y filtro: se recuerdan por repositorio */
-  const repoKey = () => (source ? `${source.owner || 'demo'}/${source.name || ''}`.toLowerCase() : '');
+  const repoKey = () => active?.key || '';
   const getPins = () => new Set(U.store.get('pins:' + repoKey(), []));
 
   function togglePin(name) {
@@ -194,73 +202,286 @@
     toasts: $('#toasts'),
     count: $('#feed-count'),
     onSelect: (a) => {
+      // la actividad de otro repo seguido lleva a su pestaña (la de uno que ya no se sigue, a ninguna parte)
+      if (a.repo != null) {
+        const tab = tabs.find((x) => x.key === a.repo);
+        if (!tab) return;
+        if (tab !== active) showTab(tab);
+      }
       if (a.sha && graph.focusSha(a.sha)) return;
       if (a.branch) graph.focusBranch(a.branch);
     },
-    // con la vista 3D, cada sonido sale del lado de la pantalla donde está su rama
-    panOf: (a) => (graph === graph3d ? graph3d.panOf(a.branch) : 0),
+    // con la vista 3D, cada sonido sale del lado de la pantalla donde está su rama (si es del repo a la vista)
+    panOf: (a) => (graph === graph3d && (a.repo == null || a.repo === active?.key) ? graph3d.panOf(a.branch) : 0),
   });
 
-  /* ---------- fuente de datos ---------- */
+  /* ---------- repos seguidos y fuente de datos ---------- */
 
-  function connect(src) {
-    replay.stop(true);
-    if (source) source.stop();
-    source = src;
-    game.load(repoKey()); // cada repo tiene sus logros, su nivel y su misión
-    layout = new GB.Layout();
-    graph2d.clear();
-    graph3d?.clear();
-    graph3d?.world?.load(repoKey()); // y sus ramas descubiertas en el modo vuelo
-    graph3d?.gx?.reset(); // los archivos que se habían pedido eran del repo anterior
-    followUI(true);
-    feed.clear();
-    // nada del repo anterior: ni sus cifras ni su grafo (el Replay lo reproduciría si el nuevo no carga)
-    lastRender = null;
-    clearStats();
-    paused = false;
-    setPressed(el.pauseBtn, false);
-    setPressed(el.tvPause, false);
-    graph3d?.setHold(false);
-    renderPause();
-    renderRepo(src.data.repo);
-    showOverlay('loading', src.data.repo.demo ? i18n.msg('overlay.demoLoading') : i18n.msg('overlay.loading', { repo: `${src.data.repo.owner}/${src.data.repo.name}` }));
-    src.on('update', (u) => src === source && onUpdate(u));
-    src.on('status', (s) => src === source && onStatus(s));
-    src.start();
+  const STAGGER = 700; // los repos que arrancan juntos, escalonados: GitHub no recibe todo a la vez
+  /** Clave de un repo (de su fuente o de { owner, name }): con ella se guarda lo suyo (fijadas, filtro, logros). */
+  const keyOf = (src) => `${src.owner || 'demo'}/${src.name || ''}`.toLowerCase();
+  /** Nombre a la vista (el de GitHub, ya cargado) y el escrito, que es el que se guarda (de él sale la clave). */
+  const nameOf = (tab) => `${tab.source.data.repo.owner}/${tab.source.data.repo.name}`;
+  const savedName = (tab) => `${tab.source.owner}/${tab.source.name}`;
+  const realTabs = () => tabs.filter((x) => !x.demo);
+  const filterOf = (tab) => (tab.demo ? tab.source.filter || '' : U.store.get('filter:' + tab.key, ''));
+
+  /** Una fuente de GitHub con lo que se recuerda de ese repo: su filtro y sus ramas fijadas. */
+  function githubSource({ owner, name }) {
+    const key = keyOf({ owner, name });
+    return new GB.GitHubSource({
+      owner,
+      name,
+      token: settings.token,
+      depth: settings.depth,
+      filter: U.store.get('filter:' + key, ''),
+      pins: U.store.get('pins:' + key, []),
+    });
   }
 
-  function connectRepo(input, { save = true } = {}) {
+  /** Suma una pestaña al final, con su fuente, sin mostrarla ni arrancarla. */
+  function addTab(src) {
+    const tab = { key: keyOf(src), demo: !!src.data.repo.demo, source: null, layout: null, game: null, unread: 0, status: null, el: null, startTimer: 0 };
+    tab.game = new GB.Game(gameHooks(tab));
+    tab.game.load(tab.key); // cada repo tiene sus logros, su nivel y su misión
+    setSource(tab, src);
+    tabs.push(tab);
+    shareQuota();
+    return tab;
+  }
+
+  /** Le da a una pestaña su fuente (al seguir el repo, o al reconectarlo con otro token). */
+  function setSource(tab, src) {
+    clearTimeout(tab.startTimer);
+    tab.source?.stop();
+    tab.source = src;
+    tab.layout = new GB.Layout();
+    tab.status = null;
+    // lo que emita una fuente que ya no es la de su pestaña (se cerró o se reemplazó) no se escucha
+    src.on('update', (u) => tab.source === src && onUpdate(tab, u));
+    src.on('status', (s) => tab.source === src && onStatus(tab, s));
+    if (tab === active) {
+      source = src;
+      layout = tab.layout;
+    }
+  }
+
+  /** Arranca la fuente de una pestaña, ahora o dentro de `delay` ms. */
+  function startTab(tab, delay = 0) {
+    const src = tab.source;
+    clearTimeout(tab.startTimer);
+    const go = () => {
+      if (tab.source !== src) return;
+      if (paused) src.setPaused(true); // se pausó mientras esperaba su turno
+      src.start();
+    };
+    if (delay) tab.startTimer = setTimeout(go, delay);
+    else go();
+  }
+
+  /** La cuota de GitHub es una para todos los repos seguidos: cada fuente cuida su parte. */
+  function shareQuota() {
+    const real = realTabs();
+    for (const x of real) x.source.share = real.length;
+  }
+
+  /** Deja de seguir un repo. Si era el que estaba a la vista, pasa al de al lado (o a la demo). */
+  function removeTab(tab, { replace = true } = {}) {
+    const i = tabs.indexOf(tab);
+    if (i < 0) return;
+    clearTimeout(tab.startTimer);
+    tab.source.stop();
+    tab.source = null;
+    tabs.splice(i, 1);
+    tab.el?.remove();
+    feed.drop(tab.key);
+    shareQuota();
+    if (tab === active) {
+      active = null;
+      if (replace) {
+        const next = tabs[Math.min(i, tabs.length - 1)];
+        if (next) showTab(next);
+        else startDemo();
+      }
+    }
+    saveTabs();
+    renderTabs();
+  }
+
+  /** El botón de cerrar de una pestaña: si tenía el foco, pasa a la pestaña que queda en su lugar. */
+  function closeTab(tab) {
+    const hadFocus = tab.el?.contains(document.activeElement);
+    const i = tabs.indexOf(tab);
+    removeTab(tab);
+    if (!hadFocus) return;
+    const next = tabs[Math.min(i, tabs.length - 1)];
+    if (next?.el?.isConnected && !el.repoTabs.hidden) next.el.querySelector('.rt-main').focus();
+    else el.repoInput.focus();
+  }
+
+  /**
+   * Muestra un repo seguido: su grafo, sus cifras y su estado. Los demás siguen consultando atrás.
+   * `force`: vuelve a armar la vista aunque ya fuera el repo a la vista (se reconectó).
+   */
+  function showTab(tab, { force = false } = {}) {
+    if (tab === active && !force) return;
+    const prev = active;
+    active = tab;
+    source = tab.source;
+    layout = tab.layout;
+    game = tab.game;
+    // la demo no se sigue, solo se mira: al pasar a otro repo se cierra
+    if (prev && prev !== tab && prev.demo) removeTab(prev);
+    replay.stop(true);
+    tv.attract = false;
+    tv.lastSwitch = Date.now();
+    clearTimeout(filterTimer); // un filtro a medio escribir era para el repo anterior
+    tab.unread = 0;
+    graph2d.clear();
+    graph3d?.clear();
+    graph3d?.world?.load(tab.key); // y sus ramas descubiertas en el modo vuelo
+    graph3d?.gx?.reset(); // los archivos que se habían pedido eran de otro repo
+    followUI(true);
+    lowerThird(null);
+    // nada de otro repo: ni sus cifras ni su grafo (el Replay lo reproduciría si este no carga)
+    lastRender = null;
+    clearStats();
+    renderGame();
+    el.repoInput.value = tab.demo ? '' : nameOf(tab);
+    el.repoInput.setCustomValidity('');
+    el.branchFilter.value = filterOf(tab);
+    renderRepo(source.data.repo);
+    saveTabs();
+    renderTabs();
+    status = tab.status;
+    if (source.data.loaded) {
+      const { data, L } = drawGraph(true);
+      feed.setDefaultBranch(data.repo.defaultBranch);
+      renderSummary(data, L);
+    } else if (status?.state === 'error') showOverlay('error', status.message, status.nextAt == null);
+    else showOverlay('loading', tab.demo ? i18n.msg('overlay.demoLoading') : i18n.msg('overlay.loading', { repo: nameOf(tab) }));
+    renderStatus();
+  }
+
+  /** Reanuda todo: seguir un repo nuevo (o volver a la demo) saca de la pausa, como siempre. */
+  function resume() {
+    if (paused) setPaused(false);
+  }
+
+  /** Conectar: sigue el repo (además de los que ya se siguen) y lo muestra; si ya se seguía, lo muestra. */
+  function connectRepo(input) {
     const parsed = U.parseRepo(input);
     if (!parsed) {
       el.repoInput.setCustomValidity(t('repo.invalid'));
       el.repoInput.reportValidity();
       return;
     }
+    let tab = tabs.find((x) => x.key === keyOf(parsed));
+    if (tab) {
+      // conectarse otra vez a uno que quedó sin conexión es reintentar
+      if (tab.status?.state === 'error') tab.source.refreshNow();
+    } else {
+      if (realTabs().length >= MAX_REPOS) {
+        el.repoInput.setCustomValidity(t('repo.limit'));
+        el.repoInput.reportValidity();
+        return;
+      }
+      resume();
+      tab = addTab(githubSource(parsed));
+      startTab(tab);
+    }
     el.repoInput.setCustomValidity('');
-    el.repoInput.value = `${parsed.owner}/${parsed.name}`;
-    if (save) U.store.set('repo', `${parsed.owner}/${parsed.name}`);
-    setUrlRepo(`${parsed.owner}/${parsed.name}`);
-    const key = `${parsed.owner}/${parsed.name}`.toLowerCase();
-    const filter = U.store.get('filter:' + key, '');
-    el.branchFilter.value = filter;
-    connect(
-      new GB.GitHubSource({
-        ...parsed,
-        token: settings.token,
-        depth: settings.depth,
-        filter,
-        pins: U.store.get('pins:' + key, []),
-      }),
-    );
+    showTab(tab);
   }
 
+  /** La demo: una pestaña más mientras se mira (no se guarda). Si ya estaba, empieza de nuevo. */
   function startDemo() {
-    U.store.set('repo', null);
-    setUrlRepo(null);
-    el.repoInput.value = '';
-    el.branchFilter.value = '';
-    connect(new GB.DemoSource());
+    const old = tabs.find((x) => x.demo);
+    if (old) removeTab(old, { replace: false });
+    resume();
+    const tab = addTab(new GB.DemoSource());
+    startTab(tab);
+    showTab(tab);
+  }
+
+  /** Recuerda qué repos se siguen y cuál está a la vista; la URL los lleva también, para compartirla. */
+  function saveTabs() {
+    const names = realTabs().map(savedName);
+    const shown = active && !active.demo ? savedName(active) : null;
+    U.store.set('repos', names.length ? names : null);
+    U.store.set('repo', shown);
+    setUrlRepos(shown ? [shown, ...names.filter((n) => n !== shown)] : names);
+  }
+
+  /** Token o profundidad nuevos: cada repo seguido se vuelve a conectar, el de la vista primero. */
+  function reconnectAll() {
+    resume();
+    const order = realTabs().sort((a, b) => (b === active) - (a === active));
+    order.forEach((tab, i) => {
+      feed.drop(tab.key);
+      tab.unread = 0;
+      setSource(tab, githubSource({ owner: tab.source.owner, name: tab.source.name }));
+      startTab(tab, i * STAGGER);
+    });
+    shareQuota();
+    if (active && !active.demo) showTab(active, { force: true });
+    else renderTabs();
+  }
+
+  /* ---------- pestañas ---------- */
+
+  const setText = (node, text) => node.textContent !== text && (node.textContent = text);
+
+  /** Las pestañas se ven con más de un repo; con uno solo, el título del grafo ya dice cuál es. */
+  function renderTabs() {
+    const box = el.repoTabs;
+    box.hidden = tabs.length < 2;
+    feed.setMulti(tabs.length > 1);
+    tabs.forEach((tab, i) => {
+      tab.el ||= makeTabEl(tab);
+      // solo se mueve lo que no está en su lugar: mover una pestaña le quitaría el foco
+      if (box.children[i] !== tab.el) box.insertBefore(tab.el, box.children[i] || null);
+      renderTab(tab);
+    });
+  }
+
+  function makeTabEl(tab) {
+    const node = document.createElement('div');
+    node.className = 'rt';
+    node.innerHTML = `<button type="button" class="rt-main">
+        <span class="rt-dot" aria-hidden="true"></span><span class="rt-name" dir="ltr"></span><span class="rt-n" aria-hidden="true"></span><span class="sr-only rt-sr"></span>
+      </button><button type="button" class="rt-close">${GB.Feed.icon('close')}</button>`;
+    node.querySelector('.rt-main').addEventListener('click', () => showTab(tab));
+    node.querySelector('.rt-close').addEventListener('click', () => closeTab(tab));
+    return node;
+  }
+
+  /** Estado, nombre y novedades sin ver de una pestaña (cambia solo lo que cambió). */
+  function renderTab(tab) {
+    const node = tab.el;
+    if (!node || !tab.source) return;
+    const st = tab.status?.state || 'loading';
+    const name = nameOf(tab);
+    const stateText = tab.demo && st === 'live' ? t('status.demoLive') : t(STATE_TEXT[st] || 'status.loading');
+    const n = tab.unread;
+    node.dataset.state = st;
+    node.classList.toggle('on', tab === active);
+    node.classList.toggle('demo', tab.demo);
+    const main = node.firstElementChild;
+    if (tab === active) main.setAttribute('aria-current', 'true');
+    else main.removeAttribute('aria-current');
+    main.title = `${name} · ${stateText}`;
+    setText(node.querySelector('.rt-name'), name);
+    setText(node.querySelector('.rt-n'), n ? (n > 99 ? '99+' : U.fmtNum(n)) : '');
+    // el lector de pantalla oye el estado si no es el normal, y cuántas novedades esperan
+    const extra = [st === 'live' ? '' : stateText, n ? t('tabs.unread', { n }) : ''].filter(Boolean).join(', ');
+    setText(node.querySelector('.rt-sr'), extra ? `, ${extra}` : '');
+    const close = node.querySelector('.rt-close');
+    const label = t('tabs.close', { repo: name });
+    if (close.getAttribute('aria-label') !== label) {
+      close.setAttribute('aria-label', label);
+      close.title = label;
+    }
   }
 
   function setUrlParam(key, value) {
@@ -273,7 +494,18 @@
       /* algunos visores no permiten cambiar la URL */
     }
   }
-  const setUrlRepo = (repo) => setUrlParam('repo', repo);
+
+  /** ?repo=a/b&repo=c/d: los repos seguidos, el de la vista primero. */
+  function setUrlRepos(list) {
+    try {
+      const url = new URL(location.href);
+      url.searchParams.delete('repo');
+      for (const r of list) url.searchParams.append('repo', r);
+      history.replaceState(null, '', url);
+    } catch {
+      /* algunos visores no permiten cambiar la URL */
+    }
+  }
 
   let lastRender = null;
 
@@ -287,11 +519,16 @@
     canPin: !data.repo.demo,
   });
 
-  function onUpdate({ activities, initial, calm }) {
-    const news = !initial && activities.length > 0;
-    // en modo TV lo que pasa ahora manda: el Replay de ambiente deja paso al presente
-    if (news && tv.attract && replay.active) replay.stop();
-    if (news) tv.lastNews = Date.now();
+  /** Lo que miran los logros: el estado del repo de ahora (`L`, su layout, si está a la vista). */
+  const gameCtx = (acts, data, L) => ({
+    openPrs: Math.max(data.totalPulls || 0, data.pulls.size),
+    // sin layout: las ramas que ya tienen su historia, que son las que se dibujarían
+    liveBranches: L ? L.heads.filter((h) => h.color !== 'ghost').length : [...data.branches.values()].filter((b) => data.commits.has(b.sha)).length,
+    recordDay: acts.some((a) => a.kind === 'push') && isRecordDay(data),
+  });
+
+  /** Calcula el layout del repo a la vista y dibuja el grafo (salvo durante el Replay). */
+  function drawGraph(initial, calm = false) {
     const data = source.view ? source.view() : source.data;
     const L = layout.compute(data);
     lastRender = { data, L };
@@ -301,24 +538,60 @@
       graph2d.update(L, gctx);
       graph3d?.update(L, gctx);
     }
+    return { data, L };
+  }
+
+  function renderSummary(data, L) {
+    renderRepo(data.repo);
+    renderStats(data, L);
+    if (!L.nodes.length) showOverlay('empty');
+    else hideOverlay();
+  }
+
+  /** Novedades de un repo seguido. Cada actividad lleva de qué repo es (el panel junta las de todos);
+      las del repo a la vista, además, se dibujan. */
+  function onUpdate(tab, { activities, initial, calm }) {
+    const name = nameOf(tab);
+    for (const a of activities) {
+      a.repo = tab.key;
+      a.repoName = name;
+    }
+    if (tab !== active) return onBackground(tab, activities, initial);
+    const news = !initial && activities.length > 0;
+    // en modo TV lo que pasa ahora manda: el Replay de ambiente deja paso al presente
+    if (news && tv.attract && replay.active) replay.stop();
+    if (news) tv.lastNews = Date.now();
+    const { data, L } = drawGraph(initial, calm);
     feed.setDefaultBranch(data.repo.defaultBranch);
     feed.add(activities, { live: !initial });
-    if (!initial && activities.length) {
-      game.observe(activities, {
-        openPrs: Math.max(data.totalPulls || 0, data.pulls.size),
-        liveBranches: L.heads.filter((h) => h.color !== 'ghost').length,
-        recordDay: activities.some((a) => a.kind === 'push') && isRecordDay(data),
-      });
-    }
+    if (news) game.observe(activities, gameCtx(activities, data, L));
     // cada tipo de evento con su efecto, en la vista que esté a la vista
     if (!initial && !replay.active) {
       graph3d?.celebrate(activities);
       graph2d.celebrate(activities);
     }
-    renderRepo(data.repo);
-    renderStats(data, L);
-    if (!L.nodes.length) showOverlay('empty');
-    else hideOverlay();
+    renderSummary(data, L);
+    renderTab(tab);
+  }
+
+  /* en modo TV la pantalla va adonde pasan las cosas: a otro repo seguido con novedades, si el de la
+     vista lleva este rato sin ellas (y sin cambiar de repo) */
+  const TV_FOLLOW = 45e3;
+
+  /** Novedades de un repo seguido que no está a la vista: al panel, a los avisos y a su pestaña. */
+  function onBackground(tab, activities, initial) {
+    feed.add(activities, { live: !initial });
+    if (initial || !activities.length) return renderTab(tab);
+    tab.unread += activities.length;
+    const data = tab.source.view ? tab.source.view() : tab.source.data;
+    tab.game.observe(activities, gameCtx(activities, data, null));
+    renderTab(tab);
+    const now = Date.now();
+    if (!tv.on || paused || now - tv.lastNews < TV_FOLLOW || now - tv.lastSwitch < TV_FOLLOW) return;
+    tv.lastNews = now;
+    showTab(tab);
+    graph3d?.celebrate(activities);
+    graph2d.celebrate(activities);
   }
 
   /* ---------- Replay: la historia como time-lapse ---------- */
@@ -343,7 +616,7 @@
       if (on) lowerThird(null); // el Replay trae sus propios rótulos
     },
     onEnd: () => {
-      if (!tv.attract) return game.replayDone();
+      if (!tv.attract) return game?.replayDone();
       // el Replay de ambiente (modo TV) se queda un momento en el final y vuelve al presente
       setTimeout(() => tv.attract && replay.active && !paused && replay.stop(), 6000);
     },
@@ -354,7 +627,7 @@
     if (!lastRender) return;
     graph2d.clear();
     graph3d?.clear();
-    if (!replay.start(lastRender.data, feed.items)) showLive();
+    if (!replay.start(lastRender.data, feed.itemsOf(active.key))) showLive();
   }
 
   /** Vuelve a dibujar el repo tal como está ahora (al salir del Replay). */
@@ -369,25 +642,30 @@
 
   /* ---------- capa de juego: logros del repo, nivel y misión del día (ver game.js) ---------- */
 
-  const game = new GB.Game({
-    onUnlock: (a) => celebrate(`${a.icon} ${t('ach.' + a.id)}`, i18n.msg(`ach.${a.id}.d`)),
-    onLevel: (n) => {
-      celebrate(i18n.msg('game.levelUp', { n }), i18n.msg('game.levelUpDetail'));
-      flashClass(el.gsLevel, 'up');
-    },
-    onMission: (m) => celebrate(i18n.msg('game.missionDone'), i18n.msg('mission.' + m.id, { n: m.n })),
-    onCombo: (n) => {
-      if (!game.enabled) return;
-      el.combo.textContent = t('game.combo', { n });
-      flashClass(el.combo, 'pop');
-    },
-    onChange: (v) => renderGame(v),
-  });
+  /** Cada repo seguido tiene su juego; solo el del repo a la vista festeja (los demás suman en silencio). */
+  function gameHooks(tab) {
+    const shown = () => tab === active;
+    return {
+      onUnlock: (a) => shown() && celebrate(`${a.icon} ${t('ach.' + a.id)}`, i18n.msg(`ach.${a.id}.d`)),
+      onLevel: (n) => {
+        if (!shown()) return;
+        celebrate(i18n.msg('game.levelUp', { n }), i18n.msg('game.levelUpDetail'));
+        flashClass(el.gsLevel, 'up');
+      },
+      onMission: (m) => shown() && celebrate(i18n.msg('game.missionDone'), i18n.msg('mission.' + m.id, { n: m.n })),
+      onCombo: (n) => {
+        if (!shown() || !game.enabled) return;
+        el.combo.textContent = t('game.combo', { n });
+        flashClass(el.combo, 'pop');
+      },
+      onChange: (v) => shown() && renderGame(v),
+    };
+  }
 
   /** Logro, nivel o misión: aviso dorado, fuegos artificiales y fanfarria (como mucho una fiesta cada 6 s). */
   let lastParty = 0;
   function celebrate(title, detail) {
-    if (!game.enabled || tv.on) return; // en modo TV, pantalla profesional: sin fiestas
+    if (!game?.enabled || tv.on) return; // en modo TV, pantalla profesional: sin fiestas
     feed.toast({ kind: 'achievement', title, detail, time: Date.now() });
     const now = Date.now();
     if (now - lastParty < 6000) return;
@@ -415,7 +693,7 @@
     return n >= 5 && n > Math.max(0, ...perDay.values());
   }
 
-  function renderGame(v = game.view()) {
+  function renderGame(v = game?.view()) {
     el.trophyCount.hidden = !v?.count;
     if (v) el.trophyCount.textContent = U.fmtNum(v.count);
     el.gameStrip.hidden = !v?.enabled;
@@ -436,7 +714,7 @@
     if (el.trophies.open) renderTrophies(v, { lv, xp, pct });
   }
 
-  function renderTrophies(v = game.view(), pre) {
+  function renderTrophies(v = game?.view(), pre) {
     if (!v) return;
     el.trLv.textContent = pre?.lv || t('game.level', { n: v.level });
     el.trXp.textContent = pre?.xp || t('game.xp', { xp: U.fmtNum(v.xp), next: U.fmtNum(v.next) });
@@ -473,7 +751,10 @@
 
   for (const b of [el.trophyBtn, el.gsLevel, el.gsMission]) b.addEventListener('click', openTrophies);
   $('#trophies-close').addEventListener('click', () => (typeof el.trophies.close === 'function' ? el.trophies.close() : el.trophies.removeAttribute('open')));
-  el.gameEnable.addEventListener('change', () => game.setEnabled(el.gameEnable.checked));
+  // la capa de juego se apaga o enciende para todos los repos
+  el.gameEnable.addEventListener('change', () => {
+    for (const x of tabs) x.game.setEnabled(el.gameEnable.checked);
+  });
 
   function prsByBranch(data) {
     const map = new Map();
@@ -550,7 +831,7 @@
   }
 
   function renderLast() {
-    const last = feed.lastTime();
+    const last = active ? feed.lastTime(active.key) : null;
     el.st.last.textContent = last ? U.timeAgo(last) : '–';
     el.st.lastSub.textContent = last ? U.fmtDateTime(last) : t('stats.noEvents');
   }
@@ -565,7 +846,11 @@
     error: 'status.error',
   };
 
-  function onStatus(s) {
+  function onStatus(tab, s) {
+    const changed = tab.status?.state !== s.state;
+    tab.status = s;
+    if (changed) renderTab(tab);
+    if (tab !== active) return;
     status = s;
     if (s.state === 'error' && !source.data.loaded) {
       const fatal = s.nextAt == null;
@@ -575,8 +860,8 @@
   }
 
   function renderStatus() {
-    if (!status) return;
-    const s = status;
+    // un repo que todavía no empezó a consultar (los que arrancan juntos esperan su turno)
+    const s = status || { state: 'loading', demo: !!active?.demo };
     el.status.dataset.state = s.state;
     const text = s.demo && s.state === 'live' ? t('status.demoLive') : STATE_TEXT[s.state] ? t(STATE_TEXT[s.state]) : s.state;
     // es región viva y esto corre cada segundo: reescribir el mismo texto podría volver a anunciarlo
@@ -592,6 +877,7 @@
       el.status.title = '';
     } else if (s.state === 'loading') {
       sub = '';
+      el.status.title = '';
     } else {
       const parts = [];
       if (s.lastOk) parts.push(t('status.updated', { ago: U.timeAgo(s.lastOk, now) }));
@@ -687,7 +973,7 @@
     setPressed(el.pauseBtn, v);
     setPressed(el.tvPause, v);
     renderPause();
-    source?.setPaused(v);
+    for (const x of tabs) x.source.setPaused(v);
     graph3d?.setHold(v);
     if (tv.attract && replay.active) {
       if (v) replay.pause();
@@ -814,7 +1100,7 @@
 
   const ATTRACT_IDLE = 3 * 60e3; // sin novedades durante este tiempo…
   const ATTRACT_EVERY = 10 * 60e3; // …se reproduce la historia, como mucho una vez cada tanto
-  const tv = { on: false, prevView: null, lock: null, locking: false, attract: false, lastNews: 0, lastAttract: 0, idleTimer: 0 };
+  const tv = { on: false, prevView: null, lock: null, locking: false, attract: false, lastNews: 0, lastAttract: 0, lastSwitch: 0, idleTimer: 0 };
 
   /** Entra o sale del modo TV. `user`: viene de un clic (solo así se puede pedir pantalla completa). */
   function setTV(on, user = false) {
@@ -1003,7 +1289,7 @@
     else U.store.set('token', settings.token || null);
     U.store.set('depth', settings.depth);
     closeSettings();
-    if (source && !source.data.repo.demo) connectRepo(`${source.owner}/${source.name}`);
+    if (realTabs().length) reconnectAll();
     else el.tokenBanner.hidden = true;
   });
 
@@ -1071,6 +1357,7 @@
     tvTick();
     renderGame();
     feed.relocalize();
+    renderTabs();
     if (!source) return;
     // la demo inventa mensajes, incidencias y comentarios en el idioma activo: se reinicia para no mezclarlos
     if (source.data.repo.demo) return startDemo();
@@ -1082,19 +1369,37 @@
 
   /* ---------- arranque ---------- */
 
-  let initialRepo = null;
+  let urlRepos = [];
   let initialTV = false;
   try {
     const q = new URLSearchParams(location.search);
-    initialRepo = q.get('repo');
+    // ?repo=a/b&repo=c/d (o separados por comas): los repos a seguir, el primero a la vista
+    urlRepos = q.getAll('repo').flatMap((r) => r.split(',')).map((r) => r.trim()).filter(Boolean);
     initialTV = q.has('tv') && !/^(0|false|no|off)$/i.test(q.get('tv'));
   } catch {
     /* sin query string */
   }
-  initialRepo ||= U.store.get('repo', null);
+
+  /** Sigue los repos guardados y los de la URL; muestra el de la URL, el último que se miraba o el primero. */
   function start() {
-    if (initialRepo && U.parseRepo(initialRepo)) connectRepo(initialRepo);
-    else startDemo();
+    const saved = U.store.get('repos', null);
+    const shown = U.store.get('repo', null);
+    const list = Array.isArray(saved) ? saved : typeof shown === 'string' ? [shown] : []; // antes se seguía uno solo
+    const parse = (input) => (typeof input === 'string' && U.parseRepo(input)) || null;
+    const repos = new Map(); // clave -> repo: los guardados y después los de la URL, sin repetir
+    for (const p of [...list, ...urlRepos].map(parse)) if (p && !repos.has(keyOf(p))) repos.set(keyOf(p), p);
+    // pasado el tope quedan fuera los guardados del final, no los que pide la URL
+    const asked = new Set(urlRepos.map(parse).filter(Boolean).map(keyOf));
+    for (const k of [...repos.keys()].reverse()) if (repos.size > MAX_REPOS && !asked.has(k)) repos.delete(k);
+    for (const p of [...repos.values()].slice(0, MAX_REPOS)) addTab(githubSource(p));
+    const want = parse(urlRepos[0]) || parse(shown);
+    const first = (want && tabs.find((x) => x.key === keyOf(want))) || tabs[0];
+    if (!first) startDemo();
+    else {
+      startTab(first);
+      tabs.filter((x) => x !== first).forEach((x, i) => startTab(x, (i + 1) * STAGGER));
+      showTab(first);
+    }
     if (initialTV) setTV(true); // ?tv=1: pensado para dejar la URL abierta en una pantalla
   }
   if (desktop) {

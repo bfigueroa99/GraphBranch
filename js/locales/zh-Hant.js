@@ -9,6 +9,11 @@ GB.i18n.define('zh-Hant', {
   'repo.demo': '示範',
   'repo.invalid': '請以 owner/name 的格式輸入儲存庫，或貼上其 GitHub 網址。',
   'repo.demoDesc': '虛構的資料，每隔幾秒會自動變動。在上方輸入 owner/repo 即可查看真實的儲存庫。',
+  'repo.connectTitle': '在此顯示；已關注的其他儲存庫會繼續更新',
+  'repo.limit': '關注的儲存庫已達上限。請先關閉一個，再新增其他的。',
+  'tabs.aria': '已關注的儲存庫',
+  'tabs.close': '取消關注 {repo}',
+  'tabs.unread': '{n} 則新動態',
   'badge.demo': '模擬',
   'badge.private': '私人',
 

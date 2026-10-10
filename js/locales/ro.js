@@ -9,6 +9,11 @@ GB.i18n.define('ro', {
   'repo.demo': 'Demo',
   'repo.invalid': 'Introduceți depozitul sub forma owner/name sau lipiți adresa lui URL de pe GitHub.',
   'repo.demoDesc': 'Date inventate care se schimbă singure la câteva secunde. Scrieți mai sus owner/repo pentru a vedea un depozit real.',
+  'repo.connectTitle': 'Îl afișează aici; celelalte depozite urmărite continuă să se actualizeze',
+  'repo.limit': 'Urmăriți deja numărul maxim de depozite. Închideți unul pentru a adăuga altul.',
+  'tabs.aria': 'Depozite urmărite',
+  'tabs.close': 'Nu mai urmăriți {repo}',
+  'tabs.unread': { one: '{n} actualizare nouă', few: '{n} actualizări noi', other: '{n} de actualizări noi' },
   'badge.demo': 'simulare',
   'badge.private': 'privat',
 

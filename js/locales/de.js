@@ -9,6 +9,11 @@ GB.i18n.define('de', {
   'repo.demo': 'Demo',
   'repo.invalid': 'Gib das Repository als owner/name ein oder füge seine GitHub-URL ein.',
   'repo.demoDesc': 'Erfundene Daten, die sich alle paar Sekunden von selbst ändern. Gib oben owner/repo ein, um ein echtes Repository zu sehen.',
+  'repo.connectTitle': 'Zeigt es hier an; die anderen Repositorys, denen du folgst, werden weiter aktualisiert',
+  'repo.limit': 'Du folgst bereits der maximalen Anzahl an Repositorys. Schließe eins, um ein weiteres hinzuzufügen.',
+  'tabs.aria': 'Gefolgte Repositorys',
+  'tabs.close': '{repo} nicht mehr folgen',
+  'tabs.unread': { one: '{n} neue Aktualisierung', other: '{n} neue Aktualisierungen' },
   'badge.demo': 'Simulation',
   'badge.private': 'privat',
 

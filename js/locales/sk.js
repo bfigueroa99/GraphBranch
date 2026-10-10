@@ -9,6 +9,11 @@ GB.i18n.define('sk', {
   'repo.demo': 'Demo',
   'repo.invalid': 'Zadajte repozitár v tvare owner/name alebo vložte jeho GitHub URL.',
   'repo.demoDesc': 'Vymyslené údaje, ktoré sa samy menia každých pár sekúnd. Ak chcete vidieť skutočný repozitár, zadajte vyššie owner/repo.',
+  'repo.connectTitle': 'Zobrazí ho tu; ostatné sledované repozitáre sa ďalej aktualizujú',
+  'repo.limit': 'Už sledujete maximálny počet repozitárov. Zatvorte jeden, aby ste mohli pridať ďalší.',
+  'tabs.aria': 'Sledované repozitáre',
+  'tabs.close': 'Prestať sledovať {repo}',
+  'tabs.unread': { one: '{n} nová aktualizácia', few: '{n} nové aktualizácie', many: '{n} novej aktualizácie', other: '{n} nových aktualizácií' },
   'badge.demo': 'simulácia',
   'badge.private': 'súkromný',
 

@@ -9,6 +9,11 @@ GB.i18n.define('th', {
   'repo.demo': 'Demo',
   'repo.invalid': 'ใส่ repository ในรูปแบบ owner/name หรือวาง GitHub URL ของ repository นั้น',
   'repo.demoDesc': 'ข้อมูลสมมติที่เปลี่ยนแปลงเองทุกไม่กี่วินาที พิมพ์ owner/repo ด้านบนเพื่อดูของจริง',
+  'repo.connectTitle': 'แสดงที่นี่ ส่วน repository อื่นที่ติดตามอยู่จะยังอัปเดตต่อไป',
+  'repo.limit': 'คุณติดตาม repository ครบจำนวนสูงสุดแล้ว ปิดสักรายการเพื่อเพิ่มรายการใหม่',
+  'tabs.aria': 'repository ที่ติดตาม',
+  'tabs.close': 'เลิกติดตาม {repo}',
+  'tabs.unread': 'อัปเดตใหม่ {n} รายการ',
   'badge.demo': 'การจำลอง',
   'badge.private': 'ส่วนตัว',
 

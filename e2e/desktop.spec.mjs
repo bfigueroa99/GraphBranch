@@ -68,6 +68,20 @@ test('sin red, un repositorio real avisa que no hay conexión', async ({}, testI
   await app.close();
 });
 
+test('--repo repetido sigue varios repos, cada uno en su pestaña, y se recuerdan al reabrir', async ({}, testInfo) => {
+  const repos = ['--repo=bfigueroa99/GraphBranch', '--repo=octo/otro'];
+  let { app, page, dir } = await launch(testInfo, { args: ['--lang=es', ...repos] });
+  const names = () => page.locator('#repo-tabs .rt-name').allTextContents();
+  await expect(page.locator('#repo-tabs')).toBeVisible({ timeout: 20_000 });
+  expect(await names()).toEqual(['bfigueroa99/GraphBranch', 'octo/otro']);
+  await expect(page.locator('#repo-link')).toHaveText('bfigueroa99/GraphBranch');
+  await app.close();
+  ({ app, page } = await launch(testInfo, { dir, args: ['--lang=es'] }));
+  await expect(page.locator('#repo-tabs')).toBeVisible({ timeout: 20_000 });
+  expect(await names()).toEqual(['bfigueroa99/GraphBranch', 'octo/otro']);
+  await app.close();
+});
+
 test('el token se guarda cifrado, fuera de localStorage, y vuelve al reabrir', async ({}, testInfo) => {
   const TOKEN = 'ghp_e2eFAKE0123456789';
   let { app, page, dir } = await launch(testInfo);

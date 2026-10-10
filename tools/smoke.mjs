@@ -18,6 +18,7 @@ import { readFile } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { dirname, extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -349,6 +350,307 @@ console.log('Escritorio (1280×800)');
   await page.context().close();
 }
 
+/** Textos visibles con poco contraste contra su fondo efectivo: 4,5:1, o 3:1 si es grande (los grafos y
+    lo escondido quedan fuera: sus colores son los de cada rama, sobre un lienzo). */
+const lowContrast = (page) =>
+  page.evaluate(() => {
+    const parse = (c) => {
+      const m = c.match(/rgba?\(([^)]+)\)/);
+      if (!m) return null;
+      const [r, g, b, a = 1] = m[1].split(/[ ,/]+/).filter(Boolean).map(Number);
+      return { r, g, b, a };
+    };
+    const lin = (v) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+    const lum = ({ r, g, b }) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+    const over = (fg, bg) => ({ r: fg.r * fg.a + bg.r * (1 - fg.a), g: fg.g * fg.a + bg.g * (1 - fg.a), b: fg.b * fg.a + bg.b * (1 - fg.a), a: 1 });
+    const backdrop = (el) => {
+      const layers = [];
+      for (let n = el; n; n = n.parentElement) {
+        const cs = getComputedStyle(n);
+        if (cs.backgroundImage !== 'none') return null; // degradados o imágenes: no se puede calcular
+        const c = parse(cs.backgroundColor);
+        if (c && c.a > 0) {
+          layers.push(c);
+          if (c.a >= 1) break;
+        }
+      }
+      return layers.reverse().reduce((bg, c) => over(c, bg), { r: 255, g: 255, b: 255, a: 1 });
+    };
+    const out = [];
+    const seen = new Set();
+    const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    while (walk.nextNode()) {
+      const el = walk.currentNode.parentElement;
+      if (!el || seen.has(el) || !walk.currentNode.textContent.trim()) continue;
+      seen.add(el);
+      const cs = getComputedStyle(el);
+      const box = el.getBoundingClientRect();
+      if (!box.width || !box.height || cs.visibility === 'hidden' || +cs.opacity === 0) continue;
+      if (el.closest('[hidden], .sr-only, [aria-hidden=true], #graph3d, #graph')) continue;
+      const fg = parse(cs.color);
+      const bg = backdrop(el);
+      if (!fg || !bg) continue;
+      const [hi, lo] = [lum(over(fg, bg)), lum(bg)].sort((x, y) => y - x);
+      const ratio = (hi + 0.05) / (lo + 0.05);
+      const size = parseFloat(cs.fontSize);
+      const large = size >= 24 || (+cs.fontWeight >= 700 && size >= 18.66);
+      if (ratio < (large ? 3 : 4.5)) out.push(`${ratio.toFixed(2)}:1 «${walk.currentNode.textContent.trim().slice(0, 24)}» (${el.className || el.tagName.toLowerCase()})`);
+    }
+    return out;
+  });
+
+/* ---------- varios repos a la vez ---------- */
+
+/**
+ * GitHub simulado para la web: los repos que se le pidan, cada uno con su rama main, sin token
+ * (modo lista). `push` suma un commit a una rama, como si alguien lo subiera ahora.
+ */
+function fakeGitHub() {
+  const repos = new Map();
+  const calls = [];
+  let n = 0;
+  const sha = (s) => createHash('sha1').update(s).digest('hex');
+  const commit = (r, branch, message) => {
+    const parent = r.branches.get(branch) || null;
+    const id = sha(`${r.full}:${++n}`);
+    const date = new Date(Date.now() - (parent ? 0 : 3600e3) + n).toISOString();
+    r.commits.set(id, {
+      sha: id,
+      parents: parent ? [{ sha: parent }] : [],
+      commit: { message, author: { name: 'Ana', date }, committer: { date } },
+      html_url: `https://github.com/${r.full}/commit/${id}`,
+      author: null,
+    });
+    r.branches.set(branch, id);
+  };
+  const repo = (full) => {
+    if (!repos.has(full)) {
+      const r = { full, branches: new Map(), commits: new Map() };
+      for (let i = 0; i < 4; i++) commit(r, 'main', `inicio ${i} de ${full}`);
+      repos.set(full, r);
+    }
+    return repos.get(full);
+  };
+  const route = (path, q) => {
+    const m = path.match(/^\/repos\/([^/]+\/[^/]+)(\/.*)?$/);
+    if (!m || !repos.has(m[1])) return { status: 404, body: { message: 'Not Found' } };
+    const r = repos.get(m[1]);
+    const [owner, name] = m[1].split('/');
+    const rest = m[2] || '';
+    if (!rest) return { body: { name, owner: { login: owner }, default_branch: 'main', html_url: `https://github.com/${m[1]}`, private: false, description: '' } };
+    if (rest === '/branches') return { body: [...r.branches].map(([b, s]) => ({ name: b, commit: { sha: s }, protected: false })) };
+    if (rest === '/events' || rest === '/pulls') return { body: [] };
+    if (rest === '/commits') {
+      let s = r.branches.get(q.get('sha')) || q.get('sha');
+      const out = [];
+      while (s && r.commits.has(s) && out.length < Number(q.get('per_page') || 30)) {
+        out.push(r.commits.get(s));
+        s = r.commits.get(s).parents[0]?.sha;
+      }
+      return out.length ? { body: out } : { status: 404, body: { message: 'No commit found' } };
+    }
+    return { status: 404, body: { message: 'Not Found' } };
+  };
+  return {
+    calls,
+    repo,
+    push: (full, branch, message) => commit(repo(full), branch, message),
+    handle: (r) => {
+      const u = new URL(r.request().url());
+      calls.push(u.pathname);
+      const { status = 200, body } = route(u.pathname, u.searchParams);
+      return r.fulfill({
+        status,
+        contentType: 'application/json',
+        headers: {
+          'access-control-allow-origin': '*',
+          'access-control-expose-headers': 'ETag, Link, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-RateLimit-Resource',
+          'x-ratelimit-limit': '5000',
+          'x-ratelimit-remaining': '4900',
+          'x-ratelimit-reset': String(Math.floor(Date.now() / 1000) + 3600),
+          'x-ratelimit-resource': 'core',
+        },
+        body: JSON.stringify(body),
+      });
+    },
+  };
+}
+
+/** Con la API simulada no hace falta esperar el minuto entre ciclos de un repo sin token. */
+const quickCycles = () => {
+  const hook = () => {
+    const P = window.GB?.GitHubSource?.prototype;
+    if (!P) return setTimeout(hook, 5);
+    const next = P.nextDelay;
+    P.nextDelay = function (...args) {
+      return Math.min(1200, next.apply(this, args));
+    };
+  };
+  hook();
+};
+
+/** Las pestañas: nombre, si es la que está a la vista, su estado y sus novedades sin ver. */
+const repoTabs = (page) =>
+  page.$$eval('#repo-tabs .rt', (els) =>
+    els.map((e) => ({
+      name: e.querySelector('.rt-name').textContent,
+      on: e.querySelector('.rt-main').getAttribute('aria-current') === 'true',
+      state: e.dataset.state,
+      unread: e.querySelector('.rt-n').textContent,
+    })),
+  );
+
+console.log('Varios repos a la vez');
+{
+  const gh = fakeGitHub();
+  for (const r of ['o/a', 'o/b', 'o/c']) gh.repo(r);
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', gh.handle);
+  await page.addInitScript(quickCycles);
+  const shown = () => page.textContent('#repo-link');
+
+  await step(page, 'sigue los repos de la URL, cada uno en su pestaña', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=o/a&repo=o/b`);
+    await loaded(page);
+    await page.waitForFunction(() => [...document.querySelectorAll('#repo-tabs .rt')].filter((t) => t.dataset.state === 'live').length === 2, null, { timeout: 15000 });
+    const tabs = await repoTabs(page);
+    const names = tabs.map((t) => `${t.name}${t.on ? '*' : ''}`).join(' ');
+    if (names !== 'o/a* o/b') throw new Error(`pestañas: ${names}`);
+    if ((await shown()) !== 'o/a') throw new Error(`el grafo muestra ${await shown()}`);
+    const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
+    if (saved !== '["o/a","o/b"]') throw new Error(`se guardó ${saved}`);
+  });
+
+  await step(page, 'lo nuevo del repo que no se ve llega con su nombre y a su pestaña', async () => {
+    gh.push('o/b', 'main', 'arreglo que llega por detrás');
+    const toast = await page.waitForSelector('#toasts .toast .toast-repo', { timeout: 15000 });
+    const from = await toast.textContent();
+    await page.waitForFunction(() => document.querySelector('#repo-tabs .rt:nth-child(2) .rt-n')?.textContent === '1', null, { timeout: 5000 });
+    const label = await page.textContent('#feed .act-repo');
+    if (from !== 'o/b') throw new Error(`el aviso dice ${from}`);
+    if (label !== 'o/b') throw new Error(`el panel dice ${label}`);
+    if ((await shown()) !== 'o/a') throw new Error('el grafo cambió de repo solo');
+  });
+
+  await step(page, 'las pestañas y el repo de cada aviso se leen (contraste, tema claro y oscuro)', async () => {
+    for (const colorScheme of ['light', 'dark']) {
+      await page.emulateMedia({ colorScheme });
+      await page.waitForTimeout(500); // los colores cambian con transición: se mide cuando terminan
+      const bad = await lowContrast(page);
+      if (bad.length) throw new Error(`${colorScheme}: ${bad.length} textos con poco contraste, como ${bad.slice(0, 3).join(', ')}`);
+    }
+    await page.emulateMedia({ colorScheme: 'light' });
+  });
+
+  await step(page, 'cambiar de pestaña muestra el otro repo sin volver a cargarlo', async () => {
+    const loads = () => gh.calls.filter((c) => c === '/repos/o/b').length;
+    const before = loads();
+    await page.click('#repo-tabs .rt:nth-child(2) .rt-main');
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: 5000 });
+    await loaded(page);
+    const tabs = await repoTabs(page);
+    const commits = await page.textContent('#st-commits');
+    const url = await page.evaluate(() => new URL(location.href).searchParams.getAll('repo').join(' '));
+    if (!tabs[1].on || tabs[1].unread) throw new Error(`la pestaña de o/b: ${JSON.stringify(tabs[1])}`);
+    if (commits !== '5') throw new Error(`el resumen dice ${commits} commits (o/b tiene 5)`);
+    if (loads() !== before) throw new Error('volvió a pedir el repo a GitHub');
+    if (url !== 'o/b o/a') throw new Error(`la URL lleva ${url}`);
+  });
+
+  await step(page, 'clic en una actividad de otro repo lleva a su pestaña', async () => {
+    gh.push('o/a', 'main', 'cambio en a');
+    const item = page.locator('#feed .act', { has: page.locator('.act-repo', { hasText: 'o/a' }) }).first();
+    await item.waitFor({ timeout: 15000 });
+    await item.locator('.act-main').click();
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: 5000 });
+  });
+
+  await step(page, 'Conectar un repo que ya se sigue no lo repite', async () => {
+    await page.fill('#repo-input', 'https://github.com/o/b');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: 5000 });
+    const n = (await repoTabs(page)).length;
+    if (n !== 2) throw new Error(`hay ${n} pestañas`);
+  });
+
+  await step(page, 'cerrar la pestaña deja de seguir el repo', async () => {
+    await page.focus('#repo-tabs .rt:nth-child(1) .rt-close'); // o/a, con el teclado
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#repo-tabs', { state: 'hidden', timeout: 5000 });
+    // sin pestañas a la vista, el foco pasa al campo del repositorio en vez de perderse
+    const focused = await page.evaluate(() => document.activeElement?.id);
+    if (focused !== 'repo-input') throw new Error(`el foco quedó en ${focused || 'el documento'}`);
+    const before = gh.calls.filter((c) => c.startsWith('/repos/o/a')).length;
+    await page.waitForTimeout(3000); // un par de ciclos
+    const after = gh.calls.filter((c) => c.startsWith('/repos/o/a')).length;
+    const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
+    const feed = await page.textContent('#feed');
+    if ((await shown()) !== 'o/b') throw new Error(`quedó a la vista ${await shown()}`);
+    if (saved !== '["o/b"]') throw new Error(`se guardó ${saved}`);
+    if (after !== before) throw new Error(`siguió consultando o/a (${after - before} consultas)`);
+    if (feed.includes('cambio en a')) throw new Error('el panel conserva la actividad de o/a');
+    if (await page.locator('#feed .act-repo').count()) throw new Error('con un solo repo, el panel sigue diciendo de cuál es cada cosa');
+  });
+
+  await step(page, 'al volver a abrir la página sigue los mismos repos', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    if ((await shown()) !== 'o/b') throw new Error(`abrió ${await shown()}`);
+    if (await page.locator('#repo-tabs').isVisible()) throw new Error('con un solo repo se ven las pestañas');
+  });
+
+  await step(page, 'la demo se mira sin dejar de seguir los repos', async () => {
+    await page.click('#demo-btn');
+    await page.waitForFunction(() => document.querySelector('#status')?.dataset.state === 'live' && document.querySelector('#repo-link')?.textContent === 'acme/orbita', null, { timeout: 15000 });
+    const names = (await repoTabs(page)).map((t) => t.name).join(' ');
+    await page.click('#repo-tabs .rt:nth-child(1) .rt-main'); // o/b: la demo se cierra
+    await page.waitForSelector('#repo-tabs', { state: 'hidden', timeout: 5000 });
+    const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
+    if (names !== 'o/b acme/orbita') throw new Error(`pestañas con la demo: ${names}`);
+    if (saved !== '["o/b"]') throw new Error(`se guardó ${saved}`);
+  });
+  await page.context().close();
+
+  const full = await openPage({ viewport: { width: 1280, height: 800 } });
+  await full.unroute('https://api.github.com/**');
+  await full.route('https://api.github.com/**', gh.handle);
+  await step(
+    full,
+    'se siguen hasta 10 repos a la vez',
+    async () => {
+      const ten = Array.from({ length: 10 }, (_, i) => `repo=o/r${i}`).join('&'); // no existen: dan 404, da igual
+      await full.goto(`${base}/index.html?lang=es&${ten}`);
+      await full.waitForSelector('#repo-tabs:not([hidden])', { timeout: 10000 });
+      await full.fill('#repo-input', 'o/a');
+      await full.press('#repo-input', 'Enter');
+      const why = await full.$eval('#repo-input', (i) => i.validationMessage);
+      const n = await full.locator('#repo-tabs .rt').count();
+      if (n !== 10) throw new Error(`hay ${n} pestañas`);
+      if (!why) throw new Error('no dice por qué no se suma el repo 11');
+      // un enlace a otro repo, con los 10 ya seguidos: entra el del enlace y sale el último guardado
+      await full.goto(`${base}/index.html?lang=es&repo=o/a`);
+      await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: 10000 });
+      const names = await full.locator('#repo-tabs .rt-name').allTextContents();
+      if (names.length !== 10 || names.at(-1) !== 'o/a' || names.includes('o/r9')) throw new Error(`pestañas tras el enlace: ${names.join(' ')}`);
+    },
+    { allow: /status of 404/ },
+  );
+  await full.context().close();
+
+  const phonePage = await openPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+  await phonePage.unroute('https://api.github.com/**');
+  await phonePage.route('https://api.github.com/**', gh.handle);
+  await step(phonePage, 'en el celular, tres pestañas no desbordan la página', async () => {
+    await phonePage.goto(`${base}/index.html?lang=de&repo=o/a&repo=o/b&repo=o/c`);
+    await loaded(phonePage);
+    await phonePage.waitForSelector('#repo-tabs:not([hidden])', { timeout: 5000 });
+    const over = await noOverflow(phonePage);
+    if (over > 1) throw new Error(`la página es ${over}px más ancha que la pantalla`);
+  });
+  await phonePage.context().close();
+}
+
 /* ---------- celular ---------- */
 
 const phone = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 };
@@ -592,53 +894,7 @@ for (const colorScheme of ['light', 'dark']) {
     await page.goto(`${base}/index.html?lang=es`);
     await loaded(page);
     await page.waitForSelector('#feed > li', { timeout: 30000 });
-    // contraste de cada texto visible contra su fondo efectivo: 4,5:1, o 3:1 si es grande (los grafos y
-    // lo escondido quedan fuera: sus colores son los de cada rama, sobre un lienzo)
-    const bad = await page.evaluate(() => {
-      const parse = (c) => {
-        const m = c.match(/rgba?\(([^)]+)\)/);
-        if (!m) return null;
-        const [r, g, b, a = 1] = m[1].split(/[ ,/]+/).filter(Boolean).map(Number);
-        return { r, g, b, a };
-      };
-      const lin = (v) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
-      const lum = ({ r, g, b }) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
-      const over = (fg, bg) => ({ r: fg.r * fg.a + bg.r * (1 - fg.a), g: fg.g * fg.a + bg.g * (1 - fg.a), b: fg.b * fg.a + bg.b * (1 - fg.a), a: 1 });
-      const backdrop = (el) => {
-        const layers = [];
-        for (let n = el; n; n = n.parentElement) {
-          const cs = getComputedStyle(n);
-          if (cs.backgroundImage !== 'none') return null; // degradados o imágenes: no se puede calcular
-          const c = parse(cs.backgroundColor);
-          if (c && c.a > 0) {
-            layers.push(c);
-            if (c.a >= 1) break;
-          }
-        }
-        return layers.reverse().reduce((bg, c) => over(c, bg), { r: 255, g: 255, b: 255, a: 1 });
-      };
-      const out = [];
-      const seen = new Set();
-      const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-      while (walk.nextNode()) {
-        const el = walk.currentNode.parentElement;
-        if (!el || seen.has(el) || !walk.currentNode.textContent.trim()) continue;
-        seen.add(el);
-        const cs = getComputedStyle(el);
-        const box = el.getBoundingClientRect();
-        if (!box.width || !box.height || cs.visibility === 'hidden' || +cs.opacity === 0) continue;
-        if (el.closest('[hidden], .sr-only, [aria-hidden=true], #graph3d, #graph')) continue;
-        const fg = parse(cs.color);
-        const bg = backdrop(el);
-        if (!fg || !bg) continue;
-        const [hi, lo] = [lum(over(fg, bg)), lum(bg)].sort((x, y) => y - x);
-        const ratio = (hi + 0.05) / (lo + 0.05);
-        const size = parseFloat(cs.fontSize);
-        const large = size >= 24 || (+cs.fontWeight >= 700 && size >= 18.66);
-        if (ratio < (large ? 3 : 4.5)) out.push(`${ratio.toFixed(2)}:1 «${walk.currentNode.textContent.trim().slice(0, 24)}» (${el.className || el.tagName.toLowerCase()})`);
-      }
-      return out;
-    });
+    const bad = await lowContrast(page);
     if (bad.length) throw new Error(`${bad.length} textos con poco contraste, como ${bad.slice(0, 3).join(', ')}`);
   });
   await page.context().close();

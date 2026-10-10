@@ -9,6 +9,11 @@ GB.i18n.define('hr', {
   'repo.demo': 'Demo',
   'repo.invalid': 'Unesite repozitorij kao owner/name ili zalijepite njegov GitHub URL.',
   'repo.demoDesc': 'Izmišljeni podaci koji se sami mijenjaju svakih nekoliko sekundi. Upišite gore owner/repo da biste vidjeli stvarni repozitorij.',
+  'repo.connectTitle': 'Prikazuje ga ovdje; ostali repozitoriji koje pratite i dalje se ažuriraju',
+  'repo.limit': 'Već pratite najveći mogući broj repozitorija. Zatvorite jedan da biste dodali drugi.',
+  'tabs.aria': 'Praćeni repozitoriji',
+  'tabs.close': 'Prestani pratiti {repo}',
+  'tabs.unread': { one: '{n} novo ažuriranje', few: '{n} nova ažuriranja', other: '{n} novih ažuriranja' },
   'badge.demo': 'simulacija',
   'badge.private': 'privatno',
 

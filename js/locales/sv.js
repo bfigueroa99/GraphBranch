@@ -9,6 +9,11 @@ GB.i18n.define('sv', {
   'repo.demo': 'Demo',
   'repo.invalid': 'Ange repot som owner/name eller klistra in dess GitHub-URL.',
   'repo.demoDesc': 'Påhittad data som ändras av sig själv med några sekunders mellanrum. Skriv owner/repo ovan för att se ett riktigt.',
+  'repo.connectTitle': 'Visar det här; de andra repona du följer fortsätter att uppdateras',
+  'repo.limit': 'Du följer redan så många repon som möjligt. Stäng ett för att lägga till ett annat.',
+  'tabs.aria': 'Repon du följer',
+  'tabs.close': 'Sluta följa {repo}',
+  'tabs.unread': { one: '{n} ny uppdatering', other: '{n} nya uppdateringar' },
   'badge.demo': 'simulering',
   'badge.private': 'privat',
 

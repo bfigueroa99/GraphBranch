@@ -14,6 +14,11 @@ GB.i18n.define('en', {
   'repo.demo': 'Demo',
   'repo.invalid': 'Enter the repository as owner/name or paste its GitHub URL.',
   'repo.demoDesc': 'Made-up data that changes on its own every few seconds. Type owner/repo above to see a real one.',
+  'repo.connectTitle': 'Show it here; the repositories you already follow keep updating',
+  'repo.limit': "You're already following as many repositories as possible. Close one to add another.",
+  'tabs.aria': 'Followed repositories',
+  'tabs.close': 'Stop following {repo}',
+  'tabs.unread': { one: '{n} new update', other: '{n} new updates' },
   'badge.demo': 'simulation',
   'badge.private': 'private',
 

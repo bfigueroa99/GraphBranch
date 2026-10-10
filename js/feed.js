@@ -1,5 +1,6 @@
 /* GraphBranch — feed de actividad y alertas: lista filtrable, avisos emergentes,
-   sonido opcional, notificaciones del sistema y contador en la pestaña. */
+   sonido opcional, notificaciones del sistema y contador en la pestaña. Con varios repos
+   seguidos, junta la actividad de todos y cada elemento dice de qué repo es. */
 (function (GB) {
   'use strict';
   const { U, i18n } = GB;
@@ -53,6 +54,8 @@
   };
   const CATS = ['commits', 'branches', 'prs', 'issues', 'other'];
   const SEV_RANK = { bad: 3, warn: 2, good: 1, info: 0 };
+  const PER_REPO = 300; // elementos que se guardan de cada repo…
+  const MAX_ITEMS = 1000; // …y en total, sumando todos los que se siguen
   const meta = (a) => KINDS[a.kind] || KINDS.other;
   const kindLabel = (a) => t('kind.' + (KINDS[a.kind] ? a.kind : 'other'));
   /* titulo y detalle pueden ser texto de GitHub o mensajes diferidos (i18n.msg): se traducen al mostrar */
@@ -69,6 +72,7 @@
       this.onSelect = onSelect;
       this.items = [];
       this.els = new Map();
+      this.multi = false; // se siguen varios repos: cada elemento lleva el nombre del suyo
       this.filters = new Set(U.store.get('filters', CATS));
       this.sound = !!U.store.get('sound', false);
       this.notifySupported = typeof window.Notification === 'function';
@@ -108,15 +112,54 @@
         a.live = live;
         a.addedAt = now;
       }
-      this.items = [...fresh, ...this.items].sort((a, b) => b.time - a.time).slice(0, 300);
-      const keep = new Set(this.items.map((a) => a.id));
-      for (const id of [...this.els.keys()]) if (!keep.has(id)) (this.els.get(id).remove(), this.els.delete(id));
+      const per = new Map();
+      this.items = [...fresh, ...this.items]
+        .sort((a, b) => b.time - a.time)
+        .filter((a) => {
+          const n = (per.get(a.repo) || 0) + 1;
+          per.set(a.repo, n);
+          return n <= PER_REPO;
+        })
+        .slice(0, MAX_ITEMS);
+      this.forget();
       this.render();
       if (live) this.alert(fresh);
     }
 
-    lastTime() {
-      return this.items[0]?.time || null;
+    /** Se dejó de seguir un repo: fuera su actividad. */
+    drop(repo) {
+      const before = this.items.length;
+      this.items = this.items.filter((a) => a.repo !== repo);
+      if (this.items.length === before) return;
+      this.forget();
+      this.render();
+    }
+
+    /** Quita de la lista los elementos que ya no están entre los guardados. */
+    forget() {
+      const keep = new Set(this.items.map((a) => a.id));
+      for (const id of [...this.els.keys()]) if (!keep.has(id)) (this.els.get(id).remove(), this.els.delete(id));
+    }
+
+    /** Actividad de un repo (`repo`: su clave); sin clave, la de todos. */
+    itemsOf(repo) {
+      return repo == null ? this.items : this.items.filter((a) => a.repo === repo);
+    }
+
+    lastTime(repo) {
+      return this.itemsOf(repo)[0]?.time || null;
+    }
+
+    /** Con más de un repo a la vista, cada elemento y cada aviso dicen de cuál es. */
+    setMulti(on) {
+      if (this.multi === on) return;
+      this.multi = on;
+      this.relocalize();
+    }
+
+    /** Nombre del repo de una actividad, si hace falta mostrarlo. */
+    repoOf(a) {
+      return this.multi && a.repoName ? a.repoName : '';
     }
 
     /* ---------- lista ---------- */
@@ -186,10 +229,11 @@
       if (a.actor) metaParts.push(`${U.avatarHTML(a.actor, 16)}<span>${U.esc(a.actor.login || a.actor.name || t('author.unknown'))}</span>`);
       if (a.ref || a.branch) metaParts.push(`<code>${U.esc(a.ref || a.branch)}</code>`);
       metaParts.push(`<time datetime="${new Date(a.time).toISOString()}" title="${U.esc(U.fmtDateTime(a.time))}" data-t="${a.time}">${U.timeAgo(a.time)}</time>`);
+      const repo = this.repoOf(a);
       const inner = `
         <span class="act-icon">${icon(m.icon)}</span>
         <span class="act-body">
-          <span class="act-kind">${U.esc(kindLabel(a))}</span>
+          <span class="act-kind">${U.esc(kindLabel(a))}${repo ? `<span class="act-repo"><bdi>${U.esc(repo)}</bdi></span>` : ''}</span>
           <span class="act-title">${U.esc(titleOf(a))}</span>
           ${detailOf(a) ? `<span class="act-detail">${U.esc(detailOf(a))}</span>` : ''}
           <span class="act-meta">${metaParts.join('<span class="sep" aria-hidden="true">·</span>')}</span>
@@ -234,6 +278,7 @@
         <button type="button" class="toast-main">
           <span class="act-icon">${icon(m.icon)}</span>
           <span class="toast-body">
+            ${this.repoOf(a) ? `<span class="toast-repo"><bdi>${U.esc(this.repoOf(a))}</bdi></span>` : ''}
             <span class="act-kind">${U.esc(kindLabel(a))}</span>
             <span class="toast-title">${U.esc(titleOf(a))}</span>
             ${detailOf(a) ? `<span class="toast-detail">${U.esc(U.truncate(detailOf(a), 120))}</span>` : ''}
@@ -338,7 +383,8 @@
       try {
         const top = ranked[0];
         const body = ranked.length > 1 ? `${detailOf(top)}\n${t('notify.more', { n: ranked.length - 1 })}` : detailOf(top);
-        const n = new Notification(titleOf(top), { body, tag: 'graphbranch', renotify: true, silent: !this.sound });
+        const repo = this.repoOf(top);
+        const n = new Notification(repo ? `${repo} · ${titleOf(top)}` : titleOf(top), { body, tag: 'graphbranch', renotify: true, silent: !this.sound });
         n.onclick = () => {
           // en la app de escritorio la ventana puede estar escondida en la bandeja, y window.focus() no la muestra
           if (window.GBDesktop) window.GBDesktop.show();

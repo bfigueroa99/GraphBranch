@@ -120,6 +120,7 @@
       this.limitedUntil = 0; // cuota agotada hasta entonces: no vale la pena insistir antes
       this.offline = false;
       this.avgRest = 1; // gasto REST por ciclo en modo GraphQL (actividad, eventos, comparaciones)
+      this.share = 1; // fuentes que consultan a la vez con la misma cuota (varios repos seguidos): cada una cuida su parte
       this.halt = null; // AbortController de esta conexión: stop() corta las consultas en curso
       this.watching = false;
       this.onWake = (ev) => {
@@ -286,10 +287,13 @@
     /**
      * Espacia los ciclos para que la cuota alcance hasta su próximo reinicio: la de GraphQL y la
      * de REST, cada una con lo que gasta un ciclo normal (sin lo de cargar ramas que esperaban).
+     * La cuota es de la cuenta (o de la IP sin token): si se siguen varios repos, cada fuente
+     * cuenta como si las demás gastaran lo mismo que ella.
      */
     nextDelay() {
       const base = this.token ? 10000 : 60000;
       const gql = this.mode === 'graphql';
+      const share = Math.max(1, this.share || 1);
       this.avgCost = this.avgCost * 0.6 + Math.max(1, (gql ? this.gqlCost : this.cost) - this.bulkCost) * 0.4;
       if (gql) this.avgRest = this.avgRest * 0.6 + this.cost * 0.4;
       this.exhausted = false;
@@ -304,8 +308,8 @@
           delay = Math.max(delay, secsLeft * 1000 + 2000);
         } else delay = Math.max(delay, Math.min((secsLeft / (usable / avg)) * 1000, secsLeft * 1000 + 2000));
       };
-      fit(gql ? this.gqlRate : this.rate, this.avgCost, this.token ? 50 : 2);
-      if (gql) fit(this.rate, this.avgRest, 50);
+      fit(gql ? this.gqlRate : this.rate, this.avgCost * share, this.token ? 50 : 2);
+      if (gql) fit(this.rate, this.avgRest * share, 50);
       this.throttled = delay > base * 1.5;
       return delay;
     }
@@ -599,10 +603,11 @@
       return Math.max(this.pushedAt.get(name)?.time || 0, e.date || 0) + (this.prHeads.has(name) ? 1 : 0);
     }
 
-    /** Consultas REST que se pueden gastar en historia en este ciclo (sin token la cuota es de 60 por hora). */
+    /** Consultas REST que se pueden gastar en historia en este ciclo (sin token la cuota es de 60 por
+        hora), repartidas entre los repos que se siguen a la vez. */
     restBudget() {
       const left = (this.rate?.remaining ?? 60) - (this.token ? 100 : 12);
-      return Math.max(0, Math.min(this.token ? 60 : 12, left));
+      return Math.max(0, Math.floor(Math.min(this.token ? 60 : 12, left) / Math.max(1, this.share || 1)));
     }
 
     canLoad() {

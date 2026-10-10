@@ -330,3 +330,32 @@ test('un 5xx de GraphQL en la carga inicial no pasa a REST para siempre', async 
   await src.cycle();
   assert.notEqual(src.mode, 'graphql');
 });
+
+/* Varios repos seguidos a la vez gastan la misma cuota (la de la cuenta, o la de la IP sin token):
+   cada fuente se espacia como si las demás gastaran lo mismo que ella. */
+
+test('con varios repos seguidos, cada fuente se queda con su parte de la cuota', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const { src } = connect(gh);
+  const hour = Date.now() / 1000 + 3600;
+  const delayWith = (share) => {
+    src.share = share;
+    src.mode = 'list';
+    src.cost = 1;
+    src.avgCost = 1;
+    src.rate = { limit: 60, remaining: 50, reset: hour };
+    return src.nextDelay();
+  };
+  const alone = delayWith(1);
+  const four = delayWith(4);
+  assert.ok(four > alone * 3.5, `con cuatro repos espera ${Math.round(four / 1000)} s, solo ${Math.round(alone / 1000)} s`);
+  assert.equal(src.throttled, true);
+
+  // la historia de las ramas que esperan también se reparte (sin token: 12 consultas por ciclo)
+  src.rate = { limit: 60, remaining: 60, reset: hour };
+  src.share = 1;
+  assert.equal(src.restBudget(), 12);
+  src.share = 4;
+  assert.equal(src.restBudget(), 3);
+});

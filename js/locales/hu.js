@@ -9,6 +9,11 @@ GB.i18n.define('hu', {
   'repo.demo': 'Demó',
   'repo.invalid': 'Add meg a repozitóriumot owner/name formában, vagy illeszd be a GitHub-URL-jét.',
   'repo.demoDesc': 'Kitalált adatok, amelyek néhány másodpercenként maguktól változnak. Egy valódi repozitórium megtekintéséhez írd be fent: owner/repo.',
+  'repo.connectTitle': 'Itt jeleníti meg; a többi követett repozitórium továbbra is frissül',
+  'repo.limit': 'Már a lehető legtöbb repozitóriumot követed. Zárj be egyet, hogy újat adhass hozzá.',
+  'tabs.aria': 'Követett repozitóriumok',
+  'tabs.close': '{repo} követésének leállítása',
+  'tabs.unread': { one: '{n} új frissítés', other: '{n} új frissítés' },
   'badge.demo': 'szimuláció',
   'badge.private': 'privát',
 

@@ -9,6 +9,11 @@ GB.i18n.define('fil', {
   'repo.demo': 'Demo',
   'repo.invalid': 'Ilagay ang repository bilang owner/name o i-paste ang GitHub URL nito.',
   'repo.demoDesc': 'Gawa-gawang data na kusang nagbabago kada ilang segundo. I-type ang owner/repo sa itaas para makakita ng totoo.',
+  'repo.connectTitle': 'Ipinapakita ito rito; patuloy na nag-a-update ang iba pang repository na sinusundan mo',
+  'repo.limit': 'Naabot mo na ang pinakamaraming repository na puwedeng sundan. Magsara ng isa para makapagdagdag ng iba.',
+  'tabs.aria': 'Mga sinusundang repository',
+  'tabs.close': 'Huwag nang sundan ang {repo}',
+  'tabs.unread': { one: '{n} bagong update', other: '{n} bagong update' },
   'badge.demo': 'simulation',
   'badge.private': 'pribado',
 

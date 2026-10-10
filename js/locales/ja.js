@@ -9,6 +9,11 @@ GB.i18n.define('ja', {
   'repo.demo': 'デモ',
   'repo.invalid': 'リポジトリを owner/name の形式で入力するか、GitHub の URL を貼り付けてください。',
   'repo.demoDesc': '数秒ごとに自動で変化する架空のデータです。上に owner/repo を入力すると、実際のリポジトリを表示できます。',
+  'repo.connectTitle': 'ここに表示します。フォロー中のほかのリポジトリも引き続き更新されます',
+  'repo.limit': 'フォローできるリポジトリの上限に達しています。追加するには、どれかを閉じてください。',
+  'tabs.aria': 'フォロー中のリポジトリ',
+  'tabs.close': '{repo} のフォローをやめる',
+  'tabs.unread': '新しい更新 {n} 件',
   'badge.demo': 'シミュレーション',
   'badge.private': 'プライベート',
 

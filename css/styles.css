@@ -447,6 +447,121 @@ kbd {
   background: var(--bad);
 }
 
+/* ---------- repos seguidos: una pestaña por repo ---------- */
+/* una fila propia al pie de la barra superior; con muchos repos se desliza de lado, sin desbordar la página */
+.repo-tabs {
+  order: 10;
+  flex: 1 1 100%;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 3px 2px; /* que el anillo del foco no se corte */
+  margin-block: -7px -3px;
+  scrollbar-width: thin;
+}
+.rt {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  max-width: 300px;
+  height: 32px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.rt:hover {
+  background: var(--surface-2);
+}
+.rt.on {
+  background: var(--surface);
+  border-color: var(--ink-2);
+}
+.rt.demo {
+  border-style: dashed;
+}
+.rt-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  height: 100%;
+  padding-inline: 10px 4px;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font: 500 12.5px var(--font-mono);
+  cursor: pointer;
+}
+.rt.on .rt-main {
+  color: var(--ink);
+  font-weight: 600;
+  cursor: default;
+}
+.rt-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* el estado de cada repo, con los colores del indicador de la barra */
+.rt-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--ink-3);
+}
+.rt[data-state="live"] .rt-dot {
+  background: var(--good);
+}
+.rt[data-state="limited"] .rt-dot {
+  background: var(--warn);
+}
+.rt[data-state="error"] .rt-dot {
+  background: var(--bad);
+}
+.rt[data-state="loading"] .rt-dot {
+  background: transparent;
+  border: 1.5px solid var(--ink-3);
+  border-top-color: transparent;
+  animation: spin 0.9s linear infinite;
+}
+/* novedades que llegaron sin estar a la vista */
+.rt-n {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--ink);
+  color: var(--surface);
+  font: 600 10.5px/18px var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.rt-n:empty {
+  display: none;
+}
+.rt-close {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-inline-end: 3px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.rt-close:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.rt-close .ico {
+  width: 13px;
+  height: 13px;
+}
+
 /* ---------- franja de resumen ---------- */
 .stats {
   display: grid;
@@ -2940,6 +3055,13 @@ button.act-main:hover {
   text-transform: uppercase;
   color: var(--ink-3);
 }
+.act-repo {
+  margin-inline-start: 7px;
+  font: 500 11px var(--font-mono);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-2);
+}
 .act-title {
   font-weight: 600;
   overflow-wrap: anywhere;
@@ -3039,6 +3161,13 @@ button.act-main:hover {
 }
 .toast .act-kind {
   display: none;
+}
+.toast-repo {
+  font: 500 11px var(--font-mono);
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .toast-close {
   display: grid;
@@ -3380,6 +3509,13 @@ html.tv .rp-bar {
 }
 html.tv .app {
   max-width: none;
+}
+/* las pestañas dicen qué repos se siguen y cuál se ve; cerrarlos se hace fuera del modo TV */
+html.tv .rt-close {
+  display: none;
+}
+html.tv .rt-main {
+  padding-inline-end: 10px;
 }
 /* la interfaz entera crece con la pantalla (--tvz lo calcula app.js); el lienzo 3D no, que ya la llena */
 html.tv .topbar,

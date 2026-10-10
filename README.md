@@ -12,7 +12,7 @@ Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas
 - **Mundo abierto**: el grafo no flota en el vacío: recorre el fondo de un valle, con su mapa pintado en el suelo como la sombra de cada rama. A los lados se abre una llanura con lomas y, en el horizonte, una cordillera con curvas de nivel, como en un mapa topográfico; arriba hay cielo con sol (luna y estrellas en el tema oscuro) y nubes que derivan con el viento. El mundo no tiene bordes y el suelo es sólido: la órbita no baja de él y en vuelo se lo puede rozar, no atravesar. En el **modo vuelo** aparece lo de un juego de mundo abierto: una **brújula** arriba con el presente, el pasado y cada rama (la más centrada dice su nombre y a cuántos metros está, y avisa si queda muy arriba o muy abajo), un **minimapa** que gira con la mirada y la altura y la velocidad. Cada rama se **descubre** al pasar cerca: un rótulo grande la anuncia con su motivo musical y el mapa se completa ("Mapa explorado: 3/12"); en la brújula y el minimapa las que faltan van huecas, y descubrirlas todas desbloquea el logro *Cartógrafo*. Para ir a una rama, **Marcar como destino** (en su detalle, o un clic en su marca de la brújula): una columna de luz la señala desde lejos, la brújula y el minimapa guían hasta ella y al llegar suena un aviso. Lo descubierto se recuerda por repositorio, solo en el navegador.
 - **Recorrer la rama**: en el detalle de un commit o de una rama, **Recorrer la rama** lleva la cámara como una montaña rusa por toda la rama, desde el commit del que nace hasta su cabeza. Doble clic en un commit vuela hasta él.
 - **Director de cámara**: el botón de la cámara de cine deja que la cámara se dirija sola, como en una transmisión. Elige qué mirar según el interés de lo que acaba de pasar (un release pesa más que un PR fusionado, que pesa más que un PR abierto, que pesa más que un commit), encuadra el arco entero de un merge o los fuegos de un release, sostiene cada plano unos segundos sin volver a la misma rama antes de 30 s (salvo por algo grande) y, cada tres planos de detalle, abre un plano general. Un rótulo abajo a la izquierda dice qué se está viendo. Los saltos largos son un corte con fundido y no un vuelo, para no marear; mientras dura un plano la cámara gira o se acerca despacio. Cuando no pasa nada rueda planos tranquilos: el presente, la vista general o un paseo por una rama. Basta mover la vista para tomar el control: el director lo cede al instante (el botón lo marca con un punto) y lo retoma tras unos segundos sin tocar nada. Con movimiento reducido solo hay cortes.
-- **Modo TV**: el botón de la pantalla (o abrir la página con `?tv=1`, por ejemplo `index.html?repo=owner/repo&tv=1`) la convierte en un panel para una pantalla compartida: solo quedan el grafo 3D con el director de cámara, el resumen, el panel de actividad y un reloj, todo con letra que crece con la pantalla, y la pantalla no se apaga (Screen Wake Lock, donde el navegador lo permite). El sonido arranca apagado, porque en un espacio compartido llega a todos, y la capa de juego no hace fiestas. Una barra arriba a la derecha (se esconde con el puntero tras unos segundos quieto) tiene **Pausar** (también la barra espaciadora: detiene las novedades, la cámara y la animación de fondo), sonido, pantalla completa (`F`) y **Salir del modo TV** (también `Esc`). Si pasan unos minutos sin novedades, reproduce la historia con el Replay y vuelve sola al presente; cualquier actividad nueva la interrumpe.
+- **Modo TV**: el botón de la pantalla (o abrir la página con `?tv=1`, por ejemplo `index.html?repo=owner/repo&tv=1`) la convierte en un panel para una pantalla compartida: solo quedan el grafo 3D con el director de cámara, el resumen, el panel de actividad y un reloj, todo con letra que crece con la pantalla, y la pantalla no se apaga (Screen Wake Lock, donde el navegador lo permite). El sonido arranca apagado, porque en un espacio compartido llega a todos, y la capa de juego no hace fiestas. Una barra arriba a la derecha (se esconde con el puntero tras unos segundos quieto) tiene **Pausar** (también la barra espaciadora: detiene las novedades, la cámara y la animación de fondo), sonido, pantalla completa (`F`) y **Salir del modo TV** (también `Esc`). Si pasan unos minutos sin novedades, reproduce la historia con el Replay y vuelve sola al presente; cualquier actividad nueva la interrumpe. Con varios repos seguidos (`index.html?repo=owner/api&repo=owner/web&tv=1`) se ven sus pestañas, y la pantalla pasa sola al repo donde llega algo nuevo si el que muestra lleva 45 segundos sin novedades.
 - **Replay**: el botón de la flecha circular reproduce la historia del repo como un time-lapse, al estilo de Gource: los commits llegan en orden, las ramas nacen, crecen y se fusionan (las ya borradas reaparecen mientras existieron, con el nombre que dejó su merge), una fecha grande marca el tiempo y unos rótulos cuentan los hitos (ramas nuevas, PRs fusionados, releases), con sus efectos y su sonido. Los periodos sin actividad se comprimen, así que toda la historia dura menos de un minuto; la línea de tiempo marca los merges y las releases, se puede arrastrar, pausar (también con la barra espaciadora) y acelerar hasta 4×. Usa lo que ya está cargado, sin consultas extra: para una historia más larga, sube los **Commits por rama** en Ajustes. Mientras tanto lo nuevo sigue llegando al panel de actividad, y **Volver al presente** lo muestra.
 - **Logros, nivel y misión del día**: el repo sube de nivel con lo que el equipo consigue (merges, revisiones aprobadas, releases, issues cerrados, ramas fusionadas que se limpian; un commit suma poco), cumple una misión distinta cada día ("Fusionar 3 pull requests", "Cerrar 2 issues"…) y desbloquea 15 logros, como *Primer merge*, *Día de merges*, *¡A producción!*, *Bandeja vacía*, *Día récord*, *Bosque*, *Viajero del tiempo* o *Cartógrafo*. Cada logro, nivel o misión se celebra con un aviso dorado, fuegos artificiales y fanfarria, y cuando el equipo encadena varias cosas seguidas aparece un **combo**. El trofeo de la barra superior abre la vitrina, con el criterio de cada logro y un interruptor para apagar todo. Celebra al repo y al equipo, nunca a personas: no hay rankings, rachas personales ni contadores por autor, porque empujan a trabajar de más (GitHub quitó sus rachas en 2016 por eso). Se guarda solo en el navegador, por repositorio.
 - **Vista 2D tipo metro**: cada rama es un carril; los commits avanzan a la derecha. La rama por defecto va arriba, debajo las fijadas y luego las demás, de la más reciente a la menos activa. Cambia entre 3D y 2D con el selector del grafo. Abajo, un **minimapa** muestra el grafo entero en miniatura con la ventana de lo que se ve: un clic lleva hasta ese punto y la ventana se arrastra (en el Replay lo reemplaza su propia línea de tiempo). Las ramas ya fusionadas y borradas llevan su **nombre** sobre su tramo gris (sale del mensaje de su merge) y pasar el puntero por un commit resalta toda su rama. Se recorre también con el **teclado**: flechas, `Re Pág` `Av Pág`, `Inicio` `Fin` y `+` `-`.
@@ -20,6 +20,7 @@ Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas
 - En ambas, las bifurcaciones y merges se dibujan como curvas y las ramas muertas quedan en gris.
 - **En vivo**: los commits nuevos aparecen con una onda, la etiqueta de la rama se desliza hasta su nueva cabeza, la rama sube justo bajo la rama por defecto (los carriles se reordenan según su última actividad) y la vista sigue lo último (o te deja recorrer la historia).
 - **Alertas**: panel de actividad filtrable, avisos emergentes, sonido opcional, notificaciones del sistema cuando la pestaña está en segundo plano y contador en el título de la pestaña.
+- **Varios repos a la vez**: cada repo que conectas se suma a los que ya sigues, en una pestaña bajo la barra superior. Todos se siguen en vivo aunque no estén a la vista: sus novedades llegan al panel de actividad (que junta las de todos y dice de qué repo es cada una), a los avisos, al sonido y a las notificaciones, y cada pestaña muestra su estado y cuántas novedades llegaron sin verla. Un clic en la pestaña, o en una actividad de ese repo, lo muestra al momento, sin volver a cargarlo; la **×** deja de seguirlo. Se recuerdan entre visitas, y la URL los lleva todos (`?repo=owner/api&repo=owner/web`), así se comparte el conjunto. Hasta 10 repos.
 - **Sonido**: cada tipo de evento tiene su timbre (pulsación para los commits, campana para los PRs, acorde para los merges, arpegio para los releases) y todo suena en una escala pentatónica, a un pulso tranquilo: varios eventos juntos forman una frase. La rama por defecto es la tónica y cada rama tiene su nota; en 3D el sonido sale del lado de la pantalla donde está la rama. Viene apagado; se activa con el altavoz de la barra superior.
 - **Estado en cada rama**: número de PR abierto, directamente en la etiqueta.
 - **Todas las ramas**: se ven todas las ramas del repo, sin tope, también con miles: aparecen de a poco, las más activas primero, y el grafo sigue fluido (ver más abajo).
@@ -31,14 +32,14 @@ No necesita servidor ni compilación: es HTML, CSS y JavaScript que llama direct
 ## Uso
 
 1. Abre `index.html` (doble clic sirve), publícalo con GitHub Pages o usa la [aplicación de escritorio](#aplicación-de-escritorio) (abajo).
-2. Escribe `owner/repo` o pega la URL del repositorio y pulsa **Conectar**. Sin repositorio arranca una **demo** simulada.
+2. Escribe `owner/repo` o pega la URL del repositorio y pulsa **Conectar**. Sin repositorio arranca una **demo** simulada. Para seguir otro repo a la vez, conéctalo igual: se suma en una pestaña y el anterior sigue en vivo detrás (ver [Varios repos a la vez](#varios-repos-a-la-vez)).
 3. Opcional pero recomendado: en **Ajustes** (engranaje) agrega un token de GitHub.
 
-También puedes abrir un repo directo con `index.html?repo=owner/repo`, y en modo TV con `index.html?repo=owner/repo&tv=1`.
+También puedes abrir un repo directo con `index.html?repo=owner/repo`, varios con `index.html?repo=owner/api&repo=owner/web` (el primero queda a la vista) y en modo TV con `index.html?repo=owner/repo&tv=1`.
 
 ### Token
 
-Sin token GitHub permite 60 consultas por hora, así que la vista se actualiza cada pocos minutos y las ramas llegan de a poco. Con un token se actualiza cada 10 segundos, ves repos privados y todas las ramas cargan en segundos, aunque sean miles.
+Sin token GitHub permite 60 consultas por hora, así que la vista se actualiza cada pocos minutos y las ramas llegan de a poco. Con un token se actualiza cada 10 segundos, ves repos privados y todas las ramas cargan en segundos, aunque sean miles. La cuota es una sola para todos los repos que sigues: sin token, seguir varios los vuelve más lentos todavía, así que con más de uno conviene el token.
 
 Crea un token *fine-grained* de solo lectura en <https://github.com/settings/personal-access-tokens/new> con acceso al repositorio y estos permisos (todos *Read-only*): **Metadata** (incluye la actividad del repo: pushes y ramas creadas o borradas), **Contents** y **Pull requests**.
 
@@ -52,7 +53,21 @@ GraphBranch consulta GitHub en ciclos: cada 10 segundos con token y cada minuto 
 - Tras un error los reintentos se espacian (5 s, 10 s, 20 s… hasta 5 minutos, con algo de azar para que muchas pantallas no reintenten a la vez). Si GitHub pide esperar (cuota agotada, o límite secundario: lo que diga `Retry-After`, o un minuto si no lo dice), espera justo eso y no lo cuenta como fallo.
 - Sin red no insiste: espera a que el navegador avise que volvió la conexión ("esperando la conexión") y consulta enseguida.
 - Al volver a la pestaña, o cuando el navegador la descongela, si ya tocaba consultar lo hace al momento (en segundo plano los navegadores frenan los temporizadores; igual sigue consultando, para poder avisar).
-- **Actualizar ahora**, cambiar el filtro o fijar una rama adelantan el ciclo (si hay uno en curso, el siguiente va enseguida); **Pausar** lo detiene, y al cambiar de repositorio se cortan las consultas en curso.
+- **Actualizar ahora**, cambiar el filtro o fijar una rama adelantan el ciclo del repo a la vista (si hay uno en curso, el siguiente va enseguida); **Pausar** detiene los de todos los repos seguidos, y al dejar de seguir uno se cortan sus consultas en curso.
+- Con varios repos seguidos, cada uno tiene su ciclo y cuenta con que los demás gastan lo mismo que él: así entre todos no agotan la cuota (cuantos más repos, más espaciado, si la cuota no da para todos cada 10 segundos). Al abrir la página arrancan escalonados, no todos en el mismo instante.
+
+## Varios repos a la vez
+
+Cada repo que conectas se suma a los que ya sigues. Con más de uno aparece una fila de pestañas bajo la barra superior:
+
+- **Todos en vivo**: cada repo tiene su propia conexión con GitHub y sigue consultando aunque no esté a la vista. Lo que pasa en cualquiera llega al panel de actividad, a los avisos emergentes, al sonido y a las notificaciones del sistema, con el nombre del repo.
+- **Pestañas**: cada una muestra el estado de su repo (el mismo punto de color del indicador de la barra: en vivo, más lento, sin conexión, cargando) y cuántas novedades llegaron mientras no estaba a la vista. Un clic la muestra al momento: el repo ya está cargado, así que no se vuelve a pedir a GitHub. La **×** deja de seguirlo (y se lleva su actividad del panel).
+- **Panel de actividad**: junta la actividad de todos los repos, la más reciente primero (hasta 300 elementos por repo). Un clic en una actividad de otro repo lo muestra y va hasta esa rama o commit.
+- **Lo que es de cada repo**: el grafo, el resumen, el Replay, las ramas fijadas, el filtro, las ramas descubiertas en el modo vuelo y los logros. Los logros de los repos que no están a la vista suman igual, sin festejo; la vitrina muestra los del repo a la vista.
+- **Conectar** un repo que ya sigues lo muestra (y, si quedó sin conexión, lo vuelve a intentar). **Demo** muestra la demo sin dejar de seguir tus repos; la demo se cierra al volver a uno de ellos.
+- **Se recuerdan**: al volver a abrir la página siguen los mismos repos y se muestra el último que mirabas. La URL los lleva todos (`?repo=owner/api&repo=owner/web`, el primero a la vista), así que se puede compartir o dejar abierta en una pantalla; los repos de una URL se suman a los que ya seguías.
+- **La cuota se reparte**: los ciclos de cada repo se espacian para que entre todos no agoten la cuota de GitHub (ver [Ciclo de actualización](#ciclo-de-actualización)). Sin token la cuota es de 60 consultas por hora para todos juntos, así que para seguir varios conviene un token.
+- Se pueden seguir hasta 10 repos a la vez.
 
 ## Repositorios con miles de ramas
 
@@ -113,6 +128,7 @@ En las dos:
 - **Modo TV** (pantalla): barra espaciadora para pausar todo, `F` para pantalla completa y `Esc` o **Salir del modo TV** (en la barra de arriba a la derecha) para salir.
 - **Pausar** (barra superior): deja de traer novedades y detiene todo lo que se mueve solo (giro, director, fondo).
 - Los chips del panel de actividad filtran la lista y también los avisos emergentes.
+- **Pestañas de repos** (con más de uno seguido): clic para mostrar ese repo, **×** para dejar de seguirlo.
 
 ## Idiomas
 
@@ -143,8 +159,9 @@ La misma página corre como aplicación de escritorio con [Electron](https://www
 
 ```
 npm install
-npm start                               # la demo o el último repositorio
+npm start                               # la demo o los repositorios que seguías
 npm start -- --repo=owner/repo --tv     # un repo directo y en modo TV (también --lang=es)
+npm start -- --repo=owner/api --repo=owner/web   # varios repos a la vez
 npm run dist                            # el instalador para este sistema, en dist/
 npm run test:e2e                        # las pruebas de punta a punta (ver Pruebas)
 ```
@@ -153,7 +170,7 @@ npm run test:e2e                        # las pruebas de punta a punta (ver Prue
 - La página se sirve desde `app://graphbranch/`, un origen propio en vez de `file://`: el CSP funciona igual que en la web, y los ajustes quedan en los datos de la app, aparte de los del navegador.
 - El token no va a `localStorage`: se guarda cifrado con el llavero del sistema (Llavero en macOS, DPAPI en Windows, el llavero de GNOME o KWallet en Linux), en un archivo de los datos de la app. La primera vez, macOS puede pedir permiso para usar el llavero. En Linux sin llavero (escritorios que Chromium no reconoce, como i3 o Sway) se guarda sin cifrar y **Ajustes** lo avisa; si tienes uno, abre la app con `--password-store=gnome-libsecret` (o `kwallet6`).
 - Los enlaces a GitHub se abren en el navegador del sistema. La ventana no puede navegar a otro sitio ni usar Node, y solo tiene los permisos que la app usa: notificaciones, pantalla completa, captura del puntero (modo vuelo) y pantalla siempre encendida (modo TV).
-- Cerrar la ventana no cierra la app: queda en la bandeja del sistema (en macOS, en la barra de menús) y sigue revisando el repositorio. Avisa con notificaciones del sistema si las activaste (campana de la barra superior), y el ícono muestra al pasar el cursor cuántas novedades llegaron. Para volver, usa el ícono o abre la app otra vez; para salir del todo, **Salir** en el menú del ícono (o `Ctrl+Q`; en macOS, `Cmd+Q`). En GNOME sin la extensión AppIndicator no se ve la bandeja: la app sigue corriendo y vuelve al abrirla otra vez.
+- Cerrar la ventana no cierra la app: queda en la bandeja del sistema (en macOS, en la barra de menús) y sigue revisando los repositorios que sigues. Avisa con notificaciones del sistema si las activaste (campana de la barra superior), y el ícono muestra al pasar el cursor cuántas novedades llegaron. Para volver, usa el ícono o abre la app otra vez; para salir del todo, **Salir** en el menú del ícono (o `Ctrl+Q`; en macOS, `Cmd+Q`). En GNOME sin la extensión AppIndicator no se ve la bandeja: la app sigue corriendo y vuelve al abrirla otra vez.
 - Con la ventana oculta o minimizada la vista sigue al día. Chromium espacia los temporizadores de una página oculta a uno por minuto después de 5 minutos (*intensive wake-up throttling*); la app desactiva esa regla, pero no dibuja mientras no se ve.
 - Funciona sin conexión: todo lo que necesita va dentro de la app. Sin red abre la demo; un repositorio real muestra que no hay conexión y se vuelve a conectar apenas vuelve la red, sin esperar el próximo reintento.
 - `npm run dist` arma el instalador del sistema donde lo corres: `.dmg` en macOS, `.exe` en Windows y `.AppImage` en Linux.
@@ -186,7 +203,7 @@ Para firmarlos de verdad hacen falta un certificado de Apple Developer (y notari
 
 `npm run test:e2e` abre la app de escritorio y la web como las usa una persona (con [Playwright](https://playwright.dev/)) y revisa:
 
-- **App de escritorio, sin red**: la demo, las librerías y las fuentes van dentro de la app; `app://` no sirve nada más del proyecto; los enlaces van al navegador del sistema y la ventana no navega a otro sitio; un repositorio real avisa que no hay conexión.
+- **App de escritorio, sin red**: la demo, las librerías y las fuentes van dentro de la app; `app://` no sirve nada más del proyecto; los enlaces van al navegador del sistema y la ventana no navega a otro sitio; un repositorio real avisa que no hay conexión; `--repo` repetido sigue varios repos, que vuelven al reabrir.
 - **Token**: se guarda cifrado y fuera de `localStorage`, vuelve al reabrir, se borra, y pasa al llavero el que la primera versión dejaba en `localStorage`.
 - **Bandeja**: cerrar esconde la ventana, la página lo sabe y sigue contando novedades, el aviso sale una vez y en su idioma, y una notificación o abrir la app otra vez traen la ventana.
 - **Ventana oculta**: Chromium no espacia los temporizadores a uno por minuto. Tarda 2 minutos; `npx playwright test --grep-invert @lento` corre todo lo demás.
@@ -194,7 +211,7 @@ Para firmarlos de verdad hacen falta un certificado de Apple Developer (y notari
 
 Las pruebas nunca usan la red: la app se abre con un proxy que no existe y con una carpeta de datos propia en cada prueba. La primera vez hace falta el Chromium de Playwright para las de la web: `npx playwright install chromium`. En Linux sin pantalla: `xvfb-run npm run test:e2e`.
 
-Además, `node --test` prueba la lógica de `js/sources/github.js` contra una API de GitHub simulada, y `node tools/smoke.mjs` es una prueba de humo rápida de la web (con `--langs`, en los 40 idiomas y en pantalla de celular).
+Además, `node --test` prueba la lógica de `js/sources/github.js` contra una API de GitHub simulada, y `node tools/smoke.mjs` es una prueba de humo rápida de la web (la demo y, con una API de GitHub simulada, varios repos a la vez) (con `--langs`, en los 40 idiomas y en pantalla de celular).
 
 ## Estructura
 
@@ -220,7 +237,7 @@ js/sound.js           sonido de la actividad (Web Audio, escala pentatónica), e
 js/replay.js          modo Replay: la historia como time-lapse
 js/game.js            logros del repo, nivel y misión del día
 js/feed.js            panel de actividad, avisos, sonido y notificaciones
-js/app.js             conecta todo
+js/app.js             conecta todo y lleva los repos seguidos (una pestaña por repo)
 vendor/               copias locales de d3, Three.js, OrbitControls y las fuentes, con sus licencias (las genera tools/vendor.mjs)
 tools/check-i18n.mjs  verifica las traducciones contra el inglés
 tools/vendor.mjs      descarga a vendor/ las librerías (comprobando su hash) y las fuentes
@@ -242,6 +259,7 @@ package.json          Electron, Playwright y los scripts (npm start, npm run dis
 - Se cargan los últimos commits de cada rama (40 por defecto, configurable) o hasta donde se junta con lo ya cargado. Las líneas punteadas a la izquierda indican que la historia sigue más atrás.
 - Sin token, la historia de cada rama cuesta una de las 60 consultas por hora: en un repo de 100 ramas tardan un rato en aparecer todas, y con más de 100 solo se ven las que pasan por el feed de eventos. Con un token no hay ese límite.
 - Los PRs se siguen entre los 50 actualizados más recientemente.
+- Se siguen hasta 10 repos a la vez, y todos comparten la cuota de GitHub: sin token, con varios repos cada uno se actualiza cada varios minutos.
 - Modo galaxias: los archivos de una rama salen de una consulta a GitHub al acercarse a su galaxia (sin token, gasta una de las 60 por hora). Para la rama por defecto es el árbol completo del repo (GitHub lo corta en repos enormes); para las demás, la comparación con la rama por defecto, que trae como mucho 300 archivos.
 - El modo TV pide al navegador que no apague la pantalla (Screen Wake Lock: Chrome y Edge 84+, Safari 16.4+, Firefox 126+). Si no lo permite (sin soporte, o con batería baja), la pantalla se apaga según el sistema; para un panel fijo conviene desactivar también el ahorro de energía del equipo. El navegador solo deja pasar a pantalla completa tras un gesto del usuario, así que con `?tv=1` hay que pulsar `F` o el botón.
 

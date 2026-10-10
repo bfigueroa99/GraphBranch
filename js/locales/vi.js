@@ -9,6 +9,11 @@ GB.i18n.define('vi', {
   'repo.demo': 'Demo',
   'repo.invalid': 'Nhập kho lưu trữ dưới dạng owner/name hoặc dán URL GitHub của kho.',
   'repo.demoDesc': 'Dữ liệu giả tự thay đổi sau vài giây. Nhập owner/repo ở trên để xem một kho thật.',
+  'repo.connectTitle': 'Hiển thị tại đây; các kho khác bạn đang theo dõi vẫn tiếp tục cập nhật',
+  'repo.limit': 'Bạn đã theo dõi số kho tối đa. Hãy đóng một kho để thêm kho khác.',
+  'tabs.aria': 'Các kho đang theo dõi',
+  'tabs.close': 'Bỏ theo dõi {repo}',
+  'tabs.unread': '{n} cập nhật mới',
   'badge.demo': 'mô phỏng',
   'badge.private': 'riêng tư',
 

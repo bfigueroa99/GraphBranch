@@ -9,6 +9,11 @@ GB.i18n.define('zh-Hans', {
   'repo.demo': '演示',
   'repo.invalid': '请按 owner/name 的格式输入仓库，或粘贴其 GitHub 网址。',
   'repo.demoDesc': '虚构的数据，每隔几秒会自动变化。在上方输入 owner/repo 即可查看真实的仓库。',
+  'repo.connectTitle': '在此显示；已关注的其他仓库会继续更新',
+  'repo.limit': '关注的仓库已达上限。请先关闭一个，再添加新的。',
+  'tabs.aria': '已关注的仓库',
+  'tabs.close': '取消关注 {repo}',
+  'tabs.unread': '{n} 条新动态',
   'badge.demo': '模拟',
   'badge.private': '私有',
 

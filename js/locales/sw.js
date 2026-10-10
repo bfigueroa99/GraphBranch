@@ -9,6 +9,11 @@ GB.i18n.define('sw', {
   'repo.demo': 'Onyesho',
   'repo.invalid': 'Andika hazina kama owner/name au bandika URL yake ya GitHub.',
   'repo.demoDesc': 'Data za kubuni zinazobadilika zenyewe kila baada ya sekunde chache. Andika owner/repo hapo juu ili kuona hazina halisi.',
+  'repo.connectTitle': 'Inaionyesha hapa; hazina nyingine unazofuatilia zinaendelea kusasishwa',
+  'repo.limit': 'Tayari unafuatilia idadi kubwa zaidi ya hazina inayowezekana. Funga moja ili kuongeza nyingine.',
+  'tabs.aria': 'Hazina zinazofuatiliwa',
+  'tabs.close': 'Acha kufuatilia {repo}',
+  'tabs.unread': { one: 'Sasisho {n} jipya', other: 'Masasisho {n} mapya' },
   'badge.demo': 'uigaji',
   'badge.private': 'ya faragha',
 

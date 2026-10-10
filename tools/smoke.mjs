@@ -658,6 +658,36 @@ const langs = allLangs
   ? [...readFileSync(join(root, 'js', 'i18n.js'), 'utf8').matchAll(/\{ code: '([^']+)', name:/g)].map((m) => m[1])
   : ['es', 'de', 'ar'];
 
+console.log('Fijar una rama con el teclado');
+{
+  const gh = fakeGitHub();
+  gh.repo('o/f');
+  gh.push('o/f', 'feat', 'una rama para fijar');
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', gh.handle);
+  await step(page, 'el botón Fijar de la ficha conserva el foco', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=o/f`);
+    await loaded(page);
+    await page.click('#view-2d');
+    // todo con el teclado: la etiqueta de una rama abre su ficha con Enter
+    const head = await page.waitForSelector('#graph svg .head[role=button]', { timeout: 10000 });
+    await head.focus();
+    await page.keyboard.press('Enter');
+    const pin = await page.waitForSelector('#graph .tip .tip-pin', { timeout: 5000 });
+    const before = await pin.getAttribute('aria-pressed');
+    await pin.focus();
+    await page.keyboard.press('Enter');
+    const after = await page.evaluate(() => {
+      const el = document.activeElement;
+      return { focus: el?.className || el?.tagName, pressed: el?.getAttribute('aria-pressed') };
+    });
+    if (after.focus !== 'tip-pin') throw new Error(`tras fijar, el foco quedó en ${after.focus}`);
+    if (after.pressed === before) throw new Error('el botón no cambió de estado');
+  });
+  await page.context().close();
+}
+
 console.log('Galaxias: cortar un salto hiperespacial');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

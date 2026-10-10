@@ -27,8 +27,8 @@ posteriores pueden haberse movido.
 
 ### Baja
 
-1. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
-    recibe foco al abrirse desde el teclado.
+1. La ficha de rama o commit no recibe foco al abrirse desde el teclado (Enter en una etiqueta de rama):
+   para llegar a sus botones hay que recorrer con Tab todas las etiquetas (`graph.js`, `graph3d.js`).
 2. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
     `:2121`): su animación termina en opacidad 0.
 3. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
@@ -354,4 +354,20 @@ posteriores pueden haberse movido.
   GraphQL, y un error propio de GraphQL sí pasa a REST. Las dos fallaban antes del arreglo.
 - Validado: 10 pruebas, smoke, i18n y 11 e2e en verde.
 - **Siguiente:** pendiente 1 (el detalle pierde el foco al pulsar **Fijar**), luego 2 (con movimiento
+  reducido, la ayuda del vuelo no se ve).
+
+### 2026-10-10 · Iteración 19
+
+- **Sincronización.** Master trajo #42 (varios repos a la vez, cada uno en su pestaña); la rama se
+  adelantó a master y todo siguió en verde (11 pruebas, smoke, i18n y 12 e2e).
+- **Arreglo: el botón Fijar de la ficha conserva el foco.** Al fijar o soltar una rama, el botón se
+  reemplazaba con `outerHTML`: quien lo pulsaba con el teclado perdía el foco, que caía al `<body>`.
+  Ahora se actualiza en su lugar (`aria-pressed` y el texto). Sirve para las dos vistas, que comparten
+  el helper (`wirePinButton`). El pendiente queda en la otra mitad: que la ficha reciba el foco al
+  abrirse con el teclado.
+- **Prueba nueva en el smoke** (con el GitHub simulado de #42, porque en la demo no se puede fijar): en
+  2D abre la ficha de una rama con Enter sobre su etiqueta, pulsa Fijar con Enter y comprueba que el
+  foco sigue en el botón y que cambió de estado. Antes del arreglo quedaba en `BODY`.
+- Validado: 11 pruebas, smoke (40 idiomas), i18n y 12 e2e en verde.
+- **Siguiente:** pendiente 1 (foco a la ficha al abrirse con el teclado), luego 2 (con movimiento
   reducido, la ayuda del vuelo no se ve).

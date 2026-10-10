@@ -1100,12 +1100,13 @@
         if (it.el.className !== cls) it.el.className = cls;
       }
       const aria = [tr(h.isDefault ? 'branch.ariaDefault' : 'branch.aria', { name: h.name })];
-      if (pr) aria.push(tr(pr.draft ? 'branch.prDraftAria' : 'branch.prAria', { num: pr.number, base: pr.base }));
+      const { prRef, prKey } = GB.graphShared;
+      if (pr) aria.push(tr(prKey(pr, pr.draft ? 'branch.prDraftAria' : 'branch.prAria'), { num: pr.number, base: pr.base }));
       if (pinned) aria.push(tr('branch.pinned'));
       const name = U.truncate(h.name, 34);
       const html =
         `<span class="h3-dot" aria-hidden="true"></span><span class="h3-name">${U.esc(name)}</span>` +
-        (pr ? `<span class="h3-pr${pr.draft ? ' draft' : ''}">#${pr.number}</span>` : '') +
+        (pr ? `<span class="h3-pr${pr.draft ? ' draft' : ''}">${prRef(pr)}</span>` : '') +
         (pinned ? `<span class="h3-pin" title="${U.esc(tr('branch.pinned'))}" aria-hidden="true"></span>` : '');
       const label = aria.join(', ');
       if (it.html === html && it.label === label) return;
@@ -1113,7 +1114,7 @@
       it.label = label;
       // ancho estimado (fuente monoespaciada, mismos rellenos que el CSS): sirve para ver qué etiquetas se pisan sin medir el DOM
       const { measure, LABEL_FONT, SMALL_FONT } = GB.graphShared;
-      it.w = Math.ceil(33 + measure(name, LABEL_FONT) * (h.isDefault ? 1.04 : 1) + (pr ? 6 + measure('#' + pr.number, SMALL_FONT) : 0) + (pinned ? 13 : 0));
+      it.w = Math.ceil(33 + measure(name, LABEL_FONT) * (h.isDefault ? 1.04 : 1) + (pr ? 6 + measure(prRef(pr), SMALL_FONT) : 0) + (pinned ? 13 : 0));
       if (!it.el) return;
       it.el.setAttribute('aria-label', label);
       it.el.innerHTML = html;

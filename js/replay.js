@@ -141,6 +141,8 @@
         const i = idx.get(c.sha);
         if (n.merge) {
           const pr = /#(\d+)/.exec(line);
+          // GitLab: "Merge branch 'x' into 'main'", y abajo "See merge request grupo/proyecto!12"
+          const mr = !pr && /See merge request \S*!(\d+)/.exec(c.message || '');
           const base = ownerName(c.sha) || def;
           let head = null;
           for (const p of c.parents.slice(1)) {
@@ -155,13 +157,17 @@
           }
           head ||= U.mergedBranchName(c.message);
           const lines = String(c.message || '').split('\n').map((s) => s.trim()).filter(Boolean);
-          const detail = pr && lines[1] ? lines[1] : head || '';
+          const detail = (pr || mr) && lines[1] ? lines[1] : head || '';
           mark(i, {
             rank: 2,
             kind: 'pr-merge',
             head,
             base,
-            title: pr ? M('act.prMergedInto', { num: Number(pr[1]), base }) : M('act.merge', { name: base }),
+            title: pr
+              ? M('act.prMergedInto', { num: Number(pr[1]), base })
+              : mr
+                ? M('act.mrMergedInto', { num: Number(mr[1]), base })
+                : M('act.merge', { name: base }),
             detail,
           });
         } else if (n.chain === 'b:' + def) {

@@ -141,7 +141,7 @@
     const branch = branchName || heads[0];
     if (branch) {
       const pr = ctx.prs?.get(branch);
-      if (pr) rows.push(`<span>${i18n.html(pr.draft ? 'tip.prDraft' : 'tip.pr', { num: pr.number, base: pr.base })}${pr.url ? ` · <a href="${U.esc(pr.url)}" target="_blank" rel="noopener">${U.esc(tr('tip.viewPr'))}</a>` : ''}</span>`);
+      if (pr) rows.push(`<span>${i18n.html(prKey(pr, pr.draft ? 'tip.prDraft' : 'tip.pr'), { num: pr.number, base: pr.base })}${pr.url ? ` · <a href="${U.esc(pr.url)}" target="_blank" rel="noopener">${U.esc(tr(prKey(pr, 'tip.viewPr')))}</a>` : ''}</span>`);
     }
     return `
       <div class="tip-head">${U.avatarHTML(c.author, 22)}<span class="tip-author">${U.esc(c.author.name || tr('author.unknown'))}</span><span class="tip-time" title="${U.esc(U.fmtDateTime(c.date))}">${U.timeAgo(c.date)}</span></div>
@@ -159,6 +159,12 @@
   function pinButtonHTML(branch, on) {
     return `<button type="button" class="tip-pin" data-branch="${U.esc(branch)}" aria-pressed="${on}">${pinLabel(branch, on)}</button>`;
   }
+
+  /** Cómo se nombra un PR: "#12" en GitHub; una merge request de GitLab, "!12". Y la clave de sus textos
+      (tip.pr → tip.mr, branch.prAria → branch.mrAria…). */
+  const prRef = (pr) => `${pr.mr ? '!' : '#'}${pr.number}`;
+  const MR_KEYS = { 'tip.pr': 'tip.mr', 'tip.prDraft': 'tip.mrDraft', 'tip.viewPr': 'tip.viewMr', 'branch.prAria': 'branch.mrAria', 'branch.prDraftAria': 'branch.mrDraftAria' };
+  const prKey = (pr, key) => (pr.mr && MR_KEYS[key]) || key;
 
   /** Conecta el botón "Fijar" de un tooltip con la acción de la app. */
   function wirePinButton(tip, onTogglePin) {
@@ -821,7 +827,7 @@
       const hl = g.classList.contains('hl') ? ' hl' : '';
       const keep = ['moved', 'enter'].filter((c) => g.classList.contains(c)).map((c) => ' ' + c).join('');
       g.setAttribute('class', `head ${h.color}${h.isDefault ? ' default' : ''}${h.own ? '' : ' pointer-head'}${keep}${hl}`);
-      const key = `${h.name}\n${h.isDefault}\n${pinned}\n${pr ? `${pr.number}:${pr.draft}:${pr.base}` : ''}\n${i18n.locale}`;
+      const key = `${h.name}\n${h.isDefault}\n${pinned}\n${pr ? `${prRef(pr)}:${pr.draft}:${pr.base}` : ''}\n${i18n.locale}`;
       if (it.key === key) return;
       it.key = key;
       g.textContent = '';
@@ -841,11 +847,11 @@
         aria.push(tr('branch.pinned'));
       }
       if (pr) {
-        const label = `#${pr.number}`;
+        const label = prRef(pr);
         const pt = mk('text', { class: `h-pr${pr.draft ? ' draft' : ''}`, x, y: 0, dy: '0.35em' }, g);
         pt.textContent = label;
         x += measure(label, SMALL_FONT) + 8;
-        aria.push(tr(pr.draft ? 'branch.prDraftAria' : 'branch.prAria', { num: pr.number, base: pr.base }));
+        aria.push(tr(prKey(pr, pr.draft ? 'branch.prDraftAria' : 'branch.prAria'), { num: pr.number, base: pr.base }));
       }
       bg.setAttribute('width', Math.round(x + 2));
       g.setAttribute('aria-label', aria.join(', '));
@@ -1799,5 +1805,5 @@
   }
 
   GB.Graph = Graph;
-  GB.graphShared = { tipHTML, wirePinButton, measure, fitText, LABEL_FONT, SMALL_FONT };
+  GB.graphShared = { tipHTML, wirePinButton, measure, fitText, prRef, prKey, LABEL_FONT, SMALL_FONT };
 })(window.GB);

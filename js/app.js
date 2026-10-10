@@ -221,24 +221,22 @@
 
   const STAGGER = 700; // los repos que arrancan juntos, escalonados: GitHub no recibe todo a la vez
   /** Clave de un repo (de su fuente o de { owner, name }): con ella se guarda lo suyo (fijadas, filtro, logros). */
-  const keyOf = (src) => `${src.owner || 'demo'}/${src.name || ''}`.toLowerCase();
-  /** Nombre a la vista (el de GitHub, ya cargado) y el escrito, que es el que se guarda (de él sale la clave). */
+  /** Los proyectos de GitLab llevan "gitlab:" delante (en la clave, en lo que se guarda y en la URL). */
+  const hostPrefix = (src) => (src.host === 'gitlab' ? 'gitlab:' : '');
+  const keyOf = (src) => `${hostPrefix(src)}${src.owner || 'demo'}/${src.name || ''}`.toLowerCase();
+  /** Nombre a la vista (el del servicio, ya cargado) y el escrito, que es el que se guarda (de él sale la clave). */
   const nameOf = (tab) => `${tab.source.data.repo.owner}/${tab.source.data.repo.name}`;
-  const savedName = (tab) => `${tab.source.owner}/${tab.source.name}`;
+  const savedName = (tab) => `${hostPrefix(tab.source)}${tab.source.owner}/${tab.source.name}`;
   const realTabs = () => tabs.filter((x) => !x.demo);
   const filterOf = (tab) => (tab.demo ? tab.source.filter || '' : U.store.get('filter:' + tab.key, ''));
 
-  /** Una fuente de GitHub con lo que se recuerda de ese repo: su filtro y sus ramas fijadas. */
-  function githubSource({ owner, name }) {
-    const key = keyOf({ owner, name });
-    return new GB.GitHubSource({
-      owner,
-      name,
-      token: settings.token,
-      depth: settings.depth,
-      filter: U.store.get('filter:' + key, ''),
-      pins: U.store.get('pins:' + key, []),
-    });
+  /** La fuente de un repo de GitHub o de un proyecto de GitLab, con lo que se recuerda de él: su
+      filtro y sus ramas fijadas. El token de GitHub va solo a la fuente de GitHub. */
+  function sourceFor({ host, owner, name }) {
+    const key = keyOf({ host, owner, name });
+    const remembered = { depth: settings.depth, filter: U.store.get('filter:' + key, ''), pins: U.store.get('pins:' + key, []) };
+    if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, ...remembered });
+    return new GB.GitHubSource({ owner, name, token: settings.token, ...remembered });
   }
 
   /** Suma una pestaña al final, con su fuente, sin mostrarla ni arrancarla. */
@@ -281,10 +279,10 @@
     else go();
   }
 
-  /** La cuota de GitHub es una para todos los repos seguidos: cada fuente cuida su parte. */
+  /** La cuota de cada servicio es una para todos sus repos seguidos: cada fuente cuida su parte. */
   function shareQuota() {
     const real = realTabs();
-    for (const x of real) x.source.share = real.length;
+    for (const x of real) x.source.share = real.filter((y) => y.source.host === x.source.host).length;
   }
 
   /** Deja de seguir un repo. Si era el que estaba a la vista, pasa al de al lado (o a la demo). */
@@ -389,7 +387,7 @@
         return;
       }
       resume();
-      tab = addTab(githubSource(parsed));
+      tab = addTab(sourceFor(parsed));
       startTab(tab);
     }
     el.repoInput.setCustomValidity('');
@@ -422,7 +420,7 @@
     order.forEach((tab, i) => {
       feed.drop(tab.key);
       tab.unread = 0;
-      setSource(tab, githubSource({ owner: tab.source.owner, name: tab.source.name }));
+      setSource(tab, sourceFor({ host: tab.source.host, owner: tab.source.owner, name: tab.source.name }));
       startTab(tab, i * STAGGER);
     });
     shareQuota();
@@ -816,8 +814,8 @@
       el.repoLink.removeAttribute('href');
       el.repoLink.setAttribute('aria-disabled', 'true');
     }
-    el.repoBadge.hidden = !repo.demo && !repo.private;
-    el.repoBadge.textContent = repo.demo ? t('badge.demo') : t('badge.private');
+    el.repoBadge.hidden = !repo.demo && !repo.private && repo.host !== 'gitlab';
+    el.repoBadge.textContent = repo.demo ? t('badge.demo') : repo.private ? t('badge.private') : 'GitLab';
     el.repoBadge.className = `badge${repo.demo ? ' demo' : ''}`;
     el.repoDesc.textContent = repo.demo ? t('repo.demoDesc') : repo.description || '';
     el.repoDesc.hidden = !el.repoDesc.textContent;
@@ -827,7 +825,8 @@
 
   function renderTokenBanner() {
     const data = source?.data;
-    const show = data && !data.repo.demo && !settings.token && data.mode;
+    // el aviso es del token de GitHub: a un proyecto de GitLab no le cambia nada
+    const show = data && !data.repo.demo && data.repo.host !== 'gitlab' && !settings.token && data.mode;
     el.tokenBanner.hidden = !show;
     if (!show) return;
     el.tokenBannerText.textContent =
@@ -966,7 +965,7 @@
           <p class="ov-title">${U.esc(t('overlay.error.title'))}</p>
           <p>${U.esc(i18n.text(message))}</p>
           <div class="ov-actions">
-            ${fatal ? `<button type="button" class="btn btn-primary" data-ov="settings">${U.esc(t('overlay.openSettings'))}</button>` : ''}
+            ${fatal && source?.host !== 'gitlab' ? `<button type="button" class="btn btn-primary" data-ov="settings">${U.esc(t('overlay.openSettings'))}</button>` : ''}
             <button type="button" class="btn ${fatal ? 'btn-ghost' : 'btn-primary'}" data-ov="retry">${U.esc(t('overlay.retry'))}</button>
             <button type="button" class="btn btn-ghost" data-ov="demo">${U.esc(t('overlay.viewDemo'))}</button>
           </div>
@@ -1434,7 +1433,7 @@
     // pasado el tope quedan fuera los guardados del final, no los que pide la URL
     const asked = new Set(urlRepos.map(parse).filter(Boolean).map(keyOf));
     for (const k of [...repos.keys()].reverse()) if (repos.size > MAX_REPOS && !asked.has(k)) repos.delete(k);
-    for (const p of [...repos.values()].slice(0, MAX_REPOS)) addTab(githubSource(p));
+    for (const p of [...repos.values()].slice(0, MAX_REPOS)) addTab(sourceFor(p));
     const want = parse(urlRepos[0]) || parse(shown);
     const first = (want && tabs.find((x) => x.key === keyOf(want))) || tabs[0];
     if (!first) startDemo();

@@ -33,9 +33,17 @@ window.GB = window.GB || {};
     return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
   };
 
-  /** Acepta "owner/repo", URLs de GitHub (https o ssh) y quita ".git". */
+  /** Acepta "owner/repo", URLs de GitHub (https o ssh) y quita ".git". Un proyecto de GitLab, con
+      sus subgrupos, va con su URL de gitlab.com (también la de una rama o un archivo, o ssh) o como
+      "gitlab:grupo/proyecto": devuelve { host: 'gitlab', owner: 'grupo/sub', name: 'proyecto' }. */
   U.parseRepo = (input) => {
-    const s = String(input || '').trim().replace(/\.git$/, '').replace(/\/+$/, '');
+    const s = String(input || '').trim().replace(/[?#].*$/, '').replace(/\/+$/, '').replace(/\.git$/, '');
+    const lab = s.match(/^gitlab:(.+)$/i) || s.match(/gitlab\.com[/:](.+)$/i);
+    if (lab) {
+      const parts = lab[1].split('/-/')[0].split('/').filter(Boolean);
+      if (parts.length < 2 || !parts.every((p) => /^[\w.-]+$/.test(p) && !/^\.+$/.test(p))) return null;
+      return { host: 'gitlab', owner: parts.slice(0, -1).join('/'), name: parts[parts.length - 1] };
+    }
     const m = s.match(/github\.com[/:]([\w.-]+)\/([\w.-]+)/i) || s.match(/^([\w.-]+)\/([\w.-]+)$/);
     return m ? { owner: m[1], name: m[2] } : null;
   };

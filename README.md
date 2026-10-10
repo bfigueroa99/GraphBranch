@@ -1,6 +1,6 @@
 # GraphBranch
 
-Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas de toda su actividad: commits, force-push, ramas creadas y borradas, pull requests, revisiones, issues, releases, estrellas y forks.
+Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub o de un proyecto de GitLab, con alertas de toda su actividad: commits, force-push, ramas creadas y borradas, pull requests, revisiones, issues, releases, estrellas y forks.
 
 ![GraphBranch en 3D mostrando el repositorio de demostración](docs/captura-3d.png)
 
@@ -21,6 +21,7 @@ Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas
 - **En vivo**: los commits nuevos aparecen con una onda, la etiqueta de la rama se desliza hasta su nueva cabeza, la rama sube justo bajo la rama por defecto (los carriles se reordenan según su última actividad) y la vista sigue lo último (o te deja recorrer la historia).
 - **Guardar imagen**: el botón de la cámara de fotos guarda la vista como un PNG tal como se ve en ese momento, en 3D o en 2D, en cualquier modo (galaxias, vuelo, Replay), con las etiquetas de las ramas y los efectos en curso, y abajo una franja con el repo y la fecha, lista para compartir. La 2D sale al doble de resolución; la 3D, a la resolución con que se dibuja. Se descarga como cualquier archivo (`graphbranch-owner-repo-2026-10-10-1430.png`); en la app de escritorio va directo a la carpeta de descargas.
 - **Alertas**: panel de actividad filtrable, avisos emergentes, sonido opcional, notificaciones del sistema cuando la pestaña está en segundo plano y contador en el título de la pestaña.
+- **También GitLab**: los proyectos públicos de gitlab.com, con sus subgrupos. Se pega su URL (también la de una rama o un archivo) o se escribe `gitlab:grupo/proyecto`, y se ven igual que un repo de GitHub, con todo lo de arriba: ramas, commits y merge requests en vivo (en las etiquetas, `!12` como en GitLab), sus efectos y su sonido, galaxias con sus archivos y el Replay. Se siguen junto a los repos de GitHub, cada uno en su pestaña, y la URL los comparte igual (`?repo=gitlab:grupo/proyecto`). No hace falta token.
 - **Varios repos a la vez**: cada repo que conectas se suma a los que ya sigues, en una pestaña bajo la barra superior. Todos se siguen en vivo aunque no estén a la vista: sus novedades llegan al panel de actividad (que junta las de todos y dice de qué repo es cada una), a los avisos, al sonido y a las notificaciones, y cada pestaña muestra su estado y cuántas novedades llegaron sin verla. Un clic en la pestaña, o en una actividad de ese repo, lo muestra al momento, sin volver a cargarlo; la **×** deja de seguirlo. Se recuerdan entre visitas, y la URL los lleva todos (`?repo=owner/api&repo=owner/web`), así se comparte el conjunto. Hasta 10 repos.
 - **Sonido**: cada tipo de evento tiene su timbre (pulsación para los commits, campana para los PRs, acorde para los merges, arpegio para los releases) y todo suena en una escala pentatónica, a un pulso tranquilo: varios eventos juntos forman una frase. La rama por defecto es la tónica y cada rama tiene su nota; en 3D el sonido sale del lado de la pantalla donde está la rama. Viene apagado; se activa con el altavoz de la barra superior.
 - **Estado en cada rama**: número de PR abierto, directamente en la etiqueta.
@@ -29,12 +30,12 @@ Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas
 - **Instalable y sin conexión**: la versión web se instala como una app más, en el celular o en el escritorio, sin Electron: con su ícono, en su propia ventana y sin la barra del navegador (en Chrome y Edge, el botón de instalar de la barra de direcciones; en el iPhone, **Compartir → Agregar a inicio**). Después de la primera visita abre aunque no haya red: la demo funciona entera y los repos de GitHub dicen que esperan la conexión, y siguen solos en cuanto vuelve. Con red siempre carga la última versión.
 - **Todos los idiomas**: la interfaz está traducida a 40 idiomas (incluidos árabe, hebreo, persa y urdu, de derecha a izquierda), se elige sola según el navegador y se puede cambiar en vivo desde el globo de la barra superior. Fechas, números y "hace 5 min" salen de `Intl`, así que también se ven bien en idiomas sin traducción (ver [Idiomas](#idiomas)).
 
-No necesita servidor ni compilación: es HTML, CSS y JavaScript que llama directo a `api.github.com` desde tu navegador. Las librerías (d3 y Three.js) y las fuentes van incluidas en `vendor/`, así que solo sale a internet para hablar con GitHub. La vista 3D usa WebGL; si el navegador no lo tiene, la app abre la 2D. También corre como [aplicación de escritorio](#aplicación-de-escritorio) con Electron.
+No necesita servidor ni compilación: es HTML, CSS y JavaScript que llama directo a `api.github.com` (o a `gitlab.com`) desde tu navegador. Las librerías (d3 y Three.js) y las fuentes van incluidas en `vendor/`, así que solo sale a internet para hablar con GitHub. La vista 3D usa WebGL; si el navegador no lo tiene, la app abre la 2D. También corre como [aplicación de escritorio](#aplicación-de-escritorio) con Electron.
 
 ## Uso
 
 1. Abre `index.html` (doble clic sirve), publícalo con GitHub Pages (y desde ahí, instálalo) o usa la [aplicación de escritorio](#aplicación-de-escritorio) (abajo).
-2. Escribe `owner/repo` o pega la URL del repositorio y pulsa **Conectar**. Sin repositorio arranca una **demo** simulada. Para seguir otro repo a la vez, conéctalo igual: se suma en una pestaña y el anterior sigue en vivo detrás (ver [Varios repos a la vez](#varios-repos-a-la-vez)).
+2. Escribe `owner/repo` o pega la URL del repositorio (de GitHub, o de un proyecto de gitlab.com) y pulsa **Conectar**. Sin repositorio arranca una **demo** simulada. Para seguir otro repo a la vez, conéctalo igual: se suma en una pestaña y el anterior sigue en vivo detrás (ver [Varios repos a la vez](#varios-repos-a-la-vez)).
 3. Opcional pero recomendado: en **Ajustes** (engranaje) agrega un token de GitHub.
 
 También puedes abrir un repo directo con `index.html?repo=owner/repo`, varios con `index.html?repo=owner/api&repo=owner/web` (el primero queda a la vista) y en modo TV con `index.html?repo=owner/repo&tv=1`.
@@ -208,7 +209,7 @@ Para firmarlos de verdad hacen falta un certificado de Apple Developer (y notari
 
 `npm run test:e2e` abre la app de escritorio y la web como las usa una persona (con [Playwright](https://playwright.dev/)) y revisa:
 
-- **App de escritorio, sin red**: la demo, las librerías y las fuentes van dentro de la app; Guardar imagen deja el PNG en la carpeta de descargas sin pisar el anterior; `app://` no sirve nada más del proyecto; los enlaces van al navegador del sistema y la ventana no navega a otro sitio; un repositorio real avisa que no hay conexión; `--repo` repetido sigue varios repos, que vuelven al reabrir.
+- **App de escritorio, sin red**: la demo, las librerías y las fuentes van dentro de la app; Guardar imagen deja el PNG en la carpeta de descargas sin pisar el anterior; `app://` no sirve nada más del proyecto; los enlaces van al navegador del sistema y la ventana no navega a otro sitio; un repositorio real (de GitHub o de GitLab) avisa que no hay conexión; `--repo` repetido sigue varios repos, que vuelven al reabrir.
 - **Token**: se guarda cifrado y fuera de `localStorage`, vuelve al reabrir, se borra, y pasa al llavero el que la primera versión dejaba en `localStorage`.
 - **Bandeja**: cerrar esconde la ventana, la página lo sabe y sigue contando novedades, el aviso sale una vez y en su idioma, y una notificación o abrir la app otra vez traen la ventana.
 - **Ventana oculta**: Chromium no espacia los temporizadores a uno por minuto. Tarda 2 minutos; `npx playwright test --grep-invert @lento` corre todo lo demás.
@@ -216,7 +217,7 @@ Para firmarlos de verdad hacen falta un certificado de Apple Developer (y notari
 
 Las pruebas nunca usan la red: la app se abre con un proxy que no existe y con una carpeta de datos propia en cada prueba. La primera vez hace falta el Chromium de Playwright para las de la web: `npx playwright install chromium`. En Linux sin pantalla: `xvfb-run npm run test:e2e`.
 
-Además, `node --test` prueba la lógica de `js/sources/github.js` contra una API de GitHub simulada y el service worker (`sw.js`) con una caché y una red falsas (guarda la página entera, nunca la API, y sin red sirve la copia), y `node tools/smoke.mjs` es una prueba de humo rápida de la web (la demo, con Guardar imagen en 3D y 2D, y, con una API de GitHub simulada, varios repos a la vez) (con `--langs`, en los 40 idiomas y en pantalla de celular).
+Además, `node --test` prueba la lógica de `js/sources/github.js` y de `js/sources/gitlab.js` contra APIs de GitHub y de GitLab simuladas, y el service worker (`sw.js`) con una caché y una red falsas (guarda la página entera, nunca la API, y sin red sirve la copia), y `node tools/smoke.mjs` es una prueba de humo rápida de la web (la demo, con Guardar imagen en 3D y 2D; con una API de GitHub simulada, varios repos a la vez; y un proyecto de GitLab simulado) (con `--langs`, en los 40 idiomas y en pantalla de celular).
 
 ## Estructura
 
@@ -230,6 +231,7 @@ js/locales/*.js       un archivo de textos por idioma (en.js es la base)
 js/i18n-apply.js      vuelve a traducir el HTML estático cuando la página ya está completa
 js/util.js            utilidades compartidas
 js/sources/github.js  datos en vivo desde la API de GitHub (modos GraphQL, lista y eventos)
+js/sources/gitlab.js  datos en vivo desde gitlab.com (proyectos públicos): hereda el ciclo de github.js
 js/sources/demo.js    repositorio simulado para la demo
 js/sources/demo-content.js  mensajes, issues y comentarios inventados de la demo
 js/palette.js         paleta de colores de las ramas, sin tope
@@ -251,7 +253,7 @@ vendor/               copias locales de d3, Three.js, OrbitControls y las fuente
 tools/check-i18n.mjs  verifica las traducciones contra el inglés
 tools/vendor.mjs      descarga a vendor/ las librerías (comprobando su hash) y las fuentes
 tools/smoke.mjs       prueba de humo: abre la demo en Chromium y recorre lo principal
-tools/*.test.mjs      pruebas de la lógica contra una API de GitHub simulada (`node --test`)
+tools/*.test.mjs      pruebas de la lógica contra APIs de GitHub y GitLab simuladas, y del service worker (`node --test`)
 e2e/                  pruebas de punta a punta de la app de escritorio y la web (npm run test:e2e)
 electron/main.js      app de escritorio: la ventana de Electron que abre index.html
 electron/preload.js   lo único que la página ve de la app de escritorio: el token, los textos de la bandeja y traer la ventana
@@ -272,14 +274,16 @@ package.json          Electron, Playwright y los scripts (npm start, npm run dis
 - Modo galaxias: los archivos de una rama salen de una consulta a GitHub al acercarse a su galaxia (sin token, gasta una de las 60 por hora). Para la rama por defecto es el árbol completo del repo (GitHub lo corta en repos enormes); para las demás, la comparación con la rama por defecto, que trae como mucho 300 archivos.
 - Instalar y abrir sin red es de la versión web publicada por https (o servida en `localhost`): con doble clic (`file://`) los navegadores no admiten service workers, y la app de escritorio ya lleva todo dentro. La primera visita necesita red. Sin red solo funciona la demo: los datos de GitHub nunca se guardan, así que un repo espera a que vuelva la conexión. Cómo se instala depende del navegador; donde no se ofrece, la página funciona igual sin instalar.
 - Guardar imagen copia lo que se ve, con dos salvedades: las etiquetas y paneles se redibujan como cajas con su fondo, borde y texto (sin sombras, desenfoques ni degradados), y la ficha de detalle abierta, los controles y la fecha grande del Replay quedan fuera de la imagen. La escena 3D sale a la resolución con que se está dibujando, que baja sola si el equipo no da abasto.
+- GitLab, por ahora: solo proyectos públicos de gitlab.com, sin token (ni GitLab propio). El panel de actividad trae lo que pasa desde que se conecta (ramas, commits y merge requests), sin historial previo, issues, comentarios ni estrellas. La historia sale de comparar puntos de la historia (`repository/compare`), porque gitlab.com le pone un desafío de Cloudflare al listado de commits cuando la consulta no lleva token: la rama por defecto trae sus últimos pasos (la mitad de **Commits por rama**, más lo que entró con cada merge) y cada rama, lo suyo desde la rama por defecto. Se listan hasta 1.000 ramas, las actualizadas más recientemente; con más de 100, una rama borrada se nota en el listado entero, cada 3 minutos. En el modo galaxias, el árbol de GitLab no trae el tamaño de cada archivo, así que los planetas de la rama por defecto salen parejos. Como GitLab no deja leer su cuota desde la página, se consulta a ritmo fijo, cada 15 segundos.
 - El modo TV pide al navegador que no apague la pantalla (Screen Wake Lock: Chrome y Edge 84+, Safari 16.4+, Firefox 126+). Si no lo permite (sin soporte, o con batería baja), la pantalla se apaga según el sistema; para un panel fijo conviene desactivar también el ahorro de energía del equipo. El navegador solo deja pasar a pantalla completa tras un gesto del usuario, así que con `?tv=1` hay que pulsar `F` o el botón.
 
 ## Seguridad
 
 `index.html` lleva una política de seguridad de contenido (CSP):
 
-- **CSP**: scripts, estilos y fuentes solo pueden venir del propio sitio; no se permite `eval` ni scripts o manejadores en línea. Las conexiones salen únicamente a `api.github.com` y las imágenes solo pueden ser avatares de GitHub o del propio sitio (los íconos). Así, aunque algún texto de un repositorio lograra colarse en la página, no podría ejecutar código ni enviar tu token a otro servidor.
+- **CSP**: scripts, estilos y fuentes solo pueden venir del propio sitio; no se permite `eval` ni scripts o manejadores en línea. Las conexiones salen únicamente a `api.github.com` y a `gitlab.com`, y las imágenes solo pueden ser avatares de GitHub o de gitlab.com, o del propio sitio (los íconos). De GitLab solo se muestran los avatares alojados en gitlab.com: los de Gravatar no se cargan, así que nadie fuera de GitHub y GitLab se entera de qué miras. Así, aunque algún texto de un repositorio lograra colarse en la página, no podría ejecutar código ni enviar tu token a otro servidor.
 - **Guardar imagen sin salir de la página**: el PNG se arma en un canvas de la propia página y se descarga con un enlace `blob:`; no se sube a ningún lado ni hace falta abrir el CSP. Las imágenes de otros sitios (los avatares) no se copian, porque dejarían el canvas sin poder exportarse. La app de escritorio solo acepta descargas de imágenes `.png` que vengan de su propia página (`blob:app://graphbranch/…`); cualquier otra se cancela.
+- **Cada token a su servicio**: el token de GitHub va solo a `api.github.com`; las consultas a GitLab no llevan ninguno.
 - **Sin conexión, sin datos guardados**: el service worker (`sw.js`) solo guarda los archivos de la propia página. Nunca guarda respuestas de `api.github.com` (con token llevan datos privados) ni avatares: esas peticiones ni siquiera pasan por él. El CSP le suma solo lo del propio sitio: `manifest-src 'self'`, `worker-src 'self'` e `img-src 'self'` (los íconos del manifiesto).
 - **Librerías y fuentes locales**: d3, Three.js, OrbitControls y las fuentes son copias en `vendor/`, junto a sus licencias. La página no depende de ningún CDN, y tampoco le cuenta a Google Fonts quién la abre.
 

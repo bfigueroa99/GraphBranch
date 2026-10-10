@@ -53,6 +53,7 @@ function fakeGitHub() {
     failOnce: null, // (ruta) => true: esa consulta falla por red una vez
     onFetch: null, // (ruta) => …: corre justo antes de responder, para simular algo a mitad de un ciclo
     pulls: [], // PRs como los da la API (los más recién actualizados, primero en la lista)
+    override: null, // (ruta) => { status, body } para responder otra cosa, o nada para seguir normal
     calls: [],
   };
   let n = 0;
@@ -124,7 +125,7 @@ function fakeGitHub() {
       gh.failOnce = null;
       throw new TypeError('Failed to fetch');
     }
-    const { status = 200, body, headers = {} } = route(path);
+    const { status = 200, body, headers = {} } = gh.override?.(path) || route(path);
     const json = JSON.stringify(body);
     const etag = `"${json.length}-${[...json].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 0)}"`;
     const inm = opts.headers?.['If-None-Match'];
@@ -144,10 +145,10 @@ function fakeGitHub() {
   return gh;
 }
 
-/** Fuente sin token conectada a la API falsa; `cycle()` corre un ciclo de sondeo completo. */
-function connect(gh) {
+/** Fuente conectada a la API falsa (sin token, salvo que se pida); `cycle()` corre un ciclo de sondeo completo. */
+function connect(gh, token = '') {
   const GB = load(gh);
-  const src = new GB.GitHubSource({ owner: 'o', name: 'r' });
+  const src = new GB.GitHubSource({ owner: 'o', name: 'r', token });
   const updates = [];
   const errors = [];
   src.on('update', (u) => updates.push(u));
@@ -297,4 +298,35 @@ test('modo lista: los PRs que solo salen de la página de abiertos no se consult
   const prs = Array.from(updates.at(-1).activities, (a) => `${a.kind} #${a.number}`).filter((k) => /^pr-/.test(k));
   assert.deepEqual(prs.sort(), ['pr-close #59', 'pr-merge #60']);
   assert.equal(updates.at(-1).activities.find((a) => a.kind === 'pr-merge').actor.login, 'beto');
+});
+
+/* Un error pasajero del servidor (5xx) no apaga funciones para toda la sesión; uno que dice que la
+   función no está disponible (403, 404, un error de GraphQL), sí. */
+
+const serverError = { status: 502, body: { message: 'Bad Gateway' } };
+
+test('la API de actividad sigue en uso tras un 502 suelto, y se deja con un 403', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const { src } = connect(gh, 'tok');
+  gh.override = (path) => (path.startsWith('/repos/o/r/activity') ? serverError : null);
+  await src.syncActivity(false, 10);
+  assert.equal(src.activityOk, true, 'un 502 no la apaga');
+  gh.override = (path) => (path.startsWith('/repos/o/r/activity') ? { status: 403, body: { message: 'Resource not accessible by personal access token' } } : null);
+  await src.syncActivity(false, 10);
+  assert.equal(src.activityOk, false, 'un 403 sí: el token no puede leerla');
+});
+
+test('un 5xx de GraphQL en la carga inicial no pasa a REST para siempre', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const { src, errors } = connect(gh, 'tok');
+  gh.override = (path) => (path === '/graphql' ? serverError : null);
+  await src.cycle();
+  assert.equal(errors.length, 1, 'el ciclo falla y se reintenta');
+  assert.equal(src.mode, 'graphql', 'sigue en GraphQL para el reintento');
+  // un error propio de GraphQL (el token no puede usarla) sí pasa a REST
+  gh.override = (path) => (path === '/graphql' ? { body: { errors: [{ type: 'FORBIDDEN', message: 'no' }] } } : null);
+  await src.cycle();
+  assert.notEqual(src.mode, 'graphql');
 });

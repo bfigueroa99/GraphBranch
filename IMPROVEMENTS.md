@@ -39,7 +39,7 @@ mantenimiento.
    nunca queda vacía: al loop no se le acaba el alcance por ganar.
 6. **Registrar:** la entrada de la bitácora dice el tipo y el eje (`Iteración 20 · Expansión ·
    Plataformas`), y una expansión actualiza su fila del Mapa de alcance y marca su ítem como hecho:
-   tachado y con el número del PR (`~~**Instalable…**~~ hecho en #44`).
+   tachado y con el número del PR (`~~**Instalable…**~~ hecho en #N`).
 
 ### Lo que trae cada expansión
 

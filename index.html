@@ -7,7 +7,8 @@
      imagen o API), añádelo a la directiva que corresponda. Va antes que cualquier recurso.
      Las librerías y las fuentes son copias locales en vendor/ (tools/vendor.mjs), así que
      scripts, estilos y fuentes solo pueden venir del propio sitio. El manifiesto y el service worker
-     (sw.js, que la deja abrir sin red) también son del propio sitio. -->
+     (sw.js, que la deja abrir sin red) también son del propio sitio. Las conexiones van a las APIs de
+     GitHub y de gitlab.com, y las imágenes de otro sitio son los avatares de cada uno. -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'none';
   script-src 'self';
@@ -15,8 +16,8 @@
   font-src 'self';
   manifest-src 'self';
   worker-src 'self';
-  img-src 'self' data: https://avatars.githubusercontent.com;
-  connect-src https://api.github.com;
+  img-src 'self' data: https://avatars.githubusercontent.com https://gitlab.com;
+  connect-src https://api.github.com https://gitlab.com;
   base-uri 'none';
   form-action 'none'">
 <title>GraphBranch</title>
@@ -47,7 +48,7 @@
     </div>
 
     <form class="repo-form" id="repo-form" autocomplete="off" novalidate>
-      <label class="sr-only" for="repo-input" data-i18n="repo.label">GitHub repository</label>
+      <label class="sr-only" for="repo-input" data-i18n="repo.label">GitHub or GitLab repository</label>
       <div class="repo-field">
         <span class="repo-prefix" aria-hidden="true">github.com/</span>
         <input id="repo-input" name="repo" type="text" placeholder="owner/repo" spellcheck="false" autocapitalize="off" autocorrect="off">
@@ -314,6 +315,7 @@
 <script src="vendor/OrbitControls.js"></script>
 <script src="js/util.js"></script>
 <script src="js/sources/github.js"></script>
+<script src="js/sources/gitlab.js"></script>
 <script src="js/sources/demo-content.js"></script>
 <script src="js/sources/demo.js"></script>
 <script src="js/palette.js"></script>

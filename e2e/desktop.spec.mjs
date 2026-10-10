@@ -92,6 +92,13 @@ test('sin red, un repositorio real avisa que no hay conexión', async ({}, testI
   await app.close();
 });
 
+test('sin red, un proyecto de GitLab avisa que no llega a gitlab.com', async ({}, testInfo) => {
+  const { app, page } = await launch(testInfo, { args: ['--lang=es', '--repo=gitlab:grupo/sub/proyecto'] });
+  await expect(page.locator('#overlay')).toContainText('No se pudo conectar con gitlab.com', { timeout: 20_000 });
+  await expect(page.locator('#repo-badge')).toHaveText('GitLab');
+  await app.close();
+});
+
 test('--repo repetido sigue varios repos, cada uno en su pestaña, y se recuerdan al reabrir', async ({}, testInfo) => {
   const repos = ['--repo=bfigueroa99/GraphBranch', '--repo=octo/otro'];
   let { app, page, dir } = await launch(testInfo, { args: ['--lang=es', ...repos] });

@@ -177,5 +177,5 @@ test('el manifiesto, sus íconos y el CSP dejan instalar la página', () => {
   assert.deepEqual(directive('manifest-src'), ["'self'"]);
   assert.deepEqual(directive('worker-src'), ["'self'"]);
   assert.ok(directive('img-src').includes("'self'"), 'los íconos del manifiesto se cargan como imágenes del propio sitio');
-  assert.deepEqual(directive('connect-src'), ['https://api.github.com'], 'el CSP sigue cerrado');
+  assert.deepEqual(directive('connect-src'), ['https://api.github.com', 'https://gitlab.com'], 'el CSP sigue cerrado: solo las APIs de GitHub y GitLab');
 });

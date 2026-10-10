@@ -730,6 +730,185 @@ const langs = allLangs
   ? [...readFileSync(join(root, 'js', 'i18n.js'), 'utf8').matchAll(/\{ code: '([^']+)', name:/g)].map((m) => m[1])
   : ['es', 'de', 'ar'];
 
+/* ---------- GitLab ---------- */
+
+/**
+ * gitlab.com simulado para la web: el proyecto g/sub/p (con subgrupo) con main, una rama con dos
+ * commits y su MR abierta. Como gitlab.com sin token, el listado de commits responde con el desafío
+ * de Cloudflare: la app nunca debe pedirlo. `push` y `merge` cambian el proyecto como si alguien
+ * trabajara en él.
+ */
+function fakeGitLab() {
+  const WEB = 'https://gitlab.com/g/sub/p';
+  const commits = new Map();
+  const branches = new Map();
+  const mrs = [];
+  const calls = [];
+  let n = 0;
+  const id = () => createHash('sha1').update(`gl:${++n}`).digest('hex');
+  const commit = (branch, title, ...extra) => {
+    const sha = id();
+    const parent = branches.get(branch);
+    commits.set(sha, {
+      id: sha,
+      parent_ids: [parent, ...extra].filter(Boolean),
+      title,
+      message: title,
+      author_name: 'Bea',
+      committed_date: new Date(Date.now() - 3600e3 + n * 1000).toISOString(),
+      web_url: `${WEB}/-/commit/${sha}`,
+    });
+    branches.set(branch, sha);
+    return sha;
+  };
+  for (let i = 0; i < 4; i++) commit('main', `inicio ${i}`);
+  branches.set('feature/x', branches.get('main'));
+  commit('feature/x', 'feat: primera parte');
+  commit('feature/x', 'feat: segunda parte');
+  const mr = (iid, source, state = 'opened') => ({
+    iid,
+    title: 'Agrega la función x',
+    source_branch: source,
+    target_branch: 'main',
+    source_project_id: 1,
+    target_project_id: 1,
+    web_url: `${WEB}/-/merge_requests/${iid}`,
+    draft: false,
+    state,
+    author: { username: 'bea', name: 'Bea', avatar_url: 'https://secure.gravatar.com/avatar/x' },
+    created_at: new Date().toISOString(),
+    updated_at: new Date(Date.now() + n).toISOString(),
+  });
+  mrs.push(mr(5, 'feature/x'));
+  const reach = (sha) => {
+    const out = new Set();
+    for (const stack = [sha]; stack.length; ) {
+      const s = stack.pop();
+      if (!s || out.has(s) || !commits.has(s)) continue;
+      out.add(s);
+      stack.push(...commits.get(s).parent_ids);
+    }
+    return out;
+  };
+  const resolve = (ref) => {
+    const m = /^(.+?)(?:~(\d+))?$/.exec(ref);
+    let sha = branches.get(m[1]) || m[1];
+    for (let i = 0; i < Number(m[2] || 0) && sha; i++) sha = commits.get(sha)?.parent_ids[0];
+    return sha && commits.has(sha) ? sha : null;
+  };
+  const route = (path, q) => {
+    const P = '/api/v4/projects/g%2Fsub%2Fp';
+    if (path === P) return { body: { id: 1, path_with_namespace: 'g/sub/p', default_branch: 'main', web_url: WEB, visibility: 'public', description: 'Un proyecto de GitLab' } };
+    if (!path.startsWith(P)) return { status: 404, body: { message: '404 Project Not Found' } };
+    const rest = path.slice(P.length);
+    if (rest === '/repository/branches') return { body: [...branches].map(([name, sha]) => ({ name, commit: commits.get(sha), protected: name === 'main' })), headers: { 'X-Total': branches.size } };
+    if (rest === '/repository/commits') return { status: 403, text: '<!DOCTYPE html><title>Just a moment...</title>' };
+    const seq = rest.match(/^\/repository\/commits\/(.+)\/sequence$/);
+    if (seq) {
+      let sha = resolve(decodeURIComponent(seq[1]));
+      let count = 0;
+      for (; sha; sha = commits.get(sha)?.parent_ids[0]) count++;
+      return count ? { body: { count } } : { status: 404, body: { message: '404 Commit Not Found' } };
+    }
+    const one = rest.match(/^\/repository\/commits\/(.+)$/);
+    if (one) {
+      const sha = resolve(decodeURIComponent(one[1]));
+      return sha ? { body: commits.get(sha) } : { status: 404, body: { message: '404 Commit Not Found' } };
+    }
+    if (rest === '/repository/compare') {
+      const [from, to] = [resolve(q.get('from')), resolve(q.get('to'))];
+      if (!from || !to) return { status: 404, body: { message: '404 Not Found' } };
+      const old = reach(from);
+      return { body: { commit: commits.get(to), commits: [...reach(to)].filter((s) => !old.has(s)).map((s) => commits.get(s)), diffs: [], compare_timeout: false } };
+    }
+    if (rest === '/repository/merge_base') return { body: { id: resolve(q.getAll('refs[]')[0]) } };
+    if (rest === '/merge_requests') return { body: mrs.filter((m) => q.get('state') === 'all' || m.state === q.get('state')) };
+    return { status: 404, body: { message: '404 Not Found' } };
+  };
+  return {
+    calls,
+    push: (branch, title) => commit(branch, title),
+    /** La MR !5 se fusiona: un commit de merge en main y la rama se borra. */
+    merge: () => {
+      const head = branches.get('feature/x');
+      commit('main', "Merge branch 'feature/x' into 'main'", head);
+      branches.delete('feature/x');
+      Object.assign(mrs[0], { state: 'merged', merged_by: { username: 'ana', name: 'Ana', avatar_url: null }, updated_at: new Date(Date.now() + 5000).toISOString() });
+    },
+    handle: (r) => {
+      const u = new URL(r.request().url());
+      calls.push(u.pathname + u.search);
+      const { status = 200, body, text, headers = {} } = route(u.pathname, u.searchParams);
+      return r.fulfill({
+        status,
+        contentType: text ? 'text/html' : 'application/json',
+        headers: { 'access-control-allow-origin': '*', 'access-control-expose-headers': 'ETag, Link, X-Total, X-Next-Page', ...Object.fromEntries(Object.entries(headers).map(([k, v]) => [k, String(v)])) },
+        body: text ?? JSON.stringify(body),
+      });
+    },
+  };
+}
+
+/** Ciclos rápidos también para GitLab (su ritmo es fijo, de 15 s) y sus MRs en cada ciclo. */
+const quickGitLab = () => {
+  const hook = () => {
+    const P = window.GB?.GitLabSource?.prototype;
+    if (!P) return setTimeout(hook, 5);
+    P.nextDelay = () => 1200;
+    P.due = () => true;
+  };
+  hook();
+};
+
+console.log('GitLab');
+{
+  const gl = fakeGitLab();
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.route('https://gitlab.com/**', gl.handle);
+  await page.addInitScript(quickGitLab);
+
+  await step(page, 'conecta un proyecto con subgrupos (gitlab:g/sub/p) y se recuerda', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=gitlab:g/sub/p`);
+    await loaded(page);
+    const link = await page.evaluate(() => {
+      const a = document.querySelector('#repo-link');
+      const b = document.querySelector('#repo-badge');
+      return { text: a.textContent, href: a.href, badge: b.hidden ? null : b.textContent, banner: !document.querySelector('#token-banner').hidden };
+    });
+    if (link.text !== 'g/sub/p' || link.href !== 'https://gitlab.com/g/sub/p') throw new Error(`el título dice ${link.text} (${link.href})`);
+    if (link.badge !== 'GitLab') throw new Error(`la etiqueta dice ${link.badge}`);
+    if (link.banner) throw new Error('muestra el aviso del token de GitHub');
+    const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
+    if (saved !== '["gitlab:g/sub/p"]') throw new Error(`se guardó ${saved}`);
+  });
+
+  await step(page, 'en 2D, la rama de la MR lleva !5 y su ficha dice MR', async () => {
+    await page.click('#view-2d');
+    const label = await page.waitForSelector('#graph .head .h-pr', { timeout: 15000 });
+    if ((await label.textContent()) !== '!5') throw new Error(`la etiqueta dice ${await label.textContent()}`);
+    const aria = await page.$$eval('#graph .head', (hs) => hs.map((h) => h.getAttribute('aria-label')).join(' | '));
+    if (!aria.includes('MR !5')) throw new Error(`etiquetas: ${aria}`);
+  });
+
+  await step(page, 'lo nuevo llega al panel: un push y la MR fusionada', async () => {
+    gl.push('main', 'fix: arreglo urgente');
+    await page.waitForFunction(() => [...document.querySelectorAll('#feed li')].some((li) => li.textContent.includes('fix: arreglo urgente')), null, { timeout: 15000 });
+    gl.merge();
+    await page.waitForFunction(() => [...document.querySelectorAll('#feed li')].some((li) => li.textContent.includes('MR !5 fusionado en main')), null, { timeout: 15000 });
+    if (gl.calls.some((c) => /\/repository\/commits\?/.test(c))) throw new Error('pidió el listado de commits, que gitlab.com bloquea sin token');
+  });
+
+  await step(page, 'un proyecto que no existe lo dice, sin mandar a Ajustes', async () => {
+    await page.fill('#repo-input', 'https://gitlab.com/g/nada/-/tree/main');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: 15000 });
+    const text = await page.textContent('#overlay');
+    if (!text.includes('No se encontró g/nada en GitLab')) throw new Error(`el aviso dice ${text}`);
+    if (await page.locator('#overlay [data-ov=settings]').count()) throw new Error('ofrece abrir Ajustes, que no sirve para GitLab');
+  }, { allow: /404/ });
+  await page.context().close();
+}
+
 console.log('Fijar una rama con el teclado');
 {
   const gh = fakeGitHub();

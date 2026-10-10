@@ -133,11 +133,16 @@
       return `/repos/${this.owner}/${this.name}`;
     }
 
+    /** La clave de un texto que nombra al servicio (GitHub, sus PRs): otra fuente la cambia por la suya. */
+    term(key) {
+      return key;
+    }
+
     /* ---------- ciclo de vida ---------- */
 
     start() {
       this.wake();
-      this.emitStatus('loading', M('status.connecting'));
+      this.emitStatus('loading', M(this.term('status.connecting')));
       this.loop();
     }
 
@@ -387,7 +392,7 @@
      */
     async request(url, opts) {
       const halt = this.halt || (this.halt = new AbortController());
-      const stopped = () => new ApiError(M('err.network'), { kind: 'aborted' });
+      const stopped = () => new ApiError(M(this.term('err.network')), { kind: 'aborted' });
       if (halt.signal.aborted) throw stopped();
       const ctl = new AbortController();
       const onHalt = () => ctl.abort();
@@ -407,13 +412,13 @@
           } catch {
             body = undefined;
           }
-          if (res.ok && !body) throw new ApiError(M('err.network'), { kind: 'network' }); // llegó vacía o cortada
+          if (res.ok && !body) throw new ApiError(M(this.term('err.network')), { kind: 'network' }); // llegó vacía o cortada
         }
         return { res, body };
       } catch (err) {
         if (err instanceof ApiError) throw err;
         if (halt.signal.aborted) throw stopped();
-        throw new ApiError(M(late ? 'err.timeout' : 'err.network'), { kind: 'network' });
+        throw new ApiError(M(this.term(late ? 'err.timeout' : 'err.network')), { kind: 'network' });
       } finally {
         clearTimeout(timer);
         halt.signal.removeEventListener('abort', onHalt);
@@ -991,6 +996,13 @@
       if (/rel="next"/.test(res.headers?.get('Link') || '')) this.mode = 'events'; // creció: desde el próximo ciclo
 
       const remote = new Map(res.data.map((b) => [b.name, { sha: b.commit.sha, protected: !!b.protected }]));
+      await this.applyBranchList(acts, quiet, remote);
+    }
+
+    /** Compara el listado de ramas (`remote`: nombre -> { sha, protected }) con el anterior: ramas
+        nuevas, movidas y borradas, con sus actividades. Las que aún no tienen su historia esperan
+        turno (fillBacklog). */
+    async applyBranchList(acts, quiet, remote) {
       this.data.totalBranches = remote.size;
       this.data.matchingBranches = this.filter ? [...remote.keys()].filter((n) => U.matches(n, this.filter)).length : null;
       const { branches: tracked, commits } = this.data;
@@ -1406,7 +1418,7 @@
           if (this.data.pulls.has(n) || pr.createdAt < since) continue; // solo entró a la página, no es nuevo
           acts.push(
             this.activity('pr-open', {
-              title: pr.draft ? M('act.prOpenedDraft', { num: n }) : M('act.prOpened', { num: n }),
+              title: M(this.term(pr.draft ? 'act.prOpenedDraft' : 'act.prOpened'), { num: n }),
               detail: pr.title,
               ref: `${pr.head} → ${pr.base}`,
               branch: pr.sameRepo ? pr.head : null,
@@ -1423,7 +1435,7 @@
           if (!s || s.state === 'open') continue; // sigue abierto, solo salió de la página
           acts.push(
             this.activity(s.merged ? 'pr-merge' : 'pr-close', {
-              title: s.merged ? M('act.prMergedInto', { num: pr.number, base: pr.base }) : M('act.prClosed', { num: pr.number }),
+              title: s.merged ? M(this.term('act.prMergedInto'), { num: pr.number, base: pr.base }) : M(this.term('act.prClosed'), { num: pr.number }),
               detail: pr.title,
               ref: `${pr.head} → ${pr.base}`,
               branch: s.merged ? pr.base : null,
@@ -1724,5 +1736,6 @@
     }
   }
 
+  GitHubSource.ApiError = ApiError;
   GB.GitHubSource = GitHubSource;
 })(window.GB);

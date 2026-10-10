@@ -217,6 +217,10 @@ posteriores pueden haberse movido.
     Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
 13. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
     (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
+14. Smoke: el paso de contraste de las pestañas (varios repos) mide 500 ms fijos después de cambiar de
+    tema, y los colores tienen transiciones de hasta 0,6 s; con el equipo cargado falló una vez
+    (iteración 21: «En vivo» a 3,83:1 en el oscuro) y pasó al repetirlo. Esperar a que terminen las
+    transiciones (`getAnimations()`) en vez de un tiempo fijo.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); `placeLabels`/`placeNotes` crean arreglos por cuadro
@@ -605,7 +609,9 @@ posteriores pueden haberse movido.
     resolución. Los textos (del SVG y de las etiquetas HTML) se escriben con el canvas de la página,
     porque un SVG convertido en imagen no puede cargar las fuentes de la página. Las etiquetas,
     paneles y el minimapa se pintan como cajas con fondo, borde, radio y texto, ordenadas por
-    `z-index` y con su opacidad (las etiquetas tapadas salen atenuadas, como se ven).
+    `z-index` y con su opacidad (las etiquetas tapadas salen atenuadas, como se ven). Cada línea de
+    texto se ubica por las cajas de sus letras y se escribe en su dirección: probado con la interfaz
+    en árabe en modo vuelo (la ayuda del teclado, la brújula y los indicadores) y en el Replay.
   - Sin `foreignObject` (Safari deja el canvas sin poder exportarse) y sin imágenes de otros sitios
     (los avatares harían lo mismo en cualquier navegador). El CSP no cambia: la imagen del SVG va como
     `data:`, que `img-src` ya permite, y la descarga es un enlace `blob:`.

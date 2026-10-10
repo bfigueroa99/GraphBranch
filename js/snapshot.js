@@ -172,48 +172,44 @@
     const raw = node.textContent;
     if (!raw.trim()) return;
     const pre = /^pre/.test(cs.whiteSpace);
+    const rtl = cs.direction === 'rtl';
+    // cada letra va a la línea a cuya altura quedó; de cada línea importa dónde empieza y termina
+    // lo que se ve (los espacios del borde pueden no dibujarse, y un texto con partes en las dos
+    // direcciones da varias cajas en la misma línea)
     const range = document.createRange();
-    const rectOf = (i) => {
+    const rows = [];
+    let row = null;
+    for (let i = 0; i < raw.length; i++) {
       range.setStart(node, i);
       range.setEnd(node, i + 1);
-      return range.getClientRects()[0];
-    };
-    range.selectNodeContents(node);
-    const many = [...range.getClientRects()].filter((q) => q.width > 0).length > 1;
-    // cada línea empieza en su primera letra (los espacios del borde pueden no dibujarse) y, con
-    // varias líneas, se arma con las letras que quedaron a su altura
-    const lines = [];
-    for (let i = 0; i < raw.length; i++) {
-      const blank = /\s/.test(raw[i]);
-      const last = lines[lines.length - 1];
-      if (last && !many) {
-        last.text += raw[i];
-        continue;
+      const q = range.getClientRects()[0];
+      if (q && q.width) {
+        row = rows.find((w) => Math.abs(w.top - q.top) < w.height / 2);
+        if (!row) rows.push((row = { top: q.top, height: q.height, left: Infinity, right: -Infinity, text: '' }));
+        if (/\S/.test(raw[i])) {
+          row.left = Math.min(row.left, q.left);
+          row.right = Math.max(row.right, q.right);
+        }
       }
-      if (blank && !pre && !last) continue;
-      const q = rectOf(i);
-      if (!q || (!q.width && !blank)) continue;
-      if (last && Math.abs(last.rect.top - q.top) < q.height / 2) last.text += raw[i];
-      else if (!blank || pre) lines.push({ text: raw[i], rect: q });
+      if (row) row.text += raw[i];
     }
-    if (!lines.length) return;
     ctx.save();
     ctx.font = fontOf(cs, scale);
     if ('letterSpacing' in ctx && cs.letterSpacing !== 'normal') ctx.letterSpacing = cs.letterSpacing;
     ctx.fillStyle = canvasColor(cs.color);
-    ctx.textAlign = 'left';
+    ctx.direction = rtl ? 'rtl' : 'ltr';
+    ctx.textAlign = rtl ? 'right' : 'left';
     ctx.textBaseline = 'alphabetic';
-    ctx.direction = 'ltr';
     textShadow(ctx, cs.textShadow);
-    for (const line of lines) {
-      const str = caseOf(pre ? line.text.replace(/\s+$/, '') : line.text.replace(/\s+/g, ' ').trim(), cs);
-      if (!str) continue;
+    for (const w of rows) {
+      const str = caseOf(pre ? w.text.replace(/\s+$/, '') : w.text.replace(/\s+/g, ' ').trim(), cs);
+      if (!str || w.left > w.right) continue;
       const m = ctx.measureText(str);
       const asc = m.fontBoundingBoxAscent ?? m.actualBoundingBoxAscent;
       const desc = m.fontBoundingBoxDescent ?? m.actualBoundingBoxDescent;
-      const q = line.rect;
       // el texto va centrado en el alto de su letra, como lo pone el navegador
-      ctx.fillText(str, q.left - origin.left, q.top - origin.top + (q.height - (asc + desc)) / 2 + asc);
+      const y = w.top - origin.top + (w.height - (asc + desc)) / 2 + asc;
+      ctx.fillText(str, (rtl ? w.right : w.left) - origin.left, y);
     }
     ctx.restore();
   }

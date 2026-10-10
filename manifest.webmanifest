@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "GraphBranch",
+  "short_name": "GraphBranch",
+  "description": "Live graph of a GitHub repository's branches, with alerts for commits, pull requests and issues.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a0f0e",
+  "theme_color": "#0a0f0e",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

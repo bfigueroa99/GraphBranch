@@ -195,30 +195,28 @@ posteriores pueden haberse movido.
 
 ### Baja
 
-1. La ficha de rama o commit no recibe foco al abrirse desde el teclado (Enter en una etiqueta de rama):
-   para llegar a sus botones hay que recorrer con Tab todas las etiquetas (`graph.js`, `graph3d.js`).
-2. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
+1. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
     `:2121`): su animación termina en opacidad 0.
-3. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
+2. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
     rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-4. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-5. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
+3. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+4. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
     `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro).
-6. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
+5. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
     `aria-pressed` y el texto, leyenda 2D sin acceso por teclado, el botón de pausa del Replay sin nombre
     accesible (`index.html:190`).
-7. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-8. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-9. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
-10. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
-11. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
+6. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+7. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+8. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
+9. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
+10. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
     blanco al arrancar.
-12. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
+11. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
     Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-13. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
+12. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
     (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-14. Smoke: el paso de contraste de las pestañas (varios repos) mide 500 ms fijos después de cambiar de
+13. Smoke: el paso de contraste de las pestañas (varios repos) mide 500 ms fijos después de cambiar de
     tema, y los colores tienen transiciones de hasta 0,6 s; con el equipo cargado falló una vez
     (iteración 21: «En vivo» a 3,83:1 en el oscuro) y pasó al repetirlo. Esperar a que terminen las
     transiciones (`getAnimations()`) en vez de un tiempo fijo.
@@ -685,3 +683,21 @@ posteriores pueden haberse movido.
 - **Siguiente:** iteración 23, de **mantenimiento**: pendiente 1 (la ficha no recibe el foco al
   abrirse con el teclado). La 24 vuelve a expansión: el primer ítem sin hacer es el 3 (video del
   Replay, Salidas), de otro eje que esta (Fuentes).
+
+### 2026-10-10 · Iteración 23 · Mantenimiento
+
+- **Arreglo: la ficha abierta con el teclado recibe el foco** (pendiente 1). Con Enter o Espacio en
+  la etiqueta de una rama se abría su ficha, pero el foco se quedaba en la etiqueta: para llegar a
+  sus botones (Fijar, ver en GitHub, Recorrer la rama…) había que pasar con Tab por todas las demás
+  etiquetas del grafo. Ahora la ficha (un `role=dialog` con su nombre) toma el foco, sus botones
+  quedan a un Tab, y al cerrarla (Esc) el foco vuelve a la etiqueta que la abrió, o al grafo si esa
+  etiqueta ya no está. Sirve para las dos vistas: un par de ayudantes compartidos (`focusTip`,
+  `returnFocus` en `GB.graphShared`); en 3D, las etiquetas son botones y se distingue el teclado por
+  `detail === 0` del clic. Con el ratón no cambia nada: el foco se queda en el grafo y las flechas
+  siguen moviéndolo. La ficha enfocada se marca con el mismo contorno que los demás controles.
+- **Prueba nueva en el smoke** (con el GitHub simulado, junto a la de Fijar): en 2D y en 3D, Enter en
+  una etiqueta deja el foco en la ficha, Tab llega a uno de sus botones y Esc lo devuelve a la
+  etiqueta. Antes del arreglo fallaba en las dos ("el foco quedó en g" y "en BUTTON").
+- Validado: 26 pruebas (`node --test`), smoke, i18n (sin textos nuevos) y 15 e2e en verde.
+- **Siguiente:** iteración 24, expansión: el primer ítem sin hacer es el 3 (grabar el Replay en
+  video, eje Salidas), de otro eje que la última expansión (Fuentes).

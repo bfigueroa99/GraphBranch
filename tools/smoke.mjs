@@ -936,6 +936,32 @@ console.log('Fijar una rama con el teclado');
     if (after.focus !== 'tip-pin') throw new Error(`tras fijar, el foco quedó en ${after.focus}`);
     if (after.pressed === before) throw new Error('el botón no cambió de estado');
   });
+
+  // abierta con el teclado, la ficha recibe el foco (si no, para llegar a sus botones habría que
+  // recorrer con Tab todas las etiquetas) y Esc la cierra y lo devuelve a la etiqueta
+  const focusRoundTrip = async (view, label) => {
+    await page.keyboard.press('Escape'); // ninguna ficha abierta de antes
+    await page.click(`#view-${view}`);
+    const head = await page.waitForSelector(label, { timeout: 10000 });
+    await head.focus();
+    await page.keyboard.press('Enter');
+    await page.waitForSelector(`#${view === '2d' ? 'graph' : 'graph3d'} .tip:not([hidden])`, { timeout: 5000 });
+    const where = () => page.evaluate(() => {
+      const el = document.activeElement;
+      return { inTip: !!el?.closest('.tip'), tag: el?.tagName, head: !!el?.matches('.head, .g3-head') };
+    });
+    const opened = await where();
+    if (!opened.inTip) throw new Error(`${view}: al abrir la ficha, el foco quedó en ${opened.tag}`);
+    await page.keyboard.press('Tab');
+    const next = await where();
+    if (!next.inTip || !['A', 'BUTTON'].includes(next.tag)) throw new Error(`${view}: Tab llevó a ${next.tag}, fuera de la ficha`);
+    await page.keyboard.press('Escape');
+    const back = await where();
+    if (!back.head) throw new Error(`${view}: tras Esc, el foco quedó en ${back.tag}`);
+  };
+  await step(page, 'Enter en una etiqueta lleva el foco a su ficha (2D), y Esc lo devuelve', () => focusRoundTrip('2d', '#graph svg .head[role=button]'));
+  if (await page.locator('#graph3d canvas').count())
+    await step(page, 'Enter en una etiqueta lleva el foco a su ficha (3D), y Esc lo devuelve', () => focusRoundTrip('3d', '#graph3d .g3-head'));
   await page.context().close();
 }
 

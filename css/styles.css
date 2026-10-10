@@ -2836,6 +2836,14 @@ kbd {
 .tip.pinned {
   pointer-events: auto;
 }
+/* abierta con el teclado, la ficha tiene el foco: se marca como los demás controles */
+.tip:focus {
+  outline: none;
+}
+.tip:focus-visible {
+  outline: 2px solid var(--ink-3);
+  outline-offset: 2px;
+}
 .tip p {
   margin: 0;
 }

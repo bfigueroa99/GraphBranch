@@ -122,7 +122,7 @@ En 2D:
 
 En las dos:
 
-- Clic en un commit o en el nombre de una rama: detalle con autor, mensaje, PR y enlace a GitHub.
+- Clic en un commit o en el nombre de una rama: detalle con autor, mensaje, PR y enlace a GitHub. Con el teclado, `Tab` hasta el nombre de una rama y `Enter`: el detalle se abre con el foco en él (sus botones quedan a un `Tab`) y `Esc` lo cierra y vuelve a la rama.
 - Clic en un nombre de la leyenda o en un elemento del panel de actividad: lleva a esa rama o commit.
 - **En vivo** / **Ir a lo último**: sigue (o vuelve a seguir) los commits nuevos.
 - **Pantalla completa** (botón o `F`): el grafo ocupa toda la pantalla; `Esc` o `F` para salir.

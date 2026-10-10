@@ -154,8 +154,10 @@
       </div>` : ''}`;
   }
 
+  const pinLabel = (branch, on) => i18n.html(on ? 'tip.unpin' : 'tip.pin', { branch: U.truncate(branch, 28) });
+
   function pinButtonHTML(branch, on) {
-    return `<button type="button" class="tip-pin" data-branch="${U.esc(branch)}" aria-pressed="${on}">${i18n.html(on ? 'tip.unpin' : 'tip.pin', { branch: U.truncate(branch, 28) })}</button>`;
+    return `<button type="button" class="tip-pin" data-branch="${U.esc(branch)}" aria-pressed="${on}">${pinLabel(branch, on)}</button>`;
   }
 
   /** Conecta el botón "Fijar" de un tooltip con la acción de la app. */
@@ -164,7 +166,9 @@
       const b = ev.target.closest('.tip-pin');
       if (!b) return;
       const on = !!onTogglePin?.(b.dataset.branch);
-      b.outerHTML = pinButtonHTML(b.dataset.branch, on);
+      // se actualiza en su lugar (no con outerHTML): el botón conserva el foco de quien lo pulsó con el teclado
+      b.setAttribute('aria-pressed', String(on));
+      b.innerHTML = pinLabel(b.dataset.branch, on);
     });
   }
 

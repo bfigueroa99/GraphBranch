@@ -34,6 +34,8 @@
     spinBtn: $('#spin-btn'),
     fullscreenBtn: $('#fullscreen-btn'),
     replayBtn: $('#replay-btn'),
+    snapBtn: $('#snap-btn'),
+    snapNote: $('#snap-note'),
     flyBtn: $('#fly-btn'),
     galaxyBtn: $('#galaxy-btn'),
     directorBtn: $('#director-btn'),
@@ -622,6 +624,46 @@
     },
   });
 
+  /* guardar la vista como imagen (js/snapshot.js): la que está a la vista, con el repo y la fecha abajo */
+  let snapping = false;
+  let snapTimer = 0;
+  function snapNote(text) {
+    el.snapNote.textContent = text;
+    el.snapNote.classList.add('on');
+    clearTimeout(snapTimer);
+    // al irse se vacía: que el lector de pantalla no encuentre después un aviso viejo
+    snapTimer = setTimeout(() => {
+      el.snapNote.classList.remove('on');
+      el.snapNote.textContent = '';
+    }, 3500);
+  }
+
+  async function saveImage() {
+    if (snapping || !active) return;
+    snapping = true;
+    el.snapBtn.setAttribute('aria-busy', 'true');
+    try {
+      const now = Date.now();
+      const repo = nameOf(active);
+      const caption = [repo, active.demo ? el.repoBadge.textContent : '', `${i18n.fmtDate(now)} ${i18n.fmtTime(now)}`, 'GraphBranch']
+        .filter(Boolean)
+        .join(' · ');
+      const wrap = graph === graph3d ? el.graph3d : el.graph;
+      const file = await GB.snapshot.save(wrap, graph, { repo: active.demo ? 'demo' : repo, caption });
+      // un destello, como el de una cámara (sin él si se pidió menos movimiento)
+      el.graphPanel.classList.remove('snap-flash');
+      void el.graphPanel.offsetWidth;
+      el.graphPanel.classList.add('snap-flash');
+      snapNote(t('snap.done', { file }));
+    } catch (err) {
+      console.error(err);
+      snapNote(t('snap.failed'));
+    } finally {
+      snapping = false;
+      el.snapBtn.removeAttribute('aria-busy');
+    }
+  }
+
   function toggleReplay() {
     if (replay.active) return replay.stop();
     if (!lastRender) return;
@@ -1040,6 +1082,7 @@
   document.addEventListener('webkitfullscreenchange', onFullscreen);
   el.fullscreenBtn.addEventListener('click', toggleFullscreen);
   el.replayBtn.addEventListener('click', toggleReplay);
+  el.snapBtn.addEventListener('click', saveImage);
   el.flyBtn.addEventListener('click', () => graph3d?.flight?.toggle());
   setPressed(el.galaxyBtn, !!graph3d?.galaxy);
   el.galaxyBtn.addEventListener('click', () => graph3d?.setGalaxy(!graph3d.galaxy));

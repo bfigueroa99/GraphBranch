@@ -75,7 +75,7 @@ segunda columna a la primera.
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias) | CI, tags, despliegues |
 | Plataformas | web estática (GitHub Pages), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV | widget y capa para streaming, VS Code |
 | Escala | hasta 10 repos, miles de ramas por repo | una organización o un usuario entero |
-| Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir | imagen y video, Slack y Discord, resumen de la semana |
+| Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG) | video del Replay, Slack y Discord, resumen de la semana |
 | Análisis | resumen de cifras, logros, misión del día | salud del repo, choques entre ramas, comparar ramas, búsqueda |
 | Público | devs y equipos, 40 idiomas, teclado | quien enseña o aprende git, quien usa lector de pantalla |
 
@@ -92,77 +92,81 @@ construir sobre ellas.
    `manifest-src 'self'` (con `default-src 'none'` el manifiesto queda bloqueado). Registrar el worker
    solo en `https:` o `localhost`, no en `app://` de la app de escritorio. Comprobar: una e2e web que
    carga, pasa a sin conexión, recarga y ve la demo.
-2. **Exportar imagen y video** · Salidas. Un botón guarda la vista tal como se ve: en 3D, el canvas
-   (renderizar y leer en la misma tarea, porque el búfer no se conserva); en 2D, el SVG con los colores
-   de las variables CSS ya resueltos, pasado a PNG. Segunda entrega: grabar el Replay a WebM con
-   `canvas.captureStream()` y `MediaRecorder`. CSP: `img-src` necesita `blob:` para dibujar el SVG.
-   Comprobar: el smoke descarga el archivo y verifica la firma PNG y el tamaño.
-3. **GitLab** · Fuentes. `js/sources/gitlab.js` con la interfaz de `GitHubSource` y `DemoSource`
+2. ~~**Exportar imagen**~~ hecho en #46 · Salidas. El botón de la cámara de fotos guarda la vista
+   como PNG, en 3D y en 2D, con las etiquetas y una franja con el repo y la fecha; en la app de
+   escritorio va a la carpeta de descargas.
+3. **Grabar el Replay en video** · Salidas. Segunda entrega de exportar: un botón en la barra del
+   Replay graba la historia a WebM con `MediaRecorder`, cuadro a cuadro desde el compositor de
+   `js/snapshot.js` (la escena 3D o el SVG, más las etiquetas y la fecha grande) sobre un canvas con
+   `captureStream()`; la grabación dura lo que el Replay (menos de un minuto). Sin audio en la primera
+   entrega. Comprobar: el smoke graba unos segundos y verifica la firma WebM (EBML) y que dure más de
+   un segundo.
+4. **GitLab** · Fuentes. `js/sources/gitlab.js` con la interfaz de `GitHubSource` y `DemoSource`
    (`data`, `start`, `stop`, `setPaused`, `setFilter`, `setPins`, `refreshNow`, `files`, los eventos
    `update` y `status`, y `view()` si filtra por su cuenta), sobre la API REST v4 de gitlab.com:
    ramas, commits por rama, merge requests y eventos del proyecto. `U.parseRepo` acepta URLs de GitLab con subgrupos; token propio en ajustes;
    `connect-src` suma `https://gitlab.com`. Primero comprobar que la API responde con CORS desde la
    página. Primera entrega: ramas, commits y MRs con sondeo. Comprobar: `tools/gitlab.test.mjs` con una
    API simulada, como `github.test.mjs`.
-4. **Una organización o un usuario entero** · Escala. Conectar `org:nombre` o `@usuario` sigue sus
+5. **Una organización o un usuario entero** · Escala. Conectar `org:nombre` o `@usuario` sigue sus
    repos con push más reciente (`/orgs/{org}/repos?sort=pushed`, `/users/{u}/repos?sort=pushed`)
    hasta el tope de pestañas, y el panel de actividad suma los eventos de la organización
    (`/orgs/{org}/events`). Segunda entrega: una vista de constelación (cada repo, una galaxia) para
    ver más repos de los que caben en pestañas. Comprobar: prueba de cuota con la API simulada.
-5. **CI en el grafo** · Datos. El estado de los checks de la cabeza de cada rama y de cada PR (✓, ✗,
+6. **CI en el grafo** · Datos. El estado de los checks de la cabeza de cada rama y de cada PR (✓, ✗,
    en curso) en su etiqueta y en el detalle, y un aviso cuando se pone en rojo la rama por defecto. Con
    token, en la misma consulta GraphQL (`statusCheckRollup`); sin token, solo la rama por defecto y las
    fijadas, para no gastar cuota. La demo simula checks. Comprobar: `node --test` con rollups
    simulados.
-6. **Repos locales en la app de escritorio** · Fuentes. `LocalGitSource`: elegir una carpeta (diálogo
+7. **Repos locales en la app de escritorio** · Fuentes. `LocalGitSource`: elegir una carpeta (diálogo
    del sistema), leer ramas y commits con `git` desde el proceso principal (`execFile`, sin shell) y
    vigilar `.git/HEAD`, `.git/refs` y `packed-refs` para ver cada commit al instante. Sin GitHub y sin
    cuota: sirve para repos privados, sin conexión y de cualquier servidor, incluidas las ramas que no
    se han publicado. `preload.js` expone lo mínimo y solo para carpetas elegidas por el usuario.
    Comprobar: una e2e de escritorio sobre un repo creado en la prueba que hace un commit y lo ve llegar.
-7. **Widget embebible y capa para streaming** · Plataformas. `?embed=1`: solo el grafo y los avisos,
+8. **Widget embebible y capa para streaming** · Plataformas. `?embed=1`: solo el grafo y los avisos,
    sin barra, para un iframe en documentación, wikis o Notion (el README trae el código para pegar).
    Con `&bg=transparent`, fondo transparente para OBS al transmitir mientras se programa. Sin token por
    defecto: pensado para repos públicos. Comprobar: el smoke abre `?embed=1` y verifica que no hay
    barras y que no desborda.
-8. **Salud del repo** · Análisis. Un panel con lo que ya está cargado, sin consultas nuevas: ramas sin
+9. **Salud del repo** · Análisis. Un panel con lo que ya está cargado, sin consultas nuevas: ramas sin
    actividad hace más de 30 días y sin PR, PRs abiertos por edad, tiempo de abierto a fusionado de los
    últimos PRs, ritmo de merges y releases. Cada fila lleva a su rama o PR en el grafo. Comprobar:
    `node --test` sobre los cálculos con datos fijos.
-9. **GitHub Enterprise Server** · Fuentes. `GitHubSource` con la URL de la API configurable
+10. **GitHub Enterprise Server** · Fuentes. `GitHubSource` con la URL de la API configurable
    (`https://host/api/v3` y `/api/graphql`). En la web, el host tiene que estar en la CSP: el README
    explica cómo sumarlo al servirlo uno mismo; en la app de escritorio, `--api-url`. Comprobar: las
    pruebas de `github.test.mjs` corridas también con otra URL base.
-10. **Choques entre ramas** · Análisis. Archivos tocados a la vez por varias ramas abiertas (de las
+11. **Choques entre ramas** · Análisis. Archivos tocados a la vez por varias ramas abiertas (de las
     comparaciones con la rama por defecto, que ya pide el modo galaxias): "feature/a y feature/b tocan
     `src/pagos.js`", en el detalle de cada rama y como aviso al aparecer uno nuevo. Comprobar: prueba
     con comparaciones simuladas.
-11. **Avisos a Slack y Discord** · Salidas. En la app de escritorio (las URL de webhook no aceptan
+12. **Avisos a Slack y Discord** · Salidas. En la app de escritorio (las URL de webhook no aceptan
     llamadas desde una página): elegir qué eventos se envían (release, merge a la rama por defecto, CI
     en rojo, force-push en la rama por defecto) y a qué webhook, guardado cifrado como el token.
     Comprobar: una e2e de escritorio con un servidor local que hace de webhook.
-12. **Aprender git** · Público. Un repo de práctica donde se escriben comandos (`commit`, `branch`,
+13. **Aprender git** · Público. Un repo de práctica donde se escriben comandos (`commit`, `branch`,
     `checkout`, `merge`, `rebase`, `reset`) y el grafo 2D o 3D responde al instante, con ejercicios
     guiados ("crea una rama, haz dos commits y fusiónala"). Reutiliza la maquinaria de `DemoSource`.
     Para quien enseña o aprende git. Comprobar: `node --test` sobre el intérprete de comandos.
-13. **Tags y despliegues** · Datos. Los tags como marcas en sus commits (banderín en 2D, obelisco en
+14. **Tags y despliegues** · Datos. Los tags como marcas en sus commits (banderín en 2D, obelisco en
     3D) y dónde está cada entorno de despliegue (producción, staging) según `/deployments`. Comprobar:
     la demo con tags y entornos, y un paso del smoke.
-14. **Vista de texto accesible** · Público. Las ramas y sus commits como un árbol navegable con el
+15. **Vista de texto accesible** · Público. Las ramas y sus commits como un árbol navegable con el
     teclado (`role=tree`), con lo mismo que dicen los grafos, para quien usa lector de pantalla.
     Comprobar: un paso del smoke recorre el árbol con el teclado y lee los nombres accesibles.
-15. **Búsqueda y filtro por autor** · Análisis. Buscar un commit por mensaje, SHA o autor y volar
+16. **Búsqueda y filtro por autor** · Análisis. Buscar un commit por mensaje, SHA o autor y volar
     hasta él; filtrar el grafo por autor ("mis ramas"). Comprobar: un paso del smoke en la demo.
-16. **Comparar dos ramas** · Análisis. Elegir dos ramas: cuántos commits lleva cada una por delante,
+17. **Comparar dos ramas** · Análisis. Elegir dos ramas: cuántos commits lleva cada una por delante,
     desde dónde se separaron y qué archivos cambian, resaltado en el grafo. Comprobar: prueba con la
     API simulada.
-17. **Gitea, Forgejo y Codeberg** · Fuentes. Con la interfaz de fuente de GitLab ya hecha; su API se
+18. **Gitea, Forgejo y Codeberg** · Fuentes. Con la interfaz de fuente de GitLab ya hecha; su API se
     parece a la de GitHub. Comprobar CORS de codeberg.org primero; si no lo hay, solo escritorio.
-18. **Bitbucket Cloud** · Fuentes. `api.bitbucket.org/2.0`: ramas, commits y pull requests.
-19. **Resumen de la semana** · Salidas. Una ficha con lo que pasó en los últimos 7 días (PRs
+19. **Bitbucket Cloud** · Fuentes. `api.bitbucket.org/2.0`: ramas, commits y pull requests.
+20. **Resumen de la semana** · Salidas. Una ficha con lo que pasó en los últimos 7 días (PRs
     fusionados, releases, quién aportó, la rama más activa), para copiar como Markdown o guardar como
     imagen.
-20. **Extensión de VS Code** · Plataformas. Un webview con la app y el token de la sesión de GitHub
+21. **Extensión de VS Code** · Plataformas. Un webview con la app y el token de la sesión de GitHub
     que ya tiene VS Code (`vscode.authentication`), abierta en el repo del espacio de trabajo. El loop
     deja el paquete; publicarlo en el Marketplace lo hace Benjamin.
 
@@ -587,3 +591,40 @@ posteriores pueden haberse movido.
 - Validado: 19 pruebas (`node --test`), smoke, i18n (sin textos nuevos) y 13 e2e en verde.
 - **Siguiente:** iteración 21, expansión: ítem 2 (exportar imagen y video, eje Salidas). La 22 también
   es de expansión; la 23, de mantenimiento (pendiente 1).
+
+### 2026-10-10 · Iteración 21 · Expansión · Salidas
+
+- **Capacidad nueva: guardar la vista como imagen** (primera entrega del ítem 2 de la hoja de ruta; la
+  segunda, grabar el Replay en video, queda como ítem 3). Un botón con una cámara de fotos en la barra
+  del grafo descarga un PNG de la vista tal como se ve, en 3D o en 2D y en cualquier modo (galaxias,
+  vuelo, tema claro u oscuro), con una franja abajo con el repo, la fecha y el nombre de la app. Un
+  aviso dice el nombre del archivo, también al lector de pantalla.
+  - `js/snapshot.js` arma la imagen en un canvas. En 3D, `Graph3D.renderNow()` dibuja la escena y se
+    copia en la misma tarea (WebGL no conserva el cuadro). En 2D, el SVG se clona con sus estilos ya
+    resueltos y se pasa a imagen por tandas de grupos, en el orden en que se pintan, a 2× de
+    resolución. Los textos (del SVG y de las etiquetas HTML) se escriben con el canvas de la página,
+    porque un SVG convertido en imagen no puede cargar las fuentes de la página. Las etiquetas,
+    paneles y el minimapa se pintan como cajas con fondo, borde, radio y texto, ordenadas por
+    `z-index` y con su opacidad (las etiquetas tapadas salen atenuadas, como se ven).
+  - Sin `foreignObject` (Safari deja el canvas sin poder exportarse) y sin imágenes de otros sitios
+    (los avatares harían lo mismo en cualquier navegador). El CSP no cambia: la imagen del SVG va como
+    `data:`, que `img-src` ya permite, y la descarga es un enlace `blob:`.
+  - App de escritorio: `will-download` guarda la imagen en la carpeta de descargas sin preguntar y sin
+    pisar otra (`… (1).png`); solo acepta `.png` que vengan de `blob:app://graphbranch/`.
+- **Pruebas que fallan sin la capacidad:**
+  - Smoke: en 2D, con la demo en pausa, guarda la imagen y comprueba el PNG (firma, proporciones de la
+    vista más la franja, nombre del archivo, el aviso) y que en el centro de cada commit a la vista la
+    imagen tenga el color de su rama. En 3D, que la imagen tenga la escena: con ella salen más de
+    1.000 colores; leyendo el canvas fuera de la tarea en que se dibujó, solo el fondo y las
+    etiquetas, unos 125 (medido); el umbral es 500.
+  - e2e de escritorio: dos clics dejan dos PNG en la carpeta de descargas (el segundo con `(1)`), y la
+    ventana no navega. Sin el manejador de descargas, Electron abre un diálogo y la prueba falla
+    (comprobado).
+- README: la función en la lista y en Controles, la estructura, las pruebas, Límites conocidos (qué no
+  se copia) y Seguridad (nada sale de la página; qué descargas acepta la app de escritorio).
+- `sw.js` suma `js/snapshot.js` a lo que guarda para abrir sin red (la prueba de #45 lo pidió).
+- Validado: 19 pruebas (`node --test`), smoke (40 idiomas), i18n (4 textos nuevos en los 40 idiomas)
+  y 14 e2e en verde.
+- **Siguiente:** iteración 22, expansión. El primer ítem sin hacer es el 3 (video del Replay), del
+  mismo eje que esta (Salidas), y entre los tres primeros hay otros ejes: toca el 4, **GitLab**
+  (Fuentes). La 23 es de mantenimiento (pendiente 1).

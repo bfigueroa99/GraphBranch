@@ -11,6 +11,7 @@
    Cerrar la ventana la esconde en la bandeja del sistema (electron/tray.js) y la app sigue
    revisando los repositorios; para salir del todo está "Salir" en el menú del ícono. */
 const { app, BrowserWindow, ipcMain, nativeTheme, net, protocol, session, shell } = require('electron');
+const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const token = require('./token');
@@ -81,6 +82,19 @@ function openOutside(url) {
   }
 }
 
+/** Las imágenes que guarda la página (Guardar imagen, js/snapshot.js) van a la carpeta de descargas
+    sin preguntar, como en un navegador, y sin pisar otra con el mismo nombre. Cualquier otra
+    descarga se cancela: la página no tiene por qué bajar nada más. */
+function saveDownload(ev, item) {
+  const name = item.getFilename();
+  if (!item.getURL().startsWith(`blob:${ORIGIN}/`) || !/^[\w.-]+\.png$/.test(name)) return item.cancel();
+  const dir = app.getPath('downloads');
+  const ext = path.extname(name);
+  let file = path.join(dir, name);
+  for (let i = 1; fs.existsSync(file); i++) file = path.join(dir, `${path.basename(name, ext)} (${i})${ext}`);
+  item.setSavePath(file);
+}
+
 let win = null;
 /** Mientras no se pide salir (menú del ícono, Cmd+Q, apagar el equipo), cerrar la ventana solo la esconde. */
 let quitting = false;
@@ -148,6 +162,7 @@ if (!app.requestSingleInstanceLock()) {
     const allow = (permission, url) => PERMISSIONS.has(permission) && isApp(url);
     session.defaultSession.setPermissionRequestHandler((wc, permission, done, details) => done(allow(permission, details.requestingUrl)));
     session.defaultSession.setPermissionCheckHandler((wc, permission, origin) => allow(permission, origin));
+    session.defaultSession.on('will-download', saveDownload);
     nativeTheme.on('updated', () => win?.setBackgroundColor(nativeTheme.shouldUseDarkColors ? BG.dark : BG.light));
 
     // el token solo se entrega a la propia página (electron/preload.js)

@@ -3388,6 +3388,58 @@ button.act-main:hover {
   background: var(--warn);
 }
 /* rótulo inferior, como en una transmisión: qué se está filmando */
+/* aviso de "imagen guardada" (js/snapshot.js): siempre presente para que el lector lo anuncie, visible solo un momento */
+.snap-note {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  z-index: 6;
+  max-width: calc(100% - 28px);
+  margin: 0;
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  font: 500 12.5px var(--font-ui);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transform: translateX(-50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.snap-note.on {
+  opacity: 1;
+}
+.snap-note:empty {
+  padding: 0;
+  border: 0;
+}
+.graph-panel.snap-flash .graph-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  background: #fff;
+  pointer-events: none;
+  animation: snapflash 0.4s ease-out forwards;
+}
+@keyframes snapflash {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .graph-panel.snap-flash .graph-stage::after {
+    display: none;
+  }
+}
 .lower {
   position: absolute;
   left: 14px;

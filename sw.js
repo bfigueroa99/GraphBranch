@@ -16,7 +16,7 @@ const FILES = [
   'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png',
   'js/app.js', 'js/director.js', 'js/feed.js', 'js/flight.js', 'js/galaxy.js', 'js/game.js', 'js/graph.js',
   'js/graph3d.js', 'js/i18n-apply.js', 'js/i18n.js', 'js/layout.js', 'js/palette.js', 'js/pwa.js',
-  'js/replay.js', 'js/sound.js', 'js/util.js', 'js/world.js',
+  'js/replay.js', 'js/snapshot.js', 'js/sound.js', 'js/util.js', 'js/world.js',
   'js/locales/ar.js', 'js/locales/bg.js', 'js/locales/bn.js', 'js/locales/ca.js', 'js/locales/cs.js',
   'js/locales/da.js', 'js/locales/de.js', 'js/locales/el.js', 'js/locales/en.js', 'js/locales/es.js',
   'js/locales/fa.js', 'js/locales/fi.js', 'js/locales/fil.js', 'js/locales/fr.js', 'js/locales/he.js',

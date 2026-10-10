@@ -1,6 +1,6 @@
 /* Pruebas e2e de la app de escritorio (Electron): se abre como la abre un usuario, sin red. */
 import { test, expect } from '@playwright/test';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { closeWindow, launch, launchAgain, loaded, runHidden, tokenFiles, windowState } from './app.mjs';
 
@@ -22,6 +22,30 @@ test('arranca sin red: la demo, las librerías y las fuentes van dentro de la ap
   expect(info.node).toEqual(['undefined', 'undefined']); // la página no ve Node
   expect(info.bridge).toEqual(['getToken', 'setLabels', 'setToken', 'show']);
   expect(info.fonts).toEqual(['Bricolage Grotesque', 'Instrument Sans', 'JetBrains Mono']);
+  await app.close();
+});
+
+test('Guardar imagen deja un PNG en la carpeta de descargas, sin pisar el anterior', async ({}, testInfo) => {
+  const { app, page } = await launch(testInfo, { args: ['--lang=es'] });
+  const dir = testInfo.outputPath('descargas');
+  mkdirSync(dir, { recursive: true });
+  await app.evaluate(({ app }, d) => app.setPath('downloads', d), dir);
+  await loaded(page);
+  await expect(page.locator('#status-text')).toHaveText('Simulación en vivo');
+  const pngs = () => readdirSync(dir).filter((f) => f.endsWith('.png')).sort();
+  for (const n of [1, 2]) {
+    await page.click('#snap-btn');
+    await expect(page.locator('#snap-note')).toContainText('Imagen guardada: graphbranch-demo-');
+    await expect.poll(pngs, { timeout: 10_000 }).toHaveLength(n);
+  }
+  const files = pngs();
+  expect(files[0]).toMatch(/^graphbranch-demo-\d{4}-\d\d-\d\d-\d{4}( \(1\))?\.png$/);
+  for (const f of files) {
+    const png = readFileSync(join(dir, f));
+    expect(png.toString('latin1', 1, 4)).toBe('PNG');
+    expect(png.readUInt32BE(16)).toBeGreaterThan(300); // ancho
+  }
+  expect(page.url()).toMatch(/^app:\/\/graphbranch\//); // la ventana no navegó al blob
   await app.close();
 });
 

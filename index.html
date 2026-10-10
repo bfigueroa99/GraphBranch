@@ -172,6 +172,9 @@
           <button class="icon-btn" type="button" id="replay-btn" aria-pressed="false" title="Replay the history" aria-label="Replay the history" data-i18n-attr="title:replay.label;aria-label:replay.label">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 8a5.4 5.4 0 1 0 1.7-3.9M2.4 2.6v3h3"/><path d="M7 5.9v4.2L10.2 8z"/></svg>
           </button>
+          <button class="icon-btn" type="button" id="snap-btn" title="Save the view as an image (PNG)" aria-label="Save image" data-i18n-attr="title:snap.title;aria-label:snap.label">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 5.2h2.6l1.3-1.9h4.2l1.3 1.9H14v7.5H2z"/><circle cx="8" cy="8.8" r="2.4"/></svg>
+          </button>
           <button class="btn btn-follow" type="button" id="follow-btn" aria-pressed="true">
             <span class="live-dot" aria-hidden="true"></span><span class="follow-label">Live</span>
           </button>
@@ -201,6 +204,8 @@
         <div class="combo" id="combo" aria-hidden="true"></div>
         <!-- rótulo del director de cámara: qué se está filmando (ya se anuncia en el panel de actividad) -->
         <div class="lower" id="lower" aria-hidden="true"></div>
+        <!-- aviso de "imagen guardada": se ve unos segundos y lo lee el lector de pantalla -->
+        <p class="snap-note" id="snap-note" role="status"></p>
         <div class="tv-bar" id="tv-bar">
           <button class="icon-btn" type="button" id="tv-pause" aria-pressed="false" title="Pause" aria-label="Pause" data-i18n-attr="title:ctl.pause;aria-label:ctl.pause">
             <svg class="ico when-off" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.5v9M10.5 3.5v9"/></svg>
@@ -323,6 +328,7 @@
 <script src="js/replay.js"></script>
 <script src="js/game.js"></script>
 <script src="js/feed.js"></script>
+<script src="js/snapshot.js"></script>
 <script src="js/app.js"></script>
 <script src="js/pwa.js"></script>
 </body>

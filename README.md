@@ -19,6 +19,7 @@ Grafo en vivo, en 3D o 2D, de las ramas de un repositorio de GitHub, con alertas
 - **Colores**: toda rama viva tiene un color propio, de una paleta de más de 8.000: los 8 primeros están elegidos a mano y el resto se genera repartido lo más lejos posible entre sí, en el tema claro y en el oscuro, así que cada rama nueva toma un color distinto sin importar cuántas haya. La rama por defecto lleva siempre el primero, cada una conserva el suyo mientras exista y la que se borra lo deja libre. El gris es solo de las ramas muertas: las ya fusionadas y borradas, y las ya fusionadas que siguen existiendo (su cabeza ya está en la rama por defecto). Las ramas de larga vida (`develop`, `release/…`, protegidas) y las recién creadas sobre la cabeza de la rama por defecto no se dan por muertas; una rama fusionada que recibe commits nuevos vuelve a tener color.
 - En ambas, las bifurcaciones y merges se dibujan como curvas y las ramas muertas quedan en gris.
 - **En vivo**: los commits nuevos aparecen con una onda, la etiqueta de la rama se desliza hasta su nueva cabeza, la rama sube justo bajo la rama por defecto (los carriles se reordenan según su última actividad) y la vista sigue lo último (o te deja recorrer la historia).
+- **Guardar imagen**: el botón de la cámara de fotos guarda la vista como un PNG tal como se ve en ese momento, en 3D o en 2D, en cualquier modo (galaxias, vuelo, Replay), con las etiquetas de las ramas y los efectos en curso, y abajo una franja con el repo y la fecha, lista para compartir. La 2D sale al doble de resolución; la 3D, a la resolución con que se dibuja. Se descarga como cualquier archivo (`graphbranch-owner-repo-2026-10-10-1430.png`); en la app de escritorio va directo a la carpeta de descargas.
 - **Alertas**: panel de actividad filtrable, avisos emergentes, sonido opcional, notificaciones del sistema cuando la pestaña está en segundo plano y contador en el título de la pestaña.
 - **Varios repos a la vez**: cada repo que conectas se suma a los que ya sigues, en una pestaña bajo la barra superior. Todos se siguen en vivo aunque no estén a la vista: sus novedades llegan al panel de actividad (que junta las de todos y dice de qué repo es cada una), a los avisos, al sonido y a las notificaciones, y cada pestaña muestra su estado y cuántas novedades llegaron sin verla. Un clic en la pestaña, o en una actividad de ese repo, lo muestra al momento, sin volver a cargarlo; la **×** deja de seguirlo. Se recuerdan entre visitas, y la URL los lleva todos (`?repo=owner/api&repo=owner/web`), así se comparte el conjunto. Hasta 10 repos.
 - **Sonido**: cada tipo de evento tiene su timbre (pulsación para los commits, campana para los PRs, acorde para los merges, arpegio para los releases) y todo suena en una escala pentatónica, a un pulso tranquilo: varios eventos juntos forman una frase. La rama por defecto es la tónica y cada rama tiene su nota; en 3D el sonido sale del lado de la pantalla donde está la rama. Viene apagado; se activa con el altavoz de la barra superior.
@@ -126,6 +127,7 @@ En las dos:
 - **Pantalla completa** (botón o `F`): el grafo ocupa toda la pantalla; `Esc` o `F` para salir.
 - **Trofeos** (barra superior, o la franja de nivel y misión bajo el título del grafo): abre la vitrina de logros; ahí se apaga o enciende la capa de juego.
 - **Replay** (flecha circular): reproduce la historia; barra espaciadora para pausar, arrastra la línea de tiempo para saltar y **Volver al presente** para salir.
+- **Guardar imagen** (cámara de fotos): descarga la vista como PNG.
 - **Modo TV** (pantalla): barra espaciadora para pausar todo, `F` para pantalla completa y `Esc` o **Salir del modo TV** (en la barra de arriba a la derecha) para salir.
 - **Pausar** (barra superior): deja de traer novedades y detiene todo lo que se mueve solo (giro, director, fondo).
 - Los chips del panel de actividad filtran la lista y también los avisos emergentes.
@@ -206,7 +208,7 @@ Para firmarlos de verdad hacen falta un certificado de Apple Developer (y notari
 
 `npm run test:e2e` abre la app de escritorio y la web como las usa una persona (con [Playwright](https://playwright.dev/)) y revisa:
 
-- **App de escritorio, sin red**: la demo, las librerías y las fuentes van dentro de la app; `app://` no sirve nada más del proyecto; los enlaces van al navegador del sistema y la ventana no navega a otro sitio; un repositorio real avisa que no hay conexión; `--repo` repetido sigue varios repos, que vuelven al reabrir.
+- **App de escritorio, sin red**: la demo, las librerías y las fuentes van dentro de la app; Guardar imagen deja el PNG en la carpeta de descargas sin pisar el anterior; `app://` no sirve nada más del proyecto; los enlaces van al navegador del sistema y la ventana no navega a otro sitio; un repositorio real avisa que no hay conexión; `--repo` repetido sigue varios repos, que vuelven al reabrir.
 - **Token**: se guarda cifrado y fuera de `localStorage`, vuelve al reabrir, se borra, y pasa al llavero el que la primera versión dejaba en `localStorage`.
 - **Bandeja**: cerrar esconde la ventana, la página lo sabe y sigue contando novedades, el aviso sale una vez y en su idioma, y una notificación o abrir la app otra vez traen la ventana.
 - **Ventana oculta**: Chromium no espacia los temporizadores a uno por minuto. Tarda 2 minutos; `npx playwright test --grep-invert @lento` corre todo lo demás.
@@ -214,7 +216,7 @@ Para firmarlos de verdad hacen falta un certificado de Apple Developer (y notari
 
 Las pruebas nunca usan la red: la app se abre con un proxy que no existe y con una carpeta de datos propia en cada prueba. La primera vez hace falta el Chromium de Playwright para las de la web: `npx playwright install chromium`. En Linux sin pantalla: `xvfb-run npm run test:e2e`.
 
-Además, `node --test` prueba la lógica de `js/sources/github.js` contra una API de GitHub simulada y el service worker (`sw.js`) con una caché y una red falsas (guarda la página entera, nunca la API, y sin red sirve la copia), y `node tools/smoke.mjs` es una prueba de humo rápida de la web (la demo y, con una API de GitHub simulada, varios repos a la vez) (con `--langs`, en los 40 idiomas y en pantalla de celular).
+Además, `node --test` prueba la lógica de `js/sources/github.js` contra una API de GitHub simulada y el service worker (`sw.js`) con una caché y una red falsas (guarda la página entera, nunca la API, y sin red sirve la copia), y `node tools/smoke.mjs` es una prueba de humo rápida de la web (la demo, con Guardar imagen en 3D y 2D, y, con una API de GitHub simulada, varios repos a la vez) (con `--langs`, en los 40 idiomas y en pantalla de celular).
 
 ## Estructura
 
@@ -242,6 +244,7 @@ js/sound.js           sonido de la actividad (Web Audio, escala pentatónica), e
 js/replay.js          modo Replay: la historia como time-lapse
 js/game.js            logros del repo, nivel y misión del día
 js/feed.js            panel de actividad, avisos, sonido y notificaciones
+js/snapshot.js        Guardar imagen: la vista 3D o 2D como PNG, con sus etiquetas
 js/app.js             conecta todo y lleva los repos seguidos (una pestaña por repo)
 js/pwa.js             registra sw.js (solo en la web por https o localhost)
 vendor/               copias locales de d3, Three.js, OrbitControls y las fuentes, con sus licencias (las genera tools/vendor.mjs)
@@ -268,6 +271,7 @@ package.json          Electron, Playwright y los scripts (npm start, npm run dis
 - Se siguen hasta 10 repos a la vez, y todos comparten la cuota de GitHub: sin token, con varios repos cada uno se actualiza cada varios minutos.
 - Modo galaxias: los archivos de una rama salen de una consulta a GitHub al acercarse a su galaxia (sin token, gasta una de las 60 por hora). Para la rama por defecto es el árbol completo del repo (GitHub lo corta en repos enormes); para las demás, la comparación con la rama por defecto, que trae como mucho 300 archivos.
 - Instalar y abrir sin red es de la versión web publicada por https (o servida en `localhost`): con doble clic (`file://`) los navegadores no admiten service workers, y la app de escritorio ya lleva todo dentro. La primera visita necesita red. Sin red solo funciona la demo: los datos de GitHub nunca se guardan, así que un repo espera a que vuelva la conexión. Cómo se instala depende del navegador; donde no se ofrece, la página funciona igual sin instalar.
+- Guardar imagen copia lo que se ve, con dos salvedades: las etiquetas y paneles se redibujan como cajas con su fondo, borde y texto (sin sombras, desenfoques ni degradados), y la ficha de detalle abierta, los controles y la fecha grande del Replay quedan fuera de la imagen. La escena 3D sale a la resolución con que se está dibujando, que baja sola si el equipo no da abasto.
 - El modo TV pide al navegador que no apague la pantalla (Screen Wake Lock: Chrome y Edge 84+, Safari 16.4+, Firefox 126+). Si no lo permite (sin soporte, o con batería baja), la pantalla se apaga según el sistema; para un panel fijo conviene desactivar también el ahorro de energía del equipo. El navegador solo deja pasar a pantalla completa tras un gesto del usuario, así que con `?tv=1` hay que pulsar `F` o el botón.
 
 ## Seguridad
@@ -275,6 +279,7 @@ package.json          Electron, Playwright y los scripts (npm start, npm run dis
 `index.html` lleva una política de seguridad de contenido (CSP):
 
 - **CSP**: scripts, estilos y fuentes solo pueden venir del propio sitio; no se permite `eval` ni scripts o manejadores en línea. Las conexiones salen únicamente a `api.github.com` y las imágenes solo pueden ser avatares de GitHub o del propio sitio (los íconos). Así, aunque algún texto de un repositorio lograra colarse en la página, no podría ejecutar código ni enviar tu token a otro servidor.
+- **Guardar imagen sin salir de la página**: el PNG se arma en un canvas de la propia página y se descarga con un enlace `blob:`; no se sube a ningún lado ni hace falta abrir el CSP. Las imágenes de otros sitios (los avatares) no se copian, porque dejarían el canvas sin poder exportarse. La app de escritorio solo acepta descargas de imágenes `.png` que vengan de su propia página (`blob:app://graphbranch/…`); cualquier otra se cancela.
 - **Sin conexión, sin datos guardados**: el service worker (`sw.js`) solo guarda los archivos de la propia página. Nunca guarda respuestas de `api.github.com` (con token llevan datos privados) ni avatares: esas peticiones ni siquiera pasan por él. El CSP le suma solo lo del propio sitio: `manifest-src 'self'`, `worker-src 'self'` e `img-src 'self'` (los íconos del manifiesto).
 - **Librerías y fuentes locales**: d3, Three.js, OrbitControls y las fuentes son copias en `vendor/`, junto a sus licencias. La página no depende de ningún CDN, y tampoco le cuenta a Google Fonts quién la abre.
 

@@ -115,6 +115,61 @@ async function step(page, name, fn, { allow = null } = {}) {
 }
 
 const loaded = (page) => page.waitForSelector('#overlay', { state: 'hidden', timeout: 20000 });
+
+/** Guarda la vista con el botón de la cámara y revisa el archivo: un PNG con las proporciones de la
+    vista (más la franja de abajo) y con dibujo, no un lienzo vacío. Con `dots`, además, en el centro
+    de cada uno de esos elementos (los commits de la 2D) la imagen tiene su color. Devuelve cuántos
+    colores distintos tiene. */
+async function snapshot(page, sel, { minColors = 100, dots = null } = {}) {
+  const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), page.click('#snap-btn')]);
+  const name = dl.suggestedFilename();
+  if (!/^graphbranch-demo-\d{4}-\d\d-\d\d-\d{4}\.png$/.test(name)) throw new Error(`nombre inesperado: ${name}`);
+  const note = await page.textContent('#snap-note');
+  if (!note.includes(name)) throw new Error(`el aviso dice "${note}"`);
+  const png = readFileSync(await dl.path());
+  if (png.toString('latin1', 1, 4) !== 'PNG') throw new Error('no es un PNG');
+  const [w, h] = [png.readUInt32BE(16), png.readUInt32BE(20)];
+  const res = await page.evaluate(
+    async ({ b64, sel, dots }) => {
+      const wrap = document.querySelector(sel);
+      const r = wrap.getBoundingClientRect();
+      const img = new Image();
+      img.src = 'data:image/png;base64,' + b64;
+      await img.decode();
+      const c = document.createElement('canvas');
+      c.width = img.width;
+      c.height = img.height;
+      const x = c.getContext('2d', { willReadFrequently: true });
+      x.drawImage(img, 0, 0);
+      // colores distintos (con 5 bits por canal) sin contar la franja de abajo
+      const d = x.getImageData(0, 0, c.width, Math.round(c.height * 0.9)).data;
+      const seen = new Set();
+      for (let i = 0; i < d.length; i += 4) seen.add(((d[i] >> 3) << 10) | ((d[i + 1] >> 3) << 5) | (d[i + 2] >> 3));
+      const k = img.width / Math.round(r.width);
+      const off = [];
+      let checked = 0;
+      for (const dot of dots ? wrap.querySelectorAll(dots) : []) {
+        const b = dot.getBoundingClientRect();
+        const [cx, cy] = [b.left + b.width / 2, b.top + b.height / 2];
+        // solo los que se ven enteros y lejos de los bordes (la leyenda y el minimapa los tapan)
+        if (b.width < 6 || cx < r.left + r.width * 0.3 || cx > r.right - 10 || cy < r.top + 30 || cy > r.bottom - 90) continue;
+        if (document.elementFromPoint(cx, cy)?.closest('.node') !== dot.closest('.node')) continue;
+        const want = getComputedStyle(dot).fill.match(/\d+/g).slice(0, 3).map(Number);
+        const got = x.getImageData(Math.round((cx - r.left) * k), Math.round((cy - r.top) * k), 1, 1).data;
+        checked++;
+        if (want.some((v, i) => Math.abs(v - got[i]) > 24)) off.push(`${want} en lugar de ${[...got].slice(0, 3)}`);
+      }
+      return { box: { w: Math.round(r.width), h: Math.round(r.height) + GB.snapshot.CAPTION }, colors: seen.size, checked, off };
+    },
+    { b64: png.toString('base64'), sel, dots },
+  );
+  const { box, colors } = res;
+  if (w < box.w || Math.abs(w / h - box.w / box.h) > 0.01) throw new Error(`mide ${w}×${h} y la vista ${box.w}×${box.h}`);
+  if (colors < minColors) throw new Error(`la imagen casi no tiene dibujo: ${colors} colores`);
+  if (dots && res.checked < 3) throw new Error(`solo ${res.checked} commits a la vista para comparar`);
+  if (res.off.length) throw new Error(`commits de otro color en la imagen: ${res.off.slice(0, 3).join('; ')}`);
+  return colors;
+}
 const noOverflow = (page) => page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
 
 /* ---------- escritorio ---------- */
@@ -172,11 +227,28 @@ console.log('Escritorio (1280×800)');
     if (await page.locator('#graph3d').isVisible()) throw new Error('la vista 3D sigue visible');
   });
 
+  await step(page, 'guarda la vista 2D como imagen, con cada commit en su lugar y de su color', async () => {
+    // en pausa nada se mueve entre la imagen y la comparación
+    await page.click('#pause-btn');
+    await page.waitForTimeout(1200);
+    try {
+      await snapshot(page, '#graph', { dots: '.node:not(.merge) .dot' });
+    } finally {
+      await page.click('#pause-btn');
+    }
+  });
+
   if (has3d) {
     await step(page, 'vuelve a 3D', async () => {
       await page.click('#view-3d');
       await page.waitForSelector('#graph3d', { state: 'visible', timeout: 5000 });
       await page.waitForTimeout(1500); // unos cuantos cuadros de animación
+    });
+
+    // la escena se copia en la misma tarea en que se dibuja: leída después, WebGL la habría borrado
+    // y quedarían solo el fondo y las etiquetas (unos 125 colores; con la escena, más de 1.000)
+    await step(page, 'guarda la vista 3D como imagen, con la escena', async () => {
+      await snapshot(page, '#graph3d', { minColors: 500 });
     });
 
     await step(page, 'modo vuelo', async () => {

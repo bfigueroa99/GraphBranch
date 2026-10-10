@@ -1738,6 +1738,14 @@
       this.padStart = pressed;
     }
 
+    /** Dibuja la escena en este instante y devuelve su canvas, para copiarlo en esta misma tarea:
+        WebGL no conserva el cuadro (preserveDrawingBuffer apagado), así que más tarde estaría vacío. */
+    renderNow() {
+      this.beforeRender();
+      this.renderer.render(this.scene, this.camera);
+      return this.canvas;
+    }
+
     /* ---------- cuadro a cuadro ---------- */
 
     frame(now) {

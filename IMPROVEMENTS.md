@@ -25,35 +25,30 @@ Ordenados por impacto. Salen de las auditorías del código: datos y lógica, y 
 también se probaron. Los números de línea son de cuando se auditó: con los cambios
 posteriores pueden haberse movido.
 
-### Media
-
-1. **Un error 5xx suelto apaga funciones para toda la sesión** (`activityOk = false`, `github.js:539`;
-    caída permanente de GraphQL a REST, `:311`). Arreglo: degradar solo con 403/404/410.
-
 ### Baja
 
-2. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
+1. El detalle de rama o commit pierde el foco al pulsar **Fijar** (`graph.js:92` usa `outerHTML`) y no
     recibe foco al abrirse desde el teclado.
-3. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
+2. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
     `:2121`): su animación termina en opacidad 0.
-4. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
+3. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
     rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-5. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-6. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
+4. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+5. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
     `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro).
-7. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
+6. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
     `aria-pressed` y el texto, leyenda 2D sin acceso por teclado, el botón de pausa del Replay sin nombre
     accesible (`index.html:190`).
-8. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-9. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-10. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
-11. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
-12. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
+7. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+8. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+9. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
+10. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
+11. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
     blanco al arrancar.
-13. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
+12. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
     Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-14. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
+13. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
     (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
@@ -345,3 +340,18 @@ posteriores pueden haberse movido.
 - Validado: 8 pruebas, smoke, i18n y 11 e2e en verde.
 - **Siguiente:** pendiente 1 (un error 5xx suelto apaga funciones para toda la sesión), luego 2 (el foco
   al pulsar **Fijar** en el detalle).
+
+### 2026-10-10 · Iteración 18
+
+- **Arreglo: un error pasajero del servidor ya no apaga funciones para toda la sesión.** Cualquier error
+  que no fuera de red ni de cuota (un 502 suelto, por ejemplo) apagaba la API de actividad hasta
+  recargar, y en la carga inicial cualquier error HTTP de GraphQL pasaba a REST para siempre: con token,
+  la sesión entera quedaba con el modo más pobre por un tropiezo de GitHub. Ahora solo se degrada con
+  errores que dicen que la función no está disponible (400, 403, 404, 410, 422 o un error propio de
+  GraphQL); los demás cortan el ciclo o se saltan y se reintentan en el siguiente.
+- **Pruebas nuevas** en `tools/github.test.mjs` (la API simulada responde a pedido): un 502 de la API de
+  actividad no la apaga y un 403 sí; un 502 de GraphQL en la carga inicial falla el ciclo y sigue en
+  GraphQL, y un error propio de GraphQL sí pasa a REST. Las dos fallaban antes del arreglo.
+- Validado: 10 pruebas, smoke, i18n y 11 e2e en verde.
+- **Siguiente:** pendiente 1 (el detalle pierde el foco al pulsar **Fijar**), luego 2 (con movimiento
+  reducido, la ayuda del vuelo no se ve).

@@ -41,6 +41,9 @@
   /** Errores que cortan el ciclo entero: una consulta secundaria que falla así no los tapa. */
   const HARD = new Set(['rate', 'network', 'auth', 'aborted']);
   const hard = (err) => HARD.has(err?.kind);
+  /** Errores que dicen que una función no está disponible (y no va a estarlo): los demás, como un 5xx
+      suelto, se reintentan en el ciclo siguiente en vez de apagarla para toda la sesión. */
+  const unavailable = (err) => err?.kind === 'graphql' || err?.kind === 'notfound' || [400, 403, 404, 410, 422].includes(err?.status);
 
   class ApiError extends Error {
     constructor(message, { status = 0, kind = 'http', resetAt = 0 } = {}) {
@@ -480,7 +483,8 @@
         try {
           await this.syncGraphQL(acts, quiet, deadline);
         } catch (err) {
-          if (this.data.loaded || !['graphql', 'http'].includes(err.kind)) throw err;
+          // un error pasajero (5xx) corta el ciclo y se reintenta; solo se pasa a REST si GraphQL no está disponible
+          if (this.data.loaded || !unavailable(err)) throw err;
           console.warn('GraphQL no disponible, se usa REST:', err.message);
           this.mode = null;
         }
@@ -937,6 +941,7 @@
           res = await this.api(path, { cacheKey: page ? null : 'activity' });
         } catch (err) {
           if (hard(err)) throw err;
+          if (!unavailable(err)) return; // pasajero: se vuelve a intentar en el ciclo siguiente
           this.activityOk = false;
           console.warn('No se pudo leer la API de actividad; se usan los eventos del repo:', err.message);
           return;

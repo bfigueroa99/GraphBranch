@@ -48,6 +48,16 @@ window.GB = window.GB || {};
     return m ? { owner: m[1], name: m[2] } : null;
   };
 
+  /** Una organización o un usuario de GitHub entero: org:nombre, user:nombre, @nombre o la URL de su
+      perfil (github.com/nombre, github.com/orgs/nombre). null si no es eso: un nombre suelto no
+      cuenta, para no confundirlo con un repo mal escrito. */
+  U.parseOwner = (input) => {
+    const s = String(input || '').trim().replace(/[?#].*$/, '').replace(/\/+$/, '');
+    const m = s.match(/^(?:org:|user:|@)(.+)$/i) || s.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/(?:orgs\/)?([^/]+)$/i);
+    // como GitHub: letras, números y guiones sueltos, sin guion al principio ni al final, hasta 39
+    return m && /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/.test(m[1]) ? { owner: m[1] } : null;
+  };
+
   /** localStorage envuelto: puede no existir o lanzar (modo privado, sandbox). */
   U.store = {
     get(key, fallback) {

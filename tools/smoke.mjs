@@ -575,6 +575,7 @@ const lowContrast = (page) =>
  */
 function fakeGitHub() {
   const repos = new Map();
+  const orgs = new Set(); // los dueños que son organizaciones (los demás, usuarios)
   const calls = [];
   let n = 0;
   const sha = (s) => createHash('sha1').update(s).digest('hex');
@@ -590,16 +591,30 @@ function fakeGitHub() {
       author: null,
     });
     r.branches.set(branch, id);
+    r.pushed = n;
   };
-  const repo = (full) => {
+  /** Un repo; `more` puede marcarlo como fork o archivado (para la lista de su organización). */
+  const repo = (full, more = {}) => {
     if (!repos.has(full)) {
-      const r = { full, branches: new Map(), commits: new Map() };
+      const r = { full, branches: new Map(), commits: new Map(), ...more };
       for (let i = 0; i < 4; i++) commit(r, 'main', `inicio ${i} de ${full}`);
       repos.set(full, r);
     }
     return repos.get(full);
   };
+  /** /orgs/{org}/repos y /users/{u}/repos: sus repos, el de push más reciente primero. */
+  const listed = (owner) =>
+    [...repos.values()]
+      .filter((r) => r.full.split('/')[0] === owner)
+      .sort((a, b) => b.pushed - a.pushed)
+      .map((r) => ({ name: r.full.split('/')[1], owner: { login: owner }, fork: !!r.fork, archived: !!r.archived, private: false, pushed_at: new Date(Date.now() - 1e6 + r.pushed).toISOString() }));
   const route = (path, q) => {
+    const own = path.match(/^\/(orgs|users)\/([^/]+)\/repos$/);
+    if (own) {
+      const [, kind, who] = own;
+      const found = kind === 'orgs' ? orgs.has(who) : !orgs.has(who) && listed(who).length > 0;
+      return found ? { body: listed(who) } : { status: 404, body: { message: 'Not Found' } };
+    }
     const m = path.match(/^\/repos\/([^/]+\/[^/]+)(\/.*)?$/);
     if (!m || !repos.has(m[1])) return { status: 404, body: { message: 'Not Found' } };
     const r = repos.get(m[1]);
@@ -622,6 +637,7 @@ function fakeGitHub() {
   return {
     calls,
     repo,
+    org: (name) => orgs.add(name),
     push: (full, branch, message) => commit(repo(full), branch, message),
     handle: (r) => {
       const u = new URL(r.request().url());
@@ -817,6 +833,56 @@ console.log('Varios repos a la vez');
     if (over > 1) throw new Error(`la página es ${over}px más ancha que la pantalla`);
   });
   await phonePage.context().close();
+}
+
+console.log('Una organización o un usuario entero');
+{
+  const gh = fakeGitHub();
+  gh.org('acme');
+  for (const r of ['acme/viejo', 'acme/api', 'acme/web']) gh.repo(r);
+  gh.repo('acme/copia', { fork: true });
+  gh.repo('acme/museo', { archived: true });
+  gh.push('acme/api', 'main', 'lo último de acme'); // el de push más reciente: api, web, viejo
+  gh.repo('ana/notas');
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', gh.handle);
+  await page.addInitScript(quickCycles);
+  const names = async () => (await repoTabs(page)).map((t) => `${t.name}${t.on ? '*' : ''}`).join(' ');
+
+  await step(page, 'org:acme sigue sus repos de push más reciente, sin forks ni archivados, y muestra el último', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    await page.fill('#repo-input', 'org:acme');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 3, null, { timeout: 15000 });
+    if ((await names()) !== 'acme/api* acme/web acme/viejo') throw new Error(`pestañas: ${await names()}`);
+    const toast = await page.waitForSelector('#toasts .toast:has-text("Ahora sigues los repositorios más activos de acme")', { timeout: 5000 });
+    const detail = await toast.$eval('.toast-detail', (d) => d.textContent);
+    if (detail !== 'api, web, viejo') throw new Error(`el aviso dice ${detail}`);
+    const lists = gh.calls.filter((c) => /^\/(orgs|users)\//.test(c));
+    if (lists.join() !== '/orgs/acme/repos') throw new Error(`consultas de la lista: ${lists.join(', ')}`);
+    const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
+    if (saved !== '["acme/api","acme/web","acme/viejo"]') throw new Error(`se guardó ${saved}`);
+  });
+
+  await step(page, 'una organización o un usuario que no existe lo dice en el campo', async () => {
+    await page.fill('#repo-input', '@nadie');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForFunction(() => document.querySelector('#repo-input').validationMessage.includes('nadie'), null, { timeout: 10000 });
+    const msg = await page.$eval('#repo-input', (i) => i.validationMessage);
+    if (msg !== 'No se encontró en GitHub una organización o un usuario llamado nadie.') throw new Error(`el campo dice ${msg}`);
+    if ((await repoTabs(page)).length !== 3) throw new Error('cambiaron las pestañas');
+  }, { allow: /404/ });
+
+  await step(page, 'con ?repo=@ana en la URL se siguen los repos de ese usuario', async () => {
+    await page.evaluate(() => localStorage.clear());
+    await page.goto(`${base}/index.html?lang=es&repo=@ana`);
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'ana/notas', null, { timeout: 15000 });
+    const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
+    if (saved !== '["ana/notas"]') throw new Error(`se guardó ${saved}`);
+  }, { allow: /404/ });
+  await page.context().close();
 }
 
 /* ---------- celular ---------- */

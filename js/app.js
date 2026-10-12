@@ -374,30 +374,65 @@
     if (paused) setPaused(false);
   }
 
-  /** Conectar: sigue el repo (además de los que ya se siguen) y lo muestra; si ya se seguía, lo muestra. */
+  /** El aviso del campo del repo (vacío: ninguno). */
+  function repoNote(text) {
+    el.repoInput.setCustomValidity(text);
+    if (text) el.repoInput.reportValidity();
+  }
+
+  /** Conectar: sigue el repo (además de los que ya se siguen) y lo muestra; si ya se seguía, lo muestra.
+      Con org:nombre o @usuario, los repos de esa organización o ese usuario (connectOwner). */
   function connectRepo(input) {
     const parsed = U.parseRepo(input);
     if (!parsed) {
-      el.repoInput.setCustomValidity(t('repo.invalid'));
-      el.repoInput.reportValidity();
-      return;
+      const who = U.parseOwner(input);
+      if (who) return connectOwner(who.owner);
+      return repoNote(t('repo.invalid'));
     }
     let tab = tabs.find((x) => x.key === keyOf(parsed));
     if (tab) {
       // conectarse otra vez a uno que quedó sin conexión es reintentar
       if (tab.status?.state === 'error') tab.source.refreshNow();
     } else {
-      if (realTabs().length >= MAX_REPOS) {
-        el.repoInput.setCustomValidity(t('repo.limit'));
-        el.repoInput.reportValidity();
-        return;
-      }
+      if (realTabs().length >= MAX_REPOS) return repoNote(t('repo.limit'));
       resume();
       tab = addTab(sourceFor(parsed));
       startTab(tab);
     }
-    el.repoInput.setCustomValidity('');
+    repoNote('');
     showTab(tab);
+  }
+
+  /**
+   * org:nombre o @usuario: sigue sus repos de push más reciente (sin forks ni archivados), cada uno en
+   * su pestaña, hasta el tope, y muestra el más reciente. La lista se arma al conectar (una o dos
+   * consultas a GitHub); lo que se guarda y comparte son los repos, como si se hubieran escrito uno a uno.
+   */
+  async function connectOwner(owner) {
+    if (realTabs().length >= MAX_REPOS) return repoNote(t('repo.limit'));
+    el.repoForm.setAttribute('aria-busy', 'true');
+    let list;
+    try {
+      list = await GB.GitHubSource.ownerRepos(owner, { token: settings.token });
+    } catch (err) {
+      return repoNote(i18n.text(err.msg || err.message));
+    } finally {
+      el.repoForm.removeAttribute('aria-busy');
+    }
+    if (!list.length) return repoNote(t('owner.empty', { owner }));
+    const fresh = list.filter((p) => !tabs.some((x) => x.key === keyOf(p)));
+    // el tope se mira otra vez: mientras llegaba la lista pudieron sumarse otros repos
+    const add = fresh.slice(0, Math.max(0, MAX_REPOS - realTabs().length));
+    if (fresh.length && !add.length) return repoNote(t('repo.limit'));
+    resume();
+    add.forEach((p, i) => startTab(addTab(sourceFor(p)), i * STAGGER));
+    repoNote('');
+    // a la vista, el de push más reciente (ya seguido o recién sumado)
+    showTab(list.map((p) => tabs.find((x) => x.key === keyOf(p))).find(Boolean));
+    if (!add.length) return; // ya se seguían todos
+    const more = fresh.length > add.length ? t('owner.limited', { owner, max: MAX_REPOS }) : '';
+    const detail = [add.map((p) => p.name).join(', '), more].filter(Boolean).join(' · ');
+    feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner }), detail, time: Date.now() });
   }
 
   /** La demo: una pestaña más mientras se mira (no se guarda). Si ya estaba, empieza de nuevo. */
@@ -1528,6 +1563,11 @@
       startTab(first);
       tabs.filter((x) => x !== first).forEach((x, i) => startTab(x, (i + 1) * STAGGER));
       showTab(first);
+    }
+    // ?repo=org:nombre: sus repos se suman después, con la lista de GitHub
+    for (const input of urlRepos) {
+      const who = !parse(input) && U.parseOwner(input);
+      if (who) connectOwner(who.owner);
     }
     if (initialTV) setTV(true); // ?tv=1: pensado para dejar la URL abierta en una pantalla
   }

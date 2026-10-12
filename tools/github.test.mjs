@@ -359,3 +359,63 @@ test('con varios repos seguidos, cada fuente se queda con su parte de la cuota',
   src.share = 4;
   assert.equal(src.restBudget(), 3);
 });
+
+/* org:nombre y @usuario: seguir los repos de una organización o de un usuario entero. */
+
+test('parseOwner reconoce org:, user:, @ y la URL de un perfil, y nada más', () => {
+  const { U } = load(fakeGitHub());
+  const ok = [
+    ['org:acme', 'acme'],
+    ['user:Ana-B', 'Ana-B'],
+    ['@ana', 'ana'],
+    ['https://github.com/acme', 'acme'],
+    ['github.com/orgs/acme/', 'acme'],
+    ['https://www.github.com/acme?tab=repositories', 'acme'],
+  ];
+  for (const [input, owner] of ok) assert.equal(U.parseOwner(input)?.owner, owner, input);
+  for (const input of ['acme', 'acme/api', 'org:', '@-ana', '@ana-', 'org:a--b', 'org:a/b', 'https://github.com/acme/api', 'gitlab:grupo', '@x..y', 'org:' + 'a'.repeat(40)]) {
+    assert.equal(U.parseOwner(input), null, input);
+  }
+});
+
+/** Un repo como lo da /orgs/{org}/repos o /users/{u}/repos. */
+const listed = (name, more = {}) => ({ name, owner: { login: 'acme' }, fork: false, archived: false, disabled: false, private: false, pushed_at: '2026-10-01T00:00:00Z', ...more });
+
+test('org:nombre: los repos de push más reciente, sin forks ni archivados, en una sola consulta', async () => {
+  const gh = fakeGitHub();
+  gh.override = (path) =>
+    path.startsWith('/orgs/acme/repos?')
+      ? { body: [listed('api'), listed('copia', { fork: true }), listed('viejo', { archived: true }), listed('web', { private: true })] }
+      : null;
+  const GB = load(gh);
+  const list = await GB.GitHubSource.ownerRepos('acme');
+  assert.deepEqual(Array.from(list, (r) => `${r.owner}/${r.name}`), ['acme/api', 'acme/web']);
+  assert.equal(gh.calls.length, 1, 'una consulta para la lista');
+  const q = new URL('https://api.github.com' + gh.calls[0]).searchParams;
+  assert.equal(q.get('sort'), 'pushed');
+  assert.equal(q.get('direction'), 'desc');
+});
+
+test('@usuario: si no es una organización, sus repos; si no existe, lo dice', async () => {
+  const gh = fakeGitHub();
+  gh.override = (path) => (path.startsWith('/users/ana/repos?') ? { body: [listed('notas', { owner: { login: 'ana' } })] } : null);
+  const GB = load(gh);
+  const list = await GB.GitHubSource.ownerRepos('ana');
+  assert.deepEqual(Array.from(list, (r) => `${r.owner}/${r.name}`), ['ana/notas']);
+  assert.deepEqual(gh.calls.map((c) => c.split('?')[0]), ['/orgs/ana/repos', '/users/ana/repos'], 'primero como organización, después como usuario');
+
+  gh.calls.length = 0;
+  await assert.rejects(GB.GitHubSource.ownerRepos('nadie'), (err) => err.kind === 'notfound' && err.msg.key === 'err.ownerNotFound' && err.msg.params.owner === 'nadie');
+  assert.equal(gh.calls.length, 2);
+});
+
+test('la lista de una organización lleva el token, si hay', async () => {
+  const gh = fakeGitHub();
+  const seen = [];
+  const fetch = gh.fetch;
+  gh.fetch = (url, opts) => (seen.push(opts.headers?.Authorization), fetch(url, opts));
+  gh.override = (path) => (path.startsWith('/orgs/acme/repos?') ? { body: [listed('api')] } : null);
+  const GB = load(gh);
+  await GB.GitHubSource.ownerRepos('acme', { token: 'ghp_x' });
+  assert.deepEqual(seen, ['Bearer ghp_x']);
+});

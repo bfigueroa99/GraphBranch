@@ -74,7 +74,7 @@ segunda columna a la primera.
 | Fuentes | GitHub.com (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados), demo | eventos de GitLab y GitLab propio, repos locales, GitHub Enterprise, Gitea/Forgejo, Bitbucket |
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias) | CI, tags, despliegues |
 | Plataformas | web estática (GitHub Pages), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV | widget y capa para streaming, VS Code |
-| Escala | hasta 10 repos, miles de ramas por repo | una organización o un usuario entero |
+| Escala | hasta 10 repos (también los más activos de una organización o un usuario), miles de ramas por repo | una organización entera (sus eventos, la lista al día, grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM) | Slack y Discord, resumen de la semana |
 | Análisis | resumen de cifras, logros, misión del día | salud del repo, choques entre ramas, comparar ramas, búsqueda |
 | Público | devs y equipos, 40 idiomas, teclado | quien enseña o aprende git, quien usa lector de pantalla |
@@ -110,65 +110,69 @@ construir sobre ellas.
    (la URL de la instancia configurable, sumada al CSP solo si se usa; en escritorio, sin tocar el
    CSP de la web). Con token se podría usar el listado de commits en vez de las comparaciones, si
    resulta más barato. Comprobar: `tools/gitlab.test.mjs` con eventos simulados y otra URL base.
-7. **Una organización o un usuario entero** · Escala. Conectar `org:nombre` o `@usuario` sigue sus
-   repos con push más reciente (`/orgs/{org}/repos?sort=pushed`, `/users/{u}/repos?sort=pushed`)
-   hasta el tope de pestañas, y el panel de actividad suma los eventos de la organización
-   (`/orgs/{org}/events`). Segunda entrega: una vista de constelación (cada repo, una galaxia) para
-   ver más repos de los que caben en pestañas. Comprobar: prueba de cuota con la API simulada.
-8. **CI en el grafo** · Datos. El estado de los checks de la cabeza de cada rama y de cada PR (✓, ✗,
+7. ~~**Una organización o un usuario entero**~~ hecho en #51 · Escala. `org:nombre`, `@usuario` o la
+   URL de su perfil siguen sus repos con push más reciente, sin forks ni archivados, hasta el tope de
+   pestañas (una consulta; dos para un usuario). También `?repo=org:nombre`.
+8. **Una organización entera, segunda entrega** · Escala. Seguir la organización y no solo su lista
+   del momento (se guarda `org:nombre` y la lista se renueva sola cada tanto), los eventos de la
+   organización en el panel (`/orgs/{org}/events`, una consulta para todos sus repos), los grupos de
+   GitLab (`/groups/:id/projects?order_by=last_activity_at`) y una vista de constelación (cada repo,
+   una galaxia) para ver más repos de los que caben en pestañas. Comprobar: prueba de cuota con la
+   API simulada.
+9. **CI en el grafo** · Datos. El estado de los checks de la cabeza de cada rama y de cada PR (✓, ✗,
    en curso) en su etiqueta y en el detalle, y un aviso cuando se pone en rojo la rama por defecto. Con
    token, en la misma consulta GraphQL (`statusCheckRollup`); sin token, solo la rama por defecto y las
    fijadas, para no gastar cuota. La demo simula checks. Comprobar: `node --test` con rollups
    simulados.
-9. **Repos locales en la app de escritorio** · Fuentes. `LocalGitSource`: elegir una carpeta (diálogo
+10. **Repos locales en la app de escritorio** · Fuentes. `LocalGitSource`: elegir una carpeta (diálogo
    del sistema), leer ramas y commits con `git` desde el proceso principal (`execFile`, sin shell) y
    vigilar `.git/HEAD`, `.git/refs` y `packed-refs` para ver cada commit al instante. Sin GitHub y sin
    cuota: sirve para repos privados, sin conexión y de cualquier servidor, incluidas las ramas que no
    se han publicado. `preload.js` expone lo mínimo y solo para carpetas elegidas por el usuario.
    Comprobar: una e2e de escritorio sobre un repo creado en la prueba que hace un commit y lo ve llegar.
-10. **Widget embebible y capa para streaming** · Plataformas. `?embed=1`: solo el grafo y los avisos,
+11. **Widget embebible y capa para streaming** · Plataformas. `?embed=1`: solo el grafo y los avisos,
    sin barra, para un iframe en documentación, wikis o Notion (el README trae el código para pegar).
    Con `&bg=transparent`, fondo transparente para OBS al transmitir mientras se programa. Sin token por
    defecto: pensado para repos públicos. Comprobar: el smoke abre `?embed=1` y verifica que no hay
    barras y que no desborda.
-11. **Salud del repo** · Análisis. Un panel con lo que ya está cargado, sin consultas nuevas: ramas sin
+12. **Salud del repo** · Análisis. Un panel con lo que ya está cargado, sin consultas nuevas: ramas sin
    actividad hace más de 30 días y sin PR, PRs abiertos por edad, tiempo de abierto a fusionado de los
    últimos PRs, ritmo de merges y releases. Cada fila lleva a su rama o PR en el grafo. Comprobar:
    `node --test` sobre los cálculos con datos fijos.
-12. **GitHub Enterprise Server** · Fuentes. `GitHubSource` con la URL de la API configurable
+13. **GitHub Enterprise Server** · Fuentes. `GitHubSource` con la URL de la API configurable
    (`https://host/api/v3` y `/api/graphql`). En la web, el host tiene que estar en la CSP: el README
    explica cómo sumarlo al servirlo uno mismo; en la app de escritorio, `--api-url`. Comprobar: las
    pruebas de `github.test.mjs` corridas también con otra URL base.
-13. **Choques entre ramas** · Análisis. Archivos tocados a la vez por varias ramas abiertas (de las
+14. **Choques entre ramas** · Análisis. Archivos tocados a la vez por varias ramas abiertas (de las
     comparaciones con la rama por defecto, que ya pide el modo galaxias): "feature/a y feature/b tocan
     `src/pagos.js`", en el detalle de cada rama y como aviso al aparecer uno nuevo. Comprobar: prueba
     con comparaciones simuladas.
-14. **Avisos a Slack y Discord** · Salidas. En la app de escritorio (las URL de webhook no aceptan
+15. **Avisos a Slack y Discord** · Salidas. En la app de escritorio (las URL de webhook no aceptan
     llamadas desde una página): elegir qué eventos se envían (release, merge a la rama por defecto, CI
     en rojo, force-push en la rama por defecto) y a qué webhook, guardado cifrado como el token.
     Comprobar: una e2e de escritorio con un servidor local que hace de webhook.
-15. **Aprender git** · Público. Un repo de práctica donde se escriben comandos (`commit`, `branch`,
+16. **Aprender git** · Público. Un repo de práctica donde se escriben comandos (`commit`, `branch`,
     `checkout`, `merge`, `rebase`, `reset`) y el grafo 2D o 3D responde al instante, con ejercicios
     guiados ("crea una rama, haz dos commits y fusiónala"). Reutiliza la maquinaria de `DemoSource`.
     Para quien enseña o aprende git. Comprobar: `node --test` sobre el intérprete de comandos.
-16. **Tags y despliegues** · Datos. Los tags como marcas en sus commits (banderín en 2D, obelisco en
+17. **Tags y despliegues** · Datos. Los tags como marcas en sus commits (banderín en 2D, obelisco en
     3D) y dónde está cada entorno de despliegue (producción, staging) según `/deployments`. Comprobar:
     la demo con tags y entornos, y un paso del smoke.
-17. **Vista de texto accesible** · Público. Las ramas y sus commits como un árbol navegable con el
+18. **Vista de texto accesible** · Público. Las ramas y sus commits como un árbol navegable con el
     teclado (`role=tree`), con lo mismo que dicen los grafos, para quien usa lector de pantalla.
     Comprobar: un paso del smoke recorre el árbol con el teclado y lee los nombres accesibles.
-18. **Búsqueda y filtro por autor** · Análisis. Buscar un commit por mensaje, SHA o autor y volar
+19. **Búsqueda y filtro por autor** · Análisis. Buscar un commit por mensaje, SHA o autor y volar
     hasta él; filtrar el grafo por autor ("mis ramas"). Comprobar: un paso del smoke en la demo.
-19. **Comparar dos ramas** · Análisis. Elegir dos ramas: cuántos commits lleva cada una por delante,
+20. **Comparar dos ramas** · Análisis. Elegir dos ramas: cuántos commits lleva cada una por delante,
     desde dónde se separaron y qué archivos cambian, resaltado en el grafo. Comprobar: prueba con la
     API simulada.
-20. **Gitea, Forgejo y Codeberg** · Fuentes. Con la interfaz de fuente de GitLab ya hecha; su API se
+21. **Gitea, Forgejo y Codeberg** · Fuentes. Con la interfaz de fuente de GitLab ya hecha; su API se
     parece a la de GitHub. Comprobar CORS de codeberg.org primero; si no lo hay, solo escritorio.
-21. **Bitbucket Cloud** · Fuentes. `api.bitbucket.org/2.0`: ramas, commits y pull requests.
-22. **Resumen de la semana** · Salidas. Una ficha con lo que pasó en los últimos 7 días (PRs
+22. **Bitbucket Cloud** · Fuentes. `api.bitbucket.org/2.0`: ramas, commits y pull requests.
+23. **Resumen de la semana** · Salidas. Una ficha con lo que pasó en los últimos 7 días (PRs
     fusionados, releases, quién aportó, la rama más activa), para copiar como Markdown o guardar como
     imagen.
-23. **Extensión de VS Code** · Plataformas. Un webview con la app y el token de la sesión de GitHub
+24. **Extensión de VS Code** · Plataformas. Un webview con la app y el token de la sesión de GitHub
     que ya tiene VS Code (`vscode.authentication`), abierta en el repo del espacio de trabajo. El loop
     deja el paquete; publicarlo en el Marketplace lo hace Benjamin.
 
@@ -800,3 +804,43 @@ posteriores pueden haberse movido.
 - **Siguiente:** iteración 26, expansión. El primer ítem sin hacer es el 6 (GitLab, tercera entrega),
   del mismo eje que esta (Fuentes), y entre los tres primeros hay otro eje: toca el 7, **una
   organización o un usuario entero** (Escala). La 27 es de mantenimiento (pendiente 1).
+
+### 2026-10-12 · Iteración 26 · Expansión · Escala
+
+- **Capacidad nueva: los repos de una organización o un usuario entero** (ítem 7 de la hoja de ruta,
+  partido: esta es la primera entrega; seguir la organización con su lista al día, sus eventos, los
+  grupos de GitLab y la constelación quedan como ítem 8). En el campo del repo, `org:nombre`,
+  `user:nombre`, `@nombre` o la URL de un perfil (`github.com/nombre`, `github.com/orgs/nombre`)
+  siguen sus repos con push más reciente, sin forks ni archivados ni los que ya se seguían, cada uno
+  en su pestaña, hasta llenar las 10. Se muestra el de push más reciente y un aviso nombra los que se
+  sumaron (y dice si quedaron otros fuera por el tope). `?repo=org:nombre` hace lo mismo al abrir.
+  - `U.parseOwner` (en `js/util.js`) reconoce esas formas con las reglas de nombres de GitHub (letras,
+    números y guiones sueltos, hasta 39); un nombre suelto no cuenta, para no confundirlo con un repo
+    mal escrito.
+  - `GitHubSource.ownerRepos`: `/orgs/{org}/repos?sort=pushed&direction=desc&type=all` (con token,
+    también los privados de la organización que el token ve) y, si da 404, `/users/{u}/repos` con
+    `type=owner`. Una consulta para una organización, dos para un usuario; si ninguna existe,
+    `err.ownerNotFound`. Usa el mismo `api()` que las fuentes: los mismos errores de token y de cuota.
+  - App: `connectOwner` vuelve a mirar el tope después de la consulta (mientras llegaba la lista
+    pudieron sumarse otros repos); lo que se guarda y comparte son los repos, uno por uno. Los errores
+    van al aviso del campo, como los de un repo mal escrito.
+  - No se pudo comprobar contra la API real: el proxy de esta sesión solo deja consultar la API del
+    propio repositorio. Los parámetros siguen la documentación de GitHub (`sort`, `direction`, `type`,
+    y el 404 de `/orgs/` para un usuario).
+  - 4 textos nuevos y `repo.invalid` con una frase más (cómo escribir una organización), en los 40
+    idiomas. El aviso nombra los repos en vez de contarlos: sin plurales nuevos.
+- **Pruebas que fallan sin la capacidad:**
+  - `tools/github.test.mjs` (+4, 15 en total): `parseOwner` con lo que acepta y lo que no; la lista de
+    una organización en una sola consulta, ordenada por push y sin forks ni archivados; un usuario
+    (404 como organización, después la de usuario) y uno que no existe (`err.ownerNotFound`, dos
+    consultas); y que la consulta lleve el token. Las cuatro fallaban antes de escribir el código.
+  - Smoke, sección nueva con el GitHub simulado (que aprendió organizaciones, usuarios y el orden por
+    push): `org:acme` abre `acme/api*`, `acme/web` y `acme/viejo` (sin el fork ni el archivado), con
+    una sola consulta de lista, el aviso con sus nombres y lo guardado; `@nadie` lo dice en el campo
+    sin tocar las pestañas; y `?repo=@ana` en la URL sigue el repo de ese usuario.
+- README: la función (en la lista y en Varios repos a la vez), el uso y la URL, las pruebas y Límites
+  conocidos (la lista se arma al conectar; de un usuario, solo sus públicos; solo GitHub por ahora).
+- Validado: 37 pruebas (`node --test`), smoke (40 idiomas), i18n y 17 e2e en verde.
+- **Siguiente:** iteración 27, de **mantenimiento**: pendiente 1 (con movimiento reducido, la ayuda
+  del modo vuelo y el combo no se ven nunca). La 28 vuelve a expansión: el primer ítem sin hacer es el
+  6 (GitLab, tercera entrega, Fuentes), de otro eje que esta (Escala).

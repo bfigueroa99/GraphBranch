@@ -943,4 +943,5 @@ posteriores pueden haberse movido.
   branch → master, /(root). Pages despliega con un flujo interno de GitHub Actions: la cuenta tiene
   que poder correr jobs de Actions.
 - Validado: 84 pruebas (`node --test`), smoke, i18n (0 errores) y 17 e2e en verde.
+- PR: #53, abierto desde la rama de la sesión (no es una iteración numerada).
 - **Siguiente:** iteración 28, expansión: ítem 6 (GitLab, tercera entrega, Fuentes)

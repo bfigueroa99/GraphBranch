@@ -1736,6 +1736,24 @@
     }
   }
 
+  /**
+   * Los repos de una organización o de un usuario (lo que sigue `org:nombre` o `@usuario`): los de
+   * push más reciente primero, sin forks ni archivados. Una consulta para una organización (con
+   * token, también sus privados que el token ve); dos para un usuario, que primero se prueba como
+   * organización. → [{ owner, name, pushedAt, private }], hasta 100.
+   */
+  GitHubSource.ownerRepos = async (owner, { token = '' } = {}) => {
+    const src = new GitHubSource({ owner, name: '', token });
+    const q = 'sort=pushed&direction=desc&per_page=100';
+    const who = encodeURIComponent(owner);
+    let res = await src.api(`/orgs/${who}/repos?${q}&type=all`, { allow: [404] });
+    if (res.status === 404) res = await src.api(`/users/${who}/repos?${q}&type=owner`, { allow: [404] });
+    if (res.status === 404) throw new ApiError(M('err.ownerNotFound', { owner }), { status: 404, kind: 'notfound' });
+    return (Array.isArray(res.data) ? res.data : [])
+      .filter((r) => r && r.name && !r.fork && !r.archived && !r.disabled)
+      .map((r) => ({ owner: r.owner?.login || owner, name: r.name, pushedAt: r.pushed_at || null, private: !!r.private }));
+  };
+
   GitHubSource.ApiError = ApiError;
   GB.GitHubSource = GitHubSource;
 })(window.GB);

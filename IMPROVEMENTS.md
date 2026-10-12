@@ -263,8 +263,9 @@ posteriores pueden haberse movido.
     `--check`.
 19. Auditoría rotativa cuando esta lista baje de 3 (R7 de `--check` avisa): QA activa con el smoke, las
     e2e y la demo; accesibilidad; rendimiento y peso de carga; dependencias y seguridad (CSP, tokens).
-    Cada auditoría deja al menos 3 pendientes con línea y reproducción. Primer caso de QA: el fallo
-    intermitente del smoke (pendiente 15).
+    Cada auditoría deja al menos 3 pendientes con línea y reproducción. Primer caso de QA: los fallos
+    intermitentes del smoke (pendientes 14 y 15, y «Zumbido del espacio: se calla con la pestaña
+    oculta», que falló una vez al validar #53 y pasó al repetirlo).
 20. Limpieza de ramas: `--reclamar` lista las ramas remotas ya fusionadas en master (borrables) y las
     huérfanas sin fusionar ni PR (hoy unas 19 `claude/*` y `ccr-*` del 4 al 10 de octubre); la skill
     borra al cierre solo las fusionadas, tolerante al proxy (a veces corta `git push --delete`). Las
@@ -942,6 +943,9 @@ posteriores pueden haberse movido.
   tiene has_pages=false. Benjamin: Settings → Pages → Build and deployment → Source: Deploy from a
   branch → master, /(root). Pages despliega con un flujo interno de GitHub Actions: la cuenta tiene
   que poder correr jobs de Actions.
-- Validado: 84 pruebas (`node --test`), smoke, i18n (0 errores) y 17 e2e en verde.
-- PR: #53, abierto desde la rama de la sesión (no es una iteración numerada).
+- Al validar: el smoke falló una vez en «Zumbido del espacio: se calla con la pestaña oculta» (el
+  zumbido seguía sonando con la pestaña oculta) y pasó entero al repetirlo; este cambio no toca `js/`.
+  Queda anotado en el pendiente 19 (primer caso de la auditoría de QA).
+- Validado: 87 pruebas (`node --test`), smoke, i18n (0 errores) y 17 e2e en verde.
+- PR: #53 (desde la rama de la sesión; no es una iteración numerada).
 - **Siguiente:** iteración 28, expansión: ítem 6 (GitLab, tercera entrega, Fuentes)

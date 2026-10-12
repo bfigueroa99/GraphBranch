@@ -51,9 +51,11 @@ const RE_ITERACION = new RegExp(`^Iteración (\\d+)(?: · (?:Expansión · (${EJ
 const RE_VALIDADO = /^- Validado:\s*/;
 const RE_SIGUIENTE = /^- \*\*Siguiente:\*\*\s*/;
 const RE_DECLARADO = /iteración (\d+), (?:de )?\*{0,2}(expansión|mantenimiento)\*{0,2}[:.,]?/i;
-// el ítem declarado: «ítem 6 (…)», «pendiente 1 (…)» y las formas de las entradas viejas
-// («el primer ítem sin hacer es el 6», «toca el 7»); vale el último número que aparezca así
-const RE_ITEM = /(?<![\p{L}\p{N}])(?:ítem|pendiente|es el|toca el) (\d+)/gu;
+// el ítem declarado: el primer «ítem N» o «pendiente N» tras el tipo (un título copiado puede citar
+// otro número más adelante); las entradas viejas («el primer ítem sin hacer es el 6», «toca el 7»)
+// no lo traen así y vale el último «es el N» o «toca el N»
+const RE_ITEM = /(?<![\p{L}\p{N}])(?:ítem|pendiente) (\d+)/u;
+const RE_ITEM_VIEJO = /(?<![\p{L}\p{N}])(?:es el|toca el) (\d+)/gu;
 
 /* ------------------------------------------------------------------ parser */
 
@@ -123,9 +125,12 @@ function vineta(cuerpo, re) {
 function declarado(sig) {
   const m = RE_DECLARADO.exec(sig);
   if (!m) return null;
-  const items = [...sig.slice(m.index + m[0].length).matchAll(RE_ITEM)];
-  if (!items.length) return null;
-  return { n: +m[1], tipo: m[2].toLowerCase() === 'expansión' ? 'Expansión' : 'Mantenimiento', item: +items[items.length - 1][1] };
+  const resto = sig.slice(m.index + m[0].length);
+  const directo = RE_ITEM.exec(resto);
+  const viejos = [...resto.matchAll(RE_ITEM_VIEJO)];
+  const item = directo ? +directo[1] : viejos.length ? +viejos[viejos.length - 1][1] : null;
+  if (item === null) return null;
+  return { n: +m[1], tipo: m[2].toLowerCase() === 'expansión' ? 'Expansión' : 'Mantenimiento', item };
 }
 
 const corta = (t, max) => (t.length > max ? t.slice(0, max - 1) + '…' : t);
@@ -242,21 +247,18 @@ export function check(texto, { log, skill, prompt, settings, dir = root } = {}) 
     let ok = 'sin ítems hechos';
     if (titulos) {
       const enLog = new Set();
-      let max = 0;
-      for (const t of titulos) {
-        for (const m of t.matchAll(/\(#(\d+)\)/g)) {
-          enLog.add(+m[1]);
-          max = Math.max(max, +m[1]);
-        }
-      }
+      for (const t of titulos) for (const m of t.matchAll(/\(#(\d+)\)/g)) enLog.add(+m[1]);
       const hechos = doc.hoja.filter((i) => i.hecho);
+      // el PR en curso es el único «hecho en #K» que puede faltar en origin/master: tiene que ser mayor
+      // que los demás de la hoja, no que el último del log (entre medio se fusionan PR ajenos)
+      const maxHoja = Math.max(0, ...hechos.filter((i) => enLog.has(i.pr)).map((i) => i.pr));
       const vistos = new Map();
       const enCurso = [];
       for (const it of hechos) {
         if (vistos.has(it.pr)) e.push(`hecho en #${it.pr} repetido (ítems ${vistos.get(it.pr)} y ${it.n})`);
         vistos.set(it.pr, it.n);
         if (enLog.has(it.pr)) continue;
-        if (it.pr > max) enCurso.push(it.pr);
+        if (it.pr > maxHoja) enCurso.push(it.pr);
         else e.push(`hecho en #${it.pr} (ítem ${it.n}): ese PR no está en origin/master`);
       }
       if (enCurso.length > 1) e.push(`${enCurso.length} PR en curso (#${enCurso.join(', #')}): a lo sumo uno puede faltar en origin/master`);
@@ -441,8 +443,9 @@ async function prAbierto(repo, rama, { sinRed, fetchFn }) {
 
 const motivo = (err) => (err?.name === 'TimeoutError' ? 'tiempo agotado' : err?.cause?.message || err?.message || String(err));
 
-/** Reclama la iteración que toca creando loop/N en origin con un commit vacío; devuelve el código de salida. */
-export async function reclamar({ relevo = false, sinRed = false, horas = RECLAMO_H, repo = root, fetchFn = globalThis.fetch, print = console.log, sesion = process.env.CLAUDE_CODE_REMOTE_SESSION_ID || 'local' } = {}) {
+/** Reclama la iteración que toca creando loop/N en origin con un commit vacío; devuelve el código de salida.
+    `antesDelPush` es un gancho de las pruebas: corre entre el fetch y el push con lease del relevo. */
+export async function reclamar({ relevo = false, sinRed = false, horas = RECLAMO_H, repo = root, fetchFn = globalThis.fetch, print = console.log, sesion = process.env.CLAUDE_CODE_REMOTE_SESSION_ID || 'local', antesDelPush = () => {} } = {}) {
   for (let intento = 0; intento < 2; intento++) {
     const f = git(repo, ['fetch', '-q', '--prune', 'origin', 'master', '+refs/heads/loop/*:refs/remotes/origin/loop/*']);
     if (f.status !== 0) {
@@ -526,6 +529,7 @@ export async function reclamar({ relevo = false, sinRed = false, horas = RECLAMO
       print(`ERROR: no se pudo crear ${rama} (${primera(c.stderr)})`);
       return 1;
     }
+    await antesDelPush();
     const p = git(repo, ['push', '-q', `--force-with-lease=refs/heads/${rama}:${viejo}`, 'origin', `HEAD:refs/heads/${rama}`]);
     if (p.status === 0) {
       print(`Relevada la iteración ${s.n} (${resumen}): rama ${rama}`);
@@ -653,7 +657,7 @@ async function main(argv) {
   return p.codigo;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main(process.argv.slice(2)).then(
     (codigo) => process.exit(codigo),
     (err) => {

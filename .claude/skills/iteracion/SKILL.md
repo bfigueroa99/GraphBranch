@@ -15,12 +15,12 @@ se piden confirmaciones; lo que necesita a Benjamin va al resumen y a la bitáco
 
 ```sh
 git fetch origin master
-[ -x node_modules/.bin/playwright ] || npm ci
 node tools/loop.mjs --check
 ```
 
-El hook de `.claude/settings.json` ya corre `npm ci` e instala Electron en las sesiones cloud. Si
-`--check` da algún `ERROR`, se arregla primero, en el mismo PR: no se amplía sobre algo roto.
+El hook de `.claude/settings.json` ya corre `npm ci` e instala Electron en las sesiones cloud; si
+falta `node_modules/.bin/playwright`, `npm ci`. Si `--check` da algún `ERROR`, se arregla primero, en
+el mismo PR: no se amplía sobre algo roto.
 
 ## 1. Reclamar
 
@@ -34,15 +34,21 @@ Imprime qué iteración toca (número, tipo, eje, ítem y por qué) y, por códi
   origin. Se sigue con el ítem que imprimió.
 - **3** `Ocupada`: otra sesión la está haciendo. Esa línea va al resumen de 3 líneas y la sesión termina,
   sin PR.
-- **4** `Vencida` (6 h sin commits): reanudación. Si dice `PR abierto: <url>`:
-  `git fetch origin loop/N && git checkout loop/N`, `git merge origin/master`, `npm run check`. En verde,
-  se fusiona ese PR con squash como la iteración N (paso 5) y se vuelve a `--reclamar` (la N+1). En rojo,
-  o con `PR abierto: ninguno`: se cierra el PR con `mcp__github__update_pull_request` (`state: closed`,
-  comentario «Cerrado por el loop: no pasó npm run check al reanudar; el trabajo queda en la rama») y se
-  releva: `node tools/loop.mjs --reclamar --relevo` (conserva lo de la rama en `loop/N-vencida-<sha>`).
+- **4** `Vencida` (6 h sin commits): reanudación. Tiene tres salidas:
+  - `PR abierto: <url>`: `git fetch origin loop/N && git checkout loop/N`, `git merge origin/master`,
+    `npm run check`. En verde, se fusiona ese PR con squash como la iteración N (paso 5) y se vuelve a
+    `--reclamar` (la N+1). En rojo: se cierra el PR con `mcp__github__update_pull_request`
+    (`state: closed`, comentario «Cerrado por el loop: no pasó npm run check al reanudar; el trabajo
+    queda en la rama»); si el merge quedó a medias, `git merge --abort`; y se releva con
+    `node tools/loop.mjs --reclamar --relevo` (conserva lo de la rama en `loop/N-vencida-<sha>`).
+  - `PR abierto: ninguno`: no hay PR que cerrar; se releva directo con `--reclamar --relevo`.
+  - `PR abierto: no se pudo consultar (…)`: `mcp__github__list_pull_requests` (head
+    `bfigueroa99:loop/N`, state `open`) y se sigue como `<url>` o como `ninguno`.
 - **5** `Sin acceso a origin`: resumen de 3 líneas con el motivo y fin.
 - **1** o **2**: `IMPROVEMENTS.md` tiene un problema de formato o se quedó sin ítems. Se arregla primero
-  (regla 5 de la directiva: reponer la hoja de ruta hasta 15) y se repite `--reclamar`.
+  (regla 5 de la directiva: reponer la hoja de ruta hasta 15) y se repite `--reclamar`. Un **1** con
+  `no se pudo crear loop/N` no es el archivo: el checkout está sucio (un merge a medias, cambios sin
+  commitear); se limpia (`git merge --abort`, `git status`) y se repite.
 
 ## 2. Construir
 
@@ -51,8 +57,8 @@ web y, si aplica, en la app de escritorio; visible en la demo cuando se pueda; s
 idiomas (`node tools/check-i18n.mjs`); una prueba que falle sin la capacidad (`node --test`, un paso
 del smoke o una e2e); el README al día (la función en la lista, su sección, Límites conocidos y
 Seguridad). Un **mantenimiento** cierra el pendiente que imprimió `--reclamar` con una prueba que
-reproduzca el fallo. Una capacidad por PR, nunca dos mezcladas. Se commitea seguido en `loop/N`: cada
-commit renueva el reclamo.
+reproduzca el fallo. Una capacidad por PR, nunca dos mezcladas. Se commitea y se empuja seguido
+(`git push origin loop/N`): cada push renueva el reclamo (la edad se mide en origin).
 
 ## 3. Validar
 
@@ -65,8 +71,8 @@ traducciones, `node tools/loop.mjs --check`, el smoke en Chromium y, si el cambi
 escritorio, las e2e (elige Chromium y Electron solo; en Linux sin pantalla usa `xvfb-run`). Su última
 línea, `Validado: …`, va a la bitácora tal cual. Si sale **2** por Electron (no se pudo instalar): un
 cambio bajo `electron/` o en `e2e/desktop.spec.mjs` no se fusiona; cualquier otro sí, validado con
-`npm run check -- --sin-e2e` y con la línea «e2e de escritorio: sin verificar (Electron no
-disponible)» en la bitácora. Si sale **1**, se arregla lo que falló (nunca se debilita una prueba).
+`npm run check -- --sin-e2e` (salta también las e2e web) y con la línea «e2e (web y escritorio): sin
+verificar (Electron no disponible)» en la bitácora. Si sale **1**, se arregla lo que falló (nunca se debilita una prueba).
 
 ## 4. Registrar
 
@@ -85,8 +91,12 @@ Al final de la bitácora de `IMPROVEMENTS.md`, con la plantilla exacta que exige
 ```
 
 Además: tachar el ítem en la hoja de ruta (`~~**Título**~~ hecho en #P · Eje.`) o quitar el pendiente
-de Mantenimiento (renumerando: `--check` exige numeración continua), actualizar la fila del Mapa de
-alcance, y reponer la hoja de ruta hasta 15 ítems si bajó de 10. El **Siguiente** se copia de
+de Mantenimiento (renumerando: `--check` exige numeración continua; un pendiente **Alta** nuevo va
+como 1, en `### Alta`, Baja se renumera desde 2 y se corrige el Siguiente de la última entrada),
+actualizar la fila del Mapa de alcance, y reponer la hoja de ruta hasta 15 ítems si bajó de 10. P
+todavía no existe: **P provisional** = el mayor `(#K)` de `git log origin/master --format=%s` + 1
+(R3 admite exactamente un PR en curso); si GitHub da otro número (paso 5), se corrige, se repiten
+`--siguiente` y `--check`, y se empuja un segundo commit. El **Siguiente** se copia de
 `node tools/loop.mjs --siguiente` corrido sobre el archivo YA editado. Después, obligatorio y en verde:
 
 ```sh
@@ -102,14 +112,21 @@ git push -u origin loop/N
 ```
 
 1. El PR **primero**, con `mcp__github__create_pull_request` (base `master`, head `loop/N`, título y
-   cuerpo en español): así se conoce P y se escribe `hecho en #P` en la hoja de ruta. Un segundo commit
-   lo corrige; se vuelve a `node tools/loop.mjs --check` y a `git push`.
-2. Si master avanzó: `git merge origin/master` y `npm run check` otra vez. Los conflictos esperables
-   están al final de `IMPROVEMENTS.md`, en `js/locales/*.js` y en la lista del README: se conservan las
-   dos partes. **Si el propio N ya está en master**, se renumera a máx+1, se revisa el tipo
-   (`--siguiente`) y se vuelve a validar.
+   cuerpo en español). Si P no es el provisional del paso 4, se corrige `hecho en #P`, se repiten
+   `node tools/loop.mjs --siguiente` y `node tools/loop.mjs --check`, y se empuja el segundo commit.
+2. Master con lo de la rama, validado y empujado antes de fusionar:
+
+   ```sh
+   git fetch origin master && git merge origin/master && npm run check && git push
+   ```
+
+   Los conflictos esperables están al final de `IMPROVEMENTS.md`, en `js/locales/*.js` y en la lista
+   del README: se conservan las dos partes. **Si el propio N ya está en master**, se renumera a máx+1,
+   se revisa el tipo (`--siguiente`) y se vuelve a validar.
 3. `mcp__github__merge_pull_request` con `merge_method: squash` y `commit_title: "<título> (#P)"`, solo
-   sin hilos de revisión pendientes. No hace falta esperar aprobación (`CLAUDE.md`).
+   sin hilos de revisión pendientes. No hace falta esperar aprobación (`CLAUDE.md`). Si el merge falla
+   (conflicto, API), se repite 5.2; si sigue fallando, el PR queda abierto, el resumen lo dice con el
+   error y la sesión termina: la siguiente lo retoma por el código 4 (Vencida con PR abierto).
 4. `git push origin --delete loop/N`; si el proxy lo corta, se dice en el resumen y no pasa nada: las
    ramas `loop/K` de iteraciones ya fusionadas son inocuas (`--reclamar` las lista).
 

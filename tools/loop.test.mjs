@@ -12,7 +12,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { EJES, FLAGS, LoopError, check, parse, publicado, siguiente } from './loop.mjs';
+import { EJES, FLAGS, LoopError, check, parse, publicado, reclamar as reclamarEnProceso, siguiente } from './loop.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const loop = join(root, 'tools', 'loop.mjs');
@@ -209,9 +209,17 @@ describe('check()', () => {
   });
 
   test('R3: sin lista de PR ni origin/master, aviso y nada más', () => {
-    const r = check(fixture(), { dir: mkdtempSync(join(tmpdir(), 'loop-')) });
+    const dir = mkdtempSync(join(tmpdir(), 'loop-'));
+    const r = check(fixture(), { dir });
+    rmSync(dir, { recursive: true, force: true });
     assert.equal(nivel(r, 'R3'), 'aviso');
     assert.match(texto(r, 'R3'), /sin origin\/master/);
+  });
+
+  test('R3: el PR en curso sigue en ok aunque entre medio se fusione un PR ajeno de número mayor', () => {
+    const r = check(fixture({ hechos: { ...HECHOS, 7: 54 } }), { log: [...LOG, 'un PR ajeno (#55)'] });
+    assert.equal(nivel(r, 'R3'), 'ok', r.salida);
+    assert.match(texto(r, 'R3'), /#54 es el PR en curso/);
   });
 
   test('R1: el Mapa de alcance con 6 filas es un error, y también fuera de orden', () => {
@@ -281,6 +289,13 @@ describe('check()', () => {
     assert.equal(nivel(vieja, 'R6'), 'ok', vieja.salida);
     const toca = check(fixture({ iteraciones: 25, hechos: { 1: 45, 2: 46, 3: 49, 4: 47, 5: 50 }, siguiente: 'iteración 26, expansión. El primer ítem sin hacer es el 6, del mismo eje que esta (Fuentes): toca el 7, **una organización** (Escala).' }), { log: LOG });
     assert.equal(nivel(toca, 'R6'), 'ok', toca.salida);
+  });
+
+  test('R6: el ítem declarado es el primero que sigue al tipo, aunque el título cite otro número', () => {
+    const m = check(fixture({ iteraciones: 30, siguiente: 'iteración 31, de **mantenimiento**: pendiente 1 (Pendiente 1 de mantenimiento, primer caso: el fallo del smoke (pendiente 15))' }), { log: LOG });
+    assert.equal(nivel(m, 'R6'), 'ok', m.salida);
+    const e = ok({ siguiente: 'iteración 28, expansión: ítem 6 (GitLab, tercera entrega, la que sigue al ítem 5, Fuentes)' });
+    assert.equal(nivel(e, 'R6'), 'ok', e.salida);
   });
 
   test('R7: mantenimiento vacío es un error, con 2 un aviso, y la numeración no salta', () => {
@@ -397,7 +412,9 @@ node tools/loop.mjs --reclamar --sin-red && npm run check -- --e2e
   });
 
   test('sin skill en el repo es solo un aviso', () => {
-    const r = check(fixture(), { log: LOG, dir: mkdtempSync(join(tmpdir(), 'loop-')) });
+    const dir = mkdtempSync(join(tmpdir(), 'loop-'));
+    const r = check(fixture(), { log: LOG, dir });
+    rmSync(dir, { recursive: true, force: true });
     assert.equal(nivel(r, 'R8'), 'aviso');
     assert.match(texto(r, 'R8'), /sin skill/);
   });
@@ -502,7 +519,13 @@ describe('--reclamar contra un repositorio bare', () => {
   const reclamar = (repo, ...extra) => spawnSync(process.execPath, [loop, '--reclamar', '--sin-red', '--repo', repo, ...extra], { encoding: 'utf8', env: ENV });
   const ramas = () => git(dir, ['ls-remote', '--heads', bare]);
 
+  const envAntes = {};
   before(() => {
+    // reclamar() corrido en este proceso (prueba del lease) commitea con el entorno del proceso
+    for (const k of ['GIT_AUTHOR_NAME', 'GIT_AUTHOR_EMAIL', 'GIT_COMMITTER_NAME', 'GIT_COMMITTER_EMAIL']) {
+      envAntes[k] = process.env[k];
+      process.env[k] = ENV[k];
+    }
     git(dir, ['init', '-q', '--bare', '--initial-branch=master', bare]);
     const semilla = join(dir, 'semilla');
     git(dir, ['clone', '-q', bare, semilla]);
@@ -514,7 +537,11 @@ describe('--reclamar contra un repositorio bare', () => {
     git(dir, ['clone', '-q', bare, A]);
     git(dir, ['clone', '-q', bare, B]);
   });
-  after(() => rmSync(dir, { recursive: true, force: true }));
+  after(() => {
+    for (const [k, v] of Object.entries(envAntes)) if (v === undefined) delete process.env[k];
+    else process.env[k] = v;
+    rmSync(dir, { recursive: true, force: true });
+  });
 
   test('la primera sesión reclama: crea loop/28 en origin con un commit vacío y sale 0', () => {
     const r = reclamar(A);
@@ -574,6 +601,24 @@ describe('--reclamar contra un repositorio bare', () => {
     const r = reclamar(B);
     assert.match(r.stdout, /\nRamas loop\/\* de iteraciones ya fusionadas \(inocuas\): loop\/25, loop\/27\n?$/);
     assert.match(ramas(), /refs\/heads\/loop\/25$/m);
+  });
+
+  test('el relevo con lease pierde si otra sesión relevó entre el fetch y el push (3), y no pisa su commit', async () => {
+    const C2 = join(dir, 'C2');
+    git(dir, ['clone', '-q', bare, C2]);
+    let ajeno = null;
+    const salida = [];
+    const antesDelPush = () => {
+      git(C2, ['checkout', '-q', '-B', 'loop/28', 'origin/master']);
+      git(C2, ['commit', '-q', '--allow-empty', '-m', 'Iteración 28: relevo ajeno']);
+      git(C2, ['push', '-q', '--force', 'origin', 'loop/28']);
+      ajeno = git(C2, ['rev-parse', 'HEAD']);
+    };
+    // en este proceso (no por el CLI): el gancho tiene que correr entre el fetch y el push con lease
+    const codigo = await reclamarEnProceso({ repo: B, relevo: true, sinRed: true, sesion: 'prueba', antesDelPush, print: (l) => salida.push(l) });
+    assert.equal(codigo, 3, salida.join('\n'));
+    assert.ok(salida.includes('Ocupada: otra sesión relevó loop/28'), salida.join('\n'));
+    assert.equal(git(dir, ['ls-remote', '--heads', bare, 'loop/28']).split('\t')[0], ajeno, 'el commit de la otra sesión sigue en origin');
   });
 
   test('sin acceso a origin sale 5 y no toca nada', () => {

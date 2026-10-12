@@ -1,14 +1,47 @@
 {
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh"
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Bash(git push *)",
+      "Bash(git fetch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git merge:*)",
+      "Bash(git push:*)",
+      "Bash(git branch:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git show:*)",
+      "Bash(git ls-remote:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git remote:*)",
+      "Bash(node:*)",
+      "Bash(npm ci)",
+      "Bash(npm run:*)",
+      "Bash(npx playwright:*)",
+      "Bash(xvfb-run:*)",
       "mcp__github__create_pull_request",
       "mcp__github__update_pull_request",
       "mcp__github__merge_pull_request",
       "mcp__github__pull_request_read",
       "mcp__github__list_pull_requests",
       "mcp__claude-code-remote__subscribe_pr_activity",
-      "mcp__claude-code-remote__unsubscribe_pr_activity"
+      "mcp__claude-code-remote__unsubscribe_pr_activity",
+      "mcp__claude-code-remote__list_triggers",
+      "mcp__claude-code-remote__get_trigger"
     ]
   }
 }

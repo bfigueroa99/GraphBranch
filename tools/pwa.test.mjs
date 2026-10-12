@@ -13,7 +13,7 @@ import vm from 'node:vm';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (file) => readFileSync(join(root, file));
-const SITE = 'https://bfigueroa99.github.io/GraphBranch/';
+const SITE = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).homepage;
 
 const walk = (dir) =>
   readdirSync(join(root, dir), { withFileTypes: true }).flatMap((e) =>

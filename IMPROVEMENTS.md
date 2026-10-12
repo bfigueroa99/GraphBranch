@@ -71,7 +71,7 @@ segunda columna a la primera.
 
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
-| Fuentes | GitHub.com (GraphQL, lista y eventos), gitlab.com (proyectos públicos), demo | GitLab con token y propio, repos locales, GitHub Enterprise, Gitea/Forgejo, Bitbucket |
+| Fuentes | GitHub.com (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados), demo | eventos de GitLab y GitLab propio, repos locales, GitHub Enterprise, Gitea/Forgejo, Bitbucket |
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias) | CI, tags, despliegues |
 | Plataformas | web estática (GitHub Pages), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV | widget y capa para streaming, VS Code |
 | Escala | hasta 10 repos, miles de ramas por repo | una organización o un usuario entero |
@@ -102,70 +102,73 @@ construir sobre ellas.
 4. ~~**GitLab**~~ hecho en #47 · Fuentes. Proyectos públicos de gitlab.com (con subgrupos), sin
    token: ramas, commits y merge requests en vivo, galaxias con sus archivos, la Replay con sus MRs.
    `GitLabSource` hereda de `GitHubSource` el ciclo, los reintentos y las actividades.
-5. **GitLab, segunda entrega** · Fuentes. Token propio en Ajustes (proyectos privados; en escritorio,
-   cifrado con el llavero como el de GitHub) y, con él, el listado de commits; los eventos del
-   proyecto (`/projects/:id/events`: issues, comentarios, tags) con su historial en el panel; y un
-   GitLab propio (la URL de la instancia configurable, sumada al CSP solo si se usa). Comprobar: el
-   token va solo a GitLab y nunca a GitHub, en `tools/gitlab.test.mjs`.
-6. **Una organización o un usuario entero** · Escala. Conectar `org:nombre` o `@usuario` sigue sus
+5. ~~**GitLab, segunda entrega: proyectos privados**~~ hecho en #50 · Fuentes. Un **Token de GitLab**
+   en Ajustes (permiso `read_api`; en escritorio, cifrado con el llavero en su propio archivo) abre
+   los proyectos privados de gitlab.com; va solo a gitlab.com y el de GitHub, solo a GitHub.
+6. **GitLab, tercera entrega** · Fuentes. Los eventos del proyecto (`/projects/:id/events`: issues,
+   comentarios, tags) con su historial en el panel, como el feed de GitHub; después, un GitLab propio
+   (la URL de la instancia configurable, sumada al CSP solo si se usa; en escritorio, sin tocar el
+   CSP de la web). Con token se podría usar el listado de commits en vez de las comparaciones, si
+   resulta más barato. Comprobar: `tools/gitlab.test.mjs` con eventos simulados y otra URL base.
+7. **Una organización o un usuario entero** · Escala. Conectar `org:nombre` o `@usuario` sigue sus
    repos con push más reciente (`/orgs/{org}/repos?sort=pushed`, `/users/{u}/repos?sort=pushed`)
    hasta el tope de pestañas, y el panel de actividad suma los eventos de la organización
    (`/orgs/{org}/events`). Segunda entrega: una vista de constelación (cada repo, una galaxia) para
    ver más repos de los que caben en pestañas. Comprobar: prueba de cuota con la API simulada.
-7. **CI en el grafo** · Datos. El estado de los checks de la cabeza de cada rama y de cada PR (✓, ✗,
+8. **CI en el grafo** · Datos. El estado de los checks de la cabeza de cada rama y de cada PR (✓, ✗,
    en curso) en su etiqueta y en el detalle, y un aviso cuando se pone en rojo la rama por defecto. Con
    token, en la misma consulta GraphQL (`statusCheckRollup`); sin token, solo la rama por defecto y las
    fijadas, para no gastar cuota. La demo simula checks. Comprobar: `node --test` con rollups
    simulados.
-8. **Repos locales en la app de escritorio** · Fuentes. `LocalGitSource`: elegir una carpeta (diálogo
+9. **Repos locales en la app de escritorio** · Fuentes. `LocalGitSource`: elegir una carpeta (diálogo
    del sistema), leer ramas y commits con `git` desde el proceso principal (`execFile`, sin shell) y
    vigilar `.git/HEAD`, `.git/refs` y `packed-refs` para ver cada commit al instante. Sin GitHub y sin
    cuota: sirve para repos privados, sin conexión y de cualquier servidor, incluidas las ramas que no
    se han publicado. `preload.js` expone lo mínimo y solo para carpetas elegidas por el usuario.
    Comprobar: una e2e de escritorio sobre un repo creado en la prueba que hace un commit y lo ve llegar.
-9. **Widget embebible y capa para streaming** · Plataformas. `?embed=1`: solo el grafo y los avisos,
+10. **Widget embebible y capa para streaming** · Plataformas. `?embed=1`: solo el grafo y los avisos,
    sin barra, para un iframe en documentación, wikis o Notion (el README trae el código para pegar).
    Con `&bg=transparent`, fondo transparente para OBS al transmitir mientras se programa. Sin token por
    defecto: pensado para repos públicos. Comprobar: el smoke abre `?embed=1` y verifica que no hay
    barras y que no desborda.
-10. **Salud del repo** · Análisis. Un panel con lo que ya está cargado, sin consultas nuevas: ramas sin
+11. **Salud del repo** · Análisis. Un panel con lo que ya está cargado, sin consultas nuevas: ramas sin
    actividad hace más de 30 días y sin PR, PRs abiertos por edad, tiempo de abierto a fusionado de los
    últimos PRs, ritmo de merges y releases. Cada fila lleva a su rama o PR en el grafo. Comprobar:
    `node --test` sobre los cálculos con datos fijos.
-11. **GitHub Enterprise Server** · Fuentes. `GitHubSource` con la URL de la API configurable
+12. **GitHub Enterprise Server** · Fuentes. `GitHubSource` con la URL de la API configurable
    (`https://host/api/v3` y `/api/graphql`). En la web, el host tiene que estar en la CSP: el README
    explica cómo sumarlo al servirlo uno mismo; en la app de escritorio, `--api-url`. Comprobar: las
    pruebas de `github.test.mjs` corridas también con otra URL base.
-12. **Choques entre ramas** · Análisis. Archivos tocados a la vez por varias ramas abiertas (de las
+13. **Choques entre ramas** · Análisis. Archivos tocados a la vez por varias ramas abiertas (de las
     comparaciones con la rama por defecto, que ya pide el modo galaxias): "feature/a y feature/b tocan
     `src/pagos.js`", en el detalle de cada rama y como aviso al aparecer uno nuevo. Comprobar: prueba
     con comparaciones simuladas.
-13. **Avisos a Slack y Discord** · Salidas. En la app de escritorio (las URL de webhook no aceptan
+14. **Avisos a Slack y Discord** · Salidas. En la app de escritorio (las URL de webhook no aceptan
     llamadas desde una página): elegir qué eventos se envían (release, merge a la rama por defecto, CI
     en rojo, force-push en la rama por defecto) y a qué webhook, guardado cifrado como el token.
     Comprobar: una e2e de escritorio con un servidor local que hace de webhook.
-14. **Aprender git** · Público. Un repo de práctica donde se escriben comandos (`commit`, `branch`,
+15. **Aprender git** · Público. Un repo de práctica donde se escriben comandos (`commit`, `branch`,
     `checkout`, `merge`, `rebase`, `reset`) y el grafo 2D o 3D responde al instante, con ejercicios
     guiados ("crea una rama, haz dos commits y fusiónala"). Reutiliza la maquinaria de `DemoSource`.
     Para quien enseña o aprende git. Comprobar: `node --test` sobre el intérprete de comandos.
-15. **Tags y despliegues** · Datos. Los tags como marcas en sus commits (banderín en 2D, obelisco en
+16. **Tags y despliegues** · Datos. Los tags como marcas en sus commits (banderín en 2D, obelisco en
     3D) y dónde está cada entorno de despliegue (producción, staging) según `/deployments`. Comprobar:
     la demo con tags y entornos, y un paso del smoke.
-16. **Vista de texto accesible** · Público. Las ramas y sus commits como un árbol navegable con el
+17. **Vista de texto accesible** · Público. Las ramas y sus commits como un árbol navegable con el
     teclado (`role=tree`), con lo mismo que dicen los grafos, para quien usa lector de pantalla.
     Comprobar: un paso del smoke recorre el árbol con el teclado y lee los nombres accesibles.
-17. **Búsqueda y filtro por autor** · Análisis. Buscar un commit por mensaje, SHA o autor y volar
+18. **Búsqueda y filtro por autor** · Análisis. Buscar un commit por mensaje, SHA o autor y volar
     hasta él; filtrar el grafo por autor ("mis ramas"). Comprobar: un paso del smoke en la demo.
-18. **Comparar dos ramas** · Análisis. Elegir dos ramas: cuántos commits lleva cada una por delante,
+19. **Comparar dos ramas** · Análisis. Elegir dos ramas: cuántos commits lleva cada una por delante,
     desde dónde se separaron y qué archivos cambian, resaltado en el grafo. Comprobar: prueba con la
     API simulada.
-19. **Gitea, Forgejo y Codeberg** · Fuentes. Con la interfaz de fuente de GitLab ya hecha; su API se
+20. **Gitea, Forgejo y Codeberg** · Fuentes. Con la interfaz de fuente de GitLab ya hecha; su API se
     parece a la de GitHub. Comprobar CORS de codeberg.org primero; si no lo hay, solo escritorio.
-20. **Bitbucket Cloud** · Fuentes. `api.bitbucket.org/2.0`: ramas, commits y pull requests.
-21. **Resumen de la semana** · Salidas. Una ficha con lo que pasó en los últimos 7 días (PRs
+21. **Bitbucket Cloud** · Fuentes. `api.bitbucket.org/2.0`: ramas, commits y pull requests.
+22. **Resumen de la semana** · Salidas. Una ficha con lo que pasó en los últimos 7 días (PRs
     fusionados, releases, quién aportó, la rama más activa), para copiar como Markdown o guardar como
     imagen.
-22. **Extensión de VS Code** · Plataformas. Un webview con la app y el token de la sesión de GitHub
+23. **Extensión de VS Code** · Plataformas. Un webview con la app y el token de la sesión de GitHub
     que ya tiene VS Code (`vscode.authentication`), abierta en el repo del espacio de trabajo. El loop
     deja el paquete; publicarlo en el Marketplace lo hace Benjamin.
 
@@ -752,3 +755,48 @@ posteriores pueden haberse movido.
 - **Siguiente:** iteración 25, expansión: el primer ítem sin hacer es el 5 (GitLab, segunda entrega:
   token, eventos y GitLab propio, eje Fuentes), de otro eje que esta (Salidas). La 26 también es de
   expansión; la 27, de mantenimiento (pendiente 1).
+
+### 2026-10-12 · Iteración 25 · Expansión · Fuentes
+
+- **Capacidad nueva: proyectos privados de GitLab** (ítem 5 de la hoja de ruta, partido: esta es la
+  primera entrega; los eventos del proyecto y un GitLab propio quedan como ítem 6, justo debajo).
+  Ajustes tiene un campo **Token de GitLab** (permiso `read_api`) y con él se ven los proyectos
+  privados de gitlab.com igual que los públicos: ramas, commits, MRs en vivo, galaxias y Replay. La
+  etiqueta del título dice **GitLab · privado**.
+  - Antes de construir, contra gitlab.com: el preflight CORS acepta `authorization` y un token que
+    no existe responde 401 (`{"message":"401 Unauthorized"}`) con CORS, así que la página lo puede
+    leer. Un proyecto privado sin token responde 404, como uno que no existe.
+  - `js/sources/gitlab.js`: el token va como `Authorization: Bearer` en cada consulta (todas pasan por
+    `api()`). Se guarda aparte (`gitlabToken`), no en `this.token`, que es el de GitHub y decide cosas
+    de GitHub. 401, o 403 con `insufficient_scope` (sin `read_api`), es un error de token
+    (`err.authGitlab`) y no insiste; el aviso de 404 ahora dice que, si es privado, hace falta el
+    token. La historia sigue saliendo de las comparaciones: igual para públicos y privados.
+  - App: cada fuente recibe solo el token de su servicio. Los errores de proyecto o token de GitLab
+    también ofrecen **Abrir Ajustes**, y Ajustes abre con el foco en el campo de GitLab. Al guardar
+    se reconectan solo los repos del servicio cuyo token cambió: un token de GitLab nuevo no gasta
+    cuota de GitHub (si no cambió nada, todo, como dice el botón). **Borrar los tokens** borra los dos.
+  - App de escritorio: `electron/token.js` guarda un token por servicio (`github-token.enc`,
+    `gitlab-token.enc`), cifrados con el llavero; el puente (`getToken`, `setToken`) suma el servicio
+    sin funciones nuevas, y el proceso principal rechaza un servicio que no conoce.
+  - 7 textos nuevos (uno reemplaza a «Borrar token») y uno cambiado en los 40 idiomas; los avisos de dónde se guarda y el nombre del
+    campo salen de los de GitHub (`api.github.com` → `gitlab.com`), así que dicen lo mismo en cada uno.
+- **Pruebas que fallan sin la capacidad:**
+  - `tools/gitlab.test.mjs` (+2, 9 en total): la API simulada, como gitlab.com, esconde un proyecto
+    privado sin token (404), responde 401 a un token que no existe y 403 `insufficient_scope` a uno
+    sin `read_api`, y comprueba en cada consulta que el encabezado sea exactamente el del token (o
+    ninguno). Con token el privado carga entero; con uno vencido o corto, `err.authGitlab` y se detiene.
+  - Smoke: un proyecto privado da el aviso con **Abrir Ajustes**, el foco cae en el campo de GitLab,
+    con el token se abre y lleva la etiqueta de privado, y todas sus consultas llevan el token.
+    Después, con un repo de GitHub al lado: a GitHub solo llega el token de GitHub y a GitLab solo el
+    de GitLab. Comprobado que falla si la fuente de GitLab recibe el de GitHub. El GitHub simulado
+    aprendió `/activity` y un GraphQL que responde con error (con token, la fuente prueba ambos).
+  - e2e: en escritorio, los dos tokens quedan cifrados en archivos separados, fuera de
+    `localStorage`, vuelven al reabrir y borrar el de GitLab deja el de GitHub; en la web, el de
+    GitLab queda en el navegador y Ajustes dice que va solo a gitlab.com.
+- README: la función, cómo crear el token de GitLab (sección Token), las pruebas, la estructura,
+  Límites conocidos (solo gitlab.com; los privados piden `read_api`) y Seguridad (cada token a su
+  servicio, cada uno en su archivo cifrado).
+- Validado: 33 pruebas (`node --test`), smoke (40 idiomas), i18n y 17 e2e en verde.
+- **Siguiente:** iteración 26, expansión. El primer ítem sin hacer es el 6 (GitLab, tercera entrega),
+  del mismo eje que esta (Fuentes), y entre los tres primeros hay otro eje: toca el 7, **una
+  organización o un usuario entero** (Escala). La 27 es de mantenimiento (pendiente 1).

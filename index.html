@@ -273,6 +273,15 @@
       <p class="help" data-i18n-html="settings.tokenHelp">Without a token, GitHub allows 60 requests per hour. With a read-only <em>fine-grained</em> token (Metadata, Contents and Pull requests permissions) the view refreshes every 10 seconds, works with repositories that have thousands of branches, and you can see private repos.</p>
       <p class="help" id="token-where" data-i18n="settings.tokenWhere">The token is stored only in this browser and is sent only to api.github.com.</p>
     </div>
+    <div class="field">
+      <label for="gitlab-token-input"><span data-i18n="settings.gitlabToken">GitLab token</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <div class="field-row">
+        <input id="gitlab-token-input" type="password" autocomplete="off" spellcheck="false" placeholder="glpat-…">
+        <button type="button" class="btn btn-ghost" id="gitlab-token-toggle">Show</button>
+      </div>
+      <p class="help" data-i18n-html="settings.gitlabTokenHelp">For private gitlab.com projects: a personal access token with the <code>read_api</code> scope. Public projects don't need one.</p>
+      <p class="help" id="gitlab-token-where" data-i18n="settings.gitlabTokenWhere">The token is stored only in this browser and is sent only to gitlab.com.</p>
+    </div>
     <div class="grid2">
       <div class="field">
         <label for="depth" data-i18n="settings.depth">Commits per branch</label>
@@ -281,7 +290,7 @@
     </div>
     <p class="help" data-i18n-html="settings.branchesHelp">GraphBranch shows every branch of the repo, the most active ones closest to the default branch. On large repos they appear gradually, most active first. Pinned branches (click a branch → <strong>Pin</strong>) go right below the default branch, even with a filter. Use the graph filter to focus on a prefix, for example <code>release/</code>.</p>
     <div class="dialog-actions">
-      <button type="button" class="btn btn-ghost" id="token-clear" data-i18n="settings.clearToken">Delete token</button>
+      <button type="button" class="btn btn-ghost" id="token-clear" data-i18n="settings.clearTokens">Delete tokens</button>
       <span class="spacer"></span>
       <button type="button" class="btn btn-ghost" id="settings-cancel" data-i18n="settings.cancel">Cancel</button>
       <button type="submit" class="btn btn-primary" data-i18n="settings.save">Save and reconnect</button>

@@ -607,7 +607,7 @@ function fakeGitHub() {
     const rest = m[2] || '';
     if (!rest) return { body: { name, owner: { login: owner }, default_branch: 'main', html_url: `https://github.com/${m[1]}`, private: false, description: '' } };
     if (rest === '/branches') return { body: [...r.branches].map(([b, s]) => ({ name: b, commit: { sha: s }, protected: false })) };
-    if (rest === '/events' || rest === '/pulls') return { body: [] };
+    if (rest === '/events' || rest === '/pulls' || rest === '/activity') return { body: [] }; // /activity: solo con token
     if (rest === '/commits') {
       let s = r.branches.get(q.get('sha')) || q.get('sha');
       const out = [];
@@ -832,14 +832,18 @@ const langs = allLangs
  * gitlab.com simulado para la web: el proyecto g/sub/p (con subgrupo) con main, una rama con dos
  * commits y su MR abierta. Como gitlab.com sin token, el listado de commits responde con el desafío
  * de Cloudflare: la app nunca debe pedirlo. `push` y `merge` cambian el proyecto como si alguien
- * trabajara en él.
+ * trabajara en él. g/privado es el mismo proyecto, pero privado: sin el token GITLAB_TOKEN responde
+ * 404 (como gitlab.com, que no dice que existe) y con otro, 401. `auths` anota el encabezado
+ * Authorization de cada consulta.
  */
+const GITLAB_TOKEN = 'glpat-smoke0123456789';
 function fakeGitLab() {
   const WEB = 'https://gitlab.com/g/sub/p';
   const commits = new Map();
   const branches = new Map();
   const mrs = [];
   const calls = [];
+  const auths = [];
   let n = 0;
   const id = () => createHash('sha1').update(`gl:${++n}`).digest('hex');
   const commit = (branch, title, ...extra) => {
@@ -892,11 +896,16 @@ function fakeGitLab() {
     for (let i = 0; i < Number(m[2] || 0) && sha; i++) sha = commits.get(sha)?.parent_ids[0];
     return sha && commits.has(sha) ? sha : null;
   };
-  const route = (path, q) => {
-    const P = '/api/v4/projects/g%2Fsub%2Fp';
-    if (path === P) return { body: { id: 1, path_with_namespace: 'g/sub/p', default_branch: 'main', web_url: WEB, visibility: 'public', description: 'Un proyecto de GitLab' } };
-    if (!path.startsWith(P)) return { status: 404, body: { message: '404 Project Not Found' } };
-    const rest = path.slice(P.length);
+  const route = (path, q, auth) => {
+    const m = /^\/api\/v4\/projects\/(g%2Fsub%2Fp|g%2Fprivado)(\/.*)?$/.exec(path);
+    if (!m) return { status: 404, body: { message: '404 Project Not Found' } };
+    const priv = m[1] === 'g%2Fprivado';
+    if (priv && auth !== `Bearer ${GITLAB_TOKEN}`) return auth ? { status: 401, body: { message: '401 Unauthorized' } } : { status: 404, body: { message: '404 Project Not Found' } };
+    const rest = m[2] || '';
+    if (!rest) {
+      const name = priv ? 'g/privado' : 'g/sub/p';
+      return { body: { id: priv ? 2 : 1, path_with_namespace: name, default_branch: 'main', web_url: `https://gitlab.com/${name}`, visibility: priv ? 'private' : 'public', description: 'Un proyecto de GitLab' } };
+    }
     if (rest === '/repository/branches') return { body: [...branches].map(([name, sha]) => ({ name, commit: commits.get(sha), protected: name === 'main' })), headers: { 'X-Total': branches.size } };
     if (rest === '/repository/commits') return { status: 403, text: '<!DOCTYPE html><title>Just a moment...</title>' };
     const seq = rest.match(/^\/repository\/commits\/(.+)\/sequence$/);
@@ -923,6 +932,7 @@ function fakeGitLab() {
   };
   return {
     calls,
+    auths,
     push: (branch, title) => commit(branch, title),
     /** La MR !5 se fusiona: un commit de merge en main y la rama se borra. */
     merge: () => {
@@ -934,7 +944,9 @@ function fakeGitLab() {
     handle: (r) => {
       const u = new URL(r.request().url());
       calls.push(u.pathname + u.search);
-      const { status = 200, body, text, headers = {} } = route(u.pathname, u.searchParams);
+      const auth = r.request().headers().authorization;
+      auths.push({ path: u.pathname, auth });
+      const { status = 200, body, text, headers = {} } = route(u.pathname, u.searchParams, auth);
       return r.fulfill({
         status,
         contentType: text ? 'text/html' : 'application/json',
@@ -994,14 +1006,63 @@ console.log('GitLab');
     if (gl.calls.some((c) => /\/repository\/commits\?/.test(c))) throw new Error('pidió el listado de commits, que gitlab.com bloquea sin token');
   });
 
-  await step(page, 'un proyecto que no existe lo dice, sin mandar a Ajustes', async () => {
+  await step(page, 'un proyecto que no existe lo dice, y ofrece Ajustes por si es privado', async () => {
     await page.fill('#repo-input', 'https://gitlab.com/g/nada/-/tree/main');
     await page.press('#repo-input', 'Enter');
     await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: 15000 });
     const text = await page.textContent('#overlay');
-    if (!text.includes('No se encontró g/nada en GitLab')) throw new Error(`el aviso dice ${text}`);
-    if (await page.locator('#overlay [data-ov=settings]').count()) throw new Error('ofrece abrir Ajustes, que no sirve para GitLab');
+    if (!text.includes('No se encontró g/nada en GitLab. Si el proyecto es privado')) throw new Error(`el aviso dice ${text}`);
+    if (!(await page.locator('#overlay [data-ov=settings]').count())) throw new Error('no ofrece abrir Ajustes');
+    // se deja de seguir: si no, al guardar un token se reconectaría y volvería a dar 404
+    await page.locator('.rt', { hasText: 'g/nada' }).locator('.rt-close').click();
   }, { allow: /404/ });
+
+  // un repo de GitHub junto a los de GitLab: cada token tiene que ir solo a su servicio
+  const gh = fakeGitHub();
+  gh.repo('o/r');
+  const ghAuths = [];
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', (r) => {
+    ghAuths.push(r.request().headers().authorization);
+    // con token se prueba primero GraphQL, que la API simulada no tiene: un error que lo dice y la
+    // fuente pasa al modo lista
+    if (new URL(r.request().url()).pathname === '/graphql') {
+      const errors = [{ type: 'FORBIDDEN', message: 'GraphQL no está en la API simulada' }];
+      return r.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ errors }) });
+    }
+    return gh.handle(r);
+  });
+
+  await step(page, 'un proyecto privado pide el token de GitLab en Ajustes, y con él se ve', async () => {
+    await page.fill('#repo-input', 'gitlab:g/privado');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForFunction(() => document.querySelector('#overlay[data-kind=error]:not([hidden])')?.textContent.includes('g/privado'), null, { timeout: 15000 });
+    await page.click('#overlay [data-ov=settings]');
+    const focus = await page.evaluate(() => document.activeElement?.id);
+    if (focus !== 'gitlab-token-input') throw new Error(`Ajustes abrió con el foco en ${focus}`);
+    await page.fill('#gitlab-token-input', GITLAB_TOKEN);
+    await page.fill('#token-input', 'ghp_smoke0123456789');
+    const from = gl.auths.length;
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'g/privado' && document.querySelector('#overlay').hidden, null, { timeout: 15000 });
+    const badge = await page.textContent('#repo-badge');
+    if (badge !== 'GitLab · privado') throw new Error(`la etiqueta dice ${badge}`);
+    const saved = await page.evaluate(() => [localStorage.getItem('graphbranch:gitlabToken'), localStorage.getItem('graphbranch:token')]);
+    if (saved[0] !== JSON.stringify(GITLAB_TOKEN)) throw new Error(`se guardó ${saved[0]}`);
+    const sent = gl.auths.slice(from).filter((a) => a.path.includes('g%2Fprivado'));
+    if (!sent.length || sent.some((a) => a.auth !== `Bearer ${GITLAB_TOKEN}`)) throw new Error(`a g/privado fue ${[...new Set(sent.map((a) => a.auth))]}`);
+  }, { allow: /40[14]/ });
+
+  await step(page, 'cada token va solo a su servicio', async () => {
+    await page.fill('#repo-input', 'o/r');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/r' && document.querySelector('#overlay').hidden, null, { timeout: 15000 });
+    if (!ghAuths.length) throw new Error('no consultó GitHub');
+    const toGitHub = new Set(ghAuths);
+    const toGitLab = new Set(gl.auths.map((a) => a.auth));
+    if ([...toGitHub].some((a) => a !== 'Bearer ghp_smoke0123456789')) throw new Error(`a GitHub fue ${[...toGitHub]}`);
+    if ([...toGitLab].some((a) => a && a !== `Bearer ${GITLAB_TOKEN}`)) throw new Error(`a GitLab fue ${[...toGitLab]}`);
+  });
   await page.context().close();
 }
 

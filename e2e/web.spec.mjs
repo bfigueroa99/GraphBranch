@@ -54,9 +54,12 @@ test('el token se queda en este navegador y Ajustes lo dice', async ({ page }) =
   await expectWorks(page);
   await page.click('#settings-btn');
   await expect(page.locator('#token-where')).toHaveText('El token se guarda solo en este navegador y se envía únicamente a api.github.com.');
+  await expect(page.locator('#gitlab-token-where')).toHaveText('El token se guarda solo en este navegador y se envía únicamente a gitlab.com.');
   await page.fill('#token-input', 'ghp_webFAKE');
+  await page.fill('#gitlab-token-input', 'glpat-webFAKE');
   await page.click('#settings-form button[type=submit]');
   expect(await page.evaluate(() => localStorage.getItem('graphbranch:token'))).toBe('"ghp_webFAKE"');
+  expect(await page.evaluate(() => localStorage.getItem('graphbranch:gitlabToken'))).toBe('"glpat-webFAKE"');
 });
 
 test('se puede instalar y, una vez abierta, vuelve a abrir sin red ni servidor', async ({ page, context }) => {

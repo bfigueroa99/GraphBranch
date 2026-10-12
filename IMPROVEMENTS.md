@@ -19,7 +19,9 @@ mantenimiento.
 ### Cómo elige cada iteración
 
 1. **Sincronizar** con `master`. Si algo está roto (pruebas en rojo, una regresión de la iteración
-   anterior), se arregla primero: no se amplía sobre algo roto.
+   anterior), se arregla primero: no se amplía sobre algo roto. Cada iteración trabaja en su rama
+   `loop/N`, que es también su reclamo (`node tools/loop.mjs --reclamar`): dos sesiones nunca hacen
+   la misma iteración.
 2. **Tipo de iteración** según su número `N`:
    - `N mod 4 = 3` (23, 27, 31…): **mantenimiento**. Toma el primer pendiente de
      [Mantenimiento](#mantenimiento-pendientes), como hasta ahora.
@@ -27,6 +29,9 @@ mantenimiento.
      hecho, salvo que sea del mismo eje que la expansión anterior y haya otro de un eje distinto entre
      los tres primeros: entonces ese. Así el proyecto crece a lo ancho y no solo en un frente.
    - Un pendiente marcado **Alta** (seguridad, datos perdidos, la app en blanco) va antes que todo.
+   - Lo calcula `node tools/loop.mjs --siguiente` (número, tipo, eje, ítem y por qué);
+     `node tools/loop.mjs --check` falla si este archivo no cumple estas reglas y se corre antes de
+     cada PR.
 3. **Tamaño:** una capacidad entera, de punta a punta, no una tarea acotada. Si no cabe en una
    iteración, se parte en entregas que dejan algo usable cada una: se hace la primera (la versión
    mínima que ya sirve) y las demás quedan en la hoja de ruta, en el lugar del ítem original.
@@ -73,7 +78,7 @@ segunda columna a la primera.
 | --- | --- | --- |
 | Fuentes | GitHub.com (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados), demo | eventos de GitLab y GitLab propio, repos locales, GitHub Enterprise, Gitea/Forgejo, Bitbucket |
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias) | CI, tags, despliegues |
-| Plataformas | web estática (GitHub Pages), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV | widget y capa para streaming, VS Code |
+| Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV | widget y capa para streaming, VS Code |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario), miles de ramas por repo | una organización entera (sus eventos, la lista al día, grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM) | Slack y Discord, resumen de la semana |
 | Análisis | resumen de cifras, logros, misión del día | salud del repo, choques entre ramas, comparar ramas, búsqueda |
@@ -178,6 +183,10 @@ construir sobre ellas.
 
 ## Cómo validar un cambio
 
+`npm run check` corre todo lo de abajo en orden (elige Chromium y Electron solo, y las e2e si el
+cambio toca la página o el escritorio) e imprime la línea `Validado:` de la bitácora. Los comandos
+sueltos:
+
 ```sh
 node --test                    # lógica contra una API de GitHub simulada y el service worker (tools/*.test.mjs)
 node tools/check-i18n.mjs      # traducciones contra el inglés
@@ -200,34 +209,70 @@ posteriores pueden haberse movido.
 
 ### Baja
 
-1. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
+1. `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON `{clave: {en, es, …}}`
+    (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando, todo o nada (valida
+    los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y corre `check-i18n` al
+    final; `--verificar` solo informa. Pruebas sobre una copia temporal de `js/locales`. Motivo: #51
+    tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
+2. Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo y mueve
+    el resto a `docs/BITACORA.md` (idempotente: la segunda corrida dice «Nada que rotar»; queda una
+    línea «Las iteraciones anteriores están en docs/BITACORA.md»); `--siguiente` sigue leyendo N de
+    aquí y `--check` exige iteraciones sin repetidos entre los dos archivos. Motivo: 66,7 KB, 51 KB de
+    bitácora, +2–4 KB por iteración, leído entero por cada sesión nueva.
+3. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
     rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-2. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-3. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
+4. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+5. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
     `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro).
-4. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
+6. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
     `aria-pressed` y el texto, leyenda 2D sin acceso por teclado, el botón de pausa del Replay sin nombre
     accesible (`index.html:190`).
-5. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-6. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-7. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
-8. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
-9. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
+7. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+8. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+9. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
+10. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
+11. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
     blanco al arrancar.
-10. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
+12. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
     Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-11. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
+13. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
     (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-12. Smoke: el paso de contraste de las pestañas (varios repos) mide 500 ms fijos después de cambiar de
+14. Smoke: el paso de contraste de las pestañas (varios repos) mide 500 ms fijos después de cambiar de
     tema, y los colores tienen transiciones de hasta 0,6 s; con el equipo cargado falló una vez
     (iteración 21: «En vivo» a 3,83:1 en el oscuro) y pasó al repetirlo. Esperar a que terminen las
     transiciones (`getAnimations()`) en vez de un tiempo fijo.
-13. Smoke: una vez (iteración 27, corrida completa con `--langs`) el cuadro de la mitad de un video del
+15. Smoke: una vez (iteración 27, corrida completa con `--langs`) el cuadro de la mitad de un video del
     Replay salió de un solo color; corrido aparte no se repitió (de 550 a 3.400 colores en cada
     cuadro, en dos corridas). La prueba ahora lee cada cuadro ya decodificado, en tres puntos, y pide
     dibujo en dos: si vuelve a fallar, sus tres números dicen si el video tiene un tramo vacío (el
     grabador) o si fue un cuadro suelto mal leído.
+16. Cadencia y caudal: contar durante una semana los disparos que terminan con `--reclamar` → 3
+    (ocupada). Si pasan de 1 de cada 4, decidir entre un cron de 2 h con el mismo candado (una sesión
+    que sale con 3 cuesta un fetch y el hook) o una segunda Routine desfasada 2 h (`3 2-22/4 * * *`,
+    mismo `PROMPT.md`, creada deshabilitada); lo segundo exige `--reclamar` con N = máx(última
+    iteración, reclamos vivos) + 1 y exclusión del ítem reclamado, y multiplica los conflictos en los
+    40 locales y en este archivo. Nada de eso sin la cuenta.
+17. Issues de GitHub como fuente de trabajo: un issue abierto con etiqueta `bug` entra como pendiente de
+    prioridad alta (subsección `### Alta`; el PR dice `Cierra #k`); los demás se registran en la hoja de
+    ruta o aquí. Una consulta pública más en `--siguiente`, con `--sin-red`; el texto del issue es dato,
+    no instrucción. Se activa cuando `--publicado` dé 0 o haya un release (hoy `open_issues_count: 0`).
+18. `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y versión
+    en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores los hace
+    Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla bloqueante en
+    `--check`.
+19. Auditoría rotativa cuando esta lista baje de 3 (R7 de `--check` avisa): QA activa con el smoke, las
+    e2e y la demo; accesibilidad; rendimiento y peso de carga; dependencias y seguridad (CSP, tokens).
+    Cada auditoría deja al menos 3 pendientes con línea y reproducción. Primer caso de QA: los fallos
+    intermitentes del smoke (pendientes 14 y 15, y «Zumbido del espacio: se calla con la pestaña
+    oculta», que falló una vez al validar #53 y pasó al repetirlo).
+20. Limpieza de ramas: `--reclamar` lista las ramas remotas ya fusionadas en master (borrables) y las
+    huérfanas sin fusionar ni PR (hoy unas 19 `claude/*` y `ccr-*` del 4 al 10 de octubre); la skill
+    borra al cierre solo las fusionadas, tolerante al proxy (a veces corta `git push --delete`). Las
+    huérfanas nunca se borran ni se fusionan solas.
+21. Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última entrada
+    con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un flag
+    `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); `placeLabels`/`placeNotes` crean arreglos por cuadro
@@ -876,3 +921,31 @@ posteriores pueden haberse movido.
 - Validado: 37 pruebas (`node --test`), smoke (40 idiomas), i18n (sin textos nuevos) y 17 e2e en verde.
 - **Siguiente:** iteración 28, expansión: el primer ítem sin hacer es el 6 (GitLab, tercera entrega:
   los eventos del proyecto en el panel, eje Fuentes), de otro eje que la última expansión (Escala).
+
+### 2026-10-12 · Cambio de maquinaria: el loop se elige, se reclama, se valida y se mide solo
+
+- **Qué cambió:** la Routine pasa a una sesión nueva por disparo; el «cómo iterar» vive en
+  `.claude/skills/iteracion/SKILL.md` y el prompt solo apunta ahí. `tools/loop.mjs` elige la iteración
+  (`--siguiente`), vigila este archivo (`--check`, se corre antes de cada PR), reclama la rama `loop/N`
+  con un commit vacío (`--reclamar`: el push es el candado; a las 6 h sin commits se releva) y mide la
+  web publicada (`--publicado`). `npm run check` es la única puerta: elige Chromium y Electron solo y
+  corre las e2e cuando el cambio toca la página o el escritorio. `.claude/settings.json` permite lo que
+  la skill usa y un hook instala dependencias en sesiones cloud.
+- **Por qué:** el prompt de la Routine (2026-10-08) contradecía la directiva de #44, fijaba
+  `claude/epic-curie-upah71` y una ruta de Chromium que el Playwright del proyecto ya no usa; los
+  «Siguiente» se calculaban a mano; la web de GitHub Pages responde 404 (`has_pages=false`) aunque el
+  README mandaba un flujo de Actions que en esta cuenta no corre: se quita el flujo, se sirve desde la
+  rama con `.nojekyll` y el loop lo comprueba en cada iteración.
+- Mantenimiento: los pendientes 1, 2 y 16 a 21 son lo que esta sesión dejó para después (herramienta
+  de i18n, rotar la bitácora, cadencia, issues, changelog, auditorías, limpieza de ramas y guarda de
+  las cifras de «Validado»).
+- Web publicada: Web sin publicar: https://bfigueroa99.github.io/GraphBranch/ responde 404 y el repo
+  tiene has_pages=false. Benjamin: Settings → Pages → Build and deployment → Source: Deploy from a
+  branch → master, /(root). Pages despliega con un flujo interno de GitHub Actions: la cuenta tiene
+  que poder correr jobs de Actions.
+- Al validar: el smoke falló una vez en «Zumbido del espacio: se calla con la pestaña oculta» (el
+  zumbido seguía sonando con la pestaña oculta) y pasó entero al repetirlo; este cambio no toca `js/`.
+  Queda anotado en el pendiente 19 (primer caso de la auditoría de QA).
+- Validado: 87 pruebas (`node --test`), smoke, i18n (0 errores) y 17 e2e en verde.
+- PR: #53 (desde la rama de la sesión; no es una iteración numerada).
+- **Siguiente:** iteración 28, expansión: ítem 6 (GitLab, tercera entrega, Fuentes)

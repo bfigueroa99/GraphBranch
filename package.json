@@ -6,6 +6,7 @@
   "description": "Grafo en vivo de las ramas de un repositorio de GitHub, con alertas de toda su actividad.",
   "author": "Benjamin Figueroa Guzman",
   "license": "MIT",
+  "homepage": "https://bfigueroa99.github.io/GraphBranch/",
   "private": true,
   "main": "electron/main.js",
   "scripts": {
@@ -13,7 +14,9 @@
     "dist": "electron-builder",
     "check:i18n": "node tools/check-i18n.mjs",
     "vendor": "node tools/vendor.mjs",
-    "test:e2e": "playwright test"
+    "test": "node --test",
+    "test:e2e": "playwright test",
+    "check": "node tools/check.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",

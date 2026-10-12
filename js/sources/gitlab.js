@@ -14,7 +14,9 @@
      rama que se movió, lo nuevo desde su cabeza anterior; la rama por defecto, sus últimos pasos.
    - Las merge requests se muestran como en GitLab: MR !12.
    - Sin token: gitlab.com permite cientos de consultas por minuto desde cada IP, así que el sondeo
-     va cada POLL_MS. Los proyectos privados quedan para una entrega con token propio. */
+     va cada POLL_MS. Con el token de GitLab de Ajustes (permiso read_api) se ven también los
+     proyectos privados: va en cada consulta, y solo a gitlab.com. Un proyecto privado sin token
+     responde 404, como uno que no existe. */
 (function (GB) {
   'use strict';
   const { U, i18n } = GB;
@@ -45,12 +47,14 @@
   const segs = (path) => String(path).split('/').map(encodeURIComponent).join('/');
 
   class GitLabSource extends GB.GitHubSource {
-    /** `path`: grupo(s) y proyecto, como en su URL (`gitlab-org/gitlab-runner`, `grupo/sub/proyecto`). */
-    constructor({ path, depth = 40, filter = '', pins = [] }) {
+    /** `path`: grupo(s) y proyecto, como en su URL (`gitlab-org/gitlab-runner`, `grupo/sub/proyecto`).
+        `token`: el de GitLab. No va en `this.token`, que es el de GitHub y decide cosas de GitHub. */
+    constructor({ path, token = '', depth = 40, filter = '', pins = [] }) {
       const cut = path.lastIndexOf('/');
       super({ owner: path.slice(0, cut), name: path.slice(cut + 1), token: '', depth, filter, pins });
       this.host = 'gitlab';
       this.path = path;
+      this.gitlabToken = token;
       this.mode = 'list';
       this.data.repo.url = `${WEB}/${segs(path)}`;
       this.data.repo.host = 'gitlab';
@@ -81,6 +85,7 @@
 
     async api(path, { cacheKey = null, allow = [] } = {}) {
       const headers = {};
+      if (this.gitlabToken) headers.Authorization = `Bearer ${this.gitlabToken}`;
       const cached = cacheKey ? this.etags.get(cacheKey) : null;
       if (cached) headers['If-None-Match'] = cached.etag;
       const { res, body } = await this.request(API + path, { headers, cache: 'no-store' });
@@ -100,6 +105,10 @@
     toError(res, body) {
       const msg = typeof body?.message === 'string' ? body.message : typeof body?.error === 'string' ? body.error : res.statusText || '';
       if (res.status === 404) return this.notFound();
+      // un token que no existe o venció (401), o sin el permiso read_api (403 insufficient_scope)
+      if (res.status === 401 || (res.status === 403 && body?.error === 'insufficient_scope')) {
+        return new ApiError(M('err.authGitlab'), { status: res.status, kind: 'auth' });
+      }
       // demasiadas consultas: GitLab no deja leer cuándo se renueva su cuota, se espera un minuto
       if (res.status === 429) return new ApiError(M('err.rateGitlab'), { status: 429, kind: 'rate', resetAt: Date.now() + 60000 });
       return new ApiError(msg ? M('err.httpGitlab', { status: res.status, message: msg }) : M('err.httpNoMessageGitlab', { status: res.status }), {

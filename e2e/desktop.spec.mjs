@@ -169,6 +169,38 @@ test('el token se guarda cifrado, fuera de localStorage, y vuelve al reabrir', a
   await app.close();
 });
 
+test('el token de GitLab se guarda cifrado, aparte del de GitHub, y vuelve al reabrir', async ({}, testInfo) => {
+  const GH = 'ghp_e2eFAKE0123456789';
+  const GL = 'glpat-e2eFAKE0123456789';
+  let { app, page, dir } = await launch(testInfo, { args: ['--lang=es'] });
+  const services = () => Object.keys(tokenFiles(dir)).map((f) => f.replace(/\.(enc|txt)$/, '')).sort();
+  await loaded(page);
+  await page.click('#settings-btn');
+  await page.fill('#token-input', GH);
+  await page.fill('#gitlab-token-input', GL);
+  await page.click('#settings-form button[type=submit]');
+  await expect.poll(services).toEqual(['github-token', 'gitlab-token']);
+  for (const [name, content] of Object.entries(tokenFiles(dir))) {
+    if (!name.endsWith('.enc')) continue;
+    expect(content.includes(GH) || content.includes(GL)).toBe(false);
+  }
+  const where = await page.locator('#gitlab-token-where').getAttribute('data-i18n');
+  expect(['settings.gitlabTokenWhereKeychain', 'settings.gitlabTokenWherePlain']).toContain(where);
+  expect(await page.evaluate(() => localStorage.getItem('graphbranch:gitlabToken'))).toBeNull();
+  await app.close();
+
+  ({ app, page } = await launch(testInfo, { dir, args: ['--lang=es'] }));
+  await loaded(page);
+  await page.click('#settings-btn');
+  await expect(page.locator('#token-input')).toHaveValue(GH);
+  await expect(page.locator('#gitlab-token-input')).toHaveValue(GL);
+  // borrar el de GitLab deja el de GitHub
+  await page.fill('#gitlab-token-input', '');
+  await page.click('#settings-form button[type=submit]');
+  await expect.poll(services).toEqual(['github-token']);
+  await app.close();
+});
+
 test('pasa al llavero el token que la primera versión dejaba en localStorage', async ({}, testInfo) => {
   let { app, page, dir } = await launch(testInfo);
   await loaded(page);

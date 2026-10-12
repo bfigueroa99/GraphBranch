@@ -40,8 +40,9 @@ export function launchAgain(dir) {
 }
 
 /** Los archivos del token en la carpeta de datos: { nombre: contenido }. */
+/** Los archivos de los tokens (github-token.enc, gitlab-token.enc o sus .txt sin cifrar), con su contenido. */
 export function tokenFiles(dir) {
-  return Object.fromEntries(readdirSync(dir).filter((f) => f.startsWith('github-token')).map((f) => [f, readFileSync(join(dir, f))]));
+  return Object.fromEntries(readdirSync(dir).filter((f) => /^(github|gitlab)-token\./.test(f)).map((f) => [f, readFileSync(join(dir, f))]));
 }
 
 /** La ventana, vista desde el proceso principal. */

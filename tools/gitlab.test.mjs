@@ -6,7 +6,9 @@
 
    La API falsa sirve el proyecto g/sub/p (con subgrupo) con ETag, pagina las ramas como GitLab
    (X-Next-Page, las actualizadas más recientemente primero) y, como gitlab.com sin token, responde
-   el listado de commits con el desafío de Cloudflare: la fuente nunca debe usarlo. */
+   el listado de commits con el desafío de Cloudflare: la fuente nunca debe usarlo. Como gitlab.com,
+   un proyecto privado responde 404 sin token, un token que no existe da 401 y uno sin el permiso
+   read_api, 403 (insufficient_scope). */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -55,6 +57,9 @@ function fakeGitLab() {
     override: null, // (ruta) => { status, body } para responder otra cosa
     calls: [],
     misses: [], // consultas que respondieron 404 (el navegador las anota como errores en la consola)
+    visibility: 'public',
+    tokens: new Map(), // token -> sus permisos
+    expect: null, // el token que tiene que llevar cada consulta (null: ninguno)
   };
   let n = 0;
   gl.commit = (sha, ...parents) => {
@@ -99,7 +104,7 @@ function fakeGitLab() {
     const u = new URL('https://gitlab.com/api/v4' + path);
     const p = u.pathname.replace('/api/v4', '');
     const q = u.searchParams;
-    if (p === PROJECT) return { body: { id: 7, path_with_namespace: 'g/sub/p', default_branch: 'main', web_url: WEB, visibility: 'public', description: 'un proyecto' } };
+    if (p === PROJECT) return { body: { id: 7, path_with_namespace: 'g/sub/p', default_branch: 'main', web_url: WEB, visibility: gl.visibility, description: 'un proyecto' } };
     if (p === PROJECT + '/repository/branches') {
       const all = [...gl.branches]
         .sort((a, b) => gl.updated.get(b[0]) - gl.updated.get(a[0]))
@@ -172,10 +177,19 @@ function fakeGitLab() {
 
   gl.fetch = async (url, opts = {}) => {
     assert.ok(url.startsWith('https://gitlab.com/api/v4/'), `consulta fuera de GitLab: ${url}`);
-    assert.equal(opts.headers?.Authorization, undefined, 'sin token: nada de Authorization');
+    const auth = opts.headers?.Authorization;
+    assert.equal(auth, gl.expect ? `Bearer ${gl.expect}` : undefined, 'el token va en cada consulta, y solo si hay uno');
     const path = url.replace('https://gitlab.com/api/v4', '');
     gl.calls.push(path);
-    const { status = 200, body, text, headers = {} } = gl.override?.(path) || route(path);
+    const scopes = auth ? gl.tokens.get(auth.slice(7)) : null;
+    const { status = 200, body, text, headers = {} } =
+      auth && !scopes
+        ? { status: 401, body: { message: '401 Unauthorized' } }
+        : scopes && !scopes.some((sc) => sc === 'api' || sc === 'read_api')
+          ? { status: 403, body: { error: 'insufficient_scope', error_description: 'The request requires higher privileges than provided by the access token.', scope: 'api read_api' } }
+          : !scopes && gl.visibility !== 'public' && path.startsWith(PROJECT)
+            ? { status: 404, body: { message: '404 Project Not Found' } }
+            : gl.override?.(path) || route(path);
     if (status === 404) gl.misses.push(path);
     const json = text ?? JSON.stringify(body);
     const etag = `W/"${json.length}-${[...json].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 0)}"`;
@@ -289,6 +303,43 @@ test('un proyecto que no existe (o es privado) lo dice y no insiste', async () =
   assert.equal(errors[0].message.key, 'err.notFoundGitlab');
   assert.equal(errors[0].nextAt, null);
   assert.equal(src.running, false);
+});
+
+test('con un token, un proyecto privado carga, y el token va en cada consulta', async () => {
+  const gl = project();
+  gl.visibility = 'private';
+  gl.mr(5, 'feature', 'main');
+  // sin token, gitlab.com lo esconde: 404, como un proyecto que no existe
+  let { src, errors } = connect(gl);
+  await src.cycle();
+  assert.equal(errors[0]?.message.key, 'err.notFoundGitlab');
+
+  gl.tokens.set('glpat-bueno', ['read_api']);
+  gl.expect = 'glpat-bueno';
+  gl.calls.length = 0;
+  ({ src, errors } = connect(gl, { token: 'glpat-bueno' }));
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  assert.equal(src.data.repo.private, true);
+  assert.deepEqual([...src.data.branches.keys()].sort(), ['feature', 'main']);
+  for (const sha of ['m1', 'm2', 'm3', 'f1', 'f2']) assert.ok(src.data.commits.has(sha), `falta ${sha}`);
+  assert.ok(src.data.pulls.has(5));
+  assert.ok(gl.calls.length > 4);
+  assert.equal(src.token, '', 'el token de GitLab no ocupa el lugar del de GitHub');
+});
+
+test('un token que no vale, o sin el permiso read_api, lo dice y no insiste', async () => {
+  for (const [token, scopes] of [['glpat-viejo', null], ['glpat-corto', ['read_user']]]) {
+    const gl = project();
+    if (scopes) gl.tokens.set(token, scopes);
+    gl.expect = token;
+    const { src, errors } = connect(gl, { token });
+    await src.cycle();
+    assert.equal(errors.length, 1, token);
+    assert.equal(errors[0].message.key, 'err.authGitlab', token);
+    assert.equal(errors[0].nextAt, null, token);
+    assert.equal(src.running, false, token);
+  }
 });
 
 test('si GitLab pide bajar el ritmo (429), espera un minuto', async () => {

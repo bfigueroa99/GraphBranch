@@ -93,15 +93,20 @@
     tokenToggle: $('#token-toggle'),
     tokenClear: $('#token-clear'),
     tokenWhere: $('#token-where'),
+    gitlabTokenInput: $('#gitlab-token-input'),
+    gitlabTokenToggle: $('#gitlab-token-toggle'),
+    gitlabTokenWhere: $('#gitlab-token-where'),
     depth: $('#depth'),
     settingsCancel: $('#settings-cancel'),
   };
 
-  /* el token: en la web, en localStorage; en la app de escritorio, cifrado con el llavero del sistema
-     (electron/preload.js expone GBDesktop) y se lee antes de conectar, ver el arranque */
+  /* los tokens (el de GitHub y el de GitLab): en la web, en localStorage; en la app de escritorio,
+     cifrados con el llavero del sistema (electron/preload.js expone GBDesktop) y se leen antes de
+     conectar, ver el arranque. Cada uno va solo a la fuente de su servicio (sourceFor). */
   const desktop = window.GBDesktop;
   const settings = {
     token: desktop ? '' : U.store.get('token', ''),
+    gitlabToken: desktop ? '' : U.store.get('gitlabToken', ''),
     depth: U.store.get('depth', 40),
   };
   U.store.set('maxBranches', null); // ya no hay tope: se muestran todas las ramas
@@ -231,11 +236,12 @@
   const filterOf = (tab) => (tab.demo ? tab.source.filter || '' : U.store.get('filter:' + tab.key, ''));
 
   /** La fuente de un repo de GitHub o de un proyecto de GitLab, con lo que se recuerda de él: su
-      filtro y sus ramas fijadas. El token de GitHub va solo a la fuente de GitHub. */
+      filtro y sus ramas fijadas. El token de GitHub va solo a la fuente de GitHub, y el de GitLab
+      solo a la de GitLab. */
   function sourceFor({ host, owner, name }) {
     const key = keyOf({ host, owner, name });
     const remembered = { depth: settings.depth, filter: U.store.get('filter:' + key, ''), pins: U.store.get('pins:' + key, []) };
-    if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, ...remembered });
+    if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, ...remembered });
     return new GB.GitHubSource({ owner, name, token: settings.token, ...remembered });
   }
 
@@ -413,10 +419,13 @@
     setUrlRepos(shown ? [shown, ...names.filter((n) => n !== shown)] : names);
   }
 
-  /** Token o profundidad nuevos: cada repo seguido se vuelve a conectar, el de la vista primero. */
-  function reconnectAll() {
+  /** Token o profundidad nuevos: cada repo seguido (o los que diga `which`) se vuelve a conectar,
+      el de la vista primero. */
+  function reconnectAll(which = () => true) {
     resume();
-    const order = realTabs().sort((a, b) => (b === active) - (a === active));
+    const order = realTabs()
+      .filter(which)
+      .sort((a, b) => (b === active) - (a === active));
     order.forEach((tab, i) => {
       feed.drop(tab.key);
       tab.unread = 0;
@@ -424,7 +433,7 @@
       startTab(tab, i * STAGGER);
     });
     shareQuota();
-    if (active && !active.demo) showTab(active, { force: true });
+    if (active && !active.demo && order.includes(active)) showTab(active, { force: true });
     else renderTabs();
   }
 
@@ -863,7 +872,8 @@
       el.repoLink.setAttribute('aria-disabled', 'true');
     }
     el.repoBadge.hidden = !repo.demo && !repo.private && repo.host !== 'gitlab';
-    el.repoBadge.textContent = repo.demo ? t('badge.demo') : repo.private ? t('badge.private') : 'GitLab';
+    const gitlab = repo.host === 'gitlab' && !repo.demo;
+    el.repoBadge.textContent = repo.demo ? t('badge.demo') : repo.private ? (gitlab ? 'GitLab · ' : '') + t('badge.private') : 'GitLab';
     el.repoBadge.className = `badge${repo.demo ? ' demo' : ''}`;
     el.repoDesc.textContent = repo.demo ? t('repo.demoDesc') : repo.description || '';
     el.repoDesc.hidden = !el.repoDesc.textContent;
@@ -1013,7 +1023,7 @@
           <p class="ov-title">${U.esc(t('overlay.error.title'))}</p>
           <p>${U.esc(i18n.text(message))}</p>
           <div class="ov-actions">
-            ${fatal && source?.host !== 'gitlab' ? `<button type="button" class="btn btn-primary" data-ov="settings">${U.esc(t('overlay.openSettings'))}</button>` : ''}
+            ${fatal ? `<button type="button" class="btn btn-primary" data-ov="settings">${U.esc(t('overlay.openSettings'))}</button>` : ''}
             <button type="button" class="btn ${fatal ? 'btn-ghost' : 'btn-primary'}" data-ov="retry">${U.esc(t('overlay.retry'))}</button>
             <button type="button" class="btn btn-ghost" data-ov="demo">${U.esc(t('overlay.viewDemo'))}</button>
           </div>
@@ -1033,7 +1043,7 @@
       showOverlay('loading', i18n.msg('status.retrying'));
       source.refreshNow();
     } else if (action === 'demo') startDemo();
-    else if (action === 'settings') openSettings();
+    else if (action === 'settings') openSettings(source?.host === 'gitlab' ? el.gitlabTokenInput : el.tokenInput);
   });
 
   /* ---------- controles ---------- */
@@ -1344,14 +1354,18 @@
 
   /* ---------- ajustes ---------- */
 
-  function openSettings() {
+  /** Abre Ajustes con el foco en `focus` (el campo del token de GitHub, si no se dice otro). */
+  function openSettings(focus = el.tokenInput) {
     el.tokenInput.value = settings.token;
-    el.tokenInput.type = 'password';
-    el.tokenToggle.textContent = t('settings.show');
+    el.gitlabTokenInput.value = settings.gitlabToken;
+    for (const [input, toggle] of tokenFields) {
+      input.type = 'password';
+      toggle.textContent = t('settings.show');
+    }
     el.depth.value = settings.depth;
     if (typeof el.dialog.showModal === 'function') el.dialog.showModal();
     else el.dialog.setAttribute('open', '');
-    el.tokenInput.focus();
+    (focus instanceof HTMLElement ? focus : el.tokenInput).focus();
   }
 
   function closeSettings() {
@@ -1359,34 +1373,57 @@
     else el.dialog.removeAttribute('open');
   }
 
-  el.settingsBtn.addEventListener('click', openSettings);
-  $('#token-banner-btn').addEventListener('click', openSettings);
+  /** Los campos de los tokens, cada uno con su botón de mostrar u ocultar. */
+  const tokenFields = [
+    [el.tokenInput, el.tokenToggle],
+    [el.gitlabTokenInput, el.gitlabTokenToggle],
+  ];
+  const showToggle = (input, toggle) => (toggle.textContent = input.type === 'password' ? t('settings.show') : t('settings.hide'));
+
+  el.settingsBtn.addEventListener('click', () => openSettings());
+  $('#token-banner-btn').addEventListener('click', () => openSettings());
   el.settingsCancel.addEventListener('click', closeSettings);
-  el.tokenToggle.addEventListener('click', () => {
-    const show = el.tokenInput.type === 'password';
-    el.tokenInput.type = show ? 'text' : 'password';
-    el.tokenToggle.textContent = show ? t('settings.hide') : t('settings.show');
-  });
+  for (const [input, toggle] of tokenFields) {
+    toggle.addEventListener('click', () => {
+      input.type = input.type === 'password' ? 'text' : 'password';
+      showToggle(input, toggle);
+    });
+  }
   el.tokenClear.addEventListener('click', () => {
     el.tokenInput.value = '';
+    el.gitlabTokenInput.value = '';
     el.tokenInput.focus();
   });
   el.settingsForm.addEventListener('submit', (ev) => {
     ev.preventDefault();
+    const before = { ...settings };
     settings.token = el.tokenInput.value.trim();
+    settings.gitlabToken = el.gitlabTokenInput.value.trim();
     settings.depth = Math.max(10, Math.min(100, Number(el.depth.value) || 40));
-    if (desktop) desktop.setToken(settings.token).then(showTokenWhere, (err) => console.error('No se pudo guardar el token:', err));
-    else U.store.set('token', settings.token || null);
+    if (desktop) {
+      const failed = (err) => console.error('No se pudo guardar el token:', err);
+      desktop.setToken(settings.token).then(showTokenWhere, failed);
+      desktop.setToken(settings.gitlabToken, 'gitlab').catch(failed);
+    } else {
+      U.store.set('token', settings.token || null);
+      U.store.set('gitlabToken', settings.gitlabToken || null);
+    }
     U.store.set('depth', settings.depth);
     closeSettings();
-    if (realTabs().length) reconnectAll();
+    // se reconecta lo que cambió: un token de GitLab nuevo no gasta la cuota de GitHub. Si no cambió
+    // nada, todo, como dice el botón
+    const changed = (tab) =>
+      settings.depth !== before.depth || (tab.source.host === 'gitlab' ? settings.gitlabToken !== before.gitlabToken : settings.token !== before.token);
+    if (realTabs().length) reconnectAll(realTabs().some(changed) ? changed : undefined);
     else el.tokenBanner.hidden = true;
   });
 
-  /** En la app de escritorio, el aviso de Ajustes dice si el token quedó cifrado ('keychain') o no ('plain'). */
+  /** En la app de escritorio, los avisos de Ajustes dicen si los tokens quedan cifrados ('keychain') o no ('plain'). */
   function showTokenWhere(where) {
-    el.tokenWhere.dataset.i18n = where === 'keychain' ? 'settings.tokenWhereKeychain' : 'settings.tokenWherePlain';
-    el.tokenWhere.textContent = t(el.tokenWhere.dataset.i18n);
+    const keychain = where === 'keychain';
+    el.tokenWhere.dataset.i18n = keychain ? 'settings.tokenWhereKeychain' : 'settings.tokenWherePlain';
+    el.gitlabTokenWhere.dataset.i18n = keychain ? 'settings.gitlabTokenWhereKeychain' : 'settings.gitlabTokenWherePlain';
+    for (const note of [el.tokenWhere, el.gitlabTokenWhere]) note.textContent = t(note.dataset.i18n);
   }
 
   /** En la app de escritorio, el ícono de la bandeja y su aviso van en el idioma de la página. */
@@ -1403,6 +1440,7 @@
       U.store.set('token', null);
     }
     settings.token = token;
+    settings.gitlabToken = (await desktop.getToken('gitlab')).token;
     showTokenWhere(where);
   }
 
@@ -1439,7 +1477,7 @@
     setView(view, !tv.on);
     renderPause();
     renderWebglNote();
-    el.tokenToggle.textContent = el.tokenInput.type === 'password' ? t('settings.show') : t('settings.hide');
+    for (const [input, toggle] of tokenFields) showToggle(input, toggle);
     el.repoInput.setCustomValidity('');
     graph2d.relocalize();
     graph3d?.relocalize();

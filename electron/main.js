@@ -165,19 +165,20 @@ if (!app.requestSingleInstanceLock()) {
     session.defaultSession.on('will-download', saveDownload);
     nativeTheme.on('updated', () => win?.setBackgroundColor(nativeTheme.shouldUseDarkColors ? BG.dark : BG.light));
 
-    // el token solo se entrega a la propia página (electron/preload.js)
-    const fromApp = (ev) => {
+    // los tokens solo se entregan a la propia página (electron/preload.js), cada uno con su servicio
+    const fromApp = (ev, service) => {
       if (!isApp(ev.senderFrame?.url)) throw new Error('origen no permitido');
+      if (!token.SERVICES.includes(service)) throw new Error('servicio desconocido');
     };
-    ipcMain.handle('token:get', async (ev) => {
-      fromApp(ev);
-      const [value, where] = await Promise.all([token.read(), token.where()]);
+    ipcMain.handle('token:get', async (ev, service = 'github') => {
+      fromApp(ev, service);
+      const [value, where] = await Promise.all([token.read(service), token.where()]);
       return { token: value, where };
     });
-    ipcMain.handle('token:set', async (ev, value) => {
-      fromApp(ev);
+    ipcMain.handle('token:set', async (ev, value, service = 'github') => {
+      fromApp(ev, service);
       if (typeof value !== 'string' || value.length > 1000) throw new Error('token inválido');
-      await token.write(value.trim());
+      await token.write(value.trim(), service);
       return token.where();
     });
     // los textos de la bandeja, en el idioma de la página

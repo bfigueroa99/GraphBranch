@@ -170,6 +170,63 @@ async function snapshot(page, sel, { minColors = 100, dots = null } = {}) {
   if (res.off.length) throw new Error(`commits de otro color en la imagen: ${res.off.slice(0, 3).join('; ')}`);
   return colors;
 }
+
+/** Revisa un video que guardó la página: un WebM (o MP4) que se reproduce, de la medida de la vista
+    más la franja de abajo, con dibujo, que dice cuánto dura y que dura lo que debe. La app no lo
+    puede abrir (su CSP no deja reproducir nada): se abre en una pestaña en blanco del mismo navegador. */
+async function videoFile(page, dl, sel, { minSeconds, maxSeconds }) {
+  const name = dl.suggestedFilename();
+  if (!/^graphbranch-demo-replay-\d{4}-\d\d-\d\d-\d{4}\.(webm|mp4)$/.test(name)) throw new Error(`nombre inesperado: ${name}`);
+  const note = await page.textContent('#snap-note');
+  if (!note.includes(name)) throw new Error(`el aviso dice "${note}"`);
+  const file = readFileSync(await dl.path());
+  const webm = name.endsWith('.webm');
+  // la firma de EBML (el contenedor de WebM) o la caja ftyp de MP4
+  if (webm ? file.readUInt32BE(0) !== 0x1a45dfa3 : file.toString('latin1', 4, 8) !== 'ftyp') throw new Error('el archivo no es un video');
+  const box = await page.evaluate((sel) => {
+    const r = document.querySelector(sel).getBoundingClientRect();
+    return { w: Math.round(r.width) & ~1, h: Math.round(r.height + GB.snapshot.CAPTION) & ~1 };
+  }, sel);
+  const probe = await page.context().newPage();
+  let v;
+  try {
+    v = await probe.evaluate(
+      async ({ b64, type }) => {
+        const video = document.createElement('video');
+        video.muted = true;
+        video.src = URL.createObjectURL(new Blob([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], { type }));
+        const once = (ev) =>
+          new Promise((ok, ko) => {
+            video.addEventListener(ev, ok, { once: true });
+            video.addEventListener('error', () => ko(new Error('el navegador no lo pudo abrir')), { once: true });
+            setTimeout(() => ko(new Error(`no llegó ${ev}`)), 10000);
+          });
+        await once('loadedmetadata');
+        // MediaRecorder no la anota: la agrega snapshot.js, y sin ella no se sabría hasta el final
+        const seconds = video.duration;
+        if (!isFinite(seconds)) throw new Error('el video no dice cuánto dura');
+        video.currentTime = seconds / 2;
+        await once('seeked');
+        const c = document.createElement('canvas');
+        c.width = video.videoWidth;
+        c.height = video.videoHeight;
+        const x = c.getContext('2d', { willReadFrequently: true });
+        x.drawImage(video, 0, 0);
+        const d = x.getImageData(0, 0, c.width, Math.round(c.height * 0.9)).data;
+        const seen = new Set();
+        for (let i = 0; i < d.length; i += 4) seen.add(((d[i] >> 3) << 10) | ((d[i + 1] >> 3) << 5) | (d[i + 2] >> 3));
+        return { seconds, w: c.width, h: c.height, colors: seen.size };
+      },
+      { b64: file.toString('base64'), type: webm ? 'video/webm' : 'video/mp4' },
+    );
+  } finally {
+    await probe.close();
+  }
+  if (v.w !== box.w || v.h !== box.h) throw new Error(`mide ${v.w}×${v.h} y la vista ${box.w}×${box.h}`);
+  if (v.colors < 100) throw new Error(`el video casi no tiene dibujo: ${v.colors} colores`);
+  if (!(v.seconds >= minSeconds && v.seconds <= maxSeconds)) throw new Error(`dura ${v.seconds.toFixed(1)} s y no entre ${minSeconds} y ${maxSeconds}`);
+  return v;
+}
 const noOverflow = (page) => page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
 
 /* ---------- escritorio ---------- */
@@ -372,6 +429,45 @@ console.log('Escritorio (1280×800)');
     await page.click('#replay-btn');
     await page.waitForSelector('#replay', { state: 'visible', timeout: 5000 });
     await page.waitForTimeout(2500);
+    await page.click('#replay .rp-exit');
+    await page.waitForSelector('#replay', { state: 'hidden', timeout: 5000 });
+  });
+
+  // grabar empieza la historia desde el principio, y al llegar al final el video se guarda solo
+  await step(page, 'graba el Replay en video, de principio a fin', async () => {
+    const sel = has3d && (await page.locator('#graph3d').isVisible()) ? '#graph3d' : '#graph';
+    await page.click('#replay-btn');
+    await page.waitForSelector('#replay', { state: 'visible', timeout: 5000 });
+    const rec = page.locator('#replay .rp-rec');
+    if (!(await rec.isVisible())) throw new Error('no se ofrece grabar');
+    while ((await page.textContent('#replay .rp-speed')) !== '4×') await page.click('#replay .rp-speed');
+    await page.waitForTimeout(1500);
+    const saved = page.waitForEvent('download', { timeout: 30000 });
+    const t0 = Date.now();
+    await rec.click();
+    if ((await rec.getAttribute('aria-pressed')) !== 'true') throw new Error('el botón no queda encendido');
+    if (Number(await page.inputValue('#replay .rp-range')) > 100) throw new Error('no volvió al principio de la historia');
+    await page.waitForTimeout(2000);
+    // sin GPU, la historia entera tardaría demasiado: se salta casi al final
+    await page.$eval('#replay .rp-range', (r) => {
+      r.value = 960;
+      r.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const dl = await saved;
+    const took = (Date.now() - t0) / 1000;
+    await videoFile(page, dl, sel, { minSeconds: 1.5, maxSeconds: took + 1 });
+    if ((await rec.getAttribute('aria-pressed')) !== 'false') throw new Error('el botón sigue encendido');
+  });
+
+  await step(page, 'parar la grabación a mano también guarda el video', async () => {
+    const sel = has3d && (await page.locator('#graph3d').isVisible()) ? '#graph3d' : '#graph';
+    const rec = page.locator('#replay .rp-rec');
+    const saved = page.waitForEvent('download', { timeout: 15000 });
+    await rec.click();
+    await page.waitForTimeout(2500);
+    await rec.click();
+    await videoFile(page, await saved, sel, { minSeconds: 1.5, maxSeconds: 5 });
+    while ((await page.textContent('#replay .rp-speed')) !== '1×') await page.click('#replay .rp-speed');
     await page.click('#replay .rp-exit');
     await page.waitForSelector('#replay', { state: 'hidden', timeout: 5000 });
   });

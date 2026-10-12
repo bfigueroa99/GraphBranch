@@ -10,7 +10,10 @@
    - Las etiquetas HTML (las de la vista 3D, los paneles del modo galaxias, el minimapa) se pintan
      como cajas con fondo, borde y texto. Sombras, desenfoques y degradados no se copian.
 
-   Nada sale de la página: el PNG se arma en un canvas y se descarga con un enlace blob:. */
+   - Grabar el Replay en video (record) repite esa misma captura cuadro a cuadro sobre un canvas
+     cuyo flujo (captureStream) graba MediaRecorder: WebM en Chromium y Firefox, MP4 en Safari.
+
+   Nada sale de la página: el PNG y el video se arman en un canvas y se descargan con un enlace blob:. */
 (function (GB) {
   'use strict';
 
@@ -280,15 +283,17 @@
 
   /* ---------- la imagen ---------- */
 
-  /** Arma la imagen de la vista: `wrap` es su contenedor y `view`, el grafo (Graph o Graph3D). */
-  async function capture(wrap, view, { caption = '' } = {}) {
+  /** Arma la imagen de la vista: `wrap` es su contenedor y `view`, el grafo (Graph o Graph3D).
+      `scale`: píxeles por px de CSS (si no, los de la escena 3D, o 2× en 2D); `extra`: elementos que
+      van encima aunque estén fuera del contenedor (la fecha grande y los rótulos del Replay). */
+  async function capture(wrap, view, { caption = '', scale: fixed = 0, extra = [] } = {}) {
     const origin = wrap.getBoundingClientRect();
     const W = Math.round(origin.width);
     const H = Math.round(origin.height);
     if (!W || !H) throw new Error('la vista no está a la vista');
     const gl = view?.renderNow ? view.canvas : null;
     // en 3D, a la resolución con que se dibuja la escena; en 2D, nítida aunque la pantalla no lo sea
-    const want = gl ? gl.width / W : Math.max(2, window.devicePixelRatio || 1);
+    const want = fixed || (gl ? gl.width / W : Math.max(2, window.devicePixelRatio || 1));
     const scale = Math.min(want, MAX_SIDE / W, MAX_SIDE / (H + CAPTION));
     const out = document.createElement('canvas');
     out.width = Math.round(W * scale);
@@ -303,6 +308,7 @@
       .map((k, i) => ({ k, i, z: parseInt(getComputedStyle(k).zIndex, 10) || 0 }))
       .sort((a, b) => a.z - b.z || a.i - b.i);
     for (const { k } of kids) await drawHtml(ctx, k, origin, gl);
+    for (const el of extra) if (el) await drawHtml(ctx, el, origin, gl);
     if (caption) drawCaption(ctx, wrap, caption, W, H);
     return out;
   }
@@ -323,18 +329,18 @@
     ctx.fillText(text, rtl ? W - 12 : 12, H + CAPTION / 2 + 0.5, W - 24);
   }
 
-  /** Nombre del archivo: graphbranch-owner-repo-2026-10-10-1430.png */
-  function fileName(repo, now = new Date()) {
+  /** Nombre del archivo: graphbranch-owner-repo-2026-10-10-1430.png (o -replay-….webm para un video). */
+  function fileName(repo, { ext = 'png', kind = '', now = new Date() } = {}) {
     const pad = (n) => String(n).padStart(2, '0');
     const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
     const slug = String(repo || 'demo').toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'demo';
-    return `graphbranch-${slug}-${stamp}.png`;
+    return `graphbranch-${slug}${kind ? '-' + kind : ''}-${stamp}.${ext}`;
   }
 
   const toBlob = (canvas) =>
     new Promise((done, fail) => canvas.toBlob((b) => (b ? done(b) : fail(new Error('toBlob'))), 'image/png'));
 
-  /** Descarga el PNG con un enlace blob: (en la app de escritorio va a la carpeta de descargas). */
+  /** Descarga el archivo con un enlace blob: (en la app de escritorio va a la carpeta de descargas). */
   function download(blob, name) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -354,5 +360,179 @@
     return name;
   }
 
-  GB.snapshot = { capture, save, fileName, CAPTION };
+  /* ---------- el video ---------- */
+
+  /** El formato de video que este navegador sabe grabar desde un canvas: WebM (Chromium, Firefox) o
+      MP4 (Safari); null si no graba ninguno (entonces no se ofrece grabar). */
+  function videoFormat() {
+    if (typeof MediaRecorder === 'undefined' || !HTMLCanvasElement.prototype.captureStream) return null;
+    const options = [['video/webm;codecs=vp9', 'webm'], ['video/webm;codecs=vp8', 'webm'], ['video/webm', 'webm'], ['video/mp4', 'mp4']];
+    for (const [mime, ext] of options) if (MediaRecorder.isTypeSupported(mime)) return { mime, ext };
+    return null;
+  }
+
+  /** Los números de EBML (el formato de WebM) tienen largo variable: el primer byte dice cuántos bytes
+      ocupan. Devuelve el largo, el valor y si es el "tamaño desconocido" (todos los bits en 1). */
+  function ebmlNumber(u8, at) {
+    const first = u8[at];
+    let len = 1;
+    while (len <= 8 && !(first & (0x100 >> len))) len++;
+    if (len > 8 || at + len > u8.length) throw new Error('EBML inválido');
+    let value = first & (0xff >> len);
+    let unknown = value === 0xff >> len;
+    for (let i = 1; i < len; i++) {
+      value = value * 256 + u8[at + i];
+      unknown = unknown && u8[at + i] === 0xff;
+    }
+    return { len, value, unknown };
+  }
+
+  /** Un elemento de EBML que empieza en `at`: su identificador (con su marca, como se escribe), dónde
+      empiezan sus datos y dónde termina (el final de `end` si su tamaño es desconocido). */
+  function ebmlElement(u8, at, end) {
+    const id = ebmlNumber(u8, at);
+    let tag = 0;
+    for (let i = 0; i < id.len; i++) tag = tag * 256 + u8[at + i];
+    const size = ebmlNumber(u8, at + id.len);
+    const data = at + id.len + size.len;
+    return { tag, size, data, end: size.unknown ? end : data + size.value };
+  }
+
+  const EBML_HEADER = 0x1a45dfa3;
+  const SEGMENT = 0x18538067;
+  const INFO = 0x1549a966;
+  const TIMECODE_SCALE = 0x2ad7b1;
+  const DURATION = 0x4489;
+
+  /**
+   * MediaRecorder escribe el WebM mientras graba y no anota cuánto dura: sin ese dato, muchos
+   * reproductores no muestran la duración ni dejan adelantar. Se agrega al bloque Info del segmento
+   * (el primero, antes de las pistas y los cuadros). `ms`: la duración en milisegundos. Si el archivo
+   * no tiene la forma esperada, o ya trae la duración, vuelve tal cual.
+   */
+  function webmDuration(bytes, ms) {
+    const u8 = new Uint8Array(bytes);
+    try {
+      const head = ebmlElement(u8, 0, u8.length);
+      if (head.tag !== EBML_HEADER) return u8;
+      const seg = ebmlElement(u8, head.end, u8.length);
+      if (seg.tag !== SEGMENT) return u8;
+      for (let at = seg.data; at < seg.end; ) {
+        const el = ebmlElement(u8, at, seg.end);
+        if (el.tag === INFO && !el.size.unknown) {
+          let scale = 1e6; // nanosegundos por unidad de tiempo: 1 ms si no se dice otra cosa
+          for (let p = el.data; p < el.end; ) {
+            const kid = ebmlElement(u8, p, el.end);
+            if (kid.tag === DURATION) return u8;
+            if (kid.tag === TIMECODE_SCALE) {
+              scale = 0;
+              for (let i = kid.data; i < kid.end; i++) scale = scale * 256 + u8[i];
+            }
+            p = kid.end;
+          }
+          // Duration: 44 89, tamaño 8 (88) y un float64; Info crece en 11 bytes y su tamaño se
+          // reescribe con 8 bytes (01 y siete más), que alcanzan para cualquiera
+          const dur = new Uint8Array(11);
+          dur.set([0x44, 0x89, 0x88]);
+          new DataView(dur.buffer).setFloat64(3, (ms * 1e6) / (scale || 1e6));
+          const body = el.end - el.data + dur.length;
+          const info = new Uint8Array(4 + 8 + body);
+          info.set(u8.subarray(at, at + 4));
+          info[4] = 0x01;
+          for (let i = 0, v = body; i < 7; i++, v = Math.floor(v / 256)) info[11 - i] = v % 256;
+          info.set(u8.subarray(el.data, el.end), 12);
+          info.set(dur, 12 + el.end - el.data);
+          const out = new Uint8Array(u8.length - (el.end - at) + info.length);
+          out.set(u8.subarray(0, at));
+          out.set(info, at);
+          out.set(u8.subarray(el.end), at + info.length);
+          // un segmento de tamaño conocido crece lo mismo (MediaRecorder lo deja desconocido)
+          if (!seg.size.unknown) {
+            const grown = seg.size.value + info.length - (el.end - at);
+            const sizeAt = head.end + ebmlNumber(u8, head.end).len; // el tamaño va tras el identificador
+            const len = seg.size.len;
+            if (grown >= 2 ** (7 * len) - 1) return u8;
+            for (let i = len - 1, v = grown; i >= 0; i--, v = Math.floor(v / 256)) out[sizeAt + i] = v % 256;
+            out[sizeAt] |= 0x100 >> len;
+          }
+          return out;
+        }
+        if (el.size.unknown) break; // un cuadro sin tamaño: Info ya tendría que haber aparecido
+        at = el.end;
+      }
+    } catch {
+      /* no es un WebM que se entienda: va sin tocar */
+    }
+    return u8;
+  }
+
+  /**
+   * Graba la vista en video: cada cuadro se arma con el mismo compositor que la imagen y se dibuja en
+   * un canvas del que `MediaRecorder` toma la película. `target()` dice qué vista grabar en cada
+   * cuadro (se puede cambiar de 3D a 2D en medio). `stop()` resuelve con el archivo.
+   */
+  function record(target, { caption = '', extra = () => [], fps = 30 } = {}) {
+    const format = videoFormat();
+    if (!format) throw new Error('este navegador no graba video desde un canvas');
+    const first = target().wrap.getBoundingClientRect();
+    const out = document.createElement('canvas');
+    // a 1 px por px de CSS, en números pares (los códecs de video los piden así)
+    out.width = Math.max(2, Math.round(first.width) & ~1);
+    out.height = Math.max(2, Math.round(first.height + (caption ? CAPTION : 0)) & ~1);
+    const ctx = out.getContext('2d');
+    const stream = out.captureStream(fps);
+    const rec = new MediaRecorder(stream, { mimeType: format.mime, videoBitsPerSecond: 6e6 });
+    const chunks = [];
+    rec.ondataavailable = (ev) => ev.data.size && chunks.push(ev.data);
+    let on = true;
+    let frames = 0;
+    const started = performance.now();
+    const frame = async () => {
+      if (!on) return;
+      try {
+        const { wrap, view } = target();
+        const img = await capture(wrap, view, { caption, scale: 1, extra: extra() });
+        // si la vista cambió de tamaño (pantalla completa), entra entera, sin deformarse
+        const k = Math.min(out.width / img.width, out.height / img.height);
+        const w = img.width * k;
+        const h = img.height * k;
+        ctx.fillStyle = backdrop(wrap);
+        ctx.fillRect(0, 0, out.width, out.height);
+        ctx.drawImage(img, (out.width - w) / 2, (out.height - h) / 2, w, h);
+        frames++;
+      } catch (err) {
+        console.warn('Un cuadro del video no se pudo armar:', err);
+      }
+      if (on) requestAnimationFrame(frame);
+    };
+    rec.start(1000);
+    requestAnimationFrame(frame);
+    return {
+      format,
+      get frames() {
+        return frames;
+      },
+      get seconds() {
+        return (performance.now() - started) / 1000;
+      },
+      stop() {
+        on = false;
+        const ms = performance.now() - started;
+        return new Promise((done, fail) => {
+          rec.onstop = async () => {
+            for (const tr of stream.getTracks()) tr.stop();
+            const type = format.mime.split(';')[0];
+            const blob = new Blob(chunks, { type });
+            if (format.ext !== 'webm') return done(blob);
+            done(new Blob([webmDuration(await blob.arrayBuffer(), ms)], { type }));
+          };
+          rec.onerror = (ev) => fail(ev.error || new Error('MediaRecorder'));
+          if (rec.state === 'inactive') rec.onstop();
+          else rec.stop();
+        });
+      },
+    };
+  }
+
+  GB.snapshot = { capture, save, fileName, download, videoFormat, record, webmDuration, CAPTION };
 })(window.GB);

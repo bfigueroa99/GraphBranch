@@ -49,6 +49,34 @@ test('Guardar imagen deja un PNG en la carpeta de descargas, sin pisar el anteri
   await app.close();
 });
 
+test('grabar el Replay deja el video en la carpeta de descargas, con su duración', async ({}, testInfo) => {
+  const { app, page } = await launch(testInfo, { args: ['--lang=es'] });
+  const dir = testInfo.outputPath('descargas');
+  mkdirSync(dir, { recursive: true });
+  await app.evaluate(({ app }, d) => app.setPath('downloads', d), dir);
+  await loaded(page);
+  await expect(page.locator('#status-text')).toHaveText('Simulación en vivo');
+  await page.click('#replay-btn');
+  const rec = page.locator('#replay .rp-rec');
+  await expect(rec).toHaveAttribute('aria-label', 'Grabar video');
+  await rec.click();
+  await expect(rec).toHaveAttribute('aria-pressed', 'true');
+  await expect(rec).toHaveAttribute('aria-label', 'Detener y guardar el video');
+  await page.waitForTimeout(2000);
+  await rec.click();
+  await expect(page.locator('#snap-note')).toContainText('Video guardado: graphbranch-demo-replay-');
+  const videos = () => readdirSync(dir).filter((f) => /\.(webm|mp4)$/.test(f));
+  await expect.poll(videos, { timeout: 10_000 }).toHaveLength(1);
+  const [file] = videos();
+  expect(file).toMatch(/^graphbranch-demo-replay-\d{4}-\d\d-\d\d-\d{4}\.webm$/);
+  const webm = readFileSync(join(dir, file));
+  expect(webm.readUInt32BE(0)).toBe(0x1a45dfa3); // la firma de EBML, el contenedor de WebM
+  expect(webm.includes(Buffer.from([0x44, 0x89, 0x88]))).toBe(true); // y la duración, que agrega snapshot.js
+  expect(webm.length).toBeGreaterThan(5000);
+  expect(page.url()).toMatch(/^app:\/\/graphbranch\//);
+  await app.close();
+});
+
 test('app:// solo sirve la página: el resto del proyecto da 404', async ({}, testInfo) => {
   const { app } = await launch(testInfo);
   const status = await app.evaluate(async ({ session }) => {

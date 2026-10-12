@@ -294,6 +294,15 @@
       else this.play();
     }
 
+    /** Desde el principio, andando (para grabarla entera). */
+    restart() {
+      if (!this.active) return;
+      this.u = 0;
+      this.seek(true);
+      this.renderClock();
+      this.play();
+    }
+
     setSpeed(i) {
       this.speedIdx = i;
       this.el.speed.textContent = `${SPEEDS[i]}×`;

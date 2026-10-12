@@ -82,12 +82,12 @@ function openOutside(url) {
   }
 }
 
-/** Las imágenes que guarda la página (Guardar imagen, js/snapshot.js) van a la carpeta de descargas
-    sin preguntar, como en un navegador, y sin pisar otra con el mismo nombre. Cualquier otra
-    descarga se cancela: la página no tiene por qué bajar nada más. */
+/** Las imágenes y los videos que guarda la página (Guardar imagen y grabar el Replay, js/snapshot.js)
+    van a la carpeta de descargas sin preguntar, como en un navegador, y sin pisar otro con el mismo
+    nombre. Cualquier otra descarga se cancela: la página no tiene por qué bajar nada más. */
 function saveDownload(ev, item) {
   const name = item.getFilename();
-  if (!item.getURL().startsWith(`blob:${ORIGIN}/`) || !/^[\w.-]+\.png$/.test(name)) return item.cancel();
+  if (!item.getURL().startsWith(`blob:${ORIGIN}/`) || !/^[\w.-]+\.(png|webm|mp4)$/.test(name)) return item.cancel();
   const dir = app.getPath('downloads');
   const ext = path.extname(name);
   let file = path.join(dir, name);

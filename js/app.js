@@ -614,8 +614,10 @@
     onState: (on) => {
       setPressed(el.replayBtn, on);
       if (on) lowerThird(null); // el Replay trae sus propios rótulos
+      else if (recorder) stopRecording(); // salir del Replay termina la grabación, y se guarda
     },
     onEnd: () => {
+      if (recorder) stopRecording(); // la historia llegó al final: el video también
       if (!tv.attract) return game?.replayDone();
       // el Replay de ambiente (modo TV) se queda un momento en el final y vuelve al presente
       setTimeout(() => tv.attract && replay.active && !paused && replay.stop(), 6000);
@@ -659,6 +661,52 @@
     } finally {
       snapping = false;
       el.snapBtn.removeAttribute('aria-busy');
+    }
+  }
+
+  /* grabar el Replay en video (js/snapshot.js): desde el principio hasta el final, o hasta que se pare */
+  const recBtn = $('#replay .rp-rec');
+  let recorder = null;
+  recBtn.hidden = !GB.snapshot.videoFormat(); // sin MediaRecorder (navegadores viejos) no se ofrece
+  recBtn.addEventListener('click', () => (recorder ? stopRecording() : startRecording()));
+  setRecUI(false);
+
+  function setRecUI(on) {
+    setPressed(recBtn, on);
+    recBtn.setAttribute('aria-label', t(on ? 'rec.stop' : 'rec.label'));
+    recBtn.title = t(on ? 'rec.stop' : 'rec.title');
+  }
+
+  function startRecording() {
+    if (!replay.active || recorder || !active) return;
+    try {
+      recorder = GB.snapshot.record(() => ({ wrap: graph === graph3d ? el.graph3d : el.graph, view: graph }), {
+        caption: `${nameOf(active)} · GraphBranch`,
+        extra: () => [$('#replay .rp-clock'), $('#replay .rp-caption')], // la fecha grande y los rótulos
+      });
+    } catch (err) {
+      console.error(err);
+      return snapNote(t('rec.failed'));
+    }
+    recorder.repo = active.demo ? 'demo' : nameOf(active);
+    setRecUI(true);
+    replay.restart();
+  }
+
+  async function stopRecording() {
+    const r = recorder;
+    if (!r) return;
+    recorder = null;
+    setRecUI(false);
+    try {
+      const blob = await r.stop();
+      if (!blob.size) throw new Error('el video quedó vacío');
+      const name = GB.snapshot.fileName(r.repo, { ext: r.format.ext, kind: 'replay' });
+      GB.snapshot.download(blob, name);
+      snapNote(t('rec.done', { file: name }));
+    } catch (err) {
+      console.error(err);
+      snapNote(t('rec.failed'));
     }
   }
 
@@ -1385,6 +1433,7 @@
 
   /* al cambiar de idioma se vuelve a dibujar todo lo que tiene texto (lo estático ya lo tradujo i18n.apply) */
   i18n.onChange(() => {
+    setRecUI(!!recorder);
     sendDesktopLabels();
     fillLanguages();
     setView(view, !tv.on);

@@ -75,7 +75,7 @@ segunda columna a la primera.
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias) | CI, tags, despliegues |
 | Plataformas | web estática (GitHub Pages), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV | widget y capa para streaming, VS Code |
 | Escala | hasta 10 repos, miles de ramas por repo | una organización o un usuario entero |
-| Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG) | video del Replay, Slack y Discord, resumen de la semana |
+| Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM) | Slack y Discord, resumen de la semana |
 | Análisis | resumen de cifras, logros, misión del día | salud del repo, choques entre ramas, comparar ramas, búsqueda |
 | Público | devs y equipos, 40 idiomas, teclado | quien enseña o aprende git, quien usa lector de pantalla |
 
@@ -95,12 +95,10 @@ construir sobre ellas.
 2. ~~**Exportar imagen**~~ hecho en #46 · Salidas. El botón de la cámara de fotos guarda la vista
    como PNG, en 3D y en 2D, con las etiquetas y una franja con el repo y la fecha; en la app de
    escritorio va a la carpeta de descargas.
-3. **Grabar el Replay en video** · Salidas. Segunda entrega de exportar: un botón en la barra del
-   Replay graba la historia a WebM con `MediaRecorder`, cuadro a cuadro desde el compositor de
-   `js/snapshot.js` (la escena 3D o el SVG, más las etiquetas y la fecha grande) sobre un canvas con
-   `captureStream()`; la grabación dura lo que el Replay (menos de un minuto). Sin audio en la primera
-   entrega. Comprobar: el smoke graba unos segundos y verifica la firma WebM (EBML) y que dure más de
-   un segundo.
+3. ~~**Grabar el Replay en video**~~ hecho en #49 · Salidas. Un botón en la barra del Replay graba
+   la historia desde el principio a WebM (MP4 en Safari) con `MediaRecorder`, cuadro a cuadro desde el
+   compositor de `js/snapshot.js`, con la fecha grande y los rótulos; al terminar se guarda solo, con
+   la duración que MediaRecorder no anota. Sin audio.
 4. ~~**GitLab**~~ hecho en #47 · Fuentes. Proyectos públicos de gitlab.com (con subgrupos), sin
    token: ramas, commits y merge requests en vivo, galaxias con sus archivos, la Replay con sus MRs.
    `GitLabSource` hereda de `GitHubSource` el ciclo, los reintentos y las actividades.
@@ -701,3 +699,56 @@ posteriores pueden haberse movido.
 - Validado: 26 pruebas (`node --test`), smoke, i18n (sin textos nuevos) y 15 e2e en verde.
 - **Siguiente:** iteración 24, expansión: el primer ítem sin hacer es el 3 (grabar el Replay en
   video, eje Salidas), de otro eje que la última expansión (Fuentes).
+
+### 2026-10-12 · Iteración 24 · Expansión · Salidas
+
+- **Antes de empezar:** entre el 11 y el 12 de octubre, con el entorno reiniciándose, quedaron en cola
+  nueve disparos de la rutina. Se tomaron como una sola iteración: nueve seguidas sobre el mismo
+  estado habrían sido la misma.
+- **Capacidad nueva: grabar el Replay en video** (ítem 3 de la hoja de ruta). En la barra del Replay,
+  un botón con un punto rojo vuelve la historia al principio y la graba tal como se ve, en 3D o en
+  2D, con la fecha grande, los rótulos de los hitos y abajo la franja con el repo. Mientras graba el
+  punto late en rojo (quieto con movimiento reducido) y el botón pasa a **Detener y guardar el
+  video**; se puede pausar o cambiar la velocidad. Al llegar al final el video se guarda solo; otro
+  clic o **Volver al presente** lo termina antes. Un aviso dice el nombre del archivo
+  (`graphbranch-owner-repo-replay-2026-10-12-0830.webm`), también al lector de pantalla.
+  - `js/snapshot.js`: `record()` repite cuadro a cuadro la misma captura de Guardar imagen (a 1 px
+    por px de CSS, con elementos extra: la fecha y los rótulos del Replay, que la imagen deja fuera)
+    sobre un canvas de medidas pares, cuyo `captureStream()` graba `MediaRecorder` a 6 Mb/s.
+    `videoFormat()` elige VP9, VP8, WebM o MP4 (Safari); sin ninguno, el botón no aparece.
+  - MediaRecorder escribe el WebM mientras graba y no anota cuánto dura: con ffprobe, el archivo de
+    Chromium decía `duration=N/A`, y sin ese dato muchos reproductores no muestran la duración ni
+    dejan adelantar. `webmDuration()` la agrega al bloque Info del segmento (lee el EBML, respeta la
+    escala de tiempo del archivo y, si el segmento tiene tamaño conocido, lo agranda). Chromium no
+    escribe índice de saltos (SeekHead), así que no hay desplazamientos que corregir. Con el parche,
+    ffprobe lee la duración y decodifica el video entero.
+  - `js/replay.js`: `restart()`, desde el principio y andando. `js/app.js` termina la grabación al
+    llegar al final o al salir del Replay.
+  - App de escritorio: las descargas aceptan `.webm` y `.mp4` además de `.png`, siempre que vengan de
+    `blob:app://graphbranch/`.
+  - CSP sin cambios: el video nunca se reproduce en la página, solo se descarga.
+  - 5 textos nuevos en los 40 idiomas.
+- **Medido:** sin GPU (SwiftShader, 1280×800), grabar baja la 3D de 7,7 a 3,3 cuadros por segundo y
+  la 2D de 26 a 10, porque cada cuadro se arma como una imagen entera; el Replay limita cada paso a
+  0,1 s, así que en un equipo así la historia avanza más despacio y el video dura más. Con GPU la
+  captura cuesta mucho menos. Si hiciera falta, lo siguiente sería copiar la escena 3D después del
+  dibujo de cada cuadro en vez de dibujarla otra vez.
+- **Pruebas que fallan sin la capacidad:**
+  - `tools/snapshot.test.mjs` (5, `node --test`): WebM armados a mano con la forma de los de Chrome
+    (segmento y cuadros de tamaño desconocido). La duración llega en la escala del archivo, las
+    pistas y los cuadros quedan byte a byte, un segmento de tamaño conocido crece lo mismo, y un
+    archivo que ya la tiene, un MP4 o uno cortado vuelven tal cual. Además, los nombres de archivo.
+  - Smoke: entra al Replay a 4×, graba (el botón queda encendido y la historia vuelve al principio),
+    salta casi al final y espera a que el video se guarde solo; después, otro grabado de 2,5 s
+    parado a mano. Cada video se abre en una pestaña en blanco (el CSP de la app no deja reproducir):
+    firma EBML, que diga su duración apenas se abre, que dure lo que se grabó, que mida lo que la
+    vista más la franja y que tenga dibujo a la mitad.
+  - e2e de escritorio: grabar y parar deja en la carpeta de descargas un `.webm` con la firma EBML y
+    la duración. Sin aceptar `.webm` en `electron/main.js`, falla (comprobado).
+- README: la función en la lista y en Controles, la estructura, las pruebas, Límites conocidos (en
+  tiempo real, sin sonido, menos cuadros en equipos lentos, la pestaña a la vista) y Seguridad (qué
+  descargas acepta la app de escritorio).
+- Validado: 31 pruebas (`node --test`), smoke (40 idiomas), i18n y 16 e2e en verde.
+- **Siguiente:** iteración 25, expansión: el primer ítem sin hacer es el 5 (GitLab, segunda entrega:
+  token, eventos y GitLab propio, eje Fuentes), de otro eje que esta (Salidas). La 26 también es de
+  expansión; la 27, de mantenimiento (pendiente 1).

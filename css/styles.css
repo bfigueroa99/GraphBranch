@@ -2794,6 +2794,27 @@ kbd {
   gap: 6px;
   white-space: nowrap;
 }
+/* grabar en video: un punto que se enciende en rojo y late mientras graba */
+.rp-rec .rec-dot {
+  fill: currentColor;
+  stroke: none;
+}
+.rp-rec[aria-pressed="true"] {
+  color: var(--bad);
+}
+.rp-rec[aria-pressed="true"] .rec-dot {
+  animation: recpulse 1.2s ease-in-out infinite;
+}
+@keyframes recpulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rp-rec[aria-pressed="true"] .rec-dot {
+    animation: none;
+  }
+}
 /* en 2D la leyenda de ramas ocupa la izquierda: la fecha y los rótulos van a la derecha */
 .graph-stage[data-view="2d"] .rp-clock {
   left: auto;

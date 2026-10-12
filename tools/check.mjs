@@ -102,19 +102,25 @@ function chromiumDelProyecto() {
   }
 }
 
+/** true si el Chromium es el que pidió PLAYWRIGHT_CHROMIUM_PATH (chromium() no lo anuncia). */
+const pedido = (ruta) => ruta === process.env.PLAYWRIGHT_CHROMIUM_PATH;
+
 function chromium() {
   const pedido = process.env.PLAYWRIGHT_CHROMIUM_PATH;
   if (pedido && existsSync(pedido)) return pedido;
   const nota = pedido ? `PLAYWRIGHT_CHROMIUM_PATH=${pedido} no existe; se usa ` : '';
   const candidatos = [chromiumDelProyecto(), ...chromiumInstalados()].filter((c) => c && existsSync(c));
   if (candidatos.length) {
-    if (nota) console.log(`Chromium: ${nota}${candidatos[0]}`);
+    console.log(`Chromium: ${nota}${candidatos[0]}`);
     return candidatos[0];
   }
   console.log('Chromium: no hay ninguno; npx playwright install chromium…');
   correr('chromium-install', process.execPath, [playwrightCli, 'install', 'chromium']);
   const instalado = chromiumDelProyecto();
-  if (instalado && existsSync(instalado)) return instalado;
+  if (instalado && existsSync(instalado)) {
+    console.log(`Chromium: ${nota}${instalado} (recién instalado)`);
+    return instalado;
+  }
   return sinVerificar('sin Chromium (npx playwright install chromium)');
 }
 
@@ -184,7 +190,7 @@ async function main() {
 
   // 5. el entorno de las pruebas en el navegador (antes del smoke, que tarda 2 minutos)
   const ruta = chromium();
-  console.log(`Chromium: ${ruta}`);
+  if (pedido(ruta)) console.log(`Chromium: ${ruta}`);
   const entorno = { ...process.env, PLAYWRIGHT_CHROMIUM_PATH: ruta };
   const prefijo = conE2E ? entornoE2E() : [];
 

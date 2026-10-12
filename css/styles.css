@@ -3661,6 +3661,26 @@ html.tv-idle .tv-bar:not(:focus-within) {
   .toast-timer {
     display: none;
   }
+  /* lo que solo se ve mientras dura su animación (el combo, la ayuda del vuelo y sus avisos) terminaría
+     al instante en su último cuadro, que es invisible: se muestra quieto el mismo tiempo y se va de golpe */
+  .combo.pop {
+    animation: still 2.2s step-end forwards !important;
+  }
+  .fl-hint.show {
+    animation: still 8s step-end forwards !important;
+  }
+  .fl-msg.show {
+    animation: still 2.6s step-end forwards !important;
+  }
+  @keyframes still {
+    from {
+      opacity: 1;
+      transform: none;
+    }
+    to {
+      opacity: 0;
+    }
+  }
 }
 
 /* ---------- pantallas medianas y pequeñas ---------- */

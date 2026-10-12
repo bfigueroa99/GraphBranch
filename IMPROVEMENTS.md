@@ -200,31 +200,34 @@ posteriores pueden haberse movido.
 
 ### Baja
 
-1. Con movimiento reducido, la ayuda del modo vuelo y el combo no se ven nunca (`styles.css:1383`,
-    `:2121`): su animación termina en opacidad 0.
-2. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
+1. Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una etiqueta de
     rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-3. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-4. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
+2. Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+3. Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`) y un
     `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro).
-5. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
+4. Accesibilidad menor: etiquetas de rama de 22 px de alto (mínimo 24), botones que cambian a la vez
     `aria-pressed` y el texto, leyenda 2D sin acceso por teclado, el botón de pausa del Replay sin nombre
     accesible (`index.html:190`).
-6. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-7. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-8. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
-9. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
-10. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
+5. La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+6. `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+7. `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos renombrados).
+8. `parseRepo` acepta `..` como owner o nombre (`util.js:39`): rechazar nombres hechos solo de puntos.
+9. Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja la app en
     blanco al arrancar.
-11. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
+10. Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de `<usuario>.github.io`.
     Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-12. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
+11. Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar `github.js`
     (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-13. Smoke: el paso de contraste de las pestañas (varios repos) mide 500 ms fijos después de cambiar de
+12. Smoke: el paso de contraste de las pestañas (varios repos) mide 500 ms fijos después de cambiar de
     tema, y los colores tienen transiciones de hasta 0,6 s; con el equipo cargado falló una vez
     (iteración 21: «En vivo» a 3,83:1 en el oscuro) y pasó al repetirlo. Esperar a que terminen las
     transiciones (`getAnimations()`) en vez de un tiempo fijo.
+13. Smoke: una vez (iteración 27, corrida completa con `--langs`) el cuadro de la mitad de un video del
+    Replay salió de un solo color; corrido aparte no se repitió (de 550 a 3.400 colores en cada
+    cuadro, en dos corridas). La prueba ahora lee cada cuadro ya decodificado, en tres puntos, y pide
+    dibujo en dos: si vuelve a fallar, sus tres números dicen si el video tiene un tramo vacío (el
+    grabador) o si fue un cuadro suelto mal leído.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); `placeLabels`/`placeNotes` crean arreglos por cuadro
@@ -844,3 +847,32 @@ posteriores pueden haberse movido.
 - **Siguiente:** iteración 27, de **mantenimiento**: pendiente 1 (con movimiento reducido, la ayuda
   del modo vuelo y el combo no se ven nunca). La 28 vuelve a expansión: el primer ítem sin hacer es el
   6 (GitLab, tercera entrega, Fuentes), de otro eje que esta (Escala).
+
+### 2026-10-12 · Iteración 27 · Mantenimiento
+
+- **Disparo fuera de programa:** la rutina se disparó a las 16:40, 26 minutos después de la iteración 26
+  y sin la marca de ejecución programada (la siguiente programada era a las 20:03): alguien la lanzó a
+  mano, así que se hizo la iteración que tocaba.
+- **Arreglo: con movimiento reducido, el combo, la ayuda del modo vuelo y sus avisos no se veían
+  nunca** (pendiente 1). La regla general de movimiento reducido acorta toda animación a 0,01 ms, y
+  estas tres solo existen mientras dura la suya, que termina en opacidad 0 con `forwards`: saltaban
+  directo al final, invisibles. Quien pide menos movimiento se quedaba sin la ayuda de los controles al
+  entrar al vuelo, sin avisos como «no hay a dónde saltar» y sin el combo. Ahora, con movimiento
+  reducido, se muestran quietos el mismo tiempo (2,2 s, 8 s y 2,6 s) con una animación de un solo paso
+  (`step-end`) y se van de golpe, sin escalas ni giros. Las demás animaciones que terminan invisibles
+  son decorativas (trazos, ondas, destellos) o sirven para ocultar, y quedan como estaban.
+- **Prueba nueva en el smoke** («Movimiento reducido»): con `reducedMotion: 'reduce'` entra al modo
+  vuelo (la ayuda aparece por su camino de siempre), enciende el aviso y el combo como los enciende la
+  app, y a los 0,6 s exige que los tres tengan opacidad 1, sin transformación, y que su animación dure
+  lo de siempre (así se siguen yendo). Sin el arreglo falla: «.combo tiene opacidad 0». Fuera del vuelo
+  la ayuda está en un contenedor oculto, donde no corre ninguna animación: por eso la prueba entra al
+  vuelo en vez de mirar el estilo calculado.
+- **Al validar:** en la primera corrida completa del smoke falló una vez «graba el Replay en video»: el
+  cuadro de la mitad del video salió de un solo color. No tiene que ver con este cambio (esa sección
+  corre sin movimiento reducido) y aparte no se repitió en dos corridas, con muestras de 550 a 3.400
+  colores en cada cuadro. La comprobación ahora espera a que cada cuadro esté decodificado, mira tres
+  puntos y pide dibujo en dos, y dice los tres números si falla; queda como pendiente 13 para ver,
+  si vuelve, si es el grabador o la lectura.
+- Validado: 37 pruebas (`node --test`), smoke (40 idiomas), i18n (sin textos nuevos) y 17 e2e en verde.
+- **Siguiente:** iteración 28, expansión: el primer ítem sin hacer es el 6 (GitLab, tercera entrega:
+  los eventos del proyecto en el panel, eje Fuentes), de otro eje que la última expansión (Escala).

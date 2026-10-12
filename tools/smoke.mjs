@@ -205,17 +205,24 @@ async function videoFile(page, dl, sel, { minSeconds, maxSeconds }) {
         // MediaRecorder no la anota: la agrega snapshot.js, y sin ella no se sabría hasta el final
         const seconds = video.duration;
         if (!isFinite(seconds)) throw new Error('el video no dice cuánto dura');
-        video.currentTime = seconds / 2;
-        await once('seeked');
         const c = document.createElement('canvas');
         c.width = video.videoWidth;
         c.height = video.videoHeight;
         const x = c.getContext('2d', { willReadFrequently: true });
-        x.drawImage(video, 0, 0);
-        const d = x.getImageData(0, 0, c.width, Math.round(c.height * 0.9)).data;
-        const seen = new Set();
-        for (let i = 0; i < d.length; i += 4) seen.add(((d[i] >> 3) << 10) | ((d[i + 1] >> 3) << 5) | (d[i + 2] >> 3));
-        return { seconds, w: c.width, h: c.height, colors: seen.size };
+        // colores distintos (con 5 bits por canal, sin la franja de abajo) en varios puntos del video;
+        // cada cuadro se lee cuando ya está decodificado, no apenas termina de buscarlo
+        const samples = [];
+        for (const at of [0.25, 0.5, 0.75]) {
+          video.currentTime = seconds * at;
+          await once('seeked');
+          for (let i = 0; i < 40 && video.readyState < 2; i++) await new Promise((ok) => setTimeout(ok, 50));
+          x.drawImage(video, 0, 0);
+          const d = x.getImageData(0, 0, c.width, Math.round(c.height * 0.9)).data;
+          const seen = new Set();
+          for (let i = 0; i < d.length; i += 4) seen.add(((d[i] >> 3) << 10) | ((d[i + 1] >> 3) << 5) | (d[i + 2] >> 3));
+          samples.push(seen.size);
+        }
+        return { seconds, w: c.width, h: c.height, samples };
       },
       { b64: file.toString('base64'), type: webm ? 'video/webm' : 'video/mp4' },
     );
@@ -223,7 +230,8 @@ async function videoFile(page, dl, sel, { minSeconds, maxSeconds }) {
     await probe.close();
   }
   if (v.w !== box.w || v.h !== box.h) throw new Error(`mide ${v.w}×${v.h} y la vista ${box.w}×${box.h}`);
-  if (v.colors < 100) throw new Error(`el video casi no tiene dibujo: ${v.colors} colores`);
+  // en la mitad de los puntos, al menos: si falla, los tres dicen si es un tramo vacío o un cuadro suelto
+  if (v.samples.filter((n) => n >= 100).length < 2) throw new Error(`el video casi no tiene dibujo: ${v.samples.join(', ')} colores al 25, 50 y 75 %`);
   if (!(v.seconds >= minSeconds && v.seconds <= maxSeconds)) throw new Error(`dura ${v.seconds.toFixed(1)} s y no entre ${minSeconds} y ${maxSeconds}`);
   return v;
 }
@@ -1413,6 +1421,45 @@ console.log('Zumbido del espacio');
     const after = await page.evaluate(() => window.__osc);
     if (flying <= before) throw new Error('el motor no sonó al acelerar');
     if (after > before) throw new Error(`tras aterrizar quedan ${after - before} osciladores del motor`);
+  });
+  await page.context().close();
+}
+
+console.log('Movimiento reducido');
+{
+  // lo que solo se ve mientras dura su animación (el combo, la ayuda del vuelo y sus avisos) tiene que
+  // verse igual, quieto y el mismo tiempo: si la animación se acorta, salta al final, que es invisible
+  const page = await openPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  await step(page, 'el combo, la ayuda del vuelo y sus avisos se ven, quietos y el mismo tiempo', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    // en vuelo (con WebGL) la ayuda aparece sola, por su camino de siempre; fuera de él está oculta
+    const fly = (await page.locator('#graph3d canvas').count()) > 0 && (await page.locator('#fly-btn').isVisible());
+    if (fly) await page.click('#fly-btn');
+    const shown = await page.evaluate(async (fly) => {
+      const wanted = [['.combo', 'pop', 2200], ...(fly ? [['.fl-hint', 'show', 8000], ['.fl-msg', 'show', 2600]] : [])];
+      // el combo y el aviso, como los enciende la app: se quita la clase, reflujo y se vuelve a poner
+      for (const [sel, cls] of wanted.filter(([sel]) => sel !== '.fl-hint')) {
+        const el = document.querySelector(sel);
+        el.textContent ||= 'aviso';
+        el.classList.remove(cls);
+        void el.offsetWidth;
+        el.classList.add(cls);
+      }
+      await new Promise((ok) => setTimeout(ok, 600));
+      return wanted.map(([sel, , ms]) => {
+        const el = document.querySelector(sel);
+        const anim = el.getAnimations().find((a) => a.animationName); // no las transiciones
+        return { sel, opacity: getComputedStyle(el).opacity, transform: getComputedStyle(el).transform, ms, dur: anim ? anim.effect.getComputedTiming().duration : 0 };
+      });
+    }, fly);
+    if (fly) await page.keyboard.press('Escape');
+    for (const x of shown) {
+      if (x.opacity !== '1') throw new Error(`${x.sel} tiene opacidad ${x.opacity}`);
+      if (x.transform !== 'none') throw new Error(`${x.sel} se mueve (${x.transform})`);
+      if (Math.abs(x.dur - x.ms) > 1) throw new Error(`${x.sel} dura ${x.dur} ms y no ${x.ms}`);
+    }
+    if (!fly) console.log('    (sin WebGL: solo el combo)');
   });
   await page.context().close();
 }

@@ -643,6 +643,7 @@ function fakeGitHub() {
       }
       return out.length ? { body: out } : { status: 404, body: { message: 'No commit found' } };
     }
+    if (/^\/commits\/[^/]+\/check-runs$/.test(rest)) return { body: { total_count: 1, check_runs: [{ status: 'completed', conclusion: 'success' }] } };
     return { status: 404, body: { message: 'Not Found' } };
   };
   return {
@@ -715,6 +716,12 @@ console.log('Varios repos a la vez');
     if ((await shown()) !== 'o/a') throw new Error(`el grafo muestra ${await shown()}`);
     const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
     if (saved !== '["o/a","o/b"]') throw new Error(`se guardó ${saved}`);
+  });
+
+  await step(page, 'CI en el grafo: la rama por defecto lleva la marca de sus checks', async () => {
+    const mark = await page.waitForSelector('.h-ci.ci-success, .h3-ci.ci-success', { timeout: 10000 });
+    const title = await mark.getAttribute('title');
+    if (!title && !(await mark.$('title'))) throw new Error('la marca de CI no dice qué significa');
   });
 
   await step(page, 'lo nuevo del repo que no se ve llega con su nombre y a su pestaña', async () => {

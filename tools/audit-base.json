@@ -2,8 +2,8 @@
   "fecha": "2026-10-13",
   "nota": "Hallazgos conocidos de node tools/audit.mjs --puerta: la puerta falla solo con los que no están aquí. Cada tipo tiene su pendiente en IMPROVEMENTS.md (audit:<tipo>). Se reescribe con --base, nunca a mano.",
   "cuota": {
-    "consultas": 5,
-    "por": "/ 1, /events 1, /branches 1, /pulls 1, /commits 1"
+    "consultas": 8,
+    "por": "/ 1, /events 1, /branches 1, /pulls 1, /commits 3, /commits/:sha/check-runs 1"
   },
   "hallazgos": [
     "objetivo-chico|celular-ar|#branch-filter",

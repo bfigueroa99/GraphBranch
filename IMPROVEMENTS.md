@@ -127,7 +127,7 @@ segunda columna a la primera.
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
 | Fuentes | GitHub.com (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), demo | GitLab propio, repos locales, GitHub Enterprise, Gitea/Forgejo, Bitbucket |
-| Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias) | CI, tags, despliegues |
+| Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs) | CI de GitLab, tags, despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV | widget y capa para streaming, VS Code |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM) | Slack y Discord, resumen de la semana |
@@ -171,11 +171,11 @@ se comprueban antes de construir sobre ellas.
    (se guarda `org:nombre` con los repos que ya vio su lista; cada 30 minutos se renueva y los nuevos
    se suman solos, sin traer de vuelta los que se cerraron). Los eventos de la organización, los
    grupos de GitLab y la constelación son el ítem 26.
-9. **CI en el grafo** · Datos · 3×3/2. El estado de los checks de la cabeza de cada rama y de cada PR (✓, ✗,
-   en curso) en su etiqueta y en el detalle, y un aviso cuando se pone en rojo la rama por defecto. Con
-   token, en la misma consulta GraphQL (`statusCheckRollup`); sin token, solo la rama por defecto y las
-   fijadas, para no gastar cuota. La demo simula checks. Comprobar: `node --test` con rollups
-   simulados.
+9. ~~**CI en el grafo**~~ hecho en #56 · Datos. El estado de los checks (✓, ✗, ●) en la etiqueta y el
+   detalle de la rama por defecto, las fijadas, las que se mueven y los PRs, y un aviso al ponerse en
+   rojo la rama por defecto. Con token, en la misma consulta GraphQL (`statusCheckRollup`); sin token,
+   check-runs de la rama por defecto y las fijadas. Los commit statuses sin token, el CI de GitLab y
+   el de todas las ramas del listado quedan sin hacer.
 10. **Repos locales en la app de escritorio** · Fuentes · 3×3/3. `LocalGitSource`: elegir una carpeta (diálogo
    del sistema), leer ramas y commits con `git` desde el proceso principal (`execFile`, sin shell) y
    vigilar `.git/HEAD`, `.git/refs` y `packed-refs` para ver cada commit al instante. Sin GitHub y sin
@@ -1072,6 +1072,25 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Validado: 89 pruebas (`node --test`), smoke, i18n (0 errores) y 17 e2e en verde.
 - **Siguiente:** iteración 30, expansión: ítem 9 (CI en el grafo, Datos)
 
+### 2026-10-13 · Iteración 30 · Expansión · Datos
+
+- **Capacidad nueva: CI en el grafo** (ítem 9 de la hoja de ruta). El estado de los checks de la cabeza
+  de la rama por defecto, las fijadas, las que acaban de moverse y los PRs sale en la etiqueta
+  (✓ ✗ ●, en 2D y 3D), en el detalle y en el texto accesible; con token viene en la misma consulta
+  GraphQL (`statusCheckRollup`) y sin token por check-runs, una consulta por commit nuevo de la rama
+  por defecto y las fijadas. Cuando la rama por defecto pasa a rojo, el panel avisa una vez («CI
+  fallido»). La demo simula checks que corren y terminan. Quedan fuera: el listado completo de ramas,
+  los commit statuses sin token y GitLab.
+- **Pruebas que fallan sin la capacidad:** `node --test` con un GraphQL simulado (estado de la rama y
+  del PR, aviso único al ponerse en rojo, sin estado cuando no hay checks) y con check-runs simulados
+  (un commit no se vuelve a preguntar, lo que sigue en curso sí, API ausente sin errores); un paso del
+  smoke con la marca de CI en el grafo.
+- README: la función en la lista, Límites conocidos y Seguridad.
+- Reclamo: loop/30, sin colisión
+- Web publicada: pendiente de `--publicado`
+- Validado: 92 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores) y 17 e2e en verde.
+- **Siguiente:** iteración 31, mantenimiento: pendiente 1 (`tools/i18n-add.mjs`)
+
 ### 2026-10-13 · Cambio de maquinaria: protocolo de QA, mantenimiento rotativo, investigación y salud del loop
 
 - **Pedido de Benjamin:** loops lo más completos y autónomos posible (QA detallista, investigación de
@@ -1098,11 +1117,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
   Simulada la rotación sobre esta lista: 31 Deuda (el zumbido), 35 Errores (el `localStorage`,
   *reproducido*: el repo queda en «Cargando»), 39 QA, 43 Deuda, 47 Seguridad, 51 Rendimiento, 55
   Accesibilidad.
+- **Al fusionar #56 (iteración 30)** la puerta de la auditoría falló dos veces con un error de consola nuevo
+  en `cuota-sin-token`: el CI sin token pide `/commits/:sha/check-runs`, y la API simulada respondía 404
+  (GitHub responde 200 en un repo público). La API simulada aprendió ese camino y la base pasó de 5 a 8
+  consultas (las check-runs de #56 y la historia de las otras ramas, que a veces cae en la ventana).
 - **Pendientes:** de 21 sin prioridad ni subtipo a 18 (4 Media, 14 Baja). Salen porque esto los cumple:
   cadencia y caudal, issues como fuente, auditoría rotativa y limpieza de ramas (`--salud`, reglas 7 y 2,
   Para Benjamin 3 y 4). Entra el zumbido intermitente (1). El 5 pierde el botón de pausa del Replay: ya
   tiene nombre (`replay.js:369`).
 - **Pruebas que fallan sin el cambio:** `tools/loop.test.mjs` (de 50 a 73) y `tools/audit.test.mjs` (10).
 - README: la auditoría en Pruebas y en la estructura, `--salud` y `docs/investigacion.md`.
-- Validado: 122 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 17 e2e en verde.
-- **Siguiente:** iteración 30, expansión: ítem 9 (CI en el grafo, Datos)
+- Validado: 125 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 17 e2e en verde.
+- **Siguiente:** iteración 31, mantenimiento · Deuda: pendiente 1 (Smoke intermitente «Zumbido del espacio: se calla con la pestaña oculta»: falló…)

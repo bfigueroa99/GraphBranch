@@ -51,6 +51,7 @@
         branches: new Map(),
         commits: new Map(),
         pulls: new Map(),
+        ci: new Map(), // rama -> 'success' | 'failure' | 'pending'
         totalBranches: 0,
         loaded: false,
       };
@@ -204,6 +205,7 @@
       openPR('feature/login', 'develop', S.prLogin, J);
       openPR('feature/dark-mode', 'develop', S.prDark, T, true);
       openPR('fix/rate-limit', 'main', S.prRetry, M);
+      for (const [name, st] of [['main', 'success'], ['develop', 'success'], ['feature/login', 'success'], ['feature/dark-mode', 'pending'], ['fix/rate-limit', 'failure']]) this.setCi(name, st);
       H.push(this.act('comment', { title: MSG('act.commentPr', { num: 38 }), detail: this.C.comments[0], actor: this.actor(V) }, t + 120e3));
       H.push(this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login: 'pgarrido' }) }, t + 140e3));
       this.data.totalBranches = this.data.branches.size;
@@ -234,7 +236,27 @@
       return list[0][2]();
     }
 
+    /** Estado de los checks de una rama (y del PR que sale de ella). */
+    setCi(name, state) {
+      this.data.ci.set(name, state);
+      for (const pr of this.data.pulls.values()) if (pr.head === name) pr.ci = state;
+    }
+
+    /** Un commit nuevo pone sus checks en curso; unos segundos después terminan, casi siempre en verde. */
+    runCi(name) {
+      this.setCi(name, 'pending');
+      this.later(3500 + this.rnd() * 2500, () => {
+        if (!this.data.branches.has(name)) return;
+        const bad = this.chance(name === 'main' ? 0.2 : 0.25);
+        this.setCi(name, bad ? 'failure' : 'success');
+        if (!bad || name !== 'main') return this.publish([]);
+        const sha = this.data.branches.get(name).sha;
+        this.publish([this.act('ci-fail', { title: MSG('act.ciFailed', { branch: name }), detail: U.firstLine(this.data.commits.get(sha).message), branch: name, sha })]);
+      });
+    }
+
     doCommit(b) {
+      this.runCi(b.name);
       const acts = [];
       const n = this.chance(0.75) ? 1 : 2 + Math.floor(this.rnd() * 2);
       const author = this.pick(AUTHORS);
@@ -266,7 +288,7 @@
       const draft = this.chance(0.2);
       const user = this.pick(AUTHORS);
       b.pr = n;
-      this.data.pulls.set(n, { number: n, title: title[0].toUpperCase() + title.slice(1), head: b.name, base: b.base, sameRepo: true, url: null, draft, user: this.actor(user), createdAt: Date.now() });
+      this.data.pulls.set(n, { number: n, title: title[0].toUpperCase() + title.slice(1), head: b.name, base: b.base, sameRepo: true, url: null, draft, user: this.actor(user), createdAt: Date.now(), ci: this.data.ci.get(b.name) });
       return [this.act('pr-open', { title: MSG(draft ? 'act.prOpenedDraft' : 'act.prOpened', { num: n }), detail: this.data.pulls.get(n).title, ref: `${b.name} → ${b.base}`, branch: b.name, sha: b.sha, actor: this.actor(user), number: n })];
     }
 
@@ -290,6 +312,8 @@
       const c = this.commit(pr.base, `Merge pull request #${pr.number} from acme/${pr.head}`, author, Date.now(), [head.sha]);
       this.data.pulls.delete(pr.number);
       head.pr = null;
+      this.data.ci.delete(pr.head);
+      this.runCi(pr.base);
       const acts = [this.act('pr-merge', { title: MSG('act.prMergedInto', { num: pr.number, base: pr.base }), detail: pr.title, ref: `${pr.head} → ${pr.base}`, branch: pr.base, sha: c.sha, actor: this.actor(author), number: pr.number })];
       head.own = 0;
       if (!head.protected) {

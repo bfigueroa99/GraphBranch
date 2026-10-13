@@ -261,7 +261,9 @@
   const STAGGER = 700; // los repos que arrancan juntos, escalonados: GitHub no recibe todo a la vez
   /** Clave de un repo (de su fuente o de { owner, name }): con ella se guarda lo suyo (fijadas, filtro, logros). */
   /** Los proyectos de GitLab llevan "gitlab:" delante (en la clave, en lo que se guarda y en la URL). */
-  const hostPrefix = (src) => (src.host === 'gitlab' ? 'gitlab:' : src.host === 'local' ? 'local:' : '');
+  const hostPrefix = (src) => (src.host === 'gitlab' ? 'gitlab:' : src.host === 'codeberg' ? 'codeberg:' : src.host === 'local' ? 'local:' : '');
+  /** Los servicios que no son GitHub, con el nombre que lleva su etiqueta. */
+  const FORGES = { gitlab: 'GitLab', codeberg: 'Codeberg' };
   const keyOf = (src) => `${hostPrefix(src)}${src.owner || 'demo'}/${src.name || ''}`.toLowerCase();
   /** Nombre a la vista (el del servicio, ya cargado) y el escrito, que es el que se guarda (de él sale la clave). */
   const nameOf = (tab) => `${tab.source.data.repo.owner}/${tab.source.data.repo.name}`;
@@ -269,13 +271,14 @@
   const realTabs = () => tabs.filter((x) => !x.demo);
   const filterOf = (tab) => (tab.demo ? tab.source.filter || '' : U.store.get('filter:' + tab.key, ''));
 
-  /** La fuente de un repo de GitHub o de un proyecto de GitLab, con lo que se recuerda de él: su
+  /** La fuente de un repo de GitHub, de un proyecto de GitLab o de un repo de Codeberg, con lo que se recuerda de él: su
       filtro y sus ramas fijadas. El token de GitHub va solo a la fuente de GitHub, y el de GitLab
       solo a la de GitLab. */
   function sourceFor({ host, owner, name }) {
     const key = keyOf({ host, owner, name });
     const remembered = { depth: settings.depth, marks: settings.marks, filter: U.store.get('filter:' + key, ''), pins: U.store.get('pins:' + key, []) };
     if (host === 'local') return new GB.LocalGitSource({ id: owner, name, ...remembered });
+    if (host === 'codeberg') return new GB.CodebergSource({ owner, name, ...remembered });
     if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, ...remembered });
     return new GB.GitHubSource({ owner, name, token: settings.token, apiUrl: API_URL, ...remembered });
   }
@@ -496,7 +499,7 @@
   function pruneOwners() {
     let changed = false;
     for (const owner of Object.keys(followedOwners)) {
-      const has = realTabs().some((x) => !['gitlab', 'local'].includes(x.source.host) && String(x.source.owner).toLowerCase() === owner.toLowerCase());
+      const has = realTabs().some((x) => !['gitlab', 'codeberg', 'local'].includes(x.source.host) && String(x.source.owner).toLowerCase() === owner.toLowerCase());
       if (!has) {
         delete followedOwners[owner];
         changed = true;
@@ -1154,9 +1157,9 @@
       el.repoLink.removeAttribute('href');
       el.repoLink.setAttribute('aria-disabled', 'true');
     }
-    el.repoBadge.hidden = !repo.demo && !repo.private && repo.host !== 'gitlab' && !repo.local;
-    const gitlab = repo.host === 'gitlab' && !repo.demo;
-    el.repoBadge.textContent = repo.demo ? t('badge.demo') : repo.local ? t('badge.local') : repo.private ? (gitlab ? 'GitLab · ' : '') + t('badge.private') : 'GitLab';
+    const forge = repo.demo ? null : FORGES[repo.host];
+    el.repoBadge.hidden = !repo.demo && !repo.private && !forge && !repo.local;
+    el.repoBadge.textContent = repo.demo ? t('badge.demo') : repo.local ? t('badge.local') : repo.private ? (forge ? forge + ' · ' : '') + t('badge.private') : forge || '';
     el.repoBadge.className = `badge${repo.demo ? ' demo' : ''}`;
     el.repoDesc.textContent = repo.practice ? t('practice.desc') : repo.demo ? t('repo.demoDesc') : repo.description || '';
     el.repoDesc.hidden = !el.repoDesc.textContent;
@@ -1166,8 +1169,8 @@
 
   function renderTokenBanner() {
     const data = source?.data;
-    // el aviso es del token de GitHub: a un proyecto de GitLab no le cambia nada
-    const show = data && !data.repo.demo && data.repo.host !== 'gitlab' && !settings.token && data.mode;
+    // el aviso es del token de GitHub: a un proyecto de GitLab o de Codeberg no le cambia nada
+    const show = data && !data.repo.demo && !FORGES[data.repo.host] && !settings.token && data.mode;
     el.tokenBanner.hidden = !show;
     if (!show) return;
     el.tokenBannerText.textContent =
@@ -1762,7 +1765,7 @@
     // se reconecta lo que cambió: un token de GitLab nuevo no gasta la cuota de GitHub. Si no cambió
     // nada, todo, como dice el botón
     const changed = (tab) =>
-      settings.depth !== before.depth || settings.marks !== before.marks || (tab.source.host === 'gitlab' ? settings.gitlabToken !== before.gitlabToken : settings.token !== before.token);
+      settings.depth !== before.depth || settings.marks !== before.marks || (tab.source.host === 'codeberg' ? false : tab.source.host === 'gitlab' ? settings.gitlabToken !== before.gitlabToken : settings.token !== before.token);
     if (realTabs().length) reconnectAll(realTabs().some(changed) ? changed : undefined);
     else el.tokenBanner.hidden = true;
   });

@@ -8,7 +8,7 @@
      Las librerías y las fuentes son copias locales en vendor/ (tools/vendor.mjs), así que
      scripts, estilos y fuentes solo pueden venir del propio sitio. El manifiesto y el service worker
      (sw.js, que la deja abrir sin red) también son del propio sitio. Las conexiones van a las APIs de
-     GitHub y de gitlab.com, y las imágenes de otro sitio son los avatares de cada uno. -->
+     GitHub, de gitlab.com y de codeberg.org, y las imágenes de otro sitio son los avatares de cada uno. -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'none';
   script-src 'self';
@@ -16,8 +16,8 @@
   font-src 'self';
   manifest-src 'self';
   worker-src 'self';
-  img-src 'self' data: https://avatars.githubusercontent.com https://gitlab.com;
-  connect-src https://api.github.com https://gitlab.com;
+  img-src 'self' data: https://avatars.githubusercontent.com https://gitlab.com https://codeberg.org;
+  connect-src https://api.github.com https://gitlab.com https://codeberg.org;
   base-uri 'none';
   form-action 'none'">
 <title>GraphBranch</title>
@@ -391,6 +391,7 @@
 <script src="js/util.js"></script>
 <script src="js/sources/github.js"></script>
 <script src="js/sources/gitlab.js"></script>
+<script src="js/sources/codeberg.js"></script>
 <script src="js/sources/local.js"></script>
 <script src="js/sources/demo-content.js"></script>
 <script src="js/sources/demo.js"></script>

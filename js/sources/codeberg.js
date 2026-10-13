@@ -1,0 +1,313 @@
+/* GraphBranch — fuente de datos en vivo desde codeberg.org (API REST v1 de Forgejo, la de Gitea), para
+   repositorios públicos.
+
+   Hereda de la fuente de GitHub todo lo que no depende del servicio: el ciclo de sondeo con sus
+   reintentos y su espera sin red, la prioridad para traer la historia de las ramas de a poco, la
+   comparación entre ciclos que da las actividades (ramas nuevas, movidas, borradas; PRs abiertos,
+   fusionados y cerrados) y la limpieza de commits. La API de Forgejo se parece a la de GitHub, y por
+   eso casi todo se hereda; cambia:
+
+   - El tamaño de página se pide con `limit` (no `per_page`), con 50 como tope del servidor.
+   - Las ramas se listan enteras en cada ciclo (el servidor las da por orden alfabético, no por
+     actividad), hasta MAX_PAGES páginas: 500 ramas. Un repo grande tarda más entre ciclos.
+   - La historia sale del listado de commits de cada cabeza (`commits?sha=`), igual que en GitHub.
+   - Una rama que se movió y cuya cabeza anterior no está cargada se distingue de un force-push con
+     dos comparaciones (`compare/a...b` y `compare/b...a`).
+   - Los PRs son los de siempre ("#12"); un título que empieza con "WIP:" o "Draft:" es un borrador.
+   - Sin feed de eventos, ni tags, ni despliegues, ni checks: el panel cuenta lo que se ve comparando
+     ciclos. En el modo galaxias, una rama que no es la principal muestra su árbol, no sus cambios.
+   - Sin token: solo repositorios públicos. codeberg.org permite varios cientos de consultas cada
+     10 minutos por IP, así que el sondeo va cada POLL_MS. Un repo privado responde 404, como uno
+     que no existe. Y no hay token de Codeberg: nada se envía más que la dirección del repo. */
+(function (GB) {
+  'use strict';
+  const { U, i18n } = GB;
+  const M = i18n.msg;
+  const { ApiError } = GB.GitHubSource;
+  const WEB = 'https://codeberg.org';
+  const API = WEB + '/api/v1';
+  const POLL_MS = 20000; // entre ciclos
+  const PULLS_MS = 40000; // entre consultas de PRs
+  const PAGE = 50; // tope del servidor por página
+  const MAX_PAGES = 10; // ramas listadas como mucho: 500
+  const TREE_PAGES = 20; // páginas del árbol como mucho: 20.000 archivos
+  const FIRST_MS = 1500;
+  const BATCH_MS = 4000;
+  const HARD = new Set(['rate', 'network', 'auth', 'aborted']);
+  const hard = (err) => HARD.has(err?.kind);
+  /** Los textos que nombran a GitHub, cambiados por los de Codeberg. */
+  const TERMS = {
+    'status.connecting': 'status.connectingCodeberg',
+    'err.network': 'err.networkCodeberg',
+    'err.timeout': 'err.timeoutCodeberg',
+  };
+  const segs = (path) => String(path).split('/').map(encodeURIComponent).join('/');
+  const DRAFT = /^\s*(?:\[wip\]|wip:|draft:|\[draft\])/i;
+
+  class CodebergSource extends GB.GitHubSource {
+    constructor({ owner, name, depth = 40, filter = '', pins = [] }) {
+      super({ owner, name, token: '', depth, filter, pins });
+      this.host = 'codeberg';
+      this.mode = 'list';
+      this.data.repo.url = `${WEB}/${segs(owner)}/${segs(name)}`;
+      this.data.repo.host = 'codeberg';
+      this.prevHead = new Map(); // cabeza nueva -> la anterior de esa rama
+    }
+
+    get base() {
+      return `/repos/${encodeURIComponent(this.owner)}/${encodeURIComponent(this.name)}`;
+    }
+
+    term(key) {
+      return TERMS[key] || key;
+    }
+
+    /* ---------- HTTP ---------- */
+
+    async api(path, { allow = [] } = {}) {
+      const { res, body } = await this.request(API + path, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+      this.cost++;
+      if (allow.includes(res.status)) return { data: null, fresh: true, status: res.status, headers: res.headers };
+      if (!res.ok) throw this.toError(res, body);
+      return { data: body, fresh: true, headers: res.headers };
+    }
+
+    notFound() {
+      return new ApiError(M('err.notFoundCodeberg', { repo: `${this.owner}/${this.name}` }), { status: 404, kind: 'notfound' });
+    }
+
+    toError(res, body) {
+      if (res.status === 404) return this.notFound();
+      if (res.status === 429) {
+        const wait = Number(res.headers.get('Retry-After'));
+        return new ApiError(M('err.rateCodeberg'), { status: 429, kind: 'rate', resetAt: Date.now() + (wait > 0 ? wait * 1000 : 60000) });
+      }
+      const msg = typeof body?.message === 'string' ? body.message : res.statusText || '';
+      return new ApiError(msg ? M('err.httpCodeberg', { status: res.status, message: msg }) : M('err.httpNoMessageCodeberg', { status: res.status }), {
+        status: res.status,
+        kind: 'http',
+      });
+    }
+
+    nextDelay() {
+      this.exhausted = false;
+      this.throttled = false;
+      return POLL_MS;
+    }
+
+    due(name) {
+      const period = { pulls: PULLS_MS }[name];
+      return !!period && Date.now() - (this.lastPoll[name] || 0) >= period - 500;
+    }
+
+    restBudget() {
+      return Math.max(1, Math.floor(40 / Math.max(1, this.share || 1)));
+    }
+
+    /** Las páginas de Codeberg de una rama, un commit, una comparación o un archivo. */
+    link(kind, a, b) {
+      const u = this.data.repo.url;
+      if (kind === 'tree') return `${u}/src/branch/${segs(a)}`;
+      if (kind === 'commits') return `${u}/commits/branch/${segs(a)}`;
+      if (kind === 'commit') return `${u}/commit/${a}`;
+      if (kind === 'compare') return `${u}/compare/${a}...${b}`;
+      return `${u}/src/commit/${a}/${segs(b)}`;
+    }
+
+    /* ---------- sondeo ---------- */
+
+    async poll(initial) {
+      this.cost = 0;
+      this.bulkCost = 0;
+      this.calm = false;
+      const acts = [];
+      const reseed = this.reseed;
+      const quiet = initial || reseed !== this.reseeded;
+      const deadline = Date.now() + (initial ? FIRST_MS : BATCH_MS);
+      if (initial) await this.loadRepo();
+      if (reseed !== this.reseeded) this.prune();
+      await this.syncBranchList(acts, quiet);
+      if (initial || this.due('pulls')) await this.syncPulls(acts, initial);
+      const before = this.cost;
+      await this.fillBacklog(deadline);
+      this.bulkCost += this.cost - before;
+      this.data.mode = this.mode;
+      this.reseeded = reseed;
+      this.gc();
+      this.countPending();
+      return acts;
+    }
+
+    async loadRepo() {
+      const { data: p } = await this.api(this.base);
+      Object.assign(this.data.repo, {
+        owner: p.owner?.login || this.owner,
+        name: p.name || this.name,
+        defaultBranch: p.default_branch || null,
+        url: p.html_url || this.data.repo.url,
+        private: !!p.private,
+        description: p.description || '',
+      });
+    }
+
+    async syncBranchList(acts, quiet) {
+      const list = [];
+      let full = true;
+      for (let page = 1; ; page++) {
+        const res = await this.api(`${this.base}/branches?limit=${PAGE}&page=${page}`);
+        list.push(...(res.data || []));
+        const more = /rel="next"/.test(res.headers?.get('Link') || '') || (res.data || []).length >= PAGE;
+        if (!more || !(res.data || []).length) break;
+        if (page >= MAX_PAGES) {
+          full = false;
+          break;
+        }
+      }
+      const remote = new Map(list.map((b) => [b.name, { sha: b.commit?.id, protected: !!b.protected }]));
+      this.prevHead.clear();
+      for (const [name, info] of remote) {
+        const was = this.data.branches.get(name)?.sha || this.remoteHeads.get(name)?.sha;
+        if (was && was !== info.sha) this.prevHead.set(info.sha, was);
+      }
+      await this.applyBranchList(acts, quiet, remote);
+      this.data.totalExact = full;
+    }
+
+    /* ---------- commits ---------- */
+
+    async fetchBranch(sha) {
+      const { data } = await this.api(`${this.base}/commits?sha=${encodeURIComponent(sha)}&limit=${Math.min(PAGE, this.depth)}&stat=false&verification=false&files=false`, {
+        allow: [404, 409, 422],
+      });
+      for (const c of data || []) this.addCommit(c);
+      return data?.[0]?.sha || null;
+    }
+
+    addCommit(c) {
+      if (!c?.sha) return false;
+      const added = super.addCommit(c);
+      if (added) {
+        const mine = this.data.commits.get(c.sha);
+        // los avatares que no son de codeberg.org (Gravatar, Libravatar) los bloquea el CSP: se omiten
+        if (mine.author.avatar && !mine.author.avatar.startsWith(WEB + '/')) mine.author.avatar = null;
+        mine.url = c.html_url || this.link('commit', c.sha);
+      }
+      return added;
+    }
+
+    branchCreated(name, sha) {
+      const a = super.branchCreated(name, sha);
+      a.url = this.link('tree', name);
+      return a;
+    }
+
+    /** Los commits que `to` tiene y `from` no (compare/from...to); null si alguno ya no existe. */
+    async ahead(from, to) {
+      const { data } = await this.api(`${this.base}/compare/${encodeURIComponent(from)}...${encodeURIComponent(to)}`, { allow: [404] });
+      return data ? Number(data.total_commits) || (data.commits || []).length : null;
+    }
+
+    async branchMoved(name, from, to) {
+      const { commits } = this.data;
+      const head = commits.get(to);
+      const now = U.ancestors(commits, to).set;
+      let count = null;
+      let force = false;
+      let behind = 0;
+      if (now.has(from)) {
+        const before = U.ancestors(commits, from).set;
+        count = [...now].filter((s) => !before.has(s)).length;
+      } else {
+        // la cabeza anterior no está en lo cargado: si tiene commits que la nueva no tiene, fue un force-push
+        try {
+          const lost = await this.ahead(to, from);
+          if (lost === null) force = true;
+          else if (lost > 0) {
+            force = true;
+            behind = lost;
+          } else count = await this.ahead(from, to);
+        } catch (err) {
+          if (hard(err)) throw err;
+          force = true;
+        }
+      }
+      const base = { branch: name, sha: to, actor: this.authorOf(to), detail: head ? U.firstLine(head.message) : '' };
+      if (force) {
+        return this.activity('force', {
+          ...base,
+          title: M('act.force', { name }),
+          detail: behind ? M('act.forceDetailDropped', { n: behind, sha: U.shortSha(to) }) : M('act.forceDetail', { sha: U.shortSha(to) }),
+          url: this.link('commits', name),
+        });
+      }
+      if (head && head.parents.length > 1) return this.activity('merge', { ...base, title: M('act.merge', { name }), url: head.url });
+      const n = count || 1;
+      return this.activity('push', { ...base, title: M('act.pushNew', { n, name }), url: n > 1 ? this.link('compare', from.slice(0, 12), to.slice(0, 12)) : head?.url });
+    }
+
+    /* ---------- pull requests ---------- */
+
+    person(u) {
+      if (!u) return null;
+      const avatar = (u.avatar_url || '').startsWith(WEB + '/') ? u.avatar_url : null;
+      return { login: u.login, name: u.full_name || u.login, avatar };
+    }
+
+    mapPull(p) {
+      const full = `${this.owner}/${this.name}`.toLowerCase();
+      return {
+        number: p.number,
+        title: p.title || '',
+        head: p.head?.ref || '',
+        base: p.base?.ref || '',
+        sameRepo: (p.head?.repo?.full_name || '').toLowerCase() === full,
+        url: p.html_url,
+        draft: !!p.draft || DRAFT.test(p.title || ''),
+        user: this.person(p.user),
+        createdAt: Date.parse(p.created_at) || Date.now(),
+      };
+    }
+
+    async syncPulls(acts, initial) {
+      const { data } = await this.api(`${this.base}/pulls?state=open&sort=recentupdate&limit=${PAGE}`);
+      this.lastPoll.pulls = Date.now();
+      await this.applyPulls(acts, initial, (data || []).map((p) => this.mapPull(p)), null);
+    }
+
+    /** Qué pasó con los PRs que dejaron de estar abiertos: una consulta por PR (son pocos por ciclo). */
+    async pullStates(numbers) {
+      const out = new Map();
+      for (const n of numbers) {
+        try {
+          const { data: p } = await this.api(`${this.base}/pulls/${Number(n)}`, { allow: [404] });
+          if (!p) continue;
+          out.set(n, { state: p.state, merged: !!p.merged, by: this.person(p.merged_by) });
+        } catch (err) {
+          if (hard(err)) throw err;
+        }
+      }
+      return out;
+    }
+
+    /* ---------- archivos (los planetas del modo galaxias) ---------- */
+
+    /** El árbol de la rama con el tamaño de cada archivo. Forgejo no da los cambios de una rama
+        contra la principal por esta vía: una rama que no es la principal muestra también su árbol. */
+    async files({ sha }) {
+      const files = [];
+      let truncated = false;
+      for (let page = 1; ; page++) {
+        const { data } = await this.api(`${this.base}/git/trees/${encodeURIComponent(sha)}?recursive=true&per_page=1000&page=${page}`);
+        for (const e of data?.tree || []) if (e.type === 'blob') files.push({ path: e.path, size: e.size || 0, url: this.link('blob', sha, e.path) });
+        if (!data?.truncated) break;
+        if (page >= TREE_PAGES) {
+          truncated = true;
+          break;
+        }
+      }
+      return { kind: 'tree', files, truncated };
+    }
+  }
+
+  GB.CodebergSource = CodebergSource;
+})(window.GB);

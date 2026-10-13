@@ -967,5 +967,5 @@ posteriores pueden haberse movido.
 - README: la función de GitLab, y Límites conocidos (el panel ya trae issues y comentarios; sin
   estrellas ni forks; solo los últimos 50 eventos).
 - Reclamo: relevo de loop/28 (23d47dd)
-- Validado: PENDIENTE
+- Validado: 89 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores) y 17 e2e en verde.
 - **Siguiente:** iteración 29, expansión: ítem 8 (Una organización entera, segunda entrega, Escala)

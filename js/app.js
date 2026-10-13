@@ -224,6 +224,14 @@
 
   /* ---------- repos seguidos y fuente de datos ---------- */
 
+  const OWNER_REFRESH = 30 * 60 * 1000; // cada cuánto se renueva la lista de una organización seguida
+  const OWNER_SEEN_MAX = 300;
+  const followedOwners = (() => {
+    const v = U.store.get('owners', null); // organización -> nombres de repos ya vistos en su lista
+    const out = {};
+    if (v && typeof v === 'object') for (const [k, names] of Object.entries(v)) if (U.parseOwner('@' + k) && Array.isArray(names)) out[k] = names.filter((n) => typeof n === 'string');
+    return out;
+  })();
   const STAGGER = 700; // los repos que arrancan juntos, escalonados: GitHub no recibe todo a la vez
   /** Clave de un repo (de su fuente o de { owner, name }): con ella se guarda lo suyo (fijadas, filtro, logros). */
   /** Los proyectos de GitLab llevan "gitlab:" delante (en la clave, en lo que se guarda y en la URL). */
@@ -311,6 +319,7 @@
       }
     }
     saveTabs();
+    pruneOwners();
     renderTabs();
   }
 
@@ -408,19 +417,33 @@
    * su pestaña, hasta el tope, y muestra el más reciente. La lista se arma al conectar (una o dos
    * consultas a GitHub); lo que se guarda y comparte son los repos, como si se hubieran escrito uno a uno.
    */
-  async function connectOwner(owner) {
-    if (realTabs().length >= MAX_REPOS) return repoNote(t('repo.limit'));
-    el.repoForm.setAttribute('aria-busy', 'true');
+  async function connectOwner(owner, { refresh = false } = {}) {
+    if (realTabs().length >= MAX_REPOS) return refresh ? undefined : repoNote(t('repo.limit'));
+    if (!refresh) el.repoForm.setAttribute('aria-busy', 'true');
     let list;
     try {
       list = await GB.GitHubSource.ownerRepos(owner, { token: settings.token });
     } catch (err) {
-      return repoNote(i18n.text(err.msg || err.message));
+      return refresh ? undefined : repoNote(i18n.text(err.msg || err.message));
     } finally {
-      el.repoForm.removeAttribute('aria-busy');
+      if (!refresh) el.repoForm.removeAttribute('aria-busy');
     }
-    if (!list.length) return repoNote(t('owner.empty', { owner }));
-    const fresh = list.filter((p) => !tabs.some((x) => x.key === keyOf(p)));
+    if (!list.length) return refresh ? undefined : repoNote(t('owner.empty', { owner }));
+    // la organización queda seguida: lo que ya se vio de su lista no vuelve a avisar como nuevo
+    const seen = new Set(followedOwners[owner]);
+    followedOwners[owner] = list.map((p) => p.name).concat([...seen]).filter((n, i, a) => a.indexOf(n) === i).slice(0, OWNER_SEEN_MAX);
+    U.store.set('owners', followedOwners);
+    const fresh = list.filter((p) => !tabs.some((x) => x.key === keyOf(p)) && (!refresh || !seen.has(p.name)));
+    if (refresh) {
+      const room = fresh.slice(0, Math.max(0, MAX_REPOS - realTabs().length));
+      if (!room.length) return;
+      resume();
+      room.forEach((p, i) => startTab(addTab(sourceFor(p)), i * STAGGER));
+      saveTabs();
+      renderTabs();
+      feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner }), detail: room.map((p) => p.name).join(', '), time: Date.now() });
+      return;
+    }
     // el tope se mira otra vez: mientras llegaba la lista pudieron sumarse otros repos
     const add = fresh.slice(0, Math.max(0, MAX_REPOS - realTabs().length));
     if (fresh.length && !add.length) return repoNote(t('repo.limit'));
@@ -433,6 +456,25 @@
     const more = fresh.length > add.length ? t('owner.limited', { owner, max: MAX_REPOS }) : '';
     const detail = [add.map((p) => p.name).join(', '), more].filter(Boolean).join(' · ');
     feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner }), detail, time: Date.now() });
+  }
+
+  /** Vuelve a mirar la lista de cada organización seguida: los repos nuevos se suman solos. */
+  function refreshOwners() {
+    if (paused || document.hidden) return;
+    Object.keys(followedOwners).forEach((owner, i) => setTimeout(() => connectOwner(owner, { refresh: true }), i * STAGGER));
+  }
+
+  /** Una organización deja de seguirse cuando se cierra el último de sus repos. */
+  function pruneOwners() {
+    let changed = false;
+    for (const owner of Object.keys(followedOwners)) {
+      const has = realTabs().some((x) => x.source.host !== 'gitlab' && String(x.source.owner).toLowerCase() === owner.toLowerCase());
+      if (!has) {
+        delete followedOwners[owner];
+        changed = true;
+      }
+    }
+    if (changed) U.store.set('owners', Object.keys(followedOwners).length ? followedOwners : null);
   }
 
   /** La demo: una pestaña más mientras se mira (no se guarda). Si ya estaba, empieza de nuevo. */
@@ -1569,6 +1611,8 @@
       const who = !parse(input) && U.parseOwner(input);
       if (who) connectOwner(who.owner);
     }
+    setTimeout(refreshOwners, 5000 + MAX_REPOS * STAGGER);
+    setInterval(refreshOwners, OWNER_REFRESH);
     if (initialTV) setTV(true); // ?tv=1: pensado para dejar la URL abierta en una pantalla
   }
   if (desktop) {

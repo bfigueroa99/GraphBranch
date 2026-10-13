@@ -3828,6 +3828,12 @@ html.embed-clear .graph-wrap {
   .repo-prefix {
     display: none;
   }
+  .repo-form {
+    flex-wrap: wrap;
+  }
+  .repo-field {
+    flex: 1 1 100%;
+  }
   .repo-field input {
     padding-left: 10px;
   }

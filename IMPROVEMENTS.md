@@ -348,10 +348,17 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 17. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-18. [QA] Repos locales sin mirar a mano (iteración 32): el botón **Abrir carpeta…** solo con teclado, la barra
-    a 320 px con ese botón de más, un repo local con 1.000 ramas y el texto nuevo en árabe y en tamil.
-    Reproducción: `node e2e/serve.mjs 4173` no sirve (es solo de escritorio): `xvfb-run npx playwright
-    test e2e/desktop.spec.mjs` con `--local=` sobre un repo con 1.000 ramas creado en la prueba.
+18. [QA] Repo local de 1.000 ramas en árabe (iteración 35): el primer arranque en frío tardó 22 s y `#status`
+    dejó de decir «cargando» con 40 ramas contadas (en tamil, 3 s y 1.001). Sin reproducir una segunda vez:
+    medir si el estado «listo» sale antes de la primera lectura completa del repo local. Reproducción:
+    `xvfb-run node` con `e2e/app.mjs` (`launch` + `--local=` sobre un repo con 1.000 ramas), leer
+    `#st-branches` al salir `loaded()`.
+19. [QA] La auditoría con `--langs` cuenta `objetivo-chico` 135 veces fuera de la base (95×22, 73×22 y
+    296×19 px en 40 idiomas): son los mismos controles del pendiente 4, repetidos por idioma. Decidir si
+    la base los guarda por control y no por idioma. Reproducción: `node tools/audit.mjs --langs`.
+20. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
+    (6.009 ms con ≤ 6.000; tareas largas 4.809 ms con ≤ 4.000), sin GPU y con la corrida larga; la corrida
+    normal de la puerta no lo marca. Medir con `node tools/audit.mjs --repetir 3` antes de tocar nada.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); `placeLabels`/`placeNotes` crean arreglos por cuadro
@@ -1205,3 +1212,18 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Reclamo: loop/34, sin colisión
 - Validado: 143 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 21 e2e en verde.
 - **Siguiente:** iteración 35, mantenimiento · QA: pendiente 18 (Repos locales sin mirar a mano (iteración 32): el botón **Abrir carpeta…** solo…)
+
+### 2026-10-13 · Iteración 35 · Mantenimiento · QA
+
+- **Arreglo: la barra a 320 px desbordaba en la app de escritorio** (pendiente 18, el botón **Abrir carpeta…**
+  a 320 px). Con el botón de más, `.repo-form` no cabía en tamil (370 px de ancho en una ventana de 305) ni en
+  alemán (332): a ≤ 560 px el formulario ahora pasa a dos filas (el campo ocupa la primera, los botones la segunda).
+- **Reproducción:** `xvfb-run npx playwright test e2e/desktop.spec.mjs -g "320 px"` → «scrollWidth - clientWidth ≤ 0» sin cumplirse (tamil 65 px, alemán 27 px).
+- **Hallazgos:** 3 nuevos (pendientes 18, 19 y 20), 0 a la base de la auditoría. Repo local de 1.000 ramas en tamil y árabe sin errores de consola, foco visible en 4 Tab sin caer a `<body>`, árabe en `rtl`; la auditoría `--langs` (137 hallazgos, 0 Alta) solo repite los de `objetivo-chico` por idioma y dos medidas de rendimiento sobre el presupuesto de esta máquina.
+- **Pruebas que fallan sin el arreglo:** la e2e «a 320 px la barra con Abrir carpeta no desborda, ni en los idiomas de textos largos» (tamil y alemán).
+- README: sin cambios (no cambia ninguna función).
+- QA: filas tocadas: solo teclado (Tab llega al botón con foco visible), 320 px (el hallazgo), árabe y tamil, 1.000 ramas, consola; smoke 3 veces en verde (sin intermitencias); auditoría completa `--langs` (sin tipos nuevos). Sin mirar: Replay y modo TV con un repo local.
+- Reclamo: loop/35, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 143 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 22 e2e en verde.
+- **Siguiente:** iteración 36, expansión: ítem 13 (GitHub Enterprise Server, Fuentes)

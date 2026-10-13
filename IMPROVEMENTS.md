@@ -1422,5 +1422,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: filas tocadas: CSP (`tools/pwa.test.mjs` con la directiva nueva); XSS (nada nuevo en `innerHTML`; textos por `textContent`); 40 idiomas (`check-i18n`); token solo a su API (Codeberg no lleva ninguno, el smoke lo comprueba); 404 y sin red (prueba y smoke). Sin mirar a mano: 320 px, 3D, repos de más de 500 ramas contra el servidor real; auditoría: no toca la interfaz más allá de la etiqueta.
 - Reclamo: loop/45, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
-- Validado: en curso
+- Validado: 184 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde. (La primera pasada falló dos e2e: la CSP de escritorio, mía y corregida, y «grabar el Replay», intermitente bajo carga, que pasó sola y en la segunda pasada.)
 - **Siguiente:** iteración 46, expansión: ítem 20 (Comparar dos ramas, Análisis)

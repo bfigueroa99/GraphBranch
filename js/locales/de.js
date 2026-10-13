@@ -405,4 +405,16 @@ GB.i18n.define('de', {
   'err.notFoundLocal': '{repo} konnte nicht geöffnet werden: Der Ordner existiert nicht mehr, ist kein Git-Repository oder wurde außerhalb der Desktop-App geöffnet, der einzigen, die lokale Ordner liest.',
   'err.noGit': 'Git wurde nicht gefunden. Installiere es und versuche es erneut.',
   'err.gitLocal': 'Git hat einen Fehler gemeldet: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Repo-Gesundheit',
+  'health.help': 'Wird nur aus bereits geladenen Daten berechnet, ohne zusätzliche Anfragen. Es beschreibt das Repository, nie Personen.',
+  'health.stale': 'Branches ohne Aktivität seit über 30 Tagen und ohne Pull Request',
+  'health.prs': 'Offene Pull Requests, die ältesten zuerst',
+  'health.merged': 'Zeit von geöffnet bis gemergt (neueste Pull Requests)',
+  'health.mergedStat': 'Median {median} · langsamster {max}',
+  'health.merges7': 'Merges, letzte 7 Tage',
+  'health.merges30': 'Merges, letzte 30 Tage',
+  'health.releases30': 'Releases, letzte 30 Tage',
+  'health.none': 'Nichts anzuzeigen.',
 });

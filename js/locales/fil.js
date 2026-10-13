@@ -405,4 +405,16 @@ GB.i18n.define('fil', {
   'err.notFoundLocal': 'Hindi mabuksan ang {repo}: wala na ang folder, hindi ito Git repository, o binuksan ito sa labas ng desktop app, ang tanging nagbabasa ng mga lokal na folder.',
   'err.noGit': 'Hindi nakita ang Git. I-install ito at subukan muli.',
   'err.gitLocal': 'May error na iniulat ang Git: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Kalusugan ng repo',
+  'health.help': 'Kinukuwenta lang mula sa mga na-load na, nang walang dagdag na request. Inilalarawan nito ang repository, hindi ang mga tao.',
+  'health.stale': 'Mga branch na walang aktibidad nang mahigit 30 araw at walang pull request',
+  'health.prs': 'Mga bukas na pull request, pinakaluma muna',
+  'health.merged': 'Oras mula nabuksan hanggang na-merge (mga huling pull request)',
+  'health.mergedStat': 'Median {median} · pinakamabagal {max}',
+  'health.merges7': 'Mga merge, huling 7 araw',
+  'health.merges30': 'Mga merge, huling 30 araw',
+  'health.releases30': 'Mga release, huling 30 araw',
+  'health.none': 'Walang ipapakita.',
 });

@@ -497,6 +497,27 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#trophies:not([open])', { state: 'attached', timeout: 3000 });
   });
 
+  await step(page, 'salud del repo: listas y ritmo de lo ya cargado, y cada fila lleva a su rama', async () => {
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open]', { timeout: 3000 });
+    const info = await page.evaluate(() => {
+      const d = document.querySelector('#health');
+      const w = d.querySelector('.tr-wrap');
+      return {
+        stats: d.querySelectorAll('.hl-stat').length,
+        rows: d.querySelectorAll('.hl-list [data-go]').length,
+        text: d.textContent,
+        overflow: w.scrollWidth - w.clientWidth,
+      };
+    });
+    if (info.stats !== 3) throw new Error(`${info.stats} cifras de ritmo, se esperaban 3`);
+    if (!info.rows) throw new Error('la demo tiene PRs abiertos y no salen en la lista');
+    if (/undefined|NaN|health\./.test(info.text)) throw new Error('texto sin resolver en el panel: ' + info.text.slice(0, 120));
+    if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
+    await page.click('#health .hl-list [data-go]');
+    await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: 3000 });
+  });
+
   await step(page, 'cambia a árabe en vivo (derecha a izquierda)', async () => {
     await page.selectOption('#lang-select', 'ar');
     await page.waitForFunction(() => document.documentElement.dir === 'rtl', null, { timeout: 5000 });

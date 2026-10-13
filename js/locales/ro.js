@@ -412,4 +412,16 @@ GB.i18n.define('ro', {
   'err.notFoundLocal': '{repo} nu a putut fi deschis: folderul nu mai există, nu este un depozit Git sau a fost deschis în afara aplicației desktop, singura care citește foldere locale.',
   'err.noGit': 'Git nu a fost găsit. Instalează-l și încearcă din nou.',
   'err.gitLocal': 'Git a raportat o eroare: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Sănătatea depozitului',
+  'health.help': 'Se calculează doar din ce e deja încărcat, fără cereri suplimentare. Descrie depozitul, niciodată persoanele.',
+  'health.stale': 'Ramuri fără activitate de peste 30 de zile și fără pull request',
+  'health.prs': 'Pull request-uri deschise, cele mai vechi primele',
+  'health.merged': 'Timp de la deschidere la îmbinare (ultimele pull request-uri)',
+  'health.mergedStat': 'Mediană {median} · cel mai lent {max}',
+  'health.merges7': 'Îmbinări, ultimele 7 zile',
+  'health.merges30': 'Îmbinări, ultimele 30 de zile',
+  'health.releases30': 'Lansări, ultimele 30 de zile',
+  'health.none': 'Nimic de afișat.',
 });

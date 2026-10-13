@@ -404,4 +404,16 @@ GB.i18n.define('zh-Hant', {
   'err.notFoundLocal': '無法開啟 {repo}：資料夾已不存在、不是 Git 儲存庫，或是在桌面應用程式之外開啟的（只有桌面應用程式能讀取本機資料夾）。',
   'err.noGit': '找不到 Git。請安裝後再試一次。',
   'err.gitLocal': 'Git 回報了錯誤：{message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': '儲存庫健康度',
+  'health.help': '僅根據已載入的資料計算，不會額外發出請求。它描述的是儲存庫，而不是個人。',
+  'health.stale': '超過 30 天沒有動靜且沒有拉取請求的分支',
+  'health.prs': '未關閉的拉取請求（最舊的在前）',
+  'health.merged': '從開啟到合併的耗時（最近的拉取請求）',
+  'health.mergedStat': '中位數 {median} · 最慢 {max}',
+  'health.merges7': '合併數，近 7 天',
+  'health.merges30': '合併數，近 30 天',
+  'health.releases30': '發布數，近 30 天',
+  'health.none': '沒有可顯示的內容。',
 });

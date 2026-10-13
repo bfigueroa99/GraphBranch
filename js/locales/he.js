@@ -461,4 +461,16 @@ GB.i18n.define('he', {
   'err.notFoundLocal': 'לא ניתן לפתוח את {repo}: התיקייה כבר לא קיימת, אינה מאגר Git או נפתחה מחוץ ליישום השולחן, היחיד שקורא תיקיות מקומיות.',
   'err.noGit': 'Git לא נמצא. התקינו אותו ונסו שוב.',
   'err.gitLocal': 'Git דיווח על שגיאה: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'בריאות המאגר',
+  'health.help': 'מחושב רק ממה שכבר נטען, בלי בקשות נוספות. מתאר את המאגר, לעולם לא אנשים.',
+  'health.stale': 'ענפים בלי פעילות מעל 30 יום ובלי pull request',
+  'health.prs': 'pull requests פתוחים, הישנים קודם',
+  'health.merged': 'זמן מפתיחה עד מיזוג (ה-pull requests האחרונים)',
+  'health.mergedStat': 'חציון {median} · האיטי ביותר {max}',
+  'health.merges7': 'מיזוגים, 7 הימים האחרונים',
+  'health.merges30': 'מיזוגים, 30 הימים האחרונים',
+  'health.releases30': 'גרסאות, 30 הימים האחרונים',
+  'health.none': 'אין מה להציג.',
 });

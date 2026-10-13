@@ -404,4 +404,16 @@ GB.i18n.define('ko', {
   'err.notFoundLocal': '{repo}을(를) 열 수 없습니다. 폴더가 더 이상 없거나, Git 저장소가 아니거나, 로컬 폴더를 읽는 유일한 앱인 데스크톱 앱 밖에서 열렸습니다.',
   'err.noGit': 'Git을 찾을 수 없습니다. 설치한 뒤 다시 시도하세요.',
   'err.gitLocal': 'Git에서 오류를 보고했습니다: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': '저장소 상태',
+  'health.help': '이미 불러온 데이터만으로 계산하며 추가 요청은 없습니다. 저장소를 설명할 뿐, 사람을 평가하지 않습니다.',
+  'health.stale': '30일 넘게 활동이 없고 풀 리퀘스트도 없는 브랜치',
+  'health.prs': '열린 풀 리퀘스트(오래된 순)',
+  'health.merged': '열림에서 병합까지 걸린 시간(최근 풀 리퀘스트)',
+  'health.mergedStat': '중앙값 {median} · 가장 느린 것 {max}',
+  'health.merges7': '병합, 최근 7일',
+  'health.merges30': '병합, 최근 30일',
+  'health.releases30': '릴리스, 최근 30일',
+  'health.none': '표시할 내용이 없습니다.',
 });

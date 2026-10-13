@@ -157,7 +157,7 @@
         const hb = this.data.branches.get(head);
         const msg = `Merge pull request #${num} from acme/${head}`;
         const c = this.commit(base, msg, author, step(), [hb.sha]);
-        H.push(this.act('pr-merge', { title: MSG('act.prMergedInto', { num, base }), detail: hb.prTitle || msg, ref: `${head} → ${base}`, branch: base, sha: c.sha, actor: this.actor(author) }, c.date));
+        H.push(this.act('pr-merge', { title: MSG('act.prMergedInto', { num, base }), detail: hb.prTitle || msg, ref: `${head} → ${base}`, branch: base, sha: c.sha, actor: this.actor(author), openedAt: c.date - (4 + this.rnd() * 44) * 36e5 }, c.date));
         if (del) {
           this.data.branches.delete(head);
           H.push(this.act('branch-delete', { title: MSG('act.branchDeleted', { name: head }), detail: MSG('act.branchDeletedMerged', { into: base }), branch: head }, t + 20e3));
@@ -314,7 +314,7 @@
       head.pr = null;
       this.data.ci.delete(pr.head);
       this.runCi(pr.base);
-      const acts = [this.act('pr-merge', { title: MSG('act.prMergedInto', { num: pr.number, base: pr.base }), detail: pr.title, ref: `${pr.head} → ${pr.base}`, branch: pr.base, sha: c.sha, actor: this.actor(author), number: pr.number })];
+      const acts = [this.act('pr-merge', { title: MSG('act.prMergedInto', { num: pr.number, base: pr.base }), detail: pr.title, ref: `${pr.head} → ${pr.base}`, branch: pr.base, sha: c.sha, actor: this.actor(author), number: pr.number, openedAt: pr.createdAt })];
       head.own = 0;
       if (!head.protected) {
         head.merged = true;

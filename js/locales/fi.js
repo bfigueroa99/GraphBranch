@@ -404,4 +404,16 @@ GB.i18n.define('fi', {
   'err.notFoundLocal': 'Kohdetta {repo} ei voitu avata: kansiota ei enää ole, se ei ole Git-repositorio tai se avattiin työpöytäsovelluksen ulkopuolella, joka on ainoa paikallisia kansioita lukeva.',
   'err.noGit': 'Gitiä ei löytynyt. Asenna se ja yritä uudelleen.',
   'err.gitLocal': 'Git ilmoitti virheestä: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Repon terveys',
+  'health.help': 'Lasketaan vain jo ladatusta tiedosta, ilman lisäkyselyjä. Kuvaa repositoriota, ei koskaan ihmisiä.',
+  'health.stale': 'Haarat, joissa ei ole ollut toimintaa yli 30 päivään ja joilla ei ole pull requestia',
+  'health.prs': 'Avoimet pull requestit, vanhimmat ensin',
+  'health.merged': 'Aika avaamisesta yhdistämiseen (viimeisimmät pull requestit)',
+  'health.mergedStat': 'Mediaani {median} · hitain {max}',
+  'health.merges7': 'Yhdistämiset, viimeiset 7 päivää',
+  'health.merges30': 'Yhdistämiset, viimeiset 30 päivää',
+  'health.releases30': 'Julkaisut, viimeiset 30 päivää',
+  'health.none': 'Ei näytettävää.',
 });

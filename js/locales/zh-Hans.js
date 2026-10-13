@@ -404,4 +404,16 @@ GB.i18n.define('zh-Hans', {
   'err.notFoundLocal': '无法打开 {repo}：文件夹已不存在、不是 Git 仓库，或是在桌面应用之外打开的（只有桌面应用能读取本地文件夹）。',
   'err.noGit': '未找到 Git。请安装后重试。',
   'err.gitLocal': 'Git 报告了错误：{message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': '仓库健康度',
+  'health.help': '仅根据已加载的数据计算，不会额外发起请求。它描述的是仓库，而不是个人。',
+  'health.stale': '超过 30 天没有动静且没有拉取请求的分支',
+  'health.prs': '未关闭的拉取请求（最旧的在前）',
+  'health.merged': '从打开到合并的耗时（最近的拉取请求）',
+  'health.mergedStat': '中位数 {median} · 最慢 {max}',
+  'health.merges7': '合并数，近 7 天',
+  'health.merges30': '合并数，近 30 天',
+  'health.releases30': '发布数，近 30 天',
+  'health.none': '没有可显示的内容。',
 });

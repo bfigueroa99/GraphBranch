@@ -1492,6 +1492,7 @@
               actor: s.by || pr.user,
               url: pr.url,
               number: pr.number,
+              openedAt: pr.createdAt, // para la salud del repo: cuánto tardó en fusionarse
             }),
           );
         }
@@ -1711,6 +1712,7 @@
             return mk('pr-merge', {
               ...fields,
               branch: pr.base?.ref || null, // la rama del PR suele borrarse al fusionar; el merge vive en la base
+              openedAt: Date.parse(pr.created_at) || null, // para la salud del repo: cuánto tardó en fusionarse
               title: pr.base?.ref ? M('act.prMergedInto', { num: prNum, base: pr.base.ref }) : M('act.prMerged', num),
             });
           if (p.action === 'closed') return mk('pr-close', { ...fields, title: M('act.prClosed', num) });

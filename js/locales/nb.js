@@ -404,4 +404,16 @@ GB.i18n.define('nb', {
   'err.notFoundLocal': '{repo} kunne ikke åpnes: mappen finnes ikke lenger, er ikke et Git-depot eller ble åpnet utenfor skrivebordsappen, som er den eneste som leser lokale mapper.',
   'err.noGit': 'Fant ikke Git. Installer det og prøv igjen.',
   'err.gitLocal': 'Git meldte en feil: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Repoets helse',
+  'health.help': 'Beregnes bare ut fra det som allerede er lastet, uten ekstra forespørsler. Beskriver repoet, aldri personer.',
+  'health.stale': 'Grener uten aktivitet på over 30 dager og uten pull request',
+  'health.prs': 'Åpne pull requests, eldste først',
+  'health.merged': 'Tid fra åpnet til flettet (siste pull requests)',
+  'health.mergedStat': 'Median {median} · tregest {max}',
+  'health.merges7': 'Flettinger, siste 7 dager',
+  'health.merges30': 'Flettinger, siste 30 dager',
+  'health.releases30': 'Utgivelser, siste 30 dager',
+  'health.none': 'Ingenting å vise.',
 });

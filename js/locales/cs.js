@@ -415,4 +415,16 @@ GB.i18n.define('cs', {
   'err.notFoundLocal': '{repo} se nepodařilo otevřít: složka už neexistuje, není repozitářem Git, nebo byla otevřena mimo desktopovou aplikaci, která jako jediná čte místní složky.',
   'err.noGit': 'Git nebyl nalezen. Nainstalujte jej a zkuste to znovu.',
   'err.gitLocal': 'Git ohlásil chybu: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Zdraví repozitáře',
+  'health.help': 'Počítá se jen z už načtených dat, bez dalších dotazů. Popisuje repozitář, nikdy lidi.',
+  'health.stale': 'Větve bez aktivity přes 30 dní a bez pull requestu',
+  'health.prs': 'Otevřené pull requesty, nejstarší první',
+  'health.merged': 'Doba od otevření po sloučení (poslední pull requesty)',
+  'health.mergedStat': 'Medián {median} · nejpomalejší {max}',
+  'health.merges7': 'Sloučení, posledních 7 dní',
+  'health.merges30': 'Sloučení, posledních 30 dní',
+  'health.releases30': 'Vydání, posledních 30 dní',
+  'health.none': 'Není co zobrazit.',
 });

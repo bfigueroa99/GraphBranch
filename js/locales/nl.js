@@ -405,4 +405,16 @@ GB.i18n.define('nl', {
   'err.notFoundLocal': '{repo} kon niet worden geopend: de map bestaat niet meer, is geen Git-repository of is buiten de desktop-app geopend, de enige die lokale mappen leest.',
   'err.noGit': 'Git is niet gevonden. Installeer het en probeer opnieuw.',
   'err.gitLocal': 'Git meldde een fout: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Gezondheid van de repo',
+  'health.help': 'Alleen berekend uit wat al geladen is, zonder extra verzoeken. Het beschrijft de repository, nooit mensen.',
+  'health.stale': 'Branches zonder activiteit gedurende meer dan 30 dagen en zonder pull request',
+  'health.prs': 'Open pull requests, oudste eerst',
+  'health.merged': 'Tijd van geopend tot samengevoegd (laatste pull requests)',
+  'health.mergedStat': 'Mediaan {median} · traagste {max}',
+  'health.merges7': 'Merges, laatste 7 dagen',
+  'health.merges30': 'Merges, laatste 30 dagen',
+  'health.releases30': 'Releases, laatste 30 dagen',
+  'health.none': 'Niets om te tonen.',
 });

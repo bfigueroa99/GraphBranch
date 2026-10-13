@@ -412,4 +412,16 @@ GB.i18n.define('hr', {
   'err.notFoundLocal': 'Nije moguće otvoriti {repo}: mapa više ne postoji, nije Git repozitorij ili je otvorena izvan desktop aplikacije, jedine koja čita lokalne mape.',
   'err.noGit': 'Git nije pronađen. Instalirajte ga i pokušajte ponovno.',
   'err.gitLocal': 'Git je prijavio pogrešku: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Zdravlje repozitorija',
+  'health.help': 'Izračunava se samo iz već učitanog, bez dodatnih upita. Opisuje repozitorij, nikad ljude.',
+  'health.stale': 'Grane bez aktivnosti dulje od 30 dana i bez pull requesta',
+  'health.prs': 'Otvoreni pull requestovi, najstariji prvi',
+  'health.merged': 'Vrijeme od otvaranja do spajanja (posljednji pull requestovi)',
+  'health.mergedStat': 'Medijan {median} · najsporiji {max}',
+  'health.merges7': 'Spajanja, zadnjih 7 dana',
+  'health.merges30': 'Spajanja, zadnjih 30 dana',
+  'health.releases30': 'Izdanja, zadnjih 30 dana',
+  'health.none': 'Nema ničega za prikaz.',
 });

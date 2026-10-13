@@ -404,4 +404,16 @@ GB.i18n.define('hu', {
   'err.notFoundLocal': 'A(z) {repo} nem nyitható meg: a mappa már nem létezik, nem Git-tároló, vagy az asztali alkalmazáson kívül nyitották meg, amely az egyetlen, amely helyi mappákat olvas.',
   'err.noGit': 'A Git nem található. Telepítsd, és próbáld újra.',
   'err.gitLocal': 'A Git hibát jelzett: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'A repó állapota',
+  'health.help': 'Csak a már betöltött adatokból számolja, külön lekérdezések nélkül. A tárolót írja le, soha nem az embereket.',
+  'health.stale': '30 napnál régebben inaktív, pull request nélküli ágak',
+  'health.prs': 'Nyitott pull requestek, a legrégebbiek elöl',
+  'health.merged': 'Megnyitástól az egyesítésig eltelt idő (legutóbbi pull requestek)',
+  'health.mergedStat': 'Medián {median} · leglassabb {max}',
+  'health.merges7': 'Egyesítések, az elmúlt 7 nap',
+  'health.merges30': 'Egyesítések, az elmúlt 30 nap',
+  'health.releases30': 'Kiadások, az elmúlt 30 nap',
+  'health.none': 'Nincs mit mutatni.',
 });

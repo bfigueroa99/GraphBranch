@@ -404,4 +404,16 @@ GB.i18n.define('id', {
   'err.notFoundLocal': '{repo} tidak bisa dibuka: folder sudah tidak ada, bukan repositori Git, atau dibuka di luar aplikasi desktop, satu-satunya yang membaca folder lokal.',
   'err.noGit': 'Git tidak ditemukan. Pasang lalu coba lagi.',
   'err.gitLocal': 'Git melaporkan kesalahan: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Kesehatan repo',
+  'health.help': 'Dihitung hanya dari data yang sudah dimuat, tanpa permintaan tambahan. Ini menggambarkan repositori, bukan orang.',
+  'health.stale': 'Cabang tanpa aktivitas lebih dari 30 hari dan tanpa pull request',
+  'health.prs': 'Pull request terbuka, yang terlama dulu',
+  'health.merged': 'Waktu dari dibuka hingga digabung (pull request terbaru)',
+  'health.mergedStat': 'Median {median} · terlambat {max}',
+  'health.merges7': 'Merge, 7 hari terakhir',
+  'health.merges30': 'Merge, 30 hari terakhir',
+  'health.releases30': 'Rilis, 30 hari terakhir',
+  'health.none': 'Tidak ada yang ditampilkan.',
 });

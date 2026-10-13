@@ -415,4 +415,16 @@ GB.i18n.define('pl', {
   'err.notFoundLocal': 'Nie udało się otworzyć {repo}: folder już nie istnieje, nie jest repozytorium Git albo został otwarty poza aplikacją desktopową, jedyną, która czyta lokalne foldery.',
   'err.noGit': 'Nie znaleziono Gita. Zainstaluj go i spróbuj ponownie.',
   'err.gitLocal': 'Git zgłosił błąd: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Kondycja repozytorium',
+  'health.help': 'Liczona tylko z danych już załadowanych, bez dodatkowych zapytań. Opisuje repozytorium, nigdy ludzi.',
+  'health.stale': 'Gałęzie bez aktywności od ponad 30 dni i bez pull requesta',
+  'health.prs': 'Otwarte pull requesty, od najstarszych',
+  'health.merged': 'Czas od otwarcia do scalenia (ostatnie pull requesty)',
+  'health.mergedStat': 'Mediana {median} · najwolniejszy {max}',
+  'health.merges7': 'Scalenia, ostatnie 7 dni',
+  'health.merges30': 'Scalenia, ostatnie 30 dni',
+  'health.releases30': 'Wydania, ostatnie 30 dni',
+  'health.none': 'Brak danych do pokazania.',
 });

@@ -554,6 +554,15 @@ console.log('Escritorio (1280×800)');
   await page.context().close();
 }
 
+/** Espera a que terminen las transiciones y animaciones finitas de la página (no un tiempo fijo: con el
+    equipo cargado 500 ms no alcanzan para las de 0,6 s). */
+const transitionsDone = (page) =>
+  page.evaluate(async () => {
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); // deja arrancar las transiciones
+    const fin = () => document.getAnimations().filter((a) => a.effect?.getComputedTiming().iterations !== Infinity && a.playState === 'running');
+    for (let i = 0, a = fin(); a.length && i < 20; i++, a = fin()) await Promise.all(a.map((x) => x.finished.catch(() => {})));
+  });
+
 /** Textos visibles con poco contraste contra su fondo efectivo: 4,5:1, o 3:1 si es grande (los grafos y
     lo escondido quedan fuera: sus colores son los de cada rama, sobre un lienzo). */
 const lowContrast = (page) =>
@@ -763,7 +772,7 @@ console.log('Varios repos a la vez');
   await step(page, 'las pestañas y el repo de cada aviso se leen (contraste, tema claro y oscuro)', async () => {
     for (const colorScheme of ['light', 'dark']) {
       await page.emulateMedia({ colorScheme });
-      await page.waitForTimeout(500); // los colores cambian con transición: se mide cuando terminan
+      await transitionsDone(page); // los colores cambian con transición: se mide cuando terminan
       const bad = await lowContrast(page);
       if (bad.length) throw new Error(`${colorScheme}: ${bad.length} textos con poco contraste, como ${bad.slice(0, 3).join(', ')}`);
     }

@@ -79,7 +79,7 @@ segunda columna a la primera.
 | Fuentes | GitHub.com (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), demo | GitLab propio, repos locales, GitHub Enterprise, Gitea/Forgejo, Bitbucket |
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias) | CI, tags, despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV | widget y capa para streaming, VS Code |
-| Escala | hasta 10 repos (también los más activos de una organización o un usuario), miles de ramas por repo | una organización entera (sus eventos, la lista al día, grupos de GitLab, constelación) |
+| Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM) | Slack y Discord, resumen de la semana |
 | Análisis | resumen de cifras, logros, misión del día | salud del repo, choques entre ramas, comparar ramas, búsqueda |
 | Público | devs y equipos, 40 idiomas, teclado | quien enseña o aprende git, quien usa lector de pantalla |
@@ -116,12 +116,10 @@ construir sobre ellas.
 7. ~~**Una organización o un usuario entero**~~ hecho en #51 · Escala. `org:nombre`, `@usuario` o la
    URL de su perfil siguen sus repos con push más reciente, sin forks ni archivados, hasta el tope de
    pestañas (una consulta; dos para un usuario). También `?repo=org:nombre`.
-8. **Una organización entera, segunda entrega** · Escala. Seguir la organización y no solo su lista
-   del momento (se guarda `org:nombre` y la lista se renueva sola cada tanto), los eventos de la
-   organización en el panel (`/orgs/{org}/events`, una consulta para todos sus repos), los grupos de
-   GitLab (`/groups/:id/projects?order_by=last_activity_at`) y una vista de constelación (cada repo,
-   una galaxia) para ver más repos de los que caben en pestañas. Comprobar: prueba de cuota con la
-   API simulada.
+8. ~~**Una organización entera, segunda entrega**~~ hecho en #55 · Escala. La organización queda seguida
+   (se guarda `org:nombre` con los repos que ya vio su lista; cada 30 minutos se renueva y los nuevos
+   se suman solos, sin traer de vuelta los que se cerraron). Los eventos de la organización, los
+   grupos de GitLab y la constelación son el ítem 26.
 9. **CI en el grafo** · Datos. El estado de los checks de la cabeza de cada rama y de cada PR (✓, ✗,
    en curso) en su etiqueta y en el detalle, y un aviso cuando se pone en rojo la rama por defecto. Con
    token, en la misma consulta GraphQL (`statusCheckRollup`); sin token, solo la rama por defecto y las
@@ -182,6 +180,11 @@ construir sobre ellas.
     al CSP solo si se usa (en escritorio, sin tocar el CSP de la web); el token sigue yendo solo al
     host de su instancia. Con token se podría usar el listado de commits en vez de las comparaciones,
     si resulta más barato. Comprobar: `tools/gitlab.test.mjs` con otra URL base.
+26. **Una organización entera, tercera entrega** · Escala. Los eventos de la organización en el panel
+    (`/orgs/{org}/events`, una consulta para todos sus repos), los grupos de GitLab
+    (`/groups/:id/projects?order_by=last_activity_at`) y una vista de constelación (cada repo, una
+    galaxia) para ver más repos de los que caben en pestañas. Comprobar: prueba de cuota con la API
+    simulada.
 
 ## Cómo validar un cambio
 

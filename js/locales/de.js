@@ -397,4 +397,12 @@ GB.i18n.define('de', {
   'tray.quit': 'GraphBranch beenden',
   'tray.hiddenTitle': 'GraphBranch läuft weiter',
   'tray.hiddenBody': 'Es beobachtet das Repository im Hintergrund weiter. Über sein Symbol im Infobereich oder in der Menüleiste kannst du es wieder öffnen oder ganz beenden.',
+  'badge.local': 'lokal',
+  'repo.openFolder': 'Ordner öffnen…',
+  'repo.openFolderTitle': 'Ein Git-Repository auf diesem Computer verfolgen, ganz ohne GitHub',
+  'repo.notGit': 'Dieser Ordner ist kein Git-Repository.',
+  'status.connectingLocal': 'Repository wird gelesen…',
+  'err.notFoundLocal': '{repo} konnte nicht geöffnet werden: Der Ordner existiert nicht mehr, ist kein Git-Repository oder wurde außerhalb der Desktop-App geöffnet, der einzigen, die lokale Ordner liest.',
+  'err.noGit': 'Git wurde nicht gefunden. Installiere es und versuche es erneut.',
+  'err.gitLocal': 'Git hat einen Fehler gemeldet: {message}',
 });

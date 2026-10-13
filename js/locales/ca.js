@@ -396,4 +396,12 @@ GB.i18n.define('ca', {
   'tray.quit': 'Surt de GraphBranch',
   'tray.hiddenTitle': 'GraphBranch continua obert',
   'tray.hiddenBody': "Continua revisant el repositori en segon pla. Torna'l a obrir o tanca'l del tot des de la seva icona a la safata del sistema o a la barra de menús.",
+  'badge.local': 'local',
+  'repo.openFolder': 'Obre una carpeta…',
+  'repo.openFolderTitle': 'Segueix un repositori Git d’aquest ordinador, sense necessitat de GitHub',
+  'repo.notGit': 'Aquesta carpeta no és un repositori Git.',
+  'status.connectingLocal': 'Llegint el repositori…',
+  'err.notFoundLocal': 'No s’ha pogut obrir {repo}: la carpeta ja no existeix, no és un repositori Git o s’ha obert fora de l’aplicació d’escriptori, l’única que llegeix carpetes locals.',
+  'err.noGit': 'No s’ha trobat Git. Instal·la’l i torna-ho a provar.',
+  'err.gitLocal': 'Git ha informat d’un error: {message}',
 });

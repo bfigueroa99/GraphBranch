@@ -396,4 +396,12 @@ GB.i18n.define('hu', {
   'tray.quit': 'Kilépés a GraphBranch-ből',
   'tray.hiddenTitle': 'A GraphBranch tovább fut',
   'tray.hiddenBody': 'A háttérben tovább figyeli a repozitóriumot. A rendszertálcán vagy a menüsorban lévő ikonjáról újra megnyithatod, vagy teljesen kiléphetsz belőle.',
+  'badge.local': 'helyi',
+  'repo.openFolder': 'Mappa megnyitása…',
+  'repo.openFolderTitle': 'Kövess egy Git-tárolót ezen a számítógépen, GitHub nélkül',
+  'repo.notGit': 'Ez a mappa nem Git-tároló.',
+  'status.connectingLocal': 'A tároló olvasása…',
+  'err.notFoundLocal': 'A(z) {repo} nem nyitható meg: a mappa már nem létezik, nem Git-tároló, vagy az asztali alkalmazáson kívül nyitották meg, amely az egyetlen, amely helyi mappákat olvas.',
+  'err.noGit': 'A Git nem található. Telepítsd, és próbáld újra.',
+  'err.gitLocal': 'A Git hibát jelzett: {message}',
 });

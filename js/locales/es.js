@@ -396,4 +396,12 @@ GB.i18n.define('es', {
   'tray.quit': 'Salir de GraphBranch',
   'tray.hiddenTitle': 'GraphBranch sigue abierto',
   'tray.hiddenBody': 'Sigue revisando el repositorio en segundo plano. Vuelve a abrirlo o ciérralo del todo desde su ícono en la bandeja del sistema o en la barra de menús.',
+  'badge.local': 'local',
+  'repo.openFolder': 'Abrir carpeta…',
+  'repo.openFolderTitle': 'Seguir un repositorio Git de este equipo, sin necesidad de GitHub',
+  'repo.notGit': 'Esa carpeta no es un repositorio Git.',
+  'status.connectingLocal': 'Leyendo el repositorio…',
+  'err.notFoundLocal': 'No se pudo abrir {repo}: la carpeta ya no existe, no es un repositorio Git o se abrió fuera de la app de escritorio, la única que lee carpetas locales.',
+  'err.noGit': 'No se encontró Git. Instálalo e inténtalo de nuevo.',
+  'err.gitLocal': 'Git informó de un error: {message}',
 });

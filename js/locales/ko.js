@@ -396,4 +396,12 @@ GB.i18n.define('ko', {
   'tray.quit': 'GraphBranch 종료',
   'tray.hiddenTitle': 'GraphBranch가 계속 실행 중입니다',
   'tray.hiddenBody': '백그라운드에서 저장소를 계속 지켜봅니다. 시스템 트레이나 메뉴 막대의 아이콘에서 다시 열거나 완전히 종료할 수 있습니다.',
+  'badge.local': '로컬',
+  'repo.openFolder': '폴더 열기…',
+  'repo.openFolderTitle': 'GitHub 없이 이 컴퓨터의 Git 저장소를 따라갑니다',
+  'repo.notGit': '이 폴더는 Git 저장소가 아닙니다.',
+  'status.connectingLocal': '저장소를 읽는 중…',
+  'err.notFoundLocal': '{repo}을(를) 열 수 없습니다. 폴더가 더 이상 없거나, Git 저장소가 아니거나, 로컬 폴더를 읽는 유일한 앱인 데스크톱 앱 밖에서 열렸습니다.',
+  'err.noGit': 'Git을 찾을 수 없습니다. 설치한 뒤 다시 시도하세요.',
+  'err.gitLocal': 'Git에서 오류를 보고했습니다: {message}',
 });

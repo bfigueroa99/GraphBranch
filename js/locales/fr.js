@@ -397,4 +397,12 @@ GB.i18n.define('fr', {
   'tray.quit': 'Quitter GraphBranch',
   'tray.hiddenTitle': 'GraphBranch reste ouvert',
   'tray.hiddenBody': 'Il continue de surveiller le dépôt en arrière-plan. Rouvrez-le ou quittez-le depuis son icône dans la zone de notification ou la barre des menus.',
+  'badge.local': 'local',
+  'repo.openFolder': 'Ouvrir un dossier…',
+  'repo.openFolderTitle': 'Suivre un dépôt Git de cet ordinateur, sans passer par GitHub',
+  'repo.notGit': 'Ce dossier n’est pas un dépôt Git.',
+  'status.connectingLocal': 'Lecture du dépôt…',
+  'err.notFoundLocal': 'Impossible d’ouvrir {repo} : le dossier n’existe plus, n’est pas un dépôt Git ou a été ouvert hors de l’application de bureau, la seule à lire les dossiers locaux.',
+  'err.noGit': 'Git est introuvable. Installez-le puis réessayez.',
+  'err.gitLocal': 'Git a signalé une erreur : {message}',
 });

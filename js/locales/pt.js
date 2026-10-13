@@ -397,4 +397,12 @@ GB.i18n.define('pt', {
   'tray.quit': 'Sair do GraphBranch',
   'tray.hiddenTitle': 'O GraphBranch continua aberto',
   'tray.hiddenBody': 'Ele continua acompanhando o repositório em segundo plano. Abra-o de novo ou feche-o de vez pelo ícone na bandeja do sistema ou na barra de menus.',
+  'badge.local': 'local',
+  'repo.openFolder': 'Abrir pasta…',
+  'repo.openFolderTitle': 'Siga um repositório Git deste computador, sem precisar do GitHub',
+  'repo.notGit': 'Essa pasta não é um repositório Git.',
+  'status.connectingLocal': 'Lendo o repositório…',
+  'err.notFoundLocal': 'Não foi possível abrir {repo}: a pasta não existe mais, não é um repositório Git ou foi aberta fora do app de desktop, o único que lê pastas locais.',
+  'err.noGit': 'O Git não foi encontrado. Instale-o e tente de novo.',
+  'err.gitLocal': 'O Git informou um erro: {message}',
 });

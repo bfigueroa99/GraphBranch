@@ -27,6 +27,7 @@ const FILES = [
   'js/locales/uk.js', 'js/locales/ur.js', 'js/locales/vi.js', 'js/locales/zh-Hans.js',
   'js/locales/zh-Hant.js',
   'js/sources/demo-content.js', 'js/sources/demo.js', 'js/sources/github.js', 'js/sources/gitlab.js',
+  'js/sources/local.js',
   'vendor/OrbitControls.js', 'vendor/d3.LICENSE.txt', 'vendor/d3.min.js', 'vendor/fonts.css',
   'vendor/three.LICENSE.txt', 'vendor/three.min.js',
   'vendor/fonts/BricolageGrotesque-OFL.txt', 'vendor/fonts/BricolageGrotesque-latin-ext.woff2',

@@ -396,4 +396,12 @@ GB.i18n.define('ms', {
   'tray.quit': 'Keluar daripada GraphBranch',
   'tray.hiddenTitle': 'GraphBranch masih berjalan',
   'tray.hiddenBody': 'Aplikasi ini terus memantau repositori di latar belakang. Buka semula atau tutup sepenuhnya melalui ikonnya dalam dulang sistem atau bar menu.',
+  'badge.local': 'tempatan',
+  'repo.openFolder': 'Buka folder…',
+  'repo.openFolderTitle': 'Ikuti repositori Git pada komputer ini tanpa memerlukan GitHub',
+  'repo.notGit': 'Folder itu bukan repositori Git.',
+  'status.connectingLocal': 'Membaca repositori…',
+  'err.notFoundLocal': '{repo} tidak dapat dibuka: folder itu sudah tiada, bukan repositori Git atau dibuka di luar aplikasi desktop, satu-satunya yang membaca folder tempatan.',
+  'err.noGit': 'Git tidak ditemui. Pasang dan cuba lagi.',
+  'err.gitLocal': 'Git melaporkan ralat: {message}',
 });

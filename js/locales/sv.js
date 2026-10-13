@@ -396,4 +396,12 @@ GB.i18n.define('sv', {
   'tray.quit': 'Avsluta GraphBranch',
   'tray.hiddenTitle': 'GraphBranch körs fortfarande',
   'tray.hiddenBody': 'Det fortsätter att bevaka repot i bakgrunden. Öppna det igen eller avsluta det helt via ikonen i systemfältet eller menyraden.',
+  'badge.local': 'lokal',
+  'repo.openFolder': 'Öppna mapp…',
+  'repo.openFolderTitle': 'Följ ett Git-arkiv på den här datorn, utan GitHub',
+  'repo.notGit': 'Den mappen är inte ett Git-arkiv.',
+  'status.connectingLocal': 'Läser arkivet…',
+  'err.notFoundLocal': '{repo} kunde inte öppnas: mappen finns inte längre, är inte ett Git-arkiv eller öppnades utanför skrivbordsappen, den enda som läser lokala mappar.',
+  'err.noGit': 'Git hittades inte. Installera det och försök igen.',
+  'err.gitLocal': 'Git rapporterade ett fel: {message}',
 });

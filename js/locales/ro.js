@@ -404,4 +404,12 @@ GB.i18n.define('ro', {
   'tray.quit': 'Ieșire din GraphBranch',
   'tray.hiddenTitle': 'GraphBranch rulează în continuare',
   'tray.hiddenBody': 'Continuă să urmărească depozitul în fundal. Redeschideți-l sau închideți-l complet din pictograma sa din bara de sistem sau din bara de meniu.',
+  'badge.local': 'local',
+  'repo.openFolder': 'Deschide folder…',
+  'repo.openFolderTitle': 'Urmărește un depozit Git de pe acest computer, fără GitHub',
+  'repo.notGit': 'Folderul acela nu este un depozit Git.',
+  'status.connectingLocal': 'Se citește depozitul…',
+  'err.notFoundLocal': '{repo} nu a putut fi deschis: folderul nu mai există, nu este un depozit Git sau a fost deschis în afara aplicației desktop, singura care citește foldere locale.',
+  'err.noGit': 'Git nu a fost găsit. Instalează-l și încearcă din nou.',
+  'err.gitLocal': 'Git a raportat o eroare: {message}',
 });

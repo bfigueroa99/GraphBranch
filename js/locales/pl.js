@@ -407,4 +407,12 @@ GB.i18n.define('pl', {
   'tray.quit': 'Zakończ GraphBranch',
   'tray.hiddenTitle': 'GraphBranch nadal działa',
   'tray.hiddenBody': 'Nadal śledzi repozytorium w tle. Otwórz go ponownie lub zamknij całkowicie za pomocą ikony w zasobniku systemowym lub na pasku menu.',
+  'badge.local': 'lokalne',
+  'repo.openFolder': 'Otwórz folder…',
+  'repo.openFolderTitle': 'Śledź repozytorium Git na tym komputerze, bez GitHuba',
+  'repo.notGit': 'Ten folder nie jest repozytorium Git.',
+  'status.connectingLocal': 'Odczytywanie repozytorium…',
+  'err.notFoundLocal': 'Nie udało się otworzyć {repo}: folder już nie istnieje, nie jest repozytorium Git albo został otwarty poza aplikacją desktopową, jedyną, która czyta lokalne foldery.',
+  'err.noGit': 'Nie znaleziono Gita. Zainstaluj go i spróbuj ponownie.',
+  'err.gitLocal': 'Git zgłosił błąd: {message}',
 });

@@ -396,4 +396,12 @@ GB.i18n.define('zh-Hant', {
   'tray.quit': '結束 GraphBranch',
   'tray.hiddenTitle': 'GraphBranch 仍在執行',
   'tray.hiddenBody': '它會繼續在背景關注這個儲存庫。可以從系統匣或選單列中的圖示重新開啟它，或完全結束。',
+  'badge.local': '本機',
+  'repo.openFolder': '開啟資料夾…',
+  'repo.openFolderTitle': '無需 GitHub，直接追蹤這台電腦上的 Git 儲存庫',
+  'repo.notGit': '該資料夾不是 Git 儲存庫。',
+  'status.connectingLocal': '正在讀取儲存庫…',
+  'err.notFoundLocal': '無法開啟 {repo}：資料夾已不存在、不是 Git 儲存庫，或是在桌面應用程式之外開啟的（只有桌面應用程式能讀取本機資料夾）。',
+  'err.noGit': '找不到 Git。請安裝後再試一次。',
+  'err.gitLocal': 'Git 回報了錯誤：{message}',
 });

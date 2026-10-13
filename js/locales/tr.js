@@ -396,4 +396,12 @@ GB.i18n.define('tr', {
   'tray.quit': "GraphBranch'ten çık",
   'tray.hiddenTitle': 'GraphBranch çalışmaya devam ediyor',
   'tray.hiddenBody': 'Depoyu arka planda izlemeye devam ediyor. Sistem tepsisindeki veya menü çubuğundaki simgesinden yeniden açabilir ya da tamamen kapatabilirsiniz.',
+  'badge.local': 'yerel',
+  'repo.openFolder': 'Klasör aç…',
+  'repo.openFolderTitle': 'Bu bilgisayardaki bir Git deposunu GitHub olmadan izleyin',
+  'repo.notGit': 'Bu klasör bir Git deposu değil.',
+  'status.connectingLocal': 'Depo okunuyor…',
+  'err.notFoundLocal': '{repo} açılamadı: klasör artık yok, bir Git deposu değil ya da yerel klasörleri okuyan tek uygulama olan masaüstü uygulamasının dışında açıldı.',
+  'err.noGit': 'Git bulunamadı. Kurup yeniden deneyin.',
+  'err.gitLocal': 'Git bir hata bildirdi: {message}',
 });

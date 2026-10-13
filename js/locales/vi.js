@@ -396,4 +396,12 @@ GB.i18n.define('vi', {
   'tray.quit': 'Thoát GraphBranch',
   'tray.hiddenTitle': 'GraphBranch vẫn đang chạy',
   'tray.hiddenBody': 'Ứng dụng vẫn theo dõi kho ở chế độ nền. Mở lại hoặc thoát hẳn từ biểu tượng của nó trong khay hệ thống hoặc thanh menu.',
+  'badge.local': 'cục bộ',
+  'repo.openFolder': 'Mở thư mục…',
+  'repo.openFolderTitle': 'Theo dõi một kho Git trên máy này mà không cần GitHub',
+  'repo.notGit': 'Thư mục đó không phải là kho Git.',
+  'status.connectingLocal': 'Đang đọc kho…',
+  'err.notFoundLocal': 'Không mở được {repo}: thư mục không còn tồn tại, không phải kho Git hoặc được mở bên ngoài ứng dụng máy tính, ứng dụng duy nhất đọc thư mục cục bộ.',
+  'err.noGit': 'Không tìm thấy Git. Hãy cài đặt rồi thử lại.',
+  'err.gitLocal': 'Git báo lỗi: {message}',
 });

@@ -299,6 +299,8 @@
         <input id="depth" type="number" min="10" max="100" step="5" inputmode="numeric">
       </div>
     </div>
+    <label class="marks-toggle"><input type="checkbox" id="marks"> <span data-i18n="settings.marks">Show tags and deployment environments</span></label>
+    <p class="help" data-i18n="settings.marksHelp">Flags on tagged commits and a plate on the commit each environment (production, staging) runs. Two more requests when a repository opens, then two every 15 minutes.</p>
     <p class="help" data-i18n-html="settings.branchesHelp">GraphBranch shows every branch of the repo, the most active ones closest to the default branch. On large repos they appear gradually, most active first. Pinned branches (click a branch → <strong>Pin</strong>) go right below the default branch, even with a filter. Use the graph filter to focus on a prefix, for example <code>release/</code>.</p>
     <div class="dialog-actions">
       <button type="button" class="btn btn-ghost" id="token-clear" data-i18n="settings.clearTokens">Delete tokens</button>

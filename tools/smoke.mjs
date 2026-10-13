@@ -295,6 +295,14 @@ console.log('Escritorio (1280×800)');
     if (await page.locator('#graph3d').isVisible()) throw new Error('la vista 3D sigue visible');
   });
 
+  await step(page, 'tags y despliegues: banderín en el commit con tag y placa en el de cada entorno', async () => {
+    await page.waitForSelector('#graph svg .node .tag-flag', { timeout: 10000, state: 'attached' });
+    await page.waitForSelector('#graph svg .node .env-plate', { timeout: 10000, state: 'attached' });
+    const texts = await page.$$eval('#graph svg .tag-text, #graph svg .env-plate text', (els) => els.map((e) => e.textContent));
+    if (!texts.some((x) => /^v1\.\d/.test(x))) throw new Error(`ningún banderín con el nombre del tag: ${texts}`);
+    if (!texts.some((x) => /production|staging/.test(x))) throw new Error(`ninguna placa con el nombre del entorno: ${texts}`);
+  });
+
   await step(page, 'guarda la vista 2D como imagen, con cada commit en su lugar y de su color', async () => {
     // en pausa nada se mueve entre la imagen y la comparación
     await page.click('#pause-btn');
@@ -667,7 +675,7 @@ function fakeGitHub() {
     const rest = m[2] || '';
     if (!rest) return { body: { name, owner: { login: owner }, default_branch: 'main', html_url: `https://github.com/${m[1]}`, private: false, description: '' } };
     if (rest === '/branches') return { body: [...r.branches].map(([b, s]) => ({ name: b, commit: { sha: s }, protected: false })) };
-    if (rest === '/events' || rest === '/pulls' || rest === '/activity') return { body: [] }; // /activity: solo con token
+    if (rest === '/events' || rest === '/pulls' || rest === '/tags' || rest === '/deployments' || rest === '/activity') return { body: [] }; // /activity: solo con token
     if (rest === '/commits') {
       let s = r.branches.get(q.get('sha')) || q.get('sha');
       const out = [];

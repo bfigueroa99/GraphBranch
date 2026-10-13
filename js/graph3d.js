@@ -580,6 +580,7 @@
       this.tmpDim = new THREE.Color();
       this.white = new THREE.Color(1, 1, 1);
       this.warmWhite = new THREE.Color(1, 0.93, 0.78);
+      this.envCol = new THREE.Color(0x2ea043);
       this.sph = new THREE.Spherical();
 
       this.scene = new THREE.Scene();
@@ -648,6 +649,9 @@
         ring: new THREE.RingGeometry(0.94, 1, 72),
         portal: new THREE.RingGeometry(0.9, 1.1, 160, 1), // solo el anillo: el sombreador no corre en toda la pantalla
         beam: new THREE.CylinderGeometry(0.22, 0.6, 1, 18, 1, true).translate(0, 0.5, 0),
+        // obelisco de un tag: base cuadrada, punta afilada, apoyado sobre el commit
+        obelisk: new THREE.CylinderGeometry(0.05, 0.16, 1, 4, 1, false).rotateY(Math.PI / 4).translate(0, 0.5, 0),
+        plate: new THREE.BoxGeometry(0.5, 0.12, 0.5),
       };
 
       this.flowLive = flowHook(this.u.flow, this.u.time, this.u.fog, this.u.thin, this.u.near);
@@ -669,6 +673,8 @@
 
       this.iSphere = new Instances(this.gNodes, this.geo.sphere, this.nodeMat);
       this.iTorus = new Instances(this.gNodes, this.geo.torus, this.nodeMat);
+      this.iObelisk = new Instances(this.gNodes, this.geo.obelisk, this.nodeMat); // tags
+      this.iPlate = new Instances(this.gNodes, this.geo.plate, this.nodeMat); // entornos de despliegue
       this.iLine = new Instances(this.gEdges, this.geo.tube, this.lineMat);
       this.iGhost = new Instances(this.gEdges, this.geo.tube, this.ghostMat);
       this.iStub = new Instances(this.gEdges, this.geo.tube, this.stubMat);
@@ -988,6 +994,7 @@
       const morph = !!ctx.morph; // cambio de modo: todo vuela a su lugar nuevo, sin efectos de llegada
       this.layout = L;
       this.ctx = ctx;
+      this.dirtyNodes = true; // los tags y entornos pueden haber cambiado sin que se mueva un commit
       this.maxX = L.maxX;
       this.ghostNames = new Map(L.ghostLabels.map((g) => [g.id, g.name]));
       const gal = this.galaxy ? this.gx : null;
@@ -1965,6 +1972,9 @@
       const gals = this.galaxy ? this.gx.gals : null;
       this.iSphere.begin(n);
       this.iTorus.begin(n);
+      const marks = this.ctx?.refs;
+      this.iObelisk.begin(marks ? marks.size : 0);
+      this.iPlate.begin(marks ? marks.size : 0);
       this.halos.begin(n + (gals ? gals.size : 0));
       const dark = this.dark;
       // el núcleo de cada galaxia brilla, también de canto
@@ -1985,6 +1995,9 @@
         const a = lit ? 1 : 1 - this.hlAmt * 0.9; // los halos de lo apagado casi se van
         const k = s * (1 + 0.3 * it.hov);
         (d.merge ? this.iTorus : this.iSphere).point(v.x, v.y, v.z, (head ? HEAD_SCALE : 1) * k, col);
+        const mk = marks?.get(d.sha);
+        if (mk?.tags.length) this.iObelisk.point(v.x, v.y + 0.35 * k, v.z, 1.5 * k, this.warmWhite);
+        if (mk?.envs.length) this.iPlate.point(v.x, v.y - 0.55 * k, v.z, k, this.envCol);
         if (head) this.halos.push(v.x, v.y, v.z, col, ((dark ? 0.72 : 0.4) + 0.2 * it.hov) * a, 3.3 * k, 1);
         else if (dark && d.color !== 'ghost') this.halos.push(v.x, v.y, v.z, col, (0.26 + 0.4 * it.hov) * a, 1.7 * k, 0);
         else if (it.hov > 0.01) this.halos.push(v.x, v.y, v.z, col, 0.4 * it.hov * a, 2.2 * k, 0);
@@ -1993,6 +2006,8 @@
       for (const d of this.dying) put(d.it, Math.max(0.001, 1 - clamp((now - d.t0) / 350, 0, 1)));
       this.iSphere.end();
       this.iTorus.end();
+      this.iObelisk.end();
+      this.iPlate.end();
       this.halos.end();
     }
 

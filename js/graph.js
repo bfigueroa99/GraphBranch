@@ -138,6 +138,9 @@
     } else if (node.color === 'ghost') {
       rows.push(`<span>${i18n.html('tip.fromMerged', { name: node.chain.slice(2) })}</span>`);
     }
+    const mk = ctx.refs?.get(c.sha);
+    if (mk?.tags.length) rows.push(`<span class="tip-tags">${U.esc(tr('tip.tags'))} ${mk.tags.map((t) => `<code>${U.esc(t)}</code>`).join(' ')}</span>`);
+    if (mk?.envs.length) rows.push(`<span class="tip-envs">${U.esc(tr('tip.envs'))} ${mk.envs.map((e) => `<code>${U.esc(e)}</code>`).join(' ')}</span>`);
     const branch = branchName || heads[0];
     if (branch) {
       const pr = ctx.prs?.get(branch);
@@ -644,6 +647,7 @@
           }
         } else this.retarget(it, n.x, n.row, now, animate);
         it.data = n;
+        it.refs = ctx.refs?.get(n.sha) || null;
         it.cls = `node ${n.color}${n.merge ? ' merge' : ''}${n.heads.length ? ' is-head' : ''}`;
         if (it.el) this.paintNode(it);
         index(it, n.chain);
@@ -802,7 +806,34 @@
       it.ripple = it.focus = 0;
     }
 
+    /** Banderín del tag (arriba del commit) y placa del entorno de despliegue (abajo): solo si el commit los tiene. */
+    paintRefs(it) {
+      const m = it.refs;
+      const key = m ? m.tags.join('\u0001') + '\u0002' + m.envs.join('\u0001') : '';
+      if (it.refKey === key) return;
+      it.refKey = key;
+      it.flag?.remove();
+      it.plate?.remove();
+      it.flag = it.plate = null;
+      if (m?.tags.length) {
+        const f = mk('g', { class: 'tag-flag', 'aria-hidden': 'true' }, it.el);
+        mk('path', { class: 'tag-pole', d: 'M0,-6V-21' }, f);
+        mk('path', { class: 'tag-cloth', d: 'M0,-21H9L6.5,-17.5L9,-14H0Z' }, f);
+        const label = U.truncate(m.tags[0], 14) + (m.tags.length > 1 ? ` +${m.tags.length - 1}` : '');
+        mk('text', { class: 'tag-text', x: 12, y: -15 }, f).textContent = label;
+        it.flag = f;
+      }
+      if (m?.envs.length) {
+        const g = mk('g', { class: 'env-plate', 'aria-hidden': 'true' }, it.el);
+        const label = U.truncate(m.envs.join(' · '), 18);
+        mk('rect', { x: -4, y: 8, width: 12 + label.length * 5.4, height: 12, rx: 3 }, g);
+        mk('text', { x: 2, y: 17 }, g).textContent = label;
+        it.plate = g;
+      }
+    }
+
     paintNode(it) {
+      this.paintRefs(it);
       const cls = it.cls + (it.el.classList.contains('enter') ? ' enter' : '') + (it.el.classList.contains('hl') ? ' hl' : '');
       if (it.el.getAttribute('class') !== cls) it.el.setAttribute('class', cls);
     }

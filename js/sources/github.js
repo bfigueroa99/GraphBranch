@@ -77,13 +77,14 @@
   }
 
   class GitHubSource extends U.Emitter {
-    constructor({ owner, name, token = '', depth = 40, filter = '', pins = [], apiUrl = '' }) {
+    constructor({ owner, name, token = '', depth = 40, filter = '', pins = [], apiUrl = '', marks = true }) {
       super();
       this.ep = endpoints(apiUrl) || endpoints(''); // una dirección que no sea https no se usa: queda GitHub.com
       this.owner = owner;
       this.name = name;
       this.token = token;
       this.depth = depth;
+      this.marks = marks;
       this.filter = filter.trim();
       this.pins = new Set(pins);
       this.mode = token ? 'graphql' : null;
@@ -93,6 +94,8 @@
         commits: new Map(),
         pulls: new Map(),
         ci: new Map(), // rama -> 'success' | 'failure' | 'pending': el estado de los checks de su cabeza
+        tags: new Map(), // commit -> [nombre de tag]
+        deploys: new Map(), // entorno -> { sha, ref }: el último despliegue de cada uno
         pins: this.pins, // van justo debajo de la rama por defecto (ver layout.js)
         mode: null,
         totalBranches: 0,
@@ -491,6 +494,7 @@
         pulls: this.token ? 10000 : 180000,
         events: Math.max(this.eventsInterval * 1000, this.token ? 30000 : 120000),
         count: 15 * 60000,
+        marks: 15 * 60000,
       }[name];
       return Date.now() - (this.lastPoll[name] || 0) >= period - 500;
     }
@@ -531,6 +535,7 @@
       await this.fillBacklog(deadline);
       this.bulkCost += this.spent() - before;
       if (this.mode && this.mode !== 'graphql') await this.syncCiRest(acts, quiet);
+      if (this.marks && (initial || this.due('marks'))) await this.syncMarks();
       if (!initial && this.mode !== 'events' && this.due('events')) await this.syncEvents(acts, false);
       if (this.mode === 'events' && this.due('count')) await this.countBranches();
 
@@ -542,6 +547,36 @@
       this.gc();
       this.countPending();
       return acts;
+    }
+
+    /** Tags (nombre -> commit) y último despliegue de cada entorno: 2 consultas cada 15 minutos, con ETag.
+        Si fallan (repo sin permisos, sin despliegues) el grafo sigue sin ellas; la cuota agotada o la red caída cortan el ciclo. */
+    async syncMarks() {
+      this.lastPoll.marks = Date.now();
+      const get = async (path, cacheKey) => {
+        try {
+          return (await this.api(`${this.base}/${path}`, { cacheKey })).data;
+        } catch (err) {
+          if (!['http', 'notfound', 'auth'].includes(err.kind)) throw err; // cuota, red o corte: el ciclo lo maneja
+          return null;
+        }
+      };
+      const tags = await get('tags?per_page=50', 'tags');
+      if (Array.isArray(tags)) {
+        const byCommit = new Map();
+        for (const t of tags) {
+          const sha = t?.commit?.sha;
+          if (!sha || typeof t.name !== 'string') continue;
+          (byCommit.get(sha) || byCommit.set(sha, []).get(sha)).push(t.name);
+        }
+        this.data.tags = byCommit;
+      }
+      const deploys = await get('deployments?per_page=30', 'deploys');
+      if (Array.isArray(deploys)) {
+        const byEnv = new Map();
+        for (const d of deploys) if (d?.sha && typeof d.environment === 'string' && !byEnv.has(d.environment)) byEnv.set(d.environment, { sha: d.sha, ref: d.ref || '' }); // el más nuevo va primero
+        this.data.deploys = byEnv;
+      }
     }
 
     async loadRepo(acts) {

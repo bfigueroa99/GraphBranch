@@ -52,6 +52,8 @@
         commits: new Map(),
         pulls: new Map(),
         ci: new Map(), // rama -> 'success' | 'failure' | 'pending'
+        tags: new Map(), // commit -> [tag]
+        deploys: new Map(), // entorno -> { sha }
         totalBranches: 0,
         loaded: false,
       };
@@ -110,6 +112,7 @@
       };
       this.data.commits.set(c.sha, c);
       b.sha = c.sha;
+      if (branch === 'develop' && this.data.deploys.has('staging')) this.data.deploys.set('staging', { sha: c.sha }); // staging sigue a develop
       b.own = (b.own || 0) + 1;
       b.movedAt = time;
       return c;
@@ -166,7 +169,7 @@
       };
 
       this.data.branches.set('main', { name: 'main', sha: null, isDefault: true, protected: true, movedAt: t, scope: 'core', own: 0 });
-      push('main', V, S.initial);
+      const first = push('main', V, S.initial);
       push('main', M, S.health);
       push('main', V, S.install);
       create('develop', 'main', 'core', V);
@@ -185,13 +188,17 @@
       push('feature/login', J, S.oauth);
       push('feature/dark-mode', T, S.darkVars);
       this.data.branches.get('develop').prTitle = 'Release 1.4';
-      merge('develop', 'main', 34, V, false);
+      const rel = merge('develop', 'main', 34, V, false);
+      this.data.tags.set(first.sha, ['v1.0.0']);
+      this.data.tags.set(rel.sha, ['v1.4.0']);
+      this.data.deploys.set('production', { sha: rel.sha });
       H.push(this.act('release', { title: MSG('act.release', { tag: 'v1.4.0' }), detail: S.releaseNotes, actor: this.actor(V) }, t + 60e3));
       push('feature/login', J, S.loginA11y);
       push('feature/dark-mode', T, S.darkToggle);
       H.push(this.act('issue-open', { title: MSG('act.issueOpened', { num: ++this.issueSeq }), detail: this.C.issues[0], actor: this.actor(C) }, step(5, 20)));
       this.openIssues.push(this.issueSeq);
-      push('develop', D, S.vite);
+      const dev = push('develop', D, S.vite);
+      this.data.deploys.set('staging', { sha: dev.sha });
       create('fix/rate-limit', 'main', 'api', M);
       push('fix/rate-limit', M, S.retryAfter);
       push('feature/login', J, S.loginE2e);

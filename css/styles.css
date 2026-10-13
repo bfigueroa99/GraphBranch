@@ -3925,3 +3925,86 @@ kbd {
 :lang(zh) {
   letter-spacing: 0 !important;
 }
+
+/* ---------- salud del repo ---------- */
+.hl-body {
+  display: grid;
+  gap: 14px;
+}
+.hl-sec h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font: 600 13px/1.3 var(--font-display);
+}
+.hl-n {
+  padding: 0 7px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  font: 600 11px/18px var(--font-mono);
+}
+.hl-list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hl-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  align-items: center;
+}
+button.hl-row {
+  cursor: pointer;
+}
+button.hl-row:hover,
+button.hl-row:focus-visible {
+  background: var(--surface-2);
+}
+.hl-main {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hl-aside {
+  flex: none;
+  color: var(--ink-3);
+  font: 12px var(--font-mono);
+}
+.hl-none,
+.hl-line {
+  margin: 0;
+  color: var(--ink-3);
+}
+.hl-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+.hl-stat {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+}
+.hl-stat b {
+  font: 700 22px/1.1 var(--font-display);
+}
+.hl-stat span {
+  color: var(--ink-3);
+  font-size: 12px;
+}

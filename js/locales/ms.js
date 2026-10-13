@@ -404,4 +404,16 @@ GB.i18n.define('ms', {
   'err.notFoundLocal': '{repo} tidak dapat dibuka: folder itu sudah tiada, bukan repositori Git atau dibuka di luar aplikasi desktop, satu-satunya yang membaca folder tempatan.',
   'err.noGit': 'Git tidak ditemui. Pasang dan cuba lagi.',
   'err.gitLocal': 'Git melaporkan ralat: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Kesihatan repo',
+  'health.help': 'Dikira hanya daripada data yang sudah dimuatkan, tanpa permintaan tambahan. Ia menerangkan repositori, bukan orang.',
+  'health.stale': 'Cabang tanpa aktiviti lebih 30 hari dan tanpa pull request',
+  'health.prs': 'Pull request terbuka, yang paling lama dahulu',
+  'health.merged': 'Masa dari dibuka hingga digabungkan (pull request terkini)',
+  'health.mergedStat': 'Median {median} · paling lambat {max}',
+  'health.merges7': 'Gabungan, 7 hari lepas',
+  'health.merges30': 'Gabungan, 30 hari lepas',
+  'health.releases30': 'Keluaran, 30 hari lepas',
+  'health.none': 'Tiada apa untuk dipaparkan.',
 });

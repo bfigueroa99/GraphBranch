@@ -405,4 +405,16 @@ GB.i18n.define('fr', {
   'err.notFoundLocal': 'Impossible d’ouvrir {repo} : le dossier n’existe plus, n’est pas un dépôt Git ou a été ouvert hors de l’application de bureau, la seule à lire les dossiers locaux.',
   'err.noGit': 'Git est introuvable. Installez-le puis réessayez.',
   'err.gitLocal': 'Git a signalé une erreur : {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Santé du dépôt',
+  'health.help': 'Calculée uniquement à partir de ce qui est déjà chargé, sans requête supplémentaire. Elle décrit le dépôt, jamais les personnes.',
+  'health.stale': 'Branches sans activité depuis plus de 30 jours et sans pull request',
+  'health.prs': 'Pull requests ouvertes, les plus anciennes d’abord',
+  'health.merged': 'Délai entre l’ouverture et la fusion (dernières pull requests)',
+  'health.mergedStat': 'Médiane {median} · la plus lente {max}',
+  'health.merges7': 'Fusions, 7 derniers jours',
+  'health.merges30': 'Fusions, 30 derniers jours',
+  'health.releases30': 'Releases, 30 derniers jours',
+  'health.none': 'Rien à afficher.',
 });

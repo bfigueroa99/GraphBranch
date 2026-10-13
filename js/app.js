@@ -48,6 +48,9 @@
     tvExit: $('#tv-exit'),
     tvBar: $('#tv-bar'),
     lower: $('#lower'),
+    healthBtn: $('#health-btn'),
+    health: $('#health'),
+    healthBody: $('#health-body'),
     trophyBtn: $('#trophy-btn'),
     trophyCount: $('#trophy-count'),
     gameStrip: $('#game-strip'),
@@ -934,6 +937,56 @@
   el.gameEnable.addEventListener('change', () => {
     for (const x of tabs) x.game.setEnabled(el.gameEnable.checked);
   });
+
+  /* ---------- salud del repo: lo ya cargado como señales de equipo (ver health.js) ---------- */
+
+  /** Una lista de filas; cada una lleva a su rama en el grafo. */
+  function healthList(id, title, block, rowOf) {
+    const rows = block.rows
+      .map((r, i) => {
+        const [main, aside] = rowOf(r);
+        const go = r.name || r.head;
+        const body = `<span class="hl-main">${U.esc(main)}</span><span class="hl-aside">${U.esc(aside)}</span>`;
+        return `<li>${go ? `<button type="button" class="hl-row" data-go="${i}" title="${U.esc(t('feed.locate'))}">${body}</button>` : `<span class="hl-row">${body}</span>`}</li>`;
+      })
+      .join('');
+    return `<section class="hl-sec"><h3>${U.esc(title)} <span class="hl-n">${U.fmtNum(block.total)}</span></h3>${rows ? `<ul class="hl-list" data-list="${id}">${rows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`}</section>`;
+  }
+
+  function renderHealth() {
+    const data = source.view ? source.view() : source.data;
+    const acts = feed.items.filter((a) => a.repo === active?.key);
+    const h = GB.health.compute(data, acts);
+    const span = (ms) => GB.i18n.fmtSpan(ms);
+    const stat = (label, n) => `<div class="hl-stat"><b>${U.fmtNum(n)}</b><span>${U.esc(label)}</span></div>`;
+    el.healthBody.innerHTML =
+      healthList('stale', t('health.stale'), h.stale, (r) => [r.name, span(r.idle)]) +
+      healthList('prs', t('health.prs'), h.prs, (r) => [`#${r.number} ${r.title}`, span(r.age)]) +
+      `<section class="hl-sec"><h3>${U.esc(t('health.merged'))}</h3>${
+        h.merged ? `<p class="hl-line">${U.esc(t('health.mergedStat', { median: span(h.merged.median), max: span(h.merged.max) }))}</p>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
+      }</section>` +
+      `<div class="hl-stats">${stat(t('health.merges7'), h.pace.merges7)}${stat(t('health.merges30'), h.pace.merges30)}${stat(t('health.releases30'), h.pace.releases30)}</div>`;
+    el.healthBody.querySelectorAll('.hl-list').forEach((ul) =>
+      ul.querySelectorAll('[data-go]').forEach((b) =>
+        b.addEventListener('click', () => {
+          const r = h[ul.dataset.list].rows[Number(b.dataset.go)];
+          closeHealth();
+          graph.focusBranch(r.name || r.head);
+        }),
+      ),
+    );
+  }
+
+  function closeHealth() {
+    if (typeof el.health.close === 'function') el.health.close();
+    else el.health.removeAttribute('open');
+  }
+  el.healthBtn.addEventListener('click', () => {
+    renderHealth();
+    if (typeof el.health.showModal === 'function') el.health.showModal();
+    else el.health.setAttribute('open', '');
+  });
+  $('#health-close').addEventListener('click', closeHealth);
 
   function prsByBranch(data) {
     const map = new Map();

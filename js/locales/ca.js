@@ -404,4 +404,16 @@ GB.i18n.define('ca', {
   'err.notFoundLocal': 'No s’ha pogut obrir {repo}: la carpeta ja no existeix, no és un repositori Git o s’ha obert fora de l’aplicació d’escriptori, l’única que llegeix carpetes locals.',
   'err.noGit': 'No s’ha trobat Git. Instal·la’l i torna-ho a provar.',
   'err.gitLocal': 'Git ha informat d’un error: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Salut del repo',
+  'health.help': 'Es calcula només amb el que ja està carregat, sense consultes noves. Descriu el repositori, mai les persones.',
+  'health.stale': 'Branques sense activitat fa més de 30 dies i sense pull request',
+  'health.prs': 'Pull requests oberts, els més vells primer',
+  'health.merged': 'Temps d’obert a fusionat (últims pull requests)',
+  'health.mergedStat': 'Mitjana {median} · el més lent {max}',
+  'health.merges7': 'Merges, darrers 7 dies',
+  'health.merges30': 'Merges, darrers 30 dies',
+  'health.releases30': 'Releases, darrers 30 dies',
+  'health.none': 'Res a mostrar.',
 });

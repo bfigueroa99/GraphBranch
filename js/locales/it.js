@@ -405,4 +405,16 @@ GB.i18n.define('it', {
   'err.notFoundLocal': 'Impossibile aprire {repo}: la cartella non esiste più, non è un repository Git o è stata aperta fuori dall’app desktop, l’unica che legge le cartelle locali.',
   'err.noGit': 'Git non è stato trovato. Installalo e riprova.',
   'err.gitLocal': 'Git ha segnalato un errore: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Salute del repo',
+  'health.help': 'Calcolata solo da ciò che è già caricato, senza richieste aggiuntive. Descrive il repository, mai le persone.',
+  'health.stale': 'Branch senza attività da oltre 30 giorni e senza pull request',
+  'health.prs': 'Pull request aperte, le più vecchie prima',
+  'health.merged': 'Tempo da apertura a merge (ultime pull request)',
+  'health.mergedStat': 'Mediana {median} · la più lenta {max}',
+  'health.merges7': 'Merge, ultimi 7 giorni',
+  'health.merges30': 'Merge, ultimi 30 giorni',
+  'health.releases30': 'Release, ultimi 30 giorni',
+  'health.none': 'Niente da mostrare.',
 });

@@ -131,7 +131,7 @@ segunda columna a la primera.
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`) | VS Code |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM) | Slack y Discord, resumen de la semana |
-| Análisis | resumen de cifras, logros, misión del día | salud del repo, choques entre ramas, comparar ramas, búsqueda |
+| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo) | choques entre ramas, comparar ramas, búsqueda |
 | Público | devs y equipos, 40 idiomas, teclado | quien enseña o aprende git, quien usa lector de pantalla |
 
 ## Hoja de ruta
@@ -185,10 +185,10 @@ se comprueban antes de construir sobre ellas.
    avisos, sin barras, para un iframe (el README trae el código para pegar); `&bg=transparent` para OBS.
    No sigue ni guarda los repos de la persona y no entra en modo TV. Sin hacer: tamaño y tema por
    parámetro (`&theme=`), y un modo sin avisos.
-12. **Salud del repo** · Análisis · 3×2/1. Un panel con lo que ya está cargado, sin consultas nuevas: ramas sin
-   actividad hace más de 30 días y sin PR, PRs abiertos por edad, tiempo de abierto a fusionado de los
-   últimos PRs, ritmo de merges y releases. Cada fila lleva a su rama o PR en el grafo. Comprobar:
-   `node --test` sobre los cálculos con datos fijos.
+12. ~~**Salud del repo**~~ hecho en #61 · Análisis. El botón del pulso abre un panel con lo ya cargado, sin
+   consultas nuevas: ramas sin actividad hace más de 30 días y sin PR, PRs abiertos por edad, tiempo de
+   abierto a fusionado (mediana y el más lento de los últimos 20) y ritmo de merges y releases. Cada fila
+   lleva a su rama en el grafo. Los cálculos viven en `js/health.js`.
 13. **GitHub Enterprise Server** · Fuentes · 1×3/2. `GitHubSource` con la URL de la API configurable
    (`https://host/api/v3` y `/api/graphql`). En la web, el host tiene que estar en la CSP: el README
    explica cómo sumarlo al servirlo uno mismo; en la app de escritorio, `--api-url`. Comprobar: las
@@ -1184,3 +1184,24 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Reclamo: loop/33, sin colisión
 - Validado: 138 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 21 e2e en verde.
 - **Siguiente:** iteración 34, expansión: ítem 12 (Salud del repo, Análisis)
+
+### 2026-10-13 · Iteración 34 · Expansión · Análisis
+
+- **Capacidad nueva: salud del repo** (ítem 12 de la hoja de ruta). El botón del pulso en la barra abre un
+  diálogo con lo que el grafo ya tiene: ramas sin actividad hace más de 30 días y sin PR, PRs abiertos por
+  edad, tiempo de abierto a fusionado de los últimos 20 PRs fusionados y ritmo de merges (7 y 30 días) y
+  releases (30 días). Cada fila lleva a su rama. Cálculos puros en `js/health.js`; los PRs fusionados traen
+  ahora `openedAt` (GitHub y GitLab, por sondeo y por eventos, y la demo) y `U`/`i18n.fmtSpan` da los lapsos
+  en cada idioma. No hace consultas nuevas ni guarda nada; cuenta el repo, no personas.
+- **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` (5 pruebas con datos fijos) y el paso
+  del smoke «salud del repo: listas y ritmo de lo ya cargado, y cada fila lleva a su rama» (que cazó un
+  índice mal calculado cuando una lista vacía no dibuja su `<ul>`).
+- README: la función en la lista, el botón en Controles, `js/health.js` en la estructura, Límites conocidos
+  (qué cuenta el ritmo) y Seguridad.
+- QA: filas del protocolo tocadas: demo sin token (el smoke abre el panel en la demo, sin API); 40 idiomas
+  (10 textos nuevos, `check-i18n`); sin conexión (`js/health.js` en `FILES` de `sw.js`); consola y CSP sin
+  cambios; cuota de GitHub (no gasta nada). Sin mirar a mano: solo teclado, árabe y tamil, 320 px y el
+  panel en la app de escritorio; auditoría: 0 hallazgos nuevos.
+- Reclamo: loop/34, sin colisión
+- Validado: 143 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 21 e2e en verde.
+- **Siguiente:** iteración 35, mantenimiento · QA: pendiente 18 (Repos locales sin mirar a mano (iteración 32): el botón **Abrir carpeta…** solo…)

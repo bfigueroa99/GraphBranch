@@ -267,6 +267,14 @@ window.GB = window.GB || {};
     return fmtDate(ms);
   }
 
+  /** Un lapso corto ("3 d", "5 h", "20 min") en el idioma activo: el mayor de días, horas o minutos. */
+  function fmtSpan(ms) {
+    const m = Math.max(0, Math.round(ms / 6e4));
+    if (m < 60) return fmtUnit(m, 'minute');
+    if (m < 1440) return fmtUnit(Math.round(m / 60), 'hour');
+    return fmtUnit(Math.round(m / 1440), 'day');
+  }
+
   /** Etiqueta de un día en los ejes: "hoy", "ayer" o "lun, 3 oct". */
   function dayLabel(ms) {
     const key = (time) => {
@@ -356,6 +364,7 @@ window.GB = window.GB || {};
     fmtTime,
     fmtSeconds,
     fmtUnit,
+    fmtSpan,
     timeAgo,
     dayLabel,
     get locale() {

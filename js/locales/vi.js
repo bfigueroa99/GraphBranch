@@ -404,4 +404,16 @@ GB.i18n.define('vi', {
   'err.notFoundLocal': 'Không mở được {repo}: thư mục không còn tồn tại, không phải kho Git hoặc được mở bên ngoài ứng dụng máy tính, ứng dụng duy nhất đọc thư mục cục bộ.',
   'err.noGit': 'Không tìm thấy Git. Hãy cài đặt rồi thử lại.',
   'err.gitLocal': 'Git báo lỗi: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Sức khỏe repo',
+  'health.help': 'Chỉ tính từ dữ liệu đã tải, không gửi thêm yêu cầu. Nó mô tả kho mã, không bao giờ mô tả con người.',
+  'health.stale': 'Nhánh không hoạt động hơn 30 ngày và không có pull request',
+  'health.prs': 'Pull request đang mở, cũ nhất trước',
+  'health.merged': 'Thời gian từ khi mở đến khi gộp (các pull request gần đây)',
+  'health.mergedStat': 'Trung vị {median} · chậm nhất {max}',
+  'health.merges7': 'Lượt gộp, 7 ngày qua',
+  'health.merges30': 'Lượt gộp, 30 ngày qua',
+  'health.releases30': 'Bản phát hành, 30 ngày qua',
+  'health.none': 'Không có gì để hiển thị.',
 });

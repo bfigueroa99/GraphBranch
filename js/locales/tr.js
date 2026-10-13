@@ -404,4 +404,16 @@ GB.i18n.define('tr', {
   'err.notFoundLocal': '{repo} açılamadı: klasör artık yok, bir Git deposu değil ya da yerel klasörleri okuyan tek uygulama olan masaüstü uygulamasının dışında açıldı.',
   'err.noGit': 'Git bulunamadı. Kurup yeniden deneyin.',
   'err.gitLocal': 'Git bir hata bildirdi: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Depo sağlığı',
+  'health.help': 'Yalnızca zaten yüklenmiş verilerden hesaplanır, ek istek yapılmaz. Depoyu anlatır, asla kişileri değil.',
+  'health.stale': '30 günden uzun süredir hareketsiz ve pull request’i olmayan dallar',
+  'health.prs': 'Açık pull request’ler, en eskisi önce',
+  'health.merged': 'Açılıştan birleştirmeye geçen süre (son pull request’ler)',
+  'health.mergedStat': 'Medyan {median} · en yavaş {max}',
+  'health.merges7': 'Birleştirmeler, son 7 gün',
+  'health.merges30': 'Birleştirmeler, son 30 gün',
+  'health.releases30': 'Sürümler, son 30 gün',
+  'health.none': 'Gösterilecek bir şey yok.',
 });

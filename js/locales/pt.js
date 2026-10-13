@@ -405,4 +405,16 @@ GB.i18n.define('pt', {
   'err.notFoundLocal': 'Não foi possível abrir {repo}: a pasta não existe mais, não é um repositório Git ou foi aberta fora do app de desktop, o único que lê pastas locais.',
   'err.noGit': 'O Git não foi encontrado. Instale-o e tente de novo.',
   'err.gitLocal': 'O Git informou um erro: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Saúde do repo',
+  'health.help': 'Calculada apenas com o que já está carregado, sem novas consultas. Descreve o repositório, nunca as pessoas.',
+  'health.stale': 'Branches sem atividade há mais de 30 dias e sem pull request',
+  'health.prs': 'Pull requests abertos, os mais antigos primeiro',
+  'health.merged': 'Tempo de aberto a mesclado (últimos pull requests)',
+  'health.mergedStat': 'Mediana {median} · o mais lento {max}',
+  'health.merges7': 'Merges, últimos 7 dias',
+  'health.merges30': 'Merges, últimos 30 dias',
+  'health.releases30': 'Releases, últimos 30 dias',
+  'health.none': 'Nada para mostrar.',
 });

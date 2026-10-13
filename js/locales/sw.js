@@ -404,4 +404,16 @@ GB.i18n.define('sw', {
   'err.notFoundLocal': 'Imeshindwa kufungua {repo}: folda haipo tena, si hazina ya Git, au ilifunguliwa nje ya programu ya kompyuta ya mezani, pekee inayosoma folda za hapa.',
   'err.noGit': 'Git haikupatikana. Isakinishe kisha ujaribu tena.',
   'err.gitLocal': 'Git imeripoti hitilafu: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Afya ya hazina',
+  'health.help': 'Hukokotolewa kwa data iliyopakiwa tayari tu, bila maombi ya ziada. Inaeleza hazina, si watu.',
+  'health.stale': 'Matawi yasiyo na shughuli kwa zaidi ya siku 30 na yasiyo na pull request',
+  'health.prs': 'Pull request zilizo wazi, za zamani kwanza',
+  'health.merged': 'Muda kutoka kufunguliwa hadi kuunganishwa (pull request za hivi karibuni)',
+  'health.mergedStat': 'Wastani {median} · polepole zaidi {max}',
+  'health.merges7': 'Uunganishaji, siku 7 zilizopita',
+  'health.merges30': 'Uunganishaji, siku 30 zilizopita',
+  'health.releases30': 'Toleo, siku 30 zilizopita',
+  'health.none': 'Hakuna cha kuonyesha.',
 });

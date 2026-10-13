@@ -404,4 +404,16 @@ GB.i18n.define('es', {
   'err.notFoundLocal': 'No se pudo abrir {repo}: la carpeta ya no existe, no es un repositorio Git o se abrió fuera de la app de escritorio, la única que lee carpetas locales.',
   'err.noGit': 'No se encontró Git. Instálalo e inténtalo de nuevo.',
   'err.gitLocal': 'Git informó de un error: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Salud del repo',
+  'health.help': 'Se calcula solo con lo que ya está cargado, sin consultas nuevas. Describe el repositorio, nunca a personas.',
+  'health.stale': 'Ramas sin actividad hace más de 30 días y sin pull request',
+  'health.prs': 'Pull requests abiertos, los más viejos primero',
+  'health.merged': 'Tiempo de abierto a fusionado (últimos pull requests)',
+  'health.mergedStat': 'Mediana {median} · el más lento {max}',
+  'health.merges7': 'Merges, últimos 7 días',
+  'health.merges30': 'Merges, últimos 30 días',
+  'health.releases30': 'Releases, últimos 30 días',
+  'health.none': 'Nada que mostrar.',
 });

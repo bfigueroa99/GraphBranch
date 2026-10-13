@@ -404,4 +404,16 @@ GB.i18n.define('ja', {
   'err.notFoundLocal': '{repo} を開けませんでした。フォルダーが存在しない、Git リポジトリではない、またはローカルフォルダーを読み取れる唯一のデスクトップアプリの外で開かれています。',
   'err.noGit': 'Git が見つかりません。インストールしてからもう一度お試しください。',
   'err.gitLocal': 'Git がエラーを報告しました: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'リポジトリの健全性',
+  'health.help': '読み込み済みのデータだけから計算し、追加のリクエストはしません。対象はリポジトリであり、人ではありません。',
+  'health.stale': '30日以上動きがなく、プルリクエストもないブランチ',
+  'health.prs': 'オープン中のプルリクエスト（古い順）',
+  'health.merged': 'オープンからマージまでの時間（直近のプルリクエスト）',
+  'health.mergedStat': '中央値 {median} · 最長 {max}',
+  'health.merges7': 'マージ数、直近7日',
+  'health.merges30': 'マージ数、直近30日',
+  'health.releases30': 'リリース数、直近30日',
+  'health.none': '表示するものはありません。',
 });

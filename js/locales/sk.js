@@ -415,4 +415,16 @@ GB.i18n.define('sk', {
   'err.notFoundLocal': '{repo} sa nepodarilo otvoriť: priečinok už neexistuje, nie je repozitárom Git alebo bol otvorený mimo desktopovej aplikácie, ktorá ako jediná číta lokálne priečinky.',
   'err.noGit': 'Git sa nenašiel. Nainštalujte ho a skúste to znova.',
   'err.gitLocal': 'Git ohlásil chybu: {message}',
+
+  /* ---------- salud del repo ---------- */
+  'health.title': 'Zdravie repozitára',
+  'health.help': 'Počíta sa len z už načítaných údajov, bez ďalších dopytov. Opisuje repozitár, nikdy ľudí.',
+  'health.stale': 'Vetvy bez aktivity viac ako 30 dní a bez pull requestu',
+  'health.prs': 'Otvorené pull requesty, najstaršie prvé',
+  'health.merged': 'Čas od otvorenia po zlúčenie (posledné pull requesty)',
+  'health.mergedStat': 'Medián {median} · najpomalší {max}',
+  'health.merges7': 'Zlúčenia, posledných 7 dní',
+  'health.merges30': 'Zlúčenia, posledných 30 dní',
+  'health.releases30': 'Vydania, posledných 30 dní',
+  'health.none': 'Nie je čo zobraziť.',
 });

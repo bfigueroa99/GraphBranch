@@ -3698,6 +3698,8 @@ html.embed .graph-panel > .panel-head {
 }
 html.embed .app {
   display: block;
+  height: 100vh;
+  height: 100dvh;
   max-width: none;
   padding: 0;
 }

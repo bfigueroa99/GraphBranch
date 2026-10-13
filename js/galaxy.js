@@ -1819,7 +1819,7 @@
     /** Con el sonido activado, el espacio tiene un fondo grave en la nota de la galaxia en la que se está
         (más tenue entre galaxias). Se avisa solo cuando cambia. */
     stepAmbience(now) {
-      if (now - this.amb.at < 250) return;
+      if (document.hidden || now - this.amb.at < 250) return; // oculta, no pisa el silencio que dejó la app
       this.amb.at = now;
       const name = this.focus?.name || null;
       const level = !this.on ? 0 : this.focus ? 1 : 0.55 + 0.45 * this.tintK;

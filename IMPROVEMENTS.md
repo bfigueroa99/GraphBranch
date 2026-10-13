@@ -293,24 +293,16 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Media
 
-1. [Deuda] Smoke intermitente «Zumbido del espacio: se calla con la pestaña oculta»: falló al validar #53
-    y otra vez en la corrida de base del 2026-10-13 sobre f7749bd (`npm run check -- --e2e`: «con la
-    pestaña oculta el zumbido sigue sonando»); pasó al repetirlo. Causa probable, leída y sin reproducir
-    a pedido: la prueba finge `document.hidden` pero Chromium sigue dando cuadros, y `stepAmbience`
-    (`galaxy.js:1821`) vuelve a pedir el zumbido cuando cambia su nivel (`tintK`) y pisa el 0 que dejó
-    `visibilitychange` (`app.js:1347`). Arreglo probable: `stepAmbience` no pide nada con
-    `document.hidden`. Reproducir: correr esa sección del smoke 20 veces y contar los fallos, antes y
-    después.
-2. [Deuda] Smoke: el paso de contraste de las pestañas (varios repos) mide 500 ms fijos después de
+1. [Deuda] Smoke: el paso de contraste de las pestañas (varios repos) mide 500 ms fijos después de
     cambiar de tema, y los colores tienen transiciones de hasta 0,6 s; con el equipo cargado falló una
     vez (iteración 21: «En vivo» a 3,83:1 en el oscuro) y pasó al repetirlo. Esperar a que terminen las
     transiciones (`getAnimations()`) en vez de un tiempo fijo.
-3. [Deuda] Smoke: una vez (iteración 27, corrida completa con `--langs`) el cuadro de la mitad de un
+2. [Deuda] Smoke: una vez (iteración 27, corrida completa con `--langs`) el cuadro de la mitad de un
     video del Replay salió de un solo color; corrido aparte no se repitió (de 550 a 3.400 colores en cada
     cuadro, en dos corridas). La prueba ahora lee cada cuadro ya decodificado, en tres puntos, y pide
     dibujo en dos: si vuelve a fallar, sus tres números dicen si el video tiene un tramo vacío (el
     grabador) o si fue un cuadro suelto mal leído.
-4. [Errores] Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja el
+3. [Errores] Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja el
     repo en «Cargando» para siempre, con una excepción. *Reproducido* el 2026-10-13 en Chromium:
     `graphbranch:pins:acme/web` = `{}` da «object is not iterable» y `graphbranch:filter:acme/web` =
     `{"a":1}`, «filter.trim is not a function» (`app.js:193` y `app.js:244`); `view`, `owners` y `repos`
@@ -318,44 +310,44 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Baja
 
-5. [Accesibilidad] Objetivos chicos y estados confusos. `audit:objetivo-chico` (24 hallazgos conocidos en
+4. [Accesibilidad] Objetivos chicos y estados confusos. `audit:objetivo-chico` (24 hallazgos conocidos en
     `tools/audit-base.json`): las etiquetas de rama de 22 px de alto en 3D y 2D (mínimo 24), el filtro de
     ramas (`#branch-filter`, 19 px), la casilla de los logros con su etiqueta (`#game-enable`, 19 px), la
     barra de posición del Replay (`.rp-range`, 16 px) y las marcas de la brújula del vuelo (18×18 px).
     Además: botones que cambian a la vez `aria-pressed` y el texto (el de pausa del Replay, `replay.js:367`)
     y la leyenda 2D sin acceso por teclado. Reproducir: `node tools/audit.mjs`.
-6. [Errores] Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una
+5. [Errores] Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una
     etiqueta de rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-7. [Errores] La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-8. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-9. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
+6. [Errores] La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+7. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+8. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
     renombrados).
-10. [Seguridad] `parseRepo` acepta `..` como owner o nombre de un repo de GitHub (`util.js:39`; los de
+9. [Seguridad] `parseRepo` acepta `..` como owner o nombre de un repo de GitHub (`util.js:39`; los de
     GitLab ya se rechazan): rechazar nombres hechos solo de puntos.
-11. [Seguridad] Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de
+10. [Seguridad] Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de
     `<usuario>.github.io`. Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-12. [Rendimiento] Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-13. [Rendimiento] Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`)
+11. [Rendimiento] Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+12. [Rendimiento] Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`)
     y un `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro). Medir antes
     y después con `node tools/audit.mjs --repetir 3`.
-14. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+13. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-15. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
+14. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
     y mueve el resto a `docs/BITACORA.md` (idempotente: la segunda corrida dice «Nada que rotar»; queda
     una línea «Las iteraciones anteriores están en docs/BITACORA.md»); `--siguiente` sigue leyendo N de
     aquí y `--check` exige iteraciones sin repetidos entre los dos archivos. Motivo: `--salud` mide el
     archivo en cada iteración (77 KB el 2026-10-13, 55 KB de bitácora), y cada sesión nueva lo lee entero.
-16. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+15. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-17. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+16. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-18. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+17. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
 
@@ -1129,3 +1121,19 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - README: la auditoría en Pruebas y en la estructura, `--salud` y `docs/investigacion.md`.
 - Validado: 125 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 17 e2e en verde.
 - **Siguiente:** iteración 31, mantenimiento · Deuda: pendiente 1 (Smoke intermitente «Zumbido del espacio: se calla con la pestaña oculta»: falló…)
+
+### 2026-10-13 · Iteración 31 · Mantenimiento · Deuda
+
+- **Arreglo: el zumbido del espacio ya no se reanuda con la pestaña oculta** (pendiente 1). Al ocultarse
+  la pestaña, `app.js` apaga el zumbido, pero `stepAmbience` (`galaxy.js`), que corre en cada cuadro,
+  volvía a pedirlo cuando cambiaba su nivel y pisaba ese silencio. Ahora no pide nada con
+  `document.hidden`; al volver, `pokeAmbience` lo vuelve a pedir como antes.
+- **Reproducción:** la sección «Zumbido del espacio» del smoke sola, 20 corridas → 1 falla («con la
+  pestaña oculta el zumbido sigue sonando»), 19 en verde. Después del arreglo: 40 corridas, 40 en verde.
+- **Pruebas que fallan sin el arreglo:** el paso del smoke «se calla con la pestaña oculta…» ahora espera
+  800 ms (varios turnos de `stepAmbience`) y vuelve a comprobar el silencio, en vez de mirarlo una vez.
+- README: sin cambios (no cambia lo que hace la app).
+- QA: contraste, 320 px, teclado y temas no se tocan; sonido y modo TV, por el mismo paso del smoke; auditoría: no toca la página más que un guardia en `stepAmbience`.
+- Reclamo: loop/31, sin colisión
+- Validado: 125 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 17 e2e en verde.
+- **Siguiente:** iteración 32, expansión: ítem 10 (Repos locales en la app de escritorio, Fuentes)

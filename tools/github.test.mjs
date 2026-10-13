@@ -54,6 +54,8 @@ function fakeGitHub() {
     onFetch: null, // (ruta) => …: corre justo antes de responder, para simular algo a mitad de un ciclo
     pulls: [], // PRs como los da la API (los más recién actualizados, primero en la lista)
     override: null, // (ruta) => { status, body } para responder otra cosa, o nada para seguir normal
+    tags: null, // [{ name, commit: { sha } }] (si es null, /tags da 404)
+    deployments: null, // despliegues como los da la API, el más nuevo primero (si es null, 404)
     checks: null, // sha -> check-runs del commit (si es null, la API de checks no existe)
     calls: [],
     base: 'https://api.github.com', // la API a la que responde; cualquier otro host falla, como si no llegara
@@ -116,6 +118,8 @@ function fakeGitHub() {
         .map(({ merged_by, ...x }) => x);
       return { body: list };
     }
+    if (p === '/repos/o/r/tags') return gh.tags ? { body: gh.tags } : { status: 404, body: { message: 'Not Found' } };
+    if (p === '/repos/o/r/deployments') return gh.deployments ? { body: gh.deployments } : { status: 404, body: { message: 'Not Found' } };
     const runs = p.match(/^\/repos\/o\/r\/commits\/([^/]+)\/check-runs$/);
     if (runs) return gh.checks ? { body: { total_count: 0, check_runs: gh.checks.get(runs[1]) || [] } } : { status: 404, body: { message: 'Not Found' } };
     if (p.startsWith('/repos/o/r/compare/')) return { body: { total_commits: 1, ahead_by: 1, commits: [] } };
@@ -153,9 +157,9 @@ function fakeGitHub() {
 }
 
 /** Fuente conectada a la API falsa (sin token, salvo que se pida); `cycle()` corre un ciclo de sondeo completo. */
-function connect(gh, token = '', apiUrl = '') {
+function connect(gh, token = '', apiUrl = '', marks = true) {
   const GB = load(gh);
-  const src = new GB.GitHubSource({ owner: 'o', name: 'r', token, apiUrl });
+  const src = new GB.GitHubSource({ owner: 'o', name: 'r', token, apiUrl, marks });
   const updates = [];
   const errors = [];
   src.on('update', (u) => updates.push(u));
@@ -519,6 +523,53 @@ test('CI sin la API de checks: la rama queda sin estado y nada falla', async () 
   await src.cycle();
   assert.equal(errors.length, 0);
   assert.equal(src.data.ci.has('main'), false);
+});
+
+/* Tags y despliegues: los banderines y las placas del grafo salen de /tags y /deployments. */
+
+test('tags y despliegues: cada tag a su commit y el último despliegue de cada entorno', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  gh.push('main', 'a2', 'a1');
+  gh.tags = [
+    { name: 'v2.0', commit: { sha: 'a2' } },
+    { name: 'latest', commit: { sha: 'a2' } },
+    { name: 'v1.0', commit: { sha: 'a1' } },
+  ];
+  gh.deployments = [
+    { id: 3, sha: 'a2', ref: 'main', environment: 'production' },
+    { id: 2, sha: 'a1', ref: 'main', environment: 'staging' },
+    { id: 1, sha: 'a1', ref: 'main', environment: 'production' }, // más viejo: no cuenta
+  ];
+  const { src, errors } = connect(gh);
+  await src.cycle();
+  assert.equal(errors.length, 0);
+  assert.deepEqual(Array.from(src.data.tags.get('a2')), ['v2.0', 'latest']);
+  assert.deepEqual(Array.from(src.data.tags.get('a1')), ['v1.0']);
+  assert.equal(src.data.deploys.get('production').sha, 'a2');
+  assert.equal(src.data.deploys.get('staging').sha, 'a1');
+  const asked = () => gh.calls.filter((c) => c.startsWith('/repos/o/r/tags') || c.startsWith('/repos/o/r/deployments')).length;
+  assert.equal(asked(), 2);
+  await src.cycle();
+  assert.equal(asked(), 2, 'no se vuelve a preguntar hasta los 15 minutos');
+});
+
+test('tags y despliegues: sin la API, o apagados, el grafo sigue y no se gasta cuota', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const on = connect(gh);
+  await on.src.cycle();
+  assert.equal(on.errors.length, 0);
+  assert.equal(on.src.data.tags.size, 0);
+  assert.equal(on.src.data.deploys.size, 0);
+
+  const gh2 = fakeGitHub();
+  gh2.push('main', 'a1');
+  gh2.tags = [{ name: 'v1', commit: { sha: 'a1' } }];
+  const off = connect(gh2, '', '', false);
+  await off.src.cycle();
+  assert.equal(gh2.calls.filter((c) => c.startsWith('/repos/o/r/tags') || c.startsWith('/repos/o/r/deployments')).length, 0);
+  assert.equal(off.src.data.tags.size, 0);
 });
 
 /* GitHub Enterprise Server: la misma fuente contra otra URL base (https://host/api/v3 y /api/graphql). */

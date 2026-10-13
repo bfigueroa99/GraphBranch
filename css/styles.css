@@ -1049,6 +1049,34 @@ kbd {
 .node .hit {
   fill: transparent;
 }
+.node .tag-pole {
+  stroke: var(--ink-2);
+  stroke-width: 1.2;
+  fill: none;
+}
+.node .tag-cloth {
+  fill: var(--c);
+  stroke: var(--surface);
+  stroke-width: 0.8;
+}
+.node .tag-text {
+  fill: var(--ink);
+  font: 600 10px var(--font-mono);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  pointer-events: none;
+}
+.node .env-plate rect {
+  fill: var(--surface);
+  stroke: var(--c);
+  stroke-width: 1;
+}
+.node .env-plate text {
+  fill: var(--ink);
+  font: 600 8.5px var(--font-mono);
+  pointer-events: none;
+}
 .node:hover .dot {
   transform: scale(1.5);
 }
@@ -1618,6 +1646,13 @@ kbd {
 .tr-when {
   color: var(--ink-3);
   font-size: 11.5px;
+}
+.settings .marks-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  margin: 8px 0 0;
 }
 .tr-toggle {
   display: flex;

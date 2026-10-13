@@ -178,25 +178,25 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Búsqueda y filtro por autor | Análisis | 3×2/1 | 6,0 | Sublime Merge, GitLens | ítem 19 |
 | CI en el grafo | Datos | 3×3/2 | 4,5 | GitButler, DORA | ítem 9 |
 | Resumen de la semana | Salidas | 2×2/1 | 4,0 | GitHub Pulse | ítem 23 |
-| Replay por tramo de fechas y con rótulos propios | Salidas | 2×2/1 | 4,0 | Gource | candidata |
-| Ejercicios de Aprender git compartidos por URL | Público | 2×2/1 | 4,0 | Learn Git Branching | candidata (segunda entrega del 16) |
+| Replay por tramo de fechas y con rótulos propios | Salidas | 2×2/1 | 4,0 | Gource | ítem 27 |
+| Ejercicios de Aprender git compartidos por URL | Público | 2×2/1 | 4,0 | Learn Git Branching | ítem 28 |
 | Repos locales en la app de escritorio | Fuentes | 3×3/3 | 3,0 | GitUp | ítem 10 |
 | Choques entre ramas | Análisis | 2×3/2 | 3,0 | GitKraken (Pro), gitk | ítem 14 |
 | Aprender git | Público | 3×3/3 | 3,0 | Learn Git Branching, git-sim | ítem 16 |
 | Avisos a Slack y Discord | Salidas | 2×2/2 | 2,0 | Fork | ítem 15 |
-| Tags y despliegues | Datos | 2×2/2 | 2,0 | DORA | ítem 17 |
+| Tags y despliegues | Datos | 2×2/2 | 2,0 | DORA | hecho en #68 |
 | Comparar dos ramas | Análisis | 2×2/2 | 2,0 | gitk | ítem 20 |
 | Bitbucket Cloud | Fuentes | 2×2/2 | 2,0 | Sourcetree | ítem 22 |
 | Extensión de VS Code | Plataformas | 3×2/3 | 2,0 | GitLens | ítem 24 |
-| Filtrar el grafo por ruta de archivo | Análisis | 2×2/2 | 2,0 | gitk | candidata |
-| Los forks en el grafo | Datos | 2×2/2 | 2,0 | Red de ramas de GitHub | candidata |
-| Ensayar un comando sobre el repo real | Público | 2×3/3 | 2,0 | git-sim | candidata |
+| Filtrar el grafo por ruta de archivo | Análisis | 2×2/2 | 2,0 | gitk | ítem 29 |
+| Los forks en el grafo | Datos | 2×2/2 | 2,0 | Red de ramas de GitHub | ítem 30 |
+| Ensayar un comando sobre el repo real | Público | 2×3/3 | 2,0 | git-sim | ítem 31 |
 | GitHub Enterprise Server | Fuentes | 1×3/2 | 1,5 | GitKraken (plan Advanced) | ítem 13 |
 | Vista de texto accesible | Público | 1×3/2 | 1,5 | (accesibilidad) | ítem 18 |
 | Una organización entera, tercera entrega | Escala | 2×2/3 | 1,3 | Red de ramas de GitHub | ítem 26 |
 | Gitea, Forgejo y Codeberg | Fuentes | 1×2/2 | 1,0 | GitLens (autolinks) | ítem 21 |
 | GitLab propio | Fuentes | 1×2/2 | 1,0 | GitKraken (plan Advanced) | ítem 25 |
-| Ramas apiladas (un PR sobre otro) | Datos | 1×2/2 | 1,0 | GitButler | candidata |
+| Ramas apiladas (un PR sobre otro) | Datos | 1×2/2 | 1,0 | GitButler | ítem 32 |
 
 ## Públicos
 

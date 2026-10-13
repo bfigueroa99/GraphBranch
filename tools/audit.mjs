@@ -396,7 +396,7 @@ function githubSimulado() {
       const s = q.get('sha');
       return { body: commits[Object.keys(ramas).find((r) => r === s || cabeza(r) === s) || 'main'] };
     }
-    if (/^\/repos\/acme\/web\/(events|pulls|activity|issues|releases)$/.test(path)) return { body: [] };
+    if (/^\/repos\/acme\/web\/(events|pulls|activity|issues|releases|tags|deployments)$/.test(path)) return { body: [] };
     if (/^\/repos\/acme\/web\/compare\//.test(path)) return { body: { status: 'ahead', ahead_by: 1, behind_by: 0, total_commits: 1, commits: [], files: [] } };
     // el CI de un commit sin token (#56): un repo público responde 200, sin checks si no tiene
     if (/^\/repos\/acme\/web\/commits\/[0-9a-f]{40}\/check-runs$/.test(path)) return { body: { total_count: 0, check_runs: [] } };

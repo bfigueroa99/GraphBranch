@@ -127,7 +127,7 @@ segunda columna a la primera.
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
 | Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), repos locales (app de escritorio, con `git`), demo | GitLab propio, Gitea/Forgejo, Bitbucket |
-| Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs) | CI de GitLab, tags, despliegues |
+| Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`) | VS Code |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM), avisos a Slack y Discord (escritorio) | resumen de la semana |
@@ -204,9 +204,10 @@ se comprueban antes de construir sobre ellas.
     bajo el grafo: `commit`, `branch`, `checkout`/`switch`, `merge`, `rebase`, `reset`, `log` y `status` sobre un
     repo en memoria (`js/gitsim.js`), y el grafo 2D o 3D responde al instante. Cuatro ejercicios guiados que se dan
     por resueltos solos. Segunda entrega posible: `cherry-pick`, `stash`, `tag` y conflictos.
-17. **Tags y despliegues** · Datos · 2×2/2. Los tags como marcas en sus commits (banderín en 2D, obelisco en
-    3D) y dónde está cada entorno de despliegue (producción, staging) según `/deployments`. Comprobar:
-    la demo con tags y entornos, y un paso del smoke.
+17. ~~**Tags y despliegues**~~ hecho en #68 · Datos. Los tags son un banderín sobre su commit en 2D y un obelisco en
+    3D; el commit que corre cada entorno de despliegue (según `/deployments`) lleva una placa con su nombre. La ficha
+    del commit los nombra. Dos consultas más al abrir un repo de GitHub y dos cada 15 minutos (con ETag), apagables en
+    Ajustes; la demo los trae. Segunda entrega posible: el estado de cada despliegue, tags de GitLab y de repos locales.
 18. **Vista de texto accesible** · Público · 1×3/2. Las ramas y sus commits como un árbol navegable con el
     teclado (`role=tree`), con lo mismo que dicen los grafos, para quien usa lector de pantalla.
     Comprobar: un paso del smoke recorre el árbol con el teclado y lee los nombres accesibles.
@@ -233,6 +234,21 @@ se comprueban antes de construir sobre ellas.
     (`/groups/:id/projects?order_by=last_activity_at`) y una vista de constelación (cada repo, una
     galaxia) para ver más repos de los que caben en pestañas. Comprobar: prueba de cuota con la API
     simulada.
+27. **Replay por tramo de fechas y con rótulos propios** · Salidas · 2×2/1. [inv. 2026-10-13] Elegir desde y hasta qué día se graba o
+    se reproduce el Replay y poner un título y un pie de foto al video, para mostrar un sprint o un lanzamiento.
+    Comprobar: prueba del recorte de fechas y un paso del smoke con el tramo elegido.
+28. **Ejercicios de Aprender git compartidos por URL** · Público · 2×2/1. [parte del ítem 16] Un ejercicio propio (estado inicial y
+    meta) codificado en la URL, para que quien enseña lo comparta con su clase. Comprobar: prueba del
+    codificado y un paso del smoke que abre la URL y resuelve el ejercicio.
+29. **Filtrar el grafo por ruta de archivo** · Análisis · 2×2/2. [inv. 2026-10-13] Mostrar solo los commits que tocaron una
+    carpeta o archivo (`/commits?path=`), atenuando el resto. Comprobar: prueba con la API simulada.
+30. **Los forks en el grafo** · Datos · 2×2/2. [inv. 2026-10-13] Los forks con actividad reciente como ramas remotas atenuadas
+    (`/forks`, ordenados por último push). Comprobar: prueba con la API simulada y cuota.
+31. **Ensayar un comando sobre el repo real** · Público · 2×3/3. [inv. 2026-10-13] Escribir un `merge` o `rebase` en la terminal de
+    práctica sobre las ramas del repo abierto y ver el resultado en el grafo sin tocar nada. Comprobar: prueba
+    del intérprete con un repo cargado desde datos reales simulados.
+32. **Ramas apiladas** · Datos · 1×2/2. [inv. 2026-10-13] Un PR cuya base es la rama de otro PR se dibuja encadenado a él, con el
+    orden de la pila. Comprobar: prueba del layout con PRs apilados.
 
 ## Cómo validar un cambio
 
@@ -1331,3 +1347,23 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 165 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde (a la segunda corrida: la primera falló en el paso de `?repo=@ana`, ajeno al cambio, anotado en el pendiente 3).
 - **Siguiente:** iteración 41, expansión: ítem 17 (Tags y despliegues, Datos)
+
+### 2026-10-13 · Iteración 41 · Expansión · Datos
+
+- **Capacidad nueva: tags y despliegues** (ítem 17 de la hoja de ruta). `GitHubSource.syncMarks` lee `/tags` (50) y
+  `/deployments` (30) con ETag al abrir el repo y cada 15 minutos; `data.tags` (commit → nombres) y `data.deploys`
+  (entorno → commit). `app.js` los junta por commit (`marksBySha`) y el grafo 2D dibuja un banderín (nombre del
+  tag, «+n» si hay más) y una placa con el entorno; el 3D, un obelisco y una losa verde instanciados; la ficha
+  del commit los nombra. Interruptor en Ajustes (apagado: ninguna consulta). La demo trae tags y entornos
+  (staging sigue a `develop`).
+- **Pruebas que fallan sin la capacidad:** `tools/github.test.mjs` (tags al commit, despliegue más nuevo por entorno,
+  sin repetir antes de 15 min, 404 y apagado sin gasto) y el paso del smoke «tags y despliegues: banderín en el
+  commit con tag y placa en el de cada entorno».
+- README: la función en la lista, Pruebas, Límites conocidos y Seguridad.
+- QA: filas tocadas: demo sin token (sin consultas a la API); 40 idiomas (4 textos, `check-i18n`); CSP (sin cambios);
+  XSS (nombres con `textContent` y `U.esc`); cuota (2 consultas, apagable). Sin mirar a mano: 320 px, árabe,
+  solo teclado (el banderín es decorativo, `aria-hidden`; los nombres van en la ficha); auditoría: 0 hallazgos nuevos (el interruptor de Ajustes salió con 19 px de alto y se arregló con `.marks-toggle`).
+- Reclamo: loop/41, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 167 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde.
+- **Siguiente:** iteración 42, expansión: ítem 18 (Vista de texto accesible, Público)

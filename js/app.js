@@ -105,6 +105,7 @@
     hooksBox: $('#hooks-box'),
     hooksList: $('#hooks-list'),
     depth: $('#depth'),
+    marks: $('#marks'),
     settingsCancel: $('#settings-cancel'),
   };
 
@@ -127,6 +128,7 @@
     token: desktop ? '' : U.store.get('token', ''),
     gitlabToken: desktop ? '' : U.store.get('gitlabToken', ''),
     depth: U.store.get('depth', 40),
+    marks: U.store.get('marks', true) !== false, // tags y entornos de despliegue (2 consultas más por repo de GitHub)
   };
   U.store.set('maxBranches', null); // ya no hay tope: se muestran todas las ramas
 
@@ -269,7 +271,7 @@
       solo a la de GitLab. */
   function sourceFor({ host, owner, name }) {
     const key = keyOf({ host, owner, name });
-    const remembered = { depth: settings.depth, filter: U.store.get('filter:' + key, ''), pins: U.store.get('pins:' + key, []) };
+    const remembered = { depth: settings.depth, marks: settings.marks, filter: U.store.get('filter:' + key, ''), pins: U.store.get('pins:' + key, []) };
     if (host === 'local') return new GB.LocalGitSource({ id: owner, name, ...remembered });
     if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, ...remembered });
     return new GB.GitHubSource({ owner, name, token: settings.token, apiUrl: API_URL, ...remembered });
@@ -642,6 +644,7 @@
     calm,
     prs: prsByBranch(data),
     ci: data.ci,
+    refs: refsBySha(data),
     pins: data.repo.demo ? new Set() : getPins(),
     canPin: !data.repo.demo,
   });
@@ -1073,6 +1076,15 @@
     else el.health.setAttribute('open', '');
   });
   $('#health-close').addEventListener('click', closeHealth);
+
+  /** Tags y entornos de despliegue por commit: sha -> { tags: [nombre], envs: [entorno] }. */
+  function refsBySha(data) {
+    const map = new Map();
+    const at = (sha) => map.get(sha) || map.set(sha, { tags: [], envs: [] }).get(sha);
+    if (data.tags) for (const [sha, names] of data.tags) if (data.commits.has(sha)) at(sha).tags.push(...names);
+    if (data.deploys) for (const [env, d] of data.deploys) if (data.commits.has(d.sha)) at(d.sha).envs.push(env);
+    return map;
+  }
 
   function prsByBranch(data) {
     const map = new Map();
@@ -1596,6 +1608,7 @@
       toggle.textContent = t('settings.show');
     }
     el.depth.value = settings.depth;
+    el.marks.checked = settings.marks;
     for (const f of hookFields) {
       f.input.value = hookUrls[f.service];
       f.state.textContent = '';
@@ -1678,6 +1691,7 @@
     settings.token = el.tokenInput.value.trim();
     settings.gitlabToken = el.gitlabTokenInput.value.trim();
     settings.depth = Math.max(10, Math.min(100, Number(el.depth.value) || 40));
+    settings.marks = el.marks.checked;
     if (desktop) {
       const failed = (err) => console.error('No se pudo guardar el token:', err);
       desktop.setToken(settings.token).then(showTokenWhere, failed);
@@ -1687,6 +1701,7 @@
       U.store.set('gitlabToken', settings.gitlabToken || null);
     }
     U.store.set('depth', settings.depth);
+    U.store.set('marks', settings.marks ? null : false);
     for (const f of hookFields) {
       hookUrls[f.service] = f.input.value.trim();
       hookPrefs[f.service] = f.boxes.filter((b) => b.checked).map((b) => b.dataset.event);
@@ -1697,7 +1712,7 @@
     // se reconecta lo que cambió: un token de GitLab nuevo no gasta la cuota de GitHub. Si no cambió
     // nada, todo, como dice el botón
     const changed = (tab) =>
-      settings.depth !== before.depth || (tab.source.host === 'gitlab' ? settings.gitlabToken !== before.gitlabToken : settings.token !== before.token);
+      settings.depth !== before.depth || settings.marks !== before.marks || (tab.source.host === 'gitlab' ? settings.gitlabToken !== before.gitlabToken : settings.token !== before.token);
     if (realTabs().length) reconnectAll(realTabs().some(changed) ? changed : undefined);
     else el.tokenBanner.hidden = true;
   });

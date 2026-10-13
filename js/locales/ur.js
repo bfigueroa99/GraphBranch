@@ -492,4 +492,10 @@ GB.i18n.define('ur', {
   'practice.ex3.goal': 'feature کو تازہ ترین main کے اوپر بغیر انضمامی commit کے دوبارہ چلائیں: checkout feature پھر rebase main۔',
   'practice.ex4.title': 'واپسی',
   'practice.ex4.goal': 'main کا آخری commit وہاں نہیں ہونا چاہیے۔ main کو ایک commit پیچھے لے جائیں: reset --hard HEAD~1 آزمائیں۔',
+  'textview.title': 'متنی منظر',
+  'textview.help': 'شاخیں اور ان کے تازہ ترین commits ایک درخت کی شکل میں۔ اوپر اور نیچے حرکت کرتے ہیں، دائیں اور بائیں شاخ کھولتے اور بند کرتے ہیں، Enter اسے گراف میں دکھاتا ہے۔',
+  'textview.default': 'طے شدہ شاخ',
+  'textview.shown': 'دکھائے گئے commits: {n}',
+  'textview.by': 'از {author}',
+  'textview.merge': 'انضمام',
 });

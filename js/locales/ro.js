@@ -457,4 +457,10 @@ GB.i18n.define('ro', {
   'practice.ex3.goal': 'Reia feature peste cel mai recent main fără un commit de îmbinare: checkout feature, apoi rebase main.',
   'practice.ex4.title': 'Anulare',
   'practice.ex4.goal': 'Ultimul commit de pe main nu ar trebui să fie acolo. Mută main înapoi cu un commit: încearcă reset --hard HEAD~1.',
+  'textview.title': 'Vedere text',
+  'textview.help': 'Ramurile și ultimele lor commituri ca arbore. Sus și jos mută, dreapta și stânga deschid și închid o ramură, Enter o arată în graf.',
+  'textview.default': 'ramura implicită',
+  'textview.shown': 'commituri afișate: {n}',
+  'textview.by': 'de {author}',
+  'textview.merge': 'merge',
 });

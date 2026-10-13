@@ -460,4 +460,10 @@ GB.i18n.define('cs', {
   'practice.ex3.goal': 'Přehraj feature nad nejnovější main bez slučovacího commitu: checkout feature a pak rebase main.',
   'practice.ex4.title': 'Vrácení',
   'practice.ex4.goal': 'Poslední commit na main tam být nemá. Vrať main o jeden commit zpět: zkus reset --hard HEAD~1.',
+  'textview.title': 'Textové zobrazení',
+  'textview.help': 'Větve a jejich poslední commity jako strom. Nahoru a dolů se pohybuje, doprava a doleva větev otevře a zavře, Enter ji ukáže v grafu.',
+  'textview.default': 'výchozí větev',
+  'textview.shown': 'zobrazené commity: {n}',
+  'textview.by': 'od {author}',
+  'textview.merge': 'merge',
 });

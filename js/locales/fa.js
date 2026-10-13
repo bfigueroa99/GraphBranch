@@ -492,4 +492,10 @@ GB.i18n.define('fa', {
   'practice.ex3.goal': 'feature را بدون commit ادغام روی تازه‌ترین main دوباره اجرا کنید: checkout feature و سپس rebase main.',
   'practice.ex4.title': 'برگرداندن',
   'practice.ex4.goal': 'آخرین commit در main نباید آنجا باشد. main را یک commit به عقب ببرید: reset --hard HEAD~1 را امتحان کنید.',
+  'textview.title': 'نمای متنی',
+  'textview.help': 'شاخه‌ها و آخرین commitهای آن‌ها به شکل درخت. بالا و پایین جابه‌جا می‌کنند، راست و چپ شاخه را باز و بسته می‌کنند، Enter آن را در نمودار نشان می‌دهد.',
+  'textview.default': 'شاخهٔ پیش‌فرض',
+  'textview.shown': 'commitهای نمایش‌داده‌شده: {n}',
+  'textview.by': 'از {author}',
+  'textview.merge': 'ادغام',
 });

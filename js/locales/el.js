@@ -449,4 +449,10 @@ GB.i18n.define('el', {
   'practice.ex3.goal': 'Επανάλαβε το feature πάνω από το νεότερο main χωρίς commit συγχώνευσης: checkout feature και μετά rebase main.',
   'practice.ex4.title': 'Αναίρεση',
   'practice.ex4.goal': 'Το τελευταίο commit του main δεν θα έπρεπε να υπάρχει. Γύρνα το main ένα commit πίσω: δοκίμασε reset --hard HEAD~1.',
+  'textview.title': 'Προβολή κειμένου',
+  'textview.help': 'Οι κλάδοι και τα τελευταία commits τους ως δέντρο. Πάνω και κάτω μετακινούν, δεξιά και αριστερά ανοίγουν και κλείνουν έναν κλάδο, το Enter τον δείχνει στο γράφημα.',
+  'textview.default': 'προεπιλεγμένος κλάδος',
+  'textview.shown': 'εμφανιζόμενα commits: {n}',
+  'textview.by': 'από {author}',
+  'textview.merge': 'συγχώνευση',
 });

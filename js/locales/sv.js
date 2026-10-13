@@ -449,4 +449,10 @@ GB.i18n.define('sv', {
   'practice.ex3.goal': 'Spela upp feature ovanpå senaste main utan sammanslagningscommit: checkout feature och sedan rebase main.',
   'practice.ex4.title': 'Ångra',
   'practice.ex4.goal': 'Sista committen på main ska inte finnas. Flytta tillbaka main en commit: prova reset --hard HEAD~1.',
+  'textview.title': 'Textvy',
+  'textview.help': 'Grenarna och deras senaste commits som ett träd. Upp och ned flyttar, höger och vänster öppnar och stänger en gren, Retur visar den i grafen.',
+  'textview.default': 'standardgren',
+  'textview.shown': 'visade commits: {n}',
+  'textview.by': 'av {author}',
+  'textview.merge': 'sammanslagning',
 });

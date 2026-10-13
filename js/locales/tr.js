@@ -449,4 +449,10 @@ GB.i18n.define('tr', {
   'practice.ex3.goal': 'feature’ı birleştirme commit’i olmadan en yeni main’in üzerine yeniden oynat: checkout feature, sonra rebase main.',
   'practice.ex4.title': 'Geri alma',
   'practice.ex4.goal': 'main’in son commit’i orada olmamalı. main’i bir commit geri götür: reset --hard HEAD~1 dene.',
+  'textview.title': 'Metin görünümü',
+  'textview.help': 'Dallar ve son commit’leri bir ağaç olarak. Yukarı ve aşağı gezinir, sağ ve sol bir dalı açar ve kapatır, Enter onu grafikte gösterir.',
+  'textview.default': 'varsayılan dal',
+  'textview.shown': 'gösterilen commit: {n}',
+  'textview.by': 'yazar {author}',
+  'textview.merge': 'birleştirme',
 });

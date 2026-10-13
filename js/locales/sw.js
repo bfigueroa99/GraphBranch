@@ -449,4 +449,10 @@ GB.i18n.define('sw', {
   'practice.ex3.goal': 'Rudia feature juu ya main ya karibuni bila commit ya kuunganisha: checkout feature, kisha rebase main.',
   'practice.ex4.title': 'Tendua',
   'practice.ex4.goal': 'Commit ya mwisho ya main haipaswi kuwepo. Rudisha main nyuma kwa commit moja: jaribu reset --hard HEAD~1.',
+  'textview.title': 'Mwonekano wa maandishi',
+  'textview.help': 'Matawi na commit zake za hivi karibuni kama mti. Juu na chini kusogeza, kulia na kushoto kufungua na kufunga tawi, Enter kulionyesha kwenye grafu.',
+  'textview.default': 'tawi chaguomsingi',
+  'textview.shown': 'commit zinazoonyeshwa: {n}',
+  'textview.by': 'na {author}',
+  'textview.merge': 'muunganisho',
 });

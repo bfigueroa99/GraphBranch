@@ -450,4 +450,10 @@ GB.i18n.define('de', {
   'practice.ex3.goal': 'Spiele feature auf dem neuesten main ab, ohne Merge-Commit: checkout feature, dann rebase main.',
   'practice.ex4.title': 'Rückgängig',
   'practice.ex4.goal': 'Der letzte Commit auf main soll weg. Setze main um einen Commit zurück: probiere reset --hard HEAD~1.',
+  'textview.title': 'Textansicht',
+  'textview.help': 'Die Branches und ihre letzten Commits als Baum. Hoch und runter bewegen, rechts und links öffnen und schließen einen Branch, Eingabe zeigt ihn im Graphen.',
+  'textview.default': 'Standard-Branch',
+  'textview.shown': 'angezeigte Commits: {n}',
+  'textview.by': 'von {author}',
+  'textview.merge': 'Merge',
 });

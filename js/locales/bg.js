@@ -449,4 +449,10 @@ GB.i18n.define('bg', {
   'practice.ex3.goal': 'Възпроизведи feature върху най-новия main без commit за сливане: checkout feature, после rebase main.',
   'practice.ex4.title': 'Отмяна',
   'practice.ex4.goal': 'Последният commit на main не трябва да е там. Върни main с един commit назад: опитай reset --hard HEAD~1.',
+  'textview.title': 'Текстов изглед',
+  'textview.help': 'Клоновете и последните им комити като дърво. Нагоре и надолу движат, надясно и наляво отварят и затварят клон, Enter го показва в графиката.',
+  'textview.default': 'клон по подразбиране',
+  'textview.shown': 'показани комити: {n}',
+  'textview.by': 'от {author}',
+  'textview.merge': 'сливане',
 });

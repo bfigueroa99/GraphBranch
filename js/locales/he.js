@@ -506,4 +506,10 @@ GB.i18n.define('he', {
   'practice.ex3.goal': 'הריצו מחדש את feature מעל ה־main העדכני ללא commit מיזוג: checkout feature ואז rebase main.',
   'practice.ex4.title': 'ביטול',
   'practice.ex4.goal': 'ה־commit האחרון ב־main לא אמור להיות שם. החזירו את main commit אחד אחורה: נסו reset --hard HEAD~1.',
+  'textview.title': 'תצוגת טקסט',
+  'textview.help': 'הענפים וה־commits האחרונים שלהם כעץ. למעלה ולמטה מזיזים, ימינה ושמאלה פותחים וסוגרים ענף, Enter מציג אותו בגרף.',
+  'textview.default': 'ענף ברירת מחדל',
+  'textview.shown': 'commits מוצגים: {n}',
+  'textview.by': 'מאת {author}',
+  'textview.merge': 'מיזוג',
 });

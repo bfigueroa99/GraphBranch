@@ -460,4 +460,10 @@ GB.i18n.define('pl', {
   'practice.ex3.goal': 'Odtwórz feature na najnowszym main bez commita scalającego: checkout feature, potem rebase main.',
   'practice.ex4.title': 'Cofanie',
   'practice.ex4.goal': 'Ostatniego commita na main nie powinno być. Cofnij main o jeden commit: spróbuj reset --hard HEAD~1.',
+  'textview.title': 'Widok tekstowy',
+  'textview.help': 'Gałęzie i ich ostatnie commity jako drzewo. Góra i dół przesuwają, prawo i lewo otwierają i zamykają gałąź, Enter pokazuje ją na wykresie.',
+  'textview.default': 'gałąź domyślna',
+  'textview.shown': 'pokazane commity: {n}',
+  'textview.by': 'autor {author}',
+  'textview.merge': 'merge',
 });

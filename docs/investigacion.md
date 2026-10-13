@@ -192,7 +192,8 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Los forks en el grafo | Datos | 2×2/2 | 2,0 | Red de ramas de GitHub | ítem 30 |
 | Ensayar un comando sobre el repo real | Público | 2×3/3 | 2,0 | git-sim | ítem 31 |
 | GitHub Enterprise Server | Fuentes | 1×3/2 | 1,5 | GitKraken (plan Advanced) | ítem 13 |
-| Vista de texto accesible | Público | 1×3/2 | 1,5 | (accesibilidad) | ítem 18 |
+| Vista de texto accesible | Público | 1×3/2 | 1,5 | (accesibilidad) | hecho en #69 |
+| Vista de texto, segunda entrega | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 33 |
 | Una organización entera, tercera entrega | Escala | 2×2/3 | 1,3 | Red de ramas de GitHub | ítem 26 |
 | Gitea, Forgejo y Codeberg | Fuentes | 1×2/2 | 1,0 | GitLens (autolinks) | ítem 21 |
 | GitLab propio | Fuentes | 1×2/2 | 1,0 | GitKraken (plan Advanced) | ítem 25 |

@@ -449,4 +449,10 @@ GB.i18n.define('id', {
   'practice.ex3.goal': 'Putar ulang feature di atas main terbaru tanpa commit merge: checkout feature, lalu rebase main.',
   'practice.ex4.title': 'Urungkan',
   'practice.ex4.goal': 'Commit terakhir di main seharusnya tidak ada. Mundurkan main satu commit: coba reset --hard HEAD~1.',
+  'textview.title': 'Tampilan teks',
+  'textview.help': 'Cabang dan commit terbarunya sebagai pohon. Atas dan bawah untuk berpindah, kanan dan kiri membuka dan menutup cabang, Enter menampilkannya di grafik.',
+  'textview.default': 'cabang bawaan',
+  'textview.shown': 'commit ditampilkan: {n}',
+  'textview.by': 'oleh {author}',
+  'textview.merge': 'merge',
 });

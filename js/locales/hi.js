@@ -449,4 +449,10 @@ GB.i18n.define('hi', {
   'practice.ex3.goal': 'feature को ताज़ा main के ऊपर बिना मर्ज commit के दोबारा चलाएँ: checkout feature, फिर rebase main।',
   'practice.ex4.title': 'पूर्ववत करें',
   'practice.ex4.goal': 'main का आख़िरी commit वहाँ नहीं होना चाहिए। main को एक commit पीछे ले जाएँ: reset --hard HEAD~1 आज़माएँ।',
+  'textview.title': 'टेक्स्ट दृश्य',
+  'textview.help': 'शाखाएँ और उनके हाल के कमिट एक पेड़ के रूप में। ऊपर और नीचे से चलें, दाएँ और बाएँ से शाखा खोलें और बंद करें, Enter उसे ग्राफ़ में दिखाता है।',
+  'textview.default': 'डिफ़ॉल्ट शाखा',
+  'textview.shown': 'दिखाए गए कमिट: {n}',
+  'textview.by': '{author} द्वारा',
+  'textview.merge': 'मर्ज',
 });

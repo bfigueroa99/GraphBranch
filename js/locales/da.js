@@ -449,4 +449,10 @@ GB.i18n.define('da', {
   'practice.ex3.goal': 'Afspil feature oven på den nyeste main uden en fletnings-commit: checkout feature og derefter rebase main.',
   'practice.ex4.title': 'Fortryd',
   'practice.ex4.goal': 'Den sidste commit på main skal ikke være der. Flyt main én commit tilbage: prøv reset --hard HEAD~1.',
+  'textview.title': 'Tekstvisning',
+  'textview.help': 'Grenene og deres seneste commits som et træ. Op og ned flytter, højre og venstre åbner og lukker en gren, Enter viser den i grafen.',
+  'textview.default': 'standardgren',
+  'textview.shown': 'viste commits: {n}',
+  'textview.by': 'af {author}',
+  'textview.merge': 'sammenfletning',
 });

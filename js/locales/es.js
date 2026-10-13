@@ -449,4 +449,10 @@ GB.i18n.define('es', {
   'practice.ex3.goal': 'Repite feature encima del main más reciente sin un commit de fusión: checkout feature y luego rebase main.',
   'practice.ex4.title': 'Deshacer',
   'practice.ex4.goal': 'El último commit de main no debería estar. Devuelve main un commit atrás: prueba reset --hard HEAD~1.',
+  'textview.title': 'Vista de texto',
+  'textview.help': 'Las ramas y sus últimos commits como un árbol. Arriba y abajo se mueven, derecha e izquierda abren y cierran una rama, Intro la muestra en el grafo.',
+  'textview.default': 'rama por defecto',
+  'textview.shown': 'commits mostrados: {n}',
+  'textview.by': 'de {author}',
+  'textview.merge': 'merge',
 });

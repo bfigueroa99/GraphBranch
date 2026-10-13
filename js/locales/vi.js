@@ -449,4 +449,10 @@ GB.i18n.define('vi', {
   'practice.ex3.goal': 'Chạy lại feature trên main mới nhất mà không có commit hợp nhất: checkout feature, rồi rebase main.',
   'practice.ex4.title': 'Hoàn tác',
   'practice.ex4.goal': 'Commit cuối của main không nên có. Lùi main một commit: thử reset --hard HEAD~1.',
+  'textview.title': 'Chế độ văn bản',
+  'textview.help': 'Các nhánh và commit mới nhất của chúng dưới dạng cây. Lên và xuống để di chuyển, phải và trái để mở và đóng nhánh, Enter để hiện trên đồ thị.',
+  'textview.default': 'nhánh mặc định',
+  'textview.shown': 'commit đang hiện: {n}',
+  'textview.by': 'bởi {author}',
+  'textview.merge': 'merge',
 });

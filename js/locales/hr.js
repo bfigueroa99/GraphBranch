@@ -457,4 +457,10 @@ GB.i18n.define('hr', {
   'practice.ex3.goal': 'Ponovi feature povrh najnovijeg main bez commita spajanja: checkout feature, pa rebase main.',
   'practice.ex4.title': 'Poništi',
   'practice.ex4.goal': 'Zadnjeg commita na main ne bi trebalo biti. Vrati main za jedan commit: probaj reset --hard HEAD~1.',
+  'textview.title': 'Tekstualni prikaz',
+  'textview.help': 'Grane i njihovi posljednji commitovi kao stablo. Gore i dolje pomiču, desno i lijevo otvaraju i zatvaraju granu, Enter je prikazuje na grafu.',
+  'textview.default': 'zadana grana',
+  'textview.shown': 'prikazani commitovi: {n}',
+  'textview.by': 'autor {author}',
+  'textview.merge': 'merge',
 });

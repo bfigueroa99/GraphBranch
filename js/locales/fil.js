@@ -450,4 +450,10 @@ GB.i18n.define('fil', {
   'practice.ex3.goal': 'I-replay ang feature sa ibabaw ng pinakabagong main nang walang merge commit: checkout feature, saka rebase main.',
   'practice.ex4.title': 'I-undo',
   'practice.ex4.goal': 'Hindi dapat naroon ang huling commit ng main. Ibalik ang main nang isang commit: subukan ang reset --hard HEAD~1.',
+  'textview.title': 'Tekstong tanaw',
+  'textview.help': 'Ang mga branch at ang mga huling commit nila bilang puno. Pataas at pababa para gumalaw, kanan at kaliwa para buksan at isara ang branch, Enter para ipakita ito sa graph.',
+  'textview.default': 'default na branch',
+  'textview.shown': 'mga commit na ipinapakita: {n}',
+  'textview.by': 'ni {author}',
+  'textview.merge': 'merge',
 });

@@ -530,6 +530,41 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: 3000 });
   });
 
+  await step(page, 'vista de texto: árbol con teclado, nombres accesibles y Enter lleva al grafo', async () => {
+    await page.click('#textview-btn');
+    await page.waitForSelector('#textview[open]', { timeout: 3000 });
+    const info = await page.evaluate(() => {
+      const d = document.querySelector('#textview');
+      const tree = d.querySelector('[role="tree"]');
+      const items = [...d.querySelectorAll('[role="treeitem"]')];
+      return {
+        tree: !!tree,
+        branches: d.querySelectorAll('.tv-branch').length,
+        unnamed: items.filter((n) => !n.getAttribute('aria-label')).length,
+        focusInTree: tree && tree.contains(document.activeElement),
+        text: d.textContent,
+        overflow: d.querySelector('.tr-wrap').scrollWidth - d.querySelector('.tr-wrap').clientWidth,
+      };
+    });
+    if (!info.tree || info.branches < 2) throw new Error(`árbol incompleto: ${info.branches} ramas`);
+    if (info.unnamed) throw new Error(`${info.unnamed} nodos sin nombre accesible`);
+    if (!info.focusInTree) throw new Error('al abrir, el foco no está en el árbol');
+    if (/undefined|NaN|textview\./.test(info.text)) throw new Error('texto sin resolver: ' + info.text.slice(0, 120));
+    if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
+    // la rama por defecto viene abierta: ↓ baja a su primer commit; ← sube a la rama y otra ← la cierra
+    await page.keyboard.press('ArrowDown');
+    const onCommit = await page.evaluate(() => document.activeElement.classList.contains('tv-commit'));
+    if (!onCommit) throw new Error('↓ no baja al primer commit de la rama abierta');
+    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('ArrowLeft');
+    const closed = await page.evaluate(() => document.activeElement.classList.contains('tv-branch') && document.activeElement.getAttribute('aria-expanded'));
+    if (closed !== 'false') throw new Error('← no cierra la rama');
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: 3000 });
+  });
+
   await step(page, 'cambia a árabe en vivo (derecha a izquierda)', async () => {
     await page.selectOption('#lang-select', 'ar');
     await page.waitForFunction(() => document.documentElement.dir === 'rtl', null, { timeout: 5000 });

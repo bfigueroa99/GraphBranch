@@ -53,6 +53,8 @@
     healthBtn: $('#health-btn'),
     health: $('#health'),
     healthBody: $('#health-body'),
+    textview: $('#textview'),
+    textviewBody: $('#textview-body'),
     trophyBtn: $('#trophy-btn'),
     trophyCount: $('#trophy-count'),
     gameStrip: $('#game-strip'),
@@ -1076,6 +1078,28 @@
     else el.health.setAttribute('open', '');
   });
   $('#health-close').addEventListener('click', closeHealth);
+
+  /* ---------- vista de texto: el árbol de ramas y commits para teclado y lector de pantalla (ver textview.js) ---------- */
+  function closeTextview() {
+    if (typeof el.textview.close === 'function') el.textview.close();
+    else el.textview.removeAttribute('open');
+  }
+  const textview = GB.textview.mount(el.textviewBody, {
+    text: (k, p) => t(k, p),
+    ago: (ms) => U.timeAgo(ms),
+    onGo: ({ branch, sha }) => {
+      closeTextview();
+      if (sha && graph.focusSha) graph.focusSha(sha);
+      else graph.focusBranch(branch);
+    },
+  });
+  $('#textview-btn').addEventListener('click', () => {
+    textview.render(GB.textview.build(source.view ? source.view() : source.data));
+    if (typeof el.textview.showModal === 'function') el.textview.showModal();
+    else el.textview.setAttribute('open', '');
+    el.textviewBody.querySelector('[tabindex="0"]')?.focus();
+  });
+  $('#textview-close').addEventListener('click', closeTextview);
 
   /** Tags y entornos de despliegue por commit: sha -> { tags: [nombre], envs: [entorno] }. */
   function refsBySha(data) {

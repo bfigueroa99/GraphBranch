@@ -2,6 +2,7 @@
 import { test, expect } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { closeWindow, launch, launchAgain, loaded, runHidden, tokenFiles, windowState } from './app.mjs';
@@ -22,7 +23,7 @@ test('arranca sin red: la demo, las librerías y las fuentes van dentro de la ap
   });
   expect(info.libs).toEqual(['object', 'object', 'function']);
   expect(info.node).toEqual(['undefined', 'undefined']); // la página no ve Node
-  expect(info.bridge).toEqual(['getToken', 'git', 'setLabels', 'setToken', 'show']);
+  expect(info.bridge).toEqual(['getToken', 'git', 'setLabels', 'setToken', 'show', 'webhook']);
   expect(info.fonts).toEqual(['Bricolage Grotesque', 'Instrument Sans', 'JetBrains Mono']);
   await app.close();
 });
@@ -219,6 +220,59 @@ test('el token de GitLab se guarda cifrado, aparte del de GitHub, y vuelve al re
   await page.click('#settings-form button[type=submit]');
   await expect.poll(services).toEqual(['github-token']);
   await app.close();
+});
+
+test('los avisos a Slack y Discord: la URL se guarda cifrada y la prueba llega al webhook', async ({}, testInfo) => {
+  const got = [];
+  const server = createServer((req, res) => {
+    let body = '';
+    req.on('data', (c) => (body += c));
+    req.on('end', () => {
+      got.push({ url: req.url, body: JSON.parse(body) });
+      res.writeHead(204).end();
+    });
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const extraEnv = { GB_WEBHOOK_TEST_PREFIX: base };
+  const SECRET = 'hook-e2eFAKE0123456789';
+  try {
+    let { app, page, dir } = await launch(testInfo, { args: ['--lang=es'], extraEnv });
+    await loaded(page);
+    await page.click('#settings-btn');
+    await expect(page.locator('#hooks-box')).toBeVisible();
+    await expect(page.locator('#hooks-box .hook')).toHaveCount(2);
+    await page.fill('#hook-slack', `${base}/slack/${SECRET}`);
+    await page.locator('#hooks-box .hook').nth(0).locator('.hook-test').click();
+    await expect(page.locator('#hooks-box .hook-state').first()).toHaveText('Enviado.');
+    expect(got).toHaveLength(1);
+    expect(got[0].url).toBe(`/slack/${SECRET}`);
+    expect(got[0].body.text).toContain('GraphBranch');
+    // una URL que no es del servicio no sale de la app
+    await page.fill('#hook-discord', 'https://evil.example/api/webhooks/1');
+    await page.locator('#hooks-box .hook').nth(1).locator('.hook-test').click();
+    await expect(page.locator('#hooks-box .hook-state').nth(1)).toHaveText('No se pudo enviar. Revisa la URL.');
+    expect(got).toHaveLength(1);
+    // los eventos que se desmarcan quedan desmarcados al volver
+    await page.locator('#hooks-box .hook').first().locator('[data-event=force]').uncheck();
+    await page.fill('#hook-discord', '');
+    await page.click('#settings-form button[type=submit]');
+    await expect.poll(() => Object.keys(tokenFiles(dir))).toHaveLength(1);
+    expect(Object.keys(tokenFiles(dir))[0]).toMatch(/^slack-token\./);
+    for (const [name, content] of Object.entries(tokenFiles(dir))) if (name.endsWith('.enc')) expect(content.includes(SECRET)).toBe(false);
+    expect(await page.evaluate(() => JSON.stringify(localStorage))).not.toContain(SECRET);
+    await app.close();
+
+    ({ app, page } = await launch(testInfo, { dir, args: ['--lang=es'], extraEnv }));
+    await loaded(page);
+    await page.click('#settings-btn');
+    await expect(page.locator('#hook-slack')).toHaveValue(`${base}/slack/${SECRET}`);
+    await expect(page.locator('#hooks-box .hook').first().locator('[data-event=force]')).not.toBeChecked();
+    await expect(page.locator('#hooks-box .hook').first().locator('[data-event=release]')).toBeChecked();
+    await app.close();
+  } finally {
+    server.close();
+  }
 });
 
 test('pasa al llavero el token que la primera versión dejaba en localStorage', async ({}, testInfo) => {

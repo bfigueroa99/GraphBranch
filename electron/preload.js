@@ -29,6 +29,9 @@ contextBridge.exposeInMainWorld('GBDesktop', {
       return () => ipcRenderer.removeListener('git:changed', on);
     },
   },
+  /** Avisos a Slack o Discord: lo manda el proceso principal con la URL guardada de `service`
+      ('slack' o 'discord'). ev = { repo, kind, title, detail, url } → { ok, status }. */
+  webhook: (service, ev) => ipcRenderer.invoke('webhook:send', String(service), ev && typeof ev === 'object' ? ev : {}),
   /** Trae la ventana aunque esté en la bandeja (al hacer clic en una notificación). */
   show: () => ipcRenderer.send('show'),
 });

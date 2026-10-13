@@ -100,6 +100,8 @@
     gitlabTokenInput: $('#gitlab-token-input'),
     gitlabTokenToggle: $('#gitlab-token-toggle'),
     gitlabTokenWhere: $('#gitlab-token-where'),
+    hooksBox: $('#hooks-box'),
+    hooksList: $('#hooks-list'),
     depth: $('#depth'),
     settingsCancel: $('#settings-cancel'),
   };
@@ -660,6 +662,7 @@
       a.repo = tab.key;
       a.repoName = name;
     }
+    sendHooks(tab, activities, initial);
     if (tab !== active) return onBackground(tab, activities, initial);
     const news = !initial && activities.length > 0;
     // en modo TV lo que pasa ahora manda: el Replay de ambiente deja paso al presente
@@ -676,6 +679,21 @@
     }
     renderSummary(data, L);
     renderTab(tab);
+  }
+
+  /* avisos a Slack y Discord (solo escritorio, js/hooks.js decide y electron/webhooks.js envía): lo
+     que pasa en vivo en un repo real, nunca la primera carga ni la demo */
+  const hookUrls = { slack: '', discord: '' };
+  const hookPrefs = U.store.get('hooks', {});
+  function sendHooks(tab, activities, initial) {
+    if (!desktop || initial || tab.demo || !activities.length) return;
+    const routed = GB.hooks.route(activities, tab.source.data.repo.defaultBranch, hookPrefs, hookUrls);
+    for (const service of GB.hooks.SERVICES) {
+      for (const a of routed[service]) {
+        const kind = t('kind.' + a.kind);
+        desktop.webhook(service, { repo: a.repoName, kind, title: i18n.text(a.title), detail: i18n.text(a.detail), url: a.url }).catch(() => {});
+      }
+    }
   }
 
   /* en modo TV la pantalla va adonde pasan las cosas: a otro repo seguido con novedades, si el de la
@@ -1556,6 +1574,12 @@
       toggle.textContent = t('settings.show');
     }
     el.depth.value = settings.depth;
+    for (const f of hookFields) {
+      f.input.value = hookUrls[f.service];
+      f.state.textContent = '';
+      const on = GB.hooks.chosen(hookPrefs, f.service);
+      for (const box of f.boxes) box.checked = on.includes(box.dataset.event);
+    }
     if (typeof el.dialog.showModal === 'function') el.dialog.showModal();
     else el.dialog.setAttribute('open', '');
     (focus instanceof HTMLElement ? focus : el.tokenInput).focus();
@@ -1566,10 +1590,48 @@
     else el.dialog.removeAttribute('open');
   }
 
+  /** Los avisos de Ajustes (solo escritorio): por servicio, su URL, los eventos que recibe y una prueba. */
+  const hookFields = !desktop
+    ? []
+    : GB.hooks.SERVICES.map((service) => {
+        const name = service === 'slack' ? 'Slack' : 'Discord';
+        const row = document.createElement('div');
+        row.className = 'field hook';
+        const events = GB.hooks.EVENTS.map(
+          (e) => `<label><input type="checkbox" data-event="${e}"> <span>${U.esc(t('kind.' + { ci: 'ci-fail' }[e] || e))}</span></label>`,
+        ).join('');
+        row.innerHTML = `
+          <label for="hook-${service}">${U.esc(t('settings.webhook', { service: name }))} <span class="opt">${U.esc(t('settings.optional'))}</span></label>
+          <div class="field-row">
+            <input id="hook-${service}" type="password" autocomplete="off" spellcheck="false" placeholder="${service === 'slack' ? 'https://hooks.slack.com/services/…' : 'https://discord.com/api/webhooks/…'}">
+            <button type="button" class="btn btn-ghost hook-toggle"></button>
+            <button type="button" class="btn btn-ghost hook-test">${U.esc(t('settings.hooksTest'))}</button>
+          </div>
+          <div class="hook-events">${events}</div>
+          <span class="hook-state" role="status"></span>`;
+        el.hooksList.append(row);
+        el.hooksBox.hidden = false;
+        const field = { service, input: row.querySelector('input[type=password]'), toggle: row.querySelector('.hook-toggle'), state: row.querySelector('.hook-state'), boxes: [...row.querySelectorAll('[data-event]')] };
+        row.querySelector('.hook-test').addEventListener('click', async () => {
+          const url = field.input.value.trim();
+          field.state.textContent = '';
+          try {
+            hookUrls[service] = url;
+            await desktop.setToken(url, service);
+            const r = url ? await desktop.webhook(service, { repo: 'GraphBranch', kind: t('settings.hooksTest'), title: t('settings.hooksTestMsg') }) : { ok: false };
+            field.state.textContent = t(r.ok ? 'settings.hooksOk' : 'settings.hooksFail');
+          } catch {
+            field.state.textContent = t('settings.hooksFail');
+          }
+        });
+        return field;
+      });
+
   /** Los campos de los tokens, cada uno con su botón de mostrar u ocultar. */
   const tokenFields = [
     [el.tokenInput, el.tokenToggle],
     [el.gitlabTokenInput, el.gitlabTokenToggle],
+    ...hookFields.map((f) => [f.input, f.toggle]),
   ];
   const showToggle = (input, toggle) => (toggle.textContent = input.type === 'password' ? t('settings.show') : t('settings.hide'));
 
@@ -1585,6 +1647,7 @@
   el.tokenClear.addEventListener('click', () => {
     el.tokenInput.value = '';
     el.gitlabTokenInput.value = '';
+    for (const f of hookFields) f.input.value = '';
     el.tokenInput.focus();
   });
   el.settingsForm.addEventListener('submit', (ev) => {
@@ -1602,6 +1665,12 @@
       U.store.set('gitlabToken', settings.gitlabToken || null);
     }
     U.store.set('depth', settings.depth);
+    for (const f of hookFields) {
+      hookUrls[f.service] = f.input.value.trim();
+      hookPrefs[f.service] = f.boxes.filter((b) => b.checked).map((b) => b.dataset.event);
+      desktop.setToken(hookUrls[f.service], f.service).catch((err) => console.error('No se pudo guardar el webhook:', err));
+    }
+    if (hookFields.length) U.store.set('hooks', hookPrefs);
     closeSettings();
     // se reconecta lo que cambió: un token de GitLab nuevo no gasta la cuota de GitHub. Si no cambió
     // nada, todo, como dice el botón
@@ -1634,6 +1703,7 @@
     }
     settings.token = token;
     settings.gitlabToken = (await desktop.getToken('gitlab')).token;
+    for (const service of GB.hooks.SERVICES) hookUrls[service] = (await desktop.getToken(service)).token;
     showTokenWhere(where);
   }
 

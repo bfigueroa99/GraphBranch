@@ -20,11 +20,11 @@ const locale = process.env.LC_ALL || process.env.LC_CTYPE || process.env.LANG ||
 export const env = process.platform === 'linux' && !/utf-?8/i.test(locale) ? { ...process.env, LC_ALL: 'C.UTF-8' } : process.env;
 
 /** Abre la app. dir: carpeta de datos (para reabrir con el mismo perfil); args: --lang=es, --repo=… */
-export async function launch(testInfo, { dir = testInfo.outputPath('perfil'), args = [] } = {}) {
+export async function launch(testInfo, { dir = testInfo.outputPath('perfil'), args = [], extraEnv = {} } = {}) {
   const app = await electron.launch({
     executablePath: electronPath,
     args: [root, `--user-data-dir=${dir}`, NO_NETWORK, ...sandboxArgs, ...args],
-    env,
+    env: { ...env, ...extraEnv },
   });
   const page = await app.firstWindow();
   return { app, page, dir };
@@ -40,9 +40,9 @@ export function launchAgain(dir) {
 }
 
 /** Los archivos del token en la carpeta de datos: { nombre: contenido }. */
-/** Los archivos de los tokens (github-token.enc, gitlab-token.enc o sus .txt sin cifrar), con su contenido. */
+/** Los archivos de los tokens (github-token.enc, gitlab-token.enc, slack-token.enc, discord-token.enc o sus .txt sin cifrar), con su contenido. */
 export function tokenFiles(dir) {
-  return Object.fromEntries(readdirSync(dir).filter((f) => /^(github|gitlab)-token\./.test(f)).map((f) => [f, readFileSync(join(dir, f))]));
+  return Object.fromEntries(readdirSync(dir).filter((f) => /^(github|gitlab|slack|discord)-token\./.test(f)).map((f) => [f, readFileSync(join(dir, f))]));
 }
 
 /** La ventana, vista desde el proceso principal. */

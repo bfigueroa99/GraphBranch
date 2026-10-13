@@ -3315,6 +3315,45 @@ button.act-main:hover {
   color: var(--ink-3);
   font-size: 12.5px;
 }
+.hooks {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.hooks legend {
+  padding: 0;
+  font-weight: 600;
+  font-size: 13px;
+}
+.hooks-list {
+  display: grid;
+  gap: 12px;
+}
+.hook {
+  display: grid;
+  gap: 6px;
+}
+.hook-events {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 12.5px;
+}
+.hook-events label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+.hook-events input {
+  width: auto;
+  height: auto;
+}
+.hook-state {
+  align-self: center;
+  color: var(--ink-3);
+  font-size: 12.5px;
+}
 .grid2 {
   display: grid;
   grid-template-columns: 1fr 1fr;

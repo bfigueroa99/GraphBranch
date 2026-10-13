@@ -455,4 +455,12 @@ GB.i18n.define('zh-Hant', {
   'textview.shown': '顯示的提交：{n}',
   'textview.by': '作者 {author}',
   'textview.merge': '合併',
+  'search.title': '搜尋提交',
+  'search.help': '依提交訊息、SHA 或作者（@名稱）搜尋。向下鍵進入結果，Enter 飛到該提交。',
+  'search.placeholder': '訊息、SHA 或 @作者…',
+  'search.author': '作者',
+  'search.anyAuthor': '所有人',
+  'search.none': '沒有符合的提交。',
+  'search.count': '結果：{n}',
+  'search.some': '顯示 {n}/{total}',
 });

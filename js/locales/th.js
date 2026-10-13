@@ -456,4 +456,12 @@ GB.i18n.define('th', {
   'textview.shown': 'คอมมิตที่แสดง: {n}',
   'textview.by': 'โดย {author}',
   'textview.merge': 'เมิร์จ',
+  'search.title': 'ค้นหาคอมมิต',
+  'search.help': 'ค้นหาด้วยข้อความ SHA หรือผู้เขียน (@ชื่อ) ลูกศรลงไปที่ผลลัพธ์ Enter บินไปยังคอมมิต',
+  'search.placeholder': 'ข้อความ SHA หรือ @ผู้เขียน…',
+  'search.author': 'ผู้เขียน',
+  'search.anyAuthor': 'ทุกคน',
+  'search.none': 'ไม่มีคอมมิตที่ตรงกัน',
+  'search.count': 'ผลลัพธ์: {n}',
+  'search.some': 'แสดง {n} จาก {total}',
 });

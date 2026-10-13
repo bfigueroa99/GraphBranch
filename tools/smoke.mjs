@@ -565,6 +565,41 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: 3000 });
   });
 
+  await step(page, 'búsqueda de commits: por mensaje y por autor, con teclado, y Enter vuela al commit', async () => {
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: 3000 });
+    const first = await page.evaluate(() => {
+      const d = document.querySelector('#search');
+      return {
+        focusInput: document.activeElement?.id === 'search-input',
+        authors: d.querySelectorAll('#search-author option').length,
+        hits: d.querySelectorAll('.sr-hit').length,
+        unnamed: [...d.querySelectorAll('.sr-hit')].filter((b) => !b.getAttribute('aria-label')).length,
+        status: d.querySelector('#search-status').textContent,
+        overflow: d.querySelector('.tr-wrap').scrollWidth - d.querySelector('.tr-wrap').clientWidth,
+      };
+    });
+    if (!first.focusInput) throw new Error('al abrir, el foco no está en el campo');
+    if (first.authors < 2 || !first.hits) throw new Error(`sin autores o sin resultados: ${first.authors} autores, ${first.hits} commits`);
+    if (first.unnamed) throw new Error(`${first.unnamed} resultados sin nombre accesible`);
+    if (/undefined|NaN|search\./.test(first.status)) throw new Error('texto sin resolver: ' + first.status);
+    if (first.overflow > 1) throw new Error(`el panel se desborda ${first.overflow}px`);
+    await page.fill('#search-input', 'zzzz-no-existe');
+    const none = await page.evaluate(() => ({ hits: document.querySelectorAll('#search .sr-hit').length, status: document.querySelector('#search-status').textContent }));
+    if (none.hits || !none.status) throw new Error('sin coincidencias debería decirlo y no listar nada');
+    await page.fill('#search-input', '');
+    const author = await page.evaluate(() => document.querySelectorAll('#search-author option')[1].value);
+    await page.selectOption('#search-author', author);
+    const byAuthor = await page.evaluate((a) => ({ hits: document.querySelectorAll('#search .sr-hit').length, text: document.querySelector('#search-list').textContent, a }), author);
+    if (!byAuthor.hits || byAuthor.hits >= first.hits) throw new Error(`el filtro por autor no acota: ${byAuthor.hits} de ${first.hits}`);
+    await page.focus('#search-input');
+    await page.keyboard.press('ArrowDown');
+    const onHit = await page.evaluate(() => document.activeElement.classList.contains('sr-hit'));
+    if (!onHit) throw new Error('↓ no baja al primer resultado');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: 3000 });
+  });
+
   await step(page, 'cambia a árabe en vivo (derecha a izquierda)', async () => {
     await page.selectOption('#lang-select', 'ar');
     await page.waitForFunction(() => document.documentElement.dir === 'rtl', null, { timeout: 5000 });

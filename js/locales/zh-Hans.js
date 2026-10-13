@@ -455,4 +455,12 @@ GB.i18n.define('zh-Hans', {
   'textview.shown': '显示的提交：{n}',
   'textview.by': '作者 {author}',
   'textview.merge': '合并',
+  'search.title': '搜索提交',
+  'search.help': '按提交信息、SHA 或作者（@名字）搜索。向下箭头进入结果，Enter 飞到该提交。',
+  'search.placeholder': '信息、SHA 或 @作者…',
+  'search.author': '作者',
+  'search.anyAuthor': '所有人',
+  'search.none': '没有匹配的提交。',
+  'search.count': '结果：{n}',
+  'search.some': '显示 {n}/{total}',
 });

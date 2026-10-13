@@ -471,4 +471,12 @@ GB.i18n.define('ru', {
   'textview.shown': 'показано коммитов: {n}',
   'textview.by': 'автор {author}',
   'textview.merge': 'слияние',
+  'search.title': 'Поиск коммитов',
+  'search.help': 'Ищите по сообщению, SHA или автору (@имя). Стрелка вниз переходит к результатам, Enter летит к коммиту.',
+  'search.placeholder': 'Сообщение, SHA или @автор…',
+  'search.author': 'Автор',
+  'search.anyAuthor': 'Все',
+  'search.none': 'Нет подходящих коммитов.',
+  'search.count': 'Результатов: {n}',
+  'search.some': 'Показано {n} из {total}',
 });

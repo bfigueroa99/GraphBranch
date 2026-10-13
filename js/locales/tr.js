@@ -455,4 +455,12 @@ GB.i18n.define('tr', {
   'textview.shown': 'gösterilen commit: {n}',
   'textview.by': 'yazar {author}',
   'textview.merge': 'birleştirme',
+  'search.title': 'Commit ara',
+  'search.help': 'İletiye, SHA’ya veya yazara (@ad) göre arayın. Aşağı ok sonuçlara gider, Enter commit’e uçurur.',
+  'search.placeholder': 'İleti, SHA veya @yazar…',
+  'search.author': 'Yazar',
+  'search.anyAuthor': 'Herkes',
+  'search.none': 'Eşleşen commit yok.',
+  'search.count': 'Sonuçlar: {n}',
+  'search.some': '{total} içinden {n} gösteriliyor',
 });

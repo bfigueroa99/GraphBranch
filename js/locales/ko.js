@@ -455,4 +455,12 @@ GB.i18n.define('ko', {
   'textview.shown': '표시된 커밋: {n}',
   'textview.by': '작성자 {author}',
   'textview.merge': '병합',
+  'search.title': '커밋 검색',
+  'search.help': '메시지, SHA 또는 작성자(@이름)로 검색합니다. 아래쪽 화살표는 결과로 이동하고 Enter는 그 커밋으로 날아갑니다.',
+  'search.placeholder': '메시지, SHA 또는 @작성자…',
+  'search.author': '작성자',
+  'search.anyAuthor': '모두',
+  'search.none': '일치하는 커밋이 없습니다.',
+  'search.count': '결과: {n}',
+  'search.some': '{total}개 중 {n}개 표시',
 });

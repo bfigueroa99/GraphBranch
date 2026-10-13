@@ -456,4 +456,12 @@ GB.i18n.define('fr', {
   'textview.shown': 'commits affichés : {n}',
   'textview.by': 'par {author}',
   'textview.merge': 'fusion',
+  'search.title': 'Rechercher des commits',
+  'search.help': 'Cherchez par message, SHA ou auteur (@nom). La flèche bas va aux résultats, Entrée vole jusqu’au commit.',
+  'search.placeholder': 'Message, SHA ou @auteur…',
+  'search.author': 'Auteur',
+  'search.anyAuthor': 'Tous',
+  'search.none': 'Aucun commit ne correspond.',
+  'search.count': 'Résultats : {n}',
+  'search.some': '{n} affichés sur {total}',
 });

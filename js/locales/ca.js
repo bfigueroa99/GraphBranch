@@ -455,4 +455,12 @@ GB.i18n.define('ca', {
   'textview.shown': 'commits mostrats: {n}',
   'textview.by': 'de {author}',
   'textview.merge': 'merge',
+  'search.title': 'Cerca commits',
+  'search.help': 'Cerca per missatge, SHA o autor (@nom). La fletxa avall va als resultats, Intro vola fins al commit.',
+  'search.placeholder': 'Missatge, SHA o @autor…',
+  'search.author': 'Autor',
+  'search.anyAuthor': 'Tots',
+  'search.none': 'Cap commit coincideix.',
+  'search.count': 'Resultats: {n}',
+  'search.some': 'Es mostren {n} de {total}',
 });

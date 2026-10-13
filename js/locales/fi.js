@@ -455,4 +455,12 @@ GB.i18n.define('fi', {
   'textview.shown': 'näytetyt commitit: {n}',
   'textview.by': 'tekijä {author}',
   'textview.merge': 'yhdistäminen',
+  'search.title': 'Hae commiteja',
+  'search.help': 'Hae viestillä, SHA:lla tai tekijällä (@nimi). Nuoli alas siirtyy tuloksiin, Enter lentää commitiin.',
+  'search.placeholder': 'Viesti, SHA tai @tekijä…',
+  'search.author': 'Tekijä',
+  'search.anyAuthor': 'Kaikki',
+  'search.none': 'Yksikään commit ei täsmää.',
+  'search.count': 'Tulokset: {n}',
+  'search.some': 'Näytetään {n} / {total}',
 });

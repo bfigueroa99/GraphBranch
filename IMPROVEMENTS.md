@@ -1407,8 +1407,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Capacidad nueva: búsqueda de commits y filtro por autor** (ítem 19 de la hoja de ruta). La lupa de la barra superior abre un cuadro que busca entre los commits ya cargados por mensaje, SHA o autor (`@ana`, por nombre o usuario; todas las palabras tienen que aparecer), con un selector de autor con la cuenta de cada uno. ↓ baja a los resultados, Enter o un clic vuela al commit en el grafo (2D o 3D) y Esc cierra. Lista los 50 más nuevos y dice el total. Sin consultas nuevas; en la demo funciona igual. Lo de esconder del grafo las ramas de otros autores queda como ítem 34.
 - **Pruebas que fallan sin la capacidad:** `tools/search.test.mjs` (mensaje, SHA, autor con y sin `@`, filtro por clave, límite, cuenta de autores) y el paso del smoke «búsqueda de commits: por mensaje y por autor, con teclado, y Enter vuela al commit».
 - README: la función en la lista, Controles, Estructura, Límites conocidos y Seguridad.
-- QA: filas tocadas: demo sin token (sin consultas); 40 idiomas (8 textos, `check-i18n`); teclado (foco en el campo al abrir, ↓ y Enter en el smoke); desborde en escritorio (smoke); CSP (sin cambios); XSS (`textContent`). Sin mirar a mano: 320 px, árabe, tamil, 3D, lector de pantalla real; auditoría: ver Validado.
+- QA: filas tocadas: demo sin token (sin consultas); 40 idiomas (8 textos, `check-i18n`); teclado (foco en el campo al abrir, ↓ y Enter en el smoke); desborde en escritorio (smoke); CSP (sin cambios); XSS (`textContent`). Sin mirar a mano: 320 px, árabe, tamil, 3D, lector de pantalla real; auditoría: 0 hallazgos nuevos.
 - Reclamo: loop/44, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
-- Validado: PENDIENTE
+- Validado: 177 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde.
 - **Siguiente:** iteración 45, expansión: ítem 21 (Gitea, Forgejo y Codeberg, Fuentes)

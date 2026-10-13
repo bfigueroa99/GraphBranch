@@ -18,6 +18,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const local = require('./git');
 const token = require('./token');
+const webhooks = require('./webhooks');
 const tray = require('./tray');
 
 const SCHEME = 'app';
@@ -241,6 +242,13 @@ if (!app.requestSingleInstanceLock()) {
       if (typeof value !== 'string' || value.length > 1000) throw new Error('token inválido');
       await token.write(value.trim(), service);
       return token.where();
+    });
+    // avisos a Slack y Discord (electron/webhooks.js): la URL no sale del proceso principal
+    const testPrefix = app.isPackaged ? '' : process.env.GB_WEBHOOK_TEST_PREFIX || '';
+    ipcMain.handle('webhook:send', async (ev, service, event) => {
+      fromApp(ev, service);
+      if (!webhooks.SERVICES.includes(service)) throw new Error('servicio desconocido');
+      return webhooks.send(service, await token.read(service), event, net.fetch, testPrefix);
     });
     // repositorios locales (electron/git.js): la página trabaja con ids de carpetas que el usuario eligió
     const guard = (fn) => async (ev, ...args) => {

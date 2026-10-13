@@ -130,7 +130,7 @@ segunda columna a la primera.
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs) | CI de GitLab, tags, despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`) | VS Code |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
-| Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM) | Slack y Discord, resumen de la semana |
+| Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM), avisos a Slack y Discord (escritorio) | resumen de la semana |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas | comparar ramas, búsqueda |
 | Público | devs y equipos, 40 idiomas, teclado | quien enseña o aprende git, quien usa lector de pantalla |
 
@@ -196,10 +196,10 @@ se comprueban antes de construir sobre ellas.
 14. ~~**Choques entre ramas**~~ hecho en #64 · Análisis. En el panel de salud, «Buscar choques» compara con la rama
     por defecto cada rama con PR abierto (hasta 20, una consulta por rama, solo al pedirlo) y lista los archivos
     que tocan varias a la vez; cada fila lleva a una de las ramas. Cálculo puro en `js/health.js`.
-15. **Avisos a Slack y Discord** · Salidas · 2×2/2. En la app de escritorio (las URL de webhook no aceptan
-    llamadas desde una página): elegir qué eventos se envían (release, merge a la rama por defecto, CI
-    en rojo, force-push en la rama por defecto) y a qué webhook, guardado cifrado como el token.
-    Comprobar: una e2e de escritorio con un servidor local que hace de webhook.
+15. ~~**Avisos a Slack y Discord**~~ hecho en #65 · Salidas. En la app de escritorio, Ajustes guarda una URL de
+    webhook por servicio (cifrada como un token) y los eventos que recibe cada una: release, merge a la rama por
+    defecto, CI en rojo y force-push en ella. Envío desde el proceso principal (`electron/webhooks.js`), decisión
+    en `js/hooks.js`; botón «Enviar prueba».
 16. **Aprender git** · Público · 3×3/3. Un repo de práctica donde se escriben comandos (`commit`, `branch`,
     `checkout`, `merge`, `rebase`, `reset`) y el grafo 2D o 3D responde al instante, con ejercicios
     guiados ("crea una rama, haz dos commits y fusiónala"). Reutiliza la maquinaria de `DemoSource`.
@@ -1275,3 +1275,25 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 148 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 23 e2e en verde.
 - **Siguiente:** iteración 38, expansión: ítem 15 (Avisos a Slack y Discord, Salidas)
+
+### 2026-10-13 · Iteración 38 · Expansión · Salidas
+
+- **Capacidad nueva: avisos a Slack y Discord** (ítem 15 de la hoja de ruta). En la app de escritorio, Ajustes
+  suma por servicio una URL de webhook (guardada cifrada, en su archivo, como un token), los cuatro eventos que
+  recibe (release, merge a la rama por defecto, CI en rojo, force-push en la por defecto) y «Enviar prueba».
+  `js/hooks.js` decide qué actividad en vivo va a qué webhook (un PR fusionado cuenta una vez; como mucho 5
+  avisos por lote); `electron/webhooks.js` valida que la URL sea del servicio, arma el cuerpo (sin menciones ni
+  enlaces ajenos) y lo envía desde el proceso principal, sin seguir redirecciones. La CSP no cambia.
+  Queda fuera: cola y reintentos, y avisar de un squash sin PR como merge.
+- **Pruebas que fallan sin la capacidad:** `tools/webhooks.test.mjs` (6 pruebas: URL aceptadas y rechazadas,
+  cuerpo escapado, envío contra un servidor local sin redirecciones, evento por actividad y enrutado) y la e2e
+  de escritorio «los avisos a Slack y Discord» (URL cifrada, prueba que llega al webhook local, URL ajena que
+  no sale, eventos que se recuerdan), además del puente `GBDesktop.webhook` en la primera e2e.
+- README: la función en la lista, Pruebas, Estructura, Límites conocidos y Seguridad.
+- QA: filas tocadas: 40 idiomas (7 textos nuevos, `check-i18n`); app de escritorio (e2e); web (la sección de
+  Ajustes queda oculta sin `GBDesktop`, la ejerce el smoke); token fuera de `localStorage` y de errores.
+  Sin mirar a mano: solo teclado, árabe y tamil, 320 px del diálogo con las filas nuevas; auditoría: 0 hallazgos nuevos.
+- Reclamo: loop/38, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 154 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde.
+- **Siguiente:** iteración 39, mantenimiento · Deuda: pendiente 1 (Smoke: el paso de contraste de las pestañas (varios repos) mide 500 ms fijos de…)

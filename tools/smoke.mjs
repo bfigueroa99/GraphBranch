@@ -1526,6 +1526,29 @@ for (const colorScheme of ['light', 'dark']) {
   await page.context().close();
 }
 
+console.log('Widget embebido (?embed=1)');
+{
+  const page = await openPage({ viewport: { width: 640, height: 400 } });
+  await step(page, 'solo el grafo y los avisos, sin barras ni desborde', async () => {
+    await page.goto(`${base}/index.html?lang=es&embed=1&bg=transparent`);
+    await loaded(page);
+    await page.waitForSelector('#graph3d canvas, #graph canvas', { timeout: 30000 });
+    for (const sel of ['.topbar', '.stats', '.feed-panel', '.toolbar', '.hint']) {
+      if (await page.locator(sel).first().isVisible()) throw new Error(`${sel} se ve en modo embed`);
+    }
+    const r = await page.evaluate(() => {
+      const b = document.querySelector('.graph-stage').getBoundingClientRect();
+      const de = document.documentElement;
+      return { w: b.width, h: b.height, sw: de.scrollWidth, sh: de.scrollHeight, bg: getComputedStyle(document.body).backgroundColor };
+    });
+    if (r.sw > 640 || r.sh > 400) throw new Error(`desborda: ${r.sw}×${r.sh} en 640×400`);
+    if (r.w < 600 || r.h < 360) throw new Error(`el grafo no llena el marco: ${r.w}×${r.h}`);
+    if (r.bg !== 'rgba(0, 0, 0, 0)') throw new Error(`&bg=transparent deja el fondo ${r.bg}`);
+    if (await page.evaluate(() => document.documentElement.classList.contains('tv'))) throw new Error('embed entró en modo TV');
+  });
+  await page.context().close();
+}
+
 console.log('Modo TV directo (?tv=1)');
 {
   const page = await openPage({ viewport: { width: 1920, height: 1080 } });

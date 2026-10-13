@@ -105,6 +105,7 @@
      cifrados con el llavero del sistema (electron/preload.js expone GBDesktop) y se leen antes de
      conectar, ver el arranque. Cada uno va solo a la fuente de su servicio (sourceFor). */
   const desktop = window.GBDesktop;
+  const EMBED = document.documentElement.classList.contains('embed'); // ?embed=1, ver i18n.js
   const settings = {
     token: desktop ? '' : U.store.get('token', ''),
     gitlabToken: desktop ? '' : U.store.get('gitlabToken', ''),
@@ -491,6 +492,7 @@
 
   /** Recuerda qué repos se siguen y cuál está a la vista; la URL los lleva también, para compartirla. */
   function saveTabs() {
+    if (EMBED) return; // un iframe ajeno no pisa los repos que la persona sigue en la app
     const names = realTabs().map(savedName);
     const shown = active && !active.demo ? savedName(active) : null;
     U.store.set('repos', names.length ? names : null);
@@ -1595,7 +1597,7 @@
     const q = new URLSearchParams(location.search);
     // ?repo=a/b&repo=c/d (o separados por comas): los repos a seguir, el primero a la vista
     urlRepos = q.getAll('repo').flatMap((r) => r.split(',')).map((r) => r.trim()).filter(Boolean);
-    initialTV = q.has('tv') && !/^(0|false|no|off)$/i.test(q.get('tv'));
+    initialTV = !EMBED && q.has('tv') && !/^(0|false|no|off)$/i.test(q.get('tv'));
   } catch {
     /* sin query string */
   }
@@ -1604,7 +1606,7 @@
   function start() {
     const saved = U.store.get('repos', null);
     const shown = U.store.get('repo', null);
-    const list = Array.isArray(saved) ? saved : typeof shown === 'string' ? [shown] : []; // antes se seguía uno solo
+    const list = EMBED ? [] : Array.isArray(saved) ? saved : typeof shown === 'string' ? [shown] : []; // antes se seguía uno solo
     const parse = (input) => (typeof input === 'string' && U.parseRepo(input)) || null;
     const repos = new Map(); // clave -> repo: los guardados y después los de la URL, sin repetir
     for (const p of [...list, ...urlRepos].map(parse)) if (p && !repos.has(keyOf(p))) repos.set(keyOf(p), p);

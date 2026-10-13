@@ -13,6 +13,18 @@ window.GB = window.GB || {};
 (function (GB) {
   'use strict';
 
+  /* ?embed=1: la página dentro de un iframe, solo el grafo y los avisos (&bg=transparent: sin fondo).
+     Se marca aquí, antes de pintar nada, para que la interfaz completa no parpadee. */
+  try {
+    const q = new URLSearchParams(location.search);
+    if (q.has('embed') && !/^(0|false|no|off)$/i.test(q.get('embed'))) {
+      document.documentElement.classList.add('embed');
+      if (/^transparent$/i.test(q.get('bg') || '')) document.documentElement.classList.add('embed-clear');
+    }
+  } catch {
+    /* sin query string */
+  }
+
   /** Idiomas con traducción. `name` es el nombre en el propio idioma (autónimo). */
   const LOCALES = [
     { code: 'en', name: 'English' },

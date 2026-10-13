@@ -307,6 +307,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     existe» (`waitForSelector` de 5 s). Corrido aparte `node tools/smoke.mjs` y repetido el `check`, pasó
     sin cambios (3 fallas en 2 corridas completas). Medir con 5 corridas seguidas bajo carga y cambiar los
     topes fijos por esperas a un estado.
+    También (iteración 40, una corrida de `npm run check`; la repetición pasó): el paso «con ?repo=@ana en la URL se
+    siguen los repos de ese usuario» guardó `["ana/notas","acme/nuevo",…]` con el orden cambiado; mismo remedio.
 
 ### Baja
 
@@ -1324,8 +1326,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
   (los tres archivos nuevos en `FILES` de `sw.js`, `tools/pwa.test.mjs`); 40 idiomas (16 textos, `check-i18n`);
   teclado (la terminal recibe el foco al abrirse, Enter ejecuta, flechas recorren el historial); consola y CSP
   (sin cambios, ningún servidor nuevo). Sin mirar a mano: árabe y tamil de la terminal, 320 px, solo teclado en
-  el selector de ejercicios, 3D (el grafo es el mismo); auditoría: ver Validado.
+  el selector de ejercicios, 3D (el grafo es el mismo); auditoría: 0 hallazgos nuevos.
 - Reclamo: loop/40, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
-- Validado: pendiente
+- Validado: 165 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde (a la segunda corrida: la primera falló en el paso de `?repo=@ana`, ajeno al cambio, anotado en el pendiente 3).
 - **Siguiente:** iteración 41, expansión: ítem 17 (Tags y despliegues, Datos)

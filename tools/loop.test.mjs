@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-/* Pruebas de tools/loop.mjs: la elección de la iteración (--siguiente), las reglas de --check (R1 a
-   R9), el reclamo de la rama (--reclamar, contra un repositorio bare local) y --publicado (con un
-   fetch simulado). Ninguna corre node --test, npm run check, el smoke ni Playwright.
+/* Pruebas de tools/loop.mjs: la elección de la iteración (--siguiente, con la rotación de los subtipos
+   de mantenimiento), las reglas de --check (R1 a R12), el reclamo de la rama (--reclamar, contra un
+   repositorio bare local), la salud del loop (--salud) y --publicado (con un fetch simulado). Ninguna
+   corre node --test, npm run check, el smoke ni Playwright.
 
      node --test                  todas las pruebas (archivos *.test.mjs)
      node tools/loop.test.mjs     solo estas */
@@ -12,7 +13,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { EJES, FLAGS, LoopError, check, parse, publicado, reclamar as reclamarEnProceso, siguiente } from './loop.mjs';
+import { AUDITABLES, EJES, FLAGS, HOJA_SIN_FUENTE, LoopError, MARCA_PROTOCOLO, PARA_BENJAMIN_MAX, SUBTIPOS, check, diagnostico, necesidades, parse, parseInvestigacion, publicado, reclamar as reclamarEnProceso, siguiente } from './loop.mjs';
+import { TIPOS } from './audit.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const loop = join(root, 'tools', 'loop.mjs');
@@ -26,10 +28,12 @@ const EXPANSIONES = ['Plataformas', 'Salidas', 'Fuentes', 'Salidas', 'Fuentes', 
 const LOG = [45, 46, 47, 48, 49, 50, 51, 52].map((k) => `un cambio (#${k})`);
 const SIGUIENTE_28 = 'iteración 28, expansión: ítem 6 (GitLab, tercera entrega, Fuentes)';
 
-/** Una entrada de la bitácora. `titulo` reemplaza la cabecera de iteración (entradas que no lo son). */
-function entrada({ n, tipo, eje, titulo, validado = true, siguiente, cuerpo = '' }) {
-  const cab = titulo ?? (n < 20 ? `Iteración ${n}` : tipo === 'Mantenimiento' ? `Iteración ${n} · Mantenimiento` : `Iteración ${n} · Expansión · ${eje}`);
+/** Una entrada de la bitácora. `titulo` reemplaza la cabecera de iteración (entradas que no lo son);
+    `subtipo` va tras «Mantenimiento»; `qa` agrega la viñeta «- QA:». */
+function entrada({ n, tipo, eje, subtipo, titulo, validado = true, qa = true, siguiente, cuerpo = '' }) {
+  const cab = titulo ?? (n < 20 ? `Iteración ${n}` : tipo === 'Mantenimiento' ? `Iteración ${n} · Mantenimiento${subtipo ? ` · ${subtipo}` : ''}` : `Iteración ${n} · Expansión · ${eje}`);
   const lineas = [`### 2026-10-12 · ${cab}`, '', `- **Trabajo:** lo que se hizo.${cuerpo}`];
+  if (qa) lineas.push('- QA: 2D y 3D en la demo; auditoría: 0 hallazgos nuevos.');
   if (validado) lineas.push('- Validado: 37 pruebas (`node --test`), smoke, i18n y 17 e2e en verde.');
   if (siguiente) lineas.push(`- **Siguiente:** ${siguiente}`, '  con una segunda línea.');
   return lineas.join('\n');
@@ -48,15 +52,28 @@ function iteraciones(n, { validado = true, siguiente = SIGUIENTE_28 } = {}) {
   return out;
 }
 
-/** Un IMPROVEMENTS.md mínimo y válido. `items` es un número o la lista de ejes de la hoja de ruta. */
-function fixture({ iteraciones: n = 27, items = 24, hechos = HECHOS, pendientes = 13, alta = null, siguiente = SIGUIENTE_28, validado = true, mapa = EJES, entradas } = {}) {
+/** Los pendientes de Mantenimiento por defecto: todos Baja de Errores; el primero cita cada tipo de la
+    auditoría (R11 con la base real, en las pruebas del CLI). */
+const mantPorDefecto = (k) => Array.from({ length: k }, (_, i) => ({ prioridad: 'Baja', subtipo: 'Errores', texto: `Pendiente ${i + 1} de mantenimiento (\`app.js:1\`)${i ? '' : `, ${Object.keys(TIPOS).map((t) => `audit:${t}`).join(' ')}`}` }));
+
+/** Un IMPROVEMENTS.md mínimo y válido. `items` es un número o la lista de ejes de la hoja de ruta;
+    `mant` reemplaza los pendientes ({prioridad, subtipo, texto}); `benjamin`, los pedidos de Para Benjamin. */
+function fixture({ iteraciones: n = 27, items = 24, hechos = HECHOS, pendientes = 13, mant, alta = null, siguiente = SIGUIENTE_28, validado = true, mapa = EJES, entradas, puntaje = true, benjamin = ['**Activar Pages** (desde 2026-10-12). Settings → Pages.'] } = {}) {
   const ejes = Array.isArray(items) ? items : Array.from({ length: items }, (_, i) => EJES_HOJA[i % EJES_HOJA.length]);
   const hoja = ejes.map((eje, i) => {
     const k = i + 1;
-    return hechos[k] ? `${k}. ~~**Ítem ${k}**~~ hecho en #${hechos[k]} · ${eje}. Detalle.` : `${k}. **Ítem ${k}** · ${eje}. Detalle del ítem\n   en dos líneas.`;
+    return hechos[k] ? `${k}. ~~**Ítem ${k}**~~ hecho en #${hechos[k]} · ${eje}. Detalle.` : `${k}. **Ítem ${k}** · ${eje}${puntaje ? ' · 2×2/2' : ''}. Detalle del ítem\n   en dos líneas.`;
   });
-  const base = alta ? 1 : 0;
-  const mant = Array.from({ length: pendientes }, (_, i) => `${i + 1 + base}. Pendiente ${i + 1} de mantenimiento (\`app.js:1\`),\n    que sigue en otra línea.`);
+  const lista = [...(alta ? [{ prioridad: 'Alta', subtipo: 'Errores', texto: alta }] : []), ...(mant ?? mantPorDefecto(pendientes))];
+  const mantenimiento = [];
+  let k = 0;
+  for (const pr of ['Alta', 'Media', 'Baja']) {
+    const de = lista.filter((p) => p.prioridad === pr);
+    if (!de.length) continue;
+    mantenimiento.push(`### ${pr}`, '');
+    for (const p of de) mantenimiento.push(`${++k}. ${p.subtipo ? `[${p.subtipo}] ` : ''}${p.texto},\n    que sigue en otra línea.`);
+    mantenimiento.push('');
+  }
   const bit = entradas ?? iteraciones(n, { validado, siguiente });
   return [
     '# Mejora continua',
@@ -65,6 +82,7 @@ function fixture({ iteraciones: n = 27, items = 24, hechos = HECHOS, pendientes 
     '',
     'Texto de la directiva.',
     '',
+    ...(benjamin ? ['## Para Benjamin', '', ...benjamin.map((b, i) => `${i + 1}. ${b}`), ''] : []),
     '## Mapa de alcance',
     '',
     '| Eje | Hoy | Siguiente |',
@@ -85,11 +103,7 @@ function fixture({ iteraciones: n = 27, items = 24, hechos = HECHOS, pendientes 
     '',
     'Los toman las iteraciones de mantenimiento.',
     '',
-    ...(alta ? ['### Alta', '', `1. ${alta}`, ''] : []),
-    '### Baja',
-    '',
-    ...mant,
-    '',
+    ...mantenimiento,
     '- Ideas menores de la auditoría: nada.',
     '',
     '## Bitácora',
@@ -125,14 +139,81 @@ describe('siguiente()', () => {
     assert.deepEqual([s.pendientes, s.hechos, s.mantenimiento], [18, 6, 13]);
   });
 
-  test('N mod 4 = 3 es de mantenimiento y toma el primer pendiente', () => {
-    const s = siguiente(fixture({ iteraciones: 30 }));
+  test('N mod 4 = 3 es de mantenimiento: gana el subtipo más necesitado y toma su primer pendiente Media', () => {
+    const mant = [
+      { prioridad: 'Media', subtipo: 'Deuda', texto: 'Smoke intermitente' },
+      { prioridad: 'Media', subtipo: 'Deuda', texto: 'Otro intermitente' },
+      { prioridad: 'Baja', subtipo: 'Errores', texto: 'Un fallo menor' },
+      { prioridad: 'Baja', subtipo: 'Deuda', texto: 'Una herramienta' },
+    ];
+    const s = siguiente(fixture({ iteraciones: 30, mant }));
     assert.equal(s.n, 31);
     assert.equal(s.tipo, 'Mantenimiento');
     assert.equal(s.eje, null);
+    assert.equal(s.subtipo, 'Deuda');
     assert.equal(s.item, 1);
-    assert.equal(s.motivo, '31 mod 4 = 3');
-    assert.match(s.titulo, /^Pendiente 1 de mantenimiento \(`app.js:1`\), que sigue/);
+    assert.equal(s.prioridad, 'Media');
+    // Deuda: 2 × 1 de espera + 3 × 2 Media + 1 Baja = 9; QA: 2 + 6 expansiones sin auditar = 8
+    assert.match(s.motivo, /^31 mod 4 = 3; necesidad: Deuda 9 \(espera 1, 2 Media, 1 Baja\) > QA 8 \(espera 1, 0 Media, 0 Baja, 6 expansiones sin auditar\) > /);
+    assert.match(s.titulo, /^Smoke intermitente, que sigue/);
+    assert.equal(s.siguiente, 'iteración 31, mantenimiento · Deuda: pendiente 1 (Smoke intermitente, que sigue en otra línea.)');
+  });
+
+  test('un subtipo auditable sin pendientes audita su área: el ítem es «auditoría»', () => {
+    // solo pendientes Baja de Errores: QA (2 + 6 expansiones) le gana a Errores (2 + 3)
+    const s = siguiente(fixture({ iteraciones: 30 }));
+    assert.equal(s.subtipo, 'QA');
+    assert.equal(s.item, 'auditoría');
+    assert.equal(s.titulo, 'auditoría de QA (sin pendientes de QA)');
+    assert.equal(s.siguiente, 'iteración 31, mantenimiento · QA: auditoría (sin pendientes de QA)');
+  });
+
+  test('el subtipo que acaba de tener turno espera: la rotación pasa a otro', () => {
+    const mant = [{ prioridad: 'Baja', subtipo: 'Deuda', texto: 'Una herramienta' }, { prioridad: 'Baja', subtipo: 'Errores', texto: 'Un fallo' }];
+    const lista = iteraciones(30);
+    // la 31 fue de QA y la 35 de Deuda: QA ya no tiene espera ni expansiones sin auditar de más
+    const extra = [
+      entrada({ n: 31, tipo: 'Mantenimiento', subtipo: 'QA', cuerpo: '\n- **Hallazgos:** 3 nuevos.' }),
+      ...[32, 33, 34].map((k) => entrada({ n: k, tipo: 'Expansión', eje: 'Datos' })),
+      entrada({ n: 35, tipo: 'Mantenimiento', subtipo: 'Deuda', cuerpo: '\n- **Reproducción:** algo.' }),
+      ...[36, 37, 38].map((k) => entrada({ n: k, tipo: 'Expansión', eje: k % 2 ? 'Fuentes' : 'Datos', siguiente: k === 38 ? 'iteración 39, mantenimiento · Errores: pendiente 2 (Un fallo)' : undefined })),
+    ];
+    const doc = parse(fixture({ mant, entradas: [...lista, ...extra] }));
+    const n = necesidades(doc);
+    const de = (st) => n.find((x) => x.subtipo === st);
+    // QA: una de espera y las 6 expansiones desde la 31 (32 a 34 y 36 a 38)
+    assert.deepEqual([de('QA').espera, de('QA').codigo, de('QA').valor], [1, 6, 8]);
+    // Deuda acaba de tener turno: sin espera, solo su pendiente Baja
+    assert.deepEqual([de('Deuda').espera, de('Deuda').valor], [0, 1]);
+    // Errores nunca tuvo turno: espera = los mantenimientos con subtipo más uno
+    assert.deepEqual([de('Errores').espera, de('Errores').valor], [3, 7]);
+    const s = siguiente(fixture({ mant, entradas: [...lista, ...extra] }));
+    assert.equal(s.n, 39);
+    assert.equal(s.subtipo, 'QA');
+    assert.equal(s.item, 'auditoría');
+    // con un pendiente Media, Errores pasa adelante (3 + 2 × 3 + 1 = 10)
+    const conMedia = siguiente(fixture({ mant: [{ prioridad: 'Media', subtipo: 'Errores', texto: 'Se rompe' }, ...mant], entradas: [...lista, ...extra] }));
+    assert.deepEqual([conMedia.subtipo, conMedia.item], ['Errores', 1]);
+  });
+
+  test('en 24 mantenimientos sin pendientes nuevos, cada subtipo auditable tiene turno', () => {
+    // simulación: tres expansiones por cada mantenimiento, sin pendientes; se cuenta quién gana
+    let entradas = iteraciones(30);
+    const turnos = {};
+    for (let k = 0; k < 24; k++) {
+      const s = siguiente(fixture({ entradas, mant: [] }));
+      turnos[s.subtipo] = (turnos[s.subtipo] ?? 0) + 1;
+      const n = s.n;
+      entradas = [...entradas, entrada({ n, tipo: 'Mantenimiento', subtipo: s.subtipo }), ...[1, 2, 3].map((d) => entrada({ n: n + d, tipo: 'Expansión', eje: 'Datos' }))];
+    }
+    for (const st of AUDITABLES) assert.ok(turnos[st] >= 3, `${st}: ${JSON.stringify(turnos)}`);
+    assert.ok(turnos.QA >= turnos.Seguridad, JSON.stringify(turnos));
+  });
+
+  test('Errores y Deuda sin pendientes no compiten; los auditables sí', () => {
+    const n = necesidades(parse(fixture({ iteraciones: 30, mant: [{ prioridad: 'Baja', subtipo: 'Seguridad', texto: 'x' }] })));
+    assert.deepEqual(n.map((x) => x.subtipo).sort(), [...AUDITABLES].sort());
+    assert.ok(SUBTIPOS.every((st) => n.some((x) => x.subtipo === st) || !AUDITABLES.includes(st)));
   });
 
   test('si el primero repite el eje de la expansión anterior y hay otro entre los tres primeros, toma ese', () => {
@@ -155,9 +236,11 @@ describe('siguiente()', () => {
     const s = siguiente(fixture({ alta: '**Alta**: la app arranca en blanco con un localStorage corrupto.' }));
     assert.equal(s.n, 28);
     assert.equal(s.tipo, 'Mantenimiento');
+    assert.equal(s.subtipo, 'Errores');
     assert.equal(s.item, 1);
     assert.equal(s.motivo, 'pendiente Alta: va antes que todo');
     assert.match(s.titulo, /^\*\*Alta\*\*/);
+    assert.match(s.siguiente, /^iteración 28, mantenimiento · Errores: pendiente 1 \(\*\*Alta\*\*/);
   });
 
   test('sin ítems pendientes en la hoja de ruta, código 2', () => {
@@ -166,10 +249,10 @@ describe('siguiente()', () => {
     assert.match(err.message, /reponer la hoja de ruta/);
   });
 
-  test('mantenimiento sin pendientes, código 2', () => {
-    const err = falla(() => siguiente(fixture({ iteraciones: 30, pendientes: 0 })));
-    assert.equal(err.codigo, 2);
-    assert.match(err.message, /Mantenimiento sin pendientes/);
+  test('mantenimiento sin ningún pendiente: igual hay iteración (una auditoría), y R7 lo marca', () => {
+    const s = siguiente(fixture({ iteraciones: 30, pendientes: 0 }));
+    assert.equal(s.item, 'auditoría');
+    assert.equal(nivel(check(fixture({ iteraciones: 30, pendientes: 0 }), { log: LOG }), 'R7'), 'ERROR');
   });
 
   test('sin ninguna iteración en la bitácora, código 1', () => {
@@ -228,7 +311,7 @@ describe('check()', () => {
   });
 
   test('R2: un ítem de la hoja que no cumple el patrón o salta la numeración es un error', () => {
-    const r = check(fixture().replace('6. **Ítem 6** · Fuentes.', '6. **Ítem 6** · Marte.'), { log: LOG });
+    const r = check(fixture().replace('6. **Ítem 6** · Fuentes · 2×2/2.', '6. **Ítem 6** · Marte · 2×2/2.'), { log: LOG });
     assert.equal(nivel(r, 'R2'), 'ERROR');
     assert.match(texto(r, 'R2'), /línea \d+/);
     const salto = check(fixture().replace('8. **Ítem 8**', '9. **Ítem 8**'), { log: LOG });
@@ -292,7 +375,8 @@ describe('check()', () => {
   });
 
   test('R6: el ítem declarado es el primero que sigue al tipo, aunque el título cite otro número', () => {
-    const m = check(fixture({ iteraciones: 30, siguiente: 'iteración 31, de **mantenimiento**: pendiente 1 (Pendiente 1 de mantenimiento, primer caso: el fallo del smoke (pendiente 15))' }), { log: LOG });
+    const mant = [...['Smoke intermitente', 'Otro', 'Y otro'].map((texto) => ({ prioridad: 'Media', subtipo: 'Deuda', texto })), ...mantPorDefecto(3)];
+    const m = check(fixture({ iteraciones: 30, mant, siguiente: 'iteración 31, mantenimiento · Deuda: pendiente 1 (Smoke intermitente, primer caso: el fallo del smoke (pendiente 15))' }), { log: LOG });
     assert.equal(nivel(m, 'R6'), 'ok', m.salida);
     const e = ok({ siguiente: 'iteración 28, expansión: ítem 6 (GitLab, tercera entrega, la que sigue al ítem 5, Fuentes)' });
     assert.equal(nivel(e, 'R6'), 'ok', e.salida);
@@ -303,8 +387,51 @@ describe('check()', () => {
     assert.equal(nivel(vacio, 'R7'), 'ERROR');
     assert.match(texto(vacio, 'R7'), /auditar y cargar pendientes/);
     assert.equal(nivel(ok({ pendientes: 2 }), 'R7'), 'aviso');
-    const salto = check(fixture().replace('4. Pendiente 4', '5. Pendiente 4'), { log: LOG });
+    const salto = check(fixture().replace('4. [Errores] Pendiente 4', '5. [Errores] Pendiente 4'), { log: LOG });
     assert.equal(nivel(salto, 'R7'), 'ERROR');
+  });
+
+  test('R6: en un mantenimiento, el subtipo y la auditoría del Siguiente se comparan con --siguiente', () => {
+    const bien = ok({ iteraciones: 30, siguiente: 'iteración 31, mantenimiento · QA: auditoría (sin pendientes de QA)' });
+    assert.equal(nivel(bien, 'R6'), 'ok', bien.salida);
+    assert.match(texto(bien, 'R6'), /iteración 31, mantenimiento · QA: auditoría/);
+    const otro = ok({ iteraciones: 30, siguiente: 'iteración 31, mantenimiento · Errores: auditoría (sin pendientes)' });
+    assert.equal(nivel(otro, 'R6'), 'ERROR');
+    assert.match(texto(otro, 'R6'), /declara el subtipo Errores y --siguiente da QA/);
+    const pend = ok({ iteraciones: 30, siguiente: 'iteración 31, mantenimiento · QA: pendiente 1 (algo)' });
+    assert.match(texto(pend, 'R6'), /pendiente 1 y --siguiente da mantenimiento con auditoría/);
+  });
+
+  test('R7: subsecciones solo Alta, Media y Baja, en orden, y cada pendiente con un subtipo conocido', () => {
+    const base = fixture({ mant: [{ prioridad: 'Media', subtipo: 'Deuda', texto: 'uno' }, ...mantPorDefecto(3)] });
+    assert.equal(nivel(check(base, { log: LOG }), 'R7'), 'ok');
+    const sin = check(base.replace('2. [Errores] ', '2. '), { log: LOG });
+    assert.match(texto(sin, 'R7'), /pendiente 2 \(línea \d+\) sin subtipo/);
+    const raro = check(base.replace('2. [Errores] ', '2. [Bichos] '), { log: LOG });
+    assert.match(texto(raro, 'R7'), /el subtipo «Bichos» no es/);
+    const sub = check(base.replace('### Media', '### Urgente'), { log: LOG });
+    assert.match(texto(sub, 'R7'), /«### Urgente» .* no es Alta, Media, Baja/);
+    const orden = check(base.replace('### Media', '### Tmp').replace('### Baja', '### Media').replace('### Tmp', '### Baja'), { log: LOG });
+    assert.match(texto(orden, 'R7'), /en orden Alta, Media, Baja/);
+  });
+
+  test('R5: las iteraciones después de la marca del protocolo llevan «- QA:» y, si son de mantenimiento, subtipo y Reproducción o Hallazgos', () => {
+    const lista = iteraciones(30);
+    const marca = entrada({ titulo: `${MARCA_PROTOCOLO}, rotación y salud`, siguiente: 'iteración 31, mantenimiento · QA: auditoría' });
+    const con = (...e) => check(fixture({ entradas: [...lista, marca, ...e] }), { log: LOG });
+    const bien = con(entrada({ n: 31, tipo: 'Mantenimiento', subtipo: 'QA', cuerpo: '\n- **Hallazgos:** 3 nuevos.', siguiente: 'iteración 32, expansión: ítem 6 (algo, Fuentes)' }));
+    assert.equal(nivel(bien, 'R5'), 'ok', bien.salida);
+    assert.match(texto(bien, 'R5'), /1 con el protocolo de QA/);
+    const sinQA = con(entrada({ n: 31, tipo: 'Mantenimiento', subtipo: 'QA', qa: false, cuerpo: '\n- **Hallazgos:** 3.' }));
+    assert.match(texto(sinQA, 'R5'), /iteración 31 sin la viñeta «- QA:»/);
+    const sinSub = con(entrada({ n: 31, tipo: 'Mantenimiento', cuerpo: '\n- **Reproducción:** x.' }));
+    assert.match(texto(sinSub, 'R5'), /iteración 31: la cabecera de un mantenimiento lleva su subtipo/);
+    const qaSinHallazgos = con(entrada({ n: 31, tipo: 'Mantenimiento', subtipo: 'QA', cuerpo: '\n- **Reproducción:** x.' }));
+    assert.match(texto(qaSinHallazgos, 'R5'), /iteración 31 \(QA\) sin la viñeta «- \*\*Hallazgos:\*\*»/);
+    const sinRepro = con(entrada({ n: 31, tipo: 'Mantenimiento', subtipo: 'Errores' }));
+    assert.match(texto(sinRepro, 'R5'), /iteración 31 sin «- \*\*Reproducción:\*\*»/);
+    // antes de la marca, nada de eso se exige
+    assert.equal(nivel(check(fixture({ entradas: iteraciones(30).map((e) => e.replace(/\n- QA: [^\n]*/, '')) }), { log: LOG }), 'R5'), 'ok');
   });
 
   test('«Fusión de #15 antes de abrir el PR» y «Cambio de objetivo» no cuentan como iteración', () => {
@@ -351,6 +478,13 @@ description: Una iteración del loop.
 
 # Iteración
 
+#### Errores
+#### QA
+#### Accesibilidad
+#### Seguridad
+#### Rendimiento
+#### Deuda
+
 Primero \`node tools/loop.mjs --check\`; después reclamar:
 
 \`\`\`sh
@@ -385,6 +519,12 @@ node tools/loop.mjs --reclamar --sin-red && npm run check -- --e2e
     const r = r8({ skill: SKILL.replace('git fetch origin master', 'git fetch origin master && git rebase origin/master') });
     assert.equal(nivel(r, 'R8'), 'ERROR');
     assert.match(texto(r, 'R8'), /«git rebase».*Bash\(git rebase:\*\)/);
+  });
+
+  test('un subtipo de mantenimiento sin su protocolo en la skill es un error', () => {
+    const r = r8({ skill: SKILL.replace('#### Seguridad\n', '') });
+    assert.equal(nivel(r, 'R8'), 'ERROR');
+    assert.match(texto(r, 'R8'), /sin el protocolo del subtipo Seguridad/);
   });
 
   test('sin frontmatter con name y description es un error', () => {
@@ -425,6 +565,163 @@ node tools/loop.mjs --reclamar --sin-red && npm run check -- --e2e
   });
 });
 
+/* ------------------------------------------- check: R10 a R12 (hoja, investigación, base, Benjamin) */
+
+describe('check() R10 a R12', () => {
+  const INV = ['# Investigación', '', '## Reglas', '', 'Texto.', '', '## Fuentes', '', '### 2026-10-13 · Gource', '', '- **Qué es:** animación.', '- **Fuente:** https://gource.io/ (consultada el 2026-10-13)', '- **Implica:** el Replay.', ''].join('\n');
+  const BASE = JSON.stringify({ hallazgos: ['objetivo-chico|celular-es|#branch-filter'] });
+  const HOY = new Date('2026-10-20T12:00:00Z');
+  const c = (doc, extra = {}) => check(doc, { log: LOG, investigacion: INV, auditBase: BASE, hoy: HOY, ...extra });
+
+  test('el fixture pasa R10, R11 y R12', () => {
+    const r = c(fixture());
+    for (const regla of ['R10', 'R11', 'R12']) assert.equal(nivel(r, regla), 'ok', r.salida);
+    assert.match(texto(r, 'R10'), /investigación del 2026-10-13 \(1 fuentes\)/);
+  });
+
+  test('parseInvestigacion lee fecha, nombre, URL e Implica de cada fuente', () => {
+    assert.deepEqual(parseInvestigacion(INV).map(({ fecha, nombre, url, implica }) => [fecha, nombre, url, implica]), [['2026-10-13', 'Gource', true, true]]);
+    // fuera de «## Fuentes» no cuenta
+    assert.equal(parseInvestigacion(INV.replace('## Fuentes', '## Otra')).length, 0);
+  });
+
+  test('R10: sin docs/investigacion.md, una fuente sin URL o sin Implica, o sin fuentes, es un error', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'loop-'));
+    const sin = check(fixture(), { log: LOG, auditBase: BASE, hoy: HOY, dir });
+    rmSync(dir, { recursive: true, force: true });
+    assert.match(texto(sin, 'R10'), /falta docs\/investigacion\.md/);
+    assert.match(texto(c(fixture(), { investigacion: INV.replace(/https:\/\/\S+/, 'gource.io') }), 'R10'), /«Gource» \(línea \d+\) sin su URL/);
+    assert.match(texto(c(fixture(), { investigacion: INV.replace('**Implica:**', 'Implica') }), 'R10'), /«Gource» \(línea \d+\) sin «\*\*Implica:\*\*»/);
+    assert.match(texto(c(fixture(), { investigacion: '# Nada\n' }), 'R10'), /sin entradas/);
+  });
+
+  test('R10: con más de 30 días, la investigación vencida es un aviso', () => {
+    const r = c(fixture(), { hoy: new Date('2026-11-20T00:00:00Z') });
+    assert.equal(nivel(r, 'R10'), 'aviso');
+    assert.match(texto(r, 'R10'), /tiene 38 días \(más de 30\): la próxima reposición de la hoja de ruta empieza por investigar/);
+  });
+
+  test('R10: un ítem pendiente sin puntaje es un error; uno hecho no lo necesita', () => {
+    const r = c(fixture({ puntaje: false }));
+    assert.equal(nivel(r, 'R10'), 'ERROR');
+    assert.match(texto(r, 'R10'), /ítem 6 sin puntaje «· a×i\/e\.»/);
+    assert.doesNotMatch(texto(r, 'R10'), /ítem 1 sin puntaje/);
+  });
+
+  test(`R10: un ítem después del ${HOJA_SIN_FUENTE} cita la investigación o el ítem del que es parte`, () => {
+    const items = [...EJES_HOJA, 'Datos', 'Datos', 'Datos'].slice(0, HOJA_SIN_FUENTE + 1);
+    const nuevo = `${HOJA_SIN_FUENTE + 1}. **Ítem ${HOJA_SIN_FUENTE + 1}** · ${items[HOJA_SIN_FUENTE]} · 2×2/2. Detalle del ítem`;
+    const doc = fixture({ items });
+    const sin = c(doc);
+    assert.match(texto(sin, 'R10'), new RegExp(`ítem ${HOJA_SIN_FUENTE + 1} sin «\\[inv\\. AAAA-MM-DD\\]»`));
+    assert.equal(nivel(c(doc.replace(nuevo, `${nuevo} [inv. 2026-10-13]`)), 'R10'), 'ok');
+    assert.match(texto(c(doc.replace(nuevo, `${nuevo} [inv. 2026-09-01]`)), 'R10'), /cita \[inv\. 2026-09-01\] y docs\/investigacion\.md no tiene fuentes de esa fecha/);
+    assert.equal(nivel(c(doc.replace(nuevo, `${nuevo} [parte del ítem 6]`)), 'R10'), 'ok');
+    assert.match(texto(c(doc.replace(nuevo, `${nuevo} [parte del ítem 99]`)), 'R10'), /dice \[parte del ítem 99\] y ese ítem no existe/);
+  });
+
+  test('R11: cada tipo de la base de la auditoría tiene un pendiente que lo cita', () => {
+    const sinCita = c(fixture({ mant: [{ prioridad: 'Baja', subtipo: 'Errores', texto: 'algo sin cita' }] }));
+    assert.equal(nivel(sinCita, 'R11'), 'ERROR');
+    assert.match(texto(sinCita, 'R11'), /tipo «objetivo-chico» sin un pendiente de Mantenimiento que cite `audit:objetivo-chico`/);
+    assert.match(texto(c(fixture(), { auditBase: JSON.stringify({ hallazgos: ['marciano|x|y'] }) }), 'R11'), /el tipo «marciano», que tools\/audit\.mjs no conoce/);
+    assert.match(texto(c(fixture(), { auditBase: '{no' }), 'R11'), /no es JSON válido/);
+    const dir = mkdtempSync(join(tmpdir(), 'loop-'));
+    const sin = check(fixture(), { log: LOG, investigacion: INV, hoy: HOY, dir });
+    rmSync(dir, { recursive: true, force: true });
+    assert.equal(nivel(sin, 'R11'), 'aviso');
+  });
+
+  test('R12: Para Benjamin existe, numerado, fechado y corto', () => {
+    assert.match(texto(c(fixture({ benjamin: null })), 'R12'), /falta la sección «## Para Benjamin»/);
+    assert.match(texto(c(fixture({ benjamin: ['**Algo** sin fecha.'] })), 'R12'), /Para Benjamin 1 \(línea \d+\) sin «\(desde AAAA-MM-DD\)»/);
+    const muchos = c(fixture({ benjamin: Array.from({ length: PARA_BENJAMIN_MAX + 1 }, (_, i) => `**Pedido ${i}** (desde 2026-10-13).`) }));
+    assert.equal(nivel(muchos, 'R12'), 'aviso');
+    const salto = c(fixture({ benjamin: ['**Uno** (desde 2026-10-13).', '**Dos** (desde 2026-10-13).'] }).replace('2. **Dos**', '3. **Dos**'));
+    assert.match(texto(salto, 'R12'), /el pedido 2 está numerado 3/);
+    assert.equal(nivel(c(fixture({ benjamin: [] })), 'R12'), 'ok');
+  });
+});
+
+/* ------------------------------------------------------------------ salud */
+
+describe('diagnostico() de --salud', () => {
+  const H = 3600e3;
+  const desde = '2026-10-10T00:00:00Z';
+  const t0 = Date.parse(desde);
+  const doc = parse(fixture());
+  const base = { doc, texto: fixture(), desde, ahora: t0 + 48 * H };
+
+  test('cadencia: iteraciones desde la directiva frente a disparos esperados, y los huecos de más de dos disparos', () => {
+    const merges = [2, 6, 10, 34, 38].map((h) => ({ fecha: t0 + h * H, titulo: 'x (#1)' }));
+    const { lineas } = diagnostico({ ...base, merges });
+    // 8 iteraciones (20 a 27) para 12 disparos
+    assert.ok(lineas.includes('Cadencia: 8 iteraciones desde la directiva (2026-10-10) para 12 disparos esperados (67 %); la última fusión fue hace 10,0 h'), lineas.join('\n'));
+    assert.ok(lineas.includes('Hueco: 2026-10-10 10:00 → 2026-10-11 10:00 UTC (24,0 h, unos 5 disparos sin iteración)'), lineas.join('\n'));
+    assert.ok(lineas.includes('Hueco: 2026-10-11 14:00 → ahora UTC (10,0 h, un disparo sin iteración)'), lineas.join('\n'));
+  });
+
+  test('más de un día sin fusionar es una Acción (a Para Benjamin)', () => {
+    const r = diagnostico({ ...base, merges: [{ fecha: t0 + 2 * H, titulo: 'x' }] });
+    assert.ok(r.lineas.some((l) => /^Acción: el loop no fusiona nada desde hace 46,0 h/.test(l)), r.lineas.join('\n'));
+  });
+
+  test('reclamos: loop/K fusionada se borra, la que toca está en curso o vencida, una más allá se revisa; la conservada se informa', () => {
+    const ramas = [
+      { nombre: 'loop/26', fecha: base.ahora - 30 * H },
+      { nombre: 'loop/28', fecha: base.ahora - 0.5 * H },
+      { nombre: 'loop/30', fecha: base.ahora - H },
+      { nombre: 'loop/27-vencida-abc1234', fecha: base.ahora - 40 * H },
+    ];
+    const r = diagnostico({ ...base, ramas });
+    assert.ok(r.lineas.includes('Acción: borrar loop/26, de una iteración ya fusionada: git push origin --delete loop/26'), r.lineas.join('\n'));
+    assert.ok(r.lineas.includes('En curso: loop/28 (último commit hace 30 min)'), r.lineas.join('\n'));
+    assert.ok(r.lineas.some((l) => /^Acción: loop\/30 va más allá de la iteración que toca \(28\)/.test(l)));
+    assert.ok(r.lineas.some((l) => /^Trabajo de relevos conservado: loop\/27-vencida-abc1234/.test(l)));
+    assert.equal(r.acciones, 2);
+    const vencida = diagnostico({ ...base, ramas: [{ nombre: 'loop/28', fecha: base.ahora - 7 * H }] });
+    assert.ok(vencida.lineas.includes('Vencida: loop/28 lleva 7,0 h sin commits: --reclamar la releva'));
+    assert.ok(diagnostico(base).lineas.includes('Reclamos: ninguna rama loop/N en origin'));
+  });
+
+  test('las demás ramas: fusionadas (por su PR o contenidas) y con trabajo, sin acciones', () => {
+    const ramas = [
+      { nombre: 'claude/a', fecha: t0, contenida: true },
+      { nombre: 'ccr-b', fecha: t0, pr: 53 },
+      { nombre: 'claude/c', fecha: t0 },
+    ];
+    const r = diagnostico({ ...base, ramas });
+    assert.ok(r.lineas.includes('Ramas ya fusionadas o contenidas en master (las borra Benjamin, ver Para Benjamin): 2 (claude/a, ccr-b #53)'), r.lineas.join('\n'));
+    assert.ok(r.lineas.includes('Ramas con trabajo sin fusionar (nunca se fusionan ni se borran solas): 1 (claude/c 2026-10-10)'));
+    assert.equal(r.acciones, 0);
+  });
+
+  test('issues: los que IMPROVEMENTS.md no nombra como «issue #k» se trían; sin consulta, el motivo', () => {
+    const issues = [
+      { number: 7, title: 'La app no carga\ncon mi repo', labels: ['bug'] },
+      { number: 9, title: 'Idea', labels: [] },
+    ];
+    const r = diagnostico({ ...base, texto: base.texto + '\nVer issue #9.', issues });
+    assert.ok(r.lineas.includes('Issues abiertos: 2, sin triar: 1'));
+    assert.ok(r.lineas.some((l) => /^Acción: triar el issue #7 «La app no carga con mi repo» \[bug\]: un fallo va a Mantenimiento/.test(l)), r.lineas.join('\n'));
+    assert.equal(r.acciones, 1);
+    // «issue #70» no cuenta como triado el #7
+    assert.equal(diagnostico({ ...base, texto: 'issue #70', issues: issues.slice(0, 1) }).acciones, 1);
+    assert.ok(diagnostico({ ...base, issues: 'HTTP 403' }).lineas.some((l) => l.startsWith('Issues: no se pudo consultar (HTTP 403)')));
+    assert.ok(diagnostico({ ...base, issues: [] }).lineas.includes('Issues abiertos: ninguno'));
+  });
+
+  test('un pendiente Alta es una Acción; Para Benjamin y el tamaño del archivo se informan', () => {
+    const conAlta = fixture({ alta: '**Alta**: la app en blanco.' });
+    const r = diagnostico({ ...base, doc: parse(conAlta), texto: conAlta });
+    assert.ok(r.lineas.some((l) => /^Acción: 1 pendiente\(s\) Alta en Mantenimiento: van antes que todo \(1\)$/.test(l)));
+    assert.ok(r.lineas.includes('Mantenimiento: 1 Alta, 0 Media, 13 Baja'));
+    assert.ok(r.lineas.includes('Para Benjamin (1): 1. Activar Pages (desde 2026-10-12)'), r.lineas.join('\n'));
+    assert.ok(r.lineas.some((l) => /^IMPROVEMENTS\.md: \d+ KB \(bitácora \d+ KB\)/.test(l)));
+    assert.equal(r.lineas.at(-1), '--salud: 1 acción(es)');
+  });
+});
+
 /* -------------------------------------------------------------- el CLI */
 
 describe('el CLI', () => {
@@ -445,13 +742,14 @@ describe('el CLI', () => {
     assert.match(err.stdout, /^ERROR R1 /m);
   });
 
-  test('--siguiente imprime las seis líneas y --json el objeto', () => {
+  test('--siguiente imprime las siete líneas (la última, el Siguiente para copiar) y --json el objeto', () => {
     const archivo = join(dir, 'siguiente.md');
     writeFileSync(archivo, fixture());
     const r = cli('--siguiente', '--archivo', archivo);
     assert.equal(r.status, 0, r.stderr);
     const lineas = r.stdout.trim().split('\n');
-    assert.equal(lineas.length, 6);
+    assert.equal(lineas.length, 7);
+    assert.equal(lineas[6], 'Siguiente: iteración 28, expansión: ítem 6 (Ítem 6, Fuentes)');
     assert.equal(lineas[0], 'Iteración 28 · Expansión · Fuentes');
     assert.equal(lineas[1], 'Ítem 6 de la hoja de ruta: Ítem 6');
     assert.equal(lineas[3], 'Rama: loop/28');
@@ -460,10 +758,11 @@ describe('el CLI', () => {
     const j = JSON.parse(cli('--siguiente', '--json', '--archivo', archivo).stdout);
     assert.equal(j.item, 6);
     assert.equal(j.rama, 'loop/28');
-    writeFileSync(archivo, fixture({ iteraciones: 30 }));
+    writeFileSync(archivo, fixture({ iteraciones: 30, mant: ['Un fallo', 'Otro', 'Y otro'].map((texto) => ({ prioridad: 'Media', subtipo: 'Errores', texto })) }));
     const m = cli('--siguiente', '--archivo', archivo).stdout.split('\n');
-    assert.equal(m[0], 'Iteración 31 · Mantenimiento');
-    assert.match(m[1], /^Pendiente 1 de mantenimiento: Pendiente 1/);
+    assert.equal(m[0], 'Iteración 31 · Mantenimiento · Errores');
+    assert.match(m[1], /^Pendiente 1 \(Media\) de mantenimiento: Un fallo/);
+    assert.equal(m[6], 'Siguiente: iteración 31, mantenimiento · Errores: pendiente 1 (Un fallo, que sigue en otra línea.)');
   });
 
   test('--siguiente sale 2 sin ítem para expansión y 1 sin iteraciones', () => {
@@ -619,6 +918,16 @@ describe('--reclamar contra un repositorio bare', () => {
     assert.equal(codigo, 3, salida.join('\n'));
     assert.ok(salida.includes('Ocupada: otra sesión relevó loop/28'), salida.join('\n'));
     assert.equal(git(dir, ['ls-remote', '--heads', bare, 'loop/28']).split('\t')[0], ajeno, 'el commit de la otra sesión sigue en origin');
+  });
+
+  test('--salud --sin-red lee origin/master y las ramas de origin: la loop/K fusionada es una Acción (3)', () => {
+    git(A, ['fetch', '-q', 'origin', '+refs/heads/*:refs/remotes/origin/*']);
+    const r = spawnSync(process.execPath, [loop, '--salud', '--sin-red', '--repo', A], { encoding: 'utf8', env: ENV });
+    assert.equal(r.status, 3, r.stdout + r.stderr);
+    assert.match(r.stdout, /^Cadencia: \d+ iteraciones desde la directiva/m);
+    assert.match(r.stdout, /^Acción: borrar loop\/25, de una iteración ya fusionada/m);
+    assert.match(r.stdout, /^Issues: no se pudo consultar \(--sin-red\)/m);
+    assert.match(r.stdout, /--salud: \d+ acción\(es\)\n$/);
   });
 
   test('sin acceso a origin sale 5 y no toca nada', () => {

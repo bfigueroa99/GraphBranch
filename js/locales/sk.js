@@ -427,4 +427,10 @@ GB.i18n.define('sk', {
   'health.merges30': 'Zlúčenia, posledných 30 dní',
   'health.releases30': 'Vydania, posledných 30 dní',
   'health.none': 'Nie je čo zobraziť.',
+  'health.clash': 'Súbory, ktorých sa dotýka viac otvorených vetiev',
+  'health.clashHelp': 'Porovná s predvolenou vetvou každú vetvu, ktorá má otvorený pull request. Stojí jeden dopyt na vetvu, takže beží len na požiadanie.',
+  'health.clashGo': 'Hľadať kolízie',
+  'health.clashBusy': 'Porovnávam vetvy: {n}…',
+  'health.clashFail': 'Vetvy sa nepodarilo porovnať.',
+  'health.clashNone': 'Medzi porovnanými vetvami ({n}) nie sú žiadne spoločné súbory.',
 });

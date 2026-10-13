@@ -416,4 +416,10 @@ GB.i18n.define('tr', {
   'health.merges30': 'Birleştirmeler, son 30 gün',
   'health.releases30': 'Sürümler, son 30 gün',
   'health.none': 'Gösterilecek bir şey yok.',
+  'health.clash': 'Birden çok açık dalın dokunduğu dosyalar',
+  'health.clashHelp': 'Açık pull request\'i olan her dalı varsayılan dalla karşılaştırır. Dal başına bir istek harcar, bu yüzden yalnızca istediğinizde çalışır.',
+  'health.clashGo': 'Çakışmaları ara',
+  'health.clashBusy': '{n} dal karşılaştırılıyor…',
+  'health.clashFail': 'Dallar karşılaştırılamadı.',
+  'health.clashNone': 'Karşılaştırılan {n} dal arasında ortak dosya yok.',
 });

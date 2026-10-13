@@ -427,4 +427,10 @@ GB.i18n.define('pl', {
   'health.merges30': 'Scalenia, ostatnie 30 dni',
   'health.releases30': 'Wydania, ostatnie 30 dni',
   'health.none': 'Brak danych do pokazania.',
+  'health.clash': 'Pliki zmieniane przez kilka otwartych gałęzi',
+  'health.clashHelp': 'Porównuje z gałęzią domyślną każdą gałąź z otwartym pull requestem. Kosztuje jedno zapytanie na gałąź, więc działa tylko na żądanie.',
+  'health.clashGo': 'Szukaj kolizji',
+  'health.clashBusy': 'Porównywanie gałęzi: {n}…',
+  'health.clashFail': 'Nie udało się porównać gałęzi.',
+  'health.clashNone': 'Wśród porównanych gałęzi ({n}) nie ma wspólnych plików.',
 });

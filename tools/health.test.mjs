@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} } });
 vm.runInContext(readFileSync(join(root, 'js', 'health.js'), 'utf8'), ctx, { filename: 'health.js' });
-const { compute } = ctx.window.GB.health;
+const { compute, clashes, clashCandidates } = ctx.window.GB.health;
 
 const DAY = 864e5;
 const NOW = Date.UTC(2026, 9, 13, 12);
@@ -98,4 +98,23 @@ test('las listas se cortan a 8 filas y dicen cuántas hay en total', () => {
   const h = compute(d, [], NOW);
   assert.equal(h.stale.rows.length, 8);
   assert.equal(h.stale.total, 15);
+});
+
+test('choques: archivos que tocan varias ramas, los más disputados primero; uno solo no choca', () => {
+  const c = clashes([
+    { name: 'feature/b', files: ['src/pagos.js', 'a.md', 'src/pagos.js'] },
+    { name: 'feature/a', files: ['src/pagos.js', 'b.md', 'a.md'] },
+    { name: 'fix/c', files: ['src/pagos.js'] },
+  ]);
+  assert.equal(c.total, 2);
+  assert.deepEqual(Array.from(c.rows, (r) => r.path), ['src/pagos.js', 'a.md']);
+  assert.deepEqual(Array.from(c.rows[0].branches), ['feature/a', 'feature/b', 'fix/c']); // sin repetir una rama
+  assert.equal(clashes([{ name: 'x', files: ['f'] }]).total, 0);
+});
+
+test('choques: se comparan las ramas con PR abierto del mismo repo, sin la de por defecto ni las de forks', () => {
+  const r = repo();
+  r.pulls.set(10, { number: 10, title: 'a main', head: 'main', sameRepo: true });
+  assert.deepEqual(Array.from(clashCandidates(r)), ['hasPr']); // 'x' no está cargada; 'f' es de un fork; 'main' es la de por defecto
+  assert.equal(clashCandidates(r, 0).length, 0);
 });

@@ -417,4 +417,10 @@ GB.i18n.define('de', {
   'health.merges30': 'Merges, letzte 30 Tage',
   'health.releases30': 'Releases, letzte 30 Tage',
   'health.none': 'Nichts anzuzeigen.',
+  'health.clash': 'Dateien, die mehrere offene Branches berühren',
+  'health.clashHelp': 'Vergleicht jeden Branch mit offenem Pull Request mit dem Standard-Branch. Das kostet eine Anfrage pro Branch und läuft deshalb nur auf Wunsch.',
+  'health.clashGo': 'Konflikte suchen',
+  'health.clashBusy': '{n} Branches werden verglichen…',
+  'health.clashFail': 'Die Branches konnten nicht verglichen werden.',
+  'health.clashNone': 'Keine gemeinsamen Dateien unter den {n} verglichenen Branches.',
 });

@@ -424,4 +424,10 @@ GB.i18n.define('hr', {
   'health.merges30': 'Spajanja, zadnjih 30 dana',
   'health.releases30': 'Izdanja, zadnjih 30 dana',
   'health.none': 'Nema ničega za prikaz.',
+  'health.clash': 'Datoteke koje diraju različite otvorene grane',
+  'health.clashHelp': 'Uspoređuje sa zadanom granom svaku granu koja ima otvoren pull request. Košta jedan zahtjev po grani, pa se pokreće samo na traženje.',
+  'health.clashGo': 'Traži sukobe',
+  'health.clashBusy': 'Uspoređujem grane: {n}…',
+  'health.clashFail': 'Grane se nije moglo usporediti.',
+  'health.clashNone': 'Među usporedenim granama ({n}) nema zajedničkih datoteka.',
 });

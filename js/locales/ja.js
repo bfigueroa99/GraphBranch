@@ -416,4 +416,10 @@ GB.i18n.define('ja', {
   'health.merges30': 'マージ数、直近30日',
   'health.releases30': 'リリース数、直近30日',
   'health.none': '表示するものはありません。',
+  'health.clash': '複数のオープンなブランチが触れているファイル',
+  'health.clashHelp': 'オープンなプルリクエストを持つ各ブランチを既定ブランチと比較します。ブランチごとに1回のリクエストがかかるため、実行は求めたときだけです。',
+  'health.clashGo': '衝突を探す',
+  'health.clashBusy': '{n} 件のブランチを比較中…',
+  'health.clashFail': 'ブランチを比較できませんでした。',
+  'health.clashNone': '比較した {n} 件のブランチに共通のファイルはありません。',
 });

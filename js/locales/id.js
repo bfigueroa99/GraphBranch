@@ -416,4 +416,10 @@ GB.i18n.define('id', {
   'health.merges30': 'Merge, 30 hari terakhir',
   'health.releases30': 'Rilis, 30 hari terakhir',
   'health.none': 'Tidak ada yang ditampilkan.',
+  'health.clash': 'File yang disentuh beberapa branch terbuka',
+  'health.clashHelp': 'Membandingkan setiap branch yang punya pull request terbuka dengan branch bawaan. Biayanya satu permintaan per branch, jadi hanya berjalan saat diminta.',
+  'health.clashGo': 'Cari benturan',
+  'health.clashBusy': 'Membandingkan {n} branch…',
+  'health.clashFail': 'Branch tidak dapat dibandingkan.',
+  'health.clashNone': 'Tidak ada file bersama di antara {n} branch yang dibandingkan.',
 });

@@ -54,5 +54,24 @@
     };
   }
 
-  GB.health = { compute, STALE_DAYS };
+  /** Archivos que tocan a la vez varias ramas abiertas. `entries`: `[{ name, files: [ruta] }]`, lo que
+      cada rama cambió respecto de la rama por defecto. Primero los más disputados. */
+  function clashes(entries) {
+    const by = new Map();
+    for (const e of entries) for (const path of new Set(e.files)) (by.get(path) || by.set(path, []).get(path)).push(e.name);
+    const rows = [...by]
+      .filter(([, names]) => names.length > 1)
+      .map(([path, branches]) => ({ path, branches: branches.sort() }))
+      .sort((a, b) => b.branches.length - a.branches.length || (a.path < b.path ? -1 : 1));
+    return { total: rows.length, rows: rows.slice(0, ROWS * 2) };
+  }
+
+  /** Ramas que se comparan: las de los PRs abiertos del mismo repo (su rama por defecto no cuenta). */
+  function clashCandidates(data, max = 20) {
+    const names = new Set();
+    for (const p of data.pulls.values()) if (p.sameRepo && p.head && p.head !== data.repo.defaultBranch && data.branches.has(p.head)) names.add(p.head);
+    return [...names].slice(0, max);
+  }
+
+  GB.health = { compute, clashes, clashCandidates, STALE_DAYS };
 })(window.GB);

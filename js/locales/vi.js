@@ -416,4 +416,10 @@ GB.i18n.define('vi', {
   'health.merges30': 'Lượt gộp, 30 ngày qua',
   'health.releases30': 'Bản phát hành, 30 ngày qua',
   'health.none': 'Không có gì để hiển thị.',
+  'health.clash': 'Tệp bị nhiều nhánh đang mở chạm vào',
+  'health.clashHelp': 'So sánh với nhánh mặc định từng nhánh có pull request đang mở. Mỗi nhánh tốn một yêu cầu, nên chỉ chạy khi bạn yêu cầu.',
+  'health.clashGo': 'Tìm xung đột',
+  'health.clashBusy': 'Đang so sánh {n} nhánh…',
+  'health.clashFail': 'Không thể so sánh các nhánh.',
+  'health.clashNone': 'Không có tệp chung giữa {n} nhánh đã so sánh.',
 });

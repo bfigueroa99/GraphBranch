@@ -416,4 +416,10 @@ GB.i18n.define('sv', {
   'health.merges30': 'Sammanfogningar, senaste 30 dagarna',
   'health.releases30': 'Utgåvor, senaste 30 dagarna',
   'health.none': 'Inget att visa.',
+  'health.clash': 'Filer som flera öppna grenar rör vid',
+  'health.clashHelp': 'Jämför varje gren med en öppen pull request mot standardgrenen. Det kostar en förfrågan per gren och körs därför bara på begäran.',
+  'health.clashGo': 'Hitta kollisioner',
+  'health.clashBusy': 'Jämför {n} grenar…',
+  'health.clashFail': 'Grenarna kunde inte jämföras.',
+  'health.clashNone': 'Inga gemensamma filer bland de {n} jämförda grenarna.',
 });

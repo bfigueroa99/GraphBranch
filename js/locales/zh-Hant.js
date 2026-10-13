@@ -416,4 +416,10 @@ GB.i18n.define('zh-Hant', {
   'health.merges30': '合併數，近 30 天',
   'health.releases30': '發布數，近 30 天',
   'health.none': '沒有可顯示的內容。',
+  'health.clash': '被多個未合併分支同時修改的檔案',
+  'health.clashHelp': '把每個有開啟中的拉取請求的分支與預設分支比較。每個分支要消耗一次請求，所以只在你需要時執行。',
+  'health.clashGo': '尋找衝突',
+  'health.clashBusy': '正在比較 {n} 個分支…',
+  'health.clashFail': '無法比較這些分支。',
+  'health.clashNone': '已比較的 {n} 個分支之間沒有共同修改的檔案。',
 });

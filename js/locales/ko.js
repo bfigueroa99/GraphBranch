@@ -416,4 +416,10 @@ GB.i18n.define('ko', {
   'health.merges30': '병합, 최근 30일',
   'health.releases30': '릴리스, 최근 30일',
   'health.none': '표시할 내용이 없습니다.',
+  'health.clash': '여러 열린 브랜치가 건드린 파일',
+  'health.clashHelp': '열린 풀 리퀘스트가 있는 각 브랜치를 기본 브랜치와 비교합니다. 브랜치마다 요청 한 번이 들기 때문에 요청할 때만 실행됩니다.',
+  'health.clashGo': '충돌 찾기',
+  'health.clashBusy': '브랜치 {n}개 비교 중…',
+  'health.clashFail': '브랜치를 비교하지 못했습니다.',
+  'health.clashNone': '비교한 브랜치 {n}개에 겹치는 파일이 없습니다.',
 });

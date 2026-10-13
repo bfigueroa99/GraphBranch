@@ -416,4 +416,10 @@ GB.i18n.define('hu', {
   'health.merges30': 'Egyesítések, az elmúlt 30 nap',
   'health.releases30': 'Kiadások, az elmúlt 30 nap',
   'health.none': 'Nincs mit mutatni.',
+  'health.clash': 'Több nyitott ág által érintett fájlok',
+  'health.clashHelp': 'Az alapértelmezett ággal veti össze az összes olyan ágat, amelyhez nyitott pull request tartozik. Ágonként egy kérésbe kerül, ezért csak kérésre fut.',
+  'health.clashGo': 'Ütközések keresése',
+  'health.clashBusy': '{n} ág összehasonlítása…',
+  'health.clashFail': 'Az ágakat nem sikerült összehasonlítani.',
+  'health.clashNone': 'Az összehasonlított {n} ág között nincs közös fájl.',
 });

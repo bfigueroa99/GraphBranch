@@ -416,4 +416,10 @@ GB.i18n.define('da', {
   'health.merges30': 'Fletninger, seneste 30 dage',
   'health.releases30': 'Udgivelser, seneste 30 dage',
   'health.none': 'Intet at vise.',
+  'health.clash': 'Filer berørt af flere åbne grene',
+  'health.clashHelp': 'Sammenligner hver gren med et åbent pull request med standardgrenen. Det koster én forespørgsel pr. gren, så det kører kun, når du beder om det.',
+  'health.clashGo': 'Find konflikter',
+  'health.clashBusy': 'Sammenligner {n} grene…',
+  'health.clashFail': 'Grenene kunne ikke sammenlignes.',
+  'health.clashNone': 'Ingen fælles filer blandt de {n} sammenlignede grene.',
 });

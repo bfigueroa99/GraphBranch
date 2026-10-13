@@ -1303,5 +1303,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: smoke (contraste en tema claro y oscuro); auditoría: no toca la página.
 - Reclamo: loop/39, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
-- Validado: PENDIENTE
+- Validado: 154 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
 - **Siguiente:** iteración 40, expansión: ítem 16 (Aprender git, Público)

@@ -439,6 +439,8 @@
       if (!room.length) return;
       resume();
       room.forEach((p, i) => startTab(addTab(sourceFor(p)), i * STAGGER));
+      saveTabs();
+      renderTabs();
       feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner }), detail: room.map((p) => p.name).join(', '), time: Date.now() });
       return;
     }

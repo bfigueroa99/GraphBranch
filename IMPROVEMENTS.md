@@ -973,3 +973,21 @@ posteriores pueden haberse movido.
 - Web publicada: Web sin publicar: https://bfigueroa99.github.io/GraphBranch/ responde 404 y el repo tiene has_pages=false (Benjamin: Settings → Pages → Deploy from a branch → master, /(root)).
 - Validado: 89 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores) y 17 e2e en verde.
 - **Siguiente:** iteración 29, expansión: ítem 8 (Una organización entera, segunda entrega, Escala)
+
+### 2026-10-13 · Iteración 29 · Expansión · Escala
+
+- **Capacidad nueva: seguir la organización, con su lista al día** (ítem 8 de la hoja de ruta,
+  partido: esta es la segunda entrega; los eventos de la organización, los grupos de GitLab y la
+  constelación pasan al ítem 26). `org:nombre` / `@usuario` queda guardado en `graphbranch:owners`
+  con los nombres de repos que ya vio su lista; cada 30 minutos (con la pestaña a la vista y sin
+  pausa) se vuelve a pedir y los repos que no se habían visto se suman solos, hasta el tope de 10, con
+  el aviso de siempre. Un repo cerrado no regresa y al cerrar el último de una organización deja de
+  seguirse. Sin textos nuevos (reusa `owner.followed`).
+- **Pruebas que fallan sin la capacidad:** smoke, dos pasos nuevos en la sección de la organización
+  (con la renovación acortada a 1,5 s): lo guardado en `owners`, el repo nuevo que se suma solo con su
+  aviso, el cerrado que no vuelve, y la organización que se olvida al cerrar su último repo.
+- README: la función, el apartado de la organización, la prueba de humo y Límites conocidos.
+- Reclamo: loop/29, sin colisión
+- Web publicada: Web sin publicar: https://bfigueroa99.github.io/GraphBranch/ responde 404 y el repo tiene has_pages=false (Benjamin: Settings → Pages → Deploy from a branch → master, /(root)).
+- Validado: 89 pruebas (`node --test`), smoke, i18n (0 errores) y 17 e2e en verde.
+- **Siguiente:** iteración 30, expansión: ítem 9 (CI en el grafo, Datos)

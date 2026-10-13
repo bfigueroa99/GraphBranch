@@ -874,7 +874,7 @@ console.log('Una organización o un usuario entero');
     const detail = await toast.$eval('.toast-detail', (d) => d.textContent);
     if (detail !== 'api, web, viejo') throw new Error(`el aviso dice ${detail}`);
     const lists = gh.calls.filter((c) => /^\/(orgs|users)\//.test(c));
-    if (lists.join() !== '/orgs/acme/repos') throw new Error(`consultas de la lista: ${lists.join(', ')}`);
+    if (!lists.length || lists.some((c) => c !== '/orgs/acme/repos')) throw new Error(`consultas de la lista: ${lists.join(', ')}`); // las renovaciones piden la misma, una por organización
     const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
     if (saved !== '["acme/api","acme/web","acme/viejo"]') throw new Error(`se guardó ${saved}`);
   });
@@ -894,12 +894,16 @@ console.log('Una organización o un usuario entero');
   });
 
   await step(page, 'al cerrar el último repo de la organización deja de seguirse', async () => {
+    // con otro repo de por medio: con una sola pestaña la barra se esconde
+    await page.fill('#repo-input', 'ana/notas');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 4, null, { timeout: 15000 });
     for (const n of ['acme/api', 'acme/web', 'acme/nuevo']) await page.locator('.rt', { hasText: n }).locator('.rt-close').click();
     const owners = await page.evaluate(() => localStorage.getItem('graphbranch:owners'));
     if (owners !== null) throw new Error(`sigue guardada: ${owners}`);
     await page.fill('#repo-input', 'org:acme');
     await page.press('#repo-input', 'Enter');
-    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 4, null, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 5, null, { timeout: 15000 });
   });
 
   await step(page, 'una organización o un usuario que no existe lo dice en el campo', async () => {
@@ -908,7 +912,7 @@ console.log('Una organización o un usuario entero');
     await page.waitForFunction(() => document.querySelector('#repo-input').validationMessage.includes('nadie'), null, { timeout: 10000 });
     const msg = await page.$eval('#repo-input', (i) => i.validationMessage);
     if (msg !== 'No se encontró en GitHub una organización o un usuario llamado nadie.') throw new Error(`el campo dice ${msg}`);
-    if ((await repoTabs(page)).length !== 4) throw new Error('cambiaron las pestañas');
+    if ((await repoTabs(page)).length !== 5) throw new Error('cambiaron las pestañas');
   }, { allow: /404/ });
 
   await step(page, 'con ?repo=@ana en la URL se siguen los repos de ese usuario', async () => {

@@ -129,6 +129,24 @@ test('sin red, un proyecto de GitLab avisa que no llega a gitlab.com', async ({}
   await app.close();
 });
 
+test('--api-url suma solo ese host al CSP y los repos de GitHub salen de él; sin https se ignora', async ({}, testInfo) => {
+  const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
+  let { app, page } = await launch(testInfo, { args: ['--lang=es', '--repo=o/r', '--api-url=https://ghe.example.com/api/v3'] });
+  try {
+    expect(await csp(page)).toContain('connect-src https://api.github.com https://ghe.example.com https://gitlab.com;');
+    expect(page.url()).toContain('api=' + encodeURIComponent('https://ghe.example.com/api/v3'));
+  } finally {
+    await app.close();
+  }
+  ({ app, page } = await launch(testInfo, { args: ['--lang=es', '--api-url=http://ghe.example.com/api/v3'] }));
+  try {
+    expect(await csp(page)).not.toContain('ghe.example.com');
+    expect(page.url()).not.toContain('api=');
+  } finally {
+    await app.close();
+  }
+});
+
 test('--repo repetido sigue varios repos, cada uno en su pestaña, y se recuerdan al reabrir', async ({}, testInfo) => {
   const repos = ['--repo=bfigueroa99/GraphBranch', '--repo=octo/otro'];
   let { app, page, dir } = await launch(testInfo, { args: ['--lang=es', ...repos] });

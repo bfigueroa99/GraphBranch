@@ -29,6 +29,19 @@
   /* mensaje diferido: se traduce al mostrarlo, no al crearlo (ver i18n.js) */
   const M = i18n.msg;
   const API = 'https://api.github.com';
+  /** Las direcciones de un GitHub: el público, o un GitHub Enterprise Server (`https://host/api/v3`, con su
+      GraphQL en `https://host/api/graphql` y sus páginas en `https://host`). null si no es una URL https. */
+  const endpoints = (apiUrl) => {
+    if (!apiUrl) return { api: API, graphql: API + '/graphql', web: 'https://github.com' };
+    try {
+      const u = new URL(String(apiUrl));
+      if (u.protocol !== 'https:' || u.username || u.password) return null;
+      const api = (u.origin + u.pathname).replace(/\/+$/, '');
+      return { api, graphql: api.replace(/\/v3$/, '') + '/graphql', web: u.origin };
+    } catch {
+      return null;
+    }
+  };
   const GQL_COMMIT =
     'oid url committedDate messageHeadline author { name user { login avatarUrl } } parents(first: 4) { nodes { oid } }';
   const GQL_TARGET = 'target { oid ... on Commit { committedDate } }';
@@ -64,8 +77,9 @@
   }
 
   class GitHubSource extends U.Emitter {
-    constructor({ owner, name, token = '', depth = 40, filter = '', pins = [] }) {
+    constructor({ owner, name, token = '', depth = 40, filter = '', pins = [], apiUrl = '' }) {
       super();
+      this.ep = endpoints(apiUrl) || endpoints(''); // una dirección que no sea https no se usa: queda GitHub.com
       this.owner = owner;
       this.name = name;
       this.token = token;
@@ -74,7 +88,7 @@
       this.pins = new Set(pins);
       this.mode = token ? 'graphql' : null;
       this.data = {
-        repo: { owner, name, defaultBranch: null, url: `https://github.com/${owner}/${name}`, demo: false },
+        repo: { owner, name, defaultBranch: null, url: `${this.ep.web}/${owner}/${name}`, demo: false },
         branches: new Map(), // ramas dibujadas: las que ya tienen su historia
         commits: new Map(),
         pulls: new Map(),
@@ -356,7 +370,7 @@
       const cached = cacheKey ? this.etags.get(cacheKey) : null;
       if (cached) headers['If-None-Match'] = cached.etag;
 
-      const { res, body } = await this.request(API + path, { headers, cache: 'no-store' });
+      const { res, body } = await this.request(this.ep.api + path, { headers, cache: 'no-store' });
       this.readRate(res);
       if (res.status === 304 && cached) {
         if (!this.token) this.cost++; // sin token, los 304 sí cuentan
@@ -371,7 +385,7 @@
     }
 
     async gql(query, variables = {}) {
-      const { res, body } = await this.request(API + '/graphql', {
+      const { res, body } = await this.request(this.ep.graphql, {
         method: 'POST',
         headers: { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ query, variables: { owner: this.owner, name: this.name, ...variables } }),
@@ -896,7 +910,7 @@
           detail: this.data.commits.get(sha)?.message ? U.firstLine(this.data.commits.get(sha).message) : '',
           branch: name,
           sha,
-          url: `https://github.com/${this.owner}/${this.name}/commits/${encodeURIComponent(name)}`,
+          url: `${this.ep.web}/${this.owner}/${this.name}/commits/${encodeURIComponent(name)}`,
         }),
       );
     }
@@ -1017,7 +1031,7 @@
         const known = [...this.pushedAt].filter(([name, p]) => !p.deleted && U.matches(name, this.filter)).length;
         if (known >= need + 10) return;
         const next = (res.headers?.get('Link') || '').match(/<([^>]+)>;\s*rel="next"/);
-        path = next ? next[1].replace(API, '') : null;
+        path = next ? next[1].replace(this.ep.api, '') : null;
       }
     }
 
@@ -1794,8 +1808,8 @@
    * token, también sus privados que el token ve); dos para un usuario, que primero se prueba como
    * organización. → [{ owner, name, pushedAt, private }], hasta 100.
    */
-  GitHubSource.ownerRepos = async (owner, { token = '' } = {}) => {
-    const src = new GitHubSource({ owner, name: '', token });
+  GitHubSource.ownerRepos = async (owner, { token = '', apiUrl = '' } = {}) => {
+    const src = new GitHubSource({ owner, name: '', token, apiUrl });
     const q = 'sort=pushed&direction=desc&per_page=100';
     const who = encodeURIComponent(owner);
     let res = await src.api(`/orgs/${who}/repos?${q}&type=all`, { allow: [404] });
@@ -1806,6 +1820,7 @@
       .map((r) => ({ owner: r.owner?.login || owner, name: r.name, pushedAt: r.pushed_at || null, private: !!r.private }));
   };
 
+  GitHubSource.endpoints = endpoints;
   GitHubSource.ApiError = ApiError;
   GB.GitHubSource = GitHubSource;
 })(window.GB);

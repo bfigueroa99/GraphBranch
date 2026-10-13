@@ -1180,7 +1180,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
   y Seguridad.
 - QA: filas del protocolo tocadas: 320 px y tema claro/oscuro, cubiertas por el mismo CSS que no depende
   del ancho; la demo (sin API) en el smoke; consola y CSP sin cambios (el smoke falla con errores). Sin
-  mirar a mano: solo teclado dentro del iframe y árabe; auditoría: ver Validado.
+  mirar a mano: solo teclado dentro del iframe y árabe; auditoría: 0 hallazgos nuevos. El paso del smoke cazó un fallo real a medio camino (el grafo medía 0 px: `height:100%` no resuelve en `html`), arreglado con altura explícita.
 - Reclamo: loop/33, sin colisión
-- Validado: pendiente
+- Validado: 138 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 21 e2e en verde.
 - **Siguiente:** iteración 34, expansión: ítem 12 (Salud del repo, Análisis)

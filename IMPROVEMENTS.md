@@ -132,7 +132,7 @@ segunda columna a la primera.
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM), avisos a Slack y Discord (escritorio) | resumen de la semana |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas | comparar ramas, búsqueda |
-| Público | devs y equipos, 40 idiomas, teclado | quien enseña o aprende git, quien usa lector de pantalla |
+| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios) | quien usa lector de pantalla |
 
 ## Hoja de ruta
 
@@ -200,10 +200,10 @@ se comprueban antes de construir sobre ellas.
     webhook por servicio (cifrada como un token) y los eventos que recibe cada una: release, merge a la rama por
     defecto, CI en rojo y force-push en ella. Envío desde el proceso principal (`electron/webhooks.js`), decisión
     en `js/hooks.js`; botón «Enviar prueba».
-16. **Aprender git** · Público · 3×3/3. Un repo de práctica donde se escriben comandos (`commit`, `branch`,
-    `checkout`, `merge`, `rebase`, `reset`) y el grafo 2D o 3D responde al instante, con ejercicios
-    guiados ("crea una rama, haz dos commits y fusiónala"). Reutiliza la maquinaria de `DemoSource`.
-    Para quien enseña o aprende git. Comprobar: `node --test` sobre el intérprete de comandos.
+16. ~~**Aprender git**~~ hecho en #67 · Público. El botón «Practicar git» abre un repo de práctica con una terminal
+    bajo el grafo: `commit`, `branch`, `checkout`/`switch`, `merge`, `rebase`, `reset`, `log` y `status` sobre un
+    repo en memoria (`js/gitsim.js`), y el grafo 2D o 3D responde al instante. Cuatro ejercicios guiados que se dan
+    por resueltos solos. Segunda entrega posible: `cherry-pick`, `stash`, `tag` y conflictos.
 17. **Tags y despliegues** · Datos · 2×2/2. Los tags como marcas en sus commits (banderín en 2D, obelisco en
     3D) y dónde está cada entorno de despliegue (producción, staging) según `/deployments`. Comprobar:
     la demo con tags y entornos, y un paso del smoke.
@@ -307,6 +307,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     existe» (`waitForSelector` de 5 s). Corrido aparte `node tools/smoke.mjs` y repetido el `check`, pasó
     sin cambios (3 fallas en 2 corridas completas). Medir con 5 corridas seguidas bajo carga y cambiar los
     topes fijos por esperas a un estado.
+    También (iteración 40, una corrida de `npm run check`; la repetición pasó): el paso «con ?repo=@ana en la URL se
+    siguen los repos de ese usuario» guardó `["ana/notas","acme/nuevo",…]` con el orden cambiado; mismo remedio.
 
 ### Baja
 
@@ -1305,3 +1307,27 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 154 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
 - **Siguiente:** iteración 40, expansión: ítem 16 (Aprender git, Público)
+
+### 2026-10-13 · Iteración 40 · Expansión · Público
+
+- **Capacidad nueva: aprender git** (ítem 16 de la hoja de ruta). El botón «Practicar git» abre un repo de práctica
+  (pestaña como la demo, sin red) con una terminal bajo el grafo. `js/gitsim.js` es un intérprete puro (commit,
+  branch, checkout/switch, merge con avance rápido o commit de fusión, rebase, reset, log, status, help) con
+  shas deterministas y cuatro ejercicios que se resuelven solos (rama y commits, fusionar, rebase, deshacer);
+  `js/sources/practice.js` pasa su estado a la forma de datos del grafo y emite actividades con los textos que ya
+  existían; `js/practice-ui.js` es la terminal (historial con flechas, salida con `textContent`). Queda fuera:
+  `stash`, `cherry-pick`, `tag`, `remote`, el área de preparación y los conflictos.
+- **Pruebas que fallan sin la capacidad:** `tools/gitsim.test.mjs` (11 pruebas: cada comando, errores, shas
+  deterministas, ejercicios que parten sin resolver y no se resuelven con el atajo equivocado) y el paso del smoke
+  «la práctica de git responde a los comandos en el grafo» (nodos nuevos en el 2D, HTML escapado, error de un
+  comando desconocido, ejercicio resuelto y cambio de ejercicio).
+- README: la función en la lista, Pruebas, Estructura, Límites conocidos y Seguridad.
+- QA: filas tocadas: demo sin token (la práctica no consulta ninguna API: el smoke falla si lo hace); sin conexión
+  (los tres archivos nuevos en `FILES` de `sw.js`, `tools/pwa.test.mjs`); 40 idiomas (16 textos, `check-i18n`);
+  teclado (la terminal recibe el foco al abrirse, Enter ejecuta, flechas recorren el historial); consola y CSP
+  (sin cambios, ningún servidor nuevo). Sin mirar a mano: árabe y tamil de la terminal, 320 px, solo teclado en
+  el selector de ejercicios, 3D (el grafo es el mismo); auditoría: 0 hallazgos nuevos.
+- Reclamo: loop/40, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 165 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde (a la segunda corrida: la primera falló en el paso de `?repo=@ana`, ajeno al cambio, anotado en el pendiente 3).
+- **Siguiente:** iteración 41, expansión: ítem 17 (Tags y despliegues, Datos)

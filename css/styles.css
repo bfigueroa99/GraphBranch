@@ -741,6 +741,103 @@ kbd {
   font-size: 11.5px;
 }
 
+/* práctica de git: la terminal bajo el grafo */
+.practice {
+  display: grid;
+  gap: 6px;
+  margin: 8px 8px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-2);
+  font-size: 12.5px;
+}
+.practice[hidden] {
+  display: none;
+}
+.pr-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.pr-ex {
+  flex: 1 1 200px;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+.pr-goal {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+.pr-log {
+  max-height: 9.5em;
+  min-height: 3.2em;
+  overflow-y: auto;
+  padding: 6px 8px;
+  border-radius: 7px;
+  background: var(--surface);
+  font: 400 12px/1.5 var(--font-mono);
+  overflow-wrap: anywhere;
+}
+.pr-row {
+  white-space: pre-wrap;
+  color: var(--ink-2);
+}
+.pr-cmd {
+  color: var(--ink);
+  font-weight: 600;
+}
+.pr-err {
+  color: color-mix(in srgb, var(--bad) 70%, var(--ink));
+}
+.pr-note {
+  color: var(--ink-3);
+}
+.pr-status {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 600;
+}
+.pr-status:empty {
+  display: none;
+}
+.pr-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: var(--surface);
+  font-family: var(--font-mono);
+}
+.pr-line:focus-within {
+  outline: 2px solid var(--s1);
+  outline-offset: 1px;
+}
+.pr-prompt {
+  color: var(--ink-3);
+}
+.pr-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 32px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+}
+
 /* pantalla completa (botón o tecla F): el panel del grafo ocupa toda la pantalla.
    Reglas separadas: un selector que el navegador no conoce anularía la lista entera. */
 .graph-panel:fullscreen {
@@ -3640,6 +3737,7 @@ html.tv .controls,
 html.tv .rate,
 html.tv .toolbar,
 html.tv .hint,
+html.tv .practice,
 html.tv .token-banner,
 html.tv .game-strip,
 html.tv .chips,
@@ -3719,6 +3817,7 @@ html.embed .stats,
 html.embed .feed-panel,
 html.embed .toolbar,
 html.embed .hint,
+html.embed .practice,
 html.embed .token-banner,
 html.embed .game-strip,
 html.embed .lower,

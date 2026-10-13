@@ -1431,7 +1431,9 @@ console.log('Zumbido del espacio');
         document.dispatchEvent(new Event('visibilitychange'));
       }, h);
     await setHidden(true);
-    const hiddenOff = await humming(false);
+    let hiddenOff = await humming(false);
+    await page.waitForTimeout(800); // varios turnos de stepAmbience (cada 250 ms): oculta no vuelve a pedirlo
+    if (hiddenOff && (await drone()) > 0) hiddenOff = false;
     await setHidden(false);
     const back = await humming(true);
     await page.click('#tv-btn');

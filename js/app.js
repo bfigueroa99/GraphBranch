@@ -601,6 +601,7 @@
     initial,
     calm,
     prs: prsByBranch(data),
+    ci: data.ci,
     pins: data.repo.demo ? new Set() : getPins(),
     canPin: !data.repo.demo,
   });

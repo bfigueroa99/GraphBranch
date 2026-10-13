@@ -77,7 +77,7 @@ segunda columna a la primera.
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
 | Fuentes | GitHub.com (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), demo | GitLab propio, repos locales, GitHub Enterprise, Gitea/Forgejo, Bitbucket |
-| Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias) | CI, tags, despliegues |
+| Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs) | CI de GitLab, tags, despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV | widget y capa para streaming, VS Code |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM) | Slack y Discord, resumen de la semana |
@@ -120,11 +120,11 @@ construir sobre ellas.
    (se guarda `org:nombre` con los repos que ya vio su lista; cada 30 minutos se renueva y los nuevos
    se suman solos, sin traer de vuelta los que se cerraron). Los eventos de la organización, los
    grupos de GitLab y la constelación son el ítem 26.
-9. **CI en el grafo** · Datos. El estado de los checks de la cabeza de cada rama y de cada PR (✓, ✗,
-   en curso) en su etiqueta y en el detalle, y un aviso cuando se pone en rojo la rama por defecto. Con
-   token, en la misma consulta GraphQL (`statusCheckRollup`); sin token, solo la rama por defecto y las
-   fijadas, para no gastar cuota. La demo simula checks. Comprobar: `node --test` con rollups
-   simulados.
+9. ~~**CI en el grafo**~~ hecho en #56 · Datos. El estado de los checks (✓, ✗, ●) en la etiqueta y el
+   detalle de la rama por defecto, las fijadas, las que se mueven y los PRs, y un aviso al ponerse en
+   rojo la rama por defecto. Con token, en la misma consulta GraphQL (`statusCheckRollup`); sin token,
+   check-runs de la rama por defecto y las fijadas. Los commit statuses sin token, el CI de GitLab y
+   el de todas las ramas del listado quedan sin hacer.
 10. **Repos locales en la app de escritorio** · Fuentes. `LocalGitSource`: elegir una carpeta (diálogo
    del sistema), leer ramas y commits con `git` desde el proceso principal (`execFile`, sin shell) y
    vigilar `.git/HEAD`, `.git/refs` y `packed-refs` para ver cada commit al instante. Sin GitHub y sin
@@ -991,3 +991,22 @@ posteriores pueden haberse movido.
 - Web publicada: Web sin publicar: https://bfigueroa99.github.io/GraphBranch/ responde 404 y el repo tiene has_pages=false (Benjamin: Settings → Pages → Deploy from a branch → master, /(root)).
 - Validado: 89 pruebas (`node --test`), smoke, i18n (0 errores) y 17 e2e en verde.
 - **Siguiente:** iteración 30, expansión: ítem 9 (CI en el grafo, Datos)
+
+### 2026-10-13 · Iteración 30 · Expansión · Datos
+
+- **Capacidad nueva: CI en el grafo** (ítem 9 de la hoja de ruta). El estado de los checks de la cabeza
+  de la rama por defecto, las fijadas, las que acaban de moverse y los PRs sale en la etiqueta
+  (✓ ✗ ●, en 2D y 3D), en el detalle y en el texto accesible; con token viene en la misma consulta
+  GraphQL (`statusCheckRollup`) y sin token por check-runs, una consulta por commit nuevo de la rama
+  por defecto y las fijadas. Cuando la rama por defecto pasa a rojo, el panel avisa una vez («CI
+  fallido»). La demo simula checks que corren y terminan. Quedan fuera: el listado completo de ramas,
+  los commit statuses sin token y GitLab.
+- **Pruebas que fallan sin la capacidad:** `node --test` con un GraphQL simulado (estado de la rama y
+  del PR, aviso único al ponerse en rojo, sin estado cuando no hay checks) y con check-runs simulados
+  (un commit no se vuelve a preguntar, lo que sigue en curso sí, API ausente sin errores); un paso del
+  smoke con la marca de CI en el grafo.
+- README: la función en la lista, Límites conocidos y Seguridad.
+- Reclamo: loop/30, sin colisión
+- Web publicada: pendiente de `--publicado`
+- Validado: 92 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores) y 17 e2e en verde.
+- **Siguiente:** iteración 31, mantenimiento: pendiente 1 (`tools/i18n-add.mjs`)

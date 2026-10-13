@@ -39,6 +39,7 @@
     'pr-open': { cat: 'prs', sev: 'info', icon: 'pr' },
     'pr-merge': { cat: 'prs', sev: 'good', icon: 'merge' },
     'pr-close': { cat: 'prs', sev: 'info', icon: 'prClosed' },
+    'ci-fail': { cat: 'commits', sev: 'bad', icon: 'close' }, // la rama por defecto pasó a rojo
     review: { cat: 'prs', sev: 'info', icon: 'review' },
     'review-ok': { cat: 'prs', sev: 'good', icon: 'review' },
     'review-changes': { cat: 'prs', sev: 'warn', icon: 'review' },

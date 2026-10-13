@@ -1002,7 +1002,7 @@ function fakeGitLab() {
     }
     if (rest === '/repository/merge_base') return { body: { id: resolve(q.getAll('refs[]')[0]) } };
     if (rest === '/events') {
-      const author = { username: 'ana', name: 'Ana', avatar_url: 'https://gitlab.com/uploads/ana.png' };
+      const author = { username: 'ana', name: 'Ana', avatar_url: 'https://secure.gravatar.com/avatar/x' };
       return { body: [{ id: 1, action_name: 'opened', target_type: 'Issue', target_iid: 9, target_title: 'Falla al abrir', created_at: new Date().toISOString(), author }] };
     }
     if (rest === '/merge_requests') return { body: mrs.filter((m) => q.get('state') === 'all' || m.state === q.get('state')) };

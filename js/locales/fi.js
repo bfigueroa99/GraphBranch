@@ -416,4 +416,10 @@ GB.i18n.define('fi', {
   'health.merges30': 'Yhdistämiset, viimeiset 30 päivää',
   'health.releases30': 'Julkaisut, viimeiset 30 päivää',
   'health.none': 'Ei näytettävää.',
+  'health.clash': 'Tiedostot, joihin useampi avoin haara koskee',
+  'health.clashHelp': 'Vertaa oletushaaraan jokaista haaraa, jolla on avoin pull request. Se maksaa yhden pyynnön haaraa kohti, joten se ajetaan vain pyydettäessä.',
+  'health.clashGo': 'Etsi törmäyksiä',
+  'health.clashBusy': 'Verrataan {n} haaraa…',
+  'health.clashFail': 'Haaroja ei voitu verrata.',
+  'health.clashNone': 'Vertailluissa {n} haarassa ei ole yhteisiä tiedostoja.',
 });

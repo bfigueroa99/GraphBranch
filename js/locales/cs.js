@@ -427,4 +427,10 @@ GB.i18n.define('cs', {
   'health.merges30': 'Sloučení, posledních 30 dní',
   'health.releases30': 'Vydání, posledních 30 dní',
   'health.none': 'Není co zobrazit.',
+  'health.clash': 'Soubory měněné více otevřenými větvemi',
+  'health.clashHelp': 'Porovná s výchozí větví každou větev, která má otevřený pull request. Stojí jeden dotaz na větev, takže běží jen na požádání.',
+  'health.clashGo': 'Hledat kolize',
+  'health.clashBusy': 'Porovnávám větve: {n}…',
+  'health.clashFail': 'Větve se nepodařilo porovnat.',
+  'health.clashNone': 'Mezi porovnanými větvemi ({n}) nejsou žádné společné soubory.',
 });

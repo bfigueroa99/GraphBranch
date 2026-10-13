@@ -416,4 +416,10 @@ GB.i18n.define('zh-Hans', {
   'health.merges30': '合并数，近 30 天',
   'health.releases30': '发布数，近 30 天',
   'health.none': '没有可显示的内容。',
+  'health.clash': '被多个未合并分支同时修改的文件',
+  'health.clashHelp': '把每个有打开的拉取请求的分支与默认分支比较。每个分支要消耗一次请求，所以只在你需要时运行。',
+  'health.clashGo': '查找冲突',
+  'health.clashBusy': '正在比较 {n} 个分支…',
+  'health.clashFail': '无法比较这些分支。',
+  'health.clashNone': '已比较的 {n} 个分支之间没有共同修改的文件。',
 });

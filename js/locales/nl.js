@@ -417,4 +417,10 @@ GB.i18n.define('nl', {
   'health.merges30': 'Merges, laatste 30 dagen',
   'health.releases30': 'Releases, laatste 30 dagen',
   'health.none': 'Niets om te tonen.',
+  'health.clash': 'Bestanden die meerdere open branches aanraken',
+  'health.clashHelp': 'Vergelijkt elke branch met een open pull request met de standaardbranch. Dat kost één verzoek per branch en draait dus alleen op verzoek.',
+  'health.clashGo': 'Botsingen zoeken',
+  'health.clashBusy': '{n} branches vergelijken…',
+  'health.clashFail': 'De branches konden niet worden vergeleken.',
+  'health.clashNone': 'Geen gedeelde bestanden onder de {n} vergeleken branches.',
 });

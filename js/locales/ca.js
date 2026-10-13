@@ -416,4 +416,10 @@ GB.i18n.define('ca', {
   'health.merges30': 'Merges, darrers 30 dies',
   'health.releases30': 'Releases, darrers 30 dies',
   'health.none': 'Res a mostrar.',
+  'health.clash': 'Fitxers tocats per diverses branques obertes',
+  'health.clashHelp': 'Compara amb la branca per defecte cada branca que té un pull request obert. Costa una consulta per branca, així que només s\'executa quan ho demanes.',
+  'health.clashGo': 'Cerca xocs',
+  'health.clashBusy': 'Comparant {n} branques…',
+  'health.clashFail': 'No s\'han pogut comparar les branques.',
+  'health.clashNone': 'Cap de les {n} branques comparades comparteix fitxers.',
 });

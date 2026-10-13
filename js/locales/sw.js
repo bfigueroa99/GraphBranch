@@ -416,4 +416,10 @@ GB.i18n.define('sw', {
   'health.merges30': 'Uunganishaji, siku 30 zilizopita',
   'health.releases30': 'Toleo, siku 30 zilizopita',
   'health.none': 'Hakuna cha kuonyesha.',
+  'health.clash': 'Faili zinazoguswa na matawi kadhaa yaliyo wazi',
+  'health.clashHelp': 'Hulinganisha kila tawi lenye pull request iliyo wazi na tawi chaguo-msingi. Gharama ni ombi moja kwa kila tawi, kwa hiyo hufanya kazi unapoomba tu.',
+  'health.clashGo': 'Tafuta migongano',
+  'health.clashBusy': 'Inalinganisha matawi {n}…',
+  'health.clashFail': 'Matawi hayakuweza kulinganishwa.',
+  'health.clashNone': 'Hakuna faili zinazoshirikiwa kati ya matawi {n} yaliyolinganishwa.',
 });

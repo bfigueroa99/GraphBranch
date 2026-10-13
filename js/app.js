@@ -975,7 +975,11 @@
       `<section class="hl-sec"><h3>${U.esc(t('health.merged'))}</h3>${
         h.merged ? `<p class="hl-line">${U.esc(t('health.mergedStat', { median: span(h.merged.median), max: span(h.merged.max) }))}</p>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
+      `<section class="hl-sec" id="hl-clash"><h3>${U.esc(t('health.clash'))}</h3><p class="hl-none">${U.esc(t('health.clashHelp'))}</p><button type="button" class="btn btn-ghost" id="hl-clash-go">${U.esc(t('health.clashGo'))}</button><div id="hl-clash-out" role="status" aria-live="polite"></div></section>` +
       `<div class="hl-stats">${stat(t('health.merges7'), h.pace.merges7)}${stat(t('health.merges30'), h.pace.merges30)}${stat(t('health.releases30'), h.pace.releases30)}</div>`;
+    const clashBtn = $('#hl-clash-go');
+    if (!source.files) clashBtn.hidden = true;
+    clashBtn.addEventListener('click', () => findClashes(data, clashBtn));
     el.healthBody.querySelectorAll('.hl-list').forEach((ul) =>
       ul.querySelectorAll('[data-go]').forEach((b) =>
         b.addEventListener('click', () => {
@@ -984,6 +988,39 @@
           graph.focusBranch(r.name || r.head);
         }),
       ),
+    );
+  }
+
+  /** Choques: una comparación por rama con PR abierto, solo cuando se pide (cuesta consultas). */
+  async function findClashes(data, btn) {
+    const out = $('#hl-clash-out');
+    const names = GB.health.clashCandidates(data);
+    if (names.length < 2) return void (out.innerHTML = `<p class="hl-none">${U.esc(t('health.none'))}</p>`);
+    btn.disabled = true;
+    out.textContent = t('health.clashBusy', { n: names.length });
+    const entries = [];
+    try {
+      for (const name of names) {
+        const b = data.branches.get(name);
+        const r = await source.files({ name, sha: b.sha, isDefault: false });
+        if (r?.kind === 'diff') entries.push({ name, files: r.files.map((f) => f.path) });
+      }
+    } catch (e) {
+      out.innerHTML = `<p class="hl-none">${U.esc(t('health.clashFail'))}</p>`;
+      btn.disabled = false;
+      return;
+    }
+    const c = GB.health.clashes(entries);
+    btn.disabled = false;
+    if (!c.rows.length) return void (out.innerHTML = `<p class="hl-none">${U.esc(t('health.clashNone', { n: entries.length }))}</p>`);
+    out.innerHTML = `<ul class="hl-list" data-list="clash">${c.rows
+      .map((r, i) => `<li><button type="button" class="hl-row" data-go="${i}" title="${U.esc(t('feed.locate'))}"><span class="hl-main">${U.esc(r.path)}</span><span class="hl-aside">${U.esc(r.branches.join(', '))}</span></button></li>`)
+      .join('')}</ul>`;
+    out.querySelectorAll('[data-go]').forEach((b) =>
+      b.addEventListener('click', () => {
+        closeHealth();
+        graph.focusBranch(c.rows[Number(b.dataset.go)].branches[0]);
+      }),
     );
   }
 

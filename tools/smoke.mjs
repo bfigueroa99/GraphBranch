@@ -514,7 +514,11 @@ console.log('Escritorio (1280×800)');
     if (!info.rows) throw new Error('la demo tiene PRs abiertos y no salen en la lista');
     if (/undefined|NaN|health\./.test(info.text)) throw new Error('texto sin resolver en el panel: ' + info.text.slice(0, 120));
     if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
-    await page.click('#health .hl-list [data-go]');
+    await page.click('#hl-clash-go');
+    await page.waitForFunction(() => document.querySelector('#hl-clash-out')?.textContent.trim() && !document.querySelector('#hl-clash-go').disabled, null, { timeout: 8000 });
+    const clash = await page.evaluate(() => document.querySelector('#hl-clash-out').textContent);
+    if (/undefined|NaN|health\./.test(clash)) throw new Error('texto sin resolver en los choques: ' + clash.slice(0, 120));
+    await page.click('#health .hl-list[data-list="prs"] [data-go]');
     await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: 3000 });
   });
 

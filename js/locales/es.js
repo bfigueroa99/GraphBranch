@@ -416,4 +416,10 @@ GB.i18n.define('es', {
   'health.merges30': 'Merges, últimos 30 días',
   'health.releases30': 'Releases, últimos 30 días',
   'health.none': 'Nada que mostrar.',
+  'health.clash': 'Archivos tocados por varias ramas abiertas',
+  'health.clashHelp': 'Compara con la rama por defecto cada rama que tiene un pull request abierto. Cuesta una consulta por rama, así que solo corre cuando lo pides.',
+  'health.clashGo': 'Buscar choques',
+  'health.clashBusy': 'Comparando {n} ramas…',
+  'health.clashFail': 'No se pudieron comparar las ramas.',
+  'health.clashNone': 'Ninguna de las {n} ramas comparadas toca los mismos archivos.',
 });

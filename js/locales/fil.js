@@ -417,4 +417,10 @@ GB.i18n.define('fil', {
   'health.merges30': 'Mga merge, huling 30 araw',
   'health.releases30': 'Mga release, huling 30 araw',
   'health.none': 'Walang ipapakita.',
+  'health.clash': 'Mga file na ginalaw ng ilang bukas na branch',
+  'health.clashHelp': 'Inihahambing sa default na branch ang bawat branch na may bukas na pull request. Isang request bawat branch ang gastos, kaya tumatakbo lang ito kapag hiniling mo.',
+  'health.clashGo': 'Maghanap ng banggaan',
+  'health.clashBusy': 'Inihahambing ang {n} branch…',
+  'health.clashFail': 'Hindi naihambing ang mga branch.',
+  'health.clashNone': 'Walang magkakabahaging file sa {n} branch na inihambing.',
 });

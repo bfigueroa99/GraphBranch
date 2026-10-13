@@ -422,4 +422,10 @@ GB.i18n.define('en', {
   'health.merges30': 'Merges, last 30 days',
   'health.releases30': 'Releases, last 30 days',
   'health.none': 'Nothing to show.',
+  'health.clash': 'Files touched by several open branches',
+  'health.clashHelp': 'Compares each branch that has an open pull request with the default branch. It costs one request per branch, so it only runs when you ask.',
+  'health.clashGo': 'Look for clashes',
+  'health.clashBusy': 'Comparing {n} branches…',
+  'health.clashFail': 'Could not compare the branches.',
+  'health.clashNone': 'No shared files among the {n} branches compared.',
 });

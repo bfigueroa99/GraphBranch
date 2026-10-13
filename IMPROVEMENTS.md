@@ -131,7 +131,7 @@ segunda columna a la primera.
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`) | VS Code |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM) | Slack y Discord, resumen de la semana |
-| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo) | choques entre ramas, comparar ramas, búsqueda |
+| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas | comparar ramas, búsqueda |
 | Público | devs y equipos, 40 idiomas, teclado | quien enseña o aprende git, quien usa lector de pantalla |
 
 ## Hoja de ruta
@@ -193,10 +193,9 @@ se comprueban antes de construir sobre ellas.
    `GitHubSource` toma la URL de la API (REST ahí, GraphQL en `/api/graphql`, enlaces al host); solo https.
    La app de escritorio suma ese host, y solo ese, al `connect-src` del CSP; en la web lo hace quien sirve la
    página (README). Un servidor por sesión, sin claves propias para sus repos ni token aparte.
-14. **Choques entre ramas** · Análisis · 2×3/2. Archivos tocados a la vez por varias ramas abiertas (de las
-    comparaciones con la rama por defecto, que ya pide el modo galaxias): "feature/a y feature/b tocan
-    `src/pagos.js`", en el detalle de cada rama y como aviso al aparecer uno nuevo. Comprobar: prueba
-    con comparaciones simuladas.
+14. ~~**Choques entre ramas**~~ hecho en #64 · Análisis. En el panel de salud, «Buscar choques» compara con la rama
+    por defecto cada rama con PR abierto (hasta 20, una consulta por rama, solo al pedirlo) y lista los archivos
+    que tocan varias a la vez; cada fila lleva a una de las ramas. Cálculo puro en `js/health.js`.
 15. **Avisos a Slack y Discord** · Salidas · 2×2/2. En la app de escritorio (las URL de webhook no aceptan
     llamadas desde una página): elegir qué eventos se envían (release, merge a la rama por defecto, CI
     en rojo, force-push en la rama por defecto) y a qué webhook, guardado cifrado como el token.
@@ -1255,3 +1254,24 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 146 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 23 e2e en verde. El primer `check` falló en tres pasos del smoke ajenos al cambio y pasó al repetirlo: pendiente nuevo [Deuda] (Media, 4).
 - **Siguiente:** iteración 37, expansión: ítem 14 (Choques entre ramas, Análisis)
+
+### 2026-10-13 · Iteración 37 · Expansión · Análisis
+
+- **Capacidad nueva: choques entre ramas** (ítem 14 de la hoja de ruta). El panel de salud suma «Buscar choques»:
+  compara con la rama por defecto cada rama con PR abierto del mismo repo (hasta 20) y lista los archivos que
+  tocan dos o más a la vez, con sus ramas; cada fila lleva a una de ellas. Reusa `source.files` (GitHub, GitLab,
+  demo y repos locales), así que no hay API nueva. Corre solo al pulsar el botón: abrir el panel no gasta cuota.
+  Cálculos puros (`clashes`, `clashCandidates`) en `js/health.js`. Queda fuera el aviso automático al aparecer un
+  choque nuevo (requeriría comparar sin que se pida).
+- **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` (2 pruebas nuevas: choques ordenados y sin
+  repetir ramas; candidatas sin la rama por defecto ni forks) y el paso del smoke de salud, que ahora pulsa
+  «Buscar choques» y espera el resultado.
+- README: la función en la lista, Controles, Límites conocidos y Seguridad.
+- QA: filas tocadas: demo sin token (el smoke la ejerce con la API de la demo); 40 idiomas (6 textos nuevos,
+  `check-i18n`); cuota de GitHub (solo al pedirlo, una consulta por rama, tope 20); error de la API (mensaje
+  «no se pudieron comparar»); resultado en región `role="status"`. Sin mirar a mano: solo teclado, árabe y
+  tamil, 320 px y la app de escritorio; auditoría: ver Validado.
+- Reclamo: loop/37, sin colisión
+- Web publicada: PENDIENTE
+- Validado: PENDIENTE
+- **Siguiente:** iteración 38, expansión: ítem 15 (Avisos a Slack y Discord, Salidas)

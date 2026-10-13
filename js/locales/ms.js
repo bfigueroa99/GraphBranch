@@ -416,4 +416,10 @@ GB.i18n.define('ms', {
   'health.merges30': 'Gabungan, 30 hari lepas',
   'health.releases30': 'Keluaran, 30 hari lepas',
   'health.none': 'Tiada apa untuk dipaparkan.',
+  'health.clash': 'Fail yang disentuh beberapa branch terbuka',
+  'health.clashHelp': 'Membandingkan setiap branch yang mempunyai pull request terbuka dengan branch lalai. Kosnya satu permintaan setiap branch, jadi ia hanya berjalan apabila diminta.',
+  'health.clashGo': 'Cari pertembungan',
+  'health.clashBusy': 'Membandingkan {n} branch…',
+  'health.clashFail': 'Branch tidak dapat dibandingkan.',
+  'health.clashNone': 'Tiada fail dikongsi antara {n} branch yang dibandingkan.',
 });

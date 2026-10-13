@@ -424,4 +424,10 @@ GB.i18n.define('ro', {
   'health.merges30': 'Îmbinări, ultimele 30 de zile',
   'health.releases30': 'Lansări, ultimele 30 de zile',
   'health.none': 'Nimic de afișat.',
+  'health.clash': 'Fișiere atinse de mai multe ramuri deschise',
+  'health.clashHelp': 'Compară cu ramura implicită fiecare ramură care are un pull request deschis. Costă o cerere pe ramură, deci rulează doar la cerere.',
+  'health.clashGo': 'Caută ciocniri',
+  'health.clashBusy': 'Se compară {n} ramuri…',
+  'health.clashFail': 'Ramurile nu au putut fi comparate.',
+  'health.clashNone': 'Niciun fișier comun între cele {n} ramuri comparate.',
 });

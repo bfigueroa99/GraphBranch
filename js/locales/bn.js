@@ -455,4 +455,12 @@ GB.i18n.define('bn', {
   'textview.shown': 'দেখানো কমিট: {n}',
   'textview.by': '{author}-এর',
   'textview.merge': 'মার্জ',
+  'search.title': 'কমিট খুঁজুন',
+  'search.help': 'বার্তা, SHA বা লেখক (@নাম) দিয়ে খুঁজুন। নিচের তীর ফলাফলে যায়, Enter কমিটে উড়ে যায়।',
+  'search.placeholder': 'বার্তা, SHA বা @লেখক…',
+  'search.author': 'লেখক',
+  'search.anyAuthor': 'সবাই',
+  'search.none': 'কোনো কমিট মেলেনি।',
+  'search.count': 'ফলাফল: {n}',
+  'search.some': '{total}-এর মধ্যে {n}টি দেখানো হচ্ছে',
 });

@@ -466,4 +466,12 @@ GB.i18n.define('cs', {
   'textview.shown': 'zobrazené commity: {n}',
   'textview.by': 'od {author}',
   'textview.merge': 'merge',
+  'search.title': 'Hledat commity',
+  'search.help': 'Hledejte podle zprávy, SHA nebo autora (@jméno). Šipka dolů přejde na výsledky, Enter přeletí k commitu.',
+  'search.placeholder': 'Zpráva, SHA nebo @autor…',
+  'search.author': 'Autor',
+  'search.anyAuthor': 'Všichni',
+  'search.none': 'Žádný commit neodpovídá.',
+  'search.count': 'Výsledky: {n}',
+  'search.some': 'Zobrazeno {n} z {total}',
 });

@@ -455,4 +455,12 @@ GB.i18n.define('bg', {
   'textview.shown': 'показани комити: {n}',
   'textview.by': 'от {author}',
   'textview.merge': 'сливане',
+  'search.title': 'Търсене на комити',
+  'search.help': 'Търсете по съобщение, SHA или автор (@име). Стрелка надолу отива към резултатите, Enter лети до комита.',
+  'search.placeholder': 'Съобщение, SHA или @автор…',
+  'search.author': 'Автор',
+  'search.anyAuthor': 'Всички',
+  'search.none': 'Няма съвпадащи комити.',
+  'search.count': 'Резултати: {n}',
+  'search.some': 'Показани {n} от {total}',
 });

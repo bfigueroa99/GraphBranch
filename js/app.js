@@ -55,6 +55,7 @@
     healthBody: $('#health-body'),
     textview: $('#textview'),
     textviewBody: $('#textview-body'),
+    search: $('#search'),
     trophyBtn: $('#trophy-btn'),
     trophyCount: $('#trophy-count'),
     gameStrip: $('#game-strip'),
@@ -1100,6 +1101,31 @@
     el.textviewBody.querySelector('[tabindex="0"]')?.focus();
   });
   $('#textview-close').addEventListener('click', closeTextview);
+
+  /* ---------- búsqueda de commits por mensaje, SHA o autor (ver search.js) ---------- */
+  function closeSearch() {
+    if (typeof el.search.close === 'function') el.search.close();
+    else el.search.removeAttribute('open');
+  }
+  const search = GB.search.mount(
+    { input: $('#search-input'), select: $('#search-author'), list: $('#search-list'), status: $('#search-status') },
+    {
+      text: (k, p) => t(k, p),
+      ago: (ms) => U.timeAgo(ms),
+      data: () => source.data,
+      onGo: (sha) => {
+        closeSearch();
+        graph.focusSha?.(sha);
+      },
+    }
+  );
+  $('#search-btn').addEventListener('click', () => {
+    search.open();
+    if (typeof el.search.showModal === 'function') el.search.showModal();
+    else el.search.setAttribute('open', '');
+    $('#search-input').focus();
+  });
+  $('#search-close').addEventListener('click', closeSearch);
 
   /** Tags y entornos de despliegue por commit: sha -> { tags: [nombre], envs: [entorno] }. */
   function refsBySha(data) {

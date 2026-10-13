@@ -498,4 +498,12 @@ GB.i18n.define('fa', {
   'textview.shown': 'commitهای نمایش‌داده‌شده: {n}',
   'textview.by': 'از {author}',
   'textview.merge': 'ادغام',
+  'search.title': 'جستجوی کامیت‌ها',
+  'search.help': 'با پیام، SHA یا نویسنده (@نام) جستجو کنید. پیکان پایین به نتایج می‌رود و Enter به کامیت پرواز می‌کند.',
+  'search.placeholder': 'پیام، SHA یا ‎@نویسنده…',
+  'search.author': 'نویسنده',
+  'search.anyAuthor': 'همه',
+  'search.none': 'هیچ کامیتی مطابقت ندارد.',
+  'search.count': 'نتایج: {n}',
+  'search.some': 'نمایش {n} از {total}',
 });

@@ -455,4 +455,12 @@ GB.i18n.define('da', {
   'textview.shown': 'viste commits: {n}',
   'textview.by': 'af {author}',
   'textview.merge': 'sammenfletning',
+  'search.title': 'Søg i commits',
+  'search.help': 'Søg efter besked, SHA eller forfatter (@navn). Pil ned går til resultaterne, Enter flyver til committen.',
+  'search.placeholder': 'Besked, SHA eller @forfatter…',
+  'search.author': 'Forfatter',
+  'search.anyAuthor': 'Alle',
+  'search.none': 'Ingen commits passer.',
+  'search.count': 'Resultater: {n}',
+  'search.some': 'Viser {n} af {total}',
 });

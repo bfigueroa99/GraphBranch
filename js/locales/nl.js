@@ -456,4 +456,12 @@ GB.i18n.define('nl', {
   'textview.shown': 'getoonde commits: {n}',
   'textview.by': 'door {author}',
   'textview.merge': 'merge',
+  'search.title': 'Commits zoeken',
+  'search.help': 'Zoek op bericht, SHA of auteur (@naam). Pijl omlaag gaat naar de resultaten, Enter vliegt naar de commit.',
+  'search.placeholder': 'Bericht, SHA of @auteur…',
+  'search.author': 'Auteur',
+  'search.anyAuthor': 'Iedereen',
+  'search.none': 'Geen enkele commit komt overeen.',
+  'search.count': 'Resultaten: {n}',
+  'search.some': '{n} van {total} getoond',
 });

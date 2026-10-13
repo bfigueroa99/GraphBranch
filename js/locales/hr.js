@@ -463,4 +463,12 @@ GB.i18n.define('hr', {
   'textview.shown': 'prikazani commitovi: {n}',
   'textview.by': 'autor {author}',
   'textview.merge': 'merge',
+  'search.title': 'Traži commitove',
+  'search.help': 'Traži po poruci, SHA-u ili autoru (@ime). Strelica dolje ide na rezultate, Enter leti do commita.',
+  'search.placeholder': 'Poruka, SHA ili @autor…',
+  'search.author': 'Autor',
+  'search.anyAuthor': 'Svi',
+  'search.none': 'Nijedan commit ne odgovara.',
+  'search.count': 'Rezultati: {n}',
+  'search.some': 'Prikazano {n} od {total}',
 });

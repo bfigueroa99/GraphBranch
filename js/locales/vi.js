@@ -455,4 +455,12 @@ GB.i18n.define('vi', {
   'textview.shown': 'commit đang hiện: {n}',
   'textview.by': 'bởi {author}',
   'textview.merge': 'merge',
+  'search.title': 'Tìm commit',
+  'search.help': 'Tìm theo thông điệp, SHA hoặc tác giả (@tên). Mũi tên xuống đi tới kết quả, Enter bay tới commit.',
+  'search.placeholder': 'Thông điệp, SHA hoặc @tác giả…',
+  'search.author': 'Tác giả',
+  'search.anyAuthor': 'Tất cả',
+  'search.none': 'Không có commit nào khớp.',
+  'search.count': 'Kết quả: {n}',
+  'search.some': 'Hiển thị {n} trên {total}',
 });

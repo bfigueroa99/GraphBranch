@@ -471,4 +471,12 @@ GB.i18n.define('uk', {
   'textview.shown': 'показано комітів: {n}',
   'textview.by': 'автор {author}',
   'textview.merge': 'злиття',
+  'search.title': 'Пошук комітів',
+  'search.help': 'Шукайте за повідомленням, SHA або автором (@ім’я). Стрілка вниз переходить до результатів, Enter летить до коміту.',
+  'search.placeholder': 'Повідомлення, SHA або @автор…',
+  'search.author': 'Автор',
+  'search.anyAuthor': 'Усі',
+  'search.none': 'Немає відповідних комітів.',
+  'search.count': 'Результатів: {n}',
+  'search.some': 'Показано {n} з {total}',
 });

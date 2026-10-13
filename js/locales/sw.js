@@ -455,4 +455,12 @@ GB.i18n.define('sw', {
   'textview.shown': 'commit zinazoonyeshwa: {n}',
   'textview.by': 'na {author}',
   'textview.merge': 'muunganisho',
+  'search.title': 'Tafuta commit',
+  'search.help': 'Tafuta kwa ujumbe, SHA au mwandishi (@jina). Mshale wa chini huenda kwenye matokeo, Enter huruka hadi kwenye commit.',
+  'search.placeholder': 'Ujumbe, SHA au @mwandishi…',
+  'search.author': 'Mwandishi',
+  'search.anyAuthor': 'Wote',
+  'search.none': 'Hakuna commit inayolingana.',
+  'search.count': 'Matokeo: {n}',
+  'search.some': 'Inaonyesha {n} kati ya {total}',
 });

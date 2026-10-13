@@ -455,4 +455,12 @@ GB.i18n.define('hu', {
   'textview.shown': 'megjelenített commitok: {n}',
   'textview.by': 'szerző: {author}',
   'textview.merge': 'merge',
+  'search.title': 'Commitok keresése',
+  'search.help': 'Keressen üzenet, SHA vagy szerző (@név) alapján. A lefelé nyíl az eredményekre lép, az Enter a commithoz repít.',
+  'search.placeholder': 'Üzenet, SHA vagy @szerző…',
+  'search.author': 'Szerző',
+  'search.anyAuthor': 'Mindenki',
+  'search.none': 'Nincs egyező commit.',
+  'search.count': 'Találatok: {n}',
+  'search.some': '{n} látható ennyiből: {total}',
 });

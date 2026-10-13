@@ -554,4 +554,12 @@ GB.i18n.define('ar', {
   'textview.shown': 'الـ commits المعروضة: {n}',
   'textview.by': 'بواسطة {author}',
   'textview.merge': 'دمج',
+  'search.title': 'البحث في الـ commits',
+  'search.help': 'ابحث بالرسالة أو SHA أو المؤلف (@الاسم). السهم لأسفل ينتقل إلى النتائج وEnter يطير إلى الـ commit.',
+  'search.placeholder': 'رسالة أو SHA أو ‎@مؤلف…',
+  'search.author': 'المؤلف',
+  'search.anyAuthor': 'الجميع',
+  'search.none': 'لا يوجد commit مطابق.',
+  'search.count': 'النتائج: {n}',
+  'search.some': 'عرض {n} من {total}',
 });

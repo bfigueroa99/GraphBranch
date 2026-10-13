@@ -455,4 +455,12 @@ GB.i18n.define('hi', {
   'textview.shown': 'दिखाए गए कमिट: {n}',
   'textview.by': '{author} द्वारा',
   'textview.merge': 'मर्ज',
+  'search.title': 'कमिट खोजें',
+  'search.help': 'संदेश, SHA या लेखक (@नाम) से खोजें। नीचे का तीर नतीजों पर जाता है, Enter कमिट तक उड़ाता है।',
+  'search.placeholder': 'संदेश, SHA या @लेखक…',
+  'search.author': 'लेखक',
+  'search.anyAuthor': 'सभी',
+  'search.none': 'कोई कमिट मेल नहीं खाता।',
+  'search.count': 'नतीजे: {n}',
+  'search.some': '{total} में से {n} दिखाए जा रहे हैं',
 });

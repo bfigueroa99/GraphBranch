@@ -456,4 +456,12 @@ GB.i18n.define('fil', {
   'textview.shown': 'mga commit na ipinapakita: {n}',
   'textview.by': 'ni {author}',
   'textview.merge': 'merge',
+  'search.title': 'Maghanap ng commit',
+  'search.help': 'Maghanap ayon sa mensahe, SHA o may-akda (@pangalan). Ang pababang arrow ay papunta sa mga resulta, ang Enter ay lilipad sa commit.',
+  'search.placeholder': 'Mensahe, SHA o @may-akda…',
+  'search.author': 'May-akda',
+  'search.anyAuthor': 'Lahat',
+  'search.none': 'Walang tumutugmang commit.',
+  'search.count': 'Mga resulta: {n}',
+  'search.some': 'Ipinapakita ang {n} sa {total}',
 });

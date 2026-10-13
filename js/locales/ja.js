@@ -455,4 +455,12 @@ GB.i18n.define('ja', {
   'textview.shown': '表示中のコミット: {n}',
   'textview.by': '作成者 {author}',
   'textview.merge': 'マージ',
+  'search.title': 'コミットを検索',
+  'search.help': 'メッセージ、SHA、作者（@名前）で検索します。下矢印で結果へ移動し、Enter でそのコミットへ飛びます。',
+  'search.placeholder': 'メッセージ、SHA、@作者…',
+  'search.author': '作者',
+  'search.anyAuthor': '全員',
+  'search.none': '一致するコミットはありません。',
+  'search.count': '結果: {n}',
+  'search.some': '{total} 件中 {n} 件を表示',
 });

@@ -512,4 +512,12 @@ GB.i18n.define('he', {
   'textview.shown': 'commits מוצגים: {n}',
   'textview.by': 'מאת {author}',
   'textview.merge': 'מיזוג',
+  'search.title': 'חיפוש קומיטים',
+  'search.help': 'חפשו לפי הודעה, SHA או כותב (@שם). חץ למטה עובר לתוצאות, Enter טס אל הקומיט.',
+  'search.placeholder': 'הודעה, SHA או ‎@כותב…',
+  'search.author': 'כותב',
+  'search.anyAuthor': 'כולם',
+  'search.none': 'אין קומיט תואם.',
+  'search.count': 'תוצאות: {n}',
+  'search.some': 'מוצגים {n} מתוך {total}',
 });

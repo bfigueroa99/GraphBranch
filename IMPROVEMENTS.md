@@ -131,7 +131,7 @@ segunda columna a la primera.
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`) | VS Code |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM), avisos a Slack y Discord (escritorio) | resumen de la semana |
-| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas | comparar ramas, búsqueda |
+| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, búsqueda de commits por mensaje, SHA o autor | comparar ramas, filtrar el grafo por autor |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado) | probar con NVDA, JAWS y VoiceOver |
 
 ## Hoja de ruta
@@ -212,8 +212,9 @@ se comprueban antes de construir sobre ellas.
     commits como un árbol (`role=tree`) que se recorre con el teclado (↑ ↓ → ← Inicio Fin, Enter lleva al grafo), con
     nombres accesibles (mensaje, autor, antigüedad, merge, tags). Segunda entrega posible: avisar de los cambios en
     vivo mientras está abierta y probarla con un lector de pantalla real.
-19. **Búsqueda y filtro por autor** · Análisis · 3×2/1. Buscar un commit por mensaje, SHA o autor y volar
-    hasta él; filtrar el grafo por autor ("mis ramas"). Comprobar: un paso del smoke en la demo.
+19. ~~**Búsqueda y filtro por autor**~~ hecho en #71 · Análisis. La lupa abre un cuadro que busca entre los commits
+    ya cargados por mensaje, SHA o autor (`@ana`), con un selector de autor y Enter para volar hasta el commit
+    (2D y 3D). Sin consultas nuevas. Sin hacer: esconder del grafo las ramas de los demás autores (ítem 34).
 20. **Comparar dos ramas** · Análisis · 2×2/2. Elegir dos ramas: cuántos commits lleva cada una por delante,
     desde dónde se separaron y qué archivos cambian, resaltado en el grafo. Comprobar: prueba con la
     API simulada.
@@ -254,6 +255,9 @@ se comprueban antes de construir sobre ellas.
     (sin anunciar de más) de las ramas y commits nuevos mientras está abierto, que filtre por nombre de rama y que
     se escriba en el README cómo se probó con NVDA, VoiceOver y Orca. Comprobar: paso del smoke con un evento en vivo
     de la demo y la región viva sin repetir lo ya leído.
+34. **Filtrar el grafo por autor** · Análisis · 2×2/2. [parte del ítem 19] Mostrar solo las ramas con commits de una
+    persona ("mis ramas"), en las tres vistas y en las tres fuentes, con el filtro guardado por repo. Comprobar: un
+    paso del smoke en la demo y una prueba por fuente.
 
 ## Cómo validar un cambio
 
@@ -1397,3 +1401,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 171 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde.
 - **Siguiente:** iteración 44, expansión: ítem 19 (Búsqueda y filtro por autor, Análisis)
+
+### 2026-10-13 · Iteración 44 · Expansión · Análisis
+
+- **Capacidad nueva: búsqueda de commits y filtro por autor** (ítem 19 de la hoja de ruta). La lupa de la barra superior abre un cuadro que busca entre los commits ya cargados por mensaje, SHA o autor (`@ana`, por nombre o usuario; todas las palabras tienen que aparecer), con un selector de autor con la cuenta de cada uno. ↓ baja a los resultados, Enter o un clic vuela al commit en el grafo (2D o 3D) y Esc cierra. Lista los 50 más nuevos y dice el total. Sin consultas nuevas; en la demo funciona igual. Lo de esconder del grafo las ramas de otros autores queda como ítem 34.
+- **Pruebas que fallan sin la capacidad:** `tools/search.test.mjs` (mensaje, SHA, autor con y sin `@`, filtro por clave, límite, cuenta de autores) y el paso del smoke «búsqueda de commits: por mensaje y por autor, con teclado, y Enter vuela al commit».
+- README: la función en la lista, Controles, Estructura, Límites conocidos y Seguridad.
+- QA: filas tocadas: demo sin token (sin consultas); 40 idiomas (8 textos, `check-i18n`); teclado (foco en el campo al abrir, ↓ y Enter en el smoke); desborde en escritorio (smoke); CSP (sin cambios); XSS (`textContent`). Sin mirar a mano: 320 px, árabe, tamil, 3D, lector de pantalla real; auditoría: ver Validado.
+- Reclamo: loop/44, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: PENDIENTE
+- **Siguiente:** iteración 45, expansión: ítem 21 (Gitea, Forgejo y Codeberg, Fuentes)

@@ -498,4 +498,12 @@ GB.i18n.define('ur', {
   'textview.shown': 'دکھائے گئے commits: {n}',
   'textview.by': 'از {author}',
   'textview.merge': 'انضمام',
+  'search.title': 'کمٹس تلاش کریں',
+  'search.help': 'پیغام، SHA یا مصنف (@نام) سے تلاش کریں۔ نیچے کا تیر نتائج پر جاتا ہے، Enter کمٹ تک اڑاتا ہے۔',
+  'search.placeholder': 'پیغام، SHA یا ‎@مصنف…',
+  'search.author': 'مصنف',
+  'search.anyAuthor': 'سب',
+  'search.none': 'کوئی کمٹ مطابقت نہیں رکھتا۔',
+  'search.count': 'نتائج: {n}',
+  'search.some': '{total} میں سے {n} دکھائے جا رہے ہیں',
 });

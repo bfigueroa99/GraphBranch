@@ -455,4 +455,12 @@ GB.i18n.define('ms', {
   'textview.shown': 'commit dipaparkan: {n}',
   'textview.by': 'oleh {author}',
   'textview.merge': 'merge',
+  'search.title': 'Cari commit',
+  'search.help': 'Cari mengikut mesej, SHA atau penulis (@nama). Anak panah bawah ke hasil, Enter terbang ke commit.',
+  'search.placeholder': 'Mesej, SHA atau @penulis…',
+  'search.author': 'Penulis',
+  'search.anyAuthor': 'Semua',
+  'search.none': 'Tiada commit yang sepadan.',
+  'search.count': 'Hasil: {n}',
+  'search.some': 'Memaparkan {n} daripada {total}',
 });

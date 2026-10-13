@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 /* La puerta antes de subir un cambio: corre en orden node --check, node --test, las traducciones,
-   loop --check, el smoke en Chromium y, si el cambio toca la página o la app de escritorio, las e2e.
-   Se detiene en el primer rojo e imprime la línea «Validado:» que va a la bitácora.
+   loop --check, el smoke en Chromium, la auditoría (si el cambio toca la página) y, si el cambio toca la
+   página o la app de escritorio, las e2e. Se detiene en el primer rojo e imprime la línea «Validado:» que
+   va a la bitácora.
 
      npm run check                  las e2e solo si el diff con origin/master toca la página o el escritorio
      npm run check -- --e2e         las e2e siempre
      npm run check -- --sin-e2e     las e2e nunca
      npm run check -- --langs       el smoke en los 40 idiomas (solo, si el diff toca js/locales/, css/ o index.html)
      npm run check -- --lento       las e2e con la prueba @lento (2 minutos más)
+     npm run check -- --auditar     la auditoría (tools/audit.mjs --puerta) siempre; sola, si el diff toca la página
+     npm run check -- --sin-auditar la auditoría nunca
 
    Salida: 0 todo en verde · 1 un paso falló (FALLA <paso> y sus últimas 40 líneas) · 2 no se pudo
    verificar (sin Chromium, sin Electron o sin pantalla ni xvfb-run). Elige el Chromium solo:
@@ -22,7 +25,7 @@ import { spawn, spawnSync } from 'node:child_process';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const logs = join(root, 'test-results', 'check');
-const FLAGS = ['--e2e', '--sin-e2e', '--langs', '--lento'];
+const FLAGS = ['--e2e', '--sin-e2e', '--langs', '--lento', '--auditar', '--sin-auditar'];
 const opciones = new Set(process.argv.slice(2));
 for (const a of opciones) {
   if (!FLAGS.includes(a)) {
@@ -34,6 +37,8 @@ mkdirSync(logs, { recursive: true });
 
 const RE_E2E = /^(index\.html|sw\.js|manifest\.webmanifest|package\.json|playwright\.config\.mjs|css\/|js\/|electron\/|vendor\/|e2e\/)/;
 const RE_LANGS = /^(js\/locales\/|css\/|index\.html)/;
+// la auditoría mira la página: corre si cambia algo de lo que se sirve o la propia auditoría
+const RE_AUDIT = /^(index\.html|sw\.js|manifest\.webmanifest|css\/|js\/|vendor\/|tools\/audit)/;
 const playwrightCli = join(root, 'node_modules', '@playwright', 'test', 'cli.js');
 
 const dur = (ms) => (ms >= 60000 ? `${Math.floor(ms / 60000)} min ${Math.round((ms % 60000) / 1000)} s` : `${(ms / 1000).toFixed(1).replace('.', ',')} s`);
@@ -145,6 +150,7 @@ async function main() {
   const toca = (re) => cambios === null || cambios.some((f) => re.test(f));
   const conE2E = opciones.has('--e2e') || (!opciones.has('--sin-e2e') && toca(RE_E2E));
   const langs = opciones.has('--langs') || toca(RE_LANGS);
+  const conAudit = opciones.has('--auditar') || (!opciones.has('--sin-auditar') && toca(RE_AUDIT));
 
   // 1. sintaxis
   const t0 = Date.now();
@@ -201,7 +207,19 @@ async function main() {
   const idiomas = (/(\d+) idiomas/.exec(smoke.salida) || [])[1];
   console.log(`ok  smoke ${pasos} pasos${langs ? `, ${idiomas} idiomas` : ''} (${dur(smoke.ms)})`);
 
-  // 7. las e2e
+  // 7. la auditoría: hallazgos nuevos frente a tools/audit-base.json (falla solo si se repiten en dos corridas)
+  let audit = null;
+  if (conAudit) {
+    const r = correr('auditoria', process.execPath, [join(root, 'tools', 'audit.mjs'), '--puerta'], entorno);
+    if (r.status === 2) sinVerificar(`la auditoría no pudo correr: ${r.salida.trim().split('\n').pop()}`);
+    if (r.status !== 0) falla('auditoría', r);
+    const m = /Auditoría: (\d+) hallazgos nuevos, (\d+) conocidos/.exec(r.salida);
+    if (!m) falla('auditoría', r);
+    audit = { nuevos: +m[1], conocidos: +m[2] };
+    console.log(`ok  auditoría ${audit.nuevos} hallazgos nuevos, ${audit.conocidos} conocidos (${dur(r.ms)})`);
+  } else console.log(opciones.has('--sin-auditar') ? 'auditoría: saltada por --sin-auditar' : 'auditoría: no corrida (el cambio no toca la página)');
+
+  // 8. las e2e
   let e2e = null;
   if (conE2E) {
     const args = [playwrightCli, 'test', ...(opciones.has('--lento') ? [] : ['--grep-invert', '@lento'])];
@@ -213,7 +231,8 @@ async function main() {
   } else console.log(opciones.has('--sin-e2e') ? 'e2e: saltadas por --sin-e2e' : 'e2e: no corridas (el cambio no toca la página ni el escritorio)');
 
   const smokeTxt = langs ? `smoke (${idiomas} idiomas)` : 'smoke';
-  const base = `Validado: ${nTests} pruebas (\`node --test\`), ${smokeTxt}, i18n (${mI18n[2]} errores)`;
+  const auditTxt = audit ? `, auditoría (${audit.nuevos} hallazgos nuevos, ${audit.conocidos} conocidos)` : '';
+  const base = `Validado: ${nTests} pruebas (\`node --test\`), ${smokeTxt}, i18n (${mI18n[2]} errores)${auditTxt}`;
   console.log(e2e === null ? `${base} en verde; e2e no corridas (${opciones.has('--sin-e2e') ? 'saltadas por --sin-e2e' : 'no toca la página ni el escritorio'}).` : `${base} y ${e2e} e2e en verde.`);
 }
 

@@ -226,7 +226,9 @@ Las pruebas nunca usan la red: la app se abre con un proxy que no existe y con u
 
 Además, `node --test` prueba la lógica de `js/sources/github.js` y de `js/sources/gitlab.js` contra APIs de GitHub y de GitLab simuladas (en GitHub, también la lista de repos de una organización o un usuario; en GitLab, también un proyecto privado con token, y un token vencido o sin **read_api**), el service worker (`sw.js`) con una caché y una red falsas (guarda la página entera, nunca la API, y sin red sirve la copia) y lo que arma `js/snapshot.js` (los nombres de los archivos y la duración que se le agrega al WebM), y `node tools/smoke.mjs` es una prueba de humo rápida de la web (la demo, con Guardar imagen en 3D y 2D y el Replay grabado en video, que se abre y se mira: medida, dibujo y duración; con una API de GitHub simulada, varios repos a la vez y una organización o un usuario entero (`org:acme` con un repo que nace y otro que se cierra, `@nadie`, `?repo=@ana`); y un GitLab simulado, con un proyecto privado que se abre con el token de Ajustes y la comprobación de que cada token va solo a su servicio) (con `--langs`, en los 40 idiomas y en pantalla de celular).
 
-`npm run check` corre todo lo anterior en orden (y `node --check`, `node tools/check-i18n.mjs` y `node tools/loop.mjs --check`), encuentra Chromium y Electron solo y corre las e2e cuando el cambio toca la página o la app de escritorio; con `--e2e` siempre, con `--sin-e2e` nunca.
+`node tools/audit.mjs` es una auditoría exploratoria en Chromium: recorre la demo en 3D y 2D, los diálogos, el Replay, las galaxias y el vuelo, el modo TV, el celular en español, árabe, alemán y tamil (con `--langs`, los 40 idiomas) y un repo con una API de GitHub simulada, y busca errores de consola, violaciones del CSP, peticiones a otros sitios, desbordes, controles sin nombre o de menos de 24 px, foco perdido o escondido, ids repetidos, texto sin traducir, animaciones que no respetan el movimiento reducido y consultas de más a la API; además mide la carga, las tareas largas y los cuadros por segundo. Nunca sale a internet. Con `--puerta` compara contra `tools/audit-base.json` (los hallazgos ya conocidos, cada uno con su pendiente en `IMPROVEMENTS.md`) y falla si aparece uno nuevo en dos corridas seguidas.
+
+`npm run check` corre todo lo anterior en orden (y `node --check`, `node tools/check-i18n.mjs` y `node tools/loop.mjs --check`), encuentra Chromium y Electron solo, y corre la auditoría cuando el cambio toca la página (`--auditar` siempre, `--sin-auditar` nunca) y las e2e cuando toca la página o la app de escritorio (`--e2e` siempre, `--sin-e2e` nunca).
 
 ## Estructura
 
@@ -262,11 +264,13 @@ vendor/               copias locales de d3, Three.js, OrbitControls y las fuente
 tools/check-i18n.mjs  verifica las traducciones contra el inglés
 tools/vendor.mjs      descarga a vendor/ las librerías (comprobando su hash) y las fuentes
 tools/smoke.mjs       prueba de humo: abre la demo en Chromium y recorre lo principal
-tools/loop.mjs        el loop: elige la iteración (--siguiente), vigila IMPROVEMENTS.md (--check), reclama la rama (--reclamar) y mide la web publicada (--publicado)
-tools/check.mjs       la puerta: npm run check (node --check, node --test, i18n, loop --check, smoke y e2e)
-tools/*.test.mjs      pruebas de la lógica contra APIs de GitHub y GitLab simuladas, del service worker y de los archivos que arma snapshot.js (`node --test`)
+tools/loop.mjs        el loop: elige la iteración y rota el subtipo del mantenimiento (--siguiente), vigila IMPROVEMENTS.md, la skill y la investigación (--check), reclama la rama (--reclamar), mide su propia salud (--salud) y la web publicada (--publicado)
+tools/audit.mjs       auditoría exploratoria en Chromium (errores, CSP, desbordes, accesibilidad, cuota, rendimiento); --puerta compara con tools/audit-base.json
+tools/check.mjs       la puerta: npm run check (node --check, node --test, i18n, loop --check, smoke, auditoría y e2e)
+tools/*.test.mjs      pruebas de la lógica contra APIs de GitHub y GitLab simuladas, del service worker, de los archivos que arma snapshot.js, del loop y de la auditoría (`node --test`)
+docs/investigacion.md la investigación de mercado, fechada y con fuentes, de la que sale la hoja de ruta
 e2e/                  pruebas de punta a punta de la app de escritorio y la web (npm run test:e2e)
-.claude/skills/iteracion/  cómo hace una iteración el loop (reclamo, puerta, registro, PR); PROMPT.md es el prompt de la Routine
+.claude/skills/iteracion/  cómo hace una iteración el loop (reclamo, protocolos de QA y de cada subtipo de mantenimiento, puerta, registro, PR); PROMPT.md es el prompt de la Routine
 electron/main.js      app de escritorio: la ventana de Electron que abre index.html
 electron/preload.js   lo único que la página ve de la app de escritorio: los tokens, los textos de la bandeja y traer la ventana
 electron/token.js     los tokens de la app de escritorio (GitHub y GitLab), cada uno cifrado con el llavero del sistema

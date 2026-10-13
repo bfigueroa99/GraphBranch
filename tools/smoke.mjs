@@ -235,7 +235,10 @@ async function videoFile(page, dl, sel, { minSeconds, maxSeconds }) {
   if (!(v.seconds >= minSeconds && v.seconds <= maxSeconds)) throw new Error(`dura ${v.seconds.toFixed(1)} s y no entre ${minSeconds} y ${maxSeconds}`);
   return v;
 }
-const noOverflow = (page) => page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+// contra clientWidth y no innerWidth: en el celular emulado (isMobile) la vista crece hasta el contenido,
+// así que innerWidth se estiraba con el desborde y la resta daba siempre 0 (con 520 px de barra en una
+// pantalla de 390: scrollWidth 532, innerWidth 532, clientWidth 390)
+const noOverflow = (page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
 /* ---------- escritorio ---------- */
 

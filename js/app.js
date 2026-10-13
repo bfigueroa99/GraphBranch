@@ -11,6 +11,8 @@
     repoForm: $('#repo-form'),
     repoInput: $('#repo-input'),
     demoBtn: $('#demo-btn'),
+    practiceBtn: $('#practice-btn'),
+    practice: $('#practice'),
     folderBtn: $('#folder-btn'),
     status: $('#status'),
     statusText: $('#status-text'),
@@ -219,6 +221,8 @@
     return on;
   }
 
+  const practice = new GB.PracticePanel(el.practice, { onPick: (i) => startPractice(i) });
+
   const feed = new GB.Feed({
     list: $('#feed'),
     empty: $('#feed-empty'),
@@ -384,6 +388,7 @@
     el.repoInput.setCustomValidity('');
     el.branchFilter.value = filterOf(tab);
     renderRepo(source.data.repo);
+    practice.attach(source);
     saveTabs();
     renderTabs();
     status = tab.status;
@@ -503,6 +508,22 @@
     const tab = addTab(new GB.DemoSource());
     startTab(tab);
     showTab(tab);
+  }
+
+  /** La práctica de git: una pestaña como la demo, pero que solo cambia con los comandos que se escriben.
+      Sin ejercicio dado, empieza por el primero que falta. */
+  function startPractice(index) {
+    const old = tabs.find((x) => x.demo);
+    if (old) removeTab(old, { replace: false });
+    resume();
+    if (index == null) {
+      const solved = new Set(U.store.get('practice', []));
+      index = Math.max(0, GB.gitsim.EXERCISES.findIndex((ex) => !solved.has(ex.id)));
+    }
+    const tab = addTab(new GB.PracticeSource(index));
+    startTab(tab);
+    showTab(tab);
+    practice.focus();
   }
 
   /** Recuerda qué repos se siguen y cuál está a la vista; la URL los lleva también, para compartirla. */
@@ -1075,7 +1096,7 @@
     const gitlab = repo.host === 'gitlab' && !repo.demo;
     el.repoBadge.textContent = repo.demo ? t('badge.demo') : repo.local ? t('badge.local') : repo.private ? (gitlab ? 'GitLab · ' : '') + t('badge.private') : 'GitLab';
     el.repoBadge.className = `badge${repo.demo ? ' demo' : ''}`;
-    el.repoDesc.textContent = repo.demo ? t('repo.demoDesc') : repo.description || '';
+    el.repoDesc.textContent = repo.practice ? t('practice.desc') : repo.demo ? t('repo.demoDesc') : repo.description || '';
     el.repoDesc.hidden = !el.repoDesc.textContent;
     feed.setBaseTitle(`${full} · GraphBranch`);
     renderTokenBanner();
@@ -1258,6 +1279,7 @@
   });
   el.repoInput.addEventListener('input', () => el.repoInput.setCustomValidity(''));
   el.demoBtn.addEventListener('click', startDemo);
+  el.practiceBtn.addEventListener('click', () => startPractice());
   /* Abrir carpeta (solo en la app de escritorio): el diálogo del sistema elige un repo de esta máquina y el
      proceso principal lo lee con git; la página recibe su id (electron/git.js). */
   el.folderBtn.hidden = !desktop?.git;
@@ -1752,7 +1774,8 @@
     renderTabs();
     if (!source) return;
     // la demo inventa mensajes, incidencias y comentarios en el idioma activo: se reinicia para no mezclarlos
-    if (source.data.repo.demo) return startDemo();
+    if (source.data.repo.practice) practice.render(); // su historia no se inventa: se queda como está
+    else if (source.data.repo.demo) return startDemo();
     renderRepo(source.data.repo);
     if (lastRender) renderStats(lastRender.data, lastRender.L);
     renderStatus();

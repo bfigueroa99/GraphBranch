@@ -848,6 +848,33 @@ console.log('Varios repos a la vez');
   });
   await page.context().close();
 
+  /* aprender git: la terminal de práctica escribe en el grafo, sin red y sin interpretar HTML */
+  const lab = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(lab, 'la práctica de git responde a los comandos en el grafo', async () => {
+    await lab.goto(`${base}/index.html?lang=es`);
+    await loaded(lab);
+    await lab.click('#view-2d');
+    await lab.click('#practice-btn');
+    await lab.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'practice/git' && !document.querySelector('#practice').hidden, null, { timeout: 15000 });
+    await lab.waitForSelector('#graph svg .node', { timeout: 10000 });
+    if ((await lab.evaluate(() => document.activeElement?.className)) !== 'pr-input') throw new Error('el foco no quedó en la línea de comandos');
+    const nodes = () => lab.locator('#graph svg .node').count();
+    const before = await nodes();
+    for (const c of ['checkout -b feature', 'commit -m uno', 'git commit -m "dos <img src=x onerror=alert(1)>"', 'push origin main']) {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    }
+    await lab.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length >= n, before + 2, { timeout: 10000 });
+    const log = await lab.textContent('.pr-log');
+    if (!log.includes('<img src=x onerror=alert(1)>')) throw new Error('el mensaje no se ve tal cual');
+    if (await lab.locator('.pr-log img').count()) throw new Error('la terminal interpretó HTML');
+    if (!/is not a git command/.test(log)) throw new Error('un comando que no existe no dio error');
+    if ((await lab.textContent('.pr-status')).trim() === '') throw new Error('el primer ejercicio no se dio por resuelto');
+    await lab.selectOption('.pr-ex', '3');
+    await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent.includes('reset'), null, { timeout: 5000 });
+  });
+  await lab.context().close();
+
   const full = await openPage({ viewport: { width: 1280, height: 800 } });
   await full.unroute('https://api.github.com/**');
   await full.route('https://api.github.com/**', gh.handle);

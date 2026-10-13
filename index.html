@@ -55,6 +55,7 @@
       </div>
       <button class="btn btn-primary" type="submit" data-i18n="repo.connect" title="Show it here; the repositories you already follow keep updating" data-i18n-attr="title:repo.connectTitle">Connect</button>
       <button class="btn btn-ghost" type="button" id="demo-btn" data-i18n="repo.demo">Demo</button>
+      <button class="btn btn-ghost" type="button" id="practice-btn" data-i18n="practice.btn" title="Learn git by typing commands: the graph answers" data-i18n-attr="title:practice.btnTitle">Practice git</button>
       <button class="btn btn-ghost" type="button" id="folder-btn" hidden data-i18n="repo.openFolder" title="Follow a repository on this computer" data-i18n-attr="title:repo.openFolderTitle">Open folder…</button>
     </form>
 
@@ -248,6 +249,7 @@
           </div>
         </div>
       </div>
+      <form class="practice" id="practice" hidden></form>
       <p class="hint" id="hint"></p>
     </section>
 
@@ -353,6 +355,8 @@
 <script src="js/sources/local.js"></script>
 <script src="js/sources/demo-content.js"></script>
 <script src="js/sources/demo.js"></script>
+<script src="js/gitsim.js"></script>
+<script src="js/sources/practice.js"></script>
 <script src="js/palette.js"></script>
 <script src="js/layout.js"></script>
 <script src="js/graph.js"></script>
@@ -365,6 +369,7 @@
 <script src="js/replay.js"></script>
 <script src="js/game.js"></script>
 <script src="js/health.js"></script>
+<script src="js/practice-ui.js"></script>
 <script src="js/hooks.js"></script>
 <script src="js/feed.js"></script>
 <script src="js/snapshot.js"></script>

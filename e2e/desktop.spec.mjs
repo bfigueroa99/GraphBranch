@@ -306,6 +306,25 @@ test('el botón Abrir carpeta está en la app de escritorio y un --local que no 
   await again.app.close();
 });
 
+test('a 320 px la barra con Abrir carpeta no desborda, ni en los idiomas de textos largos', async ({}, testInfo) => {
+  for (const lang of ['ta', 'de']) {
+    const { app, page } = await launch(testInfo, { dir: testInfo.outputPath('perfil-' + lang), args: [`--lang=${lang}`] });
+    await loaded(page);
+    await app.evaluate(({ BrowserWindow }) => {
+      const win = BrowserWindow.getAllWindows()[0];
+      win.setMinimumSize(100, 100);
+      win.setSize(320, 640);
+    });
+    await expect(page.locator('#folder-btn')).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), { message: lang })
+      .toBeLessThanOrEqual(0);
+    const box = await page.locator('#folder-btn').boundingBox();
+    expect(box.x + box.width, lang).toBeLessThanOrEqual(320);
+    await app.close();
+  }
+});
+
 test('la página no puede pedir carpetas que el usuario no eligió', async ({}, testInfo) => {
   const { app, page } = await launch(testInfo, { args: ['--lang=es'] });
   const err = await page.evaluate(() => window.GBDesktop.git.branches('0123456789ab').then(() => null, (e) => e.message));

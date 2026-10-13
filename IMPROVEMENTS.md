@@ -1270,8 +1270,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: filas tocadas: demo sin token (el smoke la ejerce con la API de la demo); 40 idiomas (6 textos nuevos,
   `check-i18n`); cuota de GitHub (solo al pedirlo, una consulta por rama, tope 20); error de la API (mensaje
   «no se pudieron comparar»); resultado en región `role="status"`. Sin mirar a mano: solo teclado, árabe y
-  tamil, 320 px y la app de escritorio; auditoría: ver Validado.
+  tamil, 320 px y la app de escritorio; auditoría: 0 hallazgos nuevos.
 - Reclamo: loop/37, sin colisión
-- Web publicada: PENDIENTE
-- Validado: PENDIENTE
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 148 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 23 e2e en verde.
 - **Siguiente:** iteración 38, expansión: ítem 15 (Avisos a Slack y Discord, Salidas)

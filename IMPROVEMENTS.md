@@ -1386,8 +1386,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - README: la función en la lista, Controles, Estructura, Límites conocidos y Seguridad.
 - QA: filas tocadas: demo sin token (sin consultas); 40 idiomas (6 textos, `check-i18n`); teclado (↑ ↓ → ← Enter en el
   smoke, foco dentro del árbol al abrir); desborde en escritorio (smoke); CSP (sin cambios); XSS (`textContent`).
-  Sin mirar a mano: 320 px, árabe, 3D, lector de pantalla real; auditoría: VALIDADO_AUD.
+  Sin mirar a mano: 320 px, árabe, 3D, lector de pantalla real; auditoría: 0 hallazgos nuevos (la e2e de 320 px midió 29 px de desborde en tamil con el botón nuevo y se arregló con `.controls { flex-wrap: wrap }`).
 - Reclamo: loop/42, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
-- Validado: VALIDADO
+- Validado: 170 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde.
 - **Siguiente:** iteración 43, mantenimiento · Errores: pendiente 2 (Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` cor…)

@@ -328,6 +328,8 @@ GB.i18n.define('hr', {
   'act.mrOpenedDraft': 'MR !{num} otvoren kao nacrt',
   'act.mrMergedInto': 'MR !{num} spojen u granu {base}',
   'act.mrClosed': 'MR !{num} zatvoren bez spajanja',
+  'act.mrApproved': 'MR !{num} odobren',
+  'act.commentMr': 'Komentar na MR !{num}',
   'act.reviewRequested': 'Zatražen pregled za PR #{num}',
   'act.prApproved': 'PR #{num} odobren',
   'act.prChanges': 'Zatražene izmjene za PR #{num}',

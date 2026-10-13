@@ -320,6 +320,8 @@ GB.i18n.define('nb', {
   'act.mrOpenedDraft': 'MR !{num} åpnet som utkast',
   'act.mrMergedInto': 'MR !{num} merget inn i {base}',
   'act.mrClosed': 'MR !{num} lukket uten merge',
+  'act.mrApproved': 'MR !{num} godkjent',
+  'act.commentMr': 'Kommentar på MR !{num}',
   'act.reviewRequested': 'Review forespurt på PR #{num}',
   'act.prApproved': 'PR #{num} godkjent',
   'act.prChanges': 'Endringer forespurt på PR #{num}',

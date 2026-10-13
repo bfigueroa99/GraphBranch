@@ -320,6 +320,8 @@ GB.i18n.define('ko', {
   'act.mrOpenedDraft': 'MR !{num} 초안으로 열림',
   'act.mrMergedInto': 'MR !{num} {base}에 머지됨',
   'act.mrClosed': 'MR !{num} 머지 없이 닫힘',
+  'act.mrApproved': 'MR !{num} 승인됨',
+  'act.commentMr': 'MR !{num} 댓글',
   'act.reviewRequested': 'PR #{num} 리뷰 요청됨',
   'act.prApproved': 'PR #{num} 승인됨',
   'act.prChanges': 'PR #{num} 변경 요청됨',

@@ -419,6 +419,8 @@ GB.i18n.define('ar', {
   'act.mrOpenedDraft': 'تم فتح MR !{num} كمسودة',
   'act.mrMergedInto': 'تم دمج MR !{num} في {base}',
   'act.mrClosed': 'تم إغلاق MR !{num} دون دمج',
+  'act.mrApproved': 'تمت الموافقة على MR !{num}',
+  'act.commentMr': 'تعليق على MR !{num}',
   'act.reviewRequested': 'طُلبت مراجعة لـ PR #{num}',
   'act.prApproved': 'تمت الموافقة على PR #{num}',
   'act.prChanges': 'طُلبت تعديلات على PR #{num}',

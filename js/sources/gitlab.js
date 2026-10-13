@@ -12,6 +12,9 @@
      gitlab.com le pone un desafío de Cloudflare a ese listado cuando la consulta no lleva token, y
      una página no lo puede resolver. Una rama nueva trae lo suyo desde la rama por defecto; una
      rama que se movió, lo nuevo desde su cabeza anterior; la rama por defecto, sus últimos pasos.
+   - Los eventos del proyecto (`/events`: issues, comentarios, tags, aprobaciones) llenan el panel
+     como el feed de GitHub: su historial al abrir y lo nuevo cada EVENTS_MS. Los pushes, las ramas y
+     las MRs abiertas, fusionadas o cerradas ya los da la comparación entre ciclos: no se repiten.
    - Las merge requests se muestran como en GitLab: MR !12.
    - Sin token: gitlab.com permite cientos de consultas por minuto desde cada IP, así que el sondeo
      va cada POLL_MS. Con el token de GitLab de Ajustes (permiso read_api) se ven también los
@@ -26,6 +29,7 @@
   const API = WEB + '/api/v4';
   const POLL_MS = 15000; // entre ciclos
   const PULLS_MS = 30000; // entre consultas de MRs
+  const EVENTS_MS = 60000; // entre consultas del feed de eventos
   const FULL_MS = 3 * 60000; // entre listados enteros de ramas, con más de 100
   const MAX_PAGES = 10; // ramas listadas como mucho: 1.000, las actualizadas más recientemente
   const TREE_PAGES = 20; // archivos del árbol como mucho: 2.000 (los planetas del modo galaxias)
@@ -42,6 +46,8 @@
     'act.prOpenedDraft': 'act.mrOpenedDraft',
     'act.prMergedInto': 'act.mrMergedInto',
     'act.prClosed': 'act.mrClosed',
+    'act.prApproved': 'act.mrApproved',
+    'act.commentPr': 'act.commentMr',
   };
   /** Cada parte de una ruta (grupos, ramas con "/") escapada por separado: las barras quedan. */
   const segs = (path) => String(path).split('/').map(encodeURIComponent).join('/');
@@ -125,7 +131,8 @@
     }
 
     due(name) {
-      return name === 'pulls' && Date.now() - (this.lastPoll.pulls || 0) >= PULLS_MS - 500;
+      const period = { pulls: PULLS_MS, events: EVENTS_MS }[name];
+      return !!period && Date.now() - (this.lastPoll[name] || 0) >= period - 500;
     }
 
     /** Historias de rama por ciclo, repartidas entre los proyectos de GitLab que se siguen a la vez. */
@@ -147,6 +154,7 @@
       if (reseed !== this.reseeded) this.prune();
       await this.syncBranchList(acts, quiet);
       if (initial || this.due('pulls')) await this.syncPulls(acts, initial);
+      if (initial || this.due('events')) await this.syncGitlabEvents(acts, initial);
       const before = this.cost;
       await this.fillBacklog(deadline);
       this.bulkCost += this.cost - before;
@@ -364,6 +372,75 @@
         if (hard(err)) throw err;
       }
       return out;
+    }
+
+    /* ---------- eventos del proyecto ---------- */
+
+    /** Los eventos nuevos del proyecto, de los más antiguos a los más nuevos. Un fallo que no es duro
+        (el feed no se puede leer, p. ej. con el token sin permiso sobre él) no corta el ciclo. */
+    async syncGitlabEvents(acts, initial) {
+      try {
+        const res = await this.api(`${this.base}/events?per_page=50`, { cacheKey: 'events' });
+        this.lastPoll.events = Date.now();
+        if (!res.fresh && !initial) return;
+        const fresh = (Array.isArray(res.data) ? res.data : []).filter((ev) => ev && !this.seenEvents.has(ev.id)).reverse();
+        for (const ev of fresh) {
+          this.seenEvents.add(ev.id);
+          const a = this.mapGitlabEvent(ev);
+          if (a) acts.push(a);
+        }
+        this.forgetOldEvents();
+      } catch (err) {
+        if (hard(err)) throw err;
+        this.lastPoll.events = Date.now();
+      }
+    }
+
+    /** Un evento de GitLab como actividad del panel; null si ya lo cubre la comparación entre ciclos
+        (pushes, ramas, MRs abiertas, fusionadas o cerradas) o no dice nada. */
+    mapGitlabEvent(ev) {
+      const repoUrl = this.data.repo.url;
+      const p = this.person(ev.author);
+      const actor = p ? { login: p.login, avatar: p.avatar } : null;
+      const mk = (kind, fields) => ({ id: 'ev:' + ev.id, kind, actor, time: Date.parse(ev.created_at) || Date.now(), ...fields });
+      const act = String(ev.action_name || '');
+      const iid = ev.target_iid;
+      const detail = ev.target_title || '';
+      const push = ev.push_data;
+      if (push) {
+        // solo los tags: las ramas y los pushes los ve la comparación
+        if (push.ref_type !== 'tag' || !push.ref) return null;
+        const url = `${repoUrl}/-/tags/${segs(push.ref)}`;
+        if (push.action === 'removed') return mk('tag', { title: M('act.tagDeleted', { name: push.ref }) });
+        return mk('tag', { title: M(push.action === 'created' ? 'act.tagCreated' : 'act.tagPushed', { name: push.ref }), url });
+      }
+      if (ev.target_type === 'Issue' && iid) {
+        const fields = { detail, number: iid, url: `${repoUrl}/-/issues/${iid}` };
+        if (act === 'opened') return mk('issue-open', { ...fields, title: M('act.issueOpened', { num: iid }) });
+        if (act === 'reopened') return mk('issue-open', { ...fields, title: M('act.issueReopened', { num: iid }) });
+        if (act === 'closed') return mk('issue-close', { ...fields, title: M('act.issueClosed', { num: iid }) });
+        return null;
+      }
+      if (ev.target_type === 'MergeRequest' && iid) {
+        if (act !== 'approved') return null; // lo demás, la comparación de MRs
+        return mk('review-ok', { detail, number: iid, url: `${repoUrl}/-/merge_requests/${iid}`, title: M(this.term('act.prApproved'), { num: iid }) });
+      }
+      if (ev.target_type === 'Note' && ev.note) {
+        const n = ev.note;
+        const body = U.truncate(U.firstLine(n.body), 160);
+        const at = ev.target_id ? `#note_${ev.target_id}` : '';
+        if (n.noteable_type === 'Issue' && n.noteable_iid)
+          return mk('comment', { title: M('act.commentIssue', { num: n.noteable_iid }), detail: body, url: `${repoUrl}/-/issues/${n.noteable_iid}${at}` });
+        if (n.noteable_type === 'MergeRequest' && n.noteable_iid)
+          return mk('comment', { title: M(this.term('act.commentPr'), { num: n.noteable_iid }), detail: body, url: `${repoUrl}/-/merge_requests/${n.noteable_iid}${at}` });
+        if (n.noteable_type === 'Commit' && (n.commit_id || n.noteable_id)) {
+          const sha = n.commit_id || n.noteable_id;
+          return mk('comment', { title: M('act.commentCommit', { sha: U.shortSha(sha) }), detail: body, sha, url: `${this.link('commit', sha)}${at}` });
+        }
+        return null;
+      }
+      if (act === 'joined') return mk('other', { title: ev.author?.username ? M('act.member', { login: ev.author.username }) : M('act.memberNoName'), url: repoUrl });
+      return null;
     }
 
     /* ---------- archivos (los planetas del modo galaxias) ---------- */

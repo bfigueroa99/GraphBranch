@@ -320,6 +320,8 @@ GB.i18n.define('hi', {
   'act.mrOpenedDraft': 'MR !{num} ड्राफ़्ट के रूप में खोला गया',
   'act.mrMergedInto': 'MR !{num} को {base} में मर्ज किया गया',
   'act.mrClosed': 'MR !{num} बिना मर्ज किए बंद हुआ',
+  'act.mrApproved': 'MR !{num} स्वीकृत',
+  'act.commentMr': 'MR !{num} पर टिप्पणी',
   'act.reviewRequested': 'PR #{num} पर रिव्यू का अनुरोध',
   'act.prApproved': 'PR #{num} स्वीकृत',
   'act.prChanges': 'PR #{num} पर बदलाव माँगे गए',

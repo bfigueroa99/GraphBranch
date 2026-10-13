@@ -320,6 +320,8 @@ GB.i18n.define('bn', {
   'act.mrOpenedDraft': 'MR !{num} খসড়া হিসেবে খোলা হয়েছে',
   'act.mrMergedInto': 'MR !{num} {base} ব্রাঞ্চে মার্জ হয়েছে',
   'act.mrClosed': 'MR !{num} মার্জ না করেই বন্ধ হয়েছে',
+  'act.mrApproved': 'MR !{num} অনুমোদিত',
+  'act.commentMr': 'MR !{num}-এ মন্তব্য',
   'act.reviewRequested': 'PR #{num}-এ রিভিউ চাওয়া হয়েছে',
   'act.prApproved': 'PR #{num} অনুমোদিত',
   'act.prChanges': 'PR #{num}-এ পরিবর্তন চাওয়া হয়েছে',

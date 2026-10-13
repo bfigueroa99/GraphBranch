@@ -377,6 +377,8 @@ GB.i18n.define('he', {
   'act.mrOpenedDraft': 'MR !{num} נפתח כטיוטה',
   'act.mrMergedInto': 'MR !{num} עבר merge ל-{base}',
   'act.mrClosed': 'MR !{num} נסגר ללא merge',
+  'act.mrApproved': 'MR !{num} אושר',
+  'act.commentMr': 'תגובה ב-MR !{num}',
   'act.reviewRequested': 'התבקשה סקירה ב-PR #{num}',
   'act.prApproved': 'PR #{num} אושר',
   'act.prChanges': 'התבקשו שינויים ב-PR #{num}',

@@ -321,6 +321,8 @@ GB.i18n.define('de', {
   'act.mrOpenedDraft': 'MR !{num} als Entwurf geöffnet',
   'act.mrMergedInto': 'MR !{num} in {base} gemergt',
   'act.mrClosed': 'MR !{num} ohne Merge geschlossen',
+  'act.mrApproved': 'MR !{num} genehmigt',
+  'act.commentMr': 'Kommentar zu MR !{num}',
   'act.reviewRequested': 'Review für PR #{num} angefordert',
   'act.prApproved': 'PR #{num} genehmigt',
   'act.prChanges': 'Änderungen an PR #{num} angefordert',

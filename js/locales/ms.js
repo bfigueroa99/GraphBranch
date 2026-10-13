@@ -320,6 +320,8 @@ GB.i18n.define('ms', {
   'act.mrOpenedDraft': 'MR !{num} dibuka sebagai draf',
   'act.mrMergedInto': 'MR !{num} di-merge ke dalam {base}',
   'act.mrClosed': 'MR !{num} ditutup tanpa di-merge',
+  'act.mrApproved': 'MR !{num} diluluskan',
+  'act.commentMr': 'Komen pada MR !{num}',
   'act.reviewRequested': 'Semakan diminta pada PR #{num}',
   'act.prApproved': 'PR #{num} diluluskan',
   'act.prChanges': 'Perubahan diminta pada PR #{num}',

@@ -331,6 +331,8 @@ GB.i18n.define('cs', {
   'act.mrOpenedDraft': 'MR !{num} otevřen jako koncept',
   'act.mrMergedInto': 'MR !{num} sloučen do {base}',
   'act.mrClosed': 'MR !{num} uzavřen bez sloučení',
+  'act.mrApproved': 'MR !{num} schválen',
+  'act.commentMr': 'Komentář k MR !{num}',
   'act.reviewRequested': 'Vyžádáno review u PR #{num}',
   'act.prApproved': 'PR #{num} schválen',
   'act.prChanges': 'Vyžádány změny u PR #{num}',

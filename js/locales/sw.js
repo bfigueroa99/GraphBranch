@@ -320,6 +320,8 @@ GB.i18n.define('sw', {
   'act.mrOpenedDraft': 'MR !{num} imefunguliwa kama rasimu',
   'act.mrMergedInto': 'MR !{num} imeunganishwa kwenye {base}',
   'act.mrClosed': 'MR !{num} imefungwa bila kuunganishwa',
+  'act.mrApproved': 'MR !{num} imekubaliwa',
+  'act.commentMr': 'Maoni kwenye MR !{num}',
   'act.reviewRequested': 'Ukaguzi umeombwa kwenye PR #{num}',
   'act.prApproved': 'PR #{num} imekubaliwa',
   'act.prChanges': 'Mabadiliko yameombwa kwenye PR #{num}',

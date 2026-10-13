@@ -320,6 +320,8 @@ GB.i18n.define('id', {
   'act.mrOpenedDraft': 'MR !{num} dibuka sebagai draf',
   'act.mrMergedInto': 'MR !{num} di-merge ke {base}',
   'act.mrClosed': 'MR !{num} ditutup tanpa di-merge',
+  'act.mrApproved': 'MR !{num} disetujui',
+  'act.commentMr': 'Komentar pada MR !{num}',
   'act.reviewRequested': 'Review diminta pada PR #{num}',
   'act.prApproved': 'PR #{num} disetujui',
   'act.prChanges': 'Perubahan diminta pada PR #{num}',

@@ -320,6 +320,8 @@ GB.i18n.define('ca', {
   'act.mrOpenedDraft': 'MR !{num} obert com a esborrany',
   'act.mrMergedInto': 'MR !{num} fusionat a {base}',
   'act.mrClosed': 'MR !{num} tancat sense fusionar',
+  'act.mrApproved': 'MR !{num} aprovat',
+  'act.commentMr': 'Comentari al MR !{num}',
   'act.reviewRequested': 'Revisió sol·licitada al PR #{num}',
   'act.prApproved': 'PR #{num} aprovat',
   'act.prChanges': 'Canvis sol·licitats al PR #{num}',

@@ -76,7 +76,7 @@ segunda columna a la primera.
 
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
-| Fuentes | GitHub.com (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados), demo | eventos de GitLab y GitLab propio, repos locales, GitHub Enterprise, Gitea/Forgejo, Bitbucket |
+| Fuentes | GitHub.com (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), demo | GitLab propio, repos locales, GitHub Enterprise, Gitea/Forgejo, Bitbucket |
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias) | CI, tags, despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV | widget y capa para streaming, VS Code |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario), miles de ramas por repo | una organización entera (sus eventos, la lista al día, grupos de GitLab, constelación) |
@@ -110,11 +110,9 @@ construir sobre ellas.
 5. ~~**GitLab, segunda entrega: proyectos privados**~~ hecho en #50 · Fuentes. Un **Token de GitLab**
    en Ajustes (permiso `read_api`; en escritorio, cifrado con el llavero en su propio archivo) abre
    los proyectos privados de gitlab.com; va solo a gitlab.com y el de GitHub, solo a GitHub.
-6. **GitLab, tercera entrega** · Fuentes. Los eventos del proyecto (`/projects/:id/events`: issues,
-   comentarios, tags) con su historial en el panel, como el feed de GitHub; después, un GitLab propio
-   (la URL de la instancia configurable, sumada al CSP solo si se usa; en escritorio, sin tocar el
-   CSP de la web). Con token se podría usar el listado de commits en vez de las comparaciones, si
-   resulta más barato. Comprobar: `tools/gitlab.test.mjs` con eventos simulados y otra URL base.
+6. ~~**GitLab, tercera entrega**~~ hecho en #54 · Fuentes. Los eventos del proyecto (`/events`: issues,
+   comentarios, tags, aprobaciones) con su historial en el panel, como el feed de GitHub. Un GitLab
+   propio, partido, es el ítem 25.
 7. ~~**Una organización o un usuario entero**~~ hecho en #51 · Escala. `org:nombre`, `@usuario` o la
    URL de su perfil siguen sus repos con push más reciente, sin forks ni archivados, hasta el tope de
    pestañas (una consulta; dos para un usuario). También `?repo=org:nombre`.
@@ -180,6 +178,10 @@ construir sobre ellas.
 24. **Extensión de VS Code** · Plataformas. Un webview con la app y el token de la sesión de GitHub
     que ya tiene VS Code (`vscode.authentication`), abierta en el repo del espacio de trabajo. El loop
     deja el paquete; publicarlo en el Marketplace lo hace Benjamin.
+25. **GitLab propio** · Fuentes. La URL de la instancia configurable (`gitlab.miempresa.com`), sumada
+    al CSP solo si se usa (en escritorio, sin tocar el CSP de la web); el token sigue yendo solo al
+    host de su instancia. Con token se podría usar el listado de commits en vez de las comparaciones,
+    si resulta más barato. Comprobar: `tools/gitlab.test.mjs` con otra URL base.
 
 ## Cómo validar un cambio
 
@@ -949,3 +951,21 @@ posteriores pueden haberse movido.
 - Validado: 87 pruebas (`node --test`), smoke, i18n (0 errores) y 17 e2e en verde.
 - PR: #53 (desde la rama de la sesión; no es una iteración numerada).
 - **Siguiente:** iteración 28, expansión: ítem 6 (GitLab, tercera entrega, Fuentes)
+
+### 2026-10-13 · Iteración 28 · Expansión · Fuentes
+
+- **Capacidad nueva: los eventos de un proyecto de GitLab en el panel de actividad** (ítem 6 de la hoja
+  de ruta, partido: esta es la tercera entrega; el GitLab propio queda como ítem 25). `GitLabSource`
+  consulta `/projects/:id/events` al abrir (el historial reciente) y cada minuto (ETag), y muestra
+  issues abiertos, reabiertos y cerrados, comentarios en issues, MRs y commits, tags, aprobaciones de
+  MRs y miembros nuevos. Los pushes, las ramas y las MRs abiertas, fusionadas o cerradas no se repiten:
+  ya los da la comparación entre ciclos. Un fallo del feed que no es de red, cuota ni token no corta el
+  ciclo. Textos nuevos: `act.mrApproved` y `act.commentMr` (40 idiomas, derivados de los de PR).
+- **Pruebas que fallan sin la capacidad:** en `tools/gitlab.test.mjs`, «eventos del proyecto: issues,
+  comentarios y tags…» (historial, no repetir lo ya visto, no duplicar pushes ni MRs) y «si el feed no se
+  puede leer, el resto del ciclo sigue; un 429 sí se respeta».
+- README: la función de GitLab, y Límites conocidos (el panel ya trae issues y comentarios; sin
+  estrellas ni forks; solo los últimos 50 eventos).
+- Reclamo: relevo de loop/28 (23d47dd)
+- Validado: PENDIENTE
+- **Siguiente:** iteración 29, expansión: ítem 8 (Una organización entera, segunda entrega, Escala)

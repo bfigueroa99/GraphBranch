@@ -320,6 +320,8 @@ GB.i18n.define('da', {
   'act.mrOpenedDraft': 'MR !{num} åbnet som kladde',
   'act.mrMergedInto': 'MR !{num} merged ind i {base}',
   'act.mrClosed': 'MR !{num} lukket uden merge',
+  'act.mrApproved': 'MR !{num} godkendt',
+  'act.commentMr': 'Kommentar på MR !{num}',
   'act.reviewRequested': 'Review anmodet på PR #{num}',
   'act.prApproved': 'PR #{num} godkendt',
   'act.prChanges': 'Ændringer anmodet på PR #{num}',

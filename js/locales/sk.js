@@ -331,6 +331,8 @@ GB.i18n.define('sk', {
   'act.mrOpenedDraft': 'MR !{num} otvorený ako koncept',
   'act.mrMergedInto': 'MR !{num} zlúčený do {base}',
   'act.mrClosed': 'MR !{num} zatvorený bez zlúčenia',
+  'act.mrApproved': 'MR !{num} schválený',
+  'act.commentMr': 'Komentár v MR !{num}',
   'act.reviewRequested': 'Vyžiadaná revízia v PR #{num}',
   'act.prApproved': 'PR #{num} schválený',
   'act.prChanges': 'Vyžiadané zmeny v PR #{num}',

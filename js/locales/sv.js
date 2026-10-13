@@ -320,6 +320,8 @@ GB.i18n.define('sv', {
   'act.mrOpenedDraft': 'MR !{num} öppnad som utkast',
   'act.mrMergedInto': 'MR !{num} mergad i {base}',
   'act.mrClosed': 'MR !{num} stängd utan merge',
+  'act.mrApproved': 'MR !{num} godkänd',
+  'act.commentMr': 'Kommentar på MR !{num}',
   'act.reviewRequested': 'Granskning begärd på PR #{num}',
   'act.prApproved': 'PR #{num} godkänd',
   'act.prChanges': 'Ändringar begärda på PR #{num}',

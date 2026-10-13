@@ -320,6 +320,8 @@ GB.i18n.define('fi', {
   'act.mrOpenedDraft': 'MR !{num} avattu luonnoksena',
   'act.mrMergedInto': 'MR !{num} yhdistetty haaraan {base}',
   'act.mrClosed': 'MR !{num} suljettu yhdistämättä',
+  'act.mrApproved': 'MR !{num} hyväksytty',
+  'act.commentMr': 'MR !{num}: kommentti',
   'act.reviewRequested': 'PR #{num}: katselmointia pyydetty',
   'act.prApproved': 'PR #{num} hyväksytty',
   'act.prChanges': 'PR #{num}: muutoksia pyydetty',

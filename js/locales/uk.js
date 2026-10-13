@@ -336,6 +336,8 @@ GB.i18n.define('uk', {
   'act.mrOpenedDraft': 'MR !{num} відкрито як чернетку',
   'act.mrMergedInto': 'MR !{num} злито в гілку {base}',
   'act.mrClosed': 'MR !{num} закрито без злиття',
+  'act.mrApproved': 'MR !{num} схвалено',
+  'act.commentMr': 'Коментар до MR !{num}',
   'act.reviewRequested': "Запрошено рев'ю для PR #{num}",
   'act.prApproved': 'PR #{num} схвалено',
   'act.prChanges': 'Запрошено зміни в PR #{num}',

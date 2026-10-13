@@ -328,6 +328,8 @@ GB.i18n.define('ro', {
   'act.mrOpenedDraft': 'MR !{num} deschis ca draft',
   'act.mrMergedInto': 'MR !{num} îmbinat în {base}',
   'act.mrClosed': 'MR !{num} închis fără îmbinare',
+  'act.mrApproved': 'MR !{num} aprobat',
+  'act.commentMr': 'Comentariu la MR !{num}',
   'act.reviewRequested': 'Review solicitat pentru PR #{num}',
   'act.prApproved': 'PR #{num} aprobat',
   'act.prChanges': 'Modificări solicitate pentru PR #{num}',

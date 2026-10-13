@@ -54,6 +54,7 @@ function fakeGitLab() {
     branches: new Map(), // nombre -> sha
     updated: new Map(), // nombre -> cuándo se movió (para ordenar como sort=updated_desc)
     mrs: [], // como los da la API
+    events: [], // los eventos del proyecto, del más antiguo al más nuevo
     override: null, // (ruta) => { status, body } para responder otra cosa
     calls: [],
     misses: [], // consultas que respondieron 404 (el navegador las anota como errores en la consola)
@@ -152,8 +153,21 @@ function fakeGitLab() {
       const list = gl.mrs.filter((m) => state === 'all' || m.state === state).sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
       return { body: list.slice(0, Number(q.get('per_page'))) };
     }
+    if (p === PROJECT + '/events') return { body: [...gl.events].reverse().slice(0, Number(q.get('per_page'))) }; // los más nuevos primero
     return { status: 404, body: { message: '404 Not Found' } };
   }
+
+  /** Un evento del proyecto como lo da /events; `more` pisa campos. */
+  gl.event = (more) => {
+    const id = gl.events.length + 100;
+    gl.events.push({
+      id,
+      created_at: new Date().toISOString(),
+      author: { username: 'ana', name: 'Ana', avatar_url: 'https://gitlab.com/uploads/ana.png' },
+      ...more,
+    });
+    return id;
+  };
 
   gl.mr = (iid, source, target, more = {}) => {
     const m = {
@@ -397,4 +411,63 @@ test('archivos: lo que cambió cada rama, con sus líneas, para el modo galaxias
   assert.equal(out.kind, 'diff');
   assert.equal(out.base, 'main');
   assert.deepEqual(JSON.parse(JSON.stringify(out.files)), [{ path: 'src/app.js', status: 'modified', add: 2, del: 1, from: null, url: `${WEB}/-/blob/f2/src/app.js` }]);
+});
+
+test('eventos del proyecto: issues, comentarios y tags al panel, sin repetir lo que ya ven las ramas y las MRs', async () => {
+  const gl = project();
+  gl.event({ action_name: 'opened', target_type: 'Issue', target_iid: 3, target_title: 'Se rompe' });
+  gl.event({ action_name: 'pushed to', push_data: { ref_type: 'branch', ref: 'main', action: 'pushed', commit_count: 2 } });
+  gl.event({ action_name: 'opened', target_type: 'MergeRequest', target_iid: 5, target_title: 'MR 5' });
+  gl.event({ action_name: 'pushed new', push_data: { ref_type: 'tag', ref: 'v1.0', action: 'created' } });
+  const { src, updates, errors } = connect(gl);
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  const first = Array.from(updates[0].activities, (a) => ({ kind: a.kind, key: a.title?.key, url: a.url ?? null, login: a.actor?.login }));
+  assert.deepEqual(
+    first.filter((a) => ['issue-open', 'tag'].includes(a.kind)),
+    [
+      { kind: 'issue-open', key: 'act.issueOpened', url: `${WEB}/-/issues/3`, login: 'ana' },
+      { kind: 'tag', key: 'act.tagCreated', url: `${WEB}/-/tags/v1.0`, login: 'ana' },
+    ],
+    'el historial del feed, de más antiguo a más nuevo',
+  );
+  assert.ok(!first.some((a) => a.kind === 'push' || a.kind === 'pr-open'), 'pushes y MRs son de la comparación, no del feed');
+  assert.equal(Array.from(updates[0].activities).find((a) => a.kind === 'issue-open').actor.avatar, 'https://gitlab.com/uploads/ana.png');
+
+  // un ciclo sin que venza el feed no lo consulta; al vencer, solo lo nuevo
+  const calls = () => gl.calls.filter((c) => c.startsWith(PROJECT + '/events')).length;
+  await src.cycle();
+  assert.equal(calls(), 1);
+  gl.event({ action_name: 'commented on', target_type: 'Note', target_id: 900, note: { noteable_type: 'MergeRequest', noteable_iid: 5, body: 'Se ve bien\nresto' } });
+  gl.event({ action_name: 'commented on', target_type: 'Note', target_id: 901, note: { noteable_type: 'Issue', noteable_iid: 3, body: 'Ya lo vi' } });
+  gl.event({ action_name: 'approved', target_type: 'MergeRequest', target_iid: 5, target_title: 'MR 5' });
+  gl.event({ action_name: 'closed', target_type: 'Issue', target_iid: 3, target_title: 'Se rompe' });
+  gl.event({ action_name: 'created', target_type: 'Milestone', target_title: 'v2' });
+  src.lastPoll.events = 0;
+  await src.cycle();
+  assert.equal(calls(), 2);
+  const live = Array.from(updates.at(-1).activities, (a) => ({ kind: a.kind, key: a.title?.key, url: a.url ?? null, detail: a.detail ?? null }));
+  assert.deepEqual(live, [
+    { kind: 'comment', key: 'act.commentMr', url: `${WEB}/-/merge_requests/5#note_900`, detail: 'Se ve bien' },
+    { kind: 'comment', key: 'act.commentIssue', url: `${WEB}/-/issues/3#note_901`, detail: 'Ya lo vi' },
+    { kind: 'review-ok', key: 'act.mrApproved', url: `${WEB}/-/merge_requests/5`, detail: 'MR 5' },
+    { kind: 'issue-close', key: 'act.issueClosed', url: `${WEB}/-/issues/3`, detail: 'Se rompe' },
+  ]);
+  src.lastPoll.events = 0;
+  await src.cycle();
+  assert.equal(updates.at(-1).activities.length, 0, 'lo ya visto no vuelve');
+});
+
+test('eventos: si el feed no se puede leer, el resto del ciclo sigue; un 429 sí se respeta', async () => {
+  const gl = project();
+  gl.override = (path) => (path.startsWith(PROJECT + '/events') ? { status: 500, body: { message: '500 Internal Server Error' } } : null);
+  const { src, updates, errors } = connect(gl);
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  assert.deepEqual([...src.data.branches.keys()].sort(), ['feature', 'main']);
+  assert.equal(updates.length, 1);
+  gl.override = (path) => (path.startsWith(PROJECT + '/events') ? { status: 429, body: { message: 'Retry later' } } : null);
+  src.lastPoll.events = 0;
+  await src.cycle();
+  assert.equal(errors.length, 1, 'un 429 corta el ciclo, como en cualquier consulta');
 });

@@ -321,6 +321,8 @@ GB.i18n.define('th', {
   'act.mrOpenedDraft': 'เปิด MR !{num} เป็น draft แล้ว',
   'act.mrMergedInto': 'merge MR !{num} เข้า {base} แล้ว',
   'act.mrClosed': 'ปิด MR !{num} โดยไม่ได้ merge',
+  'act.mrApproved': 'อนุมัติ MR !{num} แล้ว',
+  'act.commentMr': 'ความคิดเห็นใน MR !{num}',
   'act.reviewRequested': 'ขอรีวิวใน PR #{num}',
   'act.prApproved': 'อนุมัติ PR #{num} แล้ว',
   'act.prChanges': 'ขอให้แก้ไขใน PR #{num}',

@@ -450,4 +450,10 @@ GB.i18n.define('fr', {
   'practice.ex3.goal': 'Rejouez feature au-dessus du dernier main sans commit de fusion : checkout feature, puis rebase main.',
   'practice.ex4.title': 'Annuler',
   'practice.ex4.goal': 'Le dernier commit de main ne devrait pas être là. Reculez main d’un commit : essayez reset --hard HEAD~1.',
+  'textview.title': 'Vue texte',
+  'textview.help': 'Les branches et leurs derniers commits sous forme d’arbre. Haut et bas se déplacent, droite et gauche ouvrent et ferment une branche, Entrée l’affiche dans le graphe.',
+  'textview.default': 'branche par défaut',
+  'textview.shown': 'commits affichés : {n}',
+  'textview.by': 'par {author}',
+  'textview.merge': 'fusion',
 });

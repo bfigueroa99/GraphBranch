@@ -449,4 +449,10 @@ GB.i18n.define('hu', {
   'practice.ex3.goal': 'Játszd vissza a feature-t a legújabb main tetejére egyesítő commit nélkül: checkout feature, majd rebase main.',
   'practice.ex4.title': 'Visszavonás',
   'practice.ex4.goal': 'A main utolsó commitjának nem kellene ott lennie. Vidd vissza a main-t egy committal: próbáld a reset --hard HEAD~1 parancsot.',
+  'textview.title': 'Szöveges nézet',
+  'textview.help': 'Az ágak és legutóbbi commitjaik faként. Fel és le mozgat, jobbra és balra megnyit és bezár egy ágat, az Enter megmutatja a gráfon.',
+  'textview.default': 'alapértelmezett ág',
+  'textview.shown': 'megjelenített commitok: {n}',
+  'textview.by': 'szerző: {author}',
+  'textview.merge': 'merge',
 });

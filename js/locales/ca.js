@@ -449,4 +449,10 @@ GB.i18n.define('ca', {
   'practice.ex3.goal': 'Repeteix feature damunt del main més recent sense cap commit de fusió: checkout feature i després rebase main.',
   'practice.ex4.title': 'Desfer',
   'practice.ex4.goal': 'L’últim commit de main no hi hauria de ser. Torna main un commit enrere: prova reset --hard HEAD~1.',
+  'textview.title': 'Vista de text',
+  'textview.help': 'Les branques i els seus últims commits com un arbre. Amunt i avall es mouen, dreta i esquerra obren i tanquen una branca, Retorn la mostra al graf.',
+  'textview.default': 'branca per defecte',
+  'textview.shown': 'commits mostrats: {n}',
+  'textview.by': 'de {author}',
+  'textview.merge': 'merge',
 });

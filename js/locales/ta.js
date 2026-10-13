@@ -449,4 +449,10 @@ GB.i18n.define('ta', {
   'practice.ex3.goal': 'இணைப்பு commit இல்லாமல் feature-ஐ புதிய main மேல் மீண்டும் இயக்குங்கள்: checkout feature, பிறகு rebase main.',
   'practice.ex4.title': 'செயல்தவிர்',
   'practice.ex4.goal': 'main-இன் கடைசி commit அங்கே இருக்கக்கூடாது. main-ஐ ஒரு commit பின்னால் நகர்த்துங்கள்: reset --hard HEAD~1 முயலுங்கள்.',
+  'textview.title': 'உரைக் காட்சி',
+  'textview.help': 'கிளைகளும் அவற்றின் சமீபத்திய கமிட்களும் ஒரு மரமாக. மேல், கீழ் நகர்த்தும்; வலம், இடம் ஒரு கிளையைத் திறந்து மூடும்; Enter அதை வரைபடத்தில் காட்டும்.',
+  'textview.default': 'இயல்புநிலைக் கிளை',
+  'textview.shown': 'காட்டப்படும் கமிட்கள்: {n}',
+  'textview.by': '{author} மூலம்',
+  'textview.merge': 'இணைப்பு',
 });

@@ -449,4 +449,10 @@ GB.i18n.define('fi', {
   'practice.ex3.goal': 'Toista feature uusimman mainin päälle ilman yhdistämiscommitia: checkout feature ja sitten rebase main.',
   'practice.ex4.title': 'Kumoa',
   'practice.ex4.goal': 'Mainin viimeisen commitin ei pitäisi olla siellä. Siirrä mainia yksi commit taaksepäin: kokeile reset --hard HEAD~1.',
+  'textview.title': 'Tekstinäkymä',
+  'textview.help': 'Haarat ja niiden uusimmat commitit puuna. Ylös ja alas liikkuvat, oikea ja vasen avaavat ja sulkevat haaran, Enter näyttää sen kaaviossa.',
+  'textview.default': 'oletushaara',
+  'textview.shown': 'näytetyt commitit: {n}',
+  'textview.by': 'tekijä {author}',
+  'textview.merge': 'yhdistäminen',
 });

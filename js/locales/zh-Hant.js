@@ -449,4 +449,10 @@ GB.i18n.define('zh-Hant', {
   'practice.ex3.goal': '不產生合併提交,把 feature 重放到最新的 main 之上:checkout feature,然後 rebase main。',
   'practice.ex4.title': '復原',
   'practice.ex4.goal': 'main 上最後一次提交不該存在。把 main 退回一個提交:試試 reset --hard HEAD~1。',
+  'textview.title': '文字檢視',
+  'textview.help': '以樹狀顯示分支及其最近的提交。上下鍵移動，左右鍵展開與收合分支，Enter 鍵在圖中定位。',
+  'textview.default': '預設分支',
+  'textview.shown': '顯示的提交：{n}',
+  'textview.by': '作者 {author}',
+  'textview.merge': '合併',
 });

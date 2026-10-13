@@ -450,4 +450,10 @@ GB.i18n.define('it', {
   'practice.ex3.goal': 'Riapplica feature sopra l’ultimo main senza un commit di merge: checkout feature, poi rebase main.',
   'practice.ex4.title': 'Annulla',
   'practice.ex4.goal': 'L’ultimo commit di main non dovrebbe esserci. Riporta main indietro di un commit: prova reset --hard HEAD~1.',
+  'textview.title': 'Vista testuale',
+  'textview.help': 'I branch e i loro ultimi commit come albero. Su e giù per spostarsi, destra e sinistra aprono e chiudono un branch, Invio lo mostra nel grafo.',
+  'textview.default': 'branch predefinito',
+  'textview.shown': 'commit mostrati: {n}',
+  'textview.by': 'di {author}',
+  'textview.merge': 'merge',
 });

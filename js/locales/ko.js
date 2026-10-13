@@ -449,4 +449,10 @@ GB.i18n.define('ko', {
   'practice.ex3.goal': '병합 커밋 없이 최신 main 위에 feature를 다시 쌓으세요: checkout feature 다음 rebase main.',
   'practice.ex4.title': '되돌리기',
   'practice.ex4.goal': 'main의 마지막 커밋은 없어야 합니다. main을 커밋 하나 뒤로 옮기세요: reset --hard HEAD~1을 해 보세요.',
+  'textview.title': '텍스트 보기',
+  'textview.help': '브랜치와 최근 커밋을 트리로 보여 줍니다. 위·아래로 이동하고, 오른쪽·왼쪽으로 브랜치를 열고 닫으며, Enter로 그래프에 표시합니다.',
+  'textview.default': '기본 브랜치',
+  'textview.shown': '표시된 커밋: {n}',
+  'textview.by': '작성자 {author}',
+  'textview.merge': '병합',
 });

@@ -455,4 +455,10 @@ GB.i18n.define('en', {
   'practice.ex3.goal': 'Replay feature on top of the latest main without a merge commit: checkout feature, then rebase main.',
   'practice.ex4.title': 'Undo',
   'practice.ex4.goal': 'The last commit on main should not be there. Move main back one commit: try reset --hard HEAD~1.',
+  'textview.title': 'Text view',
+  'textview.help': 'The branches and their latest commits as a tree. Up and Down move, Right and Left open and close a branch, Enter shows it in the graph.',
+  'textview.default': 'default branch',
+  'textview.shown': 'commits shown: {n}',
+  'textview.by': 'by {author}',
+  'textview.merge': 'merge',
 });

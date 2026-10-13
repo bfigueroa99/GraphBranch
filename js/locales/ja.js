@@ -449,4 +449,10 @@ GB.i18n.define('ja', {
   'practice.ex3.goal': 'マージコミットなしで、最新のmainの上にfeatureを載せ直しましょう: checkout feature のあと rebase main。',
   'practice.ex4.title': '取り消し',
   'practice.ex4.goal': 'mainの最後のコミットは不要です。mainを1コミット戻しましょう: reset --hard HEAD~1 を試してください。',
+  'textview.title': 'テキストビュー',
+  'textview.help': 'ブランチと最新のコミットをツリーで表示します。上下で移動、左右でブランチを開閉、Enter でグラフに表示します。',
+  'textview.default': 'デフォルトブランチ',
+  'textview.shown': '表示中のコミット: {n}',
+  'textview.by': '作成者 {author}',
+  'textview.merge': 'マージ',
 });

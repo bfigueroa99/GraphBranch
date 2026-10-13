@@ -450,4 +450,10 @@ GB.i18n.define('nl', {
   'practice.ex3.goal': 'Speel feature opnieuw af op de nieuwste main zonder merge-commit: checkout feature en dan rebase main.',
   'practice.ex4.title': 'Ongedaan maken',
   'practice.ex4.goal': 'De laatste commit op main hoort er niet te zijn. Zet main één commit terug: probeer reset --hard HEAD~1.',
+  'textview.title': 'Tekstweergave',
+  'textview.help': 'De branches en hun laatste commits als boom. Omhoog en omlaag verplaatsen, rechts en links openen en sluiten een branch, Enter toont hem in de grafiek.',
+  'textview.default': 'standaardbranch',
+  'textview.shown': 'getoonde commits: {n}',
+  'textview.by': 'door {author}',
+  'textview.merge': 'merge',
 });

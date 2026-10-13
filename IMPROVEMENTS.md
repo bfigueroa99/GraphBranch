@@ -132,7 +132,7 @@ segunda columna a la primera.
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM), avisos a Slack y Discord (escritorio) | resumen de la semana |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas | comparar ramas, búsqueda |
-| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios) | quien usa lector de pantalla |
+| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado) | probar con NVDA, JAWS y VoiceOver |
 
 ## Hoja de ruta
 
@@ -208,9 +208,10 @@ se comprueban antes de construir sobre ellas.
     3D; el commit que corre cada entorno de despliegue (según `/deployments`) lleva una placa con su nombre. La ficha
     del commit los nombra. Dos consultas más al abrir un repo de GitHub y dos cada 15 minutos (con ETag), apagables en
     Ajustes; la demo los trae. Segunda entrega posible: el estado de cada despliegue, tags de GitLab y de repos locales.
-18. **Vista de texto accesible** · Público · 1×3/2. Las ramas y sus commits como un árbol navegable con el
-    teclado (`role=tree`), con lo mismo que dicen los grafos, para quien usa lector de pantalla.
-    Comprobar: un paso del smoke recorre el árbol con el teclado y lee los nombres accesibles.
+18. ~~**Vista de texto accesible**~~ hecho en #69 · Público. El botón de las líneas abre las ramas y sus últimos 10
+    commits como un árbol (`role=tree`) que se recorre con el teclado (↑ ↓ → ← Inicio Fin, Enter lleva al grafo), con
+    nombres accesibles (mensaje, autor, antigüedad, merge, tags). Segunda entrega posible: avisar de los cambios en
+    vivo mientras está abierta y probarla con un lector de pantalla real.
 19. **Búsqueda y filtro por autor** · Análisis · 3×2/1. Buscar un commit por mensaje, SHA o autor y volar
     hasta él; filtrar el grafo por autor ("mis ramas"). Comprobar: un paso del smoke en la demo.
 20. **Comparar dos ramas** · Análisis · 2×2/2. Elegir dos ramas: cuántos commits lleva cada una por delante,
@@ -249,6 +250,10 @@ se comprueban antes de construir sobre ellas.
     del intérprete con un repo cargado desde datos reales simulados.
 32. **Ramas apiladas** · Datos · 1×2/2. [inv. 2026-10-13] Un PR cuya base es la rama de otro PR se dibuja encadenado a él, con el
     orden de la pila. Comprobar: prueba del layout con PRs apilados.
+33. **Vista de texto, segunda entrega** · Público · 1×2/2. [parte del ítem 18] Que el árbol avise con una región viva
+    (sin anunciar de más) de las ramas y commits nuevos mientras está abierto, que filtre por nombre de rama y que
+    se escriba en el README cómo se probó con NVDA, VoiceOver y Orca. Comprobar: paso del smoke con un evento en vivo
+    de la demo y la región viva sin repetir lo ya leído.
 
 ## Cómo validar un cambio
 
@@ -1367,3 +1372,22 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 167 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde.
 - **Siguiente:** iteración 42, expansión: ítem 18 (Vista de texto accesible, Público)
+
+### 2026-10-13 · Iteración 42 · Expansión · Público
+
+- **Capacidad nueva: vista de texto accesible** (ítem 18 de la hoja de ruta). El botón de las líneas abre un diálogo
+  con las ramas (la por defecto primero, luego las más movidas, hasta 200) y sus últimos 10 commits por primer padre
+  como un árbol `role="tree"` (`js/textview.js`: `build` puro y `mount` con el teclado). ↑ ↓ recorren lo visible,
+  → abre o baja al primer commit, ← cierra o sube, Inicio y Fin, Enter lleva al grafo (2D o 3D). Cada nodo tiene
+  nombre accesible (mensaje, autor, antigüedad, merge, tags); todo entra con `textContent`. Sin consultas nuevas.
+- **Pruebas que fallan sin la capacidad:** `tools/textview.test.mjs` (orden de ramas, primer padre, límites, ciclo) y el
+  paso del smoke «vista de texto: árbol con teclado, nombres accesibles y Enter lleva al grafo» (que además midió un
+  desborde de 6 px en el diálogo, corregido con `.tv-body { min-width: 0 }` y filas que envuelven).
+- README: la función en la lista, Controles, Estructura, Límites conocidos y Seguridad.
+- QA: filas tocadas: demo sin token (sin consultas); 40 idiomas (6 textos, `check-i18n`); teclado (↑ ↓ → ← Enter en el
+  smoke, foco dentro del árbol al abrir); desborde en escritorio (smoke); CSP (sin cambios); XSS (`textContent`).
+  Sin mirar a mano: 320 px, árabe, 3D, lector de pantalla real; auditoría: 0 hallazgos nuevos (la e2e de 320 px midió 29 px de desborde en tamil con el botón nuevo y se arregló con `.controls { flex-wrap: wrap }`).
+- Reclamo: loop/42, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 170 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde.
+- **Siguiente:** iteración 43, mantenimiento · Errores: pendiente 2 (Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` cor…)

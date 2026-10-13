@@ -450,4 +450,10 @@ GB.i18n.define('pt', {
   'practice.ex3.goal': 'Reaplique feature sobre o main mais recente sem um commit de merge: checkout feature e depois rebase main.',
   'practice.ex4.title': 'Desfazer',
   'practice.ex4.goal': 'O último commit de main não deveria estar lá. Volte main um commit: tente reset --hard HEAD~1.',
+  'textview.title': 'Vista de texto',
+  'textview.help': 'As branches e seus últimos commits como uma árvore. Cima e baixo movem, direita e esquerda abrem e fecham uma branch, Enter a mostra no grafo.',
+  'textview.default': 'branch padrão',
+  'textview.shown': 'commits mostrados: {n}',
+  'textview.by': 'por {author}',
+  'textview.merge': 'merge',
 });

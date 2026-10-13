@@ -450,4 +450,10 @@ GB.i18n.define('th', {
   'practice.ex3.goal': 'เล่น feature ซ้ำบน main ล่าสุดโดยไม่มี commit รวม: checkout feature แล้ว rebase main',
   'practice.ex4.title': 'ย้อนกลับ',
   'practice.ex4.goal': 'commit ล่าสุดบน main ไม่ควรอยู่ตรงนั้น ถอย main กลับหนึ่ง commit: ลอง reset --hard HEAD~1',
+  'textview.title': 'มุมมองข้อความ',
+  'textview.help': 'แบรนช์และคอมมิตล่าสุดในรูปแบบต้นไม้ ขึ้นและลงเพื่อเลื่อน ขวาและซ้ายเพื่อเปิดและปิดแบรนช์ Enter เพื่อแสดงในกราฟ',
+  'textview.default': 'แบรนช์เริ่มต้น',
+  'textview.shown': 'คอมมิตที่แสดง: {n}',
+  'textview.by': 'โดย {author}',
+  'textview.merge': 'เมิร์จ',
 });

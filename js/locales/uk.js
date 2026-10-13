@@ -465,4 +465,10 @@ GB.i18n.define('uk', {
   'practice.ex3.goal': 'Перенесіть feature поверх найновішого main без коміту злиття: checkout feature, потім rebase main.',
   'practice.ex4.title': 'Скасування',
   'practice.ex4.goal': 'Останнього коміту в main не мало б бути. Поверніть main на один коміт назад: спробуйте reset --hard HEAD~1.',
+  'textview.title': 'Текстовий вигляд',
+  'textview.help': 'Гілки та їхні останні коміти у вигляді дерева. Вгору й вниз переміщують, праворуч і ліворуч відкривають і закривають гілку, Enter показує її на графі.',
+  'textview.default': 'гілка за замовчуванням',
+  'textview.shown': 'показано комітів: {n}',
+  'textview.by': 'автор {author}',
+  'textview.merge': 'злиття',
 });

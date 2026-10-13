@@ -449,4 +449,10 @@ GB.i18n.define('bn', {
   'practice.ex3.goal': 'মার্জ commit ছাড়াই feature-কে সর্বশেষ main-এর ওপর আবার চালান: checkout feature, তারপর rebase main।',
   'practice.ex4.title': 'পূর্বাবস্থায়',
   'practice.ex4.goal': 'main-এর শেষ commit-টি থাকার কথা নয়। main-কে এক commit পিছিয়ে দিন: reset --hard HEAD~1 চেষ্টা করুন।',
+  'textview.title': 'টেক্সট ভিউ',
+  'textview.help': 'শাখা ও তাদের সাম্প্রতিক কমিট একটি গাছের মতো। ওপর-নিচে সরান, ডান-বাঁ দিয়ে শাখা খুলুন ও বন্ধ করুন, Enter এটিকে গ্রাফে দেখায়।',
+  'textview.default': 'ডিফল্ট শাখা',
+  'textview.shown': 'দেখানো কমিট: {n}',
+  'textview.by': '{author}-এর',
+  'textview.merge': 'মার্জ',
 });

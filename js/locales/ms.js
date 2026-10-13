@@ -449,4 +449,10 @@ GB.i18n.define('ms', {
   'practice.ex3.goal': 'Main semula feature di atas main terkini tanpa commit cantuman: checkout feature, kemudian rebase main.',
   'practice.ex4.title': 'Buat asal',
   'practice.ex4.goal': 'Commit terakhir pada main tidak sepatutnya ada. Undurkan main satu commit: cuba reset --hard HEAD~1.',
+  'textview.title': 'Paparan teks',
+  'textview.help': 'Cabang dan commit terbaharunya sebagai pokok. Atas dan bawah untuk bergerak, kanan dan kiri membuka dan menutup cabang, Enter memaparkannya pada graf.',
+  'textview.default': 'cabang lalai',
+  'textview.shown': 'commit dipaparkan: {n}',
+  'textview.by': 'oleh {author}',
+  'textview.merge': 'merge',
 });

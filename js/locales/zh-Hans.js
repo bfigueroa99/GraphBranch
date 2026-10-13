@@ -449,4 +449,10 @@ GB.i18n.define('zh-Hans', {
   'practice.ex3.goal': '不产生合并提交,把 feature 重放到最新的 main 之上:checkout feature,然后 rebase main。',
   'practice.ex4.title': '撤销',
   'practice.ex4.goal': 'main 上最后一次提交不该存在。把 main 回退一个提交:试试 reset --hard HEAD~1。',
+  'textview.title': '文本视图',
+  'textview.help': '以树形显示分支及其最近的提交。上下键移动，左右键展开和收起分支，回车键在图中定位。',
+  'textview.default': '默认分支',
+  'textview.shown': '显示的提交：{n}',
+  'textview.by': '作者 {author}',
+  'textview.merge': '合并',
 });

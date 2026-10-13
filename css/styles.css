@@ -338,6 +338,7 @@ kbd {
 }
 .controls {
   display: flex;
+  flex-wrap: wrap;
   gap: 2px;
 }
 
@@ -4186,4 +4187,69 @@ button.hl-row:focus-visible {
 .hl-stat span {
   color: var(--ink-3);
   font-size: 12px;
+}
+
+/* ---------- vista de texto ---------- */
+.tv-body {
+  min-width: 0;
+}
+.tv-tree,
+.tv-commits {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tv-commits {
+  margin-inline-start: 18px;
+}
+.tv-branch,
+.tv-commit {
+  border-radius: 6px;
+  outline-offset: -2px;
+}
+.tv-head,
+.tv-commit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.tv-head::before {
+  content: '▸';
+  color: var(--ink-3);
+}
+.tv-branch[aria-expanded='true'] > .tv-head::before {
+  content: '▾';
+}
+.tv-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+.tv-tag,
+.tv-aside,
+.tv-sha {
+  flex: none;
+  color: var(--ink-3);
+  font: 12px var(--font-mono);
+}
+.tv-msg {
+  min-width: 8em;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tv-head:hover,
+.tv-commit:hover,
+.tv-branch:focus-visible > .tv-head,
+.tv-commit:focus-visible {
+  background: var(--surface-2);
+}
+.tv-branch:focus-visible,
+.tv-commit:focus-visible {
+  outline: 2px solid currentColor;
 }

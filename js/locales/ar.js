@@ -548,4 +548,10 @@ GB.i18n.define('ar', {
   'practice.ex3.goal': 'أعد تشغيل feature فوق أحدث main دون commit دمج: checkout feature ثم rebase main.',
   'practice.ex4.title': 'التراجع',
   'practice.ex4.goal': 'يجب ألّا يكون آخر commit في main موجودًا. أرجِع main commit واحدًا إلى الخلف: جرّب reset --hard HEAD~1.',
+  'textview.title': 'عرض نصي',
+  'textview.help': 'الفروع وآخر الـ commits فيها على شكل شجرة. السهمان لأعلى ولأسفل للتنقل، واليمين واليسار لفتح الفرع وإغلاقه، وEnter لإظهاره في الرسم.',
+  'textview.default': 'الفرع الافتراضي',
+  'textview.shown': 'الـ commits المعروضة: {n}',
+  'textview.by': 'بواسطة {author}',
+  'textview.merge': 'دمج',
 });

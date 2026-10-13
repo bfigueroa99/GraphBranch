@@ -465,4 +465,10 @@ GB.i18n.define('ru', {
   'practice.ex3.goal': 'Перенесите feature поверх свежего main без коммита слияния: checkout feature, затем rebase main.',
   'practice.ex4.title': 'Отмена',
   'practice.ex4.goal': 'Последнего коммита в main быть не должно. Верните main на один коммит назад: попробуйте reset --hard HEAD~1.',
+  'textview.title': 'Текстовый вид',
+  'textview.help': 'Ветки и их последние коммиты в виде дерева. Вверх и вниз перемещают, вправо и влево открывают и закрывают ветку, Enter показывает её на графе.',
+  'textview.default': 'ветка по умолчанию',
+  'textview.shown': 'показано коммитов: {n}',
+  'textview.by': 'автор {author}',
+  'textview.merge': 'слияние',
 });

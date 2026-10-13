@@ -449,4 +449,10 @@ GB.i18n.define('nb', {
   'practice.ex3.goal': 'Spill av feature oppå nyeste main uten en sammenslåings-commit: checkout feature og deretter rebase main.',
   'practice.ex4.title': 'Angre',
   'practice.ex4.goal': 'Den siste committen på main skal ikke være der. Flytt main én commit tilbake: prøv reset --hard HEAD~1.',
+  'textview.title': 'Tekstvisning',
+  'textview.help': 'Grenene og de siste commitene deres som et tre. Opp og ned flytter, høyre og venstre åpner og lukker en gren, Enter viser den i grafen.',
+  'textview.default': 'standardgren',
+  'textview.shown': 'viste commits: {n}',
+  'textview.by': 'av {author}',
+  'textview.merge': 'sammenslåing',
 });

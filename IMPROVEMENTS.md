@@ -126,7 +126,7 @@ segunda columna a la primera.
 
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
-| Fuentes | GitHub.com (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), repos locales (app de escritorio, con `git`), demo | GitLab propio, GitHub Enterprise, Gitea/Forgejo, Bitbucket |
+| Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), repos locales (app de escritorio, con `git`), demo | GitLab propio, Gitea/Forgejo, Bitbucket |
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs) | CI de GitLab, tags, despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`) | VS Code |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
@@ -189,10 +189,10 @@ se comprueban antes de construir sobre ellas.
    consultas nuevas: ramas sin actividad hace más de 30 días y sin PR, PRs abiertos por edad, tiempo de
    abierto a fusionado (mediana y el más lento de los últimos 20) y ritmo de merges y releases. Cada fila
    lleva a su rama en el grafo. Los cálculos viven en `js/health.js`.
-13. **GitHub Enterprise Server** · Fuentes · 1×3/2. `GitHubSource` con la URL de la API configurable
-   (`https://host/api/v3` y `/api/graphql`). En la web, el host tiene que estar en la CSP: el README
-   explica cómo sumarlo al servirlo uno mismo; en la app de escritorio, `--api-url`. Comprobar: las
-   pruebas de `github.test.mjs` corridas también con otra URL base.
+13. ~~**GitHub Enterprise Server**~~ hecho en #63 · Fuentes. `?api=https://host/api/v3` (web) y `--api-url=` (escritorio):
+   `GitHubSource` toma la URL de la API (REST ahí, GraphQL en `/api/graphql`, enlaces al host); solo https.
+   La app de escritorio suma ese host, y solo ese, al `connect-src` del CSP; en la web lo hace quien sirve la
+   página (README). Un servidor por sesión, sin claves propias para sus repos ni token aparte.
 14. **Choques entre ramas** · Análisis · 2×3/2. Archivos tocados a la vez por varias ramas abiertas (de las
     comparaciones con la rama por defecto, que ya pide el modo galaxias): "feature/a y feature/b tocan
     `src/pagos.js`", en el detalle de cada rama y como aviso al aparecer uno nuevo. Comprobar: prueba
@@ -306,57 +306,64 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     `{"a":1}`, «filter.trim is not a function» (`app.js:193` y `app.js:244`); `view`, `owners` y `repos`
     corruptos no rompen nada. Prueba: el smoke escribe esos valores y abre `?repo=`.
 
+4. [Deuda] Smoke: en `npm run check` bajo `xvfb-run` (iteración 36, el equipo cargado por las pruebas
+    anteriores) fallaron tres pasos que no tocaba el cambio: «vista 2D» (`waitForSelector` de 10 s),
+    «salud del repo» («la demo tiene PRs abiertos y no salen en la lista») y «cambiar a un repo que no
+    existe» (`waitForSelector` de 5 s). Corrido aparte `node tools/smoke.mjs` y repetido el `check`, pasó
+    sin cambios (3 fallas en 2 corridas completas). Medir con 5 corridas seguidas bajo carga y cambiar los
+    topes fijos por esperas a un estado.
+
 ### Baja
 
-4. [Accesibilidad] Objetivos chicos y estados confusos. `audit:objetivo-chico` (24 hallazgos conocidos en
+5. [Accesibilidad] Objetivos chicos y estados confusos. `audit:objetivo-chico` (24 hallazgos conocidos en
     `tools/audit-base.json`): las etiquetas de rama de 22 px de alto en 3D y 2D (mínimo 24), el filtro de
     ramas (`#branch-filter`, 19 px), la casilla de los logros con su etiqueta (`#game-enable`, 19 px), la
     barra de posición del Replay (`.rp-range`, 16 px) y las marcas de la brújula del vuelo (18×18 px).
     Además: botones que cambian a la vez `aria-pressed` y el texto (el de pausa del Replay, `replay.js:367`)
     y la leyenda 2D sin acceso por teclado. Reproducir: `node tools/audit.mjs`.
-5. [Errores] Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una
+6. [Errores] Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una
     etiqueta de rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-6. [Errores] La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-7. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-8. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
+7. [Errores] La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+8. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+9. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
     renombrados).
-9. [Seguridad] `parseRepo` acepta `..` como owner o nombre de un repo de GitHub (`util.js:39`; los de
+10. [Seguridad] `parseRepo` acepta `..` como owner o nombre de un repo de GitHub (`util.js:39`; los de
     GitLab ya se rechazan): rechazar nombres hechos solo de puntos.
-10. [Seguridad] Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de
+11. [Seguridad] Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de
     `<usuario>.github.io`. Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-11. [Rendimiento] Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-12. [Rendimiento] Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`)
+12. [Rendimiento] Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+13. [Rendimiento] Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`)
     y un `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro). Medir antes
     y después con `node tools/audit.mjs --repetir 3`.
-13. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+14. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-14. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
+15. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
     y mueve el resto a `docs/BITACORA.md` (idempotente: la segunda corrida dice «Nada que rotar»; queda
     una línea «Las iteraciones anteriores están en docs/BITACORA.md»); `--siguiente` sigue leyendo N de
     aquí y `--check` exige iteraciones sin repetidos entre los dos archivos. Motivo: `--salud` mide el
     archivo en cada iteración (77 KB el 2026-10-13, 55 KB de bitácora), y cada sesión nueva lo lee entero.
-15. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+16. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-16. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+17. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-17. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+18. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-18. [QA] Repo local de 1.000 ramas en árabe (iteración 35): el primer arranque en frío tardó 22 s y `#status`
+19. [QA] Repo local de 1.000 ramas en árabe (iteración 35): el primer arranque en frío tardó 22 s y `#status`
     dejó de decir «cargando» con 40 ramas contadas (en tamil, 3 s y 1.001). Sin reproducir una segunda vez:
     medir si el estado «listo» sale antes de la primera lectura completa del repo local. Reproducción:
     `xvfb-run node` con `e2e/app.mjs` (`launch` + `--local=` sobre un repo con 1.000 ramas), leer
     `#st-branches` al salir `loaded()`.
-19. [QA] La auditoría con `--langs` cuenta `objetivo-chico` 135 veces fuera de la base (95×22, 73×22 y
+20. [QA] La auditoría con `--langs` cuenta `objetivo-chico` 135 veces fuera de la base (95×22, 73×22 y
     296×19 px en 40 idiomas): son los mismos controles del pendiente 4, repetidos por idioma. Decidir si
     la base los guarda por control y no por idioma. Reproducción: `node tools/audit.mjs --langs`.
-20. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
+21. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
     (6.009 ms con ≤ 6.000; tareas largas 4.809 ms con ≤ 4.000), sin GPU y con la corrida larga; la corrida
     normal de la puerta no lo marca. Medir con `node tools/audit.mjs --repetir 3` antes de tocar nada.
 
@@ -1227,3 +1234,24 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 143 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 22 e2e en verde.
 - **Siguiente:** iteración 36, expansión: ítem 13 (GitHub Enterprise Server, Fuentes)
+
+### 2026-10-13 · Iteración 36 · Expansión · Fuentes
+
+- **Capacidad nueva: GitHub Enterprise Server** (ítem 13 de la hoja de ruta). `GitHubSource` acepta `apiUrl`
+  (`https://host/api/v3`): REST ahí, GraphQL en `https://host/api/graphql`, enlaces a `https://host`; una URL que
+  no sea https (o con usuario) se ignora. En la web se activa con `?api=`; en la app de escritorio con
+  `--api-url=`, que suma ese host, y solo él, al `connect-src` del CSP al servir `index.html`. Sin textos nuevos
+  en la interfaz (nada que traducir).
+- **Pruebas que fallan sin la capacidad:** en `tools/github.test.mjs`, la API simulada ahora responde solo en su
+  `base` (cualquier otro host falla): «GHE sin token» (modo events y su paginación), «GHE con token» (GraphQL en
+  `/api/graphql` y token solo al host) y «una URL de API que no es https no se usa»; y la e2e de escritorio
+  «--api-url suma solo ese host al CSP».
+- README: la función en la lista, `--api-url` en la app de escritorio, Límites conocidos (un servidor por sesión,
+  claves compartidas, token único, sin probar contra un servidor real) y Seguridad (CSP y token).
+- QA: filas tocadas: CSP (la web no cambia; `pwa.test.mjs` sigue exigiendo `connect-src` cerrado), cada token a su
+  API (prueba del token solo al host), sin red (el error sigue siendo de red). Sin mirar a mano: un servidor real
+  de Enterprise; el mensaje de «no se pudo conectar» nombra api.github.com (anotado en Límites).
+- Reclamo: loop/36, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 146 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 23 e2e en verde. El primer `check` falló en tres pasos del smoke ajenos al cambio y pasó al repetirlo: pendiente nuevo [Deuda] (Media, 4).
+- **Siguiente:** iteración 37, expansión: ítem 14 (Choques entre ramas, Análisis)

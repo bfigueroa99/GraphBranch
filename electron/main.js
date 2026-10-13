@@ -7,6 +7,7 @@
      npm start                         abre la demo o los repositorios que se seguían
      npm start -- --repo=owner/repo    abre ese repositorio (repetido, sigue varios)
      npm start -- --local=/ruta/repo   sigue un repositorio de esta máquina, sin GitHub (repetido, varios)
+     npm start -- --api-url=https://host/api/v3   los repos de GitHub salen de un GitHub Enterprise Server
      npm start -- --tv                 entra en modo TV (también --lang=es)
 
    Cerrar la ventana la esconde en la bandeja del sistema (electron/tray.js) y la app sigue
@@ -50,19 +51,45 @@ async function serve(request) {
   }
   const file = path.join(ROOT, rel);
   if (url.host !== HOST || !PUBLIC.has(rel.split(/[/\\]/)[0]) || path.relative(ROOT, file).startsWith('..')) return notFound();
-  return net.fetch(pathToFileURL(file).toString());
+  const res = await net.fetch(pathToFileURL(file).toString());
+  // con --api-url, el host elegido por quien abre la app entra en connect-src (y solo él)
+  if (rel === 'index.html' && API_ARG) {
+    const html = (await res.text()).replace('connect-src https://api.github.com', `connect-src https://api.github.com ${API_ARG.origin}`);
+    return new Response(html, { status: res.status, headers: { 'content-type': 'text/html; charset=utf-8' } });
+  }
+  return res;
 }
 
-/** Los argumentos --repo, --tv y --lang pasan a la página como en la web (?repo=, ?tv=1, ?lang=).
+/** --api-url=https://host/api/v3: la dirección de la API de un GitHub Enterprise Server. Solo https y sin
+    usuario; otra cosa se ignora. Es lo único que se suma a connect-src del CSP de la página (ver serve). */
+function apiUrlArg(argv) {
+  for (const arg of argv) {
+    const m = /^--api-url=(.+)$/.exec(arg);
+    if (!m) continue;
+    try {
+      const u = new URL(m[1]);
+      if (u.protocol === 'https:' && !u.username && !u.password) return { url: (u.origin + u.pathname).replace(/\/+$/, ''), origin: u.origin };
+    } catch {
+      /* no es una URL: se ignora */
+    }
+    console.error(`--api-url=${m[1]}: tiene que ser una URL https`);
+  }
+  return null;
+}
+const API_ARG = apiUrlArg(process.argv);
+
+/** Los argumentos --repo, --api-url, --tv y --lang pasan a la página como en la web (?repo=, ?tv=1, ?lang=).
     --repo se puede repetir para seguir varios repos (el primero queda a la vista). */
 function startUrl(argv, locals = []) {
   const url = new URL(`${ORIGIN}/index.html`);
   for (const r of locals) url.searchParams.append('repo', `local:${r.id}/${r.name}`);
   for (const arg of argv) {
-    const m = /^--(repo|lang)=(.+)$/.exec(arg);
+    const m = /^--(repo|lang|api-url)=(.+)$/.exec(arg);
+    if (m && m[1] === 'api-url') continue; // va validado, abajo
     if (m) url.searchParams[m[1] === 'repo' ? 'append' : 'set'](m[1], m[2]);
     else if (arg === '--tv') url.searchParams.set('tv', '1');
   }
+  if (API_ARG) url.searchParams.set('api', API_ARG.url);
   return url.toString();
 }
 

@@ -108,6 +108,16 @@
      cifrados con el llavero del sistema (electron/preload.js expone GBDesktop) y se leen antes de
      conectar, ver el arranque. Cada uno va solo a la fuente de su servicio (sourceFor). */
   const desktop = window.GBDesktop;
+  /** ?api=https://host/api/v3: los repos de GitHub salen de un GitHub Enterprise Server en vez de github.com.
+      Solo https, y la página solo llega a hosts que su CSP nombra (ver README); sin eso, no hay efecto. */
+  const API_URL = (() => {
+    try {
+      const v = new URLSearchParams(location.search).get('api') || '';
+      return GB.GitHubSource.endpoints(v) ? v : '';
+    } catch {
+      return '';
+    }
+  })();
   const EMBED = document.documentElement.classList.contains('embed'); // ?embed=1, ver i18n.js
   const settings = {
     token: desktop ? '' : U.store.get('token', ''),
@@ -256,7 +266,7 @@
     const remembered = { depth: settings.depth, filter: U.store.get('filter:' + key, ''), pins: U.store.get('pins:' + key, []) };
     if (host === 'local') return new GB.LocalGitSource({ id: owner, name, ...remembered });
     if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, ...remembered });
-    return new GB.GitHubSource({ owner, name, token: settings.token, ...remembered });
+    return new GB.GitHubSource({ owner, name, token: settings.token, apiUrl: API_URL, ...remembered });
   }
 
   /** Suma una pestaña al final, con su fuente, sin mostrarla ni arrancarla. */
@@ -428,7 +438,7 @@
     if (!refresh) el.repoForm.setAttribute('aria-busy', 'true');
     let list;
     try {
-      list = await GB.GitHubSource.ownerRepos(owner, { token: settings.token });
+      list = await GB.GitHubSource.ownerRepos(owner, { token: settings.token, apiUrl: API_URL });
     } catch (err) {
       return refresh ? undefined : repoNote(i18n.text(err.msg || err.message));
     } finally {

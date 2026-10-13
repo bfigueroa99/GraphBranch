@@ -56,6 +56,8 @@ function fakeGitHub() {
     override: null, // (ruta) => { status, body } para responder otra cosa, o nada para seguir normal
     checks: null, // sha -> check-runs del commit (si es null, la API de checks no existe)
     calls: [],
+    base: 'https://api.github.com', // la API a la que responde; cualquier otro host falla, como si no llegara
+    urls: [], // las URL completas pedidas
   };
   let n = 0;
   gh.commit = (sha, parent = null) => {
@@ -79,12 +81,12 @@ function fakeGitHub() {
   };
 
   function route(path) {
-    const u = new URL('https://api.github.com' + path);
+    const u = new URL('https://api.github.com' + path); // solo para leer la ruta y sus parámetros
     const p = u.pathname;
     if (p === '/repos/o/r') return { body: gh.repo };
     if (p === '/repos/o/r/branches') {
       const all = [...gh.branches].map(([name, sha]) => ({ name, commit: { sha }, protected: false }));
-      const headers = gh.manyBranches ? { Link: '<https://api.github.com/repos/o/r/branches?per_page=100&page=2>; rel="next"' } : {};
+      const headers = gh.manyBranches ? { Link: `<${gh.base}/repos/o/r/branches?per_page=100&page=2>; rel="next"` } : {};
       return { body: all.slice(0, Number(u.searchParams.get('per_page'))), headers };
     }
     if (p === '/repos/o/r/events') return { body: gh.events };
@@ -121,7 +123,9 @@ function fakeGitHub() {
   }
 
   gh.fetch = async (url, opts = {}) => {
-    const path = url.replace('https://api.github.com', '');
+    gh.urls.push(url);
+    if (!url.startsWith(gh.base)) throw new TypeError('Failed to fetch'); // otro host: no hay quien responda
+    const path = url.slice(gh.base.length).replace(/^\/api(?=\/graphql)/, '');
     gh.calls.push(path);
     gh.onFetch?.(path);
     if (gh.failOnce?.(path)) {
@@ -149,9 +153,9 @@ function fakeGitHub() {
 }
 
 /** Fuente conectada a la API falsa (sin token, salvo que se pida); `cycle()` corre un ciclo de sondeo completo. */
-function connect(gh, token = '') {
+function connect(gh, token = '', apiUrl = '') {
   const GB = load(gh);
-  const src = new GB.GitHubSource({ owner: 'o', name: 'r', token });
+  const src = new GB.GitHubSource({ owner: 'o', name: 'r', token, apiUrl });
   const updates = [];
   const errors = [];
   src.on('update', (u) => updates.push(u));
@@ -515,4 +519,47 @@ test('CI sin la API de checks: la rama queda sin estado y nada falla', async () 
   await src.cycle();
   assert.equal(errors.length, 0);
   assert.equal(src.data.ci.has('main'), false);
+});
+
+/* GitHub Enterprise Server: la misma fuente contra otra URL base (https://host/api/v3 y /api/graphql). */
+
+const GHE = 'https://ghe.example.com/api/v3';
+
+test('GHE sin token: modo events con la URL base configurada, su paginación y sus enlaces', async () => {
+  const gh = fakeGitHub();
+  gh.base = GHE;
+  gh.manyBranches = true;
+  gh.push('main', 'a1');
+  const { src, updates, errors } = connect(gh, '', GHE);
+  assert.equal(src.data.repo.url, 'https://ghe.example.com/o/r', 'antes de cargar, el enlace del repo es el del host');
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  assert.equal(src.mode, 'events');
+  assert.equal(updates.length, 1);
+  assert.ok(gh.urls.length > 0 && gh.urls.every((u) => u.startsWith(GHE + '/')), 'todo va al host configurado, nada a api.github.com');
+  assert.ok(src.data.branches.has('main'));
+});
+
+test('GHE con token: GraphQL en /api/graphql y el token solo al host configurado', async () => {
+  const gh = fakeGitHub();
+  gh.base = 'https://ghe.example.com/api/v3';
+  gh.push('main', 'a1');
+  fakeGraphQL(gh, { main: 'SUCCESS', pr: 'SUCCESS' });
+  const sent = [];
+  const fetch = gh.fetch;
+  gh.fetch = (url, opts = {}) => (sent.push([url, opts.headers?.Authorization]), fetch(url, opts));
+  const { src } = connect(gh, 'tok', GHE + '/');
+  await src.cycle();
+  assert.equal(src.mode, 'graphql');
+  assert.ok(sent.some(([u]) => u === 'https://ghe.example.com/api/graphql'));
+  assert.ok(sent.every(([u, a]) => u.startsWith('https://ghe.example.com/') && a === 'Bearer tok'), 'el token no sale a otro host');
+});
+
+test('una URL de API que no es https no se usa: la fuente sigue en api.github.com', () => {
+  const GB = load(fakeGitHub());
+  for (const bad of ['http://ghe.example.com/api/v3', 'https://u:p@ghe.example.com/api/v3', 'basura', 'javascript:alert(1)']) {
+    assert.equal(GB.GitHubSource.endpoints(bad), null, bad);
+    assert.equal(new GB.GitHubSource({ owner: 'o', name: 'r', apiUrl: bad }).ep.api, 'https://api.github.com');
+  }
+  assert.equal(GB.GitHubSource.endpoints(GHE).graphql, 'https://ghe.example.com/api/graphql');
 });

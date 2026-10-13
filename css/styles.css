@@ -3673,6 +3673,57 @@ html.tv-idle .tv-bar:not(:focus-within) {
   opacity: 0;
 }
 
+/* ?embed=1 (iframe en una wiki, Notion u OBS): solo el grafo y los avisos. El título del repo sigue
+   ahí para los lectores de pantalla, sin verse. &bg=transparent deja ver lo que haya detrás. */
+html.embed .topbar,
+html.embed .stats,
+html.embed .feed-panel,
+html.embed .toolbar,
+html.embed .hint,
+html.embed .token-banner,
+html.embed .game-strip,
+html.embed .lower,
+html.embed .rp-bar {
+  display: none !important;
+}
+html.embed .graph-panel > .panel-head {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  padding: 0;
+  border: 0;
+}
+html.embed .app {
+  display: block;
+  height: 100vh;
+  height: 100dvh;
+  max-width: none;
+  padding: 0;
+}
+html.embed .main {
+  display: block;
+  height: 100%;
+}
+html.embed .graph-panel {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+html.embed .graph-stage {
+  margin: 0;
+  border-radius: 0;
+}
+html.embed-clear,
+html.embed-clear body,
+html.embed-clear .graph-panel,
+html.embed-clear .graph-stage,
+html.embed-clear .graph-wrap {
+  background: transparent;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

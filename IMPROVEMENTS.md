@@ -128,7 +128,7 @@ segunda columna a la primera.
 | --- | --- | --- |
 | Fuentes | GitHub.com (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), repos locales (app de escritorio, con `git`), demo | GitLab propio, GitHub Enterprise, Gitea/Forgejo, Bitbucket |
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs) | CI de GitLab, tags, despliegues |
-| Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV | widget y capa para streaming, VS Code |
+| Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`) | VS Code |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM) | Slack y Discord, resumen de la semana |
 | Análisis | resumen de cifras, logros, misión del día | salud del repo, choques entre ramas, comparar ramas, búsqueda |
@@ -181,11 +181,10 @@ se comprueban antes de construir sobre ellas.
    y commits con `git` (`execFile`, sin shell) y vigila `.git`, y la página solo conoce el id de cada
    carpeta elegida (`GBDesktop.git`). Sin GitHub ni cuota. Los repos remotos (`origin/…`), los worktrees
    y la demo con un repo local quedan sin hacer.
-11. **Widget embebible y capa para streaming** · Plataformas · 2×3/1. `?embed=1`: solo el grafo y los avisos,
-   sin barra, para un iframe en documentación, wikis o Notion (el README trae el código para pegar).
-   Con `&bg=transparent`, fondo transparente para OBS al transmitir mientras se programa. Sin token por
-   defecto: pensado para repos públicos. Comprobar: el smoke abre `?embed=1` y verifica que no hay
-   barras y que no desborda.
+11. ~~**Widget embebible y capa para streaming**~~ hecho en #60 · Plataformas. `?embed=1`: solo el grafo y los
+   avisos, sin barras, para un iframe (el README trae el código para pegar); `&bg=transparent` para OBS.
+   No sigue ni guarda los repos de la persona y no entra en modo TV. Sin hacer: tamaño y tema por
+   parámetro (`&theme=`), y un modo sin avisos.
 12. **Salud del repo** · Análisis · 3×2/1. Un panel con lo que ya está cargado, sin consultas nuevas: ramas sin
    actividad hace más de 30 días y sin PR, PRs abiertos por edad, tiempo de abierto a fusionado de los
    últimos PRs, ritmo de merges y releases. Cada fila lleva a su rama o PR en el grafo. Comprobar:
@@ -1165,3 +1164,23 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Reclamo: loop/32, sin colisión
 - Validado: 138 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 21 e2e en verde.
 - **Siguiente:** iteración 33, expansión: ítem 11 (Widget embebible y capa para streaming, Plataformas)
+
+### 2026-10-13 · Iteración 33 · Expansión · Plataformas
+
+- **Capacidad nueva: widget embebible y capa para streaming** (ítem 11 de la hoja de ruta). `?embed=1` deja
+  solo el grafo y los avisos, sin barras, para un iframe en documentación, wikis o Notion; `&bg=transparent`
+  deja el fondo transparente (fuente de navegador de OBS). `js/i18n.js` marca `<html class="embed">` antes
+  de pintar (sin parpadeo; la CSP prohíbe scripts en línea) y `css/styles.css` esconde el resto. El título
+  del repo sigue para lectores de pantalla. En embed no se leen ni se escriben los repos seguidos
+  (`saveTabs` no hace nada) y no entra en modo TV. Sin textos nuevos: no hay interfaz nueva que traducir.
+- **Pruebas que fallan sin la capacidad:** paso nuevo del smoke «solo el grafo y los avisos, sin barras ni
+  desborde» (640×400: nada de topbar, resumen, actividad ni barra; sin desborde; el grafo llena el marco;
+  fondo transparente; sin modo TV).
+- README: la función en la lista, el código para pegar, Límites conocidos (token y sin `frame-ancestors`)
+  y Seguridad.
+- QA: filas del protocolo tocadas: 320 px y tema claro/oscuro, cubiertas por el mismo CSS que no depende
+  del ancho; la demo (sin API) en el smoke; consola y CSP sin cambios (el smoke falla con errores). Sin
+  mirar a mano: solo teclado dentro del iframe y árabe; auditoría: 0 hallazgos nuevos. El paso del smoke cazó un fallo real a medio camino (el grafo medía 0 px: `height:100%` no resuelve en `html`), arreglado con altura explícita.
+- Reclamo: loop/33, sin colisión
+- Validado: 138 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 21 e2e en verde.
+- **Siguiente:** iteración 34, expansión: ítem 12 (Salud del repo, Análisis)

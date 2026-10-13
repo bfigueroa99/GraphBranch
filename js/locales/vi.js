@@ -320,6 +320,8 @@ GB.i18n.define('vi', {
   'act.mrOpenedDraft': 'Đã mở MR !{num} dưới dạng bản nháp',
   'act.mrMergedInto': 'MR !{num} đã merge vào {base}',
   'act.mrClosed': 'MR !{num} đã đóng mà không merge',
+  'act.mrApproved': 'MR !{num} đã được duyệt',
+  'act.commentMr': 'Bình luận trong MR !{num}',
   'act.reviewRequested': 'Yêu cầu review PR #{num}',
   'act.prApproved': 'PR #{num} đã được duyệt',
   'act.prChanges': 'Yêu cầu thay đổi ở PR #{num}',

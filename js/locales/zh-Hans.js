@@ -320,6 +320,8 @@ GB.i18n.define('zh-Hans', {
   'act.mrOpenedDraft': 'MR !{num} 已作为草稿打开',
   'act.mrMergedInto': 'MR !{num} 已合并到 {base}',
   'act.mrClosed': 'MR !{num} 已关闭（未合并）',
+  'act.mrApproved': 'MR !{num} 已批准',
+  'act.commentMr': 'MR !{num} 的评论',
   'act.reviewRequested': '已请求审查 PR #{num}',
   'act.prApproved': 'PR #{num} 已批准',
   'act.prChanges': 'PR #{num} 被请求更改',

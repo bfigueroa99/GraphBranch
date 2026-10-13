@@ -321,6 +321,8 @@ GB.i18n.define('fil', {
   'act.mrOpenedDraft': 'Binuksan ang MR !{num} bilang draft',
   'act.mrMergedInto': 'Na-merge ang MR !{num} sa {base}',
   'act.mrClosed': 'Sinara ang MR !{num} nang hindi na-merge',
+  'act.mrApproved': 'Inaprubahan ang MR !{num}',
+  'act.commentMr': 'Komento sa MR !{num}',
   'act.reviewRequested': 'Hiniling ang review sa PR #{num}',
   'act.prApproved': 'Inaprubahan ang PR #{num}',
   'act.prChanges': 'Hiniling ang mga pagbabago sa PR #{num}',

@@ -320,6 +320,8 @@ GB.i18n.define('zh-Hant', {
   'act.mrOpenedDraft': 'MR !{num} 已以草稿開啟',
   'act.mrMergedInto': 'MR !{num} 已合併至 {base}',
   'act.mrClosed': 'MR !{num} 已關閉（未合併）',
+  'act.mrApproved': 'MR !{num} 已核准',
+  'act.commentMr': 'MR !{num} 的留言',
   'act.reviewRequested': '已要求審查 PR #{num}',
   'act.prApproved': 'PR #{num} 已核准',
   'act.prChanges': 'PR #{num} 被要求變更',

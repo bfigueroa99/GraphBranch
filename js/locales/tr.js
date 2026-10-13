@@ -320,6 +320,8 @@ GB.i18n.define('tr', {
   'act.mrOpenedDraft': 'MR !{num} taslak olarak açıldı',
   'act.mrMergedInto': 'MR !{num}, {base} dalına birleştirildi',
   'act.mrClosed': 'MR !{num} birleştirilmeden kapatıldı',
+  'act.mrApproved': 'MR !{num} onaylandı',
+  'act.commentMr': 'MR !{num} üzerinde yorum',
   'act.reviewRequested': 'PR #{num} için inceleme istendi',
   'act.prApproved': 'PR #{num} onaylandı',
   'act.prChanges': 'PR #{num} için değişiklik istendi',

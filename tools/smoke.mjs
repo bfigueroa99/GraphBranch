@@ -1001,6 +1001,10 @@ function fakeGitLab() {
       return { body: { commit: commits.get(to), commits: [...reach(to)].filter((s) => !old.has(s)).map((s) => commits.get(s)), diffs: [], compare_timeout: false } };
     }
     if (rest === '/repository/merge_base') return { body: { id: resolve(q.getAll('refs[]')[0]) } };
+    if (rest === '/events') {
+      const author = { username: 'ana', name: 'Ana', avatar_url: 'https://secure.gravatar.com/avatar/x' };
+      return { body: [{ id: 1, action_name: 'opened', target_type: 'Issue', target_iid: 9, target_title: 'Falla al abrir', created_at: new Date().toISOString(), author }] };
+    }
     if (rest === '/merge_requests') return { body: mrs.filter((m) => q.get('state') === 'all' || m.state === q.get('state')) };
     return { status: 404, body: { message: '404 Not Found' } };
   };
@@ -1073,6 +1077,7 @@ console.log('GitLab');
   });
 
   await step(page, 'lo nuevo llega al panel: un push y la MR fusionada', async () => {
+    await page.waitForFunction(() => [...document.querySelectorAll('#feed li')].some((li) => li.textContent.includes('Issue #9 abierto')), null, { timeout: 15000 }); // del feed de eventos
     gl.push('main', 'fix: arreglo urgente');
     await page.waitForFunction(() => [...document.querySelectorAll('#feed li')].some((li) => li.textContent.includes('fix: arreglo urgente')), null, { timeout: 15000 });
     gl.merge();

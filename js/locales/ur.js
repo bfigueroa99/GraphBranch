@@ -363,6 +363,8 @@ GB.i18n.define('ur', {
   'act.mrOpenedDraft': 'MR !{num} مسودے کے طور پر کھولا گیا',
   'act.mrMergedInto': 'MR !{num} کو {base} میں merge کیا گیا',
   'act.mrClosed': 'MR !{num} بغیر merge کے بند کیا گیا',
+  'act.mrApproved': 'MR !{num} منظور ہوا',
+  'act.commentMr': 'MR !{num} پر تبصرہ',
   'act.reviewRequested': 'PR #{num} پر جائزے کی درخواست',
   'act.prApproved': 'PR #{num} منظور ہوا',
   'act.prChanges': 'PR #{num} پر تبدیلیوں کی درخواست',

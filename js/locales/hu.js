@@ -320,6 +320,8 @@ GB.i18n.define('hu', {
   'act.mrOpenedDraft': 'MR !{num} megnyitva piszkozatként',
   'act.mrMergedInto': 'MR !{num} beolvasztva ide: {base}',
   'act.mrClosed': 'MR !{num} lezárva beolvasztás nélkül',
+  'act.mrApproved': 'MR !{num} jóváhagyva',
+  'act.commentMr': 'Hozzászólás: MR !{num}',
   'act.reviewRequested': 'Review kérve: PR #{num}',
   'act.prApproved': 'PR #{num} jóváhagyva',
   'act.prChanges': 'Változtatások kérve: PR #{num}',

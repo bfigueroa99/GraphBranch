@@ -321,6 +321,8 @@ GB.i18n.define('nl', {
   'act.mrOpenedDraft': 'MR !{num} geopend als concept',
   'act.mrMergedInto': 'MR !{num} gemerged in {base}',
   'act.mrClosed': 'MR !{num} gesloten zonder merge',
+  'act.mrApproved': 'MR !{num} goedgekeurd',
+  'act.commentMr': 'Reactie op MR !{num}',
   'act.reviewRequested': 'Review aangevraagd voor PR #{num}',
   'act.prApproved': 'PR #{num} goedgekeurd',
   'act.prChanges': 'Wijzigingen gevraagd voor PR #{num}',

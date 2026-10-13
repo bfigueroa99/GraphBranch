@@ -320,6 +320,8 @@ GB.i18n.define('ja', {
   'act.mrOpenedDraft': 'MR !{num} をドラフトとしてオープン',
   'act.mrMergedInto': 'MR !{num} を {base} にマージ',
   'act.mrClosed': 'MR !{num} をマージせずにクローズ',
+  'act.mrApproved': 'MR !{num} を承認',
+  'act.commentMr': 'MR !{num} へのコメント',
   'act.reviewRequested': 'PR #{num} のレビューを依頼',
   'act.prApproved': 'PR #{num} を承認',
   'act.prChanges': 'PR #{num} に変更を要求',

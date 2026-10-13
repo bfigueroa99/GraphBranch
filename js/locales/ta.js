@@ -320,6 +320,8 @@ GB.i18n.define('ta', {
   'act.mrOpenedDraft': 'MR !{num} வரைவாகத் திறக்கப்பட்டது',
   'act.mrMergedInto': 'MR !{num} {base} கிளையில் மெர்ஜ் ஆனது',
   'act.mrClosed': 'MR !{num} மெர்ஜ் செய்யாமல் மூடப்பட்டது',
+  'act.mrApproved': 'MR !{num} அங்கீகரிக்கப்பட்டது',
+  'act.commentMr': 'MR !{num}-இல் கருத்து',
   'act.reviewRequested': 'PR #{num}-க்கு மதிப்பாய்வு கோரப்பட்டது',
   'act.prApproved': 'PR #{num} அங்கீகரிக்கப்பட்டது',
   'act.prChanges': 'PR #{num}-இல் மாற்றங்கள் கோரப்பட்டன',

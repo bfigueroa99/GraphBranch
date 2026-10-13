@@ -320,6 +320,8 @@ GB.i18n.define('el', {
   'act.mrOpenedDraft': 'Άνοιξε το MR !{num} ως πρόχειρο',
   'act.mrMergedInto': 'Έγινε merge του MR !{num} στο {base}',
   'act.mrClosed': 'Έκλεισε το MR !{num} χωρίς merge',
+  'act.mrApproved': 'Εγκρίθηκε το MR !{num}',
+  'act.commentMr': 'Σχόλιο στο MR !{num}',
   'act.reviewRequested': 'Ζητήθηκε review στο PR #{num}',
   'act.prApproved': 'Εγκρίθηκε το PR #{num}',
   'act.prChanges': 'Ζητήθηκαν αλλαγές στο PR #{num}',

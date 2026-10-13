@@ -320,6 +320,8 @@ GB.i18n.define('bg', {
   'act.mrOpenedDraft': 'MR !{num} отворен като чернова',
   'act.mrMergedInto': 'MR !{num} слят в клон {base}',
   'act.mrClosed': 'MR !{num} затворен без сливане',
+  'act.mrApproved': 'MR !{num} одобрен',
+  'act.commentMr': 'Коментар към MR !{num}',
   'act.reviewRequested': 'Заявен преглед на PR #{num}',
   'act.prApproved': 'PR #{num} одобрен',
   'act.prChanges': 'Заявени промени в PR #{num}',

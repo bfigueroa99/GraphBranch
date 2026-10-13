@@ -363,6 +363,8 @@ GB.i18n.define('fa', {
   'act.mrOpenedDraft': 'MR !{num} به‌صورت پیش‌نویس باز شد',
   'act.mrMergedInto': 'MR !{num} در {base} merge شد',
   'act.mrClosed': 'MR !{num} بدون merge بسته شد',
+  'act.mrApproved': 'MR !{num} تأیید شد',
+  'act.commentMr': 'نظر روی MR !{num}',
   'act.reviewRequested': 'درخواست بازبینی برای PR #{num}',
   'act.prApproved': 'PR #{num} تأیید شد',
   'act.prChanges': 'درخواست تغییرات برای PR #{num}',

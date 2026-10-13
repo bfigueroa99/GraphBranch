@@ -1326,6 +1326,94 @@ console.log('GitLab');
   await page.context().close();
 }
 
+/* ---------- Codeberg ---------- */
+
+/** codeberg.org simulado para la web: ana/api con main, una rama con dos commits y un PR abierto. */
+function fakeCodeberg() {
+  const WEB = 'https://codeberg.org/ana/api';
+  const commits = new Map();
+  const branches = new Map();
+  const calls = [];
+  const auths = [];
+  let n = 0;
+  const commit = (branch, title) => {
+    const sha = createHash('sha1').update(`cb:${++n}`).digest('hex');
+    const parent = branches.get(branch);
+    const date = new Date(Date.now() - 3600e3 + n * 1000).toISOString();
+    commits.set(sha, { sha, html_url: `${WEB}/commit/${sha}`, parents: parent ? [{ sha: parent }] : [], commit: { message: title, author: { name: 'Bea', date }, committer: { date } }, author: { login: 'bea', avatar_url: null } });
+    branches.set(branch, sha);
+  };
+  for (let i = 0; i < 4; i++) commit('main', `inicio ${i}`);
+  branches.set('feature/x', branches.get('main'));
+  commit('feature/x', 'feat: primera parte');
+  commit('feature/x', 'feat: segunda parte');
+  const chain = (sha) => {
+    const out = [];
+    for (let s = sha; s && commits.has(s); s = commits.get(s).parents[0]?.sha) out.push(commits.get(s));
+    return out;
+  };
+  const json = (body, headers = {}) => ({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', ...headers }, body: JSON.stringify(body) });
+  return {
+    calls,
+    auths,
+    handle: (route) => {
+      const u = new URL(route.request().url());
+      auths.push(route.request().headers().authorization || null);
+      const p = u.pathname.replace('/api/v1', '');
+      calls.push(p + u.search);
+      if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' } });
+      if (p === '/repos/ana/api') return route.fulfill(json({ name: 'api', owner: { login: 'ana' }, default_branch: 'main', html_url: WEB, private: false, description: 'Un repo de Codeberg' }));
+      if (p === '/repos/ana/api/branches') return route.fulfill(json([...branches].map(([name, sha]) => ({ name, commit: { id: sha }, protected: name === 'main' }))));
+      if (p === '/repos/ana/api/commits') return route.fulfill(json(chain(u.searchParams.get('sha')).slice(0, Number(u.searchParams.get('limit') || 30))));
+      if (p === '/repos/ana/api/pulls') {
+        const pr = { number: 3, title: 'Agrega la función x', html_url: `${WEB}/pulls/3`, state: 'open', head: { ref: 'feature/x', repo: { full_name: 'ana/api' } }, base: { ref: 'main' }, user: { login: 'bea', avatar_url: null }, created_at: new Date().toISOString() };
+        return route.fulfill(json(u.searchParams.get('state') === 'open' ? [pr] : []));
+      }
+      return route.fulfill({ status: 404, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"message":"not found"}' });
+    },
+  };
+}
+
+console.log('Codeberg');
+{
+  const cb = fakeCodeberg();
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.route('https://codeberg.org/**', cb.handle);
+
+  await step(page, 'conecta un repo de Codeberg (codeberg:ana/api), con su etiqueta y sin token', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=codeberg:ana/api`);
+    await loaded(page);
+    const link = await page.evaluate(() => {
+      const a = document.querySelector('#repo-link');
+      const b = document.querySelector('#repo-badge');
+      return { text: a.textContent, href: a.href, badge: b.hidden ? null : b.textContent, banner: !document.querySelector('#token-banner').hidden };
+    });
+    if (link.text !== 'ana/api' || link.href !== 'https://codeberg.org/ana/api') throw new Error(`el título dice ${link.text} (${link.href})`);
+    if (link.badge !== 'Codeberg') throw new Error(`la etiqueta dice ${link.badge}`);
+    if (link.banner) throw new Error('muestra el aviso del token de GitHub');
+    const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
+    if (saved !== '["codeberg:ana/api"]') throw new Error(`se guardó ${saved}`);
+    if (cb.auths.some(Boolean)) throw new Error('una consulta a Codeberg llevó un encabezado Authorization');
+  });
+
+  await step(page, 'en 2D se ven sus dos ramas y el PR #3', async () => {
+    await page.click('#view-2d');
+    const label = await page.waitForSelector('#graph .head .h-pr', { timeout: 15000 });
+    if ((await label.textContent()) !== '#3') throw new Error(`la etiqueta dice ${await label.textContent()}`);
+    const names = await page.$$eval('#graph .head', (hs) => hs.map((h) => h.getAttribute('aria-label')).join(' | '));
+    if (!names.includes('feature/x') || !names.includes('main')) throw new Error(`ramas: ${names}`);
+  });
+
+  await step(page, 'un repo que no existe lo dice con el texto de Codeberg', async () => {
+    await page.fill('#repo-input', 'https://codeberg.org/ana/nada');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: 15000 });
+    const text = await page.textContent('#overlay');
+    if (!text.includes('No se encontró ana/nada en Codeberg. Solo se leen repositorios públicos.')) throw new Error(`el aviso dice ${text}`);
+  }, { allow: /404/ });
+  await page.context().close();
+}
+
 console.log('Fijar una rama con el teclado');
 {
   const gh = fakeGitHub();

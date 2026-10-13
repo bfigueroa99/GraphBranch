@@ -126,7 +126,7 @@ segunda columna a la primera.
 
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
-| Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), repos locales (app de escritorio, con `git`), demo | GitLab propio, Gitea/Forgejo, Bitbucket |
+| Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (repos públicos, API de Forgejo), repos locales (app de escritorio, con `git`), demo | GitLab propio, otros servidores de Gitea/Forgejo, Codeberg con token, Bitbucket |
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`) | VS Code |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
@@ -218,8 +218,9 @@ se comprueban antes de construir sobre ellas.
 20. **Comparar dos ramas** · Análisis · 2×2/2. Elegir dos ramas: cuántos commits lleva cada una por delante,
     desde dónde se separaron y qué archivos cambian, resaltado en el grafo. Comprobar: prueba con la
     API simulada.
-21. **Gitea, Forgejo y Codeberg** · Fuentes · 1×2/2. Con la interfaz de fuente de GitLab ya hecha; su API se
-    parece a la de GitHub. Comprobar CORS de codeberg.org primero; si no lo hay, solo escritorio.
+21. ~~**Gitea, Forgejo y Codeberg**~~ hecho en #72 · Fuentes. codeberg.org (CORS abierto, comprobado) con la API de
+    Forgejo: ramas, historia y PRs en vivo, galaxias con el árbol, sin token y solo repos públicos. Sin hacer:
+    otros servidores de Gitea/Forgejo (uno propio entra con el ítem 25) y Codeberg con token.
 22. **Bitbucket Cloud** · Fuentes · 2×2/2. `api.bitbucket.org/2.0`: ramas, commits y pull requests.
 23. **Resumen de la semana** · Salidas · 2×2/1. Una ficha con lo que pasó en los últimos 7 días (PRs
     fusionados, releases, quién aportó, la rama más activa), para copiar como Markdown o guardar como
@@ -1412,3 +1413,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 177 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde.
 - **Siguiente:** iteración 45, expansión: ítem 21 (Gitea, Forgejo y Codeberg, Fuentes)
+
+### 2026-10-13 · Iteración 45 · Expansión · Fuentes
+
+- **Capacidad nueva: Codeberg como fuente** (ítem 21 de la hoja de ruta). `codeberg:dueño/repo` o la URL de codeberg.org abre un repo público de Codeberg como una pestaña más: `js/sources/codeberg.js` hereda de la fuente de GitHub (la API de Forgejo se parece) y cambia lo propio: página con `limit` (50), ramas listadas enteras en cada ciclo (hasta 500), historia con `commits?sha=`, force-push distinguido con dos comparaciones `a...b`, PRs con título `WIP:`/`Draft:` como borrador y árbol de archivos para las galaxias. CORS de codeberg.org comprobado con `curl` (`access-control-allow-origin: *`, `Link` y `X-Total-Count` expuestos): sirve desde la web, sin pasar por escritorio. La CSP suma `https://codeberg.org` a `connect-src` e `img-src` (solo avatares de ahí) y nada más; no hay token de Codeberg, así que nada sensible sale. 7 textos nuevos en los 40 idiomas (los de red, límite y HTTP derivados de los de GitLab; el de «no encontrado» escrito aparte porque no hay token que sugerir). Sin hacer: otros servidores de Gitea/Forgejo, token para repos privados, eventos y CI.
+- **Pruebas que fallan sin la capacidad:** `tools/codeberg.test.mjs` (parseo de URL, carga, vivo con push/rama/PR/force/borrado, 404, 429 con `Retry-After`, más de 50 ramas, árbol) y el paso del smoke «Codeberg» (etiqueta, sin `Authorization`, PR `#3`, aviso de no encontrado).
+- README: la función en la lista, Estructura, Límites conocidos y Seguridad.
+- QA: filas tocadas: CSP (`tools/pwa.test.mjs` con la directiva nueva); XSS (nada nuevo en `innerHTML`; textos por `textContent`); 40 idiomas (`check-i18n`); token solo a su API (Codeberg no lleva ninguno, el smoke lo comprueba); 404 y sin red (prueba y smoke). Sin mirar a mano: 320 px, 3D, repos de más de 500 ramas contra el servidor real; auditoría: no toca la interfaz más allá de la etiqueta.
+- Reclamo: loop/45, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 184 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde. (La primera pasada falló dos e2e: la CSP de escritorio, mía y corregida, y «grabar el Replay», intermitente bajo carga, que pasó sola y en la segunda pasada.)
+- **Siguiente:** iteración 46, expansión: ítem 20 (Comparar dos ramas, Análisis)

@@ -1,6 +1,8 @@
 /* Pruebas e2e de la app de escritorio (Electron): se abre como la abre un usuario, sin red. */
 import { test, expect } from '@playwright/test';
-import { existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { closeWindow, launch, launchAgain, loaded, runHidden, tokenFiles, windowState } from './app.mjs';
 
@@ -20,7 +22,7 @@ test('arranca sin red: la demo, las librerías y las fuentes van dentro de la ap
   });
   expect(info.libs).toEqual(['object', 'object', 'function']);
   expect(info.node).toEqual(['undefined', 'undefined']); // la página no ve Node
-  expect(info.bridge).toEqual(['getToken', 'setLabels', 'setToken', 'show']);
+  expect(info.bridge).toEqual(['getToken', 'git', 'setLabels', 'setToken', 'show']);
   expect(info.fonts).toEqual(['Bricolage Grotesque', 'Instrument Sans', 'JetBrains Mono']);
   await app.close();
 });
@@ -247,4 +249,69 @@ test('con la ventana oculta, Chromium no espacia los temporizadores a uno por mi
   expect(r.error).toBeUndefined();
   expect(r.hidden).toBe(true);
   expect(r.second - r.first).toBeGreaterThanOrEqual(6); // la demo trae una cada ~4 s; espaciadas, 1 o 2 por minuto
+});
+
+/** Un repositorio git creado en la prueba, con un commit en main. */
+function localRepo(testInfo) {
+  const dir = testInfo.outputPath('mi repo');
+  mkdirSync(dir, { recursive: true });
+  const env = { ...process.env, GIT_AUTHOR_NAME: 'Ana', GIT_AUTHOR_EMAIL: 'ana@example.com', GIT_COMMITTER_NAME: 'Ana', GIT_COMMITTER_EMAIL: 'ana@example.com' };
+  const git = (...args) => execFileSync('git', args, { cwd: dir, env, encoding: 'utf8' });
+  const commit = (file, msg) => {
+    writeFileSync(join(dir, file), msg);
+    git('add', '-A');
+    git('commit', '-q', '-m', msg);
+  };
+  git('init', '-q', '-b', 'main');
+  commit('a.txt', 'primero');
+  return { dir, git, commit };
+}
+
+test('un repositorio de esta máquina se sigue sin GitHub: ve un commit y una rama nueva al instante y se recuerda al reabrir', async ({}, testInfo) => {
+  const repo = localRepo(testInfo);
+  let { app, page, dir } = await launch(testInfo, { args: ['--lang=es', `--local=${repo.dir}`] });
+  await loaded(page);
+  await expect(page.locator('#repo-link')).toHaveText('local/mi repo');
+  await expect(page.locator('#repo-badge')).toHaveText('local');
+  await expect(page.locator('#st-branches')).toHaveText('1');
+  await expect(page.locator('#st-commits')).toHaveText('1');
+  // un commit nuevo llega sin esperar al sondeo (el proceso principal vigila .git)
+  repo.commit('b.txt', 'segundo');
+  await expect(page.locator('#st-commits')).toHaveText('2', { timeout: 3_000 });
+  repo.git('checkout', '-q', '-b', 'experimento');
+  repo.commit('c.txt', 'tercero, sin publicar');
+  await expect(page.locator('#st-branches')).toHaveText('2', { timeout: 3_000 });
+  await expect(page.locator('#feed')).toContainText('experimento');
+  // la página nunca llegó a la red: solo habló con el proceso principal
+  expect(await page.evaluate(() => performance.getEntriesByType('resource').filter((e) => /^https?:/.test(e.name)).length)).toBe(0);
+  await app.close();
+  // al reabrir sin --local, la carpeta sigue seguida (el proceso principal recuerda las que se eligieron)
+  ({ app, page } = await launch(testInfo, { dir, args: ['--lang=es'] }));
+  await loaded(page);
+  await expect(page.locator('#repo-link')).toHaveText('local/mi repo');
+  await expect(page.locator('#st-branches')).toHaveText('2');
+  await app.close();
+});
+
+test('el botón Abrir carpeta está en la app de escritorio y un --local que no es un repo se salta sin romper la demo', async ({}, testInfo) => {
+  const { app, page } = await launch(testInfo, { args: ['--lang=es'] });
+  await expect(page.locator('#folder-btn')).toBeVisible();
+  await expect(page.locator('#folder-btn')).toHaveText('Abrir carpeta…');
+  // los argumentos son del usuario: una carpeta que no es un repo se salta y la demo sigue
+  await app.close();
+  const none = mkdtempSync(join(tmpdir(), 'gb-sin-repo-')); // fuera del proyecto: dentro de él, git subiría hasta su repo
+  const again = await launch(testInfo, { args: ['--lang=es', `--local=${none}`] });
+  await loaded(again.page);
+  await expect(again.page.locator('#repo-badge')).toHaveText('simulación');
+  await again.app.close();
+});
+
+test('la página no puede pedir carpetas que el usuario no eligió', async ({}, testInfo) => {
+  const { app, page } = await launch(testInfo, { args: ['--lang=es'] });
+  const err = await page.evaluate(() => window.GBDesktop.git.branches('0123456789ab').then(() => null, (e) => e.message));
+  expect(err).toContain('unknown');
+  const bad = await page.evaluate(() => window.GBDesktop.git.log('0123456789ab', '--output=/tmp/x', null, 5).then(() => null, (e) => e.message));
+  expect(bad).toContain('unknown'); // el id se comprueba antes que lo demás
+  expect(await page.evaluate(() => Object.keys(window.GBDesktop.git).sort())).toEqual(['branches', 'files', 'isAncestor', 'log', 'onChange', 'pick', 'unwatch', 'watch']);
+  await app.close();
 });

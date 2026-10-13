@@ -126,7 +126,7 @@ segunda columna a la primera.
 
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
-| Fuentes | GitHub.com (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), demo | GitLab propio, repos locales, GitHub Enterprise, Gitea/Forgejo, Bitbucket |
+| Fuentes | GitHub.com (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), repos locales (app de escritorio, con `git`), demo | GitLab propio, GitHub Enterprise, Gitea/Forgejo, Bitbucket |
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs) | CI de GitLab, tags, despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV | widget y capa para streaming, VS Code |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
@@ -176,12 +176,11 @@ se comprueban antes de construir sobre ellas.
    rojo la rama por defecto. Con token, en la misma consulta GraphQL (`statusCheckRollup`); sin token,
    check-runs de la rama por defecto y las fijadas. Los commit statuses sin token, el CI de GitLab y
    el de todas las ramas del listado quedan sin hacer.
-10. **Repos locales en la app de escritorio** · Fuentes · 3×3/3. `LocalGitSource`: elegir una carpeta (diálogo
-   del sistema), leer ramas y commits con `git` desde el proceso principal (`execFile`, sin shell) y
-   vigilar `.git/HEAD`, `.git/refs` y `packed-refs` para ver cada commit al instante. Sin GitHub y sin
-   cuota: sirve para repos privados, sin conexión y de cualquier servidor, incluidas las ramas que no
-   se han publicado. `preload.js` expone lo mínimo y solo para carpetas elegidas por el usuario.
-   Comprobar: una e2e de escritorio sobre un repo creado en la prueba que hace un commit y lo ve llegar.
+10. ~~**Repos locales en la app de escritorio**~~ hecho en #59 · Fuentes. **Abrir carpeta…** (diálogo del
+   sistema) o `--local=ruta` siguen un repo de la máquina con `LocalGitSource`: `electron/git.js` lee ramas
+   y commits con `git` (`execFile`, sin shell) y vigila `.git`, y la página solo conoce el id de cada
+   carpeta elegida (`GBDesktop.git`). Sin GitHub ni cuota. Los repos remotos (`origin/…`), los worktrees
+   y la demo con un repo local quedan sin hacer.
 11. **Widget embebible y capa para streaming** · Plataformas · 2×3/1. `?embed=1`: solo el grafo y los avisos,
    sin barra, para un iframe en documentación, wikis o Notion (el README trae el código para pegar).
    Con `&bg=transparent`, fondo transparente para OBS al transmitir mientras se programa. Sin token por
@@ -350,6 +349,10 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 17. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
+18. [QA] Repos locales sin mirar a mano (iteración 32): el botón **Abrir carpeta…** solo con teclado, la barra
+    a 320 px con ese botón de más, un repo local con 1.000 ramas y el texto nuevo en árabe y en tamil.
+    Reproducción: `node e2e/serve.mjs 4173` no sirve (es solo de escritorio): `xvfb-run npx playwright
+    test e2e/desktop.spec.mjs` con `--local=` sobre un repo con 1.000 ramas creado en la prueba.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); `placeLabels`/`placeNotes` crean arreglos por cuadro
@@ -1137,3 +1140,28 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Reclamo: loop/31, sin colisión
 - Validado: 125 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 17 e2e en verde.
 - **Siguiente:** iteración 32, expansión: ítem 10 (Repos locales en la app de escritorio, Fuentes)
+
+### 2026-10-13 · Iteración 32 · Expansión · Fuentes
+
+- **Capacidad nueva: repos locales en la app de escritorio** (ítem 10 de la hoja de ruta). **Abrir carpeta…**
+  elige un repositorio git con el diálogo del sistema (o `npm start -- --local=ruta`) y se sigue como
+  cualquier otro, en su pestaña con la etiqueta *local*. `electron/git.js` lee ramas, commits, ancestros y
+  archivos con `git` (`execFile`, sin shell, `core.fsmonitor` apagado, commits validados) y vigila
+  `.git/refs`, `packed-refs` y `HEAD`; `js/sources/local.js` (`LocalGitSource`, hereda de la de GitHub como
+  la de GitLab) arma el grafo y las actividades. La página solo conoce el id de la carpeta elegida
+  (`GBDesktop.git`); las carpetas se recuerdan en la carpeta de datos. Sin red y sin cuota. No entra en la
+  demo ni en la web: leer carpetas solo puede hacerlo el escritorio, y la web avisa si se abre un `local:`.
+- **Pruebas que fallan sin la capacidad:** `tools/local-git.test.mjs` (6) y `tools/local.test.mjs` (7) con
+  repos git reales; en `e2e/desktop.spec.mjs`, el repo local que ve llegar un commit y una rama sin
+  esperar al sondeo y se recuerda al reabrir, el `--local` que no es un repo, y el puente que rechaza
+  carpetas no elegidas; en `e2e/web.spec.mjs`, que la web no muestra el botón y avisa de un `local:`.
+- README: la función en la lista, la sección de la app de escritorio, Pruebas, Estructura, Límites conocidos
+  y Seguridad.
+- QA: web y escritorio (las e2e nuevas de ambos); sin conexión e instalable (`local.js` va a `FILES` de
+  `sw.js`, lo comprueba `tools/pwa.test.mjs`); 40 idiomas (8 textos nuevos, `check-i18n`); consola y CSP
+  (el CSP no cambia, e2e web sin errores); cuota de GitHub (no gasta nada: el `fetch` de la prueba falla si
+  la fuente lo toca). Sin mirar a mano en esta iteración: el recorrido solo con teclado del botón nuevo,
+  320 px con el botón extra en la barra, 1.000 ramas locales y la etiqueta en árabe y tamil (pendiente 18); auditoría: 0 hallazgos nuevos.
+- Reclamo: loop/32, sin colisión
+- Validado: 138 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 21 e2e en verde.
+- **Siguiente:** iteración 33, expansión: ítem 11 (Widget embebible y capa para streaming, Plataformas)

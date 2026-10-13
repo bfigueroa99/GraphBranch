@@ -11,6 +11,7 @@
     repoForm: $('#repo-form'),
     repoInput: $('#repo-input'),
     demoBtn: $('#demo-btn'),
+    folderBtn: $('#folder-btn'),
     status: $('#status'),
     statusText: $('#status-text'),
     statusSub: $('#status-sub'),
@@ -235,7 +236,7 @@
   const STAGGER = 700; // los repos que arrancan juntos, escalonados: GitHub no recibe todo a la vez
   /** Clave de un repo (de su fuente o de { owner, name }): con ella se guarda lo suyo (fijadas, filtro, logros). */
   /** Los proyectos de GitLab llevan "gitlab:" delante (en la clave, en lo que se guarda y en la URL). */
-  const hostPrefix = (src) => (src.host === 'gitlab' ? 'gitlab:' : '');
+  const hostPrefix = (src) => (src.host === 'gitlab' ? 'gitlab:' : src.host === 'local' ? 'local:' : '');
   const keyOf = (src) => `${hostPrefix(src)}${src.owner || 'demo'}/${src.name || ''}`.toLowerCase();
   /** Nombre a la vista (el del servicio, ya cargado) y el escrito, que es el que se guarda (de él sale la clave). */
   const nameOf = (tab) => `${tab.source.data.repo.owner}/${tab.source.data.repo.name}`;
@@ -249,6 +250,7 @@
   function sourceFor({ host, owner, name }) {
     const key = keyOf({ host, owner, name });
     const remembered = { depth: settings.depth, filter: U.store.get('filter:' + key, ''), pins: U.store.get('pins:' + key, []) };
+    if (host === 'local') return new GB.LocalGitSource({ id: owner, name, ...remembered });
     if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, ...remembered });
     return new GB.GitHubSource({ owner, name, token: settings.token, ...remembered });
   }
@@ -468,7 +470,7 @@
   function pruneOwners() {
     let changed = false;
     for (const owner of Object.keys(followedOwners)) {
-      const has = realTabs().some((x) => x.source.host !== 'gitlab' && String(x.source.owner).toLowerCase() === owner.toLowerCase());
+      const has = realTabs().some((x) => !['gitlab', 'local'].includes(x.source.host) && String(x.source.owner).toLowerCase() === owner.toLowerCase());
       if (!has) {
         delete followedOwners[owner];
         changed = true;
@@ -949,9 +951,9 @@
       el.repoLink.removeAttribute('href');
       el.repoLink.setAttribute('aria-disabled', 'true');
     }
-    el.repoBadge.hidden = !repo.demo && !repo.private && repo.host !== 'gitlab';
+    el.repoBadge.hidden = !repo.demo && !repo.private && repo.host !== 'gitlab' && !repo.local;
     const gitlab = repo.host === 'gitlab' && !repo.demo;
-    el.repoBadge.textContent = repo.demo ? t('badge.demo') : repo.private ? (gitlab ? 'GitLab · ' : '') + t('badge.private') : 'GitLab';
+    el.repoBadge.textContent = repo.demo ? t('badge.demo') : repo.local ? t('badge.local') : repo.private ? (gitlab ? 'GitLab · ' : '') + t('badge.private') : 'GitLab';
     el.repoBadge.className = `badge${repo.demo ? ' demo' : ''}`;
     el.repoDesc.textContent = repo.demo ? t('repo.demoDesc') : repo.description || '';
     el.repoDesc.hidden = !el.repoDesc.textContent;
@@ -1136,6 +1138,17 @@
   });
   el.repoInput.addEventListener('input', () => el.repoInput.setCustomValidity(''));
   el.demoBtn.addEventListener('click', startDemo);
+  /* Abrir carpeta (solo en la app de escritorio): el diálogo del sistema elige un repo de esta máquina y el
+     proceso principal lo lee con git; la página recibe su id (electron/git.js). */
+  el.folderBtn.hidden = !desktop?.git;
+  el.folderBtn.addEventListener('click', async () => {
+    try {
+      const picked = await desktop.git.pick();
+      if (picked) connectRepo(`local:${picked.id}/${picked.name}`);
+    } catch (err) {
+      repoNote(/nogit/.test(err?.message) ? t('err.noGit') : t('repo.notGit'));
+    }
+  });
 
   function renderPause() {
     for (const b of [el.pauseBtn, el.tvPause]) {

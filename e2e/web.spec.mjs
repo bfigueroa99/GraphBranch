@@ -49,6 +49,14 @@ test('abierta con doble clic y sin red funciona igual', async ({ page, context }
   expect(problems).toEqual([]);
 });
 
+test('en la web no hay Abrir carpeta, y un repo local guardado avisa que solo la app de escritorio lo lee', async ({ page }) => {
+  const problems = watch(page);
+  await page.goto('http://127.0.0.1:4173/index.html?repo=local:0123456789ab/mi-repo');
+  await expect(page.locator('#folder-btn')).toBeHidden();
+  await expect(page.locator('#overlay')).toContainText('app de escritorio', { timeout: 20_000 });
+  expect(problems.filter((p) => !/consola: Failed to load resource/.test(p))).toEqual([]);
+});
+
 test('el token se queda en este navegador y Ajustes lo dice', async ({ page }) => {
   await page.goto('http://127.0.0.1:4173/index.html');
   await expectWorks(page);

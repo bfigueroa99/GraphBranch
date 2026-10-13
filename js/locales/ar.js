@@ -495,4 +495,12 @@ GB.i18n.define('ar', {
   'tray.quit': 'إنهاء GraphBranch',
   'tray.hiddenTitle': 'لا يزال GraphBranch يعمل',
   'tray.hiddenBody': 'يواصل متابعة المستودع في الخلفية. افتحه من جديد أو أغلقه تمامًا من أيقونته في علبة النظام أو في شريط القوائم.',
+  'badge.local': 'محلي',
+  'repo.openFolder': 'فتح مجلد…',
+  'repo.openFolderTitle': 'تابع مستودع Git على هذا الحاسوب دون الحاجة إلى GitHub',
+  'repo.notGit': 'هذا المجلد ليس مستودع Git.',
+  'status.connectingLocal': 'جارٍ قراءة المستودع…',
+  'err.notFoundLocal': 'تعذّر فتح {repo}: المجلد لم يعد موجودًا، أو ليس مستودع Git، أو فُتح خارج تطبيق سطح المكتب وهو الوحيد الذي يقرأ المجلدات المحلية.',
+  'err.noGit': 'لم يتم العثور على Git. ثبّته وحاول مرة أخرى.',
+  'err.gitLocal': 'أبلغ Git عن خطأ: {message}',
 });

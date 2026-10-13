@@ -396,4 +396,12 @@ GB.i18n.define('nb', {
   'tray.quit': 'Avslutt GraphBranch',
   'tray.hiddenTitle': 'GraphBranch kjører fortsatt',
   'tray.hiddenBody': 'Det fortsetter å følge med på repoet i bakgrunnen. Åpne det igjen eller avslutt det helt fra ikonet i systemstatusfeltet eller menylinjen.',
+  'badge.local': 'lokal',
+  'repo.openFolder': 'Åpne mappe…',
+  'repo.openFolderTitle': 'Følg et Git-depot på denne datamaskinen uten å trenge GitHub',
+  'repo.notGit': 'Den mappen er ikke et Git-depot.',
+  'status.connectingLocal': 'Leser depotet…',
+  'err.notFoundLocal': '{repo} kunne ikke åpnes: mappen finnes ikke lenger, er ikke et Git-depot eller ble åpnet utenfor skrivebordsappen, som er den eneste som leser lokale mapper.',
+  'err.noGit': 'Fant ikke Git. Installer det og prøv igjen.',
+  'err.gitLocal': 'Git meldte en feil: {message}',
 });

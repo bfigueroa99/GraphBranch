@@ -396,4 +396,12 @@ GB.i18n.define('sw', {
   'tray.quit': 'Funga GraphBranch',
   'tray.hiddenTitle': 'GraphBranch bado inafanya kazi',
   'tray.hiddenBody': 'Inaendelea kufuatilia hazina chinichini. Ifungue tena au uifunge kabisa kupitia aikoni yake kwenye trei ya mfumo au upau wa menyu.',
+  'badge.local': 'ya hapa',
+  'repo.openFolder': 'Fungua folda…',
+  'repo.openFolderTitle': 'Fuatilia hazina ya Git kwenye kompyuta hii bila kuhitaji GitHub',
+  'repo.notGit': 'Folda hiyo si hazina ya Git.',
+  'status.connectingLocal': 'Inasoma hazina…',
+  'err.notFoundLocal': 'Imeshindwa kufungua {repo}: folda haipo tena, si hazina ya Git, au ilifunguliwa nje ya programu ya kompyuta ya mezani, pekee inayosoma folda za hapa.',
+  'err.noGit': 'Git haikupatikana. Isakinishe kisha ujaribu tena.',
+  'err.gitLocal': 'Git imeripoti hitilafu: {message}',
 });

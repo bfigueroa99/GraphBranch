@@ -407,4 +407,12 @@ GB.i18n.define('sk', {
   'tray.quit': 'Ukončiť GraphBranch',
   'tray.hiddenTitle': 'GraphBranch stále beží',
   'tray.hiddenBody': 'Ďalej sleduje repozitár na pozadí. Znova ho otvoríte alebo úplne ukončíte pomocou jeho ikony v oblasti oznámení alebo na lište ponúk.',
+  'badge.local': 'lokálne',
+  'repo.openFolder': 'Otvoriť priečinok…',
+  'repo.openFolderTitle': 'Sledujte repozitár Git v tomto počítači bez GitHubu',
+  'repo.notGit': 'Tento priečinok nie je repozitár Git.',
+  'status.connectingLocal': 'Číta sa repozitár…',
+  'err.notFoundLocal': '{repo} sa nepodarilo otvoriť: priečinok už neexistuje, nie je repozitárom Git alebo bol otvorený mimo desktopovej aplikácie, ktorá ako jediná číta lokálne priečinky.',
+  'err.noGit': 'Git sa nenašiel. Nainštalujte ho a skúste to znova.',
+  'err.gitLocal': 'Git ohlásil chybu: {message}',
 });

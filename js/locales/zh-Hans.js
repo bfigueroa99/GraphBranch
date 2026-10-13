@@ -396,4 +396,12 @@ GB.i18n.define('zh-Hans', {
   'tray.quit': '退出 GraphBranch',
   'tray.hiddenTitle': 'GraphBranch 仍在运行',
   'tray.hiddenBody': '它会继续在后台关注这个仓库。可以通过系统托盘或菜单栏中的图标重新打开它，或彻底退出。',
+  'badge.local': '本地',
+  'repo.openFolder': '打开文件夹…',
+  'repo.openFolderTitle': '无需 GitHub，直接关注这台电脑上的 Git 仓库',
+  'repo.notGit': '该文件夹不是 Git 仓库。',
+  'status.connectingLocal': '正在读取仓库…',
+  'err.notFoundLocal': '无法打开 {repo}：文件夹已不存在、不是 Git 仓库，或是在桌面应用之外打开的（只有桌面应用能读取本地文件夹）。',
+  'err.noGit': '未找到 Git。请安装后重试。',
+  'err.gitLocal': 'Git 报告了错误：{message}',
 });

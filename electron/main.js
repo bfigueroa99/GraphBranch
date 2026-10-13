@@ -6,14 +6,16 @@
 
      npm start                         abre la demo o los repositorios que se seguían
      npm start -- --repo=owner/repo    abre ese repositorio (repetido, sigue varios)
+     npm start -- --local=/ruta/repo   sigue un repositorio de esta máquina, sin GitHub (repetido, varios)
      npm start -- --tv                 entra en modo TV (también --lang=es)
 
    Cerrar la ventana la esconde en la bandeja del sistema (electron/tray.js) y la app sigue
    revisando los repositorios; para salir del todo está "Salir" en el menú del ícono. */
-const { app, BrowserWindow, ipcMain, nativeTheme, net, protocol, session, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, nativeTheme, net, protocol, session, shell } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
+const local = require('./git');
 const token = require('./token');
 const tray = require('./tray');
 
@@ -53,8 +55,9 @@ async function serve(request) {
 
 /** Los argumentos --repo, --tv y --lang pasan a la página como en la web (?repo=, ?tv=1, ?lang=).
     --repo se puede repetir para seguir varios repos (el primero queda a la vista). */
-function startUrl(argv) {
+function startUrl(argv, locals = []) {
   const url = new URL(`${ORIGIN}/index.html`);
+  for (const r of locals) url.searchParams.append('repo', `local:${r.id}/${r.name}`);
   for (const arg of argv) {
     const m = /^--(repo|lang)=(.+)$/.exec(arg);
     if (m) url.searchParams[m[1] === 'repo' ? 'append' : 'set'](m[1], m[2]);
@@ -96,6 +99,20 @@ function saveDownload(ev, item) {
 }
 
 let win = null;
+/** Carpetas vigiladas por la página: id -> { stop, n } (cuántas fuentes la miran). Cada cambio llega como 'git:changed'. */
+const watching = new Map();
+function watchRepo(id) {
+  const w = watching.get(id);
+  if (w) return void w.n++;
+  watching.set(id, { n: 1, stop: local.watch(id, (changed) => win?.webContents.send('git:changed', changed)) });
+}
+function unwatchRepo(id) {
+  const w = watching.get(id);
+  if (w && --w.n <= 0) {
+    w.stop();
+    watching.delete(id);
+  }
+}
 /** Mientras no se pide salir (menú del ícono, Cmd+Q, apagar el equipo), cerrar la ventana solo la esconde. */
 let quitting = false;
 
@@ -106,7 +123,23 @@ function showWindow() {
   win.focus();
 }
 
-function createWindow() {
+/** Los --local=carpeta de la línea de comandos: quien abre la app con ellos las eligió; las que no son un repo se saltan. */
+async function localArgs(argv) {
+  const out = [];
+  for (const arg of argv) {
+    const m = /^--local=(.+)$/.exec(arg);
+    if (!m) continue;
+    try {
+      out.push(await local.allow(m[1]));
+    } catch (err) {
+      console.error(`--local=${m[1]}: ${err.message}`);
+    }
+  }
+  return out;
+}
+
+async function createWindow() {
+  const locals = await localArgs(process.argv);
   win = new BrowserWindow({
     width: 1440,
     height: 900,
@@ -147,7 +180,7 @@ function createWindow() {
   webContents.on('will-attach-webview', (ev) => ev.preventDefault());
   webContents.on('page-title-updated', (ev, title) => tray.setToolTip(title));
 
-  win.loadURL(startUrl(process.argv));
+  win.loadURL(startUrl(process.argv, locals));
 }
 
 if (!app.requestSingleInstanceLock()) {
@@ -159,6 +192,7 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(() => {
     protocol.handle(SCHEME, serve);
+    local.init(path.join(app.getPath('userData'), 'local-repos.json'));
     const allow = (permission, url) => PERMISSIONS.has(permission) && isApp(url);
     session.defaultSession.setPermissionRequestHandler((wc, permission, done, details) => done(allow(permission, details.requestingUrl)));
     session.defaultSession.setPermissionCheckHandler((wc, permission, origin) => allow(permission, origin));
@@ -181,6 +215,25 @@ if (!app.requestSingleInstanceLock()) {
       await token.write(value.trim(), service);
       return token.where();
     });
+    // repositorios locales (electron/git.js): la página trabaja con ids de carpetas que el usuario eligió
+    const guard = (fn) => async (ev, ...args) => {
+      if (!isApp(ev.senderFrame?.url)) throw new Error('origen no permitido');
+      try {
+        return await fn(...args);
+      } catch (err) {
+        throw new Error(`${err.kind || 'git'}: ${err.message}`); // por IPC solo viaja el mensaje: el tipo va delante
+      }
+    };
+    ipcMain.handle('git:pick', guard(async () => {
+      const r = await dialog.showOpenDialog(win, { properties: ['openDirectory'] });
+      return r.canceled || !r.filePaths[0] ? null : local.allow(r.filePaths[0]);
+    }));
+    ipcMain.handle('git:branches', guard((id) => local.branches(id)));
+    ipcMain.handle('git:log', guard((id, sha, exclude, n) => local.log(id, sha, exclude, n)));
+    ipcMain.handle('git:ancestor', guard((id, a, b) => local.isAncestor(id, a, b)));
+    ipcMain.handle('git:files', guard((id, sha, base) => local.files(id, sha, base)));
+    ipcMain.handle('git:watch', guard((id) => watchRepo(id)));
+    ipcMain.handle('git:unwatch', guard((id) => unwatchRepo(id)));
     // los textos de la bandeja, en el idioma de la página
     ipcMain.on('labels', (ev, labels) => isApp(ev.senderFrame?.url) && tray.setLabels(labels));
     ipcMain.on('show', (ev) => isApp(ev.senderFrame?.url) && showWindow());

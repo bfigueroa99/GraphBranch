@@ -439,4 +439,12 @@ GB.i18n.define('ur', {
   'tray.quit': 'GraphBranch سے باہر نکلیں',
   'tray.hiddenTitle': 'GraphBranch ابھی بھی چل رہا ہے',
   'tray.hiddenBody': 'یہ پس منظر میں ریپوزٹری پر نظر رکھے ہوئے ہے۔ سسٹم ٹرے یا مینو بار میں اس کے آئیکن سے اسے دوبارہ کھولیں یا مکمل طور پر بند کریں۔',
+  'badge.local': 'مقامی',
+  'repo.openFolder': 'فولڈر کھولیں…',
+  'repo.openFolderTitle': 'GitHub کے بغیر اس کمپیوٹر کی Git ریپوزٹری کو فالو کریں',
+  'repo.notGit': 'وہ فولڈر Git ریپوزٹری نہیں ہے۔',
+  'status.connectingLocal': 'ریپوزٹری پڑھی جا رہی ہے…',
+  'err.notFoundLocal': '{repo} نہیں کھل سکا: فولڈر اب موجود نہیں، وہ Git ریپوزٹری نہیں ہے، یا اسے ڈیسک ٹاپ ایپ کے باہر کھولا گیا جو مقامی فولڈر پڑھنے والی واحد ایپ ہے۔',
+  'err.noGit': 'Git نہیں ملا۔ اسے انسٹال کریں اور دوبارہ کوشش کریں۔',
+  'err.gitLocal': 'Git نے خرابی بتائی: {message}',
 });

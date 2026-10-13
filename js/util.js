@@ -37,6 +37,9 @@ window.GB = window.GB || {};
       sus subgrupos, va con su URL de gitlab.com (también la de una rama o un archivo, o ssh) o como
       "gitlab:grupo/proyecto": devuelve { host: 'gitlab', owner: 'grupo/sub', name: 'proyecto' }. */
   U.parseRepo = (input) => {
+    // un repo de esta máquina (app de escritorio): local:<id de la carpeta>/<nombre>; el id lo da el proceso principal
+    const here = String(input || '').trim().match(/^local:([0-9a-f]{12})\/(.{1,200})$/);
+    if (here) return { host: 'local', owner: here[1], name: here[2] };
     const s = String(input || '').trim().replace(/[?#].*$/, '').replace(/\/+$/, '').replace(/\.git$/, '');
     const lab = s.match(/^gitlab:(.+)$/i) || s.match(/gitlab\.com[/:](.+)$/i);
     if (lab) {

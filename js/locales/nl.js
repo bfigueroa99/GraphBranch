@@ -397,4 +397,12 @@ GB.i18n.define('nl', {
   'tray.quit': 'GraphBranch afsluiten',
   'tray.hiddenTitle': 'GraphBranch draait nog',
   'tray.hiddenBody': 'Het blijft de repository op de achtergrond volgen. Open het opnieuw of sluit het helemaal af via het pictogram in het systeemvak of de menubalk.',
+  'badge.local': 'lokaal',
+  'repo.openFolder': 'Map openen…',
+  'repo.openFolderTitle': 'Volg een Git-repository op deze computer, zonder GitHub',
+  'repo.notGit': 'Die map is geen Git-repository.',
+  'status.connectingLocal': 'Repository wordt gelezen…',
+  'err.notFoundLocal': '{repo} kon niet worden geopend: de map bestaat niet meer, is geen Git-repository of is buiten de desktop-app geopend, de enige die lokale mappen leest.',
+  'err.noGit': 'Git is niet gevonden. Installeer het en probeer opnieuw.',
+  'err.gitLocal': 'Git meldde een fout: {message}',
 });

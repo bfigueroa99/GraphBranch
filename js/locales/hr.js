@@ -404,4 +404,12 @@ GB.i18n.define('hr', {
   'tray.quit': 'Zatvori GraphBranch',
   'tray.hiddenTitle': 'GraphBranch i dalje radi',
   'tray.hiddenBody': 'I dalje prati repozitorij u pozadini. Ponovno ga otvorite ili potpuno zatvorite putem njegove ikone u sistemskoj traci ili traci izbornika.',
+  'badge.local': 'lokalno',
+  'repo.openFolder': 'Otvori mapu…',
+  'repo.openFolderTitle': 'Pratite Git repozitorij na ovom računalu, bez GitHuba',
+  'repo.notGit': 'Ta mapa nije Git repozitorij.',
+  'status.connectingLocal': 'Čitanje repozitorija…',
+  'err.notFoundLocal': 'Nije moguće otvoriti {repo}: mapa više ne postoji, nije Git repozitorij ili je otvorena izvan desktop aplikacije, jedine koja čita lokalne mape.',
+  'err.noGit': 'Git nije pronađen. Instalirajte ga i pokušajte ponovno.',
+  'err.gitLocal': 'Git je prijavio pogrešku: {message}',
 });

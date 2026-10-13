@@ -397,4 +397,12 @@ GB.i18n.define('th', {
   'tray.quit': 'ออกจาก GraphBranch',
   'tray.hiddenTitle': 'GraphBranch ยังทำงานอยู่',
   'tray.hiddenBody': 'ยังคงติดตาม repository อยู่เบื้องหลัง เปิดอีกครั้งหรือออกจากโปรแกรมได้จากไอคอนในถาดระบบหรือแถบเมนู',
+  'badge.local': 'ในเครื่อง',
+  'repo.openFolder': 'เปิดโฟลเดอร์…',
+  'repo.openFolderTitle': 'ติดตามที่เก็บ Git บนคอมพิวเตอร์เครื่องนี้ โดยไม่ต้องใช้ GitHub',
+  'repo.notGit': 'โฟลเดอร์นั้นไม่ใช่ที่เก็บ Git',
+  'status.connectingLocal': 'กำลังอ่านที่เก็บ…',
+  'err.notFoundLocal': 'เปิด {repo} ไม่ได้: โฟลเดอร์ไม่มีอยู่แล้ว ไม่ใช่ที่เก็บ Git หรือถูกเปิดนอกแอปเดสก์ท็อป ซึ่งเป็นแอปเดียวที่อ่านโฟลเดอร์ในเครื่องได้',
+  'err.noGit': 'ไม่พบ Git ติดตั้งแล้วลองอีกครั้ง',
+  'err.gitLocal': 'Git รายงานข้อผิดพลาด: {message}',
 });

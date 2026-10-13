@@ -407,4 +407,12 @@ GB.i18n.define('cs', {
   'tray.quit': 'Ukončit GraphBranch',
   'tray.hiddenTitle': 'GraphBranch stále běží',
   'tray.hiddenBody': 'Dál sleduje repozitář na pozadí. Znovu ho otevřete nebo úplně ukončete pomocí jeho ikony v oznamovací oblasti nebo na řádku nabídek.',
+  'badge.local': 'místní',
+  'repo.openFolder': 'Otevřít složku…',
+  'repo.openFolderTitle': 'Sledujte repozitář Git v tomto počítači bez potřeby GitHubu',
+  'repo.notGit': 'Tato složka není repozitář Git.',
+  'status.connectingLocal': 'Čtení repozitáře…',
+  'err.notFoundLocal': '{repo} se nepodařilo otevřít: složka už neexistuje, není repozitářem Git, nebo byla otevřena mimo desktopovou aplikaci, která jako jediná čte místní složky.',
+  'err.noGit': 'Git nebyl nalezen. Nainstalujte jej a zkuste to znovu.',
+  'err.gitLocal': 'Git ohlásil chybu: {message}',
 });

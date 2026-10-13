@@ -402,4 +402,12 @@ GB.i18n.define('en', {
   'tray.quit': 'Quit GraphBranch',
   'tray.hiddenTitle': 'GraphBranch is still running',
   'tray.hiddenBody': 'It keeps watching the repository in the background. Open it again or quit it for good from its icon in the system tray or menu bar.',
+  'badge.local': 'local',
+  'repo.openFolder': 'Open folder…',
+  'repo.openFolderTitle': 'Follow a Git repository on this computer, no GitHub needed',
+  'repo.notGit': 'That folder is not a Git repository.',
+  'status.connectingLocal': 'Reading the repository…',
+  'err.notFoundLocal': '{repo} could not be opened: the folder no longer exists, is not a Git repository, or was opened outside the desktop app, the only one that reads local folders.',
+  'err.noGit': 'Git was not found. Install it and try again.',
+  'err.gitLocal': 'Git reported an error: {message}',
 });

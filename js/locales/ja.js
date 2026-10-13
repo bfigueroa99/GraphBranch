@@ -396,4 +396,12 @@ GB.i18n.define('ja', {
   'tray.quit': 'GraphBranch を終了',
   'tray.hiddenTitle': 'GraphBranch は実行中です',
   'tray.hiddenBody': 'バックグラウンドでリポジトリの監視を続けています。システムトレイまたはメニューバーのアイコンから、再び開くか完全に終了できます。',
+  'badge.local': 'ローカル',
+  'repo.openFolder': 'フォルダーを開く…',
+  'repo.openFolderTitle': 'GitHub を使わずに、このコンピューター上の Git リポジトリを追跡します',
+  'repo.notGit': 'このフォルダーは Git リポジトリではありません。',
+  'status.connectingLocal': 'リポジトリを読み込んでいます…',
+  'err.notFoundLocal': '{repo} を開けませんでした。フォルダーが存在しない、Git リポジトリではない、またはローカルフォルダーを読み取れる唯一のデスクトップアプリの外で開かれています。',
+  'err.noGit': 'Git が見つかりません。インストールしてからもう一度お試しください。',
+  'err.gitLocal': 'Git がエラーを報告しました: {message}',
 });

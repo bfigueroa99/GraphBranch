@@ -397,4 +397,12 @@ GB.i18n.define('fil', {
   'tray.quit': 'Umalis sa GraphBranch',
   'tray.hiddenTitle': 'Tumatakbo pa rin ang GraphBranch',
   'tray.hiddenBody': 'Patuloy nitong binabantayan ang repository sa background. Buksan itong muli o isara nang tuluyan mula sa icon nito sa system tray o menu bar.',
+  'badge.local': 'lokal',
+  'repo.openFolder': 'Magbukas ng folder…',
+  'repo.openFolderTitle': 'Sundan ang isang Git repository sa computer na ito, hindi kailangan ang GitHub',
+  'repo.notGit': 'Hindi Git repository ang folder na iyon.',
+  'status.connectingLocal': 'Binabasa ang repository…',
+  'err.notFoundLocal': 'Hindi mabuksan ang {repo}: wala na ang folder, hindi ito Git repository, o binuksan ito sa labas ng desktop app, ang tanging nagbabasa ng mga lokal na folder.',
+  'err.noGit': 'Hindi nakita ang Git. I-install ito at subukan muli.',
+  'err.gitLocal': 'May error na iniulat ang Git: {message}',
 });

@@ -396,4 +396,12 @@ GB.i18n.define('fi', {
   'tray.quit': 'Lopeta GraphBranch',
   'tray.hiddenTitle': 'GraphBranch on yhä käynnissä',
   'tray.hiddenBody': 'Se seuraa repositoriota edelleen taustalla. Avaa se uudelleen tai sulje se kokonaan sen kuvakkeesta ilmoitusalueella tai valikkorivillä.',
+  'badge.local': 'paikallinen',
+  'repo.openFolder': 'Avaa kansio…',
+  'repo.openFolderTitle': 'Seuraa tämän tietokoneen Git-repositoriota ilman GitHubia',
+  'repo.notGit': 'Tämä kansio ei ole Git-repositorio.',
+  'status.connectingLocal': 'Luetaan repositoriota…',
+  'err.notFoundLocal': 'Kohdetta {repo} ei voitu avata: kansiota ei enää ole, se ei ole Git-repositorio tai se avattiin työpöytäsovelluksen ulkopuolella, joka on ainoa paikallisia kansioita lukeva.',
+  'err.noGit': 'Gitiä ei löytynyt. Asenna se ja yritä uudelleen.',
+  'err.gitLocal': 'Git ilmoitti virheestä: {message}',
 });

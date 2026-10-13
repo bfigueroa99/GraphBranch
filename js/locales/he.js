@@ -453,4 +453,12 @@ GB.i18n.define('he', {
   'tray.quit': 'יציאה מ-GraphBranch',
   'tray.hiddenTitle': 'GraphBranch עדיין פועל',
   'tray.hiddenBody': 'הוא ממשיך לעקוב אחרי המאגר ברקע. אפשר לפתוח אותו שוב או לסגור אותו לגמרי מהסמל שלו במגש המערכת או בשורת התפריטים.',
+  'badge.local': 'מקומי',
+  'repo.openFolder': 'פתיחת תיקייה…',
+  'repo.openFolderTitle': 'מעקב אחר מאגר Git במחשב הזה, בלי צורך ב־GitHub',
+  'repo.notGit': 'התיקייה הזו אינה מאגר Git.',
+  'status.connectingLocal': 'קורא את המאגר…',
+  'err.notFoundLocal': 'לא ניתן לפתוח את {repo}: התיקייה כבר לא קיימת, אינה מאגר Git או נפתחה מחוץ ליישום השולחן, היחיד שקורא תיקיות מקומיות.',
+  'err.noGit': 'Git לא נמצא. התקינו אותו ונסו שוב.',
+  'err.gitLocal': 'Git דיווח על שגיאה: {message}',
 });

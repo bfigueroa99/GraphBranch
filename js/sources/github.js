@@ -32,6 +32,14 @@
   const GQL_COMMIT =
     'oid url committedDate messageHeadline author { name user { login avatarUrl } } parents(first: 4) { nodes { oid } }';
   const GQL_TARGET = 'target { oid ... on Commit { committedDate } }';
+  const GQL_TARGET_CI = 'target { oid ... on Commit { committedDate statusCheckRollup { state } } }'; // con el estado de los checks
+  /** Estado de los checks de GitHub (rollup o check-runs) en uno de tres: 'success', 'failure' o 'pending'. */
+  const ciState = (s) => {
+    s = String(s || '').toUpperCase();
+    if (s === 'SUCCESS') return 'success';
+    if (s === 'FAILURE' || s === 'ERROR') return 'failure';
+    return s ? 'pending' : null;
+  };
   const PAGE = 100; // ramas por consulta al listarlas (el máximo de GitHub)
   const FIRST = 10; // commits que pide primero cada rama nueva; casi siempre bastan para tocar lo ya cargado
   const BATCH_MS = 4000; // tiempo por ciclo para listar ramas y traer historia; el resto, en el ciclo siguiente
@@ -70,6 +78,7 @@
         branches: new Map(), // ramas dibujadas: las que ya tienen su historia
         commits: new Map(),
         pulls: new Map(),
+        ci: new Map(), // rama -> 'success' | 'failure' | 'pending': el estado de los checks de su cabeza
         pins: this.pins, // van justo debajo de la rama por defecto (ver layout.js)
         mode: null,
         totalBranches: 0,
@@ -79,6 +88,7 @@
         totalPulls: 0,
         loaded: false,
       };
+      this.ciSha = new Map(); // modo REST: rama -> commit cuyos checks ya se preguntaron
       this.known = new Map(); // ramas que existen y se quieren mostrar: nombre -> { sha, date, at, fresh, miss }
       this.listing = null; // listado de todas las ramas en curso (modo graphql): { after, startedAt, pages }
       this.listedAt = 0;
@@ -506,6 +516,7 @@
       const before = this.spent();
       await this.fillBacklog(deadline);
       this.bulkCost += this.spent() - before;
+      if (this.mode && this.mode !== 'graphql') await this.syncCiRest(acts, quiet);
       if (!initial && this.mode !== 'events' && this.due('events')) await this.syncEvents(acts, false);
       if (this.mode === 'events' && this.due('count')) await this.countBranches();
 
@@ -716,6 +727,7 @@
       const absent = []; // no aparecieron en un listado completo: se confirma una por una antes de darlas por borradas
       const see = (name, target) => {
         if (!target?.oid) return;
+        if (target.statusCheckRollup !== undefined) this.setCi(name, ciState(target.statusCheckRollup?.state), acts, quiet);
         const date = Date.parse(target.committedDate) || 0;
         const e = this.known.get(name);
         if (!e) {
@@ -734,19 +746,19 @@
           else gone.push(name);
         });
       const aliases = (list) =>
-        list.map((name, i) => `t${i}: ref(qualifiedName: ${JSON.stringify('refs/heads/' + name)}) { ${GQL_TARGET} }`).join('\n');
+        list.map((name, i) => `t${i}: ref(qualifiedName: ${JSON.stringify('refs/heads/' + name)}) { ${GQL_TARGET_CI} }`).join('\n');
 
       const listing = this.listing;
       const first = names.slice(0, PAGE);
       const query = `query($owner: String!, $name: String!${listing ? ', $q: String, $after: String' : ''}) {
         rateLimit { cost remaining limit resetAt }
         repository(owner: $owner, name: $name) {
-          defaultBranchRef { name ${GQL_TARGET} }
+          defaultBranchRef { name ${GQL_TARGET_CI} }
           all: refs(refPrefix: "refs/heads/", first: 1) { totalCount }
           ${listing ? `page: ${this.refsPage()}` : ''}
           pullRequests(states: OPEN, first: 50, orderBy: {field: UPDATED_AT, direction: DESC}) {
             totalCount
-            nodes { number title isDraft url headRefName baseRefName isCrossRepository createdAt author { login avatarUrl } }
+            nodes { number title isDraft url headRefName baseRefName isCrossRepository createdAt author { login avatarUrl } commits(last: 1) { nodes { commit { statusCheckRollup { state } } } } }
           }
           ${aliases(first)}
         }
@@ -811,6 +823,7 @@
       for (const name of new Set(gone)) {
         if (name === def) continue;
         this.known.delete(name);
+        this.data.ci.delete(name);
         const p = this.pushedAt.get(name);
         if (p && !p.deleted) p.deleted = true; // no volver a preguntar por ella
         const b = tracked.get(name);
@@ -864,9 +877,46 @@
         draft: !!p.isDraft,
         user: p.author ? { login: p.author.login, name: p.author.login, avatar: p.author.avatarUrl } : null,
         createdAt: Date.parse(p.createdAt) || Date.now(),
+        ci: ciState(p.commits?.nodes?.[0]?.commit?.statusCheckRollup?.state),
       }));
       await this.applyPulls(acts, quiet, pulls, prs.totalCount);
       this.lastPoll.pulls = Date.now();
+    }
+
+    /** Anota el estado de los checks de una rama. Si la rama por defecto pasa a rojo, avisa (no al cargar). */
+    setCi(name, state, acts, quiet) {
+      const prev = this.data.ci.get(name) || null;
+      if (state) this.data.ci.set(name, state);
+      else this.data.ci.delete(name);
+      if (quiet || state !== 'failure' || prev === 'failure' || name !== this.data.repo.defaultBranch) return;
+      const sha = this.known.get(name)?.sha || this.data.branches.get(name)?.sha;
+      acts.push(
+        this.activity('ci-fail', {
+          title: M('act.ciFailed', { branch: name }),
+          detail: this.data.commits.get(sha)?.message ? U.firstLine(this.data.commits.get(sha).message) : '',
+          branch: name,
+          sha,
+          url: `https://github.com/${this.owner}/${this.name}/commits/${encodeURIComponent(name)}`,
+        }),
+      );
+    }
+
+    /** Sin token no hay GraphQL: los checks de la rama por defecto y de las fijadas, una consulta por
+        cada una que se movió (check-runs del commit). Las demás ramas quedan sin estado, para no gastar cuota. */
+    async syncCiRest(acts, quiet) {
+      const def = this.data.repo.defaultBranch;
+      for (const name of [def, ...this.pins]) {
+        const sha = this.data.branches.get(name)?.sha;
+        if (!sha || this.ciSha.get(name) === sha) continue;
+        const res = await this.api(`${this.base}/commits/${sha}/check-runs?per_page=100`, { allow: [403, 404] });
+        const runs = res.data?.check_runs;
+        if (!runs) continue; // sin permiso o sin esa API: la rama queda sin estado
+        const bad = runs.some((r) => ['failure', 'timed_out', 'cancelled', 'action_required'].includes(r.conclusion));
+        const state = !runs.length ? null : bad ? 'failure' : runs.some((r) => r.status !== 'completed') ? 'pending' : 'success';
+        // un commit sin terminar se vuelve a preguntar en el próximo ciclo
+        if (state !== 'pending') this.ciSha.set(name, sha);
+        this.setCi(name, state, acts, quiet);
+      }
     }
 
     /** Una página del listado de ramas (en orden alfabético, con el filtro aplicado en GitHub). */

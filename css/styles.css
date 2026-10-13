@@ -1004,6 +1004,24 @@ kbd {
 .head .h-pr.draft {
   fill: var(--ink-3);
 }
+.head .h-ci {
+  font: 600 11px var(--font-mono);
+}
+.ci-success {
+  --ci: var(--good);
+}
+.ci-failure {
+  --ci: var(--bad);
+}
+.ci-pending {
+  --ci: var(--warn);
+}
+.head .h-ci,
+.h3-ci,
+.tip-ci {
+  fill: var(--ci);
+  color: var(--ci);
+}
 .head:hover .h-bg {
   fill: var(--surface-2);
 }
@@ -1207,6 +1225,10 @@ kbd {
 }
 .h3-pr.draft {
   color: var(--ink-3);
+}
+.h3-ci {
+  font-size: 11px;
+  font-weight: 600;
 }
 .h3-pin {
   width: 7px;
@@ -3633,6 +3655,7 @@ html.tv .h3-dot {
   width: calc(7px * var(--tvz, 1));
   height: calc(7px * var(--tvz, 1));
 }
+html.tv .h3-ci,
 html.tv .h3-pr {
   font-size: calc(11px * var(--tvz, 1));
 }

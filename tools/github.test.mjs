@@ -54,6 +54,7 @@ function fakeGitHub() {
     onFetch: null, // (ruta) => …: corre justo antes de responder, para simular algo a mitad de un ciclo
     pulls: [], // PRs como los da la API (los más recién actualizados, primero en la lista)
     override: null, // (ruta) => { status, body } para responder otra cosa, o nada para seguir normal
+    checks: null, // sha -> check-runs del commit (si es null, la API de checks no existe)
     calls: [],
   };
   let n = 0;
@@ -113,6 +114,8 @@ function fakeGitHub() {
         .map(({ merged_by, ...x }) => x);
       return { body: list };
     }
+    const runs = p.match(/^\/repos\/o\/r\/commits\/([^/]+)\/check-runs$/);
+    if (runs) return gh.checks ? { body: { total_count: 0, check_runs: gh.checks.get(runs[1]) || [] } } : { status: 404, body: { message: 'Not Found' } };
     if (p.startsWith('/repos/o/r/compare/')) return { body: { total_commits: 1, ahead_by: 1, commits: [] } };
     return { status: 404, body: { message: 'Not Found' } };
   }
@@ -418,4 +421,98 @@ test('la lista de una organización lleva el token, si hay', async () => {
   const GB = load(gh);
   await GB.GitHubSource.ownerRepos('acme', { token: 'ghp_x' });
   assert.deepEqual(seen, ['Bearer ghp_x']);
+});
+
+/* CI en el grafo: el estado de los checks de la cabeza de cada rama y de cada PR; la rama por defecto
+   que se pone en rojo avisa una sola vez. */
+
+/** GraphQL falso: responde la consulta del ciclo y las de historia con el estado de checks de `ci`. */
+function fakeGraphQL(gh, ci) {
+  const fetch = gh.fetch;
+  gh.fetch = (url, opts = {}) => {
+    if (!url.endsWith('/graphql')) return fetch(url, opts);
+    const { query } = JSON.parse(opts.body);
+    const target = (sha, state) => ({ oid: sha, committedDate: '2026-01-01T00:00:00Z', statusCheckRollup: state ? { state } : null });
+    const repository = {};
+    if (query.includes('defaultBranchRef')) {
+      Object.assign(repository, {
+        defaultBranchRef: { name: 'main', target: target('a1', ci.main) },
+        all: { totalCount: 1 },
+        pullRequests: {
+          totalCount: 1,
+          nodes: [{ number: 7, title: 'x', isDraft: false, url: 'u', headRefName: 'feat', baseRefName: 'main', isCrossRepository: false, createdAt: '2020-01-01T00:00:00Z', author: null, commits: { nodes: [{ commit: { statusCheckRollup: { state: ci.pr } } }] } }],
+        },
+      });
+    }
+    for (const m of query.matchAll(/(h\d+): object\(oid: "([^"]+)"/g)) {
+      repository[m[1]] = { history: { nodes: [{ oid: m[2], url: 'u', committedDate: '2026-01-01T00:00:00Z', messageHeadline: 'c', author: null, parents: { nodes: [] } }] } };
+    }
+    const body = JSON.stringify({ data: { rateLimit: { cost: 1, remaining: 4000, limit: 5000, resetAt: '2030-01-01T00:00:00Z' }, repository } });
+    return Promise.resolve({ status: 200, ok: true, headers: { get: () => null }, text: async () => body, json: async () => JSON.parse(body) });
+  };
+}
+
+test('CI con GraphQL: estado en la rama por defecto y en los PRs, y un aviso al ponerse en rojo', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const ci = { main: 'SUCCESS', pr: 'FAILURE' };
+  fakeGraphQL(gh, ci);
+  const { src, updates } = connect(gh, 'tok');
+  await src.cycle();
+  assert.equal(src.mode, 'graphql');
+  assert.equal(src.data.ci.get('main'), 'success');
+  assert.equal(src.data.pulls.get(7).ci, 'failure');
+  assert.equal(updates.flatMap((u) => Array.from(u.activities)).filter((a) => a.kind === 'ci-fail').length, 0, 'al cargar no se avisa');
+
+  ci.main = 'PENDING';
+  await src.cycle();
+  assert.equal(src.data.ci.get('main'), 'pending');
+  ci.main = 'FAILURE';
+  await src.cycle();
+  assert.equal(src.data.ci.get('main'), 'failure');
+  const fails = () => updates.flatMap((u) => Array.from(u.activities)).filter((a) => a.kind === 'ci-fail');
+  assert.equal(fails().length, 1);
+  assert.equal(fails()[0].branch, 'main');
+  await src.cycle();
+  assert.equal(fails().length, 1, 'seguir en rojo no repite el aviso');
+
+  ci.main = null; // sin checks: sin estado
+  await src.cycle();
+  assert.equal(src.data.ci.has('main'), false);
+});
+
+test('CI sin token: los check-runs de la rama por defecto, una consulta por commit', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  gh.checks = new Map([['a1', [{ status: 'completed', conclusion: 'success' }]]]);
+  const { src, updates } = connect(gh);
+  await src.cycle();
+  assert.equal(src.data.ci.get('main'), 'success');
+  const asked = () => gh.calls.filter((c) => c.includes('/check-runs')).length;
+  assert.equal(asked(), 1);
+  await src.cycle();
+  assert.equal(asked(), 1, 'el mismo commit no se vuelve a preguntar');
+
+  gh.push('main', 'a2', 'a1');
+  gh.checks.set('a2', [{ status: 'completed', conclusion: 'success' }, { status: 'completed', conclusion: 'failure' }]);
+  await src.cycle();
+  assert.equal(src.data.ci.get('main'), 'failure');
+  assert.equal(updates.flatMap((u) => Array.from(u.activities)).filter((a) => a.kind === 'ci-fail').length, 1);
+
+  gh.push('main', 'a3', 'a2');
+  gh.checks.set('a3', [{ status: 'in_progress', conclusion: null }]);
+  await src.cycle();
+  assert.equal(src.data.ci.get('main'), 'pending');
+  const before = asked();
+  await src.cycle();
+  assert.equal(asked(), before + 1, 'lo que sigue en curso se vuelve a preguntar');
+});
+
+test('CI sin la API de checks: la rama queda sin estado y nada falla', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const { src, errors } = connect(gh);
+  await src.cycle();
+  assert.equal(errors.length, 0);
+  assert.equal(src.data.ci.has('main'), false);
 });

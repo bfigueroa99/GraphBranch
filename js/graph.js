@@ -141,6 +141,8 @@
     const branch = branchName || heads[0];
     if (branch) {
       const pr = ctx.prs?.get(branch);
+      const ci = ctx.ci?.get(branch);
+      if (ci) rows.push(`<span class="tip-ci ci-${ci}">${CI_MARK[ci]} ${U.esc(ciText(ci))}</span>`);
       if (pr) rows.push(`<span>${i18n.html(prKey(pr, pr.draft ? 'tip.prDraft' : 'tip.pr'), { num: pr.number, base: pr.base })}${pr.url ? ` · <a href="${U.esc(pr.url)}" target="_blank" rel="noopener">${U.esc(tr(prKey(pr, 'tip.viewPr')))}</a>` : ''}</span>`);
     }
     return `
@@ -162,6 +164,10 @@
 
   /** Cómo se nombra un PR: "#12" en GitHub; una merge request de GitLab, "!12". Y la clave de sus textos
       (tip.pr → tip.mr, branch.prAria → branch.mrAria…). */
+  /** Estado de los checks de la cabeza de una rama: marca, para el texto accesible y para el detalle. */
+  const CI_MARK = { success: '✓', failure: '✗', pending: '●' };
+  const ciText = (state) => tr('ci.' + state);
+
   const prRef = (pr) => `${pr.mr ? '!' : '#'}${pr.number}`;
   const MR_KEYS = { 'tip.pr': 'tip.mr', 'tip.prDraft': 'tip.mrDraft', 'tip.viewPr': 'tip.viewMr', 'branch.prAria': 'branch.mrAria', 'branch.prDraftAria': 'branch.mrDraftAria' };
   const prKey = (pr, key) => (pr.mr && MR_KEYS[key]) || key;
@@ -846,7 +852,8 @@
       const hl = g.classList.contains('hl') ? ' hl' : '';
       const keep = ['moved', 'enter'].filter((c) => g.classList.contains(c)).map((c) => ' ' + c).join('');
       g.setAttribute('class', `head ${h.color}${h.isDefault ? ' default' : ''}${h.own ? '' : ' pointer-head'}${keep}${hl}`);
-      const key = `${h.name}\n${h.isDefault}\n${pinned}\n${pr ? `${prRef(pr)}:${pr.draft}:${pr.base}` : ''}\n${i18n.locale}`;
+      const ci = ctx.ci?.get(h.name) || '';
+      const key = `${h.name}\n${h.isDefault}\n${pinned}\n${ci}\n${pr ? `${prRef(pr)}:${pr.draft}:${pr.base}` : ''}\n${i18n.locale}`;
       if (it.key === key) return;
       it.key = key;
       g.textContent = '';
@@ -871,6 +878,13 @@
         pt.textContent = label;
         x += measure(label, SMALL_FONT) + 8;
         aria.push(tr(prKey(pr, pr.draft ? 'branch.prDraftAria' : 'branch.prAria'), { num: pr.number, base: pr.base }));
+      }
+      if (ci) {
+        const ct = mk('text', { class: `h-ci ci-${ci}`, x, y: 0, dy: '0.35em' }, g);
+        ct.textContent = CI_MARK[ci];
+        mk('title', null, ct).textContent = ciText(ci);
+        x += measure(CI_MARK[ci], SMALL_FONT) + 8;
+        aria.push(ciText(ci));
       }
       bg.setAttribute('width', Math.round(x + 2));
       g.setAttribute('aria-label', aria.join(', '));
@@ -1825,5 +1839,5 @@
   }
 
   GB.Graph = Graph;
-  GB.graphShared = { tipHTML, wirePinButton, focusTip, returnFocus, measure, fitText, prRef, prKey, LABEL_FONT, SMALL_FONT };
+  GB.graphShared = { tipHTML, wirePinButton, focusTip, returnFocus, measure, fitText, prRef, prKey, CI_MARK, ciText, LABEL_FONT, SMALL_FONT };
 })(window.GB);

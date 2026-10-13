@@ -1124,13 +1124,16 @@
         if (it.el.className !== cls) it.el.className = cls;
       }
       const aria = [tr(h.isDefault ? 'branch.ariaDefault' : 'branch.aria', { name: h.name })];
-      const { prRef, prKey } = GB.graphShared;
+      const { prRef, prKey, CI_MARK, ciText } = GB.graphShared;
+      const ci = ctx.ci?.get(h.name);
       if (pr) aria.push(tr(prKey(pr, pr.draft ? 'branch.prDraftAria' : 'branch.prAria'), { num: pr.number, base: pr.base }));
+      if (ci) aria.push(ciText(ci));
       if (pinned) aria.push(tr('branch.pinned'));
       const name = U.truncate(h.name, 34);
       const html =
         `<span class="h3-dot" aria-hidden="true"></span><span class="h3-name">${U.esc(name)}</span>` +
         (pr ? `<span class="h3-pr${pr.draft ? ' draft' : ''}">${prRef(pr)}</span>` : '') +
+        (ci ? `<span class="h3-ci ci-${ci}" title="${U.esc(ciText(ci))}">${CI_MARK[ci]}</span>` : '') +
         (pinned ? `<span class="h3-pin" title="${U.esc(tr('branch.pinned'))}" aria-hidden="true"></span>` : '');
       const label = aria.join(', ');
       if (it.html === html && it.label === label) return;

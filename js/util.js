@@ -61,12 +61,16 @@ window.GB = window.GB || {};
     return m && /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/.test(m[1]) ? { owner: m[1] } : null;
   };
 
-  /** localStorage envuelto: puede no existir o lanzar (modo privado, sandbox). */
+  /** localStorage envuelto: puede no existir o lanzar (modo privado, sandbox). Un valor guardado que no es
+      del tipo del `fallback` (lista, texto, número, booleano) está corrupto: se devuelve el `fallback`. */
   U.store = {
     get(key, fallback) {
       try {
         const v = localStorage.getItem('graphbranch:' + key);
-        return v == null ? fallback : JSON.parse(v);
+        if (v == null) return fallback;
+        const got = JSON.parse(v);
+        if (fallback == null) return got;
+        return Array.isArray(fallback) ? (Array.isArray(got) ? got : fallback) : typeof got === typeof fallback && got !== null && !Array.isArray(got) ? got : fallback;
       } catch {
         return fallback;
       }

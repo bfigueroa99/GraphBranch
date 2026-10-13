@@ -316,13 +316,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     cuadro, en dos corridas). La prueba ahora lee cada cuadro ya decodificado, en tres puntos, y pide
     dibujo en dos: si vuelve a fallar, sus tres números dicen si el video tiene un tramo vacío (el
     grabador) o si fue un cuadro suelto mal leído.
-2. [Errores] Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` corrupto deja el
-    repo en «Cargando» para siempre, con una excepción. *Reproducido* el 2026-10-13 en Chromium:
-    `graphbranch:pins:acme/web` = `{}` da «object is not iterable» y `graphbranch:filter:acme/web` =
-    `{"a":1}`, «filter.trim is not a function» (`app.js:193` y `app.js:244`); `view`, `owners` y `repos`
-    corruptos no rompen nada. Prueba: el smoke escribe esos valores y abre `?repo=`.
-
-3. [Deuda] Smoke: en `npm run check` bajo `xvfb-run` (iteración 36, el equipo cargado por las pruebas
+2. [Deuda] Smoke: en `npm run check` bajo `xvfb-run` (iteración 36, el equipo cargado por las pruebas
     anteriores) fallaron tres pasos que no tocaba el cambio: «vista 2D» (`waitForSelector` de 10 s),
     «salud del repo» («la demo tiene PRs abiertos y no salen en la lista») y «cambiar a un repo que no
     existe» (`waitForSelector` de 5 s). Corrido aparte `node tools/smoke.mjs` y repetido el `check`, pasó
@@ -333,55 +327,55 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Baja
 
-4. [Accesibilidad] Objetivos chicos y estados confusos. `audit:objetivo-chico` (24 hallazgos conocidos en
+3. [Accesibilidad] Objetivos chicos y estados confusos. `audit:objetivo-chico` (24 hallazgos conocidos en
     `tools/audit-base.json`): las etiquetas de rama de 22 px de alto en 3D y 2D (mínimo 24), el filtro de
     ramas (`#branch-filter`, 19 px), la casilla de los logros con su etiqueta (`#game-enable`, 19 px), la
     barra de posición del Replay (`.rp-range`, 16 px) y las marcas de la brújula del vuelo (18×18 px).
     Además: botones que cambian a la vez `aria-pressed` y el texto (el de pausa del Replay, `replay.js:367`)
     y la leyenda 2D sin acceso por teclado. Reproducir: `node tools/audit.mjs`.
-5. [Errores] Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una
+4. [Errores] Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una
     etiqueta de rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-6. [Errores] La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-7. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-8. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
+5. [Errores] La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+6. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+7. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
     renombrados).
-9. [Seguridad] `parseRepo` acepta `..` como owner o nombre de un repo de GitHub (`util.js:39`; los de
+8. [Seguridad] `parseRepo` acepta `..` como owner o nombre de un repo de GitHub (`util.js:39`; los de
     GitLab ya se rechazan): rechazar nombres hechos solo de puntos.
-10. [Seguridad] Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de
+9. [Seguridad] Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de
     `<usuario>.github.io`. Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-11. [Rendimiento] Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-12. [Rendimiento] Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`)
+10. [Rendimiento] Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
+11. [Rendimiento] Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`)
     y un `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro). Medir antes
     y después con `node tools/audit.mjs --repetir 3`.
-13. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+12. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-14. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
+13. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
     y mueve el resto a `docs/BITACORA.md` (idempotente: la segunda corrida dice «Nada que rotar»; queda
     una línea «Las iteraciones anteriores están en docs/BITACORA.md»); `--siguiente` sigue leyendo N de
     aquí y `--check` exige iteraciones sin repetidos entre los dos archivos. Motivo: `--salud` mide el
     archivo en cada iteración (77 KB el 2026-10-13, 55 KB de bitácora), y cada sesión nueva lo lee entero.
-15. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+14. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-16. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+15. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-17. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+16. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-18. [QA] Repo local de 1.000 ramas en árabe (iteración 35): el primer arranque en frío tardó 22 s y `#status`
+17. [QA] Repo local de 1.000 ramas en árabe (iteración 35): el primer arranque en frío tardó 22 s y `#status`
     dejó de decir «cargando» con 40 ramas contadas (en tamil, 3 s y 1.001). Sin reproducir una segunda vez:
     medir si el estado «listo» sale antes de la primera lectura completa del repo local. Reproducción:
     `xvfb-run node` con `e2e/app.mjs` (`launch` + `--local=` sobre un repo con 1.000 ramas), leer
     `#st-branches` al salir `loaded()`.
-19. [QA] La auditoría con `--langs` cuenta `objetivo-chico` 135 veces fuera de la base (95×22, 73×22 y
+18. [QA] La auditoría con `--langs` cuenta `objetivo-chico` 135 veces fuera de la base (95×22, 73×22 y
     296×19 px en 40 idiomas): son los mismos controles del pendiente 4, repetidos por idioma. Decidir si
     la base los guarda por control y no por idioma. Reproducción: `node tools/audit.mjs --langs`.
-20. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
+19. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
     (6.009 ms con ≤ 6.000; tareas largas 4.809 ms con ≤ 4.000), sin GPU y con la corrida larga; la corrida
     normal de la puerta no lo marca. Medir con `node tools/audit.mjs --repetir 3` antes de tocar nada.
 
@@ -1391,3 +1385,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 170 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde.
 - **Siguiente:** iteración 43, mantenimiento · Errores: pendiente 2 (Valores guardados sin validar el tipo (`pins`, `filter`): un `localStorage` cor…)
+
+### 2026-10-13 · Iteración 43 · Mantenimiento · Errores
+
+- **Arreglo: valores guardados con el tipo equivocado** (pendiente 2). `U.store.get` ahora devuelve el valor por defecto cuando lo guardado no es del tipo de éste (lista, texto, número, booleano), así que `pins` y `filter` corruptos ya no dejan el repo en «Cargando». Mismo patrón en el resto del código: todos los `U.store.get` con valor por defecto pasan por la misma guarda; `owners` (defecto `null`) ya se validaba a mano.
+- **Reproducción:** `node --test tools/util.test.mjs` → sin el arreglo, `pins:a/b` = `{}` sale como objeto (no como lista) y `filter:a/b` = `{"a":1}` como objeto (no como texto).
+- **Pruebas que fallan sin el arreglo:** `tools/util.test.mjs` (pins, filter, depth y marks corruptos; valor válido y ausente intactos).
+- README: sin cambios (no cambia ninguna función visible).
+- QA: filas tocadas: valores guardados (prueba unitaria sobre `util.js`); no toca la interfaz; auditoría: 0 hallazgos nuevos.
+- Reclamo: loop/43, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 171 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde.
+- **Siguiente:** iteración 44, expansión: ítem 19 (Búsqueda y filtro por autor, Análisis)

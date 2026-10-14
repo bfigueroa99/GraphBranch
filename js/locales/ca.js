@@ -241,6 +241,7 @@ GB.i18n.define('ca', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (esborrany) → <code>{base}</code>',
   'tip.viewPr': 'veure PR',
+  'tip.stacked': 'Apilada sobre el PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'veure MR',
   'tip.mergeOf': { one: 'merge de {n} pare', other: 'merge de {n} pares' },
   'tip.openCommit': 'Obre el commit a GitHub',

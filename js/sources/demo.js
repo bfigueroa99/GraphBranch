@@ -224,7 +224,7 @@
       };
       this.prSeq = 35;
       openPR('feature/login', 'develop', S.prLogin, J);
-      openPR('feature/dark-mode', 'develop', S.prDark, T, true);
+      openPR('feature/dark-mode', 'feature/login', S.prDark, T, true);
       openPR('fix/rate-limit', 'main', S.prRetry, M);
       for (const [name, st] of [['main', 'success'], ['develop', 'success'], ['feature/login', 'success'], ['feature/dark-mode', 'pending'], ['fix/rate-limit', 'failure']]) this.setCi(name, st);
       H.push(this.act('comment', { title: MSG('act.commentPr', { num: 38 }), detail: this.C.comments[0], actor: this.actor(V) }, t + 120e3));

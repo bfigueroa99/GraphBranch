@@ -304,6 +304,7 @@ GB.i18n.define('ar', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} → <code>{base}</code> (مسودة)',
   'tip.viewPr': 'عرض PR',
+  'tip.stacked': 'مكدّس فوق PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'عرض MR',
   'tip.mergeOf': {
     zero: 'دمج بلا commits أصلية',

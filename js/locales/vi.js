@@ -241,6 +241,7 @@ GB.i18n.define('vi', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (nháp) → <code>{base}</code>',
   'tip.viewPr': 'xem PR',
+  'tip.stacked': 'Xếp chồng trên PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'xem MR',
   'tip.mergeOf': 'merge của {n} commit cha',
   'tip.openCommit': 'Mở commit trên GitHub',

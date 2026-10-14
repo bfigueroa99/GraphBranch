@@ -241,6 +241,7 @@ GB.i18n.define('ja', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num}（ドラフト）→ <code>{base}</code>',
   'tip.viewPr': 'PR を表示',
+  'tip.stacked': 'PR #{num}（<code>{parent}</code>）の上に積まれています',
   'tip.viewMr': 'MR を表示',
   'tip.mergeOf': '{n} 個の親をマージ',
   'tip.openCommit': 'GitHub でコミットを開く',

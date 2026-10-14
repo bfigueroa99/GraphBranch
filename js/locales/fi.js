@@ -241,6 +241,7 @@ GB.i18n.define('fi', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (luonnos) → <code>{base}</code>',
   'tip.viewPr': 'näytä PR',
+  'tip.stacked': 'Pinottu PR:n #{num} (<code>{parent}</code>) päälle',
   'tip.viewMr': 'näytä MR',
   'tip.mergeOf': { one: '{n} vanhemman yhdistäminen', other: '{n} vanhemman yhdistäminen' },
   'tip.openCommit': 'Avaa commit GitHubissa',

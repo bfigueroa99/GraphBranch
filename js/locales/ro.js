@@ -245,6 +245,7 @@ GB.i18n.define('ro', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (draft) → <code>{base}</code>',
   'tip.viewPr': 'vezi PR',
+  'tip.stacked': 'Stivuit peste PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'vezi MR',
   'tip.mergeOf': { one: 'merge cu {n} părinte', few: 'merge cu {n} părinți', other: 'merge cu {n} de părinți' },
   'tip.openCommit': 'Deschideți commit-ul pe GitHub',

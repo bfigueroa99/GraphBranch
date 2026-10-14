@@ -245,6 +245,7 @@ GB.i18n.define('hr', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (nacrt) → <code>{base}</code>',
   'tip.viewPr': 'prikažite PR',
+  'tip.stacked': 'Složeno na PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'prikažite MR',
   'tip.mergeOf': { one: 'spajanje, {n} roditelj', few: 'spajanje, {n} roditelja', other: 'spajanje, {n} roditelja' },
   'tip.openCommit': 'Otvorite commit na GitHubu',

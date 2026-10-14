@@ -241,6 +241,7 @@ GB.i18n.define('zh-Hant', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num}（草稿）→ <code>{base}</code>',
   'tip.viewPr': '檢視 PR',
+  'tip.stacked': '堆疊在 PR #{num}（<code>{parent}</code>）之上',
   'tip.viewMr': '檢視 MR',
   'tip.mergeOf': '合併了 {n} 個父提交',
   'tip.openCommit': '在 GitHub 上開啟提交',

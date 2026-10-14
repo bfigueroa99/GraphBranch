@@ -241,6 +241,7 @@ GB.i18n.define('ta', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (வரைவு) → <code>{base}</code>',
   'tip.viewPr': 'PR-ஐப் பார்க்கவும்',
+  'tip.stacked': 'PR #{num} (<code>{parent}</code>) மேல் அடுக்கப்பட்டது',
   'tip.viewMr': 'MR-ஐப் பார்க்கவும்',
   'tip.mergeOf': { one: '{n} பேரன்ட்டின் மெர்ஜ்', other: '{n} பேரன்ட்களின் மெர்ஜ்' },
   'tip.openCommit': 'GitHub-இல் கமிட்டைத் திறக்கவும்',

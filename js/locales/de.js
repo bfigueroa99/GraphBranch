@@ -241,6 +241,7 @@ GB.i18n.define('de', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (Entwurf) → <code>{base}</code>',
   'tip.viewPr': 'PR ansehen',
+  'tip.stacked': 'Gestapelt auf PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'MR ansehen',
   'tip.mergeOf': { one: 'Merge von {n} Eltern-Commit', other: 'Merge von {n} Eltern-Commits' },
   'tip.openCommit': 'Commit auf GitHub öffnen',

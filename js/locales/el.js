@@ -241,6 +241,7 @@ GB.i18n.define('el', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (πρόχειρο) → <code>{base}</code>',
   'tip.viewPr': 'προβολή PR',
+  'tip.stacked': 'Στοιβαγμένο πάνω στο PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'προβολή MR',
   'tip.mergeOf': { one: 'merge από {n} γονέα', other: 'merge από {n} γονείς' },
   'tip.openCommit': 'Άνοιγμα του commit στο GitHub',

@@ -241,6 +241,7 @@ GB.i18n.define('hi', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (ड्राफ़्ट) → <code>{base}</code>',
   'tip.viewPr': 'PR देखें',
+  'tip.stacked': 'PR #{num} (<code>{parent}</code>) पर स्टैक किया गया',
   'tip.viewMr': 'MR देखें',
   'tip.mergeOf': { one: '{n} पैरेंट का मर्ज', other: '{n} पैरेंट का मर्ज' },
   'tip.openCommit': 'GitHub पर कमिट खोलें',

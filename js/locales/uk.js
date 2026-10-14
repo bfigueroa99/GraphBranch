@@ -246,6 +246,7 @@ GB.i18n.define('uk', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (чернетка) → <code>{base}</code>',
   'tip.viewPr': 'відкрити PR',
+  'tip.stacked': 'Поверх PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'відкрити MR',
   'tip.mergeOf': {
     one: 'злиття: {n} батьківський коміт',

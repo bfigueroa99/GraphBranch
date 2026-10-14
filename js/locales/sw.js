@@ -241,6 +241,7 @@ GB.i18n.define('sw', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (rasimu) → <code>{base}</code>',
   'tip.viewPr': 'tazama PR',
+  'tip.stacked': 'Imerundikwa juu ya PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'tazama MR',
   'tip.mergeOf': { one: 'merge ya mzazi {n}', other: 'merge ya wazazi {n}' },
   'tip.openCommit': 'Fungua commit kwenye GitHub',

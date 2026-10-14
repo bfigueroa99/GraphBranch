@@ -498,6 +498,8 @@ GB.i18n.define('fi', {
   'textview.shown': 'näytetyt commitit: {n}',
   'textview.by': 'tekijä {author}',
   'textview.merge': 'yhdistäminen',
+  'textview.live': 'Uutta: {branches} haaraa, {commits} commitia',
+  'textview.filtered': 'Näytetyt haarat: {shown} / {total}',
   'search.title': 'Hae commiteja',
   'search.help': 'Hae viestillä, SHA:lla tai tekijällä (@nimi). Nuoli alas siirtyy tuloksiin, Enter lentää commitiin.',
   'search.placeholder': 'Viesti, SHA tai @tekijä…',

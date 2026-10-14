@@ -58,3 +58,30 @@ test('los límites por rama y de ramas se respetan, y un ciclo no cuelga', () =>
   d.commits.get('a1').parents = ['m3'];
   assert.equal(build(d).branches[0].commits.length, 3);
 });
+
+test('news solo cuenta ramas y commits que no se habían leído', () => {
+  const d = repo();
+  const tree = build(d);
+  const seen = { branches: new Set(), shas: new Set() };
+  const first = JSON.parse(JSON.stringify(ctx.window.GB.textview.news(tree, seen)));
+  assert.deepEqual(first.branches.sort(), ['feature', 'main']);
+  assert.equal(first.commits.length, 4); // m3, a2, a1 y f2, cada uno una vez aunque salga en dos ramas
+  for (const b of first.branches) seen.branches.add(b);
+  for (const c of first.commits) seen.shas.add(c);
+  const again = JSON.parse(JSON.stringify(ctx.window.GB.textview.news(tree, seen)));
+  assert.deepEqual(again, { branches: [], commits: [] });
+  d.commits.set('n5', { sha: 'n5', parents: ['m3'], message: 'nuevo', date: 5, author: { name: 'Ana' } });
+  d.branches.get('main').sha = 'n5';
+  d.branches.set('hotfix', { name: 'hotfix', sha: 'n5', movedAt: 5 });
+  const next = JSON.parse(JSON.stringify(ctx.window.GB.textview.news(build(d), seen)));
+  assert.deepEqual(next.branches, ['hotfix']);
+  assert.deepEqual(next.commits, ['n5']);
+});
+
+test('filter deja las ramas cuyo nombre contiene el texto, sin importar mayúsculas', () => {
+  const tree = build(repo());
+  const names = (q) => ctx.window.GB.textview.filter(tree, q).map((b) => b.name);
+  assert.deepEqual(names('FEAT'), ['feature']);
+  assert.deepEqual(names('  '), ['main', 'feature']);
+  assert.deepEqual(names('zzz'), []);
+});

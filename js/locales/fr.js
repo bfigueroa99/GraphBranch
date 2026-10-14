@@ -499,6 +499,8 @@ GB.i18n.define('fr', {
   'textview.shown': 'commits affichés : {n}',
   'textview.by': 'par {author}',
   'textview.merge': 'fusion',
+  'textview.live': 'Nouveautés : {branches} branches, {commits} commits',
+  'textview.filtered': 'Branches affichées : {shown} sur {total}',
   'search.title': 'Rechercher des commits',
   'search.help': 'Cherchez par message, SHA ou auteur (@nom). La flèche bas va aux résultats, Entrée vole jusqu’au commit.',
   'search.placeholder': 'Message, SHA ou @auteur…',

@@ -514,6 +514,8 @@ GB.i18n.define('uk', {
   'textview.shown': 'показано комітів: {n}',
   'textview.by': 'автор {author}',
   'textview.merge': 'злиття',
+  'textview.live': 'Нове: гілки {branches}, коміти {commits}',
+  'textview.filtered': 'Показано гілок: {shown} із {total}',
   'search.title': 'Пошук комітів',
   'search.help': 'Шукайте за повідомленням, SHA або автором (@ім’я). Стрілка вниз переходить до результатів, Enter летить до коміту.',
   'search.placeholder': 'Повідомлення, SHA або @автор…',

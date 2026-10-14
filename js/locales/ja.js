@@ -498,6 +498,8 @@ GB.i18n.define('ja', {
   'textview.shown': '表示中のコミット: {n}',
   'textview.by': '作成者 {author}',
   'textview.merge': 'マージ',
+  'textview.live': '新着: ブランチ {branches} 件、コミット {commits} 件',
+  'textview.filtered': '表示中のブランチ: {total} 件中 {shown} 件',
   'search.title': 'コミットを検索',
   'search.help': 'メッセージ、SHA、作者（@名前）で検索します。下矢印で結果へ移動し、Enter でそのコミットへ飛びます。',
   'search.placeholder': 'メッセージ、SHA、@作者…',

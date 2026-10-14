@@ -498,6 +498,8 @@ GB.i18n.define('el', {
   'textview.shown': 'εμφανιζόμενα commits: {n}',
   'textview.by': 'από {author}',
   'textview.merge': 'συγχώνευση',
+  'textview.live': 'Νέα: {branches} κλάδοι, {commits} commits',
+  'textview.filtered': 'Κλάδοι που εμφανίζονται: {shown} από {total}',
   'search.title': 'Αναζήτηση commits',
   'search.help': 'Αναζήτηση με μήνυμα, SHA ή συγγραφέα (@όνομα). Το κάτω βέλος πάει στα αποτελέσματα, το Enter πετά στο commit.',
   'search.placeholder': 'Μήνυμα, SHA ή @συγγραφέας…',

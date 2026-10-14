@@ -498,6 +498,8 @@ GB.i18n.define('bg', {
   'textview.shown': 'показани комити: {n}',
   'textview.by': 'от {author}',
   'textview.merge': 'сливане',
+  'textview.live': 'Ново: {branches} клона, {commits} къмита',
+  'textview.filtered': 'Показани клонове: {shown} от {total}',
   'search.title': 'Търсене на комити',
   'search.help': 'Търсете по съобщение, SHA или автор (@име). Стрелка надолу отива към резултатите, Enter лети до комита.',
   'search.placeholder': 'Съобщение, SHA или @автор…',

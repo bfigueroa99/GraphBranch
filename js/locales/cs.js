@@ -509,6 +509,8 @@ GB.i18n.define('cs', {
   'textview.shown': 'zobrazené commity: {n}',
   'textview.by': 'od {author}',
   'textview.merge': 'merge',
+  'textview.live': 'Nové: větve {branches}, commity {commits}',
+  'textview.filtered': 'Zobrazené větve: {shown} z {total}',
   'search.title': 'Hledat commity',
   'search.help': 'Hledejte podle zprávy, SHA nebo autora (@jméno). Šipka dolů přejde na výsledky, Enter přeletí k commitu.',
   'search.placeholder': 'Zpráva, SHA nebo @autor…',

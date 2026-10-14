@@ -499,6 +499,8 @@ GB.i18n.define('nl', {
   'textview.shown': 'getoonde commits: {n}',
   'textview.by': 'door {author}',
   'textview.merge': 'merge',
+  'textview.live': 'Nieuw: {branches} branches, {commits} commits',
+  'textview.filtered': 'Getoonde branches: {shown} van {total}',
   'search.title': 'Commits zoeken',
   'search.help': 'Zoek op bericht, SHA of auteur (@naam). Pijl omlaag gaat naar de resultaten, Enter vliegt naar de commit.',
   'search.placeholder': 'Bericht, SHA of @auteur…',

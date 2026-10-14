@@ -498,6 +498,8 @@ GB.i18n.define('vi', {
   'textview.shown': 'commit đang hiện: {n}',
   'textview.by': 'bởi {author}',
   'textview.merge': 'merge',
+  'textview.live': 'Mới: {branches} nhánh, {commits} commit',
+  'textview.filtered': 'Nhánh đang hiện: {shown} trên {total}',
   'search.title': 'Tìm commit',
   'search.help': 'Tìm theo thông điệp, SHA hoặc tác giả (@tên). Mũi tên xuống đi tới kết quả, Enter bay tới commit.',
   'search.placeholder': 'Thông điệp, SHA hoặc @tác giả…',

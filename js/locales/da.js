@@ -498,6 +498,8 @@ GB.i18n.define('da', {
   'textview.shown': 'viste commits: {n}',
   'textview.by': 'af {author}',
   'textview.merge': 'sammenfletning',
+  'textview.live': 'Nyt: {branches} grene, {commits} commits',
+  'textview.filtered': 'Viste grene: {shown} af {total}',
   'search.title': 'Søg i commits',
   'search.help': 'Søg efter besked, SHA eller forfatter (@navn). Pil ned går til resultaterne, Enter flyver til committen.',
   'search.placeholder': 'Besked, SHA eller @forfatter…',

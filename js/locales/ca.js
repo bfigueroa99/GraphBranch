@@ -498,6 +498,8 @@ GB.i18n.define('ca', {
   'textview.shown': 'commits mostrats: {n}',
   'textview.by': 'de {author}',
   'textview.merge': 'merge',
+  'textview.live': 'Novetats: {branches} branques, {commits} commits',
+  'textview.filtered': 'Branques mostrades: {shown} de {total}',
   'search.title': 'Cerca commits',
   'search.help': 'Cerca per missatge, SHA o autor (@nom). La fletxa avall va als resultats, Intro vola fins al commit.',
   'search.placeholder': 'Missatge, SHA o @autor…',

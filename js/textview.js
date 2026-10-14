@@ -38,9 +38,32 @@
     return { total, branches: rows };
   }
 
+  /** Qué hay de nuevo en `tree` frente a lo ya leído (`seen`: { branches:Set, shas:Set }): ramas y commits sin repetir. */
+  function news(tree, seen) {
+    const branches = tree.branches.map((b) => b.name).filter((n) => !seen.branches.has(n));
+    const shas = new Set();
+    for (const b of tree.branches) for (const c of b.commits) if (!seen.shas.has(c.sha)) shas.add(c.sha);
+    return { branches, commits: [...shas] };
+  }
+
+  /** Las ramas cuyo nombre contiene `q` (sin distinguir mayúsculas); `q` vacío las deja todas. */
+  function filter(tree, q) {
+    const needle = String(q || '').trim().toLowerCase();
+    if (!needle) return tree.branches;
+    return tree.branches.filter((b) => b.name.toLowerCase().includes(needle));
+  }
+
   /** Monta el árbol en `root`. `text(key, params)`: traductor; `onGo({ branch, sha })`: Enter sobre un nodo.
       Teclado: ↑ ↓ recorren lo visible, → abre o baja al primer hijo, ← cierra o sube al padre, Inicio y Fin. */
-  function mount(root, { text, ago, onGo }) {
+  function mount(root, { text, ago, onGo, filterInput, live }) {
+    const seen = { branches: new Set(), shas: new Set() };
+    const open = new Set(); // ramas abiertas
+    let tree = { total: 0, branches: [] };
+    let query = '';
+    let timer = 0;
+    const say = (msg) => {
+      if (live) live.textContent = msg;
+    };
     const mk = (tag, cls, txt) => {
       const n = document.createElement(tag);
       if (cls) n.className = cls;
@@ -48,16 +71,17 @@
       return n;
     };
 
-    function render(tree) {
+    function draw() {
       root.textContent = '';
-      if (!tree.branches.length) return void root.appendChild(mk('p', 'hl-none', text('health.none')));
+      const shown = filter(tree, query);
+      if (!shown.length) return void root.appendChild(mk('p', 'hl-none', text('health.none')));
       const ul = mk('ul', 'tv-tree');
       ul.setAttribute('role', 'tree');
       ul.setAttribute('aria-label', text('textview.title'));
-      tree.branches.forEach((b, i) => {
+      shown.forEach((b, i) => {
         const li = mk('li', 'tv-branch');
         li.setAttribute('role', 'treeitem');
-        li.setAttribute('aria-expanded', b.isDefault ? 'true' : 'false');
+        li.setAttribute('aria-expanded', open.has(b.name) ? 'true' : 'false');
         li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}, ${text('textview.shown', { n: b.commits.length })}`);
         li.tabIndex = i === 0 ? 0 : -1;
         li.dataset.branch = b.name;
@@ -67,7 +91,7 @@
         li.appendChild(head);
         const group = mk('ul', 'tv-commits');
         group.setAttribute('role', 'group');
-        group.hidden = !b.isDefault;
+        group.hidden = !open.has(b.name);
         for (const c of b.commits) {
           const ci = mk('li', 'tv-commit');
           ci.setAttribute('role', 'treeitem');
@@ -94,10 +118,60 @@
       n.tabIndex = 0;
       n.focus();
     };
-    const setOpen = (li, open) => {
-      li.setAttribute('aria-expanded', String(open));
-      li.querySelector('.tv-commits').hidden = !open;
+    const setOpen = (li, on) => {
+      li.setAttribute('aria-expanded', String(on));
+      li.querySelector('.tv-commits').hidden = !on;
+      if (on) open.add(li.dataset.branch);
+      else open.delete(li.dataset.branch);
     };
+    const keyOf = (n) => (n.dataset.sha ? `c:${n.closest('.tv-branch').dataset.branch}:${n.dataset.sha}` : `b:${n.dataset.branch}`);
+
+    /** Primera vez (al abrir): todo lo que hay cuenta como leído y solo la rama por defecto viene abierta. */
+    function render(next) {
+      tree = next;
+      query = '';
+      if (filterInput) filterInput.value = '';
+      seen.branches = new Set(next.branches.map((b) => b.name));
+      seen.shas = new Set(next.branches.flatMap((b) => b.commits.map((c) => c.sha)));
+      open.clear();
+      for (const b of next.branches) if (b.isDefault) open.add(b.name);
+      say('');
+      draw();
+    }
+
+    /** Con el árbol abierto y datos nuevos: redibuja sin perder el foco ni lo abierto, y avisa solo de lo que no se había leído. */
+    function update(next) {
+      const fresh = news(next, seen);
+      const inside = root.contains(document.activeElement) ? document.activeElement.closest?.('[role="treeitem"]') : null;
+      const key = inside && keyOf(inside);
+      tree = next;
+      for (const b of next.branches) seen.branches.add(b.name);
+      for (const c of fresh.commits) seen.shas.add(c);
+      draw();
+      if (key) {
+        const back = [...root.querySelectorAll('[role="treeitem"]')].find((n) => keyOf(n) === key && !n.parentElement.closest('[hidden]'));
+        if (back) focus(back);
+      }
+      if (fresh.branches.length || fresh.commits.length) say(text('textview.live', { branches: fresh.branches.length, commits: fresh.commits.length }));
+    }
+
+    if (filterInput) {
+      filterInput.addEventListener('input', () => {
+        query = filterInput.value;
+        draw();
+        clearTimeout(timer);
+        timer = setTimeout(() => say(text('textview.filtered', { shown: filter(tree, query).length, total: tree.branches.length })), 500);
+      });
+      filterInput.addEventListener('keydown', (ev) => {
+        if (ev.key === 'ArrowDown') {
+          const first = root.querySelector('[role="treeitem"]');
+          if (first) {
+            focus(first);
+            ev.preventDefault();
+          }
+        }
+      });
+    }
     const branchOf = (n) => (n.classList.contains('tv-branch') ? n : n.closest('.tv-branch'));
 
     root.addEventListener('keydown', (ev) => {
@@ -131,8 +205,8 @@
       else onGo({ branch: branchOf(n).dataset.branch, sha: n.dataset.sha || null });
     });
 
-    return { render };
+    return { render, update };
   }
 
-  GB.textview = { build, mount, PER_BRANCH, MAX_BRANCHES };
+  GB.textview = { build, news, filter, mount, PER_BRANCH, MAX_BRANCHES };
 })((window.GB = window.GB || {}));

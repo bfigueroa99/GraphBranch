@@ -498,6 +498,8 @@ GB.i18n.define('sw', {
   'textview.shown': 'commit zinazoonyeshwa: {n}',
   'textview.by': 'na {author}',
   'textview.merge': 'muunganisho',
+  'textview.live': 'Mapya: matawi {branches}, commit {commits}',
+  'textview.filtered': 'Matawi yanayoonyeshwa: {shown} kati ya {total}',
   'search.title': 'Tafuta commit',
   'search.help': 'Tafuta kwa ujumbe, SHA au mwandishi (@jina). Mshale wa chini huenda kwenye matokeo, Enter huruka hadi kwenye commit.',
   'search.placeholder': 'Ujumbe, SHA au @mwandishi…',

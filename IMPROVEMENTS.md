@@ -126,6 +126,10 @@ cada iteración lo repite (`node tools/loop.mjs --salud` lo imprime) y se quita 
    así que las nuevas quedan contenidas en `master` aunque no se borren. Activar Settings → General →
    Pull Requests → «Automatically delete head branches» (GitHub borra la rama al fusionar, sin pasar por
    el proxy) y borrar esas 27 a mano en la página de ramas.
+8. **Probar la vista de texto con un lector de pantalla real** (desde 2026-10-14). El loop solo comprueba la
+   estructura ARIA y el teclado con Playwright. Abre la demo, pulsa el botón de las líneas y recórrela con NVDA,
+   VoiceOver u Orca (¿la región viva anuncia sin repetir? ¿el foco se queda al actualizar?); lo que falle va a
+   Mantenimiento y lo que salga bien se anota en el README, en «Límites conocidos».
 
 ## Mapa de alcance
 
@@ -140,7 +144,7 @@ segunda columna a la primera.
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo por ruta de archivo | filtrar el grafo por autor |
-| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado) | probar con NVDA, JAWS y VoiceOver |
+| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
 
@@ -263,7 +267,7 @@ se comprueban antes de construir sobre ellas.
     ve en el grafo sin tocar el repo ni gastar consultas. Solo ve lo ya cargado; sin conflictos.
 32. ~~**Ramas apiladas**~~ hecho en #90 · Datos · 1×2/2. [inv. 2026-10-13] Un PR cuya base es la rama de otro PR se dibuja encadenado a él, con el
     orden de la pila. Comprobar: prueba del layout con PRs apilados.
-33. **Vista de texto, segunda entrega** · Público · 1×2/2. [parte del ítem 18] Que el árbol avise con una región viva
+33. ~~**Vista de texto, segunda entrega**~~ hecho en #91 · Público · 1×2/2. [parte del ítem 18] Que el árbol avise con una región viva
     (sin anunciar de más) de las ramas y commits nuevos mientras está abierto, que filtre por nombre de rama y que
     se escriba en el README cómo se probó con NVDA, VoiceOver y Orca. Comprobar: paso del smoke con un evento en vivo
     de la demo y la región viva sin repetir lo ya leído.
@@ -1665,3 +1669,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 244 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde.
 - **Siguiente:** iteración 62, expansión: ítem 33 (Vista de texto, segunda entrega, Público)
+
+### 2026-10-14 · Iteración 62 · Expansión · Público
+
+- **Capacidad nueva: vista de texto, segunda entrega** (ítem 33 de la hoja de ruta). Con la vista de texto abierta, cada actualización en vivo redibuja el árbol sin perder el foco ni las ramas abiertas y una región `role="status"` (`aria-live="polite"`) anuncia «Novedades: n ramas, m commits» solo de lo que no se había leído (`textview.news` lleva las ramas y los SHA ya vistos). Un campo «Filtrar ramas…» (↓ pasa al árbol) deja las ramas cuyo nombre contiene el texto y anuncia cuántas quedan, sin anunciar cada tecla. 2 textos nuevos en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `tools/textview.test.mjs` (`news solo cuenta…`, `filter deja…`) y el paso del smoke «vista de texto: filtra por rama y avisa en la región viva de lo nuevo sin repetir» (con un commit en vivo de la demo).
+- README: función en la lista, Límites conocidos (cómo se probó: solo ARIA y teclado con Playwright, ningún lector real) y Seguridad. Mapa de alcance: fila Público.
+- QA: filas de XSS (todo con `textContent`), foco (se conserva al actualizar), teclado (filtro y ↓) y 40 idiomas por `check-i18n`; sin mirar a mano: 320 px, tema claro, movimiento reducido; auditoría: ver Validado.
+- Reclamo: loop/62, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 246 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde.
+- **Siguiente:** iteración 63, mantenimiento · Accesibilidad: pendiente 4 (Objetivos chicos y estados confusos. `audit:objetivo-chico` (24 hallazgos conoc…)

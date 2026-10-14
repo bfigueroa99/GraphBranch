@@ -498,6 +498,8 @@ GB.i18n.define('zh-Hans', {
   'textview.shown': '显示的提交：{n}',
   'textview.by': '作者 {author}',
   'textview.merge': '合并',
+  'textview.live': '新增：{branches} 个分支，{commits} 个提交',
+  'textview.filtered': '显示的分支：{shown} / {total}',
   'search.title': '搜索提交',
   'search.help': '按提交信息、SHA 或作者（@名字）搜索。向下箭头进入结果，Enter 飞到该提交。',
   'search.placeholder': '信息、SHA 或 @作者…',

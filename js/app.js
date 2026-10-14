@@ -56,6 +56,8 @@
     healthBody: $('#health-body'),
     textview: $('#textview'),
     textviewBody: $('#textview-body'),
+    textviewFilter: $('#textview-filter'),
+    textviewLive: $('#textview-live'),
     search: $('#search'),
     trophyBtn: $('#trophy-btn'),
     trophyCount: $('#trophy-count'),
@@ -839,6 +841,7 @@
     if (news && tv.attract && replay.active) replay.stop();
     if (news) tv.lastNews = Date.now();
     const { data, L } = drawGraph(initial, calm);
+    if (el.textview.open) textview.update(GB.textview.build(data)); // con la vista de texto abierta, avisa de lo nuevo
     feed.setDefaultBranch(data.repo.defaultBranch);
     feed.add(activities, { live: !initial });
     if (news) game.observe(activities, gameCtx(activities, data, L));
@@ -1397,6 +1400,8 @@
     else el.textview.removeAttribute('open');
   }
   const textview = GB.textview.mount(el.textviewBody, {
+    filterInput: el.textviewFilter,
+    live: el.textviewLive,
     text: (k, p) => t(k, p),
     ago: (ms) => U.timeAgo(ms),
     onGo: ({ branch, sha }) => {

@@ -506,6 +506,8 @@ GB.i18n.define('ro', {
   'textview.shown': 'commituri afișate: {n}',
   'textview.by': 'de {author}',
   'textview.merge': 'merge',
+  'textview.live': 'Noutăți: {branches} ramuri, {commits} commituri',
+  'textview.filtered': 'Ramuri afișate: {shown} din {total}',
   'search.title': 'Caută commituri',
   'search.help': 'Caută după mesaj, SHA sau autor (@nume). Săgeata în jos merge la rezultate, Enter zboară la commit.',
   'search.placeholder': 'Mesaj, SHA sau @autor…',

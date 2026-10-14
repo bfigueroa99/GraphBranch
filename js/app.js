@@ -241,7 +241,19 @@
     return on;
   }
 
-  const practice = new GB.PracticePanel(el.practice, { onPick: (i) => startPractice(i) });
+  const practice = new GB.PracticePanel(el.practice, {
+    onPick: (i, custom) => startPractice(i, custom),
+    onMake: (spec) => startPractice(null, GB.gitsim.customExercise(spec)),
+    urlFor: (source) => {
+      const code = source.custom ? GB.gitsim.encodeExercise(source.custom.spec) : String(source.index + 1);
+      if (!code) return null;
+      const url = new URL(location.href);
+      url.search = '';
+      url.hash = '';
+      url.searchParams.set('practice', code);
+      return url.href;
+    },
+  });
 
   const feed = new GB.Feed({
     list: $('#feed'),
@@ -460,6 +472,7 @@
     el.branchFilter.value = filterOf(tab);
     renderRepo(source.data.repo);
     practice.attach(source);
+    if (!source.custom) setUrlParam('practice', null);
     saveTabs();
     renderTabs();
     status = tab.status;
@@ -616,18 +629,21 @@
 
   /** La práctica de git: una pestaña como la demo, pero que solo cambia con los comandos que se escriben.
       Sin ejercicio dado, empieza por el primero que falta. */
-  function startPractice(index) {
+  function startPractice(index, custom = null) {
     const old = tabs.find((x) => x.demo);
     if (old) removeTab(old, { replace: false });
     resume();
-    if (index == null) {
+    if (index == null && !custom) {
       const solved = new Set(U.store.get('practice', []));
       index = Math.max(0, GB.gitsim.EXERCISES.findIndex((ex) => !solved.has(ex.id)));
     }
-    const tab = addTab(new GB.PracticeSource(index));
+    const tab = addTab(new GB.PracticeSource(index, custom));
     startTab(tab);
     showTab(tab);
     practice.focus();
+    // el enlace del ejercicio queda en la barra, para copiarlo; al salir de la práctica se quita
+    const source = tab.source;
+    setUrlParam('practice', custom ? GB.gitsim.encodeExercise(source.custom.spec) : null);
   }
 
   /** Recuerda qué repos se siguen y cuál está a la vista; la URL los lleva también, para compartirla. */
@@ -2115,10 +2131,12 @@
 
   let urlRepos = [];
   let initialTV = false;
+  let initialPractice = null; // ?practice=3 o ?practice=<código>: un ejercicio de Aprender git, de la lista o de quien enseña
   try {
     const q = new URLSearchParams(location.search);
     // ?repo=a/b&repo=c/d (o separados por comas): los repos a seguir, el primero a la vista
     urlRepos = q.getAll('repo').flatMap((r) => r.split(',')).map((r) => r.trim()).filter(Boolean);
+    initialPractice = !EMBED && q.has('practice') ? GB.gitsim.decodeExercise(q.get('practice').trim()) : null;
     initialTV = !EMBED && q.has('tv') && !/^(0|false|no|off)$/i.test(q.get('tv'));
   } catch {
     /* sin query string */
@@ -2153,6 +2171,10 @@
     setInterval(refreshOwners, OWNER_REFRESH);
     setTimeout(pollOrgEvents, 8000 + MAX_REPOS * STAGGER);
     setInterval(pollOrgEvents, ORG_EVENTS_EVERY);
+    if (initialPractice) {
+      if (initialPractice.custom) startPractice(null, GB.gitsim.customExercise(initialPractice.custom));
+      else startPractice(initialPractice.index);
+    }
     if (initialTV) setTV(true); // ?tv=1: pensado para dejar la URL abierta en una pantalla
   }
   if (desktop) {

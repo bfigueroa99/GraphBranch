@@ -11,9 +11,9 @@ import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const ctx = vm.createContext({ window: { GB: {} } });
+const ctx = vm.createContext({ window: { GB: {} }, TextEncoder, TextDecoder, btoa, atob, Uint8Array }); // lo que el navegador ya trae
 vm.runInContext(readFileSync(join(root, 'js', 'gitsim.js'), 'utf8'), ctx, { filename: 'gitsim.js' });
-const { Repo, EXERCISES, start } = ctx.window.GB.gitsim;
+const { Repo, EXERCISES, start, startCustom, customExercise, encodeExercise, decodeExercise, cleanExercise } = ctx.window.GB.gitsim;
 const NOW = Date.UTC(2026, 9, 13, 12);
 
 /* los arreglos de otro contexto de vm no son «iguales» para deepEqual: se comparan como datos planos */
@@ -151,4 +151,45 @@ test('Repo vacío: commit crea el primero', () => {
   assert.equal(r.run('log').ok, false);
   assert.ok(r.run('commit -m first').ok);
   assert.equal(r.log(r.headSha).length, 1);
+});
+
+/* ---------- ejercicios propios por URL ---------- */
+
+const MINE = { title: 'Fusiona «ñ» 日本', goal: 'Trae feature a main.', setup: ['checkout -b feature', 'commit -m uno', 'checkout main', 'commit -m dos'], checks: ['merge-commit:main', 'merged:feature>main'] };
+
+test('un ejercicio propio ida y vuelta por la URL, con acentos y sin caracteres raros', () => {
+  const code = encodeExercise(MINE);
+  assert.match(code, /^[\w-]+$/);
+  const back = decodeExercise(code);
+  assert.deepEqual(plain(back.custom), plain(MINE));
+});
+
+test('un ejercicio propio parte sin resolver, se resuelve con sus comandos y no con el atajo equivocado', () => {
+  const ex = customExercise(decodeExercise(encodeExercise(MINE)).custom);
+  const r = startCustom(ex, NOW);
+  assert.equal(ex.done(r), false);
+  assert.ok(r.branches.has('feature'));
+  const ff = startCustom(ex, NOW);
+  run(ff, 'rebase feature'); // main no avanza igual: rebasar no deja commit de fusión
+  assert.equal(ex.done(ff), false);
+  r.run('merge feature');
+  assert.equal(ex.done(r), true);
+});
+
+test('los números de la URL piden un ejercicio de la lista; lo demás se descarta', () => {
+  assert.deepEqual(plain(decodeExercise('3')), { index: 2 });
+  for (const bad of ['0', '9', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
+});
+
+test('un ejercicio propio mal hecho no entra: sin meta, condición inventada, comando que falla o demasiados', () => {
+  assert.equal(cleanExercise({ ...MINE, goal: '  ' }).error, 'text');
+  assert.equal(cleanExercise({ ...MINE, checks: [] }).error, 'checks');
+  assert.equal(cleanExercise({ ...MINE, checks: ['alert(1)'] }).error, 'check');
+  assert.equal(cleanExercise({ ...MINE, setup: ['merge nada'] }).error, 'command');
+  assert.equal(cleanExercise({ ...MINE, setup: Array(31).fill('commit -m x') }).error, 'setup');
+  assert.equal(cleanExercise({ ...MINE, setup: ['commit -m ' + 'x'.repeat(130)] }).error, 'setup');
+  assert.equal(encodeExercise({ ...MINE, goal: 'a'.repeat(5000) }) !== null, true, 'la meta se recorta, no rompe');
+  // el JSON de la URL se vuelve a validar al abrirlo: una condición inventada ahí no entra
+  const forged = Buffer.from(JSON.stringify({ v: 1, t: 'x', g: 'y', s: [], c: ['constructor:x'] })).toString('base64url');
+  assert.equal(decodeExercise(forged), null);
 });

@@ -1089,6 +1089,33 @@ console.log('Varios repos a la vez');
     await lab.selectOption('.pr-ex', '3');
     await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent.includes('reset'), null, { timeout: 5000 });
   });
+  await step(lab, 'un ejercicio propio se crea, se comparte por URL y la URL lo abre y se resuelve', async () => {
+    await lab.click('.pr-make summary');
+    await lab.fill('.pr-m-title', 'Fusiona <b>ya</b>');
+    await lab.fill('.pr-m-goal', 'Trae feature a main.');
+    await lab.fill('.pr-m-setup', 'checkout -b feature\ncommit -m uno\ncheckout main\ncommit -m dos');
+    await lab.fill('.pr-m-checks', 'alert(1)');
+    await lab.click('.pr-m-go');
+    if (!(await lab.textContent('.pr-m-err')).includes('alert(1)')) throw new Error('una condición inventada no dio error');
+    await lab.fill('.pr-m-checks', 'merge-commit:main\nmerged:feature>main');
+    await lab.click('.pr-m-go');
+    await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent === 'Trae feature a main.', null, { timeout: 5000 });
+    if (await lab.locator('.pr-ex b').count()) throw new Error('el título se interpretó como HTML');
+    if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('el ejercicio propio parte resuelto');
+    await lab.click('.pr-share');
+    const url = await lab.inputValue('.pr-link');
+    if (!/[?&]practice=[\w-]+$/.test(url)) throw new Error(`enlace raro: ${url}`);
+    if (!new URL(lab.url()).searchParams.get('practice')) throw new Error('la URL de la barra no lleva el ejercicio');
+    await lab.goto(url.replace(/^https?:\/\/[^/]+/, base) + '&lang=es');
+    await lab.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'practice/git' && document.querySelector('.pr-goal')?.textContent === 'Trae feature a main.', null, { timeout: 15000 });
+    await lab.fill('.pr-input', 'merge feature');
+    await lab.press('.pr-input', 'Enter');
+    await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: 5000 });
+    // una URL con basura no rompe nada: abre la demo
+    await lab.goto(`${base}/index.html?lang=es&practice=%3Cscript%3E`);
+    await loaded(lab);
+    if (await lab.isVisible('#practice')) throw new Error('un código inválido abrió la práctica');
+  });
   await lab.context().close();
 
   const full = await openPage({ viewport: { width: 1280, height: 800 } });

@@ -1,6 +1,7 @@
 /* GraphBranch — repo de práctica para aprender git. Con la misma forma de datos que la demo, pero sin
    actividad propia: el grafo cambia solo cuando la persona escribe un comando (js/gitsim.js).
-   No consulta ninguna API ni guarda el repo; solo recuerda qué ejercicios resolvió. */
+   No consulta ninguna API ni guarda el repo; solo recuerda qué ejercicios resolvió
+   (los propios, venidos de una URL, no se guardan). */
 (function (GB) {
   'use strict';
   const { U, i18n, gitsim } = GB;
@@ -8,11 +9,12 @@
   const YOU = { name: 'You', login: 'you', avatar: null };
 
   class PracticeSource extends U.Emitter {
-    /** `index`: el ejercicio de partida (0 a EXERCISES.length - 1). */
-    constructor(index = 0) {
+    /** `index`: el ejercicio de partida (0 a EXERCISES.length - 1); `custom`: un ejercicio propio (gitsim.customExercise), que manda. */
+    constructor(index = 0, custom = null) {
       super();
-      this.index = Math.max(0, Math.min(gitsim.EXERCISES.length - 1, index | 0));
-      this.git = gitsim.start(this.index);
+      this.custom = custom;
+      this.index = custom ? -1 : Math.max(0, Math.min(gitsim.EXERCISES.length - 1, index | 0));
+      this.git = custom ? gitsim.startCustom(custom) : gitsim.start(this.index);
       this.data = {
         repo: { owner: 'practice', name: 'git', defaultBranch: 'main', url: null, demo: true, practice: true },
         mode: 'demo',
@@ -31,13 +33,13 @@
     }
 
     get exercise() {
-      return gitsim.EXERCISES[this.index];
+      return this.custom || gitsim.EXERCISES[this.index];
     }
 
     /** ¿Está resuelto el ejercicio de ahora? Una vez resuelto, se recuerda aunque la persona siga jugando. */
     check() {
       const done = this.exercise.done(this.git);
-      if (done && !this.solved.has(this.exercise.id)) {
+      if (done && !this.custom && !this.solved.has(this.exercise.id)) {
         this.solved.add(this.exercise.id);
         U.store.set('practice', [...this.solved]);
       }

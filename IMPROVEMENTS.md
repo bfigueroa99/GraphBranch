@@ -140,7 +140,7 @@ segunda columna a la primera.
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor | filtrar el grafo por autor |
-| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado) | probar con NVDA, JAWS y VoiceOver |
+| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado) | probar con NVDA, JAWS y VoiceOver |
 
 ## Hoja de ruta
 
@@ -250,9 +250,9 @@ se comprueban antes de construir sobre ellas.
 27. ~~**Replay por tramo de fechas y con rótulos propios**~~ hecho en #82 · Salidas · 2×2/1. [inv. 2026-10-13] Elegir desde y hasta qué día se graba o
     se reproduce el Replay y poner un título y un pie de foto al video, para mostrar un sprint o un lanzamiento.
     Comprobar: prueba del recorte de fechas y un paso del smoke con el tramo elegido.
-28. **Ejercicios de Aprender git compartidos por URL** · Público · 2×2/1. [parte del ítem 16] Un ejercicio propio (estado inicial y
-    meta) codificado en la URL, para que quien enseña lo comparta con su clase. Comprobar: prueba del
-    codificado y un paso del smoke que abre la URL y resuelve el ejercicio.
+28. ~~**Ejercicios de Aprender git compartidos por URL**~~ hecho en #85 · Público · 2×2/1. [parte del ítem 16] Un ejercicio propio
+    (título, meta, comandos de partida y condiciones de una lista cerrada) viaja en `?practice=<código>`; se crea en
+    «Crear un ejercicio para compartir» y se copia con «Copiar enlace del ejercicio». `?practice=1` a `4` abre los de la lista.
 29. **Filtrar el grafo por ruta de archivo** · Análisis · 2×2/2. [inv. 2026-10-13] Mostrar solo los commits que tocaron una
     carpeta o archivo (`/commits?path=`), atenuando el resto. Comprobar: prueba con la API simulada.
 30. **Los forks en el grafo** · Datos · 2×2/2. [inv. 2026-10-13] Los forks con actividad reciente como ramas remotas atenuadas
@@ -1592,3 +1592,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: solo documentación; `node --test` (230) y `node tools/loop.mjs --check` en verde.
 - **Siguiente:** iteración 56, expansión: ítem 28 (Ejercicios de Aprender git compartidos por URL, Público)
+
+### 2026-10-14 · Iteración 56 · Expansión · Público
+
+- **Capacidad nueva: ejercicios de Aprender git compartidos por URL** (ítem 28 de la hoja de ruta). La práctica de git abre con `?practice=<código>`: un ejercicio propio (título, meta, comandos de partida y condiciones de una lista cerrada) va entero en la URL, sin servidor, y se vuelve a validar al abrirlo (`cleanExercise`; nunca se evalúa como código). «Crear un ejercicio para compartir» lo arma desde la propia terminal y «Copiar enlace del ejercicio» da el enlace; `?practice=1` a `4` abre uno de la lista. Un código inválido se descarta y abre la demo. Aviso para quien toque la terminal: con más de un campo, el formulario ya no envía solo al pulsar Enter; la línea de comandos lo hace explícito.
+- **Pruebas que fallan sin la capacidad:** `tools/gitsim.test.mjs` (4 pruebas: ida y vuelta por la URL, parte sin resolver y no se resuelve con el atajo equivocado, números de la lista y basura, ejercicios mal hechos); smoke, paso «un ejercicio propio se crea, se comparte por URL y la URL lo abre y se resuelve».
+- README: la función, Límites conocidos, Seguridad y la lista de pruebas.
+- QA: filas de XSS (título y meta con `textContent`; una `<b>` en el título no se interpreta, el smoke lo mira), CSP sin cambios, teclado (la línea de comandos sigue enviando con Enter), i18n (16 textos en los 40 idiomas); sin mirar a mano: 320 px, 3D, Replay; auditoría: ver Validado.
+- Reclamo: loop/56, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 234 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde. La primera corrida del smoke falló los pasos de la práctica: con más de un campo el formulario no enviaba con Enter, y el enlace pasaba el ejercicio en vez de su especificación; los dos arreglados en esta rama.
+- **Siguiente:** iteración 57, expansión: ítem 29 (Filtrar el grafo por ruta de archivo, Análisis)

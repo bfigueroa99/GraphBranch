@@ -357,6 +357,13 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     cuadro, en dos corridas). La prueba ahora lee cada cuadro ya decodificado, en tres puntos, y pide
     dibujo en dos: si vuelve a fallar, sus tres números dicen si el video tiene un tramo vacío (el
     grabador) o si fue un cuadro suelto mal leído.
+    Medido en la iteración 55 (5 smoke con `--langs` a la vez, el equipo cargado): el paso volvió a fallar
+    una vez con `1, 1, 1 colores al 25, 50 y 75 %`, o sea un video entero del color del fondo (el lienzo
+    de `snapshot.record` queda liso hasta que `capture` arma el primer cuadro y `rec.start` corre antes).
+    No se pudo repetir a voluntad: `Emulation.setCPUThrottlingRate` a 20× no lo vuelve a producir, y a 60× y
+    200× frena también el parar la grabación (29 s, `TimeoutError`). Falta una prueba que falle: idea,
+    arrancar `rec.start` recién al dibujarse el primer cuadro y medir con una cuenta de cuadros dibujados
+    antes de `stop`.
 2. [Deuda] Smoke: en `npm run check` bajo `xvfb-run` (iteración 36, el equipo cargado por las pruebas
     anteriores) fallaron tres pasos que no tocaba el cambio: «vista 2D» (`waitForSelector` de 10 s),
     «salud del repo» («la demo tiene PRs abiertos y no salen en la lista») y «cambiar a un repo que no
@@ -1573,3 +1580,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 229 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde. La primera corrida falló un paso del smoke sin relación (cambios de un commit); la repetición pasó y quedó anotado en el pendiente 2 `[Deuda]`.
 - **Siguiente:** iteración 55, mantenimiento · Deuda: pendiente 1 (Smoke: una vez (iteración 27, corrida completa con `--langs`) el cuadro de la m…)
+
+### 2026-10-14 · Iteración 55 · Mantenimiento · Deuda
+
+- **Arreglo: medida y causa probable de la intermitente del video del Replay** (pendiente 1, sigue abierto: no se mostró el arreglo, así que no se toca el código). Cinco corridas simultáneas de `node tools/smoke.mjs --langs`: el paso «graba el Replay en video, de principio a fin» falló 1 de 5 con 1, 1, 1 colores (video liso); la causa probable queda anotada en el pendiente. Se probó una prueba con `Emulation.setCPUThrottlingRate` (20×, 60×, 200×): no falla sin el arreglo, y se descartó.
+- **Reproducción:** `for i in 1 2 3 4 5; do node tools/smoke.mjs --langs & done; wait` → `✗ graba el Replay en video, de principio a fin: el video casi no tiene dibujo: 1, 1, 1 colores al 25, 50 y 75 %`.
+- **Pruebas que fallan sin el arreglo:** ninguna todavía (ver el pendiente 1).
+- README: sin cambios.
+- QA: no toca la página; auditoría: no toca la página.
+- Reclamo: loop/55, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: solo documentación; `node --test` (230) y `node tools/loop.mjs --check` en verde.
+- **Siguiente:** iteración 56, expansión: ítem 28 (Ejercicios de Aprender git compartidos por URL, Público)

@@ -8,6 +8,7 @@
      npm start -- --repo=owner/repo    abre ese repositorio (repetido, sigue varios)
      npm start -- --local=/ruta/repo   sigue un repositorio de esta máquina, sin GitHub (repetido, varios)
      npm start -- --api-url=https://host/api/v3   los repos de GitHub salen de un GitHub Enterprise Server
+     npm start -- --gitlab-url=https://host   los proyectos de GitLab salen de un GitLab propio
      npm start -- --tv                 entra en modo TV (también --lang=es)
 
    Cerrar la ventana la esconde en la bandeja del sistema (electron/tray.js) y la app sigue
@@ -53,9 +54,11 @@ async function serve(request) {
   const file = path.join(ROOT, rel);
   if (url.host !== HOST || !PUBLIC.has(rel.split(/[/\\]/)[0]) || path.relative(ROOT, file).startsWith('..')) return notFound();
   const res = await net.fetch(pathToFileURL(file).toString());
-  // con --api-url, el host elegido por quien abre la app entra en connect-src (y solo él)
-  if (rel === 'index.html' && API_ARG) {
-    const html = (await res.text()).replace('connect-src https://api.github.com', `connect-src https://api.github.com ${API_ARG.origin}`);
+  // con --api-url o --gitlab-url, el host elegido por quien abre la app entra en connect-src (y solo él)
+  if (rel === 'index.html' && (API_ARG || GITLAB_ARG)) {
+    let html = await res.text();
+    if (API_ARG) html = html.replace('connect-src https://api.github.com', `connect-src https://api.github.com ${API_ARG.origin}`);
+    if (GITLAB_ARG) html = html.replace('https://gitlab.com https://codeberg.org https://api.bitbucket.org;', `https://gitlab.com ${GITLAB_ARG.origin} https://codeberg.org https://api.bitbucket.org;`);
     return new Response(html, { status: res.status, headers: { 'content-type': 'text/html; charset=utf-8' } });
   }
   return res;
@@ -79,18 +82,36 @@ function apiUrlArg(argv) {
 }
 const API_ARG = apiUrlArg(process.argv);
 
-/** Los argumentos --repo, --api-url, --tv y --lang pasan a la página como en la web (?repo=, ?tv=1, ?lang=).
+/** --gitlab-url=https://host: la dirección de un GitLab propio. Mismas reglas que --api-url. */
+function gitlabUrlArg(argv) {
+  for (const arg of argv) {
+    const m = /^--gitlab-url=(.+)$/.exec(arg);
+    if (!m) continue;
+    try {
+      const u = new URL(m[1]);
+      if (u.protocol === 'https:' && !u.username && !u.password) return { url: (u.origin + u.pathname).replace(/\/+$/, ''), origin: u.origin };
+    } catch {
+      /* no es una URL: se ignora */
+    }
+    console.error(`--gitlab-url=${m[1]}: tiene que ser una URL https`);
+  }
+  return null;
+}
+const GITLAB_ARG = gitlabUrlArg(process.argv);
+
+/** Los argumentos --repo, --api-url, --gitlab-url, --tv y --lang pasan a la página como en la web (?repo=, ?tv=1, ?lang=).
     --repo se puede repetir para seguir varios repos (el primero queda a la vista). */
 function startUrl(argv, locals = []) {
   const url = new URL(`${ORIGIN}/index.html`);
   for (const r of locals) url.searchParams.append('repo', `local:${r.id}/${r.name}`);
   for (const arg of argv) {
-    const m = /^--(repo|lang|api-url)=(.+)$/.exec(arg);
-    if (m && m[1] === 'api-url') continue; // va validado, abajo
+    const m = /^--(repo|lang|api-url|gitlab-url)=(.+)$/.exec(arg);
+    if (m && (m[1] === 'api-url' || m[1] === 'gitlab-url')) continue; // va validado, abajo
     if (m) url.searchParams[m[1] === 'repo' ? 'append' : 'set'](m[1], m[2]);
     else if (arg === '--tv') url.searchParams.set('tv', '1');
   }
   if (API_ARG) url.searchParams.set('api', API_ARG.url);
+  if (GITLAB_ARG) url.searchParams.set('gitlab', GITLAB_ARG.url);
   return url.toString();
 }
 

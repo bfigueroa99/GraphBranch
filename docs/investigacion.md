@@ -196,8 +196,14 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Vista de texto, segunda entrega | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 33 |
 | Una organización entera, tercera entrega | Escala | 2×2/3 | 1,3 | Red de ramas de GitHub | ítem 26 |
 | Gitea, Forgejo y Codeberg | Fuentes | 1×2/2 | 1,0 | GitLens (autolinks) | ítem 21 |
-| GitLab propio | Fuentes | 1×2/2 | 1,0 | GitKraken (plan Advanced) | ítem 25 |
+| GitLab propio | Fuentes | 1×2/2 | 1,0 | GitKraken (plan Advanced) | hecho en #80 |
 | Ramas apiladas (un PR sobre otro) | Datos | 1×2/2 | 1,0 | GitButler | ítem 32 |
+| Tokens para Codeberg y Bitbucket | Fuentes | 2×2/2 | 2,0 | Sourcetree, GitLens (autolinks) | ítem 37 |
+| Vocabulario DORA en la salud | Análisis | 2×2/2 | 2,0 | DORA | ítem 38 |
+| PRs por estado | Análisis | 2×2/2 | 2,0 | GitKraken (Launchpad) | ítem 39 |
+| Gitea y Forgejo propios | Fuentes | 1×2/2 | 1,0 | GitLens (autolinks) | ítem 36 |
+| GitLab propio, segunda entrega | Fuentes | 1×2/1 | 2,0 | (ítem 25) | ítem 35 |
+| Resaltar el tramo de cada rama comparada | Análisis | 1×2/2 | 1,0 | gitk | ítem 40 |
 
 ## Públicos
 

@@ -128,6 +128,16 @@
       return '';
     }
   })();
+  /** ?gitlab=https://gitlab.miempresa.com: los proyectos de GitLab salen de un GitLab propio en vez de gitlab.com.
+      Mismas reglas que ?api=: solo https y solo si su CSP nombra ese host. Se escriben como "gitlab:grupo/proyecto". */
+  const GITLAB_URL = (() => {
+    try {
+      const v = new URLSearchParams(location.search).get('gitlab') || '';
+      return GB.GitLabSource.endpoints(v) ? v : '';
+    } catch {
+      return '';
+    }
+  })();
   const EMBED = document.documentElement.classList.contains('embed'); // ?embed=1, ver i18n.js
   const settings = {
     token: desktop ? '' : U.store.get('token', ''),
@@ -331,7 +341,7 @@
     if (host === 'local') return new GB.LocalGitSource({ id: owner, name, ...remembered });
     if (host === 'bitbucket') return new GB.BitbucketSource({ owner, name, ...remembered });
     if (host === 'codeberg') return new GB.CodebergSource({ owner, name, ...remembered });
-    if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, ...remembered });
+    if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, webUrl: GITLAB_URL, ...remembered });
     return new GB.GitHubSource({ owner, name, token: settings.token, apiUrl: API_URL, ...remembered });
   }
 

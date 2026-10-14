@@ -16,6 +16,8 @@
      como el feed de GitHub: su historial al abrir y lo nuevo cada EVENTS_MS. Los pushes, las ramas y
      las MRs abiertas, fusionadas o cerradas ya los da la comparación entre ciclos: no se repiten.
    - Las merge requests se muestran como en GitLab: MR !12.
+   - Un GitLab propio (`webUrl`, de `?gitlab=` o `--gitlab-url=`) cambia solo la dirección: el token
+     va a ese host y a ningún otro.
    - Sin token: gitlab.com permite cientos de consultas por minuto desde cada IP, así que el sondeo
      va cada POLL_MS. Con el token de GitLab de Ajustes (permiso read_api) se ven también los
      proyectos privados: va en cada consulta, y solo a gitlab.com. Un proyecto privado sin token
@@ -26,7 +28,19 @@
   const M = i18n.msg;
   const { ApiError } = GB.GitHubSource;
   const WEB = 'https://gitlab.com';
-  const API = WEB + '/api/v4';
+  /** Las direcciones de un GitLab: el público o uno propio (`https://gitlab.miempresa.com`, también con una
+      ruta si cuelga de una: `https://host/gitlab`). null si no es una URL https o lleva usuario. */
+  const endpoints = (webUrl) => {
+    if (!webUrl) return { web: WEB, api: WEB + '/api/v4' };
+    try {
+      const u = new URL(String(webUrl));
+      if (u.protocol !== 'https:' || u.username || u.password) return null;
+      const web = (u.origin + u.pathname).replace(/\/+$/, '');
+      return { web, api: web + '/api/v4' };
+    } catch {
+      return null;
+    }
+  };
   const POLL_MS = 15000; // entre ciclos
   const PULLS_MS = 30000; // entre consultas de MRs
   const EVENTS_MS = 60000; // entre consultas del feed de eventos
@@ -55,14 +69,15 @@
   class GitLabSource extends GB.GitHubSource {
     /** `path`: grupo(s) y proyecto, como en su URL (`gitlab-org/gitlab-runner`, `grupo/sub/proyecto`).
         `token`: el de GitLab. No va en `this.token`, que es el de GitHub y decide cosas de GitHub. */
-    constructor({ path, token = '', depth = 40, filter = '', pins = [] }) {
+    constructor({ path, token = '', depth = 40, filter = '', pins = [], webUrl = '' }) {
       const cut = path.lastIndexOf('/');
       super({ owner: path.slice(0, cut), name: path.slice(cut + 1), token: '', depth, filter, pins });
       this.host = 'gitlab';
+      this.ep = endpoints(webUrl) || endpoints(''); // una dirección que no sea https no se usa: queda gitlab.com
       this.path = path;
       this.gitlabToken = token;
       this.mode = 'list';
-      this.data.repo.url = `${WEB}/${segs(path)}`;
+      this.data.repo.url = `${this.ep.web}/${segs(path)}`;
       this.data.repo.host = 'gitlab';
       this.fullAt = 0; // último listado entero de ramas
       this.paged = false; // tiene más de 100 ramas
@@ -94,7 +109,7 @@
       if (this.gitlabToken) headers.Authorization = `Bearer ${this.gitlabToken}`;
       const cached = cacheKey ? this.etags.get(cacheKey) : null;
       if (cached) headers['If-None-Match'] = cached.etag;
-      const { res, body } = await this.request(API + path, { headers, cache: 'no-store' });
+      const { res, body } = await this.request(this.ep.api + path, { headers, cache: 'no-store' });
       this.cost++;
       if (res.status === 304 && cached) return { data: cached.data, fresh: false, headers: res.headers };
       if (allow.includes(res.status)) return { data: null, fresh: true, status: res.status, headers: res.headers };
@@ -173,7 +188,7 @@
         owner: path.slice(0, cut),
         name: path.slice(cut + 1),
         defaultBranch: p.default_branch || null,
-        url: p.web_url || `${WEB}/${segs(path)}`,
+        url: p.web_url || `${this.ep.web}/${segs(path)}`,
         private: !!p.visibility && p.visibility !== 'public',
         description: p.description || '',
       });
@@ -327,10 +342,11 @@
 
     /* ---------- merge requests ---------- */
 
-    /** Una persona de GitLab; su avatar solo si está en gitlab.com (los de Gravatar los bloquea el CSP). */
+    /** Una persona de GitLab; su avatar solo si está en gitlab.com (los de Gravatar los bloquea el CSP; un GitLab propio no
+        tiene su host en img-src, así que ahí no hay avatares). */
     person(u) {
       if (!u) return null;
-      const avatar = /^https:\/\/gitlab\.com\//.test(u.avatar_url || '') ? u.avatar_url : null;
+      const avatar = this.ep.web === WEB && /^https:\/\/gitlab\.com\//.test(u.avatar_url || '') ? u.avatar_url : null;
       return { login: u.username, name: u.name || u.username, avatar };
     }
 
@@ -457,7 +473,7 @@
           const res = await this.api(url);
           for (const e of res.data || []) if (e.type === 'blob') files.push({ path: e.path, size: null, url: this.link('blob', sha, e.path) });
           const next = (res.headers?.get('Link') || '').match(/<([^>]+)>;\s*rel="next"/);
-          url = next ? next[1].replace(API, '') : null;
+          url = next ? next[1].replace(this.ep.api, '') : null;
         }
         return { kind: 'tree', files, truncated: !!url };
       }
@@ -514,5 +530,6 @@
     }
   }
 
+  GitLabSource.endpoints = endpoints;
   GB.GitLabSource = GitLabSource;
 })(window.GB);

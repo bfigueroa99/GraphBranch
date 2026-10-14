@@ -130,6 +130,24 @@ test('sin red, un proyecto de GitLab avisa que no llega a gitlab.com', async ({}
   await app.close();
 });
 
+test('--gitlab-url suma solo ese host al CSP y la página lo recibe; sin https se ignora', async ({}, testInfo) => {
+  const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
+  let { app, page } = await launch(testInfo, { args: ['--lang=es', '--gitlab-url=https://git.example.com'] });
+  try {
+    expect(await csp(page)).toContain('https://gitlab.com https://git.example.com https://codeberg.org https://api.bitbucket.org;');
+    expect(page.url()).toContain('gitlab=' + encodeURIComponent('https://git.example.com'));
+  } finally {
+    await app.close();
+  }
+  ({ app, page } = await launch(testInfo, { args: ['--lang=es', '--gitlab-url=http://git.example.com'] }));
+  try {
+    expect(await csp(page)).not.toContain('git.example.com');
+    expect(page.url()).not.toContain('gitlab=');
+  } finally {
+    await app.close();
+  }
+});
+
 test('--api-url suma solo ese host al CSP y los repos de GitHub salen de él; sin https se ignora', async ({}, testInfo) => {
   const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
   let { app, page } = await launch(testInfo, { args: ['--lang=es', '--repo=o/r', '--api-url=https://ghe.example.com/api/v3'] });

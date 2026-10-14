@@ -277,6 +277,7 @@ GB.i18n.define('he', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} → <code>{base}</code> (טיוטה)',
   'tip.viewPr': 'הצג PR',
+  'tip.stacked': 'מוערם על PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'הצג MR',
   'tip.mergeOf': {
     one: 'merge של commit הורה אחד',

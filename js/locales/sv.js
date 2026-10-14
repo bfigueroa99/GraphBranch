@@ -241,6 +241,7 @@ GB.i18n.define('sv', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (utkast) → <code>{base}</code>',
   'tip.viewPr': 'visa PR',
+  'tip.stacked': 'Staplad på PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'visa MR',
   'tip.mergeOf': { one: 'merge av {n} förälder', other: 'merge av {n} föräldrar' },
   'tip.openCommit': 'Öppna commit på GitHub',

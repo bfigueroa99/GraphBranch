@@ -241,6 +241,7 @@ GB.i18n.define('bn', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (খসড়া) → <code>{base}</code>',
   'tip.viewPr': 'PR দেখুন',
+  'tip.stacked': 'PR #{num} (<code>{parent}</code>)-এর উপর স্ট্যাক করা',
   'tip.viewMr': 'MR দেখুন',
   'tip.mergeOf': { one: '{n}টি প্যারেন্টের মার্জ', other: '{n}টি প্যারেন্টের মার্জ' },
   'tip.openCommit': 'GitHub-এ কমিট খুলুন',

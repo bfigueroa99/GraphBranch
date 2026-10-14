@@ -241,6 +241,7 @@ GB.i18n.define('ko', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (초안) → <code>{base}</code>',
   'tip.viewPr': 'PR 보기',
+  'tip.stacked': 'PR #{num}(<code>{parent}</code>) 위에 쌓임',
   'tip.viewMr': 'MR 보기',
   'tip.mergeOf': '부모 {n}개의 머지',
   'tip.openCommit': 'GitHub에서 커밋 열기',

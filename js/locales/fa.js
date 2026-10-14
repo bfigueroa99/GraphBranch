@@ -268,6 +268,7 @@ GB.i18n.define('fa', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} → <code>{base}</code> (پیش‌نویس)',
   'tip.viewPr': 'مشاهده PR',
+  'tip.stacked': 'روی PR #{num} (<code>{parent}</code>) انباشته شده',
   'tip.viewMr': 'مشاهده MR',
   'tip.mergeOf': {
     one: 'merge از یک والد',

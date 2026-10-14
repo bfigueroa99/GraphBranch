@@ -246,6 +246,7 @@ GB.i18n.define('sk', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (koncept) → <code>{base}</code>',
   'tip.viewPr': 'zobraziť PR',
+  'tip.stacked': 'Nadväzuje na PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'zobraziť MR',
   'tip.mergeOf': { one: 'zlúčenie {n} rodiča', few: 'zlúčenie {n} rodičov', many: 'zlúčenie {n} rodiča', other: 'zlúčenie {n} rodičov' },
   'tip.openCommit': 'Otvoriť commit na GitHube',

@@ -787,6 +787,7 @@
     initial,
     calm,
     prs: prsByBranch(data),
+    stacks: GB.Layout.stackedPulls(data.pulls, new Set(data.branches.keys()), data.repo.defaultBranch),
     ci: data.ci,
     refs: refsBySha(data),
     pins: data.repo.demo ? new Set() : getPins(),

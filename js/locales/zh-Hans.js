@@ -241,6 +241,7 @@ GB.i18n.define('zh-Hans', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num}（草稿）→ <code>{base}</code>',
   'tip.viewPr': '查看 PR',
+  'tip.stacked': '堆叠在 PR #{num}（<code>{parent}</code>）之上',
   'tip.viewMr': '查看 MR',
   'tip.mergeOf': '合并了 {n} 个父提交',
   'tip.openCommit': '在 GitHub 上打开提交',

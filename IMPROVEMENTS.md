@@ -135,7 +135,7 @@ segunda columna a la primera.
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
 | Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (repos públicos, API de Forgejo), bitbucket.org (repos públicos, API 2.0 de Bitbucket Cloud), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), repos locales (app de escritorio, con `git`), demo | otros servidores de Gitea/Forgejo, Codeberg y Bitbucket con token |
-| Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, en el panel de salud), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
+| Datos | ramas, commits, PRs (y las pilas de PRs apilados), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, en el panel de salud), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
@@ -261,7 +261,7 @@ se comprueban antes de construir sobre ellas.
 31. ~~**Ensayar un comando sobre el repo real**~~ hecho en #89 · Público · 2×3/3. [inv. 2026-10-13] «Ensayar un comando» (con un repo real a la vista)
     abre la terminal de práctica sobre una copia en memoria de sus ramas y commits ya cargados: un `merge` o `rebase` se
     ve en el grafo sin tocar el repo ni gastar consultas. Solo ve lo ya cargado; sin conflictos.
-32. **Ramas apiladas** · Datos · 1×2/2. [inv. 2026-10-13] Un PR cuya base es la rama de otro PR se dibuja encadenado a él, con el
+32. ~~**Ramas apiladas**~~ hecho en #90 · Datos · 1×2/2. [inv. 2026-10-13] Un PR cuya base es la rama de otro PR se dibuja encadenado a él, con el
     orden de la pila. Comprobar: prueba del layout con PRs apilados.
 33. **Vista de texto, segunda entrega** · Público · 1×2/2. [parte del ítem 18] Que el árbol avise con una región viva
     (sin anunciar de más) de las ramas y commits nuevos mientras está abierto, que filtre por nombre de rama y que
@@ -1654,3 +1654,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 240 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde.
 - **Siguiente:** iteración 61, expansión: ítem 32 (Ramas apiladas, Datos)
+
+### 2026-10-14 · Iteración 61 · Expansión · Datos
+
+- **Capacidad nueva: ramas apiladas** (ítem 32 de la hoja de ruta). `Layout.stackedPulls` detecta los PRs abiertos del mismo repo cuya base es la rama de otro PR (los ciclos no apilan) y `compute` ordena los carriles para que cada rama quede justo debajo de la de su base, en el orden de la pila (`L.stacks`). El detalle de la rama dice «Apilada sobre el PR #N» (`tip.stacked`, 40 idiomas) y la demo trae una pila (`feature/dark-mode` sobre `feature/login`).
+- **Pruebas que fallan sin la capacidad:** `tools/layout.test.mjs` (4: sin pila, pila de tres contigua y en orden, ciclo de bases, base sin PR propio); sin `stackedPulls` fallan las 4.
+- README: la función en la lista y Límites conocidos (solo orden y detalle, sin línea entre ramas). Mapa de alcance: fila Datos.
+- QA: fila de XSS (el nombre de la rama entra por `i18n.html` escapado), cuota (0 consultas nuevas: usa los PRs ya cargados) y i18n (1 texto en los 40 idiomas); sin mirar a mano: 320 px, 3D, Replay; auditoría: ver Validado.
+- Reclamo: loop/61, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 244 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde.
+- **Siguiente:** iteración 62, expansión: ítem 33 (Vista de texto, segunda entrega, Público)

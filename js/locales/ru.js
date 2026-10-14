@@ -246,6 +246,7 @@ GB.i18n.define('ru', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (черновик) → <code>{base}</code>',
   'tip.viewPr': 'смотреть PR',
+  'tip.stacked': 'Поверх PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'смотреть MR',
   'tip.mergeOf': {
     one: 'слияние: {n} родительский коммит',

@@ -268,6 +268,7 @@ GB.i18n.define('ur', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} → <code>{base}</code> (مسودہ)',
   'tip.viewPr': 'PR دیکھیں',
+  'tip.stacked': 'PR #{num} (<code>{parent}</code>) کے اوپر اسٹیک کیا گیا',
   'tip.viewMr': 'MR دیکھیں',
   'tip.mergeOf': {
     one: '{n} پیرنٹ کا merge',

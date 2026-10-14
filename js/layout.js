@@ -30,6 +30,49 @@
     return (lo, x) => find(1, 0, size - 1, lo, x);
   }
 
+  /** Rama de cada PR del mismo repo -> { parent, depth, num, parentNum } si su base es la rama de otro PR.
+   *  Los ciclos (A sobre B sobre A) no apilan nada. */
+  function stackedPulls(pulls, names, def) {
+    const byHead = new Map();
+    for (const p of pulls?.values?.() || []) if (p.sameRepo && names.has(p.head) && !byHead.has(p.head)) byHead.set(p.head, p);
+    const out = new Map();
+    const upOf = (name) => {
+      const pr = byHead.get(name);
+      return pr && pr.base !== def && pr.base !== name && byHead.has(pr.base) ? pr.base : null;
+    };
+    for (const [name, pr] of byHead) {
+      const seen = new Set([name]);
+      let depth = 0;
+      for (let at = upOf(name); at; at = upOf(at)) {
+        if (seen.has(at)) { depth = 0; break; } // ciclo: no apila
+        seen.add(at);
+        depth++;
+      }
+      if (depth) out.set(name, { parent: pr.base, depth, num: pr.number, parentNum: byHead.get(pr.base).number });
+    }
+    return out;
+  }
+
+  /** Reordena `list` (ramas) para que cada rama apilada quede tras su padre; los ciclos se dejan donde estaban. */
+  function stackOrder(list, stacks) {
+    const kids = new Map();
+    for (const b of list) {
+      const s = stacks.get(b.name);
+      if (s) (kids.get(s.parent) || kids.set(s.parent, []).get(s.parent)).push(b);
+    }
+    const out = [];
+    const done = new Set();
+    const visit = (b) => {
+      if (done.has(b.name)) return;
+      done.add(b.name);
+      out.push(b);
+      for (const k of kids.get(b.name) || []) visit(k);
+    };
+    for (const b of list) if (!stacks.has(b.name)) visit(b);
+    for (const b of list) visit(b); // lo que quedó en un ciclo
+    return out;
+  }
+
   class Layout {
     constructor() {
       this.reset();
@@ -130,7 +173,11 @@
             (prevSlot.get(a.name) ?? 1e9) - (prevSlot.get(b.name) ?? 1e9) ||
             (a.name < b.name ? -1 : 1),
         );
-      this.slotOf = new Map(byActivity.map((b, i) => [b.name, i + 1]));
+      /* PRs apilados: la rama de un PR cuya base es la rama de otro PR va justo debajo de esa rama,
+         en el orden de la pila; el resto conserva su orden */
+      const stacks = stackedPulls(data.pulls, new Set(heads.map((b) => b.name)), def);
+      const slotted = stacks.size ? stackOrder(byActivity, stacks) : byActivity;
+      this.slotOf = new Map(slotted.map((b, i) => [b.name, i + 1]));
       if (live.has(def)) this.slotOf.set(def, 0);
 
       /* ramas muertas: ya fusionadas en la rama por defecto pero que nadie borró. No cuentan las
@@ -319,9 +366,10 @@
         prev = k;
       }
 
-      return { nodes, nodeOf, edges, heads: headList, ghostLabels, rows, days, maxX: Math.max(0, order.length - 1) };
+      return { nodes, nodeOf, edges, stacks, heads: headList, ghostLabels, rows, days, maxX: Math.max(0, order.length - 1) };
     }
   }
 
+  Layout.stackedPulls = stackedPulls;
   GB.Layout = Layout;
 })(window.GB);

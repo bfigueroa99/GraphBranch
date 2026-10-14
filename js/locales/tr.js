@@ -241,6 +241,7 @@ GB.i18n.define('tr', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (taslak) → <code>{base}</code>',
   'tip.viewPr': 'PR sayfası',
+  'tip.stacked': 'PR #{num} (<code>{parent}</code>) üzerine yığılmış',
   'tip.viewMr': 'MR sayfası',
   'tip.mergeOf': { one: '{n} ebeveynli birleştirme', other: '{n} ebeveynli birleştirme' },
   'tip.openCommit': 'Commit’i GitHub’da aç',

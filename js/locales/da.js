@@ -241,6 +241,7 @@ GB.i18n.define('da', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (kladde) → <code>{base}</code>',
   'tip.viewPr': 'se PR',
+  'tip.stacked': 'Stablet oven på PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'se MR',
   'tip.mergeOf': { one: 'merge af {n} forælder', other: 'merge af {n} forældre' },
   'tip.openCommit': 'Åbn commit på GitHub',

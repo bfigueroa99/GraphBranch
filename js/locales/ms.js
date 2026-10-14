@@ -241,6 +241,7 @@ GB.i18n.define('ms', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (draf) → <code>{base}</code>',
   'tip.viewPr': 'lihat PR',
+  'tip.stacked': 'Disusun di atas PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'lihat MR',
   'tip.mergeOf': 'merge bagi {n} parent',
   'tip.openCommit': 'Buka commit di GitHub',

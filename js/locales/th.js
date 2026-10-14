@@ -241,6 +241,7 @@ GB.i18n.define('th', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (draft) → <code>{base}</code>',
   'tip.viewPr': 'ดู PR',
+  'tip.stacked': 'ซ้อนอยู่บน PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'ดู MR',
   'tip.mergeOf': 'merge จาก parent {n} รายการ',
   'tip.openCommit': 'เปิด commit บน GitHub',

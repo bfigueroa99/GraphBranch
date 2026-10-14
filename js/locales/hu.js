@@ -241,6 +241,7 @@ GB.i18n.define('hu', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (piszkozat) → <code>{base}</code>',
   'tip.viewPr': 'PR megtekintése',
+  'tip.stacked': 'A(z) #{num} PR-re épül (<code>{parent}</code>)',
   'tip.viewMr': 'MR megtekintése',
   'tip.mergeOf': { one: 'merge, {n} szülővel', other: 'merge, {n} szülővel' },
   'tip.openCommit': 'Commit megnyitása a GitHubon',

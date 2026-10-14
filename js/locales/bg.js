@@ -241,6 +241,7 @@ GB.i18n.define('bg', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (чернова) → <code>{base}</code>',
   'tip.viewPr': 'вижте PR',
+  'tip.stacked': 'Надграден върху PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'вижте MR',
   'tip.mergeOf': { one: 'сливане на {n} родител', other: 'сливане на {n} родителя' },
   'tip.openCommit': 'Отваряне на комита в GitHub',

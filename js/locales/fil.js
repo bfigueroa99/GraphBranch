@@ -241,6 +241,7 @@ GB.i18n.define('fil', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (draft) → <code>{base}</code>',
   'tip.viewPr': 'tingnan ang PR',
+  'tip.stacked': 'Nakapatong sa PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'tingnan ang MR',
   'tip.mergeOf': { one: 'merge ng {n} parent', other: 'merge ng {n} parent' },
   'tip.openCommit': 'Buksan ang commit sa GitHub',

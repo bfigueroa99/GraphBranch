@@ -441,6 +441,7 @@ GB.i18n.define('da', {
   /* ---------- salud del repo ---------- */
   'health.title': 'Repoets sundhed',
   'health.help': 'Beregnes kun ud fra det, der allerede er indlæst, uden ekstra forespørgsler. Det beskriver repositoriet, aldrig personer.',
+  'health.forks': 'Forks med nylig aktivitet, seneste push først',
   'health.stale': 'Grene uden aktivitet i over 30 dage og uden pull request',
   'health.prs': 'Åbne pull requests, ældste først',
   'health.merged': 'Tid fra åbnet til flettet (seneste pull requests)',

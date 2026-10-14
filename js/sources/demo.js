@@ -54,6 +54,7 @@
         ci: new Map(), // rama -> 'success' | 'failure' | 'pending'
         tags: new Map(), // commit -> [tag]
         deploys: new Map(), // entorno -> { sha }
+        forks: [],
         totalBranches: 0,
         loaded: false,
       };
@@ -201,6 +202,10 @@
       this.data.tags.set(first.sha, ['v1.0.0']);
       this.data.tags.set(rel.sha, ['v1.4.0']);
       this.data.deploys.set('production', { sha: rel.sha });
+      this.data.forks = [
+        { fullName: 'maya-dev/orbita', url: 'https://github.com/maya-dev/orbita', pushedAt: Date.now() - 6 * 36e5, stars: 4 },
+        { fullName: 'lucas-r/orbita', url: 'https://github.com/lucas-r/orbita', pushedAt: Date.now() - 9 * 864e5, stars: 0 },
+      ];
       H.push(this.act('release', { title: MSG('act.release', { tag: 'v1.4.0' }), detail: S.releaseNotes, actor: this.actor(V) }, t + 60e3));
       push('feature/login', J, S.loginA11y);
       push('feature/dark-mode', T, S.darkToggle);

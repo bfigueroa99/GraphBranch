@@ -442,6 +442,7 @@ GB.i18n.define('pt', {
   /* ---------- salud del repo ---------- */
   'health.title': 'Saúde do repo',
   'health.help': 'Calculada apenas com o que já está carregado, sem novas consultas. Descreve o repositório, nunca as pessoas.',
+  'health.forks': 'Forks com atividade recente, o push mais novo primeiro',
   'health.stale': 'Branches sem atividade há mais de 30 dias e sem pull request',
   'health.prs': 'Pull requests abertos, os mais antigos primeiro',
   'health.merged': 'Tempo de aberto a mesclado (últimos pull requests)',

@@ -1178,7 +1178,11 @@
     const h = GB.health.compute(data, acts);
     const span = (ms) => GB.i18n.fmtSpan(ms);
     const stat = (label, n) => `<div class="hl-stat"><b>${U.fmtNum(n)}</b><span>${U.esc(label)}</span></div>`;
+    const forkRows = h.forks.rows
+      .map((r) => `<li><a class="hl-row" href="${U.esc(r.url)}" target="_blank" rel="noopener noreferrer"><span class="hl-main">${U.esc(r.fullName)}</span><span class="hl-aside">${U.esc(span(r.idle))}</span></a></li>`)
+      .join('');
     el.healthBody.innerHTML =
+      `<section class="hl-sec" id="hl-forks"><h3>${U.esc(t('health.forks'))} <span class="hl-n">${U.fmtNum(h.forks.total)}</span></h3>${forkRows ? `<ul class="hl-list">${forkRows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`}</section>` +
       healthList('stale', t('health.stale'), h.stale, (r) => [r.name, span(r.idle)]) +
       healthList('prs', t('health.prs'), h.prs, (r) => [`#${r.number} ${r.title}`, span(r.age)]) +
       `<section class="hl-sec"><h3>${U.esc(t('health.merged'))}</h3>${
@@ -1355,6 +1359,8 @@
   }
   el.healthBtn.addEventListener('click', () => {
     renderHealth();
+    const asked = source;
+    if (asked.syncForks) asked.syncForks().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
     if (typeof el.health.showModal === 'function') el.health.showModal();
     else el.health.setAttribute('open', '');
   });

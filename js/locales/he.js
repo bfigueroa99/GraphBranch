@@ -498,6 +498,7 @@ GB.i18n.define('he', {
   /* ---------- salud del repo ---------- */
   'health.title': 'בריאות המאגר',
   'health.help': 'מחושב רק ממה שכבר נטען, בלי בקשות נוספות. מתאר את המאגר, לעולם לא אנשים.',
+  'health.forks': 'פורקים עם פעילות לאחרונה, ה-push החדש ביותר ראשון',
   'health.stale': 'ענפים בלי פעילות מעל 30 יום ובלי pull request',
   'health.prs': 'pull requests פתוחים, הישנים קודם',
   'health.merged': 'זמן מפתיחה עד מיזוג (ה-pull requests האחרונים)',

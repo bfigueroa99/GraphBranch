@@ -46,7 +46,10 @@
     const within = (list, days) => list.filter((a) => now - a.time <= days * DAY && a.time <= now).length;
     const releases = acts.filter((a) => a.kind === 'release' && a.time && !seen.has(a.id) && seen.add(a.id));
 
+    const forks = (data.forks || []).filter((f) => f.pushedAt && f.url).map((f) => ({ fullName: f.fullName, url: f.url, idle: Math.max(0, now - at(f.pushedAt)) }));
+
     return {
+      forks: { total: forks.length, rows: forks.slice(0, ROWS) },
       stale: { total: stale.length, rows: stale.slice(0, ROWS) },
       prs: { total: prs.length, rows: prs.slice(0, ROWS) },
       merged: spans.length ? { n: spans.length, median: median(spans), max: Math.max(...spans) } : null,

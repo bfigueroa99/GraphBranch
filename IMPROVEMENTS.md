@@ -135,7 +135,7 @@ segunda columna a la primera.
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
 | Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (repos públicos, API de Forgejo), bitbucket.org (repos públicos, API 2.0 de Bitbucket Cloud), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), repos locales (app de escritorio, con `git`), demo | otros servidores de Gitea/Forgejo, Codeberg y Bitbucket con token |
-| Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
+| Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, en el panel de salud), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
@@ -256,8 +256,8 @@ se comprueban antes de construir sobre ellas.
 29. ~~**Filtrar el grafo por ruta de archivo**~~ hecho en #86 · Análisis · 2×2/2. [inv. 2026-10-13] En el cuadro de búsqueda, «Filtrar grafo» con un
     archivo o carpeta (`/commits?path=` por cabeza, 5 como mucho) deja a plena luz los commits que la tocaron y atenúa el resto
     en el grafo 2D; «Quitar filtro» lo deshace. Solo GitHub y la demo (donde la ruta se compara con el mensaje).
-30. **Los forks en el grafo** · Datos · 2×2/2. [inv. 2026-10-13] Los forks con actividad reciente como ramas remotas atenuadas
-    (`/forks`, ordenados por último push). Comprobar: prueba con la API simulada y cuota.
+30. ~~**Los forks en el grafo**~~ hecho en #87 · Datos · 2×2/2. [inv. 2026-10-13] Los forks con actividad reciente (`/forks`, push
+    propio en 90 días, el más nuevo primero) en el panel de salud; dibujarlos como ramas atenuadas queda por hacer.
 31. **Ensayar un comando sobre el repo real** · Público · 2×3/3. [inv. 2026-10-13] Escribir un `merge` o `rebase` en la terminal de
     práctica sobre las ramas del repo abierto y ver el resultado en el grafo sin tocar nada. Comprobar: prueba
     del intérprete con un repo cargado desde datos reales simulados.
@@ -1622,3 +1622,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 235 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde.
 - **Siguiente:** iteración 58, expansión: ítem 30 (Los forks en el grafo, Datos)
+
+### 2026-10-14 · Iteración 58 · Expansión · Datos
+
+- **Capacidad nueva: los forks activos** (ítem 30 de la hoja de ruta). `GitHubSource.syncForks` pide `/forks` solo al abrir el panel de salud (una consulta, no más de una cada 15 minutos; la auditoría de cuota la dejó fuera de la carga) y `data.forks` guarda los de push propio en los últimos 90 días (hasta 30, el más nuevo primero; sin archivados ni URL que no sea https). El panel de salud abre con la lista (`health.compute` → `forks`), cada fila un enlace al fork con `rel="noopener noreferrer"`; la demo trae 2. Primera entrega: el dibujo de los forks como ramas atenuadas en el grafo queda fuera (pediría la historia de cada fork), dicho en el README y en la hoja.
+- **Pruebas que fallan sin la capacidad:** `tools/github.test.mjs` (2: filtro de actividad, orden, archivados y URL mala, una consulta por 15 minutos; sin la API); `tools/health.test.mjs` (forks y su tiempo); smoke, paso «salud del repo» (2 forks con enlace https).
+- README: la función, Límites conocidos y Seguridad.
+- QA: filas de XSS (nombre y URL escapados, solo https), cuota (0 al cargar; 1 al abrir el panel, cada 15 min como mucho), i18n (1 texto en los 40 idiomas); sin mirar a mano: 320 px, 3D, Replay; auditoría: ver Validado.
+- Reclamo: loop/58, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 238 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde. La primera corrida de la puerta falló: el smoke y la auditoría contaron la consulta `/forks` de más al cargar; pasó a pedirse solo al abrir el panel.
+- **Siguiente:** iteración 59, mantenimiento · Seguridad: pendiente 9 (`parseRepo` acepta `..` como owner o nombre de un repo de GitHub (`util.js:39`;…)

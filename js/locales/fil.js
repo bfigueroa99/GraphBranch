@@ -442,6 +442,7 @@ GB.i18n.define('fil', {
   /* ---------- salud del repo ---------- */
   'health.title': 'Kalusugan ng repo',
   'health.help': 'Kinukuwenta lang mula sa mga na-load na, nang walang dagdag na request. Inilalarawan nito ang repository, hindi ang mga tao.',
+  'health.forks': 'Mga fork na may kamakailang aktibidad, pinakabagong push muna',
   'health.stale': 'Mga branch na walang aktibidad nang mahigit 30 araw at walang pull request',
   'health.prs': 'Mga bukas na pull request, pinakaluma muna',
   'health.merged': 'Oras mula nabuksan hanggang na-merge (mga huling pull request)',

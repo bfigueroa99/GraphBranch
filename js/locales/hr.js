@@ -449,6 +449,7 @@ GB.i18n.define('hr', {
   /* ---------- salud del repo ---------- */
   'health.title': 'Zdravlje repozitorija',
   'health.help': 'Izračunava se samo iz već učitanog, bez dodatnih upita. Opisuje repozitorij, nikad ljude.',
+  'health.forks': 'Forkovi s nedavnom aktivnošću, najnoviji push prvi',
   'health.stale': 'Grane bez aktivnosti dulje od 30 dana i bez pull requesta',
   'health.prs': 'Otvoreni pull requestovi, najstariji prvi',
   'health.merged': 'Vrijeme od otvaranja do spajanja (posljednji pull requestovi)',

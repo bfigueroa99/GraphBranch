@@ -4648,11 +4648,17 @@ kbd {
   text-align: start;
   align-items: center;
 }
-button.hl-row {
+a.hl-row {
+  text-decoration: none;
+}
+button.hl-row,
+a.hl-row {
   cursor: pointer;
 }
 button.hl-row:hover,
-button.hl-row:focus-visible {
+button.hl-row:focus-visible,
+a.hl-row:hover,
+a.hl-row:focus-visible {
   background: var(--surface-2);
 }
 .hl-main {

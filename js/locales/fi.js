@@ -441,6 +441,7 @@ GB.i18n.define('fi', {
   /* ---------- salud del repo ---------- */
   'health.title': 'Repon terveys',
   'health.help': 'Lasketaan vain jo ladatusta tiedosta, ilman lisäkyselyjä. Kuvaa repositoriota, ei koskaan ihmisiä.',
+  'health.forks': 'Forkit, joissa on ollut toimintaa äskettäin, uusin push ensin',
   'health.stale': 'Haarat, joissa ei ole ollut toimintaa yli 30 päivään ja joilla ei ole pull requestia',
   'health.prs': 'Avoimet pull requestit, vanhimmat ensin',
   'health.merged': 'Aika avaamisesta yhdistämiseen (viimeisimmät pull requestit)',

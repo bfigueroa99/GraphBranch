@@ -55,6 +55,7 @@ function fakeGitHub() {
     pulls: [], // PRs como los da la API (los más recién actualizados, primero en la lista)
     override: null, // (ruta) => { status, body } para responder otra cosa, o nada para seguir normal
     tags: null, // [{ name, commit: { sha } }] (si es null, /tags da 404)
+    forks: null, // forks como los da /forks (si es null, 404)
     deployments: null, // despliegues como los da la API, el más nuevo primero (si es null, 404)
     checks: null, // sha -> check-runs del commit (si es null, la API de checks no existe)
     calls: [],
@@ -120,6 +121,7 @@ function fakeGitHub() {
       return { body: list };
     }
     if (p === '/repos/o/r/tags') return gh.tags ? { body: gh.tags } : { status: 404, body: { message: 'Not Found' } };
+    if (p === '/repos/o/r/forks') return gh.forks ? { body: gh.forks } : { status: 404, body: { message: 'Not Found' } };
     if (p === '/repos/o/r/deployments') return gh.deployments ? { body: gh.deployments } : { status: 404, body: { message: 'Not Found' } };
     const runs = p.match(/^\/repos\/o\/r\/commits\/([^/]+)\/check-runs$/);
     if (runs) return gh.checks ? { body: { total_count: 0, check_runs: gh.checks.get(runs[1]) || [] } } : { status: 404, body: { message: 'Not Found' } };
@@ -703,4 +705,41 @@ test('commitsByPath: pide /commits?path= por cabeza y devuelve solo los commits 
   gh.calls.length = 0;
   assert.equal((await src.commitsByPath('  ')).size, 0);
   assert.equal(gh.calls.length, 0, 'una ruta vacía no gasta cuota');
+});
+
+/* Forks activos: /forks, solo los que hicieron push propio en los últimos 90 días. */
+
+test('forks: solo los activos, el push más nuevo primero, y una consulta cada 15 minutos, solo al pedirlos', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const ago = (d) => new Date(Date.now() - d * 864e5).toISOString();
+  const fk = (name, created, pushed, extra = {}) => ({ full_name: name, html_url: `https://github.com/${name}`, created_at: ago(created), pushed_at: ago(pushed), stargazers_count: 1, ...extra });
+  gh.forks = [
+    fk('a/viejo', 200, 150), // sin actividad en 90 días
+    fk('b/reciente', 40, 2),
+    fk('c/sin-push', 5, 5), // nunca hizo push propio
+    fk('d/nuevo', 30, 0.1),
+    fk('e/archivado', 30, 1, { archived: true }),
+    fk('f/malo', 30, 1, { html_url: 'javascript:alert(1)' }),
+  ];
+  const { src, errors } = connect(gh);
+  await src.cycle();
+  assert.equal(gh.calls.filter((c) => c.startsWith('/repos/o/r/forks')).length, 0, 'sin abrir el panel no se consulta');
+  await src.syncForks();
+  assert.equal(errors.length, 0);
+  assert.deepEqual(Array.from(src.data.forks, (f) => f.fullName), ['d/nuevo', 'b/reciente']);
+  const asked = () => gh.calls.filter((c) => c.startsWith('/repos/o/r/forks')).length;
+  assert.equal(asked(), 1);
+  await src.syncForks();
+  assert.equal(asked(), 1, 'no se vuelve a preguntar hasta los 15 minutos');
+});
+
+test('forks: sin la API el grafo sigue y la lista queda vacía', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const on = connect(gh);
+  await on.src.cycle();
+  await on.src.syncForks();
+  assert.equal(on.errors.length, 0);
+  assert.equal(on.src.data.forks.length, 0);
 });

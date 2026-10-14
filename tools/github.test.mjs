@@ -431,6 +431,28 @@ test('la lista de una organización lleva el token, si hay', async () => {
   assert.deepEqual(seen, ['Bearer ghp_x']);
 });
 
+test('eventos de una organización: una consulta, solo lo nuevo, con el repo de cada uno', async () => {
+  const gh = fakeGitHub();
+  const ev = (id, repo, type, payload) => ({ id: String(id), type, repo: { name: repo }, actor: { login: 'ana' }, created_at: `2026-01-01T00:00:0${id}Z`, payload });
+  let events = [ev(2, 'acme/web', 'WatchEvent', {}), ev(1, 'acme/api', 'IssuesEvent', { action: 'opened', issue: { number: 3, title: 'Falla', html_url: 'https://github.com/acme/api/issues/3' } })];
+  gh.override = (path) => (path.startsWith('/orgs/acme/events?') ? { body: events } : null);
+  const GB = load(gh);
+  const feed = GB.GitHubSource.orgFeed('acme');
+  const first = await feed.poll();
+  assert.deepEqual(Array.from(first, (a) => `${a.repoFull}:${a.kind}`), ['acme/api:issue-open', 'acme/web:star'], 'las más antiguas primero');
+  assert.equal(first[0].url, 'https://github.com/acme/api/issues/3');
+  assert.equal(gh.calls.length, 1, 'una sola consulta para todos los repos');
+  assert.deepEqual(Array.from(await feed.poll()), [], 'sin cambios (304): nada nuevo');
+  events = [ev(3, 'acme/api', 'WatchEvent', {}), ...events];
+  assert.deepEqual(Array.from(await feed.poll(), (a) => a.id), ['ev:3'], 'solo el evento nuevo');
+});
+
+test('eventos de una organización: un usuario (404) no da nada y no falla', async () => {
+  const gh = fakeGitHub();
+  const GB = load(gh);
+  assert.deepEqual(Array.from(await GB.GitHubSource.orgFeed('ana').poll()), []);
+});
+
 /* CI en el grafo: el estado de los checks de la cabeza de cada rama y de cada PR; la rama por defecto
    que se pone en rojo avisa una sola vez. */
 

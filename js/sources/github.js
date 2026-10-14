@@ -1882,6 +1882,34 @@
       .map((r) => ({ owner: r.owner?.login || owner, name: r.name, pushedAt: r.pushed_at || null, private: !!r.private }));
   };
 
+  /**
+   * Los eventos de una organización (`/orgs/{org}/events`): una consulta para todos sus repos, con
+   * ETag (un 304 no gasta cuota con token). `poll()` devuelve las actividades nuevas desde la
+   * consulta anterior, las más antiguas primero, cada una con `repoFull` ("org/repo"); en la primera
+   * trae el historial reciente. Un usuario (404) o una organización sin eventos visibles da [].
+   */
+  GitHubSource.orgFeed = (owner, { token = '', apiUrl = '' } = {}) => {
+    const src = new GitHubSource({ owner, name: '', token, apiUrl });
+    const seen = new Set();
+    return {
+      src,
+      async poll() {
+        const res = await src.api(`/orgs/${encodeURIComponent(owner)}/events?per_page=50`, { cacheKey: 'org-events', allow: [404] });
+        if (!res.fresh || !Array.isArray(res.data)) return [];
+        const out = [];
+        for (const ev of res.data.slice().reverse()) {
+          if (!ev?.id || seen.has(ev.id) || !ev.repo?.name) continue;
+          seen.add(ev.id);
+          src.data.repo.url = `${src.ep.web}/${ev.repo.name}`;
+          const a = src.mapEvent(ev);
+          if (a) out.push({ ...a, repoFull: ev.repo.name });
+        }
+        if (seen.size > 2000) [...seen].slice(0, 1000).forEach((id) => seen.delete(id));
+        return out;
+      },
+    };
+  };
+
   GitHubSource.endpoints = endpoints;
   GitHubSource.ApiError = ApiError;
   GB.GitHubSource = GitHubSource;

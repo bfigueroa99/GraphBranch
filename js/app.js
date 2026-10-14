@@ -558,6 +558,37 @@
     Object.keys(followedOwners).forEach((owner, i) => setTimeout(() => connectOwner(owner, { refresh: true }), i * STAGGER));
   }
 
+  /* Los eventos de cada organización seguida: una consulta (con ETag) para todos sus repos. Solo se
+     muestran los de repos sin pestaña propia (los demás ya los trae su pestaña); si la organización no
+     existe como tal (un usuario) o no hay eventos visibles, no se muestra nada. */
+  const ORG_EVENTS_EVERY = 5 * 60 * 1000;
+  const orgFeeds = new Map(); // organización -> { token, feed }
+  async function pollOrgEvents() {
+    if (paused || document.hidden || EMBED) return;
+    for (const owner of Object.keys(followedOwners)) {
+      let entry = orgFeeds.get(owner);
+      if (!entry || entry.token !== settings.token) {
+        entry = { token: settings.token, feed: GB.GitHubSource.orgFeed(owner, { token: settings.token, apiUrl: API_URL }), first: true };
+        orgFeeds.set(owner, entry);
+      }
+      let acts;
+      try {
+        acts = await entry.feed.poll();
+      } catch {
+        continue; // sin red o sin cuota: se intenta en el próximo ciclo
+      }
+      const key = 'org:' + owner.toLowerCase();
+      const open = new Set(realTabs().map((x) => x.key));
+      acts = acts.filter((a) => !open.has(a.repoFull.toLowerCase()));
+      for (const a of acts) {
+        a.repo = key;
+        a.repoName = a.repoFull;
+      }
+      feed.add(acts, { live: !entry.first });
+      entry.first = false;
+    }
+  }
+
   /** Una organización deja de seguirse cuando se cierra el último de sus repos. */
   function pruneOwners() {
     let changed = false;
@@ -565,6 +596,8 @@
       const has = realTabs().some((x) => !['gitlab', 'codeberg', 'bitbucket', 'local'].includes(x.source.host) && String(x.source.owner).toLowerCase() === owner.toLowerCase());
       if (!has) {
         delete followedOwners[owner];
+        orgFeeds.delete(owner);
+        feed.drop('org:' + owner.toLowerCase());
         changed = true;
       }
     }
@@ -2074,6 +2107,8 @@
     }
     setTimeout(refreshOwners, 5000 + MAX_REPOS * STAGGER);
     setInterval(refreshOwners, OWNER_REFRESH);
+    setTimeout(pollOrgEvents, 8000 + MAX_REPOS * STAGGER);
+    setInterval(pollOrgEvents, ORG_EVENTS_EVERY);
     if (initialTV) setTV(true); // ?tv=1: pensado para dejar la URL abierta en una pantalla
   }
   if (desktop) {

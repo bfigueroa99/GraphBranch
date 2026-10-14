@@ -930,6 +930,22 @@ describe('--reclamar contra un repositorio bare', () => {
     assert.match(r.stdout, /--salud: \d+ acción\(es\)\n$/);
   });
 
+  test('--salud mide la cadencia por los merges de master (--first-parent), no por los commits viejos de la rama fusionada', () => {
+    const hace30h = new Date(Date.now() - 30 * 3600 * 1000).toISOString();
+    git(A, ['checkout', '-q', '-B', 'rama-vieja', 'origin/master']);
+    writeFileSync(join(A, 'rama.txt'), 'de hace 30 h\n');
+    git(A, ['add', 'rama.txt']);
+    git(A, ['commit', '-q', '-m', 'commit de la rama, de hace 30 h'], { ...ENV, GIT_AUTHOR_DATE: hace30h, GIT_COMMITTER_DATE: hace30h });
+    git(A, ['checkout', '-q', '-B', 'master', 'origin/master']);
+    git(A, ['merge', '-q', '--no-ff', '-m', 'Una iteración (#99)', 'rama-vieja']);
+    git(A, ['push', '-q', 'origin', 'master']);
+    git(A, ['fetch', '-q', 'origin', '+refs/heads/*:refs/remotes/origin/*']);
+    const r = spawnSync(process.execPath, [loop, '--salud', '--sin-red', '--repo', A], { encoding: 'utf8', env: ENV });
+    assert.equal(r.status, 3, r.stdout + r.stderr);
+    // solo el hueco desde la directiva hasta la semilla: el commit de hace 30 h no es una fusión
+    assert.equal(r.stdout.match(/^Hueco: /gm)?.length, 1, r.stdout);
+  });
+
   test('sin acceso a origin sale 5 y no toca nada', () => {
     const C = join(dir, 'C');
     git(dir, ['clone', '-q', bare, C]);

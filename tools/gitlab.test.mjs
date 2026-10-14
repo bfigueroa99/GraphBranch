@@ -51,8 +51,9 @@ function load(gl) {
   return ctx.GB;
 }
 
-function fakeGitLab() {
+function fakeGitLab(web = 'https://gitlab.com') {
   const gl = {
+    web, // la dirección de la instancia: gitlab.com o una propia
     commits: new Map(), // sha -> { id, parent_ids, … } como los da la API
     branches: new Map(), // nombre -> sha
     updated: new Map(), // nombre -> cuándo se movió (para ordenar como sort=updated_desc)
@@ -105,10 +106,10 @@ function fakeGitLab() {
   };
 
   function route(path) {
-    const u = new URL('https://gitlab.com/api/v4' + path);
-    const p = u.pathname.replace('/api/v4', '');
+    const u = new URL(gl.web + '/api/v4' + path);
+    const p = u.pathname.replace(new URL(gl.web).pathname.replace(/\/$/, '') + '/api/v4', '');
     const q = u.searchParams;
-    if (p === PROJECT) return { body: { id: 7, path_with_namespace: 'g/sub/p', default_branch: 'main', web_url: WEB, visibility: gl.visibility, description: 'un proyecto' } };
+    if (p === PROJECT) return { body: { id: 7, path_with_namespace: 'g/sub/p', default_branch: 'main', web_url: gl.web + '/g/sub/p', visibility: gl.visibility, description: 'un proyecto' } };
     if (p === PROJECT + '/repository/branches') {
       const all = [...gl.branches]
         .sort((a, b) => gl.updated.get(b[0]) - gl.updated.get(a[0]))
@@ -193,10 +194,10 @@ function fakeGitLab() {
   };
 
   gl.fetch = async (url, opts = {}) => {
-    assert.ok(url.startsWith('https://gitlab.com/api/v4/'), `consulta fuera de GitLab: ${url}`);
+    assert.ok(url.startsWith(gl.web + '/api/v4/'), `consulta fuera de GitLab: ${url}`);
     const auth = opts.headers?.Authorization;
     assert.equal(auth, gl.expect ? `Bearer ${gl.expect}` : undefined, 'el token va en cada consulta, y solo si hay uno');
-    const path = url.replace('https://gitlab.com/api/v4', '');
+    const path = url.replace(gl.web + '/api/v4', '');
     gl.calls.push(path);
     const scopes = auth ? gl.tokens.get(auth.slice(7)) : null;
     const { status = 200, body, text, headers = {} } =
@@ -506,4 +507,35 @@ test('los cambios de un commit: la comparación con su padre y, el primero, su p
   assert.deepEqual(Array.from(first.files, (f) => [f.path, f.status, f.add]), [['README.md', 'added', 1]]);
   assert.ok(!gl.calls.some((c) => /\/repository\/commits(\?|$)/.test(c)), 'nunca el listado de commits');
   assert.equal(src.diffCheap(), true);
+});
+
+test('un GitLab propio: todo sale de su host, el token va solo a él, y sin https vuelve a gitlab.com', async () => {
+  for (const web of ['https://gitlab.miempresa.com', 'https://git.empresa.com/gitlab']) {
+    const gl = project();
+    gl.web = web;
+    gl.visibility = 'private';
+    gl.tokens.set('tok', ['read_api']);
+    gl.expect = 'tok';
+    const { src, updates, errors } = connect(gl, { token: 'tok', webUrl: web });
+    await src.cycle();
+    assert.deepEqual(errors, [], web);
+    assert.equal(updates.length, 1, web);
+    assert.equal(src.data.repo.url, web + '/g/sub/p');
+    assert.equal(src.link('commit', 'abc'), web + '/g/sub/p/-/commit/abc');
+    assert.ok(gl.calls.length > 0 && gl.misses.length === 0, web);
+  }
+  const GB = load(fakeGitLab());
+  for (const bad of ['http://gitlab.miempresa.com', 'ftp://x', 'no es una url', 'https://u:p@gitlab.miempresa.com']) {
+    assert.equal(GB.GitLabSource.endpoints(bad), null, bad);
+    const src = new GB.GitLabSource({ path: 'g/p', token: 'secreto', webUrl: bad });
+    assert.equal(src.ep.api, 'https://gitlab.com/api/v4', 'una dirección que no sirve no lleva el token a otro lado: queda gitlab.com');
+  }
+  assert.equal(GB.GitLabSource.endpoints('https://gitlab.miempresa.com/').api, 'https://gitlab.miempresa.com/api/v4');
+});
+
+test('un GitLab propio no muestra avatares (su host no está en img-src); gitlab.com sí', async () => {
+  const GB = load(fakeGitLab());
+  const own = new GB.GitLabSource({ path: 'g/p', webUrl: 'https://gitlab.miempresa.com' });
+  assert.equal(own.person({ username: 'a', avatar_url: 'https://gitlab.com/uploads/a.png' }).avatar, null);
+  assert.equal(new GB.GitLabSource({ path: 'g/p' }).person({ username: 'a', avatar_url: 'https://gitlab.com/uploads/a.png' }).avatar, 'https://gitlab.com/uploads/a.png');
 });

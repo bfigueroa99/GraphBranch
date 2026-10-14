@@ -127,7 +127,7 @@ segunda columna a la primera.
 
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
-| Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (repos públicos, API de Forgejo), bitbucket.org (repos públicos, API 2.0 de Bitbucket Cloud), repos locales (app de escritorio, con `git`), demo | GitLab propio, otros servidores de Gitea/Forgejo, Codeberg y Bitbucket con token |
+| Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (repos públicos, API de Forgejo), bitbucket.org (repos públicos, API 2.0 de Bitbucket Cloud), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), repos locales (app de escritorio, con `git`), demo | otros servidores de Gitea/Forgejo, Codeberg y Bitbucket con token |
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
@@ -233,10 +233,10 @@ se comprueban antes de construir sobre ellas.
     127.0.0.1 bajo una clave al azar, con la sesión de GitHub de VS Code (`vscode.authentication`) y el repo del
     `origin` del espacio de trabajo. Sin hacer: publicarla en el Marketplace (Benjamin), tokens de GitLab, textos
     en los 40 idiomas y recordar los repos entre sesiones.
-25. **GitLab propio** · Fuentes · 1×2/2. La URL de la instancia configurable (`gitlab.miempresa.com`), sumada
-    al CSP solo si se usa (en escritorio, sin tocar el CSP de la web); el token sigue yendo solo al
-    host de su instancia. Con token se podría usar el listado de commits en vez de las comparaciones,
-    si resulta más barato. Comprobar: `tools/gitlab.test.mjs` con otra URL base.
+25. ~~**GitLab propio**~~ hecho en #80 · Fuentes. `?gitlab=https://gitlab.miempresa.com` (web) y `--gitlab-url=` (escritorio,
+    que suma solo ese host a `connect-src`): la API v4, los enlaces y el token van a esa instancia y a ninguna
+    otra; sin https vuelve a gitlab.com. Sin hacer: reconocer una URL de la instancia en el cuadro de repos y
+    los avatares (ítem 35); el listado de commits con token sale más caro que las comparaciones, sin cambios.
 26. **Una organización entera, tercera entrega** · Escala · 2×2/3. Los eventos de la organización en el panel
     (`/orgs/{org}/events`, una consulta para todos sus repos), los grupos de GitLab
     (`/groups/:id/projects?order_by=last_activity_at`) y una vista de constelación (cada repo, una
@@ -264,6 +264,25 @@ se comprueban antes de construir sobre ellas.
 34. **Filtrar el grafo por autor** · Análisis · 2×2/2. [parte del ítem 19] Mostrar solo las ramas con commits de una
     persona ("mis ramas"), en las tres vistas y en las tres fuentes, con el filtro guardado por repo. Comprobar: un
     paso del smoke en la demo y una prueba por fuente.
+35. **GitLab propio, segunda entrega** · Fuentes · 1×2/1. [parte del ítem 25] Pegar la URL de un proyecto de la
+    instancia propia y que se reconozca (hoy hay que escribir `gitlab:grupo/proyecto`), con los avatares de ese
+    host (su `img-src` en escritorio, como `connect-src`) y claves aparte de las de gitlab.com. Comprobar: una
+    prueba de `U.parseRepo` y un paso de la e2e de escritorio.
+36. **Gitea y Forgejo propios** · Fuentes · 1×2/2. [parte del ítem 21] La URL de un servidor propio de Forgejo/Gitea
+    (`--forge-url=`), con la misma regla de CSP que GitLab propio y el token solo a ese host. Comprobar:
+    `tools/codeberg.test.mjs` con otra URL base.
+37. **Tokens para Codeberg y Bitbucket** · Fuentes · 2×2/2. [parte del ítem 21] Repos privados y más cuota:
+    el token de cada servicio en Ajustes (y en el llavero en escritorio), enviado solo a su host. Comprobar: una
+    prueba por fuente de que el token va en cada consulta y a ningún otro lado.
+38. **Vocabulario DORA en la salud** · Análisis · 2×2/2. [inv. 2026-10-13] Frecuencia de despliegues y tiempo de
+    entrega (del primer commit del PR a su fusión) con lo ya cargado, en el panel de salud. Comprobar:
+    `tools/health.test.mjs` con despliegues y PRs fabricados.
+39. **PRs por estado** · Análisis · 2×2/2. [inv. 2026-10-13] En salud, los PRs agrupados en borrador, esperando
+    revisión, aprobados y con CI en rojo, cada uno con su salto al grafo. Comprobar: `tools/health.test.mjs` y
+    un paso del smoke en la demo.
+40. **Resaltar el tramo de cada rama comparada** · Análisis · 1×2/2. [parte del ítem 20] Al comparar dos ramas, los
+    commits de cada una por delante y su punto de separación se marcan en el grafo (2D y 3D). Comprobar: un paso
+    del smoke en la demo.
 
 ## Cómo validar un cambio
 
@@ -1501,3 +1520,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 222 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) en verde; e2e no corridas (no toca la página ni el escritorio).
 - **Siguiente:** iteración 52, expansión: ítem 25 (GitLab propio, Fuentes)
+
+### 2026-10-14 · Iteración 52 · Expansión · Fuentes
+
+- **Capacidad nueva: GitLab propio** (ítem 25 de la hoja de ruta, partido: esta es la primera entrega; el reconocimiento de URLs y los avatares quedan como ítem 35). `GitLabSource` toma `webUrl` (`?gitlab=` en la web, `--gitlab-url=` en escritorio, solo https y sin usuario): la API, los enlaces y el token van a esa instancia; una dirección inválida vuelve a gitlab.com. La app de escritorio suma solo ese host a `connect-src`; el CSP de la web no cambia.
+- **Pruebas que fallan sin la capacidad:** `tools/gitlab.test.mjs` («un GitLab propio: todo sale de su host…» y «…no muestra avatares…»); e2e de escritorio «--gitlab-url suma solo ese host al CSP…».
+- README: la función en la lista, el comando de ejemplo, Límites conocidos y Seguridad (CSP y tokens).
+- QA: filas de fuentes, token y CSP: lo cubren las pruebas con API simulada (subruta incluida) y la e2e de escritorio; sin mirar a mano esta vez: tema, 320 px, 3D, Replay (no cambia la interfaz); auditoría: no toca la página visible.
+- Reclamo: loop/52, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 224 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde.
+- **Siguiente:** iteración 53, expansión: ítem 26 (Una organización entera, tercera entrega, Escala)

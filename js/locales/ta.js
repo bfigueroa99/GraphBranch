@@ -498,6 +498,8 @@ GB.i18n.define('ta', {
   'textview.shown': 'காட்டப்படும் கமிட்கள்: {n}',
   'textview.by': '{author} மூலம்',
   'textview.merge': 'இணைப்பு',
+  'textview.live': 'புதியவை: {branches} கிளைகள், {commits} கமிட்கள்',
+  'textview.filtered': 'காட்டப்படும் கிளைகள்: {total}-இல் {shown}',
   'search.title': 'கமிட்களைத் தேடு',
   'search.help': 'செய்தி, SHA அல்லது ஆசிரியர் (@பெயர்) மூலம் தேடுங்கள். கீழ் அம்பு முடிவுகளுக்குச் செல்லும்; Enter கமிட்டுக்குப் பறக்கும்.',
   'search.placeholder': 'செய்தி, SHA அல்லது @ஆசிரியர்…',

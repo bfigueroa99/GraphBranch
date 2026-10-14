@@ -638,6 +638,33 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: 3000 });
   });
 
+  await step(page, 'vista de texto: filtra por rama y avisa en la región viva de lo nuevo sin repetir', async () => {
+    await page.click('#textview-btn');
+    await page.waitForSelector('#textview[open]', { timeout: 3000 });
+    const live = await page.evaluate(() => {
+      const l = document.querySelector('#textview-live');
+      return { role: l.getAttribute('role'), polite: l.getAttribute('aria-live'), text: l.textContent };
+    });
+    if (live.role !== 'status' || live.polite !== 'polite') throw new Error('la región viva no es role=status polite');
+    if (live.text) throw new Error('al abrir, la región viva ya anuncia algo: ' + live.text);
+    // filtro: un nombre que no existe vacía el árbol; el de la primera rama lo deja con esa rama
+    const first = await page.evaluate(() => document.querySelector('#textview .tv-branch').dataset.branch);
+    await page.fill('#textview-filter', 'zzz-no-existe');
+    if (await page.locator('#textview .tv-branch').count()) throw new Error('el filtro no oculta las ramas que no coinciden');
+    await page.fill('#textview-filter', first.slice(0, 3).toUpperCase());
+    const kept = await page.evaluate(() => [...document.querySelectorAll('#textview .tv-branch')].map((n) => n.dataset.branch));
+    if (!kept.includes(first)) throw new Error(`el filtro quitó la rama ${first}: ${kept.join(', ')}`);
+    await page.fill('#textview-filter', '');
+    // la demo trae commits cada 3 a 7 s: la región viva avisa de los nuevos, una sola vez cada uno
+    await page.waitForFunction(() => /^Novedades: \d+ ramas, \d+ commits$/.test(document.querySelector('#textview-live').textContent), null, { timeout: 20000 });
+    const said = await page.evaluate(() => document.querySelector('#textview-live').textContent);
+    if (/undefined|NaN|textview\./.test(said)) throw new Error('texto sin resolver en la región viva: ' + said);
+    const unnamed = await page.evaluate(() => [...document.querySelectorAll('#textview [role="treeitem"]')].filter((n) => !n.getAttribute('aria-label')).length);
+    if (unnamed) throw new Error(`${unnamed} nodos sin nombre accesible tras la actualización en vivo`);
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: 3000 });
+  });
+
   await step(page, 'búsqueda de commits: por mensaje y por autor, con teclado, y Enter vuela al commit', async () => {
     await page.click('#search-btn');
     await page.waitForSelector('#search[open]', { timeout: 3000 });

@@ -403,6 +403,10 @@
       </button>
     </div>
     <p class="help" id="textview-help" data-i18n="textview.help">The branches and their latest commits as a tree. Up and Down move, Right and Left open and close a branch, Enter shows it in the graph.</p>
+    <div class="sr-row">
+      <input id="textview-filter" type="search" placeholder="Filter branches…" aria-label="Filter branches…" aria-describedby="textview-help" data-i18n-attr="placeholder:filter.placeholder;aria-label:filter.placeholder" spellcheck="false" autocapitalize="off" autocomplete="off">
+    </div>
+    <div id="textview-live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
     <div id="textview-body" class="tv-body" aria-describedby="textview-help"></div>
   </div>
 </dialog>

@@ -498,6 +498,8 @@ GB.i18n.define('ms', {
   'textview.shown': 'commit dipaparkan: {n}',
   'textview.by': 'oleh {author}',
   'textview.merge': 'merge',
+  'textview.live': 'Baharu: {branches} cabang, {commits} commit',
+  'textview.filtered': 'Cabang dipaparkan: {shown} daripada {total}',
   'search.title': 'Cari commit',
   'search.help': 'Cari mengikut mesej, SHA atau penulis (@nama). Anak panah bawah ke hasil, Enter terbang ke commit.',
   'search.placeholder': 'Mesej, SHA atau @penulis…',

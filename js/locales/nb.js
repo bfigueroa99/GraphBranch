@@ -498,6 +498,8 @@ GB.i18n.define('nb', {
   'textview.shown': 'viste commits: {n}',
   'textview.by': 'av {author}',
   'textview.merge': 'sammenslåing',
+  'textview.live': 'Nytt: {branches} grener, {commits} commits',
+  'textview.filtered': 'Viste grener: {shown} av {total}',
   'search.title': 'Søk i commits',
   'search.help': 'Søk etter melding, SHA eller forfatter (@navn). Pil ned går til resultatene, Enter flyr til committen.',
   'search.placeholder': 'Melding, SHA eller @forfatter…',

@@ -1449,6 +1449,95 @@ console.log('Codeberg');
   await page.context().close();
 }
 
+/* ---------- Bitbucket ---------- */
+
+/** api.bitbucket.org simulado para la web: ana/api con main, una rama con dos commits y un PR abierto. */
+function fakeBitbucket() {
+  const WEB = 'https://bitbucket.org/ana/api';
+  const commits = new Map();
+  const branches = new Map();
+  const calls = [];
+  const auths = [];
+  let n = 0;
+  const commit = (branch, title) => {
+    const hash = createHash('sha1').update(`bb:${++n}`).digest('hex');
+    const parent = branches.get(branch);
+    const date = new Date(Date.now() - 3600e3 + n * 1000).toISOString();
+    commits.set(hash, { type: 'commit', hash, date, message: title, parents: parent ? [{ hash: parent }] : [], author: { raw: 'Bea <bea@example.com>', user: { display_name: 'Bea', nickname: 'bea' } }, links: { html: { href: `${WEB}/commits/${hash}` } } });
+    branches.set(branch, hash);
+  };
+  for (let i = 0; i < 4; i++) commit('main', `inicio ${i}`);
+  branches.set('feature/x', branches.get('main'));
+  commit('feature/x', 'feat: primera parte');
+  commit('feature/x', 'feat: segunda parte');
+  const chain = (hash) => {
+    const out = [];
+    for (let s = hash; s && commits.has(s); s = commits.get(s).parents[0]?.hash) out.push(commits.get(s));
+    return out;
+  };
+  const json = (body) => ({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(body) });
+  return {
+    calls,
+    auths,
+    handle: (route) => {
+      const u = new URL(route.request().url());
+      auths.push(route.request().headers().authorization || null);
+      const p = u.pathname.replace('/2.0', '');
+      calls.push(p + u.search);
+      if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' } });
+      if (p === '/repositories/ana/api') return route.fulfill(json({ slug: 'api', workspace: { slug: 'ana' }, mainbranch: { name: 'main' }, links: { html: { href: WEB } }, is_private: false, description: 'Un repo de Bitbucket' }));
+      if (p === '/repositories/ana/api/refs/branches') return route.fulfill(json({ size: branches.size, values: [...branches].map(([name, hash]) => ({ name, target: { hash, date: commits.get(hash).date } })) }));
+      const log = p.match(/^\/repositories\/ana\/api\/commits\/(\w+)$/);
+      if (log) return route.fulfill(json({ values: chain(log[1]).slice(0, Number(u.searchParams.get('pagelen') || 10)) }));
+      if (p === '/repositories/ana/api/pullrequests') {
+        const pr = { id: 3, title: 'Agrega la función x', state: 'OPEN', draft: false, links: { html: { href: `${WEB}/pull-requests/3` } }, source: { branch: { name: 'feature/x' }, repository: { full_name: 'ana/api' } }, destination: { branch: { name: 'main' } }, author: { display_name: 'Bea', nickname: 'bea' }, created_on: new Date().toISOString() };
+        return route.fulfill(json({ values: [pr] }));
+      }
+      return route.fulfill({ status: 404, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"type":"error","error":{"message":"not found"}}' });
+    },
+  };
+}
+
+console.log('Bitbucket');
+{
+  const bb = fakeBitbucket();
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.route('https://api.bitbucket.org/**', bb.handle);
+
+  await step(page, 'conecta un repo de Bitbucket (bitbucket:ana/api), con su etiqueta y sin token', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=bitbucket:ana/api`);
+    await loaded(page);
+    const link = await page.evaluate(() => {
+      const a = document.querySelector('#repo-link');
+      const b = document.querySelector('#repo-badge');
+      return { text: a.textContent, href: a.href, badge: b.hidden ? null : b.textContent, banner: !document.querySelector('#token-banner').hidden };
+    });
+    if (link.text !== 'ana/api' || link.href !== 'https://bitbucket.org/ana/api') throw new Error(`el título dice ${link.text} (${link.href})`);
+    if (link.badge !== 'Bitbucket') throw new Error(`la etiqueta dice ${link.badge}`);
+    if (link.banner) throw new Error('muestra el aviso del token de GitHub');
+    const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
+    if (saved !== '["bitbucket:ana/api"]') throw new Error(`se guardó ${saved}`);
+    if (bb.auths.some(Boolean)) throw new Error('una consulta a Bitbucket llevó un encabezado Authorization');
+  });
+
+  await step(page, 'en 2D se ven sus dos ramas y el PR #3', async () => {
+    await page.click('#view-2d');
+    const label = await page.waitForSelector('#graph .head .h-pr', { timeout: 15000 });
+    if ((await label.textContent()) !== '#3') throw new Error(`la etiqueta dice ${await label.textContent()}`);
+    const names = await page.$$eval('#graph .head', (hs) => hs.map((h) => h.getAttribute('aria-label')).join(' | '));
+    if (!names.includes('feature/x') || !names.includes('main')) throw new Error(`ramas: ${names}`);
+  });
+
+  await step(page, 'un repo que no existe lo dice con el texto de Bitbucket', async () => {
+    await page.fill('#repo-input', 'https://bitbucket.org/ana/nada');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: 15000 });
+    const text = await page.textContent('#overlay');
+    if (!text.includes('No se encontró ana/nada en Bitbucket. Solo se leen repositorios públicos.')) throw new Error(`el aviso dice ${text}`);
+  }, { allow: /404/ });
+  await page.context().close();
+}
+
 console.log('Fijar una rama con el teclado');
 {
   const gh = fakeGitHub();

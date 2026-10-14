@@ -134,7 +134,7 @@ test('--api-url suma solo ese host al CSP y los repos de GitHub salen de él; si
   const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
   let { app, page } = await launch(testInfo, { args: ['--lang=es', '--repo=o/r', '--api-url=https://ghe.example.com/api/v3'] });
   try {
-    expect(await csp(page)).toContain('connect-src https://api.github.com https://ghe.example.com https://gitlab.com https://codeberg.org;');
+    expect(await csp(page)).toContain('connect-src https://api.github.com https://ghe.example.com https://gitlab.com https://codeberg.org https://api.bitbucket.org;');
     expect(page.url()).toContain('api=' + encodeURIComponent('https://ghe.example.com/api/v3'));
   } finally {
     await app.close();

@@ -126,7 +126,7 @@ segunda columna a la primera.
 
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
-| Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (repos públicos, API de Forgejo), repos locales (app de escritorio, con `git`), demo | GitLab propio, otros servidores de Gitea/Forgejo, Codeberg con token, Bitbucket |
+| Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (repos públicos, API de Forgejo), bitbucket.org (repos públicos, API 2.0 de Bitbucket Cloud), repos locales (app de escritorio, con `git`), demo | GitLab propio, otros servidores de Gitea/Forgejo, Codeberg y Bitbucket con token |
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`) | VS Code |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
@@ -222,7 +222,9 @@ se comprueban antes de construir sobre ellas.
 21. ~~**Gitea, Forgejo y Codeberg**~~ hecho en #72 · Fuentes. codeberg.org (CORS abierto, comprobado) con la API de
     Forgejo: ramas, historia y PRs en vivo, galaxias con el árbol, sin token y solo repos públicos. Sin hacer:
     otros servidores de Gitea/Forgejo (uno propio entra con el ítem 25) y Codeberg con token.
-22. **Bitbucket Cloud** · Fuentes · 2×2/2. `api.bitbucket.org/2.0`: ramas, commits y pull requests.
+22. ~~**Bitbucket Cloud**~~ hecho en #75 · Fuentes. `api.bitbucket.org/2.0` (CORS abierto, comprobado): ramas, historia y PRs
+    en vivo y galaxias con el árbol, sin token y solo repos públicos. Sin hacer: Bitbucket con token (repos
+    privados, mejor cuota) y los pipelines como CI.
 23. **Resumen de la semana** · Salidas · 2×2/1. Una ficha con lo que pasó en los últimos 7 días (PRs
     fusionados, releases, quién aportó, la rama más activa), para copiar como Markdown o guardar como
     imagen.
@@ -1447,3 +1449,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 188 pruebas (`node --test`), smoke (73 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde.
 - **Siguiente:** iteración 48, expansión: ítem 22 (Bitbucket Cloud, Fuentes)
+
+### 2026-10-14 · Iteración 48 · Expansión · Fuentes
+
+- **Capacidad nueva: Bitbucket Cloud como fuente** (ítem 22 de la hoja de ruta). `bitbucket:espacio/repo` o la URL de bitbucket.org abre un repo público de Bitbucket como una pestaña más: `js/sources/bitbucket.js` hereda de la fuente de GitHub y cambia lo propio: páginas con `pagelen` (100) y `next`, ramas ordenadas por fecha (hasta 300, con el total de `size`), historia con `commits/{hash}`, force-push distinguido con `exclude`, PRs con `draft` y estado `MERGED`/`DECLINED`, y árbol de `src` para las galaxias. La API real da solo 60 consultas por hora por IP sin token (`x-ratelimit-limit: 60, 60;w=3600`) y no expone el encabezado al navegador, así que la fuente lleva su propia cuenta de la última hora (48 de tope, repartido entre repos de Bitbucket; cargar historia gasta como mucho el 60 %; ciclos de 90 s o más según lo que cuesten). CORS comprobado con `curl` (`access-control-allow-origin: *`) y la fuente probada contra `atlassian/aui` real, solo lectura. La CSP suma `https://api.bitbucket.org` a `connect-src` y nada a `img-src` (sin avatares: sus hosts no están). 7 textos nuevos en los 40 idiomas (derivados de los de Codeberg, que ya están traducidos). Sin hacer: token de Bitbucket, repos privados, pipelines.
+- **Pruebas que fallan sin la capacidad:** `tools/bitbucket.test.mjs` (parseo de URL, carga, vivo con push/rama/PR/force/borrado, PR rechazado, 404, 429, más de 100 ramas con `next`, la cuota por hora y el árbol) y el paso del smoke «Bitbucket» (etiqueta, sin `Authorization`, PR `#3`, aviso de no encontrado).
+- README: la función en la lista, Estructura, Límites conocidos y Seguridad.
+- QA: filas tocadas: CSP (`tools/pwa.test.mjs` con la directiva nueva; sin `img-src` nuevo); XSS (nada nuevo en `innerHTML`; textos por `textContent`); 40 idiomas (`check-i18n`); token solo a su API (Bitbucket no lleva ninguno, la prueba y el smoke lo comprueban); 404 y sin red (prueba y smoke); cuota (prueba). Sin mirar a mano: 320 px, 3D, repos de más de 300 ramas contra el servidor real; auditoría: no toca la interfaz más allá de la etiqueta.
+- Reclamo: loop/48, sin colisión
+- Web publicada: PENDIENTE
+- Validado: PENDIENTE
+- **Siguiente:** iteración 49, expansión: ítem 23 (Resumen de la semana, Salidas)

@@ -1445,5 +1445,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: Replay con 2D y 3D en el smoke; auditoría: no toca la interfaz.
 - Reclamo: loop/47, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
-- Validado: PENDIENTE
+- Validado: 188 pruebas (`node --test`), smoke (73 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde.
 - **Siguiente:** iteración 48, expansión: ítem 22 (Bitbucket Cloud, Fuentes)

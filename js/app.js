@@ -312,9 +312,9 @@
   const STAGGER = 700; // los repos que arrancan juntos, escalonados: GitHub no recibe todo a la vez
   /** Clave de un repo (de su fuente o de { owner, name }): con ella se guarda lo suyo (fijadas, filtro, logros). */
   /** Los proyectos de GitLab llevan "gitlab:" delante (en la clave, en lo que se guarda y en la URL). */
-  const hostPrefix = (src) => (src.host === 'gitlab' ? 'gitlab:' : src.host === 'codeberg' ? 'codeberg:' : src.host === 'local' ? 'local:' : '');
+  const hostPrefix = (src) => (src.host === 'gitlab' ? 'gitlab:' : src.host === 'codeberg' ? 'codeberg:' : src.host === 'bitbucket' ? 'bitbucket:' : src.host === 'local' ? 'local:' : '');
   /** Los servicios que no son GitHub, con el nombre que lleva su etiqueta. */
-  const FORGES = { gitlab: 'GitLab', codeberg: 'Codeberg' };
+  const FORGES = { gitlab: 'GitLab', codeberg: 'Codeberg', bitbucket: 'Bitbucket' };
   const keyOf = (src) => `${hostPrefix(src)}${src.owner || 'demo'}/${src.name || ''}`.toLowerCase();
   /** Nombre a la vista (el del servicio, ya cargado) y el escrito, que es el que se guarda (de él sale la clave). */
   const nameOf = (tab) => `${tab.source.data.repo.owner}/${tab.source.data.repo.name}`;
@@ -329,6 +329,7 @@
     const key = keyOf({ host, owner, name });
     const remembered = { depth: settings.depth, marks: settings.marks, filter: U.store.get('filter:' + key, ''), pins: U.store.get('pins:' + key, []) };
     if (host === 'local') return new GB.LocalGitSource({ id: owner, name, ...remembered });
+    if (host === 'bitbucket') return new GB.BitbucketSource({ owner, name, ...remembered });
     if (host === 'codeberg') return new GB.CodebergSource({ owner, name, ...remembered });
     if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, ...remembered });
     return new GB.GitHubSource({ owner, name, token: settings.token, apiUrl: API_URL, ...remembered });
@@ -551,7 +552,7 @@
   function pruneOwners() {
     let changed = false;
     for (const owner of Object.keys(followedOwners)) {
-      const has = realTabs().some((x) => !['gitlab', 'codeberg', 'local'].includes(x.source.host) && String(x.source.owner).toLowerCase() === owner.toLowerCase());
+      const has = realTabs().some((x) => !['gitlab', 'codeberg', 'bitbucket', 'local'].includes(x.source.host) && String(x.source.owner).toLowerCase() === owner.toLowerCase());
       if (!has) {
         delete followedOwners[owner];
         changed = true;
@@ -1912,7 +1913,7 @@
     // se reconecta lo que cambió: un token de GitLab nuevo no gasta la cuota de GitHub. Si no cambió
     // nada, todo, como dice el botón
     const changed = (tab) =>
-      settings.depth !== before.depth || settings.marks !== before.marks || (tab.source.host === 'codeberg' ? false : tab.source.host === 'gitlab' ? settings.gitlabToken !== before.gitlabToken : settings.token !== before.token);
+      settings.depth !== before.depth || settings.marks !== before.marks || (tab.source.host === 'codeberg' || tab.source.host === 'bitbucket' ? false : tab.source.host === 'gitlab' ? settings.gitlabToken !== before.gitlabToken : settings.token !== before.token);
     if (realTabs().length) reconnectAll(realTabs().some(changed) ? changed : undefined);
     else el.tokenBanner.hidden = true;
   });

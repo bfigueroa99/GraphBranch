@@ -33,7 +33,7 @@ window.GB = window.GB || {};
     return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
   };
 
-  /** Acepta "owner/repo", URLs de GitHub (https o ssh) y quita ".git". Un repo de Codeberg va con su
+  /** Acepta "owner/repo", URLs de GitHub (https o ssh) y quita ".git". Un repo de Bitbucket Cloud, con su URL de bitbucket.org o como "bitbucket:espacio/repo": devuelve { host: 'bitbucket', owner, name }. Un repo de Codeberg va con su
       URL de codeberg.org o como "codeberg:dueño/repo": devuelve { host: 'codeberg', owner, name }. Un proyecto de GitLab, con
       sus subgrupos, va con su URL de gitlab.com (también la de una rama o un archivo, o ssh) o como
       "gitlab:grupo/proyecto": devuelve { host: 'gitlab', owner: 'grupo/sub', name: 'proyecto' }. */
@@ -47,6 +47,12 @@ window.GB = window.GB || {};
       const parts = lab[1].split('/-/')[0].split('/').filter(Boolean);
       if (parts.length < 2 || !parts.every((p) => /^[\w.-]+$/.test(p) && !/^\.+$/.test(p))) return null;
       return { host: 'gitlab', owner: parts.slice(0, -1).join('/'), name: parts[parts.length - 1] };
+    }
+    const bb = s.match(/^bitbucket:(.+)$/i) || s.match(/bitbucket\.org[/:](.+)$/i);
+    if (bb) {
+      const parts = bb[1].split('/').filter(Boolean);
+      if (parts.length < 2 || !parts.slice(0, 2).every((p) => /^[\w.-]+$/.test(p) && !/^\.+$/.test(p))) return null;
+      return { host: 'bitbucket', owner: parts[0], name: parts[1].replace(/\.git$/, '') };
     }
     const cb = s.match(/^codeberg:(.+)$/i) || s.match(/codeberg\.org[/:](.+)$/i);
     if (cb) {

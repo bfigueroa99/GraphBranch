@@ -376,17 +376,21 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 15. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-16. [QA] Repo local de 1.000 ramas en árabe (iteración 35): el primer arranque en frío tardó 22 s y `#status`
-    dejó de decir «cargando» con 40 ramas contadas (en tamil, 3 s y 1.001). Sin reproducir una segunda vez:
-    medir si el estado «listo» sale antes de la primera lectura completa del repo local. Reproducción:
-    `xvfb-run node` con `e2e/app.mjs` (`launch` + `--local=` sobre un repo con 1.000 ramas), leer
-    `#st-branches` al salir `loaded()`.
-17. [QA] La auditoría con `--langs` cuenta `objetivo-chico` 135 veces fuera de la base (95×22, 73×22 y
-    296×19 px en 40 idiomas): son los mismos controles del pendiente 4, repetidos por idioma. Decidir si
-    la base los guarda por control y no por idioma. Reproducción: `node tools/audit.mjs --langs`.
-18. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
+16. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
     (6.009 ms con ≤ 6.000; tareas largas 4.809 ms con ≤ 4.000), sin GPU y con la corrida larga; la corrida
     normal de la puerta no lo marca. Medir con `node tools/audit.mjs --repetir 3` antes de tocar nada.
+17. [QA] La auditoría completa con `--langs` marca 3 `objetivo-chico` en `celular-320` que la base no guarda
+    (`#branch-filter` 226×19, `#graph3d > div > button` 95×22 y `.default` 73×22): son los controles del
+    pendiente 4 a 320 px, no un fallo nuevo. Decidir si entran a la base o se arreglan con el 4.
+    Reproducción: `node tools/audit.mjs --langs`, escenario `celular-320`.
+18. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+    «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
+    Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
+    Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
+19. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+    `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
+    `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
+    Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); `placeLabels`/`placeNotes` crean arreglos por cuadro
@@ -1484,3 +1488,16 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 221 pruebas (`node --test`), smoke (77 pasos), i18n (0 errores) en verde; e2e y auditoría no corridas (el cambio no toca la página ni el escritorio).
 - **Siguiente:** iteración 51, mantenimiento · QA: pendiente 16 (Repo local de 1.000 ramas en árabe (iteración 35): el primer arranque en frío t…)
+
+### 2026-10-14 · Iteración 51 · Mantenimiento · QA
+
+- **Auditoría de QA: el pendiente 16 no era un fallo y el 17 se arregló** (pendientes 16 y 17 de entonces). Repo local de 1.000 ramas con `--lang=es`, `ar` y `ta` en la app de escritorio: `#status` sale de «cargando» con 40 ramas (el presupuesto de un ciclo) y llega a 1.001 entre 0,3 y 0,5 s después, igual que en GitHub; el 22 s del pendiente era el primer arranque en frío de Electron (14,7 s la primera vez, 1,3–1,6 s las siguientes, en los tres idiomas), no el repo ni el idioma. Se quitó de la lista y el arranque en frío quedó como pendiente 18. Arreglo: la auditoría completa con `--langs` contaba como nuevo cada control ya conocido en otro idioma (`conocido()` en `tools/audit.mjs`): de 135 fuera de la base pasó a 3.
+- **Reproducción:** `node --test tools/audit.test.mjs` sin el arreglo → `SyntaxError: The requested module './audit.mjs' does not provide an export named 'conocido'`; en la auditoría, `node tools/audit.mjs --langs` → `135 hallazgos (0 Alta), 111 fuera de la base`.
+- **Hallazgos:** 3 nuevos (pendientes 17, 18 y 19), 0 a la base de la auditoría
+- **Pruebas que fallan sin el arreglo:** `tools/audit.test.mjs` («--langs: un control conocido en un idioma de celular es conocido en los demás, pero no en otro escenario»).
+- README: sin cambios (herramienta del loop).
+- QA: auditoría completa con `--langs` (solo `objetivo-chico`, ya conocidos; medidas dentro de presupuesto); smoke tres veces en verde (con `PLAYWRIGHT_CHROMIUM_PATH`, ver pendiente 19); 1.000 ramas locales en es, ar y ta en escritorio. Sin mirar a mano esta vez: sin red, cuota agotada, 3D, Replay y modo TV a 320 px; auditoría: 3 `objetivo-chico` de `celular-320` fuera de la base (pendiente 17).
+- Reclamo: loop/51, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 222 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 52, expansión: ítem 25 (GitLab propio, Fuentes)

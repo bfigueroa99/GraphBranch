@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { BASE, CARGA_MAX, MARGEN_CUOTA, PRESUPUESTO, TIPOS, agrupar, clasesDeEstado, clave, comparar, compararMedidas, escenarios, leerBase, presupuestos } from './audit.mjs';
+import { BASE, CARGA_MAX, MARGEN_CUOTA, PRESUPUESTO, TIPOS, agrupar, clasesDeEstado, clave, comparar, conocido, compararMedidas, escenarios, leerBase, presupuestos } from './audit.mjs';
 import { PRIORIDADES, SUBTIPOS } from './loop.mjs';
 
 const h = (tipo, escenario = 'escritorio-3d', donde = '#x', extra = {}) => ({ tipo, escenario, donde, ...extra });
@@ -50,6 +50,15 @@ describe('tools/audit.mjs', () => {
     const { nuevos, resueltos } = comparar(vistos, base, { consultas: 5 });
     assert.deepEqual(nuevos.map(clave), ['sin-nombre|replay|#c']); // «borde» no entra en la puerta
     assert.deepEqual(resueltos, ['objetivo-chico|celular-es|#b']);
+  });
+
+  test('--langs: un control conocido en un idioma de celular es conocido en los demás, pero no en otro escenario', () => {
+    const base = { hallazgos: ['objetivo-chico|celular-es|#a', 'objetivo-chico|celular-320|#b'] };
+    assert.equal(conocido(h('objetivo-chico', 'celular-ta', '#a'), base), true);
+    assert.equal(conocido(h('objetivo-chico', 'celular-ta', '#b'), base), false); // celular-320 es otro escenario
+    assert.equal(conocido(h('objetivo-chico', 'celular-ta', '#z'), base), false);
+    assert.equal(conocido(h('objetivo-chico', 'replay', '#a'), base), false);
+    assert.equal(conocido(h('sin-nombre', 'celular-ta', '#a'), base), false);
   });
 
   test(`la cuota: más consultas que la base y su margen (${MARGEN_CUOTA}) es un hallazgo nuevo`, () => {

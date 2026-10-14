@@ -285,6 +285,9 @@ se comprueban antes de construir sobre ellas.
     (`/groups/:id/projects?order_by=last_activity_at`) y una vista de constelación (cada repo, una
     galaxia) para ver más repos de los que caben en pestañas. Comprobar: prueba de cuota con la API
     simulada.
+42. **Replay por tramo, segunda entrega** · Salidas · 1×2/1. [parte del ítem 27] El tramo y los rótulos viajan en la
+    URL (`?replay=2026-09-01..2026-09-14&title=…`) para compartir un sprint ya listo, y el Replay arranca solo
+    con ellos. Comprobar: prueba de la lectura de la URL y un paso del smoke con el enlace.
 
 ## Cómo validar un cambio
 

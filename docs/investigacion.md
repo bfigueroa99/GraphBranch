@@ -204,6 +204,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Gitea y Forgejo propios | Fuentes | 1×2/2 | 1,0 | GitLens (autolinks) | ítem 36 |
 | GitLab propio, segunda entrega | Fuentes | 1×2/1 | 2,0 | (ítem 25) | ítem 35 |
 | Resaltar el tramo de cada rama comparada | Análisis | 1×2/2 | 1,0 | gitk | ítem 40 |
+| Replay por tramo, segunda entrega | Salidas | 1×2/1 | 2,0 | (ítem 27) | ítem 42 |
 
 ## Públicos
 

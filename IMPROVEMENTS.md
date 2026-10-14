@@ -118,6 +118,7 @@ cada iteración lo repite (`node tools/loop.mjs --salud` lo imprime) y se quita 
    `docs/investigacion.md`, lo primero serían los ítems 11, 12 y 19 (6,0), el 9 (4,5) y el 23 (4,0); hoy
    el orden es el de la directiva (9, 10, 11…). El loop sigue el orden escrito: reordenar es una decisión
    de producto.
+6. **Publicar la extensión de VS Code** (desde 2026-10-14). El paquete está en `vscode/` (editor `publisher: bfigueroa99` en su `package.json`). Crear el publicador en marketplace.visualstudio.com, un token de Azure DevOps y correr `node tools/vscode.mjs && cd vscode && npx @vscode/vsce publish`; o instalar el `.vsix` a mano.
 
 ## Mapa de alcance
 
@@ -128,7 +129,7 @@ segunda columna a la primera.
 | --- | --- | --- |
 | Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (repos públicos, API de Forgejo), bitbucket.org (repos públicos, API 2.0 de Bitbucket Cloud), repos locales (app de escritorio, con `git`), demo | GitLab propio, otros servidores de Gitea/Forgejo, Codeberg y Bitbucket con token |
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
-| Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`) | VS Code |
+| Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor | filtrar el grafo por autor |
@@ -228,9 +229,10 @@ se comprueban antes de construir sobre ellas.
 23. ~~**Resumen de la semana**~~ hecho en #77 · Salidas. El panel de salud suma una ficha con los últimos 7 días
     (commits, PRs fusionados, releases, quién aportó y la rama más activa) para copiar o guardar como
     Markdown, con lo ya cargado. Sin hacer: guardarlo como imagen y juntar varios repos.
-24. **Extensión de VS Code** · Plataformas · 3×2/3. Un webview con la app y el token de la sesión de GitHub
-    que ya tiene VS Code (`vscode.authentication`), abierta en el repo del espacio de trabajo. El loop
-    deja el paquete; publicarlo en el Marketplace lo hace Benjamin.
+24. ~~**Extensión de VS Code**~~ hecho en #78 · Plataformas. `vscode/`: un panel con la app, servida por un servidor local en
+    127.0.0.1 bajo una clave al azar, con la sesión de GitHub de VS Code (`vscode.authentication`) y el repo del
+    `origin` del espacio de trabajo. Sin hacer: publicarla en el Marketplace (Benjamin), tokens de GitLab, textos
+    en los 40 idiomas y recordar los repos entre sesiones.
 25. **GitLab propio** · Fuentes · 1×2/2. La URL de la instancia configurable (`gitlab.miempresa.com`), sumada
     al CSP solo si se usa (en escritorio, sin tocar el CSP de la web); el token sigue yendo solo al
     host de su instancia. Con token se podría usar el listado de commits en vez de las comparaciones,
@@ -1471,3 +1473,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 217 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde. (La primera pasada del smoke falló en el panel de salud: el resumen mostraba `#undefined` y `[object Object]` con los títulos de la demo; corregido pasando los títulos por `i18n.text` y con prueba.)
 - **Siguiente:** iteración 50, expansión: ítem 24 (Extensión de VS Code, Plataformas)
+
+### 2026-10-14 · Iteración 50 · Expansión · Plataformas
+
+- **Capacidad nueva: extensión de VS Code** (ítem 24 de la hoja de ruta). `vscode/` es una extensión sin compilación: `extension.js` abre un panel con la app, `server.js` la sirve en 127.0.0.1 (puerto al azar) bajo una clave al azar y le entrega el token de la sesión de GitHub de VS Code en `vscode-session.js` (que se suma a `index.html` solo al servir; la CSP de la página no cambia), y el repo sale del `origin` de `.git/config`. `tools/vscode.mjs` deja el paquete listo (`vscode/app/`); publicarlo es de Benjamin.
+- **Pruebas que fallan sin la capacidad:** `tools/vscode.test.mjs` (repo desde `.git/config` en https, ssh y otros servicios; token entregado como JSON dentro de `localStorage`; 404 sin la clave, con otra, para `sw.js`, `package.json` y rutas con `..`; claves distintas por arranque; comandos del manifiesto registrados). A mano, con Playwright contra el servidor de la extensión: la página lee el token, lo manda solo a `api.github.com`, sin errores de consola y sin service worker.
+- README: la función en la lista, su sección, Estructura, Límites conocidos y Seguridad.
+- QA: filas tocadas: CSP (`index.html` sin cambios; el panel de VS Code solo enmarca el servidor local); token solo a su API (mirado a mano) y nunca en una URL ni en el service worker (la prueba); XSS (sin `innerHTML` nuevo en la página); 40 idiomas (la página no cambia; la extensión trae textos en inglés y español, dicho en Límites conocidos). Sin mirar: el panel dentro de VS Code (no hay VS Code en la sesión); auditoría: no toca la página.
+- Reclamo: loop/50, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 221 pruebas (`node --test`), smoke (77 pasos), i18n (0 errores) en verde; e2e y auditoría no corridas (el cambio no toca la página ni el escritorio).
+- **Siguiente:** iteración 51, mantenimiento · QA: pendiente 16 (Repo local de 1.000 ramas en árabe (iteración 35): el primer arranque en frío t…)

@@ -1,0 +1,24 @@
+{
+  "name": "graphbranch",
+  "displayName": "GraphBranch",
+  "description": "%description%",
+  "version": "0.1.0",
+  "publisher": "bfigueroa99",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/bfigueroa99/GraphBranch" },
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Visualization", "SCM Providers"],
+  "main": "./extension.js",
+  "l10n": "./l10n",
+  "activationEvents": [],
+  "capabilities": {
+    "untrustedWorkspaces": { "supported": "limited", "description": "Reads only .git/config of the workspace to find the repository." },
+    "virtualWorkspaces": false
+  },
+  "contributes": {
+    "commands": [
+      { "command": "graphbranch.open", "title": "%command.open%", "category": "GraphBranch" },
+      { "command": "graphbranch.signIn", "title": "%command.signIn%", "category": "GraphBranch" }
+    ]
+  }
+}

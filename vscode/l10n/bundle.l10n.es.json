@@ -1,0 +1,3 @@
+{
+  "GraphBranch: app files not found. Run \"node tools/vscode.mjs\" first.": "GraphBranch: faltan los archivos de la app. Corre primero «node tools/vscode.mjs»."
+}

@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} } });
 vm.runInContext(readFileSync(join(root, 'js', 'health.js'), 'utf8'), ctx, { filename: 'health.js' });
-const { compute, clashes, clashCandidates } = ctx.window.GB.health;
+const { compute, clashes, clashCandidates, compare, splitFiles } = ctx.window.GB.health;
 
 const DAY = 864e5;
 const NOW = Date.UTC(2026, 9, 13, 12);
@@ -117,4 +117,53 @@ test('choques: se comparan las ramas con PR abierto del mismo repo, sin la de po
   r.pulls.set(10, { number: 10, title: 'a main', head: 'main', sameRepo: true });
   assert.deepEqual(Array.from(clashCandidates(r)), ['hasPr']); // 'x' no está cargada; 'f' es de un fork; 'main' es la de por defecto
   assert.equal(clashCandidates(r, 0).length, 0);
+});
+
+function fork() {
+  // base <- m1 <- m2 (main); base <- f1 <- f2 (feat); f2 también fusiona m1
+  const c = (sha, parents, d) => [sha, { sha, parents, date: ago(d), message: `msg ${sha}\ncuerpo` }];
+  return {
+    commits: new Map([c('base', [], 9), c('m1', ['base'], 8), c('m2', ['m1'], 7), c('f1', ['base'], 6), c('f2', ['f1'], 5)]),
+    branches: new Map([
+      ['main', { name: 'main', sha: 'm2' }],
+      ['feat', { name: 'feat', sha: 'f2' }],
+    ]),
+  };
+}
+
+test('comparar dos ramas: commits por delante de cada una y punto de separación', () => {
+  const r = compare(fork(), 'main', 'feat');
+  assert.equal(r.a.ahead, 2);
+  assert.equal(r.b.ahead, 2);
+  assert.equal(r.base.sha, 'base');
+  assert.equal(r.base.message, 'msg base');
+  assert.equal(r.partial, false);
+});
+
+test('comparar con un merge: el punto de separación es el ancestro común más nuevo', () => {
+  const d = fork();
+  d.commits.set('f2', { sha: 'f2', parents: ['f1', 'm1'], date: ago(5), message: 'merge' });
+  const r = compare(d, 'main', 'feat');
+  assert.equal(r.a.ahead, 1); // m2
+  assert.equal(r.b.ahead, 2); // f1 y f2
+  assert.equal(r.base.sha, 'm1');
+});
+
+test('comparar: una rama contenida en la otra, sin ancestro cargado y con historia incompleta', () => {
+  const d = fork();
+  d.branches.set('old', { name: 'old', sha: 'm1' });
+  const r = compare(d, 'old', 'main');
+  assert.deepEqual([r.a.ahead, r.b.ahead, r.base.sha], [0, 1, 'm1']);
+  d.commits.delete('base');
+  const p = compare(d, 'main', 'feat');
+  assert.equal(p.partial, true);
+  assert.equal(p.base, null);
+  assert.equal(compare(d, 'main', 'nada'), null);
+});
+
+test('archivos: solo en A, solo en B y en las dos', () => {
+  const r = splitFiles(['a', 'b', 'c', 'c'], ['c', 'd', 'b']);
+  assert.deepEqual(Array.from(r.onlyA), ['a']);
+  assert.deepEqual(Array.from(r.onlyB), ['d']);
+  assert.deepEqual(Array.from(r.both), ['b', 'c']);
 });

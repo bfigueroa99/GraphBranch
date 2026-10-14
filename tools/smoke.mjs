@@ -526,6 +526,16 @@ console.log('Escritorio (1280×800)');
     await page.waitForFunction(() => document.querySelector('#hl-clash-out')?.textContent.trim() && !document.querySelector('#hl-clash-go').disabled, null, { timeout: 8000 });
     const clash = await page.evaluate(() => document.querySelector('#hl-clash-out').textContent);
     if (/undefined|NaN|health\./.test(clash)) throw new Error('texto sin resolver en los choques: ' + clash.slice(0, 120));
+    const cmp = await page.evaluate(async () => {
+      const a = document.querySelector('#cmp-a');
+      const b = document.querySelector('#cmp-b');
+      document.querySelector('#cmp-go').click();
+      await new Promise((r) => setTimeout(r, 1500));
+      return { opts: a.options.length, same: a.value === b.value, text: document.querySelector('#cmp-out').textContent, rows: document.querySelectorAll('#cmp-out .hl-row').length };
+    });
+    if (cmp.opts < 2 || cmp.same) throw new Error(`comparar ramas: ${cmp.opts} opciones, mismas ramas elegidas: ${cmp.same}`);
+    if (cmp.rows < 4) throw new Error(`comparar ramas: ${cmp.rows} filas de resultado, se esperaban al menos 4: ${cmp.text.slice(0, 120)}`);
+    if (/undefined|NaN|cmp\./.test(cmp.text)) throw new Error('texto sin resolver al comparar ramas: ' + cmp.text.slice(0, 120));
     await page.click('#health .hl-list[data-list="prs"] [data-go]');
     await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: 3000 });
   });

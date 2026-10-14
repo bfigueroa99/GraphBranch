@@ -356,59 +356,65 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     También (iteración 40, una corrida de `npm run check`; la repetición pasó): el paso «con ?repo=@ana en la URL se
     siguen los repos de ese usuario» guardó `["ana/notas","acme/nuevo",…]` con el orden cambiado; mismo remedio.
 
+3. [Deuda] e2e de escritorio: «un repositorio de esta máquina se sigue sin GitHub…» (`e2e/desktop.spec.mjs:360`)
+    falló una vez en `npm run check` (iteración 53, `xvfb-run`; la repetición pasó): el panel de cambios
+    mostró «segundo» en vez de «tercero, sin publicar» (línea 381, `toHaveText` sin esperar al commit sin
+    publicar). Medir con 5 corridas de ese test solo y esperar al estado (el commit nuevo) en vez de al texto.
+    Reproducción: `xvfb-run -a npm run check` → `Error: expect(locator).toHaveText(expected) failed … unexpected value "segundo"`.
+
 ### Baja
 
-3. [Accesibilidad] Objetivos chicos y estados confusos. `audit:objetivo-chico` (24 hallazgos conocidos en
+4. [Accesibilidad] Objetivos chicos y estados confusos. `audit:objetivo-chico` (24 hallazgos conocidos en
     `tools/audit-base.json`): las etiquetas de rama de 22 px de alto en 3D y 2D (mínimo 24), el filtro de
     ramas (`#branch-filter`, 19 px), la casilla de los logros con su etiqueta (`#game-enable`, 19 px), la
     barra de posición del Replay (`.rp-range`, 16 px) y las marcas de la brújula del vuelo (18×18 px).
     Además: botones que cambian a la vez `aria-pressed` y el texto (el de pausa del Replay, `replay.js:367`)
     y la leyenda 2D sin acceso por teclado. Reproducir: `node tools/audit.mjs`.
-4. [Errores] Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una
+5. [Errores] Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una
     etiqueta de rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-5. [Errores] La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-6. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-7. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
+6. [Errores] La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+7. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+8. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
     renombrados).
-8. [Seguridad] `parseRepo` acepta `..` como owner o nombre de un repo de GitHub (`util.js:39`; los de
+9. [Seguridad] `parseRepo` acepta `..` como owner o nombre de un repo de GitHub (`util.js:39`; los de
     GitLab ya se rechazan): rechazar nombres hechos solo de puntos.
-9. [Seguridad] Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de
+10. [Seguridad] Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de
     `<usuario>.github.io`. Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-10. [Rendimiento] Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`)
+11. [Rendimiento] Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`)
     y un `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro). Medir antes
     y después con `node tools/audit.mjs --repetir 3`.
-11. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+12. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-12. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
+13. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
     y mueve el resto a `docs/BITACORA.md` (idempotente: la segunda corrida dice «Nada que rotar»; queda
     una línea «Las iteraciones anteriores están en docs/BITACORA.md»); `--siguiente` sigue leyendo N de
     aquí y `--check` exige iteraciones sin repetidos entre los dos archivos. Motivo: `--salud` mide el
     archivo en cada iteración (77 KB el 2026-10-13, 55 KB de bitácora), y cada sesión nueva lo lee entero.
-13. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+14. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-14. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+15. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-15. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+16. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-16. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
+17. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
     (6.009 ms con ≤ 6.000; tareas largas 4.809 ms con ≤ 4.000), sin GPU y con la corrida larga; la corrida
     normal de la puerta no lo marca. Medir con `node tools/audit.mjs --repetir 3` antes de tocar nada.
-17. [QA] La auditoría completa con `--langs` marca 3 `objetivo-chico` en `celular-320` que la base no guarda
+18. [QA] La auditoría completa con `--langs` marca 3 `objetivo-chico` en `celular-320` que la base no guarda
     (`#branch-filter` 226×19, `#graph3d > div > button` 95×22 y `.default` 73×22): son los controles del
     pendiente 4 a 320 px, no un fallo nuevo. Decidir si entran a la base o se arreglan con el 4.
     Reproducción: `node tools/audit.mjs --langs`, escenario `celular-320`.
-18. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+19. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
     Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-19. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+20. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
@@ -1542,5 +1548,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: filas de token (va solo a su API, mismo `api()`), XSS (el panel escapa todo con `U.esc`; sin `innerHTML` nuevo), CSP sin cambios; sin mirar a mano: 320 px, 3D, Replay (no cambia la interfaz); auditoría: ver Validado.
 - Reclamo: loop/53, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
-- Validado: PENDIENTE
+- Validado: 226 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde. La primera corrida falló una e2e de escritorio sin relación (repo local); la repetición pasó y quedó como pendiente 3 `[Deuda]`.
 - **Siguiente:** iteración 54, expansión: ítem 27 (Replay por tramo de fechas y con rótulos propios, Salidas)

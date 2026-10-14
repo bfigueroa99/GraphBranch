@@ -4668,3 +4668,15 @@ button.hl-row:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: -2px;
 }
+
+.hl-digest {
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  font: 12px/1.5 var(--font-mono, ui-monospace, monospace);
+}

@@ -516,4 +516,16 @@ GB.i18n.define('sw', {
   'diff.openFile': 'Fungua faili',
   'diff.tooLong': 'Mistari {n} ya kwanza pekee ndiyo inaonyeshwa.',
   'diff.lines': '{add} zimeongezwa, {del} zimeondolewa',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Muhtasari wa wiki',
+  'digest.help': 'Siku 7 zilizopita, kutoka kwa data iliyopakiwa tayari. Nakili kama Markdown au hifadhi kama faili.',
+  'digest.copy': 'Nakili Markdown',
+  'digest.save': 'Hifadhi .md',
+  'digest.copied': 'Imenakiliwa.',
+  'digest.head': 'Muhtasari wa wiki · {repo}',
+  'digest.commits': 'Commit: {n}',
+  'digest.merged': 'Pull request zilizounganishwa',
+  'digest.releases': 'Matoleo',
+  'digest.people': 'Nani alichangia (commit)',
+  'digest.branch': 'Tawi lenye shughuli zaidi',
 });

@@ -573,4 +573,16 @@ GB.i18n.define('he', {
   'diff.openFile': 'פתח קובץ',
   'diff.tooLong': 'מוצגות רק {n} השורות הראשונות.',
   'diff.lines': '{add} נוספו, {del} הוסרו',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'סיכום השבוע',
+  'digest.help': '7 הימים האחרונים, ממה שכבר נטען. העתיקו כ-Markdown או שמרו כקובץ.',
+  'digest.copy': 'העתקת Markdown',
+  'digest.save': 'שמירת .md',
+  'digest.copied': 'הועתק.',
+  'digest.head': 'סיכום השבוע · {repo}',
+  'digest.commits': 'קומיטים: {n}',
+  'digest.merged': 'בקשות מיזוג שמוזגו',
+  'digest.releases': 'גרסאות',
+  'digest.people': 'מי תרם (קומיטים)',
+  'digest.branch': 'הענף הפעיל ביותר',
 });

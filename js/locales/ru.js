@@ -532,4 +532,16 @@ GB.i18n.define('ru', {
   'diff.openFile': 'Открыть файл',
   'diff.tooLong': 'Показаны только первые {n} строк.',
   'diff.lines': 'добавлено: {add}, удалено: {del}',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Итоги недели',
+  'digest.help': 'Последние 7 дней по уже загруженным данным. Скопируйте как Markdown или сохраните в файл.',
+  'digest.copy': 'Копировать Markdown',
+  'digest.save': 'Сохранить .md',
+  'digest.copied': 'Скопировано.',
+  'digest.head': 'Итоги недели · {repo}',
+  'digest.commits': 'Коммиты: {n}',
+  'digest.merged': 'Слитые pull request’ы',
+  'digest.releases': 'Релизы',
+  'digest.people': 'Кто внёс вклад (коммиты)',
+  'digest.branch': 'Самая активная ветка',
 });

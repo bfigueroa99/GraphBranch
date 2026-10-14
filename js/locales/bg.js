@@ -516,4 +516,16 @@ GB.i18n.define('bg', {
   'diff.openFile': 'Отваряне на файла',
   'diff.tooLong': 'Показани са само първите {n} реда.',
   'diff.lines': '{add} добавени, {del} премахнати',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Обобщение на седмицата',
+  'digest.help': 'Последните 7 дни, от вече заредените данни. Копирайте като Markdown или запазете във файл.',
+  'digest.copy': 'Копиране на Markdown',
+  'digest.save': 'Запазване на .md',
+  'digest.copied': 'Копирано.',
+  'digest.head': 'Обобщение на седмицата · {repo}',
+  'digest.commits': 'Комити: {n}',
+  'digest.merged': 'Слети pull request-и',
+  'digest.releases': 'Издания',
+  'digest.people': 'Кой е допринесъл (комити)',
+  'digest.branch': 'Най-активен клон',
 });

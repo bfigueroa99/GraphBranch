@@ -516,4 +516,16 @@ GB.i18n.define('zh-Hant', {
   'diff.openFile': '開啟檔案',
   'diff.tooLong': '僅顯示前 {n} 行。',
   'diff.lines': '新增 {add} 行，刪除 {del} 行',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': '本週摘要',
+  'digest.help': '根據已載入的資料,最近 7 天的情況。可複製為 Markdown,或儲存為檔案。',
+  'digest.copy': '複製 Markdown',
+  'digest.save': '儲存 .md',
+  'digest.copied': '已複製。',
+  'digest.head': '本週摘要 · {repo}',
+  'digest.commits': '提交:{n}',
+  'digest.merged': '已合併的拉取請求',
+  'digest.releases': '發布',
+  'digest.people': '誰做了貢獻(提交)',
+  'digest.branch': '最活躍的分支',
 });

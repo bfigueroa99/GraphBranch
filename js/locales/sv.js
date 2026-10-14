@@ -516,4 +516,16 @@ GB.i18n.define('sv', {
   'diff.openFile': 'Öppna fil',
   'diff.tooLong': 'Bara de första {n} raderna visas.',
   'diff.lines': '{add} tillagda, {del} borttagna',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Veckosammanfattning',
+  'digest.help': 'De senaste 7 dagarna, utifrån det som redan är inläst. Kopiera som Markdown eller spara som fil.',
+  'digest.copy': 'Kopiera Markdown',
+  'digest.save': 'Spara .md',
+  'digest.copied': 'Kopierat.',
+  'digest.head': 'Veckosammanfattning · {repo}',
+  'digest.commits': 'Commits: {n}',
+  'digest.merged': 'Sammanslagna pull requests',
+  'digest.releases': 'Releaser',
+  'digest.people': 'Vem som bidragit (commits)',
+  'digest.branch': 'Mest aktiva gren',
 });

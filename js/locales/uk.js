@@ -532,4 +532,16 @@ GB.i18n.define('uk', {
   'diff.openFile': 'Відкрити файл',
   'diff.tooLong': 'Показано лише перші {n} рядків.',
   'diff.lines': 'додано: {add}, вилучено: {del}',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Підсумки тижня',
+  'digest.help': 'Останні 7 днів за вже завантаженими даними. Скопіюйте як Markdown або збережіть у файл.',
+  'digest.copy': 'Копіювати Markdown',
+  'digest.save': 'Зберегти .md',
+  'digest.copied': 'Скопійовано.',
+  'digest.head': 'Підсумки тижня · {repo}',
+  'digest.commits': 'Коміти: {n}',
+  'digest.merged': 'Злиті pull request’и',
+  'digest.releases': 'Релізи',
+  'digest.people': 'Хто зробив внесок (коміти)',
+  'digest.branch': 'Найактивніша гілка',
 });

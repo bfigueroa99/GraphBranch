@@ -1081,11 +1081,13 @@
       }</section>` +
       `<section class="hl-sec" id="hl-clash"><h3>${U.esc(t('health.clash'))}</h3><p class="hl-none">${U.esc(t('health.clashHelp'))}</p><button type="button" class="btn btn-ghost" id="hl-clash-go">${U.esc(t('health.clashGo'))}</button><div id="hl-clash-out" role="status" aria-live="polite"></div></section>` +
       `<section class="hl-sec" id="hl-cmp"><h3>${U.esc(t('cmp.title'))}</h3><p class="hl-none">${U.esc(t('cmp.help'))}</p><div class="sr-row"><select id="cmp-a" aria-label="${U.esc(t('cmp.a'))}"></select><select id="cmp-b" aria-label="${U.esc(t('cmp.b'))}"></select></div><button type="button" class="btn btn-ghost" id="cmp-go">${U.esc(t('cmp.go'))}</button><div id="cmp-out" role="status" aria-live="polite"></div></section>` +
+      `<section class="hl-sec" id="hl-digest"><h3>${U.esc(t('digest.title'))}</h3><p class="hl-none">${U.esc(t('digest.help'))}</p><pre class="hl-digest" id="digest-md" tabindex="0" aria-label="${U.esc(t('digest.title'))}"></pre><div class="sr-row"><button type="button" class="btn btn-ghost" id="digest-copy">${U.esc(t('digest.copy'))}</button><button type="button" class="btn btn-ghost" id="digest-save">${U.esc(t('digest.save'))}</button></div><div id="digest-out" role="status" aria-live="polite"></div></section>` +
       `<div class="hl-stats">${stat(t('health.merges7'), h.pace.merges7)}${stat(t('health.merges30'), h.pace.merges30)}${stat(t('health.releases30'), h.pace.releases30)}</div>`;
     const clashBtn = $('#hl-clash-go');
     if (!source.files) clashBtn.hidden = true;
     clashBtn.addEventListener('click', () => findClashes(data, clashBtn));
     setupCompare(data);
+    setupDigest(data, acts);
     el.healthBody.querySelectorAll('.hl-list').forEach((ul) =>
       ul.querySelectorAll('[data-go]').forEach((b) =>
         b.addEventListener('click', () => {
@@ -1217,6 +1219,29 @@
         graph.focusBranch(c.rows[Number(b.dataset.go)].branches[0]);
       }),
     );
+  }
+
+  /** El resumen de la semana (js/digest.js): se arma con lo ya cargado, se copia o se baja como .md. */
+  function setupDigest(data, acts) {
+    const label = (k) => t('digest.' + k);
+    const d = GB.digest.compute(data, acts, Date.now(), 7, GB.i18n.text);
+    const repoName = active?.demo ? 'demo' : active?.key || data.repo.name || '';
+    const text = GB.digest.toMarkdown(d, repoName, { head: label('head'), commits: label('commits'), merged: label('merged'), releases: label('releases'), people: label('people'), branch: label('branch') }, GB.i18n.fmtDate, t('health.none'));
+    $('#digest-md').textContent = text;
+    const out = $('#digest-out');
+    $('#digest-copy').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+        out.textContent = label('copied');
+      } catch {
+        const range = document.createRange();
+        range.selectNodeContents($('#digest-md'));
+        const sel = getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range); // sin permiso del portapapeles: queda seleccionado para copiar a mano
+      }
+    });
+    $('#digest-save').addEventListener('click', () => GB.snapshot.download(new Blob([text], { type: 'text/markdown' }), GB.snapshot.fileName(repoName, { ext: 'md', kind: 'semana' })));
   }
 
   function closeHealth() {

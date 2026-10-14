@@ -295,6 +295,10 @@ se comprueban antes de construir sobre ellas.
 42. **Replay por tramo, segunda entrega** · Salidas · 1×2/1. [parte del ítem 27] El tramo y los rótulos viajan en la
     URL (`?replay=2026-09-01..2026-09-14&title=…`) para compartir un sprint ya listo, y el Replay arranca solo
     con ellos. Comprobar: prueba de la lectura de la URL y un paso del smoke con el enlace.
+43. **Ejercicios compartidos, segunda entrega** · Público · 1×2/1. [parte del ítem 28] Un ejercicio propio admite pistas
+    (`hint:`) que se muestran con un botón, y condiciones sobre el mensaje del último commit y sobre ramas sin
+    fusionar, para ejercicios más finos con `reset`. Comprobar: pruebas del codificado
+    con pistas y un paso del smoke.
 
 ## Cómo validar un cambio
 

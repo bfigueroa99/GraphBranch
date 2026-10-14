@@ -130,7 +130,7 @@ segunda columna a la primera.
 | Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (repos públicos, API de Forgejo), bitbucket.org (repos públicos, API 2.0 de Bitbucket Cloud), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), repos locales (app de escritorio, con `git`), demo | otros servidores de Gitea/Forgejo, Codeberg y Bitbucket con token |
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
-| Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
+| Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor | filtrar el grafo por autor |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado) | probar con NVDA, JAWS y VoiceOver |
@@ -237,11 +237,9 @@ se comprueban antes de construir sobre ellas.
     que suma solo ese host a `connect-src`): la API v4, los enlaces y el token van a esa instancia y a ninguna
     otra; sin https vuelve a gitlab.com. Sin hacer: reconocer una URL de la instancia en el cuadro de repos y
     los avatares (ítem 35); el listado de commits con token sale más caro que las comparaciones, sin cambios.
-26. **Una organización entera, tercera entrega** · Escala · 2×2/3. Los eventos de la organización en el panel
-    (`/orgs/{org}/events`, una consulta para todos sus repos), los grupos de GitLab
-    (`/groups/:id/projects?order_by=last_activity_at`) y una vista de constelación (cada repo, una
-    galaxia) para ver más repos de los que caben en pestañas. Comprobar: prueba de cuota con la API
-    simulada.
+26. ~~**Una organización entera, tercera entrega**~~ hecho en #81 · Escala. Los eventos de la organización
+    (`/orgs/{org}/events`, una consulta con ETag cada 5 minutos para todos sus repos) llegan al panel con el
+    nombre de su repo, solo los de repos sin pestaña. Los grupos de GitLab y la constelación son el ítem 41.
 27. **Replay por tramo de fechas y con rótulos propios** · Salidas · 2×2/1. [inv. 2026-10-13] Elegir desde y hasta qué día se graba o
     se reproduce el Replay y poner un título y un pie de foto al video, para mostrar un sprint o un lanzamiento.
     Comprobar: prueba del recorte de fechas y un paso del smoke con el tramo elegido.
@@ -283,6 +281,10 @@ se comprueban antes de construir sobre ellas.
 40. **Resaltar el tramo de cada rama comparada** · Análisis · 1×2/2. [parte del ítem 20] Al comparar dos ramas, los
     commits de cada una por delante y su punto de separación se marcan en el grafo (2D y 3D). Comprobar: un paso
     del smoke en la demo.
+41. **Una organización entera, cuarta entrega** · Escala · 2×2/3. Los grupos de GitLab
+    (`/groups/:id/projects?order_by=last_activity_at`) y una vista de constelación (cada repo, una
+    galaxia) para ver más repos de los que caben en pestañas. Comprobar: prueba de cuota con la API
+    simulada.
 
 ## Cómo validar un cambio
 
@@ -1531,3 +1533,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 224 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde.
 - **Siguiente:** iteración 53, expansión: ítem 26 (Una organización entera, tercera entrega, Escala)
+
+### 2026-10-14 · Iteración 53 · Expansión · Escala
+
+- **Capacidad nueva: los eventos de la organización en el panel** (ítem 26 de la hoja de ruta, partido: esta es la primera parte; los grupos de GitLab y la constelación pasan al ítem 41). `GitHubSource.orgFeed(owner)` pide `/orgs/{org}/events` (una consulta con ETag, cada 5 minutos, con la pestaña a la vista y sin pausa) y devuelve solo lo nuevo; la app lo suma al panel con el nombre de su repo, solo para repos sin pestaña propia. Un usuario (404) no da nada. Sin textos nuevos (reusa los de los eventos): i18n sin cambios. No está en la demo (no tiene organización).
+- **Pruebas que fallan sin la capacidad:** `tools/github.test.mjs` («eventos de una organización…», dos pruebas); smoke, paso «los eventos de la organización llegan al panel…».
+- README: la función, el apartado de la organización seguida, Límites conocidos.
+- QA: filas de token (va solo a su API, mismo `api()`), XSS (el panel escapa todo con `U.esc`; sin `innerHTML` nuevo), CSP sin cambios; sin mirar a mano: 320 px, 3D, Replay (no cambia la interfaz); auditoría: ver Validado.
+- Reclamo: loop/53, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: PENDIENTE
+- **Siguiente:** PENDIENTE

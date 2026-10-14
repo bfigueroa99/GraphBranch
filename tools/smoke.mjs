@@ -1131,7 +1131,7 @@ console.log('Una organización o un usuario entero');
     const toast = await page.waitForSelector('#toasts .toast:has-text("Ahora sigues los repositorios más activos de acme")', { timeout: 5000 });
     const detail = await toast.$eval('.toast-detail', (d) => d.textContent);
     if (detail !== 'api, web, viejo') throw new Error(`el aviso dice ${detail}`);
-    const lists = gh.calls.filter((c) => /^\/(orgs|users)\//.test(c));
+    const lists = gh.calls.filter((c) => /^\/(orgs|users)\/[^/]+\/repos$/.test(c));
     if (!lists.length || lists.some((c) => c !== '/orgs/acme/repos')) throw new Error(`consultas de la lista: ${lists.join(', ')}`); // las renovaciones piden la misma, una por organización
     const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
     if (saved !== '["acme/api","acme/web","acme/viejo"]') throw new Error(`se guardó ${saved}`);

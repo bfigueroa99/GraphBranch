@@ -29,6 +29,8 @@ function load(gl) {
     clearTimeout,
     URL,
     AbortController,
+    TextEncoder,
+    TextDecoder,
     fetch: gl.fetch,
     navigator: { onLine: true },
     document: { hidden: false, addEventListener() {}, removeEventListener() {} },
@@ -38,6 +40,7 @@ function load(gl) {
   });
   ctx.window = ctx;
   vm.runInContext(code('util.js'), ctx, { filename: 'util.js' });
+  vm.runInContext(code('diff.js'), ctx, { filename: 'diff.js' });
   vm.runInContext(
     `GB.i18n = { msg: (k, p) => ({ key: k, params: p }), text: (m) => (m && m.key) || String(m ?? ''),
        timeAgo: () => '', fmtNum: String, fmtDate: String, fmtDateTime: String };`,
@@ -470,4 +473,37 @@ test('eventos: si el feed no se puede leer, el resto del ciclo sigue; un 429 sí
   src.lastPoll.events = 0;
   await src.cycle();
   assert.equal(errors.length, 1, 'un 429 corta el ciclo, como en cualquier consulta');
+});
+
+test('los cambios de un commit: la comparación con su padre y, el primero, su propio diff; sin el listado bloqueado', async () => {
+  const gl = project();
+  gl.override = (path) => {
+    if (path.startsWith(PROJECT + '/repository/commits/m1/diff'))
+      return { body: [{ new_path: 'README.md', old_path: 'README.md', new_file: true, deleted_file: false, renamed_file: false, diff: '@@ -0,0 +1 @@\n+hola\n' }] };
+    if (path.startsWith(PROJECT + '/repository/compare?from=f1&to=f2&straight=true'))
+      return {
+        body: {
+          commits: [],
+          diffs: [
+            { new_path: 'src/b.js', old_path: 'src/a.js', new_file: false, deleted_file: false, renamed_file: true, diff: '@@ -1,2 +1,2 @@\n-x\n+y\n z\n' },
+            { new_path: 'img.png', old_path: 'img.png', new_file: false, deleted_file: false, renamed_file: false, diff: 'Binary files a/img.png and b/img.png differ\n' },
+            { new_path: 'old.txt', old_path: 'old.txt', new_file: false, deleted_file: true, renamed_file: false, diff: '' },
+          ],
+          compare_timeout: false,
+        },
+      };
+    return null;
+  };
+  const { src } = connect(gl);
+  await src.cycle();
+  const out = await src.commitDiff('f2');
+  assert.deepEqual(JSON.parse(JSON.stringify(out.files)), [
+    { path: 'src/b.js', from: 'src/a.js', status: 'renamed', add: 1, del: 1, binary: false, patch: '@@ -1,2 +1,2 @@\n-x\n+y\n z', url: `${WEB}/-/blob/f2/src/b.js` },
+    { path: 'img.png', from: null, status: 'modified', add: 0, del: 0, binary: true, patch: null, url: `${WEB}/-/blob/f2/img.png` },
+    { path: 'old.txt', from: null, status: 'removed', add: 0, del: 0, binary: false, patch: null, url: null },
+  ]);
+  const first = await src.commitDiff('m1');
+  assert.deepEqual(Array.from(first.files, (f) => [f.path, f.status, f.add]), [['README.md', 'added', 1]]);
+  assert.ok(!gl.calls.some((c) => /\/repository\/commits(\?|$)/.test(c)), 'nunca el listado de commits');
+  assert.equal(src.diffCheap(), true);
 });

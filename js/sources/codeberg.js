@@ -307,6 +307,25 @@
       }
       return { kind: 'tree', files, truncated };
     }
+
+    /** Los cambios de un commit: el diff en texto que da Forgejo (`git/commits/{sha}.diff`), una consulta. */
+    async commitDiff(sha) {
+      const text = await this.raw(`${this.base}/git/commits/${encodeURIComponent(sha)}.diff`);
+      const files = GB.diff.parseGit(text).map((f) => ({ ...f, url: f.status === 'removed' ? null : this.link('blob', sha, f.path) }));
+      return { files, truncated: false };
+    }
+
+    /** Una consulta cuya respuesta es texto y no JSON. */
+    async raw(path) {
+      const { res, body } = await this.request(API + path, { headers: { Accept: 'text/plain' }, cache: 'no-store', raw: true });
+      this.cost++;
+      if (!res.ok) throw this.toError(res, null);
+      return body;
+    }
+
+    diffCheap() {
+      return true;
+    }
   }
 
   GB.CodebergSource = CodebergSource;

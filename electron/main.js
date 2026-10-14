@@ -267,6 +267,7 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle('git:log', guard((id, sha, exclude, n) => local.log(id, sha, exclude, n)));
     ipcMain.handle('git:ancestor', guard((id, a, b) => local.isAncestor(id, a, b)));
     ipcMain.handle('git:files', guard((id, sha, base) => local.files(id, sha, base)));
+    ipcMain.handle('git:diff', guard((id, sha) => local.diff(id, sha)));
     ipcMain.handle('git:watch', guard((id) => watchRepo(id)));
     ipcMain.handle('git:unwatch', guard((id) => unwatchRepo(id)));
     // los textos de la bandeja, en el idioma de la página

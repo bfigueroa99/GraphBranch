@@ -569,6 +569,7 @@
       this.tip.setAttribute('aria-label', tr('tip.aria'));
       wrap.appendChild(this.tip);
       GB.graphShared.wirePinButton(this.tip, (name) => this.opts.onTogglePin?.(name));
+      GB.graphShared.wireDiffButton(this.tip, (sha) => this.opts.onDiff?.(sha));
 
       /* vectores de trabajo: el cuadro a cuadro no crea objetos */
       this.Y = new THREE.Vector3(0, 1, 0);
@@ -756,6 +757,7 @@
       this.lastRender = 0;
       this.mouse = null;
       this.hoverSha = null;
+      this.selSha = null; // el commit de los cambios a la vista (ver select)
       this.raycaster = new THREE.Raycaster();
 
       this.readTheme();
@@ -1585,6 +1587,13 @@
       this.flyTo(t, t.clone().add(off));
     }
 
+    /** El commit cuyos cambios se ven en el panel (js/diff.js) queda resaltado, como bajo el puntero. */
+    select(sha) {
+      if (this.selSha === sha) return;
+      this.selSha = sha || null;
+      this.dirtyNodes = true;
+    }
+
     setHover(sha) {
       if (this.hoverSha === sha) return;
       this.hoverSha = sha;
@@ -1953,7 +1962,7 @@
         if (this.lerpItem(it, now)) moving = true;
         if (it.born && now - it.born >= 550) it.born = 0;
         if (it.born) anim = true;
-        const hov = it.sha === this.hoverSha ? 1 : 0;
+        const hov = it.sha === this.hoverSha || it.sha === this.selSha ? 1 : 0;
         if (Math.abs(it.hov - hov) > 0.01) {
           it.hov += (hov - it.hov) * k;
           anim = true;

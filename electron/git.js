@@ -181,6 +181,25 @@ async function files(id, sha, base) {
   return { kind: 'diff', files: rows, truncated: rows.length >= 300 };
 }
 
+/** Los cambios de un commit frente a su primer padre (el primero del repo, frente a nada), como texto de
+    `git diff`, hasta DIFF_MAX: más largo se corta en el último archivo entero. Sin diff ni textconv
+    externos: la configuración del repo no puede hacer correr nada. */
+const DIFF_MAX = 4 * 1024 * 1024;
+async function diff(id, sha) {
+  const dir = dirOf(id);
+  if (!SHA.test(sha)) throw new Error('commit inválido');
+  const parent = (await git(dir, ['rev-list', '--parents', '-n', '1', sha])).trim().split(' ')[1];
+  const args = ['diff-tree', '-p', '-r', '--find-renames', '--no-color', '--no-ext-diff', '--no-textconv'];
+  let text = await git(dir, [...args, ...(parent && SHA.test(parent) ? [parent, sha] : ['--root', sha])]);
+  let truncated = false;
+  if (text.length > DIFF_MAX) {
+    const cut = text.lastIndexOf('\ndiff --git ', DIFF_MAX);
+    text = text.slice(0, cut > 0 ? cut + 1 : DIFF_MAX);
+    truncated = true;
+  }
+  return { text, truncated };
+}
+
 /**
  * Avisa con `onChange(id)` cuando algo se mueve en las ramas del repo: .git/refs (commits, ramas
  * nuevas y borradas), packed-refs y HEAD. Junta los avisos en uno (una operación de git toca varios
@@ -216,4 +235,4 @@ function watch(id, onChange) {
   };
 }
 
-module.exports = { init, allow, branches, log, isAncestor, files, watch, repos };
+module.exports = { init, allow, branches, log, isAncestor, files, diff, watch, repos };

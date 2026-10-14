@@ -635,6 +635,70 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: 3000 });
   });
 
+  await step(page, 'cambios de un commit: desde su ficha, con teclado se pasa al anterior y se vuelve, y Esc cierra', async () => {
+    await page.keyboard.press('Escape'); // ninguna ficha abierta de antes
+    await page.click('#view-2d');
+    const heads = await page.$$('#graph svg .head[role=button]');
+    await heads[heads.length > 3 ? 3 : 0].focus();
+    await page.keyboard.press('Enter');
+    const btn = await page.waitForSelector('#graph .tip .tip-diff', { timeout: 5000 });
+    await btn.focus();
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#diff-panel:not([hidden]) .df-file', { timeout: 5000 });
+    const read = () =>
+      page.evaluate(() => {
+        const p = document.querySelector('#diff-panel');
+        return {
+          focus: document.activeElement?.id,
+          msg: p.querySelector('.df-msg').textContent,
+          sum: p.querySelector('.df-sum').textContent,
+          files: p.querySelectorAll('.df-jump').length,
+          lines: p.querySelectorAll('.df-code .dl-add, .df-code .dl-del').length,
+          loading: p.classList.contains('loading'),
+          feed: getComputedStyle(document.querySelector('.feed-panel')).display,
+          sel: document.querySelectorAll('#graph .node.sel').length,
+          unnamed: [...p.querySelectorAll('button')].filter((b) => !b.getAttribute('aria-label') && !b.textContent.trim()).length,
+          overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        };
+      });
+    const first = await read();
+    if (first.focus !== 'diff-title') throw new Error(`al abrir, el foco quedó en ${first.focus}`);
+    if (!first.files || !first.lines) throw new Error(`sin archivos o sin líneas: ${first.files} archivos, ${first.lines} líneas`);
+    if (/undefined|NaN|diff\./.test(first.sum)) throw new Error('texto sin resolver: ' + first.sum);
+    if (first.feed !== 'none') throw new Error('el panel de actividad sigue a la vista junto a los cambios');
+    if (first.sel !== 1) throw new Error(`el grafo marca ${first.sel} commits como el que se ve`);
+    if (first.unnamed) throw new Error(`${first.unnamed} botones sin nombre`);
+    if (first.overflow > 0) throw new Error(`la página se desborda ${first.overflow}px`);
+    await page.keyboard.press('ArrowLeft');
+    await page.waitForFunction((m) => document.querySelector('#diff-panel .df-msg').textContent !== m && !document.querySelector('#diff-panel').classList.contains('loading'), first.msg, { timeout: 5000 });
+    const older = await read();
+    if (!older.files) throw new Error('el commit anterior llegó sin archivos');
+    // el anterior ya está guardado: volver es inmediato, sin esperar a la red
+    await page.keyboard.press('k');
+    const back = await read();
+    if (back.msg !== first.msg) throw new Error(`K no volvió al commit de donde se vino: ${back.msg}`);
+    if (back.loading) throw new Error('volver a un commit ya visto no debería esperar');
+    // con el botón «anterior» hasta el primer commit cargado: al deshabilitarse, el foco no sale del panel
+    await page.focus('#diff-panel .df-older');
+    for (let i = 0; i < 40 && !(await page.$eval('#diff-panel .df-older', (b) => b.disabled)); i++) {
+      await page.keyboard.press('Enter');
+      await page.waitForFunction(() => !document.querySelector('#diff-panel').classList.contains('loading'), null, { timeout: 5000 });
+    }
+    const end = await page.evaluate(() => ({ disabled: document.querySelector('#diff-panel .df-older').disabled, inPanel: !!document.activeElement?.closest('#diff-panel') }));
+    if (!end.disabled) throw new Error('el botón «anterior» nunca llegó al primer commit cargado');
+    if (!end.inPanel) throw new Error('al llegar al primer commit, el foco salió del panel');
+    await page.keyboard.press('Escape');
+    const closed = await page.evaluate(() => ({
+      hidden: document.querySelector('#diff-panel').hidden,
+      feed: getComputedStyle(document.querySelector('.feed-panel')).display,
+      inGraph: !!document.activeElement?.closest('#graph'),
+      sel: document.querySelectorAll('#graph .node.sel').length,
+    }));
+    if (!closed.hidden || closed.feed === 'none') throw new Error('Esc no cerró el panel ni devolvió el de actividad');
+    if (!closed.inGraph) throw new Error('al cerrar, el foco no volvió al grafo');
+    if (closed.sel) throw new Error('al cerrar, el grafo sigue marcando el commit');
+  });
+
   await step(page, 'cambia a árabe en vivo (derecha a izquierda)', async () => {
     await page.selectOption('#lang-select', 'ar');
     await page.waitForFunction(() => document.documentElement.dir === 'rtl', null, { timeout: 5000 });

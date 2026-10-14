@@ -476,6 +476,42 @@
       });
       return { kind: 'diff', base: def.name, files, truncated: !!data?.compare_timeout };
     }
+
+    /** Los cambios de un commit frente a su primer padre: la comparación de los dos (la misma consulta que ya
+        sirve sin token); el primer commit del proyecto, sin padre, con su propio diff. */
+    async commitDiff(sha) {
+      const parent = this.data.commits.get(sha)?.parents?.[0];
+      let diffs;
+      let truncated = false;
+      if (parent) {
+        const { data } = await this.api(`${this.base}/repository/compare?from=${encodeURIComponent(parent)}&to=${encodeURIComponent(sha)}&straight=true`);
+        diffs = data?.diffs || [];
+        truncated = !!data?.compare_timeout;
+      } else {
+        const res = await this.api(`${this.base}/repository/commits/${encodeURIComponent(sha)}/diff?per_page=100`);
+        diffs = res.data || [];
+        truncated = /rel="next"/.test(res.headers?.get?.('Link') || '');
+      }
+      const files = diffs.map((d) => {
+        const status = d.new_file ? 'added' : d.deleted_file ? 'removed' : d.renamed_file ? 'renamed' : 'modified';
+        const text = String(d.diff || '');
+        const patch = text.startsWith('@@') ? text.replace(/\n$/, '') : null;
+        return {
+          path: d.new_path,
+          from: d.renamed_file ? d.old_path : null,
+          status,
+          ...(patch ? GB.diff.count(patch) : { add: 0, del: 0 }),
+          binary: /^Binary files /.test(text),
+          patch,
+          url: status === 'removed' ? null : this.link('blob', sha, d.new_path),
+        };
+      });
+      return { files, truncated };
+    }
+
+    diffCheap() {
+      return true;
+    }
   }
 
   GB.GitLabSource = GitLabSource;

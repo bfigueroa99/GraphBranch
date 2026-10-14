@@ -20,6 +20,8 @@ contextBridge.exposeInMainWorld('GBDesktop', {
     log: (id, sha, exclude, n) => ipcRenderer.invoke('git:log', String(id), String(sha), exclude == null ? null : String(exclude), Number(n)),
     isAncestor: (id, a, b) => ipcRenderer.invoke('git:ancestor', String(id), String(a), String(b)),
     files: (id, sha, base) => ipcRenderer.invoke('git:files', String(id), String(sha), base == null ? null : String(base)),
+    /** Los cambios de un commit frente a su primer padre → { text, truncated } (texto de git diff). */
+    diff: (id, sha) => ipcRenderer.invoke('git:diff', String(id), String(sha)),
     /** Empieza (o deja) de vigilar las ramas de esa carpeta; los cambios llegan a onChange(id). */
     watch: (id) => ipcRenderer.invoke('git:watch', String(id)),
     unwatch: (id) => ipcRenderer.invoke('git:unwatch', String(id)),

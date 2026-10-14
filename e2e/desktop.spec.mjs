@@ -354,6 +354,20 @@ test('un repositorio de esta máquina se sigue sin GitHub: ve un commit y una ra
   repo.commit('c.txt', 'tercero, sin publicar');
   await expect(page.locator('#st-branches')).toHaveText('2', { timeout: 3_000 });
   await expect(page.locator('#feed')).toContainText('experimento');
+  // los cambios de un commit salen de git, por el proceso principal, y se pasa al anterior con ←
+  await page.click('#view-2d');
+  const head = page.locator('#graph svg .head[role=button]', { hasText: 'experimento' });
+  await head.focus();
+  await page.keyboard.press('Enter');
+  await page.locator('#graph .tip .tip-diff').click();
+  await expect(page.locator('#diff-panel .df-msg')).toHaveText('tercero, sin publicar');
+  await expect(page.locator('#diff-panel .df-jump')).toHaveText(['Ac.txt']);
+  await expect(page.locator('#diff-panel .df-code .dl-add')).toContainText(['tercero, sin publicar']);
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.locator('#diff-panel .df-msg')).toHaveText('segundo');
+  await expect(page.locator('#diff-panel .df-jump')).toHaveText(['Ab.txt']);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#diff-panel')).toBeHidden();
   // la página nunca llegó a la red: solo habló con el proceso principal
   expect(await page.evaluate(() => performance.getEntriesByType('resource').filter((e) => /^https?:/.test(e.name)).length)).toBe(0);
   await app.close();
@@ -403,6 +417,8 @@ test('la página no puede pedir carpetas que el usuario no eligió', async ({}, 
   expect(err).toContain('unknown');
   const bad = await page.evaluate(() => window.GBDesktop.git.log('0123456789ab', '--output=/tmp/x', null, 5).then(() => null, (e) => e.message));
   expect(bad).toContain('unknown'); // el id se comprueba antes que lo demás
-  expect(await page.evaluate(() => Object.keys(window.GBDesktop.git).sort())).toEqual(['branches', 'files', 'isAncestor', 'log', 'onChange', 'pick', 'unwatch', 'watch']);
+  const diff = await page.evaluate(() => window.GBDesktop.git.diff('0123456789ab', '--output=/tmp/x').then(() => null, (e) => e.message));
+  expect(diff).toContain('unknown');
+  expect(await page.evaluate(() => Object.keys(window.GBDesktop.git).sort())).toEqual(['branches', 'diff', 'files', 'isAncestor', 'log', 'onChange', 'pick', 'unwatch', 'watch']);
   await app.close();
 });

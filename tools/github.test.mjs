@@ -614,3 +614,47 @@ test('una URL de API que no es https no se usa: la fuente sigue en api.github.co
   }
   assert.equal(GB.GitHubSource.endpoints(GHE).graphql, 'https://ghe.example.com/api/graphql');
 });
+
+test('los cambios de un commit: una consulta, con el tramo de cada archivo; sin token no se adelantan los vecinos', async () => {
+  const gh = fakeGitHub();
+  gh.commit('a1');
+  gh.commit('a2', 'a1');
+  gh.branches.set('main', 'a2');
+  gh.override = (path) => {
+    if (path !== '/repos/o/r/commits/a2') return null;
+    return {
+      body: {
+        sha: 'a2',
+        files: [
+          { filename: 'src/app.js', status: 'modified', additions: 1, deletions: 1, changes: 2, patch: '@@ -1 +1 @@\n-a\n+b' },
+          { filename: 'docs/nuevo.md', previous_filename: 'viejo.md', status: 'renamed', additions: 0, deletions: 0, changes: 0 },
+          { filename: 'logo.png', status: 'removed', additions: 0, deletions: 0, changes: 0 },
+          { filename: 'x.js', status: 'copied', additions: 2, deletions: 0, changes: 2, patch: '@@ -0,0 +1,2 @@\n+a\n+b' },
+        ],
+      },
+      headers: { Link: '<https://api.github.com/repos/o/r/commits/a2?page=2>; rel="next"' },
+    };
+  };
+  const { src, errors } = connect(gh);
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  const before = gh.calls.length;
+  const out = await src.commitDiff('a2');
+  assert.deepEqual(gh.calls.slice(before), ['/repos/o/r/commits/a2']);
+  assert.equal(out.truncated, true, 'con más páginas de archivos, la lista no está completa');
+  assert.deepEqual(
+    Array.from(out.files, (f) => [f.path, f.status, f.from, f.add, f.del, f.patch, f.url]),
+    [
+      ['src/app.js', 'modified', null, 1, 1, '@@ -1 +1 @@\n-a\n+b', 'https://github.com/o/r/blob/a2/src/app.js'],
+      ['docs/nuevo.md', 'renamed', 'viejo.md', 0, 0, null, 'https://github.com/o/r/blob/a2/docs/nuevo.md'],
+      ['logo.png', 'removed', null, 0, 0, null, null],
+      ['x.js', 'modified', null, 2, 0, '@@ -0,0 +1,2 @@\n+a\n+b', 'https://github.com/o/r/blob/a2/x.js'],
+    ],
+  );
+  assert.equal(src.diffCheap(), false, 'sin token cada consulta es de 60 por hora');
+  const withToken = connect(gh, 'ghp_x').src;
+  withToken.rate = { limit: 5000, remaining: 4000, reset: 0 };
+  assert.equal(withToken.diffCheap(), true);
+  withToken.rate.remaining = 200;
+  assert.equal(withToken.diffCheap(), false, 'con la cuota casi gastada, tampoco');
+});

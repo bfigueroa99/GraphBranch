@@ -237,6 +237,19 @@
         <div class="replay" id="replay" hidden>
           <div class="rp-clock" aria-hidden="true"><span class="rp-date"></span><span class="rp-time"></span></div>
           <p class="rp-caption" role="status" aria-live="polite"></p>
+          <p class="rp-head" hidden></p>
+          <p class="rp-foot" hidden></p>
+          <form class="rp-form" id="rp-form" hidden>
+            <label><span data-i18n="replay.from">From</span><input type="date" name="from"></label>
+            <label><span data-i18n="replay.to">To</span><input type="date" name="to"></label>
+            <label class="wide"><span data-i18n="replay.title">Title</span><input type="text" name="title" maxlength="80" autocomplete="off"></label>
+            <label class="wide"><span data-i18n="replay.footer">Footer</span><input type="text" name="footer" maxlength="120" autocomplete="off"></label>
+            <div class="rp-form-btns">
+              <button type="submit" class="btn" data-i18n="replay.apply">Apply</button>
+              <button type="reset" class="btn btn-ghost" data-i18n="replay.reset">Whole history</button>
+            </div>
+            <p class="rp-form-msg" role="status" aria-live="polite"></p>
+          </form>
           <div class="rp-bar">
             <button type="button" class="icon-btn rp-play" aria-pressed="false">
               <svg class="ico when-off" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.5v9M10.5 3.5v9"/></svg>
@@ -247,6 +260,9 @@
               <input type="range" class="rp-range" min="0" max="1000" step="1" value="0" aria-label="Position in the history" data-i18n-attr="aria-label:replay.position">
             </div>
             <button type="button" class="btn btn-ghost rp-speed" title="Replay speed" data-i18n-attr="title:replay.speed">1×</button>
+            <button type="button" class="icon-btn rp-opts" aria-expanded="false" aria-controls="rp-form" title="Range and captions" aria-label="Range and captions" data-i18n-attr="title:replay.opts;aria-label:replay.opts">
+              <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 7h11M5.5 2v3M10.5 2v3"/></svg>
+            </button>
             <button type="button" class="icon-btn rp-rec" aria-pressed="false" title="Record the history as a video, from the beginning" aria-label="Record video">
               <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.6"/><circle class="rec-dot" cx="8" cy="8" r="2.8"/></svg>
             </button>

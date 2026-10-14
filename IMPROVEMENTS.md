@@ -131,7 +131,7 @@ segunda columna a la primera.
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (grupos de GitLab, constelación) |
-| Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
+| Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor | filtrar el grafo por autor |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado) | probar con NVDA, JAWS y VoiceOver |
 
@@ -240,7 +240,7 @@ se comprueban antes de construir sobre ellas.
 26. ~~**Una organización entera, tercera entrega**~~ hecho en #81 · Escala. Los eventos de la organización
     (`/orgs/{org}/events`, una consulta con ETag cada 5 minutos para todos sus repos) llegan al panel con el
     nombre de su repo, solo los de repos sin pestaña. Los grupos de GitLab y la constelación son el ítem 41.
-27. **Replay por tramo de fechas y con rótulos propios** · Salidas · 2×2/1. [inv. 2026-10-13] Elegir desde y hasta qué día se graba o
+27. ~~**Replay por tramo de fechas y con rótulos propios**~~ hecho en #82 · Salidas · 2×2/1. [inv. 2026-10-13] Elegir desde y hasta qué día se graba o
     se reproduce el Replay y poner un título y un pie de foto al video, para mostrar un sprint o un lanzamiento.
     Comprobar: prueba del recorte de fechas y un paso del smoke con el tramo elegido.
 28. **Ejercicios de Aprender git compartidos por URL** · Público · 2×2/1. [parte del ítem 16] Un ejercicio propio (estado inicial y
@@ -285,6 +285,9 @@ se comprueban antes de construir sobre ellas.
     (`/groups/:id/projects?order_by=last_activity_at`) y una vista de constelación (cada repo, una
     galaxia) para ver más repos de los que caben en pestañas. Comprobar: prueba de cuota con la API
     simulada.
+42. **Replay por tramo, segunda entrega** · Salidas · 1×2/1. [parte del ítem 27] El tramo y los rótulos viajan en la
+    URL (`?replay=2026-09-01..2026-09-14&title=…`) para compartir un sprint ya listo, y el Replay arranca solo
+    con ellos. Comprobar: prueba de la lectura de la URL y un paso del smoke con el enlace.
 
 ## Cómo validar un cambio
 
@@ -355,6 +358,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     topes fijos por esperas a un estado.
     También (iteración 40, una corrida de `npm run check`; la repetición pasó): el paso «con ?repo=@ana en la URL se
     siguen los repos de ese usuario» guardó `["ana/notas","acme/nuevo",…]` con el orden cambiado; mismo remedio.
+    También (iteración 54, `xvfb-run -a npm run check`; la repetición pasó): el paso «cambios de un commit: desde su
+    ficha, con teclado se pasa al anterior y se vuelve, y Esc cierra» venció en `page.waitForFunction` (5 s); mismo remedio.
 
 3. [Deuda] e2e de escritorio: «un repositorio de esta máquina se sigue sin GitHub…» (`e2e/desktop.spec.mjs:360`)
     falló una vez en `npm run check` (iteración 53, `xvfb-run`; la repetición pasó): el panel de cambios
@@ -1550,3 +1555,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 226 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde. La primera corrida falló una e2e de escritorio sin relación (repo local); la repetición pasó y quedó como pendiente 3 `[Deuda]`.
 - **Siguiente:** iteración 54, expansión: ítem 27 (Replay por tramo de fechas y con rótulos propios, Salidas)
+
+### 2026-10-14 · Iteración 54 · Expansión · Salidas
+
+- **Capacidad nueva: el Replay por tramo de fechas y con rótulos propios** (ítem 27 de la hoja de ruta). Un botón de calendario en la barra del Replay abre un formulario con Desde, Hasta, Título y Pie de foto: el Replay (y su video) cubre solo los commits del tramo, con la línea de tiempo y las marcas ajustadas a él, y el título y el pie se ven sobre el grafo y entran al video (`extra` de la grabación). Un tramo sin commits avisa y deja el Replay como estaba; «Toda la historia» lo quita. La lógica del tramo es `Replay.rangeOf` (pura). Sin consultas nuevas a la API; visible en la demo.
+- **Pruebas que fallan sin la capacidad:** `tools/replay.test.mjs` (3 pruebas del recorte por fechas); smoke, paso «replay: tramo de fechas y rótulos propios».
+- README: la función (Replay y su botón), la lista de controles, Límites conocidos y la lista de pruebas.
+- QA: filas de XSS (título y pie van con `textContent`, sin `innerHTML` nuevo), CSP sin cambios, teclado (Esc cierra el formulario y devuelve el foco al botón), i18n (8 textos en los 40 idiomas); sin mirar a mano: 320 px, tema claro/oscuro, RTL, 3D; auditoría: ver Validado.
+- Reclamo: loop/54, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 229 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde. La primera corrida falló un paso del smoke sin relación (cambios de un commit); la repetición pasó y quedó anotado en el pendiente 2 `[Deuda]`.
+- **Siguiente:** iteración 55, mantenimiento · Deuda: pendiente 1 (Smoke: una vez (iteración 27, corrida completa con `--langs`) el cuadro de la m…)

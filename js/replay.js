@@ -40,6 +40,16 @@
     return lo;
   }
 
+  /** Tramo de la línea de tiempo (`pos`, instantes por commit; `dates`, sus fechas) entre dos fechas en ms
+      (`from`/`to`, vacías = sin límite, inclusivas). Devuelve { u0, U, first, last } o null si no cae ningún commit. */
+  function rangeOf(dates, pos, from, to) {
+    const first = from == null ? 0 : dates.findIndex((d) => d >= from);
+    let last = dates.length - 1;
+    if (to != null) while (last >= 0 && dates[last] > to) last--;
+    if (first < 0 || last < first) return null;
+    return { u0: first > 0 ? pos[first - 1] : 0, U: pos[last], first, last };
+  }
+
   /** "Título (#12)" → { num: 12, title: 'Título' }: así quedan los PR fusionados con squash. */
   const squashOf = (line) => {
     const m = /^(.*\S)\s*\(#(\d+)\)\s*$/.exec(line);
@@ -56,6 +66,7 @@
       this.active = false;
       this.playing = false;
       this.speedIdx = 1;
+      this.opts = {};
       this.el = {
         date: root.querySelector('.rp-date'),
         time: root.querySelector('.rp-time'),
@@ -65,6 +76,8 @@
         marks: root.querySelector('.rp-marks'),
         speed: root.querySelector('.rp-speed'),
         exit: root.querySelector('.rp-exit'),
+        head: root.querySelector('.rp-head'),
+        foot: root.querySelector('.rp-foot'),
       };
       this.tick = this.tick.bind(this);
       this.el.play.addEventListener('click', () => this.toggle());
@@ -72,7 +85,7 @@
       this.el.exit.addEventListener('click', () => this.stop());
       // arrastrar la línea de tiempo salta a ese momento (sin animar cada commit intermedio)
       this.el.range.addEventListener('input', () => {
-        this.u = (Number(this.el.range.value) / 1000) * this.U;
+        this.u = this.u0 + (Number(this.el.range.value) / 1000) * (this.U - this.u0);
         this.seek(true);
         this.renderClock();
       });
@@ -108,7 +121,8 @@
       this.pos = [];
       let u = 0;
       for (let i = 0; i < seq.length; i++) this.pos.push((u += squeezed[i] + step));
-      this.U = u + step;
+      this.UT = this.U = u + step;
+      this.u0 = 0;
 
       /* ramas vivas: sus commits propios (los que el layout les asigna), del más nuevo al más viejo */
       const byChain = new Map();
@@ -184,6 +198,10 @@
         const i = Math.min(seq.length - 1, countUpTo(dates, a.time));
         mark(i, { rank: 3, kind: 'release', title: a.title, detail: a.detail, act: a });
       }
+      const r = rangeOf(dates, this.pos, this.opts.from ?? null, this.opts.to ?? null);
+      if (!r) return false;
+      this.u0 = r.u0;
+      this.U = r.last === seq.length - 1 ? this.UT : Math.max(r.U, r.u0 + step);
       this.renderMarks();
       return true;
     }
@@ -239,14 +257,17 @@
 
     /* ---------- reproducción ---------- */
 
-    start(data, events = []) {
+    /** `opts`: { from, to } (ms; el tramo a reproducir), { title, footer } (rótulos propios). */
+    start(data, events = [], opts = {}) {
       this.stop(true);
+      this.opts = { ...opts };
       if (!this.build(data, events)) return false;
+      this.renderHeads();
       this.layout = new GB.Layout(); // propio: colores y carriles estables durante toda la reproducción
       this.active = true;
       this.root.hidden = false;
       this.k = -1;
-      this.u = 0;
+      this.u = this.u0;
       this.lastUpdate = 0;
       this.el.caption.textContent = '';
       this.seek(true);
@@ -264,6 +285,7 @@
       this.root.hidden = true;
       clearTimeout(this.captionTimer);
       this.seq = this.commits = this.layout = null;
+      this.opts = {};
       this.onState?.(false);
       if (!silent) this.onExit?.();
     }
@@ -272,7 +294,7 @@
       if (!this.active) return;
       if (this.u >= this.U) {
         // terminada: vuelve a empezar
-        this.u = 0;
+        this.u = this.u0;
         this.seek(true);
       }
       this.playing = true;
@@ -297,7 +319,7 @@
     /** Desde el principio, andando (para grabarla entera). */
     restart() {
       if (!this.active) return;
-      this.u = 0;
+      this.u = this.u0;
       this.seek(true);
       this.renderClock();
       this.play();
@@ -313,7 +335,7 @@
       if (!this.active || !this.playing) return;
       const dt = Math.min(0.1, (now - this.last) / 1000);
       this.last = now;
-      this.u = Math.min(this.U, this.u + (dt * SPEEDS[this.speedIdx] * this.U) / DURATION);
+      this.u = Math.min(this.U, this.u + (dt * SPEEDS[this.speedIdx] * (this.U - this.u0)) / DURATION);
       if (now - this.lastUpdate >= UPDATE_MS || this.u >= this.U) {
         this.lastUpdate = now;
         this.seek(false);
@@ -357,7 +379,7 @@
       const loc = i18n.locale;
       this.el.date.textContent = new Intl.DateTimeFormat(loc, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(ms);
       this.el.time.textContent = i18n.fmtTime(ms);
-      const v = Math.round((this.u / this.U) * 1000);
+      const v = Math.round(((this.u - this.u0) / (this.U - this.u0)) * 1000);
       if (Number(this.el.range.value) !== v) this.el.range.value = v;
       this.el.range.setAttribute('aria-valuetext', `${this.el.date.textContent} ${this.el.time.textContent}`);
     }
@@ -374,10 +396,20 @@
       const html = [];
       for (const [i, m] of this.marks) {
         if (m.kind === 'branch-create') continue;
-        const left = ((this.pos[i] / this.U) * 100).toFixed(2);
+        if (this.pos[i] < this.u0 || this.pos[i] > this.U) continue; // fuera del tramo
+        const left = (((this.pos[i] - this.u0) / (this.U - this.u0)) * 100).toFixed(2);
         html.push(`<span class="rp-mark ${m.kind === 'release' ? 'release' : 'merge'}" style="left:${left}%"></span>`);
       }
       this.el.marks.innerHTML = html.join('');
+    }
+
+    /** Título y pie de foto propios, sobre el grafo (también quedan en el video). */
+    renderHeads() {
+      const { title = '', footer = '' } = this.opts;
+      this.el.head.textContent = title;
+      this.el.foot.textContent = footer;
+      this.el.head.hidden = !title;
+      this.el.foot.hidden = !footer;
     }
 
     caption(m) {
@@ -400,5 +432,6 @@
     }
   }
 
+  Replay.rangeOf = rangeOf;
   GB.Replay = Replay;
 })(window.GB);

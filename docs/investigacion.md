@@ -188,7 +188,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Comparar dos ramas | Análisis | 2×2/2 | 2,0 | gitk | ítem 20 |
 | Bitbucket Cloud | Fuentes | 2×2/2 | 2,0 | Sourcetree | ítem 22 |
 | Extensión de VS Code | Plataformas | 3×2/3 | 2,0 | GitLens | ítem 24 |
-| Filtrar el grafo por ruta de archivo | Análisis | 2×2/2 | 2,0 | gitk | ítem 29 |
+| Filtrar el grafo por ruta de archivo | Análisis | 2×2/2 | 2,0 | gitk | hecho en #86 |
 | Los forks en el grafo | Datos | 2×2/2 | 2,0 | Red de ramas de GitHub | ítem 30 |
 | Ensayar un comando sobre el repo real | Público | 2×3/3 | 2,0 | git-sim | ítem 31 |
 | GitHub Enterprise Server | Fuentes | 1×3/2 | 1,5 | GitKraken (plan Advanced) | ítem 13 |
@@ -206,6 +206,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Resaltar el tramo de cada rama comparada | Análisis | 1×2/2 | 1,0 | gitk | ítem 40 |
 | Replay por tramo, segunda entrega | Salidas | 1×2/1 | 2,0 | (ítem 27) | ítem 42 |
 | Ejercicios compartidos, segunda entrega | Público | 1×2/1 | 2,0 | (ítem 28) | ítem 43 |
+| Filtrar por ruta, segunda entrega | Análisis | 1×2/1 | 2,0 | (ítem 29) | ítem 44 |
 
 ## Públicos
 

@@ -253,7 +253,7 @@ se comprueban antes de construir sobre ellas.
 28. ~~**Ejercicios de Aprender git compartidos por URL**~~ hecho en #85 · Público · 2×2/1. [parte del ítem 16] Un ejercicio propio
     (título, meta, comandos de partida y condiciones de una lista cerrada) viaja en `?practice=<código>`; se crea en
     «Crear un ejercicio para compartir» y se copia con «Copiar enlace del ejercicio». `?practice=1` a `4` abre los de la lista.
-29. ~~**Filtrar el grafo por ruta de archivo**~~ hecho en #86 · Análisis. En el cuadro de búsqueda, «Filtrar grafo» con un
+29. ~~**Filtrar el grafo por ruta de archivo**~~ hecho en #86 · Análisis · 2×2/2. [inv. 2026-10-13] En el cuadro de búsqueda, «Filtrar grafo» con un
     archivo o carpeta (`/commits?path=` por cabeza, 5 como mucho) deja a plena luz los commits que la tocaron y atenúa el resto
     en el grafo 2D; «Quitar filtro» lo deshace. Solo GitHub y la demo (donde la ruta se compara con el mensaje).
 30. **Los forks en el grafo** · Datos · 2×2/2. [inv. 2026-10-13] Los forks con actividad reciente como ramas remotas atenuadas
@@ -300,6 +300,9 @@ se comprueban antes de construir sobre ellas.
     (`hint:`) que se muestran con un botón, y condiciones sobre el mensaje del último commit y sobre ramas sin
     fusionar, para ejercicios más finos con `reset`. Comprobar: pruebas del codificado
     con pistas y un paso del smoke.
+44. **Filtrar por ruta, segunda entrega** · Análisis · 1×2/1. [parte del ítem 29] El filtro por ruta también atenúa el grafo 3D
+    y viaja en la URL (`?path=src/`) para compartir la vista ya filtrada. Comprobar: prueba de la lectura de la URL y un
+    paso del smoke en 3D.
 
 ## Cómo validar un cambio
 

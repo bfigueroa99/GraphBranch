@@ -281,7 +281,7 @@ se comprueban antes de construir sobre ellas.
 40. **Resaltar el tramo de cada rama comparada** · Análisis · 1×2/2. [parte del ítem 20] Al comparar dos ramas, los
     commits de cada una por delante y su punto de separación se marcan en el grafo (2D y 3D). Comprobar: un paso
     del smoke en la demo.
-41. **Una organización entera, cuarta entrega** · Escala · 2×2/3. Los grupos de GitLab
+41. **Una organización entera, cuarta entrega** · Escala · 2×2/3. [parte del ítem 26] Los grupos de GitLab
     (`/groups/:id/projects?order_by=last_activity_at`) y una vista de constelación (cada repo, una
     galaxia) para ver más repos de los que caben en pestañas. Comprobar: prueba de cuota con la API
     simulada.
@@ -1543,4 +1543,4 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Reclamo: loop/53, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: PENDIENTE
-- **Siguiente:** PENDIENTE
+- **Siguiente:** iteración 54, expansión: ítem 27 (Replay por tramo de fechas y con rótulos propios, Salidas)

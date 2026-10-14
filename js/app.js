@@ -1024,10 +1024,12 @@
         h.merged ? `<p class="hl-line">${U.esc(t('health.mergedStat', { median: span(h.merged.median), max: span(h.merged.max) }))}</p>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
       `<section class="hl-sec" id="hl-clash"><h3>${U.esc(t('health.clash'))}</h3><p class="hl-none">${U.esc(t('health.clashHelp'))}</p><button type="button" class="btn btn-ghost" id="hl-clash-go">${U.esc(t('health.clashGo'))}</button><div id="hl-clash-out" role="status" aria-live="polite"></div></section>` +
+      `<section class="hl-sec" id="hl-cmp"><h3>${U.esc(t('cmp.title'))}</h3><p class="hl-none">${U.esc(t('cmp.help'))}</p><div class="sr-row"><select id="cmp-a" aria-label="${U.esc(t('cmp.a'))}"></select><select id="cmp-b" aria-label="${U.esc(t('cmp.b'))}"></select></div><button type="button" class="btn btn-ghost" id="cmp-go">${U.esc(t('cmp.go'))}</button><div id="cmp-out" role="status" aria-live="polite"></div></section>` +
       `<div class="hl-stats">${stat(t('health.merges7'), h.pace.merges7)}${stat(t('health.merges30'), h.pace.merges30)}${stat(t('health.releases30'), h.pace.releases30)}</div>`;
     const clashBtn = $('#hl-clash-go');
     if (!source.files) clashBtn.hidden = true;
     clashBtn.addEventListener('click', () => findClashes(data, clashBtn));
+    setupCompare(data);
     el.healthBody.querySelectorAll('.hl-list').forEach((ul) =>
       ul.querySelectorAll('[data-go]').forEach((b) =>
         b.addEventListener('click', () => {
@@ -1037,6 +1039,95 @@
         }),
       ),
     );
+  }
+
+  /** Comparar dos ramas: commits por delante y punto de separación con lo ya cargado; los archivos
+      cambiados (dos consultas) solo al pedirlo. Cada línea lleva a su rama o commit en el grafo. */
+  function setupCompare(data) {
+    const names = [...data.branches.keys()];
+    const selA = $('#cmp-a');
+    const selB = $('#cmp-b');
+    const go = $('#cmp-go');
+    const out = $('#cmp-out');
+    for (const sel of [selA, selB]) for (const n of names) sel.append(new Option(n, n));
+    const def = data.repo.defaultBranch;
+    selA.value = names.includes(def) ? def : names[0] || '';
+    selB.value = names.find((n) => n !== selA.value) || '';
+    const row = (main, aside, onGo) => {
+      const li = document.createElement('li');
+      const b = document.createElement(onGo ? 'button' : 'span');
+      b.className = 'hl-row';
+      if (onGo) {
+        b.type = 'button';
+        b.title = t('feed.locate');
+        b.addEventListener('click', () => {
+          closeHealth();
+          onGo();
+        });
+      }
+      const m = document.createElement('span');
+      m.className = 'hl-main';
+      m.textContent = main;
+      const x = document.createElement('span');
+      x.className = 'hl-aside';
+      x.textContent = aside;
+      b.append(m, x);
+      li.append(b);
+      return li;
+    };
+    const note = (text) => {
+      const p = document.createElement('p');
+      p.className = 'hl-none';
+      p.textContent = text;
+      return p;
+    };
+    go.addEventListener('click', async () => {
+      const a = selA.value;
+      const b = selB.value;
+      out.replaceChildren();
+      if (!a || !b || a === b) return void out.append(note(t('cmp.same')));
+      const r = GB.health.compare(data, a, b);
+      if (!r) return void out.append(note(t('cmp.same')));
+      const ul = document.createElement('ul');
+      ul.className = 'hl-list';
+      ul.append(
+        row(t('cmp.ahead', { name: a, n: U.fmtNum(r.a.ahead) }), '', () => graph.focusBranch(a)),
+        row(t('cmp.ahead', { name: b, n: U.fmtNum(r.b.ahead) }), '', () => graph.focusBranch(b)),
+      );
+      if (r.base) ul.append(row(t('cmp.base', { sha: r.base.sha.slice(0, 7), age: r.base.date ? GB.i18n.fmtSpan(Date.now() - r.base.date) : '' }), r.base.message, () => graph.focusSha?.(r.base.sha)));
+      out.append(ul);
+      if (!r.base) out.append(note(t('cmp.nobase')));
+      if (r.partial) out.append(note(t('cmp.partial')));
+      if (!source.files) return;
+      go.disabled = true;
+      out.append(note(t('cmp.busy')));
+      const busy = out.lastChild;
+      try {
+        const changed = async (name) => {
+          const br = data.branches.get(name);
+          if (name === def) return [];
+          const res = await source.files({ name, sha: br.sha, isDefault: false });
+          return res?.kind === 'diff' ? res.files.map((f) => f.path) : [];
+        };
+        const f = GB.health.splitFiles(await changed(a), await changed(b));
+        busy.remove();
+        const files = document.createElement('ul');
+        files.className = 'hl-list';
+        const MAX = 8;
+        const block = (label, paths) => {
+          files.append(row(label, ''));
+          for (const p of paths.slice(0, MAX)) files.append(row(p, ''));
+          if (paths.length > MAX) files.append(row(t('cmp.more', { n: U.fmtNum(paths.length - MAX) }), ''));
+        };
+        block(t('cmp.only', { name: a, n: U.fmtNum(f.onlyA.length) }), f.onlyA);
+        block(t('cmp.only', { name: b, n: U.fmtNum(f.onlyB.length) }), f.onlyB);
+        block(t('cmp.both', { n: U.fmtNum(f.both.length) }), f.both);
+        out.append(files);
+      } catch (e) {
+        busy.textContent = t('cmp.fail');
+      }
+      go.disabled = false;
+    });
   }
 
   /** Choques: una comparación por rama con PR abierto, solo cuando se pide (cuesta consultas). */

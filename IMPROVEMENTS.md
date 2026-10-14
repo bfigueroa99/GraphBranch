@@ -131,7 +131,7 @@ segunda columna a la primera.
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`) | VS Code |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM), avisos a Slack y Discord (escritorio) | resumen de la semana |
-| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, búsqueda de commits por mensaje, SHA o autor | comparar ramas, filtrar el grafo por autor |
+| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor | filtrar el grafo por autor |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado) | probar con NVDA, JAWS y VoiceOver |
 
 ## Hoja de ruta
@@ -215,9 +215,10 @@ se comprueban antes de construir sobre ellas.
 19. ~~**Búsqueda y filtro por autor**~~ hecho en #71 · Análisis. La lupa abre un cuadro que busca entre los commits
     ya cargados por mensaje, SHA o autor (`@ana`), con un selector de autor y Enter para volar hasta el commit
     (2D y 3D). Sin consultas nuevas. Sin hacer: esconder del grafo las ramas de los demás autores (ítem 34).
-20. **Comparar dos ramas** · Análisis · 2×2/2. Elegir dos ramas: cuántos commits lleva cada una por delante,
-    desde dónde se separaron y qué archivos cambian, resaltado en el grafo. Comprobar: prueba con la
-    API simulada.
+20. ~~**Comparar dos ramas**~~ hecho en #73 · Análisis. En el panel de salud, «Comparar dos ramas»: dos selectores,
+    los commits que lleva cada una por delante y el commit desde donde se separaron (con lo ya cargado, sin
+    consultas; cada línea lleva al grafo) y, al pulsar, los archivos que cambió solo una, solo la otra o las dos
+    (dos consultas). Sin hacer: resaltar en el grafo el tramo de cada rama y la comparación directa A...B por API.
 21. ~~**Gitea, Forgejo y Codeberg**~~ hecho en #72 · Fuentes. codeberg.org (CORS abierto, comprobado) con la API de
     Forgejo: ramas, historia y PRs en vivo, galaxias con el árbol, sin token y solo repos públicos. Sin hacer:
     otros servidores de Gitea/Forgejo (uno propio entra con el ítem 25) y Codeberg con token.
@@ -1424,3 +1425,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 184 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde. (La primera pasada falló dos e2e: la CSP de escritorio, mía y corregida, y «grabar el Replay», intermitente bajo carga, que pasó sola y en la segunda pasada.)
 - **Siguiente:** iteración 46, expansión: ítem 20 (Comparar dos ramas, Análisis)
+
+### 2026-10-14 · Iteración 46 · Expansión · Análisis
+
+- **Capacidad nueva: comparar dos ramas** (ítem 20 de la hoja de ruta). El panel de salud suma «Comparar dos ramas»: dos selectores (por defecto, la rama por defecto y otra), y al pulsar «Comparar» dice cuántos commits lleva cada rama por delante de la otra y el commit desde donde se separaron (el ancestro común más nuevo), calculado con los commits ya cargados y sin consultas; avisa si falta historia y las cuentas pueden quedar cortas. Cada línea lleva a la rama o al commit en el grafo. Después lista los archivos que cambió solo una, solo la otra o las dos (hasta 8 por grupo), con `source.files` de cada rama contra la por defecto: dos consultas, solo al pulsar. Lógica pura en `js/health.js` (`compare`, `splitFiles`); 15 textos nuevos en los 40 idiomas. Sin hacer: resaltar en el grafo el tramo de cada rama y la comparación directa A...B por API.
+- **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` (por delante, punto de separación con merge, rama contenida, historia incompleta, archivos en una o en las dos) y el paso del smoke «salud del repo» (selectores y filas del resultado con la demo).
+- README: la función en la lista, Controles, Límites conocidos y Seguridad.
+- QA: filas tocadas: demo sin token (smoke); 40 idiomas (`check-i18n`); XSS (filas con `textContent`, selectores con `new Option`); desborde del panel (smoke). Sin mirar a mano: 320 px, árabe, 3D, lector de pantalla; auditoría: 0 hallazgos nuevos.
+- Reclamo: loop/46, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 188 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde.
+- **Siguiente:** iteración 47, mantenimiento · Rendimiento: pendiente 10 (Durante Replay se actualizan las dos vistas aunque una esté oculta)

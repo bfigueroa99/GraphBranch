@@ -73,5 +73,55 @@
     return [...names].slice(0, max);
   }
 
-  GB.health = { compute, clashes, clashCandidates, STALE_DAYS };
+  /** Comparar dos ramas con lo ya cargado: cuántos commits lleva cada una por delante, y desde dónde
+      se separaron (el ancestro común más nuevo). `partial` avisa que alguna historia llegó incompleta
+      (un padre que no está cargado), así que las cuentas pueden quedar cortas. */
+  function compare(data, a, b) {
+    const ba = data.branches.get(a);
+    const bb = data.branches.get(b);
+    if (!ba || !bb) return null;
+    let partial = false;
+    const anc = (sha) => {
+      const seen = new Set();
+      const stack = [sha];
+      while (stack.length) {
+        const s = stack.pop();
+        if (seen.has(s)) continue;
+        const c = data.commits.get(s);
+        if (!c) {
+          partial = true;
+          continue;
+        }
+        seen.add(s);
+        for (const p of c.parents || []) stack.push(p);
+      }
+      return seen;
+    };
+    const sa = anc(ba.sha);
+    const sb = anc(bb.sha);
+    const only = (x, y) => [...x].filter((s) => !y.has(s));
+    const common = [...sa].filter((s) => sb.has(s));
+    // el punto de separación: un ancestro común que ningún otro común tiene por descendiente
+    const covered = new Set();
+    for (const s of common) for (const p of data.commits.get(s).parents || []) if (sb.has(p) && sa.has(p)) covered.add(p);
+    const tips = common.filter((s) => !covered.has(s));
+    tips.sort((x, y) => (data.commits.get(y).date || 0) - (data.commits.get(x).date || 0) || (x < y ? -1 : 1));
+    const base = tips[0] ? data.commits.get(tips[0]) : null;
+    return {
+      a: { name: a, ahead: only(sa, sb).length },
+      b: { name: b, ahead: only(sb, sa).length },
+      base: base ? { sha: base.sha, message: String(base.message || '').split('\n')[0], date: base.date } : null,
+      partial,
+    };
+  }
+
+  /** Archivos que cambió cada rama respecto de la rama por defecto: solo en A, solo en B y en las dos. */
+  function splitFiles(filesA, filesB) {
+    const sa = new Set(filesA);
+    const sb = new Set(filesB);
+    const list = (xs, not) => [...xs].filter((p) => !not.has(p)).sort();
+    return { onlyA: list(sa, sb), onlyB: list(sb, sa), both: [...sa].filter((p) => sb.has(p)).sort() };
+  }
+
+  GB.health = { compute, clashes, clashCandidates, compare, splitFiles, STALE_DAYS };
 })(window.GB);

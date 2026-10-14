@@ -835,6 +835,7 @@ function fakeGitHub() {
       .filter((r) => r.full.split('/')[0] === owner)
       .sort((a, b) => b.pushed - a.pushed)
       .map((r) => ({ name: r.full.split('/')[1], owner: { login: owner }, fork: !!r.fork, archived: !!r.archived, private: false, pushed_at: new Date(Date.now() - 1e6 + r.pushed).toISOString() }));
+  const orgEvents = []; // /orgs/acme/events: el más reciente primero
   const route = (path, q) => {
     const own = path.match(/^\/(orgs|users)\/([^/]+)\/repos$/);
     if (own) {
@@ -842,6 +843,7 @@ function fakeGitHub() {
       const found = kind === 'orgs' ? orgs.has(who) : !orgs.has(who) && listed(who).length > 0;
       return found ? { body: listed(who) } : { status: 404, body: { message: 'Not Found' } };
     }
+    if (path === '/orgs/acme/events') return { body: orgEvents };
     const m = path.match(/^\/repos\/([^/]+\/[^/]+)(\/.*)?$/);
     if (!m || !repos.has(m[1])) return { status: 404, body: { message: 'Not Found' } };
     const r = repos.get(m[1]);
@@ -866,6 +868,7 @@ function fakeGitHub() {
     calls,
     repo,
     org: (name) => orgs.add(name),
+    orgEvent: (ev) => orgEvents.unshift({ id: String(orgEvents.length + 1), actor: { login: 'ana' }, created_at: new Date().toISOString(), payload: {}, ...ev }),
     push: (full, branch, message) => commit(repo(full), branch, message),
     handle: (r) => {
       const u = new URL(r.request().url());
@@ -1112,7 +1115,9 @@ console.log('Una organización o un usuario entero');
   // la renovación de las organizaciones seguidas, que es de 30 minutos, aquí cada 1,5 s
   await page.addInitScript(() => {
     const real = window.setInterval;
-    window.setInterval = (fn, ms, ...a) => real(fn, ms === 30 * 60 * 1000 ? 1500 : ms, ...a);
+    window.setInterval = (fn, ms, ...a) => real(fn, ms === 30 * 60 * 1000 || ms === 5 * 60 * 1000 ? 1500 : ms, ...a);
+    const realTimeout = window.setTimeout; // y los eventos de la organización, que empiezan a los 15 s
+    window.setTimeout = (fn, ms, ...a) => realTimeout(fn, ms === 15000 ? 500 : ms, ...a);
   });
   const names = async () => (await repoTabs(page)).map((t) => `${t.name}${t.on ? '*' : ''}`).join(' ');
 
@@ -1130,6 +1135,16 @@ console.log('Una organización o un usuario entero');
     if (!lists.length || lists.some((c) => c !== '/orgs/acme/repos')) throw new Error(`consultas de la lista: ${lists.join(', ')}`); // las renovaciones piden la misma, una por organización
     const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
     if (saved !== '["acme/api","acme/web","acme/viejo"]') throw new Error(`se guardó ${saved}`);
+  });
+
+  await step(page, 'los eventos de la organización llegan al panel, solo los de repos sin pestaña, con una consulta', async () => {
+    gh.orgEvent({ type: 'WatchEvent', repo: { name: 'acme/lejano' } }); // sin pestaña: se muestra
+    gh.orgEvent({ type: 'WatchEvent', repo: { name: 'acme/api' } }); // con pestaña: ya lo trae la suya
+    await page.waitForFunction(() => [...document.querySelectorAll('#feed .act')].some((a) => a.textContent.includes('acme/lejano')), null, { timeout: 15000 });
+    const n = await page.$$eval('#feed .act', (els) => els.filter((a) => a.textContent.includes('acme/lejano')).length);
+    if (n !== 1) throw new Error(`el evento sin pestaña salió ${n} veces`);
+    const polls = gh.calls.filter((c) => c === '/orgs/acme/events').length;
+    if (!polls) throw new Error('nunca se pidieron los eventos de la organización');
   });
 
   await step(page, 'la organización queda seguida: un repo nuevo suyo se suma solo y uno cerrado no vuelve', async () => {

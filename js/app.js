@@ -209,6 +209,7 @@
     const keys = window.matchMedia?.('(pointer: fine)').matches;
     el.hint.innerHTML = i18n.html('hint.' + v) + (keys ? ' · ' + i18n.html(v === '3d' ? 'hint.keys' : 'hint.keys2d') : '');
     followUI(graph.following);
+    if (replay.active && replayFrame) graph.update(replayFrame.L, { ...replayFrame.gctx, initial: true }); // la vista oculta no se actualizó
     if (save) U.store.set('view', v);
   }
 
@@ -748,15 +749,15 @@
 
   /* ---------- Replay: la historia como time-lapse ---------- */
 
+  let replayFrame = null; // el último cuadro del Replay: la vista que estaba oculta lo recibe al mostrarse
   const replay = new GB.Replay({
     root: $('#replay'),
     onFrame: (data, L, { jump, acts, quiet }) => {
       const gctx = { initial: jump || quiet, replay: true, prs: new Map(), pins: new Set(), canPin: false };
-      graph2d.update(L, gctx);
-      graph3d?.update(L, gctx);
+      replayFrame = { L, gctx };
+      graph.update(L, gctx); // solo la vista a la vista: la otra se pone al día al cambiar
       if (!acts.length) return;
-      graph3d?.celebrate(acts);
-      graph2d.celebrate(acts);
+      graph.celebrate(acts);
       if (feed.sound) feed.synth.play(acts, feed.panOf);
     },
     onExit: () => {
@@ -867,6 +868,7 @@
     if (!lastRender) return;
     graph2d.clear();
     graph3d?.clear();
+    replayFrame = null;
     if (!replay.start(lastRender.data, feed.itemsOf(active.key))) showLive();
   }
 

@@ -1150,6 +1150,32 @@ console.log('Varios repos a la vez');
   const full = await openPage({ viewport: { width: 1280, height: 800 } });
   await full.unroute('https://api.github.com/**');
   await full.route('https://api.github.com/**', gh.handle);
+  await step(full, 'ensayar un comando: la copia del repo real cambia sin tocar al original ni gastar cuota', async () => {
+    await full.goto(`${base}/index.html?lang=es&repo=o/b`);
+    await full.waitForFunction(() => document.querySelector('#status')?.dataset.state === 'live' && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: 15000 });
+    await full.waitForSelector('#rehearse-btn:not([hidden])', { timeout: 5000 });
+    await full.click('#view-2d');
+    await full.waitForSelector('#graph svg .node', { timeout: 10000 });
+    const real = await full.locator('#graph svg .node').count();
+    let calls = 0;
+    const count = (req) => req.url().startsWith('https://api.github.com/') && calls++;
+    full.on('request', count);
+    await full.click('#rehearse-btn');
+    await full.waitForFunction(() => !document.querySelector('#practice').hidden && document.querySelector('.pr-goal')?.textContent.includes('o/b'), null, { timeout: 10000 });
+    await full.waitForSelector('#graph svg .node', { timeout: 10000 });
+    await full.fill('.pr-input', 'commit -m "ensayo <b>x</b>"');
+    await full.press('.pr-input', 'Enter');
+    await full.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length > n, real, { timeout: 10000 });
+    if (await full.locator('.pr-log b').count()) throw new Error('la terminal interpretó HTML');
+    if (await full.locator('.pr-make').isVisible()) throw new Error('el ensayo ofrece crear ejercicios');
+    await full.click('#repo-tabs .rt:nth-child(1) .rt-main'); // vuelve al repo real: el ensayo se cierra
+    await full.waitForFunction(() => document.querySelector('#practice').hidden && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: 5000 });
+    full.off('request', count);
+    await full.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length === n, real, { timeout: 5000 }).catch(() => {
+      throw new Error('el repo real cambió con el ensayo');
+    });
+    if (calls) throw new Error(`el ensayo hizo ${calls} consultas a la API`);
+  });
   await step(
     full,
     'se siguen hasta 10 repos a la vez',

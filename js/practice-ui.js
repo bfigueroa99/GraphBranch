@@ -8,11 +8,12 @@
 
   class PracticePanel {
     /** `root`: el <form> del panel; `onPick(index, custom)`: la persona eligió o reinició un ejercicio;
-        `onMake(spec)`: creó uno propio; `urlFor(source)`: el enlace que lo comparte (o nulo). */
-    constructor(root, { onPick, onMake, urlFor }) {
+        `onMake(spec)`: creó uno propio; `onRehearse(data)`: reinicia el ensayo sobre los datos de ese repo; `urlFor(source)`: el enlace que lo comparte (o nulo). */
+    constructor(root, { onPick, onMake, onRehearse, urlFor }) {
       this.root = root;
       this.onPick = onPick;
       this.onMake = onMake;
+      this.onRehearse = onRehearse;
       this.urlFor = urlFor;
       this.source = null;
       this.history = [];
@@ -55,9 +56,9 @@
         this.submit();
       });
       this.sel.addEventListener('change', () => {
-        if (this.sel.value !== 'custom') this.onPick(Number(this.sel.value));
+        if (this.sel.value !== 'custom' && this.sel.value !== 'rehearsal') this.onPick(Number(this.sel.value));
       });
-      this.restart.addEventListener('click', () => this.onPick(this.source.index, this.source.custom));
+      this.restart.addEventListener('click', () => (this.source.rehearsal ? this.onRehearse(this.source.rehearsal.data) : this.onPick(this.source.index, this.source.custom)));
       this.share.addEventListener('click', () => this.shareLink());
       this.make.querySelector('.pr-m-go').addEventListener('click', () => this.create());
       this.input.addEventListener('keydown', (ev) => {
@@ -92,7 +93,14 @@
       const t = i18n.t;
       this.sel.setAttribute('aria-label', t('practice.ex'));
       this.sel.textContent = '';
-      if (src.custom) {
+      this.share.hidden = !!src.rehearsal;
+      this.make.hidden = !!src.rehearsal;
+      if (src.rehearsal) {
+        const o = document.createElement('option');
+        o.value = 'rehearsal';
+        o.textContent = `${src.rehearsal.owner}/${src.rehearsal.name}`;
+        this.sel.append(o);
+      } else if (src.custom) {
         const o = document.createElement('option');
         o.value = 'custom';
         o.textContent = `${src.check() ? '✓ ' : ''}${src.custom.title}`;
@@ -104,11 +112,11 @@
         o.textContent = `${src.solved.has(ex.id) ? '✓ ' : ''}${i + 1} · ${t(`practice.ex${i + 1}.title`)}`;
         this.sel.append(o);
       });
-      this.sel.value = src.custom ? 'custom' : String(src.index);
+      this.sel.value = src.rehearsal ? 'rehearsal' : src.custom ? 'custom' : String(src.index);
       this.restart.textContent = t('practice.restart');
       this.share.textContent = t('practice.share');
       this.link.setAttribute('aria-label', t('practice.link'));
-      this.goal.textContent = src.custom ? src.custom.goal : t(`practice.ex${src.index + 1}.goal`);
+      this.goal.textContent = src.rehearsal ? t('practice.rehearseGoal', { repo: `${src.rehearsal.owner}/${src.rehearsal.name}` }) : src.custom ? src.custom.goal : t(`practice.ex${src.index + 1}.goal`);
       this.make.querySelector('summary').textContent = t('practice.make');
       for (const k of ['title', 'goal', 'setup', 'checks']) this.make.querySelector(`.pr-l-${k}`).textContent = t(`practice.make.${k}`);
       this.make.querySelector('.pr-m-help').textContent = t('practice.make.help');

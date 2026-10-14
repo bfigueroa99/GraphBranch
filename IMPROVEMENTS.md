@@ -140,7 +140,7 @@ segunda columna a la primera.
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo por ruta de archivo | filtrar el grafo por autor |
-| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado) | probar con NVDA, JAWS y VoiceOver |
+| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado) | probar con NVDA, JAWS y VoiceOver |
 
 ## Hoja de ruta
 
@@ -258,9 +258,9 @@ se comprueban antes de construir sobre ellas.
     en el grafo 2D; «Quitar filtro» lo deshace. Solo GitHub y la demo (donde la ruta se compara con el mensaje).
 30. ~~**Los forks en el grafo**~~ hecho en #87 · Datos · 2×2/2. [inv. 2026-10-13] Los forks con actividad reciente (`/forks`, push
     propio en 90 días, el más nuevo primero) en el panel de salud; dibujarlos como ramas atenuadas queda por hacer.
-31. **Ensayar un comando sobre el repo real** · Público · 2×3/3. [inv. 2026-10-13] Escribir un `merge` o `rebase` en la terminal de
-    práctica sobre las ramas del repo abierto y ver el resultado en el grafo sin tocar nada. Comprobar: prueba
-    del intérprete con un repo cargado desde datos reales simulados.
+31. ~~**Ensayar un comando sobre el repo real**~~ hecho en #89 · Público · 2×3/3. [inv. 2026-10-13] «Ensayar un comando» (con un repo real a la vista)
+    abre la terminal de práctica sobre una copia en memoria de sus ramas y commits ya cargados: un `merge` o `rebase` se
+    ve en el grafo sin tocar el repo ni gastar consultas. Solo ve lo ya cargado; sin conflictos.
 32. **Ramas apiladas** · Datos · 1×2/2. [inv. 2026-10-13] Un PR cuya base es la rama de otro PR se dibuja encadenado a él, con el
     orden de la pila. Comprobar: prueba del layout con PRs apilados.
 33. **Vista de texto, segunda entrega** · Público · 1×2/2. [parte del ítem 18] Que el árbol avise con una región viva
@@ -1643,3 +1643,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 239 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde.
 - **Siguiente:** iteración 60, expansión: ítem 31 (Ensayar un comando sobre el repo real, Público)
+
+### 2026-10-14 · Iteración 60 · Expansión · Público
+
+- **Capacidad nueva: ensayar un comando sobre el repo real** (ítem 31 de la hoja de ruta). Con un repo real cargado aparece «Ensayar un comando»: abre la terminal de práctica sobre `gitsim.fromData`, una copia en memoria de las ramas y commits que el grafo ya tiene (los padres no cargados se descartan, las ramas sin commit cargado no entran). `merge`, `rebase`, `reset`, etc. se ven en el grafo 2D y 3D; el repo real no se toca, no hay consultas a la API y al volver a su pestaña el ensayo se cierra. «Reiniciar» rehace la copia; no ofrece crear ni compartir ejercicios.
+- **Pruebas que fallan sin la capacidad:** `tools/gitsim.test.mjs` (`fromData: copia un repo real…`) y el paso del smoke «ensayar un comando: la copia del repo real cambia sin tocar al original ni gastar cuota».
+- README: función en la lista de «Aprender git», pruebas, Límites conocidos (solo lo cargado) y Seguridad (no guarda nada ni usa el token). Mapa de alcance: fila Público.
+- QA: fila de XSS/entrada (el mensaje con HTML entra con `textContent`, lo mira el smoke), repo sin ramas (el botón se esconde) y demo (no aparece); 40 idiomas por `check-i18n`; auditoría: ver Validado.
+- Reclamo: loop/60, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 240 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde.
+- **Siguiente:** iteración 61, expansión: ítem 32 (Ramas apiladas, Datos)

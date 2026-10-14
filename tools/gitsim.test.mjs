@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} }, TextEncoder, TextDecoder, btoa, atob, Uint8Array }); // lo que el navegador ya trae
 vm.runInContext(readFileSync(join(root, 'js', 'gitsim.js'), 'utf8'), ctx, { filename: 'gitsim.js' });
-const { Repo, EXERCISES, start, startCustom, customExercise, encodeExercise, decodeExercise, cleanExercise } = ctx.window.GB.gitsim;
+const { Repo, fromData, EXERCISES, start, startCustom, customExercise, encodeExercise, decodeExercise, cleanExercise } = ctx.window.GB.gitsim;
 const NOW = Date.UTC(2026, 9, 13, 12);
 
 /* los arreglos de otro contexto de vm no son «iguales» para deepEqual: se comparan como datos planos */
@@ -192,4 +192,34 @@ test('un ejercicio propio mal hecho no entra: sin meta, condición inventada, co
   // el JSON de la URL se vuelve a validar al abrirlo: una condición inventada ahí no entra
   const forged = Buffer.from(JSON.stringify({ v: 1, t: 'x', g: 'y', s: [], c: ['constructor:x'] })).toString('base64url');
   assert.equal(decodeExercise(forged), null);
+});
+
+test('fromData: copia un repo real, ensaya merge y rebase y no toca el original', () => {
+  const author = { name: 'Ana', login: 'ana', avatar: null };
+  const sha = (n) => n.repeat(40);
+  const c = (s, parents, message, date) => [sha(s), { sha: sha(s), parents: parents.map(sha), message, author, date, url: `https://x/${s}` }];
+  const data = {
+    repo: { owner: 'o', name: 'r', defaultBranch: 'main' },
+    commits: new Map([c('a', [], 'root', 1000), c('b', ['a'], 'main work', 2000), c('c', ['a'], 'feature work', 3000), c('d', ['z'], 'huérfano', 4000)]),
+    branches: new Map([
+      ['main', { sha: sha('b') }],
+      ['feature', { sha: sha('c') }],
+      ['viejo', { sha: sha('d') }],
+      ['sin-commit', { sha: sha('e') }],
+    ]),
+  };
+  const before = JSON.stringify([[...data.commits], [...data.branches]]);
+  const r = fromData(data);
+  assert.deepEqual(plain([...r.branches.keys()]), ['main', 'feature', 'viejo'], 'la rama sin commit cargado no entra');
+  assert.equal(r.head.branch, 'main');
+  assert.deepEqual(plain(r.commits.get(sha('d')).parents), [], 'un padre no cargado se descarta');
+  assert.ok(r.clock >= 4000, 'los commits nuevos caen después de los reales');
+  const m = r.run('merge feature');
+  assert.ok(m.ok && m.changed, m.lines.join('\n'));
+  assert.equal(r.commits.get(r.headSha).parents.length, 2);
+  assert.ok(r.commits.get(r.headSha).date > 4000);
+  assert.ok(r.run('checkout feature').ok);
+  assert.ok(r.run('rebase main').ok);
+  assert.equal(JSON.stringify([[...data.commits], [...data.branches]]), before, 'el original queda igual');
+  assert.equal(fromData({ ...data, branches: new Map() }), null, 'sin ramas no hay ensayo');
 });

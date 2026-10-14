@@ -452,6 +452,37 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#replay', { state: 'hidden', timeout: 5000 });
   });
 
+  await step(page, 'replay: tramo de fechas y rótulos propios', async () => {
+    await page.click('#replay-btn');
+    await page.waitForSelector('#replay', { state: 'visible', timeout: 5000 });
+    await page.click('#replay .rp-opts');
+    await page.fill('#rp-form [name=title]', 'Sprint 12');
+    await page.fill('#rp-form [name=footer]', 'Lanzamiento 2.0');
+    await page.click('#rp-form button[type=submit]');
+    await page.waitForSelector('#replay .rp-head:not([hidden])', { timeout: 3000 });
+    if ((await page.textContent('#replay .rp-head')) !== 'Sprint 12') throw new Error('el título no se ve en el Replay');
+    if ((await page.textContent('#replay .rp-foot')) !== 'Lanzamiento 2.0') throw new Error('el pie de foto no se ve en el Replay');
+    // un tramo sin commits avisa y deja el Replay como estaba
+    await page.click('#replay .rp-opts');
+    await page.fill('#rp-form [name=from]', '1990-01-01');
+    await page.fill('#rp-form [name=to]', '1990-01-02');
+    await page.click('#rp-form button[type=submit]');
+    await page.waitForFunction(() => document.querySelector('#rp-form .rp-form-msg')?.textContent, null, { timeout: 3000 });
+    if (!(await page.locator('#replay').isVisible())) throw new Error('un tramo vacío cerró el Replay');
+    if (!(await page.locator('#replay .rp-head').isVisible())) throw new Error('un tramo vacío borró los rótulos');
+    // un tramo que sí abarca la historia (desde 2000) la reproduce
+    await page.fill('#rp-form [name=from]', '2000-01-01');
+    await page.fill('#rp-form [name=to]', '');
+    await page.click('#rp-form button[type=submit]');
+    await page.waitForSelector('#rp-form', { state: 'hidden', timeout: 3000 });
+    await page.click('#replay .rp-opts');
+    await page.click('#rp-form button[type=reset]');
+    await page.waitForSelector('#replay .rp-head', { state: 'hidden', timeout: 3000 });
+    await page.keyboard.press('Escape');
+    await page.click('#replay .rp-exit');
+    await page.waitForSelector('#replay', { state: 'hidden', timeout: 5000 });
+  });
+
   await step(page, 'replay: solo se actualiza la vista a la vista', async () => {
     await page.click('#view-2d');
     await page.evaluate(() => {

@@ -932,7 +932,7 @@
     try {
       recorder = GB.snapshot.record(() => ({ wrap: graph === graph3d ? el.graph3d : el.graph, view: graph }), {
         caption: `${nameOf(active)} · GraphBranch`,
-        extra: () => [$('#replay .rp-clock'), $('#replay .rp-caption')], // la fecha grande y los rótulos
+        extra: () => [$('#replay .rp-clock'), $('#replay .rp-caption'), $('#replay .rp-head'), $('#replay .rp-foot')], // la fecha grande y los rótulos
       });
     } catch (err) {
       console.error(err);
@@ -966,8 +966,52 @@
     graph2d.clear();
     graph3d?.clear();
     replayFrame = null;
-    if (!replay.start(lastRender.data, feed.itemsOf(active.key))) showLive();
+    if (!replay.start(lastRender.data, feed.itemsOf(active.key), replayOpts)) {
+      showLive();
+      if (replayOpts.from != null || replayOpts.to != null) snapNote(t('replay.empty'));
+    }
   }
+
+  /* tramo y rótulos propios del Replay (js/replay.js): el formulario de la barra */
+  let replayOpts = {};
+  const rpForm = $('#rp-form');
+  const rpOptsBtn = $('#replay .rp-opts');
+  const dayMs = (v, end) => (v ? new Date(`${v}T${end ? '23:59:59.999' : '00:00:00'}`).getTime() : null);
+  function openRpForm(on) {
+    rpForm.hidden = !on;
+    rpOptsBtn.setAttribute('aria-expanded', String(on));
+    if (on) rpForm.elements.from.focus();
+    else rpOptsBtn.focus();
+  }
+  rpOptsBtn.addEventListener('click', () => openRpForm(rpForm.hidden));
+  rpForm.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Escape') return;
+    ev.stopPropagation();
+    openRpForm(false);
+  });
+  rpForm.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const f = rpForm.elements;
+    const next = { from: dayMs(f.from.value), to: dayMs(f.to.value, true), title: f.title.value.trim(), footer: f.footer.value.trim() };
+    const msg = rpForm.querySelector('.rp-form-msg');
+    if (!replay.active || !lastRender) return;
+    if (!replay.start(lastRender.data, feed.itemsOf(active.key), next)) {
+      msg.textContent = t('replay.empty'); // se queda el tramo anterior, no se pierde la vista
+      replay.start(lastRender.data, feed.itemsOf(active.key), replayOpts);
+      return;
+    }
+    msg.textContent = '';
+    replayOpts = next;
+    openRpForm(false);
+  });
+  rpForm.addEventListener('reset', () => {
+    // «Toda la historia»: sin tramo ni rótulos
+    replayOpts = {};
+    setTimeout(() => {
+      if (replay.active && lastRender) replay.start(lastRender.data, feed.itemsOf(active.key), replayOpts);
+      rpForm.querySelector('.rp-form-msg').textContent = '';
+    });
+  });
 
   /** Vuelve a dibujar el repo tal como está ahora (al salir del Replay). */
   function showLive() {

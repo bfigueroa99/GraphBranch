@@ -214,3 +214,12 @@ test('parseRepo entiende local:<id>/<nombre> y lo distingue de GitHub y GitLab',
   assert.equal(GB.U.parseRepo('local:0123456789ab/'), null);
   assert.equal(GB.U.parseRepo('a/b').host, undefined);
 });
+
+test('parseRepo rechaza owner o nombre hechos solo de puntos (.., .) en GitHub', async () => {
+  const { GB } = load();
+  for (const x of ['../x', 'x/..', '../..', './x', 'x/.', 'https://github.com/../x', 'git@github.com:x/..']) {
+    assert.equal(GB.U.parseRepo(x), null, x);
+  }
+  assert.deepEqual({ ...GB.U.parseRepo('a.b/c-d.js') }, { owner: 'a.b', name: 'c-d.js' });
+  assert.deepEqual({ ...GB.U.parseRepo('.github/.github') }, { owner: '.github', name: '.github' });
+});

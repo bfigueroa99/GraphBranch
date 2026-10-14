@@ -61,7 +61,7 @@ window.GB = window.GB || {};
       return { host: 'codeberg', owner: parts[0], name: parts[1] };
     }
     const m = s.match(/github\.com[/:]([\w.-]+)\/([\w.-]+)/i) || s.match(/^([\w.-]+)\/([\w.-]+)$/);
-    return m ? { owner: m[1], name: m[2] } : null;
+    return m && !/^\.+$/.test(m[1]) && !/^\.+$/.test(m[2]) ? { owner: m[1], name: m[2] } : null;
   };
 
   /** Una organización o un usuario de GitHub entero: org:nombre, user:nombre, @nombre o la URL de su

@@ -408,14 +408,122 @@
     r.commit('Fix login redirect');
   }
 
+  /* ---------- ejercicios propios, compartidos por URL ---------- */
+
+  /* Un ejercicio propio es datos, nunca código: título, meta, los comandos con que parte el repo (los mismos
+     de la terminal) y las condiciones que lo dan por resuelto. Va en la URL como JSON en base64 seguro. */
+  const LIMITS = { code: 1800, title: 60, goal: 280, setup: 30, command: 120, checks: 8 };
+  const BRANCH = '[\\w][\\w./-]{0,60}';
+  const CHECKS = [
+    [new RegExp(`^exists:(${BRANCH})$`), (r, [a]) => r.branches.get(a) != null],
+    [new RegExp(`^missing:(${BRANCH})$`), (r, [a]) => !r.branches.has(a)],
+    [new RegExp(`^merged:(${BRANCH})>(${BRANCH})$`), (r, [a, b]) => !!r.branches.get(a) && !!r.branches.get(b) && r.isAncestor(r.branches.get(a), r.branches.get(b))],
+    [new RegExp(`^merge-commit:(${BRANCH})$`), (r, [a]) => !!r.branches.get(a) && r.commits.get(r.branches.get(a)).parents.length === 2],
+    [new RegExp(`^linear:(${BRANCH})$`), (r, [a]) => !!r.branches.get(a) && r.log(r.branches.get(a)).every((s) => r.commits.get(s).parents.length < 2)],
+    [new RegExp(`^commits:(${BRANCH})=(\\d{1,3})$`), (r, [a, n]) => !!r.branches.get(a) && r.log(r.branches.get(a)).length === Number(n)],
+    [new RegExp(`^on:(${BRANCH})$`), (r, [a]) => r.head.branch === a],
+  ];
+
+  const b64 = {
+    enc(text) {
+      const bytes = new TextEncoder().encode(text);
+      let bin = '';
+      for (const b of bytes) bin += String.fromCharCode(b);
+      return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    },
+    dec(code) {
+      const bin = atob(code.replace(/-/g, '+').replace(/_/g, '/'));
+      return new TextDecoder('utf-8', { fatal: true }).decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+    },
+  };
+
+  const text = (v, max) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim() : '').slice(0, max);
+
+  /** Valida un ejercicio propio: devuelve { title, goal, setup, checks } o { error } con la razón. */
+  function cleanExercise(raw) {
+    if (!raw || typeof raw !== 'object') return { error: 'format' };
+    const title = text(raw.title, LIMITS.title);
+    const goal = text(raw.goal, LIMITS.goal);
+    if (!title || !goal) return { error: 'text' };
+    const setup = Array.isArray(raw.setup) ? raw.setup.map((c) => text(c, LIMITS.command + 1)).filter(Boolean) : [];
+    if (setup.length > LIMITS.setup || setup.some((c) => c.length > LIMITS.command)) return { error: 'setup' };
+    const checks = Array.isArray(raw.checks) ? raw.checks.map((c) => text(c, 200)).filter(Boolean) : [];
+    if (!checks.length || checks.length > LIMITS.checks) return { error: 'checks' };
+    for (const c of checks) if (!CHECKS.some(([re]) => re.test(c))) return { error: 'check', detail: c };
+    const spec = { title, goal, setup, checks };
+    const r = scenario();
+    for (const c of setup) {
+      const res = r.run(c);
+      if (!res.ok) return { error: 'command', detail: c, message: res.lines[0] };
+    }
+    return spec;
+  }
+
+  /** El ejercicio listo para jugar: mismo molde que los de EXERCISES, más sus textos propios. */
+  function customExercise(spec) {
+    const tests = spec.checks.map((c) => {
+      for (const [re, fn] of CHECKS) {
+        const m = re.exec(c);
+        if (m) return (r) => fn(r, m.slice(1));
+      }
+      return () => false;
+    });
+    return {
+      id: `custom:${hash(JSON.stringify(spec)).slice(0, 8)}`,
+      custom: true,
+      spec,
+      title: spec.title,
+      goal: spec.goal,
+      setup: (r) => {
+        for (const c of spec.setup) r.run(c);
+      },
+      done: (r) => tests.every((t) => t(r)),
+    };
+  }
+
+  /** De la persona a la URL: el texto que va tras `?practice=`. Nulo si el ejercicio no vale. */
+  function encodeExercise(raw) {
+    const spec = cleanExercise(raw);
+    if (spec.error) return null;
+    const code = b64.enc(JSON.stringify({ v: 1, t: spec.title, g: spec.goal, s: spec.setup, c: spec.checks }));
+    return code.length <= LIMITS.code ? code : null;
+  }
+
+  /** De la URL a un ejercicio: { exercise } (de EXERCISES, por su número desde 1), { custom } o nulo si es basura. */
+  function decodeExercise(code) {
+    if (typeof code !== 'string' || !code || code.length > LIMITS.code) return null;
+    if (/^\d{1,2}$/.test(code)) {
+      const index = Number(code) - 1;
+      return index >= 0 && index < EXERCISES.length ? { index } : null;
+    }
+    if (!/^[\w-]+$/.test(code)) return null;
+    try {
+      const o = JSON.parse(b64.dec(code));
+      if (o?.v !== 1) return null;
+      const spec = cleanExercise({ title: o.t, goal: o.g, setup: o.s, checks: o.c });
+      return spec.error ? null : { custom: spec };
+    } catch {
+      return null;
+    }
+  }
+
   GB.gitsim = {
     Repo,
     EXERCISES,
+    LIMITS,
     hash,
     tokenize,
+    cleanExercise,
+    customExercise,
+    encodeExercise,
+    decodeExercise,
     /** El repo de partida de un ejercicio (índice de 0 a EXERCISES.length - 1). */
     start(index, now) {
       return scenario(EXERCISES[index].setup, now);
+    },
+    /** El repo de partida de un ejercicio propio (el de customExercise). */
+    startCustom(exercise, now) {
+      return scenario(exercise.setup, now);
     },
   };
 })(window.GB);

@@ -774,6 +774,49 @@ kbd {
   color: var(--ink);
   font: inherit;
 }
+.pr-link,
+.pr-make textarea,
+.pr-make input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+.pr-link[hidden] {
+  display: none;
+}
+.pr-make summary {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--ink-2);
+}
+.pr-make label {
+  display: grid;
+  gap: 2px;
+  margin-top: 6px;
+  color: var(--ink-2);
+}
+.pr-make textarea {
+  font-family: var(--font-mono);
+  resize: vertical;
+}
+.pr-m-help {
+  margin: 6px 0;
+  color: var(--ink-2);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.pr-m-err {
+  margin: 0 0 6px;
+  color: var(--bad, #c0392b);
+}
 .pr-goal {
   margin: 0;
   color: var(--ink-2);

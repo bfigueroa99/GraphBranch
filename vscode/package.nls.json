@@ -1,0 +1,5 @@
+{
+  "description": "Live graph of your repository's branches, inside VS Code.",
+  "command.open": "Open the branch graph",
+  "command.signIn": "Sign in to GitHub and open the branch graph"
+}

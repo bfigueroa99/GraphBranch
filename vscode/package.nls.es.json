@@ -1,0 +1,5 @@
+{
+  "description": "Grafo en vivo de las ramas de tu repositorio, dentro de VS Code.",
+  "command.open": "Abrir el grafo de ramas",
+  "command.signIn": "Iniciar sesión en GitHub y abrir el grafo de ramas"
+}

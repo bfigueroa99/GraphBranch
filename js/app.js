@@ -12,6 +12,7 @@
     repoInput: $('#repo-input'),
     demoBtn: $('#demo-btn'),
     practiceBtn: $('#practice-btn'),
+    rehearseBtn: $('#rehearse-btn'),
     practice: $('#practice'),
     folderBtn: $('#folder-btn'),
     status: $('#status'),
@@ -244,6 +245,7 @@
   const practice = new GB.PracticePanel(el.practice, {
     onPick: (i, custom) => startPractice(i, custom),
     onMake: (spec) => startPractice(null, GB.gitsim.customExercise(spec)),
+    onRehearse: (data) => startRehearsal(data),
     urlFor: (source) => {
       const code = source.custom ? GB.gitsim.encodeExercise(source.custom.spec) : String(source.index + 1);
       if (!code) return null;
@@ -646,6 +648,28 @@
     // el enlace del ejercicio queda en la barra, para copiarlo; al salir de la práctica se quita
     const source = tab.source;
     setUrlParam('practice', custom ? GB.gitsim.encodeExercise(source.custom.spec) : null);
+  }
+
+  /** Ensayar un comando: la copia en memoria del repo real a la vista (sus ramas y commits ya cargados), en una pestaña
+      como la de la práctica. Lo que se escribe solo cambia la copia: no hay escritura ni consulta a la API.
+      `data`: los datos de la fuente real (por defecto, la de la pestaña a la vista). */
+  function startRehearsal(data = source?.data) {
+    if (!data || data.repo.demo || !data.loaded) return;
+    const git = GB.gitsim.fromData(data);
+    if (!git) return;
+    const old = tabs.find((x) => x.demo);
+    if (old) removeTab(old, { replace: false });
+    resume();
+    const tab = addTab(new GB.PracticeSource(0, null, { git, owner: data.repo.owner, name: data.repo.name, data }));
+    startTab(tab);
+    showTab(tab);
+    practice.focus();
+  }
+
+  /** ¿Se puede ensayar sobre lo que se ve? Solo un repo real ya cargado y con ramas. */
+  function updateRehearse() {
+    const d = source?.data;
+    el.rehearseBtn.hidden = !(d && !d.repo.demo && d.loaded && d.branches.size);
   }
 
   /** Recuerda qué repos se siguen y cuál está a la vista; la URL los lleva también, para compartirla. */
@@ -1487,10 +1511,11 @@
     el.repoBadge.hidden = !repo.demo && !repo.private && !forge && !repo.local;
     el.repoBadge.textContent = repo.demo ? t('badge.demo') : repo.local ? t('badge.local') : repo.private ? (forge ? forge + ' · ' : '') + t('badge.private') : forge || '';
     el.repoBadge.className = `badge${repo.demo ? ' demo' : ''}`;
-    el.repoDesc.textContent = repo.practice ? t('practice.desc') : repo.demo ? t('repo.demoDesc') : repo.description || '';
+    el.repoDesc.textContent = repo.rehearsal ? t('practice.rehearseGoal', { repo: `${repo.owner}/${repo.name}` }) : repo.practice ? t('practice.desc') : repo.demo ? t('repo.demoDesc') : repo.description || '';
     el.repoDesc.hidden = !el.repoDesc.textContent;
     feed.setBaseTitle(`${full} · GraphBranch`);
     renderTokenBanner();
+    updateRehearse();
   }
 
   function renderTokenBanner() {
@@ -1671,6 +1696,7 @@
   el.repoInput.addEventListener('input', () => el.repoInput.setCustomValidity(''));
   el.demoBtn.addEventListener('click', startDemo);
   el.practiceBtn.addEventListener('click', () => startPractice());
+  el.rehearseBtn.addEventListener('click', () => startRehearsal());
   /* Abrir carpeta (solo en la app de escritorio): el diálogo del sistema elige un repo de esta máquina y el
      proceso principal lo lee con git; la página recibe su id (electron/git.js). */
   el.folderBtn.hidden = !desktop?.git;

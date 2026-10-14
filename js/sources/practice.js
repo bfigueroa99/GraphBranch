@@ -9,14 +9,18 @@
   const YOU = { name: 'You', login: 'you', avatar: null };
 
   class PracticeSource extends U.Emitter {
-    /** `index`: el ejercicio de partida (0 a EXERCISES.length - 1); `custom`: un ejercicio propio (gitsim.customExercise), que manda. */
-    constructor(index = 0, custom = null) {
+    /** `index`: el ejercicio de partida (0 a EXERCISES.length - 1); `custom`: un ejercicio propio (gitsim.customExercise), que manda.
+        `rehearsal`: { git, owner, name } un ensayo sobre la copia de un repo real (gitsim.fromData): no es un ejercicio y no se resuelve. */
+    constructor(index = 0, custom = null, rehearsal = null) {
       super();
-      this.custom = custom;
-      this.index = custom ? -1 : Math.max(0, Math.min(gitsim.EXERCISES.length - 1, index | 0));
-      this.git = custom ? gitsim.startCustom(custom) : gitsim.start(this.index);
+      this.rehearsal = rehearsal;
+      this.custom = rehearsal ? null : custom;
+      this.index = this.custom || rehearsal ? -1 : Math.max(0, Math.min(gitsim.EXERCISES.length - 1, index | 0));
+      this.git = rehearsal ? rehearsal.git : custom ? gitsim.startCustom(custom) : gitsim.start(this.index);
       this.data = {
-        repo: { owner: 'practice', name: 'git', defaultBranch: 'main', url: null, demo: true, practice: true },
+        repo: rehearsal
+          ? { owner: rehearsal.owner, name: rehearsal.name, defaultBranch: this.git.defaultBranch, url: null, demo: true, practice: true, rehearsal: true }
+          : { owner: 'practice', name: 'git', defaultBranch: 'main', url: null, demo: true, practice: true },
         mode: 'demo',
         branches: new Map(),
         commits: new Map(),
@@ -33,7 +37,7 @@
     }
 
     get exercise() {
-      return this.custom || gitsim.EXERCISES[this.index];
+      return this.custom || (this.rehearsal ? { id: 'rehearsal', done: () => false } : gitsim.EXERCISES[this.index]);
     }
 
     /** ¿Está resuelto el ejercicio de ahora? Una vez resuelto, se recuerda aunque la persona siga jugando. */

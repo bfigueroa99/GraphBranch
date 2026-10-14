@@ -507,8 +507,27 @@
     }
   }
 
+  /** Un repo en memoria con las ramas y los commits que el grafo ya tiene de un repo real (`data` de una fuente):
+      es una copia, no se escribe nada en el original. Un padre que no se cargó se descarta (queda como raíz);
+      una rama cuyo commit no se cargó no entra. HEAD parte en la rama por defecto (o en la primera). */
+  function fromData(data) {
+    const real = data.commits;
+    const names = [...data.branches.keys()].filter((n) => real.has(data.branches.get(n).sha));
+    if (!names.length) return null;
+    const def = names.includes(data.repo.defaultBranch) ? data.repo.defaultBranch : names[0];
+    const r = new Repo({ now: Date.now(), branch: def });
+    r.branches.clear();
+    for (const n of names) r.branches.set(n, data.branches.get(n).sha);
+    for (const [sha, c] of real) {
+      r.commits.set(sha, { sha, parents: c.parents.filter((p) => real.has(p)), message: c.message, author: c.author, date: c.date, url: c.url || null });
+      if (c.date > r.clock) r.clock = c.date;
+    }
+    return r;
+  }
+
   GB.gitsim = {
     Repo,
+    fromData,
     EXERCISES,
     LIMITS,
     hash,

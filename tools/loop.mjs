@@ -364,7 +364,8 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
     let titulos = log;
     if (!titulos) {
       if (git(dir, ['rev-parse', '--verify', '-q', 'origin/master']).status !== 0) a.push('sin origin/master: no se comprobaron los PR');
-      else titulos = git(dir, ['log', 'origin/master', '--format=%s']).stdout.split('\n');
+      // --first-parent: con commits de merge, solo los merges son PR; los commits de cada rama no cuentan
+      else titulos = git(dir, ['log', '--first-parent', 'origin/master', '--format=%s']).stdout.split('\n');
     }
     let ok = 'sin ítems hechos';
     if (titulos) {
@@ -891,7 +892,8 @@ export async function salud({ sinRed = false, repo = root, fetchFn = globalThis.
     print(`Sin origin/master: ${primera(show.stderr)}`);
     return 5;
   }
-  const merges = git(repo, ['log', 'origin/master', '--format=%ct%x09%s'])
+  // --first-parent: una fusión es un commit de master, no los commits de la rama que trajo (fechados antes)
+  const merges = git(repo, ['log', '--first-parent', 'origin/master', '--format=%ct%x09%s'])
     .stdout.split('\n')
     .filter(Boolean)
     .map((l) => ({ fecha: +l.split('\t')[0] * 1000, titulo: l.split('\t')[1] }));

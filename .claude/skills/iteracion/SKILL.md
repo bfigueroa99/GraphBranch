@@ -25,8 +25,9 @@ falta `node_modules/.bin/playwright`, `npm ci`.
 
 - `--check` con algún `ERROR`: se arregla primero, en el mismo PR: no se amplía sobre algo roto.
 - `--salud` (sale 3 si hay algo que atender): cada línea `Acción:` se atiende en esta iteración, antes
-  de construir. Borrar una `loop/K` ya fusionada (`git push origin --delete loop/K`; si el proxy lo
-  corta, se dice en el resumen); triar cada issue sin triar (ver «Fallos e issues»); un pendiente Alta
+  de construir. Borrar una `loop/K` ya fusionada (`git push origin --delete loop/K`, solo, sin `&&` ni
+  tuberías, para que lo cubra el permiso de `.claude/settings.json`; si el proxy responde 403, se dice
+  en el resumen y se sigue); triar cada issue sin triar (ver «Fallos e issues»); un pendiente Alta
   va primero (`--reclamar` ya lo elige). Las líneas `Cadencia`, `Hueco` y `Para Benjamin` van al
   resumen; un hueco nuevo de más de un día va a Para Benjamin.
 - `node --test` en rojo sin haber tocado nada: `master` está en rojo. Se repite una vez; si sigue, la
@@ -49,7 +50,7 @@ código de salida:
   sin PR.
 - **4** `Vencida` (6 h sin commits): reanudación. Tiene tres salidas:
   - `PR abierto: <url>`: `git fetch origin loop/N && git checkout loop/N`, `git merge origin/master`,
-    `npm run check`. En verde, se fusiona ese PR con squash como la iteración N (paso 5) y se vuelve a
+    `npm run check`. En verde, se fusiona ese PR con commit de merge como la iteración N (paso 5) y se vuelve a
     `--reclamar` (la N+1). En rojo: se cierra el PR con `mcp__github__update_pull_request`
     (`state: closed`, comentario «Cerrado por el loop: no pasó npm run check al reanudar; el trabajo
     queda en la rama»); si el merge quedó a medias, `git merge --abort`; y se releva con
@@ -213,7 +214,7 @@ en su prioridad con su `[Subtipo]`, y se corrige el Siguiente de la última entr
 del Mapa de alcance, y reponer la hoja de ruta hasta 15 ítems si bajó de 10 (ver «Reponer la hoja de
 ruta»). Lo que solo puede hacer Benjamin va a `## Para Benjamin`, fechado (`(desde AAAA-MM-DD)`), y no
 suelto en la entrada; lo resuelto se quita de ahí. P todavía no existe: **P provisional** = el mayor
-`(#K)` de `git log origin/master --format=%s` + 1 (R3 admite exactamente un PR en curso); si GitHub da
+`(#K)` de `git log --first-parent origin/master --format=%s` + 1 (R3 admite exactamente un PR en curso); si GitHub da
 otro número (paso 5), se corrige, se repiten `--siguiente` y `--check`, y se empuja un segundo commit. El
 **Siguiente** se copia de la línea `Siguiente:` de `node tools/loop.mjs --siguiente` corrido sobre el
 archivo YA editado. Después, obligatorio y en verde:
@@ -254,12 +255,15 @@ git push -u origin loop/N
    Los conflictos esperables están al final de `IMPROVEMENTS.md`, en `js/locales/*.js` y en la lista
    del README: se conservan las dos partes. **Si el propio N ya está en master**, se renumera a máx+1,
    se revisa el tipo (`--siguiente`) y se vuelve a validar.
-3. `mcp__github__merge_pull_request` con `merge_method: squash` y `commit_title: "<título> (#P)"`, solo
-   sin hilos de revisión pendientes. No hace falta esperar aprobación (`CLAUDE.md`). Si el merge falla
+3. `mcp__github__merge_pull_request` con `merge_method: merge` (nunca squash: el commit de merge es lo
+   que muestra en el grafo la rama uniéndose a `master`) y `commit_title: "<título> (#P)"`, solo sin
+   hilos de revisión pendientes. No hace falta esperar aprobación (`CLAUDE.md`). Si el merge falla
    (conflicto, API), se repite 5.2; si sigue fallando, el PR queda abierto, el resumen lo dice con el
    error y la sesión termina: la siguiente lo retoma por el código 4 (Vencida con PR abierto).
-4. `git push origin --delete loop/N`; si el proxy lo corta, se dice en el resumen y no pasa nada: la
-   siguiente sesión lo ve en `--salud` como `Acción:` y lo borra.
+4. `git push origin --delete loop/N`, solo (sin `&&` ni tuberías: así lo cubre el permiso de
+   `.claude/settings.json`). Si la rama ya no existe (GitHub la borra al fusionar si está activado),
+   no hay nada que hacer; si el proxy responde 403, se dice en el resumen y no pasa nada: la rama ya
+   está contenida en `master` y la siguiente sesión la ve en `--salud` como `Acción:`.
 
 ## 6. Medir afuera
 

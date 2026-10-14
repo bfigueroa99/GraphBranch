@@ -20,6 +20,7 @@
       "Bash(git commit:*)",
       "Bash(git merge:*)",
       "Bash(git push:*)",
+      "Bash(git push origin --delete loop/*)",
       "Bash(git branch:*)",
       "Bash(git status:*)",
       "Bash(git log:*)",

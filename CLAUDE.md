@@ -13,6 +13,6 @@ Cada iteración programada sigue `.claude/skills/iteracion/SKILL.md` (reclamo co
 El dueño del repositorio autorizó que Claude abra pull requests y los fusione por su cuenta, sin pedir permiso cada vez:
 
 - Al terminar un cambio verificado, abre el pull request contra `master` desde la rama de trabajo, con título y descripción en español.
-- Fusiónalo con squash, con el título del PR seguido de `(#N)` como en el historial, en cuanto esté sin conflictos y sin hilos de revisión pendientes. No hace falta esperar aprobación.
+- Fusiónalo con commit de merge (`merge_method: merge`, no squash: así cada rama se ve uniéndose a `master` en el grafo y queda contenida en él), con el título del PR seguido de `(#N)` como en el historial, en cuanto esté sin conflictos y sin hilos de revisión pendientes. No hace falta esperar aprobación.
 - Si el usuario pidió revisar antes, o el cambio toca algo que él marcó como delicado, espera a que lo diga.
 - Los permisos para hacerlo sin confirmaciones están en `.claude/settings.json`.

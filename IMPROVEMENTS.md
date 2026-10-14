@@ -119,6 +119,13 @@ cada iteración lo repite (`node tools/loop.mjs --salud` lo imprime) y se quita 
    el orden es el de la directiva (9, 10, 11…). El loop sigue el orden escrito: reordenar es una decisión
    de producto.
 6. **Publicar la extensión de VS Code** (desde 2026-10-14). El paquete está en `vscode/` (editor `publisher: bfigueroa99` en su `package.json`). Crear el publicador en marketplace.visualstudio.com, un token de Azure DevOps y correr `node tools/vscode.mjs && cd vscode && npx @vscode/vsce publish`; o instalar el `.vsix` a mano.
+7. **Borrar las ramas `loop/*` fusionadas** (desde 2026-10-14). El proxy de las sesiones cloud responde
+   403 a `git push origin --delete`, así que `loop/28`…`loop/54` (27 ramas, cada una con su PR ya
+   fusionado, del #54 al #82) siguen en origin; como se fusionaron con squash, en el grafo parecen ramas
+   que nunca volvieron a `master`. Desde el 2026-10-14 el loop fusiona con commit de merge (`CLAUDE.md`),
+   así que las nuevas quedan contenidas en `master` aunque no se borren. Activar Settings → General →
+   Pull Requests → «Automatically delete head branches» (GitHub borra la rama al fusionar, sin pasar por
+   el proxy) y borrar esas 27 a mano en la página de ramas.
 
 ## Mapa de alcance
 

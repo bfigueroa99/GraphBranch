@@ -381,6 +381,7 @@
     if (tab === active) {
       source = src;
       layout = tab.layout;
+      clearPathFilter();
     }
   }
 
@@ -447,6 +448,7 @@
     const prev = active;
     active = tab;
     source = tab.source;
+    clearPathFilter();
     layout = tab.layout;
     game = tab.game;
     // la demo no se sigue, solo se mira: al pasar a otro repo se cierra
@@ -1404,6 +1406,49 @@
     $('#search-input').focus();
   });
   $('#search-close').addEventListener('click', closeSearch);
+
+  /* Filtro por ruta: los commits que tocaron un archivo o carpeta quedan a plena luz y el resto se atenúa. */
+  const pathEl = { input: $('#search-path'), go: $('#search-path-go'), clear: $('#search-path-clear'), status: $('#search-path-status') };
+  let pathToken = 0;
+  function clearPathFilter() {
+    pathToken++;
+    graph2d.setPathFilter?.(null);
+    $('#search-path-clear').hidden = true;
+    $('#search-path-status').textContent = '';
+    $('#search-btn').classList.remove('filtered');
+  }
+  async function applyPathFilter() {
+    const path = pathEl.input.value.trim();
+    if (!path) return clearPathFilter();
+    if (typeof source.commitsByPath !== 'function') {
+      pathEl.status.textContent = t('search.pathUnsupported');
+      return;
+    }
+    const mine = ++pathToken;
+    pathEl.go.disabled = true;
+    try {
+      const shas = await source.commitsByPath(path);
+      if (mine !== pathToken) return;
+      graph2d.setPathFilter?.(shas);
+      pathEl.clear.hidden = false;
+      $('#search-btn').classList.add('filtered');
+      pathEl.status.textContent = shas.size ? t('search.pathCount', { n: shas.size, path }) : t('search.pathNone');
+    } catch {
+      if (mine === pathToken) pathEl.status.textContent = t('search.pathFail');
+    } finally {
+      pathEl.go.disabled = false;
+    }
+  }
+  pathEl.go.addEventListener('click', applyPathFilter);
+  pathEl.clear.addEventListener('click', () => {
+    pathEl.input.value = '';
+    clearPathFilter();
+  });
+  pathEl.input.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Enter') return;
+    ev.preventDefault();
+    applyPathFilter();
+  });
 
   /** Tags y entornos de despliegue por commit: sha -> { tags: [nombre], envs: [entorno] }. */
   function refsBySha(data) {

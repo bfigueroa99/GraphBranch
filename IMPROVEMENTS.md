@@ -139,7 +139,7 @@ segunda columna a la primera.
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
-| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor | filtrar el grafo por autor |
+| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo por ruta de archivo | filtrar el grafo por autor |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado) | probar con NVDA, JAWS y VoiceOver |
 
 ## Hoja de ruta
@@ -253,8 +253,9 @@ se comprueban antes de construir sobre ellas.
 28. ~~**Ejercicios de Aprender git compartidos por URL**~~ hecho en #85 · Público · 2×2/1. [parte del ítem 16] Un ejercicio propio
     (título, meta, comandos de partida y condiciones de una lista cerrada) viaja en `?practice=<código>`; se crea en
     «Crear un ejercicio para compartir» y se copia con «Copiar enlace del ejercicio». `?practice=1` a `4` abre los de la lista.
-29. **Filtrar el grafo por ruta de archivo** · Análisis · 2×2/2. [inv. 2026-10-13] Mostrar solo los commits que tocaron una
-    carpeta o archivo (`/commits?path=`), atenuando el resto. Comprobar: prueba con la API simulada.
+29. ~~**Filtrar el grafo por ruta de archivo**~~ hecho en #86 · Análisis. En el cuadro de búsqueda, «Filtrar grafo» con un
+    archivo o carpeta (`/commits?path=` por cabeza, 5 como mucho) deja a plena luz los commits que la tocaron y atenúa el resto
+    en el grafo 2D; «Quitar filtro» lo deshace. Solo GitHub y la demo (donde la ruta se compara con el mensaje).
 30. **Los forks en el grafo** · Datos · 2×2/2. [inv. 2026-10-13] Los forks con actividad reciente como ramas remotas atenuadas
     (`/forks`, ordenados por último push). Comprobar: prueba con la API simulada y cuota.
 31. **Ensayar un comando sobre el repo real** · Público · 2×3/3. [inv. 2026-10-13] Escribir un `merge` o `rebase` en la terminal de
@@ -1607,3 +1608,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 234 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde. La primera corrida del smoke falló los pasos de la práctica: con más de un campo el formulario no enviaba con Enter, y el enlace pasaba el ejercicio en vez de su especificación; los dos arreglados en esta rama.
 - **Siguiente:** iteración 57, expansión: ítem 29 (Filtrar el grafo por ruta de archivo, Análisis)
+
+### 2026-10-14 · Iteración 57 · Expansión · Análisis
+
+- **Capacidad nueva: filtrar el grafo por ruta de archivo** (ítem 29 de la hoja de ruta). En el cuadro de la lupa, un campo de ruta y «Filtrar grafo» (o Enter): `GitHubSource.commitsByPath` hace una consulta `/commits?path=` por cabeza (la rama por defecto primero, 5 como mucho) y los commits cargados que la tocaron quedan a plena luz mientras el resto del grafo 2D se atenúa (`Graph.setPathFilter`, clase `pfx`). La lupa se marca mientras hay filtro; «Quitar filtro» y cambiar de pestaña o de repo lo deshacen. La demo compara la ruta con el mensaje del commit (no tiene archivos); las demás fuentes dicen que no pueden. Sin filtro no hay ninguna consulta nueva.
+- **Pruebas que fallan sin la capacidad:** `tools/github.test.mjs` (`commitsByPath`: una consulta por cabeza con la ruta codificada, solo commits cargados, ruta vacía sin gasto); smoke, paso «filtro por ruta: atenúa los commits que no la tocaron, lo dice y se quita».
+- README: la función, Límites conocidos y Seguridad.
+- QA: filas de XSS (la ruta solo va a la URL codificada y a `textContent`), cuota (≤ 5 consultas por filtro, solo al pedirlo), teclado (Enter aplica; los botones se alcanzan con Tab), i18n (8 textos en los 40 idiomas); sin mirar a mano: 320 px, 3D (el filtro es solo 2D), Replay; auditoría: ver Validado.
+- Reclamo: loop/57, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 235 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde.
+- **Siguiente:** iteración 58, expansión: ítem 30 (Los forks en el grafo, Datos)

@@ -1457,6 +1457,6 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - README: la función en la lista, Estructura, Límites conocidos y Seguridad.
 - QA: filas tocadas: CSP (`tools/pwa.test.mjs` con la directiva nueva; sin `img-src` nuevo); XSS (nada nuevo en `innerHTML`; textos por `textContent`); 40 idiomas (`check-i18n`); token solo a su API (Bitbucket no lleva ninguno, la prueba y el smoke lo comprueban); 404 y sin red (prueba y smoke); cuota (prueba). Sin mirar a mano: 320 px, 3D, repos de más de 300 ramas contra el servidor real; auditoría: no toca la interfaz más allá de la etiqueta.
 - Reclamo: loop/48, sin colisión
-- Web publicada: PENDIENTE
-- Validado: PENDIENTE
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 197 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde.
 - **Siguiente:** iteración 49, expansión: ítem 23 (Resumen de la semana, Salidas)

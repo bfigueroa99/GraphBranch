@@ -395,9 +395,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Baja
 
-4. [Accesibilidad] Objetivos chicos y estados confusos. `audit:objetivo-chico` (24 hallazgos conocidos en
-    `tools/audit-base.json`): las etiquetas de rama de 22 px de alto en 3D y 2D (mínimo 24), el filtro de
-    ramas (`#branch-filter`, 19 px), la casilla de los logros con su etiqueta (`#game-enable`, 19 px), la
+4. [Accesibilidad] Objetivos chicos y estados confusos. `audit:objetivo-chico` (16 hallazgos conocidos en
+    `tools/audit-base.json`): las etiquetas de rama de 22 px de alto en 3D y 2D (mínimo 24), la
     barra de posición del Replay (`.rp-range`, 16 px) y las marcas de la brújula del vuelo (18×18 px).
     Además: botones que cambian a la vez `aria-pressed` y el texto (el de pausa del Replay, `replay.js:367`)
     y la leyenda 2D sin acceso por teclado. Reproducir: `node tools/audit.mjs`.
@@ -1680,3 +1679,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 246 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde.
 - **Siguiente:** iteración 63, mantenimiento · Accesibilidad: pendiente 4 (Objetivos chicos y estados confusos. `audit:objetivo-chico` (24 hallazgos conoc…)
+
+### 2026-10-14 · Iteración 63 · Mantenimiento · Accesibilidad
+
+- **Auditoría de Accesibilidad: objetivos táctiles del filtro de ramas y de la casilla de los logros** (pendiente 4, parte). `#branch-filter` y la etiqueta de `#game-enable` (`.tr-toggle`) tenían 19 px de alto; ahora `min-height: 24px` (WCAG 2.5.8). Salen 8 hallazgos `objetivo-chico` de la base (24 → 16); el pendiente 4 sigue con las etiquetas de rama, la barra del Replay y la brújula.
+- **Reproducción:** `node tools/audit.mjs --puerta` → `objetivo-chico|…|#branch-filter` y `|dialogos|#game-enable` a 19 px antes del arreglo; después, «8 ya no aparecen».
+- **Pruebas que fallan sin el arreglo:** la puerta de la auditoría (`tools/audit.mjs --puerta`, dentro de `npm run check`): la base ya no tolera esos 8 hallazgos.
+- README: sin cambios (no cambia ninguna función).
+- QA: fila de accesibilidad/objetivos táctiles por la auditoría en escritorio, 320 px y diálogos; sin mirar a mano: lector de pantalla real; auditoría: 0 hallazgos nuevos, 16 conocidos.
+- Reclamo: loop/63, sin colisión
+- Nota: el smoke falló 4 pasos en una corrida sobre `master` (Replay en video, vista de texto, búsqueda de commits, filtro por ruta: esperas agotadas) y pasó en las siguientes; es la intermitencia de la Deuda ya anotada, sin cambio de código aquí.
+- Validado: 246 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 25 e2e en verde.
+- **Siguiente:** iteración 64, expansión: ítem 34 (Filtrar el grafo por autor, Análisis)

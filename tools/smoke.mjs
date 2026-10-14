@@ -671,6 +671,33 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: 3000 });
   });
 
+  await step(page, 'filtro por ruta: atenúa los commits que no la tocaron, lo dice y se quita', async () => {
+    await page.click('#view-2d');
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: 3000 });
+    const word = await page.evaluate(() => {
+      const msg = document.querySelector('#search .sr-hit .tv-msg')?.textContent || '';
+      return msg.split(/[^\p{L}\p{N}]+/u).sort((a, b) => b.length - a.length)[0] || '';
+    });
+    if (!word) throw new Error('no hay un mensaje del que sacar una ruta');
+    await page.fill('#search-path', word);
+    await page.press('#search-path', 'Enter');
+    await page.waitForSelector('#search-path-clear:not([hidden])', { timeout: 3000 });
+    const on = await page.evaluate(() => ({
+      dim: document.querySelectorAll('#graph svg .node.pfx').length,
+      all: document.querySelectorAll('#graph svg .node').length,
+      status: document.querySelector('#search-path-status').textContent,
+      mark: document.querySelector('#search-btn').classList.contains('filtered'),
+    }));
+    if (!on.dim || on.dim >= on.all) throw new Error(`el filtro no acota: ${on.dim} atenuados de ${on.all}`);
+    if (!on.status || /undefined|NaN|search\./.test(on.status) || !on.mark) throw new Error('sin aviso del filtro: ' + on.status);
+    await page.click('#search-path-clear');
+    const off = await page.evaluate(() => ({ dim: document.querySelectorAll('#graph svg .node.pfx').length, mark: document.querySelector('#search-btn').classList.contains('filtered') }));
+    if (off.dim || off.mark) throw new Error('quitar el filtro no deja el grafo como estaba');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: 3000 });
+  });
+
   await step(page, 'cambios de un commit: desde su ficha, con teclado se pasa al anterior y se vuelve, y Esc cierra', async () => {
     await page.keyboard.press('Escape'); // ninguna ficha abierta de antes
     await page.click('#view-2d');

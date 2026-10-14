@@ -118,6 +118,15 @@
       return c;
     }
 
+    /** En la demo no hay archivos: una ruta "toca" los commits cuyo mensaje nombra su último tramo (p. ej. `src/auth`). */
+    async commitsByPath(path) {
+      const word = String(path || '').trim().replace(/\/+$/g, '').split('/').pop().toLowerCase();
+      const out = new Set();
+      if (!word) return out;
+      for (const c of this.data.commits.values()) if (String(c.message || '').toLowerCase().includes(word)) out.add(c.sha);
+      return out;
+    }
+
     createBranch(name, from, scope, time) {
       const base = this.data.branches.get(from);
       this.data.branches.set(name, {

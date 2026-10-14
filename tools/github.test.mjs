@@ -96,9 +96,10 @@ function fakeGitHub() {
       let sha = gh.branches.get(u.searchParams.get('sha')) || u.searchParams.get('sha');
       if (!gh.commits.has(sha)) return { status: 404, body: { message: 'No commit found' } };
       const out = [];
+      const only = u.searchParams.get('path'); // gh.touched: ruta -> shas que la tocaron
       while (sha && out.length < Number(u.searchParams.get('per_page'))) {
         const c = gh.commits.get(sha);
-        out.push(c);
+        if (!only || gh.touched?.[only]?.includes(sha)) out.push(c);
         sha = c.parents[0]?.sha;
       }
       return { body: out };
@@ -679,4 +680,27 @@ test('los cambios de un commit: una consulta, con el tramo de cada archivo; sin 
   assert.equal(withToken.diffCheap(), true);
   withToken.rate.remaining = 200;
   assert.equal(withToken.diffCheap(), false, 'con la cuota casi gastada, tampoco');
+});
+
+test('commitsByPath: pide /commits?path= por cabeza y devuelve solo los commits cargados que tocaron la ruta', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  gh.push('main', 'a2', 'a1');
+  gh.push('feat', 'b1', 'a2');
+  gh.touched = { 'src/app': ['a1', 'b1'], docs: [] };
+  const { src } = connect(gh);
+  await src.cycle();
+  gh.calls.length = 0;
+
+  const hit = await src.commitsByPath('/src/app/');
+  assert.deepEqual([...hit].sort(), ['a1', 'b1']);
+  const asked = gh.calls.filter((c) => c.includes('path='));
+  assert.equal(asked.length, 2, 'una consulta por cabeza');
+  assert.ok(asked.every((c) => c.includes('path=src%2Fapp') && c.includes('per_page=100')), 'sin barras de borde y con la ruta codificada');
+  assert.ok(asked[0].includes('sha=a2'), 'la rama por defecto va primero');
+
+  assert.equal((await src.commitsByPath('docs')).size, 0);
+  gh.calls.length = 0;
+  assert.equal((await src.commitsByPath('  ')).size, 0);
+  assert.equal(gh.calls.length, 0, 'una ruta vacía no gasta cuota');
 });

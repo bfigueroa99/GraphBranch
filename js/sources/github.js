@@ -1259,6 +1259,21 @@
       return data?.[0]?.sha || null;
     }
 
+    /** Commits cargados que tocaron `path` (archivo o carpeta): una consulta `/commits?path=` por cabeza,
+        la de la rama por defecto primero y como mucho 5 en total. Devuelve un Set de SHA. */
+    async commitsByPath(path) {
+      const clean = String(path || '').trim().replace(/^\/+|\/+$/g, '');
+      const out = new Set();
+      if (!clean) return out;
+      const def = this.data.repo.defaultBranch;
+      const heads = [...this.data.branches.values()].sort((a, b) => (b.name === def) - (a.name === def)).slice(0, 5);
+      for (const b of heads) {
+        const { data } = await this.api(`${this.base}/commits?sha=${encodeURIComponent(b.sha)}&path=${encodeURIComponent(clean)}&per_page=100`, { allow: [404, 409, 422] });
+        for (const c of data || []) if (this.data.commits.has(c.sha)) out.add(c.sha);
+      }
+      return out;
+    }
+
     /* ---------- commits ---------- */
 
     /**

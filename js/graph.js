@@ -845,7 +845,7 @@
 
     paintNode(it) {
       this.paintRefs(it);
-      const cls = it.cls + (it.el.classList.contains('enter') ? ' enter' : '') + (it.el.classList.contains('hl') ? ' hl' : '') + (it.data.sha === this.selSha ? ' sel' : '');
+      const cls = it.cls + (it.el.classList.contains('enter') ? ' enter' : '') + (it.el.classList.contains('hl') ? ' hl' : '') + (it.data.sha === this.selSha ? ' sel' : '') + (this.pathSet && !this.pathSet.has(it.data.sha) ? ' pfx' : '');
       if (it.el.getAttribute('class') !== cls) it.el.setAttribute('class', cls);
     }
 
@@ -1227,6 +1227,12 @@
 
     hasBranch(name) {
       return this.heads.has(name);
+    }
+
+    /** Filtro por ruta: `shas` (Set) deja a plena luz solo esos commits y atenúa el resto; null lo quita. */
+    setPathFilter(shas) {
+      this.pathSet = shas || null;
+      for (const it of this.nodes.values()) if (it?.el) this.paintNode(it);
     }
 
     /** Resalta una cadena (rama): solo se tocan sus elementos y los del resaltado anterior. */

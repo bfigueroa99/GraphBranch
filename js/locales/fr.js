@@ -517,4 +517,16 @@ GB.i18n.define('fr', {
   'diff.openFile': 'Ouvrir le fichier',
   'diff.tooLong': 'Seules les {n} premières lignes sont affichées.',
   'diff.lines': '{add} ajoutées, {del} retirées',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Résumé de la semaine',
+  'digest.help': 'Les 7 derniers jours, à partir de ce qui est déjà chargé. Copiez-le en Markdown ou enregistrez-le dans un fichier.',
+  'digest.copy': 'Copier le Markdown',
+  'digest.save': 'Enregistrer .md',
+  'digest.copied': 'Copié.',
+  'digest.head': 'Résumé de la semaine · {repo}',
+  'digest.commits': 'Commits : {n}',
+  'digest.merged': 'Pull requests fusionnées',
+  'digest.releases': 'Releases',
+  'digest.people': 'Qui a contribué (commits)',
+  'digest.branch': 'Branche la plus active',
 });

@@ -516,4 +516,16 @@ GB.i18n.define('tr', {
   'diff.openFile': 'Dosyayı aç',
   'diff.tooLong': 'Yalnızca ilk {n} satır gösteriliyor.',
   'diff.lines': '{add} eklendi, {del} kaldırıldı',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Haftanın özeti',
+  'digest.help': 'Son 7 gün, zaten yüklenmiş verilerden. Markdown olarak kopyalayın veya dosya olarak kaydedin.',
+  'digest.copy': 'Markdown\'ı kopyala',
+  'digest.save': '.md kaydet',
+  'digest.copied': 'Kopyalandı.',
+  'digest.head': 'Haftanın özeti · {repo}',
+  'digest.commits': 'Commit: {n}',
+  'digest.merged': 'Birleştirilen pull request\'ler',
+  'digest.releases': 'Sürümler',
+  'digest.people': 'Kimler katkı verdi (commit)',
+  'digest.branch': 'En etkin dal',
 });

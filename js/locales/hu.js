@@ -516,4 +516,16 @@ GB.i18n.define('hu', {
   'diff.openFile': 'Fájl megnyitása',
   'diff.tooLong': 'Csak az első {n} sor látszik.',
   'diff.lines': '{add} hozzáadva, {del} eltávolítva',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Heti összefoglaló',
+  'digest.help': 'Az elmúlt 7 nap, a már betöltött adatokból. Másold Markdownként, vagy mentsd fájlba.',
+  'digest.copy': 'Markdown másolása',
+  'digest.save': '.md mentése',
+  'digest.copied': 'Másolva.',
+  'digest.head': 'Heti összefoglaló · {repo}',
+  'digest.commits': 'Commitok: {n}',
+  'digest.merged': 'Egyesített pull requestek',
+  'digest.releases': 'Kiadások',
+  'digest.people': 'Kik járultak hozzá (commitok)',
+  'digest.branch': 'Legaktívabb ág',
 });

@@ -516,4 +516,16 @@ GB.i18n.define('hi', {
   'diff.openFile': 'फ़ाइल खोलें',
   'diff.tooLong': 'केवल पहली {n} पंक्तियाँ दिखाई गई हैं।',
   'diff.lines': '{add} जोड़ी गईं, {del} हटाई गईं',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'सप्ताह का सारांश',
+  'digest.help': 'पिछले 7 दिन, पहले से लोड किए गए डेटा से। Markdown के रूप में कॉपी करें या फ़ाइल में सहेजें।',
+  'digest.copy': 'Markdown कॉपी करें',
+  'digest.save': '.md सहेजें',
+  'digest.copied': 'कॉपी हो गया।',
+  'digest.head': 'सप्ताह का सारांश · {repo}',
+  'digest.commits': 'कमिट: {n}',
+  'digest.merged': 'मर्ज किए गए पुल रिक्वेस्ट',
+  'digest.releases': 'रिलीज़',
+  'digest.people': 'किसने योगदान दिया (कमिट)',
+  'digest.branch': 'सबसे सक्रिय ब्रांच',
 });

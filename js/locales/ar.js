@@ -615,4 +615,16 @@ GB.i18n.define('ar', {
   'diff.openFile': 'فتح الملف',
   'diff.tooLong': 'تُعرض أول {n} سطر فقط.',
   'diff.lines': '{add} مضافة، {del} محذوفة',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'ملخص الأسبوع',
+  'digest.help': 'آخر 7 أيام، مما تم تحميله بالفعل. انسخه بصيغة Markdown أو احفظه كملف.',
+  'digest.copy': 'نسخ Markdown',
+  'digest.save': 'حفظ .md',
+  'digest.copied': 'تم النسخ.',
+  'digest.head': 'ملخص الأسبوع · {repo}',
+  'digest.commits': 'الإيداعات: {n}',
+  'digest.merged': 'طلبات السحب المدموجة',
+  'digest.releases': 'الإصدارات',
+  'digest.people': 'من ساهم (الإيداعات)',
+  'digest.branch': 'أنشط فرع',
 });

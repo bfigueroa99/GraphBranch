@@ -516,4 +516,16 @@ GB.i18n.define('ko', {
   'diff.openFile': '파일 열기',
   'diff.tooLong': '처음 {n}줄만 표시됩니다.',
   'diff.lines': '{add}줄 추가, {del}줄 삭제',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': '이번 주 요약',
+  'digest.help': '이미 불러온 데이터로 본 최근 7일입니다. Markdown으로 복사하거나 파일로 저장하세요.',
+  'digest.copy': 'Markdown 복사',
+  'digest.save': '.md 저장',
+  'digest.copied': '복사했습니다.',
+  'digest.head': '이번 주 요약 · {repo}',
+  'digest.commits': '커밋: {n}',
+  'digest.merged': '병합된 풀 리퀘스트',
+  'digest.releases': '릴리스',
+  'digest.people': '기여한 사람(커밋)',
+  'digest.branch': '가장 활발한 브랜치',
 });

@@ -516,4 +516,16 @@ GB.i18n.define('ta', {
   'diff.openFile': 'கோப்பைத் திறக்கவும்',
   'diff.tooLong': 'முதல் {n} வரிகள் மட்டுமே காட்டப்படுகின்றன.',
   'diff.lines': '{add} சேர்க்கப்பட்டன, {del} நீக்கப்பட்டன',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'வாரச் சுருக்கம்',
+  'digest.help': 'கடந்த 7 நாட்கள், ஏற்கனவே ஏற்றப்பட்டதிலிருந்து. Markdown ஆக நகலெடுக்கவும் அல்லது கோப்பாகச் சேமிக்கவும்.',
+  'digest.copy': 'Markdown நகலெடு',
+  'digest.save': '.md சேமி',
+  'digest.copied': 'நகலெடுக்கப்பட்டது.',
+  'digest.head': 'வாரச் சுருக்கம் · {repo}',
+  'digest.commits': 'கமிட்கள்: {n}',
+  'digest.merged': 'இணைக்கப்பட்ட புல் ரிக்வெஸ்ட்கள்',
+  'digest.releases': 'வெளியீடுகள்',
+  'digest.people': 'யார் பங்களித்தனர் (கமிட்கள்)',
+  'digest.branch': 'மிகச் செயலில் உள்ள கிளை',
 });

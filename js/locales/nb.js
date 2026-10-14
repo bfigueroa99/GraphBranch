@@ -516,4 +516,16 @@ GB.i18n.define('nb', {
   'diff.openFile': 'Åpne fil',
   'diff.tooLong': 'Bare de første {n} linjene vises.',
   'diff.lines': '{add} lagt til, {del} fjernet',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Ukesammendrag',
+  'digest.help': 'De siste 7 dagene, ut fra det som allerede er lastet. Kopier som Markdown eller lagre som fil.',
+  'digest.copy': 'Kopier Markdown',
+  'digest.save': 'Lagre .md',
+  'digest.copied': 'Kopiert.',
+  'digest.head': 'Ukesammendrag · {repo}',
+  'digest.commits': 'Commits: {n}',
+  'digest.merged': 'Flettede pull requests',
+  'digest.releases': 'Releaser',
+  'digest.people': 'Hvem som har bidratt (commits)',
+  'digest.branch': 'Mest aktive gren',
 });

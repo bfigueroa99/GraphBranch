@@ -516,4 +516,16 @@ GB.i18n.define('fi', {
   'diff.openFile': 'Avaa tiedosto',
   'diff.tooLong': 'Vain ensimmäiset {n} riviä näytetään.',
   'diff.lines': '{add} lisätty, {del} poistettu',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Viikon yhteenveto',
+  'digest.help': 'Viimeiset 7 päivää jo ladatun perusteella. Kopioi Markdownina tai tallenna tiedostona.',
+  'digest.copy': 'Kopioi Markdown',
+  'digest.save': 'Tallenna .md',
+  'digest.copied': 'Kopioitu.',
+  'digest.head': 'Viikon yhteenveto · {repo}',
+  'digest.commits': 'Commitit: {n}',
+  'digest.merged': 'Yhdistetyt pull requestit',
+  'digest.releases': 'Julkaisut',
+  'digest.people': 'Ketkä osallistuivat (commitit)',
+  'digest.branch': 'Aktiivisin haara',
 });

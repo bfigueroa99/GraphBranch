@@ -130,7 +130,7 @@ segunda columna a la primera.
 | Datos | ramas, commits, PRs, revisiones, issues, releases, estrellas, forks, archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`) | VS Code |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (sus eventos, grupos de GitLab, constelación) |
-| Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM), avisos a Slack y Discord (escritorio) | resumen de la semana |
+| Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor | filtrar el grafo por autor |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado) | probar con NVDA, JAWS y VoiceOver |
 
@@ -225,9 +225,9 @@ se comprueban antes de construir sobre ellas.
 22. ~~**Bitbucket Cloud**~~ hecho en #75 · Fuentes. `api.bitbucket.org/2.0` (CORS abierto, comprobado): ramas, historia y PRs
     en vivo y galaxias con el árbol, sin token y solo repos públicos. Sin hacer: Bitbucket con token (repos
     privados, mejor cuota) y los pipelines como CI.
-23. **Resumen de la semana** · Salidas · 2×2/1. Una ficha con lo que pasó en los últimos 7 días (PRs
-    fusionados, releases, quién aportó, la rama más activa), para copiar como Markdown o guardar como
-    imagen.
+23. ~~**Resumen de la semana**~~ hecho en #77 · Salidas. El panel de salud suma una ficha con los últimos 7 días
+    (commits, PRs fusionados, releases, quién aportó y la rama más activa) para copiar o guardar como
+    Markdown, con lo ya cargado. Sin hacer: guardarlo como imagen y juntar varios repos.
 24. **Extensión de VS Code** · Plataformas · 3×2/3. Un webview con la app y el token de la sesión de GitHub
     que ya tiene VS Code (`vscode.authentication`), abierta en el repo del espacio de trabajo. El loop
     deja el paquete; publicarlo en el Marketplace lo hace Benjamin.
@@ -1460,3 +1460,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 197 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde.
 - **Siguiente:** iteración 49, expansión: ítem 23 (Resumen de la semana, Salidas)
+
+### 2026-10-14 · Iteración 49 · Expansión · Salidas
+
+- **Capacidad nueva: resumen de la semana** (ítem 23 de la hoja de ruta). El panel de salud suma «Resumen de la semana»: los últimos 7 días con lo ya cargado y sin consultas (commits, PRs fusionados y releases de la actividad, quién aportó con hasta 5 personas por commits, y la rama más activa), con vista previa en Markdown y los botones «Copiar Markdown» (si no hay permiso del portapapeles, deja el texto seleccionado) y «Guardar .md» (enlace `blob:`). Lógica pura en `js/digest.js`; el Markdown escapa el texto de afuera y solo enlaza URL http(s); 11 textos nuevos en los 40 idiomas. Sin hacer: guardarlo como imagen y juntar varios repos.
+- **Pruebas que fallan sin la capacidad:** `tools/digest.test.mjs` (ventana de 7 días, personas, rama más activa, semana vacía, escapes y esquemas raros) y el paso del smoke «salud del repo» (Markdown con formato y descarga `.md`).
+- README: la función en la lista, Controles, Estructura, Límites conocidos y Seguridad.
+- QA: filas tocadas: demo sin token (smoke); 40 idiomas (`check-i18n`); XSS (vista previa con `textContent`; Markdown escapado y probado); desborde del panel (smoke). Sin mirar a mano: 320 px, árabe, lector de pantalla; auditoría: 0 hallazgos nuevos.
+- Reclamo: loop/49, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 217 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde. (La primera pasada del smoke falló en el panel de salud: el resumen mostraba `#undefined` y `[object Object]` con los títulos de la demo; corregido pasando los títulos por `i18n.text` y con prueba.)
+- **Siguiente:** iteración 50, expansión: ítem 24 (Extensión de VS Code, Plataformas)

@@ -524,4 +524,16 @@ GB.i18n.define('hr', {
   'diff.openFile': 'Otvorite datoteku',
   'diff.tooLong': 'Prikazano je samo prvih {n} redaka.',
   'diff.lines': 'dodano {add}, uklonjeno {del}',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Sažetak tjedna',
+  'digest.help': 'Posljednjih 7 dana, iz onoga što je već učitano. Kopirajte kao Markdown ili spremite u datoteku.',
+  'digest.copy': 'Kopiraj Markdown',
+  'digest.save': 'Spremi .md',
+  'digest.copied': 'Kopirano.',
+  'digest.head': 'Sažetak tjedna · {repo}',
+  'digest.commits': 'Commitovi: {n}',
+  'digest.merged': 'Spojeni pull requestovi',
+  'digest.releases': 'Izdanja',
+  'digest.people': 'Tko je doprinio (commitovi)',
+  'digest.branch': 'Najaktivnija grana',
 });

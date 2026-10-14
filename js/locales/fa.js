@@ -559,4 +559,16 @@ GB.i18n.define('fa', {
   'diff.openFile': 'باز کردن فایل',
   'diff.tooLong': 'فقط {n} خط نخست نشان داده می‌شود.',
   'diff.lines': '{add} افزوده، {del} حذف‌شده',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'خلاصهٔ هفته',
+  'digest.help': '۷ روز گذشته، از آنچه پیش‌تر بارگذاری شده است. به‌صورت Markdown کپی کنید یا در فایل ذخیره کنید.',
+  'digest.copy': 'کپی Markdown',
+  'digest.save': 'ذخیرهٔ .md',
+  'digest.copied': 'کپی شد.',
+  'digest.head': 'خلاصهٔ هفته · {repo}',
+  'digest.commits': 'کامیت‌ها: {n}',
+  'digest.merged': 'پول‌ریکوئست‌های ادغام‌شده',
+  'digest.releases': 'نسخه‌ها',
+  'digest.people': 'چه کسی مشارکت کرد (کامیت‌ها)',
+  'digest.branch': 'فعال‌ترین شاخه',
 });

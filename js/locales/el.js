@@ -516,4 +516,16 @@ GB.i18n.define('el', {
   'diff.openFile': 'Άνοιγμα αρχείου',
   'diff.tooLong': 'Εμφανίζονται μόνο οι πρώτες {n} γραμμές.',
   'diff.lines': '{add} προστέθηκαν, {del} αφαιρέθηκαν',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Περίληψη εβδομάδας',
+  'digest.help': 'Οι τελευταίες 7 ημέρες, από όσα έχουν ήδη φορτωθεί. Αντιγράψτε ως Markdown ή αποθηκεύστε σε αρχείο.',
+  'digest.copy': 'Αντιγραφή Markdown',
+  'digest.save': 'Αποθήκευση .md',
+  'digest.copied': 'Αντιγράφηκε.',
+  'digest.head': 'Περίληψη εβδομάδας · {repo}',
+  'digest.commits': 'Commits: {n}',
+  'digest.merged': 'Συγχωνευμένα pull requests',
+  'digest.releases': 'Εκδόσεις',
+  'digest.people': 'Ποιος συνεισέφερε (commits)',
+  'digest.branch': 'Πιο ενεργός κλάδος',
 });

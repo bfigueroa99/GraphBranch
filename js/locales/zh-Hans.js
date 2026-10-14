@@ -516,4 +516,16 @@ GB.i18n.define('zh-Hans', {
   'diff.openFile': '打开文件',
   'diff.tooLong': '仅显示前 {n} 行。',
   'diff.lines': '新增 {add} 行，删除 {del} 行',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': '本周摘要',
+  'digest.help': '基于已加载的数据,最近 7 天的情况。可复制为 Markdown,或保存为文件。',
+  'digest.copy': '复制 Markdown',
+  'digest.save': '保存 .md',
+  'digest.copied': '已复制。',
+  'digest.head': '本周摘要 · {repo}',
+  'digest.commits': '提交:{n}',
+  'digest.merged': '已合并的拉取请求',
+  'digest.releases': '发布',
+  'digest.people': '谁做了贡献(提交)',
+  'digest.branch': '最活跃的分支',
 });

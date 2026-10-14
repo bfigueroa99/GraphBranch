@@ -516,4 +516,16 @@ GB.i18n.define('vi', {
   'diff.openFile': 'Mở tệp',
   'diff.tooLong': 'Chỉ hiển thị {n} dòng đầu tiên.',
   'diff.lines': 'thêm {add}, bớt {del}',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Tổng kết tuần',
+  'digest.help': '7 ngày qua, từ dữ liệu đã tải. Sao chép dưới dạng Markdown hoặc lưu thành tệp.',
+  'digest.copy': 'Sao chép Markdown',
+  'digest.save': 'Lưu .md',
+  'digest.copied': 'Đã sao chép.',
+  'digest.head': 'Tổng kết tuần · {repo}',
+  'digest.commits': 'Commit: {n}',
+  'digest.merged': 'Pull request đã hợp nhất',
+  'digest.releases': 'Bản phát hành',
+  'digest.people': 'Ai đã đóng góp (commit)',
+  'digest.branch': 'Nhánh hoạt động nhất',
 });

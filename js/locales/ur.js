@@ -559,4 +559,16 @@ GB.i18n.define('ur', {
   'diff.openFile': 'فائل کھولیں',
   'diff.tooLong': 'صرف پہلی {n} سطریں دکھائی جا رہی ہیں۔',
   'diff.lines': '{add} شامل، {del} حذف',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'ہفتے کا خلاصہ',
+  'digest.help': 'پچھلے 7 دن، پہلے سے لوڈ شدہ ڈیٹا سے۔ Markdown کے طور پر کاپی کریں یا فائل میں محفوظ کریں۔',
+  'digest.copy': 'Markdown کاپی کریں',
+  'digest.save': '.md محفوظ کریں',
+  'digest.copied': 'کاپی ہو گیا۔',
+  'digest.head': 'ہفتے کا خلاصہ · {repo}',
+  'digest.commits': 'کمٹس: {n}',
+  'digest.merged': 'ضم شدہ پل ریکویسٹس',
+  'digest.releases': 'ریلیزز',
+  'digest.people': 'کس نے حصہ ڈالا (کمٹس)',
+  'digest.branch': 'سب سے فعال برانچ',
 });

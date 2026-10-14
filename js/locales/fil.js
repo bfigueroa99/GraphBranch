@@ -517,4 +517,16 @@ GB.i18n.define('fil', {
   'diff.openFile': 'Buksan ang file',
   'diff.tooLong': 'Ang unang {n} linya lang ang ipinapakita.',
   'diff.lines': '{add} idinagdag, {del} inalis',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Buod ng linggo',
+  'digest.help': 'Ang huling 7 araw, mula sa nai-load na. Kopyahin bilang Markdown o i-save bilang file.',
+  'digest.copy': 'Kopyahin ang Markdown',
+  'digest.save': 'I-save ang .md',
+  'digest.copied': 'Nakopya.',
+  'digest.head': 'Buod ng linggo · {repo}',
+  'digest.commits': 'Mga commit: {n}',
+  'digest.merged': 'Mga pull request na na-merge',
+  'digest.releases': 'Mga release',
+  'digest.people': 'Sino ang nag-ambag (mga commit)',
+  'digest.branch': 'Pinakaaktibong branch',
 });

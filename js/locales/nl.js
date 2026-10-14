@@ -517,4 +517,16 @@ GB.i18n.define('nl', {
   'diff.openFile': 'Bestand openen',
   'diff.tooLong': 'Alleen de eerste {n} regels worden getoond.',
   'diff.lines': '{add} toegevoegd, {del} verwijderd',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Weekoverzicht',
+  'digest.help': 'De afgelopen 7 dagen, uit wat al is geladen. Kopieer het als Markdown of bewaar het als bestand.',
+  'digest.copy': 'Markdown kopiëren',
+  'digest.save': '.md opslaan',
+  'digest.copied': 'Gekopieerd.',
+  'digest.head': 'Weekoverzicht · {repo}',
+  'digest.commits': 'Commits: {n}',
+  'digest.merged': 'Samengevoegde pull requests',
+  'digest.releases': 'Releases',
+  'digest.people': 'Wie heeft bijgedragen (commits)',
+  'digest.branch': 'Actiefste branch',
 });

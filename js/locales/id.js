@@ -516,4 +516,16 @@ GB.i18n.define('id', {
   'diff.openFile': 'Buka file',
   'diff.tooLong': 'Hanya {n} baris pertama yang ditampilkan.',
   'diff.lines': '{add} ditambahkan, {del} dihapus',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Ringkasan pekan',
+  'digest.help': '7 hari terakhir, dari data yang sudah dimuat. Salin sebagai Markdown atau simpan sebagai berkas.',
+  'digest.copy': 'Salin Markdown',
+  'digest.save': 'Simpan .md',
+  'digest.copied': 'Tersalin.',
+  'digest.head': 'Ringkasan pekan · {repo}',
+  'digest.commits': 'Commit: {n}',
+  'digest.merged': 'Pull request yang digabung',
+  'digest.releases': 'Rilis',
+  'digest.people': 'Siapa yang berkontribusi (commit)',
+  'digest.branch': 'Cabang paling aktif',
 });

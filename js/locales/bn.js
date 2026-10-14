@@ -516,4 +516,16 @@ GB.i18n.define('bn', {
   'diff.openFile': 'ফাইল খুলুন',
   'diff.tooLong': 'শুধু প্রথম {n} লাইন দেখানো হচ্ছে।',
   'diff.lines': '{add} যোগ, {del} বাদ',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'সপ্তাহের সারসংক্ষেপ',
+  'digest.help': 'গত ৭ দিন, ইতিমধ্যে লোড হওয়া তথ্য থেকে। Markdown হিসেবে কপি করুন বা ফাইলে সংরক্ষণ করুন।',
+  'digest.copy': 'Markdown কপি করুন',
+  'digest.save': '.md সংরক্ষণ',
+  'digest.copied': 'কপি হয়েছে।',
+  'digest.head': 'সপ্তাহের সারসংক্ষেপ · {repo}',
+  'digest.commits': 'কমিট: {n}',
+  'digest.merged': 'মার্জ হওয়া পুল রিকোয়েস্ট',
+  'digest.releases': 'রিলিজ',
+  'digest.people': 'কে অবদান রেখেছেন (কমিট)',
+  'digest.branch': 'সবচেয়ে সক্রিয় ব্রাঞ্চ',
 });

@@ -516,4 +516,16 @@ GB.i18n.define('ja', {
   'diff.openFile': 'ファイルを開く',
   'diff.tooLong': '最初の {n} 行のみ表示しています。',
   'diff.lines': '追加 {add}、削除 {del}',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': '今週のまとめ',
+  'digest.help': '読み込み済みのデータから見た直近7日間。Markdownとしてコピーするか、ファイルに保存できます。',
+  'digest.copy': 'Markdownをコピー',
+  'digest.save': '.mdを保存',
+  'digest.copied': 'コピーしました。',
+  'digest.head': '今週のまとめ · {repo}',
+  'digest.commits': 'コミット: {n}',
+  'digest.merged': 'マージされたプルリクエスト',
+  'digest.releases': 'リリース',
+  'digest.people': '貢献した人(コミット)',
+  'digest.branch': '最も活発なブランチ',
 });

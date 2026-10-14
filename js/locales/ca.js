@@ -516,4 +516,16 @@ GB.i18n.define('ca', {
   'diff.openFile': 'Obre el fitxer',
   'diff.tooLong': 'Només es mostren les primeres {n} línies.',
   'diff.lines': '{add} afegides, {del} tretes',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Resum de la setmana',
+  'digest.help': 'Els últims 7 dies, amb el que ja està carregat. Copia\'l com a Markdown o desa\'l com a fitxer.',
+  'digest.copy': 'Copia el Markdown',
+  'digest.save': 'Desa .md',
+  'digest.copied': 'Copiat.',
+  'digest.head': 'Resum de la setmana · {repo}',
+  'digest.commits': 'Commits: {n}',
+  'digest.merged': 'Pull requests fusionats',
+  'digest.releases': 'Releases',
+  'digest.people': 'Qui ha aportat (commits)',
+  'digest.branch': 'Branca més activa',
 });

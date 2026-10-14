@@ -517,4 +517,16 @@ GB.i18n.define('th', {
   'diff.openFile': 'เปิดไฟล์',
   'diff.tooLong': 'แสดงเฉพาะ {n} บรรทัดแรก',
   'diff.lines': 'เพิ่ม {add} ลบ {del}',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'สรุปประจำสัปดาห์',
+  'digest.help': '7 วันที่ผ่านมา จากข้อมูลที่โหลดไว้แล้ว คัดลอกเป็น Markdown หรือบันทึกเป็นไฟล์',
+  'digest.copy': 'คัดลอก Markdown',
+  'digest.save': 'บันทึก .md',
+  'digest.copied': 'คัดลอกแล้ว',
+  'digest.head': 'สรุปประจำสัปดาห์ · {repo}',
+  'digest.commits': 'คอมมิต: {n}',
+  'digest.merged': 'Pull request ที่ผสานแล้ว',
+  'digest.releases': 'รีลีส',
+  'digest.people': 'ผู้ร่วมพัฒนา (คอมมิต)',
+  'digest.branch': 'เบรนช์ที่คึกคักที่สุด',
 });

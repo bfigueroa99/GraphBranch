@@ -524,4 +524,16 @@ GB.i18n.define('ro', {
   'diff.openFile': 'Deschideți fișierul',
   'diff.tooLong': 'Se afișează doar primele {n} rânduri.',
   'diff.lines': '{add} adăugate, {del} eliminate',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Rezumatul săptămânii',
+  'digest.help': 'Ultimele 7 zile, din ce este deja încărcat. Copiază-l ca Markdown sau salvează-l ca fișier.',
+  'digest.copy': 'Copiază Markdown',
+  'digest.save': 'Salvează .md',
+  'digest.copied': 'Copiat.',
+  'digest.head': 'Rezumatul săptămânii · {repo}',
+  'digest.commits': 'Commituri: {n}',
+  'digest.merged': 'Pull request-uri îmbinate',
+  'digest.releases': 'Lansări',
+  'digest.people': 'Cine a contribuit (commituri)',
+  'digest.branch': 'Cea mai activă ramură',
 });

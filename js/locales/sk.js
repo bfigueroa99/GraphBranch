@@ -527,4 +527,16 @@ GB.i18n.define('sk', {
   'diff.openFile': 'Otvoriť súbor',
   'diff.tooLong': 'Zobrazuje sa len prvých {n} riadkov.',
   'diff.lines': 'pridané: {add}, odstránené: {del}',
+  /* ---------- resumen de la semana ---------- */
+  'digest.title': 'Súhrn týždňa',
+  'digest.help': 'Posledných 7 dní z toho, čo je už načítané. Skopírujte ako Markdown alebo uložte do súboru.',
+  'digest.copy': 'Kopírovať Markdown',
+  'digest.save': 'Uložiť .md',
+  'digest.copied': 'Skopírované.',
+  'digest.head': 'Súhrn týždňa · {repo}',
+  'digest.commits': 'Commity: {n}',
+  'digest.merged': 'Zlúčené pull requesty',
+  'digest.releases': 'Vydania',
+  'digest.people': 'Kto prispel (commity)',
+  'digest.branch': 'Najaktívnejšia vetva',
 });

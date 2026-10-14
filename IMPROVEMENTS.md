@@ -349,39 +349,38 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     GitLab ya se rechazan): rechazar nombres hechos solo de puntos.
 9. [Seguridad] Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de
     `<usuario>.github.io`. Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-10. [Rendimiento] Durante Replay se actualizan las dos vistas aunque una esté oculta (`app.js:278`).
-11. [Rendimiento] Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`)
+10. [Rendimiento] Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`)
     y un `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro). Medir antes
     y después con `node tools/audit.mjs --repetir 3`.
-12. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+11. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-13. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
+12. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
     y mueve el resto a `docs/BITACORA.md` (idempotente: la segunda corrida dice «Nada que rotar»; queda
     una línea «Las iteraciones anteriores están en docs/BITACORA.md»); `--siguiente` sigue leyendo N de
     aquí y `--check` exige iteraciones sin repetidos entre los dos archivos. Motivo: `--salud` mide el
     archivo en cada iteración (77 KB el 2026-10-13, 55 KB de bitácora), y cada sesión nueva lo lee entero.
-14. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+13. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-15. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+14. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-16. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+15. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-17. [QA] Repo local de 1.000 ramas en árabe (iteración 35): el primer arranque en frío tardó 22 s y `#status`
+16. [QA] Repo local de 1.000 ramas en árabe (iteración 35): el primer arranque en frío tardó 22 s y `#status`
     dejó de decir «cargando» con 40 ramas contadas (en tamil, 3 s y 1.001). Sin reproducir una segunda vez:
     medir si el estado «listo» sale antes de la primera lectura completa del repo local. Reproducción:
     `xvfb-run node` con `e2e/app.mjs` (`launch` + `--local=` sobre un repo con 1.000 ramas), leer
     `#st-branches` al salir `loaded()`.
-18. [QA] La auditoría con `--langs` cuenta `objetivo-chico` 135 veces fuera de la base (95×22, 73×22 y
+17. [QA] La auditoría con `--langs` cuenta `objetivo-chico` 135 veces fuera de la base (95×22, 73×22 y
     296×19 px en 40 idiomas): son los mismos controles del pendiente 4, repetidos por idioma. Decidir si
     la base los guarda por control y no por idioma. Reproducción: `node tools/audit.mjs --langs`.
-19. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
+18. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
     (6.009 ms con ≤ 6.000; tareas largas 4.809 ms con ≤ 4.000), sin GPU y con la corrida larga; la corrida
     normal de la puerta no lo marca. Medir con `node tools/audit.mjs --repetir 3` antes de tocar nada.
 
@@ -1436,3 +1435,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 188 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde.
 - **Siguiente:** iteración 47, mantenimiento · Rendimiento: pendiente 10 (Durante Replay se actualizan las dos vistas aunque una esté oculta)
+
+### 2026-10-14 · Iteración 47 · Mantenimiento · Rendimiento
+
+- **Arreglo: durante el Replay solo se actualiza la vista a la vista** (pendiente 10). `onFrame` dibujaba y festejaba en 2D y 3D aunque una estuviera oculta; ahora solo lo hace `graph`, y `setView` pone al día la vista que se muestra con el último cuadro (`replayFrame`). Medida: cuentas de `Graph3D.update` en el smoke, no tiempos (no se corrió `audit.mjs --repetir` antes y después; queda sin medir).
+- **Reproducción:** `node tools/smoke.mjs` sin el arreglo → `✗ replay: solo se actualiza la vista a la vista`.
+- **Pruebas que fallan sin el arreglo:** el paso del smoke «replay: solo se actualiza la vista a la vista» (con la vista 2D, cuenta las llamadas a `Graph3D.update`; al pasar a 3D mientras corre el Replay, debe actualizarse).
+- README: sin cambios (comportamiento interno).
+- QA: Replay con 2D y 3D en el smoke; auditoría: no toca la interfaz.
+- Reclamo: loop/47, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 188 pruebas (`node --test`), smoke (73 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 24 e2e en verde.
+- **Siguiente:** iteración 48, expansión: ítem 22 (Bitbucket Cloud, Fuentes)

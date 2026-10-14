@@ -452,6 +452,31 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#replay', { state: 'hidden', timeout: 5000 });
   });
 
+  await step(page, 'replay: solo se actualiza la vista a la vista', async () => {
+    await page.click('#view-2d');
+    await page.evaluate(() => {
+      const G3 = window.GB.Graph3D.prototype;
+      window.__g3u = 0;
+      window.__g3orig = G3.update;
+      G3.update = function (...a) {
+        window.__g3u++;
+        return window.__g3orig.apply(this, a);
+      };
+    });
+    await page.click('#replay-btn');
+    await page.waitForSelector('#replay', { state: 'visible', timeout: 5000 });
+    await page.waitForTimeout(2000);
+    const hidden = await page.evaluate(() => window.__g3u);
+    // la vista que estaba oculta se pone al día al mostrarse
+    await page.click('#view-3d');
+    const after = await page.evaluate(() => window.__g3u);
+    await page.click('#replay .rp-exit');
+    await page.waitForSelector('#replay', { state: 'hidden', timeout: 5000 });
+    await page.evaluate(() => { window.GB.Graph3D.prototype.update = window.__g3orig; });
+    if (hidden > 2) throw new Error(`el Replay actualizó la vista 3D oculta ${hidden} veces`);
+    if (after <= hidden) throw new Error('la vista 3D no se puso al día al mostrarse durante el Replay');
+  });
+
   // grabar empieza la historia desde el principio, y al llegar al final el video se guarda solo
   await step(page, 'graba el Replay en video, de principio a fin', async () => {
     const sel = has3d && (await page.locator('#graph3d').isVisible()) ? '#graph3d' : '#graph';

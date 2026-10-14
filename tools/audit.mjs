@@ -81,6 +81,18 @@ const PNG_1PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0l
 /** La clave estable de un hallazgo: tipo, escenario y dónde (sin índices, cifras ni estados). */
 export const clave = (h) => `${h.tipo}|${h.escenario}|${h.donde}`;
 
+/** ¿Está en la base? Un escenario por idioma (`celular-xx`, el de `--langs`) cuenta como conocido si la base
+    guarda el mismo control en cualquier idioma de celular: los controles son los mismos en los 40. */
+export function conocido(h, base) {
+  const claves = new Set(base?.hallazgos ?? []);
+  if (claves.has(clave(h))) return true;
+  if (!/^celular-(?!320$)/.test(h.escenario)) return false;
+  return [...claves].some((k) => {
+    const [tipo, escenario, ...donde] = k.split('|');
+    return tipo === h.tipo && /^celular-(?!320$)/.test(escenario) && donde.join('|') === h.donde;
+  });
+}
+
 /** Agrupa hallazgos por clave, suma cuántas veces aparecieron y les pone prioridad y subtipo. */
 export function agrupar(lista) {
   const m = new Map();
@@ -795,11 +807,10 @@ async function completa(o, env) {
   r.medidas.cargaEquipo = Math.round((loadavg()[0] / availableParallelism()) * 10) / 10;
   const base = leerBase();
   const todos = [...r.hallazgos, ...presupuestos(r.medidas)];
-  const conocidas = new Set(base.hallazgos);
   const orden = { Alta: 0, Media: 1, Baja: 2 };
   todos.sort((a, b) => orden[a.prioridad] - orden[b.prioridad] || a.subtipo.localeCompare(b.subtipo) || clave(a).localeCompare(clave(b)));
   console.log(`\nHallazgos (${todos.length}; * = ya en tools/audit-base.json):`);
-  for (const h of todos) console.log(`${conocidas.has(clave(h)) ? '*' : ' '} ${linea(h)}`);
+  for (const h of todos) console.log(`${conocido(h, base) ? '*' : ' '} ${linea(h)}`);
   console.log(`\nMedidas (Chromium sin GPU${o.repetir > 1 ? `, la mejor de ${o.repetir}` : ''}${r.medidas.cargaEquipo > CARGA_MAX ? `; equipo cargado (${r.medidas.cargaEquipo} por núcleo): no se juzgan los presupuestos, repetir con el equipo libre` : ''}):`);
   for (const [k, v] of Object.entries(r.medidas)) console.log(`  ${k}: ${v}`);
   if (o.comparar) {
@@ -808,7 +819,7 @@ async function completa(o, env) {
   }
   if (o.json) writeFileSync(o.json, JSON.stringify({ fecha: new Date().toISOString(), hallazgos: todos, medidas: r.medidas }, null, 2) + '\n');
   const altas = todos.filter((h) => h.prioridad === 'Alta').length;
-  console.log(`\nAuditoría completa: ${todos.length} hallazgos (${altas} Alta), ${todos.filter((h) => !conocidas.has(clave(h))).length} fuera de la base (${Math.round((Date.now() - t0) / 1000)} s)`);
+  console.log(`\nAuditoría completa: ${todos.length} hallazgos (${altas} Alta), ${todos.filter((h) => !conocido(h, base)).length} fuera de la base (${Math.round((Date.now() - t0) / 1000)} s)`);
   return 0;
 }
 

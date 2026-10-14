@@ -441,6 +441,7 @@ GB.i18n.define('zh-Hant', {
   /* ---------- salud del repo ---------- */
   'health.title': '儲存庫健康度',
   'health.help': '僅根據已載入的資料計算，不會額外發出請求。它描述的是儲存庫，而不是個人。',
+  'health.forks': '近期有動靜的 fork,最新推送在前',
   'health.stale': '超過 30 天沒有動靜且沒有拉取請求的分支',
   'health.prs': '未關閉的拉取請求（最舊的在前）',
   'health.merged': '從開啟到合併的耗時（最近的拉取請求）',

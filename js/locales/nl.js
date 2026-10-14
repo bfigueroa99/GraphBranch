@@ -442,6 +442,7 @@ GB.i18n.define('nl', {
   /* ---------- salud del repo ---------- */
   'health.title': 'Gezondheid van de repo',
   'health.help': 'Alleen berekend uit wat al geladen is, zonder extra verzoeken. Het beschrijft de repository, nooit mensen.',
+  'health.forks': 'Forks met recente activiteit, nieuwste push eerst',
   'health.stale': 'Branches zonder activiteit gedurende meer dan 30 dagen en zonder pull request',
   'health.prs': 'Open pull requests, oudste eerst',
   'health.merged': 'Tijd van geopend tot samengevoegd (laatste pull requests)',

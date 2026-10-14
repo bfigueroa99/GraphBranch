@@ -167,3 +167,16 @@ test('archivos: solo en A, solo en B y en las dos', () => {
   assert.deepEqual(Array.from(r.onlyB), ['d']);
   assert.deepEqual(Array.from(r.both), ['b', 'c']);
 });
+
+test('compute: los forks activos con su tiempo desde el último push', () => {
+  const d = repo();
+  d.forks = [
+    { fullName: 'x/y', url: 'https://github.com/x/y', pushedAt: ago(2) },
+    { fullName: 'sin/fecha', url: 'https://github.com/s/f' },
+  ];
+  const h = compute(d, [], NOW);
+  assert.equal(h.forks.total, 1);
+  assert.equal(h.forks.rows[0].fullName, 'x/y');
+  assert.equal(h.forks.rows[0].idle, 2 * DAY);
+  assert.equal(compute({ ...d, forks: undefined }, [], NOW).forks.total, 0);
+});

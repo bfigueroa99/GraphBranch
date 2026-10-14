@@ -53,6 +53,18 @@
     if (s === 'FAILURE' || s === 'ERROR') return 'failure';
     return s ? 'pending' : null;
   };
+  const FORK_DAYS = 90; // un fork cuenta como activo si hizo push en los últimos 90 días
+  const FORK_MAX = 30;
+  /** Los forks con push propio reciente, el más nuevo primero: [{ fullName, url, pushedAt, stars }]. Un fork
+      que nunca recibió un push suyo (pushed_at igual a su creación) no cuenta. */
+  const recentForks = (list, now = Date.now()) =>
+    list
+      .filter((f) => f && typeof f.full_name === 'string' && /^https:\/\//.test(f.html_url || '') && !f.archived)
+      .map((f) => ({ fullName: f.full_name, url: f.html_url, pushedAt: Date.parse(f.pushed_at) || 0, createdAt: Date.parse(f.created_at) || 0, stars: f.stargazers_count || 0 }))
+      .filter((f) => f.pushedAt > f.createdAt + 60000 && now - f.pushedAt <= FORK_DAYS * 864e5)
+      .sort((a, b) => b.pushedAt - a.pushedAt)
+      .slice(0, FORK_MAX)
+      .map(({ fullName, url, pushedAt, stars }) => ({ fullName, url, pushedAt, stars }));
   const PAGE = 100; // ramas por consulta al listarlas (el máximo de GitHub)
   const FIRST = 10; // commits que pide primero cada rama nueva; casi siempre bastan para tocar lo ya cargado
   const BATCH_MS = 4000; // tiempo por ciclo para listar ramas y traer historia; el resto, en el ciclo siguiente
@@ -96,6 +108,7 @@
         ci: new Map(), // rama -> 'success' | 'failure' | 'pending': el estado de los checks de su cabeza
         tags: new Map(), // commit -> [nombre de tag]
         deploys: new Map(), // entorno -> { sha, ref }: el último despliegue de cada uno
+        forks: [], // forks con actividad reciente, el push más nuevo primero
         pins: this.pins, // van justo debajo de la rama por defecto (ver layout.js)
         mode: null,
         totalBranches: 0,
@@ -578,6 +591,20 @@
         for (const d of deploys) if (d?.sha && typeof d.environment === 'string' && !byEnv.has(d.environment)) byEnv.set(d.environment, { sha: d.sha, ref: d.ref || '' }); // el más nuevo va primero
         this.data.deploys = byEnv;
       }
+    }
+
+    /** Forks con actividad reciente: una consulta, solo cuando el panel de salud los pide (y no más de una cada 15
+        minutos). Si falla (repo sin permisos) la lista queda como estaba; la cuota agotada o la red caída se avisan igual. */
+    async syncForks() {
+      if (this.lastPoll.forks && Date.now() - this.lastPoll.forks < 15 * 60000) return false;
+      this.lastPoll.forks = Date.now();
+      try {
+        const { data } = await this.api(`${this.base}/forks?sort=newest&per_page=100`, { cacheKey: 'forks' });
+        if (Array.isArray(data)) this.data.forks = recentForks(data);
+      } catch (err) {
+        if (!['http', 'notfound', 'auth'].includes(err.kind)) throw err;
+      }
+      return true;
     }
 
     async loadRepo(acts) {

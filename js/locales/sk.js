@@ -452,6 +452,7 @@ GB.i18n.define('sk', {
   /* ---------- salud del repo ---------- */
   'health.title': 'Zdravie repozitára',
   'health.help': 'Počíta sa len z už načítaných údajov, bez ďalších dopytov. Opisuje repozitár, nikdy ľudí.',
+  'health.forks': 'Forky s nedávnou aktivitou, najnovší push prvý',
   'health.stale': 'Vetvy bez aktivity viac ako 30 dní a bez pull requestu',
   'health.prs': 'Otvorené pull requesty, najstaršie prvé',
   'health.merged': 'Čas od otvorenia po zlúčenie (posledné pull requesty)',

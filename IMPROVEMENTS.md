@@ -1482,5 +1482,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: filas tocadas: CSP (`index.html` sin cambios; el panel de VS Code solo enmarca el servidor local); token solo a su API (mirado a mano) y nunca en una URL ni en el service worker (la prueba); XSS (sin `innerHTML` nuevo en la página); 40 idiomas (la página no cambia; la extensión trae textos en inglés y español, dicho en Límites conocidos). Sin mirar: el panel dentro de VS Code (no hay VS Code en la sesión); auditoría: no toca la página.
 - Reclamo: loop/50, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
-- Validado: PENDIENTE
+- Validado: 221 pruebas (`node --test`), smoke (77 pasos), i18n (0 errores) en verde; e2e y auditoría no corridas (el cambio no toca la página ni el escritorio).
 - **Siguiente:** iteración 51, mantenimiento · QA: pendiente 16 (Repo local de 1.000 ramas en árabe (iteración 35): el primer arranque en frío t…)

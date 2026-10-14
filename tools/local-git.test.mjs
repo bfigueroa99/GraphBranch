@@ -2,11 +2,12 @@
    Sin red y sin tocar el repo del proyecto. */
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, test } from 'node:test';
+import vm from 'node:vm';
 
 const local = createRequire(import.meta.url)('../electron/git.js');
 const base = realpathSync(mkdtempSync(join(tmpdir(), 'gb-local-')));
@@ -103,6 +104,31 @@ test('files da el árbol con tamaños y, con base, lo que cambió en la rama', a
   const by = Object.fromEntries(diff.files.map((f) => [f.path, f]));
   assert.deepEqual([by['nuevo.txt'].status, by['nuevo.txt'].add, by['nuevo.txt'].del], ['added', 3, 0]);
   assert.deepEqual([by['README.md'].status, by['README.md'].add], ['modified', 1]);
+});
+
+test('diff da los cambios de un commit frente a su primer padre (y el primero, frente a nada), sin correr nada del repo', async () => {
+  const dir = makeRepo('cambios');
+  const c1 = commit(dir, 'viejo.md', 'uno\ndos\ntres\ncuatro\n', 'uno');
+  git(dir, 'mv', 'viejo.md', 'nuevo.md');
+  const c2 = commit(dir, 'nuevo.md', 'uno\ndos\ntres\nCUATRO\n', 'renombra y cambia');
+  // un diff o un textconv externo en la configuración del repo no debe correr
+  const marca = join(dir, 'CORRIO');
+  git(dir, 'config', 'diff.external', `touch ${marca}`);
+  git(dir, 'config', 'diff.raro.textconv', `touch ${marca};cat`);
+  writeFileSync(join(dir, '.gitattributes'), '*.md diff=raro\n');
+  const c3 = commit(dir, 'nuevo.md', 'uno\ndos\ntres\ncinco\n', 'otra vez');
+  const { id } = await local.allow(dir);
+  const ctx = vm.createContext({ window: { GB: {} }, TextEncoder, TextDecoder });
+  vm.runInContext(readFileSync(new URL('../js/diff.js', import.meta.url), 'utf8'), ctx);
+  const parse = (r) => JSON.parse(JSON.stringify(ctx.window.GB.diff.parseGit(r.text)));
+  const root = parse(await local.diff(id, c1));
+  assert.deepEqual(root.map((f) => [f.path, f.status, f.add]), [['viejo.md', 'added', 4]]);
+  const moved = parse(await local.diff(id, c2));
+  assert.deepEqual(moved.map((f) => [f.path, f.from, f.status, f.add, f.del]), [['nuevo.md', 'viejo.md', 'renamed', 1, 1]]);
+  const last = parse(await local.diff(id, c3));
+  assert.deepEqual(last.map((f) => f.path).sort(), ['.gitattributes', 'nuevo.md']);
+  assert.ok(!existsSync(marca), 'el diff corrió un programa de la configuración del repo');
+  await assert.rejects(local.diff(id, 'HEAD'), /commit inválido/);
 });
 
 test('watch avisa cuando llega un commit y cuando nace una rama, y deja de avisar al detenerlo', async () => {

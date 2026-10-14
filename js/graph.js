@@ -153,7 +153,8 @@
       <p class="tip-msg">${U.esc(U.firstLine(c.message))}</p>
       <p class="tip-meta"><code>${U.shortSha(c.sha)}</code>${parents > 1 ? ` · ${U.esc(tr('tip.mergeOf', { n: parents }))}` : ''}</p>
       ${rows.length ? `<p class="tip-extra">${rows.join('')}</p>` : ''}
-      ${pin && (c.url || (branch && ctx.canPin)) ? `<div class="tip-actions">
+      ${pin && (c.url || ctx.canDiff || (branch && ctx.canPin)) ? `<div class="tip-actions">
+        ${ctx.canDiff ? `<button type="button" class="tip-diff" data-sha="${U.esc(c.sha)}">${U.esc(tr('diff.show'))}</button>` : ''}
         ${c.url ? `<a class="tip-link" href="${U.esc(c.url)}" target="_blank" rel="noopener">${U.esc(tr('tip.openCommit'))} ↗</a>` : ''}
         ${branch && ctx.canPin ? pinButtonHTML(branch, !!ctx.pins?.has(branch)) : ''}
       </div>` : ''}`;
@@ -191,6 +192,14 @@
       to.focus({ preventScroll: true });
     }
     view.tipOpener = null;
+  }
+
+  /** Conecta el botón "Ver cambios" de un tooltip con el panel de los cambios del commit (js/diff.js). */
+  function wireDiffButton(tip, onDiff) {
+    tip.addEventListener('click', (ev) => {
+      const b = ev.target.closest('.tip-diff');
+      if (b) onDiff?.(b.dataset.sha);
+    });
   }
 
   /** Conecta el botón "Fijar" de un tooltip con la acción de la app. */
@@ -254,6 +263,7 @@
       this.tip.setAttribute('role', 'dialog');
       this.tip.setAttribute('aria-label', tr('tip.aria'));
       wrap.appendChild(this.tip);
+      this.selSha = null; // el commit de los cambios a la vista (ver select)
 
       this.nodes = new Map();
       this.edges = new Map();
@@ -323,6 +333,7 @@
         if (!ev.target.closest('.node, .head')) this.unpin();
       });
       wirePinButton(this.tip, (name) => this.opts.onTogglePin?.(name));
+      wireDiffButton(this.tip, (sha) => this.opts.onDiff?.(sha));
       this.bindGroups();
       this.bindKeys();
       this.bindMini();
@@ -834,7 +845,7 @@
 
     paintNode(it) {
       this.paintRefs(it);
-      const cls = it.cls + (it.el.classList.contains('enter') ? ' enter' : '') + (it.el.classList.contains('hl') ? ' hl' : '');
+      const cls = it.cls + (it.el.classList.contains('enter') ? ' enter' : '') + (it.el.classList.contains('hl') ? ' hl' : '') + (it.data.sha === this.selSha ? ' sel' : '');
       if (it.el.getAttribute('class') !== cls) it.el.setAttribute('class', cls);
     }
 
@@ -1202,6 +1213,16 @@
       this.focusSha(h.data.sha);
       this.mark(h, 'moved', 1800);
       return true;
+    }
+
+    /** El commit cuyos cambios se ven en el panel (js/diff.js) queda marcado con un anillo; null lo quita. */
+    select(sha) {
+      if (this.selSha === sha) return;
+      const prev = this.nodes.get(this.selSha);
+      this.selSha = sha || null;
+      if (prev?.el) this.paintNode(prev);
+      const it = this.nodes.get(this.selSha);
+      if (it?.el) this.paintNode(it);
     }
 
     hasBranch(name) {
@@ -1870,5 +1891,5 @@
   }
 
   GB.Graph = Graph;
-  GB.graphShared = { tipHTML, wirePinButton, focusTip, returnFocus, measure, fitText, prRef, prKey, CI_MARK, ciText, LABEL_FONT, SMALL_FONT };
+  GB.graphShared = { tipHTML, wirePinButton, wireDiffButton, focusTip, returnFocus, measure, fitText, prRef, prKey, CI_MARK, ciText, LABEL_FONT, SMALL_FONT };
 })(window.GB);

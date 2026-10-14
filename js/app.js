@@ -76,6 +76,8 @@
     trGrid: $('#tr-grid'),
     gameEnable: $('#game-enable'),
     graphPanel: $('.graph-panel'),
+    main: $('.main'),
+    diffPanel: $('#diff-panel'),
     repoTabs: $('#repo-tabs'),
     toasts: $('#toasts'),
     hint: $('#hint'),
@@ -156,6 +158,7 @@
   const graph2d = new GB.Graph(el.graph, {
     onFollowChange: (v) => graph === graph2d && followUI(v),
     onTogglePin: (name) => togglePin(name),
+    onDiff: (sha) => openDiff(sha),
   });
   let graph3d = null;
   try {
@@ -163,6 +166,7 @@
       graph3d = new GB.Graph3D(el.graph3d, {
         onFollowChange: (v) => graph === graph3d && followUI(v),
         onTogglePin: (name) => togglePin(name),
+        onDiff: (sha) => openDiff(sha),
         onFlightChange: (on) => setPressed(el.flyBtn, on),
         // zumbido del motor mientras se vuela (solo con el sonido activado)
         onFlightSpeed: (level) => feed.synth.engine(feed.sound ? level : 0),
@@ -248,6 +252,52 @@
     // con la vista 3D, cada sonido sale del lado de la pantalla donde está su rama (si es del repo a la vista)
     panOf: (a) => (graph === graph3d && (a.repo == null || a.repo === active?.key) ? graph3d.panOf(a.branch) : 0),
   });
+
+  /* ---------- los cambios de cada commit (ver diff.js): un panel junto al grafo para pasar de un commit a otro ---------- */
+  const diffView = GB.diff.mount(el.diffPanel, {
+    text: (k, p) => t(k, p),
+    ago: (ms) => U.timeAgo(ms),
+    dateTime: (ms) => U.fmtDateTime(ms),
+    num: (n) => U.fmtNum(n),
+    avatar: (a) => U.avatarHTML(a, 22),
+    errText: (err) => i18n.text(err?.msg || err?.message || ''),
+    load: (sha) => (source?.commitDiff ? source.commitDiff(sha) : null),
+    cheap: () => !!source?.diffCheap?.(),
+    data: () => source.data,
+    chainOf: (sha) => lastRender?.L.nodeOf.get(sha)?.chain || null,
+    onFocus: (sha) => {
+      graph.focusSha?.(sha);
+      selectCommit(sha);
+    },
+    onClose: () => {
+      el.main.classList.remove('diffing');
+      selectCommit(null);
+      // el foco que estaba en el panel vuelve al grafo
+      if (el.diffPanel.contains(document.activeElement) || document.activeElement === document.body) (graph === graph3d ? el.graph3d : el.graph).focus?.({ preventScroll: true });
+    },
+  });
+  const canDiff = () => !!source?.commitDiff && !EMBED;
+  const selectCommit = (sha) => {
+    graph2d.select(sha);
+    graph3d?.select(sha);
+  };
+
+  /** Abre los cambios de un commit (el botón «Ver cambios» de su ficha). El panel toma el lugar del de
+      actividad; el grafo se angosta y, ya con su ancho nuevo, va hasta el commit. */
+  function openDiff(sha) {
+    if (!canDiff() || tv.on) return;
+    graph.unpin?.();
+    const was = el.main.classList.contains('diffing');
+    el.main.classList.add('diffing');
+    if (!diffView.open(sha, { focusGraph: was })) return;
+    if (!was) {
+      selectCommit(sha);
+      setTimeout(() => diffView.sha === sha && graph.focusSha?.(sha), 60);
+    }
+    el.diffPanel.querySelector('#diff-title').focus({ preventScroll: true });
+    // en pantallas angostas el panel va debajo del grafo
+    if (window.matchMedia?.('(max-width: 860px)').matches) el.diffPanel.scrollIntoView({ block: 'nearest' });
+  }
 
   /* ---------- repos seguidos y fuente de datos ---------- */
 
@@ -380,6 +430,7 @@
     // la demo no se sigue, solo se mira: al pasar a otro repo se cierra
     if (prev && prev !== tab && prev.demo) removeTab(prev);
     replay.stop(true);
+    diffView.reset(); // los cambios que se veían eran de otro repo
     tv.attract = false;
     tv.lastSwitch = Date.now();
     clearTimeout(filterTimer); // un filtro a medio escribir era para el repo anterior
@@ -655,6 +706,7 @@
     refs: refsBySha(data),
     pins: data.repo.demo ? new Set() : getPins(),
     canPin: !data.repo.demo,
+    canDiff: canDiff(),
   });
 
   /** Lo que miran los logros: el estado del repo de ahora (`L`, su layout, si está a la vista). */
@@ -711,6 +763,7 @@
     }
     renderSummary(data, L);
     renderTab(tab);
+    diffView.refresh(); // puede haber llegado el commit siguiente
   }
 
   /* avisos a Slack y Discord (solo escritorio, js/hooks.js decide y electron/webhooks.js envía): lo
@@ -754,7 +807,7 @@
   const replay = new GB.Replay({
     root: $('#replay'),
     onFrame: (data, L, { jump, acts, quiet }) => {
-      const gctx = { initial: jump || quiet, replay: true, prs: new Map(), pins: new Set(), canPin: false };
+      const gctx = { initial: jump || quiet, replay: true, prs: new Map(), pins: new Set(), canPin: false, canDiff: canDiff() };
       replayFrame = { L, gctx };
       graph.update(L, gctx); // solo la vista a la vista: la otra se pone al día al cambiar
       if (!acts.length) return;
@@ -1604,6 +1657,7 @@
     root.classList.toggle('tv', on);
     setPressed(el.tvBtn, on);
     if (on) {
+      diffView.close(); // la pantalla compartida es del grafo
       tv.prevView = view;
       tv.lastNews = tv.lastAttract = Date.now();
       if (graph3d) setView('3d', false);
@@ -1934,6 +1988,7 @@
     renderGame();
     feed.relocalize();
     renderTabs();
+    diffView.relocalize();
     if (!source) return;
     // la demo inventa mensajes, incidencias y comentarios en el idioma activo: se reinicia para no mezclarlos
     if (source.data.repo.practice) practice.render(); // su historia no se inventa: se queda como está

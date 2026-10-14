@@ -415,9 +415,9 @@
     /**
      * Una consulta a GitHub con su respuesta ya leída. Si no llega entera en REQUEST_MS se corta y
      * cuenta como fallo de red (se reintenta); si la fuente se detuvo mientras tanto, se corta y no
-     * cuenta como nada.
+     * cuenta como nada. Con `raw`, el cuerpo queda como texto (un diff), sin leerlo como JSON.
      */
-    async request(url, opts) {
+    async request(url, { raw = false, ...opts } = {}) {
       const halt = this.halt || (this.halt = new AbortController());
       const stopped = () => new ApiError(M(this.term('err.network')), { kind: 'aborted' });
       if (halt.signal.aborted) throw stopped();
@@ -434,6 +434,7 @@
         let body = null;
         if (res.status !== 204 && res.status !== 304) {
           const text = await res.text(); // el cuerpo también entra en el tope de tiempo
+          if (raw) return { res, body: text };
           try {
             body = text ? JSON.parse(text) : null;
           } catch {
@@ -639,6 +640,32 @@
         url: f.status === 'removed' ? f.blob_url || null : blob(f.filename),
       }));
       return { kind: 'diff', base: def.name, files, truncated: files.length >= 300 };
+    }
+
+    /* ---------- los cambios de un commit (el panel de js/diff.js) ---------- */
+
+    /** Los archivos que cambió un commit frente a su primer padre, con sus tramos: una consulta, hasta 300
+        archivos (GitHub no da el tramo de un binario ni el de un archivo muy grande). Solo al pedirlo. */
+    async commitDiff(sha) {
+      const { data, headers } = await this.api(`${this.base}/commits/${encodeURIComponent(sha)}`);
+      const repoUrl = this.data.repo.url;
+      const blob = (path) => `${repoUrl}/blob/${sha}/${path.split('/').map(encodeURIComponent).join('/')}`;
+      const files = (data?.files || []).map((f) => ({
+        path: f.filename,
+        from: f.status === 'renamed' ? f.previous_filename || null : null,
+        status: ['added', 'removed', 'renamed'].includes(f.status) ? f.status : 'modified',
+        add: f.additions || 0,
+        del: f.deletions || 0,
+        binary: false, // sin tramo no se sabe si es binario, vacío o muy grande: el panel lo dice así
+        patch: f.patch || null,
+        url: f.status === 'removed' || !repoUrl ? null : blob(f.filename),
+      }));
+      return { files, truncated: /rel="next"/.test(headers?.get?.('Link') || '') };
+    }
+
+    /** Pedir los cambios de un commit sin token gasta una de 60 consultas por hora: entonces solo se piden los que se abren. */
+    diffCheap() {
+      return !!this.token && (this.rate?.remaining ?? 5000) > 500;
     }
 
     /* ---------- ramas que esperan su historia ---------- */

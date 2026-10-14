@@ -524,7 +524,86 @@
       // como si viniera de la red, para ver cómo llegan
       return new Promise((resolve) => setTimeout(() => resolve(out), 350 + Math.random() * 450));
     }
+
+    /* ---------- los cambios de un commit (el panel de js/diff.js) ---------- */
+
+    /** Los cambios de un commit, inventados a partir de su mensaje («feat(search): …» toca src/search/…),
+        pero siempre los mismos para el mismo commit. */
+    commitDiff(sha) {
+      const c = this.data.commits.get(sha);
+      const rnd = mulberry32(parseInt(String(sha).slice(0, 8), 16) | 0);
+      const m = /^(\w+)(?:\(([\w-]+)\))?!?:/.exec(c?.message || '');
+      const merge = (c?.parents || []).length > 1 || /^Merge /.test(c?.message || '');
+      const type = merge ? 'merge' : m?.[1] || 'feat';
+      const s = m?.[2] && m[2] !== 'deps' ? m[2] : ['app', 'api', 'auth', 'ui'][Math.floor(rnd() * 4)];
+      const Cap = s[0].toUpperCase() + s.slice(1);
+      const paths = {
+        docs: ['README.md', `docs/${s}.md`],
+        test: [`tests/${s}/${s}.test.ts`, 'tests/setup.ts'],
+        ci: ['.github/workflows/ci.yml'],
+        build: ['vite.config.ts', 'package.json'],
+        chore: m?.[2] === 'deps' ? ['package.json', 'package-lock.json'] : [`src/${s}/index.ts`, 'src/router.ts'],
+        style: [`src/${s}/${s}.css`, 'src/styles/layout.css'],
+        merge: [`src/${s}/${Cap}.tsx`, `src/${s}/index.ts`, `tests/${s}/${s}.test.ts`, 'src/router.ts'],
+      }[type] || [`src/${s}/${Cap}.tsx`, `src/${s}/use${Cap}.ts`, `tests/${s}/${s}.test.ts`, 'src/router.ts'];
+      const n = merge ? paths.length : 1 + Math.floor(rnd() * Math.min(3, paths.length));
+      const code = DEMO_CODE.map((l) => l.replace(/\{s\}/g, s).replace(/\{S\}/g, Cap));
+      const line = () => code[Math.floor(rnd() * code.length)];
+      const files = paths.slice(0, n).map((path, i) => {
+        const fresh = (type === 'feat' && i === 0 && rnd() < 0.5) || (type === 'test' && i === 0);
+        const out = [];
+        if (fresh) {
+          const k = 6 + Math.floor(rnd() * 14);
+          out.push(`@@ -0,0 +1,${k} @@`);
+          for (let j = 0; j < k; j++) out.push('+' + line());
+        } else {
+          let at = 1 + Math.floor(rnd() * 40);
+          let shift = 0; // lo que corrieron las líneas los tramos anteriores
+          for (let h = 0, hn = 1 + Math.floor(rnd() * 2); h < hn; h++) {
+            const del = Math.floor(rnd() * 3);
+            const add = 1 + Math.floor(rnd() * 6);
+            out.push(`@@ -${at},${6 + del} +${at + shift},${6 + add} @@ ${h ? code[2] : ''}`.trimEnd());
+            shift += add - del;
+            for (let j = 0; j < 3; j++) out.push(' ' + line());
+            for (let j = 0; j < del; j++) out.push('-' + line());
+            for (let j = 0; j < add; j++) out.push('+' + line());
+            for (let j = 0; j < 3; j++) out.push(' ' + line());
+            at += 20 + Math.floor(rnd() * 40);
+          }
+        }
+        const patch = out.join('\n');
+        return { path, from: null, status: fresh ? 'added' : 'modified', ...GB.diff.count(patch), binary: false, patch, url: null };
+      });
+      const out = { files: c ? files : [], truncated: false };
+      return new Promise((resolve) => setTimeout(() => resolve(out), 150 + Math.random() * 250));
+    }
+
+    diffCheap() {
+      return true;
+    }
   }
+
+  /* las líneas de código de los cambios inventados: identificadores, así que en inglés; {s} es el ámbito */
+  const DEMO_CODE = [
+    "import { useEffect, useState } from 'react';",
+    "import { client } from '../api/client';",
+    'export function {S}({ items = [] }) {',
+    '  const [state, setState] = useState(null);',
+    '  if (!items.length) return <Empty label="{s}" />;',
+    '  return items.map((it) => <Row key={it.id} {...it} />);',
+    '}',
+    'export const {s}Limit = 50;',
+    '  const res = await client.get(`/{s}`, { retry: 2 });',
+    '  if (!res.ok) throw new ApiError(res.status);',
+    '  useEffect(() => load{S}(), [query]);',
+    "  it('handles an empty {s} response', async () => {",
+    '    expect(await load{S}()).toEqual([]);',
+    '  });',
+    '  .{s}-list { display: grid; gap: 8px; }',
+    "  { path: '/{s}', component: {S} },",
+    '  // keep the last good value while the next one loads',
+    '  return { ...state, loading: false };',
+  ];
 
   /* el árbol del repo de la demo: identificadores, así que en inglés para cualquier idioma */
   const DEMO_TREE = [

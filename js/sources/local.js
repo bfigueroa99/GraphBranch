@@ -204,6 +204,18 @@
       const r = await this.call('files', sha, def.sha);
       return { kind: 'diff', base: def.name, files: r.files.map((f) => ({ ...f, url: null })), truncated: !!r.truncated };
     }
+
+    /* ---------- los cambios de un commit (el panel de js/diff.js) ---------- */
+
+    async commitDiff(sha) {
+      const r = await this.call('diff', sha);
+      return { files: GB.diff.parseGit(r.text), truncated: !!r.truncated };
+    }
+
+    /** git local no gasta cuota: los commits vecinos se adelantan. */
+    diffCheap() {
+      return true;
+    }
   }
 
   GB.LocalGitSource = LocalGitSource;

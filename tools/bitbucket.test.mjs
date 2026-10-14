@@ -27,6 +27,8 @@ function load(bb) {
     clearTimeout,
     URL,
     AbortController,
+    TextEncoder,
+    TextDecoder,
     fetch: bb.fetch,
     navigator: { onLine: true },
     document: { hidden: false, addEventListener() {}, removeEventListener() {} },
@@ -36,6 +38,7 @@ function load(bb) {
   });
   ctx.window = ctx;
   vm.runInContext(code('util.js'), ctx, { filename: 'util.js' });
+  vm.runInContext(code('diff.js'), ctx, { filename: 'diff.js' });
   vm.runInContext(
     `GB.i18n = { msg: (k, p) => ({ key: k, params: p }), text: (m) => (m && m.key) || String(m ?? ''),
        timeAgo: () => '', fmtNum: String, fmtDate: String, fmtDateTime: String };`,
@@ -153,7 +156,7 @@ function fakeBitbucket() {
     const { status = 200, body, headers = {} } =
       bb.private && path.startsWith(REPO) ? { status: 404, body: { type: 'error', error: { message: 'not found' } } } : bb.override?.(path) || route(path);
     const hs = new Map(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), String(v)]));
-    return { status, ok: status >= 200 && status < 300, statusText: '', headers: { get: (k) => hs.get(k.toLowerCase()) || null }, text: async () => JSON.stringify(body) };
+    return { status, ok: status >= 200 && status < 300, statusText: '', headers: { get: (k) => hs.get(k.toLowerCase()) || null }, text: async () => (typeof body === 'string' ? body : JSON.stringify(body)) };
   };
   return bb;
 }
@@ -334,4 +337,26 @@ test('archivos: el árbol con el tamaño de cada archivo, para el modo galaxias'
     ['src/app.js', 120, `${WEB}/src/f2/src/app.js`],
     ['README.md', 30, `${WEB}/src/f2/README.md`],
   ]);
+});
+
+test('los cambios de un commit: el diff en texto de Bitbucket, que cuenta en la cuota y no adelanta vecinos', async () => {
+  const bb = repo();
+  bb.override = (path) =>
+    path === REPO + '/diff/f2'
+      ? { body: 'diff --git a/src/app.js b/src/app.js\nindex 1..2 100644\n--- a/src/app.js\n+++ b/src/app.js\n@@ -1 +1,2 @@\n-a\n+b\n+c\ndiff --git a/viejo.txt b/viejo.txt\ndeleted file mode 100644\nindex 3..0\n--- a/viejo.txt\n+++ /dev/null\n@@ -1 +0,0 @@\n-x\n' }
+      : null;
+  const { src } = connect(bb);
+  await src.cycle();
+  const before = src.used();
+  const out = await src.commitDiff('f2');
+  assert.equal(src.used(), before + 1, 'la consulta cuenta en las 60 de la hora');
+  assert.deepEqual(
+    Array.from(out.files, (f) => [f.path, f.status, f.add, f.del, f.url]),
+    [
+      ['src/app.js', 'modified', 2, 1, `${WEB}/src/f2/src/app.js`],
+      ['viejo.txt', 'removed', 0, 1, null],
+    ],
+  );
+  assert.equal(src.diffCheap(), false);
+  await assert.rejects(src.commitDiff('nada'), (err) => err.kind === 'notfound');
 });

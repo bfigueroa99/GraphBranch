@@ -26,6 +26,8 @@ function load(cb) {
     clearTimeout,
     URL,
     AbortController,
+    TextEncoder,
+    TextDecoder,
     fetch: cb.fetch,
     navigator: { onLine: true },
     document: { hidden: false, addEventListener() {}, removeEventListener() {} },
@@ -35,6 +37,7 @@ function load(cb) {
   });
   ctx.window = ctx;
   vm.runInContext(code('util.js'), ctx, { filename: 'util.js' });
+  vm.runInContext(code('diff.js'), ctx, { filename: 'diff.js' });
   vm.runInContext(
     `GB.i18n = { msg: (k, p) => ({ key: k, params: p }), text: (m) => (m && m.key) || String(m ?? ''),
        timeAgo: () => '', fmtNum: String, fmtDate: String, fmtDateTime: String };`,
@@ -144,7 +147,7 @@ function fakeCodeberg() {
     const { status = 200, body, headers = {} } =
       cb.private && path.startsWith(REPO) ? { status: 404, body: { message: 'not found' } } : cb.override?.(path) || route(path);
     const hs = new Map(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), String(v)]));
-    return { status, ok: status >= 200 && status < 300, statusText: '', headers: { get: (k) => hs.get(k.toLowerCase()) || null }, text: async () => JSON.stringify(body) };
+    return { status, ok: status >= 200 && status < 300, statusText: '', headers: { get: (k) => hs.get(k.toLowerCase()) || null }, text: async () => (typeof body === 'string' ? body : JSON.stringify(body)) };
   };
   return cb;
 }
@@ -285,4 +288,23 @@ test('archivos: el árbol con el tamaño de cada archivo, para el modo galaxias'
     ['src/app.js', 120, `${WEB}/src/commit/f2/src/app.js`],
     ['README.md', 30, `${WEB}/src/commit/f2/README.md`],
   ]);
+});
+
+test('los cambios de un commit: el diff en texto de Forgejo, leído archivo por archivo', async () => {
+  const cb = repo();
+  cb.override = (path) =>
+    path === REPO + '/git/commits/f2.diff'
+      ? { body: 'diff --git a/src/app.js b/src/app.js\nindex 1..2 100644\n--- a/src/app.js\n+++ b/src/app.js\n@@ -1 +1,2 @@\n-a\n+b\n+c\ndiff --git a/x.bin b/x.bin\nnew file mode 100644\nindex 0..3\nBinary files /dev/null and b/x.bin differ\n' }
+      : null;
+  const { src } = connect(cb);
+  await src.cycle();
+  const out = await src.commitDiff('f2');
+  assert.deepEqual(
+    Array.from(out.files, (f) => [f.path, f.status, f.add, f.del, f.binary, f.url]),
+    [
+      ['src/app.js', 'modified', 2, 1, false, `${WEB}/src/commit/f2/src/app.js`],
+      ['x.bin', 'added', 0, 0, true, `${WEB}/src/commit/f2/x.bin`],
+    ],
+  );
+  await assert.rejects(src.commitDiff('nada'), (err) => err.kind === 'notfound');
 });

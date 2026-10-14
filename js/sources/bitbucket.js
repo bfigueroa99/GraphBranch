@@ -356,6 +356,24 @@
       }
       return { kind: 'tree', files, truncated };
     }
+
+    /* ---------- los cambios de un commit (el panel de js/diff.js) ---------- */
+
+    /** Los cambios de un commit frente a su primer padre: el diff en texto de Bitbucket (`diff/{sha}`),
+        una consulta que cuenta en la cuota de la hora. */
+    async commitDiff(sha) {
+      this.sent.push(Date.now());
+      const { res, body } = await this.request(`${API}${this.base}/diff/${enc(sha)}`, { headers: { Accept: 'text/plain' }, cache: 'no-store', raw: true });
+      this.cost++;
+      if (!res.ok) throw this.toError(res, null);
+      const files = GB.diff.parseGit(body).map((f) => ({ ...f, url: f.status === 'removed' ? null : this.link('blob', sha, f.path) }));
+      return { files, truncated: false };
+    }
+
+    /** Sin token, Bitbucket deja 60 consultas por hora: solo se piden los cambios que se abren. */
+    diffCheap() {
+      return false;
+    }
   }
 
   GB.BitbucketSource = BitbucketSource;

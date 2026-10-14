@@ -269,6 +269,31 @@
       <ol class="feed" id="feed" aria-label="Recent activity" data-i18n-attr="aria-label:feed.listAria"></ol>
       <p class="feed-empty" id="feed-empty">The repository's activity will show up here.</p>
     </aside>
+
+    <!-- los cambios de un commit (js/diff.js): ocupa el lugar del panel de actividad mientras está abierto -->
+    <aside class="panel diff-panel" id="diff-panel" aria-labelledby="diff-title" hidden>
+      <div class="panel-head df-head">
+        <h2 id="diff-title" tabindex="-1" data-i18n="diff.title">Commit changes</h2>
+        <div class="df-nav">
+          <button type="button" class="icon-btn df-older" title="Previous commit (← or J)" aria-label="Previous commit" aria-keyshortcuts="ArrowLeft J" data-i18n-attr="title:diff.older.title;aria-label:diff.older">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg>
+          </button>
+          <button type="button" class="icon-btn df-newer" title="Next commit (→ or K)" aria-label="Next commit" aria-keyshortcuts="ArrowRight K" data-i18n-attr="title:diff.newer.title;aria-label:diff.newer">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
+          </button>
+          <button type="button" class="icon-btn df-close" title="Close the commit changes" aria-label="Close the commit changes" aria-keyshortcuts="Escape" data-i18n-attr="title:diff.close;aria-label:diff.close">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="df-bar" aria-hidden="true"></div>
+      <div class="df-scroll">
+        <div class="df-commit"></div>
+        <p class="df-sum" role="status"></p>
+        <ul class="df-files" aria-label="Changed files" data-i18n-attr="aria-label:diff.files"></ul>
+        <div class="df-body"></div>
+      </div>
+    </aside>
   </main>
 </div>
 
@@ -390,6 +415,7 @@
 <script src="vendor/three.min.js"></script>
 <script src="vendor/OrbitControls.js"></script>
 <script src="js/util.js"></script>
+<script src="js/diff.js"></script>
 <script src="js/sources/github.js"></script>
 <script src="js/sources/gitlab.js"></script>
 <script src="js/sources/codeberg.js"></script>

@@ -1227,6 +1227,11 @@
       `<section class="hl-sec"><h3>${U.esc(t('health.merged'))}</h3>${
         h.merged ? `<p class="hl-line">${U.esc(t('health.mergedStat', { median: span(h.merged.median), max: span(h.merged.max) }))}</p>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
+      `<section class="hl-sec" id="hl-dora"><h3>${U.esc(t('health.dora'))}</h3>${
+        h.dora.deploys30 || h.dora.gap != null || h.dora.lead != null
+          ? `<p class="hl-line">${U.esc(t('health.doraFreq', { n: h.dora.deploys30, gap: h.dora.gap != null ? span(h.dora.gap) : '—' }))}</p><p class="hl-line">${U.esc(t('health.doraLead', { median: h.dora.lead != null ? span(h.dora.lead) : '—' }))}</p>`
+          : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
+      }</section>` +
       `<section class="hl-sec" id="hl-clash"><h3>${U.esc(t('health.clash'))}</h3><p class="hl-none">${U.esc(t('health.clashHelp'))}</p><button type="button" class="btn btn-ghost" id="hl-clash-go">${U.esc(t('health.clashGo'))}</button><div id="hl-clash-out" role="status" aria-live="polite"></div></section>` +
       `<section class="hl-sec" id="hl-cmp"><h3>${U.esc(t('cmp.title'))}</h3><p class="hl-none">${U.esc(t('cmp.help'))}</p><div class="sr-row"><select id="cmp-a" aria-label="${U.esc(t('cmp.a'))}"></select><select id="cmp-b" aria-label="${U.esc(t('cmp.b'))}"></select></div><button type="button" class="btn btn-ghost" id="cmp-go">${U.esc(t('cmp.go'))}</button><div id="cmp-out" role="status" aria-live="polite"></div></section>` +
       `<section class="hl-sec" id="hl-digest"><h3>${U.esc(t('digest.title'))}</h3><p class="hl-none">${U.esc(t('digest.help'))}</p><pre class="hl-digest" id="digest-md" tabindex="0" aria-label="${U.esc(t('digest.title'))}"></pre><div class="sr-row"><button type="button" class="btn btn-ghost" id="digest-copy">${U.esc(t('digest.copy'))}</button><button type="button" class="btn btn-ghost" id="digest-save">${U.esc(t('digest.save'))}</button></div><div id="digest-out" role="status" aria-live="polite"></div></section>` +

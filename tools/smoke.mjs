@@ -574,6 +574,8 @@ console.log('Escritorio (1280×800)');
         overflow: w.scrollWidth - w.clientWidth,
       };
     });
+    const dora = await page.$$eval('#hl-dora .hl-line', (ps) => ps.map((p) => p.textContent));
+    if (dora.length !== 2) throw new Error(`${dora.length} líneas de entrega (DORA), se esperaban 2: ${dora.join(' | ')}`);
     if (info.stats !== 3) throw new Error(`${info.stats} cifras de ritmo, se esperaban 3`);
     if (!info.rows) throw new Error('la demo tiene PRs abiertos y no salen en la lista');
     const forks = await page.$$eval('#hl-forks a.hl-row[href^="https://"][rel~="noopener"]', (as) => as.map((a) => a.textContent));

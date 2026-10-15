@@ -89,6 +89,23 @@ test('ritmo: merges en 7 y 30 días y releases en 30, sin repetir una actividad'
   assert.deepEqual({ ...compute(repo(), acts, NOW).pace }, { merges7: 1, merges30: 2, releases30: 1 });
 });
 
+test('DORA: despliegues en 30 días, mediana entre releases y tiempo de entrega', () => {
+  const acts = [
+    { id: 'r1', kind: 'release', time: ago(2) },
+    { id: 'r1', kind: 'release', time: ago(2) },
+    { id: 'r2', kind: 'release', time: ago(6) },
+    { id: 'r3', kind: 'release', time: ago(16) },
+    { id: 'r4', kind: 'release', time: ago(50) },
+    { id: 'm1', kind: 'pr-merge', time: ago(1), openedAt: ago(1) - 6 * 36e5 },
+    { id: 'm2', kind: 'pr-merge', time: ago(2), openedAt: ago(2) - 2 * 36e5 },
+  ];
+  const d = compute(repo(), acts, NOW).dora;
+  assert.equal(d.deploys30, 3);
+  assert.equal(d.gap, 10 * DAY); // huecos 4, 10 y 34 días: mediana 10
+  assert.equal(d.lead, 4 * 36e5);
+  assert.deepEqual({ ...compute(repo(), [], NOW).dora }, { deploys30: 0, gap: null, lead: null });
+});
+
 test('las listas se cortan a 8 filas y dicen cuántas hay en total', () => {
   const d = repo();
   for (let i = 0; i < 12; i++) {

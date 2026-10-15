@@ -656,4 +656,5 @@ GB.i18n.define('he', {
   'digest.releases': 'גרסאות',
   'digest.people': 'מי תרם (קומיטים)',
   'digest.branch': 'הענף הפעיל ביותר',
+  'digest.org': 'סיכום השבוע של {owner}',
 });

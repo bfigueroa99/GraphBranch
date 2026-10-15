@@ -615,4 +615,5 @@ GB.i18n.define('ru', {
   'digest.releases': 'Релизы',
   'digest.people': 'Кто внёс вклад (коммиты)',
   'digest.branch': 'Самая активная ветка',
+  'digest.org': 'Итоги недели для {owner}',
 });

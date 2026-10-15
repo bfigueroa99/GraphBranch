@@ -599,4 +599,5 @@ GB.i18n.define('hu', {
   'digest.releases': 'Kiadások',
   'digest.people': 'Kik járultak hozzá (commitok)',
   'digest.branch': 'Legaktívabb ág',
+  'digest.org': '{owner} heti összefoglalója',
 });

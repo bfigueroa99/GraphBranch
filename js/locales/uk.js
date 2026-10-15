@@ -615,4 +615,5 @@ GB.i18n.define('uk', {
   'digest.releases': 'Релізи',
   'digest.people': 'Хто зробив внесок (коміти)',
   'digest.branch': 'Найактивніша гілка',
+  'digest.org': 'Підсумки тижня для {owner}',
 });

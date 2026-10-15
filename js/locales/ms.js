@@ -599,4 +599,5 @@ GB.i18n.define('ms', {
   'digest.releases': 'Keluaran',
   'digest.people': 'Siapa yang menyumbang (commit)',
   'digest.branch': 'Cabang paling aktif',
+  'digest.org': 'Ringkasan mingguan {owner}',
 });

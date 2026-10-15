@@ -599,4 +599,5 @@ GB.i18n.define('da', {
   'digest.releases': 'Releases',
   'digest.people': 'Hvem der har bidraget (commits)',
   'digest.branch': 'Mest aktive gren',
+  'digest.org': 'Ugens resumé for {owner}',
 });

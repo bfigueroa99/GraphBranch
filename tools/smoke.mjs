@@ -1438,6 +1438,17 @@ console.log('Una organización o un usuario entero');
     if (saved !== '["acme/api","acme/web","acme/viejo"]') throw new Error(`se guardó ${saved}`);
   });
 
+  await step(page, 'el resumen de la semana de la organización junta sus repos abiertos', async () => {
+    await page.click('#health-btn');
+    await page.waitForSelector('#digest-org-md', { timeout: 5000 });
+    const md = await page.$eval('#digest-org-md', (e) => e.textContent);
+    if (!/^# .*acme/.test(md) || !/## acme\/(api|web|viejo)/.test(md)) throw new Error('resumen de la organización sin sus repos: ' + JSON.stringify(md.slice(0, 400)));
+    if (/undefined|NaN|digest\./.test(md)) throw new Error('texto sin resolver en el resumen de la organización: ' + md.slice(0, 120));
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.click('#digest-org-save')]);
+    if (!/^graphbranch-acme-semana-.*\.md$/.test(dl.suggestedFilename())) throw new Error('nombre del resumen de la organización: ' + dl.suggestedFilename());
+    await page.keyboard.press('Escape');
+  });
+
   await step(page, 'los eventos de la organización llegan al panel, solo los de repos sin pestaña, con una consulta', async () => {
     gh.orgEvent({ type: 'WatchEvent', repo: { name: 'acme/lejano' } }); // sin pestaña: se muestra
     gh.orgEvent({ type: 'WatchEvent', repo: { name: 'acme/api' } }); // con pestaña: ya lo trae la suya

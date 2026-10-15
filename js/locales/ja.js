@@ -599,4 +599,5 @@ GB.i18n.define('ja', {
   'digest.releases': 'リリース',
   'digest.people': '貢献した人(コミット)',
   'digest.branch': '最も活発なブランチ',
+  'digest.org': '{owner} の週間サマリー',
 });

@@ -610,4 +610,5 @@ GB.i18n.define('cs', {
   'digest.releases': 'Vydání',
   'digest.people': 'Kdo přispěl (commity)',
   'digest.branch': 'Nejaktivnější větev',
+  'digest.org': 'Souhrn týdne pro {owner}',
 });

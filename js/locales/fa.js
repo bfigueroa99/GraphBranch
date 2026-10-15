@@ -642,4 +642,5 @@ GB.i18n.define('fa', {
   'digest.releases': 'نسخه‌ها',
   'digest.people': 'چه کسی مشارکت کرد (کامیت‌ها)',
   'digest.branch': 'فعال‌ترین شاخه',
+  'digest.org': 'خلاصه هفته {owner}',
 });

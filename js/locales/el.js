@@ -599,4 +599,5 @@ GB.i18n.define('el', {
   'digest.releases': 'Εκδόσεις',
   'digest.people': 'Ποιος συνεισέφερε (commits)',
   'digest.branch': 'Πιο ενεργός κλάδος',
+  'digest.org': 'Εβδομαδιαία σύνοψη του {owner}',
 });

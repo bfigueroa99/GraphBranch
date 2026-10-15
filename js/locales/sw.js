@@ -599,4 +599,5 @@ GB.i18n.define('sw', {
   'digest.releases': 'Matoleo',
   'digest.people': 'Nani alichangia (commit)',
   'digest.branch': 'Tawi lenye shughuli zaidi',
+  'digest.org': 'Muhtasari wa wiki wa {owner}',
 });

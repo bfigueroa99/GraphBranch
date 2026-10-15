@@ -600,4 +600,5 @@ GB.i18n.define('fil', {
   'digest.releases': 'Mga release',
   'digest.people': 'Sino ang nag-ambag (mga commit)',
   'digest.branch': 'Pinakaaktibong branch',
+  'digest.org': 'Buod ng linggo ng {owner}',
 });

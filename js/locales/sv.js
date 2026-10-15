@@ -599,4 +599,5 @@ GB.i18n.define('sv', {
   'digest.releases': 'Releaser',
   'digest.people': 'Vem som bidragit (commits)',
   'digest.branch': 'Mest aktiva gren',
+  'digest.org': 'Veckans sammanfattning för {owner}',
 });

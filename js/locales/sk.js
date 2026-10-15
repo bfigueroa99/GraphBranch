@@ -610,4 +610,5 @@ GB.i18n.define('sk', {
   'digest.releases': 'Vydania',
   'digest.people': 'Kto prispel (commity)',
   'digest.branch': 'Najaktívnejšia vetva',
+  'digest.org': 'Súhrn týždňa pre {owner}',
 });

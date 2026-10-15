@@ -599,4 +599,5 @@ GB.i18n.define('fi', {
   'digest.releases': 'Julkaisut',
   'digest.people': 'Ketkä osallistuivat (commitit)',
   'digest.branch': 'Aktiivisin haara',
+  'digest.org': 'Viikon yhteenveto: {owner}',
 });

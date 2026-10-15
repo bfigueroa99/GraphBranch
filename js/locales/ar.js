@@ -698,4 +698,5 @@ GB.i18n.define('ar', {
   'digest.releases': 'الإصدارات',
   'digest.people': 'من ساهم (الإيداعات)',
   'digest.branch': 'أنشط فرع',
+  'digest.org': 'ملخص الأسبوع لـ {owner}',
 });

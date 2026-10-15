@@ -599,4 +599,5 @@ GB.i18n.define('ca', {
   'digest.releases': 'Releases',
   'digest.people': 'Qui ha aportat (commits)',
   'digest.branch': 'Branca més activa',
+  'digest.org': 'Resum de la setmana de {owner}',
 });

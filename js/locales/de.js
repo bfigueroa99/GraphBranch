@@ -600,4 +600,5 @@ GB.i18n.define('de', {
   'digest.releases': 'Releases',
   'digest.people': 'Wer beigetragen hat (Commits)',
   'digest.branch': 'Aktivster Branch',
+  'digest.org': 'Wochenrückblick für {owner}',
 });

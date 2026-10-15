@@ -607,4 +607,5 @@ GB.i18n.define('hr', {
   'digest.releases': 'Izdanja',
   'digest.people': 'Tko je doprinio (commitovi)',
   'digest.branch': 'Najaktivnija grana',
+  'digest.org': 'Tjedni sažetak za {owner}',
 });

@@ -287,7 +287,7 @@ se comprueban antes de construir sobre ellas.
 38. ~~**Vocabulario DORA en la salud**~~ hecho en #95 · Análisis. [inv. 2026-10-13]
 39. ~~**PRs por estado**~~ hecho en #98 · Análisis. [inv. 2026-10-13]
 40. ~~**Resaltar el tramo de cada rama comparada**~~ hecho en #101 · Análisis. [parte del ítem 20]
-41. ~~**Una organización entera, cuarta entrega**~~ hecho en #102 · Escala. `group:ruta` (o la URL `gitlab.com/groups/ruta`) sigue
+41. ~~**Una organización entera, cuarta entrega**~~ hecho en #102 · Escala. [parte del ítem 26] `group:ruta` (o la URL `gitlab.com/groups/ruta`) sigue
     los proyectos de un grupo de GitLab con sus subgrupos, en una consulta, sin forks ni archivados. La constelación es el ítem 52.
 42. **Replay por tramo, segunda entrega** · Salidas · 1×2/1. [parte del ítem 27] El tramo y los rótulos viajan en la
     URL (`?replay=2026-09-01..2026-09-14&title=…`) para compartir un sprint ya listo, y el Replay arranca solo

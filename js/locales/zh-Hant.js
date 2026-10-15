@@ -599,4 +599,5 @@ GB.i18n.define('zh-Hant', {
   'digest.releases': '發布',
   'digest.people': '誰做了貢獻(提交)',
   'digest.branch': '最活躍的分支',
+  'digest.org': '{owner} 的每週摘要',
 });

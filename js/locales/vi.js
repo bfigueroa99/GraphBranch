@@ -599,4 +599,5 @@ GB.i18n.define('vi', {
   'digest.releases': 'Bản phát hành',
   'digest.people': 'Ai đã đóng góp (commit)',
   'digest.branch': 'Nhánh hoạt động nhất',
+  'digest.org': 'Tóm tắt tuần của {owner}',
 });

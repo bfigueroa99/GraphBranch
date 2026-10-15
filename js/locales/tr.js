@@ -599,4 +599,5 @@ GB.i18n.define('tr', {
   'digest.releases': 'Sürümler',
   'digest.people': 'Kimler katkı verdi (commit)',
   'digest.branch': 'En etkin dal',
+  'digest.org': '{owner} haftalık özeti',
 });

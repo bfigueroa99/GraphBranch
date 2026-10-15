@@ -607,4 +607,5 @@ GB.i18n.define('ro', {
   'digest.releases': 'Lansări',
   'digest.people': 'Cine a contribuit (commituri)',
   'digest.branch': 'Cea mai activă ramură',
+  'digest.org': 'Rezumatul săptămânii pentru {owner}',
 });

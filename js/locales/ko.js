@@ -599,4 +599,5 @@ GB.i18n.define('ko', {
   'digest.releases': '릴리스',
   'digest.people': '기여한 사람(커밋)',
   'digest.branch': '가장 활발한 브랜치',
+  'digest.org': '{owner} 주간 요약',
 });

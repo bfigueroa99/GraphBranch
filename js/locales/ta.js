@@ -599,4 +599,5 @@ GB.i18n.define('ta', {
   'digest.releases': 'வெளியீடுகள்',
   'digest.people': 'யார் பங்களித்தனர் (கமிட்கள்)',
   'digest.branch': 'மிகச் செயலில் உள்ள கிளை',
+  'digest.org': '{owner} வாராந்திர சுருக்கம்',
 });

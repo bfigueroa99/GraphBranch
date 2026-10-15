@@ -610,4 +610,5 @@ GB.i18n.define('pl', {
   'digest.releases': 'Wydania',
   'digest.people': 'Kto wniósł wkład (commity)',
   'digest.branch': 'Najaktywniejsza gałąź',
+  'digest.org': 'Podsumowanie tygodnia dla {owner}',
 });

@@ -605,4 +605,5 @@ GB.i18n.define('en', {
   'digest.releases': 'Releases',
   'digest.people': 'Who contributed (commits)',
   'digest.branch': 'Most active branch',
+  'digest.org': 'Weekly summary of {owner}',
 });

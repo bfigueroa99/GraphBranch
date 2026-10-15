@@ -599,4 +599,5 @@ GB.i18n.define('bg', {
   'digest.releases': 'Издания',
   'digest.people': 'Кой е допринесъл (комити)',
   'digest.branch': 'Най-активен клон',
+  'digest.org': 'Седмично обобщение на {owner}',
 });

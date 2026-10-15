@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} } });
 vm.runInContext(readFileSync(join(root, 'js', 'digest.js'), 'utf8'), ctx, { filename: 'digest.js' });
-const { compute, toMarkdown } = ctx.window.GB.digest;
+const { compute, toMarkdown, computeOrg, toMarkdownOrg } = ctx.window.GB.digest;
 
 const DAY = 864e5;
 const NOW = Date.UTC(2026, 9, 14, 12);
@@ -89,4 +89,35 @@ test('los títulos que llegan como mensajes por traducir se pasan a texto, y sin
   const out = toMarkdown(d, 'a/b', { head: 'S', commits: 'C {n}', merged: 'M', releases: 'R', people: 'P', branch: 'B' });
   assert.match(out, /\n- Texto\n/);
   assert.doesNotMatch(out, /undefined|object Object|#undefined/);
+});
+
+test('organización: junta dos repos, ordena por commits y deja fuera los quietos', () => {
+  const quiet = { commits: new Map([c('z', 30, [], 'ana')]), branches: new Map([['main', { name: 'main', sha: 'z' }]]) };
+  const o = computeOrg([{ repo: 'acme/quieto', data: quiet, acts: [] }, { repo: 'acme/web', data: repo(), acts }, { repo: 'acme/api', data: { commits: new Map([c('q', 1, [], 'ana')]), branches: new Map([['main', { name: 'main', sha: 'q' }]]) }, acts: [] }], NOW);
+  assert.equal(o.repos, 3);
+  assert.equal(o.commits, 6);
+  assert.equal(o.merged, 1);
+  assert.equal(o.releases, 1);
+  assert.deepEqual(o.rows.map((r) => r.repo), ['acme/web', 'acme/api']);
+  const t = { head: 'Semana · {repo}', commits: 'Commits: {n}', merged: 'Fusionados', releases: 'Releases', people: 'Quién', branch: 'Rama' };
+  const out = toMarkdownOrg(o, 'acme', t, (ms) => new Date(ms).toISOString().slice(0, 10), '—');
+  assert.match(out, /^# Semana · acme\n/);
+  assert.match(out, /## acme\/web\n\n- Commits: 5/);
+  assert.match(out, /Fusionados: #7/);
+  assert.doesNotMatch(out, /acme\/quieto|undefined/);
+});
+
+test('organización: más de 20 repos activos se recortan y sin actividad dice «nada»', () => {
+  const many = Array.from({ length: 22 }, (_, i) => ({ repo: `o/r${i}`, data: { commits: new Map([c('a' + i, 1, [], 'x')]), branches: new Map() }, acts: [] }));
+  const o = computeOrg(many, NOW);
+  assert.equal(o.rows.length, 20);
+  assert.equal(o.hidden, 2);
+  const t = { head: 'S · {repo}', commits: 'C: {n}', merged: 'M', releases: 'R', people: 'P', branch: 'B' };
+  assert.match(toMarkdownOrg(o, 'o', t), /… \+2/);
+  assert.match(toMarkdownOrg(computeOrg([], NOW), 'o', t, undefined, 'nada'), /nada/);
+});
+
+test('organización: el nombre de un repo se escapa en el Markdown', () => {
+  const o = computeOrg([{ repo: 'a/x*[y]', data: repo(), acts: [] }], NOW);
+  assert.match(toMarkdownOrg(o, 'a', { head: 'S {repo}', commits: 'C {n}', merged: 'M', releases: 'R', people: 'P', branch: 'B' }), /## a\/x\\\*\\\[y\\\]/);
 });

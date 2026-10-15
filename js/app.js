@@ -1314,12 +1314,14 @@
       `<section class="hl-sec" id="hl-clash"><h3>${U.esc(t('health.clash'))}</h3><p class="hl-none">${U.esc(t('health.clashHelp'))}</p><button type="button" class="btn btn-ghost" id="hl-clash-go">${U.esc(t('health.clashGo'))}</button><div id="hl-clash-out" role="status" aria-live="polite"></div></section>` +
       `<section class="hl-sec" id="hl-cmp"><h3>${U.esc(t('cmp.title'))}</h3><p class="hl-none">${U.esc(t('cmp.help'))}</p><div class="sr-row"><select id="cmp-a" aria-label="${U.esc(t('cmp.a'))}"></select><select id="cmp-b" aria-label="${U.esc(t('cmp.b'))}"></select></div><button type="button" class="btn btn-ghost" id="cmp-go">${U.esc(t('cmp.go'))}</button><div id="cmp-out" role="status" aria-live="polite"></div></section>` +
       `<section class="hl-sec" id="hl-digest"><h3>${U.esc(t('digest.title'))}</h3><p class="hl-none">${U.esc(t('digest.help'))}</p><pre class="hl-digest" id="digest-md" tabindex="0" aria-label="${U.esc(t('digest.title'))}"></pre><div class="sr-row"><button type="button" class="btn btn-ghost" id="digest-copy">${U.esc(t('digest.copy'))}</button><button type="button" class="btn btn-ghost" id="digest-save">${U.esc(t('digest.save'))}</button></div><div id="digest-out" role="status" aria-live="polite"></div></section>` +
+      orgDigestHtml() +
       `<div class="hl-stats">${stat(t('health.merges7'), h.pace.merges7)}${stat(t('health.merges30'), h.pace.merges30)}${stat(t('health.releases30'), h.pace.releases30)}</div>`;
     const clashBtn = $('#hl-clash-go');
     if (!source.files) clashBtn.hidden = true;
     clashBtn.addEventListener('click', () => findClashes(data, clashBtn));
     setupCompare(data);
     setupDigest(data, acts);
+    setupOrgDigest();
     el.healthBody.querySelectorAll('.hl-list').forEach((ul) =>
       ul.querySelectorAll('[data-go]').forEach((b) =>
         b.addEventListener('click', () => {
@@ -1463,27 +1465,62 @@
     );
   }
 
-  /** El resumen de la semana (js/digest.js): se arma con lo ya cargado, se copia o se baja como .md. */
-  function setupDigest(data, acts) {
-    const label = (k) => t('digest.' + k);
-    const d = GB.digest.compute(data, acts, Date.now(), 7, GB.i18n.text);
-    const repoName = active?.demo ? 'demo' : active?.key || data.repo.name || '';
-    const text = GB.digest.toMarkdown(d, repoName, { head: label('head'), commits: label('commits'), merged: label('merged'), releases: label('releases'), people: label('people'), branch: label('branch') }, GB.i18n.fmtDate, t('health.none'));
-    $('#digest-md').textContent = text;
-    const out = $('#digest-out');
-    $('#digest-copy').addEventListener('click', async () => {
+  /** Las pestañas abiertas de la organización seguida a la que pertenece el repo activo (GitHub), o null. */
+  const isGitHub = (x) => !x.source.host || x.source.host === 'github';
+  function orgTabs() {
+    const owner = !active || active.demo || !isGitHub(active) ? '' : String(active.source.owner || '').toLowerCase();
+    const key = owner && Object.keys(followedOwners).find((k) => k.toLowerCase() === owner);
+    if (!key) return null;
+    const mine = realTabs().filter((x) => isGitHub(x) && String(x.source.owner || '').toLowerCase() === owner);
+    return mine.length > 1 ? { owner: key, tabs: mine } : null;
+  }
+
+  /** La sección del resumen de la organización (solo con 2 o más de sus repos abiertos). */
+  function orgDigestHtml() {
+    const o = orgTabs();
+    if (!o) return '';
+    const title = t('digest.org', { owner: o.owner });
+    return `<section class="hl-sec" id="hl-digest-org"><h3>${U.esc(title)}</h3><p class="hl-none">${U.esc(t('digest.help'))}</p><pre class="hl-digest" id="digest-org-md" tabindex="0" aria-label="${U.esc(title)}"></pre><div class="sr-row"><button type="button" class="btn btn-ghost" id="digest-org-copy">${U.esc(t('digest.copy'))}</button><button type="button" class="btn btn-ghost" id="digest-org-save">${U.esc(t('digest.save'))}</button></div><div id="digest-org-out" role="status" aria-live="polite"></div></section>`;
+  }
+
+  /** Copiar y guardar el Markdown de un resumen: `id` es el prefijo de sus elementos. */
+  function wireDigest(id, text, name) {
+    const out = $(`#${id}-out`);
+    $(`#${id}-md`).textContent = text;
+    $(`#${id}-copy`).addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(text);
-        out.textContent = label('copied');
+        out.textContent = t('digest.copied');
       } catch {
         const range = document.createRange();
-        range.selectNodeContents($('#digest-md'));
+        range.selectNodeContents($(`#${id}-md`));
         const sel = getSelection();
         sel.removeAllRanges();
         sel.addRange(range); // sin permiso del portapapeles: queda seleccionado para copiar a mano
       }
     });
-    $('#digest-save').addEventListener('click', () => GB.snapshot.download(new Blob([text], { type: 'text/markdown' }), GB.snapshot.fileName(repoName, { ext: 'md', kind: 'semana' })));
+    $(`#${id}-save`).addEventListener('click', () => GB.snapshot.download(new Blob([text], { type: 'text/markdown' }), GB.snapshot.fileName(name, { ext: 'md', kind: 'semana' })));
+  }
+
+  const digestLabels = () => {
+    const label = (k) => t('digest.' + k);
+    return { head: label('head'), commits: label('commits'), merged: label('merged'), releases: label('releases'), people: label('people'), branch: label('branch') };
+  };
+
+  /** El resumen de la semana (js/digest.js): se arma con lo ya cargado, se copia o se baja como .md. */
+  function setupDigest(data, acts) {
+    const d = GB.digest.compute(data, acts, Date.now(), 7, GB.i18n.text);
+    const repoName = active?.demo ? 'demo' : active?.key || data.repo.name || '';
+    wireDigest('digest', GB.digest.toMarkdown(d, repoName, digestLabels(), GB.i18n.fmtDate, t('health.none')), repoName);
+  }
+
+  /** El de toda la organización: los repos abiertos de la misma organización seguida, sin consultas nuevas. */
+  function setupOrgDigest() {
+    const o = orgTabs();
+    if (!o) return;
+    const entries = o.tabs.map((x) => ({ repo: x.source.name || x.key, data: x.source.view ? x.source.view() : x.source.data, acts: feed.items.filter((a) => a.repo === x.key) }));
+    const d = GB.digest.computeOrg(entries, Date.now(), 7, GB.i18n.text);
+    wireDigest('digest-org', GB.digest.toMarkdownOrg(d, o.owner, digestLabels(), GB.i18n.fmtDate, t('health.none')), o.owner);
   }
 
   function closeHealth() {

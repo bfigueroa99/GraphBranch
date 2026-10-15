@@ -599,4 +599,5 @@ GB.i18n.define('nb', {
   'digest.releases': 'Releaser',
   'digest.people': 'Hvem som har bidratt (commits)',
   'digest.branch': 'Mest aktive gren',
+  'digest.org': 'Ukens oppsummering for {owner}',
 });

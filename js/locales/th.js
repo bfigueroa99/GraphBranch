@@ -600,4 +600,5 @@ GB.i18n.define('th', {
   'digest.releases': 'รีลีส',
   'digest.people': 'ผู้ร่วมพัฒนา (คอมมิต)',
   'digest.branch': 'เบรนช์ที่คึกคักที่สุด',
+  'digest.org': 'สรุปประจำสัปดาห์ของ {owner}',
 });

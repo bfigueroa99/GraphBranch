@@ -599,4 +599,5 @@ GB.i18n.define('hi', {
   'digest.releases': 'रिलीज़',
   'digest.people': 'किसने योगदान दिया (कमिट)',
   'digest.branch': 'सबसे सक्रिय ब्रांच',
+  'digest.org': '{owner} का साप्ताहिक सारांश',
 });

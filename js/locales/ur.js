@@ -642,4 +642,5 @@ GB.i18n.define('ur', {
   'digest.releases': 'ریلیزز',
   'digest.people': 'کس نے حصہ ڈالا (کمٹس)',
   'digest.branch': 'سب سے فعال برانچ',
+  'digest.org': '{owner} کا ہفتہ وار خلاصہ',
 });

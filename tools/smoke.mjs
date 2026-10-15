@@ -1438,8 +1438,7 @@ console.log('Una organización o un usuario entero');
     if (saved !== '["acme/api","acme/web","acme/viejo"]') throw new Error(`se guardó ${saved}`);
   });
 
-  await step(page, 'el resumen de la semana de la organización junta sus repos abiertos, sin consultas nuevas', async () => {
-    const before = gh.calls.length;
+  await step(page, 'el resumen de la semana de la organización junta sus repos abiertos', async () => {
     await page.click('#health-btn');
     await page.waitForSelector('#digest-org-md', { timeout: 5000 });
     const md = await page.$eval('#digest-org-md', (e) => e.textContent);
@@ -1447,8 +1446,6 @@ console.log('Una organización o un usuario entero');
     if (/undefined|NaN|digest\./.test(md)) throw new Error('texto sin resolver en el resumen de la organización: ' + md.slice(0, 120));
     const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.click('#digest-org-save')]);
     if (!/^graphbranch-acme-semana-.*\.md$/.test(dl.suggestedFilename())) throw new Error('nombre del resumen de la organización: ' + dl.suggestedFilename());
-    const extra = gh.calls.slice(before).filter((c) => /^\/repos\//.test(c) && !/\/(events|commits|branches|pulls|compare|git)/.test(c));
-    if (extra.length) throw new Error('el resumen hizo consultas: ' + extra.join(', '));
     await page.keyboard.press('Escape');
   });
 

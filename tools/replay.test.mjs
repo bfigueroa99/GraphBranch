@@ -67,3 +67,25 @@ test('un cambio de la barra con el teclado no reanuda un Replay en pausa', () =>
   rangeHooks.change(); // flechas del teclado con el Replay en pausa: sigue en pausa
   assert.equal(rp.playing, false);
 });
+
+const { paramsOf } = ctx.window.GB.Replay;
+const q = (s) => new URLSearchParams(s);
+
+test('la URL pide el Replay con tramo y rótulos', () => {
+  assert.equal(paramsOf(q('repo=a/b')), null);
+  assert.deepEqual({ ...paramsOf(q('replay=1')) }, { title: '', footer: '' });
+  const o = paramsOf(q('replay=2026-09-01..2026-09-14&title=%20Sprint%2012%20&footer=Lanzamiento'));
+  assert.equal(o.from, new Date(2026, 8, 1).getTime());
+  assert.equal(o.to, new Date(2026, 8, 14, 23, 59, 59, 999).getTime());
+  assert.equal(o.title, 'Sprint 12');
+  assert.equal(o.footer, 'Lanzamiento');
+});
+
+test('el tramo de la URL admite un solo extremo e ignora lo mal escrito', () => {
+  assert.equal(paramsOf(q('replay=2026-09-01..')).to, undefined);
+  assert.equal(paramsOf(q('replay=..2026-09-14')).from, undefined);
+  const bad = paramsOf(q('replay=2026-02-30..ayer'));
+  assert.equal(bad.from, undefined);
+  assert.equal(bad.to, undefined);
+  assert.equal(paramsOf(q(`replay=1&title=${'x'.repeat(200)}`)).title.length, 80);
+});

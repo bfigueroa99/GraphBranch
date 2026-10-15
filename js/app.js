@@ -917,6 +917,7 @@
     }
     renderSummary(data, L);
     renderTab(tab);
+    if (initialReplay && L.nodes.length) startUrlReplay();
     diffView.refresh(); // puede haber llegado el commit siguiente
   }
 
@@ -1085,6 +1086,20 @@
 
   /* tramo y rótulos propios del Replay (js/replay.js): el formulario de la barra */
   let replayOpts = {};
+  /** El Replay que pide la URL, una sola vez y con la primera historia que llega; un tramo sin commits avisa. */
+  function startUrlReplay() {
+    const opts = initialReplay;
+    initialReplay = null;
+    if (replay.active || tv.attract) return;
+    replayOpts = opts;
+    toggleReplay();
+    if (!replay.active) return void (replayOpts = {});
+    const f = rpForm.elements;
+    f.from.value = opts.from != null ? new Date(opts.from).toLocaleDateString('en-CA') : '';
+    f.to.value = opts.to != null ? new Date(opts.to).toLocaleDateString('en-CA') : '';
+    f.title.value = opts.title || '';
+    f.footer.value = opts.footer || '';
+  }
   const rpForm = $('#rp-form');
   const rpOptsBtn = $('#replay .rp-opts');
   const dayMs = (v, end) => (v ? new Date(`${v}T${end ? '23:59:59.999' : '00:00:00'}`).getTime() : null);
@@ -2350,12 +2365,14 @@
 
   let urlRepos = [];
   let initialTV = false;
+  let initialReplay = null; // ?replay=2026-09-01..2026-09-14&title=…: arranca el Replay con ese tramo en cuanto hay historia
   let initialPractice = null; // ?practice=3 o ?practice=<código>: un ejercicio de Aprender git, de la lista o de quien enseña
   try {
     const q = new URLSearchParams(location.search);
     // ?repo=a/b&repo=c/d (o separados por comas): los repos a seguir, el primero a la vista
     urlRepos = q.getAll('repo').flatMap((r) => r.split(',')).map((r) => r.trim()).filter(Boolean);
     initialPractice = !EMBED && q.has('practice') ? GB.gitsim.decodeExercise(q.get('practice').trim()) : null;
+    initialReplay = GB.Replay.paramsOf(q);
     initialTV = !EMBED && q.has('tv') && !/^(0|false|no|off)$/i.test(q.get('tv'));
   } catch {
     /* sin query string */

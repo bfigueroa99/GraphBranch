@@ -483,6 +483,21 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#replay', { state: 'hidden', timeout: 5000 });
   });
 
+  await step(page, 'replay: el enlace con tramo y rótulos arranca solo', async () => {
+    await page.goto(`${base}/index.html?lang=es&replay=2000-01-01..&title=Sprint%2012&footer=Lanzamiento%202.0`);
+    await loaded(page);
+    await page.waitForSelector('#replay', { state: 'visible', timeout: 8000 });
+    if ((await page.textContent('#replay .rp-head')) !== 'Sprint 12') throw new Error('el título del enlace no se ve en el Replay');
+    if ((await page.textContent('#replay .rp-foot')) !== 'Lanzamiento 2.0') throw new Error('el pie de foto del enlace no se ve');
+    await page.click('#replay .rp-opts');
+    if ((await page.inputValue('#rp-form [name=from]')) !== '2000-01-01') throw new Error('el formulario no muestra el tramo del enlace');
+    await page.keyboard.press('Escape');
+    await page.click('#replay .rp-exit');
+    await page.waitForSelector('#replay', { state: 'hidden', timeout: 5000 });
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+  });
+
   await step(page, 'replay: solo se actualiza la vista a la vista', async () => {
     await page.click('#view-2d');
     await page.evaluate(() => {

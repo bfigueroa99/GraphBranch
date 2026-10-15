@@ -143,7 +143,7 @@ segunda columna a la primera.
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
-| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo por ruta de archivo | filtrar el grafo por autor |
+| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo por ruta de archivo, filtrar el grafo por autor ("mis ramas") | vocabulario DORA en la salud |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
@@ -271,9 +271,9 @@ se comprueban antes de construir sobre ellas.
     (sin anunciar de más) de las ramas y commits nuevos mientras está abierto, que filtre por nombre de rama y que
     se escriba en el README cómo se probó con NVDA, VoiceOver y Orca. Comprobar: paso del smoke con un evento en vivo
     de la demo y la región viva sin repetir lo ya leído.
-34. **Filtrar el grafo por autor** · Análisis · 2×2/2. [parte del ítem 19] Mostrar solo las ramas con commits de una
-    persona ("mis ramas"), en las tres vistas y en las tres fuentes, con el filtro guardado por repo. Comprobar: un
-    paso del smoke en la demo y una prueba por fuente.
+34. ~~**Filtrar el grafo por autor**~~ hecho en #93 · Análisis · 2×2/2. [parte del ítem 19] En el cuadro de búsqueda, «Mostrar solo las
+    ramas de…» deja en el grafo 2D y 3D y en la vista de texto la rama por defecto y las ramas con commits de esa persona
+    (`GB.search.byAuthor`), en todas las fuentes, guardado por repo. Comprobar: un paso del smoke en la demo y una prueba por fuente.
 35. **GitLab propio, segunda entrega** · Fuentes · 1×2/1. [parte del ítem 25] Pegar la URL de un proyecto de la
     instancia propia y que se reconozca (hoy hay que escribir `gitlab:grupo/proyecto`), con los avatares de ese
     host (su `img-src` en escritorio, como `connect-src`) y claves aparte de las de gitlab.com. Comprobar: una
@@ -1691,3 +1691,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el smoke falló 4 pasos en una corrida sobre `master` (Replay en video, vista de texto, búsqueda de commits, filtro por ruta: esperas agotadas) y pasó en las siguientes; es la intermitencia de la Deuda ya anotada, sin cambio de código aquí.
 - Validado: 246 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 25 e2e en verde.
 - **Siguiente:** iteración 64, expansión: ítem 34 (Filtrar el grafo por autor, Análisis)
+
+### 2026-10-15 · Iteración 64 · Expansión · Análisis
+
+- **Capacidad nueva: filtrar el grafo por autor** (ítem 34 de la hoja de ruta). En el cuadro de búsqueda, «Mostrar solo las ramas de…» deja en el grafo (2D y 3D) y en la vista de texto la rama por defecto y las ramas con algún commit de esa persona que la rama por defecto no tiene (`GB.search.byAuthor`, sobre los datos ya cargados, sin consultas); los PR de las ramas quitadas se van con ellas. Se guarda por repo, avisa cuántas ramas quedan (región viva) y subraya la lupa mientras hay filtro.
+- **Pruebas que fallan sin la capacidad:** `tools/search.test.mjs` (2: `byAuthor`) y una prueba por fuente en `tools/gitlab.test.mjs`, `tools/bitbucket.test.mjs` y `tools/codeberg.test.mjs`; el paso del smoke «filtro por autor: el grafo y el árbol de texto muestran solo sus ramas, lo dice y se quita».
+- README: función en la lista (Búsqueda de commits), Límites conocidos y Seguridad. Mapa de alcance: fila Análisis. Textos en los 40 idiomas (2 claves).
+- QA: filas de XSS (nombres de autor con `textContent`), cuota (0 consultas nuevas), teclado (selector con etiqueta) y 40 idiomas por `check-i18n`; GitHub y local usan los mismos datos normalizados (sin prueba propia); sin mirar a mano: 320 px, tema claro, movimiento reducido; auditoría: ver Validado.
+- Reclamo: loop/64, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: VALIDADO_PENDIENTE
+- **Siguiente:** iteración 65, expansión: ítem 35 (GitLab propio, segunda entrega, Fuentes)

@@ -516,6 +516,8 @@ GB.i18n.define('cs', {
   'search.placeholder': 'Zpráva, SHA nebo @autor…',
   'search.author': 'Autor',
   'search.anyAuthor': 'Všichni',
+  'search.graphAuthor': 'Zobrazit jen větve od',
+  'search.graphAuthorCount': '{n} z {total} větví má commity této osoby',
   'search.none': 'Žádný commit neodpovídá.',
   'search.count': 'Výsledky: {n}',
   'search.some': 'Zobrazeno {n} z {total}',

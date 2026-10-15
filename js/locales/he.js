@@ -562,6 +562,8 @@ GB.i18n.define('he', {
   'search.placeholder': 'הודעה, SHA או ‎@כותב…',
   'search.author': 'כותב',
   'search.anyAuthor': 'כולם',
+  'search.graphAuthor': 'הצג רק ענפים של',
+  'search.graphAuthorCount': '{n} מתוך {total} ענפים כוללים קומיטים של האדם הזה',
   'search.none': 'אין קומיט תואם.',
   'search.count': 'תוצאות: {n}',
   'search.some': 'מוצגים {n} מתוך {total}',

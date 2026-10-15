@@ -505,6 +505,8 @@ GB.i18n.define('ms', {
   'search.placeholder': 'Mesej, SHA atau @penulis…',
   'search.author': 'Penulis',
   'search.anyAuthor': 'Semua',
+  'search.graphAuthor': 'Tunjuk hanya cabang oleh',
+  'search.graphAuthorCount': '{n} daripada {total} cabang ada komit orang ini',
   'search.none': 'Tiada commit yang sepadan.',
   'search.count': 'Hasil: {n}',
   'search.some': 'Memaparkan {n} daripada {total}',

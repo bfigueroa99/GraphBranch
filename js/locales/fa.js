@@ -548,6 +548,8 @@ GB.i18n.define('fa', {
   'search.placeholder': 'پیام، SHA یا ‎@نویسنده…',
   'search.author': 'نویسنده',
   'search.anyAuthor': 'همه',
+  'search.graphAuthor': 'فقط شاخه‌های این فرد را نشان بده',
+  'search.graphAuthorCount': '{n} از {total} شاخه کامیت‌هایی از این فرد دارند',
   'search.none': 'هیچ کامیتی مطابقت ندارد.',
   'search.count': 'نتایج: {n}',
   'search.some': 'نمایش {n} از {total}',

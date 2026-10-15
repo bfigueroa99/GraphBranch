@@ -516,6 +516,8 @@ GB.i18n.define('sk', {
   'search.placeholder': 'Správa, SHA alebo @autor…',
   'search.author': 'Autor',
   'search.anyAuthor': 'Všetci',
+  'search.graphAuthor': 'Zobraziť len vetvy od',
+  'search.graphAuthorCount': '{n} z {total} vetiev má commity tejto osoby',
   'search.none': 'Žiadny commit nezodpovedá.',
   'search.count': 'Výsledky: {n}',
   'search.some': 'Zobrazených {n} z {total}',

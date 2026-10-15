@@ -516,6 +516,8 @@ GB.i18n.define('pl', {
   'search.placeholder': 'Komunikat, SHA lub @autor…',
   'search.author': 'Autor',
   'search.anyAuthor': 'Wszyscy',
+  'search.graphAuthor': 'Pokaż tylko gałęzie osoby',
+  'search.graphAuthorCount': '{n} z {total} gałęzi ma commity tej osoby',
   'search.none': 'Żaden commit nie pasuje.',
   'search.count': 'Wyniki: {n}',
   'search.some': 'Pokazano {n} z {total}',

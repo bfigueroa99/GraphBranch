@@ -505,6 +505,8 @@ GB.i18n.define('sv', {
   'search.placeholder': 'Meddelande, SHA eller @författare…',
   'search.author': 'Författare',
   'search.anyAuthor': 'Alla',
+  'search.graphAuthor': 'Visa bara grenar från',
+  'search.graphAuthorCount': '{n} av {total} grenar har commits från den här personen',
   'search.none': 'Inga commits matchar.',
   'search.count': 'Resultat: {n}',
   'search.some': 'Visar {n} av {total}',

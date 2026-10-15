@@ -505,6 +505,8 @@ GB.i18n.define('zh-Hans', {
   'search.placeholder': '信息、SHA 或 @作者…',
   'search.author': '作者',
   'search.anyAuthor': '所有人',
+  'search.graphAuthor': '只显示以下作者的分支',
+  'search.graphAuthorCount': '{total} 个分支中有 {n} 个含有此人的提交',
   'search.none': '没有匹配的提交。',
   'search.count': '结果：{n}',
   'search.some': '显示 {n}/{total}',

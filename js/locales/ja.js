@@ -505,6 +505,8 @@ GB.i18n.define('ja', {
   'search.placeholder': 'メッセージ、SHA、@作者…',
   'search.author': '作者',
   'search.anyAuthor': '全員',
+  'search.graphAuthor': 'この人のブランチだけ表示',
+  'search.graphAuthorCount': '{total} 本中 {n} 本のブランチにこの人のコミットがあります',
   'search.none': '一致するコミットはありません。',
   'search.count': '結果: {n}',
   'search.some': '{total} 件中 {n} 件を表示',

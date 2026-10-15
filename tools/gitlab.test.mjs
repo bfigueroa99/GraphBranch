@@ -539,3 +539,22 @@ test('un GitLab propio no muestra avatares (su host no está en img-src); gitlab
   assert.equal(own.person({ username: 'a', avatar_url: 'https://gitlab.com/uploads/a.png' }).avatar, null);
   assert.equal(new GB.GitLabSource({ path: 'g/p' }).person({ username: 'a', avatar_url: 'https://gitlab.com/uploads/a.png' }).avatar, 'https://gitlab.com/uploads/a.png');
 });
+
+test('el filtro por autor funciona sobre los datos de esta fuente: deja la rama de quien escribió y quita la de nadie', async () => {
+  const gl = project();
+  gl.mr(5, 'feature', 'main');
+  const { src } = connect(gl);
+  await src.cycle();
+  const ctx = vm.createContext({ window: { GB: {} } });
+  vm.runInContext(code('search.js'), ctx, { filename: 'search.js' });
+  const S = ctx.window.GB.search;
+  const a = src.data.commits.get('f2').author;
+  const who = a.login || a.name;
+  const mine = S.byAuthor(src.data, who);
+  assert.ok(mine.data.branches.has('feature'), `la rama de ${who} se va`);
+  assert.ok(mine.data.branches.has('main'), 'la rama por defecto siempre queda');
+  const nobody = S.byAuthor(src.data, 'nadie-escribio-esto');
+  assert.deepEqual([...nobody.data.branches.keys()], ['main']);
+  assert.equal(nobody.shown, 1);
+  assert.equal(nobody.total, 2);
+});

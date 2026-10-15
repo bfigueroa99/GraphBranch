@@ -505,6 +505,8 @@ GB.i18n.define('bn', {
   'search.placeholder': 'বার্তা, SHA বা @লেখক…',
   'search.author': 'লেখক',
   'search.anyAuthor': 'সবাই',
+  'search.graphAuthor': 'শুধু এই ব্যক্তির শাখা দেখান',
+  'search.graphAuthorCount': '{total}টির মধ্যে {n}টি শাখায় এই ব্যক্তির কমিট আছে',
   'search.none': 'কোনো কমিট মেলেনি।',
   'search.count': 'ফলাফল: {n}',
   'search.some': '{total}-এর মধ্যে {n}টি দেখানো হচ্ছে',

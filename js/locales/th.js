@@ -506,6 +506,8 @@ GB.i18n.define('th', {
   'search.placeholder': 'ข้อความ SHA หรือ @ผู้เขียน…',
   'search.author': 'ผู้เขียน',
   'search.anyAuthor': 'ทุกคน',
+  'search.graphAuthor': 'แสดงเฉพาะแบรนช์ของ',
+  'search.graphAuthorCount': '{n} จาก {total} แบรนช์มีคอมมิตของบุคคลนี้',
   'search.none': 'ไม่มีคอมมิตที่ตรงกัน',
   'search.count': 'ผลลัพธ์: {n}',
   'search.some': 'แสดง {n} จาก {total}',

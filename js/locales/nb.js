@@ -505,6 +505,8 @@ GB.i18n.define('nb', {
   'search.placeholder': 'Melding, SHA eller @forfatter…',
   'search.author': 'Forfatter',
   'search.anyAuthor': 'Alle',
+  'search.graphAuthor': 'Vis bare grener fra',
+  'search.graphAuthorCount': '{n} av {total} grener har commits fra denne personen',
   'search.none': 'Ingen commits passer.',
   'search.count': 'Resultater: {n}',
   'search.some': 'Viser {n} av {total}',

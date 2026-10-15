@@ -513,6 +513,8 @@ GB.i18n.define('hr', {
   'search.placeholder': 'Poruka, SHA ili @autor…',
   'search.author': 'Autor',
   'search.anyAuthor': 'Svi',
+  'search.graphAuthor': 'Prikaži samo grane od',
+  'search.graphAuthorCount': '{n} od {total} grana ima commitove ove osobe',
   'search.none': 'Nijedan commit ne odgovara.',
   'search.count': 'Rezultati: {n}',
   'search.some': 'Prikazano {n} od {total}',

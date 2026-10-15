@@ -506,6 +506,8 @@ GB.i18n.define('fil', {
   'search.placeholder': 'Mensahe, SHA o @may-akda…',
   'search.author': 'May-akda',
   'search.anyAuthor': 'Lahat',
+  'search.graphAuthor': 'Ipakita lang ang mga branch ni',
+  'search.graphAuthorCount': '{n} sa {total} branch ay may commit ng taong ito',
   'search.none': 'Walang tumutugmang commit.',
   'search.count': 'Mga resulta: {n}',
   'search.some': 'Ipinapakita ang {n} sa {total}',

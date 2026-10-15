@@ -505,6 +505,8 @@ GB.i18n.define('tr', {
   'search.placeholder': 'İleti, SHA veya @yazar…',
   'search.author': 'Yazar',
   'search.anyAuthor': 'Herkes',
+  'search.graphAuthor': 'Yalnızca şu kişinin dallarını göster',
+  'search.graphAuthorCount': '{total} daldan {n} tanesinde bu kişinin commit\'leri var',
   'search.none': 'Eşleşen commit yok.',
   'search.count': 'Sonuçlar: {n}',
   'search.some': '{total} içinden {n} gösteriliyor',

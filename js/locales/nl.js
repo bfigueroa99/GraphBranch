@@ -506,6 +506,8 @@ GB.i18n.define('nl', {
   'search.placeholder': 'Bericht, SHA of @auteur…',
   'search.author': 'Auteur',
   'search.anyAuthor': 'Iedereen',
+  'search.graphAuthor': 'Toon alleen branches van',
+  'search.graphAuthorCount': '{n} van {total} branches hebben commits van deze persoon',
   'search.none': 'Geen enkele commit komt overeen.',
   'search.count': 'Resultaten: {n}',
   'search.some': '{n} van {total} getoond',

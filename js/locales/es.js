@@ -505,6 +505,8 @@ GB.i18n.define('es', {
   'search.placeholder': 'Mensaje, SHA o @autor…',
   'search.author': 'Autor',
   'search.anyAuthor': 'Todos',
+  'search.graphAuthor': 'Mostrar solo las ramas de',
+  'search.graphAuthorCount': '{n} de {total} ramas tienen commits de esta persona',
   'search.none': 'Ningún commit coincide.',
   'search.count': 'Resultados: {n}',
   'search.some': 'Se muestran {n} de {total}',

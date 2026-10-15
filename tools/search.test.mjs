@@ -69,3 +69,39 @@ test('los autores salen con su cuenta, del que más commits tiene, y un commit s
     { key: 'Luis', name: 'Luis', count: 1 },
   ]);
 });
+
+function repoWithBranches() {
+  const ana = { name: 'Ana Pérez', login: 'ana' };
+  const luis = { name: 'Luis', login: null };
+  const c = (sha, who, parents = [], date = 1) => [sha, { sha, parents, message: sha, date, author: who }];
+  return {
+    repo: { defaultBranch: 'main' },
+    commits: new Map([c('m1', luis), c('m2', luis, ['m1']), c('a1', ana, ['m1']), c('a2', luis, ['a1']), c('l1', luis, ['m2']), c('x1', ana, ['m2'])]),
+    branches: new Map([
+      ['main', { name: 'main', sha: 'm2', isDefault: true }],
+      ['feat-ana', { name: 'feat-ana', sha: 'a2' }], // un commit de Ana y uno de Luis
+      ['fix-luis', { name: 'fix-luis', sha: 'l1' }],
+      ['viejo', { name: 'viejo', sha: 'm1' }], // apunta a un commit que ya está en main
+      ['sin-historia', { name: 'sin-historia', sha: 'zzz' }],
+    ]),
+    pulls: new Map([[1, { number: 1, head: 'fix-luis', sameRepo: true }], [2, { number: 2, head: 'feat-ana', sameRepo: true }], [3, { number: 3, head: 'fork:x', sameRepo: false }]]),
+  };
+}
+
+test('byAuthor deja la rama por defecto y las ramas con commits de esa persona, y quita los PR de las demás', () => {
+  const d = repoWithBranches();
+  const r = S.byAuthor(d, 'ana');
+  assert.deepEqual([...r.data.branches.keys()], ['main', 'feat-ana', 'sin-historia']);
+  assert.deepEqual([...r.data.pulls.keys()], [2, 3]);
+  assert.equal(r.shown, 2);
+  assert.equal(r.total, 4);
+  assert.equal(d.branches.size, 5, 'no muta los datos');
+});
+
+test('byAuthor cuenta solo lo que la rama suma sobre la por defecto y no hace nada sin autor', () => {
+  const d = repoWithBranches();
+  // x1 (de Ana) cuelga de m2 pero ninguna rama lo alcanza: fix-luis no es de Ana aunque comparta historia con main
+  assert.ok(!S.byAuthor(d, 'ana').data.branches.has('fix-luis'));
+  assert.deepEqual([...S.byAuthor(d, 'Luis').data.branches.keys()], ['main', 'feat-ana', 'fix-luis', 'sin-historia']);
+  assert.equal(S.byAuthor(d, '').data, d);
+});

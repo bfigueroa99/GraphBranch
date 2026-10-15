@@ -521,6 +521,8 @@ GB.i18n.define('ru', {
   'search.placeholder': 'Сообщение, SHA или @автор…',
   'search.author': 'Автор',
   'search.anyAuthor': 'Все',
+  'search.graphAuthor': 'Показывать только ветки автора',
+  'search.graphAuthorCount': 'В {n} из {total} веток есть коммиты этого человека',
   'search.none': 'Нет подходящих коммитов.',
   'search.count': 'Результатов: {n}',
   'search.some': 'Показано {n} из {total}',

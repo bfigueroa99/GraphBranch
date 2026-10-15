@@ -548,6 +548,8 @@ GB.i18n.define('ur', {
   'search.placeholder': 'پیغام، SHA یا ‎@مصنف…',
   'search.author': 'مصنف',
   'search.anyAuthor': 'سب',
+  'search.graphAuthor': 'صرف اس شخص کی برانچیں دکھائیں',
+  'search.graphAuthorCount': '{total} میں سے {n} برانچوں میں اس شخص کے کمٹ ہیں',
   'search.none': 'کوئی کمٹ مطابقت نہیں رکھتا۔',
   'search.count': 'نتائج: {n}',
   'search.some': '{total} میں سے {n} دکھائے جا رہے ہیں',

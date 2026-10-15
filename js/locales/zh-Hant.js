@@ -505,6 +505,8 @@ GB.i18n.define('zh-Hant', {
   'search.placeholder': '訊息、SHA 或 @作者…',
   'search.author': '作者',
   'search.anyAuthor': '所有人',
+  'search.graphAuthor': '只顯示以下作者的分支',
+  'search.graphAuthorCount': '{total} 個分支中有 {n} 個含有此人的提交',
   'search.none': '沒有符合的提交。',
   'search.count': '結果：{n}',
   'search.some': '顯示 {n}/{total}',

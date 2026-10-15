@@ -505,6 +505,8 @@ GB.i18n.define('el', {
   'search.placeholder': 'Μήνυμα, SHA ή @συγγραφέας…',
   'search.author': 'Συγγραφέας',
   'search.anyAuthor': 'Όλοι',
+  'search.graphAuthor': 'Εμφάνιση μόνο των κλάδων του',
+  'search.graphAuthorCount': '{n} από {total} κλάδους έχουν commits αυτού του ατόμου',
   'search.none': 'Κανένα commit δεν ταιριάζει.',
   'search.count': 'Αποτελέσματα: {n}',
   'search.some': 'Εμφανίζονται {n} από {total}',

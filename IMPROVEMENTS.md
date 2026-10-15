@@ -284,7 +284,7 @@ se comprueban antes de construir sobre ellas.
 37. **Tokens para Codeberg y Bitbucket** · Fuentes · 2×2/2. [parte del ítem 21] Repos privados y más cuota:
     el token de cada servicio en Ajustes (y en el llavero en escritorio), enviado solo a su host. Comprobar: una
     prueba por fuente de que el token va en cada consulta y a ningún otro lado.
-38. ~~**Vocabulario DORA en la salud**~~ hecho en #95 · Análisis.
+38. ~~**Vocabulario DORA en la salud**~~ hecho en #95 · Análisis. [inv. 2026-10-13]
 39. **PRs por estado** · Análisis · 2×2/2. [inv. 2026-10-13] En salud, los PRs agrupados en borrador, esperando
     revisión, aprobados y con CI en rojo, cada uno con su salto al grafo. Comprobar: `tools/health.test.mjs` y
     un paso del smoke en la demo.
@@ -318,6 +318,10 @@ se comprueban antes de construir sobre ellas.
     de GitHub de VS Code para el token, sin pegarlo. Comprobar: `tools/vscode.test.mjs` con la sesión simulada.
 50. **Bitbucket propio** · Fuentes · 1×2/3. [parte del ítem 22] Un Bitbucket Data Center o Server (`--bitbucket-url=`),
     con la misma regla de CSP que GitLab propio. Comprobar: `tools/bitbucket.test.mjs` con otra URL base.
+51. **Tiempo de entrega desde el primer commit** · Análisis · 1×2/2. [parte del ítem 38] El tiempo de entrega de la
+    salud cuenta desde el primer commit del PR (una consulta de `/pulls/:n/commits` por PR fusionado reciente, solo al
+    abrir el panel) y no desde su apertura. Comprobar: `tools/github.test.mjs` con la API simulada y
+    `tools/health.test.mjs`.
 
 ## Cómo validar un cambio
 

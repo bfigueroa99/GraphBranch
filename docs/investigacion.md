@@ -213,6 +213,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Tasa de fallos de CI en la salud | Análisis | 2×2/2 | 2,0 | DORA | ítem 48 |
 | Extensión de VS Code, segunda entrega | Plataformas | 2×2/2 | 2,0 | GitLens | ítem 49 |
 | Bitbucket propio | Fuentes | 1×2/3 | 0,7 | Sourcetree | ítem 50 |
+| Tiempo de entrega desde el primer commit | Análisis | 1×2/2 | 1,0 | (ítem 38) | ítem 51 |
 
 ## Públicos
 

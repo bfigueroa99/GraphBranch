@@ -4069,6 +4069,19 @@ html.embed-clear .graph-wrap {
   background: transparent;
 }
 
+/* &bg=00ff00 (croma para OBS) y &hide=notices,combo: lo que se quita de la capa */
+html.embed-color,
+html.embed-color body,
+html.embed-color .graph-panel,
+html.embed-color .graph-stage,
+html.embed-color .graph-wrap {
+  background: var(--embed-bg);
+}
+html.embed-hide-notices .toasts,
+html.embed-hide-combo .combo {
+  display: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -1443,7 +1443,7 @@ console.log('Una organización o un usuario entero');
     await page.click('#health-btn');
     await page.waitForSelector('#digest-org-md', { timeout: 5000 });
     const md = await page.$eval('#digest-org-md', (e) => e.textContent);
-    if (!/^# .*acme/.test(md) || !/## acme\/(api|web|viejo)/.test(md)) throw new Error('resumen de la organización sin sus repos: ' + md.slice(0, 200));
+    if (!/^# .*acme/.test(md) || !/## acme\/(api|web|viejo)/.test(md)) throw new Error('resumen de la organización sin sus repos: ' + JSON.stringify(md.slice(0, 400)));
     if (/undefined|NaN|digest\./.test(md)) throw new Error('texto sin resolver en el resumen de la organización: ' + md.slice(0, 120));
     const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.click('#digest-org-save')]);
     if (!/^graphbranch-acme-semana-.*\.md$/.test(dl.suggestedFilename())) throw new Error('nombre del resumen de la organización: ' + dl.suggestedFilename());

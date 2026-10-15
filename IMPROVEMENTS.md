@@ -420,48 +420,44 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     renombrados).
 7. [Seguridad] Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de
     `<usuario>.github.io`. Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-8. [Rendimiento] Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`)
-    y un `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
-    buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro). Medir antes
-    y después con `node tools/audit.mjs --repetir 3`.
-9. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+8. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-10. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
+9. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
     y mueve el resto a `docs/BITACORA.md` (idempotente: la segunda corrida dice «Nada que rotar»; queda
     una línea «Las iteraciones anteriores están en docs/BITACORA.md»); `--siguiente` sigue leyendo N de
     aquí y `--check` exige iteraciones sin repetidos entre los dos archivos. Motivo: `--salud` mide el
     archivo en cada iteración (77 KB el 2026-10-13, 55 KB de bitácora), y cada sesión nueva lo lee entero.
-11. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+10. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-12. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+11. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-13. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+12. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-14. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
+13. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
     (6.009 ms con ≤ 6.000; tareas largas 4.809 ms con ≤ 4.000), sin GPU y con la corrida larga; la corrida
     normal de la puerta no lo marca. Medir con `node tools/audit.mjs --repetir 3` antes de tocar nada.
-15. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+14. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
     Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-16. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+15. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-17. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
+16. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-18. [Accesibilidad] Las etiquetas de rama 2D (`g.head[role=button]`) miden 22 px de alto en un SVG; subirlas
+17. [Accesibilidad] Las etiquetas de rama 2D (`g.head[role=button]`) miden 22 px de alto en un SVG; subirlas
     a 24 px exige recalcular el apilado de etiquetas de `layout.js`. Parte del pendiente 3, aparte por tamaño.
     Reproducción: `node tools/audit.mjs`, escenario `escritorio-2d`.
-19. [QA] El smoke y la auditoría no miran el 3D de celular a 320 px con el panel de ramas abierto (solo las
+18. [QA] El smoke y la auditoría no miran el 3D de celular a 320 px con el panel de ramas abierto (solo las
     etiquetas); revisar a mano que las etiquetas de 24 px no se tapen entre sí con 1.000 ramas.
     Reproducción: Playwright contra `node e2e/serve.mjs 4173`, 320 px, 3D, `?repo=demo`.
 
@@ -1884,3 +1880,16 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial y `--check` daba R3 en rojo (y 2 pruebas); `git fetch --unshallow` lo arregla. El borrado de `loop/65` falló por desconexión del proxy.
 - Validado: 277 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 26 e2e en verde.
 - **Siguiente:** iteración 79, mantenimiento · Rendimiento: pendiente 8 (Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`pla…)
+
+### 2026-10-15 · Iteración 79 · Mantenimiento · Rendimiento
+
+- **Arreglo: trabajo por cuadro sin lecturas que fuerzan maquetación** (pendiente 8). `placeTip` (2D y 3D) leía `offsetWidth`/`offsetHeight` del tooltip en cada cuadro mientras seguía a su commit; ahora el tamaño se mide una vez por contenido y ancho (`tipBox`, se invalida al mostrar otro tooltip y al cambiar `W`). Replay creaba un `Intl.DateTimeFormat` nuevo por cuadro en `renderClock`; ahora usa `i18n.fmtDayLong`, que reutiliza el formateador en caché.
+- **Reproducción:** `node --test tools/rendimiento.test.mjs` → sin el arreglo, 2 pruebas fallan («placeTip usa el tamaño en caché», «Replay reutiliza el formateador…»).
+- **Pruebas que fallan sin el arreglo:** `tools/rendimiento.test.mjs` (2 pruebas).
+- Medidas (`node tools/audit.mjs --repetir 3 --comparar`): consultas 10 → 10, nodosDOM 1313 → 1313, heapMB 13 → 13, tareasLargasMs 1186 → 1189, fps2d 54,2 → 52 / 56,4 en dos corridas (ruido). fps3d 9,7 → 8,3 / 8,6 (−11 % a −14 %): la medida no muestra tooltip ni Replay, así que el cambio no corre en ese camino; es ruido de Chromium sin GPU, pero queda anotado por pasar del 10 %.
+- README: sin cambios (no cambia lo que hace la app).
+- QA: tooltip 2D y 3D y reloj del Replay los cubre el smoke; auditoría: 0 hallazgos nuevos, 4 conocidos.
+- Reclamo: loop/79, sin colisión
+- Nota: el clon venía superficial y `--check` daba R3 en rojo (y 2 pruebas); `git fetch --unshallow` lo arregla. El borrado de `loop/66` falló por desconexión del proxy.
+- Validado: 279 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 26 e2e en verde.
+- **Siguiente:** iteración 80, expansión: ítem 45 (Filtro por autor en la URL, Análisis)

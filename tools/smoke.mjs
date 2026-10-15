@@ -622,6 +622,12 @@ console.log('Escritorio (1280×800)');
     if (/undefined|NaN|digest\./.test(md)) throw new Error('texto sin resolver en el resumen de la semana: ' + md.slice(0, 120));
     const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.click('#digest-save')]);
     if (!/^graphbranch-.*-semana-.*\.md$/.test(dl.suggestedFilename())) throw new Error('nombre del resumen: ' + dl.suggestedFilename());
+    const states = await page.evaluate(() => ({
+      groups: [...document.querySelectorAll('#hl-prstates .hl-sub')].map((d) => d.querySelector('h4').textContent.trim()),
+      inGroups: document.querySelectorAll('#hl-prstates .hl-sub li').length,
+      open: document.querySelectorAll('#health .hl-list[data-list="prs"] li').length,
+    }));
+    if (!states.groups.length || states.inGroups !== states.open || states.groups.some((x) => /undefined|NaN|health\./.test(x))) throw new Error('PRs por estado en la demo: ' + JSON.stringify(states));
     await page.click('#health .hl-list[data-list="prs"] [data-go]');
     await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: 3000 });
   });

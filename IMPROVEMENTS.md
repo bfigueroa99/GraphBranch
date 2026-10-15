@@ -143,7 +143,7 @@ segunda columna a la primera.
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
-| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo por ruta de archivo, filtrar el grafo por autor ("mis ramas"), vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega) | PRs por estado |
+| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo por ruta de archivo, filtrar el grafo por autor ("mis ramas"), vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión) | Resaltar el tramo de cada rama comparada |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
@@ -285,9 +285,7 @@ se comprueban antes de construir sobre ellas.
     el token de cada servicio en Ajustes (y en el llavero en escritorio), enviado solo a su host. Comprobar: una
     prueba por fuente de que el token va en cada consulta y a ningún otro lado.
 38. ~~**Vocabulario DORA en la salud**~~ hecho en #95 · Análisis. [inv. 2026-10-13]
-39. **PRs por estado** · Análisis · 2×2/2. [inv. 2026-10-13] En salud, los PRs agrupados en borrador, esperando
-    revisión, aprobados y con CI en rojo, cada uno con su salto al grafo. Comprobar: `tools/health.test.mjs` y
-    un paso del smoke en la demo.
+39. ~~**PRs por estado**~~ hecho en #98 · Análisis. [inv. 2026-10-13]
 40. **Resaltar el tramo de cada rama comparada** · Análisis · 1×2/2. [parte del ítem 20] Al comparar dos ramas, los
     commits de cada una por delante y su punto de separación se marcan en el grafo (2D y 3D). Comprobar: un paso
     del smoke en la demo.
@@ -1754,3 +1752,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 261 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 26 e2e en verde.
 - **Siguiente:** iteración 69, expansión: ítem 39 (PRs por estado, Análisis)
+
+### 2026-10-15 · Iteración 69 · Expansión · Análisis
+
+- **Capacidad nueva: PRs por estado en la salud** (ítem 39 de la hoja de ruta). El panel de salud agrupa los PRs abiertos en borrador, con los checks en rojo, aprobados y esperando revisión (precedencia en ese orden; el rojo sale de `pull.ci` o del estado de su rama), cada fila con su salto al grafo. GitHub con token trae `reviewDecision` en la misma consulta GraphQL (sin consultas nuevas); la demo muestra los tres primeros estados. 5 claves nuevas en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` («PRs por estado…») y un paso nuevo en el smoke del panel de salud de la demo.
+- README: función en la lista, mapa de archivos y Límites conocidos (sin token o en otras fuentes, nada queda «aprobado»). Mapa de alcance: fila Análisis.
+- QA: filas de XSS (los títulos entran por `U.esc`), token (la consulta es la misma, solo suma un campo) y 40 idiomas por `check-i18n`; sin mirar a mano 320 px ni tema claro.
+- Nota: el clon de la sesión venía superficial; R3 y 2 pruebas de `loop.test.mjs` fallaban hasta `git fetch --unshallow`.
+- Reclamo: loop/69, sin colisión
+- Nota: el paso «cambios de un commit» del smoke falló en 2 de 5 corridas de `npm run check` con el cambio (y otros pasos en cascada cuando mi primer paso nuevo lanzaba con el diálogo abierto, ya corregido); el smoke suelto pasó 6 de 6 y la corrida final de la puerta salió en verde. Intermitencia a vigilar.
+- Validado: 262 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 26 e2e en verde.
+- **Siguiente:** iteración 70, expansión: ítem 37 (Tokens para Codeberg y Bitbucket, Fuentes)

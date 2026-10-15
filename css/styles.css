@@ -817,6 +817,17 @@ kbd {
   margin: 0 0 6px;
   color: var(--bad, #c0392b);
 }
+.pr-hint-text {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.45;
+  white-space: pre-line;
+  font-style: italic;
+}
+.pr-hint-text[hidden],
+.pr-hint[hidden] {
+  display: none;
+}
 .pr-goal {
   margin: 0;
   color: var(--ink-2);

@@ -144,7 +144,7 @@ segunda columna a la primera.
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (constelación de repos) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo por ruta de archivo, filtrar el grafo por autor ("mis ramas"), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión) | Tasa de fallos de CI en la salud |
-| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
+| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL con pistas y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
 
@@ -291,10 +291,9 @@ se comprueban antes de construir sobre ellas.
     los proyectos de un grupo de GitLab con sus subgrupos, en una consulta, sin forks ni archivados. La constelación es el ítem 52.
 42. ~~**Replay por tramo, segunda entrega**~~ hecho en #103 · Salidas · 1×2/1. [parte del ítem 27] El tramo y los rótulos viajan en la
     URL (`?replay=2026-09-01..2026-09-14&title=…`) y el Replay arranca solo con ellos.
-43. **Ejercicios compartidos, segunda entrega** · Público · 1×2/1. [parte del ítem 28] Un ejercicio propio admite pistas
-    (`hint:`) que se muestran con un botón, y condiciones sobre el mensaje del último commit y sobre ramas sin
-    fusionar, para ejercicios más finos con `reset`. Comprobar: pruebas del codificado
-    con pistas y un paso del smoke.
+43. ~~**Ejercicios compartidos, segunda entrega**~~ hecho en #105 · Público · 1×2/1. [parte del ítem 28] Un ejercicio propio admite
+    hasta 3 pistas que se muestran con un botón, y condiciones sobre el mensaje del último commit (`tip:`) y sobre ramas
+    sin fusionar (`unmerged:`).
 44. **Filtrar por ruta, segunda entrega** · Análisis · 1×2/1. [parte del ítem 29] El filtro por ruta también atenúa el grafo 3D
     y viaja en la URL (`?path=src/`) para compartir la vista ya filtrada. Comprobar: prueba de la lectura de la URL y un
     paso del smoke en 3D.
@@ -317,6 +316,19 @@ se comprueban antes de construir sobre ellas.
     `tools/health.test.mjs`.
 52. **Constelación de repos** · Escala · 2×2/3. [parte del ítem 41] Una vista donde cada repo seguido es una galaxia, para ver
     más repos de los que caben en pestañas. Comprobar: un paso del smoke con 10 repos simulados y prueba de la disposición.
+53. **Frecuencia de despliegue en la salud** · Análisis · 2×2/2. [inv. 2026-10-13] La salud cuenta los despliegues por semana
+    con los tags y despliegues ya cargados (vocabulario DORA). Comprobar: `tools/health.test.mjs` con despliegues fabricados.
+54. **Resumen de la semana como imagen** · Salidas · 2×2/2. [inv. 2026-10-13] El resumen de la semana también sale como imagen
+    PNG para compartir, además del Markdown. Comprobar: prueba del lienzo y un paso del smoke que baja el archivo.
+55. **Práctica: cherry-pick y tag** · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `cherry-pick <sha>` y
+    `tag <nombre>`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
+56. **Búsqueda en la URL** · Análisis · 1×2/1. [parte del ítem 19] `?q=texto` abre el repo con la búsqueda ya escrita, para
+    compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
+57. **Avisos a Microsoft Teams** · Salidas · 2×2/2. [parte del ítem 15] El mismo aviso de actividad que ya va a Slack y Discord,
+    con el formato de Teams. Comprobar: `tools/webhooks.test.mjs` con el cuerpo esperado.
+58. **Ejercicios compartidos, tercera entrega** · Público · 1×2/1. [parte del ítem 28] Un enlace de ejercicio con la solución
+    propuesta (`?practice=<código>&solution=1`) que la muestra paso a paso en la terminal. Comprobar: prueba del codificado y
+    un paso del smoke.
 
 ## Cómo validar un cambio
 
@@ -1839,3 +1851,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Validado: 270 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 26 e2e en verde (la primera corrida falló dos pasos del smoke sin relación con el cambio —pendiente 1—; la repetición salió 0).
 - Nota: el clon venía superficial (`git fetch --unshallow`); `npm run check` borra `test-results/` al correr las e2e, así que su salida no puede ir ahí.
 - **Siguiente:** iteración 76, expansión: ítem 43 (Ejercicios compartidos, segunda entrega, Público)
+
+### 2026-10-15 · Iteración 76 · Expansión · Público
+
+- **Capacidad nueva: ejercicios compartidos con pistas y condiciones más finas** (ítem 43 de la hoja de ruta). Un ejercicio propio admite hasta 3 pistas (160 caracteres cada una, en la URL como `h`): con pistas aparece el botón «Pista», que las muestra de una en una (con `textContent`). Dos condiciones nuevas en la lista cerrada: `tip:rama~texto` (el mensaje del último commit de la rama contiene el texto, sin distinguir mayúsculas) y `unmerged:a>b` (la rama tiene commits que la otra no). Los enlaces viejos siguen abriendo (las pistas son opcionales). Textos nuevos en los 40 idiomas (`practice.hint`, `practice.hintOf`, `practice.make.hints`, `practice.make.err.hints`) y la ayuda del formulario al día.
+- **Pruebas que fallan sin la capacidad:** `tools/gitsim.test.mjs` (pistas por la URL con sus límites, y `tip:`/`unmerged:` con rama inexistente y texto vacío); smoke, paso «un ejercicio propio con pistas: el botón las muestra una a una y la condición de mensaje lo resuelve».
+- README: la función, Límites conocidos, Seguridad y la lista de pruebas.
+- QA: filas de XSS (una `<b>` en una pista no se interpreta, el smoke lo mira), CSP sin cambios, teclado (el botón de pista es un `<button>`), i18n (4 textos en los 40 idiomas); sin mirar a mano: 320 px, 3D, Replay; auditoría: 0 hallazgos nuevos.
+- Reclamo: loop/76, sin colisión
+- Validado: 272 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 26 e2e en verde.
+- Nota: el clon venía superficial y `--check` daba R3 en rojo (y 2 pruebas); `git fetch --unshallow` lo arregla. El borrado de `loop/63` falló por desconexión del proxy; las ramas `loop/*` fusionadas siguen en Para Benjamin. La hoja de ruta se repuso con los ítems 53 a 58 (investigación del 2026-10-13, vigente).
+- **Siguiente:** iteración 77, expansión: ítem 44 (Filtrar por ruta, segunda entrega, Análisis)

@@ -1700,5 +1700,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: filas de XSS (nombres de autor con `textContent`), cuota (0 consultas nuevas), teclado (selector con etiqueta) y 40 idiomas por `check-i18n`; GitHub y local usan los mismos datos normalizados (sin prueba propia); sin mirar a mano: 320 px, tema claro, movimiento reducido; auditoría: ver Validado.
 - Reclamo: loop/64, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
-- Validado: VALIDADO_PENDIENTE
+- Validado: 251 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 25 e2e en verde.
 - **Siguiente:** iteración 65, expansión: ítem 35 (GitLab propio, segunda entrega, Fuentes)

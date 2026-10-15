@@ -135,6 +135,7 @@ test('--gitlab-url suma solo ese host al CSP y la página lo recibe; sin https s
   let { app, page } = await launch(testInfo, { args: ['--lang=es', '--gitlab-url=https://git.example.com'] });
   try {
     expect(await csp(page)).toContain('https://gitlab.com https://git.example.com https://codeberg.org https://api.bitbucket.org;');
+    expect(await csp(page)).toContain('https://gitlab.com https://git.example.com https://codeberg.org;');
     expect(page.url()).toContain('gitlab=' + encodeURIComponent('https://git.example.com'));
   } finally {
     await app.close();

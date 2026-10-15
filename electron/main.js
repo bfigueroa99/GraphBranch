@@ -58,7 +58,10 @@ async function serve(request) {
   if (rel === 'index.html' && (API_ARG || GITLAB_ARG)) {
     let html = await res.text();
     if (API_ARG) html = html.replace('connect-src https://api.github.com', `connect-src https://api.github.com ${API_ARG.origin}`);
-    if (GITLAB_ARG) html = html.replace('https://gitlab.com https://codeberg.org https://api.bitbucket.org;', `https://gitlab.com ${GITLAB_ARG.origin} https://codeberg.org https://api.bitbucket.org;`);
+    if (GITLAB_ARG) {
+      html = html.replace('https://gitlab.com https://codeberg.org https://api.bitbucket.org;', `https://gitlab.com ${GITLAB_ARG.origin} https://codeberg.org https://api.bitbucket.org;`);
+      html = html.replace('img-src \'self\' data: https://avatars.githubusercontent.com https://gitlab.com https://codeberg.org;', `img-src 'self' data: https://avatars.githubusercontent.com https://gitlab.com ${GITLAB_ARG.origin} https://codeberg.org;`);
+    }
     return new Response(html, { status: res.status, headers: { 'content-type': 'text/html; charset=utf-8' } });
   }
   return res;

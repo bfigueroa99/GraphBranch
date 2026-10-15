@@ -37,12 +37,22 @@ window.GB = window.GB || {};
       URL de codeberg.org o como "codeberg:dueño/repo": devuelve { host: 'codeberg', owner, name }. Un proyecto de GitLab, con
       sus subgrupos, va con su URL de gitlab.com (también la de una rama o un archivo, o ssh) o como
       "gitlab:grupo/proyecto": devuelve { host: 'gitlab', owner: 'grupo/sub', name: 'proyecto' }. */
+  U.gitlabBase = ''; // la dirección de un GitLab propio (?gitlab=, --gitlab-url=): sus URLs también se reconocen (ver app.js)
   U.parseRepo = (input) => {
     // un repo de esta máquina (app de escritorio): local:<id de la carpeta>/<nombre>; el id lo da el proceso principal
     const here = String(input || '').trim().match(/^local:([0-9a-f]{12})\/(.{1,200})$/);
     if (here) return { host: 'local', owner: here[1], name: here[2] };
     const s = String(input || '').trim().replace(/[?#].*$/, '').replace(/\/+$/, '').replace(/\.git$/, '');
-    const lab = s.match(/^gitlab:(.+)$/i) || s.match(/gitlab\.com[/:](.+)$/i);
+    // un GitLab propio: su URL https (con la ruta en que cuelgue) o git@host: por ssh; se compara por prefijo exacto, no por subcadena
+    let own = null;
+    if (U.gitlabBase) {
+      const base = U.gitlabBase.replace(/\/+$/, '');
+      const ssh = `git@${base.replace(/^https:\/\//, '')}`;
+      const lower = s.toLowerCase();
+      if (lower.startsWith(base.toLowerCase() + '/')) own = [null, s.slice(base.length + 1)];
+      else if (/^[^/]+$/.test(base.slice(8)) && lower.startsWith(ssh.toLowerCase() + ':')) own = [null, s.slice(ssh.length + 1)];
+    }
+    const lab = own || s.match(/^gitlab:(.+)$/i) || s.match(/gitlab\.com[/:](.+)$/i);
     if (lab) {
       const parts = lab[1].split('/-/')[0].split('/').filter(Boolean);
       if (parts.length < 2 || !parts.every((p) => /^[\w.-]+$/.test(p) && !/^\.+$/.test(p))) return null;

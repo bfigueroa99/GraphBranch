@@ -202,11 +202,17 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Vocabulario DORA en la salud | Análisis | 2×2/2 | 2,0 | DORA | ítem 38 |
 | PRs por estado | Análisis | 2×2/2 | 2,0 | GitKraken (Launchpad) | ítem 39 |
 | Gitea y Forgejo propios | Fuentes | 1×2/2 | 1,0 | GitLens (autolinks) | ítem 36 |
-| GitLab propio, segunda entrega | Fuentes | 1×2/1 | 2,0 | (ítem 25) | ítem 35 |
+| GitLab propio, segunda entrega | Fuentes | 1×2/1 | 2,0 | (ítem 25) | hecho en #94 |
 | Resaltar el tramo de cada rama comparada | Análisis | 1×2/2 | 1,0 | gitk | ítem 40 |
 | Replay por tramo, segunda entrega | Salidas | 1×2/1 | 2,0 | (ítem 27) | ítem 42 |
 | Ejercicios compartidos, segunda entrega | Público | 1×2/1 | 2,0 | (ítem 28) | ítem 43 |
 | Filtrar por ruta, segunda entrega | Análisis | 1×2/1 | 2,0 | (ítem 29) | ítem 44 |
+| Filtro por autor en la URL | Análisis | 1×2/1 | 2,0 | (ítem 34) | ítem 45 |
+| Capa para streaming, segunda entrega | Plataformas | 2×2/1 | 4,0 | Capas para OBS | ítem 46 |
+| Resumen de la semana de una organización | Salidas | 2×2/2 | 2,0 | GitHub Pulse | ítem 47 |
+| Tasa de fallos de CI en la salud | Análisis | 2×2/2 | 2,0 | DORA | ítem 48 |
+| Extensión de VS Code, segunda entrega | Plataformas | 2×2/2 | 2,0 | GitLens | ítem 49 |
+| Bitbucket propio | Fuentes | 1×2/3 | 0,7 | Sourcetree | ítem 50 |
 
 ## Públicos
 

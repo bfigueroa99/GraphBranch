@@ -558,3 +558,30 @@ test('el filtro por autor funciona sobre los datos de esta fuente: deja la rama 
   assert.equal(nobody.shown, 1);
   assert.equal(nobody.total, 2);
 });
+
+test('parseRepo reconoce las URL de un GitLab propio (https y ssh), y sin él no las toma por GitLab', async () => {
+  const GB = load(fakeGitLab());
+  const plain = (x) => (x ? { ...x } : x);
+  const want = { host: 'gitlab', owner: 'grupo/sub', name: 'proyecto' };
+  assert.equal(GB.U.parseRepo('https://git.miempresa.com/grupo/sub/proyecto'), null, 'sin ?gitlab= no es de nadie');
+  GB.U.gitlabBase = 'https://git.miempresa.com';
+  assert.deepEqual(plain(GB.U.parseRepo('https://git.miempresa.com/grupo/sub/proyecto')), want);
+  assert.deepEqual(plain(GB.U.parseRepo('https://git.miempresa.com/grupo/sub/proyecto/-/tree/main')), want);
+  assert.deepEqual(plain(GB.U.parseRepo('git@git.miempresa.com:grupo/sub/proyecto.git')), want);
+  assert.equal(GB.U.parseRepo('https://git.miempresa.com/solo'), null);
+  assert.equal(GB.U.parseRepo('https://otro.com/grupo/proyecto'), null, 'otro host no entra');
+  assert.equal(GB.U.parseRepo('https://git.miempresa.com.evil.com/grupo/proyecto'), null, 'un host que solo empieza igual no entra');
+  assert.deepEqual(plain(GB.U.parseRepo('https://gitlab.com/grupo/proyecto')), { host: 'gitlab', owner: 'grupo', name: 'proyecto' }, 'gitlab.com sigue');
+  GB.U.gitlabBase = 'https://host.example.com/gitlab';
+  assert.deepEqual(plain(GB.U.parseRepo('https://host.example.com/gitlab/g/p')), { host: 'gitlab', owner: 'g', name: 'p' });
+});
+
+test('un GitLab propio muestra avatares solo si se piden (escritorio suma su host a img-src)', async () => {
+  const GB = load(fakeGitLab());
+  const u = { username: 'a', avatar_url: 'https://gitlab.miempresa.com/uploads/a.png' };
+  const web = new GB.GitLabSource({ path: 'g/p', webUrl: 'https://gitlab.miempresa.com' });
+  assert.equal(web.person(u).avatar, null);
+  const desk = new GB.GitLabSource({ path: 'g/p', webUrl: 'https://gitlab.miempresa.com', avatars: true });
+  assert.equal(desk.person(u).avatar, u.avatar_url);
+  assert.equal(desk.person({ username: 'a', avatar_url: 'https://www.gravatar.com/avatar/x' }).avatar, null, 'solo los de su host');
+});

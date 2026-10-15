@@ -141,6 +141,7 @@
       return '';
     }
   })();
+  U.gitlabBase = GITLAB_URL; // para que parseRepo reconozca las URLs de ese GitLab
   const EMBED = document.documentElement.classList.contains('embed'); // ?embed=1, ver i18n.js
   const settings = {
     token: desktop ? '' : U.store.get('token', ''),
@@ -341,7 +342,9 @@
   const hostPrefix = (src) => (src.host === 'gitlab' ? 'gitlab:' : src.host === 'codeberg' ? 'codeberg:' : src.host === 'bitbucket' ? 'bitbucket:' : src.host === 'local' ? 'local:' : '');
   /** Los servicios que no son GitHub, con el nombre que lleva su etiqueta. */
   const FORGES = { gitlab: 'GitLab', codeberg: 'Codeberg', bitbucket: 'Bitbucket' };
-  const keyOf = (src) => `${hostPrefix(src)}${src.owner || 'demo'}/${src.name || ''}`.toLowerCase();
+  /** Las claves de un GitLab propio llevan su host: lo guardado de `grupo/proyecto` en gitlab.com no se mezcla con el suyo. */
+  const keyPrefix = (src) => (src.host === 'gitlab' && GITLAB_URL ? `gitlab@${new URL(GITLAB_URL).host}:` : hostPrefix(src));
+  const keyOf = (src) => `${keyPrefix(src)}${src.owner || 'demo'}/${src.name || ''}`.toLowerCase();
   /** Nombre a la vista (el del servicio, ya cargado) y el escrito, que es el que se guarda (de él sale la clave). */
   const nameOf = (tab) => `${tab.source.data.repo.owner}/${tab.source.data.repo.name}`;
   const savedName = (tab) => `${hostPrefix(tab.source)}${tab.source.owner}/${tab.source.name}`;
@@ -357,7 +360,7 @@
     if (host === 'local') return new GB.LocalGitSource({ id: owner, name, ...remembered });
     if (host === 'bitbucket') return new GB.BitbucketSource({ owner, name, ...remembered });
     if (host === 'codeberg') return new GB.CodebergSource({ owner, name, ...remembered });
-    if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, webUrl: GITLAB_URL, ...remembered });
+    if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, webUrl: GITLAB_URL, avatars: desktop, ...remembered });
     return new GB.GitHubSource({ owner, name, token: settings.token, apiUrl: API_URL, ...remembered });
   }
 

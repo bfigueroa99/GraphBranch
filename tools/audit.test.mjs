@@ -9,10 +9,10 @@
      node tools/audit.test.mjs    solo estas */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { BASE, CARGA_MAX, MARGEN_CUOTA, PRESUPUESTO, TIPOS, agrupar, clasesDeEstado, clave, comparar, conocido, compararMedidas, escenarios, leerBase, presupuestos } from './audit.mjs';
+import { BASE, CARGA_MAX, MARGEN_CUOTA, PRESUPUESTO, TIPOS, agrupar, clasesDeEstado, clave, comparar, conocido, compararMedidas, escenarios, guardarInforme, leerBase, presupuestos } from './audit.mjs';
 import { PRIORIDADES, SUBTIPOS } from './loop.mjs';
 
 const h = (tipo, escenario = 'escritorio-3d', donde = '#x', extra = {}) => ({ tipo, escenario, donde, ...extra });
@@ -126,5 +126,15 @@ describe('tools/audit.mjs', () => {
       assert.ok(nombres.has(escenario), `${k}: escenario desconocido`);
     }
     assert.equal(typeof base.cuota?.consultas, 'number');
+  });
+
+  test('--json crea la carpeta del informe si no existe (en una sesión nueva no hay test-results/)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'audit-json-'));
+    try {
+      const ruta = join(dir, 'no', 'existe', 'auditoria.json');
+      guardarInforme(ruta, { hallazgos: [], medidas: { cargaMs: 1 } });
+      assert.ok(existsSync(ruta));
+      assert.equal(JSON.parse(readFileSync(ruta, 'utf8')).medidas.cargaMs, 1);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 });

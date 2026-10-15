@@ -1383,10 +1383,10 @@ kbd {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 22px;
+  height: 24px; /* objetivo táctil mínimo (WCAG 2.5.8) */
   padding: 0 9px 0 8px;
   border: 1.5px solid var(--c);
-  border-radius: 11px;
+  border-radius: 12px;
   background: color-mix(in srgb, var(--surface) 86%, transparent);
   -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);

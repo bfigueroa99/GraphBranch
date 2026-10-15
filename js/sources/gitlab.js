@@ -69,13 +69,14 @@
   class GitLabSource extends GB.GitHubSource {
     /** `path`: grupo(s) y proyecto, como en su URL (`gitlab-org/gitlab-runner`, `grupo/sub/proyecto`).
         `token`: el de GitLab. No va en `this.token`, que es el de GitHub y decide cosas de GitHub. */
-    constructor({ path, token = '', depth = 40, filter = '', pins = [], webUrl = '' }) {
+    constructor({ path, token = '', depth = 40, filter = '', pins = [], webUrl = '', avatars = false }) {
       const cut = path.lastIndexOf('/');
       super({ owner: path.slice(0, cut), name: path.slice(cut + 1), token: '', depth, filter, pins });
       this.host = 'gitlab';
       this.ep = endpoints(webUrl) || endpoints(''); // una dirección que no sea https no se usa: queda gitlab.com
       this.path = path;
       this.gitlabToken = token;
+      this.avatars = avatars; // los de un GitLab propio, solo si el CSP nombra su host en img-src (escritorio)
       this.mode = 'list';
       this.data.repo.url = `${this.ep.web}/${segs(path)}`;
       this.data.repo.host = 'gitlab';
@@ -343,10 +344,11 @@
     /* ---------- merge requests ---------- */
 
     /** Una persona de GitLab; su avatar solo si está en gitlab.com (los de Gravatar los bloquea el CSP; un GitLab propio no
-        tiene su host en img-src, así que ahí no hay avatares). */
+        tiene su host en img-src, así que ahí no hay avatares: solo la app de escritorio lo suma, y con `avatars: true` se piden). */
     person(u) {
       if (!u) return null;
-      const avatar = this.ep.web === WEB && /^https:\/\/gitlab\.com\//.test(u.avatar_url || '') ? u.avatar_url : null;
+      const own = this.ep.web !== WEB;
+      const avatar = (own ? this.avatars && String(u.avatar_url || '').startsWith(this.ep.web + '/') : /^https:\/\/gitlab\.com\//.test(u.avatar_url || '')) ? u.avatar_url : null;
       return { login: u.username, name: u.name || u.username, avatar };
     }
 

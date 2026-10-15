@@ -274,10 +274,10 @@ se comprueban antes de construir sobre ellas.
 34. ~~**Filtrar el grafo por autor**~~ hecho en #93 · Análisis · 2×2/2. [parte del ítem 19] En el cuadro de búsqueda, «Mostrar solo las
     ramas de…» deja en el grafo 2D y 3D y en la vista de texto la rama por defecto y las ramas con commits de esa persona
     (`GB.search.byAuthor`), en todas las fuentes, guardado por repo. Comprobar: un paso del smoke en la demo y una prueba por fuente.
-35. **GitLab propio, segunda entrega** · Fuentes · 1×2/1. [parte del ítem 25] Pegar la URL de un proyecto de la
-    instancia propia y que se reconozca (hoy hay que escribir `gitlab:grupo/proyecto`), con los avatares de ese
-    host (su `img-src` en escritorio, como `connect-src`) y claves aparte de las de gitlab.com. Comprobar: una
-    prueba de `U.parseRepo` y un paso de la e2e de escritorio.
+35. ~~**GitLab propio, segunda entrega**~~ hecho en #94 · Fuentes. [parte del ítem 25] Pegar la URL de un proyecto de la instancia propia
+    (https o `git@host:`, también con ruta y con `/-/tree/…`) se reconoce (`U.gitlabBase`, solo ese host y por
+    prefijo exacto); sus claves llevan el host (`gitlab@host:`), aparte de las de gitlab.com; y en escritorio sus
+    avatares salen de ese host (`img-src`, solo el elegido con `--gitlab-url`). En la web siguen sin avatares.
 36. **Gitea y Forgejo propios** · Fuentes · 1×2/2. [parte del ítem 21] La URL de un servidor propio de Forgejo/Gitea
     (`--forge-url=`), con la misma regla de CSP que GitLab propio y el token solo a ese host. Comprobar:
     `tools/codeberg.test.mjs` con otra URL base.
@@ -307,6 +307,19 @@ se comprueban antes de construir sobre ellas.
 44. **Filtrar por ruta, segunda entrega** · Análisis · 1×2/1. [parte del ítem 29] El filtro por ruta también atenúa el grafo 3D
     y viaja en la URL (`?path=src/`) para compartir la vista ya filtrada. Comprobar: prueba de la lectura de la URL y un
     paso del smoke en 3D.
+45. **Filtro por autor en la URL** · Análisis · 1×2/1. [parte del ítem 34] `?author=ana` abre el repo ya filtrado por
+    esa persona, para compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
+46. **Capa para streaming, segunda entrega** · Plataformas · 2×2/1. [inv. 2026-10-13] Parámetros de la URL para la capa
+    de OBS: fondo transparente y ocultar paneles, con los de siempre por defecto. Comprobar: un paso del smoke con
+    el enlace y prueba de la lectura.
+47. **Resumen de la semana de una organización** · Salidas · 2×2/2. [inv. 2026-10-13] El resumen de la semana de todos
+    los repos seguidos de una organización, como Markdown para pegar. Comprobar: `tools/digest.test.mjs` con dos repos.
+48. **Tasa de fallos de CI en la salud** · Análisis · 2×2/2. [inv. 2026-10-13] La proporción de ejecuciones en rojo de
+    la rama por defecto, con lo ya cargado de CI. Comprobar: `tools/health.test.mjs` con ejecuciones fabricadas.
+49. **Extensión de VS Code, segunda entrega** · Plataformas · 2×2/2. [parte del ítem 24] Que la extensión use la sesión
+    de GitHub de VS Code para el token, sin pegarlo. Comprobar: `tools/vscode.test.mjs` con la sesión simulada.
+50. **Bitbucket propio** · Fuentes · 1×2/3. [parte del ítem 22] Un Bitbucket Data Center o Server (`--bitbucket-url=`),
+    con la misma regla de CSP que GitLab propio. Comprobar: `tools/bitbucket.test.mjs` con otra URL base.
 
 ## Cómo validar un cambio
 
@@ -1702,3 +1715,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 251 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 25 e2e en verde.
 - **Siguiente:** iteración 65, expansión: ítem 35 (GitLab propio, segunda entrega, Fuentes)
+
+### 2026-10-15 · Iteración 65 · Expansión · Fuentes
+
+- **Capacidad nueva: GitLab propio, segunda entrega** (ítem 35 de la hoja de ruta). `U.parseRepo` reconoce las URL de la instancia de `?gitlab=`/`--gitlab-url=` (https y `git@host:`, con ruta y `/-/tree/…`), solo ese host y por prefijo exacto; las claves guardadas de un GitLab propio llevan su host (`gitlab@host:`), aparte de las de gitlab.com; y en escritorio los avatares de ese host salen (`avatars: true` y su `img-src`).
+- **Pruebas que fallan sin la capacidad:** `tools/gitlab.test.mjs` («parseRepo reconoce las URL de un GitLab propio…» y «…avatares solo si se piden…»); e2e de escritorio «--gitlab-url suma solo ese host al CSP…» (ahora también `img-src`).
+- README: la función en la lista, Límites conocidos y Seguridad (CSP). Mapa de alcance: fila Fuentes. Hoja de ruta repuesta a 15 con ideas de partes de ítems ya hechos y de la investigación del 2026-10-13 (ítems 45–50).
+- QA: filas de XSS (el texto de la URL solo entra a parseRepo, que lo valida), CSP (el escritorio suma solo el host elegido) y tokens (sin cambios); sin mirar a mano: tema, 320 px, 3D, Replay (no cambia la interfaz); auditoría: ver Validado.
+- Reclamo: loop/65, sin colisión
+- Nota: `git push origin --delete loop/52` falló con «unexpected disconnect» del proxy; las `loop/52`–`loop/64` fusionadas siguen en origin (ya en Para Benjamin).
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 253 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 25 e2e en verde.
+- **Siguiente:** iteración 66, expansión: ítem 38 (Vocabulario DORA en la salud, Análisis)

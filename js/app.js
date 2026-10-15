@@ -1518,7 +1518,7 @@
   function setupOrgDigest() {
     const o = orgTabs();
     if (!o) return;
-    const entries = o.tabs.map((x) => ({ repo: x.source.name || x.key, data: x.source.view ? x.source.view() : x.source.data, acts: feed.items.filter((a) => a.repo === x.key) }));
+    const entries = o.tabs.map((x) => ({ repo: `${x.source.owner}/${x.source.name}`, data: x.source.view ? x.source.view() : x.source.data, acts: feed.items.filter((a) => a.repo === x.key) }));
     const d = GB.digest.computeOrg(entries, Date.now(), 7, GB.i18n.text);
     wireDigest('digest-org', GB.digest.toMarkdownOrg(d, o.owner, digestLabels(), GB.i18n.fmtDate, t('health.none')), o.owner);
   }

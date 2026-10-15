@@ -558,6 +558,7 @@ GB.i18n.define('fi', {
   'cmp.busy': 'Luetaan muuttuneita tiedostoja…',
   'cmp.fail': 'Tiedostoja ei voitu lukea.',
   'cmp.more': '…ja {n} lisää',
+  'cmp.clear': 'Poista korostus kaaviosta',
   'diff.show': 'Näytä muutokset',
   'diff.title': 'Commitin muutokset',
   'diff.close': 'Sulje commitin muutokset',

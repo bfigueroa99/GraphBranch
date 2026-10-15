@@ -559,6 +559,7 @@ GB.i18n.define('it', {
   'cmp.busy': 'Lettura dei file modificati…',
   'cmp.fail': 'Impossibile leggere i file.',
   'cmp.more': '…e altri {n}',
+  'cmp.clear': 'Rimuovi l\'evidenziazione dal grafo',
   'diff.show': 'Vedi modifiche',
   'diff.title': 'Modifiche del commit',
   'diff.close': 'Chiudi le modifiche del commit',

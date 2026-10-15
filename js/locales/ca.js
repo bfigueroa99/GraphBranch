@@ -558,6 +558,7 @@ GB.i18n.define('ca', {
   'cmp.busy': 'Llegint els fitxers canviats…',
   'cmp.fail': 'No s\'han pogut llegir els fitxers.',
   'cmp.more': '…i {n} més',
+  'cmp.clear': 'Treu el ressaltat del graf',
   'diff.show': 'Mostra els canvis',
   'diff.title': 'Canvis del commit',
   'diff.close': 'Tanca els canvis del commit',

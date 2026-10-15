@@ -143,7 +143,7 @@ segunda columna a la primera.
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
-| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo por ruta de archivo, filtrar el grafo por autor ("mis ramas"), vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión) | Resaltar el tramo de cada rama comparada |
+| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo por ruta de archivo, filtrar el grafo por autor ("mis ramas"), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión) | Tasa de fallos de CI en la salud |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
@@ -286,9 +286,7 @@ se comprueban antes de construir sobre ellas.
     prueba por fuente de que el token va en cada consulta y a ningún otro lado.
 38. ~~**Vocabulario DORA en la salud**~~ hecho en #95 · Análisis. [inv. 2026-10-13]
 39. ~~**PRs por estado**~~ hecho en #98 · Análisis. [inv. 2026-10-13]
-40. **Resaltar el tramo de cada rama comparada** · Análisis · 1×2/2. [parte del ítem 20] Al comparar dos ramas, los
-    commits de cada una por delante y su punto de separación se marcan en el grafo (2D y 3D). Comprobar: un paso
-    del smoke en la demo.
+40. ~~**Resaltar el tramo de cada rama comparada**~~ hecho en #101 · Análisis. [parte del ítem 20]
 41. **Una organización entera, cuarta entrega** · Escala · 2×2/3. [parte del ítem 26] Los grupos de GitLab
     (`/groups/:id/projects?order_by=last_activity_at`) y una vista de constelación (cada repo, una
     galaxia) para ver más repos de los que caben en pestañas. Comprobar: prueba de cuota con la API
@@ -1787,3 +1785,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Reclamo: loop/71, sin colisión
 - Validado: 265 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 26 e2e en verde.
 - **Siguiente:** iteración 72, expansión: ítem 40 (Resaltar el tramo de cada rama comparada, Análisis)
+
+### 2026-10-15 · Iteración 72 · Expansión · Análisis
+
+- **Capacidad nueva: resaltar el tramo de cada rama comparada** (ítem 40 de la hoja de ruta). Al pulsar «Comparar» en el panel de salud, el grafo (2D y 3D) deja a la luz los commits que lleva cada rama por delante (anillo continuo la A, punteado la B) y el punto de separación más grande, y atenúa el resto; «Quitar el resaltado del grafo» lo apaga y cambiar de repo también. `health.compare` devuelve ahora los SHA de cada tramo; `Graph.setCompareMarks` y `Graph3D.setCompareMarks` los pintan.
+- **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` («comparar dos ramas…», los `shas` de cada tramo) y un paso del smoke en la demo (nodos `cmp-a`/`cmp-b`, un único `cmp-base`, el resto atenuado, y «Quitar el resaltado» los deja en cero).
+- README: la comparación y sus Límites conocidos (solo los commits ya dibujados).
+- QA: comparar ramas en la demo (2D) por el smoke y a mano con Playwright; el 3D sin mirar a mano (sin GPU en la sesión); auditoría: 0 hallazgos nuevos.
+- Nota: «Quitar el resaltado» no cierra el panel de salud (lo cerraba como las demás filas). El paso «cambios de un commit» del smoke falló una vez sin relación con el cambio y pasó al repetir `npm run check` (pendiente `[Deuda]` ya abierto).
+- Nota: el clon de la sesión venía superficial; R3 y 2 pruebas fallaban hasta `git fetch --unshallow`. Chromium del smoke: `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`.
+- Reclamo: loop/72, sin colisión
+- Validado: 265 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 26 e2e en verde.
+- **Siguiente:** iteración 73, expansión: ítem 41 (Una organización entera, cuarta entrega, Escala)

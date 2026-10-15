@@ -558,6 +558,7 @@ GB.i18n.define('tr', {
   'cmp.busy': 'Değişen dosyalar okunuyor…',
   'cmp.fail': 'Dosyalar okunamadı.',
   'cmp.more': '…ve {n} tane daha',
+  'cmp.clear': 'Grafikteki vurguyu kaldır',
   'diff.show': 'Değişiklikleri gör',
   'diff.title': 'Commit değişiklikleri',
   'diff.close': 'Commit değişikliklerini kapat',

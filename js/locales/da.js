@@ -558,6 +558,7 @@ GB.i18n.define('da', {
   'cmp.busy': 'Læser de ændrede filer…',
   'cmp.fail': 'Filerne kunne ikke læses.',
   'cmp.more': '…og {n} mere',
+  'cmp.clear': 'Fjern fremhævningen i grafen',
   'diff.show': 'Vis ændringer',
   'diff.title': 'Ændringer i commit',
   'diff.close': 'Luk ændringerne i commit',

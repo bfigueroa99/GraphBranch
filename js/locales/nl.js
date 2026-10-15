@@ -559,6 +559,7 @@ GB.i18n.define('nl', {
   'cmp.busy': 'De gewijzigde bestanden worden gelezen…',
   'cmp.fail': 'De bestanden konden niet worden gelezen.',
   'cmp.more': '…en nog {n}',
+  'cmp.clear': 'Markering in de grafiek wissen',
   'diff.show': 'Wijzigingen bekijken',
   'diff.title': 'Wijzigingen van de commit',
   'diff.close': 'Wijzigingen van de commit sluiten',

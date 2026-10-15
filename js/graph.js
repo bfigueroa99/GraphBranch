@@ -847,7 +847,7 @@
 
     paintNode(it) {
       this.paintRefs(it);
-      const cls = it.cls + (it.el.classList.contains('enter') ? ' enter' : '') + (it.el.classList.contains('hl') ? ' hl' : '') + (it.data.sha === this.selSha ? ' sel' : '') + (this.pathSet && !this.pathSet.has(it.data.sha) ? ' pfx' : '');
+      const cls = it.cls + (it.el.classList.contains('enter') ? ' enter' : '') + (it.el.classList.contains('hl') ? ' hl' : '') + (it.data.sha === this.selSha ? ' sel' : '') + (this.pathSet && !this.pathSet.has(it.data.sha) ? ' pfx' : '') + this.cmpClass(it.data.sha);
       if (it.el.getAttribute('class') !== cls) it.el.setAttribute('class', cls);
     }
 
@@ -1235,6 +1235,19 @@
     setPathFilter(shas) {
       this.pathSet = shas || null;
       for (const it of this.nodes.values()) if (it?.el) this.paintNode(it);
+    }
+
+    /** Comparación de dos ramas: `marks` (Map sha -> 'a' | 'b' | 'base') deja a la luz el tramo de cada una y
+        el punto de separación, y atenúa el resto; null lo quita. */
+    setCompareMarks(marks) {
+      this.cmpMarks = marks && marks.size ? marks : null;
+      for (const it of this.nodes.values()) if (it?.el) this.paintNode(it);
+    }
+
+    cmpClass(sha) {
+      if (!this.cmpMarks) return '';
+      const m = this.cmpMarks.get(sha);
+      return m ? ' cmp-' + m : ' pfx';
     }
 
     /** Resalta una cadena (rama): solo se tocan sus elementos y los del resaltado anterior. */
@@ -1875,6 +1888,7 @@
     }
 
     clear() {
+      this.cmpMarks = null;
       for (const m of [this.nodes, this.edges, this.heads, this.pointers, this.legend, this.ghostLabels]) for (const it of m.values()) it.el?.remove();
       for (const d of this.days.values()) (d.line.remove(), d.label.remove());
       for (const m of [this.nodes, this.edges, this.heads, this.pointers, this.legend, this.ghostLabels, this.days, this.byChain, this.gone]) m.clear();

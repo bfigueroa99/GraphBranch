@@ -135,8 +135,8 @@
     tips.sort((x, y) => (data.commits.get(y).date || 0) - (data.commits.get(x).date || 0) || (x < y ? -1 : 1));
     const base = tips[0] ? data.commits.get(tips[0]) : null;
     return {
-      a: { name: a, ahead: only(sa, sb).length },
-      b: { name: b, ahead: only(sb, sa).length },
+      a: { name: a, ahead: only(sa, sb).length, shas: only(sa, sb) },
+      b: { name: b, ahead: only(sb, sa).length, shas: only(sb, sa) },
       base: base ? { sha: base.sha, message: String(base.message || '').split('\n')[0], date: base.date } : null,
       partial,
     };

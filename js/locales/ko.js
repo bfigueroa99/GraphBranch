@@ -558,6 +558,7 @@ GB.i18n.define('ko', {
   'cmp.busy': '변경된 파일을 읽는 중…',
   'cmp.fail': '파일을 읽지 못했습니다.',
   'cmp.more': '…외 {n}개',
+  'cmp.clear': '그래프 강조 해제',
   'diff.show': '변경 사항 보기',
   'diff.title': '커밋 변경 사항',
   'diff.close': '커밋 변경 사항 닫기',

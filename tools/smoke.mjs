@@ -617,6 +617,22 @@ console.log('Escritorio (1280×800)');
     if (cmp.opts < 2 || cmp.same) throw new Error(`comparar ramas: ${cmp.opts} opciones, mismas ramas elegidas: ${cmp.same}`);
     if (cmp.rows < 4) throw new Error(`comparar ramas: ${cmp.rows} filas de resultado, se esperaban al menos 4: ${cmp.text.slice(0, 120)}`);
     if (/undefined|NaN|cmp\./.test(cmp.text)) throw new Error('texto sin resolver al comparar ramas: ' + cmp.text.slice(0, 120));
+    await page.evaluate(async () => {
+      document.querySelector('#cmp-a').value = 'main';
+      document.querySelector('#cmp-b').value = 'develop';
+      document.querySelector('#cmp-go').click();
+      await new Promise((r) => setTimeout(r, 800));
+    });
+    const marked = await page.evaluate(() => ({
+      a: document.querySelectorAll('#graph .node.cmp-a').length,
+      b: document.querySelectorAll('#graph .node.cmp-b').length,
+      base: document.querySelectorAll('#graph .node.cmp-base').length,
+      dim: document.querySelectorAll('#graph .node.pfx').length,
+    }));
+    if (marked.a + marked.b < 1 || marked.base !== 1 || marked.dim < 1) throw new Error('comparar ramas: el grafo no marca los tramos ni el punto de separación: ' + JSON.stringify(marked));
+    await page.evaluate(() => [...document.querySelectorAll('#cmp-out .hl-row')].find((b) => b.textContent.includes(document.documentElement.lang === 'es' ? 'Quitar el resaltado' : 'Clear the highlight'))?.click());
+    const left = await page.evaluate(() => document.querySelectorAll('#graph .node.cmp-a, #graph .node.cmp-b, #graph .node.cmp-base').length);
+    if (left) throw new Error(`comparar ramas: «Quitar el resaltado» deja ${left} commits marcados`);
     const md = await page.evaluate(() => document.querySelector('#digest-md')?.textContent || '');
     if (!/^# /.test(md) || !/## .*\(\d+\)/.test(md)) throw new Error('resumen de la semana sin formato Markdown: ' + md.slice(0, 120));
     if (/undefined|NaN|digest\./.test(md)) throw new Error('texto sin resolver en el resumen de la semana: ' + md.slice(0, 120));

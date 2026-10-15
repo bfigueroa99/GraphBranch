@@ -1407,6 +1407,13 @@
       this.flyTo(this.controls.target.clone(), this.controls.target.clone().add(off), 350);
     }
 
+    /** Comparación de dos ramas: `marks` (Map sha -> 'a' | 'b' | 'base') agranda y enciende el tramo de cada una y el
+        punto de separación, y encoge el resto; null lo quita. */
+    setCompareMarks(marks) {
+      this.cmpMarks = marks && marks.size ? marks : null;
+      this.dirtyNodes = true;
+    }
+
     focusSha(sha, dist = 15) {
       const it = this.nodes.get(sha);
       if (!it) return false;
@@ -2002,11 +2009,14 @@
         const lit = !this.hlAmt || d.chain === this.hlChain || (head && d.heads.includes(this.hlChain.slice(2)));
         const col = this.tint(d.color, lit);
         const a = lit ? 1 : 1 - this.hlAmt * 0.9; // los halos de lo apagado casi se van
-        const k = s * (1 + 0.3 * it.hov);
+        const cm = this.cmpMarks;
+        const side = cm?.get(d.sha);
+        const k = s * (1 + 0.3 * it.hov) * (cm ? (side ? (side === 'base' ? 1.8 : 1.35) : 0.55) : 1);
         (d.merge ? this.iTorus : this.iSphere).point(v.x, v.y, v.z, (head ? HEAD_SCALE : 1) * k, col);
         const mk = marks?.get(d.sha);
         if (mk?.tags.length) this.iObelisk.point(v.x, v.y + 0.35 * k, v.z, 1.5 * k, this.warmWhite);
         if (mk?.envs.length) this.iPlate.point(v.x, v.y - 0.55 * k, v.z, k, this.envCol);
+        if (side) this.halos.push(v.x, v.y, v.z, side === 'base' ? this.warmWhite : this.col(side === 'a' ? 'c1' : 'c3'), 0.8, (side === 'base' ? 4.2 : 2.6) * k, 1);
         if (head) this.halos.push(v.x, v.y, v.z, col, ((dark ? 0.72 : 0.4) + 0.2 * it.hov) * a, 3.3 * k, 1);
         else if (dark && d.color !== 'ghost') this.halos.push(v.x, v.y, v.z, col, (0.26 + 0.4 * it.hov) * a, 1.7 * k, 0);
         else if (it.hov > 0.01) this.halos.push(v.x, v.y, v.z, col, 0.4 * it.hov * a, 2.2 * k, 0);
@@ -2842,6 +2852,7 @@
     }
 
     clear() {
+      this.cmpMarks = null;
       for (const it of this.heads.values()) it.el?.remove();
       for (const d of this.days.values()) (this.gDays.remove(d.mesh), d.el.remove());
       for (const r of this.ripples) (this.gFx.remove(r.mesh), r.mesh.material.dispose());

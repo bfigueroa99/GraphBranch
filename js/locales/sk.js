@@ -569,6 +569,7 @@ GB.i18n.define('sk', {
   'cmp.busy': 'Čítajú sa zmenené súbory…',
   'cmp.fail': 'Súbory sa nepodarilo prečítať.',
   'cmp.more': '…a ďalších {n}',
+  'cmp.clear': 'Zrušiť zvýraznenie v grafe',
   'diff.show': 'Zobraziť zmeny',
   'diff.title': 'Zmeny commitu',
   'diff.close': 'Zavrieť zmeny commitu',

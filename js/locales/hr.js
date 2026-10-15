@@ -566,6 +566,7 @@ GB.i18n.define('hr', {
   'cmp.busy': 'Čitanje promijenjenih datoteka…',
   'cmp.fail': 'Datoteke nije moguće pročitati.',
   'cmp.more': '…i još {n}',
+  'cmp.clear': 'Ukloni isticanje u grafu',
   'diff.show': 'Prikaži promjene',
   'diff.title': 'Promjene commita',
   'diff.close': 'Zatvorite promjene commita',

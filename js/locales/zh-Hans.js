@@ -558,6 +558,7 @@ GB.i18n.define('zh-Hans', {
   'cmp.busy': '正在读取变更的文件…',
   'cmp.fail': '无法读取文件。',
   'cmp.more': '…还有 {n} 个',
+  'cmp.clear': '清除图中的高亮',
   'diff.show': '查看变更',
   'diff.title': '提交的变更',
   'diff.close': '关闭提交的变更',

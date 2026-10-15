@@ -558,6 +558,7 @@ GB.i18n.define('ja', {
   'cmp.busy': '変更ファイルを読み込み中…',
   'cmp.fail': 'ファイルを読み込めませんでした。',
   'cmp.more': '…ほか {n} 件',
+  'cmp.clear': 'グラフの強調表示を解除',
   'diff.show': '変更を見る',
   'diff.title': 'コミットの変更',
   'diff.close': 'コミットの変更を閉じる',

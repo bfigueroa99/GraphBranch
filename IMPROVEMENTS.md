@@ -140,7 +140,7 @@ segunda columna a la primera.
 | --- | --- | --- |
 | Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (API de Forgejo, repos públicos y, con token, privados), bitbucket.org (API 2.0 de Bitbucket Cloud, repos públicos y, con token, privados), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP), repos locales (app de escritorio, con `git`), demo | Token para un Forgejo/Gitea propio |
 | Datos | ramas, commits, PRs (y las pilas de PRs apilados), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, en el panel de salud), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
-| Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
+| Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color y `&hide=`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (constelación de repos) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión) | Tasa de fallos de CI en la salud |
@@ -299,7 +299,7 @@ se comprueban antes de construir sobre ellas.
     paso del smoke en 3D.
 45. **Filtro por autor en la URL** · Análisis · 1×2/1. [parte del ítem 34] `?author=ana` abre el repo ya filtrado por
     esa persona, para compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
-46. **Capa para streaming, segunda entrega** · Plataformas · 2×2/1. [inv. 2026-10-13] Parámetros de la URL para la capa
+46. ~~**Capa para streaming, segunda entrega**~~ hecho en #107 · Plataformas · 2×2/1. [inv. 2026-10-13] Parámetros de la URL para la capa
     de OBS: fondo transparente y ocultar paneles, con los de siempre por defecto. Comprobar: un paso del smoke con
     el enlace y prueba de la lectura.
 47. **Resumen de la semana de una organización** · Salidas · 2×2/2. [inv. 2026-10-13] El resumen de la semana de todos
@@ -1873,3 +1873,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial y `--check` daba R3 en rojo (y 2 pruebas); `git fetch --unshallow` lo arregla.
 - Validado: 273 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 26 e2e en verde.
 - **Siguiente:** iteración 78, expansión: ítem 46 (Capa para streaming, segunda entrega, Plataformas)
+
+### 2026-10-15 · Iteración 78 · Expansión · Plataformas
+
+- **Capacidad nueva: capa para streaming, segunda entrega** (ítem 46 de la hoja de ruta). `?embed=1` acepta `&bg=00ff00` (un color hexadecimal de 3 o 6 cifras, para un croma en OBS; `&bg=transparent` sigue igual) y `&hide=notices,combo` (quita los avisos emergentes y el contador de combos de la capa). `GB.embedOptions` (en `js/i18n.js`) lee la URL y solo deja pasar `transparent`, un hex válido y los dos nombres conocidos; el color llega al CSS por una variable de `<html>`, sin tocar la CSP. Sin esos parámetros, la capa se ve como siempre. Sin textos nuevos (i18n sin cambios).
+- **Pruebas que fallan sin la capacidad:** `tools/embed.test.mjs` (4 pruebas de la lectura de la URL) y dos pasos del smoke: «&bg=00ff00 pinta el fondo de verde y &hide=notices,combo esconde los avisos» y «sin &hide= los avisos siguen ahí».
+- README: la función del widget y Seguridad (nada de la URL llega al CSS tal cual).
+- QA: XSS/inyección en CSS (`bg=red`, `bg=url(x)` y `bg=12345` se descartan, la prueba lo mira), CSP sin cambios; sin mirar a mano: 320 px, Replay, 3D; auditoría: no toca la interfaz visible fuera de `?embed`.
+- Reclamo: loop/78, sin colisión
+- Nota: el clon venía superficial y `--check` daba R3 en rojo (y 2 pruebas); `git fetch --unshallow` lo arregla. El borrado de `loop/65` falló por desconexión del proxy.
+- Validado: 277 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 26 e2e en verde.
+- **Siguiente:** iteración 79, mantenimiento · Rendimiento: pendiente 8 (Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`pla…)

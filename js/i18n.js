@@ -13,13 +13,38 @@ window.GB = window.GB || {};
 (function (GB) {
   'use strict';
 
-  /* ?embed=1: la página dentro de un iframe, solo el grafo y los avisos (&bg=transparent: sin fondo).
-     Se marca aquí, antes de pintar nada, para que la interfaz completa no parpadee. */
+  /** Lee ?embed=1 y sus ajustes: &bg=transparent (o un color hex, p. ej. &bg=00ff00 para un croma en OBS) y
+      &hide=notices,combo (lo que no debe verse; lo de siempre se ve). Sin ?embed, no hay nada. */
+  function embedOptions(search) {
+    const q = new URLSearchParams(search || '');
+    if (!q.has('embed') || /^(0|false|no|off)$/i.test(q.get('embed'))) return null;
+    const bg = (q.get('bg') || '').trim().replace(/^#/, '');
+    const hide = (q.get('hide') || '')
+      .toLowerCase()
+      .split(',')
+      .map((x) => x.trim())
+      .filter((x) => x === 'notices' || x === 'combo');
+    return {
+      clear: /^transparent$/i.test(bg),
+      color: /^([0-9a-f]{3}|[0-9a-f]{6})$/i.test(bg) ? '#' + bg.toLowerCase() : '',
+      hide: [...new Set(hide)],
+    };
+  }
+  GB.embedOptions = embedOptions;
+
+  /* ?embed=1: la página dentro de un iframe, solo el grafo y los avisos. Se marca aquí, antes de pintar
+     nada, para que la interfaz completa no parpadee. */
   try {
-    const q = new URLSearchParams(location.search);
-    if (q.has('embed') && !/^(0|false|no|off)$/i.test(q.get('embed'))) {
-      document.documentElement.classList.add('embed');
-      if (/^transparent$/i.test(q.get('bg') || '')) document.documentElement.classList.add('embed-clear');
+    const o = embedOptions(location.search);
+    if (o) {
+      const de = document.documentElement;
+      de.classList.add('embed');
+      if (o.clear) de.classList.add('embed-clear');
+      if (o.color) {
+        de.classList.add('embed-color');
+        de.style.setProperty('--embed-bg', o.color);
+      }
+      for (const h of o.hide) de.classList.add('embed-hide-' + h);
     }
   } catch {
     /* sin query string */

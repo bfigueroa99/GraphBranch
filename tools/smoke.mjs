@@ -2344,6 +2344,30 @@ console.log('Widget embebido (?embed=1)');
   await page.context().close();
 }
 
+console.log('Capa para streaming: color de fondo y &hide= (?embed=1)');
+{
+  const page = await openPage({ viewport: { width: 640, height: 400 } });
+  await step(page, '&bg=00ff00 pinta el fondo de verde y &hide=notices,combo esconde los avisos', async () => {
+    await page.goto(`${base}/index.html?lang=es&embed=1&bg=00ff00&hide=notices,combo`);
+    await loaded(page);
+    await page.waitForSelector('#graph3d canvas, #graph canvas', { timeout: 30000 });
+    const r = await page.evaluate(() => ({
+      bg: getComputedStyle(document.body).backgroundColor,
+      toasts: getComputedStyle(document.querySelector('.toasts')).display,
+      combo: getComputedStyle(document.querySelector('.combo')).display,
+    }));
+    if (r.bg !== 'rgb(0, 255, 0)') throw new Error(`&bg=00ff00 deja el fondo ${r.bg}`);
+    if (r.toasts !== 'none' || r.combo !== 'none') throw new Error(`&hide= no esconde: ${JSON.stringify(r)}`);
+  });
+  await step(page, 'sin &hide= los avisos siguen ahí (lo de siempre por defecto)', async () => {
+    await page.goto(`${base}/index.html?lang=es&embed=1`);
+    await loaded(page);
+    const d = await page.evaluate(() => getComputedStyle(document.querySelector('.toasts')).display);
+    if (d === 'none') throw new Error('los avisos se esconden sin &hide=');
+  });
+  await page.context().close();
+}
+
 console.log('Filtro por ruta desde la URL (?path=)');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

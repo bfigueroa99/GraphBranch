@@ -1736,9 +1736,9 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Reproducción:** `node tools/smoke.mjs` (con `js/snapshot.js` sin el arreglo) → `✗ graba el Replay en video, de principio a fin: el grabador arrancó con el canvas vacío: 1 colores al empezar`.
 - **Pruebas que fallan sin el arreglo:** el paso del smoke «graba el Replay en video, de principio a fin» ahora mide los colores del canvas en el instante en que arranca `MediaRecorder` (pide al menos 100).
 - README: sin cambios (no cambia lo que hace la función).
-- QA: fila de Replay en video (las dos pasos de grabación del smoke); sin mirar a mano: 320 px, tema claro; auditoría: ver Validado.
+- QA: fila de Replay en video (los dos pasos de grabación del smoke); sin mirar a mano: 320 px, tema claro; auditoría: ver Validado.
 - Nota: una corrida del smoke falló una vez en «lo que llega mientras se ve la 2D no se acumula para la 3D» (`waitForFunction` de 30 s) y no se repitió; sin relación con el cambio.
 - Reclamo: loop/67, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
-- Validado: PENDIENTE
+- Validado: 254 pruebas (`node --test`), smoke (84 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 25 e2e en verde.
 - **Siguiente:** iteración 68, expansión: ítem 36 (Gitea y Forgejo propios, Fuentes)

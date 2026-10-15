@@ -1868,8 +1868,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Capacidad nueva: filtrar por ruta, segunda entrega** (ítem 44 de la hoja de ruta). El grafo 3D también atenúa los commits que no tocaron la ruta (`Graph3D.setPathFilter`: esferas al 60 %, color hacia el fondo y halo casi apagado; sin filtro, nada cambia) y `?path=src/` abre el repo ya filtrado: `GB.search.pathParam` lee la ruta (recortada, sin barra inicial ni caracteres de control, hasta 200), se aplica una vez con la primera historia de la pestaña a la vista, y la URL guarda la ruta mientras haya filtro y la suelta al quitarlo o cambiar de pestaña. Sin textos nuevos (i18n sin cambios).
 - **Pruebas que fallan sin la capacidad:** `tools/search.test.mjs` («pathParam lee ?path= de la URL…») y dos pasos del smoke: «filtro por ruta: el grafo 3D también recibe la ruta y la suelta al quitarla» y «abre ya filtrado, atenúa el grafo, mantiene la ruta en la URL y al quitarlo la suelta».
 - README: la función (3D y URL), Límites conocidos y Seguridad.
-- QA: XSS (la ruta de la URL entra al campo con `value`, nunca como HTML), CSP sin cambios, 2D y 3D (el smoke lo mira); sin mirar a mano: 320 px, Replay; auditoría: ver Validado.
+- QA: XSS (la ruta de la URL entra al campo con `value`, nunca como HTML), CSP sin cambios, 2D y 3D (el smoke lo mira); sin mirar a mano: 320 px, Replay; auditoría: 0 hallazgos nuevos.
 - Reclamo: loop/77, sin colisión
 - Nota: el clon venía superficial y `--check` daba R3 en rojo (y 2 pruebas); `git fetch --unshallow` lo arregla.
-- Validado: pendiente
+- Validado: 273 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 26 e2e en verde.
 - **Siguiente:** iteración 78, expansión: ítem 46 (Capa para streaming, segunda entrega, Plataformas)

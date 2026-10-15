@@ -386,6 +386,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     ficha, con teclado se pasa al anterior y se vuelve, y Esc cierra» venció en `page.waitForFunction` (5 s); mismo remedio.
     También (iteración 71, `xvfb-run -a npm run check`; la repetición pasó): el mismo paso, «cambios de un commit»,
     venció otra vez en `page.waitForFunction` (5 s); mismo remedio.
+    También (iteración 75, `xvfb-run -a npm run check`; la repetición pasó): fallaron «filtro por autor … quitar el filtro no deja el grafo como estaba» y «filtro por ruta» (`page.click` 30 s); mismo remedio.
 
 2. [Deuda] e2e de escritorio: «un repositorio de esta máquina se sigue sin GitHub…» (`e2e/desktop.spec.mjs:360`)
     falló una vez en `npm run check` (iteración 53, `xvfb-run`; la repetición pasó): el panel de cambios
@@ -1835,5 +1836,6 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - README: sin cambios (no hay función nueva).
 - QA: auditoría completa `--langs` (solo `objetivo-chico`); etiquetas 3D a 24 px por la auditoría en los 40 idiomas y en vuelo; sin mirar a mano 1.000 ramas a 320 px (pendiente 19); auditoría: 0 hallazgos nuevos tras el arreglo.
 - Reclamo: loop/75, sin colisión
-- Validado: PENDIENTE
+- Validado: 270 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 26 e2e en verde (la primera corrida falló dos pasos del smoke sin relación con el cambio —pendiente 1—; la repetición salió 0).
+- Nota: el clon venía superficial (`git fetch --unshallow`); `npm run check` borra `test-results/` al correr las e2e, así que su salida no puede ir ahí.
 - **Siguiente:** iteración 76, expansión: ítem 43 (Ejercicios compartidos, segunda entrega, Público)

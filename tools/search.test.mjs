@@ -105,3 +105,14 @@ test('byAuthor cuenta solo lo que la rama suma sobre la por defecto y no hace na
   assert.deepEqual([...S.byAuthor(d, 'Luis').data.branches.keys()], ['main', 'feat-ana', 'fix-luis', 'sin-historia']);
   assert.equal(S.byAuthor(d, '').data, d);
 });
+
+test('pathParam lee ?path= de la URL: recorta, quita la barra inicial y los caracteres de control, y limita el largo', () => {
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(S.pathParam(q('')), '');
+  assert.equal(S.pathParam(q('repo=a/b')), '');
+  assert.equal(S.pathParam(q('path=src/')), 'src/');
+  assert.equal(S.pathParam(q('path=%20%20/src/app.js%20')), 'src/app.js');
+  assert.equal(S.pathParam(q('path=a%00b%0Ac')), 'abc');
+  assert.equal(S.pathParam(q('path=' + 'x'.repeat(500))).length, 200);
+  assert.equal(S.pathParam(null), '');
+});

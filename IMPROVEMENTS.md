@@ -143,7 +143,7 @@ segunda columna a la primera.
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (constelación de repos) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
-| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo por ruta de archivo, filtrar el grafo por autor ("mis ramas"), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión) | Tasa de fallos de CI en la salud |
+| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión) | Tasa de fallos de CI en la salud |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL con pistas y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
@@ -294,7 +294,7 @@ se comprueban antes de construir sobre ellas.
 43. ~~**Ejercicios compartidos, segunda entrega**~~ hecho en #105 · Público · 1×2/1. [parte del ítem 28] Un ejercicio propio admite
     hasta 3 pistas que se muestran con un botón, y condiciones sobre el mensaje del último commit (`tip:`) y sobre ramas
     sin fusionar (`unmerged:`).
-44. **Filtrar por ruta, segunda entrega** · Análisis · 1×2/1. [parte del ítem 29] El filtro por ruta también atenúa el grafo 3D
+44. ~~**Filtrar por ruta, segunda entrega**~~ hecho en #106 · Análisis · 1×2/1. [parte del ítem 29] El filtro por ruta también atenúa el grafo 3D
     y viaja en la URL (`?path=src/`) para compartir la vista ya filtrada. Comprobar: prueba de la lectura de la URL y un
     paso del smoke en 3D.
 45. **Filtro por autor en la URL** · Análisis · 1×2/1. [parte del ítem 34] `?author=ana` abre el repo ya filtrado por
@@ -1862,3 +1862,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Validado: 272 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 26 e2e en verde.
 - Nota: el clon venía superficial y `--check` daba R3 en rojo (y 2 pruebas); `git fetch --unshallow` lo arregla. El borrado de `loop/63` falló por desconexión del proxy; las ramas `loop/*` fusionadas siguen en Para Benjamin. La hoja de ruta se repuso con los ítems 53 a 58 (investigación del 2026-10-13, vigente).
 - **Siguiente:** iteración 77, expansión: ítem 44 (Filtrar por ruta, segunda entrega, Análisis)
+
+### 2026-10-15 · Iteración 77 · Expansión · Análisis
+
+- **Capacidad nueva: filtrar por ruta, segunda entrega** (ítem 44 de la hoja de ruta). El grafo 3D también atenúa los commits que no tocaron la ruta (`Graph3D.setPathFilter`: esferas al 60 %, color hacia el fondo y halo casi apagado; sin filtro, nada cambia) y `?path=src/` abre el repo ya filtrado: `GB.search.pathParam` lee la ruta (recortada, sin barra inicial ni caracteres de control, hasta 200), se aplica una vez con la primera historia de la pestaña a la vista, y la URL guarda la ruta mientras haya filtro y la suelta al quitarlo o cambiar de pestaña. Sin textos nuevos (i18n sin cambios).
+- **Pruebas que fallan sin la capacidad:** `tools/search.test.mjs` («pathParam lee ?path= de la URL…») y dos pasos del smoke: «filtro por ruta: el grafo 3D también recibe la ruta y la suelta al quitarla» y «abre ya filtrado, atenúa el grafo, mantiene la ruta en la URL y al quitarlo la suelta».
+- README: la función (3D y URL), Límites conocidos y Seguridad.
+- QA: XSS (la ruta de la URL entra al campo con `value`, nunca como HTML), CSP sin cambios, 2D y 3D (el smoke lo mira); sin mirar a mano: 320 px, Replay; auditoría: 0 hallazgos nuevos.
+- Reclamo: loop/77, sin colisión
+- Nota: el clon venía superficial y `--check` daba R3 en rojo (y 2 pruebas); `git fetch --unshallow` lo arregla.
+- Validado: 273 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 26 e2e en verde.
+- **Siguiente:** iteración 78, expansión: ítem 46 (Capa para streaming, segunda entrega, Plataformas)

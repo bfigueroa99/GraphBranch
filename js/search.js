@@ -148,5 +148,15 @@
     return { open, run };
   }
 
-  GB.search = { authors, byAuthor, find, mount, LIMIT };
+  const PATH_MAX = 200;
+
+  /** La ruta que pide la URL (?path=src/): recortada, sin barra inicial ni caracteres de control, de hasta 200; '' si no hay. */
+  function pathParam(q) {
+    const v = q && typeof q.get === 'function' ? q.get('path') : null;
+    if (typeof v !== 'string') return '';
+    // eslint-disable-next-line no-control-regex
+    return v.replace(/[\u0000-\u001f\u007f]/g, '').trim().replace(/^\/+/, '').slice(0, PATH_MAX);
+  }
+
+  GB.search = { authors, byAuthor, find, mount, pathParam, LIMIT };
 })((window.GB = window.GB || {}));

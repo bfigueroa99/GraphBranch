@@ -110,6 +110,12 @@
     gitlabTokenInput: $('#gitlab-token-input'),
     gitlabTokenToggle: $('#gitlab-token-toggle'),
     gitlabTokenWhere: $('#gitlab-token-where'),
+    codebergTokenInput: $('#codeberg-token-input'),
+    codebergTokenToggle: $('#codeberg-token-toggle'),
+    codebergTokenWhere: $('#codeberg-token-where'),
+    bitbucketTokenInput: $('#bitbucket-token-input'),
+    bitbucketTokenToggle: $('#bitbucket-token-toggle'),
+    bitbucketTokenWhere: $('#bitbucket-token-where'),
     hooksBox: $('#hooks-box'),
     hooksList: $('#hooks-list'),
     depth: $('#depth'),
@@ -157,6 +163,8 @@
   const settings = {
     token: desktop ? '' : U.store.get('token', ''),
     gitlabToken: desktop ? '' : U.store.get('gitlabToken', ''),
+    codebergToken: desktop ? '' : U.store.get('codebergToken', ''),
+    bitbucketToken: desktop ? '' : U.store.get('bitbucketToken', ''),
     depth: U.store.get('depth', 40),
     marks: U.store.get('marks', true) !== false, // tags y entornos de despliegue (2 consultas más por repo de GitHub)
   };
@@ -364,14 +372,14 @@
   const filterOf = (tab) => (tab.demo ? tab.source.filter || '' : U.store.get('filter:' + tab.key, ''));
 
   /** La fuente de un repo de GitHub, de un proyecto de GitLab o de un repo de Codeberg, con lo que se recuerda de él: su
-      filtro y sus ramas fijadas. El token de GitHub va solo a la fuente de GitHub, y el de GitLab
-      solo a la de GitLab. */
+      filtro y sus ramas fijadas. El token de GitHub va solo a la fuente de GitHub, y el de GitLab,
+      el de Codeberg y el de Bitbucket, cada uno solo a la suya (un Forgejo propio no recibe ninguno). */
   function sourceFor({ host, owner, name }) {
     const key = keyOf({ host, owner, name });
     const remembered = { depth: settings.depth, marks: settings.marks, filter: U.store.get('filter:' + key, ''), pins: U.store.get('pins:' + key, []) };
     if (host === 'local') return new GB.LocalGitSource({ id: owner, name, ...remembered });
-    if (host === 'bitbucket') return new GB.BitbucketSource({ owner, name, ...remembered });
-    if (host === 'codeberg') return new GB.CodebergSource({ owner, name, ...remembered });
+    if (host === 'bitbucket') return new GB.BitbucketSource({ owner, name, token: settings.bitbucketToken, ...remembered });
+    if (host === 'codeberg') return new GB.CodebergSource({ owner, name, token: settings.codebergToken, ...remembered });
     if (host === 'forgejo') return new GB.CodebergSource({ owner, name, webUrl: FORGE_URL, avatars: desktop, ...remembered });
     if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, webUrl: GITLAB_URL, avatars: desktop, ...remembered });
     return new GB.GitHubSource({ owner, name, token: settings.token, apiUrl: API_URL, ...remembered });
@@ -1756,7 +1764,7 @@
       showOverlay('loading', i18n.msg('status.retrying'));
       source.refreshNow();
     } else if (action === 'demo') startDemo();
-    else if (action === 'settings') openSettings(source?.host === 'gitlab' ? el.gitlabTokenInput : el.tokenInput);
+    else if (action === 'settings') openSettings({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput, bitbucket: el.bitbucketTokenInput }[source?.host] || el.tokenInput);
   });
 
   /* ---------- controles ---------- */
@@ -2085,6 +2093,8 @@
   function openSettings(focus = el.tokenInput) {
     el.tokenInput.value = settings.token;
     el.gitlabTokenInput.value = settings.gitlabToken;
+    el.codebergTokenInput.value = settings.codebergToken;
+    el.bitbucketTokenInput.value = settings.bitbucketToken;
     for (const [input, toggle] of tokenFields) {
       input.type = 'password';
       toggle.textContent = t('settings.show');
@@ -2148,6 +2158,8 @@
   const tokenFields = [
     [el.tokenInput, el.tokenToggle],
     [el.gitlabTokenInput, el.gitlabTokenToggle],
+    [el.codebergTokenInput, el.codebergTokenToggle],
+    [el.bitbucketTokenInput, el.bitbucketTokenToggle],
     ...hookFields.map((f) => [f.input, f.toggle]),
   ];
   const showToggle = (input, toggle) => (toggle.textContent = input.type === 'password' ? t('settings.show') : t('settings.hide'));
@@ -2164,6 +2176,8 @@
   el.tokenClear.addEventListener('click', () => {
     el.tokenInput.value = '';
     el.gitlabTokenInput.value = '';
+    el.codebergTokenInput.value = '';
+    el.bitbucketTokenInput.value = '';
     for (const f of hookFields) f.input.value = '';
     el.tokenInput.focus();
   });
@@ -2172,15 +2186,21 @@
     const before = { ...settings };
     settings.token = el.tokenInput.value.trim();
     settings.gitlabToken = el.gitlabTokenInput.value.trim();
+    settings.codebergToken = el.codebergTokenInput.value.trim();
+    settings.bitbucketToken = el.bitbucketTokenInput.value.trim();
     settings.depth = Math.max(10, Math.min(100, Number(el.depth.value) || 40));
     settings.marks = el.marks.checked;
     if (desktop) {
       const failed = (err) => console.error('No se pudo guardar el token:', err);
       desktop.setToken(settings.token).then(showTokenWhere, failed);
       desktop.setToken(settings.gitlabToken, 'gitlab').catch(failed);
+      desktop.setToken(settings.codebergToken, 'codeberg').catch(failed);
+      desktop.setToken(settings.bitbucketToken, 'bitbucket').catch(failed);
     } else {
       U.store.set('token', settings.token || null);
       U.store.set('gitlabToken', settings.gitlabToken || null);
+      U.store.set('codebergToken', settings.codebergToken || null);
+      U.store.set('bitbucketToken', settings.bitbucketToken || null);
     }
     U.store.set('depth', settings.depth);
     U.store.set('marks', settings.marks ? null : false);
@@ -2194,7 +2214,7 @@
     // se reconecta lo que cambió: un token de GitLab nuevo no gasta la cuota de GitHub. Si no cambió
     // nada, todo, como dice el botón
     const changed = (tab) =>
-      settings.depth !== before.depth || settings.marks !== before.marks || (tab.source.host === 'codeberg' || tab.source.host === 'forgejo' || tab.source.host === 'bitbucket' ? false : tab.source.host === 'gitlab' ? settings.gitlabToken !== before.gitlabToken : settings.token !== before.token);
+      settings.depth !== before.depth || settings.marks !== before.marks || ({ gitlab: settings.gitlabToken !== before.gitlabToken, codeberg: settings.codebergToken !== before.codebergToken, bitbucket: settings.bitbucketToken !== before.bitbucketToken, forgejo: false }[tab.source.host] ?? settings.token !== before.token);
     if (realTabs().length) reconnectAll(realTabs().some(changed) ? changed : undefined);
     else el.tokenBanner.hidden = true;
   });
@@ -2204,7 +2224,9 @@
     const keychain = where === 'keychain';
     el.tokenWhere.dataset.i18n = keychain ? 'settings.tokenWhereKeychain' : 'settings.tokenWherePlain';
     el.gitlabTokenWhere.dataset.i18n = keychain ? 'settings.gitlabTokenWhereKeychain' : 'settings.gitlabTokenWherePlain';
-    for (const note of [el.tokenWhere, el.gitlabTokenWhere]) note.textContent = t(note.dataset.i18n);
+    el.codebergTokenWhere.dataset.i18n = keychain ? 'settings.codebergTokenWhereKeychain' : 'settings.codebergTokenWherePlain';
+    el.bitbucketTokenWhere.dataset.i18n = keychain ? 'settings.bitbucketTokenWhereKeychain' : 'settings.bitbucketTokenWherePlain';
+    for (const note of [el.tokenWhere, el.gitlabTokenWhere, el.codebergTokenWhere, el.bitbucketTokenWhere]) note.textContent = t(note.dataset.i18n);
   }
 
   /** En la app de escritorio, el ícono de la bandeja y su aviso van en el idioma de la página. */
@@ -2222,6 +2244,8 @@
     }
     settings.token = token;
     settings.gitlabToken = (await desktop.getToken('gitlab')).token;
+    settings.codebergToken = (await desktop.getToken('codeberg')).token;
+    settings.bitbucketToken = (await desktop.getToken('bitbucket')).token;
     for (const service of GB.hooks.SERVICES) hookUrls[service] = (await desktop.getToken(service)).token;
     showTokenWhere(where);
   }

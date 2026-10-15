@@ -42,7 +42,7 @@ export function launchAgain(dir) {
 /** Los archivos del token en la carpeta de datos: { nombre: contenido }. */
 /** Los archivos de los tokens (github-token.enc, gitlab-token.enc, slack-token.enc, discord-token.enc o sus .txt sin cifrar), con su contenido. */
 export function tokenFiles(dir) {
-  return Object.fromEntries(readdirSync(dir).filter((f) => /^(github|gitlab|slack|discord)-token\./.test(f)).map((f) => [f, readFileSync(join(dir, f))]));
+  return Object.fromEntries(readdirSync(dir).filter((f) => /^(github|gitlab|codeberg|bitbucket|slack|discord)-token\./.test(f)).map((f) => [f, readFileSync(join(dir, f))]));
 }
 
 /** La ventana, vista desde el proceso principal. */

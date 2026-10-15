@@ -6,7 +6,7 @@
 
    La API falsa sirve el repo ana/api como Bitbucket 2.0: páginas con `pagelen` y `next`, el listado
    de commits desde una cabeza (con `exclude`), PRs y el árbol de `src`. Un repo privado responde 404,
-   ninguna consulta debe llevar un token, y la fuente no debe pasar de su cuota por hora. */
+   ninguna consulta debe llevar un token salvo la prueba del token propio, y la fuente no debe pasar de su cuota por hora. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -50,7 +50,7 @@ function load(bb) {
 }
 
 function fakeBitbucket() {
-  const bb = { commits: new Map(), branches: new Map(), pulls: [], override: null, calls: [], private: false };
+  const bb = { commits: new Map(), branches: new Map(), pulls: [], override: null, calls: [], auths: [], expectAuth: undefined, private: false };
   let n = 0;
   bb.commit = (hash, ...parents) => {
     const date = new Date(Date.UTC(2026, 0, 1) + ++n * 60000).toISOString();
@@ -150,11 +150,12 @@ function fakeBitbucket() {
 
   bb.fetch = async (url, opts = {}) => {
     assert.ok(url.startsWith(API + '/'), `consulta fuera de Bitbucket: ${url}`);
-    assert.equal(opts.headers?.Authorization, undefined, 'ninguna consulta lleva token');
+    assert.equal(opts.headers?.Authorization, bb.expectAuth, 'solo lleva el token que se espera');
+    bb.auths.push(opts.headers?.Authorization);
     const path = url.slice(API.length);
     bb.calls.push(path);
     const { status = 200, body, headers = {} } =
-      bb.private && path.startsWith(REPO) ? { status: 404, body: { type: 'error', error: { message: 'not found' } } } : bb.override?.(path) || route(path);
+      bb.private && !bb.expectAuth && path.startsWith(REPO) ? { status: 404, body: { type: 'error', error: { message: 'not found' } } } : bb.override?.(path) || route(path);
     const hs = new Map(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), String(v)]));
     return { status, ok: status >= 200 && status < 300, statusText: '', headers: { get: (k) => hs.get(k.toLowerCase()) || null }, text: async () => (typeof body === 'string' ? body : JSON.stringify(body)) };
   };
@@ -378,4 +379,24 @@ test('el filtro por autor funciona sobre los datos de esta fuente: deja la rama 
   assert.deepEqual([...nobody.data.branches.keys()], ['main']);
   assert.equal(nobody.shown, 1);
   assert.equal(nobody.total, 2);
+});
+
+test('el token de Bitbucket va en cada consulta a api.bitbucket.org y un repo privado se abre con él', async () => {
+  const bb = repo();
+  bb.private = true;
+  const sin = connect(bb);
+  await sin.src.cycle();
+  assert.equal(sin.errors.length, 1, 'privado sin token: responde 404');
+  assert.ok(bb.auths.every((a) => a === undefined));
+
+  const con = repo();
+  con.private = true;
+  con.expectAuth = 'Bearer bb-secreto';
+  const { src, errors } = connect(con, { token: 'bb-secreto' });
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  assert.ok(src.data.commits.has('f2'));
+  assert.ok(con.calls.length > 2);
+  assert.ok(con.auths.every((a) => a === 'Bearer bb-secreto'), 'todas las consultas llevan el token');
+  assert.equal(src.token, '', 'no se mezcla con el de GitHub');
 });

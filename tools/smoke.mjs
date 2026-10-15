@@ -1742,6 +1742,24 @@ console.log('Codeberg');
     const text = await page.textContent('#overlay');
     if (!text.includes('No se encontró ana/nada en Codeberg. Solo se leen repositorios públicos.')) throw new Error(`el aviso dice ${text}`);
   }, { allow: /404/ });
+
+  await step(page, 'el token de Codeberg de Ajustes va en cada consulta, solo a Codeberg', async () => {
+    await page.fill('#repo-input', 'https://codeberg.org/ana/api');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'ana/api' && document.querySelector('#overlay').hidden, null, { timeout: 15000 });
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: 3000 });
+    await page.fill('#codeberg-token-input', 'cb-smoke0123');
+    const from = cb.auths.length;
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForFunction(() => document.querySelector('#overlay').hidden && document.querySelector('#repo-link')?.textContent === 'ana/api', null, { timeout: 15000 });
+    await page.waitForTimeout(500);
+    const sent = cb.auths.slice(from);
+    if (!sent.length) throw new Error('al guardar el token no se reconectó el repo');
+    if (sent.some((a) => a !== 'token cb-smoke0123')) throw new Error(`a Codeberg fue ${[...new Set(sent)]}`);
+    const saved = await page.evaluate(() => [localStorage.getItem('graphbranch:codebergToken'), localStorage.getItem('graphbranch:token')]);
+    if (saved[0] !== JSON.stringify('cb-smoke0123') || saved[1] !== null) throw new Error(`se guardó ${saved}`);
+  });
   await page.context().close();
 }
 
@@ -1831,6 +1849,24 @@ console.log('Bitbucket');
     const text = await page.textContent('#overlay');
     if (!text.includes('No se encontró ana/nada en Bitbucket. Solo se leen repositorios públicos.')) throw new Error(`el aviso dice ${text}`);
   }, { allow: /404/ });
+
+  await step(page, 'el token de Bitbucket de Ajustes va en cada consulta, solo a Bitbucket', async () => {
+    await page.fill('#repo-input', 'https://bitbucket.org/ana/api');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'ana/api' && document.querySelector('#overlay').hidden, null, { timeout: 15000 });
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: 3000 });
+    await page.fill('#bitbucket-token-input', 'bb-smoke0123');
+    const from = bb.auths.length;
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForFunction(() => document.querySelector('#overlay').hidden && document.querySelector('#repo-link')?.textContent === 'ana/api', null, { timeout: 15000 });
+    await page.waitForTimeout(500);
+    const sent = bb.auths.slice(from);
+    if (!sent.length) throw new Error('al guardar el token no se reconectó el repo');
+    if (sent.some((a) => a !== 'Bearer bb-smoke0123')) throw new Error(`a Bitbucket fue ${[...new Set(sent)]}`);
+    const saved = await page.evaluate(() => [localStorage.getItem('graphbranch:bitbucketToken'), localStorage.getItem('graphbranch:token')]);
+    if (saved[0] !== JSON.stringify('bb-smoke0123') || saved[1] !== null) throw new Error(`se guardó ${saved}`);
+  });
   await page.context().close();
 }
 

@@ -337,6 +337,24 @@
       <p class="help" data-i18n-html="settings.gitlabTokenHelp">For private gitlab.com projects: a personal access token with the <code>read_api</code> scope. Public projects don't need one.</p>
       <p class="help" id="gitlab-token-where" data-i18n="settings.gitlabTokenWhere">The token is stored only in this browser and is sent only to gitlab.com.</p>
     </div>
+    <div class="field">
+      <label for="codeberg-token-input"><span data-i18n="settings.codebergToken">Codeberg token</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <div class="field-row">
+        <input id="codeberg-token-input" type="password" autocomplete="off" spellcheck="false">
+        <button type="button" class="btn btn-ghost" id="codeberg-token-toggle">Show</button>
+      </div>
+      <p class="help" data-i18n-html="settings.codebergTokenHelp">For private repos on codeberg.org: an access token with the <code>read:repository</code> scope. Public repos don't need one.</p>
+      <p class="help" id="codeberg-token-where" data-i18n="settings.codebergTokenWhere">The token is stored only in this browser and is sent only to codeberg.org.</p>
+    </div>
+    <div class="field">
+      <label for="bitbucket-token-input"><span data-i18n="settings.bitbucketToken">Bitbucket token</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <div class="field-row">
+        <input id="bitbucket-token-input" type="password" autocomplete="off" spellcheck="false">
+        <button type="button" class="btn btn-ghost" id="bitbucket-token-toggle">Show</button>
+      </div>
+      <p class="help" data-i18n-html="settings.bitbucketTokenHelp">For private repos on bitbucket.org: a repository or workspace access token with the <code>repository</code> scope. Public repos don't need one.</p>
+      <p class="help" id="bitbucket-token-where" data-i18n="settings.bitbucketTokenWhere">The token is stored only in this browser and is sent only to bitbucket.org.</p>
+    </div>
     <fieldset class="field hooks" id="hooks-box" hidden>
       <legend data-i18n="settings.hooks">Notices to Slack and Discord</legend>
       <p class="help" data-i18n="settings.hooksHelp">Each webhook gets the events you tick: releases, merges to the default branch, CI turning red and force-pushes on it. The URL is a secret: it is stored encrypted on this computer and is sent only to its own service.</p>

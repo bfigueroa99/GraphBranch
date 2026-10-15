@@ -1,5 +1,5 @@
 /* GraphBranch — salud del repo: lo que ya está cargado, leído como señales de equipo.
-   Ramas sin actividad hace más de 30 días y sin PR, pull requests abiertos por edad, cuánto tardaron
+   Ramas sin actividad hace más de 30 días y sin PR, pull requests abiertos por edad y por estado (borrador, checks en rojo, aprobado, esperando revisión), cuánto tardaron
    en fusionarse los últimos, el ritmo de merges y releases y, en el idioma de DORA, la frecuencia de
    despliegues (cada release cuenta como uno) y el tiempo de entrega (de abierto a fusionado). No hace ninguna consulta: parte del
    estado del grafo y de la actividad que ya llegó, y cuenta lo que pasa en el repo, no a personas. */
@@ -38,6 +38,17 @@
       .map((p) => ({ number: p.number, title: p.title, head: p.sameRepo ? p.head : null, draft: !!p.draft, url: p.url, age: now - at(p.createdAt) }))
       .sort((a, b) => b.age - a.age);
 
+    // estado de cada PR: borrador, con los checks en rojo, aprobado o esperando revisión (en ese orden de precedencia)
+    const states = { draft: [], failing: [], approved: [], waiting: [] };
+    for (const r of prs) {
+      const p = data.pulls.get(r.number);
+      const ci = p.ci || (p.sameRepo && data.ci?.get(p.head)) || null;
+      const key = r.draft ? 'draft' : ci === 'failure' ? 'failing' : p.review === 'approved' ? 'approved' : 'waiting';
+      states[key].push({ ...r, state: key });
+    }
+    const prStates = {};
+    for (const k in states) prStates[k] = { total: states[k].length, rows: states[k].slice(0, ROWS) };
+
     const seen = new Set();
     const merges = acts.filter((a) => a.kind === 'pr-merge' && a.time && !seen.has(a.id) && seen.add(a.id));
     const spans = merges
@@ -63,6 +74,7 @@
       forks: { total: forks.length, rows: forks.slice(0, ROWS) },
       stale: { total: stale.length, rows: stale.slice(0, ROWS) },
       prs: { total: prs.length, rows: prs.slice(0, ROWS) },
+      prStates,
       merged: spans.length ? { n: spans.length, median: median(spans), max: Math.max(...spans) } : null,
       dora,
       pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30) },

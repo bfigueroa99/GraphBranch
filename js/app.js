@@ -1212,7 +1212,7 @@
   /* ---------- salud del repo: lo ya cargado como señales de equipo (ver health.js) ---------- */
 
   /** Una lista de filas; cada una lleva a su rama en el grafo. */
-  function healthList(id, title, block, rowOf) {
+  function healthList(id, title, block, rowOf, sub = false) {
     const rows = block.rows
       .map((r, i) => {
         const [main, aside] = rowOf(r);
@@ -1221,7 +1221,8 @@
         return `<li>${go ? `<button type="button" class="hl-row" data-go="${i}" title="${U.esc(t('feed.locate'))}">${body}</button>` : `<span class="hl-row">${body}</span>`}</li>`;
       })
       .join('');
-    return `<section class="hl-sec"><h3>${U.esc(title)} <span class="hl-n">${U.fmtNum(block.total)}</span></h3>${rows ? `<ul class="hl-list" data-list="${id}">${rows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`}</section>`;
+    const [box, head] = sub ? ['div class="hl-sub"', 'h4'] : ['section class="hl-sec"', 'h3'];
+    return `<${box}><${head}>${U.esc(title)} <span class="hl-n">${U.fmtNum(block.total)}</span></${head}>${rows ? `<ul class="hl-list" data-list="${id}">${rows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`}</${sub ? 'div' : 'section'}>`;
   }
 
   function renderHealth() {
@@ -1237,6 +1238,10 @@
       `<section class="hl-sec" id="hl-forks"><h3>${U.esc(t('health.forks'))} <span class="hl-n">${U.fmtNum(h.forks.total)}</span></h3>${forkRows ? `<ul class="hl-list">${forkRows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`}</section>` +
       healthList('stale', t('health.stale'), h.stale, (r) => [r.name, span(r.idle)]) +
       healthList('prs', t('health.prs'), h.prs, (r) => [`#${r.number} ${r.title}`, span(r.age)]) +
+      `<section class="hl-sec" id="hl-prstates"><h3>${U.esc(t('health.prStates'))}</h3>${['draft', 'failing', 'approved', 'waiting']
+        .filter((k) => h.prStates[k].total)
+        .map((k) => healthList('prs-' + k, t({ draft: 'health.prState.draft', failing: 'health.prState.failing', approved: 'health.prState.approved', waiting: 'health.prState.waiting' }[k]), h.prStates[k], (r) => [`#${r.number} ${r.title}`, span(r.age)], true))
+        .join('') || `<p class="hl-none">${U.esc(t('health.none'))}</p>`}</section>` +
       `<section class="hl-sec"><h3>${U.esc(t('health.merged'))}</h3>${
         h.merged ? `<p class="hl-line">${U.esc(t('health.mergedStat', { median: span(h.merged.median), max: span(h.merged.max) }))}</p>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
@@ -1257,7 +1262,8 @@
     el.healthBody.querySelectorAll('.hl-list').forEach((ul) =>
       ul.querySelectorAll('[data-go]').forEach((b) =>
         b.addEventListener('click', () => {
-          const r = h[ul.dataset.list].rows[Number(b.dataset.go)];
+          const id = ul.dataset.list;
+          const r = (id.startsWith('prs-') ? h.prStates[id.slice(4)] : h[id]).rows[Number(b.dataset.go)];
           closeHealth();
           graph.focusBranch(r.name || r.head);
         }),

@@ -861,7 +861,7 @@
           ${listing ? `page: ${this.refsPage()}` : ''}
           pullRequests(states: OPEN, first: 50, orderBy: {field: UPDATED_AT, direction: DESC}) {
             totalCount
-            nodes { number title isDraft url headRefName baseRefName isCrossRepository createdAt author { login avatarUrl } commits(last: 1) { nodes { commit { statusCheckRollup { state } } } } }
+            nodes { number title isDraft reviewDecision url headRefName baseRefName isCrossRepository createdAt author { login avatarUrl } commits(last: 1) { nodes { commit { statusCheckRollup { state } } } } }
           }
           ${aliases(first)}
         }
@@ -978,6 +978,7 @@
         sameRepo: !p.isCrossRepository,
         url: p.url,
         draft: !!p.isDraft,
+        review: p.reviewDecision === 'APPROVED' ? 'approved' : null,
         user: p.author ? { login: p.author.login, name: p.author.login, avatar: p.author.avatarUrl } : null,
         createdAt: Date.parse(p.createdAt) || Date.now(),
         ci: ciState(p.commits?.nodes?.[0]?.commit?.statusCheckRollup?.state),

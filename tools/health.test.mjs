@@ -197,3 +197,23 @@ test('compute: los forks activos con su tiempo desde el último push', () => {
   assert.equal(h.forks.rows[0].idle, 2 * DAY);
   assert.equal(compute({ ...d, forks: undefined }, [], NOW).forks.total, 0);
 });
+
+test('PRs por estado: borrador, checks en rojo, aprobado y esperando revisión, cada uno con su salto', () => {
+  const r = repo();
+  r.pulls.clear();
+  r.ci = new Map([['red', 'failure']]);
+  const add = (n, head, extra = {}) => r.pulls.set(n, { number: n, title: 't' + n, head, sameRepo: true, createdAt: ago(n), ...extra });
+  add(1, 'a', { draft: true, ci: 'failure' }); // el borrador manda sobre el rojo
+  add(2, 'red'); // el rojo viene del estado de su rama
+  add(3, 'b', { review: 'approved', ci: 'failure' }); // rojo gana a aprobado
+  add(4, 'c', { review: 'approved' });
+  add(5, 'd');
+  add(6, 'e', { ci: 'success' });
+  const s = compute(r, [], NOW).prStates;
+  const nums = (k) => Array.from(s[k].rows, (x) => x.number);
+  assert.deepEqual(nums('draft'), [1]);
+  assert.deepEqual(nums('failing'), [3, 2]);
+  assert.deepEqual(nums('approved'), [4]);
+  assert.deepEqual(nums('waiting'), [6, 5]);
+  assert.equal(s.waiting.total, 2);
+});

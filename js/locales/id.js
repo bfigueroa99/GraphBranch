@@ -394,6 +394,13 @@ GB.i18n.define('id', {
   'err.httpNoMessageGitlab': 'GitLab merespons {status}',
   'err.httpNoMessageCodeberg': 'Codeberg merespons {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket merespons {status}',
+  'status.connectingForge': 'Menyambung ke server Forgejo/Gitea…',
+  'err.notFoundForge': '{repo} tidak ditemukan di server. Hanya repositori publik yang dibaca.',
+  'err.rateForge': 'Server meminta GraphBranch memperlambat. Akan dicoba lagi dalam semenit.',
+  'err.networkForge': 'Tidak dapat menjangkau server. Periksa koneksi; jika Anda membuka GraphBranch di penampil yang memblokir jaringan, gunakan versi GitHub Pages atau berkas lokal.',
+  'err.timeoutForge': 'Server terlalu lama merespons. GraphBranch akan mencoba lagi sendiri.',
+  'err.httpForge': 'Server merespons {status}: {message}',
+  'err.httpNoMessageForge': 'Server merespons {status}',
 
   /* ---------- dialog pengaturan ---------- */
   'settings.title': 'Pengaturan',

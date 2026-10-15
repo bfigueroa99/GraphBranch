@@ -394,6 +394,13 @@ GB.i18n.define('fi', {
   'err.httpNoMessageGitlab': 'GitLab vastasi {status}',
   'err.httpNoMessageCodeberg': 'Codeberg vastasi {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket vastasi {status}',
+  'status.connectingForge': 'Yhdistetään Forgejo/Gitea-palvelimeen…',
+  'err.notFoundForge': 'Kohdetta {repo} ei löytynyt palvelimelta. Vain julkisia repositorioita luetaan.',
+  'err.rateForge': 'Palvelin pyysi GraphBranchia hidastamaan. Se yrittää uudelleen minuutin kuluttua.',
+  'err.networkForge': 'Palvelinta ei tavoitettu. Tarkista yhteys; jos avasit GraphBranchin katselimessa, joka estää verkon, käytä GitHub Pages -versiota tai paikallista tiedostoa.',
+  'err.timeoutForge': 'Palvelin vastasi liian hitaasti. GraphBranch yrittää itse uudelleen.',
+  'err.httpForge': 'Palvelin vastasi {status}: {message}',
+  'err.httpNoMessageForge': 'Palvelin vastasi {status}',
 
   /* ---------- asetukset ---------- */
   'settings.title': 'Asetukset',

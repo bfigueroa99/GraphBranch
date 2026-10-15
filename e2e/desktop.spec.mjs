@@ -149,6 +149,25 @@ test('--gitlab-url suma solo ese host al CSP y la página lo recibe; sin https s
   }
 });
 
+test('--forge-url suma solo ese host al CSP (conexiones y avatares) y la página lo recibe; sin https se ignora', async ({}, testInfo) => {
+  const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
+  let { app, page } = await launch(testInfo, { args: ['--lang=es', '--forge-url=https://forge.example.com'] });
+  try {
+    expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://forge.example.com https://api.bitbucket.org;');
+    expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://forge.example.com;');
+    expect(page.url()).toContain('forge=' + encodeURIComponent('https://forge.example.com'));
+  } finally {
+    await app.close();
+  }
+  ({ app, page } = await launch(testInfo, { args: ['--lang=es', '--forge-url=http://forge.example.com'] }));
+  try {
+    expect(await csp(page)).not.toContain('forge.example.com');
+    expect(page.url()).not.toContain('forge=');
+  } finally {
+    await app.close();
+  }
+});
+
 test('--api-url suma solo ese host al CSP y los repos de GitHub salen de él; sin https se ignora', async ({}, testInfo) => {
   const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
   let { app, page } = await launch(testInfo, { args: ['--lang=es', '--repo=o/r', '--api-url=https://ghe.example.com/api/v3'] });

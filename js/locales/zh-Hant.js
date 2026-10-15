@@ -394,6 +394,13 @@ GB.i18n.define('zh-Hant', {
   'err.httpNoMessageGitlab': 'GitLab 回應 {status}',
   'err.httpNoMessageCodeberg': 'Codeberg 回應 {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket 回應 {status}',
+  'status.connectingForge': '正在連線到 Forgejo/Gitea 伺服器…',
+  'err.notFoundForge': '在伺服器上找不到 {repo}。只讀取公開儲存庫。',
+  'err.rateForge': '伺服器要求 GraphBranch 放慢速度。一分鐘後會重試。',
+  'err.networkForge': '無法連線到伺服器。請檢查網路；如果你在會封鎖網路的檢視器裡開啟了 GraphBranch，請改用 GitHub Pages 版本或本機檔案。',
+  'err.timeoutForge': '伺服器回應太久。GraphBranch 會自動重試。',
+  'err.httpForge': '伺服器回應 {status}：{message}',
+  'err.httpNoMessageForge': '伺服器回應 {status}',
 
   /* ---------- 設定 ---------- */
   'settings.title': '設定',

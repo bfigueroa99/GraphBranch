@@ -394,6 +394,13 @@ GB.i18n.define('ca', {
   'err.httpNoMessageGitlab': 'GitLab ha respost {status}',
   'err.httpNoMessageCodeberg': 'Codeberg ha respost {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket ha respost {status}',
+  'status.connectingForge': 'Connectant amb el servidor de Forgejo/Gitea…',
+  'err.notFoundForge': 'No s\'ha trobat {repo} al servidor. Només es llegeixen repositoris públics.',
+  'err.rateForge': 'El servidor ha demanat a GraphBranch que consulti més a poc a poc. Ho tornarà a provar d\'aquí a un minut.',
+  'err.networkForge': 'No s\'ha pogut connectar amb el servidor. Revisa la connexió; si has obert GraphBranch dins d\'un visor que bloqueja la xarxa, fes servir la versió de GitHub Pages o el fitxer local.',
+  'err.timeoutForge': 'El servidor ha tardat massa a respondre. GraphBranch ho tornarà a provar sol.',
+  'err.httpForge': 'El servidor ha respost {status}: {message}',
+  'err.httpNoMessageForge': 'El servidor ha respost {status}',
 
   /* ---------- configuració ---------- */
   'settings.title': 'Configuració',

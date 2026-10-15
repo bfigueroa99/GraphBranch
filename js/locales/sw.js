@@ -394,6 +394,13 @@ GB.i18n.define('sw', {
   'err.httpNoMessageGitlab': 'GitLab ilijibu {status}',
   'err.httpNoMessageCodeberg': 'Codeberg ilijibu {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket ilijibu {status}',
+  'status.connectingForge': 'Inaunganisha na seva ya Forgejo/Gitea…',
+  'err.notFoundForge': '{repo} haikupatikana kwenye seva. Hifadhi za umma pekee ndizo husomwa.',
+  'err.rateForge': 'Seva iliomba GraphBranch kupunguza kasi. Itajaribu tena baada ya dakika moja.',
+  'err.networkForge': 'Seva haikufikiwa. Angalia muunganisho; ikiwa umefungua GraphBranch kwenye kitazamaji kinachozuia mtandao, tumia toleo la GitHub Pages au faili la ndani.',
+  'err.timeoutForge': 'Seva ilichukua muda mrefu kujibu. GraphBranch itajaribu tena yenyewe.',
+  'err.httpForge': 'Seva ilijibu {status}: {message}',
+  'err.httpNoMessageForge': 'Seva ilijibu {status}',
 
   /* ---------- mipangilio ---------- */
   'settings.title': 'Mipangilio',

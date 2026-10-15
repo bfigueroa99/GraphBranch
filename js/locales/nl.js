@@ -395,6 +395,13 @@ GB.i18n.define('nl', {
   'err.httpNoMessageGitlab': 'GitLab antwoordde {status}',
   'err.httpNoMessageCodeberg': 'Codeberg antwoordde {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket antwoordde {status}',
+  'status.connectingForge': 'Verbinden met de Forgejo/Gitea-server…',
+  'err.notFoundForge': '{repo} is niet gevonden op de server. Alleen openbare repositories worden gelezen.',
+  'err.rateForge': 'De server vroeg GraphBranch om te vertragen. Over een minuut probeert het opnieuw.',
+  'err.networkForge': 'De server is niet bereikbaar. Controleer je verbinding; als je GraphBranch hebt geopend in een viewer die het netwerk blokkeert, gebruik dan de GitHub Pages-versie of het lokale bestand.',
+  'err.timeoutForge': 'De server deed er te lang over om te antwoorden. GraphBranch probeert het vanzelf opnieuw.',
+  'err.httpForge': 'De server antwoordde {status}: {message}',
+  'err.httpNoMessageForge': 'De server antwoordde {status}',
 
   /* ---------- settings dialog ---------- */
   'settings.title': 'Instellingen',

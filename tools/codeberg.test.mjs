@@ -48,17 +48,18 @@ function load(cb) {
   return ctx.GB;
 }
 
-function fakeCodeberg() {
+function fakeCodeberg(site = 'https://codeberg.org') {
+  const web = `${site}/ana/api`;
   const cb = { commits: new Map(), branches: new Map(), pulls: [], override: null, calls: [], private: false };
   let n = 0;
   cb.commit = (sha, ...parents) => {
     const date = new Date(Date.UTC(2026, 0, 1) + ++n * 60000).toISOString();
     cb.commits.set(sha, {
       sha,
-      html_url: `${WEB}/commit/${sha}`,
+      html_url: `${web}/commit/${sha}`,
       parents: parents.map((p) => ({ sha: p })),
       commit: { message: `commit ${sha}\n`, author: { name: 'Ana', date }, committer: { date } },
-      author: { login: 'ana', avatar_url: 'https://codeberg.org/avatars/ana' },
+      author: { login: 'ana', avatar_url: `${site}/avatars/ana` },
     });
   };
   cb.push = (branch, sha, ...parents) => {
@@ -81,14 +82,14 @@ function fakeCodeberg() {
     const limit = Math.min(50, Number(q.get('limit') || 30));
     const page = Number(q.get('page') || 1);
     const headers = { 'X-Total-Count': all.length };
-    if (page * limit < all.length) headers.Link = `<https://codeberg.org/next>; rel="next"`;
+    if (page * limit < all.length) headers.Link = `<${site}/next>; rel="next"`;
     return { body: all.slice((page - 1) * limit, page * limit), headers };
   };
   cb.pull = (number, head, base, more = {}) => {
     const p = {
       number,
       title: `PR ${number}`,
-      html_url: `${WEB}/pulls/${number}`,
+      html_url: `${web}/pulls/${number}`,
       state: 'open',
       merged: false,
       head: { ref: head, repo: { full_name: 'ana/api' } },
@@ -102,10 +103,10 @@ function fakeCodeberg() {
   };
 
   function route(path) {
-    const u = new URL('https://codeberg.org/api/v1' + path);
+    const u = new URL(`${site}/api/v1` + path);
     const p = u.pathname.replace('/api/v1', '');
     const q = u.searchParams;
-    if (p === REPO) return { body: { name: 'api', owner: { login: 'ana' }, default_branch: 'main', html_url: WEB, private: cb.private, description: 'un repo' } };
+    if (p === REPO) return { body: { name: 'api', owner: { login: 'ana' }, default_branch: 'main', html_url: web, private: cb.private, description: 'un repo' } };
     if (p === REPO + '/branches') {
       const all = [...cb.branches].sort((a, b) => a[0].localeCompare(b[0])).map(([name, sha]) => ({ name, commit: { id: sha }, protected: name === 'main' }));
       return paged(all, q);
@@ -140,9 +141,9 @@ function fakeCodeberg() {
   }
 
   cb.fetch = async (url, opts = {}) => {
-    assert.ok(url.startsWith('https://codeberg.org/api/v1/'), `consulta fuera de Codeberg: ${url}`);
+    assert.ok(url.startsWith(`${site}/api/v1/`), `consulta fuera de ${site}: ${url}`);
     assert.equal(opts.headers?.Authorization, undefined, 'ninguna consulta lleva token');
-    const path = url.replace('https://codeberg.org/api/v1', '');
+    const path = url.replace(`${site}/api/v1`, '');
     cb.calls.push(path);
     const { status = 200, body, headers = {} } =
       cb.private && path.startsWith(REPO) ? { status: 404, body: { message: 'not found' } } : cb.override?.(path) || route(path);
@@ -327,3 +328,110 @@ test('el filtro por autor funciona sobre los datos de esta fuente: deja la rama 
   assert.equal(nobody.shown, 1);
   assert.equal(nobody.total, 2);
 });
+
+/* ---------- un Forgejo o Gitea propio (?forge=, --forge-url=) ---------- */
+
+const OWN = 'https://forge.example.com';
+const OWN_WEB = `${OWN}/ana/api`;
+
+test('endpoints: codeberg.org por omisión, un servidor propio solo con https y sin usuario', async () => {
+  const { GB } = connect(fakeCodeberg());
+  const ep = (u) => JSON.parse(JSON.stringify(GB.CodebergSource.endpoints(u)));
+  assert.deepEqual(ep(''), { web: 'https://codeberg.org', api: 'https://codeberg.org/api/v1' });
+  assert.deepEqual(ep(OWN + '/'), { web: OWN, api: `${OWN}/api/v1` });
+  assert.deepEqual(ep(OWN + '/git'), { web: `${OWN}/git`, api: `${OWN}/git/api/v1` }, 'también si cuelga de una ruta');
+  assert.equal(GB.CodebergSource.endpoints('http://forge.example.com'), null);
+  assert.equal(GB.CodebergSource.endpoints('https://ana:clave@forge.example.com'), null);
+  assert.equal(GB.CodebergSource.endpoints('no es una url'), null);
+});
+
+test('parseRepo reconoce la URL del servidor propio y forgejo:dueño/repo, solo si hay servidor elegido', async () => {
+  const { GB } = connect(fakeCodeberg(OWN));
+  const plain = (x) => JSON.parse(JSON.stringify(x));
+  assert.equal(GB.U.parseRepo('forgejo:ana/api'), null, 'sin servidor elegido no hay a dónde ir');
+  assert.equal(GB.U.parseRepo(`${OWN}/ana/api`), null);
+  GB.U.forgeBase = OWN;
+  const want = { host: 'forgejo', owner: 'ana', name: 'api' };
+  assert.deepEqual(plain(GB.U.parseRepo('forgejo:ana/api')), want);
+  assert.deepEqual(plain(GB.U.parseRepo(`${OWN}/ana/api`)), want);
+  assert.deepEqual(plain(GB.U.parseRepo(`${OWN}/ana/api/src/branch/main/README.md`)), want);
+  assert.deepEqual(plain(GB.U.parseRepo(`${OWN}/ana/api.git`)), want);
+  assert.deepEqual(plain(GB.U.parseRepo('git@forge.example.com:ana/api.git')), want);
+  assert.equal(GB.U.parseRepo('forgejo:solo'), null);
+  assert.equal(GB.U.parseRepo(`${OWN}/ana`), null);
+  assert.equal(GB.U.parseRepo(`${OWN}.evil.net/ana/api`), null, 'se compara por prefijo exacto, no por subcadena');
+  assert.deepEqual(plain(GB.U.parseRepo('https://codeberg.org/ana/api')), { host: 'codeberg', owner: 'ana', name: 'api' }, 'codeberg.org sigue igual');
+});
+
+test('carga un repo del servidor propio: solo habla con ese host, sin token, y sus avatares quedan fuera sin permiso de CSP', async () => {
+  const cb = repo2();
+  cb.pull(5, 'feature', 'main');
+  const { src, errors } = connect(cb, { webUrl: OWN });
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  const { repo: r, branches, commits, pulls } = src.data;
+  assert.equal(src.host, 'forgejo');
+  assert.equal(r.host, 'forgejo');
+  assert.equal(r.url, OWN_WEB);
+  assert.deepEqual([...branches.keys()].sort(), ['feature', 'main']);
+  assert.equal(commits.get('f2').url, `${OWN_WEB}/commit/f2`);
+  assert.equal(commits.get('f2').author.avatar, null, 'en la web el CSP no deja imágenes de ese host');
+  assert.equal(pulls.get(5).user.avatar, null);
+  assert.ok(cb.calls.length > 0);
+});
+
+test('con avatars (escritorio, host en img-src) muestra solo los del servidor propio', async () => {
+  const cb = repo2();
+  cb.pull(5, 'feature', 'main');
+  const { src } = connect(cb, { webUrl: OWN, avatars: true });
+  await src.cycle();
+  assert.equal(src.data.commits.get('f2').author.avatar, `${OWN}/avatars/ana`);
+  assert.equal(src.data.pulls.get(5).user.avatar, null, 'el de Libravatar es de otro sitio');
+});
+
+test('una dirección que no es https no se usa: queda codeberg.org', async () => {
+  const { src } = connect(fakeCodeberg(), { webUrl: 'http://forge.example.com' });
+  assert.equal(src.host, 'codeberg');
+  assert.equal(src.data.repo.url, WEB);
+});
+
+test('el servidor propio no puede cambiar de dirección los enlaces con su html_url', async () => {
+  const cb = repo2();
+  cb.override = (path) => (path === REPO ? { body: { name: 'api', owner: { login: 'ana' }, default_branch: 'main', html_url: 'https://evil.example.net/ana/api' } } : null);
+  const { src } = connect(cb, { webUrl: OWN });
+  await src.cycle();
+  assert.equal(src.data.repo.url, OWN_WEB);
+});
+
+test('los errores del servidor propio llevan sus textos y no nombran a Codeberg', async () => {
+  const cb = repo2();
+  cb.private = true;
+  let c = connect(cb, { webUrl: OWN });
+  await c.src.cycle();
+  assert.equal(c.errors[0].message.key, 'err.notFoundForge');
+
+  const cb2 = repo2();
+  cb2.override = (path) => (path.includes('/branches') ? { status: 429, body: {}, headers: { 'Retry-After': '30' } } : null);
+  c = connect(cb2, { webUrl: OWN });
+  await c.src.cycle();
+  assert.equal(c.errors[0].message.key, 'err.rateForge');
+
+  const cb3 = repo2();
+  cb3.override = (path) => (path.includes('/branches') ? { status: 500, body: { message: 'boom' } } : null);
+  c = connect(cb3, { webUrl: OWN });
+  await c.src.cycle();
+  assert.equal(c.errors[0].message.key, 'err.httpForge');
+  assert.equal(c.src.term('status.connecting'), 'status.connectingForge');
+  assert.equal(c.src.term('err.network'), 'err.networkForge');
+  assert.equal(c.src.term('err.timeout'), 'err.timeoutForge');
+});
+
+function repo2() {
+  const cb = fakeCodeberg(OWN);
+  cb.push('main', 'm1');
+  cb.push('main', 'm2', 'm1');
+  cb.push('main', 'm3', 'm2');
+  cb.push('feature', 'f1', 'm3');
+  cb.push('feature', 'f2', 'f1');
+  return cb;
+}

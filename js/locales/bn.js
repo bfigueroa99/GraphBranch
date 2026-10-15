@@ -394,6 +394,13 @@ GB.i18n.define('bn', {
   'err.httpNoMessageGitlab': 'GitLab উত্তর দিয়েছে {status}',
   'err.httpNoMessageCodeberg': 'Codeberg উত্তর দিয়েছে {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket উত্তর দিয়েছে {status}',
+  'status.connectingForge': 'Forgejo/Gitea সার্ভারের সঙ্গে সংযুক্ত হচ্ছে…',
+  'err.notFoundForge': 'সার্ভারে {repo} পাওয়া যায়নি। শুধু পাবলিক রিপোজিটরি পড়া হয়।',
+  'err.rateForge': 'সার্ভার GraphBranch-কে ধীরে চলতে বলেছে। এক মিনিট পরে আবার চেষ্টা করবে।',
+  'err.networkForge': 'সার্ভারে পৌঁছানো যায়নি। সংযোগ দেখুন; নেটওয়ার্ক আটকে দেয় এমন ভিউয়ারে GraphBranch খুললে GitHub Pages সংস্করণ বা স্থানীয় ফাইল ব্যবহার করুন।',
+  'err.timeoutForge': 'সার্ভার সাড়া দিতে অনেক দেরি করেছে। GraphBranch নিজেই আবার চেষ্টা করবে।',
+  'err.httpForge': 'সার্ভার {status} উত্তর দিয়েছে: {message}',
+  'err.httpNoMessageForge': 'সার্ভার {status} উত্তর দিয়েছে',
 
   /* ---------- সেটিংস ---------- */
   'settings.title': 'সেটিংস',

@@ -394,6 +394,13 @@ GB.i18n.define('vi', {
   'err.httpNoMessageGitlab': 'GitLab phản hồi {status}',
   'err.httpNoMessageCodeberg': 'Codeberg phản hồi {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket phản hồi {status}',
+  'status.connectingForge': 'Đang kết nối tới máy chủ Forgejo/Gitea…',
+  'err.notFoundForge': 'Không tìm thấy {repo} trên máy chủ. Chỉ đọc các kho công khai.',
+  'err.rateForge': 'Máy chủ yêu cầu GraphBranch chậm lại. Sẽ thử lại sau một phút.',
+  'err.networkForge': 'Không kết nối được tới máy chủ. Hãy kiểm tra kết nối; nếu bạn mở GraphBranch trong trình xem chặn mạng, hãy dùng bản GitHub Pages hoặc tệp cục bộ.',
+  'err.timeoutForge': 'Máy chủ phản hồi quá lâu. GraphBranch sẽ tự thử lại.',
+  'err.httpForge': 'Máy chủ phản hồi {status}: {message}',
+  'err.httpNoMessageForge': 'Máy chủ phản hồi {status}',
 
   /* ---------- hộp thoại cài đặt ---------- */
   'settings.title': 'Cài đặt',

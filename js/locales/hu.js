@@ -394,6 +394,13 @@ GB.i18n.define('hu', {
   'err.httpNoMessageGitlab': 'A GitLab válasza: {status}',
   'err.httpNoMessageCodeberg': 'A Codeberg válasza: {status}',
   'err.httpNoMessageBitbucket': 'A Bitbucket válasza: {status}',
+  'status.connectingForge': 'Csatlakozás a Forgejo/Gitea szerverhez…',
+  'err.notFoundForge': 'A(z) {repo} nem található a szerveren. Csak nyilvános tárolók olvashatók.',
+  'err.rateForge': 'A szerver lassításra kérte a GraphBranchet. Egy perc múlva újra próbálkozik.',
+  'err.networkForge': 'A szerver nem érhető el. Ellenőrizd a kapcsolatot; ha a GraphBranchet a hálózatot tiltó megjelenítőben nyitottad meg, használd a GitHub Pages verziót vagy a helyi fájlt.',
+  'err.timeoutForge': 'A szerver túl sokáig válaszolt. A GraphBranch magától újra próbálkozik.',
+  'err.httpForge': 'A szerver válasza {status}: {message}',
+  'err.httpNoMessageForge': 'A szerver válasza {status}',
 
   /* ---------- beállítások ---------- */
   'settings.title': 'Beállítások',

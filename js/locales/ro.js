@@ -402,6 +402,13 @@ GB.i18n.define('ro', {
   'err.httpNoMessageGitlab': 'GitLab a răspuns {status}',
   'err.httpNoMessageCodeberg': 'Codeberg a răspuns {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket a răspuns {status}',
+  'status.connectingForge': 'Se conectează la serverul Forgejo/Gitea…',
+  'err.notFoundForge': '{repo} nu a fost găsit pe server. Se citesc doar depozitele publice.',
+  'err.rateForge': 'Serverul a cerut ca GraphBranch să încetinească. Va încerca din nou peste un minut.',
+  'err.networkForge': 'Nu s-a putut ajunge la server. Verifică conexiunea; dacă ai deschis GraphBranch într-un vizualizator care blochează rețeaua, folosește versiunea de pe GitHub Pages sau fișierul local.',
+  'err.timeoutForge': 'Serverul a răspuns prea greu. GraphBranch va încerca din nou singur.',
+  'err.httpForge': 'Serverul a răspuns {status}: {message}',
+  'err.httpNoMessageForge': 'Serverul a răspuns {status}',
 
   /* ---------- setări ---------- */
   'settings.title': 'Setări',

@@ -437,6 +437,13 @@ GB.i18n.define('fa', {
   'err.httpNoMessageGitlab': 'GitLab با وضعیت {status} پاسخ داد',
   'err.httpNoMessageCodeberg': 'Codeberg با وضعیت {status} پاسخ داد',
   'err.httpNoMessageBitbucket': 'Bitbucket با وضعیت {status} پاسخ داد',
+  'status.connectingForge': 'در حال اتصال به سرور Forgejo/Gitea…',
+  'err.notFoundForge': '{repo} روی سرور پیدا نشد. فقط مخزن‌های عمومی خوانده می‌شوند.',
+  'err.rateForge': 'سرور از GraphBranch خواست آهسته‌تر پرس‌وجو کند. یک دقیقهٔ دیگر دوباره تلاش می‌کند.',
+  'err.networkForge': 'به سرور دسترسی پیدا نشد. اتصال را بررسی کنید؛ اگر GraphBranch را در نمایشگری باز کرده‌اید که شبکه را مسدود می‌کند، از نسخهٔ GitHub Pages یا فایل محلی استفاده کنید.',
+  'err.timeoutForge': 'سرور برای پاسخ‌دادن زیاد طول کشید. GraphBranch خودش دوباره تلاش می‌کند.',
+  'err.httpForge': 'سرور پاسخ {status} داد: {message}',
+  'err.httpNoMessageForge': 'سرور پاسخ {status} داد',
 
   /* ---------- settings dialog ---------- */
   'settings.title': 'تنظیمات',

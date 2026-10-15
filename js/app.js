@@ -1291,7 +1291,7 @@
     const def = data.repo.defaultBranch;
     selA.value = names.includes(def) ? def : names[0] || '';
     selB.value = names.find((n) => n !== selA.value) || '';
-    const row = (main, aside, onGo) => {
+    const row = (main, aside, onGo, keepOpen) => {
       const li = document.createElement('li');
       const b = document.createElement(onGo ? 'button' : 'span');
       b.className = 'hl-row';
@@ -1299,7 +1299,7 @@
         b.type = 'button';
         b.title = t('feed.locate');
         b.addEventListener('click', () => {
-          closeHealth();
+          if (!keepOpen) closeHealth();
           onGo();
         });
       }
@@ -1340,7 +1340,7 @@
         row(t('cmp.ahead', { name: a, n: U.fmtNum(r.a.ahead) }), '', () => graph.focusBranch(a)),
         row(t('cmp.ahead', { name: b, n: U.fmtNum(r.b.ahead) }), '', () => graph.focusBranch(b)),
       );
-      ul.append(row(t('cmp.clear'), '', () => clearMarks()));
+      ul.append(row(t('cmp.clear'), '', () => clearMarks(), true));
       if (r.base) ul.append(row(t('cmp.base', { sha: r.base.sha.slice(0, 7), age: r.base.date ? GB.i18n.fmtSpan(Date.now() - r.base.date) : '' }), r.base.message, () => graph.focusSha?.(r.base.sha)));
       out.append(ul);
       if (!r.base) out.append(note(t('cmp.nobase')));

@@ -512,6 +512,7 @@
       const { data, L } = drawGraph(true);
       feed.setDefaultBranch(data.repo.defaultBranch);
       renderSummary(data, L);
+      if (initialPath && L.nodes.length) startUrlPath(); // la demo y los repos ya cargados no pasan por onUpdate
     } else if (status?.state === 'error') showOverlay('error', status.message, status.nextAt == null);
     else showOverlay('loading', tab.demo ? i18n.msg('overlay.demoLoading') : i18n.msg('overlay.loading', { repo: nameOf(tab) }));
     renderStatus();

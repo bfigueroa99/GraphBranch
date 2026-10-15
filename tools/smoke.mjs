@@ -2359,7 +2359,7 @@ console.log('Filtro por ruta desde la URL (?path=)');
     if (!word) throw new Error('no hay un mensaje del que sacar una ruta');
     await page.goto(`${base}/index.html?lang=es&path=${encodeURIComponent('/' + word)}`);
     await loaded(page);
-    await page.waitForSelector('#search-path-clear:not([hidden])', { timeout: 5000 }).catch(async () => {
+    await page.waitForSelector('#search-path-clear:not([hidden])', { state: 'attached', timeout: 5000 }).catch(async () => {
       const st = await page.evaluate(() => ({ v: document.querySelector('#search-path').value, s: document.querySelector('#search-path-status').textContent, u: location.search }));
       throw new Error(`?path= no aplicó el filtro: ${JSON.stringify(st)} (ruta pedida «${word}»)`);
     });
@@ -2372,6 +2372,8 @@ console.log('Filtro por ruta desde la URL (?path=)');
     if (on.value !== word) throw new Error(`el campo de ruta quedó en «${on.value}», no en «${word}»`);
     if (!on.dim || on.dim >= on.all) throw new Error(`?path= no acota: ${on.dim} atenuados de ${on.all}`);
     if (!on.url.includes('path=')) throw new Error('la URL perdió la ruta: ' + on.url);
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: 3000 });
     await page.click('#search-path-clear');
     if ((await page.evaluate(() => location.search)).includes('path=')) throw new Error('quitar el filtro deja la ruta en la URL');
   });

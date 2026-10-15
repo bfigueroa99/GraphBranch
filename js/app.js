@@ -533,6 +533,8 @@
   function connectRepo(input) {
     const parsed = U.parseRepo(input);
     if (!parsed) {
+      const grp = U.parseGroup(input);
+      if (grp) return connectGroup(grp.group);
       const who = U.parseOwner(input);
       if (who) return connectOwner(who.owner);
       return repoNote(t('repo.invalid'));
@@ -595,6 +597,37 @@
     const more = fresh.length > add.length ? t('owner.limited', { owner, max: MAX_REPOS }) : '';
     const detail = [add.map((p) => p.name).join(', '), more].filter(Boolean).join(' · ');
     feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner }), detail, time: Date.now() });
+  }
+
+  /**
+   * group:ruta: sigue los proyectos de un grupo de GitLab (con sus subgrupos) de actividad más reciente,
+   * cada uno en su pestaña, hasta el tope. A diferencia de org:nombre no queda seguido: la lista se
+   * arma una vez, al conectar, y lo que se guarda y comparte son los proyectos.
+   */
+  async function connectGroup(group) {
+    if (realTabs().length >= MAX_REPOS) return repoNote(t('repo.limit'));
+    el.repoForm.setAttribute('aria-busy', 'true');
+    let list;
+    try {
+      list = await GB.GitLabSource.groupProjects(group, { token: settings.gitlabToken, webUrl: GITLAB_URL });
+    } catch (err) {
+      return repoNote(i18n.text(err.msg || err.message));
+    } finally {
+      el.repoForm.removeAttribute('aria-busy');
+    }
+    if (!list.length) return repoNote(t('owner.empty', { owner: group }));
+    const fresh = list.filter((p) => !tabs.some((x) => x.key === keyOf(p)));
+    const add = fresh.slice(0, Math.max(0, MAX_REPOS - realTabs().length));
+    if (fresh.length && !add.length) return repoNote(t('repo.limit'));
+    resume();
+    add.forEach((p, i) => startTab(addTab(sourceFor(p)), i * STAGGER));
+    repoNote('');
+    showTab(list.map((p) => tabs.find((x) => x.key === keyOf(p))).find(Boolean));
+    if (!add.length) return;
+    saveTabs();
+    renderTabs();
+    const more = fresh.length > add.length ? t('owner.limited', { owner: group, max: MAX_REPOS }) : '';
+    feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner: group }), detail: [add.map((p) => p.name).join(', '), more].filter(Boolean).join(' · '), time: Date.now() });
   }
 
   /** Vuelve a mirar la lista de cada organización seguida: los repos nuevos se suman solos. */
@@ -2350,8 +2383,11 @@
     }
     // ?repo=org:nombre: sus repos se suman después, con la lista de GitHub
     for (const input of urlRepos) {
-      const who = !parse(input) && U.parseOwner(input);
-      if (who) connectOwner(who.owner);
+      if (parse(input)) continue;
+      const grp = U.parseGroup(input);
+      const who = !grp && U.parseOwner(input);
+      if (grp) connectGroup(grp.group);
+      else if (who) connectOwner(who.owner);
     }
     setTimeout(refreshOwners, 5000 + MAX_REPOS * STAGGER);
     setInterval(refreshOwners, OWNER_REFRESH);

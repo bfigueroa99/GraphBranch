@@ -101,6 +101,22 @@ window.GB = window.GB || {};
     return m && /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/.test(m[1]) ? { owner: m[1] } : null;
   };
 
+  /** Un grupo de GitLab entero: group:ruta (con subgrupos, `group:gitlab-org/ci-cd`) o la URL de su página
+      (`gitlab.com/groups/ruta`, o la de un GitLab propio con `?gitlab=`). null si no es eso. */
+  U.parseGroup = (input) => {
+    const s = String(input || '').trim().replace(/[?#].*$/, '').replace(/\/+$/, '');
+    let rest = (s.match(/^group:(.+)$/i) || [])[1];
+    if (rest == null) {
+      const bases = ['https://gitlab.com', 'https://www.gitlab.com', 'gitlab.com', 'www.gitlab.com'];
+      if (U.gitlabBase) bases.push(U.gitlabBase.replace(/\/+$/, ''));
+      const lower = s.toLowerCase();
+      const base = bases.find((b) => lower.startsWith(b.toLowerCase() + '/groups/'));
+      if (base) rest = s.slice(base.length + 8).split('/-/')[0];
+    }
+    const parts = String(rest || '').split('/').filter(Boolean);
+    return parts.length && parts.every((p) => /^[\w.-]+$/.test(p) && !/^\.+$/.test(p)) ? { group: parts.join('/') } : null;
+  };
+
   /** localStorage envuelto: puede no existir o lanzar (modo privado, sandbox). Un valor guardado que no es
       del tipo del `fallback` (lista, texto, número, booleano) está corrupto: se devuelve el `fallback`. */
   U.store = {

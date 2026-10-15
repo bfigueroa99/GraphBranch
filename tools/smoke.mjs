@@ -2404,6 +2404,35 @@ console.log('Filtro por ruta desde la URL (?path=)');
   await page.context().close();
 }
 
+console.log('Filtro por autor desde la URL (?author=)');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, 'abre ya filtrado por esa persona, lo mantiene en la URL y al quitarlo la suelta', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    const all = await page.evaluate(() => document.querySelectorAll('#graph svg .head').length);
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: 3000 });
+    const options = await page.evaluate(() => [...document.querySelectorAll('#graph-author option')].map((o) => o.value).filter(Boolean));
+    let who = null;
+    for (const o of options) {
+      await page.goto(`${base}/index.html?lang=es&author=${encodeURIComponent(o)}`);
+      await loaded(page);
+      const n = await page.evaluate(() => document.querySelectorAll('#graph svg .head').length);
+      if (n && n < all) { who = o; break; }
+    }
+    if (!who) throw new Error(`?author= no acota el grafo con ningún autor (${all} ramas, ${options.length} autores)`);
+    const on = await page.evaluate(() => ({ mark: document.querySelector('#search-btn').classList.contains('filtered'), url: location.search }));
+    if (!on.mark) throw new Error('?author= no marca el filtro');
+    if (!on.url.includes('author=')) throw new Error('la URL perdió el autor: ' + on.url);
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: 3000 });
+    await page.selectOption('#graph-author', '');
+    if ((await page.evaluate(() => location.search)).includes('author=')) throw new Error('quitar el filtro deja el autor en la URL');
+  });
+  await page.context().close();
+}
+
 console.log('Modo TV directo (?tv=1)');
 {
   const page = await openPage({ viewport: { width: 1920, height: 1080 } });

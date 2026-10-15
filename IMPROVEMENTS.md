@@ -143,7 +143,7 @@ segunda columna a la primera.
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color y `&hide=`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (constelación de repos) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
-| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión) | Tasa de fallos de CI en la salud |
+| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión) | Tasa de fallos de CI en la salud |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL con pistas y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
@@ -297,7 +297,7 @@ se comprueban antes de construir sobre ellas.
 44. ~~**Filtrar por ruta, segunda entrega**~~ hecho en #106 · Análisis · 1×2/1. [parte del ítem 29] El filtro por ruta también atenúa el grafo 3D
     y viaja en la URL (`?path=src/`) para compartir la vista ya filtrada. Comprobar: prueba de la lectura de la URL y un
     paso del smoke en 3D.
-45. **Filtro por autor en la URL** · Análisis · 1×2/1. [parte del ítem 34] `?author=ana` abre el repo ya filtrado por
+45. ~~**Filtro por autor en la URL**~~ hecho en #109 · Análisis · 1×2/1. [parte del ítem 34] `?author=ana` abre el repo ya filtrado por
     esa persona, para compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
 46. ~~**Capa para streaming, segunda entrega**~~ hecho en #107 · Plataformas · 2×2/1. [inv. 2026-10-13] Parámetros de la URL para la capa
     de OBS: fondo transparente y ocultar paneles, con los de siempre por defecto. Comprobar: un paso del smoke con
@@ -1587,7 +1587,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Capacidad nueva: los eventos de la organización en el panel** (ítem 26 de la hoja de ruta, partido: esta es la primera parte; los grupos de GitLab y la constelación pasan al ítem 41). `GitHubSource.orgFeed(owner)` pide `/orgs/{org}/events` (una consulta con ETag, cada 5 minutos, con la pestaña a la vista y sin pausa) y devuelve solo lo nuevo; la app lo suma al panel con el nombre de su repo, solo para repos sin pestaña propia. Un usuario (404) no da nada. Sin textos nuevos (reusa los de los eventos): i18n sin cambios. No está en la demo (no tiene organización).
 - **Pruebas que fallan sin la capacidad:** `tools/github.test.mjs` («eventos de una organización…», dos pruebas); smoke, paso «los eventos de la organización llegan al panel…».
 - README: la función, el apartado de la organización seguida, Límites conocidos.
-- QA: filas de token (va solo a su API, mismo `api()`), XSS (el panel escapa todo con `U.esc`; sin `innerHTML` nuevo), CSP sin cambios; sin mirar a mano: 320 px, 3D, Replay (no cambia la interfaz); auditoría: ver Validado.
+- QA: filas de token (va solo a su API, mismo `api()`), XSS (el panel escapa todo con `U.esc`; sin `innerHTML` nuevo), CSP sin cambios; sin mirar a mano: 320 px, 3D, Replay (no cambia la interfaz); auditoría: 0 hallazgos nuevos.
 - Reclamo: loop/53, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 226 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde. La primera corrida falló una e2e de escritorio sin relación (repo local); la repetición pasó y quedó como pendiente 3 `[Deuda]`.
@@ -1598,7 +1598,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Capacidad nueva: el Replay por tramo de fechas y con rótulos propios** (ítem 27 de la hoja de ruta). Un botón de calendario en la barra del Replay abre un formulario con Desde, Hasta, Título y Pie de foto: el Replay (y su video) cubre solo los commits del tramo, con la línea de tiempo y las marcas ajustadas a él, y el título y el pie se ven sobre el grafo y entran al video (`extra` de la grabación). Un tramo sin commits avisa y deja el Replay como estaba; «Toda la historia» lo quita. La lógica del tramo es `Replay.rangeOf` (pura). Sin consultas nuevas a la API; visible en la demo.
 - **Pruebas que fallan sin la capacidad:** `tools/replay.test.mjs` (3 pruebas del recorte por fechas); smoke, paso «replay: tramo de fechas y rótulos propios».
 - README: la función (Replay y su botón), la lista de controles, Límites conocidos y la lista de pruebas.
-- QA: filas de XSS (título y pie van con `textContent`, sin `innerHTML` nuevo), CSP sin cambios, teclado (Esc cierra el formulario y devuelve el foco al botón), i18n (8 textos en los 40 idiomas); sin mirar a mano: 320 px, tema claro/oscuro, RTL, 3D; auditoría: ver Validado.
+- QA: filas de XSS (título y pie van con `textContent`, sin `innerHTML` nuevo), CSP sin cambios, teclado (Esc cierra el formulario y devuelve el foco al botón), i18n (8 textos en los 40 idiomas); sin mirar a mano: 320 px, tema claro/oscuro, RTL, 3D; auditoría: 0 hallazgos nuevos.
 - Reclamo: loop/54, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 229 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde. La primera corrida falló un paso del smoke sin relación (cambios de un commit); la repetición pasó y quedó anotado en el pendiente 2 `[Deuda]`.
@@ -1621,7 +1621,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Capacidad nueva: ejercicios de Aprender git compartidos por URL** (ítem 28 de la hoja de ruta). La práctica de git abre con `?practice=<código>`: un ejercicio propio (título, meta, comandos de partida y condiciones de una lista cerrada) va entero en la URL, sin servidor, y se vuelve a validar al abrirlo (`cleanExercise`; nunca se evalúa como código). «Crear un ejercicio para compartir» lo arma desde la propia terminal y «Copiar enlace del ejercicio» da el enlace; `?practice=1` a `4` abre uno de la lista. Un código inválido se descarta y abre la demo. Aviso para quien toque la terminal: con más de un campo, el formulario ya no envía solo al pulsar Enter; la línea de comandos lo hace explícito.
 - **Pruebas que fallan sin la capacidad:** `tools/gitsim.test.mjs` (4 pruebas: ida y vuelta por la URL, parte sin resolver y no se resuelve con el atajo equivocado, números de la lista y basura, ejercicios mal hechos); smoke, paso «un ejercicio propio se crea, se comparte por URL y la URL lo abre y se resuelve».
 - README: la función, Límites conocidos, Seguridad y la lista de pruebas.
-- QA: filas de XSS (título y meta con `textContent`; una `<b>` en el título no se interpreta, el smoke lo mira), CSP sin cambios, teclado (la línea de comandos sigue enviando con Enter), i18n (16 textos en los 40 idiomas); sin mirar a mano: 320 px, 3D, Replay; auditoría: ver Validado.
+- QA: filas de XSS (título y meta con `textContent`; una `<b>` en el título no se interpreta, el smoke lo mira), CSP sin cambios, teclado (la línea de comandos sigue enviando con Enter), i18n (16 textos en los 40 idiomas); sin mirar a mano: 320 px, 3D, Replay; auditoría: 0 hallazgos nuevos.
 - Reclamo: loop/56, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 234 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde. La primera corrida del smoke falló los pasos de la práctica: con más de un campo el formulario no enviaba con Enter, y el enlace pasaba el ejercicio en vez de su especificación; los dos arreglados en esta rama.
@@ -1632,7 +1632,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Capacidad nueva: filtrar el grafo por ruta de archivo** (ítem 29 de la hoja de ruta). En el cuadro de la lupa, un campo de ruta y «Filtrar grafo» (o Enter): `GitHubSource.commitsByPath` hace una consulta `/commits?path=` por cabeza (la rama por defecto primero, 5 como mucho) y los commits cargados que la tocaron quedan a plena luz mientras el resto del grafo 2D se atenúa (`Graph.setPathFilter`, clase `pfx`). La lupa se marca mientras hay filtro; «Quitar filtro» y cambiar de pestaña o de repo lo deshacen. La demo compara la ruta con el mensaje del commit (no tiene archivos); las demás fuentes dicen que no pueden. Sin filtro no hay ninguna consulta nueva.
 - **Pruebas que fallan sin la capacidad:** `tools/github.test.mjs` (`commitsByPath`: una consulta por cabeza con la ruta codificada, solo commits cargados, ruta vacía sin gasto); smoke, paso «filtro por ruta: atenúa los commits que no la tocaron, lo dice y se quita».
 - README: la función, Límites conocidos y Seguridad.
-- QA: filas de XSS (la ruta solo va a la URL codificada y a `textContent`), cuota (≤ 5 consultas por filtro, solo al pedirlo), teclado (Enter aplica; los botones se alcanzan con Tab), i18n (8 textos en los 40 idiomas); sin mirar a mano: 320 px, 3D (el filtro es solo 2D), Replay; auditoría: ver Validado.
+- QA: filas de XSS (la ruta solo va a la URL codificada y a `textContent`), cuota (≤ 5 consultas por filtro, solo al pedirlo), teclado (Enter aplica; los botones se alcanzan con Tab), i18n (8 textos en los 40 idiomas); sin mirar a mano: 320 px, 3D (el filtro es solo 2D), Replay; auditoría: 0 hallazgos nuevos.
 - Reclamo: loop/57, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 235 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde.
@@ -1643,7 +1643,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Capacidad nueva: los forks activos** (ítem 30 de la hoja de ruta). `GitHubSource.syncForks` pide `/forks` solo al abrir el panel de salud (una consulta, no más de una cada 15 minutos; la auditoría de cuota la dejó fuera de la carga) y `data.forks` guarda los de push propio en los últimos 90 días (hasta 30, el más nuevo primero; sin archivados ni URL que no sea https). El panel de salud abre con la lista (`health.compute` → `forks`), cada fila un enlace al fork con `rel="noopener noreferrer"`; la demo trae 2. Primera entrega: el dibujo de los forks como ramas atenuadas en el grafo queda fuera (pediría la historia de cada fork), dicho en el README y en la hoja.
 - **Pruebas que fallan sin la capacidad:** `tools/github.test.mjs` (2: filtro de actividad, orden, archivados y URL mala, una consulta por 15 minutos; sin la API); `tools/health.test.mjs` (forks y su tiempo); smoke, paso «salud del repo» (2 forks con enlace https).
 - README: la función, Límites conocidos y Seguridad.
-- QA: filas de XSS (nombre y URL escapados, solo https), cuota (0 al cargar; 1 al abrir el panel, cada 15 min como mucho), i18n (1 texto en los 40 idiomas); sin mirar a mano: 320 px, 3D, Replay; auditoría: ver Validado.
+- QA: filas de XSS (nombre y URL escapados, solo https), cuota (0 al cargar; 1 al abrir el panel, cada 15 min como mucho), i18n (1 texto en los 40 idiomas); sin mirar a mano: 320 px, 3D, Replay; auditoría: 0 hallazgos nuevos.
 - Reclamo: loop/58, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 238 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde. La primera corrida de la puerta falló: el smoke y la auditoría contaron la consulta `/forks` de más al cargar; pasó a pedirse solo al abrir el panel.
@@ -1666,7 +1666,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Capacidad nueva: ensayar un comando sobre el repo real** (ítem 31 de la hoja de ruta). Con un repo real cargado aparece «Ensayar un comando»: abre la terminal de práctica sobre `gitsim.fromData`, una copia en memoria de las ramas y commits que el grafo ya tiene (los padres no cargados se descartan, las ramas sin commit cargado no entran). `merge`, `rebase`, `reset`, etc. se ven en el grafo 2D y 3D; el repo real no se toca, no hay consultas a la API y al volver a su pestaña el ensayo se cierra. «Reiniciar» rehace la copia; no ofrece crear ni compartir ejercicios.
 - **Pruebas que fallan sin la capacidad:** `tools/gitsim.test.mjs` (`fromData: copia un repo real…`) y el paso del smoke «ensayar un comando: la copia del repo real cambia sin tocar al original ni gastar cuota».
 - README: función en la lista de «Aprender git», pruebas, Límites conocidos (solo lo cargado) y Seguridad (no guarda nada ni usa el token). Mapa de alcance: fila Público.
-- QA: fila de XSS/entrada (el mensaje con HTML entra con `textContent`, lo mira el smoke), repo sin ramas (el botón se esconde) y demo (no aparece); 40 idiomas por `check-i18n`; auditoría: ver Validado.
+- QA: fila de XSS/entrada (el mensaje con HTML entra con `textContent`, lo mira el smoke), repo sin ramas (el botón se esconde) y demo (no aparece); 40 idiomas por `check-i18n`; auditoría: 0 hallazgos nuevos.
 - Reclamo: loop/60, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 240 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde.
@@ -1677,7 +1677,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Capacidad nueva: ramas apiladas** (ítem 32 de la hoja de ruta). `Layout.stackedPulls` detecta los PRs abiertos del mismo repo cuya base es la rama de otro PR (los ciclos no apilan) y `compute` ordena los carriles para que cada rama quede justo debajo de la de su base, en el orden de la pila (`L.stacks`). El detalle de la rama dice «Apilada sobre el PR #N» (`tip.stacked`, 40 idiomas) y la demo trae una pila (`feature/dark-mode` sobre `feature/login`).
 - **Pruebas que fallan sin la capacidad:** `tools/layout.test.mjs` (4: sin pila, pila de tres contigua y en orden, ciclo de bases, base sin PR propio); sin `stackedPulls` fallan las 4.
 - README: la función en la lista y Límites conocidos (solo orden y detalle, sin línea entre ramas). Mapa de alcance: fila Datos.
-- QA: fila de XSS (el nombre de la rama entra por `i18n.html` escapado), cuota (0 consultas nuevas: usa los PRs ya cargados) y i18n (1 texto en los 40 idiomas); sin mirar a mano: 320 px, 3D, Replay; auditoría: ver Validado.
+- QA: fila de XSS (el nombre de la rama entra por `i18n.html` escapado), cuota (0 consultas nuevas: usa los PRs ya cargados) y i18n (1 texto en los 40 idiomas); sin mirar a mano: 320 px, 3D, Replay; auditoría: 0 hallazgos nuevos.
 - Reclamo: loop/61, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 244 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde.
@@ -1688,7 +1688,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Capacidad nueva: vista de texto, segunda entrega** (ítem 33 de la hoja de ruta). Con la vista de texto abierta, cada actualización en vivo redibuja el árbol sin perder el foco ni las ramas abiertas y una región `role="status"` (`aria-live="polite"`) anuncia «Novedades: n ramas, m commits» solo de lo que no se había leído (`textview.news` lleva las ramas y los SHA ya vistos). Un campo «Filtrar ramas…» (↓ pasa al árbol) deja las ramas cuyo nombre contiene el texto y anuncia cuántas quedan, sin anunciar cada tecla. 2 textos nuevos en los 40 idiomas.
 - **Pruebas que fallan sin la capacidad:** `tools/textview.test.mjs` (`news solo cuenta…`, `filter deja…`) y el paso del smoke «vista de texto: filtra por rama y avisa en la región viva de lo nuevo sin repetir» (con un commit en vivo de la demo).
 - README: función en la lista, Límites conocidos (cómo se probó: solo ARIA y teclado con Playwright, ningún lector real) y Seguridad. Mapa de alcance: fila Público.
-- QA: filas de XSS (todo con `textContent`), foco (se conserva al actualizar), teclado (filtro y ↓) y 40 idiomas por `check-i18n`; sin mirar a mano: 320 px, tema claro, movimiento reducido; auditoría: ver Validado.
+- QA: filas de XSS (todo con `textContent`), foco (se conserva al actualizar), teclado (filtro y ↓) y 40 idiomas por `check-i18n`; sin mirar a mano: 320 px, tema claro, movimiento reducido; auditoría: 0 hallazgos nuevos.
 - Reclamo: loop/62, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 246 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 24 conocidos) y 25 e2e en verde.
@@ -1711,7 +1711,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Capacidad nueva: filtrar el grafo por autor** (ítem 34 de la hoja de ruta). En el cuadro de búsqueda, «Mostrar solo las ramas de…» deja en el grafo (2D y 3D) y en la vista de texto la rama por defecto y las ramas con algún commit de esa persona que la rama por defecto no tiene (`GB.search.byAuthor`, sobre los datos ya cargados, sin consultas); los PR de las ramas quitadas se van con ellas. Se guarda por repo, avisa cuántas ramas quedan (región viva) y subraya la lupa mientras hay filtro.
 - **Pruebas que fallan sin la capacidad:** `tools/search.test.mjs` (2: `byAuthor`) y una prueba por fuente en `tools/gitlab.test.mjs`, `tools/bitbucket.test.mjs` y `tools/codeberg.test.mjs`; el paso del smoke «filtro por autor: el grafo y el árbol de texto muestran solo sus ramas, lo dice y se quita».
 - README: función en la lista (Búsqueda de commits), Límites conocidos y Seguridad. Mapa de alcance: fila Análisis. Textos en los 40 idiomas (2 claves).
-- QA: filas de XSS (nombres de autor con `textContent`), cuota (0 consultas nuevas), teclado (selector con etiqueta) y 40 idiomas por `check-i18n`; GitHub y local usan los mismos datos normalizados (sin prueba propia); sin mirar a mano: 320 px, tema claro, movimiento reducido; auditoría: ver Validado.
+- QA: filas de XSS (nombres de autor con `textContent`), cuota (0 consultas nuevas), teclado (selector con etiqueta) y 40 idiomas por `check-i18n`; GitHub y local usan los mismos datos normalizados (sin prueba propia); sin mirar a mano: 320 px, tema claro, movimiento reducido; auditoría: 0 hallazgos nuevos.
 - Reclamo: loop/64, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 251 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 25 e2e en verde.
@@ -1722,7 +1722,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Capacidad nueva: GitLab propio, segunda entrega** (ítem 35 de la hoja de ruta). `U.parseRepo` reconoce las URL de la instancia de `?gitlab=`/`--gitlab-url=` (https y `git@host:`, con ruta y `/-/tree/…`), solo ese host y por prefijo exacto; las claves guardadas de un GitLab propio llevan su host (`gitlab@host:`), aparte de las de gitlab.com; y en escritorio los avatares de ese host salen (`avatars: true` y su `img-src`).
 - **Pruebas que fallan sin la capacidad:** `tools/gitlab.test.mjs` («parseRepo reconoce las URL de un GitLab propio…» y «…avatares solo si se piden…»); e2e de escritorio «--gitlab-url suma solo ese host al CSP…» (ahora también `img-src`).
 - README: la función en la lista, Límites conocidos y Seguridad (CSP). Mapa de alcance: fila Fuentes. Hoja de ruta repuesta a 15 con ideas de partes de ítems ya hechos y de la investigación del 2026-10-13 (ítems 45–50).
-- QA: filas de XSS (el texto de la URL solo entra a parseRepo, que lo valida), CSP (el escritorio suma solo el host elegido) y tokens (sin cambios); sin mirar a mano: tema, 320 px, 3D, Replay (no cambia la interfaz); auditoría: ver Validado.
+- QA: filas de XSS (el texto de la URL solo entra a parseRepo, que lo valida), CSP (el escritorio suma solo el host elegido) y tokens (sin cambios); sin mirar a mano: tema, 320 px, 3D, Replay (no cambia la interfaz); auditoría: 0 hallazgos nuevos.
 - Reclamo: loop/65, sin colisión
 - Nota: `git push origin --delete loop/52` falló con «unexpected disconnect» del proxy; las `loop/52`–`loop/64` fusionadas siguen en origin (ya en Para Benjamin).
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
@@ -1734,7 +1734,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Capacidad nueva: vocabulario DORA en la salud** (ítem 38 de la hoja de ruta). El panel de salud suma «Entrega (DORA)»: despliegues en 30 días (cada release cuenta como uno), mediana entre los últimos 10 releases y tiempo de entrega (mediana de abierto a fusionado), con lo ya cargado y sin consultas (`GB.health.compute(...).dora`). El tiempo va de la apertura del PR a su fusión, no desde su primer commit (pediría una consulta por PR); dicho en Límites conocidos.
 - **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` («DORA: despliegues en 30 días…») y el paso del smoke de salud (dos líneas de entrega en la demo).
 - README: función en la lista (Salud del repo), mapa de archivos y Límites conocidos. Mapa de alcance: fila Análisis. Textos en los 40 idiomas (3 claves).
-- QA: filas de XSS (solo cifras y duraciones formateadas, sin texto de afuera), cuota (0 consultas nuevas) y 40 idiomas por `check-i18n`; sin mirar a mano: 320 px, tema claro, movimiento reducido; auditoría: ver Validado.
+- QA: filas de XSS (solo cifras y duraciones formateadas, sin texto de afuera), cuota (0 consultas nuevas) y 40 idiomas por `check-i18n`; sin mirar a mano: 320 px, tema claro, movimiento reducido; auditoría: 0 hallazgos nuevos.
 - Reclamo: loop/66, sin colisión
 - Nota: `git push origin --delete loop/53` falló con «the remote end hung up unexpectedly» (proxy); las `loop/28`–`loop/65` fusionadas siguen en origin (ya en Para Benjamin).
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
@@ -1747,7 +1747,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Reproducción:** `node tools/smoke.mjs` (con `js/snapshot.js` sin el arreglo) → `✗ graba el Replay en video, de principio a fin: el grabador arrancó con el canvas vacío: 1 colores al empezar`.
 - **Pruebas que fallan sin el arreglo:** el paso del smoke «graba el Replay en video, de principio a fin» ahora mide los colores del canvas en el instante en que arranca `MediaRecorder` (pide al menos 100).
 - README: sin cambios (no cambia lo que hace la función).
-- QA: fila de Replay en video (los dos pasos de grabación del smoke); sin mirar a mano: 320 px, tema claro; auditoría: ver Validado.
+- QA: fila de Replay en video (los dos pasos de grabación del smoke); sin mirar a mano: 320 px, tema claro; auditoría: 0 hallazgos nuevos.
 - Nota: una corrida del smoke falló una vez en «lo que llega mientras se ve la 2D no se acumula para la 3D» (`waitForFunction` de 30 s) y no se repitió; sin relación con el cambio.
 - Reclamo: loop/67, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
@@ -1759,7 +1759,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Capacidad nueva: Forgejo y Gitea propios** (ítem 36 de la hoja de ruta). `?forge=https://host` (o `--forge-url=` en escritorio) deja seguir repos de un servidor propio con la fuente de Codeberg (`CodebergSource({ webUrl })`, `endpoints`): API v1 en `host/api/v1`, enlaces al host, repos como `forgejo:dueño/repo` o por su URL (https o `git@host:`, por prefijo exacto), claves `forgejo@host:…` aparte de las de codeberg.org, etiqueta Forgejo. Sin token, solo ese host; el `html_url` que dé el servidor solo se acepta si cuelga de él. En escritorio el CSP suma solo ese host a `connect-src` y `img-src` (con sus avatares); en la web, sin avatares. Avisos propios sin nombrar a Codeberg (7 claves nuevas).
 - **Pruebas que fallan sin la capacidad:** `tools/codeberg.test.mjs` (la API simulada con otra URL base: `endpoints`, `parseRepo`, carga solo contra ese host, avatares, html_url ajeno, textos de error) y la e2e de escritorio «--forge-url suma solo ese host al CSP…».
 - README: función en la lista, comando de escritorio, Límites conocidos (Codeberg y propios), CSP y token. Mapa de alcance: fila Fuentes. Textos en los 40 idiomas (7 claves).
-- QA: filas de XSS (nada de afuera entra sin escapar; el host solo pasa por `new URL`), token (ninguna consulta lleva `Authorization`), CSP (`pwa.test` sigue cerrado; la e2e comprueba el host elegido y que sin https se ignora) y 40 idiomas por `check-i18n`; sin mirar a mano contra un servidor real, 320 px ni tema claro (no cambia la interfaz); auditoría: ver Validado.
+- QA: filas de XSS (nada de afuera entra sin escapar; el host solo pasa por `new URL`), token (ninguna consulta lleva `Authorization`), CSP (`pwa.test` sigue cerrado; la e2e comprueba el host elegido y que sin https se ignora) y 40 idiomas por `check-i18n`; sin mirar a mano contra un servidor real, 320 px ni tema claro (no cambia la interfaz); auditoría: 0 hallazgos nuevos.
 - Nota: `git push origin --delete loop/55` (y siguientes) lo negó el clasificador de permisos de la sesión; las `loop/28`–`loop/67` fusionadas siguen en origin (ya en Para Benjamin). El clon de la sesión venía superficial (`--depth`) y R3 de `--check` falló hasta `git fetch --unshallow`.
 - Reclamo: loop/68, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
@@ -1893,3 +1893,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial y `--check` daba R3 en rojo (y 2 pruebas); `git fetch --unshallow` lo arregla. El borrado de `loop/66` falló por desconexión del proxy.
 - Validado: 279 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 26 e2e en verde.
 - **Siguiente:** iteración 80, expansión: ítem 45 (Filtro por autor en la URL, Análisis)
+
+### 2026-10-15 · Iteración 80 · Expansión · Análisis
+
+- **Capacidad nueva: filtro por autor en la URL** (ítem 45 de la hoja de ruta). `?author=ana` abre el repo a la vista ya filtrado por esa persona (manda sobre lo recordado, solo al abrir; no en `?embed=1`) y la dirección sigue al selector «Mostrar solo las ramas de…» (también al cambiar de repo y al quitar el filtro). `GB.search.authorParam` lee el parámetro como texto (sin caracteres de control, hasta 100).
+- **Pruebas que fallan sin la capacidad:** `tools/search.test.mjs` (`authorParam`) y el paso del smoke «Filtro por autor desde la URL (?author=)».
+- README: lista de funciones (búsqueda), Límites conocidos y Seguridad.
+- QA: filas de filtros y de URL: el smoke abre la demo con `?author=`, comprueba que acota el grafo, marca la lupa, mantiene y suelta la URL; auditoría: 0 hallazgos nuevos.
+- Reclamo: loop/80, sin colisión
+- Nota: el borrado de `loop/67` falló por desconexión del proxy (las `loop/*` fusionadas siguen en Para Benjamin, punto 7).
+- Validado: 280 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 26 e2e en verde.
+- **Siguiente:** iteración 81, expansión: ítem 47 (Resumen de la semana de una organización, Salidas)

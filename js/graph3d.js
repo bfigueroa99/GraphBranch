@@ -1414,6 +1414,12 @@
       this.dirtyNodes = true;
     }
 
+    /** Filtro por ruta: `shas` (Set) deja a plena luz solo esos commits y apaga el resto; null lo quita. */
+    setPathFilter(shas) {
+      this.pathSet = shas || null;
+      this.dirtyNodes = true;
+    }
+
     focusSha(sha, dist = 15) {
       const it = this.nodes.get(sha);
       if (!it) return false;
@@ -2007,11 +2013,16 @@
         const head = d.heads.length > 0;
         // de la rama resaltada: sus commits y su cabeza, aunque no tenga commits propios
         const lit = !this.hlAmt || d.chain === this.hlChain || (head && d.heads.includes(this.hlChain.slice(2)));
-        const col = this.tint(d.color, lit);
-        const a = lit ? 1 : 1 - this.hlAmt * 0.9; // los halos de lo apagado casi se van
+        let col = this.tint(d.color, lit);
+        let a = lit ? 1 : 1 - this.hlAmt * 0.9; // los halos de lo apagado casi se van
+        const off = this.pathSet && !this.pathSet.has(d.sha); // no tocó la ruta filtrada
+        if (off) {
+          col = this.tmpDim.copy(col).lerp(this.bg, 0.7);
+          a *= 0.15;
+        }
         const cm = this.cmpMarks;
         const side = cm?.get(d.sha);
-        const k = s * (1 + 0.3 * it.hov) * (cm ? (side ? (side === 'base' ? 1.8 : 1.35) : 0.55) : 1);
+        const k = s * (1 + 0.3 * it.hov) * (cm ? (side ? (side === 'base' ? 1.8 : 1.35) : 0.55) : 1) * (off ? 0.6 : 1);
         (d.merge ? this.iTorus : this.iSphere).point(v.x, v.y, v.z, (head ? HEAD_SCALE : 1) * k, col);
         const mk = marks?.get(d.sha);
         if (mk?.tags.length) this.iObelisk.point(v.x, v.y + 0.35 * k, v.z, 1.5 * k, this.warmWhite);

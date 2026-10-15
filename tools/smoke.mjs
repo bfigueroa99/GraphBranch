@@ -830,6 +830,36 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: 3000 });
   });
 
+  await step(page, 'filtro por ruta: el grafo 3D también recibe la ruta y la suelta al quitarla', async () => {
+    await page.click('#view-2d');
+    const has = await page.evaluate(() => !!window.GB?.Graph3D);
+    if (!has) return; // sin WebGL no hay grafo 3D que atenuar
+    await page.evaluate(() => {
+      const G3 = window.GB.Graph3D.prototype;
+      window.__g3path = [];
+      const orig = G3.setPathFilter;
+      if (typeof orig !== 'function') return;
+      G3.setPathFilter = function (shas) {
+        window.__g3path.push(shas ? shas.size : null);
+        return orig.call(this, shas);
+      };
+    });
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: 3000 });
+    const word = await page.evaluate(() => {
+      const msg = document.querySelector('#search .sr-hit .tv-msg')?.textContent || '';
+      return msg.split(/[^\p{L}\p{N}]+/u).sort((a, b) => b.length - a.length)[0] || '';
+    });
+    await page.fill('#search-path', word);
+    await page.press('#search-path', 'Enter');
+    await page.waitForSelector('#search-path-clear:not([hidden])', { timeout: 3000 });
+    await page.click('#search-path-clear');
+    const calls = await page.evaluate(() => window.__g3path);
+    if (calls.length !== 2 || !(calls[0] > 0) || calls[1] !== null) throw new Error('el grafo 3D no recibió el filtro por ruta: ' + JSON.stringify(calls));
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: 3000 });
+  });
+
   await step(page, 'cambios de un commit: desde su ficha, con teclado se pasa al anterior y se vuelve, y Esc cierra', async () => {
     await page.keyboard.press('Escape'); // ninguna ficha abierta de antes
     await page.click('#view-2d');
@@ -2310,6 +2340,37 @@ console.log('Widget embebido (?embed=1)');
     if (r.w < 600 || r.h < 360) throw new Error(`el grafo no llena el marco: ${r.w}×${r.h}`);
     if (r.bg !== 'rgba(0, 0, 0, 0)') throw new Error(`&bg=transparent deja el fondo ${r.bg}`);
     if (await page.evaluate(() => document.documentElement.classList.contains('tv'))) throw new Error('embed entró en modo TV');
+  });
+  await page.context().close();
+}
+
+console.log('Filtro por ruta desde la URL (?path=)');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, 'abre ya filtrado, atenúa el grafo, mantiene la ruta en la URL y al quitarlo la suelta', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: 3000 });
+    const word = await page.evaluate(() => {
+      const msg = document.querySelector('#search .sr-hit .tv-msg')?.textContent || '';
+      return msg.split(/[^\p{L}\p{N}]+/u).sort((a, b) => b.length - a.length)[0] || '';
+    });
+    if (!word) throw new Error('no hay un mensaje del que sacar una ruta');
+    await page.goto(`${base}/index.html?lang=es&path=${encodeURIComponent('/' + word)}`);
+    await loaded(page);
+    await page.waitForSelector('#search-path-clear:not([hidden])', { timeout: 5000 });
+    const on = await page.evaluate(() => ({
+      value: document.querySelector('#search-path').value,
+      dim: document.querySelectorAll('#graph svg .node.pfx').length,
+      all: document.querySelectorAll('#graph svg .node').length,
+      url: location.search,
+    }));
+    if (on.value !== word) throw new Error(`el campo de ruta quedó en «${on.value}», no en «${word}»`);
+    if (!on.dim || on.dim >= on.all) throw new Error(`?path= no acota: ${on.dim} atenuados de ${on.all}`);
+    if (!on.url.includes('path=')) throw new Error('la URL perdió la ruta: ' + on.url);
+    await page.click('#search-path-clear');
+    if ((await page.evaluate(() => location.search)).includes('path=')) throw new Error('quitar el filtro deja la ruta en la URL');
   });
   await page.context().close();
 }

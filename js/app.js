@@ -918,6 +918,7 @@
     renderSummary(data, L);
     renderTab(tab);
     if (initialReplay && L.nodes.length) startUrlReplay();
+    if (initialPath && tab === active && L.nodes.length) startUrlPath();
     diffView.refresh(); // puede haber llegado el commit siguiente
   }
 
@@ -1581,9 +1582,11 @@
   /* Filtro por ruta: los commits que tocaron un archivo o carpeta quedan a plena luz y el resto se atenúa. */
   const pathEl = { input: $('#search-path'), go: $('#search-path-go'), clear: $('#search-path-clear'), status: $('#search-path-status') };
   let pathToken = 0;
+  let initialPath = ''; // ?path=src/: se aplica una vez, con la primera historia del repo a la vista
   function clearPathFilter() {
     pathToken++;
-    graph2d.setPathFilter?.(null);
+    if (!initialPath) setUrlParam('path', '');
+    for (const g of [graph2d, graph3d]) g?.setPathFilter?.(null);
     $('#search-path-clear').hidden = true;
     $('#search-path-status').textContent = '';
     syncFiltered();
@@ -1600,8 +1603,9 @@
     try {
       const shas = await source.commitsByPath(path);
       if (mine !== pathToken) return;
-      graph2d.setPathFilter?.(shas);
+      for (const g of [graph2d, graph3d]) g?.setPathFilter?.(shas);
       pathEl.clear.hidden = false;
+      setUrlParam('path', path); // la vista filtrada se comparte con la URL
       syncFiltered();
       pathEl.status.textContent = shas.size ? t('search.pathCount', { n: shas.size, path }) : t('search.pathNone');
     } catch {
@@ -1609,6 +1613,12 @@
     } finally {
       pathEl.go.disabled = false;
     }
+  }
+  /** El filtro que pide la URL, una sola vez y con la primera historia que llega. */
+  function startUrlPath() {
+    pathEl.input.value = initialPath;
+    initialPath = '';
+    applyPathFilter();
   }
   pathEl.go.addEventListener('click', applyPathFilter);
   pathEl.clear.addEventListener('click', () => {
@@ -2373,6 +2383,7 @@
     urlRepos = q.getAll('repo').flatMap((r) => r.split(',')).map((r) => r.trim()).filter(Boolean);
     initialPractice = !EMBED && q.has('practice') ? GB.gitsim.decodeExercise(q.get('practice').trim()) : null;
     initialReplay = GB.Replay.paramsOf(q);
+    initialPath = EMBED ? '' : GB.search.pathParam(q);
     initialTV = !EMBED && q.has('tv') && !/^(0|false|no|off)$/i.test(q.get('tv'));
   } catch {
     /* sin query string */

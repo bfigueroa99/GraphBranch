@@ -161,7 +161,7 @@ test('un ejercicio propio ida y vuelta por la URL, con acentos y sin caracteres 
   const code = encodeExercise(MINE);
   assert.match(code, /^[\w-]+$/);
   const back = decodeExercise(code);
-  assert.deepEqual(plain(back.custom), plain(MINE));
+  assert.deepEqual(plain(back.custom), { ...plain(MINE), hints: [] });
 });
 
 test('un ejercicio propio parte sin resolver, se resuelve con sus comandos y no con el atajo equivocado', () => {
@@ -174,6 +174,31 @@ test('un ejercicio propio parte sin resolver, se resuelve con sus comandos y no 
   assert.equal(ex.done(ff), false);
   r.run('merge feature');
   assert.equal(ex.done(r), true);
+});
+
+test('un ejercicio propio lleva pistas por la URL, hasta 3 y de 160 caracteres', () => {
+  const hints = ['Mira la rama feature', 'Prueba merge', 'Ñandú 日本'];
+  const back = decodeExercise(encodeExercise({ ...MINE, hints }));
+  assert.deepEqual(plain(back.custom.hints), hints);
+  assert.deepEqual(plain(customExercise(back.custom).hints), hints);
+  assert.equal(cleanExercise({ ...MINE, hints: ['a', 'b', 'c', 'd'] }).error, 'hints');
+  assert.equal(cleanExercise({ ...MINE, hints: ['x'.repeat(161)] }).error, 'hints');
+  assert.equal(cleanExercise({ ...MINE, hints: 'no es lista' }).hints.length, 0);
+});
+
+test('condiciones nuevas: el mensaje del último commit y las ramas sin fusionar', () => {
+  const spec = { title: 't', goal: 'g', setup: ['checkout -b feature', 'commit -m "Add Login"'], checks: ['tip:feature~add login', 'unmerged:feature>main'] };
+  const ex = customExercise(cleanExercise(spec));
+  const r = startCustom(ex, NOW);
+  assert.equal(ex.done(r), true, 'feature lleva «Add Login» y no está en main');
+  r.run('checkout main');
+  r.run('merge feature');
+  assert.equal(ex.done(r), false, 'ya fusionada: deja de estar sin fusionar');
+  const other = customExercise(cleanExercise({ ...spec, checks: ['tip:feature~otra cosa'] }));
+  assert.equal(other.done(startCustom(other, NOW)), false);
+  const none = customExercise(cleanExercise({ ...spec, checks: ['tip:nadie~x', 'unmerged:nadie>main'] }));
+  assert.equal(none.done(startCustom(none, NOW)), false, 'una rama que no existe no cumple');
+  assert.equal(cleanExercise({ ...spec, checks: ['tip:feature~'] }).error, 'check');
 });
 
 test('los números de la URL piden un ejercicio de la lista; lo demás se descarta', () => {

@@ -205,7 +205,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | GitLab propio, segunda entrega | Fuentes | 1×2/1 | 2,0 | (ítem 25) | hecho en #94 |
 | Resaltar el tramo de cada rama comparada | Análisis | 1×2/2 | 1,0 | gitk | ítem 40 |
 | Replay por tramo, segunda entrega | Salidas | 1×2/1 | 2,0 | (ítem 27) | ítem 42 |
-| Ejercicios compartidos, segunda entrega | Público | 1×2/1 | 2,0 | (ítem 28) | ítem 43 |
+| Ejercicios compartidos, segunda entrega | Público | 1×2/1 | 2,0 | (ítem 28) | hecho en #105 |
 | Filtrar por ruta, segunda entrega | Análisis | 1×2/1 | 2,0 | (ítem 29) | ítem 44 |
 | Filtro por autor en la URL | Análisis | 1×2/1 | 2,0 | (ítem 34) | ítem 45 |
 | Capa para streaming, segunda entrega | Plataformas | 2×2/1 | 4,0 | Capas para OBS | ítem 46 |
@@ -214,6 +214,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Extensión de VS Code, segunda entrega | Plataformas | 2×2/2 | 2,0 | GitLens | ítem 49 |
 | Bitbucket propio | Fuentes | 1×2/3 | 0,7 | Sourcetree | ítem 50 |
 | Tiempo de entrega desde el primer commit | Análisis | 1×2/2 | 1,0 | (ítem 38) | ítem 51 |
+| Frecuencia de despliegue en la salud | Análisis | 2×2/2 | 2,0 | DORA | ítem 53 |
+| Resumen de la semana como imagen | Salidas | 2×2/2 | 2,0 | GitHub Pulse | ítem 54 |
+| Práctica: cherry-pick y tag | Público | 2×2/2 | 2,0 | git-sim | ítem 55 |
+| Búsqueda en la URL | Análisis | 1×2/1 | 2,0 | (ítem 19) | ítem 56 |
+| Avisos a Microsoft Teams | Salidas | 2×2/2 | 2,0 | Fork | ítem 57 |
+| Ejercicios compartidos, tercera entrega | Público | 1×2/1 | 2,0 | (ítem 28) | ítem 58 |
 
 ## Públicos
 

@@ -617,6 +617,12 @@ console.log('Escritorio (1280×800)');
     if (cmp.opts < 2 || cmp.same) throw new Error(`comparar ramas: ${cmp.opts} opciones, mismas ramas elegidas: ${cmp.same}`);
     if (cmp.rows < 4) throw new Error(`comparar ramas: ${cmp.rows} filas de resultado, se esperaban al menos 4: ${cmp.text.slice(0, 120)}`);
     if (/undefined|NaN|cmp\./.test(cmp.text)) throw new Error('texto sin resolver al comparar ramas: ' + cmp.text.slice(0, 120));
+    await page.evaluate(async () => {
+      document.querySelector('#cmp-a').value = 'main';
+      document.querySelector('#cmp-b').value = 'develop';
+      document.querySelector('#cmp-go').click();
+      await new Promise((r) => setTimeout(r, 800));
+    });
     const marked = await page.evaluate(() => ({
       a: document.querySelectorAll('#graph .node.cmp-a').length,
       b: document.querySelectorAll('#graph .node.cmp-b').length,

@@ -558,6 +558,7 @@ GB.i18n.define('vi', {
   'cmp.busy': 'Đang đọc các tệp thay đổi…',
   'cmp.fail': 'Không thể đọc các tệp.',
   'cmp.more': '…và {n} nữa',
+  'cmp.clear': 'Bỏ làm nổi bật trên biểu đồ',
   'diff.show': 'Xem thay đổi',
   'diff.title': 'Thay đổi của commit',
   'diff.close': 'Đóng thay đổi của commit',

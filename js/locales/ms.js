@@ -558,6 +558,7 @@ GB.i18n.define('ms', {
   'cmp.busy': 'Membaca fail yang berubah…',
   'cmp.fail': 'Fail tidak dapat dibaca.',
   'cmp.more': '…dan {n} lagi',
+  'cmp.clear': 'Alih keluar sorotan pada graf',
   'diff.show': 'Lihat perubahan',
   'diff.title': 'Perubahan commit',
   'diff.close': 'Tutup perubahan commit',

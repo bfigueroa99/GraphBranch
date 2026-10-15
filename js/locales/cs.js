@@ -569,6 +569,7 @@ GB.i18n.define('cs', {
   'cmp.busy': 'Čtení změněných souborů…',
   'cmp.fail': 'Soubory se nepodařilo přečíst.',
   'cmp.more': '…a dalších {n}',
+  'cmp.clear': 'Zrušit zvýraznění v grafu',
   'diff.show': 'Zobrazit změny',
   'diff.title': 'Změny commitu',
   'diff.close': 'Zavřít změny commitu',

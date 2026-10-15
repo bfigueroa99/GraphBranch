@@ -558,6 +558,7 @@ GB.i18n.define('id', {
   'cmp.busy': 'Membaca file yang berubah…',
   'cmp.fail': 'File tidak dapat dibaca.',
   'cmp.more': '…dan {n} lagi',
+  'cmp.clear': 'Hapus sorotan pada grafik',
   'diff.show': 'Lihat perubahan',
   'diff.title': 'Perubahan commit',
   'diff.close': 'Tutup perubahan commit',

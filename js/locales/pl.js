@@ -569,6 +569,7 @@ GB.i18n.define('pl', {
   'cmp.busy': 'Wczytywanie zmienionych plików…',
   'cmp.fail': 'Nie udało się odczytać plików.',
   'cmp.more': '…i {n} więcej',
+  'cmp.clear': 'Usuń wyróżnienie na grafie',
   'diff.show': 'Pokaż zmiany',
   'diff.title': 'Zmiany w commicie',
   'diff.close': 'Zamknij zmiany w commicie',

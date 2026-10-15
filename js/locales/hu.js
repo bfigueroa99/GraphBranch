@@ -558,6 +558,7 @@ GB.i18n.define('hu', {
   'cmp.busy': 'A módosított fájlok olvasása…',
   'cmp.fail': 'A fájlokat nem sikerült beolvasni.',
   'cmp.more': '…és még {n}',
+  'cmp.clear': 'Kiemelés törlése a gráfról',
   'diff.show': 'Változások megtekintése',
   'diff.title': 'A commit változásai',
   'diff.close': 'A commit változásainak bezárása',

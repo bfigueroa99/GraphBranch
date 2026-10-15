@@ -558,6 +558,7 @@ GB.i18n.define('sv', {
   'cmp.busy': 'Läser de ändrade filerna…',
   'cmp.fail': 'Det gick inte att läsa filerna.',
   'cmp.more': '…och {n} till',
+  'cmp.clear': 'Ta bort markeringen i grafen',
   'diff.show': 'Visa ändringar',
   'diff.title': 'Ändringar i commit',
   'diff.close': 'Stäng ändringarna i commit',

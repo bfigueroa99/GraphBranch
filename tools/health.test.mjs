@@ -155,6 +155,9 @@ test('comparar dos ramas: commits por delante de cada una y punto de separación
   assert.equal(r.base.sha, 'base');
   assert.equal(r.base.message, 'msg base');
   assert.equal(r.partial, false);
+  // los commits de cada tramo, para marcarlos en el grafo
+  assert.deepEqual(Array.from(r.a.shas).sort(), ['m1', 'm2']);
+  assert.deepEqual(Array.from(r.b.shas).sort(), ['f1', 'f2']);
 });
 
 test('comparar con un merge: el punto de separación es el ancestro común más nuevo', () => {

@@ -657,6 +657,7 @@ GB.i18n.define('ar', {
   'cmp.busy': 'جارٍ قراءة الملفات المتغيرة…',
   'cmp.fail': 'تعذّرت قراءة الملفات.',
   'cmp.more': '…و{n} إضافية',
+  'cmp.clear': 'إزالة التمييز من الرسم',
   'diff.show': 'عرض التغييرات',
   'diff.title': 'تغييرات الـ commit',
   'diff.close': 'إغلاق تغييرات الـ commit',

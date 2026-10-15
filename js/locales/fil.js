@@ -559,6 +559,7 @@ GB.i18n.define('fil', {
   'cmp.busy': 'Binabasa ang mga nagbagong file…',
   'cmp.fail': 'Hindi mabasa ang mga file.',
   'cmp.more': '…at {n} pa',
+  'cmp.clear': 'Alisin ang highlight sa graph',
   'diff.show': 'Tingnan ang mga pagbabago',
   'diff.title': 'Mga pagbabago ng commit',
   'diff.close': 'Isara ang mga pagbabago ng commit',

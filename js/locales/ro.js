@@ -566,6 +566,7 @@ GB.i18n.define('ro', {
   'cmp.busy': 'Se citesc fișierele modificate…',
   'cmp.fail': 'Nu s-au putut citi fișierele.',
   'cmp.more': '…și încă {n}',
+  'cmp.clear': 'Elimină evidențierea din graf',
   'diff.show': 'Vezi modificările',
   'diff.title': 'Modificările commit-ului',
   'diff.close': 'Închideți modificările commit-ului',

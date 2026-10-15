@@ -558,6 +558,7 @@ GB.i18n.define('sw', {
   'cmp.busy': 'Inasoma faili zilizobadilika…',
   'cmp.fail': 'Imeshindwa kusoma faili.',
   'cmp.more': '…na {n} zaidi',
+  'cmp.clear': 'Ondoa mwangaza kwenye grafu',
   'diff.show': 'Ona mabadiliko',
   'diff.title': 'Mabadiliko ya commit',
   'diff.close': 'Funga mabadiliko ya commit',

@@ -1278,6 +1278,23 @@ kbd {
   opacity: 0.18;
 }
 
+/* comparar dos ramas: el tramo de cada una con su anillo, el punto de separación más grande */
+.node.cmp-a .dot {
+  stroke: var(--s1);
+  stroke-width: 3;
+}
+
+.node.cmp-b .dot {
+  stroke: var(--s3);
+  stroke-width: 3;
+  stroke-dasharray: 3 2;
+}
+
+.node.cmp-base .dot {
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+
 .graph-wrap:focus-visible {
   outline: 2px solid var(--ink-3);
   outline-offset: -2px;

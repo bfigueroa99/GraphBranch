@@ -558,6 +558,7 @@ GB.i18n.define('zh-Hant', {
   'cmp.busy': '正在讀取變更的檔案…',
   'cmp.fail': '無法讀取檔案。',
   'cmp.more': '…還有 {n} 個',
+  'cmp.clear': '清除圖中的醒目標示',
   'diff.show': '檢視變更',
   'diff.title': '提交的變更',
   'diff.close': '關閉提交的變更',

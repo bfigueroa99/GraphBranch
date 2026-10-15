@@ -116,3 +116,14 @@ test('pathParam lee ?path= de la URL: recorta, quita la barra inicial y los cara
   assert.equal(S.pathParam(q('path=' + 'x'.repeat(500))).length, 200);
   assert.equal(S.pathParam(null), '');
 });
+
+test('authorParam lee ?author= de la URL: recorta, quita caracteres de control y limita el largo', () => {
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(S.authorParam(q('')), '');
+  assert.equal(S.authorParam(q('path=src/')), '');
+  assert.equal(S.authorParam(q('author=ana')), 'ana');
+  assert.equal(S.authorParam(q('author=%20Ana%20Ruiz%20')), 'Ana Ruiz');
+  assert.equal(S.authorParam(q('author=a%00b%0Ac')), 'abc');
+  assert.equal(S.authorParam(q('author=' + 'x'.repeat(300))).length, 100);
+  assert.equal(S.authorParam(null), '');
+});

@@ -477,7 +477,9 @@
     active = tab;
     source = tab.source;
     clearPathFilter();
-    authorFilter = U.store.get('author:' + tab.key, '');
+    authorFilter = initialAuthor || U.store.get('author:' + tab.key, ''); // ?author=ana manda sobre lo guardado, solo al abrir
+    initialAuthor = '';
+    setUrlParam('author', authorFilter);
     syncFiltered();
     layout = tab.layout;
     game = tab.game;
@@ -846,6 +848,7 @@
   /* Filtro por autor: el grafo (2D, 3D) y el árbol de texto muestran solo las ramas con commits de esa persona
      (y la rama por defecto). Se guarda por repo; no hace ninguna consulta. */
   let authorFilter = '';
+  let initialAuthor = ''; // ?author=ana: el repo a la vista abre ya filtrado por esa persona
   const authorView = (data) => GB.search.byAuthor(data, authorFilter);
 
   /* `calm`: llegan ramas que esperaban su historia (la carga de a poco de un repo grande): se
@@ -1572,6 +1575,7 @@
   graphAuthor.addEventListener('change', () => {
     authorFilter = graphAuthor.value;
     U.store.set('author:' + repoKey(), authorFilter || null);
+    setUrlParam('author', authorFilter);
     syncFiltered();
     graphAuthorStatus();
     if (lastRender) {
@@ -2385,6 +2389,7 @@
     initialPractice = !EMBED && q.has('practice') ? GB.gitsim.decodeExercise(q.get('practice').trim()) : null;
     initialReplay = GB.Replay.paramsOf(q);
     initialPath = EMBED ? '' : GB.search.pathParam(q);
+    initialAuthor = EMBED ? '' : GB.search.authorParam(q);
     initialTV = !EMBED && q.has('tv') && !/^(0|false|no|off)$/i.test(q.get('tv'));
   } catch {
     /* sin query string */

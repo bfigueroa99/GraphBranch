@@ -37,3 +37,33 @@ test('sin commits en el tramo, o con las fechas al revés, no hay Replay', () =>
   assert.equal(rangeOf(dates, pos, 6 * DAY, 2 * DAY), null);
   assert.equal(rangeOf(dates, pos, null, -DAY), null);
 });
+
+/* Controles: la barra de posición y el espacio no reanudan un Replay que el usuario pausó */
+function barra() {
+  const hooks = {};
+  const el = () => ({ addEventListener: (t, f) => (hooks[t] = f), querySelector: () => null, style: {}, dataset: {} });
+  const range = el();
+  const rangeHooks = hooks;
+  const root = { hidden: false, querySelector: (q) => (q === '.rp-range' ? range : el()) };
+  return { root, range, rangeHooks };
+}
+
+test('un cambio de la barra con el teclado no reanuda un Replay en pausa', () => {
+  const ctx2 = vm.createContext({ window: { GB: { U: {}, i18n: { t: () => '', msg: () => '', onChange: () => {} } } }, performance: { now: () => 0 }, requestAnimationFrame: () => 1, cancelAnimationFrame() {}, clearTimeout() {} });
+  vm.runInContext(readFileSync(join(root, 'js', 'replay.js'), 'utf8'), ctx2, { filename: 'replay.js' });
+  const { root: r, rangeHooks } = barra();
+  ctx2.window.GB.Replay.prototype.relocalize = () => {}; // el DOM de verdad no está aquí
+  const rp = new ctx2.window.GB.Replay({ root: r });
+  rp.active = true;
+  rp.U = 10;
+  rp.u = 3;
+  rp.renderPlay = () => {};
+  rp.playing = true;
+  rangeHooks.pointerdown(); // arrastrar mientras suena: se pausa y recuerda
+  assert.equal(rp.playing, false);
+  rangeHooks.change(); // suelta: sigue
+  assert.equal(rp.playing, true);
+  rp.pause();
+  rangeHooks.change(); // flechas del teclado con el Replay en pausa: sigue en pausa
+  assert.equal(rp.playing, false);
+});

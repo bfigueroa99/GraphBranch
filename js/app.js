@@ -1880,7 +1880,7 @@
   el.graphPanel.addEventListener('keydown', (ev) => {
     // espacio: pausar o seguir el Replay (los botones y controles ya manejan su propio espacio;
     // en modo TV el espacio pausa todo, ver más abajo)
-    if (ev.key === ' ' && replay.active && !tv.on && !ev.target.closest('button, input, select, textarea, a, [contenteditable]')) {
+    if (ev.key === ' ' && !ev.defaultPrevented && replay.active && !tv.on && !ev.target.closest('button, input, select, textarea, a, [contenteditable]')) {
       ev.preventDefault();
       replay.toggle();
     }

@@ -90,7 +90,12 @@
         this.renderClock();
       });
       this.el.range.addEventListener('pointerdown', () => (this.wasPlaying = this.playing) && this.pause());
-      this.el.range.addEventListener('change', () => this.wasPlaying && this.u < this.U && this.play());
+      this.el.range.addEventListener('change', () => {
+        // solo sigue si la pausa fue de este arrastre: un cambio con el teclado no reanuda un Replay pausado
+        const resume = this.wasPlaying;
+        this.wasPlaying = false;
+        if (resume && this.u < this.U) this.play();
+      });
       this.relocalize();
     }
 
@@ -281,6 +286,7 @@
     stop(silent) {
       if (!this.active) return;
       this.pause();
+      this.wasPlaying = false;
       this.active = false;
       this.root.hidden = true;
       clearTimeout(this.captionTimer);

@@ -387,6 +387,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     siguen los repos de ese usuario» guardó `["ana/notas","acme/nuevo",…]` con el orden cambiado; mismo remedio.
     También (iteración 54, `xvfb-run -a npm run check`; la repetición pasó): el paso «cambios de un commit: desde su
     ficha, con teclado se pasa al anterior y se vuelve, y Esc cierra» venció en `page.waitForFunction` (5 s); mismo remedio.
+    También (iteración 71, `xvfb-run -a npm run check`; la repetición pasó): el mismo paso, «cambios de un commit»,
+    venció otra vez en `page.waitForFunction` (5 s); mismo remedio.
 
 2. [Deuda] e2e de escritorio: «un repositorio de esta máquina se sigue sin GitHub…» (`e2e/desktop.spec.mjs:360`)
     falló una vez en `npm run check` (iteración 53, `xvfb-run`; la repetición pasó): el panel de cambios
@@ -401,49 +403,47 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     barra de posición del Replay (`.rp-range`, 16 px) y las marcas de la brújula del vuelo (18×18 px).
     Además: botones que cambian a la vez `aria-pressed` y el texto (el de pausa del Replay, `replay.js:367`)
     y la leyenda 2D sin acceso por teclado. Reproducir: `node tools/audit.mjs`.
-4. [Errores] Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora sobre una
-    etiqueta de rama en 2D también pausa el Replay (`app.js:671` no mira `ev.defaultPrevented`).
-5. [Errores] La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-6. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-7. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
+4. [Errores] La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
+5. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+6. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
     renombrados).
-8. [Seguridad] Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de
+7. [Seguridad] Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de
     `<usuario>.github.io`. Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-9. [Rendimiento] Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`)
+8. [Rendimiento] Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`placeTip`)
     y un `Intl.DateTimeFormat` nuevo por cuadro en Replay (`replay.js:343`). Revisar tras #15, que rehízo
     buena parte de `graph.js` y `graph3d.js` (ya quitó `computeLineDistances()` por cuadro). Medir antes
     y después con `node tools/audit.mjs --repetir 3`.
-10. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+9. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-11. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
+10. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
     y mueve el resto a `docs/BITACORA.md` (idempotente: la segunda corrida dice «Nada que rotar»; queda
     una línea «Las iteraciones anteriores están en docs/BITACORA.md»); `--siguiente` sigue leyendo N de
     aquí y `--check` exige iteraciones sin repetidos entre los dos archivos. Motivo: `--salud` mide el
     archivo en cada iteración (77 KB el 2026-10-13, 55 KB de bitácora), y cada sesión nueva lo lee entero.
-12. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+11. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-13. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+12. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-14. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+13. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-15. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
+14. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
     (6.009 ms con ≤ 6.000; tareas largas 4.809 ms con ≤ 4.000), sin GPU y con la corrida larga; la corrida
     normal de la puerta no lo marca. Medir con `node tools/audit.mjs --repetir 3` antes de tocar nada.
-16. [QA] La auditoría completa con `--langs` marca 3 `objetivo-chico` en `celular-320` que la base no guarda
+15. [QA] La auditoría completa con `--langs` marca 3 `objetivo-chico` en `celular-320` que la base no guarda
     (`#branch-filter` 226×19, `#graph3d > div > button` 95×22 y `.default` 73×22): son los controles del
-    pendiente 4 a 320 px, no un fallo nuevo. Decidir si entran a la base o se arreglan con el 4.
+    pendiente 3 a 320 px, no un fallo nuevo. Decidir si entran a la base o se arreglan con el 3.
     Reproducción: `node tools/audit.mjs --langs`, escenario `celular-320`.
-17. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+16. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
     Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-18. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+17. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
@@ -1775,3 +1775,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Reclamo: loop/70, sin colisión
 - Validado: 264 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 26 e2e en verde.
 - **Siguiente:** iteración 71, mantenimiento · Errores: pendiente 4 (Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora so…)
+
+### 2026-10-15 · Iteración 71 · Mantenimiento · Errores
+
+- **Arreglo: Replay, `wasPlaying` y la barra espaciadora** (pendiente 4). `wasPlaying` se limpia al soltar la barra de posición y al salir del Replay: un cambio con las flechas del teclado ya no reanuda un Replay que el usuario había pausado. Y el espacio del panel del grafo no pausa el Replay si una etiqueta de rama ya lo gestionó (`ev.defaultPrevented`, `js/app.js`). Búsqueda del mismo patrón: los demás `keydown` de `app.js` ya miran `defaultPrevented` o excluyen controles.
+- **Reproducción:** `node --test tools/replay.test.mjs` → `not ok 4 - un cambio de la barra con el teclado no reanuda un Replay en pausa` (sin el arreglo de `replay.js`).
+- **Pruebas que fallan sin el arreglo:** `tools/replay.test.mjs` («un cambio de la barra con el teclado…»). El espacio sobre una etiqueta queda sin prueba propia (cambio de una condición).
+- README: sin cambios (arreglo interno).
+- QA: filas de Replay y de teclado; auditoría: 0 hallazgos nuevos (la puerta). Sin mirar a mano 320 px ni tema claro.
+- Nota: el clon de la sesión venía superficial; R3 y 2 pruebas fallaban hasta `git fetch --unshallow`. El paso «cambios de un commit» del smoke falló en la primera corrida de `npm run check` y pasó al repetirla (anotado en el pendiente 1 `[Deuda]`). `git push origin --delete loop/58` falló por el proxy.
+- Reclamo: loop/71, sin colisión
+- Validado: 265 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 26 e2e en verde.
+- **Siguiente:** iteración 72, expansión: ítem 40 (Resaltar el tramo de cada rama comparada, Análisis)

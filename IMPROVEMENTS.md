@@ -1871,3 +1871,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: XSS (la ruta de la URL entra al campo con `value`, nunca como HTML), CSP sin cambios, 2D y 3D (el smoke lo mira); sin mirar a mano: 320 px, Replay; auditoría: ver Validado.
 - Reclamo: loop/77, sin colisión
 - Nota: el clon venía superficial y `--check` daba R3 en rojo (y 2 pruebas); `git fetch --unshallow` lo arregla.
+- Validado: pendiente
+- **Siguiente:** iteración 78, expansión: ítem 46 (Capa para streaming, segunda entrega, Plataformas)

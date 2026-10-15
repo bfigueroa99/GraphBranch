@@ -2359,7 +2359,10 @@ console.log('Filtro por ruta desde la URL (?path=)');
     if (!word) throw new Error('no hay un mensaje del que sacar una ruta');
     await page.goto(`${base}/index.html?lang=es&path=${encodeURIComponent('/' + word)}`);
     await loaded(page);
-    await page.waitForSelector('#search-path-clear:not([hidden])', { timeout: 5000 });
+    await page.waitForSelector('#search-path-clear:not([hidden])', { timeout: 5000 }).catch(async () => {
+      const st = await page.evaluate(() => ({ v: document.querySelector('#search-path').value, s: document.querySelector('#search-path-status').textContent, u: location.search }));
+      throw new Error(`?path= no aplicó el filtro: ${JSON.stringify(st)} (ruta pedida «${word}»)`);
+    });
     const on = await page.evaluate(() => ({
       value: document.querySelector('#search-path').value,
       dim: document.querySelectorAll('#graph svg .node.pfx').length,

@@ -1882,5 +1882,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: XSS/inyección en CSS (`bg=red`, `bg=url(x)` y `bg=12345` se descartan, la prueba lo mira), CSP sin cambios; sin mirar a mano: 320 px, Replay, 3D; auditoría: no toca la interfaz visible fuera de `?embed`.
 - Reclamo: loop/78, sin colisión
 - Nota: el clon venía superficial y `--check` daba R3 en rojo (y 2 pruebas); `git fetch --unshallow` lo arregla. El borrado de `loop/65` falló por desconexión del proxy.
-- Validado: pendiente
+- Validado: 277 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 26 e2e en verde.
 - **Siguiente:** iteración 79, mantenimiento · Rendimiento: pendiente 8 (Trabajo por cuadro: lecturas de tamaño que fuerzan maquetación en 3D y 2D (`pla…)

@@ -18,7 +18,7 @@
 
    Salida: 0 bien (la completa termina siempre en 0) · 1 hallazgos nuevos en dos corridas seguidas de
    --puerta · 2 no se pudo auditar (sin Playwright o sin Chromium). */
-import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { availableParallelism, loadavg } from 'node:os';
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
@@ -727,6 +727,11 @@ function opciones(argv) {
   return o;
 }
 
+/* El informe de --json: crea la carpeta si falta (test-results/ no existe en una sesión nueva). */
+export function guardarInforme(ruta, informe) {
+  mkdirSync(dirname(ruta), { recursive: true });
+  writeFileSync(ruta, JSON.stringify(informe, null, 2) + '\n');
+}
 export const leerBase = (ruta = BASE) => (existsSync(ruta) ? JSON.parse(readFileSync(ruta, 'utf8')) : { hallazgos: [], cuota: {} });
 
 async function main(argv) {
@@ -817,7 +822,7 @@ async function completa(o, env) {
     console.log(`\nContra ${o.comparar} (+ = peor):`);
     for (const d of compararMedidas(JSON.parse(readFileSync(o.comparar, 'utf8')).medidas, r.medidas)) console.log(`  ${d.medida}: ${d.antes} → ${d.ahora} (${d.peor > 0 ? '+' : ''}${d.peor} %)`);
   }
-  if (o.json) writeFileSync(o.json, JSON.stringify({ fecha: new Date().toISOString(), hallazgos: todos, medidas: r.medidas }, null, 2) + '\n');
+  if (o.json) guardarInforme(o.json, { fecha: new Date().toISOString(), hallazgos: todos, medidas: r.medidas });
   const altas = todos.filter((h) => h.prioridad === 'Alta').length;
   console.log(`\nAuditoría completa: ${todos.length} hallazgos (${altas} Alta), ${todos.filter((h) => !conocido(h, base)).length} fuera de la base (${Math.round((Date.now() - t0) / 1000)} s)`);
   return 0;

@@ -1499,6 +1499,13 @@ function fakeGitLab() {
     return sha && commits.has(sha) ? sha : null;
   };
   const route = (path, q, auth) => {
+    if (path === '/api/v4/groups/g/projects') {
+      return { body: [
+        { path_with_namespace: 'g/sub/p', last_activity_at: new Date().toISOString(), visibility: 'public' },
+        { path_with_namespace: 'g/copia', forked_from_project: { id: 9 }, visibility: 'public' },
+        { path_with_namespace: 'g/viejo', archived: true, visibility: 'public' },
+      ] };
+    }
     const m = /^\/api\/v4\/projects\/(g%2Fsub%2Fp|g%2Fprivado)(\/.*)?$/.exec(path);
     if (!m) return { status: 404, body: { message: '404 Project Not Found' } };
     const priv = m[1] === 'g%2Fprivado';
@@ -1594,6 +1601,22 @@ console.log('GitLab');
     if (link.banner) throw new Error('muestra el aviso del token de GitHub');
     const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
     if (saved !== '["gitlab:g/sub/p"]') throw new Error(`se guardó ${saved}`);
+  });
+
+  await step(page, 'group:g sigue los proyectos del grupo de GitLab, sin forks ni archivados, con una consulta', async () => {
+    const other = await openPage({ viewport: { width: 1280, height: 800 } });
+    await other.route('https://gitlab.com/**', gl.handle);
+    await other.addInitScript(quickGitLab);
+    await other.goto(`${base}/index.html?lang=es`);
+    await loaded(other);
+    await other.fill('#repo-input', 'group:g');
+    await other.press('#repo-input', 'Enter');
+    await other.waitForSelector('#toasts .toast:has-text("Ahora sigues los repositorios más activos de g")', { timeout: 15000 });
+    const saved = await other.evaluate(() => localStorage.getItem('graphbranch:repos'));
+    if (saved !== '["gitlab:g/sub/p"]') throw new Error(`se guardó ${saved}`);
+    const lists = gl.calls.filter((c) => c.startsWith('/api/v4/groups/g/projects'));
+    if (lists.length !== 1) throw new Error(`consultas de la lista: ${lists.length}`);
+    await other.close();
   });
 
   await step(page, 'en 2D, la rama de la MR lleva !5 y su ficha dice MR', async () => {

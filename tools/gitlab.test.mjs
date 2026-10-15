@@ -110,6 +110,13 @@ function fakeGitLab(web = 'https://gitlab.com') {
     const p = u.pathname.replace(new URL(gl.web).pathname.replace(/\/$/, '') + '/api/v4', '');
     const q = u.searchParams;
     if (p === PROJECT) return { body: { id: 7, path_with_namespace: 'g/sub/p', default_branch: 'main', web_url: gl.web + '/g/sub/p', visibility: gl.visibility, description: 'un proyecto' } };
+    const grp = p.match(/^\/groups\/([^/]+)\/projects$/);
+    if (grp) {
+      const g = decodeURIComponent(grp[1]);
+      if (!gl.groups?.[g]) return { status: 404, body: { message: '404 Group Not Found' } };
+      gl.groupQuery = q.toString();
+      return { body: gl.groups[g] };
+    }
     if (p === PROJECT + '/repository/branches') {
       const all = [...gl.branches]
         .sort((a, b) => gl.updated.get(b[0]) - gl.updated.get(a[0]))
@@ -584,4 +591,44 @@ test('un GitLab propio muestra avatares solo si se piden (escritorio suma su hos
   const desk = new GB.GitLabSource({ path: 'g/p', webUrl: 'https://gitlab.miempresa.com', avatars: true });
   assert.equal(desk.person(u).avatar, u.avatar_url);
   assert.equal(desk.person({ username: 'a', avatar_url: 'https://www.gravatar.com/avatar/x' }).avatar, null, 'solo los de su host');
+});
+
+test('un grupo de GitLab entero: una consulta, con subgrupos, sin forks ni archivados, y el token solo a GitLab', async () => {
+  const gl = fakeGitLab();
+  gl.groups = {
+    'gitlab-org': [
+      { path_with_namespace: 'gitlab-org/ci/runner', last_activity_at: '2026-10-02T00:00:00Z', visibility: 'public' },
+      { path_with_namespace: 'gitlab-org/viejo', archived: true, visibility: 'public' },
+      { path_with_namespace: 'gitlab-org/copia', forked_from_project: { id: 1 }, visibility: 'public' },
+      { path_with_namespace: 'gitlab-org/interno', last_activity_at: '2026-10-01T00:00:00Z', visibility: 'private' },
+    ],
+  };
+  gl.tokens.set('tok', ['read_api']);
+  gl.expect = 'tok';
+  const GB = load(gl);
+  const list = Array.from(await GB.GitLabSource.groupProjects('gitlab-org', { token: 'tok' }), (r) => ({ ...r }));
+  assert.deepEqual(list, [
+    { host: 'gitlab', owner: 'gitlab-org/ci', name: 'runner', pushedAt: '2026-10-02T00:00:00Z', private: false },
+    { host: 'gitlab', owner: 'gitlab-org', name: 'interno', pushedAt: '2026-10-01T00:00:00Z', private: true },
+  ]);
+  assert.equal(gl.calls.length, 1, 'una sola consulta');
+  assert.match(gl.groupQuery, /include_subgroups=true/);
+  assert.match(gl.groupQuery, /order_by=last_activity_at/);
+  await assert.rejects(() => GB.GitLabSource.groupProjects('nadie', { token: 'tok' }), (err) => err.kind === 'notfound');
+  const own = fakeGitLab('https://gitlab.miempresa.com');
+  own.groups = { eq: [{ path_with_namespace: 'eq/api', visibility: 'public' }] };
+  assert.equal((await load(own).GitLabSource.groupProjects('eq', { webUrl: 'https://gitlab.miempresa.com' })).length, 1);
+  assert.ok(own.calls.every((c) => c.startsWith('/groups/eq/projects')), 'a la instancia propia');
+});
+
+test('parseGroup entiende group:ruta y las URL de grupos, y no confunde un repo ni un usuario de GitHub', async () => {
+  const GB = load(fakeGitLab());
+  const g = (x) => GB.U.parseGroup(x)?.group ?? null;
+  assert.equal(g('group:gitlab-org'), 'gitlab-org');
+  assert.equal(g('group:gitlab-org/ci-cd/'), 'gitlab-org/ci-cd');
+  assert.equal(g('https://gitlab.com/groups/gitlab-org'), 'gitlab-org');
+  assert.equal(g('https://gitlab.com/groups/gitlab-org/ci/-/issues'), 'gitlab-org/ci');
+  for (const bad of ['group:', 'group:../x', 'gitlab-org', 'org:acme', '@ana', 'https://gitlab.com/gitlab-org/gitlab', 'https://evil.com/groups/x']) assert.equal(g(bad), null, bad);
+  GB.U.gitlabBase = 'https://gitlab.miempresa.com';
+  assert.equal(g('https://gitlab.miempresa.com/groups/eq'), 'eq');
 });

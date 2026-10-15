@@ -532,6 +532,24 @@
     }
   }
 
+  /**
+   * Los proyectos de un grupo de GitLab (lo que sigue `group:ruta`), con los de sus subgrupos: los de
+   * actividad más reciente primero, sin forks ni archivados. Una consulta (con token, también los
+   * privados que ve). → [{ host: 'gitlab', owner, name, pushedAt, private }], hasta 100.
+   */
+  GitLabSource.groupProjects = async (group, { token = '', webUrl = '' } = {}) => {
+    const src = new GitLabSource({ path: `${group}/-`, token, webUrl });
+    const q = 'include_subgroups=true&archived=false&order_by=last_activity_at&sort=desc&per_page=100&simple=true';
+    const res = await src.api(`/groups/${encodeURIComponent(group)}/projects?${q}`, { allow: [404] });
+    if (res.status === 404) throw new ApiError(M('err.ownerNotFound', { owner: group }), { status: 404, kind: 'notfound' });
+    return (Array.isArray(res.data) ? res.data : [])
+      .filter((r) => r && r.path_with_namespace && r.path_with_namespace.includes('/') && !r.forked_from_project && !r.archived)
+      .map((r) => {
+        const cut = r.path_with_namespace.lastIndexOf('/');
+        return { host: 'gitlab', owner: r.path_with_namespace.slice(0, cut), name: r.path_with_namespace.slice(cut + 1), pushedAt: r.last_activity_at || null, private: r.visibility !== 'public' };
+      });
+  };
+
   GitLabSource.endpoints = endpoints;
   GB.GitLabSource = GitLabSource;
 })(window.GB);

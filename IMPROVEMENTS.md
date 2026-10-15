@@ -141,7 +141,7 @@ segunda columna a la primera.
 | Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (API de Forgejo, repos públicos y, con token, privados), bitbucket.org (API 2.0 de Bitbucket Cloud, repos públicos y, con token, privados), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP), repos locales (app de escritorio, con `git`), demo | Token para un Forgejo/Gitea propio |
 | Datos | ramas, commits, PRs (y las pilas de PRs apilados), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, en el panel de salud), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
-| Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (grupos de GitLab, constelación) |
+| Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (constelación de repos) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo por ruta de archivo, filtrar el grafo por autor ("mis ramas"), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión) | Tasa de fallos de CI en la salud |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
@@ -287,10 +287,8 @@ se comprueban antes de construir sobre ellas.
 38. ~~**Vocabulario DORA en la salud**~~ hecho en #95 · Análisis. [inv. 2026-10-13]
 39. ~~**PRs por estado**~~ hecho en #98 · Análisis. [inv. 2026-10-13]
 40. ~~**Resaltar el tramo de cada rama comparada**~~ hecho en #101 · Análisis. [parte del ítem 20]
-41. **Una organización entera, cuarta entrega** · Escala · 2×2/3. [parte del ítem 26] Los grupos de GitLab
-    (`/groups/:id/projects?order_by=last_activity_at`) y una vista de constelación (cada repo, una
-    galaxia) para ver más repos de los que caben en pestañas. Comprobar: prueba de cuota con la API
-    simulada.
+41. ~~**Una organización entera, cuarta entrega**~~ hecho en #102 · Escala. `group:ruta` (o la URL `gitlab.com/groups/ruta`) sigue
+    los proyectos de un grupo de GitLab con sus subgrupos, en una consulta, sin forks ni archivados. La constelación es el ítem 52.
 42. **Replay por tramo, segunda entrega** · Salidas · 1×2/1. [parte del ítem 27] El tramo y los rótulos viajan en la
     URL (`?replay=2026-09-01..2026-09-14&title=…`) para compartir un sprint ya listo, y el Replay arranca solo
     con ellos. Comprobar: prueba de la lectura de la URL y un paso del smoke con el enlace.
@@ -318,6 +316,8 @@ se comprueban antes de construir sobre ellas.
     salud cuenta desde el primer commit del PR (una consulta de `/pulls/:n/commits` por PR fusionado reciente, solo al
     abrir el panel) y no desde su apertura. Comprobar: `tools/github.test.mjs` con la API simulada y
     `tools/health.test.mjs`.
+52. **Constelación de repos** · Escala · 2×2/3. [parte del ítem 41] Una vista donde cada repo seguido es una galaxia, para ver
+    más repos de los que caben en pestañas. Comprobar: un paso del smoke con 10 repos simulados y prueba de la disposición.
 
 ## Cómo validar un cambio
 
@@ -1797,3 +1797,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Reclamo: loop/72, sin colisión
 - Validado: 265 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 26 e2e en verde.
 - **Siguiente:** iteración 73, expansión: ítem 41 (Una organización entera, cuarta entrega, Escala)
+
+### 2026-10-15 · Iteración 73 · Expansión · Escala
+
+- **Capacidad nueva: un grupo de GitLab entero** (ítem 41 de la hoja de ruta, cuarta entrega). `group:ruta` (con subgrupos) o la URL `gitlab.com/groups/ruta` (o la del GitLab propio) sigue los proyectos de actividad más reciente del grupo, en una consulta (`/groups/:id/projects`, `include_subgroups`), sin forks ni archivados, cada uno en su pestaña; también `?repo=group:ruta`. No queda seguido (sin renovación ni eventos del grupo). `U.parseGroup`, `GitLabSource.groupProjects` y `connectGroup`. La constelación pasa al ítem 52.
+- **Pruebas que fallan sin la capacidad:** `tools/gitlab.test.mjs` («un grupo de GitLab entero…», «parseGroup…») y un paso del smoke (`group:g` con un fork y un archivado fuera, una sola consulta, se guarda `gitlab:g/sub/p`).
+- README: la función en la lista, su uso y Límites conocidos (sin renovación ni eventos; constelación sin hacer).
+- QA: conexión por grupo en el smoke con GitLab simulado y token solo a GitLab (la prueba del fake lo exige); auditoría: 0 hallazgos nuevos. Sin textos nuevos (reusa los avisos de organización).
+- Nota: el clon de la sesión venía superficial; hizo falta `git fetch --unshallow`. Chromium: `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome` con `xvfb-run`.
+- Reclamo: loop/73, sin colisión
+- Validado: 267 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 26 e2e en verde.
+- **Siguiente:** iteración 74, expansión: ítem 42 (Replay por tramo, segunda entrega, Salidas)

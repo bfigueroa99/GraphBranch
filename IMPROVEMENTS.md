@@ -143,7 +143,7 @@ segunda columna a la primera.
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (grupos de GitLab, constelación) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown) | resumen como imagen |
-| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo por ruta de archivo, filtrar el grafo por autor ("mis ramas") | vocabulario DORA en la salud |
+| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo por ruta de archivo, filtrar el grafo por autor ("mis ramas"), vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega) | PRs por estado |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
@@ -284,9 +284,7 @@ se comprueban antes de construir sobre ellas.
 37. **Tokens para Codeberg y Bitbucket** · Fuentes · 2×2/2. [parte del ítem 21] Repos privados y más cuota:
     el token de cada servicio en Ajustes (y en el llavero en escritorio), enviado solo a su host. Comprobar: una
     prueba por fuente de que el token va en cada consulta y a ningún otro lado.
-38. **Vocabulario DORA en la salud** · Análisis · 2×2/2. [inv. 2026-10-13] Frecuencia de despliegues y tiempo de
-    entrega (del primer commit del PR a su fusión) con lo ya cargado, en el panel de salud. Comprobar:
-    `tools/health.test.mjs` con despliegues y PRs fabricados.
+38. ~~**Vocabulario DORA en la salud**~~ hecho en #95 · Análisis. [inv. 2026-10-13]
 39. **PRs por estado** · Análisis · 2×2/2. [inv. 2026-10-13] En salud, los PRs agrupados en borrador, esperando
     revisión, aprobados y con CI en rojo, cada uno con su salto al grafo. Comprobar: `tools/health.test.mjs` y
     un paso del smoke en la demo.
@@ -320,6 +318,10 @@ se comprueban antes de construir sobre ellas.
     de GitHub de VS Code para el token, sin pegarlo. Comprobar: `tools/vscode.test.mjs` con la sesión simulada.
 50. **Bitbucket propio** · Fuentes · 1×2/3. [parte del ítem 22] Un Bitbucket Data Center o Server (`--bitbucket-url=`),
     con la misma regla de CSP que GitLab propio. Comprobar: `tools/bitbucket.test.mjs` con otra URL base.
+51. **Tiempo de entrega desde el primer commit** · Análisis · 1×2/2. [parte del ítem 38] El tiempo de entrega de la
+    salud cuenta desde el primer commit del PR (una consulta de `/pulls/:n/commits` por PR fusionado reciente, solo al
+    abrir el panel) y no desde su apertura. Comprobar: `tools/github.test.mjs` con la API simulada y
+    `tools/health.test.mjs`.
 
 ## Cómo validar un cambio
 
@@ -1727,3 +1729,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 253 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 25 e2e en verde.
 - **Siguiente:** iteración 66, expansión: ítem 38 (Vocabulario DORA en la salud, Análisis)
+
+### 2026-10-15 · Iteración 66 · Expansión · Análisis
+
+- **Capacidad nueva: vocabulario DORA en la salud** (ítem 38 de la hoja de ruta). El panel de salud suma «Entrega (DORA)»: despliegues en 30 días (cada release cuenta como uno), mediana entre los últimos 10 releases y tiempo de entrega (mediana de abierto a fusionado), con lo ya cargado y sin consultas (`GB.health.compute(...).dora`). El tiempo va de la apertura del PR a su fusión, no desde su primer commit (pediría una consulta por PR); dicho en Límites conocidos.
+- **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` («DORA: despliegues en 30 días…») y el paso del smoke de salud (dos líneas de entrega en la demo).
+- README: función en la lista (Salud del repo), mapa de archivos y Límites conocidos. Mapa de alcance: fila Análisis. Textos en los 40 idiomas (3 claves).
+- QA: filas de XSS (solo cifras y duraciones formateadas, sin texto de afuera), cuota (0 consultas nuevas) y 40 idiomas por `check-i18n`; sin mirar a mano: 320 px, tema claro, movimiento reducido; auditoría: ver Validado.
+- Reclamo: loop/66, sin colisión
+- Nota: `git push origin --delete loop/53` falló con «the remote end hung up unexpectedly» (proxy); las `loop/28`–`loop/65` fusionadas siguen en origin (ya en Para Benjamin).
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 254 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 25 e2e en verde.
+- **Siguiente:** iteración 67, mantenimiento · Deuda: pendiente 1 (Smoke: una vez (iteración 27, corrida completa con `--langs`) el cuadro de la m…)

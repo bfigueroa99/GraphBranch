@@ -1,6 +1,7 @@
 /* GraphBranch — salud del repo: lo que ya está cargado, leído como señales de equipo.
    Ramas sin actividad hace más de 30 días y sin PR, pull requests abiertos por edad, cuánto tardaron
-   en fusionarse los últimos y el ritmo de merges y releases. No hace ninguna consulta: parte del
+   en fusionarse los últimos, el ritmo de merges y releases y, en el idioma de DORA, la frecuencia de
+   despliegues (cada release cuenta como uno) y el tiempo de entrega (de abierto a fusionado). No hace ninguna consulta: parte del
    estado del grafo y de la actividad que ya llegó, y cuenta lo que pasa en el repo, no a personas. */
 (function (GB) {
   'use strict';
@@ -8,6 +9,7 @@
   const DAY = 864e5;
   const STALE_DAYS = 30;
   const RECENT_MERGES = 20; // cuántos PRs fusionados entran en el tiempo de abierto a fusionado
+  const RECENT_RELEASES = 10; // cuántos releases entran en el tiempo entre despliegues
   const ROWS = 8; // filas que muestra cada lista
 
   const at = (x) => (typeof x === 'number' ? x : Date.parse(x) || 0);
@@ -46,6 +48,15 @@
     const within = (list, days) => list.filter((a) => now - a.time <= days * DAY && a.time <= now).length;
     const releases = acts.filter((a) => a.kind === 'release' && a.time && !seen.has(a.id) && seen.add(a.id));
 
+    // frecuencia de despliegues: los releases ya vistos; el hueco es la mediana entre los últimos RECENT_RELEASES
+    const relTimes = releases.map((a) => a.time).filter((x) => x <= now).sort((a, b) => b - a).slice(0, RECENT_RELEASES);
+    const gaps = relTimes.slice(1).map((x, i) => relTimes[i] - x).filter((g) => g > 0);
+    const dora = {
+      deploys30: within(releases, 30),
+      gap: gaps.length ? median(gaps) : null,
+      lead: spans.length ? median(spans) : null,
+    };
+
     const forks = (data.forks || []).filter((f) => f.pushedAt && f.url).map((f) => ({ fullName: f.fullName, url: f.url, idle: Math.max(0, now - at(f.pushedAt)) }));
 
     return {
@@ -53,6 +64,7 @@
       stale: { total: stale.length, rows: stale.slice(0, ROWS) },
       prs: { total: prs.length, rows: prs.slice(0, ROWS) },
       merged: spans.length ? { n: spans.length, median: median(spans), max: Math.max(...spans) } : null,
+      dora,
       pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30) },
     };
   }

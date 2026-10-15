@@ -1791,8 +1791,9 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Capacidad nueva: resaltar el tramo de cada rama comparada** (ítem 40 de la hoja de ruta). Al pulsar «Comparar» en el panel de salud, el grafo (2D y 3D) deja a la luz los commits que lleva cada rama por delante (anillo continuo la A, punteado la B) y el punto de separación más grande, y atenúa el resto; «Quitar el resaltado del grafo» lo apaga y cambiar de repo también. `health.compare` devuelve ahora los SHA de cada tramo; `Graph.setCompareMarks` y `Graph3D.setCompareMarks` los pintan.
 - **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` («comparar dos ramas…», los `shas` de cada tramo) y un paso del smoke en la demo (nodos `cmp-a`/`cmp-b`, un único `cmp-base`, el resto atenuado, y «Quitar el resaltado» los deja en cero).
 - README: la comparación y sus Límites conocidos (solo los commits ya dibujados).
-- QA: filas de 2D/3D, tema y comparar ramas miradas por el smoke; el 3D sin mirar a mano (sin GPU en la sesión); auditoría: ver Validado.
+- QA: comparar ramas en la demo (2D) por el smoke y a mano con Playwright; el 3D sin mirar a mano (sin GPU en la sesión); auditoría: 0 hallazgos nuevos.
+- Nota: «Quitar el resaltado» no cierra el panel de salud (lo cerraba como las demás filas). El paso «cambios de un commit» del smoke falló una vez sin relación con el cambio y pasó al repetir `npm run check` (pendiente `[Deuda]` ya abierto).
 - Nota: el clon de la sesión venía superficial; R3 y 2 pruebas fallaban hasta `git fetch --unshallow`. Chromium del smoke: `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`.
 - Reclamo: loop/72, sin colisión
-- Validado: PENDIENTE
+- Validado: 265 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 26 e2e en verde.
 - **Siguiente:** iteración 73, expansión: ítem 41 (Una organización entera, cuarta entrega, Escala)

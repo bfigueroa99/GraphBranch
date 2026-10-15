@@ -505,6 +505,8 @@ GB.i18n.define('vi', {
   'search.placeholder': 'Thông điệp, SHA hoặc @tác giả…',
   'search.author': 'Tác giả',
   'search.anyAuthor': 'Tất cả',
+  'search.graphAuthor': 'Chỉ hiện nhánh của',
+  'search.graphAuthorCount': '{n} trên {total} nhánh có commit của người này',
   'search.none': 'Không có commit nào khớp.',
   'search.count': 'Kết quả: {n}',
   'search.some': 'Hiển thị {n} trên {total}',

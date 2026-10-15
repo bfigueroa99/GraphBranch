@@ -700,6 +700,49 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: 3000 });
   });
 
+  await step(page, 'filtro por autor: el grafo y el árbol de texto muestran solo sus ramas, lo dice y se quita', async () => {
+    await page.click('#view-2d');
+    const count = () => page.evaluate(() => document.querySelectorAll('#graph svg .head').length);
+    const all = await count();
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: 3000 });
+    const options = await page.evaluate(() => [...document.querySelectorAll('#graph-author option')].map((o) => o.value));
+    // el autor que deja menos ramas a la vista (tiene que dejar alguna menos que todas)
+    let best = null;
+    for (const who of options.filter(Boolean)) {
+      await page.selectOption('#graph-author', who);
+      await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, all, { timeout: 1500 }).catch(() => {}); // las ramas salen con su transición
+      const n = await count();
+      if (n < all && (!best || n < best.n)) best = { who, n };
+    }
+    if (!best) throw new Error(`ningún autor acota el grafo (${all} ramas, ${options.length - 1} autores)`);
+    await page.selectOption('#graph-author', best.who);
+    const on = await page.evaluate(() => ({
+      status: document.querySelector('#graph-author-status').textContent,
+      mark: document.querySelector('#search-btn').classList.contains('filtered'),
+      named: !!document.querySelector('label[for="graph-author"]')?.textContent.trim(),
+    }));
+    if (!on.status || /undefined|NaN|search\./.test(on.status) || !on.mark || !on.named) throw new Error('sin aviso del filtro por autor: ' + JSON.stringify(on));
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: 3000 });
+    const saved = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('graphbranch:author:')).length);
+    if (!saved) throw new Error('el filtro por autor no se guardó por repo');
+    await page.click('#textview-btn');
+    await page.waitForSelector('#textview[open]', { timeout: 3000 });
+    const tree = await page.evaluate(() => document.querySelectorAll('#textview-body [role="treeitem"][data-branch], #textview-body > [role="tree"] > [role="treeitem"]').length);
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: 3000 });
+    if (!tree) throw new Error('el árbol de texto quedó vacío con el filtro por autor');
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: 3000 });
+    await page.selectOption('#graph-author', '');
+    const off = await page.evaluate(() => ({ mark: document.querySelector('#search-btn').classList.contains('filtered'), status: document.querySelector('#graph-author-status').textContent }));
+    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length === n, all, { timeout: 3000 }).catch(() => {});
+    if (off.mark || off.status || (await count()) !== all) throw new Error('quitar el filtro no deja el grafo como estaba');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: 3000 });
+  });
+
   await step(page, 'filtro por ruta: atenúa los commits que no la tocaron, lo dice y se quita', async () => {
     await page.click('#view-2d');
     await page.click('#search-btn');

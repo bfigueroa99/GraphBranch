@@ -453,6 +453,8 @@
     active = tab;
     source = tab.source;
     clearPathFilter();
+    authorFilter = U.store.get('author:' + tab.key, '');
+    syncFiltered();
     layout = tab.layout;
     game = tab.game;
     // la demo no se sigue, solo se mira: al pasar a otro repo se cierra
@@ -783,6 +785,11 @@
 
   let lastRender = null;
 
+  /* Filtro por autor: el grafo (2D, 3D) y el árbol de texto muestran solo las ramas con commits de esa persona
+     (y la rama por defecto). Se guarda por repo; no hace ninguna consulta. */
+  let authorFilter = '';
+  const authorView = (data) => GB.search.byAuthor(data, authorFilter);
+
   /* `calm`: llegan ramas que esperaban su historia (la carga de a poco de un repo grande): se
      suman sin efectos de llegada, que son para lo nuevo */
   const liveCtx = (data, initial, calm = false) => ({
@@ -808,11 +815,12 @@
   /** Calcula el layout del repo a la vista y dibuja el grafo (salvo durante el Replay). */
   function drawGraph(initial, calm = false) {
     const data = source.view ? source.view() : source.data;
-    const L = layout.compute(data);
+    const shownData = authorView(data).data;
+    const L = layout.compute(shownData);
     lastRender = { data, L };
     // durante el Replay el grafo muestra el pasado; lo nuevo sigue llegando al panel y se dibuja al volver
     if (!replay.active) {
-      const gctx = liveCtx(data, initial, calm);
+      const gctx = liveCtx(shownData, initial, calm);
       graph2d.update(L, gctx);
       graph3d?.update(L, gctx);
     }
@@ -841,7 +849,7 @@
     if (news && tv.attract && replay.active) replay.stop();
     if (news) tv.lastNews = Date.now();
     const { data, L } = drawGraph(initial, calm);
-    if (el.textview.open) textview.update(GB.textview.build(data)); // con la vista de texto abierta, avisa de lo nuevo
+    if (el.textview.open) textview.update(GB.textview.build(authorView(data).data)); // con la vista de texto abierta, avisa de lo nuevo
     feed.setDefaultBranch(data.repo.defaultBranch);
     feed.add(activities, { live: !initial });
     if (news) game.observe(activities, gameCtx(activities, data, L));
@@ -1411,7 +1419,7 @@
     },
   });
   $('#textview-btn').addEventListener('click', () => {
-    textview.render(GB.textview.build(source.view ? source.view() : source.data));
+    textview.render(GB.textview.build(authorView(source.view ? source.view() : source.data).data));
     if (typeof el.textview.showModal === 'function') el.textview.showModal();
     else el.textview.setAttribute('open', '');
     el.textviewBody.querySelector('[tabindex="0"]')?.focus();
@@ -1437,11 +1445,46 @@
   );
   $('#search-btn').addEventListener('click', () => {
     search.open();
+    fillGraphAuthor();
     if (typeof el.search.showModal === 'function') el.search.showModal();
     else el.search.setAttribute('open', '');
     $('#search-input').focus();
   });
   $('#search-close').addEventListener('click', closeSearch);
+
+  const syncFiltered = () => $('#search-btn').classList.toggle('filtered', !!authorFilter || !pathEl.clear.hidden);
+  const graphAuthor = $('#graph-author');
+  function fillGraphAuthor() {
+    graphAuthor.textContent = '';
+    const all = document.createElement('option');
+    all.value = '';
+    all.textContent = t('search.anyAuthor');
+    graphAuthor.appendChild(all);
+    const list = GB.search.authors(source.data);
+    if (authorFilter && !list.some((a) => a.key === authorFilter)) list.push({ key: authorFilter, name: authorFilter, count: 0 });
+    for (const a of list) {
+      const o = document.createElement('option');
+      o.value = a.key;
+      o.textContent = `${a.name} (${a.count})`;
+      graphAuthor.appendChild(o);
+    }
+    graphAuthor.value = authorFilter;
+    graphAuthorStatus();
+  }
+  function graphAuthorStatus() {
+    const { shown, total } = authorView(source.view ? source.view() : source.data);
+    $('#graph-author-status').textContent = authorFilter ? t('search.graphAuthorCount', { n: shown, total }) : '';
+  }
+  graphAuthor.addEventListener('change', () => {
+    authorFilter = graphAuthor.value;
+    U.store.set('author:' + repoKey(), authorFilter || null);
+    syncFiltered();
+    graphAuthorStatus();
+    if (lastRender) {
+      const { data, L } = drawGraph(false, true);
+      renderSummary(data, L);
+    }
+  });
 
   /* Filtro por ruta: los commits que tocaron un archivo o carpeta quedan a plena luz y el resto se atenúa. */
   const pathEl = { input: $('#search-path'), go: $('#search-path-go'), clear: $('#search-path-clear'), status: $('#search-path-status') };
@@ -1451,7 +1494,7 @@
     graph2d.setPathFilter?.(null);
     $('#search-path-clear').hidden = true;
     $('#search-path-status').textContent = '';
-    $('#search-btn').classList.remove('filtered');
+    syncFiltered();
   }
   async function applyPathFilter() {
     const path = pathEl.input.value.trim();
@@ -1467,7 +1510,7 @@
       if (mine !== pathToken) return;
       graph2d.setPathFilter?.(shas);
       pathEl.clear.hidden = false;
-      $('#search-btn').classList.add('filtered');
+      syncFiltered();
       pathEl.status.textContent = shas.size ? t('search.pathCount', { n: shas.size, path }) : t('search.pathNone');
     } catch {
       if (mine === pathToken) pathEl.status.textContent = t('search.pathFail');

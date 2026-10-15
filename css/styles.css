@@ -4820,3 +4820,8 @@ a.hl-row:focus-visible {
   border-radius: 8px;
   font: 12px/1.5 var(--font-mono, ui-monospace, monospace);
 }
+
+#graph-author {
+  flex: 1;
+  min-width: 10em;
+}

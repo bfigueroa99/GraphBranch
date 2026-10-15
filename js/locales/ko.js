@@ -505,6 +505,8 @@ GB.i18n.define('ko', {
   'search.placeholder': '메시지, SHA 또는 @작성자…',
   'search.author': '작성자',
   'search.anyAuthor': '모두',
+  'search.graphAuthor': '다음 사람의 브랜치만 보기',
+  'search.graphAuthorCount': '브랜치 {total}개 중 {n}개에 이 사람의 커밋이 있습니다',
   'search.none': '일치하는 커밋이 없습니다.',
   'search.count': '결과: {n}',
   'search.some': '{total}개 중 {n}개 표시',

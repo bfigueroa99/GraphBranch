@@ -505,6 +505,8 @@ GB.i18n.define('bg', {
   'search.placeholder': 'Съобщение, SHA или @автор…',
   'search.author': 'Автор',
   'search.anyAuthor': 'Всички',
+  'search.graphAuthor': 'Само клонове на',
+  'search.graphAuthorCount': '{n} от {total} клона имат комити от този човек',
   'search.none': 'Няма съвпадащи комити.',
   'search.count': 'Резултати: {n}',
   'search.some': 'Показани {n} от {total}',

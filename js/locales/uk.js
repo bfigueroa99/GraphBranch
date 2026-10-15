@@ -521,6 +521,8 @@ GB.i18n.define('uk', {
   'search.placeholder': 'Повідомлення, SHA або @автор…',
   'search.author': 'Автор',
   'search.anyAuthor': 'Усі',
+  'search.graphAuthor': 'Показувати лише гілки автора',
+  'search.graphAuthorCount': 'У {n} з {total} гілок є коміти цієї людини',
   'search.none': 'Немає відповідних комітів.',
   'search.count': 'Результатів: {n}',
   'search.some': 'Показано {n} з {total}',

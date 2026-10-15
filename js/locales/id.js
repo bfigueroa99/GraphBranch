@@ -505,6 +505,8 @@ GB.i18n.define('id', {
   'search.placeholder': 'Pesan, SHA, atau @penulis…',
   'search.author': 'Penulis',
   'search.anyAuthor': 'Semua',
+  'search.graphAuthor': 'Tampilkan hanya cabang dari',
+  'search.graphAuthorCount': '{n} dari {total} cabang punya commit orang ini',
   'search.none': 'Tidak ada commit yang cocok.',
   'search.count': 'Hasil: {n}',
   'search.some': 'Menampilkan {n} dari {total}',

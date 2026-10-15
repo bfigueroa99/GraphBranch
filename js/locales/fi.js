@@ -505,6 +505,8 @@ GB.i18n.define('fi', {
   'search.placeholder': 'Viesti, SHA tai @tekijä…',
   'search.author': 'Tekijä',
   'search.anyAuthor': 'Kaikki',
+  'search.graphAuthor': 'Näytä vain haarat, joissa on tekijän',
+  'search.graphAuthorCount': '{n} / {total} haarassa on tämän henkilön commiteja',
   'search.none': 'Yksikään commit ei täsmää.',
   'search.count': 'Tulokset: {n}',
   'search.some': 'Näytetään {n} / {total}',

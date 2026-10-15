@@ -505,6 +505,8 @@ GB.i18n.define('ta', {
   'search.placeholder': 'செய்தி, SHA அல்லது @ஆசிரியர்…',
   'search.author': 'ஆசிரியர்',
   'search.anyAuthor': 'அனைவரும்',
+  'search.graphAuthor': 'இவரின் கிளைகளை மட்டும் காட்டு',
+  'search.graphAuthorCount': '{total} கிளைகளில் {n} கிளைகளில் இவரின் கமிட்கள் உள்ளன',
   'search.none': 'பொருந்தும் கமிட் இல்லை.',
   'search.count': 'முடிவுகள்: {n}',
   'search.some': '{total}-இல் {n} காட்டப்படுகிறது',

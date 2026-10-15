@@ -505,6 +505,8 @@ GB.i18n.define('ca', {
   'search.placeholder': 'Missatge, SHA o @autor…',
   'search.author': 'Autor',
   'search.anyAuthor': 'Tots',
+  'search.graphAuthor': 'Mostra només les branques de',
+  'search.graphAuthorCount': '{n} de {total} branques tenen commits d\'aquesta persona',
   'search.none': 'Cap commit coincideix.',
   'search.count': 'Resultats: {n}',
   'search.some': 'Es mostren {n} de {total}',

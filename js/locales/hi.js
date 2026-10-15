@@ -505,6 +505,8 @@ GB.i18n.define('hi', {
   'search.placeholder': 'संदेश, SHA या @लेखक…',
   'search.author': 'लेखक',
   'search.anyAuthor': 'सभी',
+  'search.graphAuthor': 'केवल इस व्यक्ति की ब्रांच दिखाएँ',
+  'search.graphAuthorCount': '{total} में से {n} ब्रांच में इस व्यक्ति के कमिट हैं',
   'search.none': 'कोई कमिट मेल नहीं खाता।',
   'search.count': 'नतीजे: {n}',
   'search.some': '{total} में से {n} दिखाए जा रहे हैं',

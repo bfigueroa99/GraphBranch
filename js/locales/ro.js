@@ -513,6 +513,8 @@ GB.i18n.define('ro', {
   'search.placeholder': 'Mesaj, SHA sau @autor…',
   'search.author': 'Autor',
   'search.anyAuthor': 'Toți',
+  'search.graphAuthor': 'Arată doar ramurile lui',
+  'search.graphAuthorCount': '{n} din {total} ramuri au commituri de la această persoană',
   'search.none': 'Niciun commit nu se potrivește.',
   'search.count': 'Rezultate: {n}',
   'search.some': 'Se afișează {n} din {total}',

@@ -505,6 +505,8 @@ GB.i18n.define('hu', {
   'search.placeholder': 'Üzenet, SHA vagy @szerző…',
   'search.author': 'Szerző',
   'search.anyAuthor': 'Mindenki',
+  'search.graphAuthor': 'Csak ennek a szerzőnek az ágai',
+  'search.graphAuthorCount': '{total} ágból {n}-ban vannak ennek a személynek a commitjai',
   'search.none': 'Nincs egyező commit.',
   'search.count': 'Találatok: {n}',
   'search.some': '{n} látható ennyiből: {total}',

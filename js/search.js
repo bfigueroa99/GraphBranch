@@ -19,6 +19,35 @@
     return [...map.values()].sort((a, b) => b.count - a.count || (a.name < b.name ? -1 : 1));
   }
 
+  /** La vista de `data` con solo las ramas que tienen commits de `author` (clave de `authors`): la rama por defecto
+      siempre queda, y de las demás cuentan los commits que no están ya en ella. Los PR de las ramas quitadas se van
+      con ellas. Devuelve { data, shown, total } (ramas con historia cargada); sin autor, `data` tal cual. No muta. */
+  function byAuthor(data, author) {
+    const total = [...data.branches.values()].filter((b) => data.commits.has(b.sha)).length;
+    if (!author) return { data, shown: total, total };
+    const def = data.repo?.defaultBranch;
+    const reach = (sha, skip) => {
+      const out = new Set();
+      const stack = [sha];
+      while (stack.length) {
+        const s = stack.pop();
+        if (!s || out.has(s) || skip.has(s) || !data.commits.has(s)) continue;
+        out.add(s);
+        stack.push(...(data.commits.get(s).parents || []));
+      }
+      return out;
+    };
+    const base = reach(data.branches.get(def)?.sha, new Set());
+    const branches = new Map();
+    for (const [name, b] of data.branches) {
+      const keep = name === def || b.isDefault || !data.commits.has(b.sha) || [...reach(b.sha, base)].some((s) => authorKey(data.commits.get(s)) === author);
+      if (keep) branches.set(name, b);
+    }
+    const pulls = new Map([...data.pulls].filter(([, p]) => !p.sameRepo || branches.has(p.head)));
+    const shown = [...branches.values()].filter((b) => data.commits.has(b.sha)).length;
+    return { data: { ...data, branches, pulls }, shown, total };
+  }
+
   /** Busca `query` (palabras separadas por espacios; todas tienen que aparecer en el mensaje, el SHA o el autor;
       `@ana` pide el autor) y, si hay `author`, solo los commits de esa clave. Del más nuevo al más viejo. */
   function find(data, query, { author = '', limit = LIMIT } = {}) {
@@ -119,5 +148,5 @@
     return { open, run };
   }
 
-  GB.search = { authors, find, mount, LIMIT };
+  GB.search = { authors, byAuthor, find, mount, LIMIT };
 })((window.GB = window.GB || {}));

@@ -604,6 +604,8 @@ GB.i18n.define('ar', {
   'search.placeholder': 'رسالة أو SHA أو ‎@مؤلف…',
   'search.author': 'المؤلف',
   'search.anyAuthor': 'الجميع',
+  'search.graphAuthor': 'إظهار الفروع التي كتبها فقط',
+  'search.graphAuthorCount': '{n} من {total} فرعًا فيها التزامات لهذا الشخص',
   'search.none': 'لا يوجد commit مطابق.',
   'search.count': 'النتائج: {n}',
   'search.some': 'عرض {n} من {total}',

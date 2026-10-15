@@ -505,6 +505,8 @@ GB.i18n.define('sw', {
   'search.placeholder': 'Ujumbe, SHA au @mwandishi…',
   'search.author': 'Mwandishi',
   'search.anyAuthor': 'Wote',
+  'search.graphAuthor': 'Onyesha matawi ya huyu tu',
+  'search.graphAuthorCount': 'Matawi {n} kati ya {total} yana commit za mtu huyu',
   'search.none': 'Hakuna commit inayolingana.',
   'search.count': 'Matokeo: {n}',
   'search.some': 'Inaonyesha {n} kati ya {total}',

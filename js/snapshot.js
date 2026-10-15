@@ -486,7 +486,7 @@
     rec.ondataavailable = (ev) => ev.data.size && chunks.push(ev.data);
     let on = true;
     let frames = 0;
-    const started = performance.now();
+    let started = performance.now();
     const frame = async () => {
       if (!on) return;
       try {
@@ -500,12 +500,17 @@
         ctx.fillRect(0, 0, out.width, out.height);
         ctx.drawImage(img, (out.width - w) / 2, (out.height - h) / 2, w, h);
         frames++;
+        // el grabador arranca recién con el primer cuadro dibujado: antes, el canvas está liso del color
+        // del fondo y el video empezaba con un tramo vacío
+        if (rec.state === 'inactive' && on && frames === 1) {
+          started = performance.now();
+          rec.start(1000);
+        }
       } catch (err) {
         console.warn('Un cuadro del video no se pudo armar:', err);
       }
       if (on) requestAnimationFrame(frame);
     };
-    rec.start(1000);
     requestAnimationFrame(frame);
     return {
       format,

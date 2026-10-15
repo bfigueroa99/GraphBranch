@@ -519,6 +519,25 @@ console.log('Escritorio (1280×800)');
     await page.waitForTimeout(1500);
     const saved = page.waitForEvent('download', { timeout: 30000 });
     const t0 = Date.now();
+    // el canvas del que graba MediaRecorder ya tiene que tener dibujo cuando el grabador arranca
+    await page.evaluate(() => {
+      const canvases = [];
+      const cs = HTMLCanvasElement.prototype.captureStream;
+      HTMLCanvasElement.prototype.captureStream = function (...a) {
+        canvases.push(this);
+        return cs.apply(this, a);
+      };
+      window.__recStart = null;
+      const st = MediaRecorder.prototype.start;
+      MediaRecorder.prototype.start = function (...a) {
+        const c = canvases[canvases.length - 1];
+        const d = c.getContext('2d').getImageData(0, 0, c.width, Math.round(c.height * 0.9)).data;
+        const seen = new Set();
+        for (let i = 0; i < d.length; i += 4) seen.add(((d[i] >> 3) << 10) | ((d[i + 1] >> 3) << 5) | (d[i + 2] >> 3));
+        window.__recStart = seen.size;
+        return st.apply(this, a);
+      };
+    });
     await rec.click();
     if ((await rec.getAttribute('aria-pressed')) !== 'true') throw new Error('el botón no queda encendido');
     if (Number(await page.inputValue('#replay .rp-range')) > 100) throw new Error('no volvió al principio de la historia');
@@ -531,6 +550,8 @@ console.log('Escritorio (1280×800)');
     const dl = await saved;
     const took = (Date.now() - t0) / 1000;
     await videoFile(page, dl, sel, { minSeconds: 1.5, maxSeconds: took + 1 });
+    const atStart = await page.evaluate(() => window.__recStart);
+    if (!(atStart >= 100)) throw new Error(`el grabador arrancó con el canvas vacío: ${atStart} colores al empezar`);
     if ((await rec.getAttribute('aria-pressed')) !== 'false') throw new Error('el botón sigue encendido');
   });
 

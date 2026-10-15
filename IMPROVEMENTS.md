@@ -138,7 +138,7 @@ segunda columna a la primera.
 
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
-| Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (repos públicos, API de Forgejo), bitbucket.org (repos públicos, API 2.0 de Bitbucket Cloud), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), repos locales (app de escritorio, con `git`), demo | otros servidores de Gitea/Forgejo, Codeberg y Bitbucket con token |
+| Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (repos públicos, API de Forgejo), bitbucket.org (repos públicos, API 2.0 de Bitbucket Cloud), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP), repos locales (app de escritorio, con `git`), demo | Codeberg y Bitbucket con token |
 | Datos | ramas, commits, PRs (y las pilas de PRs apilados), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, en el panel de salud), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (grupos de GitLab, constelación) |
@@ -278,7 +278,7 @@ se comprueban antes de construir sobre ellas.
     (https o `git@host:`, también con ruta y con `/-/tree/…`) se reconoce (`U.gitlabBase`, solo ese host y por
     prefijo exacto); sus claves llevan el host (`gitlab@host:`), aparte de las de gitlab.com; y en escritorio sus
     avatares salen de ese host (`img-src`, solo el elegido con `--gitlab-url`). En la web siguen sin avatares.
-36. **Gitea y Forgejo propios** · Fuentes · 1×2/2. [parte del ítem 21] La URL de un servidor propio de Forgejo/Gitea
+36. ~~**Gitea y Forgejo propios**~~ hecho en #97 · Fuentes. [parte del ítem 21] La URL de un servidor propio de Forgejo/Gitea
     (`--forge-url=`), con la misma regla de CSP que GitLab propio y el token solo a ese host. Comprobar:
     `tools/codeberg.test.mjs` con otra URL base.
 37. **Tokens para Codeberg y Bitbucket** · Fuentes · 2×2/2. [parte del ítem 21] Repos privados y más cuota:
@@ -1742,3 +1742,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
 - Validado: 254 pruebas (`node --test`), smoke (84 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 25 e2e en verde.
 - **Siguiente:** iteración 68, expansión: ítem 36 (Gitea y Forgejo propios, Fuentes)
+
+### 2026-10-15 · Iteración 68 · Expansión · Fuentes
+
+- **Capacidad nueva: Forgejo y Gitea propios** (ítem 36 de la hoja de ruta). `?forge=https://host` (o `--forge-url=` en escritorio) deja seguir repos de un servidor propio con la fuente de Codeberg (`CodebergSource({ webUrl })`, `endpoints`): API v1 en `host/api/v1`, enlaces al host, repos como `forgejo:dueño/repo` o por su URL (https o `git@host:`, por prefijo exacto), claves `forgejo@host:…` aparte de las de codeberg.org, etiqueta Forgejo. Sin token, solo ese host; el `html_url` que dé el servidor solo se acepta si cuelga de él. En escritorio el CSP suma solo ese host a `connect-src` y `img-src` (con sus avatares); en la web, sin avatares. Avisos propios sin nombrar a Codeberg (7 claves nuevas).
+- **Pruebas que fallan sin la capacidad:** `tools/codeberg.test.mjs` (la API simulada con otra URL base: `endpoints`, `parseRepo`, carga solo contra ese host, avatares, html_url ajeno, textos de error) y la e2e de escritorio «--forge-url suma solo ese host al CSP…».
+- README: función en la lista, comando de escritorio, Límites conocidos (Codeberg y propios), CSP y token. Mapa de alcance: fila Fuentes. Textos en los 40 idiomas (7 claves).
+- QA: filas de XSS (nada de afuera entra sin escapar; el host solo pasa por `new URL`), token (ninguna consulta lleva `Authorization`), CSP (`pwa.test` sigue cerrado; la e2e comprueba el host elegido y que sin https se ignora) y 40 idiomas por `check-i18n`; sin mirar a mano contra un servidor real, 320 px ni tema claro (no cambia la interfaz); auditoría: ver Validado.
+- Nota: `git push origin --delete loop/55` (y siguientes) lo negó el clasificador de permisos de la sesión; las `loop/28`–`loop/67` fusionadas siguen en origin (ya en Para Benjamin). El clon de la sesión venía superficial (`--depth`) y R3 de `--check` falló hasta `git fetch --unshallow`.
+- Reclamo: loop/68, sin colisión
+- Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
+- Validado: 261 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 26 e2e en verde.
+- **Siguiente:** iteración 69, expansión: ítem 39 (PRs por estado, Análisis)

@@ -394,6 +394,13 @@ GB.i18n.define('ms', {
   'err.httpNoMessageGitlab': 'GitLab membalas {status}',
   'err.httpNoMessageCodeberg': 'Codeberg membalas {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket membalas {status}',
+  'status.connectingForge': 'Menyambung ke pelayan Forgejo/Gitea…',
+  'err.notFoundForge': '{repo} tidak ditemui pada pelayan. Hanya repositori awam dibaca.',
+  'err.rateForge': 'Pelayan meminta GraphBranch memperlahankan. Ia akan mencuba semula dalam seminit.',
+  'err.networkForge': 'Tidak dapat mencapai pelayan. Semak sambungan anda; jika anda membuka GraphBranch dalam pemapar yang menyekat rangkaian, gunakan versi GitHub Pages atau fail setempat.',
+  'err.timeoutForge': 'Pelayan terlalu lama membalas. GraphBranch akan mencuba semula sendiri.',
+  'err.httpForge': 'Pelayan membalas {status}: {message}',
+  'err.httpNoMessageForge': 'Pelayan membalas {status}',
 
   /* ---------- dialog tetapan ---------- */
   'settings.title': 'Tetapan',

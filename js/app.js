@@ -142,6 +142,17 @@
     }
   })();
   U.gitlabBase = GITLAB_URL; // para que parseRepo reconozca las URLs de ese GitLab
+  /** ?forge=https://git.miempresa.com: un Forgejo o Gitea propio, además de codeberg.org. Mismas reglas que ?gitlab=: solo
+      https y solo si su CSP nombra ese host. Se escriben como "forgejo:dueño/repo" o con su URL. */
+  const FORGE_URL = (() => {
+    try {
+      const v = new URLSearchParams(location.search).get('forge') || '';
+      return GB.CodebergSource.endpoints(v) ? v : '';
+    } catch {
+      return '';
+    }
+  })();
+  U.forgeBase = FORGE_URL;
   const EMBED = document.documentElement.classList.contains('embed'); // ?embed=1, ver i18n.js
   const settings = {
     token: desktop ? '' : U.store.get('token', ''),
@@ -339,11 +350,12 @@
   const STAGGER = 700; // los repos que arrancan juntos, escalonados: GitHub no recibe todo a la vez
   /** Clave de un repo (de su fuente o de { owner, name }): con ella se guarda lo suyo (fijadas, filtro, logros). */
   /** Los proyectos de GitLab llevan "gitlab:" delante (en la clave, en lo que se guarda y en la URL). */
-  const hostPrefix = (src) => (src.host === 'gitlab' ? 'gitlab:' : src.host === 'codeberg' ? 'codeberg:' : src.host === 'bitbucket' ? 'bitbucket:' : src.host === 'local' ? 'local:' : '');
+  const hostPrefix = (src) => (src.host === 'gitlab' ? 'gitlab:' : src.host === 'codeberg' ? 'codeberg:' : src.host === 'forgejo' ? 'forgejo:' : src.host === 'bitbucket' ? 'bitbucket:' : src.host === 'local' ? 'local:' : '');
   /** Los servicios que no son GitHub, con el nombre que lleva su etiqueta. */
-  const FORGES = { gitlab: 'GitLab', codeberg: 'Codeberg', bitbucket: 'Bitbucket' };
+  const FORGES = { gitlab: 'GitLab', codeberg: 'Codeberg', forgejo: 'Forgejo', bitbucket: 'Bitbucket' };
   /** Las claves de un GitLab propio llevan su host: lo guardado de `grupo/proyecto` en gitlab.com no se mezcla con el suyo. */
-  const keyPrefix = (src) => (src.host === 'gitlab' && GITLAB_URL ? `gitlab@${new URL(GITLAB_URL).host}:` : hostPrefix(src));
+  const keyPrefix = (src) =>
+    src.host === 'gitlab' && GITLAB_URL ? `gitlab@${new URL(GITLAB_URL).host}:` : src.host === 'forgejo' && FORGE_URL ? `forgejo@${new URL(FORGE_URL).host}:` : hostPrefix(src);
   const keyOf = (src) => `${keyPrefix(src)}${src.owner || 'demo'}/${src.name || ''}`.toLowerCase();
   /** Nombre a la vista (el del servicio, ya cargado) y el escrito, que es el que se guarda (de él sale la clave). */
   const nameOf = (tab) => `${tab.source.data.repo.owner}/${tab.source.data.repo.name}`;
@@ -360,6 +372,7 @@
     if (host === 'local') return new GB.LocalGitSource({ id: owner, name, ...remembered });
     if (host === 'bitbucket') return new GB.BitbucketSource({ owner, name, ...remembered });
     if (host === 'codeberg') return new GB.CodebergSource({ owner, name, ...remembered });
+    if (host === 'forgejo') return new GB.CodebergSource({ owner, name, webUrl: FORGE_URL, avatars: desktop, ...remembered });
     if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, webUrl: GITLAB_URL, avatars: desktop, ...remembered });
     return new GB.GitHubSource({ owner, name, token: settings.token, apiUrl: API_URL, ...remembered });
   }
@@ -617,7 +630,7 @@
   function pruneOwners() {
     let changed = false;
     for (const owner of Object.keys(followedOwners)) {
-      const has = realTabs().some((x) => !['gitlab', 'codeberg', 'bitbucket', 'local'].includes(x.source.host) && String(x.source.owner).toLowerCase() === owner.toLowerCase());
+      const has = realTabs().some((x) => !['gitlab', 'codeberg', 'forgejo', 'bitbucket', 'local'].includes(x.source.host) && String(x.source.owner).toLowerCase() === owner.toLowerCase());
       if (!has) {
         delete followedOwners[owner];
         orgFeeds.delete(owner);
@@ -2175,7 +2188,7 @@
     // se reconecta lo que cambió: un token de GitLab nuevo no gasta la cuota de GitHub. Si no cambió
     // nada, todo, como dice el botón
     const changed = (tab) =>
-      settings.depth !== before.depth || settings.marks !== before.marks || (tab.source.host === 'codeberg' || tab.source.host === 'bitbucket' ? false : tab.source.host === 'gitlab' ? settings.gitlabToken !== before.gitlabToken : settings.token !== before.token);
+      settings.depth !== before.depth || settings.marks !== before.marks || (tab.source.host === 'codeberg' || tab.source.host === 'forgejo' || tab.source.host === 'bitbucket' ? false : tab.source.host === 'gitlab' ? settings.gitlabToken !== before.gitlabToken : settings.token !== before.token);
     if (realTabs().length) reconnectAll(realTabs().some(changed) ? changed : undefined);
     else el.tokenBanner.hidden = true;
   });

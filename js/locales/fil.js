@@ -395,6 +395,13 @@ GB.i18n.define('fil', {
   'err.httpNoMessageGitlab': 'Sumagot ang GitLab ng {status}',
   'err.httpNoMessageCodeberg': 'Sumagot ang Codeberg ng {status}',
   'err.httpNoMessageBitbucket': 'Sumagot ang Bitbucket ng {status}',
+  'status.connectingForge': 'Kumokonekta sa server ng Forgejo/Gitea…',
+  'err.notFoundForge': 'Hindi nahanap ang {repo} sa server. Mga pampublikong repository lang ang binabasa.',
+  'err.rateForge': 'Hiniling ng server sa GraphBranch na magdahan-dahan. Susubukan ulit sa loob ng isang minuto.',
+  'err.networkForge': 'Hindi maabot ang server. Suriin ang koneksyon; kung binuksan mo ang GraphBranch sa viewer na humaharang sa network, gamitin ang bersyon sa GitHub Pages o ang lokal na file.',
+  'err.timeoutForge': 'Masyadong natagalan ang server bago sumagot. Kusang susubukan ulit ng GraphBranch.',
+  'err.httpForge': 'Sumagot ang server ng {status}: {message}',
+  'err.httpNoMessageForge': 'Sumagot ang server ng {status}',
 
   /* ---------- settings dialog ---------- */
   'settings.title': 'Mga setting',

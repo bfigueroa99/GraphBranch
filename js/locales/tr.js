@@ -394,6 +394,13 @@ GB.i18n.define('tr', {
   'err.httpNoMessageGitlab': 'GitLab {status} yanıtı verdi',
   'err.httpNoMessageCodeberg': 'Codeberg {status} yanıtı verdi',
   'err.httpNoMessageBitbucket': 'Bitbucket {status} yanıtı verdi',
+  'status.connectingForge': 'Forgejo/Gitea sunucusuna bağlanılıyor…',
+  'err.notFoundForge': '{repo} sunucuda bulunamadı. Yalnızca herkese açık depolar okunur.',
+  'err.rateForge': 'Sunucu GraphBranch\'ten yavaşlamasını istedi. Bir dakika sonra yeniden deneyecek.',
+  'err.networkForge': 'Sunucuya ulaşılamadı. Bağlantınızı kontrol edin; GraphBranch\'i ağı engelleyen bir görüntüleyicide açtıysanız GitHub Pages sürümünü veya yerel dosyayı kullanın.',
+  'err.timeoutForge': 'Sunucu çok geç yanıt verdi. GraphBranch kendiliğinden yeniden deneyecek.',
+  'err.httpForge': 'Sunucu {status} yanıtı verdi: {message}',
+  'err.httpNoMessageForge': 'Sunucu {status} yanıtı verdi',
 
   /* ---------- ayarlar penceresi ---------- */
   'settings.title': 'Ayarlar',

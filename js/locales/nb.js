@@ -394,6 +394,13 @@ GB.i18n.define('nb', {
   'err.httpNoMessageGitlab': 'GitLab svarte {status}',
   'err.httpNoMessageCodeberg': 'Codeberg svarte {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket svarte {status}',
+  'status.connectingForge': 'Kobler til Forgejo/Gitea-serveren…',
+  'err.notFoundForge': 'Fant ikke {repo} på serveren. Bare offentlige repoer leses.',
+  'err.rateForge': 'Serveren ba GraphBranch om å senke tempoet. Den prøver igjen om et minutt.',
+  'err.networkForge': 'Kunne ikke nå serveren. Sjekk tilkoblingen; hvis du åpnet GraphBranch i en fremviser som blokkerer nettverket, bruk GitHub Pages-versjonen eller den lokale filen.',
+  'err.timeoutForge': 'Serveren brukte for lang tid på å svare. GraphBranch prøver på nytt av seg selv.',
+  'err.httpForge': 'Serveren svarte {status}: {message}',
+  'err.httpNoMessageForge': 'Serveren svarte {status}',
 
   /* ---------- innstillinger ---------- */
   'settings.title': 'Innstillinger',

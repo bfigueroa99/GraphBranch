@@ -402,6 +402,13 @@ GB.i18n.define('hr', {
   'err.httpNoMessageGitlab': 'GitLab je odgovorio {status}',
   'err.httpNoMessageCodeberg': 'Codeberg je odgovorio {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket je odgovorio {status}',
+  'status.connectingForge': 'Povezivanje s Forgejo/Gitea poslužiteljem…',
+  'err.notFoundForge': '{repo} nije pronađen na poslužitelju. Čitaju se samo javni repozitoriji.',
+  'err.rateForge': 'Poslužitelj je zatražio od GraphBrancha da uspori. Pokušat će ponovno za minutu.',
+  'err.networkForge': 'Poslužitelj nije dostupan. Provjerite vezu; ako ste GraphBranch otvorili u pregledniku koji blokira mrežu, upotrijebite inačicu na GitHub Pages ili lokalnu datoteku.',
+  'err.timeoutForge': 'Poslužitelj je predugo odgovarao. GraphBranch će sam pokušati ponovno.',
+  'err.httpForge': 'Poslužitelj je odgovorio {status}: {message}',
+  'err.httpNoMessageForge': 'Poslužitelj je odgovorio {status}',
 
   /* ---------- postavke ---------- */
   'settings.title': 'Postavke',

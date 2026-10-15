@@ -405,6 +405,13 @@ GB.i18n.define('cs', {
   'err.httpNoMessageGitlab': 'GitLab odpověděl {status}',
   'err.httpNoMessageCodeberg': 'Codeberg odpověděl {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket odpověděl {status}',
+  'status.connectingForge': 'Připojování k serveru Forgejo/Gitea…',
+  'err.notFoundForge': 'Na serveru se nenašlo {repo}. Čtou se jen veřejné repozitáře.',
+  'err.rateForge': 'Server požádal GraphBranch, aby zpomalil. Za minutu to zkusí znovu.',
+  'err.networkForge': 'Server se nepodařilo zastihnout. Zkontrolujte připojení; pokud jste GraphBranch otevřeli v prohlížeči, který blokuje síť, použijte verzi na GitHub Pages nebo místní soubor.',
+  'err.timeoutForge': 'Server odpovídal příliš dlouho. GraphBranch to zkusí znovu sám.',
+  'err.httpForge': 'Server odpověděl {status}: {message}',
+  'err.httpNoMessageForge': 'Server odpověděl {status}',
 
   /* ---------- nastavení ---------- */
   'settings.title': 'Nastavení',

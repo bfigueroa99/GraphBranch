@@ -394,6 +394,13 @@ GB.i18n.define('el', {
   'err.httpNoMessageGitlab': 'Το GitLab απάντησε {status}',
   'err.httpNoMessageCodeberg': 'Το Codeberg απάντησε {status}',
   'err.httpNoMessageBitbucket': 'Το Bitbucket απάντησε {status}',
+  'status.connectingForge': 'Σύνδεση με τον διακομιστή Forgejo/Gitea…',
+  'err.notFoundForge': 'Το {repo} δεν βρέθηκε στον διακομιστή. Διαβάζονται μόνο δημόσια αποθετήρια.',
+  'err.rateForge': 'Ο διακομιστής ζήτησε από το GraphBranch να επιβραδύνει. Θα ξαναδοκιμάσει σε ένα λεπτό.',
+  'err.networkForge': 'Δεν ήταν δυνατή η επικοινωνία με τον διακομιστή. Ελέγξτε τη σύνδεση· αν ανοίξατε το GraphBranch σε πρόγραμμα προβολής που μπλοκάρει το δίκτυο, χρησιμοποιήστε την έκδοση GitHub Pages ή το τοπικό αρχείο.',
+  'err.timeoutForge': 'Ο διακομιστής άργησε πολύ να απαντήσει. Το GraphBranch θα ξαναδοκιμάσει μόνο του.',
+  'err.httpForge': 'Ο διακομιστής απάντησε {status}: {message}',
+  'err.httpNoMessageForge': 'Ο διακομιστής απάντησε {status}',
 
   /* ---------- ρυθμίσεις ---------- */
   'settings.title': 'Ρυθμίσεις',

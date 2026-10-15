@@ -394,6 +394,13 @@ GB.i18n.define('hi', {
   'err.httpNoMessageGitlab': 'GitLab ने {status} के साथ उत्तर दिया',
   'err.httpNoMessageCodeberg': 'Codeberg ने {status} के साथ उत्तर दिया',
   'err.httpNoMessageBitbucket': 'Bitbucket ने {status} के साथ उत्तर दिया',
+  'status.connectingForge': 'Forgejo/Gitea सर्वर से जुड़ रहे हैं…',
+  'err.notFoundForge': 'सर्वर पर {repo} नहीं मिला। केवल सार्वजनिक रिपॉज़िटरी पढ़ी जाती हैं।',
+  'err.rateForge': 'सर्वर ने GraphBranch से धीमे चलने को कहा। यह एक मिनट में फिर कोशिश करेगा।',
+  'err.networkForge': 'सर्वर तक नहीं पहुँचा जा सका। कनेक्शन जाँचें; अगर आपने GraphBranch को ऐसे व्यूअर में खोला है जो नेटवर्क रोकता है, तो GitHub Pages वाला संस्करण या स्थानीय फ़ाइल इस्तेमाल करें।',
+  'err.timeoutForge': 'सर्वर ने जवाब देने में बहुत देर की। GraphBranch अपने आप फिर कोशिश करेगा।',
+  'err.httpForge': 'सर्वर ने {status} जवाब दिया: {message}',
+  'err.httpNoMessageForge': 'सर्वर ने {status} जवाब दिया',
 
   /* ---------- सेटिंग ---------- */
   'settings.title': 'सेटिंग',

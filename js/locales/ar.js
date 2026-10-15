@@ -493,6 +493,13 @@ GB.i18n.define('ar', {
   'err.httpNoMessageGitlab': 'رد GitLab بالحالة {status}',
   'err.httpNoMessageCodeberg': 'رد Codeberg بالحالة {status}',
   'err.httpNoMessageBitbucket': 'رد Bitbucket بالحالة {status}',
+  'status.connectingForge': 'جارٍ الاتصال بخادم Forgejo/Gitea…',
+  'err.notFoundForge': 'لم يتم العثور على {repo} على الخادم. تُقرأ المستودعات العامة فقط.',
+  'err.rateForge': 'طلب الخادم من GraphBranch أن يبطئ. سيحاول مرة أخرى بعد دقيقة.',
+  'err.networkForge': 'تعذّر الوصول إلى الخادم. تحقق من اتصالك؛ وإذا فتحت GraphBranch داخل عارض يحجب الشبكة، فاستخدم نسخة GitHub Pages أو الملف المحلي.',
+  'err.timeoutForge': 'استغرق الخادم وقتًا طويلًا للرد. سيعيد GraphBranch المحاولة تلقائيًا.',
+  'err.httpForge': 'ردّ الخادم بالرمز {status}: {message}',
+  'err.httpNoMessageForge': 'ردّ الخادم بالرمز {status}',
 
   /* ---------- settings dialog ---------- */
   'settings.title': 'الإعدادات',

@@ -395,6 +395,13 @@ GB.i18n.define('th', {
   'err.httpNoMessageGitlab': 'GitLab ตอบกลับ {status}',
   'err.httpNoMessageCodeberg': 'Codeberg ตอบกลับ {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket ตอบกลับ {status}',
+  'status.connectingForge': 'กำลังเชื่อมต่อกับเซิร์ฟเวอร์ Forgejo/Gitea…',
+  'err.notFoundForge': 'ไม่พบ {repo} บนเซิร์ฟเวอร์ อ่านเฉพาะที่เก็บสาธารณะเท่านั้น',
+  'err.rateForge': 'เซิร์ฟเวอร์ขอให้ GraphBranch ช้าลง จะลองใหม่ในอีกหนึ่งนาที',
+  'err.networkForge': 'เข้าถึงเซิร์ฟเวอร์ไม่ได้ ตรวจสอบการเชื่อมต่อ หากเปิด GraphBranch ในตัวแสดงผลที่บล็อกเครือข่าย ให้ใช้เวอร์ชัน GitHub Pages หรือไฟล์ในเครื่อง',
+  'err.timeoutForge': 'เซิร์ฟเวอร์ตอบช้าเกินไป GraphBranch จะลองใหม่เอง',
+  'err.httpForge': 'เซิร์ฟเวอร์ตอบ {status}: {message}',
+  'err.httpNoMessageForge': 'เซิร์ฟเวอร์ตอบ {status}',
 
   /* ---------- settings dialog ---------- */
   'settings.title': 'การตั้งค่า',

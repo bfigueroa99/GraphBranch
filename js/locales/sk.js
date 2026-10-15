@@ -405,6 +405,13 @@ GB.i18n.define('sk', {
   'err.httpNoMessageGitlab': 'GitLab odpovedal {status}',
   'err.httpNoMessageCodeberg': 'Codeberg odpovedal {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket odpovedal {status}',
+  'status.connectingForge': 'Pripája sa k serveru Forgejo/Gitea…',
+  'err.notFoundForge': 'Na serveri sa nenašlo {repo}. Čítajú sa iba verejné repozitáre.',
+  'err.rateForge': 'Server požiadal GraphBranch, aby spomalil. O minútu to skúsi znova.',
+  'err.networkForge': 'Server sa nepodarilo zastihnúť. Skontrolujte pripojenie; ak ste GraphBranch otvorili v prehliadači, ktorý blokuje sieť, použite verziu na GitHub Pages alebo miestny súbor.',
+  'err.timeoutForge': 'Server odpovedal príliš dlho. GraphBranch to skúsi znova sám.',
+  'err.httpForge': 'Server odpovedal {status}: {message}',
+  'err.httpNoMessageForge': 'Server odpovedal {status}',
 
   /* ---------- settings dialog ---------- */
   'settings.title': 'Nastavenia',

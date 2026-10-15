@@ -34,9 +34,11 @@ window.GB = window.GB || {};
   };
 
   /** Acepta "owner/repo", URLs de GitHub (https o ssh) y quita ".git". Un repo de Bitbucket Cloud, con su URL de bitbucket.org o como "bitbucket:espacio/repo": devuelve { host: 'bitbucket', owner, name }. Un repo de Codeberg va con su
-      URL de codeberg.org o como "codeberg:dueño/repo": devuelve { host: 'codeberg', owner, name }. Un proyecto de GitLab, con
+      URL de codeberg.org o como "codeberg:dueño/repo": devuelve { host: 'codeberg', owner, name }. Un servidor propio de Forgejo/Gitea
+      (?forge=) va con su URL o como "forgejo:dueño/repo": { host: 'forgejo', owner, name }. Un proyecto de GitLab, con
       sus subgrupos, va con su URL de gitlab.com (también la de una rama o un archivo, o ssh) o como
       "gitlab:grupo/proyecto": devuelve { host: 'gitlab', owner: 'grupo/sub', name: 'proyecto' }. */
+  U.forgeBase = ''; // la dirección de un Forgejo/Gitea propio (?forge=, --forge-url=): sus URLs también se reconocen, como "forgejo:dueño/repo" (ver app.js)
   U.gitlabBase = ''; // la dirección de un GitLab propio (?gitlab=, --gitlab-url=): sus URLs también se reconocen (ver app.js)
   U.parseRepo = (input) => {
     // un repo de esta máquina (app de escritorio): local:<id de la carpeta>/<nombre>; el id lo da el proceso principal
@@ -51,6 +53,21 @@ window.GB = window.GB || {};
       const lower = s.toLowerCase();
       if (lower.startsWith(base.toLowerCase() + '/')) own = [null, s.slice(base.length + 1)];
       else if (/^[^/]+$/.test(base.slice(8)) && lower.startsWith(ssh.toLowerCase() + ':')) own = [null, s.slice(ssh.length + 1)];
+    }
+    // un Forgejo/Gitea propio: su URL https (o git@host: por ssh), también por prefijo exacto
+    if (U.forgeBase) {
+      const base = U.forgeBase.replace(/\/+$/, '');
+      const ssh = `git@${base.replace(/^https:\/\//, '')}`;
+      const lower = s.toLowerCase();
+      let rest = null;
+      if (lower.startsWith(base.toLowerCase() + '/')) rest = s.slice(base.length + 1);
+      else if (/^[^/]+$/.test(base.slice(8)) && lower.startsWith(ssh.toLowerCase() + ':')) rest = s.slice(ssh.length + 1);
+      else if (/^forgejo:/i.test(s)) rest = s.slice(8);
+      if (rest !== null) {
+        const parts = rest.split('/').filter(Boolean);
+        if (parts.length < 2 || !parts.slice(0, 2).every((p) => /^[\w.-]+$/.test(p) && !/^\.+$/.test(p))) return null;
+        return { host: 'forgejo', owner: parts[0], name: parts[1] };
+      }
     }
     const lab = own || s.match(/^gitlab:(.+)$/i) || s.match(/gitlab\.com[/:](.+)$/i);
     if (lab) {

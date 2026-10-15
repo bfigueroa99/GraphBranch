@@ -394,6 +394,13 @@ GB.i18n.define('ta', {
   'err.httpNoMessageGitlab': 'GitLab {status} என்று பதிலளித்தது',
   'err.httpNoMessageCodeberg': 'Codeberg {status} என்று பதிலளித்தது',
   'err.httpNoMessageBitbucket': 'Bitbucket {status} என்று பதிலளித்தது',
+  'status.connectingForge': 'Forgejo/Gitea சேவையகத்துடன் இணைக்கிறது…',
+  'err.notFoundForge': 'சேவையகத்தில் {repo} கிடைக்கவில்லை. பொது களஞ்சியங்கள் மட்டுமே படிக்கப்படும்.',
+  'err.rateForge': 'சேவையகம் GraphBranch-ஐ மெதுவாகச் செல்லுமாறு கேட்டது. ஒரு நிமிடத்தில் மீண்டும் முயலும்.',
+  'err.networkForge': 'சேவையகத்தை அடைய முடியவில்லை. இணைப்பைச் சரிபாருங்கள்; நெட்வொர்க்கைத் தடுக்கும் பார்வையாளரில் GraphBranch-ஐத் திறந்திருந்தால், GitHub Pages பதிப்பை அல்லது உள்ளூர் கோப்பைப் பயன்படுத்துங்கள்.',
+  'err.timeoutForge': 'சேவையகம் பதிலளிக்க மிக நேரம் எடுத்தது. GraphBranch தானாகவே மீண்டும் முயலும்.',
+  'err.httpForge': 'சேவையகம் {status} எனப் பதிலளித்தது: {message}',
+  'err.httpNoMessageForge': 'சேவையகம் {status} எனப் பதிலளித்தது',
 
   /* ---------- அமைப்புகள் ---------- */
   'settings.title': 'அமைப்புகள்',

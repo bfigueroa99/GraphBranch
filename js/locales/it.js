@@ -395,6 +395,13 @@ GB.i18n.define('it', {
   'err.httpNoMessageGitlab': 'GitLab ha risposto {status}',
   'err.httpNoMessageCodeberg': 'Codeberg ha risposto {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket ha risposto {status}',
+  'status.connectingForge': 'Connessione al server Forgejo/Gitea…',
+  'err.notFoundForge': '{repo} non è stato trovato sul server. Si leggono solo repository pubblici.',
+  'err.rateForge': 'Il server ha chiesto a GraphBranch di rallentare. Riproverà tra un minuto.',
+  'err.networkForge': 'Impossibile raggiungere il server. Controlla la connessione; se hai aperto GraphBranch in un visualizzatore che blocca la rete, usa la versione di GitHub Pages o il file locale.',
+  'err.timeoutForge': 'Il server ha impiegato troppo a rispondere. GraphBranch riproverà da solo.',
+  'err.httpForge': 'Il server ha risposto {status}: {message}',
+  'err.httpNoMessageForge': 'Il server ha risposto {status}',
 
   /* ---------- impostazioni ---------- */
   'settings.title': 'Impostazioni',

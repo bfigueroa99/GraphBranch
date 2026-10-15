@@ -451,6 +451,13 @@ GB.i18n.define('he', {
   'err.httpNoMessageGitlab': 'GitLab השיב {status}',
   'err.httpNoMessageCodeberg': 'Codeberg השיב {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket השיב {status}',
+  'status.connectingForge': 'מתחבר לשרת Forgejo/Gitea…',
+  'err.notFoundForge': '{repo} לא נמצא בשרת. נקראים רק מאגרים ציבוריים.',
+  'err.rateForge': 'השרת ביקש מ-GraphBranch להאט. ינסה שוב בעוד דקה.',
+  'err.networkForge': 'לא ניתן להגיע לשרת. בדקו את החיבור; אם פתחתם את GraphBranch בצופה שחוסם את הרשת, השתמשו בגרסת GitHub Pages או בקובץ המקומי.',
+  'err.timeoutForge': 'השרת התעכב יותר מדי בתשובה. GraphBranch ינסה שוב מעצמו.',
+  'err.httpForge': 'השרת ענה {status}: {message}',
+  'err.httpNoMessageForge': 'השרת ענה {status}',
 
   /* ---------- settings dialog ---------- */
   'settings.title': 'הגדרות',

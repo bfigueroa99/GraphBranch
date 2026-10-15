@@ -25,7 +25,19 @@
   const M = i18n.msg;
   const { ApiError } = GB.GitHubSource;
   const WEB = 'https://codeberg.org';
-  const API = WEB + '/api/v1';
+  /** Las direcciones de un Forgejo/Gitea: codeberg.org o uno propio (`https://git.miempresa.com`, también con una
+      ruta si cuelga de una). null si no es una URL https o lleva usuario. */
+  const endpoints = (webUrl) => {
+    if (!webUrl) return { web: WEB, api: WEB + '/api/v1' };
+    try {
+      const u = new URL(String(webUrl));
+      if (u.protocol !== 'https:' || u.username || u.password) return null;
+      const web = (u.origin + u.pathname).replace(/\/+$/, '');
+      return { web, api: web + '/api/v1' };
+    } catch {
+      return null;
+    }
+  };
   const POLL_MS = 20000; // entre ciclos
   const PULLS_MS = 40000; // entre consultas de PRs
   const PAGE = 50; // tope del servidor por página
@@ -35,22 +47,32 @@
   const BATCH_MS = 4000;
   const HARD = new Set(['rate', 'network', 'auth', 'aborted']);
   const hard = (err) => HARD.has(err?.kind);
-  /** Los textos que nombran a GitHub, cambiados por los de Codeberg. */
+  /** Los textos que nombran a GitHub, cambiados por los de Codeberg o, en un servidor propio, por los del servidor. */
   const TERMS = {
     'status.connecting': 'status.connectingCodeberg',
     'err.network': 'err.networkCodeberg',
     'err.timeout': 'err.timeoutCodeberg',
   };
+  const OWN_TERMS = {
+    'status.connecting': 'status.connectingForge',
+    'err.network': 'err.networkForge',
+    'err.timeout': 'err.timeoutForge',
+  };
   const segs = (path) => String(path).split('/').map(encodeURIComponent).join('/');
   const DRAFT = /^\s*(?:\[wip\]|wip:|draft:|\[draft\])/i;
 
   class CodebergSource extends GB.GitHubSource {
-    constructor({ owner, name, depth = 40, filter = '', pins = [] }) {
+    /** `webUrl` vacío es codeberg.org; con la dirección de un Forgejo/Gitea propio (?forge=, --forge-url=), ese servidor. Sin token en ningún caso. */
+    constructor({ owner, name, depth = 40, filter = '', pins = [], webUrl = '', avatars = false }) {
       super({ owner, name, token: '', depth, filter, pins });
-      this.host = 'codeberg';
+      const own = !!webUrl && !!endpoints(webUrl); // una dirección que no sea https no se usa: queda codeberg.org
+      this.ep = (own && endpoints(webUrl)) || endpoints('');
+      this.own = own;
+      this.avatars = !own || avatars; // los de un servidor propio, solo si el CSP nombra su host en img-src (escritorio)
+      this.host = own ? 'forgejo' : 'codeberg';
       this.mode = 'list';
-      this.data.repo.url = `${WEB}/${segs(owner)}/${segs(name)}`;
-      this.data.repo.host = 'codeberg';
+      this.data.repo.url = `${this.ep.web}/${segs(owner)}/${segs(name)}`;
+      this.data.repo.host = this.host;
       this.prevHead = new Map(); // cabeza nueva -> la anterior de esa rama
     }
 
@@ -59,13 +81,13 @@
     }
 
     term(key) {
-      return TERMS[key] || key;
+      return (this.own ? OWN_TERMS : TERMS)[key] || key;
     }
 
     /* ---------- HTTP ---------- */
 
     async api(path, { allow = [] } = {}) {
-      const { res, body } = await this.request(API + path, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+      const { res, body } = await this.request(this.ep.api + path, { headers: { Accept: 'application/json' }, cache: 'no-store' });
       this.cost++;
       if (allow.includes(res.status)) return { data: null, fresh: true, status: res.status, headers: res.headers };
       if (!res.ok) throw this.toError(res, body);
@@ -73,17 +95,18 @@
     }
 
     notFound() {
-      return new ApiError(M('err.notFoundCodeberg', { repo: `${this.owner}/${this.name}` }), { status: 404, kind: 'notfound' });
+      return new ApiError(M(this.own ? 'err.notFoundForge' : 'err.notFoundCodeberg', { repo: `${this.owner}/${this.name}` }), { status: 404, kind: 'notfound' });
     }
 
     toError(res, body) {
       if (res.status === 404) return this.notFound();
       if (res.status === 429) {
         const wait = Number(res.headers.get('Retry-After'));
-        return new ApiError(M('err.rateCodeberg'), { status: 429, kind: 'rate', resetAt: Date.now() + (wait > 0 ? wait * 1000 : 60000) });
+        return new ApiError(M(this.own ? 'err.rateForge' : 'err.rateCodeberg'), { status: 429, kind: 'rate', resetAt: Date.now() + (wait > 0 ? wait * 1000 : 60000) });
       }
       const msg = typeof body?.message === 'string' ? body.message : res.statusText || '';
-      return new ApiError(msg ? M('err.httpCodeberg', { status: res.status, message: msg }) : M('err.httpNoMessageCodeberg', { status: res.status }), {
+      const [withMsg, noMsg] = this.own ? ['err.httpForge', 'err.httpNoMessageForge'] : ['err.httpCodeberg', 'err.httpNoMessageCodeberg'];
+      return new ApiError(msg ? M(withMsg, { status: res.status, message: msg }) : M(noMsg, { status: res.status }), {
         status: res.status,
         kind: 'http',
       });
@@ -144,7 +167,7 @@
         owner: p.owner?.login || this.owner,
         name: p.name || this.name,
         defaultBranch: p.default_branch || null,
-        url: p.html_url || this.data.repo.url,
+        url: typeof p.html_url === 'string' && p.html_url.startsWith(this.ep.web + '/') ? p.html_url : this.data.repo.url,
         private: !!p.private,
         description: p.description || '',
       });
@@ -188,8 +211,8 @@
       const added = super.addCommit(c);
       if (added) {
         const mine = this.data.commits.get(c.sha);
-        // los avatares que no son de codeberg.org (Gravatar, Libravatar) los bloquea el CSP: se omiten
-        if (mine.author.avatar && !mine.author.avatar.startsWith(WEB + '/')) mine.author.avatar = null;
+        // los avatares que no son del servidor (Gravatar, Libravatar) los bloquea el CSP: se omiten
+        if (mine.author.avatar && !(this.avatars && mine.author.avatar.startsWith(this.ep.web + '/'))) mine.author.avatar = null;
         mine.url = c.html_url || this.link('commit', c.sha);
       }
       return added;
@@ -249,7 +272,7 @@
 
     person(u) {
       if (!u) return null;
-      const avatar = (u.avatar_url || '').startsWith(WEB + '/') ? u.avatar_url : null;
+      const avatar = this.avatars && (u.avatar_url || '').startsWith(this.ep.web + '/') ? u.avatar_url : null;
       return { login: u.login, name: u.full_name || u.login, avatar };
     }
 
@@ -317,7 +340,7 @@
 
     /** Una consulta cuya respuesta es texto y no JSON. */
     async raw(path) {
-      const { res, body } = await this.request(API + path, { headers: { Accept: 'text/plain' }, cache: 'no-store', raw: true });
+      const { res, body } = await this.request(this.ep.api + path, { headers: { Accept: 'text/plain' }, cache: 'no-store', raw: true });
       this.cost++;
       if (!res.ok) throw this.toError(res, null);
       return body;
@@ -328,5 +351,6 @@
     }
   }
 
+  CodebergSource.endpoints = endpoints;
   GB.CodebergSource = CodebergSource;
 })(window.GB);

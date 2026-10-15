@@ -394,6 +394,13 @@ GB.i18n.define('ja', {
   'err.httpNoMessageGitlab': 'GitLab が {status} を返しました',
   'err.httpNoMessageCodeberg': 'Codeberg が {status} を返しました',
   'err.httpNoMessageBitbucket': 'Bitbucket が {status} を返しました',
+  'status.connectingForge': 'Forgejo/Gitea サーバーに接続しています…',
+  'err.notFoundForge': 'サーバーに {repo} が見つかりません。読み取るのは公開リポジトリだけです。',
+  'err.rateForge': 'サーバーが GraphBranch にペースを落とすよう求めました。1 分後に再試行します。',
+  'err.networkForge': 'サーバーに接続できませんでした。接続を確認してください。ネットワークを遮断するビューアで GraphBranch を開いた場合は、GitHub Pages 版かローカルファイルを使ってください。',
+  'err.timeoutForge': 'サーバーの応答が遅すぎました。GraphBranch が自動で再試行します。',
+  'err.httpForge': 'サーバーが {status} を返しました: {message}',
+  'err.httpNoMessageForge': 'サーバーが {status} を返しました',
 
   /* ---------- 設定 ---------- */
   'settings.title': '設定',

@@ -394,6 +394,13 @@ GB.i18n.define('ko', {
   'err.httpNoMessageGitlab': 'GitLab 응답 {status}',
   'err.httpNoMessageCodeberg': 'Codeberg 응답 {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket 응답 {status}',
+  'status.connectingForge': 'Forgejo/Gitea 서버에 연결하는 중…',
+  'err.notFoundForge': '서버에서 {repo}을(를) 찾을 수 없습니다. 공개 저장소만 읽습니다.',
+  'err.rateForge': '서버가 GraphBranch에 속도를 늦추라고 요청했습니다. 1분 뒤에 다시 시도합니다.',
+  'err.networkForge': '서버에 연결할 수 없습니다. 연결을 확인하세요. 네트워크를 차단하는 뷰어에서 GraphBranch를 열었다면 GitHub Pages 버전이나 로컬 파일을 사용하세요.',
+  'err.timeoutForge': '서버 응답이 너무 오래 걸렸습니다. GraphBranch가 알아서 다시 시도합니다.',
+  'err.httpForge': '서버가 {status}(으)로 응답했습니다: {message}',
+  'err.httpNoMessageForge': '서버가 {status}(으)로 응답했습니다',
 
   /* ---------- 설정 ---------- */
   'settings.title': '설정',

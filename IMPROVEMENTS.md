@@ -395,9 +395,10 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Baja
 
-3. [Accesibilidad] Objetivos chicos y estados confusos. `audit:objetivo-chico` (16 hallazgos conocidos en
-    `tools/audit-base.json`): las etiquetas de rama de 22 px de alto en 3D y 2D (mínimo 24), la
-    barra de posición del Replay (`.rp-range`, 16 px) y las marcas de la brújula del vuelo (18×18 px).
+3. [Accesibilidad] Objetivos chicos y estados confusos. `audit:objetivo-chico` (4 hallazgos conocidos en
+    `tools/audit-base.json`): las etiquetas de rama de 22 px de alto en 2D (mínimo 24), la barra de
+    posición del Replay (`.rp-range`, 16 px) y las marcas de la brújula del vuelo (18×18 px).
+    Las etiquetas 3D ya miden 24 px (iteración 75).
     Además: botones que cambian a la vez `aria-pressed` y el texto (el de pausa del Replay, `replay.js:367`)
     y la leyenda 2D sin acceso por teclado. Reproducir: `node tools/audit.mjs`.
 4. [Errores] La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
@@ -432,18 +433,24 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 14. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
     (6.009 ms con ≤ 6.000; tareas largas 4.809 ms con ≤ 4.000), sin GPU y con la corrida larga; la corrida
     normal de la puerta no lo marca. Medir con `node tools/audit.mjs --repetir 3` antes de tocar nada.
-15. [QA] La auditoría completa con `--langs` marca 3 `objetivo-chico` en `celular-320` que la base no guarda
-    (`#branch-filter` 226×19, `#graph3d > div > button` 95×22 y `.default` 73×22): son los controles del
-    pendiente 3 a 320 px, no un fallo nuevo. Decidir si entran a la base o se arreglan con el 3.
-    Reproducción: `node tools/audit.mjs --langs`, escenario `celular-320`.
-16. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+15. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
     Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-17. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+16. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
+17. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
+    manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
+    `run_in_background` o partir `--langs` por lotes de idiomas.
+    Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
+18. [Accesibilidad] Las etiquetas de rama 2D (`g.head[role=button]`) miden 22 px de alto en un SVG; subirlas
+    a 24 px exige recalcular el apilado de etiquetas de `layout.js`. Parte del pendiente 3, aparte por tamaño.
+    Reproducción: `node tools/audit.mjs`, escenario `escritorio-2d`.
+19. [QA] El smoke y la auditoría no miran el 3D de celular a 320 px con el panel de ramas abierto (solo las
+    etiquetas); revisar a mano que las etiquetas de 24 px no se tapen entre sí con 1.000 ramas.
+    Reproducción: Playwright contra `node e2e/serve.mjs 4173`, 320 px, 3D, `?repo=demo`.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); `placeLabels`/`placeNotes` crean arreglos por cuadro
@@ -1818,3 +1825,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Reclamo: loop/74, sin colisión
 - Validado: 269 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 26 e2e en verde.
 - **Siguiente:** iteración 75, mantenimiento · QA: pendiente 15 (La auditoría completa con `--langs` marca 3 `objetivo-chico` en `celular-320` q…)
+
+### 2026-10-15 · Iteración 75 · Mantenimiento · QA
+
+- **Auditoría de QA: la auditoría completa con `--langs`, de la que se arregla lo peor** (pendiente 15). `#branch-filter` ya medía 24 px desde antes; lo que quedaba en `celular-320` eran las etiquetas de rama 3D (22 px). Ahora miden 24 px: salen 12 hallazgos de la base (en los 40 idiomas, `escritorio-3d` y `galaxias-vuelo`). Además, `node tools/audit.mjs --json <ruta>` fallaba con `ENOENT` si la carpeta no existía (en una sesión nueva no hay `test-results/`): `guardarInforme` la crea.
+- **Reproducción:** `node tools/audit.mjs --langs --json test-results/auditoria.json` → `ERROR: ENOENT: no such file or directory, open 'test-results/auditoria.json'` (sin la carpeta, tras ~145 s de auditoría).
+- **Hallazgos:** 3 nuevos (pendientes 17, 18, 19), 0 a la base de la auditoría (la base baja de 16 a 4 hallazgos conocidos).
+- **Pruebas que fallan sin el arreglo:** `tools/audit.test.mjs` («--json crea la carpeta del informe…»); las etiquetas 3D las vigila la auditoría de la puerta contra la base de 4.
+- README: sin cambios (no hay función nueva).
+- QA: auditoría completa `--langs` (solo `objetivo-chico`); etiquetas 3D a 24 px por la auditoría en los 40 idiomas y en vuelo; sin mirar a mano 1.000 ramas a 320 px (pendiente 19); auditoría: 0 hallazgos nuevos tras el arreglo.
+- Reclamo: loop/75, sin colisión
+- Validado: PENDIENTE
+- **Siguiente:** iteración 76, expansión: ítem 43 (Ejercicios compartidos, segunda entrega, Público)

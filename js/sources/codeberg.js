@@ -18,7 +18,9 @@
      ciclos. En el modo galaxias, una rama que no es la principal muestra su árbol, no sus cambios.
    - Sin token: solo repositorios públicos. codeberg.org permite varios cientos de consultas cada
      10 minutos por IP, así que el sondeo va cada POLL_MS. Un repo privado responde 404, como uno
-     que no existe. Y no hay token de Codeberg: nada se envía más que la dirección del repo. */
+     que no existe. Con el token de Codeberg de Ajustes (`Authorization: token …`) se ven también los
+     repos privados y la cuota es la de la cuenta: va en cada consulta, y solo a codeberg.org. Un
+     Forgejo/Gitea propio nunca lo recibe. */
 (function (GB) {
   'use strict';
   const { U, i18n } = GB;
@@ -62,10 +64,12 @@
   const DRAFT = /^\s*(?:\[wip\]|wip:|draft:|\[draft\])/i;
 
   class CodebergSource extends GB.GitHubSource {
-    /** `webUrl` vacío es codeberg.org; con la dirección de un Forgejo/Gitea propio (?forge=, --forge-url=), ese servidor. Sin token en ningún caso. */
-    constructor({ owner, name, depth = 40, filter = '', pins = [], webUrl = '', avatars = false }) {
+    /** `webUrl` vacío es codeberg.org; con la dirección de un Forgejo/Gitea propio (?forge=, --forge-url=), ese servidor. Sin token en ningún caso.
+        `token`: el de Codeberg; no va en `this.token` (el de GitHub) y solo se usa contra codeberg.org. */
+    constructor({ owner, name, token = '', depth = 40, filter = '', pins = [], webUrl = '', avatars = false }) {
       super({ owner, name, token: '', depth, filter, pins });
       const own = !!webUrl && !!endpoints(webUrl); // una dirección que no sea https no se usa: queda codeberg.org
+      this.codebergToken = own ? '' : token;
       this.ep = (own && endpoints(webUrl)) || endpoints('');
       this.own = own;
       this.avatars = !own || avatars; // los de un servidor propio, solo si el CSP nombra su host en img-src (escritorio)
@@ -86,8 +90,13 @@
 
     /* ---------- HTTP ---------- */
 
+    /** Las cabeceras de una consulta: el token de Codeberg, si lo hay, solo a codeberg.org. */
+    headers(accept) {
+      return this.codebergToken ? { Accept: accept, Authorization: `token ${this.codebergToken}` } : { Accept: accept };
+    }
+
     async api(path, { allow = [] } = {}) {
-      const { res, body } = await this.request(this.ep.api + path, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+      const { res, body } = await this.request(this.ep.api + path, { headers: this.headers('application/json'), cache: 'no-store' });
       this.cost++;
       if (allow.includes(res.status)) return { data: null, fresh: true, status: res.status, headers: res.headers };
       if (!res.ok) throw this.toError(res, body);
@@ -340,7 +349,7 @@
 
     /** Una consulta cuya respuesta es texto y no JSON. */
     async raw(path) {
-      const { res, body } = await this.request(this.ep.api + path, { headers: { Accept: 'text/plain' }, cache: 'no-store', raw: true });
+      const { res, body } = await this.request(this.ep.api + path, { headers: this.headers('text/plain'), cache: 'no-store', raw: true });
       this.cost++;
       if (!res.ok) throw this.toError(res, null);
       return body;

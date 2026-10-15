@@ -6,7 +6,7 @@
 
    La API falsa sirve el repo ana/api como Forgejo: páginas con `limit` (tope de 50, encabezado Link),
    el listado de commits desde una cabeza, comparaciones `a...b`, PRs y árboles. Un repo privado
-   responde 404, y ninguna consulta debe llevar un token. */
+   responde 404, y ninguna consulta debe llevar un token salvo la prueba del token propio. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -50,7 +50,7 @@ function load(cb) {
 
 function fakeCodeberg(site = 'https://codeberg.org') {
   const web = `${site}/ana/api`;
-  const cb = { commits: new Map(), branches: new Map(), pulls: [], override: null, calls: [], private: false };
+  const cb = { commits: new Map(), branches: new Map(), pulls: [], override: null, calls: [], auths: [], expectAuth: undefined, private: false };
   let n = 0;
   cb.commit = (sha, ...parents) => {
     const date = new Date(Date.UTC(2026, 0, 1) + ++n * 60000).toISOString();
@@ -142,11 +142,12 @@ function fakeCodeberg(site = 'https://codeberg.org') {
 
   cb.fetch = async (url, opts = {}) => {
     assert.ok(url.startsWith(`${site}/api/v1/`), `consulta fuera de ${site}: ${url}`);
-    assert.equal(opts.headers?.Authorization, undefined, 'ninguna consulta lleva token');
+    assert.equal(opts.headers?.Authorization, cb.expectAuth, 'solo lleva el token que se espera');
+    cb.auths.push(opts.headers?.Authorization);
     const path = url.replace(`${site}/api/v1`, '');
     cb.calls.push(path);
     const { status = 200, body, headers = {} } =
-      cb.private && path.startsWith(REPO) ? { status: 404, body: { message: 'not found' } } : cb.override?.(path) || route(path);
+      cb.private && !cb.expectAuth && path.startsWith(REPO) ? { status: 404, body: { message: 'not found' } } : cb.override?.(path) || route(path);
     const hs = new Map(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), String(v)]));
     return { status, ok: status >= 200 && status < 300, statusText: '', headers: { get: (k) => hs.get(k.toLowerCase()) || null }, text: async () => (typeof body === 'string' ? body : JSON.stringify(body)) };
   };
@@ -435,3 +436,31 @@ function repo2() {
   cb.push('feature', 'f2', 'f1');
   return cb;
 }
+
+test('el token de Codeberg va en cada consulta a codeberg.org (y un repo privado se abre con él), nunca a un servidor propio', async () => {
+  const cb = repo();
+  cb.private = true;
+  const sinToken = connect(cb);
+  await sinToken.src.cycle();
+  assert.equal(sinToken.errors.length, 1, 'privado sin token: responde 404');
+  assert.ok(cb.auths.every((a) => a === undefined));
+
+  const con = repo();
+  con.private = true;
+  con.expectAuth = 'token cb-secreto';
+  const { src, errors } = connect(con, { token: 'cb-secreto' });
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  assert.ok(src.data.commits.has('f2'));
+  assert.ok(con.calls.length > 2);
+  assert.ok(con.auths.every((a) => a === 'token cb-secreto'), 'todas las consultas llevan el token');
+  assert.equal(src.token, '', 'no se mezcla con el de GitHub');
+  await src.diff?.('m2').catch(() => {}); // el diff crudo también lleva la cabecera (assert en fetch)
+
+  const own = repo2();
+  const o = connect(own, { token: 'cb-secreto', webUrl: OWN });
+  await o.src.cycle();
+  assert.deepEqual(o.errors, []);
+  assert.ok(own.calls.length > 0);
+  assert.ok(own.auths.every((a) => a === undefined), 'un Forgejo propio no recibe el token de Codeberg');
+});

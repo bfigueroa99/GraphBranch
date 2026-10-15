@@ -19,8 +19,10 @@
    - Sin feed de eventos, ni tags, ni despliegues, ni checks: el panel cuenta lo que se ve comparando
      ciclos. El árbol de archivos (galaxias) se lee hasta TREE_PAGES páginas: 500 archivos.
    - Sin avatares: los de Bitbucket están en hosts que el CSP no admite.
-   - Solo repos públicos: uno privado responde 404 (o 403), como uno que no existe. No hay token de
-     Bitbucket: nada se envía más que la dirección del repo. */
+   - Sin token, solo repos públicos: uno privado responde 404 (o 403), como uno que no existe. Con el
+     token de Bitbucket de Ajustes (un token de acceso de repositorio o de espacio de trabajo, con
+     `Authorization: Bearer …`) se ven también los privados: va en cada consulta, y solo a
+     api.bitbucket.org. */
 (function (GB) {
   'use strict';
   const { U, i18n } = GB;
@@ -52,8 +54,10 @@
   const enc = encodeURIComponent;
 
   class BitbucketSource extends GB.GitHubSource {
-    constructor({ owner, name, depth = 40, filter = '', pins = [] }) {
+    /** `token`: el de Bitbucket; no va en `this.token`, que es el de GitHub. */
+    constructor({ owner, name, token = '', depth = 40, filter = '', pins = [] }) {
       super({ owner, name, token: '', depth, filter, pins });
+      this.bitbucketToken = token;
       this.host = 'bitbucket';
       this.mode = 'list';
       this.data.repo.url = `${WEB}/${enc(owner)}/${enc(name)}`;
@@ -83,9 +87,14 @@
       return Math.max(1, Math.floor(QUOTA / Math.max(1, this.share || 1)));
     }
 
+    /** Las cabeceras de una consulta: el token de Bitbucket, si lo hay, solo a api.bitbucket.org. */
+    headers(accept) {
+      return this.bitbucketToken ? { Accept: accept, Authorization: `Bearer ${this.bitbucketToken}` } : { Accept: accept };
+    }
+
     async api(path, { allow = [] } = {}) {
       this.sent.push(Date.now());
-      const { res, body } = await this.request(API + path, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+      const { res, body } = await this.request(API + path, { headers: this.headers('application/json'), cache: 'no-store' });
       this.cost++;
       if (allow.includes(res.status)) return { data: null, fresh: true, status: res.status, headers: res.headers };
       if (!res.ok) throw this.toError(res, body);
@@ -363,7 +372,7 @@
         una consulta que cuenta en la cuota de la hora. */
     async commitDiff(sha) {
       this.sent.push(Date.now());
-      const { res, body } = await this.request(`${API}${this.base}/diff/${enc(sha)}`, { headers: { Accept: 'text/plain' }, cache: 'no-store', raw: true });
+      const { res, body } = await this.request(`${API}${this.base}/diff/${enc(sha)}`, { headers: this.headers('text/plain'), cache: 'no-store', raw: true });
       this.cost++;
       if (!res.ok) throw this.toError(res, null);
       const files = GB.diff.parseGit(body).map((f) => ({ ...f, url: f.status === 'removed' ? null : this.link('blob', sha, f.path) }));

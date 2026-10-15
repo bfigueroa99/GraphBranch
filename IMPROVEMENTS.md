@@ -138,7 +138,7 @@ segunda columna a la primera.
 
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
-| Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (repos públicos, API de Forgejo), bitbucket.org (repos públicos, API 2.0 de Bitbucket Cloud), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP), repos locales (app de escritorio, con `git`), demo | Codeberg y Bitbucket con token |
+| Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (API de Forgejo, repos públicos y, con token, privados), bitbucket.org (API 2.0 de Bitbucket Cloud, repos públicos y, con token, privados), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP), repos locales (app de escritorio, con `git`), demo | Token para un Forgejo/Gitea propio |
 | Datos | ramas, commits, PRs (y las pilas de PRs apilados), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, en el panel de salud), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (grupos de GitLab, constelación) |
@@ -281,7 +281,7 @@ se comprueban antes de construir sobre ellas.
 36. ~~**Gitea y Forgejo propios**~~ hecho en #97 · Fuentes. [parte del ítem 21] La URL de un servidor propio de Forgejo/Gitea
     (`--forge-url=`), con la misma regla de CSP que GitLab propio y el token solo a ese host. Comprobar:
     `tools/codeberg.test.mjs` con otra URL base.
-37. **Tokens para Codeberg y Bitbucket** · Fuentes · 2×2/2. [parte del ítem 21] Repos privados y más cuota:
+37. ~~**Tokens para Codeberg y Bitbucket**~~ hecho en #99 · Fuentes · 2×2/2. [parte del ítem 21] Repos privados y más cuota:
     el token de cada servicio en Ajustes (y en el llavero en escritorio), enviado solo a su host. Comprobar: una
     prueba por fuente de que el token va en cada consulta y a ningún otro lado.
 38. ~~**Vocabulario DORA en la salud**~~ hecho en #95 · Análisis. [inv. 2026-10-13]
@@ -1764,3 +1764,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el paso «cambios de un commit» del smoke falló en 2 de 5 corridas de `npm run check` con el cambio (y otros pasos en cascada cuando mi primer paso nuevo lanzaba con el diálogo abierto, ya corregido); el smoke suelto pasó 6 de 6 y la corrida final de la puerta salió en verde. Intermitencia a vigilar.
 - Validado: 262 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 26 e2e en verde.
 - **Siguiente:** iteración 70, expansión: ítem 37 (Tokens para Codeberg y Bitbucket, Fuentes)
+
+### 2026-10-15 · Iteración 70 · Expansión · Fuentes
+
+- **Capacidad nueva: tokens para Codeberg y Bitbucket** (ítem 37 de la hoja de ruta). Dos campos nuevos en Ajustes (token de Codeberg con `Authorization: token …`, token de Bitbucket con `Authorization: Bearer …`), guardados como los demás (localStorage en la web; en escritorio cifrados con el llavero, servicios `codeberg` y `bitbucket` de `electron/token.js`). Cada token va en cada consulta (también la del diff) y solo a su host; un Forgejo/Gitea propio no recibe el de Codeberg. Con él se abren repos privados; guardar un token reconecta solo los repos de esa fuente.
+- **Pruebas que fallan sin la capacidad:** `tools/codeberg.test.mjs` y `tools/bitbucket.test.mjs` (privado sin token → 404; con token, todas las consultas llevan la cabecera; el servidor propio no la recibe) y un paso nuevo del smoke por fuente (Ajustes → reconexión con la cabecera, y localStorage).
+- README: lista de funciones, Límites conocidos (Codeberg/Bitbucket; sin aviso propio de «token rechazado»; propio sin token) y Seguridad (cada token a su servicio). Mapa de alcance: fila Fuentes. Textos en los 40 idiomas (10 claves, derivadas de las de GitLab; la ayuda de es y en, escrita aparte).
+- QA: filas de token (el smoke comprueba cabecera y que el de GitHub no se mezcla), XSS (sin texto de afuera nuevo en el DOM) y 40 idiomas por `check-i18n`; sin mirar a mano 320 px ni tema claro.
+- Nota: el clon de la sesión venía superficial; R3 y 2 pruebas fallaban hasta `git fetch --unshallow`.
+- Reclamo: loop/70, sin colisión
+- Validado: 264 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 16 conocidos) y 26 e2e en verde.
+- **Siguiente:** iteración 71, mantenimiento · Errores: pendiente 4 (Replay: `wasPlaying` no se reinicia (`replay.js:79`), y la barra espaciadora so…)

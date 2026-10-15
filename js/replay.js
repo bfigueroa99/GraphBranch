@@ -50,6 +50,25 @@
     return { u0: first > 0 ? pos[first - 1] : 0, U: pos[last], first, last };
   }
 
+  /** Los parámetros de la URL (`?replay=2026-09-01..2026-09-14&title=…&footer=…`) → opciones del Replay
+      ({ from, to, title, footer }), o null si no piden un Replay. Las fechas son días AAAA-MM-DD (cualquiera de las
+      dos puede faltar: `2026-09-01..`, `..2026-09-14`); una mal escrita se ignora; `replay=1` es toda la historia. */
+  function paramsOf(q) {
+    if (!q.has('replay')) return null;
+    const raw = (q.get('replay') || '').trim();
+    const day = (v, end) => {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+      if (!m) return null;
+      const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), end ? 23 : 0, end ? 59 : 0, end ? 59 : 0, end ? 999 : 0);
+      return d.getDate() === Number(m[3]) && d.getMonth() === Number(m[2]) - 1 ? d.getTime() : null;
+    };
+    const [a = '', b = ''] = raw.split('..');
+    const opts = { from: day(a.trim(), false), to: day(b.trim(), true), title: (q.get('title') || '').trim().slice(0, 80), footer: (q.get('footer') || '').trim().slice(0, 120) };
+    if (opts.from == null) delete opts.from;
+    if (opts.to == null) delete opts.to;
+    return opts;
+  }
+
   /** "Título (#12)" → { num: 12, title: 'Título' }: así quedan los PR fusionados con squash. */
   const squashOf = (line) => {
     const m = /^(.*\S)\s*\(#(\d+)\)\s*$/.exec(line);
@@ -439,5 +458,6 @@
   }
 
   Replay.rangeOf = rangeOf;
+  Replay.paramsOf = paramsOf;
   GB.Replay = Replay;
 })(window.GB);

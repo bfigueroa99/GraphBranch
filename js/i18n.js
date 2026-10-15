@@ -271,6 +271,7 @@ window.GB = window.GB || {};
   const fmtNum = (n) => intl('NumberFormat').format(Number(n));
   const fmtDate = (ms) => intl('DateTimeFormat', { day: 'numeric', month: 'short', year: 'numeric' }).format(ms);
   const fmtDateTime = (ms) => intl('DateTimeFormat', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(ms);
+  const fmtDayLong = (ms) => intl('DateTimeFormat', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(ms);
   const fmtTime = (ms) => intl('DateTimeFormat', { hour: '2-digit', minute: '2-digit' }).format(ms);
   const fmtWeekdayDate = (ms) => intl('DateTimeFormat', { weekday: 'short', day: 'numeric', month: 'short' }).format(ms);
   const fmtSeconds = (s) => intl('NumberFormat', { style: 'unit', unit: 'second', unitDisplay: 'narrow' }).format(s);
@@ -385,6 +386,7 @@ window.GB = window.GB || {};
     text,
     fmtNum,
     fmtDate,
+    fmtDayLong,
     fmtDateTime,
     fmtTime,
     fmtSeconds,

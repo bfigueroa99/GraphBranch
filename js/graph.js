@@ -1857,6 +1857,7 @@
       if (!it) return;
       this.tip.innerHTML = tipHTML(it.data, this.ctx || {}, { pin, branchName, ghostNames: this.ghostNames });
       this.tip.hidden = false;
+      this.tipBox = null;
       this.tip.classList.toggle('pinned', !!pin);
       this.tipSha = sha;
       if (pin) this.pinned = { sha };
@@ -1866,8 +1867,9 @@
     placeTip() {
       const it = this.nodes.get(this.tipSha);
       if (!it) return this.hideTip();
-      const w = this.tip.offsetWidth;
-      const h = this.tip.offsetHeight;
+      // el tamaño se mide una vez por contenido y ancho: leerlo por cuadro fuerza la maquetación
+      if (!this.tipBox || this.tipBox.W !== this.W) this.tipBox = { W: this.W, w: this.tip.offsetWidth, h: this.tip.offsetHeight };
+      const { w, h } = this.tipBox;
       let left = it.px + 16;
       let top = it.py - h - 12;
       if (left + w > this.W - 8) left = it.px - w - 16;

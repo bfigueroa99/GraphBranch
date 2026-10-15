@@ -401,8 +401,7 @@
     renderClock() {
       if (!this.active) return;
       const ms = this.dateAt(this.u);
-      const loc = i18n.locale;
-      this.el.date.textContent = new Intl.DateTimeFormat(loc, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(ms);
+      this.el.date.textContent = i18n.fmtDayLong(ms);
       this.el.time.textContent = i18n.fmtTime(ms);
       const v = Math.round(((this.u - this.u0) / (this.U - this.u0)) * 1000);
       if (Number(this.el.range.value) !== v) this.el.range.value = v;

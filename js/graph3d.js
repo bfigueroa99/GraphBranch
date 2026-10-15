@@ -1647,6 +1647,7 @@
           b.textContent = mark();
         });
       this.tip.hidden = false;
+      this.tipBox = null;
       this.tip.classList.toggle('pinned', !!pin);
       this.tipSha = sha;
       if (pin) this.pinned = sha;
@@ -1661,6 +1662,7 @@
       this.tip.innerHTML = this.gx.tipHTML(file, pin);
       this.tip.setAttribute('aria-label', tr('file.aria'));
       this.tip.hidden = false;
+      this.tipBox = null;
       this.tip.classList.toggle('pinned', !!pin);
       this.tipSha = null;
       this.tipFile = file;
@@ -1676,8 +1678,9 @@
       if (!v) return this.hideTip();
       const p = this.project(v);
       if (!p) return;
-      const w = this.tip.offsetWidth;
-      const h = this.tip.offsetHeight;
+      // el tamaño se mide una vez por contenido y ancho: leerlo por cuadro fuerza la maquetación
+      if (!this.tipBox || this.tipBox.W !== this.W) this.tipBox = { W: this.W, w: this.tip.offsetWidth, h: this.tip.offsetHeight };
+      const { w, h } = this.tipBox;
       let left = p.x + 16;
       let top = p.y - h - 14;
       if (left + w > this.W - 8) left = p.x - w - 16;

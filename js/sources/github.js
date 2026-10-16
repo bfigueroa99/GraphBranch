@@ -607,6 +607,24 @@
       return true;
     }
 
+    /** Fecha del primer commit de cada PR fusionado reciente (`numbers`): una consulta por PR (`/pulls/:n/commits`, solo el
+        primero), solo cuando el panel de salud las pide y una vez por PR. Un PR que falla se salta; la cuota o la red se avisan. */
+    async syncFirstCommits(numbers) {
+      const known = (this.data.firstCommits ||= new Map());
+      const todo = [...new Set(numbers)].filter((n) => Number.isInteger(n) && !known.has(n)).slice(0, this.token ? 20 : 8); // sin token, la cuota es de 60 por hora
+      for (const n of todo) {
+        try {
+          const { data } = await this.api(`${this.base}/pulls/${n}/commits?per_page=1`);
+          const c = Array.isArray(data) ? data[0]?.commit : null;
+          known.set(n, Date.parse(c?.author?.date || c?.committer?.date) || null);
+        } catch (err) {
+          if (!['http', 'notfound', 'auth'].includes(err.kind)) throw err;
+          known.set(n, null);
+        }
+      }
+      return todo.length > 0;
+    }
+
     async loadRepo(acts) {
       const { data: repo } = await this.api(this.base);
       Object.assign(this.data.repo, {

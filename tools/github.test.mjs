@@ -56,6 +56,7 @@ function fakeGitHub() {
     override: null, // (ruta) => { status, body } para responder otra cosa, o nada para seguir normal
     tags: null, // [{ name, commit: { sha } }] (si es null, /tags da 404)
     forks: null, // forks como los da /forks (si es null, 404)
+    prCommits: null, // número de PR -> fecha ISO de su primer commit, como /pulls/:n/commits (si es null, 404)
     deployments: null, // despliegues como los da la API, el más nuevo primero (si es null, 404)
     checks: null, // sha -> check-runs del commit (si es null, la API de checks no existe)
     calls: [],
@@ -121,6 +122,8 @@ function fakeGitHub() {
       return { body: list };
     }
     if (p === '/repos/o/r/tags') return gh.tags ? { body: gh.tags } : { status: 404, body: { message: 'Not Found' } };
+    const prCommits = p.match(/^\/repos\/o\/r\/pulls\/(\d+)\/commits$/);
+    if (prCommits) return gh.prCommits ? (gh.prCommits.has(Number(prCommits[1])) ? { body: [{ commit: { author: { date: gh.prCommits.get(Number(prCommits[1])) } } }] } : { status: 404, body: { message: 'Not Found' } }) : { status: 404, body: { message: 'Not Found' } };
     if (p === '/repos/o/r/forks') return gh.forks ? { body: gh.forks } : { status: 404, body: { message: 'Not Found' } };
     if (p === '/repos/o/r/deployments') return gh.deployments ? { body: gh.deployments } : { status: 404, body: { message: 'Not Found' } };
     const runs = p.match(/^\/repos\/o\/r\/commits\/([^/]+)\/check-runs$/);
@@ -742,4 +745,37 @@ test('forks: sin la API el grafo sigue y la lista queda vacía', async () => {
   await on.src.syncForks();
   assert.equal(on.errors.length, 0);
   assert.equal(on.src.data.forks.length, 0);
+});
+
+/* Tiempo de entrega desde el primer commit: una consulta de /pulls/:n/commits por PR, solo al pedirla. */
+
+test('primer commit de cada PR fusionado: una consulta por PR, una sola vez, y un PR que falla no corta a los demás', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  gh.prCommits = new Map([
+    [3, '2026-01-01T00:00:00Z'],
+    [4, '2026-01-02T00:00:00Z'],
+  ]);
+  const { src, errors } = connect(gh, 'tok');
+  await src.cycle();
+  const asked = () => gh.calls.filter((c) => /\/pulls\/\d+\/commits/.test(c));
+  assert.equal(asked().length, 0, 'sin abrir el panel no se consulta');
+  assert.equal(await src.syncFirstCommits([3, 4, 5, 3]), true);
+  assert.equal(errors.length, 0);
+  assert.equal(asked().length, 3, 'una por PR, sin repetir el 3');
+  assert.ok(asked().every((c) => c.includes('per_page=1')));
+  assert.equal(src.data.firstCommits.get(3), Date.parse('2026-01-01T00:00:00Z'));
+  assert.equal(src.data.firstCommits.get(5), null, 'el que dio 404 queda sin dato');
+  assert.equal(await src.syncFirstCommits([3, 4, 5]), false);
+  assert.equal(asked().length, 3, 'lo ya sabido no se vuelve a pedir');
+});
+
+test('primer commit de cada PR: sin token pide menos, para no gastar los 60 por hora', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  gh.prCommits = new Map();
+  const { src } = connect(gh);
+  await src.cycle();
+  await src.syncFirstCommits(Array.from({ length: 15 }, (_, i) => i + 1));
+  assert.equal(gh.calls.filter((c) => /\/pulls\/\d+\/commits/.test(c)).length, 8);
 });

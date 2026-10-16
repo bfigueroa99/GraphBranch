@@ -518,6 +518,7 @@ GB.i18n.define('ur', {
   'health.dora': 'ترسیل (DORA)',
   'health.doraFreq': 'تعیناتیاں (ریلیز): 30 دنوں میں {n} · ریلیز کے درمیان وسطانیہ {gap}',
   'health.doraLead': 'لیڈ ٹائم (کھلنے سے انضمام تک): وسطانیہ {median}',
+  'health.doraLeadCommit': 'لیڈ ٹائم (پہلے کمٹ سے انضمام تک، {total} میں سے {n} PR): وسطانیہ {median}',
   'health.ci': 'CI کی ناکامیاں',
   'health.ciPrs': 'ناکام چیکس والے کھلے PR: {total} میں سے {failing} ({pct}٪)',
   'health.ciFeed': '30 دنوں میں ڈیفالٹ برانچ کتنی بار سرخ ہوئی: {n}',

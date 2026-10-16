@@ -491,6 +491,7 @@ GB.i18n.define('uk', {
   'health.dora': 'Постачання (DORA)',
   'health.doraFreq': 'Розгортання (релізи): {n} за 30 днів · медіана між релізами {gap}',
   'health.doraLead': 'Час постачання (від відкриття до злиття): медіана {median}',
+  'health.doraLeadCommit': 'Час постачання (від першого коміту до злиття, {n} із {total} PR): медіана {median}',
   'health.ci': 'Збої CI',
   'health.ciPrs': 'Відкриті PR із невдалими перевірками: {failing} із {total} ({pct} %)',
   'health.ciFeed': 'Скільки разів основна гілка червоніла за 30 днів: {n}',

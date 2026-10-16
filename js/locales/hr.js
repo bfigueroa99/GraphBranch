@@ -483,6 +483,7 @@ GB.i18n.define('hr', {
   'health.dora': 'Isporuka (DORA)',
   'health.doraFreq': 'Implementacije (izdanja): {n} u 30 dana · medijan između izdanja {gap}',
   'health.doraLead': 'Vrijeme isporuke (od otvaranja do spajanja): medijan {median}',
+  'health.doraLeadCommit': 'Vrijeme isporuke (od prvog commita do spajanja, {n} od {total} PR-ova): medijan {median}',
   'health.ci': 'Neuspjesi CI-ja',
   'health.ciPrs': 'Otvoreni PR-ovi s neuspjelim provjerama: {failing} od {total} ({pct} %)',
   'health.ciFeed': 'Koliko je puta zadana grana pocrvenjela u 30 dana: {n}',

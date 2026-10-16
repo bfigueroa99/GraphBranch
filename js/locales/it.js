@@ -476,6 +476,7 @@ GB.i18n.define('it', {
   'health.dora': 'Consegna (DORA)',
   'health.doraFreq': 'Rilasci (release): {n} in 30 giorni · mediana tra una release e l’altra {gap}',
   'health.doraLead': 'Tempo di consegna (da aperta a unita): mediana {median}',
+  'health.doraLeadCommit': 'Tempo di consegna (dal primo commit all’unione, {n} PR su {total}): mediana {median}',
   'health.ci': 'Fallimenti della CI',
   'health.ciPrs': 'PR aperte con check falliti: {failing} su {total} ({pct}%)',
   'health.ciFeed': 'Volte in cui il branch predefinito è diventato rosso in 30 giorni: {n}',

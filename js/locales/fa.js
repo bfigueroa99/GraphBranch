@@ -518,6 +518,7 @@ GB.i18n.define('fa', {
   'health.dora': 'تحویل (DORA)',
   'health.doraFreq': 'استقرارها (انتشارها): {n} در ۳۰ روز · میانه فاصلهٔ انتشارها {gap}',
   'health.doraLead': 'زمان تحویل (از باز شدن تا ادغام): میانه {median}',
+  'health.doraLeadCommit': 'زمان تحویل (از اولین کامیت تا ادغام، {n} از {total} PR): میانه {median}',
   'health.ci': 'شکست‌های CI',
   'health.ciPrs': 'PRهای باز با بررسی‌های ناموفق: {failing} از {total} ({pct}٪)',
   'health.ciFeed': 'دفعاتی که شاخه پیش‌فرض در ۳۰ روز قرمز شد: {n}',

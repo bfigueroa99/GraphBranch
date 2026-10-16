@@ -486,6 +486,7 @@ GB.i18n.define('cs', {
   'health.dora': 'Dodávky (DORA)',
   'health.doraFreq': 'Nasazení (vydání): {n} za 30 dní · medián mezi vydáními {gap}',
   'health.doraLead': 'Doba dodání (od otevření po sloučení): medián {median}',
+  'health.doraLeadCommit': 'Doba dodání (od prvního commitu po sloučení, {n} z {total} PR): medián {median}',
   'health.ci': 'Selhání CI',
   'health.ciPrs': 'Otevřené PR s červenými kontrolami: {failing} z {total} ({pct} %)',
   'health.ciFeed': 'Kolikrát výchozí větev zčervenala za 30 dní: {n}',

@@ -239,3 +239,22 @@ test('tasa de fallos de CI: PRs abiertos en rojo entre los que tienen checks, y 
   assert.equal(none.ci.prs, null);
   assert.equal(none.ci.fails30, 0);
 });
+
+test('tiempo de entrega: desde el primer commit del PR cuando se conoce, y desde su apertura cuando no', () => {
+  const data = repo();
+  const merge = (id, number, hours) => ({ kind: 'pr-merge', id, number, time: ago(1), openedAt: ago(1) - hours * 36e5 });
+  const acts = [merge('a', 1, 10), merge('b', 2, 20)];
+  const base = compute(data, acts, NOW);
+  assert.equal(base.leadSource.fromCommit, 0);
+  assert.equal(base.dora.lead, 15 * 36e5, 'sin primeros commits: de abierto a fusionado');
+
+  data.firstCommits = new Map([[1, ago(1) - 30 * 36e5], [2, null]]);
+  const h = compute(data, acts, NOW);
+  assert.equal(h.leadSource.fromCommit, 1);
+  assert.equal(h.leadSource.total, 2);
+  assert.equal(h.dora.lead, 25 * 36e5, 'el 1 cuenta 30 h desde su primer commit y el 2 sigue con 20 h desde su apertura');
+  assert.equal(h.merged.median, 15 * 36e5, 'el tiempo de abierto a fusionado no cambia');
+
+  data.firstCommits = new Map([[1, ago(0.5)]]); // un primer commit posterior al merge no vale
+  assert.equal(compute(data, acts, NOW).leadSource.fromCommit, 0);
+});

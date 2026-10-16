@@ -475,6 +475,7 @@ GB.i18n.define('zh-Hant', {
   'health.dora': '交付 (DORA)',
   'health.doraFreq': '部署(發布):30 天內 {n} 次 · 發布間隔中位數 {gap}',
   'health.doraLead': '交付週期(從開啟到合併):中位數 {median}',
+  'health.doraLeadCommit': '交付週期(從第一次提交到合併,{total} 個 PR 中的 {n} 個):中位數 {median}',
   'health.ci': 'CI 失敗',
   'health.ciPrs': '檢查失敗的開啟中 PR:{failing} / {total}({pct}%)',
   'health.ciFeed': '預設分支在 30 天內變紅的次數:{n}',

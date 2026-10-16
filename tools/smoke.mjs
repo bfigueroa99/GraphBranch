@@ -92,7 +92,7 @@ async function openPage(contextOptions = {}) {
   const page = await context.newPage();
   page.errors = [];
   page.on('pageerror', (e) => page.errors.push(`excepción: ${e.message}`));
-  page.on('console', (m) => m.type() === 'error' && page.errors.push(`consola: ${m.text()}`));
+  page.on('console', (m) => m.type() === 'error' && page.errors.push(`consola: ${m.text()}${m.location().url ? ` (${m.location().url})` : ''}`));
   // la demo no debe consultar GitHub; las fuentes y avatares se sirven vacíos para no depender de la red
   await page.route('https://api.github.com/**', (r) => {
     page.errors.push(`la demo consultó ${r.request().url()}`);

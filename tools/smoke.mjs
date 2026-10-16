@@ -1870,6 +1870,8 @@ console.log('Codeberg');
     await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: T(15000) });
     const text = await page.textContent('#overlay');
     if (!text.includes('No se encontró ana/nada en Codeberg. Solo se leen repositorios públicos.')) throw new Error(`el aviso dice ${text}`);
+    // se deja de seguir: si no, al guardar un token se reconectaría y el 404 caería en el paso siguiente
+    await page.locator('.rt', { hasText: 'ana/nada' }).locator('.rt-close').click();
   }, { allow: /404/ });
 
   await step(page, 'el token de Codeberg de Ajustes va en cada consulta, solo a Codeberg', async () => {
@@ -1977,6 +1979,8 @@ console.log('Bitbucket');
     await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: T(15000) });
     const text = await page.textContent('#overlay');
     if (!text.includes('No se encontró ana/nada en Bitbucket. Solo se leen repositorios públicos.')) throw new Error(`el aviso dice ${text}`);
+    // se deja de seguir: si no, al guardar un token se reconectaría y el 404 caería en el paso siguiente
+    await page.locator('.rt', { hasText: 'ana/nada' }).locator('.rt-close').click();
   }, { allow: /404/ });
 
   await step(page, 'el token de Bitbucket de Ajustes va en cada consulta, solo a Bitbucket', async () => {

@@ -386,23 +386,13 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Media
 
-1. [Deuda] Smoke: en `npm run check` bajo `xvfb-run` (iteración 36, el equipo cargado por las pruebas
-    anteriores) fallaron tres pasos que no tocaba el cambio: «vista 2D» (`waitForSelector` de 10 s),
-    «salud del repo» («la demo tiene PRs abiertos y no salen en la lista») y «cambiar a un repo que no
-    existe» (`waitForSelector` de 5 s). Corrido aparte `node tools/smoke.mjs` y repetido el `check`, pasó
-    sin cambios (3 fallas en 2 corridas completas). Medir con 5 corridas seguidas bajo carga y cambiar los
-    topes fijos por esperas a un estado.
-    También (iteración 40, una corrida de `npm run check`; la repetición pasó): el paso «con ?repo=@ana en la URL se
-    siguen los repos de ese usuario» guardó `["ana/notas","acme/nuevo",…]` con el orden cambiado; mismo remedio.
-    También (iteración 54, `xvfb-run -a npm run check`; la repetición pasó): el paso «cambios de un commit: desde su
-    ficha, con teclado se pasa al anterior y se vuelve, y Esc cierra» venció en `page.waitForFunction` (5 s); mismo remedio.
-    También (iteración 71, `xvfb-run -a npm run check`; la repetición pasó): el mismo paso, «cambios de un commit»,
-    venció otra vez en `page.waitForFunction` (5 s); mismo remedio.
-    También (iteración 75, `xvfb-run -a npm run check`; la repetición pasó): fallaron «filtro por autor … quitar el filtro no deja el grafo como estaba» y «filtro por ruta» (`page.click` 30 s); mismo remedio.
-
-    Iteración 81: otra vez, un solo paso ajeno al cambio («cambios de un commit: … Esc cierra», `waitForFunction` de 5 s) falló en la primera corrida y pasó en la repetición.
-    También (iteración 82, una corrida de `npm run check`; el smoke repetido dos veces pasó): el paso «volando, entrar al modo TV deja la
-    cámara al director» falló con «Cannot read properties of undefined (reading 'sha')».
+1. [Deuda] Smoke: bajo carga extrema (4 procesos al 100 % en 4 núcleos, `node tools/smoke.mjs` repetido) aún
+    fallan pasos que no tocaba el cambio, en cascada: tras un `page.click` de 30 s vencido (vista de texto, búsqueda,
+    filtros por autor y por ruta) y «cambios de un commit» (`waitForFunction`); además «salud del repo» («la tasa de
+    fallos de CI no sale en la salud»). Con el equipo libre y con `xvfb-run -a npm run check` pasa. Medir la causa del
+    primer `click` que vence (qué lo tapa: un diálogo abierto del paso anterior, la barra de herramientas) y esperar
+    a ese estado antes de seguir; para «salud del repo», esperar al `#hl-ci` en vez de leerlo al abrir el panel.
+    (Hecho en la iteración 83: topes del smoke ×3 y los pasos de Codeberg y Bitbucket dejan de seguir `ana/nada`.)
 2. [Deuda] e2e de escritorio: «un repositorio de esta máquina se sigue sin GitHub…» (`e2e/desktop.spec.mjs:360`)
     falló una vez en `npm run check` (iteración 53, `xvfb-run`; la repetición pasó): el panel de cambios
     mostró «segundo» en vez de «tercero, sin publicar» (línea 381, `toHaveText` sin esperar al commit sin
@@ -1929,3 +1919,16 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow`). Un paso ajeno del smoke (modo TV) falló una vez y pasó en dos corridas aparte (anotado en el pendiente 1 de Media). El borrado de `loop/69` falló por desconexión del proxy; las `loop/*` fusionadas siguen en Para Benjamin, punto 7.
 - Validado: 284 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 26 e2e en verde.
 - **Siguiente:** iteración 83, mantenimiento · Deuda: pendiente 1 (Smoke: en `npm run check` bajo `xvfb-run` (iteración 36, el equipo cargado por …)
+
+### 2026-10-16 · Iteración 83 · Mantenimiento · Deuda
+
+- **Arreglo: smoke intermitente bajo carga** (pendiente 1 de Media, parcial). Los topes de espera (`timeout:`) del smoke pasan por `T()` (×3: las esperas a un estado vuelven al cumplirse, así que no cuestan nada con el equipo libre) y los pasos «un repo que no existe» de Codeberg y Bitbucket dejan de seguir `ana/nada`, como ya hacía el de GitLab: antes, al guardar el token se reconectaba y el 404 caía en el paso siguiente. El error de consola del smoke ahora lleva la URL que falló.
+- **Reproducción:** `node tools/smoke.mjs` ×5 con 4 procesos al 100 % de CPU → antes: «vista 2D: page.waitForSelector: Timeout 10000ms exceeded.» y «el token de Codeberg de Ajustes va en cada consulta, solo a Codeberg: consola: Failed to load resource: … 404 (https://codeberg.org/api/v1/repos/ana/nada)» (igual en Bitbucket).
+- **Pruebas que fallan sin el arreglo:** el propio smoke bajo carga: con topes ×3, 3 de 5 corridas en verde y las otras 2 solo con el 404 de `ana/nada` (arreglado después); una corrida posterior con carga extrema aún falla en cascada por `page.click` de 30 s (queda en el pendiente 1).
+- README: no aplica (herramienta interna).
+- QA: no toca la página; auditoría: no toca la página.
+- Reclamo: loop/83, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow`); el Chromium de la sesión es otra versión (`PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`).
+- Validado: 284 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
+- **Siguiente:** iteración 84, expansión: ítem 49 (Extensión de VS Code, segunda entrega, Plataformas)

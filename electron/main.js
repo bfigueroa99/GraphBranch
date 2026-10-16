@@ -9,6 +9,7 @@
      npm start -- --local=/ruta/repo   sigue un repositorio de esta máquina, sin GitHub (repetido, varios)
      npm start -- --api-url=https://host/api/v3   los repos de GitHub salen de un GitHub Enterprise Server
      npm start -- --gitlab-url=https://host   los proyectos de GitLab salen de un GitLab propio
+     npm start -- --bitbucket-url=https://host   se pueden seguir repos de un Bitbucket Data Center o Server propio (bitbucketdc:CLAVE/repo)
      npm start -- --forge-url=https://host    se pueden seguir repos de un Forgejo o Gitea propio (forgejo:dueño/repo)
      npm start -- --tv                 entra en modo TV (también --lang=es)
 
@@ -55,14 +56,15 @@ async function serve(request) {
   const file = path.join(ROOT, rel);
   if (url.host !== HOST || !PUBLIC.has(rel.split(/[/\\]/)[0]) || path.relative(ROOT, file).startsWith('..')) return notFound();
   const res = await net.fetch(pathToFileURL(file).toString());
-  // con --api-url, --gitlab-url o --forge-url, el host elegido por quien abre la app entra en el CSP (y solo él)
-  if (rel === 'index.html' && (API_ARG || GITLAB_ARG || FORGE_ARG)) {
+  // con --api-url, --gitlab-url, --forge-url o --bitbucket-url, el host elegido por quien abre la app entra en el CSP (y solo él)
+  if (rel === 'index.html' && (API_ARG || GITLAB_ARG || FORGE_ARG || BITBUCKET_ARG)) {
     let html = await res.text();
     if (API_ARG) html = html.replace('connect-src https://api.github.com', `connect-src https://api.github.com ${API_ARG.origin}`);
     const gl = GITLAB_ARG ? ` ${GITLAB_ARG.origin}` : '';
     const fg = FORGE_ARG ? ` ${FORGE_ARG.origin}` : '';
-    if (GITLAB_ARG || FORGE_ARG) {
-      html = html.replace('https://gitlab.com https://codeberg.org https://api.bitbucket.org;', `https://gitlab.com${gl} https://codeberg.org${fg} https://api.bitbucket.org;`);
+    const bb = BITBUCKET_ARG ? ` ${BITBUCKET_ARG.origin}` : '';
+    if (GITLAB_ARG || FORGE_ARG || BITBUCKET_ARG) {
+      html = html.replace('https://gitlab.com https://codeberg.org https://api.bitbucket.org;', `https://gitlab.com${gl} https://codeberg.org${fg} https://api.bitbucket.org${bb};`);
       html = html.replace('img-src \'self\' data: https://avatars.githubusercontent.com https://gitlab.com https://codeberg.org;', `img-src 'self' data: https://avatars.githubusercontent.com https://gitlab.com${gl} https://codeberg.org${fg};`);
     }
     return new Response(html, { status: res.status, headers: { 'content-type': 'text/html; charset=utf-8' } });
@@ -122,20 +124,38 @@ function forgeUrlArg(argv) {
 }
 const FORGE_ARG = forgeUrlArg(process.argv);
 
-/** Los argumentos --repo, --api-url, --gitlab-url, --forge-url, --tv y --lang pasan a la página como en la web (?repo=, ?tv=1, ?lang=).
+/** --bitbucket-url=https://host: la dirección de un Bitbucket Data Center o Server propio. Mismas reglas que --gitlab-url; solo entra a connect-src (sin avatares). */
+function bitbucketUrlArg(argv) {
+  for (const arg of argv) {
+    const m = /^--bitbucket-url=(.+)$/.exec(arg);
+    if (!m) continue;
+    try {
+      const u = new URL(m[1]);
+      if (u.protocol === 'https:' && !u.username && !u.password) return { url: (u.origin + u.pathname).replace(/\/+$/, ''), origin: u.origin };
+    } catch {
+      /* no es una URL: se ignora */
+    }
+    console.error(`--bitbucket-url=${m[1]}: tiene que ser una URL https`);
+  }
+  return null;
+}
+const BITBUCKET_ARG = bitbucketUrlArg(process.argv);
+
+/** Los argumentos --repo, --api-url, --gitlab-url, --forge-url, --bitbucket-url, --tv y --lang pasan a la página como en la web (?repo=, ?tv=1, ?lang=).
     --repo se puede repetir para seguir varios repos (el primero queda a la vista). */
 function startUrl(argv, locals = []) {
   const url = new URL(`${ORIGIN}/index.html`);
   for (const r of locals) url.searchParams.append('repo', `local:${r.id}/${r.name}`);
   for (const arg of argv) {
-    const m = /^--(repo|lang|api-url|gitlab-url|forge-url)=(.+)$/.exec(arg);
-    if (m && (m[1] === 'api-url' || m[1] === 'gitlab-url' || m[1] === 'forge-url')) continue; // va validado, abajo
+    const m = /^--(repo|lang|api-url|gitlab-url|forge-url|bitbucket-url)=(.+)$/.exec(arg);
+    if (m && (m[1] === 'api-url' || m[1] === 'gitlab-url' || m[1] === 'forge-url' || m[1] === 'bitbucket-url')) continue; // va validado, abajo
     if (m) url.searchParams[m[1] === 'repo' ? 'append' : 'set'](m[1], m[2]);
     else if (arg === '--tv') url.searchParams.set('tv', '1');
   }
   if (API_ARG) url.searchParams.set('api', API_ARG.url);
   if (GITLAB_ARG) url.searchParams.set('gitlab', GITLAB_ARG.url);
   if (FORGE_ARG) url.searchParams.set('forge', FORGE_ARG.url);
+  if (BITBUCKET_ARG) url.searchParams.set('bitbucket', BITBUCKET_ARG.url);
   return url.toString();
 }
 

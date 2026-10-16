@@ -39,6 +39,7 @@ window.GB = window.GB || {};
       sus subgrupos, va con su URL de gitlab.com (también la de una rama o un archivo, o ssh) o como
       "gitlab:grupo/proyecto": devuelve { host: 'gitlab', owner: 'grupo/sub', name: 'proyecto' }. */
   U.forgeBase = ''; // la dirección de un Forgejo/Gitea propio (?forge=, --forge-url=): sus URLs también se reconocen, como "forgejo:dueño/repo" (ver app.js)
+  U.bitbucketBase = ''; // la dirección de un Bitbucket Data Center/Server propio (?bitbucket=, --bitbucket-url=): sus URLs también se reconocen, como "bitbucketdc:CLAVE/repo" (ver app.js)
   U.gitlabBase = ''; // la dirección de un GitLab propio (?gitlab=, --gitlab-url=): sus URLs también se reconocen (ver app.js)
   U.parseRepo = (input) => {
     // un repo de esta máquina (app de escritorio): local:<id de la carpeta>/<nombre>; el id lo da el proceso principal
@@ -67,6 +68,23 @@ window.GB = window.GB || {};
         const parts = rest.split('/').filter(Boolean);
         if (parts.length < 2 || !parts.slice(0, 2).every((p) => /^[\w.-]+$/.test(p) && !/^\.+$/.test(p))) return null;
         return { host: 'forgejo', owner: parts[0], name: parts[1] };
+      }
+    }
+    // un Bitbucket Data Center/Server propio: projects/CLAVE/repos/repo, users/ana/repos/repo o scm/clave/repo.git bajo su dirección
+    if (U.bitbucketBase) {
+      const base = U.bitbucketBase.replace(/\/+$/, '');
+      const lower = s.toLowerCase();
+      let owner = null;
+      let name = null;
+      if (lower.startsWith(base.toLowerCase() + '/')) {
+        const parts = s.slice(base.length + 1).split('/').filter(Boolean);
+        if ((parts[0] === 'projects' || parts[0] === 'users') && parts[2] === 'repos') [owner, name] = [parts[0] === 'users' ? '~' + parts[1] : parts[1], parts[3]];
+        else if (parts[0] === 'scm') [owner, name] = [parts[1], parts[2]];
+        else return null;
+      } else if (/^bitbucketdc:/i.test(s)) [owner, name] = s.slice(12).split('/').filter(Boolean);
+      if (owner !== null) {
+        if (!owner || !name || !/^~?[\w.-]+$/.test(owner) || !/^[\w.-]+$/.test(name) || /^\.+$/.test(owner.replace(/^~/, '')) || /^\.+$/.test(name)) return null;
+        return { host: 'bitbucketdc', owner, name };
       }
     }
     const lab = own || s.match(/^gitlab:(.+)$/i) || s.match(/gitlab\.com[/:](.+)$/i);

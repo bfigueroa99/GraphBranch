@@ -138,7 +138,7 @@ segunda columna a la primera.
 
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
-| Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (API de Forgejo, repos públicos y, con token, privados), bitbucket.org (API 2.0 de Bitbucket Cloud, repos públicos y, con token, privados), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP), repos locales (app de escritorio, con `git`), demo | Token para un Forgejo/Gitea propio |
+| Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (API de Forgejo, repos públicos y, con token, privados), bitbucket.org (API 2.0 de Bitbucket Cloud, repos públicos y, con token, privados), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP), Bitbucket Data Center propio (`?bitbucket=` / `--bitbucket-url`, con su CSP, sin token), repos locales (app de escritorio, con `git`), demo | Token para un Forgejo/Gitea propio y para un Bitbucket propio |
 | Datos | ramas, commits, PRs (y las pilas de PRs apilados), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, en el panel de salud), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color y `&hide=`), extensión de VS Code (sigue la sesión de GitHub del editor; paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (constelación de repos) |
@@ -309,8 +309,9 @@ se comprueban antes de construir sobre ellas.
 49. ~~**Extensión de VS Code, segunda entrega**~~ hecho en #113 · Plataformas · 2×2/2. [parte del ítem 24] La extensión sigue la sesión
     de GitHub de VS Code con el panel abierto: si la persona inicia o cierra sesión (`onDidChangeSessions`), la página se
     recarga con el token nuevo o sin él (se borra el guardado). Comprobar: `tools/vscode.test.mjs` con la sesión simulada.
-50. **Bitbucket propio** · Fuentes · 1×2/3. [parte del ítem 22] Un Bitbucket Data Center o Server (`--bitbucket-url=`),
+50. ~~**Bitbucket propio**~~ hecho en #114 · Fuentes · 1×2/3. [parte del ítem 22] Un Bitbucket Data Center o Server (`--bitbucket-url=`),
     con la misma regla de CSP que GitLab propio. Comprobar: `tools/bitbucket.test.mjs` con otra URL base.
+    (Hecho en la iteración 85 como `js/sources/bitbucket-server.js`, API REST 1.0, y su prueba `tools/bitbucket-server.test.mjs`: la de Data Center no es la API 2.0 de Cloud, así que es otra fuente.)
 51. **Tiempo de entrega desde el primer commit** · Análisis · 1×2/2. [parte del ítem 38] El tiempo de entrega de la
     salud cuenta desde el primer commit del PR (una consulta de `/pulls/:n/commits` por PR fusionado reciente, solo al
     abrir el panel) y no desde su apertura. Comprobar: `tools/github.test.mjs` con la API simulada y
@@ -344,6 +345,9 @@ se comprueban antes de construir sobre ellas.
     por ruta, y lo anuncia. Comprobar: prueba de la vista y un paso del smoke.
 64. **Choques entre ramas en la URL** · Análisis · 1×2/1. [parte del ítem 14] `?conflicts=1` abre el repo con los choques ya
     marcados, para compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
+65. **Token para un Bitbucket propio** · Fuentes · 2×2/2. [parte del ítem 50] Un token de acceso personal (`Authorization: Bearer …`)
+    para un Bitbucket Data Center propio, guardado aparte (llavero en escritorio), que va solo a ese host: la mayoría de los
+    servidores no dejan leer sin iniciar sesión. Comprobar: `tools/bitbucket-server.test.mjs` con el token y sin él.
 
 ## Cómo validar un cambio
 
@@ -1958,3 +1962,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial y `--check` daba un R3 falso (`git fetch --unshallow` lo arregla); `git push origin --delete loop/71` falló con «unexpected disconnect» del proxy, así que las ramas `loop/*` fusionadas siguen en origin. La primera corrida de `npm run check` falló en 7 pasos del smoke (la tasa de fallos de CI en la salud y seis `page.click: Timeout 30000ms`, todos de la página, que este cambio no toca); la repetición pasó los 95 pasos: intermitencia del pendiente 1 de Media (smoke bajo carga).
 - Validado: 285 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
 - **Siguiente:** iteración 85, expansión: ítem 50 (Bitbucket propio, Fuentes)
+
+### 2026-10-16 · Iteración 85 · Expansión · Fuentes
+
+- **Capacidad nueva: Bitbucket Data Center o Server propio como fuente** (ítem 50 de la hoja de ruta). `?bitbucket=https://host` (web) o `--bitbucket-url=` (escritorio) elige un servidor; sus repos se escriben `bitbucketdc:CLAVE/repo` (`~usuario` si es personal) o con su URL (`/projects/…/repos/…`, `/users/…`, `/scm/….git`). `js/sources/bitbucket-server.js` es una fuente nueva sobre la de GitHub y no un cambio de URL base de la de Cloud: la API REST 1.0 de Data Center es otra (`isLastPage`/`nextPageStart`, `commits?until=&since=`, `pull-requests`, `files?at=`, diff en JSON). Ramas (500), historia, force-push, PRs con borradores, galaxias y diff de un commit; sin cuota de plataforma (cada 20 s), sin avatares y **sin ningún token** (ni el de Bitbucket Cloud sale hacia ese host). Reusa los textos genéricos de «servidor» de Forgejo propio: ninguna clave nueva en los 40 idiomas. Electron: `--bitbucket-url` suma solo ese host a `connect-src` (nada a `img-src`) y pasa `?bitbucket=` a la página; la web lo suma el operador, como con `?forge=`. Sin hacer: token (ítem 65), eventos/tags/CI, probarlo contra un servidor real.
+- **Pruebas que fallan sin la capacidad:** `tools/bitbucket-server.test.mjs` (10: endpoints, `parseRepo` por URL y prefijo, carga, repo personal, en vivo con push/rama/PR/force/borrado, más de 100 ramas, 404/401/403/429/500, árbol y diff, y que el token de Cloud no sale) y el caso `--bitbucket-url` de `e2e/desktop.spec.mjs`.
+- README: lista de funciones, ejemplo de `npm start`, Límites conocidos (solo sin credenciales, sin tamaños de archivo) y Seguridad (CSP, ningún token al servidor propio).
+- QA: filas tocadas: CSP (index.html no cambia; Electron suma solo el host de `--bitbucket-url` a `connect-src`); token solo a su API (prueba); XSS (textos por `textContent`, nada nuevo en `innerHTML`); 40 idiomas (`check-i18n`, sin claves nuevas); 404/401 y 429 (prueba). Sin mirar a mano: 320 px, 3D; auditoría: no toca la interfaz más allá de la etiqueta.
+- Reclamo: loop/85, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso y dos pruebas de `loop.test.mjs`).
+- Validado: 295 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 27 e2e en verde.
+- **Siguiente:** iteración 86, expansión: ítem 51 (Tiempo de entrega desde el primer commit, Análisis)

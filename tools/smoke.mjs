@@ -64,6 +64,10 @@ async function loadPlaywright() {
   }
 }
 
+// Topes de espera: las esperas a un estado vuelven en cuanto se cumple, así que un tope holgado no
+// cuesta nada con el equipo libre y evita las fallas intermitentes con el equipo cargado.
+const T = (ms) => ms * 3;
+
 const PNG_1PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
 
 const server = await serve();
@@ -114,14 +118,14 @@ async function step(page, name, fn, { allow = null } = {}) {
   else console.log(`  ✓ ${name}`);
 }
 
-const loaded = (page) => page.waitForSelector('#overlay', { state: 'hidden', timeout: 20000 });
+const loaded = (page) => page.waitForSelector('#overlay', { state: 'hidden', timeout: T(20000) });
 
 /** Guarda la vista con el botón de la cámara y revisa el archivo: un PNG con las proporciones de la
     vista (más la franja de abajo) y con dibujo, no un lienzo vacío. Con `dots`, además, en el centro
     de cada uno de esos elementos (los commits de la 2D) la imagen tiene su color. Devuelve cuántos
     colores distintos tiene. */
 async function snapshot(page, sel, { minColors = 100, dots = null } = {}) {
-  const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), page.click('#snap-btn')]);
+  const [dl] = await Promise.all([page.waitForEvent('download', { timeout: T(15000) }), page.click('#snap-btn')]);
   const name = dl.suggestedFilename();
   if (!/^graphbranch-demo-\d{4}-\d\d-\d\d-\d{4}\.png$/.test(name)) throw new Error(`nombre inesperado: ${name}`);
   const note = await page.textContent('#snap-note');
@@ -255,7 +259,7 @@ console.log('Escritorio (1280×800)');
   });
 
   await step(page, 'llega actividad al panel', async () => {
-    await page.waitForSelector('#feed > li', { timeout: 30000 });
+    await page.waitForSelector('#feed > li', { timeout: T(30000) });
   });
 
   await step(page, 'el estado no se anuncia cada segundo', async () => {
@@ -274,7 +278,7 @@ console.log('Escritorio (1280×800)');
   });
 
   await step(page, 'los avisos se retienen con el foco y se anuncian una sola vez', async () => {
-    const t = await page.waitForSelector('#toasts .toast:not(.leaving)', { timeout: 30000 });
+    const t = await page.waitForSelector('#toasts .toast:not(.leaving)', { timeout: T(30000) });
     // regiones vivas anidadas: algunos lectores anuncian dos veces cada aviso
     const nested = await page.evaluate(() =>
       document.querySelector('#toasts')?.hasAttribute('aria-live')
@@ -291,13 +295,13 @@ console.log('Escritorio (1280×800)');
 
   await step(page, 'vista 2D', async () => {
     await page.click('#view-2d');
-    await page.waitForSelector('#graph svg .node', { timeout: 10000 });
+    await page.waitForSelector('#graph svg .node', { timeout: T(10000) });
     if (await page.locator('#graph3d').isVisible()) throw new Error('la vista 3D sigue visible');
   });
 
   await step(page, 'tags y despliegues: banderín en el commit con tag y placa en el de cada entorno', async () => {
-    await page.waitForSelector('#graph svg .node .tag-flag', { timeout: 10000, state: 'attached' });
-    await page.waitForSelector('#graph svg .node .env-plate', { timeout: 10000, state: 'attached' });
+    await page.waitForSelector('#graph svg .node .tag-flag', { timeout: T(10000), state: 'attached' });
+    await page.waitForSelector('#graph svg .node .env-plate', { timeout: T(10000), state: 'attached' });
     const texts = await page.$$eval('#graph svg .tag-text, #graph svg .env-plate text', (els) => els.map((e) => e.textContent));
     if (!texts.some((x) => /^v1\.\d/.test(x))) throw new Error(`ningún banderín con el nombre del tag: ${texts}`);
     if (!texts.some((x) => /production|staging/.test(x))) throw new Error(`ninguna placa con el nombre del entorno: ${texts}`);
@@ -317,7 +321,7 @@ console.log('Escritorio (1280×800)');
   if (has3d) {
     await step(page, 'vuelve a 3D', async () => {
       await page.click('#view-3d');
-      await page.waitForSelector('#graph3d', { state: 'visible', timeout: 5000 });
+      await page.waitForSelector('#graph3d', { state: 'visible', timeout: T(5000) });
       await page.waitForTimeout(1500); // unos cuantos cuadros de animación
     });
 
@@ -338,7 +342,7 @@ console.log('Escritorio (1280×800)');
     const toggles = async (sel, ms) => {
       const pressed = () => page.getAttribute(sel, 'aria-pressed');
       await page.click(sel);
-      await page.waitForFunction((s) => document.querySelector(s)?.getAttribute('aria-pressed') === 'true', sel, { timeout: 5000 });
+      await page.waitForFunction((s) => document.querySelector(s)?.getAttribute('aria-pressed') === 'true', sel, { timeout: T(5000) });
       await page.waitForTimeout(ms);
       await page.click(sel);
       if ((await pressed()) !== 'false') throw new Error(`${sel} no se apagó`);
@@ -349,16 +353,16 @@ console.log('Escritorio (1280×800)');
 
     await step(page, 'modo TV (entra y sale)', async () => {
       await page.click('#tv-btn');
-      await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: 5000 });
+      await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: T(5000) });
       await page.waitForTimeout(3000); // el director elige planos
       await page.click('#tv-exit');
-      await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: 5000 });
+      await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: T(5000) });
       if (new URL(page.url()).searchParams.has('tv')) throw new Error('la URL sigue con ?tv');
     });
 
     await step(page, 'modo TV con teclado: el foco no se pierde y Esc sale', async () => {
       const active = () => page.evaluate(() => document.activeElement?.id || document.activeElement?.tagName);
-      const tvOn = (v) => page.waitForFunction((on) => document.documentElement.classList.contains('tv') === on, v, { timeout: 5000 });
+      const tvOn = (v) => page.waitForFunction((on) => document.documentElement.classList.contains('tv') === on, v, { timeout: T(5000) });
       await page.focus('#tv-btn');
       await page.keyboard.press('Enter');
       await tvOn(true);
@@ -386,7 +390,7 @@ console.log('Escritorio (1280×800)');
 
     await step(page, 'en modo TV, mover el ratón no vuelve a leer el tema', async () => {
       await page.click('#tv-btn');
-      await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: 5000 });
+      await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: T(5000) });
       // readTheme (3D, 2D y mundo abierto) es lo único que pide el estilo calculado de los contenedores
       await page.evaluate(() => {
         const orig = window.getComputedStyle;
@@ -409,13 +413,13 @@ console.log('Escritorio (1280×800)');
         return window.__themeReads - before;
       });
       await page.click('#tv-exit');
-      await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: 5000 });
+      await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: T(5000) });
       if (reads > 4) throw new Error(`30 movimientos del ratón leyeron el tema ${reads} veces`);
       if (themed < 2) throw new Error('cambiar data-theme ya no relee el tema');
     });
 
     const flying = (on) =>
-      page.waitForFunction((v) => document.querySelector('#fly-btn')?.getAttribute('aria-pressed') === v, String(on), { timeout: 5000 });
+      page.waitForFunction((v) => document.querySelector('#fly-btn')?.getAttribute('aria-pressed') === v, String(on), { timeout: T(5000) });
 
     await step(page, 'volando, el director espera al piloto', async () => {
       await page.click('#fly-btn');
@@ -433,10 +437,10 @@ console.log('Escritorio (1280×800)');
       await page.click('#fly-btn');
       await flying(true);
       await page.click('#tv-btn');
-      await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: 5000 });
+      await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: T(5000) });
       const left = await flying(false).then(() => true, () => false);
       await page.click('#tv-exit');
-      await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: 5000 });
+      await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: T(5000) });
       if (!left) {
         await page.click('#fly-btn');
         throw new Error('el modo TV quedó congelado en el vuelo');
@@ -446,20 +450,20 @@ console.log('Escritorio (1280×800)');
 
   await step(page, 'replay', async () => {
     await page.click('#replay-btn');
-    await page.waitForSelector('#replay', { state: 'visible', timeout: 5000 });
+    await page.waitForSelector('#replay', { state: 'visible', timeout: T(5000) });
     await page.waitForTimeout(2500);
     await page.click('#replay .rp-exit');
-    await page.waitForSelector('#replay', { state: 'hidden', timeout: 5000 });
+    await page.waitForSelector('#replay', { state: 'hidden', timeout: T(5000) });
   });
 
   await step(page, 'replay: tramo de fechas y rótulos propios', async () => {
     await page.click('#replay-btn');
-    await page.waitForSelector('#replay', { state: 'visible', timeout: 5000 });
+    await page.waitForSelector('#replay', { state: 'visible', timeout: T(5000) });
     await page.click('#replay .rp-opts');
     await page.fill('#rp-form [name=title]', 'Sprint 12');
     await page.fill('#rp-form [name=footer]', 'Lanzamiento 2.0');
     await page.click('#rp-form button[type=submit]');
-    await page.waitForSelector('#replay .rp-head:not([hidden])', { timeout: 3000 });
+    await page.waitForSelector('#replay .rp-head:not([hidden])', { timeout: T(3000) });
     if ((await page.textContent('#replay .rp-head')) !== 'Sprint 12') throw new Error('el título no se ve en el Replay');
     if ((await page.textContent('#replay .rp-foot')) !== 'Lanzamiento 2.0') throw new Error('el pie de foto no se ve en el Replay');
     // un tramo sin commits avisa y deja el Replay como estaba
@@ -467,33 +471,33 @@ console.log('Escritorio (1280×800)');
     await page.fill('#rp-form [name=from]', '1990-01-01');
     await page.fill('#rp-form [name=to]', '1990-01-02');
     await page.click('#rp-form button[type=submit]');
-    await page.waitForFunction(() => document.querySelector('#rp-form .rp-form-msg')?.textContent, null, { timeout: 3000 });
+    await page.waitForFunction(() => document.querySelector('#rp-form .rp-form-msg')?.textContent, null, { timeout: T(3000) });
     if (!(await page.locator('#replay').isVisible())) throw new Error('un tramo vacío cerró el Replay');
     if (!(await page.locator('#replay .rp-head').isVisible())) throw new Error('un tramo vacío borró los rótulos');
     // un tramo que sí abarca la historia (desde 2000) la reproduce
     await page.fill('#rp-form [name=from]', '2000-01-01');
     await page.fill('#rp-form [name=to]', '');
     await page.click('#rp-form button[type=submit]');
-    await page.waitForSelector('#rp-form', { state: 'hidden', timeout: 3000 });
+    await page.waitForSelector('#rp-form', { state: 'hidden', timeout: T(3000) });
     await page.click('#replay .rp-opts');
     await page.click('#rp-form button[type=reset]');
-    await page.waitForSelector('#replay .rp-head', { state: 'hidden', timeout: 3000 });
+    await page.waitForSelector('#replay .rp-head', { state: 'hidden', timeout: T(3000) });
     await page.keyboard.press('Escape');
     await page.click('#replay .rp-exit');
-    await page.waitForSelector('#replay', { state: 'hidden', timeout: 5000 });
+    await page.waitForSelector('#replay', { state: 'hidden', timeout: T(5000) });
   });
 
   await step(page, 'replay: el enlace con tramo y rótulos arranca solo', async () => {
     await page.goto(`${base}/index.html?lang=es&replay=2000-01-01..&title=Sprint%2012&footer=Lanzamiento%202.0`);
     await loaded(page);
-    await page.waitForSelector('#replay', { state: 'visible', timeout: 8000 });
+    await page.waitForSelector('#replay', { state: 'visible', timeout: T(8000) });
     if ((await page.textContent('#replay .rp-head')) !== 'Sprint 12') throw new Error('el título del enlace no se ve en el Replay');
     if ((await page.textContent('#replay .rp-foot')) !== 'Lanzamiento 2.0') throw new Error('el pie de foto del enlace no se ve');
     await page.click('#replay .rp-opts');
     if ((await page.inputValue('#rp-form [name=from]')) !== '2000-01-01') throw new Error('el formulario no muestra el tramo del enlace');
     await page.keyboard.press('Escape');
     await page.click('#replay .rp-exit');
-    await page.waitForSelector('#replay', { state: 'hidden', timeout: 5000 });
+    await page.waitForSelector('#replay', { state: 'hidden', timeout: T(5000) });
     await page.goto(`${base}/index.html?lang=es`);
     await loaded(page);
   });
@@ -510,14 +514,14 @@ console.log('Escritorio (1280×800)');
       };
     });
     await page.click('#replay-btn');
-    await page.waitForSelector('#replay', { state: 'visible', timeout: 5000 });
+    await page.waitForSelector('#replay', { state: 'visible', timeout: T(5000) });
     await page.waitForTimeout(2000);
     const hidden = await page.evaluate(() => window.__g3u);
     // la vista que estaba oculta se pone al día al mostrarse
     await page.click('#view-3d');
     const after = await page.evaluate(() => window.__g3u);
     await page.click('#replay .rp-exit');
-    await page.waitForSelector('#replay', { state: 'hidden', timeout: 5000 });
+    await page.waitForSelector('#replay', { state: 'hidden', timeout: T(5000) });
     await page.evaluate(() => { window.GB.Graph3D.prototype.update = window.__g3orig; });
     if (hidden > 2) throw new Error(`el Replay actualizó la vista 3D oculta ${hidden} veces`);
     if (after <= hidden) throw new Error('la vista 3D no se puso al día al mostrarse durante el Replay');
@@ -527,12 +531,12 @@ console.log('Escritorio (1280×800)');
   await step(page, 'graba el Replay en video, de principio a fin', async () => {
     const sel = has3d && (await page.locator('#graph3d').isVisible()) ? '#graph3d' : '#graph';
     await page.click('#replay-btn');
-    await page.waitForSelector('#replay', { state: 'visible', timeout: 5000 });
+    await page.waitForSelector('#replay', { state: 'visible', timeout: T(5000) });
     const rec = page.locator('#replay .rp-rec');
     if (!(await rec.isVisible())) throw new Error('no se ofrece grabar');
     while ((await page.textContent('#replay .rp-speed')) !== '4×') await page.click('#replay .rp-speed');
     await page.waitForTimeout(1500);
-    const saved = page.waitForEvent('download', { timeout: 30000 });
+    const saved = page.waitForEvent('download', { timeout: T(30000) });
     const t0 = Date.now();
     // el canvas del que graba MediaRecorder ya tiene que tener dibujo cuando el grabador arranca
     await page.evaluate(() => {
@@ -573,33 +577,33 @@ console.log('Escritorio (1280×800)');
   await step(page, 'parar la grabación a mano también guarda el video', async () => {
     const sel = has3d && (await page.locator('#graph3d').isVisible()) ? '#graph3d' : '#graph';
     const rec = page.locator('#replay .rp-rec');
-    const saved = page.waitForEvent('download', { timeout: 15000 });
+    const saved = page.waitForEvent('download', { timeout: T(15000) });
     await rec.click();
     await page.waitForTimeout(2500);
     await rec.click();
     await videoFile(page, await saved, sel, { minSeconds: 1.5, maxSeconds: 5 });
     while ((await page.textContent('#replay .rp-speed')) !== '1×') await page.click('#replay .rp-speed');
     await page.click('#replay .rp-exit');
-    await page.waitForSelector('#replay', { state: 'hidden', timeout: 5000 });
+    await page.waitForSelector('#replay', { state: 'hidden', timeout: T(5000) });
   });
 
   await step(page, 'ajustes', async () => {
     await page.click('#settings-btn');
-    await page.waitForSelector('#settings[open]', { timeout: 3000 });
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
     await page.keyboard.press('Escape');
-    await page.waitForSelector('#settings:not([open])', { state: 'attached', timeout: 3000 });
+    await page.waitForSelector('#settings:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
   await step(page, 'vitrina de logros', async () => {
     await page.click('#trophy-btn');
-    await page.waitForSelector('#trophies[open]', { timeout: 3000 });
+    await page.waitForSelector('#trophies[open]', { timeout: T(3000) });
     await page.click('#trophies-close');
-    await page.waitForSelector('#trophies:not([open])', { state: 'attached', timeout: 3000 });
+    await page.waitForSelector('#trophies:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
   await step(page, 'salud del repo: listas y ritmo de lo ya cargado, y cada fila lleva a su rama', async () => {
     await page.click('#health-btn');
-    await page.waitForSelector('#health[open]', { timeout: 3000 });
+    await page.waitForSelector('#health[open]', { timeout: T(3000) });
     const info = await page.evaluate(() => {
       const d = document.querySelector('#health');
       const w = d.querySelector('.tr-wrap');
@@ -621,7 +625,7 @@ console.log('Escritorio (1280×800)');
     if (/undefined|NaN|health\./.test(info.text)) throw new Error('texto sin resolver en el panel: ' + info.text.slice(0, 120));
     if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
     await page.click('#hl-clash-go');
-    await page.waitForFunction(() => document.querySelector('#hl-clash-out')?.textContent.trim() && !document.querySelector('#hl-clash-go').disabled, null, { timeout: 8000 });
+    await page.waitForFunction(() => document.querySelector('#hl-clash-out')?.textContent.trim() && !document.querySelector('#hl-clash-go').disabled, null, { timeout: T(8000) });
     const clash = await page.evaluate(() => document.querySelector('#hl-clash-out').textContent);
     if (/undefined|NaN|health\./.test(clash)) throw new Error('texto sin resolver en los choques: ' + clash.slice(0, 120));
     const cmp = await page.evaluate(async () => {
@@ -653,7 +657,7 @@ console.log('Escritorio (1280×800)');
     const md = await page.evaluate(() => document.querySelector('#digest-md')?.textContent || '');
     if (!/^# /.test(md) || !/## .*\(\d+\)/.test(md)) throw new Error('resumen de la semana sin formato Markdown: ' + md.slice(0, 120));
     if (/undefined|NaN|digest\./.test(md)) throw new Error('texto sin resolver en el resumen de la semana: ' + md.slice(0, 120));
-    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.click('#digest-save')]);
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#digest-save')]);
     if (!/^graphbranch-.*-semana-.*\.md$/.test(dl.suggestedFilename())) throw new Error('nombre del resumen: ' + dl.suggestedFilename());
     const states = await page.evaluate(() => ({
       groups: [...document.querySelectorAll('#hl-prstates .hl-sub')].map((d) => d.querySelector('h4').textContent.trim()),
@@ -662,12 +666,12 @@ console.log('Escritorio (1280×800)');
     }));
     if (!states.groups.length || states.inGroups !== states.open || states.groups.some((x) => /undefined|NaN|health\./.test(x))) throw new Error('PRs por estado en la demo: ' + JSON.stringify(states));
     await page.click('#health .hl-list[data-list="prs"] [data-go]');
-    await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: 3000 });
+    await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
   await step(page, 'vista de texto: árbol con teclado, nombres accesibles y Enter lleva al grafo', async () => {
     await page.click('#textview-btn');
-    await page.waitForSelector('#textview[open]', { timeout: 3000 });
+    await page.waitForSelector('#textview[open]', { timeout: T(3000) });
     const info = await page.evaluate(() => {
       const d = document.querySelector('#textview');
       const tree = d.querySelector('[role="tree"]');
@@ -697,12 +701,12 @@ console.log('Escritorio (1280×800)');
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press('Enter');
-    await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: 3000 });
+    await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
   await step(page, 'vista de texto: filtra por rama y avisa en la región viva de lo nuevo sin repetir', async () => {
     await page.click('#textview-btn');
-    await page.waitForSelector('#textview[open]', { timeout: 3000 });
+    await page.waitForSelector('#textview[open]', { timeout: T(3000) });
     const live = await page.evaluate(() => {
       const l = document.querySelector('#textview-live');
       return { role: l.getAttribute('role'), polite: l.getAttribute('aria-live'), text: l.textContent };
@@ -718,18 +722,18 @@ console.log('Escritorio (1280×800)');
     if (!kept.includes(first)) throw new Error(`el filtro quitó la rama ${first}: ${kept.join(', ')}`);
     await page.fill('#textview-filter', '');
     // la demo trae commits cada 3 a 7 s: la región viva avisa de los nuevos, una sola vez cada uno
-    await page.waitForFunction(() => /^Novedades: \d+ ramas, \d+ commits$/.test(document.querySelector('#textview-live').textContent), null, { timeout: 20000 });
+    await page.waitForFunction(() => /^Novedades: \d+ ramas, \d+ commits$/.test(document.querySelector('#textview-live').textContent), null, { timeout: T(20000) });
     const said = await page.evaluate(() => document.querySelector('#textview-live').textContent);
     if (/undefined|NaN|textview\./.test(said)) throw new Error('texto sin resolver en la región viva: ' + said);
     const unnamed = await page.evaluate(() => [...document.querySelectorAll('#textview [role="treeitem"]')].filter((n) => !n.getAttribute('aria-label')).length);
     if (unnamed) throw new Error(`${unnamed} nodos sin nombre accesible tras la actualización en vivo`);
     await page.keyboard.press('Escape');
-    await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: 3000 });
+    await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
   await step(page, 'búsqueda de commits: por mensaje y por autor, con teclado, y Enter vuela al commit', async () => {
     await page.click('#search-btn');
-    await page.waitForSelector('#search[open]', { timeout: 3000 });
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
     const first = await page.evaluate(() => {
       const d = document.querySelector('#search');
       return {
@@ -759,7 +763,7 @@ console.log('Escritorio (1280×800)');
     const onHit = await page.evaluate(() => document.activeElement.classList.contains('sr-hit'));
     if (!onHit) throw new Error('↓ no baja al primer resultado');
     await page.keyboard.press('Enter');
-    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: 3000 });
+    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
   await step(page, 'filtro por autor: el grafo y el árbol de texto muestran solo sus ramas, lo dice y se quita', async () => {
@@ -767,13 +771,13 @@ console.log('Escritorio (1280×800)');
     const count = () => page.evaluate(() => document.querySelectorAll('#graph svg .head').length);
     const all = await count();
     await page.click('#search-btn');
-    await page.waitForSelector('#search[open]', { timeout: 3000 });
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
     const options = await page.evaluate(() => [...document.querySelectorAll('#graph-author option')].map((o) => o.value));
     // el autor que deja menos ramas a la vista (tiene que dejar alguna menos que todas)
     let best = null;
     for (const who of options.filter(Boolean)) {
       await page.selectOption('#graph-author', who);
-      await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, all, { timeout: 1500 }).catch(() => {}); // las ramas salen con su transición
+      await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, all, { timeout: T(1500) }).catch(() => {}); // las ramas salen con su transición
       const n = await count();
       if (n < all && (!best || n < best.n)) best = { who, n };
     }
@@ -786,29 +790,29 @@ console.log('Escritorio (1280×800)');
     }));
     if (!on.status || /undefined|NaN|search\./.test(on.status) || !on.mark || !on.named) throw new Error('sin aviso del filtro por autor: ' + JSON.stringify(on));
     await page.keyboard.press('Escape');
-    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: 3000 });
+    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
     const saved = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('graphbranch:author:')).length);
     if (!saved) throw new Error('el filtro por autor no se guardó por repo');
     await page.click('#textview-btn');
-    await page.waitForSelector('#textview[open]', { timeout: 3000 });
+    await page.waitForSelector('#textview[open]', { timeout: T(3000) });
     const tree = await page.evaluate(() => document.querySelectorAll('#textview-body [role="treeitem"][data-branch], #textview-body > [role="tree"] > [role="treeitem"]').length);
     await page.keyboard.press('Escape');
-    await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: 3000 });
+    await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: T(3000) });
     if (!tree) throw new Error('el árbol de texto quedó vacío con el filtro por autor');
     await page.click('#search-btn');
-    await page.waitForSelector('#search[open]', { timeout: 3000 });
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
     await page.selectOption('#graph-author', '');
     const off = await page.evaluate(() => ({ mark: document.querySelector('#search-btn').classList.contains('filtered'), status: document.querySelector('#graph-author-status').textContent }));
-    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length === n, all, { timeout: 3000 }).catch(() => {});
+    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length === n, all, { timeout: T(3000) }).catch(() => {});
     if (off.mark || off.status || (await count()) !== all) throw new Error('quitar el filtro no deja el grafo como estaba');
     await page.keyboard.press('Escape');
-    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: 3000 });
+    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
   await step(page, 'filtro por ruta: atenúa los commits que no la tocaron, lo dice y se quita', async () => {
     await page.click('#view-2d');
     await page.click('#search-btn');
-    await page.waitForSelector('#search[open]', { timeout: 3000 });
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
     const word = await page.evaluate(() => {
       const msg = document.querySelector('#search .sr-hit .tv-msg')?.textContent || '';
       return msg.split(/[^\p{L}\p{N}]+/u).sort((a, b) => b.length - a.length)[0] || '';
@@ -816,7 +820,7 @@ console.log('Escritorio (1280×800)');
     if (!word) throw new Error('no hay un mensaje del que sacar una ruta');
     await page.fill('#search-path', word);
     await page.press('#search-path', 'Enter');
-    await page.waitForSelector('#search-path-clear:not([hidden])', { timeout: 3000 });
+    await page.waitForSelector('#search-path-clear:not([hidden])', { timeout: T(3000) });
     const on = await page.evaluate(() => ({
       dim: document.querySelectorAll('#graph svg .node.pfx').length,
       all: document.querySelectorAll('#graph svg .node').length,
@@ -829,7 +833,7 @@ console.log('Escritorio (1280×800)');
     const off = await page.evaluate(() => ({ dim: document.querySelectorAll('#graph svg .node.pfx').length, mark: document.querySelector('#search-btn').classList.contains('filtered') }));
     if (off.dim || off.mark) throw new Error('quitar el filtro no deja el grafo como estaba');
     await page.keyboard.press('Escape');
-    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: 3000 });
+    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
   await step(page, 'filtro por ruta: el grafo 3D también recibe la ruta y la suelta al quitarla', async () => {
@@ -847,19 +851,19 @@ console.log('Escritorio (1280×800)');
       };
     });
     await page.click('#search-btn');
-    await page.waitForSelector('#search[open]', { timeout: 3000 });
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
     const word = await page.evaluate(() => {
       const msg = document.querySelector('#search .sr-hit .tv-msg')?.textContent || '';
       return msg.split(/[^\p{L}\p{N}]+/u).sort((a, b) => b.length - a.length)[0] || '';
     });
     await page.fill('#search-path', word);
     await page.press('#search-path', 'Enter');
-    await page.waitForSelector('#search-path-clear:not([hidden])', { timeout: 3000 });
+    await page.waitForSelector('#search-path-clear:not([hidden])', { timeout: T(3000) });
     await page.click('#search-path-clear');
     const calls = await page.evaluate(() => window.__g3path);
     if (calls.length !== 2 || !(calls[0] > 0) || calls[1] !== null) throw new Error('el grafo 3D no recibió el filtro por ruta: ' + JSON.stringify(calls));
     await page.keyboard.press('Escape');
-    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: 3000 });
+    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
   await step(page, 'cambios de un commit: desde su ficha, con teclado se pasa al anterior y se vuelve, y Esc cierra', async () => {
@@ -868,10 +872,10 @@ console.log('Escritorio (1280×800)');
     const heads = await page.$$('#graph svg .head[role=button]');
     await heads[heads.length > 3 ? 3 : 0].focus();
     await page.keyboard.press('Enter');
-    const btn = await page.waitForSelector('#graph .tip .tip-diff', { timeout: 5000 });
+    const btn = await page.waitForSelector('#graph .tip .tip-diff', { timeout: T(5000) });
     await btn.focus();
     await page.keyboard.press('Enter');
-    await page.waitForSelector('#diff-panel:not([hidden]) .df-file', { timeout: 5000 });
+    await page.waitForSelector('#diff-panel:not([hidden]) .df-file', { timeout: T(5000) });
     const read = () =>
       page.evaluate(() => {
         const p = document.querySelector('#diff-panel');
@@ -897,7 +901,7 @@ console.log('Escritorio (1280×800)');
     if (first.unnamed) throw new Error(`${first.unnamed} botones sin nombre`);
     if (first.overflow > 0) throw new Error(`la página se desborda ${first.overflow}px`);
     await page.keyboard.press('ArrowLeft');
-    await page.waitForFunction((m) => document.querySelector('#diff-panel .df-msg').textContent !== m && !document.querySelector('#diff-panel').classList.contains('loading'), first.msg, { timeout: 5000 });
+    await page.waitForFunction((m) => document.querySelector('#diff-panel .df-msg').textContent !== m && !document.querySelector('#diff-panel').classList.contains('loading'), first.msg, { timeout: T(5000) });
     const older = await read();
     if (!older.files) throw new Error('el commit anterior llegó sin archivos');
     // el anterior ya está guardado: volver es inmediato, sin esperar a la red
@@ -909,7 +913,7 @@ console.log('Escritorio (1280×800)');
     await page.focus('#diff-panel .df-older');
     for (let i = 0; i < 40 && !(await page.$eval('#diff-panel .df-older', (b) => b.disabled)); i++) {
       await page.keyboard.press('Enter');
-      await page.waitForFunction(() => !document.querySelector('#diff-panel').classList.contains('loading'), null, { timeout: 5000 });
+      await page.waitForFunction(() => !document.querySelector('#diff-panel').classList.contains('loading'), null, { timeout: T(5000) });
     }
     const end = await page.evaluate(() => ({ disabled: document.querySelector('#diff-panel .df-older').disabled, inPanel: !!document.activeElement?.closest('#diff-panel') }));
     if (!end.disabled) throw new Error('el botón «anterior» nunca llegó al primer commit cargado');
@@ -928,10 +932,10 @@ console.log('Escritorio (1280×800)');
 
   await step(page, 'cambia a árabe en vivo (derecha a izquierda)', async () => {
     await page.selectOption('#lang-select', 'ar');
-    await page.waitForFunction(() => document.documentElement.dir === 'rtl', null, { timeout: 5000 });
+    await page.waitForFunction(() => document.documentElement.dir === 'rtl', null, { timeout: T(5000) });
     await loaded(page);
     await page.selectOption('#lang-select', 'es');
-    await page.waitForFunction(() => document.documentElement.dir !== 'rtl', null, { timeout: 5000 });
+    await page.waitForFunction(() => document.documentElement.dir !== 'rtl', null, { timeout: T(5000) });
     await loaded(page);
   });
 
@@ -943,8 +947,8 @@ console.log('Escritorio (1280×800)');
       await page.route('https://api.github.com/**', (r) => r.fulfill({ status: 404, json: { message: 'Not Found' } }));
       await page.fill('#repo-input', 'nadie/no-existe');
       await page.press('#repo-input', 'Enter');
-      await page.waitForSelector('#overlay:not([hidden])', { timeout: 5000 });
-      await page.waitForFunction(() => document.querySelector('#status')?.dataset.state === 'error', null, { timeout: 10000 });
+      await page.waitForSelector('#overlay:not([hidden])', { timeout: T(5000) });
+      await page.waitForFunction(() => document.querySelector('#status')?.dataset.state === 'error', null, { timeout: T(10000) });
       const stats = await page.$$eval('.stat-value', (els) => els.map((e) => e.textContent.trim()));
       if (stats.slice(0, 3).some((v) => v !== '–')) throw new Error(`quedan cifras del repo anterior: ${stats.join(', ')}`);
       // sin datos propios, el Replay no tiene nada que reproducir (antes reproducía la demo)
@@ -1150,7 +1154,7 @@ console.log('Varios repos a la vez');
   await step(page, 'sigue los repos de la URL, cada uno en su pestaña', async () => {
     await page.goto(`${base}/index.html?lang=es&repo=o/a&repo=o/b`);
     await loaded(page);
-    await page.waitForFunction(() => [...document.querySelectorAll('#repo-tabs .rt')].filter((t) => t.dataset.state === 'live').length === 2, null, { timeout: 15000 });
+    await page.waitForFunction(() => [...document.querySelectorAll('#repo-tabs .rt')].filter((t) => t.dataset.state === 'live').length === 2, null, { timeout: T(15000) });
     const tabs = await repoTabs(page);
     const names = tabs.map((t) => `${t.name}${t.on ? '*' : ''}`).join(' ');
     if (names !== 'o/a* o/b') throw new Error(`pestañas: ${names}`);
@@ -1160,16 +1164,16 @@ console.log('Varios repos a la vez');
   });
 
   await step(page, 'CI en el grafo: la rama por defecto lleva la marca de sus checks', async () => {
-    const mark = await page.waitForSelector('.h-ci.ci-success, .h3-ci.ci-success', { timeout: 10000 });
+    const mark = await page.waitForSelector('.h-ci.ci-success, .h3-ci.ci-success', { timeout: T(10000) });
     const title = await mark.getAttribute('title');
     if (!title && !(await mark.$('title'))) throw new Error('la marca de CI no dice qué significa');
   });
 
   await step(page, 'lo nuevo del repo que no se ve llega con su nombre y a su pestaña', async () => {
     gh.push('o/b', 'main', 'arreglo que llega por detrás');
-    const toast = await page.waitForSelector('#toasts .toast .toast-repo', { timeout: 15000 });
+    const toast = await page.waitForSelector('#toasts .toast .toast-repo', { timeout: T(15000) });
     const from = await toast.textContent();
-    await page.waitForFunction(() => document.querySelector('#repo-tabs .rt:nth-child(2) .rt-n')?.textContent === '1', null, { timeout: 5000 });
+    await page.waitForFunction(() => document.querySelector('#repo-tabs .rt:nth-child(2) .rt-n')?.textContent === '1', null, { timeout: T(5000) });
     const label = await page.textContent('#feed .act-repo');
     if (from !== 'o/b') throw new Error(`el aviso dice ${from}`);
     if (label !== 'o/b') throw new Error(`el panel dice ${label}`);
@@ -1190,7 +1194,7 @@ console.log('Varios repos a la vez');
     const loads = () => gh.calls.filter((c) => c === '/repos/o/b').length;
     const before = loads();
     await page.click('#repo-tabs .rt:nth-child(2) .rt-main');
-    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: 5000 });
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
     await loaded(page);
     const tabs = await repoTabs(page);
     const commits = await page.textContent('#st-commits');
@@ -1204,15 +1208,15 @@ console.log('Varios repos a la vez');
   await step(page, 'clic en una actividad de otro repo lleva a su pestaña', async () => {
     gh.push('o/a', 'main', 'cambio en a');
     const item = page.locator('#feed .act', { has: page.locator('.act-repo', { hasText: 'o/a' }) }).first();
-    await item.waitFor({ timeout: 15000 });
+    await item.waitFor({ timeout: T(15000) });
     await item.locator('.act-main').click();
-    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: 5000 });
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(5000) });
   });
 
   await step(page, 'Conectar un repo que ya se sigue no lo repite', async () => {
     await page.fill('#repo-input', 'https://github.com/o/b');
     await page.press('#repo-input', 'Enter');
-    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: 5000 });
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
     const n = (await repoTabs(page)).length;
     if (n !== 2) throw new Error(`hay ${n} pestañas`);
   });
@@ -1220,7 +1224,7 @@ console.log('Varios repos a la vez');
   await step(page, 'cerrar la pestaña deja de seguir el repo', async () => {
     await page.focus('#repo-tabs .rt:nth-child(1) .rt-close'); // o/a, con el teclado
     await page.keyboard.press('Enter');
-    await page.waitForSelector('#repo-tabs', { state: 'hidden', timeout: 5000 });
+    await page.waitForSelector('#repo-tabs', { state: 'hidden', timeout: T(5000) });
     // sin pestañas a la vista, el foco pasa al campo del repositorio en vez de perderse
     const focused = await page.evaluate(() => document.activeElement?.id);
     if (focused !== 'repo-input') throw new Error(`el foco quedó en ${focused || 'el documento'}`);
@@ -1245,10 +1249,10 @@ console.log('Varios repos a la vez');
 
   await step(page, 'la demo se mira sin dejar de seguir los repos', async () => {
     await page.click('#demo-btn');
-    await page.waitForFunction(() => document.querySelector('#status')?.dataset.state === 'live' && document.querySelector('#repo-link')?.textContent === 'acme/orbita', null, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelector('#status')?.dataset.state === 'live' && document.querySelector('#repo-link')?.textContent === 'acme/orbita', null, { timeout: T(15000) });
     const names = (await repoTabs(page)).map((t) => t.name).join(' ');
     await page.click('#repo-tabs .rt:nth-child(1) .rt-main'); // o/b: la demo se cierra
-    await page.waitForSelector('#repo-tabs', { state: 'hidden', timeout: 5000 });
+    await page.waitForSelector('#repo-tabs', { state: 'hidden', timeout: T(5000) });
     const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
     if (names !== 'o/b acme/orbita') throw new Error(`pestañas con la demo: ${names}`);
     if (saved !== '["o/b"]') throw new Error(`se guardó ${saved}`);
@@ -1262,8 +1266,8 @@ console.log('Varios repos a la vez');
     await loaded(lab);
     await lab.click('#view-2d');
     await lab.click('#practice-btn');
-    await lab.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'practice/git' && !document.querySelector('#practice').hidden, null, { timeout: 15000 });
-    await lab.waitForSelector('#graph svg .node', { timeout: 10000 });
+    await lab.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'practice/git' && !document.querySelector('#practice').hidden, null, { timeout: T(15000) });
+    await lab.waitForSelector('#graph svg .node', { timeout: T(10000) });
     if ((await lab.evaluate(() => document.activeElement?.className)) !== 'pr-input') throw new Error('el foco no quedó en la línea de comandos');
     const nodes = () => lab.locator('#graph svg .node').count();
     const before = await nodes();
@@ -1271,14 +1275,14 @@ console.log('Varios repos a la vez');
       await lab.fill('.pr-input', c);
       await lab.press('.pr-input', 'Enter');
     }
-    await lab.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length >= n, before + 2, { timeout: 10000 });
+    await lab.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length >= n, before + 2, { timeout: T(10000) });
     const log = await lab.textContent('.pr-log');
     if (!log.includes('<img src=x onerror=alert(1)>')) throw new Error('el mensaje no se ve tal cual');
     if (await lab.locator('.pr-log img').count()) throw new Error('la terminal interpretó HTML');
     if (!/is not a git command/.test(log)) throw new Error('un comando que no existe no dio error');
     if ((await lab.textContent('.pr-status')).trim() === '') throw new Error('el primer ejercicio no se dio por resuelto');
     await lab.selectOption('.pr-ex', '3');
-    await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent.includes('reset'), null, { timeout: 5000 });
+    await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent.includes('reset'), null, { timeout: T(5000) });
   });
   await step(lab, 'un ejercicio propio se crea, se comparte por URL y la URL lo abre y se resuelve', async () => {
     await lab.click('.pr-make summary');
@@ -1290,7 +1294,7 @@ console.log('Varios repos a la vez');
     if (!(await lab.textContent('.pr-m-err')).includes('alert(1)')) throw new Error('una condición inventada no dio error');
     await lab.fill('.pr-m-checks', 'merge-commit:main\nmerged:feature>main');
     await lab.click('.pr-m-go');
-    await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent === 'Trae feature a main.', null, { timeout: 5000 });
+    await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent === 'Trae feature a main.', null, { timeout: T(5000) });
     if (await lab.locator('.pr-ex b').count()) throw new Error('el título se interpretó como HTML');
     if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('el ejercicio propio parte resuelto');
     await lab.click('.pr-share');
@@ -1298,10 +1302,10 @@ console.log('Varios repos a la vez');
     if (!/[?&]practice=[\w-]+$/.test(url)) throw new Error(`enlace raro: ${url}`);
     if (!new URL(lab.url()).searchParams.get('practice')) throw new Error('la URL de la barra no lleva el ejercicio');
     await lab.goto(url.replace(/^https?:\/\/[^/]+/, base) + '&lang=es');
-    await lab.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'practice/git' && document.querySelector('.pr-goal')?.textContent === 'Trae feature a main.', null, { timeout: 15000 });
+    await lab.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'practice/git' && document.querySelector('.pr-goal')?.textContent === 'Trae feature a main.', null, { timeout: T(15000) });
     await lab.fill('.pr-input', 'merge feature');
     await lab.press('.pr-input', 'Enter');
-    await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: 5000 });
+    await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: T(5000) });
     // una URL con basura no rompe nada: abre la demo
     await lab.goto(`${base}/index.html?lang=es&practice=%3Cscript%3E`);
     await loaded(lab);
@@ -1309,7 +1313,7 @@ console.log('Varios repos a la vez');
   });
   await step(lab, 'un ejercicio propio con pistas: el botón las muestra una a una y la condición de mensaje lo resuelve', async () => {
     await lab.goto(`${base}/index.html?lang=es&practice=1`);
-    await lab.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: 15000 });
+    await lab.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: T(15000) });
     if (await lab.isVisible('.pr-hint')) throw new Error('un ejercicio de la lista muestra el botón de pista');
     await lab.click('.pr-make summary');
     await lab.fill('.pr-m-title', 'Con pistas');
@@ -1318,7 +1322,7 @@ console.log('Varios repos a la vez');
     await lab.fill('.pr-m-hints', 'Primera <b>pista</b>\nSegunda pista');
     await lab.fill('.pr-m-checks', 'tip:feature~listo');
     await lab.click('.pr-m-go');
-    await lab.waitForSelector('.pr-hint:not([hidden])', { timeout: 5000 });
+    await lab.waitForSelector('.pr-hint:not([hidden])', { timeout: T(5000) });
     if (await lab.isVisible('.pr-hint-text')) throw new Error('las pistas salen sin pedirlas');
     await lab.click('.pr-hint');
     let hints = await lab.textContent('.pr-hint-text');
@@ -1333,7 +1337,7 @@ console.log('Varios repos a la vez');
     if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('se resolvió con otro mensaje');
     await lab.fill('.pr-input', 'commit -m "Todo LISTO"');
     await lab.press('.pr-input', 'Enter');
-    await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: 5000 });
+    await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: T(5000) });
   });
   await lab.context().close();
 
@@ -1342,26 +1346,26 @@ console.log('Varios repos a la vez');
   await full.route('https://api.github.com/**', gh.handle);
   await step(full, 'ensayar un comando: la copia del repo real cambia sin tocar al original ni gastar cuota', async () => {
     await full.goto(`${base}/index.html?lang=es&repo=o/b`);
-    await full.waitForFunction(() => document.querySelector('#status')?.dataset.state === 'live' && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: 15000 });
-    await full.waitForSelector('#rehearse-btn:not([hidden])', { timeout: 5000 });
+    await full.waitForFunction(() => document.querySelector('#status')?.dataset.state === 'live' && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(15000) });
+    await full.waitForSelector('#rehearse-btn:not([hidden])', { timeout: T(5000) });
     await full.click('#view-2d');
-    await full.waitForSelector('#graph svg .node', { timeout: 10000 });
+    await full.waitForSelector('#graph svg .node', { timeout: T(10000) });
     const real = await full.locator('#graph svg .node').count();
     let calls = 0;
     const count = (req) => req.url().startsWith('https://api.github.com/') && calls++;
     full.on('request', count);
     await full.click('#rehearse-btn');
-    await full.waitForFunction(() => !document.querySelector('#practice').hidden && document.querySelector('.pr-goal')?.textContent.includes('o/b'), null, { timeout: 10000 });
-    await full.waitForSelector('#graph svg .node', { timeout: 10000 });
+    await full.waitForFunction(() => !document.querySelector('#practice').hidden && document.querySelector('.pr-goal')?.textContent.includes('o/b'), null, { timeout: T(10000) });
+    await full.waitForSelector('#graph svg .node', { timeout: T(10000) });
     await full.fill('.pr-input', 'commit -m "ensayo <b>x</b>"');
     await full.press('.pr-input', 'Enter');
-    await full.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length > n, real, { timeout: 10000 });
+    await full.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length > n, real, { timeout: T(10000) });
     if (await full.locator('.pr-log b').count()) throw new Error('la terminal interpretó HTML');
     if (await full.locator('.pr-make').isVisible()) throw new Error('el ensayo ofrece crear ejercicios');
     await full.click('#repo-tabs .rt:nth-child(1) .rt-main'); // vuelve al repo real: el ensayo se cierra
-    await full.waitForFunction(() => document.querySelector('#practice').hidden && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: 5000 });
+    await full.waitForFunction(() => document.querySelector('#practice').hidden && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
     full.off('request', count);
-    await full.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length === n, real, { timeout: 5000 }).catch(() => {
+    await full.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length === n, real, { timeout: T(5000) }).catch(() => {
       throw new Error('el repo real cambió con el ensayo');
     });
     if (calls) throw new Error(`el ensayo hizo ${calls} consultas a la API`);
@@ -1372,7 +1376,7 @@ console.log('Varios repos a la vez');
     async () => {
       const ten = Array.from({ length: 10 }, (_, i) => `repo=o/r${i}`).join('&'); // no existen: dan 404, da igual
       await full.goto(`${base}/index.html?lang=es&${ten}`);
-      await full.waitForSelector('#repo-tabs:not([hidden])', { timeout: 10000 });
+      await full.waitForSelector('#repo-tabs:not([hidden])', { timeout: T(10000) });
       await full.fill('#repo-input', 'o/a');
       await full.press('#repo-input', 'Enter');
       const why = await full.$eval('#repo-input', (i) => i.validationMessage);
@@ -1381,7 +1385,7 @@ console.log('Varios repos a la vez');
       if (!why) throw new Error('no dice por qué no se suma el repo 11');
       // un enlace a otro repo, con los 10 ya seguidos: entra el del enlace y sale el último guardado
       await full.goto(`${base}/index.html?lang=es&repo=o/a`);
-      await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: 10000 });
+      await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });
       const names = await full.locator('#repo-tabs .rt-name').allTextContents();
       if (names.length !== 10 || names.at(-1) !== 'o/a' || names.includes('o/r9')) throw new Error(`pestañas tras el enlace: ${names.join(' ')}`);
     },
@@ -1395,7 +1399,7 @@ console.log('Varios repos a la vez');
   await step(phonePage, 'en el celular, tres pestañas no desbordan la página', async () => {
     await phonePage.goto(`${base}/index.html?lang=de&repo=o/a&repo=o/b&repo=o/c`);
     await loaded(phonePage);
-    await phonePage.waitForSelector('#repo-tabs:not([hidden])', { timeout: 5000 });
+    await phonePage.waitForSelector('#repo-tabs:not([hidden])', { timeout: T(5000) });
     const over = await noOverflow(phonePage);
     if (over > 1) throw new Error(`la página es ${over}px más ancha que la pantalla`);
   });
@@ -1429,9 +1433,9 @@ console.log('Una organización o un usuario entero');
     await loaded(page);
     await page.fill('#repo-input', 'org:acme');
     await page.press('#repo-input', 'Enter');
-    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 3, null, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 3, null, { timeout: T(15000) });
     if ((await names()) !== 'acme/api* acme/web acme/viejo') throw new Error(`pestañas: ${await names()}`);
-    const toast = await page.waitForSelector('#toasts .toast:has-text("Ahora sigues los repositorios más activos de acme")', { timeout: 5000 });
+    const toast = await page.waitForSelector('#toasts .toast:has-text("Ahora sigues los repositorios más activos de acme")', { timeout: T(5000) });
     const detail = await toast.$eval('.toast-detail', (d) => d.textContent);
     if (detail !== 'api, web, viejo') throw new Error(`el aviso dice ${detail}`);
     const lists = gh.calls.filter((c) => /^\/(orgs|users)\/[^/]+\/repos$/.test(c));
@@ -1442,11 +1446,11 @@ console.log('Una organización o un usuario entero');
 
   await step(page, 'el resumen de la semana de la organización junta sus repos abiertos', async () => {
     await page.click('#health-btn');
-    await page.waitForSelector('#digest-org-md', { timeout: 5000 });
+    await page.waitForSelector('#digest-org-md', { timeout: T(5000) });
     const md = await page.$eval('#digest-org-md', (e) => e.textContent);
     if (!/^# .*acme/.test(md) || !/## acme\/(api|web|viejo)/.test(md)) throw new Error('resumen de la organización sin sus repos: ' + JSON.stringify(md.slice(0, 400)));
     if (/undefined|NaN|digest\./.test(md)) throw new Error('texto sin resolver en el resumen de la organización: ' + md.slice(0, 120));
-    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.click('#digest-org-save')]);
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#digest-org-save')]);
     if (!/^graphbranch-acme-semana-.*\.md$/.test(dl.suggestedFilename())) throw new Error('nombre del resumen de la organización: ' + dl.suggestedFilename());
     await page.keyboard.press('Escape');
   });
@@ -1454,7 +1458,7 @@ console.log('Una organización o un usuario entero');
   await step(page, 'los eventos de la organización llegan al panel, solo los de repos sin pestaña, con una consulta', async () => {
     gh.orgEvent({ type: 'WatchEvent', repo: { name: 'acme/lejano' } }); // sin pestaña: se muestra
     gh.orgEvent({ type: 'WatchEvent', repo: { name: 'acme/api' } }); // con pestaña: ya lo trae la suya
-    await page.waitForFunction(() => [...document.querySelectorAll('#feed .act')].some((a) => a.textContent.includes('acme/lejano')), null, { timeout: 15000 });
+    await page.waitForFunction(() => [...document.querySelectorAll('#feed .act')].some((a) => a.textContent.includes('acme/lejano')), null, { timeout: T(15000) });
     const n = await page.$$eval('#feed .act', (els) => els.filter((a) => a.textContent.includes('acme/lejano')).length);
     if (n !== 1) throw new Error(`el evento sin pestaña salió ${n} veces`);
     const polls = gh.calls.filter((c) => c === '/orgs/acme/events').length;
@@ -1468,8 +1472,8 @@ console.log('Una organización o un usuario entero');
     await page.locator('.rt', { hasText: 'acme/viejo' }).locator('.rt-close').click();
     gh.repo('acme/nuevo');
     gh.push('acme/nuevo', 'main', 'recién nacido');
-    await page.waitForFunction(() => [...document.querySelectorAll('#repo-tabs .rt-name')].some((n) => n.textContent === 'acme/nuevo'), null, { timeout: 15000 });
-    const toast = await page.waitForSelector('#toasts .toast:has-text("acme"):has(.toast-detail:text-is("nuevo"))', { timeout: 5000 });
+    await page.waitForFunction(() => [...document.querySelectorAll('#repo-tabs .rt-name')].some((n) => n.textContent === 'acme/nuevo'), null, { timeout: T(15000) });
+    const toast = await page.waitForSelector('#toasts .toast:has-text("acme"):has(.toast-detail:text-is("nuevo"))', { timeout: T(5000) });
     if (!toast) throw new Error('sin aviso del repo nuevo');
     await page.waitForTimeout(4000); // dos renovaciones más: el cerrado no regresa
     if ((await names()).includes('acme/viejo')) throw new Error(`volvió el cerrado: ${await names()}`);
@@ -1479,19 +1483,19 @@ console.log('Una organización o un usuario entero');
     // con otro repo de por medio: con una sola pestaña la barra se esconde
     await page.fill('#repo-input', 'ana/notas');
     await page.press('#repo-input', 'Enter');
-    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 4, null, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 4, null, { timeout: T(15000) });
     for (const n of ['acme/api', 'acme/web', 'acme/nuevo']) await page.locator('.rt', { hasText: n }).locator('.rt-close').click();
     const owners = await page.evaluate(() => localStorage.getItem('graphbranch:owners'));
     if (owners !== null) throw new Error(`sigue guardada: ${owners}`);
     await page.fill('#repo-input', 'org:acme');
     await page.press('#repo-input', 'Enter');
-    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 5, null, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 5, null, { timeout: T(15000) });
   });
 
   await step(page, 'una organización o un usuario que no existe lo dice en el campo', async () => {
     await page.fill('#repo-input', '@nadie');
     await page.press('#repo-input', 'Enter');
-    await page.waitForFunction(() => document.querySelector('#repo-input').validationMessage.includes('nadie'), null, { timeout: 10000 });
+    await page.waitForFunction(() => document.querySelector('#repo-input').validationMessage.includes('nadie'), null, { timeout: T(10000) });
     const msg = await page.$eval('#repo-input', (i) => i.validationMessage);
     if (msg !== 'No se encontró en GitHub una organización o un usuario llamado nadie.') throw new Error(`el campo dice ${msg}`);
     if ((await repoTabs(page)).length !== 5) throw new Error('cambiaron las pestañas');
@@ -1500,7 +1504,7 @@ console.log('Una organización o un usuario entero');
   await step(page, 'con ?repo=@ana en la URL se siguen los repos de ese usuario', async () => {
     await page.evaluate(() => localStorage.clear());
     await page.goto(`${base}/index.html?lang=es&repo=@ana`);
-    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'ana/notas', null, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'ana/notas', null, { timeout: T(15000) });
     const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
     if (saved !== '["ana/notas"]') throw new Error(`se guardó ${saved}`);
   }, { allow: /404/ });
@@ -1697,7 +1701,7 @@ console.log('GitLab');
     await loaded(other);
     await other.fill('#repo-input', 'group:g');
     await other.press('#repo-input', 'Enter');
-    await other.waitForSelector('#toasts .toast:has-text("Ahora sigues los repositorios más activos de g")', { timeout: 15000 });
+    await other.waitForSelector('#toasts .toast:has-text("Ahora sigues los repositorios más activos de g")', { timeout: T(15000) });
     const saved = await other.evaluate(() => localStorage.getItem('graphbranch:repos'));
     if (saved !== '["gitlab:g/sub/p"]') throw new Error(`se guardó ${saved}`);
     const lists = gl.calls.filter((c) => c.startsWith('/api/v4/groups/g/projects'));
@@ -1707,25 +1711,25 @@ console.log('GitLab');
 
   await step(page, 'en 2D, la rama de la MR lleva !5 y su ficha dice MR', async () => {
     await page.click('#view-2d');
-    const label = await page.waitForSelector('#graph .head .h-pr', { timeout: 15000 });
+    const label = await page.waitForSelector('#graph .head .h-pr', { timeout: T(15000) });
     if ((await label.textContent()) !== '!5') throw new Error(`la etiqueta dice ${await label.textContent()}`);
     const aria = await page.$$eval('#graph .head', (hs) => hs.map((h) => h.getAttribute('aria-label')).join(' | '));
     if (!aria.includes('MR !5')) throw new Error(`etiquetas: ${aria}`);
   });
 
   await step(page, 'lo nuevo llega al panel: un push y la MR fusionada', async () => {
-    await page.waitForFunction(() => [...document.querySelectorAll('#feed li')].some((li) => li.textContent.includes('Issue #9 abierto')), null, { timeout: 15000 }); // del feed de eventos
+    await page.waitForFunction(() => [...document.querySelectorAll('#feed li')].some((li) => li.textContent.includes('Issue #9 abierto')), null, { timeout: T(15000) }); // del feed de eventos
     gl.push('main', 'fix: arreglo urgente');
-    await page.waitForFunction(() => [...document.querySelectorAll('#feed li')].some((li) => li.textContent.includes('fix: arreglo urgente')), null, { timeout: 15000 });
+    await page.waitForFunction(() => [...document.querySelectorAll('#feed li')].some((li) => li.textContent.includes('fix: arreglo urgente')), null, { timeout: T(15000) });
     gl.merge();
-    await page.waitForFunction(() => [...document.querySelectorAll('#feed li')].some((li) => li.textContent.includes('MR !5 fusionado en main')), null, { timeout: 15000 });
+    await page.waitForFunction(() => [...document.querySelectorAll('#feed li')].some((li) => li.textContent.includes('MR !5 fusionado en main')), null, { timeout: T(15000) });
     if (gl.calls.some((c) => /\/repository\/commits\?/.test(c))) throw new Error('pidió el listado de commits, que gitlab.com bloquea sin token');
   });
 
   await step(page, 'un proyecto que no existe lo dice, y ofrece Ajustes por si es privado', async () => {
     await page.fill('#repo-input', 'https://gitlab.com/g/nada/-/tree/main');
     await page.press('#repo-input', 'Enter');
-    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: 15000 });
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: T(15000) });
     const text = await page.textContent('#overlay');
     if (!text.includes('No se encontró g/nada en GitLab. Si el proyecto es privado')) throw new Error(`el aviso dice ${text}`);
     if (!(await page.locator('#overlay [data-ov=settings]').count())) throw new Error('no ofrece abrir Ajustes');
@@ -1752,7 +1756,7 @@ console.log('GitLab');
   await step(page, 'un proyecto privado pide el token de GitLab en Ajustes, y con él se ve', async () => {
     await page.fill('#repo-input', 'gitlab:g/privado');
     await page.press('#repo-input', 'Enter');
-    await page.waitForFunction(() => document.querySelector('#overlay[data-kind=error]:not([hidden])')?.textContent.includes('g/privado'), null, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelector('#overlay[data-kind=error]:not([hidden])')?.textContent.includes('g/privado'), null, { timeout: T(15000) });
     await page.click('#overlay [data-ov=settings]');
     const focus = await page.evaluate(() => document.activeElement?.id);
     if (focus !== 'gitlab-token-input') throw new Error(`Ajustes abrió con el foco en ${focus}`);
@@ -1760,7 +1764,7 @@ console.log('GitLab');
     await page.fill('#token-input', 'ghp_smoke0123456789');
     const from = gl.auths.length;
     await page.click('#settings-form button[type=submit]');
-    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'g/privado' && document.querySelector('#overlay').hidden, null, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'g/privado' && document.querySelector('#overlay').hidden, null, { timeout: T(15000) });
     const badge = await page.textContent('#repo-badge');
     if (badge !== 'GitLab · privado') throw new Error(`la etiqueta dice ${badge}`);
     const saved = await page.evaluate(() => [localStorage.getItem('graphbranch:gitlabToken'), localStorage.getItem('graphbranch:token')]);
@@ -1772,7 +1776,7 @@ console.log('GitLab');
   await step(page, 'cada token va solo a su servicio', async () => {
     await page.fill('#repo-input', 'o/r');
     await page.press('#repo-input', 'Enter');
-    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/r' && document.querySelector('#overlay').hidden, null, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/r' && document.querySelector('#overlay').hidden, null, { timeout: T(15000) });
     if (!ghAuths.length) throw new Error('no consultó GitHub');
     const toGitHub = new Set(ghAuths);
     const toGitLab = new Set(gl.auths.map((a) => a.auth));
@@ -1854,7 +1858,7 @@ console.log('Codeberg');
 
   await step(page, 'en 2D se ven sus dos ramas y el PR #3', async () => {
     await page.click('#view-2d');
-    const label = await page.waitForSelector('#graph .head .h-pr', { timeout: 15000 });
+    const label = await page.waitForSelector('#graph .head .h-pr', { timeout: T(15000) });
     if ((await label.textContent()) !== '#3') throw new Error(`la etiqueta dice ${await label.textContent()}`);
     const names = await page.$$eval('#graph .head', (hs) => hs.map((h) => h.getAttribute('aria-label')).join(' | '));
     if (!names.includes('feature/x') || !names.includes('main')) throw new Error(`ramas: ${names}`);
@@ -1863,7 +1867,7 @@ console.log('Codeberg');
   await step(page, 'un repo que no existe lo dice con el texto de Codeberg', async () => {
     await page.fill('#repo-input', 'https://codeberg.org/ana/nada');
     await page.press('#repo-input', 'Enter');
-    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: 15000 });
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: T(15000) });
     const text = await page.textContent('#overlay');
     if (!text.includes('No se encontró ana/nada en Codeberg. Solo se leen repositorios públicos.')) throw new Error(`el aviso dice ${text}`);
   }, { allow: /404/ });
@@ -1871,13 +1875,13 @@ console.log('Codeberg');
   await step(page, 'el token de Codeberg de Ajustes va en cada consulta, solo a Codeberg', async () => {
     await page.fill('#repo-input', 'https://codeberg.org/ana/api');
     await page.press('#repo-input', 'Enter');
-    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'ana/api' && document.querySelector('#overlay').hidden, null, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'ana/api' && document.querySelector('#overlay').hidden, null, { timeout: T(15000) });
     await page.click('#settings-btn');
-    await page.waitForSelector('#settings[open]', { timeout: 3000 });
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
     await page.fill('#codeberg-token-input', 'cb-smoke0123');
     const from = cb.auths.length;
     await page.click('#settings-form button[type=submit]');
-    await page.waitForFunction(() => document.querySelector('#overlay').hidden && document.querySelector('#repo-link')?.textContent === 'ana/api', null, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelector('#overlay').hidden && document.querySelector('#repo-link')?.textContent === 'ana/api', null, { timeout: T(15000) });
     await page.waitForTimeout(500);
     const sent = cb.auths.slice(from);
     if (!sent.length) throw new Error('al guardar el token no se reconectó el repo');
@@ -1961,7 +1965,7 @@ console.log('Bitbucket');
 
   await step(page, 'en 2D se ven sus dos ramas y el PR #3', async () => {
     await page.click('#view-2d');
-    const label = await page.waitForSelector('#graph .head .h-pr', { timeout: 15000 });
+    const label = await page.waitForSelector('#graph .head .h-pr', { timeout: T(15000) });
     if ((await label.textContent()) !== '#3') throw new Error(`la etiqueta dice ${await label.textContent()}`);
     const names = await page.$$eval('#graph .head', (hs) => hs.map((h) => h.getAttribute('aria-label')).join(' | '));
     if (!names.includes('feature/x') || !names.includes('main')) throw new Error(`ramas: ${names}`);
@@ -1970,7 +1974,7 @@ console.log('Bitbucket');
   await step(page, 'un repo que no existe lo dice con el texto de Bitbucket', async () => {
     await page.fill('#repo-input', 'https://bitbucket.org/ana/nada');
     await page.press('#repo-input', 'Enter');
-    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: 15000 });
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: T(15000) });
     const text = await page.textContent('#overlay');
     if (!text.includes('No se encontró ana/nada en Bitbucket. Solo se leen repositorios públicos.')) throw new Error(`el aviso dice ${text}`);
   }, { allow: /404/ });
@@ -1978,13 +1982,13 @@ console.log('Bitbucket');
   await step(page, 'el token de Bitbucket de Ajustes va en cada consulta, solo a Bitbucket', async () => {
     await page.fill('#repo-input', 'https://bitbucket.org/ana/api');
     await page.press('#repo-input', 'Enter');
-    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'ana/api' && document.querySelector('#overlay').hidden, null, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'ana/api' && document.querySelector('#overlay').hidden, null, { timeout: T(15000) });
     await page.click('#settings-btn');
-    await page.waitForSelector('#settings[open]', { timeout: 3000 });
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
     await page.fill('#bitbucket-token-input', 'bb-smoke0123');
     const from = bb.auths.length;
     await page.click('#settings-form button[type=submit]');
-    await page.waitForFunction(() => document.querySelector('#overlay').hidden && document.querySelector('#repo-link')?.textContent === 'ana/api', null, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelector('#overlay').hidden && document.querySelector('#repo-link')?.textContent === 'ana/api', null, { timeout: T(15000) });
     await page.waitForTimeout(500);
     const sent = bb.auths.slice(from);
     if (!sent.length) throw new Error('al guardar el token no se reconectó el repo');
@@ -2008,10 +2012,10 @@ console.log('Fijar una rama con el teclado');
     await loaded(page);
     await page.click('#view-2d');
     // todo con el teclado: la etiqueta de una rama abre su ficha con Enter
-    const head = await page.waitForSelector('#graph svg .head[role=button]', { timeout: 10000 });
+    const head = await page.waitForSelector('#graph svg .head[role=button]', { timeout: T(10000) });
     await head.focus();
     await page.keyboard.press('Enter');
-    const pin = await page.waitForSelector('#graph .tip .tip-pin', { timeout: 5000 });
+    const pin = await page.waitForSelector('#graph .tip .tip-pin', { timeout: T(5000) });
     const before = await pin.getAttribute('aria-pressed');
     await pin.focus();
     await page.keyboard.press('Enter');
@@ -2028,10 +2032,10 @@ console.log('Fijar una rama con el teclado');
   const focusRoundTrip = async (view, label) => {
     await page.keyboard.press('Escape'); // ninguna ficha abierta de antes
     await page.click(`#view-${view}`);
-    const head = await page.waitForSelector(label, { timeout: 10000 });
+    const head = await page.waitForSelector(label, { timeout: T(10000) });
     await head.focus();
     await page.keyboard.press('Enter');
-    await page.waitForSelector(`#${view === '2d' ? 'graph' : 'graph3d'} .tip:not([hidden])`, { timeout: 5000 });
+    await page.waitForSelector(`#${view === '2d' ? 'graph' : 'graph3d'} .tip:not([hidden])`, { timeout: T(5000) });
     const where = () => page.evaluate(() => {
       const el = document.activeElement;
       return { inTip: !!el?.closest('.tip'), tag: el?.tagName, head: !!el?.matches('.head, .g3-head') };
@@ -2174,11 +2178,11 @@ console.log('Efectos 3D con la vista 2D');
     await page.goto(`${base}/index.html?lang=es`);
     await loaded(page);
     if (!(await page.locator('#graph3d canvas').count())) return console.log('    (sin WebGL: se salta)');
-    await page.waitForFunction(() => window.__g3, null, { timeout: 5000 });
+    await page.waitForFunction(() => window.__g3, null, { timeout: T(5000) });
     await page.click('#view-2d');
     const before = await page.evaluate(() => window.__g3.nodes.size);
     // la demo trae commits cada 3 a 7 s: se espera a que llegue alguno con la 3D escondida
-    await page.waitForFunction((n) => window.__g3.nodes.size > n, before, { timeout: 30000 });
+    await page.waitForFunction((n) => window.__g3.nodes.size > n, before, { timeout: T(30000) });
     await page.waitForTimeout(500);
     const q = await page.evaluate(() => ({ pending: window.__g3.pending.length, dying: window.__g3.dying.length }));
     await page.click('#view-3d');
@@ -2221,7 +2225,7 @@ console.log('Zumbido del espacio');
   });
   const drone = () => page.evaluate(() => window.__drone ?? null);
   const humming = (on) =>
-    page.waitForFunction((v) => (window.__drone > 0) === v, on, { timeout: 4000 }).then(
+    page.waitForFunction((v) => (window.__drone > 0) === v, on, { timeout: T(4000) }).then(
       () => true,
       () => false,
     );
@@ -2327,7 +2331,7 @@ for (const colorScheme of ['light', 'dark']) {
   await step(page, `tema ${colorScheme === 'light' ? 'claro' : 'oscuro'}: todo el texto visible se lee`, async () => {
     await page.goto(`${base}/index.html?lang=es`);
     await loaded(page);
-    await page.waitForSelector('#feed > li', { timeout: 30000 });
+    await page.waitForSelector('#feed > li', { timeout: T(30000) });
     const bad = await lowContrast(page);
     if (bad.length) throw new Error(`${bad.length} textos con poco contraste, como ${bad.slice(0, 3).join(', ')}`);
   });
@@ -2340,7 +2344,7 @@ console.log('Widget embebido (?embed=1)');
   await step(page, 'solo el grafo y los avisos, sin barras ni desborde', async () => {
     await page.goto(`${base}/index.html?lang=es&embed=1&bg=transparent`);
     await loaded(page);
-    await page.waitForSelector('#graph3d canvas, #graph canvas', { timeout: 30000 });
+    await page.waitForSelector('#graph3d canvas, #graph canvas', { timeout: T(30000) });
     for (const sel of ['.topbar', '.stats', '.feed-panel', '.toolbar', '.hint']) {
       if (await page.locator(sel).first().isVisible()) throw new Error(`${sel} se ve en modo embed`);
     }
@@ -2363,7 +2367,7 @@ console.log('Capa para streaming: color de fondo y &hide= (?embed=1)');
   await step(page, '&bg=00ff00 pinta el fondo de verde y &hide=notices,combo esconde los avisos', async () => {
     await page.goto(`${base}/index.html?lang=es&embed=1&bg=00ff00&hide=notices,combo`);
     await loaded(page);
-    await page.waitForSelector('#graph3d canvas, #graph canvas', { timeout: 30000 });
+    await page.waitForSelector('#graph3d canvas, #graph canvas', { timeout: T(30000) });
     const r = await page.evaluate(() => ({
       bg: getComputedStyle(document.body).backgroundColor,
       toasts: getComputedStyle(document.querySelector('.toasts')).display,
@@ -2388,7 +2392,7 @@ console.log('Filtro por ruta desde la URL (?path=)');
     await page.goto(`${base}/index.html?lang=es`);
     await loaded(page);
     await page.click('#search-btn');
-    await page.waitForSelector('#search[open]', { timeout: 3000 });
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
     const word = await page.evaluate(() => {
       const msg = document.querySelector('#search .sr-hit .tv-msg')?.textContent || '';
       return msg.split(/[^\p{L}\p{N}]+/u).sort((a, b) => b.length - a.length)[0] || '';
@@ -2396,7 +2400,7 @@ console.log('Filtro por ruta desde la URL (?path=)');
     if (!word) throw new Error('no hay un mensaje del que sacar una ruta');
     await page.goto(`${base}/index.html?lang=es&path=${encodeURIComponent('/' + word)}`);
     await loaded(page);
-    await page.waitForSelector('#search-path-clear:not([hidden])', { state: 'attached', timeout: 5000 }).catch(async () => {
+    await page.waitForSelector('#search-path-clear:not([hidden])', { state: 'attached', timeout: T(5000) }).catch(async () => {
       const st = await page.evaluate(() => ({ v: document.querySelector('#search-path').value, s: document.querySelector('#search-path-status').textContent, u: location.search }));
       throw new Error(`?path= no aplicó el filtro: ${JSON.stringify(st)} (ruta pedida «${word}»)`);
     });
@@ -2410,7 +2414,7 @@ console.log('Filtro por ruta desde la URL (?path=)');
     if (!on.dim || on.dim >= on.all) throw new Error(`?path= no acota: ${on.dim} atenuados de ${on.all}`);
     if (!on.url.includes('path=')) throw new Error('la URL perdió la ruta: ' + on.url);
     await page.click('#search-btn');
-    await page.waitForSelector('#search[open]', { timeout: 3000 });
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
     await page.click('#search-path-clear');
     if ((await page.evaluate(() => location.search)).includes('path=')) throw new Error('quitar el filtro deja la ruta en la URL');
   });
@@ -2425,7 +2429,7 @@ console.log('Filtro por autor desde la URL (?author=)');
     await loaded(page);
     const all = await page.evaluate(() => document.querySelectorAll('#graph svg .head').length);
     await page.click('#search-btn');
-    await page.waitForSelector('#search[open]', { timeout: 3000 });
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
     const options = await page.evaluate(() => [...document.querySelectorAll('#graph-author option')].map((o) => o.value).filter(Boolean));
     let who = null;
     for (const o of options) {
@@ -2439,7 +2443,7 @@ console.log('Filtro por autor desde la URL (?author=)');
     if (!on.mark) throw new Error('?author= no marca el filtro');
     if (!on.url.includes('author=')) throw new Error('la URL perdió el autor: ' + on.url);
     await page.click('#search-btn');
-    await page.waitForSelector('#search[open]', { timeout: 3000 });
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
     await page.selectOption('#graph-author', '');
     if ((await page.evaluate(() => location.search)).includes('author=')) throw new Error('quitar el filtro deja el autor en la URL');
   });
@@ -2452,7 +2456,7 @@ console.log('Modo TV directo (?tv=1)');
   await step(page, 'abre en modo TV y el director toma la cámara', async () => {
     await page.goto(`${base}/index.html?lang=es&tv=1`);
     await loaded(page);
-    await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: 5000 });
+    await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: T(5000) });
     await page.waitForTimeout(4000);
     if (!(await page.locator('#graph3d').isVisible())) throw new Error('el modo TV no muestra la vista 3D');
   });

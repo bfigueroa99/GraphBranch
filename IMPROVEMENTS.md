@@ -431,46 +431,44 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 5. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
 6. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
     renombrados).
-7. [Seguridad] Token en `localStorage`: en GitHub Pages lo comparten todos los proyectos de
-    `<usuario>.github.io`. Valorar `sessionStorage` con opción "recordar", o recomendar dominio propio.
-8. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+7. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-9. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
+8. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
     y mueve el resto a `docs/BITACORA.md` (idempotente: la segunda corrida dice «Nada que rotar»; queda
     una línea «Las iteraciones anteriores están en docs/BITACORA.md»); `--siguiente` sigue leyendo N de
     aquí y `--check` exige iteraciones sin repetidos entre los dos archivos. Motivo: `--salud` mide el
     archivo en cada iteración (77 KB el 2026-10-13, 55 KB de bitácora), y cada sesión nueva lo lee entero.
-10. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+9. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-11. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+10. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-12. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+11. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-13. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
+12. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
     (6.009 ms con ≤ 6.000; tareas largas 4.809 ms con ≤ 4.000), sin GPU y con la corrida larga; la corrida
     normal de la puerta no lo marca. Medir con `node tools/audit.mjs --repetir 3` antes de tocar nada.
-14. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+13. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
     Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-15. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+14. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-16. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
+15. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-17. [Accesibilidad] Las etiquetas de rama 2D (`g.head[role=button]`) miden 22 px de alto en un SVG; subirlas
+16. [Accesibilidad] Las etiquetas de rama 2D (`g.head[role=button]`) miden 22 px de alto en un SVG; subirlas
     a 24 px exige recalcular el apilado de etiquetas de `layout.js`. Parte del pendiente 3, aparte por tamaño.
     Reproducción: `node tools/audit.mjs`, escenario `escritorio-2d`.
-18. [QA] El smoke y la auditoría no miran el 3D de celular a 320 px con el panel de ramas abierto (solo las
+17. [QA] El smoke y la auditoría no miran el 3D de celular a 320 px con el panel de ramas abierto (solo las
     etiquetas); revisar a mano que las etiquetas de 24 px no se tapen entre sí con 1.000 ramas.
     Reproducción: Playwright contra `node e2e/serve.mjs 4173`, 320 px, 3D, `?repo=demo`.
 
@@ -1985,3 +1983,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); `git push origin --delete loop/73` falló con «hung up unexpectedly» del proxy, así que las `loop/*` fusionadas siguen en origin.
 - Validado: 298 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 27 e2e en verde.
 - **Siguiente:** iteración 87, mantenimiento · Seguridad: pendiente 7
+
+### 2026-10-16 · Iteración 87 · Mantenimiento · Seguridad
+
+- **Arreglo: los tokens de la web ya no quedan en el `localStorage` compartido de `<usuario>.github.io`** (pendiente 7). Nuevo `U.secret` (`js/util.js`): en un host `*.github.io` el token de GitHub, GitLab, Codeberg y Bitbucket vive en `sessionStorage` (se pierde al cerrar la pestaña) y el que ya estuviera en `localStorage` se muda a la sesión y se borra; en otro origen sigue en `store`. La app de escritorio no cambia (llavero).
+- **Reproducción:** `node --test tools/util.test.mjs` → sin el arreglo: `U.secret` indefinido (2 pruebas en rojo).
+- **Pruebas que fallan sin el arreglo:** `tools/util.test.mjs` («U.secret: en <usuario>.github.io…» y «…en otro origen sigue en localStorage»).
+- README: sección Seguridad y la línea del token.
+- QA: filas tocadas: token solo a su API (el flujo de envío no cambia); desktop sin cambios. Sin mirar a mano: el texto de Ajustes sigue diciendo «solo en este navegador» (cierto en sesión). Auditoría: no toca la maquetación.
+- Reclamo: loop/87, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); borrar `loop/64`..`loop/86` fue denegado por el clasificador de permisos, así que siguen en origin.
+- Validado: 300 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 27 e2e en verde.
+- **Siguiente:** iteración 88, expansión: ítem 52 (Constelación de repos, Escala)

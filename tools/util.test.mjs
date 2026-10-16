@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /** util.js en un contexto aislado cuyo localStorage guarda lo que se le diga (válido o corrupto). */
-function load(saved) {
+function load(saved, hostname = 'localhost', session = {}) {
   const ctx = vm.createContext({
     console,
     setTimeout,
@@ -19,7 +19,9 @@ function load(saved) {
     document: { hidden: false, addEventListener() {}, removeEventListener() {} },
     addEventListener() {},
     removeEventListener() {},
-    localStorage: { getItem: (k) => saved[k] ?? null, setItem() {}, removeItem() {} },
+    location: { hostname },
+    sessionStorage: { getItem: (k) => session[k] ?? null, setItem: (k, v) => (session[k] = v), removeItem: (k) => delete session[k] },
+    localStorage: { getItem: (k) => saved[k] ?? null, setItem: (k, v) => (saved[k] = v), removeItem: (k) => delete saved[k] },
   });
   ctx.window = ctx;
   vm.runInContext(readFileSync(join(root, 'js', 'util.js'), 'utf8'), ctx, { filename: 'util.js' });
@@ -41,4 +43,29 @@ test('U.store.get: un valor guardado de otro tipo que el esperado devuelve el va
   assert.deepEqual([...U.store.get('ok', [])], ['x']);
   assert.equal(U.store.get('falta', 7), 7);
   assert.equal(U.store.get('owners', null) === null, true);
+});
+
+test('U.secret: en <usuario>.github.io el token va a sessionStorage y el de localStorage se muda y se borra', () => {
+  const local = { 'graphbranch:token': '"ghp_viejo"' };
+  const session = {};
+  const U = load(local, 'ana.github.io', session);
+  assert.equal(U.secret.get('token', ''), 'ghp_viejo');
+  assert.equal('graphbranch:token' in local, false);
+  assert.equal(session['graphbranch:token'], '"ghp_viejo"');
+  U.secret.set('token', 'ghp_nuevo');
+  assert.equal(U.secret.get('token', ''), 'ghp_nuevo');
+  assert.equal('graphbranch:token' in local, false);
+  U.secret.set('token', null);
+  assert.equal(U.secret.get('token', ''), '');
+  assert.equal(Object.keys(session).length, 0);
+});
+
+test('U.secret: en otro origen el token sigue en localStorage', () => {
+  const local = {};
+  const session = {};
+  const U = load(local, 'graphbranch.ejemplo.com', session);
+  U.secret.set('token', 'ghp_x');
+  assert.equal(local['graphbranch:token'], '"ghp_x"');
+  assert.equal(Object.keys(session).length, 0);
+  assert.equal(U.secret.get('token', ''), 'ghp_x');
 });

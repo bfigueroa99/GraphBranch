@@ -220,3 +220,22 @@ test('PRs por estado: borrador, checks en rojo, aprobado y esperando revisión, 
   assert.deepEqual(nums('waiting'), [6, 5]);
   assert.equal(s.waiting.total, 2);
 });
+
+test('tasa de fallos de CI: PRs abiertos en rojo entre los que tienen checks, y las veces que la rama por defecto se puso roja en 30 días', () => {
+  const data = repo();
+  data.ci = new Map([['hasPr', 'failure']]);
+  data.pulls.get(9).ci = 'success';
+  data.pulls.get(8).ci = 'pending'; // sin resultado todavía: no cuenta
+  const acts = [
+    { kind: 'ci-fail', time: ago(2) },
+    { kind: 'ci-fail', time: ago(20) },
+    { kind: 'ci-fail', time: ago(40) }, // fuera de los 30 días
+    { kind: 'commit', time: ago(1) },
+  ];
+  const h = compute(data, acts, NOW);
+  assert.deepEqual({ ...h.ci.prs }, { failing: 1, total: 2, rate: 0.5 });
+  assert.equal(h.ci.fails30, 2);
+  const none = compute(repo(), [], NOW);
+  assert.equal(none.ci.prs, null);
+  assert.equal(none.ci.fails30, 0);
+});

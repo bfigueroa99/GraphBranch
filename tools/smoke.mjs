@@ -612,6 +612,8 @@ console.log('Escritorio (1280×800)');
     });
     const dora = await page.$$eval('#hl-dora .hl-line', (ps) => ps.map((p) => p.textContent));
     if (dora.length !== 2) throw new Error(`${dora.length} líneas de entrega (DORA), se esperaban 2: ${dora.join(' | ')}`);
+    const ciLines = await page.$$eval('#hl-ci .hl-line', (ps) => ps.map((p) => p.textContent));
+    if (!ciLines.length || ciLines.some((l) => !/\d/.test(l))) throw new Error(`la tasa de fallos de CI no sale en la salud: ${ciLines.join(' | ')}`);
     if (info.stats !== 3) throw new Error(`${info.stats} cifras de ritmo, se esperaban 3`);
     if (!info.rows) throw new Error('la demo tiene PRs abiertos y no salen en la lista');
     const forks = await page.$$eval('#hl-forks a.hl-row[href^="https://"][rel~="noopener"]', (as) => as.map((a) => a.textContent));

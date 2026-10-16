@@ -68,6 +68,22 @@
       lead: spans.length ? median(spans) : null,
     };
 
+    // tasa de fallos de CI: de los PRs abiertos con checks conocidos, cuántos están en rojo; y cuántas veces
+    // la rama por defecto pasó a rojo en los últimos 30 días, según la actividad ya cargada
+    let withCi = 0;
+    let failing = 0;
+    for (const p of data.pulls.values()) {
+      const ci = p.ci || (p.sameRepo && data.ci?.get(p.head)) || null;
+      if (ci === 'success' || ci === 'failure') {
+        withCi++;
+        if (ci === 'failure') failing++;
+      }
+    }
+    const ci = {
+      prs: withCi ? { failing, total: withCi, rate: failing / withCi } : null,
+      fails30: within(acts.filter((a) => a.kind === 'ci-fail' && a.time), 30),
+    };
+
     const forks = (data.forks || []).filter((f) => f.pushedAt && f.url).map((f) => ({ fullName: f.fullName, url: f.url, idle: Math.max(0, now - at(f.pushedAt)) }));
 
     return {
@@ -77,6 +93,7 @@
       prStates,
       merged: spans.length ? { n: spans.length, median: median(spans), max: Math.max(...spans) } : null,
       dora,
+      ci,
       pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30) },
     };
   }

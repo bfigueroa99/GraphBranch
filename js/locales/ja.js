@@ -475,6 +475,7 @@ GB.i18n.define('ja', {
   'health.dora': 'デリバリー (DORA)',
   'health.doraFreq': 'デプロイ(リリース): 30日で{n}件 · リリース間隔の中央値 {gap}',
   'health.doraLead': 'リードタイム(オープンからマージまで): 中央値 {median}',
+  'health.doraLeadCommit': 'リードタイム(最初のコミットからマージまで、{total} 件中 {n} 件の PR): 中央値 {median}',
   'health.ci': 'CI の失敗',
   'health.ciPrs': 'チェックが失敗している公開中の PR: {total} 件中 {failing} 件({pct}%)',
   'health.ciFeed': '30 日間でデフォルトブランチが赤になった回数: {n}',

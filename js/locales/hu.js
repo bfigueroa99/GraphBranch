@@ -475,6 +475,7 @@ GB.i18n.define('hu', {
   'health.dora': 'Szállítás (DORA)',
   'health.doraFreq': 'Telepítések (kiadások): {n} 30 nap alatt · a kiadások közti medián {gap}',
   'health.doraLead': 'Átfutási idő (megnyitástól az egyesítésig): medián {median}',
+  'health.doraLeadCommit': 'Átfutási idő (az első committól az egyesítésig, {n}/{total} PR): medián {median}',
   'health.ci': 'CI-hibák',
   'health.ciPrs': 'Sikertelen ellenőrzésű nyitott PR-ek: {failing} / {total} ({pct}%)',
   'health.ciFeed': 'Hányszor vált pirossá az alapértelmezett ág 30 nap alatt: {n}',

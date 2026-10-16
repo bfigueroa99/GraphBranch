@@ -143,7 +143,7 @@ segunda columna a la primera.
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color y `&hide=`), extensión de VS Code (sigue la sesión de GitHub del editor; paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (constelación de repos) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown, de un repo o de una organización seguida) | resumen como imagen |
-| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días) | ver la hoja de ruta |
+| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega desde el primer commit del PR), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días) | ver la hoja de ruta |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL con pistas y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
@@ -312,10 +312,11 @@ se comprueban antes de construir sobre ellas.
 50. ~~**Bitbucket propio**~~ hecho en #114 · Fuentes · 1×2/3. [parte del ítem 22] Un Bitbucket Data Center o Server (`--bitbucket-url=`),
     con la misma regla de CSP que GitLab propio. Comprobar: `tools/bitbucket.test.mjs` con otra URL base.
     (Hecho en la iteración 85 como `js/sources/bitbucket-server.js`, API REST 1.0, y su prueba `tools/bitbucket-server.test.mjs`: la de Data Center no es la API 2.0 de Cloud, así que es otra fuente.)
-51. **Tiempo de entrega desde el primer commit** · Análisis · 1×2/2. [parte del ítem 38] El tiempo de entrega de la
+51. ~~**Tiempo de entrega desde el primer commit**~~ hecho en #115 · Análisis · 1×2/2. [parte del ítem 38] El tiempo de entrega de la
     salud cuenta desde el primer commit del PR (una consulta de `/pulls/:n/commits` por PR fusionado reciente, solo al
     abrir el panel) y no desde su apertura. Comprobar: `tools/github.test.mjs` con la API simulada y
     `tools/health.test.mjs`.
+    (Hecho en la iteración 86: `syncFirstCommits` en `js/sources/github.js` y `leadSource` en `js/health.js`.)
 52. **Constelación de repos** · Escala · 2×2/3. [parte del ítem 41] Una vista donde cada repo seguido es una galaxia, para ver
     más repos de los que caben en pestañas. Comprobar: un paso del smoke con 10 repos simulados y prueba de la disposición.
 53. **Frecuencia de despliegue en la salud** · Análisis · 2×2/2. [inv. 2026-10-13] La salud cuenta los despliegues por semana
@@ -1973,3 +1974,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso y dos pruebas de `loop.test.mjs`).
 - Validado: 295 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 27 e2e en verde.
 - **Siguiente:** iteración 86, expansión: ítem 51 (Tiempo de entrega desde el primer commit, Análisis)
+
+### 2026-10-16 · Iteración 86 · Expansión · Análisis
+
+- **Capacidad nueva: el tiempo de entrega de la salud cuenta desde el primer commit del PR** (ítem 51 de la hoja de ruta). Al abrir el panel de salud, `GitHubSource.syncFirstCommits` pide `/pulls/:n/commits?per_page=1` de cada PR fusionado reciente (hasta 20 con token, 8 sin él para cuidar los 60 por hora; una sola vez por PR; un PR que falla queda sin dato y no corta a los demás) y `health.compute` calcula la mediana desde esa fecha, o desde la apertura donde no se conoce. La línea nueva (`health.doraLeadCommit`) dice de cuántos PRs salió desde el primer commit; el tiempo «de abierto a fusionado» no cambia.
+- **Pruebas que fallan sin la capacidad:** `tools/github.test.mjs` (dos: una consulta por PR sin repetir y con el 404 saltado; tope sin token) y `tools/health.test.mjs` («tiempo de entrega: desde el primer commit…»); sin el cambio fallan con `syncFirstCommits is not a function` y `leadSource` indefinido.
+- README: salud del repo (la consulta y su tope) y Límites conocidos de la entrega (DORA).
+- QA: filas tocadas: 40 idiomas (`health.doraLeadCommit` en todos, `check-i18n` en verde); token solo a su API (la consulta usa `this.api`); XSS (el texto sigue por `U.esc`); cuota (tope sin token). Sin mirar a mano: 320 px ni 3D; auditoría: 0 hallazgos nuevos.
+- Reclamo: loop/86, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); `git push origin --delete loop/73` falló con «hung up unexpectedly» del proxy, así que las `loop/*` fusionadas siguen en origin.
+- Validado: 298 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 27 e2e en verde.
+- **Siguiente:** iteración 87, mantenimiento · Seguridad: pendiente 7

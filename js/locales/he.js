@@ -532,6 +532,7 @@ GB.i18n.define('he', {
   'health.dora': 'אספקה (DORA)',
   'health.doraFreq': 'פריסות (גרסאות): {n} ב-30 ימים · חציון בין גרסאות {gap}',
   'health.doraLead': 'זמן אספקה (מפתיחה ועד מיזוג): חציון {median}',
+  'health.doraLeadCommit': 'זמן אספקה (מהקומיט הראשון ועד מיזוג, {n} מתוך {total} PRs): חציון {median}',
   'health.ci': 'כשלי CI',
   'health.ciPrs': 'PRs פתוחים עם בדיקות שנכשלו: {failing} מתוך {total} ({pct}%)',
   'health.ciFeed': 'מספר הפעמים שענף ברירת המחדל הפך לאדום ב-30 ימים: {n}',

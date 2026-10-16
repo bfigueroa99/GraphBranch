@@ -51,6 +51,20 @@
 
     const seen = new Set();
     const merges = acts.filter((a) => a.kind === 'pr-merge' && a.time && !seen.has(a.id) && seen.add(a.id));
+    // el tiempo de entrega cuenta desde el primer commit del PR si ya se conoce (data.firstCommits), si no desde su apertura
+    let fromCommit = 0;
+    const lead = merges
+      .filter((a) => a.openedAt && a.time > a.openedAt)
+      .sort((a, b) => b.time - a.time)
+      .slice(0, RECENT_MERGES)
+      .map((a) => {
+        const first = data.firstCommits?.get(a.number);
+        if (first && first < a.time) {
+          fromCommit++;
+          return a.time - first;
+        }
+        return a.time - a.openedAt;
+      });
     const spans = merges
       .filter((a) => a.openedAt && a.time > a.openedAt)
       .sort((a, b) => b.time - a.time)
@@ -65,7 +79,7 @@
     const dora = {
       deploys30: within(releases, 30),
       gap: gaps.length ? median(gaps) : null,
-      lead: spans.length ? median(spans) : null,
+      lead: lead.length ? median(lead) : null,
     };
 
     // tasa de fallos de CI: de los PRs abiertos con checks conocidos, cuántos están en rojo; y cuántas veces
@@ -93,6 +107,7 @@
       prStates,
       merged: spans.length ? { n: spans.length, median: median(spans), max: Math.max(...spans) } : null,
       dora,
+      leadSource: { fromCommit, total: lead.length },
       ci,
       pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30) },
     };

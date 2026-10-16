@@ -491,6 +491,7 @@ GB.i18n.define('ru', {
   'health.dora': 'Поставка (DORA)',
   'health.doraFreq': 'Развёртывания (релизы): {n} за 30 дней · медиана между релизами {gap}',
   'health.doraLead': 'Время поставки (от открытия до слияния): медиана {median}',
+  'health.doraLeadCommit': 'Время поставки (от первого коммита до слияния, {n} из {total} PR): медиана {median}',
   'health.ci': 'Сбои CI',
   'health.ciPrs': 'Открытые PR с упавшими проверками: {failing} из {total} ({pct} %)',
   'health.ciFeed': 'Сколько раз основная ветка краснела за 30 дней: {n}',

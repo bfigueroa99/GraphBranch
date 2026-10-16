@@ -475,6 +475,7 @@ GB.i18n.define('vi', {
   'health.dora': 'Phân phối (DORA)',
   'health.doraFreq': 'Triển khai (bản phát hành): {n} trong 30 ngày · trung vị giữa các bản {gap}',
   'health.doraLead': 'Thời gian hoàn thành (từ mở đến hợp nhất): trung vị {median}',
+  'health.doraLeadCommit': 'Thời gian hoàn thành (từ commit đầu tiên đến hợp nhất, {n}/{total} PR): trung vị {median}',
   'health.ci': 'Lỗi CI',
   'health.ciPrs': 'PR đang mở có kiểm tra thất bại: {failing}/{total} ({pct}%)',
   'health.ciFeed': 'Số lần nhánh mặc định chuyển đỏ trong 30 ngày: {n}',

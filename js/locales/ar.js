@@ -574,6 +574,7 @@ GB.i18n.define('ar', {
   'health.dora': 'التسليم (DORA)',
   'health.doraFreq': 'عمليات النشر (الإصدارات): {n} في 30 يومًا · الوسيط بين إصدار وآخر {gap}',
   'health.doraLead': 'زمن التسليم (من الفتح إلى الدمج): الوسيط {median}',
+  'health.doraLeadCommit': 'زمن التسليم (من أول إيداع إلى الدمج، {n} من {total} طلبات دمج): الوسيط {median}',
   'health.ci': 'إخفاقات CI',
   'health.ciPrs': 'طلبات السحب المفتوحة ذات الفحوص الفاشلة: {failing} من {total} ({pct}٪)',
   'health.ciFeed': 'مرات تحوّل الفرع الافتراضي إلى الأحمر خلال 30 يومًا: {n}',

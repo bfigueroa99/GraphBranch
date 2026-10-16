@@ -475,6 +475,7 @@ GB.i18n.define('zh-Hans', {
   'health.dora': '交付 (DORA)',
   'health.doraFreq': '部署(发布):30 天内 {n} 次 · 发布间隔中位数 {gap}',
   'health.doraLead': '交付周期(从打开到合并):中位数 {median}',
+  'health.doraLeadCommit': '交付周期(从第一次提交到合并,{total} 个 PR 中的 {n} 个):中位数 {median}',
   'health.ci': 'CI 失败',
   'health.ciPrs': '检查失败的未关闭 PR:{failing} / {total}({pct}%)',
   'health.ciFeed': '默认分支在 30 天内变红的次数:{n}',

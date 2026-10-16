@@ -475,6 +475,7 @@ GB.i18n.define('sw', {
   'health.dora': 'Uwasilishaji (DORA)',
   'health.doraFreq': 'Usambazaji (matoleo): {n} ndani ya siku 30 · wastani kati ya matoleo {gap}',
   'health.doraLead': 'Muda wa uwasilishaji (kutoka kufunguliwa hadi kuunganishwa): wastani {median}',
+  'health.doraLeadCommit': 'Muda wa uwasilishaji (kutoka commit ya kwanza hadi kuunganishwa, {n} kati ya PR {total}): wastani {median}',
   'health.ci': 'Kushindwa kwa CI',
   'health.ciPrs': 'PR wazi zenye ukaguzi uliofeli: {failing} kati ya {total} ({pct}%)',
   'health.ciFeed': 'Mara ambazo tawi chaguomsingi liligeuka nyekundu ndani ya siku 30: {n}',

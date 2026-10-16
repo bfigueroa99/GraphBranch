@@ -475,6 +475,7 @@ GB.i18n.define('hi', {
   'health.dora': 'डिलीवरी (DORA)',
   'health.doraFreq': 'डिप्लॉयमेंट (रिलीज़): 30 दिनों में {n} · रिलीज़ के बीच माध्यिका {gap}',
   'health.doraLead': 'लीड टाइम (खुलने से मर्ज तक): माध्यिका {median}',
+  'health.doraLeadCommit': 'लीड टाइम (पहले कमिट से मर्ज तक, {total} में से {n} PR): माध्यिका {median}',
   'health.ci': 'CI विफलताएँ',
   'health.ciPrs': 'विफल चेक वाले खुले PR: {total} में से {failing} ({pct}%)',
   'health.ciFeed': '30 दिनों में डिफ़ॉल्ट ब्रांच कितनी बार लाल हुई: {n}',

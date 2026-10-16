@@ -475,6 +475,7 @@ GB.i18n.define('id', {
   'health.dora': 'Pengiriman (DORA)',
   'health.doraFreq': 'Deployment (rilis): {n} dalam 30 hari · median antarrilis {gap}',
   'health.doraLead': 'Lead time (dari dibuka sampai digabung): median {median}',
+  'health.doraLeadCommit': 'Lead time (dari commit pertama sampai digabung, {n} dari {total} PR): median {median}',
   'health.ci': 'Kegagalan CI',
   'health.ciPrs': 'PR terbuka dengan pemeriksaan gagal: {failing} dari {total} ({pct}%)',
   'health.ciFeed': 'Berapa kali cabang default menjadi merah dalam 30 hari: {n}',

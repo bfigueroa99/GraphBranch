@@ -475,6 +475,7 @@ GB.i18n.define('bg', {
   'health.dora': 'Доставка (DORA)',
   'health.doraFreq': 'Внедрявания (издания): {n} за 30 дни · медиана между две издания {gap}',
   'health.doraLead': 'Време за доставка (от отваряне до сливане): медиана {median}',
+  'health.doraLeadCommit': 'Време за доставка (от първия къмит до сливане, {n} от {total} PR): медиана {median}',
   'health.ci': 'Неуспехи на CI',
   'health.ciPrs': 'Отворени PR с неуспешни проверки: {failing} от {total} ({pct} %)',
   'health.ciFeed': 'Пъти, когато основният клон стана червен за 30 дни: {n}',

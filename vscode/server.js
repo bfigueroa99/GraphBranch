@@ -42,15 +42,17 @@ function repoFromGitConfig(text) {
 }
 
 /** El archivo con el que se arranca la sesión: guarda el token donde la página lo lee (js/util.js, U.store). */
-function sessionScript(token) {
-  return token
-    ? `try{localStorage.setItem('graphbranch:token',${JSON.stringify(JSON.stringify(token))})}catch(e){}\n`
-    : '\n';
+function sessionScript(token, hadToken = false) {
+  if (token) return `try{localStorage.setItem('graphbranch:token',${JSON.stringify(JSON.stringify(token))})}catch(e){}\n`;
+  // la sesión se cerró: el token que dejó este servidor no se queda en el almacenamiento de la página
+  return hadToken ? `try{localStorage.removeItem('graphbranch:token')}catch(e){}\n` : '\n';
 }
 
 /** Arranca el servidor. `root` es la carpeta de la app; resuelve con { url, close }. */
-function start({ root, token = '', key = crypto.randomBytes(16).toString('hex'), repo = '' } = {}) {
+function start({ root, token: first = '', key = crypto.randomBytes(16).toString('hex'), repo = '' } = {}) {
   const base = '/' + key + '/';
+  let token = first;
+  let hadToken = !!first;
   const server = http.createServer((req, res) => {
     const fail = (code) => res.writeHead(code, { 'Content-Type': 'text/plain' }).end('Not found');
     if (req.method !== 'GET' || !req.url) return fail(404);
@@ -63,7 +65,7 @@ function start({ root, token = '', key = crypto.randomBytes(16).toString('hex'),
       return fail(404);
     }
     if (rel === SESSION) {
-      return res.writeHead(200, { 'Content-Type': TYPES['.js'], 'Cache-Control': 'no-store' }).end(sessionScript(token));
+      return res.writeHead(200, { 'Content-Type': TYPES['.js'], 'Cache-Control': 'no-store' }).end(sessionScript(token, hadToken));
     }
     const file = path.join(root, rel);
     if (!PUBLIC.has(rel.split('/')[0]) || rel.startsWith('..') || path.relative(root, file).startsWith('..')) return fail(404);
@@ -80,7 +82,7 @@ function start({ root, token = '', key = crypto.randomBytes(16).toString('hex'),
     server.listen(0, '127.0.0.1', () => {
       const { port } = server.address();
       const q = repo ? `?repo=${encodeURIComponent(repo)}` : '';
-      resolve({ url: `http://127.0.0.1:${port}${base}index.html${q}`, port, key, close: () => new Promise((done) => server.close(done)) });
+      resolve({ url: `http://127.0.0.1:${port}${base}index.html${q}`, port, key, setToken(t) { token = t || ''; hadToken = hadToken || !!token; }, close: () => new Promise((done) => server.close(done)) });
     });
   });
 }

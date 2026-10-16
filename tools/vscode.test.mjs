@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
+import Module, { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -82,4 +82,74 @@ test('el paquete: el manifiesto declara los comandos que la extensión registra'
   const nls = JSON.parse(readFileSync(join(root, 'vscode', 'package.nls.json'), 'utf8'));
   for (const c of pkg.contributes.commands) assert.ok(nls[c.title.replace(/%/g, '')], c.title + ' sin texto');
   assert.deepEqual(pkg.activationEvents, [], 'los comandos activan la extensión solos');
+});
+
+/** Carga vscode/extension.js con un `vscode` simulado: una sesión de GitHub que la prueba cambia a mano. */
+function conExtension() {
+  const sesion = { token: 'ghs_uno' };
+  const oyentes = [];
+  const paneles = [];
+  const fake = {
+    workspace: { workspaceFolders: [] },
+    window: {
+      showErrorMessage() {},
+      createWebviewPanel() {
+        const p = { webview: { html: '' }, reveal() {}, dispose() { this.cierres.forEach((f) => f()); }, cierres: [], onDidDispose(f) { this.cierres.push(f); } };
+        paneles.push(p);
+        return p;
+      },
+    },
+    ViewColumn: { Beside: 2 },
+    Uri: { parse: (u) => ({ toString: () => u }) },
+    env: { asExternalUri: async (u) => u },
+    l10n: { t: (m) => m },
+    commands: { registerCommand: (id, f) => ((fake.cmds ||= {})[id] = f) },
+    authentication: {
+      getSession: async () => (sesion.token ? { accessToken: sesion.token } : undefined),
+      onDidChangeSessions(f) {
+        oyentes.push(f);
+        return { dispose() { oyentes.splice(oyentes.indexOf(f), 1); } };
+      },
+    },
+  };
+  const load = Module._load;
+  Module._load = (req, ...r) => (req === 'vscode' ? fake : load(req, ...r));
+  try {
+    const ext = createRequire(import.meta.url)('../vscode/extension.js');
+    ext.activate({ extensionPath: join(root, 'vscode'), subscriptions: [] });
+  } finally {
+    Module._load = load;
+  }
+  return { fake, sesion, oyentes, paneles };
+}
+
+test('la extensión sigue la sesión de GitHub de VS Code mientras el panel está abierto', async () => {
+  const { fake, sesion, oyentes, paneles } = conExtension();
+  await fake.cmds['graphbranch.open']();
+  const panel = paneles[0];
+  const src = () => panel.webview.html.match(/iframe src="([^"]+)"/)[1];
+  const sesionJs = async () => (await get(new URL('vscode-session.js', src()))).text;
+  try {
+    assert.match(await sesionJs(), /setItem\('graphbranch:token',"\\"ghs_uno\\""\)/);
+    const antes = panel.webview.html;
+
+    sesion.token = 'ghs_dos'; // renovó la sesión: otra cuenta
+    await oyentes[0]({ provider: { id: 'github' } });
+    assert.match(await sesionJs(), /ghs_dos/);
+    assert.notEqual(panel.webview.html, antes, 'la página se recarga');
+
+    const html = panel.webview.html;
+    await oyentes[0]({ provider: { id: 'microsoft' } }); // otro proveedor: nada cambia
+    await oyentes[0]({ provider: { id: 'github' } }); // mismo token: nada cambia
+    assert.equal(panel.webview.html, html);
+
+    sesion.token = ''; // cerró sesión: el token guardado en la página se borra
+    await oyentes[0]({ provider: { id: 'github' } });
+    const js = await sesionJs();
+    assert.match(js, /removeItem\('graphbranch:token'\)/);
+    assert.doesNotMatch(js, /ghs_/);
+  } finally {
+    panel.dispose();
+  }
+  assert.equal(oyentes.length, 0, 'al cerrar el panel se deja de escuchar');
 });

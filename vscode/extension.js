@@ -66,13 +66,26 @@ async function open(ctx, { signIn = false } = {}) {
   });
   const external = await vscode.env.asExternalUri(vscode.Uri.parse(server.url));
   const src = external.toString(true);
-  panel.webview.html = `<!doctype html><html><head><meta charset="utf-8">
+  const html = (rev) => `<!doctype html><html><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src ${new URL(src).origin}; style-src 'unsafe-inline'">
 <style>html,body,iframe{margin:0;padding:0;width:100%;height:100%;border:0;overflow:hidden}</style></head>
-<body><iframe src="${src}" title="GraphBranch"></iframe></body></html>`;
+<body><!-- ${rev} --><iframe src="${src}" title="GraphBranch"></iframe></body></html>`;
+  panel.webview.html = html(0);
+  // la persona inicia o cierra sesión en GitHub con el panel abierto: la página se recarga con el token nuevo
+  let current = token;
+  let rev = 0;
+  const watch = vscode.authentication.onDidChangeSessions(async (e) => {
+    if (e.provider.id !== 'github') return;
+    const next = await sessionToken();
+    if (next === current) return;
+    current = next;
+    server.setToken(next);
+    panel.webview.html = html(++rev);
+  });
   running = { panel, server };
   panel.onDidDispose(() => {
     running = null;
+    watch.dispose();
     server.close();
   });
 }

@@ -211,7 +211,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Capa para streaming, segunda entrega | Plataformas | 2×2/1 | 4,0 | Capas para OBS | ítem 46 |
 | Resumen de la semana de una organización | Salidas | 2×2/2 | 2,0 | GitHub Pulse | ítem 47 |
 | Tasa de fallos de CI en la salud | Análisis | 2×2/2 | 2,0 | DORA | ítem 48 |
-| Extensión de VS Code, segunda entrega | Plataformas | 2×2/2 | 2,0 | GitLens | ítem 49 |
+| Extensión de VS Code, segunda entrega | Plataformas | 2×2/2 | 2,0 | GitLens | hecho en #113 |
 | Bitbucket propio | Fuentes | 1×2/3 | 0,7 | Sourcetree | ítem 50 |
 | Tiempo de entrega desde el primer commit | Análisis | 1×2/2 | 1,0 | (ítem 38) | ítem 51 |
 | Frecuencia de despliegue en la salud | Análisis | 2×2/2 | 2,0 | DORA | ítem 53 |
@@ -220,6 +220,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Búsqueda en la URL | Análisis | 1×2/1 | 2,0 | (ítem 19) | ítem 56 |
 | Avisos a Microsoft Teams | Salidas | 2×2/2 | 2,0 | Fork | ítem 57 |
 | Ejercicios compartidos, tercera entrega | Público | 1×2/1 | 2,0 | (ítem 28) | ítem 58 |
+| Extensión de VS Code: recordar repos | Plataformas | 1×2/2 | 1,0 | GitLens | ítem 59 |
+| Práctica: rebase y revert | Público | 2×2/2 | 2,0 | git-sim | ítem 60 |
+| Capa para streaming, tercera entrega | Plataformas | 2×2/2 | 2,0 | Capas para OBS | ítem 61 |
+| Lanzamientos en el resumen de la semana | Salidas | 1×2/1 | 2,0 | GitHub Pulse | ítem 62 |
+| Vista de texto: filtro por autor | Público | 1×2/2 | 1,0 | (ítem 33) | ítem 63 |
+| Choques entre ramas en la URL | Análisis | 1×2/1 | 2,0 | (ítem 14) | ítem 64 |
 
 ## Públicos
 

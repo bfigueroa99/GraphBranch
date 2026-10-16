@@ -140,7 +140,7 @@ segunda columna a la primera.
 | --- | --- | --- |
 | Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (API de Forgejo, repos públicos y, con token, privados), bitbucket.org (API 2.0 de Bitbucket Cloud, repos públicos y, con token, privados), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP), repos locales (app de escritorio, con `git`), demo | Token para un Forgejo/Gitea propio |
 | Datos | ramas, commits, PRs (y las pilas de PRs apilados), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, en el panel de salud), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
-| Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color y `&hide=`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
+| Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color y `&hide=`), extensión de VS Code (sigue la sesión de GitHub del editor; paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (constelación de repos) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown, de un repo o de una organización seguida) | resumen como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días) | ver la hoja de ruta |
@@ -306,8 +306,9 @@ se comprueban antes de construir sobre ellas.
     los repos seguidos de una organización, como Markdown para pegar. Comprobar: `tools/digest.test.mjs` con dos repos.
 48. ~~**Tasa de fallos de CI en la salud**~~ hecho en #111 · Análisis · 2×2/2. [inv. 2026-10-13] La proporción de ejecuciones en rojo de
     la rama por defecto, con lo ya cargado de CI. Comprobar: `tools/health.test.mjs` con ejecuciones fabricadas.
-49. **Extensión de VS Code, segunda entrega** · Plataformas · 2×2/2. [parte del ítem 24] Que la extensión use la sesión
-    de GitHub de VS Code para el token, sin pegarlo. Comprobar: `tools/vscode.test.mjs` con la sesión simulada.
+49. ~~**Extensión de VS Code, segunda entrega**~~ hecho en #113 · Plataformas · 2×2/2. [parte del ítem 24] La extensión sigue la sesión
+    de GitHub de VS Code con el panel abierto: si la persona inicia o cierra sesión (`onDidChangeSessions`), la página se
+    recarga con el token nuevo o sin él (se borra el guardado). Comprobar: `tools/vscode.test.mjs` con la sesión simulada.
 50. **Bitbucket propio** · Fuentes · 1×2/3. [parte del ítem 22] Un Bitbucket Data Center o Server (`--bitbucket-url=`),
     con la misma regla de CSP que GitLab propio. Comprobar: `tools/bitbucket.test.mjs` con otra URL base.
 51. **Tiempo de entrega desde el primer commit** · Análisis · 1×2/2. [parte del ítem 38] El tiempo de entrega de la
@@ -329,6 +330,20 @@ se comprueban antes de construir sobre ellas.
 58. **Ejercicios compartidos, tercera entrega** · Público · 1×2/1. [parte del ítem 28] Un enlace de ejercicio con la solución
     propuesta (`?practice=<código>&solution=1`) que la muestra paso a paso en la terminal. Comprobar: prueba del codificado y
     un paso del smoke.
+59. **Extensión de VS Code: recordar repos** · Plataformas · 1×2/2. [parte del ítem 24] Los repos seguidos y el tema sobreviven
+    entre sesiones del panel (el puerto cambia cada vez, así que se guardan en el estado de la extensión y se entregan con
+    el token). Comprobar: `tools/vscode.test.mjs` con el estado simulado.
+60. **Práctica: rebase y revert** · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `rebase <rama>` y
+    `revert <sha>`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
+61. **Capa para streaming, tercera entrega** · Plataformas · 2×2/2. [parte del ítem 11] `?embed=1&rotate=30` alterna entre los
+    repos seguidos cada tantos segundos, para una escena de OBS sin tocarla. Comprobar: prueba de la lectura de la URL y un paso
+    del smoke con dos repos.
+62. **Lanzamientos en el resumen de la semana** · Salidas · 1×2/1. [parte del ítem 23] El resumen de la semana lista los tags y
+    lanzamientos de la semana con lo ya cargado. Comprobar: `tools/digest.test.mjs` con tags fabricados.
+63. **Vista de texto: filtro por autor** · Público · 1×2/2. [parte del ítem 33] La vista de texto respeta el filtro por autor y
+    por ruta, y lo anuncia. Comprobar: prueba de la vista y un paso del smoke.
+64. **Choques entre ramas en la URL** · Análisis · 1×2/1. [parte del ítem 14] `?conflicts=1` abre el repo con los choques ya
+    marcados, para compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
 
 ## Cómo validar un cambio
 
@@ -1932,3 +1947,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Validado: 284 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
 - Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
 - **Siguiente:** iteración 84, expansión: ítem 49 (Extensión de VS Code, segunda entrega, Plataformas)
+
+### 2026-10-16 · Iteración 84 · Expansión · Plataformas
+
+- **Capacidad nueva: la extensión de VS Code sigue la sesión de GitHub con el panel abierto** (ítem 49 de la hoja de ruta, segunda entrega de la extensión). Antes el token se leía una sola vez al abrir el panel; ahora `vscode.authentication.onDidChangeSessions` avisa si la persona inicia, renueva o cierra sesión en GitHub: el servidor local cambia el token (`setToken`) y el panel recarga la página con el token nuevo; al cerrar sesión, `vscode-session.js` borra el token que había dejado en el almacenamiento de la página. Otros proveedores o un token igual no recargan nada, y al cerrar el panel se deja de escuchar.
+- **Pruebas que fallan sin la capacidad:** `tools/vscode.test.mjs` («la extensión sigue la sesión de GitHub…») carga `vscode/extension.js` con un `vscode` simulado y cambia la sesión a mano; sin el cambio falla con `TypeError` (no existe `onDidChangeSessions` en la extensión).
+- README: sección de la extensión al día (sigue la sesión) y Seguridad (el token se borra al cerrar sesión).
+- QA: no toca la página (solo `vscode/`); auditoría: no toca la página. Hoja de ruta repuesta a 15 (ítems 59–64, partes de ítems ya hechos).
+- Reclamo: loop/84, sin colisión
+- Nota: el clon venía superficial y `--check` daba un R3 falso (`git fetch --unshallow` lo arregla); `git push origin --delete loop/71` falló con «unexpected disconnect» del proxy, así que las ramas `loop/*` fusionadas siguen en origin. La primera corrida de `npm run check` falló en 7 pasos del smoke (la tasa de fallos de CI en la salud y seis `page.click: Timeout 30000ms`, todos de la página, que este cambio no toca); la repetición pasó los 95 pasos: intermitencia del pendiente 1 de Media (smoke bajo carga).
+- Validado: 285 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 85, expansión: ítem 50 (Bitbucket propio, Fuentes)

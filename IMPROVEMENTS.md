@@ -143,7 +143,7 @@ segunda columna a la primera.
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color y `&hide=`), extensión de VS Code (paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (constelación de repos) |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown, de un repo o de una organización seguida) | resumen como imagen |
-| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión) | Tasa de fallos de CI en la salud |
+| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días) | ver la hoja de ruta |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL con pistas y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
@@ -304,7 +304,7 @@ se comprueban antes de construir sobre ellas.
     el enlace y prueba de la lectura.
 47. ~~**Resumen de la semana de una organización**~~ hecho en #110 · Salidas · 2×2/2. [inv. 2026-10-13] El resumen de la semana de todos
     los repos seguidos de una organización, como Markdown para pegar. Comprobar: `tools/digest.test.mjs` con dos repos.
-48. **Tasa de fallos de CI en la salud** · Análisis · 2×2/2. [inv. 2026-10-13] La proporción de ejecuciones en rojo de
+48. ~~**Tasa de fallos de CI en la salud**~~ hecho en #111 · Análisis · 2×2/2. [inv. 2026-10-13] La proporción de ejecuciones en rojo de
     la rama por defecto, con lo ya cargado de CI. Comprobar: `tools/health.test.mjs` con ejecuciones fabricadas.
 49. **Extensión de VS Code, segunda entrega** · Plataformas · 2×2/2. [parte del ítem 24] Que la extensión use la sesión
     de GitHub de VS Code para el token, sin pegarlo. Comprobar: `tools/vscode.test.mjs` con la sesión simulada.
@@ -401,6 +401,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     También (iteración 75, `xvfb-run -a npm run check`; la repetición pasó): fallaron «filtro por autor … quitar el filtro no deja el grafo como estaba» y «filtro por ruta» (`page.click` 30 s); mismo remedio.
 
     Iteración 81: otra vez, un solo paso ajeno al cambio («cambios de un commit: … Esc cierra», `waitForFunction` de 5 s) falló en la primera corrida y pasó en la repetición.
+    También (iteración 82, una corrida de `npm run check`; el smoke repetido dos veces pasó): el paso «volando, entrar al modo TV deja la
+    cámara al director» falló con «Cannot read properties of undefined (reading 'sha')».
 2. [Deuda] e2e de escritorio: «un repositorio de esta máquina se sigue sin GitHub…» (`e2e/desktop.spec.mjs:360`)
     falló una vez en `npm run check` (iteración 53, `xvfb-run`; la repetición pasó): el panel de cambios
     mostró «segundo» en vez de «tercero, sin publicar» (línea 381, `toHaveText` sin esperar al commit sin
@@ -1916,3 +1918,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow`). Un paso ajeno del smoke falló una vez y pasó al repetir (anotado en el pendiente 1 de Media). Los borrados de `loop/68` a `loop/80` siguen en Para Benjamin, punto 7.
 - Validado: 283 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 26 e2e en verde.
 - **Siguiente:** iteración 82, expansión: ítem 48 (Tasa de fallos de CI en la salud, Análisis)
+
+### 2026-10-16 · Iteración 82 · Expansión · Análisis
+
+- **Capacidad nueva: tasa de fallos de CI en la salud** (ítem 48 de la hoja de ruta). El panel de salud suma «Fallos de CI»: de los PRs abiertos con checks ya resueltos, cuántos están en rojo (con el porcentaje) y cuántas veces la rama por defecto pasó a rojo en los últimos 30 días según la actividad ya cargada. Sin consultas nuevas. `GB.health.compute` devuelve `ci`; 3 textos nuevos en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` (tasa con checks pendientes fuera y fallos fuera de los 30 días) y el paso del smoke de la salud (`#hl-ci`).
+- README: lista de funciones (salud), mapa de archivos y Límites conocidos.
+- QA: fila del panel de salud: el smoke abre la demo y lee la sección; auditoría: la puerta la corre sobre la página.
+- Reclamo: loop/82, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow`). Un paso ajeno del smoke (modo TV) falló una vez y pasó en dos corridas aparte (anotado en el pendiente 1 de Media). El borrado de `loop/69` falló por desconexión del proxy; las `loop/*` fusionadas siguen en Para Benjamin, punto 7.
+- Validado: PENDIENTE
+- **Siguiente:** iteración 83, mantenimiento · Deuda: pendiente 1 (Smoke: en `npm run check` bajo `xvfb-run` (iteración 36, el equipo cargado por …)

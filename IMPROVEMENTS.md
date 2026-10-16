@@ -1927,5 +1927,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: fila del panel de salud: el smoke abre la demo y lee la sección; auditoría: la puerta la corre sobre la página.
 - Reclamo: loop/82, sin colisión
 - Nota: el clon venía superficial (`git fetch --unshallow`). Un paso ajeno del smoke (modo TV) falló una vez y pasó en dos corridas aparte (anotado en el pendiente 1 de Media). El borrado de `loop/69` falló por desconexión del proxy; las `loop/*` fusionadas siguen en Para Benjamin, punto 7.
-- Validado: PENDIENTE
+- Validado: 284 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 26 e2e en verde.
 - **Siguiente:** iteración 83, mantenimiento · Deuda: pendiente 1 (Smoke: en `npm run check` bajo `xvfb-run` (iteración 36, el equipo cargado por …)

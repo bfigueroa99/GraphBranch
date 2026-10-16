@@ -171,10 +171,10 @@
   U.bitbucketBase = BITBUCKET_URL;
   const EMBED = document.documentElement.classList.contains('embed'); // ?embed=1, ver i18n.js
   const settings = {
-    token: desktop ? '' : U.store.get('token', ''),
-    gitlabToken: desktop ? '' : U.store.get('gitlabToken', ''),
-    codebergToken: desktop ? '' : U.store.get('codebergToken', ''),
-    bitbucketToken: desktop ? '' : U.store.get('bitbucketToken', ''),
+    token: desktop ? '' : U.secret.get('token', ''),
+    gitlabToken: desktop ? '' : U.secret.get('gitlabToken', ''),
+    codebergToken: desktop ? '' : U.secret.get('codebergToken', ''),
+    bitbucketToken: desktop ? '' : U.secret.get('bitbucketToken', ''),
     depth: U.store.get('depth', 40),
     marks: U.store.get('marks', true) !== false, // tags y entornos de despliegue (2 consultas más por repo de GitHub)
   };
@@ -2327,10 +2327,10 @@
       desktop.setToken(settings.codebergToken, 'codeberg').catch(failed);
       desktop.setToken(settings.bitbucketToken, 'bitbucket').catch(failed);
     } else {
-      U.store.set('token', settings.token || null);
-      U.store.set('gitlabToken', settings.gitlabToken || null);
-      U.store.set('codebergToken', settings.codebergToken || null);
-      U.store.set('bitbucketToken', settings.bitbucketToken || null);
+      U.secret.set('token', settings.token || null);
+      U.secret.set('gitlabToken', settings.gitlabToken || null);
+      U.secret.set('codebergToken', settings.codebergToken || null);
+      U.secret.set('bitbucketToken', settings.bitbucketToken || null);
     }
     U.store.set('depth', settings.depth);
     U.store.set('marks', settings.marks ? null : false);

@@ -159,6 +159,38 @@ window.GB = window.GB || {};
     },
   };
 
+  /** Los tokens de la web. En `<usuario>.github.io` el origen lo comparten todos los proyectos del usuario, y un
+      `localStorage` ahí lo lee cualquiera de ellos: el token vive en `sessionStorage` (se pierde al cerrar la
+      pestaña) y el que ya estuviera en `localStorage` pasa a la sesión y se borra. En otro origen sigue en `store`. */
+  U.secret = {
+    shared: () => /\.github\.io$/i.test((typeof location !== 'undefined' && location.hostname) || ''),
+    get(key, fallback) {
+      if (!U.secret.shared()) return U.store.get(key, fallback);
+      try {
+        const own = sessionStorage.getItem('graphbranch:' + key);
+        if (own != null) return JSON.parse(own);
+      } catch {
+        /* sin sessionStorage: se sigue con lo que haya en localStorage */
+      }
+      const old = U.store.get(key, fallback);
+      if (old && old !== fallback) {
+        U.secret.set(key, old);
+        U.store.set(key, null);
+      }
+      return old;
+    },
+    set(key, value) {
+      if (!U.secret.shared()) return U.store.set(key, value);
+      U.store.set(key, null);
+      try {
+        if (value == null) sessionStorage.removeItem('graphbranch:' + key);
+        else sessionStorage.setItem('graphbranch:' + key, JSON.stringify(value));
+      } catch {
+        /* sin almacenamiento: la app funciona igual */
+      }
+    },
+  };
+
   U.initials = (name) => {
     const parts = String(name || '?').replace(/[^\p{L}\p{M}\p{N} ]/gu, ' ').trim().split(/\s+/);
     const first = (w) => Array.from(w || '?')[0]; // por carácter, no por unidad UTF-16

@@ -460,3 +460,22 @@ test('la página no puede pedir carpetas que el usuario no eligió', async ({}, 
   expect(await page.evaluate(() => Object.keys(window.GBDesktop.git).sort())).toEqual(['branches', 'diff', 'files', 'isAncestor', 'log', 'onChange', 'pick', 'unwatch', 'watch']);
   await app.close();
 });
+
+test('--bitbucket-url suma solo ese host a las conexiones del CSP (sin avatares) y la página lo recibe; sin https se ignora', async ({}, testInfo) => {
+  const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
+  let { app, page } = await launch(testInfo, { args: ['--lang=es', '--bitbucket-url=https://bb.example.com'] });
+  try {
+    expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://api.bitbucket.org https://bb.example.com;');
+    expect(await csp(page)).toContain('img-src \'self\' data: https://avatars.githubusercontent.com https://gitlab.com https://codeberg.org;');
+    expect(page.url()).toContain('bitbucket=' + encodeURIComponent('https://bb.example.com'));
+  } finally {
+    await app.close();
+  }
+  ({ app, page } = await launch(testInfo, { args: ['--lang=es', '--bitbucket-url=http://bb.example.com'] }));
+  try {
+    expect(await csp(page)).not.toContain('bb.example.com');
+    expect(page.url()).not.toContain('bitbucket=');
+  } finally {
+    await app.close();
+  }
+});

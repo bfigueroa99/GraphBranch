@@ -507,6 +507,8 @@ GB.i18n.define('fil', {
   'practice.ex3.goal': 'I-replay ang feature sa ibabaw ng pinakabagong main nang walang merge commit: checkout feature, saka rebase main.',
   'practice.ex4.title': 'I-undo',
   'practice.ex4.goal': 'Hindi dapat naroon ang huling commit ng main. Ibalik ang main nang isang commit: subukan ang reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick at tag',
+  'practice.ex5.goal': 'Ang hotfix ang huling commit ng feature, pero iyon lang ang dapat umabot sa main. Patakbuhin ang checkout main, cherry-pick feature, saka tag v1.0.1.',
   'practice.share': 'Kopyahin ang link ng ehersisyo',
   'practice.link': 'Link ng ehersisyo',
   'practice.copied': 'Nakopya ang link.',

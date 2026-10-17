@@ -42,6 +42,7 @@
       this.seq = 0;
       this.commits = new Map();
       this.branches = new Map(); // nombre -> sha
+      this.tags = new Map(); // nombre -> sha
       this.head = { branch }; // { branch } o { sha } (desprendido)
       this.defaultBranch = branch;
       this.branches.set(branch, null);
@@ -81,6 +82,7 @@
       let sha;
       if (base === 'HEAD' || base === '@') sha = this.headSha;
       else if (this.branches.has(base)) sha = this.branches.get(base);
+      else if (this.tags.has(base)) sha = this.tags.get(base);
       else if (/^[0-9a-f]{4,40}$/i.test(base)) {
         const hits = [...this.commits.keys()].filter((s) => s.startsWith(base.toLowerCase()));
         if (hits.length !== 1) return null;
@@ -121,11 +123,12 @@
       return out;
     }
 
-    /** Dónde apuntan las ramas y HEAD: «HEAD -> main, feature». */
+    /** Dónde apuntan las ramas, las etiquetas y HEAD: «HEAD -> main, tag: v1, feature». */
     decorations(sha) {
       const names = [...this.branches].filter(([, s]) => s === sha).map(([n]) => n);
       const head = this.head.branch ? this.branches.get(this.head.branch) === sha : this.head.sha === sha;
       const list = names.map((n) => (head && this.head.branch === n ? `HEAD -> ${n}` : n));
+      for (const [n, s] of this.tags) if (s === sha) list.push(`tag: ${n}`);
       if (head && !this.head.branch) list.unshift('HEAD');
       return list.length ? ` (${list.join(', ')})` : '';
     }
@@ -160,12 +163,12 @@
       if (words[0] === 'git') words.shift();
       if (!words.length) return { ok: true, lines: [], changed: false };
       const [cmd, ...args] = words;
-      const before = JSON.stringify([[...this.branches], this.head, this.commits.size]);
+      const before = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size]);
       try {
         const handler = this.commands[cmd];
         if (!handler) fail(`git: '${cmd}' is not a git command. Try 'help'.`);
         const lines = handler.call(this, args) || [];
-        const after = JSON.stringify([[...this.branches], this.head, this.commits.size]);
+        const after = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size]);
         return { ok: true, lines, changed: before !== after };
       } catch (e) {
         if (!(e instanceof GitError)) throw e;
@@ -199,6 +202,8 @@
         'merge <branch>              bring another branch into this one (--no-ff, --ff-only)',
         'rebase <branch>             replay this branch on top of another',
         'reset [--soft|--hard] <to>  move the branch back (HEAD~1, a sha, a branch)',
+        'cherry-pick <commit>        copy one commit on top of the current branch',
+        'tag [name] [-d name]        list, create or delete tags on a commit',
         'log [--oneline]             the history that leads to HEAD',
         'status                      where HEAD is',
       ];
@@ -328,6 +333,43 @@
       return [`Successfully rebased and updated refs/heads/${this.head.branch}.`];
     },
 
+    'cherry-pick'(args) {
+      const { rest } = parse(args);
+      if (!rest.length) fail('fatal: you must specify a commit to cherry-pick');
+      if (!this.head.branch) fail('fatal: you are in a detached HEAD state: go to a branch first (checkout <branch>)');
+      const out = [];
+      for (const ref of rest) {
+        const pick = this.resolve(ref);
+        if (!pick) fail(`fatal: bad revision '${ref}'`);
+        const c = this.commits.get(pick);
+        if (c.parents.length > 1) fail(`error: commit ${pick} is a merge but no -m option was given.`);
+        const sha = this.commit(c.message);
+        out.push(`[${this.head.branch} ${this.short(sha)}] ${c.message}`);
+      }
+      return out;
+    },
+
+    tag(args) {
+      const { flags, rest } = parse(args);
+      if (flags['-d'] || flags['--delete']) {
+        if (!rest.length) fail('fatal: tag name required');
+        return rest.map((name) => {
+          const tip = this.tags.get(name);
+          if (!tip) fail(`error: tag '${name}' not found.`);
+          this.tags.delete(name);
+          return `Deleted tag '${name}' (was ${this.short(tip)})`;
+        });
+      }
+      if (!rest.length) return [...this.tags.keys()].sort();
+      const [name, target] = rest;
+      if (!validName(name)) fail(`fatal: '${name}' is not a valid tag name.`);
+      if (this.tags.has(name)) fail(`fatal: tag '${name}' already exists`);
+      const sha = target ? this.resolve(target) : this.headSha;
+      if (!sha) fail(target ? `fatal: Failed to resolve '${target}' as a valid ref.` : 'fatal: Failed to resolve HEAD as a valid ref.');
+      this.tags.set(name, sha);
+      return [];
+    },
+
     reset(args) {
       const { flags, rest } = parse(args);
       const to = rest[0] || 'HEAD';
@@ -395,6 +437,24 @@
       done: (r) => {
         const main = r.branches.get('main');
         return !!main && r.log(main).length === BASE.length && !r.log(main).some((s) => /^Oops/.test(r.commits.get(s).message));
+      },
+    },
+    {
+      id: 'cherrypick',
+      setup: (r) => {
+        r.commands.checkout.call(r, ['-b', 'feature']);
+        r.commit('Add profile page');
+        r.commit('Hotfix: escape the login URL');
+        r.commands.checkout.call(r, ['main']);
+      },
+      done: (r) => {
+        const main = r.branches.get('main');
+        const feature = r.branches.get('feature');
+        const tag = r.tags.get('v1.0.1');
+        if (!main || !feature || tag !== main) return false;
+        // main tiene el arreglo (copiado, no fusionado) y no trajo el otro commit de feature
+        const mine = r.log(main).filter((s) => !r.ancestors(feature).has(s));
+        return mine.length === 1 && r.commits.get(mine[0]).message === 'Hotfix: escape the login URL' && !r.isAncestor(feature, main);
       },
     },
   ];

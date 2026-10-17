@@ -506,6 +506,8 @@ GB.i18n.define('tr', {
   'practice.ex3.goal': 'feature’ı birleştirme commit’i olmadan en yeni main’in üzerine yeniden oynat: checkout feature, sonra rebase main.',
   'practice.ex4.title': 'Geri alma',
   'practice.ex4.goal': 'main’in son commit’i orada olmamalı. main’i bir commit geri götür: reset --hard HEAD~1 dene.',
+  'practice.ex5.title': 'Cherry-pick ve etiket',
+  'practice.ex5.goal': 'Acil düzeltme feature\'ın son commit\'i, ama main\'e yalnızca o gitmeli. checkout main, cherry-pick feature ve ardından tag v1.0.1 komutlarını çalıştır.',
   'practice.share': 'Alıştırma bağlantısını kopyala',
   'practice.link': 'Alıştırma bağlantısı',
   'practice.copied': 'Bağlantı kopyalandı.',

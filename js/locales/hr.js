@@ -514,6 +514,8 @@ GB.i18n.define('hr', {
   'practice.ex3.goal': 'Ponovi feature povrh najnovijeg main bez commita spajanja: checkout feature, pa rebase main.',
   'practice.ex4.title': 'Poništi',
   'practice.ex4.goal': 'Zadnjeg commita na main ne bi trebalo biti. Vrati main za jedan commit: probaj reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick i oznaka',
+  'practice.ex5.goal': 'Hitni ispravak je zadnji commit grane feature, ali samo on treba stići na main. Pokreni checkout main, cherry-pick feature, a zatim tag v1.0.1.',
   'practice.share': 'Kopiraj poveznicu vježbe',
   'practice.link': 'Poveznica vježbe',
   'practice.copied': 'Poveznica kopirana.',

@@ -522,6 +522,8 @@ GB.i18n.define('uk', {
   'practice.ex3.goal': 'Перенесіть feature поверх найновішого main без коміту злиття: checkout feature, потім rebase main.',
   'practice.ex4.title': 'Скасування',
   'practice.ex4.goal': 'Останнього коміту в main не мало б бути. Поверніть main на один коміт назад: спробуйте reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick і тег',
+  'practice.ex5.goal': 'Термінове виправлення — останній коміт feature, але в main має потрапити лише він. Виконай checkout main, cherry-pick feature, потім tag v1.0.1.',
   'practice.share': 'Копіювати посилання на вправу',
   'practice.link': 'Посилання на вправу',
   'practice.copied': 'Посилання скопійовано.',

@@ -121,6 +121,7 @@ test('cada ejercicio parte sin resolver y se resuelve con sus comandos', () => {
     ['merge feature'],
     ['checkout feature', 'rebase main'],
     ['reset --hard HEAD~1'],
+    ['cherry-pick feature', 'tag v1.0.1'],
   ];
   assert.equal(solutions.length, EXERCISES.length);
   EXERCISES.forEach((ex, i) => {
@@ -247,4 +248,57 @@ test('fromData: copia un repo real, ensaya merge y rebase y no toca el original'
   assert.ok(r.run('rebase main').ok);
   assert.equal(JSON.stringify([[...data.commits], [...data.branches]]), before, 'el original queda igual');
   assert.equal(fromData({ ...data, branches: new Map() }), null, 'sin ramas no hay ensayo');
+});
+
+test('cherry-pick copia un commit encima de la rama actual sin traer los demás', () => {
+  const r = start(4, NOW);
+  const tip = r.branches.get('feature');
+  const res = r.run('cherry-pick feature');
+  assert.ok(res.ok && res.changed);
+  assert.match(res.lines[0], /^\[main [0-9a-f]{7}\] Hotfix: escape the login URL$/);
+  const copy = r.headSha;
+  assert.notEqual(copy, tip, 'es un commit nuevo, no el mismo');
+  assert.deepEqual(plain(r.commits.get(copy).parents), [r.resolve('main~1')]);
+  assert.equal(r.isAncestor(r.resolve('feature~1'), copy), false, 'no trae el otro commit de feature');
+  assert.equal(r.run('cherry-pick').ok, false);
+  assert.equal(r.run('cherry-pick nope').ok, false);
+  r.run('checkout main~1');
+  assert.equal(r.run('cherry-pick feature').ok, false, 'desprendido no puede');
+  const m = start(1, NOW);
+  m.run('merge feature');
+  m.run('checkout -b other main~1');
+  assert.match(m.run('cherry-pick main').lines[0], /is a merge/);
+});
+
+test('tag: crear, listar, borrar, mostrarse en el log y resolverse como referencia', () => {
+  const r = fresh();
+  const first = r.headSha;
+  assert.deepEqual(plain(r.run('tag').lines), []);
+  assert.ok(r.run('tag v1').changed);
+  r.run('commit -m "Next"');
+  assert.ok(r.run('tag v2').ok);
+  assert.deepEqual(plain(r.run('tag').lines), ['v1', 'v2']);
+  assert.equal(r.run('tag v1').ok, false, 'repetida');
+  assert.equal(r.run('tag bad..name').ok, false);
+  assert.equal(r.run('tag x nope').ok, false);
+  assert.match(r.run('log --oneline').lines[0], /\(HEAD -> main, tag: v2\) Next$/);
+  assert.equal(r.resolve('v1'), first);
+  assert.ok(r.run('tag -d v1').ok);
+  assert.equal(r.run('tag -d v1').ok, false);
+  assert.ok(r.run('tag late HEAD~1').ok);
+  assert.equal(r.tags.get('late'), r.resolve('HEAD~1'));
+});
+
+test('el ejercicio de cherry-pick pide el arreglo copiado y su etiqueta, no una fusión', () => {
+  const ex = EXERCISES[4];
+  const a = start(4, NOW);
+  a.run('merge feature');
+  a.run('tag v1.0.1');
+  assert.equal(ex.done(a), false, 'fusionar trae también el otro commit');
+  const b = start(4, NOW);
+  b.run('cherry-pick feature');
+  assert.equal(ex.done(b), false, 'falta la etiqueta');
+  b.run('tag v1.0.1');
+  b.run('commit -m "Later"');
+  assert.equal(ex.done(b), false, 'la etiqueta ya no está en la punta de main');
 });

@@ -512,6 +512,8 @@ GB.i18n.define('en', {
   'practice.ex3.goal': 'Replay feature on top of the latest main without a merge commit: checkout feature, then rebase main.',
   'practice.ex4.title': 'Undo',
   'practice.ex4.goal': 'The last commit on main should not be there. Move main back one commit: try reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick and tag',
+  'practice.ex5.goal': 'The hotfix is the last commit of feature, but only that one should reach main. Run checkout main, cherry-pick feature, then tag v1.0.1.',
   'practice.share': 'Copy exercise link',
   'practice.link': 'Exercise link',
   'practice.copied': 'Link copied.',

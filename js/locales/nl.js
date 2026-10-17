@@ -507,6 +507,8 @@ GB.i18n.define('nl', {
   'practice.ex3.goal': 'Speel feature opnieuw af op de nieuwste main zonder merge-commit: checkout feature en dan rebase main.',
   'practice.ex4.title': 'Ongedaan maken',
   'practice.ex4.goal': 'De laatste commit op main hoort er niet te zijn. Zet main één commit terug: probeer reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick en tag',
+  'practice.ex5.goal': 'De hotfix is de laatste commit van feature, maar alleen die moet naar main. Voer checkout main, cherry-pick feature en daarna tag v1.0.1 uit.',
   'practice.share': 'Link van de oefening kopiëren',
   'practice.link': 'Link van de oefening',
   'practice.copied': 'Link gekopieerd.',

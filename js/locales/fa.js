@@ -549,6 +549,8 @@ GB.i18n.define('fa', {
   'practice.ex3.goal': 'feature را بدون commit ادغام روی تازه‌ترین main دوباره اجرا کنید: checkout feature و سپس rebase main.',
   'practice.ex4.title': 'برگرداندن',
   'practice.ex4.goal': 'آخرین commit در main نباید آنجا باشد. main را یک commit به عقب ببرید: reset --hard HEAD~1 را امتحان کنید.',
+  'practice.ex5.title': 'Cherry-pick و برچسب',
+  'practice.ex5.goal': 'رفع فوری آخرین commit شاخهٔ feature است، اما فقط همان باید به main برسد. checkout main و cherry-pick feature و سپس tag v1.0.1 را اجرا کن.',
   'practice.share': 'کپی پیوند تمرین',
   'practice.link': 'پیوند تمرین',
   'practice.copied': 'پیوند کپی شد.',

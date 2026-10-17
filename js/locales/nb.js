@@ -506,6 +506,8 @@ GB.i18n.define('nb', {
   'practice.ex3.goal': 'Spill av feature oppå nyeste main uten en sammenslåings-commit: checkout feature og deretter rebase main.',
   'practice.ex4.title': 'Angre',
   'practice.ex4.goal': 'Den siste committen på main skal ikke være der. Flytt main én commit tilbake: prøv reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick og tagg',
+  'practice.ex5.goal': 'Hurtigfiksen er siste commit på feature, men bare den skal til main. Kjør checkout main, cherry-pick feature og deretter tag v1.0.1.',
   'practice.share': 'Kopier lenken til oppgaven',
   'practice.link': 'Oppgavelenke',
   'practice.copied': 'Lenken er kopiert.',

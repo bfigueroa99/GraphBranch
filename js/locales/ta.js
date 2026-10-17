@@ -506,6 +506,8 @@ GB.i18n.define('ta', {
   'practice.ex3.goal': 'இணைப்பு commit இல்லாமல் feature-ஐ புதிய main மேல் மீண்டும் இயக்குங்கள்: checkout feature, பிறகு rebase main.',
   'practice.ex4.title': 'செயல்தவிர்',
   'practice.ex4.goal': 'main-இன் கடைசி commit அங்கே இருக்கக்கூடாது. main-ஐ ஒரு commit பின்னால் நகர்த்துங்கள்: reset --hard HEAD~1 முயலுங்கள்.',
+  'practice.ex5.title': 'Cherry-pick மற்றும் டேக்',
+  'practice.ex5.goal': 'அவசரத் திருத்தம் feature-இன் கடைசி commit; ஆனால் அது மட்டுமே main-க்கு வர வேண்டும். checkout main, cherry-pick feature, பிறகு tag v1.0.1 இயக்கு.',
   'practice.share': 'பயிற்சி இணைப்பை நகலெடு',
   'practice.link': 'பயிற்சி இணைப்பு',
   'practice.copied': 'இணைப்பு நகலெடுக்கப்பட்டது.',

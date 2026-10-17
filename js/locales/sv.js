@@ -506,6 +506,8 @@ GB.i18n.define('sv', {
   'practice.ex3.goal': 'Spela upp feature ovanpå senaste main utan sammanslagningscommit: checkout feature och sedan rebase main.',
   'practice.ex4.title': 'Ångra',
   'practice.ex4.goal': 'Sista committen på main ska inte finnas. Flytta tillbaka main en commit: prova reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick och tagg',
+  'practice.ex5.goal': 'Snabbfixen är sista committen på feature, men bara den ska till main. Kör checkout main, cherry-pick feature och sedan tag v1.0.1.',
   'practice.share': 'Kopiera övningens länk',
   'practice.link': 'Övningens länk',
   'practice.copied': 'Länken har kopierats.',

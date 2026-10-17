@@ -144,7 +144,7 @@ segunda columna a la primera.
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia), miles de ramas por repo | una organización entera con más de 10 repos a la vez |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown, de un repo o de una organización seguida; PNG, de un repo) | resumen de la organización como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días y por semana, mediana entre releases, tiempo de entrega desde el primer commit del PR), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días) | ver la hoja de ruta |
-| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL con pistas y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
+| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal (`cherry-pick` y `tag` incluidos) y ejercicios, también propios compartidos por URL con pistas y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
 
@@ -322,7 +322,7 @@ se comprueban antes de construir sobre ellas.
     (los releases de las últimas 8; los tags y despliegues de GitHub no traen fecha en lo ya cargado). Comprobado con `tools/health.test.mjs`.
 54. ~~**Resumen de la semana como imagen**~~ hecho en #119 · Salidas · 2×2/2. [inv. 2026-10-13] El resumen de la semana también sale como imagen
     PNG para compartir, además del Markdown. Comprobar: prueba del lienzo y un paso del smoke que baja el archivo.
-55. **Práctica: cherry-pick y tag** · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `cherry-pick <sha>` y
+55. ~~**Práctica: cherry-pick y tag**~~ hecho en #121 · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `cherry-pick <sha>` y
     `tag <nombre>`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
 56. **Búsqueda en la URL** · Análisis · 1×2/1. [parte del ítem 19] `?q=texto` abre el repo con la búsqueda ya escrita, para
     compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
@@ -2035,3 +2035,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow`); `git push origin --delete loop/78` falló con «hung up unexpectedly» del proxy, así que las `loop/*` fusionadas siguen en origin.
 - Validado: 307 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 27 e2e en verde.
 - **Siguiente:** iteración 92, expansión: ítem 55 (Práctica: cherry-pick y tag, Público)
+
+### 2026-10-17 · Iteración 92 · Expansión · Público
+
+- **Capacidad nueva: la práctica de git entiende `cherry-pick` y `tag`** (ítem 55 de la hoja de ruta). `cherry-pick <commit>` copia un commit encima de la rama actual (sin traer los demás; un commit de fusión o HEAD desprendido dan el error de git), `tag [nombre [commit]]` crea, lista y borra (`-d`) etiquetas ligeras, el `log` las muestra como `tag: v1` y las etiquetas valen como referencia. Quinto ejercicio guiado («Cherry-pick y etiqueta», `?practice=5`): llevar a `main` solo el arreglo urgente de `feature` y etiquetarlo `v1.0.1`. Textos en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `tools/gitsim.test.mjs` (3 pruebas nuevas y la solución del ejercicio 5: `cherry-pick` sin traer el resto, `tag` crear/listar/borrar/decorar, y que fusionar o etiquetar a destiempo no resuelve el ejercicio) y un paso del smoke que abre `?practice=5`, copia el arreglo y lo etiqueta.
+- README: función, ejercicios (cinco, `?practice=1` a `5`), Límites conocidos (etiquetas ligeras que el grafo no dibuja; sin rangos ni `-m`) y pruebas.
+- QA: terminal de práctica con el smoke (comandos, HTML escapado, ejercicio resuelto, `?practice=5`); auditoría: 0 hallazgos nuevos; sin mirar a mano 320 px ni lector de pantalla del ejercicio nuevo.
+- Reclamo: loop/92, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow`); el borrado de las `loop/79`–`loop/91` fusionadas lo negó el clasificador de permisos, así que siguen en origin.
+- Validado: 310 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 27 e2e en verde.
+- **Siguiente:** iteración 93, expansión: ítem 56 (Búsqueda en la URL, Análisis)

@@ -506,6 +506,8 @@ GB.i18n.define('fi', {
   'practice.ex3.goal': 'Toista feature uusimman mainin päälle ilman yhdistämiscommitia: checkout feature ja sitten rebase main.',
   'practice.ex4.title': 'Kumoa',
   'practice.ex4.goal': 'Mainin viimeisen commitin ei pitäisi olla siellä. Siirrä mainia yksi commit taaksepäin: kokeile reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick ja tagi',
+  'practice.ex5.goal': 'Pikakorjaus on featuren viimeinen commit, mutta vain se pitää tuoda mainiin. Aja checkout main, cherry-pick feature ja sitten tag v1.0.1.',
   'practice.share': 'Kopioi tehtävän linkki',
   'practice.link': 'Tehtävän linkki',
   'practice.copied': 'Linkki kopioitu.',

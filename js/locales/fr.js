@@ -605,4 +605,7 @@ GB.i18n.define('fr', {
   'digest.people': 'Qui a contribué (commits)',
   'digest.branch': 'Branche la plus active',
   'digest.org': 'Résumé de la semaine de {owner}',
+  'constellation.title': 'Constellation',
+  'constellation.help': 'Chaque dépôt suivi est une galaxie : plus il y a de commits chargés, plus elle est grande. Tab passe de l’une à l’autre et Entrée l’ouvre.',
+  'constellation.stats': 'commits : {commits} · branches : {branches}',
 });

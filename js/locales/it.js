@@ -605,4 +605,7 @@ GB.i18n.define('it', {
   'digest.people': 'Chi ha contribuito (commit)',
   'digest.branch': 'Branch più attivo',
   'digest.org': 'Riepilogo della settimana di {owner}',
+  'constellation.title': 'Costellazione',
+  'constellation.help': 'Ogni repository seguito è una galassia: più commit caricati, più è grande. Tab passa dall’una all’altra e Invio la apre.',
+  'constellation.stats': 'commit: {commits} · rami: {branches}',
 });

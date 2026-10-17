@@ -605,4 +605,7 @@ GB.i18n.define('fil', {
   'digest.people': 'Sino ang nag-ambag (mga commit)',
   'digest.branch': 'Pinakaaktibong branch',
   'digest.org': 'Buod ng linggo ng {owner}',
+  'constellation.title': 'Konstelasyon',
+  'constellation.help': 'Ang bawat sinusubaybayang repository ay isang galaxy: mas malaki kung mas maraming commit ang na-load. Gumagalaw ang Tab sa pagitan nila at binubuksan ito ng Enter.',
+  'constellation.stats': 'mga commit: {commits} · mga branch: {branches}',
 });

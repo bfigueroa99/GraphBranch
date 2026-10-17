@@ -604,4 +604,7 @@ GB.i18n.define('bg', {
   'digest.people': 'Кой е допринесъл (комити)',
   'digest.branch': 'Най-активен клон',
   'digest.org': 'Седмично обобщение на {owner}',
+  'constellation.title': 'Съзвездие',
+  'constellation.help': 'Всяко следено хранилище е галактика: колкото повече заредени комити, толкова по-голяма. Tab превключва между тях, Enter я отваря.',
+  'constellation.stats': 'комити: {commits} · клонове: {branches}',
 });

@@ -141,7 +141,7 @@ segunda columna a la primera.
 | Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (API de Forgejo, repos públicos y, con token, privados), bitbucket.org (API 2.0 de Bitbucket Cloud, repos públicos y, con token, privados), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP), Bitbucket Data Center propio (`?bitbucket=` / `--bitbucket-url`, con su CSP, sin token), repos locales (app de escritorio, con `git`), demo | Token para un Forgejo/Gitea propio y para un Bitbucket propio |
 | Datos | ramas, commits, PRs (y las pilas de PRs apilados), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, en el panel de salud), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color y `&hide=`), extensión de VS Code (sigue la sesión de GitHub del editor; paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
-| Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día), miles de ramas por repo | una organización entera (constelación de repos) |
+| Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia), miles de ramas por repo | una organización entera con más de 10 repos a la vez |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown, de un repo o de una organización seguida) | resumen como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días, mediana entre releases, tiempo de entrega desde el primer commit del PR), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días) | ver la hoja de ruta |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal y ejercicios, también propios compartidos por URL con pistas y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
@@ -317,8 +317,7 @@ se comprueban antes de construir sobre ellas.
     abrir el panel) y no desde su apertura. Comprobar: `tools/github.test.mjs` con la API simulada y
     `tools/health.test.mjs`.
     (Hecho en la iteración 86: `syncFirstCommits` en `js/sources/github.js` y `leadSource` en `js/health.js`.)
-52. **Constelación de repos** · Escala · 2×2/3. [parte del ítem 41] Una vista donde cada repo seguido es una galaxia, para ver
-    más repos de los que caben en pestañas. Comprobar: un paso del smoke con 10 repos simulados y prueba de la disposición.
+52. ~~**Constelación de repos**~~ hecho en #117 · Escala. [parte del ítem 41] Cada repo seguido es una galaxia en un diálogo (`js/constellation.js`): tamaño por commits cargados, color por nombre, novedades sin ver; Tab y Intro abren su pestaña.
 53. **Frecuencia de despliegue en la salud** · Análisis · 2×2/2. [inv. 2026-10-13] La salud cuenta los despliegues por semana
     con los tags y despliegues ya cargados (vocabulario DORA). Comprobar: `tools/health.test.mjs` con despliegues fabricados.
 54. **Resumen de la semana como imagen** · Salidas · 2×2/2. [inv. 2026-10-13] El resumen de la semana también sale como imagen
@@ -412,6 +411,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     fallos de CI no sale en la salud»). Con el equipo libre y con `xvfb-run -a npm run check` pasa. Medir la causa del
     primer `click` que vence (qué lo tapa: un diálogo abierto del paso anterior, la barra de herramientas) y esperar
     a ese estado antes de seguir; para «salud del repo», esperar al `#hl-ci` en vez de leerlo al abrir el panel.
+    (Visto de nuevo en la iteración 88: sobre `master` limpio, 1 de 2 corridas de `node tools/smoke.mjs` falló en 7 pasos con el mismo `click` vencido.)
     (Hecho en la iteración 83: topes del smoke ×3 y los pasos de Codeberg y Bitbucket dejan de seguir `ana/nada`.)
 2. [Deuda] e2e de escritorio: «un repositorio de esta máquina se sigue sin GitHub…» (`e2e/desktop.spec.mjs:360`)
     falló una vez en `npm run check` (iteración 53, `xvfb-run`; la repetición pasó): el panel de cambios
@@ -1995,3 +1995,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); borrar `loop/64`..`loop/86` fue denegado por el clasificador de permisos, así que siguen en origin.
 - Validado: 300 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 27 e2e en verde.
 - **Siguiente:** iteración 88, expansión: ítem 52 (Constelación de repos, Escala)
+
+### 2026-10-17 · Iteración 88 · Expansión · Escala
+
+- **Capacidad nueva: constelación de repos** (ítem 52 de la hoja de ruta). Un botón de la barra superior abre un diálogo donde cada repo seguido es una galaxia (un botón con un disco de dos brazos): más grande cuantos más commits cargados, color estable por nombre, marca de novedades sin ver y atenuada si el repo no está en vivo. La disposición (`place` en `js/constellation.js`) pone la mayor al centro y las demás en espiral dorada sin tocarse; Tab recorre las galaxias, Intro abre la pestaña del repo y Esc cierra. No hace ninguna consulta. En la demo se ve una sola galaxia.
+- **Pruebas que fallan sin la capacidad:** `tools/constellation.test.mjs` (5 pruebas de la disposición) y el paso del smoke «se siguen hasta 10 repos a la vez» (10 galaxias con nombre, sin superponerse, foco y Intro).
+- README: la función en la lista, `js/constellation.js` en la estructura, Límites conocidos y Seguridad.
+- QA: filas tocadas: diálogo con teclado y foco (smoke), 40 idiomas sin desbordar (smoke), textos con `textContent`; sin mirar a mano 320 px, RTL ni tema claro/oscuro más allá de la auditoría. Auditoría: 0 hallazgos nuevos.
+- Reclamo: loop/88, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); `git push origin --delete loop/75` falló con «hung up unexpectedly» del proxy. El smoke falló intermitente en dos corridas del cambio y en 1 de 2 sobre `master` limpio (pendiente 1); a la tercera, verde.
+- Validado: 305 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 27 e2e en verde.
+- **Siguiente:** iteración 89, expansión: ítem 53 (Frecuencia de despliegue en la salud, Análisis)

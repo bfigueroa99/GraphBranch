@@ -105,6 +105,9 @@
       <button class="icon-btn" type="button" id="textview-btn" title="Text view" aria-label="Text view" data-i18n-attr="title:textview.title;aria-label:textview.title">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3h11M5.5 6.5h8M5.5 10h8M8.5 13.5h5M3 6.5v7"/></svg>
       </button>
+      <button class="icon-btn" type="button" id="constellation-btn" title="Constellation" aria-label="Constellation" data-i18n-attr="title:constellation.title;aria-label:constellation.title">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 11.5 6 6l3.5 3 3.5-5.5M3 11.5h.01M6 6h.01M9.5 9h.01M13 3.5h.01"/></svg>
+      </button>
       <button class="icon-btn trophy-btn" type="button" id="trophy-btn" title="Trophies" aria-label="Trophies" data-i18n-attr="title:game.trophies;aria-label:game.trophies">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 2.5h6v3.4a3 3 0 0 1-6 0zM5 3.6H2.7v.9a2.3 2.3 0 0 0 2.6 2.3M11 3.6h2.3v.9a2.3 2.3 0 0 1-2.6 2.3M8 8.9v2.2M5.6 13.5h4.8M6.5 13.5l.4-2.4h2.2l.4 2.4"/></svg>
         <span class="trophy-count" id="trophy-count" aria-hidden="true" hidden></span>
@@ -429,6 +432,19 @@
   </div>
 </dialog>
 
+<dialog class="settings trophies health" id="constellation" aria-labelledby="constellation-title">
+  <div class="tr-wrap">
+    <div class="tr-head">
+      <h2 id="constellation-title" data-i18n="constellation.title">Constellation</h2>
+      <button type="button" class="icon-btn" id="constellation-close" title="Close" aria-label="Close" data-i18n-attr="title:toast.close;aria-label:toast.close">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <p class="help" id="constellation-help" data-i18n="constellation.help">Each followed repository is a galaxy: the bigger, the more commits loaded. Tab moves between them and Enter opens it.</p>
+    <div id="constellation-body" class="cs-body" aria-describedby="constellation-help"></div>
+  </div>
+</dialog>
+
 <dialog class="settings trophies health" id="search" aria-labelledby="search-title">
   <div class="tr-wrap">
     <div class="tr-head">
@@ -490,6 +506,7 @@
 <script src="js/health.js"></script>
 <script src="js/digest.js"></script>
 <script src="js/textview.js"></script>
+<script src="js/constellation.js"></script>
 <script src="js/search.js"></script>
 <script src="js/practice-ui.js"></script>
 <script src="js/hooks.js"></script>

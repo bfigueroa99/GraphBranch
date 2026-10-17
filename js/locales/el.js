@@ -604,4 +604,7 @@ GB.i18n.define('el', {
   'digest.people': 'Ποιος συνεισέφερε (commits)',
   'digest.branch': 'Πιο ενεργός κλάδος',
   'digest.org': 'Εβδομαδιαία σύνοψη του {owner}',
+  'constellation.title': 'Αστερισμός',
+  'constellation.help': 'Κάθε αποθετήριο που παρακολουθείται είναι ένας γαλαξίας: όσο περισσότερα commits φορτωμένα, τόσο μεγαλύτερος. Το Tab μετακινεί ανάμεσά τους και το Enter τον ανοίγει.',
+  'constellation.stats': 'commits: {commits} · κλάδοι: {branches}',
 });

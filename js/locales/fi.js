@@ -604,4 +604,7 @@ GB.i18n.define('fi', {
   'digest.people': 'Ketkä osallistuivat (commitit)',
   'digest.branch': 'Aktiivisin haara',
   'digest.org': 'Viikon yhteenveto: {owner}',
+  'constellation.title': 'Tähtikuvio',
+  'constellation.help': 'Jokainen seurattu repositorio on galaksi: mitä enemmän ladattuja committeja, sitä suurempi. Tab siirtyy niiden välillä ja Enter avaa sen.',
+  'constellation.stats': 'commitit: {commits} · haarat: {branches}',
 });

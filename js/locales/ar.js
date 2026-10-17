@@ -703,4 +703,7 @@ GB.i18n.define('ar', {
   'digest.people': 'من ساهم (الإيداعات)',
   'digest.branch': 'أنشط فرع',
   'digest.org': 'ملخص الأسبوع لـ {owner}',
+  'constellation.title': 'كوكبة',
+  'constellation.help': 'كل مستودع متابَع مجرة: كلما زادت الـ commits المحمّلة كبرت. Tab للتنقل بينها وEnter لفتحها.',
+  'constellation.stats': 'commits: {commits} · فروع: {branches}',
 });

@@ -604,4 +604,7 @@ GB.i18n.define('ca', {
   'digest.people': 'Qui ha aportat (commits)',
   'digest.branch': 'Branca més activa',
   'digest.org': 'Resum de la setmana de {owner}',
+  'constellation.title': 'Constel·lació',
+  'constellation.help': 'Cada repositori seguit és una galàxia: com més commits carregats, més gran. Tab passa d’una a l’altra i Intro l’obre.',
+  'constellation.stats': 'commits: {commits} · branques: {branches}',
 });

@@ -604,4 +604,7 @@ GB.i18n.define('tr', {
   'digest.people': 'Kimler katkı verdi (commit)',
   'digest.branch': 'En etkin dal',
   'digest.org': '{owner} haftalık özeti',
+  'constellation.title': 'Takımyıldızı',
+  'constellation.help': 'Takip edilen her depo bir galaksidir: yüklenen commit sayısı arttıkça büyür. Tab aralarında gezinir, Enter açar.',
+  'constellation.stats': 'commit: {commits} · dal: {branches}',
 });

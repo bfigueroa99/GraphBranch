@@ -604,4 +604,7 @@ GB.i18n.define('ms', {
   'digest.people': 'Siapa yang menyumbang (commit)',
   'digest.branch': 'Cabang paling aktif',
   'digest.org': 'Ringkasan mingguan {owner}',
+  'constellation.title': 'Buruj',
+  'constellation.help': 'Setiap repositori yang diikuti ialah galaksi: semakin banyak commit dimuatkan, semakin besar. Tab berpindah antaranya dan Enter membukanya.',
+  'constellation.stats': 'commit: {commits} · cabang: {branches}',
 });

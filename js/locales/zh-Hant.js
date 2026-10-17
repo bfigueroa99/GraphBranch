@@ -604,4 +604,7 @@ GB.i18n.define('zh-Hant', {
   'digest.people': '誰做了貢獻(提交)',
   'digest.branch': '最活躍的分支',
   'digest.org': '{owner} 的每週摘要',
+  'constellation.title': '星座',
+  'constellation.help': '每個已追蹤的儲存庫都是一個星系：已載入的提交越多，星系越大。按 Tab 在它們之間移動，按 Enter 開啟。',
+  'constellation.stats': '提交：{commits} · 分支：{branches}',
 });

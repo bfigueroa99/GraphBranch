@@ -605,4 +605,7 @@ GB.i18n.define('de', {
   'digest.people': 'Wer beigetragen hat (Commits)',
   'digest.branch': 'Aktivster Branch',
   'digest.org': 'Wochenrückblick für {owner}',
+  'constellation.title': 'Sternbild',
+  'constellation.help': 'Jedes verfolgte Repository ist eine Galaxie: je mehr geladene Commits, desto größer. Tab wechselt zwischen ihnen, Enter öffnet sie.',
+  'constellation.stats': 'Commits: {commits} · Branches: {branches}',
 });

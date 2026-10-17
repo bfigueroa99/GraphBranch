@@ -604,4 +604,7 @@ GB.i18n.define('ja', {
   'digest.people': '貢献した人(コミット)',
   'digest.branch': '最も活発なブランチ',
   'digest.org': '{owner} の週間サマリー',
+  'constellation.title': '星座',
+  'constellation.help': 'フォロー中のリポジトリはそれぞれ銀河です。読み込んだコミットが多いほど大きくなります。Tab で移動し、Enter で開きます。',
+  'constellation.stats': 'コミット: {commits} · ブランチ: {branches}',
 });

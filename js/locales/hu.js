@@ -604,4 +604,7 @@ GB.i18n.define('hu', {
   'digest.people': 'Kik járultak hozzá (commitok)',
   'digest.branch': 'Legaktívabb ág',
   'digest.org': '{owner} heti összefoglalója',
+  'constellation.title': 'Csillagkép',
+  'constellation.help': 'Minden követett tároló egy galaxis: minél több betöltött commit, annál nagyobb. A Tab lépked köztük, az Enter megnyitja.',
+  'constellation.stats': 'commitok: {commits} · ágak: {branches}',
 });

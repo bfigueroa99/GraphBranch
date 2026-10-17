@@ -604,4 +604,7 @@ GB.i18n.define('sv', {
   'digest.people': 'Vem som bidragit (commits)',
   'digest.branch': 'Mest aktiva gren',
   'digest.org': 'Veckans sammanfattning för {owner}',
+  'constellation.title': 'Konstellation',
+  'constellation.help': 'Varje följt arkiv är en galax: ju fler inlästa commits, desto större. Tab flyttar mellan dem och Enter öppnar den.',
+  'constellation.stats': 'commits: {commits} · grenar: {branches}',
 });

@@ -615,4 +615,7 @@ GB.i18n.define('sk', {
   'digest.people': 'Kto prispel (commity)',
   'digest.branch': 'Najaktívnejšia vetva',
   'digest.org': 'Súhrn týždňa pre {owner}',
+  'constellation.title': 'Súhvezdie',
+  'constellation.help': 'Každý sledovaný repozitár je galaxia: čím viac načítaných commitov, tým väčšia. Tab prepína medzi nimi, Enter ju otvorí.',
+  'constellation.stats': 'commity: {commits} · vetvy: {branches}',
 });

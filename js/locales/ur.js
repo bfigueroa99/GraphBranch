@@ -647,4 +647,7 @@ GB.i18n.define('ur', {
   'digest.people': 'کس نے حصہ ڈالا (کمٹس)',
   'digest.branch': 'سب سے فعال برانچ',
   'digest.org': '{owner} کا ہفتہ وار خلاصہ',
+  'constellation.title': 'برج',
+  'constellation.help': 'ہر فالو کیا گیا ریپوزٹری ایک کہکشاں ہے: جتنے زیادہ کمٹ لوڈ ہوں اتنی بڑی۔ Tab سے ان کے درمیان جائیں اور Enter سے کھولیں۔',
+  'constellation.stats': 'کمٹ: {commits} · برانچیں: {branches}',
 });

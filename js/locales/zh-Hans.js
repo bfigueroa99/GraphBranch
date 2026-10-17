@@ -604,4 +604,7 @@ GB.i18n.define('zh-Hans', {
   'digest.people': '谁做了贡献(提交)',
   'digest.branch': '最活跃的分支',
   'digest.org': '{owner} 的每周摘要',
+  'constellation.title': '星座',
+  'constellation.help': '每个已关注的仓库都是一个星系：已加载的提交越多，星系越大。按 Tab 在它们之间移动，按 Enter 打开。',
+  'constellation.stats': '提交：{commits} · 分支：{branches}',
 });

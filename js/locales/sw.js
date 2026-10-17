@@ -604,4 +604,7 @@ GB.i18n.define('sw', {
   'digest.people': 'Nani alichangia (commit)',
   'digest.branch': 'Tawi lenye shughuli zaidi',
   'digest.org': 'Muhtasari wa wiki wa {owner}',
+  'constellation.title': 'Kundinyota',
+  'constellation.help': 'Kila hazina inayofuatwa ni galaksi: kadiri commit nyingi zilizopakiwa, ndivyo inavyokuwa kubwa. Tab husogea kati yake na Enter huifungua.',
+  'constellation.stats': 'commit: {commits} · matawi: {branches}',
 });

@@ -1581,6 +1581,38 @@
   });
   $('#textview-close').addEventListener('click', closeTextview);
 
+  /* ---------- constelación: cada repo seguido, una galaxia (ver constellation.js) ---------- */
+  const constellation = GB.constellation.mount($('#constellation-body'), {
+    text: t,
+    fmt: U.fmtNum,
+    onGo(key) {
+      const tab = tabs.find((x) => x.key === key);
+      if (typeof el.constellation.close === 'function') el.constellation.close();
+      else el.constellation.removeAttribute('open');
+      if (tab) showTab(tab);
+    },
+  });
+  el.constellation = $('#constellation');
+  $('#constellation-btn').addEventListener('click', () => {
+    constellation.render(
+      tabs
+        .filter((x) => x.source)
+        .map((x) => ({
+          key: x.key,
+          name: nameOf(x),
+          commits: x.source.data.commits?.size || 0,
+          branches: x.source.data.branches?.size || 0,
+          state: x.status?.state || 'loading',
+          unread: x.unread,
+          active: x === active,
+        })),
+    );
+    if (typeof el.constellation.showModal === 'function') el.constellation.showModal();
+    else el.constellation.setAttribute('open', '');
+    ($('#constellation-body .cs-gx[aria-current]') || $('#constellation-body .cs-gx'))?.focus();
+  });
+  $('#constellation-close').addEventListener('click', () => el.constellation.close?.() ?? el.constellation.removeAttribute('open'));
+
   /* ---------- búsqueda de commits por mensaje, SHA o autor (ver search.js) ---------- */
   function closeSearch() {
     if (typeof el.search.close === 'function') el.search.close();

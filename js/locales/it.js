@@ -598,6 +598,7 @@ GB.i18n.define('it', {
   'digest.help': 'Gli ultimi 7 giorni, da ciò che è già caricato. Copialo come Markdown o salvalo come file.',
   'digest.copy': 'Copia Markdown',
   'digest.save': 'Salva .md',
+  'digest.png': 'Salva .png',
   'digest.copied': 'Copiato.',
   'digest.head': 'Riepilogo della settimana · {repo}',
   'digest.commits': 'Commit: {n}',

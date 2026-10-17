@@ -597,6 +597,7 @@ GB.i18n.define('ja', {
   'digest.help': '読み込み済みのデータから見た直近7日間。Markdownとしてコピーするか、ファイルに保存できます。',
   'digest.copy': 'Markdownをコピー',
   'digest.save': '.mdを保存',
+  'digest.png': '.pngを保存',
   'digest.copied': 'コピーしました。',
   'digest.head': '今週のまとめ · {repo}',
   'digest.commits': 'コミット: {n}',

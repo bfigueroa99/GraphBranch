@@ -597,6 +597,7 @@ GB.i18n.define('ca', {
   'digest.help': 'Els últims 7 dies, amb el que ja està carregat. Copia\'l com a Markdown o desa\'l com a fitxer.',
   'digest.copy': 'Copia el Markdown',
   'digest.save': 'Desa .md',
+  'digest.png': 'Desa .png',
   'digest.copied': 'Copiat.',
   'digest.head': 'Resum de la setmana · {repo}',
   'digest.commits': 'Commits: {n}',

@@ -696,6 +696,7 @@ GB.i18n.define('ar', {
   'digest.help': 'آخر 7 أيام، مما تم تحميله بالفعل. انسخه بصيغة Markdown أو احفظه كملف.',
   'digest.copy': 'نسخ Markdown',
   'digest.save': 'حفظ .md',
+  'digest.png': 'حفظ .png',
   'digest.copied': 'تم النسخ.',
   'digest.head': 'ملخص الأسبوع · {repo}',
   'digest.commits': 'الإيداعات: {n}',

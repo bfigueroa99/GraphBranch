@@ -597,6 +597,7 @@ GB.i18n.define('fi', {
   'digest.help': 'Viimeiset 7 päivää jo ladatun perusteella. Kopioi Markdownina tai tallenna tiedostona.',
   'digest.copy': 'Kopioi Markdown',
   'digest.save': 'Tallenna .md',
+  'digest.png': 'Tallenna .png',
   'digest.copied': 'Kopioitu.',
   'digest.head': 'Viikon yhteenveto · {repo}',
   'digest.commits': 'Commitit: {n}',

@@ -605,6 +605,7 @@ GB.i18n.define('ro', {
   'digest.help': 'Ultimele 7 zile, din ce este deja încărcat. Copiază-l ca Markdown sau salvează-l ca fișier.',
   'digest.copy': 'Copiază Markdown',
   'digest.save': 'Salvează .md',
+  'digest.png': 'Salvează .png',
   'digest.copied': 'Copiat.',
   'digest.head': 'Rezumatul săptămânii · {repo}',
   'digest.commits': 'Commituri: {n}',

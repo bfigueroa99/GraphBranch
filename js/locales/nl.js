@@ -598,6 +598,7 @@ GB.i18n.define('nl', {
   'digest.help': 'De afgelopen 7 dagen, uit wat al is geladen. Kopieer het als Markdown of bewaar het als bestand.',
   'digest.copy': 'Markdown kopiëren',
   'digest.save': '.md opslaan',
+  'digest.png': '.png opslaan',
   'digest.copied': 'Gekopieerd.',
   'digest.head': 'Weekoverzicht · {repo}',
   'digest.commits': 'Commits: {n}',

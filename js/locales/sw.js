@@ -597,6 +597,7 @@ GB.i18n.define('sw', {
   'digest.help': 'Siku 7 zilizopita, kutoka kwa data iliyopakiwa tayari. Nakili kama Markdown au hifadhi kama faili.',
   'digest.copy': 'Nakili Markdown',
   'digest.save': 'Hifadhi .md',
+  'digest.png': 'Hifadhi .png',
   'digest.copied': 'Imenakiliwa.',
   'digest.head': 'Muhtasari wa wiki · {repo}',
   'digest.commits': 'Commit: {n}',

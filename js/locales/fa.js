@@ -640,6 +640,7 @@ GB.i18n.define('fa', {
   'digest.help': '۷ روز گذشته، از آنچه پیش‌تر بارگذاری شده است. به‌صورت Markdown کپی کنید یا در فایل ذخیره کنید.',
   'digest.copy': 'کپی Markdown',
   'digest.save': 'ذخیرهٔ .md',
+  'digest.png': 'ذخیرهٔ .png',
   'digest.copied': 'کپی شد.',
   'digest.head': 'خلاصهٔ هفته · {repo}',
   'digest.commits': 'کامیت‌ها: {n}',

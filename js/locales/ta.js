@@ -597,6 +597,7 @@ GB.i18n.define('ta', {
   'digest.help': 'கடந்த 7 நாட்கள், ஏற்கனவே ஏற்றப்பட்டதிலிருந்து. Markdown ஆக நகலெடுக்கவும் அல்லது கோப்பாகச் சேமிக்கவும்.',
   'digest.copy': 'Markdown நகலெடு',
   'digest.save': '.md சேமி',
+  'digest.png': '.png சேமி',
   'digest.copied': 'நகலெடுக்கப்பட்டது.',
   'digest.head': 'வாரச் சுருக்கம் · {repo}',
   'digest.commits': 'கமிட்கள்: {n}',

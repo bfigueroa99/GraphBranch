@@ -597,6 +597,7 @@ GB.i18n.define('hu', {
   'digest.help': 'Az elmúlt 7 nap, a már betöltött adatokból. Másold Markdownként, vagy mentsd fájlba.',
   'digest.copy': 'Markdown másolása',
   'digest.save': '.md mentése',
+  'digest.png': '.png mentése',
   'digest.copied': 'Másolva.',
   'digest.head': 'Heti összefoglaló · {repo}',
   'digest.commits': 'Commitok: {n}',

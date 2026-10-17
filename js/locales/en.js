@@ -603,6 +603,7 @@ GB.i18n.define('en', {
   'digest.help': 'The last 7 days, from what is already loaded. Copy it as Markdown or save it as a file.',
   'digest.copy': 'Copy Markdown',
   'digest.save': 'Save .md',
+  'digest.png': 'Save .png',
   'digest.copied': 'Copied.',
   'digest.head': 'Week summary · {repo}',
   'digest.commits': 'Commits: {n}',

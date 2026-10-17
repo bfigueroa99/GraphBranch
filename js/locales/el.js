@@ -597,6 +597,7 @@ GB.i18n.define('el', {
   'digest.help': 'Οι τελευταίες 7 ημέρες, από όσα έχουν ήδη φορτωθεί. Αντιγράψτε ως Markdown ή αποθηκεύστε σε αρχείο.',
   'digest.copy': 'Αντιγραφή Markdown',
   'digest.save': 'Αποθήκευση .md',
+  'digest.png': 'Αποθήκευση .png',
   'digest.copied': 'Αντιγράφηκε.',
   'digest.head': 'Περίληψη εβδομάδας · {repo}',
   'digest.commits': 'Commits: {n}',

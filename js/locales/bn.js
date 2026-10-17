@@ -597,6 +597,7 @@ GB.i18n.define('bn', {
   'digest.help': 'গত ৭ দিন, ইতিমধ্যে লোড হওয়া তথ্য থেকে। Markdown হিসেবে কপি করুন বা ফাইলে সংরক্ষণ করুন।',
   'digest.copy': 'Markdown কপি করুন',
   'digest.save': '.md সংরক্ষণ',
+  'digest.png': '.png সংরক্ষণ',
   'digest.copied': 'কপি হয়েছে।',
   'digest.head': 'সপ্তাহের সারসংক্ষেপ · {repo}',
   'digest.commits': 'কমিট: {n}',

@@ -563,6 +563,8 @@ GB.i18n.define('he', {
   'practice.ex3.goal': 'הריצו מחדש את feature מעל ה־main העדכני ללא commit מיזוג: checkout feature ואז rebase main.',
   'practice.ex4.title': 'ביטול',
   'practice.ex4.goal': 'ה־commit האחרון ב־main לא אמור להיות שם. החזירו את main commit אחד אחורה: נסו reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick ותגית',
+  'practice.ex5.goal': 'התיקון הדחוף הוא ה-commit האחרון של feature, אבל רק הוא צריך להגיע ל-main. הרץ checkout main, cherry-pick feature ואז tag v1.0.1.',
   'practice.share': 'העתקת קישור התרגיל',
   'practice.link': 'קישור התרגיל',
   'practice.copied': 'הקישור הועתק.',

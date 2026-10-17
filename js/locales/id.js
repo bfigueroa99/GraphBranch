@@ -506,6 +506,8 @@ GB.i18n.define('id', {
   'practice.ex3.goal': 'Putar ulang feature di atas main terbaru tanpa commit merge: checkout feature, lalu rebase main.',
   'practice.ex4.title': 'Urungkan',
   'practice.ex4.goal': 'Commit terakhir di main seharusnya tidak ada. Mundurkan main satu commit: coba reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick dan tag',
+  'practice.ex5.goal': 'Perbaikan darurat adalah commit terakhir feature, tetapi hanya itu yang boleh sampai ke main. Jalankan checkout main, cherry-pick feature, lalu tag v1.0.1.',
   'practice.share': 'Salin tautan latihan',
   'practice.link': 'Tautan latihan',
   'practice.copied': 'Tautan disalin.',

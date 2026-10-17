@@ -605,6 +605,8 @@ GB.i18n.define('ar', {
   'practice.ex3.goal': 'أعد تشغيل feature فوق أحدث main دون commit دمج: checkout feature ثم rebase main.',
   'practice.ex4.title': 'التراجع',
   'practice.ex4.goal': 'يجب ألّا يكون آخر commit في main موجودًا. أرجِع main commit واحدًا إلى الخلف: جرّب reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick ووسم',
+  'practice.ex5.goal': 'الإصلاح العاجل هو آخر commit في feature، لكن يجب أن يصل هذا وحده إلى main. نفّذ checkout main ثم cherry-pick feature ثم tag v1.0.1.',
   'practice.share': 'نسخ رابط التمرين',
   'practice.link': 'رابط التمرين',
   'practice.copied': 'تم نسخ الرابط.',

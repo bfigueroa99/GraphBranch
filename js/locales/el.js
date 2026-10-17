@@ -506,6 +506,8 @@ GB.i18n.define('el', {
   'practice.ex3.goal': 'Επανάλαβε το feature πάνω από το νεότερο main χωρίς commit συγχώνευσης: checkout feature και μετά rebase main.',
   'practice.ex4.title': 'Αναίρεση',
   'practice.ex4.goal': 'Το τελευταίο commit του main δεν θα έπρεπε να υπάρχει. Γύρνα το main ένα commit πίσω: δοκίμασε reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick και ετικέτα',
+  'practice.ex5.goal': 'Η επείγουσα διόρθωση είναι το τελευταίο commit του feature, αλλά μόνο αυτό πρέπει να φτάσει στο main. Εκτέλεσε checkout main, cherry-pick feature και μετά tag v1.0.1.',
   'practice.share': 'Αντιγραφή συνδέσμου άσκησης',
   'practice.link': 'Σύνδεσμος άσκησης',
   'practice.copied': 'Ο σύνδεσμος αντιγράφηκε.',

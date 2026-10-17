@@ -506,6 +506,8 @@ GB.i18n.define('hi', {
   'practice.ex3.goal': 'feature को ताज़ा main के ऊपर बिना मर्ज commit के दोबारा चलाएँ: checkout feature, फिर rebase main।',
   'practice.ex4.title': 'पूर्ववत करें',
   'practice.ex4.goal': 'main का आख़िरी commit वहाँ नहीं होना चाहिए। main को एक commit पीछे ले जाएँ: reset --hard HEAD~1 आज़माएँ।',
+  'practice.ex5.title': 'Cherry-pick और टैग',
+  'practice.ex5.goal': 'हॉटफ़िक्स feature का आख़िरी commit है, पर सिर्फ़ वही main तक पहुँचना चाहिए। चलाओ checkout main, cherry-pick feature, फिर tag v1.0.1।',
   'practice.share': 'अभ्यास का लिंक कॉपी करें',
   'practice.link': 'अभ्यास का लिंक',
   'practice.copied': 'लिंक कॉपी हो गया।',

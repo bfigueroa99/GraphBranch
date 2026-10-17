@@ -506,6 +506,8 @@ GB.i18n.define('vi', {
   'practice.ex3.goal': 'Chạy lại feature trên main mới nhất mà không có commit hợp nhất: checkout feature, rồi rebase main.',
   'practice.ex4.title': 'Hoàn tác',
   'practice.ex4.goal': 'Commit cuối của main không nên có. Lùi main một commit: thử reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick và tag',
+  'practice.ex5.goal': 'Bản vá khẩn là commit cuối của feature, nhưng chỉ commit đó được vào main. Chạy checkout main, cherry-pick feature rồi tag v1.0.1.',
   'practice.share': 'Sao chép liên kết bài tập',
   'practice.link': 'Liên kết bài tập',
   'practice.copied': 'Đã sao chép liên kết.',

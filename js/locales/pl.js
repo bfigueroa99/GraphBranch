@@ -517,6 +517,8 @@ GB.i18n.define('pl', {
   'practice.ex3.goal': 'Odtwórz feature na najnowszym main bez commita scalającego: checkout feature, potem rebase main.',
   'practice.ex4.title': 'Cofanie',
   'practice.ex4.goal': 'Ostatniego commita na main nie powinno być. Cofnij main o jeden commit: spróbuj reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick i tag',
+  'practice.ex5.goal': 'Poprawka awaryjna to ostatni commit gałęzi feature, ale tylko on ma trafić do main. Uruchom checkout main, cherry-pick feature, a potem tag v1.0.1.',
   'practice.share': 'Kopiuj link do ćwiczenia',
   'practice.link': 'Link do ćwiczenia',
   'practice.copied': 'Skopiowano link.',

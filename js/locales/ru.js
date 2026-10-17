@@ -522,6 +522,8 @@ GB.i18n.define('ru', {
   'practice.ex3.goal': 'Перенесите feature поверх свежего main без коммита слияния: checkout feature, затем rebase main.',
   'practice.ex4.title': 'Отмена',
   'practice.ex4.goal': 'Последнего коммита в main быть не должно. Верните main на один коммит назад: попробуйте reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick и тег',
+  'practice.ex5.goal': 'Срочное исправление — последний коммит feature, но в main должен попасть только он. Выполни checkout main, cherry-pick feature, затем tag v1.0.1.',
   'practice.share': 'Скопировать ссылку на упражнение',
   'practice.link': 'Ссылка на упражнение',
   'practice.copied': 'Ссылка скопирована.',

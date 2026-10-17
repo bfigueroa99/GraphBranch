@@ -507,6 +507,8 @@ GB.i18n.define('fr', {
   'practice.ex3.goal': 'Rejouez feature au-dessus du dernier main sans commit de fusion : checkout feature, puis rebase main.',
   'practice.ex4.title': 'Annuler',
   'practice.ex4.goal': 'Le dernier commit de main ne devrait pas être là. Reculez main d’un commit : essayez reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick et étiquette',
+  'practice.ex5.goal': 'Le correctif urgent est le dernier commit de feature, mais lui seul doit arriver sur main. Lance checkout main, cherry-pick feature, puis tag v1.0.1.',
   'practice.share': 'Copier le lien de l\'exercice',
   'practice.link': 'Lien de l\'exercice',
   'practice.copied': 'Lien copié.',

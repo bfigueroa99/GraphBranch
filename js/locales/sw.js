@@ -506,6 +506,8 @@ GB.i18n.define('sw', {
   'practice.ex3.goal': 'Rudia feature juu ya main ya karibuni bila commit ya kuunganisha: checkout feature, kisha rebase main.',
   'practice.ex4.title': 'Tendua',
   'practice.ex4.goal': 'Commit ya mwisho ya main haipaswi kuwepo. Rudisha main nyuma kwa commit moja: jaribu reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick na lebo',
+  'practice.ex5.goal': 'Marekebisho ya haraka ni commit ya mwisho ya feature, lakini hiyo pekee ndiyo ifike main. Endesha checkout main, cherry-pick feature, kisha tag v1.0.1.',
   'practice.share': 'Nakili kiungo cha zoezi',
   'practice.link': 'Kiungo cha zoezi',
   'practice.copied': 'Kiungo kimenakiliwa.',

@@ -507,6 +507,8 @@ GB.i18n.define('pt', {
   'practice.ex3.goal': 'Reaplique feature sobre o main mais recente sem um commit de merge: checkout feature e depois rebase main.',
   'practice.ex4.title': 'Desfazer',
   'practice.ex4.goal': 'O último commit de main não deveria estar lá. Volte main um commit: tente reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick e tag',
+  'practice.ex5.goal': 'A correção urgente é o último commit de feature, mas só ele deve chegar à main. Execute checkout main, cherry-pick feature e depois tag v1.0.1.',
   'practice.share': 'Copiar link do exercício',
   'practice.link': 'Link do exercício',
   'practice.copied': 'Link copiado.',

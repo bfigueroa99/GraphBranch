@@ -506,6 +506,8 @@ GB.i18n.define('zh-Hant', {
   'practice.ex3.goal': '不產生合併提交,把 feature 重放到最新的 main 之上:checkout feature,然後 rebase main。',
   'practice.ex4.title': '復原',
   'practice.ex4.goal': 'main 上最後一次提交不該存在。把 main 退回一個提交:試試 reset --hard HEAD~1。',
+  'practice.ex5.title': 'Cherry-pick 與標籤',
+  'practice.ex5.goal': '緊急修復是 feature 的最後一個提交，但只有它應該進入 main。依序執行 checkout main、cherry-pick feature，再執行 tag v1.0.1。',
   'practice.share': '複製練習連結',
   'practice.link': '練習連結',
   'practice.copied': '連結已複製。',

@@ -506,6 +506,8 @@ GB.i18n.define('ca', {
   'practice.ex3.goal': 'Repeteix feature damunt del main més recent sense cap commit de fusió: checkout feature i després rebase main.',
   'practice.ex4.title': 'Desfer',
   'practice.ex4.goal': 'L’últim commit de main no hi hauria de ser. Torna main un commit enrere: prova reset --hard HEAD~1.',
+  'practice.ex5.title': 'Cherry-pick i etiqueta',
+  'practice.ex5.goal': 'L\'arranjament urgent és l\'últim commit de feature, però només aquest ha d\'arribar a main. Fes checkout main, cherry-pick feature i després tag v1.0.1.',
   'practice.share': 'Copia l\'enllaç de l\'exercici',
   'practice.link': 'Enllaç de l\'exercici',
   'practice.copied': 'Enllaç copiat.',

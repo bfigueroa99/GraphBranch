@@ -1318,6 +1318,21 @@ console.log('Varios repos a la vez');
     await loaded(lab);
     if (await lab.isVisible('#practice')) throw new Error('un código inválido abrió la práctica');
   });
+  await step(lab, 'el ejercicio de cherry-pick y tag se abre por su número, copia un commit y se marca resuelto', async () => {
+    await lab.goto(`${base}/index.html?lang=es&practice=5`);
+    await lab.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: T(15000) });
+    await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent.includes('cherry-pick'), null, { timeout: T(5000) });
+    if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('el ejercicio parte resuelto');
+    await lab.fill('.pr-input', 'checkout main');
+    await lab.press('.pr-input', 'Enter');
+    await lab.fill('.pr-input', 'cherry-pick feature');
+    await lab.press('.pr-input', 'Enter');
+    await lab.waitForFunction(() => document.querySelector('.pr-log')?.textContent.includes('Hotfix: escape the login URL'), null, { timeout: T(5000) });
+    if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('se resolvió sin la etiqueta');
+    await lab.fill('.pr-input', 'tag v1.0.1');
+    await lab.press('.pr-input', 'Enter');
+    await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: T(5000) });
+  });
   await step(lab, 'un ejercicio propio con pistas: el botón las muestra una a una y la condición de mensaje lo resuelve', async () => {
     await lab.goto(`${base}/index.html?lang=es&practice=1`);
     await lab.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: T(15000) });

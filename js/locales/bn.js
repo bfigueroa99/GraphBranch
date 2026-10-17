@@ -506,6 +506,8 @@ GB.i18n.define('bn', {
   'practice.ex3.goal': 'মার্জ commit ছাড়াই feature-কে সর্বশেষ main-এর ওপর আবার চালান: checkout feature, তারপর rebase main।',
   'practice.ex4.title': 'পূর্বাবস্থায়',
   'practice.ex4.goal': 'main-এর শেষ commit-টি থাকার কথা নয়। main-কে এক commit পিছিয়ে দিন: reset --hard HEAD~1 চেষ্টা করুন।',
+  'practice.ex5.title': 'Cherry-pick ও ট্যাগ',
+  'practice.ex5.goal': 'জরুরি ফিক্সটি feature-এর শেষ commit, কিন্তু শুধু সেটিই main-এ যাবে। চালাও checkout main, cherry-pick feature, তারপর tag v1.0.1।',
   'practice.share': 'অনুশীলনীর লিংক কপি করুন',
   'practice.link': 'অনুশীলনীর লিংক',
   'practice.copied': 'লিংক কপি হয়েছে।',

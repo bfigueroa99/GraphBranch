@@ -507,6 +507,8 @@ GB.i18n.define('th', {
   'practice.ex3.goal': 'เล่น feature ซ้ำบน main ล่าสุดโดยไม่มี commit รวม: checkout feature แล้ว rebase main',
   'practice.ex4.title': 'ย้อนกลับ',
   'practice.ex4.goal': 'commit ล่าสุดบน main ไม่ควรอยู่ตรงนั้น ถอย main กลับหนึ่ง commit: ลอง reset --hard HEAD~1',
+  'practice.ex5.title': 'Cherry-pick และแท็ก',
+  'practice.ex5.goal': 'แพตช์ด่วนคือคอมมิตสุดท้ายของ feature แต่ต้องไปถึง main เฉพาะอันนั้นเท่านั้น รัน checkout main, cherry-pick feature แล้วตามด้วย tag v1.0.1',
   'practice.share': 'คัดลอกลิงก์แบบฝึกหัด',
   'practice.link': 'ลิงก์แบบฝึกหัด',
   'practice.copied': 'คัดลอกลิงก์แล้ว',

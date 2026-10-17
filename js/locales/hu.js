@@ -506,6 +506,8 @@ GB.i18n.define('hu', {
   'practice.ex3.goal': 'Játszd vissza a feature-t a legújabb main tetejére egyesítő commit nélkül: checkout feature, majd rebase main.',
   'practice.ex4.title': 'Visszavonás',
   'practice.ex4.goal': 'A main utolsó commitjának nem kellene ott lennie. Vidd vissza a main-t egy committal: próbáld a reset --hard HEAD~1 parancsot.',
+  'practice.ex5.title': 'Cherry-pick és címke',
+  'practice.ex5.goal': 'A sürgős javítás a feature utolsó commitja, de csak annak szabad a mainbe kerülnie. Futtasd: checkout main, cherry-pick feature, majd tag v1.0.1.',
   'practice.share': 'Feladat linkjének másolása',
   'practice.link': 'A feladat linkje',
   'practice.copied': 'Link másolva.',

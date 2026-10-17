@@ -661,6 +661,11 @@ console.log('Escritorio (1280×800)');
     if (/undefined|NaN|digest\./.test(md)) throw new Error('texto sin resolver en el resumen de la semana: ' + md.slice(0, 120));
     const [dl] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#digest-save')]);
     if (!/^graphbranch-.*-semana-.*\.md$/.test(dl.suggestedFilename())) throw new Error('nombre del resumen: ' + dl.suggestedFilename());
+    const [png] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#digest-png')]);
+    if (!/^graphbranch-.*-semana-.*\.png$/.test(png.suggestedFilename())) throw new Error('nombre de la imagen del resumen: ' + png.suggestedFilename());
+    const pngPath = await png.path();
+    const head = pngPath ? readFileSync(pngPath).subarray(0, 8).toString('hex') : '';
+    if (head !== '89504e470d0a1a0a') throw new Error('la imagen del resumen no es un PNG: ' + head);
     const states = await page.evaluate(() => ({
       groups: [...document.querySelectorAll('#hl-prstates .hl-sub')].map((d) => d.querySelector('h4').textContent.trim()),
       inGroups: document.querySelectorAll('#hl-prstates .hl-sub li').length,

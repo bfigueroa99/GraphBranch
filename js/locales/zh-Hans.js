@@ -597,6 +597,7 @@ GB.i18n.define('zh-Hans', {
   'digest.help': '基于已加载的数据,最近 7 天的情况。可复制为 Markdown,或保存为文件。',
   'digest.copy': '复制 Markdown',
   'digest.save': '保存 .md',
+  'digest.png': '保存 .png',
   'digest.copied': '已复制。',
   'digest.head': '本周摘要 · {repo}',
   'digest.commits': '提交:{n}',

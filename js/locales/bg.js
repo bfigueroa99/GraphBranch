@@ -597,6 +597,7 @@ GB.i18n.define('bg', {
   'digest.help': 'Последните 7 дни, от вече заредените данни. Копирайте като Markdown или запазете във файл.',
   'digest.copy': 'Копиране на Markdown',
   'digest.save': 'Запазване на .md',
+  'digest.png': 'Запазване на .png',
   'digest.copied': 'Копирано.',
   'digest.head': 'Обобщение на седмицата · {repo}',
   'digest.commits': 'Комити: {n}',

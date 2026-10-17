@@ -598,6 +598,7 @@ GB.i18n.define('th', {
   'digest.help': '7 วันที่ผ่านมา จากข้อมูลที่โหลดไว้แล้ว คัดลอกเป็น Markdown หรือบันทึกเป็นไฟล์',
   'digest.copy': 'คัดลอก Markdown',
   'digest.save': 'บันทึก .md',
+  'digest.png': 'บันทึก .png',
   'digest.copied': 'คัดลอกแล้ว',
   'digest.head': 'สรุปประจำสัปดาห์ · {repo}',
   'digest.commits': 'คอมมิต: {n}',

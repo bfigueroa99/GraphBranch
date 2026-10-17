@@ -654,6 +654,7 @@ GB.i18n.define('he', {
   'digest.help': '7 הימים האחרונים, ממה שכבר נטען. העתיקו כ-Markdown או שמרו כקובץ.',
   'digest.copy': 'העתקת Markdown',
   'digest.save': 'שמירת .md',
+  'digest.png': 'שמירת .png',
   'digest.copied': 'הועתק.',
   'digest.head': 'סיכום השבוע · {repo}',
   'digest.commits': 'קומיטים: {n}',

@@ -597,6 +597,7 @@ GB.i18n.define('tr', {
   'digest.help': 'Son 7 gün, zaten yüklenmiş verilerden. Markdown olarak kopyalayın veya dosya olarak kaydedin.',
   'digest.copy': 'Markdown\'ı kopyala',
   'digest.save': '.md kaydet',
+  'digest.png': '.png kaydet',
   'digest.copied': 'Kopyalandı.',
   'digest.head': 'Haftanın özeti · {repo}',
   'digest.commits': 'Commit: {n}',

@@ -597,6 +597,7 @@ GB.i18n.define('zh-Hant', {
   'digest.help': '根據已載入的資料,最近 7 天的情況。可複製為 Markdown,或儲存為檔案。',
   'digest.copy': '複製 Markdown',
   'digest.save': '儲存 .md',
+  'digest.png': '儲存 .png',
   'digest.copied': '已複製。',
   'digest.head': '本週摘要 · {repo}',
   'digest.commits': '提交:{n}',

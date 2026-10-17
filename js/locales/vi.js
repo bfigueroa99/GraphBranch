@@ -597,6 +597,7 @@ GB.i18n.define('vi', {
   'digest.help': '7 ngày qua, từ dữ liệu đã tải. Sao chép dưới dạng Markdown hoặc lưu thành tệp.',
   'digest.copy': 'Sao chép Markdown',
   'digest.save': 'Lưu .md',
+  'digest.png': 'Lưu .png',
   'digest.copied': 'Đã sao chép.',
   'digest.head': 'Tổng kết tuần · {repo}',
   'digest.commits': 'Commit: {n}',

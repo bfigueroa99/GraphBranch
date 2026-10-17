@@ -608,6 +608,7 @@ GB.i18n.define('pl', {
   'digest.help': 'Ostatnie 7 dni, z tego, co już załadowano. Skopiuj jako Markdown lub zapisz jako plik.',
   'digest.copy': 'Kopiuj Markdown',
   'digest.save': 'Zapisz .md',
+  'digest.png': 'Zapisz .png',
   'digest.copied': 'Skopiowano.',
   'digest.head': 'Podsumowanie tygodnia · {repo}',
   'digest.commits': 'Commity: {n}',

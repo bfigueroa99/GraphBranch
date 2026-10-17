@@ -597,6 +597,7 @@ GB.i18n.define('ko', {
   'digest.help': '이미 불러온 데이터로 본 최근 7일입니다. Markdown으로 복사하거나 파일로 저장하세요.',
   'digest.copy': 'Markdown 복사',
   'digest.save': '.md 저장',
+  'digest.png': '.png 저장',
   'digest.copied': '복사했습니다.',
   'digest.head': '이번 주 요약 · {repo}',
   'digest.commits': '커밋: {n}',

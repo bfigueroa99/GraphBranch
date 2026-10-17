@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} } });
 vm.runInContext(readFileSync(join(root, 'js', 'digest.js'), 'utf8'), ctx, { filename: 'digest.js' });
-const { compute, toMarkdown, computeOrg, toMarkdownOrg } = ctx.window.GB.digest;
+const { compute, toMarkdown, computeOrg, toMarkdownOrg, imageLines, toCanvas } = ctx.window.GB.digest;
 
 const DAY = 864e5;
 const NOW = Date.UTC(2026, 9, 14, 12);
@@ -120,4 +120,22 @@ test('organización: más de 20 repos activos se recortan y sin actividad dice �
 test('organización: el nombre de un repo se escapa en el Markdown', () => {
   const o = computeOrg([{ repo: 'a/x*[y]', data: repo(), acts: [] }], NOW);
   assert.match(toMarkdownOrg(o, 'a', { head: 'S {repo}', commits: 'C {n}', merged: 'M', releases: 'R', people: 'P', branch: 'B' }), /## a\/x\\\*\\\[y\\\]/);
+});
+
+test('la imagen del resumen: líneas recortadas y texto pintado en el canvas', () => {
+  const d = compute(repo(), acts, NOW);
+  const t = { head: 'Semana de {repo}', commits: '{n} commits', merged: 'PRs', releases: 'Releases', people: 'Personas', branch: 'Rama' };
+  const lines = imageLines({ ...d, branch: { name: 'x'.repeat(200), commits: 3 } }, 'o/r', t);
+  assert.equal(lines[0].text, 'Semana de o/r');
+  assert.ok(lines.every((l) => l.text.length <= 71), 'ninguna línea pasa del ancho');
+  assert.ok(lines.some((l) => l.kind === 'head' && /^PRs \(\d+\)$/.test(l.text)));
+
+  const calls = [];
+  const g = { fillRect: (...a) => calls.push(['rect', ...a]), fillText: (...a) => calls.push(['text', ...a]) };
+  const canvas = { getContext: () => g };
+  toCanvas({ createElement: () => canvas }, d, 'o/r', t, undefined, '—', { bg: '#000', fg: '#fff', dim: '#888', accent: '#0f0' }, true);
+  assert.equal(canvas.width, 1200);
+  assert.ok(canvas.height > 300);
+  assert.equal(g.textAlign, 'right');
+  assert.equal(calls.filter((c) => c[0] === 'text').length, lines.length);
 });

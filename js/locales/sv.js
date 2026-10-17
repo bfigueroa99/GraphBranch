@@ -597,6 +597,7 @@ GB.i18n.define('sv', {
   'digest.help': 'De senaste 7 dagarna, utifrån det som redan är inläst. Kopiera som Markdown eller spara som fil.',
   'digest.copy': 'Kopiera Markdown',
   'digest.save': 'Spara .md',
+  'digest.png': 'Spara .png',
   'digest.copied': 'Kopierat.',
   'digest.head': 'Veckosammanfattning · {repo}',
   'digest.commits': 'Commits: {n}',

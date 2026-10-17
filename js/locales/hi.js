@@ -597,6 +597,7 @@ GB.i18n.define('hi', {
   'digest.help': 'पिछले 7 दिन, पहले से लोड किए गए डेटा से। Markdown के रूप में कॉपी करें या फ़ाइल में सहेजें।',
   'digest.copy': 'Markdown कॉपी करें',
   'digest.save': '.md सहेजें',
+  'digest.png': '.png सहेजें',
   'digest.copied': 'कॉपी हो गया।',
   'digest.head': 'सप्ताह का सारांश · {repo}',
   'digest.commits': 'कमिट: {n}',

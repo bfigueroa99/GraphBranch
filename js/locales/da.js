@@ -597,6 +597,7 @@ GB.i18n.define('da', {
   'digest.help': 'De seneste 7 dage ud fra det, der allerede er indlæst. Kopiér som Markdown eller gem som fil.',
   'digest.copy': 'Kopiér Markdown',
   'digest.save': 'Gem .md',
+  'digest.png': 'Gem .png',
   'digest.copied': 'Kopieret.',
   'digest.head': 'Ugens oversigt · {repo}',
   'digest.commits': 'Commits: {n}',

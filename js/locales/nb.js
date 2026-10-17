@@ -597,6 +597,7 @@ GB.i18n.define('nb', {
   'digest.help': 'De siste 7 dagene, ut fra det som allerede er lastet. Kopier som Markdown eller lagre som fil.',
   'digest.copy': 'Kopier Markdown',
   'digest.save': 'Lagre .md',
+  'digest.png': 'Lagre .png',
   'digest.copied': 'Kopiert.',
   'digest.head': 'Ukesammendrag · {repo}',
   'digest.commits': 'Commits: {n}',

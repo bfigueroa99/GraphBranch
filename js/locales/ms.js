@@ -597,6 +597,7 @@ GB.i18n.define('ms', {
   'digest.help': '7 hari lepas, daripada data yang sudah dimuatkan. Salin sebagai Markdown atau simpan sebagai fail.',
   'digest.copy': 'Salin Markdown',
   'digest.save': 'Simpan .md',
+  'digest.png': 'Simpan .png',
   'digest.copied': 'Disalin.',
   'digest.head': 'Ringkasan minggu ini · {repo}',
   'digest.commits': 'Commit: {n}',

@@ -640,6 +640,7 @@ GB.i18n.define('ur', {
   'digest.help': 'پچھلے 7 دن، پہلے سے لوڈ شدہ ڈیٹا سے۔ Markdown کے طور پر کاپی کریں یا فائل میں محفوظ کریں۔',
   'digest.copy': 'Markdown کاپی کریں',
   'digest.save': '.md محفوظ کریں',
+  'digest.png': '.png محفوظ کریں',
   'digest.copied': 'کاپی ہو گیا۔',
   'digest.head': 'ہفتے کا خلاصہ · {repo}',
   'digest.commits': 'کمٹس: {n}',

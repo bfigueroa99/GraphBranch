@@ -613,6 +613,7 @@ GB.i18n.define('uk', {
   'digest.help': 'Останні 7 днів за вже завантаженими даними. Скопіюйте як Markdown або збережіть у файл.',
   'digest.copy': 'Копіювати Markdown',
   'digest.save': 'Зберегти .md',
+  'digest.png': 'Зберегти .png',
   'digest.copied': 'Скопійовано.',
   'digest.head': 'Підсумки тижня · {repo}',
   'digest.commits': 'Коміти: {n}',

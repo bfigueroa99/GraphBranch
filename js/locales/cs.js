@@ -608,6 +608,7 @@ GB.i18n.define('cs', {
   'digest.help': 'Posledních 7 dní z toho, co je už načteno. Zkopírujte jako Markdown nebo uložte do souboru.',
   'digest.copy': 'Kopírovat Markdown',
   'digest.save': 'Uložit .md',
+  'digest.png': 'Uložit .png',
   'digest.copied': 'Zkopírováno.',
   'digest.head': 'Souhrn týdne · {repo}',
   'digest.commits': 'Commity: {n}',

@@ -1330,7 +1330,7 @@
       }</section>` +
       `<section class="hl-sec" id="hl-clash"><h3>${U.esc(t('health.clash'))}</h3><p class="hl-none">${U.esc(t('health.clashHelp'))}</p><button type="button" class="btn btn-ghost" id="hl-clash-go">${U.esc(t('health.clashGo'))}</button><div id="hl-clash-out" role="status" aria-live="polite"></div></section>` +
       `<section class="hl-sec" id="hl-cmp"><h3>${U.esc(t('cmp.title'))}</h3><p class="hl-none">${U.esc(t('cmp.help'))}</p><div class="sr-row"><select id="cmp-a" aria-label="${U.esc(t('cmp.a'))}"></select><select id="cmp-b" aria-label="${U.esc(t('cmp.b'))}"></select></div><button type="button" class="btn btn-ghost" id="cmp-go">${U.esc(t('cmp.go'))}</button><div id="cmp-out" role="status" aria-live="polite"></div></section>` +
-      `<section class="hl-sec" id="hl-digest"><h3>${U.esc(t('digest.title'))}</h3><p class="hl-none">${U.esc(t('digest.help'))}</p><pre class="hl-digest" id="digest-md" tabindex="0" aria-label="${U.esc(t('digest.title'))}"></pre><div class="sr-row"><button type="button" class="btn btn-ghost" id="digest-copy">${U.esc(t('digest.copy'))}</button><button type="button" class="btn btn-ghost" id="digest-save">${U.esc(t('digest.save'))}</button></div><div id="digest-out" role="status" aria-live="polite"></div></section>` +
+      `<section class="hl-sec" id="hl-digest"><h3>${U.esc(t('digest.title'))}</h3><p class="hl-none">${U.esc(t('digest.help'))}</p><pre class="hl-digest" id="digest-md" tabindex="0" aria-label="${U.esc(t('digest.title'))}"></pre><div class="sr-row"><button type="button" class="btn btn-ghost" id="digest-copy">${U.esc(t('digest.copy'))}</button><button type="button" class="btn btn-ghost" id="digest-save">${U.esc(t('digest.save'))}</button><button type="button" class="btn btn-ghost" id="digest-png">${U.esc(t('digest.png'))}</button></div><div id="digest-out" role="status" aria-live="polite"></div></section>` +
       orgDigestHtml() +
       `<div class="hl-stats">${stat(t('health.merges7'), h.pace.merges7)}${stat(t('health.merges30'), h.pace.merges30)}${stat(t('health.releases30'), h.pace.releases30)}</div>`;
     const clashBtn = $('#hl-clash-go');
@@ -1500,8 +1500,9 @@
     return `<section class="hl-sec" id="hl-digest-org"><h3>${U.esc(title)}</h3><p class="hl-none">${U.esc(t('digest.help'))}</p><pre class="hl-digest" id="digest-org-md" tabindex="0" aria-label="${U.esc(title)}"></pre><div class="sr-row"><button type="button" class="btn btn-ghost" id="digest-org-copy">${U.esc(t('digest.copy'))}</button><button type="button" class="btn btn-ghost" id="digest-org-save">${U.esc(t('digest.save'))}</button></div><div id="digest-org-out" role="status" aria-live="polite"></div></section>`;
   }
 
-  /** Copiar y guardar el Markdown de un resumen: `id` es el prefijo de sus elementos. */
-  function wireDigest(id, text, name) {
+  /** Copiar y guardar un resumen como Markdown o como imagen: `id` es el prefijo de sus elementos y
+      `image()` arma el canvas de la imagen (solo el resumen de un repo). */
+  function wireDigest(id, text, name, image) {
     const out = $(`#${id}-out`);
     $(`#${id}-md`).textContent = text;
     $(`#${id}-copy`).addEventListener('click', async () => {
@@ -1517,8 +1518,16 @@
       }
     });
     $(`#${id}-save`).addEventListener('click', () => GB.snapshot.download(new Blob([text], { type: 'text/markdown' }), GB.snapshot.fileName(name, { ext: 'md', kind: 'semana' })));
+    $(`#${id}-png`)?.addEventListener('click', () => {
+      image().toBlob((b) => {
+        if (!b) return;
+        GB.snapshot.download(b, GB.snapshot.fileName(name, { kind: 'semana' }));
+      }, 'image/png');
+    });
   }
 
+  // colores fijos: la imagen es para compartir y se ve igual con cualquier tema de la página
+  const DIGEST_COLORS = { bg: '#0e1514', fg: '#e6efed', dim: '#93a5a1', accent: '#4ade80' };
   const digestLabels = () => {
     const label = (k) => t('digest.' + k);
     return { head: label('head'), commits: label('commits'), merged: label('merged'), releases: label('releases'), people: label('people'), branch: label('branch') };
@@ -1528,7 +1537,9 @@
   function setupDigest(data, acts) {
     const d = GB.digest.compute(data, acts, Date.now(), 7, GB.i18n.text);
     const repoName = active?.demo ? 'demo' : active?.key || data.repo.name || '';
-    wireDigest('digest', GB.digest.toMarkdown(d, repoName, digestLabels(), GB.i18n.fmtDate, t('health.none')), repoName);
+    const rtl = getComputedStyle(document.documentElement).direction === 'rtl';
+    wireDigest('digest', GB.digest.toMarkdown(d, repoName, digestLabels(), GB.i18n.fmtDate, t('health.none')), repoName, () =>
+      GB.digest.toCanvas(document, d, repoName, digestLabels(), GB.i18n.fmtDate, t('health.none'), DIGEST_COLORS, rtl));
   }
 
   /** El de toda la organización: los repos abiertos de la misma organización seguida, sin consultas nuevas. */

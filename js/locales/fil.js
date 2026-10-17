@@ -598,6 +598,7 @@ GB.i18n.define('fil', {
   'digest.help': 'Ang huling 7 araw, mula sa nai-load na. Kopyahin bilang Markdown o i-save bilang file.',
   'digest.copy': 'Kopyahin ang Markdown',
   'digest.save': 'I-save ang .md',
+  'digest.png': 'I-save ang .png',
   'digest.copied': 'Nakopya.',
   'digest.head': 'Buod ng linggo · {repo}',
   'digest.commits': 'Mga commit: {n}',

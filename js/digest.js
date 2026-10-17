@@ -114,5 +114,57 @@
     return out.join('\n') + '\n';
   }
 
-  GB.digest = { compute, toMarkdown, computeOrg, toMarkdownOrg };
+  /** Las líneas de la imagen del resumen: { text, kind } con kind 'title' | 'sub' | 'head' | 'row'.
+      Cada texto va recortado para caber en el ancho de la imagen. */
+  function imageLines(d, repo, t, fmtDate = (ms) => new Date(ms).toISOString().slice(0, 10), none = '—') {
+    const flat = (s) => String(s ?? '').replace(/\s+/g, ' ').trim();
+    const cut = (s) => (s.length > 70 ? s.slice(0, 69) + '…' : s);
+    const L = [{ text: cut(flat(t.head.replace('{repo}', repo))), kind: 'title' }, { text: `${fmtDate(d.since)} – ${fmtDate(d.now)}`, kind: 'sub' }];
+    L.push({ text: t.commits.replace('{n}', d.commits), kind: 'head' });
+    if (d.branch) L.push({ text: cut(`${t.branch}: ${flat(d.branch.name)} (${d.branch.commits})`), kind: 'row' });
+    const section = (label, total, rows) => {
+      L.push({ text: `${label} (${total})`, kind: 'head' });
+      if (rows.length) for (const r of rows.slice(0, 5)) L.push({ text: cut(r), kind: 'row' });
+      else L.push({ text: none, kind: 'row' });
+    };
+    section(t.merged, d.merged.total, d.merged.rows.map((r) => `${r.number ? `#${r.number} ` : ''}${flat(r.title)}`));
+    section(t.releases, d.releases.total, d.releases.rows.map((r) => flat(r.title)));
+    section(t.people, d.people.total, d.people.rows.map((r) => `${flat(r.name)}: ${r.commits}`));
+    return L;
+  }
+
+  const SIZE = { title: 34, sub: 20, head: 24, row: 20 };
+  const GAP = { title: 14, sub: 22, head: 10, row: 6 };
+  const W = 1200;
+  const PAD = 56;
+
+  /** Dibuja el resumen en un canvas nuevo y lo devuelve. `colors`: { bg, fg, dim, accent } ya resueltos
+      para el canvas. Con el texto escrito de derecha a izquierda, la imagen se alinea a la derecha. */
+  function toCanvas(doc, d, repo, t, fmtDate, none, colors, rtl = false) {
+    const lines = imageLines(d, repo, t, fmtDate, none);
+    const height = PAD * 2 + lines.reduce((n, l) => n + SIZE[l.kind] + GAP[l.kind] + (l.kind === 'head' ? 8 : 0), 0);
+    const canvas = doc.createElement('canvas');
+    canvas.width = W;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0, 0, W, height);
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(rtl ? W - 10 : 0, 0, 10, height);
+    ctx.direction = rtl ? 'rtl' : 'ltr';
+    ctx.textAlign = rtl ? 'right' : 'left';
+    ctx.textBaseline = 'top';
+    const x = rtl ? W - PAD : PAD;
+    let y = PAD;
+    for (const l of lines) {
+      if (l.kind === 'head') y += 8;
+      ctx.font = `${l.kind === 'row' || l.kind === 'sub' ? '400' : '700'} ${SIZE[l.kind]}px system-ui, sans-serif`;
+      ctx.fillStyle = l.kind === 'head' ? colors.accent : l.kind === 'sub' ? colors.dim : colors.fg;
+      ctx.fillText(l.text, x, y);
+      y += SIZE[l.kind] + GAP[l.kind];
+    }
+    return canvas;
+  }
+
+  GB.digest = { compute, toMarkdown, computeOrg, toMarkdownOrg, imageLines, toCanvas };
 })(window.GB);

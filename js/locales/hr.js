@@ -605,6 +605,7 @@ GB.i18n.define('hr', {
   'digest.help': 'Posljednjih 7 dana, iz onoga što je već učitano. Kopirajte kao Markdown ili spremite u datoteku.',
   'digest.copy': 'Kopiraj Markdown',
   'digest.save': 'Spremi .md',
+  'digest.png': 'Spremi .png',
   'digest.copied': 'Kopirano.',
   'digest.head': 'Sažetak tjedna · {repo}',
   'digest.commits': 'Commitovi: {n}',

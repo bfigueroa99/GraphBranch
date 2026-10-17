@@ -477,6 +477,7 @@ GB.i18n.define('de', {
   'health.doraFreq': 'Deployments (Releases): {n} in 30 Tagen · Median zwischen Releases {gap}',
   'health.doraLead': 'Durchlaufzeit (von geöffnet bis gemergt): Median {median}',
   'health.doraLeadCommit': 'Durchlaufzeit (vom ersten Commit bis gemergt, {n} von {total} PRs): Median {median}',
+  'health.doraWeeks': 'Deployments pro Woche, letzte {n} Wochen (von der ältesten bis zur aktuellen): {list}',
   'health.ci': 'CI-Fehlschläge',
   'health.ciPrs': 'Offene PRs mit fehlgeschlagenen Checks: {failing} von {total} ({pct} %)',
   'health.ciFeed': 'Wie oft der Standard-Branch in 30 Tagen rot wurde: {n}',

@@ -1,7 +1,7 @@
 /* GraphBranch — salud del repo: lo que ya está cargado, leído como señales de equipo.
    Ramas sin actividad hace más de 30 días y sin PR, pull requests abiertos por edad y por estado (borrador, checks en rojo, aprobado, esperando revisión), cuánto tardaron
    en fusionarse los últimos, el ritmo de merges y releases y, en el idioma de DORA, la frecuencia de
-   despliegues (cada release cuenta como uno) y el tiempo de entrega (de abierto a fusionado). No hace ninguna consulta: parte del
+   despliegues (cada release cuenta como uno, también por semana) y el tiempo de entrega (de abierto a fusionado). No hace ninguna consulta: parte del
    estado del grafo y de la actividad que ya llegó, y cuenta lo que pasa en el repo, no a personas. */
 (function (GB) {
   'use strict';
@@ -10,6 +10,7 @@
   const STALE_DAYS = 30;
   const RECENT_MERGES = 20; // cuántos PRs fusionados entran en el tiempo de abierto a fusionado
   const RECENT_RELEASES = 10; // cuántos releases entran en el tiempo entre despliegues
+  const WEEKS = 8; // semanas que entran en la frecuencia de despliegue
   const ROWS = 8; // filas que muestra cada lista
 
   const at = (x) => (typeof x === 'number' ? x : Date.parse(x) || 0);
@@ -18,6 +19,17 @@
     const m = s.length >> 1;
     return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
   };
+
+  /** Cuenta los releases de cada una de las últimas WEEKS semanas (bloques de 7 días hacia atrás desde `now`). */
+  function weekly(list, now) {
+    const weeks = new Array(WEEKS).fill(0);
+    for (const a of list) {
+      if (a.time > now) continue;
+      const k = Math.floor((now - a.time) / (7 * DAY));
+      if (k < WEEKS) weeks[WEEKS - 1 - k]++;
+    }
+    return weeks;
+  }
 
   /** `data`: el estado del repo (ramas, commits, PRs abiertos); `acts`: su actividad ya cargada.
       Devuelve las listas ordenadas (lo peor primero) con su total, y el ritmo. */
@@ -80,6 +92,7 @@
       deploys30: within(releases, 30),
       gap: gaps.length ? median(gaps) : null,
       lead: lead.length ? median(lead) : null,
+      weeks: weekly(releases, now), // despliegues por semana, de la más vieja (a la izquierda) a la actual
     };
 
     // tasa de fallos de CI: de los PRs abiertos con checks conocidos, cuántos están en rojo; y cuántas veces

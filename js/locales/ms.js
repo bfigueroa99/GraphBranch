@@ -476,6 +476,7 @@ GB.i18n.define('ms', {
   'health.doraFreq': 'Penempatan (keluaran): {n} dalam 30 hari · median antara keluaran {gap}',
   'health.doraLead': 'Masa pimpinan (dari dibuka hingga digabung): median {median}',
   'health.doraLeadCommit': 'Masa pimpinan (dari commit pertama hingga digabung, {n} daripada {total} PR): median {median}',
+  'health.doraWeeks': 'Penempatan seminggu, {n} minggu terakhir (dari yang terlama hingga semasa): {list}',
   'health.ci': 'Kegagalan CI',
   'health.ciPrs': 'PR terbuka dengan semakan gagal: {failing} daripada {total} ({pct}%)',
   'health.ciFeed': 'Bilangan cabang lalai bertukar merah dalam 30 hari: {n}',

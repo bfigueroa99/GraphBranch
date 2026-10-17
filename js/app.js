@@ -1318,8 +1318,8 @@
         h.merged ? `<p class="hl-line">${U.esc(t('health.mergedStat', { median: span(h.merged.median), max: span(h.merged.max) }))}</p>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
       `<section class="hl-sec" id="hl-dora"><h3>${U.esc(t('health.dora'))}</h3>${
-        h.dora.deploys30 || h.dora.gap != null || h.dora.lead != null
-          ? `<p class="hl-line">${U.esc(t('health.doraFreq', { n: h.dora.deploys30, gap: h.dora.gap != null ? span(h.dora.gap) : '—' }))}</p><p class="hl-line">${U.esc(h.leadSource.fromCommit ? t('health.doraLeadCommit', { median: span(h.dora.lead), n: h.leadSource.fromCommit, total: h.leadSource.total }) : t('health.doraLead', { median: h.dora.lead != null ? span(h.dora.lead) : '—' }))}</p>`
+        h.dora.deploys30 || h.dora.gap != null || h.dora.lead != null || h.dora.weeks.some(Boolean)
+          ? `<p class="hl-line">${U.esc(t('health.doraFreq', { n: h.dora.deploys30, gap: h.dora.gap != null ? span(h.dora.gap) : '—' }))}</p><p class="hl-line" id="hl-weeks">${U.esc(t('health.doraWeeks', { n: h.dora.weeks.length, list: h.dora.weeks.join(' · ') }))}</p><p class="hl-line">${U.esc(h.leadSource.fromCommit ? t('health.doraLeadCommit', { median: span(h.dora.lead), n: h.leadSource.fromCommit, total: h.leadSource.total }) : t('health.doraLead', { median: h.dora.lead != null ? span(h.dora.lead) : '—' }))}</p>`
           : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
       `<section class="hl-sec" id="hl-ci"><h3>${U.esc(t('health.ci'))}</h3>${

@@ -476,6 +476,7 @@ GB.i18n.define('da', {
   'health.doraFreq': 'Udrulninger (releases): {n} på 30 dage · median mellem udgivelser {gap}',
   'health.doraLead': 'Leveringstid (fra åbnet til flettet): median {median}',
   'health.doraLeadCommit': 'Leveringstid (fra første commit til flettet, {n} af {total} PR): median {median}',
+  'health.doraWeeks': 'Udrulninger pr. uge, de seneste {n} uger (ældste til nuværende): {list}',
   'health.ci': 'CI-fejl',
   'health.ciPrs': 'Åbne PR\'er med fejlende checks: {failing} af {total} ({pct} %)',
   'health.ciFeed': 'Gange standardgrenen blev rød inden for 30 dage: {n}',

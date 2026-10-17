@@ -604,4 +604,7 @@ GB.i18n.define('id', {
   'digest.people': 'Siapa yang berkontribusi (commit)',
   'digest.branch': 'Cabang paling aktif',
   'digest.org': 'Ringkasan mingguan {owner}',
+  'constellation.title': 'Rasi bintang',
+  'constellation.help': 'Setiap repositori yang diikuti adalah galaksi: makin banyak commit yang dimuat, makin besar. Tab berpindah di antaranya dan Enter membukanya.',
+  'constellation.stats': 'commit: {commits} · cabang: {branches}',
 });

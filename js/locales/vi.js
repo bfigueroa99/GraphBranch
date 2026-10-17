@@ -604,4 +604,7 @@ GB.i18n.define('vi', {
   'digest.people': 'Ai đã đóng góp (commit)',
   'digest.branch': 'Nhánh hoạt động nhất',
   'digest.org': 'Tóm tắt tuần của {owner}',
+  'constellation.title': 'Chòm sao',
+  'constellation.help': 'Mỗi kho đang theo dõi là một thiên hà: càng nhiều commit đã tải thì càng lớn. Tab di chuyển giữa chúng và Enter mở ra.',
+  'constellation.stats': 'commit: {commits} · nhánh: {branches}',
 });

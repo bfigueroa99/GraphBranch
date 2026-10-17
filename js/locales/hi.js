@@ -604,4 +604,7 @@ GB.i18n.define('hi', {
   'digest.people': 'किसने योगदान दिया (कमिट)',
   'digest.branch': 'सबसे सक्रिय ब्रांच',
   'digest.org': '{owner} का साप्ताहिक सारांश',
+  'constellation.title': 'तारामंडल',
+  'constellation.help': 'अनुसरण किया गया हर रिपॉज़िटरी एक आकाशगंगा है: जितने ज़्यादा कमिट लोड हैं, उतनी बड़ी। Tab से उनके बीच जाएँ और Enter से खोलें।',
+  'constellation.stats': 'कमिट: {commits} · ब्रांच: {branches}',
 });

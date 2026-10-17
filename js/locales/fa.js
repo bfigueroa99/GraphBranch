@@ -647,4 +647,7 @@ GB.i18n.define('fa', {
   'digest.people': 'چه کسی مشارکت کرد (کامیت‌ها)',
   'digest.branch': 'فعال‌ترین شاخه',
   'digest.org': 'خلاصه هفته {owner}',
+  'constellation.title': 'صورت فلکی',
+  'constellation.help': 'هر مخزن دنبال‌شده یک کهکشان است: هرچه کامیت بیشتری بارگذاری شده باشد بزرگ‌تر است. Tab میان آن‌ها جابه‌جا می‌شود و Enter آن را باز می‌کند.',
+  'constellation.stats': 'کامیت‌ها: {commits} · شاخه‌ها: {branches}',
 });

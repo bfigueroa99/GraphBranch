@@ -605,4 +605,7 @@ GB.i18n.define('nl', {
   'digest.people': 'Wie heeft bijgedragen (commits)',
   'digest.branch': 'Actiefste branch',
   'digest.org': 'Weekoverzicht van {owner}',
+  'constellation.title': 'Sterrenbeeld',
+  'constellation.help': 'Elke gevolgde repository is een sterrenstelsel: hoe meer geladen commits, hoe groter. Tab wisselt ertussen en Enter opent het.',
+  'constellation.stats': 'commits: {commits} · branches: {branches}',
 });

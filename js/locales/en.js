@@ -610,4 +610,7 @@ GB.i18n.define('en', {
   'digest.people': 'Who contributed (commits)',
   'digest.branch': 'Most active branch',
   'digest.org': 'Weekly summary of {owner}',
+  'constellation.title': 'Constellation',
+  'constellation.help': 'Each followed repository is a galaxy: the bigger, the more commits loaded. Tab moves between them and Enter opens it.',
+  'constellation.stats': 'commits: {commits} · branches: {branches}',
 });

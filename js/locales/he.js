@@ -661,4 +661,7 @@ GB.i18n.define('he', {
   'digest.people': 'מי תרם (קומיטים)',
   'digest.branch': 'הענף הפעיל ביותר',
   'digest.org': 'סיכום השבוע של {owner}',
+  'constellation.title': 'קבוצת כוכבים',
+  'constellation.help': 'כל מאגר במעקב הוא גלקסיה: ככל שנטענו יותר קומיטים היא גדולה יותר. Tab עובר ביניהן ו-Enter פותח אותה.',
+  'constellation.stats': 'קומיטים: {commits} · ענפים: {branches}',
 });

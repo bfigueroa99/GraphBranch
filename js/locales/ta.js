@@ -604,4 +604,7 @@ GB.i18n.define('ta', {
   'digest.people': 'யார் பங்களித்தனர் (கமிட்கள்)',
   'digest.branch': 'மிகச் செயலில் உள்ள கிளை',
   'digest.org': '{owner} வாராந்திர சுருக்கம்',
+  'constellation.title': 'விண்மீன் தொகுதி',
+  'constellation.help': 'பின்தொடரும் ஒவ்வொரு களஞ்சியமும் ஒரு விண்மீன் மண்டலம்: அதிக கமிட்கள் ஏற்றப்பட்டால் பெரிதாகும். Tab மூலம் நகர்ந்து Enter மூலம் திறக்கவும்.',
+  'constellation.stats': 'கமிட்கள்: {commits} · கிளைகள்: {branches}',
 });

@@ -1383,6 +1383,22 @@ console.log('Varios repos a la vez');
       const n = await full.locator('#repo-tabs .rt').count();
       if (n !== 10) throw new Error(`hay ${n} pestañas`);
       if (!why) throw new Error('no dice por qué no se suma el repo 11');
+      // la constelación: una galaxia por repo seguido, con nombre, sin tocarse, y Intro lleva a su pestaña
+      await full.click('#constellation-btn');
+      await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
+      const gx = await full.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => ({ label: b.getAttribute('aria-label'), r: b.getBoundingClientRect().toJSON() })));
+      if (gx.length !== 10) throw new Error(`la constelación tiene ${gx.length} galaxias`);
+      if (gx.some((g) => !g.label || /undefined|NaN|constellation\./.test(g.label))) throw new Error('galaxia sin nombre o con texto sin resolver: ' + JSON.stringify(gx.map((g) => g.label)));
+      for (let i = 0; i < gx.length; i++)
+        for (let j = i + 1; j < gx.length; j++) {
+          const a = gx[i].r, b = gx[j].r;
+          if (Math.hypot(a.x + a.width / 2 - b.x - b.width / 2, a.y + a.height / 2 - b.y - b.height / 2) < (a.width + b.width) / 2 - 1) throw new Error(`las galaxias ${i} y ${j} se superponen`);
+        }
+      if (!(await full.evaluate(() => document.activeElement?.classList.contains('cs-gx')))) throw new Error('el foco no entra a la constelación');
+      await full.press('#constellation .cs-gx:focus', 'Tab');
+      await full.keyboard.press('Enter');
+      await full.waitForSelector('#constellation:not([open])', { state: 'attached', timeout: T(3000) });
+      if (!(await full.locator('#repo-tabs .rt-main[aria-current="true"]').count())) throw new Error('Intro en una galaxia no abre su pestaña');
       // un enlace a otro repo, con los 10 ya seguidos: entra el del enlace y sale el último guardado
       await full.goto(`${base}/index.html?lang=es&repo=o/a`);
       await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });

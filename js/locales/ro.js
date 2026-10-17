@@ -612,4 +612,7 @@ GB.i18n.define('ro', {
   'digest.people': 'Cine a contribuit (commituri)',
   'digest.branch': 'Cea mai activă ramură',
   'digest.org': 'Rezumatul săptămânii pentru {owner}',
+  'constellation.title': 'Constelație',
+  'constellation.help': 'Fiecare depozit urmărit este o galaxie: cu cât sunt mai multe commit-uri încărcate, cu atât e mai mare. Tab trece între ele, iar Enter o deschide.',
+  'constellation.stats': 'commit-uri: {commits} · ramuri: {branches}',
 });

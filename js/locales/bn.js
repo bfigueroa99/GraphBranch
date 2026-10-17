@@ -604,4 +604,7 @@ GB.i18n.define('bn', {
   'digest.people': 'কে অবদান রেখেছেন (কমিট)',
   'digest.branch': 'সবচেয়ে সক্রিয় ব্রাঞ্চ',
   'digest.org': '{owner}-এর সাপ্তাহিক সারাংশ',
+  'constellation.title': 'নক্ষত্রমণ্ডল',
+  'constellation.help': 'অনুসরণ করা প্রতিটি রিপোজিটরি একটি গ্যালাক্সি: যত বেশি কমিট লোড হয়, তত বড়। Tab দিয়ে এগোন, Enter দিয়ে খুলুন।',
+  'constellation.stats': 'কমিট: {commits} · ব্রাঞ্চ: {branches}',
 });

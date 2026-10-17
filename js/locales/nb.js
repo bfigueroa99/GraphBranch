@@ -604,4 +604,7 @@ GB.i18n.define('nb', {
   'digest.people': 'Hvem som har bidratt (commits)',
   'digest.branch': 'Mest aktive gren',
   'digest.org': 'Ukens oppsummering for {owner}',
+  'constellation.title': 'Konstellasjon',
+  'constellation.help': 'Hvert fulgte repository er en galakse: jo flere innlastede commits, jo større. Tab flytter mellom dem, og Enter åpner den.',
+  'constellation.stats': 'commits: {commits} · grener: {branches}',
 });

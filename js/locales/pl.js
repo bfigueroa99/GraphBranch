@@ -615,4 +615,7 @@ GB.i18n.define('pl', {
   'digest.people': 'Kto wniósł wkład (commity)',
   'digest.branch': 'Najaktywniejsza gałąź',
   'digest.org': 'Podsumowanie tygodnia dla {owner}',
+  'constellation.title': 'Konstelacja',
+  'constellation.help': 'Każde obserwowane repozytorium to galaktyka: im więcej wczytanych commitów, tym większa. Tab przełącza między nimi, Enter ją otwiera.',
+  'constellation.stats': 'commity: {commits} · gałęzie: {branches}',
 });

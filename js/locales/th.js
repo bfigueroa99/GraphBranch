@@ -605,4 +605,7 @@ GB.i18n.define('th', {
   'digest.people': 'ผู้ร่วมพัฒนา (คอมมิต)',
   'digest.branch': 'เบรนช์ที่คึกคักที่สุด',
   'digest.org': 'สรุปประจำสัปดาห์ของ {owner}',
+  'constellation.title': 'กลุ่มดาว',
+  'constellation.help': 'ที่เก็บแต่ละแห่งที่ติดตามคือกาแล็กซีหนึ่งแห่ง ยิ่งโหลดคอมมิตมากยิ่งใหญ่ ใช้ Tab เพื่อเลื่อนและ Enter เพื่อเปิด',
+  'constellation.stats': 'คอมมิต: {commits} · สาขา: {branches}',
 });

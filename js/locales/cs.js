@@ -615,4 +615,7 @@ GB.i18n.define('cs', {
   'digest.people': 'Kdo přispěl (commity)',
   'digest.branch': 'Nejaktivnější větev',
   'digest.org': 'Souhrn týdne pro {owner}',
+  'constellation.title': 'Souhvězdí',
+  'constellation.help': 'Každý sledovaný repozitář je galaxie: čím více načtených commitů, tím větší. Tab přepíná mezi nimi, Enter ji otevře.',
+  'constellation.stats': 'commity: {commits} · větve: {branches}',
 });

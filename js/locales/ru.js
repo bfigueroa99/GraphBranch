@@ -620,4 +620,7 @@ GB.i18n.define('ru', {
   'digest.people': 'Кто внёс вклад (коммиты)',
   'digest.branch': 'Самая активная ветка',
   'digest.org': 'Итоги недели для {owner}',
+  'constellation.title': 'Созвездие',
+  'constellation.help': 'Каждый отслеживаемый репозиторий — это галактика: чем больше загружено коммитов, тем она больше. Tab переключает между ними, Enter открывает.',
+  'constellation.stats': 'коммиты: {commits} · ветки: {branches}',
 });

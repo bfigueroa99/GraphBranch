@@ -620,4 +620,7 @@ GB.i18n.define('uk', {
   'digest.people': 'Хто зробив внесок (коміти)',
   'digest.branch': 'Найактивніша гілка',
   'digest.org': 'Підсумки тижня для {owner}',
+  'constellation.title': 'Сузір’я',
+  'constellation.help': 'Кожен відстежуваний репозиторій — це галактика: чим більше завантажено комітів, тим вона більша. Tab перемикає між ними, Enter відкриває.',
+  'constellation.stats': 'коміти: {commits} · гілки: {branches}',
 });

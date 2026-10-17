@@ -604,4 +604,7 @@ GB.i18n.define('ko', {
   'digest.people': '기여한 사람(커밋)',
   'digest.branch': '가장 활발한 브랜치',
   'digest.org': '{owner} 주간 요약',
+  'constellation.title': '별자리',
+  'constellation.help': '팔로우 중인 저장소는 각각 하나의 은하입니다. 불러온 커밋이 많을수록 큽니다. Tab으로 이동하고 Enter로 엽니다.',
+  'constellation.stats': '커밋: {commits} · 브랜치: {branches}',
 });

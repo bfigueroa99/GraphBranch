@@ -612,4 +612,7 @@ GB.i18n.define('hr', {
   'digest.people': 'Tko je doprinio (commitovi)',
   'digest.branch': 'Najaktivnija grana',
   'digest.org': 'Tjedni sažetak za {owner}',
+  'constellation.title': 'Zviježđe',
+  'constellation.help': 'Svaki praćeni repozitorij je galaksija: što je više učitanih commitova, to je veća. Tab se kreće među njima, a Enter je otvara.',
+  'constellation.stats': 'commitovi: {commits} · grane: {branches}',
 });

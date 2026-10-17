@@ -103,7 +103,7 @@ test('DORA: despliegues en 30 días, mediana entre releases y tiempo de entrega'
   assert.equal(d.deploys30, 3);
   assert.equal(d.gap, 10 * DAY); // huecos 4, 10 y 34 días: mediana 10
   assert.equal(d.lead, 4 * 36e5);
-  assert.deepEqual({ ...compute(repo(), [], NOW).dora }, { deploys30: 0, gap: null, lead: null });
+  assert.deepEqual({ ...compute(repo(), [], NOW).dora, weeks: [...compute(repo(), [], NOW).dora.weeks] }, { deploys30: 0, gap: null, lead: null, weeks: [0, 0, 0, 0, 0, 0, 0, 0] });
 });
 
 test('las listas se cortan a 8 filas y dicen cuántas hay en total', () => {
@@ -257,4 +257,12 @@ test('tiempo de entrega: desde el primer commit del PR cuando se conoce, y desde
 
   data.firstCommits = new Map([[1, ago(0.5)]]); // un primer commit posterior al merge no vale
   assert.equal(compute(data, acts, NOW).leadSource.fromCommit, 0);
+});
+
+test('frecuencia de despliegue: releases por semana, de la semana más vieja a la actual', () => {
+  const rel = (id, days) => ({ kind: 'release', id, time: ago(days) });
+  const acts = [rel('a', 0.5), rel('b', 3), rel('c', 8), rel('d', 20), rel('e', 20.5), rel('f', 70), rel('g', -1)];
+  const h = compute(repo(), acts, NOW);
+  assert.deepEqual([...h.dora.weeks], [0, 0, 0, 0, 0, 2, 1, 2], 'a y b esta semana, c la pasada, d y e hace tres, f fuera de las 8 y g (futuro) no cuenta');
+  assert.deepEqual([...compute(repo(), [], NOW).dora.weeks], [0, 0, 0, 0, 0, 0, 0, 0]);
 });

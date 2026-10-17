@@ -476,6 +476,7 @@ GB.i18n.define('bn', {
   'health.doraFreq': 'ডিপ্লয় (রিলিজ): ৩০ দিনে {n} · দুই রিলিজের মধ্যে মধ্যমা {gap}',
   'health.doraLead': 'ডেলিভারির সময় (খোলা থেকে মার্জ): মধ্যমা {median}',
   'health.doraLeadCommit': 'ডেলিভারির সময় (প্রথম কমিট থেকে মার্জ, {total}টির মধ্যে {n}টি PR): মধ্যমা {median}',
+  'health.doraWeeks': 'প্রতি সপ্তাহে ডিপ্লয়, শেষ {n} সপ্তাহ (পুরনো থেকে বর্তমান): {list}',
   'health.ci': 'CI ব্যর্থতা',
   'health.ciPrs': 'ব্যর্থ চেকসহ খোলা PR: {total}-এর মধ্যে {failing} ({pct}%)',
   'health.ciFeed': '৩০ দিনে ডিফল্ট ব্রাঞ্চ লাল হওয়ার সংখ্যা: {n}',

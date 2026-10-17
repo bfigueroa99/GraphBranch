@@ -487,6 +487,7 @@ GB.i18n.define('pl', {
   'health.doraFreq': 'Wdrożenia (wydania): {n} w 30 dni · mediana między wydaniami {gap}',
   'health.doraLead': 'Czas realizacji (od otwarcia do scalenia): mediana {median}',
   'health.doraLeadCommit': 'Czas realizacji (od pierwszego commita do scalenia, {n} z {total} PR): mediana {median}',
+  'health.doraWeeks': 'Wdrożenia na tydzień, ostatnie {n} tygodni (od najstarszego do bieżącego): {list}',
   'health.ci': 'Błędy CI',
   'health.ciPrs': 'Otwarte PR-y z nieudanymi sprawdzeniami: {failing} z {total} ({pct}%)',
   'health.ciFeed': 'Ile razy domyślna gałąź zaczerwieniła się w 30 dni: {n}',

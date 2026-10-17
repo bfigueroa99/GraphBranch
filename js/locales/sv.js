@@ -476,6 +476,7 @@ GB.i18n.define('sv', {
   'health.doraFreq': 'Driftsättningar (releaser): {n} på 30 dagar · median mellan releaser {gap}',
   'health.doraLead': 'Ledtid (från öppnad till sammanfogad): median {median}',
   'health.doraLeadCommit': 'Ledtid (från första commit till sammanfogad, {n} av {total} PR): median {median}',
+  'health.doraWeeks': 'Driftsättningar per vecka, senaste {n} veckorna (äldsta till nuvarande): {list}',
   'health.ci': 'CI-fel',
   'health.ciPrs': 'Öppna PR:er med misslyckade kontroller: {failing} av {total} ({pct} %)',
   'health.ciFeed': 'Gånger standardgrenen blev röd på 30 dagar: {n}',

@@ -2026,5 +2026,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: filas tocadas: 40 idiomas (`digest.png`, `check-i18n` en verde); texto de afuera solo por `fillText` (sin HTML); sin mirar a mano 320 px ni RTL del panel más allá de la auditoría.
 - Reclamo: loop/90, sin colisión
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); `git push origin --delete loop/77` falló con «hung up unexpectedly» del proxy.
-- Validado: PENDIENTE
+- Validado: 307 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 27 e2e en verde.
 - **Siguiente:** iteración 91, mantenimiento · Accesibilidad: pendiente 3 (Objetivos chicos y estados confusos. `audit:objetivo-chico` (4 hallazgos conoci…)

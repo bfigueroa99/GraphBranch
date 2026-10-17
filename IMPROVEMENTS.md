@@ -421,12 +421,9 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Baja
 
-3. [Accesibilidad] Objetivos chicos y estados confusos. `audit:objetivo-chico` (4 hallazgos conocidos en
-    `tools/audit-base.json`): las etiquetas de rama de 22 px de alto en 2D (mínimo 24), la barra de
-    posición del Replay (`.rp-range`, 16 px) y las marcas de la brújula del vuelo (18×18 px).
-    Las etiquetas 3D ya miden 24 px (iteración 75).
-    Además: botones que cambian a la vez `aria-pressed` y el texto (el de pausa del Replay, `replay.js:367`)
-    y la leyenda 2D sin acceso por teclado. Reproducir: `node tools/audit.mjs`.
+3. [Accesibilidad] Estados confusos: botones que cambian a la vez `aria-pressed` y el texto (el de pausa del
+    Replay, `replay.js:367`) y la leyenda 2D sin acceso por teclado. Los objetivos chicos ya cumplen los
+    24 px (iteración 91) y la base de la auditoría quedó vacía. Reproducir: `node tools/audit.mjs`.
 4. [Errores] La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
 5. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
 6. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
@@ -465,10 +462,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-16. [Accesibilidad] Las etiquetas de rama 2D (`g.head[role=button]`) miden 22 px de alto en un SVG; subirlas
-    a 24 px exige recalcular el apilado de etiquetas de `layout.js`. Parte del pendiente 3, aparte por tamaño.
-    Reproducción: `node tools/audit.mjs`, escenario `escritorio-2d`.
-17. [QA] El smoke y la auditoría no miran el 3D de celular a 320 px con el panel de ramas abierto (solo las
+16. [QA] El smoke y la auditoría no miran el 3D de celular a 320 px con el panel de ramas abierto (solo las
     etiquetas); revisar a mano que las etiquetas de 24 px no se tapen entre sí con 1.000 ramas.
     Reproducción: Playwright contra `node e2e/serve.mjs 4173`, 320 px, 3D, `?repo=demo`.
 
@@ -2028,3 +2022,16 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); `git push origin --delete loop/77` falló con «hung up unexpectedly» del proxy.
 - Validado: 307 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 27 e2e en verde.
 - **Siguiente:** iteración 91, mantenimiento · Accesibilidad: pendiente 3 (Objetivos chicos y estados confusos. `audit:objetivo-chico` (4 hallazgos conoci…)
+
+### 2026-10-17 · Iteración 91 · Mantenimiento · Accesibilidad
+
+- **Auditoría de Accesibilidad: objetivos táctiles de 24 px** (pendientes 3, parte, y 16). Las etiquetas de rama 2D (`.h-bg`, 22 → 24 px), las marcas de la brújula del vuelo (`.wd-mark`, 18 → 24 px, rombo centrado) y la barra del Replay (`.rp-range`, 16 → 24 px) cumplen WCAG 2.5.8. Los 4 hallazgos `objetivo-chico` salen de la base, que queda vacía. El pendiente 3 sigue con `aria-pressed` y la leyenda 2D.
+- **Reproducción:** `node tools/audit.mjs --puerta` → 4 `objetivo-chico` conocidos antes del arreglo; después, «4 ya no aparecen».
+- **Hallazgos:** 0 nuevos, 4 salen de la base de la auditoría.
+- **Pruebas que fallan sin el arreglo:** la auditoría (`--puerta`) y su base vacía: un objetivo de menos de 24 px vuelve a ser hallazgo nuevo.
+- README: sin cambios (no cambia ninguna función).
+- QA: objetivos táctiles en 2D, vuelo y Replay medidos por la auditoría; sin mirar a mano el apilado de etiquetas 2D con 1.000 ramas; auditoría: 0 hallazgos nuevos.
+- Reclamo: loop/91, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow`); `git push origin --delete loop/78` falló con «hung up unexpectedly» del proxy, así que las `loop/*` fusionadas siguen en origin.
+- Validado: 307 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 27 e2e en verde.
+- **Siguiente:** iteración 92, expansión: ítem 55 (Práctica: cherry-pick y tag, Público)

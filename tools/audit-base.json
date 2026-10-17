@@ -1,14 +1,9 @@
 {
-  "fecha": "2026-10-15",
+  "fecha": "2026-10-17",
   "nota": "Hallazgos conocidos de node tools/audit.mjs --puerta: la puerta falla solo con los que no están aquí. Cada tipo tiene su pendiente en IMPROVEMENTS.md (audit:<tipo>). Se reescribe con --base, nunca a mano.",
   "cuota": {
     "consultas": 10,
     "por": "/ 1, /events 1, /branches 1, /pulls 1, /commits 3, /commits/:sha/check-runs 1, /tags 1, /deployments 1"
   },
-  "hallazgos": [
-    "objetivo-chico|escritorio-2d|#graph > svg.graph-svg > g.heads > g.head.default[role=button]",
-    "objetivo-chico|escritorio-2d|#graph > svg.graph-svg > g.heads > g.head[role=button]",
-    "objetivo-chico|galaxias-vuelo|div.wd-ui > div.wd-compass[role=group] > div.wd-marks > button.wd-mark.unk",
-    "objetivo-chico|replay|#replay > div.rp-bar > div.rp-track > input.rp-range"
-  ]
+  "hallazgos": []
 }

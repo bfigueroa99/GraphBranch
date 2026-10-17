@@ -2031,11 +2031,11 @@ kbd {
 }
 .wd-mark {
   position: absolute;
-  top: 12px;
+  top: 9px;
   left: 0;
-  width: 18px;
-  height: 18px;
-  margin-left: -9px;
+  width: 24px;
+  height: 24px;
+  margin-left: -12px;
   padding: 0;
   border: 0;
   background: none;
@@ -2046,7 +2046,7 @@ kbd {
   display: block;
   width: 8px;
   height: 8px;
-  margin: 5px;
+  margin: 8px;
   border: 1.5px solid var(--c);
   border-radius: 1px;
   background: var(--c);
@@ -3000,6 +3000,7 @@ kbd {
 }
 .rp-range {
   width: 100%;
+  height: 24px;
   margin: 0;
   accent-color: var(--s1);
   cursor: pointer;

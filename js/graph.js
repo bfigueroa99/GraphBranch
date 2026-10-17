@@ -901,7 +901,7 @@
       if (it.key === key) return;
       it.key = key;
       g.textContent = '';
-      const bg = mk('rect', { class: 'h-bg', x: 0, y: -11, height: 22, rx: 11 }, g);
+      const bg = mk('rect', { class: 'h-bg', x: 0, y: -12, height: 24, rx: 12 }, g);
       mk('circle', { class: 'h-dot', cx: 11, cy: 0, r: 3.5 }, g);
       let x = 20;
       const name = fitText(h.name, LABEL_FONT, 210);

@@ -424,6 +424,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     primer `click` que vence (qué lo tapa: un diálogo abierto del paso anterior, la barra de herramientas) y esperar
     a ese estado antes de seguir; para «salud del repo», esperar al `#hl-ci` en vez de leerlo al abrir el panel.
     (Visto de nuevo en la iteración 88: sobre `master` limpio, 1 de 2 corridas de `node tools/smoke.mjs` falló en 7 pasos con el mismo `click` vencido.)
+    (Visto de nuevo en la iteración 95: `xvfb-run -a npm run check` falló una vez en 3 pasos (filtro por autor y por ruta, 2D y 3D, con el `click` vencido); la repetición pasó y 3 corridas sueltas del smoke también.)
     (Hecho en la iteración 83: topes del smoke ×3 y los pasos de Codeberg y Bitbucket dejan de seguir `ana/nada`.)
 2. [Deuda] e2e de escritorio: «un repositorio de esta máquina se sigue sin GitHub…» (`e2e/desktop.spec.mjs:360`)
     falló una vez en `npm run check` (iteración 53, `xvfb-run`; la repetición pasó): el panel de cambios
@@ -2098,5 +2099,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: auditoría completa con `--langs` (0 hallazgos, 114 s), smoke tres veces (3 en verde, con `PLAYWRIGHT_CHROMIUM_PATH`) y los bordes de 320 px a mano; no toca la página.
 - Reclamo: loop/95, sin colisión
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); el borrado de las `loop/82`–`loop/94` fusionadas falló con «hung up unexpectedly» del proxy y un comando posterior lo bloqueó el clasificador de permisos.
-- Validado: PENDIENTE
+- Validado: 313 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) en verde; e2e no corridas (no toca la página ni el escritorio). El primer `npm run check` falló en 3 pasos del smoke (filtros por autor y por ruta, ya en el pendiente Media 1); la repetición pasó.
 - **Siguiente:** iteración 96, expansión: ítem 58 (Ejercicios compartidos, tercera entrega, Público)

@@ -2134,5 +2134,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - README: la función en la lista, Controles, Estructura, Límites conocidos y Seguridad.
 - QA: filas tocadas: web y escritorio (e2e de escritorio nueva), demo sin token (smoke), 40 idiomas y RTL (check-i18n; smoke), teclado (Esc devuelve el foco a la tarjeta), celular a 390 y 320 px sin desborde, consola limpia, cuota (sin consultas nuevas).
 - **Para después:** importar un `estado.json` (también los de Brunell_Node) para seguir su historial, la bitácora como imagen PNG y la de una organización seguida.
-- Validado: VALIDADO
+- Validado: 328 pruebas (`node --test`), smoke (40 idiomas, 136 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 98, expansión: ítem 60 (Práctica: rebase y revert, Público)

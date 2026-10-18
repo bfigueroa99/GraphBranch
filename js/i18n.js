@@ -14,7 +14,8 @@ window.GB = window.GB || {};
   'use strict';
 
   /** Lee ?embed=1 y sus ajustes: &bg=transparent (o un color hex, p. ej. &bg=00ff00 para un croma en OBS) y
-      &hide=notices,combo (lo que no debe verse; lo de siempre se ve). Sin ?embed, no hay nada. */
+      &hide=notices,combo (lo que no debe verse; lo de siempre se ve) y &rotate=30 (cada cuántos
+      segundos pasa al siguiente repo de ?repo=, de 5 a 3600; sin él, 0 y no rota). Sin ?embed, no hay nada. */
   function embedOptions(search) {
     const q = new URLSearchParams(search || '');
     if (!q.has('embed') || /^(0|false|no|off)$/i.test(q.get('embed'))) return null;
@@ -24,7 +25,9 @@ window.GB = window.GB || {};
       .split(',')
       .map((x) => x.trim())
       .filter((x) => x === 'notices' || x === 'combo');
+    const rotate = /^\d{1,4}$/.test((q.get('rotate') || '').trim()) ? Number(q.get('rotate').trim()) : 0;
     return {
+      rotate: rotate >= 5 && rotate <= 3600 ? rotate : 0,
       clear: /^transparent$/i.test(bg),
       color: /^([0-9a-f]{3}|[0-9a-f]{6})$/i.test(bg) ? '#' + bg.toLowerCase() : '',
       hide: [...new Set(hide)],

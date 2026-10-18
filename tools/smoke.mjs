@@ -2547,6 +2547,28 @@ console.log('Capa para streaming: color de fondo y &hide= (?embed=1)');
   await page.context().close();
 }
 
+console.log('Capa para streaming: &rotate= pasa de un repo a otro (?embed=1)');
+{
+  const gh = fakeGitHub();
+  for (const r of ['o/a', 'o/b']) gh.repo(r);
+  const page = await openPage({ viewport: { width: 640, height: 400 } });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', gh.handle);
+  await step(page, '&rotate=5 alterna entre o/a y o/b; sin &rotate= se queda en el primero', async () => {
+    await page.goto(`${base}/index.html?lang=es&embed=1&repo=o/a&repo=o/b&rotate=5`);
+    await loaded(page);
+    const shown = () => page.textContent('#repo-link');
+    if ((await shown()) !== 'o/a') throw new Error(`empieza en ${await shown()}`);
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(15000) });
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(15000) });
+    await page.goto(`${base}/index.html?lang=es&embed=1&repo=o/a&repo=o/b`);
+    await loaded(page);
+    await page.waitForTimeout(7000);
+    if ((await shown()) !== 'o/a') throw new Error(`sin &rotate= pasó a ${await shown()}`);
+  });
+  await page.context().close();
+}
+
 console.log('Filtro por ruta desde la URL (?path=)');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

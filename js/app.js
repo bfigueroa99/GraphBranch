@@ -1771,6 +1771,59 @@
   $('#bt-save').addEventListener('click', () => GB.snapshot.download(new Blob([GB.bitacora.toMarkdown(bitCompute(), bitFormat())], { type: 'text/markdown' }), bitFile('md')));
   $('#bt-json').addEventListener('click', () => GB.snapshot.download(new Blob([JSON.stringify(GB.bitacora.toEstado(bitCompute(), bitFormat()), null, 2) + '\n'], { type: 'application/json' }), bitFile('json')));
 
+  /* ---------- el prompt del loop autónomo: para que Claude Code desarrolle el repo solo (ver loopprompt.js) ---------- */
+  const lp = { dialog: $('#loop-prompt'), repo: $('#lp-repo'), lang: $('#lp-lang'), integration: $('#lp-integration'), release: $('#lp-release'), goal: $('#lp-goal'), text: $('#lp-text'), size: $('#lp-size'), out: $('#lp-out') };
+  const LP_FIELDS = ['repo', 'integration', 'release', 'goal'];
+  let lpTab = null; // el repo para el que se abrió: lo escrito se guarda para él (en la demo, no se guarda)
+  const lpRead = () => ({ repo: lp.repo.value, integration: lp.integration.value, release: lp.release.value, goal: lp.goal.value, lang: lp.lang.value });
+  function lpRender() {
+    const text = GB.loopPrompt.build(lpRead());
+    lp.text.value = text; // como valor, no como texto del nodo: el prompt nombra cosas como {n} que no son claves
+    lp.size.textContent = t('loopPrompt.chars', { n: text.length });
+    return text;
+  }
+  function openLoopPrompt() {
+    if (!active) return;
+    lpTab = active;
+    const repo = active.source.data.repo;
+    const saved = active.demo ? {} : U.store.get('loopPrompt:' + active.key, {});
+    const v = { repo: active.demo ? '' : nameOf(active), integration: repo.defaultBranch || 'main', release: '', goal: '', lang: i18n.locale === 'es' ? 'es' : 'en', ...saved };
+    for (const k of LP_FIELDS) lp[k].value = typeof v[k] === 'string' ? v[k] : '';
+    lp.lang.value = GB.loopPrompt.LANGS.includes(v.lang) ? v.lang : 'en';
+    lp.out.textContent = '';
+    lpRender();
+    if (typeof lp.dialog.showModal === 'function') lp.dialog.showModal();
+    else lp.dialog.setAttribute('open', '');
+  }
+  function closeLoopPrompt() {
+    if (typeof lp.dialog.close === 'function') lp.dialog.close();
+    else lp.dialog.removeAttribute('open');
+  }
+  $('#loop-btn').addEventListener('click', openLoopPrompt);
+  $('#bt-loop').addEventListener('click', () => {
+    closeBitacora();
+    openLoopPrompt();
+  });
+  $('#lp-close').addEventListener('click', closeLoopPrompt);
+  for (const k of [...LP_FIELDS, 'lang'])
+    lp[k].addEventListener('input', () => {
+      lpRender();
+      lp.out.textContent = '';
+      if (lpTab && !lpTab.demo) U.store.set('loopPrompt:' + lpTab.key, lpRead());
+    });
+  $('#lp-form').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const text = lpRender();
+    try {
+      await navigator.clipboard.writeText(text);
+      lp.out.textContent = t('digest.copied');
+    } catch {
+      lp.text.focus();
+      lp.text.select(); // sin permiso del portapapeles: queda seleccionado para copiar a mano
+    }
+  });
+  $('#lp-save').addEventListener('click', () => GB.snapshot.download(new Blob([lpRender()], { type: 'text/markdown' }), GB.snapshot.fileName(lp.repo.value.trim() || 'loop', { ext: 'md', kind: 'loop' })));
+
   /* ---------- vista de texto: el árbol de ramas y commits para teclado y lector de pantalla (ver textview.js) ---------- */
   function closeTextview() {
     if (typeof el.textview.close === 'function') el.textview.close();
@@ -2689,6 +2742,7 @@
     feed.relocalize();
     renderTabs();
     diffView.relocalize();
+    if (lp.dialog.open) lpRender();
     if (!source) return;
     // la demo inventa mensajes, incidencias y comentarios en el idioma activo: se reinicia para no mezclarlos
     if (source.data.repo.practice) practice.render(); // su historia no se inventa: se queda como está

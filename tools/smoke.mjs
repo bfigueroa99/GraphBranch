@@ -717,6 +717,39 @@ console.log('Escritorio (1280×800)');
     if (!(await page.evaluate(() => document.activeElement?.id === 'st-bitacora'))) throw new Error('al cerrar el panel, el foco no vuelve a la tarjeta');
   });
 
+  await step(page, 'prompt del loop autónomo: se arma con el repo, el objetivo y la rama de release, y se guarda', async () => {
+    await page.click('#loop-btn');
+    await page.waitForSelector('#loop-prompt[open]', { timeout: T(3000) });
+    await page.fill('#lp-repo', 'acme/orbita');
+    await page.fill('#lp-integration', 'dev');
+    await page.fill('#lp-release', 'main');
+    await page.fill('#lp-goal', 'Un panel de envíos para bodegas.');
+    const info = await page.evaluate(() => ({
+      text: document.querySelector('#lp-text').value,
+      size: document.querySelector('#lp-size').textContent,
+      overflow: (() => { const f = document.querySelector('#lp-form'); return f.scrollWidth - f.clientWidth; })(),
+      saved: Object.keys(localStorage).filter((k) => k.includes('loopPrompt')).length,
+    }));
+    for (const want of ['`acme/orbita`', 'origin/dev', '`main`', 'Un panel de envíos para bodegas.', '@acme', 'LOOP.md']) if (!info.text.includes(want)) throw new Error(`el prompt no lleva ${want}`);
+    if (/\$\{|undefined|NaN/.test(info.text) || /undefined|NaN|loopPrompt\./.test(info.size)) throw new Error('prompt a medio armar: ' + info.size + ' ' + info.text.slice(0, 80));
+    if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
+    if (info.saved) throw new Error('lo escrito en la demo no debería guardarse');
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#lp-save')]);
+    if (!/^graphbranch-acme-orbita-loop-.*\.md$/.test(dl.suggestedFilename())) throw new Error('nombre del prompt guardado: ' + dl.suggestedFilename());
+    if (readFileSync(await dl.path(), 'utf8') !== info.text) throw new Error('el .md guardado no es el prompt que se ve');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#loop-prompt:not([open])', { state: 'attached', timeout: T(3000) });
+    if (!(await page.evaluate(() => document.activeElement?.id === 'loop-btn'))) throw new Error('al cerrar, el foco no vuelve al botón');
+    // también se llega desde la bitácora
+    await page.click('#st-bitacora');
+    await page.waitForSelector('#bitacora[open]', { timeout: T(3000) });
+    await page.click('#bt-loop');
+    await page.waitForSelector('#loop-prompt[open]', { timeout: T(3000) });
+    if (await page.evaluate(() => document.querySelector('#bitacora').open)) throw new Error('la bitácora sigue abierta debajo del prompt');
+    await page.click('#lp-close');
+    await page.waitForSelector('#loop-prompt:not([open])', { state: 'attached', timeout: T(3000) });
+  });
+
   await step(page, 'vista de texto: árbol con teclado, nombres accesibles y Enter lleva al grafo', async () => {
     await page.click('#textview-btn');
     await page.waitForSelector('#textview[open]', { timeout: T(3000) });

@@ -427,7 +427,7 @@ GB.i18n.define('ja', {
   'settings.bitbucketTokenWhere': 'トークンはこのブラウザーにのみ保存され、bitbucket.org にのみ送信されます。',
   'settings.bitbucketTokenWhereKeychain': 'トークンはシステムのキーチェーンで暗号化されてこのコンピューターにのみ保存され、bitbucket.org にのみ送信されます。',
   'settings.bitbucketTokenWherePlain': 'トークンはこのコンピューターにのみ保存されますが、システムで利用できるキーチェーンがないため暗号化されません。bitbucket.org にのみ送信されます。',
-  'settings.hooks': 'Slack と Discord への通知',
+  'settings.hooks': 'Slack、Discord、Teams への通知',
   'settings.hooksHelp': '各 Webhook には、チェックしたイベントが届きます。リリース、デフォルトブランチへのマージ、CI の失敗、そこへの強制プッシュです。URL は秘密です。このコンピューターにのみ保存され（システムにキーチェーンがあれば暗号化）、対応するサービスにだけ送信されます。',
   'settings.webhook': '{service} の Webhook',
   'settings.hooksTest': 'テスト送信',

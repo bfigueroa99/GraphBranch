@@ -427,7 +427,7 @@ GB.i18n.define('ko', {
   'settings.bitbucketTokenWhere': '토큰은 이 브라우저에만 저장되고 bitbucket.org으로만 전송됩니다.',
   'settings.bitbucketTokenWhereKeychain': '토큰은 시스템 키체인으로 암호화되어 이 컴퓨터에만 저장되고 bitbucket.org으로만 전송됩니다.',
   'settings.bitbucketTokenWherePlain': '토큰은 이 컴퓨터에만 저장되지만, 시스템에 사용할 수 있는 키체인이 없어 암호화되지 않습니다. bitbucket.org으로만 전송됩니다.',
-  'settings.hooks': 'Slack 및 Discord 알림',
+  'settings.hooks': 'Slack, Discord 및 Teams 알림',
   'settings.hooksHelp': '각 웹훅은 선택한 이벤트를 받습니다: 릴리스, 기본 브랜치로의 머지, 빨간색으로 바뀐 CI, 기본 브랜치에 대한 강제 푸시. URL은 비밀입니다. 이 컴퓨터에만 남고(시스템에 키체인이 있으면 암호화됨) 해당 서비스로만 전송됩니다.',
   'settings.webhook': '{service} 웹훅',
   'settings.hooksTest': '테스트 보내기',

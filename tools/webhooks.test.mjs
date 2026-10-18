@@ -21,6 +21,7 @@ vm.runInContext(readFileSync(join(root, 'js', 'hooks.js'), 'utf8'), ctx, { filen
 const hooks = ctx.window.GB.hooks;
 
 const SLACK = 'https://hooks.slack.com/services/T000/B000/XXXXXXXXXXXX';
+const TEAMS = 'https://prod-12.westus.logic.azure.com:443/workflows/0123456789abcdef0123456789abcdef/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sig=abcDEF_123-456';
 const DISCORD = 'https://discord.com/api/webhooks/123456789012345678/abcDEF_-123456';
 
 test('solo se aceptan URL de webhook de su propio servicio', () => {
@@ -38,6 +39,18 @@ test('solo se aceptan URL de webhook de su propio servicio', () => {
   assert.equal(wh.valid('slack', DISCORD), false); // el webhook de uno no sirve para el otro
   assert.equal(wh.valid('discord', SLACK), false);
   assert.equal(wh.valid('github', SLACK), false);
+  assert.ok(wh.valid('teams', TEAMS));
+  assert.ok(wh.valid('teams', 'https://acme.webhook.office.com/webhookb2/aaaaaaaa-1111@bbbbbbbb-2222/IncomingWebhook/0123456789abcdef/cccccccc-3333'));
+  for (const bad of [
+    TEAMS.replace('https', 'http'),
+    TEAMS.replace('logic.azure.com', 'logic.azure.com.evil.example'),
+    'https://evil.example/prod.logic.azure.com/workflows/0123456789abcdef/triggers/manual/paths/invoke?sig=abcdefgh',
+    'https://logic.azure.com@evil.example/workflows/0123456789abcdef/triggers/manual/paths/invoke?sig=abcdefgh',
+    'https://prod-12.westus.logic.azure.com/workflows/0123456789abcdef/triggers/manual/paths/invoke',
+    SLACK,
+  ]) assert.equal(wh.valid('teams', bad), false, bad);
+  assert.equal(wh.valid('slack', TEAMS), false);
+  assert.equal(wh.valid('discord', TEAMS), false);
   assert.ok(wh.valid('slack', 'http://127.0.0.1:9/x', 'http://127.0.0.1:')); // el servidor de pruebas
 });
 
@@ -51,6 +64,21 @@ test('el cuerpo no deja que un texto de GitHub mencione a nadie ni abra enlaces 
   assert.deepEqual(d.allowed_mentions, { parse: [] });
   assert.match(d.content, /<https:\/\/github\.com\/acme\/app\/releases\/tag\/v1>$/);
   assert.ok(wh.payload('discord', { title: 'x'.repeat(5000) }).content.length <= 2000);
+});
+
+test('el cuerpo de Teams es una tarjeta adaptable sin menciones ni enlaces ajenos', () => {
+  const ev = { repo: 'acme/app', kind: 'Release', title: 'v1 <at>Todos</at> [x](https://evil.example) *grueso*', detail: '@everyone', url: 'https://github.com/acme/app/releases/tag/v(1)' };
+  const p = wh.payload('teams', ev);
+  assert.equal(p.type, 'message');
+  const card = p.attachments[0];
+  assert.equal(card.contentType, 'application/vnd.microsoft.card.adaptive');
+  assert.equal(card.content.type, 'AdaptiveCard');
+  const texts = card.content.body.map((b) => b.text);
+  assert.match(texts[0], /^acme\/app · Release$/);
+  assert.ok(!texts[1].includes('<at>') && !/(^|[^\\])\[x\]\(/.test(texts[1]) && !/(^|[^\\])\*grueso/.test(texts[1]), texts[1]);
+  assert.match(texts[1], /^v1 \\<at\\>/);
+  assert.ok(texts[3].endsWith('(https://github.com/acme/app/releases/tag/v%281%29)'), texts[3]);
+  assert.equal(wh.payload('teams', { ...ev, url: 'javascript:alert(1)' }).attachments[0].content.body.length, 3); // solo https
 });
 
 test('send manda el JSON de cada servicio y no sigue redirecciones', async () => {
@@ -71,6 +99,8 @@ test('send manda el JSON de cada servicio y no sigue redirecciones', async () =>
     assert.deepEqual(await wh.send('slack', `${base}/ok`, ev, fetch, base), { ok: true, status: 204 });
     assert.equal(got[0].type, 'application/json');
     assert.match(got[0].body.text, /^\*acme\/app\* · CI failed\nmain falló$/);
+    assert.deepEqual(await wh.send('teams', `${base}/teams`, ev, fetch, base), { ok: true, status: 204 });
+    assert.equal(got.pop().body.attachments[0].content.body[1].text, 'main falló');
     assert.equal((await wh.send('discord', `${base}/fail`, ev, fetch, base)).ok, false);
     assert.equal((await wh.send('discord', `${base}/redir`, ev, fetch, base)).ok, false);
     assert.equal(got.length, 3);
@@ -82,7 +112,7 @@ test('send manda el JSON de cada servicio y no sigue redirecciones', async () =>
 });
 
 const act = (kind, branch, extra = {}) => ({ kind, branch, id: kind + branch, ...extra });
-const ON = { slack: true, discord: true };
+const ON = { slack: true, discord: true, teams: true };
 
 test('qué actividad es qué evento: solo la rama por defecto cuenta para merge y force-push', () => {
   const e = (a) => hooks.eventOf(a, 'main');
@@ -102,6 +132,8 @@ test('cada webhook recibe solo los eventos que se marcaron, y solo si tiene URL'
   const acts = [act('release', null), act('ci-fail', 'main'), act('force', 'main'), act('pr-merge', 'main')];
   const all = hooks.route(acts, 'main', {}, ON);
   assert.equal(all.slack.length, 4);
+  assert.equal(all.teams.length, 4);
+  assert.equal(hooks.route(acts, 'main', {}, { teams: false }).teams.length, 0);
   assert.deepEqual(Array.from(all.slack, (a) => a.kind), ['force', 'ci-fail', 'release', 'pr-merge']); // lo más grave primero
   const some = hooks.route(acts, 'main', { slack: ['ci'], discord: [] }, ON);
   assert.deepEqual(Array.from(some.slack, (a) => a.kind), ['ci-fail']);

@@ -427,7 +427,7 @@ GB.i18n.define('hu', {
   'settings.bitbucketTokenWhere': 'A token csak ebben a böngészőben van tárolva, és kizárólag az bitbucket.org kapja meg.',
   'settings.bitbucketTokenWhereKeychain': 'A token csak ezen a számítógépen van tárolva, a rendszer kulcskarikájával titkosítva, és kizárólag az bitbucket.org kapja meg.',
   'settings.bitbucketTokenWherePlain': 'A token csak ezen a számítógépen van tárolva, de titkosítatlanul: a rendszerben nincs elérhető kulcskarika. Kizárólag az bitbucket.org kapja meg.',
-  'settings.hooks': 'Értesítések Slackre és Discordra',
+  'settings.hooks': 'Értesítések Slackre, Discordra és Teamsre',
   'settings.hooksHelp': 'Minden webhook megkapja a bejelölt eseményeket: kiadások, összefésülések az alapértelmezett ágba, pirosra váltó CI és force-push arra. Az URL titok: ezen a számítógépen marad (titkosítva, ha a rendszernek van kulcstartója), és csak a saját szolgáltatásának küldi el.',
   'settings.webhook': '{service}-webhook',
   'settings.hooksTest': 'Teszt küldése',

@@ -435,7 +435,7 @@ GB.i18n.define('hr', {
   'settings.bitbucketTokenWhere': 'Token se sprema samo u ovom pregledniku i šalje se isključivo na bitbucket.org.',
   'settings.bitbucketTokenWhereKeychain': 'Token se sprema samo na ovom računalu, šifriran pomoću sustavskog privjeska za ključeve, i šalje se isključivo na bitbucket.org.',
   'settings.bitbucketTokenWherePlain': 'Token se sprema samo na ovom računalu, ali nešifriran: sustav nema dostupan privjesak za ključeve. Šalje se isključivo na bitbucket.org.',
-  'settings.hooks': 'Obavijesti na Slack i Discord',
+  'settings.hooks': 'Obavijesti na Slack, Discord i Teams',
   'settings.hooksHelp': 'Svaki webhook prima događaje koje označite: izdanja, spajanja u zadanu granu, CI koji postaje crven i force-push na nju. URL je tajna: ostaje na ovom računalu (šifriran ako sustav ima privjesak ključeva) i šalje se samo vlastitoj usluzi.',
   'settings.webhook': 'Webhook za {service}',
   'settings.hooksTest': 'Pošalji probu',

@@ -428,7 +428,7 @@ GB.i18n.define('fil', {
   'settings.bitbucketTokenWhere': 'Sa browser na ito lang naka-store ang token at sa bitbucket.org lang ito ipinapadala.',
   'settings.bitbucketTokenWhereKeychain': 'Sa computer na ito lang naka-store ang token, naka-encrypt gamit ang keychain ng system, at sa bitbucket.org lang ito ipinapadala.',
   'settings.bitbucketTokenWherePlain': 'Sa computer na ito lang naka-store ang token, pero hindi naka-encrypt: walang available na keychain ang system. Sa bitbucket.org lang ito ipinapadala.',
-  'settings.hooks': 'Mga abiso sa Slack at Discord',
+  'settings.hooks': 'Mga abiso sa Slack, Discord at Teams',
   'settings.hooksHelp': 'Natatanggap ng bawat webhook ang mga event na tinick mo: mga release, merge sa default na branch, CI na nagiging pula, at force-push dito. Lihim ang URL: nananatili ito sa computer na ito (naka-encrypt kung may keychain ang system) at sa sarili lang nitong serbisyo ipinapadala.',
   'settings.webhook': 'Webhook ng {service}',
   'settings.hooksTest': 'Magpadala ng pagsubok',

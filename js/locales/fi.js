@@ -427,7 +427,7 @@ GB.i18n.define('fi', {
   'settings.bitbucketTokenWhere': 'Token tallennetaan vain tähän selaimeen, ja se lähetetään vain osoitteeseen bitbucket.org.',
   'settings.bitbucketTokenWhereKeychain': 'Token tallennetaan vain tälle tietokoneelle, salattuna järjestelmän avainnipun avulla, ja se lähetetään vain osoitteeseen bitbucket.org.',
   'settings.bitbucketTokenWherePlain': 'Token tallennetaan vain tälle tietokoneelle, mutta salaamattomana: järjestelmässä ei ole käytettävissä avainnippua. Se lähetetään vain osoitteeseen bitbucket.org.',
-  'settings.hooks': 'Ilmoitukset Slackiin ja Discordiin',
+  'settings.hooks': 'Ilmoitukset Slackiin, Discordiin ja Teamsiin',
   'settings.hooksHelp': 'Jokainen webhook saa valitsemasi tapahtumat: julkaisut, yhdistämiset oletushaaraan, punaiseksi muuttuvan CI:n ja sen force-pushit. URL on salaisuus: se pysyy tällä tietokoneella (salattuna, jos järjestelmässä on avainnippu) ja lähetetään vain omalle palvelulleen.',
   'settings.webhook': '{service}-webhook',
   'settings.hooksTest': 'Lähetä testi',

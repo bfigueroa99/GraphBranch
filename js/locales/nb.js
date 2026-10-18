@@ -427,7 +427,7 @@ GB.i18n.define('nb', {
   'settings.bitbucketTokenWhere': 'Tokenet lagres bare i denne nettleseren og sendes bare til bitbucket.org.',
   'settings.bitbucketTokenWhereKeychain': 'Tokenet lagres bare på denne datamaskinen, kryptert med systemets nøkkelring, og sendes bare til bitbucket.org.',
   'settings.bitbucketTokenWherePlain': 'Tokenet lagres bare på denne datamaskinen, men ukryptert: systemet har ingen nøkkelring tilgjengelig. Det sendes bare til bitbucket.org.',
-  'settings.hooks': 'Varsler til Slack og Discord',
+  'settings.hooks': 'Varsler til Slack, Discord og Teams',
   'settings.hooksHelp': 'Hver webhook får hendelsene du huker av: utgivelser, flettinger til standardgrenen, CI som blir rød og force-push til den. URL-en er en hemmelighet: den blir på denne datamaskinen (kryptert hvis systemet har en nøkkelring) og sendes bare til sin egen tjeneste.',
   'settings.webhook': '{service}-webhook',
   'settings.hooksTest': 'Send test',

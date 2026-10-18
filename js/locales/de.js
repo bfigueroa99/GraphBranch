@@ -428,7 +428,7 @@ GB.i18n.define('de', {
   'settings.bitbucketTokenWhere': 'Der Token wird nur in diesem Browser gespeichert und ausschließlich an bitbucket.org gesendet.',
   'settings.bitbucketTokenWhereKeychain': 'Der Token wird nur auf diesem Computer gespeichert, verschlüsselt mit dem Schlüsselbund des Systems, und ausschließlich an bitbucket.org gesendet.',
   'settings.bitbucketTokenWherePlain': 'Der Token wird nur auf diesem Computer gespeichert, aber unverschlüsselt: Das System hat keinen Schlüsselbund zur Verfügung. Er wird ausschließlich an bitbucket.org gesendet.',
-  'settings.hooks': 'Benachrichtigungen an Slack und Discord',
+  'settings.hooks': 'Benachrichtigungen an Slack, Discord und Teams',
   'settings.hooksHelp': 'Jeder Webhook erhält die Ereignisse, die du ankreuzt: Releases, Merges in den Standard-Branch, rot werdende CI und Force-Pushes darauf. Die URL ist geheim: Sie bleibt auf diesem Computer (verschlüsselt, wenn das System einen Schlüsselbund hat) und wird nur an ihren eigenen Dienst gesendet.',
   'settings.webhook': '{service}-Webhook',
   'settings.hooksTest': 'Test senden',

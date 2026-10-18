@@ -142,7 +142,7 @@ segunda columna a la primera.
 | Datos | ramas, commits, PRs (y las pilas de PRs apilados), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, en el panel de salud), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color y `&hide=`), extensión de VS Code (sigue la sesión de GitHub del editor; paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia), miles de ramas por repo | una organización entera con más de 10 repos a la vez |
-| Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack y Discord (escritorio), resumen de la semana (Markdown, de un repo o de una organización seguida; PNG, de un repo) | resumen de la organización como imagen |
+| Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack, Discord y Teams (escritorio), resumen de la semana (Markdown, de un repo o de una organización seguida; PNG, de un repo) | resumen de la organización como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), búsqueda de commits también desde la URL (`?q=`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días y por semana, mediana entre releases, tiempo de entrega desde el primer commit del PR), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días) | ver la hoja de ruta |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal (`cherry-pick` y `tag` incluidos) y ejercicios, también propios compartidos por URL con pistas y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
@@ -326,7 +326,7 @@ se comprueban antes de construir sobre ellas.
     `tag <nombre>`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
 56. ~~**Búsqueda en la URL**~~ hecho en #122 · Análisis · 1×2/1. [parte del ítem 19] `?q=texto` abre el repo con la búsqueda ya escrita, para
     compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
-57. **Avisos a Microsoft Teams** · Salidas · 2×2/2. [parte del ítem 15] El mismo aviso de actividad que ya va a Slack y Discord,
+57. ~~**Avisos a Microsoft Teams**~~ hecho en #123 · Salidas · 2×2/2. [parte del ítem 15] El mismo aviso de actividad que ya va a Slack y Discord,
     con el formato de Teams. Comprobar: `tools/webhooks.test.mjs` con el cuerpo esperado.
 58. **Ejercicios compartidos, tercera entrega** · Público · 1×2/1. [parte del ítem 28] Un enlace de ejercicio con la solución
     propuesta (`?practice=<código>&solution=1`) que la muestra paso a paso en la terminal. Comprobar: prueba del codificado y
@@ -2070,3 +2070,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); el borrado de las `loop/80`–`loop/92` fusionadas falló con «hung up unexpectedly» del proxy.
 - Validado: 311 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 27 e2e en verde.
 - **Siguiente:** iteración 94, expansión: ítem 57 (Avisos a Microsoft Teams, Salidas)
+
+### 2026-10-18 · Iteración 94 · Expansión · Salidas
+
+- **Capacidad nueva: avisos a Microsoft Teams** (ítem 57 de la hoja de ruta). Un tercer webhook en Ajustes (solo escritorio) con los mismos eventos que Slack y Discord; el aviso viaja como tarjeta adaptable (`electron/webhooks.js`). Solo se acepta la URL de un flujo de Workflows (`*.logic.azure.com/workflows/…`, `*.environment.api.powerplatform.com/powerautomate/…`) o del conector heredado (`*.webhook.office.com/webhookb2/…`); el texto de GitHub entra con el Markdown escapado (sin `<at>` ni enlaces ajenos) y el enlace solo si es https. El título de la sección de Ajustes pasa a «Slack, Discord y Teams» en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `tools/webhooks.test.mjs` (URL aceptadas y rechazadas, cuerpo de la tarjeta, envío y enrutado) y la e2e de escritorio (tres filas, la prueba de Teams llega como tarjeta).
+- README: función, Límites y Seguridad al día.
+- QA: filas tocadas: Ajustes de escritorio (solo existen bajo Electron; el campo reutiliza el de Slack y Discord); sin probar contra un Teams real (no hay cuenta): el formato sigue la documentación de Microsoft; auditoría: no toca la página web.
+- Reclamo: loop/94, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso).
+- Validado: 312 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 27 e2e en verde.
+- **Siguiente:** iteración 95, mantenimiento · QA: pendiente 16 (El smoke y la auditoría no miran el 3D de celular a 320 px con el panel de rama…)

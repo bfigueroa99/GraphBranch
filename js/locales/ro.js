@@ -435,7 +435,7 @@ GB.i18n.define('ro', {
   'settings.bitbucketTokenWhere': 'Tokenul este stocat doar în acest browser și este trimis exclusiv către bitbucket.org.',
   'settings.bitbucketTokenWhereKeychain': 'Tokenul este stocat doar pe acest computer, criptat cu portcheiul sistemului, și este trimis exclusiv către bitbucket.org.',
   'settings.bitbucketTokenWherePlain': 'Tokenul este stocat doar pe acest computer, dar necriptat: sistemul nu are un portchei disponibil. Este trimis exclusiv către bitbucket.org.',
-  'settings.hooks': 'Notificări către Slack și Discord',
+  'settings.hooks': 'Notificări către Slack, Discord și Teams',
   'settings.hooksHelp': 'Fiecare webhook primește evenimentele bifate: lansări, îmbinări în ramura implicită, CI care devine roșu și force-push pe ea. URL-ul este secret: rămâne pe acest calculator (criptat dacă sistemul are un breloc) și se trimite doar propriului serviciu.',
   'settings.webhook': 'Webhook {service}',
   'settings.hooksTest': 'Trimite un test',

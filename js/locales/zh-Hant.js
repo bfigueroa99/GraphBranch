@@ -427,7 +427,7 @@ GB.i18n.define('zh-Hant', {
   'settings.bitbucketTokenWhere': '權杖只會儲存在此瀏覽器中，並且只會傳送到 bitbucket.org。',
   'settings.bitbucketTokenWhereKeychain': '權杖只會儲存在這台電腦上，並由系統鑰匙圈加密，只會傳送到 bitbucket.org。',
   'settings.bitbucketTokenWherePlain': '權杖只會儲存在這台電腦上，但不會加密：系統沒有可用的鑰匙圈。它只會傳送到 bitbucket.org。',
-  'settings.hooks': '傳送到 Slack 和 Discord 的通知',
+  'settings.hooks': '傳送到 Slack、Discord 和 Teams 的通知',
   'settings.hooksHelp': '每個 Webhook 會收到你勾選的事件：發布、合併到預設分支、CI 變紅，以及對預設分支的強制推送。URL 是機密：它只保存在這台電腦上（系統有鑰匙圈時會加密），而且只會傳送給對應的服務。',
   'settings.webhook': '{service} Webhook',
   'settings.hooksTest': '傳送測試',

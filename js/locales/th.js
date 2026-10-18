@@ -428,7 +428,7 @@ GB.i18n.define('th', {
   'settings.bitbucketTokenWhere': 'token จะถูกเก็บไว้ในเบราว์เซอร์นี้เท่านั้น และส่งไปที่ bitbucket.org เท่านั้น',
   'settings.bitbucketTokenWhereKeychain': 'token จะถูกเก็บไว้ในคอมพิวเตอร์เครื่องนี้เท่านั้น โดยเข้ารหัสด้วยพวงกุญแจของระบบ และส่งไปที่ bitbucket.org เท่านั้น',
   'settings.bitbucketTokenWherePlain': 'token จะถูกเก็บไว้ในคอมพิวเตอร์เครื่องนี้เท่านั้น แต่ไม่ได้เข้ารหัส เพราะระบบไม่มีพวงกุญแจให้ใช้ และส่งไปที่ bitbucket.org เท่านั้น',
-  'settings.hooks': 'การแจ้งเตือนไปยัง Slack และ Discord',
+  'settings.hooks': 'การแจ้งเตือนไปยัง Slack, Discord และ Teams',
   'settings.hooksHelp': 'แต่ละ webhook จะได้รับเหตุการณ์ที่คุณเลือก: รีลีส การเมิร์จเข้าสาขาเริ่มต้น CI ที่เปลี่ยนเป็นสีแดง และการ force-push ไปยังสาขานั้น URL เป็นความลับ: เก็บไว้ในคอมพิวเตอร์เครื่องนี้เท่านั้น (เข้ารหัสหากระบบมีพวงกุญแจ) และส่งไปยังบริการของตัวเองเท่านั้น',
   'settings.webhook': 'Webhook ของ {service}',
   'settings.hooksTest': 'ส่งทดสอบ',

@@ -427,7 +427,7 @@ GB.i18n.define('tr', {
   'settings.bitbucketTokenWhere': 'Token yalnızca bu tarayıcıda saklanır ve yalnızca bitbucket.org adresine gönderilir.',
   'settings.bitbucketTokenWhereKeychain': 'Token yalnızca bu bilgisayarda, sistemin anahtar zinciriyle şifrelenmiş olarak saklanır ve yalnızca bitbucket.org adresine gönderilir.',
   'settings.bitbucketTokenWherePlain': 'Token yalnızca bu bilgisayarda saklanır, ancak şifrelenmeden: sistemde kullanılabilir bir anahtar zinciri yok. Yalnızca bitbucket.org adresine gönderilir.',
-  'settings.hooks': 'Slack ve Discord bildirimleri',
+  'settings.hooks': 'Slack, Discord ve Teams bildirimleri',
   'settings.hooksHelp': 'Her webhook, işaretlediğiniz olayları alır: sürümler, varsayılan dala birleştirmeler, kırmızıya dönen CI ve o dala force-push. URL bir sırdır: bu bilgisayarda kalır (sistemde anahtar zinciri varsa şifreli) ve yalnızca kendi hizmetine gönderilir.',
   'settings.webhook': '{service} webhook\'u',
   'settings.hooksTest': 'Deneme gönder',

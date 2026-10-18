@@ -427,7 +427,7 @@ GB.i18n.define('bn', {
   'settings.bitbucketTokenWhere': 'টোকেনটি শুধু এই ব্রাউজারে সংরক্ষিত থাকে এবং কেবল bitbucket.org সার্ভারে পাঠানো হয়।',
   'settings.bitbucketTokenWhereKeychain': 'টোকেনটি শুধু এই কম্পিউটারে, সিস্টেমের কিচেইন দিয়ে এনক্রিপ্ট করে, সংরক্ষিত থাকে এবং কেবল bitbucket.org সার্ভারে পাঠানো হয়।',
   'settings.bitbucketTokenWherePlain': 'টোকেনটি শুধু এই কম্পিউটারে সংরক্ষিত থাকে, তবে এনক্রিপ্ট ছাড়াই: সিস্টেমে কোনো কিচেইন নেই। এটি কেবল bitbucket.org সার্ভারে পাঠানো হয়।',
-  'settings.hooks': 'Slack ও Discord-এ বিজ্ঞপ্তি',
+  'settings.hooks': 'Slack, Discord ও Teams-এ বিজ্ঞপ্তি',
   'settings.hooksHelp': 'প্রতিটি webhook আপনার বেছে নেওয়া ঘটনাগুলো পায়: রিলিজ, ডিফল্ট ব্রাঞ্চে মার্জ, CI লাল হওয়া এবং সেখানে ফোর্স-পুশ। URL একটি গোপন বিষয়: এটি এই কম্পিউটারেই থাকে (সিস্টেমে কিচেইন থাকলে এনক্রিপ্টেড) এবং শুধু নিজের সেবাতেই পাঠানো হয়।',
   'settings.webhook': '{service} webhook',
   'settings.hooksTest': 'পরীক্ষা পাঠান',

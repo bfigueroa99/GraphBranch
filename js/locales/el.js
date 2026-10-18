@@ -427,7 +427,7 @@ GB.i18n.define('el', {
   'settings.bitbucketTokenWhere': 'Το token αποθηκεύεται μόνο σε αυτό το πρόγραμμα περιήγησης και στέλνεται μόνο στο bitbucket.org.',
   'settings.bitbucketTokenWhereKeychain': 'Το token αποθηκεύεται μόνο σε αυτόν τον υπολογιστή, κρυπτογραφημένο με την κλειδοθήκη του συστήματος, και στέλνεται μόνο στο bitbucket.org.',
   'settings.bitbucketTokenWherePlain': 'Το token αποθηκεύεται μόνο σε αυτόν τον υπολογιστή, αλλά χωρίς κρυπτογράφηση: το σύστημα δεν έχει διαθέσιμη κλειδοθήκη. Στέλνεται μόνο στο bitbucket.org.',
-  'settings.hooks': 'Ειδοποιήσεις σε Slack και Discord',
+  'settings.hooks': 'Ειδοποιήσεις σε Slack, Discord και Teams',
   'settings.hooksHelp': 'Κάθε webhook λαμβάνει τα συμβάντα που επιλέγετε: εκδόσεις, συγχωνεύσεις στον προεπιλεγμένο κλάδο, CI που γίνεται κόκκινο και force-push σε αυτόν. Το URL είναι μυστικό: μένει σε αυτόν τον υπολογιστή (κρυπτογραφημένο αν το σύστημα έχει κλειδοθήκη) και στέλνεται μόνο στη δική του υπηρεσία.',
   'settings.webhook': 'Webhook του {service}',
   'settings.hooksTest': 'Αποστολή δοκιμής',

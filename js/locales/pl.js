@@ -438,7 +438,7 @@ GB.i18n.define('pl', {
   'settings.bitbucketTokenWhere': 'Token jest przechowywany tylko w tej przeglądarce i wysyłany wyłącznie do bitbucket.org.',
   'settings.bitbucketTokenWhereKeychain': 'Token jest przechowywany tylko na tym komputerze, zaszyfrowany za pomocą systemowego pęku kluczy, i wysyłany wyłącznie do bitbucket.org.',
   'settings.bitbucketTokenWherePlain': 'Token jest przechowywany tylko na tym komputerze, ale bez szyfrowania: system nie ma dostępnego pęku kluczy. Jest wysyłany wyłącznie do bitbucket.org.',
-  'settings.hooks': 'Powiadomienia do Slacka i Discorda',
+  'settings.hooks': 'Powiadomienia do Slacka, Discorda i Teams',
   'settings.hooksHelp': 'Każdy webhook dostaje zaznaczone zdarzenia: wydania, scalenia do domyślnej gałęzi, czerwone CI i force-push do niej. Adres URL jest tajny: zostaje na tym komputerze (zaszyfrowany, jeśli system ma pęk kluczy) i trafia tylko do swojej usługi.',
   'settings.webhook': 'Webhook {service}',
   'settings.hooksTest': 'Wyślij test',

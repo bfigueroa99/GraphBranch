@@ -427,7 +427,7 @@ GB.i18n.define('bg', {
   'settings.bitbucketTokenWhere': 'Токенът се съхранява само в този браузър и се изпраща единствено към bitbucket.org.',
   'settings.bitbucketTokenWhereKeychain': 'Токенът се съхранява само на този компютър, шифрован чрез системния ключодържател, и се изпраща единствено към bitbucket.org.',
   'settings.bitbucketTokenWherePlain': 'Токенът се съхранява само на този компютър, но нешифрован: системата няма наличен ключодържател. Изпраща се единствено към bitbucket.org.',
-  'settings.hooks': 'Известия към Slack и Discord',
+  'settings.hooks': 'Известия към Slack, Discord и Teams',
   'settings.hooksHelp': 'Всеки webhook получава отметнатите събития: издания, сливания в основния клон, CI, който става червен, и принудителни изпращания в него. URL адресът е тайна: остава на този компютър (шифрован, ако системата има ключодържател) и се изпраща само до своята услуга.',
   'settings.webhook': 'Webhook на {service}',
   'settings.hooksTest': 'Изпращане на тест',

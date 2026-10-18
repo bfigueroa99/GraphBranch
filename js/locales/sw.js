@@ -427,7 +427,7 @@ GB.i18n.define('sw', {
   'settings.bitbucketTokenWhere': 'Token huhifadhiwa kwenye kivinjari hiki pekee na hutumwa kwa bitbucket.org pekee.',
   'settings.bitbucketTokenWhereKeychain': 'Token huhifadhiwa kwenye kompyuta hii pekee, ikiwa imesimbwa kwa mnyororo wa funguo wa mfumo, na hutumwa kwa bitbucket.org pekee.',
   'settings.bitbucketTokenWherePlain': 'Token huhifadhiwa kwenye kompyuta hii pekee, lakini bila kusimbwa: mfumo hauna mnyororo wa funguo unaopatikana. Hutumwa kwa bitbucket.org pekee.',
-  'settings.hooks': 'Arifa kwa Slack na Discord',
+  'settings.hooks': 'Arifa kwa Slack, Discord na Teams',
   'settings.hooksHelp': 'Kila webhook hupokea matukio unayoyachagua: matoleo, muunganisho kwenye tawi chaguomsingi, CI kuwa nyekundu na force-push kwenye tawi hilo. URL ni siri: hubaki kwenye kompyuta hii (imesimbwa kama mfumo una keychain) na hutumwa kwa huduma yake pekee.',
   'settings.webhook': 'Webhook ya {service}',
   'settings.hooksTest': 'Tuma jaribio',

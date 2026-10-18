@@ -427,7 +427,7 @@ GB.i18n.define('zh-Hans', {
   'settings.bitbucketTokenWhere': '令牌仅保存在此浏览器中，并且只会发送到 bitbucket.org。',
   'settings.bitbucketTokenWhereKeychain': '令牌仅保存在这台电脑上，并由系统钥匙串加密，只会发送到 bitbucket.org。',
   'settings.bitbucketTokenWherePlain': '令牌仅保存在这台电脑上，但未加密：系统没有可用的钥匙串。它只会发送到 bitbucket.org。',
-  'settings.hooks': '发送到 Slack 和 Discord 的通知',
+  'settings.hooks': '发送到 Slack、Discord 和 Teams 的通知',
   'settings.hooksHelp': '每个 Webhook 会收到你勾选的事件：发布、合并到默认分支、CI 变红，以及对默认分支的强制推送。URL 是机密：它只保存在这台电脑上（系统有钥匙串时加密），并且只会发送给对应的服务。',
   'settings.webhook': '{service} Webhook',
   'settings.hooksTest': '发送测试',

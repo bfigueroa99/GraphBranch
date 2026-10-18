@@ -428,7 +428,7 @@ GB.i18n.define('nl', {
   'settings.bitbucketTokenWhere': 'Het token wordt alleen in deze browser opgeslagen en alleen naar bitbucket.org verzonden.',
   'settings.bitbucketTokenWhereKeychain': 'Het token wordt alleen op deze computer opgeslagen, versleuteld met de sleutelhanger van het systeem, en alleen naar bitbucket.org verzonden.',
   'settings.bitbucketTokenWherePlain': 'Het token wordt alleen op deze computer opgeslagen, maar onversleuteld: het systeem heeft geen sleutelhanger beschikbaar. Het wordt alleen naar bitbucket.org verzonden.',
-  'settings.hooks': 'Meldingen naar Slack en Discord',
+  'settings.hooks': 'Meldingen naar Slack, Discord en Teams',
   'settings.hooksHelp': 'Elke webhook krijgt de gebeurtenissen die je aanvinkt: releases, merges naar de standaardbranch, CI die rood wordt en force-pushes erop. De URL is geheim: hij blijft op deze computer (versleuteld als het systeem een sleutelhanger heeft) en gaat alleen naar zijn eigen dienst.',
   'settings.webhook': '{service}-webhook',
   'settings.hooksTest': 'Test versturen',

@@ -428,7 +428,7 @@ GB.i18n.define('fr', {
   'settings.bitbucketTokenWhere': 'Le jeton est conservé uniquement dans ce navigateur et n’est envoyé qu’à bitbucket.org.',
   'settings.bitbucketTokenWhereKeychain': 'Le jeton est conservé uniquement sur cet ordinateur, chiffré avec le trousseau du système, et n’est envoyé qu’à bitbucket.org.',
   'settings.bitbucketTokenWherePlain': 'Le jeton est conservé uniquement sur cet ordinateur, mais sans chiffrement : le système n’a pas de trousseau disponible. Il n’est envoyé qu’à bitbucket.org.',
-  'settings.hooks': 'Notifications vers Slack et Discord',
+  'settings.hooks': 'Notifications vers Slack, Discord et Teams',
   'settings.hooksHelp': 'Chaque webhook reçoit les événements que vous cochez : releases, merges vers la branche par défaut, CI qui passe au rouge et force-push sur celle-ci. L\'URL est un secret : elle reste sur cet ordinateur (chiffrée si le système a un trousseau) et n\'est envoyée qu\'à son propre service.',
   'settings.webhook': 'Webhook {service}',
   'settings.hooksTest': 'Envoyer un test',

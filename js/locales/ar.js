@@ -526,7 +526,7 @@ GB.i18n.define('ar', {
   'settings.bitbucketTokenWhere': 'يُحفظ الرمز في هذا المتصفح فقط ولا يُرسل إلا إلى bitbucket.org.',
   'settings.bitbucketTokenWhereKeychain': 'يُحفظ الرمز على هذا الحاسوب فقط، مشفّرًا بسلسلة مفاتيح النظام، ولا يُرسل إلا إلى bitbucket.org.',
   'settings.bitbucketTokenWherePlain': 'يُحفظ الرمز على هذا الحاسوب فقط، لكن دون تشفير: لا تتوفر سلسلة مفاتيح في النظام. ولا يُرسل إلا إلى bitbucket.org.',
-  'settings.hooks': 'إشعارات إلى Slack وDiscord',
+  'settings.hooks': 'إشعارات إلى Slack وDiscord وTeams',
   'settings.hooksHelp': 'يتلقى كل webhook الأحداث التي تحددها: الإصدارات، والدمج في الفرع الافتراضي، وتحوّل CI إلى الأحمر، والدفع القسري إليه. العنوان سرّي: يبقى على هذا الحاسوب (مشفّرًا إن وُجد سلسلة مفاتيح في النظام) ويُرسل إلى خدمته فقط.',
   'settings.webhook': 'webhook الخاص بـ {service}',
   'settings.hooksTest': 'إرسال اختبار',

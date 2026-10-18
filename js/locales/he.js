@@ -484,7 +484,7 @@ GB.i18n.define('he', {
   'settings.bitbucketTokenWhere': 'ה-token נשמר רק בדפדפן הזה ונשלח רק אל bitbucket.org.',
   'settings.bitbucketTokenWhereKeychain': 'ה-token נשמר רק במחשב הזה, מוצפן באמצעות מחזיק המפתחות של המערכת, ונשלח רק אל bitbucket.org.',
   'settings.bitbucketTokenWherePlain': 'ה-token נשמר רק במחשב הזה, אבל ללא הצפנה: אין במערכת מחזיק מפתחות זמין. הוא נשלח רק אל bitbucket.org.',
-  'settings.hooks': 'התראות ל-Slack ול-Discord',
+  'settings.hooks': 'התראות ל-Slack, ל-Discord ול-Teams',
   'settings.hooksHelp': 'כל webhook מקבל את האירועים שסימנת: גרסאות, מיזוגים לענף ברירת המחדל, CI שהופך לאדום ו-force-push אליו. הכתובת היא סוד: היא נשארת במחשב הזה (מוצפנת אם למערכת יש מחזיקת מפתחות) ונשלחת רק לשירות שלה.',
   'settings.webhook': 'webhook של {service}',
   'settings.hooksTest': 'שליחת בדיקה',

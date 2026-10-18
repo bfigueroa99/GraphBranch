@@ -470,7 +470,7 @@ GB.i18n.define('ur', {
   'settings.bitbucketTokenWhere': 'ٹوکن صرف اسی براؤزر میں محفوظ رہتا ہے اور صرف bitbucket.org کو بھیجا جاتا ہے۔',
   'settings.bitbucketTokenWhereKeychain': 'ٹوکن صرف اسی کمپیوٹر میں، سسٹم کی کی چین سے انکرپٹ ہو کر، محفوظ رہتا ہے اور صرف bitbucket.org کو بھیجا جاتا ہے۔',
   'settings.bitbucketTokenWherePlain': 'ٹوکن صرف اسی کمپیوٹر میں محفوظ رہتا ہے، لیکن انکرپشن کے بغیر: سسٹم میں کوئی کی چین دستیاب نہیں۔ یہ صرف bitbucket.org کو بھیجا جاتا ہے۔',
-  'settings.hooks': 'Slack اور Discord کو اطلاعات',
+  'settings.hooks': 'Slack، Discord اور Teams کو اطلاعات',
   'settings.hooksHelp': 'ہر webhook کو وہ واقعات ملتے ہیں جو آپ منتخب کرتے ہیں: ریلیز، ڈیفالٹ برانچ میں انضمام، سرخ ہوتا CI اور اس پر فورس پش۔ URL ایک راز ہے: یہ اسی کمپیوٹر پر رہتا ہے (اگر سسٹم میں کی چین ہو تو خفیہ کردہ) اور صرف اپنی سروس کو بھیجا جاتا ہے۔',
   'settings.webhook': '{service} webhook',
   'settings.hooksTest': 'ٹیسٹ بھیجیں',

@@ -308,7 +308,7 @@ if (!app.requestSingleInstanceLock()) {
       await token.write(value.trim(), service);
       return token.where();
     });
-    // avisos a Slack y Discord (electron/webhooks.js): la URL no sale del proceso principal
+    // avisos a Slack, Discord y Teams (electron/webhooks.js): la URL no sale del proceso principal
     const testPrefix = app.isPackaged ? '' : process.env.GB_WEBHOOK_TEST_PREFIX || '';
     ipcMain.handle('webhook:send', async (ev, service, event) => {
       fromApp(ev, service);

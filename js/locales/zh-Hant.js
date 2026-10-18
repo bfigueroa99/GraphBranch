@@ -612,6 +612,7 @@ GB.i18n.define('zh-Hant', {
   'digest.commits': '提交:{n}',
   'digest.merged': '已合併的拉取請求',
   'digest.releases': '發布',
+  'digest.tags': '標籤',
   'digest.people': '誰做了貢獻(提交)',
   'digest.branch': '最活躍的分支',
   'digest.org': '{owner} 的每週摘要',

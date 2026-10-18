@@ -612,6 +612,7 @@ GB.i18n.define('tr', {
   'digest.commits': 'Commit: {n}',
   'digest.merged': 'Birleştirilen pull request\'ler',
   'digest.releases': 'Sürümler',
+  'digest.tags': 'Etiketler',
   'digest.people': 'Kimler katkı verdi (commit)',
   'digest.branch': 'En etkin dal',
   'digest.org': '{owner} haftalık özeti',

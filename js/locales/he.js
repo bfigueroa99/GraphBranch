@@ -669,6 +669,7 @@ GB.i18n.define('he', {
   'digest.commits': 'קומיטים: {n}',
   'digest.merged': 'בקשות מיזוג שמוזגו',
   'digest.releases': 'גרסאות',
+  'digest.tags': 'תגיות',
   'digest.people': 'מי תרם (קומיטים)',
   'digest.branch': 'הענף הפעיל ביותר',
   'digest.org': 'סיכום השבוע של {owner}',

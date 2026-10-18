@@ -612,6 +612,7 @@ GB.i18n.define('el', {
   'digest.commits': 'Commits: {n}',
   'digest.merged': 'Συγχωνευμένα pull requests',
   'digest.releases': 'Εκδόσεις',
+  'digest.tags': 'Ετικέτες (tags)',
   'digest.people': 'Ποιος συνεισέφερε (commits)',
   'digest.branch': 'Πιο ενεργός κλάδος',
   'digest.org': 'Εβδομαδιαία σύνοψη του {owner}',

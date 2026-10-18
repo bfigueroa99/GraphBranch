@@ -612,6 +612,7 @@ GB.i18n.define('id', {
   'digest.commits': 'Commit: {n}',
   'digest.merged': 'Pull request yang digabung',
   'digest.releases': 'Rilis',
+  'digest.tags': 'Tag',
   'digest.people': 'Siapa yang berkontribusi (commit)',
   'digest.branch': 'Cabang paling aktif',
   'digest.org': 'Ringkasan mingguan {owner}',

@@ -612,6 +612,7 @@ GB.i18n.define('sv', {
   'digest.commits': 'Commits: {n}',
   'digest.merged': 'Sammanslagna pull requests',
   'digest.releases': 'Releaser',
+  'digest.tags': 'Tags',
   'digest.people': 'Vem som bidragit (commits)',
   'digest.branch': 'Mest aktiva gren',
   'digest.org': 'Veckans sammanfattning för {owner}',

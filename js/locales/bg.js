@@ -612,6 +612,7 @@ GB.i18n.define('bg', {
   'digest.commits': 'Комити: {n}',
   'digest.merged': 'Слети pull request-и',
   'digest.releases': 'Издания',
+  'digest.tags': 'Тагове',
   'digest.people': 'Кой е допринесъл (комити)',
   'digest.branch': 'Най-активен клон',
   'digest.org': 'Седмично обобщение на {owner}',

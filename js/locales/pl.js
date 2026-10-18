@@ -623,6 +623,7 @@ GB.i18n.define('pl', {
   'digest.commits': 'Commity: {n}',
   'digest.merged': 'Scalone pull requesty',
   'digest.releases': 'Wydania',
+  'digest.tags': 'Tagi',
   'digest.people': 'Kto wniósł wkład (commity)',
   'digest.branch': 'Najaktywniejsza gałąź',
   'digest.org': 'Podsumowanie tygodnia dla {owner}',

@@ -139,3 +139,22 @@ test('la imagen del resumen: líneas recortadas y texto pintado en el canvas', (
   assert.equal(g.textAlign, 'right');
   assert.equal(calls.filter((c) => c[0] === 'text').length, lines.length);
 });
+
+test('los tags de la semana salen en el resumen, sin repetir los que ya son release', () => {
+  const r = repo();
+  // 'a' es de hace 40 días (fuera); 'x' de hace 3; 'm' de hace medio día
+  r.tags = new Map([['a', ['v0.1']], ['x', ['v1.1.0']], ['m', ['v1.2.0', 'rc|1'], ], ['zz', ['sin-commit']]]);
+  const d = compute(r, acts, NOW);
+  assert.deepEqual(JSON.parse(JSON.stringify(d.tags.rows.map((t) => t.name))), ['rc|1', 'v1.1.0']);
+  assert.equal(d.tags.total, 2);
+  const t = { head: 'S', commits: 'C {n}', merged: 'M', releases: 'R', tags: 'Tags', people: 'P', branch: 'B' };
+  const out = toMarkdown(d, 'a/b', t);
+  assert.match(out, /## Tags \(2\)\n\n- rc\\\|1\n- v1\.1\.0\n/);
+  assert.ok(imageLines(d, 'a/b', t).some((l) => l.text === 'Tags (2)'));
+});
+
+test('sin tags en la semana, el resumen no trae la sección', () => {
+  const d = compute(repo(), acts, NOW);
+  assert.equal(d.tags.total, 0);
+  assert.doesNotMatch(toMarkdown(d, 'a/b', { head: 'S', commits: 'C {n}', merged: 'M', releases: 'R', tags: 'Tags', people: 'P', branch: 'B' }), /Tags/);
+});

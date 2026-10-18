@@ -628,6 +628,7 @@ GB.i18n.define('ru', {
   'digest.commits': 'Коммиты: {n}',
   'digest.merged': 'Слитые pull request’ы',
   'digest.releases': 'Релизы',
+  'digest.tags': 'Теги',
   'digest.people': 'Кто внёс вклад (коммиты)',
   'digest.branch': 'Самая активная ветка',
   'digest.org': 'Итоги недели для {owner}',

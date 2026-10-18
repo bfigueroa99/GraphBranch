@@ -612,6 +612,7 @@ GB.i18n.define('ca', {
   'digest.commits': 'Commits: {n}',
   'digest.merged': 'Pull requests fusionats',
   'digest.releases': 'Releases',
+  'digest.tags': 'Tags',
   'digest.people': 'Qui ha aportat (commits)',
   'digest.branch': 'Branca més activa',
   'digest.org': 'Resum de la setmana de {owner}',

@@ -655,6 +655,7 @@ GB.i18n.define('ur', {
   'digest.commits': 'کمٹس: {n}',
   'digest.merged': 'ضم شدہ پل ریکویسٹس',
   'digest.releases': 'ریلیزز',
+  'digest.tags': 'ٹیگز',
   'digest.people': 'کس نے حصہ ڈالا (کمٹس)',
   'digest.branch': 'سب سے فعال برانچ',
   'digest.org': '{owner} کا ہفتہ وار خلاصہ',

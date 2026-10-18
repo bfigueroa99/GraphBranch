@@ -612,6 +612,7 @@ GB.i18n.define('fi', {
   'digest.commits': 'Commitit: {n}',
   'digest.merged': 'Yhdistetyt pull requestit',
   'digest.releases': 'Julkaisut',
+  'digest.tags': 'Tagit',
   'digest.people': 'Ketkä osallistuivat (commitit)',
   'digest.branch': 'Aktiivisin haara',
   'digest.org': 'Viikon yhteenveto: {owner}',

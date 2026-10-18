@@ -711,6 +711,7 @@ GB.i18n.define('ar', {
   'digest.commits': 'الإيداعات: {n}',
   'digest.merged': 'طلبات السحب المدموجة',
   'digest.releases': 'الإصدارات',
+  'digest.tags': 'الوسوم',
   'digest.people': 'من ساهم (الإيداعات)',
   'digest.branch': 'أنشط فرع',
   'digest.org': 'ملخص الأسبوع لـ {owner}',

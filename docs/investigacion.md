@@ -223,7 +223,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Extensión de VS Code: recordar repos | Plataformas | 1×2/2 | 1,0 | GitLens | ítem 59 |
 | Práctica: rebase y revert | Público | 2×2/2 | 2,0 | git-sim | ítem 60 |
 | Capa para streaming, tercera entrega | Plataformas | 2×2/2 | 2,0 | Capas para OBS | ítem 61 |
-| Lanzamientos en el resumen de la semana | Salidas | 1×2/1 | 2,0 | GitHub Pulse | ítem 62 |
+| Lanzamientos en el resumen de la semana | Salidas | 1×2/1 | 2,0 | GitHub Pulse | hecho en #132 |
 | Vista de texto: filtro por autor | Público | 1×2/2 | 1,0 | (ítem 33) | ítem 63 |
 | Choques entre ramas en la URL | Análisis | 1×2/1 | 2,0 | (ítem 14) | ítem 64 |
 | Salud del repo en la URL | Análisis | 1×2/1 | 2,0 | (ítem 12) | ítem 66 |
@@ -232,6 +232,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Resumen de la organización como imagen | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 69 |
 | Los forks en el grafo, segunda entrega | Datos | 1×2/2 | 1,0 | Red de ramas de GitHub | ítem 70 |
 | Vista de texto: filtro por ruta en la URL | Público | 1×2/1 | 2,0 | (ítem 33) | ítem 71 |
+| Resumen de la semana: pull requests abiertos | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 72 |
+| Vista de texto: tags | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 73 |
+| Capa para streaming, cuarta entrega | Plataformas | 1×2/1 | 2,0 | Capas para OBS | ítem 74 |
+| Los forks en el grafo, tercera entrega | Datos | 1×2/2 | 1,0 | Red de ramas de GitHub | ítem 75 |
+| Constelación ordenada por actividad | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 76 |
+| Práctica: branch -d y merge --abort | Público | 2×2/2 | 2,0 | git-sim | ítem 77 |
 
 ## Públicos
 

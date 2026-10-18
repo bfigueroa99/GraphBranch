@@ -142,7 +142,7 @@ segunda columna a la primera.
 | Datos | ramas, commits, PRs (y las pilas de PRs apilados), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, en el panel de salud), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color, `&hide=` y `&rotate=` entre repos), extensión de VS Code (sigue la sesión de GitHub del editor y recuerda repos, vista e idioma entre sesiones; paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia), miles de ramas por repo | una organización entera con más de 10 repos a la vez |
-| Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack, Discord y Teams (escritorio), resumen de la semana (Markdown, de un repo o de una organización seguida; PNG, de un repo), prompt del loop autónomo para cualquier repo (español o inglés, con repo, ramas y objetivo; se copia o se guarda como `.md`) | resumen de la organización como imagen |
+| Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack, Discord y Teams (escritorio), resumen de la semana (Markdown, con releases y tags, de un repo o de una organización seguida; PNG, de un repo), prompt del loop autónomo para cualquier repo (español o inglés, con repo, ramas y objetivo; se copia o se guarda como `.md`) | resumen de la organización como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), búsqueda de commits también desde la URL (`?q=`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días y por semana, mediana entre releases, tiempo de entrega desde el primer commit del PR), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días), bitácora en vivo al estilo de Brunell_Node (la quinta cifra del resumen: desde la bitácora anterior, lo grande, commits por día, nota del 1 al 100 de ritmo, publicado y salud con su origen, hallazgos con su gravedad y su seguimiento, cronología y qué sigue; se cierra, se guarda en el navegador y sale en Markdown o `estado.json`) | ver la hoja de ruta |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal (`cherry-pick`, `revert` y `tag` incluidos) y ejercicios, también propios compartidos por URL con pistas, solución propuesta que se muestra paso a paso con `solution=1` y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
@@ -339,7 +339,7 @@ se comprueban antes de construir sobre ellas.
 61. ~~**Capa para streaming, tercera entrega**~~ hecho en #131 · Plataformas · 2×2/2. [parte del ítem 11] `?embed=1&rotate=30` alterna entre los
     repos seguidos cada tantos segundos, para una escena de OBS sin tocarla. Comprobar: prueba de la lectura de la URL y un paso
     del smoke con dos repos.
-62. **Lanzamientos en el resumen de la semana** · Salidas · 1×2/1. [parte del ítem 23] El resumen de la semana lista los tags y
+62. ~~**Lanzamientos en el resumen de la semana**~~ hecho en #132 · Salidas · 1×2/1. [parte del ítem 23] El resumen de la semana lista los tags y
     lanzamientos de la semana con lo ya cargado. Comprobar: `tools/digest.test.mjs` con tags fabricados.
 63. **Vista de texto: filtro por autor** · Público · 1×2/2. [parte del ítem 33] La vista de texto respeta el filtro por autor y
     por ruta, y lo anuncia. Comprobar: prueba de la vista y un paso del smoke.
@@ -360,6 +360,12 @@ se comprueban antes de construir sobre ellas.
     un interruptor del panel y la elección viaja en la URL. Comprobar: prueba de la lectura de la URL y un paso del smoke.
 71. **Vista de texto: filtro por ruta en la URL** · Público · 1×2/1. [parte del ítem 33] La vista de texto abre con `?path=` y
     `?q=` aplicados y lo anuncia a quien usa lector de pantalla. Comprobar: prueba de la vista y un paso del smoke.
+72. **Resumen de la semana: pull requests abiertos** · Salidas · 1×2/2. [parte del ítem 23] El resumen de la semana suma cuántos pull requests se abrieron en los últimos 7 días, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con PRs fabricados.
+73. **Vista de texto: tags** · Público · 1×2/2. [parte del ítem 33] La vista de texto dice qué commits llevan tag y lo anuncia a quien usa lector de pantalla. Comprobar: prueba de la vista y un paso del smoke.
+74. **Capa para streaming, cuarta entrega** · Plataformas · 1×2/1. [parte del ítem 11] `&theme=light|dark` fija el tema de la capa sin tocar el de la página. Comprobar: prueba de la lectura de la URL y un paso del smoke.
+75. **Los forks en el grafo, tercera entrega** · Datos · 1×2/2. [parte del ítem 30] Los forks se ordenan por actividad reciente en el panel. Comprobar: prueba del orden con forks fabricados.
+76. **Constelación ordenada por actividad** · Escala · 1×2/1. [parte del ítem 26] La constelación puede ordenar las galaxias por commits cargados o por nombre, y lo anuncia. Comprobar: prueba del orden y un paso del smoke.
+77. **Práctica: branch -d y merge --abort** · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `branch -d` y `merge --abort`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
 
 ## Cómo validar un cambio
 
@@ -2181,3 +2187,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); Chromium se usó con `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`.
 - Validado: 337 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 101, expansión: ítem 62 (Lanzamientos en el resumen de la semana, Salidas)
+
+### 2026-10-18 · Iteración 101 · Expansión · Salidas
+
+- **Capacidad nueva: tags en el resumen de la semana** (ítem 62 de la hoja de ruta, Lanzamientos en el resumen de la semana): el resumen (Markdown e imagen PNG) suma la sección «Tags» con los tags cargados cuyo commit es de los últimos 7 días, sin repetir los que ya salen como release; sin tags en la semana, la sección no sale. Sin consultas nuevas ni CSP distinta; en la web y en la app de escritorio (misma página). Texto `digest.tags` en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `tools/digest.test.mjs` (tags de la semana en orden, fuera los viejos, los sin commit cargado y los repetidos como release; escape de `|`; sin tags no hay sección).
+- README: la función, Límites conocidos (solo los tags cargados, con «Mostrar tags y entornos de despliegue» activado) y mapa de módulos. Seguridad no cambia (el nombre del tag se escapa como el resto del Markdown). Mapa de alcance: fila Salidas.
+- QA: filas tocadas: 40 idiomas (`check-i18n`, 0 errores) y resumen en Markdown/imagen (pruebas); hoja de ruta repuesta a 15 (ítems 72–77, de partes de ítems ya hechos); auditoría: 0 hallazgos nuevos.
+- Reclamo: loop/101, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso).
+- Validado: 339 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 102, expansión: ítem 63 (Vista de texto: filtro por autor, Público)

@@ -623,6 +623,7 @@ GB.i18n.define('sk', {
   'digest.commits': 'Commity: {n}',
   'digest.merged': 'Zlúčené pull requesty',
   'digest.releases': 'Vydania',
+  'digest.tags': 'Tagy',
   'digest.people': 'Kto prispel (commity)',
   'digest.branch': 'Najaktívnejšia vetva',
   'digest.org': 'Súhrn týždňa pre {owner}',

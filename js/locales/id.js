@@ -427,7 +427,7 @@ GB.i18n.define('id', {
   'settings.bitbucketTokenWhere': 'Token hanya disimpan di browser ini dan hanya dikirim ke bitbucket.org.',
   'settings.bitbucketTokenWhereKeychain': 'Token hanya disimpan di komputer ini, dienkripsi dengan keychain sistem, dan hanya dikirim ke bitbucket.org.',
   'settings.bitbucketTokenWherePlain': 'Token hanya disimpan di komputer ini, tetapi tanpa enkripsi: sistem tidak memiliki keychain yang tersedia. Token hanya dikirim ke bitbucket.org.',
-  'settings.hooks': 'Pemberitahuan ke Slack dan Discord',
+  'settings.hooks': 'Pemberitahuan ke Slack, Discord, dan Teams',
   'settings.hooksHelp': 'Setiap webhook menerima peristiwa yang Anda centang: rilis, merge ke cabang bawaan, CI yang menjadi merah, dan force-push ke cabang itu. URL adalah rahasia: tetap di komputer ini (terenkripsi jika sistem punya keychain) dan hanya dikirim ke layanannya sendiri.',
   'settings.webhook': 'Webhook {service}',
   'settings.hooksTest': 'Kirim uji coba',

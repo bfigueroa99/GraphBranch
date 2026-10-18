@@ -427,7 +427,7 @@ GB.i18n.define('ca', {
   'settings.bitbucketTokenWhere': "El token només es desa en aquest navegador i només s'envia a bitbucket.org.",
   'settings.bitbucketTokenWhereKeychain': "El token només es desa en aquest ordinador, xifrat amb el clauer del sistema, i només s'envia a bitbucket.org.",
   'settings.bitbucketTokenWherePlain': "El token només es desa en aquest ordinador, però sense xifrar: el sistema no té cap clauer disponible. Només s'envia a bitbucket.org.",
-  'settings.hooks': 'Avisos a Slack i Discord',
+  'settings.hooks': 'Avisos a Slack, Discord i Teams',
   'settings.hooksHelp': 'Cada webhook rep els esdeveniments que marquis: llançaments, fusions a la branca per defecte, CI en vermell i force-push en aquesta. L\'URL és un secret: es queda en aquest equip (xifrada si el sistema té clauer) i només s\'envia al seu propi servei.',
   'settings.webhook': 'Webhook de {service}',
   'settings.hooksTest': 'Envia una prova',

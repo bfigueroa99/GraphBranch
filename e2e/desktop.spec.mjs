@@ -260,7 +260,7 @@ test('el token de GitLab se guarda cifrado, aparte del de GitHub, y vuelve al re
   await app.close();
 });
 
-test('los avisos a Slack y Discord: la URL se guarda cifrada y la prueba llega al webhook', async ({}, testInfo) => {
+test('los avisos a Slack, Discord y Teams: la URL se guarda cifrada y la prueba llega al webhook', async ({}, testInfo) => {
   const got = [];
   const server = createServer((req, res) => {
     let body = '';
@@ -279,7 +279,7 @@ test('los avisos a Slack y Discord: la URL se guarda cifrada y la prueba llega a
     await loaded(page);
     await page.click('#settings-btn');
     await expect(page.locator('#hooks-box')).toBeVisible();
-    await expect(page.locator('#hooks-box .hook')).toHaveCount(2);
+    await expect(page.locator('#hooks-box .hook')).toHaveCount(3);
     await page.fill('#hook-slack', `${base}/slack/${SECRET}`);
     await page.locator('#hooks-box .hook').nth(0).locator('.hook-test').click();
     await expect(page.locator('#hooks-box .hook-state').first()).toHaveText('Enviado.');
@@ -291,6 +291,14 @@ test('los avisos a Slack y Discord: la URL se guarda cifrada y la prueba llega a
     await page.locator('#hooks-box .hook').nth(1).locator('.hook-test').click();
     await expect(page.locator('#hooks-box .hook-state').nth(1)).toHaveText('No se pudo enviar. Revisa la URL.');
     expect(got).toHaveLength(1);
+    // Teams recibe una tarjeta adaptable
+    await page.fill('#hook-teams', `${base}/teams/${SECRET}`);
+    await page.locator('#hooks-box .hook').nth(2).locator('.hook-test').click();
+    await expect(page.locator('#hooks-box .hook-state').nth(2)).toHaveText('Enviado.');
+    expect(got).toHaveLength(2);
+    expect(got[1].url).toBe(`/teams/${SECRET}`);
+    expect(got[1].body.attachments[0].contentType).toBe('application/vnd.microsoft.card.adaptive');
+    await page.fill('#hook-teams', '');
     // los eventos que se desmarcan quedan desmarcados al volver
     await page.locator('#hooks-box .hook').first().locator('[data-event=force]').uncheck();
     await page.fill('#hook-discord', '');

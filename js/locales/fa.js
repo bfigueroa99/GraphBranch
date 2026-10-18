@@ -470,7 +470,7 @@ GB.i18n.define('fa', {
   'settings.bitbucketTokenWhere': 'توکن فقط در همین مرورگر ذخیره می‌شود و فقط به bitbucket.org ارسال می‌شود.',
   'settings.bitbucketTokenWhereKeychain': 'توکن فقط در همین رایانه، رمزگذاری‌شده با جاکلیدی سیستم، ذخیره می‌شود و فقط به bitbucket.org ارسال می‌شود.',
   'settings.bitbucketTokenWherePlain': 'توکن فقط در همین رایانه ذخیره می‌شود، اما بدون رمزگذاری: سیستم جاکلیدی در دسترس ندارد. فقط به bitbucket.org ارسال می‌شود.',
-  'settings.hooks': 'اعلان‌ها به Slack و Discord',
+  'settings.hooks': 'اعلان‌ها به Slack، Discord و Teams',
   'settings.hooksHelp': 'هر webhook رویدادهایی را که علامت می‌زنید دریافت می‌کند: انتشارها، ادغام در شاخهٔ پیش‌فرض، قرمز شدن CI و فورس‌پوش روی آن. نشانی یک راز است: روی همین رایانه می‌ماند (اگر سیستم دسته‌کلید داشته باشد رمزگذاری‌شده) و فقط به سرویس خودش فرستاده می‌شود.',
   'settings.webhook': 'webhook ‏{service}',
   'settings.hooksTest': 'ارسال آزمایشی',

@@ -427,7 +427,7 @@ GB.i18n.define('ms', {
   'settings.bitbucketTokenWhere': 'Token hanya disimpan dalam pelayar ini dan hanya dihantar ke bitbucket.org.',
   'settings.bitbucketTokenWhereKeychain': 'Token hanya disimpan dalam komputer ini, disulitkan dengan rantai kunci sistem, dan hanya dihantar ke bitbucket.org.',
   'settings.bitbucketTokenWherePlain': 'Token hanya disimpan dalam komputer ini, tetapi tidak disulitkan: sistem tidak mempunyai rantai kunci yang tersedia. Token hanya dihantar ke bitbucket.org.',
-  'settings.hooks': 'Pemberitahuan ke Slack dan Discord',
+  'settings.hooks': 'Pemberitahuan ke Slack, Discord dan Teams',
   'settings.hooksHelp': 'Setiap webhook menerima peristiwa yang anda tandakan: keluaran, gabungan ke cabang lalai, CI bertukar merah dan force-push padanya. URL ialah rahsia: kekal pada komputer ini (disulitkan jika sistem ada keychain) dan hanya dihantar ke perkhidmatannya sendiri.',
   'settings.webhook': 'Webhook {service}',
   'settings.hooksTest': 'Hantar ujian',

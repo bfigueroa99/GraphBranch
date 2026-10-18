@@ -939,9 +939,9 @@
     diffView.refresh(); // puede haber llegado el commit siguiente
   }
 
-  /* avisos a Slack y Discord (solo escritorio, js/hooks.js decide y electron/webhooks.js envía): lo
+  /* avisos a Slack, Discord y Teams (solo escritorio, js/hooks.js decide y electron/webhooks.js envía): lo
      que pasa en vivo en un repo real, nunca la primera carga ni la demo */
-  const hookUrls = { slack: '', discord: '' };
+  const hookUrls = { slack: '', discord: '', teams: '' };
   const hookPrefs = U.store.get('hooks', {});
   function sendHooks(tab, activities, initial) {
     if (!desktop || initial || tab.demo || !activities.length) return;
@@ -2307,7 +2307,7 @@
   const hookFields = !desktop
     ? []
     : GB.hooks.SERVICES.map((service) => {
-        const name = service === 'slack' ? 'Slack' : 'Discord';
+        const name = { slack: 'Slack', discord: 'Discord', teams: 'Microsoft Teams' }[service];
         const row = document.createElement('div');
         row.className = 'field hook';
         const events = GB.hooks.EVENTS.map(
@@ -2316,7 +2316,7 @@
         row.innerHTML = `
           <label for="hook-${service}">${U.esc(t('settings.webhook', { service: name }))} <span class="opt">${U.esc(t('settings.optional'))}</span></label>
           <div class="field-row">
-            <input id="hook-${service}" type="password" autocomplete="off" spellcheck="false" placeholder="${service === 'slack' ? 'https://hooks.slack.com/services/…' : 'https://discord.com/api/webhooks/…'}">
+            <input id="hook-${service}" type="password" autocomplete="off" spellcheck="false" placeholder="${{ slack: 'https://hooks.slack.com/services/…', discord: 'https://discord.com/api/webhooks/…', teams: 'https://….logic.azure.com/workflows/…' }[service]}">
             <button type="button" class="btn btn-ghost hook-toggle"></button>
             <button type="button" class="btn btn-ghost hook-test">${U.esc(t('settings.hooksTest'))}</button>
           </div>

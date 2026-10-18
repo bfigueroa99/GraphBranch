@@ -427,7 +427,7 @@ GB.i18n.define('da', {
   'settings.bitbucketTokenWhere': 'Tokenet gemmes kun i denne browser og sendes kun til bitbucket.org.',
   'settings.bitbucketTokenWhereKeychain': 'Tokenet gemmes kun på denne computer, krypteret med systemets nøglering, og sendes kun til bitbucket.org.',
   'settings.bitbucketTokenWherePlain': 'Tokenet gemmes kun på denne computer, men ukrypteret: systemet har ingen nøglering til rådighed. Det sendes kun til bitbucket.org.',
-  'settings.hooks': 'Beskeder til Slack og Discord',
+  'settings.hooks': 'Beskeder til Slack, Discord og Teams',
   'settings.hooksHelp': 'Hver webhook får de hændelser, du markerer: udgivelser, fletninger til standardgrenen, CI der bliver rød og force-push til den. URL\'en er en hemmelighed: den bliver på denne computer (krypteret, hvis systemet har en nøglering) og sendes kun til sin egen tjeneste.',
   'settings.webhook': '{service}-webhook',
   'settings.hooksTest': 'Send test',

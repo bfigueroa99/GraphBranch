@@ -427,7 +427,7 @@ GB.i18n.define('vi', {
   'settings.bitbucketTokenWhere': 'Token chỉ được lưu trong trình duyệt này và chỉ được gửi tới bitbucket.org.',
   'settings.bitbucketTokenWhereKeychain': 'Token chỉ được lưu trên máy tính này, được mã hóa bằng chuỗi khóa của hệ thống, và chỉ được gửi tới bitbucket.org.',
   'settings.bitbucketTokenWherePlain': 'Token chỉ được lưu trên máy tính này nhưng không được mã hóa: hệ thống không có chuỗi khóa nào khả dụng. Token chỉ được gửi tới bitbucket.org.',
-  'settings.hooks': 'Thông báo tới Slack và Discord',
+  'settings.hooks': 'Thông báo tới Slack, Discord và Teams',
   'settings.hooksHelp': 'Mỗi webhook nhận các sự kiện bạn đánh dấu: bản phát hành, hợp nhất vào nhánh mặc định, CI chuyển sang đỏ và force-push lên nhánh đó. URL là bí mật: nó chỉ nằm trên máy này (được mã hóa nếu hệ thống có chuỗi khóa) và chỉ được gửi tới dịch vụ của nó.',
   'settings.webhook': 'Webhook {service}',
   'settings.hooksTest': 'Gửi thử',

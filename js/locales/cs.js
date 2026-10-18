@@ -438,7 +438,7 @@ GB.i18n.define('cs', {
   'settings.bitbucketTokenWhere': 'Token se ukládá jen v tomto prohlížeči a odesílá se pouze na bitbucket.org.',
   'settings.bitbucketTokenWhereKeychain': 'Token se ukládá jen v tomto počítači, zašifrovaný pomocí systémové klíčenky, a odesílá se pouze na bitbucket.org.',
   'settings.bitbucketTokenWherePlain': 'Token se ukládá jen v tomto počítači, ale nešifrovaný: systém nemá k dispozici klíčenku. Odesílá se pouze na bitbucket.org.',
-  'settings.hooks': 'Oznámení do Slacku a Discordu',
+  'settings.hooks': 'Oznámení do Slacku, Discordu a Teams',
   'settings.hooksHelp': 'Každý webhook dostává události, které zaškrtnete: vydání, sloučení do výchozí větve, červené CI a force-push do ní. URL je tajemství: zůstává v tomto počítači (šifrovaná, má-li systém klíčenku) a posílá se jen své službě.',
   'settings.webhook': 'Webhook služby {service}',
   'settings.hooksTest': 'Odeslat zkoušku',

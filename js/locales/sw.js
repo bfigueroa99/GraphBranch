@@ -612,6 +612,7 @@ GB.i18n.define('sw', {
   'digest.commits': 'Commit: {n}',
   'digest.merged': 'Pull request zilizounganishwa',
   'digest.releases': 'Matoleo',
+  'digest.tags': 'Lebo (tags)',
   'digest.people': 'Nani alichangia (commit)',
   'digest.branch': 'Tawi lenye shughuli zaidi',
   'digest.org': 'Muhtasari wa wiki wa {owner}',

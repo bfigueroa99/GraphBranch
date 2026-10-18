@@ -620,6 +620,7 @@ GB.i18n.define('hr', {
   'digest.commits': 'Commitovi: {n}',
   'digest.merged': 'Spojeni pull requestovi',
   'digest.releases': 'Izdanja',
+  'digest.tags': 'Tagovi',
   'digest.people': 'Tko je doprinio (commitovi)',
   'digest.branch': 'Najaktivnija grana',
   'digest.org': 'Tjedni sažetak za {owner}',

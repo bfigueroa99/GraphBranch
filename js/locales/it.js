@@ -613,6 +613,7 @@ GB.i18n.define('it', {
   'digest.commits': 'Commit: {n}',
   'digest.merged': 'Pull request unite',
   'digest.releases': 'Release',
+  'digest.tags': 'Tag',
   'digest.people': 'Chi ha contribuito (commit)',
   'digest.branch': 'Branch più attivo',
   'digest.org': 'Riepilogo della settimana di {owner}',

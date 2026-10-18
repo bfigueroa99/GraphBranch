@@ -612,6 +612,7 @@ GB.i18n.define('da', {
   'digest.commits': 'Commits: {n}',
   'digest.merged': 'Flettede pull requests',
   'digest.releases': 'Releases',
+  'digest.tags': 'Tags',
   'digest.people': 'Hvem der har bidraget (commits)',
   'digest.branch': 'Mest aktive gren',
   'digest.org': 'Ugens resumé for {owner}',

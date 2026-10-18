@@ -612,6 +612,7 @@ GB.i18n.define('ko', {
   'digest.commits': '커밋: {n}',
   'digest.merged': '병합된 풀 리퀘스트',
   'digest.releases': '릴리스',
+  'digest.tags': '태그',
   'digest.people': '기여한 사람(커밋)',
   'digest.branch': '가장 활발한 브랜치',
   'digest.org': '{owner} 주간 요약',

@@ -612,6 +612,7 @@ GB.i18n.define('hi', {
   'digest.commits': 'कमिट: {n}',
   'digest.merged': 'मर्ज किए गए पुल रिक्वेस्ट',
   'digest.releases': 'रिलीज़',
+  'digest.tags': 'टैग',
   'digest.people': 'किसने योगदान दिया (कमिट)',
   'digest.branch': 'सबसे सक्रिय ब्रांच',
   'digest.org': '{owner} का साप्ताहिक सारांश',

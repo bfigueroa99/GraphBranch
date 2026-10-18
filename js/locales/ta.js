@@ -612,6 +612,7 @@ GB.i18n.define('ta', {
   'digest.commits': 'கமிட்கள்: {n}',
   'digest.merged': 'இணைக்கப்பட்ட புல் ரிக்வெஸ்ட்கள்',
   'digest.releases': 'வெளியீடுகள்',
+  'digest.tags': 'குறிச்சொற்கள்',
   'digest.people': 'யார் பங்களித்தனர் (கமிட்கள்)',
   'digest.branch': 'மிகச் செயலில் உள்ள கிளை',
   'digest.org': '{owner} வாராந்திர சுருக்கம்',

@@ -612,6 +612,7 @@ GB.i18n.define('bn', {
   'digest.commits': 'কমিট: {n}',
   'digest.merged': 'মার্জ হওয়া পুল রিকোয়েস্ট',
   'digest.releases': 'রিলিজ',
+  'digest.tags': 'ট্যাগ',
   'digest.people': 'কে অবদান রেখেছেন (কমিট)',
   'digest.branch': 'সবচেয়ে সক্রিয় ব্রাঞ্চ',
   'digest.org': '{owner}-এর সাপ্তাহিক সারাংশ',

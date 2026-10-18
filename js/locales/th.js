@@ -613,6 +613,7 @@ GB.i18n.define('th', {
   'digest.commits': 'คอมมิต: {n}',
   'digest.merged': 'Pull request ที่ผสานแล้ว',
   'digest.releases': 'รีลีส',
+  'digest.tags': 'แท็ก',
   'digest.people': 'ผู้ร่วมพัฒนา (คอมมิต)',
   'digest.branch': 'เบรนช์ที่คึกคักที่สุด',
   'digest.org': 'สรุปประจำสัปดาห์ของ {owner}',

@@ -623,6 +623,7 @@ GB.i18n.define('cs', {
   'digest.commits': 'Commity: {n}',
   'digest.merged': 'Sloučené pull requesty',
   'digest.releases': 'Vydání',
+  'digest.tags': 'Tagy',
   'digest.people': 'Kdo přispěl (commity)',
   'digest.branch': 'Nejaktivnější větev',
   'digest.org': 'Souhrn týdne pro {owner}',

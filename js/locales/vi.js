@@ -612,6 +612,7 @@ GB.i18n.define('vi', {
   'digest.commits': 'Commit: {n}',
   'digest.merged': 'Pull request đã hợp nhất',
   'digest.releases': 'Bản phát hành',
+  'digest.tags': 'Thẻ (tag)',
   'digest.people': 'Ai đã đóng góp (commit)',
   'digest.branch': 'Nhánh hoạt động nhất',
   'digest.org': 'Tóm tắt tuần của {owner}',

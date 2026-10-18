@@ -57,6 +57,18 @@
       .sort((a, b) => b.time - a.time)
       .map((a) => ({ title: text(a.title), url: a.url || null, time: a.time }));
 
+    // tags cuyo commit es de la semana (con lo ya cargado), sin repetir los que ya salen como release
+    const named = new Set(releases.map((r) => r.title));
+    const tags = [];
+    if (data.tags) {
+      for (const [sha, names] of data.tags) {
+        const c = data.commits.get(sha);
+        if (!c || !recent(c)) continue;
+        for (const name of names) if (name && !named.has(name)) tags.push({ name: String(name), time: at(c.date) });
+      }
+    }
+    tags.sort((a, b) => b.time - a.time || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+
     return {
       since,
       now,
@@ -64,6 +76,7 @@
       commits: week.size,
       merged: { total: merged.length, rows: merged.slice(0, LIST) },
       releases: { total: releases.length, rows: releases.slice(0, LIST) },
+      tags: { total: tags.length, rows: tags.slice(0, LIST) },
       people: { total: people.size, rows: [...people].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, commits]) => ({ name, commits })) },
       branch,
     };
@@ -72,7 +85,7 @@
   /** Texto que va en una línea de Markdown: sin saltos ni caracteres que lo rompan. */
   const md = (s) => String(s ?? '').replace(/\s+/g, ' ').trim().replace(/([\\`*_{}[\]<>|])/g, '\\$1');
 
-  /** Markdown del resumen. `t`: las etiquetas ya traducidas { head, commits, merged, releases, people,
+  /** Markdown del resumen. `t`: las etiquetas ya traducidas { head, commits, merged, releases, tags, people,
       branch }; `none`: el texto de «nada»; `fmtDate`: cómo escribir un día. */
   function toMarkdown(d, repo, t, fmtDate = (ms) => new Date(ms).toISOString().slice(0, 10), none = '—') {
     const out = [`# ${md(t.head.replace('{repo}', repo))}`, '', `${fmtDate(d.since)} – ${fmtDate(d.now)}`, '', `- ${t.commits.replace('{n}', d.commits)}`];
@@ -84,6 +97,7 @@
     out.push('', `## ${t.releases} (${d.releases.total})`, '');
     if (d.releases.rows.length) for (const r of d.releases.rows) out.push(`- ${link(r, md(r.title))}`);
     else out.push(none);
+    if (d.tags?.total) out.push('', `## ${t.tags} (${d.tags.total})`, '', ...d.tags.rows.map((r) => `- ${md(r.name)}`));
     out.push('', `## ${t.people} (${d.people.total})`, '');
     if (d.people.rows.length) for (const r of d.people.rows) out.push(`- ${md(r.name)}: ${r.commits}`);
     else out.push(none);
@@ -129,6 +143,7 @@
     };
     section(t.merged, d.merged.total, d.merged.rows.map((r) => `${r.number ? `#${r.number} ` : ''}${flat(r.title)}`));
     section(t.releases, d.releases.total, d.releases.rows.map((r) => flat(r.title)));
+    if (d.tags?.total) section(t.tags, d.tags.total, d.tags.rows.map((r) => flat(r.name)));
     section(t.people, d.people.total, d.people.rows.map((r) => `${flat(r.name)}: ${r.commits}`));
     return L;
   }

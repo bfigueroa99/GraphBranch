@@ -58,7 +58,14 @@ async function open(ctx, { signIn = false } = {}) {
       /* la persona cerró el diálogo: sigue sin token */
     }
   }
-  const server = await start({ root, token, repo: workspaceRepo() });
+  // los repos seguidos, el repo a la vista, la vista y el idioma sobreviven entre sesiones del panel: el puerto (y el origen de la página) cambia cada vez
+  const server = await start({
+    root,
+    token,
+    repo: workspaceRepo(),
+    state: ctx.globalState.get('pageState', {}),
+    onState: (s) => ctx.globalState.update('pageState', s),
+  });
   const panel = vscode.window.createWebviewPanel('graphbranch', 'GraphBranch', vscode.ViewColumn.Beside, {
     enableScripts: true,
     retainContextWhenHidden: true,

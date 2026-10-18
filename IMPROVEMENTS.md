@@ -140,7 +140,7 @@ segunda columna a la primera.
 | --- | --- | --- |
 | Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (API de Forgejo, repos públicos y, con token, privados), bitbucket.org (API 2.0 de Bitbucket Cloud, repos públicos y, con token, privados), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP), Bitbucket Data Center propio (`?bitbucket=` / `--bitbucket-url`, con su CSP, sin token), repos locales (app de escritorio, con `git`), demo | Token para un Forgejo/Gitea propio y para un Bitbucket propio |
 | Datos | ramas, commits, PRs (y las pilas de PRs apilados), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, en el panel de salud), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
-| Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color y `&hide=`), extensión de VS Code (sigue la sesión de GitHub del editor; paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
+| Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color y `&hide=`), extensión de VS Code (sigue la sesión de GitHub del editor y recuerda repos, vista e idioma entre sesiones; paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia), miles de ramas por repo | una organización entera con más de 10 repos a la vez |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack, Discord y Teams (escritorio), resumen de la semana (Markdown, de un repo o de una organización seguida; PNG, de un repo) | resumen de la organización como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), búsqueda de commits también desde la URL (`?q=`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días y por semana, mediana entre releases, tiempo de entrega desde el primer commit del PR), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días) | ver la hoja de ruta |
@@ -243,7 +243,7 @@ se comprueban antes de construir sobre ellas.
 24. ~~**Extensión de VS Code**~~ hecho en #78 · Plataformas. `vscode/`: un panel con la app, servida por un servidor local en
     127.0.0.1 bajo una clave al azar, con la sesión de GitHub de VS Code (`vscode.authentication`) y el repo del
     `origin` del espacio de trabajo. Sin hacer: publicarla en el Marketplace (Benjamin), tokens de GitLab, textos
-    en los 40 idiomas y recordar los repos entre sesiones.
+    en los 40 idiomas (recordar los repos entre sesiones: hecho en #126).
 25. ~~**GitLab propio**~~ hecho en #80 · Fuentes. `?gitlab=https://gitlab.miempresa.com` (web) y `--gitlab-url=` (escritorio,
     que suma solo ese host a `connect-src`): la API v4, los enlaces y el token van a esa instancia y a ninguna
     otra; sin https vuelve a gitlab.com. Sin hacer: reconocer una URL de la instancia en el cuadro de repos y
@@ -331,7 +331,7 @@ se comprueban antes de construir sobre ellas.
 58. ~~**Ejercicios compartidos, tercera entrega**~~ hecho en #125 · Público · 1×2/1. [parte del ítem 28] Un enlace de ejercicio con la solución
     propuesta (`?practice=<código>&solution=1`) que la muestra paso a paso en la terminal. Comprobar: prueba del codificado y
     un paso del smoke.
-59. **Extensión de VS Code: recordar repos** · Plataformas · 1×2/2. [parte del ítem 24] Los repos seguidos y el tema sobreviven
+59. ~~**Extensión de VS Code: recordar repos**~~ hecho en #126 · Plataformas · 1×2/2. [parte del ítem 24] Los repos seguidos y el tema sobreviven
     entre sesiones del panel (el puerto cambia cada vez, así que se guardan en el estado de la extensión y se entregan con
     el token). Comprobar: `tools/vscode.test.mjs` con el estado simulado.
 60. **Práctica: rebase y revert** · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `rebase <rama>` y
@@ -2112,3 +2112,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); el borrado de las `loop/83`–`loop/95` fusionadas falló otra vez («hung up unexpectedly» del proxy y luego el clasificador de permisos), siguen en Para Benjamin.
 - Validado: 314 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 27 e2e en verde.
 - **Siguiente:** iteración 97, expansión: ítem 59 (Extensión de VS Code: recordar repos, Plataformas)
+
+### 2026-10-18 · Iteración 97 · Expansión · Plataformas
+
+- **Capacidad nueva: la extensión de VS Code recuerda los repos** (ítem 59 de la hoja de ruta). El puerto del servidor local cambia en cada apertura y con él el almacenamiento de la página, así que antes se perdían los repos seguidos. Ahora `vscode/server.js` siembra en `vscode-session.js` lo recordado (repos, repo a la vista, vista e idioma) y la página avisa de sus cambios a `state` (una imagen, que la CSP ya permite, sin tocarla); la extensión lo guarda en `globalState`. Solo esas cuatro claves, con JSON válido y acotado: el token nunca se recuerda. El tema no se guarda: la página sigue el del editor.
+- **Pruebas que fallan sin la capacidad:** `tools/vscode.test.mjs` (`cleanState`, el servidor que recibe y siembra el estado, y la extensión que lo guarda en `globalState` y lo devuelve al abrir de nuevo).
+- README: sección de la extensión, Límites conocidos y Seguridad al día.
+- QA: fila tocada: extensión de VS Code (pruebas con `vscode` simulado); auditoría: no toca la página
+- Reclamo: loop/97, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso).
+- Validado: 317 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 98, expansión: ítem 60 (Práctica: rebase y revert, Público)

@@ -437,52 +437,51 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 3. [Accesibilidad] Estados confusos: botones que cambian a la vez `aria-pressed` y el texto (el de pausa del
     Replay, `replay.js:367`) y la leyenda 2D sin acceso por teclado. Los objetivos chicos ya cumplen los
     24 px (iteración 91) y la base de la auditoría quedó vacía. Reproducir: `node tools/audit.mjs`.
-4. [Errores] La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:264`).
-5. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-6. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
+4. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+5. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
     renombrados).
-7. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+6. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-8. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
+7. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
     y mueve el resto a `docs/BITACORA.md` (idempotente: la segunda corrida dice «Nada que rotar»; queda
     una línea «Las iteraciones anteriores están en docs/BITACORA.md»); `--siguiente` sigue leyendo N de
     aquí y `--check` exige iteraciones sin repetidos entre los dos archivos. Motivo: `--salud` mide el
     archivo en cada iteración (77 KB el 2026-10-13, 55 KB de bitácora), y cada sesión nueva lo lee entero.
-9. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+8. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-10. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+9. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-11. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+10. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-12. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
+11. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
     (6.009 ms con ≤ 6.000; tareas largas 4.809 ms con ≤ 4.000), sin GPU y con la corrida larga; la corrida
     normal de la puerta no lo marca. Medir con `node tools/audit.mjs --repetir 3` antes de tocar nada.
-13. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+12. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
     Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-14. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+13. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-15. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
+14. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-16. [QA] No hay un escenario de la auditoría con 1.000 ramas a 320 px en 3D: la comprobación de etiquetas
+15. [QA] No hay un escenario de la auditoría con 1.000 ramas a 320 px en 3D: la comprobación de etiquetas
     pisadas (`celular-320-3d`) corre sobre la API simulada de 3 ramas; con 1.000 solo se miró a mano.
     Reproducción: Playwright contra `node e2e/serve.mjs 4173` con 1.000 ramas simuladas, 320 px, `?repo=acme/web`
     → 4 etiquetas visibles, 0 pisadas (hoy bien; nada lo vigila).
-17. [QA] Con 1.000 ramas a 320 px el 3D deja solo 4 etiquetas de rama visibles (`reach` de `placeLabels`
+16. [QA] Con 1.000 ramas a 320 px el 3D deja solo 4 etiquetas de rama visibles (`reach` de `placeLabels`
     esconde las lejanas); revisar si en celular conviene un alcance mayor o una pista de «+N ramas».
     Reproducción: la misma de arriba, contar `.g3-head` con `display` distinto de `none` → 4.
-18. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
+17. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
     nítidas (demo a 320 px: 3 de 5 atenuadas); comprobar que Tab y el toque no caigan en una atenuada.
     Reproducción: Playwright, 320 px, 3D, `?repo=demo` → `.g3-head` con opacidad 0,22 y `display: flex`.
 
@@ -2159,3 +2158,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: filas tocadas: demo sin token (smoke), 40 idiomas (check-i18n), teclado (Esc devuelve el foco al botón), celular a 390 px sin desborde y tema oscuro, consola limpia, cuota (sin consultas).
 - Validado: 335 pruebas (`node --test`), smoke (40 idiomas, 138 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 99, mantenimiento · Errores: pendiente 4 (La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:…)
+
+### 2026-10-18 · Iteración 99 · Mantenimiento · Errores
+
+- **Arreglo: pendiente 4 ya estaba resuelto** (la etiqueta de ramas fusionadas de la leyenda): `graph.js` la rotula con `tr('legend.merged')` desde #26 y `layout.js` ya no lleva texto; la clave existe en los 40 idiomas. El pendiente estaba obsoleto y se quita.
+- **Reproducción:** sin fallo que reproducir: el pendiente apuntaba a `layout.js:264`, que hoy solo dice «la vista la rotula en su idioma».
+- **Pruebas que fallan sin el arreglo:** `tools/layout.test.mjs` (la leyenda usa `legend.merged`, `layout.js` no lleva «fusionadas» y los 40 idiomas definen la clave).
+- README: sin cambios.
+- QA: sin cambios de página; auditoría: no toca la página.
+- Reclamo: loop/99, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso).
+- Validado: 336 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 100, expansión: ítem 61 (Capa para streaming, tercera entrega, Plataformas)

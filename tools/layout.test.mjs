@@ -5,7 +5,7 @@
      node tools/layout.test.mjs */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
@@ -59,4 +59,13 @@ test('un ciclo de bases o un PR cruzado no apila ni se cuelga', () => {
 test('un PR hacia una rama sin PR propio no es una pila', () => {
   const L = new Layout().compute(repo([[2, 'b', 'a']]));
   assert.equal(L.stacks.size, 0);
+});
+
+test('la etiqueta de las ramas fusionadas de la leyenda sale del idioma, no del código', () => {
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const graph = readFileSync(join(root, 'js/graph.js'), 'utf8');
+  assert.match(graph, /r\.ghost \? tr\('legend\.merged'\)/);
+  assert.doesNotMatch(readFileSync(join(root, 'js/layout.js'), 'utf8'), /['"`]fusionadas['"`]/);
+  for (const f of readdirSync(join(root, 'js/locales')).filter((n) => n.endsWith('.js')))
+    assert.match(readFileSync(join(root, 'js/locales', f), 'utf8'), /'legend\.merged':/, f);
 });

@@ -116,6 +116,13 @@ describe('tools/audit.mjs', () => {
     assert.ok(todos.length >= puerta.length + 2 + 36, `${todos.length}`);
   });
 
+  test('la completa mira el 3D de celular a 320 px: etiquetas de rama nítidas que se pisan (pendiente 16)', () => {
+    const e = escenarios({ completa: true }).find((x) => x.nombre === 'celular-320-3d');
+    assert.ok(e && !e.puerta && e.contexto.viewport.width === 320);
+    assert.equal(TIPOS['etiquetas-pisadas'].subtipo, 'Errores');
+    assert.ok(!escenarios().some((x) => x.nombre === 'celular-320-3d'));
+  });
+
   test('la base del repo es válida: tipos conocidos de la puerta, escenarios de la puerta y la cuota', () => {
     const base = leerBase(BASE);
     const nombres = new Set(escenarios().map((e) => e.nombre));

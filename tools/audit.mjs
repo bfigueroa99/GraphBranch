@@ -56,6 +56,7 @@ export const TIPOS = {
   cuota: { prioridad: 'Media', subtipo: 'Rendimiento', puerta: true, que: 'más consultas a la API de GitHub que las de la base al abrir un repo sin token' },
   'objetivo-chico': { prioridad: 'Baja', subtipo: 'Accesibilidad', puerta: true, que: 'control de menos de 24×24 px (WCAG 2.5.8)' },
   borde: { prioridad: 'Baja', subtipo: 'Errores', puerta: false, que: 'texto o control cortado por el borde de la pantalla' },
+  'etiquetas-pisadas': { prioridad: 'Baja', subtipo: 'Errores', puerta: false, que: 'dos etiquetas de rama del 3D, las dos nítidas, se pisan entre sí' },
   'texto-cortado': { prioridad: 'Baja', subtipo: 'Errores', puerta: false, que: 'texto cortado sin puntos suspensivos' },
   'sin-indicador': { prioridad: 'Baja', subtipo: 'Accesibilidad', puerta: false, que: 'el foco del teclado no cambia nada en pantalla' },
   'animacion-infinita': { prioridad: 'Baja', subtipo: 'Accesibilidad', puerta: false, que: 'animación sin fin con movimiento reducido' },
@@ -582,6 +583,30 @@ export function escenarios({ langs = false, completa = false } = {}) {
       async mirar(ctx) {
         await ctx.actividad();
         await ctx.revisar();
+      },
+    },
+    {
+      nombre: 'celular-320-3d',
+      puerta: false,
+      contexto: { ...CELULAR, viewport: { width: 320, height: 640 } },
+      url: '?lang=es',
+      async mirar(ctx) {
+        await ctx.actividad();
+        await ctx.page.waitForSelector('.g3-head', { timeout: 15000 });
+        await ctx.page.waitForTimeout(2500);
+        // las que se pisan se atenúan a propósito (placeLabels); dos nítidas encima una de otra son el fallo
+        const pares = await ctx.page.evaluate(() => {
+          const hs = [...document.querySelectorAll('.g3-head')].filter((e) => getComputedStyle(e).display !== 'none' && +getComputedStyle(e).opacity >= 0.5);
+          const out = [];
+          for (let i = 0; i < hs.length; i++)
+            for (let j = i + 1; j < hs.length; j++) {
+              const a = hs[i].getBoundingClientRect();
+              const c = hs[j].getBoundingClientRect();
+              if (Math.min(a.right, c.right) - Math.max(a.left, c.left) > 2 && Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top) > 2) out.push(`${window.__audit.firma(hs[i])} / ${window.__audit.firma(hs[j])}`);
+            }
+          return out;
+        });
+        ctx.add(pares.map((donde) => ({ tipo: 'etiquetas-pisadas', donde })));
       },
     },
     {

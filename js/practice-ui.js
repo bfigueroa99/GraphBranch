@@ -23,7 +23,9 @@
           <select class="pr-ex"></select>
           <button type="button" class="btn btn-ghost pr-restart"></button>
           <button type="button" class="btn btn-ghost pr-hint" hidden></button>
+          <button type="button" class="btn btn-ghost pr-solution" hidden></button>
           <button type="button" class="btn btn-ghost pr-share"></button>
+          <button type="button" class="btn btn-ghost pr-share-solution" hidden></button>
         </div>
         <p class="pr-goal"></p>
         <p class="pr-hint-text" role="status" hidden></p>
@@ -36,6 +38,7 @@
           <label><span class="pr-l-goal"></span><textarea class="pr-m-goal" rows="2" maxlength="280"></textarea></label>
           <label><span class="pr-l-setup"></span><textarea class="pr-m-setup" rows="3" spellcheck="false" placeholder="checkout -b feature&#10;commit -m &quot;one&quot;"></textarea></label>
           <label><span class="pr-l-hints"></span><textarea class="pr-m-hints" rows="2" maxlength="500"></textarea></label>
+          <label><span class="pr-l-solution"></span><textarea class="pr-m-solution" rows="2" spellcheck="false" placeholder="merge feature"></textarea></label>
           <label><span class="pr-l-checks"></span><textarea class="pr-m-checks" rows="2" spellcheck="false" placeholder="exists:feature&#10;merged:feature>main"></textarea></label>
           <p class="pr-m-help"></p>
           <p class="pr-m-err" role="alert"></p>
@@ -49,8 +52,11 @@
       this.restart = root.querySelector('.pr-restart');
       this.share = root.querySelector('.pr-share');
       this.hint = root.querySelector('.pr-hint');
+      this.solution = root.querySelector('.pr-solution');
+      this.shareSolution = root.querySelector('.pr-share-solution');
       this.hintText = root.querySelector('.pr-hint-text');
       this.hintsShown = 0;
+      this.solutionShown = 0;
       this.link = root.querySelector('.pr-link');
       this.make = root.querySelector('.pr-make');
       this.goal = root.querySelector('.pr-goal');
@@ -64,8 +70,10 @@
       this.sel.addEventListener('change', () => {
         if (this.sel.value !== 'custom' && this.sel.value !== 'rehearsal') this.onPick(Number(this.sel.value));
       });
-      this.restart.addEventListener('click', () => (this.source.rehearsal ? this.onRehearse(this.source.rehearsal.data) : this.onPick(this.source.index, this.source.custom)));
+      this.restart.addEventListener('click', () => (this.source.rehearsal ? this.onRehearse(this.source.rehearsal.data) : this.onPick(this.source.index, this.source.custom, this.source.solutionOn)));
       this.share.addEventListener('click', () => this.shareLink());
+      this.shareSolution.addEventListener('click', () => this.shareLink(true));
+      this.solution.addEventListener('click', () => this.showSolutionStep());
       this.hint.addEventListener('click', () => {
         this.hintsShown = Math.min(this.hintsShown + 1, this.source?.custom?.hints?.length || 0);
         this.renderHint();
@@ -93,6 +101,7 @@
       this.log.textContent = '';
       this.link.hidden = true;
       this.hintsShown = 0;
+      this.solutionShown = 0;
       this.print(i18n.t('practice.hello'), 'pr-note');
       this.render();
     }
@@ -126,11 +135,14 @@
       this.sel.value = src.rehearsal ? 'rehearsal' : src.custom ? 'custom' : String(src.index);
       this.restart.textContent = t('practice.restart');
       this.share.textContent = t('practice.share');
+      this.shareSolution.hidden = !src.custom?.solution?.length;
+      this.shareSolution.textContent = t('practice.shareSolution');
       this.renderHint();
+      this.renderSolution();
       this.link.setAttribute('aria-label', t('practice.link'));
       this.goal.textContent = src.rehearsal ? t('practice.rehearseGoal', { repo: `${src.rehearsal.owner}/${src.rehearsal.name}` }) : src.custom ? src.custom.goal : t(`practice.ex${src.index + 1}.goal`);
       this.make.querySelector('summary').textContent = t('practice.make');
-      for (const k of ['title', 'goal', 'setup', 'hints', 'checks']) this.make.querySelector(`.pr-l-${k}`).textContent = t(`practice.make.${k}`);
+      for (const k of ['title', 'goal', 'setup', 'hints', 'solution', 'checks']) this.make.querySelector(`.pr-l-${k}`).textContent = t(`practice.make.${k}`);
       this.make.querySelector('.pr-m-help').textContent = t('practice.make.help');
       this.make.querySelector('.pr-m-go').textContent = t('practice.make.go');
       this.input.setAttribute('aria-label', t('practice.input'));
@@ -150,9 +162,26 @@
       this.hintText.textContent = hints.slice(0, this.hintsShown).map((h, i) => t('practice.hintOf', { n: i + 1, total: hints.length, text: h })).join('\n');
     }
 
+    /** El botón «Solución» (solo si el enlace la pidió con `solution=1` y el ejercicio la trae): cada pulsación
+        escribe el siguiente paso en la terminal, sin ejecutarlo. */
+    renderSolution() {
+      const steps = this.source?.solutionOn ? this.source.custom?.solution || [] : [];
+      this.solution.hidden = !steps.length;
+      this.solution.textContent = i18n.t('practice.solution');
+      this.solution.disabled = this.solutionShown >= steps.length;
+    }
+
+    showSolutionStep() {
+      const steps = this.source?.custom?.solution || [];
+      if (!this.source?.solutionOn || this.solutionShown >= steps.length) return;
+      const cmd = steps[this.solutionShown++];
+      this.print(i18n.t('practice.solutionStep', { n: this.solutionShown, total: steps.length, cmd: `git ${cmd.replace(/^git\s+/, '')}` }), 'pr-note');
+      this.renderSolution();
+    }
+
     /** Muestra el enlace del ejercicio y lo copia si el navegador deja. */
-    async shareLink() {
-      const url = this.urlFor?.(this.source);
+    async shareLink(solution = false) {
+      const url = this.urlFor?.(this.source, solution);
       if (!url) return;
       this.link.value = url;
       this.link.hidden = false;
@@ -169,7 +198,7 @@
     create() {
       const q = (c) => this.make.querySelector(c).value;
       const lines = (c) => q(c).split('\n').map((l) => l.trim()).filter(Boolean);
-      const spec = GB.gitsim.cleanExercise({ title: q('.pr-m-title'), goal: q('.pr-m-goal'), setup: lines('.pr-m-setup'), hints: lines('.pr-m-hints'), checks: lines('.pr-m-checks') });
+      const spec = GB.gitsim.cleanExercise({ title: q('.pr-m-title'), goal: q('.pr-m-goal'), setup: lines('.pr-m-setup'), hints: lines('.pr-m-hints'), solution: lines('.pr-m-solution'), checks: lines('.pr-m-checks') });
       const err = this.make.querySelector('.pr-m-err');
       if (spec.error || !GB.gitsim.encodeExercise(spec)) {
         err.textContent = i18n.t(`practice.make.err.${spec.error || 'long'}`, { detail: spec.detail || '', message: spec.message || '' });

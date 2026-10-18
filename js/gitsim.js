@@ -472,7 +472,7 @@
 
   /* Un ejercicio propio es datos, nunca código: título, meta, los comandos con que parte el repo (los mismos
      de la terminal) y las condiciones que lo dan por resuelto. Va en la URL como JSON en base64 seguro. */
-  const LIMITS = { code: 1800, title: 60, goal: 280, setup: 30, command: 120, checks: 8, hints: 3, hint: 160 };
+  const LIMITS = { code: 1800, title: 60, goal: 280, setup: 30, command: 120, checks: 8, hints: 3, hint: 160, solution: 10 };
   const BRANCH = '[\\w][\\w./-]{0,60}';
   const CHECKS = [
     [new RegExp(`^exists:(${BRANCH})$`), (r, [a]) => r.branches.get(a) != null],
@@ -516,24 +516,39 @@
     for (const c of checks) if (!CHECKS.some(([re]) => re.test(c))) return { error: 'check', detail: c };
     const hints = Array.isArray(raw.hints) ? raw.hints.map((h) => text(h, LIMITS.hint + 1)).filter(Boolean) : [];
     if (hints.length > LIMITS.hints || hints.some((h) => h.length > LIMITS.hint)) return { error: 'hints' };
-    const spec = { title, goal, setup, checks, hints };
+    const solution = Array.isArray(raw.solution) ? raw.solution.map((c) => text(c, LIMITS.command + 1)).filter(Boolean) : [];
+    if (solution.length > LIMITS.solution || solution.some((c) => c.length > LIMITS.command)) return { error: 'solution' };
+    const spec = { title, goal, setup, checks, hints, ...(solution.length && { solution }) };
     const r = scenario();
     for (const c of setup) {
       const res = r.run(c);
       if (!res.ok) return { error: 'command', detail: c, message: res.lines[0] };
     }
+    // la solución propuesta tiene que resolver el ejercicio: si no, mostrarla enseñaría algo falso
+    if (solution.length) {
+      for (const c of solution) {
+        const res = r.run(c);
+        if (!res.ok) return { error: 'solution', detail: c, message: res.lines[0] };
+      }
+      if (!checkTests(checks).every((t) => t(r))) return { error: 'solution', detail: solution[solution.length - 1], message: '' };
+    }
     return spec;
   }
 
-  /** El ejercicio listo para jugar: mismo molde que los de EXERCISES, más sus textos propios. */
-  function customExercise(spec) {
-    const tests = spec.checks.map((c) => {
+  /** Las condiciones de resuelto ya validadas, como funciones del repo. */
+  function checkTests(checks) {
+    return checks.map((c) => {
       for (const [re, fn] of CHECKS) {
         const m = re.exec(c);
         if (m) return (r) => fn(r, m.slice(1));
       }
       return () => false;
     });
+  }
+
+  /** El ejercicio listo para jugar: mismo molde que los de EXERCISES, más sus textos propios. */
+  function customExercise(spec) {
+    const tests = checkTests(spec.checks);
     return {
       id: `custom:${hash(JSON.stringify(spec)).slice(0, 8)}`,
       custom: true,
@@ -541,6 +556,7 @@
       title: spec.title,
       goal: spec.goal,
       hints: spec.hints,
+      solution: spec.solution || [],
       setup: (r) => {
         for (const c of spec.setup) r.run(c);
       },
@@ -548,11 +564,12 @@
     };
   }
 
-  /** De la persona a la URL: el texto que va tras `?practice=`. Nulo si el ejercicio no vale. */
-  function encodeExercise(raw) {
+  /** De la persona a la URL: el texto que va tras `?practice=`. Nulo si el ejercicio no vale.
+      La solución propuesta solo viaja si se pide (`{ solution: true }`): el enlace común no la lleva. */
+  function encodeExercise(raw, { solution = false } = {}) {
     const spec = cleanExercise(raw);
     if (spec.error) return null;
-    const code = b64.enc(JSON.stringify({ v: 1, t: spec.title, g: spec.goal, s: spec.setup, c: spec.checks, ...(spec.hints.length && { h: spec.hints }) }));
+    const code = b64.enc(JSON.stringify({ v: 1, t: spec.title, g: spec.goal, s: spec.setup, c: spec.checks, ...(spec.hints.length && { h: spec.hints }), ...(solution && spec.solution && { r: spec.solution }) }));
     return code.length <= LIMITS.code ? code : null;
   }
 
@@ -567,7 +584,7 @@
     try {
       const o = JSON.parse(b64.dec(code));
       if (o?.v !== 1) return null;
-      const spec = cleanExercise({ title: o.t, goal: o.g, setup: o.s, checks: o.c, hints: o.h });
+      const spec = cleanExercise({ title: o.t, goal: o.g, setup: o.s, checks: o.c, hints: o.h, solution: o.r });
       return spec.error ? null : { custom: spec };
     } catch {
       return null;

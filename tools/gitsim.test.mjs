@@ -177,6 +177,25 @@ test('un ejercicio propio parte sin resolver, se resuelve con sus comandos y no 
   assert.equal(ex.done(r), true);
 });
 
+test('la solución propuesta solo viaja si se pide, y tiene que resolver el ejercicio', () => {
+  const mine = { ...MINE, solution: ['merge feature'] };
+  const plainLink = decodeExercise(encodeExercise(mine));
+  assert.equal(plainLink.custom.solution, undefined); // el enlace común no lleva la solución
+  const withSolution = decodeExercise(encodeExercise(mine, { solution: true }));
+  assert.deepEqual(plain(withSolution.custom.solution), ['merge feature']);
+  const ex = customExercise(withSolution.custom);
+  assert.deepEqual(plain(ex.solution), ['merge feature']);
+  const r = startCustom(ex, NOW);
+  for (const c of ex.solution) assert.ok(r.run(c).ok);
+  assert.equal(ex.done(r), true);
+  // una solución que no resuelve, que falla o que se pasa de largo no entra
+  assert.equal(cleanExercise({ ...MINE, solution: ['commit -m "otro"'] }).error, 'solution');
+  assert.equal(cleanExercise({ ...MINE, solution: ['merge nada'] }).error, 'solution');
+  assert.equal(cleanExercise({ ...MINE, solution: Array(11).fill('merge feature') }).error, 'solution');
+  assert.equal(cleanExercise({ ...MINE, solution: ['x'.repeat(121)] }).error, 'solution');
+  assert.equal(customExercise(plainLink.custom).solution.length, 0);
+});
+
 test('un ejercicio propio lleva pistas por la URL, hasta 3 y de 160 caracteres', () => {
   const hints = ['Mira la rama feature', 'Prueba merge', 'Ñandú 日本'];
   const back = decodeExercise(encodeExercise({ ...MINE, hints }));

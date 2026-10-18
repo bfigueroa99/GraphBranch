@@ -514,6 +514,8 @@ GB.i18n.define('en', {
   'practice.ex4.goal': 'The last commit on main should not be there. Move main back one commit: try reset --hard HEAD~1.',
   'practice.ex5.title': 'Cherry-pick and tag',
   'practice.ex5.goal': 'The hotfix is the last commit of feature, but only that one should reach main. Run checkout main, cherry-pick feature, then tag v1.0.1.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'The "Break checkout totals" commit is already shared, so do not rewrite history. Undo it with a new commit: try revert HEAD~1.',
   'practice.share': 'Copy exercise link',
   'practice.link': 'Exercise link',
   'practice.copied': 'Link copied.',

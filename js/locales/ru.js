@@ -524,6 +524,8 @@ GB.i18n.define('ru', {
   'practice.ex4.goal': 'Последнего коммита в main быть не должно. Верните main на один коммит назад: попробуйте reset --hard HEAD~1.',
   'practice.ex5.title': 'Cherry-pick и тег',
   'practice.ex5.goal': 'Срочное исправление — последний коммит feature, но в main должен попасть только он. Выполни checkout main, cherry-pick feature, затем tag v1.0.1.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'Коммит «Break checkout totals» уже опубликован, поэтому не переписывайте историю. Отмените его новым коммитом: попробуйте revert HEAD~1.',
   'practice.share': 'Скопировать ссылку на упражнение',
   'practice.link': 'Ссылка на упражнение',
   'practice.copied': 'Ссылка скопирована.',

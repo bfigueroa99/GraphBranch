@@ -516,6 +516,8 @@ GB.i18n.define('ro', {
   'practice.ex4.goal': 'Ultimul commit de pe main nu ar trebui să fie acolo. Mută main înapoi cu un commit: încearcă reset --hard HEAD~1.',
   'practice.ex5.title': 'Cherry-pick și tag',
   'practice.ex5.goal': 'Remedierea urgentă este ultimul commit din feature, dar doar el trebuie să ajungă în main. Rulează checkout main, cherry-pick feature, apoi tag v1.0.1.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'Commitul „Break checkout totals” a fost deja partajat, așa că nu rescrie istoricul. Anulează-l cu un commit nou: încearcă revert HEAD~1.',
   'practice.share': 'Copiază linkul exercițiului',
   'practice.link': 'Linkul exercițiului',
   'practice.copied': 'Link copiat.',

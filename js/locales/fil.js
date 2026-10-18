@@ -509,6 +509,8 @@ GB.i18n.define('fil', {
   'practice.ex4.goal': 'Hindi dapat naroon ang huling commit ng main. Ibalik ang main nang isang commit: subukan ang reset --hard HEAD~1.',
   'practice.ex5.title': 'Cherry-pick at tag',
   'practice.ex5.goal': 'Ang hotfix ang huling commit ng feature, pero iyon lang ang dapat umabot sa main. Patakbuhin ang checkout main, cherry-pick feature, saka tag v1.0.1.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'Naibahagi na ang commit na "Break checkout totals", kaya huwag isulat muli ang history. Bawiin ito gamit ang bagong commit: subukan ang revert HEAD~1.',
   'practice.share': 'Kopyahin ang link ng ehersisyo',
   'practice.link': 'Link ng ehersisyo',
   'practice.copied': 'Nakopya ang link.',

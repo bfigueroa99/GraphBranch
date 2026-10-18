@@ -508,6 +508,8 @@ GB.i18n.define('bg', {
   'practice.ex4.goal': 'Последният commit на main не трябва да е там. Върни main с един commit назад: опитай reset --hard HEAD~1.',
   'practice.ex5.title': 'Cherry-pick и таг',
   'practice.ex5.goal': 'Спешната поправка е последният commit на feature, но само тя трябва да стигне до main. Изпълни checkout main, cherry-pick feature и после tag v1.0.1.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'Комитът „Break checkout totals“ вече е споделен, затова не пренаписвайте историята. Отменете го с нов комит: опитайте revert HEAD~1.',
   'practice.share': 'Копиране на връзката към упражнението',
   'practice.link': 'Връзка към упражнението',
   'practice.copied': 'Връзката е копирана.',

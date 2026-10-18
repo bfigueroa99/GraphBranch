@@ -508,6 +508,8 @@ GB.i18n.define('hi', {
   'practice.ex4.goal': 'main का आख़िरी commit वहाँ नहीं होना चाहिए। main को एक commit पीछे ले जाएँ: reset --hard HEAD~1 आज़माएँ।',
   'practice.ex5.title': 'Cherry-pick और टैग',
   'practice.ex5.goal': 'हॉटफ़िक्स feature का आख़िरी commit है, पर सिर्फ़ वही main तक पहुँचना चाहिए। चलाओ checkout main, cherry-pick feature, फिर tag v1.0.1।',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': '"Break checkout totals" कमिट पहले ही साझा हो चुका है, इसलिए इतिहास को दोबारा न लिखें। एक नए कमिट से उसे पलटें: revert HEAD~1 आज़माएँ।',
   'practice.share': 'अभ्यास का लिंक कॉपी करें',
   'practice.link': 'अभ्यास का लिंक',
   'practice.copied': 'लिंक कॉपी हो गया।',

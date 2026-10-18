@@ -508,6 +508,8 @@ GB.i18n.define('ta', {
   'practice.ex4.goal': 'main-இன் கடைசி commit அங்கே இருக்கக்கூடாது. main-ஐ ஒரு commit பின்னால் நகர்த்துங்கள்: reset --hard HEAD~1 முயலுங்கள்.',
   'practice.ex5.title': 'Cherry-pick மற்றும் டேக்',
   'practice.ex5.goal': 'அவசரத் திருத்தம் feature-இன் கடைசி commit; ஆனால் அது மட்டுமே main-க்கு வர வேண்டும். checkout main, cherry-pick feature, பிறகு tag v1.0.1 இயக்கு.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': '"Break checkout totals" கமிட் ஏற்கனவே பகிரப்பட்டுவிட்டது, எனவே வரலாற்றை மீண்டும் எழுத வேண்டாம். புதிய கமிட் மூலம் அதை நீக்குங்கள்: revert HEAD~1 முயற்சிக்கவும்.',
   'practice.share': 'பயிற்சி இணைப்பை நகலெடு',
   'practice.link': 'பயிற்சி இணைப்பு',
   'practice.copied': 'இணைப்பு நகலெடுக்கப்பட்டது.',

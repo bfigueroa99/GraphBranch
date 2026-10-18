@@ -509,6 +509,8 @@ GB.i18n.define('th', {
   'practice.ex4.goal': 'commit ล่าสุดบน main ไม่ควรอยู่ตรงนั้น ถอย main กลับหนึ่ง commit: ลอง reset --hard HEAD~1',
   'practice.ex5.title': 'Cherry-pick และแท็ก',
   'practice.ex5.goal': 'แพตช์ด่วนคือคอมมิตสุดท้ายของ feature แต่ต้องไปถึง main เฉพาะอันนั้นเท่านั้น รัน checkout main, cherry-pick feature แล้วตามด้วย tag v1.0.1',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'คอมมิต "Break checkout totals" ถูกแชร์ไปแล้ว จึงไม่ควรเขียนประวัติใหม่ ให้ย้อนกลับด้วยคอมมิตใหม่ ลองใช้ revert HEAD~1',
   'practice.share': 'คัดลอกลิงก์แบบฝึกหัด',
   'practice.link': 'ลิงก์แบบฝึกหัด',
   'practice.copied': 'คัดลอกลิงก์แล้ว',

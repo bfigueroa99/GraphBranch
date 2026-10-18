@@ -1374,6 +1374,16 @@ console.log('Varios repos a la vez');
     await lab.press('.pr-input', 'Enter');
     await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: T(5000) });
   });
+  await step(lab, 'el ejercicio de revert se abre por su número, deshace un commit con otro nuevo y se marca resuelto', async () => {
+    await lab.goto(`${base}/index.html?lang=es&practice=6`);
+    await lab.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: T(15000) });
+    await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent.includes('revert'), null, { timeout: T(5000) });
+    if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('el ejercicio parte resuelto');
+    await lab.fill('.pr-input', 'revert HEAD~1');
+    await lab.press('.pr-input', 'Enter');
+    await lab.waitForFunction(() => document.querySelector('.pr-log')?.textContent.includes('Revert "Break checkout totals"'), null, { timeout: T(5000) });
+    await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: T(5000) });
+  });
   await step(lab, 'un ejercicio propio con pistas: el botón las muestra una a una y la condición de mensaje lo resuelve', async () => {
     await lab.goto(`${base}/index.html?lang=es&practice=1`);
     await lab.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: T(15000) });

@@ -508,6 +508,8 @@ GB.i18n.define('fi', {
   'practice.ex4.goal': 'Mainin viimeisen commitin ei pitäisi olla siellä. Siirrä mainia yksi commit taaksepäin: kokeile reset --hard HEAD~1.',
   'practice.ex5.title': 'Cherry-pick ja tagi',
   'practice.ex5.goal': 'Pikakorjaus on featuren viimeinen commit, mutta vain se pitää tuoda mainiin. Aja checkout main, cherry-pick feature ja sitten tag v1.0.1.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'Commit "Break checkout totals" on jo jaettu, joten älä kirjoita historiaa uudelleen. Kumoa se uudella commitilla: kokeile revert HEAD~1.',
   'practice.share': 'Kopioi tehtävän linkki',
   'practice.link': 'Tehtävän linkki',
   'practice.copied': 'Linkki kopioitu.',

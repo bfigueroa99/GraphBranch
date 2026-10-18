@@ -508,6 +508,8 @@ GB.i18n.define('ja', {
   'practice.ex4.goal': 'mainの最後のコミットは不要です。mainを1コミット戻しましょう: reset --hard HEAD~1 を試してください。',
   'practice.ex5.title': 'チェリーピックとタグ',
   'practice.ex5.goal': '緊急修正はfeatureの最後のコミットですが、mainに入れるのはそれだけです。checkout main、cherry-pick feature、続けて tag v1.0.1 を実行しましょう。',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': '「Break checkout totals」のコミットはすでに共有されているので、履歴は書き換えません。新しいコミットで取り消しましょう。revert HEAD~1 を試してください。',
   'practice.share': '演習のリンクをコピー',
   'practice.link': '演習のリンク',
   'practice.copied': 'リンクをコピーしました。',

@@ -203,6 +203,7 @@
         'rebase <branch>             replay this branch on top of another',
         'reset [--soft|--hard] <to>  move the branch back (HEAD~1, a sha, a branch)',
         'cherry-pick <commit>        copy one commit on top of the current branch',
+        'revert <commit>             undo a commit with a new one, keeping the history',
         'tag [name] [-d name]        list, create or delete tags on a commit',
         'log [--oneline]             the history that leads to HEAD',
         'status                      where HEAD is',
@@ -349,6 +350,22 @@
       return out;
     },
 
+    revert(args) {
+      const { rest } = parse(args);
+      if (!rest.length) fail('fatal: you must specify a commit to revert');
+      if (!this.head.branch) fail('fatal: you are in a detached HEAD state: go to a branch first (checkout <branch>)');
+      const out = [];
+      for (const ref of rest) {
+        const target = this.resolve(ref);
+        if (!target) fail(`fatal: bad revision '${ref}'`);
+        const c = this.commits.get(target);
+        if (c.parents.length > 1) fail(`error: commit ${target} is a merge but no -m option was given.`);
+        const sha = this.commit(`Revert "${c.message}"`);
+        out.push(`[${this.head.branch} ${this.short(sha)}] Revert "${c.message}"`);
+      }
+      return out;
+    },
+
     tag(args) {
       const { flags, rest } = parse(args);
       if (flags['-d'] || flags['--delete']) {
@@ -455,6 +472,21 @@
         // main tiene el arreglo (copiado, no fusionado) y no trajo el otro commit de feature
         const mine = r.log(main).filter((s) => !r.ancestors(feature).has(s));
         return mine.length === 1 && r.commits.get(mine[0]).message === 'Hotfix: escape the login URL' && !r.isAncestor(feature, main);
+      },
+    },
+    {
+      id: 'revert',
+      setup: (r) => {
+        r.commit('Add dark mode');
+        r.commit('Break checkout totals');
+        r.commit('Add footer links');
+      },
+      done: (r) => {
+        const main = r.branches.get('main');
+        if (!main) return false;
+        // el historial se conserva entero y encima hay un commit nuevo que deshace el malo
+        const msgs = r.log(main).slice().reverse().map((s) => r.commits.get(s).message);
+        return msgs.length === BASE.length + 4 && msgs.slice(BASE.length).join('|') === 'Add dark mode|Break checkout totals|Add footer links|Revert "Break checkout totals"';
       },
     },
   ];

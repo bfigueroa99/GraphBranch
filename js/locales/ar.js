@@ -607,6 +607,8 @@ GB.i18n.define('ar', {
   'practice.ex4.goal': 'يجب ألّا يكون آخر commit في main موجودًا. أرجِع main commit واحدًا إلى الخلف: جرّب reset --hard HEAD~1.',
   'practice.ex5.title': 'Cherry-pick ووسم',
   'practice.ex5.goal': 'الإصلاح العاجل هو آخر commit في feature، لكن يجب أن يصل هذا وحده إلى main. نفّذ checkout main ثم cherry-pick feature ثم tag v1.0.1.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'تمت مشاركة commit "Break checkout totals" بالفعل، فلا تعد كتابة السجل. تراجع عنه بـ commit جديد: جرّب revert HEAD~1.',
   'practice.share': 'نسخ رابط التمرين',
   'practice.link': 'رابط التمرين',
   'practice.copied': 'تم نسخ الرابط.',

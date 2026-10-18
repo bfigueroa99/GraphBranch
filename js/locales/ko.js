@@ -508,6 +508,8 @@ GB.i18n.define('ko', {
   'practice.ex4.goal': 'main의 마지막 커밋은 없어야 합니다. main을 커밋 하나 뒤로 옮기세요: reset --hard HEAD~1을 해 보세요.',
   'practice.ex5.title': '체리픽과 태그',
   'practice.ex5.goal': '긴급 수정은 feature의 마지막 커밋이지만 main에는 그것만 들어가야 합니다. checkout main, cherry-pick feature를 실행한 뒤 tag v1.0.1을 실행하세요.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': '"Break checkout totals" 커밋은 이미 공유되었으므로 기록을 다시 쓰지 마세요. 새 커밋으로 되돌리세요: revert HEAD~1을 실행해 보세요.',
   'practice.share': '연습 링크 복사',
   'practice.link': '연습 링크',
   'practice.copied': '링크를 복사했습니다.',

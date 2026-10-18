@@ -551,6 +551,8 @@ GB.i18n.define('fa', {
   'practice.ex4.goal': 'آخرین commit در main نباید آنجا باشد. main را یک commit به عقب ببرید: reset --hard HEAD~1 را امتحان کنید.',
   'practice.ex5.title': 'Cherry-pick و برچسب',
   'practice.ex5.goal': 'رفع فوری آخرین commit شاخهٔ feature است، اما فقط همان باید به main برسد. checkout main و cherry-pick feature و سپس tag v1.0.1 را اجرا کن.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'کامیت «Break checkout totals» قبلاً به اشتراک گذاشته شده است، پس تاریخچه را بازنویسی نکنید. آن را با یک کامیت جدید خنثی کنید: revert HEAD~1 را امتحان کنید.',
   'practice.share': 'کپی پیوند تمرین',
   'practice.link': 'پیوند تمرین',
   'practice.copied': 'پیوند کپی شد.',

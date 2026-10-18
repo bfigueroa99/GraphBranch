@@ -519,6 +519,8 @@ GB.i18n.define('cs', {
   'practice.ex4.goal': 'Poslední commit na main tam být nemá. Vrať main o jeden commit zpět: zkus reset --hard HEAD~1.',
   'practice.ex5.title': 'Cherry-pick a štítek',
   'practice.ex5.goal': 'Rychlá oprava je poslední commit větve feature, ale do main má přijít jen ten. Spusť checkout main, cherry-pick feature a pak tag v1.0.1.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'Commit „Break checkout totals“ už je sdílený, takže nepřepisuj historii. Vrať ho novým commitem: zkus revert HEAD~1.',
   'practice.share': 'Zkopírovat odkaz na úlohu',
   'practice.link': 'Odkaz na úlohu',
   'practice.copied': 'Odkaz zkopírován.',

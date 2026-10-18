@@ -508,6 +508,8 @@ GB.i18n.define('nb', {
   'practice.ex4.goal': 'Den siste committen på main skal ikke være der. Flytt main én commit tilbake: prøv reset --hard HEAD~1.',
   'practice.ex5.title': 'Cherry-pick og tagg',
   'practice.ex5.goal': 'Hurtigfiksen er siste commit på feature, men bare den skal til main. Kjør checkout main, cherry-pick feature og deretter tag v1.0.1.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'Committen «Break checkout totals» er allerede delt, så ikke skriv om historikken. Angre den med en ny commit: prøv revert HEAD~1.',
   'practice.share': 'Kopier lenken til oppgaven',
   'practice.link': 'Oppgavelenke',
   'practice.copied': 'Lenken er kopiert.',

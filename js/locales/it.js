@@ -509,6 +509,8 @@ GB.i18n.define('it', {
   'practice.ex4.goal': 'L’ultimo commit di main non dovrebbe esserci. Riporta main indietro di un commit: prova reset --hard HEAD~1.',
   'practice.ex5.title': 'Cherry-pick e tag',
   'practice.ex5.goal': 'Il fix urgente è l\'ultimo commit di feature, ma solo quello deve arrivare su main. Esegui checkout main, cherry-pick feature e poi tag v1.0.1.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'Il commit "Break checkout totals" è già condiviso, quindi non riscrivere la storia. Annullalo con un nuovo commit: prova revert HEAD~1.',
   'practice.share': 'Copia il link dell\'esercizio',
   'practice.link': 'Link dell\'esercizio',
   'practice.copied': 'Link copiato.',

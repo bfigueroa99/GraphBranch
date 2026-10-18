@@ -508,6 +508,8 @@ GB.i18n.define('zh-Hans', {
   'practice.ex4.goal': 'main 上最后一次提交不该存在。把 main 回退一个提交:试试 reset --hard HEAD~1。',
   'practice.ex5.title': 'Cherry-pick 与标签',
   'practice.ex5.goal': '紧急修复是 feature 的最后一个提交，但只有它应该进入 main。依次运行 checkout main、cherry-pick feature，再运行 tag v1.0.1。',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': '“Break checkout totals”这个提交已经共享，所以不要改写历史。用一个新提交撤销它：试试 revert HEAD~1。',
   'practice.share': '复制练习链接',
   'practice.link': '练习链接',
   'practice.copied': '链接已复制。',

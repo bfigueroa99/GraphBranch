@@ -508,6 +508,8 @@ GB.i18n.define('sv', {
   'practice.ex4.goal': 'Sista committen på main ska inte finnas. Flytta tillbaka main en commit: prova reset --hard HEAD~1.',
   'practice.ex5.title': 'Cherry-pick och tagg',
   'practice.ex5.goal': 'Snabbfixen är sista committen på feature, men bara den ska till main. Kör checkout main, cherry-pick feature och sedan tag v1.0.1.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'Committen "Break checkout totals" är redan delad, så skriv inte om historiken. Ångra den med en ny commit: prova revert HEAD~1.',
   'practice.share': 'Kopiera övningens länk',
   'practice.link': 'Övningens länk',
   'practice.copied': 'Länken har kopierats.',

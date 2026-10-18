@@ -565,6 +565,8 @@ GB.i18n.define('he', {
   'practice.ex4.goal': 'ה־commit האחרון ב־main לא אמור להיות שם. החזירו את main commit אחד אחורה: נסו reset --hard HEAD~1.',
   'practice.ex5.title': 'Cherry-pick ותגית',
   'practice.ex5.goal': 'התיקון הדחוף הוא ה-commit האחרון של feature, אבל רק הוא צריך להגיע ל-main. הרץ checkout main, cherry-pick feature ואז tag v1.0.1.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'הקומיט "Break checkout totals" כבר שותף, אז אל תשכתבו את ההיסטוריה. בטלו אותו בעזרת קומיט חדש: נסו revert HEAD~1.',
   'practice.share': 'העתקת קישור התרגיל',
   'practice.link': 'קישור התרגיל',
   'practice.copied': 'הקישור הועתק.',

@@ -508,6 +508,8 @@ GB.i18n.define('sw', {
   'practice.ex4.goal': 'Commit ya mwisho ya main haipaswi kuwepo. Rudisha main nyuma kwa commit moja: jaribu reset --hard HEAD~1.',
   'practice.ex5.title': 'Cherry-pick na lebo',
   'practice.ex5.goal': 'Marekebisho ya haraka ni commit ya mwisho ya feature, lakini hiyo pekee ndiyo ifike main. Endesha checkout main, cherry-pick feature, kisha tag v1.0.1.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'Commit ya "Break checkout totals" imeshashirikiwa, kwa hiyo usiandike upya historia. Itengue kwa commit mpya: jaribu revert HEAD~1.',
   'practice.share': 'Nakili kiungo cha zoezi',
   'practice.link': 'Kiungo cha zoezi',
   'practice.copied': 'Kiungo kimenakiliwa.',

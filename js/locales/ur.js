@@ -551,6 +551,8 @@ GB.i18n.define('ur', {
   'practice.ex4.goal': 'main کا آخری commit وہاں نہیں ہونا چاہیے۔ main کو ایک commit پیچھے لے جائیں: reset --hard HEAD~1 آزمائیں۔',
   'practice.ex5.title': 'Cherry-pick اور ٹیگ',
   'practice.ex5.goal': 'ہنگامی درستی feature کا آخری commit ہے، مگر main تک صرف وہی پہنچنا چاہیے۔ checkout main، cherry-pick feature اور پھر tag v1.0.1 چلاؤ۔',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'کمٹ "Break checkout totals" پہلے ہی شیئر ہو چکا ہے، اس لیے تاریخ دوبارہ نہ لکھیں۔ اسے نئی کمٹ سے واپس کریں: revert HEAD~1 آزمائیں۔',
   'practice.share': 'مشق کا لنک کاپی کریں',
   'practice.link': 'مشق کا لنک',
   'practice.copied': 'لنک کاپی ہو گیا۔',

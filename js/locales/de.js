@@ -509,6 +509,8 @@ GB.i18n.define('de', {
   'practice.ex4.goal': 'Der letzte Commit auf main soll weg. Setze main um einen Commit zurück: probiere reset --hard HEAD~1.',
   'practice.ex5.title': 'Cherry-pick und Tag',
   'practice.ex5.goal': 'Der Hotfix ist der letzte Commit von feature, aber nur er soll nach main. Führe checkout main, cherry-pick feature und dann tag v1.0.1 aus.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'Der Commit „Break checkout totals“ ist schon geteilt, schreibe die Historie also nicht um. Mach ihn mit einem neuen Commit rückgängig: Probiere revert HEAD~1.',
   'practice.share': 'Link zur Übung kopieren',
   'practice.link': 'Link zur Übung',
   'practice.copied': 'Link kopiert.',

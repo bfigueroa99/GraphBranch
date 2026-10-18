@@ -508,6 +508,8 @@ GB.i18n.define('ms', {
   'practice.ex4.goal': 'Commit terakhir pada main tidak sepatutnya ada. Undurkan main satu commit: cuba reset --hard HEAD~1.',
   'practice.ex5.title': 'Cherry-pick dan tag',
   'practice.ex5.goal': 'Pembetulan segera ialah commit terakhir feature, tetapi hanya itu yang patut sampai ke main. Jalankan checkout main, cherry-pick feature, kemudian tag v1.0.1.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'Commit "Break checkout totals" sudah dikongsi, jadi jangan tulis semula sejarah. Batalkannya dengan commit baharu: cuba revert HEAD~1.',
   'practice.share': 'Salin pautan latihan',
   'practice.link': 'Pautan latihan',
   'practice.copied': 'Pautan disalin.',

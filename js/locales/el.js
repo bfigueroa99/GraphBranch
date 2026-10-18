@@ -508,6 +508,8 @@ GB.i18n.define('el', {
   'practice.ex4.goal': 'Το τελευταίο commit του main δεν θα έπρεπε να υπάρχει. Γύρνα το main ένα commit πίσω: δοκίμασε reset --hard HEAD~1.',
   'practice.ex5.title': 'Cherry-pick και ετικέτα',
   'practice.ex5.goal': 'Η επείγουσα διόρθωση είναι το τελευταίο commit του feature, αλλά μόνο αυτό πρέπει να φτάσει στο main. Εκτέλεσε checkout main, cherry-pick feature και μετά tag v1.0.1.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'Το commit «Break checkout totals» έχει ήδη κοινοποιηθεί, οπότε μην ξαναγράψεις το ιστορικό. Αναίρεσέ το με ένα νέο commit: δοκίμασε revert HEAD~1.',
   'practice.share': 'Αντιγραφή συνδέσμου άσκησης',
   'practice.link': 'Σύνδεσμος άσκησης',
   'practice.copied': 'Ο σύνδεσμος αντιγράφηκε.',

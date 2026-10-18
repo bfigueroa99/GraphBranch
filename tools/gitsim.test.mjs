@@ -122,6 +122,7 @@ test('cada ejercicio parte sin resolver y se resuelve con sus comandos', () => {
     ['checkout feature', 'rebase main'],
     ['reset --hard HEAD~1'],
     ['cherry-pick feature', 'tag v1.0.1'],
+    ['revert HEAD~1'],
   ];
   assert.equal(solutions.length, EXERCISES.length);
   EXERCISES.forEach((ex, i) => {
@@ -320,4 +321,37 @@ test('el ejercicio de cherry-pick pide el arreglo copiado y su etiqueta, no una 
   b.run('tag v1.0.1');
   b.run('commit -m "Later"');
   assert.equal(ex.done(b), false, 'la etiqueta ya no está en la punta de main');
+});
+
+test('revert deshace un commit con uno nuevo y conserva el historial', () => {
+  const r = start(5, NOW);
+  const bad = r.resolve('HEAD~1');
+  const before = r.log(r.headSha).length;
+  const res = r.run('revert HEAD~1');
+  assert.ok(res.ok && res.changed);
+  assert.match(res.lines[0], /^\[main [0-9a-f]{7}\] Revert "Break checkout totals"$/);
+  assert.equal(r.log(r.headSha).length, before + 1);
+  assert.ok(r.isAncestor(bad, r.headSha), 'el commit malo sigue en el historial');
+  assert.deepEqual(plain(r.commits.get(r.headSha).parents), [r.resolve('HEAD~1')]);
+  assert.equal(r.run('revert').ok, false);
+  assert.equal(r.run('revert nope').ok, false);
+  r.run('checkout main~1');
+  assert.equal(r.run('revert HEAD').ok, false, 'desprendido no puede');
+  const m = start(1, NOW);
+  m.run('merge feature');
+  assert.match(m.run('revert main').lines[0], /is a merge/);
+});
+
+test('el ejercicio de revert pide un commit nuevo y no reescribir la historia', () => {
+  const ex = EXERCISES[5];
+  const a = start(5, NOW);
+  assert.equal(ex.done(a), false);
+  a.run('reset --hard HEAD~2');
+  assert.equal(ex.done(a), false, 'reset reescribe la historia');
+  const b = start(5, NOW);
+  b.run('revert HEAD');
+  assert.equal(ex.done(b), false, 'deshizo otro commit');
+  const c = start(5, NOW);
+  c.run('revert HEAD~1');
+  assert.equal(ex.done(c), true);
 });

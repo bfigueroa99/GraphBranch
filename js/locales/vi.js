@@ -508,6 +508,8 @@ GB.i18n.define('vi', {
   'practice.ex4.goal': 'Commit cuối của main không nên có. Lùi main một commit: thử reset --hard HEAD~1.',
   'practice.ex5.title': 'Cherry-pick và tag',
   'practice.ex5.goal': 'Bản vá khẩn là commit cuối của feature, nhưng chỉ commit đó được vào main. Chạy checkout main, cherry-pick feature rồi tag v1.0.1.',
+  'practice.ex6.title': 'Revert',
+  'practice.ex6.goal': 'Commit "Break checkout totals" đã được chia sẻ, nên đừng viết lại lịch sử. Hãy hoàn tác nó bằng một commit mới: thử revert HEAD~1.',
   'practice.share': 'Sao chép liên kết bài tập',
   'practice.link': 'Liên kết bài tập',
   'practice.copied': 'Đã sao chép liên kết.',

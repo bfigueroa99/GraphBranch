@@ -144,7 +144,7 @@ segunda columna a la primera.
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia), miles de ramas por repo | una organización entera con más de 10 repos a la vez |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack, Discord y Teams (escritorio), resumen de la semana (Markdown, de un repo o de una organización seguida; PNG, de un repo) | resumen de la organización como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), búsqueda de commits también desde la URL (`?q=`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días y por semana, mediana entre releases, tiempo de entrega desde el primer commit del PR), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días), bitácora en vivo al estilo de Brunell_Node (la quinta cifra del resumen: desde la bitácora anterior, lo grande, commits por día, nota del 1 al 100 de ritmo, publicado y salud con su origen, hallazgos con su gravedad y su seguimiento, cronología y qué sigue; se cierra, se guarda en el navegador y sale en Markdown o `estado.json`) | ver la hoja de ruta |
-| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal (`cherry-pick` y `tag` incluidos) y ejercicios, también propios compartidos por URL con pistas, solución propuesta que se muestra paso a paso con `solution=1` y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
+| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal (`cherry-pick`, `revert` y `tag` incluidos) y ejercicios, también propios compartidos por URL con pistas, solución propuesta que se muestra paso a paso con `solution=1` y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
 
@@ -334,7 +334,7 @@ se comprueban antes de construir sobre ellas.
 59. ~~**Extensión de VS Code: recordar repos**~~ hecho en #126 · Plataformas · 1×2/2. [parte del ítem 24] Los repos seguidos y el tema sobreviven
     entre sesiones del panel (el puerto cambia cada vez, así que se guardan en el estado de la extensión y se entregan con
     el token). Comprobar: `tools/vscode.test.mjs` con el estado simulado.
-60. **Práctica: rebase y revert** · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `rebase <rama>` y
+60. ~~**Práctica: rebase y revert**~~ hecho en #128 · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `rebase <rama>` y
     `revert <sha>`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
 61. **Capa para streaming, tercera entrega** · Plataformas · 2×2/2. [parte del ítem 11] `?embed=1&rotate=30` alterna entre los
     repos seguidos cada tantos segundos, para una escena de OBS sin tocarla. Comprobar: prueba de la lectura de la URL y un paso
@@ -2026,7 +2026,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Capacidad nueva: frecuencia de despliegue por semana en la salud** (ítem 53 de la hoja de ruta). `compute` (`js/health.js`) suma `dora.weeks`: los releases ya cargados de cada una de las últimas 8 semanas (de la más vieja a la actual), y el panel de salud lo muestra bajo «Entrega (DORA)» (`#hl-weeks`). Sin consultas nuevas. Los tags y despliegues de GitHub no traen fecha en lo ya cargado, así que el despliegue sigue siendo el release.
 - **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` («frecuencia de despliegue: releases por semana…» y la de DORA, que ahora exige `weeks`) y el paso del smoke de la salud (tres líneas de entrega, la de semanas con 8 cifras y algún release en la demo).
 - README: salud del repo y Límites conocidos de la entrega (DORA).
-- QA: filas tocadas: 40 idiomas (`health.doraWeeks`, `check-i18n` en verde); XSS (el texto sigue por `U.esc`, solo números); sin consultas nuevas. Sin mirar a mano 320 px ni RTL del panel más allá de la auditoría; auditoría: ver Validado.
+- QA: filas tocadas: 40 idiomas (`health.doraWeeks`, `check-i18n` en verde); XSS (el texto sigue por `U.esc`, solo números); sin consultas nuevas. Sin mirar a mano 320 px ni RTL del panel más allá de la auditoría; auditoría: 0 hallazgos nuevos (corrida completa).
 - Reclamo: loop/89, sin colisión
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso y dos pruebas de `loop.test.mjs`); `git push origin --delete loop/76` y `loop/77` fallaron con «hung up unexpectedly» del proxy, así que las `loop/*` fusionadas siguen en origin.
 - Validado: 306 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 4 conocidos) y 27 e2e en verde.
@@ -2136,3 +2136,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Para después:** importar un `estado.json` (también los de Brunell_Node) para seguir su historial, la bitácora como imagen PNG y la de una organización seguida.
 - Validado: 328 pruebas (`node --test`), smoke (40 idiomas, 136 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 98, expansión: ítem 60 (Práctica: rebase y revert, Público)
+
+### 2026-10-18 · Iteración 98 · Expansión · Público
+
+- **Capacidad nueva: `revert` y un sexto ejercicio en la práctica de git** (ítem 60 de la hoja de ruta). `rebase` ya existía en el intérprete; faltaba `revert <commit>`, que deshace un commit con uno nuevo (`Revert "…"`) sin tocar la historia, y el ejercicio «Revert»: un commit malo ya compartido en medio de `main`, que se resuelve con `revert HEAD~1` y no con `reset`. Admite varios commits, falla con HEAD desprendido, con una referencia inexistente y con un commit de fusión (como `cherry-pick`).
+- **Pruebas que fallan sin la capacidad:** `tools/gitsim.test.mjs` (`revert`: commit nuevo con el padre correcto, historial conservado, errores; el ejercicio no se da por resuelto con `reset --hard`, con el `revert` equivocado ni sin hacer nada) y un paso del smoke que abre `?practice=6`, escribe `revert HEAD~1` y mira que se marque resuelto.
+- Textos: 2 claves nuevas (`practice.ex6.title` y `.goal`) en los 40 idiomas.
+- README: la función en la lista, `?practice=1` a `6`, pruebas y Límites conocidos al día.
+- QA: filas tocadas: terminal de práctica y ejercicios (pruebas y smoke), 40 idiomas (check-i18n); auditoría: 0 hallazgos nuevos (corrida completa).
+- Reclamo: loop/98, sin colisión
+- Nota: el clon venía superficial otra vez (`git fetch --unshallow` arregló un R3 falso).
+- Validado: 330 pruebas (`node --test`), smoke (40 idiomas, 137 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 99, mantenimiento · Errores: pendiente 4 (La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:…)

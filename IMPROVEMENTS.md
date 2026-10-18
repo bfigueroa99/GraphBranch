@@ -348,6 +348,18 @@ se comprueban antes de construir sobre ellas.
 65. **Token para un Bitbucket propio** · Fuentes · 2×2/2. [parte del ítem 50] Un token de acceso personal (`Authorization: Bearer …`)
     para un Bitbucket Data Center propio, guardado aparte (llavero en escritorio), que va solo a ese host: la mayoría de los
     servidores no dejan leer sin iniciar sesión. Comprobar: `tools/bitbucket-server.test.mjs` con el token y sin él.
+66. **Salud del repo en la URL** · Análisis · 1×2/1. [parte del ítem 12] `?health=1` abre el repo con el panel de salud ya
+    desplegado, para compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
+67. **Búsqueda por fecha** · Análisis · 1×2/2. [parte del ítem 19] La lupa entiende `desde:2026-09-01` y `hasta:2026-09-14`
+    junto al texto, sobre lo ya cargado. Comprobar: `tools/search.test.mjs` con fechas fabricadas.
+68. **Práctica: stash y reset** · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `stash`, `stash pop` y
+    `reset --hard <sha>`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
+69. **Resumen de la organización como imagen** · Salidas · 1×2/2. [parte del ítem 47] El resumen de la semana de una
+    organización también se baja como imagen PNG, como el de un repo. Comprobar: `tools/digest.test.mjs` con la imagen simulada.
+70. **Los forks en el grafo, segunda entrega** · Datos · 1×2/2. [parte del ítem 30] Los forks se pueden ocultar o mostrar desde
+    un interruptor del panel y la elección viaja en la URL. Comprobar: prueba de la lectura de la URL y un paso del smoke.
+71. **Vista de texto: filtro por ruta en la URL** · Público · 1×2/1. [parte del ítem 33] La vista de texto abre con `?path=` y
+    `?q=` aplicados y lo anuncia a quien usa lector de pantalla. Comprobar: prueba de la vista y un paso del smoke.
 
 ## Cómo validar un cambio
 
@@ -2054,6 +2066,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - README: función, Límites y Seguridad (`?q=` como texto).
 - QA: filas tocadas: dialog de búsqueda y foco con el smoke; texto de afuera por `value`; sin mirar a mano 320 px ni RTL; auditoría: 0 hallazgos nuevos.
 - Reclamo: loop/93, sin colisión
+- Hoja de ruta repuesta hasta 15 (ítems 66–71, continuaciones de ideas ya investigadas, con puntaje en `docs/investigacion.md`).
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); el borrado de las `loop/80`–`loop/92` fusionadas falló con «hung up unexpectedly» del proxy.
 - Validado: 311 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 27 e2e en verde.
 - **Siguiente:** iteración 94, expansión: ítem 57 (Avisos a Microsoft Teams, Salidas)

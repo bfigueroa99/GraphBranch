@@ -713,4 +713,18 @@ GB.i18n.define('hu', {
   'bitacora.gap': 'Nincs aktivitás',
   'bitacora.nextNone': 'Semmi sürgős: csak így tovább.',
   'bitacora.historyNone': 'Ennek a repozitóriumnak még egyetlen naplója sincs lezárva.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Prompt az autonóm ciklushoz',
+  'loopPrompt.btnTitle': 'Olyan prompt másolása, amellyel a Claude Code magától fejleszti ezt a projektet',
+  'loopPrompt.help': 'Illeszd be egy Claude Code Routine-ba (futásonként egy iteráció, néhány óránként) vagy egy munkamenetbe. Az első futás felállítja a ciklust a repóban (LOOP.md), a következők pedig követik és tovább javítják, ahogy a Brunell_Node ciklusa is. Bármilyen projekthez használható.',
+  'loopPrompt.repo': 'Repozitórium',
+  'loopPrompt.lang': 'A prompt nyelve',
+  'loopPrompt.integration': 'Integrációs ág',
+  'loopPrompt.release': 'Kiadási ág (nem kötelező)',
+  'loopPrompt.releaseHelp': 'Ha megadsz egyet, a ciklus sosem nyúl hozzá: csak te viszel át bele változtatásokat.',
+  'loopPrompt.goal': 'A projekt célja (nem kötelező)',
+  'loopPrompt.goalPlaceholder': 'Mi ez, kinek szól, és merre szeretnéd vinni.',
+  'loopPrompt.preview': 'A prompt',
+  'loopPrompt.chars': { one: '{n} karakter', other: '{n} karakter' },
+  'loopPrompt.copy': 'Prompt másolása',
 });

@@ -713,4 +713,18 @@ GB.i18n.define('ca', {
   'bitacora.gap': 'Sense activitat',
   'bitacora.nextNone': 'Res urgent: continua així.',
   'bitacora.historyNone': 'Encara no s’ha tancat cap diari de bord d’aquest repositori.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Prompt del bucle autònom',
+  'loopPrompt.btnTitle': 'Copia un prompt perquè Claude Code desenvolupi aquest projecte tot sol',
+  'loopPrompt.help': 'Enganxa’l en una Routine de Claude Code (una iteració per execució, cada poques hores) o en una sessió. La primera execució munta el bucle al repositori (LOOP.md) i les següents el segueixen i el milloren, com el bucle de Brunell_Node. Serveix per a qualsevol projecte.',
+  'loopPrompt.repo': 'Repositori',
+  'loopPrompt.lang': 'Idioma del prompt',
+  'loopPrompt.integration': 'Branca d’integració',
+  'loopPrompt.release': 'Branca de release (opcional)',
+  'loopPrompt.releaseHelp': 'Si en poses una, el bucle no la toca mai: només tu hi promous canvis.',
+  'loopPrompt.goal': 'Objectiu del projecte (opcional)',
+  'loopPrompt.goalPlaceholder': 'Què és, per a qui és i cap a on vols que vagi.',
+  'loopPrompt.preview': 'El prompt',
+  'loopPrompt.chars': { one: '{n} caràcter', other: '{n} caràcters' },
+  'loopPrompt.copy': 'Copia el prompt',
 });

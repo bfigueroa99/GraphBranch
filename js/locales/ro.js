@@ -721,4 +721,18 @@ GB.i18n.define('ro', {
   'bitacora.gap': 'Fără activitate',
   'bitacora.nextNone': 'Nimic urgent: continuă tot așa.',
   'bitacora.historyNone': 'Încă nu s-a închis niciun jurnal de bord al acestui depozit.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Promptul buclei autonome',
+  'loopPrompt.btnTitle': 'Copiază un prompt cu care Claude Code dezvoltă singur acest proiect',
+  'loopPrompt.help': 'Lipește-l într-o Routine din Claude Code (o iterație per rulare, la câteva ore) sau într-o sesiune. Prima rulare pune la punct bucla în depozit (LOOP.md), iar următoarele o urmează și o îmbunătățesc, ca bucla Brunell_Node. Funcționează pentru orice proiect.',
+  'loopPrompt.repo': 'Depozit',
+  'loopPrompt.lang': 'Limba promptului',
+  'loopPrompt.integration': 'Ramură de integrare',
+  'loopPrompt.release': 'Ramură de release (opțional)',
+  'loopPrompt.releaseHelp': 'Dacă setezi una, bucla nu o atinge niciodată: doar tu promovezi modificări în ea.',
+  'loopPrompt.goal': 'Obiectivul proiectului (opțional)',
+  'loopPrompt.goalPlaceholder': 'Ce este, pentru cine este și încotro vrei să meargă.',
+  'loopPrompt.preview': 'Promptul',
+  'loopPrompt.chars': { one: '{n} caracter', few: '{n} caractere', other: '{n} de caractere' },
+  'loopPrompt.copy': 'Copiază promptul',
 });

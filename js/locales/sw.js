@@ -713,4 +713,18 @@ GB.i18n.define('sw', {
   'bitacora.gap': 'Hakuna shughuli',
   'bitacora.nextNone': 'Hakuna cha dharura: endelea hivyo.',
   'bitacora.historyNone': 'Bado hakuna daftari la hazina hii lililofungwa.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Prompt ya mzunguko unaojiendesha',
+  'loopPrompt.btnTitle': 'Nakili prompt inayoiwezesha Claude Code kuendeleza mradi huu yenyewe',
+  'loopPrompt.help': 'Ibandike kwenye Routine ya Claude Code (awamu moja kwa kila uendeshaji, kila baada ya saa chache) au kwenye kipindi. Uendeshaji wa kwanza huandaa mzunguko kwenye hazina (LOOP.md), na uendeshaji unaofuata huufuata na kuuboresha, kama mzunguko wa Brunell_Node. Inafaa kwa mradi wowote.',
+  'loopPrompt.repo': 'Hazina',
+  'loopPrompt.lang': 'Lugha ya prompt',
+  'loopPrompt.integration': 'Tawi la muunganisho',
+  'loopPrompt.release': 'Tawi la matoleo (si lazima)',
+  'loopPrompt.releaseHelp': 'Ukiweka moja, mzunguko hautaligusa kamwe: ni wewe tu unayepeleka mabadiliko humo.',
+  'loopPrompt.goal': 'Lengo la mradi (si lazima)',
+  'loopPrompt.goalPlaceholder': 'Ni nini, ni kwa ajili ya nani na unataka uelekee wapi.',
+  'loopPrompt.preview': 'Prompt',
+  'loopPrompt.chars': { one: 'herufi {n}', other: 'herufi {n}' },
+  'loopPrompt.copy': 'Nakili prompt',
 });

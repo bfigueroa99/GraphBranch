@@ -713,4 +713,18 @@ GB.i18n.define('id', {
   'bitacora.gap': 'Tidak ada aktivitas',
   'bitacora.nextNone': 'Tidak ada yang mendesak: lanjutkan.',
   'bitacora.historyNone': 'Belum ada jurnal repositori ini yang ditutup.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Prompt loop otonom',
+  'loopPrompt.btnTitle': 'Salin prompt yang membuat Claude Code mengembangkan proyek ini secara mandiri',
+  'loopPrompt.help': 'Tempelkan ke sebuah Routine Claude Code (satu iterasi setiap kali berjalan, tiap beberapa jam) atau ke sebuah sesi. Eksekusi pertama menyiapkan loop di repositori (LOOP.md), dan eksekusi berikutnya mengikuti serta menyempurnakannya, seperti loop Brunell_Node. Bisa dipakai untuk proyek apa pun.',
+  'loopPrompt.repo': 'Repositori',
+  'loopPrompt.lang': 'Bahasa prompt',
+  'loopPrompt.integration': 'Branch integrasi',
+  'loopPrompt.release': 'Branch rilis (opsional)',
+  'loopPrompt.releaseHelp': 'Jika Anda menetapkannya, loop tidak akan pernah menyentuhnya: hanya Anda yang membawa perubahan ke sana.',
+  'loopPrompt.goal': 'Tujuan proyek (opsional)',
+  'loopPrompt.goalPlaceholder': 'Apa proyek ini, untuk siapa, dan ke mana Anda ingin membawanya.',
+  'loopPrompt.preview': 'Prompt',
+  'loopPrompt.chars': '{n} karakter',
+  'loopPrompt.copy': 'Salin prompt',
 });

@@ -724,4 +724,18 @@ GB.i18n.define('sk', {
   'bitacora.gap': 'Bez aktivity',
   'bitacora.nextNone': 'Nič naliehavé: len tak ďalej.',
   'bitacora.historyNone': 'Žiadny palubný denník tohto repozitára ešte nebol uzavretý.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Prompt autonómnej slučky',
+  'loopPrompt.btnTitle': 'Skopírovať prompt, s ktorým bude Claude Code tento projekt vyvíjať sám',
+  'loopPrompt.help': 'Vložte ho do Routine v Claude Code (jedna iterácia na spustenie, každých pár hodín) alebo do relácie. Prvé spustenie založí v repozitári slučku (LOOP.md) a ďalšie sa ňou riadia a vylepšujú ju, ako slučka Brunell_Node. Funguje pre akýkoľvek projekt.',
+  'loopPrompt.repo': 'Repozitár',
+  'loopPrompt.lang': 'Jazyk promptu',
+  'loopPrompt.integration': 'Integračná vetva',
+  'loopPrompt.release': 'Vetva pre vydania (voliteľné)',
+  'loopPrompt.releaseHelp': 'Ak ju nastavíte, slučka sa jej nikdy nedotkne: zmeny do nej povyšujete len vy.',
+  'loopPrompt.goal': 'Cieľ projektu (voliteľné)',
+  'loopPrompt.goalPlaceholder': 'Čo to je, pre koho to je a kam chcete, aby smeroval.',
+  'loopPrompt.preview': 'Prompt',
+  'loopPrompt.chars': { one: '{n} znak', few: '{n} znaky', many: '{n} znaku', other: '{n} znakov' },
+  'loopPrompt.copy': 'Kopírovať prompt',
 });

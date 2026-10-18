@@ -713,4 +713,18 @@ GB.i18n.define('zh-Hant', {
   'bitacora.gap': '無活動',
   'bitacora.nextNone': '沒有緊急事項：繼續保持。',
   'bitacora.historyNone': '此儲存庫還沒有結束過任何一期日誌。',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': '自主迴圈提示詞',
+  'loopPrompt.btnTitle': '複製一段提示詞，讓 Claude Code 自主開發這個專案',
+  'loopPrompt.help': '將它貼到 Claude Code 的 Routine（每次執行一輪迭代，每隔幾小時一次）或某個工作階段中。第一次執行會在儲存庫中建立迴圈（LOOP.md），之後的每次執行都會遵循並改進它，就像 Brunell_Node 的迴圈一樣。適用於任何專案。',
+  'loopPrompt.repo': '儲存庫',
+  'loopPrompt.lang': '提示詞語言',
+  'loopPrompt.integration': '整合分支',
+  'loopPrompt.release': '發布分支（選填）',
+  'loopPrompt.releaseHelp': '設定後，迴圈永遠不會碰它：只有你能把變更推進到這個分支。',
+  'loopPrompt.goal': '專案目標（選填）',
+  'loopPrompt.goalPlaceholder': '它是什麼、為誰而做、你希望它往哪裡發展。',
+  'loopPrompt.preview': '提示詞',
+  'loopPrompt.chars': '{n} 個字元',
+  'loopPrompt.copy': '複製提示詞',
 });

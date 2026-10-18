@@ -770,4 +770,18 @@ GB.i18n.define('he', {
   'bitacora.gap': 'אין פעילות',
   'bitacora.nextNone': 'שום דבר דחוף: המשיכו כך.',
   'bitacora.historyNone': 'עדיין לא נסגר אף יומן של המאגר הזה.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'פרומפט ללולאה האוטונומית',
+  'loopPrompt.btnTitle': 'העתיקו פרומפט שגורם ל-Claude Code לפתח את הפרויקט הזה בעצמו',
+  'loopPrompt.help': 'הדביקו אותו ב-Routine של Claude Code (איטרציה אחת בכל הרצה, כל כמה שעות) או בסשן. ההרצה הראשונה מקימה את הלולאה במאגר (LOOP.md), וההרצות הבאות פועלות לפיה ומשפרות אותה, כמו הלולאה של Brunell_Node. זה מתאים לכל פרויקט.',
+  'loopPrompt.repo': 'מאגר',
+  'loopPrompt.lang': 'שפת הפרומפט',
+  'loopPrompt.integration': 'ענף אינטגרציה',
+  'loopPrompt.release': 'ענף release (אופציונלי)',
+  'loopPrompt.releaseHelp': 'אם תגדירו ענף כזה, הלולאה לעולם לא תיגע בו: רק אתם מקדמים אליו שינויים.',
+  'loopPrompt.goal': 'מטרת הפרויקט (אופציונלי)',
+  'loopPrompt.goalPlaceholder': 'מה הוא, למי הוא מיועד ולאן אתם רוצים שיגיע.',
+  'loopPrompt.preview': 'הפרומפט',
+  'loopPrompt.chars': { one: '{n} תו', two: '{n} תווים', other: '{n} תווים' },
+  'loopPrompt.copy': 'העתקת הפרומפט',
 });

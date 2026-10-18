@@ -713,4 +713,18 @@ GB.i18n.define('ms', {
   'bitacora.gap': 'Tiada aktiviti',
   'bitacora.nextNone': 'Tiada yang mendesak: teruskan.',
   'bitacora.historyNone': 'Belum ada buku log repositori ini yang ditutup.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Prompt gelung autonomi',
+  'loopPrompt.btnTitle': 'Salin prompt yang membolehkan Claude Code membangunkan projek ini sendiri',
+  'loopPrompt.help': 'Tampalkan dalam Routine Claude Code (satu lelaran bagi setiap larian, setiap beberapa jam) atau dalam satu sesi. Larian pertama menyediakan gelung dalam repositori (LOOP.md) dan larian seterusnya mengikutinya serta menambah baiknya, seperti gelung Brunell_Node. Ia sesuai untuk sebarang projek.',
+  'loopPrompt.repo': 'Repositori',
+  'loopPrompt.lang': 'Bahasa prompt',
+  'loopPrompt.integration': 'Branch integrasi',
+  'loopPrompt.release': 'Branch keluaran (pilihan)',
+  'loopPrompt.releaseHelp': 'Jika anda menetapkannya, gelung tidak akan menyentuhnya: hanya anda yang membawa perubahan ke situ.',
+  'loopPrompt.goal': 'Matlamat projek (pilihan)',
+  'loopPrompt.goalPlaceholder': 'Apakah projek ini, untuk siapa dan ke mana anda mahu ia pergi.',
+  'loopPrompt.preview': 'Prompt',
+  'loopPrompt.chars': '{n} aksara',
+  'loopPrompt.copy': 'Salin prompt',
 });

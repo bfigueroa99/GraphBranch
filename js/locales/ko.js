@@ -713,4 +713,18 @@ GB.i18n.define('ko', {
   'bitacora.gap': '활동 없음',
   'bitacora.nextNone': '급한 일은 없습니다. 이대로 계속하세요.',
   'bitacora.historyNone': '이 저장소에서 마감된 일지가 아직 없습니다.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': '자율 루프 프롬프트',
+  'loopPrompt.btnTitle': 'Claude Code가 이 프로젝트를 스스로 개발하게 하는 프롬프트 복사',
+  'loopPrompt.help': 'Claude Code의 Routine(실행마다 이터레이션 1회, 몇 시간 간격) 또는 세션에 붙여 넣으세요. 첫 실행에서 저장소에 루프(LOOP.md)를 마련하고, 이후 실행은 그 루프를 따르며 개선합니다. Brunell_Node의 루프와 같은 방식이며 어떤 프로젝트에도 쓸 수 있습니다.',
+  'loopPrompt.repo': '저장소',
+  'loopPrompt.lang': '프롬프트 언어',
+  'loopPrompt.integration': '통합 브랜치',
+  'loopPrompt.release': '릴리스 브랜치 (선택 사항)',
+  'loopPrompt.releaseHelp': '지정하면 루프는 이 브랜치를 절대 건드리지 않습니다. 이 브랜치로의 반영은 사용자만 할 수 있습니다.',
+  'loopPrompt.goal': '프로젝트 목표 (선택 사항)',
+  'loopPrompt.goalPlaceholder': '무엇인지, 누구를 위한 것인지, 어디로 나아가길 원하는지.',
+  'loopPrompt.preview': '프롬프트',
+  'loopPrompt.chars': '{n}자',
+  'loopPrompt.copy': '프롬프트 복사',
 });

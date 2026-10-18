@@ -714,4 +714,18 @@ GB.i18n.define('fr', {
   'bitacora.gap': 'Aucune activité',
   'bitacora.nextNone': 'Rien d’urgent : continuez ainsi.',
   'bitacora.historyNone': 'Aucun journal de bord de ce dépôt n’a encore été clôturé.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Prompt de la boucle autonome',
+  'loopPrompt.btnTitle': 'Copier un prompt pour que Claude Code développe ce projet tout seul',
+  'loopPrompt.help': 'Collez-le dans une Routine de Claude Code (une itération par exécution, toutes les quelques heures) ou dans une session. La première exécution met en place la boucle dans le dépôt (LOOP.md) et les suivantes l’appliquent et l’améliorent, comme la boucle de Brunell_Node. Cela fonctionne pour n’importe quel projet.',
+  'loopPrompt.repo': 'Dépôt',
+  'loopPrompt.lang': 'Langue du prompt',
+  'loopPrompt.integration': 'Branche d’intégration',
+  'loopPrompt.release': 'Branche de release (facultative)',
+  'loopPrompt.releaseHelp': 'Si vous en définissez une, la boucle n’y touche jamais : vous seul y promouvez des changements.',
+  'loopPrompt.goal': 'Objectif du projet (facultatif)',
+  'loopPrompt.goalPlaceholder': 'Ce qu’il est, à qui il s’adresse et où vous voulez qu’il aille.',
+  'loopPrompt.preview': 'Le prompt',
+  'loopPrompt.chars': { one: '{n} caractère', other: '{n} caractères' },
+  'loopPrompt.copy': 'Copier le prompt',
 });

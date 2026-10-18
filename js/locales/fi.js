@@ -713,4 +713,18 @@ GB.i18n.define('fi', {
   'bitacora.gap': 'Ei toimintaa',
   'bitacora.nextNone': 'Ei mitään kiireellistä: jatka samaan malliin.',
   'bitacora.historyNone': 'Tämän repositorion lokikirjoja ei ole vielä suljettu.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Autonomisen silmukan kehote',
+  'loopPrompt.btnTitle': 'Kopioi kehote, jolla Claude Code kehittää tätä projektia itsenäisesti',
+  'loopPrompt.help': 'Liitä se Claude Code -sovelluksen Routine-tehtävään (yksi iteraatio ajoa kohden, muutaman tunnin välein) tai istuntoon. Ensimmäinen ajo rakentaa silmukan repositorioon (LOOP.md), ja seuraavat ajot noudattavat ja parantavat sitä, kuten Brunell_Node-silmukassa. Kehote toimii missä tahansa projektissa.',
+  'loopPrompt.repo': 'Repositorio',
+  'loopPrompt.lang': 'Kehotteen kieli',
+  'loopPrompt.integration': 'Integraatiohaara',
+  'loopPrompt.release': 'Julkaisuhaara (valinnainen)',
+  'loopPrompt.releaseHelp': 'Jos asetat sellaisen, silmukka ei koskaan koske siihen: vain sinä viet muutoksia sinne.',
+  'loopPrompt.goal': 'Projektin tavoite (valinnainen)',
+  'loopPrompt.goalPlaceholder': 'Mikä se on, kenelle se on ja mihin suuntaan haluat sen menevän.',
+  'loopPrompt.preview': 'Kehote',
+  'loopPrompt.chars': { one: '{n} merkki', other: '{n} merkkiä' },
+  'loopPrompt.copy': 'Kopioi kehote',
 });

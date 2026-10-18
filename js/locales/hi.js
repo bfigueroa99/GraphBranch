@@ -713,4 +713,18 @@ GB.i18n.define('hi', {
   'bitacora.gap': 'कोई गतिविधि नहीं',
   'bitacora.nextNone': 'कुछ भी ज़रूरी नहीं: ऐसे ही चलते रहें।',
   'bitacora.historyNone': 'इस रिपॉज़िटरी की अभी तक कोई लॉगबुक बंद नहीं हुई।',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'स्वायत्त लूप का प्रॉम्प्ट',
+  'loopPrompt.btnTitle': 'ऐसा प्रॉम्प्ट कॉपी करें जिससे Claude Code यह प्रोजेक्ट खुद विकसित करे',
+  'loopPrompt.help': 'इसे Claude Code के किसी Routine में (हर रन में एक इटरेशन, हर कुछ घंटों में) या किसी सेशन में पेस्ट करें। पहला रन रिपॉज़िटरी में लूप (LOOP.md) तैयार करता है और अगले रन उसका पालन करते हैं और उसे बेहतर बनाते हैं, Brunell_Node के लूप की तरह। यह किसी भी प्रोजेक्ट के लिए काम करता है।',
+  'loopPrompt.repo': 'रिपॉज़िटरी',
+  'loopPrompt.lang': 'प्रॉम्प्ट की भाषा',
+  'loopPrompt.integration': 'इंटीग्रेशन ब्रांच',
+  'loopPrompt.release': 'रिलीज़ ब्रांच (वैकल्पिक)',
+  'loopPrompt.releaseHelp': 'अगर आप कोई ब्रांच चुनते हैं, तो लूप उसे कभी नहीं छूता: उसमें बदलाव सिर्फ़ आप प्रमोट करते हैं।',
+  'loopPrompt.goal': 'प्रोजेक्ट का लक्ष्य (वैकल्पिक)',
+  'loopPrompt.goalPlaceholder': 'यह क्या है, किसके लिए है और आप इसे कहाँ तक ले जाना चाहते हैं।',
+  'loopPrompt.preview': 'प्रॉम्प्ट',
+  'loopPrompt.chars': { one: '{n} अक्षर', other: '{n} अक्षर' },
+  'loopPrompt.copy': 'प्रॉम्प्ट कॉपी करें',
 });

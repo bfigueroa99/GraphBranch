@@ -714,4 +714,18 @@ GB.i18n.define('fil', {
   'bitacora.gap': 'Walang aktibidad',
   'bitacora.nextNone': 'Walang kailangang madaliin: ituloy lang.',
   'bitacora.historyNone': 'Wala pang naisasarang talaan ng repository na ito.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Prompt para sa autonomous na loop',
+  'loopPrompt.btnTitle': 'Kopyahin ang isang prompt para kusang i-develop ng Claude Code ang proyektong ito',
+  'loopPrompt.help': 'I-paste ito sa isang Routine ng Claude Code (isang iteration bawat run, kada ilang oras) o sa isang session. Inihahanda ng unang run ang loop sa repository (LOOP.md), at sinusundan at pinapahusay ito ng mga susunod na run, tulad ng loop ng Brunell_Node. Gumagana ito sa kahit anong proyekto.',
+  'loopPrompt.repo': 'Repository',
+  'loopPrompt.lang': 'Wika ng prompt',
+  'loopPrompt.integration': 'Branch ng integration',
+  'loopPrompt.release': 'Branch ng release (opsyonal)',
+  'loopPrompt.releaseHelp': 'Kapag nagtakda ka nito, hinding-hindi ito gagalawin ng loop: ikaw lang ang magdadala ng mga pagbabago rito.',
+  'loopPrompt.goal': 'Layunin ng proyekto (opsyonal)',
+  'loopPrompt.goalPlaceholder': 'Ano ito, para kanino ito, at saan mo gustong umabot ito.',
+  'loopPrompt.preview': 'Ang prompt',
+  'loopPrompt.chars': { one: '{n} karakter', other: '{n} karakter' },
+  'loopPrompt.copy': 'Kopyahin ang prompt',
 });

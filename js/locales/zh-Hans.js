@@ -713,4 +713,18 @@ GB.i18n.define('zh-Hans', {
   'bitacora.gap': '无活动',
   'bitacora.nextNone': '没有紧急事项：继续保持。',
   'bitacora.historyNone': '该仓库还没有结束过任何一期日志。',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': '自主循环提示词',
+  'loopPrompt.btnTitle': '复制一段提示词，让 Claude Code 自主开发这个项目',
+  'loopPrompt.help': '把它粘贴到 Claude Code 的 Routine（每次运行一轮迭代，每隔几小时一次）或某个会话中。首次运行会在仓库中搭建循环（LOOP.md），之后的每次运行都会遵循并改进它，就像 Brunell_Node 的循环那样。适用于任何项目。',
+  'loopPrompt.repo': '仓库',
+  'loopPrompt.lang': '提示词语言',
+  'loopPrompt.integration': '集成分支',
+  'loopPrompt.release': '发布分支（可选）',
+  'loopPrompt.releaseHelp': '设置后，循环永远不会动它：只有你能把改动推进到这个分支。',
+  'loopPrompt.goal': '项目目标（可选）',
+  'loopPrompt.goalPlaceholder': '它是什么、为谁而做、你希望它走向哪里。',
+  'loopPrompt.preview': '提示词',
+  'loopPrompt.chars': '{n} 个字符',
+  'loopPrompt.copy': '复制提示词',
 });

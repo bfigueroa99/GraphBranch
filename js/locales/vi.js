@@ -713,4 +713,18 @@ GB.i18n.define('vi', {
   'bitacora.gap': 'Không có hoạt động',
   'bitacora.nextNone': 'Không có gì gấp: cứ tiếp tục.',
   'bitacora.historyNone': 'Chưa có nhật ký nào của kho này được chốt.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Prompt cho vòng lặp tự chủ',
+  'loopPrompt.btnTitle': 'Sao chép một prompt để Claude Code tự phát triển dự án này',
+  'loopPrompt.help': 'Dán nó vào một Routine của Claude Code (mỗi lần chạy một lượt, cách vài giờ một lần) hoặc vào một phiên. Lần chạy đầu tiên sẽ thiết lập vòng lặp trong repo (LOOP.md), các lần sau sẽ làm theo và cải thiện nó, giống như vòng lặp của Brunell_Node. Dùng được cho mọi dự án.',
+  'loopPrompt.repo': 'Kho lưu trữ',
+  'loopPrompt.lang': 'Ngôn ngữ của prompt',
+  'loopPrompt.integration': 'Nhánh tích hợp',
+  'loopPrompt.release': 'Nhánh phát hành (tùy chọn)',
+  'loopPrompt.releaseHelp': 'Nếu bạn đặt một nhánh, vòng lặp sẽ không bao giờ động vào nó: chỉ bạn mới đưa thay đổi lên đó.',
+  'loopPrompt.goal': 'Mục tiêu dự án (tùy chọn)',
+  'loopPrompt.goalPlaceholder': 'Dự án là gì, dành cho ai và bạn muốn nó đi về đâu.',
+  'loopPrompt.preview': 'Prompt',
+  'loopPrompt.chars': '{n} ký tự',
+  'loopPrompt.copy': 'Sao chép prompt',
 });

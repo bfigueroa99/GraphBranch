@@ -756,4 +756,18 @@ GB.i18n.define('fa', {
   'bitacora.gap': 'بدون فعالیت',
   'bitacora.nextNone': 'چیز فوری‌ای نیست: همین‌طور ادامه دهید.',
   'bitacora.historyNone': 'هنوز هیچ دفتر وقایعی از این مخزن بسته نشده است.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'پرامپت حلقه خودگردان',
+  'loopPrompt.btnTitle': 'پرامپتی را کپی کنید که با آن Claude Code این پروژه را خودش توسعه دهد',
+  'loopPrompt.help': 'آن را در یک Routine از Claude Code (یک تکرار در هر اجرا، هر چند ساعت یک‌بار) یا در یک نشست بچسبانید. اجرای نخست حلقه را در مخزن (LOOP.md) راه می‌اندازد و اجراهای بعدی از آن پیروی می‌کنند و بهترش می‌کنند، مانند حلقه Brunell_Node. برای هر پروژه‌ای کار می‌کند.',
+  'loopPrompt.repo': 'مخزن',
+  'loopPrompt.lang': 'زبان پرامپت',
+  'loopPrompt.integration': 'شاخه یکپارچه‌سازی',
+  'loopPrompt.release': 'شاخه انتشار (اختیاری)',
+  'loopPrompt.releaseHelp': 'اگر یکی تعیین کنید، حلقه هرگز به آن دست نمی‌زند: فقط خودتان تغییرات را به آن ارتقا می‌دهید.',
+  'loopPrompt.goal': 'هدف پروژه (اختیاری)',
+  'loopPrompt.goalPlaceholder': 'چیست، برای چه کسی است و می‌خواهید به کجا برسد.',
+  'loopPrompt.preview': 'پرامپت',
+  'loopPrompt.chars': { one: '{n} نویسه', other: '{n} نویسه' },
+  'loopPrompt.copy': 'کپی پرامپت',
 });

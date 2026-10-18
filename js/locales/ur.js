@@ -756,4 +756,18 @@ GB.i18n.define('ur', {
   'bitacora.gap': 'کوئی سرگرمی نہیں',
   'bitacora.nextNone': 'کچھ فوری نہیں: یوں ہی جاری رکھیں۔',
   'bitacora.historyNone': 'اس ریپوزٹری کا ابھی تک کوئی روزنامچہ بند نہیں ہوا۔',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'خودمختار لوپ کا پرامپٹ',
+  'loopPrompt.btnTitle': 'ایسا پرامپٹ کاپی کریں جس سے Claude Code یہ پروجیکٹ خود تیار کرے',
+  'loopPrompt.help': 'اسے Claude Code کی کسی Routine میں (ہر رن میں ایک اِٹریشن، ہر چند گھنٹے بعد) یا کسی سیشن میں پیسٹ کریں۔ پہلا رن ریپوزٹری میں لوپ (LOOP.md) قائم کرتا ہے اور اگلے رن اس پر عمل کرتے اور اسے بہتر بناتے ہیں، جیسے Brunell_Node کا لوپ۔ یہ کسی بھی پروجیکٹ کے لیے کام کرتا ہے۔',
+  'loopPrompt.repo': 'ریپوزٹری',
+  'loopPrompt.lang': 'پرامپٹ کی زبان',
+  'loopPrompt.integration': 'انٹیگریشن برانچ',
+  'loopPrompt.release': 'ریلیز برانچ (اختیاری)',
+  'loopPrompt.releaseHelp': 'اگر آپ کوئی برانچ مقرر کریں تو لوپ اسے کبھی نہیں چھوتا: اس میں تبدیلیاں صرف آپ پروموٹ کرتے ہیں۔',
+  'loopPrompt.goal': 'پروجیکٹ کا مقصد (اختیاری)',
+  'loopPrompt.goalPlaceholder': 'یہ کیا ہے، کس کے لیے ہے اور آپ اسے کہاں تک لے جانا چاہتے ہیں۔',
+  'loopPrompt.preview': 'پرامپٹ',
+  'loopPrompt.chars': { one: '{n} حرف', other: '{n} حروف' },
+  'loopPrompt.copy': 'پرامپٹ کاپی کریں',
 });

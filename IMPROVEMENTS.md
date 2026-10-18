@@ -2157,5 +2157,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Textos: 13 claves nuevas en los 40 idiomas.
 - README: la función, Controles, Estructura, Límites conocidos y Seguridad.
 - QA: filas tocadas: demo sin token (smoke), 40 idiomas (check-i18n), teclado (Esc devuelve el foco al botón), celular a 390 px sin desborde y tema oscuro, consola limpia, cuota (sin consultas).
-- Validado: VALIDADO
+- Validado: 335 pruebas (`node --test`), smoke (40 idiomas, 138 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 99, mantenimiento · Errores: pendiente 4 (La etiqueta de ramas fusionadas de la leyenda está fija en español (`layout.js:…)

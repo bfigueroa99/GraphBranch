@@ -474,9 +474,16 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-16. [QA] El smoke y la auditoría no miran el 3D de celular a 320 px con el panel de ramas abierto (solo las
-    etiquetas); revisar a mano que las etiquetas de 24 px no se tapen entre sí con 1.000 ramas.
-    Reproducción: Playwright contra `node e2e/serve.mjs 4173`, 320 px, 3D, `?repo=demo`.
+16. [QA] No hay un escenario de la auditoría con 1.000 ramas a 320 px en 3D: la comprobación de etiquetas
+    pisadas (`celular-320-3d`) corre sobre la API simulada de 3 ramas; con 1.000 solo se miró a mano.
+    Reproducción: Playwright contra `node e2e/serve.mjs 4173` con 1.000 ramas simuladas, 320 px, `?repo=acme/web`
+    → 4 etiquetas visibles, 0 pisadas (hoy bien; nada lo vigila).
+17. [QA] Con 1.000 ramas a 320 px el 3D deja solo 4 etiquetas de rama visibles (`reach` de `placeLabels`
+    esconde las lejanas); revisar si en celular conviene un alcance mayor o una pista de «+N ramas».
+    Reproducción: la misma de arriba, contar `.g3-head` con `display` distinto de `none` → 4.
+18. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
+    nítidas (demo a 320 px: 3 de 5 atenuadas); comprobar que Tab y el toque no caigan en una atenuada.
+    Reproducción: Playwright, 320 px, 3D, `?repo=demo` → `.g3-head` con opacidad 0,22 y `display: flex`.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); `placeLabels`/`placeNotes` crean arreglos por cuadro
@@ -2081,3 +2088,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso).
 - Validado: 312 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 27 e2e en verde.
 - **Siguiente:** iteración 95, mantenimiento · QA: pendiente 16 (El smoke y la auditoría no miran el 3D de celular a 320 px con el panel de rama…)
+
+### 2026-10-18 · Iteración 95 · Mantenimiento · QA
+
+- **Auditoría de QA: el 3D de celular a 320 px** (pendiente 16). La auditoría completa gana el escenario `celular-320-3d` (tipo nuevo `etiquetas-pisadas`, Baja): dos etiquetas de rama nítidas (opacidad ≥ 0,5) que se pisan son un hallazgo; las atenuadas por solaparse son a propósito. A mano, 320 px: demo (5 ramas, 3 atenuadas, ninguna nítida pisada) y 1.000 ramas simuladas con nombres larguísimos (4 etiquetas, 0 pisadas, sin errores de consola, sin desborde, ninguna menor de 24 px).
+- **Hallazgos:** 3 nuevos (pendientes 16–18), 0 a la base de la auditoría
+- **Pruebas que fallan sin el arreglo:** `tools/audit.test.mjs` (el escenario `celular-320-3d` de la completa y el tipo `etiquetas-pisadas`).
+- README: no cambia (herramienta del loop).
+- QA: auditoría completa con `--langs` (0 hallazgos, 114 s), smoke tres veces (3 en verde, con `PLAYWRIGHT_CHROMIUM_PATH`) y los bordes de 320 px a mano; no toca la página.
+- Reclamo: loop/95, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); el borrado de las `loop/82`–`loop/94` fusionadas falló con «hung up unexpectedly» del proxy y un comando posterior lo bloqueó el clasificador de permisos.
+- Validado: PENDIENTE
+- **Siguiente:** iteración 96, expansión: ítem 58 (Ejercicios compartidos, tercera entrega, Público)

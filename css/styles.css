@@ -566,7 +566,7 @@ kbd {
 /* ---------- franja de resumen ---------- */
 .stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr)); /* la quinta es la bitácora en vivo */
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -4937,4 +4937,608 @@ a.hl-row:focus-visible {
   color: var(--bg);
   font: 600 10.5px var(--font-mono);
   line-height: 18px;
+}
+
+/* ---------- bitácora en vivo (js/bitacora.js) ----------
+   La tarjeta del resumen abre un panel con la forma de las bitácoras de Brunell_Node: encabezado con la
+   bajada, secciones numeradas, la nota grande en violeta, hallazgos con el borde según su gravedad y la
+   cronología día por día. El color sigue reservado al estado: verde arreglado, ámbar a medias, rojo grave. */
+.stat-bitacora {
+  margin: 0;
+  border: 0;
+  border-start-end-radius: var(--radius);
+  border-end-end-radius: var(--radius);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.stat-bitacora:hover {
+  background: var(--surface-2);
+}
+.stat-bitacora:focus-visible {
+  outline: 2px solid var(--s7);
+  outline-offset: -2px;
+}
+.stat-bitacora .stat-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.stat-bitacora .stat-label > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stat-bitacora .live-dot,
+.bt-eyebrow .live-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  background: var(--good);
+}
+.stat-bitacora .stat-value {
+  gap: 2px;
+}
+#st-bitacora-score {
+  color: var(--s7);
+}
+.bt-of {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.bt-trend {
+  margin-inline-start: 6px;
+  font: 600 12px var(--font-mono);
+  color: var(--ink-3);
+}
+.bt-trend.up {
+  color: color-mix(in srgb, var(--good) 75%, var(--ink));
+}
+.bt-trend.down {
+  color: color-mix(in srgb, var(--bad) 80%, var(--ink));
+}
+
+.bitacora {
+  --bt-accent: var(--s7);
+  --bt-ok: color-mix(in srgb, var(--good) 72%, var(--ink));
+  --bt-warn: color-mix(in srgb, var(--warn) 62%, var(--ink));
+  --bt-bad: color-mix(in srgb, var(--bad) 82%, var(--ink));
+  width: min(1040px, calc(100vw - 2 * var(--gutter)));
+  max-width: none;
+}
+.bt-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* una tabla ancha se desplaza en su caja, no estira el panel */
+  gap: 0;
+  max-height: min(90vh, 1100px);
+  overflow: auto;
+  padding: 22px 30px 26px;
+}
+.bt-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.bt-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  margin: 0;
+  font: 500 11.5px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bt-accent);
+  overflow-wrap: anywhere;
+}
+.bt-mast {
+  padding: 10px 0 22px;
+  border-bottom: 2px solid var(--ink);
+}
+.bt-mast h2 {
+  margin: 0 0 12px;
+  font: 700 clamp(28px, 4.6vw, 46px) / 1.05 var(--font-display);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.bt-dek {
+  max-width: 66ch;
+  margin: 0;
+  font-size: 16.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.bt-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  margin: 16px 0 0;
+  font: 400 12px var(--font-mono);
+  color: var(--ink-3);
+}
+.bt-sec {
+  padding-top: 30px;
+}
+.bt-sec-head {
+  margin-bottom: 12px;
+}
+.bt-mark {
+  font: 500 11.5px var(--font-mono);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.bt-big {
+  margin: 0;
+  font: 650 clamp(19px, 2.6vw, 25px) / 1.25 var(--font-display);
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+.bt-big a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+.bt-more {
+  font: 500 13px var(--font-mono);
+  color: var(--ink-3);
+}
+.bt-lede {
+  max-width: 66ch;
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.bt-note {
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  border-inline-start: 3px solid var(--bt-warn);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--warn) 9%, var(--surface));
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.bt-go {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.bt-go:hover {
+  color: var(--bt-accent);
+}
+
+/* el gráfico de commits por día */
+.bt-chart {
+  margin: 0;
+  padding: 18px 20px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.bt-chart-scroll {
+  overflow-x: auto;
+}
+.bt-bars {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  height: 150px;
+  min-width: min-content;
+}
+.bt-col {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 16px;
+  max-width: 72px;
+}
+.bt-col.off {
+  opacity: 0.4; /* antes de la historia cargada: no se sabe */
+}
+.bt-stack {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 0;
+}
+.bt-bar-in,
+.bt-bar-out {
+  display: block;
+  min-height: 2px;
+}
+.bt-bar-in,
+.bt-bar-out {
+  border-radius: 2px;
+}
+.bt-bar-in {
+  background: var(--bt-accent);
+}
+.bt-bar-out {
+  background: color-mix(in srgb, var(--bt-accent) 32%, var(--surface));
+}
+.bt-bar-out + .bt-bar-in {
+  margin-top: 1px;
+}
+.bt-bar-n,
+.bt-bar-d {
+  font: 500 10px / 1.5 var(--font-mono);
+  color: var(--ink-3);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.bt-bar-n {
+  color: var(--ink-2);
+}
+.bt-bar-d {
+  margin-top: 4px;
+}
+.bt-chart figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.bt-key {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--bt-accent);
+}
+.bt-key.out {
+  margin-inline-start: 12px;
+  background: color-mix(in srgb, var(--bt-accent) 32%, var(--surface));
+}
+
+/* la franja de cifras */
+.bt-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  margin-top: 18px;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+}
+.bt-metric {
+  padding: 14px 16px 14px 0;
+  min-width: 0;
+}
+.bt-metric .v {
+  font: 700 26px / 1 var(--font-display);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.bt-metric .k {
+  margin-top: 7px;
+  font: 400 10.5px / 1.4 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+
+/* la nota */
+.bt-score {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px 28px;
+  padding: 20px 24px;
+  border: 1px solid var(--line);
+  border-inline-start: 3px solid var(--bt-accent);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.bt-score-n {
+  font: 700 64px / 0.9 var(--font-display);
+  letter-spacing: -0.03em;
+  color: var(--bt-accent);
+  font-variant-numeric: tabular-nums;
+}
+.bt-score-n span {
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.bt-score-txt {
+  flex: 1 1 280px;
+}
+.bt-score-txt p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.bt-score-txt p + p {
+  margin-top: 6px;
+}
+
+/* tablas: la nota con su historial, el seguimiento y las anteriores */
+.bt-tbl {
+  margin-top: 16px;
+  overflow-x: auto;
+}
+.bt-tbl table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+.bt-tbl th,
+.bt-tbl td {
+  padding: 9px 14px 9px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: start;
+  vertical-align: top;
+}
+.bt-tbl thead th {
+  font: 400 10.5px var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  border-bottom-color: var(--line-strong);
+  white-space: nowrap;
+}
+.bt-tbl .n {
+  padding-inline: 14px 0;
+  text-align: end;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.bt-tbl .n0 {
+  padding-inline-end: 18px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.bt-tbl .live {
+  color: var(--bt-accent);
+  font-weight: 600;
+}
+.bt-tbl .tot td {
+  font-weight: 650;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 0;
+}
+.bt-tbl td:first-child:not(.n0) {
+  min-width: 10em;
+}
+.bt-why {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+/* píldoras de estado */
+.bt-pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font: 600 10.5px var(--font-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.bt-pill.ok {
+  background: color-mix(in srgb, var(--good) 14%, var(--surface));
+  color: var(--bt-ok);
+}
+.bt-pill.warn {
+  background: color-mix(in srgb, var(--warn) 16%, var(--surface));
+  color: var(--bt-warn);
+}
+.bt-pill.bad {
+  background: color-mix(in srgb, var(--bad) 13%, var(--surface));
+  color: var(--bt-bad);
+}
+
+/* hallazgos */
+.bt-finds {
+  border-top: 1px solid var(--line-strong);
+}
+.bt-find {
+  padding: 16px 0 16px 18px;
+  border-bottom: 1px solid var(--line);
+  border-inline-start: 3px solid var(--line-strong);
+}
+.bt-find.sev-alto {
+  border-inline-start-color: var(--bad);
+}
+.bt-find.sev-medio {
+  border-inline-start-color: var(--warn);
+}
+.bt-find-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+}
+.bt-find h4 {
+  flex: 1 1 260px;
+  margin: 0;
+  font: 600 16px / 1.3 var(--font-display);
+}
+.bt-find p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.bt-rows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  font: 400 12.5px var(--font-mono);
+  color: var(--ink-2);
+}
+.bt-rows a {
+  overflow-wrap: anywhere;
+}
+
+/* cronología */
+.bt-tl {
+  border-top: 1px solid var(--line-strong);
+}
+.bt-day {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 0 22px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.bt-day-date {
+  font: 500 12px var(--font-mono);
+  color: var(--bt-accent);
+  white-space: nowrap;
+}
+.bt-day-date span {
+  display: block;
+  margin-top: 4px;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.bt-day h4 {
+  margin: 0;
+  font: 600 15px / 1.3 var(--font-display);
+  overflow-wrap: anywhere;
+}
+.bt-day p {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+.bt-gap {
+  background: var(--surface-2);
+}
+.bt-gap .bt-day-date {
+  padding-inline-start: 8px;
+  color: var(--ink-3);
+}
+.bt-gap p {
+  margin: 0;
+  color: var(--ink-3);
+}
+.bt-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+.bt-tag {
+  padding: 1px 7px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  font: 400 10.5px var(--font-mono);
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+
+/* qué sigue */
+.bt-next {
+  margin: 0;
+  padding-inline-start: 22px;
+  font-size: 14.5px;
+  color: var(--ink-2);
+}
+.bt-next li + li {
+  margin-top: 7px;
+}
+.bt-next strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* cerrar, copiar y guardar */
+.bt-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 30px;
+  padding-top: 18px;
+  border-top: 2px solid var(--ink);
+}
+.bt-actions .field input {
+  font-family: var(--font-ui);
+  font-size: 14px;
+}
+.bt-actions .btn {
+  height: auto;
+  min-height: 34px;
+  padding-block: 6px;
+  white-space: normal;
+  text-align: center;
+}
+.bt-out {
+  margin: 0;
+  min-height: 1.4em;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.bitacora > .bt-wrap > .help {
+  margin-top: 16px;
+}
+
+/* en la práctica de git no hay bitácora: las otras cuatro cifras ocupan la franja */
+@media (min-width: 721px) {
+  .stats:has(> .stat-bitacora[hidden]) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 720px) {
+  .stat-bitacora {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--line);
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+}
+@media (max-width: 560px) {
+  .bt-wrap {
+    padding: 16px 16px 20px;
+  }
+  .bt-day {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  .bt-day-date span {
+    display: inline;
+    margin-inline-start: 8px;
+  }
+  .bt-score-n {
+    font-size: 52px;
+  }
+  .bt-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .bt-bars {
+    gap: 3px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stat-bitacora .live-dot::after,
+  .bt-eyebrow .live-dot::after {
+    animation: none;
+  }
 }

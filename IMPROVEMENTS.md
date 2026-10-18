@@ -2107,8 +2107,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - **Capacidad nueva: ejercicios compartidos con solución propuesta** (ítem 58 de la hoja de ruta). «Crear un ejercicio» gana el campo «Solución propuesta» (hasta 10 comandos de 120 caracteres): se corren al crear y tienen que resolver el ejercicio, o se rechaza con su error. «Copiar enlace con la solución» arma `?practice=<código>&solution=1`; solo ese código lleva la solución (`r`), el enlace común no. Quien abre el enlace ve el botón «Ver solución», que escribe un paso por pulsación en la terminal (con `textContent`, sin ejecutarlo) hasta agotarlos; reiniciar conserva la solución y salir de la práctica quita `solution` de la URL. Sin `solution=1` el botón no aparece aunque el código la traiga.
 - **Pruebas que fallan sin la capacidad:** `tools/gitsim.test.mjs` (la solución solo viaja si se pide, resuelve el ejercicio y se rechaza si no lo resuelve, falla, pasa de 10 o de 120 caracteres) y un paso del smoke (crear con solución en el formulario, rechazo de una inválida, enlace con `solution=1`, pasos uno a uno con una `<b>` sin interpretar, sin resolver el ejercicio, y sin el botón con el enlace común).
 - README: función, pruebas, Límites conocidos y Seguridad al día.
-- QA: filas tocadas: terminal de práctica y formulario de creación (smoke); auditoría: VALIDADO_AUD
+- QA: filas tocadas: terminal de práctica y formulario de creación (smoke); auditoría: 0 hallazgos nuevos
 - Reclamo: loop/96, sin colisión
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); el borrado de las `loop/83`–`loop/95` fusionadas falló otra vez («hung up unexpectedly» del proxy y luego el clasificador de permisos), siguen en Para Benjamin.
-- Validado: VALIDADO_LINEA
+- Validado: 314 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 27 e2e en verde.
 - **Siguiente:** iteración 97, expansión: ítem 59 (Extensión de VS Code: recordar repos, Plataformas)

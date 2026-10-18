@@ -2810,6 +2810,12 @@
       if (grp) connectGroup(grp.group);
       else if (who) connectOwner(who.owner);
     }
+    const rotate = EMBED ? GB.embedOptions(location.search)?.rotate || 0 : 0; // &rotate=30: la capa pasa de un repo a otro
+    if (rotate)
+      setInterval(() => {
+        const live = tabs.filter((x) => !x.demo);
+        if (live.length > 1) showTab(live[(live.indexOf(active) + 1) % live.length]);
+      }, rotate * 1000);
     setTimeout(refreshOwners, 5000 + MAX_REPOS * STAGGER);
     setInterval(refreshOwners, OWNER_REFRESH);
     setTimeout(pollOrgEvents, 8000 + MAX_REPOS * STAGGER);

@@ -74,3 +74,13 @@ test('i18n.js marca <html> con lo que pide la URL', () => {
   assert.ok(!classes.has('embed-clear') && !classes.has('embed-hide-combo'));
   assert.equal(vars['--embed-bg'], '#00ff00');
 });
+
+test('embedOptions: rotate acepta de 5 a 3600 segundos y por defecto no rota', () => {
+  const { GB } = load('');
+  assert.equal(GB.embedOptions('?embed=1').rotate, 0);
+  assert.equal(GB.embedOptions('?embed=1&rotate=30').rotate, 30);
+  assert.equal(GB.embedOptions('?embed=1&rotate=5').rotate, 5);
+  assert.equal(GB.embedOptions('?embed=1&rotate=3600').rotate, 3600);
+  for (const bad of ['0', '4', '3601', '-3', '1.5', 'abc', '', '99999', '1e2']) assert.equal(GB.embedOptions('?embed=1&rotate=' + bad).rotate, 0, bad);
+  assert.equal(GB.embedOptions('?rotate=30'), null);
+});

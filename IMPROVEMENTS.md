@@ -2179,5 +2179,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: filas tocadas: demo sin token y varios repos (smoke con API simulada); sin textos nuevos; auditoría: la capa solo añade un temporizador, sin cambios visuales.
 - Reclamo: loop/100, sin colisión
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); Chromium se usó con `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`.
-- Validado: PENDIENTE
+- Validado: 337 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 101, expansión: ítem 62 (Lanzamientos en el resumen de la semana, Salidas)

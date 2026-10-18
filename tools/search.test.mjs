@@ -127,3 +127,14 @@ test('authorParam lee ?author= de la URL: recorta, quita caracteres de control y
   assert.equal(S.authorParam(q('author=' + 'x'.repeat(300))).length, 100);
   assert.equal(S.authorParam(null), '');
 });
+
+test('queryParam lee ?q= de la URL: recorta, quita caracteres de control y limita el largo', () => {
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(S.queryParam(q('')), '');
+  assert.equal(S.queryParam(q('path=src/')), '');
+  assert.equal(S.queryParam(q('q=fix')), 'fix');
+  assert.equal(S.queryParam(q('q=%20arregla%20bug%20')), 'arregla bug');
+  assert.equal(S.queryParam(q('q=a%00b%0Ac')), 'abc');
+  assert.equal(S.queryParam(q('q=' + 'x'.repeat(300))).length, 100);
+  assert.equal(S.queryParam(null), '');
+});

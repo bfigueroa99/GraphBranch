@@ -166,5 +166,13 @@
     return v.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 100);
   }
 
-  GB.search = { authors, authorParam, byAuthor, find, mount, pathParam, LIMIT };
+  /** La búsqueda que pide la URL (?q=texto): recortada, sin caracteres de control, de hasta 100; '' si no hay. */
+  function queryParam(q) {
+    const v = q && typeof q.get === 'function' ? q.get('q') : null;
+    if (typeof v !== 'string') return '';
+    // eslint-disable-next-line no-control-regex
+    return v.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 100);
+  }
+
+  GB.search = { authors, authorParam, byAuthor, find, mount, pathParam, queryParam, LIMIT };
 })((window.GB = window.GB || {}));

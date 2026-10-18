@@ -226,6 +226,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Lanzamientos en el resumen de la semana | Salidas | 1×2/1 | 2,0 | GitHub Pulse | ítem 62 |
 | Vista de texto: filtro por autor | Público | 1×2/2 | 1,0 | (ítem 33) | ítem 63 |
 | Choques entre ramas en la URL | Análisis | 1×2/1 | 2,0 | (ítem 14) | ítem 64 |
+| Salud del repo en la URL | Análisis | 1×2/1 | 2,0 | (ítem 12) | ítem 66 |
+| Búsqueda por fecha | Análisis | 1×2/2 | 1,0 | (ítem 19) | ítem 67 |
+| Práctica: stash y reset | Público | 2×2/2 | 2,0 | git-sim | ítem 68 |
+| Resumen de la organización como imagen | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 69 |
+| Los forks en el grafo, segunda entrega | Datos | 1×2/2 | 1,0 | Red de ramas de GitHub | ítem 70 |
+| Vista de texto: filtro por ruta en la URL | Público | 1×2/1 | 2,0 | (ítem 33) | ítem 71 |
 
 ## Públicos
 

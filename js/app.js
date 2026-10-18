@@ -525,6 +525,7 @@
       const { data, L } = drawGraph(true);
       feed.setDefaultBranch(data.repo.defaultBranch);
       renderSummary(data, L);
+      if (initialQuery && L.nodes.length) startUrlQuery();
       if (initialPath && L.nodes.length) startUrlPath(); // la demo y los repos ya cargados no pasan por onUpdate
     } else if (status?.state === 'error') showOverlay('error', status.message, status.nextAt == null);
     else showOverlay('loading', tab.demo ? i18n.msg('overlay.demoLoading') : i18n.msg('overlay.loading', { repo: nameOf(tab) }));
@@ -933,6 +934,7 @@
     renderSummary(data, L);
     renderTab(tab);
     if (initialReplay && L.nodes.length) startUrlReplay();
+    if (initialQuery && tab === active && L.nodes.length) startUrlQuery();
     if (initialPath && tab === active && L.nodes.length) startUrlPath();
     diffView.refresh(); // puede haber llegado el commit siguiente
   }
@@ -1641,13 +1643,24 @@
       },
     }
   );
-  $('#search-btn').addEventListener('click', () => {
+  function openSearch() {
     search.open();
     fillGraphAuthor();
     if (typeof el.search.showModal === 'function') el.search.showModal();
     else el.search.setAttribute('open', '');
     $('#search-input').focus();
+  }
+  $('#search-btn').addEventListener('click', openSearch);
+  $('#search-input').addEventListener('input', () => {
+    if (!initialQuery) setUrlParam('q', $('#search-input').value.trim().slice(0, 100)); // la búsqueda se comparte con la URL
   });
+  let initialQuery = ''; // ?q=texto: se abre una vez, con la primera historia del repo a la vista
+  /** La búsqueda que pide la URL, una sola vez y con la primera historia que llega. */
+  function startUrlQuery() {
+    $('#search-input').value = initialQuery;
+    initialQuery = '';
+    openSearch();
+  }
   $('#search-close').addEventListener('click', closeSearch);
 
   const syncFiltered = () => $('#search-btn').classList.toggle('filtered', !!authorFilter || !pathEl.clear.hidden);
@@ -2491,6 +2504,7 @@
     initialReplay = GB.Replay.paramsOf(q);
     initialPath = EMBED ? '' : GB.search.pathParam(q);
     initialAuthor = EMBED ? '' : GB.search.authorParam(q);
+    initialQuery = EMBED ? '' : GB.search.queryParam(q);
     initialTV = !EMBED && q.has('tv') && !/^(0|false|no|off)$/i.test(q.get('tv'));
   } catch {
     /* sin query string */

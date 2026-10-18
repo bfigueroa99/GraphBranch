@@ -2463,6 +2463,40 @@ console.log('Filtro por ruta desde la URL (?path=)');
   await page.context().close();
 }
 
+console.log('Búsqueda desde la URL (?q=)');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, 'abre la búsqueda ya escrita, con resultados, y mantiene el texto en la URL', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    const word = await page.evaluate(() => {
+      const msg = document.querySelector('#search .sr-hit .tv-msg')?.textContent || '';
+      return msg.split(/[^\p{L}\p{N}]+/u).sort((a, b) => b.length - a.length)[0] || '';
+    });
+    if (!word) throw new Error('no hay un mensaje del que sacar una búsqueda');
+    await page.goto(`${base}/index.html?lang=es&q=${encodeURIComponent(' ' + word + ' ')}`);
+    await loaded(page);
+    await page.waitForSelector('#search[open]', { timeout: T(5000) }).catch(() => {
+      throw new Error('?q= no abrió la búsqueda');
+    });
+    const st = await page.evaluate(() => ({
+      value: document.querySelector('#search-input').value,
+      hits: document.querySelectorAll('#search .sr-hit').length,
+      focus: document.activeElement?.id,
+    }));
+    if (st.value !== word) throw new Error(`el campo quedó en «${st.value}», no en «${word}»`);
+    if (!st.hits) throw new Error('?q= no lista resultados');
+    if (st.focus !== 'search-input') throw new Error('el foco no está en el campo: ' + st.focus);
+    await page.fill('#search-input', 'zzzz-no-existe');
+    if (!(await page.evaluate(() => location.search)).includes('q=zzzz')) throw new Error('la URL no sigue al texto');
+    await page.fill('#search-input', '');
+    if ((await page.evaluate(() => location.search)).includes('q=')) throw new Error('vaciar el campo deja ?q= en la URL');
+  });
+  await page.context().close();
+}
+
 console.log('Filtro por autor desde la URL (?author=)');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

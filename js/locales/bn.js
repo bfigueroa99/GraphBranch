@@ -713,4 +713,18 @@ GB.i18n.define('bn', {
   'bitacora.gap': 'কোনো কার্যকলাপ নেই',
   'bitacora.nextNone': 'জরুরি কিছু নেই: এভাবেই চালিয়ে যান।',
   'bitacora.historyNone': 'এই রিপোজিটরির কোনো লগবুক এখনও বন্ধ করা হয়নি।',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'স্বয়ংক্রিয় লুপের প্রম্পট',
+  'loopPrompt.btnTitle': 'এমন একটি প্রম্পট কপি করুন যাতে Claude Code নিজে থেকেই এই প্রজেক্টটি ডেভেলপ করে',
+  'loopPrompt.help': 'এটি Claude Code-এর একটি Routine-এ (প্রতি রানে একটি ইটারেশন, কয়েক ঘণ্টা পরপর) বা একটি সেশনে পেস্ট করুন। প্রথম রান রিপোজিটরিতে লুপটি (LOOP.md) তৈরি করে, আর পরের রানগুলো সেটি অনুসরণ করে ও উন্নত করে, Brunell_Node-এর লুপের মতো। এটি যেকোনো প্রজেক্টে কাজ করে।',
+  'loopPrompt.repo': 'রিপোজিটরি',
+  'loopPrompt.lang': 'প্রম্পটের ভাষা',
+  'loopPrompt.integration': 'ইন্টিগ্রেশন ব্রাঞ্চ',
+  'loopPrompt.release': 'রিলিজ ব্রাঞ্চ (ঐচ্ছিক)',
+  'loopPrompt.releaseHelp': 'আপনি একটি ঠিক করে দিলে লুপ সেটি কখনো ছোঁয় না: সেখানে পরিবর্তন শুধু আপনিই প্রমোট করেন।',
+  'loopPrompt.goal': 'প্রজেক্টের লক্ষ্য (ঐচ্ছিক)',
+  'loopPrompt.goalPlaceholder': 'এটি কী, কার জন্য এবং আপনি এটিকে কোথায় নিয়ে যেতে চান।',
+  'loopPrompt.preview': 'প্রম্পট',
+  'loopPrompt.chars': { one: '{n}টি অক্ষর', other: '{n}টি অক্ষর' },
+  'loopPrompt.copy': 'প্রম্পট কপি করুন',
 });

@@ -724,4 +724,18 @@ GB.i18n.define('cs', {
   'bitacora.gap': 'Bez aktivity',
   'bitacora.nextNone': 'Nic naléhavého: jen tak dál.',
   'bitacora.historyNone': 'Žádný palubní deník tohoto repozitáře zatím nebyl uzavřen.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Prompt autonomní smyčky',
+  'loopPrompt.btnTitle': 'Zkopírovat prompt, se kterým bude Claude Code tento projekt vyvíjet sám',
+  'loopPrompt.help': 'Vložte ho do Routine v Claude Code (jedna iterace na spuštění, každých pár hodin) nebo do relace. První spuštění založí v repozitáři smyčku (LOOP.md) a další se jí řídí a vylepšují ji, jako smyčka Brunell_Node. Funguje pro jakýkoli projekt.',
+  'loopPrompt.repo': 'Repozitář',
+  'loopPrompt.lang': 'Jazyk promptu',
+  'loopPrompt.integration': 'Integrační větev',
+  'loopPrompt.release': 'Větev pro vydání (volitelné)',
+  'loopPrompt.releaseHelp': 'Pokud ji nastavíte, smyčka se jí nikdy nedotkne: změny do ní povyšujete jen vy.',
+  'loopPrompt.goal': 'Cíl projektu (volitelné)',
+  'loopPrompt.goalPlaceholder': 'Co to je, pro koho to je a kam chcete, aby směřoval.',
+  'loopPrompt.preview': 'Prompt',
+  'loopPrompt.chars': { one: '{n} znak', few: '{n} znaky', many: '{n} znaku', other: '{n} znaků' },
+  'loopPrompt.copy': 'Kopírovat prompt',
 });

@@ -713,4 +713,18 @@ GB.i18n.define('ja', {
   'bitacora.gap': '動きなし',
   'bitacora.nextNone': '急ぎの対応はありません。この調子で。',
   'bitacora.historyNone': 'このリポジトリの航海日誌はまだ締められていません。',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': '自律ループのプロンプト',
+  'loopPrompt.btnTitle': 'Claude Code がこのプロジェクトを自力で開発するためのプロンプトをコピー',
+  'loopPrompt.help': 'Claude Code の Routine（1 回の実行につき 1 イテレーション、数時間ごと）またはセッションに貼り付けてください。最初の実行でリポジトリにループ（LOOP.md）を用意し、以降の実行はそれに従いながら改善していきます。Brunell_Node のループと同じ仕組みで、どんなプロジェクトにも使えます。',
+  'loopPrompt.repo': 'リポジトリ',
+  'loopPrompt.lang': 'プロンプトの言語',
+  'loopPrompt.integration': '統合ブランチ',
+  'loopPrompt.release': 'リリースブランチ（任意）',
+  'loopPrompt.releaseHelp': '指定すると、ループはそのブランチに一切触れません。そこへの反映はあなただけが行います。',
+  'loopPrompt.goal': 'プロジェクトの目標（任意）',
+  'loopPrompt.goalPlaceholder': '何なのか、誰のためのものか、どこを目指したいのか。',
+  'loopPrompt.preview': 'プロンプト',
+  'loopPrompt.chars': '{n} 文字',
+  'loopPrompt.copy': 'プロンプトをコピー',
 });

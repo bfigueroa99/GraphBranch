@@ -5542,3 +5542,39 @@ a.hl-row:focus-visible {
     animation: none;
   }
 }
+
+/* ---------- el prompt del loop autónomo (js/loopprompt.js) ---------- */
+.loop-prompt {
+  width: min(760px, calc(100vw - 2 * var(--gutter)));
+}
+.loop-prompt form {
+  max-height: min(90vh, 960px);
+  overflow: auto;
+}
+.loop-prompt textarea,
+.loop-prompt select {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 13px / 1.45 var(--font-ui);
+}
+.loop-prompt select {
+  height: 36px;
+  padding-block: 0;
+}
+.loop-prompt textarea {
+  resize: vertical;
+}
+.lp-text {
+  min-height: 220px;
+  font: 400 12px / 1.5 var(--font-mono) !important;
+  white-space: pre-wrap;
+}
+.lp-out {
+  font-size: 13px;
+  color: var(--ink-2);
+}

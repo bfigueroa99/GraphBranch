@@ -724,4 +724,18 @@ GB.i18n.define('pl', {
   'bitacora.gap': 'Brak aktywności',
   'bitacora.nextNone': 'Nic pilnego: tak trzymaj.',
   'bitacora.historyNone': 'Nie zamknięto jeszcze żadnego dziennika pokładowego tego repozytorium.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Prompt autonomicznej pętli',
+  'loopPrompt.btnTitle': 'Skopiuj prompt, dzięki któremu Claude Code sam będzie rozwijać ten projekt',
+  'loopPrompt.help': 'Wklej go do Routine w Claude Code (jedna iteracja na uruchomienie, co kilka godzin) albo do sesji. Pierwsze uruchomienie tworzy pętlę w repozytorium (LOOP.md), a kolejne się jej trzymają i ją ulepszają, jak pętla Brunell_Node. Działa z każdym projektem.',
+  'loopPrompt.repo': 'Repozytorium',
+  'loopPrompt.lang': 'Język promptu',
+  'loopPrompt.integration': 'Gałąź integracyjna',
+  'loopPrompt.release': 'Gałąź wydań (opcjonalnie)',
+  'loopPrompt.releaseHelp': 'Jeśli ją ustawisz, pętla nigdy jej nie dotknie: tylko ty promujesz do niej zmiany.',
+  'loopPrompt.goal': 'Cel projektu (opcjonalnie)',
+  'loopPrompt.goalPlaceholder': 'Czym jest, dla kogo jest i dokąd ma zmierzać.',
+  'loopPrompt.preview': 'Prompt',
+  'loopPrompt.chars': { one: '{n} znak', few: '{n} znaki', many: '{n} znaków', other: '{n} znaku' },
+  'loopPrompt.copy': 'Kopiuj prompt',
 });

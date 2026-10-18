@@ -721,4 +721,18 @@ GB.i18n.define('hr', {
   'bitacora.gap': 'Bez aktivnosti',
   'bitacora.nextNone': 'Ništa hitno: samo tako nastavite.',
   'bitacora.historyNone': 'Još nije zatvoren nijedan brodski dnevnik ovog repozitorija.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Prompt za autonomnu petlju',
+  'loopPrompt.btnTitle': 'Kopiraj prompt uz koji Claude Code sam razvija ovaj projekt',
+  'loopPrompt.help': 'Zalijepite ga u Routine alata Claude Code (jedna iteracija po pokretanju, svakih nekoliko sati) ili u sesiju. Prvo pokretanje postavlja petlju u repozitoriju (LOOP.md), a sljedeća je slijede i poboljšavaju, kao petlja Brunell_Node. Radi za bilo koji projekt.',
+  'loopPrompt.repo': 'Repozitorij',
+  'loopPrompt.lang': 'Jezik prompta',
+  'loopPrompt.integration': 'Integracijska grana',
+  'loopPrompt.release': 'Grana za izdanja (neobavezno)',
+  'loopPrompt.releaseHelp': 'Ako je postavite, petlja je nikad ne dira: promjene u nju promovirate samo vi.',
+  'loopPrompt.goal': 'Cilj projekta (neobavezno)',
+  'loopPrompt.goalPlaceholder': 'Što je, kome je namijenjen i kamo želite da ide.',
+  'loopPrompt.preview': 'Prompt',
+  'loopPrompt.chars': { one: '{n} znak', few: '{n} znaka', other: '{n} znakova' },
+  'loopPrompt.copy': 'Kopiraj prompt',
 });

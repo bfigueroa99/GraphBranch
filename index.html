@@ -112,6 +112,9 @@
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 2.5h6v3.4a3 3 0 0 1-6 0zM5 3.6H2.7v.9a2.3 2.3 0 0 0 2.6 2.3M11 3.6h2.3v.9a2.3 2.3 0 0 1-2.6 2.3M8 8.9v2.2M5.6 13.5h4.8M6.5 13.5l.4-2.4h2.2l.4 2.4"/></svg>
         <span class="trophy-count" id="trophy-count" aria-hidden="true" hidden></span>
       </button>
+      <button class="icon-btn" type="button" id="loop-btn" aria-haspopup="dialog" title="Copy a prompt that makes Claude Code develop this project on its own" aria-label="Autonomous loop prompt" data-i18n-attr="title:loopPrompt.btnTitle;aria-label:loopPrompt.title">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 8c-1.4-1.9-2.6-3-4-3a3 3 0 0 0 0 6c1.4 0 2.6-1.1 4-3s2.6-3 4-3a3 3 0 0 1 0 6c-1.4 0-2.6-1.1-4-3z"/></svg>
+      </button>
       <button class="icon-btn" type="button" id="settings-btn" title="Settings and token" aria-label="Settings and token" data-i18n-attr="title:ctl.settings;aria-label:ctl.settings">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.8M8 12.4v1.8M14.2 8h-1.8M3.6 8H1.8M12.4 3.6l-1.3 1.3M4.9 11.1l-1.3 1.3M12.4 12.4l-1.3-1.3M4.9 4.9 3.6 3.6"/></svg>
       </button>
@@ -446,12 +449,62 @@
         <button type="button" class="btn btn-ghost" id="bt-copy" data-i18n="digest.copy">Copy Markdown</button>
         <button type="button" class="btn btn-ghost" id="bt-save" data-i18n="digest.save">Save .md</button>
         <button type="button" class="btn btn-ghost" id="bt-json" data-i18n="bitacora.json">Save estado.json</button>
+        <button type="button" class="btn btn-ghost" id="bt-loop" aria-haspopup="dialog" data-i18n="loopPrompt.title">Autonomous loop prompt</button>
       </div>
       <p class="help" id="bt-close-help"></p>
       <p class="bt-out" id="bt-out" role="status" aria-live="polite"><span id="bt-out-text"></span> <button type="button" class="link-btn" id="bt-undo" hidden data-i18n="bitacora.undo">Undo</button></p>
     </div>
     <p class="help" data-i18n="bitacora.help">Calculated only from what is already loaded, with no extra requests, and updated live. It describes the repository, never people. Closed logbooks are saved only in this browser.</p>
   </div>
+</dialog>
+
+<!-- el prompt del loop autónomo (js/loopprompt.js): se arma con el repo a la vista y se copia -->
+<dialog class="settings loop-prompt" id="loop-prompt" aria-labelledby="lp-title">
+  <form id="lp-form" novalidate>
+    <div class="tr-head">
+      <h2 id="lp-title" data-i18n="loopPrompt.title">Autonomous loop prompt</h2>
+      <button type="button" class="icon-btn" id="lp-close" title="Close" aria-label="Close" data-i18n-attr="title:toast.close;aria-label:toast.close">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <p class="help" id="lp-help" data-i18n="loopPrompt.help">Paste it into a Claude Code Routine (one iteration per run, every few hours) or into a session. The first run sets up the loop in the repository (LOOP.md) and the next ones follow it and improve it, like the Brunell_Node loop. It works for any project.</p>
+    <div class="grid2">
+      <div class="field">
+        <label for="lp-repo" data-i18n="loopPrompt.repo">Repository</label>
+        <input id="lp-repo" type="text" placeholder="owner/repo" spellcheck="false" autocapitalize="off" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="lp-lang" data-i18n="loopPrompt.lang">Language of the prompt</label>
+        <select id="lp-lang">
+          <option value="es" lang="es">Español</option>
+          <option value="en" lang="en">English</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="lp-integration" data-i18n="loopPrompt.integration">Integration branch</label>
+        <input id="lp-integration" type="text" placeholder="main" spellcheck="false" autocapitalize="off" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="lp-release" data-i18n="loopPrompt.release">Release branch (optional)</label>
+        <input id="lp-release" type="text" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="lp-release-help">
+      </div>
+    </div>
+    <p class="help" id="lp-release-help" data-i18n="loopPrompt.releaseHelp">If you set one, the loop never touches it: only you promote to it.</p>
+    <div class="field">
+      <label for="lp-goal" data-i18n="loopPrompt.goal">Project goal (optional)</label>
+      <textarea id="lp-goal" rows="3" maxlength="1200" placeholder="What it is, who it is for and where you want it to go." data-i18n-attr="placeholder:loopPrompt.goalPlaceholder"></textarea>
+    </div>
+    <div class="field">
+      <label for="lp-text"><span data-i18n="loopPrompt.preview">The prompt</span> <span class="opt" id="lp-size"></span></label>
+      <textarea id="lp-text" class="lp-text" rows="12" readonly spellcheck="false"></textarea>
+    </div>
+    <div class="dialog-actions">
+      <span class="lp-out" id="lp-out" role="status" aria-live="polite"></span>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn-ghost" id="lp-save" data-i18n="digest.save">Save .md</button>
+      <button type="submit" class="btn btn-primary" id="lp-copy" data-i18n="loopPrompt.copy">Copy the prompt</button>
+    </div>
+  </form>
 </dialog>
 
 <dialog class="settings trophies health" id="textview" aria-labelledby="textview-title">
@@ -545,6 +598,7 @@
 <script src="js/health.js"></script>
 <script src="js/digest.js"></script>
 <script src="js/bitacora.js"></script>
+<script src="js/loopprompt.js"></script>
 <script src="js/textview.js"></script>
 <script src="js/constellation.js"></script>
 <script src="js/search.js"></script>

@@ -714,4 +714,18 @@ GB.i18n.define('th', {
   'bitacora.gap': 'ไม่มีกิจกรรม',
   'bitacora.nextNone': 'ไม่มีเรื่องเร่งด่วน: ทำต่อไปแบบนี้',
   'bitacora.historyNone': 'ยังไม่มีสมุดบันทึกของ repository นี้ที่ปิดแล้ว',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'พรอมต์สำหรับลูปอัตโนมัติ',
+  'loopPrompt.btnTitle': 'คัดลอกพรอมต์ที่ทำให้ Claude Code พัฒนาโปรเจกต์นี้ได้ด้วยตัวเอง',
+  'loopPrompt.help': 'วางลงใน Routine ของ Claude Code (หนึ่งรอบต่อการรันหนึ่งครั้ง ทุก ๆ สองสามชั่วโมง) หรือในเซสชัน การรันครั้งแรกจะตั้งลูปไว้ใน repository (LOOP.md) และการรันครั้งต่อ ๆ ไปจะทำตามและปรับปรุงลูปนั้น เหมือนลูปของ Brunell_Node ใช้ได้กับทุกโปรเจกต์',
+  'loopPrompt.repo': 'Repository',
+  'loopPrompt.lang': 'ภาษาของพรอมต์',
+  'loopPrompt.integration': 'branch สำหรับรวมงาน',
+  'loopPrompt.release': 'branch สำหรับ release (ไม่บังคับ)',
+  'loopPrompt.releaseHelp': 'หากคุณกำหนดไว้ ลูปจะไม่แตะ branch นี้เลย: มีเพียงคุณเท่านั้นที่นำการเปลี่ยนแปลงเข้าไป',
+  'loopPrompt.goal': 'เป้าหมายของโปรเจกต์ (ไม่บังคับ)',
+  'loopPrompt.goalPlaceholder': 'โปรเจกต์นี้คืออะไร ทำเพื่อใคร และคุณอยากให้ไปทางไหน',
+  'loopPrompt.preview': 'พรอมต์',
+  'loopPrompt.chars': '{n} อักขระ',
+  'loopPrompt.copy': 'คัดลอกพรอมต์',
 });

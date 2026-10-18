@@ -713,4 +713,18 @@ GB.i18n.define('tr', {
   'bitacora.gap': 'Etkinlik yok',
   'bitacora.nextNone': 'Acil bir şey yok: böyle devam.',
   'bitacora.historyNone': 'Bu depo için henüz hiçbir seyir defteri kapatılmadı.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Otonom döngü istemi',
+  'loopPrompt.btnTitle': 'Claude Code\'un bu projeyi kendi başına geliştirmesini sağlayan bir istem kopyala',
+  'loopPrompt.help': 'Bunu Claude Code\'da bir Routine\'e (her çalıştırmada bir yineleme, birkaç saatte bir) veya bir oturuma yapıştırın. İlk çalıştırma döngüyü depoda kurar (LOOP.md), sonrakiler ona uyar ve onu geliştirir, tıpkı Brunell_Node döngüsü gibi. Her projede işe yarar.',
+  'loopPrompt.repo': 'Depo',
+  'loopPrompt.lang': 'İstemin dili',
+  'loopPrompt.integration': 'Entegrasyon dalı',
+  'loopPrompt.release': 'Sürüm dalı (isteğe bağlı)',
+  'loopPrompt.releaseHelp': 'Bir tane belirlerseniz döngü ona asla dokunmaz: oraya değişiklikleri yalnızca siz taşırsınız.',
+  'loopPrompt.goal': 'Proje hedefi (isteğe bağlı)',
+  'loopPrompt.goalPlaceholder': 'Ne olduğu, kimin için olduğu ve nereye gitmesini istediğiniz.',
+  'loopPrompt.preview': 'İstem',
+  'loopPrompt.chars': { one: '{n} karakter', other: '{n} karakter' },
+  'loopPrompt.copy': 'İstemi kopyala',
 });

@@ -812,4 +812,18 @@ GB.i18n.define('ar', {
   'bitacora.gap': 'لا نشاط',
   'bitacora.nextNone': 'لا شيء عاجل: واصل على هذا النحو.',
   'bitacora.historyNone': 'لم يُغلق أي دفتر لهذا المستودع بعد.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'موجّه الحلقة المستقلة',
+  'loopPrompt.btnTitle': 'انسخ موجّهًا يجعل Claude Code يطوّر هذا المشروع بنفسه',
+  'loopPrompt.help': 'الصقه في Routine من Claude Code (دورة واحدة في كل تشغيل، كل بضع ساعات) أو في جلسة. يُعِدّ التشغيل الأول الحلقة في المستودع (LOOP.md)، وتتبعها التشغيلات التالية وتحسّنها، مثل حلقة Brunell_Node. يصلح لأي مشروع.',
+  'loopPrompt.repo': 'المستودع',
+  'loopPrompt.lang': 'لغة الموجّه',
+  'loopPrompt.integration': 'فرع التكامل',
+  'loopPrompt.release': 'فرع الإصدار (اختياري)',
+  'loopPrompt.releaseHelp': 'إن حدّدت فرعًا، فلن تلمسه الحلقة أبدًا: أنت وحدك من يرقّي التغييرات إليه.',
+  'loopPrompt.goal': 'هدف المشروع (اختياري)',
+  'loopPrompt.goalPlaceholder': 'ما هو، ولمن هو، وإلى أين تريد أن يصل.',
+  'loopPrompt.preview': 'الموجّه',
+  'loopPrompt.chars': { zero: '{n} حرف', one: '{n} حرف', two: '{n} حرفان', few: '{n} أحرف', many: '{n} حرفًا', other: '{n} حرف' },
+  'loopPrompt.copy': 'نسخ الموجّه',
 });

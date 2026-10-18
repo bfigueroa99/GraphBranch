@@ -714,4 +714,18 @@ GB.i18n.define('nl', {
   'bitacora.gap': 'Geen activiteit',
   'bitacora.nextNone': 'Niets dringends: ga zo door.',
   'bitacora.historyNone': 'Er is nog geen logboek van deze repository afgesloten.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Prompt voor de autonome loop',
+  'loopPrompt.btnTitle': 'Een prompt kopiëren waarmee Claude Code dit project zelfstandig ontwikkelt',
+  'loopPrompt.help': 'Plak hem in een Routine van Claude Code (één iteratie per run, om de paar uur) of in een sessie. De eerste run zet de loop op in de repository (LOOP.md) en de volgende runs volgen hem en verbeteren hem, zoals de loop van Brunell_Node. Het werkt voor elk project.',
+  'loopPrompt.repo': 'Repository',
+  'loopPrompt.lang': 'Taal van de prompt',
+  'loopPrompt.integration': 'Integratiebranch',
+  'loopPrompt.release': 'Releasebranch (optioneel)',
+  'loopPrompt.releaseHelp': 'Als je er een opgeeft, komt de loop er nooit aan: alleen jij zet er wijzigingen naar door.',
+  'loopPrompt.goal': 'Doel van het project (optioneel)',
+  'loopPrompt.goalPlaceholder': 'Wat het is, voor wie het is en waar je ermee naartoe wilt.',
+  'loopPrompt.preview': 'De prompt',
+  'loopPrompt.chars': { one: '{n} teken', other: '{n} tekens' },
+  'loopPrompt.copy': 'Prompt kopiëren',
 });

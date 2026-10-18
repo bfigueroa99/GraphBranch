@@ -729,4 +729,18 @@ GB.i18n.define('ru', {
   'bitacora.gap': 'Нет активности',
   'bitacora.nextNone': 'Ничего срочного: так держать.',
   'bitacora.historyNone': 'Ни один бортжурнал этого репозитория ещё не закрыт.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Промпт автономного цикла',
+  'loopPrompt.btnTitle': 'Скопировать промпт, с которым Claude Code будет сам развивать этот проект',
+  'loopPrompt.help': 'Вставьте его в Routine Claude Code (одна итерация за запуск, раз в несколько часов) или в сессию. Первый запуск настраивает цикл в репозитории (LOOP.md), а следующие придерживаются его и улучшают, как цикл Brunell_Node. Подходит для любого проекта.',
+  'loopPrompt.repo': 'Репозиторий',
+  'loopPrompt.lang': 'Язык промпта',
+  'loopPrompt.integration': 'Ветка интеграции',
+  'loopPrompt.release': 'Релизная ветка (необязательно)',
+  'loopPrompt.releaseHelp': 'Если её указать, цикл никогда её не трогает: продвигать в неё изменения можете только вы.',
+  'loopPrompt.goal': 'Цель проекта (необязательно)',
+  'loopPrompt.goalPlaceholder': 'Что это, для кого и куда вы хотите его развивать.',
+  'loopPrompt.preview': 'Промпт',
+  'loopPrompt.chars': { one: '{n} символ', few: '{n} символа', many: '{n} символов', other: '{n} символа' },
+  'loopPrompt.copy': 'Копировать промпт',
 });

@@ -713,4 +713,18 @@ GB.i18n.define('el', {
   'bitacora.gap': 'Καμία δραστηριότητα',
   'bitacora.nextNone': 'Τίποτα επείγον: συνεχίστε έτσι.',
   'bitacora.historyNone': 'Δεν έχει κλείσει ακόμη κανένα ημερολόγιο αυτού του αποθετηρίου.',
+  /* ---------- prompt del loop autónomo ---------- */
+  'loopPrompt.title': 'Prompt αυτόνομου βρόχου',
+  'loopPrompt.btnTitle': 'Αντιγραφή ενός prompt που κάνει το Claude Code να αναπτύσσει μόνο του αυτό το έργο',
+  'loopPrompt.help': 'Επικολλήστε το σε ένα Routine του Claude Code (μία επανάληψη ανά εκτέλεση, κάθε λίγες ώρες) ή σε μια συνεδρία. Η πρώτη εκτέλεση στήνει τον βρόχο στο αποθετήριο (LOOP.md) και οι επόμενες τον ακολουθούν και τον βελτιώνουν, όπως ο βρόχος του Brunell_Node. Λειτουργεί για οποιοδήποτε έργο.',
+  'loopPrompt.repo': 'Αποθετήριο',
+  'loopPrompt.lang': 'Γλώσσα του prompt',
+  'loopPrompt.integration': 'Branch ενσωμάτωσης',
+  'loopPrompt.release': 'Branch έκδοσης (προαιρετικό)',
+  'loopPrompt.releaseHelp': 'Αν ορίσετε ένα, ο βρόχος δεν το αγγίζει ποτέ: μόνο εσείς μεταφέρετε αλλαγές σε αυτό.',
+  'loopPrompt.goal': 'Στόχος του έργου (προαιρετικός)',
+  'loopPrompt.goalPlaceholder': 'Τι είναι, για ποιον είναι και πού θέλετε να φτάσει.',
+  'loopPrompt.preview': 'Το prompt',
+  'loopPrompt.chars': { one: '{n} χαρακτήρας', other: '{n} χαρακτήρες' },
+  'loopPrompt.copy': 'Αντιγραφή του prompt',
 });

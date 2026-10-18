@@ -25,6 +25,32 @@ const TYPES = {
   '.svg': 'image/svg+xml',
 };
 const SESSION = 'vscode-session.js';
+// lo que la página guarda y la extensión recuerda entre sesiones (el puerto cambia cada vez, y con él el origen): repos seguidos, repo a la vista, vista 2D/3D e idioma
+const STATE_KEYS = ['repos', 'repo', 'view', 'lang'];
+const STATE_MAX = 4000;
+
+/** Lo que la página avisó (`?d=` de /state): solo las claves de STATE_KEYS, cada valor un JSON válido y acotado; lo demás se descarta. */
+function cleanState(raw) {
+  const out = {};
+  let obj;
+  try {
+    obj = JSON.parse(String(raw || ''));
+  } catch {
+    return out;
+  }
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return out;
+  for (const k of STATE_KEYS) {
+    const v = obj[k];
+    if (typeof v !== 'string' || v.length > STATE_MAX) continue;
+    try {
+      JSON.parse(v);
+      out[k] = v;
+    } catch {
+      /* texto que no es JSON: no es de la página */
+    }
+  }
+  return out;
+}
 
 /** El repo que sigue un `.git/config`: la URL de `origin` si es de un servicio que GraphBranch lee, o null. */
 function repoFromGitConfig(text) {
@@ -42,30 +68,49 @@ function repoFromGitConfig(text) {
 }
 
 /** El archivo con el que se arranca la sesión: guarda el token donde la página lo lee (js/util.js, U.store). */
-function sessionScript(token, hadToken = false) {
-  if (token) return `try{localStorage.setItem('graphbranch:token',${JSON.stringify(JSON.stringify(token))})}catch(e){}\n`;
+function sessionScript(token, hadToken = false, state = {}) {
+  let js = '\n';
+  if (token) js = `try{localStorage.setItem('graphbranch:token',${JSON.stringify(JSON.stringify(token))})}catch(e){}\n`;
   // la sesión se cerró: el token que dejó este servidor no se queda en el almacenamiento de la página
-  return hadToken ? `try{localStorage.removeItem('graphbranch:token')}catch(e){}\n` : '\n';
+  else if (hadToken) js = `try{localStorage.removeItem('graphbranch:token')}catch(e){}\n`;
+  return js + stateScript(state);
+}
+
+/** Siembra lo que la extensión recordó y avisa a /state (una imagen, que la CSP de la página ya permite) cuando la página lo cambia. */
+function stateScript(state) {
+  const seed = STATE_KEYS.filter((k) => typeof state[k] === 'string').map((k) => `localStorage.setItem('graphbranch:${k}',${JSON.stringify(state[k])});`).join('');
+  return `try{${seed}var K=${JSON.stringify(STATE_KEYS)},t=0,o=Storage.prototype.setItem,r=Storage.prototype.removeItem;
+function send(k){if(typeof k!=='string'||k.indexOf('graphbranch:')!==0||K.indexOf(k.slice(12))<0)return;clearTimeout(t);t=setTimeout(function(){var s={};K.forEach(function(n){var v=localStorage.getItem('graphbranch:'+n);if(v!=null)s[n]=v});new Image().src='state?d='+encodeURIComponent(JSON.stringify(s))},300)}
+Storage.prototype.setItem=function(k,v){o.call(this,k,v);send(k)};Storage.prototype.removeItem=function(k){r.call(this,k);send(k)}}catch(e){}\n`;
 }
 
 /** Arranca el servidor. `root` es la carpeta de la app; resuelve con { url, close }. */
-function start({ root, token: first = '', key = crypto.randomBytes(16).toString('hex'), repo = '' } = {}) {
+function start({ root, token: first = '', key = crypto.randomBytes(16).toString('hex'), repo = '', state: saved = {}, onState = () => {} } = {}) {
   const base = '/' + key + '/';
   let token = first;
   let hadToken = !!first;
+  let state = cleanState(JSON.stringify(saved));
   const server = http.createServer((req, res) => {
     const fail = (code) => res.writeHead(code, { 'Content-Type': 'text/plain' }).end('Not found');
     if (req.method !== 'GET' || !req.url) return fail(404);
     let rel;
+    let query = '';
     try {
-      const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+      const u = new URL(req.url, 'http://x');
+      query = u.searchParams.get('d') || '';
+      const p = decodeURIComponent(u.pathname);
       if (!p.startsWith(base)) return fail(404);
       rel = path.posix.normalize(p.slice(base.length)) || 'index.html';
     } catch {
       return fail(404);
     }
     if (rel === SESSION) {
-      return res.writeHead(200, { 'Content-Type': TYPES['.js'], 'Cache-Control': 'no-store' }).end(sessionScript(token, hadToken));
+      return res.writeHead(200, { 'Content-Type': TYPES['.js'], 'Cache-Control': 'no-store' }).end(sessionScript(token, hadToken, state));
+    }
+    if (rel === 'state') {
+      state = cleanState(query);
+      onState({ ...state });
+      return res.writeHead(204, { 'Cache-Control': 'no-store' }).end();
     }
     const file = path.join(root, rel);
     if (!PUBLIC.has(rel.split('/')[0]) || rel.startsWith('..') || path.relative(root, file).startsWith('..')) return fail(404);
@@ -87,4 +132,4 @@ function start({ root, token: first = '', key = crypto.randomBytes(16).toString(
   });
 }
 
-module.exports = { start, repoFromGitConfig, sessionScript, SESSION };
+module.exports = { start, repoFromGitConfig, sessionScript, cleanState, SESSION, STATE_KEYS };

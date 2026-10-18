@@ -12,7 +12,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const { start, repoFromGitConfig } = createRequire(import.meta.url)('../vscode/server.js');
+const { start, repoFromGitConfig, cleanState } = createRequire(import.meta.url)('../vscode/server.js');
 const get = async (url) => {
   const r = await fetch(url);
   return { status: r.status, type: r.headers.get('content-type'), text: await r.text() };
@@ -115,8 +115,16 @@ function conExtension() {
   const load = Module._load;
   Module._load = (req, ...r) => (req === 'vscode' ? fake : load(req, ...r));
   try {
-    const ext = createRequire(import.meta.url)('../vscode/extension.js');
-    ext.activate({ extensionPath: join(root, 'vscode'), subscriptions: [] });
+    const req = createRequire(import.meta.url);
+    delete req.cache[req.resolve('../vscode/extension.js')]; // cada prueba, su `vscode` simulado
+    const ext = req('../vscode/extension.js');
+    const guardado = {};
+    ext.activate({
+      extensionPath: join(root, 'vscode'),
+      subscriptions: [],
+      globalState: { get: (k, d) => guardado[k] ?? d, update: async (k, v) => void (guardado[k] = v) },
+    });
+    fake.guardado = guardado;
   } finally {
     Module._load = load;
   }
@@ -152,4 +160,64 @@ test('la extensión sigue la sesión de GitHub de VS Code mientras el panel est�
     panel.dispose();
   }
   assert.equal(oyentes.length, 0, 'al cerrar el panel se deja de escuchar');
+});
+
+test('cleanState: solo las claves de la página, con JSON válido y acotado (nunca el token)', () => {
+  const ok = { repos: '["o/r"]', repo: '"o/r"', view: '"2d"', lang: '"es"' };
+  assert.deepEqual(cleanState(JSON.stringify(ok)), ok);
+  assert.deepEqual(cleanState(JSON.stringify({ ...ok, token: '"ghp_x"', otra: '1' })), ok, 'el token y lo ajeno se descartan');
+  assert.deepEqual(cleanState(JSON.stringify({ repos: 'no es json', view: 3, repo: '"' + 'x'.repeat(4000) + '"' })), {});
+  for (const mal of ['', 'no', '[]', 'null', '"x"']) assert.deepEqual(cleanState(mal), {}, mal);
+});
+
+test('el servidor recuerda lo que la página avisa en /state y lo siembra en la sesión siguiente', async () => {
+  const visto = [];
+  const a = await start({ root, key: 'a'.repeat(32), onState: (s) => visto.push(s) });
+  try {
+    const d = encodeURIComponent(JSON.stringify({ repos: '["o/r","p/q"]', repo: '"p/q"', token: '"ghp_x"' }));
+    assert.equal((await fetch(new URL('state?d=' + d, a.url))).status, 204);
+    assert.deepEqual(visto, [{ repos: '["o/r","p/q"]', repo: '"p/q"' }]);
+    assert.equal((await fetch(`http://127.0.0.1:${a.port}/state?d=${d}`)).status, 404, 'sin la clave, nada');
+    assert.equal(visto.length, 1);
+  } finally {
+    await a.close();
+  }
+  // otro panel, otro puerto y otra clave: la página parte de lo guardado
+  const b = await start({ root, state: visto[0] });
+  try {
+    const store = {};
+    const js = (await get(new URL('vscode-session.js', b.url))).text;
+    class Storage {}
+    Storage.prototype.setItem = function (k, v) { store[k] = v; };
+    Storage.prototype.removeItem = function (k) { delete store[k]; };
+    const local = Object.create(Storage.prototype);
+    local.getItem = (k) => store[k] ?? null;
+    const imagenes = [];
+    class Image { set src(v) { imagenes.push(v); } }
+    new Function('localStorage', 'Storage', 'Image', 'setTimeout', 'clearTimeout', js)(local, Storage, Image, (f) => f(), () => {});
+    assert.equal(store['graphbranch:repos'], '["o/r","p/q"]');
+    assert.equal(store['graphbranch:repo'], '"p/q"');
+    assert.equal(store['graphbranch:token'], undefined, 'el token nunca se recuerda');
+    assert.equal(imagenes.length, 0, 'sembrar no avisa');
+    Storage.prototype.setItem.call(local, 'graphbranch:view', '"2d"'); // la página guarda algo suyo
+    Storage.prototype.setItem.call(local, 'graphbranch:token', '"ghp_y"'); // y el token: no se avisa
+    assert.equal(imagenes.length, 1);
+    assert.match(imagenes[0], /^state\?d=/);
+    const enviado = JSON.parse(decodeURIComponent(imagenes[0].slice(8)));
+    assert.deepEqual(Object.keys(enviado).sort(), ['repo', 'repos', 'view']);
+  } finally {
+    await b.close();
+  }
+});
+
+test('la extensión guarda lo que avisa la página y se lo devuelve al abrir de nuevo', async () => {
+  const { fake, paneles } = conExtension();
+  await fake.cmds['graphbranch.open']();
+  const src = (i) => paneles[i].webview.html.match(/iframe src="([^"]+)"/)[1];
+  await fetch(new URL('state?d=' + encodeURIComponent(JSON.stringify({ repos: '["o/r"]' })), src(0)));
+  assert.deepEqual(fake.guardado.pageState, { repos: '["o/r"]' });
+  paneles[0].dispose();
+  await fake.cmds['graphbranch.open']();
+  assert.match((await get(new URL('vscode-session.js', src(1)))).text, /graphbranch:repos',"\[\\"o\/r\\"\]"/);
+  paneles[1].dispose();
 });

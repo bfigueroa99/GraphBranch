@@ -144,7 +144,7 @@ segunda columna a la primera.
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia), miles de ramas por repo | una organización entera con más de 10 repos a la vez |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack, Discord y Teams (escritorio), resumen de la semana (Markdown, de un repo o de una organización seguida; PNG, de un repo) | resumen de la organización como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), búsqueda de commits también desde la URL (`?q=`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días y por semana, mediana entre releases, tiempo de entrega desde el primer commit del PR), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días) | ver la hoja de ruta |
-| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal (`cherry-pick` y `tag` incluidos) y ejercicios, también propios compartidos por URL con pistas y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
+| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal (`cherry-pick` y `tag` incluidos) y ejercicios, también propios compartidos por URL con pistas, solución propuesta que se muestra paso a paso con `solution=1` y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
 
@@ -328,7 +328,7 @@ se comprueban antes de construir sobre ellas.
     compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
 57. ~~**Avisos a Microsoft Teams**~~ hecho en #123 · Salidas · 2×2/2. [parte del ítem 15] El mismo aviso de actividad que ya va a Slack y Discord,
     con el formato de Teams. Comprobar: `tools/webhooks.test.mjs` con el cuerpo esperado.
-58. **Ejercicios compartidos, tercera entrega** · Público · 1×2/1. [parte del ítem 28] Un enlace de ejercicio con la solución
+58. ~~**Ejercicios compartidos, tercera entrega**~~ hecho en #125 · Público · 1×2/1. [parte del ítem 28] Un enlace de ejercicio con la solución
     propuesta (`?practice=<código>&solution=1`) que la muestra paso a paso en la terminal. Comprobar: prueba del codificado y
     un paso del smoke.
 59. **Extensión de VS Code: recordar repos** · Plataformas · 1×2/2. [parte del ítem 24] Los repos seguidos y el tema sobreviven
@@ -2101,3 +2101,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); el borrado de las `loop/82`–`loop/94` fusionadas falló con «hung up unexpectedly» del proxy y un comando posterior lo bloqueó el clasificador de permisos.
 - Validado: 313 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) en verde; e2e no corridas (no toca la página ni el escritorio). El primer `npm run check` falló en 3 pasos del smoke (filtros por autor y por ruta, ya en el pendiente Media 1); la repetición pasó.
 - **Siguiente:** iteración 96, expansión: ítem 58 (Ejercicios compartidos, tercera entrega, Público)
+
+### 2026-10-18 · Iteración 96 · Expansión · Público
+
+- **Capacidad nueva: ejercicios compartidos con solución propuesta** (ítem 58 de la hoja de ruta). «Crear un ejercicio» gana el campo «Solución propuesta» (hasta 10 comandos de 120 caracteres): se corren al crear y tienen que resolver el ejercicio, o se rechaza con su error. «Copiar enlace con la solución» arma `?practice=<código>&solution=1`; solo ese código lleva la solución (`r`), el enlace común no. Quien abre el enlace ve el botón «Ver solución», que escribe un paso por pulsación en la terminal (con `textContent`, sin ejecutarlo) hasta agotarlos; reiniciar conserva la solución y salir de la práctica quita `solution` de la URL. Sin `solution=1` el botón no aparece aunque el código la traiga.
+- **Pruebas que fallan sin la capacidad:** `tools/gitsim.test.mjs` (la solución solo viaja si se pide, resuelve el ejercicio y se rechaza si no lo resuelve, falla, pasa de 10 o de 120 caracteres) y un paso del smoke (crear con solución en el formulario, rechazo de una inválida, enlace con `solution=1`, pasos uno a uno con una `<b>` sin interpretar, sin resolver el ejercicio, y sin el botón con el enlace común).
+- README: función, pruebas, Límites conocidos y Seguridad al día.
+- QA: filas tocadas: terminal de práctica y formulario de creación (smoke); auditoría: VALIDADO_AUD
+- Reclamo: loop/96, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); el borrado de las `loop/83`–`loop/95` fusionadas falló otra vez («hung up unexpectedly» del proxy y luego el clasificador de permisos), siguen en Para Benjamin.
+- Validado: VALIDADO_LINEA
+- **Siguiente:** iteración 97, expansión: ítem 59 (Extensión de VS Code: recordar repos, Plataformas)

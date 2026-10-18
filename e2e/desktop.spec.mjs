@@ -425,6 +425,31 @@ test('un repositorio de esta máquina se sigue sin GitHub: ve un commit y una ra
   await app.close();
 });
 
+test('la bitácora en vivo de un repo de esta máquina: se cierra en la app de escritorio y sigue cerrada al reabrir', async ({}, testInfo) => {
+  const repo = localRepo(testInfo);
+  repo.commit('b.txt', 'segundo');
+  let { app, page, dir } = await launch(testInfo, { args: ['--lang=es', `--local=${repo.dir}`] });
+  await loaded(page);
+  await expect(page.locator('#st-bitacora-label')).toHaveText('Bitácora n.º 1');
+  await expect(page.locator('#st-bitacora-score')).toHaveText(/^\d+$/);
+  await page.click('#st-bitacora');
+  await expect(page.locator('#bitacora')).toBeVisible();
+  await expect(page.locator('#bt-dek')).toContainText('2 commits');
+  await expect(page.locator('#bitacora [data-sec="history"]')).toContainText('Todavía no se cerró ninguna bitácora');
+  await page.fill('#bt-title-input', 'Primera semana');
+  await page.click('#bt-close-btn');
+  await expect(page.locator('#bt-eyebrow')).toContainText('n.º 2');
+  await expect(page.locator('#bitacora [data-sec="history"] tbody tr')).toHaveCount(1);
+  await app.close();
+  // lo cerrado queda en el almacenamiento de la app: al reabrir, la siguiente sigue siendo la n.º 2
+  ({ app, page } = await launch(testInfo, { dir, args: ['--lang=es'] }));
+  await loaded(page);
+  await expect(page.locator('#st-bitacora-label')).toHaveText('Bitácora n.º 2');
+  await page.click('#st-bitacora');
+  await expect(page.locator('#bitacora [data-sec="history"] tbody tr')).toHaveText([/1\s*.*Primera semana/]);
+  await app.close();
+});
+
 test('el botón Abrir carpeta está en la app de escritorio y un --local que no es un repo se salta sin romper la demo', async ({}, testInfo) => {
   const { app, page } = await launch(testInfo, { args: ['--lang=es'] });
   await expect(page.locator('#folder-btn')).toBeVisible();

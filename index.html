@@ -142,6 +142,12 @@
       <span class="stat-value" id="st-last">–</span>
       <span class="stat-sub" id="st-last-sub"></span>
     </div>
+    <!-- la bitácora en vivo (js/bitacora.js): su nota y sus hallazgos, y abre el panel con todo -->
+    <button type="button" class="stat stat-bitacora" id="st-bitacora" aria-haspopup="dialog" title="Open the live logbook" data-i18n-attr="title:bitacora.open">
+      <span class="stat-label"><span class="live-dot" aria-hidden="true"></span><span id="st-bitacora-label">Logbook</span></span>
+      <span class="stat-value"><span id="st-bitacora-score">–</span><span class="bt-of">/100</span><span class="bt-trend" id="st-bitacora-trend"></span></span>
+      <span class="stat-sub" id="st-bitacora-sub"></span>
+    </button>
   </section>
 
   <main class="main">
@@ -415,6 +421,39 @@
   </div>
 </dialog>
 
+<!-- la bitácora en vivo (js/bitacora.js): las secciones de #bt-body se rehacen con cada novedad -->
+<dialog class="settings bitacora" id="bitacora" aria-labelledby="bt-title">
+  <div class="bt-wrap">
+    <div class="bt-top">
+      <p class="bt-eyebrow"><span class="live-dot" aria-hidden="true"></span><span id="bt-eyebrow"></span></p>
+      <button type="button" class="icon-btn" id="bitacora-close" title="Close" aria-label="Close" data-i18n-attr="title:toast.close;aria-label:toast.close">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <header class="bt-mast">
+      <h2 id="bt-title"></h2>
+      <p class="bt-dek" id="bt-dek"></p>
+      <p class="bt-meta"><span id="bt-window"></span><span id="bt-updated"></span></p>
+    </header>
+    <div id="bt-body" class="bt-body"></div>
+    <div class="bt-actions">
+      <div class="field">
+        <label for="bt-title-input" data-i18n="bitacora.titleLabel">Title of this logbook</label>
+        <input id="bt-title-input" type="text" maxlength="90" autocomplete="off" spellcheck="true">
+      </div>
+      <div class="sr-row">
+        <button type="button" class="btn btn-primary" id="bt-close-btn" aria-describedby="bt-close-help"></button>
+        <button type="button" class="btn btn-ghost" id="bt-copy" data-i18n="digest.copy">Copy Markdown</button>
+        <button type="button" class="btn btn-ghost" id="bt-save" data-i18n="digest.save">Save .md</button>
+        <button type="button" class="btn btn-ghost" id="bt-json" data-i18n="bitacora.json">Save estado.json</button>
+      </div>
+      <p class="help" id="bt-close-help"></p>
+      <p class="bt-out" id="bt-out" role="status" aria-live="polite"><span id="bt-out-text"></span> <button type="button" class="link-btn" id="bt-undo" hidden data-i18n="bitacora.undo">Undo</button></p>
+    </div>
+    <p class="help" data-i18n="bitacora.help">Calculated only from what is already loaded, with no extra requests, and updated live. It describes the repository, never people. Closed logbooks are saved only in this browser.</p>
+  </div>
+</dialog>
+
 <dialog class="settings trophies health" id="textview" aria-labelledby="textview-title">
   <div class="tr-wrap">
     <div class="tr-head">
@@ -505,6 +544,7 @@
 <script src="js/game.js"></script>
 <script src="js/health.js"></script>
 <script src="js/digest.js"></script>
+<script src="js/bitacora.js"></script>
 <script src="js/textview.js"></script>
 <script src="js/constellation.js"></script>
 <script src="js/search.js"></script>

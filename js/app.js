@@ -54,6 +54,23 @@
     healthBtn: $('#health-btn'),
     health: $('#health'),
     healthBody: $('#health-body'),
+    stBit: $('#st-bitacora'),
+    stBitLabel: $('#st-bitacora-label'),
+    stBitScore: $('#st-bitacora-score'),
+    stBitTrend: $('#st-bitacora-trend'),
+    stBitSub: $('#st-bitacora-sub'),
+    bitacora: $('#bitacora'),
+    btEyebrow: $('#bt-eyebrow'),
+    btTitle: $('#bt-title'),
+    btDek: $('#bt-dek'),
+    btWindow: $('#bt-window'),
+    btUpdated: $('#bt-updated'),
+    btBody: $('#bt-body'),
+    btTitleInput: $('#bt-title-input'),
+    btCloseBtn: $('#bt-close-btn'),
+    btCloseHelp: $('#bt-close-help'),
+    btOutText: $('#bt-out-text'),
+    btUndo: $('#bt-undo'),
     textview: $('#textview'),
     textviewBody: $('#textview-body'),
     textviewFilter: $('#textview-filter'),
@@ -939,6 +956,9 @@
     }
     renderSummary(data, L);
     renderTab(tab);
+    tab.updatedAt = Date.now();
+    if (el.bitacora.open) scheduleBitacora();
+    if (initialBitacora && L.nodes.length) openBitacora();
     if (initialReplay && L.nodes.length) startUrlReplay();
     if (initialQuery && tab === active && L.nodes.length) startUrlQuery();
     if (initialPath && tab === active && L.nodes.length) startUrlPath();
@@ -1576,6 +1596,181 @@
   });
   $('#health-close').addEventListener('click', closeHealth);
 
+  /* ---------- bitácora en vivo: lo que hizo el repo desde la anterior, con su nota y sus hallazgos (ver bitacora.js) ---------- */
+  const BIT_EVERY = 1500; // con el panel abierto, se rehace a lo más cada 1,5 s
+  const BIT_CARD_EVERY = 2000; // la tarjeta del resumen, a lo más cada 2 s
+  let initialBitacora = false; // ?bitacora=1: el panel se abre solo, con la primera historia del repo a la vista
+  let bitCard = { at: 0, key: null, timer: 0 };
+  let bitTimer = 0;
+  let bitBody = ''; // el último HTML de las secciones: si no cambió, no se toca (ni el foco ni el desplazamiento)
+  let bitUndo = null; // la bitácora recién cerrada, para deshacer: { key, n, title }
+  let demoBitacoras = null; // la demo trae su historia ficticia; lo que se cierra en ella no se guarda
+  const demoTitles = new Map();
+  /** La bitácora no tiene sentido en la práctica de git ni en el ensayo de comandos. */
+  const bitOn = (tab = active) => !!tab && !tab.source.data.repo.practice && !tab.source.data.repo.rehearsal;
+  const bitDemo = (tab) => !!tab.source.data.repo.demo;
+  function bitPrev(tab = active) {
+    if (!tab) return [];
+    if (bitDemo(tab)) return (demoBitacoras ||= GB.bitacora.demoHistory());
+    return GB.bitacora.sanitize(U.store.get('bitacora:' + tab.key, []));
+  }
+  function bitSave(tab, list) {
+    if (bitDemo(tab)) demoBitacoras = list;
+    else U.store.set('bitacora:' + tab.key, list);
+  }
+  /** El título que se escribe para la bitácora en curso (vacío: el automático), por repo. */
+  const bitDraft = (tab) => (bitDemo(tab) ? demoTitles.get(tab.key) || '' : U.store.get('bitacora-title:' + tab.key, ''));
+  function setBitDraft(tab, v) {
+    if (bitDemo(tab)) demoTitles.set(tab.key, v);
+    else U.store.set('bitacora-title:' + tab.key, v || null);
+  }
+  function bitCompute(tab = active) {
+    const data = tab.source.view ? tab.source.view() : tab.source.data;
+    return GB.bitacora.compute(data, feed.items.filter((a) => a.repo === tab.key), { prev: bitPrev(tab), text: i18n.text });
+  }
+  let bitDay = null;
+  /** Día y mes cortos ("18 oct.") en el idioma activo. */
+  const bitShort = (ms) => {
+    if (bitDay?.locale !== i18n.locale) bitDay = { locale: i18n.locale, f: new Intl.DateTimeFormat(i18n.locale, { day: 'numeric', month: 'short' }) };
+    return bitDay.f.format(ms);
+  };
+  const bitFormat = (tab = active) => ({ t, esc: U.esc, num: U.fmtNum, short: bitShort, text: i18n.text, repo: nameOf(tab), title: bitDraft(tab).trim() });
+  const bitTrend = (b) => (!b.trend ? t('bitacora.trend.first') : b.score.total > b.trend.prev ? t('bitacora.trend.up', { prev: b.trend.prev }) : b.score.total < b.trend.prev ? t('bitacora.trend.down', { prev: b.trend.prev }) : t('bitacora.trend.same', { n: b.trend.n }));
+
+  /** La tarjeta del resumen: número, nota, si subió o bajó y cuántos hallazgos. Se recalcula a lo más cada 2 s. */
+  function renderBitacoraCard(force = false) {
+    const on = bitOn();
+    el.stBit.hidden = !on;
+    if (!on || !source?.data.loaded) return;
+    const wait = !force && bitCard.key === active.key ? BIT_CARD_EVERY - (Date.now() - bitCard.at) : 0;
+    if (wait > 0) {
+      if (!bitCard.timer) bitCard.timer = setTimeout(() => ((bitCard.timer = 0), renderBitacoraCard()), wait);
+      return;
+    }
+    clearTimeout(bitCard.timer);
+    bitCard = { at: Date.now(), key: active.key, timer: 0 };
+    const b = bitCompute();
+    const d = b.trend ? b.score.total - b.trend.prev : 0;
+    setText(el.stBitLabel, t('bitacora.card', { n: b.n }));
+    setText(el.stBitScore, U.fmtNum(b.score.total));
+    setText(el.stBitTrend, d ? `${d > 0 ? '▲' : '▼'}${U.fmtNum(Math.abs(d))}` : '');
+    el.stBitTrend.className = `bt-trend${d > 0 ? ' up' : d < 0 ? ' down' : ''}`;
+    setText(el.stBitSub, `${t('status.live')} · ${t('bitacora.cardFindings', { n: b.findings.length })}`);
+    el.stBit.setAttribute('aria-label', `${t('bitacora.card', { n: b.n })}. ${t('bitacora.score', { score: b.score.total, trend: bitTrend(b) })} ${t('bitacora.cardFindings', { n: b.findings.length })}.`);
+  }
+
+  /** El panel entero. Las secciones solo se reemplazan si cambiaron y nadie está parado con el foco en ellas. */
+  function renderBitacora() {
+    clearTimeout(bitTimer);
+    bitTimer = 0;
+    if (!el.bitacora.open || !bitOn()) return;
+    const b = bitCompute();
+    const f = bitFormat();
+    const r = GB.bitacora.render(b, f);
+    setText(el.btEyebrow, r.eyebrow);
+    setText(el.btTitle, r.title);
+    setText(el.btDek, r.dek);
+    setText(el.btWindow, r.window);
+    setText(el.btUpdated, t('bitacora.updated', { ago: U.timeAgo(active.updatedAt || Date.now()) }));
+    if (document.activeElement !== el.btTitleInput) {
+      el.btTitleInput.value = f.title;
+      el.btTitleInput.dataset.key = active.key;
+    }
+    el.btTitleInput.placeholder = GB.bitacora.autoTitle(b, f);
+    setText(el.btCloseBtn, t('bitacora.close', { n: b.n }));
+    setText(el.btCloseHelp, t('bitacora.closeHelp', { next: b.n + 1 }));
+    if (r.body !== bitBody) {
+      if (el.btBody.contains(document.activeElement)) scheduleBitacora(); // se rehace cuando el foco salga
+      else {
+        el.btBody.innerHTML = r.body;
+        bitBody = r.body;
+      }
+    }
+  }
+  function scheduleBitacora() {
+    if (!bitTimer) bitTimer = setTimeout(renderBitacora, BIT_EVERY);
+  }
+
+  function openBitacora() {
+    initialBitacora = false;
+    if (!bitOn() || el.bitacora.open) return;
+    bitBody = '';
+    el.btOutText.textContent = '';
+    el.btUndo.hidden = true;
+    if (typeof el.bitacora.showModal === 'function') el.bitacora.showModal();
+    else el.bitacora.setAttribute('open', '');
+    renderBitacora();
+  }
+  function closeBitacora() {
+    if (typeof el.bitacora.close === 'function') el.bitacora.close();
+    else el.bitacora.removeAttribute('open');
+  }
+  el.stBit.addEventListener('click', openBitacora);
+  $('#bitacora-close').addEventListener('click', closeBitacora);
+  el.bitacora.addEventListener('close', () => {
+    clearTimeout(bitTimer);
+    bitTimer = 0;
+  });
+  // cada rama de un hallazgo o de lo grande lleva a ella en el grafo
+  el.btBody.addEventListener('click', (ev) => {
+    const go = ev.target.closest('[data-branch]');
+    if (!go) return;
+    closeBitacora();
+    graph.focusBranch(go.dataset.branch);
+  });
+  el.btBody.addEventListener('focusout', () => setTimeout(() => !el.btBody.contains(document.activeElement) && bitTimer && renderBitacora(), 0));
+  el.btTitleInput.addEventListener('input', () => {
+    if (!active || el.btTitleInput.dataset.key !== active.key) return;
+    setBitDraft(active, el.btTitleInput.value);
+    setText(el.btTitle, el.btTitleInput.value.trim() || el.btTitleInput.placeholder);
+  });
+  // ¿pasó un rato sin novedades? la línea de "actualizada hace…" igual avanza
+  setInterval(() => el.bitacora.open && active && setText(el.btUpdated, t('bitacora.updated', { ago: U.timeAgo(active.updatedAt || Date.now()) })), 10000);
+
+  /** Cerrar la bitácora: se guarda (en la demo, solo en memoria) y la siguiente empieza ahora. */
+  el.btCloseBtn.addEventListener('click', () => {
+    const tab = active;
+    if (!bitOn(tab)) return;
+    const b = bitCompute(tab);
+    const title = bitDraft(tab).trim() || GB.bitacora.autoTitle(b, bitFormat(tab));
+    bitSave(tab, GB.bitacora.append(bitPrev(tab), GB.bitacora.closeEntry(b, title)));
+    setBitDraft(tab, '');
+    el.btTitleInput.value = '';
+    bitUndo = { key: tab.key, n: b.n, title };
+    el.btOutText.textContent = t('bitacora.closed', { n: b.n, next: b.n + 1 });
+    el.btUndo.hidden = false;
+    renderBitacora();
+    renderBitacoraCard(true);
+  });
+  el.btUndo.addEventListener('click', () => {
+    const tab = active;
+    if (!bitUndo || !tab || bitUndo.key !== tab.key) return;
+    const list = bitPrev(tab);
+    if (list[list.length - 1]?.n === bitUndo.n) {
+      bitSave(tab, list.slice(0, -1));
+      setBitDraft(tab, bitUndo.title);
+    }
+    bitUndo = null;
+    el.btOutText.textContent = '';
+    el.btUndo.hidden = true;
+    el.btCloseBtn.focus();
+    renderBitacora();
+    renderBitacoraCard(true);
+  });
+  const bitFile = (ext) => GB.snapshot.fileName(active.demo ? 'demo' : active.key, { ext, kind: 'bitacora' });
+  $('#bt-copy').addEventListener('click', async () => {
+    const text = GB.bitacora.toMarkdown(bitCompute(), bitFormat());
+    try {
+      await navigator.clipboard.writeText(text);
+      el.btOutText.textContent = t('digest.copied');
+    } catch {
+      GB.snapshot.download(new Blob([text], { type: 'text/markdown' }), bitFile('md')); // sin permiso del portapapeles, se guarda
+    }
+    el.btUndo.hidden = true;
+  });
+  $('#bt-save').addEventListener('click', () => GB.snapshot.download(new Blob([GB.bitacora.toMarkdown(bitCompute(), bitFormat())], { type: 'text/markdown' }), bitFile('md')));
+  $('#bt-json').addEventListener('click', () => GB.snapshot.download(new Blob([JSON.stringify(GB.bitacora.toEstado(bitCompute(), bitFormat()), null, 2) + '\n'], { type: 'application/json' }), bitFile('json')));
+
   /* ---------- vista de texto: el árbol de ramas y commits para teclado y lector de pantalla (ver textview.js) ---------- */
   function closeTextview() {
     if (typeof el.textview.close === 'function') el.textview.close();
@@ -1834,12 +2029,20 @@
 
     renderLast();
     renderTokenBanner();
+    renderBitacoraCard();
   }
 
   /** Cifras en blanco hasta que el repo recién conectado traiga las suyas. */
   function clearStats() {
     for (const [key, node] of Object.entries(el.st)) node.textContent = key.endsWith('Sub') ? '' : '–';
     el.st.branchesSub.title = '';
+    clearTimeout(bitCard.timer);
+    bitCard = { at: 0, key: null, timer: 0 };
+    el.stBitScore.textContent = '–';
+    el.stBitTrend.textContent = '';
+    el.stBitSub.textContent = '';
+    el.stBit.removeAttribute('aria-label');
+    el.stBit.hidden = !bitOn();
   }
 
   function renderLast() {
@@ -2492,6 +2695,8 @@
     else if (source.data.repo.demo) return startDemo();
     renderRepo(source.data.repo);
     if (lastRender) renderStats(lastRender.data, lastRender.L);
+    renderBitacoraCard(true);
+    if (el.bitacora.open) renderBitacora();
     renderStatus();
     if (overlayState) showOverlay(overlayState.kind, overlayState.message, overlayState.fatal);
   });
@@ -2502,6 +2707,12 @@
   let initialTV = false;
   let initialReplay = null; // ?replay=2026-09-01..2026-09-14&title=…: arranca el Replay con ese tramo en cuanto hay historia
   let initialPractice = null; // ?practice=3 o ?practice=<código>: un ejercicio de Aprender git, de la lista o de quien enseña
+  try {
+    const q0 = new URLSearchParams(location.search);
+    initialBitacora = !EMBED && q0.has('bitacora') && !/^(0|false|no|off)$/i.test(q0.get('bitacora'));
+  } catch {
+    /* sin query string */
+  }
   try {
     const q = new URLSearchParams(location.search);
     // ?repo=a/b&repo=c/d (o separados por comas): los repos a seguir, el primero a la vista

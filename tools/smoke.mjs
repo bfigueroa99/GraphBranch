@@ -676,6 +676,47 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
+  await step(page, 'bitácora en vivo: la tarjeta del resumen abre el panel, se cierra, se deshace y se descarga', async () => {
+    const card = await page.evaluate(() => ({ score: document.querySelector('#st-bitacora-score').textContent, label: document.querySelector('#st-bitacora-label').textContent, aria: document.querySelector('#st-bitacora').getAttribute('aria-label') || '' }));
+    if (!/^\d+$/.test(card.score) || !/\d/.test(card.label) || /undefined|NaN|bitacora\./.test(card.aria + card.label)) throw new Error('tarjeta de la bitácora: ' + JSON.stringify(card));
+    await page.click('#st-bitacora');
+    await page.waitForSelector('#bitacora[open]', { timeout: T(3000) });
+    const info = await page.evaluate(() => {
+      const d = document.querySelector('#bitacora');
+      const w = d.querySelector('.bt-wrap');
+      return {
+        secs: [...d.querySelectorAll('.bt-sec')].map((x) => x.dataset.sec),
+        bars: d.querySelectorAll('.bt-col').length,
+        hist: d.querySelectorAll('[data-sec="history"] tbody tr').length,
+        eyebrow: d.querySelector('#bt-eyebrow').textContent,
+        title: d.querySelector('#bt-title').textContent,
+        text: d.textContent,
+        overflow: w.scrollWidth - w.clientWidth,
+      };
+    });
+    for (const k of ['big', 'period', 'verdict', 'findings', 'follow', 'timeline', 'next', 'history']) if (!info.secs.includes(k)) throw new Error(`falta la sección ${k}: ${info.secs.join(', ')}`);
+    if (!info.bars || info.hist !== 4 || !info.title.trim() || !/5/.test(info.eyebrow)) throw new Error('panel de la bitácora: ' + JSON.stringify({ ...info, text: undefined }));
+    if (/undefined|NaN|bitacora\.|status\./.test(info.text)) throw new Error('texto sin resolver en la bitácora: ' + info.text.slice(0, 160));
+    if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
+    // cerrarla guarda la n.º 5 y empieza la 6; deshacer la devuelve
+    await page.click('#bt-close-btn');
+    await page.waitForFunction(() => document.querySelectorAll('#bitacora [data-sec="history"] tbody tr').length === 5 && /6/.test(document.querySelector('#bt-eyebrow').textContent), null, { timeout: T(3000) });
+    if (await page.isHidden('#bt-undo')) throw new Error('cerrar la bitácora no ofrece deshacer');
+    await page.click('#bt-undo');
+    await page.waitForFunction(() => document.querySelectorAll('#bitacora [data-sec="history"] tbody tr').length === 4 && /5/.test(document.querySelector('#bt-eyebrow').textContent), null, { timeout: T(3000) });
+    const [md] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#bt-save')]);
+    if (!/^graphbranch-demo-bitacora-.*\.md$/.test(md.suggestedFilename())) throw new Error('nombre de la bitácora en Markdown: ' + md.suggestedFilename());
+    const mdText = readFileSync(await md.path(), 'utf8');
+    if (!/^# .+\n/.test(mdText) || !/\n## 08 · /.test(mdText) || /undefined|NaN|bitacora\./.test(mdText)) throw new Error('Markdown de la bitácora: ' + mdText.slice(0, 160));
+    const [js] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#bt-json')]);
+    if (!/^graphbranch-demo-bitacora-.*\.json$/.test(js.suggestedFilename())) throw new Error('nombre del estado.json: ' + js.suggestedFilename());
+    const st = JSON.parse(readFileSync(await js.path(), 'utf8'));
+    if (st.esquema !== 1 || st.bitacora !== 5 || st.historial?.length !== 5 || st.anteriores?.length !== 4 || !st.nota?.total) throw new Error('estado.json de la bitácora: ' + JSON.stringify(st).slice(0, 200));
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#bitacora:not([open])', { state: 'attached', timeout: T(3000) });
+    if (!(await page.evaluate(() => document.activeElement?.id === 'st-bitacora'))) throw new Error('al cerrar el panel, el foco no vuelve a la tarjeta');
+  });
+
   await step(page, 'vista de texto: árbol con teclado, nombres accesibles y Enter lleva al grafo', async () => {
     await page.click('#textview-btn');
     await page.waitForSelector('#textview[open]', { timeout: T(3000) });

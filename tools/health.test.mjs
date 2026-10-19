@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} } });
 vm.runInContext(readFileSync(join(root, 'js', 'health.js'), 'utf8'), ctx, { filename: 'health.js' });
-const { compute, clashes, clashCandidates, compare, splitFiles } = ctx.window.GB.health;
+const { compute, clashes, clashCandidates, compare, conflictsParam, splitFiles } = ctx.window.GB.health;
 
 const DAY = 864e5;
 const NOW = Date.UTC(2026, 9, 13, 12);
@@ -265,4 +265,16 @@ test('frecuencia de despliegue: releases por semana, de la semana más vieja a l
   const h = compute(repo(), acts, NOW);
   assert.deepEqual([...h.dora.weeks], [0, 0, 0, 0, 0, 2, 1, 2], 'a y b esta semana, c la pasada, d y e hace tres, f fuera de las 8 y g (futuro) no cuenta');
   assert.deepEqual([...compute(repo(), [], NOW).dora.weeks], [0, 0, 0, 0, 0, 0, 0, 0]);
+});
+
+test('conflictsParam lee ?conflicts= de la URL: 1 o vacío lo pide; 0, false, no y off no', () => {
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(conflictsParam(q('')), false);
+  assert.equal(conflictsParam(q('repo=a/b')), false);
+  assert.equal(conflictsParam(q('conflicts=1')), true);
+  assert.equal(conflictsParam(q('conflicts')), true);
+  assert.equal(conflictsParam(q('conflicts=yes')), true);
+  for (const off of ['0', 'false', 'NO', 'off', ' 0 ']) assert.equal(conflictsParam(q('conflicts=' + encodeURIComponent(off))), false, off);
+  assert.equal(conflictsParam(null), false);
+  assert.equal(conflictsParam({}), false);
 });

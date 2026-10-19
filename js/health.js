@@ -195,5 +195,11 @@
     return { onlyA: list(sa, sb), onlyB: list(sb, sa), both: [...sa].filter((p) => sb.has(p)).sort() };
   }
 
-  GB.health = { compute, clashes, clashCandidates, compare, splitFiles, STALE_DAYS };
+  /** ?conflicts=1 (o cualquier valor que no sea 0, false, no u off): abrir la salud con los choques ya buscados. */
+  function conflictsParam(q) {
+    if (!q || typeof q.has !== 'function' || !q.has('conflicts')) return false;
+    return !/^(0|false|no|off)$/i.test(String(q.get('conflicts')).trim());
+  }
+
+  GB.health = { compute, clashes, clashCandidates, compare, conflictsParam, splitFiles, STALE_DAYS };
 })(window.GB);

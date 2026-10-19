@@ -511,6 +511,8 @@ GB.i18n.define('fr', {
   'practice.ex5.goal': 'Le correctif urgent est le dernier commit de feature, mais lui seul doit arriver sur main. Lance checkout main, cherry-pick feature, puis tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'Le commit « Break checkout totals » est déjà partagé : ne réécris pas l’historique. Annule-le avec un nouveau commit : essaie revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Vous avez des modifications en cours sur feature et main doit être corrigée tout de suite. Mettez-les de côté avec stash, faites checkout main et un commit du correctif, revenez sur feature et récupérez-les avec stash pop.',
   'practice.share': 'Copier le lien de l\'exercice',
   'practice.link': 'Lien de l\'exercice',
   'practice.copied': 'Lien copié.',

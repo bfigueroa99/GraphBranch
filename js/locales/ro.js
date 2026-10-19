@@ -518,6 +518,8 @@ GB.i18n.define('ro', {
   'practice.ex5.goal': 'Remedierea urgentă este ultimul commit din feature, dar doar el trebuie să ajungă în main. Rulează checkout main, cherry-pick feature, apoi tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'Commitul „Break checkout totals” a fost deja partajat, așa că nu rescrie istoricul. Anulează-l cu un commit nou: încearcă revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Ai modificări neterminate pe feature, iar main trebuie reparat acum. Pune-le deoparte cu stash, fă checkout main și un commit cu reparația, întoarce-te pe feature și recupereaz-le cu stash pop.',
   'practice.share': 'Copiază linkul exercițiului',
   'practice.link': 'Linkul exercițiului',
   'practice.copied': 'Link copiat.',

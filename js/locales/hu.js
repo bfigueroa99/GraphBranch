@@ -510,6 +510,8 @@ GB.i18n.define('hu', {
   'practice.ex5.goal': 'A sürgős javítás a feature utolsó commitja, de csak annak szabad a mainbe kerülnie. Futtasd: checkout main, cherry-pick feature, majd tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'A „Break checkout totals” commit már meg van osztva, ezért ne írd át az előzményeket. Vond vissza egy új committal: próbáld ki a revert HEAD~1 parancsot.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'A feature ágon félkész változtatásaid vannak, a main-t pedig azonnal javítani kell. Tedd félre őket a stash-sel, válts a main-re (checkout main), commitold a javítást, menj vissza a feature-re, és hozd vissza őket a stash pop-pal.',
   'practice.share': 'Feladat linkjének másolása',
   'practice.link': 'A feladat linkje',
   'practice.copied': 'Link másolva.',

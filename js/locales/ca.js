@@ -510,6 +510,8 @@ GB.i18n.define('ca', {
   'practice.ex5.goal': 'L\'arranjament urgent és l\'últim commit de feature, però només aquest ha d\'arribar a main. Fes checkout main, cherry-pick feature i després tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'El commit "Break checkout totals" ja està compartit, així que no reescriguis la història. Desfés-lo amb un commit nou: prova revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Tens canvis a mig fer a feature i cal arreglar main ara mateix. Desa\'ls amb stash, fes checkout main i un commit amb l\'arranjament, torna a feature i recupera\'ls amb stash pop.',
   'practice.share': 'Copia l\'enllaç de l\'exercici',
   'practice.link': 'Enllaç de l\'exercici',
   'practice.copied': 'Enllaç copiat.',

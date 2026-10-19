@@ -511,6 +511,8 @@ GB.i18n.define('de', {
   'practice.ex5.goal': 'Der Hotfix ist der letzte Commit von feature, aber nur er soll nach main. Führe checkout main, cherry-pick feature und dann tag v1.0.1 aus.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'Der Commit „Break checkout totals“ ist schon geteilt, schreibe die Historie also nicht um. Mach ihn mit einem neuen Commit rückgängig: Probiere revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Auf feature liegen halbfertige Änderungen, und main braucht sofort einen Fix. Leg sie mit stash beiseite, mach checkout main und einen Commit mit dem Fix, geh zurück zu feature und hol sie mit stash pop wieder.',
   'practice.share': 'Link zur Übung kopieren',
   'practice.link': 'Link zur Übung',
   'practice.copied': 'Link kopiert.',

@@ -1424,6 +1424,24 @@ console.log('Varios repos a la vez');
     await lab.waitForFunction(() => document.querySelector('.pr-log')?.textContent.includes('Revert "Break checkout totals"'), null, { timeout: T(5000) });
     await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: T(5000) });
   });
+  await step(lab, 'el ejercicio de stash: con cambios a medias checkout falla, stash los guarda y stash pop los devuelve', async () => {
+    await lab.goto(`${base}/index.html?lang=es&practice=7`);
+    await lab.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: T(15000) });
+    await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent.includes('stash pop'), null, { timeout: T(5000) });
+    if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('el ejercicio parte resuelto');
+    const send = async (line) => {
+      await lab.fill('.pr-input', line);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await send('checkout main');
+    await lab.waitForFunction(() => document.querySelector('.pr-log')?.textContent.includes('Please commit your changes or stash them'), null, { timeout: T(5000) });
+    for (const line of ['stash', 'checkout main', 'commit -m "Fix login redirect"', 'checkout feature']) await send(line);
+    await lab.waitForFunction(() => document.querySelector('.pr-log')?.textContent.includes("Switched to branch 'feature'"), null, { timeout: T(5000) });
+    if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('se resolvió sin stash pop');
+    await send('stash pop');
+    await lab.waitForFunction(() => document.querySelector('.pr-log')?.textContent.includes('modified:   profile.js'), null, { timeout: T(5000) });
+    await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: T(5000) });
+  });
   await step(lab, 'un ejercicio propio con pistas: el botón las muestra una a una y la condición de mensaje lo resuelve', async () => {
     await lab.goto(`${base}/index.html?lang=es&practice=1`);
     await lab.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: T(15000) });

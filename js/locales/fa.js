@@ -553,6 +553,8 @@ GB.i18n.define('fa', {
   'practice.ex5.goal': 'رفع فوری آخرین commit شاخهٔ feature است، اما فقط همان باید به main برسد. checkout main و cherry-pick feature و سپس tag v1.0.1 را اجرا کن.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'کامیت «Break checkout totals» قبلاً به اشتراک گذاشته شده است، پس تاریخچه را بازنویسی نکنید. آن را با یک کامیت جدید خنثی کنید: revert HEAD~1 را امتحان کنید.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'در feature تغییرات نیمه‌کاره دارید و main همین حالا باید اصلاح شود. آن‌ها را با stash کنار بگذارید، checkout main کنید و اصلاح را commit کنید، به feature برگردید و با stash pop آن‌ها را برگردانید.',
   'practice.share': 'کپی پیوند تمرین',
   'practice.link': 'پیوند تمرین',
   'practice.copied': 'پیوند کپی شد.',

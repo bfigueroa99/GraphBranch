@@ -510,6 +510,8 @@ GB.i18n.define('ta', {
   'practice.ex5.goal': 'அவசரத் திருத்தம் feature-இன் கடைசி commit; ஆனால் அது மட்டுமே main-க்கு வர வேண்டும். checkout main, cherry-pick feature, பிறகு tag v1.0.1 இயக்கு.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': '"Break checkout totals" கமிட் ஏற்கனவே பகிரப்பட்டுவிட்டது, எனவே வரலாற்றை மீண்டும் எழுத வேண்டாம். புதிய கமிட் மூலம் அதை நீக்குங்கள்: revert HEAD~1 முயற்சிக்கவும்.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'feature-இல் பாதி முடிந்த மாற்றங்கள் உள்ளன, main-ஐ இப்போதே சரிசெய்ய வேண்டும். stash மூலம் அவற்றை ஒதுக்கி வைத்து, checkout main செய்து திருத்தத்தை commit செய்யுங்கள், பின் feature-க்குத் திரும்பி stash pop மூலம் அவற்றை மீட்டெடுங்கள்.',
   'practice.share': 'பயிற்சி இணைப்பை நகலெடு',
   'practice.link': 'பயிற்சி இணைப்பு',
   'practice.copied': 'இணைப்பு நகலெடுக்கப்பட்டது.',

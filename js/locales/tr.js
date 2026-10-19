@@ -510,6 +510,8 @@ GB.i18n.define('tr', {
   'practice.ex5.goal': 'Acil düzeltme feature\'ın son commit\'i, ama main\'e yalnızca o gitmeli. checkout main, cherry-pick feature ve ardından tag v1.0.1 komutlarını çalıştır.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': '"Break checkout totals" commit\'i zaten paylaşıldı, bu yüzden geçmişi yeniden yazma. Yeni bir commit ile geri al: revert HEAD~1 komutunu dene.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'feature üzerinde yarım kalmış değişiklikleriniz var ve main hemen düzeltilmeli. Onları stash ile kenara koyun, checkout main yapıp düzeltmeyi commit edin, feature\'a dönün ve stash pop ile geri getirin.',
   'practice.share': 'Alıştırma bağlantısını kopyala',
   'practice.link': 'Alıştırma bağlantısı',
   'practice.copied': 'Bağlantı kopyalandı.',

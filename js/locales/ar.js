@@ -609,6 +609,8 @@ GB.i18n.define('ar', {
   'practice.ex5.goal': 'الإصلاح العاجل هو آخر commit في feature، لكن يجب أن يصل هذا وحده إلى main. نفّذ checkout main ثم cherry-pick feature ثم tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'تمت مشاركة commit "Break checkout totals" بالفعل، فلا تعد كتابة السجل. تراجع عنه بـ commit جديد: جرّب revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'لديك تغييرات غير مكتملة في feature وmain تحتاج إلى إصلاح الآن. ضعها جانبًا بـ stash، ثم checkout main وcommit للإصلاح، وعد إلى feature واسترجعها بـ stash pop.',
   'practice.share': 'نسخ رابط التمرين',
   'practice.link': 'رابط التمرين',
   'practice.copied': 'تم نسخ الرابط.',

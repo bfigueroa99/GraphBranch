@@ -2217,5 +2217,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - README: la función (sección Salud del repo) y la lista de URLs directas; Límites conocidos y Seguridad sin cambios (no hay texto de afuera nuevo ni consultas nuevas).
 - QA: filas tocadas: el panel de salud por URL (smoke, en la demo); idiomas sin cambios (`check-i18n`, sin claves nuevas); auditoría: no cambia ningún control, solo cuándo se abre un diálogo existente.
 - Reclamo: loop/106, a mano en modo caos (`--reclamar` dio Ocupada en la 103; la 104 y la 105 ya estaban tomadas)
-- Validado: (pendiente)
+- Validado: 342 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 107, mantenimiento · Deuda: pendiente 1

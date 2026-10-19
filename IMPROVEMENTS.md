@@ -2218,5 +2218,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: filas tocadas: demo sin token (smoke), teclado (Esc cierra y la URL se limpia), cuota de GitHub (mismas consultas que el botón, una vez por carga, nunca en la capa), 40 idiomas sin textos nuevos (`check-i18n`, 0 errores); a mano con Playwright contra `node e2e/serve.mjs 4173`: 1 choque en la demo, sin errores de consola. La primera corrida del smoke falló al mirar la URL justo tras cerrar (el evento `close` del diálogo llega en la tarea siguiente): el paso ahora espera esa condición.
 - Reclamo: loop/104, a mano en modo caos (la 103 estaba ocupada)
 - Nota: clon superficial otra vez (`git fetch --unshallow` arregló el R3 falso); borrar las `loop/*` fusionadas no se pudo (el proxy corta el push de borrado).
-- Validado: (pendiente)
+- Validado: 342 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera corrida de `npm run check` falló en el smoke en «cambios de un commit: desde su ficha, con teclado…» (`waitForFunction` 15000 ms, sección que el diff no toca, con seis sesiones del caos cargando la máquina); la segunda pasó entera: es la intermitencia bajo carga del pendiente de Deuda del smoke.
 - **Siguiente:** iteración 105, expansión: ítem 65 (Token para un Bitbucket propio, Fuentes)

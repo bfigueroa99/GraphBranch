@@ -138,7 +138,7 @@ segunda columna a la primera.
 
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
-| Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (API de Forgejo, repos públicos y, con token, privados), bitbucket.org (API 2.0 de Bitbucket Cloud, repos públicos y, con token, privados), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP), Bitbucket Data Center propio (`?bitbucket=` / `--bitbucket-url`, con su CSP, sin token), repos locales (app de escritorio, con `git`), demo | Token para un Forgejo/Gitea propio y para un Bitbucket propio |
+| Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (API de Forgejo, repos públicos y, con token, privados), bitbucket.org (API 2.0 de Bitbucket Cloud, repos públicos y, con token, privados), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP), Bitbucket Data Center propio (`?bitbucket=` / `--bitbucket-url`, con su CSP y, con su token aparte y atado al servidor, privados), repos locales (app de escritorio, con `git`), demo | Token para un Forgejo/Gitea propio |
 | Datos | ramas, commits, PRs (y las pilas de PRs apilados), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, en el panel de salud), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color, `&hide=` y `&rotate=` entre repos), extensión de VS Code (sigue la sesión de GitHub del editor y recuerda repos, vista e idioma entre sesiones; paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia), miles de ramas por repo | una organización entera con más de 10 repos a la vez |
@@ -344,7 +344,7 @@ se comprueban antes de construir sobre ellas.
 63. ~~**Vista de texto: filtro por autor**~~ hecho en #133 · Público · 1×2/2. [parte del ítem 33]
 64. ~~**Choques entre ramas en la URL**~~ hecho en #135 · Análisis · 1×2/1. [parte del ítem 14] `?conflicts=1` abre el repo con los choques ya
     marcados, para compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
-65. **Token para un Bitbucket propio** · Fuentes · 2×2/2. [parte del ítem 50] Un token de acceso personal (`Authorization: Bearer …`)
+65. ~~**Token para un Bitbucket propio**~~ hecho en #136 · Fuentes · 2×2/2. [parte del ítem 50] Un token de acceso personal (`Authorization: Bearer …`)
     para un Bitbucket Data Center propio, guardado aparte (llavero en escritorio), que va solo a ese host: la mayoría de los
     servidores no dejan leer sin iniciar sesión. Comprobar: `tools/bitbucket-server.test.mjs` con el token y sin él.
 66. ~~**Salud del repo en la URL**~~ hecho en #139 · Análisis · 1×2/1. [parte del ítem 12] `?health=1` abre el repo con el panel de salud ya
@@ -2224,6 +2224,17 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: clon superficial otra vez (`git fetch --unshallow` arregló el R3 falso); borrar las `loop/*` fusionadas no se pudo (el proxy corta el push de borrado).
 - Validado: 342 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera corrida de `npm run check` falló en el smoke en «cambios de un commit: desde su ficha, con teclado…» (`waitForFunction` 15000 ms, sección que el diff no toca, con seis sesiones del caos cargando la máquina); la segunda pasó entera. Era la intermitencia que arregló la iteración 103; tras integrarla, `npm run check` otra vez en verde.
 - **Siguiente:** iteración 105, expansión: ítem 65 (Token para un Bitbucket propio, Fuentes)
+
+### 2026-10-19 · Iteración 105 · Expansión · Fuentes
+
+- **Capacidad nueva: token para un Bitbucket propio** (ítem 65 de la hoja de ruta): con un servidor elegido (`?bitbucket=` / `--bitbucket-url=`), Ajustes muestra «Token de tu Bitbucket propio» (un token de acceso personal o HTTP), que va como `Authorization: Bearer …` en cada consulta y solo a ese servidor. Se guarda aparte de los demás y atado a la dirección del servidor (`pack`/`unpack` en `js/sources/bitbucket-server.js`, JSON `{base, token}`): con otro `?bitbucket=` no se envía ni se muestra. En la app de escritorio, cifrado en el llavero (servicio nuevo `bitbucketdc` en `electron/token.js`). Con token, un 401 se dice como token rechazado (`err.authBbdc`, nombra el host) y un 404 como repo no encontrado o sin permiso (`err.notFoundBbdc`); «Abrir Ajustes» del aviso lleva al campo propio. Sin token, todo como antes. Siete textos nuevos en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `tools/bitbucket-server.test.mjs` (3 nuevas: con un servidor que exige iniciar sesión, el token abre el repo y va como Bearer solo ahí, sin el de Cloud; 401 y 404 con sus textos; el guardado atado a la dirección, que otro host, otra ruta o `http:` no reciben), el bloque del smoke «Bitbucket propio con token» (campo oculto sin servidor, aviso con el host, cabecera solo a `bb.example.com`, `otro.example.com` sin token ni campo lleno) y la e2e de escritorio de `--bitbucket-url` (ida y vuelta por el llavero y el campo visible con su host).
+- README: la función (Bitbucket Data Center propio), Límites conocidos (un solo token, atado al servidor) y Seguridad (cada token a su servicio). Mapa de alcance: fila Fuentes.
+- QA: filas tocadas: token fuera de `localStorage` en escritorio (e2e) y solo a su API (smoke y pruebas), 40 idiomas (`check-i18n`, 0 errores), teclado («Abrir Ajustes» enfoca el campo, smoke); auditoría: un campo de formulario con su `label`, como los demás tokens.
+- Reclamo: loop/105, a mano en modo caos (la 103 estaba ocupada y la 104 tomada)
+- Nota: clon superficial otra vez (`git fetch --unshallow` arregló el R3 falso); Electron se instaló a mano con `node node_modules/electron/install.js` (el hook dijo «no disponible»); borrar las `loop/*` fusionadas no se pudo (el proxy corta el push de borrado). La primera e2e de escritorio falló por abrir Ajustes antes de cargar la página; ahora espera la carga como las demás.
+- Validado: 345 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 106, expansión: ítem 66 (Salud del repo en la URL, Análisis)
 
 ### 2026-10-19 · Iteración 106 · Expansión · Análisis
 

@@ -554,6 +554,8 @@ GB.i18n.define('sk', {
   'textview.merge': 'merge',
   'textview.live': 'Nové: vetvy {branches}, commity {commits}',
   'textview.filtered': 'Zobrazené vetvy: {shown} z {total}',
+  'textview.scopeAuthor': 'Filter podľa autora: {author} ({shown} z {total} vetiev)',
+  'textview.scopePath': 'Filter podľa cesty: {path} ({n} commitov)',
   'search.title': 'Hľadať commity',
   'search.help': 'Hľadajte podľa správy, SHA alebo autora (@meno). Šípka nadol prejde na výsledky, Enter preletí ku commitu.',
   'search.placeholder': 'Správa, SHA alebo @autor…',

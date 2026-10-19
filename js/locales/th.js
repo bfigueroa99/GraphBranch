@@ -544,6 +544,8 @@ GB.i18n.define('th', {
   'textview.merge': 'เมิร์จ',
   'textview.live': 'ใหม่: {branches} แบรนช์ {commits} คอมมิต',
   'textview.filtered': 'แบรนช์ที่แสดง: {shown} จาก {total}',
+  'textview.scopeAuthor': 'กรองตามผู้เขียน: {author} ({shown} จาก {total} บรานช์)',
+  'textview.scopePath': 'กรองตามพาธ: {path} ({n} คอมมิต)',
   'search.title': 'ค้นหาคอมมิต',
   'search.help': 'ค้นหาด้วยข้อความ SHA หรือผู้เขียน (@ชื่อ) ลูกศรลงไปที่ผลลัพธ์ Enter บินไปยังคอมมิต',
   'search.placeholder': 'ข้อความ SHA หรือ @ผู้เขียน…',

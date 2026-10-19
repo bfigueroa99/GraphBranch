@@ -543,6 +543,8 @@ GB.i18n.define('ko', {
   'textview.merge': '병합',
   'textview.live': '새 소식: 브랜치 {branches}개, 커밋 {commits}개',
   'textview.filtered': '표시된 브랜치: {total}개 중 {shown}개',
+  'textview.scopeAuthor': '작성자 필터: {author} (브랜치 {total}개 중 {shown}개)',
+  'textview.scopePath': '경로 필터: {path} (커밋 {n}개)',
   'search.title': '커밋 검색',
   'search.help': '메시지, SHA 또는 작성자(@이름)로 검색합니다. 아래쪽 화살표는 결과로 이동하고 Enter는 그 커밋으로 날아갑니다.',
   'search.placeholder': '메시지, SHA 또는 @작성자…',

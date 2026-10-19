@@ -554,6 +554,8 @@ GB.i18n.define('pl', {
   'textview.merge': 'merge',
   'textview.live': 'Nowe: gałęzie {branches}, commity {commits}',
   'textview.filtered': 'Wyświetlone gałęzie: {shown} z {total}',
+  'textview.scopeAuthor': 'Filtr autora: {author} ({shown} z {total} gałęzi)',
+  'textview.scopePath': 'Filtr ścieżki: {path} ({n} commitów)',
   'search.title': 'Szukaj commitów',
   'search.help': 'Szukaj po komunikacie, SHA lub autorze (@nazwa). Strzałka w dół przechodzi do wyników, Enter leci do commita.',
   'search.placeholder': 'Komunikat, SHA lub @autor…',

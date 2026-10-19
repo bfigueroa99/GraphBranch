@@ -642,6 +642,8 @@ GB.i18n.define('ar', {
   'textview.merge': 'دمج',
   'textview.live': 'جديد: {branches} فروع، {commits} إيداعات',
   'textview.filtered': 'الفروع المعروضة: {shown} من {total}',
+  'textview.scopeAuthor': 'مُصفّى حسب المؤلف: {author} ({shown} من {total} فرعًا)',
+  'textview.scopePath': 'مُصفّى حسب المسار: {path} ({n} من الـ commits)',
   'search.title': 'البحث في الـ commits',
   'search.help': 'ابحث بالرسالة أو SHA أو المؤلف (@الاسم). السهم لأسفل ينتقل إلى النتائج وEnter يطير إلى الـ commit.',
   'search.placeholder': 'رسالة أو SHA أو ‎@مؤلف…',

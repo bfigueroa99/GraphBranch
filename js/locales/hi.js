@@ -543,6 +543,8 @@ GB.i18n.define('hi', {
   'textview.merge': 'मर्ज',
   'textview.live': 'नया: {branches} ब्रांच, {commits} कमिट',
   'textview.filtered': 'दिखाई गई ब्रांच: {total} में से {shown}',
+  'textview.scopeAuthor': 'लेखक के अनुसार फ़िल्टर: {author} ({total} में से {shown} ब्रांच)',
+  'textview.scopePath': 'पाथ के अनुसार फ़िल्टर: {path} ({n} कमिट)',
   'search.title': 'कमिट खोजें',
   'search.help': 'संदेश, SHA या लेखक (@नाम) से खोजें। नीचे का तीर नतीजों पर जाता है, Enter कमिट तक उड़ाता है।',
   'search.placeholder': 'संदेश, SHA या @लेखक…',

@@ -543,6 +543,8 @@ GB.i18n.define('zh-Hant', {
   'textview.merge': '合併',
   'textview.live': '新增：{branches} 個分支，{commits} 個提交',
   'textview.filtered': '顯示的分支：{shown} / {total}',
+  'textview.scopeAuthor': '依作者篩選：{author}（{total} 個分支中的 {shown} 個）',
+  'textview.scopePath': '依路徑篩選：{path}（{n} 個提交）',
   'search.title': '搜尋提交',
   'search.help': '依提交訊息、SHA 或作者（@名稱）搜尋。向下鍵進入結果，Enter 飛到該提交。',
   'search.placeholder': '訊息、SHA 或 @作者…',

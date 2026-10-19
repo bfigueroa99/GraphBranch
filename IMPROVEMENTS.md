@@ -2210,5 +2210,6 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: no toca la página; auditoría: no toca la página.
 - Reclamo: loop/103, sin colisión (primera del modo caos del 2026-10-19)
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); Chromium con `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`. Borrar las `loop/*` fusionadas dio 403 (ya en Para Benjamin).
-- Validado: PENDIENTE
+- Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
+- Validado: 341 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
 - **Siguiente:** iteración 104, expansión: ítem 64 (Choques entre ramas en la URL, Análisis)

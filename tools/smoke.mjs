@@ -1003,6 +1003,7 @@ console.log('Escritorio (1280×800)');
         return {
           focus: document.activeElement?.id,
           msg: p.querySelector('.df-msg').textContent,
+          sha: p.querySelector('.df-meta code')?.textContent,
           sum: p.querySelector('.df-sum').textContent,
           files: p.querySelectorAll('.df-jump').length,
           lines: p.querySelectorAll('.df-code .dl-add, .df-code .dl-del').length,
@@ -1015,20 +1016,23 @@ console.log('Escritorio (1280×800)');
       });
     const first = await read();
     if (first.focus !== 'diff-title') throw new Error(`al abrir, el foco quedó en ${first.focus}`);
+    if (!/^[0-9a-f]{7}$/.test(first.sha || '')) throw new Error(`la ficha no muestra el sha corto: ${first.sha}`);
     if (!first.files || !first.lines) throw new Error(`sin archivos o sin líneas: ${first.files} archivos, ${first.lines} líneas`);
     if (/undefined|NaN|diff\./.test(first.sum)) throw new Error('texto sin resolver: ' + first.sum);
     if (first.feed !== 'none') throw new Error('el panel de actividad sigue a la vista junto a los cambios');
     if (first.sel !== 1) throw new Error(`el grafo marca ${first.sel} commits como el que se ve`);
     if (first.unnamed) throw new Error(`${first.unnamed} botones sin nombre`);
     if (first.overflow > 0) throw new Error(`la página se desborda ${first.overflow}px`);
+    // por el sha y no por el mensaje: la demo saca los mensajes de una lista corta y un commit puede llevar
+    // el mismo que su padre, y entonces esperar a que el mensaje cambie vence aunque el panel ya avanzó
     await page.keyboard.press('ArrowLeft');
-    await page.waitForFunction((m) => document.querySelector('#diff-panel .df-msg').textContent !== m && !document.querySelector('#diff-panel').classList.contains('loading'), first.msg, { timeout: T(5000) });
+    await page.waitForFunction((sha) => document.querySelector('#diff-panel .df-meta code')?.textContent !== sha && !document.querySelector('#diff-panel').classList.contains('loading'), first.sha, { timeout: T(5000) });
     const older = await read();
     if (!older.files) throw new Error('el commit anterior llegó sin archivos');
     // el anterior ya está guardado: volver es inmediato, sin esperar a la red
     await page.keyboard.press('k');
     const back = await read();
-    if (back.msg !== first.msg) throw new Error(`K no volvió al commit de donde se vino: ${back.msg}`);
+    if (back.sha !== first.sha) throw new Error(`K no volvió al commit de donde se vino: ${back.sha} ${back.msg}`);
     if (back.loading) throw new Error('volver a un commit ya visto no debería esperar');
     // con el botón «anterior» hasta el primer commit cargado: al deshabilitarse, el foco no sale del panel
     await page.focus('#diff-panel .df-older');

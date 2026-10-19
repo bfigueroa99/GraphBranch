@@ -143,11 +143,13 @@ function fakeServer() {
   }
   bb.fetch = async (url, opts = {}) => {
     assert.ok(url.startsWith(API + '/'), `consulta fuera del servidor propio: ${url}`);
-    assert.equal(opts.headers?.Authorization, undefined, 'ninguna consulta lleva credenciales');
+    // sin bb.token, ninguna consulta lleva credenciales; con él, solo ese token. bb.private: el servidor no deja leer sin él (401)
+    assert.equal(opts.headers?.Authorization, bb.token ? `Bearer ${bb.token}` : undefined, 'credenciales de más o equivocadas');
     bb.headers.push(opts.headers);
     const path = url.slice(API.length);
     bb.calls.push(path);
-    const { status = 200, body, headers = {} } = bb.status !== 200 ? { status: bb.status, body: {} } : bb.override?.(path) || route(path);
+    const denied = bb.private && opts.headers?.Authorization !== `Bearer ${bb.private}`;
+    const { status = 200, body, headers = {} } = denied ? { status: 401, body: {} } : bb.status !== 200 ? { status: bb.status, body: {} } : bb.override?.(path) || route(path);
     const hs = new Map(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), String(v)]));
     return { status, ok: status >= 200 && status < 300, statusText: '', headers: { get: (k) => hs.get(k.toLowerCase()) || null }, text: async () => (typeof body === 'string' ? body : JSON.stringify(body)) };
   };
@@ -335,4 +337,57 @@ test('el token de Bitbucket Cloud no sale hacia el servidor propio', async () =>
   await src.cycle();
   assert.ok(bb.calls.length > 0);
   assert.ok(bb.headers.every((h) => !JSON.stringify(h).includes('secreto')));
+});
+
+test('token de Bitbucket propio: va en cada consulta como Bearer, solo a ese servidor, y abre un repo que sin él no se lee', async () => {
+  const bb = repo();
+  bb.private = 'tok-dc';
+  const anon = connect(bb);
+  await anon.src.cycle();
+  assert.equal(anon.errors[0].message.key, 'err.notFoundForge', 'sin token: no encontrado, como hasta ahora');
+  bb.token = 'tok-dc';
+  bb.calls.length = 0;
+  const { src, errors } = connect(bb, { serverToken: 'tok-dc', token: 'de-cloud' });
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  assert.deepEqual([...src.data.branches.keys()].sort(), ['feature', 'main']);
+  assert.ok(bb.calls.length > 0);
+  assert.ok(bb.headers.every((h) => !JSON.stringify(h).includes('de-cloud')), 'el de Bitbucket Cloud no sale');
+  assert.equal(src.token, '', 'no va en el campo del token de GitHub');
+  await src.files({ sha: 'f2' });
+  await src.commitDiff('f2');
+});
+
+test('token de Bitbucket propio: 401 es el token y 404 el repo o sus permisos, con sus textos', async () => {
+  const bb = repo();
+  bb.token = 'viejo';
+  bb.private = 'nuevo';
+  const c = connect(bb, { serverToken: 'viejo' });
+  await c.src.cycle();
+  assert.equal(c.errors[0].message.key, 'err.authBbdc');
+  assert.equal(c.errors[0].message.params.host, 'bb.example.com');
+  const bb2 = repo();
+  bb2.token = 'tok';
+  bb2.status = 404;
+  const c2 = connect(bb2, { serverToken: 'tok' });
+  await c2.src.cycle();
+  assert.equal(c2.errors[0].message.key, 'err.notFoundBbdc');
+});
+
+test('token de Bitbucket propio: se guarda atado a la dirección y otra no lo recibe', async () => {
+  const { BitbucketServerSource: S } = load(async () => assert.fail('nada sale'));
+  const stored = S.pack('tok', OWN + '/');
+  assert.equal(S.unpack(stored, OWN), 'tok');
+  assert.equal(S.unpack(stored, 'https://otro.example.com'), '', 'otro host');
+  assert.equal(S.unpack(stored, OWN + '/git'), '', 'otra ruta en el mismo host');
+  assert.equal(S.unpack(stored, 'http://bb.example.com'), '', 'sin https');
+  assert.equal(S.unpack('tok', OWN), '', 'un texto suelto no vale');
+  assert.equal(S.unpack('', OWN), '');
+  assert.equal(S.pack('', OWN), '');
+  assert.equal(S.pack('tok', 'http://bb.example.com'), '', 'sin dirección válida no se guarda');
+  // una fuente con dirección no válida no manda el token a ningún lado
+  const bb = repo();
+  bb.token = 'tok';
+  const { src } = connect(bb, { webUrl: 'http://bb.example.com', serverToken: 'tok' });
+  assert.equal(src.serverToken, '');
 });

@@ -133,6 +133,10 @@
     bitbucketTokenInput: $('#bitbucket-token-input'),
     bitbucketTokenToggle: $('#bitbucket-token-toggle'),
     bitbucketTokenWhere: $('#bitbucket-token-where'),
+    bbdcTokenField: $('#bbdc-token-field'),
+    bbdcTokenInput: $('#bbdc-token-input'),
+    bbdcTokenToggle: $('#bbdc-token-toggle'),
+    bbdcTokenWhere: $('#bbdc-token-where'),
     hooksBox: $('#hooks-box'),
     hooksList: $('#hooks-list'),
     depth: $('#depth'),
@@ -192,6 +196,8 @@
     gitlabToken: desktop ? '' : U.secret.get('gitlabToken', ''),
     codebergToken: desktop ? '' : U.secret.get('codebergToken', ''),
     bitbucketToken: desktop ? '' : U.secret.get('bitbucketToken', ''),
+    // el de un Bitbucket propio, aparte y atado a su dirección: si ?bitbucket= es otro, no se usa (ni se pisa hasta guardar Ajustes)
+    bbdcToken: desktop ? '' : GB.BitbucketServerSource.unpack(U.secret.get('bbdcToken', ''), BITBUCKET_URL),
     depth: U.store.get('depth', 40),
     marks: U.store.get('marks', true) !== false, // tags y entornos de despliegue (2 consultas más por repo de GitHub)
   };
@@ -401,12 +407,13 @@
 
   /** La fuente de un repo de GitHub, de un proyecto de GitLab o de un repo de Codeberg, con lo que se recuerda de él: su
       filtro y sus ramas fijadas. El token de GitHub va solo a la fuente de GitHub, y el de GitLab,
-      el de Codeberg y el de Bitbucket, cada uno solo a la suya (un Forgejo propio no recibe ninguno). */
+      el de Codeberg y el de Bitbucket, cada uno solo a la suya, y el de un Bitbucket propio solo a ese servidor (un Forgejo
+      propio no recibe ninguno). */
   function sourceFor({ host, owner, name }) {
     const key = keyOf({ host, owner, name });
     const remembered = { depth: settings.depth, marks: settings.marks, filter: U.store.get('filter:' + key, ''), pins: U.store.get('pins:' + key, []) };
     if (host === 'local') return new GB.LocalGitSource({ id: owner, name, ...remembered });
-    if (host === 'bitbucketdc') return new GB.BitbucketServerSource({ owner, name, webUrl: BITBUCKET_URL, ...remembered });
+    if (host === 'bitbucketdc') return new GB.BitbucketServerSource({ owner, name, webUrl: BITBUCKET_URL, serverToken: settings.bbdcToken, ...remembered });
     if (host === 'bitbucket') return new GB.BitbucketSource({ owner, name, token: settings.bitbucketToken, ...remembered });
     if (host === 'codeberg') return new GB.CodebergSource({ owner, name, token: settings.codebergToken, ...remembered });
     if (host === 'forgejo') return new GB.CodebergSource({ owner, name, webUrl: FORGE_URL, avatars: desktop, ...remembered });
@@ -2226,7 +2233,7 @@
       showOverlay('loading', i18n.msg('status.retrying'));
       source.refreshNow();
     } else if (action === 'demo') startDemo();
-    else if (action === 'settings') openSettings({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput, bitbucket: el.bitbucketTokenInput }[source?.host] || el.tokenInput);
+    else if (action === 'settings') openSettings({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput, bitbucket: el.bitbucketTokenInput, bitbucketdc: el.bbdcTokenInput }[source?.host] || el.tokenInput);
   });
 
   /* ---------- controles ---------- */
@@ -2557,6 +2564,7 @@
     el.gitlabTokenInput.value = settings.gitlabToken;
     el.codebergTokenInput.value = settings.codebergToken;
     el.bitbucketTokenInput.value = settings.bitbucketToken;
+    el.bbdcTokenInput.value = settings.bbdcToken;
     for (const [input, toggle] of tokenFields) {
       input.type = 'password';
       toggle.textContent = t('settings.show');
@@ -2622,6 +2630,7 @@
     [el.gitlabTokenInput, el.gitlabTokenToggle],
     [el.codebergTokenInput, el.codebergTokenToggle],
     [el.bitbucketTokenInput, el.bitbucketTokenToggle],
+    [el.bbdcTokenInput, el.bbdcTokenToggle],
     ...hookFields.map((f) => [f.input, f.toggle]),
   ];
   const showToggle = (input, toggle) => (toggle.textContent = input.type === 'password' ? t('settings.show') : t('settings.hide'));
@@ -2640,6 +2649,7 @@
     el.gitlabTokenInput.value = '';
     el.codebergTokenInput.value = '';
     el.bitbucketTokenInput.value = '';
+    el.bbdcTokenInput.value = '';
     for (const f of hookFields) f.input.value = '';
     el.tokenInput.focus();
   });
@@ -2650,6 +2660,8 @@
     settings.gitlabToken = el.gitlabTokenInput.value.trim();
     settings.codebergToken = el.codebergTokenInput.value.trim();
     settings.bitbucketToken = el.bitbucketTokenInput.value.trim();
+    if (BITBUCKET_URL) settings.bbdcToken = el.bbdcTokenInput.value.trim(); // sin servidor elegido, el campo no se ve y lo guardado queda como está
+    const bbdcStored = GB.BitbucketServerSource.pack(settings.bbdcToken, BITBUCKET_URL) || null;
     settings.depth = Math.max(10, Math.min(100, Number(el.depth.value) || 40));
     settings.marks = el.marks.checked;
     if (desktop) {
@@ -2658,11 +2670,13 @@
       desktop.setToken(settings.gitlabToken, 'gitlab').catch(failed);
       desktop.setToken(settings.codebergToken, 'codeberg').catch(failed);
       desktop.setToken(settings.bitbucketToken, 'bitbucket').catch(failed);
+      if (BITBUCKET_URL) desktop.setToken(bbdcStored || '', 'bitbucketdc').catch(failed);
     } else {
       U.secret.set('token', settings.token || null);
       U.secret.set('gitlabToken', settings.gitlabToken || null);
       U.secret.set('codebergToken', settings.codebergToken || null);
       U.secret.set('bitbucketToken', settings.bitbucketToken || null);
+      if (BITBUCKET_URL) U.secret.set('bbdcToken', bbdcStored);
     }
     U.store.set('depth', settings.depth);
     U.store.set('marks', settings.marks ? null : false);
@@ -2676,7 +2690,7 @@
     // se reconecta lo que cambió: un token de GitLab nuevo no gasta la cuota de GitHub. Si no cambió
     // nada, todo, como dice el botón
     const changed = (tab) =>
-      settings.depth !== before.depth || settings.marks !== before.marks || ({ gitlab: settings.gitlabToken !== before.gitlabToken, codeberg: settings.codebergToken !== before.codebergToken, bitbucket: settings.bitbucketToken !== before.bitbucketToken, forgejo: false, bitbucketdc: false }[tab.source.host] ?? settings.token !== before.token);
+      settings.depth !== before.depth || settings.marks !== before.marks || ({ gitlab: settings.gitlabToken !== before.gitlabToken, codeberg: settings.codebergToken !== before.codebergToken, bitbucket: settings.bitbucketToken !== before.bitbucketToken, forgejo: false, bitbucketdc: settings.bbdcToken !== before.bbdcToken }[tab.source.host] ?? settings.token !== before.token);
     if (realTabs().length) reconnectAll(realTabs().some(changed) ? changed : undefined);
     else el.tokenBanner.hidden = true;
   });
@@ -2689,7 +2703,17 @@
     el.codebergTokenWhere.dataset.i18n = keychain ? 'settings.codebergTokenWhereKeychain' : 'settings.codebergTokenWherePlain';
     el.bitbucketTokenWhere.dataset.i18n = keychain ? 'settings.bitbucketTokenWhereKeychain' : 'settings.bitbucketTokenWherePlain';
     for (const note of [el.tokenWhere, el.gitlabTokenWhere, el.codebergTokenWhere, el.bitbucketTokenWhere]) note.textContent = t(note.dataset.i18n);
+    bbdcWhere = keychain ? 'settings.bbdcTokenWhereKeychain' : 'settings.bbdcTokenWherePlain';
+    renderBbdcField();
   }
+
+  /** El campo del token de un Bitbucket propio: solo con un servidor elegido (?bitbucket=, --bitbucket-url=), y su aviso nombra ese host. */
+  let bbdcWhere = 'settings.bbdcTokenWhere';
+  function renderBbdcField() {
+    el.bbdcTokenField.hidden = !BITBUCKET_URL;
+    el.bbdcTokenWhere.textContent = BITBUCKET_URL ? t(bbdcWhere, { host: new URL(BITBUCKET_URL).host }) : '';
+  }
+  renderBbdcField();
 
   /** En la app de escritorio, el ícono de la bandeja y su aviso van en el idioma de la página. */
   function sendDesktopLabels() {
@@ -2708,6 +2732,7 @@
     settings.gitlabToken = (await desktop.getToken('gitlab')).token;
     settings.codebergToken = (await desktop.getToken('codeberg')).token;
     settings.bitbucketToken = (await desktop.getToken('bitbucket')).token;
+    if (BITBUCKET_URL) settings.bbdcToken = GB.BitbucketServerSource.unpack((await desktop.getToken('bitbucketdc')).token, BITBUCKET_URL);
     for (const service of GB.hooks.SERVICES) hookUrls[service] = (await desktop.getToken(service)).token;
     showTokenWhere(where);
   }
@@ -2746,6 +2771,7 @@
     renderPause();
     renderWebglNote();
     for (const [input, toggle] of tokenFields) showToggle(input, toggle);
+    renderBbdcField();
     el.repoInput.setCustomValidity('');
     graph2d.relocalize();
     graph3d?.relocalize();

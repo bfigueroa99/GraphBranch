@@ -342,7 +342,7 @@ se comprueban antes de construir sobre ellas.
 62. ~~**Lanzamientos en el resumen de la semana**~~ hecho en #132 · Salidas · 1×2/1. [parte del ítem 23] El resumen de la semana lista los tags y
     lanzamientos de la semana con lo ya cargado. Comprobar: `tools/digest.test.mjs` con tags fabricados.
 63. ~~**Vista de texto: filtro por autor**~~ hecho en #133 · Público · 1×2/2. [parte del ítem 33]
-64. ~~**Choques entre ramas en la URL**~~ hecho en #134 · Análisis · 1×2/1. [parte del ítem 14] `?conflicts=1` abre el repo con los choques ya
+64. ~~**Choques entre ramas en la URL**~~ hecho en #135 · Análisis · 1×2/1. [parte del ítem 14] `?conflicts=1` abre el repo con los choques ya
     marcados, para compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
 65. **Token para un Bitbucket propio** · Fuentes · 2×2/2. [parte del ítem 50] Un token de acceso personal (`Authorization: Bearer …`)
     para un Bitbucket Data Center propio, guardado aparte (llavero en escritorio), que va solo a ese host: la mayoría de los
@@ -2209,3 +2209,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); Chromium con `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`. El smoke falló una vez bajo carga en «filtro por autor» y «filtro por ruta» (tiempos) y pasó limpio las otras veces.
 - Validado: 341 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 103, mantenimiento · Deuda: pendiente 1
+
+### 2026-10-19 · Iteración 104 · Expansión · Análisis
+
+- **Capacidad nueva: choques entre ramas en la URL** (ítem 64 de la hoja de ruta): `?conflicts=1` abre el repo con el panel de salud abierto y «Buscar choques» ya corrido, en cuanto hay dos ramas con PR abierto (los PRs pueden llegar después que las ramas: hasta entonces el panel espera abierto). Corre una sola vez por carga; si se cierra el panel antes, no vuelve. Pulsar «Buscar choques» deja `conflicts=1` en la dirección para compartir la vista y cerrar el panel lo quita. No corre con `embed=1`, en la práctica de git ni en el ensayo, ni sin `source.files`. Lectura pura en `GB.health.conflictsParam` (sí o no; `0`, `false`, `no` y `off` lo apagan). Sin textos nuevos (reusa los del panel), sin consultas aparte de las que ya hacía el botón y sin cambios de CSP; en la web y en la app de escritorio (misma página).
+- **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` (`conflictsParam`: vacío, `1`, sin valor y los valores que lo apagan) y el paso del smoke «Choques entre ramas desde la URL»: abre la demo con `?conflicts=1`, espera el panel y la lista de choques, que la URL lo conserve, que Esc lo suelte y que reabrir a mano no vuelva a buscar.
+- README: la función (Salud del repo), Controles, Límites conocidos (gasta las mismas consultas al abrir, una vez) y Seguridad (solo se lee como sí o no). Mapa de alcance: fila Análisis.
+- QA: filas tocadas: demo sin token (smoke), teclado (Esc cierra y la URL se limpia), cuota de GitHub (mismas consultas que el botón, una vez por carga, nunca en la capa), 40 idiomas sin textos nuevos (`check-i18n`, 0 errores); a mano con Playwright contra `node e2e/serve.mjs 4173`: 1 choque en la demo, sin errores de consola. La primera corrida del smoke falló al mirar la URL justo tras cerrar (el evento `close` del diálogo llega en la tarea siguiente): el paso ahora espera esa condición.
+- Reclamo: loop/104, a mano en modo caos (la 103 estaba ocupada)
+- Nota: clon superficial otra vez (`git fetch --unshallow` arregló el R3 falso); borrar las `loop/*` fusionadas no se pudo (el proxy corta el push de borrado).
+- Validado: (pendiente)
+- **Siguiente:** iteración 105, expansión: ítem 65 (Token para un Bitbucket propio, Fuentes)

@@ -2666,7 +2666,9 @@ console.log('Choques entre ramas desde la URL (?conflicts=1)');
     if (!st.url.includes('conflicts=1')) throw new Error('la URL perdió conflicts=1: ' + st.url);
     await page.keyboard.press('Escape');
     await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
-    if ((await page.evaluate(() => location.search)).includes('conflicts')) throw new Error('cerrar la salud deja ?conflicts= en la URL');
+    await page.waitForFunction(() => !location.search.includes('conflicts'), null, { timeout: T(3000) }).catch(async () => {
+      throw new Error('cerrar la salud deja ?conflicts= en la URL: ' + (await page.evaluate(() => location.search)));
+    }); // el evento close del diálogo llega en la tarea siguiente
     await page.click('#health-btn');
     await page.waitForSelector('#health[open]', { timeout: T(3000) });
     if ((await page.evaluate(() => document.querySelector('#hl-clash-out').textContent.trim()))) throw new Error('reabrir la salud a mano volvió a buscar choques');

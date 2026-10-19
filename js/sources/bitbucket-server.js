@@ -15,9 +15,12 @@
    - Los PRs son los de siempre ("#12"); el servidor marca los borradores con `draft`.
    - Sin feed de eventos, ni tags, ni despliegues, ni checks: el panel cuenta lo que se ve comparando
      ciclos. El árbol de archivos (galaxias) sale de `files?at=`, sin tamaños.
-   - Sin avatares (el CSP no nombra el host en `img-src`) y sin token: ni el de Bitbucket Cloud de
-     Ajustes ni ningún otro sale hacia un servidor propio. Solo se leen repos que el servidor deja ver
-     sin credenciales; uno que no, responde 401 o 404 y se dice como no encontrado.
+   - Sin avatares (el CSP no nombra el host en `img-src`). Ni el token de Bitbucket Cloud ni ningún otro
+     de Ajustes sale hacia un servidor propio: solo el suyo, «Token de Bitbucket propio» (un token de
+     acceso personal o HTTP, `Authorization: Bearer …`), que se guarda aparte y atado a la dirección del
+     servidor (`pack`/`unpack`): si `?bitbucket=` cambia de host, el guardado no se usa. Sin token, solo
+     se leen repos que el servidor deja ver sin credenciales; uno que no, responde 401 o 404 y se dice como
+     no encontrado. Con token, un 401 es el token (no vale o expiró) y un 404, el repo o sus permisos.
    - El servidor es de quien lo opera, sin cuota de la plataforma: se sondea cada POLL_MS. */
 (function (GB) {
   'use strict';
@@ -34,6 +37,21 @@
       return { web, api: web + '/rest/api/1.0' };
     } catch {
       return null;
+    }
+  };
+  /** El token como se guarda: atado a la dirección del servidor, '' si no hay token o la dirección no vale. */
+  const pack = (token, webUrl) => {
+    const ep = endpoints(webUrl);
+    return token && ep ? JSON.stringify({ base: ep.web, token: String(token) }) : '';
+  };
+  /** El token guardado, solo si es del servidor `webUrl`; si no, ''. */
+  const unpack = (stored, webUrl) => {
+    const ep = endpoints(webUrl);
+    try {
+      const v = JSON.parse(String(stored || ''));
+      return ep && v && v.base === ep.web && typeof v.token === 'string' ? v.token : '';
+    } catch {
+      return '';
     }
   };
   const POLL_MS = 20000; // entre ciclos
@@ -54,10 +72,12 @@
   const enc = encodeURIComponent;
 
   class BitbucketServerSource extends GB.GitHubSource {
-    /** `webUrl`: la dirección del servidor (?bitbucket=, --bitbucket-url=). `owner` es la clave del proyecto; `name`, el slug. */
-    constructor({ owner, name, depth = 40, filter = '', pins = [], webUrl = '' }) {
+    /** `webUrl`: la dirección del servidor (?bitbucket=, --bitbucket-url=). `owner` es la clave del proyecto; `name`, el slug.
+        `serverToken`: el token de ese servidor; no va en `this.token`, que es el de GitHub, y sin dirección válida no se usa. */
+    constructor({ owner, name, depth = 40, filter = '', pins = [], webUrl = '', serverToken = '' }) {
       super({ owner, name, token: '', depth, filter, pins });
       this.ep = endpoints(webUrl) || { web: 'https://bitbucket.invalid', api: 'https://bitbucket.invalid/rest/api/1.0' };
+      this.serverToken = endpoints(webUrl) ? String(serverToken || '') : '';
       this.host = 'bitbucketdc';
       this.mode = 'list';
       this.data.repo.url = this.repoUrl();
@@ -82,7 +102,8 @@
     /* ---------- HTTP ---------- */
 
     async api(path, { allow = [] } = {}) {
-      const { res, body } = await this.request(this.ep.api + path, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+      const headers = this.serverToken ? { Accept: 'application/json', Authorization: `Bearer ${this.serverToken}` } : { Accept: 'application/json' };
+      const { res, body } = await this.request(this.ep.api + path, { headers, cache: 'no-store' });
       this.cost++;
       if (allow.includes(res.status)) return { data: null, fresh: true, status: res.status, headers: res.headers };
       if (!res.ok) throw this.toError(res, body);
@@ -90,10 +111,11 @@
     }
 
     notFound() {
-      return new ApiError(M('err.notFoundForge', { repo: `${this.owner}/${this.name}` }), { status: 404, kind: 'notfound' });
+      return new ApiError(M(this.serverToken ? 'err.notFoundBbdc' : 'err.notFoundForge', { repo: `${this.owner}/${this.name}` }), { status: 404, kind: 'notfound' });
     }
 
     toError(res, body) {
+      if (res.status === 401 && this.serverToken) return new ApiError(M('err.authBbdc', { host: new URL(this.ep.web).host }), { status: 401, kind: 'auth' });
       if (res.status === 404 || res.status === 401 || res.status === 403) return this.notFound();
       if (res.status === 429) {
         const wait = Number(res.headers.get('Retry-After'));
@@ -364,5 +386,7 @@
   }
 
   BitbucketServerSource.endpoints = endpoints;
+  BitbucketServerSource.pack = pack;
+  BitbucketServerSource.unpack = unpack;
   GB.BitbucketServerSource = BitbucketServerSource;
 })(window.GB);

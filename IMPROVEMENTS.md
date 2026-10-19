@@ -465,9 +465,11 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 10. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-11. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
-    (6.009 ms con ≤ 6.000; tareas largas 4.809 ms con ≤ 4.000), sin GPU y con la corrida larga; la corrida
-    normal de la puerta no lo marca. Medir con `node tools/audit.mjs --repetir 3` antes de tocar nada.
+11. [Rendimiento] El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (los dos
+    `MeshStandardMaterial` de nodos y aristas, ~170 ms y 65 KB de fuente cada uno), dentro de una tarea de
+    ~1,2 s; SwiftShader no ofrece `KHR_parallel_shader_compile` y los 12 hacen falta (el mundo es la escena
+    de la órbita). Ideas: compilar con `renderer.compile` mientras se espera la red en un repo real, o
+    materiales más livianos si se ven igual. Reproducción: perfil de CDP de la carga (iteración 107).
 12. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.

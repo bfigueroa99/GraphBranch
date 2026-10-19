@@ -195,10 +195,16 @@
     return { onlyA: list(sa, sb), onlyB: list(sb, sa), both: [...sa].filter((p) => sb.has(p)).sort() };
   }
 
+  /** ?conflicts=1 (o cualquier valor que no sea 0, false, no u off): abrir la salud con los choques ya buscados. */
+  function conflictsParam(q) {
+    if (!q || typeof q.has !== 'function' || !q.has('conflicts')) return false;
+    return !/^(0|false|no|off)$/i.test(String(q.get('conflicts')).trim());
+  }
+
   /** ?health=1 (o solo ?health): abrir el panel al cargar el repo, para compartir la vista. 0, false, no u off lo apagan. */
-  function urlParam(q) {
+  function healthParam(q) {
     return !!q && q.has('health') && !/^(0|false|no|off)$/i.test(String(q.get('health')).trim());
   }
 
-  GB.health = { compute, clashes, clashCandidates, compare, splitFiles, urlParam, STALE_DAYS };
+  GB.health = { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, splitFiles, STALE_DAYS };
 })(window.GB);

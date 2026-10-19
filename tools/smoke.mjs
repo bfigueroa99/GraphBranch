@@ -110,12 +110,33 @@ async function step(page, name, fn, { allow = null } = {}) {
   try {
     await fn();
   } catch (e) {
-    errs.push(e.message.split('\n')[0]);
+    errs.push(e.message.split('\n')[0] + blocker(e.message));
   }
   // la excepción de la app explica mejor que el timeout
   errs.unshift(...page.errors.slice(before).filter((e) => !allow?.test(e)));
-  if (errs.length) fail(`${name}: ${errs.join(' | ')}`);
-  else console.log(`  ✓ ${name}`);
+  if (errs.length) {
+    fail(`${name}: ${errs.join(' | ')}`);
+    await reset(page);
+  } else console.log(`  ✓ ${name}`);
+}
+
+/** De un `click` vencido, Playwright cuenta en las líneas de su registro qué tapaba el objetivo: la
+    última va al fallo, que si no dice solo «Timeout 30000ms exceeded». */
+function blocker(msg) {
+  const tapa = msg.split('\n').filter((l) => /intercepts pointer events/.test(l)).pop();
+  return tapa ? ` (${tapa.trim().replace(/^- /, '')})` : '';
+}
+
+/** Un paso que falla a medias deja abierto lo que abrió (un diálogo modal, la búsqueda, una ficha) y
+    tapa los botones del siguiente: cada `click` de ahí en más vence a los 30 s y el fallo se encadena.
+    Se cierra todo para que el siguiente paso falle, si falla, por lo suyo. */
+async function reset(page) {
+  if (page.isClosed()) return;
+  try {
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
+    await page.evaluate(() => document.querySelectorAll('dialog[open]').forEach((d) => d.close()));
+  } catch {}
 }
 
 const loaded = (page) => page.waitForSelector('#overlay', { state: 'hidden', timeout: T(20000) });
@@ -602,8 +623,20 @@ console.log('Escritorio (1280×800)');
   });
 
   await step(page, 'salud del repo: listas y ritmo de lo ya cargado, y cada fila lleva a su rama', async () => {
-    await page.click('#health-btn');
-    await page.waitForSelector('#health[open]', { timeout: T(3000) });
+    const open = async () => {
+      await page.click('#health-btn');
+      await page.waitForSelector('#health[open]', { timeout: T(3000) });
+    };
+    await open();
+    // la sección de CI cuenta los PRs con checks terminados, y en la demo cada commit nuevo deja los de su
+    // rama «en curso» de 3,5 a 6 s: si justo lo están todos, sale vacía. El panel no se rehace abierto, así
+    // que se reabre hasta que alguno termine (con el equipo cargado los temporizadores de la demo se atrasan)
+    for (let i = 0; i < 15 && !(await page.$('#hl-ci .hl-line')); i++) {
+      await page.click('#health-close');
+      await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
+      await page.waitForTimeout(1000);
+      await open();
+    }
     const info = await page.evaluate(() => {
       const d = document.querySelector('#health');
       const w = d.querySelector('.tr-wrap');
@@ -970,6 +1003,7 @@ console.log('Escritorio (1280×800)');
         return {
           focus: document.activeElement?.id,
           msg: p.querySelector('.df-msg').textContent,
+          sha: p.querySelector('.df-meta code')?.textContent,
           sum: p.querySelector('.df-sum').textContent,
           files: p.querySelectorAll('.df-jump').length,
           lines: p.querySelectorAll('.df-code .dl-add, .df-code .dl-del').length,
@@ -982,20 +1016,23 @@ console.log('Escritorio (1280×800)');
       });
     const first = await read();
     if (first.focus !== 'diff-title') throw new Error(`al abrir, el foco quedó en ${first.focus}`);
+    if (!/^[0-9a-f]{7}$/.test(first.sha || '')) throw new Error(`la ficha no muestra el sha corto: ${first.sha}`);
     if (!first.files || !first.lines) throw new Error(`sin archivos o sin líneas: ${first.files} archivos, ${first.lines} líneas`);
     if (/undefined|NaN|diff\./.test(first.sum)) throw new Error('texto sin resolver: ' + first.sum);
     if (first.feed !== 'none') throw new Error('el panel de actividad sigue a la vista junto a los cambios');
     if (first.sel !== 1) throw new Error(`el grafo marca ${first.sel} commits como el que se ve`);
     if (first.unnamed) throw new Error(`${first.unnamed} botones sin nombre`);
     if (first.overflow > 0) throw new Error(`la página se desborda ${first.overflow}px`);
+    // por el sha y no por el mensaje: la demo saca los mensajes de una lista corta y un commit puede llevar
+    // el mismo que su padre, y entonces esperar a que el mensaje cambie vence aunque el panel ya avanzó
     await page.keyboard.press('ArrowLeft');
-    await page.waitForFunction((m) => document.querySelector('#diff-panel .df-msg').textContent !== m && !document.querySelector('#diff-panel').classList.contains('loading'), first.msg, { timeout: T(5000) });
+    await page.waitForFunction((sha) => document.querySelector('#diff-panel .df-meta code')?.textContent !== sha && !document.querySelector('#diff-panel').classList.contains('loading'), first.sha, { timeout: T(5000) });
     const older = await read();
     if (!older.files) throw new Error('el commit anterior llegó sin archivos');
     // el anterior ya está guardado: volver es inmediato, sin esperar a la red
     await page.keyboard.press('k');
     const back = await read();
-    if (back.msg !== first.msg) throw new Error(`K no volvió al commit de donde se vino: ${back.msg}`);
+    if (back.sha !== first.sha) throw new Error(`K no volvió al commit de donde se vino: ${back.sha} ${back.msg}`);
     if (back.loading) throw new Error('volver a un commit ya visto no debería esperar');
     // con el botón «anterior» hasta el primer commit cargado: al deshabilitarse, el foco no sale del panel
     await page.focus('#diff-panel .df-older');
@@ -2646,6 +2683,40 @@ console.log('Búsqueda desde la URL (?q=)');
   await page.context().close();
 }
 
+console.log('Choques entre ramas desde la URL (?conflicts=1)');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, 'abre la salud con los choques ya buscados, los mantiene en la URL y al cerrar los suelta', async () => {
+    await page.goto(`${base}/index.html?lang=es&conflicts=1`);
+    await loaded(page);
+    await page.waitForSelector('#health[open]', { timeout: T(5000) }).catch(() => {
+      throw new Error('?conflicts=1 no abrió la salud');
+    });
+    await page
+      .waitForFunction(() => document.querySelector('#hl-clash-out')?.textContent.trim() && !document.querySelector('#hl-clash-go').disabled, null, { timeout: T(8000) })
+      .catch(() => {
+        throw new Error('?conflicts=1 no buscó los choques');
+      });
+    const st = await page.evaluate(() => ({ text: document.querySelector('#hl-clash-out').textContent, rows: document.querySelectorAll('#hl-clash-out .hl-row').length, url: location.search }));
+    if (/undefined|NaN|health\./.test(st.text)) throw new Error('texto sin resolver en los choques: ' + st.text.slice(0, 120));
+    if (!st.rows) throw new Error('la demo tiene ramas que tocan los mismos archivos y ?conflicts=1 no las lista: ' + st.text.slice(0, 120));
+    if (!st.url.includes('conflicts=1')) throw new Error('la URL perdió conflicts=1: ' + st.url);
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
+    await page.waitForFunction(() => !location.search.includes('conflicts'), null, { timeout: T(3000) }).catch(async () => {
+      throw new Error('cerrar la salud deja ?conflicts= en la URL: ' + (await page.evaluate(() => location.search)));
+    }); // el evento close del diálogo llega en la tarea siguiente
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open]', { timeout: T(3000) });
+    if ((await page.evaluate(() => document.querySelector('#hl-clash-out').textContent.trim()))) throw new Error('reabrir la salud a mano volvió a buscar choques');
+    await page.click('#hl-clash-go');
+    await page.waitForFunction(() => location.search.includes('conflicts=1'), null, { timeout: T(8000) }).catch(() => {
+      throw new Error('«Buscar choques» no deja la vista en la URL');
+    });
+  });
+  await page.context().close();
+}
+
 console.log('Filtro por autor desde la URL (?author=)');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
@@ -2702,6 +2773,7 @@ console.log('Salud del repo directa (?health=1)');
     await page.click('#health-close');
     await page.waitForTimeout(300);
     if (await page.evaluate(() => document.querySelector('#health').open)) throw new Error('el panel no se cierra');
+    if ((await page.evaluate(() => location.search)).includes('health=')) throw new Error('cerrar el panel deja health= en la URL');
   });
   await step(page, 'sin el parámetro (o con health=0) el panel no se abre solo', async () => {
     await page.goto(`${base}/index.html?lang=es&health=0`);

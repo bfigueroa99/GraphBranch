@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} } });
 vm.runInContext(readFileSync(join(root, 'js', 'health.js'), 'utf8'), ctx, { filename: 'health.js' });
-const { compute, clashes, clashCandidates, compare, splitFiles, urlParam } = ctx.window.GB.health;
+const { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, splitFiles } = ctx.window.GB.health;
 
 const DAY = 864e5;
 const NOW = Date.UTC(2026, 9, 13, 12);
@@ -267,9 +267,21 @@ test('frecuencia de despliegue: releases por semana, de la semana más vieja a l
   assert.deepEqual([...compute(repo(), [], NOW).dora.weeks], [0, 0, 0, 0, 0, 0, 0, 0]);
 });
 
+test('conflictsParam lee ?conflicts= de la URL: 1 o vacío lo pide; 0, false, no y off no', () => {
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(conflictsParam(q('')), false);
+  assert.equal(conflictsParam(q('repo=a/b')), false);
+  assert.equal(conflictsParam(q('conflicts=1')), true);
+  assert.equal(conflictsParam(q('conflicts')), true);
+  assert.equal(conflictsParam(q('conflicts=yes')), true);
+  for (const off of ['0', 'false', 'NO', 'off', ' 0 ']) assert.equal(conflictsParam(q('conflicts=' + encodeURIComponent(off))), false, off);
+  assert.equal(conflictsParam(null), false);
+  assert.equal(conflictsParam({}), false);
+});
+
 test('?health=1 abre el panel al cargar; sin el parámetro o con 0, false, no u off, no', () => {
   const q = (s) => new URLSearchParams(s);
-  for (const s of ['health=1', 'health', 'health=', 'repo=a/b&health=true', 'health=sí']) assert.equal(urlParam(q(s)), true, s);
-  for (const s of ['', 'repo=a/b', 'health=0', 'health=false', 'health=NO', 'health=off', 'health= off ', 'healthy=1']) assert.equal(urlParam(q(s)), false, s);
-  assert.equal(urlParam(null), false);
+  for (const s of ['health=1', 'health', 'health=', 'repo=a/b&health=true', 'health=sí']) assert.equal(healthParam(q(s)), true, s);
+  for (const s of ['', 'repo=a/b', 'health=0', 'health=false', 'health=NO', 'health=off', 'health= off ', 'healthy=1']) assert.equal(healthParam(q(s)), false, s);
+  assert.equal(healthParam(null), false);
 });

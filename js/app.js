@@ -548,6 +548,7 @@
       renderSummary(data, L);
       if (initialQuery && L.nodes.length) startUrlQuery();
       if (initialPath && L.nodes.length) startUrlPath(); // la demo y los repos ya cargados no pasan por onUpdate
+      if (initialConflicts && L.nodes.length) startUrlConflicts();
     } else if (status?.state === 'error') showOverlay('error', status.message, status.nextAt == null);
     else showOverlay('loading', tab.demo ? i18n.msg('overlay.demoLoading') : i18n.msg('overlay.loading', { repo: nameOf(tab) }));
     renderStatus();
@@ -963,6 +964,7 @@
     if (initialReplay && L.nodes.length) startUrlReplay();
     if (initialQuery && tab === active && L.nodes.length) startUrlQuery();
     if (initialPath && tab === active && L.nodes.length) startUrlPath();
+    if (initialConflicts && tab === active && L.nodes.length) startUrlConflicts();
     diffView.refresh(); // puede haber llegado el commit siguiente
   }
 
@@ -1499,6 +1501,7 @@
     }
     const c = GB.health.clashes(entries);
     btn.disabled = false;
+    setUrlParam('conflicts', '1'); // la vista con los choques se comparte con la URL
     if (!c.rows.length) return void (out.innerHTML = `<p class="hl-none">${U.esc(t('health.clashNone', { n: entries.length }))}</p>`);
     out.innerHTML = `<ul class="hl-list" data-list="clash">${c.rows
       .map((r, i) => `<li><button type="button" class="hl-row" data-go="${i}" title="${U.esc(t('feed.locate'))}"><span class="hl-main">${U.esc(r.path)}</span><span class="hl-aside">${U.esc(r.branches.join(', '))}</span></button></li>`)
@@ -1600,6 +1603,28 @@
   }
   el.healthBtn.addEventListener('click', openHealth);
   $('#health-close').addEventListener('click', closeHealth);
+  el.health.addEventListener('close', () => {
+    setUrlParam('conflicts', null);
+    setUrlParam('health', null);
+  });
+
+  let initialConflicts = false; // ?conflicts=1: la salud se abre sola y busca los choques en cuanto hay dos ramas con PR
+  let conflictsOpened = false;
+  function startUrlConflicts() {
+    if (!source.files || source.data.repo.practice || source.data.repo.rehearsal) return void (initialConflicts = false);
+    if (conflictsOpened && !el.health.open) return void (initialConflicts = false); // quien lo cerró no lo quiere de vuelta
+    if (!el.health.open) {
+      conflictsOpened = true;
+      el.healthBtn.click();
+      setUrlParam('conflicts', '1'); // cerrar el panel la quita; abrirlo así la conserva
+    }
+    const data = source.view ? source.view() : source.data;
+    if (GB.health.clashCandidates(data).length < 2) return; // los PRs pueden llegar después que las ramas
+    initialConflicts = false;
+    renderHealth(); // con los PRs ya cargados
+    const btn = $('#hl-clash-go');
+    if (btn && !btn.hidden && !btn.disabled) findClashes(data, btn);
+  }
 
   /* ---------- bitácora en vivo: lo que hizo el repo desde la anterior, con su nota y sus hallazgos (ver bitacora.js) ---------- */
   const BIT_EVERY = 1500; // con el panel abierto, se rehace a lo más cada 1,5 s
@@ -2783,7 +2808,7 @@
   try {
     const q0 = new URLSearchParams(location.search);
     initialBitacora = !EMBED && q0.has('bitacora') && !/^(0|false|no|off)$/i.test(q0.get('bitacora'));
-    initialHealth = !EMBED && GB.health.urlParam(q0);
+    initialHealth = !EMBED && GB.health.healthParam(q0);
   } catch {
     /* sin query string */
   }
@@ -2797,6 +2822,7 @@
     initialPath = EMBED ? '' : GB.search.pathParam(q);
     initialAuthor = EMBED ? '' : GB.search.authorParam(q);
     initialQuery = EMBED ? '' : GB.search.queryParam(q);
+    initialConflicts = !EMBED && GB.health.conflictsParam(q);
     initialTV = !EMBED && q.has('tv') && !/^(0|false|no|off)$/i.test(q.get('tv'));
   } catch {
     /* sin query string */

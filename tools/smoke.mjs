@@ -2244,6 +2244,60 @@ console.log('Bitbucket');
   await page.context().close();
 }
 
+console.log('Bitbucket propio con token');
+{
+  // el CSP de la web no nombra hosts propios (eso lo hace la app de escritorio con --bitbucket-url=): aquí se salta para ver qué sale
+  const page = await openPage({ viewport: { width: 1280, height: 800 }, bypassCSP: true });
+  const auths = [];
+  await page.route(/^https:\/\/(bb|otro)\.example\.com\//, (route) => {
+    auths.push([new URL(route.request().url()).host, route.request().headers().authorization || '']);
+    return route.fulfill({ status: 404, contentType: 'application/json', body: '{"errors":[{"message":"no existe"}]}' });
+  });
+
+  await step(page, 'sin ?bitbucket= no hay campo de token propio; con él, nombra su host y el token va solo ahí, atado a esa dirección', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    if (await page.isVisible('#bbdc-token-field')) throw new Error('el campo se ve sin un servidor elegido');
+    await page.goto(`${base}/index.html?lang=es&bitbucket=https://bb.example.com&repo=bitbucketdc:ANA/api`);
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: T(15000) });
+    if (auths.some(([, a]) => a)) throw new Error('sin token, una consulta llevó credenciales');
+    if (!(await page.textContent('#overlay')).includes('Solo se leen repositorios públicos')) throw new Error('sin token, el aviso no es el de siempre');
+    await page.click('#overlay [data-ov=settings]');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    if (!(await page.evaluate(() => document.activeElement?.id === 'bbdc-token-input'))) throw new Error('«Abrir Ajustes» no lleva al campo del token propio');
+    const where = await page.textContent('#bbdc-token-where');
+    if (!where.includes('bb.example.com')) throw new Error(`el aviso dice ${where}`);
+    await page.fill('#bbdc-token-input', 'dc-smoke0123');
+    const from = auths.length;
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForFunction(() => document.querySelector('#overlay:not([hidden])')?.textContent.includes('el token no puede leerlo'), null, { timeout: T(15000) });
+    await page.waitForTimeout(500);
+    const sent = auths.slice(from);
+    if (!sent.length) throw new Error('al guardar el token no se reconectó el repo');
+    if (sent.some(([h, a]) => h !== 'bb.example.com' || a !== 'Bearer dc-smoke0123')) throw new Error(`salió ${JSON.stringify(sent)}`);
+    const text = await page.textContent('#overlay');
+    if (!text.includes('el token no puede leerlo')) throw new Error(`con token, el aviso dice ${text}`);
+    const saved = await page.evaluate(() => [JSON.parse(JSON.parse(localStorage.getItem('graphbranch:bbdcToken'))), localStorage.getItem('graphbranch:bitbucketToken')]);
+    if (saved[0].base !== 'https://bb.example.com' || saved[0].token !== 'dc-smoke0123' || saved[1] !== null) throw new Error(`se guardó ${JSON.stringify(saved)}`);
+  }, { allow: /404/ });
+
+  await step(page, 'con otro ?bitbucket= el token guardado no se usa ni se muestra', async () => {
+    const from = auths.length;
+    await page.evaluate(() => localStorage.removeItem('graphbranch:repos'));
+    await page.goto(`${base}/index.html?lang=es&bitbucket=https://otro.example.com&repo=bitbucketdc:ANA/api`);
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: T(15000) });
+    const sent = auths.slice(from);
+    if (!sent.length || sent.some(([h, a]) => h !== 'otro.example.com' || a)) throw new Error(`salió ${JSON.stringify(sent)}`);
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    if ((await page.inputValue('#bbdc-token-input')) !== '') throw new Error('el campo muestra el token de otro servidor');
+    if (!(await page.textContent('#bbdc-token-where')).includes('otro.example.com')) throw new Error('el aviso no nombra el servidor elegido');
+  }, { allow: /404/ });
+  await page.context().close();
+}
+
 console.log('Fijar una rama con el teclado');
 {
   const gh = fakeGitHub();
@@ -2794,6 +2848,31 @@ console.log('Modo TV directo (?tv=1)');
     await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: T(5000) });
     await page.waitForTimeout(4000);
     if (!(await page.locator('#graph3d').isVisible())) throw new Error('el modo TV no muestra la vista 3D');
+  });
+  await page.context().close();
+}
+
+console.log('Salud del repo directa (?health=1)');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, 'abre la demo con el panel de salud ya desplegado y con sus secciones', async () => {
+    await page.goto(`${base}/index.html?lang=es&health=1`);
+    await loaded(page);
+    await page.waitForSelector('#health[open]', { timeout: T(5000) }).catch(() => {
+      throw new Error('?health=1 no abrió el panel de salud');
+    });
+    const n = await page.evaluate(() => document.querySelectorAll('#health-body .hl-sec').length);
+    if (!n) throw new Error('el panel de salud se abrió vacío');
+    await page.click('#health-close');
+    await page.waitForTimeout(300);
+    if (await page.evaluate(() => document.querySelector('#health').open)) throw new Error('el panel no se cierra');
+    if ((await page.evaluate(() => location.search)).includes('health=')) throw new Error('cerrar el panel deja health= en la URL');
+  });
+  await step(page, 'sin el parámetro (o con health=0) el panel no se abre solo', async () => {
+    await page.goto(`${base}/index.html?lang=es&health=0`);
+    await loaded(page);
+    await page.waitForTimeout(500);
+    if (await page.evaluate(() => document.querySelector('#health').open)) throw new Error('health=0 abrió el panel');
   });
   await page.context().close();
 }

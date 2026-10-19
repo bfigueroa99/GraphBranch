@@ -1,4 +1,4 @@
-/* Los tokens de la app de escritorio (el de GitHub, el de GitLab, el de Codeberg, el de Bitbucket y las URL de webhook de Slack, de Discord y de Teams), cifrados con el llavero del
+/* Los tokens de la app de escritorio (el de GitHub, el de GitLab, el de Codeberg, el de Bitbucket, el de un Bitbucket propio y las URL de webhook de Slack, de Discord y de Teams), cifrados con el llavero del
    sistema (safeStorage): Llavero en macOS, DPAPI en Windows y el llavero de GNOME o KWallet en
    Linux. Cada uno queda en su archivo de los datos de la app, nunca en localStorage.
 
@@ -11,7 +11,7 @@ const path = require('node:path');
 const file = (name) => path.join(app.getPath('userData'), name);
 /** Los servicios con token. Cada uno, en `<servicio>-token.enc`: cifrado (con el llavero o, en Linux
     sin llavero, con la clave fija de Chromium) o, si no hay cifrado, en claro en `<servicio>-token.txt`. */
-const SERVICES = ['github', 'gitlab', 'codeberg', 'bitbucket', 'slack', 'discord', 'teams']; // los tres últimos guardan la URL de un webhook (electron/webhooks.js)
+const SERVICES = ['github', 'gitlab', 'codeberg', 'bitbucket', 'bitbucketdc', 'slack', 'discord', 'teams']; // 'bitbucketdc' guarda el token atado a su servidor (JSON, ver js/sources/bitbucket-server.js); los tres últimos, la URL de un webhook (electron/webhooks.js)
 const names = (service) => {
   if (!SERVICES.includes(service)) throw new Error('servicio desconocido');
   return { ENCRYPTED: `${service}-token.enc`, PLAIN: `${service}-token.txt` };

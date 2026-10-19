@@ -423,16 +423,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Media
 
-1. [Deuda] Smoke: bajo carga extrema (4 procesos al 100 % en 4 núcleos, `node tools/smoke.mjs` repetido) aún
-    fallan pasos que no tocaba el cambio, en cascada: tras un `page.click` de 30 s vencido (vista de texto, búsqueda,
-    filtros por autor y por ruta) y «cambios de un commit» (`waitForFunction`); además «salud del repo» («la tasa de
-    fallos de CI no sale en la salud»). Con el equipo libre y con `xvfb-run -a npm run check` pasa. Medir la causa del
-    primer `click` que vence (qué lo tapa: un diálogo abierto del paso anterior, la barra de herramientas) y esperar
-    a ese estado antes de seguir; para «salud del repo», esperar al `#hl-ci` en vez de leerlo al abrir el panel.
-    (Visto de nuevo en la iteración 88: sobre `master` limpio, 1 de 2 corridas de `node tools/smoke.mjs` falló en 7 pasos con el mismo `click` vencido.)
-    (Visto de nuevo en la iteración 95: `xvfb-run -a npm run check` falló una vez en 3 pasos (filtro por autor y por ruta, 2D y 3D, con el `click` vencido); la repetición pasó y 3 corridas sueltas del smoke también.)
-    (Hecho en la iteración 83: topes del smoke ×3 y los pasos de Codeberg y Bitbucket dejan de seguir `ana/nada`.)
-2. [Deuda] e2e de escritorio: «un repositorio de esta máquina se sigue sin GitHub…» (`e2e/desktop.spec.mjs:360`)
+1. [Deuda] e2e de escritorio: «un repositorio de esta máquina se sigue sin GitHub…» (`e2e/desktop.spec.mjs:360`)
     falló una vez en `npm run check` (iteración 53, `xvfb-run`; la repetición pasó): el panel de cambios
     mostró «segundo» en vez de «tercero, sin publicar» (línea 381, `toHaveText` sin esperar al commit sin
     publicar). Medir con 5 corridas de ese test solo y esperar al estado (el commit nuevo) en vez de al texto.
@@ -440,54 +431,54 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Baja
 
-3. [Accesibilidad] Estados confusos: botones que cambian a la vez `aria-pressed` y el texto (el de pausa del
+2. [Accesibilidad] Estados confusos: botones que cambian a la vez `aria-pressed` y el texto (el de pausa del
     Replay, `replay.js:367`) y la leyenda 2D sin acceso por teclado. Los objetivos chicos ya cumplen los
     24 px (iteración 91) y la base de la auditoría quedó vacía. Reproducir: `node tools/audit.mjs`.
-4. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-5. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
+3. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+4. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
     renombrados).
-6. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+5. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-7. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
+6. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
     y mueve el resto a `docs/BITACORA.md` (idempotente: la segunda corrida dice «Nada que rotar»; queda
     una línea «Las iteraciones anteriores están en docs/BITACORA.md»); `--siguiente` sigue leyendo N de
     aquí y `--check` exige iteraciones sin repetidos entre los dos archivos. Motivo: `--salud` mide el
     archivo en cada iteración (77 KB el 2026-10-13, 55 KB de bitácora), y cada sesión nueva lo lee entero.
-8. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+7. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-9. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+8. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-10. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+9. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-11. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
+10. [Rendimiento] Con `--langs` la carga del escenario `escritorio-3d` pasó el presupuesto en este entorno
     (6.009 ms con ≤ 6.000; tareas largas 4.809 ms con ≤ 4.000), sin GPU y con la corrida larga; la corrida
     normal de la puerta no lo marca. Medir con `node tools/audit.mjs --repetir 3` antes de tocar nada.
-12. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+11. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
     Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-13. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+12. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-14. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
+13. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-15. [QA] No hay un escenario de la auditoría con 1.000 ramas a 320 px en 3D: la comprobación de etiquetas
+14. [QA] No hay un escenario de la auditoría con 1.000 ramas a 320 px en 3D: la comprobación de etiquetas
     pisadas (`celular-320-3d`) corre sobre la API simulada de 3 ramas; con 1.000 solo se miró a mano.
     Reproducción: Playwright contra `node e2e/serve.mjs 4173` con 1.000 ramas simuladas, 320 px, `?repo=acme/web`
     → 4 etiquetas visibles, 0 pisadas (hoy bien; nada lo vigila).
-16. [QA] Con 1.000 ramas a 320 px el 3D deja solo 4 etiquetas de rama visibles (`reach` de `placeLabels`
+15. [QA] Con 1.000 ramas a 320 px el 3D deja solo 4 etiquetas de rama visibles (`reach` de `placeLabels`
     esconde las lejanas); revisar si en celular conviene un alcance mayor o una pista de «+N ramas».
     Reproducción: la misma de arriba, contar `.g3-head` con `display` distinto de `none` → 4.
-17. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
+16. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
     nítidas (demo a 320 px: 3 de 5 atenuadas); comprobar que Tab y el toque no caigan en una atenuada.
     Reproducción: Playwright, 320 px, 3D, `?repo=demo` → `.g3-head` con opacidad 0,22 y `display: flex`.
 
@@ -2209,3 +2200,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); Chromium con `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`. El smoke falló una vez bajo carga en «filtro por autor» y «filtro por ruta» (tiempos) y pasó limpio las otras veces.
 - Validado: 341 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 103, mantenimiento · Deuda: pendiente 1
+
+### 2026-10-19 · Iteración 103 · Mantenimiento · Deuda
+
+- **Arreglo: smoke intermitente bajo carga** (pendiente 1 de Media). Tres causas: (1) «cambios de un commit» esperaba a que cambiara el *mensaje* del commit tras ←, pero la demo saca los mensajes de una lista corta y un commit puede llevar el mismo que su padre: la espera vencía aunque el panel ya había avanzado; ahora sigue al commit por su sha corto (`.df-meta code`), y K comprueba la vuelta por sha. (2) «salud del repo» leía `#hl-ci` al abrir, y en la demo cada commit deja los checks de su rama «en curso» de 3,5 a 6 s: si justo lo estaban todos, la sección salía vacía; el paso reabre el panel (hasta 15 veces, 1 s entre una y otra) hasta que alguno termine. (3) La cascada: un paso que fallaba a medias dejaba abierto un diálogo modal y cada `page.click` siguiente vencía a los 30 s; ahora `step` cierra lo abierto (Esc y `dialog[open]`) tras un fallo, y el fallo de un `click` vencido dice qué tapaba el objetivo (la línea «intercepts pointer events» del registro de Playwright, que antes se perdía al quedarse con la primera línea).
+- **Reproducción:** `node tools/smoke.mjs` ×2 con 4 procesos al 100 % en 4 núcleos → antes: 1 de 2 corridas falló con «cambios de un commit: … page.waitForFunction: Timeout 15000ms exceeded.»
+- **Pruebas que fallan sin el arreglo:** el propio smoke bajo la misma carga: después, 2 de 2 corridas en verde (408 s y 401 s); con el equipo libre, 1 de 1 en verde (340 s) antes del cambio.
+- README: no aplica (herramienta interna).
+- QA: no toca la página; auditoría: no toca la página.
+- Reclamo: loop/103, sin colisión (primera del modo caos del 2026-10-19)
+- Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); Chromium con `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`. Borrar las `loop/*` fusionadas dio 403 (ya en Para Benjamin).
+- Validado: PENDIENTE
+- **Siguiente:** iteración 104, expansión: ítem 64 (Choques entre ramas en la URL, Análisis)

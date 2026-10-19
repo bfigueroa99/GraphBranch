@@ -2646,6 +2646,38 @@ console.log('Búsqueda desde la URL (?q=)');
   await page.context().close();
 }
 
+console.log('Choques entre ramas desde la URL (?conflicts=1)');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, 'abre la salud con los choques ya buscados, los mantiene en la URL y al cerrar los suelta', async () => {
+    await page.goto(`${base}/index.html?lang=es&conflicts=1`);
+    await loaded(page);
+    await page.waitForSelector('#health[open]', { timeout: T(5000) }).catch(() => {
+      throw new Error('?conflicts=1 no abrió la salud');
+    });
+    await page
+      .waitForFunction(() => document.querySelector('#hl-clash-out')?.textContent.trim() && !document.querySelector('#hl-clash-go').disabled, null, { timeout: T(8000) })
+      .catch(() => {
+        throw new Error('?conflicts=1 no buscó los choques');
+      });
+    const st = await page.evaluate(() => ({ text: document.querySelector('#hl-clash-out').textContent, rows: document.querySelectorAll('#hl-clash-out .hl-row').length, url: location.search }));
+    if (/undefined|NaN|health\./.test(st.text)) throw new Error('texto sin resolver en los choques: ' + st.text.slice(0, 120));
+    if (!st.rows) throw new Error('la demo tiene ramas que tocan los mismos archivos y ?conflicts=1 no las lista: ' + st.text.slice(0, 120));
+    if (!st.url.includes('conflicts=1')) throw new Error('la URL perdió conflicts=1: ' + st.url);
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
+    if ((await page.evaluate(() => location.search)).includes('conflicts')) throw new Error('cerrar la salud deja ?conflicts= en la URL');
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open]', { timeout: T(3000) });
+    if ((await page.evaluate(() => document.querySelector('#hl-clash-out').textContent.trim()))) throw new Error('reabrir la salud a mano volvió a buscar choques');
+    await page.click('#hl-clash-go');
+    await page.waitForFunction(() => location.search.includes('conflicts=1'), null, { timeout: T(8000) }).catch(() => {
+      throw new Error('«Buscar choques» no deja la vista en la URL');
+    });
+  });
+  await page.context().close();
+}
+
 console.log('Filtro por autor desde la URL (?author=)');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

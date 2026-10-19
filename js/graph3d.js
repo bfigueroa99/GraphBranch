@@ -550,8 +550,8 @@
       this.dpr = this.dprMax;
       const probe = Graph3D.probe;
       Graph3D.probe = null; // un contexto por renderer: el siguiente crea el suyo
+      // sin setPixelRatio: rehacía el búfer de 300 × 150; el tamaño y la densidad los pone resize()
       this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, ...(probe ?? {}) });
-      this.renderer.setPixelRatio(this.dpr);
       this.canvas = this.renderer.domElement;
       this.canvas.className = 'g3-canvas';
       this.canvas.setAttribute('aria-hidden', 'true');

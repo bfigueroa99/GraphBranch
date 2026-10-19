@@ -110,12 +110,33 @@ async function step(page, name, fn, { allow = null } = {}) {
   try {
     await fn();
   } catch (e) {
-    errs.push(e.message.split('\n')[0]);
+    errs.push(e.message.split('\n')[0] + blocker(e.message));
   }
   // la excepción de la app explica mejor que el timeout
   errs.unshift(...page.errors.slice(before).filter((e) => !allow?.test(e)));
-  if (errs.length) fail(`${name}: ${errs.join(' | ')}`);
-  else console.log(`  ✓ ${name}`);
+  if (errs.length) {
+    fail(`${name}: ${errs.join(' | ')}`);
+    await reset(page);
+  } else console.log(`  ✓ ${name}`);
+}
+
+/** De un `click` vencido, Playwright cuenta en las líneas de su registro qué tapaba el objetivo: la
+    última va al fallo, que si no dice solo «Timeout 30000ms exceeded». */
+function blocker(msg) {
+  const tapa = msg.split('\n').filter((l) => /intercepts pointer events/.test(l)).pop();
+  return tapa ? ` (${tapa.trim().replace(/^- /, '')})` : '';
+}
+
+/** Un paso que falla a medias deja abierto lo que abrió (un diálogo modal, la búsqueda, una ficha) y
+    tapa los botones del siguiente: cada `click` de ahí en más vence a los 30 s y el fallo se encadena.
+    Se cierra todo para que el siguiente paso falle, si falla, por lo suyo. */
+async function reset(page) {
+  if (page.isClosed()) return;
+  try {
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
+    await page.evaluate(() => document.querySelectorAll('dialog[open]').forEach((d) => d.close()));
+  } catch {}
 }
 
 const loaded = (page) => page.waitForSelector('#overlay', { state: 'hidden', timeout: T(20000) });
@@ -602,8 +623,20 @@ console.log('Escritorio (1280×800)');
   });
 
   await step(page, 'salud del repo: listas y ritmo de lo ya cargado, y cada fila lleva a su rama', async () => {
-    await page.click('#health-btn');
-    await page.waitForSelector('#health[open]', { timeout: T(3000) });
+    const open = async () => {
+      await page.click('#health-btn');
+      await page.waitForSelector('#health[open]', { timeout: T(3000) });
+    };
+    await open();
+    // la sección de CI cuenta los PRs con checks terminados, y en la demo cada commit nuevo deja los de su
+    // rama «en curso» de 3,5 a 6 s: si justo lo están todos, sale vacía. El panel no se rehace abierto, así
+    // que se reabre hasta que alguno termine (con el equipo cargado los temporizadores de la demo se atrasan)
+    for (let i = 0; i < 15 && !(await page.$('#hl-ci .hl-line')); i++) {
+      await page.click('#health-close');
+      await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
+      await page.waitForTimeout(1000);
+      await open();
+    }
     const info = await page.evaluate(() => {
       const d = document.querySelector('#health');
       const w = d.querySelector('.tr-wrap');

@@ -959,6 +959,7 @@
     tab.updatedAt = Date.now();
     if (el.bitacora.open) scheduleBitacora();
     if (initialBitacora && L.nodes.length) openBitacora();
+    if (initialHealth && tab === active && L.nodes.length) openHealth();
     if (initialReplay && L.nodes.length) startUrlReplay();
     if (initialQuery && tab === active && L.nodes.length) startUrlQuery();
     if (initialPath && tab === active && L.nodes.length) startUrlPath();
@@ -1583,7 +1584,10 @@
     if (typeof el.health.close === 'function') el.health.close();
     else el.health.removeAttribute('open');
   }
-  el.healthBtn.addEventListener('click', () => {
+  let initialHealth = false; // ?health=1: el panel de salud se abre solo en cuanto el repo a la vista tiene grafo
+  function openHealth() {
+    initialHealth = false;
+    if (el.health.open) return;
     renderHealth();
     const asked = source;
     if (asked.syncForks) asked.syncForks().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
@@ -1593,7 +1597,8 @@
     }
     if (typeof el.health.showModal === 'function') el.health.showModal();
     else el.health.setAttribute('open', '');
-  });
+  }
+  el.healthBtn.addEventListener('click', openHealth);
   $('#health-close').addEventListener('click', closeHealth);
 
   /* ---------- bitácora en vivo: lo que hizo el repo desde la anterior, con su nota y sus hallazgos (ver bitacora.js) ---------- */
@@ -2778,6 +2783,7 @@
   try {
     const q0 = new URLSearchParams(location.search);
     initialBitacora = !EMBED && q0.has('bitacora') && !/^(0|false|no|off)$/i.test(q0.get('bitacora'));
+    initialHealth = !EMBED && GB.health.urlParam(q0);
   } catch {
     /* sin query string */
   }

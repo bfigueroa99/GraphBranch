@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} } });
 vm.runInContext(readFileSync(join(root, 'js', 'health.js'), 'utf8'), ctx, { filename: 'health.js' });
-const { compute, clashes, clashCandidates, compare, splitFiles } = ctx.window.GB.health;
+const { compute, clashes, clashCandidates, compare, splitFiles, urlParam } = ctx.window.GB.health;
 
 const DAY = 864e5;
 const NOW = Date.UTC(2026, 9, 13, 12);
@@ -265,4 +265,11 @@ test('frecuencia de despliegue: releases por semana, de la semana más vieja a l
   const h = compute(repo(), acts, NOW);
   assert.deepEqual([...h.dora.weeks], [0, 0, 0, 0, 0, 2, 1, 2], 'a y b esta semana, c la pasada, d y e hace tres, f fuera de las 8 y g (futuro) no cuenta');
   assert.deepEqual([...compute(repo(), [], NOW).dora.weeks], [0, 0, 0, 0, 0, 0, 0, 0]);
+});
+
+test('?health=1 abre el panel al cargar; sin el parámetro o con 0, false, no u off, no', () => {
+  const q = (s) => new URLSearchParams(s);
+  for (const s of ['health=1', 'health', 'health=', 'repo=a/b&health=true', 'health=sí']) assert.equal(urlParam(q(s)), true, s);
+  for (const s of ['', 'repo=a/b', 'health=0', 'health=false', 'health=NO', 'health=off', 'health= off ', 'healthy=1']) assert.equal(urlParam(q(s)), false, s);
+  assert.equal(urlParam(null), false);
 });

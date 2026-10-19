@@ -195,5 +195,10 @@
     return { onlyA: list(sa, sb), onlyB: list(sb, sa), both: [...sa].filter((p) => sb.has(p)).sort() };
   }
 
-  GB.health = { compute, clashes, clashCandidates, compare, splitFiles, STALE_DAYS };
+  /** ?health=1 (o solo ?health): abrir el panel al cargar el repo, para compartir la vista. 0, false, no u off lo apagan. */
+  function urlParam(q) {
+    return !!q && q.has('health') && !/^(0|false|no|off)$/i.test(String(q.get('health')).trim());
+  }
+
+  GB.health = { compute, clashes, clashCandidates, compare, splitFiles, urlParam, STALE_DAYS };
 })(window.GB);

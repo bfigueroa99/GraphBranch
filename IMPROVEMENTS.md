@@ -351,7 +351,7 @@ se comprueban antes de construir sobre ellas.
     desplegado, para compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
 67. **Búsqueda por fecha** · Análisis · 1×2/2. [parte del ítem 19] La lupa entiende `desde:2026-09-01` y `hasta:2026-09-14`
     junto al texto, sobre lo ya cargado. Comprobar: `tools/search.test.mjs` con fechas fabricadas.
-68. ~~**Práctica: stash y reset**~~ hecho en #134 · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `stash`, `stash pop` y
+68. ~~**Práctica: stash y reset**~~ hecho en #137 · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `stash`, `stash pop` y
     `reset --hard <sha>`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
 69. **Resumen de la organización como imagen** · Salidas · 1×2/2. [parte del ítem 47] El resumen de la semana de una
     organización también se baja como imagen PNG, como el de un repo. Comprobar: `tools/digest.test.mjs` con la imagen simulada.

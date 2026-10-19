@@ -144,7 +144,7 @@ segunda columna a la primera.
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia), miles de ramas por repo | una organización entera con más de 10 repos a la vez |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack, Discord y Teams (escritorio), resumen de la semana (Markdown, con releases y tags, de un repo o de una organización seguida; PNG, de un repo), prompt del loop autónomo para cualquier repo (español o inglés, con repo, ramas y objetivo; se copia o se guarda como `.md`) | resumen de la organización como imagen |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), búsqueda de commits también desde la URL (`?q=`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, vocabulario DORA en la salud (despliegues en 30 días y por semana, mediana entre releases, tiempo de entrega desde el primer commit del PR), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días), bitácora en vivo al estilo de Brunell_Node (la quinta cifra del resumen: desde la bitácora anterior, lo grande, commits por día, nota del 1 al 100 de ritmo, publicado y salud con su origen, hallazgos con su gravedad y su seguimiento, cronología y qué sigue; se cierra, se guarda en el navegador y sale en Markdown o `estado.json`) | ver la hoja de ruta |
-| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal (`cherry-pick`, `revert` y `tag` incluidos) y ejercicios, también propios compartidos por URL con pistas, solución propuesta que se muestra paso a paso con `solution=1` y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
+| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal (`cherry-pick`, `revert` y `tag` incluidos) y ejercicios, también propios compartidos por URL con pistas, solución propuesta que se muestra paso a paso con `solution=1` y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto: árbol de ramas y commits con teclado, filtro por rama, por autor y por ruta con su aviso, y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
 
@@ -341,8 +341,7 @@ se comprueban antes de construir sobre ellas.
     del smoke con dos repos.
 62. ~~**Lanzamientos en el resumen de la semana**~~ hecho en #132 · Salidas · 1×2/1. [parte del ítem 23] El resumen de la semana lista los tags y
     lanzamientos de la semana con lo ya cargado. Comprobar: `tools/digest.test.mjs` con tags fabricados.
-63. **Vista de texto: filtro por autor** · Público · 1×2/2. [parte del ítem 33] La vista de texto respeta el filtro por autor y
-    por ruta, y lo anuncia. Comprobar: prueba de la vista y un paso del smoke.
+63. ~~**Vista de texto: filtro por autor**~~ hecho en #133 · Público · 1×2/2. [parte del ítem 33]
 64. **Choques entre ramas en la URL** · Análisis · 1×2/1. [parte del ítem 14] `?conflicts=1` abre el repo con los choques ya
     marcados, para compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
 65. **Token para un Bitbucket propio** · Fuentes · 2×2/2. [parte del ítem 50] Un token de acceso personal (`Authorization: Bearer …`)
@@ -366,6 +365,7 @@ se comprueban antes de construir sobre ellas.
 75. **Los forks en el grafo, tercera entrega** · Datos · 1×2/2. [parte del ítem 30] Los forks se ordenan por actividad reciente en el panel. Comprobar: prueba del orden con forks fabricados.
 76. **Constelación ordenada por actividad** · Escala · 1×2/1. [parte del ítem 26] La constelación puede ordenar las galaxias por commits cargados o por nombre, y lo anuncia. Comprobar: prueba del orden y un paso del smoke.
 77. **Práctica: branch -d y merge --abort** · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `branch -d` y `merge --abort`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
+78. **Vista de texto: abrirla desde la URL** · Público · 1×2/1. [parte del ítem 33] `?view=text` abre el repo con la vista de texto ya abierta, con su filtro por autor o por ruta si los trae, para compartir el enlace con quien usa lector de pantalla. Comprobar: prueba de la lectura de la URL y un paso del smoke.
 
 ## Cómo validar un cambio
 
@@ -1695,7 +1695,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 - **Capacidad nueva: ensayar un comando sobre el repo real** (ítem 31 de la hoja de ruta). Con un repo real cargado aparece «Ensayar un comando»: abre la terminal de práctica sobre `gitsim.fromData`, una copia en memoria de las ramas y commits que el grafo ya tiene (los padres no cargados se descartan, las ramas sin commit cargado no entran). `merge`, `rebase`, `reset`, etc. se ven en el grafo 2D y 3D; el repo real no se toca, no hay consultas a la API y al volver a su pestaña el ensayo se cierra. «Reiniciar» rehace la copia; no ofrece crear ni compartir ejercicios.
 - **Pruebas que fallan sin la capacidad:** `tools/gitsim.test.mjs` (`fromData: copia un repo real…`) y el paso del smoke «ensayar un comando: la copia del repo real cambia sin tocar al original ni gastar cuota».
-- README: función en la lista de «Aprender git», pruebas, Límites conocidos (solo lo cargado) y Seguridad (no guarda nada ni usa el token). Mapa de alcance: fila Público.
+- README: función en la lista de «Aprender git», pruebas, Límites conocidos (solo lo cargado) y Seguridad (no guarda nada ni usa el token). Mapa de alcance: fila Público. Hoja de ruta repuesta a 15 (ítem 78).
 - QA: fila de XSS/entrada (el mensaje con HTML entra con `textContent`, lo mira el smoke), repo sin ramas (el botón se esconde) y demo (no aparece); 40 idiomas por `check-i18n`; auditoría: 0 hallazgos nuevos.
 - Reclamo: loop/60, sin colisión
 - Web publicada: 404, has_pages=false (Pages sin activar, ya en Para Benjamin)
@@ -2198,3 +2198,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso).
 - Validado: 339 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 102, expansión: ítem 63 (Vista de texto: filtro por autor, Público)
+
+### 2026-10-19 · Iteración 102 · Expansión · Público
+
+- **Capacidad nueva: la vista de texto respeta el filtro por autor y por ruta, y lo anuncia** (ítem 63 de la hoja de ruta, Vista de texto: filtro por autor): con un autor elegido, el árbol ya mostraba solo sus ramas, pero en silencio; ahora una nota bajo la ayuda dice «Filtrado por autor: X (n de m ramas)» y la región viva (`role="status"`) lo anuncia al abrir. Con un filtro por ruta activo, el árbol deja solo los commits que la tocaron (y quita las ramas sin ninguno) y la nota dice «Filtrado por ruta: … (n commits)»; también al llegar commits nuevos con la vista abierta. Sin filtros no hay nota ni anuncio. Sin consultas nuevas ni CSP distinta; en la web y en la app de escritorio (misma página).
+- **Pruebas que fallan sin la capacidad:** `tools/textview.test.mjs` (`build` con `paths` deja solo los commits de la ruta y quita las ramas vacías; `scopeText`) y el paso del smoke «filtro por autor» (la nota está visible, la región viva dice lo mismo y se va al quitar el filtro).
+- README: la función, Límites conocidos (la ruta filtra solo entre los commits ya cargados) y Seguridad sin cambios (todo entra con `textContent`). Mapa de alcance: fila Público.
+- QA: filas tocadas: 40 idiomas (`check-i18n`, 0 errores; dos claves nuevas), teclado y región viva de la vista de texto (smoke); auditoría: la nota es un párrafo de ayuda sin controles nuevos.
+- Reclamo: loop/102, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso); Chromium con `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`. El smoke falló una vez bajo carga en «filtro por autor» y «filtro por ruta» (tiempos) y pasó limpio las otras veces.
+- Validado: 341 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 103, mantenimiento · Deuda: pendiente 1

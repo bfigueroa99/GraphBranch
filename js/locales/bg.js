@@ -543,6 +543,8 @@ GB.i18n.define('bg', {
   'textview.merge': 'сливане',
   'textview.live': 'Ново: {branches} клона, {commits} къмита',
   'textview.filtered': 'Показани клонове: {shown} от {total}',
+  'textview.scopeAuthor': 'Филтър по автор: {author} ({shown} от {total} клона)',
+  'textview.scopePath': 'Филтър по път: {path} ({n} къмита)',
   'search.title': 'Търсене на комити',
   'search.help': 'Търсете по съобщение, SHA или автор (@име). Стрелка надолу отива към резултатите, Enter лети до комита.',
   'search.placeholder': 'Съобщение, SHA или @автор…',

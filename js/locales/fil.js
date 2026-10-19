@@ -544,6 +544,8 @@ GB.i18n.define('fil', {
   'textview.merge': 'merge',
   'textview.live': 'Bago: {branches} branch, {commits} commit',
   'textview.filtered': 'Mga branch na ipinapakita: {shown} sa {total}',
+  'textview.scopeAuthor': 'Naka-filter ayon sa may-akda: {author} ({shown} sa {total} na branch)',
+  'textview.scopePath': 'Naka-filter ayon sa path: {path} ({n} commit)',
   'search.title': 'Maghanap ng commit',
   'search.help': 'Maghanap ayon sa mensahe, SHA o may-akda (@pangalan). Ang pababang arrow ay papunta sa mga resulta, ang Enter ay lilipad sa commit.',
   'search.placeholder': 'Mensahe, SHA o @may-akda…',

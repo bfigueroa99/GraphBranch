@@ -877,6 +877,8 @@ console.log('Escritorio (1280×800)');
     await page.click('#textview-btn');
     await page.waitForSelector('#textview[open]', { timeout: T(3000) });
     const tree = await page.evaluate(() => document.querySelectorAll('#textview-body [role="treeitem"][data-branch], #textview-body > [role="tree"] > [role="treeitem"]').length);
+    const scope = await page.evaluate(() => ({ note: document.querySelector('#textview-scope').textContent, hidden: document.querySelector('#textview-scope').hidden, live: document.querySelector('#textview-live').textContent }));
+    if (scope.hidden || !scope.note || scope.live !== scope.note || /undefined|NaN|textview\./.test(scope.note)) throw new Error('la vista de texto no dice el filtro por autor: ' + JSON.stringify(scope));
     await page.keyboard.press('Escape');
     await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: T(3000) });
     if (!tree) throw new Error('el árbol de texto quedó vacío con el filtro por autor');
@@ -888,6 +890,11 @@ console.log('Escritorio (1280×800)');
     if (off.mark || off.status || (await count()) !== all) throw new Error('quitar el filtro no deja el grafo como estaba');
     await page.keyboard.press('Escape');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
+    await page.click('#textview-btn');
+    await page.waitForSelector('#textview[open]', { timeout: T(3000) });
+    if (!(await page.evaluate(() => document.querySelector('#textview-scope').hidden && !document.querySelector('#textview-live').textContent))) throw new Error('sin filtro, la vista de texto sigue diciendo uno');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
   await step(page, 'filtro por ruta: atenúa los commits que no la tocaron, lo dice y se quita', async () => {

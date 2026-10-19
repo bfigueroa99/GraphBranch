@@ -85,3 +85,22 @@ test('filter deja las ramas cuyo nombre contiene el texto, sin importar mayúscu
   assert.deepEqual(names('  '), ['main', 'feature']);
   assert.deepEqual(names('zzz'), []);
 });
+
+test('con el filtro por ruta solo quedan los commits que la tocaron, y las ramas sin ninguno se van', () => {
+  const t = build(repo(), { paths: new Set(['a1', 'f2']) });
+  assert.deepEqual(t.branches.map((b) => b.name), ['main', 'feature']);
+  assert.deepEqual(t.branches[0].commits.map((c) => c.sha), ['a1']);
+  assert.deepEqual(t.branches[1].commits.map((c) => c.sha), ['f2', 'a1']);
+  assert.equal(t.total, 2);
+  assert.deepEqual(build(repo(), { paths: new Set(['f2']) }).branches.map((b) => b.name), ['feature']);
+  assert.deepEqual(build(repo(), { paths: new Set(['zzz']) }).branches, []);
+});
+
+test('scopeText dice el filtro por autor y el de ruta, y nada sin filtros', () => {
+  const text = (k, p) => `${k}:${JSON.stringify(p)}`;
+  const st = ctx.window.GB.textview.scopeText;
+  assert.equal(st(null, text), '');
+  assert.equal(st({ author: 'Ana', shown: 2, total: 5 }, text), 'textview.scopeAuthor:{"author":"Ana","shown":2,"total":5}');
+  assert.equal(st({ path: 'src/', count: 3 }, text), 'textview.scopePath:{"path":"src/","n":3}');
+  assert.match(st({ author: 'Ana', shown: 1, total: 1, path: 'src/', count: 3 }, text), /scopeAuthor.*\. textview\.scopePath/);
+});

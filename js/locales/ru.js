@@ -559,6 +559,8 @@ GB.i18n.define('ru', {
   'textview.merge': 'слияние',
   'textview.live': 'Новое: ветки {branches}, коммиты {commits}',
   'textview.filtered': 'Показано веток: {shown} из {total}',
+  'textview.scopeAuthor': 'Фильтр по автору: {author} ({shown} из {total} веток)',
+  'textview.scopePath': 'Фильтр по пути: {path} ({n} коммитов)',
   'search.title': 'Поиск коммитов',
   'search.help': 'Ищите по сообщению, SHA или автору (@имя). Стрелка вниз переходит к результатам, Enter летит к коммиту.',
   'search.placeholder': 'Сообщение, SHA или @автор…',

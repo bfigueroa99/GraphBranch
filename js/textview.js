@@ -8,7 +8,7 @@
   const MAX_BRANCHES = 200; // con más ramas, las más recientes: el árbol tiene que seguir siendo legible
 
   /** Ramas (la por defecto primero, luego las más movidas) con sus últimos commits, del más nuevo al más viejo. */
-  function build(data, { perBranch = PER_BRANCH, maxBranches = MAX_BRANCHES } = {}) {
+  function build(data, { perBranch = PER_BRANCH, maxBranches = MAX_BRANCHES, paths = null } = {}) {
     const marks = new Map(); // sha -> [tag]
     if (data.tags) for (const [sha, names] of data.tags) marks.set(sha, [...names]);
     const def = data.repo?.defaultBranch;
@@ -16,6 +16,8 @@
       .filter((b) => b.sha && data.commits.has(b.sha))
       .sort((a, b) => (b.isDefault || b.name === def) - (a.isDefault || a.name === def) || (b.movedAt || 0) - (a.movedAt || 0) || (a.name < b.name ? -1 : 1));
     const total = list.length;
+    // `paths` (Set de shas, el filtro por ruta): solo cuentan los commits que tocaron esa ruta; sin ninguno, la rama no entra
+    const keep = (sha) => !paths || paths.has(sha);
     const rows = list.slice(0, maxBranches).map((b) => {
       const commits = [];
       const seen = new Set();
@@ -23,6 +25,10 @@
       while (sha && data.commits.has(sha) && !seen.has(sha) && commits.length < perBranch) {
         seen.add(sha);
         const c = data.commits.get(sha);
+        if (!keep(sha)) {
+          sha = c.parents?.[0];
+          continue;
+        }
         commits.push({
           sha,
           message: String(c.message || '').split('\n')[0],
@@ -34,7 +40,7 @@
         sha = c.parents?.[0];
       }
       return { name: b.name, isDefault: !!(b.isDefault || b.name === def), commits };
-    });
+    }).filter((b) => !paths || b.commits.length);
     return { total, branches: rows };
   }
 
@@ -53,9 +59,18 @@
     return tree.branches.filter((b) => b.name.toLowerCase().includes(needle));
   }
 
+  /** Lo que dice la vista de los filtros activos: `scope` = { author, shown, total, path, count }. Vacío sin filtros. */
+  function scopeText(scope, text) {
+    if (!scope) return '';
+    const out = [];
+    if (scope.author) out.push(text('textview.scopeAuthor', { author: scope.author, shown: scope.shown, total: scope.total }));
+    if (scope.path) out.push(text('textview.scopePath', { path: scope.path, n: scope.count }));
+    return out.join('. ');
+  }
+
   /** Monta el árbol en `root`. `text(key, params)`: traductor; `onGo({ branch, sha })`: Enter sobre un nodo.
       Teclado: ↑ ↓ recorren lo visible, → abre o baja al primer hijo, ← cierra o sube al padre, Inicio y Fin. */
-  function mount(root, { text, ago, onGo, filterInput, live }) {
+  function mount(root, { text, ago, onGo, filterInput, live, scopeEl }) {
     const seen = { branches: new Set(), shas: new Set() };
     const open = new Set(); // ramas abiertas
     let tree = { total: 0, branches: [] };
@@ -127,15 +142,20 @@
     const keyOf = (n) => (n.dataset.sha ? `c:${n.closest('.tv-branch').dataset.branch}:${n.dataset.sha}` : `b:${n.dataset.branch}`);
 
     /** Primera vez (al abrir): todo lo que hay cuenta como leído y solo la rama por defecto viene abierta. */
-    function render(next) {
+    function render(next, scope) {
       tree = next;
+      const note = scopeText(scope, text);
+      if (scopeEl) {
+        scopeEl.textContent = note;
+        scopeEl.hidden = !note;
+      }
       query = '';
       if (filterInput) filterInput.value = '';
       seen.branches = new Set(next.branches.map((b) => b.name));
       seen.shas = new Set(next.branches.flatMap((b) => b.commits.map((c) => c.sha)));
       open.clear();
       for (const b of next.branches) if (b.isDefault) open.add(b.name);
-      say('');
+      say(note);
       draw();
     }
 
@@ -208,5 +228,5 @@
     return { render, update };
   }
 
-  GB.textview = { build, news, filter, mount, PER_BRANCH, MAX_BRANCHES };
+  GB.textview = { build, news, filter, scopeText, mount, PER_BRANCH, MAX_BRANCHES };
 })((window.GB = window.GB || {}));

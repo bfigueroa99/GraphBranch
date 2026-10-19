@@ -554,6 +554,8 @@ GB.i18n.define('cs', {
   'textview.merge': 'merge',
   'textview.live': 'Nové: větve {branches}, commity {commits}',
   'textview.filtered': 'Zobrazené větve: {shown} z {total}',
+  'textview.scopeAuthor': 'Filtr podle autora: {author} ({shown} z {total} větví)',
+  'textview.scopePath': 'Filtr podle cesty: {path} ({n} commitů)',
   'search.title': 'Hledat commity',
   'search.help': 'Hledejte podle zprávy, SHA nebo autora (@jméno). Šipka dolů přejde na výsledky, Enter přeletí k commitu.',
   'search.placeholder': 'Zpráva, SHA nebo @autor…',

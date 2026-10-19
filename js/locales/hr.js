@@ -551,6 +551,8 @@ GB.i18n.define('hr', {
   'textview.merge': 'merge',
   'textview.live': 'Novo: {branches} grana, {commits} commitova',
   'textview.filtered': 'Prikazane grane: {shown} od {total}',
+  'textview.scopeAuthor': 'Filtrirano po autoru: {author} ({shown} od {total} grana)',
+  'textview.scopePath': 'Filtrirano po putanji: {path} ({n} commitova)',
   'search.title': 'Traži commitove',
   'search.help': 'Traži po poruci, SHA-u ili autoru (@ime). Strelica dolje ide na rezultate, Enter leti do commita.',
   'search.placeholder': 'Poruka, SHA ili @autor…',

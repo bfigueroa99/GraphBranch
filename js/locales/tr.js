@@ -543,6 +543,8 @@ GB.i18n.define('tr', {
   'textview.merge': 'birleştirme',
   'textview.live': 'Yeni: {branches} dal, {commits} commit',
   'textview.filtered': 'Gösterilen dallar: {total} içinden {shown}',
+  'textview.scopeAuthor': 'Yazara göre süzüldü: {author} ({total} daldan {shown})',
+  'textview.scopePath': 'Yola göre süzüldü: {path} ({n} commit)',
   'search.title': 'Commit ara',
   'search.help': 'İletiye, SHA’ya veya yazara (@ad) göre arayın. Aşağı ok sonuçlara gider, Enter commit’e uçurur.',
   'search.placeholder': 'İleti, SHA veya @yazar…',

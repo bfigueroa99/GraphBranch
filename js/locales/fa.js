@@ -586,6 +586,8 @@ GB.i18n.define('fa', {
   'textview.merge': 'ادغام',
   'textview.live': 'جدید: {branches} شاخه، {commits} کامیت',
   'textview.filtered': 'شاخه‌های نمایش‌داده‌شده: {shown} از {total}',
+  'textview.scopeAuthor': 'فیلتر بر اساس نویسنده: {author} ({shown} از {total} شاخه)',
+  'textview.scopePath': 'فیلتر بر اساس مسیر: {path} ({n} کامیت)',
   'search.title': 'جستجوی کامیت‌ها',
   'search.help': 'با پیام، SHA یا نویسنده (@نام) جستجو کنید. پیکان پایین به نتایج می‌رود و Enter به کامیت پرواز می‌کند.',
   'search.placeholder': 'پیام، SHA یا ‎@نویسنده…',

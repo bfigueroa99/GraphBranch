@@ -543,6 +543,8 @@ GB.i18n.define('bn', {
   'textview.merge': 'মার্জ',
   'textview.live': 'নতুন: {branches}টি ব্রাঞ্চ, {commits}টি কমিট',
   'textview.filtered': 'দেখানো ব্রাঞ্চ: {total}-এর মধ্যে {shown}',
+  'textview.scopeAuthor': 'লেখক অনুযায়ী ছাঁকা: {author} ({total}টির মধ্যে {shown}টি ব্র্যাঞ্চ)',
+  'textview.scopePath': 'পাথ অনুযায়ী ছাঁকা: {path} ({n}টি কমিট)',
   'search.title': 'কমিট খুঁজুন',
   'search.help': 'বার্তা, SHA বা লেখক (@নাম) দিয়ে খুঁজুন। নিচের তীর ফলাফলে যায়, Enter কমিটে উড়ে যায়।',
   'search.placeholder': 'বার্তা, SHA বা @লেখক…',

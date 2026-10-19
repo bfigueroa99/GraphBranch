@@ -544,6 +544,8 @@ GB.i18n.define('de', {
   'textview.merge': 'Merge',
   'textview.live': 'Neu: {branches} Branches, {commits} Commits',
   'textview.filtered': 'Angezeigte Branches: {shown} von {total}',
+  'textview.scopeAuthor': 'Nach Autor gefiltert: {author} ({shown} von {total} Branches)',
+  'textview.scopePath': 'Nach Pfad gefiltert: {path} ({n} Commits)',
   'search.title': 'Commits suchen',
   'search.help': 'Suche nach Nachricht, SHA oder Autor (@name). Pfeil nach unten geht zu den Ergebnissen, Enter fliegt zum Commit.',
   'search.placeholder': 'Nachricht, SHA oder @Autor…',

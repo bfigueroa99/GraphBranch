@@ -945,7 +945,7 @@
     if (news && tv.attract && replay.active) replay.stop();
     if (news) tv.lastNews = Date.now();
     const { data, L } = drawGraph(initial, calm);
-    if (el.textview.open) textview.update(GB.textview.build(authorView(data).data)); // con la vista de texto abierta, avisa de lo nuevo
+    if (el.textview.open) textview.update(GB.textview.build(authorView(data).data, { paths: pathShas })); // con la vista de texto abierta, avisa de lo nuevo
     feed.setDefaultBranch(data.repo.defaultBranch);
     feed.add(activities, { live: !initial });
     if (news) game.observe(activities, gameCtx(activities, data, L));
@@ -1832,6 +1832,7 @@
   const textview = GB.textview.mount(el.textviewBody, {
     filterInput: el.textviewFilter,
     live: el.textviewLive,
+    scopeEl: $('#textview-scope'),
     text: (k, p) => t(k, p),
     ago: (ms) => U.timeAgo(ms),
     onGo: ({ branch, sha }) => {
@@ -1840,8 +1841,15 @@
       else graph.focusBranch(branch);
     },
   });
+  /** El árbol con los filtros del grafo (autor y ruta) y una nota que los dice, también para el lector de pantalla. */
+  function openTextview() {
+    const v = authorView(source.view ? source.view() : source.data);
+    const name = authorFilter && (GB.search.authors(source.data).find((a) => a.key === authorFilter)?.name || authorFilter);
+    const scope = authorFilter || pathShas ? { author: name, shown: v.shown, total: v.total, path: pathShas ? pathText : '', count: pathShas ? pathShas.size : 0 } : null;
+    textview.render(GB.textview.build(v.data, { paths: pathShas }), scope);
+  }
   $('#textview-btn').addEventListener('click', () => {
-    textview.render(GB.textview.build(authorView(source.view ? source.view() : source.data).data));
+    openTextview();
     if (typeof el.textview.showModal === 'function') el.textview.showModal();
     else el.textview.setAttribute('open', '');
     el.textviewBody.querySelector('[tabindex="0"]')?.focus();
@@ -1955,9 +1963,13 @@
   /* Filtro por ruta: los commits que tocaron un archivo o carpeta quedan a plena luz y el resto se atenúa. */
   const pathEl = { input: $('#search-path'), go: $('#search-path-go'), clear: $('#search-path-clear'), status: $('#search-path-status') };
   let pathToken = 0;
+  let pathShas = null; // los commits del filtro por ruta activo (para la vista de texto) y su texto
+  let pathText = '';
   let initialPath = ''; // ?path=src/: se aplica una vez, con la primera historia del repo a la vista
   function clearPathFilter() {
     pathToken++;
+    pathShas = null;
+    pathText = '';
     if (!initialPath) setUrlParam('path', '');
     for (const g of [graph2d, graph3d]) g?.setPathFilter?.(null);
     $('#search-path-clear').hidden = true;
@@ -1977,6 +1989,8 @@
       const shas = await source.commitsByPath(path);
       if (mine !== pathToken) return;
       for (const g of [graph2d, graph3d]) g?.setPathFilter?.(shas);
+      pathShas = shas.size ? shas : null;
+      pathText = path;
       pathEl.clear.hidden = false;
       setUrlParam('path', path); // la vista filtrada se comparte con la URL
       syncFiltered();

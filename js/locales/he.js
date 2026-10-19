@@ -600,6 +600,8 @@ GB.i18n.define('he', {
   'textview.merge': 'מיזוג',
   'textview.live': 'חדש: {branches} ענפים, {commits} קומיטים',
   'textview.filtered': 'ענפים מוצגים: {shown} מתוך {total}',
+  'textview.scopeAuthor': 'מסונן לפי מחבר: {author} ({shown} מתוך {total} ענפים)',
+  'textview.scopePath': 'מסונן לפי נתיב: {path} ({n} קומיטים)',
   'search.title': 'חיפוש קומיטים',
   'search.help': 'חפשו לפי הודעה, SHA או כותב (@שם). חץ למטה עובר לתוצאות, Enter טס אל הקומיט.',
   'search.placeholder': 'הודעה, SHA או ‎@כותב…',

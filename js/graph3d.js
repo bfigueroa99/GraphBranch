@@ -527,11 +527,16 @@
   }
 
   class Graph3D {
+    /* La prueba crea el contexto con los atributos que pediría three (r128) y lo guarda para el
+       renderer: crear un contexto WebGL cuesta (236 ms sin GPU) y antes se creaban dos al arrancar. */
     static supported() {
       if (!window.THREE || !THREE.OrbitControls) return false;
       try {
-        const c = document.createElement('canvas');
-        return !!(c.getContext('webgl2') || c.getContext('webgl'));
+        const canvas = document.createElement('canvas');
+        const attrs = { alpha: true, depth: true, stencil: true, antialias: true, premultipliedAlpha: true, preserveDrawingBuffer: false, powerPreference: 'default', failIfMajorPerformanceCaveat: false };
+        const context = canvas.getContext('webgl2', attrs) || canvas.getContext('webgl', attrs);
+        Graph3D.probe = context ? { canvas, context } : null;
+        return !!context;
       } catch {
         return false;
       }
@@ -543,8 +548,10 @@
       this.dprMax = Math.min(window.devicePixelRatio || 1, 2);
       this.dprLimit = this.dprMax; // baja sola si el equipo no da abasto
       this.dpr = this.dprMax;
-      this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      this.renderer.setPixelRatio(this.dpr);
+      const probe = Graph3D.probe;
+      Graph3D.probe = null; // un contexto por renderer: el siguiente crea el suyo
+      // sin setPixelRatio: rehacía el búfer de 300 × 150; el tamaño y la densidad los pone resize()
+      this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, ...(probe ?? {}) });
       this.canvas = this.renderer.domElement;
       this.canvas.className = 'g3-canvas';
       this.canvas.setAttribute('aria-hidden', 'true');
@@ -932,12 +939,14 @@
       const W = this.wrap.clientWidth;
       const H = this.wrap.clientHeight;
       if (!W || !H) return;
+      // en pantallas enormes no hace falta dibujar más de ~4,6 millones de píxeles
+      const dpr = Math.min(this.dprLimit, Math.max(1, Math.sqrt(MAX_PIXELS / (W * H))));
+      // asignar canvas.width rehace y borra el búfer aunque no cambie (el ResizeObserver avisa al empezar
+      // a observar, con el mismo tamaño), y setPixelRatio + setSize lo rehacían dos veces: una, si cambió
+      if (W !== this.W || H !== this.H || dpr !== this.dpr) this.renderer.setDrawingBufferSize(W, H, dpr);
       this.W = W;
       this.H = H;
-      // en pantallas enormes no hace falta dibujar más de ~4,6 millones de píxeles
-      this.dpr = Math.min(this.dprLimit, Math.max(1, Math.sqrt(MAX_PIXELS / (W * H))));
-      this.renderer.setPixelRatio(this.dpr);
-      this.renderer.setSize(W, H, false);
+      this.dpr = dpr;
       this.camera.aspect = W / H;
       this.camera.updateProjectionMatrix();
       this.stars.material.uniforms.uPx.value = this.dpr;

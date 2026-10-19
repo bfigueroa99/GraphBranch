@@ -279,6 +279,45 @@ console.log('Escritorio (1280×800)');
     if (!has3d) console.log('    (sin WebGL: la app abrió la vista 2D)');
   });
 
+  if (has3d) {
+    await step(page, 'el 3D arranca con un solo contexto WebGL y sin rehacer su búfer por el mismo tamaño', async () => {
+      // crear un contexto y reasignar el búfer (canvas.width) cuestan en el arranque: la prueba de
+      // Graph3D.supported le pasa el suyo al renderer, y resize() solo toca el búfer si cambió el tamaño
+      const p = await openPage({ viewport: { width: 1280, height: 800 } });
+      try {
+        await p.addInitScript(() => {
+          const w = (window.__gl = { contexts: 0, same: 0 });
+          const get = HTMLCanvasElement.prototype.getContext;
+          HTMLCanvasElement.prototype.getContext = function (type, ...a) {
+            const c = get.call(this, type, ...a);
+            if (c && /webgl/.test(type) && !this.__gl) w.contexts += this.__gl = 1;
+            return c;
+          };
+          // three asigna width y después height; asignar el mismo tamaño también rehace y borra el búfer
+          const wd = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, 'width');
+          const hd = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, 'height');
+          Object.defineProperty(HTMLCanvasElement.prototype, 'width', { ...wd, set(v) { if (this.__gl) this.__was = [wd.get.call(this), hd.get.call(this)]; wd.set.call(this, v); } });
+          Object.defineProperty(HTMLCanvasElement.prototype, 'height', {
+            ...hd,
+            set(v) {
+              if (this.__was && this.__was[0] === wd.get.call(this) && this.__was[1] === v) w.same++;
+              this.__was = null;
+              hd.set.call(this, v);
+            },
+          });
+        });
+        await p.goto(`${base}/index.html?lang=es`);
+        await loaded(p);
+        await p.waitForTimeout(500); // el primer aviso del ResizeObserver llega después de la carga
+        const gl = await p.evaluate(() => window.__gl);
+        if (gl.contexts !== 1) throw new Error(`${gl.contexts} contextos WebGL al arrancar (se espera 1)`);
+        if (gl.same) throw new Error(`el búfer del 3D se rehízo ${gl.same} vez/veces con el mismo tamaño al arrancar`);
+      } finally {
+        await p.context().close();
+      }
+    });
+  }
+
   await step(page, 'llega actividad al panel', async () => {
     await page.waitForSelector('#feed > li', { timeout: T(30000) });
   });

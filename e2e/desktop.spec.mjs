@@ -508,6 +508,7 @@ test('--bitbucket-url suma solo ese host a las conexiones del CSP (sin avatares)
       return (await window.GBDesktop.getToken('bitbucketdc')).token;
     }, packed);
     expect(back).toBe(packed);
+    await loaded(page);
     await page.click('#settings-btn');
     await expect(page.locator('#bbdc-token-field')).toBeVisible();
     await expect(page.locator('#bbdc-token-where')).toContainText('bb.example.com');

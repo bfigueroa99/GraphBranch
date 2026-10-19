@@ -201,5 +201,10 @@
     return !/^(0|false|no|off)$/i.test(String(q.get('conflicts')).trim());
   }
 
-  GB.health = { compute, clashes, clashCandidates, compare, conflictsParam, splitFiles, STALE_DAYS };
+  /** ?health=1 (o solo ?health): abrir el panel al cargar el repo, para compartir la vista. 0, false, no u off lo apagan. */
+  function healthParam(q) {
+    return !!q && q.has('health') && !/^(0|false|no|off)$/i.test(String(q.get('health')).trim());
+  }
+
+  GB.health = { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, splitFiles, STALE_DAYS };
 })(window.GB);

@@ -2813,6 +2813,31 @@ console.log('Modo TV directo (?tv=1)');
   await page.context().close();
 }
 
+console.log('Salud del repo directa (?health=1)');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, 'abre la demo con el panel de salud ya desplegado y con sus secciones', async () => {
+    await page.goto(`${base}/index.html?lang=es&health=1`);
+    await loaded(page);
+    await page.waitForSelector('#health[open]', { timeout: T(5000) }).catch(() => {
+      throw new Error('?health=1 no abrió el panel de salud');
+    });
+    const n = await page.evaluate(() => document.querySelectorAll('#health-body .hl-sec').length);
+    if (!n) throw new Error('el panel de salud se abrió vacío');
+    await page.click('#health-close');
+    await page.waitForTimeout(300);
+    if (await page.evaluate(() => document.querySelector('#health').open)) throw new Error('el panel no se cierra');
+    if ((await page.evaluate(() => location.search)).includes('health=')) throw new Error('cerrar el panel deja health= en la URL');
+  });
+  await step(page, 'sin el parámetro (o con health=0) el panel no se abre solo', async () => {
+    await page.goto(`${base}/index.html?lang=es&health=0`);
+    await loaded(page);
+    await page.waitForTimeout(500);
+    if (await page.evaluate(() => document.querySelector('#health').open)) throw new Error('health=0 abrió el panel');
+  });
+  await page.context().close();
+}
+
 console.log(`Celular (390×844), ${langs.length} idiomas`);
 {
   const page = await openPage(phone);

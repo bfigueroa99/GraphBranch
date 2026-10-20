@@ -135,6 +135,30 @@ y qué piden los usuarios de esa app, y con eso se rellena y se ordena la hoja d
   el smoke y la auditoría ya hacen ese trabajo, la primera pide dependencias nuevas
   (`@axe-core/playwright`) y la segunda copia el sistema visual de la referencia.
 
+### Arena: enfoques distintos que compiten
+
+Pedido de Benjamin, 2026-10-20: que la skill arena (`.claude/skills/arena/`, MIT, de
+<https://github.com/Jakeschincariol/arena-skill>, commit df07b8e) corra dentro del loop. Cuando la
+capacidad o el arreglo de una iteración admite enfoques genuinamente distintos, antes de escribir el
+código compiten en un torneo de eliminación simple que lleva `bracket.py`: cada subagente recibe la misma
+tarea y una carta de estrategia distinta, se atacan, se defienden y un juez puntúa cada cruce con la
+rúbrica de la skill. Los competidores nunca tocan el proyecto: el ganador vuelve como un diff o archivos
+completos, y la iteración lo aplica y lo pasa por la puerta como cualquier cambio. La skill `iteracion`
+dice cómo, en «Construir».
+
+- **Cuándo:** como máximo una arena por iteración, de cualquier tipo. Si hay una sola forma obvia, no
+  aplica, y la bitácora dice por qué. No cambia qué se construye ni la proporción de la regla 2: solo
+  cómo se elige la implementación.
+- **Tamaño:** 4 competidores (2 rondas, 19 llamadas de subagente) y como tope 8 (3 rondas, 43); nunca
+  los 100 por defecto de la skill (595 llamadas) ni su modo rápido de 16 (91). `bracket.py plan` siempre
+  antes, y el seed queda en la bitácora.
+- **Autorización:** estas reglas reemplazan los pasos de la skill que piden un sí antes de empezar y
+  antes de aplicar el ganador: nadie mira en vivo.
+- **Registro:** desde la entrada «Cambio de maquinaria: la arena en el loop», cada iteración lleva
+  `- Arena:` con N, seed, rondas, la carta del ganador y su puntaje, o «no aplica: <por qué>».
+  `node tools/loop.mjs --check` lo exige (R5) y vigila que la skill `iteracion` corra la arena con su
+  ruta y con `--agents` de 1 a 8 (R8). `.arena/` no se versiona.
+
 ## Para Benjamin
 
 Lo que el loop no puede hacer solo. Cada pedido dice desde cuándo, por qué y qué hacer; el resumen de
@@ -144,14 +168,16 @@ cada iteración lo repite (`node tools/loop.mjs --salud` lo imprime) y se quita 
    `has_pages=false`: Settings → Pages → Build and deployment → Source: Deploy from a branch → `master`,
    `/(root)`. Pages despliega con un flujo interno de Actions, así que la cuenta tiene que poder correr
    jobs. `node tools/loop.mjs --publicado` lo comprueba en cada iteración.
-2. **Permisos para investigar y triar** (desde 2026-10-13). Para que la
-   investigación de mercado, la paridad con la app de referencia y el triaje de issues no dependan del
-   modo de permisos de la sesión, sumar a `.claude/settings.json` (`permissions.allow`): `WebSearch`,
-   `WebFetch`, `mcp__github__list_issues`, `mcp__github__issue_read`,
-   `Bash(python3 .claude/skills/replica-diff/parity.py:*)` y
-   `Bash(python3 .claude/skills/replica-entrepreneur/reviews.py:*)` (estos dos, desde 2026-10-20). Sin ellos el loop sigue: los issues
-   los lee `--salud` por la API pública y la hoja se repone con lo ya investigado mientras esté vigente
-   (30 días); sin `WebFetch` no hay pasada de Replica y la bitácora lo dice.
+2. **Permisos para investigar, triar, Replica y la arena** (desde 2026-10-13). Para que la investigación de
+   mercado, la paridad con la app de referencia, la arena y el triaje de issues no dependan del modo de
+   permisos de la sesión, sumar a `.claude/settings.json` (`permissions.allow`): `WebSearch`, `WebFetch`,
+   `mcp__github__list_issues`, `mcp__github__issue_read` y, desde 2026-10-20,
+   `Bash(python3 .claude/skills/replica-diff/parity.py:*)`,
+   `Bash(python3 .claude/skills/replica-entrepreneur/reviews.py:*)` y
+   `Bash(python3 .claude/skills/arena/bracket.py:*)`. Sin ellos el loop sigue: los issues los lee
+   `--salud` por la API pública y la hoja se repone con lo ya investigado mientras esté vigente (30 días).
+   Sin `WebFetch` no hay pasada de Replica, y la arena necesita además que la sesión pueda lanzar
+   subagentes que escriban en `.arena/`; si algo falta, no se hace y la bitácora lo dice.
 3. **La mitad de los disparos no llega a iteración** (desde 2026-10-13). Medido el 2026-10-13: 10
    iteraciones fusionadas para 18 disparos esperados desde la directiva; un hueco de 36,5 h (del 10 al 12
    de octubre, con el entorno reiniciándose) y un reclamo perdido de 6 h (`loop/28`, relevado). `--salud`
@@ -486,8 +512,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     corridas de `xvfb-run -a npm run check` en la iteración 110, en 1 de 2 sueltas sobre `master` y en 0 de 4 con diagnóstico (otro paso, «filtro por ruta», falló 1); tras
     `#view-2d` el SVG tarda más que en una corrida suelta. Medir con 5 corridas del smoke dentro de `check` y esperar
     el estado (vista 2D activa) en vez del selector. El 2026-10-20 (Replica y la arena en el loop, sin tocar la
-    página) volvió a fallar 1 vez, y otra corrida falló en «filtro por autor» (`Cannot read properties of
-    undefined (reading 'sha')`); las dos pasaron al repetir.
+    página) falló en 2 de 6 corridas de `npm run check`, y otra falló en «filtro por autor» (`Cannot read
+    properties of undefined (reading 'sha')`); cada una pasó al repetir.
     Reproducción: `xvfb-run -a npm run check` → `✗ vista 2D: page.waitForSelector: Timeout 30000ms exceeded.`
 
 ### Baja
@@ -2408,4 +2434,32 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
   'sha')`, solo con el pack copiado) y otra en «vista 2D» (pendiente 2), y pasó entero al repetirlo; este
   cambio no toca la página. Anotado en el pendiente 2.
 - Validado: 361 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 112, expansión: ítem 70 (Los forks en el grafo, segunda entrega, Datos)
+
+### 2026-10-20 · Cambio de maquinaria: la arena en el loop
+
+- **Pedido de Benjamin:** integrar en el loop, además de Replica, la skill arena
+  (`.claude/skills/arena/`, MIT, de https://github.com/Jakeschincariol/arena-skill, commit df07b8e, con
+  `disable-model-invocation: true`): un torneo de eliminación simple entre subagentes con enfoques
+  distintos para la misma tarea. No es una iteración numerada y la proporción de la regla 2 no cambia.
+- **Lo nuevo:** la sección «Arena: enfoques distintos que compiten» de la directiva y, en la skill
+  `iteracion`, «Arena: cuando hay enfoques genuinamente distintos» dentro de «Construir»: una arena como
+  máximo por iteración, `--agents 4` (19 llamadas de subagente) y tope 8 (43), siempre `plan` antes, el
+  seed a la bitácora, `.arena/task.md` escrito por la iteración sin pistas de solución, la ruta
+  `python3 .claude/skills/arena/bracket.py` escrita entera, los pasos de la skill que piden un sí
+  reemplazados por las reglas del loop y el ganador aplicado y pasado por la puerta como cualquier
+  cambio. Desde esta entrada, cada iteración lleva `- Arena:` (R5); R8 vigila que la skill corra la
+  arena con su ruta y de 1 a 8 competidores (sin `--quick` ni el tamaño por defecto). `.arena/` va al
+  `.gitignore` y Para Benjamin 2 suma el permiso de `bracket.py`.
+- **Comprobado:** `python3 .claude/skills/arena/bracket.py plan --agents 4` desde la raíz (4 → 2 → 1, 19
+  llamadas; con 8, 3 rondas y 43) sin escribir nada; `.arena/` queda fuera de git, de `node --test` (no
+  entra en carpetas ocultas), del smoke, de `check-i18n`, del service worker y de los paquetes. No se
+  corrió ninguna arena.
+- **Pruebas que fallan sin el cambio:** `tools/loop.test.mjs` (de 82 a 84: la viñeta `- Arena:` tras la
+  marca, con N, seed y rondas o con el porqué de «no aplica», y la arena de la skill con `--quick`, sin
+  `--agents`, con más de 8, con una variable de la skill o con una ruta que no existe).
+- README: `.claude/skills/arena/` en la estructura.
+- Al validar: el smoke falló una vez en «vista 2D» (pendiente 2) y pasó entero al repetirlo; este cambio
+  no toca la página.
+- Validado: 363 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
 - **Siguiente:** iteración 112, expansión: ítem 70 (Los forks en el grafo, segunda entrega, Datos)

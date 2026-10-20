@@ -8,3 +8,6 @@ vscode/*.vsix
 
 # capturas de la app de referencia que tome Replica: nunca se versionan
 replica/screens/
+
+# las corridas de la arena (.claude/skills/arena): tareas, soluciones y veredictos, nunca se versionan
+.arena/

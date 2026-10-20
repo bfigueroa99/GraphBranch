@@ -48,6 +48,12 @@ export const INVESTIGACION_DIAS = 30;
 export const REPLICA_DIAS = 30;
 /** Las columnas de replica/features.csv que lee parity.py (.claude/skills/replica-diff/). */
 export const COLUMNAS_REPLICA = ['feature', 'area', 'priority', 'original', 'clone', 'notes'];
+/** Tope de competidores de la arena en el loop (.claude/skills/arena/bracket.py): con 8 son 3 rondas y 43
+    llamadas de subagente; la skill trae 100 por defecto (595) y --quick (16, 91), que el loop no usa. */
+export const ARENA_MAX = 8;
+/** La entrada de la bitácora desde la que cada iteración lleva «- Arena:» (lo que corrió, o por qué no
+    aplica). Por posición, como MARCA_PROTOCOLO. */
+export const MARCA_ARENA = 'Cambio de maquinaria: la arena';
 /** Los ítems de la hoja de ruta hasta este son anteriores a docs/investigacion.md; los que vienen después
     citan su fuente («[inv. AAAA-MM-DD]») o, si son una entrega más de otro, «[parte del ítem K]». */
 export const HOJA_SIN_FUENTE = 26;
@@ -83,6 +89,7 @@ const RE_ITERACION = new RegExp(`^Iteración (\\d+)(?: · (?:Expansión · (${EJ
 const RE_VALIDADO = /^- Validado:\s*/;
 const RE_SIGUIENTE = /^- \*\*Siguiente:\*\*\s*/;
 const RE_QA = /^- QA:\s*\S/;
+const RE_ARENA = /^- Arena:\s*\S/;
 const RE_DECLARADO = new RegExp(`iteración (\\d+), (?:de )?\\*{0,2}(expansión|mantenimiento)\\*{0,2}(?: · (${SUB}))?[:.,]?`, 'i');
 // el ítem declarado: el primer «ítem N», «pendiente N» o «auditoría» tras el tipo (un título copiado
 // puede citar otro número más adelante); las entradas viejas («el primer ítem sin hacer es el 6», «toca
@@ -483,6 +490,8 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
     const its = doc.bitacora.filter((x) => x.n !== null);
     const marca = doc.bitacora.findIndex((x) => x.n === null && x.titulo.startsWith(MARCA_PROTOCOLO));
     const conProtocolo = new Set(marca < 0 ? [] : doc.bitacora.slice(marca + 1).filter((x) => x.n !== null));
+    const marcaArena = doc.bitacora.findIndex((x) => x.n === null && x.titulo.startsWith(MARCA_ARENA));
+    const conArena = new Set(marcaArena < 0 ? [] : doc.bitacora.slice(marcaArena + 1).filter((x) => x.n !== null));
     const vistos = new Set();
     for (const it of its) {
       if (vistos.has(it.n)) e.push(`iteración ${it.n} repetida (línea ${it.linea})`);
@@ -491,6 +500,14 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
       if (!it.tipo) e.push(`iteración ${it.n} sin tipo en la cabecera (Expansión · <Eje> o Mantenimiento)`);
       else if (it.n % 4 === 3 && it.tipo !== 'Mantenimiento') e.push(`iteración ${it.n} tiene que ser de mantenimiento (${it.n} mod 4 = 3)`);
       else if (it.n % 4 !== 3 && it.tipo === 'Mantenimiento' && !it.cuerpo.includes('**Alta**')) e.push(`iteración ${it.n} es de mantenimiento sin un pendiente **Alta** (${it.n} mod 4 = ${it.n % 4})`);
+      // la arena: lo que corrió (N, seed y rondas) o por qué no aplicaba
+      if (conArena.has(it)) {
+        const arena = it.cuerpo.split('\n').find((l) => RE_ARENA.test(l));
+        if (!arena) e.push(`iteración ${it.n} sin la viñeta «- Arena:» (N, seed, rondas, carta y puntaje del ganador, o «no aplica: <por qué>»)`);
+        else if (/^- Arena:\s*no aplica\b/i.test(arena)) {
+          if (!/^- Arena:\s*no aplica\s*[:,(—–-]\s*\S.{9,}/i.test(arena)) e.push(`iteración ${it.n}: «- Arena: no aplica» sin el porqué`);
+        } else if (!/\bN \d+\b/.test(arena) || !/\bseed \d+\b/.test(arena) || !/\b\d+ rondas?\b/.test(arena)) e.push(`iteración ${it.n}: «- Arena:» sin N, seed o rondas («N 4, seed 123, 2 rondas; ganador …»)`);
+      }
       // el protocolo de QA: cada entrada dice qué se revisó de su propio cambio
       if (!conProtocolo.has(it)) continue;
       if (!it.cuerpo.split('\n').some((l) => RE_QA.test(l))) e.push(`iteración ${it.n} sin la viñeta «- QA:» (Protocolo de QA)`);
@@ -503,7 +520,7 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
     const max = Math.max(0, ...vistos);
     for (let k = 1; k <= max; k++) if (!vistos.has(k)) a.push(`falta la iteración ${k}`);
     if (!its.length) e.push('no hay ninguna «Iteración N» en la bitácora');
-    regla('R5', e, a, `${its.length} iteraciones, 1..${max}, con tipo desde la 20${marca < 0 ? '' : `; ${conProtocolo.size} con el protocolo de QA`}`);
+    regla('R5', e, a, `${its.length} iteraciones, 1..${max}, con tipo desde la 20${marca < 0 ? '' : `; ${conProtocolo.size} con el protocolo de QA`}${marcaArena < 0 ? '' : `; ${conArena.size} con «- Arena:»`}`);
   }
   // R6: la última entrada tiene Validado y un Siguiente que coincide con --siguiente
   {
@@ -570,6 +587,7 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
       const flags = new Set();
       const rutas = new Set();
       const comandos = new Set();
+      const arena = [];
       let enBloque = false;
       for (const linea of skillTxt.split('\n')) {
         // flags que siguen a loop.mjs en la misma línea (hasta el fin del comando)
@@ -589,6 +607,7 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
           continue;
         }
         if (!enBloque) continue;
+        if (/\bbracket\.py\b/.test(linea)) arena.push(linea.trim());
         for (const seg of linea.split(/&&|\|\||;|\|/)) {
           const toks = seg.trim().split(/\s+/).filter(Boolean);
           while (toks.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(toks[0])) toks.shift();
@@ -600,6 +619,16 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
       }
       for (const f of flags) e.push(`SKILL.md nombra ${f}, que loop.mjs no tiene`);
       for (const r of rutas) e.push(`SKILL.md nombra ${r}, que no existe`);
+      // la arena: ruta escrita entera (las variables de la skill solo se expanden al invocarla) y de 1 a
+      // ARENA_MAX competidores, nunca los 100 por defecto ni --quick
+      for (const l of arena) {
+        const cmd = /\bbracket\.py\s+([a-z]+)/.exec(l)?.[1];
+        const n = /--agents[ =](\d+)/.exec(l)?.[1];
+        if (/\$\{?(?:CLAUDE_SKILL_DIR|ARGUMENTS)\b/.test(l)) e.push(`SKILL.md corre la arena con una variable de la skill («${corta(l, 50)}»): fuera de /arena no se expande; va python3 .claude/skills/arena/bracket.py`);
+        if (/--quick\b/.test(l)) e.push(`SKILL.md corre la arena con --quick (16 competidores, 91 llamadas): en el loop, --agents de 1 a ${ARENA_MAX}`);
+        else if ((cmd === 'plan' || cmd === 'init') && !n) e.push(`SKILL.md corre «bracket.py ${cmd}» sin --agents: por defecto son 100 competidores (595 llamadas)`);
+        if (n && (+n < 1 || +n > ARENA_MAX)) e.push(`SKILL.md corre la arena con --agents ${n}: en el loop, de 1 a ${ARENA_MAX}`);
+      }
       // cada subtipo que puede elegir --siguiente tiene su protocolo en la skill
       for (const st of SUBTIPOS) if (!new RegExp(`^#{3,4} ${st}\\b`, 'm').test(skillTxt)) e.push(`SKILL.md sin el protocolo del subtipo ${st} («#### ${st}»)`);
       let allow = [];
@@ -622,7 +651,7 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
       ];
       for (const [re, que] of podridos) if (re.test(promptTxt)) e.push(`PROMPT.md contiene ${que} (${re.source}): eso se pudre, va en la skill`);
     }
-    regla('R8', e, a, 'la skill nombra flags, rutas y comandos que existen y están permitidos, y tiene el protocolo de cada subtipo; el prompt no lleva hechos que se pudren');
+    regla('R8', e, a, `la skill nombra flags, rutas y comandos que existen y están permitidos, tiene el protocolo de cada subtipo y corre la arena con su ruta y de 1 a ${ARENA_MAX} competidores; el prompt no lleva hechos que se pudren`);
   }
   // R9: sin flujos de GitHub Actions (CLAUDE.md: no hay CI)
   {

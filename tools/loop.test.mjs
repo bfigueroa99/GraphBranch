@@ -13,7 +13,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { AUDITABLES, EJES, FLAGS, HOJA_SIN_FUENTE, LoopError, MARCA_PROTOCOLO, PARA_BENJAMIN_MAX, REPLICA_DIAS, SUBTIPOS, appReferencia, check, diagnostico, matrizReplica, necesidades, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, siguiente } from './loop.mjs';
+import { ARENA_MAX, AUDITABLES, EJES, FLAGS, HOJA_SIN_FUENTE, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, PARA_BENJAMIN_MAX, REPLICA_DIAS, SUBTIPOS, appReferencia, check, diagnostico, matrizReplica, necesidades, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, siguiente } from './loop.mjs';
 import { TIPOS } from './audit.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -434,6 +434,22 @@ describe('check()', () => {
     assert.equal(nivel(check(fixture({ entradas: iteraciones(30).map((e) => e.replace(/\n- QA: [^\n]*/, '')) }), { log: LOG }), 'R5'), 'ok');
   });
 
+  test('R5: las iteraciones después de la marca de la arena llevan «- Arena:» con N, seed y rondas, o por qué no aplica', () => {
+    const lista = iteraciones(30);
+    const marca = entrada({ titulo: `${MARCA_ARENA} en el loop`, siguiente: 'iteración 31, mantenimiento · QA: auditoría' });
+    const it31 = (cuerpo) => entrada({ n: 31, tipo: 'Mantenimiento', subtipo: 'QA', cuerpo: `\n- **Hallazgos:** 3 nuevos.${cuerpo}`, siguiente: 'iteración 32, expansión: ítem 6 (algo, Fuentes)' });
+    const con = (cuerpo) => check(fixture({ entradas: [...lista, entrada({ titulo: `${MARCA_PROTOCOLO}, rotación y salud` }), marca, it31(cuerpo)] }), { log: LOG });
+    const corrio = con('\n- Arena: N 4, seed 412977, 2 rondas; ganador A3 (primeros principios · prototipo · lo mínimo), 81,5 a 74');
+    assert.equal(nivel(corrio, 'R5'), 'ok', corrio.salida);
+    assert.match(texto(corrio, 'R5'), /1 con «- Arena:»/);
+    assert.equal(nivel(con('\n- Arena: no aplica: una sola forma obvia, un parámetro más en la URL.'), 'R5'), 'ok');
+    assert.match(texto(con(''), 'R5'), /iteración 31 sin la viñeta «- Arena:»/);
+    assert.match(texto(con('\n- Arena: no aplica.'), 'R5'), /iteración 31: «- Arena: no aplica» sin el porqué/);
+    assert.match(texto(con('\n- Arena: ganó la A3, muy bien.'), 'R5'), /iteración 31: «- Arena:» sin N, seed o rondas/);
+    // antes de la marca no se exige
+    assert.equal(nivel(check(fixture({ entradas: [...lista, entrada({ titulo: `${MARCA_PROTOCOLO}, rotación y salud` }), it31(''), marca] }), { log: LOG }), 'R5'), 'ok');
+  });
+
   test('«Fusión de #15 antes de abrir el PR» y «Cambio de objetivo» no cuentan como iteración', () => {
     const lista = iteraciones(27);
     const doc = fixture({
@@ -549,6 +565,25 @@ node tools/loop.mjs --reclamar --sin-red && npm run check -- --e2e
     }
     const largo = r8({ prompt: 'x'.repeat(601) });
     assert.match(texto(largo, 'R8'), /601 bytes/);
+  });
+
+  test(`la arena va con su ruta entera y de 1 a ${ARENA_MAX} competidores, nunca los 100 por defecto ni --quick`, () => {
+    const ARENA = '\n```sh\npython3 .claude/skills/arena/bracket.py plan --agents 4\npython3 .claude/skills/arena/bracket.py init --agents 4 --task-file .arena/task.md\npython3 .claude/skills/arena/bracket.py next\n```\n';
+    const con = (bloque) => r8({ skill: SKILL + bloque });
+    assert.equal(nivel(con(ARENA), 'R8'), 'ok', con(ARENA).salida);
+    // en la prosa se puede nombrar lo prohibido; en un bloque de código, no
+    assert.equal(nivel(con(ARENA + '\nNunca `--quick` ni 100 competidores.\n'), 'R8'), 'ok');
+    for (const [malo, que] of [
+      [ARENA.replace('plan --agents 4', 'plan --quick'), /--quick \(16 competidores, 91 llamadas\)/],
+      [ARENA.replace('init --agents 4', 'init'), /«bracket\.py init» sin --agents: por defecto son 100/],
+      [ARENA.replace('plan --agents 4', 'plan --agents 16'), new RegExp(`--agents 16: en el loop, de 1 a ${ARENA_MAX}`)],
+      [ARENA.replace('python3 .claude/skills/arena/bracket.py next', 'python3 "${CLAUDE_SKILL_DIR}/bracket.py" next'), /una variable de la skill/],
+      [ARENA.replace(/\.claude\/skills\/arena\//g, '.claude/skills/arenita/'), /\.claude\/skills\/arenita\/bracket\.py, que no existe/],
+    ]) {
+      const r = con(malo);
+      assert.equal(nivel(r, 'R8'), 'ERROR', malo);
+      assert.match(texto(r, 'R8'), que);
+    }
   });
 
   test('sin skill en el repo es solo un aviso', () => {

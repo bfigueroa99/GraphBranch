@@ -336,6 +336,7 @@ docs/investigacion.md la investigación de mercado, fechada y con fuentes, de la
 e2e/                  pruebas de punta a punta de la app de escritorio y la web (npm run test:e2e)
 .claude/skills/iteracion/  cómo hace una iteración el loop (reclamo, protocolos de QA y de cada subtipo de mantenimiento, puerta, registro, PR); PROMPT.md es el prompt de la Routine
 .claude/skills/replica-*/  el pack Replica (MIT): mapa de una app, matriz de funciones, reseñas y paridad; el loop corre recon, entrepreneur y diff al reponer la hoja de ruta, el resto va a mano (/replica-…)
+.claude/skills/arena/  la arena (MIT): un torneo de subagentes con enfoques distintos para la misma tarea (bracket.py); el loop la usa para elegir cómo implementar, sus corridas quedan en .arena/ (sin versionar)
 replica/              lo que deja Replica en el loop: el mapa y la matriz de la app de referencia, sus reseñas y la paridad de GraphBranch (sin capturas)
 electron/main.js      app de escritorio: la ventana de Electron que abre index.html
 electron/preload.js   lo único que la página ve de la app de escritorio: los tokens, los repos locales por su id, los textos de la bandeja y traer la ventana

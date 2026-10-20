@@ -518,6 +518,8 @@ GB.i18n.define('nl', {
   'practice.ex5.goal': 'De hotfix is de laatste commit van feature, maar alleen die moet naar main. Voer checkout main, cherry-pick feature en daarna tag v1.0.1 uit.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'De commit "Break checkout totals" is al gedeeld, dus herschrijf de geschiedenis niet. Maak hem ongedaan met een nieuwe commit: probeer revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Je hebt half afgemaakte wijzigingen op feature en main moet nu meteen gerepareerd worden. Zet ze opzij met stash, doe checkout main en een commit met de fix, ga terug naar feature en haal ze terug met stash pop.',
   'practice.share': 'Link van de oefening kopiëren',
   'practice.link': 'Link van de oefening',
   'practice.copied': 'Link gekopieerd.',

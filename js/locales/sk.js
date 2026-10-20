@@ -528,6 +528,8 @@ GB.i18n.define('sk', {
   'practice.ex5.goal': 'Rýchla oprava je posledný commit vetvy feature, ale do main má prísť len ten. Spusti checkout main, cherry-pick feature a potom tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'Commit „Break checkout totals“ je už zdieľaný, preto neprepisuj históriu. Vráť ho novým commitom: skús revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Vo feature máte rozpracované zmeny a main treba hneď opraviť. Odložte ich pomocou stash, urobte checkout main a commit s opravou, vráťte sa do feature a obnovte ich cez stash pop.',
   'practice.share': 'Kopírovať odkaz na úlohu',
   'practice.link': 'Odkaz na úlohu',
   'practice.copied': 'Odkaz skopírovaný.',

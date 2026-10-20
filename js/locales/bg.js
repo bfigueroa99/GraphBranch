@@ -517,6 +517,8 @@ GB.i18n.define('bg', {
   'practice.ex5.goal': 'Спешната поправка е последният commit на feature, но само тя трябва да стигне до main. Изпълни checkout main, cherry-pick feature и после tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'Комитът „Break checkout totals“ вече е споделен, затова не пренаписвайте историята. Отменете го с нов комит: опитайте revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Имате недовършени промени във feature, а main трябва да се поправи веднага. Оставете ги настрана със stash, направете checkout main и комит с поправката, върнете се във feature и ги възстановете със stash pop.',
   'practice.share': 'Копиране на връзката към упражнението',
   'practice.link': 'Връзка към упражнението',
   'practice.copied': 'Връзката е копирана.',

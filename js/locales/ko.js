@@ -517,6 +517,8 @@ GB.i18n.define('ko', {
   'practice.ex5.goal': '긴급 수정은 feature의 마지막 커밋이지만 main에는 그것만 들어가야 합니다. checkout main, cherry-pick feature를 실행한 뒤 tag v1.0.1을 실행하세요.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': '"Break checkout totals" 커밋은 이미 공유되었으므로 기록을 다시 쓰지 마세요. 새 커밋으로 되돌리세요: revert HEAD~1을 실행해 보세요.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'feature에 하다 만 변경 사항이 있고 main을 지금 바로 고쳐야 합니다. stash로 변경 사항을 치워 두고, checkout main 후 수정 사항을 커밋한 다음, feature로 돌아가 stash pop으로 되돌리세요.',
   'practice.share': '연습 링크 복사',
   'practice.link': '연습 링크',
   'practice.copied': '링크를 복사했습니다.',

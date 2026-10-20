@@ -123,6 +123,7 @@ test('cada ejercicio parte sin resolver y se resuelve con sus comandos', () => {
     ['reset --hard HEAD~1'],
     ['cherry-pick feature', 'tag v1.0.1'],
     ['revert HEAD~1'],
+    ['stash', 'checkout main', 'commit -m "Fix login redirect"', 'checkout feature', 'stash pop'],
   ];
   assert.equal(solutions.length, EXERCISES.length);
   EXERCISES.forEach((ex, i) => {
@@ -354,4 +355,98 @@ test('el ejercicio de revert pide un commit nuevo y no reescribir la historia', 
   const c = start(5, NOW);
   c.run('revert HEAD~1');
   assert.equal(ex.done(c), true);
+});
+
+test('stash guarda los cambios a medias, deja cambiar de rama y pop los devuelve', () => {
+  const r = fresh();
+  assert.match(r.run('stash').lines[0], /No local changes/);
+  assert.equal(r.run('touch').ok, false);
+  assert.equal(r.run('touch ../etc').ok, false);
+  run(r, 'checkout -b feature', 'touch app.js');
+  assert.ok(r.run('checkout main').ok, 'al mismo commit se puede ir con cambios, como en git');
+  run(r, 'stash', 'checkout feature', 'commit -m "Feature work"', 'checkout main', 'stash pop', 'touch app.js notes.md');
+  assert.deepEqual(plain(r.work), ['app.js', 'notes.md']);
+  assert.deepEqual(plain(r.run('status').lines), ['On branch main', 'Changes not staged for commit:', '\tmodified:   app.js', '\tmodified:   notes.md']);
+  // con cambios a medias no se cambia de rama, ni se fusiona, rebasa o copia
+  const blocked = r.run('checkout feature');
+  assert.equal(blocked.ok, false);
+  assert.match(blocked.lines.join('\n'), /would be overwritten by checkout:\n\tapp.js\n\tnotes.md\nPlease commit your changes or stash them/);
+  assert.equal(r.head.branch, 'main');
+  for (const c of ['rebase feature', 'cherry-pick HEAD~1', 'revert HEAD']) assert.equal(r.run(c).ok, false, c);
+  assert.ok(r.run('checkout main').ok, 'quedarse donde está no pide nada');
+  const tip = r.headSha;
+  const saved = r.run('stash');
+  assert.ok(saved.ok);
+  assert.match(saved.lines[0], /^Saved working directory and index state WIP on main: [0-9a-f]{7} Add login form$/);
+  assert.equal(r.stashes.length, 1, 'el primer stash ya salió con pop');
+  assert.equal(r.headSha, tip, 'stash no hace commits en la rama');
+  assert.deepEqual(plain(r.work), []);
+  assert.match(r.run('stash list').lines[0], /^stash@\{0\}: WIP on main/);
+  assert.ok(r.run('checkout feature').ok);
+  r.run('touch other.txt');
+  run(r, 'stash push -m "second"');
+  assert.deepEqual(plain(r.run('stash list').lines.map((l) => l.split(':')[0])), ['stash@{0}', 'stash@{1}']);
+  assert.match(r.run('stash list').lines[0], /^stash@\{0\}: On feature: second$/);
+  // apply deja la entrada; pop la quita; drop la tira sin aplicar
+  const applied = r.run('stash apply stash@{1}');
+  assert.ok(applied.ok);
+  assert.deepEqual(plain(r.work), ['app.js', 'notes.md']);
+  assert.equal(r.stashes.length, 2);
+  assert.equal(r.run('stash pop 1').ok, false, 'pisaría los mismos archivos');
+  assert.equal(r.run('stash pop stash@{7}').ok, false);
+  assert.match(r.run('stash drop 1').lines[0], /^Dropped stash@\{1\} \([0-9a-f]{40}\)$/);
+  const popped = r.run('stash pop');
+  assert.ok(popped.ok);
+  assert.match(popped.lines.at(-1), /^Dropped stash@\{0\}/);
+  assert.deepEqual(plain(r.work), ['app.js', 'notes.md', 'other.txt']);
+  assert.equal(r.run('stash pop').lines[0], 'error: No stash entries found.');
+  assert.equal(r.run('stash frobnicate').ok, false);
+  // el commit se lleva los cambios
+  r.run('commit -m "Use the stash"');
+  assert.deepEqual(plain(r.work), []);
+});
+
+test('reset --hard a un sha tira los cambios a medias; los otros reset los conservan', () => {
+  const r = fresh();
+  const first = [...r.log(r.headSha)].at(-1);
+  r.run('touch app.js');
+  assert.ok(r.run('reset HEAD~1').ok);
+  assert.deepEqual(plain(r.work), ['app.js']);
+  const res = r.run(`reset --hard ${first.slice(0, 7)}`);
+  assert.ok(res.ok);
+  assert.equal(res.lines[0], `HEAD is now at ${first.slice(0, 7)} Initial commit`);
+  assert.equal(r.headSha, first);
+  assert.deepEqual(plain(r.work), []);
+  assert.equal(r.run('status').lines[1], 'nothing to commit, working tree clean');
+});
+
+test('el ejercicio de stash pide guardar, arreglar main y recuperar los cambios sin commitearlos', () => {
+  const ex = EXERCISES.find((e) => e.id === 'stash');
+  const i = EXERCISES.indexOf(ex);
+  // commitear lo a medias en feature para poder cambiar de rama no vale
+  const a = start(i, NOW);
+  run(a, 'commit -m "WIP"', 'checkout main', 'commit -m "Fix"', 'checkout feature');
+  assert.equal(ex.done(a), false);
+  // olvidarse de stash pop tampoco
+  const b = start(i, NOW);
+  run(b, 'stash', 'checkout main', 'commit -m "Fix"', 'checkout feature');
+  assert.equal(ex.done(b), false);
+  // tirar los cambios con reset --hard tampoco
+  const c = start(i, NOW);
+  run(c, 'reset --hard', 'checkout main', 'commit -m "Fix"', 'checkout feature');
+  assert.equal(ex.done(c), false);
+  // sin arreglo en main, no
+  const d = start(i, NOW);
+  run(d, 'stash', 'stash pop');
+  assert.equal(ex.done(d), false);
+});
+
+test('un ejercicio propio puede partir con cambios a medias (touch en sus comandos)', () => {
+  const spec = cleanExercise({ title: 'Stash', goal: 'Guarda', setup: ['checkout -b feature', 'touch a.js'], checks: ['on:main'], solution: ['stash', 'checkout main'] });
+  assert.equal(spec.error, undefined);
+  const r = startCustom(customExercise(spec), NOW);
+  assert.deepEqual(plain(r.work), ['a.js']);
+  const blocked = { title: 'x', goal: 'y', setup: ['checkout -b feature', 'commit -m "x"', 'checkout main', 'touch a.js'], checks: ['on:feature'] };
+  assert.equal(cleanExercise({ ...blocked, solution: ['checkout feature'] }).error, 'solution', 'checkout con cambios falla, así que esa solución no vale');
+  assert.equal(cleanExercise({ ...blocked, solution: ['stash', 'checkout feature'] }).error, undefined);
 });

@@ -528,6 +528,8 @@ GB.i18n.define('pl', {
   'practice.ex5.goal': 'Poprawka awaryjna to ostatni commit gałęzi feature, ale tylko on ma trafić do main. Uruchom checkout main, cherry-pick feature, a potem tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'Commit „Break checkout totals” został już udostępniony, więc nie przepisuj historii. Cofnij go nowym commitem: spróbuj revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Na feature masz niedokończone zmiany, a main trzeba naprawić od razu. Odłóż je za pomocą stash, zrób checkout main i commit z poprawką, wróć na feature i przywróć je przez stash pop.',
   'practice.share': 'Kopiuj link do ćwiczenia',
   'practice.link': 'Link do ćwiczenia',
   'practice.copied': 'Skopiowano link.',

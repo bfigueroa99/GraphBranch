@@ -517,6 +517,8 @@ GB.i18n.define('ms', {
   'practice.ex5.goal': 'Pembetulan segera ialah commit terakhir feature, tetapi hanya itu yang patut sampai ke main. Jalankan checkout main, cherry-pick feature, kemudian tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'Commit "Break checkout totals" sudah dikongsi, jadi jangan tulis semula sejarah. Batalkannya dengan commit baharu: cuba revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Anda ada perubahan separuh siap pada feature dan main perlu dibaiki sekarang. Simpan dahulu dengan stash, buat checkout main dan commit pembaikan, kembali ke feature dan pulihkannya dengan stash pop.',
   'practice.share': 'Salin pautan latihan',
   'practice.link': 'Pautan latihan',
   'practice.copied': 'Pautan disalin.',

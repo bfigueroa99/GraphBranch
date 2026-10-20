@@ -517,6 +517,8 @@ GB.i18n.define('sv', {
   'practice.ex5.goal': 'Snabbfixen är sista committen på feature, men bara den ska till main. Kör checkout main, cherry-pick feature och sedan tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'Committen "Break checkout totals" är redan delad, så skriv inte om historiken. Ångra den med en ny commit: prova revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Du har halvfärdiga ändringar på feature och main behöver rättas nu. Lägg undan dem med stash, gör checkout main och en commit med rättningen, gå tillbaka till feature och hämta dem med stash pop.',
   'practice.share': 'Kopiera övningens länk',
   'practice.link': 'Övningens länk',
   'practice.copied': 'Länken har kopierats.',

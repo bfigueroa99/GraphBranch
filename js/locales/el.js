@@ -517,6 +517,8 @@ GB.i18n.define('el', {
   'practice.ex5.goal': 'Η επείγουσα διόρθωση είναι το τελευταίο commit του feature, αλλά μόνο αυτό πρέπει να φτάσει στο main. Εκτέλεσε checkout main, cherry-pick feature και μετά tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'Το commit «Break checkout totals» έχει ήδη κοινοποιηθεί, οπότε μην ξαναγράψεις το ιστορικό. Αναίρεσέ το με ένα νέο commit: δοκίμασε revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Έχετε μισοτελειωμένες αλλαγές στο feature και το main χρειάζεται διόρθωση τώρα. Βάλτε τις στην άκρη με stash, κάντε checkout main και ένα commit με τη διόρθωση, γυρίστε στο feature και επαναφέρετέ τις με stash pop.',
   'practice.share': 'Αντιγραφή συνδέσμου άσκησης',
   'practice.link': 'Σύνδεσμος άσκησης',
   'practice.copied': 'Ο σύνδεσμος αντιγράφηκε.',

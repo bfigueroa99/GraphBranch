@@ -517,6 +517,8 @@ GB.i18n.define('sw', {
   'practice.ex5.goal': 'Marekebisho ya haraka ni commit ya mwisho ya feature, lakini hiyo pekee ndiyo ifike main. Endesha checkout main, cherry-pick feature, kisha tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'Commit ya "Break checkout totals" imeshashirikiwa, kwa hiyo usiandike upya historia. Itengue kwa commit mpya: jaribu revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Una mabadiliko ambayo hayajakamilika kwenye feature na main inahitaji kurekebishwa sasa hivi. Yaweke kando kwa stash, fanya checkout main na commit ya marekebisho, rudi kwenye feature na uyarudishe kwa stash pop.',
   'practice.share': 'Nakili kiungo cha zoezi',
   'practice.link': 'Kiungo cha zoezi',
   'practice.copied': 'Kiungo kimenakiliwa.',

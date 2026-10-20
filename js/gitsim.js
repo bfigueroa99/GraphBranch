@@ -1,5 +1,6 @@
 /* GraphBranch — intérprete de git de práctica. Un repo en memoria y los comandos de todos los días
-   (commit, branch, checkout/switch, merge, rebase, reset, log, status), más los ejercicios guiados.
+   (commit, branch, checkout/switch, merge, rebase, reset, stash, log, status), más los ejercicios guiados.
+   El árbol de trabajo es solo la lista de archivos con cambios sin commit (`touch` los crea).
    Sin DOM ni red: lo usa la fuente de práctica (sources/practice.js) y lo prueba tools/gitsim.test.mjs.
    La salida de los comandos es la de git (en inglés, como en cualquier terminal); los textos de la
    interfaz van en los idiomas de la app. */
@@ -44,6 +45,8 @@
       this.branches = new Map(); // nombre -> sha
       this.tags = new Map(); // nombre -> sha
       this.head = { branch }; // { branch } o { sha } (desprendido)
+      this.work = []; // archivos con cambios sin commit, en orden de llegada
+      this.stashes = []; // { files, branch, sha }, el más nuevo primero (stash@{0})
       this.defaultBranch = branch;
       this.branches.set(branch, null);
     }
@@ -152,7 +155,14 @@
     commit(message) {
       const sha = this.make(message, this.headSha ? [this.headSha] : []);
       this.moveHead(sha);
+      this.work = [];
       return sha;
+    }
+
+    /** Falla como git si hay cambios sin commit: en esta simulación, ir a otro commit siempre pisa los archivos cambiados. */
+    needClean(verb) {
+      if (!this.work.length) return;
+      fail(`error: Your local changes to the following files would be overwritten by ${verb}:\n${this.work.map((f) => `\t${f}`).join('\n')}\nPlease commit your changes or stash them before you ${verb === 'checkout' ? 'switch branches' : verb}.\nAborting`);
     }
 
     /* ---------- los comandos ---------- */
@@ -201,7 +211,9 @@
         'checkout [-b] <name|sha>    move to a branch or commit (also: switch [-c])',
         'merge <branch>              bring another branch into this one (--no-ff, --ff-only)',
         'rebase <branch>             replay this branch on top of another',
-        'reset [--soft|--hard] <to>  move the branch back (HEAD~1, a sha, a branch)',
+        'reset [--soft|--hard] <to>  move the branch back (HEAD~1, a sha, a branch); --hard drops changes',
+        'stash [list|pop|apply|drop] put uncommitted changes aside and bring them back',
+        'touch <file>                change a file (uncommitted work, for stash)',
         'cherry-pick <commit>        copy one commit on top of the current branch',
         'revert <commit>             undo a commit with a new one, keeping the history',
         'tag [name] [-d name]        list, create or delete tags on a commit',
@@ -221,7 +233,60 @@
 
     status() {
       const where = this.head.branch ? `On branch ${this.head.branch}` : `HEAD detached at ${this.short(this.head.sha)}`;
-      return [where, 'nothing to commit, working tree clean'];
+      if (!this.work.length) return [where, 'nothing to commit, working tree clean'];
+      return [where, 'Changes not staged for commit:', ...this.work.map((f) => `\tmodified:   ${f}`)];
+    },
+
+    touch(args) {
+      const { rest } = parse(args);
+      if (!rest.length) fail('usage: touch <file>');
+      for (const f of rest) {
+        if (!/^[\w][\w./-]{0,60}$/.test(f) || f.includes('..')) fail(`touch: invalid file name '${f}'`);
+        if (!this.work.includes(f)) this.work.push(f);
+      }
+      return [];
+    },
+
+    stash(args) {
+      const { flags, rest } = parse(args, ['-m', '--message']);
+      const [sub = 'push', ref] = rest;
+      const msg = flags['-m'] ?? flags['--message'];
+      const pick = () => {
+        if (!this.stashes.length) fail('error: No stash entries found.');
+        const m = /^(?:stash@\{(\d+)\}|(\d+))$/.exec(ref ?? '0');
+        const i = m ? Number(m[1] ?? m[2]) : -1;
+        if (i < 0 || i >= this.stashes.length) fail(`error: ${ref} is not a valid reference`);
+        return i;
+      };
+      if (sub === 'push' || sub === 'save') {
+        if (!this.work.length) return ['No local changes to save'];
+        if (!this.headSha) fail('You do not have the initial commit yet');
+        const branch = this.head.branch || '(no branch)';
+        const line = typeof msg === 'string' && msg ? `On ${branch}: ${msg}` : `WIP on ${branch}: ${this.short(this.headSha)} ${this.commits.get(this.headSha).message}`;
+        this.stashes.unshift({ files: this.work, line });
+        this.work = [];
+        return [`Saved working directory and index state ${line}`];
+      }
+      if (sub === 'list') return this.stashes.map((s, i) => `stash@{${i}}: ${s.line}`);
+      if (sub === 'drop') {
+        const i = pick();
+        const [gone] = this.stashes.splice(i, 1);
+        return [`Dropped stash@{${i}} (${hash(gone.line)})`];
+      }
+      if (sub === 'pop' || sub === 'apply') {
+        const i = pick();
+        const entry = this.stashes[i];
+        const clash = entry.files.filter((f) => this.work.includes(f));
+        if (clash.length) fail(`error: Your local changes to the following files would be overwritten by merge:\n${clash.map((f) => `\t${f}`).join('\n')}\nPlease commit your changes or stash them before you merge.\nAborting`);
+        this.work = [...this.work, ...entry.files];
+        const out = this.commands.status.call(this);
+        if (sub === 'pop') {
+          this.stashes.splice(i, 1);
+          out.push(`Dropped stash@{${i}} (${hash(entry.line)})`);
+        }
+        return out;
+      }
+      fail(`error: unknown subcommand: '${sub}'\nusage: stash [push | list | pop | apply | drop]`);
     },
 
     log(args) {
@@ -282,11 +347,13 @@
       if (!target) fail('fatal: missing branch or commit argument');
       if (this.branches.has(target)) {
         if (this.head.branch === target) return [`Already on '${target}'`];
+        if (this.branches.get(target) !== this.headSha) this.needClean('checkout');
         this.head = { branch: target };
         return [`Switched to branch '${target}'`];
       }
       const sha = this.resolve(target);
       if (!sha) fail(`error: pathspec '${target}' did not match any branch or commit known to git`);
+      if (sha !== this.headSha) this.needClean('checkout');
       this.head = { sha };
       return [`HEAD is now at ${this.short(sha)} ${this.commits.get(sha).message}`];
     },
@@ -300,6 +367,7 @@
       if (!theirs) fail(`merge: ${name} - not something we can merge`);
       const ours = this.headSha;
       if (this.isAncestor(theirs, ours)) return ['Already up to date.'];
+      this.needClean('merge');
       if (this.isAncestor(ours, theirs) && !flags['--no-ff']) {
         this.moveHead(theirs);
         return [`Updating ${this.short(ours)}..${this.short(theirs)}`, 'Fast-forward'];
@@ -318,6 +386,7 @@
       const onto = this.resolve(name);
       if (!onto) fail(`fatal: invalid upstream '${name}'`);
       const tip = this.headSha;
+      if (this.work.length) fail('error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.');
       if (this.isAncestor(onto, tip)) return [`Current branch ${this.head.branch} is up to date.`];
       if (this.isAncestor(tip, onto)) {
         this.moveHead(onto);
@@ -338,6 +407,7 @@
       const { rest } = parse(args);
       if (!rest.length) fail('fatal: you must specify a commit to cherry-pick');
       if (!this.head.branch) fail('fatal: you are in a detached HEAD state: go to a branch first (checkout <branch>)');
+      this.needClean('cherry-pick');
       const out = [];
       for (const ref of rest) {
         const pick = this.resolve(ref);
@@ -354,6 +424,7 @@
       const { rest } = parse(args);
       if (!rest.length) fail('fatal: you must specify a commit to revert');
       if (!this.head.branch) fail('fatal: you are in a detached HEAD state: go to a branch first (checkout <branch>)');
+      this.needClean('revert');
       const out = [];
       for (const ref of rest) {
         const target = this.resolve(ref);
@@ -393,6 +464,7 @@
       const sha = this.resolve(to);
       if (!sha) fail(`fatal: ambiguous argument '${to}': unknown revision`);
       this.moveHead(sha);
+      if (flags['--hard']) this.work = [];
       if (flags['--hard']) return [`HEAD is now at ${this.short(sha)} ${this.commits.get(sha).message}`];
       return [];
     },
@@ -487,6 +559,23 @@
         // el historial se conserva entero y encima hay un commit nuevo que deshace el malo
         const msgs = r.log(main).slice().reverse().map((s) => r.commits.get(s).message);
         return msgs.length === BASE.length + 4 && msgs.slice(BASE.length).join('|') === 'Add dark mode|Break checkout totals|Add footer links|Revert "Break checkout totals"';
+      },
+    },
+    {
+      id: 'stash',
+      setup: (r) => {
+        r.commands.checkout.call(r, ['-b', 'feature']);
+        r.commit('Add profile page');
+        r.work = ['profile.js', 'profile.css'];
+      },
+      done: (r) => {
+        const main = r.branches.get('main');
+        const feature = r.branches.get('feature');
+        if (!main || !feature || r.head.branch !== 'feature' || r.stashes.length) return false;
+        // el arreglo llegó a main solo, feature sigue con su único commit y los cambios a medias volvieron sin commitear
+        const fix = r.log(main).filter((s) => !r.ancestors(feature).has(s));
+        const own = r.log(feature).filter((s) => !r.ancestors(main).has(s));
+        return fix.length === 1 && r.log(main).length === BASE.length + 1 && own.length === 1 && ['profile.js', 'profile.css'].every((f) => r.work.includes(f));
       },
     },
   ];

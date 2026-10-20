@@ -518,6 +518,8 @@ GB.i18n.define('fil', {
   'practice.ex5.goal': 'Ang hotfix ang huling commit ng feature, pero iyon lang ang dapat umabot sa main. Patakbuhin ang checkout main, cherry-pick feature, saka tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'Naibahagi na ang commit na "Break checkout totals", kaya huwag isulat muli ang history. Bawiin ito gamit ang bagong commit: subukan ang revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'May mga kalahating-tapos kang pagbabago sa feature at kailangang ayusin agad ang main. Itabi ang mga ito gamit ang stash, mag-checkout main at mag-commit ng ayos, bumalik sa feature at ibalik ang mga ito gamit ang stash pop.',
   'practice.share': 'Kopyahin ang link ng ehersisyo',
   'practice.link': 'Link ng ehersisyo',
   'practice.copied': 'Nakopya ang link.',

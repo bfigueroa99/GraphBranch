@@ -517,6 +517,8 @@ GB.i18n.define('vi', {
   'practice.ex5.goal': 'Bản vá khẩn là commit cuối của feature, nhưng chỉ commit đó được vào main. Chạy checkout main, cherry-pick feature rồi tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'Commit "Break checkout totals" đã được chia sẻ, nên đừng viết lại lịch sử. Hãy hoàn tác nó bằng một commit mới: thử revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Bạn có thay đổi đang làm dở trên feature và main cần sửa ngay. Cất chúng đi bằng stash, checkout main và commit bản sửa, quay lại feature rồi lấy lại bằng stash pop.',
   'practice.share': 'Sao chép liên kết bài tập',
   'practice.link': 'Liên kết bài tập',
   'practice.copied': 'Đã sao chép liên kết.',

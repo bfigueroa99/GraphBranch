@@ -523,6 +523,8 @@ GB.i18n.define('en', {
   'practice.ex5.goal': 'The hotfix is the last commit of feature, but only that one should reach main. Run checkout main, cherry-pick feature, then tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'The "Break checkout totals" commit is already shared, so do not rewrite history. Undo it with a new commit: try revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'You have half-done changes on feature and main needs a fix right now. Put them aside with stash, checkout main and commit the fix, go back to feature and bring them back with stash pop.',
   'practice.share': 'Copy exercise link',
   'practice.link': 'Exercise link',
   'practice.copied': 'Link copied.',

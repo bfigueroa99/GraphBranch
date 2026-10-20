@@ -525,6 +525,8 @@ GB.i18n.define('hr', {
   'practice.ex5.goal': 'Hitni ispravak je zadnji commit grane feature, ali samo on treba stići na main. Pokreni checkout main, cherry-pick feature, a zatim tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'Commit „Break checkout totals“ već je podijeljen, pa ne prepisuj povijest. Poništi ga novim commitom: probaj revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Na feature imate napola gotove promjene, a main treba odmah popraviti. Sklonite ih sa stash, napravite checkout main i commit s popravkom, vratite se na feature i vratite ih sa stash pop.',
   'practice.share': 'Kopiraj poveznicu vježbe',
   'practice.link': 'Poveznica vježbe',
   'practice.copied': 'Poveznica kopirana.',

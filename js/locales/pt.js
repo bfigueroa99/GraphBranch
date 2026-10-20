@@ -518,6 +518,8 @@ GB.i18n.define('pt', {
   'practice.ex5.goal': 'A correção urgente é o último commit de feature, mas só ele deve chegar à main. Execute checkout main, cherry-pick feature e depois tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'O commit "Break checkout totals" já foi compartilhado, então não reescreva o histórico. Desfaça-o com um novo commit: experimente revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Você tem mudanças pela metade em feature e main precisa de uma correção agora. Guarde-as com stash, faça checkout main e um commit com a correção, volte para feature e recupere-as com stash pop.',
   'practice.share': 'Copiar link do exercício',
   'practice.link': 'Link do exercício',
   'practice.copied': 'Link copiado.',

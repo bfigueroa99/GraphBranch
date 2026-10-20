@@ -533,6 +533,8 @@ GB.i18n.define('ru', {
   'practice.ex5.goal': 'Срочное исправление — последний коммит feature, но в main должен попасть только он. Выполни checkout main, cherry-pick feature, затем tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'Коммит «Break checkout totals» уже опубликован, поэтому не переписывайте историю. Отмените его новым коммитом: попробуйте revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'В feature у вас незаконченные изменения, а main нужно исправить прямо сейчас. Отложите их через stash, сделайте checkout main и коммит с исправлением, вернитесь в feature и верните изменения через stash pop.',
   'practice.share': 'Скопировать ссылку на упражнение',
   'practice.link': 'Ссылка на упражнение',
   'practice.copied': 'Ссылка скопирована.',

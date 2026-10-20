@@ -517,6 +517,8 @@ GB.i18n.define('fi', {
   'practice.ex5.goal': 'Pikakorjaus on featuren viimeinen commit, mutta vain se pitää tuoda mainiin. Aja checkout main, cherry-pick feature ja sitten tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'Commit "Break checkout totals" on jo jaettu, joten älä kirjoita historiaa uudelleen. Kumoa se uudella commitilla: kokeile revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Sinulla on keskeneräisiä muutoksia feature-haarassa, ja main pitää korjata heti. Siirrä ne sivuun stashilla, tee checkout main ja commit korjauksesta, palaa featureen ja palauta muutokset komennolla stash pop.',
   'practice.share': 'Kopioi tehtävän linkki',
   'practice.link': 'Tehtävän linkki',
   'practice.copied': 'Linkki kopioitu.',

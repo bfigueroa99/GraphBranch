@@ -517,6 +517,8 @@ GB.i18n.define('hi', {
   'practice.ex5.goal': 'हॉटफ़िक्स feature का आख़िरी commit है, पर सिर्फ़ वही main तक पहुँचना चाहिए। चलाओ checkout main, cherry-pick feature, फिर tag v1.0.1।',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': '"Break checkout totals" कमिट पहले ही साझा हो चुका है, इसलिए इतिहास को दोबारा न लिखें। एक नए कमिट से उसे पलटें: revert HEAD~1 आज़माएँ।',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'feature पर आपके आधे-अधूरे बदलाव हैं और main को अभी ठीक करना है। उन्हें stash से अलग रखें, checkout main करके सुधार का कमिट करें, फिर feature पर लौटें और stash pop से उन्हें वापस लाएँ।',
   'practice.share': 'अभ्यास का लिंक कॉपी करें',
   'practice.link': 'अभ्यास का लिंक',
   'practice.copied': 'लिंक कॉपी हो गया।',

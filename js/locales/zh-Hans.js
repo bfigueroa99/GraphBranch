@@ -517,6 +517,8 @@ GB.i18n.define('zh-Hans', {
   'practice.ex5.goal': '紧急修复是 feature 的最后一个提交，但只有它应该进入 main。依次运行 checkout main、cherry-pick feature，再运行 tag v1.0.1。',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': '“Break checkout totals”这个提交已经共享，所以不要改写历史。用一个新提交撤销它：试试 revert HEAD~1。',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'feature 上有做到一半的改动，而 main 需要马上修复。用 stash 把改动暂存起来，checkout main 并提交修复，再回到 feature，用 stash pop 取回改动。',
   'practice.share': '复制练习链接',
   'practice.link': '练习链接',
   'practice.copied': '链接已复制。',

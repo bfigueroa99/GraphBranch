@@ -517,6 +517,8 @@ GB.i18n.define('id', {
   'practice.ex5.goal': 'Perbaikan darurat adalah commit terakhir feature, tetapi hanya itu yang boleh sampai ke main. Jalankan checkout main, cherry-pick feature, lalu tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'Commit "Break checkout totals" sudah dibagikan, jadi jangan tulis ulang riwayat. Batalkan dengan commit baru: coba revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Ada perubahan setengah jadi di feature dan main perlu diperbaiki sekarang. Simpan dulu dengan stash, lakukan checkout main dan commit perbaikannya, kembali ke feature lalu ambil lagi dengan stash pop.',
   'practice.share': 'Salin tautan latihan',
   'practice.link': 'Tautan latihan',
   'practice.copied': 'Tautan disalin.',

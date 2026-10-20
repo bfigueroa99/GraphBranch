@@ -560,6 +560,8 @@ GB.i18n.define('ur', {
   'practice.ex5.goal': 'ہنگامی درستی feature کا آخری commit ہے، مگر main تک صرف وہی پہنچنا چاہیے۔ checkout main، cherry-pick feature اور پھر tag v1.0.1 چلاؤ۔',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'کمٹ "Break checkout totals" پہلے ہی شیئر ہو چکا ہے، اس لیے تاریخ دوبارہ نہ لکھیں۔ اسے نئی کمٹ سے واپس کریں: revert HEAD~1 آزمائیں۔',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'feature پر آپ کی ادھوری تبدیلیاں ہیں اور main کو ابھی ٹھیک کرنا ہے۔ انہیں stash سے ایک طرف رکھیں، checkout main کر کے اصلاح کا commit کریں، پھر feature پر واپس جا کر stash pop سے انہیں واپس لائیں۔',
   'practice.share': 'مشق کا لنک کاپی کریں',
   'practice.link': 'مشق کا لنک',
   'practice.copied': 'لنک کاپی ہو گیا۔',

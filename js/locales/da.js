@@ -517,6 +517,8 @@ GB.i18n.define('da', {
   'practice.ex5.goal': 'Hurtigrettelsen er sidste commit på feature, men kun den skal til main. Kør checkout main, cherry-pick feature og derefter tag v1.0.1.',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': 'Commit "Break checkout totals" er allerede delt, så omskriv ikke historikken. Fortryd den med en ny commit: prøv revert HEAD~1.',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'Du har halvfærdige ændringer på feature, og main skal rettes nu. Læg dem til side med stash, lav checkout main og et commit med rettelsen, gå tilbage til feature og hent dem med stash pop.',
   'practice.share': 'Kopiér opgavens link',
   'practice.link': 'Opgavens link',
   'practice.copied': 'Link kopieret.',

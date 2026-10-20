@@ -517,6 +517,8 @@ GB.i18n.define('bn', {
   'practice.ex5.goal': 'জরুরি ফিক্সটি feature-এর শেষ commit, কিন্তু শুধু সেটিই main-এ যাবে। চালাও checkout main, cherry-pick feature, তারপর tag v1.0.1।',
   'practice.ex6.title': 'Revert',
   'practice.ex6.goal': '"Break checkout totals" কমিটটি ইতিমধ্যে শেয়ার করা হয়েছে, তাই ইতিহাস নতুন করে লিখবেন না। একটি নতুন কমিট দিয়ে এটি বাতিল করুন: revert HEAD~1 চালান।',
+  'practice.ex7.title': 'Stash',
+  'practice.ex7.goal': 'feature-এ আপনার অর্ধেক করা পরিবর্তন আছে, আর main এখনই ঠিক করতে হবে। stash দিয়ে সেগুলো সরিয়ে রাখুন, checkout main করে সংশোধনের একটি কমিট করুন, তারপর feature-এ ফিরে stash pop দিয়ে সেগুলো ফিরিয়ে আনুন।',
   'practice.share': 'অনুশীলনীর লিংক কপি করুন',
   'practice.link': 'অনুশীলনীর লিংক',
   'practice.copied': 'লিংক কপি হয়েছে।',

@@ -435,34 +435,40 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     publicar). Medir con 5 corridas de ese test solo y esperar al estado (el commit nuevo) en vez de al texto.
     Reproducción: `xvfb-run -a npm run check` → `Error: expect(locator).toHaveText(expected) failed … unexpected value "segundo"`.
 
+2. [Deuda] Smoke: el paso «vista 2D» (`tools/smoke.mjs:356`, `waitForSelector('#graph svg .node')`) falló en 2 de 2
+    corridas de `xvfb-run -a npm run check` en la iteración 110 y en 0 de 1 suelta (`node tools/smoke.mjs`); tras
+    `#view-2d` el SVG tarda más que en una corrida suelta. Medir con 5 corridas del smoke dentro de `check` y esperar
+    el estado (vista 2D activa) en vez del selector.
+    Reproducción: `xvfb-run -a npm run check` → `✗ vista 2D: page.waitForSelector: Timeout 30000ms exceeded.`
+
 ### Baja
 
-2. [Accesibilidad] Estados confusos: botones que cambian a la vez `aria-pressed` y el texto (el de pausa del
+3. [Accesibilidad] Estados confusos: botones que cambian a la vez `aria-pressed` y el texto (el de pausa del
     Replay, `replay.js:367`) y la leyenda 2D sin acceso por teclado. Los objetivos chicos ya cumplen los
     24 px (iteración 91) y la base de la auditoría quedó vacía. Reproducir: `node tools/audit.mjs`.
-3. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-4. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
+4. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+5. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
     renombrados).
-5. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+6. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-6. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
+7. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
     y mueve el resto a `docs/BITACORA.md` (idempotente: la segunda corrida dice «Nada que rotar»; queda
     una línea «Las iteraciones anteriores están en docs/BITACORA.md»); `--siguiente` sigue leyendo N de
     aquí y `--check` exige iteraciones sin repetidos entre los dos archivos. Motivo: `--salud` mide el
     archivo en cada iteración (77 KB el 2026-10-13, 55 KB de bitácora), y cada sesión nueva lo lee entero.
-7. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+8. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-8. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+9. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-9. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+10. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-10. [Rendimiento] El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (los dos
+11. [Rendimiento] El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (los dos
     `MeshStandardMaterial` de nodos y aristas, ~170 ms y 65 KB de fuente cada uno), dentro de una tarea de
     ~1,2 s; SwiftShader no ofrece `KHR_parallel_shader_compile` y los 12 hacen falta (el mundo es la escena
     de la órbita). Descartado en la 107: `renderer.compile(scene, camera)` con instancias de mentira antes
@@ -471,26 +477,26 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     igual, o precompilar solo los dos `MeshStandardMaterial` con una escena propia que repita luces y niebla.
     Reproducción: contar `linkProgram` con `addInitScript` sobre `?lang=es` (12 programas, ~186 ms en
     `getProgramParameter`).
-11. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+12. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
     Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-12. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+13. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-13. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
+14. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-14. [QA] No hay un escenario de la auditoría con 1.000 ramas a 320 px en 3D: la comprobación de etiquetas
+15. [QA] No hay un escenario de la auditoría con 1.000 ramas a 320 px en 3D: la comprobación de etiquetas
     pisadas (`celular-320-3d`) corre sobre la API simulada de 3 ramas; con 1.000 solo se miró a mano.
     Reproducción: Playwright contra `node e2e/serve.mjs 4173` con 1.000 ramas simuladas, 320 px, `?repo=acme/web`
     → 4 etiquetas visibles, 0 pisadas (hoy bien; nada lo vigila).
-15. [QA] Con 1.000 ramas a 320 px el 3D deja solo 4 etiquetas de rama visibles (`reach` de `placeLabels`
+16. [QA] Con 1.000 ramas a 320 px el 3D deja solo 4 etiquetas de rama visibles (`reach` de `placeLabels`
     esconde las lejanas); revisar si en celular conviene un alcance mayor o una pista de «+N ramas».
     Reproducción: la misma de arriba, contar `.g3-head` con `display` distinto de `none` → 4.
-16. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
+17. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
     nítidas (demo a 320 px: 3 de 5 atenuadas); comprobar que Tab y el toque no caigan en una atenuada.
     Reproducción: Playwright, 320 px, 3D, `?repo=demo` → `.g3-head` con opacidad 0,22 y `display: flex`.
 
@@ -2294,3 +2300,16 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Intermitente: el paso del smoke «Salud del repo directa» (`cerrar el panel deja health= en la URL`) falló 2 de 3 corridas de `npm run check` y 0 de 5 sueltas; la causa era una espera fija de 300 ms tras cerrar el panel. Ahora espera la condición (`waitForFunction`).
 - Validado: 351 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 110, expansión: ítem 69 (Resumen de la organización como imagen, Salidas)
+
+### 2026-10-20 · Iteración 110 · Expansión · Salidas
+
+- **Capacidad nueva: resumen de la organización como imagen** (ítem 69 de la hoja de ruta). El resumen de la semana de una organización seguida también se guarda como PNG (botón «Guardar .png» junto a los de Markdown): una tarjeta oscura de 1200 px con los totales y los 8 repos más activos (commits, PRs fusionados y releases de cada uno) y «… +n» por el resto; recorta cada línea a unos 70 caracteres y se alinea a la derecha en idiomas de derecha a izquierda. Sin consultas; en la web y en la app de escritorio (misma página).
+- **Pruebas que fallan sin la capacidad:** `tools/digest.test.mjs` (líneas de la imagen de la organización: totales, recorte a 8 repos, «… +2», sin actividad y pintado en el canvas con alineación a la derecha) y el paso del smoke «el resumen de la semana de la organización junta sus repos abiertos», que ahora baja el PNG y comprueba su firma.
+- Textos: sin claves nuevas (reusa `digest.png`).
+- README: la función en la lista, Límites conocidos, estructura de archivos. Seguridad sin cambios (`fillText` en un canvas, sin HTML). Mapa de alcance: fila Salidas. Hoja de ruta repuesta con los ítems 79 a 84.
+- QA: filas tocadas: resumen de la organización (prueba y smoke), 40 idiomas (check-i18n); auditoría: sin controles ni textos nuevos.
+- Reclamo: loop/110, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso y 2 pruebas rojas). `git push origin --delete loop/87` falló por el proxy (desconexión), como en la 107 y la 109.
+- Intermitente: el paso del smoke «vista 2D» falló en 2 de 2 corridas de `npm run check` y en 0 de 1 suelta; cargado como pendiente Media 2 [Deuda].
+- Validado: pendiente
+- **Siguiente:** iteración 111, mantenimiento · QA: pendiente 15 (No hay un escenario de la auditoría con 1.000 ramas a 320 px en 3D: la comproba…)

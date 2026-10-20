@@ -367,6 +367,15 @@
       <p class="help" data-i18n-html="settings.bitbucketTokenHelp">For private repos on bitbucket.org: a repository or workspace access token with the <code>repository</code> scope. Public repos don't need one.</p>
       <p class="help" id="bitbucket-token-where" data-i18n="settings.bitbucketTokenWhere">The token is stored only in this browser and is sent only to bitbucket.org.</p>
     </div>
+    <div class="field" id="bbdc-token-field" hidden>
+      <label for="bbdc-token-input"><span data-i18n="settings.bbdcToken">Token for your Bitbucket server</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <div class="field-row">
+        <input id="bbdc-token-input" type="password" autocomplete="off" spellcheck="false">
+        <button type="button" class="btn btn-ghost" id="bbdc-token-toggle">Show</button>
+      </div>
+      <p class="help" data-i18n-html="settings.bbdcTokenHelp">For your own Bitbucket Data Center or Server: a personal or HTTP access token with read permission on the repositories. Most servers don't let anyone read without signing in.</p>
+      <p class="help" id="bbdc-token-where"></p>
+    </div>
     <fieldset class="field hooks" id="hooks-box" hidden>
       <legend data-i18n="settings.hooks">Notices to Slack, Discord and Teams</legend>
       <p class="help" data-i18n="settings.hooksHelp">Each webhook gets the events you tick: releases, merges to the default branch, CI turning red and force-pushes on it. The URL is a secret: it is stored encrypted on this computer and is sent only to its own service.</p>

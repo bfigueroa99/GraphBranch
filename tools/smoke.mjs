@@ -1711,6 +1711,11 @@ console.log('Una organización o un usuario entero');
     if (/undefined|NaN|digest\./.test(md)) throw new Error('texto sin resolver en el resumen de la organización: ' + md.slice(0, 120));
     const [dl] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#digest-org-save')]);
     if (!/^graphbranch-acme-semana-.*\.md$/.test(dl.suggestedFilename())) throw new Error('nombre del resumen de la organización: ' + dl.suggestedFilename());
+    const [orgPng] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#digest-org-png')]);
+    if (!/^graphbranch-acme-semana-.*\.png$/.test(orgPng.suggestedFilename())) throw new Error('nombre de la imagen de la organización: ' + orgPng.suggestedFilename());
+    const orgPngPath = await orgPng.path();
+    const orgHead = orgPngPath ? readFileSync(orgPngPath).subarray(0, 8).toString('hex') : '';
+    if (orgHead !== '89504e470d0a1a0a') throw new Error('la imagen de la organización no es un PNG: ' + orgHead);
     await page.keyboard.press('Escape');
   });
 

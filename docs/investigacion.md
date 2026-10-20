@@ -229,7 +229,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Salud del repo en la URL | Análisis | 1×2/1 | 2,0 | (ítem 12) | ítem 66 |
 | Búsqueda por fecha | Análisis | 1×2/2 | 1,0 | (ítem 19) | ítem 67 |
 | Práctica: stash y reset | Público | 2×2/2 | 2,0 | git-sim | ítem 68 |
-| Resumen de la organización como imagen | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 69 |
+| Resumen de la organización como imagen | Salidas | 1×2/2 | 1,0 | GitHub Pulse | hecho en #144 |
 | Los forks en el grafo, segunda entrega | Datos | 1×2/2 | 1,0 | Red de ramas de GitHub | ítem 70 |
 | Vista de texto: filtro por ruta en la URL | Público | 1×2/1 | 2,0 | (ítem 33) | ítem 71 |
 | Resumen de la semana: pull requests abiertos | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 72 |
@@ -238,6 +238,13 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Los forks en el grafo, tercera entrega | Datos | 1×2/2 | 1,0 | Red de ramas de GitHub | ítem 75 |
 | Constelación ordenada por actividad | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 76 |
 | Práctica: branch -d y merge --abort | Público | 2×2/2 | 2,0 | git-sim | ítem 77 |
+| Vista de texto: abrirla desde la URL | Público | 1×2/1 | 2,0 | (ítem 33) | ítem 78 |
+| Resumen de la semana: issues cerrados | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 79 |
+| Vista de texto: releases | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 80 |
+| Práctica: switch y restore | Público | 2×2/2 | 2,0 | git-sim | ítem 81 |
+| Capa para streaming, quinta entrega | Plataformas | 1×2/1 | 2,0 | Capas para OBS | ítem 82 |
+| Salud del repo: tendencia de merges | Análisis | 1×2/2 | 1,0 | DORA | ítem 83 |
+| Constelación ordenada, en la URL | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 84 |
 
 ## Públicos
 

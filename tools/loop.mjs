@@ -3,7 +3,7 @@
    de la iteración en origin y mide la web publicada. Solo módulos de Node y git, sin dependencias.
 
      node tools/loop.mjs --siguiente [--json]     qué iteración toca: número, tipo, eje, ítem y por qué
-     node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill y el prompt (sin red)
+     node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill, el prompt y la pasada de Replica (sin red)
      node tools/loop.mjs --reclamar [--relevo] [--sin-red] [--horas 6] [--repo <dir>]
                                                   reclama la rama loop/N en origin: el push es el candado
      node tools/loop.mjs --publicado              compara la web de GitHub Pages con origin/master
@@ -43,6 +43,17 @@ export const PRIORIDADES = ['Alta', 'Media', 'Baja'];
 export const MARCA_PROTOCOLO = 'Cambio de maquinaria: protocolo de QA';
 /** Días que vale la investigación de mercado: pasados, reponer la hoja de ruta empieza por investigar. */
 export const INVESTIGACION_DIAS = 30;
+/** Días que vale la pasada de Replica (replica/recon.md y replica/features.csv, la paridad con la app de
+    referencia): pasados, la próxima reposición de la hoja de ruta la rehace. */
+export const REPLICA_DIAS = 30;
+/** Las columnas de replica/features.csv que lee parity.py (.claude/skills/replica-diff/). */
+export const COLUMNAS_REPLICA = ['feature', 'area', 'priority', 'original', 'clone', 'notes'];
+/** Tope de competidores de la arena en el loop (.claude/skills/arena/bracket.py): con 8 son 3 rondas y 43
+    llamadas de subagente; la skill trae 100 por defecto (595) y --quick (16, 91), que el loop no usa. */
+export const ARENA_MAX = 8;
+/** La entrada de la bitácora desde la que cada iteración lleva «- Arena:» (lo que corrió, o por qué no
+    aplica). Por posición, como MARCA_PROTOCOLO. */
+export const MARCA_ARENA = 'Cambio de maquinaria: la arena';
 /** Los ítems de la hoja de ruta hasta este son anteriores a docs/investigacion.md; los que vienen después
     citan su fuente («[inv. AAAA-MM-DD]») o, si son una entrega más de otro, «[parte del ítem K]». */
 export const HOJA_SIN_FUENTE = 26;
@@ -53,7 +64,7 @@ export const CRON_H = 4;
 export const DESDE_DIRECTIVA = '2026-10-10T04:32:04Z';
 
 const USO = `node tools/loop.mjs --siguiente [--json]     qué iteración toca: número, tipo, eje, ítem y por qué
-node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill y el prompt (sin red)
+node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill, el prompt y la pasada de Replica (sin red)
 node tools/loop.mjs --reclamar [--relevo] [--sin-red] [--horas ${RECLAMO_H}] [--repo <dir>]
                                              reclama la rama loop/N en origin: el push es el candado
 node tools/loop.mjs --publicado              compara la web de GitHub Pages con origin/master
@@ -78,6 +89,7 @@ const RE_ITERACION = new RegExp(`^Iteración (\\d+)(?: · (?:Expansión · (${EJ
 const RE_VALIDADO = /^- Validado:\s*/;
 const RE_SIGUIENTE = /^- \*\*Siguiente:\*\*\s*/;
 const RE_QA = /^- QA:\s*\S/;
+const RE_ARENA = /^- Arena:\s*\S/;
 const RE_DECLARADO = new RegExp(`iteración (\\d+), (?:de )?\\*{0,2}(expansión|mantenimiento)\\*{0,2}(?: · (${SUB}))?[:.,]?`, 'i');
 // el ítem declarado: el primer «ítem N», «pendiente N» o «auditoría» tras el tipo (un título copiado
 // puede citar otro número más adelante); las entradas viejas («el primer ítem sin hacer es el 6», «toca
@@ -309,6 +321,77 @@ function git(dir, args, env) {
 const primera = (s) => (s || '').split('\n').find((l) => l.trim()) || 'sin detalle';
 const leer = (ruta) => (existsSync(ruta) ? readFileSync(ruta, 'utf8') : null);
 
+/** Las filas de un CSV como el que escribe Replica: comillas dobles (con "" dentro), comas y saltos de
+    línea entre comillas, BOM y CRLF. Sin las filas en blanco. */
+export function parseCsv(texto) {
+  const t = texto.replace(/^﻿/, '');
+  const filas = [];
+  let fila = [];
+  let campo = '';
+  let comillas = false;
+  for (let i = 0; i < t.length; i++) {
+    const ch = t[i];
+    if (comillas) {
+      if (ch !== '"') campo += ch;
+      else if (t[i + 1] === '"') campo += t[i++];
+      else comillas = false;
+    } else if (ch === '"') comillas = true;
+    else if (ch === ',') {
+      fila.push(campo);
+      campo = '';
+    } else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && t[i + 1] === '\n') i++;
+      fila.push(campo);
+      filas.push(fila);
+      fila = [];
+      campo = '';
+    } else campo += ch;
+  }
+  if (campo || fila.length) filas.push([...fila, campo]);
+  return filas.filter((f) => f.some((c) => c.trim()));
+}
+
+/** replica/features.csv con las reglas de parity.py, pero estrictas: lo que parity.py cuenta como «no» o
+    como «could» sin decirlo es aquí un error, para que la paridad mida lo que dice. Devuelve los errores,
+    las filas y los must de la referencia que GraphBranch ya hace (los `skip` no cuentan, como en parity.py). */
+export function matrizReplica(texto) {
+  const filas = parseCsv(texto);
+  const cab = (filas[0] ?? []).map((c) => c.trim().toLowerCase());
+  const faltan = COLUMNAS_REPLICA.filter((c) => !cab.includes(c));
+  if (!filas.length) return { errores: ['replica/features.csv está vacío'], filas: 0, must: 0, mustHechos: 0 };
+  if (faltan.length) return { errores: [`replica/features.csv sin las columnas ${faltan.join(', ')} (las de parity.py: ${COLUMNAS_REPLICA.join(', ')})`], filas: 0, must: 0, mustHechos: 0 };
+  const errores = [];
+  let n = 0;
+  let must = 0;
+  let mustHechos = 0;
+  filas.slice(1).forEach((f, i) => {
+    const v = (c) => (f[cab.indexOf(c)] ?? '').trim();
+    if (!v('feature')) return;
+    n++;
+    const fila = i + 2;
+    const prio = v('priority').toLowerCase();
+    const original = v('original').toLowerCase() || 'yes';
+    const clone = v('clone').toLowerCase();
+    if (!['must', 'should', 'could'].includes(prio)) errores.push(`fila ${fila}: priority «${v('priority')}» no es must, should ni could`);
+    if (!['yes', 'no'].includes(original)) errores.push(`fila ${fila}: original «${v('original')}» no es yes ni no`);
+    if (!['yes', 'partial', 'no', 'skip'].includes(clone)) errores.push(`fila ${fila}: clone «${v('clone')}» no es yes, partial, no ni skip`);
+    else if ((clone === 'skip' || clone === 'partial') && !v('notes')) errores.push(`fila ${fila}: «${clone}» sin nota (${clone === 'skip' ? 'el motivo' : 'qué falta'})`);
+    if (prio === 'must' && original === 'yes' && clone !== 'skip') {
+      must++;
+      if (clone === 'yes') mustHechos++;
+    }
+  });
+  if (!n) errores.push('replica/features.csv sin filas');
+  const MAX = 5;
+  const cortos = errores.length > MAX ? [...errores.slice(0, MAX), `y ${errores.length - MAX} más`] : errores;
+  return { errores: cortos.map((x) => (x.startsWith('fila') ? `replica/features.csv, ${x}` : x)), filas: n, must, mustHechos };
+}
+
+/** La app de referencia de Replica: «- **App de referencia:** Nombre (URL)…» en IMPROVEMENTS.md. */
+export function appReferencia(texto) {
+  return /^- \*\*App de referencia:\*\*\s*([^(·\n]+?)\s*(?:\(|·|$)/m.exec(texto)?.[1] ?? null;
+}
+
 /** Las entradas de docs/investigacion.md: «### AAAA-MM-DD · Nombre» bajo «## Fuentes», con su URL y su «**Implica:**». */
 export function parseInvestigacion(texto) {
   const out = [];
@@ -333,8 +416,12 @@ export function parseInvestigacion(texto) {
 
 /** Las reglas R1–R12. `log` (títulos de commits), `skill`, `prompt`, `settings`, `investigacion` y `auditBase`
     (textos) y `hoy` se inyectan en las pruebas; si no, se leen del repo y del reloj. */
-export function check(texto, { log, skill, prompt, settings, investigacion, auditBase, hoy = new Date(), dir = root } = {}) {
+export function check(texto, { log, skill, prompt, settings, investigacion, auditBase, recon, features, hoy = new Date(), dir = root } = {}) {
   const doc = parse(texto);
+  // la pasada de Replica: la leen R10 (los ítems que la citan) y R13
+  const reconTxt = recon ?? leer(join(dir, 'replica', 'recon.md'));
+  const featuresTxt = features ?? leer(join(dir, 'replica', 'features.csv'));
+  const replicaFecha = /^(?:Fecha|Date):\s*(\d{4}-\d{2}-\d{2})\b/m.exec(reconTxt ?? '')?.[1] ?? null;
   const lineas = [];
   const regla = (nombre, errores, avisos, ok) => {
     const nivel = errores.length ? 'ERROR' : avisos.length ? 'aviso' : 'ok';
@@ -403,6 +490,8 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
     const its = doc.bitacora.filter((x) => x.n !== null);
     const marca = doc.bitacora.findIndex((x) => x.n === null && x.titulo.startsWith(MARCA_PROTOCOLO));
     const conProtocolo = new Set(marca < 0 ? [] : doc.bitacora.slice(marca + 1).filter((x) => x.n !== null));
+    const marcaArena = doc.bitacora.findIndex((x) => x.n === null && x.titulo.startsWith(MARCA_ARENA));
+    const conArena = new Set(marcaArena < 0 ? [] : doc.bitacora.slice(marcaArena + 1).filter((x) => x.n !== null));
     const vistos = new Set();
     for (const it of its) {
       if (vistos.has(it.n)) e.push(`iteración ${it.n} repetida (línea ${it.linea})`);
@@ -411,6 +500,14 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
       if (!it.tipo) e.push(`iteración ${it.n} sin tipo en la cabecera (Expansión · <Eje> o Mantenimiento)`);
       else if (it.n % 4 === 3 && it.tipo !== 'Mantenimiento') e.push(`iteración ${it.n} tiene que ser de mantenimiento (${it.n} mod 4 = 3)`);
       else if (it.n % 4 !== 3 && it.tipo === 'Mantenimiento' && !it.cuerpo.includes('**Alta**')) e.push(`iteración ${it.n} es de mantenimiento sin un pendiente **Alta** (${it.n} mod 4 = ${it.n % 4})`);
+      // la arena: lo que corrió (N, seed y rondas) o por qué no aplicaba
+      if (conArena.has(it)) {
+        const arena = it.cuerpo.split('\n').find((l) => RE_ARENA.test(l));
+        if (!arena) e.push(`iteración ${it.n} sin la viñeta «- Arena:» (N, seed, rondas, carta y puntaje del ganador, o «no aplica: <por qué>»)`);
+        else if (/^- Arena:\s*no aplica\b/i.test(arena)) {
+          if (!/^- Arena:\s*no aplica\s*[:,(—–-]\s*\S.{9,}/i.test(arena)) e.push(`iteración ${it.n}: «- Arena: no aplica» sin el porqué`);
+        } else if (!/\bN \d+\b/.test(arena) || !/\bseed \d+\b/.test(arena) || !/\b\d+ rondas?\b/.test(arena)) e.push(`iteración ${it.n}: «- Arena:» sin N, seed o rondas («N 4, seed 123, 2 rondas; ganador …»)`);
+      }
       // el protocolo de QA: cada entrada dice qué se revisó de su propio cambio
       if (!conProtocolo.has(it)) continue;
       if (!it.cuerpo.split('\n').some((l) => RE_QA.test(l))) e.push(`iteración ${it.n} sin la viñeta «- QA:» (Protocolo de QA)`);
@@ -423,7 +520,7 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
     const max = Math.max(0, ...vistos);
     for (let k = 1; k <= max; k++) if (!vistos.has(k)) a.push(`falta la iteración ${k}`);
     if (!its.length) e.push('no hay ninguna «Iteración N» en la bitácora');
-    regla('R5', e, a, `${its.length} iteraciones, 1..${max}, con tipo desde la 20${marca < 0 ? '' : `; ${conProtocolo.size} con el protocolo de QA`}`);
+    regla('R5', e, a, `${its.length} iteraciones, 1..${max}, con tipo desde la 20${marca < 0 ? '' : `; ${conProtocolo.size} con el protocolo de QA`}${marcaArena < 0 ? '' : `; ${conArena.size} con «- Arena:»`}`);
   }
   // R6: la última entrada tiene Validado y un Siguiente que coincide con --siguiente
   {
@@ -490,6 +587,7 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
       const flags = new Set();
       const rutas = new Set();
       const comandos = new Set();
+      const arena = [];
       let enBloque = false;
       for (const linea of skillTxt.split('\n')) {
         // flags que siguen a loop.mjs en la misma línea (hasta el fin del comando)
@@ -509,6 +607,7 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
           continue;
         }
         if (!enBloque) continue;
+        if (/\bbracket\.py\b/.test(linea)) arena.push(linea.trim());
         for (const seg of linea.split(/&&|\|\||;|\|/)) {
           const toks = seg.trim().split(/\s+/).filter(Boolean);
           while (toks.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(toks[0])) toks.shift();
@@ -520,6 +619,16 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
       }
       for (const f of flags) e.push(`SKILL.md nombra ${f}, que loop.mjs no tiene`);
       for (const r of rutas) e.push(`SKILL.md nombra ${r}, que no existe`);
+      // la arena: ruta escrita entera (las variables de la skill solo se expanden al invocarla) y de 1 a
+      // ARENA_MAX competidores, nunca los 100 por defecto ni --quick
+      for (const l of arena) {
+        const cmd = /\bbracket\.py\s+([a-z]+)/.exec(l)?.[1];
+        const n = /--agents[ =](\d+)/.exec(l)?.[1];
+        if (/\$\{?(?:CLAUDE_SKILL_DIR|ARGUMENTS)\b/.test(l)) e.push(`SKILL.md corre la arena con una variable de la skill («${corta(l, 50)}»): fuera de /arena no se expande; va python3 .claude/skills/arena/bracket.py`);
+        if (/--quick\b/.test(l)) e.push(`SKILL.md corre la arena con --quick (16 competidores, 91 llamadas): en el loop, --agents de 1 a ${ARENA_MAX}`);
+        else if ((cmd === 'plan' || cmd === 'init') && !n) e.push(`SKILL.md corre «bracket.py ${cmd}» sin --agents: por defecto son 100 competidores (595 llamadas)`);
+        if (n && (+n < 1 || +n > ARENA_MAX)) e.push(`SKILL.md corre la arena con --agents ${n}: en el loop, de 1 a ${ARENA_MAX}`);
+      }
       // cada subtipo que puede elegir --siguiente tiene su protocolo en la skill
       for (const st of SUBTIPOS) if (!new RegExp(`^#{3,4} ${st}\\b`, 'm').test(skillTxt)) e.push(`SKILL.md sin el protocolo del subtipo ${st} («#### ${st}»)`);
       let allow = [];
@@ -542,7 +651,7 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
       ];
       for (const [re, que] of podridos) if (re.test(promptTxt)) e.push(`PROMPT.md contiene ${que} (${re.source}): eso se pudre, va en la skill`);
     }
-    regla('R8', e, a, 'la skill nombra flags, rutas y comandos que existen y están permitidos, y tiene el protocolo de cada subtipo; el prompt no lleva hechos que se pudren');
+    regla('R8', e, a, `la skill nombra flags, rutas y comandos que existen y están permitidos, tiene el protocolo de cada subtipo y corre la arena con su ruta y de 1 a ${ARENA_MAX} competidores; el prompt no lleva hechos que se pudren`);
   }
   // R9: sin flujos de GitHub Actions (CLAUDE.md: no hay CI)
   {
@@ -577,10 +686,15 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
     for (const it of doc.hoja.filter((i) => !i.hecho && !i.puntaje)) e.push(`ítem ${it.n} sin puntaje «· a×i/e.» tras el eje (alcance × impacto / esfuerzo, de 1 a 3)`);
     for (const it of doc.hoja.filter((i) => i.n > HOJA_SIN_FUENTE)) {
       const f = /\[inv\. (\d{4}-\d{2}-\d{2})\]/.exec(it.texto);
+      const rep = /\[replica (\d{4}-\d{2}-\d{2})\]/.exec(it.texto);
       const parte = /\[parte del ítem (\d+)\]/.exec(it.texto);
       if (parte) {
         if (!doc.hoja.some((x) => x.n === +parte[1] && x.n !== it.n)) e.push(`ítem ${it.n} dice [parte del ítem ${parte[1]}] y ese ítem no existe`);
-      } else if (!f) e.push(`ítem ${it.n} sin «[inv. AAAA-MM-DD]» (o «[parte del ítem K]»): los ítems después del ${HOJA_SIN_FUENTE} salen de docs/investigacion.md`);
+      } else if (rep && !f) {
+        // replica/recon.md se rehace en cada pasada: una cita vale si no es posterior a la pasada vigente
+        if (!replicaFecha) e.push(`ítem ${it.n} cita [replica ${rep[1]}] y no hay pasada de Replica (replica/recon.md con «Fecha: AAAA-MM-DD»)`);
+        else if (rep[1] > replicaFecha) e.push(`ítem ${it.n} cita [replica ${rep[1]}] y la pasada de Replica es del ${replicaFecha}`);
+      } else if (!f) e.push(`ítem ${it.n} sin «[inv. AAAA-MM-DD]» (o «[replica AAAA-MM-DD]» o «[parte del ítem K]»): los ítems después del ${HOJA_SIN_FUENTE} salen de docs/investigacion.md o de la paridad con la app de referencia (replica/)`);
       else if (inv != null && !fechas.has(f[1])) e.push(`ítem ${it.n} cita [inv. ${f[1]}] y docs/investigacion.md no tiene fuentes de esa fecha`);
     }
     regla('R10', e, a, `hoja de ruta con puntaje; ${ok}`);
@@ -623,6 +737,35 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
     for (const x of b) if (!/\(desde \d{4}-\d{2}-\d{2}\)/.test(x.texto)) e.push(`Para Benjamin ${x.n} (línea ${x.linea}) sin «(desde AAAA-MM-DD)»`);
     if (b.length > PARA_BENJAMIN_MAX) a.push(`Para Benjamin tiene ${b.length} pedidos (más de ${PARA_BENJAMIN_MAX}): juntar o quitar los resueltos`);
     regla('R12', e, a, `Para Benjamin: ${b.length} pedido(s), fechados`);
+  }
+  // R13: la paridad con la app de referencia (Replica): la pasada existe, es de esa app, no venció y su
+  // matriz se puede medir. Sin pasada es un aviso: la hace la próxima reposición de la hoja de ruta.
+  {
+    const e = [];
+    const a = [];
+    const ref = appReferencia(texto);
+    let ok = 'Replica';
+    if (!ref) a.push('IMPROVEMENTS.md sin «- **App de referencia:** …» (sección Replica de la directiva): la pasada no sabe qué app mapear');
+    if (reconTxt == null && featuresTxt == null) a.push('sin pasada de Replica (replica/recon.md y replica/features.csv): la próxima reposición de la hoja de ruta empieza por ella');
+    else {
+      if (reconTxt == null) e.push('falta replica/recon.md (el mapa de la app de referencia)');
+      else {
+        const titulo = (/^# (.+)$/m.exec(reconTxt)?.[1] ?? '').trim();
+        if (!replicaFecha) e.push('replica/recon.md sin «Fecha: AAAA-MM-DD» (o «Date:»)');
+        else {
+          const dias = Math.floor((hoy - Date.parse(`${replicaFecha}T00:00:00Z`)) / 864e5);
+          if (dias > REPLICA_DIAS) a.push(`la pasada de Replica tiene ${dias} días (más de ${REPLICA_DIAS}): la próxima reposición de la hoja de ruta la rehace`);
+        }
+        if (ref && !titulo.toLowerCase().includes(ref.toLowerCase())) a.push(`replica/recon.md es de «${corta(titulo, 50)}» y la app de referencia es ${ref}: la próxima reposición rehace la pasada`);
+      }
+      if (featuresTxt == null) e.push('falta replica/features.csv (la matriz que mide parity.py)');
+      else {
+        const m = matrizReplica(featuresTxt);
+        e.push(...m.errores);
+        ok = `Replica: ${ref ?? 'sin app de referencia'}, pasada del ${replicaFecha} (${m.filas} filas; must hechos: ${m.mustHechos} de ${m.must})`;
+      }
+    }
+    regla('R13', e, a, ok);
   }
 
   const cuenta = (nivel) => lineas.filter((l) => l.nivel === nivel).length;

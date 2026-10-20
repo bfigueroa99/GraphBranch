@@ -16,6 +16,8 @@ vm.runInContext(readFileSync(join(root, 'js', 'search.js'), 'utf8'), ctx, { file
 const S = ctx.window.GB.search;
 const plain = (x) => JSON.parse(JSON.stringify(x)); // fuera del contexto de vm, para comparar con deepEqual
 
+const DAYMS = 86400000;
+
 function repo() {
   const c = (sha, message, who, date, parents = []) => [sha, { sha, parents, message, date, author: who }];
   const ana = { name: 'Ana Pérez', login: 'ana' };
@@ -48,6 +50,24 @@ test('busca por autor, con @ o sin él, por nombre o por login', () => {
   assert.equal(S.find(repo(), '@pérez').total, 2);
   assert.equal(S.find(repo(), '@ana login').total, 1);
   assert.equal(S.find(repo(), 'luis').total, 1);
+});
+
+test('desde: y hasta: acotan por día UTC, incluidos ambos, junto al texto; una fecha falsa es una palabra más', () => {
+  const day = (d) => Date.UTC(2026, 8, d);
+  const r = repo();
+  r.commits.get('a1b2c3d').date = day(1) + 5000;
+  r.commits.get('e4f5a6b').date = day(14) + DAYMS - 1; // último milisegundo del 14
+  r.commits.get('99aa88b').date = day(20);
+  r.commits.get('7c7c7c7').date = 0; // sin fecha
+  const shas = (q) => plain(S.find(r, q)).results.map((x) => x.sha).sort();
+  assert.deepEqual(shas('desde:2026-09-01 hasta:2026-09-14'), ['a1b2c3d', 'e4f5a6b']);
+  assert.deepEqual(shas('desde:2026-09-02'), ['99aa88b', 'e4f5a6b']);
+  assert.deepEqual(shas('hasta:2026-09-01'), ['a1b2c3d']);
+  assert.deepEqual(shas('desde:2026-09-01 hasta:2026-09-14 login'), ['a1b2c3d', 'e4f5a6b']);
+  assert.deepEqual(shas('desde:2026-09-02 login'), ['e4f5a6b']);
+  assert.deepEqual(shas('HASTA:2026-09-14 @ana'), ['a1b2c3d']);
+  assert.deepEqual(shas('desde:2026-02-31'), [], 'una fecha que no existe se busca como texto');
+  assert.deepEqual(shas('desde:hoy'), []);
 });
 
 test('el filtro por autor usa la clave (login o nombre) y se combina con el texto', () => {

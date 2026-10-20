@@ -8,6 +8,7 @@
   const DAY = 864e5;
   const TOP = 5; // personas que se listan
   const LIST = 10; // filas de PRs y de releases
+  const ORG_IMAGE_REPOS = 8; // repos que caben en la imagen del resumen de una organización
   const ORG_REPOS = 20; // repos que salen en el resumen de una organización
 
   const at = (x) => (typeof x === 'number' ? x : Date.parse(x) || 0);
@@ -148,6 +149,27 @@
     return L;
   }
 
+  /** Las líneas de la imagen del resumen de la organización: los totales y, por repo con actividad, su
+      nombre y sus cifras (hasta ORG_IMAGE_REPOS repos; el resto se cuenta en una última fila). */
+  function imageLinesOrg(o, owner, t, fmtDate = (ms) => new Date(ms).toISOString().slice(0, 10), none = '—') {
+    const flat = (s) => String(s ?? '').replace(/\s+/g, ' ').trim();
+    const cut = (s) => (s.length > 70 ? s.slice(0, 69) + '…' : s);
+    const L = [{ text: cut(flat(t.head.replace('{repo}', owner))), kind: 'title' }, { text: `${fmtDate(o.since)} – ${fmtDate(o.now)}`, kind: 'sub' }];
+    L.push({ text: t.commits.replace('{n}', o.commits), kind: 'head' });
+    L.push({ text: `${t.merged}: ${o.merged}`, kind: 'row' }, { text: `${t.releases}: ${o.releases}`, kind: 'row' });
+    if (!o.rows.length) L.push({ text: none, kind: 'row' });
+    for (const { repo, d } of o.rows.slice(0, ORG_IMAGE_REPOS)) {
+      L.push({ text: cut(flat(repo)), kind: 'head' });
+      const parts = [t.commits.replace('{n}', d.commits)];
+      if (d.merged.total) parts.push(`${t.merged}: ${d.merged.rows.map((r) => (r.number ? `#${r.number}` : flat(r.title))).join(', ')}`);
+      if (d.releases.total) parts.push(`${t.releases}: ${d.releases.rows.map((r) => flat(r.title)).join(', ')}`);
+      L.push({ text: cut(parts.join(' · ')), kind: 'row' });
+    }
+    const more = o.hidden + Math.max(0, o.rows.length - ORG_IMAGE_REPOS);
+    if (more) L.push({ text: `… +${more}`, kind: 'row' });
+    return L;
+  }
+
   const SIZE = { title: 34, sub: 20, head: 24, row: 20 };
   const GAP = { title: 14, sub: 22, head: 10, row: 6 };
   const W = 1200;
@@ -156,7 +178,15 @@
   /** Dibuja el resumen en un canvas nuevo y lo devuelve. `colors`: { bg, fg, dim, accent } ya resueltos
       para el canvas. Con el texto escrito de derecha a izquierda, la imagen se alinea a la derecha. */
   function toCanvas(doc, d, repo, t, fmtDate, none, colors, rtl = false) {
-    const lines = imageLines(d, repo, t, fmtDate, none);
+    return drawLines(doc, imageLines(d, repo, t, fmtDate, none), colors, rtl);
+  }
+
+  /** Lo mismo para el resumen de la organización. */
+  function toCanvasOrg(doc, o, owner, t, fmtDate, none, colors, rtl = false) {
+    return drawLines(doc, imageLinesOrg(o, owner, t, fmtDate, none), colors, rtl);
+  }
+
+  function drawLines(doc, lines, colors, rtl) {
     const height = PAD * 2 + lines.reduce((n, l) => n + SIZE[l.kind] + GAP[l.kind] + (l.kind === 'head' ? 8 : 0), 0);
     const canvas = doc.createElement('canvas');
     canvas.width = W;
@@ -181,5 +211,5 @@
     return canvas;
   }
 
-  GB.digest = { compute, toMarkdown, computeOrg, toMarkdownOrg, imageLines, toCanvas };
+  GB.digest = { compute, toMarkdown, computeOrg, toMarkdownOrg, imageLines, imageLinesOrg, toCanvas, toCanvasOrg };
 })(window.GB);

@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} } });
 vm.runInContext(readFileSync(join(root, 'js', 'digest.js'), 'utf8'), ctx, { filename: 'digest.js' });
-const { compute, toMarkdown, computeOrg, toMarkdownOrg, imageLines, toCanvas } = ctx.window.GB.digest;
+const { compute, toMarkdown, computeOrg, toMarkdownOrg, imageLines, imageLinesOrg, toCanvas, toCanvasOrg } = ctx.window.GB.digest;
 
 const DAY = 864e5;
 const NOW = Date.UTC(2026, 9, 14, 12);
@@ -157,4 +157,24 @@ test('sin tags en la semana, el resumen no trae la sección', () => {
   const d = compute(repo(), acts, NOW);
   assert.equal(d.tags.total, 0);
   assert.doesNotMatch(toMarkdown(d, 'a/b', { head: 'S', commits: 'C {n}', merged: 'M', releases: 'R', tags: 'Tags', people: 'P', branch: 'B' }), /Tags/);
+});
+
+test('la imagen de la organización: totales, un bloque por repo, recortada a 8 y pintada en el canvas', () => {
+  const many = Array.from({ length: 10 }, (_, i) => ({ repo: `o/r${i}`, data: { commits: new Map([c('a' + i, 1, [], 'x')]), branches: new Map() }, acts: [] }));
+  const o = computeOrg(many, NOW);
+  const t = { head: 'Semana · {repo}', commits: '{n} commits', merged: 'PRs', releases: 'Releases', people: 'P', branch: 'B' };
+  const lines = imageLinesOrg(o, 'o', t);
+  assert.equal(lines[0].text, 'Semana · o');
+  assert.equal(lines.filter((l) => l.kind === 'head').length, 1 + 8);
+  assert.equal(lines.at(-1).text, '… +2');
+  assert.ok(lines.every((l) => l.text.length <= 71));
+  assert.equal(imageLinesOrg(computeOrg([], NOW), 'o', t, undefined, 'nada').at(-1).text, 'nada');
+
+  const calls = [];
+  const g = { fillRect: () => {}, fillText: (...a) => calls.push(a) };
+  const canvas = { getContext: () => g };
+  toCanvasOrg({ createElement: () => canvas }, o, 'o', t, undefined, '—', { bg: '#000', fg: '#fff', dim: '#888', accent: '#0f0' }, true);
+  assert.equal(canvas.width, 1200);
+  assert.equal(g.textAlign, 'right');
+  assert.equal(calls.length, lines.length);
 });

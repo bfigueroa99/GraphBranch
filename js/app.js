@@ -1536,11 +1536,11 @@
     const o = orgTabs();
     if (!o) return '';
     const title = t('digest.org', { owner: o.owner });
-    return `<section class="hl-sec" id="hl-digest-org"><h3>${U.esc(title)}</h3><p class="hl-none">${U.esc(t('digest.help'))}</p><pre class="hl-digest" id="digest-org-md" tabindex="0" aria-label="${U.esc(title)}"></pre><div class="sr-row"><button type="button" class="btn btn-ghost" id="digest-org-copy">${U.esc(t('digest.copy'))}</button><button type="button" class="btn btn-ghost" id="digest-org-save">${U.esc(t('digest.save'))}</button></div><div id="digest-org-out" role="status" aria-live="polite"></div></section>`;
+    return `<section class="hl-sec" id="hl-digest-org"><h3>${U.esc(title)}</h3><p class="hl-none">${U.esc(t('digest.help'))}</p><pre class="hl-digest" id="digest-org-md" tabindex="0" aria-label="${U.esc(title)}"></pre><div class="sr-row"><button type="button" class="btn btn-ghost" id="digest-org-copy">${U.esc(t('digest.copy'))}</button><button type="button" class="btn btn-ghost" id="digest-org-save">${U.esc(t('digest.save'))}</button><button type="button" class="btn btn-ghost" id="digest-org-png">${U.esc(t('digest.png'))}</button></div><div id="digest-org-out" role="status" aria-live="polite"></div></section>`;
   }
 
   /** Copiar y guardar un resumen como Markdown o como imagen: `id` es el prefijo de sus elementos y
-      `image()` arma el canvas de la imagen (solo el resumen de un repo). */
+      `image()` arma el canvas de la imagen. */
   function wireDigest(id, text, name, image) {
     const out = $(`#${id}-out`);
     $(`#${id}-md`).textContent = text;
@@ -1587,7 +1587,8 @@
     if (!o) return;
     const entries = o.tabs.map((x) => ({ repo: `${x.source.owner}/${x.source.name}`, data: x.source.view ? x.source.view() : x.source.data, acts: feed.items.filter((a) => a.repo === x.key) }));
     const d = GB.digest.computeOrg(entries, Date.now(), 7, GB.i18n.text);
-    wireDigest('digest-org', GB.digest.toMarkdownOrg(d, o.owner, digestLabels(), GB.i18n.fmtDate, t('health.none')), o.owner);
+    wireDigest('digest-org', GB.digest.toMarkdownOrg(d, o.owner, digestLabels(), GB.i18n.fmtDate, t('health.none')), o.owner, () =>
+      GB.digest.toCanvasOrg(document, d, o.owner, digestLabels(), GB.i18n.fmtDate, t('health.none'), DIGEST_COLORS, getComputedStyle(document.documentElement).direction === 'rtl'));
   }
 
   function closeHealth() {

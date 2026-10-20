@@ -2882,7 +2882,7 @@ console.log('Salud del repo directa (?health=1)');
     const n = await page.evaluate(() => document.querySelectorAll('#health-body .hl-sec').length);
     if (!n) throw new Error('el panel de salud se abrió vacío');
     await page.click('#health-close');
-    await page.waitForTimeout(300);
+    await page.waitForFunction(() => !document.querySelector('#health').open && !location.search.includes('health='), null, { timeout: T(5000) }).catch(() => {});
     if (await page.evaluate(() => document.querySelector('#health').open)) throw new Error('el panel no se cierra');
     if ((await page.evaluate(() => location.search)).includes('health=')) throw new Error('cerrar el panel deja health= en la URL');
   });

@@ -2285,5 +2285,6 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: filas tocadas: lupa (prueba y smoke de siempre); auditoría: no cambia ningún control ni texto.
 - Reclamo: loop/109, sin colisión
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso y 2 pruebas rojas). `git push origin --delete loop/87` falló por el proxy (desconexión), como en la 107.
-- Validado: PENDIENTE
+- Intermitente: el paso del smoke «Salud del repo directa» (`cerrar el panel deja health= en la URL`) falló 2 de 3 corridas de `npm run check` y 0 de 5 sueltas; la causa era una espera fija de 300 ms tras cerrar el panel. Ahora espera la condición (`waitForFunction`).
+- Validado: 351 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 110, expansión: ítem 69 (Resumen de la organización como imagen, Salidas)

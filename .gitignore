@@ -5,3 +5,6 @@ playwright-report/
 vscode/app/
 vscode/LICENSE
 vscode/*.vsix
+
+# capturas de la app de referencia que tome Replica: nunca se versionan
+replica/screens/

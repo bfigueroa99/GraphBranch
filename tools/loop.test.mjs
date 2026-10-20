@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Pruebas de tools/loop.mjs: la elección de la iteración (--siguiente, con la rotación de los subtipos
-   de mantenimiento), las reglas de --check (R1 a R12), el reclamo de la rama (--reclamar, contra un
+   de mantenimiento), las reglas de --check (R1 a R13), el reclamo de la rama (--reclamar, contra un
    repositorio bare local), la salud del loop (--salud) y --publicado (con un fetch simulado). Ninguna
    corre node --test, npm run check, el smoke ni Playwright.
 
@@ -13,7 +13,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { AUDITABLES, EJES, FLAGS, HOJA_SIN_FUENTE, LoopError, MARCA_PROTOCOLO, PARA_BENJAMIN_MAX, SUBTIPOS, check, diagnostico, necesidades, parse, parseInvestigacion, publicado, reclamar as reclamarEnProceso, siguiente } from './loop.mjs';
+import { AUDITABLES, EJES, FLAGS, HOJA_SIN_FUENTE, LoopError, MARCA_PROTOCOLO, PARA_BENJAMIN_MAX, REPLICA_DIAS, SUBTIPOS, appReferencia, check, diagnostico, matrizReplica, necesidades, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, siguiente } from './loop.mjs';
 import { TIPOS } from './audit.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -640,6 +640,105 @@ describe('check() R10 a R12', () => {
     const salto = c(fixture({ benjamin: ['**Uno** (desde 2026-10-13).', '**Dos** (desde 2026-10-13).'] }).replace('2. **Dos**', '3. **Dos**'));
     assert.match(texto(salto, 'R12'), /el pedido 2 está numerado 3/);
     assert.equal(nivel(c(fixture({ benjamin: [] })), 'R12'), 'ok');
+  });
+});
+
+/* ------------------------------------------- check: R13 y las citas [replica …] de R10 (Replica) */
+
+describe('check() R13: la paridad con la app de referencia', () => {
+  const REF = '- **App de referencia:** GitKraken Desktop (https://www.gitkraken.com/git-client), escritorio.';
+  const conRef = (doc = fixture()) => doc.replace('Texto de la directiva.', `Texto de la directiva.\n\n${REF}`);
+  const RECON = '# Recon map: GitKraken Desktop (escritorio)\n\nFecha: 2026-10-20\n\n## Sources\n';
+  const FEATURES = [
+    'feature,area,priority,original,clone,notes',
+    'Grafo de commits,grafo,must,yes,yes,README: Controles',
+    'Commit desde la app,repo,must,yes,skip,tokens de solo lectura',
+    'Rama de otro equipo,grafo,must,yes,no,',
+    '"Launchpad: PRs, issues",equipo,should,yes,partial,"PRs por estado, sin ""issues"""',
+    'Vista de texto,accesibilidad,could,no,yes,',
+  ].join('\r\n');
+  const HOY = new Date('2026-10-21T12:00:00Z');
+  const c = (doc, extra = {}) => check(doc, { log: LOG, recon: RECON, features: FEATURES, hoy: HOY, ...extra });
+  const enCarpeta = (archivos, doc = conRef()) => {
+    const dir = mkdtempSync(join(tmpdir(), 'loop-'));
+    mkdirSync(join(dir, 'replica'));
+    for (const [nombre, contenido] of Object.entries(archivos)) writeFileSync(join(dir, 'replica', nombre), contenido);
+    const r = check(doc, { log: LOG, hoy: HOY, dir });
+    rmSync(dir, { recursive: true, force: true });
+    return r;
+  };
+
+  test('parseCsv entiende comillas, comas y "" dentro, BOM, CRLF y filas en blanco', () => {
+    assert.deepEqual(parseCsv('﻿a,b\r\n"x, y","di ""hola"""\r\n\r\n,\n"dos\nlíneas",z'), [['a', 'b'], ['x, y', 'di "hola"'], ['dos\nlíneas', 'z']]);
+  });
+
+  test('appReferencia lee el nombre de la línea «App de referencia»', () => {
+    assert.equal(appReferencia(conRef()), 'GitKraken Desktop');
+    assert.equal(appReferencia(fixture()), null);
+  });
+
+  test('una pasada al día, de la app de referencia y con su matriz bien escrita pasa', () => {
+    const r = c(conRef());
+    assert.equal(nivel(r, 'R13'), 'ok', r.salida);
+    // la fila skip no cuenta, la de original=no tampoco: 1 must hecho de 2
+    assert.equal(texto(r, 'R13'), 'Replica: GitKraken Desktop, pasada del 2026-10-20 (5 filas; must hechos: 1 de 2)');
+    assert.deepEqual(matrizReplica(FEATURES), { errores: [], filas: 5, must: 2, mustHechos: 1 });
+  });
+
+  test('sin pasada o sin app de referencia es solo un aviso: la hace la próxima reposición', () => {
+    const sin = enCarpeta({});
+    assert.equal(nivel(sin, 'R13'), 'aviso');
+    assert.match(texto(sin, 'R13'), /sin pasada de Replica .*la próxima reposición de la hoja de ruta empieza por ella/);
+    const sinRef = c(fixture());
+    assert.equal(nivel(sinRef, 'R13'), 'aviso');
+    assert.match(texto(sinRef, 'R13'), /sin «- \*\*App de referencia:\*\* …»/);
+  });
+
+  test(`con más de ${REPLICA_DIAS} días, o de otra app, es un aviso`, () => {
+    const vieja = c(conRef(), { hoy: new Date('2026-11-25T00:00:00Z') });
+    assert.equal(nivel(vieja, 'R13'), 'aviso');
+    assert.match(texto(vieja, 'R13'), /la pasada de Replica tiene 36 días \(más de 30\)/);
+    const otra = c(conRef(), { recon: RECON.replace('GitKraken Desktop', 'Fork') });
+    assert.equal(nivel(otra, 'R13'), 'aviso');
+    assert.match(texto(otra, 'R13'), /es de «Recon map: Fork \(escritorio\)» y la app de referencia es GitKraken Desktop/);
+  });
+
+  test('la matriz o el mapa a medias es un error', () => {
+    assert.match(texto(enCarpeta({ 'features.csv': FEATURES }), 'R13'), /falta replica\/recon\.md/);
+    assert.match(texto(enCarpeta({ 'recon.md': RECON }), 'R13'), /falta replica\/features\.csv/);
+    assert.match(texto(c(conRef(), { recon: '# Recon map: GitKraken Desktop\n' }), 'R13'), /sin «Fecha: AAAA-MM-DD»/);
+    assert.equal(nivel(c(conRef(), { recon: '# Recon map: GitKraken Desktop\n\nDate: 2026-10-20\n' }), 'R13'), 'ok');
+    const columnas = c(conRef(), { features: 'feature,priority,clone\nGrafo,must,yes\n' });
+    assert.equal(nivel(columnas, 'R13'), 'ERROR');
+    assert.match(texto(columnas, 'R13'), /sin las columnas area, original, notes/);
+  });
+
+  test('cada fila con priority, original y clone de parity.py, y skip o partial con su nota', () => {
+    const malos = [
+      'feature,area,priority,original,clone,notes',
+      'Uno,a,urgente,yes,yes,',
+      'Dos,a,must,quizás,no,',
+      'Tres,a,must,yes,hecho,',
+      'Cuatro,a,should,yes,skip,',
+      'Cinco,a,could,yes,partial,',
+    ].join('\n');
+    const r = c(conRef(), { features: malos });
+    assert.equal(nivel(r, 'R13'), 'ERROR');
+    for (const re of [/fila 2: priority «urgente»/, /fila 3: original «quizás»/, /fila 4: clone «hecho»/, /fila 5: «skip» sin nota \(el motivo\)/, /fila 6: «partial» sin nota \(qué falta\)/]) assert.match(texto(r, 'R13'), re);
+    const muchos = c(conRef(), { features: ['feature,area,priority,original,clone,notes', ...Array.from({ length: 8 }, (_, i) => `F${i},a,x,yes,yes,`)].join('\n') });
+    assert.match(texto(muchos, 'R13'), /y 3 más$/);
+    assert.match(texto(c(conRef(), { features: 'feature,area,priority,original,clone,notes\n' }), 'R13'), /sin filas/);
+  });
+
+  test('R10: un ítem puede citar la pasada de Replica, pero no una posterior ni una que no existe', () => {
+    const items = [...EJES_HOJA, 'Datos', 'Datos', 'Datos'].slice(0, HOJA_SIN_FUENTE + 1);
+    const nuevo = `${HOJA_SIN_FUENTE + 1}. **Ítem ${HOJA_SIN_FUENTE + 1}** · ${items[HOJA_SIN_FUENTE]} · 2×2/2. Detalle del ítem`;
+    const doc = conRef(fixture({ items }));
+    assert.equal(nivel(c(doc.replace(nuevo, `${nuevo} [replica 2026-10-20]`)), 'R10'), 'ok');
+    assert.equal(nivel(c(doc.replace(nuevo, `${nuevo} [replica 2026-10-01]`)), 'R10'), 'ok');
+    assert.match(texto(c(doc.replace(nuevo, `${nuevo} [replica 2026-10-21]`)), 'R10'), /cita \[replica 2026-10-21\] y la pasada de Replica es del 2026-10-20/);
+    assert.match(texto(enCarpeta({}, doc.replace(nuevo, `${nuevo} [replica 2026-10-20]`)), 'R10'), /cita \[replica 2026-10-20\] y no hay pasada de Replica/);
+    assert.match(texto(c(doc), 'R10'), /sin «\[inv\. AAAA-MM-DD\]» \(o «\[replica AAAA-MM-DD\]» o «\[parte del ítem K\]»\)/);
   });
 });
 

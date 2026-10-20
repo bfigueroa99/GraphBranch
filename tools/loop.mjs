@@ -3,7 +3,7 @@
    de la iteración en origin y mide la web publicada. Solo módulos de Node y git, sin dependencias.
 
      node tools/loop.mjs --siguiente [--json]     qué iteración toca: número, tipo, eje, ítem y por qué
-     node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill y el prompt (sin red)
+     node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill, el prompt y la pasada de Replica (sin red)
      node tools/loop.mjs --reclamar [--relevo] [--sin-red] [--horas 6] [--repo <dir>]
                                                   reclama la rama loop/N en origin: el push es el candado
      node tools/loop.mjs --publicado              compara la web de GitHub Pages con origin/master
@@ -43,6 +43,11 @@ export const PRIORIDADES = ['Alta', 'Media', 'Baja'];
 export const MARCA_PROTOCOLO = 'Cambio de maquinaria: protocolo de QA';
 /** Días que vale la investigación de mercado: pasados, reponer la hoja de ruta empieza por investigar. */
 export const INVESTIGACION_DIAS = 30;
+/** Días que vale la pasada de Replica (replica/recon.md y replica/features.csv, la paridad con la app de
+    referencia): pasados, la próxima reposición de la hoja de ruta la rehace. */
+export const REPLICA_DIAS = 30;
+/** Las columnas de replica/features.csv que lee parity.py (.claude/skills/replica-diff/). */
+export const COLUMNAS_REPLICA = ['feature', 'area', 'priority', 'original', 'clone', 'notes'];
 /** Los ítems de la hoja de ruta hasta este son anteriores a docs/investigacion.md; los que vienen después
     citan su fuente («[inv. AAAA-MM-DD]») o, si son una entrega más de otro, «[parte del ítem K]». */
 export const HOJA_SIN_FUENTE = 26;
@@ -53,7 +58,7 @@ export const CRON_H = 4;
 export const DESDE_DIRECTIVA = '2026-10-10T04:32:04Z';
 
 const USO = `node tools/loop.mjs --siguiente [--json]     qué iteración toca: número, tipo, eje, ítem y por qué
-node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill y el prompt (sin red)
+node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill, el prompt y la pasada de Replica (sin red)
 node tools/loop.mjs --reclamar [--relevo] [--sin-red] [--horas ${RECLAMO_H}] [--repo <dir>]
                                              reclama la rama loop/N en origin: el push es el candado
 node tools/loop.mjs --publicado              compara la web de GitHub Pages con origin/master
@@ -309,6 +314,77 @@ function git(dir, args, env) {
 const primera = (s) => (s || '').split('\n').find((l) => l.trim()) || 'sin detalle';
 const leer = (ruta) => (existsSync(ruta) ? readFileSync(ruta, 'utf8') : null);
 
+/** Las filas de un CSV como el que escribe Replica: comillas dobles (con "" dentro), comas y saltos de
+    línea entre comillas, BOM y CRLF. Sin las filas en blanco. */
+export function parseCsv(texto) {
+  const t = texto.replace(/^﻿/, '');
+  const filas = [];
+  let fila = [];
+  let campo = '';
+  let comillas = false;
+  for (let i = 0; i < t.length; i++) {
+    const ch = t[i];
+    if (comillas) {
+      if (ch !== '"') campo += ch;
+      else if (t[i + 1] === '"') campo += t[i++];
+      else comillas = false;
+    } else if (ch === '"') comillas = true;
+    else if (ch === ',') {
+      fila.push(campo);
+      campo = '';
+    } else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && t[i + 1] === '\n') i++;
+      fila.push(campo);
+      filas.push(fila);
+      fila = [];
+      campo = '';
+    } else campo += ch;
+  }
+  if (campo || fila.length) filas.push([...fila, campo]);
+  return filas.filter((f) => f.some((c) => c.trim()));
+}
+
+/** replica/features.csv con las reglas de parity.py, pero estrictas: lo que parity.py cuenta como «no» o
+    como «could» sin decirlo es aquí un error, para que la paridad mida lo que dice. Devuelve los errores,
+    las filas y los must de la referencia que GraphBranch ya hace (los `skip` no cuentan, como en parity.py). */
+export function matrizReplica(texto) {
+  const filas = parseCsv(texto);
+  const cab = (filas[0] ?? []).map((c) => c.trim().toLowerCase());
+  const faltan = COLUMNAS_REPLICA.filter((c) => !cab.includes(c));
+  if (!filas.length) return { errores: ['replica/features.csv está vacío'], filas: 0, must: 0, mustHechos: 0 };
+  if (faltan.length) return { errores: [`replica/features.csv sin las columnas ${faltan.join(', ')} (las de parity.py: ${COLUMNAS_REPLICA.join(', ')})`], filas: 0, must: 0, mustHechos: 0 };
+  const errores = [];
+  let n = 0;
+  let must = 0;
+  let mustHechos = 0;
+  filas.slice(1).forEach((f, i) => {
+    const v = (c) => (f[cab.indexOf(c)] ?? '').trim();
+    if (!v('feature')) return;
+    n++;
+    const fila = i + 2;
+    const prio = v('priority').toLowerCase();
+    const original = v('original').toLowerCase() || 'yes';
+    const clone = v('clone').toLowerCase();
+    if (!['must', 'should', 'could'].includes(prio)) errores.push(`fila ${fila}: priority «${v('priority')}» no es must, should ni could`);
+    if (!['yes', 'no'].includes(original)) errores.push(`fila ${fila}: original «${v('original')}» no es yes ni no`);
+    if (!['yes', 'partial', 'no', 'skip'].includes(clone)) errores.push(`fila ${fila}: clone «${v('clone')}» no es yes, partial, no ni skip`);
+    else if ((clone === 'skip' || clone === 'partial') && !v('notes')) errores.push(`fila ${fila}: «${clone}» sin nota (${clone === 'skip' ? 'el motivo' : 'qué falta'})`);
+    if (prio === 'must' && original === 'yes' && clone !== 'skip') {
+      must++;
+      if (clone === 'yes') mustHechos++;
+    }
+  });
+  if (!n) errores.push('replica/features.csv sin filas');
+  const MAX = 5;
+  const cortos = errores.length > MAX ? [...errores.slice(0, MAX), `y ${errores.length - MAX} más`] : errores;
+  return { errores: cortos.map((x) => (x.startsWith('fila') ? `replica/features.csv, ${x}` : x)), filas: n, must, mustHechos };
+}
+
+/** La app de referencia de Replica: «- **App de referencia:** Nombre (URL)…» en IMPROVEMENTS.md. */
+export function appReferencia(texto) {
+  return /^- \*\*App de referencia:\*\*\s*([^(·\n]+?)\s*(?:\(|·|$)/m.exec(texto)?.[1] ?? null;
+}
+
 /** Las entradas de docs/investigacion.md: «### AAAA-MM-DD · Nombre» bajo «## Fuentes», con su URL y su «**Implica:**». */
 export function parseInvestigacion(texto) {
   const out = [];
@@ -333,8 +409,12 @@ export function parseInvestigacion(texto) {
 
 /** Las reglas R1–R12. `log` (títulos de commits), `skill`, `prompt`, `settings`, `investigacion` y `auditBase`
     (textos) y `hoy` se inyectan en las pruebas; si no, se leen del repo y del reloj. */
-export function check(texto, { log, skill, prompt, settings, investigacion, auditBase, hoy = new Date(), dir = root } = {}) {
+export function check(texto, { log, skill, prompt, settings, investigacion, auditBase, recon, features, hoy = new Date(), dir = root } = {}) {
   const doc = parse(texto);
+  // la pasada de Replica: la leen R10 (los ítems que la citan) y R13
+  const reconTxt = recon ?? leer(join(dir, 'replica', 'recon.md'));
+  const featuresTxt = features ?? leer(join(dir, 'replica', 'features.csv'));
+  const replicaFecha = /^(?:Fecha|Date):\s*(\d{4}-\d{2}-\d{2})\b/m.exec(reconTxt ?? '')?.[1] ?? null;
   const lineas = [];
   const regla = (nombre, errores, avisos, ok) => {
     const nivel = errores.length ? 'ERROR' : avisos.length ? 'aviso' : 'ok';
@@ -577,10 +657,15 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
     for (const it of doc.hoja.filter((i) => !i.hecho && !i.puntaje)) e.push(`ítem ${it.n} sin puntaje «· a×i/e.» tras el eje (alcance × impacto / esfuerzo, de 1 a 3)`);
     for (const it of doc.hoja.filter((i) => i.n > HOJA_SIN_FUENTE)) {
       const f = /\[inv\. (\d{4}-\d{2}-\d{2})\]/.exec(it.texto);
+      const rep = /\[replica (\d{4}-\d{2}-\d{2})\]/.exec(it.texto);
       const parte = /\[parte del ítem (\d+)\]/.exec(it.texto);
       if (parte) {
         if (!doc.hoja.some((x) => x.n === +parte[1] && x.n !== it.n)) e.push(`ítem ${it.n} dice [parte del ítem ${parte[1]}] y ese ítem no existe`);
-      } else if (!f) e.push(`ítem ${it.n} sin «[inv. AAAA-MM-DD]» (o «[parte del ítem K]»): los ítems después del ${HOJA_SIN_FUENTE} salen de docs/investigacion.md`);
+      } else if (rep && !f) {
+        // replica/recon.md se rehace en cada pasada: una cita vale si no es posterior a la pasada vigente
+        if (!replicaFecha) e.push(`ítem ${it.n} cita [replica ${rep[1]}] y no hay pasada de Replica (replica/recon.md con «Fecha: AAAA-MM-DD»)`);
+        else if (rep[1] > replicaFecha) e.push(`ítem ${it.n} cita [replica ${rep[1]}] y la pasada de Replica es del ${replicaFecha}`);
+      } else if (!f) e.push(`ítem ${it.n} sin «[inv. AAAA-MM-DD]» (o «[replica AAAA-MM-DD]» o «[parte del ítem K]»): los ítems después del ${HOJA_SIN_FUENTE} salen de docs/investigacion.md o de la paridad con la app de referencia (replica/)`);
       else if (inv != null && !fechas.has(f[1])) e.push(`ítem ${it.n} cita [inv. ${f[1]}] y docs/investigacion.md no tiene fuentes de esa fecha`);
     }
     regla('R10', e, a, `hoja de ruta con puntaje; ${ok}`);
@@ -623,6 +708,35 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
     for (const x of b) if (!/\(desde \d{4}-\d{2}-\d{2}\)/.test(x.texto)) e.push(`Para Benjamin ${x.n} (línea ${x.linea}) sin «(desde AAAA-MM-DD)»`);
     if (b.length > PARA_BENJAMIN_MAX) a.push(`Para Benjamin tiene ${b.length} pedidos (más de ${PARA_BENJAMIN_MAX}): juntar o quitar los resueltos`);
     regla('R12', e, a, `Para Benjamin: ${b.length} pedido(s), fechados`);
+  }
+  // R13: la paridad con la app de referencia (Replica): la pasada existe, es de esa app, no venció y su
+  // matriz se puede medir. Sin pasada es un aviso: la hace la próxima reposición de la hoja de ruta.
+  {
+    const e = [];
+    const a = [];
+    const ref = appReferencia(texto);
+    let ok = 'Replica';
+    if (!ref) a.push('IMPROVEMENTS.md sin «- **App de referencia:** …» (sección Replica de la directiva): la pasada no sabe qué app mapear');
+    if (reconTxt == null && featuresTxt == null) a.push('sin pasada de Replica (replica/recon.md y replica/features.csv): la próxima reposición de la hoja de ruta empieza por ella');
+    else {
+      if (reconTxt == null) e.push('falta replica/recon.md (el mapa de la app de referencia)');
+      else {
+        const titulo = (/^# (.+)$/m.exec(reconTxt)?.[1] ?? '').trim();
+        if (!replicaFecha) e.push('replica/recon.md sin «Fecha: AAAA-MM-DD» (o «Date:»)');
+        else {
+          const dias = Math.floor((hoy - Date.parse(`${replicaFecha}T00:00:00Z`)) / 864e5);
+          if (dias > REPLICA_DIAS) a.push(`la pasada de Replica tiene ${dias} días (más de ${REPLICA_DIAS}): la próxima reposición de la hoja de ruta la rehace`);
+        }
+        if (ref && !titulo.toLowerCase().includes(ref.toLowerCase())) a.push(`replica/recon.md es de «${corta(titulo, 50)}» y la app de referencia es ${ref}: la próxima reposición rehace la pasada`);
+      }
+      if (featuresTxt == null) e.push('falta replica/features.csv (la matriz que mide parity.py)');
+      else {
+        const m = matrizReplica(featuresTxt);
+        e.push(...m.errores);
+        ok = `Replica: ${ref ?? 'sin app de referencia'}, pasada del ${replicaFecha} (${m.filas} filas; must hechos: ${m.mustHechos} de ${m.must})`;
+      }
+    }
+    regla('R13', e, a, ok);
   }
 
   const cuenta = (nivel) => lineas.filter((l) => l.nivel === nivel).length;

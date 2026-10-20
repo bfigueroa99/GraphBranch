@@ -384,11 +384,13 @@ async function recorrerConTab(page, { veces = 50 } = {}) {
 
 /** Una API de GitHub simulada, mínima: un repo público con tres ramas y la cuota de 60 por hora de una
     consulta sin token, que baja con cada consulta. Anota cada una. */
-function githubSimulado() {
+function githubSimulado(extra = 0) {
   const calls = [];
   const ahora = Date.now();
+  const limite = extra ? 5000 : 60; // con 1.000 ramas el repo es de quien tiene token: la cuota no frena la carga
   const sha = (i) => i.toString(16).padStart(40, '0');
   const ramas = { main: 4, 'feature/a': 2, 'feature/b': 1 };
+  for (let i = 0; i < extra; i++) ramas[`feature/rama-${i}`] = 1;
   const commits = {};
   let k = 100;
   for (const [rama, n] of Object.entries(ramas)) {
@@ -427,8 +429,8 @@ function githubSimulado() {
         headers: {
           'access-control-allow-origin': '*',
           'access-control-expose-headers': 'ETag, Link, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-RateLimit-Resource',
-          'x-ratelimit-limit': '60',
-          'x-ratelimit-remaining': String(Math.max(0, 60 - calls.length)),
+          'x-ratelimit-limit': String(limite),
+          'x-ratelimit-remaining': String(Math.max(0, limite - calls.length)),
           'x-ratelimit-reset': String(Math.floor(ahora / 1000) + 3600),
           'x-ratelimit-resource': 'core',
         },
@@ -610,6 +612,34 @@ export function escenarios({ langs = false, completa = false } = {}) {
       },
     },
     {
+      // 1.000 ramas en 3D a 320 px (pendiente 15): `placeLabels` esconde las lejanas y las que quedan no se pisan
+      nombre: 'celular-320-3d-mil',
+      puerta: false,
+      contexto: { ...CELULAR, viewport: { width: 320, height: 640 } },
+      url: '?lang=es&repo=acme/web',
+      github: 1000,
+      async mirar(ctx) {
+        await ctx.page.waitForSelector('#status:not([data-state=loading])', { timeout: 60000 });
+        await ctx.page.click('#view-3d'); // con un repo la vista arranca en 2D
+        await ctx.page.locator('#graph3d').scrollIntoViewIfNeeded(); // el grafo queda bajo las tarjetas: las etiquetas se arman solo a la vista
+        await ctx.page.waitForSelector('.g3-head', { state: 'attached', timeout: 45000 });
+        await ctx.page.waitForTimeout(2500);
+        const pares = await ctx.page.evaluate(() => {
+          const hs = [...document.querySelectorAll('.g3-head')].filter((e) => getComputedStyle(e).display !== 'none' && +getComputedStyle(e).opacity >= 0.5);
+          const out = [];
+          for (let i = 0; i < hs.length; i++)
+            for (let j = i + 1; j < hs.length; j++) {
+              const a = hs[i].getBoundingClientRect();
+              const c = hs[j].getBoundingClientRect();
+              if (Math.min(a.right, c.right) - Math.max(a.left, c.left) > 2 && Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top) > 2) out.push(`${window.__audit.firma(hs[i])} / ${window.__audit.firma(hs[j])}`);
+            }
+          return { out, visibles: hs.length };
+        });
+        ctx.add(pares.out.map((donde) => ({ tipo: 'etiquetas-pisadas', donde })));
+        if (!pares.visibles) ctx.add([{ tipo: 'error', donde: '.g3-head', detalle: 'ninguna etiqueta de rama visible con 1.000 ramas' }]);
+      },
+    },
+    {
       nombre: 'movimiento-reducido',
       puerta: false,
       contexto: { ...ESCRITORIO, reducedMotion: 'reduce' },
@@ -657,7 +687,7 @@ async function auditar({ browser, base, estado, soloPuerta, langs, completa, dec
     const page = await context.newPage();
     const propios = [];
     const add = (lista) => propios.push(...lista.map((h) => ({ escenario: esc.nombre, ...h })));
-    const gh = esc.github ? githubSimulado() : null;
+    const gh = esc.github ? githubSimulado(typeof esc.github === 'number' ? esc.github : 0) : null;
     await page.addInitScript(instrumentar, estado);
     page.on('pageerror', (e) => add([{ tipo: 'error', donde: 'excepción', detalle: e.message.split('\n')[0].slice(0, 140) }]));
     page.on('console', (m) => {

@@ -489,16 +489,19 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-15. [QA] No hay un escenario de la auditoría con 1.000 ramas a 320 px en 3D: la comprobación de etiquetas
-    pisadas (`celular-320-3d`) corre sobre la API simulada de 3 ramas; con 1.000 solo se miró a mano.
-    Reproducción: Playwright contra `node e2e/serve.mjs 4173` con 1.000 ramas simuladas, 320 px, `?repo=acme/web`
-    → 4 etiquetas visibles, 0 pisadas (hoy bien; nada lo vigila).
-16. [QA] Con 1.000 ramas a 320 px el 3D deja solo 4 etiquetas de rama visibles (`reach` de `placeLabels`
+15. [QA] Con 1.000 ramas a 320 px el 3D deja solo 4 etiquetas de rama visibles (`reach` de `placeLabels`
     esconde las lejanas); revisar si en celular conviene un alcance mayor o una pista de «+N ramas».
-    Reproducción: la misma de arriba, contar `.g3-head` con `display` distinto de `none` → 4.
-17. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
+    Reproducción: la del escenario `celular-320-3d-mil` de `node tools/audit.mjs`, contar `.g3-head` con `display` distinto de `none` → 4.
+16. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
     nítidas (demo a 320 px: 3 de 5 atenuadas); comprobar que Tab y el toque no caigan en una atenuada.
     Reproducción: Playwright, 320 px, 3D, `?repo=demo` → `.g3-head` con opacidad 0,22 y `display: flex`.
+17. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
+    vistas, las estadísticas y la bitácora encima) y el 3D no arma etiquetas hasta verse; pensar en una
+    forma de llegar al grafo sin recorrer la página (ancla o tarjetas plegables en celular).
+    Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la auditoría → captura sin grafo; `#graph3d` fuera de la pantalla.
+18. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+    completa. Añadir `--escenario <nombre>`.
+    Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); `placeLabels`/`placeNotes` crean arreglos por cuadro
@@ -2313,3 +2316,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Intermitente: el paso del smoke «vista 2D» falló en 3 de 4 corridas de `npm run check` (y en 1 de 2 sueltas sobre `master`); la cuarta pasó; cargado como pendiente Media 2 [Deuda].
 - Validado: 352 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 111, mantenimiento · QA: pendiente 15 (No hay un escenario de la auditoría con 1.000 ramas a 320 px en 3D: la comproba…)
+
+### 2026-10-20 · Iteración 111 · Mantenimiento · QA
+
+- **Auditoría de QA: 1.000 ramas en 3D a 320 px** (pendiente 15). La auditoría completa gana el escenario `celular-320-3d-mil`: API simulada con 1.000 ramas extra (`githubSimulado(n)`), cambia a 3D, lleva el grafo a la vista y exige que las etiquetas nítidas no se pisen y que haya al menos una. Resultado: 0 hallazgos; la auditoría completa pasa de 0 a 0 y tarda ~63 s.
+- **Hallazgos:** 2 nuevos (pendientes 17 y 18), 0 a la base de la auditoría
+- **Pruebas que fallan sin el arreglo:** `tools/audit.test.mjs` (el escenario `celular-320-3d-mil` está en la completa y no en la puerta).
+- README: sin cambios (herramienta interna).
+- QA: filas tocadas: auditoría con 1.000 ramas a 320 px en 3D (a mano con captura: el grafo queda bajo las tarjetas, ver pendiente 17); auditoría: completa, 0 hallazgos.
+- Reclamo: loop/111, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso). `git push origin --delete loop/87` falló por el proxy, como en la 107, 109 y 110.
+- Validado: 353 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 112, expansión: ítem 70 (Los forks en el grafo, segunda entrega, Datos)

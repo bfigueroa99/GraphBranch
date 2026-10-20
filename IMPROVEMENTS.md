@@ -459,8 +459,12 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 10. [Rendimiento] El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (los dos
     `MeshStandardMaterial` de nodos y aristas, ~170 ms y 65 KB de fuente cada uno), dentro de una tarea de
     ~1,2 s; SwiftShader no ofrece `KHR_parallel_shader_compile` y los 12 hacen falta (el mundo es la escena
-    de la órbita). Ideas: compilar con `renderer.compile` mientras se espera la red en un repo real, o
-    materiales más livianos si se ven igual. Reproducción: perfil de CDP de la carga (iteración 107).
+    de la órbita). Descartado en la 107: `renderer.compile(scene, camera)` con instancias de mentira antes
+    de los datos compila 21 programas (recorre toda la escena, también lo que no se dibuja al arrancar) y
+    el primer cuadro aún suma 2: 23 en total contra 12, peor. Queda: materiales más livianos si se ven
+    igual, o precompilar solo los dos `MeshStandardMaterial` con una escena propia que repita luces y niebla.
+    Reproducción: contar `linkProgram` con `addInitScript` sobre `?lang=es` (12 programas, ~186 ms en
+    `getProgramParameter`).
 11. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
@@ -2248,3 +2252,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Validado: 342 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - Nota: al reanudar la 106 (vencida, PR #139) se fusionó `origin/master` (conflicto solo en la bitácora, se conservaron ambas entradas); dos corridas seguidas de `npm run check` fallaron una vez cada una en pasos que el cambio no toca («vista 2D» del smoke y la e2e de escritorio «se sigue sin GitHub», que pasó sola en 4 s) y la tercera salió en verde: intermitencias bajo carga, a vigilar en la próxima auditoría de Deuda. Borrar las `loop/*` fusionadas sigue cortado por el proxy.
 - **Siguiente:** iteración 107, mantenimiento · Rendimiento: pendiente 10
+
+### 2026-10-20 · Iteración 107 · Mantenimiento · Rendimiento
+
+- **Auditoría de Rendimiento: precompilar los sombreadores del 3D, probado y descartado** (pendiente 10). Medida base: 12 programas, ~186 ms esperando `getProgramParameter`, en el primer cuadro. Se probó `renderer.compile` con instancias de mentira (en reposo y en el constructor): `compile` recorre toda la escena y compila 21 programas más los 2 del primer cuadro (23, contra 12), así que se revirtió sin cambios de código. El pendiente 10 queda con el resultado y los dos caminos que faltan.
+- **Hallazgos:** 0 nuevos, 0 a la base de la auditoría
+- Nota: el PR #140 (iteración 107 anterior, ya fusionado) dejó la entrada de la bitácora sin escribir; esta la repone. El clon vino superficial (R3 falso y 2 pruebas rojas hasta `git fetch --unshallow`); `--reclamar` dio Vencida sin PR y se relevó. Borrar las `loop/*` fusionadas sigue cortado por el proxy.
+- README: sin cambios (no hay código nuevo)
+- QA: no cambia ningún control ni texto; auditoría: no toca la página
+- Reclamo: relevo de loop/107 (6a3a514)
+- Validado: 346 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 108, expansión: ítem 68 (Práctica: stash y reset, Público)

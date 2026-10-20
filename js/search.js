@@ -48,16 +48,38 @@
     return { data: { ...data, branches, pulls }, shown, total };
   }
 
+  const DAY = 86400000;
+
+  /** `2026-09-14` -> el milisegundo UTC en que empieza ese día; null si no es una fecha real. */
+  function dayStart(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (!m) return null;
+    const t = Date.UTC(+m[1], +m[2] - 1, +m[3]);
+    return new Date(t).getUTCDate() === +m[3] ? t : null;
+  }
+
   /** Busca `query` (palabras separadas por espacios; todas tienen que aparecer en el mensaje, el SHA o el autor;
-      `@ana` pide el autor) y, si hay `author`, solo los commits de esa clave. Del más nuevo al más viejo. */
+      `@ana` pide el autor; `desde:2026-09-01` y `hasta:2026-09-14` acotan por fecha, días UTC y ambos incluidos; una
+      fecha que no existe cuenta como una palabra más) y, si hay `author`, solo los commits de esa clave. Del más nuevo al más viejo. */
   function find(data, query, { author = '', limit = LIMIT } = {}) {
     const words = String(query || '').toLowerCase().split(/\s+/).filter(Boolean);
     const who = words.filter((w) => w.startsWith('@') && w.length > 1).map((w) => w.slice(1));
-    const rest = words.filter((w) => !(w.startsWith('@') && w.length > 1));
+    let from = -Infinity;
+    let to = Infinity;
+    const rest = words.filter((w) => {
+      if (w.startsWith('@') && w.length > 1) return false;
+      const m = /^(desde|hasta):(.*)$/.exec(w);
+      const t = m && dayStart(m[2]);
+      if (t == null) return true;
+      if (m[1] === 'desde') from = Math.max(from, t);
+      else to = Math.min(to, t + DAY);
+      return false;
+    });
     const out = [];
     for (const c of data.commits.values()) {
       const key = authorKey(c);
       if (author && key !== author) continue;
+      if ((from > -Infinity || to < Infinity) && !((c.date || 0) >= from && (c.date || 0) < to && c.date)) continue;
       const names = `${c.author?.login || ''} ${c.author?.name || ''}`.toLowerCase();
       if (who.some((w) => !names.includes(w))) continue;
       const hay = `${c.sha} ${c.message || ''} ${names}`.toLowerCase();

@@ -435,8 +435,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     publicar). Medir con 5 corridas de ese test solo y esperar al estado (el commit nuevo) en vez de al texto.
     Reproducción: `xvfb-run -a npm run check` → `Error: expect(locator).toHaveText(expected) failed … unexpected value "segundo"`.
 
-2. [Deuda] Smoke: el paso «vista 2D» (`tools/smoke.mjs:356`, `waitForSelector('#graph svg .node')`) falló en 2 de 2
-    corridas de `xvfb-run -a npm run check` en la iteración 110 y en 0 de 1 suelta (`node tools/smoke.mjs`); tras
+2. [Deuda] Smoke: el paso «vista 2D» (`tools/smoke.mjs:356`, `waitForSelector('#graph svg .node')`) falló en 3 de 4
+    corridas de `xvfb-run -a npm run check` en la iteración 110, en 1 de 2 sueltas sobre `master` y en 0 de 4 con diagnóstico (otro paso, «filtro por ruta», falló 1); tras
     `#view-2d` el SVG tarda más que en una corrida suelta. Medir con 5 corridas del smoke dentro de `check` y esperar
     el estado (vista 2D activa) en vez del selector.
     Reproducción: `xvfb-run -a npm run check` → `✗ vista 2D: page.waitForSelector: Timeout 30000ms exceeded.`
@@ -2310,6 +2310,6 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - QA: filas tocadas: resumen de la organización (prueba y smoke), 40 idiomas (check-i18n); auditoría: sin controles ni textos nuevos.
 - Reclamo: loop/110, sin colisión
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso y 2 pruebas rojas). `git push origin --delete loop/87` falló por el proxy (desconexión), como en la 107 y la 109.
-- Intermitente: el paso del smoke «vista 2D» falló en 2 de 2 corridas de `npm run check` y en 0 de 1 suelta; cargado como pendiente Media 2 [Deuda].
-- Validado: pendiente
+- Intermitente: el paso del smoke «vista 2D» falló en 3 de 4 corridas de `npm run check` (y en 1 de 2 sueltas sobre `master`); la cuarta pasó; cargado como pendiente Media 2 [Deuda].
+- Validado: 352 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 111, mantenimiento · QA: pendiente 15 (No hay un escenario de la auditoría con 1.000 ramas a 320 px en 3D: la comproba…)

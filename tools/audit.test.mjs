@@ -123,6 +123,12 @@ describe('tools/audit.mjs', () => {
     assert.ok(!escenarios().some((x) => x.nombre === 'celular-320-3d'));
   });
 
+  test('la completa mira 1.000 ramas en 3D a 320 px con la API simulada (pendiente 15)', () => {
+    const e = escenarios({ completa: true }).find((x) => x.nombre === 'celular-320-3d-mil');
+    assert.ok(e && !e.puerta && e.contexto.viewport.width === 320 && e.github === 1000);
+    assert.ok(!escenarios().some((x) => x.nombre === 'celular-320-3d-mil'));
+  });
+
   test('la base del repo es válida: tipos conocidos de la puerta, escenarios de la puerta y la cuota', () => {
     const base = leerBase(BASE);
     const nombres = new Set(escenarios().map((e) => e.nombre));

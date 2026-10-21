@@ -594,6 +594,8 @@ GB.i18n.define('fa', {
   'textview.shown': 'commitهای نمایش‌داده‌شده: {n}',
   'textview.by': 'از {author}',
   'textview.merge': 'ادغام',
+  'textview.tag': 'برچسب {name}',
+  'textview.tagged': 'کامیت‌های دارای برچسب: {n}',
   'textview.live': 'جدید: {branches} شاخه، {commits} کامیت',
   'textview.filtered': 'شاخه‌های نمایش‌داده‌شده: {shown} از {total}',
   'textview.scopeAuthor': 'فیلتر بر اساس نویسنده: {author} ({shown} از {total} شاخه)',

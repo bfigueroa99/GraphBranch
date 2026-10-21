@@ -559,6 +559,8 @@ GB.i18n.define('hr', {
   'textview.shown': 'prikazani commitovi: {n}',
   'textview.by': 'autor {author}',
   'textview.merge': 'merge',
+  'textview.tag': 'oznaka {name}',
+  'textview.tagged': 'Commitovi s oznakom: {n}',
   'textview.live': 'Novo: {branches} grana, {commits} commitova',
   'textview.filtered': 'Prikazane grane: {shown} od {total}',
   'textview.scopeAuthor': 'Filtrirano po autoru: {author} ({shown} od {total} grana)',

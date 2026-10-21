@@ -114,3 +114,12 @@ test('openParam: ?vista=texto pide abrir la vista de texto; cualquier otra cosa,
   assert.equal(op(q('')), false);
   assert.equal(op(null), false);
 });
+
+test('taggedCount cuenta los commits con tag una vez, aunque salgan en dos ramas', () => {
+  const d = repo();
+  d.tags.set('f2', ['rc1', 'rc1-b']);
+  d.branches.set('otra', { name: 'otra', sha: 'f2', movedAt: 1 });
+  const tree = raw(d);
+  assert.equal(ctx.window.GB.textview.taggedCount(tree), 2); // a2 y f2
+  assert.equal(ctx.window.GB.textview.taggedCount({ branches: [] }), 0);
+});

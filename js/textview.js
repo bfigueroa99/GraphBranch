@@ -59,6 +59,13 @@
     return tree.branches.filter((b) => b.name.toLowerCase().includes(needle));
   }
 
+  /** Cuántos commits del árbol llevan tag (cada uno una vez, aunque salga en dos ramas). */
+  function taggedCount(tree) {
+    const shas = new Set();
+    for (const b of tree.branches) for (const c of b.commits) if (c.tags.length) shas.add(c.sha);
+    return shas.size;
+  }
+
   /** Lo que dice la vista de los filtros activos: `scope` = { author, shown, total, path, count }. Vacío sin filtros. */
   function scopeText(scope, text) {
     if (!scope) return '';
@@ -113,7 +120,7 @@
           ci.tabIndex = -1;
           ci.dataset.sha = c.sha;
           const when = c.date ? ago(c.date) : '';
-          const parts = [c.message || c.sha.slice(0, 7), c.author && text('textview.by', { author: c.author }), when, c.merge && text('textview.merge'), ...c.tags];
+          const parts = [c.message || c.sha.slice(0, 7), c.author && text('textview.by', { author: c.author }), when, c.merge && text('textview.merge'), ...c.tags.map((t) => text('textview.tag', { name: t }))];
           ci.setAttribute('aria-label', parts.filter(Boolean).join(', '));
           ci.appendChild(mk('span', 'tv-sha', c.sha.slice(0, 7)));
           ci.appendChild(mk('span', 'tv-msg', c.message || ''));
@@ -155,7 +162,8 @@
       seen.shas = new Set(next.branches.flatMap((b) => b.commits.map((c) => c.sha)));
       open.clear();
       for (const b of next.branches) if (b.isDefault) open.add(b.name);
-      say(note);
+      const tagged = taggedCount(next);
+      say([note, tagged && text('textview.tagged', { n: tagged })].filter(Boolean).join('. '));
       draw();
     }
 
@@ -244,5 +252,5 @@
     return typeof v === 'string' && v.trim().toLowerCase() === 'texto';
   }
 
-  GB.textview = { build, news, filter, scopeText, mount, openParam, PER_BRANCH, MAX_BRANCHES };
+  GB.textview = { build, news, taggedCount, filter, scopeText, mount, openParam, PER_BRANCH, MAX_BRANCHES };
 })((window.GB = window.GB || {}));

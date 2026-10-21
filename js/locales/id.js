@@ -551,6 +551,8 @@ GB.i18n.define('id', {
   'textview.shown': 'commit ditampilkan: {n}',
   'textview.by': 'oleh {author}',
   'textview.merge': 'merge',
+  'textview.tag': 'tag {name}',
+  'textview.tagged': 'Commit dengan tag: {n}',
   'textview.live': 'Baru: {branches} cabang, {commits} commit',
   'textview.filtered': 'Cabang ditampilkan: {shown} dari {total}',
   'textview.scopeAuthor': 'Disaring menurut penulis: {author} ({shown} dari {total} cabang)',

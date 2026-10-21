@@ -562,6 +562,8 @@ GB.i18n.define('sk', {
   'textview.shown': 'zobrazené commity: {n}',
   'textview.by': 'od {author}',
   'textview.merge': 'merge',
+  'textview.tag': 'značka {name}',
+  'textview.tagged': 'Commity so značkou: {n}',
   'textview.live': 'Nové: vetvy {branches}, commity {commits}',
   'textview.filtered': 'Zobrazené vetvy: {shown} z {total}',
   'textview.scopeAuthor': 'Filter podľa autora: {author} ({shown} z {total} vetiev)',

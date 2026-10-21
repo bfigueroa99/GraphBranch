@@ -551,6 +551,8 @@ GB.i18n.define('fi', {
   'textview.shown': 'näytetyt commitit: {n}',
   'textview.by': 'tekijä {author}',
   'textview.merge': 'yhdistäminen',
+  'textview.tag': 'tagi {name}',
+  'textview.tagged': 'Commitit tagilla: {n}',
   'textview.live': 'Uutta: {branches} haaraa, {commits} commitia',
   'textview.filtered': 'Näytetyt haarat: {shown} / {total}',
   'textview.scopeAuthor': 'Suodatettu tekijän mukaan: {author} ({shown}/{total} haaraa)',

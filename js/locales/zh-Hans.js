@@ -551,6 +551,8 @@ GB.i18n.define('zh-Hans', {
   'textview.shown': '显示的提交：{n}',
   'textview.by': '作者 {author}',
   'textview.merge': '合并',
+  'textview.tag': '标签 {name}',
+  'textview.tagged': '带标签的提交：{n}',
   'textview.live': '新增：{branches} 个分支，{commits} 个提交',
   'textview.filtered': '显示的分支：{shown} / {total}',
   'textview.scopeAuthor': '按作者筛选：{author}（{total} 个分支中的 {shown} 个）',

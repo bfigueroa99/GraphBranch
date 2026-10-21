@@ -2746,6 +2746,23 @@ console.log('Capa para streaming: &rotate= pasa de un repo a otro (?embed=1)');
   await page.context().close();
 }
 
+console.log('Capa para streaming: &theme= fija el tema (?embed=1)');
+{
+  const page = await openPage({ viewport: { width: 640, height: 400 }, colorScheme: 'light' });
+  await step(page, '&theme=dark pinta la capa oscura aunque el sistema sea claro; sin &theme= sigue al sistema', async () => {
+    const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    await page.goto(`${base}/index.html?lang=es&embed=1&theme=dark`);
+    await loaded(page);
+    if ((await page.getAttribute('html', 'data-theme')) !== 'dark') throw new Error('falta data-theme=dark');
+    const dark = await bg();
+    await page.goto(`${base}/index.html?lang=es&embed=1`);
+    await loaded(page);
+    if (await page.getAttribute('html', 'data-theme')) throw new Error('data-theme sin &theme=');
+    if ((await bg()) === dark) throw new Error('el fondo no cambió con &theme=dark');
+  });
+  await page.context().close();
+}
+
 console.log('Filtro por ruta desde la URL (?path=)');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

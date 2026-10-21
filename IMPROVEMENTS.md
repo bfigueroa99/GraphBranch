@@ -2486,5 +2486,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Arena: no aplica: una sola forma obvia (un parámetro de URL que reutiliza el filtro por ruta y el render existentes).
 - Reclamo: loop/113, sin colisión
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso y 2 pruebas en rojo). `git push origin --delete loop/87` falló por el proxy (sideband), como en la 111 y la 112.
-- Validado: PENDIENTE
+- Validado: 365 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 114, expansión: ítem 72 (Resumen de la semana: pull requests abiertos, Salidas)

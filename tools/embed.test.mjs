@@ -11,6 +11,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 function load(search) {
   const classes = new Set();
   const vars = {};
+  const attrs = {};
   const ctx = vm.createContext({
     console,
     setTimeout,
@@ -23,7 +24,7 @@ function load(search) {
         classList: { add: (c) => classes.add(c), contains: (c) => classes.has(c) },
         style: { setProperty: (k, v) => (vars[k] = v) },
         dataset: {},
-        setAttribute() {},
+        setAttribute: (k, v) => (attrs[k] = v),
         removeAttribute() {},
         querySelectorAll: () => [],
       },
@@ -38,7 +39,7 @@ function load(search) {
   });
   ctx.window = ctx;
   vm.runInContext(readFileSync(join(root, 'js', 'i18n.js'), 'utf8'), ctx, { filename: 'i18n.js' });
-  return { GB: ctx.GB, classes, vars };
+  return { GB: ctx.GB, classes, vars, attrs };
 }
 
 test('embedOptions: sin ?embed (o apagado) no hay capa', () => {
@@ -83,4 +84,16 @@ test('embedOptions: rotate acepta de 5 a 3600 segundos y por defecto no rota', (
   assert.equal(GB.embedOptions('?embed=1&rotate=3600').rotate, 3600);
   for (const bad of ['0', '4', '3601', '-3', '1.5', 'abc', '', '99999', '1e2']) assert.equal(GB.embedOptions('?embed=1&rotate=' + bad).rotate, 0, bad);
   assert.equal(GB.embedOptions('?rotate=30'), null);
+});
+
+test('embedOptions: theme solo admite light o dark, y marca data-theme en <html>', () => {
+  const { GB } = load('');
+  assert.equal(GB.embedOptions('?embed=1').theme, '');
+  assert.equal(GB.embedOptions('?embed=1&theme=dark').theme, 'dark');
+  assert.equal(GB.embedOptions('?embed=1&theme=LIGHT').theme, 'light');
+  for (const bad of ['red', 'auto', '', 'dark;x', 'url(x)']) assert.equal(GB.embedOptions('?embed=1&theme=' + bad).theme, '', bad);
+  assert.equal(GB.embedOptions('?theme=dark'), null);
+  assert.equal(load('?embed=1&theme=dark').attrs['data-theme'], 'dark');
+  assert.equal(load('?embed=1').attrs['data-theme'], undefined);
+  assert.equal(load('?theme=dark').attrs['data-theme'], undefined);
 });

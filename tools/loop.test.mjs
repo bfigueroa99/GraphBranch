@@ -537,6 +537,17 @@ node tools/loop.mjs --reclamar --sin-red && npm run check -- --e2e
     assert.match(texto(r, 'R8'), /«git rebase».*Bash\(git rebase:\*\)/);
   });
 
+  test('el comando de OpenCode tiene que pasar el prompt de la Routine y nombrar rutas que existen', () => {
+    const bien = 'El prompt:\n\n!`cat .claude/skills/iteracion/PROMPT.md`\n\nLo lanza `node tools/opencode.mjs`.\n';
+    assert.equal(nivel(r8({ opencode: bien }), 'R8'), 'ok');
+    const copia = r8({ opencode: `Seguí la skill \`iteracion\` (.claude/skills/iteracion/PROMPT.md).\n` });
+    assert.equal(nivel(copia, 'R8'), 'ERROR');
+    assert.match(texto(copia, 'R8'), /no le pasa el prompt de la Routine/);
+    const ruta = r8({ opencode: bien + 'Y corré `tools/no-existe.mjs`.\n' });
+    assert.equal(nivel(ruta, 'R8'), 'ERROR');
+    assert.match(texto(ruta, 'R8'), /iteracion\.md nombra tools\/no-existe\.mjs/);
+  });
+
   test('un subtipo de mantenimiento sin su protocolo en la skill es un error', () => {
     const r = r8({ skill: SKILL.replace('#### Seguridad\n', '') });
     assert.equal(nivel(r, 'R8'), 'ERROR');
@@ -1087,6 +1098,24 @@ describe('--reclamar contra un repositorio bare', () => {
     const r = reclamar(C);
     assert.equal(r.status, 5, r.stdout + r.stderr);
     assert.match(r.stdout, /^Sin acceso a origin: no se puede reclamar ni publicar \(/);
+  });
+
+  test('fuera de una sesión cloud (OpenCode) el reclamo firma con LOOP_SESION', () => {
+    const otro = mkdtempSync(join(tmpdir(), 'loop-'));
+    const origen = join(otro, 'bare.git');
+    const D = join(otro, 'D');
+    git(otro, ['init', '-q', '--bare', '--initial-branch=master', origen]);
+    git(otro, ['clone', '-q', origen, D]);
+    git(D, ['symbolic-ref', 'HEAD', 'refs/heads/master']);
+    writeFileSync(join(D, 'IMPROVEMENTS.md'), fixture());
+    git(D, ['add', 'IMPROVEMENTS.md']);
+    git(D, ['commit', '-q', '-m', 'semilla']);
+    git(D, ['push', '-q', 'origin', 'master']);
+    const { CLAUDE_CODE_REMOTE_SESSION_ID, ...sinNube } = ENV;
+    const r = spawnSync(process.execPath, [loop, '--reclamar', '--sin-red', '--repo', D], { encoding: 'utf8', env: { ...sinNube, LOOP_SESION: 'opencode-pc-20261021T0400Z' } });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(git(D, ['log', '-1', '--format=%s']), / · sesión opencode-pc-20261021T0400Z$/);
+    rmSync(otro, { recursive: true, force: true });
   });
 });
 

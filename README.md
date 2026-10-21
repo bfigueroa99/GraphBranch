@@ -281,6 +281,20 @@ Además, `node --test` prueba la lógica de `js/sources/github.js`, `js/sources/
 
 `npm run check` corre todo lo anterior en orden (y `node --check`, `node tools/check-i18n.mjs` y `node tools/loop.mjs --check`), encuentra Chromium y Electron solo, y corre la auditoría cuando el cambio toca la página (`--auditar` siempre, `--sin-auditar` nunca) y las e2e cuando toca la página o la app de escritorio (`--e2e` siempre, `--sin-e2e` nunca).
 
+## Correr el loop en OpenCode
+
+El loop de mejora (`.claude/skills/iteracion/`) lo dispara una Routine de Claude Code, pero también corre en [OpenCode](https://opencode.ai) con el modelo que quieras detrás de [OmniRoute](https://github.com/diegosouzapw/OmniRoute):
+
+1. OpenCode 1.19 o más nuevo (`npm i -g opencode-ai`), OmniRoute andando (`npm i -g omniroute` y `omniroute`; el panel queda en http://localhost:20128) con al menos un proveedor conectado, y `gh auth login`: con `gh` la iteración abre y fusiona su PR.
+2. El proveedor: `omniroute setup-opencode` lo deja en la configuración de OpenCode. Si no está, `tools/opencode.mjs` lo arma con `OMNIROUTE_URL` (`http://localhost:20128` por defecto) y `OMNIROUTE_API_KEY` (si OmniRoute exige clave; nunca se escribe en un archivo).
+3. Una iteración: `node tools/opencode.mjs` (con `--plan` dice qué haría sin tocar nada). Usa `omniroute/auto`, el combo automático de OmniRoute; otro modelo o combo con `OMNIROUTE_MODEL=<id>` o `--modelo omniroute/<id>`. Conviene uno que maneje bien las herramientas: la iteración corre `npm run check`, commitea, abre su PR y lo fusiona.
+
+Cada corrida deja un worktree limpio en `origin/master` al lado del repo (`../GraphBranch-loop`, o el de `--dir`), instala lo que falte y corre `opencode run --command iteracion` sin pedir confirmaciones (`--auto`), con un tope de 240 minutos (`--minutos`). El comando, `.opencode/commands/iteracion.md`, le pasa el prompt de la Routine tal cual y le dice qué herramienta reemplaza a cada una de Claude Code. El reclamo de la rama `loop/N` es el mismo, así que la Routine y OpenCode conviven sin pisarse. Los commits salen como `OpenCode <opencode@localhost>` (`LOOP_AUTOR` lo cambia). Para programarlo, un cron cada 4 horas como la Routine (en Windows, lo mismo con el Programador de tareas). Si el cron no encuentra `opencode`, `OPENCODE_BIN` lleva su ruta:
+
+```sh
+3 */4 * * * cd /ruta/a/GraphBranch && node tools/opencode.mjs >> ~/graphbranch-loop.log 2>&1
+```
+
 ## Estructura
 
 ```
@@ -331,10 +345,12 @@ tools/smoke.mjs       prueba de humo: abre la demo en Chromium y recorre lo prin
 tools/loop.mjs        el loop: elige la iteración y rota el subtipo del mantenimiento (--siguiente), vigila IMPROVEMENTS.md, la skill, la investigación y la pasada de Replica (--check), reclama la rama (--reclamar), mide su propia salud (--salud) y la web publicada (--publicado)
 tools/audit.mjs       auditoría exploratoria en Chromium (errores, CSP, desbordes, accesibilidad, cuota, rendimiento); --puerta compara con tools/audit-base.json
 tools/check.mjs       la puerta: npm run check (node --check, node --test, i18n, loop --check, smoke, auditoría y e2e)
-tools/*.test.mjs      pruebas de la lógica contra APIs de GitHub, GitLab, Codeberg y Bitbucket simuladas, del service worker, de los archivos que arma snapshot.js, del loop y de la auditoría (`node --test`)
+tools/opencode.mjs    una iteración del loop en OpenCode con un modelo de OmniRoute: worktree limpio, proveedor y /iteracion
+tools/*.test.mjs      pruebas de la lógica contra APIs de GitHub, GitLab, Codeberg y Bitbucket simuladas, del service worker, de los archivos que arma snapshot.js, del loop (y su lanzador de OpenCode) y de la auditoría (`node --test`)
 docs/investigacion.md la investigación de mercado, fechada y con fuentes, de la que sale la hoja de ruta
 e2e/                  pruebas de punta a punta de la app de escritorio y la web (npm run test:e2e)
 .claude/skills/iteracion/  cómo hace una iteración el loop (reclamo, protocolos de QA y de cada subtipo de mantenimiento, puerta, registro, PR); PROMPT.md es el prompt de la Routine
+.opencode/commands/iteracion.md  el /iteracion de OpenCode: el prompt de la Routine y qué herramienta reemplaza a cada una de Claude Code
 .claude/skills/replica-*/  el pack Replica (MIT): mapa de una app, matriz de funciones, reseñas y paridad; el loop corre recon, entrepreneur y diff al reponer la hoja de ruta, el resto va a mano (/replica-…)
 .claude/skills/arena/  la arena (MIT): un torneo de subagentes con enfoques distintos para la misma tarea (bracket.py); el loop la usa para elegir cómo implementar, sus corridas quedan en .arena/ (sin versionar)
 replica/              lo que deja Replica en el loop: el mapa y la matriz de la app de referencia, sus reseñas y la paridad de GraphBranch (sin capturas)

@@ -33,7 +33,8 @@ falta `node_modules/.bin/playwright`, `npm ci`.
 - `node --test` en rojo sin haber tocado nada: `master` está en rojo. Se repite una vez; si sigue, la
   iteración pasa a arreglarlo (como un pendiente Alta, `[Errores]` o `[Deuda]`) y lo dice la bitácora.
 - La Routine: `mcp__claude-code-remote__list_triggers` y `get_trigger` (de lectura) dan su prompt; si no
-  es byte a byte `.claude/skills/iteracion/PROMPT.md`, va a Para Benjamin (no se corrige sola).
+  es byte a byte `.claude/skills/iteracion/PROMPT.md`, va a Para Benjamin (no se corrige sola). En
+  OpenCode esas herramientas no están: se salta y el resumen lo dice.
 
 ## 1. Reclamar
 
@@ -383,9 +384,17 @@ de lectura y sirven para compararlo. Si difiere, va a Para Benjamin y **no se co
 de cada subtipo de mantenimiento y que el prompt no lleve hechos que se pudren (ramas, rutas de
 Chromium, cifras).
 
+La otra vía de disparo es OpenCode, con un modelo detrás de OmniRoute: `node tools/opencode.mjs` deja un
+worktree limpio en `origin/master` (lo que es una sesión nueva) y corre el comando `/iteracion` de
+`.opencode/commands/iteracion.md`, que le pasa este mismo prompt y dice qué herramienta reemplaza a
+cada una de Claude Code (`gh` al MCP de GitHub, `task` a los subagentes). R8 vigila que ese comando
+le pase el prompt tal cual. Las dos vías comparten el candado, la rama `loop/N` en origin: si una la
+tiene, `--reclamar` le sale 3 a la otra. El cron de esa vía, como la Routine, lo pone Benjamin.
+
 ## Nunca
 
-- Otra Routine, otro loop ni un disparo a mano: esta Routine ya es el programador.
+- Otra Routine, otro loop ni un disparo a mano: los programadores son la Routine y, si Benjamin lo
+  puso, el cron de `node tools/opencode.mjs`.
 - `master` directo; force-push (salvo el lease interno de `--reclamar --relevo` sobre `loop/N`).
 - Debilitar puertas o pruebas para que pasen; fusionar con `npm run check` en rojo o a medias; reescribir
   `tools/audit-base.json` a mano o para tapar un hallazgo del propio cambio.

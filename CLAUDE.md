@@ -8,6 +8,8 @@ Las iteraciones del loop siguen `IMPROVEMENTS.md`. Desde la iteración 20 su obj
 
 Cada iteración programada sigue `.claude/skills/iteracion/SKILL.md` (reclamo con `node tools/loop.mjs --reclamar`, puerta `npm run check`, guarda `node tools/loop.mjs --check`); el prompt de la Routine solo apunta a esa skill, y `--check` vigila que la skill y el prompt nombren lo que existe.
 
+El loop también corre en OpenCode con un modelo detrás de OmniRoute: `node tools/opencode.mjs` prepara un worktree limpio y lanza `/iteracion` (`.opencode/commands/iteracion.md`: el prompt de la Routine y las herramientas que cambian, como `gh` en lugar del MCP de GitHub). OpenCode lee este archivo (no hay `AGENTS.md`) y las skills de `.claude/skills/`, así que lo de arriba vale igual ahí. Cómo dejarlo andar y en un cron: «Correr el loop en OpenCode» en el README.
+
 ## Pull requests y merge
 
 El dueño del repositorio autorizó que Claude abra pull requests y los fusione por su cuenta, sin pedir permiso cada vez:

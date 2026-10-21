@@ -416,7 +416,7 @@ export function parseInvestigacion(texto) {
 
 /** Las reglas R1–R12. `log` (títulos de commits), `skill`, `prompt`, `settings`, `investigacion` y `auditBase`
     (textos) y `hoy` se inyectan en las pruebas; si no, se leen del repo y del reloj. */
-export function check(texto, { log, skill, prompt, settings, investigacion, auditBase, recon, features, hoy = new Date(), dir = root } = {}) {
+export function check(texto, { log, skill, prompt, settings, opencode, investigacion, auditBase, recon, features, hoy = new Date(), dir = root } = {}) {
   const doc = parse(texto);
   // la pasada de Replica: la leen R10 (los ítems que la citan) y R13
   const reconTxt = recon ?? leer(join(dir, 'replica', 'recon.md'));
@@ -650,8 +650,18 @@ export function check(texto, { log, skill, prompt, settings, investigacion, audi
         [/mod \d/, 'una regla mod N'],
       ];
       for (const [re, que] of podridos) if (re.test(promptTxt)) e.push(`PROMPT.md contiene ${que} (${re.source}): eso se pudre, va en la skill`);
+      // el comando de OpenCode (tools/opencode.mjs) es la otra vía de disparo: le pasa este mismo prompt,
+      // no una copia que se aleje, y nombra rutas que existen
+      const comandoTxt = opencode ?? leer(join(dir, '.opencode', 'commands', 'iteracion.md'));
+      if (comandoTxt != null) {
+        if (!/!`[^`\n]*\.claude\/skills\/iteracion\/PROMPT\.md[^`\n]*`/.test(comandoTxt)) e.push('.opencode/commands/iteracion.md no le pasa el prompt de la Routine con !`cat .claude/skills/iteracion/PROMPT.md`');
+        for (const m of comandoTxt.matchAll(/(?:^|[\s`("'])((?:tools|e2e|\.claude)\/[\w./-]*)/g)) {
+          const ruta = m[1].replace(/[.,;:]+$/, '');
+          if (!existsSync(join(dir, ruta))) e.push(`.opencode/commands/iteracion.md nombra ${ruta}, que no existe`);
+        }
+      }
     }
-    regla('R8', e, a, `la skill nombra flags, rutas y comandos que existen y están permitidos, tiene el protocolo de cada subtipo y corre la arena con su ruta y de 1 a ${ARENA_MAX} competidores; el prompt no lleva hechos que se pudren`);
+    regla('R8', e, a, `la skill nombra flags, rutas y comandos que existen y están permitidos, tiene el protocolo de cada subtipo y corre la arena con su ruta y de 1 a ${ARENA_MAX} competidores; el prompt no lleva hechos que se pudren y el comando de OpenCode lo pasa tal cual`);
   }
   // R9: sin flujos de GitHub Actions (CLAUDE.md: no hay CI)
   {
@@ -808,7 +818,7 @@ const motivo = (err) => (err?.name === 'TimeoutError' ? 'tiempo agotado' : err?.
 
 /** Reclama la iteración que toca creando loop/N en origin con un commit vacío; devuelve el código de salida.
     `antesDelPush` es un gancho de las pruebas: corre entre el fetch y el push con lease del relevo. */
-export async function reclamar({ relevo = false, sinRed = false, horas = RECLAMO_H, repo = root, fetchFn = globalThis.fetch, print = console.log, sesion = process.env.CLAUDE_CODE_REMOTE_SESSION_ID || 'local', antesDelPush = () => {} } = {}) {
+export async function reclamar({ relevo = false, sinRed = false, horas = RECLAMO_H, repo = root, fetchFn = globalThis.fetch, print = console.log, sesion = process.env.CLAUDE_CODE_REMOTE_SESSION_ID || process.env.LOOP_SESION || 'local', antesDelPush = () => {} } = {}) {
   for (let intento = 0; intento < 2; intento++) {
     const f = git(repo, ['fetch', '-q', '--prune', 'origin', 'master', '+refs/heads/loop/*:refs/remotes/origin/loop/*']);
     if (f.status !== 0) {

@@ -475,6 +475,7 @@ GB.i18n.define('ro', {
   'health.title': 'Sănătatea depozitului',
   'health.help': 'Se calculează doar din ce e deja încărcat, fără cereri suplimentare. Descrie depozitul, niciodată persoanele.',
   'health.forks': 'Fork-uri cu activitate recentă, cel mai nou push primul',
+  'health.forksShow': 'Afișează fork-urile',
   'health.stale': 'Ramuri fără activitate de peste 30 de zile și fără pull request',
   'health.prs': 'Pull request-uri deschise, cele mai vechi primele',
   'health.prStates': 'Pull request-uri deschise după stare',

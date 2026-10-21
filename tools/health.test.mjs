@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} } });
 vm.runInContext(readFileSync(join(root, 'js', 'health.js'), 'utf8'), ctx, { filename: 'health.js' });
-const { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, splitFiles } = ctx.window.GB.health;
+const { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, forksParam, splitFiles } = ctx.window.GB.health;
 
 const DAY = 864e5;
 const NOW = Date.UTC(2026, 9, 13, 12);
@@ -284,4 +284,11 @@ test('?health=1 abre el panel al cargar; sin el parámetro o con 0, false, no u 
   for (const s of ['health=1', 'health', 'health=', 'repo=a/b&health=true', 'health=sí']) assert.equal(healthParam(q(s)), true, s);
   for (const s of ['', 'repo=a/b', 'health=0', 'health=false', 'health=NO', 'health=off', 'health= off ', 'healthy=1']) assert.equal(healthParam(q(s)), false, s);
   assert.equal(healthParam(null), false);
+});
+
+test('?forks=0 (o false, no, off) oculta los forks del panel; sin el parámetro o con otro valor se muestran', () => {
+  const q = (s) => new URLSearchParams(s);
+  for (const s of ['forks=0', 'forks=false', 'forks=NO', 'forks=off', 'repo=a/b&forks= off ']) assert.equal(forksParam(q(s)), false, s);
+  for (const s of ['', 'repo=a/b', 'forks=1', 'forks', 'forks=true', 'forks=sí', 'forky=0']) assert.equal(forksParam(q(s)), true, s);
+  assert.equal(forksParam(null), true);
 });

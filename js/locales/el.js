@@ -467,6 +467,7 @@ GB.i18n.define('el', {
   'health.title': 'Υγεία του αποθετηρίου',
   'health.help': 'Υπολογίζεται μόνο από όσα έχουν ήδη φορτωθεί, χωρίς πρόσθετα αιτήματα. Περιγράφει το αποθετήριο, ποτέ τα άτομα.',
   'health.forks': 'Forks με πρόσφατη δραστηριότητα, πρώτο το νεότερο push',
+  'health.forksShow': 'Εμφάνιση forks',
   'health.stale': 'Κλάδοι χωρίς δραστηριότητα πάνω από 30 ημέρες και χωρίς pull request',
   'health.prs': 'Ανοιχτά pull request, τα παλαιότερα πρώτα',
   'health.prStates': 'Ανοιχτά pull requests ανά κατάσταση',

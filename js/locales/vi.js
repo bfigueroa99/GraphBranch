@@ -467,6 +467,7 @@ GB.i18n.define('vi', {
   'health.title': 'Sức khỏe repo',
   'health.help': 'Chỉ tính từ dữ liệu đã tải, không gửi thêm yêu cầu. Nó mô tả kho mã, không bao giờ mô tả con người.',
   'health.forks': 'Fork có hoạt động gần đây, push mới nhất trước',
+  'health.forksShow': 'Hiện các fork',
   'health.stale': 'Nhánh không hoạt động hơn 30 ngày và không có pull request',
   'health.prs': 'Pull request đang mở, cũ nhất trước',
   'health.prStates': 'Pull request đang mở theo trạng thái',

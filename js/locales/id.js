@@ -467,6 +467,7 @@ GB.i18n.define('id', {
   'health.title': 'Kesehatan repo',
   'health.help': 'Dihitung hanya dari data yang sudah dimuat, tanpa permintaan tambahan. Ini menggambarkan repositori, bukan orang.',
   'health.forks': 'Fork dengan aktivitas terbaru, push terbaru lebih dulu',
+  'health.forksShow': 'Tampilkan fork',
   'health.stale': 'Cabang tanpa aktivitas lebih dari 30 hari dan tanpa pull request',
   'health.prs': 'Pull request terbuka, yang terlama dulu',
   'health.prStates': 'Pull request terbuka menurut status',

@@ -467,6 +467,7 @@ GB.i18n.define('hu', {
   'health.title': 'A repó állapota',
   'health.help': 'Csak a már betöltött adatokból számolja, külön lekérdezések nélkül. A tárolót írja le, soha nem az embereket.',
   'health.forks': 'Friss aktivitású forkok, a legújabb push elöl',
+  'health.forksShow': 'Forkok megjelenítése',
   'health.stale': '30 napnál régebben inaktív, pull request nélküli ágak',
   'health.prs': 'Nyitott pull requestek, a legrégebbiek elöl',
   'health.prStates': 'Nyitott pull requestek állapot szerint',

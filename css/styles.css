@@ -4727,6 +4727,18 @@ a.hl-row:focus-visible {
   color: var(--ink-3);
   font: 12px var(--font-mono);
 }
+.hl-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.hl-switch input {
+  width: 18px;
+  height: 18px;
+}
 .hl-none,
 .hl-line {
   margin: 0;

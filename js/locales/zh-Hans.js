@@ -467,6 +467,7 @@ GB.i18n.define('zh-Hans', {
   'health.title': '仓库健康度',
   'health.help': '仅根据已加载的数据计算，不会额外发起请求。它描述的是仓库，而不是个人。',
   'health.forks': '近期有动静的 fork,最新推送在前',
+  'health.forksShow': '显示复刻',
   'health.stale': '超过 30 天没有动静且没有拉取请求的分支',
   'health.prs': '未关闭的拉取请求（最旧的在前）',
   'health.prStates': '按状态划分的开放拉取请求',

@@ -467,6 +467,7 @@ GB.i18n.define('sw', {
   'health.title': 'Afya ya hazina',
   'health.help': 'Hukokotolewa kwa data iliyopakiwa tayari tu, bila maombi ya ziada. Inaeleza hazina, si watu.',
   'health.forks': 'Fork zenye shughuli za hivi karibuni, push mpya zaidi kwanza',
+  'health.forksShow': 'Onyesha fork',
   'health.stale': 'Matawi yasiyo na shughuli kwa zaidi ya siku 30 na yasiyo na pull request',
   'health.prs': 'Pull request zilizo wazi, za zamani kwanza',
   'health.prStates': 'Pull request zilizo wazi kwa hali',

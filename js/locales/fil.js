@@ -468,6 +468,7 @@ GB.i18n.define('fil', {
   'health.title': 'Kalusugan ng repo',
   'health.help': 'Kinukuwenta lang mula sa mga na-load na, nang walang dagdag na request. Inilalarawan nito ang repository, hindi ang mga tao.',
   'health.forks': 'Mga fork na may kamakailang aktibidad, pinakabagong push muna',
+  'health.forksShow': 'Ipakita ang mga fork',
   'health.stale': 'Mga branch na walang aktibidad nang mahigit 30 araw at walang pull request',
   'health.prs': 'Mga bukas na pull request, pinakaluma muna',
   'health.prStates': 'Mga bukas na pull request ayon sa estado',

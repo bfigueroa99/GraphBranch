@@ -1344,8 +1344,9 @@
     const forkRows = h.forks.rows
       .map((r) => `<li><a class="hl-row" href="${U.esc(r.url)}" target="_blank" rel="noopener noreferrer"><span class="hl-main">${U.esc(r.fullName)}</span><span class="hl-aside">${U.esc(span(r.idle))}</span></a></li>`)
       .join('');
+    const forksBody = !showForks ? '' : forkRows ? `<ul class="hl-list">${forkRows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`;
     el.healthBody.innerHTML =
-      `<section class="hl-sec" id="hl-forks"><h3>${U.esc(t('health.forks'))} <span class="hl-n">${U.fmtNum(h.forks.total)}</span></h3>${forkRows ? `<ul class="hl-list">${forkRows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`}</section>` +
+      `<section class="hl-sec" id="hl-forks"><h3>${U.esc(t('health.forks'))}${showForks ? ` <span class="hl-n">${U.fmtNum(h.forks.total)}</span>` : ''}</h3><label class="hl-switch"><input type="checkbox" id="hl-forks-toggle"${showForks ? ' checked' : ''}> ${U.esc(t('health.forksShow'))}</label>${forksBody}</section>` +
       healthList('stale', t('health.stale'), h.stale, (r) => [r.name, span(r.idle)]) +
       healthList('prs', t('health.prs'), h.prs, (r) => [`#${r.number} ${r.title}`, span(r.age)]) +
       `<section class="hl-sec" id="hl-prstates"><h3>${U.esc(t('health.prStates'))}</h3>${['draft', 'failing', 'approved', 'waiting']
@@ -1371,6 +1372,13 @@
       `<section class="hl-sec" id="hl-digest"><h3>${U.esc(t('digest.title'))}</h3><p class="hl-none">${U.esc(t('digest.help'))}</p><pre class="hl-digest" id="digest-md" tabindex="0" aria-label="${U.esc(t('digest.title'))}"></pre><div class="sr-row"><button type="button" class="btn btn-ghost" id="digest-copy">${U.esc(t('digest.copy'))}</button><button type="button" class="btn btn-ghost" id="digest-save">${U.esc(t('digest.save'))}</button><button type="button" class="btn btn-ghost" id="digest-png">${U.esc(t('digest.png'))}</button></div><div id="digest-out" role="status" aria-live="polite"></div></section>` +
       orgDigestHtml() +
       `<div class="hl-stats">${stat(t('health.merges7'), h.pace.merges7)}${stat(t('health.merges30'), h.pace.merges30)}${stat(t('health.releases30'), h.pace.releases30)}</div>`;
+    $('#hl-forks-toggle').addEventListener('change', (e) => {
+      showForks = e.target.checked;
+      setUrlParam('forks', showForks ? null : '0');
+      renderHealth();
+      if (showForks) syncHealthForks();
+      $('#hl-forks-toggle').focus();
+    });
     const clashBtn = $('#hl-clash-go');
     if (!source.files) clashBtn.hidden = true;
     clashBtn.addEventListener('click', () => findClashes(data, clashBtn));
@@ -1595,13 +1603,18 @@
     if (typeof el.health.close === 'function') el.health.close();
     else el.health.removeAttribute('open');
   }
+  let showForks = true; // ?forks=0: el panel de salud no muestra los forks ni los pide (cuota)
+  function syncHealthForks() {
+    const asked = source;
+    if (showForks && asked.syncForks) asked.syncForks().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
+  }
   let initialHealth = false; // ?health=1: el panel de salud se abre solo en cuanto el repo a la vista tiene grafo
   function openHealth() {
     initialHealth = false;
     if (el.health.open) return;
     renderHealth();
     const asked = source;
-    if (asked.syncForks) asked.syncForks().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
+    syncHealthForks();
     if (asked.syncFirstCommits) {
       const merged = feed.items.filter((a) => a.repo === active?.key && a.kind === 'pr-merge' && a.number && a.openedAt).sort((a, b) => b.time - a.time).slice(0, 20);
       asked.syncFirstCommits(merged.map((a) => a.number)).then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
@@ -2836,6 +2849,7 @@
     const q0 = new URLSearchParams(location.search);
     initialBitacora = !EMBED && q0.has('bitacora') && !/^(0|false|no|off)$/i.test(q0.get('bitacora'));
     initialHealth = !EMBED && GB.health.healthParam(q0);
+    showForks = GB.health.forksParam(q0);
   } catch {
     /* sin query string */
   }

@@ -467,6 +467,7 @@ GB.i18n.define('tr', {
   'health.title': 'Depo sağlığı',
   'health.help': 'Yalnızca zaten yüklenmiş verilerden hesaplanır, ek istek yapılmaz. Depoyu anlatır, asla kişileri değil.',
   'health.forks': 'Yakın zamanda etkinliği olan fork\'lar, en yeni push önce',
+  'health.forksShow': "Fork'ları göster",
   'health.stale': '30 günden uzun süredir hareketsiz ve pull request’i olmayan dallar',
   'health.prs': 'Açık pull request’ler, en eskisi önce',
   'health.prStates': 'Duruma göre açık pull request\'ler',

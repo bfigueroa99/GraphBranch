@@ -206,5 +206,10 @@
     return !!q && q.has('health') && !/^(0|false|no|off)$/i.test(String(q.get('health')).trim());
   }
 
-  GB.health = { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, splitFiles, STALE_DAYS };
+  /** ?forks=0 (o false, no u off): el panel de salud no muestra los forks ni los pide. Sin el parámetro, se muestran. */
+  function forksParam(q) {
+    return !(q && typeof q.has === 'function' && q.has('forks') && /^(0|false|no|off)$/i.test(String(q.get('forks')).trim()));
+  }
+
+  GB.health = { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, forksParam, splitFiles, STALE_DAYS };
 })(window.GB);

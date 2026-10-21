@@ -468,6 +468,7 @@ GB.i18n.define('fr', {
   'health.title': 'Santé du dépôt',
   'health.help': 'Calculée uniquement à partir de ce qui est déjà chargé, sans requête supplémentaire. Elle décrit le dépôt, jamais les personnes.',
   'health.forks': 'Forks avec une activité récente, le push le plus récent d\'abord',
+  'health.forksShow': 'Afficher les forks',
   'health.stale': 'Branches sans activité depuis plus de 30 jours et sans pull request',
   'health.prs': 'Pull requests ouvertes, les plus anciennes d’abord',
   'health.prStates': 'Pull requests ouvertes par état',

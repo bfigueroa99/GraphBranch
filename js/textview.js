@@ -225,8 +225,24 @@
       else onGo({ branch: branchOf(n).dataset.branch, sha: n.dataset.sha || null });
     });
 
-    return { render, update };
+    /** Escribe `q` en el filtro de ramas (el ?q= de la URL) y lo dice junto con los filtros activos del grafo. */
+    function setFilter(q) {
+      query = q;
+      if (filterInput) filterInput.value = q;
+      draw();
+      if (!q) return;
+      const note = scopeEl && !scopeEl.hidden ? scopeEl.textContent : '';
+      say([note, text('textview.filtered', { shown: filter(tree, q).length, total: tree.branches.length })].filter(Boolean).join('. '));
+    }
+
+    return { render, update, setFilter };
   }
 
-  GB.textview = { build, news, filter, scopeText, mount, PER_BRANCH, MAX_BRANCHES };
+  /** ¿Pide la URL abrir la vista de texto (?vista=texto)? Con ?path= y ?q= ya aplicados. */
+  function openParam(q) {
+    const v = q && typeof q.get === 'function' ? q.get('vista') : null;
+    return typeof v === 'string' && v.trim().toLowerCase() === 'texto';
+  }
+
+  GB.textview = { build, news, filter, scopeText, mount, openParam, PER_BRANCH, MAX_BRANCHES };
 })((window.GB = window.GB || {}));

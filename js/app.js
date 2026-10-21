@@ -553,6 +553,7 @@
       const { data, L } = drawGraph(true);
       feed.setDefaultBranch(data.repo.defaultBranch);
       renderSummary(data, L);
+      if (initialText && L.nodes.length) startUrlText();
       if (initialQuery && L.nodes.length) startUrlQuery();
       if (initialPath && L.nodes.length) startUrlPath(); // la demo y los repos ya cargados no pasan por onUpdate
       if (initialConflicts && L.nodes.length) startUrlConflicts();
@@ -969,6 +970,7 @@
     if (initialBitacora && L.nodes.length) openBitacora();
     if (initialHealth && tab === active && L.nodes.length) openHealth();
     if (initialReplay && L.nodes.length) startUrlReplay();
+    if (initialText && tab === active && L.nodes.length) startUrlText();
     if (initialQuery && tab === active && L.nodes.length) startUrlQuery();
     if (initialPath && tab === active && L.nodes.length) startUrlPath();
     if (initialConflicts && tab === active && L.nodes.length) startUrlConflicts();
@@ -1899,12 +1901,28 @@
     const scope = authorFilter || pathShas ? { author: name, shown: v.shown, total: v.total, path: pathShas ? pathText : '', count: pathShas ? pathShas.size : 0 } : null;
     textview.render(GB.textview.build(v.data, { paths: pathShas }), scope);
   }
-  $('#textview-btn').addEventListener('click', () => {
+  function showTextview() {
     openTextview();
     if (typeof el.textview.showModal === 'function') el.textview.showModal();
     else el.textview.setAttribute('open', '');
     el.textviewBody.querySelector('[tabindex="0"]')?.focus();
-  });
+  }
+  $('#textview-btn').addEventListener('click', showTextview);
+  let initialText = false; // ?vista=texto: se abre una vez, con ?path= y ?q= aplicados a la vista
+  /** La vista de texto que pide la URL: espera al filtro por ruta, lo abre y escribe el ?q= en su filtro de ramas. */
+  async function startUrlText() {
+    const q = initialQuery;
+    const path = initialPath;
+    initialText = false;
+    initialQuery = '';
+    initialPath = '';
+    if (path) {
+      pathEl.input.value = path;
+      await applyPathFilter();
+    }
+    showTextview();
+    if (q) textview.setFilter(q);
+  }
   $('#textview-close').addEventListener('click', closeTextview);
 
   /* ---------- constelación: cada repo seguido, una galaxia (ver constellation.js) ---------- */
@@ -2863,6 +2881,7 @@
     initialPath = EMBED ? '' : GB.search.pathParam(q);
     initialAuthor = EMBED ? '' : GB.search.authorParam(q);
     initialQuery = EMBED ? '' : GB.search.queryParam(q);
+    initialText = !EMBED && GB.textview.openParam(q);
     initialConflicts = !EMBED && GB.health.conflictsParam(q);
     initialTV = !EMBED && q.has('tv') && !/^(0|false|no|off)$/i.test(q.get('tv'));
   } catch {

@@ -502,13 +502,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Media
 
-1. [Deuda] e2e de escritorio: «un repositorio de esta máquina se sigue sin GitHub…» (`e2e/desktop.spec.mjs:360`)
-    falló una vez en `npm run check` (iteración 53, `xvfb-run`; la repetición pasó): el panel de cambios
-    mostró «segundo» en vez de «tercero, sin publicar» (línea 381, `toHaveText` sin esperar al commit sin
-    publicar). Medir con 5 corridas de ese test solo y esperar al estado (el commit nuevo) en vez de al texto.
-    Reproducción: `xvfb-run -a npm run check` → `Error: expect(locator).toHaveText(expected) failed … unexpected value "segundo"`.
-
-2. [Deuda] Smoke: el paso «vista 2D» (`tools/smoke.mjs:356`, `waitForSelector('#graph svg .node')`) falló en 3 de 4
+1. [Deuda] Smoke: el paso «vista 2D» (`tools/smoke.mjs:356`, `waitForSelector('#graph svg .node')`) falló en 3 de 4
     corridas de `xvfb-run -a npm run check` en la iteración 110, en 1 de 2 sueltas sobre `master` y en 0 de 4 con diagnóstico (otro paso, «filtro por ruta», falló 1); tras
     `#view-2d` el SVG tarda más que en una corrida suelta. Medir con 5 corridas del smoke dentro de `check` y esperar
     el estado (vista 2D activa) en vez del selector. El 2026-10-20 (Replica y la arena en el loop, sin tocar la
@@ -519,32 +513,32 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Baja
 
-3. [Accesibilidad] Estados confusos: botones que cambian a la vez `aria-pressed` y el texto (el de pausa del
+2. [Accesibilidad] Estados confusos: botones que cambian a la vez `aria-pressed` y el texto (el de pausa del
     Replay, `replay.js:367`) y la leyenda 2D sin acceso por teclado. Los objetivos chicos ya cumplen los
     24 px (iteración 91) y la base de la auditoría quedó vacía. Reproducir: `node tools/audit.mjs`.
-4. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-5. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
+3. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
+4. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
     renombrados).
-6. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+5. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-7. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
+6. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
     y mueve el resto a `docs/BITACORA.md` (idempotente: la segunda corrida dice «Nada que rotar»; queda
     una línea «Las iteraciones anteriores están en docs/BITACORA.md»); `--siguiente` sigue leyendo N de
     aquí y `--check` exige iteraciones sin repetidos entre los dos archivos. Motivo: `--salud` mide el
     archivo en cada iteración (77 KB el 2026-10-13, 55 KB de bitácora), y cada sesión nueva lo lee entero.
-8. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+7. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-9. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+8. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-10. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+9. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-11. [Rendimiento] El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (los dos
+10. [Rendimiento] El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (los dos
     `MeshStandardMaterial` de nodos y aristas, ~170 ms y 65 KB de fuente cada uno), dentro de una tarea de
     ~1,2 s; SwiftShader no ofrece `KHR_parallel_shader_compile` y los 12 hacen falta (el mundo es la escena
     de la órbita). Descartado en la 107: `renderer.compile(scene, camera)` con instancias de mentira antes
@@ -553,29 +547,29 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     igual, o precompilar solo los dos `MeshStandardMaterial` con una escena propia que repita luces y niebla.
     Reproducción: contar `linkProgram` con `addInitScript` sobre `?lang=es` (12 programas, ~186 ms en
     `getProgramParameter`).
-12. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+11. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
     Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-13. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+12. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-14. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
+13. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-15. [QA] Con 1.000 ramas a 320 px el 3D deja solo 4 etiquetas de rama visibles (`reach` de `placeLabels`
+14. [QA] Con 1.000 ramas a 320 px el 3D deja solo 4 etiquetas de rama visibles (`reach` de `placeLabels`
     esconde las lejanas); revisar si en celular conviene un alcance mayor o una pista de «+N ramas».
     Reproducción: la del escenario `celular-320-3d-mil` de `node tools/audit.mjs`, contar `.g3-head` con `display` distinto de `none` → 4.
-16. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
+15. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
     nítidas (demo a 320 px: 3 de 5 atenuadas); comprobar que Tab y el toque no caigan en una atenuada.
     Reproducción: Playwright, 320 px, 3D, `?repo=demo` → `.g3-head` con opacidad 0,22 y `display: flex`.
-17. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
+16. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
     vistas, las estadísticas y la bitácora encima) y el 3D no arma etiquetas hasta verse; pensar en una
     forma de llegar al grafo sin recorrer la página (ancla o tarjetas plegables en celular).
     Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la auditoría → captura sin grafo; `#graph3d` fuera de la pantalla.
-18. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+17. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
 
@@ -2500,3 +2494,16 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso y 2 pruebas en rojo). `git push origin --delete loop/87` (y las demás loop/K fusionadas) lo negó el clasificador de permisos del entorno: quedan en Para Benjamin 7.
 - Validado: 387 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. (El smoke falló una vez en «vista 2D», intermitente conocido de Deuda; pasó al repetir.)
 - **Siguiente:** iteración 115, mantenimiento · Deuda: pendiente 1 (e2e de escritorio: «un repositorio de esta máquina se sigue sin GitHub…» (`e2e/…)
+
+### 2026-10-21 · Iteración 115 · Mantenimiento · Deuda
+
+- **Arreglo: la e2e de escritorio «un repositorio de esta máquina se sigue sin GitHub…» ya no es intermitente** (pendiente 1). La rama nueva aparece al hacer `checkout`, antes del commit; la prueba abría el diff en esa cabeza todavía sobre «segundo». Ahora espera a que `#st-commits` llegue a 3 antes de abrirlo.
+- **Reproducción:** `xvfb-run -a npx playwright test e2e/desktop.spec.mjs -g "se sigue sin GitHub"` ×6 → 1 falla: `expect(locator).toHaveText(expected) failed … unexpected value "segundo"`; con el arreglo, 10 de 10 en verde.
+- **Pruebas que fallan sin el arreglo:** la misma e2e (`e2e/desktop.spec.mjs`), que es la prueba intermitente.
+- README: sin cambios (no toca funciones).
+- QA: fila de la app de escritorio (repo local) mirada con 10 corridas; auditoría: no toca la página.
+- Arena: no aplica: una sola forma obvia (esperar al estado en vez de al texto).
+- Reclamo: loop/115, sin colisión
+- Nota: el clon venía superficial otra vez (`git fetch --unshallow`). El smoke sigue con su intermitente de «vista 2D» (pendiente 1 actual); pasó en esta corrida.
+- Validado: 387 pruebas (`node --test`), smoke, i18n (0 errores) y 28 e2e en verde.
+- **Siguiente:** iteración 116, expansión: ítem 73 (Vista de texto: tags, Público)

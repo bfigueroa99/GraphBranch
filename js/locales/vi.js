@@ -551,6 +551,8 @@ GB.i18n.define('vi', {
   'textview.shown': 'commit đang hiện: {n}',
   'textview.by': 'bởi {author}',
   'textview.merge': 'merge',
+  'textview.tag': 'thẻ {name}',
+  'textview.tagged': 'Commit có thẻ: {n}',
   'textview.live': 'Mới: {branches} nhánh, {commits} commit',
   'textview.filtered': 'Nhánh đang hiện: {shown} trên {total}',
   'textview.scopeAuthor': 'Lọc theo tác giả: {author} ({shown}/{total} nhánh)',

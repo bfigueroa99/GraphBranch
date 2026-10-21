@@ -650,6 +650,8 @@ GB.i18n.define('ar', {
   'textview.shown': 'الـ commits المعروضة: {n}',
   'textview.by': 'بواسطة {author}',
   'textview.merge': 'دمج',
+  'textview.tag': 'وسم {name}',
+  'textview.tagged': 'الإيداعات ذات الوسم: {n}',
   'textview.live': 'جديد: {branches} فروع، {commits} إيداعات',
   'textview.filtered': 'الفروع المعروضة: {shown} من {total}',
   'textview.scopeAuthor': 'مُصفّى حسب المؤلف: {author} ({shown} من {total} فرعًا)',

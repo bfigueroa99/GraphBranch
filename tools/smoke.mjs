@@ -849,6 +849,17 @@ console.log('Escritorio (1280×800)');
     if (!info.focusInTree) throw new Error('al abrir, el foco no está en el árbol');
     if (/undefined|NaN|textview\./.test(info.text)) throw new Error('texto sin resolver: ' + info.text.slice(0, 120));
     if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
+    // los commits con tag lo dicen en su nombre accesible («tag v1.0.0») y la región viva cuenta cuántos hay al abrir
+    const marks = await page.evaluate(() => {
+      const commits = [...document.querySelectorAll('#textview .tv-commit')];
+      return {
+        marked: commits.filter((n) => /\bv\d/.test(n.querySelector('.tv-aside').textContent)).length,
+        named: commits.filter((n) => /\btag v\d/.test(n.getAttribute('aria-label'))).length,
+        live: document.querySelector('#textview-live').textContent,
+      };
+    });
+    if (marks.marked !== marks.named) throw new Error(`commits con tag sin decirlo en su nombre accesible: ${marks.marked} vs ${marks.named}`);
+    if (marks.marked && !/^Commits con tag: \d+/.test(marks.live)) throw new Error('la región viva no cuenta los commits con tag: ' + marks.live);
     // la rama por defecto viene abierta: ↓ baja a su primer commit; ← sube a la rama y otra ← la cierra
     await page.keyboard.press('ArrowDown');
     const onCommit = await page.evaluate(() => document.activeElement.classList.contains('tv-commit'));
@@ -871,7 +882,7 @@ console.log('Escritorio (1280×800)');
       return { role: l.getAttribute('role'), polite: l.getAttribute('aria-live'), text: l.textContent };
     });
     if (live.role !== 'status' || live.polite !== 'polite') throw new Error('la región viva no es role=status polite');
-    if (live.text) throw new Error('al abrir, la región viva ya anuncia algo: ' + live.text);
+    if (live.text && !/^Commits con tag: \d+$/.test(live.text)) throw new Error('al abrir, la región viva ya anuncia algo más que los tags: ' + live.text);
     // filtro: un nombre que no existe vacía el árbol; el de la primera rama lo deja con esa rama
     const first = await page.evaluate(() => document.querySelector('#textview .tv-branch').dataset.branch);
     await page.fill('#textview-filter', 'zzz-no-existe');
@@ -956,7 +967,7 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#textview[open]', { timeout: T(3000) });
     const tree = await page.evaluate(() => document.querySelectorAll('#textview-body [role="treeitem"][data-branch], #textview-body > [role="tree"] > [role="treeitem"]').length);
     const scope = await page.evaluate(() => ({ note: document.querySelector('#textview-scope').textContent, hidden: document.querySelector('#textview-scope').hidden, live: document.querySelector('#textview-live').textContent }));
-    if (scope.hidden || !scope.note || scope.live !== scope.note || /undefined|NaN|textview\./.test(scope.note)) throw new Error('la vista de texto no dice el filtro por autor: ' + JSON.stringify(scope));
+    if (scope.hidden || !scope.note || !scope.live.startsWith(scope.note) || /undefined|NaN|textview\./.test(scope.note)) throw new Error('la vista de texto no dice el filtro por autor: ' + JSON.stringify(scope));
     await page.keyboard.press('Escape');
     await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: T(3000) });
     if (!tree) throw new Error('el árbol de texto quedó vacío con el filtro por autor');
@@ -970,7 +981,7 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
     await page.click('#textview-btn');
     await page.waitForSelector('#textview[open]', { timeout: T(3000) });
-    if (!(await page.evaluate(() => document.querySelector('#textview-scope').hidden && !document.querySelector('#textview-live').textContent))) throw new Error('sin filtro, la vista de texto sigue diciendo uno');
+    if (!(await page.evaluate(() => document.querySelector('#textview-scope').hidden && !/^Filtrado/.test(document.querySelector('#textview-live').textContent)))) throw new Error('sin filtro, la vista de texto sigue diciendo uno');
     await page.keyboard.press('Escape');
     await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: T(3000) });
   });

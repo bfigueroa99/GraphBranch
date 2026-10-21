@@ -567,6 +567,8 @@ GB.i18n.define('ru', {
   'textview.shown': 'показано коммитов: {n}',
   'textview.by': 'автор {author}',
   'textview.merge': 'слияние',
+  'textview.tag': 'тег {name}',
+  'textview.tagged': 'Коммиты с тегом: {n}',
   'textview.live': 'Новое: ветки {branches}, коммиты {commits}',
   'textview.filtered': 'Показано веток: {shown} из {total}',
   'textview.scopeAuthor': 'Фильтр по автору: {author} ({shown} из {total} веток)',

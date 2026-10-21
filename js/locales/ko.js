@@ -551,6 +551,8 @@ GB.i18n.define('ko', {
   'textview.shown': '표시된 커밋: {n}',
   'textview.by': '작성자 {author}',
   'textview.merge': '병합',
+  'textview.tag': '태그 {name}',
+  'textview.tagged': '태그가 있는 커밋: {n}',
   'textview.live': '새 소식: 브랜치 {branches}개, 커밋 {commits}개',
   'textview.filtered': '표시된 브랜치: {total}개 중 {shown}개',
   'textview.scopeAuthor': '작성자 필터: {author} (브랜치 {total}개 중 {shown}개)',

@@ -551,6 +551,8 @@ GB.i18n.define('ja', {
   'textview.shown': '表示中のコミット: {n}',
   'textview.by': '作成者 {author}',
   'textview.merge': 'マージ',
+  'textview.tag': 'タグ {name}',
+  'textview.tagged': 'タグ付きコミット: {n}',
   'textview.live': '新着: ブランチ {branches} 件、コミット {commits} 件',
   'textview.filtered': '表示中のブランチ: {total} 件中 {shown} 件',
   'textview.scopeAuthor': '作者で絞り込み中: {author}（{total} ブランチ中 {shown}）',

@@ -552,6 +552,8 @@ GB.i18n.define('th', {
   'textview.shown': 'คอมมิตที่แสดง: {n}',
   'textview.by': 'โดย {author}',
   'textview.merge': 'เมิร์จ',
+  'textview.tag': 'แท็ก {name}',
+  'textview.tagged': 'คอมมิตที่มีแท็ก: {n}',
   'textview.live': 'ใหม่: {branches} แบรนช์ {commits} คอมมิต',
   'textview.filtered': 'แบรนช์ที่แสดง: {shown} จาก {total}',
   'textview.scopeAuthor': 'กรองตามผู้เขียน: {author} ({shown} จาก {total} บรานช์)',

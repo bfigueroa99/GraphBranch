@@ -551,6 +551,8 @@ GB.i18n.define('sw', {
   'textview.shown': 'commit zinazoonyeshwa: {n}',
   'textview.by': 'na {author}',
   'textview.merge': 'muunganisho',
+  'textview.tag': 'lebo {name}',
+  'textview.tagged': 'Commit zenye lebo: {n}',
   'textview.live': 'Mapya: matawi {branches}, commit {commits}',
   'textview.filtered': 'Matawi yanayoonyeshwa: {shown} kati ya {total}',
   'textview.scopeAuthor': 'Imechujwa kwa mwandishi: {author} (matawi {shown} kati ya {total})',

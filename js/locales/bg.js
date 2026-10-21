@@ -551,6 +551,8 @@ GB.i18n.define('bg', {
   'textview.shown': 'показани комити: {n}',
   'textview.by': 'от {author}',
   'textview.merge': 'сливане',
+  'textview.tag': 'таг {name}',
+  'textview.tagged': 'Комити с таг: {n}',
   'textview.live': 'Ново: {branches} клона, {commits} къмита',
   'textview.filtered': 'Показани клонове: {shown} от {total}',
   'textview.scopeAuthor': 'Филтър по автор: {author} ({shown} от {total} клона)',

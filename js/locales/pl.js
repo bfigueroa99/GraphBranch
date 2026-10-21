@@ -562,6 +562,8 @@ GB.i18n.define('pl', {
   'textview.shown': 'pokazane commity: {n}',
   'textview.by': 'autor {author}',
   'textview.merge': 'merge',
+  'textview.tag': 'tag {name}',
+  'textview.tagged': 'Commity z tagiem: {n}',
   'textview.live': 'Nowe: gałęzie {branches}, commity {commits}',
   'textview.filtered': 'Wyświetlone gałęzie: {shown} z {total}',
   'textview.scopeAuthor': 'Filtr autora: {author} ({shown} z {total} gałęzi)',

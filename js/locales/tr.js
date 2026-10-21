@@ -551,6 +551,8 @@ GB.i18n.define('tr', {
   'textview.shown': 'gösterilen commit: {n}',
   'textview.by': 'yazar {author}',
   'textview.merge': 'birleştirme',
+  'textview.tag': 'etiket {name}',
+  'textview.tagged': 'Etiketli commit: {n}',
   'textview.live': 'Yeni: {branches} dal, {commits} commit',
   'textview.filtered': 'Gösterilen dallar: {total} içinden {shown}',
   'textview.scopeAuthor': 'Yazara göre süzüldü: {author} ({total} daldan {shown})',

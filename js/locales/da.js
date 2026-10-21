@@ -551,6 +551,8 @@ GB.i18n.define('da', {
   'textview.shown': 'viste commits: {n}',
   'textview.by': 'af {author}',
   'textview.merge': 'sammenfletning',
+  'textview.tag': 'tag {name}',
+  'textview.tagged': 'Commits med tag: {n}',
   'textview.live': 'Nyt: {branches} grene, {commits} commits',
   'textview.filtered': 'Viste grene: {shown} af {total}',
   'textview.scopeAuthor': 'Filtreret efter forfatter: {author} ({shown} af {total} grene)',

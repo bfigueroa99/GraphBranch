@@ -631,6 +631,7 @@ GB.i18n.define('ro', {
   'digest.head': 'Rezumatul săptămânii · {repo}',
   'digest.commits': 'Commituri: {n}',
   'digest.merged': 'Pull request-uri îmbinate',
+  'digest.opened': 'Pull request-uri deschise',
   'digest.releases': 'Lansări',
   'digest.tags': 'Etichete (tags)',
   'digest.people': 'Cine a contribuit (commituri)',

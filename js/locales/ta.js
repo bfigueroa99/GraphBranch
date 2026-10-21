@@ -623,6 +623,7 @@ GB.i18n.define('ta', {
   'digest.head': 'வாரச் சுருக்கம் · {repo}',
   'digest.commits': 'கமிட்கள்: {n}',
   'digest.merged': 'இணைக்கப்பட்ட புல் ரிக்வெஸ்ட்கள்',
+  'digest.opened': 'திறக்கப்பட்ட புல் ரிக்வெஸ்ட்கள்',
   'digest.releases': 'வெளியீடுகள்',
   'digest.tags': 'குறிச்சொற்கள்',
   'digest.people': 'யார் பங்களித்தனர் (கமிட்கள்)',

@@ -623,6 +623,7 @@ GB.i18n.define('zh-Hant', {
   'digest.head': '本週摘要 · {repo}',
   'digest.commits': '提交:{n}',
   'digest.merged': '已合併的拉取請求',
+  'digest.opened': '已開啟的拉取請求',
   'digest.releases': '發布',
   'digest.tags': '標籤',
   'digest.people': '誰做了貢獻(提交)',

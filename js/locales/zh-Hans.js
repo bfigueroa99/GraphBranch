@@ -623,6 +623,7 @@ GB.i18n.define('zh-Hans', {
   'digest.head': '本周摘要 · {repo}',
   'digest.commits': '提交:{n}',
   'digest.merged': '已合并的拉取请求',
+  'digest.opened': '已打开的拉取请求',
   'digest.releases': '发布',
   'digest.tags': '标签',
   'digest.people': '谁做了贡献(提交)',

@@ -629,6 +629,7 @@ GB.i18n.define('en', {
   'digest.head': 'Week summary · {repo}',
   'digest.commits': 'Commits: {n}',
   'digest.merged': 'Merged pull requests',
+  'digest.opened': 'Opened pull requests',
   'digest.releases': 'Releases',
   'digest.tags': 'Tags',
   'digest.people': 'Who contributed (commits)',

@@ -623,6 +623,7 @@ GB.i18n.define('el', {
   'digest.head': 'Περίληψη εβδομάδας · {repo}',
   'digest.commits': 'Commits: {n}',
   'digest.merged': 'Συγχωνευμένα pull requests',
+  'digest.opened': 'Ανοιχτά pull requests',
   'digest.releases': 'Εκδόσεις',
   'digest.tags': 'Ετικέτες (tags)',
   'digest.people': 'Ποιος συνεισέφερε (commits)',

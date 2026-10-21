@@ -634,6 +634,7 @@ GB.i18n.define('cs', {
   'digest.head': 'Souhrn týdne · {repo}',
   'digest.commits': 'Commity: {n}',
   'digest.merged': 'Sloučené pull requesty',
+  'digest.opened': 'Otevřené pull requesty',
   'digest.releases': 'Vydání',
   'digest.tags': 'Tagy',
   'digest.people': 'Kdo přispěl (commity)',

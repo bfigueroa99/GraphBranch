@@ -178,3 +178,27 @@ test('la imagen de la organización: totales, un bloque por repo, recortada a 8 
   assert.equal(g.textAlign, 'right');
   assert.equal(calls.length, lines.length);
 });
+
+test('pull requests abiertos: cuenta los de la semana, sin repetir un PR reabierto ni contar los viejos', () => {
+  const opens = [
+    { id: 'o1', kind: 'pr-open', time: ago(2), number: 11, detail: 'Nuevo `x`', url: 'https://example.com/11' },
+    { id: 'o2', kind: 'pr-open', time: ago(1), number: 11, detail: 'Nuevo (reabierto)' },
+    { id: 'o3', kind: 'pr-open', time: ago(3), number: 12, detail: 'Otro', url: 'javascript:alert(1)' },
+    { id: 'o4', kind: 'pr-open', time: ago(10), number: 5, detail: 'Viejo' },
+  ];
+  const d = compute(repo(), opens, NOW);
+  assert.equal(d.opened.total, 2);
+  assert.deepEqual(JSON.parse(JSON.stringify(d.opened.rows.map((r) => r.number))), [11, 12]);
+  const t = { head: 'S · {repo}', commits: 'C: {n}', merged: 'M', opened: 'Abiertos', releases: 'R', people: 'P', branch: 'B' };
+  const out = toMarkdown(d, 'a/b', t);
+  assert.match(out, /## Abiertos \(2\)\n\n- \[#11 Nuevo \\`x\\`\]\(https:\/\/example\.com\/11\)\n- #12 Otro\n/);
+  assert.doesNotMatch(out, /javascript:|Viejo/);
+  assert.ok(imageLines(d, 'a/b', t).some((l) => l.text === 'Abiertos (2)'));
+});
+
+test('pull requests abiertos: sin ninguno no hay sección', () => {
+  const d = compute(repo(), acts, NOW);
+  assert.equal(d.opened.total, 0);
+  const t = { head: 'S', commits: 'C {n}', merged: 'M', opened: 'Abiertos', releases: 'R', people: 'P', branch: 'B' };
+  assert.doesNotMatch(toMarkdown(d, 'a/b', t), /Abiertos/);
+});

@@ -2771,6 +2771,40 @@ console.log('Filtro por ruta desde la URL (?path=)');
   await page.context().close();
 }
 
+console.log('Vista de texto desde la URL (?vista=texto)');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, 'abre la vista de texto con el filtro por ruta y el ?q= aplicados, y lo anuncia en la región viva', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    const word = await page.evaluate(() => {
+      const msg = document.querySelector('#search .sr-hit .tv-msg')?.textContent || '';
+      return msg.split(/[^\p{L}\p{N}]+/u).sort((a, b) => b.length - a.length)[0] || '';
+    });
+    if (!word) throw new Error('no hay un mensaje del que sacar una ruta');
+    await page.goto(`${base}/index.html?lang=es&vista=texto&path=${encodeURIComponent(word)}&q=main`);
+    await loaded(page);
+    await page.waitForSelector('#textview[open]', { timeout: T(5000) }).catch(() => {
+      throw new Error('?vista=texto no abrió la vista de texto');
+    });
+    const st = await page.evaluate(() => ({
+      search: document.querySelector('#search').open,
+      filter: document.querySelector('#textview-filter').value,
+      scope: document.querySelector('#textview-scope').textContent,
+      live: document.querySelector('#textview-live').textContent,
+      branches: document.querySelectorAll('#textview .tv-branch').length,
+    }));
+    if (st.search) throw new Error('?q= abrió también la búsqueda');
+    if (st.filter !== 'main') throw new Error(`el filtro de ramas quedó en «${st.filter}», no en «main»`);
+    if (!st.scope.includes(word)) throw new Error('la nota no dice la ruta: ' + st.scope);
+    if (!st.live.includes(st.scope) || !/Ramas mostradas: \d+ de \d+/.test(st.live)) throw new Error('la región viva no anuncia ruta y filtro: ' + st.live);
+    if (/undefined|NaN|textview\./.test(st.live)) throw new Error('texto sin resolver: ' + st.live);
+  });
+  await page.context().close();
+}
+
 console.log('Búsqueda desde la URL (?q=)');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

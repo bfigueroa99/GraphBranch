@@ -104,3 +104,13 @@ test('scopeText dice el filtro por autor y el de ruta, y nada sin filtros', () =
   assert.equal(st({ path: 'src/', count: 3 }, text), 'textview.scopePath:{"path":"src/","n":3}');
   assert.match(st({ author: 'Ana', shown: 1, total: 1, path: 'src/', count: 3 }, text), /scopeAuthor.*\. textview\.scopePath/);
 });
+
+test('openParam: ?vista=texto pide abrir la vista de texto; cualquier otra cosa, no', () => {
+  const op = ctx.window.GB.textview.openParam;
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(op(q('vista=texto')), true);
+  assert.equal(op(q('vista=%20Texto%20')), true);
+  assert.equal(op(q('vista=grafo')), false);
+  assert.equal(op(q('')), false);
+  assert.equal(op(null), false);
+});

@@ -399,6 +399,8 @@ test('un repositorio de esta máquina se sigue sin GitHub: ve un commit y una ra
   repo.git('checkout', '-q', '-b', 'experimento');
   repo.commit('c.txt', 'tercero, sin publicar');
   await expect(page.locator('#st-branches')).toHaveText('2', { timeout: 3_000 });
+  // la rama aparece al hacer checkout, antes del commit: se espera al commit para que su cabeza ya apunte a él
+  await expect(page.locator('#st-commits')).toHaveText('3', { timeout: 3_000 });
   await expect(page.locator('#feed')).toContainText('experimento');
   // los cambios de un commit salen de git, por el proceso principal, y se pasa al anterior con ←
   await page.click('#view-2d');

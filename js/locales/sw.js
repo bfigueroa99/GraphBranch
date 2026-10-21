@@ -623,6 +623,7 @@ GB.i18n.define('sw', {
   'digest.head': 'Muhtasari wa wiki · {repo}',
   'digest.commits': 'Commit: {n}',
   'digest.merged': 'Pull request zilizounganishwa',
+  'digest.opened': 'Pull request zilizofunguliwa',
   'digest.releases': 'Matoleo',
   'digest.tags': 'Lebo (tags)',
   'digest.people': 'Nani alichangia (commit)',

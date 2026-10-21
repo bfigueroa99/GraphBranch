@@ -623,6 +623,7 @@ GB.i18n.define('ja', {
   'digest.head': '今週のまとめ · {repo}',
   'digest.commits': 'コミット: {n}',
   'digest.merged': 'マージされたプルリクエスト',
+  'digest.opened': 'オープンされたプルリクエスト',
   'digest.releases': 'リリース',
   'digest.tags': 'タグ',
   'digest.people': '貢献した人(コミット)',

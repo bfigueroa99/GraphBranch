@@ -623,6 +623,7 @@ GB.i18n.define('da', {
   'digest.head': 'Ugens oversigt · {repo}',
   'digest.commits': 'Commits: {n}',
   'digest.merged': 'Flettede pull requests',
+  'digest.opened': 'Åbnede pull requests',
   'digest.releases': 'Releases',
   'digest.tags': 'Tags',
   'digest.people': 'Hvem der har bidraget (commits)',

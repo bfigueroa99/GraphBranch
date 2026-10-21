@@ -623,6 +623,7 @@ GB.i18n.define('bn', {
   'digest.head': 'সপ্তাহের সারসংক্ষেপ · {repo}',
   'digest.commits': 'কমিট: {n}',
   'digest.merged': 'মার্জ হওয়া পুল রিকোয়েস্ট',
+  'digest.opened': 'খোলা পুল রিকোয়েস্ট',
   'digest.releases': 'রিলিজ',
   'digest.tags': 'ট্যাগ',
   'digest.people': 'কে অবদান রেখেছেন (কমিট)',

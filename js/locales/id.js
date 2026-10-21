@@ -623,6 +623,7 @@ GB.i18n.define('id', {
   'digest.head': 'Ringkasan pekan · {repo}',
   'digest.commits': 'Commit: {n}',
   'digest.merged': 'Pull request yang digabung',
+  'digest.opened': 'Pull request yang dibuka',
   'digest.releases': 'Rilis',
   'digest.tags': 'Tag',
   'digest.people': 'Siapa yang berkontribusi (commit)',

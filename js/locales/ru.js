@@ -639,6 +639,7 @@ GB.i18n.define('ru', {
   'digest.head': 'Итоги недели · {repo}',
   'digest.commits': 'Коммиты: {n}',
   'digest.merged': 'Слитые pull request’ы',
+  'digest.opened': 'Открытые pull request’ы',
   'digest.releases': 'Релизы',
   'digest.tags': 'Теги',
   'digest.people': 'Кто внёс вклад (коммиты)',

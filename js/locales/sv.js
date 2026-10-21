@@ -467,6 +467,7 @@ GB.i18n.define('sv', {
   'health.title': 'Repots hälsa',
   'health.help': 'Beräknas bara utifrån det som redan är laddat, utan extra förfrågningar. Beskriver repot, aldrig personer.',
   'health.forks': 'Forkar med nylig aktivitet, senaste push först',
+  'health.forksShow': 'Visa forkar',
   'health.stale': 'Grenar utan aktivitet på över 30 dagar och utan pull request',
   'health.prs': 'Öppna pull requests, äldst först',
   'health.prStates': 'Öppna pull requests efter status',

@@ -212,7 +212,7 @@ segunda columna a la primera.
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
 | Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (API de Forgejo, repos públicos y, con token, privados), bitbucket.org (API 2.0 de Bitbucket Cloud, repos públicos y, con token, privados), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP), Bitbucket Data Center propio (`?bitbucket=` / `--bitbucket-url`, con su CSP y, con su token aparte y atado al servidor, privados), repos locales (app de escritorio, con `git`), demo | Token para un Forgejo/Gitea propio |
-| Datos | ramas, commits, PRs (y las pilas de PRs apilados), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, en el panel de salud), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
+| Datos | ramas, commits, PRs (y las pilas de PRs apilados), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, en el panel de salud, con un interruptor y `?forks=0`), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color, `&hide=` y `&rotate=` entre repos), extensión de VS Code (sigue la sesión de GitHub del editor y recuerda repos, vista e idioma entre sesiones; paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia), miles de ramas por repo | una organización entera con más de 10 repos a la vez |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack, Discord y Teams (escritorio), resumen de la semana (Markdown, con releases y tags, de un repo o de una organización seguida; PNG, de un repo o de una organización), prompt del loop autónomo para cualquier repo (español o inglés, con repo, ramas y objetivo; se copia o se guarda como `.md`) | issues cerrados en el resumen de la semana |
@@ -428,7 +428,7 @@ se comprueban antes de construir sobre ellas.
     `reset --hard <sha>`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
 69. ~~**Resumen de la organización como imagen**~~ hecho en #144 · Salidas · 1×2/2. [parte del ítem 47] El resumen de la semana de una
     organización también se baja como imagen PNG, como el de un repo. Comprobar: `tools/digest.test.mjs` con la imagen simulada.
-70. **Los forks en el grafo, segunda entrega** · Datos · 1×2/2. [parte del ítem 30] Los forks se pueden ocultar o mostrar desde
+70. ~~**Los forks en el grafo, segunda entrega**~~ hecho en #147 · Datos · 1×2/2. [parte del ítem 30] Los forks se pueden ocultar o mostrar desde
     un interruptor del panel y la elección viaja en la URL. Comprobar: prueba de la lectura de la URL y un paso del smoke.
 71. **Vista de texto: filtro por ruta en la URL** · Público · 1×2/1. [parte del ítem 33] La vista de texto abre con `?path=` y
     `?q=` aplicados y lo anuncia a quien usa lector de pantalla. Comprobar: prueba de la vista y un paso del smoke.
@@ -513,7 +513,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     `#view-2d` el SVG tarda más que en una corrida suelta. Medir con 5 corridas del smoke dentro de `check` y esperar
     el estado (vista 2D activa) en vez del selector. El 2026-10-20 (Replica y la arena en el loop, sin tocar la
     página) falló en 2 de 6 corridas de `npm run check`, y otra falló en «filtro por autor» (`Cannot read
-    properties of undefined (reading 'sha')`); cada una pasó al repetir.
+    properties of undefined (reading 'sha')`); cada una pasó al repetir. En la iteración 112 falló en 2 de 3
+    corridas de `npm run check` (también «replay: tramo de fechas y rótulos propios», mismo `'sha'`) y en 0 de 6 sueltas.
     Reproducción: `xvfb-run -a npm run check` → `✗ vista 2D: page.waitForSelector: Timeout 30000ms exceeded.`
 
 ### Baja
@@ -2463,3 +2464,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
   no toca la página.
 - Validado: 363 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
 - **Siguiente:** iteración 112, expansión: ítem 70 (Los forks en el grafo, segunda entrega, Datos)
+
+### 2026-10-21 · Iteración 112 · Expansión · Datos
+
+- **Capacidad nueva: interruptor «Mostrar forks» en el panel de salud, con `?forks=0`** (ítem 70 de la hoja de ruta, segunda entrega de los forks). Apagado, el panel oculta la lista de forks, deja `forks=0` en la dirección y no hace la consulta `/forks` (ni una de más al abrir con `?forks=0`); encendido la quita de la URL y vuelve a pedirla. El foco se queda en el interruptor. `GB.health.forksParam` lee el parámetro (0, false, no, off). Dibujarlos como ramas en el grafo sigue pendiente (ítem 75 y siguientes).
+- **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` (`forksParam`) y dos pasos nuevos dentro del paso del panel de salud del smoke (apagar oculta los forks, deja `forks=0` y conserva el foco; encender devuelve los 2 de la demo y quita el parámetro).
+- README: la sección de Salud del repo (interruptor y `?forks=0`) y Límites conocidos (forks activos sin cuota con el interruptor apagado).
+- QA: filas tocadas: panel de salud (teclado: el interruptor es un checkbox con etiqueta, foco conservado), 40 idiomas (`health.forksShow`, smoke con `--langs` sin desbordes); auditoría: 0 hallazgos nuevos.
+- Arena: no aplica: una sola forma obvia (un parámetro de URL y un interruptor del panel que ya tiene su render).
+- Reclamo: loop/112, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow` arregló un R3 falso y 2 pruebas en rojo). `git push origin --delete loop/87` falló por el proxy (sideband), como en la 111. El smoke dentro de `npm run check` falló en «vista 2D» (pendiente 2) en las dos primeras corridas y pasó en la tercera; suelto, pasó 6 de 6.
+- Validado: 364 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 113, expansión: ítem 71 (Vista de texto: filtro por ruta en la URL, Público)

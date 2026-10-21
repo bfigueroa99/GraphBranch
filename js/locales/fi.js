@@ -467,6 +467,7 @@ GB.i18n.define('fi', {
   'health.title': 'Repon terveys',
   'health.help': 'Lasketaan vain jo ladatusta tiedosta, ilman lisäkyselyjä. Kuvaa repositoriota, ei koskaan ihmisiä.',
   'health.forks': 'Forkit, joissa on ollut toimintaa äskettäin, uusin push ensin',
+  'health.forksShow': 'Näytä forkit',
   'health.stale': 'Haarat, joissa ei ole ollut toimintaa yli 30 päivään ja joilla ei ole pull requestia',
   'health.prs': 'Avoimet pull requestit, vanhimmat ensin',
   'health.prStates': 'Avoimet pull requestit tilan mukaan',

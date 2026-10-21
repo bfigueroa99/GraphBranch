@@ -478,6 +478,7 @@ GB.i18n.define('pl', {
   'health.title': 'Kondycja repozytorium',
   'health.help': 'Liczona tylko z danych już załadowanych, bez dodatkowych zapytań. Opisuje repozytorium, nigdy ludzi.',
   'health.forks': 'Forki z niedawną aktywnością, najnowszy push pierwszy',
+  'health.forksShow': 'Pokaż forki',
   'health.stale': 'Gałęzie bez aktywności od ponad 30 dni i bez pull requesta',
   'health.prs': 'Otwarte pull requesty, od najstarszych',
   'health.prStates': 'Otwarte pull requesty wg stanu',

@@ -520,6 +520,8 @@ GB.i18n.define('ms', {
   'practice.ex6.goal': 'Commit "Break checkout totals" sudah dikongsi, jadi jangan tulis semula sejarah. Batalkannya dengan commit baharu: cuba revert HEAD~1.',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'Anda ada perubahan separuh siap pada feature dan main perlu dibaiki sekarang. Simpan dahulu dengan stash, buat checkout main dan commit pembaikan, kembali ke feature dan pulihkannya dengan stash pop.',
+  'practice.ex8.title': 'Batalkan penggabungan',
+  'practice.ex8.goal': 'Anda mahu tahu sama ada feature boleh digabungkan ke main, tetapi tanpa menyimpan hasilnya. Mulakan dengan merge feature --no-commit, kemudian batalkan dengan merge --abort.',
   'practice.share': 'Salin pautan latihan',
   'practice.link': 'Pautan latihan',
   'practice.copied': 'Pautan disalin.',

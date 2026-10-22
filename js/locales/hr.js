@@ -528,6 +528,8 @@ GB.i18n.define('hr', {
   'practice.ex6.goal': 'Commit „Break checkout totals“ već je podijeljen, pa ne prepisuj povijest. Poništi ga novim commitom: probaj revert HEAD~1.',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'Na feature imate napola gotove promjene, a main treba odmah popraviti. Sklonite ih sa stash, napravite checkout main i commit s popravkom, vratite se na feature i vratite ih sa stash pop.',
+  'practice.ex8.title': 'Otkazivanje spajanja',
+  'practice.ex8.goal': 'Želiš vidjeti bi li se feature spojio s main, ali bez zadržavanja rezultata. Počni s merge feature --no-commit, a zatim ga otkaži s merge --abort.',
   'practice.share': 'Kopiraj poveznicu vježbe',
   'practice.link': 'Poveznica vježbe',
   'practice.copied': 'Poveznica kopirana.',

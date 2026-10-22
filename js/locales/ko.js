@@ -520,6 +520,8 @@ GB.i18n.define('ko', {
   'practice.ex6.goal': '"Break checkout totals" 커밋은 이미 공유되었으므로 기록을 다시 쓰지 마세요. 새 커밋으로 되돌리세요: revert HEAD~1을 실행해 보세요.',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'feature에 하다 만 변경 사항이 있고 main을 지금 바로 고쳐야 합니다. stash로 변경 사항을 치워 두고, checkout main 후 수정 사항을 커밋한 다음, feature로 돌아가 stash pop으로 되돌리세요.',
+  'practice.ex8.title': '병합 취소하기',
+  'practice.ex8.goal': 'feature가 main에 병합될지 확인하고 싶지만 결과는 남기고 싶지 않습니다. merge feature --no-commit으로 시작한 뒤 merge --abort로 취소하세요.',
   'practice.share': '연습 링크 복사',
   'practice.link': '연습 링크',
   'practice.copied': '링크를 복사했습니다.',

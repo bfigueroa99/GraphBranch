@@ -520,6 +520,8 @@ GB.i18n.define('sw', {
   'practice.ex6.goal': 'Commit ya "Break checkout totals" imeshashirikiwa, kwa hiyo usiandike upya historia. Itengue kwa commit mpya: jaribu revert HEAD~1.',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'Una mabadiliko ambayo hayajakamilika kwenye feature na main inahitaji kurekebishwa sasa hivi. Yaweke kando kwa stash, fanya checkout main na commit ya marekebisho, rudi kwenye feature na uyarudishe kwa stash pop.',
+  'practice.ex8.title': 'Ghairi muunganisho',
+  'practice.ex8.goal': 'Unataka kuona kama feature ingeunganishwa na main, bila kuhifadhi matokeo. Anza na merge feature --no-commit, kisha ighairi kwa merge --abort.',
   'practice.share': 'Nakili kiungo cha zoezi',
   'practice.link': 'Kiungo cha zoezi',
   'practice.copied': 'Kiungo kimenakiliwa.',

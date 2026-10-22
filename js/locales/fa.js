@@ -563,6 +563,8 @@ GB.i18n.define('fa', {
   'practice.ex6.goal': 'کامیت «Break checkout totals» قبلاً به اشتراک گذاشته شده است، پس تاریخچه را بازنویسی نکنید. آن را با یک کامیت جدید خنثی کنید: revert HEAD~1 را امتحان کنید.',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'در feature تغییرات نیمه‌کاره دارید و main همین حالا باید اصلاح شود. آن‌ها را با stash کنار بگذارید، checkout main کنید و اصلاح را commit کنید، به feature برگردید و با stash pop آن‌ها را برگردانید.',
+  'practice.ex8.title': 'لغو یک ادغام',
+  'practice.ex8.goal': 'می‌خواهید ببینید feature در main ادغام می‌شود یا نه، بدون نگه‌داشتن نتیجه. با merge feature --no-commit شروع کنید و با merge --abort لغوش کنید.',
   'practice.share': 'کپی پیوند تمرین',
   'practice.link': 'پیوند تمرین',
   'practice.copied': 'پیوند کپی شد.',

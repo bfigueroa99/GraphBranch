@@ -520,6 +520,8 @@ GB.i18n.define('vi', {
   'practice.ex6.goal': 'Commit "Break checkout totals" đã được chia sẻ, nên đừng viết lại lịch sử. Hãy hoàn tác nó bằng một commit mới: thử revert HEAD~1.',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'Bạn có thay đổi đang làm dở trên feature và main cần sửa ngay. Cất chúng đi bằng stash, checkout main và commit bản sửa, quay lại feature rồi lấy lại bằng stash pop.',
+  'practice.ex8.title': 'Hủy một lần merge',
+  'practice.ex8.goal': 'Bạn muốn xem feature có merge được vào main không nhưng không giữ kết quả. Bắt đầu bằng merge feature --no-commit rồi hủy bằng merge --abort.',
   'practice.share': 'Sao chép liên kết bài tập',
   'practice.link': 'Liên kết bài tập',
   'practice.copied': 'Đã sao chép liên kết.',

@@ -520,6 +520,8 @@ GB.i18n.define('hu', {
   'practice.ex6.goal': 'A „Break checkout totals” commit már meg van osztva, ezért ne írd át az előzményeket. Vond vissza egy új committal: próbáld ki a revert HEAD~1 parancsot.',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'A feature ágon félkész változtatásaid vannak, a main-t pedig azonnal javítani kell. Tedd félre őket a stash-sel, válts a main-re (checkout main), commitold a javítást, menj vissza a feature-re, és hozd vissza őket a stash pop-pal.',
+  'practice.ex8.title': 'Egyesítés megszakítása',
+  'practice.ex8.goal': 'Meg szeretnéd nézni, hogy a feature egyesíthető-e a main-nel, de az eredményt nem akarod megtartani. Indítsd a merge feature --no-commit paranccsal, majd szakítsd meg a merge --abort paranccsal.',
   'practice.share': 'Feladat linkjének másolása',
   'practice.link': 'A feladat linkje',
   'practice.copied': 'Link másolva.',

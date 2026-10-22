@@ -520,6 +520,8 @@ GB.i18n.define('tr', {
   'practice.ex6.goal': '"Break checkout totals" commit\'i zaten paylaşıldı, bu yüzden geçmişi yeniden yazma. Yeni bir commit ile geri al: revert HEAD~1 komutunu dene.',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'feature üzerinde yarım kalmış değişiklikleriniz var ve main hemen düzeltilmeli. Onları stash ile kenara koyun, checkout main yapıp düzeltmeyi commit edin, feature\'a dönün ve stash pop ile geri getirin.',
+  'practice.ex8.title': 'Birleştirmeyi iptal et',
+  'practice.ex8.goal': 'feature\'ın main ile birleşip birleşmeyeceğini görmek istiyorsun ama sonucu tutmak istemiyorsun. merge feature --no-commit ile başla, merge --abort ile iptal et.',
   'practice.share': 'Alıştırma bağlantısını kopyala',
   'practice.link': 'Alıştırma bağlantısı',
   'practice.copied': 'Bağlantı kopyalandı.',

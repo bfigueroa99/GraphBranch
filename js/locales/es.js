@@ -520,6 +520,8 @@ GB.i18n.define('es', {
   'practice.ex6.goal': 'El commit "Break checkout totals" ya está compartido, así que no reescribas la historia. Deshazlo con un commit nuevo: prueba revert HEAD~1.',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'Tienes cambios a medias en feature y hay que arreglar main ya. Guárdalos con stash, haz checkout main y un commit con el arreglo, vuelve a feature y recupéralos con stash pop.',
+  'practice.ex8.title': 'Cancelar una fusión',
+  'practice.ex8.goal': 'Quieres ver si feature se fusionaría con main, pero sin quedarte con el resultado. Empieza con merge feature --no-commit y cancélala con merge --abort.',
   'practice.share': 'Copiar enlace del ejercicio',
   'practice.link': 'Enlace del ejercicio',
   'practice.copied': 'Enlace copiado.',

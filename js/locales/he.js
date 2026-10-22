@@ -577,6 +577,8 @@ GB.i18n.define('he', {
   'practice.ex6.goal': 'הקומיט "Break checkout totals" כבר שותף, אז אל תשכתבו את ההיסטוריה. בטלו אותו בעזרת קומיט חדש: נסו revert HEAD~1.',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'יש לכם שינויים חלקיים ב-feature, ו-main צריך תיקון עכשיו. שימו אותם בצד עם stash, עשו checkout main ו-commit לתיקון, חזרו ל-feature והחזירו אותם עם stash pop.',
+  'practice.ex8.title': 'ביטול מיזוג',
+  'practice.ex8.goal': 'אתם רוצים לראות אם feature תתמזג ל־main, בלי לשמור את התוצאה. התחילו עם merge feature --no-commit ובטלו עם merge --abort.',
   'practice.share': 'העתקת קישור התרגיל',
   'practice.link': 'קישור התרגיל',
   'practice.copied': 'הקישור הועתק.',

@@ -634,6 +634,11 @@ GB.i18n.define('bn', {
   'constellation.title': 'নক্ষত্রমণ্ডল',
   'constellation.help': 'অনুসরণ করা প্রতিটি রিপোজিটরি একটি গ্যালাক্সি: যত বেশি কমিট লোড হয়, তত বড়। Tab দিয়ে এগোন, Enter দিয়ে খুলুন।',
   'constellation.stats': 'কমিট: {commits} · ব্রাঞ্চ: {branches}',
+  'constellation.order': 'ক্রম',
+  'constellation.orderTabs': 'ট্যাব',
+  'constellation.orderActivity': 'কার্যকলাপ',
+  'constellation.orderName': 'নাম',
+  'constellation.ordered': 'সাজানো: {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'লগবুক নং {n}',
   'bitacora.open': 'লাইভ লগবুক খুলুন: আগের লগবুকের পর থেকে রিপোজিটরি কী করেছে, তার স্কোর এবং পর্যবেক্ষণ',

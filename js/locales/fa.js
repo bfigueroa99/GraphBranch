@@ -677,6 +677,11 @@ GB.i18n.define('fa', {
   'constellation.title': 'صورت فلکی',
   'constellation.help': 'هر مخزن دنبال‌شده یک کهکشان است: هرچه کامیت بیشتری بارگذاری شده باشد بزرگ‌تر است. Tab میان آن‌ها جابه‌جا می‌شود و Enter آن را باز می‌کند.',
   'constellation.stats': 'کامیت‌ها: {commits} · شاخه‌ها: {branches}',
+  'constellation.order': 'ترتیب',
+  'constellation.orderTabs': 'زبانه‌ها',
+  'constellation.orderActivity': 'فعالیت',
+  'constellation.orderName': 'نام',
+  'constellation.ordered': 'مرتب‌شده بر اساس {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'دفتر وقایع شمارهٔ {n}',
   'bitacora.open': 'باز کردن دفتر وقایع زنده: آنچه مخزن از دفتر قبلی تا حالا انجام داده، نمره و یافته‌هایش',

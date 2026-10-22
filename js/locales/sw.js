@@ -634,6 +634,11 @@ GB.i18n.define('sw', {
   'constellation.title': 'Kundinyota',
   'constellation.help': 'Kila hazina inayofuatwa ni galaksi: kadiri commit nyingi zilizopakiwa, ndivyo inavyokuwa kubwa. Tab husogea kati yake na Enter huifungua.',
   'constellation.stats': 'commit: {commits} · matawi: {branches}',
+  'constellation.order': 'Mpangilio',
+  'constellation.orderTabs': 'Vichupo',
+  'constellation.orderActivity': 'Shughuli',
+  'constellation.orderName': 'Jina',
+  'constellation.ordered': 'Imepangwa kwa {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Daftari Na. {n}',
   'bitacora.open': 'Fungua daftari la moja kwa moja: kile hazina ilichofanya tangu daftari lililopita, alama zake na ugunduzi wake',

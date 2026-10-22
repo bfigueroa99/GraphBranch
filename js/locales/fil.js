@@ -635,6 +635,11 @@ GB.i18n.define('fil', {
   'constellation.title': 'Konstelasyon',
   'constellation.help': 'Ang bawat sinusubaybayang repository ay isang galaxy: mas malaki kung mas maraming commit ang na-load. Gumagalaw ang Tab sa pagitan nila at binubuksan ito ng Enter.',
   'constellation.stats': 'mga commit: {commits} · mga branch: {branches}',
+  'constellation.order': 'Pagkakasunod-sunod',
+  'constellation.orderTabs': 'Mga tab',
+  'constellation.orderActivity': 'Aktibidad',
+  'constellation.orderName': 'Pangalan',
+  'constellation.ordered': 'Inayos ayon sa {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Talaan Blg. {n}',
   'bitacora.open': 'Buksan ang live na talaan: ang ginawa ng repository mula sa nakaraan, ang iskor nito at ang mga natuklasan',

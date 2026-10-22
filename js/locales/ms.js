@@ -634,6 +634,11 @@ GB.i18n.define('ms', {
   'constellation.title': 'Buruj',
   'constellation.help': 'Setiap repositori yang diikuti ialah galaksi: semakin banyak commit dimuatkan, semakin besar. Tab berpindah antaranya dan Enter membukanya.',
   'constellation.stats': 'commit: {commits} · cabang: {branches}',
+  'constellation.order': 'Susunan',
+  'constellation.orderTabs': 'Tab',
+  'constellation.orderActivity': 'Aktiviti',
+  'constellation.orderName': 'Nama',
+  'constellation.ordered': 'Disusun mengikut {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Buku log Bil. {n}',
   'bitacora.open': 'Buka buku log langsung: apa yang dilakukan repositori sejak buku log sebelumnya, skor dan dapatannya',

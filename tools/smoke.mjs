@@ -1655,6 +1655,16 @@ console.log('Varios repos a la vez');
           if (Math.hypot(a.x + a.width / 2 - b.x - b.width / 2, a.y + a.height / 2 - b.y - b.height / 2) < (a.width + b.width) / 2 - 1) throw new Error(`las galaxias ${i} y ${j} se superponen`);
         }
       if (!(await full.evaluate(() => document.activeElement?.classList.contains('cs-gx')))) throw new Error('el foco no entra a la constelación');
+      // el orden: por nombre (alfabético) y por actividad, y lo anuncia en la región viva
+      await full.selectOption('#constellation-order', 'name');
+      const byName = await full.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => b.dataset.key));
+      if (byName.join() !== [...byName].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true })).join()) throw new Error('la constelación no se ordena por nombre: ' + byName);
+      const said = await full.$eval('#constellation-status', (e) => e.textContent.trim());
+      if (!said || /undefined|constellation\./.test(said)) throw new Error('el orden no se anuncia: ' + said);
+      await full.selectOption('#constellation-order', 'activity');
+      if ((await full.$$('#constellation .cs-gx')).length !== 10) throw new Error('al ordenar por actividad cambia el número de galaxias');
+      await full.selectOption('#constellation-order', 'tabs');
+      await full.focus('#constellation .cs-gx');
       await full.press('#constellation .cs-gx:focus', 'Tab');
       await full.keyboard.press('Enter');
       await full.waitForSelector('#constellation:not([open])', { state: 'attached', timeout: T(3000) });

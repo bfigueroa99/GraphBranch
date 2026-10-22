@@ -634,6 +634,11 @@ GB.i18n.define('id', {
   'constellation.title': 'Rasi bintang',
   'constellation.help': 'Setiap repositori yang diikuti adalah galaksi: makin banyak commit yang dimuat, makin besar. Tab berpindah di antaranya dan Enter membukanya.',
   'constellation.stats': 'commit: {commits} · cabang: {branches}',
+  'constellation.order': 'Urutan',
+  'constellation.orderTabs': 'Tab',
+  'constellation.orderActivity': 'Aktivitas',
+  'constellation.orderName': 'Nama',
+  'constellation.ordered': 'Diurutkan menurut {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Jurnal No. {n}',
   'bitacora.open': 'Buka jurnal yang diperbarui langsung: apa yang dilakukan repositori sejak jurnal sebelumnya, skornya, dan temuannya',

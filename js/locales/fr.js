@@ -635,6 +635,11 @@ GB.i18n.define('fr', {
   'constellation.title': 'Constellation',
   'constellation.help': 'Chaque dépôt suivi est une galaxie : plus il y a de commits chargés, plus elle est grande. Tab passe de l’une à l’autre et Entrée l’ouvre.',
   'constellation.stats': 'commits : {commits} · branches : {branches}',
+  'constellation.order': 'Ordre',
+  'constellation.orderTabs': 'Onglets',
+  'constellation.orderActivity': 'Activité',
+  'constellation.orderName': 'Nom',
+  'constellation.ordered': 'Triées par {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Journal de bord n° {n}',
   'bitacora.open': 'Ouvrir le journal de bord en direct : ce que le dépôt a fait depuis le précédent, sa note et ses constats',

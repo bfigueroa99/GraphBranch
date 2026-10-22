@@ -642,6 +642,11 @@ GB.i18n.define('ro', {
   'constellation.title': 'Constelație',
   'constellation.help': 'Fiecare depozit urmărit este o galaxie: cu cât sunt mai multe commit-uri încărcate, cu atât e mai mare. Tab trece între ele, iar Enter o deschide.',
   'constellation.stats': 'commit-uri: {commits} · ramuri: {branches}',
+  'constellation.order': 'Ordine',
+  'constellation.orderTabs': 'File',
+  'constellation.orderActivity': 'Activitate',
+  'constellation.orderName': 'Nume',
+  'constellation.ordered': 'Sortate după {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Jurnal de bord nr. {n}',
   'bitacora.open': 'Deschide jurnalul de bord în direct: ce a făcut depozitul de la cel anterior, scorul și constatările lui',

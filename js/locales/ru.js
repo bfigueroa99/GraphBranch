@@ -650,6 +650,11 @@ GB.i18n.define('ru', {
   'constellation.title': 'Созвездие',
   'constellation.help': 'Каждый отслеживаемый репозиторий — это галактика: чем больше загружено коммитов, тем она больше. Tab переключает между ними, Enter открывает.',
   'constellation.stats': 'коммиты: {commits} · ветки: {branches}',
+  'constellation.order': 'Порядок',
+  'constellation.orderTabs': 'Вкладки',
+  'constellation.orderActivity': 'Активность',
+  'constellation.orderName': 'Название',
+  'constellation.ordered': 'Отсортировано: {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Бортжурнал № {n}',
   'bitacora.open': 'Открыть бортжурнал в реальном времени: что сделано в репозитории с предыдущего, оценка и замечания',

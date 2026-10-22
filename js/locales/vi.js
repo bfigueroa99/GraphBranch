@@ -634,6 +634,11 @@ GB.i18n.define('vi', {
   'constellation.title': 'Chòm sao',
   'constellation.help': 'Mỗi kho đang theo dõi là một thiên hà: càng nhiều commit đã tải thì càng lớn. Tab di chuyển giữa chúng và Enter mở ra.',
   'constellation.stats': 'commit: {commits} · nhánh: {branches}',
+  'constellation.order': 'Thứ tự',
+  'constellation.orderTabs': 'Tab',
+  'constellation.orderActivity': 'Hoạt động',
+  'constellation.orderName': 'Tên',
+  'constellation.ordered': 'Đã sắp xếp theo {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Nhật ký số {n}',
   'bitacora.open': 'Mở nhật ký trực tiếp: những gì kho đã làm từ số trước, điểm số và các phát hiện',

@@ -645,6 +645,11 @@ GB.i18n.define('pl', {
   'constellation.title': 'Konstelacja',
   'constellation.help': 'Każde obserwowane repozytorium to galaktyka: im więcej wczytanych commitów, tym większa. Tab przełącza między nimi, Enter ją otwiera.',
   'constellation.stats': 'commity: {commits} · gałęzie: {branches}',
+  'constellation.order': 'Kolejność',
+  'constellation.orderTabs': 'Karty',
+  'constellation.orderActivity': 'Aktywność',
+  'constellation.orderName': 'Nazwa',
+  'constellation.ordered': 'Posortowano według: {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Dziennik pokładowy nr {n}',
   'bitacora.open': 'Otwórz dziennik pokładowy na żywo: co zrobiono w repozytorium od poprzedniego, jego ocena i ustalenia',

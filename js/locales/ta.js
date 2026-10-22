@@ -634,6 +634,11 @@ GB.i18n.define('ta', {
   'constellation.title': 'விண்மீன் தொகுதி',
   'constellation.help': 'பின்தொடரும் ஒவ்வொரு களஞ்சியமும் ஒரு விண்மீன் மண்டலம்: அதிக கமிட்கள் ஏற்றப்பட்டால் பெரிதாகும். Tab மூலம் நகர்ந்து Enter மூலம் திறக்கவும்.',
   'constellation.stats': 'கமிட்கள்: {commits} · கிளைகள்: {branches}',
+  'constellation.order': 'வரிசை',
+  'constellation.orderTabs': 'தாவல்கள்',
+  'constellation.orderActivity': 'செயல்பாடு',
+  'constellation.orderName': 'பெயர்',
+  'constellation.ordered': '{order} படி வரிசைப்படுத்தப்பட்டது',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'பதிவேடு எண் {n}',
   'bitacora.open': 'நேரலைப் பதிவேட்டைத் திறக்கவும்: முந்தைய பதிவேட்டிலிருந்து களஞ்சியம் என்ன செய்தது, அதன் மதிப்பெண், அதன் கண்டறிதல்கள்',

@@ -677,6 +677,11 @@ GB.i18n.define('ur', {
   'constellation.title': 'برج',
   'constellation.help': 'ہر فالو کیا گیا ریپوزٹری ایک کہکشاں ہے: جتنے زیادہ کمٹ لوڈ ہوں اتنی بڑی۔ Tab سے ان کے درمیان جائیں اور Enter سے کھولیں۔',
   'constellation.stats': 'کمٹ: {commits} · برانچیں: {branches}',
+  'constellation.order': 'ترتیب',
+  'constellation.orderTabs': 'ٹیبز',
+  'constellation.orderActivity': 'سرگرمی',
+  'constellation.orderName': 'نام',
+  'constellation.ordered': '{order} کے مطابق ترتیب',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'روزنامچہ نمبر {n}',
   'bitacora.open': 'لائیو روزنامچہ کھولیں: پچھلے روزنامچے کے بعد سے ریپوزٹری نے کیا کیا، اس کا اسکور اور مشاہدات',

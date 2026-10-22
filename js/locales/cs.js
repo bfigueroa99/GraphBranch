@@ -645,6 +645,11 @@ GB.i18n.define('cs', {
   'constellation.title': 'Souhvězdí',
   'constellation.help': 'Každý sledovaný repozitář je galaxie: čím více načtených commitů, tím větší. Tab přepíná mezi nimi, Enter ji otevře.',
   'constellation.stats': 'commity: {commits} · větve: {branches}',
+  'constellation.order': 'Řazení',
+  'constellation.orderTabs': 'Karty',
+  'constellation.orderActivity': 'Aktivita',
+  'constellation.orderName': 'Název',
+  'constellation.ordered': 'Seřazeno podle: {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Palubní deník č. {n}',
   'bitacora.open': 'Otevřít živý palubní deník: co se v repozitáři událo od předchozího, jeho hodnocení a zjištění',

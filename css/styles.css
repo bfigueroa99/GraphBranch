@@ -4892,6 +4892,12 @@ a.hl-row:focus-visible {
 }
 
 /* constelación de repos: cada repo seguido es una galaxia (un botón) en un cuadro */
+.cs-order {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
 .cs-body {
   position: relative;
   width: min(100%, 70vh);

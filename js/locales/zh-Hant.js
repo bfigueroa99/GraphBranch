@@ -634,6 +634,11 @@ GB.i18n.define('zh-Hant', {
   'constellation.title': '星座',
   'constellation.help': '每個已追蹤的儲存庫都是一個星系：已載入的提交越多，星系越大。按 Tab 在它們之間移動，按 Enter 開啟。',
   'constellation.stats': '提交：{commits} · 分支：{branches}',
+  'constellation.order': '排序',
+  'constellation.orderTabs': '分頁',
+  'constellation.orderActivity': '活躍度',
+  'constellation.orderName': '名稱',
+  'constellation.ordered': '已依{order}排序',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': '日誌第 {n} 期',
   'bitacora.open': '開啟即時日誌：儲存庫自上一期以來的動態、評分與問題',

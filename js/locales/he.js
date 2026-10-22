@@ -691,6 +691,11 @@ GB.i18n.define('he', {
   'constellation.title': 'קבוצת כוכבים',
   'constellation.help': 'כל מאגר במעקב הוא גלקסיה: ככל שנטענו יותר קומיטים היא גדולה יותר. Tab עובר ביניהן ו-Enter פותח אותה.',
   'constellation.stats': 'קומיטים: {commits} · ענפים: {branches}',
+  'constellation.order': 'סדר',
+  'constellation.orderTabs': 'לשוניות',
+  'constellation.orderActivity': 'פעילות',
+  'constellation.orderName': 'שם',
+  'constellation.ordered': 'ממוין לפי {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'יומן מס׳ {n}',
   'bitacora.open': 'פתיחת היומן החי: מה המאגר עשה מאז היומן הקודם, הציון שלו והממצאים שלו',

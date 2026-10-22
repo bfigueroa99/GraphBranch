@@ -1929,6 +1929,8 @@
   const constellation = GB.constellation.mount($('#constellation-body'), {
     text: t,
     fmt: U.fmtNum,
+    select: $('#constellation-order'),
+    status: $('#constellation-status'),
     onGo(key) {
       const tab = tabs.find((x) => x.key === key);
       if (typeof el.constellation.close === 'function') el.constellation.close();

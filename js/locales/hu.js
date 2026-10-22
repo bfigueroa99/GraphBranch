@@ -634,6 +634,11 @@ GB.i18n.define('hu', {
   'constellation.title': 'Csillagkép',
   'constellation.help': 'Minden követett tároló egy galaxis: minél több betöltött commit, annál nagyobb. A Tab lépked köztük, az Enter megnyitja.',
   'constellation.stats': 'commitok: {commits} · ágak: {branches}',
+  'constellation.order': 'Sorrend',
+  'constellation.orderTabs': 'Lapok',
+  'constellation.orderActivity': 'Aktivitás',
+  'constellation.orderName': 'Név',
+  'constellation.ordered': 'Rendezés: {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': '{n}. sz. napló',
   'bitacora.open': 'Az élő napló megnyitása: mit csinált a repozitórium az előző óta, a pontszáma és a megállapításai',

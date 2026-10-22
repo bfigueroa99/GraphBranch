@@ -330,10 +330,12 @@ kbd {
   color: var(--ink);
 }
 .icon-btn .when-on,
-.icon-btn[aria-pressed="true"] .when-off {
+.icon-btn[aria-pressed="true"] .when-off,
+.icon-btn[data-paused="true"] .when-off {
   display: none;
 }
-.icon-btn[aria-pressed="true"] .when-on {
+.icon-btn[aria-pressed="true"] .when-on,
+.icon-btn[data-paused="true"] .when-on {
   display: inline;
 }
 .controls {
@@ -686,7 +688,7 @@ kbd {
   margin-inline-start: 4px;
   font-size: 13px;
 }
-.btn-follow[aria-pressed="true"] {
+.btn-follow[data-following="true"] {
   border-color: color-mix(in srgb, var(--good) 45%, var(--line-strong));
 }
 .live-dot {
@@ -696,10 +698,10 @@ kbd {
   border-radius: 50%;
   background: var(--ink-3);
 }
-.btn-follow[aria-pressed="true"] .live-dot {
+.btn-follow[data-following="true"] .live-dot {
   background: var(--good);
 }
-.btn-follow[aria-pressed="false"] .live-dot::after {
+.btn-follow[data-following="false"] .live-dot::after {
   display: none;
 }
 
@@ -3261,7 +3263,7 @@ kbd {
 .tip-pin:hover {
   background: var(--surface-2);
 }
-.tip-pin[aria-pressed="true"] {
+.tip-pin[data-on="true"] {
   background: var(--surface-2);
 }
 

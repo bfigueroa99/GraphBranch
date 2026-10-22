@@ -165,7 +165,7 @@
   const pinLabel = (branch, on) => i18n.html(on ? 'tip.unpin' : 'tip.pin', { branch: U.truncate(branch, 28) });
 
   function pinButtonHTML(branch, on) {
-    return `<button type="button" class="tip-pin" data-branch="${U.esc(branch)}" aria-pressed="${on}">${pinLabel(branch, on)}</button>`;
+    return `<button type="button" class="tip-pin" data-branch="${U.esc(branch)}" data-on="${on}">${pinLabel(branch, on)}</button>`;
   }
 
   /** Cómo se nombra un PR: "#12" en GitHub; una merge request de GitLab, "!12". Y la clave de sus textos
@@ -211,7 +211,7 @@
       if (!b) return;
       const on = !!onTogglePin?.(b.dataset.branch);
       // se actualiza en su lugar (no con outerHTML): el botón conserva el foco de quien lo pulsó con el teclado
-      b.setAttribute('aria-pressed', String(on));
+      b.dataset.on = String(on);
       b.innerHTML = pinLabel(b.dataset.branch, on);
     });
   }

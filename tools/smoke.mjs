@@ -2380,12 +2380,13 @@ console.log('Fijar una rama con el teclado');
     await head.focus();
     await page.keyboard.press('Enter');
     const pin = await page.waitForSelector('#graph .tip .tip-pin', { timeout: T(5000) });
-    const before = await pin.getAttribute('aria-pressed');
+    const before = await pin.getAttribute('data-on');
+    if ((await pin.getAttribute('aria-pressed')) !== null) throw new Error('Fijar cambia de texto y no debe llevar aria-pressed');
     await pin.focus();
     await page.keyboard.press('Enter');
     const after = await page.evaluate(() => {
       const el = document.activeElement;
-      return { focus: el?.className || el?.tagName, pressed: el?.getAttribute('aria-pressed') };
+      return { focus: el?.className || el?.tagName, pressed: el?.dataset.on };
     });
     if (after.focus !== 'tip-pin') throw new Error(`tras fijar, el foco quedó en ${after.focus}`);
     if (after.pressed === before) throw new Error('el botón no cambió de estado');

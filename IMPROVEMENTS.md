@@ -519,9 +519,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Baja
 
-2. [Accesibilidad] Estados confusos: botones que cambian a la vez `aria-pressed` y el texto (el de pausa del
-    Replay, `replay.js:367`) y la leyenda 2D sin acceso por teclado. Los objetivos chicos ya cumplen los
-    24 px (iteración 91) y la base de la auditoría quedó vacía. Reproducir: `node tools/audit.mjs`.
+2. [Accesibilidad] La leyenda 2D no tiene acceso por teclado. Los botones de estado ya no mezclan
+    `aria-pressed` con un texto cambiante (iteración 123). Reproducir: `node tools/audit.mjs`.
 3. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
 4. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
     renombrados).
@@ -587,6 +586,9 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     `WebFetch` a `releases.electronjs.org` dio HTTP 500 en la iteración 119. Repetir la comparación
     cuando la página responda y subir si hay una estable más nueva.
     Reproducción: `WebFetch https://releases.electronjs.org/release/stable` → `HTTP 500`.
+20. [Deuda] Smoke intermitente: «filtro por autor: … quitar el filtro no deja el grafo como estaba» falló una vez
+    en la iteración 123 y pasó al repetir. Medir cuántas fallas en N corridas y buscar el tiempo fijo.
+    Reproducción: `node tools/smoke.mjs` → `✗ filtro por autor: el grafo y el árbol de texto muestran solo sus ramas…`.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); `placeLabels`/`placeNotes` crean arreglos por cuadro
@@ -2608,3 +2610,17 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow`); el `push --delete loop/87` sigue cortado por el proxy (Para Benjamin 7).
 - Validado: 397 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 123, mantenimiento · Accesibilidad: pendiente 2 (Estados confusos: botones que cambian a la vez `aria-pressed` y el texto (el de…)
+
+### 2026-10-22 · Iteración 123 · Mantenimiento · Accesibilidad
+
+- **Arreglo: los botones que cambian de nombre ya no llevan `aria-pressed`** (pendiente 2, primera mitad). El play del Replay («Pausa»/«Reanudar»), «Fijar»/«Soltar» de la ficha de rama y «En vivo»/«Saltar» no anuncian ya «pulsado» además de su nombre; el estado va en `data-paused`, `data-on` y `data-following` (el CSS y el smoke los leen). Queda la leyenda 2D sin teclado como pendiente 2.
+- **Reproducción:** `node --test tools/estados.test.mjs` → 3 pruebas fallan sin el arreglo (`aria-pressed` junto al texto cambiante).
+- **Pruebas que fallan sin el arreglo:** `tools/estados.test.mjs` y el paso del smoke de «Fijar» con el teclado (exige que no haya `aria-pressed`).
+- README: sin cambios (no cambia ninguna función).
+- QA: botones con estado (Replay, ficha de rama, seguir en vivo) leídos en el código y en el smoke; auditoría: la corre `npm run check`.
+- Arena: no aplica: una sola forma obvia (mover el estado a un `data-*`).
+- Reclamo: loop/123, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow`).
+- Nota: el smoke falló una vez en «filtro por autor: … quitar el filtro no deja el grafo como estaba» (no toca el cambio) y pasó al repetir; cargado como pendiente [Deuda].
+- Validado: 400 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 124, expansión: ítem 78 (Vista de texto: abrirla desde la URL, Público)

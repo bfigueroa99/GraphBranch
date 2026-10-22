@@ -410,7 +410,7 @@
 
     renderPlay() {
       const label = t(this.playing ? 'ctl.pause' : 'ctl.resume');
-      this.el.play.setAttribute('aria-pressed', this.playing ? 'false' : 'true');
+      this.el.play.dataset.paused = this.playing ? 'false' : 'true';
       this.el.play.title = label;
       this.el.play.setAttribute('aria-label', label);
     }

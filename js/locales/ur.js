@@ -563,6 +563,8 @@ GB.i18n.define('ur', {
   'practice.ex6.goal': 'کمٹ "Break checkout totals" پہلے ہی شیئر ہو چکا ہے، اس لیے تاریخ دوبارہ نہ لکھیں۔ اسے نئی کمٹ سے واپس کریں: revert HEAD~1 آزمائیں۔',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'feature پر آپ کی ادھوری تبدیلیاں ہیں اور main کو ابھی ٹھیک کرنا ہے۔ انہیں stash سے ایک طرف رکھیں، checkout main کر کے اصلاح کا commit کریں، پھر feature پر واپس جا کر stash pop سے انہیں واپس لائیں۔',
+  'practice.ex8.title': 'انضمام منسوخ کریں',
+  'practice.ex8.goal': 'آپ دیکھنا چاہتے ہیں کہ feature، main میں ضم ہوگی یا نہیں، مگر نتیجہ رکھنا نہیں چاہتے۔ merge feature --no-commit سے شروع کریں اور merge --abort سے منسوخ کریں۔',
   'practice.share': 'مشق کا لنک کاپی کریں',
   'practice.link': 'مشق کا لنک',
   'practice.copied': 'لنک کاپی ہو گیا۔',

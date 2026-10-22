@@ -520,6 +520,8 @@ GB.i18n.define('ja', {
   'practice.ex6.goal': '「Break checkout totals」のコミットはすでに共有されているので、履歴は書き換えません。新しいコミットで取り消しましょう。revert HEAD~1 を試してください。',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'feature に作業途中の変更があり、main をすぐに直す必要があります。stash で変更を退避し、checkout main して修正をコミットし、feature に戻って stash pop で変更を戻してください。',
+  'practice.ex8.title': 'マージを取り消す',
+  'practice.ex8.goal': 'feature が main にマージできるか確かめたいが、結果は残したくありません。merge feature --no-commit で始め、merge --abort で取り消してください。',
   'practice.share': '演習のリンクをコピー',
   'practice.link': '演習のリンク',
   'practice.copied': 'リンクをコピーしました。',

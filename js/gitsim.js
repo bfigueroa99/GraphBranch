@@ -47,6 +47,8 @@
       this.head = { branch }; // { branch } o { sha } (desprendido)
       this.work = []; // archivos con cambios sin commit, en orden de llegada
       this.stashes = []; // { files, branch, sha }, el más nuevo primero (stash@{0})
+      this.merging = null; // { name, theirs } mientras una fusión (merge --no-commit) espera su commit
+      this.aborts = 0; // cuántas fusiones se cancelaron con merge --abort
       this.defaultBranch = branch;
       this.branches.set(branch, null);
     }
@@ -173,12 +175,12 @@
       if (words[0] === 'git') words.shift();
       if (!words.length) return { ok: true, lines: [], changed: false };
       const [cmd, ...args] = words;
-      const before = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size]);
+      const before = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size, this.merging, this.aborts]);
       try {
         const handler = this.commands[cmd];
         if (!handler) fail(`git: '${cmd}' is not a git command. Try 'help'.`);
         const lines = handler.call(this, args) || [];
-        const after = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size]);
+        const after = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size, this.merging, this.aborts]);
         return { ok: true, lines, changed: before !== after };
       } catch (e) {
         if (!(e instanceof GitError)) throw e;
@@ -209,7 +211,8 @@
         'commit -m "msg"             save a snapshot on the current branch',
         'branch [name] [-d name]     list, create or delete branches',
         'checkout [-b] <name|sha>    move to a branch or commit (also: switch [-c])',
-        'merge <branch>              bring another branch into this one (--no-ff, --ff-only)',
+        'merge <branch>              bring another branch into this one (--no-ff, --ff-only, --no-commit)',
+        'merge --abort              cancel a merge that is waiting for its commit',
         'rebase <branch>             replay this branch on top of another',
         'reset [--soft|--hard] <to>  move the branch back (HEAD~1, a sha, a branch); --hard drops changes',
         'stash [list|pop|apply|drop] put uncommitted changes aside and bring them back',
@@ -226,6 +229,14 @@
       const { flags } = parse(args, ['-m', '--message']);
       const msg = flags['-m'] ?? flags['--message'];
       if (!msg || msg === true) fail('Aborting commit due to empty commit message.\n(use: commit -m "message")');
+      if (this.merging) {
+        const { theirs } = this.merging;
+        const merged = this.make(msg, [this.headSha, theirs]);
+        this.moveHead(merged);
+        this.work = [];
+        this.merging = null;
+        return [`[${this.head.branch} ${this.short(merged)}] ${msg}`];
+      }
       const sha = this.commit(msg);
       const where = this.head.branch || 'detached HEAD';
       return [`[${where} ${this.short(sha)}] ${msg}`];
@@ -233,6 +244,7 @@
 
     status() {
       const where = this.head.branch ? `On branch ${this.head.branch}` : `HEAD detached at ${this.short(this.head.sha)}`;
+      if (this.merging) return [where, 'All conflicts fixed but you are still merging.', '  (use "git commit" to conclude merge)', '  (use "git merge --abort" to cancel it)'];
       if (!this.work.length) return [where, 'nothing to commit, working tree clean'];
       return [where, 'Changes not staged for commit:', ...this.work.map((f) => `\tmodified:   ${f}`)];
     },
@@ -361,6 +373,14 @@
     merge(args) {
       const { flags, rest } = parse(args);
       const [name] = rest;
+      if (flags['--abort']) {
+        if (!this.merging) fail('fatal: There is no merge to abort (MERGE_HEAD missing).');
+        this.merging = null;
+        this.work = [];
+        this.aborts++;
+        return [];
+      }
+      if (this.merging) fail('fatal: You have not concluded your merge (MERGE_HEAD exists).\nPlease, commit your changes before you merge.');
       if (!name) fail('fatal: no branch to merge was given');
       if (!this.head.branch) fail('fatal: you are in a detached HEAD state: go to a branch first (checkout <branch>)');
       const theirs = this.resolve(name);
@@ -373,6 +393,10 @@
         return [`Updating ${this.short(ours)}..${this.short(theirs)}`, 'Fast-forward'];
       }
       if (flags['--ff-only']) fail('fatal: Not possible to fast-forward, aborting.');
+      if (flags['--no-commit']) {
+        this.merging = { name, theirs };
+        return ['Automatic merge went well; stopped before committing as requested'];
+      }
       const sha = this.make(`Merge branch '${name}'`, [ours, theirs]);
       this.moveHead(sha);
       return ["Merge made by the 'ort' strategy."];
@@ -465,6 +489,7 @@
       if (!sha) fail(`fatal: ambiguous argument '${to}': unknown revision`);
       this.moveHead(sha);
       if (flags['--hard']) this.work = [];
+      this.merging = null;
       if (flags['--hard']) return [`HEAD is now at ${this.short(sha)} ${this.commits.get(sha).message}`];
       return [];
     },
@@ -576,6 +601,16 @@
         const fix = r.log(main).filter((s) => !r.ancestors(feature).has(s));
         const own = r.log(feature).filter((s) => !r.ancestors(main).has(s));
         return fix.length === 1 && r.log(main).length === BASE.length + 1 && own.length === 1 && ['profile.js', 'profile.css'].every((f) => r.work.includes(f));
+      },
+    },
+    {
+      id: 'abort',
+      setup: diverge,
+      done: (r) => {
+        const feature = r.branches.get('feature');
+        const main = r.branches.get('main');
+        // se probó la fusión y se canceló: main sigue en su commit, feature intacta y nada a medias
+        return !!feature && r.aborts > 0 && !r.merging && r.head.branch === 'main' && r.log(main).length === BASE.length + 1 && !r.isAncestor(feature, main);
       },
     },
   ];

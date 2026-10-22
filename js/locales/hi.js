@@ -520,6 +520,8 @@ GB.i18n.define('hi', {
   'practice.ex6.goal': '"Break checkout totals" कमिट पहले ही साझा हो चुका है, इसलिए इतिहास को दोबारा न लिखें। एक नए कमिट से उसे पलटें: revert HEAD~1 आज़माएँ।',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'feature पर आपके आधे-अधूरे बदलाव हैं और main को अभी ठीक करना है। उन्हें stash से अलग रखें, checkout main करके सुधार का कमिट करें, फिर feature पर लौटें और stash pop से उन्हें वापस लाएँ।',
+  'practice.ex8.title': 'मर्ज रद्द करें',
+  'practice.ex8.goal': 'आप देखना चाहते हैं कि feature, main में मर्ज होगी या नहीं, पर नतीजा रखना नहीं चाहते। merge feature --no-commit से शुरू करें और merge --abort से रद्द करें।',
   'practice.share': 'अभ्यास का लिंक कॉपी करें',
   'practice.link': 'अभ्यास का लिंक',
   'practice.copied': 'लिंक कॉपी हो गया।',

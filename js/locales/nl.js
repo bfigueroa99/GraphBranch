@@ -521,6 +521,8 @@ GB.i18n.define('nl', {
   'practice.ex6.goal': 'De commit "Break checkout totals" is al gedeeld, dus herschrijf de geschiedenis niet. Maak hem ongedaan met een nieuwe commit: probeer revert HEAD~1.',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'Je hebt half afgemaakte wijzigingen op feature en main moet nu meteen gerepareerd worden. Zet ze opzij met stash, doe checkout main en een commit met de fix, ga terug naar feature en haal ze terug met stash pop.',
+  'practice.ex8.title': 'Een merge annuleren',
+  'practice.ex8.goal': 'Je wilt zien of feature in main zou mergen, maar het resultaat niet houden. Begin met merge feature --no-commit en annuleer met merge --abort.',
   'practice.share': 'Link van de oefening kopiëren',
   'practice.link': 'Link van de oefening',
   'practice.copied': 'Link gekopieerd.',

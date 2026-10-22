@@ -520,6 +520,8 @@ GB.i18n.define('zh-Hans', {
   'practice.ex6.goal': '“Break checkout totals”这个提交已经共享，所以不要改写历史。用一个新提交撤销它：试试 revert HEAD~1。',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'feature 上有做到一半的改动，而 main 需要马上修复。用 stash 把改动暂存起来，checkout main 并提交修复，再回到 feature，用 stash pop 取回改动。',
+  'practice.ex8.title': '取消合并',
+  'practice.ex8.goal': '你想看看 feature 能否合并进 main，但不保留结果。先用 merge feature --no-commit 开始，再用 merge --abort 取消。',
   'practice.share': '复制练习链接',
   'practice.link': '练习链接',
   'practice.copied': '链接已复制。',

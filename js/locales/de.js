@@ -521,6 +521,8 @@ GB.i18n.define('de', {
   'practice.ex6.goal': 'Der Commit „Break checkout totals“ ist schon geteilt, schreibe die Historie also nicht um. Mach ihn mit einem neuen Commit rückgängig: Probiere revert HEAD~1.',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'Auf feature liegen halbfertige Änderungen, und main braucht sofort einen Fix. Leg sie mit stash beiseite, mach checkout main und einen Commit mit dem Fix, geh zurück zu feature und hol sie mit stash pop wieder.',
+  'practice.ex8.title': 'Merge abbrechen',
+  'practice.ex8.goal': 'Du willst sehen, ob feature sich in main mergen ließe, das Ergebnis aber nicht behalten. Starte mit merge feature --no-commit und brich es mit merge --abort ab.',
   'practice.share': 'Link zur Übung kopieren',
   'practice.link': 'Link zur Übung',
   'practice.copied': 'Link kopiert.',

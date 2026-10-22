@@ -520,6 +520,8 @@ GB.i18n.define('fi', {
   'practice.ex6.goal': 'Commit "Break checkout totals" on jo jaettu, joten älä kirjoita historiaa uudelleen. Kumoa se uudella commitilla: kokeile revert HEAD~1.',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'Sinulla on keskeneräisiä muutoksia feature-haarassa, ja main pitää korjata heti. Siirrä ne sivuun stashilla, tee checkout main ja commit korjauksesta, palaa featureen ja palauta muutokset komennolla stash pop.',
+  'practice.ex8.title': 'Yhdistämisen peruminen',
+  'practice.ex8.goal': 'Haluat nähdä, yhdistyisikö feature main-haaraan, mutta et halua pitää tulosta. Aloita komennolla merge feature --no-commit ja peru se komennolla merge --abort.',
   'practice.share': 'Kopioi tehtävän linkki',
   'practice.link': 'Tehtävän linkki',
   'practice.copied': 'Linkki kopioitu.',

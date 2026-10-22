@@ -528,6 +528,8 @@ GB.i18n.define('ro', {
   'practice.ex6.goal': 'Commitul „Break checkout totals” a fost deja partajat, așa că nu rescrie istoricul. Anulează-l cu un commit nou: încearcă revert HEAD~1.',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'Ai modificări neterminate pe feature, iar main trebuie reparat acum. Pune-le deoparte cu stash, fă checkout main și un commit cu reparația, întoarce-te pe feature și recupereaz-le cu stash pop.',
+  'practice.ex8.title': 'Anularea unei îmbinări',
+  'practice.ex8.goal': 'Vrei să vezi dacă feature s-ar îmbina în main, fără să păstrezi rezultatul. Începe cu merge feature --no-commit și anulează cu merge --abort.',
   'practice.share': 'Copiază linkul exercițiului',
   'practice.link': 'Linkul exercițiului',
   'practice.copied': 'Link copiat.',

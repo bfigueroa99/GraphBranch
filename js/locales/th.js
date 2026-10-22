@@ -521,6 +521,8 @@ GB.i18n.define('th', {
   'practice.ex6.goal': 'คอมมิต "Break checkout totals" ถูกแชร์ไปแล้ว จึงไม่ควรเขียนประวัติใหม่ ให้ย้อนกลับด้วยคอมมิตใหม่ ลองใช้ revert HEAD~1',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'คุณมีการเปลี่ยนแปลงที่ทำค้างไว้ใน feature และต้องแก้ main ทันที เก็บไว้ก่อนด้วย stash แล้ว checkout main และ commit การแก้ไข จากนั้นกลับไปที่ feature แล้วเอาคืนด้วย stash pop',
+  'practice.ex8.title': 'ยกเลิกการ merge',
+  'practice.ex8.goal': 'คุณอยากดูว่า feature จะ merge เข้า main ได้ไหม แต่ไม่ต้องการเก็บผลลัพธ์ ให้เริ่มด้วย merge feature --no-commit แล้วยกเลิกด้วย merge --abort',
   'practice.share': 'คัดลอกลิงก์แบบฝึกหัด',
   'practice.link': 'ลิงก์แบบฝึกหัด',
   'practice.copied': 'คัดลอกลิงก์แล้ว',

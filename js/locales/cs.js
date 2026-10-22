@@ -531,6 +531,8 @@ GB.i18n.define('cs', {
   'practice.ex6.goal': 'Commit „Break checkout totals“ už je sdílený, takže nepřepisuj historii. Vrať ho novým commitem: zkus revert HEAD~1.',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'Ve feature máte rozdělanou práci a main je potřeba hned opravit. Odložte změny pomocí stash, udělejte checkout main a commit s opravou, vraťte se do feature a obnovte je pomocí stash pop.',
+  'practice.ex8.title': 'Zrušení sloučení',
+  'practice.ex8.goal': 'Chcete zjistit, zda by se feature sloučila do main, ale výsledek si nechat nechcete. Začněte příkazem merge feature --no-commit a zrušte ho příkazem merge --abort.',
   'practice.share': 'Zkopírovat odkaz na úlohu',
   'practice.link': 'Odkaz na úlohu',
   'practice.copied': 'Odkaz zkopírován.',

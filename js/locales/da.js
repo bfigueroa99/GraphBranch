@@ -520,6 +520,8 @@ GB.i18n.define('da', {
   'practice.ex6.goal': 'Commit "Break checkout totals" er allerede delt, så omskriv ikke historikken. Fortryd den med en ny commit: prøv revert HEAD~1.',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'Du har halvfærdige ændringer på feature, og main skal rettes nu. Læg dem til side med stash, lav checkout main og et commit med rettelsen, gå tilbage til feature og hent dem med stash pop.',
+  'practice.ex8.title': 'Annuller en sammenfletning',
+  'practice.ex8.goal': 'Du vil se, om feature kan flettes ind i main, men uden at beholde resultatet. Start med merge feature --no-commit og annuller den med merge --abort.',
   'practice.share': 'Kopiér opgavens link',
   'practice.link': 'Opgavens link',
   'practice.copied': 'Link kopieret.',

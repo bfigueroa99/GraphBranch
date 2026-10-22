@@ -520,6 +520,8 @@ GB.i18n.define('bg', {
   'practice.ex6.goal': 'Комитът „Break checkout totals“ вече е споделен, затова не пренаписвайте историята. Отменете го с нов комит: опитайте revert HEAD~1.',
   'practice.ex7.title': 'Stash',
   'practice.ex7.goal': 'Имате недовършени промени във feature, а main трябва да се поправи веднага. Оставете ги настрана със stash, направете checkout main и комит с поправката, върнете се във feature и ги възстановете със stash pop.',
+  'practice.ex8.title': 'Отмяна на сливане',
+  'practice.ex8.goal': 'Искате да видите дали feature ще се слее с main, но без да запазите резултата. Започнете с merge feature --no-commit и го отменете с merge --abort.',
   'practice.share': 'Копиране на връзката към упражнението',
   'practice.link': 'Връзка към упражнението',
   'practice.copied': 'Връзката е копирана.',

@@ -124,6 +124,7 @@ test('cada ejercicio parte sin resolver y se resuelve con sus comandos', () => {
     ['cherry-pick feature', 'tag v1.0.1'],
     ['revert HEAD~1'],
     ['stash', 'checkout main', 'commit -m "Fix login redirect"', 'checkout feature', 'stash pop'],
+    ['merge feature --no-commit', 'merge --abort'],
   ];
   assert.equal(solutions.length, EXERCISES.length);
   EXERCISES.forEach((ex, i) => {
@@ -449,4 +450,36 @@ test('un ejercicio propio puede partir con cambios a medias (touch en sus comand
   const blocked = { title: 'x', goal: 'y', setup: ['checkout -b feature', 'commit -m "x"', 'checkout main', 'touch a.js'], checks: ['on:feature'] };
   assert.equal(cleanExercise({ ...blocked, solution: ['checkout feature'] }).error, 'solution', 'checkout con cambios falla, así que esa solución no vale');
   assert.equal(cleanExercise({ ...blocked, solution: ['stash', 'checkout feature'] }).error, undefined);
+});
+
+test('merge --no-commit deja la fusión a medias: status la nombra, commit la cierra y --abort la cancela', () => {
+  const r = start(1, NOW);
+  const main = r.branches.get('main');
+  assert.equal(r.run('merge --abort').ok, false);
+  assert.match(r.run('merge --abort').lines[0], /There is no merge to abort/);
+  assert.match(r.run('merge feature --no-commit').lines[0], /stopped before committing/);
+  assert.equal(r.branches.get('main'), main, 'main no se movió');
+  assert.ok(r.run('status').lines.includes('All conflicts fixed but you are still merging.'));
+  const again = r.run('merge feature');
+  assert.equal(again.ok, false);
+  assert.match(again.lines[0], /not concluded your merge/);
+  assert.equal(r.run('merge --abort').ok, true);
+  assert.equal(r.merging, null);
+  assert.equal(r.branches.get('main'), main);
+  assert.equal(r.run('status').lines[1], 'nothing to commit, working tree clean');
+  r.run('merge feature --no-commit');
+  const c = r.run('commit -m "Join feature"');
+  assert.ok(c.ok);
+  assert.equal(r.commits.get(r.branches.get('main')).parents.length, 2);
+  assert.equal(r.merging, null);
+});
+
+test('el ejercicio de abort no se resuelve con una fusión confirmada ni con una fusión a medias', () => {
+  const i = EXERCISES.findIndex((e) => e.id === 'abort');
+  const a = start(i, NOW);
+  run(a, 'merge feature --no-commit');
+  assert.equal(EXERCISES[i].done(a), false, 'a medias no cuenta');
+  const b = start(i, NOW);
+  run(b, 'merge feature');
+  assert.equal(EXERCISES[i].done(b), false, 'fusionar de verdad no cuenta');
 });

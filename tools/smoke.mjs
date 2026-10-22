@@ -1535,6 +1535,21 @@ console.log('Varios repos a la vez');
     await lab.waitForFunction(() => document.querySelector('.pr-log')?.textContent.includes('modified:   profile.js'), null, { timeout: T(5000) });
     await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: T(5000) });
   });
+  await step(lab, 'el ejercicio de abort: merge --no-commit deja la fusión a medias y merge --abort la cancela y lo resuelve', async () => {
+    await lab.goto(`${base}/index.html?lang=es&practice=8`);
+    await lab.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: T(15000) });
+    await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent.includes('merge --abort'), null, { timeout: T(5000) });
+    if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('el ejercicio parte resuelto');
+    const send = async (line) => {
+      await lab.fill('.pr-input', line);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await send('merge feature --no-commit');
+    await lab.waitForFunction(() => document.querySelector('.pr-log')?.textContent.includes('stopped before committing'), null, { timeout: T(5000) });
+    if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('se resolvió sin cancelar la fusión');
+    await send('merge --abort');
+    await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: T(5000) });
+  });
   await step(lab, 'un ejercicio propio con pistas: el botón las muestra una a una y la condición de mensaje lo resuelve', async () => {
     await lab.goto(`${base}/index.html?lang=es&practice=1`);
     await lab.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: T(15000) });

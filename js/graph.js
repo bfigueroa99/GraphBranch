@@ -148,7 +148,7 @@
       if (ci) rows.push(`<span class="tip-ci ci-${ci}">${CI_MARK[ci]} ${U.esc(ciText(ci))}</span>`);
       const stack = ctx.stacks?.get(branch);
       if (stack) rows.push(`<span class="tip-stack">${i18n.html('tip.stacked', { num: stack.parentNum, parent: stack.parent })}</span>`);
-      if (pr) rows.push(`<span>${i18n.html(prKey(pr, pr.draft ? 'tip.prDraft' : 'tip.pr'), { num: pr.number, base: pr.base })}${pr.url ? ` · <a href="${U.esc(pr.url)}" target="_blank" rel="noopener">${U.esc(tr(prKey(pr, 'tip.viewPr')))}</a>` : ''}</span>`);
+      if (pr) rows.push(`<span>${i18n.html(prKey(pr, pr.draft ? 'tip.prDraft' : 'tip.pr'), { num: pr.number, base: pr.base })}${U.safeUrl(pr.url) ? ` · <a href="${U.esc(U.safeUrl(pr.url))}" target="_blank" rel="noopener">${U.esc(tr(prKey(pr, 'tip.viewPr')))}</a>` : ''}</span>`);
     }
     return `
       <div class="tip-head">${U.avatarHTML(c.author, 22)}<span class="tip-author">${U.esc(c.author.name || tr('author.unknown'))}</span><span class="tip-time" title="${U.esc(U.fmtDateTime(c.date))}">${U.timeAgo(c.date)}</span></div>
@@ -157,7 +157,7 @@
       ${rows.length ? `<p class="tip-extra">${rows.join('')}</p>` : ''}
       ${pin && (c.url || ctx.canDiff || (branch && ctx.canPin)) ? `<div class="tip-actions">
         ${ctx.canDiff ? `<button type="button" class="tip-diff" data-sha="${U.esc(c.sha)}">${U.esc(tr('diff.show'))}</button>` : ''}
-        ${c.url ? `<a class="tip-link" href="${U.esc(c.url)}" target="_blank" rel="noopener">${U.esc(tr('tip.openCommit'))} ↗</a>` : ''}
+        ${U.safeUrl(c.url) ? `<a class="tip-link" href="${U.esc(U.safeUrl(c.url))}" target="_blank" rel="noopener">${U.esc(tr('tip.openCommit'))} ↗</a>` : ''}
         ${branch && ctx.canPin ? pinButtonHTML(branch, !!ctx.pins?.has(branch)) : ''}
       </div>` : ''}`;
   }

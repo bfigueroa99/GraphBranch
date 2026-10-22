@@ -2558,7 +2558,7 @@
         ${p.dir ? `<p class="tip-meta"><code>${U.esc(p.dir)}/</code></p>` : ''}
         ${meta.length ? `<p class="tip-meta">${meta.join(' · ')}</p>` : ''}
         ${p.from ? `<p class="tip-extra"><span>${i18n.html('file.renamedFrom', { path: p.from })}</span></p>` : ''}
-        ${pin ? `<div class="tip-actions"><button type="button" class="tip-ride gx-visit">${U.esc(tr('galaxy.visit'))}</button>${p.url ? `<a class="tip-link" href="${U.esc(p.url)}" target="_blank" rel="noopener">${U.esc(tr('file.open'))} ↗</a>` : ''}</div>` : ''}`;
+        ${pin ? `<div class="tip-actions"><button type="button" class="tip-ride gx-visit">${U.esc(tr('galaxy.visit'))}</button>${U.safeUrl(p.url) ? `<a class="tip-link" href="${U.esc(U.safeUrl(p.url))}" target="_blank" rel="noopener">${U.esc(tr('file.open'))} ↗</a>` : ''}</div>` : ''}`;
     }
 
     clear() {

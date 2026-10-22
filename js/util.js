@@ -13,6 +13,9 @@ window.GB = window.GB || {};
   U.esc = (s) =>
     String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
+  /** Solo http(s): una URL que llega de la API no puede ser javascript:, data: ni otro esquema. */
+  U.safeUrl = (u) => (typeof u === 'string' && /^https?:\/\//i.test(u) ? u : '');
+
   U.shortSha = (sha) => (sha || '').slice(0, 7);
   U.firstLine = (msg) => String(msg || '').split('\n')[0].trim();
   U.truncate = (s, n) => {

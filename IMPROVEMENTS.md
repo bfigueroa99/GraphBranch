@@ -2548,5 +2548,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Reclamo: loop/118, sin colisión
 - Nota: el clon venía superficial (`git fetch --unshallow`); sin eso `--check` R3 y dos pruebas de `loop.test.mjs` fallan.
 - Replica: sin pasada nueva (no existe `replica/features.csv`; sin paridad que medir); la hoja se repuso a 15 ítems (85–90) con candidatas de `docs/investigacion.md`.
-- Validado: (se completa al terminar npm run check)
+- Validado: 390 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 119, mantenimiento · Seguridad: auditoría (sin pendientes de Seguridad)

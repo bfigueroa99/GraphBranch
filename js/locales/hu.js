@@ -628,6 +628,7 @@ GB.i18n.define('hu', {
   'digest.commits': 'Commitok: {n}',
   'digest.merged': 'Egyesített pull requestek',
   'digest.opened': 'Megnyitott pull requestek',
+  'digest.closed': 'Lezárt issue-k',
   'digest.releases': 'Kiadások',
   'digest.tags': 'Címkék',
   'digest.people': 'Kik járultak hozzá (commitok)',

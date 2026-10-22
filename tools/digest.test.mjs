@@ -202,3 +202,27 @@ test('pull requests abiertos: sin ninguno no hay sección', () => {
   const t = { head: 'S', commits: 'C {n}', merged: 'M', opened: 'Abiertos', releases: 'R', people: 'P', branch: 'B' };
   assert.doesNotMatch(toMarkdown(d, 'a/b', t), /Abiertos/);
 });
+
+test('issues cerrados: cuenta los de la semana, una vez por issue, sin los viejos ni enlaces peligrosos', () => {
+  const closes = [
+    { id: 'c1', kind: 'issue-close', time: ago(2), number: 21, detail: 'Falla `x`', url: 'https://example.com/21' },
+    { id: 'c2', kind: 'issue-close', time: ago(1), number: 21, detail: 'Falla (otra vez)' },
+    { id: 'c3', kind: 'issue-close', time: ago(3), number: 22, detail: 'Otro', url: 'javascript:alert(1)' },
+    { id: 'c4', kind: 'issue-close', time: ago(10), number: 5, detail: 'Viejo' },
+    { id: 'c5', kind: 'issue-open', time: ago(1), number: 23, detail: 'Abierto' },
+  ];
+  const d = compute(repo(), closes, NOW);
+  assert.equal(d.closed.total, 2);
+  assert.deepEqual(JSON.parse(JSON.stringify(d.closed.rows.map((r) => r.number))), [21, 22]);
+  const t = { head: 'S · {repo}', commits: 'C: {n}', merged: 'M', closed: 'Cerrados', releases: 'R', people: 'P', branch: 'B' };
+  const out = toMarkdown(d, 'a/b', t);
+  assert.match(out, /## Cerrados \(2\)\n\n- \[#21 Falla \\`x\\`\]\(https:\/\/example\.com\/21\)\n- #22 Otro\n/);
+  assert.doesNotMatch(out, /javascript:|Viejo|Abierto/);
+  assert.ok(imageLines(d, 'a/b', t).some((l) => l.text === 'Cerrados (2)'));
+});
+
+test('issues cerrados: sin ninguno no hay sección', () => {
+  const d = compute(repo(), acts, NOW);
+  assert.equal(d.closed.total, 0);
+  assert.doesNotMatch(toMarkdown(d, 'a/b', { head: 'S', commits: 'C {n}', merged: 'M', closed: 'Cerrados', releases: 'R', people: 'P', branch: 'B' }), /Cerrados/);
+});

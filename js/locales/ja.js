@@ -628,6 +628,7 @@ GB.i18n.define('ja', {
   'digest.commits': 'コミット: {n}',
   'digest.merged': 'マージされたプルリクエスト',
   'digest.opened': 'オープンされたプルリクエスト',
+  'digest.closed': 'クローズされた issue',
   'digest.releases': 'リリース',
   'digest.tags': 'タグ',
   'digest.people': '貢献した人(コミット)',

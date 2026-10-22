@@ -629,6 +629,7 @@ GB.i18n.define('th', {
   'digest.commits': 'คอมมิต: {n}',
   'digest.merged': 'Pull request ที่ผสานแล้ว',
   'digest.opened': 'Pull request ที่เปิดใหม่',
+  'digest.closed': 'issue ที่ปิดแล้ว',
   'digest.releases': 'รีลีส',
   'digest.tags': 'แท็ก',
   'digest.people': 'ผู้ร่วมพัฒนา (คอมมิต)',

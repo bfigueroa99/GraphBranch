@@ -628,6 +628,7 @@ GB.i18n.define('da', {
   'digest.commits': 'Commits: {n}',
   'digest.merged': 'Flettede pull requests',
   'digest.opened': 'Åbnede pull requests',
+  'digest.closed': 'Lukkede issues',
   'digest.releases': 'Releases',
   'digest.tags': 'Tags',
   'digest.people': 'Hvem der har bidraget (commits)',

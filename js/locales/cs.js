@@ -639,6 +639,7 @@ GB.i18n.define('cs', {
   'digest.commits': 'Commity: {n}',
   'digest.merged': 'Sloučené pull requesty',
   'digest.opened': 'Otevřené pull requesty',
+  'digest.closed': 'Uzavřené issues',
   'digest.releases': 'Vydání',
   'digest.tags': 'Tagy',
   'digest.people': 'Kdo přispěl (commity)',

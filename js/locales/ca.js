@@ -628,6 +628,7 @@ GB.i18n.define('ca', {
   'digest.commits': 'Commits: {n}',
   'digest.merged': 'Pull requests fusionats',
   'digest.opened': 'Pull requests oberts',
+  'digest.closed': 'Issues tancats',
   'digest.releases': 'Releases',
   'digest.tags': 'Tags',
   'digest.people': 'Qui ha aportat (commits)',

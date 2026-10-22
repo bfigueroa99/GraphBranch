@@ -628,6 +628,7 @@ GB.i18n.define('bg', {
   'digest.commits': 'Комити: {n}',
   'digest.merged': 'Слети pull request-и',
   'digest.opened': 'Отворени pull request-и',
+  'digest.closed': 'Затворени проблеми',
   'digest.releases': 'Издания',
   'digest.tags': 'Тагове',
   'digest.people': 'Кой е допринесъл (комити)',

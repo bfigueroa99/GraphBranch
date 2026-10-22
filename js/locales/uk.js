@@ -644,6 +644,7 @@ GB.i18n.define('uk', {
   'digest.commits': 'Коміти: {n}',
   'digest.merged': 'Злиті pull request’и',
   'digest.opened': 'Відкриті pull request’и',
+  'digest.closed': 'Закриті задачі',
   'digest.releases': 'Релізи',
   'digest.tags': 'Теги',
   'digest.people': 'Хто зробив внесок (коміти)',

@@ -628,6 +628,7 @@ GB.i18n.define('nb', {
   'digest.commits': 'Commits: {n}',
   'digest.merged': 'Flettede pull requests',
   'digest.opened': 'Åpnede pull requests',
+  'digest.closed': 'Lukkede issues',
   'digest.releases': 'Releaser',
   'digest.tags': 'Tags',
   'digest.people': 'Hvem som har bidratt (commits)',

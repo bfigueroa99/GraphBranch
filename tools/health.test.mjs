@@ -201,6 +201,16 @@ test('compute: los forks activos con su tiempo desde el último push', () => {
   assert.equal(compute({ ...d, forks: undefined }, [], NOW).forks.total, 0);
 });
 
+test('compute: los forks salen por actividad reciente aunque la lista venga desordenada', () => {
+  const d = repo();
+  d.forks = [
+    { fullName: 'a/viejo', url: 'https://github.com/a/viejo', pushedAt: ago(40) },
+    { fullName: 'b/nuevo', url: 'https://github.com/b/nuevo', pushedAt: ago(1) },
+    { fullName: 'c/medio', url: 'https://github.com/c/medio', pushedAt: ago(9) },
+  ];
+  assert.deepEqual(compute(d, [], NOW).forks.rows.map((f) => f.fullName), ['b/nuevo', 'c/medio', 'a/viejo']);
+});
+
 test('PRs por estado: borrador, checks en rojo, aprobado y esperando revisión, cada uno con su salto', () => {
   const r = repo();
   r.pulls.clear();

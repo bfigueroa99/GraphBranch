@@ -217,7 +217,7 @@
 
   /* dos vistas del mismo layout: 3D (Three.js) y 2D (SVG) */
   function followUI(v) {
-    el.followBtn.setAttribute('aria-pressed', v);
+    el.followBtn.dataset.following = String(!!v);
     el.followBtn.querySelector('.follow-label').textContent = v ? t('follow.live') : t('follow.jump');
     el.followBtn.title = v ? t('follow.live.title') : t('follow.jump.title');
   }

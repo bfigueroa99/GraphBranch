@@ -285,9 +285,9 @@
       const chain = opts.chainOf?.(c.sha);
       if (chain?.startsWith('b:')) meta.append(' · ', mk('span', 'df-branch', t('diff.onBranch', { name: chain.slice(2) })));
       if ((c.parents || []).length > 1) meta.append(' · ', mk('span', null, t('diff.merge')));
-      if (c.url) {
+      if (GB.U.safeUrl(c.url)) {
         const a = mk('a', 'df-link', `${t('tip.openCommit')} ↗`);
-        a.href = c.url;
+        a.href = GB.U.safeUrl(c.url);
         a.target = '_blank';
         a.rel = 'noopener';
         meta.append(' · ', a);
@@ -343,9 +343,9 @@
         sec.dataset.filled = '1';
         if (f.patch) sec.append(codeOf(f));
         else sec.append(mk('p', 'df-note', t('diff.noPatch')));
-        if (f.url) {
+        if (GB.U.safeUrl(f.url)) {
           const a = mk('a', 'df-link', `${t('diff.openFile')} ↗`);
-          a.href = f.url;
+          a.href = GB.U.safeUrl(f.url);
           a.target = '_blank';
           a.rel = 'noopener';
           const p = mk('p', 'df-note');

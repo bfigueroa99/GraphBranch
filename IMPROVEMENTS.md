@@ -578,6 +578,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 17. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
+18. [Seguridad] Las fuentes Codeberg y Bitbucket no validan en el origen las URL de los pull requests
+    (`codeberg.js:296` `p.html_url`, `bitbucket.js:204` y `:321` `links.html.href`), a diferencia de
+    `codeberg.js:179` y GitHub (`/^https:\/\//`). La interfaz ya las filtra con `U.safeUrl` (iteración 119),
+    pero un dato fuera de http(s) llega hasta las exportaciones (resumen, bitácora en Markdown).
+    Reproducción: `tools/codeberg.test.mjs` con un PR cuyo `html_url` sea `javascript:alert(1)` → la actividad conserva esa `url`.
+19. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
+    `WebFetch` a `releases.electronjs.org` dio HTTP 500 en la iteración 119. Repetir la comparación
+    cuando la página responda y subir si hay una estable más nueva.
+    Reproducción: `WebFetch https://releases.electronjs.org/release/stable` → `HTTP 500`.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); `placeLabels`/`placeNotes` crean arreglos por cuadro
@@ -2550,3 +2559,16 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Replica: sin pasada nueva (no existe `replica/features.csv`; sin paridad que medir); la hoja se repuso a 15 ítems (85–90) con candidatas de `docs/investigacion.md`.
 - Validado: 390 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 119, mantenimiento · Seguridad: auditoría (sin pendientes de Seguridad)
+
+### 2026-10-22 · Iteración 119 · Mantenimiento · Seguridad
+
+- **Auditoría de Seguridad: los enlaces que arma la interfaz con URL de la API solo salen con http(s).** CSP cerrado (`script-src 'self'`, sin `eval`), los 41 usos de `innerHTML` revisados (todo texto externo pasa por `U.esc` o `textContent`), tokens solo en cabeceras, `sw.js` sin guardar la API, Electron con aislamiento, `sandbox`, navegación y ventanas bloqueadas y `openExternal` solo a https. Hallazgo peor (Media): `feed.js`, `graph.js`, `galaxy.js`, `diff.js` y `app.js` ponían en un `href` la `url` de la API sin comprobar el esquema; un `javascript:` lo frena el CSP, pero no debía llegar al DOM. Se añade `U.safeUrl` y se usa en los 9 sitios (la bitácora ya validaba con `isUrl`).
+- **Hallazgos:** 3 (el arreglado aquí y los pendientes 18 y 19), 0 a la base de la auditoría
+- **Pruebas que fallan sin el arreglo:** `tools/util.test.mjs` («U.safeUrl: solo deja pasar http(s)…» y «ningún enlace de la interfaz arma su href… sin pasar por U.safeUrl»).
+- README: sin cambios (sin función nueva).
+- QA: filas de Seguridad del protocolo; auditoría: la corre `npm run check`.
+- Arena: no aplica: una sola forma obvia (un filtro de esquema en un helper).
+- Reclamo: loop/119, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow`); las `loop/87`–`99` fusionadas siguen sin borrarse (el proxy cortó el `push --delete`).
+- Validado: 392 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 120, expansión: ítem 76 (Constelación ordenada por actividad, Escala)

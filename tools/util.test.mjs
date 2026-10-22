@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -68,4 +68,23 @@ test('U.secret: en otro origen el token sigue en localStorage', () => {
   assert.equal(local['graphbranch:token'], '"ghp_x"');
   assert.equal(Object.keys(session).length, 0);
   assert.equal(U.secret.get('token', ''), 'ghp_x');
+});
+
+test('U.safeUrl: solo deja pasar http(s); javascript:, data: y lo que no es texto salen vacíos', () => {
+  const U = load({});
+  assert.equal(U.safeUrl('https://github.com/a/b'), 'https://github.com/a/b');
+  assert.equal(U.safeUrl('http://forge.local/a'), 'http://forge.local/a');
+  for (const malo of ['javascript:alert(1)', ' JavaScript:alert(1)', 'data:text/html,x', 'file:///etc/passwd', '//evil.test/x', '', null, undefined, 7, {}]) {
+    assert.equal(U.safeUrl(malo), '', String(malo));
+  }
+});
+
+test('ningún enlace de la interfaz arma su href con una URL de la API sin pasar por U.safeUrl', () => {
+  const dir = join(root, 'js');
+  const sueltos = [];
+  for (const f of readdirSync(dir).filter((n) => n.endsWith('.js'))) {
+    const src = readFileSync(join(dir, f), 'utf8');
+    for (const m of src.matchAll(/href="\$\{U\.esc\((?!U\.safeUrl)([^)]*)\)\}"|\.href = (?!GB\.U\.safeUrl|U\.safeUrl)((?:\w+\.)+url)\b/g)) sueltos.push(`${f}: ${m[0]}`);
+  }
+  assert.deepEqual(sueltos, []);
 });

@@ -1344,7 +1344,7 @@
     const span = (ms) => GB.i18n.fmtSpan(ms);
     const stat = (label, n) => `<div class="hl-stat"><b>${U.fmtNum(n)}</b><span>${U.esc(label)}</span></div>`;
     const forkRows = h.forks.rows
-      .map((r) => `<li><a class="hl-row" href="${U.esc(r.url)}" target="_blank" rel="noopener noreferrer"><span class="hl-main">${U.esc(r.fullName)}</span><span class="hl-aside">${U.esc(span(r.idle))}</span></a></li>`)
+      .map((r) => `<li><a class="hl-row" href="${U.esc(U.safeUrl(r.url))}" target="_blank" rel="noopener noreferrer"><span class="hl-main">${U.esc(r.fullName)}</span><span class="hl-aside">${U.esc(span(r.idle))}</span></a></li>`)
       .join('');
     const forksBody = !showForks ? '' : forkRows ? `<ul class="hl-list">${forkRows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`;
     el.healthBody.innerHTML =
@@ -2107,8 +2107,8 @@
   function renderRepo(repo) {
     const full = `${repo.owner}/${repo.name}`;
     el.repoLink.textContent = full;
-    if (repo.url) {
-      el.repoLink.href = repo.url;
+    if (U.safeUrl(repo.url)) {
+      el.repoLink.href = U.safeUrl(repo.url);
       el.repoLink.removeAttribute('aria-disabled');
     } else {
       el.repoLink.removeAttribute('href');

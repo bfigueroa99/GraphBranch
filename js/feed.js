@@ -243,7 +243,7 @@
         (focusable
           ? `<button type="button" class="act-main" title="${U.esc(t('feed.locate'))}">${inner}</button>`
           : `<div class="act-main">${inner}</div>`) +
-        (a.url ? `<a class="act-link" href="${U.esc(a.url)}" target="_blank" rel="noopener" title="${U.esc(t('feed.openGithub'))}" aria-label="${U.esc(t('feed.openGithub'))}">${icon('link')}</a>` : '');
+        (U.safeUrl(a.url) ? `<a class="act-link" href="${U.esc(U.safeUrl(a.url))}" target="_blank" rel="noopener" title="${U.esc(t('feed.openGithub'))}" aria-label="${U.esc(t('feed.openGithub'))}">${icon('link')}</a>` : '');
       if (focusable) li.querySelector('.act-main').addEventListener('click', () => this.onSelect?.(a));
       if (a.live) setTimeout(() => li.classList.remove('fresh'), 6000);
       return li;

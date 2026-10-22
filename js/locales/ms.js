@@ -628,6 +628,7 @@ GB.i18n.define('ms', {
   'digest.commits': 'Commit: {n}',
   'digest.merged': 'Pull request yang digabungkan',
   'digest.opened': 'Pull request yang dibuka',
+  'digest.closed': 'Isu yang ditutup',
   'digest.releases': 'Keluaran',
   'digest.tags': 'Tag',
   'digest.people': 'Siapa yang menyumbang (commit)',

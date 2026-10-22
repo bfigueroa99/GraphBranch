@@ -636,6 +636,7 @@ GB.i18n.define('ro', {
   'digest.commits': 'Commituri: {n}',
   'digest.merged': 'Pull request-uri îmbinate',
   'digest.opened': 'Pull request-uri deschise',
+  'digest.closed': 'Issue-uri închise',
   'digest.releases': 'Lansări',
   'digest.tags': 'Etichete (tags)',
   'digest.people': 'Cine a contribuit (commituri)',

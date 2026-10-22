@@ -727,6 +727,7 @@ GB.i18n.define('ar', {
   'digest.commits': 'الإيداعات: {n}',
   'digest.merged': 'طلبات السحب المدموجة',
   'digest.opened': 'طلبات السحب المفتوحة',
+  'digest.closed': 'القضايا المغلقة',
   'digest.releases': 'الإصدارات',
   'digest.tags': 'الوسوم',
   'digest.people': 'من ساهم (الإيداعات)',

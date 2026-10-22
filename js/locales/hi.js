@@ -628,6 +628,7 @@ GB.i18n.define('hi', {
   'digest.commits': 'कमिट: {n}',
   'digest.merged': 'मर्ज किए गए पुल रिक्वेस्ट',
   'digest.opened': 'खोले गए पुल रिक्वेस्ट',
+  'digest.closed': 'बंद किए गए इश्यू',
   'digest.releases': 'रिलीज़',
   'digest.tags': 'टैग',
   'digest.people': 'किसने योगदान दिया (कमिट)',

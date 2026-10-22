@@ -685,6 +685,7 @@ GB.i18n.define('he', {
   'digest.commits': 'קומיטים: {n}',
   'digest.merged': 'בקשות מיזוג שמוזגו',
   'digest.opened': 'בקשות מיזוג שנפתחו',
+  'digest.closed': 'תקלות שנסגרו',
   'digest.releases': 'גרסאות',
   'digest.tags': 'תגיות',
   'digest.people': 'מי תרם (קומיטים)',

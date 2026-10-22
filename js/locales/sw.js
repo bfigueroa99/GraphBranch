@@ -628,6 +628,7 @@ GB.i18n.define('sw', {
   'digest.commits': 'Commit: {n}',
   'digest.merged': 'Pull request zilizounganishwa',
   'digest.opened': 'Pull request zilizofunguliwa',
+  'digest.closed': 'Masuala yaliyofungwa',
   'digest.releases': 'Matoleo',
   'digest.tags': 'Lebo (tags)',
   'digest.people': 'Nani alichangia (commit)',

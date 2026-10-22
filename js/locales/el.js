@@ -628,6 +628,7 @@ GB.i18n.define('el', {
   'digest.commits': 'Commits: {n}',
   'digest.merged': 'Συγχωνευμένα pull requests',
   'digest.opened': 'Ανοιχτά pull requests',
+  'digest.closed': 'Κλειστά issues',
   'digest.releases': 'Εκδόσεις',
   'digest.tags': 'Ετικέτες (tags)',
   'digest.people': 'Ποιος συνεισέφερε (commits)',

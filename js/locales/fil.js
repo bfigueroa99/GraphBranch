@@ -629,6 +629,7 @@ GB.i18n.define('fil', {
   'digest.commits': 'Mga commit: {n}',
   'digest.merged': 'Mga pull request na na-merge',
   'digest.opened': 'Mga pull request na binuksan',
+  'digest.closed': 'Mga naisarang issue',
   'digest.releases': 'Mga release',
   'digest.tags': 'Mga tag',
   'digest.people': 'Sino ang nag-ambag (mga commit)',

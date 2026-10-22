@@ -671,6 +671,7 @@ GB.i18n.define('ur', {
   'digest.commits': 'کمٹس: {n}',
   'digest.merged': 'ضم شدہ پل ریکویسٹس',
   'digest.opened': 'کھولی گئی پل ریکویسٹس',
+  'digest.closed': 'بند کیے گئے مسائل',
   'digest.releases': 'ریلیزز',
   'digest.tags': 'ٹیگز',
   'digest.people': 'کس نے حصہ ڈالا (کمٹس)',

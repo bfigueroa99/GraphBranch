@@ -671,6 +671,7 @@ GB.i18n.define('fa', {
   'digest.commits': 'کامیت‌ها: {n}',
   'digest.merged': 'پول‌ریکوئست‌های ادغام‌شده',
   'digest.opened': 'پول‌ریکوئست‌های بازشده',
+  'digest.closed': 'ایشوهای بسته‌شده',
   'digest.releases': 'نسخه‌ها',
   'digest.tags': 'برچسب‌ها',
   'digest.people': 'چه کسی مشارکت کرد (کامیت‌ها)',

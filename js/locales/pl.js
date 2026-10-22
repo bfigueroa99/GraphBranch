@@ -639,6 +639,7 @@ GB.i18n.define('pl', {
   'digest.commits': 'Commity: {n}',
   'digest.merged': 'Scalone pull requesty',
   'digest.opened': 'Otwarte pull requesty',
+  'digest.closed': 'Zamknięte zgłoszenia',
   'digest.releases': 'Wydania',
   'digest.tags': 'Tagi',
   'digest.people': 'Kto wniósł wkład (commity)',

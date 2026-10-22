@@ -636,6 +636,7 @@ GB.i18n.define('hr', {
   'digest.commits': 'Commitovi: {n}',
   'digest.merged': 'Spojeni pull requestovi',
   'digest.opened': 'Otvoreni pull requestovi',
+  'digest.closed': 'Zatvoreni issuei',
   'digest.releases': 'Izdanja',
   'digest.tags': 'Tagovi',
   'digest.people': 'Tko je doprinio (commitovi)',

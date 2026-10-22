@@ -111,7 +111,7 @@
       fails30: within(acts.filter((a) => a.kind === 'ci-fail' && a.time), 30),
     };
 
-    const forks = (data.forks || []).filter((f) => f.pushedAt && f.url).map((f) => ({ fullName: f.fullName, url: f.url, idle: Math.max(0, now - at(f.pushedAt)) }));
+    const forks = (data.forks || []).filter((f) => f.pushedAt && f.url).map((f) => ({ fullName: f.fullName, url: f.url, idle: Math.max(0, now - at(f.pushedAt)) })).sort((a, b) => a.idle - b.idle); // el push más reciente primero, venga como venga la lista
 
     return {
       forks: { total: forks.length, rows: forks.slice(0, ROWS) },

@@ -212,7 +212,7 @@ segunda columna a la primera.
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
 | Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (API de Forgejo, repos públicos y, con token, privados), bitbucket.org (API 2.0 de Bitbucket Cloud, repos públicos y, con token, privados), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP), Bitbucket Data Center propio (`?bitbucket=` / `--bitbucket-url`, con su CSP y, con su token aparte y atado al servidor, privados), repos locales (app de escritorio, con `git`), demo | Token para un Forgejo/Gitea propio |
-| Datos | ramas, commits, PRs (y las pilas de PRs apilados), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, en el panel de salud, con un interruptor y `?forks=0`), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
+| Datos | ramas, commits, PRs (y las pilas de PRs apilados), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, por push más reciente, en el panel de salud, con un interruptor y `?forks=0`), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color, `&hide=`, `&rotate=` entre repos y `&theme=` claro u oscuro), extensión de VS Code (sigue la sesión de GitHub del editor y recuerda repos, vista e idioma entre sesiones; paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia), miles de ramas por repo | una organización entera con más de 10 repos a la vez |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack, Discord y Teams (escritorio), resumen de la semana (Markdown, con PRs abiertos, releases y tags, de un repo o de una organización seguida; PNG, de un repo o de una organización), prompt del loop autónomo para cualquier repo (español o inglés, con repo, ramas y objetivo; se copia o se guarda como `.md`) | issues cerrados en el resumen de la semana |
@@ -435,7 +435,7 @@ se comprueban antes de construir sobre ellas.
 72. ~~**Resumen de la semana: pull requests abiertos**~~ hecho en #150 · Salidas · 1×2/2. [parte del ítem 23] El resumen de la semana suma cuántos pull requests se abrieron en los últimos 7 días, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con PRs fabricados.
 73. ~~**Vista de texto: tags**~~ hecho en #152 · Público · 1×2/2. [parte del ítem 33] La vista de texto dice qué commits llevan tag y lo anuncia a quien usa lector de pantalla. Comprobar: prueba de la vista y un paso del smoke.
 74. ~~**Capa para streaming, cuarta entrega**~~ hecho en #153 · Plataformas · 1×2/1. [parte del ítem 11] `&theme=light|dark` fija el tema de la capa sin tocar el de la página. Comprobar: prueba de la lectura de la URL y un paso del smoke.
-75. **Los forks en el grafo, tercera entrega** · Datos · 1×2/2. [parte del ítem 30] Los forks se ordenan por actividad reciente en el panel. Comprobar: prueba del orden con forks fabricados.
+75. ~~**Los forks en el grafo, tercera entrega**~~ hecho en #154 · Datos · 1×2/2. [parte del ítem 30] Los forks se ordenan por actividad reciente en el panel. Comprobar: prueba del orden con forks fabricados.
 76. **Constelación ordenada por actividad** · Escala · 1×2/1. [parte del ítem 26] La constelación puede ordenar las galaxias por commits cargados o por nombre, y lo anuncia. Comprobar: prueba del orden y un paso del smoke.
 77. **Práctica: branch -d y merge --abort** · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `branch -d` y `merge --abort`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
 78. **Vista de texto: abrirla desde la URL** · Público · 1×2/1. [parte del ítem 33] `?view=text` abre el repo con la vista de texto ya abierta, con su filtro por autor o por ruta si los trae, para compartir el enlace con quien usa lector de pantalla. Comprobar: prueba de la lectura de la URL y un paso del smoke.
@@ -445,6 +445,12 @@ se comprueban antes de construir sobre ellas.
 82. **Capa para streaming, quinta entrega** · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&title=` pone un rótulo propio sobre la capa, escapado. Comprobar: prueba de la lectura de la URL y un paso del smoke.
 83. **Salud del repo: tendencia de merges** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los PRs fusionados por semana de las últimas 8, como ya hace con los despliegues. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
 84. **Constelación ordenada, en la URL** · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] `?order=activity` abre la constelación ya ordenada por actividad. Comprobar: prueba de la lectura de la URL y un paso del smoke.
+85. **Práctica: tag -d y cherry-pick --abort** · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `tag -d` y `cherry-pick --abort`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
+86. **Resumen de la semana: tags nuevos por semana** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana dice cuántos tags nuevos hubo, contados una sola vez aunque salgan como release. Comprobar: `tools/digest.test.mjs` con tags fabricados.
+87. **Vista de texto: forks activos** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] La vista de texto lista los forks activos ya cargados, el más reciente primero, y lo anuncia a quien usa lector de pantalla. Comprobar: prueba de la vista y un paso del smoke.
+88. **Salud del repo: tendencia de PRs abiertos** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra cuántos PRs se abrieron por semana en las últimas 8. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
+89. **Capa para streaming, sexta entrega** · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&max=N` limita cuántas ramas muestra la capa, escapando y acotando el valor. Comprobar: `tools/embed.test.mjs` y un paso del smoke.
+90. **Los forks en el grafo, cuarta entrega** · Datos · 1×2/2. [inv. 2026-10-13] [parte del ítem 30] El panel de forks suma las estrellas de cada fork (ya vienen en `/forks`) y deja ordenar por ellas. Comprobar: `tools/health.test.mjs` con forks fabricados.
 
 ## Cómo validar un cambio
 
@@ -2531,3 +2537,16 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow`). `git push origin --delete loop/*` sigue sin poder (el proxy cuelga la conexión): sigue en Para Benjamin 7.
 - Validado: 389 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 118, expansión: ítem 75 (Los forks en el grafo, tercera entrega, Datos)
+
+### 2026-10-22 · Iteración 118 · Expansión · Datos
+
+- **Capacidad nueva: los forks del panel de salud salen por actividad reciente** (ítem 75 de la hoja de ruta). `compute` ordena los forks por su último push (el más nuevo primero) en vez de fiarse del orden en que llega la lista, así el orden vale para cualquier fuente (la API de GitHub ya los traía así; la demo y las futuras no tienen por qué).
+- **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` («los forks salen por actividad reciente aunque la lista venga desordenada»).
+- README: la descripción del panel de salud (forks) y la fila del Mapa de alcance (Datos).
+- QA: fila del panel de salud: orden de los forks comprobado con forks fabricados; auditoría: la corre `npm run check`.
+- Arena: no aplica: una sola forma obvia (un `sort` sobre lo que `compute` ya mapea).
+- Reclamo: loop/118, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow`); sin eso `--check` R3 y dos pruebas de `loop.test.mjs` fallan.
+- Replica: sin pasada nueva (no existe `replica/features.csv`; sin paridad que medir); la hoja se repuso a 15 ítems (85–90) con candidatas de `docs/investigacion.md`.
+- Validado: 390 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 119, mantenimiento · Seguridad: auditoría (sin pendientes de Seguridad)

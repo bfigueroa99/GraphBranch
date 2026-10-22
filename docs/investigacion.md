@@ -248,6 +248,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Capa para streaming, quinta entrega | Plataformas | 1×2/1 | 2,0 | Capas para OBS | ítem 82 |
 | Salud del repo: tendencia de merges | Análisis | 1×2/2 | 1,0 | DORA | ítem 83 |
 | Constelación ordenada, en la URL | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 84 |
+| Práctica: tag -d y cherry-pick --abort | Público | 2×2/2 | 2,0 | git-sim | ítem 85 |
+| Resumen de la semana: tags nuevos por semana | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 86 |
+| Vista de texto: forks activos | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 87 |
+| Salud del repo: tendencia de PRs abiertos | Análisis | 1×2/2 | 1,0 | DORA | ítem 88 |
+| Capa para streaming, sexta entrega | Plataformas | 1×2/1 | 2,0 | Capas para OBS | ítem 89 |
+| Los forks en el grafo, cuarta entrega | Datos | 1×2/2 | 1,0 | Red de ramas de GitHub | ítem 90 |
 
 ## Públicos
 

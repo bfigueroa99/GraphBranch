@@ -635,6 +635,11 @@ GB.i18n.define('th', {
   'constellation.title': 'กลุ่มดาว',
   'constellation.help': 'ที่เก็บแต่ละแห่งที่ติดตามคือกาแล็กซีหนึ่งแห่ง ยิ่งโหลดคอมมิตมากยิ่งใหญ่ ใช้ Tab เพื่อเลื่อนและ Enter เพื่อเปิด',
   'constellation.stats': 'คอมมิต: {commits} · สาขา: {branches}',
+  'constellation.order': 'ลำดับ',
+  'constellation.orderTabs': 'แท็บ',
+  'constellation.orderActivity': 'กิจกรรม',
+  'constellation.orderName': 'ชื่อ',
+  'constellation.ordered': 'เรียงตาม{order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'สมุดบันทึก ฉบับที่ {n}',
   'bitacora.open': 'เปิดสมุดบันทึกสด: สิ่งที่ repository ทำตั้งแต่ฉบับก่อน คะแนน และข้อค้นพบ',

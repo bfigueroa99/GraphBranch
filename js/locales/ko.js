@@ -634,6 +634,11 @@ GB.i18n.define('ko', {
   'constellation.title': '별자리',
   'constellation.help': '팔로우 중인 저장소는 각각 하나의 은하입니다. 불러온 커밋이 많을수록 큽니다. Tab으로 이동하고 Enter로 엽니다.',
   'constellation.stats': '커밋: {commits} · 브랜치: {branches}',
+  'constellation.order': '정렬',
+  'constellation.orderTabs': '탭',
+  'constellation.orderActivity': '활동',
+  'constellation.orderName': '이름',
+  'constellation.ordered': '{order} 순으로 정렬됨',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': '일지 제{n}호',
   'bitacora.open': '실시간 일지 열기: 지난 호 이후 저장소에서 있었던 일, 점수, 발견 사항',

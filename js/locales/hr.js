@@ -642,6 +642,11 @@ GB.i18n.define('hr', {
   'constellation.title': 'Zviježđe',
   'constellation.help': 'Svaki praćeni repozitorij je galaksija: što je više učitanih commitova, to je veća. Tab se kreće među njima, a Enter je otvara.',
   'constellation.stats': 'commitovi: {commits} · grane: {branches}',
+  'constellation.order': 'Redoslijed',
+  'constellation.orderTabs': 'Kartice',
+  'constellation.orderActivity': 'Aktivnost',
+  'constellation.orderName': 'Naziv',
+  'constellation.ordered': 'Poredano po: {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Brodski dnevnik br. {n}',
   'bitacora.open': 'Otvori brodski dnevnik uživo: što se u repozitoriju događalo od prethodnog, njegova ocjena i nalazi',

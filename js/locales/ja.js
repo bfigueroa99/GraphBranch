@@ -634,6 +634,11 @@ GB.i18n.define('ja', {
   'constellation.title': '星座',
   'constellation.help': 'フォロー中のリポジトリはそれぞれ銀河です。読み込んだコミットが多いほど大きくなります。Tab で移動し、Enter で開きます。',
   'constellation.stats': 'コミット: {commits} · ブランチ: {branches}',
+  'constellation.order': '並び順',
+  'constellation.orderTabs': 'タブ',
+  'constellation.orderActivity': 'アクティビティ',
+  'constellation.orderName': '名前',
+  'constellation.ordered': '{order}順に並べました',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': '航海日誌 第{n}号',
   'bitacora.open': 'ライブ航海日誌を開く: 前号以降にリポジトリで起きたこと、スコア、指摘事項',

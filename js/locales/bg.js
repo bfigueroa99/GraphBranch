@@ -634,6 +634,11 @@ GB.i18n.define('bg', {
   'constellation.title': 'Съзвездие',
   'constellation.help': 'Всяко следено хранилище е галактика: колкото повече заредени комити, толкова по-голяма. Tab превключва между тях, Enter я отваря.',
   'constellation.stats': 'комити: {commits} · клонове: {branches}',
+  'constellation.order': 'Ред',
+  'constellation.orderTabs': 'Табове',
+  'constellation.orderActivity': 'Активност',
+  'constellation.orderName': 'Име',
+  'constellation.ordered': 'Подредено по: {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Бордови дневник № {n}',
   'bitacora.open': 'Отваряне на бордовия дневник на живо: какво е станало в хранилището от предишния, оценката и забележките',

@@ -634,6 +634,11 @@ GB.i18n.define('tr', {
   'constellation.title': 'Takımyıldızı',
   'constellation.help': 'Takip edilen her depo bir galaksidir: yüklenen commit sayısı arttıkça büyür. Tab aralarında gezinir, Enter açar.',
   'constellation.stats': 'commit: {commits} · dal: {branches}',
+  'constellation.order': 'Sıralama',
+  'constellation.orderTabs': 'Sekmeler',
+  'constellation.orderActivity': 'Etkinlik',
+  'constellation.orderName': 'Ad',
+  'constellation.ordered': 'Şuna göre sıralandı: {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Seyir defteri No. {n}',
   'bitacora.open': 'Canlı seyir defterini aç: deponun bir öncekinden bu yana yaptıkları, puanı ve bulguları',

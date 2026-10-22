@@ -634,6 +634,11 @@ GB.i18n.define('sv', {
   'constellation.title': 'Konstellation',
   'constellation.help': 'Varje följt arkiv är en galax: ju fler inlästa commits, desto större. Tab flyttar mellan dem och Enter öppnar den.',
   'constellation.stats': 'commits: {commits} · grenar: {branches}',
+  'constellation.order': 'Ordning',
+  'constellation.orderTabs': 'Flikar',
+  'constellation.orderActivity': 'Aktivitet',
+  'constellation.orderName': 'Namn',
+  'constellation.ordered': 'Sorterat efter {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Loggbok nr {n}',
   'bitacora.open': 'Öppna loggboken live: vad repot har gjort sedan den förra, dess poäng och fynd',

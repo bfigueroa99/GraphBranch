@@ -634,6 +634,11 @@ GB.i18n.define('fi', {
   'constellation.title': 'Tähtikuvio',
   'constellation.help': 'Jokainen seurattu repositorio on galaksi: mitä enemmän ladattuja committeja, sitä suurempi. Tab siirtyy niiden välillä ja Enter avaa sen.',
   'constellation.stats': 'commitit: {commits} · haarat: {branches}',
+  'constellation.order': 'Järjestys',
+  'constellation.orderTabs': 'Välilehdet',
+  'constellation.orderActivity': 'Aktiviteetti',
+  'constellation.orderName': 'Nimi',
+  'constellation.ordered': 'Lajiteltu: {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Lokikirja nro {n}',
   'bitacora.open': 'Avaa reaaliaikainen lokikirja: mitä repositoriossa on tapahtunut edellisen jälkeen, sen pisteet ja havainnot',

@@ -635,6 +635,11 @@ GB.i18n.define('de', {
   'constellation.title': 'Sternbild',
   'constellation.help': 'Jedes verfolgte Repository ist eine Galaxie: je mehr geladene Commits, desto größer. Tab wechselt zwischen ihnen, Enter öffnet sie.',
   'constellation.stats': 'Commits: {commits} · Branches: {branches}',
+  'constellation.order': 'Reihenfolge',
+  'constellation.orderTabs': 'Tabs',
+  'constellation.orderActivity': 'Aktivität',
+  'constellation.orderName': 'Name',
+  'constellation.ordered': 'Sortiert nach: {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Logbuch Nr. {n}',
   'bitacora.open': 'Live-Logbuch öffnen: was das Repository seit dem letzten getan hat, seine Punktzahl und seine Befunde',

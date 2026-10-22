@@ -634,6 +634,11 @@ GB.i18n.define('zh-Hans', {
   'constellation.title': '星座',
   'constellation.help': '每个已关注的仓库都是一个星系：已加载的提交越多，星系越大。按 Tab 在它们之间移动，按 Enter 打开。',
   'constellation.stats': '提交：{commits} · 分支：{branches}',
+  'constellation.order': '排序',
+  'constellation.orderTabs': '标签页',
+  'constellation.orderActivity': '活跃度',
+  'constellation.orderName': '名称',
+  'constellation.ordered': '已按{order}排序',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': '日志第 {n} 期',
   'bitacora.open': '打开实时日志：仓库自上一期以来的动态、评分和问题',

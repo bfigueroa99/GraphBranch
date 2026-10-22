@@ -733,6 +733,11 @@ GB.i18n.define('ar', {
   'constellation.title': 'كوكبة',
   'constellation.help': 'كل مستودع متابَع مجرة: كلما زادت الـ commits المحمّلة كبرت. Tab للتنقل بينها وEnter لفتحها.',
   'constellation.stats': 'commits: {commits} · فروع: {branches}',
+  'constellation.order': 'الترتيب',
+  'constellation.orderTabs': 'التبويبات',
+  'constellation.orderActivity': 'النشاط',
+  'constellation.orderName': 'الاسم',
+  'constellation.ordered': 'مرتبة حسب {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'الدفتر رقم {n}',
   'bitacora.open': 'افتح الدفتر المباشر: ما فعله المستودع منذ الدفتر السابق، ودرجته وملاحظاته',

@@ -634,6 +634,11 @@ GB.i18n.define('hi', {
   'constellation.title': 'तारामंडल',
   'constellation.help': 'अनुसरण किया गया हर रिपॉज़िटरी एक आकाशगंगा है: जितने ज़्यादा कमिट लोड हैं, उतनी बड़ी। Tab से उनके बीच जाएँ और Enter से खोलें।',
   'constellation.stats': 'कमिट: {commits} · ब्रांच: {branches}',
+  'constellation.order': 'क्रम',
+  'constellation.orderTabs': 'टैब',
+  'constellation.orderActivity': 'गतिविधि',
+  'constellation.orderName': 'नाम',
+  'constellation.ordered': 'क्रम: {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'लॉगबुक सं. {n}',
   'bitacora.open': 'लाइव लॉगबुक खोलें: पिछली लॉगबुक के बाद से रिपॉज़िटरी ने क्या किया, उसका स्कोर और उसके निष्कर्ष',

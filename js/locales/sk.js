@@ -645,6 +645,11 @@ GB.i18n.define('sk', {
   'constellation.title': 'Súhvezdie',
   'constellation.help': 'Každý sledovaný repozitár je galaxia: čím viac načítaných commitov, tým väčšia. Tab prepína medzi nimi, Enter ju otvorí.',
   'constellation.stats': 'commity: {commits} · vetvy: {branches}',
+  'constellation.order': 'Zoradenie',
+  'constellation.orderTabs': 'Karty',
+  'constellation.orderActivity': 'Aktivita',
+  'constellation.orderName': 'Názov',
+  'constellation.ordered': 'Zoradené podľa: {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Palubný denník č. {n}',
   'bitacora.open': 'Otvoriť živý palubný denník: čo sa v repozitári udialo od predchádzajúceho, jeho hodnotenie a zistenia',

@@ -650,6 +650,11 @@ GB.i18n.define('uk', {
   'constellation.title': 'Сузір’я',
   'constellation.help': 'Кожен відстежуваний репозиторій — це галактика: чим більше завантажено комітів, тим вона більша. Tab перемикає між ними, Enter відкриває.',
   'constellation.stats': 'коміти: {commits} · гілки: {branches}',
+  'constellation.order': 'Порядок',
+  'constellation.orderTabs': 'Вкладки',
+  'constellation.orderActivity': 'Активність',
+  'constellation.orderName': 'Назва',
+  'constellation.ordered': 'Відсортовано: {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Бортжурнал № {n}',
   'bitacora.open': 'Відкрити бортжурнал наживо: що зроблено в репозиторії від попереднього, оцінка й зауваження',

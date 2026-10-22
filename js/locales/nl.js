@@ -635,6 +635,11 @@ GB.i18n.define('nl', {
   'constellation.title': 'Sterrenbeeld',
   'constellation.help': 'Elke gevolgde repository is een sterrenstelsel: hoe meer geladen commits, hoe groter. Tab wisselt ertussen en Enter opent het.',
   'constellation.stats': 'commits: {commits} · branches: {branches}',
+  'constellation.order': 'Volgorde',
+  'constellation.orderTabs': 'Tabbladen',
+  'constellation.orderActivity': 'Activiteit',
+  'constellation.orderName': 'Naam',
+  'constellation.ordered': 'Gesorteerd op {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Logboek nr. {n}',
   'bitacora.open': 'Open het live logboek: wat de repository sinds het vorige deed, de score en de bevindingen',

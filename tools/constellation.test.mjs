@@ -58,3 +58,18 @@ test('radio y tono: repos sin commits cargados no rompen, el tono es estable', (
   assert.ok(C.hueOf('o/a') >= 0 && C.hueOf('o/a') < 360);
   assert.equal(place([{ key: 'a' }, { key: 'b' }]).length, 2);
 });
+
+test('el orden: pestañas tal cual, actividad por commits y nombre sin mayúsculas ni acentos; empata por pestaña', () => {
+  const items = [
+    { key: 'o/b', name: 'o/beta', commits: 10 },
+    { key: 'o/a', name: 'o/Árbol', commits: 90 },
+    { key: 'o/c', name: 'o/ceta', commits: 10 },
+    { key: 'o/d', name: 'o/alfa', commits: 0 },
+  ];
+  const keys = (mode) => C.sortItems(items, mode).map((i) => i.key);
+  assert.deepEqual(keys('tabs'), ['o/b', 'o/a', 'o/c', 'o/d']);
+  assert.deepEqual(keys('desconocido'), keys('tabs'));
+  assert.deepEqual(keys('activity'), ['o/a', 'o/b', 'o/c', 'o/d']);
+  assert.deepEqual(keys('name'), ['o/d', 'o/a', 'o/b', 'o/c']);
+  assert.deepEqual(items.map((i) => i.key), ['o/b', 'o/a', 'o/c', 'o/d'], 'no toca la lista original');
+});

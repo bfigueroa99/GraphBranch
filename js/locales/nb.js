@@ -634,6 +634,11 @@ GB.i18n.define('nb', {
   'constellation.title': 'Konstellasjon',
   'constellation.help': 'Hvert fulgte repository er en galakse: jo flere innlastede commits, jo større. Tab flytter mellom dem, og Enter åpner den.',
   'constellation.stats': 'commits: {commits} · grener: {branches}',
+  'constellation.order': 'Rekkefølge',
+  'constellation.orderTabs': 'Faner',
+  'constellation.orderActivity': 'Aktivitet',
+  'constellation.orderName': 'Navn',
+  'constellation.ordered': 'Sortert etter {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Loggbok nr. {n}',
   'bitacora.open': 'Åpne loggboken live: hva repoet har gjort siden forrige, poengsummen og funnene',

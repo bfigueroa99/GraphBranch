@@ -543,6 +543,15 @@
       </button>
     </div>
     <p class="help" id="constellation-help" data-i18n="constellation.help">Each followed repository is a galaxy: the bigger, the more commits loaded. Tab moves between them and Enter opens it.</p>
+    <label class="cs-order">
+      <span data-i18n="constellation.order">Order</span>
+      <select id="constellation-order">
+        <option value="tabs" data-i18n="constellation.orderTabs">Tabs</option>
+        <option value="activity" data-i18n="constellation.orderActivity">Activity</option>
+        <option value="name" data-i18n="constellation.orderName">Name</option>
+      </select>
+    </label>
+    <p id="constellation-status" class="sr-only" role="status" aria-live="polite"></p>
     <div id="constellation-body" class="cs-body" aria-describedby="constellation-help"></div>
   </div>
 </dialog>

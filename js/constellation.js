@@ -41,6 +41,15 @@
       .map((p) => ({ key: p.key, x: 50 + p.x * k, y: 50 + p.y * k, r: p.r * k }));
   }
 
+  /** Los repos en el orden pedido: `tabs` (el de las pestañas), `activity` (más commits cargados primero) o
+      `name` (alfabético, sin mayúsculas ni acentos). Empata por el orden de las pestañas; no toca `items`. */
+  function sortItems(items, mode) {
+    const list = items.map((it, idx) => ({ it, idx }));
+    if (mode === 'activity') list.sort((a, b) => (b.it.commits || 0) - (a.it.commits || 0) || a.idx - b.idx);
+    else if (mode === 'name') list.sort((a, b) => String(a.it.name).localeCompare(String(b.it.name), undefined, { sensitivity: 'base', numeric: true }) || a.idx - b.idx);
+    return list.map((x) => x.it);
+  }
+
   /** Tono (0–359) estable para un nombre. */
   function hueOf(name) {
     let h = 0;
@@ -79,12 +88,28 @@
   }
 
   /** Monta la constelación en `root`. `text(key, params)`: traductor; `fmt(n)`: número; `onGo(key)`: Intro sobre una galaxia. */
-  function mount(root, { text, fmt = String, onGo }) {
-    function render(items) {
+  function mount(root, { text, fmt = String, onGo, select = null, status = null }) {
+    let items = [];
+    let mode = 'tabs';
+    if (select) select.addEventListener('change', () => setOrder(select.value, true));
+    /** Cambia el orden (el de Tab y el de lector de pantalla) y, si lo pidió la persona, lo anuncia. */
+    function setOrder(next, announce) {
+      mode = ['activity', 'name'].includes(next) ? next : 'tabs';
+      if (select) select.value = mode;
+      draw();
+      if (announce && status) status.textContent = text('constellation.ordered', { order: text('constellation.order' + mode[0].toUpperCase() + mode.slice(1)) });
+    }
+    function render(list) {
+      items = list;
+      if (status) status.textContent = '';
+      draw();
+    }
+    function draw() {
+      const shown = sortItems(items, mode);
       const had = document.activeElement?.closest?.('.cs-gx') ? document.activeElement.dataset.key : null;
       root.textContent = '';
-      const spots = place(items);
-      items.forEach((it, i) => {
+      const spots = place(shown);
+      shown.forEach((it, i) => {
         const s = spots[i];
         const b = document.createElement('button');
         b.type = 'button';
@@ -117,8 +142,8 @@
       });
       if (had) [...root.children].find((n) => n.dataset.key === had)?.focus();
     }
-    return { render };
+    return { render, setOrder };
   }
 
-  GB.constellation = { place, radiusOf, hueOf, mount };
+  GB.constellation = { place, sortItems, radiusOf, hueOf, mount };
 })(window.GB);

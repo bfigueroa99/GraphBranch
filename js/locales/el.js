@@ -634,6 +634,11 @@ GB.i18n.define('el', {
   'constellation.title': 'Αστερισμός',
   'constellation.help': 'Κάθε αποθετήριο που παρακολουθείται είναι ένας γαλαξίας: όσο περισσότερα commits φορτωμένα, τόσο μεγαλύτερος. Το Tab μετακινεί ανάμεσά τους και το Enter τον ανοίγει.',
   'constellation.stats': 'commits: {commits} · κλάδοι: {branches}',
+  'constellation.order': 'Σειρά',
+  'constellation.orderTabs': 'Καρτέλες',
+  'constellation.orderActivity': 'Δραστηριότητα',
+  'constellation.orderName': 'Όνομα',
+  'constellation.ordered': 'Ταξινόμηση κατά: {order}',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Ημερολόγιο αρ. {n}',
   'bitacora.open': 'Άνοιγμα του ζωντανού ημερολογίου: τι έκανε το αποθετήριο από το προηγούμενο, η βαθμολογία και τα ευρήματά του',

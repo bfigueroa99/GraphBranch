@@ -570,31 +570,32 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-14. [QA] Con 1.000 ramas a 320 px el 3D deja solo 4 etiquetas de rama visibles (`reach` de `placeLabels`
-    esconde las lejanas); revisar si en celular conviene un alcance mayor o una pista de «+N ramas».
-    Reproducción: la del escenario `celular-320-3d-mil` de `node tools/audit.mjs`, contar `.g3-head` con `display` distinto de `none` → 4.
-15. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
+14. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
     nítidas (demo a 320 px: 3 de 5 atenuadas); comprobar que Tab y el toque no caigan en una atenuada.
     Reproducción: Playwright, 320 px, 3D, `?repo=demo` → `.g3-head` con opacidad 0,22 y `display: flex`.
-16. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
+15. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
     vistas, las estadísticas y la bitácora encima) y el 3D no arma etiquetas hasta verse; pensar en una
     forma de llegar al grafo sin recorrer la página (ancla o tarjetas plegables en celular).
     Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la auditoría → captura sin grafo; `#graph3d` fuera de la pantalla.
-17. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+16. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-18. [Seguridad] Las fuentes Codeberg y Bitbucket no validan en el origen las URL de los pull requests
+17. [Seguridad] Las fuentes Codeberg y Bitbucket no validan en el origen las URL de los pull requests
     (`codeberg.js:296` `p.html_url`, `bitbucket.js:204` y `:321` `links.html.href`), a diferencia de
     `codeberg.js:179` y GitHub (`/^https:\/\//`). La interfaz ya las filtra con `U.safeUrl` (iteración 119),
     pero un dato fuera de http(s) llega hasta las exportaciones (resumen, bitácora en Markdown).
     Reproducción: `tools/codeberg.test.mjs` con un PR cuyo `html_url` sea `javascript:alert(1)` → la actividad conserva esa `url`.
-19. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
+18. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
     `WebFetch` a `releases.electronjs.org` dio HTTP 500 en la iteración 119. Repetir la comparación
     cuando la página responda y subir si hay una estable más nueva.
     Reproducción: `WebFetch https://releases.electronjs.org/release/stable` → `HTTP 500`.
-20. [Deuda] Smoke intermitente: «filtro por autor: … quitar el filtro no deja el grafo como estaba» falló una vez
-    en la iteración 123 y pasó al repetir. Medir cuántas fallas en N corridas y buscar el tiempo fijo.
-    Reproducción: `node tools/smoke.mjs` → `✗ filtro por autor: el grafo y el árbol de texto muestran solo sus ramas…`.
+19. [Deuda] El clon de las sesiones cloud viene superficial: `node tools/loop.mjs --check` da ERROR R3 («ese PR no
+    está en origin/master») y `node --test` falla 2 pruebas hasta `git fetch --unshallow origin`. Que `--check`
+    y `--salud` avisen «clon superficial: git fetch --unshallow origin» en vez del ERROR.
+    Reproducción: en un clon `--depth 50`, `node tools/loop.mjs --check` → `ERROR R3 hecho en #45 …: ese PR no está en origin/master`.
+20. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
+    corta a los 120 s; documentar en «Cómo validar» que se corra en segundo plano, como `audit --langs`.
+    Reproducción: `time node tools/smoke.mjs` → ~480 s.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); `placeLabels`/`placeNotes` crean arreglos por cuadro
@@ -2667,3 +2668,17 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow`); `git push origin --delete loop/87` sigue cortado por el proxy (Para Benjamin 7).
 - Validado: 402 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 127, mantenimiento · QA: pendiente 14 (Con 1.000 ramas a 320 px el 3D deja solo 4 etiquetas de rama visibles (`reach` …)
+
+### 2026-10-23 · Iteración 127 · Mantenimiento · QA
+
+- **Auditoría de QA: el smoke tenía una carrera en el paso del filtro por autor** (pendientes 14 y 20). Pendiente 20 arreglado: `tools/smoke.mjs` leía `off` (marca y aviso del filtro) antes de esperar a que el grafo y el aviso se actualizaran; ahora espera ambos y después mide. Pendiente 14 revisado y cerrado sin cambio de código: a 320 px, con 1.000 ramas, `placeLabels` deja pocas etiquetas legibles y sin pisarse a propósito (`crowd` oculta las pisadas y la escena `celular-320-3d-mil` de la auditoría exige que ninguna se pise); una pista de «+N ramas» sería una capacidad nueva, no un arreglo.
+- **Reproducción:** `node tools/smoke.mjs` (corrida 1 de 2, equipo cloud) → `✗ filtro por autor: el grafo y el árbol de texto muestran solo sus ramas, lo dice y se quita: quitar el filtro no deja el grafo como estaba`; la corrida 2 pasó (1 falla en 2).
+- **Hallazgos:** 3 nuevos (pendientes 19 y 20 cargados; la carrera del smoke, arreglada aquí), 0 a la base de la auditoría. Auditoría completa con `--langs`: 0 hallazgos (185 s).
+- **Pruebas que fallan sin el arreglo:** el propio paso del smoke «filtro por autor…» (intermitente: 1 falla en 2 corridas antes; ahora espera el estado antes de medir).
+- README: sin cambios (no toca funciones).
+- QA: auditoría completa y smoke de las expansiones recientes (vista de texto, releases); bordes de 1.000 ramas a 320 px por la escena `celular-320-3d-mil`; el clon superficial rompía `--check` (pendiente 19).
+- Arena: no aplica: un cambio de unas líneas con una sola forma obvia (esperar el estado antes de medirlo).
+- Reclamo: loop/127, sin colisión
+- Nota: `git push origin --delete loop/87` sigue cortado por el proxy (Para Benjamin 7); el clon venía superficial (`git fetch --unshallow origin`).
+- Validado: 402 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 128, expansión: ítem 83 (Salud del repo: tendencia de merges, Análisis)

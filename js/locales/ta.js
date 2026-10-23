@@ -555,6 +555,8 @@ GB.i18n.define('ta', {
   'textview.merge': 'இணைப்பு',
   'textview.tag': 'குறிச்சொல் {name}',
   'textview.tagged': 'குறிச்சொல் உள்ள கமிட்கள்: {n}',
+  'textview.release': 'வெளியீடு {name}',
+  'textview.released': 'வெளியீடு உள்ள கமிட்கள்: {n}',
   'textview.live': 'புதியவை: {branches} கிளைகள், {commits} கமிட்கள்',
   'textview.filtered': 'காட்டப்படும் கிளைகள்: {total}-இல் {shown}',
   'textview.scopeAuthor': 'ஆசிரியர் வடிகட்டி: {author} ({total} கிளைகளில் {shown})',

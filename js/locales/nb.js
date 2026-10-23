@@ -555,6 +555,8 @@ GB.i18n.define('nb', {
   'textview.merge': 'sammenslåing',
   'textview.tag': 'tag {name}',
   'textview.tagged': 'Commits med tag: {n}',
+  'textview.release': 'utgivelse {name}',
+  'textview.released': 'Commits med utgivelse: {n}',
   'textview.live': 'Nytt: {branches} grener, {commits} commits',
   'textview.filtered': 'Viste grener: {shown} av {total}',
   'textview.scopeAuthor': 'Filtrert på forfatter: {author} ({shown} av {total} grener)',

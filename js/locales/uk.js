@@ -571,6 +571,8 @@ GB.i18n.define('uk', {
   'textview.merge': 'злиття',
   'textview.tag': 'тег {name}',
   'textview.tagged': 'Коміти з тегом: {n}',
+  'textview.release': 'реліз {name}',
+  'textview.released': 'Коміти з релізом: {n}',
   'textview.live': 'Нове: гілки {branches}, коміти {commits}',
   'textview.filtered': 'Показано гілок: {shown} із {total}',
   'textview.scopeAuthor': 'Фільтр за автором: {author} ({shown} із {total} гілок)',

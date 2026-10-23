@@ -555,6 +555,8 @@ GB.i18n.define('el', {
   'textview.merge': 'συγχώνευση',
   'textview.tag': 'ετικέτα {name}',
   'textview.tagged': 'Commits με ετικέτα: {n}',
+  'textview.release': 'κυκλοφορία {name}',
+  'textview.released': 'Commits με κυκλοφορία: {n}',
   'textview.live': 'Νέα: {branches} κλάδοι, {commits} commits',
   'textview.filtered': 'Κλάδοι που εμφανίζονται: {shown} από {total}',
   'textview.scopeAuthor': 'Φίλτρο ανά συγγραφέα: {author} ({shown} από {total} κλάδους)',

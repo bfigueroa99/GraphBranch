@@ -556,6 +556,8 @@ GB.i18n.define('pt', {
   'textview.merge': 'merge',
   'textview.tag': 'tag {name}',
   'textview.tagged': 'Commits com tag: {n}',
+  'textview.release': 'release {name}',
+  'textview.released': 'Commits com release: {n}',
   'textview.live': 'Novidades: {branches} branches, {commits} commits',
   'textview.filtered': 'Branches mostradas: {shown} de {total}',
   'textview.scopeAuthor': 'Filtrado por autor: {author} ({shown} de {total} branches)',

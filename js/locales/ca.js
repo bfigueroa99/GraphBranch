@@ -555,6 +555,8 @@ GB.i18n.define('ca', {
   'textview.merge': 'merge',
   'textview.tag': 'etiqueta {name}',
   'textview.tagged': 'Commits amb etiqueta: {n}',
+  'textview.release': 'versió {name}',
+  'textview.released': 'Commits amb versió publicada: {n}',
   'textview.live': 'Novetats: {branches} branques, {commits} commits',
   'textview.filtered': 'Branques mostrades: {shown} de {total}',
   'textview.scopeAuthor': 'Filtrat per autor: {author} ({shown} de {total} branques)',

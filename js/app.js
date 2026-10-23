@@ -954,7 +954,7 @@
     if (news && tv.attract && replay.active) replay.stop();
     if (news) tv.lastNews = Date.now();
     const { data, L } = drawGraph(initial, calm);
-    if (el.textview.open) textview.update(GB.textview.build(authorView(data).data, { paths: pathShas })); // con la vista de texto abierta, avisa de lo nuevo
+    if (el.textview.open) textview.update(textTree(authorView(data).data)); // con la vista de texto abierta, avisa de lo nuevo
     feed.setDefaultBranch(data.repo.defaultBranch);
     feed.add(activities, { live: !initial });
     if (news) game.observe(activities, gameCtx(activities, data, L));
@@ -1894,12 +1894,14 @@
       else graph.focusBranch(branch);
     },
   });
+  /** El árbol de `data` con los filtros de ruta y los releases que el feed dice de este repo. */
+  const textTree = (data) => GB.textview.build(data, { paths: pathShas, releases: GB.textview.releaseMarks(feed.items.filter((a) => a.repo === active?.key)) });
   /** El árbol con los filtros del grafo (autor y ruta) y una nota que los dice, también para el lector de pantalla. */
   function openTextview() {
     const v = authorView(source.view ? source.view() : source.data);
     const name = authorFilter && (GB.search.authors(source.data).find((a) => a.key === authorFilter)?.name || authorFilter);
     const scope = authorFilter || pathShas ? { author: name, shown: v.shown, total: v.total, path: pathShas ? pathText : '', count: pathShas ? pathShas.size : 0 } : null;
-    textview.render(GB.textview.build(v.data, { paths: pathShas }), scope);
+    textview.render(textTree(v.data), scope);
   }
   function showTextview() {
     openTextview();

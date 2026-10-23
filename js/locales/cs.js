@@ -566,6 +566,8 @@ GB.i18n.define('cs', {
   'textview.merge': 'merge',
   'textview.tag': 'tag {name}',
   'textview.tagged': 'Commity se značkou: {n}',
+  'textview.release': 'vydání {name}',
+  'textview.released': 'Commity s vydáním: {n}',
   'textview.live': 'Nové: větve {branches}, commity {commits}',
   'textview.filtered': 'Zobrazené větve: {shown} z {total}',
   'textview.scopeAuthor': 'Filtr podle autora: {author} ({shown} z {total} větví)',

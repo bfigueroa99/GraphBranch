@@ -485,6 +485,7 @@ GB.i18n.define('fi', {
   'health.doraLead': 'Läpimenoaika (avauksesta yhdistämiseen): mediaani {median}',
   'health.doraLeadCommit': 'Läpimenoaika (ensimmäisestä commitista yhdistämiseen, {n}/{total} PR:ää): mediaani {median}',
   'health.doraWeeks': 'Julkaisut viikossa, viimeiset {n} viikkoa (vanhimmasta nykyiseen): {list}',
+  'health.mergeWeeks': 'Yhdistetyt pull requestit viikossa, viimeiset {n} viikkoa (vanhimmasta nykyiseen): {list}',
   'health.ci': 'CI-virheet',
   'health.ciPrs': 'Avoimet PR:t, joiden tarkistukset epäonnistuvat: {failing} / {total} ({pct} %)',
   'health.ciFeed': 'Kertaa, jolloin oletushaara punastui 30 päivässä: {n}',

@@ -485,6 +485,7 @@ GB.i18n.define('tr', {
   'health.doraLead': 'Teslim süresi (açılıştan birleştirmeye): medyan {median}',
   'health.doraLeadCommit': 'Teslim süresi (ilk commit’ten birleştirmeye, {total} PR’den {n}’i): medyan {median}',
   'health.doraWeeks': 'Haftalık dağıtımlar, son {n} hafta (en eskiden mevcut haftaya): {list}',
+  'health.mergeWeeks': 'Haftalık birleştirilen pull request sayısı, son {n} hafta (en eskiden mevcut haftaya): {list}',
   'health.ci': 'CI hataları',
   'health.ciPrs': 'Kontrolleri başarısız açık PR\'ler: {total} içinde {failing} (%{pct})',
   'health.ciFeed': 'Varsayılan dalın 30 günde kırmızıya döndüğü sayı: {n}',

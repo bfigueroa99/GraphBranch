@@ -1357,6 +1357,7 @@
         .join('') || `<p class="hl-none">${U.esc(t('health.none'))}</p>`}</section>` +
       `<section class="hl-sec"><h3>${U.esc(t('health.merged'))}</h3>${
         h.merged ? `<p class="hl-line">${U.esc(t('health.mergedStat', { median: span(h.merged.median), max: span(h.merged.max) }))}</p>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
+      }${h.mergeWeeks.some(Boolean) ? `<p class="hl-line" id="hl-merge-weeks">${U.esc(t('health.mergeWeeks', { n: h.mergeWeeks.length, list: h.mergeWeeks.join(' · ') }))}</p>` : ''
       }</section>` +
       `<section class="hl-sec" id="hl-dora"><h3>${U.esc(t('health.dora'))}</h3>${
         h.dora.deploys30 || h.dora.gap != null || h.dora.lead != null || h.dora.weeks.some(Boolean)

@@ -486,6 +486,7 @@ GB.i18n.define('nl', {
   'health.doraLead': 'Doorlooptijd (van geopend tot samengevoegd): mediaan {median}',
   'health.doraLeadCommit': 'Doorlooptijd (van eerste commit tot samengevoegd, {n} van {total} PR’s): mediaan {median}',
   'health.doraWeeks': 'Deployments per week, laatste {n} weken (van oudste naar huidige): {list}',
+  'health.mergeWeeks': 'Samengevoegde pull requests per week, laatste {n} weken (van oudste naar huidige): {list}',
   'health.ci': 'CI-fouten',
   'health.ciPrs': 'Open PR\'s met mislukte checks: {failing} van {total} ({pct}%)',
   'health.ciFeed': 'Aantal keren dat de standaardbranch in 30 dagen rood werd: {n}',

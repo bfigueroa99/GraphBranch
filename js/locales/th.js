@@ -486,6 +486,7 @@ GB.i18n.define('th', {
   'health.doraLead': 'เวลานำ (ตั้งแต่เปิดจนถึงรวม): ค่ามัธยฐาน {median}',
   'health.doraLeadCommit': 'เวลานำ (ตั้งแต่คอมมิตแรกจนถึงรวม, {n} จาก {total} PR): ค่ามัธยฐาน {median}',
   'health.doraWeeks': 'การปรับใช้ต่อสัปดาห์ {n} สัปดาห์ล่าสุด (จากเก่าสุดถึงปัจจุบัน): {list}',
+  'health.mergeWeeks': 'Pull request ที่ผสานต่อสัปดาห์ {n} สัปดาห์ล่าสุด (จากเก่าสุดถึงปัจจุบัน): {list}',
   'health.ci': 'CI ล้มเหลว',
   'health.ciPrs': 'PR ที่เปิดอยู่และการตรวจสอบล้มเหลว: {failing} จาก {total} ({pct}%)',
   'health.ciFeed': 'จำนวนครั้งที่เบรนช์เริ่มต้นเป็นสีแดงใน 30 วัน: {n}',

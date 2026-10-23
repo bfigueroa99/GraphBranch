@@ -277,6 +277,13 @@ test('frecuencia de despliegue: releases por semana, de la semana más vieja a l
   assert.deepEqual([...compute(repo(), [], NOW).dora.weeks], [0, 0, 0, 0, 0, 0, 0, 0]);
 });
 
+test('tendencia de merges: PRs fusionados por semana, de la semana más vieja a la actual', () => {
+  const mg = (id, days) => ({ kind: 'pr-merge', id, time: ago(days) });
+  const acts = [mg('a', 0.5), mg('a', 0.5), mg('b', 3), mg('c', 8), mg('d', 20), mg('e', 70), mg('f', -1)];
+  assert.deepEqual([...compute(repo(), acts, NOW).mergeWeeks], [0, 0, 0, 0, 0, 1, 1, 2], 'a (repetido) y b esta semana, c la pasada, d hace tres, e fuera de las 8 y f (futuro) no cuenta');
+  assert.deepEqual([...compute(repo(), [], NOW).mergeWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
+});
+
 test('conflictsParam lee ?conflicts= de la URL: 1 o vacío lo pide; 0, false, no y off no', () => {
   const q = (s) => new URLSearchParams(s);
   assert.equal(conflictsParam(q('')), false);

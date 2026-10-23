@@ -491,6 +491,7 @@ GB.i18n.define('en', {
   'health.doraLead': 'Lead time (opened to merged): median {median}',
   'health.doraLeadCommit': 'Lead time (first commit to merged, {n} of {total} PRs): median {median}',
   'health.doraWeeks': 'Deployments per week, last {n} weeks (oldest to current): {list}',
+  'health.mergeWeeks': 'Merged pull requests per week, last {n} weeks (oldest to current): {list}',
   'health.ci': 'CI failures',
   'health.ciPrs': 'Open PRs with failing checks: {failing} of {total} ({pct}%)',
   'health.ciFeed': 'Times the default branch turned red in 30 days: {n}',

@@ -485,6 +485,7 @@ GB.i18n.define('ko', {
   'health.doraLead': '리드 타임(열림부터 병합까지): 중앙값 {median}',
   'health.doraLeadCommit': '리드 타임(첫 커밋부터 병합까지, PR {total}개 중 {n}개): 중앙값 {median}',
   'health.doraWeeks': '주간 배포 횟수, 최근 {n}주 (오래된 주부터 현재까지): {list}',
+  'health.mergeWeeks': '주간 병합된 풀 리퀘스트, 최근 {n}주 (오래된 주부터 현재까지): {list}',
   'health.ci': 'CI 실패',
   'health.ciPrs': '체크가 실패한 열린 PR: {total}개 중 {failing}개({pct}%)',
   'health.ciFeed': '30일 동안 기본 브랜치가 빨간색이 된 횟수: {n}',

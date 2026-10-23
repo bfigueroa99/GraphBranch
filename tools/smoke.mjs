@@ -2789,6 +2789,24 @@ console.log('Capa para streaming: &theme= fija el tema (?embed=1)');
   await page.context().close();
 }
 
+console.log('Capa para streaming: &title= pone un rótulo propio (?embed=1)');
+{
+  const page = await openPage({ viewport: { width: 640, height: 400 } });
+  await step(page, '&title= muestra el texto escapado sobre la capa; sin &title= no hay rótulo', async () => {
+    await page.goto(`${base}/index.html?lang=es&embed=1&title=${encodeURIComponent('<b>Directo</b> de hoy')}`);
+    await loaded(page);
+    const t = await page.evaluate(() => {
+      const el = document.querySelector('.embed-title');
+      return el && { text: el.textContent, bolds: el.querySelectorAll('b').length, shown: el.offsetHeight > 0 };
+    });
+    if (!t || t.text !== '<b>Directo</b> de hoy' || t.bolds || !t.shown) throw new Error('rótulo mal: ' + JSON.stringify(t));
+    await page.goto(`${base}/index.html?lang=es&embed=1`);
+    await loaded(page);
+    if (await page.$('.embed-title')) throw new Error('rótulo sin &title=');
+  });
+  await page.context().close();
+}
+
 console.log('Filtro por ruta desde la URL (?path=)');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

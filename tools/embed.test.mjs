@@ -97,3 +97,14 @@ test('embedOptions: theme solo admite light o dark, y marca data-theme en <html>
   assert.equal(load('?embed=1').attrs['data-theme'], undefined);
   assert.equal(load('?theme=dark').attrs['data-theme'], undefined);
 });
+
+test('embedOptions: title se limpia, se acota a 60 letras y no entra sin ?embed', () => {
+  const { GB } = load('');
+  assert.equal(GB.embedOptions('?embed=1').title, '');
+  assert.equal(GB.embedOptions('?embed=1&title=Directo%20de%20hoy').title, 'Directo de hoy');
+  assert.equal(GB.embedOptions('?embed=1&title=%20%20a%0Ab%09c%20').title, 'a b c');
+  assert.equal(GB.embedOptions('?embed=1&title=' + 'x'.repeat(200)).title.length, 60);
+  assert.equal(Array.from(GB.embedOptions('?embed=1&title=' + '😀'.repeat(100)).title).length, 60);
+  assert.equal(GB.embedOptions('?embed=1&title=%3Cb%3Ehola').title, '<b>hola'); // se escapa al pintar (textContent)
+  assert.equal(GB.embedOptions('?title=hola'), null);
+});

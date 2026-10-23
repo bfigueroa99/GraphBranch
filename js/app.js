@@ -2918,6 +2918,14 @@
       if (grp) connectGroup(grp.group);
       else if (who) connectOwner(who.owner);
     }
+    const embedTitle = EMBED ? GB.embedOptions(location.search)?.title || '' : ''; // &title=: rótulo propio sobre la capa
+    if (embedTitle) {
+      const el = document.createElement('div');
+      el.className = 'embed-title';
+      el.textContent = embedTitle;
+      el.setAttribute('aria-hidden', 'true'); // el h1 del repo sigue siendo el título para los lectores
+      document.querySelector('.graph-stage')?.appendChild(el);
+    }
     const rotate = EMBED ? GB.embedOptions(location.search)?.rotate || 0 : 0; // &rotate=30: la capa pasa de un repo a otro
     if (rotate)
       setInterval(() => {

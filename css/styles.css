@@ -4080,6 +4080,23 @@ html.embed-color .graph-stage,
 html.embed-color .graph-wrap {
   background: var(--embed-bg);
 }
+/* &title=: rótulo propio sobre la capa */
+.embed-title {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  right: 12px;
+  z-index: 3;
+  max-width: calc(100% - 24px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-shadow: 0 1px 3px var(--surface);
+  pointer-events: none;
+}
 html.embed-hide-notices .toasts,
 html.embed-hide-combo .combo {
   display: none !important;

@@ -555,6 +555,8 @@ GB.i18n.define('zh-Hant', {
   'textview.merge': '合併',
   'textview.tag': '標籤 {name}',
   'textview.tagged': '帶標籤的提交：{n}',
+  'textview.release': '發行版 {name}',
+  'textview.released': '帶發行版的提交：{n}',
   'textview.live': '新增：{branches} 個分支，{commits} 個提交',
   'textview.filtered': '顯示的分支：{shown} / {total}',
   'textview.scopeAuthor': '依作者篩選：{author}（{total} 個分支中的 {shown} 個）',

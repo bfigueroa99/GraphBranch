@@ -598,6 +598,8 @@ GB.i18n.define('ur', {
   'textview.merge': 'انضمام',
   'textview.tag': 'ٹیگ {name}',
   'textview.tagged': 'ٹیگ والے کمٹ: {n}',
+  'textview.release': 'ریلیز {name}',
+  'textview.released': 'ریلیز والے کمٹ: {n}',
   'textview.live': 'نیا: {branches} برانچیں، {commits} کمٹس',
   'textview.filtered': 'دکھائی گئی برانچیں: {total} میں سے {shown}',
   'textview.scopeAuthor': 'مصنف کے مطابق فلٹر: {author} ({total} میں سے {shown} برانچ)',

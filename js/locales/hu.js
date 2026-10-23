@@ -555,6 +555,8 @@ GB.i18n.define('hu', {
   'textview.merge': 'merge',
   'textview.tag': 'címke {name}',
   'textview.tagged': 'Címkés commitok: {n}',
+  'textview.release': 'kiadás {name}',
+  'textview.released': 'Kiadással rendelkező commitok: {n}',
   'textview.live': 'Új: {branches} ág, {commits} commit',
   'textview.filtered': 'Megjelenített ágak: {shown} / {total}',
   'textview.scopeAuthor': 'Szűrve szerző szerint: {author} ({shown} / {total} ág)',

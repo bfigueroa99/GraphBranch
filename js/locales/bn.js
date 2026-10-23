@@ -555,6 +555,8 @@ GB.i18n.define('bn', {
   'textview.merge': 'মার্জ',
   'textview.tag': 'ট্যাগ {name}',
   'textview.tagged': 'ট্যাগসহ কমিট: {n}',
+  'textview.release': 'রিলিজ {name}',
+  'textview.released': 'রিলিজসহ কমিট: {n}',
   'textview.live': 'নতুন: {branches}টি ব্রাঞ্চ, {commits}টি কমিট',
   'textview.filtered': 'দেখানো ব্রাঞ্চ: {total}-এর মধ্যে {shown}',
   'textview.scopeAuthor': 'লেখক অনুযায়ী ছাঁকা: {author} ({total}টির মধ্যে {shown}টি ব্র্যাঞ্চ)',

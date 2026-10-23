@@ -654,6 +654,8 @@ GB.i18n.define('ar', {
   'textview.merge': 'دمج',
   'textview.tag': 'وسم {name}',
   'textview.tagged': 'الإيداعات ذات الوسم: {n}',
+  'textview.release': 'إصدار {name}',
+  'textview.released': 'الإيداعات ذات الإصدار: {n}',
   'textview.live': 'جديد: {branches} فروع، {commits} إيداعات',
   'textview.filtered': 'الفروع المعروضة: {shown} من {total}',
   'textview.scopeAuthor': 'مُصفّى حسب المؤلف: {author} ({shown} من {total} فرعًا)',

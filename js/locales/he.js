@@ -612,6 +612,8 @@ GB.i18n.define('he', {
   'textview.merge': 'מיזוג',
   'textview.tag': 'תגית {name}',
   'textview.tagged': 'קומיטים עם תגית: {n}',
+  'textview.release': 'גרסה {name}',
+  'textview.released': 'קומיטים עם גרסה: {n}',
   'textview.live': 'חדש: {branches} ענפים, {commits} קומיטים',
   'textview.filtered': 'ענפים מוצגים: {shown} מתוך {total}',
   'textview.scopeAuthor': 'מסונן לפי מחבר: {author} ({shown} מתוך {total} ענפים)',

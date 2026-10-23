@@ -555,6 +555,8 @@ GB.i18n.define('sw', {
   'textview.merge': 'muunganisho',
   'textview.tag': 'lebo {name}',
   'textview.tagged': 'Commit zenye lebo: {n}',
+  'textview.release': 'toleo {name}',
+  'textview.released': 'Commit zenye toleo: {n}',
   'textview.live': 'Mapya: matawi {branches}, commit {commits}',
   'textview.filtered': 'Matawi yanayoonyeshwa: {shown} kati ya {total}',
   'textview.scopeAuthor': 'Imechujwa kwa mwandishi: {author} (matawi {shown} kati ya {total})',

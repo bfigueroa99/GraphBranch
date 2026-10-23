@@ -563,6 +563,8 @@ GB.i18n.define('ro', {
   'textview.merge': 'merge',
   'textview.tag': 'etichetă {name}',
   'textview.tagged': 'Commituri cu etichetă: {n}',
+  'textview.release': 'lansare {name}',
+  'textview.released': 'Commituri cu lansare: {n}',
   'textview.live': 'Noutăți: {branches} ramuri, {commits} commituri',
   'textview.filtered': 'Ramuri afișate: {shown} din {total}',
   'textview.scopeAuthor': 'Filtrat după autor: {author} ({shown} din {total} ramuri)',

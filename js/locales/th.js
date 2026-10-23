@@ -556,6 +556,8 @@ GB.i18n.define('th', {
   'textview.merge': 'เมิร์จ',
   'textview.tag': 'แท็ก {name}',
   'textview.tagged': 'คอมมิตที่มีแท็ก: {n}',
+  'textview.release': 'รีลีส {name}',
+  'textview.released': 'คอมมิตที่มีรีลีส: {n}',
   'textview.live': 'ใหม่: {branches} แบรนช์ {commits} คอมมิต',
   'textview.filtered': 'แบรนช์ที่แสดง: {shown} จาก {total}',
   'textview.scopeAuthor': 'กรองตามผู้เขียน: {author} ({shown} จาก {total} บรานช์)',

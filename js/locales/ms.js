@@ -555,6 +555,8 @@ GB.i18n.define('ms', {
   'textview.merge': 'merge',
   'textview.tag': 'tag {name}',
   'textview.tagged': 'Commit dengan tag: {n}',
+  'textview.release': 'keluaran {name}',
+  'textview.released': 'Commit dengan keluaran: {n}',
   'textview.live': 'Baharu: {branches} cabang, {commits} commit',
   'textview.filtered': 'Cabang dipaparkan: {shown} daripada {total}',
   'textview.scopeAuthor': 'Ditapis mengikut penulis: {author} ({shown} daripada {total} cabang)',

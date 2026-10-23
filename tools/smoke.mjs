@@ -854,11 +854,14 @@ console.log('Escritorio (1280×800)');
       const commits = [...document.querySelectorAll('#textview .tv-commit')];
       return {
         marked: commits.filter((n) => /\bv\d/.test(n.querySelector('.tv-aside').textContent)).length,
-        named: commits.filter((n) => /\btag v\d/.test(n.getAttribute('aria-label'))).length,
+        named: commits.filter((n) => /\b(tag|release) v\d/.test(n.getAttribute('aria-label'))).length,
+        released: commits.filter((n) => /\brelease v\d/.test(n.getAttribute('aria-label'))).length,
         live: document.querySelector('#textview-live').textContent,
       };
     });
     if (marks.marked !== marks.named) throw new Error(`commits con tag sin decirlo en su nombre accesible: ${marks.marked} vs ${marks.named}`);
+    // la demo publica v1.4.0 como release sobre un commit con ese tag: se dice «release» en su nombre y la región viva lo cuenta
+    if (!marks.released || !/Commits con release: \d+$/.test(marks.live)) throw new Error(`el release de la demo no se dice (${marks.released}): ${marks.live}`);
     if (marks.marked && !/^Commits con tag: \d+/.test(marks.live)) throw new Error('la región viva no cuenta los commits con tag: ' + marks.live);
     // la rama por defecto viene abierta: ↓ baja a su primer commit; ← sube a la rama y otra ← la cierra
     await page.keyboard.press('ArrowDown');
@@ -882,7 +885,7 @@ console.log('Escritorio (1280×800)');
       return { role: l.getAttribute('role'), polite: l.getAttribute('aria-live'), text: l.textContent };
     });
     if (live.role !== 'status' || live.polite !== 'polite') throw new Error('la región viva no es role=status polite');
-    if (live.text && !/^Commits con tag: \d+$/.test(live.text)) throw new Error('al abrir, la región viva ya anuncia algo más que los tags: ' + live.text);
+    if (live.text && !/^Commits con tag: \d+(\. Commits con release: \d+)?$/.test(live.text)) throw new Error('al abrir, la región viva ya anuncia algo más que los tags y releases: ' + live.text);
     // filtro: un nombre que no existe vacía el árbol; el de la primera rama lo deja con esa rama
     const first = await page.evaluate(() => document.querySelector('#textview .tv-branch').dataset.branch);
     await page.fill('#textview-filter', 'zzz-no-existe');

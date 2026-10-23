@@ -243,7 +243,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Práctica: branch -d y merge --abort | Público | 2×2/2 | 2,0 | git-sim | ítem 77 |
 | Vista de texto: abrirla desde la URL | Público | 1×2/1 | 2,0 | (ítem 33) | ítem 78 |
 | Resumen de la semana: issues cerrados | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 79 |
-| Vista de texto: releases | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 80 |
+| Vista de texto: releases | Público | 1×2/2 | 1,0 | (accesibilidad) | hecho en #162 |
 | Práctica: switch y restore | Público | 2×2/2 | 2,0 | git-sim | ítem 81 |
 | Capa para streaming, quinta entrega | Plataformas | 1×2/1 | 2,0 | Capas para OBS | ítem 82 |
 | Salud del repo: tendencia de merges | Análisis | 1×2/2 | 1,0 | DORA | ítem 83 |
@@ -254,6 +254,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Salud del repo: tendencia de PRs abiertos | Análisis | 1×2/2 | 1,0 | DORA | ítem 88 |
 | Capa para streaming, sexta entrega | Plataformas | 1×2/1 | 2,0 | Capas para OBS | ítem 89 |
 | Los forks en el grafo, cuarta entrega | Datos | 1×2/2 | 1,0 | Red de ramas de GitHub | ítem 90 |
+| Práctica: revert --abort y rebase --abort | Público | 2×2/2 | 2,0 | git-sim | ítem 91 |
+| Resumen de la semana: autores nuevos | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 92 |
+| Capa para streaming, séptima entrega | Plataformas | 1×2/1 | 2,0 | Capas para OBS | ítem 93 |
+| Constelación ordenada por nombre, en la URL | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 94 |
+| Vista de texto: PRs abiertos por rama | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 95 |
+| Salud del repo: tendencia de releases | Análisis | 1×2/2 | 1,0 | DORA | ítem 96 |
 
 ## Públicos
 

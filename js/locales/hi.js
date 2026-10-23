@@ -555,6 +555,8 @@ GB.i18n.define('hi', {
   'textview.merge': 'मर्ज',
   'textview.tag': 'टैग {name}',
   'textview.tagged': 'टैग वाले कमिट: {n}',
+  'textview.release': 'रिलीज़ {name}',
+  'textview.released': 'रिलीज़ वाले कमिट: {n}',
   'textview.live': 'नया: {branches} ब्रांच, {commits} कमिट',
   'textview.filtered': 'दिखाई गई ब्रांच: {total} में से {shown}',
   'textview.scopeAuthor': 'लेखक के अनुसार फ़िल्टर: {author} ({total} में से {shown} ब्रांच)',

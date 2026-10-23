@@ -8,9 +8,11 @@
   const MAX_BRANCHES = 200; // con más ramas, las más recientes: el árbol tiene que seguir siendo legible
 
   /** Ramas (la por defecto primero, luego las más movidas) con sus últimos commits, del más nuevo al más viejo. */
-  function build(data, { perBranch = PER_BRANCH, maxBranches = MAX_BRANCHES, paths = null } = {}) {
+  function build(data, { perBranch = PER_BRANCH, maxBranches = MAX_BRANCHES, paths = null, releases = null } = {}) {
     const marks = new Map(); // sha -> [tag]
     if (data.tags) for (const [sha, names] of data.tags) marks.set(sha, [...names]);
+    const relTags = releases?.tags || new Set();
+    const relShas = releases?.shas || new Map();
     const def = data.repo?.defaultBranch;
     const list = [...data.branches.values()]
       .filter((b) => b.sha && data.commits.has(b.sha))
@@ -29,19 +31,36 @@
           sha = c.parents?.[0];
           continue;
         }
+        const tags = marks.get(sha) || [];
+        const rel = tags.filter((t) => relTags.has(t));
+        if (!rel.length && relShas.has(sha)) rel.push(relShas.get(sha));
         commits.push({
           sha,
           message: String(c.message || '').split('\n')[0],
           author: c.author?.name || c.author?.login || '',
           date: c.date,
           merge: (c.parents || []).length > 1,
-          tags: marks.get(sha) || [],
+          tags: tags.filter((t) => !rel.includes(t)),
+          releases: rel,
         });
         sha = c.parents?.[0];
       }
       return { name: b.name, isDefault: !!(b.isDefault || b.name === def), commits };
     }).filter((b) => !paths || b.commits.length);
     return { total, branches: rows };
+  }
+
+  /** Los releases que dicen las actividades del feed (`kind: 'release'`): sus tags y, si traen `sha`, ese commit. */
+  function releaseMarks(acts) {
+    const tags = new Set();
+    const shas = new Map();
+    for (const a of acts || []) {
+      if (!a || a.kind !== 'release') continue;
+      const tag = String((a.title && typeof a.title === 'object' && a.title.params && a.title.params.tag) || a.tag || '');
+      if (tag) tags.add(tag);
+      if (tag && a.sha) shas.set(a.sha, tag);
+    }
+    return { tags, shas };
   }
 
   /** Qué hay de nuevo en `tree` frente a lo ya leído (`seen`: { branches:Set, shas:Set }): ramas y commits sin repetir. */
@@ -63,6 +82,13 @@
   function taggedCount(tree) {
     const shas = new Set();
     for (const b of tree.branches) for (const c of b.commits) if (c.tags.length) shas.add(c.sha);
+    return shas.size;
+  }
+
+  /** Cuántos commits del árbol llevan release (cada uno una vez). */
+  function releasedCount(tree) {
+    const shas = new Set();
+    for (const b of tree.branches) for (const c of b.commits) if (c.releases.length) shas.add(c.sha);
     return shas.size;
   }
 
@@ -120,11 +146,11 @@
           ci.tabIndex = -1;
           ci.dataset.sha = c.sha;
           const when = c.date ? ago(c.date) : '';
-          const parts = [c.message || c.sha.slice(0, 7), c.author && text('textview.by', { author: c.author }), when, c.merge && text('textview.merge'), ...c.tags.map((t) => text('textview.tag', { name: t }))];
+          const parts = [c.message || c.sha.slice(0, 7), c.author && text('textview.by', { author: c.author }), when, c.merge && text('textview.merge'), ...c.releases.map((t) => text('textview.release', { name: t })), ...c.tags.map((t) => text('textview.tag', { name: t }))];
           ci.setAttribute('aria-label', parts.filter(Boolean).join(', '));
           ci.appendChild(mk('span', 'tv-sha', c.sha.slice(0, 7)));
           ci.appendChild(mk('span', 'tv-msg', c.message || ''));
-          ci.appendChild(mk('span', 'tv-aside', [c.merge && text('textview.merge'), ...c.tags, when].filter(Boolean).join(' · ')));
+          ci.appendChild(mk('span', 'tv-aside', [c.merge && text('textview.merge'), ...c.releases.map((t) => text('textview.release', { name: t })), ...c.tags, when].filter(Boolean).join(' · ')));
           group.appendChild(ci);
         }
         li.appendChild(group);
@@ -163,7 +189,8 @@
       open.clear();
       for (const b of next.branches) if (b.isDefault) open.add(b.name);
       const tagged = taggedCount(next);
-      say([note, tagged && text('textview.tagged', { n: tagged })].filter(Boolean).join('. '));
+      const released = releasedCount(next);
+      say([note, tagged && text('textview.tagged', { n: tagged }), released && text('textview.released', { n: released })].filter(Boolean).join('. '));
       draw();
     }
 
@@ -256,5 +283,5 @@
     return is('vista', 'texto') || is('view', 'text');
   }
 
-  GB.textview = { build, news, taggedCount, filter, scopeText, mount, openParam, PER_BRANCH, MAX_BRANCHES };
+  GB.textview = { build, news, taggedCount, releasedCount, releaseMarks, filter, scopeText, mount, openParam, PER_BRANCH, MAX_BRANCHES };
 })((window.GB = window.GB || {}));

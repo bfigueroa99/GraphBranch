@@ -127,3 +127,22 @@ test('taggedCount cuenta los commits con tag una vez, aunque salgan en dos ramas
   assert.equal(ctx.window.GB.textview.taggedCount(tree), 2); // a2 y f2
   assert.equal(ctx.window.GB.textview.taggedCount({ branches: [] }), 0);
 });
+
+test('los releases del feed marcan el commit de su tag (o su sha) y se cuentan una vez', () => {
+  const { releaseMarks, releasedCount } = ctx.window.GB.textview;
+  const marks = releaseMarks([
+    { kind: 'release', title: { key: 'act.release', params: { tag: 'v1.0' } } },
+    { kind: 'release', title: { key: 'act.release', params: { tag: 'v2' } }, sha: 'f2' },
+    { kind: 'push', title: { params: { tag: 'v9' } } },
+  ]);
+  assert.deepEqual([...marks.tags], ['v1.0', 'v2']);
+  const tree = build(repo(), { releases: marks });
+  const main = tree.branches.find((b) => b.name === 'main');
+  const a2 = main.commits.find((c) => c.sha === 'a2');
+  assert.deepEqual(a2.releases, ['v1.0']);
+  assert.deepEqual(a2.tags, []); // ya no sale también como tag suelto
+  assert.deepEqual(tree.branches.find((b) => b.name === 'feature').commits[0].releases, ['v2']);
+  assert.equal(releasedCount(tree), 2);
+  assert.equal(releasedCount(build(repo())), 0); // sin releases, nada cambia
+  assert.deepEqual(build(repo()).branches[0].commits[1].tags, ['v1.0']);
+});

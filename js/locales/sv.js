@@ -555,6 +555,8 @@ GB.i18n.define('sv', {
   'textview.merge': 'sammanslagning',
   'textview.tag': 'tagg {name}',
   'textview.tagged': 'Commits med tagg: {n}',
+  'textview.release': 'release {name}',
+  'textview.released': 'Commits med release: {n}',
   'textview.live': 'Nytt: {branches} grenar, {commits} commits',
   'textview.filtered': 'Visade grenar: {shown} av {total}',
   'textview.scopeAuthor': 'Filtrerat på författare: {author} ({shown} av {total} grenar)',

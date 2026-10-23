@@ -556,6 +556,8 @@ GB.i18n.define('fil', {
   'textview.merge': 'merge',
   'textview.tag': 'tag {name}',
   'textview.tagged': 'Mga commit na may tag: {n}',
+  'textview.release': 'release {name}',
+  'textview.released': 'Mga commit na may release: {n}',
   'textview.live': 'Bago: {branches} branch, {commits} commit',
   'textview.filtered': 'Mga branch na ipinapakita: {shown} sa {total}',
   'textview.scopeAuthor': 'Naka-filter ayon sa may-akda: {author} ({shown} sa {total} na branch)',

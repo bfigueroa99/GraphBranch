@@ -440,7 +440,7 @@ se comprueban antes de construir sobre ellas.
 77. ~~**Práctica: branch -d y merge --abort**~~ hecho en #157 · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `branch -d` y `merge --abort`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
 78. ~~**Vista de texto: abrirla desde la URL**~~ hecho en #160 · Público · 1×2/1. [parte del ítem 33] `?view=text` abre el repo con la vista de texto ya abierta, con su filtro por autor o por ruta si los trae, para compartir el enlace con quien usa lector de pantalla. Comprobar: prueba de la lectura de la URL y un paso del smoke.
 79. ~~**Resumen de la semana: issues cerrados**~~ hecho en #158 · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana suma cuántos issues se cerraron en los últimos 7 días, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con issues fabricados.
-80. **Vista de texto: releases** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] La vista de texto dice qué commits llevan release y lo anuncia a quien usa lector de pantalla. Comprobar: prueba de la vista y un paso del smoke.
+80. ~~**Vista de texto: releases**~~ hecho en #162 · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] La vista de texto dice qué commits llevan release y lo anuncia a quien usa lector de pantalla. Comprobar: prueba de la vista y un paso del smoke.
 81. **Práctica: switch y restore** · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `switch`, `switch -c` y `restore`. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
 82. ~~**Capa para streaming, quinta entrega**~~ hecho en #161 · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&title=` pone un rótulo propio sobre la capa, escapado. Comprobar: prueba de la lectura de la URL y un paso del smoke.
 83. **Salud del repo: tendencia de merges** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los PRs fusionados por semana de las últimas 8, como ya hace con los despliegues. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
@@ -451,6 +451,12 @@ se comprueban antes de construir sobre ellas.
 88. **Salud del repo: tendencia de PRs abiertos** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra cuántos PRs se abrieron por semana en las últimas 8. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
 89. **Capa para streaming, sexta entrega** · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&max=N` limita cuántas ramas muestra la capa, escapando y acotando el valor. Comprobar: `tools/embed.test.mjs` y un paso del smoke.
 90. **Los forks en el grafo, cuarta entrega** · Datos · 1×2/2. [inv. 2026-10-13] [parte del ítem 30] El panel de forks suma las estrellas de cada fork (ya vienen en `/forks`) y deja ordenar por ellas. Comprobar: `tools/health.test.mjs` con forks fabricados.
+91. **Práctica: revert --abort y rebase --abort** · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `revert --abort` y `rebase --abort`, y vuelve al estado de antes del comando. Comprobar: prueba del simulador y un paso del smoke.
+92. **Resumen de la semana: autores nuevos** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana dice cuántas personas aportaron por primera vez en el repo, con los datos ya cargados. Comprobar: prueba del resumen y un paso del smoke.
+93. **Capa para streaming, séptima entrega** · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&hide=` oculta partes de la capa (leyenda, rótulo o reloj) para quien arma su escena de OBS. Comprobar: prueba de `embedOptions` y un paso del smoke.
+94. **Constelación ordenada por nombre, en la URL** · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] `?order=name` abre la constelación ordenada alfabéticamente, junto a `?order=activity`. Comprobar: prueba de la lectura de la URL y un paso del smoke.
+95. **Vista de texto: PRs abiertos por rama** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de cada rama dice cuántos PRs abiertos tiene, con los PRs ya cargados. Comprobar: prueba de la vista y un paso del smoke.
+96. **Salud del repo: tendencia de releases** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los releases por semana de las últimas semanas, con las actividades ya cargadas. Comprobar: prueba de `health` y un paso del smoke.
 
 ## Cómo validar un cambio
 
@@ -2648,3 +2654,16 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow`); `git push origin --delete loop/87` sigue cortado por el proxy (Para Benjamin 7).
 - Validado: 401 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 126, expansión: ítem 80 (Vista de texto: releases, Público)
+
+### 2026-10-23 · Iteración 126 · Expansión · Público
+
+- **Capacidad nueva: la vista de texto dice qué commits llevan release** (ítem 80 de la hoja de ruta, parte del ítem 33). Con los releases que el feed ya trajo (`ReleaseEvent` de GitHub o los de la demo), el commit cuyo tag coincide (o cuyo `sha` trae la actividad) se dice «release v1.4.0» en su nombre accesible y en su texto lateral (sin repetirlo como tag suelto), y al abrir la región viva suma «Commits con release: n» a lo de los tags. Sin consultas nuevas ni estado guardado; el nombre entra con `textContent`. Textos nuevos (`textview.release`, `textview.released`) en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `tools/textview.test.mjs` («los releases del feed marcan el commit de su tag…») y el paso del smoke «vista de texto: árbol con teclado…» (el release v1.4.0 de la demo se dice en el nombre accesible y la región viva lo cuenta).
+- README: la descripción de la vista de texto y sus Límites conocidos (solo los releases que el feed ya trajo); fila Público del Mapa de alcance sin cambios.
+- QA: fila de la vista de texto (nombres accesibles y región viva) en el smoke; auditoría: la corre `npm run check`.
+- Arena: no aplica: una sola forma obvia (marcar en `build` los commits cuyo tag o sha coincide con un release del feed).
+- Replica: sin pasada nueva (R13 avisa; reposición con las candidatas vigentes de la investigación): ítems 91 a 96.
+- Reclamo: loop/126, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow`); `git push origin --delete loop/87` sigue cortado por el proxy (Para Benjamin 7).
+- Validado: 402 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 127, mantenimiento · QA: pendiente 14 (Con 1.000 ramas a 320 px el 3D deja solo 4 etiquetas de rama visibles (`reach` …)

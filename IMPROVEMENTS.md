@@ -2692,5 +2692,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Arena: no aplica: una sola forma obvia (reusar `weekly` sobre los merges ya contados).
 - Reclamo: loop/128, sin colisión
 - Nota: el clon venía superficial (`git fetch --unshallow`, el R3 y 2 pruebas fallaban sin eso); `git push origin --delete loop/87` sigue cortado por el proxy (Para Benjamin 7).
-- Validado: PENDIENTE
+- Validado: NO FUSIONADO: 403 pruebas (`node --test`) e i18n en verde; el smoke falla en «vista 2D» (`waitForSelector '#graph svg .node'`, 30 s) también sobre `origin/master` en este equipo cloud (2 de 2 corridas), así que no es del cambio; el paso propio (salud, `#hl-merge-weeks`) pasa. Falta confirmar en otro equipo.
 - **Siguiente:** iteración 129, expansión: ítem 81 (Práctica: switch y restore, Público)

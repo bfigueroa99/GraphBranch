@@ -438,7 +438,7 @@ se comprueban antes de construir sobre ellas.
 75. ~~**Los forks en el grafo, tercera entrega**~~ hecho en #154 · Datos · 1×2/2. [parte del ítem 30] Los forks se ordenan por actividad reciente en el panel. Comprobar: prueba del orden con forks fabricados.
 76. ~~**Constelación ordenada por actividad**~~ hecho en #156 · Escala. [parte del ítem 26] Un selector de orden (pestañas, actividad o nombre) reordena las galaxias, también el recorrido con Tab, y lo anuncia en una región viva (`C.sortItems` en `js/constellation.js`).
 77. ~~**Práctica: branch -d y merge --abort**~~ hecho en #157 · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `branch -d` y `merge --abort`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
-78. **Vista de texto: abrirla desde la URL** · Público · 1×2/1. [parte del ítem 33] `?view=text` abre el repo con la vista de texto ya abierta, con su filtro por autor o por ruta si los trae, para compartir el enlace con quien usa lector de pantalla. Comprobar: prueba de la lectura de la URL y un paso del smoke.
+78. ~~**Vista de texto: abrirla desde la URL**~~ hecho en #160 · Público · 1×2/1. [parte del ítem 33] `?view=text` abre el repo con la vista de texto ya abierta, con su filtro por autor o por ruta si los trae, para compartir el enlace con quien usa lector de pantalla. Comprobar: prueba de la lectura de la URL y un paso del smoke.
 79. ~~**Resumen de la semana: issues cerrados**~~ hecho en #158 · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana suma cuántos issues se cerraron en los últimos 7 días, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con issues fabricados.
 80. **Vista de texto: releases** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] La vista de texto dice qué commits llevan release y lo anuncia a quien usa lector de pantalla. Comprobar: prueba de la vista y un paso del smoke.
 81. **Práctica: switch y restore** · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `switch`, `switch -c` y `restore`. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
@@ -2624,3 +2624,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el smoke falló una vez en «filtro por autor: … quitar el filtro no deja el grafo como estaba» (no toca el cambio) y pasó al repetir; cargado como pendiente [Deuda].
 - Validado: 400 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 124, expansión: ítem 78 (Vista de texto: abrirla desde la URL, Público)
+
+### 2026-10-23 · Iteración 124 · Expansión · Público
+
+- **Capacidad nueva: `?view=text` abre la vista de texto, como alias en inglés de `?vista=texto`** (ítem 78 de la hoja de ruta). El grueso del ítem (abrirla desde la URL con `?path=` y `?q=`) ya lo entregó la iteración 113 (ítem 71); `?author=` ya lo aplica el resto de la app a la vista. Queda el nombre `view=text` para enlaces compartidos en inglés; `?view=texto` y `?vista=text` no cuentan. Sin textos nuevos ni consultas nuevas.
+- **Pruebas que fallan sin la capacidad:** `tools/textview.test.mjs` («openParam: ?vista=texto y ?view=text piden abrir…») y el paso del smoke «?view=text, el alias en inglés, abre también la vista de texto».
+- README: la descripción de la vista de texto y su línea de Seguridad; fila Público del Mapa de alcance sin cambios (ya nombra la URL).
+- QA: lectura de la URL y apertura en el smoke; auditoría: la corre `npm run check`.
+- Arena: no aplica: una sola forma obvia (aceptar otro nombre de parámetro en `openParam`).
+- Reclamo: loop/124, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow`); `git push origin --delete loop/87` sigue cortado por el proxy (Para Benjamin 7).
+- Validado: 400 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 125, expansión: ítem 82 (Capa para streaming, quinta entrega, Plataformas)

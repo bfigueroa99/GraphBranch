@@ -246,10 +246,14 @@
     return { render, update, setFilter };
   }
 
-  /** ¿Pide la URL abrir la vista de texto (?vista=texto)? Con ?path= y ?q= ya aplicados. */
+  /** ¿Pide la URL abrir la vista de texto (?vista=texto o ?view=text)? Con ?path= y ?q= ya aplicados. */
   function openParam(q) {
-    const v = q && typeof q.get === 'function' ? q.get('vista') : null;
-    return typeof v === 'string' && v.trim().toLowerCase() === 'texto';
+    if (!q || typeof q.get !== 'function') return false;
+    const is = (k, word) => {
+      const v = q.get(k);
+      return typeof v === 'string' && v.trim().toLowerCase() === word;
+    };
+    return is('vista', 'texto') || is('view', 'text');
   }
 
   GB.textview = { build, news, taggedCount, filter, scopeText, mount, openParam, PER_BRANCH, MAX_BRANCHES };

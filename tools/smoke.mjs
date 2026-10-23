@@ -2856,6 +2856,13 @@ console.log('Vista de texto desde la URL (?vista=texto)');
     if (!st.live.includes(st.scope) || !/Ramas mostradas: \d+ de \d+/.test(st.live)) throw new Error('la región viva no anuncia ruta y filtro: ' + st.live);
     if (/undefined|NaN|textview\./.test(st.live)) throw new Error('texto sin resolver: ' + st.live);
   });
+  await step(page, '?view=text, el alias en inglés, abre también la vista de texto', async () => {
+    await page.goto(`${base}/index.html?lang=es&view=text`);
+    await loaded(page);
+    await page.waitForSelector('#textview[open]', { timeout: T(5000) }).catch(() => {
+      throw new Error('?view=text no abrió la vista de texto');
+    });
+  });
   await page.context().close();
 }
 

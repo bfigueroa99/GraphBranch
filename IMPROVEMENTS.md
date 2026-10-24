@@ -444,7 +444,7 @@ se comprueban antes de construir sobre ellas.
 81. ~~**Práctica: switch y restore**~~ hecho en #165 · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `switch`, `switch -c` y `restore`. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
 82. ~~**Capa para streaming, quinta entrega**~~ hecho en #161 · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&title=` pone un rótulo propio sobre la capa, escapado. Comprobar: prueba de la lectura de la URL y un paso del smoke.
 83. ~~**Salud del repo: tendencia de merges**~~ hecho en #164 · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los PRs fusionados por semana de las últimas 8, como ya hace con los despliegues. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
-84. **Constelación ordenada, en la URL** · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] `?order=activity` abre la constelación ya ordenada por actividad. Comprobar: prueba de la lectura de la URL y un paso del smoke.
+84. ~~**Constelación ordenada, en la URL**~~ hecho en #166 · Escala. [parte del ítem 26] `?order=activity` abre la constelación ya ordenada por actividad (`C.orderParam` en `js/constellation.js`).
 85. **Práctica: tag -d y cherry-pick --abort** · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `tag -d` y `cherry-pick --abort`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
 86. **Resumen de la semana: tags nuevos por semana** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana dice cuántos tags nuevos hubo, contados una sola vez aunque salgan como release. Comprobar: `tools/digest.test.mjs` con tags fabricados.
 87. **Vista de texto: forks activos** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] La vista de texto lista los forks activos ya cargados, el más reciente primero, y lo anuncia a quien usa lector de pantalla. Comprobar: prueba de la vista y un paso del smoke.
@@ -2709,3 +2709,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow`); `git push origin --delete loop/88` sigue cortado por el proxy (Para Benjamin 7).
 - Validado: 404 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 130, expansión: ítem 84 (Constelación ordenada, en la URL, Escala)
+
+### 2026-10-24 · Iteración 130 · Expansión · Escala
+
+- **Capacidad nueva: la constelación abre ordenada por la URL** (ítem 84 de la hoja de ruta, parte del ítem 26). `?order=activity` deja el selector y el recorrido con Tab en «actividad» desde el arranque (`C.orderParam` lee el parámetro; lo desconocido o vacío deja el orden de las pestañas). Sin consultas nuevas ni estado guardado; no se anuncia en la región viva porque no lo pidió nadie con el selector.
+- **Pruebas que fallan sin la capacidad:** `tools/constellation.test.mjs` («?order=activity abre ordenada…») y el paso del smoke «se siguen hasta 10 repos a la vez» (abre con `?order=activity` y mira el selector).
+- README: la función Constelación (y el parámetro `?order=activity`). Textos: sin claves nuevas.
+- QA: fila de la constelación en el smoke; auditoría: 0 hallazgos nuevos.
+- Arena: no aplica: una sola forma obvia (un parámetro de URL que llama a `setOrder`, el mismo camino que el selector).
+- Reclamo: loop/130, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow`); `git push origin --delete loop/88` lo denegó el clasificador de permisos (Para Benjamin 7).
+- Validado: 405 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 131, mantenimiento · Errores: pendiente 3 (`i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de car…)

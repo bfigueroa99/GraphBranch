@@ -607,6 +607,8 @@ GB.i18n.define('ur', {
   'textview.filtered': 'دکھائی گئی برانچیں: {total} میں سے {shown}',
   'textview.scopeAuthor': 'مصنف کے مطابق فلٹر: {author} ({total} میں سے {shown} برانچ)',
   'textview.scopePath': 'پاتھ کے مطابق فلٹر: {path} ({n} کمٹ)',
+  'textview.forks': 'فعال فورکس: {n}',
+  'textview.fork': '{name}، آخری push {when}',
   'search.title': 'کمٹس تلاش کریں',
   'search.help': 'پیغام، SHA یا مصنف (@نام) سے تلاش کریں۔ نیچے کا تیر نتائج پر جاتا ہے، Enter کمٹ تک اڑاتا ہے۔',
   'search.placeholder': 'پیغام، SHA یا ‎@مصنف…',

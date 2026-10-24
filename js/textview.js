@@ -6,9 +6,20 @@
 
   const PER_BRANCH = 10; // commits que muestra cada rama (siguiendo el primer padre)
   const MAX_BRANCHES = 200; // con más ramas, las más recientes: el árbol tiene que seguir siendo legible
+  const MAX_FORKS = 10; // forks que lista la vista, el push más reciente primero
+
+  /** Los forks activos ya cargados (`data.forks`), el push más reciente primero; sin url https o sin push no cuentan. */
+  function forks(data, max = MAX_FORKS) {
+    const at = (x) => (typeof x === 'number' ? x : Date.parse(x) || 0);
+    const all = (data.forks || [])
+      .filter((f) => f && f.fullName && f.pushedAt && /^https:\/\//.test(String(f.url || '')))
+      .map((f) => ({ name: String(f.fullName), url: String(f.url), pushedAt: at(f.pushedAt) }))
+      .sort((a, b) => b.pushedAt - a.pushedAt || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    return { total: all.length, rows: all.slice(0, max) };
+  }
 
   /** Ramas (la por defecto primero, luego las más movidas) con sus últimos commits, del más nuevo al más viejo. */
-  function build(data, { perBranch = PER_BRANCH, maxBranches = MAX_BRANCHES, paths = null, releases = null } = {}) {
+  function build(data, { perBranch = PER_BRANCH, maxBranches = MAX_BRANCHES, paths = null, releases = null, withForks = false } = {}) {
     const marks = new Map(); // sha -> [tag]
     if (data.tags) for (const [sha, names] of data.tags) marks.set(sha, [...names]);
     const relTags = releases?.tags || new Set();
@@ -47,7 +58,7 @@
       }
       return { name: b.name, isDefault: !!(b.isDefault || b.name === def), commits };
     }).filter((b) => !paths || b.commits.length);
-    return { total, branches: rows };
+    return { total, branches: rows, forks: withForks ? forks(data) : { total: 0, rows: [] } };
   }
 
   /** Los releases que dicen las actividades del feed (`kind: 'release'`): sus tags y, si traen `sha`, ese commit. */
@@ -122,7 +133,37 @@
     function draw() {
       root.textContent = '';
       const shown = filter(tree, query);
-      if (!shown.length) return void root.appendChild(mk('p', 'hl-none', text('health.none')));
+      if (!shown.length) root.appendChild(mk('p', 'hl-none', text('health.none')));
+      else root.appendChild(drawTree(shown));
+      if (tree.forks?.total) root.appendChild(drawForks(tree.forks));
+    }
+
+    /** Los forks activos: una lista de enlaces fuera del árbol (no son ramas), con su nombre y cuándo fue su último push. */
+    function drawForks(f) {
+      const sec = mk('section', 'tv-forks');
+      const h = mk('h3', 'tv-forks-h', text('textview.forks', { n: f.total }));
+      h.id = 'tv-forks-h';
+      sec.setAttribute('aria-labelledby', h.id);
+      sec.appendChild(h);
+      const ul = mk('ul', 'tv-forks-list');
+      for (const r of f.rows) {
+        const li = mk('li');
+        const a = mk('a', 'tv-fork');
+        a.href = GB.U.safeUrl(r.url);
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        const when = ago(r.pushedAt);
+        a.setAttribute('aria-label', text('textview.fork', { name: r.name, when }));
+        a.appendChild(mk('span', 'tv-name', r.name));
+        a.appendChild(mk('span', 'tv-aside', when));
+        li.appendChild(a);
+        ul.appendChild(li);
+      }
+      sec.appendChild(ul);
+      return sec;
+    }
+
+    function drawTree(shown) {
       const ul = mk('ul', 'tv-tree');
       ul.setAttribute('role', 'tree');
       ul.setAttribute('aria-label', text('textview.title'));
@@ -156,7 +197,7 @@
         li.appendChild(group);
         ul.appendChild(li);
       });
-      root.appendChild(ul);
+      return ul;
     }
 
     const items = () => [...root.querySelectorAll('[role="treeitem"]')].filter((n) => !n.parentElement.closest('[hidden]'));
@@ -190,7 +231,7 @@
       for (const b of next.branches) if (b.isDefault) open.add(b.name);
       const tagged = taggedCount(next);
       const released = releasedCount(next);
-      say([note, tagged && text('textview.tagged', { n: tagged }), released && text('textview.released', { n: released })].filter(Boolean).join('. '));
+      say([note, tagged && text('textview.tagged', { n: tagged }), released && text('textview.released', { n: released }), next.forks?.total && text('textview.forks', { n: next.forks.total })].filter(Boolean).join('. '));
       draw();
     }
 
@@ -283,5 +324,5 @@
     return is('vista', 'texto') || is('view', 'text');
   }
 
-  GB.textview = { build, news, taggedCount, releasedCount, releaseMarks, filter, scopeText, mount, openParam, PER_BRANCH, MAX_BRANCHES };
+  GB.textview = { build, forks, news, taggedCount, releasedCount, releaseMarks, filter, scopeText, mount, openParam, PER_BRANCH, MAX_BRANCHES, MAX_FORKS };
 })((window.GB = window.GB || {}));

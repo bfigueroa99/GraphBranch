@@ -564,6 +564,8 @@ GB.i18n.define('vi', {
   'textview.filtered': 'Nhánh đang hiện: {shown} trên {total}',
   'textview.scopeAuthor': 'Lọc theo tác giả: {author} ({shown}/{total} nhánh)',
   'textview.scopePath': 'Lọc theo đường dẫn: {path} ({n} commit)',
+  'textview.forks': 'Fork đang hoạt động: {n}',
+  'textview.fork': '{name}, push gần nhất {when}',
   'search.title': 'Tìm commit',
   'search.help': 'Tìm theo thông điệp, SHA hoặc tác giả (@tên). Mũi tên xuống đi tới kết quả, Enter bay tới commit.',
   'search.placeholder': 'Thông điệp, SHA hoặc @tác giả…',

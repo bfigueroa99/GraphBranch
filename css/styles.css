@@ -4811,6 +4811,28 @@ a.hl-row:focus-visible {
   padding: 4px 8px;
   cursor: pointer;
 }
+.tv-forks {
+  margin-top: 16px;
+}
+.tv-forks-h {
+  margin: 0 0 6px;
+  font-size: 1em;
+}
+.tv-forks-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tv-fork {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: inherit;
+}
 .tv-head::before {
   content: '▸';
   color: var(--ink-3);

@@ -621,6 +621,8 @@ GB.i18n.define('he', {
   'textview.filtered': 'ענפים מוצגים: {shown} מתוך {total}',
   'textview.scopeAuthor': 'מסונן לפי מחבר: {author} ({shown} מתוך {total} ענפים)',
   'textview.scopePath': 'מסונן לפי נתיב: {path} ({n} קומיטים)',
+  'textview.forks': 'פורקים פעילים: {n}',
+  'textview.fork': '{name}, push אחרון {when}',
   'search.title': 'חיפוש קומיטים',
   'search.help': 'חפשו לפי הודעה, SHA או כותב (@שם). חץ למטה עובר לתוצאות, Enter טס אל הקומיט.',
   'search.placeholder': 'הודעה, SHA או ‎@כותב…',

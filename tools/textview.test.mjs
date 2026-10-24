@@ -146,3 +146,21 @@ test('los releases del feed marcan el commit de su tag (o su sha) y se cuentan u
   assert.equal(releasedCount(build(repo())), 0); // sin releases, nada cambia
   assert.deepEqual(build(repo()).branches[0].commits[1].tags, ['v1.0']);
 });
+
+test('los forks activos ya cargados salen del más reciente al más viejo, solo con https y push, y solo si se piden', () => {
+  const { forks } = ctx.window.GB.textview;
+  const d = repo();
+  d.forks = [
+    { fullName: 'a/viejo', url: 'https://github.com/a/viejo', pushedAt: '2026-01-01T00:00:00Z' },
+    { fullName: 'b/nuevo', url: 'https://github.com/b/nuevo', pushedAt: '2026-03-01T00:00:00Z' },
+    { fullName: 'c/js', url: 'javascript:alert(1)', pushedAt: '2026-04-01T00:00:00Z' },
+    { fullName: 'd/sin-push', url: 'https://github.com/d/sin-push' },
+  ];
+  const f = forks(d);
+  assert.deepEqual(f.rows.map((r) => r.name), ['b/nuevo', 'a/viejo']);
+  assert.equal(f.total, 2);
+  assert.equal(forks(d, 1).rows.length, 1);
+  assert.equal(forks({}).total, 0);
+  assert.equal(build(d).forks.total, 0); // sin pedirlos, la vista no los trae (?forks=0)
+  assert.deepEqual(build(d, { withForks: true }).forks.rows.map((r) => r.name), ['b/nuevo', 'a/viejo']);
+});

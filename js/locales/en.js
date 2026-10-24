@@ -570,6 +570,8 @@ GB.i18n.define('en', {
   'textview.filtered': 'Branches shown: {shown} of {total}',
   'textview.scopeAuthor': 'Filtered by author: {author} ({shown} of {total} branches)',
   'textview.scopePath': 'Filtered by path: {path} ({n} commits)',
+  'textview.forks': 'Active forks: {n}',
+  'textview.fork': '{name}, last push {when}',
   'search.title': 'Search commits',
   'search.help': 'Search by message, SHA or author (@name). Down arrow goes to the results, Enter flies to the commit.',
   'search.placeholder': 'Message, SHA or @author…',

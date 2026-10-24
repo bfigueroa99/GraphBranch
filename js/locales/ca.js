@@ -564,6 +564,8 @@ GB.i18n.define('ca', {
   'textview.filtered': 'Branques mostrades: {shown} de {total}',
   'textview.scopeAuthor': 'Filtrat per autor: {author} ({shown} de {total} branques)',
   'textview.scopePath': 'Filtrat per ruta: {path} ({n} commits)',
+  'textview.forks': 'Forks actius: {n}',
+  'textview.fork': '{name}, darrer push {when}',
   'search.title': 'Cerca commits',
   'search.help': 'Cerca per missatge, SHA o autor (@nom). La fletxa avall va als resultats, Intro vola fins al commit.',
   'search.placeholder': 'Missatge, SHA o @autor…',

@@ -1895,7 +1895,7 @@
     },
   });
   /** El árbol de `data` con los filtros de ruta y los releases que el feed dice de este repo. */
-  const textTree = (data) => GB.textview.build(data, { paths: pathShas, releases: GB.textview.releaseMarks(feed.items.filter((a) => a.repo === active?.key)) });
+  const textTree = (data) => GB.textview.build(data, { withForks: showForks, paths: pathShas, releases: GB.textview.releaseMarks(feed.items.filter((a) => a.repo === active?.key)) });
   /** El árbol con los filtros del grafo (autor y ruta) y una nota que los dice, también para el lector de pantalla. */
   function openTextview() {
     const v = authorView(source.view ? source.view() : source.data);

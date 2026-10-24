@@ -564,6 +564,8 @@ GB.i18n.define('bg', {
   'textview.filtered': 'Показани клонове: {shown} от {total}',
   'textview.scopeAuthor': 'Филтър по автор: {author} ({shown} от {total} клона)',
   'textview.scopePath': 'Филтър по път: {path} ({n} къмита)',
+  'textview.forks': 'Активни форкове: {n}',
+  'textview.fork': '{name}, последен push {when}',
   'search.title': 'Търсене на комити',
   'search.help': 'Търсете по съобщение, SHA или автор (@име). Стрелка надолу отива към резултатите, Enter лети до комита.',
   'search.placeholder': 'Съобщение, SHA или @автор…',

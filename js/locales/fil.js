@@ -565,6 +565,8 @@ GB.i18n.define('fil', {
   'textview.filtered': 'Mga branch na ipinapakita: {shown} sa {total}',
   'textview.scopeAuthor': 'Naka-filter ayon sa may-akda: {author} ({shown} sa {total} na branch)',
   'textview.scopePath': 'Naka-filter ayon sa path: {path} ({n} commit)',
+  'textview.forks': 'Mga aktibong fork: {n}',
+  'textview.fork': '{name}, huling push {when}',
   'search.title': 'Maghanap ng commit',
   'search.help': 'Maghanap ayon sa mensahe, SHA o may-akda (@pangalan). Ang pababang arrow ay papunta sa mga resulta, ang Enter ay lilipad sa commit.',
   'search.placeholder': 'Mensahe, SHA o @may-akda…',

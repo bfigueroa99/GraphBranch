@@ -564,6 +564,8 @@ GB.i18n.define('sw', {
   'textview.filtered': 'Matawi yanayoonyeshwa: {shown} kati ya {total}',
   'textview.scopeAuthor': 'Imechujwa kwa mwandishi: {author} (matawi {shown} kati ya {total})',
   'textview.scopePath': 'Imechujwa kwa njia: {path} (commit {n})',
+  'textview.forks': 'Fork zinazoendelea: {n}',
+  'textview.fork': '{name}, push ya mwisho {when}',
   'search.title': 'Tafuta commit',
   'search.help': 'Tafuta kwa ujumbe, SHA au mwandishi (@jina). Mshale wa chini huenda kwenye matokeo, Enter huruka hadi kwenye commit.',
   'search.placeholder': 'Ujumbe, SHA au @mwandishi…',

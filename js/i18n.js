@@ -118,6 +118,7 @@ window.GB = window.GB || {};
   const listeners = [];
   const cache = new Map();
   let locale = FALLBACK;
+  let pedidos = 0; // cuenta de setLocale, para descartar los que llegan tarde
 
   // carpeta de los idiomas, relativa a este script (funciona también bajo file://)
   const localesUrl = (() => {
@@ -350,7 +351,9 @@ window.GB = window.GB || {};
   /** Cambia el idioma: carga su diccionario, actualiza el documento y avisa a quien escuche. */
   async function setLocale(code, { persist = true } = {}) {
     const next = BY_CODE.has(code) ? code : FALLBACK;
+    const turno = ++pedidos;
     await Promise.all([load(FALLBACK), load(next)]);
+    if (turno !== pedidos) return locale; // se pidió otro idioma después: gana el último, no el que carga último
     locale = dicts[next] ? next : FALLBACK;
     if (persist) writeStored(locale);
     setDocument();

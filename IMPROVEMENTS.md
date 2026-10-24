@@ -527,29 +527,28 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 2. [Accesibilidad] La leyenda 2D no tiene acceso por teclado. Los botones de estado ya no mezclan
     `aria-pressed` con un texto cambiante (iteración 123). Reproducir: `node tools/audit.mjs`.
-3. [Errores] `i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de cargar último.
-4. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
+3. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
     renombrados).
-5. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+4. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-6. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
+5. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
     y mueve el resto a `docs/BITACORA.md` (idempotente: la segunda corrida dice «Nada que rotar»; queda
     una línea «Las iteraciones anteriores están en docs/BITACORA.md»); `--siguiente` sigue leyendo N de
     aquí y `--check` exige iteraciones sin repetidos entre los dos archivos. Motivo: `--salud` mide el
     archivo en cada iteración (77 KB el 2026-10-13, 55 KB de bitácora), y cada sesión nueva lo lee entero.
-7. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+6. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-8. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+7. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-9. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+8. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-10. [Rendimiento] El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (los dos
+9. [Rendimiento] El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (los dos
     `MeshStandardMaterial` de nodos y aristas, ~170 ms y 65 KB de fuente cada uno), dentro de una tarea de
     ~1,2 s; SwiftShader no ofrece `KHR_parallel_shader_compile` y los 12 hacen falta (el mundo es la escena
     de la órbita). Descartado en la 107: `renderer.compile(scene, camera)` con instancias de mentira antes
@@ -558,45 +557,45 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     igual, o precompilar solo los dos `MeshStandardMaterial` con una escena propia que repita luces y niebla.
     Reproducción: contar `linkProgram` con `addInitScript` sobre `?lang=es` (12 programas, ~186 ms en
     `getProgramParameter`).
-11. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+10. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
     Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-12. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+11. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-13. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
+12. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-14. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
+13. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
     nítidas (demo a 320 px: 3 de 5 atenuadas); comprobar que Tab y el toque no caigan en una atenuada.
     Reproducción: Playwright, 320 px, 3D, `?repo=demo` → `.g3-head` con opacidad 0,22 y `display: flex`.
-15. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
+14. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
     vistas, las estadísticas y la bitácora encima) y el 3D no arma etiquetas hasta verse; pensar en una
     forma de llegar al grafo sin recorrer la página (ancla o tarjetas plegables en celular).
     Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la auditoría → captura sin grafo; `#graph3d` fuera de la pantalla.
-16. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+15. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-17. [Seguridad] Las fuentes Codeberg y Bitbucket no validan en el origen las URL de los pull requests
+16. [Seguridad] Las fuentes Codeberg y Bitbucket no validan en el origen las URL de los pull requests
     (`codeberg.js:296` `p.html_url`, `bitbucket.js:204` y `:321` `links.html.href`), a diferencia de
     `codeberg.js:179` y GitHub (`/^https:\/\//`). La interfaz ya las filtra con `U.safeUrl` (iteración 119),
     pero un dato fuera de http(s) llega hasta las exportaciones (resumen, bitácora en Markdown).
     Reproducción: `tools/codeberg.test.mjs` con un PR cuyo `html_url` sea `javascript:alert(1)` → la actividad conserva esa `url`.
-18. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
+17. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
     `WebFetch` a `releases.electronjs.org` dio HTTP 500 en la iteración 119. Repetir la comparación
     cuando la página responda y subir si hay una estable más nueva.
     Reproducción: `WebFetch https://releases.electronjs.org/release/stable` → `HTTP 500`.
-19. [Deuda] El clon de las sesiones cloud viene superficial: `node tools/loop.mjs --check` da ERROR R3 («ese PR no
+18. [Deuda] El clon de las sesiones cloud viene superficial: `node tools/loop.mjs --check` da ERROR R3 («ese PR no
     está en origin/master») y `node --test` falla 2 pruebas hasta `git fetch --unshallow origin`. Que `--check`
     y `--salud` avisen «clon superficial: git fetch --unshallow origin» en vez del ERROR.
     Reproducción: en un clon `--depth 50`, `node tools/loop.mjs --check` → `ERROR R3 hecho en #45 …: ese PR no está en origin/master`.
-20. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
+19. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
     corta a los 120 s; documentar en «Cómo validar» que se corra en segundo plano, como `audit --langs`.
     Reproducción: `time node tools/smoke.mjs` → ~480 s.
-21. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
+20. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
     `npm run check` en la iteración 128 (la repetición pasó), aun con la espera de la 127.
     Reproducción: `npm run check` → `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
 
@@ -2721,3 +2720,16 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow`); `git push origin --delete loop/88` lo denegó el clasificador de permisos (Para Benjamin 7).
 - Validado: 405 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 131, mantenimiento · Errores: pendiente 3 (`i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de car…)
+
+### 2026-10-24 · Iteración 131 · Mantenimiento · Errores
+
+- **Arreglo: `i18n.setLocale` ya no deja ganar al idioma que carga último** (pendiente 3). Cada llamada toma un turno; al terminar de cargar, si se pidió otro idioma después, descarta su resultado (sin tocar el documento, el almacenamiento ni a los oyentes) y devuelve el idioma vigente. Sin consultas nuevas.
+- **Reproducción:** `node --test tools/i18n.test.mjs` → `AssertionError: expected 'fr', actual 'de'` (se elige `de`, luego `fr`; `fr` carga antes y `de` lo pisa).
+- **Pruebas que fallan sin el arreglo:** `tools/i18n.test.mjs` («setLocale: si se eligen dos idiomas seguidos, gana el último elegido…»).
+- README: sin cambios (no cambia lo que hace la app a la vista). Textos: sin claves nuevas.
+- QA: la fila del selector de idioma en el smoke; auditoría: 0 hallazgos nuevos.
+- Arena: no aplica: una sola forma obvia (un contador de turnos dentro de `setLocale`).
+- Reclamo: loop/131, sin colisión
+- Nota: el clon venía superficial (`git fetch --unshallow`: sin eso `--check` daba R3 falso y 2 pruebas en rojo); `git push origin --delete loop/88`…`loop/99` lo denegó el clasificador de permisos (Para Benjamin 7). El paso «filtro por autor» del smoke falló una vez y pasó al repetir `npm run check` (intermitente ya anotado en el pendiente 1).
+- Validado: 406 pruebas (`node --test`), smoke, i18n (0 errores), auditoría y e2e en verde.
+- **Siguiente:** iteración 132, expansión: ítem 85 (Práctica: tag -d y cherry-pick --abort, Público)

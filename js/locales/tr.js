@@ -523,6 +523,8 @@ GB.i18n.define('tr', {
   'practice.ex7.goal': 'feature üzerinde yarım kalmış değişiklikleriniz var ve main hemen düzeltilmeli. Onları stash ile kenara koyun, checkout main yapıp düzeltmeyi commit edin, feature\'a dönün ve stash pop ile geri getirin.',
   'practice.ex8.title': 'Birleştirmeyi iptal et',
   'practice.ex8.goal': 'feature\'ın main ile birleşip birleşmeyeceğini görmek istiyorsun ama sonucu tutmak istemiyorsun. merge feature --no-commit ile başla, merge --abort ile iptal et.',
+  'practice.ex9.title': 'Fazla etiket ve iptal edilen cherry-pick',
+  'practice.ex9.goal': 'Biri v2 etiketini erken koymuş: tag -d ile sil. Sonra feature\'daki düzeltmeyi cherry-pick feature --no-commit ile kopyalamayı dene ve cherry-pick --abort ile iptal et.',
   'practice.share': 'Alıştırma bağlantısını kopyala',
   'practice.link': 'Alıştırma bağlantısı',
   'practice.copied': 'Bağlantı kopyalandı.',

@@ -523,6 +523,8 @@ GB.i18n.define('el', {
   'practice.ex7.goal': 'Έχετε μισοτελειωμένες αλλαγές στο feature και το main χρειάζεται διόρθωση τώρα. Βάλτε τις στην άκρη με stash, κάντε checkout main και ένα commit με τη διόρθωση, γυρίστε στο feature και επαναφέρετέ τις με stash pop.',
   'practice.ex8.title': 'Ακύρωση συγχώνευσης',
   'practice.ex8.goal': 'Θέλεις να δεις αν το feature θα συγχωνευόταν στο main, χωρίς να κρατήσεις το αποτέλεσμα. Ξεκίνα με merge feature --no-commit και ακύρωσέ την με merge --abort.',
+  'practice.ex9.title': 'Περιττή ετικέτα και ακυρωμένο cherry-pick',
+  'practice.ex9.goal': 'Κάποιος έβαλε την ετικέτα v2 νωρίς: διέγραψέ την με tag -d. Μετά δοκίμασε να αντιγράψεις τη διόρθωση από το feature με cherry-pick feature --no-commit και ακύρωσέ την με cherry-pick --abort.',
   'practice.share': 'Αντιγραφή συνδέσμου άσκησης',
   'practice.link': 'Σύνδεσμος άσκησης',
   'practice.copied': 'Ο σύνδεσμος αντιγράφηκε.',

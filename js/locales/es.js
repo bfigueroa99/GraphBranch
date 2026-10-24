@@ -523,6 +523,8 @@ GB.i18n.define('es', {
   'practice.ex7.goal': 'Tienes cambios a medias en feature y hay que arreglar main ya. Guárdalos con stash, haz checkout main y un commit con el arreglo, vuelve a feature y recupéralos con stash pop.',
   'practice.ex8.title': 'Cancelar una fusión',
   'practice.ex8.goal': 'Quieres ver si feature se fusionaría con main, pero sin quedarte con el resultado. Empieza con merge feature --no-commit y cancélala con merge --abort.',
+  'practice.ex9.title': 'Etiqueta de más y cherry-pick cancelado',
+  'practice.ex9.goal': 'Alguien puso la etiqueta v2 antes de tiempo: bórrala con tag -d. Luego prueba copiar el arreglo de feature con cherry-pick feature --no-commit y cancélalo con cherry-pick --abort.',
   'practice.share': 'Copiar enlace del ejercicio',
   'practice.link': 'Enlace del ejercicio',
   'practice.copied': 'Enlace copiado.',

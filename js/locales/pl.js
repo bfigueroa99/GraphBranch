@@ -534,6 +534,8 @@ GB.i18n.define('pl', {
   'practice.ex7.goal': 'Na feature masz niedokończone zmiany, a main trzeba naprawić od razu. Odłóż je za pomocą stash, zrób checkout main i commit z poprawką, wróć na feature i przywróć je przez stash pop.',
   'practice.ex8.title': 'Anulowanie scalenia',
   'practice.ex8.goal': 'Chcesz sprawdzić, czy feature scaliłaby się z main, ale bez zachowywania wyniku. Zacznij od merge feature --no-commit i anuluj poleceniem merge --abort.',
+  'practice.ex9.title': 'Zbędny tag i anulowany cherry-pick',
+  'practice.ex9.goal': 'Ktoś za wcześnie dodał tag v2: usuń go poleceniem tag -d. Potem spróbuj skopiować poprawkę z feature poleceniem cherry-pick feature --no-commit i anuluj ją poleceniem cherry-pick --abort.',
   'practice.share': 'Kopiuj link do ćwiczenia',
   'practice.link': 'Link do ćwiczenia',
   'practice.copied': 'Skopiowano link.',

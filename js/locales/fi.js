@@ -523,6 +523,8 @@ GB.i18n.define('fi', {
   'practice.ex7.goal': 'Sinulla on keskeneräisiä muutoksia feature-haarassa, ja main pitää korjata heti. Siirrä ne sivuun stashilla, tee checkout main ja commit korjauksesta, palaa featureen ja palauta muutokset komennolla stash pop.',
   'practice.ex8.title': 'Yhdistämisen peruminen',
   'practice.ex8.goal': 'Haluat nähdä, yhdistyisikö feature main-haaraan, mutta et halua pitää tulosta. Aloita komennolla merge feature --no-commit ja peru se komennolla merge --abort.',
+  'practice.ex9.title': 'Turha tagi ja peruttu cherry-pick',
+  'practice.ex9.goal': 'Joku merkitsi tagin v2 liian aikaisin: poista se komennolla tag -d. Kokeile sitten kopioida korjaus haarasta feature komennolla cherry-pick feature --no-commit ja peruuta se komennolla cherry-pick --abort.',
   'practice.share': 'Kopioi tehtävän linkki',
   'practice.link': 'Tehtävän linkki',
   'practice.copied': 'Linkki kopioitu.',

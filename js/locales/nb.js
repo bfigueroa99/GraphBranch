@@ -523,6 +523,8 @@ GB.i18n.define('nb', {
   'practice.ex7.goal': 'Du har halvferdige endringer på feature, og main må fikses nå. Legg dem til side med stash, gjør checkout main og en commit med rettelsen, gå tilbake til feature og hent dem med stash pop.',
   'practice.ex8.title': 'Avbryt en sammenslåing',
   'practice.ex8.goal': 'Du vil se om feature lar seg slå sammen med main, men uten å beholde resultatet. Start med merge feature --no-commit og avbryt med merge --abort.',
+  'practice.ex9.title': 'Overflødig tagg og avbrutt cherry-pick',
+  'practice.ex9.goal': 'Noen satte taggen v2 for tidlig: slett den med tag -d. Prøv deretter å kopiere rettelsen fra feature med cherry-pick feature --no-commit og avbryt den med cherry-pick --abort.',
   'practice.share': 'Kopier lenken til oppgaven',
   'practice.link': 'Oppgavelenke',
   'practice.copied': 'Lenken er kopiert.',

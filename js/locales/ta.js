@@ -523,6 +523,8 @@ GB.i18n.define('ta', {
   'practice.ex7.goal': 'feature-இல் பாதி முடிந்த மாற்றங்கள் உள்ளன, main-ஐ இப்போதே சரிசெய்ய வேண்டும். stash மூலம் அவற்றை ஒதுக்கி வைத்து, checkout main செய்து திருத்தத்தை commit செய்யுங்கள், பின் feature-க்குத் திரும்பி stash pop மூலம் அவற்றை மீட்டெடுங்கள்.',
   'practice.ex8.title': 'இணைப்பை ரத்து செய்',
   'practice.ex8.goal': 'feature, main உடன் இணையுமா எனப் பார்க்க வேண்டும், ஆனால் முடிவை வைத்துக்கொள்ள வேண்டாம். merge feature --no-commit மூலம் தொடங்கி, merge --abort மூலம் ரத்து செய்யுங்கள்.',
+  'practice.ex9.title': 'தேவையற்ற குறிச்சொல்லும் ரத்து செய்த cherry-pick-உம்',
+  'practice.ex9.goal': 'யாரோ v2 குறிச்சொல்லை முன்கூட்டியே இட்டுவிட்டார்: tag -d மூலம் அழிக்கவும். பிறகு cherry-pick feature --no-commit மூலம் feature-இன் திருத்தத்தை நகலெடுத்துப் பார்த்து cherry-pick --abort மூலம் ரத்து செய்யவும்.',
   'practice.share': 'பயிற்சி இணைப்பை நகலெடு',
   'practice.link': 'பயிற்சி இணைப்பு',
   'practice.copied': 'இணைப்பு நகலெடுக்கப்பட்டது.',

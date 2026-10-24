@@ -523,6 +523,8 @@ GB.i18n.define('da', {
   'practice.ex7.goal': 'Du har halvfærdige ændringer på feature, og main skal rettes nu. Læg dem til side med stash, lav checkout main og et commit med rettelsen, gå tilbage til feature og hent dem med stash pop.',
   'practice.ex8.title': 'Annuller en sammenfletning',
   'practice.ex8.goal': 'Du vil se, om feature kan flettes ind i main, men uden at beholde resultatet. Start med merge feature --no-commit og annuller den med merge --abort.',
+  'practice.ex9.title': 'Overflødigt tag og annulleret cherry-pick',
+  'practice.ex9.goal': 'Nogen har sat tagget v2 for tidligt: slet det med tag -d. Prøv derefter at kopiere rettelsen fra feature med cherry-pick feature --no-commit og annuller den med cherry-pick --abort.',
   'practice.share': 'Kopiér opgavens link',
   'practice.link': 'Opgavens link',
   'practice.copied': 'Link kopieret.',

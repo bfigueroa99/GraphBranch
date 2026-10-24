@@ -1485,6 +1485,17 @@ console.log('Varios repos a la vez');
     if (/is not a git command/.test(log.split('restore a.txt').pop())) throw new Error('restore no se reconoce');
     if (!/working tree clean/.test(log.split('restore a.txt').pop())) throw new Error('restore no dejó el árbol limpio');
   });
+  await step(lab, 'la práctica borra un tag y cancela un cherry-pick a medias', async () => {
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await lab.selectOption('.pr-ex', '8');
+    for (const c of ['tag -d v2', 'cherry-pick feature --no-commit', 'status', 'cherry-pick --abort']) await send(c);
+    await lab.waitForFunction(() => /Deleted tag 'v2'/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    const log = await lab.textContent('.pr-log');
+    if (!/currently cherry-picking/.test(log)) throw new Error('status no dijo que había un cherry-pick a medias');
+  });
   await step(lab, 'un ejercicio propio se crea, se comparte por URL y la URL lo abre y se resuelve', async () => {
     await lab.click('.pr-make summary');
     await lab.fill('.pr-m-title', 'Fusiona <b>ya</b>');

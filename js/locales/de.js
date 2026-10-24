@@ -524,6 +524,8 @@ GB.i18n.define('de', {
   'practice.ex7.goal': 'Auf feature liegen halbfertige Änderungen, und main braucht sofort einen Fix. Leg sie mit stash beiseite, mach checkout main und einen Commit mit dem Fix, geh zurück zu feature und hol sie mit stash pop wieder.',
   'practice.ex8.title': 'Merge abbrechen',
   'practice.ex8.goal': 'Du willst sehen, ob feature sich in main mergen ließe, das Ergebnis aber nicht behalten. Starte mit merge feature --no-commit und brich es mit merge --abort ab.',
+  'practice.ex9.title': 'Überflüssiger Tag und abgebrochener Cherry-Pick',
+  'practice.ex9.goal': 'Jemand hat den Tag v2 zu früh gesetzt: Lösche ihn mit tag -d. Probiere dann, den Fix aus feature mit cherry-pick feature --no-commit zu kopieren, und brich ihn mit cherry-pick --abort ab.',
   'practice.share': 'Link zur Übung kopieren',
   'practice.link': 'Link zur Übung',
   'practice.copied': 'Link kopiert.',

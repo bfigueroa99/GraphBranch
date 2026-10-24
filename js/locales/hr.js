@@ -531,6 +531,8 @@ GB.i18n.define('hr', {
   'practice.ex7.goal': 'Na feature imate napola gotove promjene, a main treba odmah popraviti. Sklonite ih sa stash, napravite checkout main i commit s popravkom, vratite se na feature i vratite ih sa stash pop.',
   'practice.ex8.title': 'Otkazivanje spajanja',
   'practice.ex8.goal': 'Želiš vidjeti bi li se feature spojio s main, ali bez zadržavanja rezultata. Počni s merge feature --no-commit, a zatim ga otkaži s merge --abort.',
+  'practice.ex9.title': 'Suvišna oznaka i otkazani cherry-pick',
+  'practice.ex9.goal': 'Netko je prerano postavio oznaku v2: izbriši je naredbom tag -d. Zatim pokušaj kopirati ispravak iz feature naredbom cherry-pick feature --no-commit i otkaži ga naredbom cherry-pick --abort.',
   'practice.share': 'Kopiraj poveznicu vježbe',
   'practice.link': 'Poveznica vježbe',
   'practice.copied': 'Poveznica kopirana.',

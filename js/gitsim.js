@@ -49,6 +49,8 @@
       this.stashes = []; // { files, branch, sha }, el más nuevo primero (stash@{0})
       this.merging = null; // { name, theirs } mientras una fusión (merge --no-commit) espera su commit
       this.aborts = 0; // cuántas fusiones se cancelaron con merge --abort
+      this.picking = null; // { sha } mientras un cherry-pick --no-commit espera su commit
+      this.pickAborts = 0; // cuántos cherry-pick se cancelaron con cherry-pick --abort
       this.defaultBranch = branch;
       this.branches.set(branch, null);
     }
@@ -163,6 +165,7 @@
 
     /** Falla como git si hay cambios sin commit: en esta simulación, ir a otro commit siempre pisa los archivos cambiados. */
     needClean(verb) {
+      if (this.picking) fail(`error: You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\nPlease, commit your changes or use 'cherry-pick --abort' before you ${verb === 'checkout' ? 'switch branches' : verb}.`);
       if (!this.work.length) return;
       fail(`error: Your local changes to the following files would be overwritten by ${verb}:\n${this.work.map((f) => `\t${f}`).join('\n')}\nPlease commit your changes or stash them before you ${verb === 'checkout' ? 'switch branches' : verb}.\nAborting`);
     }
@@ -175,12 +178,12 @@
       if (words[0] === 'git') words.shift();
       if (!words.length) return { ok: true, lines: [], changed: false };
       const [cmd, ...args] = words;
-      const before = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size, this.merging, this.aborts]);
+      const before = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts]);
       try {
         const handler = this.commands[cmd];
         if (!handler) fail(`git: '${cmd}' is not a git command. Try 'help'.`);
         const lines = handler.call(this, args) || [];
-        const after = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size, this.merging, this.aborts]);
+        const after = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts]);
         return { ok: true, lines, changed: before !== after };
       } catch (e) {
         if (!(e instanceof GitError)) throw e;
@@ -218,7 +221,8 @@
         'reset [--soft|--hard] <to>  move the branch back (HEAD~1, a sha, a branch); --hard drops changes',
         'stash [list|pop|apply|drop] put uncommitted changes aside and bring them back',
         'touch <file>                change a file (uncommitted work, for stash)',
-        'cherry-pick <commit>        copy one commit on top of the current branch',
+        'cherry-pick <commit>        copy one commit on top of the current branch (-n holds it until commit or --continue)',
+        'cherry-pick --abort        cancel a cherry-pick that is waiting for its commit',
         'revert <commit>             undo a commit with a new one, keeping the history',
         'tag [name] [-d name]        list, create or delete tags on a commit',
         'log [--oneline]             the history that leads to HEAD',
@@ -238,6 +242,7 @@
         this.merging = null;
         return [`[${this.head.branch} ${this.short(merged)}] ${msg}`];
       }
+      if (this.picking) this.picking = null;
       const sha = this.commit(msg);
       const where = this.head.branch || 'detached HEAD';
       return [`[${where} ${this.short(sha)}] ${msg}`];
@@ -246,6 +251,7 @@
     status() {
       const where = this.head.branch ? `On branch ${this.head.branch}` : `HEAD detached at ${this.short(this.head.sha)}`;
       if (this.merging) return [where, 'All conflicts fixed but you are still merging.', '  (use "git commit" to conclude merge)', '  (use "git merge --abort" to cancel it)'];
+      if (this.picking) return [where, `You are currently cherry-picking commit ${this.short(this.picking.sha)}.`, '  (use "git cherry-pick --continue" to commit it)', '  (use "git cherry-pick --abort" to cancel the cherry-pick operation)'];
       if (!this.work.length) return [where, 'nothing to commit, working tree clean'];
       return [where, 'Changes not staged for commit:', ...this.work.map((f) => `\tmodified:   ${f}`)];
     },
@@ -382,6 +388,7 @@
         return [];
       }
       if (this.merging) fail('fatal: You have not concluded your merge (MERGE_HEAD exists).\nPlease, commit your changes before you merge.');
+      if (this.picking) fail('fatal: You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\nPlease, commit your changes or use \'cherry-pick --abort\' before you merge.');
       if (!name) fail('fatal: no branch to merge was given');
       if (!this.head.branch) fail('fatal: you are in a detached HEAD state: go to a branch first (checkout <branch>)');
       const theirs = this.resolve(name);
@@ -429,10 +436,32 @@
     },
 
     'cherry-pick'(args) {
-      const { rest } = parse(args);
+      const { flags, rest } = parse(args);
+      if (flags['--abort']) {
+        if (!this.picking) fail('error: no cherry-pick or revert in progress');
+        this.picking = null;
+        this.pickAborts++;
+        return [];
+      }
+      if (flags['--continue']) {
+        if (!this.picking) fail('error: no cherry-pick or revert in progress');
+        const { sha: pick } = this.picking;
+        this.picking = null;
+        const c = this.commits.get(pick);
+        const sha = this.commit(c.message);
+        return [`[${this.head.branch} ${this.short(sha)}] ${c.message}`];
+      }
       if (!rest.length) fail('fatal: you must specify a commit to cherry-pick');
       if (!this.head.branch) fail('fatal: you are in a detached HEAD state: go to a branch first (checkout <branch>)');
       this.needClean('cherry-pick');
+      if (flags['--no-commit'] || flags['-n']) {
+        if (rest.length > 1) fail('error: --no-commit takes a single commit in this practice');
+        const pick = this.resolve(rest[0]);
+        if (!pick) fail(`fatal: bad revision '${rest[0]}'`);
+        if (this.commits.get(pick).parents.length > 1) fail(`error: commit ${pick} is a merge but no -m option was given.`);
+        this.picking = { sha: pick };
+        return [];
+      }
       const out = [];
       for (const ref of rest) {
         const pick = this.resolve(ref);
@@ -491,6 +520,7 @@
       this.moveHead(sha);
       if (flags['--hard']) this.work = [];
       this.merging = null;
+      this.picking = null;
       if (flags['--hard']) return [`HEAD is now at ${this.short(sha)} ${this.commits.get(sha).message}`];
       return [];
     },
@@ -655,6 +685,21 @@
         const main = r.branches.get('main');
         // se probó la fusión y se canceló: main sigue en su commit, feature intacta y nada a medias
         return !!feature && r.aborts > 0 && !r.merging && r.head.branch === 'main' && r.log(main).length === BASE.length + 1 && !r.isAncestor(feature, main);
+      },
+    },
+    {
+      id: 'tagabort',
+      setup: (r) => {
+        r.tags.set('v2', r.headSha);
+        r.commands.checkout.call(r, ['-b', 'feature']);
+        r.commit('Hotfix: escape the login URL');
+        r.commands.checkout.call(r, ['main']);
+      },
+      done: (r) => {
+        const main = r.branches.get('main');
+        const feature = r.branches.get('feature');
+        // la etiqueta puesta de más se borró, el cherry-pick se probó y se canceló: main y feature intactas y nada a medias
+        return !!feature && !r.tags.has('v2') && r.pickAborts > 0 && !r.picking && r.head.branch === 'main' && r.log(main).length === BASE.length && !r.isAncestor(feature, main);
       },
     },
   ];

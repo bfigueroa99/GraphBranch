@@ -622,6 +622,8 @@ GB.i18n.define('ar', {
   'practice.ex7.goal': 'لديك تغييرات غير مكتملة في feature وmain تحتاج إلى إصلاح الآن. ضعها جانبًا بـ stash، ثم checkout main وcommit للإصلاح، وعد إلى feature واسترجعها بـ stash pop.',
   'practice.ex8.title': 'إلغاء دمج',
   'practice.ex8.goal': 'تريد أن ترى هل سيندمج feature في main دون الاحتفاظ بالنتيجة. ابدأ بـ merge feature --no-commit ثم ألغه بـ merge --abort.',
+  'practice.ex9.title': 'وسم زائد وcherry-pick ملغى',
+  'practice.ex9.goal': 'وضع أحدهم الوسم v2 مبكرًا: احذفه بـ tag -d. ثم جرّب نسخ الإصلاح من feature بالأمر cherry-pick feature --no-commit وألغِه بـ cherry-pick --abort.',
   'practice.share': 'نسخ رابط التمرين',
   'practice.link': 'رابط التمرين',
   'practice.copied': 'تم نسخ الرابط.',

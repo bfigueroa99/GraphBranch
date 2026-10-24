@@ -493,6 +493,7 @@ GB.i18n.define('ro', {
   'health.doraLead': 'Timp de livrare (de la deschidere la îmbinare): mediana {median}',
   'health.doraLeadCommit': 'Timp de livrare (de la primul commit la îmbinare, {n} din {total} PR-uri): mediana {median}',
   'health.doraWeeks': 'Implementări pe săptămână, ultimele {n} săptămâni (de la cea mai veche la cea curentă): {list}',
+  'health.mergeWeeks': 'Pull request-uri îmbinate pe săptămână, ultimele {n} săptămâni (de la cea mai veche la cea curentă): {list}',
   'health.ci': 'Eșecuri CI',
   'health.ciPrs': 'PR-uri deschise cu verificări eșuate: {failing} din {total} ({pct}%)',
   'health.ciFeed': 'De câte ori a devenit roșie ramura implicită în 30 de zile: {n}',

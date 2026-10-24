@@ -485,6 +485,7 @@ GB.i18n.define('hi', {
   'health.doraLead': 'लीड टाइम (खुलने से मर्ज तक): माध्यिका {median}',
   'health.doraLeadCommit': 'लीड टाइम (पहले कमिट से मर्ज तक, {total} में से {n} PR): माध्यिका {median}',
   'health.doraWeeks': 'प्रति सप्ताह डिप्लॉयमेंट, पिछले {n} सप्ताह (सबसे पुराने से वर्तमान तक): {list}',
+  'health.mergeWeeks': 'प्रति सप्ताह मर्ज हुए pull request, पिछले {n} सप्ताह (सबसे पुराने से मौजूदा तक): {list}',
   'health.ci': 'CI विफलताएँ',
   'health.ciPrs': 'विफल चेक वाले खुले PR: {total} में से {failing} ({pct}%)',
   'health.ciFeed': '30 दिनों में डिफ़ॉल्ट ब्रांच कितनी बार लाल हुई: {n}',

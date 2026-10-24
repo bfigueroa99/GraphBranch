@@ -50,6 +50,34 @@ test('branch y checkout: crear, cambiar, desprender y borrar', () => {
   assert.equal(r.run('checkout nope').ok, false);
 });
 
+test('switch y restore: solo ramas, desprender a propósito y tirar cambios sin commit', () => {
+  const r = fresh();
+  assert.ok(r.run('switch -c arreglo').ok);
+  assert.equal(r.head.branch, 'arreglo');
+  assert.equal(r.run('switch -c arreglo').ok, false, 'no se pisa una rama');
+  const sha = r.run('log --oneline').lines[1].slice(0, 7);
+  const bad = r.run(`switch ${sha}`);
+  assert.equal(bad.ok, false, 'switch no va a un commit a secas');
+  assert.match(bad.lines[0], /a branch is expected/);
+  assert.match(r.run('switch nope').lines[0], /invalid reference/);
+  assert.ok(r.run(`switch --detach ${sha}`).ok);
+  assert.equal(r.head.branch, undefined);
+  r.run('switch arreglo');
+  r.run('commit -m otro');
+  r.run('switch main');
+  r.run('touch a.txt');
+  r.run('touch b.txt');
+  assert.equal(r.run('switch arreglo').ok, false, 'con cambios sin commit no se cambia de rama');
+  assert.ok(r.run('restore a.txt').ok);
+  assert.equal(r.work.join(), 'b.txt');
+  assert.equal(r.run('restore').ok, false);
+  assert.equal(r.run('restore --staged b.txt').ok, false);
+  assert.equal(r.run('restore ../x').ok, false);
+  assert.ok(r.run('restore .').ok);
+  assert.equal(r.work.length, 0);
+  assert.match(r.run('status').lines.at(-1), /working tree clean/);
+});
+
 test('merge: avance rápido, commit de fusión y ya al día', () => {
   const r = fresh();
   run(r, 'checkout -b feature', 'commit -m a', 'checkout main');

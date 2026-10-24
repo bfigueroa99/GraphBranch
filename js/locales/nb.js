@@ -485,6 +485,7 @@ GB.i18n.define('nb', {
   'health.doraLead': 'Ledetid (fra åpnet til flettet): median {median}',
   'health.doraLeadCommit': 'Ledetid (fra første commit til flettet, {n} av {total} PR-er): median {median}',
   'health.doraWeeks': 'Utrullinger per uke, siste {n} uker (eldste til nåværende): {list}',
+  'health.mergeWeeks': 'Flettede pull requests per uke, siste {n} uker (fra eldste til nåværende): {list}',
   'health.ci': 'CI-feil',
   'health.ciPrs': 'Åpne PR-er med feilende sjekker: {failing} av {total} ({pct} %)',
   'health.ciFeed': 'Ganger standardgrenen ble rød på 30 dager: {n}',

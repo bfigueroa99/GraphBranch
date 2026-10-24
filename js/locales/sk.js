@@ -496,6 +496,7 @@ GB.i18n.define('sk', {
   'health.doraLead': 'Čas dodania (od otvorenia po zlúčenie): medián {median}',
   'health.doraLeadCommit': 'Čas dodania (od prvého commitu po zlúčenie, {n} z {total} PR): medián {median}',
   'health.doraWeeks': 'Nasadenia za týždeň, posledných {n} týždňov (od najstaršieho po aktuálny): {list}',
+  'health.mergeWeeks': 'Zlúčené pull requesty za týždeň, posledných {n} týždňov (od najstaršieho po aktuálny): {list}',
   'health.ci': 'Zlyhania CI',
   'health.ciPrs': 'Otvorené PR s neúspešnými kontrolami: {failing} z {total} ({pct} %)',
   'health.ciFeed': 'Koľkokrát predvolená vetva sčervenala za 30 dní: {n}',

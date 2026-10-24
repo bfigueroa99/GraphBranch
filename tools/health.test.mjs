@@ -86,7 +86,8 @@ test('ritmo: merges en 7 y 30 días y releases en 30, sin repetir una actividad'
     { id: '5', kind: 'release', time: ago(50) },
     { id: '6', kind: 'push', time: ago(1) },
   ];
-  assert.deepEqual({ ...compute(repo(), acts, NOW).pace }, { merges7: 1, merges30: 2, releases30: 1 });
+  const pace = compute(repo(), acts, NOW).pace;
+  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1] });
 });
 
 test('DORA: despliegues en 30 días, mediana entre releases y tiempo de entrega', () => {
@@ -275,6 +276,14 @@ test('frecuencia de despliegue: releases por semana, de la semana más vieja a l
   const h = compute(repo(), acts, NOW);
   assert.deepEqual([...h.dora.weeks], [0, 0, 0, 0, 0, 2, 1, 2], 'a y b esta semana, c la pasada, d y e hace tres, f fuera de las 8 y g (futuro) no cuenta');
   assert.deepEqual([...compute(repo(), [], NOW).dora.weeks], [0, 0, 0, 0, 0, 0, 0, 0]);
+});
+
+test('tendencia de merges: PRs fusionados por semana, de la semana más vieja a la actual', () => {
+  const mg = (id, days) => ({ kind: 'pr-merge', id, number: id, time: ago(days) });
+  const acts = [mg(1, 0.5), mg(2, 3), mg(2, 3), mg(3, 8), mg(4, 20), mg(5, 70), mg(6, -1)];
+  const h = compute(repo(), acts, NOW);
+  assert.deepEqual([...h.pace.mergeWeeks], [0, 0, 0, 0, 0, 1, 1, 2], 'el 1 y el 2 (repetido, cuenta una vez) esta semana, el 3 la pasada, el 4 hace tres; el 5 fuera de las 8 y el 6 (futuro) no cuentan');
+  assert.deepEqual([...compute(repo(), [], NOW).pace.mergeWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
 });
 
 test('conflictsParam lee ?conflicts= de la URL: 1 o vacío lo pide; 0, false, no y off no', () => {

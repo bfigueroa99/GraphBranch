@@ -528,6 +528,7 @@ GB.i18n.define('ur', {
   'health.doraLead': 'لیڈ ٹائم (کھلنے سے انضمام تک): وسطانیہ {median}',
   'health.doraLeadCommit': 'لیڈ ٹائم (پہلے کمٹ سے انضمام تک، {total} میں سے {n} PR): وسطانیہ {median}',
   'health.doraWeeks': 'ہفتہ وار تعیناتیاں، آخری {n} ہفتے (سب سے پرانے سے موجودہ تک): {list}',
+  'health.mergeWeeks': 'ہفتہ وار مرج ہونے والے pull request، آخری {n} ہفتے (سب سے پرانے سے موجودہ تک): {list}',
   'health.ci': 'CI کی ناکامیاں',
   'health.ciPrs': 'ناکام چیکس والے کھلے PR: {total} میں سے {failing} ({pct}٪)',
   'health.ciFeed': '30 دنوں میں ڈیفالٹ برانچ کتنی بار سرخ ہوئی: {n}',

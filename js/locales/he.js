@@ -542,6 +542,7 @@ GB.i18n.define('he', {
   'health.doraLead': 'זמן אספקה (מפתיחה ועד מיזוג): חציון {median}',
   'health.doraLeadCommit': 'זמן אספקה (מהקומיט הראשון ועד מיזוג, {n} מתוך {total} PRs): חציון {median}',
   'health.doraWeeks': 'פריסות בשבוע, {n} השבועות האחרונים (מהישן לנוכחי): {list}',
+  'health.mergeWeeks': 'Pull requests שמוזגו בשבוע, {n} השבועות האחרונים (מהישן לנוכחי): {list}',
   'health.ci': 'כשלי CI',
   'health.ciPrs': 'PRs פתוחים עם בדיקות שנכשלו: {failing} מתוך {total} ({pct}%)',
   'health.ciFeed': 'מספר הפעמים שענף ברירת המחדל הפך לאדום ב-30 ימים: {n}',

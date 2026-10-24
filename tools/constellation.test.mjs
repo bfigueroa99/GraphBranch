@@ -73,3 +73,12 @@ test('el orden: pestañas tal cual, actividad por commits y nombre sin mayúscul
   assert.deepEqual(keys('name'), ['o/d', 'o/a', 'o/b', 'o/c']);
   assert.deepEqual(items.map((i) => i.key), ['o/b', 'o/a', 'o/c', 'o/d'], 'no toca la lista original');
 });
+
+test('?order=activity abre ordenada por actividad; lo desconocido o vacío deja el orden de las pestañas', () => {
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(C.orderParam(q('order=activity')), 'activity');
+  assert.equal(C.orderParam(q('order=%20Activity%20')), 'activity');
+  assert.equal(C.orderParam(q('order=')), null);
+  assert.equal(C.orderParam(q('order=otro')), null);
+  assert.equal(C.orderParam(q('repo=o/a')), null);
+});

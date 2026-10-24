@@ -50,6 +50,12 @@
     return list.map((x) => x.it);
   }
 
+  /** `?order=activity`: el orden con que abre la constelación. Lo que no se conoce (o falta) es `null`: queda el de las pestañas. */
+  function orderParam(q) {
+    const v = String(q.get('order') || '').trim().toLowerCase();
+    return v === 'activity' ? v : null;
+  }
+
   /** Tono (0–359) estable para un nombre. */
   function hueOf(name) {
     let h = 0;
@@ -145,5 +151,5 @@
     return { render, setOrder };
   }
 
-  GB.constellation = { place, sortItems, radiusOf, hueOf, mount };
+  GB.constellation = { place, sortItems, orderParam, radiusOf, hueOf, mount };
 })(window.GB);

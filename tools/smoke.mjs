@@ -1704,6 +1704,13 @@ console.log('Varios repos a la vez');
       await full.keyboard.press('Enter');
       await full.waitForSelector('#constellation:not([open])', { state: 'attached', timeout: T(3000) });
       if (!(await full.locator('#repo-tabs .rt-main[aria-current="true"]').count())) throw new Error('Intro en una galaxia no abre su pestaña');
+      // ?order=activity: la constelación abre ya ordenada por actividad, con el selector de acuerdo
+      await full.goto(`${base}/index.html?lang=es&order=activity&repo=o/a`);
+      await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });
+      await full.click('#constellation-btn');
+      await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
+      if ((await full.$eval('#constellation-order', (s) => s.value)) !== 'activity') throw new Error('?order=activity no deja el selector en actividad');
+      await full.click('#constellation-close');
       // un enlace a otro repo, con los 10 ya seguidos: entra el del enlace y sale el último guardado
       await full.goto(`${base}/index.html?lang=es&repo=o/a`);
       await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });

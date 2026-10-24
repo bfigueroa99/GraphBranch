@@ -523,6 +523,8 @@ GB.i18n.define('bn', {
   'practice.ex7.goal': 'feature-এ আপনার অর্ধেক করা পরিবর্তন আছে, আর main এখনই ঠিক করতে হবে। stash দিয়ে সেগুলো সরিয়ে রাখুন, checkout main করে সংশোধনের একটি কমিট করুন, তারপর feature-এ ফিরে stash pop দিয়ে সেগুলো ফিরিয়ে আনুন।',
   'practice.ex8.title': 'মার্জ বাতিল করা',
   'practice.ex8.goal': 'feature, main-এ মার্জ হবে কি না দেখতে চান, কিন্তু ফলাফল রাখতে চান না। merge feature --no-commit দিয়ে শুরু করুন, তারপর merge --abort দিয়ে বাতিল করুন।',
+  'practice.ex9.title': 'বাড়তি ট্যাগ ও বাতিল cherry-pick',
+  'practice.ex9.goal': 'কেউ আগেভাগেই v2 ট্যাগ দিয়েছে: tag -d দিয়ে মুছে ফেলুন। তারপর cherry-pick feature --no-commit দিয়ে feature-এর সমাধানটি কপি করে দেখুন এবং cherry-pick --abort দিয়ে বাতিল করুন।',
   'practice.share': 'অনুশীলনীর লিংক কপি করুন',
   'practice.link': 'অনুশীলনীর লিংক',
   'practice.copied': 'লিংক কপি হয়েছে।',

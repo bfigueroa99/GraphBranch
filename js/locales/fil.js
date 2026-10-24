@@ -524,6 +524,8 @@ GB.i18n.define('fil', {
   'practice.ex7.goal': 'May mga kalahating-tapos kang pagbabago sa feature at kailangang ayusin agad ang main. Itabi ang mga ito gamit ang stash, mag-checkout main at mag-commit ng ayos, bumalik sa feature at ibalik ang mga ito gamit ang stash pop.',
   'practice.ex8.title': 'Kanselahin ang merge',
   'practice.ex8.goal': 'Gusto mong makita kung puwedeng i-merge ang feature sa main, pero hindi itatago ang resulta. Simulan sa merge feature --no-commit, tapos kanselahin gamit ang merge --abort.',
+  'practice.ex9.title': 'Sobrang tag at kinanselang cherry-pick',
+  'practice.ex9.goal': 'May naglagay ng tag na v2 nang maaga: burahin ito gamit ang tag -d. Subukan pagkatapos kopyahin ang ayos mula sa feature gamit ang cherry-pick feature --no-commit at kanselahin gamit ang cherry-pick --abort.',
   'practice.share': 'Kopyahin ang link ng ehersisyo',
   'practice.link': 'Link ng ehersisyo',
   'practice.copied': 'Nakopya ang link.',

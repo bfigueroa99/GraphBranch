@@ -524,6 +524,8 @@ GB.i18n.define('nl', {
   'practice.ex7.goal': 'Je hebt half afgemaakte wijzigingen op feature en main moet nu meteen gerepareerd worden. Zet ze opzij met stash, doe checkout main en een commit met de fix, ga terug naar feature en haal ze terug met stash pop.',
   'practice.ex8.title': 'Een merge annuleren',
   'practice.ex8.goal': 'Je wilt zien of feature in main zou mergen, maar het resultaat niet houden. Begin met merge feature --no-commit en annuleer met merge --abort.',
+  'practice.ex9.title': 'Overbodige tag en afgebroken cherry-pick',
+  'practice.ex9.goal': 'Iemand heeft de tag v2 te vroeg gezet: verwijder hem met tag -d. Probeer daarna de fix van feature te kopiëren met cherry-pick feature --no-commit en breek af met cherry-pick --abort.',
   'practice.share': 'Link van de oefening kopiëren',
   'practice.link': 'Link van de oefening',
   'practice.copied': 'Link gekopieerd.',

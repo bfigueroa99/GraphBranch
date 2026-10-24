@@ -153,6 +153,7 @@ test('cada ejercicio parte sin resolver y se resuelve con sus comandos', () => {
     ['revert HEAD~1'],
     ['stash', 'checkout main', 'commit -m "Fix login redirect"', 'checkout feature', 'stash pop'],
     ['merge feature --no-commit', 'merge --abort'],
+    ['tag -d v2', 'cherry-pick feature --no-commit', 'cherry-pick --abort'],
   ];
   assert.equal(solutions.length, EXERCISES.length);
   EXERCISES.forEach((ex, i) => {
@@ -254,7 +255,7 @@ test('condiciones nuevas: el mensaje del último commit y las ramas sin fusionar
 
 test('los números de la URL piden un ejercicio de la lista; lo demás se descarta', () => {
   assert.deepEqual(plain(decodeExercise('3')), { index: 2 });
-  for (const bad of ['0', '9', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
+  for (const bad of ['0', '10', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
 });
 
 test('un ejercicio propio mal hecho no entra: sin meta, condición inventada, comando que falla o demasiados', () => {
@@ -510,4 +511,32 @@ test('el ejercicio de abort no se resuelve con una fusión confirmada ni con una
   const b = start(i, NOW);
   run(b, 'merge feature');
   assert.equal(EXERCISES[i].done(b), false, 'fusionar de verdad no cuenta');
+});
+
+test('cherry-pick --no-commit espera su commit y --abort lo cancela', () => {
+  const r = start(EXERCISES.findIndex((e) => e.id === 'tagabort'), NOW);
+  const main = r.branches.get('main');
+  assert.equal(r.run('cherry-pick --abort').ok, false, 'sin nada a medias no hay qué cancelar');
+  assert.ok(r.run('cherry-pick -n feature').ok);
+  assert.equal(r.branches.get('main'), main, 'a medias no commitea');
+  assert.match(r.run('status').lines.at(-1), /cherry-pick --abort/);
+  assert.equal(r.run('checkout feature').ok, false, 'con un cherry-pick a medias no se cambia de rama');
+  assert.equal(r.run('merge feature').ok, false);
+  assert.equal(r.run('cherry-pick feature').ok, false);
+  assert.ok(r.run('cherry-pick --abort').ok);
+  assert.equal(r.picking, null);
+  assert.equal(r.pickAborts, 1);
+  assert.equal(r.branches.get('main'), main);
+  // --continue lo confirma con el mensaje del commit copiado
+  run(r, 'cherry-pick --no-commit feature');
+  assert.match(r.run('cherry-pick --continue').lines[0], /Hotfix: escape the login URL/);
+  assert.equal(r.picking, null);
+  assert.notEqual(r.branches.get('main'), main);
+  // el ejercicio no se resuelve sin borrar la etiqueta ni con el cherry-pick confirmado
+  const a = start(EXERCISES.findIndex((e) => e.id === 'tagabort'), NOW);
+  run(a, 'cherry-pick -n feature', 'cherry-pick --abort');
+  assert.equal(EXERCISES.find((e) => e.id === 'tagabort').done(a), false, 'la etiqueta sigue');
+  const b = start(EXERCISES.findIndex((e) => e.id === 'tagabort'), NOW);
+  run(b, 'tag -d v2', 'cherry-pick feature');
+  assert.equal(EXERCISES.find((e) => e.id === 'tagabort').done(b), false, 'confirmarlo no cuenta');
 });

@@ -523,6 +523,8 @@ GB.i18n.define('ko', {
   'practice.ex7.goal': 'feature에 하다 만 변경 사항이 있고 main을 지금 바로 고쳐야 합니다. stash로 변경 사항을 치워 두고, checkout main 후 수정 사항을 커밋한 다음, feature로 돌아가 stash pop으로 되돌리세요.',
   'practice.ex8.title': '병합 취소하기',
   'practice.ex8.goal': 'feature가 main에 병합될지 확인하고 싶지만 결과는 남기고 싶지 않습니다. merge feature --no-commit으로 시작한 뒤 merge --abort로 취소하세요.',
+  'practice.ex9.title': '불필요한 태그와 cherry-pick 취소',
+  'practice.ex9.goal': '누군가 v2 태그를 너무 일찍 달았습니다. tag -d로 지우세요. 그다음 cherry-pick feature --no-commit으로 feature의 수정을 복사해 보고 cherry-pick --abort로 취소하세요.',
   'practice.share': '연습 링크 복사',
   'practice.link': '연습 링크',
   'practice.copied': '링크를 복사했습니다.',

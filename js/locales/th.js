@@ -524,6 +524,8 @@ GB.i18n.define('th', {
   'practice.ex7.goal': 'คุณมีการเปลี่ยนแปลงที่ทำค้างไว้ใน feature และต้องแก้ main ทันที เก็บไว้ก่อนด้วย stash แล้ว checkout main และ commit การแก้ไข จากนั้นกลับไปที่ feature แล้วเอาคืนด้วย stash pop',
   'practice.ex8.title': 'ยกเลิกการ merge',
   'practice.ex8.goal': 'คุณอยากดูว่า feature จะ merge เข้า main ได้ไหม แต่ไม่ต้องการเก็บผลลัพธ์ ให้เริ่มด้วย merge feature --no-commit แล้วยกเลิกด้วย merge --abort',
+  'practice.ex9.title': 'แท็กเกินและ cherry-pick ที่ยกเลิก',
+  'practice.ex9.goal': 'มีคนติดแท็ก v2 เร็วเกินไป: ลบด้วย tag -d จากนั้นลองคัดลอกการแก้ไขจาก feature ด้วย cherry-pick feature --no-commit แล้วยกเลิกด้วย cherry-pick --abort',
   'practice.share': 'คัดลอกลิงก์แบบฝึกหัด',
   'practice.link': 'ลิงก์แบบฝึกหัด',
   'practice.copied': 'คัดลอกลิงก์แล้ว',

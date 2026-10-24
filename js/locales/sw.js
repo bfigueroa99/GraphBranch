@@ -523,6 +523,8 @@ GB.i18n.define('sw', {
   'practice.ex7.goal': 'Una mabadiliko ambayo hayajakamilika kwenye feature na main inahitaji kurekebishwa sasa hivi. Yaweke kando kwa stash, fanya checkout main na commit ya marekebisho, rudi kwenye feature na uyarudishe kwa stash pop.',
   'practice.ex8.title': 'Ghairi muunganisho',
   'practice.ex8.goal': 'Unataka kuona kama feature ingeunganishwa na main, bila kuhifadhi matokeo. Anza na merge feature --no-commit, kisha ighairi kwa merge --abort.',
+  'practice.ex9.title': 'Lebo ya ziada na cherry-pick iliyoghairiwa',
+  'practice.ex9.goal': 'Mtu ameweka lebo v2 mapema mno: ifute kwa tag -d. Kisha jaribu kunakili marekebisho kutoka feature kwa cherry-pick feature --no-commit na uyaghairi kwa cherry-pick --abort.',
   'practice.share': 'Nakili kiungo cha zoezi',
   'practice.link': 'Kiungo cha zoezi',
   'practice.copied': 'Kiungo kimenakiliwa.',

@@ -539,6 +539,8 @@ GB.i18n.define('ru', {
   'practice.ex7.goal': 'В feature у вас незаконченные изменения, а main нужно исправить прямо сейчас. Отложите их через stash, сделайте checkout main и коммит с исправлением, вернитесь в feature и верните изменения через stash pop.',
   'practice.ex8.title': 'Отмена слияния',
   'practice.ex8.goal': 'Вы хотите проверить, сольётся ли feature с main, но не оставлять результат. Начните с merge feature --no-commit и отмените командой merge --abort.',
+  'practice.ex9.title': 'Лишний тег и отменённый cherry-pick',
+  'practice.ex9.goal': 'Кто-то слишком рано поставил тег v2: удалите его командой tag -d. Затем попробуйте скопировать исправление из feature командой cherry-pick feature --no-commit и отмените его командой cherry-pick --abort.',
   'practice.share': 'Скопировать ссылку на упражнение',
   'practice.link': 'Ссылка на упражнение',
   'practice.copied': 'Ссылка скопирована.',

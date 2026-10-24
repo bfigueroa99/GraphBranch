@@ -529,6 +529,8 @@ GB.i18n.define('en', {
   'practice.ex7.goal': 'You have half-done changes on feature and main needs a fix right now. Put them aside with stash, checkout main and commit the fix, go back to feature and bring them back with stash pop.',
   'practice.ex8.title': 'Cancel a merge',
   'practice.ex8.goal': 'You want to see whether feature would merge into main, but not keep the result. Start it with merge feature --no-commit, then cancel it with merge --abort.',
+  'practice.ex9.title': 'Stray tag and a cancelled cherry-pick',
+  'practice.ex9.goal': 'Someone tagged v2 too early: delete it with tag -d. Then try copying the fix from feature with cherry-pick feature --no-commit and cancel it with cherry-pick --abort.',
   'practice.share': 'Copy exercise link',
   'practice.link': 'Exercise link',
   'practice.copied': 'Link copied.',

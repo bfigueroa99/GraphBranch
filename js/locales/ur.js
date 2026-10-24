@@ -566,6 +566,8 @@ GB.i18n.define('ur', {
   'practice.ex7.goal': 'feature پر آپ کی ادھوری تبدیلیاں ہیں اور main کو ابھی ٹھیک کرنا ہے۔ انہیں stash سے ایک طرف رکھیں، checkout main کر کے اصلاح کا commit کریں، پھر feature پر واپس جا کر stash pop سے انہیں واپس لائیں۔',
   'practice.ex8.title': 'انضمام منسوخ کریں',
   'practice.ex8.goal': 'آپ دیکھنا چاہتے ہیں کہ feature، main میں ضم ہوگی یا نہیں، مگر نتیجہ رکھنا نہیں چاہتے۔ merge feature --no-commit سے شروع کریں اور merge --abort سے منسوخ کریں۔',
+  'practice.ex9.title': 'فالتو ٹیگ اور منسوخ cherry-pick',
+  'practice.ex9.goal': 'کسی نے ٹیگ v2 وقت سے پہلے لگا دیا: اسے tag -d سے مٹائیں۔ پھر cherry-pick feature --no-commit سے feature کی درستی کاپی کر کے دیکھیں اور cherry-pick --abort سے منسوخ کریں۔',
   'practice.share': 'مشق کا لنک کاپی کریں',
   'practice.link': 'مشق کا لنک',
   'practice.copied': 'لنک کاپی ہو گیا۔',

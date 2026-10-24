@@ -524,6 +524,8 @@ GB.i18n.define('fr', {
   'practice.ex7.goal': 'Vous avez des modifications en cours sur feature et main doit être corrigée tout de suite. Mettez-les de côté avec stash, faites checkout main et un commit du correctif, revenez sur feature et récupérez-les avec stash pop.',
   'practice.ex8.title': 'Annuler une fusion',
   'practice.ex8.goal': 'Vous voulez voir si feature fusionnerait dans main, sans garder le résultat. Lancez merge feature --no-commit, puis annulez avec merge --abort.',
+  'practice.ex9.title': 'Tag en trop et cherry-pick annulé',
+  'practice.ex9.goal': 'Quelqu\'un a posé le tag v2 trop tôt : supprime-le avec tag -d. Essaie ensuite de copier le correctif de feature avec cherry-pick feature --no-commit, puis annule-le avec cherry-pick --abort.',
   'practice.share': 'Copier le lien de l\'exercice',
   'practice.link': 'Lien de l\'exercice',
   'practice.copied': 'Lien copié.',

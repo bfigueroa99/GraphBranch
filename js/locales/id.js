@@ -523,6 +523,8 @@ GB.i18n.define('id', {
   'practice.ex7.goal': 'Ada perubahan setengah jadi di feature dan main perlu diperbaiki sekarang. Simpan dulu dengan stash, lakukan checkout main dan commit perbaikannya, kembali ke feature lalu ambil lagi dengan stash pop.',
   'practice.ex8.title': 'Batalkan merge',
   'practice.ex8.goal': 'Kamu ingin tahu apakah feature bisa di-merge ke main, tetapi tanpa menyimpan hasilnya. Mulai dengan merge feature --no-commit, lalu batalkan dengan merge --abort.',
+  'practice.ex9.title': 'Tag berlebih dan cherry-pick dibatalkan',
+  'practice.ex9.goal': 'Seseorang memasang tag v2 terlalu cepat: hapus dengan tag -d. Lalu coba salin perbaikan dari feature dengan cherry-pick feature --no-commit dan batalkan dengan cherry-pick --abort.',
   'practice.share': 'Salin tautan latihan',
   'practice.link': 'Tautan latihan',
   'practice.copied': 'Tautan disalin.',

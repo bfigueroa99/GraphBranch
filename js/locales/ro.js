@@ -531,6 +531,8 @@ GB.i18n.define('ro', {
   'practice.ex7.goal': 'Ai modificări neterminate pe feature, iar main trebuie reparat acum. Pune-le deoparte cu stash, fă checkout main și un commit cu reparația, întoarce-te pe feature și recupereaz-le cu stash pop.',
   'practice.ex8.title': 'Anularea unei îmbinări',
   'practice.ex8.goal': 'Vrei să vezi dacă feature s-ar îmbina în main, fără să păstrezi rezultatul. Începe cu merge feature --no-commit și anulează cu merge --abort.',
+  'practice.ex9.title': 'Tag în plus și cherry-pick anulat',
+  'practice.ex9.goal': 'Cineva a pus tagul v2 prea devreme: șterge-l cu tag -d. Apoi încearcă să copiezi remedierea din feature cu cherry-pick feature --no-commit și anuleaz-o cu cherry-pick --abort.',
   'practice.share': 'Copiază linkul exercițiului',
   'practice.link': 'Linkul exercițiului',
   'practice.copied': 'Link copiat.',

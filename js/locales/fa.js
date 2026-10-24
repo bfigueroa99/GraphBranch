@@ -566,6 +566,8 @@ GB.i18n.define('fa', {
   'practice.ex7.goal': 'در feature تغییرات نیمه‌کاره دارید و main همین حالا باید اصلاح شود. آن‌ها را با stash کنار بگذارید، checkout main کنید و اصلاح را commit کنید، به feature برگردید و با stash pop آن‌ها را برگردانید.',
   'practice.ex8.title': 'لغو یک ادغام',
   'practice.ex8.goal': 'می‌خواهید ببینید feature در main ادغام می‌شود یا نه، بدون نگه‌داشتن نتیجه. با merge feature --no-commit شروع کنید و با merge --abort لغوش کنید.',
+  'practice.ex9.title': 'برچسب اضافی و cherry-pick لغوشده',
+  'practice.ex9.goal': 'کسی برچسب v2 را زودتر از موعد گذاشته: آن را با tag -d حذف کن. سپس با cherry-pick feature --no-commit رفع‌اشکال feature را کپی کن و با cherry-pick --abort لغوش کن.',
   'practice.share': 'کپی پیوند تمرین',
   'practice.link': 'پیوند تمرین',
   'practice.copied': 'پیوند کپی شد.',

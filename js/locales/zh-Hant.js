@@ -523,6 +523,8 @@ GB.i18n.define('zh-Hant', {
   'practice.ex7.goal': 'feature 上有做到一半的變更，而 main 需要馬上修正。用 stash 把變更暫存起來，checkout main 並提交修正，再回到 feature，用 stash pop 取回變更。',
   'practice.ex8.title': '取消合併',
   'practice.ex8.goal': '你想看看 feature 能否合併進 main，但不保留結果。先用 merge feature --no-commit 開始，再用 merge --abort 取消。',
+  'practice.ex9.title': '多餘的標籤與取消 cherry-pick',
+  'practice.ex9.goal': '有人過早打了標籤 v2：用 tag -d 刪掉它。然後試著用 cherry-pick feature --no-commit 複製 feature 上的修復，再用 cherry-pick --abort 取消。',
   'practice.share': '複製練習連結',
   'practice.link': '練習連結',
   'practice.copied': '連結已複製。',

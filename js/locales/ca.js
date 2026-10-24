@@ -523,6 +523,8 @@ GB.i18n.define('ca', {
   'practice.ex7.goal': 'Tens canvis a mig fer a feature i cal arreglar main ara mateix. Desa\'ls amb stash, fes checkout main i un commit amb l\'arranjament, torna a feature i recupera\'ls amb stash pop.',
   'practice.ex8.title': 'Cancel·lar una fusió',
   'practice.ex8.goal': 'Vols veure si feature es fusionaria amb main, però sense quedar-te el resultat. Comença amb merge feature --no-commit i cancel·la-la amb merge --abort.',
+  'practice.ex9.title': 'Etiqueta de més i cherry-pick cancel·lat',
+  'practice.ex9.goal': 'Algú ha posat l\'etiqueta v2 massa d\'hora: esborra-la amb tag -d. Després prova de copiar l\'arranjament de feature amb cherry-pick feature --no-commit i cancel·la\'l amb cherry-pick --abort.',
   'practice.share': 'Copia l\'enllaç de l\'exercici',
   'practice.link': 'Enllaç de l\'exercici',
   'practice.copied': 'Enllaç copiat.',

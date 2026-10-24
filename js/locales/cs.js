@@ -534,6 +534,8 @@ GB.i18n.define('cs', {
   'practice.ex7.goal': 'Ve feature máte rozdělanou práci a main je potřeba hned opravit. Odložte změny pomocí stash, udělejte checkout main a commit s opravou, vraťte se do feature a obnovte je pomocí stash pop.',
   'practice.ex8.title': 'Zrušení sloučení',
   'practice.ex8.goal': 'Chcete zjistit, zda by se feature sloučila do main, ale výsledek si nechat nechcete. Začněte příkazem merge feature --no-commit a zrušte ho příkazem merge --abort.',
+  'practice.ex9.title': 'Zbytečný tag a zrušený cherry-pick',
+  'practice.ex9.goal': 'Někdo dal tag v2 příliš brzy: smaž ho příkazem tag -d. Pak zkus zkopírovat opravu z feature pomocí cherry-pick feature --no-commit a zruš ji příkazem cherry-pick --abort.',
   'practice.share': 'Zkopírovat odkaz na úlohu',
   'practice.link': 'Odkaz na úlohu',
   'practice.copied': 'Odkaz zkopírován.',

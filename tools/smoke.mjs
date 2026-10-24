@@ -1471,6 +1471,20 @@ console.log('Varios repos a la vez');
     await lab.selectOption('.pr-ex', '3');
     await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent.includes('reset'), null, { timeout: T(5000) });
   });
+  await step(lab, 'la práctica entiende switch y restore', async () => {
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await lab.selectOption('.pr-ex', '1');
+    for (const c of ['switch -c arreglo', 'touch a.txt', 'status', 'restore a.txt', 'status', 'switch main', 'switch HEAD~1']) await send(c);
+    await lab.waitForFunction(() => /a branch is expected/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    const log = await lab.textContent('.pr-log');
+    if (!/modified:\s+a\.txt/.test(log)) throw new Error('touch no dejó el archivo cambiado');
+    if (!/Switched to a new branch 'arreglo'/.test(log)) throw new Error('switch -c no creó la rama');
+    if (/is not a git command/.test(log.split('restore a.txt').pop())) throw new Error('restore no se reconoce');
+    if (!/working tree clean/.test(log.split('restore a.txt').pop())) throw new Error('restore no dejó el árbol limpio');
+  });
   await step(lab, 'un ejercicio propio se crea, se comparte por URL y la URL lo abre y se resuelve', async () => {
     await lab.click('.pr-make summary');
     await lab.fill('.pr-m-title', 'Fusiona <b>ya</b>');

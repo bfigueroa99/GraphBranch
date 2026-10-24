@@ -210,7 +210,8 @@
       return [
         'commit -m "msg"             save a snapshot on the current branch',
         'branch [name] [-d name]     list, create or delete branches',
-        'checkout [-b] <name|sha>    move to a branch or commit (also: switch [-c])',
+        'checkout [-b] <name|sha>    move to a branch or commit (also: switch [-c|--detach])',
+        'restore <file|.>            throw away the uncommitted changes of a file (see touch)',
         'merge <branch>              bring another branch into this one (--no-ff, --ff-only, --no-commit)',
         'merge --abort              cancel a merge that is waiting for its commit',
         'rebase <branch>             replay this branch on top of another',
@@ -494,8 +495,51 @@
       return [];
     },
   };
+  /** `switch` solo mueve entre ramas: `-c` crea, `--detach` va a un commit; un commit a secas no vale. */
   Repo.prototype.commands.switch = function (args) {
-    return Repo.prototype.commands.checkout.call(this, args.map((a) => (a === '-c' || a === '--create' ? '-b' : a)));
+    const { flags, rest } = parse(args);
+    if (flags['--detach'] || flags['-d']) {
+      const [target] = rest;
+      if (!target) fail('fatal: missing branch or commit argument');
+      const sha = this.resolve(target);
+      if (!sha) fail(`fatal: invalid reference: ${target}`);
+      if (sha !== this.headSha) this.needClean('switch');
+      this.head = { sha };
+      return [`HEAD is now at ${this.short(sha)} ${this.commits.get(sha).message}`];
+    }
+    if (flags['-c'] || flags['--create']) {
+      const [name, start] = rest;
+      if (!name) fail('fatal: missing branch name');
+      return Repo.prototype.commands.checkout.call(this, ['-b', ...(start ? [name, start] : [name])]);
+    }
+    const [target] = rest;
+    if (!target) fail('fatal: missing branch or commit argument');
+    if (!this.branches.has(target)) {
+      if (this.resolve(target)) fail(`fatal: a branch is expected, got commit '${target}'\nhint: use 'switch --detach ${target}' to go there without a branch`);
+      fail(`fatal: invalid reference: ${target}`);
+    }
+    return Repo.prototype.commands.checkout.call(this, [target]);
+  };
+
+  /** `restore <archivo>…` o `restore .` deja los archivos como en HEAD: tira los cambios sin commit de esos archivos. */
+  Repo.prototype.commands.restore = function (args) {
+    const { flags, rest } = parse(args);
+    if (flags['--staged'] || flags['-S']) fail('error: this practice has no staging area: restore works on files with changes (touch <file>)');
+    const source = Object.keys(flags).find((f) => f.startsWith('--source='));
+    const from = source ? this.resolve(source.slice(9)) : this.headSha;
+    if (!from) fail(`fatal: could not resolve ${source.slice(9)}`);
+    if (!rest.length) fail('fatal: you must specify path(s) to restore');
+    if (!this.headSha) fail('fatal: could not resolve HEAD');
+    for (const f of rest) {
+      if (f !== '.' && (!/^[\w][\w./-]{0,60}$/.test(f) || f.includes('..'))) fail(`error: pathspec '${f}' did not match any file(s) known to git`);
+    }
+    if (from !== this.headSha) {
+      // otra fuente que HEAD: los archivos quedan distintos de HEAD, o sea cambiados sin commit
+      for (const f of rest) if (f !== '.' && !this.work.includes(f)) this.work.push(f);
+      return [];
+    }
+    this.work = rest.includes('.') ? [] : this.work.filter((f) => !rest.includes(f));
+    return [];
   };
 
   /* ---------- ejercicios ---------- */

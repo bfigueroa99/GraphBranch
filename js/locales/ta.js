@@ -564,6 +564,8 @@ GB.i18n.define('ta', {
   'textview.filtered': 'காட்டப்படும் கிளைகள்: {total}-இல் {shown}',
   'textview.scopeAuthor': 'ஆசிரியர் வடிகட்டி: {author} ({total} கிளைகளில் {shown})',
   'textview.scopePath': 'பாதை வடிகட்டி: {path} ({n} கமிட்டுகள்)',
+  'textview.forks': 'செயலில் உள்ள ஃபோர்க்குகள்: {n}',
+  'textview.fork': '{name}, கடைசி push {when}',
   'search.title': 'கமிட்களைத் தேடு',
   'search.help': 'செய்தி, SHA அல்லது ஆசிரியர் (@பெயர்) மூலம் தேடுங்கள். கீழ் அம்பு முடிவுகளுக்குச் செல்லும்; Enter கமிட்டுக்குப் பறக்கும்.',
   'search.placeholder': 'செய்தி, SHA அல்லது @ஆசிரியர்…',

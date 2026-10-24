@@ -564,6 +564,8 @@ GB.i18n.define('nb', {
   'textview.filtered': 'Viste grener: {shown} av {total}',
   'textview.scopeAuthor': 'Filtrert på forfatter: {author} ({shown} av {total} grener)',
   'textview.scopePath': 'Filtrert på sti: {path} ({n} commits)',
+  'textview.forks': 'Aktive forks: {n}',
+  'textview.fork': '{name}, siste push {when}',
   'search.title': 'Søk i commits',
   'search.help': 'Søk etter melding, SHA eller forfatter (@navn). Pil ned går til resultatene, Enter flyr til committen.',
   'search.placeholder': 'Melding, SHA eller @forfatter…',

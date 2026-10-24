@@ -564,6 +564,8 @@ GB.i18n.define('ms', {
   'textview.filtered': 'Cabang dipaparkan: {shown} daripada {total}',
   'textview.scopeAuthor': 'Ditapis mengikut penulis: {author} ({shown} daripada {total} cabang)',
   'textview.scopePath': 'Ditapis mengikut laluan: {path} ({n} commit)',
+  'textview.forks': 'Fork aktif: {n}',
+  'textview.fork': '{name}, push terakhir {when}',
   'search.title': 'Cari commit',
   'search.help': 'Cari mengikut mesej, SHA atau penulis (@nama). Anak panah bawah ke hasil, Enter terbang ke commit.',
   'search.placeholder': 'Mesej, SHA atau @penulis…',

@@ -863,8 +863,16 @@ console.log('Escritorio (1280×800)');
     });
     if (marks.marked !== marks.named) throw new Error(`commits con tag sin decirlo en su nombre accesible: ${marks.marked} vs ${marks.named}`);
     // la demo publica v1.4.0 como release sobre un commit con ese tag: se dice «release» en su nombre y la región viva lo cuenta
-    if (!marks.released || !/Commits con release: \d+$/.test(marks.live)) throw new Error(`el release de la demo no se dice (${marks.released}): ${marks.live}`);
+    if (!marks.released || !/Commits con release: \d+(\. Forks activos: \d+)?$/.test(marks.live)) throw new Error(`el release de la demo no se dice (${marks.released}): ${marks.live}`);
     if (marks.marked && !/^Commits con tag: \d+/.test(marks.live)) throw new Error('la región viva no cuenta los commits con tag: ' + marks.live);
+    // los 2 forks activos de la demo salen como lista de enlaces aparte del árbol, el más reciente primero, y la región viva los cuenta
+    const forks = await page.evaluate(() => ({
+      rows: [...document.querySelectorAll('#textview .tv-forks a.tv-fork[href^="https://"][rel~="noopener"]')].map((a) => a.getAttribute('aria-label')),
+      inTree: !!document.querySelector('#textview [role="tree"] .tv-forks'),
+      live: document.querySelector('#textview-live').textContent,
+    }));
+    if (forks.rows.length !== 2 || !/^maya-dev\/orbita, /.test(forks.rows[0]) || !/^lucas-r\/orbita, /.test(forks.rows[1]) || forks.inTree) throw new Error('la vista de texto no lista los 2 forks de la demo: ' + JSON.stringify(forks));
+    if (!/Forks activos: 2$/.test(forks.live)) throw new Error('la región viva no cuenta los forks: ' + forks.live);
     // la rama por defecto viene abierta: ↓ baja a su primer commit; ← sube a la rama y otra ← la cierra
     await page.keyboard.press('ArrowDown');
     const onCommit = await page.evaluate(() => document.activeElement.classList.contains('tv-commit'));
@@ -887,7 +895,7 @@ console.log('Escritorio (1280×800)');
       return { role: l.getAttribute('role'), polite: l.getAttribute('aria-live'), text: l.textContent };
     });
     if (live.role !== 'status' || live.polite !== 'polite') throw new Error('la región viva no es role=status polite');
-    if (live.text && !/^Commits con tag: \d+(\. Commits con release: \d+)?$/.test(live.text)) throw new Error('al abrir, la región viva ya anuncia algo más que los tags y releases: ' + live.text);
+    if (live.text && !/^Commits con tag: \d+(\. Commits con release: \d+)?(\. Forks activos: \d+)?$/.test(live.text)) throw new Error('al abrir, la región viva ya anuncia algo más que los tags y releases: ' + live.text);
     // filtro: un nombre que no existe vacía el árbol; el de la primera rama lo deja con esa rama
     const first = await page.evaluate(() => document.querySelector('#textview .tv-branch').dataset.branch);
     await page.fill('#textview-filter', 'zzz-no-existe');

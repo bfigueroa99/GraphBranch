@@ -564,6 +564,8 @@ GB.i18n.define('fi', {
   'textview.filtered': 'Näytetyt haarat: {shown} / {total}',
   'textview.scopeAuthor': 'Suodatettu tekijän mukaan: {author} ({shown}/{total} haaraa)',
   'textview.scopePath': 'Suodatettu polun mukaan: {path} ({n} commitia)',
+  'textview.forks': 'Aktiiviset forkit: {n}',
+  'textview.fork': '{name}, viimeisin push {when}',
   'search.title': 'Hae commiteja',
   'search.help': 'Hae viestillä, SHA:lla tai tekijällä (@nimi). Nuoli alas siirtyy tuloksiin, Enter lentää commitiin.',
   'search.placeholder': 'Viesti, SHA tai @tekijä…',

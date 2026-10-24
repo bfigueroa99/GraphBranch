@@ -564,6 +564,8 @@ GB.i18n.define('el', {
   'textview.filtered': 'Κλάδοι που εμφανίζονται: {shown} από {total}',
   'textview.scopeAuthor': 'Φίλτρο ανά συγγραφέα: {author} ({shown} από {total} κλάδους)',
   'textview.scopePath': 'Φίλτρο ανά διαδρομή: {path} ({n} commits)',
+  'textview.forks': 'Ενεργά forks: {n}',
+  'textview.fork': '{name}, τελευταίο push {when}',
   'search.title': 'Αναζήτηση commits',
   'search.help': 'Αναζήτηση με μήνυμα, SHA ή συγγραφέα (@όνομα). Το κάτω βέλος πάει στα αποτελέσματα, το Enter πετά στο commit.',
   'search.placeholder': 'Μήνυμα, SHA ή @συγγραφέας…',

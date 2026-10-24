@@ -572,6 +572,8 @@ GB.i18n.define('hr', {
   'textview.filtered': 'Prikazane grane: {shown} od {total}',
   'textview.scopeAuthor': 'Filtrirano po autoru: {author} ({shown} od {total} grana)',
   'textview.scopePath': 'Filtrirano po putanji: {path} ({n} commitova)',
+  'textview.forks': 'Aktivni forkovi: {n}',
+  'textview.fork': '{name}, zadnji push {when}',
   'search.title': 'Traži commitove',
   'search.help': 'Traži po poruci, SHA-u ili autoru (@ime). Strelica dolje ide na rezultate, Enter leti do commita.',
   'search.placeholder': 'Poruka, SHA ili @autor…',

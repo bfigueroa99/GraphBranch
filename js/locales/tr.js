@@ -564,6 +564,8 @@ GB.i18n.define('tr', {
   'textview.filtered': 'Gösterilen dallar: {total} içinden {shown}',
   'textview.scopeAuthor': 'Yazara göre süzüldü: {author} ({total} daldan {shown})',
   'textview.scopePath': 'Yola göre süzüldü: {path} ({n} commit)',
+  'textview.forks': 'Etkin fork\'lar: {n}',
+  'textview.fork': '{name}, son push {when}',
   'search.title': 'Commit ara',
   'search.help': 'İletiye, SHA’ya veya yazara (@ad) göre arayın. Aşağı ok sonuçlara gider, Enter commit’e uçurur.',
   'search.placeholder': 'İleti, SHA veya @yazar…',

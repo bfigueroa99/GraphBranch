@@ -580,6 +580,8 @@ GB.i18n.define('uk', {
   'textview.filtered': 'Показано гілок: {shown} із {total}',
   'textview.scopeAuthor': 'Фільтр за автором: {author} ({shown} із {total} гілок)',
   'textview.scopePath': 'Фільтр за шляхом: {path} ({n} комітів)',
+  'textview.forks': 'Активні форки: {n}',
+  'textview.fork': '{name}, останній push {when}',
   'search.title': 'Пошук комітів',
   'search.help': 'Шукайте за повідомленням, SHA або автором (@ім’я). Стрілка вниз переходить до результатів, Enter летить до коміту.',
   'search.placeholder': 'Повідомлення, SHA або @автор…',

@@ -564,6 +564,8 @@ GB.i18n.define('hu', {
   'textview.filtered': 'Megjelenített ágak: {shown} / {total}',
   'textview.scopeAuthor': 'Szűrve szerző szerint: {author} ({shown} / {total} ág)',
   'textview.scopePath': 'Szűrve útvonal szerint: {path} ({n} commit)',
+  'textview.forks': 'Aktív forkok: {n}',
+  'textview.fork': '{name}, utolsó push {when}',
   'search.title': 'Commitok keresése',
   'search.help': 'Keressen üzenet, SHA vagy szerző (@név) alapján. A lefelé nyíl az eredményekre lép, az Enter a commithoz repít.',
   'search.placeholder': 'Üzenet, SHA vagy @szerző…',

@@ -572,6 +572,8 @@ GB.i18n.define('ro', {
   'textview.filtered': 'Ramuri afișate: {shown} din {total}',
   'textview.scopeAuthor': 'Filtrat după autor: {author} ({shown} din {total} ramuri)',
   'textview.scopePath': 'Filtrat după cale: {path} ({n} commituri)',
+  'textview.forks': 'Fork-uri active: {n}',
+  'textview.fork': '{name}, ultimul push {when}',
   'search.title': 'Caută commituri',
   'search.help': 'Caută după mesaj, SHA sau autor (@nume). Săgeata în jos merge la rezultate, Enter zboară la commit.',
   'search.placeholder': 'Mesaj, SHA sau @autor…',

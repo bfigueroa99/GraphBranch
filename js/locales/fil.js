@@ -487,6 +487,7 @@ GB.i18n.define('fil', {
   'health.doraLeadCommit': 'Lead time (mula sa unang commit hanggang na-merge, {n} sa {total} PR): median {median}',
   'health.doraWeeks': 'Mga deployment kada linggo, huling {n} linggo (pinakaluma hanggang kasalukuyan): {list}',
   'health.mergeWeeks': 'Mga pull request na na-merge kada linggo, huling {n} linggo (pinakaluma hanggang kasalukuyan): {list}',
+  'health.openedWeeks': 'Mga pull request na binuksan kada linggo, huling {n} linggo (pinakaluma hanggang kasalukuyan): {list}',
   'health.ci': 'Mga pagkabigo ng CI',
   'health.ciPrs': 'Mga bukas na PR na bigo ang checks: {failing} sa {total} ({pct}%)',
   'health.ciFeed': 'Ilang beses naging pula ang default na branch sa 30 araw: {n}',

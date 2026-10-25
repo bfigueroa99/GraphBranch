@@ -486,6 +486,7 @@ GB.i18n.define('sw', {
   'health.doraLeadCommit': 'Muda wa uwasilishaji (kutoka commit ya kwanza hadi kuunganishwa, {n} kati ya PR {total}): wastani {median}',
   'health.doraWeeks': 'Usambazaji kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',
   'health.mergeWeeks': 'Pull request zilizounganishwa kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',
+  'health.openedWeeks': 'Pull request zilizofunguliwa kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',
   'health.ci': 'Kushindwa kwa CI',
   'health.ciPrs': 'PR wazi zenye ukaguzi uliofeli: {failing} kati ya {total} ({pct}%)',
   'health.ciFeed': 'Mara ambazo tawi chaguomsingi liligeuka nyekundu ndani ya siku 30: {n}',

@@ -87,7 +87,7 @@ test('ritmo: merges en 7 y 30 días y releases en 30, sin repetir una actividad'
     { id: '6', kind: 'push', time: ago(1) },
   ];
   const pace = compute(repo(), acts, NOW).pace;
-  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1] });
+  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
 });
 
 test('DORA: despliegues en 30 días, mediana entre releases y tiempo de entrega', () => {
@@ -284,6 +284,15 @@ test('tendencia de merges: PRs fusionados por semana, de la semana más vieja a 
   const h = compute(repo(), acts, NOW);
   assert.deepEqual([...h.pace.mergeWeeks], [0, 0, 0, 0, 0, 1, 1, 2], 'el 1 y el 2 (repetido, cuenta una vez) esta semana, el 3 la pasada, el 4 hace tres; el 5 fuera de las 8 y el 6 (futuro) no cuentan');
   assert.deepEqual([...compute(repo(), [], NOW).pace.mergeWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
+});
+
+test('tendencia de PRs abiertos: cada PR cuenta una vez por semana, con pr-open o con el openedAt de su merge', () => {
+  const op = (id, number, days) => ({ kind: 'pr-open', id, number, time: ago(days) });
+  const mg = (id, number, days, openedDays) => ({ kind: 'pr-merge', id, number, time: ago(days), openedAt: ago(openedDays) });
+  const acts = [op('a', 1, 0.5), op('b', 1, 0.2), mg('c', 2, 1, 9), mg('d', 3, 2, 3), op('e', 3, 3), op('f', 4, 70), op('g', 5, -1), { kind: 'push', id: 'h', time: ago(1) }];
+  const h = compute(repo(), acts, NOW);
+  assert.deepEqual([...h.pace.openedWeeks], [0, 0, 0, 0, 0, 0, 1, 2], 'el 1 (reabierto) cuenta una vez, el 3 con su primera apertura; el 2 por su openedAt de hace 9 días; el 4 fuera de las 8 y el 5 (futuro) no cuentan');
+  assert.deepEqual([...compute(repo(), [], NOW).pace.openedWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
 });
 
 test('conflictsParam lee ?conflicts= de la URL: 1 o vacío lo pide; 0, false, no y off no', () => {

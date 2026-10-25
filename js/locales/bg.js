@@ -486,6 +486,7 @@ GB.i18n.define('bg', {
   'health.doraLeadCommit': 'Време за доставка (от първия къмит до сливане, {n} от {total} PR): медиана {median}',
   'health.doraWeeks': 'Внедрявания на седмица, последните {n} седмици (от най-старата до текущата): {list}',
   'health.mergeWeeks': 'Слети pull request-и седмично, последните {n} седмици (от най-старата до текущата): {list}',
+  'health.openedWeeks': 'Отворени pull request-и седмично, последните {n} седмици (от най-старата до текущата): {list}',
   'health.ci': 'Неуспехи на CI',
   'health.ciPrs': 'Отворени PR с неуспешни проверки: {failing} от {total} ({pct} %)',
   'health.ciFeed': 'Пъти, когато основният клон стана червен за 30 дни: {n}',

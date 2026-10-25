@@ -486,6 +486,7 @@ GB.i18n.define('ja', {
   'health.doraLeadCommit': 'リードタイム(最初のコミットからマージまで、{total} 件中 {n} 件の PR): 中央値 {median}',
   'health.doraWeeks': '週ごとのデプロイ数、直近 {n} 週間（古い週から今週まで）: {list}',
   'health.mergeWeeks': '週ごとのマージ済みプルリクエスト、直近{n}週間（古い順から今週まで）：{list}',
+  'health.openedWeeks': '週ごとに開かれたプルリクエスト、直近{n}週間（古い順から今週まで）：{list}',
   'health.ci': 'CI の失敗',
   'health.ciPrs': 'チェックが失敗している公開中の PR: {total} 件中 {failing} 件({pct}%)',
   'health.ciFeed': '30 日間でデフォルトブランチが赤になった回数: {n}',

@@ -502,6 +502,7 @@ GB.i18n.define('uk', {
   'health.doraLeadCommit': 'Час постачання (від першого коміту до злиття, {n} із {total} PR): медіана {median}',
   'health.doraWeeks': 'Розгортання за тиждень, останні {n} тижнів (від найстарішого до поточного): {list}',
   'health.mergeWeeks': 'Злиті pull request за тиждень, останні {n} тижнів (від найстарішого до поточного): {list}',
+  'health.openedWeeks': 'Відкриті pull request за тиждень, останні {n} тижнів (від найстарішого до поточного): {list}',
   'health.ci': 'Збої CI',
   'health.ciPrs': 'Відкриті PR із невдалими перевірками: {failing} із {total} ({pct} %)',
   'health.ciFeed': 'Скільки разів основна гілка червоніла за 30 днів: {n}',

@@ -487,6 +487,7 @@ GB.i18n.define('pt', {
   'health.doraLeadCommit': 'Tempo de entrega (do primeiro commit a mesclado, {n} de {total} PRs): mediana {median}',
   'health.doraWeeks': 'Implantações por semana, últimas {n} semanas (da mais antiga à atual): {list}',
   'health.mergeWeeks': 'Pull requests mesclados por semana, últimas {n} semanas (da mais antiga à atual): {list}',
+  'health.openedWeeks': 'Pull requests abertos por semana, últimas {n} semanas (da mais antiga à atual): {list}',
   'health.ci': 'Falhas de CI',
   'health.ciPrs': 'PRs abertos com checks falhando: {failing} de {total} ({pct}%)',
   'health.ciFeed': 'Vezes em que a branch padrão ficou vermelha em 30 dias: {n}',

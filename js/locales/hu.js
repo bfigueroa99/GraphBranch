@@ -486,6 +486,7 @@ GB.i18n.define('hu', {
   'health.doraLeadCommit': 'Átfutási idő (az első committól az egyesítésig, {n}/{total} PR): medián {median}',
   'health.doraWeeks': 'Telepítések hetente, az utolsó {n} hét (a legrégebbitől a jelenlegiig): {list}',
   'health.mergeWeeks': 'Egyesített pull requestek hetente, az utolsó {n} hét (a legrégebbitől a jelenlegiig): {list}',
+  'health.openedWeeks': 'Megnyitott pull requestek hetente, az utolsó {n} hét (a legrégebbitől a jelenlegiig): {list}',
   'health.ci': 'CI-hibák',
   'health.ciPrs': 'Sikertelen ellenőrzésű nyitott PR-ek: {failing} / {total} ({pct}%)',
   'health.ciFeed': 'Hányszor vált pirossá az alapértelmezett ág 30 nap alatt: {n}',

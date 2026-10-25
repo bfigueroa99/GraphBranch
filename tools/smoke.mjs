@@ -692,6 +692,8 @@ console.log('Escritorio (1280×800)');
     if (!/(\d+ · ){7}\d+$/.test(weeks) || /^(0 · ){7}0$/.test(weeks.split(': ').pop())) throw new Error(`la frecuencia de despliegue por semana no trae 8 cifras con algún release: ${weeks}`);
     const mweeks = await page.$eval('#hl-mergeweeks', (p) => p.textContent).catch(() => '');
     if (!/(\d+ · ){7}\d+$/.test(mweeks) || /^(0 · ){7}0$/.test(mweeks.split(': ').pop())) throw new Error(`la tendencia de merges por semana no trae 8 cifras con algún PR fusionado: ${mweeks}`);
+    const oweeks = await page.$eval('#hl-openedweeks', (p) => p.textContent).catch(() => '');
+    if (!/(\d+ · ){7}\d+$/.test(oweeks) || /^(0 · ){7}0$/.test(oweeks.split(': ').pop())) throw new Error(`la tendencia de PRs abiertos por semana no trae 8 cifras con algún PR abierto: ${oweeks}`);
     const ciLines = await page.$$eval('#hl-ci .hl-line', (ps) => ps.map((p) => p.textContent));
     if (!ciLines.length || ciLines.some((l) => !/\d/.test(l))) throw new Error(`la tasa de fallos de CI no sale en la salud: ${ciLines.join(' | ')}`);
     if (info.stats !== 3) throw new Error(`${info.stats} cifras de ritmo, se esperaban 3`);

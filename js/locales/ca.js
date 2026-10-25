@@ -486,6 +486,7 @@ GB.i18n.define('ca', {
   'health.doraLeadCommit': 'Temps de lliurament (del primer commit a fusionat, {n} de {total} PR): mediana {median}',
   'health.doraWeeks': "Desplegaments per setmana, últimes {n} setmanes (de la més antiga a l'actual): {list}",
   'health.mergeWeeks': 'Pull requests fusionats per setmana, últimes {n} setmanes (de la més vella a l’actual): {list}',
+  'health.openedWeeks': 'Pull requests oberts per setmana, últimes {n} setmanes (de la més vella a l’actual): {list}',
   'health.ci': 'Errors de CI',
   'health.ciPrs': 'PR oberts amb els checks en vermell: {failing} de {total} ({pct} %)',
   'health.ciFeed': 'Vegades que la branca per defecte ha passat a vermell en 30 dies: {n}',

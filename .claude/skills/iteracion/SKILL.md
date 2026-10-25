@@ -20,16 +20,17 @@ node tools/loop.mjs --salud
 node --test
 ```
 
-El hook de `.claude/settings.json` ya corre `npm ci` e instala Electron en las sesiones cloud; si
-falta `node_modules/.bin/playwright`, `npm ci`.
+El hook de `.claude/settings.json` ya corre `npm ci`, instala Electron y completa el clon superficial
+(`git fetch --unshallow`) en las sesiones cloud; si falta `node_modules/.bin/playwright`, `npm ci`. Si el
+clon sigue superficial, `--check` lo avisa en R3 y `--salud` y `--reclamar` lo completan al traer origin.
 
 - `--check` con algún `ERROR`: se arregla primero, en el mismo PR: no se amplía sobre algo roto.
 - `--salud` (sale 3 si hay algo que atender): cada línea `Acción:` se atiende en esta iteración, antes
-  de construir. Borrar una `loop/K` ya fusionada (`git push origin --delete loop/K`, solo, sin `&&` ni
-  tuberías, para que lo cubra el permiso de `.claude/settings.json`; si el proxy responde 403, se dice
-  en el resumen y se sigue); triar cada issue sin triar (ver «Fallos e issues»); un pendiente Alta
-  va primero (`--reclamar` ya lo elige). Las líneas `Cadencia`, `Hueco` y `Para Benjamin` van al
-  resumen; un hueco nuevo de más de un día va a Para Benjamin.
+  de construir: triar cada issue sin triar (ver «Fallos e issues»); un pendiente Alta va primero
+  (`--reclamar` ya lo elige). Las `loop/K` ya fusionadas salen en una sola línea y no son una Acción: la
+  sesión no las borra (en la nube el proxy niega el push `--delete`) ni lo anota; son de Benjamin (Para
+  Benjamin). Las líneas `Cadencia`, `Hueco` y `Para Benjamin` van al resumen; un hueco nuevo de más de
+  un día va a Para Benjamin.
 - `node --test` en rojo sin haber tocado nada: `master` está en rojo. Se repite una vez; si sigue, la
   iteración pasa a arreglarlo (como un pendiente Alta, `[Errores]` o `[Deuda]`) y lo dice la bitácora.
 - La Routine: `mcp__claude-code-remote__list_triggers` y `get_trigger` (de lectura) dan su prompt; si no
@@ -49,7 +50,9 @@ código de salida:
   origin. Se sigue con el ítem que imprimió.
 - **3** `Ocupada`: otra sesión la está haciendo. Esa línea va al resumen de 3 líneas y la sesión termina,
   sin PR.
-- **4** `Vencida` (6 h sin commits): reanudación. Tiene tres salidas:
+- **4** `Vencida` (sin commits desde hace más de `RECLAMO_H` horas, menos que el intervalo de la Routine:
+  una sesión que murió o dejó su reclamo sin fusionar la releva el disparo siguiente): reanudación. Tiene
+  tres salidas:
   - `PR abierto: <url>`: `git fetch origin loop/N && git checkout loop/N`, `git merge origin/master`,
     `npm run check`. En verde, se fusiona ese PR con commit de merge como la iteración N (paso 5) y se vuelve a
     `--reclamar` (la N+1). En rojo: se cierra el PR con `mcp__github__update_pull_request`
@@ -68,7 +71,8 @@ código de salida:
 ## 2. Construir
 
 Una capacidad o un arreglo por PR, nunca dos mezclados. Se commitea y se empuja seguido
-(`git push origin loop/N`): cada push renueva el reclamo (la edad se mide en origin).
+(`git push origin loop/N`): cada push renueva el reclamo (la edad se mide en origin), y más de `RECLAMO_H`
+horas sin un push (una arena o una pasada de Replica larga) dejan que el disparo siguiente la releve.
 
 ### Arena: cuando hay enfoques genuinamente distintos
 
@@ -271,6 +275,11 @@ node tools/loop.mjs --siguiente
 node tools/loop.mjs --check
 ```
 
+Si `--check` avisa en R14 (la bitácora de `IMPROVEMENTS.md` pasó de 16 entradas), en el mismo PR
+`node tools/loop.mjs --rotar`: deja allí las últimas 8 y lleva las demás al final de `docs/BITACORA.md`,
+que es historia y no se edita; `--siguiente` y `--check` leen las dos. Una entrada nueva va siempre al
+final de `IMPROVEMENTS.md`. Después, otra vez `--check`.
+
 ### Reponer la hoja de ruta
 
 Primero, la paridad con la app de referencia («Replica» en la directiva de `IMPROVEMENTS.md`: cuál es,
@@ -349,10 +358,12 @@ git push -u origin loop/N
    hilos de revisión pendientes. No hace falta esperar aprobación (`CLAUDE.md`). Si el merge falla
    (conflicto, API), se repite 5.2; si sigue fallando, el PR queda abierto, el resumen lo dice con el
    error y la sesión termina: la siguiente lo retoma por el código 4 (Vencida con PR abierto).
-4. `git push origin --delete loop/N`, solo (sin `&&` ni tuberías: así lo cubre el permiso de
-   `.claude/settings.json`). Si la rama ya no existe (GitHub la borra al fusionar si está activado),
-   no hay nada que hacer; si el proxy responde 403, se dice en el resumen y no pasa nada: la rama ya
-   está contenida en `master` y la siguiente sesión la ve en `--salud` como `Acción:`.
+4. La rama `loop/N` queda en origin, contenida en `master` por el commit de merge: en la nube no se
+   intenta borrarla (el proxy niega el push `--delete`: falló en todas las iteraciones de la 111 a la 134)
+   ni se anota en la bitácora; `--salud` la cuenta en su línea de ramas fusionadas y Benjamin las borra
+   todas con `node tools/loop.mjs --limpiar --borrar`. Fuera de la nube (OpenCode en un PC), sí:
+   `git push origin --delete loop/N`, solo (sin `&&` ni tuberías: así lo cubre el permiso de
+   `.claude/settings.json`).
 
 ## 6. Medir afuera
 

@@ -8,12 +8,12 @@
      node tools/loop.test.mjs     solo estas */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { ARENA_MAX, AUDITABLES, EJES, FLAGS, HOJA_SIN_FUENTE, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, PARA_BENJAMIN_MAX, REPLICA_DIAS, SUBTIPOS, appReferencia, check, diagnostico, matrizReplica, necesidades, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, siguiente } from './loop.mjs';
+import { ARCHIVO_BITACORA, ARENA_MAX, AUDITABLES, CRON_H, EJES, FLAGS, HOJA_SIN_FUENTE, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, PARA_BENJAMIN_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SUBTIPOS, appReferencia, check, diagnostico, matrizReplica, necesidades, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, siguiente, tramos } from './loop.mjs';
 import { TIPOS } from './audit.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -297,6 +297,22 @@ describe('check()', () => {
     rmSync(dir, { recursive: true, force: true });
     assert.equal(nivel(r, 'R3'), 'aviso');
     assert.match(texto(r, 'R3'), /sin origin\/master/);
+  });
+
+  test('R3: en un clon superficial, los PR anteriores al primero visible son un aviso (unshallow); los posteriores, un error', () => {
+    // el log de un clon con --depth: solo los merges desde #49
+    const corto = LOG.filter((t) => +/#(\d+)/.exec(t)[1] >= 49);
+    const r = check(fixture(), { log: corto, superficial: true });
+    assert.equal(nivel(r, 'R3'), 'aviso', r.salida);
+    assert.match(texto(r, 'R3'), /^clon superficial: 3 «hecho en #K» anteriores a #49 no se pudieron comprobar \(git fetch --unshallow origin\)$/);
+    assert.equal(nivel(check(fixture(), { log: corto }), 'R3'), 'ERROR', 'con la historia entera, que falten es un error');
+    const hueco = check(fixture(), { log: corto.filter((t) => !t.includes('#50')), superficial: true });
+    assert.equal(nivel(hueco, 'R3'), 'ERROR', 'un PR posterior al primero visible tiene que estar');
+    assert.match(texto(hueco, 'R3'), /hecho en #50 .*no está en origin\/master/);
+    // con el clon cortado después de todos los de la hoja, ninguno es «el PR en curso»: son todos anteriores
+    const nada = check(fixture(), { log: ['otro PR (#60)'], superficial: true });
+    assert.equal(nivel(nada, 'R3'), 'aviso', nada.salida);
+    assert.match(texto(nada, 'R3'), /^clon superficial: 6 «hecho en #K» anteriores a #60/);
   });
 
   test('R3: el PR en curso sigue en ok aunque entre medio se fusione un PR ajeno de número mayor', () => {
@@ -788,6 +804,72 @@ describe('check() R13: la paridad con la app de referencia', () => {
   });
 });
 
+/* ------------------------------------------------------------------ rotar */
+
+describe('rotar() y la bitácora en dos archivos', () => {
+  // 34 iteraciones, con mantenimientos de subtipos distintos: la rotación de los subtipos mira toda la historia
+  const SUBT = { 23: 'Errores', 27: 'Deuda', 31: 'QA' };
+  const largo = (() => {
+    const entradas = [];
+    let exp = 0;
+    for (let k = 1; k <= 34; k++) {
+      const tipo = k % 4 === 3 ? 'Mantenimiento' : 'Expansión';
+      const eje = tipo === 'Expansión' && k >= 20 ? EXPANSIONES[exp++ % EXPANSIONES.length] : null;
+      entradas.push(entrada({ n: k, tipo, eje, subtipo: SUBT[k], siguiente: k === 34 ? 'POR CALCULAR' : `iteración ${k + 1}, expansión: ítem 1 (algo, Fuentes)` }));
+    }
+    const t = fixture({ entradas });
+    return t.replace('POR CALCULAR', siguiente(t).siguiente);
+  })();
+  const c = (doc, extra = {}) => check(doc, { log: LOG, ...extra });
+
+  test('deja las últimas entradas en IMPROVEMENTS.md, lleva las demás al archivo y el loop elige lo mismo', () => {
+    const r = rotar(largo);
+    assert.equal(r.cuantas, 34 - ROTAR_DEJA);
+    assert.equal(r.primera, '2026-10-12 · Iteración 1');
+    assert.equal(r.ultima, `2026-10-12 · Iteración ${34 - ROTAR_DEJA} · Expansión · ${parse(largo).bitacora[34 - ROTAR_DEJA - 1].eje}`);
+    assert.deepEqual(parse(r.texto).bitacora.map((e) => e.n), Array.from({ length: ROTAR_DEJA }, (_, i) => 34 - ROTAR_DEJA + 1 + i));
+    assert.deepEqual(parse(r.texto, { archivo: r.archivo }).bitacora.map((e) => e.n), Array.from({ length: 34 }, (_, i) => i + 1));
+    assert.match(r.archivo, /^# Bitácora del loop: entradas anteriores\n[^]*\n## Bitácora\n\n### 2026-10-12 · Iteración 1\n/);
+    assert.equal(r.texto.split(ARCHIVO_BITACORA).length - 1, 2, 'el aviso, una vez (enlace y texto)');
+    assert.ok(Buffer.byteLength(r.texto) < Buffer.byteLength(largo));
+    // lo que elige el loop no cambia, y sin la bitácora vieja cambiaría: por eso se leen las dos
+    assert.deepEqual(siguiente(r.texto, { archivo: r.archivo }), siguiente(largo));
+    assert.notDeepEqual(necesidades(parse(r.texto)), necesidades(parse(largo)));
+    assert.deepEqual(necesidades(parse(r.texto, { archivo: r.archivo })), necesidades(parse(largo)));
+    const antes = c(largo);
+    const despues = c(r.texto, { archivo: r.archivo });
+    assert.equal(despues.errores, 0, despues.salida);
+    for (const regla of ['R5', 'R6']) assert.equal(texto(despues, regla), texto(antes, regla));
+  });
+
+  test('es idempotente y la segunda rotación agrega al final del archivo, en orden', () => {
+    const r = rotar(largo);
+    assert.equal(rotar(r.texto, r.archivo), null);
+    const otra = rotar(r.texto, r.archivo, 3);
+    assert.equal(otra.cuantas, ROTAR_DEJA - 3);
+    assert.deepEqual(parse(otra.archivo).bitacora.map((e) => e.n), Array.from({ length: 34 - 3 }, (_, i) => i + 1));
+    assert.equal(otra.texto.split(ARCHIVO_BITACORA).length - 1, 2, 'el aviso no se repite');
+    assert.deepEqual(siguiente(otra.texto, { archivo: otra.archivo }), siguiente(largo));
+    assert.throws(() => rotar('# Sin bitácora\n'), LoopError);
+  });
+
+  test(`R14: más de ${ROTAR_MAX} entradas en IMPROVEMENTS.md es un aviso para rotar; el archivo va antes que IMPROVEMENTS.md`, () => {
+    assert.equal(nivel(c(largo), 'R14'), 'aviso');
+    assert.match(texto(c(largo), 'R14'), /tiene 34 entradas \(más de 16\): node tools\/loop\.mjs --rotar/);
+    const r = rotar(largo);
+    assert.equal(nivel(c(r.texto, { archivo: r.archivo }), 'R14'), 'ok');
+    assert.match(texto(c(r.texto, { archivo: r.archivo }), 'R14'), new RegExp(`^bitácora: ${ROTAR_DEJA} entradas en IMPROVEMENTS\\.md y ${34 - ROTAR_DEJA} en docs/BITACORA\\.md$`));
+    // una entrada nueva escrita por error en el archivo: R14 y R5 lo dicen
+    const mal = `${r.archivo}\n${entrada({ n: 30, tipo: 'Expansión', eje: 'Datos' })}\n`;
+    const m = c(r.texto, { archivo: mal });
+    assert.equal(nivel(m, 'R14'), 'ERROR');
+    assert.match(texto(m, 'R14'), /llega a la iteración 30 y la bitácora de IMPROVEMENTS\.md empieza en la 27/);
+    assert.match(texto(m, 'R5'), /iteración 30 repetida/);
+    const dup = c(r.texto, { archivo: `${r.archivo}\n${entrada({ n: 5 })}\n` });
+    assert.match(texto(dup, 'R5'), /iteración 5 repetida \(línea \d+ de docs\/BITACORA\.md\)/);
+  });
+});
+
 /* ------------------------------------------------------------------ salud */
 
 describe('diagnostico() de --salud', () => {
@@ -811,22 +893,49 @@ describe('diagnostico() de --salud', () => {
     assert.ok(r.lineas.some((l) => /^Acción: el loop no fusiona nada desde hace 46,0 h/.test(l)), r.lineas.join('\n'));
   });
 
-  test('reclamos: loop/K fusionada se borra, la que toca está en curso o vencida, una más allá se revisa; la conservada se informa', () => {
+  test('reclamos: las loop/K fusionadas van en una línea sin Acción, la que toca está en curso o vencida, una más allá se revisa; la conservada se informa', () => {
     const ramas = [
+      { nombre: 'loop/24', fecha: base.ahora - 40 * H },
+      { nombre: 'loop/25', fecha: base.ahora - 35 * H },
       { nombre: 'loop/26', fecha: base.ahora - 30 * H },
+      { nombre: 'loop/22', fecha: base.ahora - 50 * H },
       { nombre: 'loop/28', fecha: base.ahora - 0.5 * H },
       { nombre: 'loop/30', fecha: base.ahora - H },
       { nombre: 'loop/27-vencida-abc1234', fecha: base.ahora - 40 * H },
     ];
     const r = diagnostico({ ...base, ramas });
-    assert.ok(r.lineas.includes('Acción: borrar loop/26, de una iteración ya fusionada: git push origin --delete loop/26'), r.lineas.join('\n'));
+    // el proxy de la nube niega el push --delete: una Acción por rama era ruido que ninguna sesión podía atender
+    assert.ok(!r.lineas.some((l) => /^Acción: borrar/.test(l)), r.lineas.join('\n'));
+    assert.ok(r.lineas.some((l) => l.startsWith('Ramas loop/K de iteraciones ya fusionadas: 4 (loop/22, 24–26), inocuas;') && l.includes('node tools/loop.mjs --limpiar --borrar')), r.lineas.join('\n'));
     assert.ok(r.lineas.includes('En curso: loop/28 (último commit hace 30 min)'), r.lineas.join('\n'));
     assert.ok(r.lineas.some((l) => /^Acción: loop\/30 va más allá de la iteración que toca \(28\)/.test(l)));
     assert.ok(r.lineas.some((l) => /^Trabajo de relevos conservado: loop\/27-vencida-abc1234/.test(l)));
-    assert.equal(r.acciones, 2);
+    assert.equal(r.acciones, 1);
     const vencida = diagnostico({ ...base, ramas: [{ nombre: 'loop/28', fecha: base.ahora - 7 * H }] });
     assert.ok(vencida.lineas.includes('Vencida: loop/28 lleva 7,0 h sin commits: --reclamar la releva'));
     assert.ok(diagnostico(base).lineas.includes('Reclamos: ninguna rama loop/N en origin'));
+  });
+
+  test('un reclamo abandonado lo releva el disparo siguiente, no el de después (RECLAMO_H < CRON_H)', () => {
+    // loop/128: una sesión la dejó sin fusionar a los 25 min; con 6 h, el disparo de 4 h después la vio «Ocupada»
+    assert.ok(RECLAMO_H < CRON_H, `RECLAMO_H (${RECLAMO_H}) tiene que ser menor que CRON_H (${CRON_H})`);
+    const r = diagnostico({ ...base, ramas: [{ nombre: 'loop/28', fecha: base.ahora - (CRON_H - 0.1) * H }] });
+    assert.ok(r.lineas.some((l) => /^Vencida: loop\/28 lleva 3,9 h sin commits/.test(l)), r.lineas.join('\n'));
+  });
+
+  test('en un clon superficial no hay huecos antes del primer merge visible, y se dice', () => {
+    const merges = [30, 34, 38].map((h) => ({ fecha: t0 + h * H, titulo: 'x (#1)' }));
+    const completo = diagnostico({ ...base, merges });
+    assert.ok(completo.lineas.includes('Hueco: 2026-10-10 00:00 → 2026-10-11 06:00 UTC (30,0 h, unos 6 disparos sin iteración)'), completo.lineas.join('\n'));
+    const corto = diagnostico({ ...base, merges, superficial: true });
+    assert.ok(!corto.lineas.some((l) => l.startsWith('Hueco: 2026-10-10 00:00')), corto.lineas.join('\n'));
+    assert.ok(corto.lineas.includes('Clon superficial: master se ve desde 2026-10-11 06:00 UTC; los huecos anteriores no se miden (git fetch --unshallow origin)'), corto.lineas.join('\n'));
+    assert.ok(corto.lineas.includes('Hueco: 2026-10-11 14:00 → ahora UTC (10,0 h, un disparo sin iteración)'), corto.lineas.join('\n'));
+  });
+
+  test('tramos: números seguidos en un rango', () => {
+    assert.equal(tramos([30, 28, 29, 32, 34, 35, 28]), '28–30, 32, 34–35');
+    assert.equal(tramos([]), '');
   });
 
   test('las demás ramas: fusionadas (por su PR o contenidas) y con trabajo, sin acciones', () => {
@@ -920,6 +1029,25 @@ describe('el CLI', () => {
     assert.equal(cli('--siguiente', '--archivo', archivo).status, 1);
   });
 
+  test('--rotar escribe los dos archivos y la segunda vez no hay nada que rotar; --siguiente y --check leen las dos bitácoras', () => {
+    const repo = join(dir, 'rotar');
+    mkdirSync(repo);
+    const t = fixture({ iteraciones: 27 });
+    writeFileSync(join(repo, 'IMPROVEMENTS.md'), t);
+    const antes = cli('--siguiente', '--archivo', join(repo, 'IMPROVEMENTS.md')).stdout;
+    const r = cli('--rotar', '--repo', repo);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.equal(r.stdout, `Rotadas ${27 - ROTAR_DEJA} entradas a docs/BITACORA.md (de «2026-10-12 · Iteración 1» a «2026-10-12 · Iteración ${27 - ROTAR_DEJA}»); quedan ${ROTAR_DEJA} en IMPROVEMENTS.md\n`);
+    assert.equal(parse(readFileSync(join(repo, ARCHIVO_BITACORA), 'utf8')).bitacora.length, 27 - ROTAR_DEJA);
+    assert.equal(cli('--siguiente', '--archivo', join(repo, 'IMPROVEMENTS.md')).stdout, antes);
+    const ch = cli('--check', '--archivo', join(repo, 'IMPROVEMENTS.md'));
+    assert.match(ch.stdout, new RegExp(`^ok  R5 27 iteraciones, 1\\.\\.27`, 'm'));
+    assert.match(ch.stdout, /^ok  R14 bitácora: 8 entradas en IMPROVEMENTS\.md y 19 en docs\/BITACORA\.md$/m);
+    const otra = cli('--rotar', '--repo', repo);
+    assert.equal(otra.status, 0);
+    assert.match(otra.stdout, /^Nada que rotar/);
+  });
+
   test('--help sale 0 y nombra todos los flags; una opción desconocida sale 1', () => {
     const r = cli('--help');
     assert.equal(r.status, 0);
@@ -932,15 +1060,17 @@ describe('el CLI', () => {
 
 describe('IMPROVEMENTS.md real', () => {
   const real = readFileSync(join(root, 'IMPROVEMENTS.md'), 'utf8');
+  const ruta = join(root, ARCHIVO_BITACORA);
+  const archivo = existsSync(ruta) ? readFileSync(ruta, 'utf8') : null;
 
   test('cumple todas las reglas sin ningún ERROR', () => {
-    const r = check(real);
+    const r = check(real, { archivo });
     assert.equal(r.errores, 0, r.salida);
   });
 
   test('--siguiente da la iteración que sigue a la última de la bitácora', () => {
-    const M = Math.max(...parse(real).bitacora.filter((e) => e.n !== null).map((e) => e.n));
-    const s = siguiente(real);
+    const M = Math.max(...parse(real, { archivo }).bitacora.filter((e) => e.n !== null).map((e) => e.n));
+    const s = siguiente(real, { archivo });
     assert.equal(s.n, M + 1);
     assert.equal(s.rama, `loop/${M + 1}`);
     if (s.tipo === 'Expansión') assert.ok(EJES.includes(s.eje));
@@ -1065,14 +1195,15 @@ describe('--reclamar contra un repositorio bare', () => {
     assert.equal(git(dir, ['ls-remote', '--heads', bare, 'loop/28']).split('\t')[0], ajeno, 'el commit de la otra sesión sigue en origin');
   });
 
-  test('--salud --sin-red lee origin/master y las ramas de origin: la loop/K fusionada es una Acción (3)', () => {
+  test('--salud --sin-red lee origin/master y las ramas de origin: las loop/K fusionadas van en una línea, sin Acción (0)', () => {
     git(A, ['fetch', '-q', 'origin', '+refs/heads/*:refs/remotes/origin/*']);
     const r = spawnSync(process.execPath, [loop, '--salud', '--sin-red', '--repo', A], { encoding: 'utf8', env: ENV });
-    assert.equal(r.status, 3, r.stdout + r.stderr);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /^Cadencia: \d+ iteraciones desde la directiva/m);
-    assert.match(r.stdout, /^Acción: borrar loop\/25, de una iteración ya fusionada/m);
+    assert.match(r.stdout, /^Ramas loop\/K de iteraciones ya fusionadas: 2 \(loop\/25, 27\), inocuas;/m);
+    assert.doesNotMatch(r.stdout, /^Acción:/m);
     assert.match(r.stdout, /^Issues: no se pudo consultar \(--sin-red\)/m);
-    assert.match(r.stdout, /--salud: \d+ acción\(es\)\n$/);
+    assert.match(r.stdout, /--salud: sin acciones\n$/);
   });
 
   test('--salud mide la cadencia por los merges de master (--first-parent), no por los commits viejos de la rama fusionada', () => {
@@ -1086,9 +1217,24 @@ describe('--reclamar contra un repositorio bare', () => {
     git(A, ['push', '-q', 'origin', 'master']);
     git(A, ['fetch', '-q', 'origin', '+refs/heads/*:refs/remotes/origin/*']);
     const r = spawnSync(process.execPath, [loop, '--salud', '--sin-red', '--repo', A], { encoding: 'utf8', env: ENV });
-    assert.equal(r.status, 3, r.stdout + r.stderr);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
     // solo el hueco desde la directiva hasta la semilla: el commit de hace 30 h no es una fusión
     assert.equal(r.stdout.match(/^Hueco: /gm)?.length, 1, r.stdout);
+  });
+
+  test('--limpiar lista las loop/K de iteraciones ya fusionadas y con --borrar las borra en un push; la que toca y la conservada quedan', () => {
+    const limpiar = (...extra) => spawnSync(process.execPath, [loop, '--limpiar', '--repo', A, ...extra], { encoding: 'utf8', env: ENV });
+    const lista = limpiar();
+    assert.equal(lista.status, 0, lista.stdout + lista.stderr);
+    assert.equal(lista.stdout, 'Ramas loop/K de iteraciones ya fusionadas: 2 (loop/25, 27)\nPara borrarlas de origin en un solo push: node tools/loop.mjs --limpiar --borrar\n');
+    assert.match(ramas(), /refs\/heads\/loop\/25$/m, 'sin --borrar no borra nada');
+    const borra = limpiar('--borrar');
+    assert.equal(borra.status, 0, borra.stdout + borra.stderr);
+    assert.match(borra.stdout, /\nBorradas de origin: 2 ramas loop\/K\n$/);
+    assert.doesNotMatch(ramas(), /refs\/heads\/loop\/2[57]$/m);
+    assert.match(ramas(), /refs\/heads\/loop\/28$/m, 'la iteración que toca puede estar en curso');
+    assert.match(ramas(), /refs\/heads\/loop\/28-vencida-/m, 'lo conservado de un relevo no se toca');
+    assert.match(limpiar().stdout, /^Nada que limpiar: ninguna rama loop\/K de una iteración ya fusionada \(la última es la 27\)\n$/);
   });
 
   test('sin acceso a origin sale 5 y no toca nada', () => {
@@ -1098,6 +1244,28 @@ describe('--reclamar contra un repositorio bare', () => {
     const r = reclamar(C);
     assert.equal(r.status, 5, r.stdout + r.stderr);
     assert.match(r.stdout, /^Sin acceso a origin: no se puede reclamar ni publicar \(/);
+  });
+
+  test('en un clon superficial (--depth, como las sesiones cloud) el reclamo trae la historia entera', () => {
+    const otro = mkdtempSync(join(tmpdir(), 'loop-'));
+    const origen = join(otro, 'bare.git');
+    const D = join(otro, 'D');
+    const E = join(otro, 'E');
+    git(otro, ['init', '-q', '--bare', '--initial-branch=master', origen]);
+    git(otro, ['clone', '-q', origen, D]);
+    git(D, ['symbolic-ref', 'HEAD', 'refs/heads/master']);
+    writeFileSync(join(D, 'IMPROVEMENTS.md'), fixture());
+    git(D, ['add', 'IMPROVEMENTS.md']);
+    git(D, ['commit', '-q', '-m', 'semilla']);
+    git(D, ['commit', '-q', '--allow-empty', '-m', 'Un cambio (#52)']);
+    git(D, ['push', '-q', 'origin', 'master']);
+    git(otro, ['clone', '-q', '--depth', '1', `file://${origen}`, E]);
+    assert.equal(git(E, ['rev-parse', '--is-shallow-repository']), 'true');
+    const r = reclamar(E);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.equal(git(E, ['rev-parse', '--is-shallow-repository']), 'false');
+    assert.equal(git(E, ['rev-list', '--count', 'origin/master']), '2');
+    rmSync(otro, { recursive: true, force: true });
   });
 
   test('fuera de una sesión cloud (OpenCode) el reclamo firma con LOOP_SESION', () => {

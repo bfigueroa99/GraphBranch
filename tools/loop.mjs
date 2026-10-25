@@ -4,18 +4,27 @@
 
      node tools/loop.mjs --siguiente [--json]     qué iteración toca: número, tipo, eje, ítem y por qué
      node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill, el prompt y la pasada de Replica (sin red)
-     node tools/loop.mjs --reclamar [--relevo] [--sin-red] [--horas 6] [--repo <dir>]
+     node tools/loop.mjs --reclamar [--relevo] [--sin-red] [--horas 3.5] [--repo <dir>]
                                                   reclama la rama loop/N en origin: el push es el candado
      node tools/loop.mjs --publicado              compara la web de GitHub Pages con origin/master
      node tools/loop.mjs --salud [--sin-red]      la salud del loop: disparos perdidos, reclamos, ramas, issues sin
                                                   triar, la cola Para Benjamin; cada «Acción:» se atiende
+     node tools/loop.mjs --rotar [--repo <dir>]   deja las últimas entradas de la bitácora en IMPROVEMENTS.md y
+                                                  lleva las demás a docs/BITACORA.md
+     node tools/loop.mjs --limpiar [--borrar] [--repo <dir>]
+                                                  las ramas loop/K de iteraciones ya fusionadas; --borrar las borra
+                                                  de origin en un solo push (desde un PC: en la nube, el proxy lo niega)
      --archivo <ruta> | --ref <ref>               leen otro IMPROVEMENTS.md: un archivo, o git show <ref>:IMPROVEMENTS.md
+
+   La bitácora vive en dos archivos: las últimas entradas en IMPROVEMENTS.md y las anteriores en
+   docs/BITACORA.md. --siguiente, --check, --reclamar y --salud leen las dos juntas.
 
    Códigos de salida. --siguiente y --check: 0 bien, 1 formato (o algún ERROR), 2 sin ítem.
    --reclamar: 0 reclamada o relevada · 1 formato · 2 sin ítem · 3 ocupada · 4 vencida · 5 sin remoto.
    --publicado: 0 al día · 2 atrasada o sin publicar · 4 no se pudo comprobar.
-   --salud: 0 sin acciones · 3 con alguna «Acción:» · 5 sin acceso a origin. */
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+   --salud: 0 sin acciones · 3 con alguna «Acción:» · 5 sin acceso a origin.
+   --rotar: 0 rotada o nada que rotar · 1 formato. --limpiar: 0 bien · 5 sin acceso a origin o push negado. */
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -27,10 +36,13 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 /** Los ejes del Mapa de alcance, en su orden. */
 export const EJES = ['Fuentes', 'Datos', 'Plataformas', 'Escala', 'Salidas', 'Análisis', 'Público'];
 /** Todos los flags del CLI: --check (R8) comprueba que la skill no nombre otros. */
-export const FLAGS = ['--siguiente', '--check', '--reclamar', '--publicado', '--salud', '--relevo', '--sin-red', '--horas', '--repo', '--archivo', '--ref', '--json', '--help'];
-/** Horas sin commits a partir de las cuales una rama loop/N se da por abandonada y se puede relevar:
-    una expansión mide entre 3 h 21 y 4 h 29 (iteraciones 24 a 26) y la puerta, unos 4 min. */
-export const RECLAMO_H = 6;
+export const FLAGS = ['--siguiente', '--check', '--reclamar', '--publicado', '--salud', '--rotar', '--limpiar', '--borrar', '--relevo', '--sin-red', '--horas', '--repo', '--archivo', '--ref', '--json', '--help'];
+/** Horas sin commits a partir de las cuales una rama loop/N se da por abandonada y se puede relevar. Tiene
+    que ser menos que CRON_H: si no, el disparo siguiente a una sesión muerta la encuentra «Ocupada» y se
+    pierde también ese (loop/128: reclamada el 2026-10-23 a las 16:05 y dejada sin fusionar a las 16:30; el
+    disparo de las 20:04 salió con 3 y la relevó el de las 00:05: 11,9 h sin iteración). Las iteraciones
+    109 a 134 tardaron de 8 a 81 min del reclamo al merge, y cada push renueva el reclamo. */
+export const RECLAMO_H = 3.5;
 /** Los subtipos de una iteración de mantenimiento, en el orden en que desempatan. */
 export const SUBTIPOS = ['Errores', 'QA', 'Accesibilidad', 'Seguridad', 'Rendimiento', 'Deuda'];
 /** Los que, sin pendientes propios, auditan su área; Errores y Deuda necesitan un pendiente. */
@@ -62,6 +74,12 @@ export const PARA_BENJAMIN_MAX = 8;
 /** Cada cuántas horas dispara la Routine (cron `3 *\/4 * * *`) y desde cuándo (fusión de #44, la directiva). */
 export const CRON_H = 4;
 export const DESDE_DIRECTIVA = '2026-10-10T04:32:04Z';
+/** Las entradas viejas de la bitácora: --rotar las lleva ahí y deja ROTAR_DEJA en IMPROVEMENTS.md, que cada
+    sesión lee (312 KB el 2026-10-25, 248 KB de bitácora). Con más de ROTAR_MAX, --check (R14) avisa: se rota
+    de a lotes, una vez cada ~8 iteraciones, y no en cada PR. */
+export const ARCHIVO_BITACORA = 'docs/BITACORA.md';
+export const ROTAR_DEJA = 8;
+export const ROTAR_MAX = 16;
 
 const USO = `node tools/loop.mjs --siguiente [--json]     qué iteración toca: número, tipo, eje, ítem y por qué
 node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill, el prompt y la pasada de Replica (sin red)
@@ -69,6 +87,9 @@ node tools/loop.mjs --reclamar [--relevo] [--sin-red] [--horas ${RECLAMO_H}] [--
                                              reclama la rama loop/N en origin: el push es el candado
 node tools/loop.mjs --publicado              compara la web de GitHub Pages con origin/master
 node tools/loop.mjs --salud [--sin-red]      disparos perdidos, reclamos, ramas, issues sin triar y Para Benjamin
+node tools/loop.mjs --rotar [--repo <dir>]   deja las últimas ${ROTAR_DEJA} entradas de la bitácora y lleva las demás a ${ARCHIVO_BITACORA}
+node tools/loop.mjs --limpiar [--borrar] [--repo <dir>]
+                                             las ramas loop/K de iteraciones ya fusionadas (--borrar: las borra de origin)
 --archivo <ruta> | --ref <ref>               leen otro IMPROVEMENTS.md: un archivo, o git show <ref>:IMPROVEMENTS.md
 --help                                       esta ayuda`;
 
@@ -99,8 +120,10 @@ const RE_ITEM_VIEJO = /(?<![\p{L}\p{N}])(?:es el|toca el) (\d+)/gu;
 
 /* ------------------------------------------------------------------ parser */
 
-/** Lee IMPROVEMENTS.md: Para Benjamin, Mapa de alcance, Hoja de ruta, Mantenimiento y Bitácora. */
-export function parse(texto) {
+/** Lee IMPROVEMENTS.md: Para Benjamin, Mapa de alcance, Hoja de ruta, Mantenimiento y Bitácora. Con `archivo`
+    (el texto de docs/BITACORA.md), sus entradas van antes que las de IMPROVEMENTS.md, con `origen`: así la
+    rotación de los subtipos, la numeración y las marcas del protocolo ven la bitácora entera. */
+export function parse(texto, { archivo = null } = {}) {
   const out = { secciones: [], benjamin: [], mapa: [], hoja: [], mantenimiento: [], subsecciones: [], bitacora: [], errores: [] };
   let seccion = '';
   let sub = '';
@@ -166,6 +189,8 @@ export function parse(texto) {
     }
   });
   for (const p of out.mantenimiento) if (p.texto.includes('**Alta**')) p.alta = true;
+  out.propias = out.bitacora.length;
+  if (archivo) out.bitacora = [...parse(archivo).bitacora.map((e) => ({ ...e, origen: ARCHIVO_BITACORA })), ...out.bitacora];
   return out;
 }
 
@@ -227,9 +252,10 @@ export function necesidades(doc) {
 
 const textoNecesidad = (x) => `${x.subtipo} ${x.valor} (espera ${x.espera}, ${x.media} Media, ${x.baja} Baja${x.subtipo === 'QA' ? `, ${x.codigo} expansiones sin auditar` : ''})`;
 
-/** Qué iteración toca según IMPROVEMENTS.md: número, tipo, eje o subtipo, ítem y por qué. Lanza LoopError. */
-export function siguiente(texto) {
-  const doc = parse(texto);
+/** Qué iteración toca según IMPROVEMENTS.md (y `archivo`, la bitácora vieja): número, tipo, eje o subtipo,
+    ítem y por qué. Lanza LoopError. */
+export function siguiente(texto, { archivo = null } = {}) {
+  const doc = parse(texto, { archivo });
   const its = doc.bitacora.filter((e) => e.n !== null);
   if (!its.length) throw new LoopError('no hay ninguna «Iteración N» en la bitácora', 1);
   const M = Math.max(...its.map((e) => e.n));
@@ -320,6 +346,17 @@ function git(dir, args, env) {
 }
 const primera = (s) => (s || '').split('\n').find((l) => l.trim()) || 'sin detalle';
 const leer = (ruta) => (existsSync(ruta) ? readFileSync(ruta, 'utf8') : null);
+/** true si el clon no tiene toda la historia (git clone --depth, como las sesiones cloud). */
+const esSuperficial = (dir) => git(dir, ['rev-parse', '--is-shallow-repository']).stdout.trim() === 'true';
+/** El fetch de los modos que salen a la red: completa la historia si el clon es superficial, porque R3, la
+    cadencia y los huecos de --salud la necesitan (con --depth 50, --salud veía un hueco falso de 172 h). */
+const fetchOrigin = (dir, refspecs) => git(dir, ['fetch', '-q', '--prune', ...(esSuperficial(dir) ? ['--unshallow'] : []), 'origin', ...refspecs]);
+/** IMPROVEMENTS.md y la bitácora vieja tal como están en un ref; `archivo` es null si ese ref no la tiene. */
+function deRef(dir, ref) {
+  const t = git(dir, ['show', `${ref}:IMPROVEMENTS.md`]);
+  const a = git(dir, ['show', `${ref}:${ARCHIVO_BITACORA}`]);
+  return { status: t.status, stderr: t.stderr, texto: t.stdout, archivo: a.status === 0 ? a.stdout : null };
+}
 
 /** Las filas de un CSV como el que escribe Replica: comillas dobles (con "" dentro), comas y saltos de
     línea entre comillas, BOM y CRLF. Sin las filas en blanco. */
@@ -414,10 +451,11 @@ export function parseInvestigacion(texto) {
   return out;
 }
 
-/** Las reglas R1–R12. `log` (títulos de commits), `skill`, `prompt`, `settings`, `investigacion` y `auditBase`
-    (textos) y `hoy` se inyectan en las pruebas; si no, se leen del repo y del reloj. */
-export function check(texto, { log, skill, prompt, settings, opencode, investigacion, auditBase, recon, features, hoy = new Date(), dir = root } = {}) {
-  const doc = parse(texto);
+/** Las reglas R1–R14. `log` (títulos de commits), `superficial` (el clon no tiene toda la historia), `skill`,
+    `prompt`, `settings`, `investigacion` y `auditBase` (textos) y `hoy` se inyectan en las pruebas; si no, se
+    leen del repo y del reloj. `archivo` es docs/BITACORA.md (la bitácora vieja), que pasa quien lee el repo. */
+export function check(texto, { archivo = null, log, superficial, skill, prompt, settings, opencode, investigacion, auditBase, recon, features, hoy = new Date(), dir = root } = {}) {
+  const doc = parse(texto, { archivo });
   // la pasada de Replica: la leen R10 (los ítems que la citan) y R13
   const reconTxt = recon ?? leer(join(dir, 'replica', 'recon.md'));
   const featuresTxt = features ?? leer(join(dir, 'replica', 'features.csv'));
@@ -449,10 +487,12 @@ export function check(texto, { log, skill, prompt, settings, opencode, investiga
     const e = [];
     const a = [];
     let titulos = log;
+    let corto = superficial ?? false;
     if (!titulos) {
       if (git(dir, ['rev-parse', '--verify', '-q', 'origin/master']).status !== 0) a.push('sin origin/master: no se comprobaron los PR');
       // --first-parent: con commits de merge, solo los merges son PR; los commits de cada rama no cuentan
       else titulos = git(dir, ['log', '--first-parent', 'origin/master', '--format=%s']).stdout.split('\n');
+      corto = superficial ?? esSuperficial(dir);
     }
     let ok = 'sin ítems hechos';
     if (titulos) {
@@ -462,16 +502,22 @@ export function check(texto, { log, skill, prompt, settings, opencode, investiga
       // el PR en curso es el único «hecho en #K» que puede faltar en origin/master: tiene que ser mayor
       // que los demás de la hoja, no que el último del log (entre medio se fusionan PR ajenos)
       const maxHoja = Math.max(0, ...hechos.filter((i) => enLog.has(i.pr)).map((i) => i.pr));
+      // un clon superficial (las sesiones cloud clonan con --depth) no ve los PR anteriores a su primer merge:
+      // esos no se pueden comprobar, los posteriores sí
+      const primero = Math.min(...enLog);
       const vistos = new Map();
       const enCurso = [];
+      const antiguos = [];
       for (const it of hechos) {
         if (vistos.has(it.pr)) e.push(`hecho en #${it.pr} repetido (ítems ${vistos.get(it.pr)} y ${it.n})`);
         vistos.set(it.pr, it.n);
         if (enLog.has(it.pr)) continue;
-        if (it.pr > maxHoja) enCurso.push(it.pr);
+        if (corto && it.pr < primero) antiguos.push(it.pr);
+        else if (it.pr > maxHoja) enCurso.push(it.pr);
         else e.push(`hecho en #${it.pr} (ítem ${it.n}): ese PR no está en origin/master`);
       }
       if (enCurso.length > 1) e.push(`${enCurso.length} PR en curso (#${enCurso.join(', #')}): a lo sumo uno puede faltar en origin/master`);
+      if (antiguos.length) a.push(`clon superficial: ${antiguos.length} «hecho en #K» anteriores a #${primero} no se pudieron comprobar (git fetch --unshallow origin)`);
       ok = `los ${hechos.length} «hecho en #K» están en origin/master${enCurso.length === 1 ? ` (#${enCurso[0]} es el PR en curso)` : ''}`;
     }
     regla('R3', e, a, ok);
@@ -494,7 +540,7 @@ export function check(texto, { log, skill, prompt, settings, opencode, investiga
     const conArena = new Set(marcaArena < 0 ? [] : doc.bitacora.slice(marcaArena + 1).filter((x) => x.n !== null));
     const vistos = new Set();
     for (const it of its) {
-      if (vistos.has(it.n)) e.push(`iteración ${it.n} repetida (línea ${it.linea})`);
+      if (vistos.has(it.n)) e.push(`iteración ${it.n} repetida (línea ${it.linea}${it.origen ? ` de ${it.origen}` : ''})`);
       vistos.add(it.n);
       if (it.n < 20) continue;
       if (!it.tipo) e.push(`iteración ${it.n} sin tipo en la cabecera (Expansión · <Eje> o Mantenimiento)`);
@@ -537,7 +583,7 @@ export function check(texto, { log, skill, prompt, settings, opencode, investiga
       else {
         let s = null;
         try {
-          s = siguiente(texto);
+          s = siguiente(texto, { archivo });
         } catch (err) {
           e.push(`no se puede calcular la siguiente iteración: ${err.message}`);
         }
@@ -777,6 +823,19 @@ export function check(texto, { log, skill, prompt, settings, opencode, investiga
     }
     regla('R13', e, a, ok);
   }
+  // R14: la bitácora de IMPROVEMENTS.md se mantiene corta (cada sesión lee el archivo) y la de
+  // docs/BITACORA.md es anterior a ella
+  {
+    const e = [];
+    const a = [];
+    const viejas = doc.bitacora.slice(0, doc.bitacora.length - doc.propias).filter((x) => x.n !== null);
+    const propias = doc.bitacora.slice(doc.bitacora.length - doc.propias).filter((x) => x.n !== null);
+    const ultimaVieja = Math.max(0, ...viejas.map((x) => x.n));
+    const primeraPropia = Math.min(Infinity, ...propias.map((x) => x.n));
+    if (ultimaVieja && ultimaVieja >= primeraPropia) e.push(`${ARCHIVO_BITACORA} llega a la iteración ${ultimaVieja} y la bitácora de IMPROVEMENTS.md empieza en la ${primeraPropia}: una entrada nueva va al final de IMPROVEMENTS.md`);
+    if (doc.propias > ROTAR_MAX) a.push(`la bitácora de IMPROVEMENTS.md tiene ${doc.propias} entradas (más de ${ROTAR_MAX}): node tools/loop.mjs --rotar deja las últimas ${ROTAR_DEJA} y lleva las demás a ${ARCHIVO_BITACORA}`);
+    regla('R14', e, a, `bitácora: ${doc.propias} entradas en IMPROVEMENTS.md${doc.bitacora.length > doc.propias ? ` y ${doc.bitacora.length - doc.propias} en ${ARCHIVO_BITACORA}` : ''}`);
+  }
 
   const cuenta = (nivel) => lineas.filter((l) => l.nivel === nivel).length;
   const ok = cuenta('ok');
@@ -820,19 +879,19 @@ const motivo = (err) => (err?.name === 'TimeoutError' ? 'tiempo agotado' : err?.
     `antesDelPush` es un gancho de las pruebas: corre entre el fetch y el push con lease del relevo. */
 export async function reclamar({ relevo = false, sinRed = false, horas = RECLAMO_H, repo = root, fetchFn = globalThis.fetch, print = console.log, sesion = process.env.CLAUDE_CODE_REMOTE_SESSION_ID || process.env.LOOP_SESION || 'local', antesDelPush = () => {} } = {}) {
   for (let intento = 0; intento < 2; intento++) {
-    const f = git(repo, ['fetch', '-q', '--prune', 'origin', 'master', '+refs/heads/loop/*:refs/remotes/origin/loop/*']);
+    const f = fetchOrigin(repo, ['master', '+refs/heads/loop/*:refs/remotes/origin/loop/*']);
     if (f.status !== 0) {
       print(`Sin acceso a origin: no se puede reclamar ni publicar (${primera(f.stderr)})`);
       return 5;
     }
-    const show = git(repo, ['show', 'origin/master:IMPROVEMENTS.md']);
+    const show = deRef(repo, 'origin/master');
     if (show.status !== 0) {
       print(`ERROR: no se pudo leer IMPROVEMENTS.md de origin/master (${primera(show.stderr)})`);
       return 1;
     }
     let s;
     try {
-      s = siguiente(show.stdout);
+      s = siguiente(show.texto, { archivo: show.archivo });
     } catch (err) {
       if (!(err instanceof LoopError)) throw err;
       print(`ERROR: ${err.message}`);
@@ -960,12 +1019,26 @@ export async function publicado({ fetch: fetchFn = globalThis.fetch, homepage, s
 const horasDe = (ms) => (ms / 3600e3).toFixed(1).replace('.', ',');
 const fechaUTC = (ms) => new Date(ms).toISOString().slice(0, 16).replace('T', ' ');
 
+/** Números en tramos: [28, 29, 30, 32] → «28–30, 32». */
+export function tramos(nums) {
+  const o = [...new Set(nums)].sort((a, b) => a - b);
+  const out = [];
+  for (let i = 0; i < o.length; i++) {
+    let j = i;
+    while (j + 1 < o.length && o[j + 1] === o[j] + 1) j++;
+    out.push(j > i ? `${o[i]}–${o[j]}` : `${o[i]}`);
+    i = j;
+  }
+  return out.join(', ');
+}
+
 /** La salud del loop con los datos ya reunidos (pura: la prueban las pruebas). Devuelve las líneas y
     cuántas son «Acción:», lo que la sesión tiene que atender antes de seguir.
       merges: [{ fecha (ms), titulo }] de origin/master · ramas: [{ nombre, fecha (ms), contenida, pr }] de origin
       (pr: el PR fusionado cuya cabeza es la punta de la rama)
-      issues: [{ number, title, labels }] o un texto con el motivo si no se pudo consultar */
-export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], ramas = [], issues = [], desde = DESDE_DIRECTIVA, cron = CRON_H, horas = RECLAMO_H }) {
+      issues: [{ number, title, labels }] o un texto con el motivo si no se pudo consultar
+      superficial: el clon no tiene toda la historia de master (los huecos se miden desde su primer merge) */
+export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], ramas = [], issues = [], desde = DESDE_DIRECTIVA, cron = CRON_H, horas = RECLAMO_H, superficial = false }) {
   const lineas = [];
   let acciones = 0;
   const accion = (t) => {
@@ -982,7 +1055,10 @@ export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], 
   const fusiones = merges.filter((x) => x.fecha >= t0).sort((a, b) => a.fecha - b.fecha);
   const ultima = fusiones.length ? fusiones[fusiones.length - 1].fecha : null;
   lineas.push(`Cadencia: ${hechas} iteraciones desde la directiva (${desde.slice(0, 10)}) para ${esperados} disparos esperados (${esperados ? Math.round((hechas / esperados) * 100) : 100} %)${ultima ? `; la última fusión fue hace ${horasDe(ahora - ultima)} h` : ''}`);
-  const puntos = [t0, ...fusiones.map((x) => x.fecha), ahora];
+  // sin la historia entera, lo de antes del primer merge visible no es un hueco: es lo que el clon no trajo
+  const visible = superficial && fusiones.length ? fusiones[0].fecha : t0;
+  if (superficial) lineas.push(`Clon superficial: master se ve desde ${fusiones.length ? fechaUTC(visible) : 'ningún merge'} UTC; los huecos anteriores no se miden (git fetch --unshallow origin)`);
+  const puntos = [visible, ...fusiones.map((x) => x.fecha).filter((f) => f > visible), ahora];
   for (let i = 1; i < puntos.length; i++) {
     const h = (puntos[i] - puntos[i - 1]) / 3600e3;
     const k = Math.floor(h / cron) - 1;
@@ -993,10 +1069,14 @@ export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], 
   // reclamos: las ramas loop/K
   const loops = ramas.filter((r) => /^loop\/\d+$/.test(r.nombre));
   const conservadas = ramas.filter((r) => /^loop\/\d+-vencida-/.test(r.nombre));
+  // las de iteraciones ya fusionadas son inocuas (las fusionadas con commit de merge están contenidas en master):
+  // una línea y no una Acción por rama, porque el proxy de la nube niega el push --delete (iteraciones 111 a 134)
+  const fusionadas = loops.map((r) => +r.nombre.slice(5)).filter((k) => k <= M);
+  if (fusionadas.length) lineas.push(`Ramas loop/K de iteraciones ya fusionadas: ${fusionadas.length} (loop/${tramos(fusionadas)}), inocuas; la sesión no las borra (en la nube el proxy niega el push --delete): las borra Benjamin con node tools/loop.mjs --limpiar --borrar (Para Benjamin)`);
   for (const r of loops) {
     const k = +r.nombre.slice(5);
     const edad = ahora - r.fecha;
-    if (k <= M) accion(`borrar ${r.nombre}, de una iteración ya fusionada: git push origin --delete ${r.nombre}`);
+    if (k <= M) continue;
     else if (k === M + 1) lineas.push(edad < horas * 3600e3 ? `En curso: ${r.nombre} (último commit hace ${Math.round(edad / 60e3)} min)` : `Vencida: ${r.nombre} lleva ${horasDe(edad)} h sin commits: --reclamar la releva`);
     else accion(`${r.nombre} va más allá de la iteración que toca (${M + 1}): revisar a mano, sin borrarla`);
   }
@@ -1034,13 +1114,13 @@ export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], 
 /** Reúne los datos de --salud (git y, salvo --sin-red, la API pública de issues) y los imprime. */
 export async function salud({ sinRed = false, repo = root, fetchFn = globalThis.fetch, print = console.log, ahora = Date.now() } = {}) {
   if (!sinRed) {
-    const f = git(repo, ['fetch', '-q', '--prune', 'origin', '+refs/heads/*:refs/remotes/origin/*']);
+    const f = fetchOrigin(repo, ['+refs/heads/*:refs/remotes/origin/*']);
     if (f.status !== 0) {
       print(`Sin acceso a origin: ${primera(f.stderr)}`);
       return 5;
     }
   }
-  const show = git(repo, ['show', 'origin/master:IMPROVEMENTS.md']);
+  const show = deRef(repo, 'origin/master');
   if (show.status !== 0) {
     print(`Sin origin/master: ${primera(show.stderr)}`);
     return 5;
@@ -1091,24 +1171,114 @@ export async function salud({ sinRed = false, repo = root, fetchFn = globalThis.
       }
     }
   }
-  const { lineas, acciones } = diagnostico({ ahora, doc: parse(show.stdout), texto: show.stdout, merges, ramas, issues });
+  const { lineas, acciones } = diagnostico({ ahora, doc: parse(show.texto, { archivo: show.archivo }), texto: show.texto, merges, ramas, issues, superficial: esSuperficial(repo) });
   for (const l of lineas) print(l);
   return acciones ? 3 : 0;
+}
+
+/* ---------------------------------------------------------------- limpiar */
+
+/** Las ramas loop/K de iteraciones que ya están en la bitácora de origin/master (K ≤ la última): su trabajo ya
+    entró por su PR. Sin --borrar las lista; con --borrar las borra de origin en un solo push. No toca la loop/N
+    que toca (puede estar en curso), las conservadas de un relevo (loop/K-vencida-…) ni ninguna otra rama.
+    En la nube el proxy niega el push --delete: es para Benjamin, desde su PC. Devuelve el código de salida. */
+export async function limpiar({ borrar = false, repo = root, print = console.log } = {}) {
+  const f = fetchOrigin(repo, ['master', '+refs/heads/loop/*:refs/remotes/origin/loop/*']);
+  if (f.status !== 0) {
+    print(`Sin acceso a origin: ${primera(f.stderr)}`);
+    return 5;
+  }
+  const show = deRef(repo, 'origin/master');
+  if (show.status !== 0) {
+    print(`ERROR: no se pudo leer IMPROVEMENTS.md de origin/master (${primera(show.stderr)})`);
+    return 1;
+  }
+  const M = Math.max(0, ...parse(show.texto, { archivo: show.archivo }).bitacora.filter((e) => e.n !== null).map((e) => e.n));
+  const ks = git(repo, ['for-each-ref', '--format=%(refname:short)', 'refs/remotes/origin/loop/'])
+    .stdout.split('\n')
+    .map((r) => /^origin\/loop\/(\d+)$/.exec(r))
+    .filter((m) => m && +m[1] <= M)
+    .map((m) => +m[1])
+    .sort((a, b) => a - b);
+  if (!ks.length) {
+    print(`Nada que limpiar: ninguna rama loop/K de una iteración ya fusionada (la última es la ${M})`);
+    return 0;
+  }
+  print(`Ramas loop/K de iteraciones ya fusionadas: ${ks.length} (loop/${tramos(ks)})`);
+  if (!borrar) {
+    print('Para borrarlas de origin en un solo push: node tools/loop.mjs --limpiar --borrar');
+    return 0;
+  }
+  const p = git(repo, ['push', '-q', 'origin', '--delete', ...ks.map((k) => `loop/${k}`)]);
+  if (p.status !== 0) {
+    print(`No se pudieron borrar (${primera(p.stderr)}): en una sesión cloud el proxy niega el push --delete; desde un PC con permiso de escritura sí`);
+    return 5;
+  }
+  print(`Borradas de origin: ${ks.length} ramas loop/K`);
+  return 0;
+}
+
+/* ------------------------------------------------------------------ rotar */
+
+const CABECERA_ARCHIVO = `# Bitácora del loop: entradas anteriores
+
+Las entradas de la bitácora de \`IMPROVEMENTS.md\` que ya no van allí, en orden: \`node tools/loop.mjs --rotar\`
+deja en ese archivo las más recientes y trae aquí el resto. Es historia: no se edita, y una entrada nueva va
+siempre al final de \`IMPROVEMENTS.md\`. \`--siguiente\`, \`--check\`, \`--reclamar\` y \`--salud\` leen las dos
+bitácoras juntas (la rotación de los subtipos de mantenimiento, la numeración y las marcas del protocolo).
+
+## Bitácora
+`;
+const AVISO_ROTADA = `Las entradas anteriores están en [\`${ARCHIVO_BITACORA}\`](${ARCHIVO_BITACORA}) (las lleva \`node tools/loop.mjs --rotar\`); el loop lee las dos.`;
+
+/** Deja las últimas `deja` entradas de la bitácora en IMPROVEMENTS.md y agrega las anteriores al final de
+    docs/BITACORA.md (`archivo`, o uno nuevo). Pura: devuelve {texto, archivo, cuantas, primera, ultima} (los
+    dos textos nuevos y las entradas movidas) o null si no hay nada que rotar. Lanza LoopError si
+    IMPROVEMENTS.md no tiene «## Bitácora». */
+export function rotar(texto, archivo = null, deja = ROTAR_DEJA) {
+  const lineas = texto.split('\n');
+  const ini = lineas.findIndex((l) => /^## Bitácora\s*$/.test(l));
+  if (ini < 0) throw new LoopError('IMPROVEMENTS.md sin «## Bitácora»', 1);
+  let fin = lineas.findIndex((l, i) => i > ini && l.startsWith('## '));
+  if (fin < 0) fin = lineas.length;
+  const cab = [];
+  for (let i = ini + 1; i < fin; i++) if (RE_ENTRADA.test(lineas[i])) cab.push(i);
+  if (cab.length <= deja) return null;
+  const corte = cab[cab.length - deja];
+  const sinBlancos = (ls) => {
+    const o = [...ls];
+    while (o.length && !o[0].trim()) o.shift();
+    while (o.length && !o[o.length - 1].trim()) o.pop();
+    return o;
+  };
+  const movidas = sinBlancos(lineas.slice(cab[0], corte));
+  // lo que hay entre «## Bitácora» y la primera entrada se queda, con el aviso una sola vez
+  const intro = sinBlancos(lineas.slice(ini + 1, cab[0]));
+  if (!intro.some((l) => l.includes(ARCHIVO_BITACORA))) intro.push(...(intro.length ? [''] : []), AVISO_ROTADA);
+  const titulos = movidas.filter((l) => RE_ENTRADA.test(l)).map((l) => l.slice(4));
+  return {
+    texto: [...lineas.slice(0, ini + 1), '', ...intro, '', ...lineas.slice(corte)].join('\n'),
+    archivo: `${(archivo ?? CABECERA_ARCHIVO).replace(/\s+$/, '')}\n\n${movidas.join('\n')}\n`,
+    cuantas: titulos.length,
+    primera: titulos[0],
+    ultima: titulos[titulos.length - 1],
+  };
 }
 
 /* --------------------------------------------------------------------- CLI */
 
 function opciones(argv) {
-  const o = { modo: null, json: false, relevo: false, sinRed: false, horas: RECLAMO_H, repo: root, archivo: null, ref: null, help: false };
+  const o = { modo: null, json: false, relevo: false, borrar: false, sinRed: false, horas: RECLAMO_H, repo: root, archivo: null, ref: null, help: false };
   const valor = (i, flag) => {
     if (i + 1 >= argv.length) throw new LoopError(`${flag} necesita un valor`, 1);
     return argv[i + 1];
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (['--siguiente', '--check', '--reclamar', '--publicado', '--salud'].includes(a)) o.modo = a.slice(2);
+    if (['--siguiente', '--check', '--reclamar', '--publicado', '--salud', '--rotar', '--limpiar'].includes(a)) o.modo = a.slice(2);
     else if (a === '--json') o.json = true;
     else if (a === '--relevo') o.relevo = true;
+    else if (a === '--borrar') o.borrar = true;
     else if (a === '--sin-red') o.sinRed = true;
     else if (a === '--horas') o.horas = Number(valor(i++, a));
     else if (a === '--repo') o.repo = resolve(valor(i++, a));
@@ -1121,20 +1291,22 @@ function opciones(argv) {
   return o;
 }
 
+/** El IMPROVEMENTS.md que se lee y su bitácora vieja: los del árbol de trabajo, los de un ref (--ref) o los de
+    un archivo (--archivo, con el docs/BITACORA.md de su carpeta, si lo hay). */
 function textoDe(o) {
-  if (o.archivo) return readFileSync(o.archivo, 'utf8');
+  if (o.archivo) return { texto: readFileSync(o.archivo, 'utf8'), archivo: leer(join(dirname(o.archivo), ARCHIVO_BITACORA)) };
   if (o.ref) {
-    const r = git(root, ['show', `${o.ref}:IMPROVEMENTS.md`]);
+    const r = deRef(root, o.ref);
     if (r.status !== 0) throw new LoopError(`no se pudo leer ${o.ref}:IMPROVEMENTS.md (${primera(r.stderr)})`, 1);
-    return r.stdout;
+    return { texto: r.texto, archivo: r.archivo };
   }
-  return readFileSync(join(root, 'IMPROVEMENTS.md'), 'utf8');
+  return { texto: readFileSync(join(root, 'IMPROVEMENTS.md'), 'utf8'), archivo: leer(join(root, ARCHIVO_BITACORA)) };
 }
 
 /** El fetch de Node no mira HTTPS_PROXY por sí solo: en una sesión cloud (proxy obligatorio) los modos
     que salen a la red se relanzan con NODE_USE_ENV_PROXY=1; en un PC sin proxy no cambia nada. */
 function conProxy(argv, o) {
-  const red = o.modo === 'publicado' || (['reclamar', 'salud'].includes(o.modo) && !o.sinRed);
+  const red = ['publicado', 'limpiar'].includes(o.modo) || (['reclamar', 'salud'].includes(o.modo) && !o.sinRed);
   const proxy = process.env.HTTPS_PROXY || process.env.https_proxy;
   if (!red || !proxy || process.env.NODE_USE_ENV_PROXY) return null;
   const r = spawnSync(process.execPath, ['--disable-warning=UNDICI-EHPA', fileURLToPath(import.meta.url), ...argv], {
@@ -1153,7 +1325,8 @@ async function main(argv) {
   const relanzado = conProxy(argv, o);
   if (relanzado !== null) return relanzado;
   if (o.modo === 'siguiente') {
-    const s = siguiente(textoDe(o));
+    const { texto, archivo } = textoDe(o);
+    const s = siguiente(texto, { archivo });
     if (o.json) {
       const { ultima, ...json } = s;
       console.log(JSON.stringify(json, null, 2));
@@ -1161,12 +1334,27 @@ async function main(argv) {
     return 0;
   }
   if (o.modo === 'check') {
-    const r = check(textoDe(o));
+    const { texto, archivo } = textoDe(o);
+    const r = check(texto, { archivo });
     console.log(r.salida);
     return r.errores ? 1 : 0;
   }
+  if (o.modo === 'rotar') {
+    const ruta = join(o.repo, ARCHIVO_BITACORA);
+    const r = rotar(readFileSync(join(o.repo, 'IMPROVEMENTS.md'), 'utf8'), leer(ruta));
+    if (!r) {
+      console.log(`Nada que rotar: la bitácora de IMPROVEMENTS.md tiene ${ROTAR_DEJA} entradas o menos`);
+      return 0;
+    }
+    mkdirSync(dirname(ruta), { recursive: true });
+    writeFileSync(ruta, r.archivo);
+    writeFileSync(join(o.repo, 'IMPROVEMENTS.md'), r.texto);
+    console.log(`Rotadas ${r.cuantas} entradas a ${ARCHIVO_BITACORA} (de «${r.primera}» a «${r.ultima}»); quedan ${ROTAR_DEJA} en IMPROVEMENTS.md`);
+    return 0;
+  }
   if (o.modo === 'reclamar') return reclamar({ relevo: o.relevo, sinRed: o.sinRed, horas: o.horas, repo: o.repo });
   if (o.modo === 'salud') return salud({ sinRed: o.sinRed, repo: o.repo });
+  if (o.modo === 'limpiar') return limpiar({ borrar: o.borrar, repo: o.repo });
   const p = await publicado();
   console.log(p.linea);
   return p.codigo;

@@ -342,12 +342,13 @@ vendor/               copias locales de d3, Three.js, OrbitControls y las fuente
 tools/check-i18n.mjs  verifica las traducciones contra el inglés
 tools/vendor.mjs      descarga a vendor/ las librerías (comprobando su hash) y las fuentes
 tools/smoke.mjs       prueba de humo: abre la demo en Chromium y recorre lo principal
-tools/loop.mjs        el loop: elige la iteración y rota el subtipo del mantenimiento (--siguiente), vigila IMPROVEMENTS.md, la skill, la investigación y la pasada de Replica (--check), reclama la rama (--reclamar), mide su propia salud (--salud) y la web publicada (--publicado)
+tools/loop.mjs        el loop: elige la iteración y rota el subtipo del mantenimiento (--siguiente), vigila IMPROVEMENTS.md, la skill, la investigación y la pasada de Replica (--check), reclama la rama (--reclamar), mide su propia salud (--salud) y la web publicada (--publicado), lleva la bitácora vieja a docs/BITACORA.md (--rotar) y lista o borra las ramas loop/K ya fusionadas (--limpiar [--borrar], desde un PC)
 tools/audit.mjs       auditoría exploratoria en Chromium (errores, CSP, desbordes, accesibilidad, cuota, rendimiento); --puerta compara con tools/audit-base.json
 tools/check.mjs       la puerta: npm run check (node --check, node --test, i18n, loop --check, smoke, auditoría y e2e)
 tools/opencode.mjs    una iteración del loop en OpenCode con un modelo de OmniRoute: worktree limpio, proveedor y /iteracion
 tools/*.test.mjs      pruebas de la lógica contra APIs de GitHub, GitLab, Codeberg y Bitbucket simuladas, del service worker, de los archivos que arma snapshot.js, del loop (y su lanzador de OpenCode) y de la auditoría (`node --test`)
 docs/investigacion.md la investigación de mercado, fechada y con fuentes, de la que sale la hoja de ruta
+docs/BITACORA.md      las entradas viejas de la bitácora del loop (IMPROVEMENTS.md guarda las últimas; el loop lee las dos)
 e2e/                  pruebas de punta a punta de la app de escritorio y la web (npm run test:e2e)
 .claude/skills/iteracion/  cómo hace una iteración el loop (reclamo, protocolos de QA y de cada subtipo de mantenimiento, puerta, registro, PR); PROMPT.md es el prompt de la Routine
 .opencode/commands/iteracion.md  el /iteracion de OpenCode: el prompt de la Routine y qué herramienta reemplaza a cada una de Claude Code

@@ -1,6 +1,7 @@
 # Mejora continua
 
-Hoja de ruta, pendientes y bitácora de las iteraciones del loop (una cada 4 horas).
+Hoja de ruta, pendientes y bitácora de las iteraciones del loop (una cada 4 horas). Las entradas viejas
+de la bitácora están en [`docs/BITACORA.md`](docs/BITACORA.md) (las lleva `node tools/loop.mjs --rotar`).
 
 ## Directiva vigente: ampliar el alcance
 
@@ -178,27 +179,32 @@ cada iteración lo repite (`node tools/loop.mjs --salud` lo imprime) y se quita 
    `--salud` por la API pública y la hoja se repone con lo ya investigado mientras esté vigente (30 días).
    Sin `WebFetch` no hay pasada de Replica, y la arena necesita además que la sesión pueda lanzar
    subagentes que escriban en `.arena/`; si algo falta, no se hace y la bitácora lo dice.
-3. **La mitad de los disparos no llega a iteración** (desde 2026-10-13). Medido el 2026-10-13: 10
-   iteraciones fusionadas para 18 disparos esperados desde la directiva; un hueco de 36,5 h (del 10 al 12
-   de octubre, con el entorno reiniciándose) y un reclamo perdido de 6 h (`loop/28`, relevado). `--salud`
-   lo mide en cada iteración. Decidir si se revisa la Routine (cuota, entorno) o se sube la cadencia
-   (cron cada 2 h con el mismo candado).
-4. **Ramas viejas** (desde 2026-10-13). 23 ramas `claude/*`, `ccr-*` y `permisos-claude` ya están
-   fusionadas (su PR) o contenidas en master, y `claude/laughing-carson-eyq3az` (2026-10-07) tiene
-   trabajo sin fusionar. `node tools/loop.mjs --salud` las lista; borrarlas es tuyo: el loop nunca borra
-   ni fusiona ramas ajenas.
+3. **¿Subir la cadencia?** (desde 2026-10-13). Medido de nuevo el 2026-10-25: ya no se pierde la mitad
+   de los disparos (`--salud` cuenta más iteraciones que disparos esperados desde la directiva, una por
+   disparo), y de la 109 a la 134 cada iteración tardó de 8 a 81 min del reclamo al merge: el loop pasa
+   la mayor parte de cada ventana de 4 h parado. Lo que todavía se pierde son disparos tras una sesión
+   que dejó su reclamo sin fusionar (`loop/107`, `loop/128`: 12 h cada vez); desde el 2026-10-25 los
+   releva el disparo siguiente (`RECLAMO_H` de `tools/loop.mjs`, menor que `CRON_H`). Decidir si el cron
+   de la Routine pasa a cada 2 h: el candado ya evita que dos sesiones se pisen, y `CRON_H` y
+   `RECLAMO_H` bajan con él (una prueba exige que el reclamo venza antes del disparo siguiente).
+4. **Ramas viejas** (desde 2026-10-13). Las ramas `claude/*`, `ccr-*` y `permisos-claude` no son del loop:
+   `node tools/loop.mjs --salud` dice cuáles ya están fusionadas o contenidas en master y cuáles tienen
+   trabajo sin fusionar (11 y 19 el 2026-10-25). Borrarlas o fusionarlas es tuyo: el loop nunca toca
+   ramas ajenas.
 5. **¿Ordenar la hoja de ruta por puntaje?** (desde 2026-10-13). Con los puntajes de
    `docs/investigacion.md`, lo primero serían los ítems 11, 12 y 19 (6,0), el 9 (4,5) y el 23 (4,0); hoy
    el orden es el de la directiva (9, 10, 11…). El loop sigue el orden escrito: reordenar es una decisión
    de producto.
 6. **Publicar la extensión de VS Code** (desde 2026-10-14). El paquete está en `vscode/` (editor `publisher: bfigueroa99` en su `package.json`). Crear el publicador en marketplace.visualstudio.com, un token de Azure DevOps y correr `node tools/vscode.mjs && cd vscode && npx @vscode/vsce publish`; o instalar el `.vsix` a mano.
-7. **Borrar las ramas `loop/*` fusionadas** (desde 2026-10-14). El proxy de las sesiones cloud responde
-   403 a `git push origin --delete`, así que `loop/28`…`loop/54` (27 ramas, cada una con su PR ya
-   fusionado, del #54 al #82) siguen en origin; como se fusionaron con squash, en el grafo parecen ramas
-   que nunca volvieron a `master`. Desde el 2026-10-14 el loop fusiona con commit de merge (`CLAUDE.md`),
-   así que las nuevas quedan contenidas en `master` aunque no se borren. Activar Settings → General →
-   Pull Requests → «Automatically delete head branches» (GitHub borra la rama al fusionar, sin pasar por
-   el proxy) y borrar esas 27 a mano en la página de ramas.
+7. **Borrar las ramas `loop/*` fusionadas** (desde 2026-10-14). El proxy de las sesiones cloud niega
+   `git push origin --delete` (falló en todas las iteraciones de la 111 a la 134; desde el 2026-10-25 ya no
+   se intenta), así que cada `loop/K` fusionada se queda en origin: 107 el 2026-10-25 (`loop/28` a
+   `loop/134`; las 28 a 54 se fusionaron con squash y en el grafo parecen ramas que nunca volvieron a
+   `master`). Desde un PC con permiso de escritura, `node tools/loop.mjs --limpiar` las lista y
+   `node tools/loop.mjs --limpiar --borrar` las borra en un solo push (solo las de iteraciones ya
+   fusionadas: nunca la que está en curso ni las `loop/K-vencida-…`). Para que no se vuelvan a juntar:
+   Settings → General → Pull Requests → «Automatically delete head branches» (GitHub borra la rama al
+   fusionar, sin pasar por el proxy).
 8. **Probar la vista de texto con un lector de pantalla real** (desde 2026-10-14). El loop solo comprueba la
    estructura ARIA y el teclado con Playwright. Abre la demo, pulsa el botón de las líneas y recórrela con NVDA,
    VoiceOver u Orca (¿la región viva anuncia sin repetir? ¿el foco se queda al actualizar?); lo que falle va a
@@ -526,6 +532,9 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     página) falló en 2 de 6 corridas de `npm run check`, y otra falló en «filtro por autor» (`Cannot read
     properties of undefined (reading 'sha')`); cada una pasó al repetir. En la iteración 112 falló en 2 de 3
     corridas de `npm run check` (también «replay: tramo de fechas y rótulos propios», mismo `'sha'`) y en 0 de 6 sueltas.
+    El 2026-10-25 (cambio de maquinaria, sin tocar la página, con la máquina a carga 12 en 4 CPU) falló en 1 de 2
+    `npm run check`, junto con «bitácora en vivo» (`'sha'`) y «vista de texto: filtra por rama…» (60 s); la
+    repetición pasó los 116 pasos.
     Reproducción: `xvfb-run -a npm run check` → `✗ vista 2D: page.waitForSelector: Timeout 30000ms exceeded.`
 
 ### Baja
@@ -539,21 +548,16 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-5. [Deuda] Rotar la bitácora: `node tools/loop.mjs --rotar` deja las últimas 8 entradas en este archivo
-    y mueve el resto a `docs/BITACORA.md` (idempotente: la segunda corrida dice «Nada que rotar»; queda
-    una línea «Las iteraciones anteriores están en docs/BITACORA.md»); `--siguiente` sigue leyendo N de
-    aquí y `--check` exige iteraciones sin repetidos entre los dos archivos. Motivo: `--salud` mide el
-    archivo en cada iteración (77 KB el 2026-10-13, 55 KB de bitácora), y cada sesión nueva lo lee entero.
-6. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+5. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-7. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+6. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-8. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+7. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-9. [Rendimiento] El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (los dos
+8. [Rendimiento] El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (los dos
     `MeshStandardMaterial` de nodos y aristas, ~170 ms y 65 KB de fuente cada uno), dentro de una tarea de
     ~1,2 s; SwiftShader no ofrece `KHR_parallel_shader_compile` y los 12 hacen falta (el mundo es la escena
     de la órbita). Descartado en la 107: `renderer.compile(scene, camera)` con instancias de mentira antes
@@ -562,45 +566,41 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     igual, o precompilar solo los dos `MeshStandardMaterial` con una escena propia que repita luces y niebla.
     Reproducción: contar `linkProgram` con `addInitScript` sobre `?lang=es` (12 programas, ~186 ms en
     `getProgramParameter`).
-10. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+9. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
     Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-11. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+10. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-12. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
+11. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-13. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
+12. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
     nítidas (demo a 320 px: 3 de 5 atenuadas); comprobar que Tab y el toque no caigan en una atenuada.
     Reproducción: Playwright, 320 px, 3D, `?repo=demo` → `.g3-head` con opacidad 0,22 y `display: flex`.
-14. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
+13. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
     vistas, las estadísticas y la bitácora encima) y el 3D no arma etiquetas hasta verse; pensar en una
     forma de llegar al grafo sin recorrer la página (ancla o tarjetas plegables en celular).
     Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la auditoría → captura sin grafo; `#graph3d` fuera de la pantalla.
-15. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+14. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-16. [Seguridad] Las fuentes Codeberg y Bitbucket no validan en el origen las URL de los pull requests
+15. [Seguridad] Las fuentes Codeberg y Bitbucket no validan en el origen las URL de los pull requests
     (`codeberg.js:296` `p.html_url`, `bitbucket.js:204` y `:321` `links.html.href`), a diferencia de
     `codeberg.js:179` y GitHub (`/^https:\/\//`). La interfaz ya las filtra con `U.safeUrl` (iteración 119),
     pero un dato fuera de http(s) llega hasta las exportaciones (resumen, bitácora en Markdown).
     Reproducción: `tools/codeberg.test.mjs` con un PR cuyo `html_url` sea `javascript:alert(1)` → la actividad conserva esa `url`.
-17. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
+16. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
     `WebFetch` a `releases.electronjs.org` dio HTTP 500 en la iteración 119. Repetir la comparación
     cuando la página responda y subir si hay una estable más nueva.
     Reproducción: `WebFetch https://releases.electronjs.org/release/stable` → `HTTP 500`.
-18. [Deuda] El clon de las sesiones cloud viene superficial: `node tools/loop.mjs --check` da ERROR R3 («ese PR no
-    está en origin/master») y `node --test` falla 2 pruebas hasta `git fetch --unshallow origin`. Que `--check`
-    y `--salud` avisen «clon superficial: git fetch --unshallow origin» en vez del ERROR.
-    Reproducción: en un clon `--depth 50`, `node tools/loop.mjs --check` → `ERROR R3 hecho en #45 …: ese PR no está en origin/master`.
-19. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
+17. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
     corta a los 120 s; documentar en «Cómo validar» que se corra en segundo plano, como `audit --langs`.
     Reproducción: `time node tools/smoke.mjs` → ~480 s.
-20. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
+18. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
     `npm run check` en la iteración 128 (la repetición pasó), aun con la espera de la 127.
     Reproducción: `npm run check` → `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
 
@@ -2775,3 +2775,44 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Nota: el clon venía superficial (`git fetch --unshallow`); `git push origin --delete loop/88` lo denegó el clasificador de permisos (Para Benjamin 7).
 - Validado: 409 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 135, mantenimiento · Rendimiento: pendiente 9 (El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (…)
+
+### 2026-10-25 · Cambio de maquinaria: clon entero, ramas fusionadas sin ruido, relevo a tiempo y bitácora rotada
+
+- **Medido** (origin/master, las notas de la bitácora y `--salud`, el 2026-10-25): las 23 iteraciones de la
+  112 a la 134 anotaron lo mismo dos veces: el clon superficial de la sesión (R3 en ERROR falso y 2 pruebas
+  en rojo hasta `git fetch --unshallow`) y un `git push origin --delete loop/K` negado por el proxy o por el
+  clasificador de permisos. `--salud` daba 107 líneas `Acción: borrar loop/K` que ninguna sesión podía
+  atender y, en un clon `--depth 50`, un hueco falso de 171,9 h. `loop/128` (reclamada a las 16:05 del
+  2026-10-23 y dejada sin fusionar a las 16:30 porque el smoke falló dos veces) dejó «Ocupada» al disparo
+  de las 20:04, porque el reclamo vencía a las 6 h y el cron es cada 4: 11,9 h sin iteración, como
+  `loop/107` (12,1 h). Del reclamo al merge, las iteraciones 109 a 134 tardaron de 8 a 81 min.
+  `IMPROVEMENTS.md` pesaba 312 KB, 248 de ellos de bitácora, y cada sesión lo lee.
+- **Lo nuevo:** el hook de inicio completa el clon superficial en la nube, y `--reclamar`, `--salud` y
+  `--limpiar` lo completan al traer origin; en un clon que sigue superficial, R3 avisa de los PR anteriores
+  al primero visible (los posteriores siguen siendo un error) y `--salud` mide los huecos desde el primer
+  merge que ve. Las `loop/K` ya fusionadas salen en una sola línea de `--salud`, no como una Acción por
+  rama; la skill deja de intentar borrarlas en la nube, y `node tools/loop.mjs --limpiar [--borrar]` las
+  lista o las borra en un solo push desde un PC (Para Benjamin 7). `RECLAMO_H` baja de 6 a 3,5 h, por
+  debajo de `CRON_H`: el disparo siguiente releva un reclamo abandonado, y una prueba lo ata. La bitácora
+  vive en dos archivos: `node tools/loop.mjs --rotar` deja las últimas 8 entradas aquí y lleva las demás a
+  `docs/BITACORA.md` (en este PR, las 135 entradas hasta la iteración 127: `IMPROVEMENTS.md` baja de 312 a
+  79 KB);
+  `--siguiente`, `--check`, `--reclamar` y `--salud` leen las dos (los turnos de mantenimiento miran toda
+  la historia), y R14 avisa con más de 16 entradas aquí, para rotar de a lotes. Para Benjamin 3, 4 y 7 se
+  reescriben con lo medido hoy y sin cifras que envejezcan solas.
+- **Cierra:** los pendientes de Deuda «rotar la bitácora» (5) y «el clon de las sesiones cloud viene
+  superficial» (18); los demás se renumeran (el de los sombreadores del 3D pasa del 9 al 8).
+- **Pruebas que fallan sin el cambio:** `tools/loop.test.mjs` (de 86 a 96), cada guarda con su mutación:
+  R3 sin el aviso del clon superficial, una Acción por cada `loop/K` fusionada, `RECLAMO_H` en 6, los huecos
+  medidos desde la directiva en un clon superficial, `parse` sin la bitácora vieja, el fetch sin
+  `--unshallow` y R14 sin su aviso. La suite de `loop.test.mjs` pasa también en un clon `--depth 50`
+  (antes fallaban 2).
+- README: `--rotar` y `--limpiar` en `tools/loop.mjs`, y `docs/BITACORA.md` en la estructura.
+- QA: no toca la página ni el escritorio; `--salud` y `--limpiar` corridos contra origin (107 ramas en una
+  línea, sin acciones), `--rotar` dos veces (la segunda, «Nada que rotar») y lo movido es idéntico byte a
+  byte a lo que había.
+- Al validar: el primer `npm run check` falló en tres pasos del smoke que este cambio no toca («vista 2D»,
+  «bitácora en vivo» con `'sha'` y «vista de texto: filtra por rama…»), con la máquina a carga 12 en 4 CPU;
+  la repetición pasó los 116. Anotado en el pendiente 1.
+- Validado: 419 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 135, mantenimiento · Rendimiento: pendiente 8 (El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (…)

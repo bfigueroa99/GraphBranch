@@ -2773,5 +2773,5 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 - Arena: no aplica: una sola forma obvia (reusar `weekly` con los PRs ya cargados).
 - Reclamo: loop/134, sin colisión
 - Nota: el clon venía superficial (`git fetch --unshallow`); `git push origin --delete loop/88` lo denegó el clasificador de permisos (Para Benjamin 7).
-- Validado: PENDIENTE
+- Validado: 409 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 135, mantenimiento · Rendimiento: pendiente 9 (El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (…)

@@ -752,5 +752,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: sin textos nuevos (i18n sin cambios); capa con `&max=` válido, 0, texto y sin él en el smoke.
 - Arena: no aplica: una sola forma obvia (recortar la vista de datos antes del layout, como el filtro por autor).
 - Reclamo: loop/136, sin colisión
-- Validado: (pendiente de la corrida final)
+- Validado: 422 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 137, expansión: ítem 89 (Los forks en el grafo, cuarta entrega, Datos)

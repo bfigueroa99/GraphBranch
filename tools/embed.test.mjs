@@ -108,3 +108,13 @@ test('embedOptions: title se limpia, se acota a 60 letras y no entra sin ?embed'
   assert.equal(GB.embedOptions('?embed=1&title=%3Cb%3Ehola').title, '<b>hola'); // se escapa al pintar (textContent)
   assert.equal(GB.embedOptions('?title=hola'), null);
 });
+
+test('embedOptions: max acepta de 1 a 200 y por defecto muestra todas las ramas', () => {
+  const { GB } = load('');
+  assert.equal(GB.embedOptions('?embed=1').max, 0);
+  assert.equal(GB.embedOptions('?embed=1&max=5').max, 5);
+  assert.equal(GB.embedOptions('?embed=1&max=1').max, 1);
+  assert.equal(GB.embedOptions('?embed=1&max=200').max, 200);
+  for (const bad of ['0', '201', '-3', '1.5', 'abc', '', '9999', '1e2', '5%20']) assert.equal(GB.embedOptions('?embed=1&max=' + bad).max, bad === '5%20' ? 5 : 0, bad);
+  assert.equal(GB.embedOptions('?max=5'), null);
+});

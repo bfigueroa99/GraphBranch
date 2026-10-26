@@ -191,6 +191,7 @@
   })();
   U.bitbucketBase = BITBUCKET_URL;
   const EMBED = document.documentElement.classList.contains('embed'); // ?embed=1, ver i18n.js
+  const embedMax = EMBED ? GB.embedOptions(location.search)?.max || 0 : 0; // &max=N: tope de ramas de la capa
   const settings = {
     token: desktop ? '' : U.secret.get('token', ''),
     gitlabToken: desktop ? '' : U.secret.get('gitlabToken', ''),
@@ -920,9 +921,10 @@
   /** Calcula el layout del repo a la vista y dibuja el grafo (salvo durante el Replay). */
   function drawGraph(initial, calm = false) {
     const data = source.view ? source.view() : source.data;
-    const shownData = authorView(data).data;
+    const shownData = GB.search.limitBranches(authorView(data).data, embedMax); // &max=N: solo la capa embebida
     const L = layout.compute(shownData);
     lastRender = { data, L };
+    if (embedMax) document.querySelector('.graph-stage')?.setAttribute('data-embed-branches', String(L.heads.filter((h) => h.color !== 'ghost').length)); // lo que comprueba el smoke
     // durante el Replay el grafo muestra el pasado; lo nuevo sigue llegando al panel y se dibuja al volver
     if (!replay.active) {
       const gctx = liveCtx(shownData, initial, calm);

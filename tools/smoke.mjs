@@ -2855,6 +2855,23 @@ console.log('Capa para streaming: &title= pone un rótulo propio (?embed=1)');
   await page.context().close();
 }
 
+console.log('Capa para streaming: &max= limita las ramas (?embed=1)');
+{
+  const page = await openPage({ viewport: { width: 640, height: 400 } });
+  await step(page, '&max=2 deja 2 ramas en la capa; sin &max= las de la demo; valores inválidos, todas', async () => {
+    const shown = async (q) => {
+      await page.goto(`${base}/index.html?lang=es&embed=1${q}`);
+      await loaded(page);
+      await page.waitForSelector('#graph3d canvas, #graph canvas', { timeout: T(30000) });
+      return page.evaluate(() => Number(document.querySelector('.graph-stage').dataset.embedBranches ?? -1));
+    };
+    if ((await shown('&max=2')) !== 2) throw new Error('&max=2 no deja 2 ramas');
+    if (await shown('')  !== -1) throw new Error('sin &max= la capa marca ramas');
+    if (await shown('&max=0') !== -1 || await shown('&max=abc') !== -1) throw new Error('un &max= inválido limita');
+  });
+  await page.context().close();
+}
+
 console.log('Filtro por ruta desde la URL (?path=)');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

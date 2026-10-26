@@ -17,7 +17,8 @@ window.GB = window.GB || {};
       &hide=notices,combo (lo que no debe verse; lo de siempre se ve) y &rotate=30 (cada cuántos
       segundos pasa al siguiente repo de ?repo=, de 5 a 3600; sin él, 0 y no rota) y &theme=light|dark (fija el
       tema de la capa; sin él, el del sistema) y &title=Texto (un rótulo propio sobre la capa: sin
-      caracteres de control, hasta 60 letras; se pone con textContent, nunca como HTML). Sin ?embed, no hay nada. */
+      caracteres de control, hasta 60 letras; se pone con textContent, nunca como HTML) y &max=N (cuántas ramas muestra: la rama por defecto y
+      las de commit más reciente; entero de 1 a 200, sin él, todas). Sin ?embed, no hay nada. */
   function embedOptions(search) {
     const q = new URLSearchParams(search || '');
     if (!q.has('embed') || /^(0|false|no|off)$/i.test(q.get('embed'))) return null;
@@ -32,8 +33,10 @@ window.GB = window.GB || {};
       .slice(0, 60)
       .join('')
       .trim();
+    const max = /^\d{1,3}$/.test((q.get('max') || '').trim()) ? Number(q.get('max').trim()) : 0;
     return {
       title,
+      max: max >= 1 && max <= 200 ? max : 0,
       theme: /^(light|dark)$/i.test((q.get('theme') || '').trim()) ? q.get('theme').trim().toLowerCase() : '',
       rotate: rotate >= 5 && rotate <= 3600 ? rotate : 0,
       clear: /^transparent$/i.test(bg),

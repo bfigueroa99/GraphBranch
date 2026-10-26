@@ -7,7 +7,7 @@ El prompt de la Routine, tal cual está en `.claude/skills/iteracion/PROMPT.md`:
 
 Corrés en OpenCode (lo lanza `node tools/opencode.mjs`, normalmente con un modelo detrás de OmniRoute), no en Claude Code. `CLAUDE.md`, la directiva de `IMPROVEMENTS.md`, la skill y la puerta mandan igual; cambian solo las herramientas:
 
-- **La skill**: con la herramienta `skill` (`iteracion`) o leyendo `.claude/skills/iteracion/SKILL.md`. La arena y las del pack Replica se leen por ruta, como dice la skill.
+- **La skill**: con la herramienta `skill` (`iteracion`) o leyendo `.claude/skills/iteracion/SKILL.md`. La arena, find-skills y las del pack Replica se leen por ruta, como dice la skill; la CLI de find-skills (`npx skills@1.7.4`) corre con `bash`, igual que en Claude Code.
 - **GitHub**: no hay MCP de GitHub; cada `mcp__github__*` de la skill se hace con `gh`. Si `gh auth status` falla, no hay cómo abrir ni fusionar: la rama queda empujada y el resumen lo dice.
   - `create_pull_request` → `gh pr create --base master --head loop/N --title "<título>" --body-file <archivo>`; P es el número de la URL que imprime.
   - `merge_pull_request` (`merge_method: merge`, `commit_title: "<título> (#P)"`) → `gh pr merge P --merge --subject "<título> (#P)" --body ""`. Nunca `--squash` ni `--rebase`.

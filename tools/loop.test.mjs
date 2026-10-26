@@ -13,7 +13,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { ARCHIVO_BITACORA, ARENA_MAX, AUDITABLES, CRON_H, EJES, FLAGS, HOJA_SIN_FUENTE, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, PARA_BENJAMIN_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SUBTIPOS, appReferencia, check, diagnostico, matrizReplica, necesidades, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, siguiente, tramos } from './loop.mjs';
+import { ARCHIVO_BITACORA, ARENA_MAX, AUDITABLES, CRON_H, EJES, FLAGS, HOJA_SIN_FUENTE, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SUBTIPOS, appReferencia, check, diagnostico, matrizReplica, necesidades, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, siguiente, tramos } from './loop.mjs';
 import { TIPOS } from './audit.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -466,6 +466,25 @@ describe('check()', () => {
     assert.equal(nivel(check(fixture({ entradas: [...lista, entrada({ titulo: `${MARCA_PROTOCOLO}, rotación y salud` }), it31(''), marca] }), { log: LOG }), 'R5'), 'ok');
   });
 
+  test('R5: las iteraciones después de la marca de find-skills llevan «- Skills:» con la consulta y lo que se hizo, o por qué no aplica', () => {
+    const lista = iteraciones(30);
+    const marca = entrada({ titulo: `${MARCA_SKILLS} en el loop`, siguiente: 'iteración 31, mantenimiento · QA: auditoría' });
+    const it31 = (cuerpo) => entrada({ n: 31, tipo: 'Mantenimiento', subtipo: 'QA', cuerpo: `\n- **Hallazgos:** 3 nuevos.${cuerpo}`, siguiente: 'iteración 32, expansión: ítem 6 (algo, Fuentes)' });
+    const con = (cuerpo) => check(fixture({ entradas: [...lista, entrada({ titulo: `${MARCA_PROTOCOLO}, rotación y salud` }), marca, it31(cuerpo)] }), { log: LOG });
+    const consulto = con('\n- Skills: "webgl performance" → acme/three-skills@three-perf, consultada (instancias en vez de mallas sueltas)');
+    assert.equal(nivel(consulto, 'R5'), 'ok', consulto.salida);
+    assert.match(texto(consulto, 'R5'), /1 con «- Skills:»/);
+    assert.equal(nivel(con('\n- Skills: "a11y audit" → acme/a11y@aria-review, instalada (1a2b3c4, MIT)'), 'R5'), 'ok');
+    assert.equal(nivel(con('\n- Skills: "playwright" → descartadas: x/y@stealth (evasión), z/w@pw (pide npx de un paquete ajeno)'), 'R5'), 'ok');
+    assert.equal(nivel(con('\n- Skills: no aplica: un arreglo de una línea en el parser.'), 'R5'), 'ok');
+    assert.match(texto(con(''), 'R5'), /iteración 31 sin la viñeta «- Skills:»/);
+    assert.match(texto(con('\n- Skills: no aplica.'), 'R5'), /iteración 31: «- Skills: no aplica» sin el porqué/);
+    assert.match(texto(con('\n- Skills: busqué y encontré una buena.'), 'R5'), /iteración 31: «- Skills:» sin la consulta y lo que se hizo/);
+    assert.match(texto(con('\n- Skills: "webgl" → acme/three-skills@three-perf'), 'R5'), /iteración 31: «- Skills:» sin la consulta y lo que se hizo/);
+    // antes de la marca no se exige
+    assert.equal(nivel(check(fixture({ entradas: [...lista, entrada({ titulo: `${MARCA_PROTOCOLO}, rotación y salud` }), it31(''), marca] }), { log: LOG }), 'R5'), 'ok');
+  });
+
   test('«Fusión de #15 antes de abrir el PR» y «Cambio de objetivo» no cuentan como iteración', () => {
     const lista = iteraciones(27);
     const doc = fixture({
@@ -613,6 +632,31 @@ node tools/loop.mjs --reclamar --sin-red && npm run check -- --e2e
     }
   });
 
+  test(`find-skills corre npx ${SKILLS_CLI} sin telemetría, solo find, use y add (copiado, al proyecto)`, () => {
+    const CLI = `\n\`\`\`sh\nDISABLE_TELEMETRY=1 npx ${SKILLS_CLI} find <consulta>\nDISABLE_TELEMETRY=1 npx ${SKILLS_CLI} use <dueño/repo>@<skill>\nDISABLE_TELEMETRY=1 npx ${SKILLS_CLI} add <dueño/repo> --skill <nombre> -a claude-code --copy -y\n\`\`\`\n`;
+    const con = (bloque, settings = SETTINGS) => r8({ skill: SKILL + bloque, settings });
+    const permitido = JSON.stringify({ permissions: { allow: [...JSON.parse(SETTINGS).permissions.allow, `Bash(npx ${SKILLS_CLI}:*)`] } });
+    assert.equal(nivel(con(CLI, permitido), 'R8'), 'ok', con(CLI, permitido).salida);
+    // sin el permiso es un aviso, no un error: lo suma Benjamin (Para Benjamin 2)
+    assert.equal(nivel(con(CLI), 'R8'), 'aviso');
+    assert.match(texto(con(CLI), 'R8'), new RegExp(`«npx ${SKILLS_CLI.replaceAll('.', '\\.')}».*Para Benjamin 2`));
+    // en la prosa se puede nombrar lo prohibido; en un bloque de código, no
+    assert.equal(nivel(con(CLI + '\nNunca `npx skills update` ni `-g`.\n', permitido), 'R8'), 'ok');
+    for (const [malo, que] of [
+      [CLI.replace(`npx ${SKILLS_CLI} find`, 'npx skills find'), /como «skills»: va npx skills@/],
+      [CLI.replace(`npx ${SKILLS_CLI} find`, 'npx skills@latest find'), /como «skills@latest»/],
+      [CLI.replace(`DISABLE_TELEMETRY=1 npx ${SKILLS_CLI} use`, `npx ${SKILLS_CLI} use`), /sin DISABLE_TELEMETRY=1/],
+      [CLI.replace('--copy -y', '--copy -y -g'), /instala skills globales/],
+      [CLI.replace(' --copy -y', ' -y'), /«skills add» sin --copy -a claude-code/],
+      [CLI.replace(`npx ${SKILLS_CLI} find <consulta>`, `npx ${SKILLS_CLI} update`), /«skills update»: el loop solo usa find, use y add/],
+      [CLI.replace(`npx ${SKILLS_CLI} find <consulta>`, `npx ${SKILLS_CLI} experimental_sync -y`), /«skills experimental_sync»/],
+    ]) {
+      const r = con(malo, permitido);
+      assert.equal(nivel(r, 'R8'), 'ERROR', malo);
+      assert.match(texto(r, 'R8'), que);
+    }
+  });
+
   test('sin skill en el repo es solo un aviso', () => {
     const dir = mkdtempSync(join(tmpdir(), 'loop-'));
     const r = check(fixture(), { log: LOG, dir });
@@ -621,9 +665,10 @@ node tools/loop.mjs --reclamar --sin-red && npm run check -- --e2e
     assert.match(texto(r, 'R8'), /sin skill/);
   });
 
-  test('los archivos reales del repo pasan R8', () => {
+  test('los archivos reales del repo pasan R8 (a lo sumo con el aviso del permiso de find-skills, que suma Benjamin)', () => {
     const r = check(fixture(), { log: LOG });
-    assert.equal(nivel(r, 'R8'), 'ok', r.salida);
+    if (nivel(r, 'R8') === 'aviso') assert.match(texto(r, 'R8'), new RegExp(`^SKILL\\.md usa «npx ${SKILLS_CLI.replaceAll('.', '\\.')}» [^;]*\\(Para Benjamin 2\\)$`), r.salida);
+    else assert.equal(nivel(r, 'R8'), 'ok', r.salida);
   });
 });
 

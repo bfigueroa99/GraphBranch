@@ -476,6 +476,7 @@ GB.i18n.define('hr', {
   'health.help': 'Izračunava se samo iz već učitanog, bez dodatnih upita. Opisuje repozitorij, nikad ljude.',
   'health.forks': 'Forkovi s nedavnom aktivnošću, najnoviji push prvi',
   'health.forksShow': 'Prikaži forkove',
+  'health.forksByStars': 'Poredaj forkove po zvjezdicama',
   'health.stale': 'Grane bez aktivnosti dulje od 30 dana i bez pull requesta',
   'health.prs': 'Otvoreni pull requestovi, najstariji prvi',
   'health.prStates': 'Otvoreni pull requestovi po stanju',

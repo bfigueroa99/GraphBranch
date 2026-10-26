@@ -33,7 +33,7 @@
 
   /** `data`: el estado del repo (ramas, commits, PRs abiertos); `acts`: su actividad ya cargada.
       Devuelve las listas ordenadas (lo peor primero) con su total, y el ritmo. */
-  function compute(data, acts = [], now = Date.now()) {
+  function compute(data, acts = [], now = Date.now(), forkSort = 'recent') {
     const withPr = new Set();
     for (const p of data.pulls.values()) if (p.sameRepo && p.head) withPr.add(p.head);
 
@@ -119,7 +119,7 @@
       fails30: within(acts.filter((a) => a.kind === 'ci-fail' && a.time), 30),
     };
 
-    const forks = (data.forks || []).filter((f) => f.pushedAt && f.url).map((f) => ({ fullName: f.fullName, url: f.url, idle: Math.max(0, now - at(f.pushedAt)) })).sort((a, b) => a.idle - b.idle); // el push más reciente primero, venga como venga la lista
+    const forks = (data.forks || []).filter((f) => f.pushedAt && f.url).map((f) => ({ fullName: f.fullName, url: f.url, idle: Math.max(0, now - at(f.pushedAt)), stars: Math.max(0, Math.floor(Number(f.stars)) || 0) })).sort((a, b) => (forkSort === 'stars' ? b.stars - a.stars : 0) || a.idle - b.idle); // el push más reciente primero (o las estrellas, con el desempate por push), venga como venga la lista
 
     return {
       forks: { total: forks.length, rows: forks.slice(0, ROWS) },

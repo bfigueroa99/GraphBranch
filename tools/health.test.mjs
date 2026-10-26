@@ -212,6 +212,20 @@ test('compute: los forks salen por actividad reciente aunque la lista venga deso
   assert.deepEqual(compute(d, [], NOW).forks.rows.map((f) => f.fullName), ['b/nuevo', 'c/medio', 'a/viejo']);
 });
 
+test('compute: los forks se pueden ordenar por estrellas, con el push más nuevo como desempate', () => {
+  const d = repo();
+  d.forks = [
+    { fullName: 'a/uno', url: 'https://github.com/a/uno', pushedAt: ago(1), stars: 2 },
+    { fullName: 'b/dos', url: 'https://github.com/b/dos', pushedAt: ago(9), stars: 30 },
+    { fullName: 'c/tres', url: 'https://github.com/c/tres', pushedAt: ago(3), stars: 2 },
+    { fullName: 'd/sin', url: 'https://github.com/d/sin', pushedAt: ago(2) },
+  ];
+  const rows = compute(d, [], NOW, 'stars').forks.rows;
+  assert.deepEqual(rows.map((f) => f.fullName), ['b/dos', 'a/uno', 'c/tres', 'd/sin']);
+  assert.deepEqual(rows.map((f) => f.stars), [30, 2, 2, 0]);
+  assert.deepEqual(compute(d, [], NOW).forks.rows.map((f) => f.fullName), ['a/uno', 'd/sin', 'c/tres', 'b/dos']);
+});
+
 test('PRs por estado: borrador, checks en rojo, aprobado y esperando revisión, cada uno con su salto', () => {
   const r = repo();
   r.pulls.clear();

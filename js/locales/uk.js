@@ -484,6 +484,7 @@ GB.i18n.define('uk', {
   'health.help': 'Розраховується лише із завантажених даних, без зайвих запитів. Описує репозиторій, а не людей.',
   'health.forks': 'Форки з недавньою активністю, спершу найновіший push',
   'health.forksShow': 'Показувати форки',
+  'health.forksByStars': 'Сортувати форки за зірками',
   'health.stale': 'Гілки без активності понад 30 днів і без pull request',
   'health.prs': 'Відкриті pull request, спочатку найстарші',
   'health.prStates': 'Відкриті pull request за станом',

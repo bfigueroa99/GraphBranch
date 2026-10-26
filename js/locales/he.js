@@ -525,6 +525,7 @@ GB.i18n.define('he', {
   'health.help': 'מחושב רק ממה שכבר נטען, בלי בקשות נוספות. מתאר את המאגר, לעולם לא אנשים.',
   'health.forks': 'פורקים עם פעילות לאחרונה, ה-push החדש ביותר ראשון',
   'health.forksShow': 'הצגת פורקים',
+  'health.forksByStars': 'מיון הפורקים לפי כוכבים',
   'health.stale': 'ענפים בלי פעילות מעל 30 יום ובלי pull request',
   'health.prs': 'pull requests פתוחים, הישנים קודם',
   'health.prStates': 'בקשות משיכה פתוחות לפי מצב',

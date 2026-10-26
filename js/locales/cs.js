@@ -479,6 +479,7 @@ GB.i18n.define('cs', {
   'health.help': 'Počítá se jen z už načtených dat, bez dalších dotazů. Popisuje repozitář, nikdy lidi.',
   'health.forks': 'Forky s nedávnou aktivitou, nejnovější push první',
   'health.forksShow': 'Zobrazit forky',
+  'health.forksByStars': 'Řadit forky podle hvězdiček',
   'health.stale': 'Větve bez aktivity přes 30 dní a bez pull requestu',
   'health.prs': 'Otevřené pull requesty, nejstarší první',
   'health.prStates': 'Otevřené pull requesty podle stavu',

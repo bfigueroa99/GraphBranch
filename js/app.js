@@ -1342,15 +1342,15 @@
   function renderHealth() {
     const data = source.view ? source.view() : source.data;
     const acts = feed.items.filter((a) => a.repo === active?.key);
-    const h = GB.health.compute(data, acts);
+    const h = GB.health.compute(data, acts, Date.now(), forksByStars ? 'stars' : 'recent');
     const span = (ms) => GB.i18n.fmtSpan(ms);
     const stat = (label, n) => `<div class="hl-stat"><b>${U.fmtNum(n)}</b><span>${U.esc(label)}</span></div>`;
     const forkRows = h.forks.rows
-      .map((r) => `<li><a class="hl-row" href="${U.esc(U.safeUrl(r.url))}" target="_blank" rel="noopener noreferrer"><span class="hl-main">${U.esc(r.fullName)}</span><span class="hl-aside">${U.esc(span(r.idle))}</span></a></li>`)
+      .map((r) => `<li><a class="hl-row" href="${U.esc(U.safeUrl(r.url))}" target="_blank" rel="noopener noreferrer"><span class="hl-main">${U.esc(r.fullName)}</span><span class="hl-aside">${r.stars ? `★ ${U.fmtNum(r.stars)} · ` : ''}${U.esc(span(r.idle))}</span></a></li>`)
       .join('');
     const forksBody = !showForks ? '' : forkRows ? `<ul class="hl-list">${forkRows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`;
     el.healthBody.innerHTML =
-      `<section class="hl-sec" id="hl-forks"><h3>${U.esc(t('health.forks'))}${showForks ? ` <span class="hl-n">${U.fmtNum(h.forks.total)}</span>` : ''}</h3><label class="hl-switch"><input type="checkbox" id="hl-forks-toggle"${showForks ? ' checked' : ''}> ${U.esc(t('health.forksShow'))}</label>${forksBody}</section>` +
+      `<section class="hl-sec" id="hl-forks"><h3>${U.esc(t('health.forks'))}${showForks ? ` <span class="hl-n">${U.fmtNum(h.forks.total)}</span>` : ''}</h3><label class="hl-switch"><input type="checkbox" id="hl-forks-toggle"${showForks ? ' checked' : ''}> ${U.esc(t('health.forksShow'))}</label>${showForks ? `<label class="hl-switch"><input type="checkbox" id="hl-forks-stars"${forksByStars ? ' checked' : ''}> ${U.esc(t('health.forksByStars'))}</label>` : ''}${forksBody}</section>` +
       healthList('stale', t('health.stale'), h.stale, (r) => [r.name, span(r.idle)]) +
       healthList('prs', t('health.prs'), h.prs, (r) => [`#${r.number} ${r.title}`, span(r.age)]) +
       `<section class="hl-sec" id="hl-prstates"><h3>${U.esc(t('health.prStates'))}</h3>${['draft', 'failing', 'approved', 'waiting']
@@ -1382,6 +1382,11 @@
       renderHealth();
       if (showForks) syncHealthForks();
       $('#hl-forks-toggle').focus();
+    });
+    $('#hl-forks-stars')?.addEventListener('change', (e) => {
+      forksByStars = e.target.checked;
+      renderHealth();
+      $('#hl-forks-stars').focus();
     });
     const clashBtn = $('#hl-clash-go');
     if (!source.files) clashBtn.hidden = true;
@@ -1607,6 +1612,7 @@
     if (typeof el.health.close === 'function') el.health.close();
     else el.health.removeAttribute('open');
   }
+  let forksByStars = false; // el panel de salud ordena los forks por estrellas en vez de por push
   let showForks = true; // ?forks=0: el panel de salud no muestra los forks ni los pide (cuota)
   function syncHealthForks() {
     const asked = source;

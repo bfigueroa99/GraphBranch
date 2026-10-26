@@ -23,3 +23,10 @@ test('Replay reutiliza el formateador de fecha de i18n en vez de crear uno por c
   assert.match(cuerpo, /i18n\.fmtDayLong/);
   assert.match(src('i18n.js'), /fmtDayLong,/);
 });
+
+test('las aristas del 3D usan materiales Lambert: el programa PBR compilaba ~170 ms cada uno sin GPU', () => {
+  const s = src('graph3d.js');
+  assert.match(s, /this\.lineMat = new THREE\.MeshLambertMaterial\(/);
+  assert.match(s, /this\.ghostMat = new THREE\.MeshLambertMaterial\(/);
+  assert.match(s, /this\.nodeMat = new THREE\.MeshStandardMaterial\(/, 'los commits conservan el brillo de vidrio');
+});

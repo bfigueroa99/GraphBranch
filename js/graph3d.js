@@ -665,9 +665,9 @@
       this.flowLive = flowHook(this.u.flow, this.u.time, this.u.fog, this.u.thin, this.u.near);
       this.nodeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, roughness: 0.32, metalness: 0.1 });
       this.nodeMat.onBeforeCompile = nodeHook(this.u);
-      this.lineMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, roughness: 0.5, metalness: 0.05 });
+      this.lineMat = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0xffffff });
       this.lineMat.onBeforeCompile = this.flowLive;
-      this.ghostMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, roughness: 0.55, metalness: 0.05, transparent: true, opacity: 0.5 });
+      this.ghostMat = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0xffffff, transparent: true, opacity: 0.5 });
       this.ghostMat.onBeforeCompile = flowHook(this.u.noFlow, this.u.time, this.u.fog, this.u.thin, this.u.near);
       this.stubMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
       this.stubMat.onBeforeCompile = thinHook(this.u.thin, this.u.near);

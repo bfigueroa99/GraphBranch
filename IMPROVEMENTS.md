@@ -557,50 +557,41 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 7. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-8. [Rendimiento] El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (los dos
-    `MeshStandardMaterial` de nodos y aristas, ~170 ms y 65 KB de fuente cada uno), dentro de una tarea de
-    ~1,2 s; SwiftShader no ofrece `KHR_parallel_shader_compile` y los 12 hacen falta (el mundo es la escena
-    de la órbita). Descartado en la 107: `renderer.compile(scene, camera)` con instancias de mentira antes
-    de los datos compila 21 programas (recorre toda la escena, también lo que no se dibuja al arrancar) y
-    el primer cuadro aún suma 2: 23 en total contra 12, peor. Queda: materiales más livianos si se ven
-    igual, o precompilar solo los dos `MeshStandardMaterial` con una escena propia que repita luces y niebla.
-    Reproducción: contar `linkProgram` con `addInitScript` sobre `?lang=es` (12 programas, ~186 ms en
-    `getProgramParameter`).
-9. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+8. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
     Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-10. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+9. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-11. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
+10. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-12. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
+11. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
     nítidas (demo a 320 px: 3 de 5 atenuadas); comprobar que Tab y el toque no caigan en una atenuada.
     Reproducción: Playwright, 320 px, 3D, `?repo=demo` → `.g3-head` con opacidad 0,22 y `display: flex`.
-13. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
+12. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
     vistas, las estadísticas y la bitácora encima) y el 3D no arma etiquetas hasta verse; pensar en una
     forma de llegar al grafo sin recorrer la página (ancla o tarjetas plegables en celular).
     Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la auditoría → captura sin grafo; `#graph3d` fuera de la pantalla.
-14. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+13. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-15. [Seguridad] Las fuentes Codeberg y Bitbucket no validan en el origen las URL de los pull requests
+14. [Seguridad] Las fuentes Codeberg y Bitbucket no validan en el origen las URL de los pull requests
     (`codeberg.js:296` `p.html_url`, `bitbucket.js:204` y `:321` `links.html.href`), a diferencia de
     `codeberg.js:179` y GitHub (`/^https:\/\//`). La interfaz ya las filtra con `U.safeUrl` (iteración 119),
     pero un dato fuera de http(s) llega hasta las exportaciones (resumen, bitácora en Markdown).
     Reproducción: `tools/codeberg.test.mjs` con un PR cuyo `html_url` sea `javascript:alert(1)` → la actividad conserva esa `url`.
-16. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
+15. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
     `WebFetch` a `releases.electronjs.org` dio HTTP 500 en la iteración 119. Repetir la comparación
     cuando la página responda y subir si hay una estable más nueva.
     Reproducción: `WebFetch https://releases.electronjs.org/release/stable` → `HTTP 500`.
-17. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
+16. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
     corta a los 120 s; documentar en «Cómo validar» que se corra en segundo plano, como `audit --langs`.
     Reproducción: `time node tools/smoke.mjs` → ~480 s.
-18. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
+17. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
     `npm run check` en la iteración 128 (la repetición pasó), aun con la espera de la 127.
     Reproducción: `npm run check` → `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
 
@@ -739,3 +730,16 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
   la repetición pasó los 116. Anotado en el pendiente 1.
 - Validado: 419 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
 - **Siguiente:** iteración 135, mantenimiento · Rendimiento: pendiente 8 (El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (…)
+
+### 2026-10-26 · Iteración 135 · Mantenimiento · Rendimiento
+
+- **Arreglo: las aristas del 3D usan `MeshLambertMaterial`** (pendiente 8): `lineMat` y `ghostMat` pasan de `MeshStandardMaterial` (PBR) a Lambert, con los mismos ganchos de pulsos, niebla y afinado; los commits (`nodeMat`) conservan el brillo de vidrio. Los dos programas de aristas dejan de ser los más caros del primer cuadro.
+- **Reproducción:** `node tools/audit.mjs --json antes.json` → antes del arreglo: tareasLargasMs 1825, fps3d 6.2, fps2d 32.1, cargaMs 2807 (sin GPU).
+- **Medido después** (una corrida cada una, sin GPU): tareasLargasMs 1323, fps3d 8.8, fps2d 40.8, cargaMs 2631; consultas igual (10); heap 16→17 MB.
+- **Pruebas que fallan sin el arreglo:** `tools/rendimiento.test.mjs` («las aristas del 3D usan materiales Lambert»).
+- README: no cambia (sin función nueva).
+- QA: auditoría completa (3D y 2D, 0 hallazgos) y smoke de 116 pasos en verde; Lambert sin rugosidad ni metal: las aristas son casi emisivas, sin diferencia que el smoke o la auditoría detecten; no se comparó pixel a pixel (a mirar por Benjamin).
+- Arena: no aplica: una sola forma obvia (cambiar el material de dos mallas).
+- Reclamo: relevo de loop/135 (65abe1b)
+- Validado: 420 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 136, expansión: ítem 88 (Capa para streaming, sexta entrega, Plataformas)

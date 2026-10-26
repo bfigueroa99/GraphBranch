@@ -565,7 +565,9 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     el primer cuadro aún suma 2: 23 en total contra 12, peor. Queda: materiales más livianos si se ven
     igual, o precompilar solo los dos `MeshStandardMaterial` con una escena propia que repita luces y niebla.
     Reproducción: contar `linkProgram` con `addInitScript` sobre `?lang=es` (12 programas, ~186 ms en
-    `getProgramParameter`).
+    `getProgramParameter`). Medido de nuevo en la 135 (demo, 3D, `linkProgram` con `addInitScript`): 13 programas,
+    de los cuales solo 2 pesan (los `MeshStandardMaterial`, ~53 KB de fragmento cada uno); los otros 11 miden
+    entre 3,6 y 15 KB (brillos, suelo, líneas), así que lo que queda por ganar está en esos dos.
 9. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
@@ -739,3 +741,15 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
   la repetición pasó los 116. Anotado en el pendiente 1.
 - Validado: 419 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
 - **Siguiente:** iteración 135, mantenimiento · Rendimiento: pendiente 8 (El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (…)
+
+### 2026-10-26 · Iteración 135 · Mantenimiento · Rendimiento
+
+- **Auditoría de Rendimiento: el primer cuadro 3D, medido de nuevo** (pendiente 8, sigue abierto). Un script de Playwright con `addInitScript` sobre `linkProgram` cuenta 13 programas en la demo en 3D: 2 son `MeshStandardMaterial` (~53 KB de fragmento) y 11 son de 3,6 a 15 KB. Sin cambio de código: precompilar los dos grandes con una escena propia o aligerar sus materiales cambia el aspecto o repite lo que la 107 descartó, y no se pudo comprobar la ganancia sin GPU dentro de la sesión. Nota en el pendiente.
+- **Hallazgos:** 0 nuevos (la medida solo precisa el pendiente 8).
+- **Pruebas que fallan sin el arreglo:** no aplica, no hay arreglo de código.
+- README: sin cambios.
+- QA: no toca la página ni el escritorio; auditoría: no toca la página.
+- Arena: no aplica: no hay implementación que decidir, solo una medida.
+- Reclamo: relevo de loop/135 (5824ba8)
+- Validado: 419 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 136, expansión: ítem 88 (Capa para streaming, sexta entrega, Plataformas)

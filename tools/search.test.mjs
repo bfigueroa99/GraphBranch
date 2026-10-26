@@ -158,3 +158,21 @@ test('queryParam lee ?q= de la URL: recorta, quita caracteres de control y limit
   assert.equal(S.queryParam(q('q=' + 'x'.repeat(300))).length, 100);
   assert.equal(S.queryParam(null), '');
 });
+
+test('limitBranches: deja la rama por defecto y las de commit más reciente, sin mutar', () => {
+  const commits = new Map();
+  const branches = new Map();
+  [['main', 1], ['a', 5], ['b', 9], ['c', 7], ['d', 3]].forEach(([name, date], i) => {
+    commits.set('s' + i, { sha: 's' + i, parents: [], message: name, date });
+    branches.set(name, { name, sha: 's' + i });
+  });
+  branches.set('esperando', { name: 'esperando', sha: 'sinhistoria' });
+  const data = { repo: { defaultBranch: 'main' }, commits, branches, pulls: new Map([[1, { sameRepo: true, head: 'd' }], [2, { sameRepo: true, head: 'b' }]]) };
+  const v = S.limitBranches(data, 3);
+  assert.deepEqual([...v.branches.keys()], ['main', 'b', 'c', 'esperando']);
+  assert.deepEqual([...v.pulls.keys()], [2]);
+  assert.equal(data.branches.size, 6);
+  assert.equal(S.limitBranches(data, 0), data);
+  assert.equal(S.limitBranches(data, 5), data);
+  assert.deepEqual([...S.limitBranches(data, 1).branches.keys()], ['main', 'esperando']);
+});

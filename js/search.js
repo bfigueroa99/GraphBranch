@@ -48,6 +48,30 @@
     return { data: { ...data, branches, pulls }, shown, total };
   }
 
+  /** La vista de `data` con solo `max` ramas con historia: la rama por defecto (cuenta como una) y las de commit más
+      reciente. Las que aún no tienen historia cargada no se tocan, y los PR de las quitadas se van con ellas.
+      `max` 0 o inválido: `data` tal cual. No muta. */
+  function limitBranches(data, max) {
+    if (!(max >= 1)) return data;
+    const def = data.repo?.defaultBranch;
+    const isDef = (b) => b.name === def || b.isDefault;
+    const loaded = [...data.branches.values()].filter((b) => data.commits.has(b.sha));
+    if (loaded.length <= max) return data;
+    const slots = max - (loaded.some(isDef) ? 1 : 0);
+    const when = (b) => data.commits.get(b.sha).date || 0;
+    const keep = new Set(
+      loaded
+        .filter((b) => !isDef(b))
+        .sort((a, b) => when(b) - when(a) || (a.name < b.name ? -1 : 1))
+        .slice(0, Math.max(0, slots))
+        .map((b) => b.name)
+    );
+    const branches = new Map();
+    for (const [name, b] of data.branches) if (isDef(b) || !data.commits.has(b.sha) || keep.has(name)) branches.set(name, b);
+    const pulls = new Map([...data.pulls].filter(([, p]) => !p.sameRepo || branches.has(p.head)));
+    return { ...data, branches, pulls };
+  }
+
   const DAY = 86400000;
 
   /** `2026-09-14` -> el milisegundo UTC en que empieza ese día; null si no es una fecha real. */
@@ -196,5 +220,5 @@
     return v.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 100);
   }
 
-  GB.search = { authors, authorParam, byAuthor, find, mount, pathParam, queryParam, LIMIT };
+  GB.search = { authors, authorParam, byAuthor, limitBranches, find, mount, pathParam, queryParam, LIMIT };
 })((window.GB = window.GB || {}));

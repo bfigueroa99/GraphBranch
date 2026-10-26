@@ -66,6 +66,12 @@ export const ARENA_MAX = 8;
 /** La entrada de la bitácora desde la que cada iteración lleva «- Arena:» (lo que corrió, o por qué no
     aplica). Por posición, como MARCA_PROTOCOLO. */
 export const MARCA_ARENA = 'Cambio de maquinaria: la arena';
+/** La CLI de find-skills (.claude/skills/find-skills/, de vercel-labs/skills), con la versión fija: si la CLI
+    cambia en npm, no cambia bajo el loop. */
+export const SKILLS_CLI = 'skills@1.7.4';
+/** La entrada de la bitácora desde la que cada iteración lleva «- Skills:» (qué buscó en el ecosistema de
+    skills y qué hizo con lo que encontró, o por qué no aplica). Por posición, como MARCA_ARENA. */
+export const MARCA_SKILLS = 'Cambio de maquinaria: find-skills';
 /** Los ítems de la hoja de ruta hasta este son anteriores a docs/investigacion.md; los que vienen después
     citan su fuente («[inv. AAAA-MM-DD]») o, si son una entrega más de otro, «[parte del ítem K]». */
 export const HOJA_SIN_FUENTE = 26;
@@ -111,6 +117,7 @@ const RE_VALIDADO = /^- Validado:\s*/;
 const RE_SIGUIENTE = /^- \*\*Siguiente:\*\*\s*/;
 const RE_QA = /^- QA:\s*\S/;
 const RE_ARENA = /^- Arena:\s*\S/;
+const RE_SKILLS = /^- Skills:\s*\S/;
 const RE_DECLARADO = new RegExp(`iteración (\\d+), (?:de )?\\*{0,2}(expansión|mantenimiento)\\*{0,2}(?: · (${SUB}))?[:.,]?`, 'i');
 // el ítem declarado: el primer «ítem N», «pendiente N» o «auditoría» tras el tipo (un título copiado
 // puede citar otro número más adelante); las entradas viejas («el primer ítem sin hacer es el 6», «toca
@@ -538,6 +545,8 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
     const conProtocolo = new Set(marca < 0 ? [] : doc.bitacora.slice(marca + 1).filter((x) => x.n !== null));
     const marcaArena = doc.bitacora.findIndex((x) => x.n === null && x.titulo.startsWith(MARCA_ARENA));
     const conArena = new Set(marcaArena < 0 ? [] : doc.bitacora.slice(marcaArena + 1).filter((x) => x.n !== null));
+    const marcaSkills = doc.bitacora.findIndex((x) => x.n === null && x.titulo.startsWith(MARCA_SKILLS));
+    const conSkills = new Set(marcaSkills < 0 ? [] : doc.bitacora.slice(marcaSkills + 1).filter((x) => x.n !== null));
     const vistos = new Set();
     for (const it of its) {
       if (vistos.has(it.n)) e.push(`iteración ${it.n} repetida (línea ${it.linea}${it.origen ? ` de ${it.origen}` : ''})`);
@@ -554,6 +563,14 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
           if (!/^- Arena:\s*no aplica\s*[:,(—–-]\s*\S.{9,}/i.test(arena)) e.push(`iteración ${it.n}: «- Arena: no aplica» sin el porqué`);
         } else if (!/\bN \d+\b/.test(arena) || !/\bseed \d+\b/.test(arena) || !/\b\d+ rondas?\b/.test(arena)) e.push(`iteración ${it.n}: «- Arena:» sin N, seed o rondas («N 4, seed 123, 2 rondas; ganador …»)`);
       }
+      // find-skills: qué buscó y qué hizo con lo que encontró, o por qué no aplicaba
+      if (conSkills.has(it)) {
+        const skills = it.cuerpo.split('\n').find((l) => RE_SKILLS.test(l));
+        if (!skills) e.push(`iteración ${it.n} sin la viñeta «- Skills:» (la búsqueda y qué se hizo con la skill, o «no aplica: <por qué>»)`);
+        else if (/^- Skills:\s*no aplica\b/i.test(skills)) {
+          if (!/^- Skills:\s*no aplica\s*[:,(—–-]\s*\S.{9,}/i.test(skills)) e.push(`iteración ${it.n}: «- Skills: no aplica» sin el porqué`);
+        } else if (!/"[^"]+"\s*→/.test(skills) || !(/[\w.-]+\/[\w.-]+@[\w.:-]+.*\b(?:consultada|instalada)\b/.test(skills) || /→\s*descartadas?\b/.test(skills))) e.push(`iteración ${it.n}: «- Skills:» sin la consulta y lo que se hizo («"<consulta>" → dueño/repo@skill, consultada (…)», «…, instalada (…)» o «"<consulta>" → descartadas: …»)`);
+      }
       // el protocolo de QA: cada entrada dice qué se revisó de su propio cambio
       if (!conProtocolo.has(it)) continue;
       if (!it.cuerpo.split('\n').some((l) => RE_QA.test(l))) e.push(`iteración ${it.n} sin la viñeta «- QA:» (Protocolo de QA)`);
@@ -566,7 +583,7 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
     const max = Math.max(0, ...vistos);
     for (let k = 1; k <= max; k++) if (!vistos.has(k)) a.push(`falta la iteración ${k}`);
     if (!its.length) e.push('no hay ninguna «Iteración N» en la bitácora');
-    regla('R5', e, a, `${its.length} iteraciones, 1..${max}, con tipo desde la 20${marca < 0 ? '' : `; ${conProtocolo.size} con el protocolo de QA`}${marcaArena < 0 ? '' : `; ${conArena.size} con «- Arena:»`}`);
+    regla('R5', e, a, `${its.length} iteraciones, 1..${max}, con tipo desde la 20${marca < 0 ? '' : `; ${conProtocolo.size} con el protocolo de QA`}${marcaArena < 0 ? '' : `; ${conArena.size} con «- Arena:»`}${marcaSkills < 0 ? '' : `; ${conSkills.size} con «- Skills:»`}`);
   }
   // R6: la última entrada tiene Validado y un Siguiente que coincide con --siguiente
   {
@@ -634,6 +651,7 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
       const rutas = new Set();
       const comandos = new Set();
       const arena = [];
+      const cliSkills = [];
       let enBloque = false;
       for (const linea of skillTxt.split('\n')) {
         // flags que siguen a loop.mjs en la misma línea (hasta el fin del comando)
@@ -654,6 +672,7 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
         }
         if (!enBloque) continue;
         if (/\bbracket\.py\b/.test(linea)) arena.push(linea.trim());
+        if (/\bnpx\b[^|;&]*\bskills\b/.test(linea)) cliSkills.push(linea.trim());
         for (const seg of linea.split(/&&|\|\||;|\|/)) {
           const toks = seg.trim().split(/\s+/).filter(Boolean);
           while (toks.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(toks[0])) toks.shift();
@@ -675,6 +694,16 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
         else if ((cmd === 'plan' || cmd === 'init') && !n) e.push(`SKILL.md corre «bracket.py ${cmd}» sin --agents: por defecto son 100 competidores (595 llamadas)`);
         if (n && (+n < 1 || +n > ARENA_MAX)) e.push(`SKILL.md corre la arena con --agents ${n}: en el loop, de 1 a ${ARENA_MAX}`);
       }
+      // find-skills: la CLI con su versión fija y sin telemetría; solo find, use y add (este, en el proyecto y
+      // copiado: sin --copy crea .agents/), nunca global, update ni sync, que traen contenido sin leer
+      for (const l of cliSkills) {
+        const [, pkg, sub] = /\bnpx\s+(?:-{1,2}[\w-]+\s+)*(skills(?:@\S+)?)(?:\s+([\w-]+))?/.exec(l) ?? [];
+        if (pkg !== SKILLS_CLI) e.push(`SKILL.md corre la CLI de skills como «${pkg ?? corta(l, 40)}»: va npx ${SKILLS_CLI}, con la versión fija`);
+        if (!/\bDISABLE_TELEMETRY=1\b/.test(l)) e.push(`SKILL.md corre la CLI de skills sin DISABLE_TELEMETRY=1 («${corta(l, 50)}»): sin telemetría (CLAUDE.md)`);
+        if (!['find', 'use', 'add'].includes(sub)) e.push(`SKILL.md corre «skills ${sub ?? ''}»: el loop solo usa find, use y add`);
+        if (/(?:^|\s)(?:-g|--global)\b/.test(l)) e.push(`SKILL.md instala skills globales («${corta(l, 50)}»): van al proyecto`);
+        if (sub === 'add' && (!/--copy\b/.test(l) || !/(?:-a|--agent) claude-code\b/.test(l))) e.push(`SKILL.md corre «skills add» sin --copy -a claude-code: la skill va copiada a .claude/skills/, no enlazada desde .agents/`);
+      }
       // cada subtipo que puede elegir --siguiente tiene su protocolo en la skill
       for (const st of SUBTIPOS) if (!new RegExp(`^#{3,4} ${st}\\b`, 'm').test(skillTxt)) e.push(`SKILL.md sin el protocolo del subtipo ${st} («#### ${st}»)`);
       let allow = [];
@@ -683,7 +712,13 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
       } catch (err) {
         e.push(`.claude/settings.json no es JSON válido: ${err.message}`);
       }
-      for (const cmd of comandos) if (!allow.includes(`Bash(${cmd}:*)`) && !allow.includes(`Bash(${cmd})`)) e.push(`SKILL.md usa «${cmd}» y .claude/settings.json no lo permite (Bash(${cmd}:*))`);
+      for (const cmd of comandos) {
+        if (allow.includes(`Bash(${cmd}:*)`) || allow.includes(`Bash(${cmd})`)) continue;
+        // el permiso de la CLI de find-skills lo suma Benjamin (Para Benjamin 2); sin él, la búsqueda depende
+        // del modo de permisos de la sesión y la bitácora lo dice, como el de la arena
+        if (cmd === `npx ${SKILLS_CLI}`) a.push(`SKILL.md usa «${cmd}» y .claude/settings.json no lo permite (Bash(${cmd}:*)): lo suma Benjamin (Para Benjamin 2)`);
+        else e.push(`SKILL.md usa «${cmd}» y .claude/settings.json no lo permite (Bash(${cmd}:*))`);
+      }
       const bytes = Buffer.byteLength(promptTxt);
       if (bytes > 600) e.push(`PROMPT.md tiene ${bytes} bytes (máximo 600)`);
       const podridos = [
@@ -707,7 +742,7 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
         }
       }
     }
-    regla('R8', e, a, `la skill nombra flags, rutas y comandos que existen y están permitidos, tiene el protocolo de cada subtipo y corre la arena con su ruta y de 1 a ${ARENA_MAX} competidores; el prompt no lleva hechos que se pudren y el comando de OpenCode lo pasa tal cual`);
+    regla('R8', e, a, `la skill nombra flags, rutas y comandos que existen y están permitidos, tiene el protocolo de cada subtipo, corre la arena con su ruta y de 1 a ${ARENA_MAX} competidores y la CLI de skills fija y sin telemetría; el prompt no lleva hechos que se pudren y el comando de OpenCode lo pasa tal cual`);
   }
   // R9: sin flujos de GitHub Actions (CLAUDE.md: no hay CI)
   {

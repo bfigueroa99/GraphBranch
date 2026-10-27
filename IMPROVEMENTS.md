@@ -561,7 +561,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 1. [Deuda] Smoke intermitente bajo carga: «filtro por autor», «filtro por ruta», «bitácora en vivo», «replay: tramo
     de fechas y rótulos propios» y «salud del repo…» fallan a veces con `Cannot read properties of undefined (reading
-    'sha')` o con un filtro que no acota (el grafo aún no cargó los commits), y «vista de texto: filtra por rama…»
+    'sha')` (el 2026-10-27, también «modo galaxias») o con un filtro que no acota (el grafo aún no cargó los commits), y «vista de texto: filtra por rama…»
     con 60 s; cada una pasa al repetir `npm run check`. El paso «vista 2D» ya no está (arreglado en la iteración
     139: esperaba nodos *visibles* y bajo carga tardan; ahora espera `state: 'attached'` y la vista activa). Medir
     con 5 corridas del smoke solo y esperar el estado (commits cargados) en vez de leer `[0].sha` apenas hay nodos.
@@ -887,4 +887,28 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: no toca la página ni el escritorio; `--reclamar`, `--salud` y `--limpiar` corridos contra un
   repositorio bare con `dev` por delante de `master` en las pruebas.
 - Validado: 429 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) en verde; e2e no corridas (saltadas por --sin-e2e: Electron no se pudo instalar en la sesión, y lo que toca la página es #177 y #178, ya validados con sus 28 e2e en `master`).
+- **Siguiente:** iteración 141, expansión: ítem 92 (Capa para streaming, séptima entrega, Plataformas)
+
+### 2026-10-27 · Pedido de Benjamin: los cambios de cada commit, más fáciles de leer
+
+- **Pedido de Benjamin:** «mejora el cómo poder ver los cambios de cada commit». No es una iteración numerada y
+  la proporción de la regla 2 no cambia.
+- **Lo nuevo:** en el panel de cambios, las palabras que cambiaron dentro de cada línea quitada y su agregada
+  (`GB.diff.words`, por la subsecuencia común más larga de sus palabras; no marca líneas de más de 500
+  caracteres ni las que comparten muy poco, hasta 1.500 pares por archivo); **Unificado** o **Lado a lado**
+  (`GB.diff.rows` empareja cada quitada con su agregada; las líneas largas se parten); el botón del panel
+  ancho; **Desplegar/Plegar todo**; desde 4 archivos, un filtro por ruta que sigue al pasar de commit (`Esc`
+  lo borra); la cabecera de cada archivo queda fija mientras se lee su código (`overflow: clip` en vez de
+  `hidden`); y con el panel abierto, un clic en un commit del grafo (2D o 3D) muestra los suyos en vez de
+  abrir su ficha. El modo y el ancho se recuerdan (`diffMode`, `diffWide`). La demo retoca las líneas que
+  quita (un número, un nombre), así el resaltado se ve sin token.
+- **Pruebas que fallan sin el cambio:** `tools/diff.test.mjs` (de 9 a 13: `rows`, `words` y la demo con
+  palabras marcadas) y el paso del smoke «cambios de un commit: un clic en el grafo cambia de commit, lado a
+  lado con palabras marcadas, filtro y panel ancho».
+- README: la función en la lista, los atajos del panel y Límites conocidos (las palabras, lado a lado).
+- QA: 2D y 3D (el clic en un commit de cada vista), demo sin token, 40 idiomas (11 textos nuevos; árabe en
+  vivo con el panel), celular (el botón ancho se esconde bajo 860 px), teclado (`J`/`K` no pasan de commit
+  mientras se escribe en el filtro; `Esc` en él lo borra sin cerrar). El fallo intermitente conocido
+  (Media 1, `reading 'sha'`) apareció una vez en «modo galaxias»; la corrida de la puerta pasó entera.
+- Validado: 433 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (las e2e, repetidas aparte: en la corrida de `npm run check` una chocó con un servidor de prueba que había quedado en el puerto 4174).
 - **Siguiente:** iteración 141, expansión: ítem 92 (Capa para streaming, séptima entrega, Plataformas)

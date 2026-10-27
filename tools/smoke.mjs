@@ -1143,7 +1143,8 @@ console.log('Escritorio (1280×800)');
     // el paso anterior dejó el grafo en el primer commit: vuelve a lo último, donde están las etiquetas de rama
     await page.focus('#graph');
     await page.keyboard.press('End');
-    await page.waitForFunction(() => document.querySelector('#follow-btn')?.dataset.following === 'true', null, { timeout: T(3000) }).catch(() => {});
+    // (se desplaza con una transición: las etiquetas aparecen al llegar)
+    await wait('las etiquetas de rama a la vista', page.waitForFunction(() => [...document.querySelectorAll('#graph svg .head[role=button]:not(.exit)')].some((h) => getComputedStyle(h).display !== 'none'), null, { timeout: T(3000) }));
     // la ficha de una rama vigente y a la vista (la demo borra ramas fusionadas: una etiqueta puede estar saliendo)
     let tipDiff = null;
     const shownHeads = [];

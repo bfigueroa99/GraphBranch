@@ -2785,6 +2785,26 @@ console.log('Fijar una rama con el teclado');
   await page.context().close();
 }
 
+console.log('Celular angosto: etiquetas 3D pisadas');
+{
+  const page = await openPage({ viewport: { width: 320, height: 640 }, isMobile: true, hasTouch: true });
+  await step(page, 'a 320 px, una etiqueta 3D tapada por otra no recibe el toque (sigue accesible con Tab)', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    await page.waitForSelector('#graph3d .g3-head', { timeout: T(15000) });
+    await page.locator('#graph3d').scrollIntoViewIfNeeded();
+    await page.waitForTimeout(T(2500));
+    const r = await page.evaluate(() => {
+      const tapadas = [...document.querySelectorAll('#graph3d .g3-head.tapada')].filter((e) => getComputedStyle(e).display !== 'none');
+      return { tapadas: tapadas.length, tactiles: tapadas.filter((e) => getComputedStyle(e).pointerEvents !== 'none').map((e) => e.textContent.trim()), tab: tapadas.every((e) => e.tabIndex >= 0) };
+    });
+    if (!r.tapadas) throw new Error('ninguna etiqueta quedó tapada: el caso no se probó');
+    if (r.tactiles.length) throw new Error(`etiquetas atenuadas que reciben el toque: ${r.tactiles.join(', ')}`);
+    if (!r.tab) throw new Error('una etiqueta tapada quedó fuera del orden de Tab');
+  });
+  await page.context().close();
+}
+
 console.log('Galaxias: cortar un salto hiperespacial');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

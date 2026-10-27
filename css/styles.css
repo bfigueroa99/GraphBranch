@@ -1467,6 +1467,12 @@ kbd {
   opacity: 1 !important;
   z-index: 2000 !important;
 }
+/* con el dedo, una etiqueta tapada no recibe el toque (caería en una casi invisible); con Tab sigue al alcance y el foco la trae al frente */
+@media (pointer: coarse) {
+  .g3-head.tapada:not(:focus-visible) {
+    pointer-events: none;
+  }
+}
 .g3-head.moved {
   animation: glow3 2.6s ease-out;
 }

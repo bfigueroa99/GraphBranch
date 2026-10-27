@@ -572,42 +572,42 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     no está (2026-10-27: un merge sobre la base borrada de un PR apilado; ver la bitácora). El paso «vista 2D» ya no
     está (arreglado en la iteración 139). Medir con 5 corridas del smoke solo y esperar el estado (commits cargados).
     Reproducción: `xvfb-run -a npm run check` → `✗ filtro por autor: ningún autor acota el grafo`.
+2. [Deuda] La e2e de escritorio «pasa al llavero el token que la primera versión dejaba en localStorage» es
+    intermitente en la sesión cloud: falló 1 de 2 `npm run check` en la iteración 143 (la repetición pasó).
+    Reproducción: `xvfb-run -a npm run check` → `expect(Object.keys(tokenFiles(dir))).not.toEqual([])` (`e2e/desktop.spec.mjs:333`).
 
 ### Baja
 
-2. [Accesibilidad] La leyenda 2D no tiene acceso por teclado. Los botones de estado ya no mezclan
+3. [Accesibilidad] La leyenda 2D no tiene acceso por teclado. Los botones de estado ya no mezclan
     `aria-pressed` con un texto cambiante (iteración 123). Reproducir: `node tools/audit.mjs`.
-3. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
+4. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
     renombrados).
-4. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+5. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-5. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+6. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-6. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+7. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-7. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+8. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-8. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+9. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
     Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-9. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+10. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-10. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
+11. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-11. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
-    nítidas (demo a 320 px: 3 de 5 atenuadas); comprobar que Tab y el toque no caigan en una atenuada.
-    Reproducción: Playwright, 320 px, 3D, `?repo=demo` → `.g3-head` con opacidad 0,22 y `display: flex`.
 12. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
     vistas, las estadísticas y la bitácora encima) y el 3D no arma etiquetas hasta verse; pensar en una
     forma de llegar al grafo sin recorrer la página (ancla o tarjetas plegables en celular).
@@ -812,3 +812,19 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/142, sin colisión
 - Validado: 449 pruebas (`node --test`), smoke (124 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 143, mantenimiento · QA: pendiente 11 (Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones toca…)
+
+### 2026-10-27 · Iteración 143 · Mantenimiento · QA
+
+- **Arreglo: las etiquetas 3D tapadas por otra no reciben el toque en celular** (pendiente 11): con puntero táctil
+  (`pointer: coarse`) una etiqueta atenuada a 0,22 pasa a `pointer-events: none` (clase `tapada`, que sobrevive a
+  la reconstrucción de la etiqueta); con Tab sigue en el orden y el foco la trae al frente.
+- **Reproducción:** Playwright, 320×640 táctil, `?lang=es` (demo, 3D) → 3 etiquetas con opacidad 0,22 y `pointer-events: auto`, que recibían el toque.
+- **Hallazgos:** 1 nuevo (pendiente 2: e2e de escritorio intermitente), 0 a la base de la auditoría. QA acotada al pendiente; la auditoría completa con `--langs` y el smoke tres veces no se corrieron.
+- **Pruebas que fallan sin el arreglo:** paso del smoke «a 320 px, una etiqueta 3D tapada por otra no recibe el toque».
+- README: la línea del rendimiento 3D (etiquetas) dice cómo se tratan las tapadas con el dedo. Sin textos nuevos de interfaz.
+- QA: celular angosto, 3D y teclado (Tab sigue llegando a las tapadas); auditoría: 0 hallazgos nuevos, 0 conocidos.
+- Skills: no aplica: una regla CSS y una clase, sin dominio que una guía externa mejore.
+- Arena: no aplica: una sola forma obvia (sacar el toque de lo atenuado).
+- Reclamo: loop/143, sin colisión
+- Validado: 449 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 144, expansión: ítem 94 (Vista de texto: PRs abiertos por rama, Público)

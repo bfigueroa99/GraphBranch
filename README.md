@@ -198,7 +198,35 @@ Publicada así, la página se puede instalar y abre sin red: `manifest.webmanife
 
 ## Aplicación de escritorio
 
-La misma página corre como aplicación de escritorio con [Electron](https://www.electronjs.org/), en Windows, macOS y Linux. Hace falta Node.js 22.12 o superior.
+La misma página corre como aplicación de escritorio con [Electron](https://www.electronjs.org/), en Windows, macOS y Linux, en su propia ventana y con su ícono en la bandeja del sistema.
+
+### Abrirla en tu computadora
+
+Todavía no hay instaladores en los releases de GitHub, así que la app se arma desde el código. Hace falta [Node.js](https://nodejs.org/) 22.12 o superior (la versión LTS sirve) y [git](https://git-scm.com/) para descargar el proyecto.
+
+1. Descarga el proyecto y entra en su carpeta (sin git: **Code → Download ZIP** en GitHub, y descomprímelo):
+
+   ```
+   git clone https://github.com/bfigueroa99/GraphBranch.git
+   cd GraphBranch
+   ```
+
+2. Instala lo que necesita, una sola vez: `npm install`. Baja Electron y las herramientas para armar el instalador (unos 400 MB), así que la primera vez tarda unos minutos.
+3. Ábrela con `npm start`. Arranca con la demo: escribe `owner/repo` y pulsa **Conectar**, como en la web. Mientras la uses, deja la terminal abierta.
+
+Para abrirla como cualquier otro programa, sin terminal, arma su instalador una vez con `npm run dist` y abre lo que deja en la carpeta `dist/`:
+
+- **Windows**: el `.exe` la instala y deja un acceso directo en el escritorio y en el menú Inicio.
+- **macOS**: abre el `.dmg` y arrastra GraphBranch a **Aplicaciones**; desde ahí se abre con Launchpad o Spotlight.
+- **Linux**: el `.AppImage` no se instala: márcalo como ejecutable (`chmod +x dist/GraphBranch-*.AppImage`), muévelo donde quieras y ábrelo con doble clic. Si no abre y avisa que falta FUSE, instala `libfuse2` (en Ubuntu 24.04, `libfuse2t64`).
+
+El instalador no va firmado: si lo pasas a otra computadora, Windows y macOS avisan la primera vez que se abre (ver [cómo abrirlo igual](#publicar-la-app-de-escritorio)).
+
+- Cerrar la ventana no cierra la app: queda en la bandeja del sistema y sigue revisando los repositorios. Para salir del todo, **Salir** en el menú de su ícono (o `Ctrl+Q`; en macOS, `Cmd+Q`).
+- Para pasar a una versión nueva: `git pull` y `npm install`, y luego `npm start` (o `npm run dist` otra vez, e instálala encima).
+- En Windows, si PowerShell dice que la ejecución de scripts está deshabilitada al escribir `npm`, usa el Símbolo del sistema (`cmd`) o escribe `npm.cmd` en lugar de `npm`.
+
+### Opciones y detalles
 
 ```
 npm install

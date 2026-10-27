@@ -565,13 +565,13 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Media
 
-1. [Deuda] Smoke intermitente bajo carga: «filtro por autor», «filtro por ruta», «bitácora en vivo», «replay: tramo
-    de fechas y rótulos propios» y «salud del repo…» fallan a veces con `Cannot read properties of undefined (reading
-    'sha')` (el 2026-10-27, también «modo galaxias») o con un filtro que no acota (el grafo aún no cargó los commits), y «vista de texto: filtra por rama…»
-    con 60 s; cada una pasa al repetir `npm run check`. El paso «vista 2D» ya no está (arreglado en la iteración
-    139: esperaba nodos *visibles* y bajo carga tardan; ahora espera `state: 'attached'` y la vista activa). Medir
-    con 5 corridas del smoke solo y esperar el estado (commits cargados) en vez de leer `[0].sha` apenas hay nodos.
-    Reproducción: `xvfb-run -a npm run check` → `✗ salud del repo: … excepción: Cannot read properties of undefined (reading 'sha')`.
+1. [Deuda] Smoke intermitente bajo carga: «filtro por autor» y «filtro por ruta» fallan a veces con un filtro que
+    no acota (el grafo aún no cargó los commits), y «vista de texto: filtra por rama…» con 60 s; cada una pasa al
+    repetir `npm run check`. La `excepción: Cannot read properties of undefined (reading 'sha')` que salía en esos
+    pasos y en otros («salud del repo», «bitácora en vivo», «replay: tramo…», «modo galaxias») era de la demo y ya
+    no está (2026-10-27: un merge sobre la base borrada de un PR apilado; ver la bitácora). El paso «vista 2D» ya no
+    está (arreglado en la iteración 139). Medir con 5 corridas del smoke solo y esperar el estado (commits cargados).
+    Reproducción: `xvfb-run -a npm run check` → `✗ filtro por autor: ningún autor acota el grafo`.
 
 ### Baja
 
@@ -909,6 +909,21 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Validado: 430 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)
 
+### 2026-10-27 · Arreglo: la demo hacía un merge sobre la base borrada de un PR apilado
+
+- **Fallo:** la `excepción: Cannot read properties of undefined (reading 'sha')` que hacía caer pasos distintos
+  del smoke en la corrida larga (pendiente Media 1). La pila, con la demo acelerada: `DemoSource.commit` ←
+  `doMerge`. Al fusionarse un PR, la demo borra su rama a los 2,2 s, pero un PR apilado sobre ella seguía con esa
+  base; el siguiente merge de ese PR hacía su commit en una rama que ya no existía. No es una iteración numerada.
+- **Arreglo:** como GitHub, al borrarse la rama fusionada los PRs apilados sobre ella (y las ramas que salían de
+  ella) pasan a apuntar a la base del PR que se fusionó.
+- **Reproducción:** `tools/demo.test.mjs` (nueva): 1.500 pasos de la demo con cinco semillas fijas y los `later`
+  corridos a mano; sin el arreglo falla en el primer paso de la semilla 1 («el PR #37 apunta a feature/login, que
+  ya no existe»). Con la demo acelerada en Chromium (un paso cada 60 ms) la excepción salía en segundos; con el
+  arreglo, 90 s sin errores.
+- QA: solo la demo; el pendiente Media 1 queda con lo que sigue intermitente (filtros que no acotan, vista de texto).
+- Validado: 431 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+
 ### 2026-10-27 · Pedido de Benjamin: los cambios de cada commit, más fáciles de leer
 
 - **Pedido de Benjamin:** «mejora el cómo poder ver los cambios de cada commit». No es una iteración numerada y
@@ -928,7 +943,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - README: la función en la lista, los atajos del panel y Límites conocidos (las palabras, lado a lado).
 - QA: 2D y 3D (el clic en un commit de cada vista), demo sin token, 40 idiomas (11 textos nuevos; árabe en
   vivo con el panel), celular (el botón ancho se esconde bajo 860 px), teclado (`J`/`K` no pasan de commit
-  mientras se escribe en el filtro; `Esc` en él lo borra sin cerrar). El fallo intermitente conocido
-  (Media 1, `reading 'sha'`) apareció una vez en «modo galaxias»; la corrida de la puerta pasó entera.
+  mientras se escribe en el filtro; `Esc` en él lo borra sin cerrar). La excepción intermitente
+  `reading 'sha'` del smoke salió aquí en «modo galaxias» y en «filtro por autor»: era de la demo y la arregló #184.
 - Validado: 433 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (las e2e, repetidas aparte: en la corrida de `npm run check` una chocó con un servidor de prueba que había quedado en el puerto 4174).
 - **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)

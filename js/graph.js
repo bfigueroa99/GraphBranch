@@ -442,6 +442,8 @@
         const g = ev.target.closest('.node');
         if (!g) return;
         ev.stopPropagation();
+        // con el panel de cambios abierto, un clic en un commit muestra los suyos (la ficha sigue al pasar el puntero)
+        if (this.ctx?.canDiff && this.opts.diffing?.()) return this.opts.onDiff?.(g.__sha);
         this.showTip(g.__sha, true);
       });
 

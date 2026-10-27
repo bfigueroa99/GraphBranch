@@ -226,6 +226,7 @@
     onFollowChange: (v) => graph === graph2d && followUI(v),
     onTogglePin: (name) => togglePin(name),
     onDiff: (sha) => openDiff(sha),
+    diffing: () => diffView.isOpen,
   });
   let graph3d = null;
   try {
@@ -234,6 +235,7 @@
         onFollowChange: (v) => graph === graph3d && followUI(v),
         onTogglePin: (name) => togglePin(name),
         onDiff: (sha) => openDiff(sha),
+        diffing: () => diffView.isOpen,
         onFlightChange: (on) => setPressed(el.flyBtn, on),
         // zumbido del motor mientras se vuela (solo con el sonido activado)
         onFlightSpeed: (level) => feed.synth.engine(feed.sound ? level : 0),
@@ -350,8 +352,9 @@
       graph.focusSha?.(sha);
       selectCommit(sha);
     },
+    onWide: (on) => el.main.classList.toggle('diff-wide', on && diffView.isOpen),
     onClose: () => {
-      el.main.classList.remove('diffing');
+      el.main.classList.remove('diffing', 'diff-wide');
       selectCommit(null);
       // el foco que estaba en el panel vuelve al grafo
       if (el.diffPanel.contains(document.activeElement) || document.activeElement === document.body) (graph === graph3d ? el.graph3d : el.graph).focus?.({ preventScroll: true });
@@ -370,6 +373,7 @@
     graph.unpin?.();
     const was = el.main.classList.contains('diffing');
     el.main.classList.add('diffing');
+    el.main.classList.toggle('diff-wide', diffView.wide);
     if (!diffView.open(sha, { focusGraph: was })) return;
     if (!was) {
       selectCommit(sha);

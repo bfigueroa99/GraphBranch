@@ -1134,6 +1134,86 @@ console.log('Escritorio (1280×800)');
     if (closed.sel) throw new Error('al cerrar, el grafo sigue marcando el commit');
   });
 
+  await step(page, 'cambios de un commit: un clic en el grafo cambia de commit, lado a lado con palabras marcadas, filtro y panel ancho', async () => {
+    await page.keyboard.press('Escape');
+    const heads = await page.$$('#graph svg .head[role=button]');
+    await heads[0].focus();
+    await page.keyboard.press('Enter');
+    await (await page.waitForSelector('#graph .tip .tip-diff', { timeout: T(5000) })).focus();
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#diff-panel:not([hidden]) .df-file', { timeout: T(5000) });
+    const idle = () => page.waitForFunction(() => !document.querySelector('#diff-panel').classList.contains('loading'), null, { timeout: T(5000) });
+    await idle();
+    // con el panel abierto, un clic en un merge (4 archivos en la demo) muestra sus cambios, no su ficha
+    const sha = await page.textContent('#diff-panel .df-meta code');
+    const clicked = await page.evaluate(() => {
+      const m = document.querySelector('#graph svg .node.merge');
+      m?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      return !!m;
+    });
+    if (!clicked) throw new Error('el grafo no dibuja ningún merge de la demo');
+    await page.waitForFunction((s) => document.querySelector('#diff-panel .df-meta code')?.textContent !== s, sha, { timeout: T(5000) });
+    await idle();
+    if (await page.locator('#graph .tip.pinned:not([hidden])').count()) throw new Error('el clic abrió la ficha en vez de cambiar los cambios');
+    const files = await page.locator('#diff-panel .df-jump').count();
+    if (files < 4) throw new Error(`el merge trae ${files} archivos`);
+    // lado a lado: dos columnas por fila, se recuerda
+    await page.click('#diff-panel .df-splitb');
+    const split = await page.evaluate(() => {
+      const rows = [...document.querySelectorAll('#diff-panel .df-code.df-split .dl-row')];
+      return { rows: rows.length, two: rows.every((r) => r.querySelectorAll('.dl-side').length === 2), saved: localStorage.getItem('graphbranch:diffMode'), unified: document.querySelectorAll('#diff-panel .df-code:not(.df-split)').length };
+    });
+    if (!split.rows || !split.two || split.unified) throw new Error('lado a lado no dibujó dos columnas por fila: ' + JSON.stringify(split));
+    if (split.saved !== '"split"') throw new Error(`el modo no se recuerda: ${split.saved}`);
+    // las palabras cambiadas se marcan (la demo retoca las líneas que quita): se busca en los commits vecinos
+    let marks = await page.locator('#diff-panel .dw').count();
+    for (let i = 0; i < 12 && !marks && !(await page.$eval('#diff-panel .df-older', (b) => b.disabled)); i++) {
+      await page.click('#diff-panel .df-older');
+      await idle();
+      await page.locator('#diff-panel .df-file').first().evaluate((d) => d.parentElement.querySelectorAll('.df-file').forEach((x) => (x.open = true)));
+      marks = await page.locator('#diff-panel .dw').count();
+    }
+    if (!marks) throw new Error('ninguna palabra cambiada marcada en 12 commits de la demo');
+    // filtro por ruta (desde 4 archivos): se vuelve al merge con el clic
+    await page.evaluate(() => document.querySelector('#graph svg .node.merge').dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    await page.waitForSelector('#diff-panel .df-ffield:not([hidden])', { timeout: T(5000) });
+    await idle();
+    const first = await page.$eval('#diff-panel .df-jump .df-jpath', (n) => n.textContent);
+    const q = first.split('/').pop();
+    await page.fill('#diff-panel .df-filter', q);
+    const filtered = await page.evaluate(() => ({
+      list: [...document.querySelectorAll('#diff-panel .df-files li')].filter((li) => !li.hidden).length,
+      secs: [...document.querySelectorAll('#diff-panel .df-file')].filter((s) => !s.hidden).length,
+      count: document.querySelector('#diff-panel .df-fcount').textContent,
+    }));
+    if (filtered.list < 1 || filtered.list >= files || filtered.secs !== filtered.list) throw new Error('el filtro no deja solo lo que coincide: ' + JSON.stringify(filtered));
+    if (!/\d/.test(filtered.count) || /\{|undefined/.test(filtered.count)) throw new Error(`la cuenta del filtro dice «${filtered.count}»`);
+    await page.press('#diff-panel .df-filter', 'Escape'); // Esc con texto lo borra, sin cerrar el panel
+    if (await page.$eval('#diff-panel', (p) => p.hidden)) throw new Error('Esc en el filtro cerró el panel');
+    if (await page.$eval('#diff-panel .df-filter', (i) => i.value)) throw new Error('Esc no borró el filtro');
+    // plegar y desplegar todo
+    await page.click('#diff-panel .df-all');
+    const allOpen = await page.$$eval('#diff-panel .df-file', (s) => s.map((x) => x.open));
+    await page.click('#diff-panel .df-all');
+    const allShut = await page.$$eval('#diff-panel .df-file', (s) => s.map((x) => x.open));
+    if (allOpen.some((o) => o !== allOpen[0]) || allShut.some((o) => o === allOpen[0])) throw new Error(`plegar todo: ${allOpen} → ${allShut}`);
+    // panel ancho: el código gana lugar y el grafo queda como guía
+    const w = () => page.evaluate(() => [document.querySelector('.graph-panel').offsetWidth, document.querySelector('#diff-panel').offsetWidth]);
+    const [g0, d0] = await w();
+    await page.click('#diff-panel .df-wide');
+    await page.waitForFunction(() => document.querySelector('.main').classList.contains('diff-wide'), null, { timeout: T(3000) });
+    const [g1, d1] = await w();
+    if (!(d1 > d0 && g1 < g0)) throw new Error(`el panel ancho no ensanchó: ${d0}→${d1}, grafo ${g0}→${g1}`);
+    const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    if (over > 0) throw new Error(`la página se desborda ${over}px`);
+    // lo elegido se deja como estaba para los pasos que siguen
+    await page.click('#diff-panel .df-wide');
+    await page.click('#diff-panel .df-unified');
+    await page.keyboard.press('Escape');
+    if (!(await page.$eval('#diff-panel', (p) => p.hidden))) await page.click('#diff-panel .df-close');
+    if (await page.evaluate(() => document.querySelector('.main').classList.contains('diff-wide'))) throw new Error('al cerrar, la vista queda con el ancho del panel');
+  });
+
   await step(page, 'cambia a árabe en vivo (derecha a izquierda)', async () => {
     await page.selectOption('#lang-select', 'ar');
     await page.waitForFunction(() => document.documentElement.dir === 'rtl', null, { timeout: T(5000) });

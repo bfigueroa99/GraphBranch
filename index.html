@@ -310,10 +310,27 @@
           <button type="button" class="icon-btn df-newer" title="Next commit (→ or K)" aria-label="Next commit" aria-keyshortcuts="ArrowRight K" data-i18n-attr="title:diff.newer.title;aria-label:diff.newer">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
           </button>
+          <button type="button" class="icon-btn df-wide" aria-pressed="false" title="Wider panel to read the code (the graph gets narrower)" aria-label="Wider panel" data-i18n-attr="title:diff.wide.title;aria-label:diff.wide">
+            <svg class="ico when-off" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>
+            <svg class="ico when-on" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5 5.5 8 2 11.5M14 4.5 10.5 8l3.5 3.5"/></svg>
+          </button>
           <button type="button" class="icon-btn df-close" title="Close the commit changes" aria-label="Close the commit changes" aria-keyshortcuts="Escape" data-i18n-attr="title:diff.close;aria-label:diff.close">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>
           </button>
         </div>
+      </div>
+      <!-- cómo se leen los cambios: unificado o lado a lado, plegar o desplegar todo y filtrar por ruta -->
+      <div class="df-tools" hidden>
+        <div class="view-switch df-mode" role="group" aria-label="How the changes are shown" data-i18n-attr="aria-label:diff.mode">
+          <button type="button" class="df-unified" aria-pressed="true" data-i18n="diff.unified">Unified</button>
+          <button type="button" class="df-splitb" aria-pressed="false" data-i18n="diff.split">Side by side</button>
+        </div>
+        <button type="button" class="btn btn-ghost df-all" hidden></button>
+        <div class="filter-field df-ffield" hidden>
+          <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
+          <input type="search" class="df-filter" placeholder="Filter files…" aria-label="Filter files by path" data-i18n-attr="placeholder:diff.filterPlaceholder;aria-label:diff.filter" spellcheck="false" autocapitalize="off" autocomplete="off">
+        </div>
+        <span class="df-fcount" aria-live="polite"></span>
       </div>
       <div class="df-bar" aria-hidden="true"></div>
       <div class="df-scroll">

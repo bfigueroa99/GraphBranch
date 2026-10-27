@@ -51,6 +51,9 @@
       this.aborts = 0; // cuántas fusiones se cancelaron con merge --abort
       this.picking = null; // { sha } mientras un cherry-pick --no-commit espera su commit
       this.pickAborts = 0; // cuántos cherry-pick se cancelaron con cherry-pick --abort
+      this.revertAborts = 0; // cuántos revert --no-commit se cancelaron con revert --abort
+      this.rebasing = null; // { orig, branch, base, rest } mientras un rebase -i espera su --continue
+      this.rebaseAborts = 0; // cuántos rebase se cancelaron con rebase --abort
       this.defaultBranch = branch;
       this.branches.set(branch, null);
     }
@@ -165,7 +168,7 @@
 
     /** Falla como git si hay cambios sin commit: en esta simulación, ir a otro commit siempre pisa los archivos cambiados. */
     needClean(verb) {
-      if (this.picking) fail(`error: You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\nPlease, commit your changes or use 'cherry-pick --abort' before you ${verb === 'checkout' ? 'switch branches' : verb}.`);
+      if (this.picking) fail(`error: You have not concluded your ${this.picking.revert ? 'revert' : 'cherry-pick'} (${this.picking.revert ? 'REVERT_HEAD' : 'CHERRY_PICK_HEAD'} exists).\nPlease, commit your changes or use '${this.picking.revert ? 'revert' : 'cherry-pick'} --abort' before you ${verb === 'checkout' ? 'switch branches' : verb}.`);
       if (!this.work.length) return;
       fail(`error: Your local changes to the following files would be overwritten by ${verb}:\n${this.work.map((f) => `\t${f}`).join('\n')}\nPlease commit your changes or stash them before you ${verb === 'checkout' ? 'switch branches' : verb}.\nAborting`);
     }
@@ -178,12 +181,15 @@
       if (words[0] === 'git') words.shift();
       if (!words.length) return { ok: true, lines: [], changed: false };
       const [cmd, ...args] = words;
-      const before = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts]);
+      const before = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
       try {
         const handler = this.commands[cmd];
         if (!handler) fail(`git: '${cmd}' is not a git command. Try 'help'.`);
+        if (this.rebasing && REBASE_BLOCKED.has(cmd) && !(cmd === 'rebase' && (args.includes('--abort') || args.includes('--continue')))) {
+          fail(`fatal: It seems that there is already a rebase-merge directory (a rebase is in progress).\nUse 'rebase --continue' to finish it or 'rebase --abort' to cancel it before you ${cmd}.`);
+        }
         const lines = handler.call(this, args) || [];
-        const after = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts]);
+        const after = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
         return { ok: true, lines, changed: before !== after };
       } catch (e) {
         if (!(e instanceof GitError)) throw e;
@@ -191,6 +197,9 @@
       }
     }
   }
+
+  /** Lo que se niega con un rebase a medias (git exige terminarlo o cancelarlo antes). */
+  const REBASE_BLOCKED = new Set(['checkout', 'switch', 'merge', 'rebase', 'reset', 'cherry-pick', 'revert', 'stash']);
 
   /** Separa banderas y argumentos: `flags` son las que llevan valor (-m). */
   function parse(args, withValue = []) {
@@ -217,13 +226,15 @@
         'restore <file|.>            throw away the uncommitted changes of a file (see touch)',
         'merge <branch>              bring another branch into this one (--no-ff, --ff-only, --no-commit)',
         'merge --abort              cancel a merge that is waiting for its commit',
-        'rebase <branch>             replay this branch on top of another',
+        'rebase [-i] <branch>        replay this branch on top of another (-i stops after the first commit)',
+        'rebase --abort|--continue  cancel a stopped rebase, or replay the rest of it',
         'reset [--soft|--hard] <to>  move the branch back (HEAD~1, a sha, a branch); --hard drops changes',
         'stash [list|pop|apply|drop] put uncommitted changes aside and bring them back',
         'touch <file>                change a file (uncommitted work, for stash)',
         'cherry-pick <commit>        copy one commit on top of the current branch (-n holds it until commit or --continue)',
         'cherry-pick --abort        cancel a cherry-pick that is waiting for its commit',
-        'revert <commit>             undo a commit with a new one, keeping the history',
+        'revert <commit>             undo a commit with a new one, keeping the history (-n holds it until commit or --continue)',
+        'revert --abort             cancel a revert that is waiting for its commit',
         'tag [name] [-d name]        list, create or delete tags on a commit',
         'log [--oneline]             the history that leads to HEAD',
         'status                      where HEAD is',
@@ -251,7 +262,11 @@
     status() {
       const where = this.head.branch ? `On branch ${this.head.branch}` : `HEAD detached at ${this.short(this.head.sha)}`;
       if (this.merging) return [where, 'All conflicts fixed but you are still merging.', '  (use "git commit" to conclude merge)', '  (use "git merge --abort" to cancel it)'];
-      if (this.picking) return [where, `You are currently cherry-picking commit ${this.short(this.picking.sha)}.`, '  (use "git cherry-pick --continue" to commit it)', '  (use "git cherry-pick --abort" to cancel the cherry-pick operation)'];
+      if (this.rebasing) return [where, `interactive rebase in progress; onto ${this.short(this.rebasing.onto)}`, `Last command done (1 command done), ${this.rebasing.rest.length} remaining.`, '  (use "git rebase --continue" to replay the rest)', '  (use "git rebase --abort" to check out the original branch)'];
+      if (this.picking) {
+        const verb = this.picking.revert ? 'revert' : 'cherry-pick';
+        return [where, `You are currently ${this.picking.revert ? 'reverting' : 'cherry-picking'} commit ${this.short(this.picking.sha)}.`, `  (use "git ${verb} --continue" to commit it)`, `  (use "git ${verb} --abort" to cancel the ${verb} operation)`];
+      }
       if (!this.work.length) return [where, 'nothing to commit, working tree clean'];
       return [where, 'Changes not staged for commit:', ...this.work.map((f) => `\tmodified:   ${f}`)];
     },
@@ -411,7 +426,25 @@
     },
 
     rebase(args) {
-      const { rest } = parse(args);
+      const { flags, rest } = parse(args);
+      if (flags['--abort']) {
+        if (!this.rebasing) fail('fatal: No rebase in progress?');
+        this.branches.set(this.rebasing.branch, this.rebasing.orig);
+        this.head = { branch: this.rebasing.branch };
+        this.rebasing = null;
+        this.rebaseAborts++;
+        return [];
+      }
+      if (flags['--continue']) {
+        if (!this.rebasing) fail('fatal: No rebase in progress?');
+        const { branch, rest: left } = this.rebasing;
+        let base = this.headSha;
+        for (const s of left) base = this.make(this.commits.get(s).message, [base]);
+        this.branches.set(branch, base);
+        this.head = { branch };
+        this.rebasing = null;
+        return [`Successfully rebased and updated refs/heads/${branch}.`];
+      }
       const [name] = rest;
       if (!name) fail('fatal: no upstream given (rebase <branch>)');
       if (!this.head.branch) fail('fatal: you are in a detached HEAD state: go to a branch first (checkout <branch>)');
@@ -430,6 +463,14 @@
         .filter((s) => !theirs.has(s) && this.commits.get(s).parents.length < 2)
         .reverse();
       let base = onto;
+      if (flags['-i'] || flags['--interactive']) {
+        // sin editor: el rebase se detiene tras el primer commit, como con «edit», hasta --continue o --abort
+        const [first, ...left] = own;
+        base = this.make(this.commits.get(first).message, [onto]);
+        this.rebasing = { orig: tip, branch: this.head.branch, onto, rest: left };
+        this.head = { sha: base };
+        return [`Stopped at ${this.short(base)}  ${this.commits.get(first).message}`, "You can amend the commit now, then run 'rebase --continue' (or 'rebase --abort' to cancel)."];
+      }
       for (const s of own) base = this.make(this.commits.get(s).message, [base]);
       this.moveHead(base);
       return [`Successfully rebased and updated refs/heads/${this.head.branch}.`];
@@ -439,17 +480,19 @@
       const { flags, rest } = parse(args);
       if (flags['--abort']) {
         if (!this.picking) fail('error: no cherry-pick or revert in progress');
+        if (this.picking.revert) this.revertAborts++;
+        else this.pickAborts++;
         this.picking = null;
-        this.pickAborts++;
         return [];
       }
       if (flags['--continue']) {
         if (!this.picking) fail('error: no cherry-pick or revert in progress');
-        const { sha: pick } = this.picking;
+        const { sha: pick, revert } = this.picking;
         this.picking = null;
         const c = this.commits.get(pick);
-        const sha = this.commit(c.message);
-        return [`[${this.head.branch} ${this.short(sha)}] ${c.message}`];
+        const msg = revert ? `Revert "${c.message}"` : c.message;
+        const sha = this.commit(msg);
+        return [`[${this.head.branch} ${this.short(sha)}] ${msg}`];
       }
       if (!rest.length) fail('fatal: you must specify a commit to cherry-pick');
       if (!this.head.branch) fail('fatal: you are in a detached HEAD state: go to a branch first (checkout <branch>)');
@@ -475,10 +518,25 @@
     },
 
     revert(args) {
-      const { rest } = parse(args);
+      const { flags, rest } = parse(args);
+      if (flags['--abort']) {
+        if (!this.picking?.revert) fail('error: no cherry-pick or revert in progress');
+        this.picking = null;
+        this.revertAborts++;
+        return [];
+      }
+      if (flags['--continue']) return this.commands['cherry-pick'].call(this, ['--continue']);
       if (!rest.length) fail('fatal: you must specify a commit to revert');
       if (!this.head.branch) fail('fatal: you are in a detached HEAD state: go to a branch first (checkout <branch>)');
       this.needClean('revert');
+      if (flags['--no-commit'] || flags['-n']) {
+        if (rest.length > 1) fail('error: --no-commit takes a single commit in this practice');
+        const target = this.resolve(rest[0]);
+        if (!target) fail(`fatal: bad revision '${rest[0]}'`);
+        if (this.commits.get(target).parents.length > 1) fail(`error: commit ${target} is a merge but no -m option was given.`);
+        this.picking = { sha: target, revert: true };
+        return [];
+      }
       const out = [];
       for (const ref of rest) {
         const target = this.resolve(ref);

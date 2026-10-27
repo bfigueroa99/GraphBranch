@@ -1511,6 +1511,20 @@ console.log('Varios repos a la vez');
     const log = await lab.textContent('.pr-log');
     if (!/currently cherry-picking/.test(log)) throw new Error('status no dijo que había un cherry-pick a medias');
   });
+  await step(lab, 'la práctica cancela un revert y un rebase -i a medias', async () => {
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await lab.selectOption('.pr-ex', '5');
+    for (const c of ['revert -n HEAD~1', 'status', 'revert --abort', 'status']) await send(c);
+    await lab.waitForFunction(() => (document.querySelector('.pr-log')?.textContent.match(/working tree clean/g) || []).length >= 1, null, { timeout: T(5000) });
+    let log = await lab.textContent('.pr-log');
+    if (!/currently reverting/.test(log)) throw new Error('status no dijo que había un revert a medias');
+    await lab.selectOption('.pr-ex', '2');
+    for (const c of ['checkout feature', 'rebase -i main', 'status', 'rebase --abort', 'status']) await send(c);
+    await lab.waitForFunction(() => /interactive rebase in progress/.test(document.querySelector('.pr-log')?.textContent || '') && /On branch feature\s*nothing to commit/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+  });
   await step(lab, 'un ejercicio propio se crea, se comparte por URL y la URL lo abre y se resuelve', async () => {
     await lab.click('.pr-make summary');
     await lab.fill('.pr-m-title', 'Fusiona <b>ya</b>');

@@ -716,6 +716,7 @@ GB.i18n.define('pl', {
   'editor.err.perm': 'Token nie może zapisywać w tym repozytorium: potrzebuje prawa zapisu (w GitHubie „Contents: Read and write”).',
   'editor.err.conflict': 'Plik zmienił się na gałęzi, odkąd go otworzyłeś: otwórz go ponownie i nanieś zmiany na nowo.',
   'editor.err.dir': 'Ta ścieżka to folder: wpisz ścieżkę pliku.',
+  'editor.err.path': 'Ta ścieżka jest nieprawidłowa: bez pustych części, „.” ani „..”.',
   'editor.you': 'Ty',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Dziennik pokładowy nr {n}',

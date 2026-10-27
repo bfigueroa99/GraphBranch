@@ -713,6 +713,7 @@ GB.i18n.define('ro', {
   'editor.err.perm': 'Tokenul nu poate scrie în acest depozit: are nevoie de drept de scriere (pe GitHub „Contents: Read and write”).',
   'editor.err.conflict': 'Fișierul s-a schimbat pe ramură de când l-ai deschis: deschide-l din nou și aplică-ți modificările peste el.',
   'editor.err.dir': 'Această cale este un dosar: scrie calea unui fișier.',
+  'editor.err.path': 'Această cale nu este validă: fără părți goale, „.” sau „..”.',
   'editor.you': 'Tu',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Jurnal de bord nr. {n}',

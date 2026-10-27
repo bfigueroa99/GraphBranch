@@ -706,6 +706,7 @@ GB.i18n.define('fil', {
   'editor.err.perm': 'Hindi makasulat ang token sa repository na ito: kailangan nito ng pahintulot sumulat (sa GitHub, “Contents: Read and write”).',
   'editor.err.conflict': 'Nagbago ang file sa branch mula nang buksan mo ito: buksan muli at ilapat doon ang iyong mga pagbabago.',
   'editor.err.dir': 'Folder ang path na iyan: isulat ang path ng isang file.',
+  'editor.err.path': 'Hindi wasto ang path na iyan: walang bakanteng bahagi, “.” o “..”.',
   'editor.you': 'Ikaw',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Talaan Blg. {n}',

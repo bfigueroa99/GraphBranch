@@ -706,6 +706,7 @@ GB.i18n.define('it', {
   'editor.err.perm': 'Il token non può scrivere in questo repository: serve il permesso di scrittura (su GitHub «Contents: Read and write»).',
   'editor.err.conflict': 'Il file è cambiato sul ramo da quando l’hai aperto: riaprilo e applica sopra le tue modifiche.',
   'editor.err.dir': 'Questo percorso è una cartella: scrivi quello di un file.',
+  'editor.err.path': 'Questo percorso non è valido: niente parti vuote, «.» o «..».',
   'editor.you': 'Tu',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Diario di bordo n. {n}',

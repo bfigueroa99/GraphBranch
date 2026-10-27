@@ -705,6 +705,7 @@ GB.i18n.define('vi', {
   'editor.err.perm': 'Token không ghi được vào kho này: cần quyền ghi (trên GitHub là “Contents: Read and write”).',
   'editor.err.conflict': 'Tệp đã đổi trên nhánh kể từ khi bạn mở: mở lại và áp thay đổi của bạn lên trên.',
   'editor.err.dir': 'Đường dẫn đó là thư mục: hãy nhập đường dẫn của một tệp.',
+  'editor.err.path': 'Đường dẫn đó không hợp lệ: không có phần trống, “.” hay “..”.',
   'editor.you': 'Bạn',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Nhật ký số {n}',

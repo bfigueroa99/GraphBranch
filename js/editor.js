@@ -177,6 +177,11 @@
       const path = ui.path.value.trim().replace(/^\/+/, '');
       const branch = ui.branch.value;
       if (!path || !branch) return;
+      if (!GB.U.safePath(path)) {
+        base = null;
+        setNote(t('editor.err.path'), 'error');
+        return renderSum();
+      }
       const my = ++seq;
       busy = true;
       base = null;

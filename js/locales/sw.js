@@ -705,6 +705,7 @@ GB.i18n.define('sw', {
   'editor.err.perm': 'Tokeni haiwezi kuandika kwenye hazina hii: inahitaji ruhusa ya kuandika (kwenye GitHub, “Contents: Read and write”).',
   'editor.err.conflict': 'Faili imebadilika kwenye tawi tangu ulipoifungua: ifungue tena na uweke mabadiliko yako juu yake.',
   'editor.err.dir': 'Njia hiyo ni folda: andika njia ya faili.',
+  'editor.err.path': 'Njia hiyo si halali: bila sehemu tupu, “.” wala “..”.',
   'editor.you': 'Wewe',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Daftari Na. {n}',

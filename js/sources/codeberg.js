@@ -372,6 +372,7 @@
     }
 
     async readFile({ path, ref }) {
+      if (!U.safePath(path)) throw GB.GitHubSource.editError('path');
       const { data, status } = await this.api(`${this.base}/contents/${U.encPath(path)}?ref=${encodeURIComponent(ref)}`, { allow: [404] });
       if (status === 404) return { missing: true };
       if (Array.isArray(data) || data?.type !== 'file') throw GB.GitHubSource.editError('dir');
@@ -383,6 +384,7 @@
     /** Un commit que deja el archivo con `text`: PUT con su sha si existía, POST si es nuevo. */
     async writeFile({ path, branch, text, message, sha = null }) {
       if (this.own || !this.codebergToken) throw GB.GitHubSource.editError(this.own ? 'noWrite' : 'noToken');
+      if (!U.safePath(path)) throw GB.GitHubSource.editError('path');
       const payload = { content: U.b64encode(text), message, branch };
       if (sha) payload.sha = sha;
       const { res, body } = await this.request(this.ep.api + `${this.base}/contents/${U.encPath(path)}`, {

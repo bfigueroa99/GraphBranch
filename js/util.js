@@ -332,6 +332,10 @@ window.GB = window.GB || {};
     }
   };
 
+  /** ¿Es una ruta de archivo que se puede mandar a una API? Sin tramos vacíos, «.» ni «..»: en una URL se
+      normalizan (también escapados como %2E) y el pedido iría a otro lugar de la API. */
+  U.safePath = (path) => typeof path === 'string' && path.length > 0 && path.length <= 4096 && !path.includes('\0') && path.split('/').every((seg) => seg && seg !== '.' && seg !== '..');
+
   /** Una ruta de archivo para la URL de una API: cada tramo escapado, las barras como barras. */
   U.encPath = (path) => String(path || '').split('/').map(encodeURIComponent).join('/');
 

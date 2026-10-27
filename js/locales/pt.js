@@ -706,6 +706,7 @@ GB.i18n.define('pt', {
   'editor.err.perm': 'O token não pode escrever neste repositório: precisa de permissão de escrita (no GitHub, “Contents: Read and write”).',
   'editor.err.conflict': 'O arquivo mudou na branch desde que você o abriu: abra de novo e aplique suas alterações por cima.',
   'editor.err.dir': 'Esse caminho é uma pasta: digite o de um arquivo.',
+  'editor.err.path': 'Esse caminho não é válido: sem partes vazias, “.” ou “..”.',
   'editor.you': 'Você',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Diário de bordo nº {n}',

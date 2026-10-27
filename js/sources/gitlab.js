@@ -543,6 +543,7 @@
 
     /** El archivo como está ahora en la rama; su `sha` es el último commit que lo tocó (GitLab compara con él al escribir). */
     async readFile({ path, ref }) {
+      if (!U.safePath(path)) throw GB.GitHubSource.editError('path');
       const { data, status } = await this.api(`${this.base}/repository/files/${encodeURIComponent(path)}?ref=${encodeURIComponent(ref)}`, { allow: [404] });
       if (status === 404) return { missing: true };
       if (data?.encoding !== 'base64') return { tooLarge: true };
@@ -553,6 +554,7 @@
     /** Un commit que deja el archivo con `text` (POST si no existía, PUT si sí). GitLab no dice el sha del commit. */
     async writeFile({ path, branch, text, message, sha = null }) {
       if (!this.gitlabToken) throw GB.GitHubSource.editError('noToken');
+      if (!U.safePath(path)) throw GB.GitHubSource.editError('path');
       const payload = { branch, content: U.b64encode(text), encoding: 'base64', commit_message: message };
       if (sha) payload.last_commit_id = sha;
       const { res, body } = await this.request(this.ep.api + `${this.base}/repository/files/${encodeURIComponent(path)}`, {

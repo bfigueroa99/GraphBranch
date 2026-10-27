@@ -705,6 +705,7 @@ GB.i18n.define('es', {
   'editor.err.perm': 'El token no puede escribir en este repositorio: necesita permiso de escritura (en GitHub, «Contents: Read and write»).',
   'editor.err.conflict': 'El archivo cambió en la rama desde que lo abriste: vuelve a abrirlo y aplica tus cambios encima.',
   'editor.err.dir': 'Esa ruta es una carpeta: escribe la de un archivo.',
+  'editor.err.path': 'Esa ruta no vale: sin tramos vacíos, «.» ni «..».',
   'editor.you': 'Tú',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Bitácora n.º {n}',

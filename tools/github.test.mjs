@@ -833,6 +833,13 @@ test('writeFile: un PUT a contents con el texto en base64, la rama y el sha; sin
   // un archivo nuevo va sin sha
   await src.writeFile({ path: 'nuevo.txt', branch: 'main', text: '', message: 'Crea nuevo.txt' });
   assert.equal('sha' in sent.body, false);
+  // una ruta con «..» no sale: en la URL apuntaría a otro lugar de la API, con el token
+  sent = null;
+  const calls = gh.calls.length;
+  await assert.rejects(src.writeFile({ path: '../../user/repos', branch: 'main', text: 'x', message: 'm' }), (err) => err.editKind === 'path');
+  await assert.rejects(src.readFile({ path: 'src/../../../user', ref: 'main' }), (err) => err.editKind === 'path');
+  assert.equal(sent, null);
+  assert.equal(gh.calls.length, calls, 'ni una consulta');
 });
 
 test('writeFile: el motivo de cada fallo (token rechazado, sin permiso de escritura, el archivo ya cambió)', async () => {

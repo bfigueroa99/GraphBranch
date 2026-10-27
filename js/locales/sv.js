@@ -705,6 +705,7 @@ GB.i18n.define('sv', {
   'editor.err.perm': 'Token kan inte skriva till det här repot: den behöver skrivbehörighet (på GitHub ”Contents: Read and write”).',
   'editor.err.conflict': 'Filen har ändrats på grenen sedan du öppnade den: öppna den igen och lägg dina ändringar ovanpå.',
   'editor.err.dir': 'Den sökvägen är en mapp: skriv sökvägen till en fil.',
+  'editor.err.path': 'Den sökvägen är ogiltig: inga tomma delar, ”.” eller ”..”.',
   'editor.you': 'Du',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Loggbok nr {n}',

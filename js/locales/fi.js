@@ -705,6 +705,7 @@ GB.i18n.define('fi', {
   'editor.err.perm': 'Tunnus ei voi kirjoittaa tähän repositorioon: se tarvitsee kirjoitusoikeuden (GitHubissa ”Contents: Read and write”).',
   'editor.err.conflict': 'Tiedosto on muuttunut haarassa avaamisesi jälkeen: avaa se uudelleen ja tee muutoksesi sen päälle.',
   'editor.err.dir': 'Polku on kansio: kirjoita tiedoston polku.',
+  'editor.err.path': 'Polku ei kelpaa: ei tyhjiä osia, ”.” eikä ”..”.',
   'editor.you': 'Sinä',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Lokikirja nro {n}',

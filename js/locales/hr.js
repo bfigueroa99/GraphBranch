@@ -713,6 +713,7 @@ GB.i18n.define('hr', {
   'editor.err.perm': 'Token ne može pisati u ovaj repozitorij: treba mu pravo pisanja (na GitHubu „Contents: Read and write”).',
   'editor.err.conflict': 'Datoteka se promijenila na grani otkad ste je otvorili: otvorite je ponovno i primijenite svoje promjene na nju.',
   'editor.err.dir': 'Ta je putanja mapa: upišite putanju datoteke.',
+  'editor.err.path': 'Ta putanja nije valjana: bez praznih dijelova, „.” ili „..”.',
   'editor.you': 'Vi',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Brodski dnevnik br. {n}',

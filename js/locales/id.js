@@ -705,6 +705,7 @@ GB.i18n.define('id', {
   'editor.err.perm': 'Token tidak bisa menulis ke repositori ini: perlu izin tulis (di GitHub, “Contents: Read and write”).',
   'editor.err.conflict': 'File berubah di cabang sejak kamu membukanya: buka lagi dan terapkan perubahanmu di atasnya.',
   'editor.err.dir': 'Jalur itu adalah folder: ketik jalur sebuah file.',
+  'editor.err.path': 'Jalur itu tidak valid: tanpa bagian kosong, “.” atau “..”.',
   'editor.you': 'Kamu',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Jurnal No. {n}',

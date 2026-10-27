@@ -40,6 +40,9 @@ test('b64encode y b64decode: UTF-8 de ida y vuelta, y lo binario se reconoce', (
   const big = 'x'.repeat(200000);
   assert.equal(U.b64decode(U.b64encode(big)).text.length, 200000, 'un archivo grande no revienta la pila');
   assert.equal(U.encPath('src/mi archivo#1.js'), 'src/mi%20archivo%231.js');
+  // una ruta con «..» o «.» se normaliza en la URL (también como %2E): el pedido iría a otro lugar de la API
+  for (const bad of ['../user/repos', 'src/../../x', './a', 'a//b', 'a/', '', '..', 'a\0b']) assert.equal(U.safePath(bad), false, bad);
+  for (const ok of ['a', 'src/app.js', '.github/workflows/ci.yml', 'a..b/c', 'docs/v1.2/x.md']) assert.equal(U.safePath(ok), true, ok);
 });
 
 test('lineDiff y changes: el contexto, lo quitado y lo agregado, línea por línea', () => {

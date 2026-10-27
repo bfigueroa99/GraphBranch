@@ -705,6 +705,7 @@ GB.i18n.define('hu', {
   'editor.err.perm': 'A token nem írhat ebbe a repozitóriumba: írási jog kell neki (GitHubon „Contents: Read and write”).',
   'editor.err.conflict': 'A fájl megváltozott az ágon, mióta megnyitottad: nyisd meg újra, és alkalmazd rá a változtatásaidat.',
   'editor.err.dir': 'Ez az útvonal egy mappa: egy fájl útvonalát add meg.',
+  'editor.err.path': 'Ez az útvonal érvénytelen: nem lehet benne üres rész, „.” vagy „..”.',
   'editor.you': 'Te',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': '{n}. sz. napló',

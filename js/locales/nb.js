@@ -705,6 +705,7 @@ GB.i18n.define('nb', {
   'editor.err.perm': 'Tokenet kan ikke skrive til dette repoet: det trenger skrivetilgang (på GitHub «Contents: Read and write»).',
   'editor.err.conflict': 'Filen er endret på grenen siden du åpnet den: åpne den igjen og legg endringene dine oppå.',
   'editor.err.dir': 'Den stien er en mappe: skriv stien til en fil.',
+  'editor.err.path': 'Den stien er ikke gyldig: ingen tomme deler, «.» eller «..».',
   'editor.you': 'Deg',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Loggbok nr. {n}',

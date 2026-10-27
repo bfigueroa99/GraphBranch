@@ -705,6 +705,7 @@ GB.i18n.define('tr', {
   'editor.err.perm': 'Token bu depoya yazamıyor: yazma izni gerekir (GitHub’da “Contents: Read and write”).',
   'editor.err.conflict': 'Dosya, açtığından beri dalda değişti: yeniden aç ve değişikliklerini üstüne uygula.',
   'editor.err.dir': 'Bu yol bir klasör: bir dosyanın yolunu yaz.',
+  'editor.err.path': 'Bu yol geçerli değil: boş parça, “.” ya da “..” olamaz.',
   'editor.you': 'Sen',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Seyir defteri No. {n}',

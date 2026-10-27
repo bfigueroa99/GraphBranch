@@ -706,6 +706,7 @@ GB.i18n.define('nl', {
   'editor.err.perm': 'Het token kan niet naar deze repository schrijven: het heeft schrijfrechten nodig (op GitHub ‘Contents: Read and write’).',
   'editor.err.conflict': 'Het bestand is op de branch gewijzigd sinds je het opende: open het opnieuw en pas je wijzigingen erop toe.',
   'editor.err.dir': 'Dat pad is een map: typ het pad van een bestand.',
+  'editor.err.path': 'Dat pad is ongeldig: geen lege delen, ‘.’ of ‘..’.',
   'editor.you': 'Jij',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Logboek nr. {n}',

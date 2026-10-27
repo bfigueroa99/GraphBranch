@@ -711,6 +711,7 @@ GB.i18n.define('en', {
   'editor.err.perm': 'The token cannot write to this repository: it needs write permission (on GitHub, “Contents: Read and write”).',
   'editor.err.conflict': 'The file changed on the branch since you opened it: open it again and apply your changes on top.',
   'editor.err.dir': 'That path is a folder: type the path of a file.',
+  'editor.err.path': 'That path is not valid: no empty parts, “.” or “..”.',
   'editor.you': 'You',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Logbook No. {n}',

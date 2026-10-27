@@ -716,6 +716,7 @@ GB.i18n.define('sk', {
   'editor.err.perm': 'Token nemôže zapisovať do tohto repozitára: potrebuje oprávnenie na zápis (na GitHube „Contents: Read and write“).',
   'editor.err.conflict': 'Súbor sa vo vetve zmenil, odkedy ste ho otvorili: otvorte ho znova a použite svoje zmeny navrch.',
   'editor.err.dir': 'Táto cesta je priečinok: zadajte cestu k súboru.',
+  'editor.err.path': 'Táto cesta nie je platná: bez prázdnych častí, „.“ a „..“.',
   'editor.you': 'Vy',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Palubný denník č. {n}',

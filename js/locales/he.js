@@ -762,6 +762,7 @@ GB.i18n.define('he', {
   'editor.err.perm': 'האסימון לא יכול לכתוב במאגר הזה: הוא צריך הרשאת כתיבה (ב־GitHub‏ “Contents: Read and write”).',
   'editor.err.conflict': 'הקובץ השתנה בענף מאז שפתחת אותו: פתחו אותו שוב והחילו עליו את השינויים.',
   'editor.err.dir': 'הנתיב הזה הוא תיקייה: כתבו נתיב של קובץ.',
+  'editor.err.path': 'הנתיב הזה לא תקין: בלי חלקים ריקים, “.” או “..”.',
   'editor.you': 'את/ה',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'יומן מס׳ {n}',

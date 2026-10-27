@@ -705,6 +705,7 @@ GB.i18n.define('ko', {
   'editor.err.perm': '토큰이 이 저장소에 쓸 수 없습니다: 쓰기 권한이 필요합니다(GitHub에서는 “Contents: Read and write”).',
   'editor.err.conflict': '연 뒤에 브랜치에서 파일이 바뀌었습니다: 다시 열고 그 위에 변경 사항을 적용하세요.',
   'editor.err.dir': '이 경로는 폴더입니다: 파일 경로를 입력하세요.',
+  'editor.err.path': '이 경로는 올바르지 않습니다: 빈 부분, “.”, “..”는 쓸 수 없습니다.',
   'editor.you': '나',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': '일지 제{n}호',

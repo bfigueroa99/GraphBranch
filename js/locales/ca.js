@@ -705,6 +705,7 @@ GB.i18n.define('ca', {
   'editor.err.perm': 'El token no pot escriure en aquest repositori: necessita permís d’escriptura (a GitHub, «Contents: Read and write»).',
   'editor.err.conflict': 'El fitxer ha canviat a la branca des que el vas obrir: torna’l a obrir i aplica-hi els teus canvis.',
   'editor.err.dir': 'Aquesta ruta és una carpeta: escriu la d’un fitxer.',
+  'editor.err.path': 'Aquesta ruta no és vàlida: sense trams buits, «.» ni «..».',
   'editor.you': 'Tu',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Diari de bord núm. {n}',

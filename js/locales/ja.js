@@ -705,6 +705,7 @@ GB.i18n.define('ja', {
   'editor.err.perm': 'このトークンはこのリポジトリに書き込めません。書き込み権限が必要です（GitHub では「Contents: Read and write」）。',
   'editor.err.conflict': '開いた後にブランチでファイルが変更されました。もう一度開いて、変更を上から適用してください。',
   'editor.err.dir': 'このパスはフォルダーです。ファイルのパスを入力してください。',
+  'editor.err.path': 'このパスは無効です。空の部分や「.」「..」は使えません。',
   'editor.you': 'あなた',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': '航海日誌 第{n}号',

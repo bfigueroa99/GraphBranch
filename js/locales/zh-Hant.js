@@ -705,6 +705,7 @@ GB.i18n.define('zh-Hant', {
   'editor.err.perm': '權杖無法寫入此儲存庫：需要寫入權限（在 GitHub 上是「Contents: Read and write」）。',
   'editor.err.conflict': '你開啟檔案後，分支上的檔案已經改變：請重新開啟，並在其上套用你的變更。',
   'editor.err.dir': '這個路徑是資料夾：請輸入檔案的路徑。',
+  'editor.err.path': '這個路徑無效：不能有空的部分、「.」或「..」。',
   'editor.you': '你',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': '日誌第 {n} 期',

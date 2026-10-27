@@ -987,7 +987,8 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
   GitHub (`PUT /contents`, con su sha), GitLab (`PUT`/`POST /repository/files`, con `last_commit_id`) y Codeberg
   (`PUT`/`POST /contents`). Un archivo que cambió en la rama no se pisa (conflicto), una ruta nueva se crea, y
   cada fallo se dice (sin token, token rechazado, sin permiso de escritura, carpeta, binario, demasiado grande);
-  sin token el editor ofrece Ajustes con el foco en el campo de ese servicio. La demo edita en memoria: su commit
+  sin token el editor ofrece Ajustes con el foco en el campo de ese servicio. Una ruta escrita con tramos vacíos,
+  «.» o «..» no sale (`U.safePath`: en la URL se normalizaría y el `PUT`, con el token, iría a otro lugar de la API). La demo edita en memoria: su commit
   aparece en la rama y sus cambios (`GB.editor.patch`) son los escritos. Bitbucket, un Forgejo propio y las
   carpetas locales quedan para después (`canEdit` por servicio). `U.b64encode`, `U.b64decode` y `U.encPath`
   pasan a `js/util.js`.

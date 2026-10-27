@@ -706,6 +706,7 @@ GB.i18n.define('fr', {
   'editor.err.perm': 'Le jeton ne peut pas écrire dans ce dépôt : il lui faut le droit d’écriture (sur GitHub, « Contents: Read and write »).',
   'editor.err.conflict': 'Le fichier a changé sur la branche depuis que vous l’avez ouvert : rouvrez-le et appliquez vos modifications par-dessus.',
   'editor.err.dir': 'Ce chemin est un dossier : saisissez celui d’un fichier.',
+  'editor.err.path': 'Ce chemin n’est pas valide : pas de parties vides, ni « . » ni « .. ».',
   'editor.you': 'Vous',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Journal de bord n° {n}',

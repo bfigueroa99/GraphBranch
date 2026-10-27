@@ -705,6 +705,7 @@ GB.i18n.define('ms', {
   'editor.err.perm': 'Token tidak boleh menulis ke repositori ini: ia perlukan kebenaran menulis (di GitHub, “Contents: Read and write”).',
   'editor.err.conflict': 'Fail berubah pada cabang sejak anda membukanya: buka semula dan gunakan perubahan anda di atasnya.',
   'editor.err.dir': 'Laluan itu ialah folder: taip laluan sebuah fail.',
+  'editor.err.path': 'Laluan itu tidak sah: tiada bahagian kosong, “.” atau “..”.',
   'editor.you': 'Anda',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Buku log Bil. {n}',

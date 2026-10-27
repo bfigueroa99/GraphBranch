@@ -706,6 +706,7 @@ GB.i18n.define('de', {
   'editor.err.perm': 'Das Token darf in dieses Repository nicht schreiben: es braucht Schreibrecht (bei GitHub „Contents: Read and write“).',
   'editor.err.conflict': 'Die Datei hat sich im Branch geändert, seit du sie geöffnet hast: öffne sie neu und übernimm deine Änderungen darauf.',
   'editor.err.dir': 'Dieser Pfad ist ein Ordner: gib den Pfad einer Datei ein.',
+  'editor.err.path': 'Dieser Pfad ist ungültig: keine leeren Teile, „.“ oder „..“.',
   'editor.you': 'Du',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Logbuch Nr. {n}',

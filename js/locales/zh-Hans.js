@@ -705,6 +705,7 @@ GB.i18n.define('zh-Hans', {
   'editor.err.perm': '令牌无法写入此仓库：需要写入权限（在 GitHub 上是“Contents: Read and write”）。',
   'editor.err.conflict': '你打开文件后，分支上的文件已经改变：请重新打开，并在其上应用你的改动。',
   'editor.err.dir': '这个路径是文件夹：请输入文件的路径。',
+  'editor.err.path': '这个路径无效：不能有空的部分、“.”或“..”。',
   'editor.you': '你',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': '日志第 {n} 期',

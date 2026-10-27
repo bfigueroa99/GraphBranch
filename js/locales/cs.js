@@ -716,6 +716,7 @@ GB.i18n.define('cs', {
   'editor.err.perm': 'Token nemůže zapisovat do tohoto repozitáře: potřebuje oprávnění k zápisu (na GitHubu „Contents: Read and write“).',
   'editor.err.conflict': 'Soubor se ve větvi změnil od chvíle, kdy jste ho otevřeli: otevřete ho znovu a použijte své změny navrch.',
   'editor.err.dir': 'Tato cesta je složka: zadejte cestu k souboru.',
+  'editor.err.path': 'Tato cesta není platná: bez prázdných částí, „.“ a „..“.',
   'editor.you': 'Vy',
   /* ---------- bitácora en vivo ---------- */
   'bitacora.card': 'Palubní deník č. {n}',

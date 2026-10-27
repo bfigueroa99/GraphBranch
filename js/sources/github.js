@@ -738,6 +738,7 @@
 
     /** El archivo `path` como está ahora en la rama `ref`: { text, sha, missing, binary, tooLarge }. */
     async readFile({ path, ref }) {
+      if (!U.safePath(path)) throw editError('path');
       const { data, status } = await this.api(`${this.base}/contents/${U.encPath(path)}?ref=${encodeURIComponent(ref)}`, { allow: [404] });
       if (status === 404) return { missing: true };
       if (Array.isArray(data) || data?.type !== 'file') throw editError('dir');
@@ -750,6 +751,7 @@
     /** Un commit que deja `path` con `text` en `branch` (lo crea si `sha` es null). Solo con token, y uno que pueda escribir. */
     async writeFile({ path, branch, text, message, sha = null }) {
       if (!this.token) throw editError('noToken');
+      if (!U.safePath(path)) throw editError('path');
       const payload = { message, content: U.b64encode(text), branch };
       if (sha) payload.sha = sha;
       const { res, body } = await this.request(this.ep.api + `${this.base}/contents/${U.encPath(path)}`, {

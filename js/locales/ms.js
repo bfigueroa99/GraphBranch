@@ -641,6 +641,7 @@ GB.i18n.define('ms', {
   'digest.releases': 'Keluaran',
   'digest.tags': 'Tag',
   'digest.people': 'Siapa yang menyumbang (commit)',
+  'digest.newcomers': 'Penyumbang baharu: {n}',
   'digest.branch': 'Cabang paling aktif',
   'digest.org': 'Ringkasan mingguan {owner}',
   'constellation.title': 'Buruj',

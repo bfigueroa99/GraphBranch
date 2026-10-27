@@ -226,3 +226,14 @@ test('issues cerrados: sin ninguno no hay sección', () => {
   assert.equal(d.closed.total, 0);
   assert.doesNotMatch(toMarkdown(d, 'a/b', { head: 'S', commits: 'C {n}', merged: 'M', closed: 'Cerrados', releases: 'R', people: 'P', branch: 'B' }), /Cerrados/);
 });
+
+test('autores nuevos: quienes no tienen commit cargado anterior a la semana', () => {
+  const d = compute(repo(), acts, NOW);
+  assert.equal(d.newcomers, 1); // beto; ana ya tenía commits de hace 40 días
+  const t = { head: 'S', commits: 'C {n}', merged: 'M', releases: 'R', people: 'P', branch: 'B', newcomers: 'Nuevos: {n}' };
+  assert.match(toMarkdown(d, 'a/b', t), /- Nuevos: 1\n/);
+  assert.ok(imageLines(d, 'a/b', t).some((l) => l.text === 'Nuevos: 1'));
+  const sin = compute({ commits: new Map([c('p', 2, [], 'ana'), c('q', 30, [], 'ana')]), branches: new Map() }, [], NOW);
+  assert.equal(sin.newcomers, 0);
+  assert.doesNotMatch(toMarkdown(sin, 'a/b', t), /Nuevos/);
+});

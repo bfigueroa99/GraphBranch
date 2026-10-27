@@ -355,7 +355,9 @@ console.log('Escritorio (1280×800)');
 
   await step(page, 'vista 2D', async () => {
     await page.click('#view-2d');
-    await page.waitForSelector('#graph svg .node', { timeout: T(10000) });
+    // los nodos existen antes de ser «visibles» (entran con animación y, bajo carga, tardan): se espera el estado
+    await page.waitForSelector('#graph svg .node', { timeout: T(10000), state: 'attached' });
+    await page.waitForFunction(() => !document.querySelector('#graph').hidden && document.querySelector('#view-2d').getAttribute('aria-pressed') === 'true', null, { timeout: T(10000) });
     if (await page.locator('#graph3d').isVisible()) throw new Error('la vista 3D sigue visible');
   });
 

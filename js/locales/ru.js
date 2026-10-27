@@ -657,6 +657,7 @@ GB.i18n.define('ru', {
   'digest.releases': 'Релизы',
   'digest.tags': 'Теги',
   'digest.people': 'Кто внёс вклад (коммиты)',
+  'digest.newcomers': 'Новые авторы: {n}',
   'digest.branch': 'Самая активная ветка',
   'digest.org': 'Итоги недели для {owner}',
   'constellation.title': 'Созвездие',

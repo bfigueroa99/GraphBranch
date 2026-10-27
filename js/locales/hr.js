@@ -649,6 +649,7 @@ GB.i18n.define('hr', {
   'digest.releases': 'Izdanja',
   'digest.tags': 'Tagovi',
   'digest.people': 'Tko je doprinio (commitovi)',
+  'digest.newcomers': 'Novi suradnici: {n}',
   'digest.branch': 'Najaktivnija grana',
   'digest.org': 'Tjedni sažetak za {owner}',
   'constellation.title': 'Zviježđe',

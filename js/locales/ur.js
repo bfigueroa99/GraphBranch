@@ -684,6 +684,7 @@ GB.i18n.define('ur', {
   'digest.releases': 'ریلیزز',
   'digest.tags': 'ٹیگز',
   'digest.people': 'کس نے حصہ ڈالا (کمٹس)',
+  'digest.newcomers': 'نئے معاونین: {n}',
   'digest.branch': 'سب سے فعال برانچ',
   'digest.org': '{owner} کا ہفتہ وار خلاصہ',
   'constellation.title': 'برج',

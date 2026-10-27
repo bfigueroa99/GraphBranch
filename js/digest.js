@@ -24,8 +24,13 @@
 
     const week = new Set();
     const people = new Map();
+    const before = new Set(); // quienes ya firmaron un commit cargado anterior a la semana
     for (const c of data.commits.values()) {
-      if (!recent(c)) continue;
+      if (!recent(c)) {
+        const old = c.author?.login || c.author?.name;
+        if (old && at(c.date) <= since) before.add(old);
+        continue;
+      }
       week.add(c.sha);
       const who = c.author?.login || c.author?.name;
       if (who) people.set(who, (people.get(who) || 0) + 1);
@@ -87,6 +92,7 @@
       now,
       days,
       commits: week.size,
+      newcomers: [...people.keys()].filter((who) => !before.has(who)).length, // con lo cargado: sin commit anterior a la semana
       merged: { total: merged.length, rows: merged.slice(0, LIST) },
       opened: { total: opened.length, rows: opened.slice(0, LIST) },
       closed: { total: closed.length, rows: closed.slice(0, LIST) },
@@ -104,6 +110,7 @@
       branch }; `none`: el texto de «nada»; `fmtDate`: cómo escribir un día. */
   function toMarkdown(d, repo, t, fmtDate = (ms) => new Date(ms).toISOString().slice(0, 10), none = '—') {
     const out = [`# ${md(t.head.replace('{repo}', repo))}`, '', `${fmtDate(d.since)} – ${fmtDate(d.now)}`, '', `- ${t.commits.replace('{n}', d.commits)}`];
+    if (d.newcomers && t.newcomers) out.push(`- ${t.newcomers.replace('{n}', d.newcomers)}`);
     if (d.branch) out.push(`- ${t.branch}: \`${String(d.branch.name).replace(/`/g, "'")}\` (${d.branch.commits})`);
     const link = (r, text) => (r.url && /^https?:\/\//.test(r.url) ? `[${text}](${r.url.replace(/[()\s]/g, encodeURIComponent)})` : text);
     out.push('', `## ${t.merged} (${d.merged.total})`, '');
@@ -152,6 +159,7 @@
     const cut = (s) => (s.length > 70 ? s.slice(0, 69) + '…' : s);
     const L = [{ text: cut(flat(t.head.replace('{repo}', repo))), kind: 'title' }, { text: `${fmtDate(d.since)} – ${fmtDate(d.now)}`, kind: 'sub' }];
     L.push({ text: t.commits.replace('{n}', d.commits), kind: 'head' });
+    if (d.newcomers && t.newcomers) L.push({ text: cut(t.newcomers.replace('{n}', d.newcomers)), kind: 'row' });
     if (d.branch) L.push({ text: cut(`${t.branch}: ${flat(d.branch.name)} (${d.branch.commits})`), kind: 'row' });
     const section = (label, total, rows) => {
       L.push({ text: `${label} (${total})`, kind: 'head' });

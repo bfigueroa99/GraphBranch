@@ -201,17 +201,17 @@ cada iteración lo repite (`node tools/loop.mjs --salud` lo imprime) y se quita 
    fusiona en `dev` y `master` es el release: la web muestra lo nuevo cuando promovés `dev` a `master`
    (un PR `dev` → `master` con commit de merge); la línea `Release:` de `--salud` dice cuántos merges
    faltan.
-2. **Permisos para investigar, triar, Replica, la arena y find-skills** (desde 2026-10-13). Para que la
-   investigación de mercado, la paridad con la app de referencia, la arena, la búsqueda de skills y el
-   triaje de issues no dependan del modo de permisos de la sesión, sumar a `.claude/settings.json`
-   (`permissions.allow`): `WebSearch`, `WebFetch`, `mcp__github__list_issues`, `mcp__github__issue_read`
-   y, desde 2026-10-20, `Bash(python3 .claude/skills/replica-diff/parity.py:*)`,
+2. **Permisos para investigar, triar, Replica y la arena** (desde 2026-10-13). Para que la investigación de
+   mercado, la paridad con la app de referencia, la arena y el triaje de issues no dependan del modo de
+   permisos de la sesión, sumar a `.claude/settings.json` (`permissions.allow`): `WebSearch`, `WebFetch`,
+   `mcp__github__list_issues`, `mcp__github__issue_read` y, desde 2026-10-20,
+   `Bash(python3 .claude/skills/replica-diff/parity.py:*)`,
    `Bash(python3 .claude/skills/replica-entrepreneur/reviews.py:*)` y
-   `Bash(python3 .claude/skills/arena/bracket.py:*)`; desde 2026-10-26, `Bash(npx skills@1.7.4:*)` (sin
-   él, `--check` avisa en R8). Sin ellos el loop sigue: los issues los lee `--salud` por la API pública y
-   la hoja se repone con lo ya investigado mientras esté vigente (30 días). Sin `WebFetch` no hay pasada
-   de Replica, la arena necesita además que la sesión pueda lanzar subagentes que escriban en `.arena/`,
-   y find-skills, que pueda correr la CLI y salir a skills.sh y a GitHub; si algo falta, no se hace y la
+   `Bash(python3 .claude/skills/arena/bracket.py:*)`. El de find-skills, `Bash(npx skills@1.7.4:*)`, ya
+   está (2026-10-27). Sin ellos el loop sigue: los issues los lee `--salud` por la API pública y la hoja
+   se repone con lo ya investigado mientras esté vigente (30 días). Sin `WebFetch` no hay pasada de
+   Replica, la arena necesita además que la sesión pueda lanzar subagentes que escriban en `.arena/`, y
+   find-skills, que la sesión pueda salir a skills.sh y a GitHub; si algo falta, no se hace y la
    bitácora lo dice.
 3. **¿Subir la cadencia?** (desde 2026-10-13). Medido de nuevo el 2026-10-25: ya no se pierde la mitad
    de los disparos (`--salud` cuenta más iteraciones que disparos esperados desde la directiva, una por

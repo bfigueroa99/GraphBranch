@@ -948,3 +948,30 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
   `reading 'sha'` del smoke salió aquí en «modo galaxias» y en «filtro por autor»: era de la demo y la arregló #184.
 - Validado: 435 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)
+
+### 2026-10-27 · Pedido de Benjamin: todos los repos seguidos en una misma vista
+
+- **Pedido de Benjamin:** «poder revisar en una misma vista los repositorios conectados y no tener que cambiarme
+  entre pestañas para revisar cada uno». No es una iteración numerada y la proporción de la regla 2 no cambia.
+- **Lo nuevo:** **Todos**, delante de las pestañas (con dos repos o más), cambia el grafo de un solo repo por una
+  cuadrícula con una tarjeta por repo (`js/overview.js`): su estado, su etiqueta, sus cifras (ramas, commits del
+  grafo, PRs abiertos y cuándo fue el último commit), su último commit (un clic abre sus cambios) y su grafo 2D en
+  vivo (una instancia de `GB.Graph` con su propio layout), con los efectos de lo que llega; arriba, los totales.
+  El panel de cambios ahora sigue al repo del commit (`diffTab`) y no siempre al de la vista, así que «Ver
+  cambios» en una tarjeta lo abre al lado sin cambiar de pestaña. El panel de actividad lleva a la tarjeta de cada
+  repo; lo que llega se ve en su tarjeta y no queda como novedad sin ver. Se recuerda (`all`), viaja en la URL
+  (`?all=1`, `?all=0`) y la dejan el modo TV, la demo, la práctica y el ensayo; ir a una rama desde la salud, la
+  búsqueda o la vista de texto vuelve al grafo del repo a la vista. Mientras está puesta, el 3D no dibuja.
+- **Pruebas que fallan sin el cambio:** `tools/overview.test.mjs` (nueva: `allParam`, `lastCommit`, `summary`,
+  `totals`) y el paso del smoke «vista conjunta: «Todos» muestra cada repo en su tarjeta, en vivo, y sus cambios
+  sin cambiar de pestaña» (con dos repos de GitHub simulados: teclado, URL y almacenamiento, contraste, un push
+  que llega a su tarjeta sin quedar sin ver, los cambios desde la tarjeta, se recuerda al volver a abrir y el
+  nombre abre su pestaña con el foco en ella). La API simulada del smoke da ahora los cambios de un commit.
+- README: la función en la lista y en «Varios repos a la vez», los controles, el mapa de archivos, Límites
+  conocidos y Seguridad.
+- QA: web (el escritorio usa la misma página: e2e); 2D en cada tarjeta y el 3D apagado mientras se ve; demo y
+  práctica salen de la vista; 40 idiomas (10 textos nuevos, «etiqueta: número» como la constelación para no
+  depender de plurales); celular (una columna, el grafo de 300 px); teclado (Todos con Intro, cada tarjeta con
+  Tab; el nombre deja el foco en la pestaña del repo); movimiento reducido (el punto de carga quieto).
+- Validado: (pendiente)
+- **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)

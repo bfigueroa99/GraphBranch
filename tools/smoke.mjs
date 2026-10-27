@@ -1315,7 +1315,7 @@ const lowContrast = (page) =>
       const cs = getComputedStyle(el);
       const box = el.getBoundingClientRect();
       if (!box.width || !box.height || cs.visibility === 'hidden' || +cs.opacity === 0) continue;
-      if (el.closest('[hidden], .sr-only, [aria-hidden=true], #graph3d, #graph')) continue;
+      if (el.closest('[hidden], .sr-only, [aria-hidden=true], #graph3d, .graph-wrap')) continue; // .graph-wrap: el grafo 2D y los de la vista conjunta
       const fg = parse(cs.color);
       const bg = backdrop(el);
       if (!fg || !bg) continue;
@@ -1551,8 +1551,13 @@ console.log('Varios repos a la vez');
     if (on.cards.some((c) => !/\d/.test(c.stats) || /\{|undefined|NaN/.test(c.stats)) || /\{|undefined|NaN/.test(on.sum + on.label)) throw new Error('texto sin resolver: ' + JSON.stringify(on));
     if (on.current) throw new Error('con la vista conjunta una pestaña sigue marcada como la que se ve');
     if (on.url !== '1' || on.saved !== 'true') throw new Error(`no viaja en la URL ni se recuerda: all=${on.url}, guardado ${on.saved}`);
-    const bad = await lowContrast(page);
-    if (bad.length) throw new Error(`${bad.length} textos con poco contraste, como ${bad.slice(0, 3).join(', ')}`);
+    for (const colorScheme of ['light', 'dark']) {
+      await page.emulateMedia({ colorScheme });
+      await transitionsDone(page); // «Todos» cambia de color con transición: se mide cuando termina
+      const bad = await lowContrast(page);
+      if (bad.length) throw new Error(`${colorScheme}: ${bad.length} textos con poco contraste, como ${bad.slice(0, 3).join(', ')}`);
+    }
+    await page.emulateMedia({ colorScheme: 'light' });
     // lo nuevo de o/b llega a su tarjeta, sin quedar «sin ver» en su pestaña
     const commitsOf = (name) => page.$eval(`.rc-card[data-key="${name}"] .rc-stats`, (n) => Number(/(\d+)\D+(\d+)/.exec(n.textContent)?.[2]));
     const before = await commitsOf('o/b');

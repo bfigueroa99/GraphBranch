@@ -1315,7 +1315,7 @@ const lowContrast = (page) =>
       const cs = getComputedStyle(el);
       const box = el.getBoundingClientRect();
       if (!box.width || !box.height || cs.visibility === 'hidden' || +cs.opacity === 0) continue;
-      if (el.closest('[hidden], .sr-only, [aria-hidden=true], #graph3d, #graph')) continue;
+      if (el.closest('[hidden], .sr-only, [aria-hidden=true], #graph3d, .graph-wrap')) continue; // .graph-wrap: el grafo 2D y los de la vista conjunta
       const fg = parse(cs.color);
       const bg = backdrop(el);
       if (!fg || !bg) continue;
@@ -1396,6 +1396,8 @@ function fakeGitHub() {
       return out.length ? { body: out } : { status: 404, body: { message: 'No commit found' } };
     }
     if (/^\/commits\/[^/]+\/check-runs$/.test(rest)) return { body: { total_count: 1, check_runs: [{ status: 'completed', conclusion: 'success' }] } };
+    const one = rest.match(/^\/commits\/([0-9a-f]{40})$/); // los cambios de un commit (el panel de js/diff.js)
+    if (one && r.commits.has(one[1])) return { body: { ...r.commits.get(one[1]), files: [{ filename: 'src/app.js', status: 'modified', additions: 1, deletions: 1, patch: '@@ -1,2 +1,2 @@\n const a = 1;\n-const limit = 50;\n+const limit = 100;' }] } };
     return { status: 404, body: { message: 'Not Found' } };
   };
   return {
@@ -1527,6 +1529,67 @@ console.log('Varios repos a la vez');
     await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
     const n = (await repoTabs(page)).length;
     if (n !== 2) throw new Error(`hay ${n} pestañas`);
+  });
+
+  await step(page, 'vista conjunta: «Todos» muestra cada repo en su tarjeta, en vivo, y sus cambios sin cambiar de pestaña', async () => {
+    await page.focus('#all-tab'); // con el teclado
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#all-panel:not([hidden]) .rc-card .graph-svg .node', { timeout: T(5000) });
+    const on = await page.evaluate(() => ({
+      pressed: document.querySelector('#all-tab').getAttribute('aria-pressed'),
+      graph: getComputedStyle(document.querySelector('.graph-panel')).display,
+      stats: getComputedStyle(document.querySelector('.stats')).display,
+      cards: [...document.querySelectorAll('.rc-card')].map((c) => ({ name: c.querySelector('.rc-name').textContent, nodes: c.querySelectorAll('.graph-svg .node').length, stats: c.querySelector('.rc-stats').textContent })),
+      current: document.querySelectorAll('#repo-tabs [aria-current="true"]').length,
+      url: new URL(location.href).searchParams.get('all'),
+      saved: localStorage.getItem('graphbranch:all'),
+      sum: document.querySelector('#all-sum').textContent,
+      label: document.querySelector('#all-tab').getAttribute('aria-label'),
+    }));
+    if (on.pressed !== 'true' || on.graph !== 'none' || on.stats !== 'none') throw new Error('«Todos» no tomó el lugar del grafo: ' + JSON.stringify(on));
+    if (on.cards.map((c) => c.name).join(' ') !== 'o/a o/b' || on.cards.some((c) => !c.nodes)) throw new Error('tarjetas: ' + JSON.stringify(on.cards));
+    if (on.cards.some((c) => !/\d/.test(c.stats) || /\{|undefined|NaN/.test(c.stats)) || /\{|undefined|NaN/.test(on.sum + on.label)) throw new Error('texto sin resolver: ' + JSON.stringify(on));
+    if (on.current) throw new Error('con la vista conjunta una pestaña sigue marcada como la que se ve');
+    if (on.url !== '1' || on.saved !== 'true') throw new Error(`no viaja en la URL ni se recuerda: all=${on.url}, guardado ${on.saved}`);
+    for (const colorScheme of ['light', 'dark']) {
+      await page.emulateMedia({ colorScheme });
+      await transitionsDone(page); // «Todos» cambia de color con transición: se mide cuando termina
+      const bad = await lowContrast(page);
+      if (bad.length) throw new Error(`${colorScheme}: ${bad.length} textos con poco contraste, como ${bad.slice(0, 3).join(', ')}`);
+    }
+    await page.emulateMedia({ colorScheme: 'light' });
+    // lo nuevo de o/b llega a su tarjeta, sin quedar «sin ver» en su pestaña
+    const commitsOf = (name) => page.$eval(`.rc-card[data-key="${name}"] .rc-stats`, (n) => Number(/(\d+)\D+(\d+)/.exec(n.textContent)?.[2]));
+    const before = await commitsOf('o/b');
+    gh.push('o/b', 'main', 'cambio que se ve en la tarjeta');
+    await page.waitForFunction(() => document.querySelector('.rc-card[data-key="o/b"] .rc-lmsg')?.textContent === 'cambio que se ve en la tarjeta', null, { timeout: T(15000) });
+    if ((await commitsOf('o/b')) !== before + 1) throw new Error(`la tarjeta no sumó el commit: ${before} → ${await commitsOf('o/b')}`);
+    const unread = (await repoTabs(page)).map((t) => t.unread).join('');
+    if (unread) throw new Error(`con todo a la vista quedaron novedades sin ver: ${unread}`);
+    // sus cambios, sin cambiar de pestaña: el panel se abre al lado y la tarjeta marca el commit
+    const shownBefore = await shown();
+    await page.click('.rc-card[data-key="o/b"] .rc-last');
+    await page.waitForSelector('#diff-panel:not([hidden]) .df-file .dl-add', { timeout: T(10000) });
+    const diff = await page.evaluate(() => ({
+      msg: document.querySelector('#diff-panel .df-msg').textContent,
+      sel: document.querySelectorAll('.rc-card[data-key="o/b"] .node.sel').length,
+      other: document.querySelectorAll('.rc-card[data-key="o/a"] .node.sel').length,
+      all: !document.querySelector('#all-panel').hidden,
+    }));
+    if (diff.msg !== 'cambio que se ve en la tarjeta' || diff.sel !== 1 || diff.other || !diff.all) throw new Error('los cambios desde la tarjeta: ' + JSON.stringify(diff));
+    if ((await shown()) !== shownBefore) throw new Error('ver los cambios cambió de pestaña');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#diff-panel', { state: 'hidden', timeout: T(3000) });
+    // al volver a abrir la página, sigue en la vista conjunta
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    await page.waitForSelector('#all-panel:not([hidden]) .rc-card', { timeout: T(10000) });
+    // el nombre de la tarjeta abre el repo en su pestaña y deja la vista conjunta
+    await page.click('.rc-card[data-key="o/b"] .rc-open');
+    await page.waitForFunction(() => document.querySelector('#all-panel').hidden && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
+    const off = await page.evaluate(() => ({ pressed: document.querySelector('#all-tab').getAttribute('aria-pressed'), url: new URL(location.href).searchParams.has('all'), saved: localStorage.getItem('graphbranch:all'), focus: document.activeElement?.closest('.rt')?.querySelector('.rt-name')?.textContent }));
+    if (off.pressed !== 'false' || off.url || off.saved) throw new Error('al salir, la vista conjunta sigue puesta: ' + JSON.stringify(off));
+    if (off.focus !== 'o/b') throw new Error(`el foco quedó en ${off.focus || 'otro lado'} y no en la pestaña de o/b`);
   });
 
   await step(page, 'cerrar la pestaña deja de seguir el repo', async () => {

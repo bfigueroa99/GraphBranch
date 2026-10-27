@@ -1548,6 +1548,28 @@ console.log('Varios repos a la vez');
     if (saved !== '["o/a","o/b"]') throw new Error(`se guardó ${saved}`);
   });
 
+  await step(page, 'con un repo real a la vista, el campo del repo deja espacio para escribir otro', async () => {
+    // un repo real suma «Probar un comando» (y la app de escritorio, «Abrir carpeta…»): antes aplastaban el campo
+    await page.waitForSelector('#rehearse-btn:not([hidden])', { timeout: T(10000) });
+    const bad = [];
+    try {
+      for (const [width, folder] of [[1875, true], [1536, false], [1280, true], [1024, false]]) {
+        await page.setViewportSize({ width, height: 800 });
+        await page.evaluate((f) => (document.getElementById('folder-btn').hidden = !f), folder);
+        const r = await page.evaluate(() => {
+          const box = (sel) => document.querySelector(sel).getBoundingClientRect();
+          return { field: box('.repo-field'), input: box('#repo-input').width, connect: box('#repo-form .btn-primary'), sw: document.documentElement.scrollWidth };
+        });
+        const tapa = r.connect.top < r.field.bottom && r.connect.left < r.field.right - 1;
+        if (r.input < 120 || tapa || r.sw > width) bad.push(`${width} px${folder ? ' con «Abrir carpeta…»' : ''}: campo de ${Math.round(r.input)} px${tapa ? ', Conectar encima' : ''}${r.sw > width ? `, desborda a ${r.sw} px` : ''}`);
+      }
+    } finally {
+      await page.evaluate(() => (document.getElementById('folder-btn').hidden = true));
+      await page.setViewportSize({ width: 1280, height: 800 });
+    }
+    if (bad.length) throw new Error(bad.join(' · '));
+  });
+
   await step(page, 'CI en el grafo: la rama por defecto lleva la marca de sus checks', async () => {
     const mark = await page.waitForSelector('.h-ci.ci-success, .h3-ci.ci-success', { timeout: T(10000) });
     const title = await mark.getAttribute('title');

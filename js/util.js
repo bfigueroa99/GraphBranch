@@ -305,5 +305,39 @@ window.GB = window.GB || {};
     return null;
   };
 
+  /** Texto → base64 de sus bytes UTF-8, de a tramos (un archivo grande no revienta la pila). Las APIs de los
+      servicios mandan y reciben así el contenido de un archivo (ver js/editor.js). */
+  U.b64encode = (text) => {
+    const bytes = new TextEncoder().encode(String(text ?? ''));
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  };
+
+  /** base64 → { text, binary }: binary si los bytes no son UTF-8 válido o traen un byte nulo (no se editan como texto). */
+  U.b64decode = (b64) => {
+    let bin;
+    try {
+      bin = atob(String(b64 || '').replace(/\s+/g, ''));
+    } catch {
+      return { text: '', binary: true };
+    }
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    if (bytes.includes(0)) return { text: '', binary: true };
+    try {
+      return { text: new TextDecoder('utf-8', { fatal: true }).decode(bytes), binary: false };
+    } catch {
+      return { text: '', binary: true };
+    }
+  };
+
+  /** ¿Es una ruta de archivo que se puede mandar a una API? Sin tramos vacíos, «.» ni «..»: en una URL se
+      normalizan (también escapados como %2E) y el pedido iría a otro lugar de la API. */
+  U.safePath = (path) => typeof path === 'string' && path.length > 0 && path.length <= 4096 && !path.includes('\0') && path.split('/').every((seg) => seg && seg !== '.' && seg !== '..');
+
+  /** Una ruta de archivo para la URL de una API: cada tramo escapado, las barras como barras. */
+  U.encPath = (path) => String(path || '').split('/').map(encodeURIComponent).join('/');
+
   GB.U = U;
 })(window.GB);

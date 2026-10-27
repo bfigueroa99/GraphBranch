@@ -31,6 +31,8 @@ function load(gl) {
     AbortController,
     TextEncoder,
     TextDecoder,
+    btoa,
+    atob,
     fetch: gl.fetch,
     navigator: { onLine: true },
     document: { hidden: false, addEventListener() {}, removeEventListener() {} },
@@ -214,7 +216,7 @@ function fakeGitLab(web = 'https://gitlab.com') {
           ? { status: 403, body: { error: 'insufficient_scope', error_description: 'The request requires higher privileges than provided by the access token.', scope: 'api read_api' } }
           : !scopes && gl.visibility !== 'public' && path.startsWith(PROJECT)
             ? { status: 404, body: { message: '404 Project Not Found' } }
-            : gl.override?.(path) || route(path);
+            : gl.override?.(path, opts) || route(path);
     if (status === 404) gl.misses.push(path);
     const json = text ?? JSON.stringify(body);
     const etag = `W/"${json.length}-${[...json].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 0)}"`;
@@ -631,4 +633,54 @@ test('parseGroup entiende group:ruta y las URL de grupos, y no confunde un repo 
   for (const bad of ['group:', 'group:../x', 'gitlab-org', 'org:acme', '@ana', 'https://gitlab.com/gitlab-org/gitlab', 'https://evil.com/groups/x']) assert.equal(g(bad), null, bad);
   GB.U.gitlabBase = 'https://gitlab.miempresa.com';
   assert.equal(g('https://gitlab.miempresa.com/groups/eq'), 'eq');
+});
+
+/* ---------- editar un archivo (js/editor.js) ---------- */
+
+test('editar: lee el archivo de la rama (su huella es el último commit que lo tocó) y escribe con PUT, o POST si es nuevo', async () => {
+  const gl = project();
+  gl.expect = 'glpat-w';
+  gl.tokens.set('glpat-w', ['api']);
+  const sent = [];
+  gl.override = (path, opts) => {
+    if (path === `${PROJECT}/repository/files/src%2Fapp.js?ref=feature`) return { body: { file_path: 'src/app.js', encoding: 'base64', content: Buffer.from('const a = 1;\n').toString('base64'), last_commit_id: 'f2', blob_id: 'b1' } };
+    if (opts.method === 'PUT' || opts.method === 'POST') {
+      sent.push({ path, method: opts.method, auth: opts.headers?.Authorization, body: JSON.parse(opts.body) });
+      return { status: opts.method === 'POST' ? 201 : 200, body: { file_path: 'x', branch: 'feature' } };
+    }
+    return null;
+  };
+  const { src } = connect(gl, { token: 'glpat-w' });
+  assert.equal(src.canEdit(), true);
+  assert.equal(src.canWrite(), null);
+  const f = await src.readFile({ path: 'src/app.js', ref: 'feature' });
+  assert.deepEqual([f.text, f.sha, f.binary], ['const a = 1;\n', 'f2', false]);
+  assert.equal((await src.readFile({ path: 'nuevo.txt', ref: 'feature' })).missing, true);
+  const out = await src.writeFile({ path: 'src/app.js', branch: 'feature', text: 'const a = 2;\n', message: 'Actualiza src/app.js', sha: 'f2' });
+  assert.deepEqual({ ...out }, { sha: null, blob: null }, 'GitLab no dice el commit: el editor vuelve a leer');
+  await src.writeFile({ path: 'docs/nuevo.md', branch: 'feature', text: '# Nuevo\n', message: 'Crea docs/nuevo.md' });
+  assert.deepEqual(
+    sent.map((x) => [x.method, x.path, x.auth, x.body.branch, x.body.encoding, Buffer.from(x.body.content, 'base64').toString(), x.body.commit_message, x.body.last_commit_id ?? null]),
+    [
+      ['PUT', `${PROJECT}/repository/files/src%2Fapp.js`, 'Bearer glpat-w', 'feature', 'base64', 'const a = 2;\n', 'Actualiza src/app.js', 'f2'],
+      ['POST', `${PROJECT}/repository/files/docs%2Fnuevo.md`, 'Bearer glpat-w', 'feature', 'base64', '# Nuevo\n', 'Crea docs/nuevo.md', null],
+    ],
+  );
+});
+
+test('editar: sin token no escribe; un token que no puede (403) o un archivo que cambió (400) se dicen', async () => {
+  const gl = project();
+  gl.visibility = 'public';
+  const anon = connect(gl).src;
+  assert.equal(anon.canWrite(), 'editor.noToken');
+  await assert.rejects(anon.writeFile({ path: 'a', branch: 'main', text: '', message: 'm' }), (err) => err.editKind === 'noToken');
+  gl.expect = 'glpat-r';
+  gl.tokens.set('glpat-r', ['read_api']);
+  let reply = null;
+  gl.override = (path, opts) => (opts.method ? reply : null);
+  const { src } = connect(gl, { token: 'glpat-r' });
+  reply = { status: 403, body: { message: '403 Forbidden' } };
+  await assert.rejects(src.writeFile({ path: 'a', branch: 'main', text: 'x', message: 'm', sha: 's' }), (err) => err.editKind === 'perm');
+  reply = { status: 400, body: { message: 'You are attempting to update a file that has changed since you started editing it.' } };
+  await assert.rejects(src.writeFile({ path: 'a', branch: 'main', text: 'x', message: 'm', sha: 's' }), (err) => err.editKind === 'conflict');
 });

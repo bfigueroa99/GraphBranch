@@ -975,3 +975,32 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
   Tab; el nombre deja el foco en la pestaña del repo); movimiento reducido (el punto de carga quieto).
 - Validado: 439 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)
+
+### 2026-10-27 · Pedido de Benjamin: editar el código desde GraphBranch
+
+- **Pedido de Benjamin:** «haz que sea posible poder editar el código desde GraphBranch». No es una iteración
+  numerada y la proporción de la regla 2 no cambia.
+- **Lo nuevo:** **Editar** en cada archivo del panel de cambios (y en la ficha de cada planeta del modo galaxias)
+  abre `js/editor.js`: el archivo como está ahora en su rama (la del commit que se veía o la de la galaxia; se
+  elige otra rama u otra ruta), el mensaje propuesto, lo que va cambiando (+n −m, por la subsecuencia común más
+  larga de las líneas) y **Hacer commit**, que lo guarda como un commit en esa rama por la API del servicio:
+  GitHub (`PUT /contents`, con su sha), GitLab (`PUT`/`POST /repository/files`, con `last_commit_id`) y Codeberg
+  (`PUT`/`POST /contents`). Un archivo que cambió en la rama no se pisa (conflicto), una ruta nueva se crea, y
+  cada fallo se dice (sin token, token rechazado, sin permiso de escritura, carpeta, binario, demasiado grande);
+  sin token el editor ofrece Ajustes con el foco en el campo de ese servicio. Una ruta escrita con tramos vacíos,
+  «.» o «..» no sale (`U.safePath`: en la URL se normalizaría y el `PUT`, con el token, iría a otro lugar de la API). La demo edita en memoria: su commit
+  aparece en la rama y sus cambios (`GB.editor.patch`) son los escritos. Bitbucket, un Forgejo propio y las
+  carpetas locales quedan para después (`canEdit` por servicio). `U.b64encode`, `U.b64decode` y `U.encPath`
+  pasan a `js/util.js`.
+- **Pruebas que fallan sin el cambio:** `tools/editor.test.mjs` (nueva: base64, `lineDiff`, `patch` y la demo),
+  `tools/github.test.mjs` (de 31 a 34: `readFile`, `writeFile` y el motivo de cada fallo), `tools/gitlab.test.mjs`
+  (de 19 a 21) y `tools/codeberg.test.mjs` (de 17 a 18); en el smoke, «editar el código: desde los cambios de un
+  commit…» (la demo: abrir, cambiar, preguntar al cerrar con cambios, hacer commit y ver sus cambios de verdad) y
+  «editar sin token…» (GitHub simulado: no deja hacer commit, no escribe y lleva a Ajustes).
+- README: la función en la lista, el permiso de escritura del token (Contents: Read and write; `api` en GitLab;
+  `write:repository` en Codeberg), el mapa de archivos, Límites conocidos y Seguridad.
+- QA: 2D (panel de cambios) y galaxias (ficha del planeta); demo sin token (en memoria); 40 idiomas (33 textos
+  nuevos); teclado (Intro en la ruta abre el archivo, no hace commit; `Esc` o Cancelar con cambios pregunta);
+  CSP sin cambios: los mismos servidores de `connect-src`.
+- Validado: 449 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)

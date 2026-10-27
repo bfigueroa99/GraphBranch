@@ -358,6 +358,45 @@
     diffCheap() {
       return true;
     }
+
+    /* ---------- editar un archivo (js/editor.js): la API de contenidos de Forgejo, como la de GitHub ---------- */
+
+    canEdit() {
+      return true;
+    }
+
+    /** Un Forgejo propio no recibe token (ver el constructor): ahí no se escribe. */
+    canWrite() {
+      if (this.own) return 'editor.noWrite';
+      return this.codebergToken ? null : 'editor.noToken';
+    }
+
+    async readFile({ path, ref }) {
+      if (!U.safePath(path)) throw GB.GitHubSource.editError('path');
+      const { data, status } = await this.api(`${this.base}/contents/${U.encPath(path)}?ref=${encodeURIComponent(ref)}`, { allow: [404] });
+      if (status === 404) return { missing: true };
+      if (Array.isArray(data) || data?.type !== 'file') throw GB.GitHubSource.editError('dir');
+      if (data.encoding !== 'base64' || (data.size > 0 && !data.content)) return { tooLarge: true };
+      const { text, binary } = U.b64decode(data.content);
+      return { text, binary, sha: data.sha };
+    }
+
+    /** Un commit que deja el archivo con `text`: PUT con su sha si existía, POST si es nuevo. */
+    async writeFile({ path, branch, text, message, sha = null }) {
+      if (this.own || !this.codebergToken) throw GB.GitHubSource.editError(this.own ? 'noWrite' : 'noToken');
+      if (!U.safePath(path)) throw GB.GitHubSource.editError('path');
+      const payload = { content: U.b64encode(text), message, branch };
+      if (sha) payload.sha = sha;
+      const { res, body } = await this.request(this.ep.api + `${this.base}/contents/${U.encPath(path)}`, {
+        method: sha ? 'PUT' : 'POST',
+        headers: { ...this.headers('application/json'), 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        cache: 'no-store',
+      });
+      this.cost++;
+      if (!res.ok) throw this.writeError(res, body);
+      return { sha: body?.commit?.sha || null, url: U.safeUrl(body?.commit?.html_url) || null, blob: body?.content?.sha || null };
+    }
   }
 
   CodebergSource.endpoints = endpoints;

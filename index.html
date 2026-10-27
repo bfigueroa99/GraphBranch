@@ -552,6 +552,47 @@
   </form>
 </dialog>
 
+<!-- editar un archivo (js/editor.js): lo abre de una rama, se cambia y se guarda como un commit en ella -->
+<dialog class="settings editor" id="editor" aria-labelledby="editor-title" aria-describedby="editor-help">
+  <form novalidate>
+    <div class="tr-head">
+      <h2 id="editor-title"><span data-i18n="editor.title">Edit a file</span> <span class="ed-repo" dir="ltr"></span></h2>
+      <button type="button" class="icon-btn ed-close" title="Close" aria-label="Close" data-i18n-attr="title:toast.close;aria-label:toast.close">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <p class="help" id="editor-help" data-i18n="editor.help">You edit what the branch has now, not the commit you were looking at, and the commit goes straight to that branch.</p>
+    <div class="ed-row">
+      <div class="field">
+        <label for="editor-branch" data-i18n="editor.branch">Branch</label>
+        <select id="editor-branch" class="ed-branch"></select>
+      </div>
+      <div class="field ed-pathf">
+        <label for="editor-path" data-i18n="editor.path">File</label>
+        <div class="field-row">
+          <input id="editor-path" class="ed-path-input" type="text" placeholder="src/app.js" spellcheck="false" autocapitalize="off" autocomplete="off" dir="ltr">
+          <button type="button" class="btn btn-ghost ed-load" data-i18n="editor.load">Open</button>
+        </div>
+      </div>
+    </div>
+    <p class="ed-note" role="status" aria-live="polite"></p>
+    <div class="field">
+      <label for="editor-text"><span data-i18n="editor.content">File contents</span> <span class="opt ed-sum"></span></label>
+      <textarea id="editor-text" class="ed-text" rows="16" spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off" dir="ltr"></textarea>
+    </div>
+    <div class="field">
+      <label for="editor-message" data-i18n="editor.message">Commit message</label>
+      <input id="editor-message" class="ed-message" type="text" maxlength="200" autocomplete="off">
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-ghost ed-settings" hidden data-i18n="editor.settings">Add a token in Settings</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn-ghost ed-cancel" data-i18n="settings.cancel">Cancel</button>
+      <button type="submit" class="btn btn-primary ed-save" data-i18n="editor.save">Commit</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog class="settings trophies health" id="textview" aria-labelledby="textview-title">
   <div class="tr-wrap">
     <div class="tr-head">
@@ -657,6 +698,7 @@
 <script src="js/textview.js"></script>
 <script src="js/constellation.js"></script>
 <script src="js/overview.js"></script>
+<script src="js/editor.js"></script>
 <script src="js/search.js"></script>
 <script src="js/practice-ui.js"></script>
 <script src="js/hooks.js"></script>

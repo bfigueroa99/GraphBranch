@@ -257,6 +257,9 @@
         onDirector: (st) => renderDirector(st),
         // modo galaxias: los archivos de una rama (los planetas) se piden al acercarse a su galaxia
         loadFiles: (q) => (source?.files ? source.files(q) : null),
+        // y cada planeta se puede editar en la rama de su galaxia (ver editor.js)
+        canEdit: () => canEditTab(active),
+        onEditFile: (path, branch) => openEditor(active, path, { branch }),
         onGalaxyChange: (on) => setPressed(el.galaxyBtn, on),
         onScan: () => feed.sound && feed.synth.discover('scan', null, 0),
         // el espacio tiene su zumbido de fondo, en la nota de la galaxia en la que se está
@@ -364,6 +367,8 @@
       selectCommit(sha);
     },
     onWide: (on) => el.main.classList.toggle('diff-wide', on && diffView.isOpen),
+    canEdit: () => canEditTab(diffTab || active),
+    onEdit: (path, sha) => openEditor(diffTab || active, path, { sha }),
     onClose: () => {
       el.main.classList.remove('diffing', 'diff-wide');
       selectCommit(null);
@@ -406,6 +411,46 @@
     el.diffPanel.querySelector('#diff-title').focus({ preventScroll: true });
     // en pantallas angostas el panel va debajo del grafo
     if (window.matchMedia?.('(max-width: 860px)').matches) el.diffPanel.scrollIntoView({ block: 'nearest' });
+  }
+
+  /* ---------- editar el código (ver editor.js): un archivo de una rama, guardado como un commit en ella ---------- */
+
+  let editTab = null; // el repo del archivo que se edita
+  /** ¿Se pueden editar los archivos de este repo? (GitHub, GitLab, Codeberg y la demo; no la práctica ni la capa embebida) */
+  const canEditTab = (tab) => !!tab?.source?.canEdit?.() && !EMBED && !tab.source.data.repo.practice;
+  /** El campo de Ajustes del token que escribe en el servicio de ese repo. */
+  const tokenFieldOf = (tab) => ({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput })[tab?.source?.host] || el.tokenInput;
+  const editor = GB.editor.mount($('#editor'), {
+    text: (k, p) => t(k, p),
+    num: (n) => U.fmtNum(n),
+    errText: (err) => i18n.text(err?.msg || err?.message || ''),
+    repo() {
+      const d = editTab?.source?.data;
+      if (!d) return null;
+      const def = d.repo.defaultBranch;
+      // la rama por defecto primero; las demás por nombre
+      const branches = [...d.branches.keys()].sort((a, b) => (b === def) - (a === def) || a.localeCompare(b));
+      return { name: nameOf(editTab), branches, defaultBranch: def };
+    },
+    read: (q) => editTab.source.readFile(q),
+    write: (q) => editTab.source.writeFile(q),
+    canWrite: () => {
+      const why = editTab?.source?.canWrite?.();
+      return why ? t(why) : null;
+    },
+    // el commit nuevo llega al grafo en el próximo ciclo: se adelanta (la demo ya lo dibujó)
+    onSaved: () => !editTab?.demo && editTab?.source?.refreshNow?.(),
+    onSettings: () => openSettings(tokenFieldOf(editTab)),
+  });
+
+  /** Abre el editor con un archivo del repo de `tab`: en la rama que se diga, la del commit que se veía o la por defecto. */
+  function openEditor(tab, path, { sha = null, branch = null } = {}) {
+    if (!canEditTab(tab) || tv.on) return;
+    editTab = tab;
+    const chain = sha ? (tab === diffTab ? diffLayout() : lastRender?.L)?.nodeOf.get(sha)?.chain : null;
+    const onBranch = chain?.startsWith('b:') ? chain.slice(2) : null;
+    const want = [branch, onBranch].find((b) => b && tab.source.data.branches.has(b)) || tab.source.data.repo.defaultBranch;
+    editor.open({ path, branch: want });
   }
 
   /* ---------- repos seguidos y fuente de datos ---------- */
@@ -3013,6 +3058,7 @@
     feed.relocalize();
     renderTabs();
     overview.relocalize();
+    editor.relocalize();
     if (allOn) renderAllSum();
     diffView.relocalize();
     if (lp.dialog.open) lpRender();

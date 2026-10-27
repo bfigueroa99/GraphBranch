@@ -740,6 +740,7 @@ GB.i18n.define('ar', {
   'digest.releases': 'الإصدارات',
   'digest.tags': 'الوسوم',
   'digest.people': 'من ساهم (الإيداعات)',
+  'digest.newcomers': 'مساهمون جدد: {n}',
   'digest.branch': 'أنشط فرع',
   'digest.org': 'ملخص الأسبوع لـ {owner}',
   'constellation.title': 'كوكبة',

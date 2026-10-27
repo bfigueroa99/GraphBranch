@@ -642,6 +642,7 @@ GB.i18n.define('pt', {
   'digest.releases': 'Releases',
   'digest.tags': 'Tags',
   'digest.people': 'Quem contribuiu (commits)',
+  'digest.newcomers': 'Novos autores: {n}',
   'digest.branch': 'Branch mais ativa',
   'digest.org': 'Resumo da semana de {owner}',
   'constellation.title': 'Constelação',

@@ -641,6 +641,7 @@ GB.i18n.define('sw', {
   'digest.releases': 'Matoleo',
   'digest.tags': 'Lebo (tags)',
   'digest.people': 'Nani alichangia (commit)',
+  'digest.newcomers': 'Wachangiaji wapya: {n}',
   'digest.branch': 'Tawi lenye shughuli zaidi',
   'digest.org': 'Muhtasari wa wiki wa {owner}',
   'constellation.title': 'Kundinyota',

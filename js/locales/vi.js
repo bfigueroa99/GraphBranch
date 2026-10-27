@@ -641,6 +641,7 @@ GB.i18n.define('vi', {
   'digest.releases': 'Bản phát hành',
   'digest.tags': 'Thẻ (tag)',
   'digest.people': 'Ai đã đóng góp (commit)',
+  'digest.newcomers': 'Người đóng góp mới: {n}',
   'digest.branch': 'Nhánh hoạt động nhất',
   'digest.org': 'Tóm tắt tuần của {owner}',
   'constellation.title': 'Chòm sao',

@@ -129,6 +129,8 @@ describe('una corrida contra un repositorio bare y un opencode de mentira', { sk
     git(repo, ['add', 'README.md']);
     git(repo, ['commit', '-q', '-m', 'semilla']);
     git(repo, ['push', '-q', 'origin', 'master']);
+    // dev es la base del loop; master, el release (no avanza con las iteraciones)
+    git(repo, ['push', '-q', 'origin', 'master:dev']);
     // anota desde dónde y con qué lo llamaron; DORMIR lo deja colgado para probar el tope
     writeFileSync(
       falso,
@@ -156,7 +158,7 @@ esac
     assert.equal(existsSync(wt), false);
   });
 
-  test('crea el worktree en origin/master y corre /iteracion ahí, sin entrada y con su entorno', () => {
+  test('crea el worktree en origin/dev y corre /iteracion ahí, sin entrada y con su entorno', () => {
     const r = correr();
     assert.equal(r.status, 7, r.stdout + r.stderr);
     const reg = readFileSync(registro, 'utf8');
@@ -167,7 +169,7 @@ esac
     assert.match(reg, /^LOOP_MODELO=omniroute\/auto$/m);
     assert.match(reg, /^GIT_AUTHOR_NAME=OpenCode$/m);
     assert.match(reg, /^OPENCODE_CONFIG_CONTENT=.*"baseURL":"http:\/\/localhost:20128\/v1"/m);
-    assert.equal(git(wt, ['rev-parse', 'HEAD']), git(repo, ['rev-parse', 'origin/master']));
+    assert.equal(git(wt, ['rev-parse', 'HEAD']), git(repo, ['rev-parse', 'origin/dev']));
   });
 
   test('el disparo siguiente arranca limpio: sin lo que dejó el anterior y con lo nuevo de origin', () => {
@@ -176,12 +178,14 @@ esac
     git(wt, ['checkout', '-q', '-b', 'loop/1']);
     writeFileSync(join(repo, 'NUEVO.md'), 'nuevo\n');
     git(repo, ['add', 'NUEVO.md']);
-    git(repo, ['commit', '-q', '-m', 'nuevo en master']);
-    git(repo, ['push', '-q', 'origin', 'master']);
+    git(repo, ['commit', '-q', '-m', 'nuevo en dev']);
+    git(repo, ['push', '-q', 'origin', 'HEAD:dev']);
     const r = correr();
     assert.equal(r.status, 7, r.stdout + r.stderr);
     assert.equal(git(wt, ['status', '--porcelain']), '');
-    assert.equal(git(wt, ['rev-parse', 'HEAD']), git(repo, ['rev-parse', 'origin/master']));
+    // sale de dev, que ya tiene lo nuevo; master (el release) se quedó en la semilla
+    assert.equal(git(wt, ['rev-parse', 'HEAD']), git(repo, ['rev-parse', 'origin/dev']));
+    assert.notEqual(git(wt, ['rev-parse', 'HEAD']), git(repo, ['rev-parse', 'origin/master']));
     assert.equal(readFileSync(join(wt, 'README.md'), 'utf8'), 'hola\n');
   });
 

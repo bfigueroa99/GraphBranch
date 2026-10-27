@@ -19,8 +19,10 @@ mantenimiento.
 
 ### Cómo elige cada iteración
 
-1. **Sincronizar** con `master`. Si algo está roto (pruebas en rojo, una regresión de la iteración
-   anterior), se arregla primero: no se amplía sobre algo roto. Cada iteración trabaja en su rama
+1. **Sincronizar** con `dev`, la rama de integración (desde el 2026-10-27, pedido de Benjamin: cada
+   `loop/N` sale de `dev` y su PR se fusiona en `dev`; `master` es el release, lo publica GitHub Pages y
+   solo recibe `dev` cuando Benjamin lo promueve). Si algo está roto (pruebas en rojo, una regresión de
+   la iteración anterior), se arregla primero: no se amplía sobre algo roto. Cada iteración trabaja en su rama
    `loop/N`, que es también su reclamo (`node tools/loop.mjs --reclamar`): dos sesiones nunca hacen
    la misma iteración.
 2. **Tipo de iteración** según su número `N`:
@@ -35,7 +37,7 @@ mantenimiento.
    - Las demás: **expansión**. Toma el primer ítem de la [Hoja de ruta](#hoja-de-ruta) que no esté
      hecho, salvo que sea del mismo eje que la expansión anterior y haya otro de un eje distinto entre
      los tres primeros: entonces ese. Así el proyecto crece a lo ancho y no solo en un frente.
-   - Un pendiente marcado **Alta** (seguridad, datos perdidos, la app en blanco, `master` en rojo) va
+   - Un pendiente marcado **Alta** (seguridad, datos perdidos, la app en blanco, `dev` en rojo) va
      antes que todo, en cualquier iteración.
    - Lo calcula `node tools/loop.mjs --siguiente` (número, tipo, eje o subtipo, ítem, por qué y el
      «Siguiente» para copiar); `node tools/loop.mjs --check` falla si este archivo no cumple estas
@@ -195,7 +197,10 @@ cada iteración lo repite (`node tools/loop.mjs --salud` lo imprime) y se quita 
 1. **Activar GitHub Pages** (desde 2026-10-12). La web pública responde 404 y el repo tiene
    `has_pages=false`: Settings → Pages → Build and deployment → Source: Deploy from a branch → `master`,
    `/(root)`. Pages despliega con un flujo interno de Actions, así que la cuenta tiene que poder correr
-   jobs. `node tools/loop.mjs --publicado` lo comprueba en cada iteración.
+   jobs. `node tools/loop.mjs --publicado` lo comprueba en cada iteración. Desde el 2026-10-27 el loop
+   fusiona en `dev` y `master` es el release: la web muestra lo nuevo cuando promovés `dev` a `master`
+   (un PR `dev` → `master` con commit de merge); la línea `Release:` de `--salud` dice cuántos merges
+   faltan.
 2. **Permisos para investigar, triar, Replica, la arena y find-skills** (desde 2026-10-13). Para que la
    investigación de mercado, la paridad con la app de referencia, la arena, la búsqueda de skills y el
    triaje de issues no dependan del modo de permisos de la sesión, sumar a `.claude/settings.json`
@@ -217,7 +222,7 @@ cada iteración lo repite (`node tools/loop.mjs --salud` lo imprime) y se quita 
    de la Routine pasa a cada 2 h: el candado ya evita que dos sesiones se pisen, y `CRON_H` y
    `RECLAMO_H` bajan con él (una prueba exige que el reclamo venza antes del disparo siguiente).
 4. **Ramas viejas** (desde 2026-10-13). Las ramas `claude/*`, `ccr-*` y `permisos-claude` no son del loop:
-   `node tools/loop.mjs --salud` dice cuáles ya están fusionadas o contenidas en master y cuáles tienen
+   `node tools/loop.mjs --salud` dice cuáles ya están fusionadas o contenidas en dev y cuáles tienen
    trabajo sin fusionar (11 y 19 el 2026-10-25). Borrarlas o fusionarlas es tuyo: el loop nunca toca
    ramas ajenas.
 5. **¿Ordenar la hoja de ruta por puntaje?** (desde 2026-10-13). Con los puntajes de
@@ -857,4 +862,29 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (restar de la semana a quienes ya firmaron antes).
 - Reclamo: loop/140, sin colisión
 - Validado: 428 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 141, expansión: ítem 92 (Capa para streaming, séptima entrega, Plataformas)
+
+### 2026-10-27 · Cambio de maquinaria: dev como rama de integración, master de release
+
+- **Pedido de Benjamin:** que el loop trabaje en `dev`, como los demás proyectos, y deje `master` de
+  release. No es una iteración numerada y la proporción de la regla 2 no cambia.
+- **Lo nuevo:** `dev` (creada el 2026-10-27 desde `master`) es la rama de integración: `--reclamar`
+  crea cada `loop/N` desde `origin/dev` y lee de ahí la hoja de ruta y la bitácora; su PR va contra
+  `dev` y se fusiona ahí con commit de merge; R3 busca los «hecho en #K» en `origin/dev`; `--salud` mide
+  la cadencia, los huecos y las ramas fusionadas sobre `dev`, y suma la línea `Release:` (cuántos merges
+  de `dev` le faltan a `master`); `--limpiar`, `npm run check` (el diff que decide las e2e) y
+  `tools/opencode.mjs` (el worktree) salen de `dev`. `master` es el release: lo publica GitHub Pages
+  (`--publicado` lo sigue comparando con la web) y solo recibe `dev` cuando Benjamin lo promueve con un
+  PR `dev` → `master`. La skill `iteracion` arranca con `git fetch origin +dev:refs/remotes/origin/dev`
+  y `git checkout --detach origin/dev` (el refspec entero porque en un clon de una sola rama `fetch
+  origin dev` no crea `origin/dev`), y nunca abre un PR contra `master`. `PROMPT.md` dice que la skill
+  que manda es la de `dev`; `CLAUDE.md`, el README, el comando de OpenCode, la directiva y Para
+  Benjamin 1 (la web se actualiza al promover) lo dicen igual.
+- **Pruebas que fallan sin el cambio:** `tools/loop.test.mjs` (de 98 a 99: el release en `--salud`) y
+  `tools/opencode.test.mjs`; con `BASE` de vuelta en `master` fallan 10 (el reclamo que sale de `dev`
+  con lo que `master` no tiene, R3, `--salud`, el clon superficial y el worktree de OpenCode).
+- README: la sección de Pages (master es el release) y la de OpenCode (el worktree sale de `dev`).
+- QA: no toca la página ni el escritorio; `--reclamar`, `--salud` y `--limpiar` corridos contra un
+  repositorio bare con `dev` por delante de `master` en las pruebas.
+- Validado: 429 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) en verde; e2e no corridas (saltadas por --sin-e2e: Electron no se pudo instalar en la sesión, y lo que toca la página es #177 y #178, ya validados con sus 28 e2e en `master`).
 - **Siguiente:** iteración 141, expansión: ítem 92 (Capa para streaming, séptima entrega, Plataformas)

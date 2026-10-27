@@ -13,7 +13,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { ARCHIVO_BITACORA, ARENA_MAX, AUDITABLES, CRON_H, EJES, FLAGS, HOJA_SIN_FUENTE, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SUBTIPOS, appReferencia, check, diagnostico, matrizReplica, necesidades, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, siguiente, tramos } from './loop.mjs';
+import { ARCHIVO_BITACORA, ARENA_MAX, AUDITABLES, BASE, RELEASE, CRON_H, EJES, FLAGS, HOJA_SIN_FUENTE, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SUBTIPOS, appReferencia, check, diagnostico, matrizReplica, necesidades, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, siguiente, tramos } from './loop.mjs';
 import { TIPOS } from './audit.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -282,21 +282,21 @@ describe('check()', () => {
     assert.match(texto(uno, 'R3'), /#999 es el PR en curso/);
   });
 
-  test('R3: un PR repetido o uno que no está en origin/master es un error', () => {
+  test('R3: un PR repetido o uno que no está en origin/dev es un error', () => {
     const rep = check(fixture({ hechos: { ...HECHOS, 7: 45 } }), { log: LOG });
     assert.equal(nivel(rep, 'R3'), 'ERROR');
     assert.match(texto(rep, 'R3'), /#45 repetido/);
     const falta = check(fixture({ hechos: { ...HECHOS, 7: 44 } }), { log: LOG });
     assert.equal(nivel(falta, 'R3'), 'ERROR');
-    assert.match(texto(falta, 'R3'), /#44 .*no está en origin\/master/);
+    assert.match(texto(falta, 'R3'), /#44 .*no está en origin\/dev/);
   });
 
-  test('R3: sin lista de PR ni origin/master, aviso y nada más', () => {
+  test('R3: sin lista de PR ni origin/dev, aviso y nada más', () => {
     const dir = mkdtempSync(join(tmpdir(), 'loop-'));
     const r = check(fixture(), { dir });
     rmSync(dir, { recursive: true, force: true });
     assert.equal(nivel(r, 'R3'), 'aviso');
-    assert.match(texto(r, 'R3'), /sin origin\/master/);
+    assert.match(texto(r, 'R3'), /sin origin\/dev/);
   });
 
   test('R3: en un clon superficial, los PR anteriores al primero visible son un aviso (unshallow); los posteriores, un error', () => {
@@ -308,7 +308,7 @@ describe('check()', () => {
     assert.equal(nivel(check(fixture(), { log: corto }), 'R3'), 'ERROR', 'con la historia entera, que falten es un error');
     const hueco = check(fixture(), { log: corto.filter((t) => !t.includes('#50')), superficial: true });
     assert.equal(nivel(hueco, 'R3'), 'ERROR', 'un PR posterior al primero visible tiene que estar');
-    assert.match(texto(hueco, 'R3'), /hecho en #50 .*no está en origin\/master/);
+    assert.match(texto(hueco, 'R3'), /hecho en #50 .*no está en origin\/dev/);
     // con el clon cortado después de todos los de la hoja, ninguno es «el PR en curso»: son todos anteriores
     const nada = check(fixture(), { log: ['otro PR (#60)'], superficial: true });
     assert.equal(nivel(nada, 'R3'), 'aviso', nada.salida);
@@ -974,7 +974,7 @@ describe('diagnostico() de --salud', () => {
     assert.ok(completo.lineas.includes('Hueco: 2026-10-10 00:00 → 2026-10-11 06:00 UTC (30,0 h, unos 6 disparos sin iteración)'), completo.lineas.join('\n'));
     const corto = diagnostico({ ...base, merges, superficial: true });
     assert.ok(!corto.lineas.some((l) => l.startsWith('Hueco: 2026-10-10 00:00')), corto.lineas.join('\n'));
-    assert.ok(corto.lineas.includes('Clon superficial: master se ve desde 2026-10-11 06:00 UTC; los huecos anteriores no se miden (git fetch --unshallow origin)'), corto.lineas.join('\n'));
+    assert.ok(corto.lineas.includes('Clon superficial: dev se ve desde 2026-10-11 06:00 UTC; los huecos anteriores no se miden (git fetch --unshallow origin)'), corto.lineas.join('\n'));
     assert.ok(corto.lineas.includes('Hueco: 2026-10-11 14:00 → ahora UTC (10,0 h, un disparo sin iteración)'), corto.lineas.join('\n'));
   });
 
@@ -990,9 +990,19 @@ describe('diagnostico() de --salud', () => {
       { nombre: 'claude/c', fecha: t0 },
     ];
     const r = diagnostico({ ...base, ramas });
-    assert.ok(r.lineas.includes('Ramas ya fusionadas o contenidas en master (las borra Benjamin, ver Para Benjamin): 2 (claude/a, ccr-b #53)'), r.lineas.join('\n'));
+    assert.ok(r.lineas.includes('Ramas ya fusionadas o contenidas en dev (las borra Benjamin, ver Para Benjamin): 2 (claude/a, ccr-b #53)'), r.lineas.join('\n'));
     assert.ok(r.lineas.includes('Ramas con trabajo sin fusionar (nunca se fusionan ni se borran solas): 1 (claude/c 2026-10-10)'));
     assert.equal(r.acciones, 0);
+  });
+
+  test('el release: cuántos merges de dev le faltan a master (la web), sin Acción; sin medida, nada', () => {
+    assert.equal(BASE, 'dev');
+    assert.equal(RELEASE, 'master');
+    const atras = diagnostico({ ...base, release: 3 });
+    assert.ok(atras.lineas.includes('Release: master va 3 merge(s) detrás de dev; la web publica master y la promoción (PR dev → master) es de Benjamin'), atras.lineas.join('\n'));
+    assert.equal(atras.acciones, 0);
+    assert.ok(diagnostico({ ...base, release: 0 }).lineas.includes('Release: master al día con dev'));
+    assert.ok(!diagnostico(base).lineas.some((l) => l.startsWith('Release:')));
   });
 
   test('issues: los que IMPROVEMENTS.md no nombra como «issue #k» se trían; sin consulta, el motivo', () => {
@@ -1153,6 +1163,12 @@ describe('--reclamar contra un repositorio bare', () => {
     git(semilla, ['add', 'IMPROVEMENTS.md']);
     git(semilla, ['commit', '-q', '-m', 'semilla']);
     git(semilla, ['push', '-q', 'origin', 'master']);
+    // dev es la base del loop y va por delante de master (el release): el reclamo tiene que salir de dev
+    git(semilla, ['checkout', '-q', '-b', 'dev']);
+    writeFileSync(join(semilla, 'solo-dev.txt'), 'fusionado en dev, sin promover\n');
+    git(semilla, ['add', 'solo-dev.txt']);
+    git(semilla, ['commit', '-q', '-m', 'solo en dev']);
+    git(semilla, ['push', '-q', 'origin', 'dev']);
     git(dir, ['clone', '-q', bare, A]);
     git(dir, ['clone', '-q', bare, B]);
   });
@@ -1171,6 +1187,9 @@ describe('--reclamar contra un repositorio bare', () => {
     assert.match(ramas(), /refs\/heads\/loop\/28$/m);
     assert.match(git(A, ['log', '-1', '--format=%s', 'origin/loop/28']), /^Iteración 28: reclamo \d{4}-\d{2}-\d{2}T.* · ítem 6 \(Ítem 6\) · sesión sesion-de-prueba$/);
     assert.equal(git(A, ['rev-parse', '--abbrev-ref', 'HEAD']), 'loop/28');
+    // sale de origin/dev (trae lo que master no tiene), con el reclamo encima
+    assert.equal(git(A, ['rev-list', '--count', 'origin/dev..origin/loop/28']), '1');
+    assert.equal(git(A, ['rev-parse', 'origin/loop/28~1']), git(A, ['rev-parse', 'origin/dev']));
   });
 
   test('la segunda sesión la encuentra ocupada y sale 3', () => {
@@ -1200,7 +1219,7 @@ describe('--reclamar contra un repositorio bare', () => {
     assert.match(relevo.stdout, /\nRelevada la iteración 28 \(ítem 6, Fuentes\): rama loop\/28\n/);
     assert.match(ramas(), new RegExp(`refs/heads/loop/28-vencida-${sha7}$`, 'm'));
     assert.match(git(B, ['log', '-1', '--format=%s', 'origin/loop/28']), /^Iteración 28: relevo /);
-    assert.equal(git(B, ['rev-list', '--count', 'origin/master..origin/loop/28']), '1');
+    assert.equal(git(B, ['rev-list', '--count', 'origin/dev..origin/loop/28']), '1');
 
     const tarde = reclamar(A, '--relevo');
     assert.equal(tarde.status, 3, tarde.stdout + tarde.stderr);
@@ -1216,7 +1235,7 @@ describe('--reclamar contra un repositorio bare', () => {
   });
 
   test('las ramas loop/K de iteraciones ya fusionadas se listan y no se borran', () => {
-    git(A, ['push', '-q', 'origin', 'origin/master:refs/heads/loop/25', 'origin/master:refs/heads/loop/27']);
+    git(A, ['push', '-q', 'origin', 'origin/dev:refs/heads/loop/25', 'origin/dev:refs/heads/loop/27']);
     const r = reclamar(B);
     assert.match(r.stdout, /\nRamas loop\/\* de iteraciones ya fusionadas \(inocuas\): loop\/25, loop\/27\n?$/);
     assert.match(ramas(), /refs\/heads\/loop\/25$/m);
@@ -1228,7 +1247,7 @@ describe('--reclamar contra un repositorio bare', () => {
     let ajeno = null;
     const salida = [];
     const antesDelPush = () => {
-      git(C2, ['checkout', '-q', '-B', 'loop/28', 'origin/master']);
+      git(C2, ['checkout', '-q', '-B', 'loop/28', 'origin/dev']);
       git(C2, ['commit', '-q', '--allow-empty', '-m', 'Iteración 28: relevo ajeno']);
       git(C2, ['push', '-q', '--force', 'origin', 'loop/28']);
       ajeno = git(C2, ['rev-parse', 'HEAD']);
@@ -1240,7 +1259,7 @@ describe('--reclamar contra un repositorio bare', () => {
     assert.equal(git(dir, ['ls-remote', '--heads', bare, 'loop/28']).split('\t')[0], ajeno, 'el commit de la otra sesión sigue en origin');
   });
 
-  test('--salud --sin-red lee origin/master y las ramas de origin: las loop/K fusionadas van en una línea, sin Acción (0)', () => {
+  test('--salud --sin-red lee origin/dev y las ramas de origin: las loop/K fusionadas van en una línea, sin Acción (0)', () => {
     git(A, ['fetch', '-q', 'origin', '+refs/heads/*:refs/remotes/origin/*']);
     const r = spawnSync(process.execPath, [loop, '--salud', '--sin-red', '--repo', A], { encoding: 'utf8', env: ENV });
     assert.equal(r.status, 0, r.stdout + r.stderr);
@@ -1248,18 +1267,20 @@ describe('--reclamar contra un repositorio bare', () => {
     assert.match(r.stdout, /^Ramas loop\/K de iteraciones ya fusionadas: 2 \(loop\/25, 27\), inocuas;/m);
     assert.doesNotMatch(r.stdout, /^Acción:/m);
     assert.match(r.stdout, /^Issues: no se pudo consultar \(--sin-red\)/m);
+    assert.match(r.stdout, /^Release: master va 1 merge\(s\) detrás de dev;/m);
+    assert.doesNotMatch(r.stdout, /^Ramas .*\b(dev|master)\b/m, 'dev y master no son ramas «fusionadas» ni «con trabajo»');
     assert.match(r.stdout, /--salud: sin acciones\n$/);
   });
 
-  test('--salud mide la cadencia por los merges de master (--first-parent), no por los commits viejos de la rama fusionada', () => {
+  test('--salud mide la cadencia por los merges de dev (--first-parent), no por los commits viejos de la rama fusionada', () => {
     const hace30h = new Date(Date.now() - 30 * 3600 * 1000).toISOString();
-    git(A, ['checkout', '-q', '-B', 'rama-vieja', 'origin/master']);
+    git(A, ['checkout', '-q', '-B', 'rama-vieja', 'origin/dev']);
     writeFileSync(join(A, 'rama.txt'), 'de hace 30 h\n');
     git(A, ['add', 'rama.txt']);
     git(A, ['commit', '-q', '-m', 'commit de la rama, de hace 30 h'], { ...ENV, GIT_AUTHOR_DATE: hace30h, GIT_COMMITTER_DATE: hace30h });
-    git(A, ['checkout', '-q', '-B', 'master', 'origin/master']);
+    git(A, ['checkout', '-q', '-B', 'dev', 'origin/dev']);
     git(A, ['merge', '-q', '--no-ff', '-m', 'Una iteración (#99)', 'rama-vieja']);
-    git(A, ['push', '-q', 'origin', 'master']);
+    git(A, ['push', '-q', 'origin', 'dev']);
     git(A, ['fetch', '-q', 'origin', '+refs/heads/*:refs/remotes/origin/*']);
     const r = spawnSync(process.execPath, [loop, '--salud', '--sin-red', '--repo', A], { encoding: 'utf8', env: ENV });
     assert.equal(r.status, 0, r.stdout + r.stderr);
@@ -1303,13 +1324,13 @@ describe('--reclamar contra un repositorio bare', () => {
     git(D, ['add', 'IMPROVEMENTS.md']);
     git(D, ['commit', '-q', '-m', 'semilla']);
     git(D, ['commit', '-q', '--allow-empty', '-m', 'Un cambio (#52)']);
-    git(D, ['push', '-q', 'origin', 'master']);
+    git(D, ['push', '-q', 'origin', 'master', 'master:dev']);
     git(otro, ['clone', '-q', '--depth', '1', `file://${origen}`, E]);
     assert.equal(git(E, ['rev-parse', '--is-shallow-repository']), 'true');
     const r = reclamar(E);
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.equal(git(E, ['rev-parse', '--is-shallow-repository']), 'false');
-    assert.equal(git(E, ['rev-list', '--count', 'origin/master']), '2');
+    assert.equal(git(E, ['rev-list', '--count', 'origin/dev']), '2');
     rmSync(otro, { recursive: true, force: true });
   });
 
@@ -1323,7 +1344,7 @@ describe('--reclamar contra un repositorio bare', () => {
     writeFileSync(join(D, 'IMPROVEMENTS.md'), fixture());
     git(D, ['add', 'IMPROVEMENTS.md']);
     git(D, ['commit', '-q', '-m', 'semilla']);
-    git(D, ['push', '-q', 'origin', 'master']);
+    git(D, ['push', '-q', 'origin', 'master', 'master:dev']);
     const { CLAUDE_CODE_REMOTE_SESSION_ID, ...sinNube } = ENV;
     const r = spawnSync(process.execPath, [loop, '--reclamar', '--sin-red', '--repo', D], { encoding: 'utf8', env: { ...sinNube, LOOP_SESION: 'opencode-pc-20261021T0400Z' } });
     assert.equal(r.status, 0, r.stdout + r.stderr);

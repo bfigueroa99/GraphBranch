@@ -584,8 +584,10 @@
             out.push(`@@ -${at},${6 + del} +${at + shift},${6 + add} @@ ${h ? code[2] : ''}`.trimEnd());
             shift += add - del;
             for (let j = 0; j < 3; j++) out.push(' ' + line());
-            for (let j = 0; j < del; j++) out.push('-' + line());
-            for (let j = 0; j < add; j++) out.push('+' + line());
+            const gone = Array.from({ length: del }, line);
+            for (const l of gone) out.push('-' + l);
+            // lo quitado vuelve retocado (un número, un nombre), como en un cambio de verdad: el panel marca la palabra
+            for (let j = 0; j < add; j++) out.push('+' + (j < del ? tweak(gone[j]) || line() : line()));
             for (let j = 0; j < 3; j++) out.push(' ' + line());
             at += 20 + Math.floor(rnd() * 40);
           }
@@ -603,6 +605,24 @@
   }
 
   /* las líneas de código de los cambios inventados: identificadores, así que en inglés; {s} es el ámbito */
+  /* el retoque de una línea quitada que vuelve agregada: el primer cambio que le sirve (null si ninguno) */
+  const DEMO_TWEAKS = [
+    [/\d+/, (d) => String(Number(d) * 2 || 1)],
+    [/useState/, 'useReducer'],
+    [/client/, 'http'],
+    [/items/, 'rows'],
+    [/state/, 'value'],
+    [/keep/, 'hold'],
+    [/load/, 'fetch'],
+    [/ApiError/, 'HttpError'],
+    [/handles/, 'tolerates'],
+    [/component/, 'element'],
+  ];
+  const tweak = (l) => {
+    const hit = DEMO_TWEAKS.find(([re]) => re.test(l));
+    return hit ? l.replace(hit[0], hit[1]) : null;
+  };
+
   const DEMO_CODE = [
     "import { useEffect, useState } from 'react';",
     "import { client } from '../api/client';",

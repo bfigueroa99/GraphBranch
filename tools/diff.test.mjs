@@ -115,6 +115,52 @@ test('hunks: los números de línea de antes y de después, la línea de context
   assert.deepEqual(h[1].lines.at(-2), { t: ' ', a: 11, b: 12, s: '}' });
 });
 
+test('rows: lado a lado, el contexto en los dos lados y cada quitada junto a su agregada', () => {
+  const lines = plain(D.hunks('@@ -1,5 +1,5 @@\n a\n-b\n-c\n+B\n d\n+e\n-f\n+F\n\\ No newline at end of file'));
+  const r = plain(D.rows(lines[0].lines)).map((x) => [x.a ? x.a.t + x.a.s : null, x.b ? x.b.t + x.b.s : null]);
+  assert.deepEqual(r, [
+    [' a', ' a'],
+    ['-b', '+B'],
+    ['-c', null],
+    [' d', ' d'],
+    [null, '+e'],
+    ['-f', '+F'],
+    [null, '\\No newline at end of file'],
+  ]);
+});
+
+test('rows: lo quitado después de lo agregado abre otro bloque', () => {
+  const lines = plain(D.hunks('@@ -1,2 +1,2 @@\n+x\n-y\n+z')[0].lines);
+  const r = plain(D.rows(lines)).map((x) => [x.a?.s ?? null, x.b?.s ?? null]);
+  assert.deepEqual(r, [
+    [null, 'x'],
+    ['y', 'z'],
+  ]);
+});
+
+test('words: marca solo lo que cambió dentro de la línea', () => {
+  assert.deepEqual(plain(D.words('const b = 2;', 'const b = 3;')), {
+    a: [['const b = ', false], ['2', true], [';', false]],
+    b: [['const b = ', false], ['3', true], [';', false]],
+  });
+  const w = plain(D.words('  return { ...state, loading: false };', '  return { ...value, loading: true };'));
+  assert.deepEqual(w.a.filter(([, ch]) => ch).map(([s]) => s), ['state', 'false']);
+  assert.deepEqual(w.b.filter(([, ch]) => ch).map(([s]) => s), ['value', 'true']);
+  assert.equal(w.a.map(([s]) => s).join(''), '  return { ...state, loading: false };', 'los tramos rearman la línea entera');
+  // una palabra nueva en el medio: del otro lado no se marca nada
+  const ins = plain(D.words('foo(a, b)', 'foo(a, extra, b)'));
+  assert.deepEqual(ins.a.filter(([, ch]) => ch), []);
+  assert.deepEqual(ins.b.filter(([, ch]) => ch).map(([s]) => s.trim()), ['extra,']);
+});
+
+test('words: líneas iguales, del todo distintas o enormes no se marcan', () => {
+  assert.equal(D.words('igual', 'igual'), null);
+  assert.equal(D.words('import x from "y";', 'return 42;'), null, 'comparten muy poco: la línea entera es otra');
+  assert.equal(D.words('a'.repeat(600), 'b'.repeat(600)), null);
+  assert.ok(D.words('añadir ñandú', 'añadir ñandúes'), 'las palabras con acentos son una sola palabra');
+  assert.deepEqual(plain(D.words('añadir ñandú', 'añadir ñandúes')).b, [['añadir ', false], ['ñandúes', true]]);
+});
+
 test('count y totals: las líneas de un tramo y lo que suma un commit', () => {
   assert.deepEqual(plain(D.count('@@ -1 +1,2 @@\n-a\n+b\n+c')), { add: 2, del: 1 });
   assert.deepEqual(plain(D.count(null)), { add: 0, del: 0 });
@@ -184,5 +230,12 @@ test('la demo inventa los cambios de un commit a partir de su mensaje, y siempre
     const lines = D.hunks(f.patch).flatMap((h) => h.lines);
     assert.ok(lines.length > 0);
   }
+  // lo quitado vuelve retocado: en la demo se ve el resaltado de palabras
+  let marked = 0;
+  const shas = Array.from({ length: 40 }, (_, i) => (0x10000000 + i * 7919).toString(16).padEnd(40, '0'));
+  for (const s of shas) src.data.commits.set(s, { sha: s, parents: ['p'], message: 'fix(api): retry', author: {}, date: 1 });
+  for (const r of await Promise.all(shas.map((s) => src.commitDiff(s))))
+    for (const f of r.files) for (const h of D.hunks(f.patch)) for (const row of D.rows(h.lines)) if (row.a?.t === '-' && row.b?.t === '+' && D.words(row.a.s, row.b.s)) marked++;
+  assert.ok(marked > 10, `solo ${marked} líneas con palabras marcadas`);
   assert.equal(src.diffCheap(), true);
 });

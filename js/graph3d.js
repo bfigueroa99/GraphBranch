@@ -1595,7 +1595,9 @@
     /** Clic: abre el detalle de lo que haya ahí (o cierra el que estaba abierto). */
     openAt(x, y) {
       const hit = this.pickAny(x, y);
-      if (hit?.sha) this.showTip(hit.sha, true);
+      // con el panel de cambios abierto, un clic en un commit muestra los suyos
+      if (hit?.sha && this.ctx?.canDiff && this.opts.diffing?.()) this.opts.onDiff?.(hit.sha);
+      else if (hit?.sha) this.showTip(hit.sha, true);
       else if (hit?.file) this.showFileTip(hit.file, true);
       else this.unpin();
     }

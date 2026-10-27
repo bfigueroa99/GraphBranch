@@ -4148,6 +4148,10 @@ html.embed-hide-clock .g3-day {
 .main.diffing .feed-panel {
   display: none;
 }
+/* panel ancho (su botón ‹ ›): el código manda y el grafo queda como guía, más angosto */
+.main.diffing.diff-wide {
+  grid-template-columns: minmax(240px, 1fr) minmax(340px, 2.2fr);
+}
 .diff-panel {
   overflow: hidden;
 }
@@ -4185,6 +4189,44 @@ html.embed-hide-clock .g3-day {
   opacity: 0.35;
   cursor: default;
   background: transparent;
+}
+/* unificado o lado a lado, plegar o desplegar todo y el filtro por ruta: siempre a mano, fuera del desplazamiento */
+.df-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 0 14px 8px;
+  flex: none;
+}
+.df-tools[hidden] {
+  display: none;
+}
+.df-tools .view-switch {
+  margin-inline-end: 0;
+}
+.df-all {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12.5px;
+}
+.df-ffield {
+  flex: 1 1 150px;
+  min-width: 0;
+  max-width: 280px;
+  height: 30px;
+  margin-inline-end: 0;
+}
+.df-ffield[hidden] {
+  display: none;
+}
+.df-ffield input {
+  width: 100%;
+}
+.df-fcount {
+  color: var(--ink-3);
+  font-size: 12px;
+  white-space: nowrap;
 }
 .df-bar {
   position: relative;
@@ -4358,9 +4400,17 @@ html.embed-hide-clock .g3-day {
   border: 1px solid var(--line);
   border-radius: 9px;
   overflow: hidden;
+  overflow: clip; /* recorta las esquinas sin ser contenedor de desplazamiento: la cabecera puede quedar fija */
   scroll-margin-top: 8px;
 }
+.df-file[hidden] {
+  display: none;
+}
+/* la cabecera de cada archivo queda arriba mientras se lee su código: siempre se sabe en cuál se está */
 .df-fhead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -4475,6 +4525,45 @@ html.embed-hide-clock .g3-day {
   color: var(--ink-3);
   font-style: italic;
 }
+/* lo que cambió dentro de una línea quitada o agregada */
+.dw {
+  border-radius: 3px;
+}
+.dw-del {
+  background: color-mix(in srgb, var(--bad) 34%, var(--surface));
+}
+.dw-add {
+  background: color-mix(in srgb, var(--good) 34%, var(--surface));
+}
+/* lado a lado: lo de antes a la izquierda y lo de después a la derecha; las líneas largas se parten */
+.df-split .df-lines {
+  display: block;
+}
+.df-split .dl-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.dl-side {
+  display: flex;
+  min-width: 0;
+}
+.dl-side.dl-b {
+  border-left: 1px solid var(--line);
+}
+.dl-side.dl-gap {
+  background: var(--band);
+}
+.df-split .lc {
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.df-split .dl-hunk .lc {
+  padding-inline: 8px;
+}
+.df-files li[hidden] {
+  display: none;
+}
 html.tv .diff-panel,
 html.embed .diff-panel {
   display: none !important;
@@ -4492,8 +4581,12 @@ html.embed .diff-panel {
   }
 }
 @media (max-width: 860px) {
-  .main.diffing {
+  .main.diffing,
+  .main.diffing.diff-wide {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .df-wide {
+    display: none;
   }
   .diff-panel {
     max-height: 85vh;

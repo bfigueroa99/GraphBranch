@@ -923,4 +923,28 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
   arreglo, 90 s sin errores.
 - QA: solo la demo; el pendiente Media 1 queda con lo que sigue intermitente (filtros que no acotan, vista de texto).
 - Validado: 431 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+
+### 2026-10-27 · Pedido de Benjamin: los cambios de cada commit, más fáciles de leer
+
+- **Pedido de Benjamin:** «mejora el cómo poder ver los cambios de cada commit». No es una iteración numerada y
+  la proporción de la regla 2 no cambia.
+- **Lo nuevo:** en el panel de cambios, las palabras que cambiaron dentro de cada línea quitada y su agregada
+  (`GB.diff.words`, por la subsecuencia común más larga de sus palabras; no marca líneas de más de 500
+  caracteres ni las que comparten muy poco, hasta 1.500 pares por archivo); **Unificado** o **Lado a lado**
+  (`GB.diff.rows` empareja cada quitada con su agregada; las líneas largas se parten); el botón del panel
+  ancho; **Desplegar/Plegar todo**; desde 4 archivos, un filtro por ruta que sigue al pasar de commit (`Esc`
+  lo borra); la cabecera de cada archivo queda fija mientras se lee su código (`overflow: clip` en vez de
+  `hidden`); y con el panel abierto, un clic en un commit del grafo (2D o 3D) muestra los suyos en vez de
+  abrir su ficha. El modo y el ancho se recuerdan (`diffMode`, `diffWide`). La demo retoca las líneas que
+  quita (un número, un nombre), así el resaltado se ve sin token.
+- **Pruebas que fallan sin el cambio:** `tools/diff.test.mjs` (de 9 a 13: `rows`, `words` y la demo con
+  palabras marcadas) y el paso del smoke «cambios de un commit: un clic en el grafo cambia de commit, lado a
+  lado con palabras marcadas, filtro y panel ancho» (vuelve a lo último y abre la ficha de una rama a la vista:
+  con la historia larga de la corrida entera, el paso anterior deja las etiquetas fuera de pantalla).
+- README: la función en la lista, los atajos del panel y Límites conocidos (las palabras, lado a lado).
+- QA: 2D y 3D (el clic en un commit de cada vista), demo sin token, 40 idiomas (11 textos nuevos; árabe en
+  vivo con el panel), celular (el botón ancho se esconde bajo 860 px), teclado (`J`/`K` no pasan de commit
+  mientras se escribe en el filtro; `Esc` en él lo borra sin cerrar). La excepción intermitente
+  `reading 'sha'` del smoke salió aquí en «modo galaxias» y en «filtro por autor»: era de la demo y la arregló #184.
+- Validado: 435 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)

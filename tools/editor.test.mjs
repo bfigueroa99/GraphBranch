@@ -112,6 +112,6 @@ test('la demo edita en memoria: lee un archivo inventado, el commit aparece en s
   assert.ok(diff.files[0].patch.includes('+export default router;'));
   // lo guardado se vuelve a leer igual (y desde otra rama, el original)
   assert.equal((await src.readFile({ path: 'src/router.ts', ref: 'main' })).text, f.text + 'export default router;\n');
-  const nuevo = await src.writeFile({ path: 'docs/nuevo.md', branch: 'main', text: '# Nuevo\n', message: 'Crea docs/nuevo.md' });
+  const nuevo = await src.writeFile({ path: 'notas/nuevo.md', branch: 'main', text: '# Nuevo\n', message: 'Crea notas/nuevo.md' });
   assert.equal((await src.commitDiff(nuevo.sha)).files[0].status, 'added');
 });

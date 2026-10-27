@@ -1469,6 +1469,8 @@ function fakeGitHub() {
       return out.length ? { body: out } : { status: 404, body: { message: 'No commit found' } };
     }
     if (/^\/commits\/[^/]+\/check-runs$/.test(rest)) return { body: { total_count: 1, check_runs: [{ status: 'completed', conclusion: 'success' }] } };
+    const file = rest.match(/^\/contents\/(.+)$/); // un archivo de una rama (el editor, js/editor.js)
+    if (file) return { body: { type: 'file', encoding: 'base64', size: 20, content: Buffer.from(`// ${decodeURIComponent(file[1])} en ${q.get('ref')}\n`).toString('base64'), sha: 'blob-' + file[1].length } };
     const one = rest.match(/^\/commits\/([0-9a-f]{40})$/); // los cambios de un commit (el panel de js/diff.js)
     if (one && r.commits.has(one[1])) return { body: { ...r.commits.get(one[1]), files: [{ filename: 'src/app.js', status: 'modified', additions: 1, deletions: 1, patch: '@@ -1,2 +1,2 @@\n const a = 1;\n-const limit = 50;\n+const limit = 100;' }] } };
     return { status: 404, body: { message: 'Not Found' } };

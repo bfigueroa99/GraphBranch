@@ -626,7 +626,7 @@
       const key = `${ref}\u0000${path}`;
       let text = this.edits.files.get(key);
       if (text == null) {
-        const known = DEMO_TREE.includes(path) || this.edits.files.has(`${this.data.repo.defaultBranch}\u0000${path}`);
+        const known = demoKnown(path) || this.edits.files.has(`${this.data.repo.defaultBranch}\u0000${path}`);
         if (!known) return Promise.resolve({ missing: true });
         text = this.edits.files.get(`${this.data.repo.defaultBranch}\u0000${path}`) ?? demoFile(path);
       }
@@ -639,7 +639,7 @@
       const b = this.data.branches.get(branch);
       if (!b) return Promise.reject(new Error(MSG('editor.err.perm')));
       const key = `${branch}\u0000${path}`;
-      const known = this.edits.files.has(key) || DEMO_TREE.includes(path);
+      const known = this.edits.files.has(key) || demoKnown(path);
       const before = this.edits.files.get(key) ?? (known ? this.edits.files.get(`${this.data.repo.defaultBranch}\u0000${path}`) ?? demoFile(path) : '');
       const me = { name: i18n.t('editor.you'), login: 'you' };
       const c = this.commit(branch, message, me, Date.now());
@@ -650,6 +650,9 @@
       return new Promise((resolve) => setTimeout(() => resolve({ sha: c.sha, blob: c.sha }), 200));
     }
   }
+
+  /** ¿Existe esta ruta en la demo? Las de su árbol y las que tocan sus commits inventados (src/, tests/, docs/…). */
+  const demoKnown = (path) => DEMO_TREE.includes(path) || /^(src|tests|docs)\/[\w./-]+\.\w+$/.test(path) || ['README.md', 'package.json', 'package-lock.json', 'vite.config.ts', '.github/workflows/ci.yml'].includes(path);
 
   /** Un archivo de la demo, inventado a partir de su ruta (siempre el mismo): código, Markdown o configuración. */
   function demoFile(path) {

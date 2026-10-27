@@ -343,6 +343,10 @@
         this.later(2200, () => {
           if (!this.data.branches.has(pr.head)) return;
           this.data.branches.delete(pr.head);
+          // como GitHub: un PR apilado sobre la rama borrada pasa a apuntar a la base del que se fusionó
+          // (si no, el siguiente merge haría su commit en una rama que ya no existe)
+          for (const p of this.data.pulls.values()) if (p.base === pr.head) p.base = pr.base;
+          for (const x of this.data.branches.values()) if (x.base === pr.head) x.base = pr.base;
           this.data.totalBranches = this.data.branches.size;
           this.publish([this.act('branch-delete', { title: MSG('act.branchDeleted', { name: pr.head }), detail: MSG('act.branchDeletedMerged', { into: pr.base }), branch: pr.head, sha: c.sha, actor: this.actor(author) })]);
         });

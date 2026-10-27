@@ -4140,8 +4140,12 @@ html.embed-color .graph-wrap {
   text-shadow: 0 1px 3px var(--surface);
   pointer-events: none;
 }
+/* &hide=legend,title,clock: la leyenda de ramas (2D), el rótulo de &title= y las fechas del eje (3D) */
 html.embed-hide-notices .toasts,
-html.embed-hide-combo .combo {
+html.embed-hide-combo .combo,
+html.embed-hide-legend .legend,
+html.embed-hide-title .embed-title,
+html.embed-hide-clock .g3-day {
   display: none !important;
 }
 

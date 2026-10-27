@@ -33,6 +33,7 @@
       "Bash(npm ci)",
       "Bash(npm run:*)",
       "Bash(npx playwright:*)",
+      "Bash(npx skills@1.7.4:*)",
       "Bash(xvfb-run:*)",
       "mcp__github__create_pull_request",
       "mcp__github__update_pull_request",

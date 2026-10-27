@@ -1135,24 +1135,46 @@ console.log('Escritorio (1280×800)');
   });
 
   await step(page, 'cambios de un commit: un clic en el grafo cambia de commit, lado a lado con palabras marcadas, filtro y panel ancho', async () => {
-    await page.keyboard.press('Escape');
-    const heads = await page.$$('#graph svg .head[role=button]');
-    await heads[0].focus();
-    await page.keyboard.press('Enter');
-    await (await page.waitForSelector('#graph .tip .tip-diff', { timeout: T(5000) })).focus();
-    await page.keyboard.press('Enter');
-    await page.waitForSelector('#diff-panel:not([hidden]) .df-file', { timeout: T(5000) });
-    const idle = () => page.waitForFunction(() => !document.querySelector('#diff-panel').classList.contains('loading'), null, { timeout: T(5000) });
-    await idle();
-    // con el panel abierto, un clic en un merge (4 archivos en la demo) muestra sus cambios, no su ficha
-    const sha = await page.textContent('#diff-panel .df-meta code');
-    const clicked = await page.evaluate(() => {
-      const m = document.querySelector('#graph svg .node.merge');
-      m?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      return !!m;
+    // cada espera dice cuál fue si vence (la corrida larga trae mucha historia de la demo y lo recorta)
+    const wait = (what, p) => p.catch((err) => {
+      throw new Error(`${what}: ${err.message.split('\n')[0]}`);
     });
-    if (!clicked) throw new Error('el grafo no dibuja ningún merge de la demo');
-    await page.waitForFunction((s) => document.querySelector('#diff-panel .df-meta code')?.textContent !== s, sha, { timeout: T(5000) });
+    await page.keyboard.press('Escape');
+    // el paso anterior dejó el grafo en el primer commit: vuelve a lo último, donde están las etiquetas de rama
+    await page.focus('#graph');
+    await page.keyboard.press('End');
+    // (se desplaza con una transición: las etiquetas aparecen al llegar)
+    await wait('las etiquetas de rama a la vista', page.waitForFunction(() => [...document.querySelectorAll('#graph svg .head[role=button]:not(.exit)')].some((h) => getComputedStyle(h).display !== 'none'), null, { timeout: T(3000) }));
+    // la ficha de una rama vigente y a la vista (la demo borra ramas fusionadas: una etiqueta puede estar saliendo)
+    let tipDiff = null;
+    const shownHeads = [];
+    for (const h of await page.$$('#graph svg .head[role=button]:not(.exit)')) if (await h.isVisible()) shownHeads.push(h);
+    for (const h of shownHeads.slice(0, 6)) {
+      await h.focus();
+      await page.keyboard.press('Enter');
+      tipDiff = await page.waitForSelector('#graph .tip:not([hidden]) .tip-diff', { timeout: T(1000) }).catch(() => null);
+      if (tipDiff) break;
+      await page.keyboard.press('Escape');
+    }
+    if (!tipDiff) throw new Error('la ficha de la rama: ninguna de las primeras 6 ramas abrió su ficha con Ver cambios');
+    await tipDiff.focus();
+    await page.keyboard.press('Enter');
+    await wait('el panel al abrir', page.waitForSelector('#diff-panel:not([hidden]) .df-file', { timeout: T(5000) }));
+    const idle = () => wait('el panel cargando', page.waitForFunction(() => !document.querySelector('#diff-panel').classList.contains('loading'), null, { timeout: T(5000) }));
+    await idle();
+    // con el panel abierto, un clic en un merge (4 archivos en la demo) muestra sus cambios, no su ficha: uno que
+    // esté en la historia cargada ahora (la demo recorta la vieja) y que no esté saliendo
+    const clickMerge = () =>
+      page.evaluate(() => {
+        const data = [...document.querySelectorAll('#graph svg .node.merge:not(.exit)')].filter((m) => m.__sha);
+        const m = data[data.length - 1];
+        m?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        return m ? m.__sha.slice(0, 7) : null;
+      });
+    const atSha = (sha, what) => wait(what, page.waitForFunction((s) => document.querySelector('#diff-panel .df-meta code')?.textContent === s, sha, { timeout: T(5000) }));
+    const merge = await clickMerge();
+    if (!merge) throw new Error('el grafo no dibuja ningún merge de la demo');
+    await atSha(merge, `el clic en el merge ${merge}`);
     await idle();
     if (await page.locator('#graph .tip.pinned:not([hidden])').count()) throw new Error('el clic abrió la ficha en vez de cambiar los cambios');
     const files = await page.locator('#diff-panel .df-jump').count();
@@ -1174,10 +1196,12 @@ console.log('Escritorio (1280×800)');
       marks = await page.locator('#diff-panel .dw').count();
     }
     if (!marks) throw new Error('ninguna palabra cambiada marcada en 12 commits de la demo');
-    // filtro por ruta (desde 4 archivos): se vuelve al merge con el clic
-    await page.evaluate(() => document.querySelector('#graph svg .node.merge').dispatchEvent(new MouseEvent('click', { bubbles: true })));
-    await page.waitForSelector('#diff-panel .df-ffield:not([hidden])', { timeout: T(5000) });
+    // filtro por ruta (desde 4 archivos): se vuelve a un merge con el clic
+    const back = await clickMerge();
+    if (!back) throw new Error('el merge ya no está en el grafo');
+    await atSha(back, `el clic de vuelta en el merge ${back}`);
     await idle();
+    await wait('el filtro (4 archivos)', page.waitForSelector('#diff-panel .df-ffield:not([hidden])', { timeout: T(5000) }));
     const first = await page.$eval('#diff-panel .df-jump .df-jpath', (n) => n.textContent);
     const q = first.split('/').pop();
     await page.fill('#diff-panel .df-filter', q);
@@ -2947,6 +2971,21 @@ console.log('Capa para streaming: color de fondo y &hide= (?embed=1)');
     }));
     if (r.bg !== 'rgb(0, 255, 0)') throw new Error(`&bg=00ff00 deja el fondo ${r.bg}`);
     if (r.toasts !== 'none' || r.combo !== 'none') throw new Error(`&hide= no esconde: ${JSON.stringify(r)}`);
+  });
+  await step(page, '&hide=legend,title,clock esconde la leyenda, el rótulo y las fechas', async () => {
+    await page.goto(`${base}/index.html?lang=es&embed=1&title=Hola&hide=legend,title,clock`);
+    await loaded(page);
+    await page.waitForSelector('.embed-title', { state: 'attached', timeout: T(30000) });
+    const r = await page.evaluate(() => {
+      const d = (s) => {
+        const e = document.querySelector(s);
+        return e ? getComputedStyle(e).display : 'ausente';
+      };
+      return { title: d('.embed-title'), legend: d('.legend'), cls: document.documentElement.className };
+    });
+    if (r.title !== 'none') throw new Error(`&hide=title deja el rótulo ${r.title}`);
+    if (r.legend !== 'none' && r.legend !== 'ausente') throw new Error(`&hide=legend deja la leyenda ${r.legend}`);
+    if (!/embed-hide-clock/.test(r.cls)) throw new Error('&hide=clock no marca la capa');
   });
   await step(page, 'sin &hide= los avisos siguen ahí (lo de siempre por defecto)', async () => {
     await page.goto(`${base}/index.html?lang=es&embed=1`);

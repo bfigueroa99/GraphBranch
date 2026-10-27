@@ -540,3 +540,54 @@ test('cherry-pick --no-commit espera su commit y --abort lo cancela', () => {
   run(b, 'tag -d v2', 'cherry-pick feature');
   assert.equal(EXERCISES.find((e) => e.id === 'tagabort').done(b), false, 'confirmarlo no cuenta');
 });
+
+test('revert --no-commit espera su commit y --abort vuelve al estado de antes', () => {
+  const r = start(EXERCISES.findIndex((e) => e.id === 'revert'), NOW);
+  const main = r.branches.get('main');
+  assert.equal(r.run('revert --abort').ok, false, 'sin nada a medias no hay qué cancelar');
+  assert.ok(r.run('revert -n HEAD~1').ok);
+  assert.equal(r.branches.get('main'), main, 'a medias no commitea');
+  assert.match(r.run('status').lines.at(-1), /revert --abort/);
+  assert.equal(r.run('checkout HEAD~2').ok, false, 'con un revert a medias no se cambia de rama');
+  assert.equal(r.run('revert HEAD').ok, false);
+  assert.ok(r.run('revert --abort').ok);
+  assert.equal(r.picking, null);
+  assert.equal(r.revertAborts, 1);
+  assert.equal(r.pickAborts, 0);
+  assert.equal(r.branches.get('main'), main);
+  assert.match(r.run('status').lines.at(-1), /clean/);
+  // --continue lo confirma con el mensaje de un revert
+  run(r, 'revert --no-commit HEAD~1');
+  assert.match(r.run('revert --continue').lines[0], /Revert "Break checkout totals"/);
+  assert.equal(r.picking, null);
+  assert.equal(r.log(r.branches.get('main')).length, r.log(main).length + 1);
+});
+
+test('rebase -i se detiene tras el primer commit y --abort deja la rama como estaba', () => {
+  const r = start(EXERCISES.findIndex((e) => e.id === 'rebase'), NOW);
+  run(r, 'checkout feature');
+  const feature = r.branches.get('feature');
+  const log = r.log(feature);
+  assert.equal(r.run('rebase --abort').ok, false, 'sin rebase a medias no hay qué cancelar');
+  const res = r.run('rebase -i main');
+  assert.ok(res.ok);
+  assert.match(res.lines[0], /Stopped at/);
+  assert.equal(r.branches.get('feature'), feature, 'la rama no se mueve hasta terminar');
+  assert.equal(r.head.branch, undefined, 'HEAD queda desprendido');
+  assert.match(r.run('status').lines.join('\n'), /rebase --abort/);
+  for (const c of ['checkout main', 'merge main', 'reset --hard HEAD~1', 'rebase main', 'cherry-pick main']) {
+    assert.equal(r.run(c).ok, false, `${c} se niega con un rebase a medias`);
+  }
+  assert.ok(r.run('rebase --abort').ok);
+  assert.equal(r.rebasing, null);
+  assert.equal(r.rebaseAborts, 1);
+  assert.equal(r.head.branch, 'feature');
+  assert.deepEqual(r.log(r.branches.get('feature')), log, 'la historia es la de antes');
+  // --continue repite el resto y deja la rama rebasada
+  run(r, 'rebase --interactive main');
+  assert.ok(r.run('rebase --continue').ok);
+  assert.equal(r.rebasing, null);
+  assert.equal(r.head.branch, 'feature');
+  assert.ok(r.isAncestor(r.branches.get('main'), r.branches.get('feature')));
+  assert.equal(EXERCISES.find((e) => e.id === 'rebase').done(r), true);
+});

@@ -554,17 +554,13 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Media
 
-1. [Deuda] Smoke: el paso «vista 2D» (`tools/smoke.mjs:356`, `waitForSelector('#graph svg .node')`) falló en 3 de 4
-    corridas de `xvfb-run -a npm run check` en la iteración 110, en 1 de 2 sueltas sobre `master` y en 0 de 4 con diagnóstico (otro paso, «filtro por ruta», falló 1); tras
-    `#view-2d` el SVG tarda más que en una corrida suelta. Medir con 5 corridas del smoke dentro de `check` y esperar
-    el estado (vista 2D activa) en vez del selector. El 2026-10-20 (Replica y la arena en el loop, sin tocar la
-    página) falló en 2 de 6 corridas de `npm run check`, y otra falló en «filtro por autor» (`Cannot read
-    properties of undefined (reading 'sha')`); cada una pasó al repetir. En la iteración 112 falló en 2 de 3
-    corridas de `npm run check` (también «replay: tramo de fechas y rótulos propios», mismo `'sha'`) y en 0 de 6 sueltas.
-    El 2026-10-25 (cambio de maquinaria, sin tocar la página, con la máquina a carga 12 en 4 CPU) falló en 1 de 2
-    `npm run check`, junto con «bitácora en vivo» (`'sha'`) y «vista de texto: filtra por rama…» (60 s); la
-    repetición pasó los 116 pasos.
-    Reproducción: `xvfb-run -a npm run check` → `✗ vista 2D: page.waitForSelector: Timeout 30000ms exceeded.`
+1. [Deuda] Smoke intermitente bajo carga: «filtro por autor», «filtro por ruta», «bitácora en vivo», «replay: tramo
+    de fechas y rótulos propios» y «salud del repo…» fallan a veces con `Cannot read properties of undefined (reading
+    'sha')` o con un filtro que no acota (el grafo aún no cargó los commits), y «vista de texto: filtra por rama…»
+    con 60 s; cada una pasa al repetir `npm run check`. El paso «vista 2D» ya no está (arreglado en la iteración
+    139: esperaba nodos *visibles* y bajo carga tardan; ahora espera `state: 'attached'` y la vista activa). Medir
+    con 5 corridas del smoke solo y esperar el estado (commits cargados) en vez de leer `[0].sha` apenas hay nodos.
+    Reproducción: `xvfb-run -a npm run check` → `✗ salud del repo: … excepción: Cannot read properties of undefined (reading 'sha')`.
 
 ### Baja
 
@@ -837,3 +833,16 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/138, sin colisión
 - Validado: 427 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 139, mantenimiento · Deuda: pendiente 1 (Smoke: el paso «vista 2D» (`tools/smoke.mjs:356`, `waitForSelector('#graph svg …)
+
+### 2026-10-27 · Iteración 139 · Mantenimiento · Deuda
+
+- **Arreglo: el paso «vista 2D» del smoke esperaba nodos visibles** (pendiente 1): `waitForSelector('#graph svg .node')` espera visibilidad y bajo carga los nodos (40 ya en el DOM) tardan en serlo; ahora espera `state: 'attached'` y que `#graph` no esté oculto con `#view-2d` presionado. Las otras intermitentes del pendiente (`'sha'`, vista de texto) siguen como pendiente 1.
+- **Reproducción:** `xvfb-run -a node tools/smoke.mjs` → `✗ vista 2D: page.waitForSelector: Timeout 30000ms exceeded.` (falló en 2 de 2 corridas, y con diagnóstico `{"hidden":false,"svg":true,"nodes":40}`); con el arreglo, el paso pasó en 2 de 2 corridas de `npm run check`.
+- **Pruebas que fallan sin el arreglo:** el paso «vista 2D» del smoke, que ahora comprueba el estado y no la visibilidad.
+- README: sin cambios (herramienta de prueba).
+- QA: smoke completo dos veces con `xvfb-run`; auditoría: no toca la página.
+- Skills: no aplica: arreglo de una espera en el smoke propio.
+- Arena: no aplica: una sola forma obvia (esperar el estado en vez del selector visible).
+- Reclamo: loop/139, sin colisión
+- Validado: 427 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 140, expansión: ítem 91 (Resumen de la semana: autores nuevos, Salidas)

@@ -6,7 +6,7 @@
      node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill, el prompt y la pasada de Replica (sin red)
      node tools/loop.mjs --reclamar [--relevo] [--sin-red] [--horas 3.5] [--repo <dir>]
                                                   reclama la rama loop/N en origin: el push es el candado
-     node tools/loop.mjs --publicado              compara la web de GitHub Pages con origin/master
+     node tools/loop.mjs --publicado              compara la web de GitHub Pages con origin/master (el release)
      node tools/loop.mjs --salud [--sin-red]      la salud del loop: disparos perdidos, reclamos, ramas, issues sin
                                                   triar, la cola Para Benjamin; cada «Acción:» se atiende
      node tools/loop.mjs --rotar [--repo <dir>]   deja las últimas entradas de la bitácora en IMPROVEMENTS.md y
@@ -43,6 +43,15 @@ export const FLAGS = ['--siguiente', '--check', '--reclamar', '--publicado', '--
     disparo de las 20:04 salió con 3 y la relevó el de las 00:05: 11,9 h sin iteración). Las iteraciones
     109 a 134 tardaron de 8 a 81 min del reclamo al merge, y cada push renueva el reclamo. */
 export const RECLAMO_H = 3.5;
+/** La rama de integración: cada loop/N sale de ella, su PR se fusiona en ella y de ella se leen la hoja de
+    ruta y la bitácora. Pedido de Benjamin, 2026-10-27: el loop trabaja en dev y master queda de release. */
+export const BASE = 'dev';
+/** La rama de release: la publica GitHub Pages (--publicado la compara con la web) y solo recibe dev cuando
+    Benjamin lo promueve. */
+export const RELEASE = 'master';
+/** El refspec de BASE escrito entero: en un clon de una sola rama (git clone --depth, que trae solo master),
+    `git fetch origin dev` deja dev en FETCH_HEAD y no crea origin/dev. */
+const REF_BASE = `+refs/heads/${BASE}:refs/remotes/origin/${BASE}`;
 /** Los subtipos de una iteración de mantenimiento, en el orden en que desempatan. */
 export const SUBTIPOS = ['Errores', 'QA', 'Accesibilidad', 'Seguridad', 'Rendimiento', 'Deuda'];
 /** Los que, sin pendientes propios, auditan su área; Errores y Deuda necesitan un pendiente. */
@@ -91,7 +100,7 @@ const USO = `node tools/loop.mjs --siguiente [--json]     qué iteración toca: 
 node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill, el prompt y la pasada de Replica (sin red)
 node tools/loop.mjs --reclamar [--relevo] [--sin-red] [--horas ${RECLAMO_H}] [--repo <dir>]
                                              reclama la rama loop/N en origin: el push es el candado
-node tools/loop.mjs --publicado              compara la web de GitHub Pages con origin/master
+node tools/loop.mjs --publicado              compara la web de GitHub Pages con origin/${RELEASE} (el release)
 node tools/loop.mjs --salud [--sin-red]      disparos perdidos, reclamos, ramas, issues sin triar y Para Benjamin
 node tools/loop.mjs --rotar [--repo <dir>]   deja las últimas ${ROTAR_DEJA} entradas de la bitácora y lleva las demás a ${ARCHIVO_BITACORA}
 node tools/loop.mjs --limpiar [--borrar] [--repo <dir>]
@@ -489,16 +498,16 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
     if (!doc.hoja.length) e.push('hoja de ruta vacía');
     regla('R2', e, [], `hoja de ruta: ${doc.hoja.length} ítems numerados 1..${doc.hoja.length}`);
   }
-  // R3: cada «hecho en #K» está en origin/master, salvo a lo sumo el PR en curso
+  // R3: cada «hecho en #K» está en origin/dev (BASE), salvo a lo sumo el PR en curso
   {
     const e = [];
     const a = [];
     let titulos = log;
     let corto = superficial ?? false;
     if (!titulos) {
-      if (git(dir, ['rev-parse', '--verify', '-q', 'origin/master']).status !== 0) a.push('sin origin/master: no se comprobaron los PR');
+      if (git(dir, ['rev-parse', '--verify', '-q', `origin/${BASE}`]).status !== 0) a.push(`sin origin/${BASE}: no se comprobaron los PR`);
       // --first-parent: con commits de merge, solo los merges son PR; los commits de cada rama no cuentan
-      else titulos = git(dir, ['log', '--first-parent', 'origin/master', '--format=%s']).stdout.split('\n');
+      else titulos = git(dir, ['log', '--first-parent', `origin/${BASE}`, '--format=%s']).stdout.split('\n');
       corto = superficial ?? esSuperficial(dir);
     }
     let ok = 'sin ítems hechos';
@@ -506,7 +515,7 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
       const enLog = new Set();
       for (const t of titulos) for (const m of t.matchAll(/\(#(\d+)\)/g)) enLog.add(+m[1]);
       const hechos = doc.hoja.filter((i) => i.hecho);
-      // el PR en curso es el único «hecho en #K» que puede faltar en origin/master: tiene que ser mayor
+      // el PR en curso es el único «hecho en #K» que puede faltar en origin/dev: tiene que ser mayor
       // que los demás de la hoja, no que el último del log (entre medio se fusionan PR ajenos)
       const maxHoja = Math.max(0, ...hechos.filter((i) => enLog.has(i.pr)).map((i) => i.pr));
       // un clon superficial (las sesiones cloud clonan con --depth) no ve los PR anteriores a su primer merge:
@@ -521,11 +530,11 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
         if (enLog.has(it.pr)) continue;
         if (corto && it.pr < primero) antiguos.push(it.pr);
         else if (it.pr > maxHoja) enCurso.push(it.pr);
-        else e.push(`hecho en #${it.pr} (ítem ${it.n}): ese PR no está en origin/master`);
+        else e.push(`hecho en #${it.pr} (ítem ${it.n}): ese PR no está en origin/${BASE}`);
       }
-      if (enCurso.length > 1) e.push(`${enCurso.length} PR en curso (#${enCurso.join(', #')}): a lo sumo uno puede faltar en origin/master`);
+      if (enCurso.length > 1) e.push(`${enCurso.length} PR en curso (#${enCurso.join(', #')}): a lo sumo uno puede faltar en origin/${BASE}`);
       if (antiguos.length) a.push(`clon superficial: ${antiguos.length} «hecho en #K» anteriores a #${primero} no se pudieron comprobar (git fetch --unshallow origin)`);
-      ok = `los ${hechos.length} «hecho en #K» están en origin/master${enCurso.length === 1 ? ` (#${enCurso[0]} es el PR en curso)` : ''}`;
+      ok = `los ${hechos.length} «hecho en #K» están en origin/${BASE}${enCurso.length === 1 ? ` (#${enCurso[0]} es el PR en curso)` : ''}`;
     }
     regla('R3', e, a, ok);
   }
@@ -914,14 +923,14 @@ const motivo = (err) => (err?.name === 'TimeoutError' ? 'tiempo agotado' : err?.
     `antesDelPush` es un gancho de las pruebas: corre entre el fetch y el push con lease del relevo. */
 export async function reclamar({ relevo = false, sinRed = false, horas = RECLAMO_H, repo = root, fetchFn = globalThis.fetch, print = console.log, sesion = process.env.CLAUDE_CODE_REMOTE_SESSION_ID || process.env.LOOP_SESION || 'local', antesDelPush = () => {} } = {}) {
   for (let intento = 0; intento < 2; intento++) {
-    const f = fetchOrigin(repo, ['master', '+refs/heads/loop/*:refs/remotes/origin/loop/*']);
+    const f = fetchOrigin(repo, [REF_BASE, '+refs/heads/loop/*:refs/remotes/origin/loop/*']);
     if (f.status !== 0) {
       print(`Sin acceso a origin: no se puede reclamar ni publicar (${primera(f.stderr)})`);
       return 5;
     }
-    const show = deRef(repo, 'origin/master');
+    const show = deRef(repo, `origin/${BASE}`);
     if (show.status !== 0) {
-      print(`ERROR: no se pudo leer IMPROVEMENTS.md de origin/master (${primera(show.stderr)})`);
+      print(`ERROR: no se pudo leer IMPROVEMENTS.md de origin/${BASE} (${primera(show.stderr)})`);
       return 1;
     }
     let s;
@@ -947,7 +956,7 @@ export async function reclamar({ relevo = false, sinRed = false, horas = RECLAMO
       print(`Ramas loop/* de iteraciones ya fusionadas (inocuas): ${lista.length ? lista.join(', ') : 'ninguna'}`);
     };
     const commitVacio = (verbo) => {
-      const co = git(repo, ['checkout', '-q', '-B', rama, 'origin/master']);
+      const co = git(repo, ['checkout', '-q', '-B', rama, `origin/${BASE}`]);
       if (co.status !== 0) return co;
       return git(repo, ['commit', '-q', '--allow-empty', '-m', `Iteración ${s.n}: ${verbo} ${new Date().toISOString()} · ${que} · sesión ${sesion}`]);
     };
@@ -987,7 +996,7 @@ export async function reclamar({ relevo = false, sinRed = false, horas = RECLAMO
       return 4;
     }
     // relevo: se conserva el trabajo de la rama vencida (si hay más que el reclamo) y se reemplaza con lease
-    if (+git(repo, ['rev-list', '--count', `origin/master..${ref}`]).stdout.trim() > 1) {
+    if (+git(repo, ['rev-list', '--count', `origin/${BASE}..${ref}`]).stdout.trim() > 1) {
       const g = git(repo, ['push', '-q', 'origin', `${viejo}:refs/heads/${rama}-vencida-${sha7}`]);
       if (g.status !== 0) print(`aviso: no se pudo conservar el trabajo de ${rama} en ${rama}-vencida-${sha7} (${primera(g.stderr)})`);
     }
@@ -1014,13 +1023,14 @@ export async function reclamar({ relevo = false, sinRed = false, horas = RECLAMO
 
 const sha256 = (texto) => createHash('sha256').update(texto).digest('hex');
 
-/** Compara el sw.js publicado en GitHub Pages con el de origin/master. Devuelve {codigo, linea}. */
+/** Compara el sw.js publicado en GitHub Pages con el de origin/master, el release (Pages publica master, no
+    dev: lo fusionado en dev se ve en la web cuando Benjamin lo promueve). Devuelve {codigo, linea}. */
 export async function publicado({ fetch: fetchFn = globalThis.fetch, homepage, swLocal, owner, repo: nombre } = {}) {
   homepage ??= JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).homepage;
   if (!homepage) return { codigo: 4, linea: 'Web publicada: no se pudo comprobar (package.json sin homepage)' };
   if (swLocal === undefined) {
-    const s = git(root, ['show', 'origin/master:sw.js']);
-    if (s.status !== 0) return { codigo: 4, linea: `Web publicada: no se pudo comprobar (sin origin/master: ${primera(s.stderr)})` };
+    const s = git(root, ['show', `origin/${RELEASE}:sw.js`]);
+    if (s.status !== 0) return { codigo: 4, linea: `Web publicada: no se pudo comprobar (sin origin/${RELEASE}: ${primera(s.stderr)})` };
     swLocal = s.stdout;
   }
   if (!owner) ({ owner, repo: nombre } = ownerRepo(git(root, ['remote', 'get-url', 'origin']).stdout.trim()) ?? {});
@@ -1069,11 +1079,12 @@ export function tramos(nums) {
 
 /** La salud del loop con los datos ya reunidos (pura: la prueban las pruebas). Devuelve las líneas y
     cuántas son «Acción:», lo que la sesión tiene que atender antes de seguir.
-      merges: [{ fecha (ms), titulo }] de origin/master · ramas: [{ nombre, fecha (ms), contenida, pr }] de origin
+      merges: [{ fecha (ms), titulo }] de origin/dev · ramas: [{ nombre, fecha (ms), contenida, pr }] de origin
       (pr: el PR fusionado cuya cabeza es la punta de la rama)
       issues: [{ number, title, labels }] o un texto con el motivo si no se pudo consultar
-      superficial: el clon no tiene toda la historia de master (los huecos se miden desde su primer merge) */
-export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], ramas = [], issues = [], desde = DESDE_DIRECTIVA, cron = CRON_H, horas = RECLAMO_H, superficial = false }) {
+      superficial: el clon no tiene toda la historia de dev (los huecos se miden desde su primer merge)
+      release: los merges de dev que master todavía no tiene (null si no se pudo medir) */
+export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], ramas = [], issues = [], desde = DESDE_DIRECTIVA, cron = CRON_H, horas = RECLAMO_H, superficial = false, release = null }) {
   const lineas = [];
   let acciones = 0;
   const accion = (t) => {
@@ -1092,7 +1103,7 @@ export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], 
   lineas.push(`Cadencia: ${hechas} iteraciones desde la directiva (${desde.slice(0, 10)}) para ${esperados} disparos esperados (${esperados ? Math.round((hechas / esperados) * 100) : 100} %)${ultima ? `; la última fusión fue hace ${horasDe(ahora - ultima)} h` : ''}`);
   // sin la historia entera, lo de antes del primer merge visible no es un hueco: es lo que el clon no trajo
   const visible = superficial && fusiones.length ? fusiones[0].fecha : t0;
-  if (superficial) lineas.push(`Clon superficial: master se ve desde ${fusiones.length ? fechaUTC(visible) : 'ningún merge'} UTC; los huecos anteriores no se miden (git fetch --unshallow origin)`);
+  if (superficial) lineas.push(`Clon superficial: ${BASE} se ve desde ${fusiones.length ? fechaUTC(visible) : 'ningún merge'} UTC; los huecos anteriores no se miden (git fetch --unshallow origin)`);
   const puntos = [visible, ...fusiones.map((x) => x.fecha).filter((f) => f > visible), ahora];
   for (let i = 1; i < puntos.length; i++) {
     const h = (puntos[i] - puntos[i - 1]) / 3600e3;
@@ -1104,7 +1115,7 @@ export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], 
   // reclamos: las ramas loop/K
   const loops = ramas.filter((r) => /^loop\/\d+$/.test(r.nombre));
   const conservadas = ramas.filter((r) => /^loop\/\d+-vencida-/.test(r.nombre));
-  // las de iteraciones ya fusionadas son inocuas (las fusionadas con commit de merge están contenidas en master):
+  // las de iteraciones ya fusionadas son inocuas (las fusionadas con commit de merge están contenidas en dev):
   // una línea y no una Acción por rama, porque el proxy de la nube niega el push --delete (iteraciones 111 a 134)
   const fusionadas = loops.map((r) => +r.nombre.slice(5)).filter((k) => k <= M);
   if (fusionadas.length) lineas.push(`Ramas loop/K de iteraciones ya fusionadas: ${fusionadas.length} (loop/${tramos(fusionadas)}), inocuas; la sesión no las borra (en la nube el proxy niega el push --delete): las borra Benjamin con node tools/loop.mjs --limpiar --borrar (Para Benjamin)`);
@@ -1122,8 +1133,10 @@ export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], 
   const otras = ramas.filter((r) => !/^loop\//.test(r.nombre));
   const contenidas = otras.filter((r) => r.contenida || r.pr);
   const conTrabajo = otras.filter((r) => !r.contenida && !r.pr);
-  if (contenidas.length) lineas.push(`Ramas ya fusionadas o contenidas en master (las borra Benjamin, ver Para Benjamin): ${contenidas.length} (${contenidas.map((r) => `${r.nombre}${r.pr ? ` #${r.pr}` : ''}`).join(', ')})`);
+  if (contenidas.length) lineas.push(`Ramas ya fusionadas o contenidas en ${BASE} (las borra Benjamin, ver Para Benjamin): ${contenidas.length} (${contenidas.map((r) => `${r.nombre}${r.pr ? ` #${r.pr}` : ''}`).join(', ')})`);
   if (conTrabajo.length) lineas.push(`Ramas con trabajo sin fusionar (nunca se fusionan ni se borran solas): ${conTrabajo.length} (${conTrabajo.map((r) => `${r.nombre} ${fechaUTC(r.fecha).slice(0, 10)}`).join(', ')})`);
+  // el release: lo que el loop fusionó en dev y la web (master) todavía no muestra; promoverlo es de Benjamin
+  if (release !== null) lineas.push(release ? `Release: ${RELEASE} va ${release} merge(s) detrás de ${BASE}; la web publica ${RELEASE} y la promoción (PR ${BASE} → ${RELEASE}) es de Benjamin` : `Release: ${RELEASE} al día con ${BASE}`);
 
   // issues: cada uno abierto se tría una vez (su número queda en IMPROVEMENTS.md como «issue #k»)
   if (typeof issues === 'string') lineas.push(`Issues: no se pudo consultar (${issues}); con el MCP: mcp__github__list_issues (state OPEN)`);
@@ -1155,26 +1168,28 @@ export async function salud({ sinRed = false, repo = root, fetchFn = globalThis.
       return 5;
     }
   }
-  const show = deRef(repo, 'origin/master');
+  const show = deRef(repo, `origin/${BASE}`);
   if (show.status !== 0) {
-    print(`Sin origin/master: ${primera(show.stderr)}`);
+    print(`Sin origin/${BASE}: ${primera(show.stderr)}`);
     return 5;
   }
-  // --first-parent: una fusión es un commit de master, no los commits de la rama que trajo (fechados antes)
-  const merges = git(repo, ['log', '--first-parent', 'origin/master', '--format=%ct%x09%s'])
+  // --first-parent: una fusión es un commit de dev, no los commits de la rama que trajo (fechados antes)
+  const merges = git(repo, ['log', '--first-parent', `origin/${BASE}`, '--format=%ct%x09%s'])
     .stdout.split('\n')
     .filter(Boolean)
     .map((l) => ({ fecha: +l.split('\t')[0] * 1000, titulo: l.split('\t')[1] }));
-  const arbol = git(repo, ['rev-parse', 'origin/master^{tree}']).stdout.trim();
+  const arbol = git(repo, ['rev-parse', `origin/${BASE}^{tree}`]).stdout.trim();
+  const atraso = git(repo, ['rev-list', '--count', '--first-parent', `origin/${RELEASE}..origin/${BASE}`]);
+  const release = atraso.status === 0 ? +atraso.stdout.trim() : null;
   const ramas = git(repo, ['for-each-ref', '--format=%(refname:short)%09%(committerdate:unix)', 'refs/remotes/origin'])
     .stdout.split('\n')
     .filter(Boolean)
     .map((l) => l.split('\t'))
-    .filter(([n]) => n.startsWith('origin/') && !['origin/HEAD', 'origin/master'].includes(n))
+    .filter(([n]) => n.startsWith('origin/') && !['origin/HEAD', `origin/${BASE}`, `origin/${RELEASE}`].includes(n))
     .map(([n, t]) => {
       const nombre = n.slice('origin/'.length);
-      // contenida: ya está en master, también si se fusionó con squash (unirla no cambiaría el árbol)
-      const contenida = !nombre.startsWith('loop/') && (git(repo, ['merge-base', '--is-ancestor', n, 'origin/master']).status === 0 || git(repo, ['merge-tree', '--write-tree', 'origin/master', n]).stdout.split('\n')[0] === arbol);
+      // contenida: ya está en dev, también si se fusionó con squash (unirla no cambiaría el árbol)
+      const contenida = !nombre.startsWith('loop/') && (git(repo, ['merge-base', '--is-ancestor', n, `origin/${BASE}`]).status === 0 || git(repo, ['merge-tree', '--write-tree', `origin/${BASE}`, n]).stdout.split('\n')[0] === arbol);
       return { nombre, fecha: +t * 1000, contenida };
     });
   let issues = '--sin-red';
@@ -1192,7 +1207,7 @@ export async function salud({ sinRed = false, repo = root, fetchFn = globalThis.
       } catch (err) {
         issues = motivo(err);
       }
-      // una rama fusionada con squash no es antecesora de master: la delata su PR fusionado
+      // una rama fusionada con squash no es antecesora de dev: la delata su PR fusionado
       try {
         const puntas = new Map(ramas.map((r) => [r.nombre, r]));
         const shas = git(repo, ['for-each-ref', '--format=%(refname:short)%09%(objectname)', 'refs/remotes/origin']).stdout.split('\n');
@@ -1206,26 +1221,26 @@ export async function salud({ sinRed = false, repo = root, fetchFn = globalThis.
       }
     }
   }
-  const { lineas, acciones } = diagnostico({ ahora, doc: parse(show.texto, { archivo: show.archivo }), texto: show.texto, merges, ramas, issues, superficial: esSuperficial(repo) });
+  const { lineas, acciones } = diagnostico({ ahora, doc: parse(show.texto, { archivo: show.archivo }), texto: show.texto, merges, ramas, issues, superficial: esSuperficial(repo), release });
   for (const l of lineas) print(l);
   return acciones ? 3 : 0;
 }
 
 /* ---------------------------------------------------------------- limpiar */
 
-/** Las ramas loop/K de iteraciones que ya están en la bitácora de origin/master (K ≤ la última): su trabajo ya
+/** Las ramas loop/K de iteraciones que ya están en la bitácora de origin/dev (K ≤ la última): su trabajo ya
     entró por su PR. Sin --borrar las lista; con --borrar las borra de origin en un solo push. No toca la loop/N
     que toca (puede estar en curso), las conservadas de un relevo (loop/K-vencida-…) ni ninguna otra rama.
     En la nube el proxy niega el push --delete: es para Benjamin, desde su PC. Devuelve el código de salida. */
 export async function limpiar({ borrar = false, repo = root, print = console.log } = {}) {
-  const f = fetchOrigin(repo, ['master', '+refs/heads/loop/*:refs/remotes/origin/loop/*']);
+  const f = fetchOrigin(repo, [REF_BASE, '+refs/heads/loop/*:refs/remotes/origin/loop/*']);
   if (f.status !== 0) {
     print(`Sin acceso a origin: ${primera(f.stderr)}`);
     return 5;
   }
-  const show = deRef(repo, 'origin/master');
+  const show = deRef(repo, `origin/${BASE}`);
   if (show.status !== 0) {
-    print(`ERROR: no se pudo leer IMPROVEMENTS.md de origin/master (${primera(show.stderr)})`);
+    print(`ERROR: no se pudo leer IMPROVEMENTS.md de origin/${BASE} (${primera(show.stderr)})`);
     return 1;
   }
   const M = Math.max(0, ...parse(show.texto, { archivo: show.archivo }).bitacora.filter((e) => e.n !== null).map((e) => e.n));

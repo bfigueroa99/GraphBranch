@@ -9,7 +9,7 @@ Corrés en OpenCode (lo lanza `node tools/opencode.mjs`, normalmente con un mode
 
 - **La skill**: con la herramienta `skill` (`iteracion`) o leyendo `.claude/skills/iteracion/SKILL.md`. La arena, find-skills y las del pack Replica se leen por ruta, como dice la skill; la CLI de find-skills (`npx skills@1.7.4`) corre con `bash`, igual que en Claude Code.
 - **GitHub**: no hay MCP de GitHub; cada `mcp__github__*` de la skill se hace con `gh`. Si `gh auth status` falla, no hay cómo abrir ni fusionar: la rama queda empujada y el resumen lo dice.
-  - `create_pull_request` → `gh pr create --base master --head loop/N --title "<título>" --body-file <archivo>`; P es el número de la URL que imprime.
+  - `create_pull_request` → `gh pr create --base dev --head loop/N --title "<título>" --body-file <archivo>`; P es el número de la URL que imprime. Nunca `--base master`: `master` es el release y lo promueve Benjamin.
   - `merge_pull_request` (`merge_method: merge`, `commit_title: "<título> (#P)"`) → `gh pr merge P --merge --subject "<título> (#P)" --body ""`. Nunca `--squash` ni `--rebase`.
   - `update_pull_request` con `state: closed` y su comentario → `gh pr close P --comment "<comentario>"`.
   - `list_pull_requests` (head `loop/N`, state `open`) → `gh pr list --head loop/N --state open --json number,url`.

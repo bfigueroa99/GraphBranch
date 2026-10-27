@@ -649,6 +649,7 @@ GB.i18n.define('ro', {
   'digest.releases': 'Lansări',
   'digest.tags': 'Etichete (tags)',
   'digest.people': 'Cine a contribuit (commituri)',
+  'digest.newcomers': 'Autori noi: {n}',
   'digest.branch': 'Cea mai activă ramură',
   'digest.org': 'Rezumatul săptămânii pentru {owner}',
   'constellation.title': 'Constelație',

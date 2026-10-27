@@ -641,6 +641,7 @@ GB.i18n.define('bg', {
   'digest.releases': 'Издания',
   'digest.tags': 'Тагове',
   'digest.people': 'Кой е допринесъл (комити)',
+  'digest.newcomers': 'Нови автори: {n}',
   'digest.branch': 'Най-активен клон',
   'digest.org': 'Седмично обобщение на {owner}',
   'constellation.title': 'Съзвездие',

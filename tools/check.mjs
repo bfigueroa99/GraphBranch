@@ -4,7 +4,7 @@
    página o la app de escritorio, las e2e. Se detiene en el primer rojo e imprime la línea «Validado:» que
    va a la bitácora.
 
-     npm run check                  las e2e solo si el diff con origin/master toca la página o el escritorio
+     npm run check                  las e2e solo si el diff con origin/dev toca la página o el escritorio
      npm run check -- --e2e         las e2e siempre
      npm run check -- --sin-e2e     las e2e nunca
      npm run check -- --langs       el smoke en los 40 idiomas (solo, si el diff toca js/locales/, css/ o index.html)
@@ -73,9 +73,9 @@ function sinVerificar(msg) {
 
 const git = (args) => spawnSync('git', args, { cwd: root, encoding: 'utf8' });
 
-/** Qué cambió frente a origin/master (más lo no versionado); null si no hay origin/master. */
+/** Qué cambió frente a origin/dev, la base del loop (más lo no versionado); null si no hay origin/dev. */
 function diff() {
-  const d = git(['diff', '--name-only', 'origin/master']);
+  const d = git(['diff', '--name-only', 'origin/dev']);
   if (d.status !== 0) return null;
   const otros = git(['ls-files', '--others', '--exclude-standard']).stdout;
   return [...d.stdout.split('\n'), ...otros.split('\n')].filter(Boolean);

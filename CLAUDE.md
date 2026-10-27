@@ -14,7 +14,7 @@ El loop también corre en OpenCode con un modelo detrás de OmniRoute: `node too
 
 El dueño del repositorio autorizó que Claude abra pull requests y los fusione por su cuenta, sin pedir permiso cada vez:
 
-- Al terminar un cambio verificado, abre el pull request contra `master` desde la rama de trabajo, con título y descripción en español.
-- Fusiónalo con commit de merge (`merge_method: merge`, no squash: así cada rama se ve uniéndose a `master` en el grafo y queda contenida en él), con el título del PR seguido de `(#N)` como en el historial, en cuanto esté sin conflictos y sin hilos de revisión pendientes. No hace falta esperar aprobación.
+- Al terminar un cambio verificado, abre el pull request contra `dev` desde la rama de trabajo, con título y descripción en español. `dev` es la rama de integración (la del loop y la de todo cambio); `master` es el release: lo publica GitHub Pages y solo recibe `dev` cuando Benjamin lo promueve con un PR `dev` → `master`. No abras PR contra `master` ni lo fusiones si él no lo pide.
+- Fusiónalo con commit de merge (`merge_method: merge`, no squash: así cada rama se ve uniéndose a `dev` en el grafo y queda contenida en él), con el título del PR seguido de `(#N)` como en el historial, en cuanto esté sin conflictos y sin hilos de revisión pendientes. No hace falta esperar aprobación.
 - Si el usuario pidió revisar antes, o el cambio toca algo que él marcó como delicado, espera a que lo diga.
 - Los permisos para hacerlo sin confirmaciones están en `.claude/settings.json`.

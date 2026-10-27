@@ -641,6 +641,7 @@ GB.i18n.define('da', {
   'digest.releases': 'Releases',
   'digest.tags': 'Tags',
   'digest.people': 'Hvem der har bidraget (commits)',
+  'digest.newcomers': 'Nye bidragydere: {n}',
   'digest.branch': 'Mest aktive gren',
   'digest.org': 'Ugens resumé for {owner}',
   'constellation.title': 'Konstellation',

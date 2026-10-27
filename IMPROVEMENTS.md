@@ -835,5 +835,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Skills: no aplica: es lógica del simulador propio, sin dominio externo que una guía acelere.
 - Arena: no aplica: una sola forma obvia (un estado más en el simulador, como `picking` y `merging`).
 - Reclamo: loop/138, sin colisión
-- Validado: PENDIENTE
+- Validado: 427 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 139, mantenimiento · Deuda: pendiente 1 (Smoke: el paso «vista 2D» (`tools/smoke.mjs:356`, `waitForSelector('#graph svg …)

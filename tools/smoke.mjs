@@ -1140,10 +1140,23 @@ console.log('Escritorio (1280×800)');
       throw new Error(`${what}: ${err.message.split('\n')[0]}`);
     });
     await page.keyboard.press('Escape');
-    const heads = await page.$$('#graph svg .head[role=button]');
-    await heads[0].focus();
-    await page.keyboard.press('Enter');
-    await (await wait('la ficha de la rama', page.waitForSelector('#graph .tip .tip-diff', { timeout: T(5000) }))).focus();
+    // el paso anterior dejó el grafo en el primer commit: vuelve a lo último, donde están las etiquetas de rama
+    await page.focus('#graph');
+    await page.keyboard.press('End');
+    await page.waitForFunction(() => document.querySelector('#follow-btn')?.dataset.following === 'true', null, { timeout: T(3000) }).catch(() => {});
+    // la ficha de una rama vigente y a la vista (la demo borra ramas fusionadas: una etiqueta puede estar saliendo)
+    let tipDiff = null;
+    const shownHeads = [];
+    for (const h of await page.$$('#graph svg .head[role=button]:not(.exit)')) if (await h.isVisible()) shownHeads.push(h);
+    for (const h of shownHeads.slice(0, 6)) {
+      await h.focus();
+      await page.keyboard.press('Enter');
+      tipDiff = await page.waitForSelector('#graph .tip:not([hidden]) .tip-diff', { timeout: T(1000) }).catch(() => null);
+      if (tipDiff) break;
+      await page.keyboard.press('Escape');
+    }
+    if (!tipDiff) throw new Error('la ficha de la rama: ninguna de las primeras 6 ramas abrió su ficha con Ver cambios');
+    await tipDiff.focus();
     await page.keyboard.press('Enter');
     await wait('el panel al abrir', page.waitForSelector('#diff-panel:not([hidden]) .df-file', { timeout: T(5000) }));
     const idle = () => wait('el panel cargando', page.waitForFunction(() => !document.querySelector('#diff-panel').classList.contains('loading'), null, { timeout: T(5000) }));

@@ -2144,7 +2144,7 @@
   });
   el.constellation = $('#constellation');
   try {
-    // ?order=activity: la constelación abre ya ordenada (sin anunciarlo: no la pidió nadie con el selector)
+    // ?order=activity|name: la constelación abre ya ordenada (sin anunciarlo: no la pidió nadie con el selector)
     const order = GB.constellation.orderParam(new URLSearchParams(location.search));
     if (order) constellation.setOrder(order, false);
   } catch {

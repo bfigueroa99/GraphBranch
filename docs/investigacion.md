@@ -265,6 +265,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Capa para streaming, octava entrega | Plataformas | 1×2/1 | 2,0 | Capas para OBS | ítem 99 |
 | Salud del repo: tendencia de ramas nuevas | Análisis | 1×2/2 | 1,0 | DORA | ítem 100 |
 | Práctica: reset --mixed y reflog | Público | 2×2/2 | 2,0 | git-sim | ítem 101 |
+| Constelación: filtrar por nombre en la URL | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 102 |
+| Resumen de la semana: ramas nuevas | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 103 |
+| Vista de texto: ramas fusionadas | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 104 |
+| Salud del repo: tendencia de commits | Análisis | 1×2/2 | 1,0 | DORA | ítem 105 |
+| Capa para streaming, novena entrega | Plataformas | 1×2/1 | 2,0 | Capas para OBS | ítem 106 |
+| Práctica: commit --amend | Público | 2×2/2 | 2,0 | git-sim | ítem 107 |
 
 ## Públicos
 

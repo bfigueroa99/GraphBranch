@@ -69,6 +69,12 @@ test('embedOptions: bg transparente o hex, hide solo con nombres conocidos', () 
   assert.deepEqual([...GB.embedOptions('?embed=1&hide=Notices, combo,notices,otra').hide], ['notices', 'combo']);
 });
 
+test('embedOptions: hide acepta legend, title y clock', () => {
+  const { GB, classes } = load('?embed=1&hide=legend,title,clock');
+  assert.deepEqual([...GB.embedOptions('?embed=1&hide=Legend, clock,title,reloj').hide], ['legend', 'clock', 'title']);
+  assert.ok(classes.has('embed-hide-legend') && classes.has('embed-hide-title') && classes.has('embed-hide-clock'));
+});
+
 test('i18n.js marca <html> con lo que pide la URL', () => {
   const { classes, vars } = load('?embed=1&bg=00ff00&hide=notices');
   assert.ok(classes.has('embed') && classes.has('embed-color') && classes.has('embed-hide-notices'));

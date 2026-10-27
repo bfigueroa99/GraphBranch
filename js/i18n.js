@@ -14,11 +14,12 @@ window.GB = window.GB || {};
   'use strict';
 
   /** Lee ?embed=1 y sus ajustes: &bg=transparent (o un color hex, p. ej. &bg=00ff00 para un croma en OBS) y
-      &hide=notices,combo (lo que no debe verse; lo de siempre se ve) y &rotate=30 (cada cuántos
+      &hide=notices,combo,legend,title,clock (lo que no debe verse; lo de siempre se ve) y &rotate=30 (cada cuántos
       segundos pasa al siguiente repo de ?repo=, de 5 a 3600; sin él, 0 y no rota) y &theme=light|dark (fija el
       tema de la capa; sin él, el del sistema) y &title=Texto (un rótulo propio sobre la capa: sin
       caracteres de control, hasta 60 letras; se pone con textContent, nunca como HTML) y &max=N (cuántas ramas muestra: la rama por defecto y
       las de commit más reciente; entero de 1 a 200, sin él, todas). Sin ?embed, no hay nada. */
+  const HIDE = ['notices', 'combo', 'legend', 'title', 'clock'];
   function embedOptions(search) {
     const q = new URLSearchParams(search || '');
     if (!q.has('embed') || /^(0|false|no|off)$/i.test(q.get('embed'))) return null;
@@ -27,7 +28,7 @@ window.GB = window.GB || {};
       .toLowerCase()
       .split(',')
       .map((x) => x.trim())
-      .filter((x) => x === 'notices' || x === 'combo');
+      .filter((x) => HIDE.includes(x));
     const rotate = /^\d{1,4}$/.test((q.get('rotate') || '').trim()) ? Number(q.get('rotate').trim()) : 0;
     const title = Array.from((q.get('title') || '').replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, ' ').trim())
       .slice(0, 60)

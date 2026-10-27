@@ -642,6 +642,7 @@ GB.i18n.define('th', {
   'digest.releases': 'รีลีส',
   'digest.tags': 'แท็ก',
   'digest.people': 'ผู้ร่วมพัฒนา (คอมมิต)',
+  'digest.newcomers': 'ผู้ร่วมพัฒนาใหม่: {n}',
   'digest.branch': 'เบรนช์ที่คึกคักที่สุด',
   'digest.org': 'สรุปประจำสัปดาห์ของ {owner}',
   'constellation.title': 'กลุ่มดาว',

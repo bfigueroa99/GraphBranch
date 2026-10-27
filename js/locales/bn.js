@@ -641,6 +641,7 @@ GB.i18n.define('bn', {
   'digest.releases': 'রিলিজ',
   'digest.tags': 'ট্যাগ',
   'digest.people': 'কে অবদান রেখেছেন (কমিট)',
+  'digest.newcomers': 'নতুন অবদানকারী: {n}',
   'digest.branch': 'সবচেয়ে সক্রিয় ব্রাঞ্চ',
   'digest.org': '{owner}-এর সাপ্তাহিক সারাংশ',
   'constellation.title': 'নক্ষত্রমণ্ডল',

@@ -698,6 +698,7 @@ GB.i18n.define('he', {
   'digest.releases': 'גרסאות',
   'digest.tags': 'תגיות',
   'digest.people': 'מי תרם (קומיטים)',
+  'digest.newcomers': 'תורמים חדשים: {n}',
   'digest.branch': 'הענף הפעיל ביותר',
   'digest.org': 'סיכום השבוע של {owner}',
   'constellation.title': 'קבוצת כוכבים',

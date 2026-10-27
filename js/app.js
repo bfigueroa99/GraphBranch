@@ -99,6 +99,12 @@
     main: $('.main'),
     diffPanel: $('#diff-panel'),
     repoTabs: $('#repo-tabs'),
+    tabsRow: $('#tabs-row'),
+    allTab: $('#all-tab'),
+    allN: $('#all-n'),
+    allPanel: $('#all-panel'),
+    allSum: $('#all-sum'),
+    app: $('.app'),
     toasts: $('#toasts'),
     hint: $('#hint'),
     overlay: $('#overlay'),
@@ -215,6 +221,9 @@
   let game = null; // y sus logros
   let status = null;
   let paused = false;
+  let allOn = false; // la vista conjunta: todos los repos a la vez, cada uno en su tarjeta (ver overview.js)
+  let diffTab = null; // el repo del commit cuyos cambios se ven (en la vista conjunta, puede no ser `active`)
+  let diffKey = null; // y de qué repo son los cambios guardados en el panel
 
   /* dos vistas del mismo layout: 3D (Three.js) y 2D (SVG) */
   function followUI(v) {
@@ -271,7 +280,7 @@
     el.graph3d.hidden = v !== '3d';
     el.graph.hidden = v !== '2d';
     el.graph.parentElement.dataset.view = v; // el Replay acomoda su fecha según la vista
-    graph3d?.setActive(v === '3d');
+    graph3d?.setActive(v === '3d' && !allOn); // con la vista conjunta el grafo no se ve: el 3D no dibuja
     setPressed(el.view3d, v === '3d');
     setPressed(el.view2d, v === '2d');
     el.spinBtn.hidden = v !== '3d';
@@ -323,6 +332,8 @@
     toasts: $('#toasts'),
     count: $('#feed-count'),
     onSelect: (a) => {
+      // en la vista conjunta, a la tarjeta de su repo y a su commit o su rama, sin salir de ella
+      if (allOn && a.repo != null) return overview.focus(a.repo, { sha: a.sha, branch: a.branch });
       // la actividad de otro repo seguido lleva a su pestaña (la de uno que ya no se sigue, a ninguna parte)
       if (a.repo != null) {
         const tab = tabs.find((x) => x.key === a.repo);
@@ -344,40 +355,53 @@
     num: (n) => U.fmtNum(n),
     avatar: (a) => U.avatarHTML(a, 22),
     errText: (err) => i18n.text(err?.msg || err?.message || ''),
-    load: (sha) => (source?.commitDiff ? source.commitDiff(sha) : null),
-    cheap: () => !!source?.diffCheap?.(),
-    data: () => source.data,
-    chainOf: (sha) => lastRender?.L.nodeOf.get(sha)?.chain || null,
+    load: (sha) => (diffSrc()?.commitDiff ? diffSrc().commitDiff(sha) : null),
+    cheap: () => !!diffSrc()?.diffCheap?.(),
+    data: () => diffSrc().data,
+    chainOf: (sha) => diffLayout()?.nodeOf.get(sha)?.chain || null,
     onFocus: (sha) => {
-      graph.focusSha?.(sha);
+      diffGraph()?.focusSha?.(sha);
       selectCommit(sha);
     },
     onWide: (on) => el.main.classList.toggle('diff-wide', on && diffView.isOpen),
     onClose: () => {
       el.main.classList.remove('diffing', 'diff-wide');
       selectCommit(null);
-      // el foco que estaba en el panel vuelve al grafo
-      if (el.diffPanel.contains(document.activeElement) || document.activeElement === document.body) (graph === graph3d ? el.graph3d : el.graph).focus?.({ preventScroll: true });
+      // el foco que estaba en el panel vuelve al grafo (en la vista conjunta, al de la tarjeta de ese repo)
+      const back = allOn ? overview.graphOf(diffTab?.key)?.wrap : graph === graph3d ? el.graph3d : el.graph;
+      diffTab = null;
+      if (el.diffPanel.contains(document.activeElement) || document.activeElement === document.body) back?.focus?.({ preventScroll: true });
     },
   });
-  const canDiff = () => !!source?.commitDiff && !EMBED;
+  /** ¿Se pueden ver los cambios de los commits de este repo? */
+  const canDiffTab = (tab) => !!tab?.source?.commitDiff && !EMBED;
+  const canDiff = () => canDiffTab(active);
+  /* los cambios que se ven son de `diffTab`: su fuente, su grafo (el de la vista o el de su tarjeta) y su layout */
+  const diffSrc = () => (diffTab || active)?.source;
+  const diffGraph = () => (allOn ? overview.graphOf(diffTab?.key) : graph);
+  const diffLayout = () => (allOn ? overview.layoutOf(diffTab?.key) : lastRender?.L);
   const selectCommit = (sha) => {
+    if (allOn) return overview.select(diffTab?.key, sha);
     graph2d.select(sha);
     graph3d?.select(sha);
   };
 
-  /** Abre los cambios de un commit (el botón «Ver cambios» de su ficha). El panel toma el lugar del de
-      actividad; el grafo se angosta y, ya con su ancho nuevo, va hasta el commit. */
-  function openDiff(sha) {
-    if (!canDiff() || tv.on) return;
-    graph.unpin?.();
+  /** Abre los cambios de un commit (el botón «Ver cambios» de su ficha), del repo a la vista o, en la vista
+      conjunta, del de su tarjeta. El panel toma el lugar del de actividad; el grafo se angosta y, ya con su
+      ancho nuevo, va hasta el commit. */
+  function openDiff(sha, tab = active) {
+    if (!canDiffTab(tab) || tv.on) return;
+    if (diffKey !== tab.key) diffView.reset(); // los cambios que se veían (o se guardaron) eran de otro repo
+    diffKey = tab.key;
+    diffTab = tab;
+    diffGraph()?.unpin?.();
     const was = el.main.classList.contains('diffing');
     el.main.classList.add('diffing');
     el.main.classList.toggle('diff-wide', diffView.wide);
     if (!diffView.open(sha, { focusGraph: was })) return;
     if (!was) {
       selectCommit(sha);
-      setTimeout(() => diffView.sha === sha && graph.focusSha?.(sha), 60);
+      setTimeout(() => diffView.sha === sha && diffGraph()?.focusSha?.(sha), 60);
     }
     el.diffPanel.querySelector('#diff-title').focus({ preventScroll: true });
     // en pantallas angostas el panel va debajo del grafo
@@ -478,6 +502,7 @@
     const i = tabs.indexOf(tab);
     if (i < 0) return;
     clearTimeout(tab.startTimer);
+    if (diffKey === tab.key) diffView.reset(); // los cambios abiertos (o guardados) eran suyos
     tab.source.stop();
     tab.source = null;
     tabs.splice(i, 1);
@@ -734,6 +759,7 @@
 
   /** La demo: una pestaña más mientras se mira (no se guarda). Si ya estaba, empieza de nuevo. */
   function startDemo() {
+    setAll(false, { save: false }); // se mira un repo solo
     const old = tabs.find((x) => x.demo);
     if (old) removeTab(old, { replace: false });
     resume();
@@ -745,6 +771,7 @@
   /** La práctica de git: una pestaña como la demo, pero que solo cambia con los comandos que se escriben.
       Sin ejercicio dado, empieza por el primero que falta. */
   function startPractice(index, custom = null, solution = false) {
+    setAll(false, { save: false }); // se mira un repo solo
     const old = tabs.find((x) => x.demo);
     if (old) removeTab(old, { replace: false });
     resume();
@@ -767,6 +794,7 @@
       como la de la práctica. Lo que se escribe solo cambia la copia: no hay escritura ni consulta a la API.
       `data`: los datos de la fuente real (por defecto, la de la pestaña a la vista). */
   function startRehearsal(data = source?.data) {
+    setAll(false, { save: false }); // se mira un repo solo
     if (!data || data.repo.demo || !data.loaded) return;
     const git = GB.gitsim.fromData(data);
     if (!git) return;
@@ -817,10 +845,12 @@
 
   const setText = (node, text) => node.textContent !== text && (node.textContent = text);
 
-  /** Las pestañas se ven con más de un repo; con uno solo, el título del grafo ya dice cuál es. */
+  /** Las pestañas se ven con más de un repo; con uno solo, el título del grafo ya dice cuál es. Delante, «Todos»:
+      la vista conjunta. */
   function renderTabs() {
     const box = el.repoTabs;
     box.hidden = tabs.length < 2;
+    el.tabsRow.hidden = box.hidden || EMBED;
     feed.setMulti(tabs.length > 1);
     tabs.forEach((tab, i) => {
       tab.el ||= makeTabEl(tab);
@@ -828,6 +858,20 @@
       if (box.children[i] !== tab.el) box.insertBefore(tab.el, box.children[i] || null);
       renderTab(tab);
     });
+    if (allOn && tabs.length < 2) setAll(false); // con un solo repo no hay nada que juntar
+    else if (allOn) syncAll();
+    else if (wantAll && tabs.length > 1 && !tv.on) {
+      // ?all=1 (o lo recordado) con repos que llegan después, como los de org:nombre
+      wantAll = false;
+      setAll(true, { save: false });
+    }
+    renderAllTab();
+  }
+
+  /** Un clic en la pestaña de un repo: lo muestra (y deja la vista conjunta, si estaba). */
+  function openTab(tab) {
+    if (allOn) setAll(false);
+    showTab(tab);
   }
 
   function makeTabEl(tab) {
@@ -836,7 +880,7 @@
     node.innerHTML = `<button type="button" class="rt-main">
         <span class="rt-dot" aria-hidden="true"></span><span class="rt-name" dir="ltr"></span><span class="rt-n" aria-hidden="true"></span><span class="sr-only rt-sr"></span>
       </button><button type="button" class="rt-close">${GB.Feed.icon('close')}</button>`;
-    node.querySelector('.rt-main').addEventListener('click', () => showTab(tab));
+    node.querySelector('.rt-main').addEventListener('click', () => openTab(tab));
     node.querySelector('.rt-close').addEventListener('click', () => closeTab(tab));
     return node;
   }
@@ -850,10 +894,12 @@
     const stateText = tab.demo && st === 'live' ? t('status.demoLive') : t(STATE_TEXT[st] || 'status.loading');
     const n = tab.unread;
     node.dataset.state = st;
-    node.classList.toggle('on', tab === active);
+    // con la vista conjunta ninguna pestaña es «la que se ve»: se ven todas
+    const shown = tab === active && !allOn;
+    node.classList.toggle('on', shown);
     node.classList.toggle('demo', tab.demo);
     const main = node.firstElementChild;
-    if (tab === active) main.setAttribute('aria-current', 'true');
+    if (shown) main.setAttribute('aria-current', 'true');
     else main.removeAttribute('aria-current');
     main.title = `${name} · ${stateText}`;
     setText(node.querySelector('.rt-name'), name);
@@ -867,6 +913,7 @@
       close.setAttribute('aria-label', label);
       close.title = label;
     }
+    renderAllTab();
   }
 
   function setUrlParam(key, value) {
@@ -892,6 +939,101 @@
     }
   }
 
+  /* ---------- vista conjunta: todos los repos seguidos a la vez, cada uno en su tarjeta (ver overview.js) ---------- */
+
+  let wantAll = false; // ?all=1 o lo recordado: se aplica en cuanto hay más de un repo
+  const overview = GB.overview.mount($('#all-grid'), {
+    text: (k, p) => t(k, p),
+    num: (n) => U.fmtNum(n),
+    ago: (ms) => U.timeAgo(ms),
+    dateTime: (ms) => U.fmtDateTime(ms),
+    onOpen: (key) => {
+      const tab = tabs.find((x) => x.key === key);
+      if (!tab) return;
+      openTab(tab);
+      // la tarjeta ya no se ve: el foco queda en la pestaña del repo, que es donde se está ahora
+      tab.el?.querySelector('.rt-main')?.focus({ preventScroll: true });
+    },
+    onDiff: (key, sha) => openDiff(sha, tabs.find((x) => x.key === key)),
+    canDiff: (key) => canDiffTab(tabs.find((x) => x.key === key)),
+    diffing: () => diffView.isOpen,
+    onStats: (list) => renderAllSum(list),
+  });
+
+  /** La etiqueta de un repo (la del encabezado y la de su tarjeta): simulación, local, privado o su servicio. */
+  function badgeOf(repo) {
+    const forge = repo.demo ? null : FORGES[repo.host];
+    return repo.demo ? t('badge.demo') : repo.local ? t('badge.local') : repo.private ? (forge ? forge + ' · ' : '') + t('badge.private') : forge || '';
+  }
+
+  function allItems() {
+    return tabs
+      .filter((x) => x.source)
+      .map((x) => {
+        const st = x.status?.state || 'loading';
+        return { key: x.key, name: nameOf(x), state: st, stateText: x.demo && st === 'live' ? t('status.demoLive') : t(STATE_TEXT[st] || 'status.loading'), badge: badgeOf(x.source.data.repo), demo: x.demo };
+      });
+  }
+
+  /** Las tarjetas al día con las pestañas; las de repos nuevos se dibujan con lo que ya cargaron. */
+  function syncAll() {
+    overview.sync(allItems());
+    for (const x of tabs) if (!overview.layoutOf(x.key)) drawCard(x, { initial: true });
+  }
+
+  /** Dibuja la tarjeta de un repo con lo suyo, y los efectos de lo que acaba de llegar. Solo con la vista conjunta. */
+  function drawCard(tab, { initial = false, calm = false, activities = [] } = {}) {
+    if (!allOn || !tab.source?.data.loaded) return;
+    const data = tab.source.view ? tab.source.view() : tab.source.data;
+    if (!overview.draw(tab.key, data, liveCtx(data, initial, calm, tab))) return;
+    if (!initial && activities.length) overview.celebrate(tab.key, activities);
+  }
+
+  /** «Todos»: la pestaña de la vista conjunta, con las novedades sin ver de todos los repos. */
+  function renderAllTab() {
+    const n = tabs.reduce((sum, x) => sum + (x.unread || 0), 0);
+    setText(el.allN, n ? (n > 99 ? '99+' : U.fmtNum(n)) : '');
+    setPressed(el.allTab, allOn);
+    const label = [t('all.tabLabel', { n: tabs.length }), n ? t('tabs.unread', { n }) : ''].filter(Boolean).join(', ');
+    if (el.allTab.getAttribute('aria-label') !== label) el.allTab.setAttribute('aria-label', label);
+  }
+
+  /** La cabecera de la vista conjunta: repos, ramas y PRs abiertos entre todos (de lo ya cargado). */
+  function renderAllSum(list = overview.stats()) {
+    const sum = GB.overview.totals(list);
+    setText(el.allSum, t('all.summary', { repos: U.fmtNum(tabs.length), branches: U.fmtNum(sum.branches), prs: U.fmtNum(sum.prs) }));
+  }
+
+  /** Entra o sale de la vista conjunta (se recuerda y viaja en la URL, ?all=1). Con un solo repo no hay. */
+  function setAll(on, { save = true } = {}) {
+    on = !!on && tabs.length > 1 && !EMBED && !tv.on;
+    if (on === allOn) return renderAllTab();
+    diffView.close(); // los cambios abiertos eran del grafo que se deja de ver
+    allOn = on;
+    el.app.classList.toggle('all-on', on);
+    el.allPanel.hidden = !on;
+    if (on) {
+      if (replay.active) replay.stop(true);
+      graph.unpin?.();
+      lowerThird(null);
+      for (const x of tabs) x.unread = 0; // se ven todos: nada queda sin ver
+      overview.sync(allItems());
+      for (const x of tabs) drawCard(x, { initial: true }); // lo que llegó mientras no se veía
+      renderAllSum();
+    }
+    graph3d?.setActive(view === '3d' && !on);
+    renderTabs();
+    if (save) U.store.set('all', on || null);
+    setUrlParam('all', on ? '1' : null);
+  }
+  el.allTab.addEventListener('click', () => setAll(!allOn));
+  /** El grafo del repo a la vista, a la vista: ir a una rama o a un commit desde la salud, la búsqueda o la vista de
+      texto deja la vista conjunta. */
+  const shownGraph = () => {
+    if (allOn) setAll(false);
+    return graph;
+  };
+
   let lastRender = null;
 
   /* Filtro por autor: el grafo (2D, 3D) y el árbol de texto muestran solo las ramas con commits de esa persona
@@ -902,16 +1044,16 @@
 
   /* `calm`: llegan ramas que esperaban su historia (la carga de a poco de un repo grande): se
      suman sin efectos de llegada, que son para lo nuevo */
-  const liveCtx = (data, initial, calm = false) => ({
+  const liveCtx = (data, initial, calm = false, tab = active) => ({
     initial,
     calm,
     prs: prsByBranch(data),
     stacks: GB.Layout.stackedPulls(data.pulls, new Set(data.branches.keys()), data.repo.defaultBranch),
     ci: data.ci,
     refs: refsBySha(data),
-    pins: data.repo.demo ? new Set() : getPins(),
-    canPin: !data.repo.demo,
-    canDiff: canDiff(),
+    pins: data.repo.demo ? new Set() : tab === active ? getPins() : new Set(U.store.get('pins:' + tab.key, [])),
+    canPin: !data.repo.demo && tab === active && !allOn, // fijar una rama es del grafo de la vista
+    canDiff: canDiffTab(tab),
   });
 
   /** Lo que miran los logros: el estado del repo de ahora (`L`, su layout, si está a la vista). */
@@ -969,6 +1111,7 @@
       graph3d?.celebrate(activities);
       graph2d.celebrate(activities);
     }
+    drawCard(tab, { initial, calm, activities });
     renderSummary(data, L);
     renderTab(tab);
     tab.updatedAt = Date.now();
@@ -980,7 +1123,7 @@
     if (initialQuery && tab === active && L.nodes.length) startUrlQuery();
     if (initialPath && tab === active && L.nodes.length) startUrlPath();
     if (initialConflicts && tab === active && L.nodes.length) startUrlConflicts();
-    diffView.refresh(); // puede haber llegado el commit siguiente
+    if (diffTab === tab) diffView.refresh(); // puede haber llegado el commit siguiente
   }
 
   /* avisos a Slack, Discord y Teams (solo escritorio, js/hooks.js decide y electron/webhooks.js envía): lo
@@ -1005,8 +1148,10 @@
   /** Novedades de un repo seguido que no está a la vista: al panel, a los avisos y a su pestaña. */
   function onBackground(tab, activities, initial) {
     feed.add(activities, { live: !initial });
+    drawCard(tab, { initial, activities });
+    if (diffTab === tab) diffView.refresh();
     if (initial || !activities.length) return renderTab(tab);
-    tab.unread += activities.length;
+    if (!allOn) tab.unread += activities.length;
     const data = tab.source.view ? tab.source.view() : tab.source.data;
     tab.game.observe(activities, gameCtx(activities, data, null));
     renderTab(tab);
@@ -1404,7 +1549,7 @@
           const id = ul.dataset.list;
           const r = (id.startsWith('prs-') ? h.prStates[id.slice(4)] : h[id]).rows[Number(b.dataset.go)];
           closeHealth();
-          graph.focusBranch(r.name || r.head);
+          shownGraph().focusBranch(r.name || r.head);
         }),
       ),
     );
@@ -1468,11 +1613,11 @@
       const ul = document.createElement('ul');
       ul.className = 'hl-list';
       ul.append(
-        row(t('cmp.ahead', { name: a, n: U.fmtNum(r.a.ahead) }), '', () => graph.focusBranch(a)),
-        row(t('cmp.ahead', { name: b, n: U.fmtNum(r.b.ahead) }), '', () => graph.focusBranch(b)),
+        row(t('cmp.ahead', { name: a, n: U.fmtNum(r.a.ahead) }), '', () => shownGraph().focusBranch(a)),
+        row(t('cmp.ahead', { name: b, n: U.fmtNum(r.b.ahead) }), '', () => shownGraph().focusBranch(b)),
       );
       ul.append(row(t('cmp.clear'), '', () => clearMarks(), true));
-      if (r.base) ul.append(row(t('cmp.base', { sha: r.base.sha.slice(0, 7), age: r.base.date ? GB.i18n.fmtSpan(Date.now() - r.base.date) : '' }), r.base.message, () => graph.focusSha?.(r.base.sha)));
+      if (r.base) ul.append(row(t('cmp.base', { sha: r.base.sha.slice(0, 7), age: r.base.date ? GB.i18n.fmtSpan(Date.now() - r.base.date) : '' }), r.base.message, () => shownGraph().focusSha?.(r.base.sha)));
       out.append(ul);
       if (!r.base) out.append(note(t('cmp.nobase')));
       if (r.partial) out.append(note(t('cmp.partial')));
@@ -1537,7 +1682,7 @@
     out.querySelectorAll('[data-go]').forEach((b) =>
       b.addEventListener('click', () => {
         closeHealth();
-        graph.focusBranch(c.rows[Number(b.dataset.go)].branches[0]);
+        shownGraph().focusBranch(c.rows[Number(b.dataset.go)].branches[0]);
       }),
     );
   }
@@ -1781,7 +1926,7 @@
     const go = ev.target.closest('[data-branch]');
     if (!go) return;
     closeBitacora();
-    graph.focusBranch(go.dataset.branch);
+    shownGraph().focusBranch(go.dataset.branch);
   });
   el.btBody.addEventListener('focusout', () => setTimeout(() => !el.btBody.contains(document.activeElement) && bitTimer && renderBitacora(), 0));
   el.btTitleInput.addEventListener('input', () => {
@@ -1902,8 +2047,8 @@
     ago: (ms) => U.timeAgo(ms),
     onGo: ({ branch, sha }) => {
       closeTextview();
-      if (sha && graph.focusSha) graph.focusSha(sha);
-      else graph.focusBranch(branch);
+      if (sha && shownGraph().focusSha) shownGraph().focusSha(sha);
+      else shownGraph().focusBranch(branch);
     },
   });
   /** El árbol de `data` con los filtros de ruta y los releases que el feed dice de este repo. */
@@ -1993,7 +2138,7 @@
       data: () => source.data,
       onGo: (sha) => {
         closeSearch();
-        graph.focusSha?.(sha);
+        shownGraph().focusSha?.(sha);
       },
     }
   );
@@ -2137,9 +2282,8 @@
       el.repoLink.removeAttribute('href');
       el.repoLink.setAttribute('aria-disabled', 'true');
     }
-    const forge = repo.demo ? null : FORGES[repo.host];
-    el.repoBadge.hidden = !repo.demo && !repo.private && !forge && !repo.local;
-    el.repoBadge.textContent = repo.demo ? t('badge.demo') : repo.local ? t('badge.local') : repo.private ? (forge ? forge + ' · ' : '') + t('badge.private') : forge || '';
+    el.repoBadge.textContent = badgeOf(repo);
+    el.repoBadge.hidden = !el.repoBadge.textContent;
     el.repoBadge.className = `badge${repo.demo ? ' demo' : ''}`;
     el.repoDesc.textContent = repo.rehearsal ? t('practice.rehearseGoal', { repo: `${repo.owner}/${repo.name}` }) : repo.practice ? t('practice.desc') : repo.demo ? t('repo.demoDesc') : repo.description || '';
     el.repoDesc.hidden = !el.repoDesc.textContent;
@@ -2224,6 +2368,7 @@
     const changed = tab.status?.state !== s.state;
     tab.status = s;
     if (changed) renderTab(tab);
+    if (changed && allOn) syncAll();
     if (tab !== active) return;
     status = s;
     if (s.state === 'error' && !source.data.loaded) {
@@ -2500,6 +2645,7 @@
     root.classList.toggle('tv', on);
     setPressed(el.tvBtn, on);
     if (on) {
+      setAll(false, { save: false }); // la pantalla compartida es la del grafo, con el director (pasa sola de un repo a otro)
       diffView.close(); // la pantalla compartida es del grafo
       tv.prevView = view;
       tv.lastNews = tv.lastAttract = Date.now();
@@ -2866,6 +3012,8 @@
     renderGame();
     feed.relocalize();
     renderTabs();
+    overview.relocalize();
+    if (allOn) renderAllSum();
     diffView.relocalize();
     if (lp.dialog.open) lpRender();
     if (!source) return;
@@ -2886,6 +3034,7 @@
   let initialTV = false;
   let initialReplay = null; // ?replay=2026-09-01..2026-09-14&title=…: arranca el Replay con ese tramo en cuanto hay historia
   let initialPractice = null; // ?practice=3 o ?practice=<código>: un ejercicio de Aprender git, de la lista o de quien enseña
+  let initialAll = null; // ?all=1 o ?all=0: la vista conjunta al abrir (sin decirlo, la que se recuerda)
   try {
     const q0 = new URLSearchParams(location.search);
     initialBitacora = !EMBED && q0.has('bitacora') && !/^(0|false|no|off)$/i.test(q0.get('bitacora'));
@@ -2907,12 +3056,14 @@
     initialText = !EMBED && GB.textview.openParam(q);
     initialConflicts = !EMBED && GB.health.conflictsParam(q);
     initialTV = !EMBED && q.has('tv') && !/^(0|false|no|off)$/i.test(q.get('tv'));
+    initialAll = EMBED ? false : GB.overview.allParam(q);
   } catch {
     /* sin query string */
   }
 
   /** Sigue los repos guardados y los de la URL; muestra el de la URL, el último que se miraba o el primero. */
   function start() {
+    wantAll = !EMBED && !initialTV && (initialAll ?? U.store.get('all', false) === true);
     const saved = U.store.get('repos', null);
     const shown = U.store.get('repo', null);
     const list = EMBED ? [] : Array.isArray(saved) ? saved : typeof shown === 'string' ? [shown] : []; // antes se seguía uno solo

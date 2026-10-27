@@ -120,8 +120,15 @@
       </button>
     </div>
 
-    <!-- repos seguidos: una pestaña por repo (con más de uno); los demás siguen en vivo detrás -->
-    <div class="repo-tabs" id="repo-tabs" role="group" aria-label="Followed repositories" data-i18n-attr="aria-label:tabs.aria" hidden></div>
+    <!-- repos seguidos: una pestaña por repo (con más de uno); los demás siguen en vivo detrás. «Todos» los muestra
+         a la vez, cada uno en su tarjeta (js/overview.js) -->
+    <div class="tabs-row" id="tabs-row" hidden>
+      <button type="button" class="all-tab" id="all-tab" aria-pressed="false" title="See every followed repository at once, without switching tabs" data-i18n-attr="title:all.tabTitle">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>
+        <span data-i18n="all.tab">All</span><span class="rt-n" id="all-n" aria-hidden="true"></span>
+      </button>
+      <div class="repo-tabs" id="repo-tabs" role="group" aria-label="Followed repositories" data-i18n-attr="aria-label:tabs.aria" hidden></div>
+    </div>
   </header>
 
   <section class="stats" aria-label="Repository summary" data-i18n-attr="aria-label:stats.aria">
@@ -287,6 +294,18 @@
       </div>
       <form class="practice" id="practice" hidden></form>
       <p class="hint" id="hint"></p>
+    </section>
+
+    <!-- vista conjunta (js/overview.js): todos los repos seguidos a la vez, en el lugar del grafo de uno solo -->
+    <section class="panel all-panel" id="all-panel" aria-labelledby="all-title" hidden>
+      <div class="panel-head">
+        <div class="repo-title">
+          <h2 id="all-title" data-i18n="all.title">All repositories</h2>
+          <p class="repo-desc" id="all-sum"></p>
+        </div>
+      </div>
+      <div class="rc-grid" id="all-grid"></div>
+      <p class="hint" data-i18n="all.hint">Each card follows its repository live. Click a commit for its details and its changes; the name opens the repository in its tab.</p>
     </section>
 
     <aside class="panel feed-panel" aria-labelledby="feed-title">
@@ -637,6 +656,7 @@
 <script src="js/loopprompt.js"></script>
 <script src="js/textview.js"></script>
 <script src="js/constellation.js"></script>
+<script src="js/overview.js"></script>
 <script src="js/search.js"></script>
 <script src="js/practice-ui.js"></script>
 <script src="js/hooks.js"></script>

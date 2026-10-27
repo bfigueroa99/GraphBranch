@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Una iteración del loop en OpenCode, con el modelo detrás de OmniRoute: lo mismo que hace la Routine en
-   una sesión cloud de Claude Code, pero en un PC o en un cron. Deja un worktree limpio en origin/master
+   una sesión cloud de Claude Code, pero en un PC o en un cron. Deja un worktree limpio en origin/dev
    (la sesión nueva de cada disparo), le da a OpenCode el proveedor de OmniRoute y corre
    `opencode run --command iteracion` (.opencode/commands/iteracion.md: el prompt de la Routine y lo que
    cambia fuera de Claude Code).
@@ -28,8 +28,9 @@ import { createHash } from 'node:crypto';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const WIN = process.platform === 'win32';
 
-/** La rama de la que sale cada iteración y el comando de OpenCode que la corre. */
-export const BASE = 'master';
+/** La rama de la que sale cada iteración (la de integración, como BASE en tools/loop.mjs) y el comando de
+    OpenCode que la corre. */
+export const BASE = 'dev';
 export const COMANDO = 'iteracion';
 export const OMNIROUTE_URL = 'http://localhost:20128';
 /** La clave que acepta OmniRoute cuando no exige una (REQUIRE_API_KEY=false, lo normal en local). */
@@ -166,10 +167,11 @@ function vivo(pid) {
   }
 }
 
-/** Deja el worktree como una sesión nueva: origin/master sin nada encima, con la historia entera (R3 de
+/** Deja el worktree como una sesión nueva: origin/dev sin nada encima, con la historia entera (R3 de
     loop --check la recorre) y sin lo que dejó el disparo anterior, salvo node_modules. */
 function preparar(repo, comun, dir, print) {
-  paso(repo, ['fetch', '-q', 'origin', BASE]);
+  // el refspec entero: en un clon de una sola rama, `fetch origin dev` no crea origin/dev
+  paso(repo, ['fetch', '-q', 'origin', `+refs/heads/${BASE}:refs/remotes/origin/${BASE}`]);
   if (git(repo, ['rev-parse', '--is-shallow-repository']).stdout.trim() === 'true') {
     print('=> el clon es superficial: git fetch --unshallow');
     paso(repo, ['fetch', '-q', '--unshallow', 'origin']);

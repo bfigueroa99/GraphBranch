@@ -5965,3 +5965,94 @@ a.hl-row:focus-visible {
     margin-block: 0;
   }
 }
+
+/* ---------- editar un archivo (js/editor.js) ---------- */
+.df-factions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.df-edit {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12.5px;
+}
+.editor {
+  width: min(920px, calc(100vw - 2 * var(--gutter)));
+}
+.editor form {
+  max-height: min(92vh, 1000px);
+  overflow: auto;
+  gap: 12px;
+}
+.ed-repo {
+  color: var(--ink-3);
+  font: 500 14px var(--font-mono);
+  overflow-wrap: anywhere;
+}
+.ed-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+.editor select {
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--ink);
+  font: 500 13px var(--font-mono);
+}
+.ed-text {
+  width: 100%;
+  min-width: 0;
+  min-height: 260px;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--ink);
+  font: 12.5px/1.55 var(--font-mono);
+  font-variant-ligatures: none;
+  tab-size: 4;
+  white-space: pre;
+  overflow: auto;
+}
+.ed-text:read-only {
+  color: var(--ink-3);
+}
+.ed-note {
+  margin: 0;
+  min-height: 1.4em;
+  color: var(--ink-2);
+  font-size: 12.5px;
+}
+.ed-note:empty {
+  display: none;
+}
+.ed-note[data-kind="error"] {
+  color: var(--bad);
+  font-weight: 600;
+}
+.ed-note[data-kind="warn"] {
+  color: color-mix(in srgb, var(--warn) 70%, var(--ink));
+}
+.ed-note[data-kind="ok"] {
+  color: color-mix(in srgb, var(--good) 75%, var(--ink));
+  font-weight: 600;
+}
+.ed-settings[hidden] {
+  display: none;
+}
+@media (max-width: 560px) {
+  .ed-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

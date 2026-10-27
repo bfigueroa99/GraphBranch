@@ -1214,6 +1214,63 @@ console.log('Escritorio (1280×800)');
     if (await page.evaluate(() => document.querySelector('.main').classList.contains('diff-wide'))) throw new Error('al cerrar, la vista queda con el ancho del panel');
   });
 
+  await step(page, 'editar el código: desde los cambios de un commit se abre su archivo en la rama, se cambia y el commit llega al grafo con sus cambios', async () => {
+    await page.keyboard.press('Escape');
+    await page.click('#view-2d');
+    const heads = await page.$$('#graph svg .head[role=button]');
+    await heads[0].focus();
+    await page.keyboard.press('Enter');
+    await (await page.waitForSelector('#graph .tip .tip-diff', { timeout: T(5000) })).focus();
+    await page.keyboard.press('Enter');
+    const edit = await page.waitForSelector('#diff-panel .df-file[open] .df-edit', { timeout: T(5000) });
+    const label = await edit.getAttribute('aria-label');
+    const branchOf = await page.$eval('#diff-panel .df-branch', (n) => n.textContent).catch(() => '');
+    await edit.click();
+    await page.waitForSelector('#editor[open]', { timeout: T(3000) });
+    await page.waitForFunction(() => {
+      const a = document.querySelector('#editor-text');
+      return a && !a.readOnly && a.value.length > 0;
+    }, null, { timeout: T(5000) });
+    const opened = await page.evaluate(() => ({
+      path: document.querySelector('#editor-path').value,
+      branch: document.querySelector('#editor-branch').value,
+      msg: document.querySelector('#editor-message').value,
+      save: document.querySelector('#editor .ed-save').disabled,
+      sum: document.querySelector('#editor .ed-sum').textContent,
+      settings: !document.querySelector('#editor .ed-settings').hidden,
+    }));
+    if (!label || !label.includes(opened.path)) throw new Error(`el botón Editar no nombra su archivo: ${label}`);
+    if (branchOf && !branchOf.includes(opened.branch)) throw new Error(`abrió la rama ${opened.branch} y el commit es ${branchOf}`);
+    if (!opened.save || opened.settings) throw new Error('sin cambios no se puede hacer commit, y la demo no pide token: ' + JSON.stringify(opened));
+    if (!opened.msg.includes(opened.path) || /\{|undefined/.test(opened.msg + opened.sum)) throw new Error('el mensaje propuesto: ' + JSON.stringify(opened));
+    const before = await page.$eval('#editor-text', (a) => a.value);
+    await page.fill('#editor-text', before + '// editado desde GraphBranch\n');
+    const sum = await page.textContent('#editor .ed-sum');
+    if (!/\+1\b/.test(sum)) throw new Error(`el resumen no cuenta la línea agregada: ${sum}`);
+    // cerrar con cambios sin guardar pregunta; se puede seguir editando
+    page.once('dialog', (d) => d.dismiss());
+    await page.click('#editor .ed-cancel');
+    if (!(await page.$eval('#editor', (d) => d.open))) throw new Error('cerró sin preguntar por los cambios sin guardar');
+    await page.click('#editor .ed-save');
+    await page.waitForSelector('#editor .ed-note[data-kind="ok"]', { timeout: T(5000) });
+    const note = await page.textContent('#editor .ed-note');
+    if (/\{|undefined/.test(note)) throw new Error(`aviso sin resolver: ${note}`);
+    await page.click('#editor .ed-close'); // ya guardado: cierra sin preguntar
+    await page.waitForSelector('#editor:not([open])', { state: 'attached', timeout: T(3000) });
+    // el commit nuevo es el siguiente del que se veía: sus cambios son los de verdad
+    await page.waitForFunction(() => !document.querySelector('#diff-panel .df-newer').disabled, null, { timeout: T(5000) });
+    await page.focus('#diff-panel .df-newer');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction((m) => document.querySelector('#diff-panel .df-msg')?.textContent === m, opened.msg, { timeout: T(5000) });
+    await page.waitForSelector('#diff-panel:not(.loading) .df-file .dl-add', { timeout: T(5000) });
+    const diff = await page.evaluate(() => ({ files: [...document.querySelectorAll('#diff-panel .df-jump .df-jpath')].map((n) => n.textContent), added: [...document.querySelectorAll('#diff-panel .dl-add .lc')].map((n) => n.textContent) }));
+    if (diff.files.length !== 1 || diff.files[0] !== opened.path) throw new Error('el commit del editor cambió otros archivos: ' + diff.files.join(', '));
+    if (!diff.added.includes('// editado desde GraphBranch')) throw new Error('sus cambios no son los escritos: ' + diff.added.join(' | '));
+    const feed = await page.textContent('#feed');
+    if (!feed.includes(opened.msg)) throw new Error('el commit no llegó al panel de actividad');
+    await page.keyboard.press('Escape');
+  });
+
   await step(page, 'cambia a árabe en vivo (derecha a izquierda)', async () => {
     await page.selectOption('#lang-select', 'ar');
     await page.waitForFunction(() => document.documentElement.dir === 'rtl', null, { timeout: T(5000) });
@@ -1561,6 +1618,31 @@ console.log('Varios repos a la vez');
     const off = await page.evaluate(() => ({ pressed: document.querySelector('#all-tab').getAttribute('aria-pressed'), url: new URL(location.href).searchParams.has('all'), saved: localStorage.getItem('graphbranch:all'), focus: document.activeElement?.closest('.rt')?.querySelector('.rt-name')?.textContent }));
     if (off.pressed !== 'false' || off.url || off.saved) throw new Error('al salir, la vista conjunta sigue puesta: ' + JSON.stringify(off));
     if (off.focus !== 'o/b') throw new Error(`el foco quedó en ${off.focus || 'otro lado'} y no en la pestaña de o/b`);
+  });
+
+  await step(page, 'editar sin token: el editor lo dice, no deja hacer commit y lleva a Ajustes', async () => {
+    await page.click('#all-tab');
+    await page.click('.rc-card[data-key="o/b"] .rc-last');
+    await (await page.waitForSelector('#diff-panel .df-file[open] .df-edit', { timeout: T(10000) })).click();
+    await page.waitForSelector('#editor[open]', { timeout: T(3000) });
+    await page.waitForFunction(() => document.querySelector('#editor .ed-note')?.dataset.kind && document.querySelector('#editor .ed-note').dataset.kind !== 'busy', null, { timeout: T(5000) });
+    const st = await page.evaluate(() => ({
+      settings: !document.querySelector('#editor .ed-settings').hidden,
+      save: document.querySelector('#editor .ed-save').disabled,
+      branch: document.querySelector('#editor-branch').value,
+      repo: document.querySelector('#editor .ed-repo').textContent,
+    }));
+    if (!st.settings || !st.save) throw new Error('sin token deja hacer commit o no ofrece Ajustes: ' + JSON.stringify(st));
+    if (st.repo !== 'o/b' || st.branch !== 'main') throw new Error('el editor abrió otro repo o rama: ' + JSON.stringify(st));
+    const puts = gh.calls.length;
+    await page.click('#editor .ed-settings');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    const focus = await page.evaluate(() => document.activeElement?.id);
+    if (focus !== 'token-input') throw new Error(`Ajustes abrió con el foco en ${focus}`);
+    if (gh.calls.length !== puts) throw new Error('intentó escribir sin token');
+    await page.click('#settings-cancel');
+    await page.click('#all-tab'); // deja la vista conjunta como estaba para los pasos que siguen
+    await page.waitForSelector('#all-panel', { state: 'hidden', timeout: T(3000) });
   });
 
   await step(page, 'cerrar la pestaña deja de seguir el repo', async () => {

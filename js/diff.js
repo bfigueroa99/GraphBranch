@@ -296,6 +296,7 @@
    *   avatar(author) → HTML del avatar (de util.js, ya escapado); dateTime(ms) → fecha y hora completas
    *   errText(err) → el motivo de un fallo, en el idioma activo
    *   onWide(on): la persona pidió el panel ancho (o lo devolvió a su ancho)
+   *   canEdit() → ¿se pueden editar los archivos de este repo?; onEdit(path, sha): editar ese archivo (visto en ese commit)
    * Devuelve { open(sha, { focusGraph }), close(), step(dir), reset(), relocalize(), refresh(), get sha(), get isOpen(), get wide() }.
    */
   function mount(root, opts) {
@@ -562,17 +563,25 @@
       const fill = () => {
         if (sec.dataset.filled) return;
         sec.dataset.filled = '1';
-        if (f.patch) sec.append(codeOf(f));
-        else sec.append(mk('p', 'df-note', t('diff.noPatch')));
+        // arriba, lo que se hace con el archivo: editarlo (si el servicio deja) y abrirlo en el servicio
+        const acts = mk('p', 'df-note df-factions');
+        if (f.status !== 'removed' && opts.canEdit?.()) {
+          const b = mk('button', 'btn btn-ghost df-edit', t('editor.edit'));
+          b.type = 'button';
+          b.setAttribute('aria-label', t('editor.editFile', { path: f.path }));
+          b.addEventListener('click', () => opts.onEdit?.(f.path, sha));
+          acts.append(b);
+        }
         if (GB.U.safeUrl(f.url)) {
           const a = mk('a', 'df-link', `${t('diff.openFile')} ↗`);
           a.href = GB.U.safeUrl(f.url);
           a.target = '_blank';
           a.rel = 'noopener';
-          const p = mk('p', 'df-note');
-          p.append(a);
-          sec.append(p);
+          acts.append(a);
         }
+        if (acts.childNodes.length) sec.append(acts);
+        if (f.patch) sec.append(codeOf(f));
+        else sec.append(mk('p', 'df-note', t('diff.noPatch')));
       };
       if (open) {
         sec.open = true;

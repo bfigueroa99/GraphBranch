@@ -88,6 +88,16 @@
     }
   }
 
+  /** La clave del texto de un fallo al editar: editor.noToken y editor.noWrite (no se puede ni intentar) o editor.err.<kind>. */
+  const editKey = (kind) => (kind === 'noToken' || kind === 'noWrite' ? 'editor.' + kind : 'editor.err.' + kind);
+
+  /** Un fallo al editar que el editor dice con su propio texto. */
+  function editError(kind) {
+    const err = new ApiError(M(editKey(kind)), { kind: 'edit' });
+    err.editKind = kind;
+    return err;
+  }
+
   class GitHubSource extends U.Emitter {
     constructor({ owner, name, token = '', depth = 40, filter = '', pins = [], apiUrl = '', marks = true }) {
       super();
@@ -711,6 +721,57 @@
     /** Pedir los cambios de un commit sin token gasta una de 60 consultas por hora: entonces solo se piden los que se abren. */
     diffCheap() {
       return !!this.token && (this.rate?.remaining ?? 5000) > 500;
+    }
+
+    /* ---------- editar un archivo (js/editor.js) ---------- */
+
+    /** ¿Este servicio sabe leer y escribir un archivo? GitHub sí; las fuentes que heredan de esta lo dicen por su
+        cuenta (GitLab y Codeberg sí; Bitbucket y las carpetas locales, todavía no). */
+    canEdit() {
+      return !this.host || this.host === 'github';
+    }
+
+    /** null si se puede intentar un commit; si no, la clave del texto que dice por qué (sin token, nada que escribir). */
+    canWrite() {
+      return this.token ? null : 'editor.noToken';
+    }
+
+    /** El archivo `path` como está ahora en la rama `ref`: { text, sha, missing, binary, tooLarge }. */
+    async readFile({ path, ref }) {
+      const { data, status } = await this.api(`${this.base}/contents/${U.encPath(path)}?ref=${encodeURIComponent(ref)}`, { allow: [404] });
+      if (status === 404) return { missing: true };
+      if (Array.isArray(data) || data?.type !== 'file') throw editError('dir');
+      // de 1 a 100 MB la API no da el contenido (encoding «none»): no se edita aquí
+      if (data.encoding !== 'base64' || (data.size > 0 && !data.content)) return { tooLarge: true };
+      const { text, binary } = U.b64decode(data.content);
+      return { text, binary, sha: data.sha };
+    }
+
+    /** Un commit que deja `path` con `text` en `branch` (lo crea si `sha` es null). Solo con token, y uno que pueda escribir. */
+    async writeFile({ path, branch, text, message, sha = null }) {
+      if (!this.token) throw editError('noToken');
+      const payload = { message, content: U.b64encode(text), branch };
+      if (sha) payload.sha = sha;
+      const { res, body } = await this.request(this.ep.api + `${this.base}/contents/${U.encPath(path)}`, {
+        method: 'PUT',
+        headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        cache: 'no-store',
+      });
+      this.readRate(res);
+      this.cost++;
+      if (!res.ok) throw this.writeError(res, body);
+      return { sha: body?.commit?.sha || null, url: U.safeUrl(body?.commit?.html_url) || null, blob: body?.content?.sha || null };
+    }
+
+    /** El fallo de un commit, con el motivo que el editor sabe decir: token rechazado, sin permiso o el archivo ya cambió. */
+    writeError(res, body) {
+      const err = this.toError(res, body);
+      const msg = String(body?.message || '');
+      if (res.status === 401) err.editKind = 'auth';
+      else if (res.status === 409 || (/^(400|422)$/.test(String(res.status)) && /\bsha\b|changed since|does not match/i.test(msg))) err.editKind = 'conflict';
+      else if ((res.status === 403 || res.status === 404) && err.kind !== 'rate') err.editKind = 'perm';
+      return err;
     }
 
     /* ---------- ramas que esperan su historia ---------- */
@@ -1973,5 +2034,7 @@
 
   GitHubSource.endpoints = endpoints;
   GitHubSource.ApiError = ApiError;
+  GitHubSource.editError = editError; // para las fuentes que heredan de esta (GitLab, Codeberg)
+  GitHubSource.editKey = editKey;
   GB.GitHubSource = GitHubSource;
 })(window.GB);

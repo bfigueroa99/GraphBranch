@@ -24,6 +24,10 @@ function load(gh) {
     clearTimeout,
     URL,
     AbortController,
+    TextEncoder,
+    TextDecoder,
+    btoa,
+    atob,
     fetch: gh.fetch,
     navigator: { onLine: true },
     document: { hidden: false, addEventListener() {}, removeEventListener() {} },
@@ -142,7 +146,7 @@ function fakeGitHub() {
       gh.failOnce = null;
       throw new TypeError('Failed to fetch');
     }
-    const { status = 200, body, headers = {} } = gh.override?.(path) || route(path);
+    const { status = 200, body, headers = {} } = gh.override?.(path, opts) || route(path);
     const json = JSON.stringify(body);
     const etag = `"${json.length}-${[...json].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 0)}"`;
     const inm = opts.headers?.['If-None-Match'];
@@ -778,4 +782,77 @@ test('primer commit de cada PR: sin token pide menos, para no gastar los 60 por 
   await src.cycle();
   await src.syncFirstCommits(Array.from({ length: 15 }, (_, i) => i + 1));
   assert.equal(gh.calls.filter((c) => /\/pulls\/\d+\/commits/.test(c)).length, 8);
+});
+
+/* ---------- editar un archivo (js/editor.js): leer de una rama y escribir un commit ---------- */
+
+test('readFile: el archivo de la rama (texto UTF-8 y su sha), y uno que no existe, una carpeta, uno enorme o binario', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const b64 = (s) => Buffer.from(s, 'utf8').toString('base64');
+  const files = {
+    '/repos/o/r/contents/src/caf%C3%A9.js?ref=main': { body: { type: 'file', encoding: 'base64', size: 9, content: b64('const é = 1;\n').replace(/(.{4})/g, '$1\n'), sha: 'blob1' } },
+    '/repos/o/r/contents/src?ref=main': { body: [{ type: 'file', name: 'a.js' }] },
+    '/repos/o/r/contents/big.bin?ref=main': { body: { type: 'file', encoding: 'none', size: 5e6, content: '', sha: 'blob2' } },
+    '/repos/o/r/contents/logo.png?ref=dev': { body: { type: 'file', encoding: 'base64', size: 4, content: Buffer.from([0x89, 0x50, 0x00, 0x47]).toString('base64'), sha: 'blob3' } },
+  };
+  gh.override = (path) => files[path] || null;
+  const { src } = connect(gh);
+  const f = await src.readFile({ path: 'src/café.js', ref: 'main' });
+  assert.equal(f.text, 'const é = 1;\n', 'base64 con saltos de línea y bytes UTF-8');
+  assert.equal(f.sha, 'blob1');
+  assert.equal(f.binary, false);
+  assert.equal((await src.readFile({ path: 'nada.txt', ref: 'main' })).missing, true, 'un 404 es un archivo que no existe todavía');
+  await assert.rejects(src.readFile({ path: 'src', ref: 'main' }), (err) => err.editKind === 'dir');
+  assert.equal((await src.readFile({ path: 'big.bin', ref: 'main' })).tooLarge, true);
+  assert.equal((await src.readFile({ path: 'logo.png', ref: 'dev' })).binary, true);
+  assert.equal(src.canEdit(), true);
+});
+
+test('writeFile: un PUT a contents con el texto en base64, la rama y el sha; sin token ni lo intenta', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  let sent = null;
+  gh.override = (path, opts) => {
+    if (opts.method !== 'PUT') return null;
+    sent = { path, auth: opts.headers?.Authorization, body: JSON.parse(opts.body) };
+    return { body: { content: { sha: 'blob-new' }, commit: { sha: 'c0ffee1234', html_url: 'https://github.com/o/r/commit/c0ffee1234' } } };
+  };
+  const anon = connect(gh).src;
+  assert.equal(anon.canWrite(), 'editor.noToken');
+  await assert.rejects(anon.writeFile({ path: 'a.txt', branch: 'main', text: 'x', message: 'm' }), (err) => err.editKind === 'noToken');
+  assert.equal(sent, null, 'sin token no sale nada');
+
+  const { src } = connect(gh, 'ghp_x');
+  assert.equal(src.canWrite(), null);
+  const out = await src.writeFile({ path: 'docs/ñandú.md', branch: 'feat/x', text: 'hola ñandú\n', message: 'Actualiza docs', sha: 'blob-old' });
+  assert.equal(sent.path, '/repos/o/r/contents/docs/%C3%B1and%C3%BA.md');
+  assert.equal(sent.auth, 'Bearer ghp_x');
+  assert.deepEqual(sent.body, { message: 'Actualiza docs', content: Buffer.from('hola ñandú\n', 'utf8').toString('base64'), branch: 'feat/x', sha: 'blob-old' });
+  assert.deepEqual({ ...out }, { sha: 'c0ffee1234', url: 'https://github.com/o/r/commit/c0ffee1234', blob: 'blob-new' });
+  // un archivo nuevo va sin sha
+  await src.writeFile({ path: 'nuevo.txt', branch: 'main', text: '', message: 'Crea nuevo.txt' });
+  assert.equal('sha' in sent.body, false);
+});
+
+test('writeFile: el motivo de cada fallo (token rechazado, sin permiso de escritura, el archivo ya cambió)', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  let reply = null;
+  gh.override = (path, opts) => (opts.method === 'PUT' ? reply : null);
+  const { src } = connect(gh, 'ghp_x');
+  const kind = async (status, message) => {
+    reply = { status, body: { message } };
+    try {
+      await src.writeFile({ path: 'a.txt', branch: 'main', text: 'x', message: 'm', sha: 's' });
+    } catch (err) {
+      return err.editKind || err.kind;
+    }
+    return 'ok';
+  };
+  assert.equal(await kind(401, 'Bad credentials'), 'auth');
+  assert.equal(await kind(403, 'Resource not accessible by personal access token'), 'perm');
+  assert.equal(await kind(404, 'Not Found'), 'perm', 'un token sin permiso de escritura ve un 404');
+  assert.equal(await kind(409, 'a.txt does not match s'), 'conflict');
+  assert.equal(await kind(422, 'Invalid request. "sha" wasn\'t supplied.'), 'conflict');
 });

@@ -1217,10 +1217,22 @@ console.log('Escritorio (1280×800)');
   await step(page, 'editar el código: desde los cambios de un commit se abre su archivo en la rama, se cambia y el commit llega al grafo con sus cambios', async () => {
     await page.keyboard.press('Escape');
     await page.click('#view-2d');
-    const heads = await page.$$('#graph svg .head[role=button]');
-    await heads[0].focus();
-    await page.keyboard.press('Enter');
-    await (await page.waitForSelector('#graph .tip .tip-diff', { timeout: T(5000) })).focus();
+    // a lo último, donde están las etiquetas de rama, y la ficha de una vigente y a la vista
+    await page.focus('#graph');
+    await page.keyboard.press('End');
+    await page.waitForFunction(() => [...document.querySelectorAll('#graph svg .head[role=button]:not(.exit)')].some((h) => getComputedStyle(h).display !== 'none'), null, { timeout: T(3000) });
+    let tipDiff = null;
+    const shownHeads = [];
+    for (const h of await page.$$('#graph svg .head[role=button]:not(.exit)')) if (await h.isVisible()) shownHeads.push(h);
+    for (const h of shownHeads.slice(0, 6)) {
+      await h.focus();
+      await page.keyboard.press('Enter');
+      tipDiff = await page.waitForSelector('#graph .tip:not([hidden]) .tip-diff', { timeout: T(1000) }).catch(() => null);
+      if (tipDiff) break;
+      await page.keyboard.press('Escape');
+    }
+    if (!tipDiff) throw new Error('ninguna rama a la vista abrió su ficha con Ver cambios');
+    await tipDiff.focus();
     await page.keyboard.press('Enter');
     const edit = await page.waitForSelector('#diff-panel .df-file[open] .df-edit', { timeout: T(5000) });
     const label = await edit.getAttribute('aria-label');
@@ -1257,10 +1269,14 @@ console.log('Escritorio (1280×800)');
     if (/\{|undefined/.test(note)) throw new Error(`aviso sin resolver: ${note}`);
     await page.click('#editor .ed-close'); // ya guardado: cierra sin preguntar
     await page.waitForSelector('#editor:not([open])', { state: 'attached', timeout: T(3000) });
-    // el commit nuevo es el siguiente del que se veía: sus cambios son los de verdad
-    await page.waitForFunction(() => !document.querySelector('#diff-panel .df-newer').disabled, null, { timeout: T(5000) });
-    await page.focus('#diff-panel .df-newer');
-    await page.keyboard.press('Enter');
+    // el commit nuevo está entre los siguientes del que se veía (la demo pudo sumar otro a la rama mientras tanto):
+    // se avanza hasta él, y sus cambios son los de verdad
+    for (let i = 0; i < 6 && (await page.textContent('#diff-panel .df-msg')) !== opened.msg; i++) {
+      await page.waitForFunction(() => !document.querySelector('#diff-panel .df-newer').disabled, null, { timeout: T(5000) });
+      await page.focus('#diff-panel .df-newer');
+      await page.keyboard.press('Enter');
+      await page.waitForTimeout(200);
+    }
     await page.waitForFunction((m) => document.querySelector('#diff-panel .df-msg')?.textContent === m, opened.msg, { timeout: T(5000) });
     await page.waitForSelector('#diff-panel:not(.loading) .df-file .dl-add', { timeout: T(5000) });
     const diff = await page.evaluate(() => ({ files: [...document.querySelectorAll('#diff-panel .df-jump .df-jpath')].map((n) => n.textContent), added: [...document.querySelectorAll('#diff-panel .dl-add .lc')].map((n) => n.textContent) }));

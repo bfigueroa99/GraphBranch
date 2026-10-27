@@ -355,7 +355,19 @@ console.log('Escritorio (1280×800)');
 
   await step(page, 'vista 2D', async () => {
     await page.click('#view-2d');
-    await page.waitForSelector('#graph svg .node', { timeout: T(10000) });
+    try {
+      await page.waitForSelector('#graph svg .node', { timeout: T(10000) });
+    } catch (e) {
+      const d = await page.evaluate(() => ({
+        hidden: document.querySelector('#graph')?.hidden,
+        svg: !!document.querySelector('#graph svg'),
+        nodes: document.querySelectorAll('#graph svg .node').length,
+        status: document.querySelector('#status')?.textContent?.trim().slice(0, 120),
+        filters: document.querySelectorAll('.chip.active, [aria-pressed=true]').length,
+        url: location.search,
+      }));
+      throw new Error(`${e.message.split('\n')[0]} ${JSON.stringify(d)}`);
+    }
     if (await page.locator('#graph3d').isVisible()) throw new Error('la vista 3D sigue visible');
   });
 

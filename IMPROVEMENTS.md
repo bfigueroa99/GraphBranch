@@ -973,5 +973,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
   práctica salen de la vista; 40 idiomas (10 textos nuevos, «etiqueta: número» como la constelación para no
   depender de plurales); celular (una columna, el grafo de 300 px); teclado (Todos con Intro, cada tarjeta con
   Tab; el nombre deja el foco en la pestaña del repo); movimiento reducido (el punto de carga quieto).
-- Validado: (pendiente)
+- Validado: 439 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)

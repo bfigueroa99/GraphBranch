@@ -2890,6 +2890,21 @@ console.log('Capa para streaming: color de fondo y &hide= (?embed=1)');
     if (r.bg !== 'rgb(0, 255, 0)') throw new Error(`&bg=00ff00 deja el fondo ${r.bg}`);
     if (r.toasts !== 'none' || r.combo !== 'none') throw new Error(`&hide= no esconde: ${JSON.stringify(r)}`);
   });
+  await step(page, '&hide=legend,title,clock esconde la leyenda, el rótulo y las fechas', async () => {
+    await page.goto(`${base}/index.html?lang=es&embed=1&title=Hola&hide=legend,title,clock`);
+    await loaded(page);
+    await page.waitForSelector('.embed-title', { state: 'attached', timeout: T(30000) });
+    const r = await page.evaluate(() => {
+      const d = (s) => {
+        const e = document.querySelector(s);
+        return e ? getComputedStyle(e).display : 'ausente';
+      };
+      return { title: d('.embed-title'), legend: d('.legend'), cls: document.documentElement.className };
+    });
+    if (r.title !== 'none') throw new Error(`&hide=title deja el rótulo ${r.title}`);
+    if (r.legend !== 'none' && r.legend !== 'ausente') throw new Error(`&hide=legend deja la leyenda ${r.legend}`);
+    if (!/embed-hide-clock/.test(r.cls)) throw new Error('&hide=clock no marca la capa');
+  });
   await step(page, 'sin &hide= los avisos siguen ahí (lo de siempre por defecto)', async () => {
     await page.goto(`${base}/index.html?lang=es&embed=1`);
     await loaded(page);

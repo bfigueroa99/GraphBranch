@@ -1004,3 +1004,26 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
   CSP sin cambios: los mismos servidores de `connect-src`.
 - Validado: 449 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)
+
+### 2026-10-27 · Pedido de Benjamin: espacio para conectar otro repo
+
+- **Pedido de Benjamin:** «no me está dando espacio para conectarme a otros repositorios» (captura: la app de
+  escritorio con un repo conectado y el campo `owner/repo` reducido a «gi», debajo de Conectar). No es una
+  iteración numerada y la proporción de la regla 2 no cambia.
+- **Fallo:** el formulario de la barra de arriba tenía un tope de 560 px y el campo `min-width: 0`. Con un repo
+  real aparece «Probar un comando» (ítem 31) y en el escritorio «Abrir carpeta…», y los botones se comían el
+  ancho: el campo quedaba de 2 a 24 px entre 1024 y 1875 px de pantalla (en la web, con cuatro botones, a lo sumo
+  145 px y 46 de texto). Cerca de los 1500 px, además, la barra saltaba de una fila a dos según el largo del
+  texto del estado, que cambia cada segundo.
+- **Arreglo (solo CSS):** el campo no baja de 15rem ni pasa de 30rem. Con un repo real («Probar un comando» o el
+  cupo de la API a la vista), en la app de escritorio y, en la demo, bajo 1500 px, el formulario baja a una fila
+  propia debajo de la marca, el estado y los controles, como ya hacía bajo 860 px; los botones que no quepan
+  junto al campo pasan a otra línea. La demo web de 1500 px o más sigue en una fila. Qué fila toca depende del
+  ancho y de los botones a la vista, no del texto del estado: la barra no salta.
+- **Prueba que falla sin el cambio:** el paso del smoke «con un repo real a la vista, el campo del repo deja
+  espacio para escribir otro» (GitHub simulado; 1875, 1536, 1280 y 1024 px, con y sin «Abrir carpeta…»): sin el
+  arreglo, el campo queda de 11 px.
+- QA: de 400 a 1875 px, con tres, cuatro y cinco botones; inglés, español, alemán, ruso y árabe (RTL); el alto
+  de la barra no cambia entre «actualizado ahora · sincronizando…» y «actualizado hace 12 s · próximo en 12 s».
+- Validado: 449 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)

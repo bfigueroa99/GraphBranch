@@ -229,16 +229,18 @@ kbd {
   letter-spacing: -0.02em;
 }
 
+/* el campo nunca baja de un ancho donde se pueda escribir owner/repo: si el formulario no cabe
+   junto al estado y los controles, baja a una fila propia (ver «el formulario en su fila») */
 .repo-form {
   display: flex;
   gap: 8px;
-  flex: 1 1 380px;
-  min-width: 0;
-  max-width: 560px;
+  flex: 1 1 auto;
 }
 .repo-field {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 auto;
+  width: 15rem;
+  min-width: 15rem;
+  max-width: 30rem;
   display: flex;
   align-items: center;
   border: 1px solid var(--line-strong);
@@ -4643,6 +4645,23 @@ html.embed .diff-panel {
   }
 }
 
+/* el formulario en su fila: con un repo real (suma «Probar un comando» y el cupo de la API) o en la
+   app de escritorio (suma «Abrir carpeta…») no cabe junto al estado y los controles sin aplastar el
+   campo, y en pantallas de menos de 1500 px tampoco en la demo. Los botones que no quepan junto al
+   campo bajan */
+.topbar:has(#rehearse-btn:not([hidden]), #folder-btn:not([hidden]), #rate:not([hidden])) .repo-form {
+  order: 4;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+}
+@media (max-width: 1500px) {
+  .repo-form {
+    order: 4;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+  }
+}
+
 @media (max-width: 860px) {
   html,
   body {
@@ -4664,11 +4683,6 @@ html.embed .diff-panel {
   .status-group {
     margin-inline-start: 0;
     order: 3;
-  }
-  .repo-form {
-    order: 4;
-    flex-basis: 100%;
-    max-width: none;
   }
   .controls {
     margin-inline-start: auto;

@@ -939,11 +939,12 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
   quita (un número, un nombre), así el resaltado se ve sin token.
 - **Pruebas que fallan sin el cambio:** `tools/diff.test.mjs` (de 9 a 13: `rows`, `words` y la demo con
   palabras marcadas) y el paso del smoke «cambios de un commit: un clic en el grafo cambia de commit, lado a
-  lado con palabras marcadas, filtro y panel ancho».
+  lado con palabras marcadas, filtro y panel ancho» (vuelve a lo último y abre la ficha de una rama a la vista:
+  con la historia larga de la corrida entera, el paso anterior deja las etiquetas fuera de pantalla).
 - README: la función en la lista, los atajos del panel y Límites conocidos (las palabras, lado a lado).
 - QA: 2D y 3D (el clic en un commit de cada vista), demo sin token, 40 idiomas (11 textos nuevos; árabe en
   vivo con el panel), celular (el botón ancho se esconde bajo 860 px), teclado (`J`/`K` no pasan de commit
   mientras se escribe en el filtro; `Esc` en él lo borra sin cerrar). La excepción intermitente
   `reading 'sha'` del smoke salió aquí en «modo galaxias» y en «filtro por autor»: era de la demo y la arregló #184.
-- Validado: 433 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (las e2e, repetidas aparte: en la corrida de `npm run check` una chocó con un servidor de prueba que había quedado en el puerto 4174).
+- Validado: 435 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)

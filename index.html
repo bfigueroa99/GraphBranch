@@ -120,8 +120,15 @@
       </button>
     </div>
 
-    <!-- repos seguidos: una pestaña por repo (con más de uno); los demás siguen en vivo detrás -->
-    <div class="repo-tabs" id="repo-tabs" role="group" aria-label="Followed repositories" data-i18n-attr="aria-label:tabs.aria" hidden></div>
+    <!-- repos seguidos: una pestaña por repo (con más de uno); los demás siguen en vivo detrás. «Todos» los muestra
+         a la vez, cada uno en su tarjeta (js/overview.js) -->
+    <div class="tabs-row" id="tabs-row" hidden>
+      <button type="button" class="all-tab" id="all-tab" aria-pressed="false" title="See every followed repository at once, without switching tabs" data-i18n-attr="title:all.tabTitle">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>
+        <span data-i18n="all.tab">All</span><span class="rt-n" id="all-n" aria-hidden="true"></span>
+      </button>
+      <div class="repo-tabs" id="repo-tabs" role="group" aria-label="Followed repositories" data-i18n-attr="aria-label:tabs.aria" hidden></div>
+    </div>
   </header>
 
   <section class="stats" aria-label="Repository summary" data-i18n-attr="aria-label:stats.aria">
@@ -289,6 +296,18 @@
       <p class="hint" id="hint"></p>
     </section>
 
+    <!-- vista conjunta (js/overview.js): todos los repos seguidos a la vez, en el lugar del grafo de uno solo -->
+    <section class="panel all-panel" id="all-panel" aria-labelledby="all-title" hidden>
+      <div class="panel-head">
+        <div class="repo-title">
+          <h2 id="all-title" data-i18n="all.title">All repositories</h2>
+          <p class="repo-desc" id="all-sum"></p>
+        </div>
+      </div>
+      <div class="rc-grid" id="all-grid"></div>
+      <p class="hint" data-i18n="all.hint">Each card follows its repository live. Click a commit for its details and its changes; the name opens the repository in its tab.</p>
+    </section>
+
     <aside class="panel feed-panel" aria-labelledby="feed-title">
       <div class="panel-head">
         <h2 id="feed-title" data-i18n="feed.title">Activity</h2>
@@ -310,10 +329,27 @@
           <button type="button" class="icon-btn df-newer" title="Next commit (→ or K)" aria-label="Next commit" aria-keyshortcuts="ArrowRight K" data-i18n-attr="title:diff.newer.title;aria-label:diff.newer">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
           </button>
+          <button type="button" class="icon-btn df-wide" aria-pressed="false" title="Wider panel to read the code (the graph gets narrower)" aria-label="Wider panel" data-i18n-attr="title:diff.wide.title;aria-label:diff.wide">
+            <svg class="ico when-off" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>
+            <svg class="ico when-on" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5 5.5 8 2 11.5M14 4.5 10.5 8l3.5 3.5"/></svg>
+          </button>
           <button type="button" class="icon-btn df-close" title="Close the commit changes" aria-label="Close the commit changes" aria-keyshortcuts="Escape" data-i18n-attr="title:diff.close;aria-label:diff.close">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>
           </button>
         </div>
+      </div>
+      <!-- cómo se leen los cambios: unificado o lado a lado, plegar o desplegar todo y filtrar por ruta -->
+      <div class="df-tools" hidden>
+        <div class="view-switch df-mode" role="group" aria-label="How the changes are shown" data-i18n-attr="aria-label:diff.mode">
+          <button type="button" class="df-unified" aria-pressed="true" data-i18n="diff.unified">Unified</button>
+          <button type="button" class="df-splitb" aria-pressed="false" data-i18n="diff.split">Side by side</button>
+        </div>
+        <button type="button" class="btn btn-ghost df-all" hidden></button>
+        <div class="filter-field df-ffield" hidden>
+          <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
+          <input type="search" class="df-filter" placeholder="Filter files…" aria-label="Filter files by path" data-i18n-attr="placeholder:diff.filterPlaceholder;aria-label:diff.filter" spellcheck="false" autocapitalize="off" autocomplete="off">
+        </div>
+        <span class="df-fcount" aria-live="polite"></span>
       </div>
       <div class="df-bar" aria-hidden="true"></div>
       <div class="df-scroll">
@@ -516,6 +552,47 @@
   </form>
 </dialog>
 
+<!-- editar un archivo (js/editor.js): lo abre de una rama, se cambia y se guarda como un commit en ella -->
+<dialog class="settings editor" id="editor" aria-labelledby="editor-title" aria-describedby="editor-help">
+  <form novalidate>
+    <div class="tr-head">
+      <h2 id="editor-title"><span data-i18n="editor.title">Edit a file</span> <span class="ed-repo" dir="ltr"></span></h2>
+      <button type="button" class="icon-btn ed-close" title="Close" aria-label="Close" data-i18n-attr="title:toast.close;aria-label:toast.close">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <p class="help" id="editor-help" data-i18n="editor.help">You edit what the branch has now, not the commit you were looking at, and the commit goes straight to that branch.</p>
+    <div class="ed-row">
+      <div class="field">
+        <label for="editor-branch" data-i18n="editor.branch">Branch</label>
+        <select id="editor-branch" class="ed-branch"></select>
+      </div>
+      <div class="field ed-pathf">
+        <label for="editor-path" data-i18n="editor.path">File</label>
+        <div class="field-row">
+          <input id="editor-path" class="ed-path-input" type="text" placeholder="src/app.js" spellcheck="false" autocapitalize="off" autocomplete="off" dir="ltr">
+          <button type="button" class="btn btn-ghost ed-load" data-i18n="editor.load">Open</button>
+        </div>
+      </div>
+    </div>
+    <p class="ed-note" role="status" aria-live="polite"></p>
+    <div class="field">
+      <label for="editor-text"><span data-i18n="editor.content">File contents</span> <span class="opt ed-sum"></span></label>
+      <textarea id="editor-text" class="ed-text" rows="16" spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off" dir="ltr"></textarea>
+    </div>
+    <div class="field">
+      <label for="editor-message" data-i18n="editor.message">Commit message</label>
+      <input id="editor-message" class="ed-message" type="text" maxlength="200" autocomplete="off">
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-ghost ed-settings" hidden data-i18n="editor.settings">Add a token in Settings</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn-ghost ed-cancel" data-i18n="settings.cancel">Cancel</button>
+      <button type="submit" class="btn btn-primary ed-save" data-i18n="editor.save">Commit</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog class="settings trophies health" id="textview" aria-labelledby="textview-title">
   <div class="tr-wrap">
     <div class="tr-head">
@@ -620,6 +697,8 @@
 <script src="js/loopprompt.js"></script>
 <script src="js/textview.js"></script>
 <script src="js/constellation.js"></script>
+<script src="js/overview.js"></script>
+<script src="js/editor.js"></script>
 <script src="js/search.js"></script>
 <script src="js/practice-ui.js"></script>
 <script src="js/hooks.js"></script>

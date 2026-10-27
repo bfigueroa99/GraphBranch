@@ -1134,6 +1134,183 @@ console.log('Escritorio (1280×800)');
     if (closed.sel) throw new Error('al cerrar, el grafo sigue marcando el commit');
   });
 
+  await step(page, 'cambios de un commit: un clic en el grafo cambia de commit, lado a lado con palabras marcadas, filtro y panel ancho', async () => {
+    // cada espera dice cuál fue si vence (la corrida larga trae mucha historia de la demo y lo recorta)
+    const wait = (what, p) => p.catch((err) => {
+      throw new Error(`${what}: ${err.message.split('\n')[0]}`);
+    });
+    await page.keyboard.press('Escape');
+    // el paso anterior dejó el grafo en el primer commit: vuelve a lo último, donde están las etiquetas de rama
+    await page.focus('#graph');
+    await page.keyboard.press('End');
+    // (se desplaza con una transición: las etiquetas aparecen al llegar)
+    await wait('las etiquetas de rama a la vista', page.waitForFunction(() => [...document.querySelectorAll('#graph svg .head[role=button]:not(.exit)')].some((h) => getComputedStyle(h).display !== 'none'), null, { timeout: T(3000) }));
+    // la ficha de una rama vigente y a la vista (la demo borra ramas fusionadas: una etiqueta puede estar saliendo)
+    let tipDiff = null;
+    const shownHeads = [];
+    for (const h of await page.$$('#graph svg .head[role=button]:not(.exit)')) if (await h.isVisible()) shownHeads.push(h);
+    for (const h of shownHeads.slice(0, 6)) {
+      await h.focus();
+      await page.keyboard.press('Enter');
+      tipDiff = await page.waitForSelector('#graph .tip:not([hidden]) .tip-diff', { timeout: T(1000) }).catch(() => null);
+      if (tipDiff) break;
+      await page.keyboard.press('Escape');
+    }
+    if (!tipDiff) throw new Error('la ficha de la rama: ninguna de las primeras 6 ramas abrió su ficha con Ver cambios');
+    await tipDiff.focus();
+    await page.keyboard.press('Enter');
+    await wait('el panel al abrir', page.waitForSelector('#diff-panel:not([hidden]) .df-file', { timeout: T(5000) }));
+    const idle = () => wait('el panel cargando', page.waitForFunction(() => !document.querySelector('#diff-panel').classList.contains('loading'), null, { timeout: T(5000) }));
+    await idle();
+    // con el panel abierto, un clic en un merge (4 archivos en la demo) muestra sus cambios, no su ficha: uno que
+    // esté en la historia cargada ahora (la demo recorta la vieja) y que no esté saliendo
+    const clickMerge = () =>
+      page.evaluate(() => {
+        const data = [...document.querySelectorAll('#graph svg .node.merge:not(.exit)')].filter((m) => m.__sha);
+        const m = data[data.length - 1];
+        m?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        return m ? m.__sha.slice(0, 7) : null;
+      });
+    const atSha = (sha, what) => wait(what, page.waitForFunction((s) => document.querySelector('#diff-panel .df-meta code')?.textContent === s, sha, { timeout: T(5000) }));
+    const merge = await clickMerge();
+    if (!merge) throw new Error('el grafo no dibuja ningún merge de la demo');
+    await atSha(merge, `el clic en el merge ${merge}`);
+    await idle();
+    if (await page.locator('#graph .tip.pinned:not([hidden])').count()) throw new Error('el clic abrió la ficha en vez de cambiar los cambios');
+    const files = await page.locator('#diff-panel .df-jump').count();
+    if (files < 4) throw new Error(`el merge trae ${files} archivos`);
+    // lado a lado: dos columnas por fila, se recuerda
+    await page.click('#diff-panel .df-splitb');
+    const split = await page.evaluate(() => {
+      const rows = [...document.querySelectorAll('#diff-panel .df-code.df-split .dl-row')];
+      return { rows: rows.length, two: rows.every((r) => r.querySelectorAll('.dl-side').length === 2), saved: localStorage.getItem('graphbranch:diffMode'), unified: document.querySelectorAll('#diff-panel .df-code:not(.df-split)').length };
+    });
+    if (!split.rows || !split.two || split.unified) throw new Error('lado a lado no dibujó dos columnas por fila: ' + JSON.stringify(split));
+    if (split.saved !== '"split"') throw new Error(`el modo no se recuerda: ${split.saved}`);
+    // las palabras cambiadas se marcan (la demo retoca las líneas que quita): se busca en los commits vecinos
+    let marks = await page.locator('#diff-panel .dw').count();
+    for (let i = 0; i < 12 && !marks && !(await page.$eval('#diff-panel .df-older', (b) => b.disabled)); i++) {
+      await page.click('#diff-panel .df-older');
+      await idle();
+      await page.locator('#diff-panel .df-file').first().evaluate((d) => d.parentElement.querySelectorAll('.df-file').forEach((x) => (x.open = true)));
+      marks = await page.locator('#diff-panel .dw').count();
+    }
+    if (!marks) throw new Error('ninguna palabra cambiada marcada en 12 commits de la demo');
+    // filtro por ruta (desde 4 archivos): se vuelve a un merge con el clic
+    const back = await clickMerge();
+    if (!back) throw new Error('el merge ya no está en el grafo');
+    await atSha(back, `el clic de vuelta en el merge ${back}`);
+    await idle();
+    await wait('el filtro (4 archivos)', page.waitForSelector('#diff-panel .df-ffield:not([hidden])', { timeout: T(5000) }));
+    const first = await page.$eval('#diff-panel .df-jump .df-jpath', (n) => n.textContent);
+    const q = first.split('/').pop();
+    await page.fill('#diff-panel .df-filter', q);
+    const filtered = await page.evaluate(() => ({
+      list: [...document.querySelectorAll('#diff-panel .df-files li')].filter((li) => !li.hidden).length,
+      secs: [...document.querySelectorAll('#diff-panel .df-file')].filter((s) => !s.hidden).length,
+      count: document.querySelector('#diff-panel .df-fcount').textContent,
+    }));
+    if (filtered.list < 1 || filtered.list >= files || filtered.secs !== filtered.list) throw new Error('el filtro no deja solo lo que coincide: ' + JSON.stringify(filtered));
+    if (!/\d/.test(filtered.count) || /\{|undefined/.test(filtered.count)) throw new Error(`la cuenta del filtro dice «${filtered.count}»`);
+    await page.press('#diff-panel .df-filter', 'Escape'); // Esc con texto lo borra, sin cerrar el panel
+    if (await page.$eval('#diff-panel', (p) => p.hidden)) throw new Error('Esc en el filtro cerró el panel');
+    if (await page.$eval('#diff-panel .df-filter', (i) => i.value)) throw new Error('Esc no borró el filtro');
+    // plegar y desplegar todo
+    await page.click('#diff-panel .df-all');
+    const allOpen = await page.$$eval('#diff-panel .df-file', (s) => s.map((x) => x.open));
+    await page.click('#diff-panel .df-all');
+    const allShut = await page.$$eval('#diff-panel .df-file', (s) => s.map((x) => x.open));
+    if (allOpen.some((o) => o !== allOpen[0]) || allShut.some((o) => o === allOpen[0])) throw new Error(`plegar todo: ${allOpen} → ${allShut}`);
+    // panel ancho: el código gana lugar y el grafo queda como guía
+    const w = () => page.evaluate(() => [document.querySelector('.graph-panel').offsetWidth, document.querySelector('#diff-panel').offsetWidth]);
+    const [g0, d0] = await w();
+    await page.click('#diff-panel .df-wide');
+    await page.waitForFunction(() => document.querySelector('.main').classList.contains('diff-wide'), null, { timeout: T(3000) });
+    const [g1, d1] = await w();
+    if (!(d1 > d0 && g1 < g0)) throw new Error(`el panel ancho no ensanchó: ${d0}→${d1}, grafo ${g0}→${g1}`);
+    const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    if (over > 0) throw new Error(`la página se desborda ${over}px`);
+    // lo elegido se deja como estaba para los pasos que siguen
+    await page.click('#diff-panel .df-wide');
+    await page.click('#diff-panel .df-unified');
+    await page.keyboard.press('Escape');
+    if (!(await page.$eval('#diff-panel', (p) => p.hidden))) await page.click('#diff-panel .df-close');
+    if (await page.evaluate(() => document.querySelector('.main').classList.contains('diff-wide'))) throw new Error('al cerrar, la vista queda con el ancho del panel');
+  });
+
+  await step(page, 'editar el código: desde los cambios de un commit se abre su archivo en la rama, se cambia y el commit llega al grafo con sus cambios', async () => {
+    await page.keyboard.press('Escape');
+    await page.click('#view-2d');
+    // a lo último, donde están las etiquetas de rama, y la ficha de una vigente y a la vista
+    await page.focus('#graph');
+    await page.keyboard.press('End');
+    await page.waitForFunction(() => [...document.querySelectorAll('#graph svg .head[role=button]:not(.exit)')].some((h) => getComputedStyle(h).display !== 'none'), null, { timeout: T(3000) });
+    let tipDiff = null;
+    const shownHeads = [];
+    for (const h of await page.$$('#graph svg .head[role=button]:not(.exit)')) if (await h.isVisible()) shownHeads.push(h);
+    for (const h of shownHeads.slice(0, 6)) {
+      await h.focus();
+      await page.keyboard.press('Enter');
+      tipDiff = await page.waitForSelector('#graph .tip:not([hidden]) .tip-diff', { timeout: T(1000) }).catch(() => null);
+      if (tipDiff) break;
+      await page.keyboard.press('Escape');
+    }
+    if (!tipDiff) throw new Error('ninguna rama a la vista abrió su ficha con Ver cambios');
+    await tipDiff.focus();
+    await page.keyboard.press('Enter');
+    const edit = await page.waitForSelector('#diff-panel .df-file[open] .df-edit', { timeout: T(5000) });
+    const label = await edit.getAttribute('aria-label');
+    const branchOf = await page.$eval('#diff-panel .df-branch', (n) => n.textContent).catch(() => '');
+    await edit.click();
+    await page.waitForSelector('#editor[open]', { timeout: T(3000) });
+    await page.waitForFunction(() => {
+      const a = document.querySelector('#editor-text');
+      return a && !a.readOnly && a.value.length > 0;
+    }, null, { timeout: T(5000) });
+    const opened = await page.evaluate(() => ({
+      path: document.querySelector('#editor-path').value,
+      branch: document.querySelector('#editor-branch').value,
+      msg: document.querySelector('#editor-message').value,
+      save: document.querySelector('#editor .ed-save').disabled,
+      sum: document.querySelector('#editor .ed-sum').textContent,
+      settings: !document.querySelector('#editor .ed-settings').hidden,
+    }));
+    if (!label || !label.includes(opened.path)) throw new Error(`el botón Editar no nombra su archivo: ${label}`);
+    if (branchOf && !branchOf.includes(opened.branch)) throw new Error(`abrió la rama ${opened.branch} y el commit es ${branchOf}`);
+    if (!opened.save || opened.settings) throw new Error('sin cambios no se puede hacer commit, y la demo no pide token: ' + JSON.stringify(opened));
+    if (!opened.msg.includes(opened.path) || /\{|undefined/.test(opened.msg + opened.sum)) throw new Error('el mensaje propuesto: ' + JSON.stringify(opened));
+    const before = await page.$eval('#editor-text', (a) => a.value);
+    await page.fill('#editor-text', before + '// editado desde GraphBranch\n');
+    const sum = await page.textContent('#editor .ed-sum');
+    if (!/\+1\b/.test(sum)) throw new Error(`el resumen no cuenta la línea agregada: ${sum}`);
+    // cerrar con cambios sin guardar pregunta; se puede seguir editando
+    page.once('dialog', (d) => d.dismiss());
+    await page.click('#editor .ed-cancel');
+    if (!(await page.$eval('#editor', (d) => d.open))) throw new Error('cerró sin preguntar por los cambios sin guardar');
+    await page.click('#editor .ed-save');
+    await page.waitForSelector('#editor .ed-note[data-kind="ok"]', { timeout: T(5000) });
+    const note = await page.textContent('#editor .ed-note');
+    if (/\{|undefined/.test(note)) throw new Error(`aviso sin resolver: ${note}`);
+    await page.click('#editor .ed-close'); // ya guardado: cierra sin preguntar
+    await page.waitForSelector('#editor:not([open])', { state: 'attached', timeout: T(3000) });
+    // el commit nuevo está entre los siguientes del que se veía (la demo pudo sumar otro a la rama mientras tanto):
+    // se avanza hasta él, y sus cambios son los de verdad
+    for (let i = 0; i < 6 && (await page.textContent('#diff-panel .df-msg')) !== opened.msg; i++) {
+      await page.waitForFunction(() => !document.querySelector('#diff-panel .df-newer').disabled, null, { timeout: T(5000) });
+      await page.focus('#diff-panel .df-newer');
+      await page.keyboard.press('Enter');
+      await page.waitForTimeout(200);
+    }
+    await page.waitForFunction((m) => document.querySelector('#diff-panel .df-msg')?.textContent === m, opened.msg, { timeout: T(5000) });
+    await page.waitForSelector('#diff-panel:not(.loading) .df-file .dl-add', { timeout: T(5000) });
+    const diff = await page.evaluate(() => ({ files: [...document.querySelectorAll('#diff-panel .df-jump .df-jpath')].map((n) => n.textContent), added: [...document.querySelectorAll('#diff-panel .dl-add .lc')].map((n) => n.textContent) }));
+    if (diff.files.length !== 1 || diff.files[0] !== opened.path) throw new Error('el commit del editor cambió otros archivos: ' + diff.files.join(', '));
+    if (!diff.added.includes('// editado desde GraphBranch')) throw new Error('sus cambios no son los escritos: ' + diff.added.join(' | '));
+    const feed = await page.textContent('#feed');
+    if (!feed.includes(opened.msg)) throw new Error('el commit no llegó al panel de actividad');
+    await page.keyboard.press('Escape');
+  });
+
   await step(page, 'cambia a árabe en vivo (derecha a izquierda)', async () => {
     await page.selectOption('#lang-select', 'ar');
     await page.waitForFunction(() => document.documentElement.dir === 'rtl', null, { timeout: T(5000) });
@@ -1211,7 +1388,7 @@ const lowContrast = (page) =>
       const cs = getComputedStyle(el);
       const box = el.getBoundingClientRect();
       if (!box.width || !box.height || cs.visibility === 'hidden' || +cs.opacity === 0) continue;
-      if (el.closest('[hidden], .sr-only, [aria-hidden=true], #graph3d, #graph')) continue;
+      if (el.closest('[hidden], .sr-only, [aria-hidden=true], #graph3d, .graph-wrap')) continue; // .graph-wrap: el grafo 2D y los de la vista conjunta
       const fg = parse(cs.color);
       const bg = backdrop(el);
       if (!fg || !bg) continue;
@@ -1292,6 +1469,10 @@ function fakeGitHub() {
       return out.length ? { body: out } : { status: 404, body: { message: 'No commit found' } };
     }
     if (/^\/commits\/[^/]+\/check-runs$/.test(rest)) return { body: { total_count: 1, check_runs: [{ status: 'completed', conclusion: 'success' }] } };
+    const file = rest.match(/^\/contents\/(.+)$/); // un archivo de una rama (el editor, js/editor.js)
+    if (file) return { body: { type: 'file', encoding: 'base64', size: 20, content: Buffer.from(`// ${decodeURIComponent(file[1])} en ${q.get('ref')}\n`).toString('base64'), sha: 'blob-' + file[1].length } };
+    const one = rest.match(/^\/commits\/([0-9a-f]{40})$/); // los cambios de un commit (el panel de js/diff.js)
+    if (one && r.commits.has(one[1])) return { body: { ...r.commits.get(one[1]), files: [{ filename: 'src/app.js', status: 'modified', additions: 1, deletions: 1, patch: '@@ -1,2 +1,2 @@\n const a = 1;\n-const limit = 50;\n+const limit = 100;' }] } };
     return { status: 404, body: { message: 'Not Found' } };
   };
   return {
@@ -1423,6 +1604,92 @@ console.log('Varios repos a la vez');
     await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
     const n = (await repoTabs(page)).length;
     if (n !== 2) throw new Error(`hay ${n} pestañas`);
+  });
+
+  await step(page, 'vista conjunta: «Todos» muestra cada repo en su tarjeta, en vivo, y sus cambios sin cambiar de pestaña', async () => {
+    await page.focus('#all-tab'); // con el teclado
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#all-panel:not([hidden]) .rc-card .graph-svg .node', { timeout: T(5000) });
+    const on = await page.evaluate(() => ({
+      pressed: document.querySelector('#all-tab').getAttribute('aria-pressed'),
+      graph: getComputedStyle(document.querySelector('.graph-panel')).display,
+      stats: getComputedStyle(document.querySelector('.stats')).display,
+      cards: [...document.querySelectorAll('.rc-card')].map((c) => ({ name: c.querySelector('.rc-name').textContent, nodes: c.querySelectorAll('.graph-svg .node').length, stats: c.querySelector('.rc-stats').textContent })),
+      current: document.querySelectorAll('#repo-tabs [aria-current="true"]').length,
+      url: new URL(location.href).searchParams.get('all'),
+      saved: localStorage.getItem('graphbranch:all'),
+      sum: document.querySelector('#all-sum').textContent,
+      label: document.querySelector('#all-tab').getAttribute('aria-label'),
+    }));
+    if (on.pressed !== 'true' || on.graph !== 'none' || on.stats !== 'none') throw new Error('«Todos» no tomó el lugar del grafo: ' + JSON.stringify(on));
+    if (on.cards.map((c) => c.name).join(' ') !== 'o/a o/b' || on.cards.some((c) => !c.nodes)) throw new Error('tarjetas: ' + JSON.stringify(on.cards));
+    if (on.cards.some((c) => !/\d/.test(c.stats) || /\{|undefined|NaN/.test(c.stats)) || /\{|undefined|NaN/.test(on.sum + on.label)) throw new Error('texto sin resolver: ' + JSON.stringify(on));
+    if (on.current) throw new Error('con la vista conjunta una pestaña sigue marcada como la que se ve');
+    if (on.url !== '1' || on.saved !== 'true') throw new Error(`no viaja en la URL ni se recuerda: all=${on.url}, guardado ${on.saved}`);
+    for (const colorScheme of ['light', 'dark']) {
+      await page.emulateMedia({ colorScheme });
+      await transitionsDone(page); // «Todos» cambia de color con transición: se mide cuando termina
+      const bad = await lowContrast(page);
+      if (bad.length) throw new Error(`${colorScheme}: ${bad.length} textos con poco contraste, como ${bad.slice(0, 3).join(', ')}`);
+    }
+    await page.emulateMedia({ colorScheme: 'light' });
+    // lo nuevo de o/b llega a su tarjeta, sin quedar «sin ver» en su pestaña
+    const commitsOf = (name) => page.$eval(`.rc-card[data-key="${name}"] .rc-stats`, (n) => Number(/(\d+)\D+(\d+)/.exec(n.textContent)?.[2]));
+    const before = await commitsOf('o/b');
+    gh.push('o/b', 'main', 'cambio que se ve en la tarjeta');
+    await page.waitForFunction(() => document.querySelector('.rc-card[data-key="o/b"] .rc-lmsg')?.textContent === 'cambio que se ve en la tarjeta', null, { timeout: T(15000) });
+    if ((await commitsOf('o/b')) !== before + 1) throw new Error(`la tarjeta no sumó el commit: ${before} → ${await commitsOf('o/b')}`);
+    const unread = (await repoTabs(page)).map((t) => t.unread).join('');
+    if (unread) throw new Error(`con todo a la vista quedaron novedades sin ver: ${unread}`);
+    // sus cambios, sin cambiar de pestaña: el panel se abre al lado y la tarjeta marca el commit
+    const shownBefore = await shown();
+    await page.click('.rc-card[data-key="o/b"] .rc-last');
+    await page.waitForSelector('#diff-panel:not([hidden]) .df-file .dl-add', { timeout: T(10000) });
+    const diff = await page.evaluate(() => ({
+      msg: document.querySelector('#diff-panel .df-msg').textContent,
+      sel: document.querySelectorAll('.rc-card[data-key="o/b"] .node.sel').length,
+      other: document.querySelectorAll('.rc-card[data-key="o/a"] .node.sel').length,
+      all: !document.querySelector('#all-panel').hidden,
+    }));
+    if (diff.msg !== 'cambio que se ve en la tarjeta' || diff.sel !== 1 || diff.other || !diff.all) throw new Error('los cambios desde la tarjeta: ' + JSON.stringify(diff));
+    if ((await shown()) !== shownBefore) throw new Error('ver los cambios cambió de pestaña');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#diff-panel', { state: 'hidden', timeout: T(3000) });
+    // al volver a abrir la página, sigue en la vista conjunta
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    await page.waitForSelector('#all-panel:not([hidden]) .rc-card', { timeout: T(10000) });
+    // el nombre de la tarjeta abre el repo en su pestaña y deja la vista conjunta
+    await page.click('.rc-card[data-key="o/b"] .rc-open');
+    await page.waitForFunction(() => document.querySelector('#all-panel').hidden && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
+    const off = await page.evaluate(() => ({ pressed: document.querySelector('#all-tab').getAttribute('aria-pressed'), url: new URL(location.href).searchParams.has('all'), saved: localStorage.getItem('graphbranch:all'), focus: document.activeElement?.closest('.rt')?.querySelector('.rt-name')?.textContent }));
+    if (off.pressed !== 'false' || off.url || off.saved) throw new Error('al salir, la vista conjunta sigue puesta: ' + JSON.stringify(off));
+    if (off.focus !== 'o/b') throw new Error(`el foco quedó en ${off.focus || 'otro lado'} y no en la pestaña de o/b`);
+  });
+
+  await step(page, 'editar sin token: el editor lo dice, no deja hacer commit y lleva a Ajustes', async () => {
+    await page.click('#all-tab');
+    await page.click('.rc-card[data-key="o/b"] .rc-last');
+    await (await page.waitForSelector('#diff-panel .df-file[open] .df-edit', { timeout: T(10000) })).click();
+    await page.waitForSelector('#editor[open]', { timeout: T(3000) });
+    await page.waitForFunction(() => document.querySelector('#editor .ed-note')?.dataset.kind && document.querySelector('#editor .ed-note').dataset.kind !== 'busy', null, { timeout: T(5000) });
+    const st = await page.evaluate(() => ({
+      settings: !document.querySelector('#editor .ed-settings').hidden,
+      save: document.querySelector('#editor .ed-save').disabled,
+      branch: document.querySelector('#editor-branch').value,
+      repo: document.querySelector('#editor .ed-repo').textContent,
+    }));
+    if (!st.settings || !st.save) throw new Error('sin token deja hacer commit o no ofrece Ajustes: ' + JSON.stringify(st));
+    if (st.repo !== 'o/b' || st.branch !== 'main') throw new Error('el editor abrió otro repo o rama: ' + JSON.stringify(st));
+    const puts = gh.calls.length;
+    await page.click('#editor .ed-settings');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    const focus = await page.evaluate(() => document.activeElement?.id);
+    if (focus !== 'token-input') throw new Error(`Ajustes abrió con el foco en ${focus}`);
+    if (gh.calls.length !== puts) throw new Error('intentó escribir sin token');
+    await page.click('#settings-cancel');
+    await page.click('#all-tab'); // deja la vista conjunta como estaba para los pasos que siguen
+    await page.waitForSelector('#all-panel', { state: 'hidden', timeout: T(3000) });
   });
 
   await step(page, 'cerrar la pestaña deja de seguir el repo', async () => {
@@ -2809,6 +3076,21 @@ console.log('Capa para streaming: color de fondo y &hide= (?embed=1)');
     }));
     if (r.bg !== 'rgb(0, 255, 0)') throw new Error(`&bg=00ff00 deja el fondo ${r.bg}`);
     if (r.toasts !== 'none' || r.combo !== 'none') throw new Error(`&hide= no esconde: ${JSON.stringify(r)}`);
+  });
+  await step(page, '&hide=legend,title,clock esconde la leyenda, el rótulo y las fechas', async () => {
+    await page.goto(`${base}/index.html?lang=es&embed=1&title=Hola&hide=legend,title,clock`);
+    await loaded(page);
+    await page.waitForSelector('.embed-title', { state: 'attached', timeout: T(30000) });
+    const r = await page.evaluate(() => {
+      const d = (s) => {
+        const e = document.querySelector(s);
+        return e ? getComputedStyle(e).display : 'ausente';
+      };
+      return { title: d('.embed-title'), legend: d('.legend'), cls: document.documentElement.className };
+    });
+    if (r.title !== 'none') throw new Error(`&hide=title deja el rótulo ${r.title}`);
+    if (r.legend !== 'none' && r.legend !== 'ausente') throw new Error(`&hide=legend deja la leyenda ${r.legend}`);
+    if (!/embed-hide-clock/.test(r.cls)) throw new Error('&hide=clock no marca la capa');
   });
   await step(page, 'sin &hide= los avisos siguen ahí (lo de siempre por defecto)', async () => {
     await page.goto(`${base}/index.html?lang=es&embed=1`);

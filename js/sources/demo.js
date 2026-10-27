@@ -343,6 +343,10 @@
         this.later(2200, () => {
           if (!this.data.branches.has(pr.head)) return;
           this.data.branches.delete(pr.head);
+          // como GitHub: un PR apilado sobre la rama borrada pasa a apuntar a la base del que se fusionó
+          // (si no, el siguiente merge haría su commit en una rama que ya no existe)
+          for (const p of this.data.pulls.values()) if (p.base === pr.head) p.base = pr.base;
+          for (const x of this.data.branches.values()) if (x.base === pr.head) x.base = pr.base;
           this.data.totalBranches = this.data.branches.size;
           this.publish([this.act('branch-delete', { title: MSG('act.branchDeleted', { name: pr.head }), detail: MSG('act.branchDeletedMerged', { into: pr.base }), branch: pr.head, sha: c.sha, actor: this.actor(author) })]);
         });
@@ -545,6 +549,9 @@
     /** Los cambios de un commit, inventados a partir de su mensaje («feat(search): …» toca src/search/…),
         pero siempre los mismos para el mismo commit. */
     commitDiff(sha) {
+      // un commit hecho con el editor tiene sus cambios de verdad
+      const own = this.edits?.diffs.get(sha);
+      if (own) return Promise.resolve({ files: own, truncated: false });
       const c = this.data.commits.get(sha);
       const rnd = mulberry32(parseInt(String(sha).slice(0, 8), 16) | 0);
       const m = /^(\w+)(?:\(([\w-]+)\))?!?:/.exec(c?.message || '');
@@ -580,8 +587,10 @@
             out.push(`@@ -${at},${6 + del} +${at + shift},${6 + add} @@ ${h ? code[2] : ''}`.trimEnd());
             shift += add - del;
             for (let j = 0; j < 3; j++) out.push(' ' + line());
-            for (let j = 0; j < del; j++) out.push('-' + line());
-            for (let j = 0; j < add; j++) out.push('+' + line());
+            const gone = Array.from({ length: del }, line);
+            for (const l of gone) out.push('-' + l);
+            // lo quitado vuelve retocado (un número, un nombre), como en un cambio de verdad: el panel marca la palabra
+            for (let j = 0; j < add; j++) out.push('+' + (j < del ? tweak(gone[j]) || line() : line()));
             for (let j = 0; j < 3; j++) out.push(' ' + line());
             at += 20 + Math.floor(rnd() * 40);
           }
@@ -596,9 +605,91 @@
     diffCheap() {
       return true;
     }
+
+    /* ---------- editar un archivo (js/editor.js): en la demo, en memoria ---------- */
+
+    canEdit() {
+      return true;
+    }
+
+    canWrite() {
+      return null;
+    }
+
+    /** Lo que guardó el editor (rama + ruta → texto) y los cambios de cada commit suyo. */
+    get edits() {
+      return (this._edits ||= { files: new Map(), diffs: new Map() });
+    }
+
+    /** El archivo de una rama: lo que se guardó con el editor o, si no, uno inventado (siempre el mismo) para sus rutas. */
+    readFile({ path, ref }) {
+      const key = `${ref}\u0000${path}`;
+      let text = this.edits.files.get(key);
+      if (text == null) {
+        const known = demoKnown(path) || this.edits.files.has(`${this.data.repo.defaultBranch}\u0000${path}`);
+        if (!known) return Promise.resolve({ missing: true });
+        text = this.edits.files.get(`${this.data.repo.defaultBranch}\u0000${path}`) ?? demoFile(path);
+      }
+      const sha = this.edits.diffs.size + ':' + text.length;
+      return new Promise((resolve) => setTimeout(() => resolve({ text, sha, binary: false }), 120));
+    }
+
+    /** Un commit en la rama con el archivo nuevo: aparece en el grafo y en el panel de actividad como cualquier push. */
+    writeFile({ path, branch, text, message }) {
+      const b = this.data.branches.get(branch);
+      if (!b) return Promise.reject(new Error(MSG('editor.err.perm')));
+      const key = `${branch}\u0000${path}`;
+      const known = this.edits.files.has(key) || demoKnown(path);
+      const before = this.edits.files.get(key) ?? (known ? this.edits.files.get(`${this.data.repo.defaultBranch}\u0000${path}`) ?? demoFile(path) : '');
+      const me = { name: i18n.t('editor.you'), login: 'you' };
+      const c = this.commit(branch, message, me, Date.now());
+      this.edits.files.set(key, text);
+      const patch = GB.editor ? GB.editor.patch(before, text) : '';
+      this.edits.diffs.set(c.sha, [{ path, from: null, status: known ? 'modified' : 'added', ...GB.diff.count(patch), binary: false, patch: patch || null, url: null }]);
+      this.publish([this.act('push', { title: MSG('act.pushNew', { n: 1, name: branch }), detail: U.firstLine(message), branch, sha: c.sha, actor: this.actor(me) })]);
+      return new Promise((resolve) => setTimeout(() => resolve({ sha: c.sha, blob: c.sha }), 200));
+    }
+  }
+
+  /** ¿Existe esta ruta en la demo? Las de su árbol y las que tocan sus commits inventados (src/, tests/, docs/…). */
+  const demoKnown = (path) => DEMO_TREE.includes(path) || /^(src|tests|docs)\/[\w./-]+\.\w+$/.test(path) || ['README.md', 'package.json', 'package-lock.json', 'vite.config.ts', '.github/workflows/ci.yml'].includes(path);
+
+  /** Un archivo de la demo, inventado a partir de su ruta (siempre el mismo): código, Markdown o configuración. */
+  function demoFile(path) {
+    const rnd = mulberry32([...path].reduce((h, ch) => (Math.imul(h, 31) + ch.charCodeAt(0)) | 0, 11));
+    const name = path.split('/').pop();
+    const base = name.replace(/\.[^.]+$/, '');
+    if (/\.md$/i.test(name)) return `# ${base}\n\n${i18n.t('repo.demoDesc')}\n`;
+    if (/\.(json)$/i.test(name)) return `{\n  "name": "orbita",\n  "version": "1.4.0",\n  "private": true\n}\n`;
+    if (/\.(ya?ml)$/i.test(name)) return `name: ${base}\non: [push]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: npm test\n`;
+    if (/\.css$/i.test(name)) return `.${base} {\n  display: grid;\n  gap: 8px;\n}\n`;
+    const s = base.replace(/[^\w]/g, '') || 'app';
+    const Cap = s[0].toUpperCase() + s.slice(1);
+    const lines = DEMO_CODE.map((l) => l.replace(/\{s\}/g, s).replace(/\{S\}/g, Cap));
+    const out = [];
+    for (let i = 0, n = 8 + Math.floor(rnd() * 10); i < n; i++) out.push(lines[Math.floor(rnd() * lines.length)]);
+    return out.join('\n') + '\n';
   }
 
   /* las líneas de código de los cambios inventados: identificadores, así que en inglés; {s} es el ámbito */
+  /* el retoque de una línea quitada que vuelve agregada: el primer cambio que le sirve (null si ninguno) */
+  const DEMO_TWEAKS = [
+    [/\d+/, (d) => String(Number(d) * 2 || 1)],
+    [/useState/, 'useReducer'],
+    [/client/, 'http'],
+    [/items/, 'rows'],
+    [/state/, 'value'],
+    [/keep/, 'hold'],
+    [/load/, 'fetch'],
+    [/ApiError/, 'HttpError'],
+    [/handles/, 'tolerates'],
+    [/component/, 'element'],
+  ];
+  const tweak = (l) => {
+    const hit = DEMO_TWEAKS.find(([re]) => re.test(l));
+    return hit ? l.replace(hit[0], hit[1]) : null;
+  };
+
   const DEMO_CODE = [
     "import { useEffect, useState } from 'react';",
     "import { client } from '../api/client';",

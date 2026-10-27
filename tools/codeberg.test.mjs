@@ -28,6 +28,8 @@ function load(cb) {
     AbortController,
     TextEncoder,
     TextDecoder,
+    btoa,
+    atob,
     fetch: cb.fetch,
     navigator: { onLine: true },
     document: { hidden: false, addEventListener() {}, removeEventListener() {} },
@@ -147,7 +149,7 @@ function fakeCodeberg(site = 'https://codeberg.org') {
     const path = url.replace(`${site}/api/v1`, '');
     cb.calls.push(path);
     const { status = 200, body, headers = {} } =
-      cb.private && !cb.expectAuth && path.startsWith(REPO) ? { status: 404, body: { message: 'not found' } } : cb.override?.(path) || route(path);
+      cb.private && !cb.expectAuth && path.startsWith(REPO) ? { status: 404, body: { message: 'not found' } } : cb.override?.(path, opts) || route(path);
     const hs = new Map(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), String(v)]));
     return { status, ok: status >= 200 && status < 300, statusText: '', headers: { get: (k) => hs.get(k.toLowerCase()) || null }, text: async () => (typeof body === 'string' ? body : JSON.stringify(body)) };
   };
@@ -463,4 +465,39 @@ test('el token de Codeberg va en cada consulta a codeberg.org (y un repo privado
   assert.deepEqual(o.errors, []);
   assert.ok(own.calls.length > 0);
   assert.ok(own.auths.every((a) => a === undefined), 'un Forgejo propio no recibe el token de Codeberg');
+});
+
+/* ---------- editar un archivo (js/editor.js) ---------- */
+
+test('editar: lee el archivo de la rama y escribe con el token de Codeberg (PUT con su sha, POST si es nuevo); un Forgejo propio no', async () => {
+  const cb = repo();
+  cb.expectAuth = 'token cb-w';
+  const sent = [];
+  cb.override = (path, opts) => {
+    if (path === `${REPO}/contents/src/app.js?ref=feature`) return { body: { type: 'file', encoding: 'base64', size: 13, content: Buffer.from('const a = 1;\n').toString('base64'), sha: 'blob1' } };
+    if (opts.method === 'PUT' || opts.method === 'POST') {
+      sent.push({ path, method: opts.method, body: JSON.parse(opts.body) });
+      return { status: opts.method === 'POST' ? 201 : 200, body: { content: { sha: 'blob2' }, commit: { sha: 'c2', html_url: 'https://codeberg.org/ana/api/commit/c2' } } };
+    }
+    return null;
+  };
+  const { src } = connect(cb, { token: 'cb-w' });
+  assert.equal(src.canEdit(), true);
+  assert.equal(src.canWrite(), null);
+  const f = await src.readFile({ path: 'src/app.js', ref: 'feature' });
+  assert.deepEqual([f.text, f.sha], ['const a = 1;\n', 'blob1']);
+  assert.equal((await src.readFile({ path: 'otro.txt', ref: 'feature' })).missing, true);
+  const out = await src.writeFile({ path: 'src/app.js', branch: 'feature', text: 'const a = 2;\n', message: 'Actualiza src/app.js', sha: 'blob1' });
+  assert.deepEqual({ ...out }, { sha: 'c2', url: 'https://codeberg.org/ana/api/commit/c2', blob: 'blob2' });
+  await src.writeFile({ path: 'nuevo.md', branch: 'feature', text: '#\n', message: 'Crea nuevo.md' });
+  assert.deepEqual(
+    sent.map((x) => [x.method, x.path, x.body.branch, Buffer.from(x.body.content, 'base64').toString(), x.body.message, x.body.sha ?? null]),
+    [
+      ['PUT', `${REPO}/contents/src/app.js`, 'feature', 'const a = 2;\n', 'Actualiza src/app.js', 'blob1'],
+      ['POST', `${REPO}/contents/nuevo.md`, 'feature', '#\n', 'Crea nuevo.md', null],
+    ],
+  );
+  const own = connect(fakeCodeberg('https://git.miempresa.com'), { webUrl: 'https://git.miempresa.com' }).src;
+  assert.equal(own.canWrite(), 'editor.noWrite', 'un Forgejo propio no recibe token: no se escribe');
+  await assert.rejects(own.writeFile({ path: 'a', branch: 'main', text: '', message: 'm' }), (err) => err.editKind === 'noWrite');
 });

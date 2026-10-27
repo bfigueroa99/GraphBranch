@@ -506,8 +506,8 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
     let corto = superficial ?? false;
     if (!titulos) {
       if (git(dir, ['rev-parse', '--verify', '-q', `origin/${BASE}`]).status !== 0) a.push(`sin origin/${BASE}: no se comprobaron los PR`);
-      // --first-parent: con commits de merge, solo los merges son PR; los commits de cada rama no cuentan
-      else titulos = git(dir, ['log', '--first-parent', `origin/${BASE}`, '--format=%s']).stdout.split('\n');
+      // el log entero: un PR que llegó a dev dentro de un «Merge master en la rama» (#177 y #178) no es primer padre
+      else titulos = git(dir, ['log', `origin/${BASE}`, '--format=%s']).stdout.split('\n');
       corto = superficial ?? esSuperficial(dir);
     }
     let ok = 'sin ítems hechos';

@@ -605,29 +605,26 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-11. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
-    nítidas (demo a 320 px: 3 de 5 atenuadas); comprobar que Tab y el toque no caigan en una atenuada.
-    Reproducción: Playwright, 320 px, 3D, `?repo=demo` → `.g3-head` con opacidad 0,22 y `display: flex`.
-12. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
+11. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
     vistas, las estadísticas y la bitácora encima) y el 3D no arma etiquetas hasta verse; pensar en una
     forma de llegar al grafo sin recorrer la página (ancla o tarjetas plegables en celular).
     Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la auditoría → captura sin grafo; `#graph3d` fuera de la pantalla.
-13. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+12. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-14. [Seguridad] Las fuentes Codeberg y Bitbucket no validan en el origen las URL de los pull requests
+13. [Seguridad] Las fuentes Codeberg y Bitbucket no validan en el origen las URL de los pull requests
     (`codeberg.js:296` `p.html_url`, `bitbucket.js:204` y `:321` `links.html.href`), a diferencia de
     `codeberg.js:179` y GitHub (`/^https:\/\//`). La interfaz ya las filtra con `U.safeUrl` (iteración 119),
     pero un dato fuera de http(s) llega hasta las exportaciones (resumen, bitácora en Markdown).
     Reproducción: `tools/codeberg.test.mjs` con un PR cuyo `html_url` sea `javascript:alert(1)` → la actividad conserva esa `url`.
-15. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
+14. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
     `WebFetch` a `releases.electronjs.org` dio HTTP 500 en la iteración 119. Repetir la comparación
     cuando la página responda y subir si hay una estable más nueva.
     Reproducción: `WebFetch https://releases.electronjs.org/release/stable` → `HTTP 500`.
-16. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
+15. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
     corta a los 120 s; documentar en «Cómo validar» que se corra en segundo plano, como `audit --langs`.
     Reproducción: `time node tools/smoke.mjs` → ~480 s.
-17. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
+16. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
     `npm run check` en la iteración 128 (la repetición pasó), aun con la espera de la 127.
     Reproducción: `npm run check` → `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
 

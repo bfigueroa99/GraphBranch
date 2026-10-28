@@ -13,7 +13,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { ARCHIVO_BITACORA, ARENA_MAX, AUDITABLES, BASE, RELEASE, CRON_H, EJES, FLAGS, HOJA_SIN_FUENTE, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SUBTIPOS, appReferencia, check, diagnostico, matrizReplica, necesidades, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, siguiente, tramos } from './loop.mjs';
+import { ARCHIVO_BITACORA, ARENA_MAX, AUDITABLES, BASE, CADENCIAS, RELEASE, CRON_H, EJES, FLAGS, HOJA_SIN_FUENTE, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SUBTIPOS, appReferencia, check, diagnostico, disparosEntre, matrizReplica, necesidades, ordenHoja, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, siguiente, tramos } from './loop.mjs';
 import { TIPOS } from './audit.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -127,14 +127,14 @@ const falla = (fn) => {
 /* -------------------------------------------------------------- siguiente */
 
 describe('siguiente()', () => {
-  test('la 28 es de expansión y toma el primer ítem sin hacer si no repite el eje', () => {
+  test('la 28 es de expansión y, a igual puntaje, toma el primer ítem sin hacer si no repite el eje', () => {
     const s = siguiente(fixture());
     assert.equal(s.n, 28);
     assert.equal(s.tipo, 'Expansión');
     assert.equal(s.item, 6);
     assert.equal(s.eje, 'Fuentes');
     assert.equal(s.rama, 'loop/28');
-    assert.equal(s.motivo, 'primer ítem sin hacer; la expansión anterior (26) fue de Escala');
+    assert.equal(s.motivo, 'el primero (ítem 6, puntaje 2,0); la expansión anterior (26) fue de Escala');
     assert.equal(s.declarado, SIGUIENTE_28 + ' con una segunda línea.');
     assert.deepEqual([s.pendientes, s.hechos, s.mantenimiento], [18, 6, 13]);
   });
@@ -222,14 +222,57 @@ describe('siguiente()', () => {
     assert.equal(s.n, 26);
     assert.equal(s.item, 7);
     assert.equal(s.eje, 'Escala');
-    assert.equal(s.motivo, 'el primero (6) es del mismo eje que la 25 (Fuentes) y entre los tres primeros hay otro eje');
+    assert.equal(s.motivo, 'el primero (ítem 6, puntaje 2,0) es del mismo eje que la 25 (Fuentes) y entre los tres primeros hay otro eje');
   });
 
   test('si no hay otro eje entre los tres primeros, toma el primero igual', () => {
     const items = ['Plataformas', 'Salidas', 'Salidas', 'Fuentes', 'Fuentes', 'Fuentes', 'Fuentes', 'Fuentes', ...Array(16).fill('Datos')];
     const s = siguiente(fixture({ iteraciones: 25, items, hechos: { 1: 45, 2: 46, 3: 49, 4: 47, 5: 50 } }));
     assert.equal(s.item, 6);
-    assert.equal(s.motivo, 'el primero (6) es del mismo eje que la 25 (Fuentes) y no hay otro eje entre los tres primeros');
+    assert.equal(s.motivo, 'el primero (ítem 6, puntaje 2,0) es del mismo eje que la 25 (Fuentes) y no hay otro eje entre los tres primeros');
+  });
+
+  // pedido de Benjamin, 2026-10-28: la hoja se toma por puntaje y no por el orden escrito
+  const conPuntajes = (puntajes, extra = {}) => {
+    let doc = fixture(extra);
+    for (const [k, p] of Object.entries(puntajes)) doc = doc.replace(new RegExp(`^(${k}\\. \\*\\*Ítem ${k}\\*\\* · [^·]+) · 2×2/2\\.`, 'm'), `$1${p}.`);
+    return doc;
+  };
+
+  test('toma el de mayor puntaje aunque esté más abajo; a igual puntaje, el de número menor', () => {
+    // la 27 fue de Público; sin hacer, 6 (Fuentes) en adelante, todos 2×2/2 salvo estos
+    const s = siguiente(conPuntajes({ 9: ' · 3×2/1', 12: ' · 3×2/1', 8: ' · 3×3/2' }));
+    assert.equal(s.item, 9);
+    assert.equal(s.eje, 'Datos');
+    assert.equal(s.motivo, 'el primero (ítem 9, puntaje 6,0); la expansión anterior (26) fue de Escala');
+    assert.deepEqual(ordenHoja(parse(conPuntajes({ 9: ' · 3×2/1', 12: ' · 3×2/1', 8: ' · 3×3/2' })).hoja.filter((i) => !i.hecho)).slice(0, 5).map((i) => i.n), [9, 12, 8, 6, 10]);
+  });
+
+  test('un ítem sin puntaje va al final; el eje se mira en los tres primeros del orden por puntaje', () => {
+    const doc = conPuntajes({ 6: '', 8: ' · 3×3/1' });
+    const orden = ordenHoja(parse(doc).hoja.filter((i) => !i.hecho)).map((i) => i.n);
+    assert.equal(orden[0], 8);
+    assert.equal(orden[orden.length - 1], 6, 'el 6 no tiene puntaje');
+    // la 25 fue de Fuentes y el 8 es de Escala: el 8 sigue primero aunque el 6, más arriba, es otro eje
+    const s = siguiente(conPuntajes({ 6: '', 8: ' · 3×3/1' }, { iteraciones: 25, hechos: { 1: 45, 2: 46, 3: 49, 4: 47, 5: 50 } }));
+    assert.equal(s.item, 8);
+    // si el de mayor puntaje repite el eje, toma otro de los tres primeros de ese orden
+    const t = siguiente(conPuntajes({ 10: ' · 3×3/1', 13: ' · 3×3/1', 9: ' · 3×2/1' }, { iteraciones: 25, hechos: { 1: 45, 2: 46, 3: 49, 4: 47, 5: 50 } }));
+    assert.equal(t.item, 9);
+    assert.equal(t.motivo, 'el primero (ítem 10, puntaje 9,0) es del mismo eje que la 25 (Fuentes) y entre los tres primeros hay otro eje');
+  });
+
+  test('los must de Replica que faltan van antes que todo, entre ellos por puntaje', () => {
+    const doc = conPuntajes({ 9: ' · 3×3/1', 14: ' · 1×2/2', 16: ' · 2×2/1' })
+      .replace(/^(14\. \*\*Ítem 14\*\*[^\n]*)$/m, '$1 [replica must 2026-10-20]')
+      .replace(/^(16\. \*\*Ítem 16\*\*[^\n]*)$/m, '$1 [replica must 2026-10-20]')
+      .replace(/^(10\. \*\*Ítem 10\*\*[^\n]*)$/m, '$1 [replica 2026-10-20]');
+    const pend = parse(doc).hoja.filter((i) => !i.hecho);
+    assert.deepEqual(pend.filter((i) => i.must).map((i) => i.n), [14, 16], 'un [replica …] sin must no es must');
+    assert.deepEqual(ordenHoja(pend).slice(0, 3).map((i) => i.n), [16, 14, 9]);
+    const s = siguiente(doc);
+    assert.equal(s.item, 16);
+    assert.equal(s.motivo, 'el primero (ítem 16, must de Replica, puntaje 4,0); la expansión anterior (26) fue de Escala');
   });
 
   test('un pendiente Alta va antes que todo, también en una iteración de expansión', () => {
@@ -637,9 +680,9 @@ node tools/loop.mjs --reclamar --sin-red && npm run check -- --e2e
     const con = (bloque, settings = SETTINGS) => r8({ skill: SKILL + bloque, settings });
     const permitido = JSON.stringify({ permissions: { allow: [...JSON.parse(SETTINGS).permissions.allow, `Bash(npx ${SKILLS_CLI}:*)`] } });
     assert.equal(nivel(con(CLI, permitido), 'R8'), 'ok', con(CLI, permitido).salida);
-    // sin el permiso es un aviso, no un error: lo suma Benjamin (Para Benjamin 2)
+    // sin el permiso es un aviso, no un error: los permisos los decide Benjamin
     assert.equal(nivel(con(CLI), 'R8'), 'aviso');
-    assert.match(texto(con(CLI), 'R8'), new RegExp(`«npx ${SKILLS_CLI.replaceAll('.', '\\.')}».*Para Benjamin 2`));
+    assert.match(texto(con(CLI), 'R8'), new RegExp(`«npx ${SKILLS_CLI.replaceAll('.', '\\.')}».*los decide Benjamin \\(Para Benjamin\\)$`));
     // en la prosa se puede nombrar lo prohibido; en un bloque de código, no
     assert.equal(nivel(con(CLI + '\nNunca `npx skills update` ni `-g`.\n', permitido), 'R8'), 'ok');
     for (const [malo, que] of [
@@ -665,10 +708,17 @@ node tools/loop.mjs --reclamar --sin-red && npm run check -- --e2e
     assert.match(texto(r, 'R8'), /sin skill/);
   });
 
-  test('los archivos reales del repo pasan R8 (a lo sumo con el aviso del permiso de find-skills, que suma Benjamin)', () => {
+  test('los archivos reales del repo pasan R8, con todos los permisos que pide la skill', () => {
     const r = check(fixture(), { log: LOG });
-    if (nivel(r, 'R8') === 'aviso') assert.match(texto(r, 'R8'), new RegExp(`^SKILL\\.md usa «npx ${SKILLS_CLI.replaceAll('.', '\\.')}» [^;]*\\(Para Benjamin 2\\)$`), r.salida);
-    else assert.equal(nivel(r, 'R8'), 'ok', r.salida);
+    assert.equal(nivel(r, 'R8'), 'ok', r.salida);
+  });
+
+  test('.claude/settings.json permite lo que Benjamin autorizó el 2026-10-28 (investigar, triar, Replica y la arena)', () => {
+    const allow = JSON.parse(readFileSync(join(root, '.claude', 'settings.json'), 'utf8')).permissions.allow;
+    for (const p of ['WebSearch', 'WebFetch', 'mcp__github__list_issues', 'mcp__github__issue_read', 'Bash(python3 .claude/skills/replica-diff/parity.py:*)', 'Bash(python3 .claude/skills/replica-entrepreneur/reviews.py:*)', 'Bash(python3 .claude/skills/arena/bracket.py:*)', `Bash(npx ${SKILLS_CLI}:*)`]) assert.ok(allow.includes(p), p);
+    for (const p of allow.filter((x) => x.startsWith('Bash(python3 '))) assert.ok(existsSync(join(root, /^Bash\(python3 (\S+):\*\)$/.exec(p)[1])), `${p}: el script existe`);
+    // editar o borrar Routines sigue fuera (la skill, «Nunca»)
+    assert.ok(!allow.some((x) => /update_trigger|delete_trigger/.test(x)));
   });
 });
 
@@ -725,6 +775,11 @@ describe('check() R10 a R12', () => {
     assert.match(texto(c(doc.replace(nuevo, `${nuevo} [inv. 2026-09-01]`)), 'R10'), /cita \[inv\. 2026-09-01\] y docs\/investigacion\.md no tiene fuentes de esa fecha/);
     assert.equal(nivel(c(doc.replace(nuevo, `${nuevo} [parte del ítem 6]`)), 'R10'), 'ok');
     assert.match(texto(c(doc.replace(nuevo, `${nuevo} [parte del ítem 99]`)), 'R10'), /dice \[parte del ítem 99\] y ese ítem no existe/);
+    // lo que sale de la paridad con la app de referencia, must o no, cita la pasada vigente
+    const recon = '# Recon map: GitKraken Desktop\n\nFecha: 2026-10-20\n';
+    assert.equal(nivel(c(doc.replace(nuevo, `${nuevo} [replica 2026-10-20]`), { recon }), 'R10'), 'ok');
+    assert.equal(nivel(c(doc.replace(nuevo, `${nuevo} [replica must 2026-10-20]`), { recon }), 'R10'), 'ok');
+    assert.match(texto(c(doc.replace(nuevo, `${nuevo} [replica must 2026-10-25]`), { recon }), 'R10'), /cita \[replica 2026-10-25\] y la pasada de Replica es del 2026-10-20/);
   });
 
   test('R11: cada tipo de la base de la auditoría tiene un pendiente que lo cita', () => {
@@ -963,9 +1018,30 @@ describe('diagnostico() de --salud', () => {
 
   test('un reclamo abandonado lo releva el disparo siguiente, no el de después (RECLAMO_H < CRON_H)', () => {
     // loop/128: una sesión la dejó sin fusionar a los 25 min; con 6 h, el disparo de 4 h después la vio «Ocupada»
+    assert.equal(CRON_H, 2, 'el cron de la Routine es cada 2 h desde el 2026-10-28 (3 */2 * * *)');
     assert.ok(RECLAMO_H < CRON_H, `RECLAMO_H (${RECLAMO_H}) tiene que ser menor que CRON_H (${CRON_H})`);
-    const r = diagnostico({ ...base, ramas: [{ nombre: 'loop/28', fecha: base.ahora - (CRON_H - 0.1) * H }] });
-    assert.ok(r.lineas.some((l) => /^Vencida: loop\/28 lleva 3,9 h sin commits/.test(l)), r.lineas.join('\n'));
+    const ahora = Date.parse('2026-11-01T00:00:00Z'); // en el tramo de 2 h
+    const r = diagnostico({ ...base, ahora, ramas: [{ nombre: 'loop/28', fecha: ahora - (CRON_H - 0.1) * H }] });
+    assert.ok(r.lineas.includes(`Vencida: loop/28 lleva ${(CRON_H - 0.1).toFixed(1).replace('.', ',')} h sin commits: --reclamar la releva`), r.lineas.join('\n'));
+    // y no antes de tiempo: la iteración más larga sin relevo (81 min) sigue en curso
+    const larga = diagnostico({ ...base, ahora, ramas: [{ nombre: 'loop/28', fecha: ahora - 81 * 60e3 }] });
+    assert.ok(larga.lineas.includes('En curso: loop/28 (último commit hace 81 min)'), larga.lineas.join('\n'));
+  });
+
+  test('la cadencia por tramos: cada uno con su intervalo, sin huecos falsos de antes del cambio', () => {
+    assert.deepEqual(CADENCIAS.map((c) => c.horas), [4, 2]);
+    assert.equal(CADENCIAS[0].desde, '2026-10-10T04:32:04Z');
+    const tramos2 = [{ desde: desde, horas: 4 }, { desde: new Date(t0 + 24 * H).toISOString(), horas: 2 }];
+    assert.equal(disparosEntre(t0, t0 + 48 * H, tramos2), 6 + 12);
+    assert.equal(disparosEntre(t0 + 20 * H, t0 + 28 * H, tramos2), 1 + 2, 'un tramo que cruza el cambio cuenta cada parte con su intervalo');
+    // antes del cambio, cada 4 h; después, cada 2 h, con una ventana de 5 h: solo esa es un hueco
+    const merges = [...[4, 8, 13, 17, 21].map((h) => t0 + h * H), ...[25, 27, 32, 34, 36, 38, 40, 42, 44, 46].map((h) => t0 + h * H)].map((fecha) => ({ fecha, titulo: 'x (#1)' }));
+    const r = diagnostico({ ...base, merges, cadencias: tramos2 });
+    assert.ok(r.lineas.some((l) => l.startsWith('Cadencia: 8 iteraciones desde la directiva (2026-10-10) para 18 disparos esperados')), r.lineas.join('\n'));
+    assert.deepEqual(r.lineas.filter((l) => l.startsWith('Hueco:')), ['Hueco: 2026-10-11 03:00 → 2026-10-11 08:00 UTC (5,0 h, un disparo sin iteración)'], r.lineas.join('\n'));
+    // con un solo intervalo de 2 h para todo, la historia de 4 h salía llena de huecos
+    const plano = diagnostico({ ...base, merges, cadencias: [{ desde, horas: 2 }] });
+    assert.ok(plano.lineas.filter((l) => l.startsWith('Hueco:')).length > 1, plano.lineas.join('\n'));
   });
 
   test('en un clon superficial no hay huecos antes del primer merge visible, y se dice', () => {

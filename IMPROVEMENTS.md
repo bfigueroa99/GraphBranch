@@ -1,6 +1,6 @@
 # Mejora continua
 
-Hoja de ruta, pendientes y bitácora de las iteraciones del loop (una cada 4 horas). Las entradas viejas
+Hoja de ruta, pendientes y bitácora de las iteraciones del loop (una cada 2 horas). Las entradas viejas
 de la bitácora están en [`docs/BITACORA.md`](docs/BITACORA.md) (las lleva `node tools/loop.mjs --rotar`).
 
 ## Directiva vigente: ampliar el alcance
@@ -34,9 +34,15 @@ mantenimiento.
      que llegaron sin auditar (hasta 6); `espera` son los mantenimientos desde su último turno. Toma el
      primer pendiente **Media** de ese subtipo, o el primero; si no tiene pendientes (QA, Accesibilidad,
      Seguridad y Rendimiento pueden quedar sin ellos), audita su área con el protocolo de la skill.
-   - Las demás: **expansión**. Toma el primer ítem de la [Hoja de ruta](#hoja-de-ruta) que no esté
-     hecho, salvo que sea del mismo eje que la expansión anterior y haya otro de un eje distinto entre
-     los tres primeros: entonces ese. Así el proyecto crece a lo ancho y no solo en un frente.
+   - Las demás: **expansión**. Toma el primer ítem sin hacer de la [Hoja de ruta](#hoja-de-ruta) en este
+     orden (pedido de Benjamin, 2026-10-28: por puntaje, no por el orden escrito): primero los `must` de la
+     app de referencia que faltan (`[replica must AAAA-MM-DD]`, ver
+     [Replica](#replica-paridad-con-una-app-de-referencia)) y después los demás; dentro de cada grupo, de
+     mayor a menor puntaje (el `a×i/e` que lleva tras el eje, el de su idea en
+     [`docs/investigacion.md`](docs/investigacion.md)) y, a igual puntaje, el de número menor, que es el
+     orden escrito. Un ítem sin puntaje va al final de su grupo (y `--check` lo da como error en R10). Si
+     ese primero es del mismo eje que la expansión anterior y hay otro de un eje distinto entre los tres
+     primeros de ese orden, toma ese otro. Así el proyecto crece a lo ancho y no solo en un frente.
    - Un pendiente marcado **Alta** (seguridad, datos perdidos, la app en blanco, `dev` en rojo) va
      antes que todo, en cualquier iteración.
    - Lo calcula `node tools/loop.mjs --siguiente` (número, tipo, eje o subtipo, ítem, por qué y el
@@ -56,8 +62,9 @@ mantenimiento.
    con menos cobertura en el [Mapa de alcance](#mapa-de-alcance). La investigación vale 30 días: vencida,
    se rehace antes de reponer (con `WebSearch` y `WebFetch`; sin ellas, se dice en la bitácora y en Para
    Benjamin, y no se inventan fuentes). Cada ítem pendiente lleva su puntaje tras el eje
-   (`· Datos · 3×3/2.`: alcance × impacto / esfuerzo, de 1 a 3) y uno nuevo cita su fuente
-   (`[inv. AAAA-MM-DD]`, o `[parte del ítem K]` si es otra entrega de uno que ya estaba). La hoja de ruta
+   (`· Datos · 3×3/2.`: alcance × impacto / esfuerzo, de 1 a 3; con él lo ordena la regla 2) y uno
+   nuevo cita su fuente (`[inv. AAAA-MM-DD]`, o `[parte del ítem K]` si es otra entrega de uno que ya
+   estaba). La hoja de ruta
    nunca queda vacía: al loop no se le acaba el alcance por ganar.
 6. **Registrar:** la entrada de la bitácora dice el tipo y el eje (`Iteración 20 · Expansión ·
    Plataformas`) o el subtipo (`Iteración 31 · Mantenimiento · Deuda`), y lleva la viñeta `- QA:` del
@@ -121,9 +128,12 @@ y qué piden los usuarios de esa app, y con eso se rellena y se ordena la hoja d
   reseñas y paridad), al empezar esa reposición si R13 avisa que no hay pasada, que tiene más de 30 días
   o que es de otra app. Cada expansión que entrega una fila de la matriz la marca (`clone`) en su PR.
 - **De la paridad a la hoja:** los `must` de la referencia que GraphBranch no tiene (`no` o `partial`)
-  entran primero, cada uno con su evidencia (la fuente de su fila), su puntaje y `[replica AAAA-MM-DD]`
-  (la fecha de la pasada). Lo que piden las reseñas entra a la tabla de ideas de la investigación con
-  su puntaje y compite con las demás. Lo que choca con «Lo que no cambia» o con lo que es GraphBranch
+  entran primero, cada uno con su evidencia (la fuente de su fila), su puntaje y
+  `[replica must AAAA-MM-DD]` (la fecha de la pasada), y la regla 2 los toma antes que a los demás ítems,
+  entre ellos por puntaje (un must de puntaje bajo va antes que una idea de puntaje alto: es lo que falta
+  frente a la referencia). Lo que salga de la matriz sin ser `must` lleva `[replica AAAA-MM-DD]` y compite
+  por puntaje. Lo que piden las reseñas entra a la tabla de ideas de la investigación con su puntaje y
+  compite con las demás. Lo que choca con «Lo que no cambia» o con lo que es GraphBranch
   (lee repos con tokens de solo lectura: no hace commit, push ni merge en el repo real) queda en la
   matriz como `skip`, con el motivo.
 - **Reglas:** solo fuentes públicas y sin iniciar sesión (nunca la cuenta de nadie), leídas página por
@@ -201,36 +211,12 @@ cada iteración lo repite (`node tools/loop.mjs --salud` lo imprime) y se quita 
    fusiona en `dev` y `master` es el release: la web muestra lo nuevo cuando promovés `dev` a `master`
    (un PR `dev` → `master` con commit de merge); la línea `Release:` de `--salud` dice cuántos merges
    faltan.
-2. **Permisos para investigar, triar, Replica y la arena** (desde 2026-10-13). Para que la investigación de
-   mercado, la paridad con la app de referencia, la arena y el triaje de issues no dependan del modo de
-   permisos de la sesión, sumar a `.claude/settings.json` (`permissions.allow`): `WebSearch`, `WebFetch`,
-   `mcp__github__list_issues`, `mcp__github__issue_read` y, desde 2026-10-20,
-   `Bash(python3 .claude/skills/replica-diff/parity.py:*)`,
-   `Bash(python3 .claude/skills/replica-entrepreneur/reviews.py:*)` y
-   `Bash(python3 .claude/skills/arena/bracket.py:*)`. El de find-skills, `Bash(npx skills@1.7.4:*)`, ya
-   está (2026-10-27). Sin ellos el loop sigue: los issues los lee `--salud` por la API pública y la hoja
-   se repone con lo ya investigado mientras esté vigente (30 días). Sin `WebFetch` no hay pasada de
-   Replica, la arena necesita además que la sesión pueda lanzar subagentes que escriban en `.arena/`, y
-   find-skills, que la sesión pueda salir a skills.sh y a GitHub; si algo falta, no se hace y la
-   bitácora lo dice.
-3. **¿Subir la cadencia?** (desde 2026-10-13). Medido de nuevo el 2026-10-25: ya no se pierde la mitad
-   de los disparos (`--salud` cuenta más iteraciones que disparos esperados desde la directiva, una por
-   disparo), y de la 109 a la 134 cada iteración tardó de 8 a 81 min del reclamo al merge: el loop pasa
-   la mayor parte de cada ventana de 4 h parado. Lo que todavía se pierde son disparos tras una sesión
-   que dejó su reclamo sin fusionar (`loop/107`, `loop/128`: 12 h cada vez); desde el 2026-10-25 los
-   releva el disparo siguiente (`RECLAMO_H` de `tools/loop.mjs`, menor que `CRON_H`). Decidir si el cron
-   de la Routine pasa a cada 2 h: el candado ya evita que dos sesiones se pisen, y `CRON_H` y
-   `RECLAMO_H` bajan con él (una prueba exige que el reclamo venza antes del disparo siguiente).
-4. **Ramas viejas** (desde 2026-10-13). Las ramas `claude/*`, `ccr-*` y `permisos-claude` no son del loop:
+2. **Ramas viejas** (desde 2026-10-13). Las ramas `claude/*`, `ccr-*` y `permisos-claude` no son del loop:
    `node tools/loop.mjs --salud` dice cuáles ya están fusionadas o contenidas en dev y cuáles tienen
    trabajo sin fusionar (11 y 19 el 2026-10-25). Borrarlas o fusionarlas es tuyo: el loop nunca toca
    ramas ajenas.
-5. **¿Ordenar la hoja de ruta por puntaje?** (desde 2026-10-13). Con los puntajes de
-   `docs/investigacion.md`, lo primero serían los ítems 11, 12 y 19 (6,0), el 9 (4,5) y el 23 (4,0); hoy
-   el orden es el de la directiva (9, 10, 11…). El loop sigue el orden escrito: reordenar es una decisión
-   de producto.
-6. **Publicar la extensión de VS Code** (desde 2026-10-14). El paquete está en `vscode/` (editor `publisher: bfigueroa99` en su `package.json`). Crear el publicador en marketplace.visualstudio.com, un token de Azure DevOps y correr `node tools/vscode.mjs && cd vscode && npx @vscode/vsce publish`; o instalar el `.vsix` a mano.
-7. **Borrar las ramas `loop/*` fusionadas** (desde 2026-10-14). El proxy de las sesiones cloud niega
+3. **Publicar la extensión de VS Code** (desde 2026-10-14). El paquete está en `vscode/` (editor `publisher: bfigueroa99` en su `package.json`). Crear el publicador en marketplace.visualstudio.com, un token de Azure DevOps y correr `node tools/vscode.mjs && cd vscode && npx @vscode/vsce publish`; o instalar el `.vsix` a mano.
+4. **Borrar las ramas `loop/*` fusionadas** (desde 2026-10-14). El proxy de las sesiones cloud niega
    `git push origin --delete` (falló en todas las iteraciones de la 111 a la 134; desde el 2026-10-25 ya no
    se intenta), así que cada `loop/K` fusionada se queda en origin: 107 el 2026-10-25 (`loop/28` a
    `loop/134`; las 28 a 54 se fusionaron con squash y en el grafo parecen ramas que nunca volvieron a
@@ -239,7 +225,7 @@ cada iteración lo repite (`node tools/loop.mjs --salud` lo imprime) y se quita 
    fusionadas: nunca la que está en curso ni las `loop/K-vencida-…`). Para que no se vuelvan a juntar:
    Settings → General → Pull Requests → «Automatically delete head branches» (GitHub borra la rama al
    fusionar, sin pasar por el proxy).
-8. **Probar la vista de texto con un lector de pantalla real** (desde 2026-10-14). El loop solo comprueba la
+5. **Probar la vista de texto con un lector de pantalla real** (desde 2026-10-14). El loop solo comprueba la
    estructura ARIA y el teclado con Playwright. Abre la demo, pulsa el botón de las líneas y recórrela con NVDA,
    VoiceOver u Orca (¿la región viva anuncia sin repetir? ¿el foco se queda al actualizar?); lo que falle va a
    Mantenimiento y lo que salga bien se anota en el README, en «Límites conocidos».
@@ -261,9 +247,11 @@ segunda columna a la primera.
 
 ## Hoja de ruta
 
-Ordenada por alcance ganado frente a esfuerzo. Cada ítem dice su eje, su puntaje (alcance × impacto /
-esfuerzo, de 1 a 3; de dónde sale cada uno, en [`docs/investigacion.md`](docs/investigacion.md)), la
-primera entrega (la mínima que ya sirve) y cómo comprobarla. Las notas técnicas son un punto de partida:
+Numerada en el orden en que entró cada ítem (el número no cambia: lo citan los PR, la investigación y las
+otras entregas de un ítem); el loop la toma por puntaje, con los `must` de Replica primero (regla 2 de la
+directiva). Cada ítem dice su eje, su puntaje (alcance × impacto / esfuerzo, de 1 a 3; de dónde sale
+cada uno, en [`docs/investigacion.md`](docs/investigacion.md)), la primera entrega (la mínima que ya
+sirve) y cómo comprobarla. Las notas técnicas son un punto de partida:
 se comprueban antes de construir sobre ellas.
 
 1. ~~**Instalable y sin conexión (PWA)**~~ hecho en #45 · Plataformas. `manifest.webmanifest` con íconos (sale de
@@ -507,8 +495,8 @@ se comprueban antes de construir sobre ellas.
 104. **Salud del repo: tendencia de commits** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los commits por semana de las últimas 8, con lo ya cargado. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
 105. **Capa para streaming, novena entrega** · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&lang=` ya fija el idioma; `&view=2d|3d` fija la vista de la capa sin tocar la de la página. Comprobar: prueba de `embedOptions` y un paso del smoke.
 106. **Práctica: commit --amend** · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `commit --amend` (con `-m`), para corregir el último commit. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
-107. **Fuente Azure DevOps** · Fuentes · 2×3/3. [replica 2026-10-28] El primer must que falta frente a GitKraken (su ayuda «Azure DevOps», <https://help.gitkraken.com/gitkraken-desktop/azure-devops/>; `replica/parity.md`): conectar `azure:org/proyecto/repo` y dibujar sus ramas y commits con la API REST de Azure DevOps, primero repos públicos y sin token; la CSP suma solo `https://dev.azure.com`. Si esa API no admite CORS desde la página, la primera entrega es de la app de escritorio, dicho en el README. Comprobar: `tools/azure.test.mjs` con la API simulada y un paso del smoke.
-108. **Launchpad: los PRs de todos los repos seguidos, por estado** · Escala · 2×3/2. [replica 2026-10-28] El otro must que falta (ayuda «Launchpad», <https://help.gitkraken.com/gitkraken-desktop/gitkraken-launchpad/>): con dos o más repos abiertos, la vista conjunta «Todos» suma una lista única de sus PRs abiertos agrupados por estado (borrador, checks en rojo, aprobados, esperando revisión), con lo ya cargado de cada pestaña; cada fila lleva a su rama en su pestaña. Comprobar: prueba de la agrupación con PRs fabricados y un paso del smoke con la API simulada.
+107. **Fuente Azure DevOps** · Fuentes · 2×3/3. [replica must 2026-10-28] El primer must que falta frente a GitKraken (su ayuda «Azure DevOps», <https://help.gitkraken.com/gitkraken-desktop/azure-devops/>; `replica/parity.md`): conectar `azure:org/proyecto/repo` y dibujar sus ramas y commits con la API REST de Azure DevOps, primero repos públicos y sin token; la CSP suma solo `https://dev.azure.com`. Si esa API no admite CORS desde la página, la primera entrega es de la app de escritorio, dicho en el README. Comprobar: `tools/azure.test.mjs` con la API simulada y un paso del smoke.
+108. **Launchpad: los PRs de todos los repos seguidos, por estado** · Escala · 2×3/2. [replica must 2026-10-28] El otro must que falta (ayuda «Launchpad», <https://help.gitkraken.com/gitkraken-desktop/gitkraken-launchpad/>): con dos o más repos abiertos, la vista conjunta «Todos» suma una lista única de sus PRs abiertos agrupados por estado (borrador, checks en rojo, aprobados, esperando revisión), con lo ya cargado de cada pestaña; cada fila lleva a su rama en su pestaña. Comprobar: prueba de la agrupación con PRs fabricados y un paso del smoke con la API simulada.
 109. **Historial de un archivo** · Análisis · 2×2/1. [replica 2026-10-28] Frente al historial de archivo de GitKraken (ayuda «Diffs, File History and Blame», <https://help.gitkraken.com/gitkraken-desktop/diff/>): cada archivo de los cambios de un commit suma «Historial», que aplica el filtro por ruta a ese archivo (`?path=`) y deja a la vista los commits ya cargados que lo tocaron. Comprobar: un paso del smoke (de un archivo del diff al grafo filtrado por su ruta).
 110. **Ocultar una rama o dejarla sola** · Análisis · 2×2/2. [replica 2026-10-28] Frente a «Hide and Solo» del grafo de GitKraken (ayuda «Interface», <https://help.gitkraken.com/gitkraken-desktop/interface/>): la ficha de una rama suma «Ocultar» y «Solo esta», en 2D y en 3D, recordados por repo y con un botón para volver a verlas todas. Comprobar: prueba de la selección de ramas y un paso del smoke.
 111. **Primer padre en el grafo** · Análisis · 2×2/2. [replica 2026-10-28] Lo pide un usuario de GitKraken, que no lo tiene («it lacks the ability to show first parent only», <https://news.ycombinator.com/item?id=40486993>; `replica/fixes.md`): un interruptor deja en el grafo 2D solo la cadena del primer padre de cada rama, como `git log --first-parent`, con lo ya cargado, y viaja en la URL. Comprobar: prueba de la selección de commits y un paso del smoke.
@@ -930,3 +918,48 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/148, sin colisión
 - Validado: 455 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 149, expansión: ítem 98 (Capa para streaming, octava entrega, Plataformas)
+
+### 2026-10-28 · Cambio de maquinaria: permisos, cadencia de 2 h y hoja de ruta por puntaje
+
+- **Pedido de Benjamin** (2026-10-28): sus respuestas a tres pedidos de Para Benjamin (sí a los permisos, el
+  cron cada 2 h y la hoja de ruta por puntaje) y promover `dev` a `master`. No es una iteración numerada y la
+  proporción de la regla 2 no cambia.
+- **Permisos** (era Para Benjamin 2): `.claude/settings.json` suma `WebSearch`, `WebFetch`,
+  `mcp__github__list_issues`, `mcp__github__issue_read` y `Bash(python3 …:*)` de
+  `.claude/skills/replica-diff/parity.py`, `.claude/skills/replica-entrepreneur/reviews.py` y
+  `.claude/skills/arena/bracket.py`: la investigación, el triaje de issues, la pasada de Replica y la arena ya
+  no dependen del modo de permisos de la sesión. El aviso de R8 por el permiso de find-skills (que ya estaba
+  desde el 2026-10-27) deja de citar un pedido que no existe.
+- **Cadencia** (era Para Benjamin 3): la Routine pasa de `3 */4 * * *` a `3 */2 * * *` (la cambia la sesión de
+  Benjamin cuando se fusione este PR). `CRON_H` baja de 4 a 2 y `RECLAMO_H` de 3,5 a 1,5 h: un reclamo
+  abandonado lo releva el disparo siguiente, y la iteración más larga sin relevo medida (81 min, de la 109 a
+  la 148) no llega a vencer; la prueba lo ata en los dos sentidos. `--salud` mide la cadencia por tramos
+  (`CADENCIAS`: cada 4 h desde la directiva, cada 2 h desde el 2026-10-28 a las 18:00 UTC, el primer disparo
+  que el cron de 4 h no tenía): con 2 h para toda la historia daba 221 disparos esperados (58 %) en vez de
+  110 y 31 huecos en vez de 5. Lo dicen la cabecera de este archivo, la skill (Routine) y el README (el cron
+  de OpenCode y su ejemplo).
+- **Orden de la hoja de ruta** (era Para Benjamin 5): la regla 2 toma la hoja por puntaje y no por el orden
+  escrito. Primero los `must` de Replica que faltan, ahora marcados `[replica must AAAA-MM-DD]` (los ítems
+  107 y 108; la directiva ya los ponía primero, y la regla se conserva); después los demás. Dentro de cada
+  grupo, de mayor a menor puntaje; a igual puntaje, el de número menor (el orden escrito); un ítem sin
+  puntaje, al final de su grupo. El cambio de eje se sigue mirando en los tres primeros de ese orden. Lo
+  hace `ordenHoja` en `--siguiente`; R10 acepta la marca; lo dicen la regla 2, la sección Replica de la
+  directiva, la cabecera de la hoja y la skill («Reponer la hoja de ruta»). Los números de la hoja no
+  cambian (los citan los PR y la investigación). Hoy el orden es 108 y 107 (must, 3,0 y 2,0), 109 (4,0), los
+  de 2,0 (98, 100, 101, 105, 106, 110, 111 y 112) y los de 1,0 (99, 102, 103 y 104).
+- **Para Benjamin:** se quitan esos tres pedidos, resueltos; los demás pasan a ser del 1 al 5.
+- **Release:** fusionado este PR, `dev` se promueve a `master` con un PR `dev` → `master` y commit de merge,
+  pedido explícito de Benjamin del mismo día.
+- **Pruebas que fallan sin el cambio:** `tools/loop.test.mjs` (de 99 a 104): el orden por puntaje con
+  empates por número y sin puntaje al final, los must primero, la cadencia por tramos (con 2 h para toda la
+  historia salen huecos falsos), `RECLAMO_H` menor que `CRON_H` = 2 sin relevar una iteración de 81 min, R10
+  con `[replica must …]` y los siete permisos en `.claude/settings.json`; mutados, el orden escrito, el orden
+  sin must, la cadencia plana y `RECLAMO_H` en 1 h hacen fallar cada uno su prueba.
+- README: la sección «Correr el loop en OpenCode» (cron cada 2 h).
+- QA: no toca la página ni el escritorio; `--siguiente` y `--check` sobre el archivo editado y `--salud
+  --sin-red` contra origin (110 disparos esperados, los mismos 5 huecos que antes).
+- Al validar: el primer `npm run check` falló en el paso del smoke «filtro por autor» (quitar el filtro no
+  dejaba el grafo como estaba), el intermitente bajo carga del pendiente 1 (carga 8 en el contenedor); este
+  cambio no toca la página, y la repetición pasó los 126 pasos.
+- Validado: 460 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 149, expansión: ítem 108 (Launchpad: los PRs de todos los repos seguidos, por estado, Escala)

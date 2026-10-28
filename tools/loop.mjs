@@ -4,7 +4,7 @@
 
      node tools/loop.mjs --siguiente [--json]     qué iteración toca: número, tipo, eje, ítem y por qué
      node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill, el prompt y la pasada de Replica (sin red)
-     node tools/loop.mjs --reclamar [--relevo] [--sin-red] [--horas 3.5] [--repo <dir>]
+     node tools/loop.mjs --reclamar [--relevo] [--sin-red] [--horas 1.5] [--repo <dir>]
                                                   reclama la rama loop/N en origin: el push es el candado
      node tools/loop.mjs --publicado              compara la web de GitHub Pages con origin/master (el release)
      node tools/loop.mjs --salud [--sin-red]      la salud del loop: disparos perdidos, reclamos, ramas, issues sin
@@ -41,8 +41,10 @@ export const FLAGS = ['--siguiente', '--check', '--reclamar', '--publicado', '--
     que ser menos que CRON_H: si no, el disparo siguiente a una sesión muerta la encuentra «Ocupada» y se
     pierde también ese (loop/128: reclamada el 2026-10-23 a las 16:05 y dejada sin fusionar a las 16:30; el
     disparo de las 20:04 salió con 3 y la relevó el de las 00:05: 11,9 h sin iteración). Las iteraciones
-    109 a 134 tardaron de 8 a 81 min del reclamo al merge, y cada push renueva el reclamo. */
-export const RECLAMO_H = 3.5;
+    109 a 134 tardaron de 8 a 81 min del reclamo al merge (las 136 a 148, de 9 a 36), y cada push renueva el
+    reclamo. Con el cron cada 2 h (2026-10-28), 1,5 h: vence antes del disparo siguiente y no antes de lo
+    que tardó entera la iteración más larga. */
+export const RECLAMO_H = 1.5;
 /** La rama de integración: cada loop/N sale de ella, su PR se fusiona en ella y de ella se leen la hoja de
     ruta y la bitácora. Pedido de Benjamin, 2026-10-27: el loop trabaja en dev y master queda de release. */
 export const BASE = 'dev';
@@ -86,9 +88,17 @@ export const MARCA_SKILLS = 'Cambio de maquinaria: find-skills';
 export const HOJA_SIN_FUENTE = 26;
 /** La cola «Para Benjamin» es corta a propósito: con más ítems, aviso. */
 export const PARA_BENJAMIN_MAX = 8;
-/** Cada cuántas horas dispara la Routine (cron `3 *\/4 * * *`) y desde cuándo (fusión de #44, la directiva). */
-export const CRON_H = 4;
-export const DESDE_DIRECTIVA = '2026-10-10T04:32:04Z';
+/** Cada cuántas horas dispara la Routine, por tramos: cron `3 *\/4 * * *` desde la fusión de #44 (la directiva)
+    y `3 *\/2 * * *` desde el 2026-10-28 (pedido de Benjamin; el disparo de las 18:03 UTC es el primero que el
+    cron de 4 h no tenía). --salud mide cada tramo con su intervalo: con el de ahora para toda la historia, los
+    disparos esperados se duplicaban y cada ventana de 4 h de antes salía como un hueco. */
+export const CADENCIAS = [
+  { desde: '2026-10-10T04:32:04Z', horas: 4 },
+  { desde: '2026-10-28T18:00:00Z', horas: 2 },
+];
+/** El intervalo de ahora (el último tramo): RECLAMO_H tiene que ser menor. */
+export const CRON_H = CADENCIAS[CADENCIAS.length - 1].horas;
+export const DESDE_DIRECTIVA = CADENCIAS[0].desde;
 /** Las entradas viejas de la bitácora: --rotar las lleva ahí y deja ROTAR_DEJA en IMPROVEMENTS.md, que cada
     sesión lee (312 KB el 2026-10-25, 248 KB de bitácora). Con más de ROTAR_MAX, --check (R14) avisa: se rota
     de a lotes, una vez cada ~8 iteraciones, y no en cada PR. */
@@ -119,6 +129,8 @@ const EJE = EJES.join('|');
 const SUB = SUBTIPOS.join('|');
 // «N. **Título** · Eje · a×i/e.»: el puntaje (alcance × impacto / esfuerzo, de 1 a 3) es opcional en lo hecho
 const RE_HOJA = new RegExp(`^(\\d+)\\. (~~)?\\*\\*(.+?)\\*\\*(?:~~ hecho en #(\\d+))? · (${EJE})(?: · ([1-3])×([1-3])/([1-3]))?\\.`);
+// un must de la app de referencia que GraphBranch no tiene (Replica): va antes que los demás en la regla 2
+const RE_MUST = /\[replica must \d{4}-\d{2}-\d{2}\]/;
 const RE_MAPA = /^\| (.+?) \| (.+?) \| (.+?) \|$/;
 const RE_ENTRADA = /^### (\d{4}-\d{2}-\d{2}) · (.+)$/;
 const RE_ITERACION = new RegExp(`^Iteración (\\d+)(?: · (?:Expansión · (${EJE})|Mantenimiento(?: · (${SUB}))?))?$`);
@@ -205,6 +217,7 @@ export function parse(texto, { archivo = null } = {}) {
     }
   });
   for (const p of out.mantenimiento) if (p.texto.includes('**Alta**')) p.alta = true;
+  for (const it of out.hoja) it.must = RE_MUST.test(it.texto);
   out.propias = out.bitacora.length;
   if (archivo) out.bitacora = [...parse(archivo).bitacora.map((e) => ({ ...e, origen: ARCHIVO_BITACORA })), ...out.bitacora];
   return out;
@@ -266,6 +279,18 @@ export function necesidades(doc) {
     .sort((a, b) => b.valor - a.valor || a.orden - b.orden);
 }
 
+/** La hoja sin hacer en el orden en que la toma una expansión (regla 2 de la directiva; pedido de Benjamin,
+    2026-10-28: por puntaje y no por el orden escrito). Primero los must de la app de referencia que faltan
+    («[replica must AAAA-MM-DD]»), después los demás; dentro de cada grupo, de mayor a menor puntaje (alcance ×
+    impacto / esfuerzo) y, a igual puntaje, por número, que es el orden escrito. Un ítem sin puntaje (R10 ya lo
+    da como error) va al final de su grupo. */
+export function ordenHoja(pend) {
+  return [...pend].sort((a, b) => b.must - a.must || (b.puntaje?.valor ?? 0) - (a.puntaje?.valor ?? 0) || a.n - b.n);
+}
+
+const textoPuntaje = (it) => (it.puntaje ? `puntaje ${(Math.round(it.puntaje.valor * 10) / 10).toFixed(1).replace('.', ',')}` : 'sin puntaje');
+const textoPrimero = (it) => `el primero (ítem ${it.n}, ${it.must ? 'must de Replica, ' : ''}${textoPuntaje(it)})`;
+
 const textoNecesidad = (x) => `${x.subtipo} ${x.valor} (espera ${x.espera}, ${x.media} Media, ${x.baja} Baja${x.subtipo === 'QA' ? `, ${x.codigo} expansiones sin auditar` : ''})`;
 
 /** Qué iteración toca según IMPROVEMENTS.md (y `archivo`, la bitácora vieja): número, tipo, eje o subtipo,
@@ -293,12 +318,14 @@ export function siguiente(texto, { archivo = null } = {}) {
     if (!pend.length) throw new LoopError('no hay ítem para expansión: reponer la hoja de ruta (regla 5)', 2);
     const ant = [...its].reverse().find((e) => e.tipo === 'Expansión');
     const ejeAnt = ant?.eje ?? null;
-    item = pend.slice(0, 3).find((i) => i.eje !== ejeAnt) ?? pend[0];
+    const orden = ordenHoja(pend);
+    item = orden.slice(0, 3).find((i) => i.eje !== ejeAnt) ?? orden[0];
     eje = item.eje;
-    if (!ant) motivo = 'primer ítem sin hacer; no hay una expansión anterior';
-    else if (pend[0].eje !== ejeAnt) motivo = `primer ítem sin hacer; la expansión anterior (${ant.n}) fue de ${ejeAnt}`;
-    else if (item !== pend[0]) motivo = `el primero (${pend[0].n}) es del mismo eje que la ${ant.n} (${ejeAnt}) y entre los tres primeros hay otro eje`;
-    else motivo = `el primero (${pend[0].n}) es del mismo eje que la ${ant.n} (${ejeAnt}) y no hay otro eje entre los tres primeros`;
+    const primero = textoPrimero(orden[0]);
+    if (!ant) motivo = `${primero}; no hay una expansión anterior`;
+    else if (orden[0].eje !== ejeAnt) motivo = `${primero}; la expansión anterior (${ant.n}) fue de ${ejeAnt}`;
+    else if (item !== orden[0]) motivo = `${primero} es del mismo eje que la ${ant.n} (${ejeAnt}) y entre los tres primeros hay otro eje`;
+    else motivo = `${primero} es del mismo eje que la ${ant.n} (${ejeAnt}) y no hay otro eje entre los tres primeros`;
   } else {
     lista = necesidades(doc);
     subtipo = lista[0].subtipo;
@@ -723,9 +750,9 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
       }
       for (const cmd of comandos) {
         if (allow.includes(`Bash(${cmd}:*)`) || allow.includes(`Bash(${cmd})`)) continue;
-        // el permiso de la CLI de find-skills lo suma Benjamin (Para Benjamin 2); sin él, la búsqueda depende
-        // del modo de permisos de la sesión y la bitácora lo dice, como el de la arena
-        if (cmd === `npx ${SKILLS_CLI}`) a.push(`SKILL.md usa «${cmd}» y .claude/settings.json no lo permite (Bash(${cmd}:*)): lo suma Benjamin (Para Benjamin 2)`);
+        // los permisos los decide Benjamin (sumó el de la CLI de find-skills el 2026-10-27): sin él, la búsqueda
+        // depende del modo de permisos de la sesión y la bitácora lo dice, así que avisa y no frena el loop
+        if (cmd === `npx ${SKILLS_CLI}`) a.push(`SKILL.md usa «${cmd}» y .claude/settings.json no lo permite (Bash(${cmd}:*)): los permisos los decide Benjamin (Para Benjamin)`);
         else e.push(`SKILL.md usa «${cmd}» y .claude/settings.json no lo permite (Bash(${cmd}:*))`);
       }
       const bytes = Buffer.byteLength(promptTxt);
@@ -786,7 +813,7 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
     for (const it of doc.hoja.filter((i) => !i.hecho && !i.puntaje)) e.push(`ítem ${it.n} sin puntaje «· a×i/e.» tras el eje (alcance × impacto / esfuerzo, de 1 a 3)`);
     for (const it of doc.hoja.filter((i) => i.n > HOJA_SIN_FUENTE)) {
       const f = /\[inv\. (\d{4}-\d{2}-\d{2})\]/.exec(it.texto);
-      const rep = /\[replica (\d{4}-\d{2}-\d{2})\]/.exec(it.texto);
+      const rep = /\[replica (?:must )?(\d{4}-\d{2}-\d{2})\]/.exec(it.texto);
       const parte = /\[parte del ítem (\d+)\]/.exec(it.texto);
       if (parte) {
         if (!doc.hoja.some((x) => x.n === +parte[1] && x.n !== it.n)) e.push(`ítem ${it.n} dice [parte del ítem ${parte[1]}] y ese ítem no existe`);
@@ -1077,6 +1104,18 @@ export function tramos(nums) {
   return out.join(', ');
 }
 
+/** Cuántos disparos de la Routine caben entre a y b (ms), cada tramo de `cadencias` con su intervalo: el primero
+    vale también antes de su fecha y cada uno llega hasta el siguiente. Fraccionario: quien lo usa redondea. */
+export function disparosEntre(a, b, cadencias = CADENCIAS) {
+  let total = 0;
+  cadencias.forEach((c, i) => {
+    const ini = Math.max(a, i ? Date.parse(c.desde) : -Infinity);
+    const fin = Math.min(b, i + 1 < cadencias.length ? Date.parse(cadencias[i + 1].desde) : Infinity);
+    if (fin > ini) total += (fin - ini) / (c.horas * 3600e3);
+  });
+  return total;
+}
+
 /** La salud del loop con los datos ya reunidos (pura: la prueban las pruebas). Devuelve las líneas y
     cuántas son «Acción:», lo que la sesión tiene que atender antes de seguir.
       merges: [{ fecha (ms), titulo }] de origin/dev · ramas: [{ nombre, fecha (ms), contenida, pr }] de origin
@@ -1084,7 +1123,7 @@ export function tramos(nums) {
       issues: [{ number, title, labels }] o un texto con el motivo si no se pudo consultar
       superficial: el clon no tiene toda la historia de dev (los huecos se miden desde su primer merge)
       release: los merges de dev que master todavía no tiene (null si no se pudo medir) */
-export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], ramas = [], issues = [], desde = DESDE_DIRECTIVA, cron = CRON_H, horas = RECLAMO_H, superficial = false, release = null }) {
+export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], ramas = [], issues = [], desde = DESDE_DIRECTIVA, cadencias = CADENCIAS, horas = RECLAMO_H, superficial = false, release = null }) {
   const lineas = [];
   let acciones = 0;
   const accion = (t) => {
@@ -1096,7 +1135,7 @@ export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], 
   const M = Math.max(0, ...its.map((e) => e.n));
 
   // cadencia: iteraciones desde la directiva frente a los disparos que tuvo que haber
-  const esperados = Math.max(0, Math.floor((ahora - t0) / (cron * 3600e3)));
+  const esperados = Math.max(0, Math.floor(disparosEntre(t0, ahora, cadencias)));
   const hechas = its.filter((e) => e.n >= 20).length;
   const fusiones = merges.filter((x) => x.fecha >= t0).sort((a, b) => a.fecha - b.fecha);
   const ultima = fusiones.length ? fusiones[fusiones.length - 1].fecha : null;
@@ -1106,9 +1145,9 @@ export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], 
   if (superficial) lineas.push(`Clon superficial: ${BASE} se ve desde ${fusiones.length ? fechaUTC(visible) : 'ningún merge'} UTC; los huecos anteriores no se miden (git fetch --unshallow origin)`);
   const puntos = [visible, ...fusiones.map((x) => x.fecha).filter((f) => f > visible), ahora];
   for (let i = 1; i < puntos.length; i++) {
-    const h = (puntos[i] - puntos[i - 1]) / 3600e3;
-    const k = Math.floor(h / cron) - 1;
-    if (h > 2 * cron) lineas.push(`Hueco: ${fechaUTC(puntos[i - 1])} → ${i === puntos.length - 1 ? 'ahora' : fechaUTC(puntos[i])} UTC (${horasDe(puntos[i] - puntos[i - 1])} h, ${k === 1 ? 'un disparo' : `unos ${k} disparos`} sin iteración)`);
+    const d = disparosEntre(puntos[i - 1], puntos[i], cadencias);
+    const k = Math.floor(d) - 1;
+    if (d > 2) lineas.push(`Hueco: ${fechaUTC(puntos[i - 1])} → ${i === puntos.length - 1 ? 'ahora' : fechaUTC(puntos[i])} UTC (${horasDe(puntos[i] - puntos[i - 1])} h, ${k === 1 ? 'un disparo' : `unos ${k} disparos`} sin iteración)`);
   }
   if (ultima && ahora - ultima > 24 * 3600e3) accion(`el loop no fusiona nada desde hace ${horasDe(ahora - ultima)} h: anotarlo en Para Benjamin (¿la Routine está apagada o sin cuota?)`);
 

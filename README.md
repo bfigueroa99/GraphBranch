@@ -321,10 +321,10 @@ El loop de mejora (`.claude/skills/iteracion/`) lo dispara una Routine de Claude
 2. El proveedor: `omniroute setup-opencode` lo deja en la configuración de OpenCode. Si no está, `tools/opencode.mjs` lo arma con `OMNIROUTE_URL` (`http://localhost:20128` por defecto) y `OMNIROUTE_API_KEY` (si OmniRoute exige clave; nunca se escribe en un archivo).
 3. Una iteración: `node tools/opencode.mjs` (con `--plan` dice qué haría sin tocar nada). Usa `omniroute/auto`, el combo automático de OmniRoute; otro modelo o combo con `OMNIROUTE_MODEL=<id>` o `--modelo omniroute/<id>`. Conviene uno que maneje bien las herramientas: la iteración corre `npm run check`, commitea, abre su PR y lo fusiona.
 
-Cada corrida deja un worktree limpio en `origin/dev` (la rama de integración del loop) al lado del repo (`../GraphBranch-loop`, o el de `--dir`), instala lo que falte y corre `opencode run --command iteracion` sin pedir confirmaciones (`--auto`), con un tope de 240 minutos (`--minutos`). El comando, `.opencode/commands/iteracion.md`, le pasa el prompt de la Routine tal cual y le dice qué herramienta reemplaza a cada una de Claude Code. El reclamo de la rama `loop/N` es el mismo, así que la Routine y OpenCode conviven sin pisarse. Los commits salen como `OpenCode <opencode@localhost>` (`LOOP_AUTOR` lo cambia). Para programarlo, un cron cada 4 horas como la Routine (en Windows, lo mismo con el Programador de tareas). Si el cron no encuentra `opencode`, `OPENCODE_BIN` lleva su ruta:
+Cada corrida deja un worktree limpio en `origin/dev` (la rama de integración del loop) al lado del repo (`../GraphBranch-loop`, o el de `--dir`), instala lo que falte y corre `opencode run --command iteracion` sin pedir confirmaciones (`--auto`), con un tope de 240 minutos (`--minutos`). El comando, `.opencode/commands/iteracion.md`, le pasa el prompt de la Routine tal cual y le dice qué herramienta reemplaza a cada una de Claude Code. El reclamo de la rama `loop/N` es el mismo, así que la Routine y OpenCode conviven sin pisarse. Los commits salen como `OpenCode <opencode@localhost>` (`LOOP_AUTOR` lo cambia). Para programarlo, un cron cada 2 horas como la Routine (en Windows, lo mismo con el Programador de tareas; si una corrida sigue cuando llega la siguiente, esa no arranca). Si el cron no encuentra `opencode`, `OPENCODE_BIN` lleva su ruta:
 
 ```sh
-3 */4 * * * cd /ruta/a/GraphBranch && node tools/opencode.mjs >> ~/graphbranch-loop.log 2>&1
+3 */2 * * * cd /ruta/a/GraphBranch && node tools/opencode.mjs >> ~/graphbranch-loop.log 2>&1
 ```
 
 ## Estructura

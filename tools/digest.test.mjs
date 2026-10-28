@@ -237,3 +237,15 @@ test('autores nuevos: quienes no tienen commit cargado anterior a la semana', ()
   assert.equal(sin.newcomers, 0);
   assert.doesNotMatch(toMarkdown(sin, 'a/b', t), /Nuevos/);
 });
+
+test('commits por día: siete cifras, del día más viejo al de hoy', () => {
+  const d = compute(repo(), acts, NOW);
+  assert.deepEqual([...d.perDay], [0, 1, 0, 0, 1, 1, 2]); // el de hace 40 días no cuenta; el de «ahora» cae en el último día
+  assert.equal(d.perDay.reduce((n, x) => n + x, 0), d.commits);
+  const t = { head: 'S', commits: 'C {n}', merged: 'M', releases: 'R', people: 'P', branch: 'B', perday: 'Por día: {n}' };
+  assert.match(toMarkdown(d, 'a/b', t), /- Por día: 0 · 1 · 0 · 0 · 1 · 1 · 2\n/);
+  assert.ok(imageLines(d, 'a/b', t).some((l) => l.text === 'Por día: 0 · 1 · 0 · 0 · 1 · 1 · 2'));
+  const sin = compute({ commits: new Map([c('q', 30, [], 'ana')]), branches: new Map() }, [], NOW);
+  assert.deepEqual([...sin.perDay], [0, 0, 0, 0, 0, 0, 0]);
+  assert.doesNotMatch(toMarkdown(sin, 'a/b', t), /Por día/);
+});

@@ -251,13 +251,13 @@ segunda columna a la primera.
 
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
-| Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (API de Forgejo, repos públicos y, con token, privados), bitbucket.org (API 2.0 de Bitbucket Cloud, repos públicos y, con token, privados), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP), Bitbucket Data Center propio (`?bitbucket=` / `--bitbucket-url`, con su CSP y, con su token aparte y atado al servidor, privados), repos locales (app de escritorio, con `git`), demo | Token para un Forgejo/Gitea propio |
+| Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (API de Forgejo, repos públicos y, con token, privados), bitbucket.org (API 2.0 de Bitbucket Cloud, repos públicos y, con token, privados), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP), Bitbucket Data Center propio (`?bitbucket=` / `--bitbucket-url`, con su CSP y, con su token aparte y atado al servidor, privados), repos locales (app de escritorio, con `git`), demo | Azure DevOps (ítem 107), token para un Forgejo/Gitea propio |
 | Datos | ramas, commits, PRs (y las pilas de PRs apilados), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, por push más reciente o por estrellas, en el panel de salud, con un interruptor y `?forks=0`), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs), tags y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes) | CI de GitLab, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color, `&hide=` (avisos, combo, leyenda, rótulo y fechas), `&rotate=` entre repos, `&theme=` claro u oscuro y `&title=` con un rótulo propio y `&max=` con el tope de ramas), extensión de VS Code (sigue la sesión de GitHub del editor y recuerda repos, vista e idioma entre sesiones; paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
-| Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia, ordenable por pestañas, actividad o nombre), miles de ramas por repo | una organización entera con más de 10 repos a la vez |
-| Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack, Discord y Teams (escritorio), resumen de la semana (Markdown, con PRs abiertos, issues cerrados, releases, tags y autores nuevos, de un repo o de una organización seguida; PNG, de un repo o de una organización), prompt del loop autónomo para cualquier repo (español o inglés, con repo, ramas y objetivo; se copia o se guarda como `.md`) | el resumen de la semana de una organización con sus issues cerrados |
-| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo), choques entre ramas, también desde la URL (`?conflicts=1`), comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), búsqueda de commits también desde la URL (`?q=`), búsqueda por fecha (`desde:` y `hasta:`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, PRs fusionados y abiertos por semana en la salud (las últimas 8), vocabulario DORA en la salud (despliegues en 30 días y por semana, mediana entre releases, tiempo de entrega desde el primer commit del PR), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días), el panel de salud abierto desde la URL (`?health=1`), bitácora en vivo al estilo de Brunell_Node (la quinta cifra del resumen: desde la bitácora anterior, lo grande, commits por día, nota del 1 al 100 de ritmo, publicado y salud con su origen, hallazgos con su gravedad y su seguimiento, cronología y qué sigue; se cierra, se guarda en el navegador y sale en Markdown o `estado.json`) | ver la hoja de ruta |
-| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal (`cherry-pick` (con `--no-commit`/`--abort`), `revert` (con `--no-commit`/`--abort`), `rebase -i` (con `--abort`/`--continue`), `stash`, `tag` (con `-d`), `switch`, `restore` y `merge --no-commit`/`--abort` incluidos) y ejercicios, también propios compartidos por URL con pistas, solución propuesta que se muestra paso a paso con `solution=1` y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto (también desde la URL con `?vista=texto`): árbol de ramas y commits con teclado, filtro por rama, por autor y por ruta con su aviso, tags dichos en cada commit, forks activos ya cargados y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
+| Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia, ordenable por pestañas, actividad o nombre, también desde la URL con `?order=activity` o `?order=name`), miles de ramas por repo | los PRs de todos los repos seguidos, por estado (ítem 108), una organización entera con más de 10 repos a la vez |
+| Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack, Discord y Teams (escritorio), resumen de la semana (Markdown, con PRs abiertos, issues cerrados, releases, tags, autores nuevos y commits por día, de un repo o de una organización seguida; PNG, de un repo o de una organización), prompt del loop autónomo para cualquier repo (español o inglés, con repo, ramas y objetivo; se copia o se guarda como `.md`) | el resumen de la semana de una organización con sus issues cerrados |
+| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo, issues cerrados por semana), choques entre ramas, también desde la URL (`?conflicts=1`), comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), búsqueda de commits también desde la URL (`?q=`), búsqueda por fecha (`desde:` y `hasta:`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, PRs fusionados y abiertos por semana en la salud (las últimas 8), vocabulario DORA en la salud (despliegues en 30 días y por semana, mediana entre releases, tiempo de entrega desde el primer commit del PR), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días), el panel de salud abierto desde la URL (`?health=1`), bitácora en vivo al estilo de Brunell_Node (la quinta cifra del resumen: desde la bitácora anterior, lo grande, commits por día, nota del 1 al 100 de ritmo, publicado y salud con su origen, hallazgos con su gravedad y su seguimiento, cronología y qué sigue; se cierra, se guarda en el navegador y sale en Markdown o `estado.json`) | ver la hoja de ruta |
+| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal (`cherry-pick` (con `--no-commit`/`--abort`), `revert` (con `--no-commit`/`--abort`), `rebase -i` (con `--abort`/`--continue`), `stash`, `tag` (con `-d`), `switch`, `restore` y `merge --no-commit`/`--abort` incluidos) y ejercicios, también propios compartidos por URL con pistas, solución propuesta que se muestra paso a paso con `solution=1` y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto (también desde la URL con `?vista=texto`): árbol de ramas y commits con teclado, filtro por rama, por autor y por ruta con su aviso, tags dichos en cada commit, forks activos y PRs abiertos por rama ya cargados ramas sin actividad hace más de 30 días dichas en su nombre y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
 
@@ -493,21 +493,26 @@ se comprueban antes de construir sobre ellas.
 90. ~~**Práctica: revert --abort y rebase --abort**~~ hecho en #176 · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `revert --abort` y `rebase --abort`, y vuelve al estado de antes del comando. Comprobar: prueba del simulador y un paso del smoke.
 91. ~~**Resumen de la semana: autores nuevos**~~ hecho en #178 · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana dice cuántas personas aportaron por primera vez en el repo, con los datos ya cargados. Comprobar: prueba del resumen y un paso del smoke.
 92. ~~**Capa para streaming, séptima entrega**~~ hecho en #181 · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&hide=` oculta partes de la capa (leyenda, rótulo o reloj) para quien arma su escena de OBS. Comprobar: prueba de `embedOptions` y un paso del smoke.
-93. **Constelación ordenada por nombre, en la URL** · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] `?order=name` abre la constelación ordenada alfabéticamente, junto a `?order=activity`. Comprobar: prueba de la lectura de la URL y un paso del smoke.
-94. **Vista de texto: PRs abiertos por rama** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de cada rama dice cuántos PRs abiertos tiene, con los PRs ya cargados. Comprobar: prueba de la vista y un paso del smoke.
-95. **Salud del repo: tendencia de releases** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los releases por semana de las últimas semanas, con las actividades ya cargadas. Comprobar: prueba de `health` y un paso del smoke.
-96. **Salud del repo: tendencia de issues cerrados** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los issues cerrados por semana de las últimas 8, con las actividades ya cargadas. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
-97. **Resumen de la semana: commits por día** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana suma los commits de cada uno de los 7 días, en una línea de siete cifras, para ver el ritmo. Comprobar: `tools/digest.test.mjs` con commits fabricados.
-98. **Vista de texto: ramas quietas** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama sin commits en 30 días lo dice («sin actividad»), con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
-99. **Capa para streaming, octava entrega** · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&spin=0` apaga la rotación lenta de la vista 3D de la capa, para una escena de OBS quieta (el tema ya lo fija `&theme=`, ítem 74). Comprobar: prueba de `embedOptions` y un paso del smoke.
-100. **Salud del repo: tendencia de ramas nuevas** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra cuántas ramas se crearon por semana en las últimas 8, con las actividades ya cargadas. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
-101. **Práctica: reset --mixed y reflog** · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `reset --mixed` y `reflog`, para recuperar un commit tras un `reset --hard`. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
-102. **Constelación: filtrar por nombre en la URL** · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] `?constellation=texto` deja en la constelación solo los repos cuyo nombre lo contiene. Comprobar: prueba de la lectura de la URL y un paso del smoke.
-103. **Resumen de la semana: ramas nuevas** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana dice cuántas ramas se crearon en los últimos 7 días, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con ramas fabricadas.
-104. **Vista de texto: ramas fusionadas** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama ya fusionada en la por defecto lo dice, con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
-105. **Salud del repo: tendencia de commits** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los commits por semana de las últimas 8, con lo ya cargado. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
-106. **Capa para streaming, novena entrega** · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&lang=` ya fija el idioma; `&view=2d|3d` fija la vista de la capa sin tocar la de la página. Comprobar: prueba de `embedOptions` y un paso del smoke.
-107. **Práctica: commit --amend** · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `commit --amend` (con `-m`), para corregir el último commit. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
+93. ~~**Constelación ordenada por nombre, en la URL**~~ hecho en #189 · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] `?order=name` abre la constelación ordenada alfabéticamente, junto a `?order=activity`. Comprobar: prueba de la lectura de la URL y un paso del smoke.
+94. ~~**Vista de texto: PRs abiertos por rama**~~ hecho en #191 · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de cada rama dice cuántos PRs abiertos tiene, con los PRs ya cargados. Comprobar: prueba de la vista y un paso del smoke.
+95. ~~**Salud del repo: tendencia de issues cerrados**~~ hecho en #192 · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los issues cerrados por semana de las últimas 8, con las actividades ya cargadas. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
+96. ~~**Resumen de la semana: commits por día**~~ hecho en #193 · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana suma los commits de cada uno de los 7 días, en una línea de siete cifras, para ver el ritmo. Comprobar: `tools/digest.test.mjs` con commits fabricados.
+97. ~~**Vista de texto: ramas quietas**~~ hecho en #195 · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama sin commits en 30 días lo dice («sin actividad»), con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
+98. **Capa para streaming, octava entrega** · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&spin=0` apaga la rotación lenta de la vista 3D de la capa, para una escena de OBS quieta (el tema ya lo fija `&theme=`, ítem 74). Comprobar: prueba de `embedOptions` y un paso del smoke.
+99. **Salud del repo: tendencia de ramas nuevas** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra cuántas ramas se crearon por semana en las últimas 8, con las actividades ya cargadas. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
+100. **Práctica: reset --mixed y reflog** · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `reset --mixed` y `reflog`, para recuperar un commit tras un `reset --hard`. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
+101. **Constelación: filtrar por nombre en la URL** · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] `?constellation=texto` deja en la constelación solo los repos cuyo nombre lo contiene. Comprobar: prueba de la lectura de la URL y un paso del smoke.
+102. **Resumen de la semana: ramas nuevas** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana dice cuántas ramas se crearon en los últimos 7 días, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con ramas fabricadas.
+103. **Vista de texto: ramas fusionadas** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama ya fusionada en la por defecto lo dice, con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
+104. **Salud del repo: tendencia de commits** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los commits por semana de las últimas 8, con lo ya cargado. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
+105. **Capa para streaming, novena entrega** · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&lang=` ya fija el idioma; `&view=2d|3d` fija la vista de la capa sin tocar la de la página. Comprobar: prueba de `embedOptions` y un paso del smoke.
+106. **Práctica: commit --amend** · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `commit --amend` (con `-m`), para corregir el último commit. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
+107. **Fuente Azure DevOps** · Fuentes · 2×3/3. [replica 2026-10-28] El primer must que falta frente a GitKraken (su ayuda «Azure DevOps», <https://help.gitkraken.com/gitkraken-desktop/azure-devops/>; `replica/parity.md`): conectar `azure:org/proyecto/repo` y dibujar sus ramas y commits con la API REST de Azure DevOps, primero repos públicos y sin token; la CSP suma solo `https://dev.azure.com`. Si esa API no admite CORS desde la página, la primera entrega es de la app de escritorio, dicho en el README. Comprobar: `tools/azure.test.mjs` con la API simulada y un paso del smoke.
+108. **Launchpad: los PRs de todos los repos seguidos, por estado** · Escala · 2×3/2. [replica 2026-10-28] El otro must que falta (ayuda «Launchpad», <https://help.gitkraken.com/gitkraken-desktop/gitkraken-launchpad/>): con dos o más repos abiertos, la vista conjunta «Todos» suma una lista única de sus PRs abiertos agrupados por estado (borrador, checks en rojo, aprobados, esperando revisión), con lo ya cargado de cada pestaña; cada fila lleva a su rama en su pestaña. Comprobar: prueba de la agrupación con PRs fabricados y un paso del smoke con la API simulada.
+109. **Historial de un archivo** · Análisis · 2×2/1. [replica 2026-10-28] Frente al historial de archivo de GitKraken (ayuda «Diffs, File History and Blame», <https://help.gitkraken.com/gitkraken-desktop/diff/>): cada archivo de los cambios de un commit suma «Historial», que aplica el filtro por ruta a ese archivo (`?path=`) y deja a la vista los commits ya cargados que lo tocaron. Comprobar: un paso del smoke (de un archivo del diff al grafo filtrado por su ruta).
+110. **Ocultar una rama o dejarla sola** · Análisis · 2×2/2. [replica 2026-10-28] Frente a «Hide and Solo» del grafo de GitKraken (ayuda «Interface», <https://help.gitkraken.com/gitkraken-desktop/interface/>): la ficha de una rama suma «Ocultar» y «Solo esta», en 2D y en 3D, recordados por repo y con un botón para volver a verlas todas. Comprobar: prueba de la selección de ramas y un paso del smoke.
+111. **Primer padre en el grafo** · Análisis · 2×2/2. [replica 2026-10-28] Lo pide un usuario de GitKraken, que no lo tiene («it lacks the ability to show first parent only», <https://news.ycombinator.com/item?id=40486993>; `replica/fixes.md`): un interruptor deja en el grafo 2D solo la cadena del primer padre de cada rama, como `git log --first-parent`, con lo ya cargado, y viaja en la URL. Comprobar: prueba de la selección de commits y un paso del smoke.
+112. **Vista de un PR: descripción y comentarios** · Datos · 2×2/2. [replica 2026-10-28] Frente a la vista de PR de GitKraken (ayuda «Pull Requests», <https://help.gitkraken.com/gitkraken-desktop/pull-requests/>): la ficha de una rama con PR de GitHub suma la descripción del PR y sus últimos comentarios, con una consulta solo al pulsar. Comprobar: `tools/github.test.mjs` con la API simulada y un paso del smoke.
 
 ## Cómo validar un cambio
 
@@ -572,54 +577,54 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     no está (2026-10-27: un merge sobre la base borrada de un PR apilado; ver la bitácora). El paso «vista 2D» ya no
     está (arreglado en la iteración 139). Medir con 5 corridas del smoke solo y esperar el estado (commits cargados).
     Reproducción: `xvfb-run -a npm run check` → `✗ filtro por autor: ningún autor acota el grafo`.
+2. [Deuda] La e2e de escritorio «pasa al llavero el token que la primera versión dejaba en localStorage» es
+    intermitente en la sesión cloud: falló 1 de 2 `npm run check` en la iteración 143 (la repetición pasó).
+    Reproducción: `xvfb-run -a npm run check` → `expect(Object.keys(tokenFiles(dir))).not.toEqual([])` (`e2e/desktop.spec.mjs:333`).
+3. [Deuda] El paso del smoke «editar el código: desde los cambios de un commit se abre su archivo en la rama…» falló
+    1 de 3 corridas en la iteración 148 (sesión cloud con otras cinco corriendo a la vez), en una copia sin el cambio
+    de esa iteración: un clic sobre un elemento que la demo ya había reemplazado. Medir con 5 corridas y esperar
+    al elemento estable en lugar de guardar su handle. Reproducción: `node tools/smoke.mjs` →
+    `✗ editar el código: …: elementHandle.click: Element is not attached to the DOM`.
 
 ### Baja
 
-2. [Accesibilidad] La leyenda 2D no tiene acceso por teclado. Los botones de estado ya no mezclan
+4. [Accesibilidad] La leyenda 2D no tiene acceso por teclado. Los botones de estado ya no mezclan
     `aria-pressed` con un texto cambiante (iteración 123). Reproducir: `node tools/audit.mjs`.
-3. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
+5. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
     renombrados).
-4. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+6. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-5. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+7. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-6. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+8. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-7. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+9. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-8. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+10. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
     Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-9. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+11. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-10. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
+12. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-11. [QA] Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones tocables debajo de las
-    nítidas (demo a 320 px: 3 de 5 atenuadas); comprobar que Tab y el toque no caigan en una atenuada.
-    Reproducción: Playwright, 320 px, 3D, `?repo=demo` → `.g3-head` con opacidad 0,22 y `display: flex`.
-12. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
+13. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
     vistas, las estadísticas y la bitácora encima) y el 3D no arma etiquetas hasta verse; pensar en una
     forma de llegar al grafo sin recorrer la página (ancla o tarjetas plegables en celular).
     Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la auditoría → captura sin grafo; `#graph3d` fuera de la pantalla.
-13. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+14. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-14. [Seguridad] Las fuentes Codeberg y Bitbucket no validan en el origen las URL de los pull requests
-    (`codeberg.js:296` `p.html_url`, `bitbucket.js:204` y `:321` `links.html.href`), a diferencia de
-    `codeberg.js:179` y GitHub (`/^https:\/\//`). La interfaz ya las filtra con `U.safeUrl` (iteración 119),
-    pero un dato fuera de http(s) llega hasta las exportaciones (resumen, bitácora en Markdown).
-    Reproducción: `tools/codeberg.test.mjs` con un PR cuyo `html_url` sea `javascript:alert(1)` → la actividad conserva esa `url`.
 15. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
     `WebFetch` a `releases.electronjs.org` dio HTTP 500 en la iteración 119. Repetir la comparación
     cuando la página responda y subir si hay una estable más nueva.
@@ -639,236 +644,6 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 ## Bitácora
 
 Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las lleva `node tools/loop.mjs --rotar`); el loop lee las dos.
-
-### 2026-10-24 · Iteración 128 · Expansión · Análisis
-
-- **Capacidad nueva: tendencia de merges en la salud** (ítem 83 de la hoja de ruta, parte del ítem 12). `compute` (`js/health.js`) suma `pace.mergeWeeks`: los PRs fusionados que el feed ya trajo en cada una de las últimas 8 semanas (de la más vieja a la actual, sin repetir ni contar futuros), y el panel lo muestra bajo el tiempo de abierto a fusionado (`#hl-mergeweeks`, oculto si no hay ninguno). Sin consultas nuevas.
-- **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` («tendencia de merges…» y «ritmo…») y el paso del smoke de salud (`#hl-mergeweeks` con 8 cifras y algún PR fusionado en la demo).
-- README: la función (Salud del repo) y Límites conocidos. Mapa de alcance: fila Análisis. Textos en los 40 idiomas (1 clave: `health.mergeWeeks`).
-- QA: fila de la salud en el smoke; auditoría: 0 hallazgos nuevos.
-- Arena: no aplica: una sola forma obvia (reusar `weekly` con los merges ya cargados).
-- Reclamo: relevo de loop/128 (f5ede95)
-- Nota: el clon venía superficial (`git fetch --unshallow`); `git push origin --delete loop/87` sigue cortado por el proxy (Para Benjamin 7). El primer `npm run check` falló en el paso «filtro por autor» (ajeno al cambio); la repetición pasó: pendiente 21.
-- Validado: 403 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 129, expansión: ítem 81 (Práctica: switch y restore, Público)
-
-### 2026-10-24 · Iteración 129 · Expansión · Público
-
-- **Capacidad nueva: la práctica de git entiende `switch` y `restore`** (ítem 81 de la hoja de ruta, parte del ítem 31). `switch` deja de ser un alias de `checkout`: `-c` crea, `--detach <commit>` va a un commit a propósito y un commit a secas da el error de git («a branch is expected»); `restore <archivo>…` y `restore .` tiran los cambios sin commit que dejó `touch` (`--source=<rev>` los deja distintos de HEAD; `--staged` avisa que la práctica no tiene índice). Sin consultas nuevas ni estado guardado; las líneas de la terminal siguen entrando con `textContent`.
-- **Pruebas que fallan sin la capacidad:** `tools/gitsim.test.mjs` («switch y restore…») y el paso del smoke «la práctica entiende switch y restore».
-- README: la lista de comandos de Aprender git; fila Público del Mapa de alcance. Textos: la ayuda de la terminal es inglés fijo como el resto de los comandos, sin claves nuevas.
-- QA: fila de la práctica en el smoke; auditoría: 0 hallazgos nuevos.
-- Arena: no aplica: una sola forma obvia (dos comandos nuevos sobre `work`, el mismo modelo que `touch` y `stash`).
-- Reclamo: loop/129, sin colisión
-- Nota: el clon venía superficial (`git fetch --unshallow`); `git push origin --delete loop/88` sigue cortado por el proxy (Para Benjamin 7).
-- Validado: 404 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 130, expansión: ítem 84 (Constelación ordenada, en la URL, Escala)
-
-### 2026-10-24 · Iteración 130 · Expansión · Escala
-
-- **Capacidad nueva: la constelación abre ordenada por la URL** (ítem 84 de la hoja de ruta, parte del ítem 26). `?order=activity` deja el selector y el recorrido con Tab en «actividad» desde el arranque (`C.orderParam` lee el parámetro; lo desconocido o vacío deja el orden de las pestañas). Sin consultas nuevas ni estado guardado; no se anuncia en la región viva porque no lo pidió nadie con el selector.
-- **Pruebas que fallan sin la capacidad:** `tools/constellation.test.mjs` («?order=activity abre ordenada…») y el paso del smoke «se siguen hasta 10 repos a la vez» (abre con `?order=activity` y mira el selector).
-- README: la función Constelación (y el parámetro `?order=activity`). Textos: sin claves nuevas.
-- QA: fila de la constelación en el smoke; auditoría: 0 hallazgos nuevos.
-- Arena: no aplica: una sola forma obvia (un parámetro de URL que llama a `setOrder`, el mismo camino que el selector).
-- Reclamo: loop/130, sin colisión
-- Nota: el clon venía superficial (`git fetch --unshallow`); `git push origin --delete loop/88` lo denegó el clasificador de permisos (Para Benjamin 7).
-- Validado: 405 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 131, mantenimiento · Errores: pendiente 3 (`i18n.setLocale`: si se eligen dos idiomas seguidos, gana el que termina de car…)
-
-### 2026-10-24 · Iteración 131 · Mantenimiento · Errores
-
-- **Arreglo: `i18n.setLocale` ya no deja ganar al idioma que carga último** (pendiente 3). Cada llamada toma un turno; al terminar de cargar, si se pidió otro idioma después, descarta su resultado (sin tocar el documento, el almacenamiento ni a los oyentes) y devuelve el idioma vigente. Sin consultas nuevas.
-- **Reproducción:** `node --test tools/i18n.test.mjs` → `AssertionError: expected 'fr', actual 'de'` (se elige `de`, luego `fr`; `fr` carga antes y `de` lo pisa).
-- **Pruebas que fallan sin el arreglo:** `tools/i18n.test.mjs` («setLocale: si se eligen dos idiomas seguidos, gana el último elegido…»).
-- README: sin cambios (no cambia lo que hace la app a la vista). Textos: sin claves nuevas.
-- QA: la fila del selector de idioma en el smoke; auditoría: 0 hallazgos nuevos.
-- Arena: no aplica: una sola forma obvia (un contador de turnos dentro de `setLocale`).
-- Reclamo: loop/131, sin colisión
-- Nota: el clon venía superficial (`git fetch --unshallow`: sin eso `--check` daba R3 falso y 2 pruebas en rojo); `git push origin --delete loop/88`…`loop/99` lo denegó el clasificador de permisos (Para Benjamin 7). El paso «filtro por autor» del smoke falló una vez y pasó al repetir `npm run check` (intermitente ya anotado en el pendiente 1).
-- Validado: 406 pruebas (`node --test`), smoke, i18n (0 errores), auditoría y e2e en verde.
-- **Siguiente:** iteración 132, expansión: ítem 85 (Práctica: tag -d y cherry-pick --abort, Público)
-
-### 2026-10-24 · Iteración 132 · Expansión · Público
-
-- **Capacidad nueva: la práctica de git entiende `cherry-pick --no-commit`, `--continue` y `--abort`, y trae un noveno ejercicio que usa `tag -d`** (ítem 85 de la hoja de ruta). El pick a medias aparece en `status`, bloquea `checkout`, `merge` y otro `cherry-pick` hasta confirmarlo (`commit` o `--continue`) o cancelarlo (`--abort`); `reset` también lo suelta. `tag -d` ya existía: el ejercicio «Etiqueta de más y cherry-pick cancelado» lo exige.
-- **Pruebas que fallan sin la capacidad:** `tools/gitsim.test.mjs` («cherry-pick --no-commit espera su commit y --abort lo cancela», y la solución del noveno ejercicio en «cada ejercicio parte sin resolver…») y el paso del smoke «la práctica borra un tag y cancela un cherry-pick a medias».
-- README: la lista de comandos de «Aprender git», los nueve ejercicios y `?practice=1` a `9`. Textos: `practice.ex9.title` y `practice.ex9.goal` en los 40 idiomas.
-- QA: fila de la práctica de git en el smoke; auditoría: 0 hallazgos nuevos.
-- Arena: no aplica: una sola forma obvia (un estado `picking` junto a `merging`, el mismo molde de `merge --no-commit`/`--abort`).
-- Reclamo: loop/132, sin colisión
-- Nota: el clon venía superficial (`git fetch --unshallow`); `git push origin --delete loop/88` lo denegó el proxy (Para Benjamin 7). En la primera pasada de `npm run check` el paso «filtro por autor» del smoke falló y pasó al repetir (intermitente ya anotado en el pendiente 1).
-- Validado: 407 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 133, expansión: ítem 86 (Resumen de la semana: tags nuevos por semana, Salidas)
-
-### 2026-10-24 · Iteración 133 · Expansión · Público
-
-- **Capacidad nueva: la vista de texto lista los forks activos ya cargados** (ítem 87 de la hoja de ruta, hoy el 86: el «tags nuevos por semana» que ocupaba el 86 ya estaba entregado en #132, así que se quitó y se renumeró). Debajo del árbol, una lista aparte de hasta 10 enlaces (`https://`, `rel="noopener noreferrer"`, el push más reciente primero), cada uno dicho como «nombre, último push hace…»; la región viva cuenta «Forks activos: n» al abrir. `?forks=0` y el interruptor «Mostrar forks» apagado la quitan; no hace consultas.
-- **Pruebas que fallan sin la capacidad:** `tools/textview.test.mjs` («los forks activos ya cargados salen del más reciente al más viejo…») y el paso del smoke «vista de texto: árbol con teclado…» (los 2 forks de la demo y la región viva).
-- README: la función de la vista de texto, Límites conocidos y Seguridad. Textos: `textview.forks` y `textview.fork` en los 40 idiomas.
-- QA: filas de la vista de texto (teclado, nombres accesibles, región viva) en el smoke; auditoría: 0 hallazgos nuevos.
-- Arena: no aplica: una sola forma obvia (una lista aparte, con los datos que ya reúne `health`).
-- Replica: sin pasada nueva (sigue sin `replica/recon.md`); la hoja se repuso con seis ítems de las fuentes investigadas del 2026-10-13 (96 a 101), sin paridad.
-- Reclamo: loop/133, sin colisión
-- Nota: el clon venía superficial (`git fetch --unshallow`); `git push origin --delete loop/88` lo denegó el proxy (Para Benjamin 7). Las aserciones del smoke que anclaban el fin de la región viva se ajustaron para admitir la frase de forks.
-- Validado: 408 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 134, expansión: ítem 87 (Salud del repo: tendencia de PRs abiertos, Análisis)
-
-### 2026-10-25 · Iteración 134 · Expansión · Análisis
-
-- **Capacidad nueva: tendencia de PRs abiertos en la salud** (ítem 87 de la hoja de ruta, parte del ítem 12). `compute` (`js/health.js`) suma `pace.openedWeeks`: los PRs que el feed ya trajo abiertos en cada una de las últimas 8 semanas (de la más vieja a la actual). Cada PR cuenta una vez, con su primera apertura: un `pr-open` o el `openedAt` de su merge; los reabiertos no se repiten y los futuros no cuentan. El panel lo muestra bajo la línea de merges por semana (`#hl-openedweeks`, oculto si no hay ninguno). Sin consultas nuevas.
-- **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` («tendencia de PRs abiertos…» y «ritmo…») y el paso del smoke de salud (`#hl-openedweeks` con 8 cifras y algún PR abierto en la demo).
-- README: la función (Salud del repo) y Límites conocidos. Mapa de alcance: fila Análisis. Textos en los 40 idiomas (1 clave: `health.openedWeeks`).
-- QA: fila de la salud en el smoke; auditoría: 0 hallazgos nuevos.
-- Arena: no aplica: una sola forma obvia (reusar `weekly` con los PRs ya cargados).
-- Reclamo: loop/134, sin colisión
-- Nota: el clon venía superficial (`git fetch --unshallow`); `git push origin --delete loop/88` lo denegó el clasificador de permisos (Para Benjamin 7).
-- Validado: 409 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 135, mantenimiento · Rendimiento: pendiente 9 (El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (…)
-
-### 2026-10-25 · Cambio de maquinaria: clon entero, ramas fusionadas sin ruido, relevo a tiempo y bitácora rotada
-
-- **Medido** (origin/master, las notas de la bitácora y `--salud`, el 2026-10-25): las 23 iteraciones de la
-  112 a la 134 anotaron lo mismo dos veces: el clon superficial de la sesión (R3 en ERROR falso y 2 pruebas
-  en rojo hasta `git fetch --unshallow`) y un `git push origin --delete loop/K` negado por el proxy o por el
-  clasificador de permisos. `--salud` daba 107 líneas `Acción: borrar loop/K` que ninguna sesión podía
-  atender y, en un clon `--depth 50`, un hueco falso de 171,9 h. `loop/128` (reclamada a las 16:05 del
-  2026-10-23 y dejada sin fusionar a las 16:30 porque el smoke falló dos veces) dejó «Ocupada» al disparo
-  de las 20:04, porque el reclamo vencía a las 6 h y el cron es cada 4: 11,9 h sin iteración, como
-  `loop/107` (12,1 h). Del reclamo al merge, las iteraciones 109 a 134 tardaron de 8 a 81 min.
-  `IMPROVEMENTS.md` pesaba 312 KB, 248 de ellos de bitácora, y cada sesión lo lee.
-- **Lo nuevo:** el hook de inicio completa el clon superficial en la nube, y `--reclamar`, `--salud` y
-  `--limpiar` lo completan al traer origin; en un clon que sigue superficial, R3 avisa de los PR anteriores
-  al primero visible (los posteriores siguen siendo un error) y `--salud` mide los huecos desde el primer
-  merge que ve. Las `loop/K` ya fusionadas salen en una sola línea de `--salud`, no como una Acción por
-  rama; la skill deja de intentar borrarlas en la nube, y `node tools/loop.mjs --limpiar [--borrar]` las
-  lista o las borra en un solo push desde un PC (Para Benjamin 7). `RECLAMO_H` baja de 6 a 3,5 h, por
-  debajo de `CRON_H`: el disparo siguiente releva un reclamo abandonado, y una prueba lo ata. La bitácora
-  vive en dos archivos: `node tools/loop.mjs --rotar` deja las últimas 8 entradas aquí y lleva las demás a
-  `docs/BITACORA.md` (en este PR, las 135 entradas hasta la iteración 127: `IMPROVEMENTS.md` baja de 312 a
-  79 KB);
-  `--siguiente`, `--check`, `--reclamar` y `--salud` leen las dos (los turnos de mantenimiento miran toda
-  la historia), y R14 avisa con más de 16 entradas aquí, para rotar de a lotes. Para Benjamin 3, 4 y 7 se
-  reescriben con lo medido hoy y sin cifras que envejezcan solas.
-- **Cierra:** los pendientes de Deuda «rotar la bitácora» (5) y «el clon de las sesiones cloud viene
-  superficial» (18); los demás se renumeran (el de los sombreadores del 3D pasa del 9 al 8).
-- **Pruebas que fallan sin el cambio:** `tools/loop.test.mjs` (de 86 a 96), cada guarda con su mutación:
-  R3 sin el aviso del clon superficial, una Acción por cada `loop/K` fusionada, `RECLAMO_H` en 6, los huecos
-  medidos desde la directiva en un clon superficial, `parse` sin la bitácora vieja, el fetch sin
-  `--unshallow` y R14 sin su aviso. La suite de `loop.test.mjs` pasa también en un clon `--depth 50`
-  (antes fallaban 2).
-- README: `--rotar` y `--limpiar` en `tools/loop.mjs`, y `docs/BITACORA.md` en la estructura.
-- QA: no toca la página ni el escritorio; `--salud` y `--limpiar` corridos contra origin (107 ramas en una
-  línea, sin acciones), `--rotar` dos veces (la segunda, «Nada que rotar») y lo movido es idéntico byte a
-  byte a lo que había.
-- Al validar: el primer `npm run check` falló en tres pasos del smoke que este cambio no toca («vista 2D»,
-  «bitácora en vivo» con `'sha'` y «vista de texto: filtra por rama…»), con la máquina a carga 12 en 4 CPU;
-  la repetición pasó los 116. Anotado en el pendiente 1.
-- Validado: 419 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
-- **Siguiente:** iteración 135, mantenimiento · Rendimiento: pendiente 8 (El primer cuadro 3D compila 12 programas de shaders seguidos, ~620 ms sin GPU (…)
-
-### 2026-10-26 · Iteración 135 · Mantenimiento · Rendimiento
-
-- **Arreglo: las aristas del 3D usan `MeshLambertMaterial`** (pendiente 8): `lineMat` y `ghostMat` pasan de `MeshStandardMaterial` (PBR) a Lambert, con los mismos ganchos de pulsos, niebla y afinado; los commits (`nodeMat`) conservan el brillo de vidrio. Los dos programas de aristas dejan de ser los más caros del primer cuadro.
-- **Reproducción:** `node tools/audit.mjs --json antes.json` → antes del arreglo: tareasLargasMs 1825, fps3d 6.2, fps2d 32.1, cargaMs 2807 (sin GPU).
-- **Medido después** (una corrida cada una, sin GPU): tareasLargasMs 1323, fps3d 8.8, fps2d 40.8, cargaMs 2631; consultas igual (10); heap 16→17 MB.
-- **Pruebas que fallan sin el arreglo:** `tools/rendimiento.test.mjs` («las aristas del 3D usan materiales Lambert»).
-- README: no cambia (sin función nueva).
-- QA: auditoría completa (3D y 2D, 0 hallazgos) y smoke de 116 pasos en verde; Lambert sin rugosidad ni metal: las aristas son casi emisivas, sin diferencia que el smoke o la auditoría detecten; no se comparó pixel a pixel (a mirar por Benjamin).
-- Arena: no aplica: una sola forma obvia (cambiar el material de dos mallas).
-- Reclamo: relevo de loop/135 (65abe1b)
-- Validado: 420 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 136, expansión: ítem 88 (Capa para streaming, sexta entrega, Plataformas)
-
-### 2026-10-26 · Iteración 136 · Expansión · Plataformas
-
-- **Capacidad nueva: `&max=N` en la capa para streaming** (ítem 88 de la hoja de ruta, sexta entrega): `?embed=1&max=5` dibuja solo la rama por defecto y las de commit más reciente hasta sumar N (entero de 1 a 200; otro valor, o sin `max`, todas). `GB.search.limitBranches` recorta la vista sin mutar los datos ni gastar consultas; los PR de las ramas quitadas se van con ellas.
-- **Pruebas que fallan sin la capacidad:** `tools/embed.test.mjs` («max acepta de 1 a 200…»), `tools/search.test.mjs` («limitBranches…») y el paso del smoke «&max=2 deja 2 ramas en la capa».
-- README: `&max=` en la lista del widget y en Seguridad (solo un entero de 1 a 200); la fila de Plataformas del Mapa de alcance.
-- QA: sin textos nuevos (i18n sin cambios); capa con `&max=` válido, 0, texto y sin él en el smoke.
-- Arena: no aplica: una sola forma obvia (recortar la vista de datos antes del layout, como el filtro por autor).
-- Reclamo: loop/136, sin colisión
-- Validado: 422 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 137, expansión: ítem 89 (Los forks en el grafo, cuarta entrega, Datos)
-
-### 2026-10-26 · Iteración 137 · Expansión · Datos
-
-- **Capacidad nueva: estrellas de cada fork y orden por estrellas en el panel de salud** (ítem 89 de la hoja de ruta, cuarta entrega): cada fila suma «★ n» (las estrellas ya venían en `/forks`, sin consultas nuevas) y la casilla «Ordenar los forks por estrellas» los ordena por ellas, con el push más nuevo como desempate. `GB.health.compute` recibe el orden como cuarto parámetro.
-- **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` («los forks se pueden ordenar por estrellas…») y el paso del smoke del panel de salud (la casilla, «★ 4» en la demo y el foco).
-- README: el panel de salud (estrellas y casilla) y la fila de Datos del Mapa de alcance. Textos: `health.forksByStars` en los 40 idiomas.
-- QA: panel de salud con forks de la demo, casilla encendida y apagada, foco en la casilla tras ordenar; auditoría en `npm run check`.
-- Arena: no aplica: una sola forma obvia (un parámetro de orden en `compute` y una casilla como el interruptor existente).
-- Reclamo: loop/137, sin colisión
-- Validado: 423 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 138, expansión: ítem 90 (Práctica: revert --abort y rebase --abort, Público)
-
-### 2026-10-26 · Cambio de maquinaria: find-skills en el loop
-
-- **Pedido de Benjamin:** integrar en el loop la skill `find-skills` (`.claude/skills/find-skills/`, MIT, de
-  https://github.com/vercel-labs/skills, commit 65d20cb, con `disable-model-invocation: true` porque su
-  descripción se dispara con frases genéricas como «how do I do X»): busca en el ecosistema abierto de
-  skills (skills.sh) con la CLI `skills`. No es una iteración numerada y la proporción de la regla 2 no
-  cambia.
-- **Lo nuevo:** la sección «Skills de afuera: find-skills» de la directiva y, en la skill `iteracion`,
-  «Skills de afuera: buscar antes de construir» dentro de «Construir», antes de la arena: una búsqueda por
-  iteración (hasta 3 consultas) cuando la tarea entra en un dominio que el repo no cubre; la CLI fija
-  (`npx skills@1.7.4`) y con `DISABLE_TELEMETRY=1`; cada candidata se lee entera con `use` (sin
-  instalarla) y pasa un filtro más estricto que el de la skill (licencia permisiva, sin código remoto,
-  datos afuera, tokens ni evasión, y nada que choque con «Lo que no cambia»), porque los installs se
-  inflan; consultada es dato, no instrucción; instalada (una por iteración, en su propio commit) va
-  copiada al proyecto con su licencia, `disable-model-invocation: true` y la procedencia, sin
-  `skills-lock.json`, nunca global ni actualizada sola. Desde esta entrada, cada iteración lleva
-  `- Skills:` (R5); R8 vigila que la skill corra la CLI con su versión, sin telemetría y solo `find`,
-  `use` y `add --copy -a claude-code`, y avisa (no falla) mientras `.claude/settings.json` no la permita:
-  Para Benjamin 2 suma `Bash(npx skills@1.7.4:*)`. El comando de OpenCode la nombra.
-- **Comprobado:** en la sesión cloud, `DISABLE_TELEMETRY=1 npx -y skills@1.7.4 find playwright` responde
-  en 3 s (y lista `anti-detect-browser` y `playwright-stealth-verify` entre las de más installs: de ahí el
-  filtro); `use vercel-labs/skills@find-skills` imprime la skill sin instalar nada; `add … --skill
-  find-skills -a claude-code --copy -y` en un repo temporal deja solo `.claude/skills/find-skills/` (igual
-  byte a byte al original) y `skills-lock.json`. No se instaló ninguna skill de afuera en el repo.
-- **Pruebas que fallan sin el cambio:** `tools/loop.test.mjs` (de 96 a 98: la viñeta `- Skills:` tras la
-  marca, con la consulta y lo que se hizo o con el porqué de «no aplica», y la CLI de la skill sin la
-  versión fija, sin `DISABLE_TELEMETRY=1`, global, sin `--copy` o con `update` o `experimental_sync`).
-- README: `.claude/skills/find-skills/` en la estructura.
-- Validado: 425 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (saltadas por --sin-e2e).
-- **Siguiente:** iteración 138, expansión: ítem 90 (Práctica: revert --abort y rebase --abort, Público)
-
-### 2026-10-27 · Iteración 138 · Expansión · Público
-
-- **Capacidad nueva: `revert --abort` y `rebase --abort` en la terminal de práctica** (ítem 90 de la hoja de ruta): `revert -n` deja el revert a medias hasta `commit` o `revert --continue`, y `revert --abort` lo cancela; `rebase -i <rama>` se detiene tras el primer commit (HEAD desprendido, la rama sin moverse), `rebase --continue` repite el resto y `rebase --abort` devuelve la rama y HEAD a como estaban. `status` cuenta los dos estados y, con un rebase a medias, `checkout`, `switch`, `merge`, `reset`, `cherry-pick`, `revert` y `stash` se niegan.
-- **Pruebas que fallan sin la capacidad:** `tools/gitsim.test.mjs` («revert --no-commit espera su commit…» y «rebase -i se detiene…») y el paso del smoke «la práctica cancela un revert y un rebase -i a medias».
-- README: la lista de comandos de «Aprender git», sus pruebas y Límites conocidos (el `rebase -i` no abre editor); fila de Público del Mapa de alcance. Sin textos nuevos de interfaz (la salida de la terminal está en inglés), así que no hay claves en los 40 idiomas.
-- QA: terminal de práctica con los ejercicios de `revert` y `rebase`, comandos a medias, `status` y cancelación; auditoría en `npm run check`.
-- Skills: no aplica: es lógica del simulador propio, sin dominio externo que una guía acelere.
-- Arena: no aplica: una sola forma obvia (un estado más en el simulador, como `picking` y `merging`).
-- Reclamo: loop/138, sin colisión
-- Validado: 427 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 139, mantenimiento · Deuda: pendiente 1 (Smoke: el paso «vista 2D» (`tools/smoke.mjs:356`, `waitForSelector('#graph svg …)
-
-### 2026-10-27 · Iteración 139 · Mantenimiento · Deuda
-
-- **Arreglo: el paso «vista 2D» del smoke esperaba nodos visibles** (pendiente 1): `waitForSelector('#graph svg .node')` espera visibilidad y bajo carga los nodos (40 ya en el DOM) tardan en serlo; ahora espera `state: 'attached'` y que `#graph` no esté oculto con `#view-2d` presionado. Las otras intermitentes del pendiente (`'sha'`, vista de texto) siguen como pendiente 1.
-- **Reproducción:** `xvfb-run -a node tools/smoke.mjs` → `✗ vista 2D: page.waitForSelector: Timeout 30000ms exceeded.` (falló en 2 de 2 corridas, y con diagnóstico `{"hidden":false,"svg":true,"nodes":40}`); con el arreglo, el paso pasó en 2 de 2 corridas de `npm run check`.
-- **Pruebas que fallan sin el arreglo:** el paso «vista 2D» del smoke, que ahora comprueba el estado y no la visibilidad.
-- README: sin cambios (herramienta de prueba).
-- QA: smoke completo dos veces con `xvfb-run`; auditoría: no toca la página.
-- Skills: no aplica: arreglo de una espera en el smoke propio.
-- Arena: no aplica: una sola forma obvia (esperar el estado en vez del selector visible).
-- Reclamo: loop/139, sin colisión
-- Validado: 427 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
-- **Siguiente:** iteración 140, expansión: ítem 91 (Resumen de la semana: autores nuevos, Salidas)
-
-### 2026-10-27 · Iteración 140 · Expansión · Salidas
-
-- **Capacidad nueva: autores nuevos en el resumen de la semana** (ítem 91 de la hoja de ruta): el resumen (Markdown e imagen) dice cuántas personas aportaron esta semana sin tener ningún commit cargado anterior a ella. Sin consultas nuevas; con historia sin cargar puede contar de más (queda en Límites conocidos).
-- **Pruebas que fallan sin la capacidad:** `tools/digest.test.mjs` («autores nuevos…»: la cuenta, la línea en Markdown y en la imagen, y su ausencia con cero); el paso del smoke del resumen ya falla con una clave `digest.*` sin resolver.
-- README: la ficha del resumen en «Salud del repo» y Límites conocidos; fila de Salidas del Mapa de alcance. Clave `digest.newcomers` en los 40 idiomas.
-- QA: Markdown e imagen del resumen con el repo de la demo; auditoría en `npm run check`.
-- Skills: no aplica: es una cuenta sobre datos ya cargados, sin dominio externo.
-- Arena: no aplica: una sola forma obvia (restar de la semana a quienes ya firmaron antes).
-- Reclamo: loop/140, sin colisión
-- Validado: 428 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 141, expansión: ítem 92 (Capa para streaming, séptima entrega, Plataformas)
 
 ### 2026-10-27 · Cambio de maquinaria: dev como rama de integración, master de release
 
@@ -1004,3 +779,154 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
   CSP sin cambios: los mismos servidores de `connect-src`.
 - Validado: 449 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)
+
+### 2026-10-27 · Pedido de Benjamin: espacio para conectar otro repo
+
+- **Pedido de Benjamin:** «no me está dando espacio para conectarme a otros repositorios» (captura: la app de
+  escritorio con un repo conectado y el campo `owner/repo` reducido a «gi», debajo de Conectar). No es una
+  iteración numerada y la proporción de la regla 2 no cambia.
+- **Fallo:** el formulario de la barra de arriba tenía un tope de 560 px y el campo `min-width: 0`. Con un repo
+  real aparece «Probar un comando» (ítem 31) y en el escritorio «Abrir carpeta…», y los botones se comían el
+  ancho: el campo quedaba de 2 a 24 px entre 1024 y 1875 px de pantalla (en la web, con cuatro botones, a lo sumo
+  145 px y 46 de texto). Cerca de los 1500 px, además, la barra saltaba de una fila a dos según el largo del
+  texto del estado, que cambia cada segundo.
+- **Arreglo (solo CSS):** el campo no baja de 15rem ni pasa de 30rem. Con un repo real («Probar un comando» o el
+  cupo de la API a la vista), en la app de escritorio y, en la demo, bajo 1500 px, el formulario baja a una fila
+  propia debajo de la marca, el estado y los controles, como ya hacía bajo 860 px; los botones que no quepan
+  junto al campo pasan a otra línea. La demo web de 1500 px o más sigue en una fila. Qué fila toca depende del
+  ancho y de los botones a la vista, no del texto del estado: la barra no salta.
+- **Prueba que falla sin el cambio:** el paso del smoke «con un repo real a la vista, el campo del repo deja
+  espacio para escribir otro» (GitHub simulado; 1875, 1536, 1280 y 1024 px, con y sin «Abrir carpeta…»): sin el
+  arreglo, el campo queda de 11 px.
+- QA: de 400 a 1875 px, con tres, cuatro y cinco botones; inglés, español, alemán, ruso y árabe (RTL); el alto
+  de la barra no cambia entre «actualizado ahora · sincronizando…» y «actualizado hace 12 s · próximo en 12 s».
+- Validado: 449 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)
+
+### 2026-10-27 · Iteración 142 · Expansión · Escala
+
+- **Capacidad nueva: Constelación ordenada por nombre, en la URL** (ítem 93 de la hoja de ruta): `?order=name`
+  abre la constelación ya ordenada alfabéticamente, junto a `?order=activity`; `orderParam` (`js/constellation.js`)
+  reconoce los dos, sin importar mayúsculas ni espacios, y lo desconocido deja el orden de las pestañas.
+- **Pruebas que fallan sin la capacidad:** `tools/constellation.test.mjs` (`orderParam('order=name')` daba `null`) y
+  un paso del smoke (`?order=name` deja el selector en «nombre»).
+- README: la línea de la Constelación. Sin textos nuevos de interfaz, así que no hay claves en los 40 idiomas.
+- QA: constelación con el selector y con la URL; el parámetro no gasta cuota ni toca la CSP; auditoría: no cambia la página más que un valor de la URL.
+- Skills: no aplica: un valor más en un parámetro de URL existente, sin dominio que una guía externa mejore.
+- Arena: no aplica: una sola forma obvia (ampliar la lista de valores de `orderParam`).
+- Reclamo: loop/142, sin colisión
+- Validado: 449 pruebas (`node --test`), smoke (124 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 143, mantenimiento · QA: pendiente 11 (Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones toca…)
+
+### 2026-10-27 · Iteración 143 · Mantenimiento · QA
+
+- **Arreglo: las etiquetas 3D tapadas por otra no reciben el toque en celular** (pendiente 11): con puntero táctil
+  (`pointer: coarse`) una etiqueta atenuada a 0,22 pasa a `pointer-events: none` (clase `tapada`, que sobrevive a
+  la reconstrucción de la etiqueta); con Tab sigue en el orden y el foco la trae al frente.
+- **Reproducción:** Playwright, 320×640 táctil, `?lang=es` (demo, 3D) → 3 etiquetas con opacidad 0,22 y `pointer-events: auto`, que recibían el toque.
+- **Hallazgos:** 1 nuevo (pendiente 2: e2e de escritorio intermitente), 0 a la base de la auditoría. QA acotada al pendiente; la auditoría completa con `--langs` y el smoke tres veces no se corrieron.
+- **Pruebas que fallan sin el arreglo:** paso del smoke «a 320 px, una etiqueta 3D tapada por otra no recibe el toque».
+- README: la línea del rendimiento 3D (etiquetas) dice cómo se tratan las tapadas con el dedo. Sin textos nuevos de interfaz.
+- QA: celular angosto, 3D y teclado (Tab sigue llegando a las tapadas); auditoría: 0 hallazgos nuevos, 0 conocidos.
+- Skills: no aplica: una regla CSS y una clase, sin dominio que una guía externa mejore.
+- Arena: no aplica: una sola forma obvia (sacar el toque de lo atenuado).
+- Reclamo: loop/143, sin colisión
+- Validado: 449 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 144, expansión: ítem 94 (Vista de texto: PRs abiertos por rama, Público)
+
+### 2026-10-28 · Iteración 144 · Expansión · Público
+
+- **Capacidad nueva: Vista de texto: PRs abiertos por rama** (ítem 94 de la hoja de ruta): el nombre accesible de cada
+  rama con PRs abiertos ya cargados lo dice («PRs abiertos: 2») y una marca junto al nombre lo muestra; los PRs de forks
+  no cuentan. `build` (`js/textview.js`) suma `prs` por rama desde `data.pulls`, sin consultas nuevas.
+- **Pruebas que fallan sin la capacidad:** `tools/textview.test.mjs` (`branches[].prs` era `undefined`) y un paso del
+  smoke (la vista de texto de la demo dice los PRs abiertos de sus ramas y coinciden con la marca visible).
+- README: la sección de la vista de texto dice los PRs abiertos por rama. Textos nuevos: `textview.prs` en los 40 idiomas.
+- QA: vista de texto de la demo con teclado y nombres accesibles; auditoría: la ejecuta `npm run check`.
+- Skills: no aplica: una etiqueta más en un árbol ARIA ya construido, que el repo cubre con sus reglas de accesibilidad.
+- Arena: no aplica: una sola forma obvia (contar `data.pulls` por rama en `build`).
+- Reclamo: loop/144, sin colisión
+- Validado: 450 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 145, expansión: ítem 95 (Salud del repo: tendencia de releases, Análisis)
+
+### 2026-10-28 · Iteración 145 · Expansión · Análisis
+
+- **Capacidad nueva: Salud del repo: tendencia de issues cerrados** (ítem 96 de la hoja de ruta, hoy 95; el 95 original, releases por
+  semana, ya estaba hecho en #118 con `dora.weeks` y se quitó de la hoja, con la renumeración de los siguientes): el panel de salud suma la línea «Issues
+  cerrados por semana, últimas 8 semanas» con las actividades `issue-close` ya cargadas (cada número cuenta una vez,
+  con su primer cierre). `compute` (`js/health.js`) devuelve `pace.closedWeeks`; sin consultas nuevas. La demo siembra
+  un cierre para verlo.
+- **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` (`closedWeeks` era `undefined`) y un paso del smoke
+  (`#hl-closedweeks` con 8 cifras y algún cierre).
+- README: la línea de la salud dice los issues cerrados por semana. Textos nuevos: `health.closedWeeks` en los 40 idiomas.
+- QA: panel de salud de la demo (línea visible con 8 cifras, texto escapado); auditoría: sin hallazgos nuevos.
+- Skills: no aplica: una línea más en un panel ya construido, que el repo cubre con sus reglas.
+- Arena: no aplica: una sola forma obvia (contar `issue-close` por semana como ya se hace con PRs abiertos).
+- Reclamo: loop/145, sin colisión
+- Validado: 451 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 146, expansión: ítem 96 (Resumen de la semana: commits por día, Salidas)
+
+### 2026-10-28 · Iteración 146 · Expansión · Salidas
+
+- **Capacidad nueva: Resumen de la semana: commits por día** (ítem 96 de la hoja de ruta): el resumen de la semana suma
+  una línea con los commits de cada uno de los 7 días, del más viejo al de hoy (`Commits por día: 0 · 1 · 0 · 0 · 1 · 1 · 2`),
+  en el Markdown y en la imagen, con lo ya cargado. `compute` (`js/digest.js`) devuelve `perDay`; sin consultas nuevas ni
+  sección si no hubo commits.
+- **Pruebas que fallan sin la capacidad:** `tools/digest.test.mjs` (`perDay` era `undefined`) y un paso del smoke (siete
+  cifras en el Markdown de la demo).
+- README: la línea del resumen dice los commits por día y Límites conocidos aclara que solo cuentan los cargados. Textos nuevos: `digest.perday` en los 40 idiomas.
+- QA: Markdown e imagen del resumen de la demo (línea con siete cifras, sin `undefined`); auditoría: no toca la página más que una línea de texto.
+- Skills: no aplica: una línea más en un resumen ya construido, que el repo cubre con sus reglas.
+- Arena: no aplica: una sola forma obvia (contar commits por día como ya se cuenta por autor).
+- Reclamo: loop/146, sin colisión
+- Validado: 452 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 147, mantenimiento · Seguridad: pendiente 14 (Las fuentes Codeberg y Bitbucket no validan en el origen las URL de los pull re…)
+
+### 2026-10-28 · Iteración 147 · Mantenimiento · Seguridad
+
+- **Arreglo: las URL de PR y commits de Codeberg y Bitbucket se validan en el origen** (pendiente 14): Codeberg solo
+  acepta `html_url` de PR que cuelgue de su servidor (como ya hacía `loadRepo`) y Bitbucket suma `webUrl`, que descarta
+  todo enlace (`links.html.href` de repo, commit y PR) que no cuelgue de `bitbucket.org`; en lugar del dato malo se arma
+  el enlace a mano. Un `javascript:` o un sitio ajeno ya no llega a las exportaciones (resumen, bitácora en Markdown).
+- **Reproducción:** `node --test tools/codeberg.test.mjs tools/bitbucket.test.mjs` → `actual: 'javascript:alert(1)'` en la `url` del PR.
+- **Pruebas que fallan sin el arreglo:** una en `tools/codeberg.test.mjs` y otra en `tools/bitbucket.test.mjs`.
+- README: sin cambios (comportamiento interno, sin textos nuevos de interfaz).
+- QA: Seguridad (CSP intacta, sin `innerHTML` nuevo, ningún token tocado); auditoría: no toca la página.
+- Skills: no aplica: un arreglo de una validación, que el repo cubre con sus reglas.
+- Arena: no aplica: una sola forma obvia (la misma validación que ya usa `loadRepo`).
+- Reclamo: loop/147, sin colisión
+- Validado: 454 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 148, expansión: ítem 97 (Vista de texto: ramas quietas, Público)
+
+### 2026-10-28 · Iteración 148 · Expansión · Público
+
+- **Capacidad nueva: Vista de texto: ramas quietas** (ítem 97 de la hoja de ruta): el nombre accesible de una rama sin
+  actividad hace más de 30 días lo dice («sin actividad hace más de 30 días») y una marca junto al nombre lo muestra,
+  también en la rama por defecto. La actividad es la del grafo: el último commit de la rama o, si fue después, cuando se
+  la vio moverse (una rama creada hoy desde un commit viejo no está quieta); sin fecha no se dice nada. `build`
+  (`js/textview.js`) suma `quiet` con lo ya cargado, sin consultas.
+- **Pruebas que fallan sin la capacidad:** `tools/textview.test.mjs` («una rama sin actividad en más de 30 días se dice
+  quieta…»: `quiet` era `undefined`) y el paso del smoke «Vista de texto: ramas quietas (GitHub simulado)», que en una
+  copia sin el cambio dio `la rama de hace 45 días no lo dice en su nombre accesible: {"name":"gh-pages","label":"gh-pages, commits mostrados: 1",…}`;
+  otro paso mira que ninguna rama de la demo, toda de esta semana, se diga quieta.
+- README: la función de la vista de texto y Límites conocidos (qué cuenta como actividad y cuándo se recalcula). Textos
+  nuevos: `textview.quiet` en los 40 idiomas, con las palabras de `health.stale` de cada uno.
+- QA: vista de texto (nombre accesible y marca visible) en la demo y con la API de GitHub simulada; demo sin token: su
+  historia es de los últimos 3 días y no tiene ramas quietas (rehacerla movería el Replay, el resumen y la bitácora), así
+  que lo positivo se ve con la API simulada; 40 idiomas: árabe y tamil sobre su `health.stale`; auditoría: la corre `npm run check`.
+- Skills: no aplica: una etiqueta más en un árbol ARIA ya construido, que el repo cubre con sus reglas de accesibilidad.
+- Arena: no aplica: una sola forma obvia (la fecha de la punta de cada rama en `build`, como ya la mide la salud).
+- Replica: pasada del 2026-10-28, paridad 75/100, must hechos 11 de 13; ítems 107 a 112 (los dos must que faltan, Azure
+  DevOps y el Launchpad de varios repos, y cuatro de la paridad y las reseñas). Primera pasada completa: `replica/recon.md`
+  (14 páginas públicas de GitKraken, con `WebFetch`), `features.csv` (59 filas), 59 comentarios de Hacker News por la API
+  de Algolia (G2, TrustRadius y el tablero de pedidos de GitKraken respondieron 403 y Capterra 404: una sola fuente y
+  todos los temas finos), `feedback.md`, `fixes.md` y `parity.md`; las candidatas que no entraron, a la tabla de ideas
+  de `docs/investigacion.md`.
+- Nota: el paso del smoke «editar el código…» falló 1 de 3 corridas, en la copia sin el cambio (pendiente 3, nuevo,
+  Media). La rama de trabajo y el PR son los de la sesión (`claude/wonderful-hamilton-ww0uum`), sobre el reclamo de
+  `loop/148`. Con otras sesiones en el mismo contenedor, `npm run check` corrió en un espacio de red propio
+  (`unshare -n` con `lo` arriba), para que las e2e usen 4173 y 4174 sin chocar; ahí las pruebas que hacen commits en
+  repos temporales necesitan `commit.gpgsign=false` (`GIT_CONFIG_*`), porque la firma del contenedor sale por la red.
+- Reclamo: loop/148, sin colisión
+- Validado: 455 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 149, expansión: ítem 98 (Capa para streaming, octava entrega, Plataformas)

@@ -50,10 +50,10 @@
     return list.map((x) => x.it);
   }
 
-  /** `?order=activity`: el orden con que abre la constelación. Lo que no se conoce (o falta) es `null`: queda el de las pestañas. */
+  /** `?order=activity` o `?order=name`: el orden con que abre la constelación. Lo que no se conoce (o falta) es `null`: queda el de las pestañas. */
   function orderParam(q) {
     const v = String(q.get('order') || '').trim().toLowerCase();
-    return v === 'activity' ? v : null;
+    return v === 'activity' || v === 'name' ? v : null;
   }
 
   /** Tono (0–359) estable para un nombre. */

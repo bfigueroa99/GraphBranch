@@ -1553,7 +1553,7 @@
         .join('') || `<p class="hl-none">${U.esc(t('health.none'))}</p>`}</section>` +
       `<section class="hl-sec"><h3>${U.esc(t('health.merged'))}</h3>${
         h.merged ? `<p class="hl-line">${U.esc(t('health.mergedStat', { median: span(h.merged.median), max: span(h.merged.max) }))}</p>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
-      }${h.pace.mergeWeeks.some(Boolean) ? `<p class="hl-line" id="hl-mergeweeks">${U.esc(t('health.mergeWeeks', { n: h.pace.mergeWeeks.length, list: h.pace.mergeWeeks.join(' · ') }))}</p>` : ''}${h.pace.openedWeeks.some(Boolean) ? `<p class="hl-line" id="hl-openedweeks">${U.esc(t('health.openedWeeks', { n: h.pace.openedWeeks.length, list: h.pace.openedWeeks.join(' · ') }))}</p>` : ''}</section>` +
+      }${h.pace.mergeWeeks.some(Boolean) ? `<p class="hl-line" id="hl-mergeweeks">${U.esc(t('health.mergeWeeks', { n: h.pace.mergeWeeks.length, list: h.pace.mergeWeeks.join(' · ') }))}</p>` : ''}${h.pace.openedWeeks.some(Boolean) ? `<p class="hl-line" id="hl-openedweeks">${U.esc(t('health.openedWeeks', { n: h.pace.openedWeeks.length, list: h.pace.openedWeeks.join(' · ') }))}</p>` : ''}${h.pace.closedWeeks.some(Boolean) ? `<p class="hl-line" id="hl-closedweeks">${U.esc(t('health.closedWeeks', { n: h.pace.closedWeeks.length, list: h.pace.closedWeeks.join(' · ') }))}</p>` : ''}</section>` +
       `<section class="hl-sec" id="hl-dora"><h3>${U.esc(t('health.dora'))}</h3>${
         h.dora.deploys30 || h.dora.gap != null || h.dora.lead != null || h.dora.weeks.some(Boolean)
           ? `<p class="hl-line">${U.esc(t('health.doraFreq', { n: h.dora.deploys30, gap: h.dora.gap != null ? span(h.dora.gap) : '—' }))}</p><p class="hl-line" id="hl-weeks">${U.esc(t('health.doraWeeks', { n: h.dora.weeks.length, list: h.dora.weeks.join(' · ') }))}</p><p class="hl-line">${U.esc(h.leadSource.fromCommit ? t('health.doraLeadCommit', { median: span(h.dora.lead), n: h.leadSource.fromCommit, total: h.leadSource.total }) : t('health.doraLead', { median: h.dora.lead != null ? span(h.dora.lead) : '—' }))}</p>`
@@ -1780,7 +1780,7 @@
   const DIGEST_COLORS = { bg: '#0e1514', fg: '#e6efed', dim: '#93a5a1', accent: '#4ade80' };
   const digestLabels = () => {
     const label = (k) => t('digest.' + k);
-    return { head: label('head'), commits: label('commits'), newcomers: label('newcomers'), merged: label('merged'), opened: label('opened'), closed: label('closed'), releases: label('releases'), tags: label('tags'), people: label('people'), branch: label('branch') };
+    return { head: label('head'), commits: label('commits'), perday: label('perday'), newcomers: label('newcomers'), merged: label('merged'), opened: label('opened'), closed: label('closed'), releases: label('releases'), tags: label('tags'), people: label('people'), branch: label('branch') };
   };
 
   /** El resumen de la semana (js/digest.js): se arma con lo ya cargado, se copia o se baja como .md. */
@@ -2144,7 +2144,7 @@
   });
   el.constellation = $('#constellation');
   try {
-    // ?order=activity: la constelación abre ya ordenada (sin anunciarlo: no la pidió nadie con el selector)
+    // ?order=activity|name: la constelación abre ya ordenada (sin anunciarlo: no la pidió nadie con el selector)
     const order = GB.constellation.orderParam(new URLSearchParams(location.search));
     if (order) constellation.setOrder(order, false);
   } catch {

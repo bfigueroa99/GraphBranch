@@ -1138,7 +1138,7 @@
       const pinned = ctx.pins?.has(h.name);
       it.cls = `g3-head ${h.color}${h.isDefault ? ' default' : ''}`;
       if (it.el) {
-        const cls = it.cls + (it.el.classList.contains('moved') ? ' moved' : '');
+        const cls = it.cls + (it.el.classList.contains('moved') ? ' moved' : '') + (it.el.classList.contains('tapada') ? ' tapada' : '');
         if (it.el.className !== cls) it.el.className = cls;
       }
       const aria = [tr(h.isDefault ? 'branch.ariaDefault' : 'branch.aria', { name: h.name })];
@@ -2777,6 +2777,7 @@
         if (!it.el) this.makeHead(it);
         const fade = clamp(1.15 - (s.dist - 30) / range, 0.3, 1);
         let op = hit ? fade * 0.22 : fade;
+        if (it.tapada !== hit) it.el.classList.toggle('tapada', (it.tapada = hit));
         // con una rama resaltada, su etiqueta pasa al frente y las demás se apagan
         const lit = hl && it.data.chain === hl;
         if (hl) op = lit ? op + (1 - op) * this.hlAmt : op * (1 - 0.75 * this.hlAmt);

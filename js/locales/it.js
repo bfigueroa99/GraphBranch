@@ -489,6 +489,7 @@ GB.i18n.define('it', {
   'health.doraWeeks': "Rilasci in produzione a settimana, ultime {n} settimane (dalla più vecchia all'attuale): {list}",
   'health.mergeWeeks': 'Pull request unite per settimana, ultime {n} settimane (dalla più vecchia a quella attuale): {list}',
   'health.openedWeeks': 'Pull request aperte per settimana, ultime {n} settimane (dalla più vecchia a quella attuale): {list}',
+  'health.closedWeeks': 'Issue chiuse per settimana, ultime {n} settimane (dalla più vecchia a quella attuale): {list}',
   'health.ci': 'Fallimenti della CI',
   'health.ciPrs': 'PR aperte con check falliti: {failing} su {total} ({pct}%)',
   'health.ciFeed': 'Volte in cui il branch predefinito è diventato rosso in 30 giorni: {n}',

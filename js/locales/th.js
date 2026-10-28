@@ -489,6 +489,7 @@ GB.i18n.define('th', {
   'health.doraWeeks': 'การปรับใช้ต่อสัปดาห์ {n} สัปดาห์ล่าสุด (จากเก่าสุดถึงปัจจุบัน): {list}',
   'health.mergeWeeks': 'pull request ที่รวมต่อสัปดาห์ {n} สัปดาห์ล่าสุด (จากเก่าสุดถึงปัจจุบัน): {list}',
   'health.openedWeeks': 'pull request ที่เปิดต่อสัปดาห์ {n} สัปดาห์ล่าสุด (จากเก่าสุดถึงปัจจุบัน): {list}',
+  'health.closedWeeks': 'issue ที่ปิดต่อสัปดาห์ {n} สัปดาห์ล่าสุด (จากเก่าสุดถึงปัจจุบัน): {list}',
   'health.ci': 'CI ล้มเหลว',
   'health.ciPrs': 'PR ที่เปิดอยู่และการตรวจสอบล้มเหลว: {failing} จาก {total} ({pct}%)',
   'health.ciFeed': 'จำนวนครั้งที่เบรนช์เริ่มต้นเป็นสีแดงใน 30 วัน: {n}',

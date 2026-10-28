@@ -545,6 +545,7 @@ GB.i18n.define('he', {
   'health.doraWeeks': 'פריסות בשבוע, {n} השבועות האחרונים (מהישן לנוכחי): {list}',
   'health.mergeWeeks': 'Pull requests שמוזגו בשבוע, {n} השבועות האחרונים (מהישן לנוכחי): {list}',
   'health.openedWeeks': 'Pull requests שנפתחו בשבוע, {n} השבועות האחרונים (מהישן לנוכחי): {list}',
+  'health.closedWeeks': 'Issues שנסגרו בשבוע, {n} השבועות האחרונים (מהישן לנוכחי): {list}',
   'health.ci': 'כשלי CI',
   'health.ciPrs': 'PRs פתוחים עם בדיקות שנכשלו: {failing} מתוך {total} ({pct}%)',
   'health.ciFeed': 'מספר הפעמים שענף ברירת המחדל הפך לאדום ב-30 ימים: {n}',

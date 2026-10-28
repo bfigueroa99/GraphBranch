@@ -579,6 +579,7 @@ GB.i18n.define('pl', {
   'textview.scopePath': 'Filtr ścieżki: {path} ({n} commitów)',
   'textview.forks': 'Aktywne forki: {n}',
   'textview.fork': '{name}, ostatni push {when}',
+  'textview.prs': 'otwarte PR-y: {n}',
   'search.title': 'Szukaj commitów',
   'search.help': 'Szukaj po komunikacie, SHA lub autorze (@nazwa). Strzałka w dół przechodzi do wyników, Enter leci do commita.',
   'search.placeholder': 'Komunikat, SHA lub @autor…',

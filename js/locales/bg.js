@@ -568,6 +568,7 @@ GB.i18n.define('bg', {
   'textview.scopePath': 'Филтър по път: {path} ({n} къмита)',
   'textview.forks': 'Активни форкове: {n}',
   'textview.fork': '{name}, последен push {when}',
+  'textview.prs': 'отворени PR: {n}',
   'search.title': 'Търсене на комити',
   'search.help': 'Търсете по съобщение, SHA или автор (@име). Стрелка надолу отива към резултатите, Enter лети до комита.',
   'search.placeholder': 'Съобщение, SHA или @автор…',

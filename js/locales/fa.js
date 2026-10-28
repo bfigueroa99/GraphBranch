@@ -611,6 +611,7 @@ GB.i18n.define('fa', {
   'textview.scopePath': 'فیلتر بر اساس مسیر: {path} ({n} کامیت)',
   'textview.forks': 'فورک‌های فعال: {n}',
   'textview.fork': '{name}، آخرین push {when}',
+  'textview.prs': 'PR باز: {n}',
   'search.title': 'جستجوی کامیت‌ها',
   'search.help': 'با پیام، SHA یا نویسنده (@نام) جستجو کنید. پیکان پایین به نتایج می‌رود و Enter به کامیت پرواز می‌کند.',
   'search.placeholder': 'پیام، SHA یا ‎@نویسنده…',

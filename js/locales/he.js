@@ -625,6 +625,7 @@ GB.i18n.define('he', {
   'textview.scopePath': 'מסונן לפי נתיב: {path} ({n} קומיטים)',
   'textview.forks': 'פורקים פעילים: {n}',
   'textview.fork': '{name}, push אחרון {when}',
+  'textview.prs': 'PRs פתוחים: {n}',
   'search.title': 'חיפוש קומיטים',
   'search.help': 'חפשו לפי הודעה, SHA או כותב (@שם). חץ למטה עובר לתוצאות, Enter טס אל הקומיט.',
   'search.placeholder': 'הודעה, SHA או ‎@כותב…',

@@ -611,6 +611,7 @@ GB.i18n.define('ur', {
   'textview.scopePath': 'پاتھ کے مطابق فلٹر: {path} ({n} کمٹ)',
   'textview.forks': 'فعال فورکس: {n}',
   'textview.fork': '{name}، آخری push {when}',
+  'textview.prs': 'کھلے PR: {n}',
   'search.title': 'کمٹس تلاش کریں',
   'search.help': 'پیغام، SHA یا مصنف (@نام) سے تلاش کریں۔ نیچے کا تیر نتائج پر جاتا ہے، Enter کمٹ تک اڑاتا ہے۔',
   'search.placeholder': 'پیغام، SHA یا ‎@مصنف…',

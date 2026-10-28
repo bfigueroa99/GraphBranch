@@ -569,6 +569,7 @@ GB.i18n.define('nl', {
   'textview.scopePath': 'Gefilterd op pad: {path} ({n} commits)',
   'textview.forks': 'Actieve forks: {n}',
   'textview.fork': '{name}, laatste push {when}',
+  'textview.prs': 'open PR\'s: {n}',
   'search.title': 'Commits zoeken',
   'search.help': 'Zoek op bericht, SHA of auteur (@naam). Pijl omlaag gaat naar de resultaten, Enter vliegt naar de commit.',
   'search.placeholder': 'Bericht, SHA of @auteur…',

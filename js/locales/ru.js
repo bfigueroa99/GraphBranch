@@ -584,6 +584,7 @@ GB.i18n.define('ru', {
   'textview.scopePath': 'Фильтр по пути: {path} ({n} коммитов)',
   'textview.forks': 'Активные форки: {n}',
   'textview.fork': '{name}, последний push {when}',
+  'textview.prs': 'открытые PR: {n}',
   'search.title': 'Поиск коммитов',
   'search.help': 'Ищите по сообщению, SHA или автору (@имя). Стрелка вниз переходит к результатам, Enter летит к коммиту.',
   'search.placeholder': 'Сообщение, SHA или @автор…',

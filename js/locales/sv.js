@@ -568,6 +568,7 @@ GB.i18n.define('sv', {
   'textview.scopePath': 'Filtrerat på sökväg: {path} ({n} commits)',
   'textview.forks': 'Aktiva forkar: {n}',
   'textview.fork': '{name}, senaste push {when}',
+  'textview.prs': 'öppna PR: {n}',
   'search.title': 'Sök commits',
   'search.help': 'Sök på meddelande, SHA eller författare (@namn). Pil ned går till resultaten, Enter flyger till committen.',
   'search.placeholder': 'Meddelande, SHA eller @författare…',

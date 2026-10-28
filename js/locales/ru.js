@@ -504,6 +504,7 @@ GB.i18n.define('ru', {
   'health.doraWeeks': 'Развёртывания по неделям, последние {n} нед. (от самой старой до текущей): {list}',
   'health.mergeWeeks': 'Слитые pull request в неделю, последние {n} нед. (от самой старой к текущей): {list}',
   'health.openedWeeks': 'Открытые pull request в неделю, последние {n} нед. (от самой старой к текущей): {list}',
+  'health.closedWeeks': 'Закрытые issue в неделю, последние {n} нед. (от самой старой к текущей): {list}',
   'health.ci': 'Сбои CI',
   'health.ciPrs': 'Открытые PR с упавшими проверками: {failing} из {total} ({pct} %)',
   'health.ciFeed': 'Сколько раз основная ветка краснела за 30 дней: {n}',

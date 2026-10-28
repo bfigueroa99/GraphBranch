@@ -488,6 +488,7 @@ GB.i18n.define('da', {
   'health.doraWeeks': 'Udrulninger pr. uge, de seneste {n} uger (ældste til nuværende): {list}',
   'health.mergeWeeks': 'Flettede pull requests pr. uge, seneste {n} uger (fra ældste til nuværende): {list}',
   'health.openedWeeks': 'Åbnede pull requests pr. uge, seneste {n} uger (fra ældste til nuværende): {list}',
+  'health.closedWeeks': 'Lukkede issues pr. uge, seneste {n} uger (fra ældste til nuværende): {list}',
   'health.ci': 'CI-fejl',
   'health.ciPrs': 'Åbne PR\'er med fejlende checks: {failing} af {total} ({pct} %)',
   'health.ciFeed': 'Gange standardgrenen blev rød inden for 30 dage: {n}',

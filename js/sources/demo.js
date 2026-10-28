@@ -211,6 +211,7 @@
       push('feature/dark-mode', T, S.darkToggle);
       H.push(this.act('issue-open', { title: MSG('act.issueOpened', { num: ++this.issueSeq }), detail: this.C.issues[0], actor: this.actor(C) }, step(5, 20)));
       this.openIssues.push(this.issueSeq);
+      H.push(this.act('issue-close', { title: MSG('act.issueClosed', { num: 84 }), detail: S.resolved, actor: this.actor(M), number: 84 }, step(5, 20)));
       const dev = push('develop', D, S.vite);
       this.data.deploys.set('staging', { sha: dev.sha });
       create('fix/rate-limit', 'main', 'api', M);

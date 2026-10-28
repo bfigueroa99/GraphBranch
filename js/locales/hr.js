@@ -496,6 +496,7 @@ GB.i18n.define('hr', {
   'health.doraWeeks': 'Isporuke tjedno, zadnjih {n} tjedana (od najstarijeg do trenutnog): {list}',
   'health.mergeWeeks': 'Spojeni pull requestovi tjedno, zadnjih {n} tjedana (od najstarijeg do trenutnog): {list}',
   'health.openedWeeks': 'Otvoreni pull requestovi tjedno, zadnjih {n} tjedana (od najstarijeg do trenutnog): {list}',
+  'health.closedWeeks': 'Zatvoreni issuei tjedno, zadnjih {n} tjedana (od najstarijeg do trenutnog): {list}',
   'health.ci': 'Neuspjesi CI-ja',
   'health.ciPrs': 'Otvoreni PR-ovi s neuspjelim provjerama: {failing} od {total} ({pct} %)',
   'health.ciFeed': 'Koliko je puta zadana grana pocrvenjela u 30 dana: {n}',

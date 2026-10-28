@@ -488,6 +488,7 @@ GB.i18n.define('vi', {
   'health.doraWeeks': 'Số lần triển khai mỗi tuần, {n} tuần gần nhất (từ cũ nhất đến hiện tại): {list}',
   'health.mergeWeeks': 'Pull request đã gộp mỗi tuần, {n} tuần gần nhất (từ cũ nhất đến hiện tại): {list}',
   'health.openedWeeks': 'Pull request đã mở mỗi tuần, {n} tuần gần nhất (từ cũ nhất đến hiện tại): {list}',
+  'health.closedWeeks': 'Issue đã đóng mỗi tuần, {n} tuần gần nhất (từ cũ nhất đến hiện tại): {list}',
   'health.ci': 'Lỗi CI',
   'health.ciPrs': 'PR đang mở có kiểm tra thất bại: {failing}/{total} ({pct}%)',
   'health.ciFeed': 'Số lần nhánh mặc định chuyển đỏ trong 30 ngày: {n}',

@@ -87,7 +87,7 @@ test('ritmo: merges en 7 y 30 días y releases en 30, sin repetir una actividad'
     { id: '6', kind: 'push', time: ago(1) },
   ];
   const pace = compute(repo(), acts, NOW).pace;
-  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
+  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks], closedWeeks: [...pace.closedWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], closedWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
 });
 
 test('DORA: despliegues en 30 días, mediana entre releases y tiempo de entrega', () => {
@@ -333,4 +333,12 @@ test('?forks=0 (o false, no, off) oculta los forks del panel; sin el parámetro 
   for (const s of ['forks=0', 'forks=false', 'forks=NO', 'forks=off', 'repo=a/b&forks= off ']) assert.equal(forksParam(q(s)), false, s);
   for (const s of ['', 'repo=a/b', 'forks=1', 'forks', 'forks=true', 'forks=sí', 'forky=0']) assert.equal(forksParam(q(s)), true, s);
   assert.equal(forksParam(null), true);
+});
+
+test('tendencia de issues cerrados: cada issue cuenta una vez, por semana, de la más vieja a la actual', () => {
+  const cl = (id, days, number) => ({ kind: 'issue-close', id, number, time: ago(days) });
+  const acts = [cl('a', 0.5, 1), cl('b', 3, 2), cl('c', 3.5, 2), cl('d', 8, 3), cl('e', 20, 4), cl('f', 70, 5), cl('g', -1, 6), { kind: 'issue-open', id: 'h', number: 7, time: ago(1) }];
+  const h = compute(repo(), acts, NOW);
+  assert.deepEqual([...h.pace.closedWeeks], [0, 0, 0, 0, 0, 1, 1, 2], 'el 1 y el 2 (cerrado dos veces, cuenta una) esta semana, el 3 la pasada, el 4 hace tres; el 5 fuera de las 8, el 6 (futuro) y el issue abierto no cuentan');
+  assert.deepEqual([...compute(repo(), [], NOW).pace.closedWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
 });

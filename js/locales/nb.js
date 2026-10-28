@@ -488,6 +488,7 @@ GB.i18n.define('nb', {
   'health.doraWeeks': 'Utrullinger per uke, siste {n} uker (eldste til nåværende): {list}',
   'health.mergeWeeks': 'Flettede pull requests per uke, siste {n} uker (fra eldste til nåværende): {list}',
   'health.openedWeeks': 'Åpnede pull requests per uke, siste {n} uker (fra eldste til nåværende): {list}',
+  'health.closedWeeks': 'Lukkede issues per uke, siste {n} uker (fra eldste til nåværende): {list}',
   'health.ci': 'CI-feil',
   'health.ciPrs': 'Åpne PR-er med feilende sjekker: {failing} av {total} ({pct} %)',
   'health.ciFeed': 'Ganger standardgrenen ble rød på 30 dager: {n}',

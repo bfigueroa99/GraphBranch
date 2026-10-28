@@ -261,7 +261,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Salud del repo: tendencia de releases | Análisis | 1×2/2 | 1,0 | DORA | ítem 95 |
 | Salud del repo: tendencia de issues cerrados | Análisis | 1×2/2 | 1,0 | DORA | ítem 96 |
 | Resumen de la semana: commits por día | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 97 |
-| Vista de texto: ramas quietas | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 98 |
+| Vista de texto: ramas quietas | Público | 1×2/2 | 1,0 | (accesibilidad) | hecho en #195 |
 | Capa para streaming, octava entrega | Plataformas | 1×2/1 | 2,0 | Capas para OBS | ítem 99 |
 | Salud del repo: tendencia de ramas nuevas | Análisis | 1×2/2 | 1,0 | DORA | ítem 100 |
 | Práctica: reset --mixed y reflog | Público | 2×2/2 | 2,0 | git-sim | ítem 101 |
@@ -271,6 +271,19 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Salud del repo: tendencia de commits | Análisis | 1×2/2 | 1,0 | DORA | ítem 105 |
 | Capa para streaming, novena entrega | Plataformas | 1×2/1 | 2,0 | Capas para OBS | ítem 106 |
 | Práctica: commit --amend | Público | 2×2/2 | 2,0 | git-sim | ítem 107 |
+| Fuente Azure DevOps | Fuentes | 2×3/3 | 2,0 | Replica (GitKraken, must) | ítem 107 |
+| Launchpad: los PRs de todos los repos seguidos, por estado | Escala | 2×3/2 | 3,0 | Replica (GitKraken, must) | ítem 108 |
+| Historial de un archivo | Análisis | 2×2/1 | 4,0 | Replica (GitKraken) | ítem 109 |
+| Ocultar una rama o dejarla sola | Análisis | 2×2/2 | 2,0 | Replica (GitKraken) | ítem 110 |
+| Primer padre en el grafo | Análisis | 2×2/2 | 2,0 | Replica (reseñas) | ítem 111 |
+| Vista de un PR: descripción y comentarios | Datos | 2×2/2 | 2,0 | Replica (GitKraken) | ítem 112 |
+| Resaltar una rama al pasar el puntero | Análisis | 2×1/1 | 2,0 | Replica (GitKraken) | candidata |
+| Paleta de comandos | Público | 2×2/2 | 2,0 | Replica (GitKraken) | candidata |
+| Blame de un archivo | Datos | 2×2/3 | 1,3 | Replica (GitKraken) | candidata |
+| Varias cuentas del mismo servicio | Fuentes | 1×2/2 | 1,0 | Replica (reseñas) | candidata |
+| Columnas de autor y fecha en el grafo 2D | Análisis | 1×2/2 | 1,0 | Replica (GitKraken) | candidata |
+| Alias de las pestañas | Escala | 1×1/1 | 1,0 | Replica (GitKraken) | candidata |
+| Issues de Jira y Trello | Fuentes | 1×2/3 | 0,7 | Replica (GitKraken) | candidata |
 
 ## Públicos
 

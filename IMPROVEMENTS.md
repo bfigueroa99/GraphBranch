@@ -838,5 +838,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (heredar de la fuente de GitHub como las demás); lo que pesó fue lo que la API real
   permite, que se midió con `curl`.
 - Reclamo: loop/150, sin colisión
-- Validado: PENDIENTE
-- **Siguiente:** PENDIENTE
+- Validado: PENDIENTE-CHECK
+- **Siguiente:** iteración 151, mantenimiento · Deuda: pendiente 1 (Smoke intermitente bajo carga: «filtro por autor» y «filtro por ruta» fallan a …)

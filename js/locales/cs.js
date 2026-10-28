@@ -640,6 +640,8 @@ GB.i18n.define('cs', {
   'diff.binary': 'binární',
   'diff.noPatch': 'Bez zobrazení po řádcích: soubor je binární, prázdný nebo příliš velký.',
   'diff.openFile': 'Otevřít soubor',
+  'diff.history': 'Historie',
+  'diff.historyOf': 'Historie souboru {path}',
   'diff.tooLong': 'Zobrazeno je jen prvních {n} řádků.',
   'diff.lines': 'přidáno {add}, odebráno {del}',
   'diff.mode': 'Jak se změny zobrazují',

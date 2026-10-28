@@ -630,6 +630,8 @@ GB.i18n.define('th', {
   'diff.binary': 'ไบนารี',
   'diff.noPatch': 'ไม่มีมุมมองรายบรรทัด: ไฟล์เป็นไบนารี ว่างเปล่า หรือใหญ่เกินไป',
   'diff.openFile': 'เปิดไฟล์',
+  'diff.history': 'ประวัติ',
+  'diff.historyOf': 'ประวัติของ {path}',
   'diff.tooLong': 'แสดงเฉพาะ {n} บรรทัดแรก',
   'diff.lines': 'เพิ่ม {add} ลบ {del}',
   'diff.mode': 'วิธีแสดงการเปลี่ยนแปลง',

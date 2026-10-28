@@ -686,6 +686,8 @@ GB.i18n.define('he', {
   'diff.binary': 'בינארי',
   'diff.noPatch': 'אין תצוגה שורה אחר שורה: הקובץ בינארי, ריק או גדול מדי.',
   'diff.openFile': 'פתח קובץ',
+  'diff.history': 'היסטוריה',
+  'diff.historyOf': 'ההיסטוריה של {path}',
   'diff.tooLong': 'מוצגות רק {n} השורות הראשונות.',
   'diff.lines': '{add} נוספו, {del} הוסרו',
   'diff.mode': 'איך מוצגים השינויים',

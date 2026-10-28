@@ -242,7 +242,7 @@ segunda columna a la primera.
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color, `&hide=` (avisos, combo, leyenda, rótulo y fechas), `&rotate=` entre repos, `&theme=` claro u oscuro y `&title=` con un rótulo propio y `&max=` con el tope de ramas), extensión de VS Code (sigue la sesión de GitHub del editor y recuerda repos, vista e idioma entre sesiones; paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia, ordenable por pestañas, actividad o nombre, también desde la URL con `?order=activity` o `?order=name`), miles de ramas por repo, el Launchpad de la vista conjunta (los PRs abiertos de todos los repos seguidos, por estado: borrador, checks en rojo, aprobados y esperando revisión) | una organización entera con más de 10 repos a la vez |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack, Discord y Teams (escritorio), resumen de la semana (Markdown, con PRs abiertos, issues cerrados, releases, tags, autores nuevos y commits por día, de un repo o de una organización seguida; PNG, de un repo o de una organización), prompt del loop autónomo para cualquier repo (español o inglés, con repo, ramas y objetivo; se copia o se guarda como `.md`) | el resumen de la semana de una organización con sus issues cerrados |
-| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo, issues cerrados por semana), choques entre ramas, también desde la URL (`?conflicts=1`), comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`), filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), búsqueda de commits también desde la URL (`?q=`), búsqueda por fecha (`desde:` y `hasta:`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, PRs fusionados y abiertos por semana en la salud (las últimas 8), vocabulario DORA en la salud (despliegues en 30 días y por semana, mediana entre releases, tiempo de entrega desde el primer commit del PR), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días), el panel de salud abierto desde la URL (`?health=1`), bitácora en vivo al estilo de Brunell_Node (la quinta cifra del resumen: desde la bitácora anterior, lo grande, commits por día, nota del 1 al 100 de ritmo, publicado y salud con su origen, hallazgos con su gravedad y su seguimiento, cronología y qué sigue; se cierra, se guarda en el navegador y sale en Markdown o `estado.json`) | ver la hoja de ruta |
+| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo, issues cerrados por semana), choques entre ramas, también desde la URL (`?conflicts=1`), comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`) y desde el botón «Historial» de cada archivo del diff, filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), búsqueda de commits también desde la URL (`?q=`), búsqueda por fecha (`desde:` y `hasta:`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, PRs fusionados y abiertos por semana en la salud (las últimas 8), vocabulario DORA en la salud (despliegues en 30 días y por semana, mediana entre releases, tiempo de entrega desde el primer commit del PR), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días), el panel de salud abierto desde la URL (`?health=1`), bitácora en vivo al estilo de Brunell_Node (la quinta cifra del resumen: desde la bitácora anterior, lo grande, commits por día, nota del 1 al 100 de ritmo, publicado y salud con su origen, hallazgos con su gravedad y su seguimiento, cronología y qué sigue; se cierra, se guarda en el navegador y sale en Markdown o `estado.json`) | ver la hoja de ruta |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal (`cherry-pick` (con `--no-commit`/`--abort`), `revert` (con `--no-commit`/`--abort`), `rebase -i` (con `--abort`/`--continue`), `stash`, `tag` (con `-d`), `switch`, `restore` y `merge --no-commit`/`--abort` incluidos) y ejercicios, también propios compartidos por URL con pistas, solución propuesta que se muestra paso a paso con `solution=1` y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto (también desde la URL con `?vista=texto`): árbol de ramas y commits con teclado, filtro por rama, por autor y por ruta con su aviso, tags dichos en cada commit, forks activos y PRs abiertos por rama ya cargados ramas sin actividad hace más de 30 días dichas en su nombre y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
@@ -497,7 +497,7 @@ se comprueban antes de construir sobre ellas.
 106. **Práctica: commit --amend** · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `commit --amend` (con `-m`), para corregir el último commit. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
 107. ~~**Fuente Azure DevOps**~~ hecho en #200 · Fuentes · 2×3/3. [replica must 2026-10-28] El primer must que falta frente a GitKraken (su ayuda «Azure DevOps», <https://help.gitkraken.com/gitkraken-desktop/azure-devops/>; `replica/parity.md`): conectar `azure:org/proyecto/repo` y dibujar sus ramas y commits con la API REST de Azure DevOps, primero repos públicos y sin token; la CSP suma solo `https://dev.azure.com`. Si esa API no admite CORS desde la página, la primera entrega es de la app de escritorio, dicho en el README. Comprobar: `tools/azure.test.mjs` con la API simulada y un paso del smoke.
 108. ~~**Launchpad: los PRs de todos los repos seguidos, por estado**~~ hecho en #199 · Escala · 2×3/2. [replica must 2026-10-28] El otro must que falta (ayuda «Launchpad», <https://help.gitkraken.com/gitkraken-desktop/gitkraken-launchpad/>): con dos o más repos abiertos, la vista conjunta «Todos» suma una lista única de sus PRs abiertos agrupados por estado (borrador, checks en rojo, aprobados, esperando revisión), con lo ya cargado de cada pestaña; cada fila lleva a su rama en su pestaña. Comprobar: prueba de la agrupación con PRs fabricados y un paso del smoke con la API simulada.
-109. **Historial de un archivo** · Análisis · 2×2/1. [replica 2026-10-28] Frente al historial de archivo de GitKraken (ayuda «Diffs, File History and Blame», <https://help.gitkraken.com/gitkraken-desktop/diff/>): cada archivo de los cambios de un commit suma «Historial», que aplica el filtro por ruta a ese archivo (`?path=`) y deja a la vista los commits ya cargados que lo tocaron. Comprobar: un paso del smoke (de un archivo del diff al grafo filtrado por su ruta).
+109. ~~**Historial de un archivo**~~ hecho en #202 · Análisis · 2×2/1. [replica 2026-10-28] Frente al historial de archivo de GitKraken (ayuda «Diffs, File History and Blame», <https://help.gitkraken.com/gitkraken-desktop/diff/>): cada archivo de los cambios de un commit suma «Historial», que aplica el filtro por ruta a ese archivo (`?path=`) y deja a la vista los commits ya cargados que lo tocaron. Comprobar: un paso del smoke (de un archivo del diff al grafo filtrado por su ruta).
 110. **Ocultar una rama o dejarla sola** · Análisis · 2×2/2. [replica 2026-10-28] Frente a «Hide and Solo» del grafo de GitKraken (ayuda «Interface», <https://help.gitkraken.com/gitkraken-desktop/interface/>): la ficha de una rama suma «Ocultar» y «Solo esta», en 2D y en 3D, recordados por repo y con un botón para volver a verlas todas. Comprobar: prueba de la selección de ramas y un paso del smoke.
 111. **Primer padre en el grafo** · Análisis · 2×2/2. [replica 2026-10-28] Lo pide un usuario de GitKraken, que no lo tiene («it lacks the ability to show first parent only», <https://news.ycombinator.com/item?id=40486993>; `replica/fixes.md`): un interruptor deja en el grafo 2D solo la cadena del primer padre de cada rama, como `git log --first-parent`, con lo ya cargado, y viaja en la URL. Comprobar: prueba de la selección de commits y un paso del smoke.
 112. **Vista de un PR: descripción y comentarios** · Datos · 2×2/2. [replica 2026-10-28] Frente a la vista de PR de GitKraken (ayuda «Pull Requests», <https://help.gitkraken.com/gitkraken-desktop/pull-requests/>): la ficha de una rama con PR de GitHub suma la descripción del PR y sus últimos comentarios, con una consulta solo al pulsar. Comprobar: `tools/github.test.mjs` con la API simulada y un paso del smoke.
@@ -567,54 +567,60 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     de esa iteración: un clic sobre un elemento que la demo ya había reemplazado. Medir con 5 corridas y esperar
     al elemento estable en lugar de guardar su handle. Reproducción: `node tools/smoke.mjs` →
     `✗ editar el código: …: elementHandle.click: Element is not attached to the DOM`.
+3. [Deuda] Pasos del smoke intermitentes en la sesión cloud: en la iteración 152, `npm run check` falló 2 de 3 veces
+    en «filtro por autor: el grafo y el árbol de texto muestran solo sus ramas…» (la tercera pasó, y el paso no toca
+    lo que cambió esa iteración) y una corrida del smoke sobre `dev` limpio falló en otro, «al cerrar el último repo
+    de la organización deja de seguirse». Medir con 5 corridas del paso y esperar el estado en lugar de comparar con
+    el conteo base de ramas (la demo sigue publicando). Reproducción: `xvfb-run -a node tools/smoke.mjs` →
+    `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
 
 ### Baja
 
-3. [Accesibilidad] La leyenda 2D no tiene acceso por teclado. Los botones de estado ya no mezclan
+4. [Accesibilidad] La leyenda 2D no tiene acceso por teclado. Los botones de estado ya no mezclan
     `aria-pressed` con un texto cambiante (iteración 123). Reproducir: `node tools/audit.mjs`.
-4. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
+5. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
     renombrados).
-5. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+6. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-6. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+7. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-7. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+8. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-8. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+9. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-9. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+10. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
     Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-10. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+11. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-11. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
+12. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-12. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
+13. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
     vistas, las estadísticas y la bitácora encima) y el 3D no arma etiquetas hasta verse; pensar en una
     forma de llegar al grafo sin recorrer la página (ancla o tarjetas plegables en celular).
     Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la auditoría → captura sin grafo; `#graph3d` fuera de la pantalla.
-13. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+14. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-14. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
+15. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
     `WebFetch` a `releases.electronjs.org` dio HTTP 500 en la iteración 119. Repetir la comparación
     cuando la página responda y subir si hay una estable más nueva.
     Reproducción: `WebFetch https://releases.electronjs.org/release/stable` → `HTTP 500`.
-15. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
+16. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
     corta a los 120 s; documentar en «Cómo validar» que se corra en segundo plano, como `audit --langs`.
     Reproducción: `time node tools/smoke.mjs` → ~480 s.
-16. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
+17. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
     `npm run check` en la iteración 128 (la repetición pasó), aun con la espera de la 127.
     Reproducción: `npm run check` → `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
 
@@ -846,3 +852,15 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/151, sin colisión
 - Validado: 473 pruebas (`node --test`), smoke (129 pasos), i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
 - **Siguiente:** iteración 152, expansión: ítem 109 (Historial de un archivo, Análisis)
+
+### 2026-10-28 · Iteración 152 · Expansión · Análisis
+
+- **Capacidad nueva: Historial de un archivo** (ítem 109 de la hoja de ruta): cada archivo abierto en el panel de cambios de un commit suma «Historial», que aplica el filtro por ruta (`?path=`) a ese archivo, deja a la vista los commits ya cargados que lo tocaron, lo anuncia con un aviso y deja la ruta en la dirección
+- **Pruebas que fallan sin la capacidad:** `node --test tools/demo.test.mjs` → `el historial de src/api/Api.tsx no trae a feat(api): /healthz health endpoint`; y un paso del smoke («historial de un archivo»: del botón del diff al filtro por ruta aplicado)
+- README: «Cambios de cada commit» y Límites conocidos; `replica/features.csv`: «Historial de un archivo» pasa de `partial` a `yes`. Textos nuevos: `diff.history` y `diff.historyOf` en los 40 idiomas
+- QA: panel de cambios (botón con nombre accesible, solo con teclado como cualquier botón), filtro por ruta de la demo; la vista conjunta no lo ofrece; auditoría: la corre `npm run check`
+- Skills: no aplica: un botón sobre el filtro por ruta que ya existe, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (reusar `applyPathFilter`).
+- Reclamo: loop/152, sin colisión
+- Validado: 474 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (la tercera corrida; las dos primeras fallaron en el paso intermitente «filtro por autor», anotado en Mantenimiento 3).
+- **Siguiente:** iteración 153, expansión: ítem 98 (Capa para streaming, octava entrega, Plataformas)

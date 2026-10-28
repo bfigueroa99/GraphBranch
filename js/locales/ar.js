@@ -728,6 +728,8 @@ GB.i18n.define('ar', {
   'diff.binary': 'ثنائي',
   'diff.noPatch': 'لا عرض سطرًا بسطر: الملف ثنائي أو فارغ أو كبير جدًا.',
   'diff.openFile': 'فتح الملف',
+  'diff.history': 'السجل',
+  'diff.historyOf': 'سجل {path}',
   'diff.tooLong': 'تُعرض أول {n} سطر فقط.',
   'diff.lines': '{add} مضافة، {del} محذوفة',
   'diff.mode': 'طريقة عرض التغييرات',

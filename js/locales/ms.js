@@ -629,6 +629,8 @@ GB.i18n.define('ms', {
   'diff.binary': 'binari',
   'diff.noPatch': 'Tiada paparan baris demi baris: fail ini binari, kosong atau terlalu besar.',
   'diff.openFile': 'Buka fail',
+  'diff.history': 'Sejarah',
+  'diff.historyOf': 'Sejarah {path}',
   'diff.tooLong': 'Hanya {n} baris pertama dipaparkan.',
   'diff.lines': '{add} ditambah, {del} dibuang',
   'diff.mode': 'Cara perubahan dipaparkan',

@@ -629,6 +629,8 @@ GB.i18n.define('vi', {
   'diff.binary': 'nhị phân',
   'diff.noPatch': 'Không có chế độ xem từng dòng: tệp là nhị phân, trống hoặc quá lớn.',
   'diff.openFile': 'Mở tệp',
+  'diff.history': 'Lịch sử',
+  'diff.historyOf': 'Lịch sử của {path}',
   'diff.tooLong': 'Chỉ hiển thị {n} dòng đầu tiên.',
   'diff.lines': 'thêm {add}, bớt {del}',
   'diff.mode': 'Cách hiển thị thay đổi',

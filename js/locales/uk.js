@@ -645,6 +645,8 @@ GB.i18n.define('uk', {
   'diff.binary': 'двійковий',
   'diff.noPatch': 'Порядкового перегляду немає: файл двійковий, порожній або завеликий.',
   'diff.openFile': 'Відкрити файл',
+  'diff.history': 'Історія',
+  'diff.historyOf': 'Історія {path}',
   'diff.tooLong': 'Показано лише перші {n} рядків.',
   'diff.lines': 'додано: {add}, вилучено: {del}',
   'diff.mode': 'Як показувати зміни',

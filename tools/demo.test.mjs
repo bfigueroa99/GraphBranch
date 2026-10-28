@@ -45,3 +45,18 @@ test('mucha actividad seguida no rompe la demo: un PR apilado sobre una rama fus
     }
   }
 });
+
+test('commitsByPath: el historial de un archivo del diff de la demo incluye al commit que lo cambió', async () => {
+  const { src } = demo(7);
+  let probados = 0;
+  for (const c of src.data.commits.values()) {
+    const scope = /^\w+\((\w+)\)!?:/.exec(c.message || '')?.[1];
+    if (!scope || scope === 'deps') continue;
+    const { files } = await src.commitDiff(c.sha);
+    const file = files.find((f) => f.path.includes(`/${scope}/`) || f.path.includes(`/${scope}.`));
+    if (!file) continue;
+    assert.ok((await src.commitsByPath(file.path)).has(c.sha), `el historial de ${file.path} no trae a ${c.message}`);
+    if (++probados >= 5) break;
+  }
+  assert.ok(probados, 'la demo no tiene un commit con ámbito del que sacar un archivo');
+});

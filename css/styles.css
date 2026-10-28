@@ -6063,6 +6063,7 @@ a.hl-row:focus-visible {
   gap: 6px 12px;
   border-bottom: 1px solid var(--line);
 }
+.df-history,
 .df-edit {
   height: 28px;
   padding: 0 10px;

@@ -672,6 +672,8 @@ GB.i18n.define('fa', {
   'diff.binary': 'دودویی',
   'diff.noPatch': 'نمای خط‌به‌خط در دسترس نیست: فایل دودویی، خالی یا بیش از حد بزرگ است.',
   'diff.openFile': 'باز کردن فایل',
+  'diff.history': 'تاریخچه',
+  'diff.historyOf': 'تاریخچهٔ {path}',
   'diff.tooLong': 'فقط {n} خط نخست نشان داده می‌شود.',
   'diff.lines': '{add} افزوده، {del} حذف‌شده',
   'diff.mode': 'نحوهٔ نمایش تغییرات',

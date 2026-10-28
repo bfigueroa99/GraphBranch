@@ -672,6 +672,8 @@ GB.i18n.define('ur', {
   'diff.binary': 'بائنری',
   'diff.noPatch': 'سطر بہ سطر منظر نہیں: فائل بائنری، خالی یا بہت بڑی ہے۔',
   'diff.openFile': 'فائل کھولیں',
+  'diff.history': 'تاریخ',
+  'diff.historyOf': '{path} کی تاریخ',
   'diff.tooLong': 'صرف پہلی {n} سطریں دکھائی جا رہی ہیں۔',
   'diff.lines': '{add} شامل، {del} حذف',
   'diff.mode': 'تبدیلیاں کیسے دکھائی جائیں',

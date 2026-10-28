@@ -11,7 +11,7 @@ Buscar commits por mensaje SHA o autor,búsqueda,must,yes,yes,"README: Búsqueda
 Paleta de comandos,navegación,could,yes,no,"atajos de teclado sí; no hay paleta de comandos"
 Cambios de un commit archivo por archivo,diffs,must,yes,yes,"README: Cambios de cada commit (#183)"
 Diff lado a lado con las palabras que cambiaron,diffs,should,yes,yes,"README: Cambios de cada commit (unificado o lado a lado, palabras marcadas)"
-Historial de un archivo,diffs,should,yes,partial,"el filtro por ruta (?path=) deja los commits que la tocaron; no hay una vista del historial de un archivo"
+Historial de un archivo,diffs,should,yes,yes,"README: Cambios de cada commit (el botón «Historial» de cada archivo aplica el filtro por ruta a ese archivo)"
 Blame de un archivo (autor y fecha por línea),diffs,should,yes,no,
 Editar un archivo y hacer commit desde el diff,diffs,could,yes,yes,"README: Editar el código (#186)"
 PRs abiertos con su estado de CI y de revisión,pull requests,must,yes,yes,"README: Salud del repo (PRs por estado) y la marca del PR en el grafo"

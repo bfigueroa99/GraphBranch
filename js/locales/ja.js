@@ -629,6 +629,8 @@ GB.i18n.define('ja', {
   'diff.binary': 'バイナリ',
   'diff.noPatch': '行ごとの表示はありません: ファイルがバイナリ、空、または大きすぎます。',
   'diff.openFile': 'ファイルを開く',
+  'diff.history': '履歴',
+  'diff.historyOf': '{path} の履歴',
   'diff.tooLong': '最初の {n} 行のみ表示しています。',
   'diff.lines': '追加 {add}、削除 {del}',
   'diff.mode': '変更の表示方法',

@@ -629,6 +629,8 @@ GB.i18n.define('hi', {
   'diff.binary': 'बाइनरी',
   'diff.noPatch': 'पंक्ति-दर-पंक्ति दृश्य नहीं: फ़ाइल बाइनरी, खाली या बहुत बड़ी है।',
   'diff.openFile': 'फ़ाइल खोलें',
+  'diff.history': 'इतिहास',
+  'diff.historyOf': '{path} का इतिहास',
   'diff.tooLong': 'केवल पहली {n} पंक्तियाँ दिखाई गई हैं।',
   'diff.lines': '{add} जोड़ी गईं, {del} हटाई गईं',
   'diff.mode': 'बदलाव कैसे दिखाए जाएँ',

@@ -1,6 +1,6 @@
-## Parity: 78.7 / 100
+## Parity: 79.9 / 100
 
-features 78.7  (38 counted, must-haves 12 of 13 done)
+features 79.9  (38 counted, must-haves 12 of 13 done)
 
 Not shippable yet: 1 must-have features are not done.
 
@@ -8,9 +8,9 @@ Not shippable yet: 1 must-have features are not done.
 - navegación                     0.0  (1 features)
 - cuentas                        0.0  (1 features)
 - launchpad                     60.0  (3 features)
-- diffs                         70.0  (5 features)
 - grafo                         75.0  (8 features)
 - varios repos                  75.0  (3 features)
+- diffs                         80.0  (5 features)
 - pull requests                 83.3  (3 features)
 - integraciones                 86.8  (7 features)
 - búsqueda                     100.0  (1 features)
@@ -25,7 +25,6 @@ Not shippable yet: 1 must-have features are not done.
 - [should] cuentas: Varios perfiles o cuentas, no  (un token por servicio)
 - [should] diffs: Blame de un archivo (autor y fecha por línea), no
 - [should] grafo: Ocultar una rama o dejarla sola en el grafo, no  (hay Fijar ramas (las sube) y el filtro por autor; no ocultar ni dejar sola una rama elegida)
-- [should] diffs: Historial de un archivo, partial  (el filtro por ruta (?path=) deja los commits que la tocaron; no hay una vista del historial de un archivo)
 - [should] grafo: Columnas de autor fecha y SHA a la vista en el grafo, partial  (autor fecha y SHA están en la ficha del commit y en la vista de texto; el grafo no tiene columnas)
 - [should] grafo: Resaltar los commits de una rama y atenuar el resto, partial  (comparar dos ramas resalta sus tramos y el filtro por autor o ruta atenúa; no al pasar el puntero por una rama)
 - [should] integraciones: Issues de rastreadores (Jira Trello GitHub Issues), partial  (issues de GitHub GitLab Codeberg y Bitbucket en el panel de actividad y la salud; sin Jira ni Trello)

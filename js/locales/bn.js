@@ -629,6 +629,8 @@ GB.i18n.define('bn', {
   'diff.binary': 'বাইনারি',
   'diff.noPatch': 'লাইন ধরে দেখা যাবে না: ফাইলটি বাইনারি, খালি বা খুব বড়।',
   'diff.openFile': 'ফাইল খুলুন',
+  'diff.history': 'ইতিহাস',
+  'diff.historyOf': '{path}-এর ইতিহাস',
   'diff.tooLong': 'শুধু প্রথম {n} লাইন দেখানো হচ্ছে।',
   'diff.lines': '{add} যোগ, {del} বাদ',
   'diff.mode': 'পরিবর্তনগুলো কীভাবে দেখানো হবে',

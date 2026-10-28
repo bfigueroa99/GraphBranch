@@ -629,6 +629,8 @@ GB.i18n.define('zh-Hans', {
   'diff.binary': '二进制',
   'diff.noPatch': '无逐行视图：文件为二进制、为空或过大。',
   'diff.openFile': '打开文件',
+  'diff.history': '历史',
+  'diff.historyOf': '{path} 的历史',
   'diff.tooLong': '仅显示前 {n} 行。',
   'diff.lines': '新增 {add} 行，删除 {del} 行',
   'diff.mode': '变更的显示方式',

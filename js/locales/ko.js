@@ -629,6 +629,8 @@ GB.i18n.define('ko', {
   'diff.binary': '바이너리',
   'diff.noPatch': '줄 단위 보기 없음: 파일이 바이너리이거나 비어 있거나 너무 큽니다.',
   'diff.openFile': '파일 열기',
+  'diff.history': '기록',
+  'diff.historyOf': '{path}의 기록',
   'diff.tooLong': '처음 {n}줄만 표시됩니다.',
   'diff.lines': '{add}줄 추가, {del}줄 삭제',
   'diff.mode': '변경 사항 표시 방식',

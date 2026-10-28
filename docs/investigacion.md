@@ -14,11 +14,12 @@ se consultó y su URL, y dice solo lo que la página dice: lo que no consta, se 
 - **Puntaje:** `alcance × impacto / esfuerzo`, cada uno de 1 a 3. Alcance: 1 un nicho, 2 un grupo claro,
   3 casi todos los que usan la app o un público nuevo grande. Impacto: 1 un detalle, 2 útil, 3 cambia
   para qué sirve. Esfuerzo: 1 cabe holgado en una iteración, 2 una iteración justa, 3 hay que partirlo.
-  En la hoja de ruta va tras el eje (`· Datos · 3×3/2.`).
+  En la hoja de ruta va tras el eje (`· Datos · 3×3/2.`), y con él elige el loop qué ítem toma (regla 2 de la
+  directiva, desde el 2026-10-28: de mayor a menor puntaje, después de los `must` de Replica).
 - **De la investigación a la hoja:** un ítem nuevo (después del 26) cita su fuente con `[inv. AAAA-MM-DD]`
   (una fecha de las entradas de abajo) o, si es una entrega más de otro ítem, `[parte del ítem K]`. Lo
   que falta frente a la app de referencia cita `[replica AAAA-MM-DD]` (la fecha de `replica/recon.md`;
-  ver «Replica» en la directiva de `IMPROVEMENTS.md`), y lo que piden sus reseñas entra a la tabla de
+  `[replica must AAAA-MM-DD]` si es un `must`; ver «Replica» en la directiva de `IMPROVEMENTS.md`), y lo que piden sus reseñas entra a la tabla de
   ideas de abajo con «Replica» en «De dónde».
 
 ## Fuentes

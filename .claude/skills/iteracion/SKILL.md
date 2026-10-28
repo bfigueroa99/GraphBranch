@@ -381,8 +381,9 @@ python3 .claude/skills/replica-diff/parity.py replica/features.csv --markdown > 
 ```
 
 Los `must` que faltan («Missing, in build order») entran primero a la hoja, uno por ítem, con su puntaje,
-su primera entrega, cómo comprobarla, su evidencia (la fuente de su fila) y `[replica AAAA-MM-DD]` (la
-fecha de `replica/recon.md`). Las mejoras de `replica/fixes.md` van a la tabla de ideas de
+su primera entrega, cómo comprobarla, su evidencia (la fuente de su fila) y `[replica must AAAA-MM-DD]` (la
+fecha de `replica/recon.md`): con esa marca, `--siguiente` los toma antes que al resto (regla 2 de la
+directiva; los demás, por puntaje). Las mejoras de `replica/fixes.md` van a la tabla de ideas de
 `docs/investigacion.md` («De dónde»: Replica) con su puntaje y compiten con las demás. La bitácora lleva
 `- Replica: pasada del AAAA-MM-DD, paridad X/100, must hechos a de b; ítems k…` (o «paridad, sin pasada
 nueva»).
@@ -453,7 +454,7 @@ capacidades en un PR.
 ## Routine
 
 Esta skill la dispara la Routine «GraphBranch: iteración del loop (sesión nueva por disparo)», cron
-`3 */4 * * *` (UTC), una sesión nueva por disparo. Su prompt tiene que ser byte a byte
+`3 */2 * * *` (UTC; cada 4 h hasta el 2026-10-28), una sesión nueva por disparo. Su prompt tiene que ser byte a byte
 `.claude/skills/iteracion/PROMPT.md`: `mcp__claude-code-remote__list_triggers` y `get_trigger` son
 de lectura y sirven para compararlo. Si difiere, va a Para Benjamin y **no se corrige sola**.
 `--check` (R8) vigila que esta skill nombre flags, rutas y comandos que existen, que tenga el protocolo

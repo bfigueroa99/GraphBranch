@@ -1472,6 +1472,10 @@ function fakeGitHub() {
     const rest = m[2] || '';
     if (!rest) return { body: { name, owner: { login: owner }, default_branch: 'main', html_url: `https://github.com/${m[1]}`, private: false, description: '' } };
     if (rest === '/branches') return { body: [...r.branches].map(([b, s]) => ({ name: b, commit: { sha: s }, protected: false })) };
+    if (rest === '/pulls' && m[1] === 'o/b') {
+      const pr = (number, title, draft) => ({ number, title, html_url: `https://github.com/o/b/pull/${number}`, state: 'open', draft, head: { ref: 'main', repo: { full_name: 'o/b' } }, base: { ref: 'main' }, user: { login: 'bea', avatar_url: null }, created_at: new Date(Date.now() - number * 60000).toISOString() });
+      return { body: [pr(7, 'Cambio en revisión', false), pr(8, 'Borrador a medias', true)] };
+    }
     if (rest === '/events' || rest === '/pulls' || rest === '/tags' || rest === '/deployments' || rest === '/forks' || rest === '/activity') return { body: [] }; // /activity: solo con token
     if (rest === '/commits') {
       let s = r.branches.get(q.get('sha')) || q.get('sha');
@@ -1669,6 +1673,17 @@ console.log('Varios repos a la vez');
       if (bad.length) throw new Error(`${colorScheme}: ${bad.length} textos con poco contraste, como ${bad.slice(0, 3).join(', ')}`);
     }
     await page.emulateMedia({ colorScheme: 'light' });
+    // el Launchpad: los PRs abiertos de todos los repos por estado; una fila lleva a su repo, en su pestaña
+    const lp = await page.evaluate(() => ({
+      title: document.querySelector('#all-prs .ap-title')?.textContent,
+      groups: [...document.querySelectorAll('#all-prs .ap-group')].map((g) => ({ id: g.dataset.group, rows: [...g.querySelectorAll('.ap-row')].map((r) => r.querySelector('.ap-t').textContent + ' | ' + r.querySelector('.ap-m').textContent + ' | ' + r.getAttribute('aria-label')) })),
+    }));
+    const want = [['draft', '#8 Borrador a medias | o/b · main · bea'], ['waiting', '#7 Cambio en revisión | o/b · main · bea']];
+    if (!/2/.test(lp.title || '') || lp.groups.length !== 2 || want.some(([id, row], i) => lp.groups[i].id !== id || lp.groups[i].rows.length !== 1 || !lp.groups[i].rows[0].startsWith(row)) || /\{|undefined|NaN/.test(lp.title + lp.groups.map((g) => g.rows.join()).join())) throw new Error('el Launchpad: ' + JSON.stringify(lp));
+    await page.click('#all-prs .ap-row[data-number="7"]');
+    await page.waitForFunction(() => document.querySelector('#all-panel').hidden && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
+    await page.click('#all-tab');
+    await page.waitForSelector('#all-panel:not([hidden]) .rc-card .graph-svg .node', { timeout: T(5000) });
     // lo nuevo de o/b llega a su tarjeta, sin quedar «sin ver» en su pestaña
     const commitsOf = (name) => page.$eval(`.rc-card[data-key="${name}"] .rc-stats`, (n) => Number(/(\d+)\D+(\d+)/.exec(n.textContent)?.[2]));
     const before = await commitsOf('o/b');

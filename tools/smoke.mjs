@@ -2703,6 +2703,99 @@ console.log('Bitbucket');
   await page.context().close();
 }
 
+/* ---------- Azure DevOps ---------- */
+
+/** dev.azure.com simulado para la web: acme/web/api con main, una rama con dos commits y un PR activo. La lista de commits no trae los padres, como la real. */
+function fakeAzure() {
+  const WEB = 'https://dev.azure.com/acme/web/_git/api';
+  const REPO = '/acme/web/_apis/git/repositories/api';
+  const commits = new Map();
+  const branches = new Map();
+  const calls = [];
+  const auths = [];
+  let n = 0;
+  const commit = (branch, title) => {
+    const commitId = createHash('sha1').update(`az:${++n}`).digest('hex');
+    const date = new Date(Date.now() - 3600e3 + n * 1000).toISOString();
+    commits.set(commitId, { commitId, author: { name: 'Bea', date }, committer: { name: 'Bea', date }, comment: title, parents: branches.has(branch) ? [branches.get(branch)] : [] });
+    branches.set(branch, commitId);
+  };
+  for (let i = 0; i < 4; i++) commit('main', `inicio ${i}`);
+  branches.set('feature/x', branches.get('main'));
+  commit('feature/x', 'feat: primera parte');
+  commit('feature/x', 'feat: segunda parte');
+  const chain = (id) => {
+    const out = [];
+    for (let s = id; s && commits.has(s); s = commits.get(s).parents[0]) out.push(commits.get(s));
+    return out;
+  };
+  const json = (body) => ({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(body) });
+  return {
+    calls,
+    auths,
+    handle: (route) => {
+      const u = new URL(route.request().url());
+      auths.push(route.request().headers().authorization || null);
+      calls.push(u.pathname + u.search);
+      const p = u.pathname;
+      if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' } });
+      if (p === REPO) return route.fulfill(json({ id: 'r1', name: 'api', webUrl: WEB, defaultBranch: 'refs/heads/main', project: { name: 'web', visibility: 'public', description: 'Un repo de Azure DevOps' } }));
+      if (p === `${REPO}/refs`) return route.fulfill(json({ count: branches.size, value: [...branches].map(([name, objectId]) => ({ name: `refs/heads/${name}`, objectId })) }));
+      if (p === `${REPO}/commits`) {
+        const list = chain(u.searchParams.get('searchCriteria.itemVersion.version')).slice(0, Number(u.searchParams.get('searchCriteria.$top') || 100)).map(({ parents, ...c }) => c);
+        return route.fulfill(json({ count: list.length, value: list }));
+      }
+      const one = p.match(/\/repositories\/api\/commits\/(\w+)$/);
+      if (one && commits.has(one[1])) return route.fulfill(json(commits.get(one[1])));
+      if (p === `${REPO}/pullrequests`) {
+        const pr = { pullRequestId: 3, title: 'Agrega la función x', status: 'active', isDraft: false, sourceRefName: 'refs/heads/feature/x', targetRefName: 'refs/heads/main', createdBy: { displayName: 'Bea', uniqueName: 'bea@example.com' }, creationDate: new Date().toISOString() };
+        return route.fulfill(json({ count: 1, value: [pr] }));
+      }
+      return route.fulfill({ status: 404, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"message":"TF401019: The Git repository does not exist or you do not have permissions."}' });
+    },
+  };
+}
+
+console.log('Azure DevOps');
+{
+  const az = fakeAzure();
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.route('https://dev.azure.com/**', az.handle);
+
+  await step(page, 'conecta un repo de Azure DevOps (azure:acme/web/api), con su etiqueta y sin token', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=azure:acme/web/api`);
+    await loaded(page);
+    const link = await page.evaluate(() => {
+      const a = document.querySelector('#repo-link');
+      const b = document.querySelector('#repo-badge');
+      return { text: a.textContent, href: a.href, badge: b.hidden ? null : b.textContent, banner: !document.querySelector('#token-banner').hidden };
+    });
+    if (link.text !== 'acme/web/api' || link.href !== 'https://dev.azure.com/acme/web/_git/api') throw new Error(`el título dice ${link.text} (${link.href})`);
+    if (link.badge !== 'Azure DevOps') throw new Error(`la etiqueta dice ${link.badge}`);
+    if (link.banner) throw new Error('muestra el aviso del token de GitHub');
+    const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
+    if (saved !== '["azure:acme/web/api"]') throw new Error(`se guardó ${saved}`);
+    if (az.auths.some(Boolean)) throw new Error('una consulta a Azure DevOps llevó un encabezado Authorization');
+  });
+
+  await step(page, 'en 2D se ven sus dos ramas y el PR #3', async () => {
+    await page.click('#view-2d');
+    const label = await page.waitForSelector('#graph .head .h-pr', { timeout: T(15000) });
+    if ((await label.textContent()) !== '#3') throw new Error(`la etiqueta dice ${await label.textContent()}`);
+    const names = await page.$$eval('#graph .head', (hs) => hs.map((h) => h.getAttribute('aria-label')).join(' | '));
+    if (!names.includes('feature/x') || !names.includes('main')) throw new Error(`ramas: ${names}`);
+  });
+
+  await step(page, 'se acepta pegar la URL de dev.azure.com y un repo que no existe lo dice con el texto de Azure DevOps', async () => {
+    await page.fill('#repo-input', 'https://dev.azure.com/acme/web/_git/nada');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: T(15000) });
+    const text = await page.textContent('#overlay');
+    if (!text.includes('No se encontró acme/web/nada en Azure DevOps. Solo se leen proyectos públicos.')) throw new Error(`el aviso dice ${text}`);
+  }, { allow: /404/ });
+  await page.context().close();
+}
+
 console.log('Bitbucket propio con token');
 {
   // el CSP de la web no nombra hosts propios (eso lo hace la app de escritorio con --bitbucket-url=): aquí se salta para ver qué sale

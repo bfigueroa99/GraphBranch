@@ -395,6 +395,8 @@ GB.i18n.define('th', {
   'err.httpNoMessageGitlab': 'GitLab ตอบกลับ {status}',
   'err.httpNoMessageCodeberg': 'Codeberg ตอบกลับ {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket ตอบกลับ {status}',
+  'status.connectingAzure': 'กำลังเชื่อมต่อกับ Azure DevOps…',
+  'err.notFoundAzure': 'ไม่พบ {repo} บน Azure DevOps อ่านได้เฉพาะโปรเจกต์สาธารณะ',
   'status.connectingForge': 'กำลังเชื่อมต่อกับเซิร์ฟเวอร์ Forgejo/Gitea…',
   'err.notFoundForge': 'ไม่พบ {repo} บนเซิร์ฟเวอร์ อ่านเฉพาะที่เก็บสาธารณะเท่านั้น',
   'err.authBbdc': 'โทเค็นของ {host} ไม่ถูกต้องหรือหมดอายุ ตรวจสอบได้ในการตั้งค่า',

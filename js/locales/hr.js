@@ -402,6 +402,8 @@ GB.i18n.define('hr', {
   'err.httpNoMessageGitlab': 'GitLab je odgovorio {status}',
   'err.httpNoMessageCodeberg': 'Codeberg je odgovorio {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket je odgovorio {status}',
+  'status.connectingAzure': 'Povezivanje s Azure DevOpsom…',
+  'err.notFoundAzure': '{repo} nije pronađen na Azure DevOpsu. Čitaju se samo javni projekti.',
   'status.connectingForge': 'Povezivanje s Forgejo/Gitea poslužiteljem…',
   'err.notFoundForge': '{repo} nije pronađen na poslužitelju. Čitaju se samo javni repozitoriji.',
   'err.authBbdc': 'Token za {host} nije valjan ili je istekao. Provjeri ga u Postavkama.',

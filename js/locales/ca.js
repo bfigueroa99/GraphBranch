@@ -394,6 +394,8 @@ GB.i18n.define('ca', {
   'err.httpNoMessageGitlab': 'GitLab ha respost {status}',
   'err.httpNoMessageCodeberg': 'Codeberg ha respost {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket ha respost {status}',
+  'status.connectingAzure': 'S\'està connectant amb Azure DevOps…',
+  'err.notFoundAzure': 'No s\'ha trobat {repo} a Azure DevOps. Només es llegeixen projectes públics.',
   'status.connectingForge': 'Connectant amb el servidor de Forgejo/Gitea…',
   'err.notFoundForge': 'No s\'ha trobat {repo} al servidor. Només es llegeixen repositoris públics.',
   'err.authBbdc': 'El token de {host} no és vàlid o ha caducat. Revisa\'l a Configuració.',

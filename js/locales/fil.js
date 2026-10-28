@@ -395,6 +395,8 @@ GB.i18n.define('fil', {
   'err.httpNoMessageGitlab': 'Sumagot ang GitLab ng {status}',
   'err.httpNoMessageCodeberg': 'Sumagot ang Codeberg ng {status}',
   'err.httpNoMessageBitbucket': 'Sumagot ang Bitbucket ng {status}',
+  'status.connectingAzure': 'Kumokonekta sa Azure DevOps…',
+  'err.notFoundAzure': 'Hindi nahanap ang {repo} sa Azure DevOps. Mga pampublikong proyekto lang ang binabasa.',
   'status.connectingForge': 'Kumokonekta sa server ng Forgejo/Gitea…',
   'err.notFoundForge': 'Hindi nahanap ang {repo} sa server. Mga pampublikong repository lang ang binabasa.',
   'err.authBbdc': 'Hindi valid o expired na ang token para sa {host}. Tingnan ito sa Mga Setting.',

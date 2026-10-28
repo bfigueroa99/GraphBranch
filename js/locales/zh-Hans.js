@@ -394,6 +394,8 @@ GB.i18n.define('zh-Hans', {
   'err.httpNoMessageGitlab': 'GitLab 返回 {status}',
   'err.httpNoMessageCodeberg': 'Codeberg 返回 {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket 返回 {status}',
+  'status.connectingAzure': '正在连接 Azure DevOps…',
+  'err.notFoundAzure': '在 Azure DevOps 上找不到 {repo}。只读取公开项目。',
   'status.connectingForge': '正在连接 Forgejo/Gitea 服务器…',
   'err.notFoundForge': '在服务器上找不到 {repo}。只读取公开仓库。',
   'err.authBbdc': '{host} 的令牌无效或已过期。请在设置中检查。',

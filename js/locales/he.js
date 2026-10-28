@@ -451,6 +451,8 @@ GB.i18n.define('he', {
   'err.httpNoMessageGitlab': 'GitLab השיב {status}',
   'err.httpNoMessageCodeberg': 'Codeberg השיב {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket השיב {status}',
+  'status.connectingAzure': 'מתחבר ל-Azure DevOps…',
+  'err.notFoundAzure': '{repo} לא נמצא ב-Azure DevOps. נקראים רק פרויקטים ציבוריים.',
   'status.connectingForge': 'מתחבר לשרת Forgejo/Gitea…',
   'err.notFoundForge': '{repo} לא נמצא בשרת. נקראים רק מאגרים ציבוריים.',
   'err.authBbdc': 'האסימון של {host} אינו תקף או שפג תוקפו. בדוק אותו בהגדרות.',

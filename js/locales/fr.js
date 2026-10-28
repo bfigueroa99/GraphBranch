@@ -395,6 +395,8 @@ GB.i18n.define('fr', {
   'err.httpNoMessageGitlab': 'GitLab a répondu {status}',
   'err.httpNoMessageCodeberg': 'Codeberg a répondu {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket a répondu {status}',
+  'status.connectingAzure': 'Connexion à Azure DevOps…',
+  'err.notFoundAzure': '{repo} est introuvable sur Azure DevOps. Seuls les projets publics sont lus.',
   'status.connectingForge': 'Connexion au serveur Forgejo/Gitea…',
   'err.notFoundForge': '{repo} est introuvable sur le serveur. Seuls les dépôts publics sont lus.',
   'err.authBbdc': 'Le jeton de {host} n’est pas valide ou a expiré. Vérifiez-le dans les Réglages.',

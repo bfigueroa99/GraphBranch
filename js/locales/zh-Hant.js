@@ -394,6 +394,8 @@ GB.i18n.define('zh-Hant', {
   'err.httpNoMessageGitlab': 'GitLab 回應 {status}',
   'err.httpNoMessageCodeberg': 'Codeberg 回應 {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket 回應 {status}',
+  'status.connectingAzure': '正在連線至 Azure DevOps…',
+  'err.notFoundAzure': '在 Azure DevOps 上找不到 {repo}。只讀取公開專案。',
   'status.connectingForge': '正在連線到 Forgejo/Gitea 伺服器…',
   'err.notFoundForge': '在伺服器上找不到 {repo}。只讀取公開儲存庫。',
   'err.authBbdc': '{host} 的權杖無效或已過期。請在設定中檢查。',

@@ -394,6 +394,8 @@ GB.i18n.define('id', {
   'err.httpNoMessageGitlab': 'GitLab merespons {status}',
   'err.httpNoMessageCodeberg': 'Codeberg merespons {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket merespons {status}',
+  'status.connectingAzure': 'Menyambung ke Azure DevOps…',
+  'err.notFoundAzure': '{repo} tidak ditemukan di Azure DevOps. Hanya proyek publik yang dibaca.',
   'status.connectingForge': 'Menyambung ke server Forgejo/Gitea…',
   'err.notFoundForge': '{repo} tidak ditemukan di server. Hanya repositori publik yang dibaca.',
   'err.authBbdc': 'Token untuk {host} tidak valid atau sudah kedaluwarsa. Periksa di Pengaturan.',

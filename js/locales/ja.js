@@ -394,6 +394,8 @@ GB.i18n.define('ja', {
   'err.httpNoMessageGitlab': 'GitLab が {status} を返しました',
   'err.httpNoMessageCodeberg': 'Codeberg が {status} を返しました',
   'err.httpNoMessageBitbucket': 'Bitbucket が {status} を返しました',
+  'status.connectingAzure': 'Azure DevOps に接続中…',
+  'err.notFoundAzure': 'Azure DevOps に {repo} が見つかりません。読み取れるのは公開プロジェクトだけです。',
   'status.connectingForge': 'Forgejo/Gitea サーバーに接続しています…',
   'err.notFoundForge': 'サーバーに {repo} が見つかりません。読み取るのは公開リポジトリだけです。',
   'err.authBbdc': '{host} のトークンが無効か期限切れです。設定で確認してください。',

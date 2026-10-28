@@ -394,6 +394,8 @@ GB.i18n.define('sw', {
   'err.httpNoMessageGitlab': 'GitLab ilijibu {status}',
   'err.httpNoMessageCodeberg': 'Codeberg ilijibu {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket ilijibu {status}',
+  'status.connectingAzure': 'Inaunganisha na Azure DevOps…',
+  'err.notFoundAzure': '{repo} haikupatikana kwenye Azure DevOps. Miradi ya umma pekee ndiyo husomwa.',
   'status.connectingForge': 'Inaunganisha na seva ya Forgejo/Gitea…',
   'err.notFoundForge': '{repo} haikupatikana kwenye seva. Hifadhi za umma pekee ndizo husomwa.',
   'err.authBbdc': 'Tokeni ya {host} si sahihi au imeisha muda. Iangalie kwenye Mipangilio.',

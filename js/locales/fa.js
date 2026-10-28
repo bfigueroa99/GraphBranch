@@ -437,6 +437,8 @@ GB.i18n.define('fa', {
   'err.httpNoMessageGitlab': 'GitLab با وضعیت {status} پاسخ داد',
   'err.httpNoMessageCodeberg': 'Codeberg با وضعیت {status} پاسخ داد',
   'err.httpNoMessageBitbucket': 'Bitbucket با وضعیت {status} پاسخ داد',
+  'status.connectingAzure': 'در حال اتصال به Azure DevOps…',
+  'err.notFoundAzure': '{repo} در Azure DevOps پیدا نشد. فقط پروژه‌های عمومی خوانده می‌شوند.',
   'status.connectingForge': 'در حال اتصال به سرور Forgejo/Gitea…',
   'err.notFoundForge': '{repo} روی سرور پیدا نشد. فقط مخزن‌های عمومی خوانده می‌شوند.',
   'err.authBbdc': 'توکن {host} معتبر نیست یا منقضی شده است. آن را در تنظیمات بررسی کنید.',

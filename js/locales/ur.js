@@ -437,6 +437,8 @@ GB.i18n.define('ur', {
   'err.httpNoMessageGitlab': 'GitLab نے {status} جواب دیا',
   'err.httpNoMessageCodeberg': 'Codeberg نے {status} جواب دیا',
   'err.httpNoMessageBitbucket': 'Bitbucket نے {status} جواب دیا',
+  'status.connectingAzure': 'Azure DevOps سے جڑ رہا ہے…',
+  'err.notFoundAzure': 'Azure DevOps پر {repo} نہیں ملا۔ صرف عوامی پراجیکٹ پڑھے جاتے ہیں۔',
   'status.connectingForge': 'Forgejo/Gitea سرور سے جڑ رہا ہے…',
   'err.notFoundForge': 'سرور پر {repo} نہیں ملا۔ صرف عوامی ریپوزٹریز پڑھی جاتی ہیں۔',
   'err.authBbdc': '{host} کا ٹوکن درست نہیں یا اس کی میعاد ختم ہو گئی ہے۔ اسے ترتیبات میں دیکھیں۔',

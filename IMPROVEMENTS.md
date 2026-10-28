@@ -581,7 +581,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     intermitente en la sesión cloud: falló 1 de 2 `npm run check` en la iteración 143 (la repetición pasó).
     Reproducción: `xvfb-run -a npm run check` → `expect(Object.keys(tokenFiles(dir))).not.toEqual([])` (`e2e/desktop.spec.mjs:333`).
 3. [Deuda] El paso del smoke «editar el código: desde los cambios de un commit se abre su archivo en la rama…» falló
-    1 de 2 corridas en la iteración 148 (sesión cloud con otras cinco corriendo a la vez), en una copia sin el cambio
+    1 de 3 corridas en la iteración 148 (sesión cloud con otras cinco corriendo a la vez), en una copia sin el cambio
     de esa iteración: un clic sobre un elemento que la demo ya había reemplazado. Medir con 5 corridas y esperar
     al elemento estable en lugar de guardar su handle. Reproducción: `node tools/smoke.mjs` →
     `✗ editar el código: …: elementHandle.click: Element is not attached to the DOM`.
@@ -922,8 +922,11 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
   de Algolia (G2, TrustRadius y el tablero de pedidos de GitKraken respondieron 403 y Capterra 404: una sola fuente y
   todos los temas finos), `feedback.md`, `fixes.md` y `parity.md`; las candidatas que no entraron, a la tabla de ideas
   de `docs/investigacion.md`.
-- Nota: el paso del smoke «editar el código…» falló una vez en la copia sin el cambio (pendiente 3, nuevo, Media); la
-  rama de trabajo y el PR son los de la sesión (`claude/wonderful-hamilton-ww0uum`), sobre el reclamo de `loop/148`.
+- Nota: el paso del smoke «editar el código…» falló 1 de 3 corridas, en la copia sin el cambio (pendiente 3, nuevo,
+  Media). La rama de trabajo y el PR son los de la sesión (`claude/wonderful-hamilton-ww0uum`), sobre el reclamo de
+  `loop/148`. Con otras sesiones en el mismo contenedor, `npm run check` corrió en un espacio de red propio
+  (`unshare -n` con `lo` arriba), para que las e2e usen 4173 y 4174 sin chocar; ahí las pruebas que hacen commits en
+  repos temporales necesitan `commit.gpgsign=false` (`GIT_CONFIG_*`), porque la firma del contenedor sale por la red.
 - Reclamo: loop/148, sin colisión
-- Validado: (pendiente)
+- Validado: 455 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 149, expansión: ítem 98 (Capa para streaming, octava entrega, Plataformas)

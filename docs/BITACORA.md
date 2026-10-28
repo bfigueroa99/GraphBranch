@@ -2315,3 +2315,176 @@ bitácoras juntas (la rotación de los subtipos de mantenimiento, la numeración
 - Reclamo: loop/140, sin colisión
 - Validado: 428 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 141, expansión: ítem 92 (Capa para streaming, séptima entrega, Plataformas)
+
+### 2026-10-27 · Cambio de maquinaria: dev como rama de integración, master de release
+
+- **Pedido de Benjamin:** que el loop trabaje en `dev`, como los demás proyectos, y deje `master` de
+  release. No es una iteración numerada y la proporción de la regla 2 no cambia.
+- **Lo nuevo:** `dev` (creada el 2026-10-27 desde `master`) es la rama de integración: `--reclamar`
+  crea cada `loop/N` desde `origin/dev` y lee de ahí la hoja de ruta y la bitácora; su PR va contra
+  `dev` y se fusiona ahí con commit de merge; R3 busca los «hecho en #K» en `origin/dev`; `--salud` mide
+  la cadencia, los huecos y las ramas fusionadas sobre `dev`, y suma la línea `Release:` (cuántos merges
+  de `dev` le faltan a `master`); `--limpiar`, `npm run check` (el diff que decide las e2e) y
+  `tools/opencode.mjs` (el worktree) salen de `dev`. `master` es el release: lo publica GitHub Pages
+  (`--publicado` lo sigue comparando con la web) y solo recibe `dev` cuando Benjamin lo promueve con un
+  PR `dev` → `master`. La skill `iteracion` arranca con `git fetch origin +dev:refs/remotes/origin/dev`
+  y `git checkout --detach origin/dev` (el refspec entero porque en un clon de una sola rama `fetch
+  origin dev` no crea `origin/dev`), y nunca abre un PR contra `master`. `PROMPT.md` dice que la skill
+  que manda es la de `dev`; `CLAUDE.md`, el README, el comando de OpenCode, la directiva y Para
+  Benjamin 1 (la web se actualiza al promover) lo dicen igual.
+- **Pruebas que fallan sin el cambio:** `tools/loop.test.mjs` (de 98 a 99: el release en `--salud`) y
+  `tools/opencode.test.mjs`; con `BASE` de vuelta en `master` fallan 10 (el reclamo que sale de `dev`
+  con lo que `master` no tiene, R3, `--salud`, el clon superficial y el worktree de OpenCode).
+- README: la sección de Pages (master es el release) y la de OpenCode (el worktree sale de `dev`).
+- QA: no toca la página ni el escritorio; `--reclamar`, `--salud` y `--limpiar` corridos contra un
+  repositorio bare con `dev` por delante de `master` en las pruebas.
+- Validado: 429 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) en verde; e2e no corridas (saltadas por --sin-e2e: Electron no se pudo instalar en la sesión, y lo que toca la página es #177 y #178, ya validados con sus 28 e2e en `master`).
+- **Siguiente:** iteración 141, expansión: ítem 92 (Capa para streaming, séptima entrega, Plataformas)
+
+### 2026-10-27 · Iteración 141 · Expansión · Plataformas
+
+- **Capacidad nueva: `&hide=legend,title,clock` en la capa para streaming** (ítem 92 de la hoja de ruta, Capa para streaming, séptima entrega): además de `notices` y `combo`, `&hide=` esconde la leyenda de ramas (2D), el rótulo de `&title=` y las fechas del eje (3D, `.g3-day`); sin `hide`, se ve todo; un nombre desconocido se ignora.
+- **Pruebas que fallan sin la capacidad:** `tools/embed.test.mjs` (hide acepta legend, title y clock) y un paso del smoke («&hide=legend,title,clock esconde la leyenda, el rótulo y las fechas»).
+- README: la lista de funciones (`&hide=`), Seguridad (cinco nombres conocidos); sin textos nuevos de interfaz, así que sin tocar los 40 idiomas.
+- QA: fila del widget embebido: el smoke mira que el rótulo y la leyenda queden en `display: none` y que la capa lleve la marca del reloj; auditoría: la puerta de `npm run check`.
+- Skills: no aplica: un parámetro de URL y tres reglas de CSS que las reglas del repo ya cubren.
+- Arena: no aplica: una sola forma obvia (ampliar la lista de nombres de `hide` y una clase por cada uno).
+- Arreglo de paso: R3 de `tools/loop.mjs` leía el log de `dev` con `--first-parent` y no veía #177 y #178 (llegaron dentro del «Merge master en la rama»): con ellos y el PR en curso fallaba; ahora lee el log entero.
+- Replica: paridad, sin pasada nueva (no existe `replica/`; la pasada completa sigue pendiente, R13); ítems 102 a 107 repuestos con entregas chicas de líneas ya investigadas, y el 99 reescrito (su `&theme=` ya estaba hecho en el 74)
+- Reclamo: loop/141, sin colisión
+- Validado: 430 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)
+
+### 2026-10-27 · Arreglo: la demo hacía un merge sobre la base borrada de un PR apilado
+
+- **Fallo:** la `excepción: Cannot read properties of undefined (reading 'sha')` que hacía caer pasos distintos
+  del smoke en la corrida larga (pendiente Media 1). La pila, con la demo acelerada: `DemoSource.commit` ←
+  `doMerge`. Al fusionarse un PR, la demo borra su rama a los 2,2 s, pero un PR apilado sobre ella seguía con esa
+  base; el siguiente merge de ese PR hacía su commit en una rama que ya no existía. No es una iteración numerada.
+- **Arreglo:** como GitHub, al borrarse la rama fusionada los PRs apilados sobre ella (y las ramas que salían de
+  ella) pasan a apuntar a la base del PR que se fusionó.
+- **Reproducción:** `tools/demo.test.mjs` (nueva): 1.500 pasos de la demo con cinco semillas fijas y los `later`
+  corridos a mano; sin el arreglo falla en el primer paso de la semilla 1 («el PR #37 apunta a feature/login, que
+  ya no existe»). Con la demo acelerada en Chromium (un paso cada 60 ms) la excepción salía en segundos; con el
+  arreglo, 90 s sin errores.
+- QA: solo la demo; el pendiente Media 1 queda con lo que sigue intermitente (filtros que no acotan, vista de texto).
+- Validado: 431 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+
+### 2026-10-27 · Pedido de Benjamin: los cambios de cada commit, más fáciles de leer
+
+- **Pedido de Benjamin:** «mejora el cómo poder ver los cambios de cada commit». No es una iteración numerada y
+  la proporción de la regla 2 no cambia.
+- **Lo nuevo:** en el panel de cambios, las palabras que cambiaron dentro de cada línea quitada y su agregada
+  (`GB.diff.words`, por la subsecuencia común más larga de sus palabras; no marca líneas de más de 500
+  caracteres ni las que comparten muy poco, hasta 1.500 pares por archivo); **Unificado** o **Lado a lado**
+  (`GB.diff.rows` empareja cada quitada con su agregada; las líneas largas se parten); el botón del panel
+  ancho; **Desplegar/Plegar todo**; desde 4 archivos, un filtro por ruta que sigue al pasar de commit (`Esc`
+  lo borra); la cabecera de cada archivo queda fija mientras se lee su código (`overflow: clip` en vez de
+  `hidden`); y con el panel abierto, un clic en un commit del grafo (2D o 3D) muestra los suyos en vez de
+  abrir su ficha. El modo y el ancho se recuerdan (`diffMode`, `diffWide`). La demo retoca las líneas que
+  quita (un número, un nombre), así el resaltado se ve sin token.
+- **Pruebas que fallan sin el cambio:** `tools/diff.test.mjs` (de 9 a 13: `rows`, `words` y la demo con
+  palabras marcadas) y el paso del smoke «cambios de un commit: un clic en el grafo cambia de commit, lado a
+  lado con palabras marcadas, filtro y panel ancho» (vuelve a lo último y abre la ficha de una rama a la vista:
+  con la historia larga de la corrida entera, el paso anterior deja las etiquetas fuera de pantalla).
+- README: la función en la lista, los atajos del panel y Límites conocidos (las palabras, lado a lado).
+- QA: 2D y 3D (el clic en un commit de cada vista), demo sin token, 40 idiomas (11 textos nuevos; árabe en
+  vivo con el panel), celular (el botón ancho se esconde bajo 860 px), teclado (`J`/`K` no pasan de commit
+  mientras se escribe en el filtro; `Esc` en él lo borra sin cerrar). La excepción intermitente
+  `reading 'sha'` del smoke salió aquí en «modo galaxias» y en «filtro por autor»: era de la demo y la arregló #184.
+- Validado: 435 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)
+
+### 2026-10-27 · Pedido de Benjamin: todos los repos seguidos en una misma vista
+
+- **Pedido de Benjamin:** «poder revisar en una misma vista los repositorios conectados y no tener que cambiarme
+  entre pestañas para revisar cada uno». No es una iteración numerada y la proporción de la regla 2 no cambia.
+- **Lo nuevo:** **Todos**, delante de las pestañas (con dos repos o más), cambia el grafo de un solo repo por una
+  cuadrícula con una tarjeta por repo (`js/overview.js`): su estado, su etiqueta, sus cifras (ramas, commits del
+  grafo, PRs abiertos y cuándo fue el último commit), su último commit (un clic abre sus cambios) y su grafo 2D en
+  vivo (una instancia de `GB.Graph` con su propio layout), con los efectos de lo que llega; arriba, los totales.
+  El panel de cambios ahora sigue al repo del commit (`diffTab`) y no siempre al de la vista, así que «Ver
+  cambios» en una tarjeta lo abre al lado sin cambiar de pestaña. El panel de actividad lleva a la tarjeta de cada
+  repo; lo que llega se ve en su tarjeta y no queda como novedad sin ver. Se recuerda (`all`), viaja en la URL
+  (`?all=1`, `?all=0`) y la dejan el modo TV, la demo, la práctica y el ensayo; ir a una rama desde la salud, la
+  búsqueda o la vista de texto vuelve al grafo del repo a la vista. Mientras está puesta, el 3D no dibuja.
+- **Pruebas que fallan sin el cambio:** `tools/overview.test.mjs` (nueva: `allParam`, `lastCommit`, `summary`,
+  `totals`) y el paso del smoke «vista conjunta: «Todos» muestra cada repo en su tarjeta, en vivo, y sus cambios
+  sin cambiar de pestaña» (con dos repos de GitHub simulados: teclado, URL y almacenamiento, contraste, un push
+  que llega a su tarjeta sin quedar sin ver, los cambios desde la tarjeta, se recuerda al volver a abrir y el
+  nombre abre su pestaña con el foco en ella). La API simulada del smoke da ahora los cambios de un commit.
+- README: la función en la lista y en «Varios repos a la vez», los controles, el mapa de archivos, Límites
+  conocidos y Seguridad.
+- QA: web (el escritorio usa la misma página: e2e); 2D en cada tarjeta y el 3D apagado mientras se ve; demo y
+  práctica salen de la vista; 40 idiomas (10 textos nuevos, «etiqueta: número» como la constelación para no
+  depender de plurales); celular (una columna, el grafo de 300 px); teclado (Todos con Intro, cada tarjeta con
+  Tab; el nombre deja el foco en la pestaña del repo); movimiento reducido (el punto de carga quieto).
+- Validado: 439 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)
+
+### 2026-10-27 · Pedido de Benjamin: editar el código desde GraphBranch
+
+- **Pedido de Benjamin:** «haz que sea posible poder editar el código desde GraphBranch». No es una iteración
+  numerada y la proporción de la regla 2 no cambia.
+- **Lo nuevo:** **Editar** en cada archivo del panel de cambios (y en la ficha de cada planeta del modo galaxias)
+  abre `js/editor.js`: el archivo como está ahora en su rama (la del commit que se veía o la de la galaxia; se
+  elige otra rama u otra ruta), el mensaje propuesto, lo que va cambiando (+n −m, por la subsecuencia común más
+  larga de las líneas) y **Hacer commit**, que lo guarda como un commit en esa rama por la API del servicio:
+  GitHub (`PUT /contents`, con su sha), GitLab (`PUT`/`POST /repository/files`, con `last_commit_id`) y Codeberg
+  (`PUT`/`POST /contents`). Un archivo que cambió en la rama no se pisa (conflicto), una ruta nueva se crea, y
+  cada fallo se dice (sin token, token rechazado, sin permiso de escritura, carpeta, binario, demasiado grande);
+  sin token el editor ofrece Ajustes con el foco en el campo de ese servicio. Una ruta escrita con tramos vacíos,
+  «.» o «..» no sale (`U.safePath`: en la URL se normalizaría y el `PUT`, con el token, iría a otro lugar de la API). La demo edita en memoria: su commit
+  aparece en la rama y sus cambios (`GB.editor.patch`) son los escritos. Bitbucket, un Forgejo propio y las
+  carpetas locales quedan para después (`canEdit` por servicio). `U.b64encode`, `U.b64decode` y `U.encPath`
+  pasan a `js/util.js`.
+- **Pruebas que fallan sin el cambio:** `tools/editor.test.mjs` (nueva: base64, `lineDiff`, `patch` y la demo),
+  `tools/github.test.mjs` (de 31 a 34: `readFile`, `writeFile` y el motivo de cada fallo), `tools/gitlab.test.mjs`
+  (de 19 a 21) y `tools/codeberg.test.mjs` (de 17 a 18); en el smoke, «editar el código: desde los cambios de un
+  commit…» (la demo: abrir, cambiar, preguntar al cerrar con cambios, hacer commit y ver sus cambios de verdad) y
+  «editar sin token…» (GitHub simulado: no deja hacer commit, no escribe y lleva a Ajustes).
+- README: la función en la lista, el permiso de escritura del token (Contents: Read and write; `api` en GitLab;
+  `write:repository` en Codeberg), el mapa de archivos, Límites conocidos y Seguridad.
+- QA: 2D (panel de cambios) y galaxias (ficha del planeta); demo sin token (en memoria); 40 idiomas (33 textos
+  nuevos); teclado (Intro en la ruta abre el archivo, no hace commit; `Esc` o Cancelar con cambios pregunta);
+  CSP sin cambios: los mismos servidores de `connect-src`.
+- Validado: 449 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)
+
+### 2026-10-27 · Pedido de Benjamin: espacio para conectar otro repo
+
+- **Pedido de Benjamin:** «no me está dando espacio para conectarme a otros repositorios» (captura: la app de
+  escritorio con un repo conectado y el campo `owner/repo` reducido a «gi», debajo de Conectar). No es una
+  iteración numerada y la proporción de la regla 2 no cambia.
+- **Fallo:** el formulario de la barra de arriba tenía un tope de 560 px y el campo `min-width: 0`. Con un repo
+  real aparece «Probar un comando» (ítem 31) y en el escritorio «Abrir carpeta…», y los botones se comían el
+  ancho: el campo quedaba de 2 a 24 px entre 1024 y 1875 px de pantalla (en la web, con cuatro botones, a lo sumo
+  145 px y 46 de texto). Cerca de los 1500 px, además, la barra saltaba de una fila a dos según el largo del
+  texto del estado, que cambia cada segundo.
+- **Arreglo (solo CSS):** el campo no baja de 15rem ni pasa de 30rem. Con un repo real («Probar un comando» o el
+  cupo de la API a la vista), en la app de escritorio y, en la demo, bajo 1500 px, el formulario baja a una fila
+  propia debajo de la marca, el estado y los controles, como ya hacía bajo 860 px; los botones que no quepan
+  junto al campo pasan a otra línea. La demo web de 1500 px o más sigue en una fila. Qué fila toca depende del
+  ancho y de los botones a la vista, no del texto del estado: la barra no salta.
+- **Prueba que falla sin el cambio:** el paso del smoke «con un repo real a la vista, el campo del repo deja
+  espacio para escribir otro» (GitHub simulado; 1875, 1536, 1280 y 1024 px, con y sin «Abrir carpeta…»): sin el
+  arreglo, el campo queda de 11 px.
+- QA: de 400 a 1875 px, con tres, cuatro y cinco botones; inglés, español, alemán, ruso y árabe (RTL); el alto
+  de la barra no cambia entre «actualizado ahora · sincronizando…» y «actualizado hace 12 s · próximo en 12 s».
+- Validado: 449 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 142, expansión: ítem 93 (Constelación ordenada por nombre, en la URL, Escala)
+
+### 2026-10-27 · Iteración 142 · Expansión · Escala
+
+- **Capacidad nueva: Constelación ordenada por nombre, en la URL** (ítem 93 de la hoja de ruta): `?order=name`
+  abre la constelación ya ordenada alfabéticamente, junto a `?order=activity`; `orderParam` (`js/constellation.js`)
+  reconoce los dos, sin importar mayúsculas ni espacios, y lo desconocido deja el orden de las pestañas.
+- **Pruebas que fallan sin la capacidad:** `tools/constellation.test.mjs` (`orderParam('order=name')` daba `null`) y
+  un paso del smoke (`?order=name` deja el selector en «nombre»).
+- README: la línea de la Constelación. Sin textos nuevos de interfaz, así que no hay claves en los 40 idiomas.
+- QA: constelación con el selector y con la URL; el parámetro no gasta cuota ni toca la CSP; auditoría: no cambia la página más que un valor de la URL.
+- Skills: no aplica: un valor más en un parámetro de URL existente, sin dominio que una guía externa mejore.
+- Arena: no aplica: una sola forma obvia (ampliar la lista de valores de `orderParam`).
+- Reclamo: loop/142, sin colisión
+- Validado: 449 pruebas (`node --test`), smoke (124 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 143, mantenimiento · QA: pendiente 11 (Las etiquetas de rama pisadas se atenúan a 0,22 pero siguen siendo botones toca…)

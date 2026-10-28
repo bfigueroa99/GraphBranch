@@ -697,6 +697,7 @@ GB.i18n.define('fa', {
   'digest.releases': 'نسخه‌ها',
   'digest.tags': 'برچسب‌ها',
   'digest.people': 'چه کسی مشارکت کرد (کامیت‌ها)',
+  'digest.perday': 'کامیت در هر روز: {n}',
   'digest.newcomers': 'مشارکت‌کنندگان جدید: {n}',
   'digest.branch': 'فعال‌ترین شاخه',
   'digest.org': 'خلاصه هفته {owner}',

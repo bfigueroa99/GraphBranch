@@ -749,6 +749,7 @@ console.log('Escritorio (1280×800)');
     if (left) throw new Error(`comparar ramas: «Quitar el resaltado» deja ${left} commits marcados`);
     const md = await page.evaluate(() => document.querySelector('#digest-md')?.textContent || '');
     if (!/^# /.test(md) || !/## .*\(\d+\)/.test(md)) throw new Error('resumen de la semana sin formato Markdown: ' + md.slice(0, 120));
+    if (!/\d( · \d+){6}\n/.test(md)) throw new Error('resumen de la semana sin los commits de cada día: ' + md.slice(0, 160));
     if (/undefined|NaN|digest\./.test(md)) throw new Error('texto sin resolver en el resumen de la semana: ' + md.slice(0, 120));
     const [dl] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#digest-save')]);
     if (!/^graphbranch-.*-semana-.*\.md$/.test(dl.suggestedFilename())) throw new Error('nombre del resumen: ' + dl.suggestedFilename());

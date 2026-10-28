@@ -670,6 +670,7 @@ GB.i18n.define('uk', {
   'digest.releases': 'Релізи',
   'digest.tags': 'Теги',
   'digest.people': 'Хто зробив внесок (коміти)',
+  'digest.perday': 'Коміти за днями: {n}',
   'digest.newcomers': 'Нові автори: {n}',
   'digest.branch': 'Найактивніша гілка',
   'digest.org': 'Підсумки тижня для {owner}',

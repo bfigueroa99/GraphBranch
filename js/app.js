@@ -1780,7 +1780,7 @@
   const DIGEST_COLORS = { bg: '#0e1514', fg: '#e6efed', dim: '#93a5a1', accent: '#4ade80' };
   const digestLabels = () => {
     const label = (k) => t('digest.' + k);
-    return { head: label('head'), commits: label('commits'), newcomers: label('newcomers'), merged: label('merged'), opened: label('opened'), closed: label('closed'), releases: label('releases'), tags: label('tags'), people: label('people'), branch: label('branch') };
+    return { head: label('head'), commits: label('commits'), perday: label('perday'), newcomers: label('newcomers'), merged: label('merged'), opened: label('opened'), closed: label('closed'), releases: label('releases'), tags: label('tags'), people: label('people'), branch: label('branch') };
   };
 
   /** El resumen de la semana (js/digest.js): se arma con lo ya cargado, se copia o se baja como .md. */

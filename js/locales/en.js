@@ -660,6 +660,7 @@ GB.i18n.define('en', {
   'digest.releases': 'Releases',
   'digest.tags': 'Tags',
   'digest.people': 'Who contributed (commits)',
+  'digest.perday': 'Commits per day: {n}',
   'digest.newcomers': 'New contributors: {n}',
   'digest.branch': 'Most active branch',
   'digest.org': 'Weekly summary of {owner}',

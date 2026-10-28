@@ -655,6 +655,7 @@ GB.i18n.define('fil', {
   'digest.releases': 'Mga release',
   'digest.tags': 'Mga tag',
   'digest.people': 'Sino ang nag-ambag (mga commit)',
+  'digest.perday': 'Mga commit kada araw: {n}',
   'digest.newcomers': 'Mga bagong contributor: {n}',
   'digest.branch': 'Pinakaaktibong branch',
   'digest.org': 'Buod ng linggo ng {owner}',

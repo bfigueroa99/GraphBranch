@@ -655,6 +655,7 @@ GB.i18n.define('nl', {
   'digest.releases': 'Releases',
   'digest.tags': 'Tags',
   'digest.people': 'Wie heeft bijgedragen (commits)',
+  'digest.perday': 'Commits per dag: {n}',
   'digest.newcomers': 'Nieuwe bijdragers: {n}',
   'digest.branch': 'Actiefste branch',
   'digest.org': 'Weekoverzicht van {owner}',

@@ -654,6 +654,7 @@ GB.i18n.define('el', {
   'digest.releases': 'Εκδόσεις',
   'digest.tags': 'Ετικέτες (tags)',
   'digest.people': 'Ποιος συνεισέφερε (commits)',
+  'digest.perday': 'Commits ανά ημέρα: {n}',
   'digest.newcomers': 'Νέοι συνεισφέροντες: {n}',
   'digest.branch': 'Πιο ενεργός κλάδος',
   'digest.org': 'Εβδομαδιαία σύνοψη του {owner}',

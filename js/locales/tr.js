@@ -654,6 +654,7 @@ GB.i18n.define('tr', {
   'digest.releases': 'Sürümler',
   'digest.tags': 'Etiketler',
   'digest.people': 'Kimler katkı verdi (commit)',
+  'digest.perday': 'Günlük commit: {n}',
   'digest.newcomers': 'Yeni katkıda bulunanlar: {n}',
   'digest.branch': 'En etkin dal',
   'digest.org': '{owner} haftalık özeti',

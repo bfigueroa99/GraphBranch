@@ -670,6 +670,7 @@ GB.i18n.define('ru', {
   'digest.releases': 'Релизы',
   'digest.tags': 'Теги',
   'digest.people': 'Кто внёс вклад (коммиты)',
+  'digest.perday': 'Коммиты по дням: {n}',
   'digest.newcomers': 'Новые авторы: {n}',
   'digest.branch': 'Самая активная ветка',
   'digest.org': 'Итоги недели для {owner}',

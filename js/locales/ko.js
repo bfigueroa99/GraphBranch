@@ -570,6 +570,7 @@ GB.i18n.define('ko', {
   'textview.forks': '활성 포크: {n}',
   'textview.fork': '{name}, 마지막 push {when}',
   'textview.prs': '열린 PR: {n}',
+  'textview.quiet': '30일 넘게 활동 없음',
   'search.title': '커밋 검색',
   'search.help': '메시지, SHA 또는 작성자(@이름)로 검색합니다. 아래쪽 화살표는 결과로 이동하고 Enter는 그 커밋으로 날아갑니다.',
   'search.placeholder': '메시지, SHA 또는 @작성자…',

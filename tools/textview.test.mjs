@@ -176,3 +176,27 @@ test('cada rama cuenta los PRs abiertos ya cargados que salen de ella, sin los d
   assert.deepEqual(by, { main: 0, feature: 2 });
   assert.equal(build(repo()).branches[0].prs, 0); // sin PRs cargados, ninguno
 });
+
+test('una rama sin actividad en más de 30 días se dice quieta, también la por defecto; sin fecha no se sabe', () => {
+  const DAY = 864e5;
+  const now = Date.UTC(2026, 9, 28);
+  const d = repo();
+  d.commits.get('m3').date = new Date(now - 31 * DAY).toISOString(); // la fecha puede venir como texto
+  d.commits.get('f2').date = now - 29 * DAY;
+  const quiet = (data, opts) => Object.fromEntries(build(data, { now, ...opts }).branches.map((b) => [b.name, b.quiet]));
+  assert.deepEqual(quiet(d), { main: true, feature: false });
+  assert.equal(raw(repo()).branches.length, 2); // sin `now`, la de hoy: las fechas de 1970 de repo() ya están quietas
+  assert.ok(raw(repo()).branches.every((b) => b.quiet));
+  // una rama que se movió hace poco (creada hoy desde un commit viejo) no está quieta, aunque su punta sea vieja
+  d.branches.get('main').movedAt = now - 2 * DAY;
+  assert.deepEqual(quiet(d), { main: false, feature: false });
+  // sin fecha de la punta ni del movimiento no se sabe su edad: no se dice quieta
+  d.commits.get('m3').date = undefined;
+  d.branches.get('main').movedAt = 0;
+  assert.equal(quiet(d).main, false);
+  // con el filtro por ruta cuenta la punta, no el último commit que tocó la ruta
+  d.commits.get('f2').date = now - DAY;
+  d.commits.get('a1').date = now - 90 * DAY;
+  assert.deepEqual(quiet(d, { paths: new Set(['a1']) }), { main: false, feature: false });
+  assert.equal(ctx.window.GB.textview.QUIET_DAYS, 30); // los textos de 'textview.quiet' dicen 30 en los 40 idiomas
+});

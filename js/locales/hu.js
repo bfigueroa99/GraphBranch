@@ -570,6 +570,7 @@ GB.i18n.define('hu', {
   'textview.forks': 'Aktív forkok: {n}',
   'textview.fork': '{name}, utolsó push {when}',
   'textview.prs': 'nyitott PR-ek: {n}',
+  'textview.quiet': '30 napnál régebben inaktív',
   'search.title': 'Commitok keresése',
   'search.help': 'Keressen üzenet, SHA vagy szerző (@név) alapján. A lefelé nyíl az eredményekre lép, az Enter a commithoz repít.',
   'search.placeholder': 'Üzenet, SHA vagy @szerző…',

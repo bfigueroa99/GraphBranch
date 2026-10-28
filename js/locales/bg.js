@@ -570,6 +570,7 @@ GB.i18n.define('bg', {
   'textview.forks': 'Активни форкове: {n}',
   'textview.fork': '{name}, последен push {when}',
   'textview.prs': 'отворени PR: {n}',
+  'textview.quiet': 'без активност над 30 дни',
   'search.title': 'Търсене на комити',
   'search.help': 'Търсете по съобщение, SHA или автор (@име). Стрелка надолу отива към резултатите, Enter лети до комита.',
   'search.placeholder': 'Съобщение, SHA или @автор…',

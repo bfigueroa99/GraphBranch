@@ -570,6 +570,7 @@ GB.i18n.define('id', {
   'textview.forks': 'Fork aktif: {n}',
   'textview.fork': '{name}, push terakhir {when}',
   'textview.prs': 'PR terbuka: {n}',
+  'textview.quiet': 'tanpa aktivitas lebih dari 30 hari',
   'search.title': 'Cari commit',
   'search.help': 'Cari berdasarkan pesan, SHA, atau penulis (@nama). Panah bawah menuju hasil, Enter terbang ke commit.',
   'search.placeholder': 'Pesan, SHA, atau @penulis…',

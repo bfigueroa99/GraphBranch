@@ -841,5 +841,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Skills: no aplica: una etiqueta más en un árbol ARIA ya construido, que el repo cubre con sus reglas de accesibilidad.
 - Arena: no aplica: una sola forma obvia (contar `data.pulls` por rama en `build`).
 - Reclamo: loop/144, sin colisión
-- Validado: PENDIENTE
+- Validado: 450 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 145, expansión: ítem 95 (Salud del repo: tendencia de releases, Análisis)

@@ -410,6 +410,8 @@ GB.i18n.define('uk', {
   'err.httpNoMessageGitlab': 'GitLab відповів {status}',
   'err.httpNoMessageCodeberg': 'Codeberg відповів {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket відповів {status}',
+  'status.connectingAzure': 'Підключення до Azure DevOps…',
+  'err.notFoundAzure': '{repo} не знайдено в Azure DevOps. Читаються лише публічні проєкти.',
   'status.connectingForge': 'Підключення до сервера Forgejo/Gitea…',
   'err.notFoundForge': '{repo} не знайдено на сервері. Читаються лише публічні репозиторії.',
   'err.authBbdc': 'Токен для {host} недійсний або закінчився. Перевірте його в налаштуваннях.',

@@ -394,6 +394,8 @@ GB.i18n.define('fi', {
   'err.httpNoMessageGitlab': 'GitLab vastasi {status}',
   'err.httpNoMessageCodeberg': 'Codeberg vastasi {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket vastasi {status}',
+  'status.connectingAzure': 'Yhdistetään Azure DevOpsiin…',
+  'err.notFoundAzure': '{repo} ei löytynyt Azure DevOpsista. Vain julkiset projektit luetaan.',
   'status.connectingForge': 'Yhdistetään Forgejo/Gitea-palvelimeen…',
   'err.notFoundForge': 'Kohdetta {repo} ei löytynyt palvelimelta. Vain julkisia repositorioita luetaan.',
   'err.authBbdc': 'Kohteen {host} tunnus ei kelpaa tai on vanhentunut. Tarkista se asetuksista.',

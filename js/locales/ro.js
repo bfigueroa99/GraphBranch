@@ -402,6 +402,8 @@ GB.i18n.define('ro', {
   'err.httpNoMessageGitlab': 'GitLab a răspuns {status}',
   'err.httpNoMessageCodeberg': 'Codeberg a răspuns {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket a răspuns {status}',
+  'status.connectingAzure': 'Se conectează la Azure DevOps…',
+  'err.notFoundAzure': '{repo} nu a fost găsit în Azure DevOps. Se citesc doar proiectele publice.',
   'status.connectingForge': 'Se conectează la serverul Forgejo/Gitea…',
   'err.notFoundForge': '{repo} nu a fost găsit pe server. Se citesc doar depozitele publice.',
   'err.authBbdc': 'Tokenul pentru {host} nu este valid sau a expirat. Verifică-l în Setări.',

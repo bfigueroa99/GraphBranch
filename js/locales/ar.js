@@ -493,6 +493,8 @@ GB.i18n.define('ar', {
   'err.httpNoMessageGitlab': 'رد GitLab بالحالة {status}',
   'err.httpNoMessageCodeberg': 'رد Codeberg بالحالة {status}',
   'err.httpNoMessageBitbucket': 'رد Bitbucket بالحالة {status}',
+  'status.connectingAzure': 'جارٍ الاتصال بـ Azure DevOps…',
+  'err.notFoundAzure': 'لم يُعثر على {repo} في Azure DevOps. تُقرأ المشاريع العامة فقط.',
   'status.connectingForge': 'جارٍ الاتصال بخادم Forgejo/Gitea…',
   'err.notFoundForge': 'لم يتم العثور على {repo} على الخادم. تُقرأ المستودعات العامة فقط.',
   'err.authBbdc': 'رمز {host} غير صالح أو انتهت صلاحيته. راجعه في الإعدادات.',

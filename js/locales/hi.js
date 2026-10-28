@@ -394,6 +394,8 @@ GB.i18n.define('hi', {
   'err.httpNoMessageGitlab': 'GitLab ने {status} के साथ उत्तर दिया',
   'err.httpNoMessageCodeberg': 'Codeberg ने {status} के साथ उत्तर दिया',
   'err.httpNoMessageBitbucket': 'Bitbucket ने {status} के साथ उत्तर दिया',
+  'status.connectingAzure': 'Azure DevOps से कनेक्ट हो रहा है…',
+  'err.notFoundAzure': 'Azure DevOps पर {repo} नहीं मिला। केवल सार्वजनिक प्रोजेक्ट पढ़े जाते हैं।',
   'status.connectingForge': 'Forgejo/Gitea सर्वर से जुड़ रहे हैं…',
   'err.notFoundForge': 'सर्वर पर {repo} नहीं मिला। केवल सार्वजनिक रिपॉज़िटरी पढ़ी जाती हैं।',
   'err.authBbdc': '{host} का टोकन मान्य नहीं है या उसकी अवधि समाप्त हो गई है। इसे सेटिंग्स में जाँचें।',

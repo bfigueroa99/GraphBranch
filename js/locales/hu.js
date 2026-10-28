@@ -394,6 +394,8 @@ GB.i18n.define('hu', {
   'err.httpNoMessageGitlab': 'A GitLab válasza: {status}',
   'err.httpNoMessageCodeberg': 'A Codeberg válasza: {status}',
   'err.httpNoMessageBitbucket': 'A Bitbucket válasza: {status}',
+  'status.connectingAzure': 'Csatlakozás az Azure DevOpshoz…',
+  'err.notFoundAzure': 'A(z) {repo} nem található az Azure DevOpson. Csak nyilvános projektek olvashatók.',
   'status.connectingForge': 'Csatlakozás a Forgejo/Gitea szerverhez…',
   'err.notFoundForge': 'A(z) {repo} nem található a szerveren. Csak nyilvános tárolók olvashatók.',
   'err.authBbdc': 'A(z) {host} tokenje érvénytelen vagy lejárt. Ellenőrizd a Beállításokban.',

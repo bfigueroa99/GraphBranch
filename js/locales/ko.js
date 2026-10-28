@@ -394,6 +394,8 @@ GB.i18n.define('ko', {
   'err.httpNoMessageGitlab': 'GitLab 응답 {status}',
   'err.httpNoMessageCodeberg': 'Codeberg 응답 {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket 응답 {status}',
+  'status.connectingAzure': 'Azure DevOps에 연결하는 중…',
+  'err.notFoundAzure': 'Azure DevOps에서 {repo}을(를) 찾을 수 없습니다. 공개 프로젝트만 읽습니다.',
   'status.connectingForge': 'Forgejo/Gitea 서버에 연결하는 중…',
   'err.notFoundForge': '서버에서 {repo}을(를) 찾을 수 없습니다. 공개 저장소만 읽습니다.',
   'err.authBbdc': '{host}의 토큰이 유효하지 않거나 만료되었습니다. 설정에서 확인하세요.',

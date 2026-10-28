@@ -405,6 +405,8 @@ GB.i18n.define('cs', {
   'err.httpNoMessageGitlab': 'GitLab odpověděl {status}',
   'err.httpNoMessageCodeberg': 'Codeberg odpověděl {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket odpověděl {status}',
+  'status.connectingAzure': 'Připojování k Azure DevOps…',
+  'err.notFoundAzure': '{repo} se v Azure DevOps nenašlo. Čtou se jen veřejné projekty.',
   'status.connectingForge': 'Připojování k serveru Forgejo/Gitea…',
   'err.notFoundForge': 'Na serveru se nenašlo {repo}. Čtou se jen veřejné repozitáře.',
   'err.authBbdc': 'Token pro {host} není platný nebo vypršel. Zkontroluj ho v Nastavení.',

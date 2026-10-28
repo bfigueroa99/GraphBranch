@@ -394,6 +394,8 @@ GB.i18n.define('tr', {
   'err.httpNoMessageGitlab': 'GitLab {status} yanıtı verdi',
   'err.httpNoMessageCodeberg': 'Codeberg {status} yanıtı verdi',
   'err.httpNoMessageBitbucket': 'Bitbucket {status} yanıtı verdi',
+  'status.connectingAzure': 'Azure DevOps\'a bağlanılıyor…',
+  'err.notFoundAzure': '{repo} Azure DevOps\'ta bulunamadı. Yalnızca herkese açık projeler okunur.',
   'status.connectingForge': 'Forgejo/Gitea sunucusuna bağlanılıyor…',
   'err.notFoundForge': '{repo} sunucuda bulunamadı. Yalnızca herkese açık depolar okunur.',
   'err.authBbdc': '{host} belirteci geçersiz veya süresi dolmuş. Ayarlar\'dan kontrol et.',

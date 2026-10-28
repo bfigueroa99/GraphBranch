@@ -1,18 +1,18 @@
-## Parity: 75.0 / 100
+## Parity: 78.7 / 100
 
-features 75.0  (38 counted, must-haves 11 of 13 done)
+features 78.7  (38 counted, must-haves 12 of 13 done)
 
-Not shippable yet: 2 must-have features are not done.
+Not shippable yet: 1 must-have features are not done.
 
 ## By area, weakest first
 - navegación                     0.0  (1 features)
 - cuentas                        0.0  (1 features)
-- launchpad                     30.0  (3 features)
+- launchpad                     60.0  (3 features)
 - diffs                         70.0  (5 features)
 - grafo                         75.0  (8 features)
 - varios repos                  75.0  (3 features)
-- integraciones                 78.9  (7 features)
 - pull requests                 83.3  (3 features)
+- integraciones                 86.8  (7 features)
 - búsqueda                     100.0  (1 features)
 - ci                           100.0  (1 features)
 - análisis                     100.0  (1 features)
@@ -21,8 +21,7 @@ Not shippable yet: 2 must-have features are not done.
 - compartir                    100.0  (1 features)
 
 ## Missing, in build order
-- [must] integraciones: Azure DevOps, no  (no hay fuente de Azure DevOps)
-- [must] launchpad: Launchpad: PRs de varios repos agrupados por estado, partial  (la salud agrupa por estado los PRs de un repo y «Todos» muestra cada repo en su tarjeta; falta una lista única de los PRs de todos los repos seguidos por estado)
+- [must] integraciones: Azure DevOps, partial  (README: También Azure DevOps (proyectos públicos y sin token; falta el token para los privados, ítem 113))
 - [should] cuentas: Varios perfiles o cuentas, no  (un token por servicio)
 - [should] diffs: Blame de un archivo (autor y fecha por línea), no
 - [should] grafo: Ocultar una rama o dejarla sola en el grafo, no  (hay Fijar ramas (las sube) y el filtro por autor; no ocultar ni dejar sola una rama elegida)

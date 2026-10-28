@@ -27,7 +27,7 @@ Issues de rastreadores (Jira Trello GitHub Issues),integraciones,should,yes,part
 GitHub y GitHub Enterprise Server,integraciones,must,yes,yes,"README: fuentes (?api=)"
 GitLab y GitLab propio,integraciones,must,yes,yes,"README: fuentes (gitlab: y ?gitlab=)"
 Bitbucket y Bitbucket Data Center,integraciones,must,yes,yes,"README: fuentes (bitbucket: y ?bitbucket=)"
-Azure DevOps,integraciones,must,yes,no,"no hay fuente de Azure DevOps"
+Azure DevOps,integraciones,must,yes,partial,"README: También Azure DevOps (proyectos públicos y sin token; falta el token para los privados, ítem 113)"
 Otros hosts de Git,integraciones,should,yes,yes,"Codeberg y Forgejo/Gitea propio (?forge=)"
 Repos locales,integraciones,must,yes,yes,"app de escritorio: carpeta local con git"
 Estado de CI en ramas y PRs,ci,should,yes,yes,"README: CI de GitHub en la cabeza de las ramas y los PRs"

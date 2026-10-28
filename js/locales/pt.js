@@ -395,6 +395,8 @@ GB.i18n.define('pt', {
   'err.httpNoMessageGitlab': 'O GitLab respondeu {status}',
   'err.httpNoMessageCodeberg': 'O Codeberg respondeu {status}',
   'err.httpNoMessageBitbucket': 'O Bitbucket respondeu {status}',
+  'status.connectingAzure': 'Conectando ao Azure DevOps…',
+  'err.notFoundAzure': '{repo} não foi encontrado no Azure DevOps. Só são lidos projetos públicos.',
   'status.connectingForge': 'Conectando ao servidor Forgejo/Gitea…',
   'err.notFoundForge': '{repo} não foi encontrado no servidor. Só se leem repositórios públicos.',
   'err.authBbdc': 'O token de {host} não é válido ou expirou. Verifique-o em Configurações.',

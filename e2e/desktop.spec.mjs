@@ -134,7 +134,7 @@ test('--gitlab-url suma solo ese host al CSP y la página lo recibe; sin https s
   const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
   let { app, page } = await launch(testInfo, { args: ['--lang=es', '--gitlab-url=https://git.example.com'] });
   try {
-    expect(await csp(page)).toContain('https://gitlab.com https://git.example.com https://codeberg.org https://api.bitbucket.org;');
+    expect(await csp(page)).toContain('https://gitlab.com https://git.example.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com;');
     expect(await csp(page)).toContain('https://gitlab.com https://git.example.com https://codeberg.org;');
     expect(page.url()).toContain('gitlab=' + encodeURIComponent('https://git.example.com'));
   } finally {
@@ -153,7 +153,7 @@ test('--forge-url suma solo ese host al CSP (conexiones y avatares) y la página
   const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
   let { app, page } = await launch(testInfo, { args: ['--lang=es', '--forge-url=https://forge.example.com'] });
   try {
-    expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://forge.example.com https://api.bitbucket.org;');
+    expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://forge.example.com https://api.bitbucket.org https://dev.azure.com;');
     expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://forge.example.com;');
     expect(page.url()).toContain('forge=' + encodeURIComponent('https://forge.example.com'));
   } finally {
@@ -172,7 +172,7 @@ test('--api-url suma solo ese host al CSP y los repos de GitHub salen de él; si
   const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
   let { app, page } = await launch(testInfo, { args: ['--lang=es', '--repo=o/r', '--api-url=https://ghe.example.com/api/v3'] });
   try {
-    expect(await csp(page)).toContain('connect-src https://api.github.com https://ghe.example.com https://gitlab.com https://codeberg.org https://api.bitbucket.org;');
+    expect(await csp(page)).toContain('connect-src https://api.github.com https://ghe.example.com https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com;');
     expect(page.url()).toContain('api=' + encodeURIComponent('https://ghe.example.com/api/v3'));
   } finally {
     await app.close();
@@ -500,7 +500,7 @@ test('--bitbucket-url suma solo ese host a las conexiones del CSP (sin avatares)
   const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
   let { app, page } = await launch(testInfo, { args: ['--lang=es', '--bitbucket-url=https://bb.example.com'] });
   try {
-    expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://api.bitbucket.org https://bb.example.com;');
+    expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://api.bitbucket.org https://bb.example.com https://dev.azure.com;');
     expect(await csp(page)).toContain('img-src \'self\' data: https://avatars.githubusercontent.com https://gitlab.com https://codeberg.org;');
     expect(page.url()).toContain('bitbucket=' + encodeURIComponent('https://bb.example.com'));
     // su token, aparte en el llavero ('bitbucketdc') y atado a ese servidor; Ajustes muestra su campo nombrando el host

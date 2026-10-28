@@ -394,6 +394,8 @@ GB.i18n.define('vi', {
   'err.httpNoMessageGitlab': 'GitLab phản hồi {status}',
   'err.httpNoMessageCodeberg': 'Codeberg phản hồi {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket phản hồi {status}',
+  'status.connectingAzure': 'Đang kết nối với Azure DevOps…',
+  'err.notFoundAzure': 'Không tìm thấy {repo} trên Azure DevOps. Chỉ đọc các dự án công khai.',
   'status.connectingForge': 'Đang kết nối tới máy chủ Forgejo/Gitea…',
   'err.notFoundForge': 'Không tìm thấy {repo} trên máy chủ. Chỉ đọc các kho công khai.',
   'err.authBbdc': 'Token của {host} không hợp lệ hoặc đã hết hạn. Hãy kiểm tra trong Cài đặt.',

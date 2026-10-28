@@ -394,6 +394,8 @@ GB.i18n.define('nb', {
   'err.httpNoMessageGitlab': 'GitLab svarte {status}',
   'err.httpNoMessageCodeberg': 'Codeberg svarte {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket svarte {status}',
+  'status.connectingAzure': 'Kobler til Azure DevOps…',
+  'err.notFoundAzure': '{repo} ble ikke funnet på Azure DevOps. Bare offentlige prosjekter leses.',
   'status.connectingForge': 'Kobler til Forgejo/Gitea-serveren…',
   'err.notFoundForge': 'Fant ikke {repo} på serveren. Bare offentlige repoer leses.',
   'err.authBbdc': 'Tokenet for {host} er ugyldig eller utløpt. Sjekk det i Innstillinger.',

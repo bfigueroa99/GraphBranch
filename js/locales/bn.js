@@ -394,6 +394,8 @@ GB.i18n.define('bn', {
   'err.httpNoMessageGitlab': 'GitLab উত্তর দিয়েছে {status}',
   'err.httpNoMessageCodeberg': 'Codeberg উত্তর দিয়েছে {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket উত্তর দিয়েছে {status}',
+  'status.connectingAzure': 'Azure DevOps-এর সাথে সংযোগ হচ্ছে…',
+  'err.notFoundAzure': 'Azure DevOps-এ {repo} পাওয়া যায়নি। শুধু পাবলিক প্রজেক্ট পড়া হয়।',
   'status.connectingForge': 'Forgejo/Gitea সার্ভারের সঙ্গে সংযুক্ত হচ্ছে…',
   'err.notFoundForge': 'সার্ভারে {repo} পাওয়া যায়নি। শুধু পাবলিক রিপোজিটরি পড়া হয়।',
   'err.authBbdc': '{host}-এর টোকেন বৈধ নয় বা মেয়াদ শেষ হয়েছে। সেটিংসে দেখুন।',

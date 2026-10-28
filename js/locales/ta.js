@@ -394,6 +394,8 @@ GB.i18n.define('ta', {
   'err.httpNoMessageGitlab': 'GitLab {status} என்று பதிலளித்தது',
   'err.httpNoMessageCodeberg': 'Codeberg {status} என்று பதிலளித்தது',
   'err.httpNoMessageBitbucket': 'Bitbucket {status} என்று பதிலளித்தது',
+  'status.connectingAzure': 'Azure DevOps உடன் இணைக்கிறது…',
+  'err.notFoundAzure': 'Azure DevOps-இல் {repo} கிடைக்கவில்லை. பொது திட்டங்கள் மட்டுமே படிக்கப்படும்.',
   'status.connectingForge': 'Forgejo/Gitea சேவையகத்துடன் இணைக்கிறது…',
   'err.notFoundForge': 'சேவையகத்தில் {repo} கிடைக்கவில்லை. பொது களஞ்சியங்கள் மட்டுமே படிக்கப்படும்.',
   'err.authBbdc': '{host} டோக்கன் செல்லுபடியாகாதது அல்லது காலாவதியானது. அமைப்புகளில் சரிபார்க்கவும்.',

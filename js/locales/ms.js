@@ -394,6 +394,8 @@ GB.i18n.define('ms', {
   'err.httpNoMessageGitlab': 'GitLab membalas {status}',
   'err.httpNoMessageCodeberg': 'Codeberg membalas {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket membalas {status}',
+  'status.connectingAzure': 'Menyambung ke Azure DevOps…',
+  'err.notFoundAzure': '{repo} tidak ditemui di Azure DevOps. Hanya projek awam dibaca.',
   'status.connectingForge': 'Menyambung ke pelayan Forgejo/Gitea…',
   'err.notFoundForge': '{repo} tidak ditemui pada pelayan. Hanya repositori awam dibaca.',
   'err.authBbdc': 'Token untuk {host} tidak sah atau telah tamat tempoh. Semak dalam Tetapan.',

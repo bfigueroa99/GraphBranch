@@ -395,6 +395,8 @@ GB.i18n.define('nl', {
   'err.httpNoMessageGitlab': 'GitLab antwoordde {status}',
   'err.httpNoMessageCodeberg': 'Codeberg antwoordde {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket antwoordde {status}',
+  'status.connectingAzure': 'Verbinden met Azure DevOps…',
+  'err.notFoundAzure': '{repo} is niet gevonden op Azure DevOps. Alleen openbare projecten worden gelezen.',
   'status.connectingForge': 'Verbinden met de Forgejo/Gitea-server…',
   'err.notFoundForge': '{repo} is niet gevonden op de server. Alleen openbare repositories worden gelezen.',
   'err.authBbdc': 'Het token voor {host} is ongeldig of verlopen. Controleer het in Instellingen.',

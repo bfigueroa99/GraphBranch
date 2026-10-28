@@ -394,6 +394,8 @@ GB.i18n.define('bg', {
   'err.httpNoMessageGitlab': 'GitLab отговори {status}',
   'err.httpNoMessageCodeberg': 'Codeberg отговори {status}',
   'err.httpNoMessageBitbucket': 'Bitbucket отговори {status}',
+  'status.connectingAzure': 'Свързване с Azure DevOps…',
+  'err.notFoundAzure': '{repo} не е намерено в Azure DevOps. Четат се само публични проекти.',
   'status.connectingForge': 'Свързване със сървъра на Forgejo/Gitea…',
   'err.notFoundForge': '{repo} не е намерен на сървъра. Четат се само публични хранилища.',
   'err.authBbdc': 'Токенът за {host} е невалиден или е изтекъл. Провери го в Настройки.',

@@ -8,8 +8,8 @@
      Las librerías y las fuentes son copias locales en vendor/ (tools/vendor.mjs), así que
      scripts, estilos y fuentes solo pueden venir del propio sitio. El manifiesto y el service worker
      (sw.js, que la deja abrir sin red) también son del propio sitio. Las conexiones van a las APIs de
-     GitHub, de gitlab.com, de codeberg.org y de api.bitbucket.org, y las imágenes de otro sitio son los avatares de cada uno
-     (los de Bitbucket no se cargan). -->
+     GitHub, de gitlab.com, de codeberg.org, de api.bitbucket.org y de dev.azure.com, y las imágenes de otro sitio son los avatares de cada uno
+     (los de Bitbucket y los de Azure DevOps no se cargan). -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'none';
   script-src 'self';
@@ -18,7 +18,7 @@
   manifest-src 'self';
   worker-src 'self';
   img-src 'self' data: https://avatars.githubusercontent.com https://gitlab.com https://codeberg.org;
-  connect-src https://api.github.com https://gitlab.com https://codeberg.org https://api.bitbucket.org;
+  connect-src https://api.github.com https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com;
   base-uri 'none';
   form-action 'none'">
 <title>GraphBranch</title>
@@ -676,6 +676,7 @@
 <script src="js/sources/codeberg.js"></script>
 <script src="js/sources/bitbucket.js"></script>
 <script src="js/sources/bitbucket-server.js"></script>
+<script src="js/sources/azure.js"></script>
 <script src="js/sources/local.js"></script>
 <script src="js/sources/demo-content.js"></script>
 <script src="js/sources/demo.js"></script>

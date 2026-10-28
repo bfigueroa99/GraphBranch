@@ -394,6 +394,8 @@ GB.i18n.define('el', {
   'err.httpNoMessageGitlab': 'Το GitLab απάντησε {status}',
   'err.httpNoMessageCodeberg': 'Το Codeberg απάντησε {status}',
   'err.httpNoMessageBitbucket': 'Το Bitbucket απάντησε {status}',
+  'status.connectingAzure': 'Σύνδεση με το Azure DevOps…',
+  'err.notFoundAzure': 'Το {repo} δεν βρέθηκε στο Azure DevOps. Διαβάζονται μόνο δημόσια έργα.',
   'status.connectingForge': 'Σύνδεση με τον διακομιστή Forgejo/Gitea…',
   'err.notFoundForge': 'Το {repo} δεν βρέθηκε στον διακομιστή. Διαβάζονται μόνο δημόσια αποθετήρια.',
   'err.authBbdc': 'Το token για το {host} δεν είναι έγκυρο ή έχει λήξει. Ελέγξτε το στις Ρυθμίσεις.',

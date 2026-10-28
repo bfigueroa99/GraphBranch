@@ -654,6 +654,7 @@ GB.i18n.define('hi', {
   'digest.releases': 'रिलीज़',
   'digest.tags': 'टैग',
   'digest.people': 'किसने योगदान दिया (कमिट)',
+  'digest.perday': 'प्रतिदिन कमिट: {n}',
   'digest.newcomers': 'नए योगदानकर्ता: {n}',
   'digest.branch': 'सबसे सक्रिय ब्रांच',
   'digest.org': '{owner} का साप्ताहिक सारांश',

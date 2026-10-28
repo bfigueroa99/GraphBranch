@@ -654,6 +654,7 @@ GB.i18n.define('zh-Hant', {
   'digest.releases': '發布',
   'digest.tags': '標籤',
   'digest.people': '誰做了貢獻(提交)',
+  'digest.perday': '每日提交: {n}',
   'digest.newcomers': '新貢獻者:{n}',
   'digest.branch': '最活躍的分支',
   'digest.org': '{owner} 的每週摘要',

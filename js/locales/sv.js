@@ -654,6 +654,7 @@ GB.i18n.define('sv', {
   'digest.releases': 'Releaser',
   'digest.tags': 'Tags',
   'digest.people': 'Vem som bidragit (commits)',
+  'digest.perday': 'Commits per dag: {n}',
   'digest.newcomers': 'Nya bidragsgivare: {n}',
   'digest.branch': 'Mest aktiva gren',
   'digest.org': 'Veckans sammanfattning för {owner}',

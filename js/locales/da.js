@@ -654,6 +654,7 @@ GB.i18n.define('da', {
   'digest.releases': 'Releases',
   'digest.tags': 'Tags',
   'digest.people': 'Hvem der har bidraget (commits)',
+  'digest.perday': 'Commits pr. dag: {n}',
   'digest.newcomers': 'Nye bidragydere: {n}',
   'digest.branch': 'Mest aktive gren',
   'digest.org': 'Ugens resumé for {owner}',

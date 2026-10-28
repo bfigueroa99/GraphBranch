@@ -23,6 +23,7 @@
     };
 
     const week = new Set();
+    const perDay = new Array(days).fill(0); // commits de cada día de la semana, del más viejo al de hoy
     const people = new Map();
     const before = new Set(); // quienes ya firmaron un commit cargado anterior a la semana
     for (const c of data.commits.values()) {
@@ -32,6 +33,7 @@
         continue;
       }
       week.add(c.sha);
+      perDay[Math.min(days - 1, Math.floor((at(c.date) - since) / DAY))]++;
       const who = c.author?.login || c.author?.name;
       if (who) people.set(who, (people.get(who) || 0) + 1);
     }
@@ -92,6 +94,7 @@
       now,
       days,
       commits: week.size,
+      perDay,
       newcomers: [...people.keys()].filter((who) => !before.has(who)).length, // con lo cargado: sin commit anterior a la semana
       merged: { total: merged.length, rows: merged.slice(0, LIST) },
       opened: { total: opened.length, rows: opened.slice(0, LIST) },
@@ -106,10 +109,11 @@
   /** Texto que va en una línea de Markdown: sin saltos ni caracteres que lo rompan. */
   const md = (s) => String(s ?? '').replace(/\s+/g, ' ').trim().replace(/([\\`*_{}[\]<>|])/g, '\\$1');
 
-  /** Markdown del resumen. `t`: las etiquetas ya traducidas { head, commits, merged, closed, releases, tags, people,
+  /** Markdown del resumen. `t`: las etiquetas ya traducidas { head, commits, perday, merged, closed, releases, tags, people,
       branch }; `none`: el texto de «nada»; `fmtDate`: cómo escribir un día. */
   function toMarkdown(d, repo, t, fmtDate = (ms) => new Date(ms).toISOString().slice(0, 10), none = '—') {
     const out = [`# ${md(t.head.replace('{repo}', repo))}`, '', `${fmtDate(d.since)} – ${fmtDate(d.now)}`, '', `- ${t.commits.replace('{n}', d.commits)}`];
+    if (d.commits && t.perday) out.push(`- ${t.perday.replace('{n}', d.perDay.join(' · '))}`);
     if (d.newcomers && t.newcomers) out.push(`- ${t.newcomers.replace('{n}', d.newcomers)}`);
     if (d.branch) out.push(`- ${t.branch}: \`${String(d.branch.name).replace(/`/g, "'")}\` (${d.branch.commits})`);
     const link = (r, text) => (r.url && /^https?:\/\//.test(r.url) ? `[${text}](${r.url.replace(/[()\s]/g, encodeURIComponent)})` : text);
@@ -159,6 +163,7 @@
     const cut = (s) => (s.length > 70 ? s.slice(0, 69) + '…' : s);
     const L = [{ text: cut(flat(t.head.replace('{repo}', repo))), kind: 'title' }, { text: `${fmtDate(d.since)} – ${fmtDate(d.now)}`, kind: 'sub' }];
     L.push({ text: t.commits.replace('{n}', d.commits), kind: 'head' });
+    if (d.commits && t.perday) L.push({ text: cut(t.perday.replace('{n}', d.perDay.join(' · '))), kind: 'row' });
     if (d.newcomers && t.newcomers) L.push({ text: cut(t.newcomers.replace('{n}', d.newcomers)), kind: 'row' });
     if (d.branch) L.push({ text: cut(`${t.branch}: ${flat(d.branch.name)} (${d.branch.commits})`), kind: 'row' });
     const section = (label, total, rows) => {

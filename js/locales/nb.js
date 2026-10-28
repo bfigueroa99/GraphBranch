@@ -654,6 +654,7 @@ GB.i18n.define('nb', {
   'digest.releases': 'Releaser',
   'digest.tags': 'Tags',
   'digest.people': 'Hvem som har bidratt (commits)',
+  'digest.perday': 'Commits per dag: {n}',
   'digest.newcomers': 'Nye bidragsytere: {n}',
   'digest.branch': 'Mest aktive gren',
   'digest.org': 'Ukens oppsummering for {owner}',

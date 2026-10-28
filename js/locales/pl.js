@@ -665,6 +665,7 @@ GB.i18n.define('pl', {
   'digest.releases': 'Wydania',
   'digest.tags': 'Tagi',
   'digest.people': 'Kto wniósł wkład (commity)',
+  'digest.perday': 'Commity dziennie: {n}',
   'digest.newcomers': 'Nowi autorzy: {n}',
   'digest.branch': 'Najaktywniejsza gałąź',
   'digest.org': 'Podsumowanie tygodnia dla {owner}',

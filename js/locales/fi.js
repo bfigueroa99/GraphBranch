@@ -654,6 +654,7 @@ GB.i18n.define('fi', {
   'digest.releases': 'Julkaisut',
   'digest.tags': 'Tagit',
   'digest.people': 'Ketkä osallistuivat (commitit)',
+  'digest.perday': 'Commitit päivittäin: {n}',
   'digest.newcomers': 'Uudet tekijät: {n}',
   'digest.branch': 'Aktiivisin haara',
   'digest.org': 'Viikon yhteenveto: {owner}',

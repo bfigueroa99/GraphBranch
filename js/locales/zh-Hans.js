@@ -654,6 +654,7 @@ GB.i18n.define('zh-Hans', {
   'digest.releases': '发布',
   'digest.tags': '标签',
   'digest.people': '谁做了贡献(提交)',
+  'digest.perday': '每日提交: {n}',
   'digest.newcomers': '新贡献者:{n}',
   'digest.branch': '最活跃的分支',
   'digest.org': '{owner} 的每周摘要',

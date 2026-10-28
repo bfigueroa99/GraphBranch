@@ -974,7 +974,14 @@ console.log('Escritorio (1280×800)');
   await step(page, 'filtro por autor: el grafo y el árbol de texto muestran solo sus ramas, lo dice y se quita', async () => {
     await page.click('#view-2d');
     const count = () => page.evaluate(() => document.querySelectorAll('#graph svg .head').length);
-    const all = await count();
+    // bajo carga el grafo aún reparte ramas: se espera a que el conteo quede quieto antes de tomarlo como base
+    let all = await count();
+    for (let quiet = 0, i = 0; quiet < 3 && i < 40; i++) {
+      await page.waitForTimeout(250);
+      const n = await count();
+      quiet = n === all && n > 0 ? quiet + 1 : 0;
+      all = n;
+    }
     await page.click('#search-btn');
     await page.waitForSelector('#search[open]', { timeout: T(3000) });
     const options = await page.evaluate(() => [...document.querySelectorAll('#graph-author option')].map((o) => o.value));
@@ -982,7 +989,7 @@ console.log('Escritorio (1280×800)');
     let best = null;
     for (const who of options.filter(Boolean)) {
       await page.selectOption('#graph-author', who);
-      await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, all, { timeout: T(1500) }).catch(() => {}); // las ramas salen con su transición
+      await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, all, { timeout: T(4000) }).catch(() => {}); // las ramas salen con su transición, más lenta bajo carga
       const n = await count();
       if (n < all && (!best || n < best.n)) best = { who, n };
     }
@@ -1043,6 +1050,7 @@ console.log('Escritorio (1280×800)');
     if (!on.dim || on.dim >= on.all) throw new Error(`el filtro no acota: ${on.dim} atenuados de ${on.all}`);
     if (!on.status || /undefined|NaN|search\./.test(on.status) || !on.mark) throw new Error('sin aviso del filtro: ' + on.status);
     await page.click('#search-path-clear');
+    await page.waitForFunction(() => !document.querySelectorAll('#graph svg .node.pfx').length, null, { timeout: T(3000) }).catch(() => {});
     const off = await page.evaluate(() => ({ dim: document.querySelectorAll('#graph svg .node.pfx').length, mark: document.querySelector('#search-btn').classList.contains('filtered') }));
     if (off.dim || off.mark) throw new Error('quitar el filtro no deja el grafo como estaba');
     await page.keyboard.press('Escape');

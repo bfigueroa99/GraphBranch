@@ -1003,6 +1003,14 @@
     canDiff: (key) => canDiffTab(tabs.find((x) => x.key === key)),
     diffing: () => diffView.isOpen,
     onStats: (list) => renderAllSum(list),
+    prsRoot: $('#all-prs'),
+    onOpenPr: (key, head) => {
+      const tab = tabs.find((x) => x.key === key);
+      if (!tab) return;
+      openTab(tab);
+      if (head) graph.focusBranch(head);
+      tab.el?.querySelector('.rt-main')?.focus({ preventScroll: true });
+    },
   });
 
   /** La etiqueta de un repo (la del encabezado y la de su tarjeta): simulación, local, privado o su servicio. */
@@ -1047,6 +1055,12 @@
   function renderAllSum(list = overview.stats()) {
     const sum = GB.overview.totals(list);
     setText(el.allSum, t('all.summary', { repos: U.fmtNum(tabs.length), branches: U.fmtNum(sum.branches), prs: U.fmtNum(sum.prs) }));
+    renderAllPrs();
+  }
+
+  /** El Launchpad de la vista conjunta: los PRs abiertos de lo ya cargado en cada pestaña, por estado. */
+  function renderAllPrs() {
+    overview.setPulls(tabs.filter((x) => x.source?.data.loaded).map((x) => ({ key: x.key, name: nameOf(x), pulls: x.source.data.pulls.values() })));
   }
 
   /** Entra o sale de la vista conjunta (se recuerda y viaja en la URL, ?all=1). Con un solo repo no hay. */

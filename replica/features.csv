@@ -20,7 +20,7 @@ PRs apilados,pull requests,could,yes,yes,"Mapa de alcance (Datos): las pilas de 
 Crear un PR desde la app,pull requests,could,yes,skip,"GraphBranch mira repos: no abre PRs (Replica en la directiva)"
 Fusionar un PR desde la app,pull requests,could,yes,skip,"GraphBranch mira repos: no fusiona PRs"
 Sugerir cambios en un PR,pull requests,could,yes,skip,"revisar código es del servicio; GraphBranch no escribe en los PRs"
-Launchpad: PRs de varios repos agrupados por estado,launchpad,must,yes,partial,"la salud agrupa por estado los PRs de un repo y «Todos» muestra cada repo en su tarjeta; falta una lista única de los PRs de todos los repos seguidos por estado"
+Launchpad: PRs de varios repos agrupados por estado,launchpad,must,yes,yes,"README, «Todos a la vez»: el Launchpad de la vista conjunta agrupa por estado los PRs abiertos de todos los repos seguidos (sin token, solo borrador o esperando revisión)"
 Launchpad: fijar y posponer PRs e issues,launchpad,could,yes,no,
 Launchpad: vista de equipo filtrada por colaborador,launchpad,could,yes,no,
 Issues de rastreadores (Jira Trello GitHub Issues),integraciones,should,yes,partial,"issues de GitHub GitLab Codeberg y Bitbucket en el panel de actividad y la salud; sin Jira ni Trello"

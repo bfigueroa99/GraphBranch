@@ -584,6 +584,7 @@ GB.i18n.define('uk', {
   'textview.scopePath': 'Фільтр за шляхом: {path} ({n} комітів)',
   'textview.forks': 'Активні форки: {n}',
   'textview.fork': '{name}, останній push {when}',
+  'textview.prs': 'відкриті PR: {n}',
   'search.title': 'Пошук комітів',
   'search.help': 'Шукайте за повідомленням, SHA або автором (@ім’я). Стрілка вниз переходить до результатів, Enter летить до коміту.',
   'search.placeholder': 'Повідомлення, SHA або @автор…',

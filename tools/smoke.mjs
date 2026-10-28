@@ -882,6 +882,13 @@ console.log('Escritorio (1280×800)');
     }));
     if (forks.rows.length !== 2 || !/^maya-dev\/orbita, /.test(forks.rows[0]) || !/^lucas-r\/orbita, /.test(forks.rows[1]) || forks.inTree) throw new Error('la vista de texto no lista los 2 forks de la demo: ' + JSON.stringify(forks));
     if (!/Forks activos: 2$/.test(forks.live)) throw new Error('la región viva no cuenta los forks: ' + forks.live);
+    // los PRs abiertos ya cargados se dicen en el nombre accesible de su rama («PRs abiertos: n») y coinciden con el chip visible
+    const prs = await page.evaluate(() => {
+      const bs = [...document.querySelectorAll('#textview .tv-branch')];
+      const named = bs.filter((n) => /PRs abiertos: \d+/.test(n.getAttribute('aria-label')));
+      return { named: named.length, chips: bs.filter((n) => /PRs abiertos: \d+/.test(n.querySelector('.tv-head').textContent)).length, total: bs.reduce((a, n) => a + (Number((n.getAttribute('aria-label').match(/PRs abiertos: (\d+)/) || [])[1]) || 0), 0) };
+    });
+    if (!prs.named || prs.named !== prs.chips || !prs.total) throw new Error('la vista de texto no dice los PRs abiertos de cada rama: ' + JSON.stringify(prs));
     // la rama por defecto viene abierta: ↓ baja a su primer commit; ← sube a la rama y otra ← la cierra
     await page.keyboard.press('ArrowDown');
     const onCommit = await page.evaluate(() => document.activeElement.classList.contains('tv-commit'));

@@ -569,6 +569,7 @@ GB.i18n.define('fr', {
   'textview.scopePath': 'Filtré par chemin : {path} ({n} commits)',
   'textview.forks': 'Forks actifs : {n}',
   'textview.fork': '{name}, dernier push {when}',
+  'textview.prs': 'PR ouvertes : {n}',
   'search.title': 'Rechercher des commits',
   'search.help': 'Cherchez par message, SHA ou auteur (@nom). La flèche bas va aux résultats, Entrée vole jusqu’au commit.',
   'search.placeholder': 'Message, SHA ou @auteur…',

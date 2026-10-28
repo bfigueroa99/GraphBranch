@@ -568,6 +568,7 @@ GB.i18n.define('bn', {
   'textview.scopePath': 'পাথ অনুযায়ী ছাঁকা: {path} ({n}টি কমিট)',
   'textview.forks': 'সক্রিয় ফর্ক: {n}',
   'textview.fork': '{name}, সর্বশেষ push {when}',
+  'textview.prs': 'খোলা PR: {n}',
   'search.title': 'কমিট খুঁজুন',
   'search.help': 'বার্তা, SHA বা লেখক (@নাম) দিয়ে খুঁজুন। নিচের তীর ফলাফলে যায়, Enter কমিটে উড়ে যায়।',
   'search.placeholder': 'বার্তা, SHA বা @লেখক…',

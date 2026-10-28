@@ -568,6 +568,7 @@ GB.i18n.define('id', {
   'textview.scopePath': 'Disaring menurut path: {path} ({n} commit)',
   'textview.forks': 'Fork aktif: {n}',
   'textview.fork': '{name}, push terakhir {when}',
+  'textview.prs': 'PR terbuka: {n}',
   'search.title': 'Cari commit',
   'search.help': 'Cari berdasarkan pesan, SHA, atau penulis (@nama). Panah bawah menuju hasil, Enter terbang ke commit.',
   'search.placeholder': 'Pesan, SHA, atau @penulis…',

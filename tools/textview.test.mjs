@@ -164,3 +164,15 @@ test('los forks activos ya cargados salen del más reciente al más viejo, solo 
   assert.equal(build(d).forks.total, 0); // sin pedirlos, la vista no los trae (?forks=0)
   assert.deepEqual(build(d, { withForks: true }).forks.rows.map((r) => r.name), ['b/nuevo', 'a/viejo']);
 });
+
+test('cada rama cuenta los PRs abiertos ya cargados que salen de ella, sin los de forks', () => {
+  const d = repo();
+  d.pulls = new Map([
+    [1, { number: 1, head: 'feature', sameRepo: true }],
+    [2, { number: 2, head: 'feature', sameRepo: true }],
+    [3, { number: 3, head: 'main', sameRepo: false }], // de un fork: su rama no es de este repo
+  ]);
+  const by = Object.fromEntries(build(d).branches.map((b) => [b.name, b.prs]));
+  assert.deepEqual(by, { main: 0, feature: 2 });
+  assert.equal(build(repo()).branches[0].prs, 0); // sin PRs cargados, ninguno
+});

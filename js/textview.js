@@ -29,6 +29,9 @@
       .filter((b) => b.sha && data.commits.has(b.sha))
       .sort((a, b) => (b.isDefault || b.name === def) - (a.isDefault || a.name === def) || (b.movedAt || 0) - (a.movedAt || 0) || (a.name < b.name ? -1 : 1));
     const total = list.length;
+    // PRs abiertos ya cargados por rama (los de forks no cuentan: su rama no es de este repo)
+    const open = new Map();
+    for (const p of data.pulls?.values?.() || []) if (p && p.sameRepo && p.head) open.set(p.head, (open.get(p.head) || 0) + 1);
     // `paths` (Set de shas, el filtro por ruta): solo cuentan los commits que tocaron esa ruta; sin ninguno, la rama no entra
     const keep = (sha) => !paths || paths.has(sha);
     const rows = list.slice(0, maxBranches).map((b) => {
@@ -56,7 +59,7 @@
         });
         sha = c.parents?.[0];
       }
-      return { name: b.name, isDefault: !!(b.isDefault || b.name === def), commits };
+      return { name: b.name, isDefault: !!(b.isDefault || b.name === def), prs: open.get(b.name) || 0, commits };
     }).filter((b) => !paths || b.commits.length);
     return { total, branches: rows, forks: withForks ? forks(data) : { total: 0, rows: [] } };
   }
@@ -171,12 +174,13 @@
         const li = mk('li', 'tv-branch');
         li.setAttribute('role', 'treeitem');
         li.setAttribute('aria-expanded', open.has(b.name) ? 'true' : 'false');
-        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}, ${text('textview.shown', { n: b.commits.length })}`);
+        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}, ${text('textview.shown', { n: b.commits.length })}`);
         li.tabIndex = i === 0 ? 0 : -1;
         li.dataset.branch = b.name;
         const head = mk('span', 'tv-head');
         head.appendChild(mk('span', 'tv-name', b.name));
         if (b.isDefault) head.appendChild(mk('span', 'tv-tag', text('textview.default')));
+        if (b.prs) head.appendChild(mk('span', 'tv-tag', text('textview.prs', { n: b.prs })));
         li.appendChild(head);
         const group = mk('ul', 'tv-commits');
         group.setAttribute('role', 'group');

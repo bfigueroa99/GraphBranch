@@ -293,7 +293,7 @@
         head: p.head?.ref || '',
         base: p.base?.ref || '',
         sameRepo: (p.head?.repo?.full_name || '').toLowerCase() === full,
-        url: p.html_url,
+        url: typeof p.html_url === 'string' && p.html_url.startsWith(this.ep.web + '/') ? p.html_url : `${this.data.repo.url}/pulls/${p.number}`,
         draft: !!p.draft || DRAFT.test(p.title || ''),
         user: this.person(p.user),
         createdAt: Date.parse(p.created_at) || Date.now(),

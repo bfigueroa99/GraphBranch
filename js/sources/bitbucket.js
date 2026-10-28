@@ -195,13 +195,18 @@
       return acts;
     }
 
+    /** Un enlace de la API solo vale si cuelga de bitbucket.org: lo demás (javascript:, otro sitio) se descarta. */
+    webUrl(u) {
+      return typeof u === 'string' && u.startsWith(WEB + '/') ? u : '';
+    }
+
     async loadRepo() {
       const { data: p } = await this.api(this.base);
       Object.assign(this.data.repo, {
         owner: p.workspace?.slug || this.owner,
         name: p.slug || this.name,
         defaultBranch: p.mainbranch?.name || null,
-        url: p.links?.html?.href || this.data.repo.url,
+        url: this.webUrl(p.links?.html?.href) || this.data.repo.url,
         private: !!p.is_private,
         description: p.description || '',
       });
@@ -245,11 +250,11 @@
       const added = super.addCommit({
         sha: c.hash,
         parents: (c.parents || []).map((p) => ({ sha: p.hash })),
-        html_url: c.links?.html?.href,
+        html_url: this.webUrl(c.links?.html?.href) || undefined,
         commit: { message: c.message || '', author: { name: user?.display_name || raw, date: c.date }, committer: { date: c.date } },
         author: { login: user?.nickname || user?.display_name || null, avatar_url: null },
       });
-      if (added) this.data.commits.get(c.hash).url = c.links?.html?.href || this.link('commit', c.hash);
+      if (added) this.data.commits.get(c.hash).url = this.webUrl(c.links?.html?.href) || this.link('commit', c.hash);
       return added;
     }
 
@@ -318,7 +323,7 @@
         head: p.source?.branch?.name || '',
         base: p.destination?.branch?.name || '',
         sameRepo: (p.source?.repository?.full_name || '').toLowerCase() === full,
-        url: p.links?.html?.href || `${this.data.repo.url}/pull-requests/${p.id}`,
+        url: this.webUrl(p.links?.html?.href) || `${this.data.repo.url}/pull-requests/${p.id}`,
         draft: !!p.draft,
         user: this.person(p.author),
         createdAt: Date.parse(p.created_on) || Date.now(),

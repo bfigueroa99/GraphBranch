@@ -400,3 +400,15 @@ test('el token de Bitbucket va en cada consulta a api.bitbucket.org y un repo pr
   assert.ok(con.auths.every((a) => a === 'Bearer bb-secreto'), 'todas las consultas llevan el token');
   assert.equal(src.token, '', 'no se mezcla con el de GitHub');
 });
+
+test('los enlaces que no cuelgan de bitbucket.org (PR, commit) se descartan y se arman a mano', async () => {
+  const bb = repo();
+  bb.pull(5, 'feature', 'main', { links: { html: { href: 'javascript:alert(1)' } } });
+  bb.pull(6, 'fix', 'main', { links: { html: { href: 'https://evil.example.net/pull-requests/6' } } });
+  bb.commits.get('f2').links = { html: { href: 'data:text/html,x' } };
+  const { src } = connect(bb);
+  await src.cycle();
+  assert.equal(src.data.pulls.get(5).url, `${WEB}/pull-requests/5`);
+  assert.equal(src.data.pulls.get(6).url, `${WEB}/pull-requests/6`);
+  assert.equal(src.data.commits.get('f2').url, `${WEB}/commits/f2`);
+});

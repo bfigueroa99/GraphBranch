@@ -501,3 +501,13 @@ test('editar: lee el archivo de la rama y escribe con el token de Codeberg (PUT 
   assert.equal(own.canWrite(), 'editor.noWrite', 'un Forgejo propio no recibe token: no se escribe');
   await assert.rejects(own.writeFile({ path: 'a', branch: 'main', text: '', message: 'm' }), (err) => err.editKind === 'noWrite');
 });
+
+test('la url de un PR que no cuelga del servidor se descarta: no llega a la actividad ni a las exportaciones', async () => {
+  const cb = repo();
+  cb.pull(5, 'feature', 'main', { html_url: 'javascript:alert(1)' });
+  cb.pull(6, 'fix', 'main', { html_url: 'https://evil.example.net/ana/api/pulls/6' });
+  const { src } = connect(cb);
+  await src.cycle();
+  assert.equal(src.data.pulls.get(5).url, `${WEB}/pulls/5`);
+  assert.equal(src.data.pulls.get(6).url, `${WEB}/pulls/6`);
+});

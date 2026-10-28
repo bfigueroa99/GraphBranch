@@ -495,19 +495,18 @@ se comprueban antes de construir sobre ellas.
 92. ~~**Capa para streaming, séptima entrega**~~ hecho en #181 · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&hide=` oculta partes de la capa (leyenda, rótulo o reloj) para quien arma su escena de OBS. Comprobar: prueba de `embedOptions` y un paso del smoke.
 93. ~~**Constelación ordenada por nombre, en la URL**~~ hecho en #189 · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] `?order=name` abre la constelación ordenada alfabéticamente, junto a `?order=activity`. Comprobar: prueba de la lectura de la URL y un paso del smoke.
 94. ~~**Vista de texto: PRs abiertos por rama**~~ hecho en #191 · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de cada rama dice cuántos PRs abiertos tiene, con los PRs ya cargados. Comprobar: prueba de la vista y un paso del smoke.
-95. ~~**Salud del repo: tendencia de releases**~~ ya cubierto por #118 (ítem 53: `dora.weeks`, `#hl-weeks`, con prueba y smoke) · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los releases por semana de las últimas semanas, con las actividades ya cargadas. Comprobar: prueba de `health` y un paso del smoke.
-96. ~~**Salud del repo: tendencia de issues cerrados**~~ hecho en #192 · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los issues cerrados por semana de las últimas 8, con las actividades ya cargadas. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
-97. **Resumen de la semana: commits por día** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana suma los commits de cada uno de los 7 días, en una línea de siete cifras, para ver el ritmo. Comprobar: `tools/digest.test.mjs` con commits fabricados.
-98. **Vista de texto: ramas quietas** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama sin commits en 30 días lo dice («sin actividad»), con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
-99. **Capa para streaming, octava entrega** · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&spin=0` apaga la rotación lenta de la vista 3D de la capa, para una escena de OBS quieta (el tema ya lo fija `&theme=`, ítem 74). Comprobar: prueba de `embedOptions` y un paso del smoke.
-100. **Salud del repo: tendencia de ramas nuevas** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra cuántas ramas se crearon por semana en las últimas 8, con las actividades ya cargadas. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
-101. **Práctica: reset --mixed y reflog** · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `reset --mixed` y `reflog`, para recuperar un commit tras un `reset --hard`. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
-102. **Constelación: filtrar por nombre en la URL** · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] `?constellation=texto` deja en la constelación solo los repos cuyo nombre lo contiene. Comprobar: prueba de la lectura de la URL y un paso del smoke.
-103. **Resumen de la semana: ramas nuevas** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana dice cuántas ramas se crearon en los últimos 7 días, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con ramas fabricadas.
-104. **Vista de texto: ramas fusionadas** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama ya fusionada en la por defecto lo dice, con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
-105. **Salud del repo: tendencia de commits** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los commits por semana de las últimas 8, con lo ya cargado. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
-106. **Capa para streaming, novena entrega** · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&lang=` ya fija el idioma; `&view=2d|3d` fija la vista de la capa sin tocar la de la página. Comprobar: prueba de `embedOptions` y un paso del smoke.
-107. **Práctica: commit --amend** · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `commit --amend` (con `-m`), para corregir el último commit. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
+95. ~~**Salud del repo: tendencia de issues cerrados**~~ hecho en #192 · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los issues cerrados por semana de las últimas 8, con las actividades ya cargadas. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
+96. **Resumen de la semana: commits por día** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana suma los commits de cada uno de los 7 días, en una línea de siete cifras, para ver el ritmo. Comprobar: `tools/digest.test.mjs` con commits fabricados.
+97. **Vista de texto: ramas quietas** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama sin commits en 30 días lo dice («sin actividad»), con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
+98. **Capa para streaming, octava entrega** · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&spin=0` apaga la rotación lenta de la vista 3D de la capa, para una escena de OBS quieta (el tema ya lo fija `&theme=`, ítem 74). Comprobar: prueba de `embedOptions` y un paso del smoke.
+99. **Salud del repo: tendencia de ramas nuevas** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra cuántas ramas se crearon por semana en las últimas 8, con las actividades ya cargadas. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
+100. **Práctica: reset --mixed y reflog** · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `reset --mixed` y `reflog`, para recuperar un commit tras un `reset --hard`. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
+101. **Constelación: filtrar por nombre en la URL** · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] `?constellation=texto` deja en la constelación solo los repos cuyo nombre lo contiene. Comprobar: prueba de la lectura de la URL y un paso del smoke.
+102. **Resumen de la semana: ramas nuevas** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana dice cuántas ramas se crearon en los últimos 7 días, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con ramas fabricadas.
+103. **Vista de texto: ramas fusionadas** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama ya fusionada en la por defecto lo dice, con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
+104. **Salud del repo: tendencia de commits** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los commits por semana de las últimas 8, con lo ya cargado. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
+105. **Capa para streaming, novena entrega** · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&lang=` ya fija el idioma; `&view=2d|3d` fija la vista de la capa sin tocar la de la página. Comprobar: prueba de `embedOptions` y un paso del smoke.
+106. **Práctica: commit --amend** · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `commit --amend` (con `-m`), para corregir el último commit. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
 
 ## Cómo validar un cambio
 
@@ -846,8 +845,8 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 
 ### 2026-10-28 · Iteración 145 · Expansión · Análisis
 
-- **Capacidad nueva: Salud del repo: tendencia de issues cerrados** (ítem 96 de la hoja de ruta; el 95, releases por
-  semana, ya estaba hecho en #118 con `dora.weeks` y se tacha como cubierto): el panel de salud suma la línea «Issues
+- **Capacidad nueva: Salud del repo: tendencia de issues cerrados** (ítem 96 de la hoja de ruta, hoy 95; el 95 original, releases por
+  semana, ya estaba hecho en #118 con `dora.weeks` y se quitó de la hoja, con la renumeración de los siguientes): el panel de salud suma la línea «Issues
   cerrados por semana, últimas 8 semanas» con las actividades `issue-close` ya cargadas (cada número cuenta una vez,
   con su primer cierre). `compute` (`js/health.js`) devuelve `pace.closedWeeks`; sin consultas nuevas. La demo siembra
   un cierre para verlo.
@@ -859,4 +858,4 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (contar `issue-close` por semana como ya se hace con PRs abiertos).
 - Reclamo: loop/145, sin colisión
 - Validado: 451 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 146, expansión: ítem 97 (Resumen de la semana: commits por día, Salidas)
+- **Siguiente:** iteración 146, expansión: ítem 96 (Resumen de la semana: commits por día, Salidas)

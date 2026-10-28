@@ -570,6 +570,7 @@ GB.i18n.define('ja', {
   'textview.forks': 'アクティブなフォーク: {n}',
   'textview.fork': '{name}、最後の push {when}',
   'textview.prs': 'オープンな PR: {n}',
+  'textview.quiet': '30日以上動きなし',
   'search.title': 'コミットを検索',
   'search.help': 'メッセージ、SHA、作者（@名前）で検索します。下矢印で結果へ移動し、Enter でそのコミットへ飛びます。',
   'search.placeholder': 'メッセージ、SHA、@作者…',

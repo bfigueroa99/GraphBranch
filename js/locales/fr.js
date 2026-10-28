@@ -571,6 +571,7 @@ GB.i18n.define('fr', {
   'textview.forks': 'Forks actifs : {n}',
   'textview.fork': '{name}, dernier push {when}',
   'textview.prs': 'PR ouvertes : {n}',
+  'textview.quiet': 'sans activité depuis plus de 30 jours',
   'search.title': 'Rechercher des commits',
   'search.help': 'Cherchez par message, SHA ou auteur (@nom). La flèche bas va aux résultats, Entrée vole jusqu’au commit.',
   'search.placeholder': 'Message, SHA ou @auteur…',

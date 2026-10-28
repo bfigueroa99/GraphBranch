@@ -570,6 +570,7 @@ GB.i18n.define('ms', {
   'textview.forks': 'Fork aktif: {n}',
   'textview.fork': '{name}, push terakhir {when}',
   'textview.prs': 'PR terbuka: {n}',
+  'textview.quiet': 'tanpa aktiviti lebih 30 hari',
   'search.title': 'Cari commit',
   'search.help': 'Cari mengikut mesej, SHA atau penulis (@nama). Anak panah bawah ke hasil, Enter terbang ke commit.',
   'search.placeholder': 'Mesej, SHA atau @penulis…',

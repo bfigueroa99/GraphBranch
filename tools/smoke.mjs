@@ -892,6 +892,9 @@ console.log('Escritorio (1280×800)');
       return { named: named.length, chips: bs.filter((n) => /PRs abiertos: \d+/.test(n.querySelector('.tv-head').textContent)).length, total: bs.reduce((a, n) => a + (Number((n.getAttribute('aria-label').match(/PRs abiertos: (\d+)/) || [])[1]) || 0), 0) };
     });
     if (!prs.named || prs.named !== prs.chips || !prs.total) throw new Error('la vista de texto no dice los PRs abiertos de cada rama: ' + JSON.stringify(prs));
+    // la historia de la demo es de los últimos días: ninguna rama está quieta (la que sí, en «Vista de texto: ramas quietas»)
+    const quiet = await page.$$eval('#textview .tv-branch', (bs) => bs.filter((n) => /sin actividad/.test(n.getAttribute('aria-label') + n.querySelector('.tv-head').textContent)).map((n) => n.dataset.branch));
+    if (quiet.length) throw new Error('la vista de texto dice sin actividad ramas de la demo con commits de esta semana: ' + quiet.join(', '));
     // la rama por defecto viene abierta: ↓ baja a su primer commit; ← sube a la rama y otra ← la cierra
     await page.keyboard.press('ArrowDown');
     const onCommit = await page.evaluate(() => document.activeElement.classList.contains('tv-commit'));
@@ -1423,10 +1426,11 @@ function fakeGitHub() {
   const calls = [];
   let n = 0;
   const sha = (s) => createHash('sha1').update(s).digest('hex');
-  const commit = (r, branch, message) => {
+  /** `at` (ms) fecha el commit a mano, para una rama sin actividad hace semanas; sin él, ahora. */
+  const commit = (r, branch, message, at = null) => {
     const parent = r.branches.get(branch) || null;
     const id = sha(`${r.full}:${++n}`);
-    const date = new Date(Date.now() - (parent ? 0 : 3600e3) + n).toISOString();
+    const date = new Date(at ?? Date.now() - (parent ? 0 : 3600e3) + n).toISOString();
     r.commits.set(id, {
       sha: id,
       parents: parent ? [{ sha: parent }] : [],
@@ -1490,7 +1494,7 @@ function fakeGitHub() {
     repo,
     org: (name) => orgs.add(name),
     orgEvent: (ev) => orgEvents.unshift({ id: String(orgEvents.length + 1), actor: { login: 'ana' }, created_at: new Date().toISOString(), payload: {}, ...ev }),
-    push: (full, branch, message) => commit(repo(full), branch, message),
+    push: (full, branch, message, at) => commit(repo(full), branch, message, at),
     handle: (r) => {
       const u = new URL(r.request().url());
       calls.push(u.pathname);
@@ -3307,6 +3311,34 @@ console.log('Vista de texto desde la URL (?vista=texto)');
     await page.waitForSelector('#textview[open]', { timeout: T(5000) }).catch(() => {
       throw new Error('?view=text no abrió la vista de texto');
     });
+  });
+  await page.context().close();
+}
+
+console.log('Vista de texto: ramas quietas (GitHub simulado)');
+{
+  const gh = fakeGitHub();
+  gh.repo('o/q');
+  gh.push('o/q', 'gh-pages', 'publica la documentación', Date.now() - 45 * 864e5); // una rama aparte cuyo último commit es de hace 45 días
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', gh.handle);
+  await step(page, 'una rama sin actividad hace más de 30 días lo dice en su nombre accesible y con una marca; la de hoy no', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=o/q&vista=texto`);
+    await loaded(page);
+    await page.waitForSelector('#textview[open]', { timeout: T(10000) }).catch(() => {
+      throw new Error('?vista=texto no abrió la vista de texto');
+    });
+    // sin token las ramas llegan de a poco: la vista abierta se pone al día sola
+    await page.waitForFunction(() => document.querySelectorAll('#textview .tv-branch').length === 2, null, { timeout: T(15000) }).catch(async () => {
+      throw new Error('la vista de texto no llegó a las 2 ramas: ' + (await page.$$eval('#textview .tv-branch', (bs) => bs.map((n) => n.dataset.branch).join(', '))));
+    });
+    const rows = await page.$$eval('#textview .tv-branch', (bs) => bs.map((n) => ({ name: n.dataset.branch, label: n.getAttribute('aria-label'), head: n.querySelector('.tv-head').textContent })));
+    const old = rows.find((r) => r.name === 'gh-pages');
+    const main = rows.find((r) => r.name === 'main');
+    if (!old || !/^gh-pages, sin actividad hace más de 30 días, commits mostrados: 1$/.test(old.label)) throw new Error('la rama de hace 45 días no lo dice en su nombre accesible: ' + JSON.stringify(old));
+    if (!old.head.includes('sin actividad hace más de 30 días')) throw new Error('la rama de hace 45 días no lleva la marca visible: ' + old.head);
+    if (!main || /sin actividad/.test(main.label + main.head)) throw new Error('la rama por defecto, con commits de hoy, se dice quieta: ' + JSON.stringify(main));
   });
   await page.context().close();
 }

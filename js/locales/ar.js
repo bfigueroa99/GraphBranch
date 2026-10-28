@@ -669,6 +669,7 @@ GB.i18n.define('ar', {
   'textview.forks': 'الفروع المنسوخة النشطة: {n}',
   'textview.fork': '{name}، آخر push {when}',
   'textview.prs': 'PR مفتوحة: {n}',
+  'textview.quiet': 'بلا نشاط منذ أكثر من 30 يومًا',
   'search.title': 'البحث في الـ commits',
   'search.help': 'ابحث بالرسالة أو SHA أو المؤلف (@الاسم). السهم لأسفل ينتقل إلى النتائج وEnter يطير إلى الـ commit.',
   'search.placeholder': 'رسالة أو SHA أو ‎@مؤلف…',

@@ -570,6 +570,7 @@ GB.i18n.define('da', {
   'textview.forks': 'Aktive forks: {n}',
   'textview.fork': '{name}, seneste push {when}',
   'textview.prs': 'åbne PR: {n}',
+  'textview.quiet': 'uden aktivitet i over 30 dage',
   'search.title': 'Søg i commits',
   'search.help': 'Søg efter besked, SHA eller forfatter (@navn). Pil ned går til resultaterne, Enter flyver til committen.',
   'search.placeholder': 'Besked, SHA eller @forfatter…',

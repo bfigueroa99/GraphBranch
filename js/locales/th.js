@@ -571,6 +571,7 @@ GB.i18n.define('th', {
   'textview.forks': 'ฟอร์กที่ยังใช้งาน: {n}',
   'textview.fork': '{name}, push ล่าสุด {when}',
   'textview.prs': 'PR ที่เปิดอยู่: {n}',
+  'textview.quiet': 'ไม่มีความเคลื่อนไหวเกิน 30 วัน',
   'search.title': 'ค้นหาคอมมิต',
   'search.help': 'ค้นหาด้วยข้อความ SHA หรือผู้เขียน (@ชื่อ) ลูกศรลงไปที่ผลลัพธ์ Enter บินไปยังคอมมิต',
   'search.placeholder': 'ข้อความ SHA หรือ @ผู้เขียน…',

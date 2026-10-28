@@ -7,10 +7,14 @@
   const PER_BRANCH = 10; // commits que muestra cada rama (siguiendo el primer padre)
   const MAX_BRANCHES = 200; // con más ramas, las más recientes: el árbol tiene que seguir siendo legible
   const MAX_FORKS = 10; // forks que lista la vista, el push más reciente primero
+  const DAY = 864e5;
+  // una rama quieta: los mismos 30 días de las ramas olvidadas de la salud (js/health.js); los textos de 'textview.quiet' dicen 30
+  const QUIET_DAYS = 30;
+
+  const at = (x) => (typeof x === 'number' ? x : Date.parse(x) || 0);
 
   /** Los forks activos ya cargados (`data.forks`), el push más reciente primero; sin url https o sin push no cuentan. */
   function forks(data, max = MAX_FORKS) {
-    const at = (x) => (typeof x === 'number' ? x : Date.parse(x) || 0);
     const all = (data.forks || [])
       .filter((f) => f && f.fullName && f.pushedAt && /^https:\/\//.test(String(f.url || '')))
       .map((f) => ({ name: String(f.fullName), url: String(f.url), pushedAt: at(f.pushedAt) }))
@@ -18,8 +22,9 @@
     return { total: all.length, rows: all.slice(0, max) };
   }
 
-  /** Ramas (la por defecto primero, luego las más movidas) con sus últimos commits, del más nuevo al más viejo. */
-  function build(data, { perBranch = PER_BRANCH, maxBranches = MAX_BRANCHES, paths = null, releases = null, withForks = false } = {}) {
+  /** Ramas (la por defecto primero, luego las más movidas) con sus últimos commits, del más nuevo al más viejo.
+      `quiet`: la rama no tuvo actividad en más de QUIET_DAYS días hasta `now`. */
+  function build(data, { perBranch = PER_BRANCH, maxBranches = MAX_BRANCHES, paths = null, releases = null, withForks = false, now = Date.now() } = {}) {
     const marks = new Map(); // sha -> [tag]
     if (data.tags) for (const [sha, names] of data.tags) marks.set(sha, [...names]);
     const relTags = releases?.tags || new Set();
@@ -59,7 +64,11 @@
         });
         sha = c.parents?.[0];
       }
-      return { name: b.name, isDefault: !!(b.isDefault || b.name === def), prs: open.get(b.name) || 0, commits };
+      // la actividad es la del grafo (js/layout.js): el commit de la punta o, si fue después, cuando se movió la rama (creada
+      // hoy desde un commit viejo no está quieta); con el filtro por ruta cuenta igual la punta, no el último commit que la tocó
+      const last = Math.max(at(data.commits.get(b.sha)?.date), at(b.movedAt));
+      const quiet = last > 0 && now - last > QUIET_DAYS * DAY;
+      return { name: b.name, isDefault: !!(b.isDefault || b.name === def), prs: open.get(b.name) || 0, quiet, commits };
     }).filter((b) => !paths || b.commits.length);
     return { total, branches: rows, forks: withForks ? forks(data) : { total: 0, rows: [] } };
   }
@@ -174,13 +183,14 @@
         const li = mk('li', 'tv-branch');
         li.setAttribute('role', 'treeitem');
         li.setAttribute('aria-expanded', open.has(b.name) ? 'true' : 'false');
-        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}, ${text('textview.shown', { n: b.commits.length })}`);
+        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}${b.quiet ? ', ' + text('textview.quiet') : ''}, ${text('textview.shown', { n: b.commits.length })}`);
         li.tabIndex = i === 0 ? 0 : -1;
         li.dataset.branch = b.name;
         const head = mk('span', 'tv-head');
         head.appendChild(mk('span', 'tv-name', b.name));
         if (b.isDefault) head.appendChild(mk('span', 'tv-tag', text('textview.default')));
         if (b.prs) head.appendChild(mk('span', 'tv-tag', text('textview.prs', { n: b.prs })));
+        if (b.quiet) head.appendChild(mk('span', 'tv-tag', text('textview.quiet')));
         li.appendChild(head);
         const group = mk('ul', 'tv-commits');
         group.setAttribute('role', 'group');
@@ -328,5 +338,5 @@
     return is('vista', 'texto') || is('view', 'text');
   }
 
-  GB.textview = { build, forks, news, taggedCount, releasedCount, releaseMarks, filter, scopeText, mount, openParam, PER_BRANCH, MAX_BRANCHES, MAX_FORKS };
+  GB.textview = { build, forks, news, taggedCount, releasedCount, releaseMarks, filter, scopeText, mount, openParam, PER_BRANCH, MAX_BRANCHES, MAX_FORKS, QUIET_DAYS };
 })((window.GB = window.GB || {}));

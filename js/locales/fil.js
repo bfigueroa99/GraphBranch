@@ -571,6 +571,7 @@ GB.i18n.define('fil', {
   'textview.forks': 'Mga aktibong fork: {n}',
   'textview.fork': '{name}, huling push {when}',
   'textview.prs': 'bukas na PR: {n}',
+  'textview.quiet': 'walang aktibidad nang mahigit 30 araw',
   'search.title': 'Maghanap ng commit',
   'search.help': 'Maghanap ayon sa mensahe, SHA o may-akda (@pangalan). Ang pababang arrow ay papunta sa mga resulta, ang Enter ay lilipad sa commit.',
   'search.placeholder': 'Mensahe, SHA o @may-akda…',

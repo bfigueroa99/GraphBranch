@@ -570,6 +570,7 @@ GB.i18n.define('zh-Hans', {
   'textview.forks': '活跃的复刻：{n}',
   'textview.fork': '{name}，最近一次 push {when}',
   'textview.prs': '打开的 PR：{n}',
+  'textview.quiet': '超过 30 天没有动静',
   'search.title': '搜索提交',
   'search.help': '按提交信息、SHA 或作者（@名字）搜索。向下箭头进入结果，Enter 飞到该提交。',
   'search.placeholder': '信息、SHA 或 @作者…',

@@ -629,6 +629,8 @@ GB.i18n.define('es', {
   'diff.binary': 'binario',
   'diff.noPatch': 'Sin detalle por línea: el archivo es binario, está vacío o es demasiado grande.',
   'diff.openFile': 'Abrir archivo',
+  'diff.history': 'Historial',
+  'diff.historyOf': 'Historial de {path}',
   'diff.tooLong': 'Se muestran solo las primeras {n} líneas.',
   'diff.lines': '{add} agregadas, {del} quitadas',
   'diff.mode': 'Cómo se muestran los cambios',

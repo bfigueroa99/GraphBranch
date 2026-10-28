@@ -629,6 +629,8 @@ GB.i18n.define('zh-Hant', {
   'diff.binary': '二進位',
   'diff.noPatch': '無逐行檢視：檔案為二進位、空白或過大。',
   'diff.openFile': '開啟檔案',
+  'diff.history': '歷史',
+  'diff.historyOf': '{path} 的歷史',
   'diff.tooLong': '僅顯示前 {n} 行。',
   'diff.lines': '新增 {add} 行，刪除 {del} 行',
   'diff.mode': '變更的顯示方式',

@@ -629,6 +629,8 @@ GB.i18n.define('da', {
   'diff.binary': 'binær',
   'diff.noPatch': 'Ingen linje-for-linje-visning: filen er binær, tom eller for stor.',
   'diff.openFile': 'Åbn fil',
+  'diff.history': 'Historik',
+  'diff.historyOf': 'Historik for {path}',
   'diff.tooLong': 'Kun de første {n} linjer vises.',
   'diff.lines': '{add} tilføjet, {del} fjernet',
   'diff.mode': 'Sådan vises ændringerne',

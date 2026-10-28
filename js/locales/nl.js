@@ -630,6 +630,8 @@ GB.i18n.define('nl', {
   'diff.binary': 'binair',
   'diff.noPatch': 'Geen weergave per regel: het bestand is binair, leeg of te groot.',
   'diff.openFile': 'Bestand openen',
+  'diff.history': 'Geschiedenis',
+  'diff.historyOf': 'Geschiedenis van {path}',
   'diff.tooLong': 'Alleen de eerste {n} regels worden getoond.',
   'diff.lines': '{add} toegevoegd, {del} verwijderd',
   'diff.mode': 'Hoe de wijzigingen worden getoond',

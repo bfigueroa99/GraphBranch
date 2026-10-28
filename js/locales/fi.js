@@ -629,6 +629,8 @@ GB.i18n.define('fi', {
   'diff.binary': 'binääri',
   'diff.noPatch': 'Ei rivikohtaista näkymää: tiedosto on binääri, tyhjä tai liian suuri.',
   'diff.openFile': 'Avaa tiedosto',
+  'diff.history': 'Historia',
+  'diff.historyOf': 'Tiedoston {path} historia',
   'diff.tooLong': 'Vain ensimmäiset {n} riviä näytetään.',
   'diff.lines': '{add} lisätty, {del} poistettu',
   'diff.mode': 'Miten muutokset näytetään',

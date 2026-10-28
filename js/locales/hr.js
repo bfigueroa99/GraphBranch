@@ -637,6 +637,8 @@ GB.i18n.define('hr', {
   'diff.binary': 'binarna',
   'diff.noPatch': 'Nema prikaza po recima: datoteka je binarna, prazna ili prevelika.',
   'diff.openFile': 'Otvorite datoteku',
+  'diff.history': 'Povijest',
+  'diff.historyOf': 'Povijest datoteke {path}',
   'diff.tooLong': 'Prikazano je samo prvih {n} redaka.',
   'diff.lines': 'dodano {add}, uklonjeno {del}',
   'diff.mode': 'Kako se prikazuju promjene',

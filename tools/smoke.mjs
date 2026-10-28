@@ -1155,6 +1155,32 @@ console.log('Escritorio (1280×800)');
     if (closed.sel) throw new Error('al cerrar, el grafo sigue marcando el commit');
   });
 
+  await step(page, 'historial de un archivo: un botón del diff aplica el filtro por ruta a ese archivo y lo deja en la URL', async () => {
+    await page.click('#view-2d');
+    const heads = await page.$$('#graph svg .head[role=button]');
+    await heads[heads.length > 3 ? 3 : 0].focus();
+    await page.keyboard.press('Enter');
+    const btn = await page.waitForSelector('#graph .tip .tip-diff', { timeout: T(5000) });
+    await btn.focus();
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#diff-panel:not([hidden]) .df-file', { timeout: T(5000) });
+    await page.locator('#diff-panel .df-file').first().evaluate((d) => (d.open = true)); // el primero ya suele venir abierto: un clic lo cerraría
+    const hist = await page.waitForSelector('#diff-panel .df-file[open] .df-history', { timeout: T(5000) });
+    const path = await page.$eval('#diff-panel .df-file[open] .df-path', (n) => n.textContent.split(' → ').pop());
+    if (!/\S/.test((await hist.getAttribute('aria-label')) || '') || /diff\.|undefined/.test(await hist.textContent())) throw new Error('el botón Historial no tiene nombre');
+    await hist.click();
+    await page.waitForSelector('#search-path-clear:not([hidden])', { state: 'attached', timeout: T(5000) });
+    const on = await page.evaluate(() => ({ value: document.querySelector('#search-path').value, url: location.search }));
+    if (on.value !== path) throw new Error(`el filtro quedó en «${on.value}», no en «${path}»`);
+    if (!on.url.includes('path=')) throw new Error('el historial no dejó la ruta en la URL: ' + on.url);
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    await page.click('#search-path-clear');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
+    await page.keyboard.press('Escape');
+  });
+
   await step(page, 'cambios de un commit: un clic en el grafo cambia de commit, lado a lado con palabras marcadas, filtro y panel ancho', async () => {
     // cada espera dice cuál fue si vence (la corrida larga trae mucha historia de la demo y lo recorta)
     const wait = (what, p) => p.catch((err) => {

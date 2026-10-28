@@ -629,6 +629,8 @@ GB.i18n.define('hu', {
   'diff.binary': 'bináris',
   'diff.noPatch': 'Nincs soronkénti nézet: a fájl bináris, üres vagy túl nagy.',
   'diff.openFile': 'Fájl megnyitása',
+  'diff.history': 'Előzmények',
+  'diff.historyOf': '{path} előzményei',
   'diff.tooLong': 'Csak az első {n} sor látszik.',
   'diff.lines': '{add} hozzáadva, {del} eltávolítva',
   'diff.mode': 'A változások megjelenítése',

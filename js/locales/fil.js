@@ -630,6 +630,8 @@ GB.i18n.define('fil', {
   'diff.binary': 'binary file',
   'diff.noPatch': 'Walang tingin bawat linya: binary, walang laman o napakalaki ng file.',
   'diff.openFile': 'Buksan ang file',
+  'diff.history': 'Kasaysayan',
+  'diff.historyOf': 'Kasaysayan ng {path}',
   'diff.tooLong': 'Ang unang {n} linya lang ang ipinapakita.',
   'diff.lines': '{add} idinagdag, {del} inalis',
   'diff.mode': 'Paano ipinapakita ang mga pagbabago',

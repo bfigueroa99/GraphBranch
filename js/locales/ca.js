@@ -629,6 +629,8 @@ GB.i18n.define('ca', {
   'diff.binary': 'binari',
   'diff.noPatch': 'Sense detall per línia: el fitxer és binari, és buit o és massa gran.',
   'diff.openFile': 'Obre el fitxer',
+  'diff.history': 'Historial',
+  'diff.historyOf': 'Historial de {path}',
   'diff.tooLong': 'Només es mostren les primeres {n} línies.',
   'diff.lines': '{add} afegides, {del} tretes',
   'diff.mode': 'Com es mostren els canvis',

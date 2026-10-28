@@ -629,6 +629,8 @@ GB.i18n.define('tr', {
   'diff.binary': 'ikili',
   'diff.noPatch': 'Satır satır görünüm yok: dosya ikili, boş ya da çok büyük.',
   'diff.openFile': 'Dosyayı aç',
+  'diff.history': 'Geçmiş',
+  'diff.historyOf': '{path} geçmişi',
   'diff.tooLong': 'Yalnızca ilk {n} satır gösteriliyor.',
   'diff.lines': '{add} eklendi, {del} kaldırıldı',
   'diff.mode': 'Değişikliklerin gösterimi',

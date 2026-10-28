@@ -640,6 +640,8 @@ GB.i18n.define('pl', {
   'diff.binary': 'binarny',
   'diff.noPatch': 'Brak widoku wiersz po wierszu: plik jest binarny, pusty lub za duży.',
   'diff.openFile': 'Otwórz plik',
+  'diff.history': 'Historia',
+  'diff.historyOf': 'Historia pliku {path}',
   'diff.tooLong': 'Pokazano tylko pierwsze {n} wierszy.',
   'diff.lines': 'dodane: {add}, usunięte: {del}',
   'diff.mode': 'Sposób wyświetlania zmian',

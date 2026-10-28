@@ -629,6 +629,8 @@ GB.i18n.define('sw', {
   'diff.binary': 'jozi',
   'diff.noPatch': 'Hakuna mwonekano wa mstari kwa mstari: faili ni ya jozi, tupu au kubwa mno.',
   'diff.openFile': 'Fungua faili',
+  'diff.history': 'Historia',
+  'diff.historyOf': 'Historia ya {path}',
   'diff.tooLong': 'Mistari {n} ya kwanza pekee ndiyo inaonyeshwa.',
   'diff.lines': '{add} zimeongezwa, {del} zimeondolewa',
   'diff.mode': 'Jinsi mabadiliko yanavyoonyeshwa',

@@ -629,6 +629,8 @@ GB.i18n.define('id', {
   'diff.binary': 'biner',
   'diff.noPatch': 'Tidak ada tampilan per baris: file biner, kosong, atau terlalu besar.',
   'diff.openFile': 'Buka file',
+  'diff.history': 'Riwayat',
+  'diff.historyOf': 'Riwayat {path}',
   'diff.tooLong': 'Hanya {n} baris pertama yang ditampilkan.',
   'diff.lines': '{add} ditambahkan, {del} dihapus',
   'diff.mode': 'Cara perubahan ditampilkan',

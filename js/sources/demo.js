@@ -119,12 +119,17 @@
       return c;
     }
 
-    /** En la demo no hay archivos: una ruta "toca" los commits cuyo mensaje nombra su último tramo (p. ej. `src/auth`). */
+    /** En la demo no hay archivos: una ruta "toca" los commits cuyo mensaje nombra su último tramo (p. ej. `src/auth`);
+        si ninguno lo nombra, su nombre sin extensión (`tests/auth/auth.test.ts` → auth) o la carpeta que lo contiene. */
     async commitsByPath(path) {
-      const word = String(path || '').trim().replace(/\/+$/g, '').split('/').pop().toLowerCase();
+      const parts = String(path || '').trim().replace(/\/+$/g, '').toLowerCase().split('/');
+      const last = parts.pop() || '';
       const out = new Set();
-      if (!word) return out;
-      for (const c of this.data.commits.values()) if (String(c.message || '').toLowerCase().includes(word)) out.add(c.sha);
+      for (const word of [last, last.split('.')[0], parts.pop()]) {
+        if (!word) continue;
+        for (const c of this.data.commits.values()) if (String(c.message || '').toLowerCase().includes(word)) out.add(c.sha);
+        if (out.size) break;
+      }
       return out;
     }
 

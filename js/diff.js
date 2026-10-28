@@ -297,6 +297,7 @@
    *   errText(err) → el motivo de un fallo, en el idioma activo
    *   onWide(on): la persona pidió el panel ancho (o lo devolvió a su ancho)
    *   canEdit() → ¿se pueden editar los archivos de este repo?; onEdit(path, sha): editar ese archivo (visto en ese commit)
+   *   canHistory() → ¿se puede filtrar el grafo por una ruta?; onHistory(path): dejar a la vista los commits que tocaron ese archivo
    * Devuelve { open(sha, { focusGraph }), close(), step(dir), reset(), relocalize(), refresh(), get sha(), get isOpen(), get wide() }.
    */
   function mount(root, opts) {
@@ -565,6 +566,13 @@
         sec.dataset.filled = '1';
         // arriba, lo que se hace con el archivo: editarlo (si el servicio deja) y abrirlo en el servicio
         const acts = mk('p', 'df-note df-factions');
+        if (opts.canHistory?.()) {
+          const h = mk('button', 'btn btn-ghost df-history', t('diff.history'));
+          h.type = 'button';
+          h.setAttribute('aria-label', t('diff.historyOf', { path: f.path }));
+          h.addEventListener('click', () => opts.onHistory?.(f.path));
+          acts.append(h);
+        }
         if (f.status !== 'removed' && opts.canEdit?.()) {
           const b = mk('button', 'btn btn-ghost df-edit', t('editor.edit'));
           b.type = 'button';

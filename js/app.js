@@ -369,6 +369,9 @@
     onWide: (on) => el.main.classList.toggle('diff-wide', on && diffView.isOpen),
     canEdit: () => canEditTab(diffTab || active),
     onEdit: (path, sha) => openEditor(diffTab || active, path, { sha }),
+    // el filtro por ruta es del repo a la vista: no existe en la vista conjunta ni en una fuente que no lo sepa
+    canHistory: () => !allOn && typeof source?.commitsByPath === 'function' && diffSrc() === source,
+    onHistory: (path) => fileHistory(path),
     onClose: () => {
       el.main.classList.remove('diffing', 'diff-wide');
       selectCommit(null);
@@ -2297,6 +2300,13 @@
     } finally {
       pathEl.go.disabled = false;
     }
+  }
+  /** «Historial» de un archivo del diff: el filtro por ruta aplicado a ese archivo, con un aviso de cuántos commits tocó. */
+  async function fileHistory(path) {
+    pathEl.input.value = path;
+    await applyPathFilter();
+    if (pathEl.input.value !== path) return; // otro filtro pisó a este mientras la consulta volvía
+    feed.toast({ kind: 'other', title: t('diff.historyOf', { path }), detail: pathEl.status.textContent, time: Date.now() });
   }
   /** El filtro que pide la URL, una sola vez y con la primera historia que llega. */
   function startUrlPath() {

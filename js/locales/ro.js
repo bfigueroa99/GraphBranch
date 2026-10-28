@@ -637,6 +637,8 @@ GB.i18n.define('ro', {
   'diff.binary': 'binar',
   'diff.noPatch': 'Fără vizualizare rând cu rând: fișierul este binar, gol sau prea mare.',
   'diff.openFile': 'Deschideți fișierul',
+  'diff.history': 'Istoric',
+  'diff.historyOf': 'Istoricul pentru {path}',
   'diff.tooLong': 'Se afișează doar primele {n} rânduri.',
   'diff.lines': '{add} adăugate, {del} eliminate',
   'diff.mode': 'Cum sunt afișate modificările',

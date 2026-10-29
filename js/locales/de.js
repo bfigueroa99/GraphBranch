@@ -836,4 +836,10 @@ GB.i18n.define('de', {
   'loopPrompt.preview': 'Der Prompt',
   'loopPrompt.chars': { one: '{n} Zeichen', other: '{n} Zeichen' },
   'loopPrompt.copy': 'Prompt kopieren',
+  'prview.show': 'Beschreibung und Kommentare anzeigen',
+  'prview.busy': 'Pull Request wird geladen…',
+  'prview.fail': 'Der Pull Request konnte nicht geladen werden.',
+  'prview.noBody': 'Keine Beschreibung.',
+  'prview.comments': 'Neueste Kommentare',
+  'prview.noComments': 'Noch keine Kommentare.',
 });

@@ -835,4 +835,10 @@ GB.i18n.define('ms', {
   'loopPrompt.preview': 'Prompt',
   'loopPrompt.chars': '{n} aksara',
   'loopPrompt.copy': 'Salin prompt',
+  'prview.show': 'Lihat penerangan dan komen',
+  'prview.busy': 'Memuatkan pull request…',
+  'prview.fail': 'Pull request tidak dapat dimuatkan.',
+  'prview.noBody': 'Tiada penerangan.',
+  'prview.comments': 'Komen terkini',
+  'prview.noComments': 'Belum ada komen.',
 });

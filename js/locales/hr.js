@@ -843,4 +843,10 @@ GB.i18n.define('hr', {
   'loopPrompt.preview': 'Prompt',
   'loopPrompt.chars': { one: '{n} znak', few: '{n} znaka', other: '{n} znakova' },
   'loopPrompt.copy': 'Kopiraj prompt',
+  'prview.show': 'Prikaži opis i komentare',
+  'prview.busy': 'Učitavanje pull requesta…',
+  'prview.fail': 'Pull request nije moguće učitati.',
+  'prview.noBody': 'Nema opisa.',
+  'prview.comments': 'Najnoviji komentari',
+  'prview.noComments': 'Još nema komentara.',
 });

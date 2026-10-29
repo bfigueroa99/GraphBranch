@@ -835,4 +835,10 @@ GB.i18n.define('nb', {
   'loopPrompt.preview': 'Prompten',
   'loopPrompt.chars': { one: '{n} tegn', other: '{n} tegn' },
   'loopPrompt.copy': 'Kopier prompten',
+  'prview.show': 'Vis beskrivelse og kommentarer',
+  'prview.busy': 'Laster pull request…',
+  'prview.fail': 'Kunne ikke laste pull requesten.',
+  'prview.noBody': 'Ingen beskrivelse.',
+  'prview.comments': 'Siste kommentarer',
+  'prview.noComments': 'Ingen kommentarer ennå.',
 });

@@ -835,4 +835,10 @@ GB.i18n.define('hu', {
   'loopPrompt.preview': 'A prompt',
   'loopPrompt.chars': { one: '{n} karakter', other: '{n} karakter' },
   'loopPrompt.copy': 'Prompt másolása',
+  'prview.show': 'Leírás és hozzászólások megtekintése',
+  'prview.busy': 'A pull request betöltése…',
+  'prview.fail': 'A pull requestet nem sikerült betölteni.',
+  'prview.noBody': 'Nincs leírás.',
+  'prview.comments': 'Legutóbbi hozzászólások',
+  'prview.noComments': 'Még nincs hozzászólás.',
 });

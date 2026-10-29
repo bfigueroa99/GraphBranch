@@ -835,4 +835,10 @@ GB.i18n.define('el', {
   'loopPrompt.preview': 'Το prompt',
   'loopPrompt.chars': { one: '{n} χαρακτήρας', other: '{n} χαρακτήρες' },
   'loopPrompt.copy': 'Αντιγραφή του prompt',
+  'prview.show': 'Προβολή περιγραφής και σχολίων',
+  'prview.busy': 'Φόρτωση του pull request…',
+  'prview.fail': 'Δεν ήταν δυνατή η φόρτωση του pull request.',
+  'prview.noBody': 'Χωρίς περιγραφή.',
+  'prview.comments': 'Τελευταία σχόλια',
+  'prview.noComments': 'Δεν υπάρχουν σχόλια ακόμη.',
 });

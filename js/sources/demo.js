@@ -608,6 +608,23 @@
       return new Promise((resolve) => setTimeout(() => resolve(out), 150 + Math.random() * 250));
     }
 
+    /** La descripción y los comentarios de un PR de la demo (inventados, siempre los mismos para el mismo PR). */
+    prDetail(number) {
+      const pr = this.data.pulls.get(Number(number));
+      const out = {
+        number: Number(number),
+        body: pr ? `${pr.title}\n\n- ${pr.head} → ${pr.base}\n- Closes #${pr.number}` : '',
+        total: pr ? 2 : 0,
+        comments: pr
+          ? [
+              { user: this.actor({ name: 'Ana', login: 'ana' }), body: 'LGTM 👍', date: Date.now() - 3 * 3600e3 },
+              { user: this.actor({ name: 'Luis', login: 'luis' }), body: '+1, ship it', date: Date.now() - 3600e3 },
+            ]
+          : [],
+      };
+      return new Promise((resolve) => setTimeout(() => resolve(out), 150 + Math.random() * 250));
+    }
+
     diffCheap() {
       return true;
     }

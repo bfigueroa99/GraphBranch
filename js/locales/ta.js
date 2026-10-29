@@ -835,4 +835,10 @@ GB.i18n.define('ta', {
   'loopPrompt.preview': 'ப்ராம்ப்ட்',
   'loopPrompt.chars': { one: '{n} எழுத்து', other: '{n} எழுத்துகள்' },
   'loopPrompt.copy': 'ப்ராம்ப்ட்டை நகலெடு',
+  'prview.show': 'விளக்கம் மற்றும் கருத்துகளைப் பார்',
+  'prview.busy': 'புல் ரிக்வெஸ்ட் ஏற்றப்படுகிறது…',
+  'prview.fail': 'புல் ரிக்வெஸ்ட்டை ஏற்ற முடியவில்லை.',
+  'prview.noBody': 'விளக்கம் இல்லை.',
+  'prview.comments': 'சமீபத்திய கருத்துகள்',
+  'prview.noComments': 'இன்னும் கருத்துகள் இல்லை.',
 });

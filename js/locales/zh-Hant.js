@@ -835,4 +835,10 @@ GB.i18n.define('zh-Hant', {
   'loopPrompt.preview': '提示詞',
   'loopPrompt.chars': '{n} 個字元',
   'loopPrompt.copy': '複製提示詞',
+  'prview.show': '檢視說明與留言',
+  'prview.busy': '正在載入提取請求…',
+  'prview.fail': '無法載入提取請求。',
+  'prview.noBody': '沒有說明。',
+  'prview.comments': '最新留言',
+  'prview.noComments': '尚無留言。',
 });

@@ -835,4 +835,10 @@ GB.i18n.define('zh-Hans', {
   'loopPrompt.preview': '提示词',
   'loopPrompt.chars': '{n} 个字符',
   'loopPrompt.copy': '复制提示词',
+  'prview.show': '查看描述和评论',
+  'prview.busy': '正在加载拉取请求…',
+  'prview.fail': '无法加载拉取请求。',
+  'prview.noBody': '没有描述。',
+  'prview.comments': '最新评论',
+  'prview.noComments': '暂无评论。',
 });

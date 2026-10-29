@@ -835,4 +835,10 @@ GB.i18n.define('sv', {
   'loopPrompt.preview': 'Prompten',
   'loopPrompt.chars': { one: '{n} tecken', other: '{n} tecken' },
   'loopPrompt.copy': 'Kopiera prompten',
+  'prview.show': 'Visa beskrivning och kommentarer',
+  'prview.busy': 'Läser in pull request…',
+  'prview.fail': 'Pull requesten kunde inte läsas in.',
+  'prview.noBody': 'Ingen beskrivning.',
+  'prview.comments': 'Senaste kommentarer',
+  'prview.noComments': 'Inga kommentarer än.',
 });

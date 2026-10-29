@@ -155,9 +155,10 @@
       <p class="tip-msg">${U.esc(U.firstLine(c.message))}</p>
       <p class="tip-meta"><code>${U.shortSha(c.sha)}</code>${parents > 1 ? ` · ${U.esc(tr('tip.mergeOf', { n: parents }))}` : ''}</p>
       ${rows.length ? `<p class="tip-extra">${rows.join('')}</p>` : ''}
-      ${pin && (c.url || ctx.canDiff || (branch && (ctx.canPin || ctx.canHide))) ? `<div class="tip-actions">
+      ${pin && (c.url || ctx.canDiff || (branch && (ctx.canPin || ctx.canHide || ctx.canPrView))) ? `<div class="tip-actions">
         ${ctx.canDiff ? `<button type="button" class="tip-diff" data-sha="${U.esc(c.sha)}">${U.esc(tr('diff.show'))}</button>` : ''}
         ${U.safeUrl(c.url) ? `<a class="tip-link" href="${U.esc(U.safeUrl(c.url))}" target="_blank" rel="noopener">${U.esc(tr('tip.openCommit'))} ↗</a>` : ''}
+        ${branch && ctx.canPrView && ctx.prs?.get(branch) && !ctx.prs.get(branch).mr ? `<button type="button" class="tip-prview" data-pr="${Number(ctx.prs.get(branch).number)}" aria-expanded="false">${U.esc(tr('prview.show'))}</button>` : ''}
         ${branch && ctx.canPin ? pinButtonHTML(branch, !!ctx.pins?.has(branch)) : ''}
         ${branch && ctx.canHide ? viewButtonsHTML(branch) : ''}
       </div>` : ''}`;
@@ -209,6 +210,57 @@
     tip.addEventListener('click', (ev) => {
       const b = ev.target.closest('.tip-diff');
       if (b) onDiff?.(b.dataset.sha);
+    });
+  }
+
+  /** El cuerpo de la vista de un PR (descripción y últimos comentarios) como HTML: todo texto de afuera, escapado. */
+  function prBodyHTML(d) {
+    const body = String(d.body || '').trim();
+    const comments = (d.comments || [])
+      .map((c) => `<li><span class="pv-who">${U.avatarHTML(c.user, 16)}<b>${U.esc(c.user?.login || tr('author.unknown'))}</b>${c.date ? ` <span class="pv-time">${U.esc(U.timeAgo(c.date))}</span>` : ''}</span><p>${U.esc(U.truncate(String(c.body).trim(), 400))}</p></li>`)
+      .join('');
+    return `<p class="pv-body">${body ? U.esc(U.truncate(body, 1200)) : `<i>${U.esc(tr('prview.noBody'))}</i>`}</p>
+      <p class="pv-head">${U.esc(tr('prview.comments'))}</p>
+      ${comments ? `<ul class="pv-list">${comments}</ul>` : `<p class="pv-none">${U.esc(tr('prview.noComments'))}</p>`}`;
+  }
+
+  /** Conecta el botón de la vista del PR de la ficha de una rama: `load(número)` da {body, comments}; una consulta,
+      solo al pulsarlo, y pulsarlo otra vez esconde la vista. */
+  function wirePrButton(tip, load) {
+    tip.addEventListener('click', async (ev) => {
+      const b = ev.target.closest('.tip-prview');
+      if (!b || !load || b.dataset.busy) return;
+      let box = tip.querySelector('.tip-prbody');
+      if (box && b.getAttribute('aria-expanded') === 'true') {
+        box.hidden = true;
+        b.setAttribute('aria-expanded', 'false');
+        return;
+      }
+      if (!box) {
+        box = document.createElement('div');
+        box.className = 'tip-prbody';
+        box.setAttribute('role', 'region');
+        box.setAttribute('aria-live', 'polite');
+        box.setAttribute('aria-label', tr('prview.show'));
+        tip.append(box);
+      }
+      box.hidden = false;
+      b.setAttribute('aria-expanded', 'true');
+      if (box.dataset.pr === b.dataset.pr && box.dataset.ok) return;
+      box.dataset.pr = b.dataset.pr;
+      delete box.dataset.ok;
+      box.textContent = tr('prview.busy');
+      b.dataset.busy = '1';
+      try {
+        const d = await load(Number(b.dataset.pr));
+        if (box.dataset.pr !== b.dataset.pr) return;
+        box.innerHTML = prBodyHTML(d || {});
+        box.dataset.ok = '1';
+      } catch (e) {
+        box.textContent = tr('prview.fail');
+      } finally {
+        delete b.dataset.busy;
+      }
     });
   }
 
@@ -353,6 +405,7 @@
       wirePinButton(this.tip, (name) => this.opts.onTogglePin?.(name));
       wireViewButtons(this.tip, (name, how) => this.opts.onBranchView?.(name, how));
       wireDiffButton(this.tip, (sha) => this.opts.onDiff?.(sha));
+      wirePrButton(this.tip, (n) => this.opts.onPrView?.(n));
       this.bindGroups();
       this.bindKeys();
       this.bindMini();
@@ -1956,5 +2009,5 @@
   }
 
   GB.Graph = Graph;
-  GB.graphShared = { tipHTML, wirePinButton, wireViewButtons, wireDiffButton, focusTip, returnFocus, measure, fitText, prRef, prKey, CI_MARK, ciText, LABEL_FONT, SMALL_FONT };
+  GB.graphShared = { tipHTML, wirePinButton, wireViewButtons, wireDiffButton, wirePrButton, focusTip, returnFocus, measure, fitText, prRef, prKey, CI_MARK, ciText, LABEL_FONT, SMALL_FONT };
 })(window.GB);

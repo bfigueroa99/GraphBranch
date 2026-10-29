@@ -836,4 +836,10 @@ GB.i18n.define('nl', {
   'loopPrompt.preview': 'De prompt',
   'loopPrompt.chars': { one: '{n} teken', other: '{n} tekens' },
   'loopPrompt.copy': 'Prompt kopiëren',
+  'prview.show': 'Beschrijving en reacties bekijken',
+  'prview.busy': 'Pull request laden…',
+  'prview.fail': 'De pull request kon niet worden geladen.',
+  'prview.noBody': 'Geen beschrijving.',
+  'prview.comments': 'Laatste reacties',
+  'prview.noComments': 'Nog geen reacties.',
 });

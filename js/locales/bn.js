@@ -835,4 +835,10 @@ GB.i18n.define('bn', {
   'loopPrompt.preview': 'প্রম্পট',
   'loopPrompt.chars': { one: '{n}টি অক্ষর', other: '{n}টি অক্ষর' },
   'loopPrompt.copy': 'প্রম্পট কপি করুন',
+  'prview.show': 'বিবরণ ও মন্তব্য দেখুন',
+  'prview.busy': 'পুল রিকোয়েস্ট লোড হচ্ছে…',
+  'prview.fail': 'পুল রিকোয়েস্ট লোড করা যায়নি।',
+  'prview.noBody': 'কোনো বিবরণ নেই।',
+  'prview.comments': 'সাম্প্রতিক মন্তব্য',
+  'prview.noComments': 'এখনও কোনো মন্তব্য নেই।',
 });

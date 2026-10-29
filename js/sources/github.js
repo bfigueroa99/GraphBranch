@@ -718,6 +718,26 @@
       return { files, truncated: /rel="next"/.test(headers?.get?.('Link') || '') };
     }
 
+    /** La descripción de un PR y sus últimos comentarios (los de la conversación, no los de revisión): hasta dos
+        consultas, y solo al pedir la vista del PR desde la ficha de su rama. */
+    async prDetail(number) {
+      const n = Number(number);
+      const { data: pr } = await this.api(`${this.base}/pulls/${n}`);
+      const total = pr?.comments || 0;
+      const page = Math.max(1, Math.ceil(total / 100));
+      const list = total ? (await this.api(`${this.base}/issues/${n}/comments?per_page=100&page=${page}`)).data || [] : [];
+      return {
+        number: n,
+        body: pr?.body || '',
+        total,
+        comments: list.slice(-5).map((c) => ({
+          user: { login: c.user?.login, name: c.user?.login, avatar: c.user?.avatar_url },
+          body: c.body || '',
+          date: Date.parse(c.created_at) || 0,
+        })),
+      };
+    }
+
     /** Pedir los cambios de un commit sin token gasta una de 60 consultas por hora: entonces solo se piden los que se abren. */
     diffCheap() {
       return !!this.token && (this.rate?.remaining ?? 5000) > 500;

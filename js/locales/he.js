@@ -892,4 +892,10 @@ GB.i18n.define('he', {
   'loopPrompt.preview': 'הפרומפט',
   'loopPrompt.chars': { one: '{n} תו', two: '{n} תווים', other: '{n} תווים' },
   'loopPrompt.copy': 'העתקת הפרומפט',
+  'prview.show': 'הצגת תיאור והערות',
+  'prview.busy': 'טוען את ה-pull request…',
+  'prview.fail': 'לא ניתן לטעון את ה-pull request.',
+  'prview.noBody': 'אין תיאור.',
+  'prview.comments': 'ההערות האחרונות',
+  'prview.noComments': 'עדיין אין הערות.',
 });

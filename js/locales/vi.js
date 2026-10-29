@@ -835,4 +835,10 @@ GB.i18n.define('vi', {
   'loopPrompt.preview': 'Prompt',
   'loopPrompt.chars': '{n} ký tự',
   'loopPrompt.copy': 'Sao chép prompt',
+  'prview.show': 'Xem mô tả và bình luận',
+  'prview.busy': 'Đang tải pull request…',
+  'prview.fail': 'Không tải được pull request.',
+  'prview.noBody': 'Không có mô tả.',
+  'prview.comments': 'Bình luận mới nhất',
+  'prview.noComments': 'Chưa có bình luận.',
 });

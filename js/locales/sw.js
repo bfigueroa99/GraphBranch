@@ -835,4 +835,10 @@ GB.i18n.define('sw', {
   'loopPrompt.preview': 'Prompt',
   'loopPrompt.chars': { one: 'herufi {n}', other: 'herufi {n}' },
   'loopPrompt.copy': 'Nakili prompt',
+  'prview.show': 'Tazama maelezo na maoni',
+  'prview.busy': 'Inapakia pull request…',
+  'prview.fail': 'Imeshindwa kupakia pull request.',
+  'prview.noBody': 'Hakuna maelezo.',
+  'prview.comments': 'Maoni ya hivi karibuni',
+  'prview.noComments': 'Bado hakuna maoni.',
 });

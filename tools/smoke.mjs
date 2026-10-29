@@ -1094,7 +1094,7 @@ console.log('Escritorio (1280×800)');
     const all = await count();
     const openTip = async () => {
       const heads = await page.$$('#graph svg .head[role=button]');
-      await heads[heads.length - 1].focus();
+      await heads[heads.length > 3 ? 3 : 0].focus();
       await page.keyboard.press('Enter');
     };
     await openTip();

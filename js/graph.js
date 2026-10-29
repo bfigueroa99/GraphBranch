@@ -172,8 +172,8 @@
   /** «Ocultar» y «Solo esta» de la ficha de una rama (el grafo muestra menos ramas; ver search.byBranches). */
   function viewButtonsHTML(branch) {
     const name = U.truncate(branch, 28);
-    return `<button type="button" class="tip-pin tip-hide" data-branch="${U.esc(branch)}">${i18n.html('tip.hide', { branch: name })}</button>
-        <button type="button" class="tip-pin tip-solo" data-branch="${U.esc(branch)}">${i18n.html('tip.solo', { branch: name })}</button>`;
+    return `<button type="button" class="tip-view tip-hide" data-branch="${U.esc(branch)}">${i18n.html('tip.hide', { branch: name })}</button>
+        <button type="button" class="tip-view tip-solo" data-branch="${U.esc(branch)}">${i18n.html('tip.solo', { branch: name })}</button>`;
   }
 
   /** Cómo se nombra un PR: "#12" en GitHub; una merge request de GitLab, "!12". Y la clave de sus textos

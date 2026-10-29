@@ -176,6 +176,7 @@
     /** Lo que git anota en el reflog de HEAD por ese comando. */
     reflogMessage(cmd, args, from) {
       const { flags, rest } = parse(args, ['-m']);
+      if (cmd === 'commit' && flags['--amend']) return `commit (amend): ${this.commits.get(this.headSha).message}`;
       if (cmd === 'commit') return `commit: ${flags['-m'] ?? this.commits.get(this.headSha).message}`;
       if (cmd === 'checkout' || cmd === 'switch') return `checkout: moving from ${from} to ${this.head.branch ?? this.short(this.headSha)}`;
       if (cmd === 'reset') return `reset: moving to ${rest[0] || 'HEAD'}`;
@@ -244,7 +245,7 @@
   Repo.prototype.commands = {
     help() {
       return [
-        'commit -m "msg"             save a snapshot on the current branch',
+        'commit -m "msg"             save a snapshot on the current branch (--amend [-m "msg"] redoes the last one)',
         'branch [name] [-d name]     list, create or delete branches',
         'checkout [-b] <name|sha>    move to a branch or commit (also: switch [-c|--detach])',
         'restore <file|.>            throw away the uncommitted changes of a file (see touch)',
@@ -269,6 +270,19 @@
     commit(args) {
       const { flags } = parse(args, ['-m', '--message']);
       const msg = flags['-m'] ?? flags['--message'];
+      if (flags['--amend']) {
+        if (!this.headSha) fail('fatal: You have nothing to amend.');
+        if (this.merging) fail('fatal: You are in the middle of a merge -- cannot amend.');
+        if (this.picking) fail(`fatal: You are in the middle of a ${this.picking.revert ? 'revert' : 'cherry-pick'} -- cannot amend.`);
+        if (msg === true) fail('error: switch `m\' requires a value');
+        const old = this.commits.get(this.headSha);
+        const text = msg || old.message;
+        // como git: el commit viejo se reemplaza por uno nuevo con los mismos padres (el viejo queda en el reflog)
+        const sha = this.make(text, old.parents);
+        this.moveHead(sha);
+        this.work = [];
+        return [`[${this.head.branch || 'detached HEAD'} ${this.short(sha)}] ${text}`];
+      }
       if (!msg || msg === true) fail('Aborting commit due to empty commit message.\n(use: commit -m "message")');
       if (this.merging) {
         const { theirs } = this.merging;

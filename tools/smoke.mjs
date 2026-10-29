@@ -1889,6 +1889,19 @@ console.log('Varios repos a la vez');
     await lab.waitForFunction(() => /HEAD@\{0\}: reset: moving to HEAD~1/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
     await lab.waitForFunction(() => /HEAD is now at [0-9a-f]{7} Oops: debug logging left in/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
   });
+  await step(lab, 'la práctica corrige el último commit con commit --amend', async () => {
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await lab.selectOption('.pr-ex', '1');
+    for (const c of ['commit -m "Fix tpyo"', 'commit --amend -m "Fix typo"', 'log --oneline']) await send(c);
+    await lab.waitForFunction(() => {
+      const t = document.querySelector('.pr-log')?.textContent || '';
+      const out = t.slice(t.lastIndexOf('log --oneline'));
+      return /\) Fix typo/.test(out) && !out.includes('Fix tpyo');
+    }, null, { timeout: T(5000) });
+  });
   await step(lab, 'un ejercicio propio se crea, se comparte por URL y la URL lo abre y se resuelve', async () => {
     await lab.click('.pr-make summary');
     await lab.fill('.pr-m-title', 'Fusiona <b>ya</b>');

@@ -251,6 +251,7 @@ GB.i18n.define('bg', {
   'tip.solo': 'Само <code>{branch}</code>',
   'branchview.status': '{n} от {total} клона се виждат',
   'branchview.reset': 'Показване на всички клонове',
+  'search.firstParent': 'Само първият родител (като git log --first-parent)',
   'author.unknown': 'неизвестен',
 
   /* ---------- слой върху графиката ---------- */

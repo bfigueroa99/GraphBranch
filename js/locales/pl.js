@@ -256,6 +256,7 @@ GB.i18n.define('pl', {
   'tip.solo': 'Pokaż tylko <code>{branch}</code>',
   'branchview.status': 'Widoczne gałęzie: {n} z {total}',
   'branchview.reset': 'Pokaż wszystkie gałęzie',
+  'search.firstParent': 'Tylko pierwszy rodzic (jak git log --first-parent)',
   'author.unknown': 'nieznany',
 
   /* ---------- nakładka na grafie ---------- */

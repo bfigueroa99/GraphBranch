@@ -251,6 +251,7 @@ GB.i18n.define('de', {
   'tip.solo': 'Nur <code>{branch}</code> zeigen',
   'branchview.status': '{n} von {total} Branches sichtbar',
   'branchview.reset': 'Alle Branches zeigen',
+  'search.firstParent': 'Nur erster Elternteil (wie git log --first-parent)',
   'author.unknown': 'unbekannt',
 
   /* ---------- Overlay über dem Graph ---------- */

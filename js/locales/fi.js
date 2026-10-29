@@ -251,6 +251,7 @@ GB.i18n.define('fi', {
   'tip.solo': 'Näytä vain <code>{branch}</code>',
   'branchview.status': '{n} / {total} haaraa näkyvissä',
   'branchview.reset': 'Näytä kaikki haarat',
+  'search.firstParent': 'Vain ensimmäinen vanhempi (kuten git log --first-parent)',
   'author.unknown': 'tuntematon',
 
   /* ---------- kaavion päällä oleva kerros ---------- */

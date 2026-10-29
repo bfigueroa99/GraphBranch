@@ -321,6 +321,7 @@ GB.i18n.define('ar', {
   'tip.solo': 'عرض <code>{branch}</code> فقط',
   'branchview.status': '{n} من {total} فروع قيد العرض',
   'branchview.reset': 'عرض كل الفروع',
+  'search.firstParent': 'الأب الأول فقط (مثل git log --first-parent)',
   'author.unknown': 'غير معروف',
 
   /* ---------- graph overlay ---------- */

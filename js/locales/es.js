@@ -251,6 +251,7 @@ GB.i18n.define('es', {
   'tip.solo': 'Ver solo <code>{branch}</code>',
   'branchview.status': '{n} de {total} ramas a la vista',
   'branchview.reset': 'Ver todas las ramas',
+  'search.firstParent': 'Solo el primer padre (como git log --first-parent)',
   'author.unknown': 'desconocido',
 
   /* ---------- capa sobre el grafo ---------- */

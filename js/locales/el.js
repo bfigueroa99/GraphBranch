@@ -251,6 +251,7 @@ GB.i18n.define('el', {
   'tip.solo': 'Μόνο το <code>{branch}</code>',
   'branchview.status': '{n} από {total} κλάδοι σε προβολή',
   'branchview.reset': 'Εμφάνιση όλων των κλάδων',
+  'search.firstParent': 'Μόνο ο πρώτος γονέας (όπως το git log --first-parent)',
   'author.unknown': 'άγνωστος',
 
   /* ---------- επίστρωμα γραφήματος ---------- */

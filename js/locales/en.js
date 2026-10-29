@@ -256,6 +256,7 @@ GB.i18n.define('en', {
   'tip.solo': 'Show only <code>{branch}</code>',
   'branchview.status': '{n} of {total} branches in view',
   'branchview.reset': 'Show all branches',
+  'search.firstParent': 'First parent only (like git log --first-parent)',
   'author.unknown': 'unknown',
 
   /* ---------- graph overlay ---------- */

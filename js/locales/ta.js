@@ -251,6 +251,7 @@ GB.i18n.define('ta', {
   'tip.solo': '<code>{branch}</code> மட்டும் காட்டு',
   'branchview.status': '{total} கிளைகளில் {n} தெரிகின்றன',
   'branchview.reset': 'எல்லா கிளைகளையும் காட்டு',
+  'search.firstParent': 'முதல் பெற்றோர் மட்டும் (git log --first-parent போல)',
   'author.unknown': 'தெரியாதவர்',
 
   /* ---------- வரைபடத்தின் மேல் அடுக்கு ---------- */

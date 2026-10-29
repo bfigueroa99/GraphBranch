@@ -251,6 +251,7 @@ GB.i18n.define('nl', {
   'tip.solo': 'Alleen <code>{branch}</code> tonen',
   'branchview.status': '{n} van {total} branches zichtbaar',
   'branchview.reset': 'Alle branches tonen',
+  'search.firstParent': 'Alleen eerste ouder (zoals git log --first-parent)',
   'author.unknown': 'onbekend',
 
   /* ---------- graph overlay ---------- */

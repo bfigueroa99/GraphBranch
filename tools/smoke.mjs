@@ -3727,6 +3727,33 @@ console.log('Filtro por autor desde la URL (?author=)');
   await page.context().close();
 }
 
+console.log('Grafo de primer padre (?firstparent=1)');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, 'deja menos commits que el grafo entero, queda en la URL y el interruptor lo apaga', async () => {
+    const nodes = () => page.evaluate(() => document.querySelectorAll('#graph svg .node').length);
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    const all = await nodes();
+    await page.goto(`${base}/index.html?lang=es&firstparent=1`);
+    await loaded(page);
+    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length < n, all, { timeout: T(5000) }).catch(() => {});
+    const on = await page.evaluate(() => ({ n: document.querySelectorAll('#graph svg .node').length, mark: document.querySelector('#search-btn').classList.contains('filtered'), url: location.search }));
+    if (!(on.n > 0 && on.n < all)) throw new Error(`?firstparent=1 no acota los commits (${on.n} de ${all})`);
+    if (!on.mark) throw new Error('?firstparent=1 no marca el filtro');
+    if (!on.url.includes('firstparent=1')) throw new Error('la URL perdió firstparent: ' + on.url);
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    if (!(await page.locator('#graph-firstparent').isChecked())) throw new Error('el interruptor no refleja ?firstparent=1');
+    if (!(await page.evaluate(() => !!document.querySelector('#graph-firstparent').closest('label')?.textContent.trim()))) throw new Error('el interruptor no tiene nombre');
+    await page.uncheck('#graph-firstparent');
+    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length === n, all, { timeout: T(5000) }).catch(() => {});
+    if ((await nodes()) !== all) throw new Error('apagar el interruptor no devuelve todos los commits');
+    if ((await page.evaluate(() => location.search)).includes('firstparent')) throw new Error('apagarlo deja firstparent en la URL');
+  });
+  await page.context().close();
+}
+
 console.log('Modo TV directo (?tv=1)');
 {
   const page = await openPage({ viewport: { width: 1920, height: 1080 } });

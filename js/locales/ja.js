@@ -251,6 +251,7 @@ GB.i18n.define('ja', {
   'tip.solo': '<code>{branch}</code> だけ表示',
   'branchview.status': '{total} 本中 {n} 本のブランチを表示中',
   'branchview.reset': 'すべてのブランチを表示',
+  'search.firstParent': '第一親のみ（git log --first-parent と同じ）',
   'author.unknown': '不明',
 
   /* ---------- グラフ上のオーバーレイ ---------- */

@@ -213,6 +213,28 @@
     return { open, run };
   }
 
+  /** La vista de `data` con solo la cadena del primer padre de cada rama, como `git log --first-parent`: por cada
+      cabeza se sigue `parents[0]`, y lo que solo alcanza un segundo padre (lo que una fusión trajo) se va; cada commit
+      que queda conserva únicamente su primer padre. Sin consultas: usa lo ya cargado. No muta. */
+  function firstParent(data) {
+    const commits = new Map();
+    for (const b of data.branches.values()) {
+      let sha = b.sha;
+      while (sha && !commits.has(sha) && data.commits.has(sha)) {
+        const c = data.commits.get(sha);
+        const first = c.parents?.length ? [c.parents[0]] : [];
+        commits.set(sha, { ...c, parents: first });
+        sha = first[0];
+      }
+    }
+    return { ...data, commits };
+  }
+
+  /** ?firstparent=1 (o solo ?firstparent): abrir el grafo con el primer padre ya activo. 0, false, no u off lo apagan. */
+  function firstParentParam(q) {
+    return !!q && typeof q.has === 'function' && q.has('firstparent') && !/^(0|false|no|off)$/i.test(String(q.get('firstparent')).trim());
+  }
+
   const PATH_MAX = 200;
 
   /** La ruta que pide la URL (?path=src/): recortada, sin barra inicial ni caracteres de control, de hasta 200; '' si no hay. */
@@ -239,5 +261,5 @@
     return v.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 100);
   }
 
-  GB.search = { authors, authorParam, byAuthor, byBranches, limitBranches, find, mount, pathParam, queryParam, LIMIT };
+  GB.search = { authors, authorParam, byAuthor, byBranches, firstParent, firstParentParam, limitBranches, find, mount, pathParam, queryParam, LIMIT };
 })((window.GB = window.GB || {}));

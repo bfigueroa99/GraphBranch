@@ -251,6 +251,7 @@ GB.i18n.define('hu', {
   'tip.solo': 'Csak <code>{branch}</code> mutatása',
   'branchview.status': '{n} / {total} ág látszik',
   'branchview.reset': 'Minden ág mutatása',
+  'search.firstParent': 'Csak az első szülő (mint a git log --first-parent)',
   'author.unknown': 'ismeretlen',
 
   /* ---------- a gráf fölötti réteg ---------- */

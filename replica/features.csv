@@ -55,6 +55,6 @@ Web sin instalar ni cuenta y gratis,plataformas,should,no,yes,"de las reseñas: 
 Vista de texto para lector de pantalla,accesibilidad,should,no,yes,"original de GraphBranch"
 Práctica de git en el navegador,público,could,no,yes,"original de GraphBranch"
 Bitácora en vivo y resumen de la semana,salidas,could,no,yes,"original de GraphBranch"
-Mostrar solo el primer padre en el grafo,grafo,should,no,no,"de las reseñas (replica/fixes.md)"
+Mostrar solo el primer padre en el grafo,grafo,should,no,yes,"README: «Solo el primer padre» y ?firstparent=; lo pedía un usuario de GitKraken (replica/fixes.md)"
 Ver de un vistazo en qué trabaja cada uno,grafo,should,no,yes,"de las reseñas: «mis ramas» y ramas por actividad reciente (replica/fixes.md)"
 Varias cuentas del mismo servicio,cuentas,could,no,no,"de las reseñas (replica/fixes.md)"

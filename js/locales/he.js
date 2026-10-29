@@ -291,6 +291,7 @@ GB.i18n.define('he', {
   'tip.solo': 'הצגת <code>{branch}</code> בלבד',
   'branchview.status': '{n} מתוך {total} ענפים מוצגים',
   'branchview.reset': 'הצגת כל הענפים',
+  'search.firstParent': 'רק האב הראשון (כמו git log --first-parent)',
   'author.unknown': 'לא ידוע',
 
   /* ---------- graph overlay ---------- */

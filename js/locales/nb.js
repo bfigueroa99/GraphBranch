@@ -251,6 +251,7 @@ GB.i18n.define('nb', {
   'tip.solo': 'Vis bare <code>{branch}</code>',
   'branchview.status': '{n} av {total} grener vises',
   'branchview.reset': 'Vis alle grener',
+  'search.firstParent': 'Bare første forelder (som git log --first-parent)',
   'author.unknown': 'ukjent',
 
   /* ---------- lag over grafen ---------- */

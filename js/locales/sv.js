@@ -251,6 +251,7 @@ GB.i18n.define('sv', {
   'tip.solo': 'Visa bara <code>{branch}</code>',
   'branchview.status': '{n} av {total} grenar visas',
   'branchview.reset': 'Visa alla grenar',
+  'search.firstParent': 'Bara första föräldern (som git log --first-parent)',
   'author.unknown': 'okänd',
 
   /* ---------- lager över grafen ---------- */

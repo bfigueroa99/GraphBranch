@@ -196,3 +196,36 @@ test('byBranches oculta ramas o deja una sola, siempre con la rama por defecto y
   assert.deepEqual([...solo.data.branches.keys()], ['main', 'f2', 'lejana']);
   assert.equal(data.branches.size, 4);
 });
+
+test('firstParent deja la cadena del primer padre de cada rama, sin mutar', () => {
+  const c = (sha, parents = []) => [sha, { sha, parents, message: sha, date: 1 }];
+  const data = {
+    commits: new Map([c('r'), c('m1', ['r']), c('f1', ['r']), c('f2', ['f1']), c('mm', ['m1', 'f2']), c('x1', ['mm']), c('lonely', ['ausente'])]),
+    branches: new Map([
+      ['main', { name: 'main', sha: 'x1' }],
+      ['viva', { name: 'viva', sha: 'f2' }],
+      ['sin-historia', { name: 'sin-historia', sha: 'nada' }],
+      ['huerfana', { name: 'huerfana', sha: 'lonely' }],
+    ]),
+    pulls: new Map(),
+  };
+  const r = S.firstParent(data);
+  assert.deepEqual(plain([...r.commits.keys()].sort()), ['f1', 'f2', 'lonely', 'm1', 'mm', 'r', 'x1']);
+  assert.deepEqual(plain(r.commits.get('mm').parents), ['m1']);
+  assert.deepEqual(plain(r.commits.get('lonely').parents), ['ausente']);
+  assert.equal(r.branches, data.branches);
+  assert.deepEqual(plain(data.commits.get('mm').parents), ['m1', 'f2']); // no muta
+  // sin la rama viva, lo que solo trajo el merge desaparece
+  const solo = S.firstParent({ ...data, branches: new Map([['main', data.branches.get('main')]]) });
+  assert.deepEqual(plain([...solo.commits.keys()].sort()), ['m1', 'mm', 'r', 'x1']);
+});
+
+test('firstParentParam lee ?firstparent= de la URL: presente enciende, 0/false/no/off apagan', () => {
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(S.firstParentParam(q('firstparent=1')), true);
+  assert.equal(S.firstParentParam(q('firstparent')), true);
+  assert.equal(S.firstParentParam(q('firstparent=0')), false);
+  assert.equal(S.firstParentParam(q('firstparent=OFF')), false);
+  assert.equal(S.firstParentParam(q('x=1')), false);
+  assert.equal(S.firstParentParam(null), false);
+});

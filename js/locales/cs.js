@@ -256,6 +256,7 @@ GB.i18n.define('cs', {
   'tip.solo': 'Zobrazit jen <code>{branch}</code>',
   'branchview.status': 'Zobrazeno {n} z {total} větví',
   'branchview.reset': 'Zobrazit všechny větve',
+  'search.firstParent': 'Jen první rodič (jako git log --first-parent)',
   'author.unknown': 'neznámý',
 
   /* ---------- vrstva nad grafem ---------- */

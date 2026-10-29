@@ -255,6 +255,7 @@ GB.i18n.define('ro', {
   'tip.solo': 'Arată doar <code>{branch}</code>',
   'branchview.status': '{n} din {total} ramuri la vedere',
   'branchview.reset': 'Arată toate ramurile',
+  'search.firstParent': 'Doar primul părinte (ca git log --first-parent)',
   'author.unknown': 'necunoscut',
 
   /* ---------- strat peste graf ---------- */

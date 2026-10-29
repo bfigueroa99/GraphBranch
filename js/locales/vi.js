@@ -251,6 +251,7 @@ GB.i18n.define('vi', {
   'tip.solo': 'Chỉ hiện <code>{branch}</code>',
   'branchview.status': 'Đang hiện {n} trên {total} nhánh',
   'branchview.reset': 'Hiện tất cả nhánh',
+  'search.firstParent': 'Chỉ commit cha đầu tiên (như git log --first-parent)',
   'author.unknown': 'không rõ',
 
   /* ---------- lớp phủ trên biểu đồ ---------- */

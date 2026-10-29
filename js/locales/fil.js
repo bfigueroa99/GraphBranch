@@ -672,6 +672,7 @@ GB.i18n.define('fil', {
   'constellation.orderActivity': 'Aktibidad',
   'constellation.orderName': 'Pangalan',
   'constellation.ordered': 'Inayos ayon sa {order}',
+  'constellation.filtered': 'Naka-filter sa «{filter}»: {shown} sa {total}',
   'all.tab': 'Lahat',
   'all.tabTitle': 'Tingnan nang sabay ang lahat ng sinusundang repository, nang hindi nagpapalit ng tab',
   'all.tabLabel': 'Lahat ng repository ({n})',

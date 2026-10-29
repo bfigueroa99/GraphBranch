@@ -671,6 +671,7 @@ GB.i18n.define('hu', {
   'constellation.orderActivity': 'Aktivitás',
   'constellation.orderName': 'Név',
   'constellation.ordered': 'Rendezés: {order}',
+  'constellation.filtered': 'Szűrés: «{filter}», {shown} / {total}',
   'all.tab': 'Mind',
   'all.tabTitle': 'Az összes követett repozitórium egyszerre, lapváltás nélkül',
   'all.tabLabel': 'Mind – repozitóriumok ({n})',

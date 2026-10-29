@@ -84,3 +84,17 @@ test('?order=activity o ?order=name abre ordenada; lo desconocido o vacío deja 
   assert.equal(C.orderParam(q('order=otro')), null);
   assert.equal(C.orderParam(q('repo=o/a')), null);
 });
+
+test('?constellation=texto deja los repos cuyo nombre lo contiene, sin mayúsculas ni acentos', () => {
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(C.filterParam(q('constellation=%20Api%20')), 'Api');
+  assert.equal(C.filterParam(q('constellation=')), '');
+  assert.equal(C.filterParam(q('repo=o/a')), '');
+  assert.equal(C.filterParam(q('constellation=' + 'x'.repeat(300))).length, 100);
+  const items = [{ name: 'o/Café-API' }, { name: 'o/web' }, { name: 'o/api-docs' }];
+  assert.deepEqual(C.filterItems(items, 'api').map((i) => i.name), ['o/Café-API', 'o/api-docs']);
+  assert.deepEqual(C.filterItems(items, 'CAFE').map((i) => i.name), ['o/Café-API']);
+  assert.deepEqual(C.filterItems(items, 'nada'), []);
+  assert.deepEqual(C.filterItems(items, '  '), items);
+  assert.notEqual(C.filterItems(items, ''), items, 'no devuelve la misma lista');
+});

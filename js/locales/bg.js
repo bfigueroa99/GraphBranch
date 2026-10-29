@@ -671,6 +671,7 @@ GB.i18n.define('bg', {
   'constellation.orderActivity': 'Активност',
   'constellation.orderName': 'Име',
   'constellation.ordered': 'Подредено по: {order}',
+  'constellation.filtered': 'Филтър «{filter}»: {shown} от {total}',
   'all.tab': 'Всички',
   'all.tabTitle': 'Вижте всички следвани хранилища наведнъж, без да сменяте разделите',
   'all.tabLabel': 'Всички хранилища ({n})',

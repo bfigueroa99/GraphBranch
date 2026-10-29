@@ -672,6 +672,7 @@ GB.i18n.define('th', {
   'constellation.orderActivity': 'กิจกรรม',
   'constellation.orderName': 'ชื่อ',
   'constellation.ordered': 'เรียงตาม{order}',
+  'constellation.filtered': 'กรองด้วย «{filter}»: {shown} จาก {total}',
   'all.tab': 'ทั้งหมด',
   'all.tabTitle': 'ดู repository ที่ติดตามทั้งหมดพร้อมกัน โดยไม่ต้องสลับแท็บ',
   'all.tabLabel': 'ทั้งหมด: repository ที่ติดตาม ({n})',

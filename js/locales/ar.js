@@ -770,6 +770,7 @@ GB.i18n.define('ar', {
   'constellation.orderActivity': 'النشاط',
   'constellation.orderName': 'الاسم',
   'constellation.ordered': 'مرتبة حسب {order}',
+  'constellation.filtered': 'مصفاة بـ «{filter}»: {shown} من {total}',
   'all.tab': 'الكل',
   'all.tabTitle': 'اعرض كل المستودعات المتابَعة معًا دون التنقل بين الألسنة',
   'all.tabLabel': 'الكل: المستودعات المتابَعة ({n})',

@@ -682,6 +682,7 @@ GB.i18n.define('cs', {
   'constellation.orderActivity': 'Aktivita',
   'constellation.orderName': 'Název',
   'constellation.ordered': 'Seřazeno podle: {order}',
+  'constellation.filtered': 'Filtr „{filter}“: {shown} z {total}',
   'all.tab': 'Vše',
   'all.tabTitle': 'Zobrazit všechny sledované repozitáře najednou, bez přepínání karet',
   'all.tabLabel': 'Vše – repozitáře ({n})',

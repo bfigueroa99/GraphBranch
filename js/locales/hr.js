@@ -679,6 +679,7 @@ GB.i18n.define('hr', {
   'constellation.orderActivity': 'Aktivnost',
   'constellation.orderName': 'Naziv',
   'constellation.ordered': 'Poredano po: {order}',
+  'constellation.filtered': 'Filtrirano po «{filter}»: {shown} od {total}',
   'all.tab': 'Sve',
   'all.tabTitle': 'Pogledajte sve praćene repozitorije odjednom, bez mijenjanja kartica',
   'all.tabLabel': 'Sve – repozitoriji ({n})',

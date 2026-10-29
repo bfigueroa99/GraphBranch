@@ -671,6 +671,7 @@ GB.i18n.define('vi', {
   'constellation.orderActivity': 'Hoạt động',
   'constellation.orderName': 'Tên',
   'constellation.ordered': 'Đã sắp xếp theo {order}',
+  'constellation.filtered': 'Lọc theo «{filter}»: {shown} trên {total}',
   'all.tab': 'Tất cả',
   'all.tabTitle': 'Xem cùng lúc mọi kho đang theo dõi, không cần đổi tab',
   'all.tabLabel': 'Tất cả các kho ({n})',

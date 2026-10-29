@@ -671,6 +671,7 @@ GB.i18n.define('da', {
   'constellation.orderActivity': 'Aktivitet',
   'constellation.orderName': 'Navn',
   'constellation.ordered': 'Sorteret efter {order}',
+  'constellation.filtered': 'Filtreret på «{filter}»: {shown} af {total}',
   'all.tab': 'Alle',
   'all.tabTitle': 'Se alle repositories, du følger, på én gang uden at skifte faneblad',
   'all.tabLabel': 'Alle repositories ({n})',

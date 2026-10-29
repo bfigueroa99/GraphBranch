@@ -671,6 +671,7 @@ GB.i18n.define('ja', {
   'constellation.orderActivity': 'アクティビティ',
   'constellation.orderName': '名前',
   'constellation.ordered': '{order}順に並べました',
+  'constellation.filtered': '「{filter}」で絞り込み：{total} 件中 {shown} 件',
   'all.tab': 'すべて',
   'all.tabTitle': 'タブを切り替えずに、フォロー中のすべてのリポジトリを一度に表示',
   'all.tabLabel': 'すべてのリポジトリ（{n}）',

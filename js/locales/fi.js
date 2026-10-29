@@ -671,6 +671,7 @@ GB.i18n.define('fi', {
   'constellation.orderActivity': 'Aktiviteetti',
   'constellation.orderName': 'Nimi',
   'constellation.ordered': 'Lajiteltu: {order}',
+  'constellation.filtered': 'Suodatus «{filter}»: {shown} / {total}',
   'all.tab': 'Kaikki',
   'all.tabTitle': 'Näytä kaikki seuratut repositoriot kerralla vaihtamatta välilehteä',
   'all.tabLabel': 'Kaikki repositoriot ({n})',

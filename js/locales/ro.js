@@ -679,6 +679,7 @@ GB.i18n.define('ro', {
   'constellation.orderActivity': 'Activitate',
   'constellation.orderName': 'Nume',
   'constellation.ordered': 'Sortate după {order}',
+  'constellation.filtered': 'Filtrate după «{filter}»: {shown} din {total}',
   'all.tab': 'Toate',
   'all.tabTitle': 'Vezi toate depozitele urmărite deodată, fără să schimbi fila',
   'all.tabLabel': 'Toate depozitele ({n})',

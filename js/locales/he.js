@@ -728,6 +728,7 @@ GB.i18n.define('he', {
   'constellation.orderActivity': 'פעילות',
   'constellation.orderName': 'שם',
   'constellation.ordered': 'ממוין לפי {order}',
+  'constellation.filtered': 'מסונן לפי «{filter}»: {shown} מתוך {total}',
   'all.tab': 'הכול',
   'all.tabTitle': 'הצגת כל המאגרים במעקב יחד, בלי לעבור בין לשוניות',
   'all.tabLabel': 'הכול: מאגרים במעקב ({n})',

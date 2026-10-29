@@ -714,6 +714,7 @@ GB.i18n.define('fa', {
   'constellation.orderActivity': 'فعالیت',
   'constellation.orderName': 'نام',
   'constellation.ordered': 'مرتب‌شده بر اساس {order}',
+  'constellation.filtered': 'فیلتر «{filter}»: {shown} از {total}',
   'all.tab': 'همه',
   'all.tabTitle': 'دیدن همهٔ مخزن‌های دنبال‌شده با هم، بدون عوض کردن زبانه',
   'all.tabLabel': 'همهٔ مخزن‌ها ({n})',

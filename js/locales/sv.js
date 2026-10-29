@@ -671,6 +671,7 @@ GB.i18n.define('sv', {
   'constellation.orderActivity': 'Aktivitet',
   'constellation.orderName': 'Namn',
   'constellation.ordered': 'Sorterat efter {order}',
+  'constellation.filtered': 'Filtrerat på «{filter}»: {shown} av {total}',
   'all.tab': 'Alla',
   'all.tabTitle': 'Se alla repon du följer på en gång, utan att byta flik',
   'all.tabLabel': 'Alla repon ({n})',

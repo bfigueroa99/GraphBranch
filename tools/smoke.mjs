@@ -2122,6 +2122,16 @@ console.log('Varios repos a la vez');
       await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
       if ((await full.$eval('#constellation-order', (s) => s.value)) !== 'name') throw new Error('?order=name no deja el selector en nombre');
       await full.click('#constellation-close');
+      // ?constellation=r1: solo las galaxias cuyo nombre contiene el texto, y lo anuncia
+      await full.goto(`${base}/index.html?lang=es&constellation=R1&repo=o/a`);
+      await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });
+      await full.click('#constellation-btn');
+      await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
+      const filtered = await full.$$eval('#constellation .cs-gx', (b) => b.map((x) => x.dataset.key));
+      if (!filtered.length || filtered.some((k) => !/r1/i.test(k)) || filtered.length >= 10) throw new Error('?constellation=R1 no filtra por nombre: ' + filtered);
+      const filteredSaid = await full.$eval('#constellation-status', (e) => e.textContent.trim());
+      if (!filteredSaid.includes('R1') || /undefined|constellation\./.test(filteredSaid)) throw new Error('el filtro no se anuncia: ' + filteredSaid);
+      await full.click('#constellation-close');
       // un enlace a otro repo, con los 10 ya seguidos: entra el del enlace y sale el último guardado
       await full.goto(`${base}/index.html?lang=es&repo=o/a`);
       await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });

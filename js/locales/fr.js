@@ -672,6 +672,7 @@ GB.i18n.define('fr', {
   'constellation.orderActivity': 'Activité',
   'constellation.orderName': 'Nom',
   'constellation.ordered': 'Triées par {order}',
+  'constellation.filtered': 'Filtrées par « {filter} » : {shown} sur {total}',
   'all.tab': 'Tous',
   'all.tabTitle': 'Voir tous les dépôts suivis à la fois, sans changer d’onglet',
   'all.tabLabel': 'Tous les dépôts ({n})',

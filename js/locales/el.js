@@ -671,6 +671,7 @@ GB.i18n.define('el', {
   'constellation.orderActivity': 'Δραστηριότητα',
   'constellation.orderName': 'Όνομα',
   'constellation.ordered': 'Ταξινόμηση κατά: {order}',
+  'constellation.filtered': 'Φίλτρο «{filter}»: {shown} από {total}',
   'all.tab': 'Όλα',
   'all.tabTitle': 'Δείτε όλα τα αποθετήρια που ακολουθείτε μαζί, χωρίς αλλαγή καρτέλας',
   'all.tabLabel': 'Όλα τα αποθετήρια ({n})',

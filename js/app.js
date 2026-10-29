@@ -2165,6 +2165,8 @@
     // ?order=activity|name: la constelación abre ya ordenada (sin anunciarlo: no la pidió nadie con el selector)
     const order = GB.constellation.orderParam(new URLSearchParams(location.search));
     if (order) constellation.setOrder(order, false);
+    // ?constellation=texto: solo los repos cuyo nombre lo contiene
+    constellation.setFilter(GB.constellation.filterParam(new URLSearchParams(location.search)));
   } catch {
     /* sin query string */
   }

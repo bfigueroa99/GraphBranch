@@ -671,6 +671,7 @@ GB.i18n.define('ca', {
   'constellation.orderActivity': 'Activitat',
   'constellation.orderName': 'Nom',
   'constellation.ordered': 'Ordenat per {order}',
+  'constellation.filtered': 'Filtrades per «{filter}»: {shown} de {total}',
   'all.tab': 'Tots',
   'all.tabTitle': 'Mostra tots els repositoris seguits alhora, sense canviar de pestanya',
   'all.tabLabel': 'Tots els repositoris ({n})',

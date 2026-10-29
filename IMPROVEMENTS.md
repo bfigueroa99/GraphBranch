@@ -576,6 +576,9 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     de la organización deja de seguirse». Medir con 5 corridas del paso y esperar el estado en lugar de comparar con
     el conteo base de ramas (la demo sigue publicando). Reproducción: `xvfb-run -a node tools/smoke.mjs` →
     `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
+    En la iteración 160 falló una vez, y pasó a la repetición, «vista de texto: árbol con teclado, nombres accesibles y
+    Enter lleva al grafo» (`el release de la demo no se dice (2): Novedades: 0 ramas, 1 commits`): depende de lo que la
+    demo publica en ese momento.
 
 ### Baja
 
@@ -754,5 +757,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Skills: no aplica: extensión de un filtro propio, sin dominio nuevo.
 - Arena: no aplica: una sola forma obvia (componer sobre el filtro por autor con la misma firma).
 - Reclamo: loop/160, sin colisión
-- Validado: PENDIENTE
+- Validado: 482 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Una primera corrida falló en un paso ajeno (vista de texto, release de la demo) y pasó a la repetición: anotado en el pendiente 2 de Mantenimiento.
 - **Siguiente:** iteración 161, expansión: ítem 112 (Vista de un PR: descripción y comentarios, Datos)

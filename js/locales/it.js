@@ -672,6 +672,7 @@ GB.i18n.define('it', {
   'constellation.orderActivity': 'Attività',
   'constellation.orderName': 'Nome',
   'constellation.ordered': 'Ordinate per {order}',
+  'constellation.filtered': 'Filtrate per «{filter}»: {shown} di {total}',
   'all.tab': 'Tutti',
   'all.tabTitle': 'Vedi tutti i repository seguiti insieme, senza cambiare scheda',
   'all.tabLabel': 'Tutti i repository ({n})',

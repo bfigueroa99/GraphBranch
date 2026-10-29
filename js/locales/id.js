@@ -671,6 +671,7 @@ GB.i18n.define('id', {
   'constellation.orderActivity': 'Aktivitas',
   'constellation.orderName': 'Nama',
   'constellation.ordered': 'Diurutkan menurut {order}',
+  'constellation.filtered': 'Disaring dengan «{filter}»: {shown} dari {total}',
   'all.tab': 'Semua',
   'all.tabTitle': 'Lihat semua repositori yang diikuti sekaligus, tanpa berganti tab',
   'all.tabLabel': 'Semua repositori ({n})',

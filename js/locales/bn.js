@@ -671,6 +671,7 @@ GB.i18n.define('bn', {
   'constellation.orderActivity': 'কার্যকলাপ',
   'constellation.orderName': 'নাম',
   'constellation.ordered': 'সাজানো: {order}',
+  'constellation.filtered': '«{filter}» দিয়ে ছাঁকা: {total}-এর মধ্যে {shown}',
   'all.tab': 'সব',
   'all.tabTitle': 'ট্যাব না বদলে সব অনুসরণ করা রিপোজিটরি একসাথে দেখুন',
   'all.tabLabel': 'সব রিপোজিটরি ({n})',

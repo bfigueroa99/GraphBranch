@@ -714,6 +714,7 @@ GB.i18n.define('ur', {
   'constellation.orderActivity': 'سرگرمی',
   'constellation.orderName': 'نام',
   'constellation.ordered': '{order} کے مطابق ترتیب',
+  'constellation.filtered': '«{filter}» سے فلٹر: {total} میں سے {shown}',
   'all.tab': 'سب',
   'all.tabTitle': 'ٹیب بدلے بغیر سب فالو کی گئی ریپوزٹریز ایک ساتھ دیکھیں',
   'all.tabLabel': 'سب ریپوزٹریز ({n})',

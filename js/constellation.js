@@ -56,6 +56,22 @@
     return v === 'activity' || v === 'name' ? v : null;
   }
 
+  /** Minúsculas y sin acentos, para comparar nombres. */
+  function fold(s) {
+    return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  /** `?constellation=texto`: lo que tiene que contener el nombre de un repo para quedar en la constelación. Vacío o ausente es `''` (sin filtro). */
+  function filterParam(q) {
+    return String(q.get('constellation') || '').trim().slice(0, 100);
+  }
+
+  /** Los repos cuyo nombre contiene `text` (sin mayúsculas ni acentos); sin texto, todos. No toca `items`. */
+  function filterItems(items, text) {
+    const f = fold(String(text || '').trim());
+    return f ? items.filter((it) => fold(it.name).includes(f)) : items.slice();
+  }
+
   /** Tono (0–359) estable para un nombre. */
   function hueOf(name) {
     let h = 0;
@@ -97,6 +113,7 @@
   function mount(root, { text, fmt = String, onGo, select = null, status = null }) {
     let items = [];
     let mode = 'tabs';
+    let filter = '';
     if (select) select.addEventListener('change', () => setOrder(select.value, true));
     /** Cambia el orden (el de Tab y el de lector de pantalla) y, si lo pidió la persona, lo anuncia. */
     function setOrder(next, announce) {
@@ -105,13 +122,18 @@
       draw();
       if (announce && status) status.textContent = text('constellation.ordered', { order: text('constellation.order' + mode[0].toUpperCase() + mode.slice(1)) });
     }
-    function render(list) {
-      items = list;
-      if (status) status.textContent = '';
+    /** Deja solo los repos cuyo nombre contiene `next` (`''`: todos). */
+    function setFilter(next) {
+      filter = String(next || '').trim();
       draw();
     }
+    function render(list) {
+      items = list;
+      draw();
+      if (status) status.textContent = filter ? text('constellation.filtered', { filter, shown: fmt(filterItems(items, filter).length), total: fmt(items.length) }) : '';
+    }
     function draw() {
-      const shown = sortItems(items, mode);
+      const shown = sortItems(filterItems(items, filter), mode);
       const had = document.activeElement?.closest?.('.cs-gx') ? document.activeElement.dataset.key : null;
       root.textContent = '';
       const spots = place(shown);
@@ -148,8 +170,8 @@
       });
       if (had) [...root.children].find((n) => n.dataset.key === had)?.focus();
     }
-    return { render, setOrder };
+    return { render, setOrder, setFilter };
   }
 
-  GB.constellation = { place, sortItems, orderParam, radiusOf, hueOf, mount };
+  GB.constellation = { place, sortItems, orderParam, filterParam, filterItems, radiusOf, hueOf, mount };
 })(window.GB);

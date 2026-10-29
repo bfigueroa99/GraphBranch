@@ -682,6 +682,7 @@ GB.i18n.define('pl', {
   'constellation.orderActivity': 'Aktywność',
   'constellation.orderName': 'Nazwa',
   'constellation.ordered': 'Posortowano według: {order}',
+  'constellation.filtered': 'Filtr «{filter}»: {shown} z {total}',
   'all.tab': 'Wszystkie',
   'all.tabTitle': 'Zobacz wszystkie obserwowane repozytoria naraz, bez przełączania kart',
   'all.tabLabel': 'Wszystkie repozytoria ({n})',

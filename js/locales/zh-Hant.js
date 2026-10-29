@@ -671,6 +671,7 @@ GB.i18n.define('zh-Hant', {
   'constellation.orderActivity': '活躍度',
   'constellation.orderName': '名稱',
   'constellation.ordered': '已依{order}排序',
+  'constellation.filtered': '依「{filter}」篩選：{total} 個中的 {shown} 個',
   'all.tab': '全部',
   'all.tabTitle': '不必切換分頁，同時查看所有已關注的儲存庫',
   'all.tabLabel': '全部儲存庫（{n}）',

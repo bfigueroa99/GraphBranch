@@ -671,6 +671,7 @@ GB.i18n.define('nb', {
   'constellation.orderActivity': 'Aktivitet',
   'constellation.orderName': 'Navn',
   'constellation.ordered': 'Sortert etter {order}',
+  'constellation.filtered': 'Filtrert på «{filter}»: {shown} av {total}',
   'all.tab': 'Alle',
   'all.tabTitle': 'Se alle repoer du følger samtidig, uten å bytte fane',
   'all.tabLabel': 'Alle repoer ({n})',

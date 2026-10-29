@@ -682,6 +682,7 @@ GB.i18n.define('sk', {
   'constellation.orderActivity': 'Aktivita',
   'constellation.orderName': 'Názov',
   'constellation.ordered': 'Zoradené podľa: {order}',
+  'constellation.filtered': 'Filter „{filter}“: {shown} z {total}',
   'all.tab': 'Všetky',
   'all.tabTitle': 'Zobraziť všetky sledované repozitáre naraz, bez prepínania kariet',
   'all.tabLabel': 'Všetky repozitáre ({n})',

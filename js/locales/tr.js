@@ -671,6 +671,7 @@ GB.i18n.define('tr', {
   'constellation.orderActivity': 'Etkinlik',
   'constellation.orderName': 'Ad',
   'constellation.ordered': 'Şuna göre sıralandı: {order}',
+  'constellation.filtered': '«{filter}» ile süzüldü: {total} içinden {shown}',
   'all.tab': 'Tümü',
   'all.tabTitle': 'Takip edilen tüm depoları sekme değiştirmeden birlikte görün',
   'all.tabLabel': 'Tümü: depolar ({n})',

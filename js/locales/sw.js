@@ -671,6 +671,7 @@ GB.i18n.define('sw', {
   'constellation.orderActivity': 'Shughuli',
   'constellation.orderName': 'Jina',
   'constellation.ordered': 'Imepangwa kwa {order}',
+  'constellation.filtered': 'Imechujwa kwa «{filter}»: {shown} kati ya {total}',
   'all.tab': 'Zote',
   'all.tabTitle': 'Tazama hazina zote zinazofuatiliwa kwa pamoja, bila kubadili kichupo',
   'all.tabLabel': 'Hazina zote ({n})',

@@ -325,12 +325,14 @@ test('pasa al llavero el token que la primera versión dejaba en localStorage', 
   let { app, page, dir } = await launch(testInfo);
   await loaded(page);
   await page.evaluate(() => localStorage.setItem('graphbranch:token', JSON.stringify('ghp_legacyFAKE')));
+  // localStorage se escribe a disco en segundo plano: sin vaciarlo, cerrar enseguida puede perder el token viejo
+  await app.evaluate(({ session }) => session.defaultSession.flushStorageData());
   await app.close();
 
   ({ app, page } = await launch(testInfo, { dir }));
   await loaded(page);
+  await expect.poll(() => Object.keys(tokenFiles(dir))).not.toEqual([]);
   expect(await page.evaluate(() => localStorage.getItem('graphbranch:token'))).toBeNull();
-  expect(Object.keys(tokenFiles(dir))).not.toEqual([]);
   await page.click('#settings-btn');
   await expect(page.locator('#token-input')).toHaveValue('ghp_legacyFAKE');
   await app.close();

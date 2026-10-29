@@ -565,15 +565,12 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Media
 
-1. [Deuda] La e2e de escritorio «pasa al llavero el token que la primera versión dejaba en localStorage» es
-    intermitente en la sesión cloud: falló 1 de 2 `npm run check` en la iteración 143 (la repetición pasó).
-    Reproducción: `xvfb-run -a npm run check` → `expect(Object.keys(tokenFiles(dir))).not.toEqual([])` (`e2e/desktop.spec.mjs:333`).
-2. [Deuda] El paso del smoke «editar el código: desde los cambios de un commit se abre su archivo en la rama…» falló
+1. [Deuda] El paso del smoke «editar el código: desde los cambios de un commit se abre su archivo en la rama…» falló
     1 de 3 corridas en la iteración 148 (sesión cloud con otras cinco corriendo a la vez), en una copia sin el cambio
     de esa iteración: un clic sobre un elemento que la demo ya había reemplazado. Medir con 5 corridas y esperar
     al elemento estable en lugar de guardar su handle. Reproducción: `node tools/smoke.mjs` →
     `✗ editar el código: …: elementHandle.click: Element is not attached to the DOM`.
-3. [Deuda] Pasos del smoke intermitentes en la sesión cloud: en la iteración 152, `npm run check` falló 2 de 3 veces
+2. [Deuda] Pasos del smoke intermitentes en la sesión cloud: en la iteración 152, `npm run check` falló 2 de 3 veces
     en «filtro por autor: el grafo y el árbol de texto muestran solo sus ramas…» (la tercera pasó, y el paso no toca
     lo que cambió esa iteración) y una corrida del smoke sobre `dev` limpio falló en otro, «al cerrar el último repo
     de la organización deja de seguirse». Medir con 5 corridas del paso y esperar el estado en lugar de comparar con
@@ -582,49 +579,49 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Baja
 
-4. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
+3. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
     renombrados).
-5. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+4. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-6. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+5. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-7. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+6. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-8. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+7. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-9. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+8. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
     Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-10. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+9. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-11. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
+10. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-12. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
+11. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
     vistas, las estadísticas y la bitácora encima) y el 3D no arma etiquetas hasta verse; pensar en una
     forma de llegar al grafo sin recorrer la página (ancla o tarjetas plegables en celular).
     Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la auditoría → captura sin grafo; `#graph3d` fuera de la pantalla.
-13. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+12. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-14. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
+13. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
     `WebFetch` a `releases.electronjs.org` dio HTTP 500 en la iteración 119. Repetir la comparación
     cuando la página responda y subir si hay una estable más nueva.
     Reproducción: `WebFetch https://releases.electronjs.org/release/stable` → `HTTP 500`.
-15. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
+14. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
     corta a los 120 s; documentar en «Cómo validar» que se corra en segundo plano, como `audit --langs`.
     Reproducción: `time node tools/smoke.mjs` → ~480 s.
-16. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
+15. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
     `npm run check` en la iteración 128 (la repetición pasó), aun con la espera de la 127.
     Reproducción: `npm run check` → `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
 
@@ -734,3 +731,16 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/158, sin colisión
 - Validado: 481 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 159, mantenimiento · Deuda: pendiente 1 (La e2e de escritorio «pasa al llavero el token que la primera versión dejaba en…)
+
+### 2026-10-29 · Iteración 159 · Mantenimiento · Deuda
+
+- **Arreglo: la e2e de escritorio «pasa al llavero el token que la primera versión dejaba en localStorage» ya no es intermitente** (pendiente 1). Causa probable: `localStorage` se escribe a disco en segundo plano, así que `app.close()` justo después de sembrar el token viejo podía perderlo; la segunda ventana arrancaba sin nada que migrar, el `localStorage` salía vacío (la primera aserción pasaba sola) y no había archivo en el llavero. La siembra ahora vacía el almacenamiento (`session.defaultSession.flushStorageData()`) antes de cerrar, y la aserción del archivo espera con `expect.poll` a que termine la migración, antes de mirar `localStorage`.
+- **Reproducción:** `xvfb-run -a npx playwright test e2e/desktop.spec.mjs -g "pasa al llavero"` → no se pudo reproducir en esta sesión: 0 fallos en 20 corridas (8 sin carga, 12 con cuatro procesos ocupando la CPU). El arreglo sale del análisis de la causa, no de una falla vista; si vuelve a fallar, el pendiente se reabre.
+- **Pruebas que fallan sin el arreglo:** ninguna nueva (el cambio es la propia prueba); 10 corridas en verde con el arreglo.
+- README: no toca.
+- QA: no toca la página ni la app (solo `e2e/desktop.spec.mjs`); auditoría: no toca la página
+- Skills: no aplica: un ajuste de una prueba propia, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (vaciar el almacenamiento antes de cerrar y esperar la migración).
+- Reclamo: loop/159, sin colisión
+- Validado: 481 pruebas (`node --test`), smoke, i18n (0 errores) y 28 e2e en verde.
+- **Siguiente:** iteración 160, expansión: ítem 110 (Ocultar una rama o dejarla sola, Análisis)

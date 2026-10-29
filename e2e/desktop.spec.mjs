@@ -512,9 +512,15 @@ test('--bitbucket-url suma solo ese host a las conexiones del CSP (sin avatares)
       return (await window.GBDesktop.getToken('bitbucketdc')).token;
     }, packed);
     expect(back).toBe(packed);
+    // el de Azure DevOps, también aparte en el llavero ('azure'), con su campo siempre a la vista en Ajustes
+    expect(await page.evaluate(async () => {
+      await window.GBDesktop.setToken('az-e2e', 'azure');
+      return (await window.GBDesktop.getToken('azure')).token;
+    })).toBe('az-e2e');
     await loaded(page);
     await page.click('#settings-btn');
     await expect(page.locator('#bbdc-token-field')).toBeVisible();
+    await expect(page.locator('#azure-token-input')).toHaveValue('az-e2e');
     await expect(page.locator('#bbdc-token-where')).toContainText('bb.example.com');
   } finally {
     await app.close();

@@ -2858,15 +2858,17 @@ function fakeAzure() {
     return out;
   };
   const json = (body) => ({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(body) });
-  return {
+  const az = {
     calls,
     auths,
+    reject: false, // el servicio rechaza el token: 401 en cada consulta con Authorization
     handle: (route) => {
       const u = new URL(route.request().url());
       auths.push(route.request().headers().authorization || null);
       calls.push(u.pathname + u.search);
       const p = u.pathname;
-      if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' } });
+      if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization,content-type' } });
+      if (az.reject && route.request().headers().authorization) return route.fulfill({ status: 401, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"message":"TF400813: The user is not authorized to access this resource."}' });
       if (p === REPO) return route.fulfill(json({ id: 'r1', name: 'api', webUrl: WEB, defaultBranch: 'refs/heads/main', project: { name: 'web', visibility: 'public', description: 'Un repo de Azure DevOps' } }));
       if (p === `${REPO}/refs`) return route.fulfill(json({ count: branches.size, value: [...branches].map(([name, objectId]) => ({ name: `refs/heads/${name}`, objectId })) }));
       if (p === `${REPO}/commits`) {
@@ -2882,6 +2884,7 @@ function fakeAzure() {
       return route.fulfill({ status: 404, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"message":"TF401019: The Git repository does not exist or you do not have permissions."}' });
     },
   };
+  return az;
 }
 
 console.log('Azure DevOps');
@@ -2913,6 +2916,39 @@ console.log('Azure DevOps');
     const names = await page.$$eval('#graph .head', (hs) => hs.map((h) => h.getAttribute('aria-label')).join(' | '));
     if (!names.includes('feature/x') || !names.includes('main')) throw new Error(`ramas: ${names}`);
   });
+
+  await step(page, 'el token de Azure DevOps de Ajustes va en cada consulta como Basic, solo a dev.azure.com', async () => {
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    await page.fill('#azure-token-input', 'az-smoke0123');
+    const from = az.auths.length;
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForFunction(() => document.querySelector('#overlay').hidden && document.querySelector('#repo-link')?.textContent === 'acme/web/api', null, { timeout: T(15000) });
+    await page.waitForTimeout(500);
+    const sent = az.auths.slice(from);
+    const want = `Basic ${Buffer.from(':az-smoke0123').toString('base64')}`;
+    if (!sent.length) throw new Error('al guardar el token no se reconectó el repo');
+    if (sent.some((a) => a !== want)) throw new Error(`a Azure DevOps fue ${[...new Set(sent)]}`);
+    const saved = await page.evaluate(() => [localStorage.getItem('graphbranch:azureToken'), localStorage.getItem('graphbranch:token')]);
+    if (saved[0] !== JSON.stringify('az-smoke0123') || saved[1] !== null) throw new Error(`se guardó ${saved}`);
+  });
+
+  await step(page, 'si Azure DevOps rechaza el token, el aviso lo dice y lleva a Ajustes', async () => {
+    az.reject = true;
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    await page.fill('#azure-token-input', 'az-vencido');
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: T(15000) });
+    const text = await page.textContent('#overlay');
+    if (!text.includes('El token de Azure DevOps no es válido')) throw new Error(`el aviso dice ${text}`);
+    az.reject = false;
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    await page.click('#token-clear');
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForFunction(() => document.querySelector('#overlay').hidden && document.querySelector('#repo-link')?.textContent === 'acme/web/api', null, { timeout: T(15000) });
+  }, { allow: /401/ });
 
   await step(page, 'se acepta pegar la URL de dev.azure.com y un repo que no existe lo dice con el texto de Azure DevOps', async () => {
     await page.fill('#repo-input', 'https://dev.azure.com/acme/web/_git/nada');

@@ -484,6 +484,19 @@
         ev.stopPropagation();
         if (!it.data.ghost) this.focusBranch(it.data.name);
       });
+      this.gLegend.addEventListener('keydown', (ev) => {
+        const it = row(ev);
+        if (!it || it.data.ghost || (ev.key !== 'Enter' && ev.key !== ' ')) return;
+        ev.preventDefault();
+        this.focusBranch(it.data.name);
+      });
+      this.gLegend.addEventListener('focusin', (ev) => {
+        const chain = row(ev)?.data.chain;
+        if (chain) this.highlight(chain);
+      });
+      this.gLegend.addEventListener('focusout', (ev) => {
+        if (row(ev)) this.highlight(null);
+      });
     }
 
     /* ---------- geometría ---------- */
@@ -946,7 +959,16 @@
       if (it.key === key) return;
       it.key = key;
       g.textContent = '';
-      mk('rect', { class: 'l-bg', x: 0, y: -10, height: 20, rx: 10, width: this.legendW }, g);
+      if (r.ghost) {
+        g.removeAttribute('tabindex');
+        g.removeAttribute('role');
+        g.removeAttribute('aria-label');
+      } else {
+        g.setAttribute('tabindex', '0');
+        g.setAttribute('role', 'button');
+        g.setAttribute('aria-label', tr('branch.aria', { name: r.name }));
+      }
+      mk('rect', { class: 'l-bg', x: 0, y: -12, height: 24, rx: 12, width: this.legendW }, g);
       mk('circle', { class: 'l-dot', cx: 10, cy: 0, r: 3.5 }, g);
       const t = mk('text', { class: 'l-name', x: 19, y: 0, dy: '0.35em' }, g);
       t.textContent = fitText(name, SMALL_FONT, this.legendW - 26);

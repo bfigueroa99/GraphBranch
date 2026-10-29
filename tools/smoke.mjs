@@ -2923,6 +2923,21 @@ console.log('Fijar una rama con el teclado');
     if (after.pressed === before) throw new Error('el botón no cambió de estado');
   });
 
+  await step(page, 'la leyenda 2D se recorre con Tab y Enter lleva al commit de la rama', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=o/f`);
+    await loaded(page);
+    await page.click('#view-2d');
+    const fila = await page.waitForSelector('#graph svg .legend-item[role=button]', { timeout: T(10000) });
+    const r = await fila.evaluate((el) => ({ tab: el.getAttribute('tabindex'), nombre: el.getAttribute('aria-label'), titulo: el.querySelector('title')?.textContent }));
+    if (r.tab !== '0' || !r.nombre?.includes(r.titulo)) throw new Error(`la fila de la leyenda no es enfocable con nombre: ${JSON.stringify(r)}`);
+    await fila.focus();
+    if (!(await page.evaluate(() => !!document.querySelector('#graph svg.dimmed')))) throw new Error('enfocar la fila no resalta su rama');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#graph svg .head.moved, #graph svg .node.moved', { timeout: T(4000) });
+    const fantasma = await page.$$eval('#graph svg .legend-item.ghost-row[tabindex]', (xs) => xs.length);
+    if (fantasma) throw new Error('las filas de ramas ya fusionadas no deben ser enfocables');
+  });
+
   // abierta con el teclado, la ficha recibe el foco (si no, para llegar a sus botones habría que
   // recorrer con Tab todas las etiquetas) y Esc la cierra y lo devuelve a la etiqueta
   const focusRoundTrip = async (view, label) => {

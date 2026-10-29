@@ -576,51 +576,49 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Baja
 
-4. [Accesibilidad] La leyenda 2D no tiene acceso por teclado. Los botones de estado ya no mezclan
-    `aria-pressed` con un texto cambiante (iteración 123). Reproducir: `node tools/audit.mjs`.
-5. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
+4. [Errores] `mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (repos
     renombrados).
-6. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+5. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-7. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+6. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-8. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+7. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-9. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+8. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-10. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
+9. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
     «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
     Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
     Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-11. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+10. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-12. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
+11. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-13. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
+12. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
     vistas, las estadísticas y la bitácora encima) y el 3D no arma etiquetas hasta verse; pensar en una
     forma de llegar al grafo sin recorrer la página (ancla o tarjetas plegables en celular).
     Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la auditoría → captura sin grafo; `#graph3d` fuera de la pantalla.
-14. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+13. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-15. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
+14. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
     `WebFetch` a `releases.electronjs.org` dio HTTP 500 en la iteración 119. Repetir la comparación
     cuando la página responda y subir si hay una estable más nueva.
     Reproducción: `WebFetch https://releases.electronjs.org/release/stable` → `HTTP 500`.
-16. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
+15. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
     corta a los 120 s; documentar en «Cómo validar» que se corra en segundo plano, como `audit --langs`.
     Reproducción: `time node tools/smoke.mjs` → ~480 s.
-17. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
+16. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
     `npm run check` en la iteración 128 (la repetición pasó), aun con la espera de la 127.
     Reproducción: `npm run check` → `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
 
@@ -887,4 +885,17 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (un registro de HEAD en `run`).
 - Reclamo: loop/154, sin colisión
 - Validado: 477 pruebas (`node --test`), smoke (132 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 155, mantenimiento · Accesibilidad: pendiente 4 (La leyenda 2D no tiene acceso por teclado. Los botones de estado ya no mezclan …)
+- **Siguiente:** iteración 156, expansión: ítem 101 (Constelación: filtrar por nombre en la URL, Escala)
+
+### 2026-10-29 · Iteración 155 · Mantenimiento · Accesibilidad
+
+- **Arreglo: la leyenda 2D se recorre con el teclado** (pendiente 4): cada fila de rama de la leyenda es ahora un botón enfocable (`tabindex=0`, `role=button`, nombre «Rama {name}» con el texto de `branch.aria` que ya existía), Enter o Espacio llevan al commit de la rama (`focusBranch`, igual que el clic), enfocarla resalta su rama como el puntero, y tiene anillo de foco visible. Las filas «fusionada» (fantasma) no son enfocables. Las filas miden 24 px de alto (objetivo táctil, WCAG 2.5.8). Sin textos nuevos; web y escritorio.
+- **Reproducción:** `node tools/smoke.mjs` → `✗ la leyenda 2D se recorre con Tab y Enter lleva al commit de la rama: la fila de la leyenda no es enfocable con nombre` (sin el arreglo no hay `.legend-item[role=button]`)
+- **Pruebas que fallan sin el arreglo:** el paso del smoke «la leyenda 2D se recorre con Tab y Enter…»
+- README: no cambia (accesibilidad de una función que ya estaba)
+- QA: Accesibilidad: la leyenda solo con Tab, Enter y Espacio (el foco no cae a `<body>`, anillo visible, nombre accesible); auditoría: la corre `npm run check`
+- Skills: no aplica: un arreglo de atributos ARIA y foco sobre el patrón de `.head`, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (copiar el patrón de las etiquetas de rama).
+- Reclamo: loop/155, sin colisión
+- Validado: 477 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (la tercera corrida: la primera falló en dos pasos del smoke, «historial de un archivo» y «editar sin token», mientras corría otro smoke en la misma máquina; la segunda, en la auditoría: las filas de la leyenda, ya enfocables, medían 20 px y se subieron a 24, WCAG 2.5.8).
+- **Siguiente:** iteración 156, expansión: ítem 101 (Constelación: filtrar por nombre en la URL, Escala)

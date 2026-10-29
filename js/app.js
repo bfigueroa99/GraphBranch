@@ -234,6 +234,7 @@
   const graph2d = new GB.Graph(el.graph, {
     onFollowChange: (v) => graph === graph2d && followUI(v),
     onTogglePin: (name) => togglePin(name),
+    onBranchView: (name, how) => onBranchView(name, how),
     onDiff: (sha) => openDiff(sha),
     diffing: () => diffView.isOpen,
   });
@@ -243,6 +244,7 @@
       graph3d = new GB.Graph3D(el.graph3d, {
         onFollowChange: (v) => graph === graph3d && followUI(v),
         onTogglePin: (name) => togglePin(name),
+        onBranchView: (name, how) => onBranchView(name, how),
         onDiff: (sha) => openDiff(sha),
         diffing: () => diffView.isOpen,
         onFlightChange: (on) => setPressed(el.flyBtn, on),
@@ -595,6 +597,7 @@
     authorFilter = initialAuthor || U.store.get('author:' + tab.key, ''); // ?author=ana manda sobre lo guardado, solo al abrir
     initialAuthor = '';
     setUrlParam('author', authorFilter);
+    branchView = loadBranchView(tab.key);
     syncFiltered();
     layout = tab.layout;
     game = tab.game;
@@ -1105,6 +1108,33 @@
   let initialAuthor = ''; // ?author=ana: el repo a la vista abre ya filtrado por esa persona
   const authorView = (data) => GB.search.byAuthor(data, authorFilter);
 
+  /* Ramas ocultas o «solo esta» (desde la ficha de una rama): el grafo muestra menos. Se guarda por repo; la rama por
+     defecto siempre queda. Sin consultas. */
+  let branchView = { hidden: [], solo: '' };
+  const loadBranchView = (key) => {
+    const v = U.store.get('bview:' + key, null);
+    return { hidden: Array.isArray(v?.hidden) ? v.hidden.filter((n) => typeof n === 'string') : [], solo: typeof v?.solo === 'string' ? v.solo : '' };
+  };
+  const branchViewOn = () => !!(branchView.hidden.length || branchView.solo);
+  /** Lo que se dibuja: los filtros por autor y por rama, uno sobre el otro. */
+  const viewOf = (data) => GB.search.byBranches(authorView(data).data, branchView);
+  function setBranchView(next) {
+    branchView = next;
+    U.store.set('bview:' + repoKey(), branchViewOn() ? next : null);
+    syncFiltered();
+    branchViewStatus();
+    if (lastRender) {
+      const { data, L } = drawGraph(false, true);
+      renderSummary(data, L);
+    }
+  }
+  /** «Ocultar» o «Solo esta» de la ficha de `name`; repetir «Solo esta» sobre la misma vuelve a verlas todas. */
+  function onBranchView(name, how) {
+    if (how === 'solo') return setBranchView({ hidden: [], solo: branchView.solo === name ? '' : name });
+    const hidden = branchView.hidden.includes(name) ? branchView.hidden : [...branchView.hidden, name];
+    setBranchView({ hidden, solo: '' });
+  }
+
   /* `calm`: llegan ramas que esperaban su historia (la carga de a poco de un repo grande): se
      suman sin efectos de llegada, que son para lo nuevo */
   const liveCtx = (data, initial, calm = false, tab = active) => ({
@@ -1116,6 +1146,7 @@
     refs: refsBySha(data),
     pins: data.repo.demo ? new Set() : tab === active ? getPins() : new Set(U.store.get('pins:' + tab.key, [])),
     canPin: !data.repo.demo && tab === active && !allOn, // fijar una rama es del grafo de la vista
+    canHide: tab === active && !allOn, // y ocultarla o dejarla sola, también en la demo
     canDiff: canDiffTab(tab),
   });
 
@@ -1130,7 +1161,7 @@
   /** Calcula el layout del repo a la vista y dibuja el grafo (salvo durante el Replay). */
   function drawGraph(initial, calm = false) {
     const data = source.view ? source.view() : source.data;
-    const shownData = GB.search.limitBranches(authorView(data).data, embedMax); // &max=N: solo la capa embebida
+    const shownData = GB.search.limitBranches(viewOf(data).data, embedMax); // &max=N: solo la capa embebida
     const L = layout.compute(shownData);
     lastRender = { data, L };
     if (embedMax) document.querySelector('.graph-stage')?.setAttribute('data-embed-branches', String(L.heads.filter((h) => h.color !== 'ghost').length)); // lo que comprueba el smoke
@@ -1165,7 +1196,7 @@
     if (news && tv.attract && replay.active) replay.stop();
     if (news) tv.lastNews = Date.now();
     const { data, L } = drawGraph(initial, calm);
-    if (el.textview.open) textview.update(textTree(authorView(data).data)); // con la vista de texto abierta, avisa de lo nuevo
+    if (el.textview.open) textview.update(textTree(viewOf(data).data)); // con la vista de texto abierta, avisa de lo nuevo
     feed.setDefaultBranch(data.repo.defaultBranch);
     feed.add(activities, { live: !initial });
     if (news) game.observe(activities, gameCtx(activities, data, L));
@@ -2118,9 +2149,9 @@
   const textTree = (data) => GB.textview.build(data, { withForks: showForks, paths: pathShas, releases: GB.textview.releaseMarks(feed.items.filter((a) => a.repo === active?.key)) });
   /** El árbol con los filtros del grafo (autor y ruta) y una nota que los dice, también para el lector de pantalla. */
   function openTextview() {
-    const v = authorView(source.view ? source.view() : source.data);
+    const v = viewOf(source.view ? source.view() : source.data);
     const name = authorFilter && (GB.search.authors(source.data).find((a) => a.key === authorFilter)?.name || authorFilter);
-    const scope = authorFilter || pathShas ? { author: name, shown: v.shown, total: v.total, path: pathShas ? pathText : '', count: pathShas ? pathShas.size : 0 } : null;
+    const scope = authorFilter || pathShas || branchViewOn() ? { author: name, shown: v.shown, total: v.total, branches: branchViewOn() ? { shown: v.shown, total: v.total } : null, path: pathShas ? pathText : '', count: pathShas ? pathShas.size : 0 } : null;
     textview.render(textTree(v.data), scope);
   }
   function showTextview() {
@@ -2227,7 +2258,7 @@
   }
   $('#search-close').addEventListener('click', closeSearch);
 
-  const syncFiltered = () => $('#search-btn').classList.toggle('filtered', !!authorFilter || !pathEl.clear.hidden);
+  const syncFiltered = () => $('#search-btn').classList.toggle('filtered', !!authorFilter || !pathEl.clear.hidden || branchViewOn());
   const graphAuthor = $('#graph-author');
   function fillGraphAuthor() {
     graphAuthor.textContent = '';
@@ -2245,11 +2276,23 @@
     }
     graphAuthor.value = authorFilter;
     graphAuthorStatus();
+    branchViewStatus();
   }
   function graphAuthorStatus() {
     const { shown, total } = authorView(source.view ? source.view() : source.data);
     $('#graph-author-status').textContent = authorFilter ? t('search.graphAuthorCount', { n: shown, total }) : '';
   }
+  const branchViewReset = $('#branch-view-reset');
+  function branchViewStatus() {
+    const on = branchViewOn();
+    branchViewReset.hidden = !on;
+    const { shown, total } = viewOf(source.view ? source.view() : source.data);
+    $('#branch-view-status').textContent = on ? t('branchview.status', { n: shown, total }) : '';
+  }
+  branchViewReset.addEventListener('click', () => {
+    setBranchView({ hidden: [], solo: '' });
+    graphAuthor.focus(); // el botón se esconde: el foco no se pierde
+  });
   graphAuthor.addEventListener('change', () => {
     authorFilter = graphAuthor.value;
     U.store.set('author:' + repoKey(), authorFilter || null);

@@ -257,6 +257,10 @@ GB.i18n.define('ru', {
   'tip.openCommit': 'Открыть коммит на GitHub',
   'tip.pin': 'Закрепить <code>{branch}</code>',
   'tip.unpin': 'Открепить <code>{branch}</code>',
+  'tip.hide': 'Скрыть <code>{branch}</code>',
+  'tip.solo': 'Показать только <code>{branch}</code>',
+  'branchview.status': 'Видно веток: {n} из {total}',
+  'branchview.reset': 'Показать все ветки',
   'author.unknown': 'неизвестен',
 
   /* ---------- слой поверх графа ---------- */

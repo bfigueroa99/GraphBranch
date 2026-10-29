@@ -247,6 +247,10 @@ GB.i18n.define('hi', {
   'tip.openCommit': 'GitHub पर कमिट खोलें',
   'tip.pin': 'पिन करें: <code>{branch}</code>',
   'tip.unpin': 'अनपिन करें: <code>{branch}</code>',
+  'tip.hide': '<code>{branch}</code> छिपाएँ',
+  'tip.solo': 'केवल <code>{branch}</code> दिखाएँ',
+  'branchview.status': '{total} में से {n} शाखाएँ दिख रही हैं',
+  'branchview.reset': 'सभी शाखाएँ दिखाएँ',
   'author.unknown': 'अज्ञात',
 
   /* ---------- ग्राफ़ के ऊपर की परत ---------- */

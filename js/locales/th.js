@@ -247,6 +247,10 @@ GB.i18n.define('th', {
   'tip.openCommit': 'เปิด commit บน GitHub',
   'tip.pin': 'ปักหมุด <code>{branch}</code>',
   'tip.unpin': 'เลิกปักหมุด <code>{branch}</code>',
+  'tip.hide': 'ซ่อน <code>{branch}</code>',
+  'tip.solo': 'แสดงเฉพาะ <code>{branch}</code>',
+  'branchview.status': 'แสดง {n} จาก {total} เบรนช์',
+  'branchview.reset': 'แสดงเบรนช์ทั้งหมด',
   'author.unknown': 'ไม่ทราบ',
 
   /* ---------- graph overlay ---------- */

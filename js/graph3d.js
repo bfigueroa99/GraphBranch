@@ -576,6 +576,7 @@
       this.tip.setAttribute('aria-label', tr('tip.aria'));
       wrap.appendChild(this.tip);
       GB.graphShared.wirePinButton(this.tip, (name) => this.opts.onTogglePin?.(name));
+      GB.graphShared.wireViewButtons(this.tip, (name, how) => this.opts.onBranchView?.(name, how));
       GB.graphShared.wireDiffButton(this.tip, (sha) => this.opts.onDiff?.(sha));
 
       /* vectores de trabajo: el cuadro a cuadro no crea objetos */

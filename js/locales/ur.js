@@ -277,6 +277,10 @@ GB.i18n.define('ur', {
   'tip.openCommit': 'GitHub پر commit کھولیں',
   'tip.pin': '<code>{branch}</code> کو پن کریں',
   'tip.unpin': '<code>{branch}</code> کا پن ہٹائیں',
+  'tip.hide': '<code>{branch}</code> چھپائیں',
+  'tip.solo': 'صرف <code>{branch}</code> دکھائیں',
+  'branchview.status': '{total} میں سے {n} شاخیں نظر آ رہی ہیں',
+  'branchview.reset': 'تمام شاخیں دکھائیں',
   'author.unknown': 'نامعلوم',
 
   /* ---------- graph overlay ---------- */

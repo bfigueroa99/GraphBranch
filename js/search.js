@@ -48,6 +48,25 @@
     return { data: { ...data, branches, pulls }, shown, total };
   }
 
+  /** La vista de `data` sin las ramas ocultas (`view.hidden`, nombres) o con solo una (`view.solo`): la rama por defecto
+      y las que aún no tienen historia cargada siempre quedan, y los PR de las ramas quitadas se van con ellas. Devuelve
+      { data, shown, total } (ramas con historia cargada); sin nada oculto ni solo, `data` tal cual. No muta. */
+  function byBranches(data, view) {
+    const total = [...data.branches.values()].filter((b) => data.commits.has(b.sha)).length;
+    const hidden = new Set(view?.hidden || []);
+    const solo = view?.solo || '';
+    if (!hidden.size && !solo) return { data, shown: total, total };
+    const def = data.repo?.defaultBranch;
+    const branches = new Map();
+    for (const [name, b] of data.branches) {
+      const keep = name === def || b.isDefault || !data.commits.has(b.sha) || (solo ? name === solo : !hidden.has(name));
+      if (keep) branches.set(name, b);
+    }
+    const pulls = new Map([...data.pulls].filter(([, p]) => !p.sameRepo || branches.has(p.head)));
+    const shown = [...branches.values()].filter((b) => data.commits.has(b.sha)).length;
+    return { data: { ...data, branches, pulls }, shown, total };
+  }
+
   /** La vista de `data` con solo `max` ramas con historia: la rama por defecto (cuenta como una) y las de commit más
       reciente. Las que aún no tienen historia cargada no se tocan, y los PR de las quitadas se van con ellas.
       `max` 0 o inválido: `data` tal cual. No muta. */
@@ -220,5 +239,5 @@
     return v.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 100);
   }
 
-  GB.search = { authors, authorParam, byAuthor, limitBranches, find, mount, pathParam, queryParam, LIMIT };
+  GB.search = { authors, authorParam, byAuthor, byBranches, limitBranches, find, mount, pathParam, queryParam, LIMIT };
 })((window.GB = window.GB || {}));

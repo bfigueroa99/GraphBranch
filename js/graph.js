@@ -155,10 +155,11 @@
       <p class="tip-msg">${U.esc(U.firstLine(c.message))}</p>
       <p class="tip-meta"><code>${U.shortSha(c.sha)}</code>${parents > 1 ? ` · ${U.esc(tr('tip.mergeOf', { n: parents }))}` : ''}</p>
       ${rows.length ? `<p class="tip-extra">${rows.join('')}</p>` : ''}
-      ${pin && (c.url || ctx.canDiff || (branch && ctx.canPin)) ? `<div class="tip-actions">
+      ${pin && (c.url || ctx.canDiff || (branch && (ctx.canPin || ctx.canHide))) ? `<div class="tip-actions">
         ${ctx.canDiff ? `<button type="button" class="tip-diff" data-sha="${U.esc(c.sha)}">${U.esc(tr('diff.show'))}</button>` : ''}
         ${U.safeUrl(c.url) ? `<a class="tip-link" href="${U.esc(U.safeUrl(c.url))}" target="_blank" rel="noopener">${U.esc(tr('tip.openCommit'))} ↗</a>` : ''}
         ${branch && ctx.canPin ? pinButtonHTML(branch, !!ctx.pins?.has(branch)) : ''}
+        ${branch && ctx.canHide ? viewButtonsHTML(branch) : ''}
       </div>` : ''}`;
   }
 
@@ -166,6 +167,13 @@
 
   function pinButtonHTML(branch, on) {
     return `<button type="button" class="tip-pin" data-branch="${U.esc(branch)}" data-on="${on}">${pinLabel(branch, on)}</button>`;
+  }
+
+  /** «Ocultar» y «Solo esta» de la ficha de una rama (el grafo muestra menos ramas; ver search.byBranches). */
+  function viewButtonsHTML(branch) {
+    const name = U.truncate(branch, 28);
+    return `<button type="button" class="tip-view tip-hide" data-branch="${U.esc(branch)}">${i18n.html('tip.hide', { branch: name })}</button>
+        <button type="button" class="tip-view tip-solo" data-branch="${U.esc(branch)}">${i18n.html('tip.solo', { branch: name })}</button>`;
   }
 
   /** Cómo se nombra un PR: "#12" en GitHub; una merge request de GitLab, "!12". Y la clave de sus textos
@@ -213,6 +221,14 @@
       // se actualiza en su lugar (no con outerHTML): el botón conserva el foco de quien lo pulsó con el teclado
       b.dataset.on = String(on);
       b.innerHTML = pinLabel(b.dataset.branch, on);
+    });
+  }
+
+  /** Conecta «Ocultar» y «Solo esta» de un tooltip con la acción de la app: (nombre, 'hide' | 'solo'). */
+  function wireViewButtons(tip, onBranchView) {
+    tip.addEventListener('click', (ev) => {
+      const b = ev.target.closest('.tip-hide, .tip-solo');
+      if (b) onBranchView?.(b.dataset.branch, b.classList.contains('tip-solo') ? 'solo' : 'hide');
     });
   }
 
@@ -335,6 +351,7 @@
         if (!ev.target.closest('.node, .head')) this.unpin();
       });
       wirePinButton(this.tip, (name) => this.opts.onTogglePin?.(name));
+      wireViewButtons(this.tip, (name, how) => this.opts.onBranchView?.(name, how));
       wireDiffButton(this.tip, (sha) => this.opts.onDiff?.(sha));
       this.bindGroups();
       this.bindKeys();
@@ -1939,5 +1956,5 @@
   }
 
   GB.Graph = Graph;
-  GB.graphShared = { tipHTML, wirePinButton, wireDiffButton, focusTip, returnFocus, measure, fitText, prRef, prKey, CI_MARK, ciText, LABEL_FONT, SMALL_FONT };
+  GB.graphShared = { tipHTML, wirePinButton, wireViewButtons, wireDiffButton, focusTip, returnFocus, measure, fitText, prRef, prKey, CI_MARK, ciText, LABEL_FONT, SMALL_FONT };
 })(window.GB);

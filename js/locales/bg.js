@@ -247,6 +247,10 @@ GB.i18n.define('bg', {
   'tip.openCommit': 'Отваряне на комита в GitHub',
   'tip.pin': 'Закрепване на <code>{branch}</code>',
   'tip.unpin': 'Открепване на <code>{branch}</code>',
+  'tip.hide': 'Скриване на <code>{branch}</code>',
+  'tip.solo': 'Само <code>{branch}</code>',
+  'branchview.status': '{n} от {total} клона се виждат',
+  'branchview.reset': 'Показване на всички клонове',
   'author.unknown': 'неизвестен',
 
   /* ---------- слой върху графиката ---------- */

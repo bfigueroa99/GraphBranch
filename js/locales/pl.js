@@ -252,6 +252,10 @@ GB.i18n.define('pl', {
   'tip.openCommit': 'Otwórz commit na GitHubie',
   'tip.pin': 'Przypnij <code>{branch}</code>',
   'tip.unpin': 'Odepnij <code>{branch}</code>',
+  'tip.hide': 'Ukryj <code>{branch}</code>',
+  'tip.solo': 'Pokaż tylko <code>{branch}</code>',
+  'branchview.status': 'Widoczne gałęzie: {n} z {total}',
+  'branchview.reset': 'Pokaż wszystkie gałęzie',
   'author.unknown': 'nieznany',
 
   /* ---------- nakładka na grafie ---------- */

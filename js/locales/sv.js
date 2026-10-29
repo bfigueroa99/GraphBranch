@@ -247,6 +247,10 @@ GB.i18n.define('sv', {
   'tip.openCommit': 'Öppna commit på GitHub',
   'tip.pin': 'Fäst <code>{branch}</code>',
   'tip.unpin': 'Sluta fästa <code>{branch}</code>',
+  'tip.hide': 'Dölj <code>{branch}</code>',
+  'tip.solo': 'Visa bara <code>{branch}</code>',
+  'branchview.status': '{n} av {total} grenar visas',
+  'branchview.reset': 'Visa alla grenar',
   'author.unknown': 'okänd',
 
   /* ---------- lager över grafen ---------- */

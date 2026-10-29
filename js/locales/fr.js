@@ -247,6 +247,10 @@ GB.i18n.define('fr', {
   'tip.openCommit': 'Ouvrir le commit sur GitHub',
   'tip.pin': 'Épingler <code>{branch}</code>',
   'tip.unpin': 'Désépingler <code>{branch}</code>',
+  'tip.hide': 'Masquer <code>{branch}</code>',
+  'tip.solo': 'Afficher seulement <code>{branch}</code>',
+  'branchview.status': '{n} branches sur {total} affichées',
+  'branchview.reset': 'Afficher toutes les branches',
   'author.unknown': 'inconnu',
 
   /* ---------- couche au-dessus du graphe ---------- */

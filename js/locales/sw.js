@@ -247,6 +247,10 @@ GB.i18n.define('sw', {
   'tip.openCommit': 'Fungua commit kwenye GitHub',
   'tip.pin': 'Bandika <code>{branch}</code>',
   'tip.unpin': 'Acha kubandika <code>{branch}</code>',
+  'tip.hide': 'Ficha <code>{branch}</code>',
+  'tip.solo': 'Onyesha <code>{branch}</code> pekee',
+  'branchview.status': 'Matawi {n} kati ya {total} yanaonekana',
+  'branchview.reset': 'Onyesha matawi yote',
   'author.unknown': 'hajulikani',
 
   /* ---------- safu juu ya mchoro ---------- */

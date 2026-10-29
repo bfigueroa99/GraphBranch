@@ -247,6 +247,10 @@ GB.i18n.define('nl', {
   'tip.openCommit': 'Commit openen op GitHub',
   'tip.pin': '<code>{branch}</code> vastzetten',
   'tip.unpin': '<code>{branch}</code> losmaken',
+  'tip.hide': '<code>{branch}</code> verbergen',
+  'tip.solo': 'Alleen <code>{branch}</code> tonen',
+  'branchview.status': '{n} van {total} branches zichtbaar',
+  'branchview.reset': 'Alle branches tonen',
   'author.unknown': 'onbekend',
 
   /* ---------- graph overlay ---------- */

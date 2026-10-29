@@ -1087,6 +1087,37 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
+  await step(page, 'ocultar una rama o dejarla sola: desde su ficha, lo dice, se guarda por repo y un botón las vuelve a mostrar', async () => {
+    await page.keyboard.press('Escape'); // ninguna ficha abierta de antes
+    await page.click('#view-2d');
+    const count = () => page.evaluate(() => document.querySelectorAll('#graph svg .head').length);
+    const all = await count();
+    const openTip = async () => {
+      const heads = await page.$$('#graph svg .head[role=button]');
+      await heads[heads.length > 3 ? 3 : 0].focus();
+      await page.keyboard.press('Enter');
+    };
+    await openTip();
+    await page.click('#graph .tip .tip-hide');
+    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, all, { timeout: T(5000) });
+    const hid = await count();
+    const saved = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('graphbranch:bview:')).length);
+    if (!saved) throw new Error('las ramas ocultas no se guardaron por repo');
+    await openTip();
+    await page.click('#graph .tip .tip-solo');
+    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, hid, { timeout: T(5000) });
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    const on = await page.evaluate(() => ({ status: document.querySelector('#branch-view-status').textContent, mark: document.querySelector('#search-btn').classList.contains('filtered'), reset: !document.querySelector('#branch-view-reset').hidden }));
+    if (!on.status || /undefined|NaN|branchview\./.test(on.status) || !on.mark || !on.reset) throw new Error('sin aviso de las ramas ocultas: ' + JSON.stringify(on));
+    await page.click('#branch-view-reset');
+    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length === n, all, { timeout: T(5000) });
+    const off = await page.evaluate(() => ({ status: document.querySelector('#branch-view-status').textContent, mark: document.querySelector('#search-btn').classList.contains('filtered'), keys: Object.keys(localStorage).filter((k) => k.startsWith('graphbranch:bview:')).length, focus: document.activeElement?.id }));
+    if (off.status || off.mark || off.keys || off.focus !== 'graph-author') throw new Error('«Ver todas» no deja el grafo como estaba: ' + JSON.stringify(off));
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
+  });
+
   await step(page, 'cambios de un commit: desde su ficha, con teclado se pasa al anterior y se vuelve, y Esc cierra', async () => {
     await page.keyboard.press('Escape'); // ninguna ficha abierta de antes
     await page.click('#view-2d');

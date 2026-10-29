@@ -247,6 +247,10 @@ GB.i18n.define('el', {
   'tip.openCommit': 'Άνοιγμα του commit στο GitHub',
   'tip.pin': 'Καρφίτσωμα του <code>{branch}</code>',
   'tip.unpin': 'Ξεκαρφίτσωμα του <code>{branch}</code>',
+  'tip.hide': 'Απόκρυψη του <code>{branch}</code>',
+  'tip.solo': 'Μόνο το <code>{branch}</code>',
+  'branchview.status': '{n} από {total} κλάδοι σε προβολή',
+  'branchview.reset': 'Εμφάνιση όλων των κλάδων',
   'author.unknown': 'άγνωστος',
 
   /* ---------- επίστρωμα γραφήματος ---------- */

@@ -277,6 +277,10 @@ GB.i18n.define('fa', {
   'tip.openCommit': 'باز کردن commit در GitHub',
   'tip.pin': 'سنجاق کردن <code>{branch}</code>',
   'tip.unpin': 'برداشتن سنجاق <code>{branch}</code>',
+  'tip.hide': 'پنهان کردن <code>{branch}</code>',
+  'tip.solo': 'نمایش فقط <code>{branch}</code>',
+  'branchview.status': '{n} از {total} شاخه نمایش داده می‌شود',
+  'branchview.reset': 'نمایش همهٔ شاخه‌ها',
   'author.unknown': 'ناشناس',
 
   /* ---------- graph overlay ---------- */

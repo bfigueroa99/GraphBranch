@@ -247,6 +247,10 @@ GB.i18n.define('hu', {
   'tip.openCommit': 'Commit megnyitása a GitHubon',
   'tip.pin': 'Kitűzés: <code>{branch}</code>',
   'tip.unpin': 'Kitűzés megszüntetése: <code>{branch}</code>',
+  'tip.hide': '<code>{branch}</code> elrejtése',
+  'tip.solo': 'Csak <code>{branch}</code> mutatása',
+  'branchview.status': '{n} / {total} ág látszik',
+  'branchview.reset': 'Minden ág mutatása',
   'author.unknown': 'ismeretlen',
 
   /* ---------- a gráf fölötti réteg ---------- */

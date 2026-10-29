@@ -247,6 +247,10 @@ GB.i18n.define('nb', {
   'tip.openCommit': 'Åpne commit på GitHub',
   'tip.pin': 'Fest <code>{branch}</code>',
   'tip.unpin': 'Løsne <code>{branch}</code>',
+  'tip.hide': 'Skjul <code>{branch}</code>',
+  'tip.solo': 'Vis bare <code>{branch}</code>',
+  'branchview.status': '{n} av {total} grener vises',
+  'branchview.reset': 'Vis alle grener',
   'author.unknown': 'ukjent',
 
   /* ---------- lag over grafen ---------- */

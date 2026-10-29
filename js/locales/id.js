@@ -247,6 +247,10 @@ GB.i18n.define('id', {
   'tip.openCommit': 'Buka commit di GitHub',
   'tip.pin': 'Sematkan <code>{branch}</code>',
   'tip.unpin': 'Lepas sematan <code>{branch}</code>',
+  'tip.hide': 'Sembunyikan <code>{branch}</code>',
+  'tip.solo': 'Tampilkan hanya <code>{branch}</code>',
+  'branchview.status': '{n} dari {total} cabang terlihat',
+  'branchview.reset': 'Tampilkan semua cabang',
   'author.unknown': 'tidak diketahui',
 
   /* ---------- lapisan di atas grafik ---------- */

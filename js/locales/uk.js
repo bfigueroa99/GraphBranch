@@ -257,6 +257,10 @@ GB.i18n.define('uk', {
   'tip.openCommit': 'Відкрити коміт на GitHub',
   'tip.pin': 'Закріпити <code>{branch}</code>',
   'tip.unpin': 'Відкріпити <code>{branch}</code>',
+  'tip.hide': 'Приховати <code>{branch}</code>',
+  'tip.solo': 'Показати лише <code>{branch}</code>',
+  'branchview.status': 'Видно гілок: {n} із {total}',
+  'branchview.reset': 'Показати всі гілки',
   'author.unknown': 'невідомий',
 
   /* ---------- шар поверх графа ---------- */

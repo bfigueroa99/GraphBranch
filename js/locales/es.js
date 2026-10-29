@@ -247,6 +247,10 @@ GB.i18n.define('es', {
   'tip.openCommit': 'Abrir commit en GitHub',
   'tip.pin': 'Fijar <code>{branch}</code>',
   'tip.unpin': 'Dejar de fijar <code>{branch}</code>',
+  'tip.hide': 'Ocultar <code>{branch}</code>',
+  'tip.solo': 'Ver solo <code>{branch}</code>',
+  'branchview.status': '{n} de {total} ramas a la vista',
+  'branchview.reset': 'Ver todas las ramas',
   'author.unknown': 'desconocido',
 
   /* ---------- capa sobre el grafo ---------- */

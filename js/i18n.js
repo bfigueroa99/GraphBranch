@@ -19,7 +19,8 @@ window.GB = window.GB || {};
       tema de la capa; sin él, el del sistema) y &title=Texto (un rótulo propio sobre la capa: sin
       caracteres de control, hasta 60 letras; se pone con textContent, nunca como HTML) y &max=N (cuántas ramas muestra: la rama por defecto y
       las de commit más reciente; entero de 1 a 200, sin él, todas) y &spin=0 (apaga la rotación lenta de la vista 3D; solo
-      0, off, false o no la apagan, y no toca lo que la persona guardó). Sin ?embed, no hay nada. */
+      0, off, false o no la apagan, y no toca lo que la persona guardó) y &view=2d|3d (fija la vista de la capa sin
+      guardarla; sin él, la que la persona tenía). Sin ?embed, no hay nada. */
   const HIDE = ['notices', 'combo', 'legend', 'title', 'clock'];
   function embedOptions(search) {
     const q = new URLSearchParams(search || '');
@@ -40,6 +41,7 @@ window.GB = window.GB || {};
       title,
       max: max >= 1 && max <= 200 ? max : 0,
       theme: /^(light|dark)$/i.test((q.get('theme') || '').trim()) ? q.get('theme').trim().toLowerCase() : '',
+      view: /^(2d|3d)$/i.test((q.get('view') || '').trim()) ? q.get('view').trim().toLowerCase() : '',
       spin: !/^(0|off|false|no)$/i.test((q.get('spin') || '').trim()),
       rotate: rotate >= 5 && rotate <= 3600 ? rotate : 0,
       clear: /^transparent$/i.test(bg),

@@ -3396,6 +3396,26 @@ console.log('Capa para streaming: &spin=0 apaga la rotación 3D (?embed=1)');
   await page.context().close();
 }
 
+console.log('Capa para streaming: &view= fija la vista (?embed=1)');
+{
+  const page = await openPage({ viewport: { width: 640, height: 400 } });
+  await step(page, '&view=2d y &view=3d fijan la vista sin guardarla; sin &view= manda la guardada', async () => {
+    const pressed = (id) => page.getAttribute(id, 'aria-pressed');
+    await page.goto(`${base}/index.html?lang=es&embed=1&view=2d`);
+    await loaded(page);
+    if ((await pressed('#view-2d')) !== 'true') throw new Error('&view=2d no deja la vista 2D');
+    if (await page.evaluate(() => localStorage.getItem('graphbranch:view'))) throw new Error('&view=2d guardó la vista');
+    await page.goto(`${base}/index.html?lang=es&embed=1&view=3d`);
+    await loaded(page);
+    if ((await pressed('#view-3d')) !== 'true') throw new Error('&view=3d no deja la vista 3D');
+    await page.evaluate(() => localStorage.setItem('graphbranch:view', JSON.stringify('2d')));
+    await page.goto(`${base}/index.html?lang=es&embed=1`);
+    await loaded(page);
+    if ((await pressed('#view-2d')) !== 'true') throw new Error('sin &view= no manda la vista guardada');
+  });
+  await page.context().close();
+}
+
 console.log('Capa para streaming: &title= pone un rótulo propio (?embed=1)');
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });

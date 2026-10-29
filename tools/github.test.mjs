@@ -892,3 +892,16 @@ test('la vista de un PR: descripción y los últimos 5 comentarios, solo al pedi
   assert.deepEqual(gh.calls.slice(n), ['/repos/o/r/pulls/8'], 'sin comentarios no hay segunda consulta');
   assert.deepEqual([empty.body, empty.comments.length], ['', 0]);
 });
+
+test('mapPull: un repo renombrado sigue marcando sus PRs de la misma repo (compara con la base que da GitHub)', () => {
+  const gh = fakeGitHub();
+  const { src } = connect(gh); // escrito como o/r, pero GitHub lo conoce ya como nuevo/nombre
+  const pr = (head, base) => ({
+    number: 1, title: 't', head: { ref: 'feat', repo: head }, base: { ref: 'main', repo: base },
+    user: { login: 'ana' }, html_url: 'https://github.com/nuevo/nombre/pull/1', created_at: '2026-10-01T00:00:00Z',
+  });
+  const nueva = { full_name: 'Nuevo/Nombre' };
+  assert.equal(src.mapPull(pr(nueva, nueva)).sameRepo, true, 'rama del propio repo renombrado');
+  assert.equal(src.mapPull(pr({ full_name: 'ana/nombre' }, nueva)).sameRepo, false, 'un fork sigue siendo de afuera');
+  assert.equal(src.mapPull(pr({ full_name: 'o/r' }, undefined)).sameRepo, true, 'sin base.repo se cae al nombre escrito');
+});

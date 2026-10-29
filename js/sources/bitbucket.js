@@ -316,7 +316,7 @@
     }
 
     mapPull(p) {
-      const full = `${this.owner}/${this.name}`.toLowerCase();
+      const full = (p.destination?.repository?.full_name || `${this.owner}/${this.name}`).toLowerCase(); // el nombre de hoy, tras un renombrado
       return {
         number: p.id,
         title: p.title || '',

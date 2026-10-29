@@ -29,6 +29,7 @@ function load(az) {
     AbortController,
     TextEncoder,
     TextDecoder,
+    btoa,
     fetch: az.fetch,
     navigator: { onLine: true },
     document: { hidden: false, addEventListener() {}, removeEventListener() {} },
@@ -50,7 +51,7 @@ function load(az) {
 }
 
 function fakeAzure() {
-  const az = { commits: new Map(), branches: new Map(), pulls: [], override: null, calls: [], init: [], private: false };
+  const az = { commits: new Map(), branches: new Map(), pulls: [], override: null, calls: [], init: [], private: false, token: '', valid: '' };
   let n = 0;
   az.commit = (id, ...parents) => {
     const date = new Date(Date.UTC(2026, 0, 1) + ++n * 60000).toISOString();
@@ -135,12 +136,13 @@ function fakeAzure() {
 
   az.fetch = async (url, opts = {}) => {
     assert.ok(url.startsWith(HOST + '/'), `consulta fuera de dev.azure.com: ${url}`);
-    assert.equal(opts.headers?.Authorization, undefined, 'sin token: ninguna consulta lleva Authorization');
+    const basic = (t) => `Basic ${Buffer.from(`:${t}`).toString('base64')}`;
+    assert.equal(opts.headers?.Authorization, az.token ? basic(az.token) : undefined, az.token ? 'con token: cada consulta lleva Authorization: Basic' : 'sin token: ninguna consulta lleva Authorization');
     assert.equal(opts.redirect, 'manual', 'sin seguir la redirección al inicio de sesión (otro origen)');
     az.init.push(opts);
     const path = url.slice(HOST.length);
     az.calls.push(path);
-    if (az.private && path.startsWith(REPO.split('/_apis')[0])) return { type: 'opaqueredirect', status: 0, ok: false, statusText: '', headers: { get: () => null }, text: async () => '' };
+    if (az.private && opts.headers?.Authorization !== (az.valid ? basic(az.valid) : '') && path.startsWith(REPO.split('/_apis')[0])) return { type: 'opaqueredirect', status: 0, ok: false, statusText: '', headers: { get: () => null }, text: async () => '' };
     const { status = 200, body, headers = {} } = az.override?.(path) || route(path);
     const hs = new Map(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), String(v)]));
     return { type: 'cors', status, ok: status >= 200 && status < 300, statusText: '', headers: { get: (k) => hs.get(k.toLowerCase()) || null }, text: async () => (typeof body === 'string' ? body : JSON.stringify(body)) };
@@ -339,4 +341,48 @@ test('todavía sin árbol de archivos, sin cambios de commit y sin edición', ()
   assert.equal(src.files, null);
   assert.equal(src.commitDiff, null);
   assert.equal(src.canEdit(), false);
+});
+
+test('con token, un proyecto privado se lee y cada consulta lleva Authorization: Basic solo a dev.azure.com', async () => {
+  const az = repo();
+  az.private = true;
+  az.valid = az.token = 'pat-secreto';
+  const { src, errors } = connect(az, { token: az.token });
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  assert.equal(src.data.repo.private, true);
+  assert.ok(src.data.branches.has('feature'));
+  assert.ok(az.init.length > 3 && az.init.every((o) => o.headers.Authorization === `Basic ${Buffer.from(':pat-secreto').toString('base64')}`), 'todas llevan el token');
+  assert.equal(src.token, '', 'el token de GitHub queda vacío: el de Azure no se mezcla');
+});
+
+test('con token, que el servicio lo rechace (redirección, 203, 401 o 403) es «token rechazado», no «no se encontró»', async () => {
+  for (const how of ['redirect', 203, 401, 403]) {
+    const az = repo();
+    az.token = 'pat-malo';
+    if (how === 'redirect') {
+      az.private = true;
+      az.valid = 'otro';
+    } else az.override = () => ({ status: how, body: how === 203 ? '<html>sign in</html>' : { message: 'TF400813: no autorizado' } });
+    const { src, errors } = connect(az, { token: az.token });
+    await src.cycle();
+    assert.equal(errors[0]?.message.key, 'err.authAzure', `${how}`);
+    assert.equal(src.data.branches.size, 0);
+  }
+});
+
+test('con token, un repo que no existe sigue siendo «no se encontró» (404)', async () => {
+  const az = repo();
+  az.token = 'pat-ok';
+  const { src, errors } = connect(az, { token: az.token, name: 'nada' });
+  await src.cycle();
+  assert.equal(errors[0]?.message.key, 'err.notFoundAzure');
+});
+
+test('sin token, un 203 no se toma por error de token y una redirección sigue siendo «no se encontró»', async () => {
+  const az = fakeAzure();
+  az.private = true;
+  const { src, errors } = connect(az);
+  await src.cycle();
+  assert.equal(errors[0]?.message.key, 'err.notFoundAzure');
 });

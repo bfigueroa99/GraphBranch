@@ -5,7 +5,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('GBDesktop', {
-  /** El token de `service` ('github', 'gitlab', 'codeberg', 'bitbucket' o 'bitbucketdc', el de un Bitbucket propio) → { token, where }: where es 'keychain' (cifrado con
+  /** El token de `service` ('github', 'gitlab', 'codeberg', 'bitbucket', 'bitbucketdc', el de un Bitbucket propio, o 'azure') → { token, where }: where es 'keychain' (cifrado con
       el llavero) o 'plain' (el sistema no tiene llavero). */
   getToken: (service = 'github') => ipcRenderer.invoke('token:get', String(service)),
   /** Guarda el token de `service` ('' lo borra) → where. */

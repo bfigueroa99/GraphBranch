@@ -1,5 +1,5 @@
 /* GraphBranch — fuente de datos en vivo desde Azure DevOps (dev.azure.com, API REST 7.1 de Azure Repos),
-   para repositorios de proyectos públicos y sin token.
+   para repositorios de proyectos públicos y, con el token de Azure DevOps de Ajustes, privados.
 
    Hereda de la fuente de GitHub todo lo que no depende del servicio: el ciclo de sondeo con sus
    reintentos y su espera sin red, la prioridad para traer la historia de las ramas de a poco, la
@@ -12,6 +12,9 @@
    - Sin token: solo proyectos públicos. Un proyecto privado no responde 401 sino que redirige al inicio de
      sesión de Microsoft (otro origen): la consulta va con `redirect: 'manual'` y esa redirección cuenta como
      «no se encontró», igual que un repo que no existe.
+   - Con token (un token de acceso personal con el permiso `Code (Read)`): va en cada consulta como
+     `Authorization: Basic` (usuario vacío) y solo a dev.azure.com. Si el servicio lo rechaza (redirección al
+     inicio de sesión, la página de acceso con 203, 401 o 403) es un error de token, no un «no se encontró».
    - Las ramas salen de `refs?filter=heads/` (hasta MAX_BRANCHES, por orden alfabético: el servicio no las
      ordena por fecha).
    - La lista de commits de Azure no trae los padres: solo la consulta de un commit suelto los da. Por eso la
@@ -52,9 +55,10 @@
   const branchOf = (ref) => (typeof ref === 'string' && ref.startsWith(HEADS) ? ref.slice(HEADS.length) : '');
 
   class AzureSource extends GB.GitHubSource {
-    /** `owner` es "organización/proyecto"; `name`, el repo. */
-    constructor({ owner, name, depth = 40, filter = '', pins = [] }) {
+    /** `owner` es "organización/proyecto"; `name`, el repo. `token`: el de Azure DevOps; no va en `this.token`, que es el de GitHub. */
+    constructor({ owner, name, token = '', depth = 40, filter = '', pins = [] }) {
       super({ owner, name, token: '', depth, filter, pins });
+      this.azureToken = token;
       [this.org, this.project = ''] = String(owner).split('/');
       this.host = 'azure';
       this.mode = 'list';
@@ -79,12 +83,28 @@
 
     /* ---------- HTTP ---------- */
 
+    /** Las cabeceras de una consulta: el token de Azure DevOps, si lo hay, solo a dev.azure.com. */
+    headers() {
+      return this.azureToken ? { Accept: 'application/json', Authorization: `Basic ${btoa(`:${this.azureToken}`)}` } : { Accept: 'application/json' };
+    }
+
     async api(path, { allow = [] } = {}) {
       const sep = path.includes('?') ? '&' : '?';
-      const { res, body } = await this.request(`${WEB}${path}${sep}${VERSION}`, { headers: { Accept: 'application/json' }, cache: 'no-store', redirect: 'manual' });
+      // el cuerpo se lee como texto: con un token malo, a veces llega la página de acceso (HTML) con 203, y eso es un token rechazado, no una red cortada
+      const { res, body: text } = await this.request(`${WEB}${path}${sep}${VERSION}`, { headers: this.headers(), cache: 'no-store', redirect: 'manual', raw: true });
       this.cost++;
       if (allow.includes(res.status)) return { data: null, fresh: true, status: res.status, headers: res.headers };
+      if (this.azureToken && res.status === 203) throw this.toError(res, null);
+      let body = null;
+      if (text) {
+        try {
+          body = JSON.parse(text);
+        } catch {
+          body = undefined;
+        }
+      }
       if (!res.ok) throw this.toError(res, body);
+      if (!body) throw new ApiError(M(this.term('err.network')), { kind: 'network' }); // llegó vacía o cortada
       return { data: body, fresh: true, headers: res.headers };
     }
 
@@ -93,6 +113,10 @@
     }
 
     toError(res, body) {
+      // con token, que el servicio no lo acepte (o no deje leer con él) es un token malo, no un repo que falta; un 404 sigue siendo «no se encontró»
+      if (this.azureToken && (res.type === 'opaqueredirect' || (res.status >= 300 && res.status < 400) || [0, 203, 401, 403].includes(res.status))) {
+        return new ApiError(M('err.authAzure'), { status: res.status, kind: 'auth' });
+      }
       // un proyecto privado redirige al inicio de sesión (en el navegador, una respuesta opaca de estado 0); 401, 403 y 404, igual que un repo que no existe
       if (res.type === 'opaqueredirect' || (res.status >= 300 && res.status < 400) || [0, 401, 403, 404].includes(res.status)) return this.notFound();
       if (res.status === 429) return new ApiError(M('err.rateForge'), { status: 429, kind: 'rate', resetAt: Date.now() + WAIT_429 });

@@ -139,6 +139,9 @@
     bitbucketTokenInput: $('#bitbucket-token-input'),
     bitbucketTokenToggle: $('#bitbucket-token-toggle'),
     bitbucketTokenWhere: $('#bitbucket-token-where'),
+    azureTokenInput: $('#azure-token-input'),
+    azureTokenToggle: $('#azure-token-toggle'),
+    azureTokenWhere: $('#azure-token-where'),
     bbdcTokenField: $('#bbdc-token-field'),
     bbdcTokenInput: $('#bbdc-token-input'),
     bbdcTokenToggle: $('#bbdc-token-toggle'),
@@ -203,6 +206,7 @@
     gitlabToken: desktop ? '' : U.secret.get('gitlabToken', ''),
     codebergToken: desktop ? '' : U.secret.get('codebergToken', ''),
     bitbucketToken: desktop ? '' : U.secret.get('bitbucketToken', ''),
+    azureToken: desktop ? '' : U.secret.get('azureToken', ''),
     // el de un Bitbucket propio, aparte y atado a su dirección: si ?bitbucket= es otro, no se usa (ni se pisa hasta guardar Ajustes)
     bbdcToken: desktop ? '' : GB.BitbucketServerSource.unpack(U.secret.get('bbdcToken', ''), BITBUCKET_URL),
     depth: U.store.get('depth', 40),
@@ -426,7 +430,7 @@
   /** ¿Se pueden editar los archivos de este repo? (GitHub, GitLab, Codeberg y la demo; no la práctica ni la capa embebida) */
   const canEditTab = (tab) => !!tab?.source?.canEdit?.() && !EMBED && !tab.source.data.repo.practice;
   /** El campo de Ajustes del token que escribe en el servicio de ese repo. */
-  const tokenFieldOf = (tab) => ({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput })[tab?.source?.host] || el.tokenInput;
+  const tokenFieldOf = (tab) => ({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput, azure: el.azureTokenInput })[tab?.source?.host] || el.tokenInput;
   const editor = GB.editor.mount($('#editor'), {
     text: (k, p) => t(k, p),
     num: (n) => U.fmtNum(n),
@@ -494,7 +498,7 @@
     const key = keyOf({ host, owner, name });
     const remembered = { depth: settings.depth, marks: settings.marks, filter: U.store.get('filter:' + key, ''), pins: U.store.get('pins:' + key, []) };
     if (host === 'local') return new GB.LocalGitSource({ id: owner, name, ...remembered });
-    if (host === 'azure') return new GB.AzureSource({ owner, name, ...remembered });
+    if (host === 'azure') return new GB.AzureSource({ owner, name, token: settings.azureToken, ...remembered });
     if (host === 'bitbucketdc') return new GB.BitbucketServerSource({ owner, name, webUrl: BITBUCKET_URL, serverToken: settings.bbdcToken, ...remembered });
     if (host === 'bitbucket') return new GB.BitbucketSource({ owner, name, token: settings.bitbucketToken, ...remembered });
     if (host === 'codeberg') return new GB.CodebergSource({ owner, name, token: settings.codebergToken, ...remembered });
@@ -2600,7 +2604,7 @@
       showOverlay('loading', i18n.msg('status.retrying'));
       source.refreshNow();
     } else if (action === 'demo') startDemo();
-    else if (action === 'settings') openSettings({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput, bitbucket: el.bitbucketTokenInput, bitbucketdc: el.bbdcTokenInput }[source?.host] || el.tokenInput);
+    else if (action === 'settings') openSettings({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput, bitbucket: el.bitbucketTokenInput, bitbucketdc: el.bbdcTokenInput, azure: el.azureTokenInput }[source?.host] || el.tokenInput);
   });
 
   /* ---------- controles ---------- */
@@ -2934,6 +2938,7 @@
     el.gitlabTokenInput.value = settings.gitlabToken;
     el.codebergTokenInput.value = settings.codebergToken;
     el.bitbucketTokenInput.value = settings.bitbucketToken;
+    el.azureTokenInput.value = settings.azureToken;
     el.bbdcTokenInput.value = settings.bbdcToken;
     for (const [input, toggle] of tokenFields) {
       input.type = 'password';
@@ -3000,6 +3005,7 @@
     [el.gitlabTokenInput, el.gitlabTokenToggle],
     [el.codebergTokenInput, el.codebergTokenToggle],
     [el.bitbucketTokenInput, el.bitbucketTokenToggle],
+    [el.azureTokenInput, el.azureTokenToggle],
     [el.bbdcTokenInput, el.bbdcTokenToggle],
     ...hookFields.map((f) => [f.input, f.toggle]),
   ];
@@ -3019,6 +3025,7 @@
     el.gitlabTokenInput.value = '';
     el.codebergTokenInput.value = '';
     el.bitbucketTokenInput.value = '';
+    el.azureTokenInput.value = '';
     el.bbdcTokenInput.value = '';
     for (const f of hookFields) f.input.value = '';
     el.tokenInput.focus();
@@ -3030,6 +3037,7 @@
     settings.gitlabToken = el.gitlabTokenInput.value.trim();
     settings.codebergToken = el.codebergTokenInput.value.trim();
     settings.bitbucketToken = el.bitbucketTokenInput.value.trim();
+    settings.azureToken = el.azureTokenInput.value.trim();
     if (BITBUCKET_URL) settings.bbdcToken = el.bbdcTokenInput.value.trim(); // sin servidor elegido, el campo no se ve y lo guardado queda como está
     const bbdcStored = GB.BitbucketServerSource.pack(settings.bbdcToken, BITBUCKET_URL) || null;
     settings.depth = Math.max(10, Math.min(100, Number(el.depth.value) || 40));
@@ -3040,12 +3048,14 @@
       desktop.setToken(settings.gitlabToken, 'gitlab').catch(failed);
       desktop.setToken(settings.codebergToken, 'codeberg').catch(failed);
       desktop.setToken(settings.bitbucketToken, 'bitbucket').catch(failed);
+      desktop.setToken(settings.azureToken, 'azure').catch(failed);
       if (BITBUCKET_URL) desktop.setToken(bbdcStored || '', 'bitbucketdc').catch(failed);
     } else {
       U.secret.set('token', settings.token || null);
       U.secret.set('gitlabToken', settings.gitlabToken || null);
       U.secret.set('codebergToken', settings.codebergToken || null);
       U.secret.set('bitbucketToken', settings.bitbucketToken || null);
+      U.secret.set('azureToken', settings.azureToken || null);
       if (BITBUCKET_URL) U.secret.set('bbdcToken', bbdcStored);
     }
     U.store.set('depth', settings.depth);
@@ -3060,7 +3070,7 @@
     // se reconecta lo que cambió: un token de GitLab nuevo no gasta la cuota de GitHub. Si no cambió
     // nada, todo, como dice el botón
     const changed = (tab) =>
-      settings.depth !== before.depth || settings.marks !== before.marks || ({ gitlab: settings.gitlabToken !== before.gitlabToken, codeberg: settings.codebergToken !== before.codebergToken, bitbucket: settings.bitbucketToken !== before.bitbucketToken, forgejo: false, azure: false, bitbucketdc: settings.bbdcToken !== before.bbdcToken }[tab.source.host] ?? settings.token !== before.token);
+      settings.depth !== before.depth || settings.marks !== before.marks || ({ gitlab: settings.gitlabToken !== before.gitlabToken, codeberg: settings.codebergToken !== before.codebergToken, bitbucket: settings.bitbucketToken !== before.bitbucketToken, forgejo: false, azure: settings.azureToken !== before.azureToken, bitbucketdc: settings.bbdcToken !== before.bbdcToken }[tab.source.host] ?? settings.token !== before.token);
     if (realTabs().length) reconnectAll(realTabs().some(changed) ? changed : undefined);
     else el.tokenBanner.hidden = true;
   });
@@ -3072,7 +3082,8 @@
     el.gitlabTokenWhere.dataset.i18n = keychain ? 'settings.gitlabTokenWhereKeychain' : 'settings.gitlabTokenWherePlain';
     el.codebergTokenWhere.dataset.i18n = keychain ? 'settings.codebergTokenWhereKeychain' : 'settings.codebergTokenWherePlain';
     el.bitbucketTokenWhere.dataset.i18n = keychain ? 'settings.bitbucketTokenWhereKeychain' : 'settings.bitbucketTokenWherePlain';
-    for (const note of [el.tokenWhere, el.gitlabTokenWhere, el.codebergTokenWhere, el.bitbucketTokenWhere]) note.textContent = t(note.dataset.i18n);
+    el.azureTokenWhere.dataset.i18n = keychain ? 'settings.azureTokenWhereKeychain' : 'settings.azureTokenWherePlain';
+    for (const note of [el.tokenWhere, el.gitlabTokenWhere, el.codebergTokenWhere, el.bitbucketTokenWhere, el.azureTokenWhere]) note.textContent = t(note.dataset.i18n);
     bbdcWhere = keychain ? 'settings.bbdcTokenWhereKeychain' : 'settings.bbdcTokenWherePlain';
     renderBbdcField();
   }
@@ -3102,6 +3113,7 @@
     settings.gitlabToken = (await desktop.getToken('gitlab')).token;
     settings.codebergToken = (await desktop.getToken('codeberg')).token;
     settings.bitbucketToken = (await desktop.getToken('bitbucket')).token;
+    settings.azureToken = (await desktop.getToken('azure')).token;
     if (BITBUCKET_URL) settings.bbdcToken = GB.BitbucketServerSource.unpack((await desktop.getToken('bitbucketdc')).token, BITBUCKET_URL);
     for (const service of GB.hooks.SERVICES) hookUrls[service] = (await desktop.getToken(service)).token;
     showTokenWhere(where);

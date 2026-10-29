@@ -1654,7 +1654,8 @@
     /* ---------- pull requests ---------- */
 
     mapPull(p) {
-      const full = `${this.owner}/${this.name}`.toLowerCase();
+      // la base es este repo tal como lo nombra GitHub hoy (un repo renombrado ya no es `owner/name` escrito)
+      const full = (p.base?.repo?.full_name || `${this.owner}/${this.name}`).toLowerCase();
       return {
         number: p.number,
         title: p.title || '',

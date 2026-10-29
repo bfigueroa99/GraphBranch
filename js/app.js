@@ -2854,7 +2854,8 @@
     graph3d?.setSpin(!graph3d.spin);
     setPressed(el.spinBtn, !!graph3d?.spin);
   });
-  setView(U.store.get('view', '3d'));
+  const embedView = EMBED ? GB.embedOptions(location.search)?.view || '' : ''; // &view=2d|3d: la vista de la capa, sin guardarla
+  setView(embedView || U.store.get('view', '3d'), !embedView);
   director?.setOn(!!U.store.get('director', false));
   renderDirector();
   renderPause();

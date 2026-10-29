@@ -125,6 +125,16 @@ test('embedOptions: max acepta de 1 a 200 y por defecto muestra todas las ramas'
   assert.equal(GB.embedOptions('?max=5'), null);
 });
 
+test('embedOptions: view=2d|3d fija la vista; cualquier otro valor la deja como estaba', () => {
+  const { GB } = load('');
+  assert.equal(GB.embedOptions('?embed=1').view, '');
+  assert.equal(GB.embedOptions('?embed=1&view=2d').view, '2d');
+  assert.equal(GB.embedOptions('?embed=1&view=3D').view, '3d');
+  assert.equal(GB.embedOptions('?embed=1&view= 2d ').view, '2d');
+  for (const bad of ['', '4d', '2', 'galaxy', '2d3d']) assert.equal(GB.embedOptions('?embed=1&view=' + bad).view, '', bad);
+  assert.equal(GB.embedOptions('?view=2d'), null);
+});
+
 test('embedOptions: spin=0 (o off, false, no) apaga la rotación; por defecto gira', () => {
   const { GB } = load('');
   assert.equal(GB.embedOptions('?embed=1').spin, true);

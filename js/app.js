@@ -599,6 +599,10 @@
     authorFilter = initialAuthor || U.store.get('author:' + tab.key, ''); // ?author=ana manda sobre lo guardado, solo al abrir
     initialAuthor = '';
     setUrlParam('author', authorFilter);
+    firstParentOn = initialFirstParent ?? U.store.get('firstparent:' + tab.key, false) === true; // ?firstparent=1 manda sobre lo guardado, solo al abrir
+    initialFirstParent = null;
+    setUrlParam('firstparent', firstParentOn ? '1' : '');
+    $('#graph-firstparent').checked = firstParentOn;
     branchView = loadBranchView(tab.key);
     syncFiltered();
     layout = tab.layout;
@@ -1107,6 +1111,8 @@
   /* Filtro por autor: el grafo (2D, 3D) y el árbol de texto muestran solo las ramas con commits de esa persona
      (y la rama por defecto). Se guarda por repo; no hace ninguna consulta. */
   let authorFilter = '';
+  let firstParentOn = false; // el grafo solo con la cadena del primer padre de cada rama (?firstparent=1)
+  let initialFirstParent = null; // ?firstparent=1: el repo a la vista abre con el grafo de primer padre
   let initialAuthor = ''; // ?author=ana: el repo a la vista abre ya filtrado por esa persona
   const authorView = (data) => GB.search.byAuthor(data, authorFilter);
 
@@ -1119,7 +1125,10 @@
   };
   const branchViewOn = () => !!(branchView.hidden.length || branchView.solo);
   /** Lo que se dibuja: los filtros por autor y por rama, uno sobre el otro. */
-  const viewOf = (data) => GB.search.byBranches(authorView(data).data, branchView);
+  const viewOf = (data) => {
+    const v = GB.search.byBranches(authorView(data).data, branchView);
+    return firstParentOn ? { ...v, data: GB.search.firstParent(v.data) } : v;
+  };
   function setBranchView(next) {
     branchView = next;
     U.store.set('bview:' + repoKey(), branchViewOn() ? next : null);
@@ -2154,7 +2163,7 @@
   function openTextview() {
     const v = viewOf(source.view ? source.view() : source.data);
     const name = authorFilter && (GB.search.authors(source.data).find((a) => a.key === authorFilter)?.name || authorFilter);
-    const scope = authorFilter || pathShas || branchViewOn() ? { author: name, shown: v.shown, total: v.total, branches: branchViewOn() ? { shown: v.shown, total: v.total } : null, path: pathShas ? pathText : '', count: pathShas ? pathShas.size : 0 } : null;
+    const scope = authorFilter || pathShas || branchViewOn() || firstParentOn ? { author: name, shown: v.shown, total: v.total, branches: branchViewOn() ? { shown: v.shown, total: v.total } : null, path: pathShas ? pathText : '', count: pathShas ? pathShas.size : 0 } : null;
     textview.render(textTree(v.data), scope);
   }
   function showTextview() {
@@ -2261,7 +2270,7 @@
   }
   $('#search-close').addEventListener('click', closeSearch);
 
-  const syncFiltered = () => $('#search-btn').classList.toggle('filtered', !!authorFilter || !pathEl.clear.hidden || branchViewOn());
+  const syncFiltered = () => $('#search-btn').classList.toggle('filtered', !!authorFilter || !pathEl.clear.hidden || branchViewOn() || firstParentOn);
   const graphAuthor = $('#graph-author');
   function fillGraphAuthor() {
     graphAuthor.textContent = '';
@@ -2295,6 +2304,16 @@
   branchViewReset.addEventListener('click', () => {
     setBranchView({ hidden: [], solo: '' });
     graphAuthor.focus(); // el botón se esconde: el foco no se pierde
+  });
+  $('#graph-firstparent').addEventListener('change', (e) => {
+    firstParentOn = e.target.checked;
+    U.store.set('firstparent:' + repoKey(), firstParentOn ? true : null);
+    setUrlParam('firstparent', firstParentOn ? '1' : '');
+    syncFiltered();
+    if (lastRender) {
+      const { data, L } = drawGraph(false, true);
+      renderSummary(data, L);
+    }
   });
   graphAuthor.addEventListener('change', () => {
     authorFilter = graphAuthor.value;
@@ -3173,6 +3192,7 @@
     initialReplay = GB.Replay.paramsOf(q);
     initialPath = EMBED ? '' : GB.search.pathParam(q);
     initialAuthor = EMBED ? '' : GB.search.authorParam(q);
+    initialFirstParent = !EMBED && q.has('firstparent') ? GB.search.firstParentParam(q) : null;
     initialQuery = EMBED ? '' : GB.search.queryParam(q);
     initialText = !EMBED && GB.textview.openParam(q);
     initialConflicts = !EMBED && GB.health.conflictsParam(q);

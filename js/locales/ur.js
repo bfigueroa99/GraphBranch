@@ -281,6 +281,7 @@ GB.i18n.define('ur', {
   'tip.solo': 'صرف <code>{branch}</code> دکھائیں',
   'branchview.status': '{total} میں سے {n} شاخیں نظر آ رہی ہیں',
   'branchview.reset': 'تمام شاخیں دکھائیں',
+  'search.firstParent': 'صرف پہلا والد (جیسے git log --first-parent)',
   'author.unknown': 'نامعلوم',
 
   /* ---------- graph overlay ---------- */

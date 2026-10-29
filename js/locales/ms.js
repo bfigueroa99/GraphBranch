@@ -251,6 +251,7 @@ GB.i18n.define('ms', {
   'tip.solo': 'Tunjuk <code>{branch}</code> sahaja',
   'branchview.status': '{n} daripada {total} cabang kelihatan',
   'branchview.reset': 'Tunjuk semua cabang',
+  'search.firstParent': 'Induk pertama sahaja (seperti git log --first-parent)',
   'author.unknown': 'tidak diketahui',
 
   /* ---------- lapisan di atas graf ---------- */

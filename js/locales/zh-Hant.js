@@ -251,6 +251,7 @@ GB.i18n.define('zh-Hant', {
   'tip.solo': '只顯示 <code>{branch}</code>',
   'branchview.status': '顯示 {total} 個分支中的 {n} 個',
   'branchview.reset': '顯示所有分支',
+  'search.firstParent': '僅第一個父提交（同 git log --first-parent）',
   'author.unknown': '未知',
 
   /* ---------- 圖形上層提示 ---------- */

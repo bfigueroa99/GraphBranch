@@ -255,6 +255,7 @@ GB.i18n.define('hr', {
   'tip.solo': 'Prikaži samo <code>{branch}</code>',
   'branchview.status': 'Prikazano {n} od {total} grana',
   'branchview.reset': 'Prikaži sve grane',
+  'search.firstParent': 'Samo prvi roditelj (kao git log --first-parent)',
   'author.unknown': 'nepoznat',
 
   /* ---------- sloj preko grafa ---------- */

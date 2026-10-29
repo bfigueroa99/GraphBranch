@@ -251,6 +251,7 @@ GB.i18n.define('fr', {
   'tip.solo': 'Afficher seulement <code>{branch}</code>',
   'branchview.status': '{n} branches sur {total} affichées',
   'branchview.reset': 'Afficher toutes les branches',
+  'search.firstParent': 'Premier parent seulement (comme git log --first-parent)',
   'author.unknown': 'inconnu',
 
   /* ---------- couche au-dessus du graphe ---------- */

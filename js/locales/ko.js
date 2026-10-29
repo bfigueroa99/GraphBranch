@@ -251,6 +251,7 @@ GB.i18n.define('ko', {
   'tip.solo': '<code>{branch}</code>만 보기',
   'branchview.status': '브랜치 {total}개 중 {n}개 표시 중',
   'branchview.reset': '모든 브랜치 보기',
+  'search.firstParent': '첫 번째 부모만 (git log --first-parent처럼)',
   'author.unknown': '알 수 없음',
 
   /* ---------- 그래프 위 안내 ---------- */

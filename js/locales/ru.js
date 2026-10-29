@@ -261,6 +261,7 @@ GB.i18n.define('ru', {
   'tip.solo': 'Показать только <code>{branch}</code>',
   'branchview.status': 'Видно веток: {n} из {total}',
   'branchview.reset': 'Показать все ветки',
+  'search.firstParent': 'Только первый родитель (как git log --first-parent)',
   'author.unknown': 'неизвестен',
 
   /* ---------- слой поверх графа ---------- */

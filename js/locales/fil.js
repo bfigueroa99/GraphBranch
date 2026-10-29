@@ -251,6 +251,7 @@ GB.i18n.define('fil', {
   'tip.solo': 'Ipakita lang ang <code>{branch}</code>',
   'branchview.status': '{n} sa {total} branch ang nakikita',
   'branchview.reset': 'Ipakita ang lahat ng branch',
+  'search.firstParent': 'Unang parent lang (tulad ng git log --first-parent)',
   'author.unknown': 'hindi kilala',
 
   /* ---------- graph overlay ---------- */

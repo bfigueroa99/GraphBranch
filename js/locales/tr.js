@@ -251,6 +251,7 @@ GB.i18n.define('tr', {
   'tip.solo': 'Yalnızca <code>{branch}</code> dalını göster',
   'branchview.status': '{total} daldan {n} tanesi görünüyor',
   'branchview.reset': 'Tüm dalları göster',
+  'search.firstParent': 'Yalnızca ilk ebeveyn (git log --first-parent gibi)',
   'author.unknown': 'bilinmiyor',
 
   /* ---------- grafik üstü katman ---------- */

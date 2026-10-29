@@ -261,6 +261,7 @@ GB.i18n.define('uk', {
   'tip.solo': 'Показати лише <code>{branch}</code>',
   'branchview.status': 'Видно гілок: {n} із {total}',
   'branchview.reset': 'Показати всі гілки',
+  'search.firstParent': 'Лише перший батько (як git log --first-parent)',
   'author.unknown': 'невідомий',
 
   /* ---------- шар поверх графа ---------- */

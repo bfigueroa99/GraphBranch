@@ -251,6 +251,7 @@ GB.i18n.define('bn', {
   'tip.solo': 'শুধু <code>{branch}</code> দেখান',
   'branchview.status': '{total}টির মধ্যে {n}টি শাখা দেখা যাচ্ছে',
   'branchview.reset': 'সব শাখা দেখান',
+  'search.firstParent': 'শুধু প্রথম প্যারেন্ট (git log --first-parent-এর মতো)',
   'author.unknown': 'অজানা',
 
   /* ---------- গ্রাফের ওপরের স্তর ---------- */

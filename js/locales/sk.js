@@ -256,6 +256,7 @@ GB.i18n.define('sk', {
   'tip.solo': 'Zobraziť len <code>{branch}</code>',
   'branchview.status': 'Zobrazených {n} z {total} vetiev',
   'branchview.reset': 'Zobraziť všetky vetvy',
+  'search.firstParent': 'Iba prvý rodič (ako git log --first-parent)',
   'author.unknown': 'neznámy',
 
   /* ---------- graph overlay ---------- */

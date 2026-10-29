@@ -251,6 +251,7 @@ GB.i18n.define('sw', {
   'tip.solo': 'Onyesha <code>{branch}</code> pekee',
   'branchview.status': 'Matawi {n} kati ya {total} yanaonekana',
   'branchview.reset': 'Onyesha matawi yote',
+  'search.firstParent': 'Mzazi wa kwanza tu (kama git log --first-parent)',
   'author.unknown': 'hajulikani',
 
   /* ---------- safu juu ya mchoro ---------- */

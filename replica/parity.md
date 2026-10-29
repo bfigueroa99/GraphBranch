@@ -1,6 +1,6 @@
-## Parity: 79.9 / 100
+## Parity: 81.1 / 100
 
-features 79.9  (38 counted, must-haves 12 of 13 done)
+features 81.1  (38 counted, must-haves 12 of 13 done)
 
 Not shippable yet: 1 must-have features are not done.
 
@@ -11,9 +11,9 @@ Not shippable yet: 1 must-have features are not done.
 - grafo                         75.0  (8 features)
 - varios repos                  75.0  (3 features)
 - diffs                         80.0  (5 features)
-- pull requests                 83.3  (3 features)
 - integraciones                 86.8  (7 features)
 - búsqueda                     100.0  (1 features)
+- pull requests                100.0  (3 features)
 - ci                           100.0  (1 features)
 - análisis                     100.0  (1 features)
 - conflictos                   100.0  (1 features)
@@ -28,7 +28,6 @@ Not shippable yet: 1 must-have features are not done.
 - [should] grafo: Columnas de autor fecha y SHA a la vista en el grafo, partial  (autor fecha y SHA están en la ficha del commit y en la vista de texto; el grafo no tiene columnas)
 - [should] grafo: Resaltar los commits de una rama y atenuar el resto, partial  (comparar dos ramas resalta sus tramos y el filtro por autor o ruta atenúa; no al pasar el puntero por una rama)
 - [should] integraciones: Issues de rastreadores (Jira Trello GitHub Issues), partial  (issues de GitHub GitLab Codeberg y Bitbucket en el panel de actividad y la salud; sin Jira ni Trello)
-- [should] pull requests: Vista de un PR (descripción comentarios revisores checks), partial  (la ficha de la rama dice su PR y sus checks y enlaza al servicio; sin descripción ni comentarios)
 - [should] varios repos: Pestañas por repo con alias, partial  (pestañas por repo, sin alias)
 - [could] launchpad: Launchpad: fijar y posponer PRs e issues, no
 - [could] launchpad: Launchpad: vista de equipo filtrada por colaborador, no

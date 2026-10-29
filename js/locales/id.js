@@ -251,6 +251,7 @@ GB.i18n.define('id', {
   'tip.solo': 'Tampilkan hanya <code>{branch}</code>',
   'branchview.status': '{n} dari {total} cabang terlihat',
   'branchview.reset': 'Tampilkan semua cabang',
+  'search.firstParent': 'Hanya induk pertama (seperti git log --first-parent)',
   'author.unknown': 'tidak diketahui',
 
   /* ---------- lapisan di atas grafik ---------- */

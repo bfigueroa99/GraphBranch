@@ -124,3 +124,11 @@ test('embedOptions: max acepta de 1 a 200 y por defecto muestra todas las ramas'
   for (const bad of ['0', '201', '-3', '1.5', 'abc', '', '9999', '1e2', '5%20']) assert.equal(GB.embedOptions('?embed=1&max=' + bad).max, bad === '5%20' ? 5 : 0, bad);
   assert.equal(GB.embedOptions('?max=5'), null);
 });
+
+test('embedOptions: spin=0 (o off, false, no) apaga la rotación; por defecto gira', () => {
+  const { GB } = load('');
+  assert.equal(GB.embedOptions('?embed=1').spin, true);
+  for (const off of ['0', 'off', 'FALSE', 'no', ' 0 ']) assert.equal(GB.embedOptions('?embed=1&spin=' + off).spin, false, off);
+  for (const on of ['1', 'on', 'x', '', '00']) assert.equal(GB.embedOptions('?embed=1&spin=' + on).spin, true, on);
+  assert.equal(GB.embedOptions('?spin=0'), null);
+});

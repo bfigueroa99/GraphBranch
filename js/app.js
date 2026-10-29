@@ -2846,6 +2846,7 @@
   function renderWebglNote() {
     el.view3d.title = graph3d ? '' : t('webgl.missing');
   }
+  if (graph3d && EMBED && GB.embedOptions(location.search)?.spin === false) graph3d.spin = false; // &spin=0: capa quieta, sin guardarlo
   setPressed(el.spinBtn, !!graph3d?.spin);
   el.spinBtn.addEventListener('click', () => {
     graph3d?.setSpin(!graph3d.spin);

@@ -835,4 +835,10 @@ GB.i18n.define('hi', {
   'loopPrompt.preview': 'प्रॉम्प्ट',
   'loopPrompt.chars': { one: '{n} अक्षर', other: '{n} अक्षर' },
   'loopPrompt.copy': 'प्रॉम्प्ट कॉपी करें',
+  'prview.show': 'विवरण और टिप्पणियाँ देखें',
+  'prview.busy': 'पुल रिक्वेस्ट लोड हो रहा है…',
+  'prview.fail': 'पुल रिक्वेस्ट लोड नहीं हो सका।',
+  'prview.noBody': 'कोई विवरण नहीं।',
+  'prview.comments': 'नवीनतम टिप्पणियाँ',
+  'prview.noComments': 'अभी कोई टिप्पणी नहीं।',
 });

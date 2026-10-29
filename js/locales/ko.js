@@ -835,4 +835,10 @@ GB.i18n.define('ko', {
   'loopPrompt.preview': '프롬프트',
   'loopPrompt.chars': '{n}자',
   'loopPrompt.copy': '프롬프트 복사',
+  'prview.show': '설명과 댓글 보기',
+  'prview.busy': '풀 리퀘스트를 불러오는 중…',
+  'prview.fail': '풀 리퀘스트를 불러오지 못했습니다.',
+  'prview.noBody': '설명이 없습니다.',
+  'prview.comments': '최근 댓글',
+  'prview.noComments': '아직 댓글이 없습니다.',
 });

@@ -836,4 +836,10 @@ GB.i18n.define('pt', {
   'loopPrompt.preview': 'O prompt',
   'loopPrompt.chars': { one: '{n} caractere', other: '{n} caracteres' },
   'loopPrompt.copy': 'Copiar o prompt',
+  'prview.show': 'Ver descrição e comentários',
+  'prview.busy': 'A carregar o pull request…',
+  'prview.fail': 'Não foi possível carregar o pull request.',
+  'prview.noBody': 'Sem descrição.',
+  'prview.comments': 'Últimos comentários',
+  'prview.noComments': 'Ainda não há comentários.',
 });

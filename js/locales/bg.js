@@ -835,4 +835,10 @@ GB.i18n.define('bg', {
   'loopPrompt.preview': 'Промптът',
   'loopPrompt.chars': { one: '{n} знак', other: '{n} знака' },
   'loopPrompt.copy': 'Копиране на промпта',
+  'prview.show': 'Описание и коментари',
+  'prview.busy': 'Зареждане на pull request…',
+  'prview.fail': 'Pull request не можа да се зареди.',
+  'prview.noBody': 'Няма описание.',
+  'prview.comments': 'Последни коментари',
+  'prview.noComments': 'Все още няма коментари.',
 });

@@ -836,4 +836,10 @@ GB.i18n.define('th', {
   'loopPrompt.preview': 'พรอมต์',
   'loopPrompt.chars': '{n} อักขระ',
   'loopPrompt.copy': 'คัดลอกพรอมต์',
+  'prview.show': 'ดูคำอธิบายและความคิดเห็น',
+  'prview.busy': 'กำลังโหลด pull request…',
+  'prview.fail': 'โหลด pull request ไม่สำเร็จ',
+  'prview.noBody': 'ไม่มีคำอธิบาย',
+  'prview.comments': 'ความคิดเห็นล่าสุด',
+  'prview.noComments': 'ยังไม่มีความคิดเห็น',
 });

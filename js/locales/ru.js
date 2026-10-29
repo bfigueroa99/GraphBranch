@@ -851,4 +851,10 @@ GB.i18n.define('ru', {
   'loopPrompt.preview': 'Промпт',
   'loopPrompt.chars': { one: '{n} символ', few: '{n} символа', many: '{n} символов', other: '{n} символа' },
   'loopPrompt.copy': 'Копировать промпт',
+  'prview.show': 'Показать описание и комментарии',
+  'prview.busy': 'Загрузка pull request…',
+  'prview.fail': 'Не удалось загрузить pull request.',
+  'prview.noBody': 'Нет описания.',
+  'prview.comments': 'Последние комментарии',
+  'prview.noComments': 'Комментариев пока нет.',
 });

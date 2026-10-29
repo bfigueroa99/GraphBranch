@@ -835,4 +835,10 @@ GB.i18n.define('tr', {
   'loopPrompt.preview': 'İstem',
   'loopPrompt.chars': { one: '{n} karakter', other: '{n} karakter' },
   'loopPrompt.copy': 'İstemi kopyala',
+  'prview.show': 'Açıklamayı ve yorumları göster',
+  'prview.busy': 'Pull request yükleniyor…',
+  'prview.fail': 'Pull request yüklenemedi.',
+  'prview.noBody': 'Açıklama yok.',
+  'prview.comments': 'Son yorumlar',
+  'prview.noComments': 'Henüz yorum yok.',
 });

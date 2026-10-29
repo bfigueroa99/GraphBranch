@@ -835,4 +835,10 @@ GB.i18n.define('ja', {
   'loopPrompt.preview': 'プロンプト',
   'loopPrompt.chars': '{n} 文字',
   'loopPrompt.copy': 'プロンプトをコピー',
+  'prview.show': '説明とコメントを見る',
+  'prview.busy': 'プルリクエストを読み込み中…',
+  'prview.fail': 'プルリクエストを読み込めませんでした。',
+  'prview.noBody': '説明はありません。',
+  'prview.comments': '最新のコメント',
+  'prview.noComments': 'コメントはまだありません。',
 });

@@ -3304,6 +3304,40 @@ kbd {
   font-size: 12.5px;
   text-underline-offset: 3px;
 }
+.tip-prbody {
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+.tip-prbody p {
+  margin: 0 0 6px;
+}
+.tip-prbody .pv-body {
+  white-space: pre-wrap;
+  max-height: 140px;
+  overflow: auto;
+}
+.tip-prbody .pv-head {
+  font-weight: 600;
+  color: var(--ink);
+}
+.tip-prbody .pv-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tip-prbody .pv-who {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.tip-prbody .pv-time {
+  color: var(--ink-2);
+}
+.tip-prview,
 .tip-pin,
 .tip-view {
   display: inline-flex;
@@ -3318,6 +3352,7 @@ kbd {
   font-weight: 600;
   cursor: pointer;
 }
+.tip-prview:hover,
 .tip-pin:hover,
 .tip-view:hover {
   background: var(--surface-2);

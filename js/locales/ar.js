@@ -934,4 +934,10 @@ GB.i18n.define('ar', {
   'loopPrompt.preview': 'الموجّه',
   'loopPrompt.chars': { zero: '{n} حرف', one: '{n} حرف', two: '{n} حرفان', few: '{n} أحرف', many: '{n} حرفًا', other: '{n} حرف' },
   'loopPrompt.copy': 'نسخ الموجّه',
+  'prview.show': 'عرض الوصف والتعليقات',
+  'prview.busy': 'جارٍ تحميل طلب الدمج…',
+  'prview.fail': 'تعذّر تحميل طلب الدمج.',
+  'prview.noBody': 'لا يوجد وصف.',
+  'prview.comments': 'أحدث التعليقات',
+  'prview.noComments': 'لا توجد تعليقات بعد.',
 });

@@ -578,6 +578,7 @@
       GB.graphShared.wirePinButton(this.tip, (name) => this.opts.onTogglePin?.(name));
       GB.graphShared.wireViewButtons(this.tip, (name, how) => this.opts.onBranchView?.(name, how));
       GB.graphShared.wireDiffButton(this.tip, (sha) => this.opts.onDiff?.(sha));
+      GB.graphShared.wirePrButton(this.tip, (n) => this.opts.onPrView?.(n));
 
       /* vectores de trabajo: el cuadro a cuadro no crea objetos */
       this.Y = new THREE.Vector3(0, 1, 0);

@@ -835,4 +835,10 @@ GB.i18n.define('id', {
   'loopPrompt.preview': 'Prompt',
   'loopPrompt.chars': '{n} karakter',
   'loopPrompt.copy': 'Salin prompt',
+  'prview.show': 'Lihat deskripsi dan komentar',
+  'prview.busy': 'Memuat pull request…',
+  'prview.fail': 'Pull request tidak dapat dimuat.',
+  'prview.noBody': 'Tanpa deskripsi.',
+  'prview.comments': 'Komentar terbaru',
+  'prview.noComments': 'Belum ada komentar.',
 });

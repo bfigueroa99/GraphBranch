@@ -15,7 +15,7 @@ Historial de un archivo,diffs,should,yes,yes,"README: Cambios de cada commit (el
 Blame de un archivo (autor y fecha por línea),diffs,should,yes,no,
 Editar un archivo y hacer commit desde el diff,diffs,could,yes,yes,"README: Editar el código (#186)"
 PRs abiertos con su estado de CI y de revisión,pull requests,must,yes,yes,"README: Salud del repo (PRs por estado) y la marca del PR en el grafo"
-Vista de un PR (descripción comentarios revisores checks),pull requests,should,yes,partial,"la ficha de la rama dice su PR y sus checks y enlaza al servicio; sin descripción ni comentarios"
+Vista de un PR (descripción comentarios revisores checks),pull requests,should,yes,yes,"README: Descripción y comentarios de un PR (ficha de la rama; GitHub y demo; sin revisores ni checks por línea)"
 PRs apilados,pull requests,could,yes,yes,"Mapa de alcance (Datos): las pilas de PRs apilados"
 Crear un PR desde la app,pull requests,could,yes,skip,"GraphBranch mira repos: no abre PRs (Replica en la directiva)"
 Fusionar un PR desde la app,pull requests,could,yes,skip,"GraphBranch mira repos: no fusiona PRs"

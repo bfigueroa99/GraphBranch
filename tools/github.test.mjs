@@ -863,3 +863,32 @@ test('writeFile: el motivo de cada fallo (token rechazado, sin permiso de escrit
   assert.equal(await kind(409, 'a.txt does not match s'), 'conflict');
   assert.equal(await kind(422, 'Invalid request. "sha" wasn\'t supplied.'), 'conflict');
 });
+
+test('la vista de un PR: descripción y los últimos 5 comentarios, solo al pedirla (dos consultas)', async () => {
+  const gh = fakeGitHub();
+  gh.commit('a1');
+  gh.branches.set('main', 'a1');
+  const { src, errors } = connect(gh);
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  const before = gh.calls.length;
+  gh.override = (path) => {
+    if (path === '/repos/o/r/pulls/7') return { body: { number: 7, body: 'Arregla el login', comments: 7 } };
+    if (path === '/repos/o/r/issues/7/comments?per_page=100&page=1') {
+      const user = { login: 'ana', avatar_url: 'https://avatars.example/ana' };
+      return { body: Array.from({ length: 7 }, (_, i) => ({ user, body: `c${i + 1}`, created_at: '2026-10-01T00:00:00Z' })) };
+    }
+    return null;
+  };
+  const d = await src.prDetail(7);
+  assert.deepEqual(gh.calls.slice(before), ['/repos/o/r/pulls/7', '/repos/o/r/issues/7/comments?per_page=100&page=1']);
+  assert.equal(d.body, 'Arregla el login');
+  assert.equal(d.total, 7);
+  assert.deepEqual(Array.from(d.comments, (c) => c.body), ['c3', 'c4', 'c5', 'c6', 'c7']);
+  assert.equal(d.comments[0].user.login, 'ana');
+  gh.override = (path) => (path === '/repos/o/r/pulls/8' ? { body: { number: 8, body: null, comments: 0 } } : null);
+  const n = gh.calls.length;
+  const empty = await src.prDetail(8);
+  assert.deepEqual(gh.calls.slice(n), ['/repos/o/r/pulls/8'], 'sin comentarios no hay segunda consulta');
+  assert.deepEqual([empty.body, empty.comments.length], ['', 0]);
+});

@@ -236,6 +236,7 @@
     onTogglePin: (name) => togglePin(name),
     onBranchView: (name, how) => onBranchView(name, how),
     onDiff: (sha) => openDiff(sha),
+    onPrView: (n) => active.source.prDetail(n),
     diffing: () => diffView.isOpen,
   });
   let graph3d = null;
@@ -246,6 +247,7 @@
         onTogglePin: (name) => togglePin(name),
         onBranchView: (name, how) => onBranchView(name, how),
         onDiff: (sha) => openDiff(sha),
+        onPrView: (n) => active.source.prDetail(n),
         diffing: () => diffView.isOpen,
         onFlightChange: (on) => setPressed(el.flyBtn, on),
         // zumbido del motor mientras se vuela (solo con el sonido activado)
@@ -1148,6 +1150,7 @@
     canPin: !data.repo.demo && tab === active && !allOn, // fijar una rama es del grafo de la vista
     canHide: tab === active && !allOn, // y ocultarla o dejarla sola, también en la demo
     canDiff: canDiffTab(tab),
+    canPrView: !!tab.source.prDetail && !EMBED && tab === active && !allOn, // la vista del PR pide su descripción al pulsarla
   });
 
   /** Lo que miran los logros: el estado del repo de ahora (`L`, su layout, si está a la vista). */

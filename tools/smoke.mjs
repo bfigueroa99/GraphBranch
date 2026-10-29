@@ -1118,6 +1118,36 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
+  await step(page, 'vista de un PR: la ficha de una rama con PR muestra su descripción y comentarios al pulsar, sin consultar api.github.com', async () => {
+    await page.keyboard.press('Escape');
+    await page.click('#view-2d');
+    const heads = await page.$$('#graph svg .head[role=button]');
+    let btn = null;
+    for (const h of heads) {
+      await h.focus();
+      await page.keyboard.press('Enter');
+      btn = await page.$('#graph .tip .tip-prview');
+      if (btn) break;
+      await page.keyboard.press('Escape');
+    }
+    if (!btn) throw new Error('ninguna ficha de rama con PR trae «Ver descripción y comentarios»');
+    await btn.focus();
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#graph .tip .tip-prbody .pv-list li', { timeout: T(5000) });
+    const r = await page.evaluate(() => ({
+      expanded: document.querySelector('.tip-prview').getAttribute('aria-expanded'),
+      body: document.querySelector('.tip-prbody .pv-body').textContent,
+      n: document.querySelectorAll('.tip-prbody .pv-list li').length,
+      focus: document.activeElement?.className,
+    }));
+    if (r.expanded !== 'true' || !r.body.trim() || !r.n || r.focus !== 'tip-prview') throw new Error('vista del PR rota: ' + JSON.stringify(r));
+    if (/undefined|NaN|prview\./.test(r.body)) throw new Error('texto sin resolver: ' + r.body);
+    await page.keyboard.press('Enter');
+    const hidden = await page.$eval('.tip-prbody', (b) => b.hidden);
+    if (!hidden) throw new Error('pulsarlo otra vez no esconde la vista del PR');
+    await page.keyboard.press('Escape');
+  });
+
   await step(page, 'cambios de un commit: desde su ficha, con teclado se pasa al anterior y se vuelve, y Esc cierra', async () => {
     await page.keyboard.press('Escape'); // ninguna ficha abierta de antes
     await page.click('#view-2d');

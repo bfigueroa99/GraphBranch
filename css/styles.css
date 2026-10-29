@@ -1297,6 +1297,13 @@ kbd {
   font: 500 11px var(--font-mono);
   fill: var(--ink-2);
 }
+.legend-item:focus {
+  outline: none;
+}
+.legend-item:focus-visible .l-bg {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
 .legend-item.ghost-row {
   cursor: default;
 }

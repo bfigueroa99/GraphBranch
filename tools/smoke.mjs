@@ -3345,6 +3345,22 @@ console.log('Capa para streaming: &theme= fija el tema (?embed=1)');
   await page.context().close();
 }
 
+console.log('Capa para streaming: &spin=0 apaga la rotación 3D (?embed=1)');
+{
+  const page = await openPage({ viewport: { width: 640, height: 400 } });
+  await step(page, '&spin=0 deja la vista 3D quieta sin guardarlo; sin &spin= gira como siempre', async () => {
+    const spin = () => page.getAttribute('#spin-btn', 'aria-pressed');
+    await page.goto(`${base}/index.html?lang=es&embed=1&spin=0`);
+    await loaded(page);
+    if ((await spin()) !== 'false') throw new Error('&spin=0 no apaga la rotación');
+    if (await page.evaluate(() => localStorage.getItem('graphbranch:spin3d'))) throw new Error('&spin=0 guardó la preferencia');
+    await page.goto(`${base}/index.html?lang=es&embed=1`);
+    await loaded(page);
+    if ((await spin()) !== 'true') throw new Error('sin &spin= la rotación no sigue encendida');
+  });
+  await page.context().close();
+}
+
 console.log('Capa para streaming: &title= pone un rótulo propio (?embed=1)');
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });

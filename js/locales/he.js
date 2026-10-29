@@ -287,6 +287,10 @@ GB.i18n.define('he', {
   'tip.openCommit': 'פתח commit ב-GitHub',
   'tip.pin': 'הצמד את <code>{branch}</code>',
   'tip.unpin': 'בטל הצמדה של <code>{branch}</code>',
+  'tip.hide': 'הסתרת <code>{branch}</code>',
+  'tip.solo': 'הצגת <code>{branch}</code> בלבד',
+  'branchview.status': '{n} מתוך {total} ענפים מוצגים',
+  'branchview.reset': 'הצגת כל הענפים',
   'author.unknown': 'לא ידוע',
 
   /* ---------- graph overlay ---------- */

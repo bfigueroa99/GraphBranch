@@ -176,3 +176,23 @@ test('limitBranches: deja la rama por defecto y las de commit más reciente, sin
   assert.equal(S.limitBranches(data, 5), data);
   assert.deepEqual([...S.limitBranches(data, 1).branches.keys()], ['main', 'esperando']);
 });
+
+test('byBranches oculta ramas o deja una sola, siempre con la rama por defecto y sin mutar', () => {
+  const br = (name, sha) => [name, { name, sha }];
+  const data = {
+    repo: { defaultBranch: 'main' },
+    commits: new Map([['a', {}], ['b', {}], ['c', {}]]),
+    branches: new Map([br('main', 'a'), br('f1', 'b'), br('f2', 'c'), br('lejana', 'zz')]),
+    pulls: new Map([[1, { head: 'f1', sameRepo: true }], [2, { head: 'f2', sameRepo: true }]]),
+  };
+  const none = S.byBranches(data, { hidden: [], solo: '' });
+  assert.equal(none.data, data);
+  assert.equal(none.total, 3);
+  const hid = S.byBranches(data, { hidden: ['f1', 'main'], solo: '' });
+  assert.deepEqual([...hid.data.branches.keys()], ['main', 'f2', 'lejana']);
+  assert.deepEqual([...hid.data.pulls.keys()], [2]);
+  assert.equal(hid.shown, 2);
+  const solo = S.byBranches(data, { hidden: [], solo: 'f2' });
+  assert.deepEqual([...solo.data.branches.keys()], ['main', 'f2', 'lejana']);
+  assert.equal(data.branches.size, 4);
+});

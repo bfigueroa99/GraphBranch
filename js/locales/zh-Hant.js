@@ -247,6 +247,10 @@ GB.i18n.define('zh-Hant', {
   'tip.openCommit': '在 GitHub 上開啟提交',
   'tip.pin': '釘選 <code>{branch}</code>',
   'tip.unpin': '取消釘選 <code>{branch}</code>',
+  'tip.hide': '隱藏 <code>{branch}</code>',
+  'tip.solo': '只顯示 <code>{branch}</code>',
+  'branchview.status': '顯示 {total} 個分支中的 {n} 個',
+  'branchview.reset': '顯示所有分支',
   'author.unknown': '未知',
 
   /* ---------- 圖形上層提示 ---------- */

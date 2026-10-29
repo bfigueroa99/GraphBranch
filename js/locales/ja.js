@@ -247,6 +247,10 @@ GB.i18n.define('ja', {
   'tip.openCommit': 'GitHub でコミットを開く',
   'tip.pin': '<code>{branch}</code> をピン留め',
   'tip.unpin': '<code>{branch}</code> のピン留めを解除',
+  'tip.hide': '<code>{branch}</code> を非表示',
+  'tip.solo': '<code>{branch}</code> だけ表示',
+  'branchview.status': '{total} 本中 {n} 本のブランチを表示中',
+  'branchview.reset': 'すべてのブランチを表示',
   'author.unknown': '不明',
 
   /* ---------- グラフ上のオーバーレイ ---------- */

@@ -247,6 +247,10 @@ GB.i18n.define('bn', {
   'tip.openCommit': 'GitHub-এ কমিট খুলুন',
   'tip.pin': 'পিন করুন: <code>{branch}</code>',
   'tip.unpin': 'আনপিন করুন: <code>{branch}</code>',
+  'tip.hide': '<code>{branch}</code> লুকান',
+  'tip.solo': 'শুধু <code>{branch}</code> দেখান',
+  'branchview.status': '{total}টির মধ্যে {n}টি শাখা দেখা যাচ্ছে',
+  'branchview.reset': 'সব শাখা দেখান',
   'author.unknown': 'অজানা',
 
   /* ---------- গ্রাফের ওপরের স্তর ---------- */

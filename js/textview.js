@@ -115,11 +115,12 @@
     return shas.size;
   }
 
-  /** Lo que dice la vista de los filtros activos: `scope` = { author, shown, total, path, count }. Vacío sin filtros. */
+  /** Lo que dice la vista de los filtros activos: `scope` = { author, shown, total, branches: { shown, total }, path, count }. Vacío sin filtros. */
   function scopeText(scope, text) {
     if (!scope) return '';
     const out = [];
     if (scope.author) out.push(text('textview.scopeAuthor', { author: scope.author, shown: scope.shown, total: scope.total }));
+    if (scope.branches) out.push(text('branchview.status', { n: scope.branches.shown, total: scope.branches.total }));
     if (scope.path) out.push(text('textview.scopePath', { path: scope.path, n: scope.count }));
     return out.join('. ');
   }

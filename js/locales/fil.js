@@ -247,6 +247,10 @@ GB.i18n.define('fil', {
   'tip.openCommit': 'Buksan ang commit sa GitHub',
   'tip.pin': 'I-pin ang <code>{branch}</code>',
   'tip.unpin': 'I-unpin ang <code>{branch}</code>',
+  'tip.hide': 'Itago ang <code>{branch}</code>',
+  'tip.solo': 'Ipakita lang ang <code>{branch}</code>',
+  'branchview.status': '{n} sa {total} branch ang nakikita',
+  'branchview.reset': 'Ipakita ang lahat ng branch',
   'author.unknown': 'hindi kilala',
 
   /* ---------- graph overlay ---------- */

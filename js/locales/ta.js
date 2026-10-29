@@ -247,6 +247,10 @@ GB.i18n.define('ta', {
   'tip.openCommit': 'GitHub-இல் கமிட்டைத் திறக்கவும்',
   'tip.pin': 'பின் செய்யவும்: <code>{branch}</code>',
   'tip.unpin': 'பின்னை நீக்கவும்: <code>{branch}</code>',
+  'tip.hide': '<code>{branch}</code> ஐ மறை',
+  'tip.solo': '<code>{branch}</code> மட்டும் காட்டு',
+  'branchview.status': '{total} கிளைகளில் {n} தெரிகின்றன',
+  'branchview.reset': 'எல்லா கிளைகளையும் காட்டு',
   'author.unknown': 'தெரியாதவர்',
 
   /* ---------- வரைபடத்தின் மேல் அடுக்கு ---------- */

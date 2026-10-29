@@ -247,6 +247,10 @@ GB.i18n.define('vi', {
   'tip.openCommit': 'Mở commit trên GitHub',
   'tip.pin': 'Ghim <code>{branch}</code>',
   'tip.unpin': 'Bỏ ghim <code>{branch}</code>',
+  'tip.hide': 'Ẩn <code>{branch}</code>',
+  'tip.solo': 'Chỉ hiện <code>{branch}</code>',
+  'branchview.status': 'Đang hiện {n} trên {total} nhánh',
+  'branchview.reset': 'Hiện tất cả nhánh',
   'author.unknown': 'không rõ',
 
   /* ---------- lớp phủ trên biểu đồ ---------- */

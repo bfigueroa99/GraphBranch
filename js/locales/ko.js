@@ -247,6 +247,10 @@ GB.i18n.define('ko', {
   'tip.openCommit': 'GitHub에서 커밋 열기',
   'tip.pin': '<code>{branch}</code> 고정',
   'tip.unpin': '<code>{branch}</code> 고정 해제',
+  'tip.hide': '<code>{branch}</code> 숨기기',
+  'tip.solo': '<code>{branch}</code>만 보기',
+  'branchview.status': '브랜치 {total}개 중 {n}개 표시 중',
+  'branchview.reset': '모든 브랜치 보기',
   'author.unknown': '알 수 없음',
 
   /* ---------- 그래프 위 안내 ---------- */

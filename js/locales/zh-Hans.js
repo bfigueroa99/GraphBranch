@@ -247,6 +247,10 @@ GB.i18n.define('zh-Hans', {
   'tip.openCommit': '在 GitHub 上打开提交',
   'tip.pin': '固定 <code>{branch}</code>',
   'tip.unpin': '取消固定 <code>{branch}</code>',
+  'tip.hide': '隐藏 <code>{branch}</code>',
+  'tip.solo': '只显示 <code>{branch}</code>',
+  'branchview.status': '显示 {total} 个分支中的 {n} 个',
+  'branchview.reset': '显示所有分支',
   'author.unknown': '未知',
 
   /* ---------- 图形上层提示 ---------- */

@@ -252,6 +252,10 @@ GB.i18n.define('sk', {
   'tip.openCommit': 'Otvoriť commit na GitHube',
   'tip.pin': 'Pripnúť <code>{branch}</code>',
   'tip.unpin': 'Odopnúť <code>{branch}</code>',
+  'tip.hide': 'Skryť <code>{branch}</code>',
+  'tip.solo': 'Zobraziť len <code>{branch}</code>',
+  'branchview.status': 'Zobrazených {n} z {total} vetiev',
+  'branchview.reset': 'Zobraziť všetky vetvy',
   'author.unknown': 'neznámy',
 
   /* ---------- graph overlay ---------- */

@@ -251,6 +251,10 @@ GB.i18n.define('ro', {
   'tip.openCommit': 'Deschideți commit-ul pe GitHub',
   'tip.pin': 'Fixați <code>{branch}</code>',
   'tip.unpin': 'Anulați fixarea pentru <code>{branch}</code>',
+  'tip.hide': 'Ascunde <code>{branch}</code>',
+  'tip.solo': 'Arată doar <code>{branch}</code>',
+  'branchview.status': '{n} din {total} ramuri la vedere',
+  'branchview.reset': 'Arată toate ramurile',
   'author.unknown': 'necunoscut',
 
   /* ---------- strat peste graf ---------- */

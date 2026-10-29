@@ -252,6 +252,10 @@ GB.i18n.define('cs', {
   'tip.openCommit': 'Otevřít commit na GitHubu',
   'tip.pin': 'Připnout <code>{branch}</code>',
   'tip.unpin': 'Odepnout <code>{branch}</code>',
+  'tip.hide': 'Skrýt <code>{branch}</code>',
+  'tip.solo': 'Zobrazit jen <code>{branch}</code>',
+  'branchview.status': 'Zobrazeno {n} z {total} větví',
+  'branchview.reset': 'Zobrazit všechny větve',
   'author.unknown': 'neznámý',
 
   /* ---------- vrstva nad grafem ---------- */

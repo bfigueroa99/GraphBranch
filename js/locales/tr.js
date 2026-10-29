@@ -247,6 +247,10 @@ GB.i18n.define('tr', {
   'tip.openCommit': 'Commit’i GitHub’da aç',
   'tip.pin': '<code>{branch}</code> dalını sabitle',
   'tip.unpin': '<code>{branch}</code> dalının sabitlemesini kaldır',
+  'tip.hide': '<code>{branch}</code> dalını gizle',
+  'tip.solo': 'Yalnızca <code>{branch}</code> dalını göster',
+  'branchview.status': '{total} daldan {n} tanesi görünüyor',
+  'branchview.reset': 'Tüm dalları göster',
   'author.unknown': 'bilinmiyor',
 
   /* ---------- grafik üstü katman ---------- */

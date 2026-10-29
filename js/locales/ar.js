@@ -317,6 +317,10 @@ GB.i18n.define('ar', {
   'tip.openCommit': 'فتح الـ commit على GitHub',
   'tip.pin': 'تثبيت <code>{branch}</code>',
   'tip.unpin': 'إلغاء تثبيت <code>{branch}</code>',
+  'tip.hide': 'إخفاء <code>{branch}</code>',
+  'tip.solo': 'عرض <code>{branch}</code> فقط',
+  'branchview.status': '{n} من {total} فروع قيد العرض',
+  'branchview.reset': 'عرض كل الفروع',
   'author.unknown': 'غير معروف',
 
   /* ---------- graph overlay ---------- */

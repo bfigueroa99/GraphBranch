@@ -251,6 +251,10 @@ GB.i18n.define('hr', {
   'tip.openCommit': 'Otvorite commit na GitHubu',
   'tip.pin': 'Prikvačite <code>{branch}</code>',
   'tip.unpin': 'Otkvačite <code>{branch}</code>',
+  'tip.hide': 'Sakrij <code>{branch}</code>',
+  'tip.solo': 'Prikaži samo <code>{branch}</code>',
+  'branchview.status': 'Prikazano {n} od {total} grana',
+  'branchview.reset': 'Prikaži sve grane',
   'author.unknown': 'nepoznat',
 
   /* ---------- sloj preko grafa ---------- */

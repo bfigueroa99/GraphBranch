@@ -247,6 +247,10 @@ GB.i18n.define('ca', {
   'tip.openCommit': 'Obre el commit a GitHub',
   'tip.pin': 'Fixa <code>{branch}</code>',
   'tip.unpin': 'Deixa de fixar <code>{branch}</code>',
+  'tip.hide': 'Amaga <code>{branch}</code>',
+  'tip.solo': 'Mostra només <code>{branch}</code>',
+  'branchview.status': '{n} de {total} branques a la vista',
+  'branchview.reset': 'Mostra totes les branques',
   'author.unknown': 'desconegut',
 
   /* ---------- capa sobre el graf ---------- */

@@ -247,6 +247,10 @@ GB.i18n.define('de', {
   'tip.openCommit': 'Commit auf GitHub öffnen',
   'tip.pin': '<code>{branch}</code> anheften',
   'tip.unpin': '<code>{branch}</code> nicht mehr anheften',
+  'tip.hide': '<code>{branch}</code> ausblenden',
+  'tip.solo': 'Nur <code>{branch}</code> zeigen',
+  'branchview.status': '{n} von {total} Branches sichtbar',
+  'branchview.reset': 'Alle Branches zeigen',
   'author.unknown': 'unbekannt',
 
   /* ---------- Overlay über dem Graph ---------- */

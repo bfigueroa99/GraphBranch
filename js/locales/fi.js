@@ -247,6 +247,10 @@ GB.i18n.define('fi', {
   'tip.openCommit': 'Avaa commit GitHubissa',
   'tip.pin': 'Kiinnitä <code>{branch}</code>',
   'tip.unpin': 'Poista kiinnitys: <code>{branch}</code>',
+  'tip.hide': 'Piilota <code>{branch}</code>',
+  'tip.solo': 'Näytä vain <code>{branch}</code>',
+  'branchview.status': '{n} / {total} haaraa näkyvissä',
+  'branchview.reset': 'Näytä kaikki haarat',
   'author.unknown': 'tuntematon',
 
   /* ---------- kaavion päällä oleva kerros ---------- */

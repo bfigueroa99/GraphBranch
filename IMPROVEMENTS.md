@@ -874,5 +874,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Skills: no aplica: una opción más de la URL de la capa, sin dominio nuevo.
 - Arena: no aplica: una sola forma obvia (otra clave de `embedOptions`).
 - Reclamo: loop/153, sin colisión
-- Validado: PENDIENTE
+- Validado: 475 pruebas (`node --test`), smoke (131 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 154, expansión: ítem 100 (Práctica: reset --mixed y reflog, Público)

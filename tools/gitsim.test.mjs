@@ -591,3 +591,36 @@ test('rebase -i se detiene tras el primer commit y --abort deja la rama como est
   assert.ok(r.isAncestor(r.branches.get('main'), r.branches.get('feature')));
   assert.equal(EXERCISES.find((e) => e.id === 'rebase').done(r), true);
 });
+
+test('reflog recuerda dónde estuvo HEAD y deja recuperar un commit tras reset --hard', () => {
+  const r = fresh();
+  assert.equal(r.run('reflog').ok, true);
+  run(r, 'commit -m "Add search"', 'commit -m "Add filters"');
+  const lost = r.headSha;
+  assert.ok(r.run('reset --hard HEAD~2').ok);
+  assert.ok(!r.log(r.headSha).includes(lost), 'el reset soltó los dos commits');
+  const lines = r.run('reflog').lines;
+  assert.match(lines[0], /^[0-9a-f]{7} HEAD@\{0\}: reset: moving to HEAD~2$/);
+  assert.match(lines[1], new RegExp(`^${lost.slice(0, 7)} HEAD@\\{1\\}: commit: Add filters$`));
+  assert.equal(r.resolve('HEAD@{1}'), lost);
+  assert.equal(r.resolve('HEAD@{99}'), null);
+  assert.equal(r.run('reset --hard HEAD@{99}').ok, false);
+  assert.ok(r.run('reset --hard HEAD@{1}').ok);
+  assert.equal(r.headSha, lost, 'el commit volvió');
+  assert.equal(r.run('reflog show HEAD').ok, true);
+  assert.equal(r.run('reflog expire').ok, false);
+});
+
+test('reflog anota el cambio de rama y reset --mixed deja los cambios sin commit', () => {
+  const r = fresh();
+  run(r, 'branch feature', 'checkout feature');
+  assert.match(r.run('reflog').lines[0], /HEAD@\{0\}: checkout: moving from main to feature$/);
+  run(r, 'commit -m "Wip"', 'touch a.js');
+  const res = r.run('reset --mixed HEAD~1');
+  assert.ok(res.ok);
+  assert.deepEqual(plain(res.lines), ['Unstaged changes after reset:', 'M\ta.js']);
+  assert.deepEqual(plain(r.work), ['a.js'], 'los cambios sin commit siguen ahí');
+  assert.equal(r.run('reset --soft --hard HEAD').ok, false, 'los modos no se mezclan');
+  assert.ok(r.run('reset --hard').ok);
+  assert.deepEqual(plain(r.work), []);
+});

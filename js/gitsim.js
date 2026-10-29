@@ -54,6 +54,7 @@
       this.revertAborts = 0; // cuántos revert --no-commit se cancelaron con revert --abort
       this.rebasing = null; // { orig, branch, base, rest } mientras un rebase -i espera su --continue
       this.rebaseAborts = 0; // cuántos rebase se cancelaron con rebase --abort
+      this.reflog = []; // { sha, msg }, el más nuevo al final (HEAD@{0}); cada vez que HEAD se mueve
       this.defaultBranch = branch;
       this.branches.set(branch, null);
     }
@@ -90,7 +91,13 @@
       const m = /^(.*?)((?:[~^]\d*)*)$/.exec(ref);
       let base = m[1];
       let sha;
-      if (base === 'HEAD' || base === '@') sha = this.headSha;
+      const log = /^(?:HEAD|@)@\{(\d+)\}$/.exec(base);
+      if (log) {
+        const i = this.reflog.length - 1 - Number(log[1]);
+        if (!this.reflog.length && log[1] === '0') sha = this.headSha;
+        else if (i >= 0) sha = this.reflog[i].sha;
+        else return null;
+      } else if (base === 'HEAD' || base === '@') sha = this.headSha;
       else if (this.branches.has(base)) sha = this.branches.get(base);
       else if (this.tags.has(base)) sha = this.tags.get(base);
       else if (/^[0-9a-f]{4,40}$/i.test(base)) {
@@ -166,6 +173,15 @@
       return sha;
     }
 
+    /** Lo que git anota en el reflog de HEAD por ese comando. */
+    reflogMessage(cmd, args, from) {
+      const { flags, rest } = parse(args, ['-m']);
+      if (cmd === 'commit') return `commit: ${flags['-m'] ?? this.commits.get(this.headSha).message}`;
+      if (cmd === 'checkout' || cmd === 'switch') return `checkout: moving from ${from} to ${this.head.branch ?? this.short(this.headSha)}`;
+      if (cmd === 'reset') return `reset: moving to ${rest[0] || 'HEAD'}`;
+      return `${cmd}${args.length ? ` ${args.join(' ')}` : ''}`;
+    }
+
     /** Falla como git si hay cambios sin commit: en esta simulación, ir a otro commit siempre pisa los archivos cambiados. */
     needClean(verb) {
       if (this.picking) fail(`error: You have not concluded your ${this.picking.revert ? 'revert' : 'cherry-pick'} (${this.picking.revert ? 'REVERT_HEAD' : 'CHERRY_PICK_HEAD'} exists).\nPlease, commit your changes or use '${this.picking.revert ? 'revert' : 'cherry-pick'} --abort' before you ${verb === 'checkout' ? 'switch branches' : verb}.`);
@@ -181,6 +197,10 @@
       if (words[0] === 'git') words.shift();
       if (!words.length) return { ok: true, lines: [], changed: false };
       const [cmd, ...args] = words;
+      const headBefore = this.head.branch ?? null;
+      const shaBefore = this.headSha;
+      // la primera línea del reflog es de dónde partió HEAD
+      if (!this.reflog.length && shaBefore) this.reflog.push({ sha: shaBefore, msg: `commit: ${this.commits.get(shaBefore).message}` });
       const before = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
       try {
         const handler = this.commands[cmd];
@@ -189,6 +209,10 @@
           fail(`fatal: It seems that there is already a rebase-merge directory (a rebase is in progress).\nUse 'rebase --continue' to finish it or 'rebase --abort' to cancel it before you ${cmd}.`);
         }
         const lines = handler.call(this, args) || [];
+        if (cmd !== 'reflog' && this.headSha && (this.headSha !== shaBefore || (this.head.branch ?? null) !== headBefore)) {
+          this.reflog.push({ sha: this.headSha, msg: this.reflogMessage(cmd, args, headBefore ?? this.short(shaBefore ?? '')) });
+          if (this.reflog.length > 100) this.reflog.shift();
+        }
         const after = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
         return { ok: true, lines, changed: before !== after };
       } catch (e) {
@@ -228,7 +252,8 @@
         'merge --abort              cancel a merge that is waiting for its commit',
         'rebase [-i] <branch>        replay this branch on top of another (-i stops after the first commit)',
         'rebase --abort|--continue  cancel a stopped rebase, or replay the rest of it',
-        'reset [--soft|--hard] <to>  move the branch back (HEAD~1, a sha, a branch); --hard drops changes',
+        'reset [--soft|--mixed|--hard] <to>  move the branch back (HEAD~1, a sha, HEAD@{1}); --hard drops changes',
+        'reflog                      where HEAD has been (HEAD@{n}): find a commit again after a reset --hard',
         'stash [list|pop|apply|drop] put uncommitted changes aside and bring them back',
         'touch <file>                change a file (uncommitted work, for stash)',
         'cherry-pick <commit>        copy one commit on top of the current branch (-n holds it until commit or --continue)',
@@ -572,6 +597,8 @@
 
     reset(args) {
       const { flags, rest } = parse(args);
+      const modes = ['--soft', '--mixed', '--hard'].filter((m) => flags[m]);
+      if (modes.length > 1) fail(`fatal: ${modes.join(', ')} are incompatible: use only one of --soft, --mixed or --hard`);
       const to = rest[0] || 'HEAD';
       const sha = this.resolve(to);
       if (!sha) fail(`fatal: ambiguous argument '${to}': unknown revision`);
@@ -580,7 +607,17 @@
       this.merging = null;
       this.picking = null;
       if (flags['--hard']) return [`HEAD is now at ${this.short(sha)} ${this.commits.get(sha).message}`];
+      // --mixed (lo que hace `reset` a secas): los cambios sin commit se quedan, sin preparar
+      if (!flags['--soft'] && this.work.length) return ['Unstaged changes after reset:', ...this.work.map((f) => `M\t${f}`)];
       return [];
+    },
+
+    /** `reflog` (o `reflog show [HEAD]`): dónde estuvo HEAD, del más nuevo al más viejo. */
+    reflog(args) {
+      const [sub, ref] = args;
+      if (sub && sub !== 'show') fail(`error: unknown subcommand: '${sub}'\nusage: reflog [show [HEAD]]`);
+      if (ref && ref !== 'HEAD') fail(`fatal: ambiguous argument '${ref}': only HEAD has a reflog in this practice`);
+      return this.reflog.map((e, i) => `${this.short(e.sha)} HEAD@{${this.reflog.length - 1 - i}}: ${e.msg}`).reverse();
     },
   };
   /** `switch` solo mueve entre ramas: `-c` crea, `--detach` va a un commit; un commit a secas no vale. */

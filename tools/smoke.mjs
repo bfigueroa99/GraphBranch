@@ -1879,6 +1879,16 @@ console.log('Varios repos a la vez');
     for (const c of ['checkout feature', 'rebase -i main', 'status', 'rebase --abort', 'status']) await send(c);
     await lab.waitForFunction(() => /interactive rebase in progress/.test(document.querySelector('.pr-log')?.textContent || '') && /On branch feature\s*nothing to commit/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
   });
+  await step(lab, 'la práctica muestra el reflog y recupera un commit tras reset --hard', async () => {
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await lab.selectOption('.pr-ex', '3');
+    for (const c of ['reset --hard HEAD~1', 'reflog', 'reset --hard HEAD@{1}', 'log --oneline']) await send(c);
+    await lab.waitForFunction(() => /HEAD@\{0\}: reset: moving to HEAD~1/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    await lab.waitForFunction(() => /HEAD is now at [0-9a-f]{7} Oops: debug logging left in/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+  });
   await step(lab, 'un ejercicio propio se crea, se comparte por URL y la URL lo abre y se resuelve', async () => {
     await lab.click('.pr-make summary');
     await lab.fill('.pr-m-title', 'Fusiona <b>ya</b>');

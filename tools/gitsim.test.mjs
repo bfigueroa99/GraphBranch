@@ -32,6 +32,41 @@ test('commit mueve la rama y exige mensaje', () => {
   assert.equal(r.commits.get(r.headSha).parents[0], before);
 });
 
+test('commit --amend reemplaza el último commit con los mismos padres', () => {
+  const r = fresh();
+  r.run('commit -m "Add serch"');
+  const typo = r.headSha;
+  const parent = r.commits.get(typo).parents[0];
+  const count = r.commits.size;
+  const res = r.run('git commit --amend -m "Add search"');
+  assert.ok(res.ok && res.changed);
+  assert.match(res.lines[0], /^\[main [0-9a-f]{7}\] Add search$/);
+  assert.notEqual(r.headSha, typo);
+  assert.deepEqual(plain(r.commits.get(r.headSha).parents), [parent]);
+  assert.equal(r.commits.size, count + 1);
+  assert.ok(!r.log(r.headSha).includes(typo), 'el commit viejo ya no está en la rama');
+  // sin -m conserva el mensaje y recoge los archivos cambiados
+  r.run('touch a.txt');
+  assert.ok(r.run('commit --amend').ok);
+  assert.equal(r.commits.get(r.headSha).message, 'Add search');
+  assert.deepEqual(plain(r.work), []);
+  assert.match(r.run('reflog').lines.join('\n'), /commit \(amend\): Add search/);
+});
+
+test('commit --amend se niega sin commits o con una fusión a medias', () => {
+  const r = fresh();
+  r.run('checkout -b feature');
+  r.run('commit -m uno');
+  r.run('checkout main');
+  r.run('commit -m dos');
+  r.run('merge --no-commit feature');
+  const sha = r.headSha;
+  const res = r.run('commit --amend -m x');
+  assert.equal(res.ok, false);
+  assert.match(res.lines[0], /middle of a merge/);
+  assert.equal(r.headSha, sha);
+});
+
 test('branch y checkout: crear, cambiar, desprender y borrar', () => {
   const r = fresh();
   assert.ok(r.run('checkout -b feature').ok);

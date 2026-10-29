@@ -742,5 +742,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Skills: no aplica: un ajuste de una prueba propia, sin dominio nuevo.
 - Arena: no aplica: una sola forma obvia (vaciar el almacenamiento antes de cerrar y esperar la migración).
 - Reclamo: loop/159, sin colisión
-- Validado: VALIDADO
+- Validado: 481 pruebas (`node --test`), smoke, i18n (0 errores) y 28 e2e en verde.
 - **Siguiente:** iteración 160, expansión: ítem 110 (Ocultar una rama o dejarla sola, Análisis)

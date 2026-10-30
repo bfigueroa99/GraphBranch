@@ -843,6 +843,7 @@ GB.i18n.define('hu', {
   'loopPrompt.chars': { one: '{n} karakter', other: '{n} karakter' },
   'loopPrompt.copy': 'Prompt másolása',
   'prview.show': 'Leírás és hozzászólások megtekintése',
+  'prview.title': '{n}. pull request',
   'prview.busy': 'A pull request betöltése…',
   'prview.fail': 'A pull requestet nem sikerült betölteni.',
   'prview.noBody': 'Nincs leírás.',

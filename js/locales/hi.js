@@ -843,6 +843,7 @@ GB.i18n.define('hi', {
   'loopPrompt.chars': { one: '{n} अक्षर', other: '{n} अक्षर' },
   'loopPrompt.copy': 'प्रॉम्प्ट कॉपी करें',
   'prview.show': 'विवरण और टिप्पणियाँ देखें',
+  'prview.title': 'पुल रिक्वेस्ट #{n}',
   'prview.busy': 'पुल रिक्वेस्ट लोड हो रहा है…',
   'prview.fail': 'पुल रिक्वेस्ट लोड नहीं हो सका।',
   'prview.noBody': 'कोई विवरण नहीं।',

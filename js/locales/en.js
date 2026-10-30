@@ -849,6 +849,7 @@ GB.i18n.define('en', {
   'loopPrompt.chars': { one: '{n} character', other: '{n} characters' },
   'loopPrompt.copy': 'Copy the prompt',
   'prview.show': 'View description and comments',
+  'prview.title': 'Pull request #{n}',
   'prview.busy': 'Loading the pull request…',
   'prview.fail': 'Couldn’t load the pull request.',
   'prview.noBody': 'No description.',

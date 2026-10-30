@@ -854,6 +854,7 @@ GB.i18n.define('cs', {
   'loopPrompt.chars': { one: '{n} znak', few: '{n} znaky', many: '{n} znaku', other: '{n} znaků' },
   'loopPrompt.copy': 'Kopírovat prompt',
   'prview.show': 'Zobrazit popis a komentáře',
+  'prview.title': 'Pull request č. {n}',
   'prview.busy': 'Načítání pull requestu…',
   'prview.fail': 'Pull request se nepodařilo načíst.',
   'prview.noBody': 'Bez popisu.',

@@ -843,6 +843,7 @@ GB.i18n.define('ms', {
   'loopPrompt.chars': '{n} aksara',
   'loopPrompt.copy': 'Salin prompt',
   'prview.show': 'Lihat penerangan dan komen',
+  'prview.title': 'Pull request #{n}',
   'prview.busy': 'Memuatkan pull request…',
   'prview.fail': 'Pull request tidak dapat dimuatkan.',
   'prview.noBody': 'Tiada penerangan.',

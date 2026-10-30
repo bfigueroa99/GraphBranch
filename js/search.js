@@ -259,6 +259,13 @@
     return v.replace(/[\u0000-\u001f\u007f]/g, '').trim().replace(/^\/+/, '').slice(0, PATH_MAX);
   }
 
+  /** El pull request que pide la URL (?pr=12 o ?pr=#12): un entero positivo; 0 si no hay o no es uno. */
+  function prParam(q) {
+    const v = q && typeof q.get === 'function' ? q.get('pr') : null;
+    const m = typeof v === 'string' ? /^#?(\d{1,9})$/.exec(v.trim()) : null;
+    return m ? Number(m[1]) : 0;
+  }
+
   /** La persona que pide la URL (?author=ana): recortada, sin caracteres de control, de hasta 100; '' si no hay. */
   function authorParam(q) {
     const v = q && typeof q.get === 'function' ? q.get('author') : null;
@@ -275,5 +282,5 @@
     return v.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 100);
   }
 
-  GB.search = { authors, authorParam, branchViewParam, byAuthor, byBranches, firstParent, firstParentParam, limitBranches, find, mount, pathParam, queryParam, LIMIT };
+  GB.search = { authors, authorParam, branchViewParam, byAuthor, byBranches, firstParent, firstParentParam, limitBranches, find, mount, pathParam, prParam, queryParam, LIMIT };
 })((window.GB = window.GB || {}));

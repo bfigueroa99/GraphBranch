@@ -844,6 +844,7 @@ GB.i18n.define('fil', {
   'loopPrompt.chars': { one: '{n} karakter', other: '{n} karakter' },
   'loopPrompt.copy': 'Kopyahin ang prompt',
   'prview.show': 'Tingnan ang paglalarawan at mga komento',
+  'prview.title': 'Pull request blg. {n}',
   'prview.busy': 'Nilo-load ang pull request…',
   'prview.fail': 'Hindi ma-load ang pull request.',
   'prview.noBody': 'Walang paglalarawan.',

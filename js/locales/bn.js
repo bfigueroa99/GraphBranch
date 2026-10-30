@@ -843,6 +843,7 @@ GB.i18n.define('bn', {
   'loopPrompt.chars': { one: '{n}টি অক্ষর', other: '{n}টি অক্ষর' },
   'loopPrompt.copy': 'প্রম্পট কপি করুন',
   'prview.show': 'বিবরণ ও মন্তব্য দেখুন',
+  'prview.title': 'পুল রিকোয়েস্ট #{n}',
   'prview.busy': 'পুল রিকোয়েস্ট লোড হচ্ছে…',
   'prview.fail': 'পুল রিকোয়েস্ট লোড করা যায়নি।',
   'prview.noBody': 'কোনো বিবরণ নেই।',

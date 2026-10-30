@@ -2009,5 +2009,5 @@
   }
 
   GB.Graph = Graph;
-  GB.graphShared = { tipHTML, wirePinButton, wireViewButtons, wireDiffButton, wirePrButton, focusTip, returnFocus, measure, fitText, prRef, prKey, CI_MARK, ciText, LABEL_FONT, SMALL_FONT };
+  GB.graphShared = { tipHTML, wirePinButton, wireViewButtons, wireDiffButton, wirePrButton, prBodyHTML, focusTip, returnFocus, measure, fitText, prRef, prKey, CI_MARK, ciText, LABEL_FONT, SMALL_FONT };
 })(window.GB);

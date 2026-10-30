@@ -886,6 +886,7 @@ GB.i18n.define('fa', {
   'loopPrompt.chars': { one: '{n} نویسه', other: '{n} نویسه' },
   'loopPrompt.copy': 'کپی پرامپت',
   'prview.show': 'نمایش توضیح و نظرها',
+  'prview.title': 'درخواست ادغام شماره {n}',
   'prview.busy': 'در حال بارگیری پول‌ریکوئست…',
   'prview.fail': 'بارگیری پول‌ریکوئست ممکن نشد.',
   'prview.noBody': 'توضیحی وجود ندارد.',

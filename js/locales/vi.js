@@ -843,6 +843,7 @@ GB.i18n.define('vi', {
   'loopPrompt.chars': '{n} ký tự',
   'loopPrompt.copy': 'Sao chép prompt',
   'prview.show': 'Xem mô tả và bình luận',
+  'prview.title': 'Pull request số {n}',
   'prview.busy': 'Đang tải pull request…',
   'prview.fail': 'Không tải được pull request.',
   'prview.noBody': 'Không có mô tả.',

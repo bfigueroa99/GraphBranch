@@ -3833,6 +3833,37 @@ console.log('Grafo de primer padre (?firstparent=1)');
   await page.context().close();
 }
 
+console.log('Ramas ocultas o solas desde la URL (?solo=, ?ocultar=)');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, '?ocultar= y ?solo= abren el grafo con menos ramas, la URL las sigue y «Ver todas» las limpia', async () => {
+    const count = () => page.evaluate(() => document.querySelectorAll('#graph svg .head').length);
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    const all = await count();
+    await page.goto(`${base}/index.html?lang=es&ocultar=feature/login&ocultar=fix/rate-limit`);
+    await loaded(page);
+    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, all, { timeout: T(5000) });
+    const hid = await count();
+    if (hid !== all - 2) throw new Error(`?ocultar= quitó ${all - hid} ramas, no 2`);
+    const url = await page.evaluate(() => location.search);
+    if ((url.match(/ocultar=/g) || []).length !== 2) throw new Error('la URL perdió ocultar: ' + url);
+    await page.goto(`${base}/index.html?lang=es&solo=feature/login`);
+    await loaded(page);
+    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, hid, { timeout: T(5000) });
+    const solo = await count();
+    if (solo !== 2) throw new Error(`?solo= dejó ${solo} ramas, no 2 (la elegida y la por defecto)`);
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    if (!(await page.evaluate(() => document.querySelector('#search-btn').classList.contains('filtered')))) throw new Error('?solo= no marca el filtro');
+    await page.click('#branch-view-reset');
+    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length === n, all, { timeout: T(5000) });
+    const after = await page.evaluate(() => location.search);
+    if (/solo=|ocultar=/.test(after)) throw new Error('«Ver todas» deja la rama en la URL: ' + after);
+  });
+  await page.context().close();
+}
+
 console.log('Modo TV directo (?tv=1)');
 {
   const page = await openPage({ viewport: { width: 1920, height: 1080 } });

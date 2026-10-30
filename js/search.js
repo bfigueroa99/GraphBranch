@@ -235,6 +235,20 @@
     return !!q && typeof q.has === 'function' && q.has('firstparent') && !/^(0|false|no|off)$/i.test(String(q.get('firstparent')).trim());
   }
 
+  const NAME_MAX = 200;
+  const cleanName = (v) => String(v).replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, NAME_MAX); // eslint-disable-line no-control-regex
+
+  /** ?solo=rama o ?ocultar=a&ocultar=b: abrir el repo con esas ramas ocultas o con una sola. Los nombres se leen como
+      texto (sin caracteres de control, hasta 200); cada `ocultar` es una rama (sin partir por comas: git las admite en
+      un nombre) y `solo` manda sobre `ocultar`. null si la URL no pide nada. */
+  function branchViewParam(q) {
+    if (!q || typeof q.get !== 'function') return null;
+    const solo = cleanName(q.get('solo') ?? '');
+    if (solo) return { hidden: [], solo };
+    const hidden = [...new Set((q.getAll('ocultar') || []).map(cleanName).filter(Boolean))].slice(0, 50);
+    return hidden.length ? { hidden, solo: '' } : null;
+  }
+
   const PATH_MAX = 200;
 
   /** La ruta que pide la URL (?path=src/): recortada, sin barra inicial ni caracteres de control, de hasta 200; '' si no hay. */
@@ -261,5 +275,5 @@
     return v.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 100);
   }
 
-  GB.search = { authors, authorParam, byAuthor, byBranches, firstParent, firstParentParam, limitBranches, find, mount, pathParam, queryParam, LIMIT };
+  GB.search = { authors, authorParam, branchViewParam, byAuthor, byBranches, firstParent, firstParentParam, limitBranches, find, mount, pathParam, queryParam, LIMIT };
 })((window.GB = window.GB || {}));

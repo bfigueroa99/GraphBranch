@@ -608,7 +608,10 @@
     initialFirstParent = null;
     setUrlParam('firstparent', firstParentOn ? '1' : '');
     $('#graph-firstparent').checked = firstParentOn;
-    branchView = loadBranchView(tab.key);
+    branchView = initialBranchView || loadBranchView(tab.key); // la URL manda sobre lo guardado, solo al abrir
+    if (initialBranchView) U.store.set('bview:' + tab.key, branchView);
+    initialBranchView = null;
+    setBranchViewUrl();
     syncFiltered();
     layout = tab.layout;
     game = tab.game;
@@ -1118,6 +1121,7 @@
   let authorFilter = '';
   let firstParentOn = false; // el grafo solo con la cadena del primer padre de cada rama (?firstparent=1)
   let initialFirstParent = null; // ?firstparent=1: el repo a la vista abre con el grafo de primer padre
+  let initialBranchView = null; // ?solo=rama u ?ocultar=rama: el repo a la vista abre con esas ramas quitadas del grafo
   let initialAuthor = ''; // ?author=ana: el repo a la vista abre ya filtrado por esa persona
   const authorView = (data) => GB.search.byAuthor(data, authorFilter);
 
@@ -1134,9 +1138,23 @@
     const v = GB.search.byBranches(authorView(data).data, branchView);
     return firstParentOn ? { ...v, data: GB.search.firstParent(v.data) } : v;
   };
+  /** La dirección sigue a las ramas quitadas: ?solo=rama, o ?ocultar= una vez por rama. */
+  function setBranchViewUrl() {
+    try {
+      const url = new URL(location.href);
+      url.searchParams.delete('solo');
+      url.searchParams.delete('ocultar');
+      if (branchView.solo) url.searchParams.set('solo', branchView.solo);
+      else for (const n of branchView.hidden) url.searchParams.append('ocultar', n);
+      history.replaceState(null, '', url);
+    } catch {
+      /* algunos visores no permiten cambiar la URL */
+    }
+  }
   function setBranchView(next) {
     branchView = next;
     U.store.set('bview:' + repoKey(), branchViewOn() ? next : null);
+    setBranchViewUrl();
     syncFiltered();
     branchViewStatus();
     if (lastRender) {
@@ -3207,6 +3225,7 @@
     initialPath = EMBED ? '' : GB.search.pathParam(q);
     initialAuthor = EMBED ? '' : GB.search.authorParam(q);
     initialFirstParent = !EMBED && q.has('firstparent') ? GB.search.firstParentParam(q) : null;
+    initialBranchView = EMBED ? null : GB.search.branchViewParam(q);
     initialQuery = EMBED ? '' : GB.search.queryParam(q);
     initialText = !EMBED && GB.textview.openParam(q);
     initialConflicts = !EMBED && GB.health.conflictsParam(q);

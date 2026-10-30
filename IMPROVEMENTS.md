@@ -862,5 +862,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Skills: no aplica: un ajuste de CSS sobre código propio, sin dominio nuevo.
 - Arena: no aplica: una sola forma obvia (compactar la rejilla de cifras).
 - Reclamo: loop/167, sin colisión
-- Validado: PENDIENTE
+- Validado: 494 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Tres corridas previas del smoke: una en verde y dos con «historial de un archivo» (intermitencia, pendiente 2).
 - **Siguiente:** iteración 168, expansión: ítem 116 (Ocultar o dejar sola una rama, en la URL, Análisis)

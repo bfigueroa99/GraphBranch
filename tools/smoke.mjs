@@ -1976,6 +1976,26 @@ console.log('Varios repos a la vez');
       return /Une feature/.test(out) && /Merge made by the 'ort' strategy/.test(t) && !/Fast-forward/.test(t.slice(t.lastIndexOf('merge --no-ff')));
     }, null, { timeout: T(5000) });
   });
+  await step(lab, 'la práctica renombra ramas con branch -m: el grafo, el reflog y el panel de actividad lo dicen', async () => {
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await lab.selectOption('.pr-ex', '1');
+    for (const c of ['branch -m feature feature/login', 'branch -m trunk', 'reflog']) await send(c);
+    await lab.waitForFunction(() => {
+      const heads = [...document.querySelectorAll('#graph svg .head .h-name')].map((n) => n.textContent.trim());
+      const log = document.querySelector('.pr-log')?.textContent || '';
+      const feed = document.querySelector('#feed')?.textContent || '';
+      return (
+        heads.includes('trunk') && heads.includes('feature/login') && !heads.includes('main') && !heads.includes('feature') &&
+        log.includes('Branch: renamed refs/heads/main to refs/heads/trunk') &&
+        feed.includes('Rama feature renombrada a feature/login') && feed.includes('Rama main renombrada a trunk')
+      );
+    }, null, { timeout: T(5000) });
+    await send('branch -m nope x');
+    await lab.waitForFunction(() => (document.querySelector('.pr-log')?.textContent || '').includes("fatal: no branch named 'nope'"), null, { timeout: T(5000) });
+  });
   await step(lab, 'un ejercicio propio se crea, se comparte por URL y la URL lo abre y se resuelve', async () => {
     await lab.click('.pr-make summary');
     await lab.fill('.pr-m-title', 'Fusiona <b>ya</b>');

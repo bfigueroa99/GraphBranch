@@ -283,7 +283,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Blame de un archivo | Datos | 2×2/3 | 1,3 | Replica (GitKraken) | candidata |
 | Varias cuentas del mismo servicio | Fuentes | 1×2/2 | 1,0 | Replica (reseñas) | candidata |
 | Columnas de autor y fecha en el grafo 2D | Análisis | 1×2/2 | 1,0 | Replica (GitKraken) | candidata |
-| Alias de las pestañas | Escala | 1×1/1 | 1,0 | Replica (GitKraken) | candidata |
+| Alias de las pestañas | Escala | 1×1/1 | 1,0 | Replica (GitKraken) | ítem 125 |
 | Issues de Jira y Trello | Fuentes | 1×2/3 | 0,7 | Replica (GitKraken) | candidata |
 
 ## Públicos

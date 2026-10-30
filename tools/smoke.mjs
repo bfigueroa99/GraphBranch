@@ -3561,6 +3561,24 @@ console.log('Capa para streaming: &max= limita las ramas (?embed=1)');
   await page.context().close();
 }
 
+console.log('Capa para streaming: &branch= deja una rama (?embed=1)');
+{
+  const page = await openPage({ viewport: { width: 640, height: 400 } });
+  await step(page, '&branch=develop deja 2 ramas (develop y la por defecto); una que no existe, solo la por defecto; sin &branch= ninguna marca', async () => {
+    const shown = async (q) => {
+      await page.goto(`${base}/index.html?lang=es&embed=1${q}`);
+      await loaded(page);
+      await page.waitForSelector('#graph3d canvas, #graph canvas', { timeout: T(30000) });
+      return page.evaluate(() => Number(document.querySelector('.graph-stage').dataset.embedBranches ?? -1));
+    };
+    if ((await shown('&branch=develop')) !== 2) throw new Error('&branch=develop no deja 2 ramas');
+    if ((await shown('&branch=no-existe')) !== 1) throw new Error('una rama inexistente no deja solo la por defecto');
+    if ((await shown('&branch=%3Cb%3Ex')) !== 1) throw new Error('un nombre con HTML no se compara como texto');
+    if ((await shown('')) !== -1) throw new Error('sin &branch= la capa marca ramas');
+  });
+  await page.context().close();
+}
+
 console.log('Filtro por ruta desde la URL (?path=)');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

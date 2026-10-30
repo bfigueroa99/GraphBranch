@@ -125,6 +125,17 @@ test('embedOptions: max acepta de 1 a 200 y por defecto muestra todas las ramas'
   assert.equal(GB.embedOptions('?max=5'), null);
 });
 
+test('embedOptions: branch deja el nombre tal cual, sin control ni más de 200 caracteres', () => {
+  const { GB } = load('');
+  assert.equal(GB.embedOptions('?embed=1').branch, '');
+  assert.equal(GB.embedOptions('?embed=1&branch=fix/empty-payload').branch, 'fix/empty-payload');
+  assert.equal(GB.embedOptions('?embed=1&branch=%20feature%2FA%20').branch, 'feature/A');
+  assert.equal(GB.embedOptions('?embed=1&branch=a%0Ab%00c').branch, 'abc');
+  assert.equal(GB.embedOptions('?embed=1&branch=%3Cb%3Ex').branch, '<b>x'); // se compara como texto, nunca como HTML
+  assert.equal(GB.embedOptions('?embed=1&branch=' + 'x'.repeat(500)).branch.length, 200);
+  assert.equal(GB.embedOptions('?branch=main'), null);
+});
+
 test('embedOptions: view=2d|3d fija la vista; cualquier otro valor la deja como estaba', () => {
   const { GB } = load('');
   assert.equal(GB.embedOptions('?embed=1').view, '');

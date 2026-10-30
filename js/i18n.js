@@ -20,7 +20,8 @@ window.GB = window.GB || {};
       caracteres de control, hasta 60 letras; se pone con textContent, nunca como HTML) y &max=N (cuántas ramas muestra: la rama por defecto y
       las de commit más reciente; entero de 1 a 200, sin él, todas) y &spin=0 (apaga la rotación lenta de la vista 3D; solo
       0, off, false o no la apagan, y no toca lo que la persona guardó) y &view=2d|3d (fija la vista de la capa sin
-      guardarla; sin él, la que la persona tenía). Sin ?embed, no hay nada. */
+      guardarla; sin él, la que la persona tenía) y &branch=nombre (deja solo esa rama y la rama por defecto;
+      el nombre se compara tal cual, hasta 200 caracteres sin control, y nunca entra al DOM como HTML). Sin ?embed, no hay nada. */
   const HIDE = ['notices', 'combo', 'legend', 'title', 'clock'];
   function embedOptions(search) {
     const q = new URLSearchParams(search || '');
@@ -36,9 +37,11 @@ window.GB = window.GB || {};
       .slice(0, 60)
       .join('')
       .trim();
+    const branch = (q.get('branch') || '').replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, '').trim().slice(0, 200);
     const max = /^\d{1,3}$/.test((q.get('max') || '').trim()) ? Number(q.get('max').trim()) : 0;
     return {
       title,
+      branch,
       max: max >= 1 && max <= 200 ? max : 0,
       theme: /^(light|dark)$/i.test((q.get('theme') || '').trim()) ? q.get('theme').trim().toLowerCase() : '',
       view: /^(2d|3d)$/i.test((q.get('view') || '').trim()) ? q.get('view').trim().toLowerCase() : '',

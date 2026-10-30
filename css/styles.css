@@ -6190,3 +6190,32 @@ a.hl-row:focus-visible {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* celular angosto: las cifras en tres columnas y sin la línea de detalle, para que el grafo quede a
+   una pantalla de la barra y no bajo 245 px de tarjetas */
+@media (max-width: 560px) {
+  .stats,
+  .stats:has(> .stat-bitacora[hidden]) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .stat:nth-child(n),
+  .stat:nth-child(even),
+  .stat:nth-child(n + 3) {
+    border-top: 0;
+    border-inline-start: 1px solid var(--line);
+    padding: 7px 10px 8px;
+  }
+  .stat:nth-child(3n + 1) {
+    border-inline-start: 0;
+  }
+  .stat:nth-child(n + 4) {
+    border-top: 1px solid var(--line);
+  }
+  .stat-bitacora {
+    grid-column: span 2;
+    border-radius: 0 0 var(--radius) 0;
+  }
+  .stat-sub {
+    display: none;
+  }
+}

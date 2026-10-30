@@ -584,6 +584,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     En la iteración 160 falló una vez, y pasó a la repetición, «vista de texto: árbol con teclado, nombres accesibles y
     Enter lleva al grafo» (`el release de la demo no se dice (2): Novedades: 0 ramas, 1 commits`): depende de lo que la
     demo publica en ese momento.
+    En la iteración 167, 2 de 3 corridas del smoke fallaron en «historial de un archivo: un botón del diff aplica el filtro
+    por ruta…» (`elementHandle.click: Element is not attached to the DOM` y `waitForSelector: Timeout 15000ms`); la tercera pasó.
 
 ### Baja
 
@@ -613,10 +615,11 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-10. [QA] Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scroll con la barra de
-    vistas, las estadísticas y la bitácora encima) y el 3D no arma etiquetas hasta verse; pensar en una
-    forma de llegar al grafo sin recorrer la página (ancla o tarjetas plegables en celular).
-    Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la auditoría → captura sin grafo; `#graph3d` fuera de la pantalla.
+10. [QA] A 320 px el grafo sigue a ~420 px del inicio con la demo (antes 522; con un repo real, más: barra de
+    vistas, bitácora) y el 3D no arma etiquetas hasta verse. La iteración 167 compactó las cifras (tres columnas
+    sin la línea de detalle, 245 → 144 px); falta una forma de llegar al grafo sin recorrer la página (ancla o
+    tarjetas plegables en celular). Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la
+    auditoría → `.graph-panel` empieza bajo los 400 px; `#graph3d` fuera de la pantalla.
 11. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
@@ -630,6 +633,17 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 14. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
     `npm run check` en la iteración 128 (la repetición pasó), aun con la espera de la 127.
     Reproducción: `npm run check` → `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
+
+15. [QA] El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 del repositorio o la cuota
+    agotada, aunque el mensaje de abajo es exacto («No se encontró acme/web…»): en celular, donde solo se ve el
+    indicador, confunde. Distinguir «No encontrado» / «Cuota agotada» de «Sin conexión».
+    Reproducción: Playwright, 320×640, `?repo=acme/web&lang=es` con la API respondiendo 404 → `#status-text` = «Sin conexión».
+16. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+    regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
+    Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
+17. [QA] A ≤560 px las cifras ya no muestran su línea de detalle (`.stat-sub`: «de N en total», la hora de la última
+    actividad): se perdió información en celular. Devolverla como `title`/texto accesible de la tarjeta o en un
+    plegable. Reproducción: Playwright, 320×640 → `getComputedStyle(#st-branches-sub).display` = `none`.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); `placeLabels`/`placeNotes` crean arreglos por cuadro
@@ -836,3 +850,17 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/166, sin colisión
 - Validado: 494 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera corrida falló en «ocultar una rama o dejarla sola» (ajeno al cambio; intermitencia ya conocida) y la repetición pasó.
 - **Siguiente:** iteración 167, mantenimiento · QA: pendiente 10 (Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scrol…)
+
+### 2026-10-30 · Iteración 167 · Mantenimiento · QA
+
+- **Auditoría de QA: celular angosto** (pendiente 10, parcial): a ≤560 px las cifras van en tres columnas y sin la línea de detalle (`css/styles.css`); en 320 px bajan de 245 a 144 px y el grafo empieza en 421 px en lugar de 522.
+- **Reproducción:** Playwright 320×640 sobre la demo, sin el cambio → `.stats` 245 px de alto y `.graph-panel` en 522 px.
+- **Hallazgos:** 3 nuevos (pendientes 15, 16 y 17), 0 a la base de la auditoría; además la intermitencia de «historial de un archivo» anotada en el pendiente 2.
+- **Pruebas que fallan sin el arreglo:** un paso del smoke («a 320 px, las cifras ocupan tres columnas compactas y el grafo empieza antes»).
+- README: sin cambios (no hay función nueva).
+- QA: 320 px con 404, sin red (ar), cuota agotada (ta) y repo vacío (consola limpia, sin desborde); auditoría completa con `--langs`: 0 hallazgos (la primera pasada con una franja deslizable dio 84 `borde` y se cambió de diseño).
+- Skills: no aplica: un ajuste de CSS sobre código propio, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (compactar la rejilla de cifras).
+- Reclamo: loop/167, sin colisión
+- Validado: 494 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Tres corridas previas del smoke: una en verde y dos con «historial de un archivo» (intermitencia, pendiente 2).
+- **Siguiente:** iteración 168, expansión: ítem 116 (Ocultar o dejar sola una rama, en la URL, Análisis)

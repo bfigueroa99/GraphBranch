@@ -3116,6 +3116,18 @@ console.log('Celular angosto: etiquetas 3D pisadas');
     if (r.tactiles.length) throw new Error(`etiquetas atenuadas que reciben el toque: ${r.tactiles.join(', ')}`);
     if (!r.tab) throw new Error('una etiqueta tapada quedó fuera del orden de Tab');
   });
+  await step(page, 'a 320 px, las cifras ocupan tres columnas compactas y el grafo empieza antes', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    const r = await page.evaluate(() => {
+      const stats = document.querySelector('.stats').getBoundingClientRect();
+      const graph = document.querySelector('.graph-panel').getBoundingClientRect();
+      return { alto: Math.round(stats.height), grafo: Math.round(graph.top + scrollY), ancho: document.documentElement.scrollWidth };
+    });
+    if (r.alto > 170) throw new Error(`las cifras ocupan ${r.alto} px de alto (compactas: hasta 170)`);
+    if (r.grafo > 450) throw new Error(`el grafo empieza a ${r.grafo} px del inicio de la página`);
+    if (r.ancho > 320) throw new Error(`la página se desborda a ${r.ancho} px`);
+  });
   await page.context().close();
 }
 

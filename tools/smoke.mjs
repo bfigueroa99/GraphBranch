@@ -1963,6 +1963,19 @@ console.log('Varios repos a la vez');
       return /\) Fix typo/.test(out) && !out.includes('Fix tpyo');
     }, null, { timeout: T(5000) });
   });
+  await step(lab, 'la práctica hace un commit de fusión con merge --no-ff aunque se pudiera avanzar', async () => {
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await lab.selectOption('.pr-ex', '1');
+    for (const c of ['checkout -b feature', 'commit -m uno', 'checkout main', 'merge --no-ff -m "Une feature" feature', 'log --oneline']) await send(c);
+    await lab.waitForFunction(() => {
+      const t = document.querySelector('.pr-log')?.textContent || '';
+      const out = t.slice(t.lastIndexOf('log --oneline'));
+      return /Une feature/.test(out) && /Merge made by the 'ort' strategy/.test(t) && !/Fast-forward/.test(t.slice(t.lastIndexOf('merge --no-ff')));
+    }, null, { timeout: T(5000) });
+  });
   await step(lab, 'un ejercicio propio se crea, se comparte por URL y la URL lo abre y se resuelve', async () => {
     await lab.click('.pr-make summary');
     await lab.fill('.pr-m-title', 'Fusiona <b>ya</b>');

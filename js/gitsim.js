@@ -249,7 +249,7 @@
         'branch [name] [-d name]     list, create or delete branches',
         'checkout [-b] <name|sha>    move to a branch or commit (also: switch [-c|--detach])',
         'restore <file|.>            throw away the uncommitted changes of a file (see touch)',
-        'merge <branch>              bring another branch into this one (--no-ff, --ff-only, --no-commit)',
+        'merge <branch>              bring another branch into this one (--no-ff always makes a merge commit, --ff-only, --no-commit, -m "msg")',
         'merge --abort              cancel a merge that is waiting for its commit',
         'rebase [-i] <branch>        replay this branch on top of another (-i stops after the first commit)',
         'rebase --abort|--continue  cancel a stopped rebase, or replay the rest of it',
@@ -432,7 +432,7 @@
     },
 
     merge(args) {
-      const { flags, rest } = parse(args);
+      const { flags, rest } = parse(args, ['-m', '--message']);
       const [name] = rest;
       if (flags['--abort']) {
         if (!this.merging) fail('fatal: There is no merge to abort (MERGE_HEAD missing).');
@@ -444,6 +444,7 @@
       if (this.merging) fail('fatal: You have not concluded your merge (MERGE_HEAD exists).\nPlease, commit your changes before you merge.');
       if (this.picking) fail('fatal: You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\nPlease, commit your changes or use \'cherry-pick --abort\' before you merge.');
       if (!name) fail('fatal: no branch to merge was given');
+      if (flags['--no-ff'] && flags['--ff-only']) fail('fatal: options \'--ff-only\' and \'--no-ff\' cannot be used together.');
       if (!this.head.branch) fail('fatal: you are in a detached HEAD state: go to a branch first (checkout <branch>)');
       const theirs = this.resolve(name);
       if (!theirs) fail(`merge: ${name} - not something we can merge`);
@@ -459,7 +460,9 @@
         this.merging = { name, theirs };
         return ['Automatic merge went well; stopped before committing as requested'];
       }
-      const sha = this.make(`Merge branch '${name}'`, [ours, theirs]);
+      const msg = flags['-m'] ?? flags['--message'];
+      if (msg === true || msg === '') fail('error: switch `m\' requires a value');
+      const sha = this.make(msg || `Merge branch '${name}'`, [ours, theirs]);
       this.moveHead(sha);
       return ["Merge made by the 'ort' strategy."];
     },

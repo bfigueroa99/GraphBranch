@@ -127,6 +127,29 @@ test('merge: avance rápido, commit de fusión y ya al día', () => {
   assert.equal(tip.message, "Merge branch 'feature'");
 });
 
+test('merge --no-ff: hace el commit de fusión aunque se pudiera avanzar, con -m y sin chocar con --ff-only', () => {
+  const r = fresh();
+  run(r, 'checkout -b feature', 'commit -m a', 'checkout main');
+  const before = r.headSha;
+  assert.deepEqual(plain(r.run('merge --no-ff feature').lines), ["Merge made by the 'ort' strategy."]);
+  const tip = r.commits.get(r.headSha);
+  assert.deepEqual([...tip.parents], [before, r.branches.get('feature')]);
+  assert.equal(tip.message, "Merge branch 'feature'");
+  assert.deepEqual(plain(r.run('merge --no-ff feature').lines), ['Already up to date.']);
+  const m = fresh();
+  run(m, 'checkout -b feature', 'commit -m a', 'checkout main');
+  assert.ok(m.run('merge --no-ff -m "Une feature" feature').ok);
+  assert.equal(m.commits.get(m.headSha).message, 'Une feature');
+  assert.equal(m.commits.get(m.headSha).parents.length, 2);
+  const c = fresh();
+  run(c, 'checkout -b feature', 'commit -m a', 'checkout main');
+  const res = c.run('merge --no-ff --ff-only feature');
+  assert.equal(res.ok, false);
+  assert.match(res.lines[0], /cannot be used together/);
+  assert.equal(c.branches.get('main'), c.headSha);
+  assert.equal(c.commits.get(c.headSha).parents.length, 1);
+});
+
 test('rebase: repite los commits propios encima, sin fusiones y sin tocar la otra rama', () => {
   const r = start(2, NOW);
   const main = r.branches.get('main');

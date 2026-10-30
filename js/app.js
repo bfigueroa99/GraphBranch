@@ -71,6 +71,9 @@
     btCloseHelp: $('#bt-close-help'),
     btOutText: $('#bt-out-text'),
     btUndo: $('#bt-undo'),
+    prview: $('#prview'),
+    prviewBody: $('#prview-body'),
+    prviewTitle: $('#prview-title'),
     textview: $('#textview'),
     textviewBody: $('#textview-body'),
     textviewFilter: $('#textview-filter'),
@@ -650,6 +653,7 @@
       feed.setDefaultBranch(data.repo.defaultBranch);
       renderSummary(data, L);
       if (initialText && L.nodes.length) startUrlText();
+      if (initialPr && L.nodes.length) startUrlPr();
       if (initialQuery && L.nodes.length) startUrlQuery();
       if (initialPath && L.nodes.length) startUrlPath(); // la demo y los repos ya cargados no pasan por onUpdate
       if (initialConflicts && L.nodes.length) startUrlConflicts();
@@ -1250,6 +1254,7 @@
     if (initialHealth && tab === active && L.nodes.length) openHealth();
     if (initialReplay && L.nodes.length) startUrlReplay();
     if (initialText && tab === active && L.nodes.length) startUrlText();
+    if (initialPr && tab === active && L.nodes.length) startUrlPr();
     if (initialQuery && tab === active && L.nodes.length) startUrlQuery();
     if (initialPath && tab === active && L.nodes.length) startUrlPath();
     if (initialConflicts && tab === active && L.nodes.length) startUrlConflicts();
@@ -2197,6 +2202,30 @@
     el.textviewBody.querySelector('[tabindex="0"]')?.focus();
   }
   $('#textview-btn').addEventListener('click', showTextview);
+  let initialPr = 0; // ?pr=N: la vista de ese pull request (descripción y comentarios) al abrir, una vez
+  /** La vista del PR que pide la URL: una consulta (`prDetail`), en un diálogo; sin soporte de la fuente, no abre nada. */
+  async function startUrlPr() {
+    const n = initialPr;
+    const src = source;
+    initialPr = 0;
+    if (!n || !src.prDetail) return;
+    el.prviewTitle.textContent = t('prview.title', { n });
+    el.prviewBody.textContent = t('prview.busy');
+    if (typeof el.prview.showModal === 'function') el.prview.showModal();
+    else el.prview.setAttribute('open', '');
+    el.prviewBody.focus();
+    try {
+      const d = await src.prDetail(n);
+      if (src !== source || !el.prview.open) return;
+      el.prviewBody.innerHTML = GB.graphShared.prBodyHTML(d || {});
+    } catch {
+      el.prviewBody.textContent = t('prview.fail');
+    }
+  }
+  $('#prview-close').addEventListener('click', () => {
+    if (typeof el.prview.close === 'function') el.prview.close();
+    else el.prview.removeAttribute('open');
+  });
   let initialText = false; // ?vista=texto: se abre una vez, con ?path= y ?q= aplicados a la vista
   /** La vista de texto que pide la URL: espera al filtro por ruta, lo abre y escribe el ?q= en su filtro de ramas. */
   async function startUrlText() {
@@ -3228,6 +3257,7 @@
     initialBranchView = EMBED ? null : GB.search.branchViewParam(q);
     initialQuery = EMBED ? '' : GB.search.queryParam(q);
     initialText = !EMBED && GB.textview.openParam(q);
+    initialPr = EMBED ? 0 : GB.search.prParam(q);
     initialConflicts = !EMBED && GB.health.conflictsParam(q);
     initialTV = !EMBED && q.has('tv') && !/^(0|false|no|off)$/i.test(q.get('tv'));
     initialAll = EMBED ? false : GB.overview.allParam(q);

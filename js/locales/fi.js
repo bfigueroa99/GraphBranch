@@ -843,6 +843,7 @@ GB.i18n.define('fi', {
   'loopPrompt.chars': { one: '{n} merkki', other: '{n} merkkiä' },
   'loopPrompt.copy': 'Kopioi kehote',
   'prview.show': 'Näytä kuvaus ja kommentit',
+  'prview.title': 'Pull request nro {n}',
   'prview.busy': 'Ladataan pull requestia…',
   'prview.fail': 'Pull requestia ei voitu ladata.',
   'prview.noBody': 'Ei kuvausta.',

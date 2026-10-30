@@ -241,3 +241,13 @@ test('branchViewParam lee ?solo= y ?ocultar= de la URL: solo manda, ocultar se r
   assert.equal(S.branchViewParam(q('solo=a%00b')).solo, 'ab');
   assert.equal(S.branchViewParam(q('solo=' + 'x'.repeat(500))).solo.length, 200);
 });
+
+test('prParam lee ?pr= de la URL: un entero positivo, con o sin #; todo lo demás es 0', () => {
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(S.prParam(q('')), 0);
+  assert.equal(S.prParam(q('pr=12')), 12);
+  assert.equal(S.prParam(q('pr=%2312')), 12);
+  assert.equal(S.prParam(q('pr=%20 7 ')), 7);
+  for (const bad of ['pr=', 'pr=0x1', 'pr=-3', 'pr=1.5', 'pr=abc', 'pr=1234567890', 'pr=<b>1</b>']) assert.equal(S.prParam(q(bad)), 0, bad);
+  assert.equal(S.prParam(null), 0);
+});

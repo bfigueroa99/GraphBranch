@@ -844,6 +844,7 @@ GB.i18n.define('th', {
   'loopPrompt.chars': '{n} อักขระ',
   'loopPrompt.copy': 'คัดลอกพรอมต์',
   'prview.show': 'ดูคำอธิบายและความคิดเห็น',
+  'prview.title': 'พูลรีเควสต์ #{n}',
   'prview.busy': 'กำลังโหลด pull request…',
   'prview.fail': 'โหลด pull request ไม่สำเร็จ',
   'prview.noBody': 'ไม่มีคำอธิบาย',

@@ -886,6 +886,7 @@ GB.i18n.define('ur', {
   'loopPrompt.chars': { one: '{n} حرف', other: '{n} حروف' },
   'loopPrompt.copy': 'پرامپٹ کاپی کریں',
   'prview.show': 'تفصیل اور تبصرے دیکھیں',
+  'prview.title': 'پل ریکویسٹ نمبر {n}',
   'prview.busy': 'پل ریکویسٹ لوڈ ہو رہی ہے…',
   'prview.fail': 'پل ریکویسٹ لوڈ نہیں ہو سکی۔',
   'prview.noBody': 'کوئی تفصیل نہیں۔',

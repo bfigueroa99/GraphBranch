@@ -3640,6 +3640,32 @@ console.log('Filtro por ruta desde la URL (?path=)');
   await page.context().close();
 }
 
+console.log('Vista de un PR desde la URL (?pr=N)');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, '?pr=N abre la vista del PR con su descripción y comentarios, y Esc la cierra', async () => {
+    await page.goto(`${base}/index.html?lang=es&pr=36`);
+    await loaded(page);
+    await page.waitForSelector('#prview[open] #prview-body .pv-list li', { timeout: T(5000) }).catch(() => {
+      throw new Error('?pr=36 no abrió la vista del PR');
+    });
+    const r = await page.evaluate(() => ({
+      title: document.querySelector('#prview-title').textContent,
+      body: document.querySelector('#prview-body').textContent,
+      n: document.querySelectorAll('#prview-body .pv-list li').length,
+    }));
+    if (!r.title.includes('36') || !r.n || /undefined|NaN|prview\./.test(r.title + r.body)) throw new Error('vista del PR rota: ' + JSON.stringify(r));
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#prview:not([open])', { state: 'attached', timeout: T(3000) });
+  });
+  await step(page, '?pr=abc no abre nada', async () => {
+    await page.goto(`${base}/index.html?lang=es&pr=abc`);
+    await loaded(page);
+    if (await page.$('#prview[open]')) throw new Error('?pr=abc abrió la vista del PR');
+  });
+  await page.context().close();
+}
+
 console.log('Vista de texto desde la URL (?vista=texto)');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

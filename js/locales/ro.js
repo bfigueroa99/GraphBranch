@@ -851,6 +851,7 @@ GB.i18n.define('ro', {
   'loopPrompt.chars': { one: '{n} caracter', few: '{n} caractere', other: '{n} de caractere' },
   'loopPrompt.copy': 'Copiază promptul',
   'prview.show': 'Vezi descrierea și comentariile',
+  'prview.title': 'Pull request nr. {n}',
   'prview.busy': 'Se încarcă pull request-ul…',
   'prview.fail': 'Pull request-ul nu a putut fi încărcat.',
   'prview.noBody': 'Fără descriere.',

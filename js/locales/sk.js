@@ -854,6 +854,7 @@ GB.i18n.define('sk', {
   'loopPrompt.chars': { one: '{n} znak', few: '{n} znaky', many: '{n} znaku', other: '{n} znakov' },
   'loopPrompt.copy': 'Kopírovať prompt',
   'prview.show': 'Zobraziť popis a komentáre',
+  'prview.title': 'Pull request č. {n}',
   'prview.busy': 'Načítava sa pull request…',
   'prview.fail': 'Pull request sa nepodarilo načítať.',
   'prview.noBody': 'Bez popisu.',

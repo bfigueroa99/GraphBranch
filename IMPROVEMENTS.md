@@ -787,3 +787,16 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/171, sin colisión
 - Validado: 497 pruebas (`node --test`), smoke, i18n (0 errores) en verde; auditoría y e2e no corridas (no toca la página ni el escritorio).
 - **Siguiente:** iteración 172, expansión: ítem 122 (Capa para streaming, undécima entrega, Plataformas)
+
+### 2026-10-30 · Iteración 173 · Expansión · Público
+
+- **Capacidad nueva: `branch -m` en la terminal de práctica** (ítem 123 de la hoja de ruta, parte del 31): `branch -m [vieja] nueva` (también `--move`) renombra una rama con sus commits; sin la vieja, la actual. HEAD y la rama por defecto la siguen (el grafo la sigue dibujando como la principal), el `reflog` lo anota como git (`Branch: renamed refs/heads/main to refs/heads/trunk`), `-M` pisa una rama que ya existe salvo la que está en uso, y los errores son los de git 2.43 (sin nombre, demasiados argumentos, rama que no existe, nombre tomado o inválido, HEAD desprendido, la rama de un rebase a medias) sin tocar nada. El panel de actividad dice «Rama main renombrada a trunk» en vez de una rama borrada y otra creada (texto nuevo `act.branchRenamed`). Sirve también en los ejercicios propios (`exists:` y `missing:`) y en el ensayo sobre un repo real.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/gitsim.test.mjs` → `not ok 5 - branch -m renombra una rama…` y cuatro más (errores de git sin tocar nada, rebase a medias y repo vacío, un ejercicio propio que pide renombrar, el panel de actividad de la fuente de práctica); y un paso del smoke («la práctica renombra ramas con branch -m…»).
+- README: la lista de funciones (Aprender git), Pruebas y Límites conocidos.
+- QA: terminal de práctica (renombrar otra rama y la actual, `-M`, errores, `reflog`, grafo 2D y panel de actividad en español); texto nuevo en los 40 idiomas (`check-i18n` 0 errores); auditoría: ver Validado.
+- Skills: no aplica: un subcomando más del intérprete propio, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (un caso más de `branch` que cambia la clave en el mapa de ramas); y 18 iteraciones simultáneas en un contenedor de 4 CPU, pedido del dueño.
+- Replica: sin pasada ni paridad nuevas; el ítem 125 sale de la matriz del 2026-10-28 (fila «Pestañas por repo con alias», `partial`) solo para no bajar de 10 pendientes: la reposición hasta 15 la hace la iteración 174.
+- Reclamo: loop/173, sin colisión (a mano: tanda de tres iteraciones simultáneas que Benjamin pidió en persona, no un disparo de la Routine; la 172 y la 174 en otras ranuras)
+- Validado: PENDIENTE (npm run check tras fusionar la 172)
+- **Siguiente:** iteración 174, expansión: ítem 99 (Salud del repo: tendencia de ramas nuevas, Análisis)

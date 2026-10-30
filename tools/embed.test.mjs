@@ -136,6 +136,15 @@ test('embedOptions: branch deja el nombre tal cual, sin control ni más de 200 c
   assert.equal(GB.embedOptions('?branch=main'), null);
 });
 
+test('embedOptions: pr=1 (o on, true, yes) deja solo las ramas con PR; por defecto, todas', () => {
+  const { GB } = load('');
+  assert.equal(GB.embedOptions('?embed=1').pr, false);
+  for (const on of ['1', 'on', 'TRUE', 'yes', ' 1 ']) assert.equal(GB.embedOptions('?embed=1&pr=' + on).pr, true, on);
+  // fuera de la capa ?pr=N abre la vista del PR N: dentro, un número que no es 1 no enciende el filtro
+  for (const off of ['0', '', '12', '#1', 'x', 'off', '01']) assert.equal(GB.embedOptions('?embed=1&pr=' + encodeURIComponent(off)).pr, false, off);
+  assert.equal(GB.embedOptions('?pr=1'), null);
+});
+
 test('embedOptions: view=2d|3d fija la vista; cualquier otro valor la deja como estaba', () => {
   const { GB } = load('');
   assert.equal(GB.embedOptions('?embed=1').view, '');

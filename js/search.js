@@ -67,6 +67,20 @@
     return { data: { ...data, branches, pulls }, shown, total };
   }
 
+  /** La vista de `data` con solo las ramas que tienen un PR abierto de la misma repo (`data.pulls` guarda solo los
+      abiertos): la rama por defecto y las que aún no tienen historia cargada siempre quedan, como en `byBranches`.
+      Sin ramas que quitar, `data` tal cual. No muta. */
+  function withOpenPr(data) {
+    const heads = new Set();
+    for (const p of data.pulls.values()) if (p.sameRepo && p.head) heads.add(p.head);
+    const def = data.repo?.defaultBranch;
+    const branches = new Map();
+    for (const [name, b] of data.branches) if (name === def || b.isDefault || !data.commits.has(b.sha) || heads.has(name)) branches.set(name, b);
+    if (branches.size === data.branches.size) return data;
+    const pulls = new Map([...data.pulls].filter(([, p]) => !p.sameRepo || branches.has(p.head)));
+    return { ...data, branches, pulls };
+  }
+
   /** La vista de `data` con solo `max` ramas con historia: la rama por defecto (cuenta como una) y las de commit más
       reciente. Las que aún no tienen historia cargada no se tocan, y los PR de las quitadas se van con ellas.
       `max` 0 o inválido: `data` tal cual. No muta. */
@@ -282,5 +296,5 @@
     return v.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 100);
   }
 
-  GB.search = { authors, authorParam, branchViewParam, byAuthor, byBranches, firstParent, firstParentParam, limitBranches, find, mount, pathParam, prParam, queryParam, LIMIT };
+  GB.search = { authors, authorParam, branchViewParam, byAuthor, byBranches, firstParent, firstParentParam, limitBranches, find, mount, pathParam, prParam, queryParam, withOpenPr, LIMIT };
 })((window.GB = window.GB || {}));

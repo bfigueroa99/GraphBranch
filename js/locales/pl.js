@@ -320,6 +320,7 @@ GB.i18n.define('pl', {
 
   /* ---------- tytuły i szczegóły zdarzeń ---------- */
   'act.branchCreated': 'Utworzono gałąź {name}',
+  'act.branchRenamed': 'Zmieniono nazwę gałęzi {old} na {name}',
   'act.branchFrom': 'Odgałęziono od {from} w commicie {sha}',
   'act.branchFromOnly': 'Odgałęziono od {from}',
   'act.branchAt': 'W commicie {sha}',

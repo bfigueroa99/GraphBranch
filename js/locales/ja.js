@@ -314,6 +314,7 @@ GB.i18n.define('ja', {
 
   /* ---------- アクティビティのタイトルと詳細 ---------- */
   'act.branchCreated': 'ブランチ {name} を作成',
+  'act.branchRenamed': 'ブランチ {old} を {name} に名前変更',
   'act.branchFrom': '{from} の {sha} から分岐',
   'act.branchFromOnly': '{from} から分岐',
   'act.branchAt': '{sha} 時点',

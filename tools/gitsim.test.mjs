@@ -85,6 +85,86 @@ test('branch y checkout: crear, cambiar, desprender y borrar', () => {
   assert.equal(r.run('checkout nope').ok, false);
 });
 
+test('branch -m renombra una rama (la actual si no se dice cuál) y HEAD, la por defecto y el reflog la siguen', () => {
+  const r = fresh();
+  r.run('branch feature');
+  const tip = r.branches.get('feature');
+  const main = r.headSha;
+  // otra rama: cambia el nombre, no el commit, y HEAD no se mueve
+  let res = r.run('branch -m feature feature/login');
+  assert.ok(res.ok && res.changed);
+  assert.deepEqual(plain(res.lines), []);
+  assert.equal(r.branches.has('feature'), false);
+  assert.equal(r.branches.get('feature/login'), tip);
+  assert.equal(r.head.branch, 'main');
+  assert.deepEqual(plain(r.renamed), { from: 'feature', to: 'feature/login' });
+  assert.equal(r.reflog.length, 1, 'renombrar otra rama no mueve HEAD');
+  // la actual, sin decir cuál: HEAD y la rama por defecto la siguen, en su mismo lugar, y el reflog lo anota como git
+  res = r.run('git branch -m trunk');
+  assert.ok(res.ok && res.changed);
+  assert.equal(r.head.branch, 'trunk');
+  assert.equal(r.headSha, main);
+  assert.equal(r.defaultBranch, 'trunk');
+  assert.deepEqual([...r.branches.keys()], ['trunk', 'feature/login']);
+  assert.match(r.run('reflog').lines[0], /HEAD@\{0\}: Branch: renamed refs\/heads\/main to refs\/heads\/trunk$/);
+  assert.deepEqual(plain(r.run('branch').lines), ['  feature/login', '* trunk']);
+  assert.match(r.run('log --oneline').lines[0], /\(HEAD -> trunk, feature\/login\)/);
+  assert.equal(r.renamed, null, 'otro comando borra la marca del renombre');
+  // --move también; con el mismo nombre no hace nada
+  assert.ok(r.run('branch --move feature/login login').ok);
+  assert.equal(r.branches.get('login'), tip);
+  res = r.run('branch -m trunk trunk');
+  assert.ok(res.ok);
+  assert.equal(res.changed, false);
+  // la rama renombrada sigue siendo la misma: se le puede hacer commit y fusionar
+  assert.match(r.run('commit -m "On trunk"').lines[0], /^\[trunk [0-9a-f]{7}\] On trunk$/);
+});
+
+test('branch -m se niega como git sin tocar nada; -M pisa una rama que no está en uso', () => {
+  const r = fresh();
+  run(r, 'branch feature', 'checkout -b otra', 'commit -m x', 'checkout main');
+  const state = () => JSON.stringify([[...r.branches], r.head, r.defaultBranch]);
+  const before = state();
+  for (const [line, re] of [
+    ['branch -m', /^fatal: branch name required$/],
+    ['branch -m a b c', /^fatal: too many arguments for a rename operation$/],
+    ['branch -m nope x', /^fatal: no branch named 'nope'$/],
+    ['branch -m feature otra', /^fatal: a branch named 'otra' already exists$/],
+    ['branch -m feature "a..b"', /^fatal: 'a\.\.b' is not a valid branch name$/],
+    ['branch -M feature main', /^fatal: cannot force update the branch 'main' used by worktree$/],
+    ['branch -d -m feature x', /^usage: branch \(-m \| -M\) \[<old-branch>\] <new-branch>$/],
+  ]) {
+    const res = r.run(line);
+    assert.equal(res.ok, false, line);
+    assert.equal(res.changed, false, line);
+    assert.match(res.lines[0], re, line);
+  }
+  assert.equal(state(), before);
+  // -M pisa la otra rama (sus commits quedan sin rama, como en git)
+  const tip = r.branches.get('feature');
+  assert.ok(r.run('branch -M feature otra').ok);
+  assert.equal(r.branches.get('otra'), tip);
+  assert.equal(r.branches.has('feature'), false);
+  // desprendido no hay rama actual que renombrar
+  r.run('checkout HEAD~1');
+  assert.match(r.run('branch -m nueva').lines[0], /^fatal: cannot rename the current branch while not on any$/);
+});
+
+test('branch -m no renombra la rama de un rebase a medias, y en un repo vacío renombra la rama sin commits', () => {
+  const r = start(2, NOW);
+  run(r, 'checkout feature', 'rebase -i main');
+  assert.match(r.run('branch -m feature otra').lines[0], /^fatal: branch refs\/heads\/feature is being rebased$/);
+  assert.match(r.run('branch -M main feature').lines[0], /^fatal: cannot force update the branch 'feature' used by worktree$/);
+  assert.ok(r.run('rebase --abort').ok);
+  assert.equal(r.head.branch, 'feature');
+  const e = new Repo({ now: NOW });
+  assert.ok(e.run('branch -m trunk').ok);
+  assert.equal(e.head.branch, 'trunk');
+  assert.equal(e.defaultBranch, 'trunk');
+  assert.match(e.run('commit -m first').lines[0], /^\[trunk [0-9a-f]{7}\] first$/);
+  assert.equal(e.branches.has('main'), false);
+});
+
 test('switch y restore: solo ramas, desprender a propósito y tirar cambios sin commit', () => {
   const r = fresh();
   assert.ok(r.run('switch -c arreglo').ok);
@@ -309,6 +389,63 @@ test('condiciones nuevas: el mensaje del último commit y las ramas sin fusionar
   const none = customExercise(cleanExercise({ ...spec, checks: ['tip:nadie~x', 'unmerged:nadie>main'] }));
   assert.equal(none.done(startCustom(none, NOW)), false, 'una rama que no existe no cumple');
   assert.equal(cleanExercise({ ...spec, checks: ['tip:feature~'] }).error, 'check');
+});
+
+test('un ejercicio propio puede pedir renombrar una rama con branch -m', () => {
+  const spec = { title: 'Renombra', goal: 'feature pasa a llamarse feature/login.', setup: ['checkout -b feature', 'commit -m uno'], checks: ['exists:feature/login', 'missing:feature', 'on:feature/login'], solution: ['branch -m feature/login'] };
+  const clean = cleanExercise(spec);
+  assert.equal(clean.error, undefined, 'la solución con branch -m lo resuelve');
+  const ex = customExercise(clean);
+  const r = startCustom(ex, NOW);
+  assert.equal(ex.done(r), false);
+  r.run('branch feature/login');
+  assert.equal(ex.done(r), false, 'una rama nueva con el nombre no alcanza: la vieja sigue');
+  r.run('branch -D feature/login');
+  r.run('branch -m feature feature/login');
+  assert.equal(ex.done(r), true);
+});
+
+/* la fuente de práctica (js/sources/practice.js) cuenta en el panel de actividad lo que hace cada comando */
+function practiceSource() {
+  const pctx = vm.createContext({ setTimeout, clearTimeout, TextEncoder, TextDecoder, btoa, atob, Uint8Array, console, document: { hidden: false, addEventListener() {}, removeEventListener() {} }, localStorage: { getItem: () => null, setItem() {}, removeItem() {} } });
+  pctx.window = pctx;
+  const load = (f) => vm.runInContext(readFileSync(join(root, 'js', f), 'utf8'), pctx, { filename: f });
+  load('util.js');
+  vm.runInContext(`GB.i18n = { locale: 'en', msg: (k, p) => ({ key: k, params: p }), t: (k) => k, text: String, fmtNum: String };`, pctx);
+  load('gitsim.js');
+  load('sources/practice.js');
+  const src = new pctx.GB.PracticeSource(0);
+  const updates = [];
+  src.on('update', (u) => updates.push(u));
+  src.running = true;
+  return { src, acts: () => plain(updates.at(-1)?.activities ?? []) };
+}
+
+test('la práctica dice «rama renombrada» en el panel, no una borrada y otra creada, y el grafo sigue a la rama por defecto', () => {
+  const { src, acts } = practiceSource();
+  src.run('branch feature');
+  assert.equal(src.run('branch -m feature feature/login').ok, true);
+  let list = acts();
+  assert.equal(list.length, 1);
+  assert.equal(list[0].kind, 'branch-create');
+  assert.equal(list[0].branch, 'feature/login');
+  assert.deepEqual(list[0].title, { key: 'act.branchRenamed', params: { old: 'feature', name: 'feature/login' } });
+  assert.equal(list[0].detail, 'Add login form');
+  // la rama por defecto: el grafo la sigue con su nuevo nombre
+  src.run('branch -m trunk');
+  assert.deepEqual(acts().map((a) => a.title.params), [{ old: 'main', name: 'trunk' }]);
+  assert.equal(src.data.repo.defaultBranch, 'trunk');
+  assert.equal(src.data.branches.get('trunk').isDefault, true);
+  assert.equal(src.data.branches.has('main'), false);
+  // -M sobre una rama que existía: un solo aviso, el del renombre
+  src.run('branch otra');
+  src.run('branch -M feature/login otra');
+  list = acts();
+  assert.equal(list.length, 1);
+  assert.deepEqual(list[0].title.params, { old: 'feature/login', name: 'otra' });
+  // y lo de siempre sigue igual: borrar una rama es borrarla
+  src.run('branch -d otra');
+  assert.deepEqual(acts().map((a) => [a.kind, a.title.key]), [['branch-delete', 'act.branchDeleted']]);
 });
 
 test('los números de la URL piden un ejercicio de la lista; lo demás se descarta', () => {

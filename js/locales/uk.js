@@ -325,6 +325,7 @@ GB.i18n.define('uk', {
 
   /* ---------- заголовки та подробиці подій ---------- */
   'act.branchCreated': 'Створено гілку {name}',
+  'act.branchRenamed': 'Гілку {old} перейменовано на {name}',
   'act.branchFrom': 'Відгалужено від {from} на коміті {sha}',
   'act.branchFromOnly': 'Відгалужено від {from}',
   'act.branchAt': 'На коміті {sha}',

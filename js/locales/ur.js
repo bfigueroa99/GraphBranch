@@ -348,6 +348,7 @@ GB.i18n.define('ur', {
 
   /* ---------- activity titles and details ---------- */
   'act.branchCreated': 'برانچ {name} بنائی گئی',
+  'act.branchRenamed': 'برانچ {old} کا نام بدل کر {name} رکھ دیا گیا',
   'act.branchFrom': '{from} سے {sha} پر الگ ہوئی',
   'act.branchFromOnly': '{from} سے الگ ہوئی',
   'act.branchAt': '{sha} پر',

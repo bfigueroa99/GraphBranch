@@ -315,6 +315,7 @@ GB.i18n.define('th', {
 
   /* ---------- activity titles and details ---------- */
   'act.branchCreated': 'สร้าง branch {name} แล้ว',
+  'act.branchRenamed': 'เปลี่ยนชื่อ branch {old} เป็น {name} แล้ว',
   'act.branchFrom': 'แตกมาจาก {from} ที่ {sha}',
   'act.branchFromOnly': 'แตกมาจาก {from}',
   'act.branchAt': 'ที่ {sha}',

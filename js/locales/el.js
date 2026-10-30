@@ -314,6 +314,7 @@ GB.i18n.define('el', {
 
   /* ---------- τίτλοι και λεπτομέρειες δραστηριότητας ---------- */
   'act.branchCreated': 'Δημιουργήθηκε το branch {name}',
+  'act.branchRenamed': 'Το branch {old} μετονομάστηκε σε {name}',
   'act.branchFrom': 'Δημιουργήθηκε από το {from} στο {sha}',
   'act.branchFromOnly': 'Δημιουργήθηκε από το {from}',
   'act.branchAt': 'Στο {sha}',

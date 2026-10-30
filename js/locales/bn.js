@@ -314,6 +314,7 @@ GB.i18n.define('bn', {
 
   /* ---------- কার্যকলাপের শিরোনাম ও বিবরণ ---------- */
   'act.branchCreated': 'ব্রাঞ্চ {name} তৈরি হয়েছে',
+  'act.branchRenamed': 'ব্রাঞ্চ {old}-এর নাম বদলে {name} রাখা হয়েছে',
   'act.branchFrom': '{from} থেকে ব্রাঞ্চ করা হয়েছে (কমিট {sha})',
   'act.branchFromOnly': '{from} থেকে ব্রাঞ্চ করা হয়েছে',
   'act.branchAt': 'কমিট {sha}',

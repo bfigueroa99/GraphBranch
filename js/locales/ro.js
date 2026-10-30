@@ -318,6 +318,7 @@ GB.i18n.define('ro', {
 
   /* ---------- titluri și detalii de activitate ---------- */
   'act.branchCreated': 'Ramura {name} creată',
+  'act.branchRenamed': 'Ramura {old} redenumită în {name}',
   'act.branchFrom': 'Ramificată din {from} la {sha}',
   'act.branchFromOnly': 'Ramificată din {from}',
   'act.branchAt': 'La {sha}',

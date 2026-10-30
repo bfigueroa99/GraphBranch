@@ -315,6 +315,7 @@ GB.i18n.define('nl', {
 
   /* ---------- activity titles and details ---------- */
   'act.branchCreated': 'Branch {name} aangemaakt',
+  'act.branchRenamed': 'Branch {old} hernoemd naar {name}',
   'act.branchFrom': 'Afgesplitst van {from} bij {sha}',
   'act.branchFromOnly': 'Afgesplitst van {from}',
   'act.branchAt': 'Bij {sha}',

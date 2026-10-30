@@ -320,6 +320,7 @@ GB.i18n.define('en', {
 
   /* ---------- activity titles and details ---------- */
   'act.branchCreated': 'Branch {name} created',
+  'act.branchRenamed': 'Branch {old} renamed to {name}',
   'act.branchFrom': 'Branched from {from} at {sha}',
   'act.branchFromOnly': 'Branched from {from}',
   'act.branchAt': 'At {sha}',

@@ -314,6 +314,7 @@ GB.i18n.define('ta', {
 
   /* ---------- செயல்பாட்டுத் தலைப்புகளும் விவரங்களும் ---------- */
   'act.branchCreated': 'கிளை {name} உருவாக்கப்பட்டது',
+  'act.branchRenamed': 'கிளை {old} இன் பெயர் {name} என மாற்றப்பட்டது',
   'act.branchFrom': '{from} கிளையிலிருந்து பிரிக்கப்பட்டது (கமிட் {sha})',
   'act.branchFromOnly': '{from} கிளையிலிருந்து பிரிக்கப்பட்டது',
   'act.branchAt': 'கமிட் {sha}',

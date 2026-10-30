@@ -314,6 +314,7 @@ GB.i18n.define('hi', {
 
   /* ---------- गतिविधि के शीर्षक और विवरण ---------- */
   'act.branchCreated': 'ब्रांच {name} बनाई गई',
+  'act.branchRenamed': 'ब्रांच {old} का नाम बदलकर {name} किया गया',
   'act.branchFrom': '{from} से बनी, {sha} पर',
   'act.branchFromOnly': '{from} से बनी',
   'act.branchAt': '{sha} पर',

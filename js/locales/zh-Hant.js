@@ -314,6 +314,7 @@ GB.i18n.define('zh-Hant', {
 
   /* ---------- 動態標題與詳細資料 ---------- */
   'act.branchCreated': '分支 {name} 已建立',
+  'act.branchRenamed': '分支 {old} 已重新命名為 {name}',
   'act.branchFrom': '從 {from} 的 {sha} 建立',
   'act.branchFromOnly': '從 {from} 建立',
   'act.branchAt': '位於 {sha}',

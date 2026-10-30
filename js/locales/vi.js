@@ -314,6 +314,7 @@ GB.i18n.define('vi', {
 
   /* ---------- tiêu đề và chi tiết hoạt động ---------- */
   'act.branchCreated': 'Đã tạo nhánh {name}',
+  'act.branchRenamed': 'Đã đổi tên nhánh {old} thành {name}',
   'act.branchFrom': 'Tách từ {from} tại {sha}',
   'act.branchFromOnly': 'Tách từ {from}',
   'act.branchAt': 'Tại {sha}',

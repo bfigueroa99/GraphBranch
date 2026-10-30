@@ -314,6 +314,7 @@ GB.i18n.define('hu', {
 
   /* ---------- aktivitások címei és részletei ---------- */
   'act.branchCreated': 'Ág létrehozva: {name}',
+  'act.branchRenamed': 'Ág átnevezve: {old} → {name}',
   'act.branchFrom': 'Elágazás: {from}, commit: {sha}',
   'act.branchFromOnly': 'Elágazás: {from}',
   'act.branchAt': 'Commit: {sha}',

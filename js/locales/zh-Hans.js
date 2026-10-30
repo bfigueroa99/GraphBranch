@@ -314,6 +314,7 @@ GB.i18n.define('zh-Hans', {
 
   /* ---------- 动态标题与详情 ---------- */
   'act.branchCreated': '分支 {name} 已创建',
+  'act.branchRenamed': '分支 {old} 已重命名为 {name}',
   'act.branchFrom': '从 {from} 的 {sha} 创建',
   'act.branchFromOnly': '从 {from} 创建',
   'act.branchAt': '位于 {sha}',

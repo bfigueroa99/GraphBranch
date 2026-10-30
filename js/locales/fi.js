@@ -314,6 +314,7 @@ GB.i18n.define('fi', {
 
   /* ---------- toiminnan otsikot ja tiedot ---------- */
   'act.branchCreated': 'Haara {name} luotu',
+  'act.branchRenamed': 'Haara {old} nimetty uudelleen: {name}',
   'act.branchFrom': 'Luotu haarasta {from} kohdassa {sha}',
   'act.branchFromOnly': 'Luotu haarasta {from}',
   'act.branchAt': 'Kohdassa {sha}',

@@ -314,6 +314,7 @@ GB.i18n.define('ko', {
 
   /* ---------- 활동 제목과 상세 ---------- */
   'act.branchCreated': '브랜치 {name} 생성됨',
+  'act.branchRenamed': '브랜치 {old} 이름을 {name}(으)로 변경함',
   'act.branchFrom': '{from}의 {sha}에서 분기',
   'act.branchFromOnly': '{from}에서 분기',
   'act.branchAt': '{sha} 기준',

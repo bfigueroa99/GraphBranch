@@ -359,6 +359,7 @@ GB.i18n.define('he', {
 
   /* ---------- activity titles and details ---------- */
   'act.branchCreated': 'הענף {name} נוצר',
+  'act.branchRenamed': 'שם הענף {old} שונה ל-{name}',
   'act.branchFrom': 'הסתעף מ-{from} ב-{sha}',
   'act.branchFromOnly': 'הסתעף מ-{from}',
   'act.branchAt': 'ב-{sha}',

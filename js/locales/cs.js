@@ -320,6 +320,7 @@ GB.i18n.define('cs', {
 
   /* ---------- názvy a podrobnosti událostí ---------- */
   'act.branchCreated': 'Vytvořena větev {name}',
+  'act.branchRenamed': 'Větev {old} přejmenována na {name}',
   'act.branchFrom': 'Odvozeno z {from} v commitu {sha}',
   'act.branchFromOnly': 'Odvozeno z {from}',
   'act.branchAt': 'V commitu {sha}',

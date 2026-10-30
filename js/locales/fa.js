@@ -348,6 +348,7 @@ GB.i18n.define('fa', {
 
   /* ---------- activity titles and details ---------- */
   'act.branchCreated': 'شاخه {name} ایجاد شد',
+  'act.branchRenamed': 'نام شاخه {old} به {name} تغییر کرد',
   'act.branchFrom': 'منشعب از {from} در {sha}',
   'act.branchFromOnly': 'منشعب از {from}',
   'act.branchAt': 'در {sha}',

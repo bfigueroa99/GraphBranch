@@ -314,6 +314,7 @@ GB.i18n.define('sw', {
 
   /* ---------- vichwa na maelezo ya shughuli ---------- */
   'act.branchCreated': 'Tawi {name} limeundwa',
+  'act.branchRenamed': 'Tawi {old} limepewa jina jipya {name}',
   'act.branchFrom': 'Limetokana na {from} kwenye {sha}',
   'act.branchFromOnly': 'Limetokana na {from}',
   'act.branchAt': 'Kwenye {sha}',

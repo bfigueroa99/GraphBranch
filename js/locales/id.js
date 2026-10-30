@@ -314,6 +314,7 @@ GB.i18n.define('id', {
 
   /* ---------- judul dan detail aktivitas ---------- */
   'act.branchCreated': 'Branch {name} dibuat',
+  'act.branchRenamed': 'Branch {old} diganti namanya menjadi {name}',
   'act.branchFrom': 'Dibuat dari {from} di {sha}',
   'act.branchFromOnly': 'Dibuat dari {from}',
   'act.branchAt': 'Di {sha}',

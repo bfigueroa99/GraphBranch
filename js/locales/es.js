@@ -314,6 +314,7 @@ GB.i18n.define('es', {
 
   /* ---------- títulos y detalles de actividad ---------- */
   'act.branchCreated': 'Rama {name} creada',
+  'act.branchRenamed': 'Rama {old} renombrada a {name}',
   'act.branchFrom': 'Sale de {from} en {sha}',
   'act.branchFromOnly': 'Sale de {from}',
   'act.branchAt': 'En {sha}',

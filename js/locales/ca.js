@@ -314,6 +314,7 @@ GB.i18n.define('ca', {
 
   /* ---------- títols i detalls de l'activitat ---------- */
   'act.branchCreated': 'Branca {name} creada',
+  'act.branchRenamed': 'Branca {old} reanomenada a {name}',
   'act.branchFrom': 'Surt de {from} a {sha}',
   'act.branchFromOnly': 'Surt de {from}',
   'act.branchAt': 'A {sha}',

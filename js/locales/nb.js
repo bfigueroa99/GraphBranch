@@ -314,6 +314,7 @@ GB.i18n.define('nb', {
 
   /* ---------- aktivitetstitler og detaljer ---------- */
   'act.branchCreated': 'Branch {name} opprettet',
+  'act.branchRenamed': 'Branch {old} omdøpt til {name}',
   'act.branchFrom': 'Opprettet fra {from} ved {sha}',
   'act.branchFromOnly': 'Opprettet fra {from}',
   'act.branchAt': 'Ved {sha}',

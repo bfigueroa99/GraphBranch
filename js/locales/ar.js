@@ -392,6 +392,7 @@ GB.i18n.define('ar', {
 
   /* ---------- activity titles and details ---------- */
   'act.branchCreated': 'تم إنشاء الفرع {name}',
+  'act.branchRenamed': 'تمت إعادة تسمية الفرع {old} إلى {name}',
   'act.branchFrom': 'متفرّع من {from} عند {sha}',
   'act.branchFromOnly': 'متفرّع من {from}',
   'act.branchAt': 'عند {sha}',

@@ -314,6 +314,7 @@ GB.i18n.define('ms', {
 
   /* ---------- tajuk dan butiran aktiviti ---------- */
   'act.branchCreated': 'Branch {name} dicipta',
+  'act.branchRenamed': 'Branch {old} dinamakan semula kepada {name}',
   'act.branchFrom': 'Dicipta daripada {from} pada {sha}',
   'act.branchFromOnly': 'Dicipta daripada {from}',
   'act.branchAt': 'Pada {sha}',

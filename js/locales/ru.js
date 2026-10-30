@@ -325,6 +325,7 @@ GB.i18n.define('ru', {
 
   /* ---------- заголовки и детали событий ---------- */
   'act.branchCreated': 'Создана ветка {name}',
+  'act.branchRenamed': 'Ветка {old} переименована в {name}',
   'act.branchFrom': 'Ответвлена от {from} на коммите {sha}',
   'act.branchFromOnly': 'Ответвлена от {from}',
   'act.branchAt': 'На коммите {sha}',

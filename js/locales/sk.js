@@ -320,6 +320,7 @@ GB.i18n.define('sk', {
 
   /* ---------- activity titles and details ---------- */
   'act.branchCreated': 'Vetva {name} vytvorená',
+  'act.branchRenamed': 'Vetva {old} premenovaná na {name}',
   'act.branchFrom': 'Vznikla z {from} pri {sha}',
   'act.branchFromOnly': 'Vznikla z {from}',
   'act.branchAt': 'Na {sha}',

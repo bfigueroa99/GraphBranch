@@ -314,6 +314,7 @@ GB.i18n.define('tr', {
 
   /* ---------- etkinlik başlıkları ve ayrıntıları ---------- */
   'act.branchCreated': '{name} dalı oluşturuldu',
+  'act.branchRenamed': '{old} dalının adı {name} olarak değiştirildi',
   'act.branchFrom': '{from} dalından, {sha} noktasında ayrıldı',
   'act.branchFromOnly': '{from} dalından ayrıldı',
   'act.branchAt': '{sha} noktasında',

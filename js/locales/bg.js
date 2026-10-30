@@ -314,6 +314,7 @@ GB.i18n.define('bg', {
 
   /* ---------- заглавия и подробности за активността ---------- */
   'act.branchCreated': 'Клон {name} създаден',
+  'act.branchRenamed': 'Клон {old} преименуван на {name}',
   'act.branchFrom': 'Отделен от {from} при {sha}',
   'act.branchFromOnly': 'Отделен от {from}',
   'act.branchAt': 'При {sha}',

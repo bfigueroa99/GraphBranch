@@ -796,7 +796,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: terminal de práctica (renombrar otra rama y la actual, `-M`, errores, `reflog`, grafo 2D y panel de actividad en español); texto nuevo en los 40 idiomas (`check-i18n` 0 errores); auditoría: ver Validado.
 - Skills: no aplica: un subcomando más del intérprete propio, sin dominio nuevo.
 - Arena: no aplica: una sola forma obvia (un caso más de `branch` que cambia la clave en el mapa de ramas); y 18 iteraciones simultáneas en un contenedor de 4 CPU, pedido del dueño.
-- Replica: sin pasada ni paridad nuevas; el ítem 125 sale de la matriz del 2026-10-28 (fila «Pestañas por repo con alias», `partial`) solo para no bajar de 10 pendientes: la reposición hasta 15 la hace la iteración 174.
+- Replica: sin pasada ni paridad nuevas; el ítem 125 («Varias cuentas del mismo servicio», Fuentes, 1×2/2) sale de las reseñas de la pasada del 2026-10-28 (`replica/fixes.md`, fila «Varios perfiles o cuentas», `no`) solo para no bajar de 10 pendientes sin adelantar al ítem 99 de la 174 (la 172 ya tomó «Alias de las pestañas»); la reposición hasta 15 la hace la iteración 174.
 - Reclamo: loop/173, sin colisión (a mano: tanda de tres iteraciones simultáneas que Benjamin pidió en persona, no un disparo de la Routine; la 172 y la 174 en otras ranuras)
 - Validado: PENDIENTE (npm run check tras fusionar la 172)
 - **Siguiente:** iteración 174, expansión: ítem 99 (Salud del repo: tendencia de ramas nuevas, Análisis)

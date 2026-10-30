@@ -759,9 +759,9 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - **Capacidad nueva: la vista de un PR en la URL** (ítem 118 de la hoja de ruta, parte del 112): `?pr=N` (o `?pr=%23N`) abre, al cargar el repo, un diálogo con la descripción y los últimos comentarios del PR (la misma `prDetail` y el mismo HTML de la ficha de la rama, una sola consulta), con el foco en él y Esc para cerrarlo. `GB.search.prParam` solo acepta un entero positivo de hasta 9 cifras; se ignora en `?embed=1` y en fuentes sin `prDetail`.
 - **Pruebas que fallan sin la capacidad:** `node --test tools/search.test.mjs` → `S.prParam is not a function`; y un paso del smoke («?pr=N abre la vista del PR…»).
 - README: la función «Descripción y comentarios de un PR» explica `?pr=N`; Límites conocidos y Seguridad al día.
-- QA: demo con `?pr=31` y `?pr=abc`; texto nuevo (`prview.title`) en los 40 idiomas; auditoría: ver Validado.
+- QA: demo con `?pr=36` y `?pr=abc`; texto nuevo (`prview.title`) en los 40 idiomas; auditoría: ver Validado.
 - Skills: no aplica: un parámetro de URL y un diálogo sobre código propio, sin dominio nuevo.
 - Arena: no aplica: una sola forma obvia (leer la URL como `?vista=texto` y reutilizar `prDetail`).
 - Reclamo: loop/169, sin colisión
-- Validado: PENDIENTE
+- Validado: 496 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Un primer smoke falló por usar un PR (#31) que la demo no tiene; el paso usa el #36.
 - **Siguiente:** iteración 170, expansión: ítem 120 (Azure DevOps: cambios de un commit, Análisis)

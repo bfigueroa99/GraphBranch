@@ -334,6 +334,7 @@ GB.i18n.define('he', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'ענף חדש',
+  'kind.branch-rename': 'ענף ששמו שונה',
   'kind.branch-delete': 'ענף נמחק',
   'kind.branch-delete-unmerged': 'ענף נמחק ללא merge',
   'kind.pr-open': 'Pull request',

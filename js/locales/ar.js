@@ -367,6 +367,7 @@ GB.i18n.define('ar', {
   'kind.merge': 'دمج',
   'kind.force': 'Force-push',
   'kind.branch-create': 'فرع جديد',
+  'kind.branch-rename': 'إعادة تسمية فرع',
   'kind.branch-delete': 'فرع محذوف',
   'kind.branch-delete-unmerged': 'فرع محذوف دون دمج',
   'kind.pr-open': 'Pull request',

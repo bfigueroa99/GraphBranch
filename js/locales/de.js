@@ -290,6 +290,7 @@ GB.i18n.define('de', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-Push',
   'kind.branch-create': 'Neuer Branch',
+  'kind.branch-rename': 'Branch umbenannt',
   'kind.branch-delete': 'Branch gelöscht',
   'kind.branch-delete-unmerged': 'Branch ungemergt gelöscht',
   'kind.pr-open': 'Pull Request',

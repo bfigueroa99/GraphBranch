@@ -289,6 +289,7 @@ GB.i18n.define('ta', {
   'kind.merge': 'மெர்ஜ்',
   'kind.force': 'ஃபோர்ஸ்-புஷ்',
   'kind.branch-create': 'புதிய கிளை',
+  'kind.branch-rename': 'கிளையின் பெயர் மாற்றம்',
   'kind.branch-delete': 'கிளை நீக்கப்பட்டது',
   'kind.branch-delete-unmerged': 'மெர்ஜ் செய்யாமல் கிளை நீக்கப்பட்டது',
   'kind.pr-open': 'Pull request',

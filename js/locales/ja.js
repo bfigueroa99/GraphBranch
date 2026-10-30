@@ -289,6 +289,7 @@ GB.i18n.define('ja', {
   'kind.merge': 'マージ',
   'kind.force': '強制プッシュ',
   'kind.branch-create': '新規ブランチ',
+  'kind.branch-rename': 'ブランチ名の変更',
   'kind.branch-delete': 'ブランチ削除',
   'kind.branch-delete-unmerged': '未マージのままブランチ削除',
   'kind.pr-open': 'プルリクエスト',

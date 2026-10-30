@@ -427,7 +427,7 @@ test('la práctica dice «rama renombrada» en el panel, no una borrada y otra c
   assert.equal(src.run('branch -m feature feature/login').ok, true);
   let list = acts();
   assert.equal(list.length, 1);
-  assert.equal(list[0].kind, 'branch-create');
+  assert.equal(list[0].kind, 'branch-rename');
   assert.equal(list[0].branch, 'feature/login');
   assert.deepEqual(list[0].title, { key: 'act.branchRenamed', params: { old: 'feature', name: 'feature/login' } });
   assert.equal(list[0].detail, 'Add login form');

@@ -295,6 +295,7 @@ GB.i18n.define('pl', {
   'kind.merge': 'Scalenie',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Nowa gałąź',
+  'kind.branch-rename': 'Zmiana nazwy gałęzi',
   'kind.branch-delete': 'Gałąź usunięta',
   'kind.branch-delete-unmerged': 'Gałąź usunięta bez scalenia',
   'kind.pr-open': 'Pull request',

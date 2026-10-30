@@ -289,6 +289,7 @@ GB.i18n.define('ms', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Branch baharu',
+  'kind.branch-rename': 'Branch dinamakan semula',
   'kind.branch-delete': 'Branch dipadam',
   'kind.branch-delete-unmerged': 'Branch dipadam tanpa di-merge',
   'kind.pr-open': 'Pull request',

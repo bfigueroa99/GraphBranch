@@ -289,6 +289,7 @@ GB.i18n.define('sv', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Ny branch',
+  'kind.branch-rename': 'Branch bytte namn',
   'kind.branch-delete': 'Branch raderad',
   'kind.branch-delete-unmerged': 'Branch raderad utan merge',
   'kind.pr-open': 'Pull request',

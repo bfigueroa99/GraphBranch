@@ -95,7 +95,7 @@
       const ren = g.renamed;
       if (ren && g.branches.get(ren.to)) {
         const sha = g.branches.get(ren.to);
-        acts.push(act('branch-create', { title: MSG('act.branchRenamed', { old: ren.from, name: ren.to }), detail: U.firstLine(g.commits.get(sha).message), branch: ren.to, sha }));
+        acts.push(act('branch-rename', { title: MSG('act.branchRenamed', { old: ren.from, name: ren.to }), detail: U.firstLine(g.commits.get(sha).message), branch: ren.to, sha }));
       }
       for (const [name, sha] of g.branches) {
         if (!sha || name === ren?.to) continue;

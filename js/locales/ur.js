@@ -323,6 +323,7 @@ GB.i18n.define('ur', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'نئی برانچ',
+  'kind.branch-rename': 'برانچ کا نام بدلا',
   'kind.branch-delete': 'برانچ حذف',
   'kind.branch-delete-unmerged': 'برانچ بغیر merge کے حذف',
   'kind.pr-open': 'Pull request',

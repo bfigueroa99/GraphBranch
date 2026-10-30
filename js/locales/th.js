@@ -290,6 +290,7 @@ GB.i18n.define('th', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Branch ใหม่',
+  'kind.branch-rename': 'เปลี่ยนชื่อ branch แล้ว',
   'kind.branch-delete': 'ลบ branch แล้ว',
   'kind.branch-delete-unmerged': 'ลบ branch โดยไม่ได้ merge',
   'kind.pr-open': 'Pull request',

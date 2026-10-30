@@ -290,6 +290,7 @@ GB.i18n.define('pt', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Novo branch',
+  'kind.branch-rename': 'Branch renomeado',
   'kind.branch-delete': 'Branch excluído',
   'kind.branch-delete-unmerged': 'Branch excluído sem merge',
   'kind.pr-open': 'Pull request',

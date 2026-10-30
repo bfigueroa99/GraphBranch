@@ -289,6 +289,7 @@ GB.i18n.define('hu', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Új ág',
+  'kind.branch-rename': 'Ág átnevezve',
   'kind.branch-delete': 'Ág törölve',
   'kind.branch-delete-unmerged': 'Ág törölve beolvasztás nélkül',
   'kind.pr-open': 'Pull request',

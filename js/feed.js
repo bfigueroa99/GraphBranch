@@ -34,6 +34,7 @@
     merge: { cat: 'commits', sev: 'good', icon: 'merge' },
     force: { cat: 'commits', sev: 'warn', icon: 'force' },
     'branch-create': { cat: 'branches', sev: 'info', icon: 'branch' },
+    'branch-rename': { cat: 'branches', sev: 'info', icon: 'branch' }, // solo la práctica (branch -m): las fuentes reales no lo saben
     'branch-delete': { cat: 'branches', sev: 'info', icon: 'trash' },
     'branch-delete-unmerged': { cat: 'branches', sev: 'warn', icon: 'trash' },
     'pr-open': { cat: 'prs', sev: 'info', icon: 'pr' },

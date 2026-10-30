@@ -300,6 +300,7 @@ GB.i18n.define('uk', {
   'kind.merge': 'Злиття',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Нова гілка',
+  'kind.branch-rename': 'Гілку перейменовано',
   'kind.branch-delete': 'Гілку видалено',
   'kind.branch-delete-unmerged': 'Гілку видалено без злиття',
   'kind.pr-open': 'Pull request',

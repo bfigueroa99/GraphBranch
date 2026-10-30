@@ -295,6 +295,7 @@ GB.i18n.define('cs', {
   'kind.merge': 'Sloučení',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Nová větev',
+  'kind.branch-rename': 'Větev přejmenována',
   'kind.branch-delete': 'Větev smazána',
   'kind.branch-delete-unmerged': 'Větev smazána bez sloučení',
   'kind.pr-open': 'Pull request',

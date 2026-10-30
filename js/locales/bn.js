@@ -289,6 +289,7 @@ GB.i18n.define('bn', {
   'kind.merge': 'মার্জ',
   'kind.force': 'ফোর্স-পুশ',
   'kind.branch-create': 'নতুন ব্রাঞ্চ',
+  'kind.branch-rename': 'ব্রাঞ্চের নাম বদল',
   'kind.branch-delete': 'ব্রাঞ্চ মুছে ফেলা হয়েছে',
   'kind.branch-delete-unmerged': 'মার্জ না করেই ব্রাঞ্চ মুছে ফেলা হয়েছে',
   'kind.pr-open': 'Pull request',

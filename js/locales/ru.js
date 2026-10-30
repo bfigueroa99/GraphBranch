@@ -300,6 +300,7 @@ GB.i18n.define('ru', {
   'kind.merge': 'Слияние',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Новая ветка',
+  'kind.branch-rename': 'Ветка переименована',
   'kind.branch-delete': 'Ветка удалена',
   'kind.branch-delete-unmerged': 'Ветка удалена без слияния',
   'kind.pr-open': 'Pull request',

@@ -323,6 +323,7 @@ GB.i18n.define('fa', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'شاخه جدید',
+  'kind.branch-rename': 'شاخه تغییر نام داد',
   'kind.branch-delete': 'شاخه حذف شد',
   'kind.branch-delete-unmerged': 'شاخه بدون merge حذف شد',
   'kind.pr-open': 'Pull request',

@@ -289,6 +289,7 @@ GB.i18n.define('zh-Hant', {
   'kind.merge': '合併',
   'kind.force': '強制推送',
   'kind.branch-create': '新分支',
+  'kind.branch-rename': '分支已重新命名',
   'kind.branch-delete': '分支已刪除',
   'kind.branch-delete-unmerged': '分支已刪除（未合併）',
   'kind.pr-open': 'Pull Request',

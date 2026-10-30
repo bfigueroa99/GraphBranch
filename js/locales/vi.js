@@ -289,6 +289,7 @@ GB.i18n.define('vi', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Nhánh mới',
+  'kind.branch-rename': 'Đã đổi tên nhánh',
   'kind.branch-delete': 'Đã xóa nhánh',
   'kind.branch-delete-unmerged': 'Đã xóa nhánh chưa merge',
   'kind.pr-open': 'Pull request',

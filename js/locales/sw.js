@@ -289,6 +289,7 @@ GB.i18n.define('sw', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Tawi jipya',
+  'kind.branch-rename': 'Tawi limepewa jina jipya',
   'kind.branch-delete': 'Tawi limefutwa',
   'kind.branch-delete-unmerged': 'Tawi limefutwa bila kuunganishwa',
   'kind.pr-open': 'Pull request',

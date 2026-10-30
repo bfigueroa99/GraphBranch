@@ -289,6 +289,7 @@ GB.i18n.define('ca', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Branca nova',
+  'kind.branch-rename': 'Branca reanomenada',
   'kind.branch-delete': 'Branca eliminada',
   'kind.branch-delete-unmerged': 'Branca eliminada sense fusionar',
   'kind.pr-open': 'Pull request',

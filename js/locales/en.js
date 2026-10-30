@@ -295,6 +295,7 @@ GB.i18n.define('en', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'New branch',
+  'kind.branch-rename': 'Branch renamed',
   'kind.branch-delete': 'Branch deleted',
   'kind.branch-delete-unmerged': 'Branch deleted unmerged',
   'kind.pr-open': 'Pull request',

@@ -874,5 +874,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Skills: no aplica: dos parámetros de URL sobre código propio, sin dominio nuevo.
 - Arena: no aplica: una sola forma obvia (leer la URL en `showTab` como `?author=`).
 - Reclamo: loop/168, sin colisión
-- Validado: PENDIENTE
+- Validado: SIN FUSIONAR: `node --test` (494+1) y el paso nuevo del smoke pasan, pero `npm run check` salió 1 en cinco corridas, cada una con un paso ajeno distinto (historial de un archivo, editar el código, editar sin token, ocultar una rama, filtro por autor); `origin/dev` limpio también falla ahí («historial de un archivo», modo TV). Entorno cloud lento o dev intermitente; falta una corrida en verde.
 - **Siguiente:** iteración 169, expansión: ítem 118 (Vista de un PR en la URL, Datos)

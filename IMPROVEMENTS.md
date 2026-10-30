@@ -242,7 +242,7 @@ segunda columna a la primera.
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color, `&hide=` (avisos, combo, leyenda, rótulo y fechas), `&rotate=` entre repos, `&theme=` claro u oscuro y `&title=` con un rótulo propio, `&max=` con el tope de ramas y `&spin=0` que aquieta la vista 3D, `&view=2d|3d` que fija la vista, `&branch=` que deja una sola rama), extensión de VS Code (sigue la sesión de GitHub del editor y recuerda repos, vista e idioma entre sesiones; paquete listo, sin publicar) | extensión de Chrome o Firefox, app móvil |
 | Escala | hasta 10 repos (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia, ordenable por pestañas, actividad o nombre, también desde la URL con `?order=activity` o `?order=name`, y filtrable por nombre con `?constellation=texto`), miles de ramas por repo, el Launchpad de la vista conjunta (los PRs abiertos de todos los repos seguidos, por estado: borrador, checks en rojo, aprobados y esperando revisión) | una organización entera con más de 10 repos a la vez |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack, Discord y Teams (escritorio), resumen de la semana (Markdown, con PRs abiertos, issues cerrados, releases, tags, autores nuevos y commits por día, de un repo o de una organización seguida; PNG, de un repo o de una organización), prompt del loop autónomo para cualquier repo (español o inglés, con repo, ramas y objetivo; se copia o se guarda como `.md`) | el resumen de la semana de una organización con sus issues cerrados |
-| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo, issues cerrados por semana), choques entre ramas, también desde la URL (`?conflicts=1`), comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`) y desde el botón «Historial» de cada archivo del diff, filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), ocultar una rama o dejarla sola desde su ficha (2D y 3D, por repo), el grafo de primer padre como `git log --first-parent`, también desde la URL (`?firstparent=1`), búsqueda de commits también desde la URL (`?q=`), búsqueda por fecha (`desde:` y `hasta:`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, PRs fusionados y abiertos por semana en la salud (las últimas 8), vocabulario DORA en la salud (despliegues en 30 días y por semana, mediana entre releases, tiempo de entrega desde el primer commit del PR), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días), el panel de salud abierto desde la URL (`?health=1`), bitácora en vivo al estilo de Brunell_Node (la quinta cifra del resumen: desde la bitácora anterior, lo grande, commits por día, nota del 1 al 100 de ritmo, publicado y salud con su origen, hallazgos con su gravedad y su seguimiento, cronología y qué sigue; se cierra, se guarda en el navegador y sale en Markdown o `estado.json`) | ver la hoja de ruta |
+| Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo, issues cerrados por semana), choques entre ramas, también desde la URL (`?conflicts=1`), comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`) y desde el botón «Historial» de cada archivo del diff, filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), ocultar una rama o dejarla sola desde su ficha (2D y 3D, por repo), el grafo de primer padre como `git log --first-parent`, también desde la URL (`?firstparent=1`), búsqueda de commits también desde la URL (`?q=`), búsqueda por fecha (`desde:` y `hasta:`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, PRs fusionados y abiertos por semana en la salud (las últimas 8), vocabulario DORA en la salud (despliegues en 30 días y por semana, mediana entre releases, tiempo de entrega desde el primer commit del PR), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días), el panel de salud abierto desde la URL (`?health=1`), ramas ocultas o sola una desde la URL (`?ocultar=`, `?solo=`), bitácora en vivo al estilo de Brunell_Node (la quinta cifra del resumen: desde la bitácora anterior, lo grande, commits por día, nota del 1 al 100 de ritmo, publicado y salud con su origen, hallazgos con su gravedad y su seguimiento, cronología y qué sigue; se cierra, se guarda en el navegador y sale en Markdown o `estado.json`) | ver la hoja de ruta |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal (`cherry-pick` (con `--no-commit`/`--abort`), `revert` (con `--no-commit`/`--abort`), `rebase -i` (con `--abort`/`--continue`), `stash`, `tag` (con `-d`), `reset` (`--soft`/`--mixed`/`--hard`, con `HEAD@{n}`), `commit --amend` (con `-m`) y `reflog`, `switch`, `restore` y `merge --no-ff` (con `-m`), `--no-commit` y `--abort` incluidos) y ejercicios, también propios compartidos por URL con pistas, solución propuesta que se muestra paso a paso con `solution=1` y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), quien usa lector de pantalla (vista de texto (también desde la URL con `?vista=texto`): árbol de ramas y commits con teclado, filtro por rama, por autor y por ruta con su aviso, tags dichos en cada commit, forks activos y PRs abiertos por rama ya cargados ramas sin actividad hace más de 30 días dichas en su nombre y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
@@ -504,7 +504,7 @@ se comprueban antes de construir sobre ellas.
 113. ~~**Token para Azure DevOps (proyectos privados)**~~ hecho en #214 · Fuentes · 2×2/2. [parte del ítem 107] La primera entrega de Azure DevOps lee solo proyectos públicos: un campo «Token de Azure DevOps» en Ajustes (un token de acceso personal con el permiso `Code (Read)`, enviado como `Authorization: Basic` solo a `dev.azure.com`, guardado como el de Bitbucket y cifrado con el llavero en escritorio) abre los privados, y con él una redirección al inicio de sesión deja de ser «no encontrado» para ser «token rechazado». Comprobar: `tools/azure.test.mjs` (el token va solo a dev.azure.com y en cada consulta) y el paso del smoke del token.
 114. ~~**Capa para streaming, décima entrega**~~ hecho en #215 · Plataformas · 1×2/1. [parte del ítem 11] `&branch=nombre` deja en la capa solo esa rama y la rama por defecto (el nombre se compara tal cual, sin tocar el DOM como HTML). Comprobar: prueba de `embedOptions` y un paso del smoke.
 115. ~~**Práctica: merge --no-ff**~~ hecho en #216 · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `merge --no-ff`, que crea el commit de fusión aunque se pudiera avanzar. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
-116. **Ocultar o dejar sola una rama, en la URL** · Análisis · 1×2/1. [parte del ítem 110] `?solo=rama` y `?ocultar=rama` abren el repo ya con ese filtro. Comprobar: prueba de la lectura de la URL y un paso del smoke.
+116. ~~**Ocultar o dejar sola una rama, en la URL**~~ hecho en #218 · Análisis · 1×2/1. [parte del ítem 110] `?solo=rama` y `?ocultar=rama` abren el repo ya con ese filtro. Comprobar: prueba de la lectura de la URL y un paso del smoke.
 117. **Azure DevOps: los PRs en el grafo** · Datos · 1×2/2. [parte del ítem 107] Los pull requests de un repo de Azure DevOps salen en el grafo como los de GitHub. Comprobar: `node --test` con la API simulada y un paso del smoke.
 118. **Vista de un PR en la URL** · Datos · 1×2/1. [parte del ítem 112] `?pr=N` abre la vista del PR (descripción y comentarios). Comprobar: prueba de la lectura de la URL y un paso del smoke.
 119. **Azure DevOps: tags en el grafo** · Datos · 1×2/2. [parte del ítem 107] Los tags de un repo de Azure DevOps (`refs?filter=tags/`) salen en el grafo como los de GitHub. Comprobar: `tools/azure.test.mjs` con la API simulada y un paso del smoke.
@@ -654,129 +654,6 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las lleva `node tools/loop.mjs --rotar`); el loop lee las dos.
 
-### 2026-10-28 · Iteración 151 · Mantenimiento · Deuda
-
-- **Arreglo: el smoke ya no falla bajo carga en «filtro por autor» y «filtro por ruta»** (pendiente 1)
-- **Reproducción:** 5 corridas de `xvfb-run -a node tools/smoke.mjs` en paralelo → `✗ filtro por autor: …: ningún autor acota el grafo (0 ramas, 6 autores)` (3 de 5) y `✗ filtro por ruta: …: quitar el filtro no deja el grafo como estaba` (1 de 5)
-- **Pruebas que fallan sin el arreglo:** los mismos pasos del smoke; el conteo base de ramas se tomaba antes de que el grafo terminara de repartirlas, la espera de la transición era de 1,5 s y el paso de la ruta leía el grafo sin esperar a que soltara el filtro. Ahora espera a que el conteo quede quieto, 4 s de transición y espera a que se quite el filtro.
-- README: no aplica (solo la herramienta de pruebas)
-- QA: no toca la página; auditoría: no toca la página
-- Skills: no aplica: un arreglo de esperas del smoke, que ya cubre el Protocolo de QA.
-- Arena: no aplica: una sola forma obvia (esperar el estado en vez de un tiempo fijo).
-- Reclamo: loop/151, sin colisión
-- Validado: 473 pruebas (`node --test`), smoke (129 pasos), i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
-- **Siguiente:** iteración 152, expansión: ítem 109 (Historial de un archivo, Análisis)
-
-### 2026-10-28 · Iteración 152 · Expansión · Análisis
-
-- **Capacidad nueva: Historial de un archivo** (ítem 109 de la hoja de ruta): cada archivo abierto en el panel de cambios de un commit suma «Historial», que aplica el filtro por ruta (`?path=`) a ese archivo, deja a la vista los commits ya cargados que lo tocaron, lo anuncia con un aviso y deja la ruta en la dirección
-- **Pruebas que fallan sin la capacidad:** `node --test tools/demo.test.mjs` → `el historial de src/api/Api.tsx no trae a feat(api): /healthz health endpoint`; y un paso del smoke («historial de un archivo»: del botón del diff al filtro por ruta aplicado)
-- README: «Cambios de cada commit» y Límites conocidos; `replica/features.csv`: «Historial de un archivo» pasa de `partial` a `yes`. Textos nuevos: `diff.history` y `diff.historyOf` en los 40 idiomas
-- QA: panel de cambios (botón con nombre accesible, solo con teclado como cualquier botón), filtro por ruta de la demo; la vista conjunta no lo ofrece; auditoría: la corre `npm run check`
-- Skills: no aplica: un botón sobre el filtro por ruta que ya existe, sin dominio nuevo.
-- Arena: no aplica: una sola forma obvia (reusar `applyPathFilter`).
-- Reclamo: loop/152, sin colisión
-- Validado: 474 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (la tercera corrida; las dos primeras fallaron en el paso intermitente «filtro por autor», anotado en Mantenimiento 3).
-- **Siguiente:** iteración 153, expansión: ítem 98 (Capa para streaming, octava entrega, Plataformas)
-
-### 2026-10-29 · Iteración 153 · Expansión · Plataformas
-
-- **Capacidad nueva: `&spin=0` en la capa para streaming** (ítem 98 de la hoja de ruta, Capa para streaming, octava entrega): `?embed=1&spin=0` (también `off`, `false` o `no`) apaga la rotación lenta de la vista 3D para una escena de OBS quieta, sin guardar la preferencia (`spin3d`) de la persona; sin `spin`, o con otro valor, gira como siempre. Sin conexiones nuevas ni CSP distinta; en la web y en la app de escritorio (misma página). Sin textos nuevos de interfaz.
-- **Pruebas que fallan sin la capacidad:** `node --test tools/embed.test.mjs` → `embedOptions: spin=0 … undefined !== false`; y un paso del smoke («&spin=0 deja la vista 3D quieta»)
-- README: la lista de funciones (widget embebible) y Seguridad
-- QA: capa embebida con y sin `&spin=0` (botón de giro con `aria-pressed`, almacenamiento intacto); auditoría: la corre `npm run check`
-- Skills: no aplica: una opción más de la URL de la capa, sin dominio nuevo.
-- Arena: no aplica: una sola forma obvia (otra clave de `embedOptions`).
-- Reclamo: loop/153, sin colisión
-- Validado: 475 pruebas (`node --test`), smoke (131 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 154, expansión: ítem 100 (Práctica: reset --mixed y reflog, Público)
-
-### 2026-10-29 · Iteración 154 · Expansión · Público
-
-- **Capacidad nueva: `reset --mixed` y `reflog` en la práctica** (ítem 100 de la hoja de ruta, Práctica: reset --mixed y reflog): la terminal anota cada movimiento de HEAD (commit, checkout/switch, reset, etc.); `reflog` (o `reflog show [HEAD]`) los lista del más nuevo al más viejo como `HEAD@{n}`, y `HEAD@{n}` vale como referencia (`reset --hard HEAD@{1}` recupera un commit tras un `reset --hard`; fuera de rango da error). `reset` acepta `--soft`, `--mixed` (lo que hace a secas: los cambios sin commit se quedan y lo dice con «Unstaged changes after reset») o `--hard`, y niega mezclarlos. Sin textos nuevos de interfaz (la ayuda de la terminal es en inglés como siempre); en la web y en la app de escritorio.
-- **Pruebas que fallan sin la capacidad:** `node --test tools/gitsim.test.mjs` → `reflog recuerda dónde estuvo HEAD…` (sin el arreglo, `git: 'reflog' is not a git command`); y un paso del smoke («la práctica muestra el reflog y recupera un commit tras reset --hard»)
-- README: la lista de funciones (Aprender git)
-- QA: terminal de práctica (sin cambios de HTML ni de foco); auditoría: la corre `npm run check`
-- Skills: no aplica: una extensión del simulador propio, sin dominio nuevo.
-- Arena: no aplica: una sola forma obvia (un registro de HEAD en `run`).
-- Reclamo: loop/154, sin colisión
-- Validado: 477 pruebas (`node --test`), smoke (132 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 156, expansión: ítem 101 (Constelación: filtrar por nombre en la URL, Escala)
-
-### 2026-10-29 · Iteración 155 · Mantenimiento · Accesibilidad
-
-- **Arreglo: la leyenda 2D se recorre con el teclado** (pendiente 4): cada fila de rama de la leyenda es ahora un botón enfocable (`tabindex=0`, `role=button`, nombre «Rama {name}» con el texto de `branch.aria` que ya existía), Enter o Espacio llevan al commit de la rama (`focusBranch`, igual que el clic), enfocarla resalta su rama como el puntero, y tiene anillo de foco visible. Las filas «fusionada» (fantasma) no son enfocables. Las filas miden 24 px de alto (objetivo táctil, WCAG 2.5.8). Sin textos nuevos; web y escritorio.
-- **Reproducción:** `node tools/smoke.mjs` → `✗ la leyenda 2D se recorre con Tab y Enter lleva al commit de la rama: la fila de la leyenda no es enfocable con nombre` (sin el arreglo no hay `.legend-item[role=button]`)
-- **Pruebas que fallan sin el arreglo:** el paso del smoke «la leyenda 2D se recorre con Tab y Enter…»
-- README: no cambia (accesibilidad de una función que ya estaba)
-- QA: Accesibilidad: la leyenda solo con Tab, Enter y Espacio (el foco no cae a `<body>`, anillo visible, nombre accesible); auditoría: la corre `npm run check`
-- Skills: no aplica: un arreglo de atributos ARIA y foco sobre el patrón de `.head`, sin dominio nuevo.
-- Arena: no aplica: una sola forma obvia (copiar el patrón de las etiquetas de rama).
-- Reclamo: loop/155, sin colisión
-- Validado: 477 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (la tercera corrida: la primera falló en dos pasos del smoke, «historial de un archivo» y «editar sin token», mientras corría otro smoke en la misma máquina; la segunda, en la auditoría: las filas de la leyenda, ya enfocables, medían 20 px y se subieron a 24, WCAG 2.5.8).
-- **Siguiente:** iteración 156, expansión: ítem 101 (Constelación: filtrar por nombre en la URL, Escala)
-
-### 2026-10-29 · Iteración 156 · Expansión · Escala
-
-- **Capacidad nueva: `?constellation=texto` filtra la constelación por nombre** (ítem 101 de la hoja de ruta, Constelación: filtrar por nombre en la URL): la constelación muestra solo los repos cuyo nombre contiene el texto (sin mayúsculas ni acentos, hasta 100 caracteres) y lo anuncia en su región viva: «Filtradas por “texto”: n de m». `C.filterParam` y `C.filterItems` en `js/constellation.js`; `setFilter` en el montaje. Un texto sin coincidencias deja la constelación vacía con el aviso «0 de m». Un texto nuevo de interfaz (`constellation.filtered`) en los 40 idiomas; web y escritorio.
-- **Pruebas que fallan sin la capacidad:** `node --test tools/constellation.test.mjs` → `?constellation=texto deja los repos cuyo nombre lo contiene…` (sin la capacidad, `C.filterParam is not a function`); y un paso del smoke («?constellation=R1 filtra por nombre y lo anuncia»)
-- README: la lista de funciones (Constelación)
-- QA: constelación (diálogo, región viva, foco al abrir); auditoría: la corre `npm run check`
-- Skills: no aplica: un filtro de texto sobre código propio, sin dominio nuevo.
-- Arena: no aplica: una sola forma obvia (filtrar la lista antes de ordenarla).
-- Reclamo: loop/156, sin colisión
-- Validado: 478 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 157, expansión: ítem 105 (Capa para streaming, novena entrega, Plataformas)
-
-### 2026-10-29 · Iteración 157 · Expansión · Plataformas
-
-- **Capacidad nueva: `&view=2d|3d` en la capa para streaming** (ítem 105 de la hoja de ruta, Capa para streaming, novena entrega): `?embed=1&view=2d` o `&view=3d` fija la vista de la capa sin guardarla (`view` en el almacenamiento queda como estaba); sin `view`, o con otro valor, manda la vista guardada de la persona. El idioma ya lo fijaba `&lang=`. Sin conexiones nuevas ni CSP distinta; en la web y en la app de escritorio (misma página). Sin textos nuevos de interfaz.
-- **Pruebas que fallan sin la capacidad:** `node --test tools/embed.test.mjs` → `embedOptions: view=2d|3d fija la vista…` (sin la capacidad, `view` es `undefined`); y un paso del smoke («&view=2d y &view=3d fijan la vista sin guardarla…»)
-- README: la lista de funciones (widget embebible) y Seguridad (`&view=` solo admite `2d` o `3d`)
-- QA: capa `?embed=1` (vista 2D y 3D, almacenamiento intacto, vista guardada sin `&view=`); auditoría: la corre `npm run check`
-- Skills: no aplica: un parámetro más de la URL sobre código propio, sin dominio nuevo.
-- Arena: no aplica: una sola forma obvia (leer el parámetro en `embedOptions` y pasarlo a `setView` sin guardar).
-- Reclamo: loop/157, sin colisión
-- Validado: 479 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 158, expansión: ítem 106 (Práctica: commit --amend, Público)
-
-### 2026-10-29 · Iteración 158 · Expansión · Público
-
-- **Capacidad nueva: `commit --amend` en la terminal de práctica** (ítem 106 de la hoja de ruta, Práctica: commit --amend): `commit --amend [-m "msg"]` reemplaza el último commit por otro con los mismos padres (el viejo sale de la rama y queda en el `reflog` como `commit (amend)`); sin `-m` conserva el mensaje y recoge los archivos cambiados con `touch`. Se niega sin commits y con una fusión, un cherry-pick o un revert a medias, como git; con un `rebase -i` detenido corrige el commit en pausa. `js/gitsim.js` (`commit`, `reflogMessage`, `help`). Sin textos nuevos de interfaz (los comandos y sus respuestas de la terminal van en inglés, como los demás); web y escritorio.
-- **Pruebas que fallan sin la capacidad:** `node --test tools/gitsim.test.mjs` → `commit --amend reemplaza el último commit con los mismos padres` (sin la capacidad, `commit --amend` da «Aborting commit due to empty commit message»); y un paso del smoke («la práctica corrige el último commit con commit --amend»)
-- README: la lista de funciones (Aprender git) y sus pruebas
-- QA: terminal de práctica (grafo, `log`, `reflog`, errores sin commits y con fusión a medias); auditoría: la corre `npm run check`
-- Skills: no aplica: un comando más del simulador propio, sin dominio nuevo.
-- Arena: no aplica: una sola forma obvia (crear el commit con los padres del cabeza y mover la rama).
-- Reclamo: loop/158, sin colisión
-- Validado: 481 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 159, mantenimiento · Deuda: pendiente 1 (La e2e de escritorio «pasa al llavero el token que la primera versión dejaba en…)
-
-### 2026-10-29 · Iteración 159 · Mantenimiento · Deuda
-
-- **Arreglo: la e2e de escritorio «pasa al llavero el token que la primera versión dejaba en localStorage» ya no es intermitente** (pendiente 1). Causa probable: `localStorage` se escribe a disco en segundo plano, así que `app.close()` justo después de sembrar el token viejo podía perderlo; la segunda ventana arrancaba sin nada que migrar, el `localStorage` salía vacío (la primera aserción pasaba sola) y no había archivo en el llavero. La siembra ahora vacía el almacenamiento (`session.defaultSession.flushStorageData()`) antes de cerrar, y la aserción del archivo espera con `expect.poll` a que termine la migración, antes de mirar `localStorage`.
-- **Reproducción:** `xvfb-run -a npx playwright test e2e/desktop.spec.mjs -g "pasa al llavero"` → no se pudo reproducir en esta sesión: 0 fallos en 20 corridas (8 sin carga, 12 con cuatro procesos ocupando la CPU). El arreglo sale del análisis de la causa, no de una falla vista; si vuelve a fallar, el pendiente se reabre.
-- **Pruebas que fallan sin el arreglo:** ninguna nueva (el cambio es la propia prueba); 10 corridas en verde con el arreglo.
-- README: no toca.
-- QA: no toca la página ni la app (solo `e2e/desktop.spec.mjs`); auditoría: no toca la página
-- Skills: no aplica: un ajuste de una prueba propia, sin dominio nuevo.
-- Arena: no aplica: una sola forma obvia (vaciar el almacenamiento antes de cerrar y esperar la migración).
-- Reclamo: loop/159, sin colisión
-- Validado: 481 pruebas (`node --test`), smoke, i18n (0 errores) y 28 e2e en verde.
-- **Siguiente:** iteración 160, expansión: ítem 110 (Ocultar una rama o dejarla sola, Análisis)
-
-### 2026-10-29 · Iteración 160 · Expansión · Análisis
-
-- **Capacidad nueva: ocultar una rama o dejarla sola** (ítem 110 de la hoja de ruta, `[replica 2026-10-28]`). La ficha de una rama, en 2D y en 3D, suma «Ocultar» y «Ver solo»; se recuerdan por repo (`bview:`), la lupa se marca como filtrada, su cuadro dice «n de m ramas a la vista» y trae «Ver todas las ramas», y la vista de texto lo respeta y lo dice. La rama por defecto siempre queda; sin consultas. Nueva `GB.search.byBranches`.
-- **Pruebas que fallan sin la capacidad:** `node tools/search.test.mjs` (byBranches) y el paso del smoke «ocultar una rama o dejarla sola».
-- README: función en la lista, Límites conocidos y mapa de `js/search.js`.
-- QA: ficha de rama (2D), filtro y su aviso, persistencia por repo, foco al restablecer; auditoría: ver Validado.
-- Skills: no aplica: extensión de un filtro propio, sin dominio nuevo.
-- Arena: no aplica: una sola forma obvia (componer sobre el filtro por autor con la misma firma).
-- Reclamo: loop/160, sin colisión
-- Validado: 482 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Una primera corrida falló en un paso ajeno (vista de texto, release de la demo) y pasó a la repetición: anotado en el pendiente 2 de Mantenimiento.
-- **Siguiente:** iteración 161, expansión: ítem 112 (Vista de un PR: descripción y comentarios, Datos)
-
 ### 2026-10-29 · Iteración 161 · Expansión · Datos
 
 - **Capacidad nueva: vista de un PR, descripción y comentarios** (ítem 112 de la hoja de ruta, `[replica 2026-10-28]`). La ficha de una rama con PR de GitHub (2D, 3D y demo) suma «Ver descripción y comentarios»: al pulsarlo pide el PR (`prDetail`: `/pulls/N` y, si tiene comentarios, la última página de `/issues/N/comments`) y muestra la descripción y los últimos 5 comentarios, todo como texto y recortado; pulsarlo otra vez lo esconde. Fila «Vista de un PR» de `replica/features.csv` a `yes`. El ítem 119 (`?pr=N`) sigue en la hoja.
@@ -864,3 +741,15 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/167, sin colisión
 - Validado: 494 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Tres corridas previas del smoke: una en verde y dos con «historial de un archivo» (intermitencia, pendiente 2).
 - **Siguiente:** iteración 168, expansión: ítem 116 (Ocultar o dejar sola una rama, en la URL, Análisis)
+
+### 2026-10-30 · Iteración 168 · Expansión · Análisis
+
+- **Capacidad nueva: ocultar o dejar sola una rama, en la URL** (ítem 116 de la hoja de ruta, parte del 110): `?solo=rama` y `?ocultar=a&ocultar=b` abren el repo con ese filtro (mandan sobre lo recordado, solo al abrir), la dirección sigue a «Ocultar», «Ver solo» y «Ver todas las ramas», y `GB.search.branchViewParam` lee los nombres como texto (sin caracteres de control, hasta 200).
+- **Pruebas que fallan sin la capacidad:** `node --test tools/search.test.mjs` → `branchViewParam` no existe; y un paso del smoke («?ocultar= y ?solo= abren el grafo con menos ramas…»).
+- README: «Ocultar una rama o dejarla sola» explica las dos URL; Límites conocidos ya no dice que no viajan.
+- QA: filtro de ramas (2D, demo, URL con rama que existe y «Ver todas» que limpia la dirección); sin textos nuevos de interfaz; auditoría: ver Validado.
+- Skills: no aplica: dos parámetros de URL sobre código propio, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (leer la URL en `showTab` como `?author=`).
+- Reclamo: relevo de loop/168 (661adc4)
+- Validado: 495 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Un relevo la retomó tras cinco corridas previas en rojo por pasos ajenos intermitentes (historial de un archivo, editar el código, editar sin token, ocultar una rama, filtro por autor); la sexta dio verde.
+- **Siguiente:** iteración 169, expansión: ítem 118 (Vista de un PR en la URL, Datos)

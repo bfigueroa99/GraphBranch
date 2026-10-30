@@ -229,3 +229,15 @@ test('firstParentParam lee ?firstparent= de la URL: presente enciende, 0/false/n
   assert.equal(S.firstParentParam(q('x=1')), false);
   assert.equal(S.firstParentParam(null), false);
 });
+
+test('branchViewParam lee ?solo= y ?ocultar= de la URL: solo manda, ocultar se repite, sin caracteres de control', () => {
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(S.branchViewParam(q('')), null);
+  assert.equal(S.branchViewParam(null), null);
+  assert.equal(JSON.stringify(S.branchViewParam(q('solo=feature%2Fa'))), JSON.stringify({ hidden: [], solo: 'feature/a' }));
+  assert.equal(JSON.stringify(S.branchViewParam(q('ocultar=a&ocultar=b,c&ocultar=a'))), JSON.stringify({ hidden: ['a', 'b,c'], solo: '' }));
+  assert.equal(JSON.stringify(S.branchViewParam(q('solo=x&ocultar=y'))), JSON.stringify({ hidden: [], solo: 'x' }));
+  assert.equal(S.branchViewParam(q('solo=%20&ocultar=')), null);
+  assert.equal(S.branchViewParam(q('solo=a%00b')).solo, 'ab');
+  assert.equal(S.branchViewParam(q('solo=' + 'x'.repeat(500))).solo.length, 200);
+});

@@ -290,6 +290,7 @@ GB.i18n.define('fil', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Bagong branch',
+  'kind.branch-rename': 'Pinalitan ang pangalan ng branch',
   'kind.branch-delete': 'Nabura ang branch',
   'kind.branch-delete-unmerged': 'Nabura ang branch nang hindi na-merge',
   'kind.pr-open': 'Pull request',
@@ -315,6 +316,7 @@ GB.i18n.define('fil', {
 
   /* ---------- activity titles and details ---------- */
   'act.branchCreated': 'Nagawa ang branch {name}',
+  'act.branchRenamed': 'Pinalitan ang pangalan ng branch {old} ng {name}',
   'act.branchFrom': 'Nag-branch mula sa {from} sa {sha}',
   'act.branchFromOnly': 'Nag-branch mula sa {from}',
   'act.branchAt': 'Sa {sha}',

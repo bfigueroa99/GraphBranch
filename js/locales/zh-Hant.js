@@ -289,6 +289,7 @@ GB.i18n.define('zh-Hant', {
   'kind.merge': '合併',
   'kind.force': '強制推送',
   'kind.branch-create': '新分支',
+  'kind.branch-rename': '分支已重新命名',
   'kind.branch-delete': '分支已刪除',
   'kind.branch-delete-unmerged': '分支已刪除（未合併）',
   'kind.pr-open': 'Pull Request',
@@ -314,6 +315,7 @@ GB.i18n.define('zh-Hant', {
 
   /* ---------- 動態標題與詳細資料 ---------- */
   'act.branchCreated': '分支 {name} 已建立',
+  'act.branchRenamed': '分支 {old} 已重新命名為 {name}',
   'act.branchFrom': '從 {from} 的 {sha} 建立',
   'act.branchFromOnly': '從 {from} 建立',
   'act.branchAt': '位於 {sha}',

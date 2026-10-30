@@ -367,6 +367,7 @@ GB.i18n.define('ar', {
   'kind.merge': 'دمج',
   'kind.force': 'Force-push',
   'kind.branch-create': 'فرع جديد',
+  'kind.branch-rename': 'إعادة تسمية فرع',
   'kind.branch-delete': 'فرع محذوف',
   'kind.branch-delete-unmerged': 'فرع محذوف دون دمج',
   'kind.pr-open': 'Pull request',
@@ -392,6 +393,7 @@ GB.i18n.define('ar', {
 
   /* ---------- activity titles and details ---------- */
   'act.branchCreated': 'تم إنشاء الفرع {name}',
+  'act.branchRenamed': 'تمت إعادة تسمية الفرع {old} إلى {name}',
   'act.branchFrom': 'متفرّع من {from} عند {sha}',
   'act.branchFromOnly': 'متفرّع من {from}',
   'act.branchAt': 'عند {sha}',

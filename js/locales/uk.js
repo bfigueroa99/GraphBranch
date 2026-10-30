@@ -300,6 +300,7 @@ GB.i18n.define('uk', {
   'kind.merge': 'Злиття',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Нова гілка',
+  'kind.branch-rename': 'Гілку перейменовано',
   'kind.branch-delete': 'Гілку видалено',
   'kind.branch-delete-unmerged': 'Гілку видалено без злиття',
   'kind.pr-open': 'Pull request',
@@ -325,6 +326,7 @@ GB.i18n.define('uk', {
 
   /* ---------- заголовки та подробиці подій ---------- */
   'act.branchCreated': 'Створено гілку {name}',
+  'act.branchRenamed': 'Гілку {old} перейменовано на {name}',
   'act.branchFrom': 'Відгалужено від {from} на коміті {sha}',
   'act.branchFromOnly': 'Відгалужено від {from}',
   'act.branchAt': 'На коміті {sha}',

@@ -289,6 +289,7 @@ GB.i18n.define('hu', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Új ág',
+  'kind.branch-rename': 'Ág átnevezve',
   'kind.branch-delete': 'Ág törölve',
   'kind.branch-delete-unmerged': 'Ág törölve beolvasztás nélkül',
   'kind.pr-open': 'Pull request',
@@ -314,6 +315,7 @@ GB.i18n.define('hu', {
 
   /* ---------- aktivitások címei és részletei ---------- */
   'act.branchCreated': 'Ág létrehozva: {name}',
+  'act.branchRenamed': 'Ág átnevezve: {old} → {name}',
   'act.branchFrom': 'Elágazás: {from}, commit: {sha}',
   'act.branchFromOnly': 'Elágazás: {from}',
   'act.branchAt': 'Commit: {sha}',

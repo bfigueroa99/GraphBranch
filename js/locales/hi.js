@@ -289,6 +289,7 @@ GB.i18n.define('hi', {
   'kind.merge': 'मर्ज',
   'kind.force': 'फ़ोर्स-पुश',
   'kind.branch-create': 'नई ब्रांच',
+  'kind.branch-rename': 'ब्रांच का नाम बदला',
   'kind.branch-delete': 'ब्रांच हटाई गई',
   'kind.branch-delete-unmerged': 'बिना मर्ज किए ब्रांच हटाई गई',
   'kind.pr-open': 'Pull request',
@@ -314,6 +315,7 @@ GB.i18n.define('hi', {
 
   /* ---------- गतिविधि के शीर्षक और विवरण ---------- */
   'act.branchCreated': 'ब्रांच {name} बनाई गई',
+  'act.branchRenamed': 'ब्रांच {old} का नाम बदलकर {name} किया गया',
   'act.branchFrom': '{from} से बनी, {sha} पर',
   'act.branchFromOnly': '{from} से बनी',
   'act.branchAt': '{sha} पर',

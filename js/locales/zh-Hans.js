@@ -289,6 +289,7 @@ GB.i18n.define('zh-Hans', {
   'kind.merge': '合并',
   'kind.force': '强制推送',
   'kind.branch-create': '新分支',
+  'kind.branch-rename': '分支已重命名',
   'kind.branch-delete': '分支已删除',
   'kind.branch-delete-unmerged': '分支已删除（未合并）',
   'kind.pr-open': 'Pull Request',
@@ -314,6 +315,7 @@ GB.i18n.define('zh-Hans', {
 
   /* ---------- 动态标题与详情 ---------- */
   'act.branchCreated': '分支 {name} 已创建',
+  'act.branchRenamed': '分支 {old} 已重命名为 {name}',
   'act.branchFrom': '从 {from} 的 {sha} 创建',
   'act.branchFromOnly': '从 {from} 创建',
   'act.branchAt': '位于 {sha}',

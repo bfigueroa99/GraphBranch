@@ -289,6 +289,7 @@ GB.i18n.define('id', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Branch baru',
+  'kind.branch-rename': 'Branch diganti namanya',
   'kind.branch-delete': 'Branch dihapus',
   'kind.branch-delete-unmerged': 'Branch dihapus tanpa di-merge',
   'kind.pr-open': 'Pull request',
@@ -314,6 +315,7 @@ GB.i18n.define('id', {
 
   /* ---------- judul dan detail aktivitas ---------- */
   'act.branchCreated': 'Branch {name} dibuat',
+  'act.branchRenamed': 'Branch {old} diganti namanya menjadi {name}',
   'act.branchFrom': 'Dibuat dari {from} di {sha}',
   'act.branchFromOnly': 'Dibuat dari {from}',
   'act.branchAt': 'Di {sha}',

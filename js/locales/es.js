@@ -289,6 +289,7 @@ GB.i18n.define('es', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Rama nueva',
+  'kind.branch-rename': 'Rama renombrada',
   'kind.branch-delete': 'Rama eliminada',
   'kind.branch-delete-unmerged': 'Rama eliminada sin fusionar',
   'kind.pr-open': 'Pull request',
@@ -314,6 +315,7 @@ GB.i18n.define('es', {
 
   /* ---------- títulos y detalles de actividad ---------- */
   'act.branchCreated': 'Rama {name} creada',
+  'act.branchRenamed': 'Rama {old} renombrada a {name}',
   'act.branchFrom': 'Sale de {from} en {sha}',
   'act.branchFromOnly': 'Sale de {from}',
   'act.branchAt': 'En {sha}',

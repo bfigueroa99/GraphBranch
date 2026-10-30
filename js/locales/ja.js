@@ -289,6 +289,7 @@ GB.i18n.define('ja', {
   'kind.merge': 'マージ',
   'kind.force': '強制プッシュ',
   'kind.branch-create': '新規ブランチ',
+  'kind.branch-rename': 'ブランチ名の変更',
   'kind.branch-delete': 'ブランチ削除',
   'kind.branch-delete-unmerged': '未マージのままブランチ削除',
   'kind.pr-open': 'プルリクエスト',
@@ -314,6 +315,7 @@ GB.i18n.define('ja', {
 
   /* ---------- アクティビティのタイトルと詳細 ---------- */
   'act.branchCreated': 'ブランチ {name} を作成',
+  'act.branchRenamed': 'ブランチ {old} を {name} に名前変更',
   'act.branchFrom': '{from} の {sha} から分岐',
   'act.branchFromOnly': '{from} から分岐',
   'act.branchAt': '{sha} 時点',

@@ -289,6 +289,7 @@ GB.i18n.define('ta', {
   'kind.merge': 'மெர்ஜ்',
   'kind.force': 'ஃபோர்ஸ்-புஷ்',
   'kind.branch-create': 'புதிய கிளை',
+  'kind.branch-rename': 'கிளையின் பெயர் மாற்றம்',
   'kind.branch-delete': 'கிளை நீக்கப்பட்டது',
   'kind.branch-delete-unmerged': 'மெர்ஜ் செய்யாமல் கிளை நீக்கப்பட்டது',
   'kind.pr-open': 'Pull request',
@@ -314,6 +315,7 @@ GB.i18n.define('ta', {
 
   /* ---------- செயல்பாட்டுத் தலைப்புகளும் விவரங்களும் ---------- */
   'act.branchCreated': 'கிளை {name} உருவாக்கப்பட்டது',
+  'act.branchRenamed': 'கிளை {old} இன் பெயர் {name} என மாற்றப்பட்டது',
   'act.branchFrom': '{from} கிளையிலிருந்து பிரிக்கப்பட்டது (கமிட் {sha})',
   'act.branchFromOnly': '{from} கிளையிலிருந்து பிரிக்கப்பட்டது',
   'act.branchAt': 'கமிட் {sha}',

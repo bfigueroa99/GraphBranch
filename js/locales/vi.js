@@ -289,6 +289,7 @@ GB.i18n.define('vi', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Nhánh mới',
+  'kind.branch-rename': 'Đã đổi tên nhánh',
   'kind.branch-delete': 'Đã xóa nhánh',
   'kind.branch-delete-unmerged': 'Đã xóa nhánh chưa merge',
   'kind.pr-open': 'Pull request',
@@ -314,6 +315,7 @@ GB.i18n.define('vi', {
 
   /* ---------- tiêu đề và chi tiết hoạt động ---------- */
   'act.branchCreated': 'Đã tạo nhánh {name}',
+  'act.branchRenamed': 'Đã đổi tên nhánh {old} thành {name}',
   'act.branchFrom': 'Tách từ {from} tại {sha}',
   'act.branchFromOnly': 'Tách từ {from}',
   'act.branchAt': 'Tại {sha}',

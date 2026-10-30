@@ -290,6 +290,7 @@ GB.i18n.define('nl', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Nieuwe branch',
+  'kind.branch-rename': 'Branch hernoemd',
   'kind.branch-delete': 'Branch verwijderd',
   'kind.branch-delete-unmerged': 'Branch verwijderd zonder merge',
   'kind.pr-open': 'Pull request',
@@ -315,6 +316,7 @@ GB.i18n.define('nl', {
 
   /* ---------- activity titles and details ---------- */
   'act.branchCreated': 'Branch {name} aangemaakt',
+  'act.branchRenamed': 'Branch {old} hernoemd naar {name}',
   'act.branchFrom': 'Afgesplitst van {from} bij {sha}',
   'act.branchFromOnly': 'Afgesplitst van {from}',
   'act.branchAt': 'Bij {sha}',

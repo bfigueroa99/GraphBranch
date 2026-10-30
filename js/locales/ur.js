@@ -323,6 +323,7 @@ GB.i18n.define('ur', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'نئی برانچ',
+  'kind.branch-rename': 'برانچ کا نام بدلا',
   'kind.branch-delete': 'برانچ حذف',
   'kind.branch-delete-unmerged': 'برانچ بغیر merge کے حذف',
   'kind.pr-open': 'Pull request',
@@ -348,6 +349,7 @@ GB.i18n.define('ur', {
 
   /* ---------- activity titles and details ---------- */
   'act.branchCreated': 'برانچ {name} بنائی گئی',
+  'act.branchRenamed': 'برانچ {old} کا نام بدل کر {name} رکھ دیا گیا',
   'act.branchFrom': '{from} سے {sha} پر الگ ہوئی',
   'act.branchFromOnly': '{from} سے الگ ہوئی',
   'act.branchAt': '{sha} پر',

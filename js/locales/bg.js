@@ -289,6 +289,7 @@ GB.i18n.define('bg', {
   'kind.merge': 'Сливане',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Нов клон',
+  'kind.branch-rename': 'Клон преименуван',
   'kind.branch-delete': 'Клон изтрит',
   'kind.branch-delete-unmerged': 'Клон изтрит без сливане',
   'kind.pr-open': 'Pull request',
@@ -314,6 +315,7 @@ GB.i18n.define('bg', {
 
   /* ---------- заглавия и подробности за активността ---------- */
   'act.branchCreated': 'Клон {name} създаден',
+  'act.branchRenamed': 'Клон {old} преименуван на {name}',
   'act.branchFrom': 'Отделен от {from} при {sha}',
   'act.branchFromOnly': 'Отделен от {from}',
   'act.branchAt': 'При {sha}',

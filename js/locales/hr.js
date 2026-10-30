@@ -293,6 +293,7 @@ GB.i18n.define('hr', {
   'kind.merge': 'Spajanje',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Nova grana',
+  'kind.branch-rename': 'Grana preimenovana',
   'kind.branch-delete': 'Grana obrisana',
   'kind.branch-delete-unmerged': 'Grana obrisana bez spajanja',
   'kind.pr-open': 'Pull request',
@@ -318,6 +319,7 @@ GB.i18n.define('hr', {
 
   /* ---------- naslovi i detalji aktivnosti ---------- */
   'act.branchCreated': 'Grana {name} stvorena',
+  'act.branchRenamed': 'Grana {old} preimenovana u {name}',
   'act.branchFrom': 'Odvojena od {from} na commitu {sha}',
   'act.branchFromOnly': 'Odvojena od {from}',
   'act.branchAt': 'Na commitu {sha}',

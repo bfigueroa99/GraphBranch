@@ -295,6 +295,7 @@ GB.i18n.define('pl', {
   'kind.merge': 'Scalenie',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Nowa gałąź',
+  'kind.branch-rename': 'Zmiana nazwy gałęzi',
   'kind.branch-delete': 'Gałąź usunięta',
   'kind.branch-delete-unmerged': 'Gałąź usunięta bez scalenia',
   'kind.pr-open': 'Pull request',
@@ -320,6 +321,7 @@ GB.i18n.define('pl', {
 
   /* ---------- tytuły i szczegóły zdarzeń ---------- */
   'act.branchCreated': 'Utworzono gałąź {name}',
+  'act.branchRenamed': 'Zmieniono nazwę gałęzi {old} na {name}',
   'act.branchFrom': 'Odgałęziono od {from} w commicie {sha}',
   'act.branchFromOnly': 'Odgałęziono od {from}',
   'act.branchAt': 'W commicie {sha}',

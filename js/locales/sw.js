@@ -502,6 +502,7 @@ GB.i18n.define('sw', {
   'health.mergeWeeks': 'Pull request zilizounganishwa kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',
   'health.openedWeeks': 'Pull request zilizofunguliwa kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',
   'health.closedWeeks': 'Issue zilizofungwa kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',
+  'health.branchWeeks': 'Matawi mapya kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',
   'health.ci': 'Kushindwa kwa CI',
   'health.ciPrs': 'PR wazi zenye ukaguzi uliofeli: {failing} kati ya {total} ({pct}%)',
   'health.ciFeed': 'Mara ambazo tawi chaguomsingi liligeuka nyekundu ndani ya siku 30: {n}',

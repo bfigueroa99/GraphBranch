@@ -508,6 +508,7 @@ GB.i18n.define('en', {
   'health.mergeWeeks': 'Merged pull requests per week, last {n} weeks (oldest to current): {list}',
   'health.openedWeeks': 'Opened pull requests per week, last {n} weeks (oldest to current): {list}',
   'health.closedWeeks': 'Closed issues per week, last {n} weeks (oldest to current): {list}',
+  'health.branchWeeks': 'New branches per week, last {n} weeks (oldest to current): {list}',
   'health.ci': 'CI failures',
   'health.ciPrs': 'Open PRs with failing checks: {failing} of {total} ({pct}%)',
   'health.ciFeed': 'Times the default branch turned red in 30 days: {n}',

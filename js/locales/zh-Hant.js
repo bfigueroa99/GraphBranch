@@ -502,6 +502,7 @@ GB.i18n.define('zh-Hant', {
   'health.mergeWeeks': '每週合併的拉取請求，最近 {n} 週（從最早到目前）：{list}',
   'health.openedWeeks': '每週開啟的拉取請求，最近 {n} 週（從最早到目前）：{list}',
   'health.closedWeeks': '每週關閉的議題，最近 {n} 週（從最早到目前）：{list}',
+  'health.branchWeeks': '每週新建的分支，最近 {n} 週（從最早到目前）：{list}',
   'health.ci': 'CI 失敗',
   'health.ciPrs': '檢查失敗的開啟中 PR:{failing} / {total}({pct}%)',
   'health.ciFeed': '預設分支在 30 天內變紅的次數:{n}',

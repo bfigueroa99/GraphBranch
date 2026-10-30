@@ -502,6 +502,7 @@ GB.i18n.define('es', {
   'health.mergeWeeks': 'Pull requests fusionados por semana, últimas {n} semanas (de la más vieja a la actual): {list}',
   'health.openedWeeks': 'Pull requests abiertos por semana, últimas {n} semanas (de la más vieja a la actual): {list}',
   'health.closedWeeks': 'Issues cerrados por semana, últimas {n} semanas (de la más vieja a la actual): {list}',
+  'health.branchWeeks': 'Ramas nuevas por semana, últimas {n} semanas (de la más vieja a la actual): {list}',
   'health.ci': 'Fallos de CI',
   'health.ciPrs': 'PRs abiertos con los checks en rojo: {failing} de {total} ({pct} %)',
   'health.ciFeed': 'Veces que la rama por defecto pasó a rojo en 30 días: {n}',

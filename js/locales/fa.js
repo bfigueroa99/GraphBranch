@@ -545,6 +545,7 @@ GB.i18n.define('fa', {
   'health.mergeWeeks': 'pull requestهای ادغام‌شده در هفته، {n} هفتهٔ اخیر (از قدیمی‌ترین تا فعلی): {list}',
   'health.openedWeeks': 'pull requestهای بازشده در هفته، {n} هفتهٔ اخیر (از قدیمی‌ترین تا فعلی): {list}',
   'health.closedWeeks': 'issueهای بسته‌شده در هفته، {n} هفتهٔ اخیر (از قدیمی‌ترین تا فعلی): {list}',
+  'health.branchWeeks': 'شاخه‌های جدید در هفته، {n} هفتهٔ اخیر (از قدیمی‌ترین تا فعلی): {list}',
   'health.ci': 'شکست‌های CI',
   'health.ciPrs': 'PRهای باز با بررسی‌های ناموفق: {failing} از {total} ({pct}٪)',
   'health.ciFeed': 'دفعاتی که شاخه پیش‌فرض در ۳۰ روز قرمز شد: {n}',

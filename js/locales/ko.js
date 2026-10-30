@@ -502,6 +502,7 @@ GB.i18n.define('ko', {
   'health.mergeWeeks': '주별 병합된 풀 리퀘스트, 최근 {n}주(오래된 순에서 현재까지): {list}',
   'health.openedWeeks': '주별 열린 풀 리퀘스트, 최근 {n}주(오래된 순에서 현재까지): {list}',
   'health.closedWeeks': '주별 닫힌 이슈, 최근 {n}주(오래된 순에서 현재까지): {list}',
+  'health.branchWeeks': '주별 새 브랜치, 최근 {n}주(오래된 순에서 현재까지): {list}',
   'health.ci': 'CI 실패',
   'health.ciPrs': '체크가 실패한 열린 PR: {total}개 중 {failing}개({pct}%)',
   'health.ciFeed': '30일 동안 기본 브랜치가 빨간색이 된 횟수: {n}',

@@ -1,6 +1,6 @@
-## Parity: 81.1 / 100
+## Parity: 83.5 / 100
 
-features 81.1  (38 counted, must-haves 12 of 13 done)
+features 83.5  (38 counted, must-haves 12 of 13 done)
 
 Not shippable yet: 1 must-have features are not done.
 
@@ -8,9 +8,9 @@ Not shippable yet: 1 must-have features are not done.
 - navegación                     0.0  (1 features)
 - cuentas                        0.0  (1 features)
 - launchpad                     60.0  (3 features)
-- grafo                         75.0  (8 features)
 - varios repos                  75.0  (3 features)
 - diffs                         80.0  (5 features)
+- grafo                         86.1  (8 features)
 - integraciones                 86.8  (7 features)
 - búsqueda                     100.0  (1 features)
 - pull requests                100.0  (3 features)
@@ -21,10 +21,9 @@ Not shippable yet: 1 must-have features are not done.
 - compartir                    100.0  (1 features)
 
 ## Missing, in build order
-- [must] integraciones: Azure DevOps, partial  (README: También Azure DevOps (proyectos públicos y sin token; falta el token para los privados, ítem 113))
+- [must] integraciones: Azure DevOps, partial  (README: También Azure DevOps (públicos y, con token, privados: #214; los archivos de un commit, sin el diff: #220); faltan los PRs en el grafo (ítem 117))
 - [should] cuentas: Varios perfiles o cuentas, no  (un token por servicio)
 - [should] diffs: Blame de un archivo (autor y fecha por línea), no
-- [should] grafo: Ocultar una rama o dejarla sola en el grafo, no  (hay Fijar ramas (las sube) y el filtro por autor; no ocultar ni dejar sola una rama elegida)
 - [should] grafo: Columnas de autor fecha y SHA a la vista en el grafo, partial  (autor fecha y SHA están en la ficha del commit y en la vista de texto; el grafo no tiene columnas)
 - [should] grafo: Resaltar los commits de una rama y atenuar el resto, partial  (comparar dos ramas resalta sus tramos y el filtro por autor o ruta atenúa; no al pasar el puntero por una rama)
 - [should] integraciones: Issues de rastreadores (Jira Trello GitHub Issues), partial  (issues de GitHub GitLab Codeberg y Bitbucket en el panel de actividad y la salud; sin Jira ni Trello)

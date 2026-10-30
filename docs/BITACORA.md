@@ -2695,3 +2695,126 @@ bitácoras juntas (la rotación de los subtipos de mantenimiento, la numeración
 - Reclamo: loop/150, sin colisión
 - Validado: 473 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 151, mantenimiento · Deuda: pendiente 1 (Smoke intermitente bajo carga: «filtro por autor» y «filtro por ruta» fallan a …)
+
+### 2026-10-28 · Iteración 151 · Mantenimiento · Deuda
+
+- **Arreglo: el smoke ya no falla bajo carga en «filtro por autor» y «filtro por ruta»** (pendiente 1)
+- **Reproducción:** 5 corridas de `xvfb-run -a node tools/smoke.mjs` en paralelo → `✗ filtro por autor: …: ningún autor acota el grafo (0 ramas, 6 autores)` (3 de 5) y `✗ filtro por ruta: …: quitar el filtro no deja el grafo como estaba` (1 de 5)
+- **Pruebas que fallan sin el arreglo:** los mismos pasos del smoke; el conteo base de ramas se tomaba antes de que el grafo terminara de repartirlas, la espera de la transición era de 1,5 s y el paso de la ruta leía el grafo sin esperar a que soltara el filtro. Ahora espera a que el conteo quede quieto, 4 s de transición y espera a que se quite el filtro.
+- README: no aplica (solo la herramienta de pruebas)
+- QA: no toca la página; auditoría: no toca la página
+- Skills: no aplica: un arreglo de esperas del smoke, que ya cubre el Protocolo de QA.
+- Arena: no aplica: una sola forma obvia (esperar el estado en vez de un tiempo fijo).
+- Reclamo: loop/151, sin colisión
+- Validado: 473 pruebas (`node --test`), smoke (129 pasos), i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 152, expansión: ítem 109 (Historial de un archivo, Análisis)
+
+### 2026-10-28 · Iteración 152 · Expansión · Análisis
+
+- **Capacidad nueva: Historial de un archivo** (ítem 109 de la hoja de ruta): cada archivo abierto en el panel de cambios de un commit suma «Historial», que aplica el filtro por ruta (`?path=`) a ese archivo, deja a la vista los commits ya cargados que lo tocaron, lo anuncia con un aviso y deja la ruta en la dirección
+- **Pruebas que fallan sin la capacidad:** `node --test tools/demo.test.mjs` → `el historial de src/api/Api.tsx no trae a feat(api): /healthz health endpoint`; y un paso del smoke («historial de un archivo»: del botón del diff al filtro por ruta aplicado)
+- README: «Cambios de cada commit» y Límites conocidos; `replica/features.csv`: «Historial de un archivo» pasa de `partial` a `yes`. Textos nuevos: `diff.history` y `diff.historyOf` en los 40 idiomas
+- QA: panel de cambios (botón con nombre accesible, solo con teclado como cualquier botón), filtro por ruta de la demo; la vista conjunta no lo ofrece; auditoría: la corre `npm run check`
+- Skills: no aplica: un botón sobre el filtro por ruta que ya existe, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (reusar `applyPathFilter`).
+- Reclamo: loop/152, sin colisión
+- Validado: 474 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (la tercera corrida; las dos primeras fallaron en el paso intermitente «filtro por autor», anotado en Mantenimiento 3).
+- **Siguiente:** iteración 153, expansión: ítem 98 (Capa para streaming, octava entrega, Plataformas)
+
+### 2026-10-29 · Iteración 153 · Expansión · Plataformas
+
+- **Capacidad nueva: `&spin=0` en la capa para streaming** (ítem 98 de la hoja de ruta, Capa para streaming, octava entrega): `?embed=1&spin=0` (también `off`, `false` o `no`) apaga la rotación lenta de la vista 3D para una escena de OBS quieta, sin guardar la preferencia (`spin3d`) de la persona; sin `spin`, o con otro valor, gira como siempre. Sin conexiones nuevas ni CSP distinta; en la web y en la app de escritorio (misma página). Sin textos nuevos de interfaz.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/embed.test.mjs` → `embedOptions: spin=0 … undefined !== false`; y un paso del smoke («&spin=0 deja la vista 3D quieta»)
+- README: la lista de funciones (widget embebible) y Seguridad
+- QA: capa embebida con y sin `&spin=0` (botón de giro con `aria-pressed`, almacenamiento intacto); auditoría: la corre `npm run check`
+- Skills: no aplica: una opción más de la URL de la capa, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (otra clave de `embedOptions`).
+- Reclamo: loop/153, sin colisión
+- Validado: 475 pruebas (`node --test`), smoke (131 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 154, expansión: ítem 100 (Práctica: reset --mixed y reflog, Público)
+
+### 2026-10-29 · Iteración 154 · Expansión · Público
+
+- **Capacidad nueva: `reset --mixed` y `reflog` en la práctica** (ítem 100 de la hoja de ruta, Práctica: reset --mixed y reflog): la terminal anota cada movimiento de HEAD (commit, checkout/switch, reset, etc.); `reflog` (o `reflog show [HEAD]`) los lista del más nuevo al más viejo como `HEAD@{n}`, y `HEAD@{n}` vale como referencia (`reset --hard HEAD@{1}` recupera un commit tras un `reset --hard`; fuera de rango da error). `reset` acepta `--soft`, `--mixed` (lo que hace a secas: los cambios sin commit se quedan y lo dice con «Unstaged changes after reset») o `--hard`, y niega mezclarlos. Sin textos nuevos de interfaz (la ayuda de la terminal es en inglés como siempre); en la web y en la app de escritorio.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/gitsim.test.mjs` → `reflog recuerda dónde estuvo HEAD…` (sin el arreglo, `git: 'reflog' is not a git command`); y un paso del smoke («la práctica muestra el reflog y recupera un commit tras reset --hard»)
+- README: la lista de funciones (Aprender git)
+- QA: terminal de práctica (sin cambios de HTML ni de foco); auditoría: la corre `npm run check`
+- Skills: no aplica: una extensión del simulador propio, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (un registro de HEAD en `run`).
+- Reclamo: loop/154, sin colisión
+- Validado: 477 pruebas (`node --test`), smoke (132 pasos), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 156, expansión: ítem 101 (Constelación: filtrar por nombre en la URL, Escala)
+
+### 2026-10-29 · Iteración 155 · Mantenimiento · Accesibilidad
+
+- **Arreglo: la leyenda 2D se recorre con el teclado** (pendiente 4): cada fila de rama de la leyenda es ahora un botón enfocable (`tabindex=0`, `role=button`, nombre «Rama {name}» con el texto de `branch.aria` que ya existía), Enter o Espacio llevan al commit de la rama (`focusBranch`, igual que el clic), enfocarla resalta su rama como el puntero, y tiene anillo de foco visible. Las filas «fusionada» (fantasma) no son enfocables. Las filas miden 24 px de alto (objetivo táctil, WCAG 2.5.8). Sin textos nuevos; web y escritorio.
+- **Reproducción:** `node tools/smoke.mjs` → `✗ la leyenda 2D se recorre con Tab y Enter lleva al commit de la rama: la fila de la leyenda no es enfocable con nombre` (sin el arreglo no hay `.legend-item[role=button]`)
+- **Pruebas que fallan sin el arreglo:** el paso del smoke «la leyenda 2D se recorre con Tab y Enter…»
+- README: no cambia (accesibilidad de una función que ya estaba)
+- QA: Accesibilidad: la leyenda solo con Tab, Enter y Espacio (el foco no cae a `<body>`, anillo visible, nombre accesible); auditoría: la corre `npm run check`
+- Skills: no aplica: un arreglo de atributos ARIA y foco sobre el patrón de `.head`, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (copiar el patrón de las etiquetas de rama).
+- Reclamo: loop/155, sin colisión
+- Validado: 477 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (la tercera corrida: la primera falló en dos pasos del smoke, «historial de un archivo» y «editar sin token», mientras corría otro smoke en la misma máquina; la segunda, en la auditoría: las filas de la leyenda, ya enfocables, medían 20 px y se subieron a 24, WCAG 2.5.8).
+- **Siguiente:** iteración 156, expansión: ítem 101 (Constelación: filtrar por nombre en la URL, Escala)
+
+### 2026-10-29 · Iteración 156 · Expansión · Escala
+
+- **Capacidad nueva: `?constellation=texto` filtra la constelación por nombre** (ítem 101 de la hoja de ruta, Constelación: filtrar por nombre en la URL): la constelación muestra solo los repos cuyo nombre contiene el texto (sin mayúsculas ni acentos, hasta 100 caracteres) y lo anuncia en su región viva: «Filtradas por “texto”: n de m». `C.filterParam` y `C.filterItems` en `js/constellation.js`; `setFilter` en el montaje. Un texto sin coincidencias deja la constelación vacía con el aviso «0 de m». Un texto nuevo de interfaz (`constellation.filtered`) en los 40 idiomas; web y escritorio.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/constellation.test.mjs` → `?constellation=texto deja los repos cuyo nombre lo contiene…` (sin la capacidad, `C.filterParam is not a function`); y un paso del smoke («?constellation=R1 filtra por nombre y lo anuncia»)
+- README: la lista de funciones (Constelación)
+- QA: constelación (diálogo, región viva, foco al abrir); auditoría: la corre `npm run check`
+- Skills: no aplica: un filtro de texto sobre código propio, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (filtrar la lista antes de ordenarla).
+- Reclamo: loop/156, sin colisión
+- Validado: 478 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 157, expansión: ítem 105 (Capa para streaming, novena entrega, Plataformas)
+
+### 2026-10-29 · Iteración 157 · Expansión · Plataformas
+
+- **Capacidad nueva: `&view=2d|3d` en la capa para streaming** (ítem 105 de la hoja de ruta, Capa para streaming, novena entrega): `?embed=1&view=2d` o `&view=3d` fija la vista de la capa sin guardarla (`view` en el almacenamiento queda como estaba); sin `view`, o con otro valor, manda la vista guardada de la persona. El idioma ya lo fijaba `&lang=`. Sin conexiones nuevas ni CSP distinta; en la web y en la app de escritorio (misma página). Sin textos nuevos de interfaz.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/embed.test.mjs` → `embedOptions: view=2d|3d fija la vista…` (sin la capacidad, `view` es `undefined`); y un paso del smoke («&view=2d y &view=3d fijan la vista sin guardarla…»)
+- README: la lista de funciones (widget embebible) y Seguridad (`&view=` solo admite `2d` o `3d`)
+- QA: capa `?embed=1` (vista 2D y 3D, almacenamiento intacto, vista guardada sin `&view=`); auditoría: la corre `npm run check`
+- Skills: no aplica: un parámetro más de la URL sobre código propio, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (leer el parámetro en `embedOptions` y pasarlo a `setView` sin guardar).
+- Reclamo: loop/157, sin colisión
+- Validado: 479 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 158, expansión: ítem 106 (Práctica: commit --amend, Público)
+
+### 2026-10-29 · Iteración 158 · Expansión · Público
+
+- **Capacidad nueva: `commit --amend` en la terminal de práctica** (ítem 106 de la hoja de ruta, Práctica: commit --amend): `commit --amend [-m "msg"]` reemplaza el último commit por otro con los mismos padres (el viejo sale de la rama y queda en el `reflog` como `commit (amend)`); sin `-m` conserva el mensaje y recoge los archivos cambiados con `touch`. Se niega sin commits y con una fusión, un cherry-pick o un revert a medias, como git; con un `rebase -i` detenido corrige el commit en pausa. `js/gitsim.js` (`commit`, `reflogMessage`, `help`). Sin textos nuevos de interfaz (los comandos y sus respuestas de la terminal van en inglés, como los demás); web y escritorio.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/gitsim.test.mjs` → `commit --amend reemplaza el último commit con los mismos padres` (sin la capacidad, `commit --amend` da «Aborting commit due to empty commit message»); y un paso del smoke («la práctica corrige el último commit con commit --amend»)
+- README: la lista de funciones (Aprender git) y sus pruebas
+- QA: terminal de práctica (grafo, `log`, `reflog`, errores sin commits y con fusión a medias); auditoría: la corre `npm run check`
+- Skills: no aplica: un comando más del simulador propio, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (crear el commit con los padres del cabeza y mover la rama).
+- Reclamo: loop/158, sin colisión
+- Validado: 481 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 159, mantenimiento · Deuda: pendiente 1 (La e2e de escritorio «pasa al llavero el token que la primera versión dejaba en…)
+
+### 2026-10-29 · Iteración 159 · Mantenimiento · Deuda
+
+- **Arreglo: la e2e de escritorio «pasa al llavero el token que la primera versión dejaba en localStorage» ya no es intermitente** (pendiente 1). Causa probable: `localStorage` se escribe a disco en segundo plano, así que `app.close()` justo después de sembrar el token viejo podía perderlo; la segunda ventana arrancaba sin nada que migrar, el `localStorage` salía vacío (la primera aserción pasaba sola) y no había archivo en el llavero. La siembra ahora vacía el almacenamiento (`session.defaultSession.flushStorageData()`) antes de cerrar, y la aserción del archivo espera con `expect.poll` a que termine la migración, antes de mirar `localStorage`.
+- **Reproducción:** `xvfb-run -a npx playwright test e2e/desktop.spec.mjs -g "pasa al llavero"` → no se pudo reproducir en esta sesión: 0 fallos en 20 corridas (8 sin carga, 12 con cuatro procesos ocupando la CPU). El arreglo sale del análisis de la causa, no de una falla vista; si vuelve a fallar, el pendiente se reabre.
+- **Pruebas que fallan sin el arreglo:** ninguna nueva (el cambio es la propia prueba); 10 corridas en verde con el arreglo.
+- README: no toca.
+- QA: no toca la página ni la app (solo `e2e/desktop.spec.mjs`); auditoría: no toca la página
+- Skills: no aplica: un ajuste de una prueba propia, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (vaciar el almacenamiento antes de cerrar y esperar la migración).
+- Reclamo: loop/159, sin colisión
+- Validado: 481 pruebas (`node --test`), smoke, i18n (0 errores) y 28 e2e en verde.
+- **Siguiente:** iteración 160, expansión: ítem 110 (Ocultar una rama o dejarla sola, Análisis)
+
+### 2026-10-29 · Iteración 160 · Expansión · Análisis
+
+- **Capacidad nueva: ocultar una rama o dejarla sola** (ítem 110 de la hoja de ruta, `[replica 2026-10-28]`). La ficha de una rama, en 2D y en 3D, suma «Ocultar» y «Ver solo»; se recuerdan por repo (`bview:`), la lupa se marca como filtrada, su cuadro dice «n de m ramas a la vista» y trae «Ver todas las ramas», y la vista de texto lo respeta y lo dice. La rama por defecto siempre queda; sin consultas. Nueva `GB.search.byBranches`.
+- **Pruebas que fallan sin la capacidad:** `node tools/search.test.mjs` (byBranches) y el paso del smoke «ocultar una rama o dejarla sola».
+- README: función en la lista, Límites conocidos y mapa de `js/search.js`.
+- QA: ficha de rama (2D), filtro y su aviso, persistencia por repo, foco al restablecer; auditoría: ver Validado.
+- Skills: no aplica: extensión de un filtro propio, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (componer sobre el filtro por autor con la misma firma).
+- Reclamo: loop/160, sin colisión
+- Validado: 482 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Una primera corrida falló en un paso ajeno (vista de texto, release de la demo) y pasó a la repetición: anotado en el pendiente 2 de Mantenimiento.
+- **Siguiente:** iteración 161, expansión: ítem 112 (Vista de un PR: descripción y comentarios, Datos)

@@ -775,5 +775,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Skills: no aplica: un endpoint más de una fuente propia, sin dominio nuevo.
 - Arena: no aplica: una sola forma obvia (el mismo `commitDiff` que ya usan GitLab y Bitbucket).
 - Reclamo: loop/170, sin colisión
-- Validado: PENDIENTE
+- Validado: 497 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera corrida falló solo en «historial de un archivo» (intermitencia conocida, pendiente 2); la repetida pasó entera.
 - **Siguiente:** iteración 171, mantenimiento · Rendimiento: pendiente 7 (El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta sal…)

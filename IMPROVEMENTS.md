@@ -798,5 +798,6 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (un filtro más en `drawGraph`, como `&branch=` y `&max=`); además, 18 iteraciones simultáneas en un contenedor de 4 CPU, pedido del dueño.
 - Replica: paridad, sin pasada nueva (81,1/100, must hechos 12 de 13); ítem 125, lo mínimo para que la hoja no baje de 10 en esta tanda de tres iteraciones pedida por Benjamin (la reposición hasta 15 la hace la 174). Las filas «Azure DevOps» (must, `partial`) y «Ocultar una rama o dejarla sola» (`no`) de `replica/features.csv` quedaron atrasadas respecto de #214 y #210.
 - Reclamo: loop/172, sin colisión; ronda de tres iteraciones simultáneas (172, 173 y 174) pedida por Benjamin en persona, no un disparo de la Routine.
+- Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
 - Validado: PENDIENTE
 - **Siguiente:** iteración 173, expansión: ítem 123 (Práctica: branch -m, Público)

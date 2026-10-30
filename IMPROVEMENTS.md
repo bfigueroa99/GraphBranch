@@ -584,6 +584,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     En la iteración 160 falló una vez, y pasó a la repetición, «vista de texto: árbol con teclado, nombres accesibles y
     Enter lleva al grafo» (`el release de la demo no se dice (2): Novedades: 0 ramas, 1 commits`): depende de lo que la
     demo publica en ese momento.
+    En la iteración 167, 2 de 3 corridas del smoke fallaron en «historial de un archivo: un botón del diff aplica el filtro
+    por ruta…» (`elementHandle.click: Element is not attached to the DOM` y `waitForSelector: Timeout 15000ms`); la tercera pasó.
 
 ### Baja
 
@@ -848,3 +850,17 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/166, sin colisión
 - Validado: 494 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera corrida falló en «ocultar una rama o dejarla sola» (ajeno al cambio; intermitencia ya conocida) y la repetición pasó.
 - **Siguiente:** iteración 167, mantenimiento · QA: pendiente 10 (Con un repo a 320 px el grafo queda bajo las tarjetas (más de 1.200 px de scrol…)
+
+### 2026-10-30 · Iteración 167 · Mantenimiento · QA
+
+- **Auditoría de QA: celular angosto** (pendiente 10, parcial): a ≤560 px las cifras van en tres columnas y sin la línea de detalle (`css/styles.css`); en 320 px bajan de 245 a 144 px y el grafo empieza en 421 px en lugar de 522.
+- **Reproducción:** Playwright 320×640 sobre la demo, sin el cambio → `.stats` 245 px de alto y `.graph-panel` en 522 px.
+- **Hallazgos:** 3 nuevos (pendientes 15, 16 y 17), 0 a la base de la auditoría; además la intermitencia de «historial de un archivo» anotada en el pendiente 2.
+- **Pruebas que fallan sin el arreglo:** un paso del smoke («a 320 px, las cifras ocupan tres columnas compactas y el grafo empieza antes»).
+- README: sin cambios (no hay función nueva).
+- QA: 320 px con 404, sin red (ar), cuota agotada (ta) y repo vacío (consola limpia, sin desborde); auditoría completa con `--langs`: 0 hallazgos (la primera pasada con una franja deslizable dio 84 `borde` y se cambió de diseño).
+- Skills: no aplica: un ajuste de CSS sobre código propio, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (compactar la rejilla de cifras).
+- Reclamo: loop/167, sin colisión
+- Validado: PENDIENTE
+- **Siguiente:** iteración 168, expansión: ítem 116 (Ocultar o dejar sola una rama, en la URL, Análisis)

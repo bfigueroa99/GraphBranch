@@ -38,6 +38,7 @@
   const MAX_BRANCHES = 500; // ramas pedidas como mucho
   const DETAIL_PARALLEL = 6; // consultas de commit suelto a la vez
   const DETAIL_MAX = 150; // y como mucho por historia pedida: más allá la rama queda cortada
+  const CHANGES_MAX = 300; // archivos por commit que se piden
   const LOADS = 6; // ramas por ciclo que se cargan de la lista de espera
   const WAIT_429 = 60000;
   const FIRST_MS = 1500;
@@ -64,9 +65,8 @@
       this.mode = 'list';
       this.data.repo.url = this.web;
       this.data.repo.host = 'azure';
-      // todavía sin árbol de archivos ni cambios de commit: la app ve que no están y no ofrece lo que los pide
+      // todavía sin árbol de archivos: la app ve que no está y no ofrece lo que lo pide
       this.files = null;
-      this.commitDiff = null;
     }
 
     get web() {
@@ -349,7 +349,23 @@
       return false;
     }
 
-    /** Sin cambios de commit: nada que pedir barato. */
+    /** Los archivos que cambió un commit (`commits/{id}/changes`): Azure da la lista y el tipo de cambio, no los
+        tramos del diff, así que `patch` va en null y el panel dice que no hay vista previa. Hasta 300 archivos. */
+    async commitDiff(sha) {
+      const { data } = await this.api(`${this.base}/commits/${enc(sha)}/changes?$top=${CHANGES_MAX}`);
+      const files = [];
+      for (const c of data?.changes || []) {
+        const path = String(c?.item?.path || '').replace(/^\//, '');
+        if (!path || c.item.isFolder) continue;
+        const type = String(c.changeType || '');
+        const status = /rename/.test(type) ? 'renamed' : /delete/.test(type) ? 'removed' : /add/.test(type) ? 'added' : 'modified';
+        const from = status === 'renamed' ? String(c.sourceServerItem || '').replace(/^\//, '') || null : null;
+        files.push({ path, from, status, add: 0, del: 0, binary: false, patch: null, url: status === 'removed' ? null : this.link('blob', sha, path) });
+      }
+      return { files, truncated: data?.allChangesIncluded === false };
+    }
+
+    /** Sin cuota que cuidar pero sin tramos tampoco: solo se piden los cambios que se abren. */
     diffCheap() {
       return false;
     }

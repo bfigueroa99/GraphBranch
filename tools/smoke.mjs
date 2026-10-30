@@ -2888,6 +2888,8 @@ function fakeAzure() {
         const list = chain(u.searchParams.get('searchCriteria.itemVersion.version')).slice(0, Number(u.searchParams.get('searchCriteria.$top') || 100)).map(({ parents, ...c }) => c);
         return route.fulfill(json({ count: list.length, value: list }));
       }
+      const chg = p.match(/\/repositories\/api\/commits\/(\w+)\/changes$/);
+      if (chg && commits.has(chg[1])) return route.fulfill(json({ changes: [{ changeType: 'edit', item: { path: '/src/azure-cambio.js' } }, { changeType: 'add', item: { path: '/docs/nuevo.md' } }], allChangesIncluded: true }));
       const one = p.match(/\/repositories\/api\/commits\/(\w+)$/);
       if (one && commits.has(one[1])) return route.fulfill(json(commits.get(one[1])));
       if (p === `${REPO}/pullrequests`) {
@@ -2928,6 +2930,20 @@ console.log('Azure DevOps');
     if ((await label.textContent()) !== '#3') throw new Error(`la etiqueta dice ${await label.textContent()}`);
     const names = await page.$$eval('#graph .head', (hs) => hs.map((h) => h.getAttribute('aria-label')).join(' | '));
     if (!names.includes('feature/x') || !names.includes('main')) throw new Error(`ramas: ${names}`);
+  });
+
+  await step(page, 'cambios de un commit de Azure DevOps: la ficha abre el panel con sus archivos (commits/{id}/changes)', async () => {
+    const heads = await page.$$('#graph svg .head[role=button]');
+    await heads[0].focus();
+    await page.keyboard.press('Enter');
+    const btn = await page.waitForSelector('#graph .tip .tip-diff', { timeout: T(5000) });
+    await btn.focus();
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#diff-panel:not([hidden]) .df-file', { timeout: T(5000) });
+    const names = await page.$$eval('#diff-panel .df-jump', (b) => b.map((x) => x.textContent).join(' | '));
+    if (!names.includes('azure-cambio.js') || !names.includes('nuevo.md')) throw new Error(`archivos del panel: ${names}`);
+    if (!az.calls.some((c) => /\/commits\/\w+\/changes\?/.test(c))) throw new Error('no pidió commits/{id}/changes');
+    await page.keyboard.press('Escape');
   });
 
   await step(page, 'el token de Azure DevOps de Ajustes va en cada consulta como Basic, solo a dev.azure.com', async () => {

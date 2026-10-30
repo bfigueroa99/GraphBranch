@@ -119,6 +119,13 @@ function fakeAzure() {
       const top = Number(q.get('searchCriteria.$top') || 100);
       return { body: { count: Math.min(top, list.length), value: list.slice(0, top).map(noParents) } };
     }
+    const chg = p.match(/\/repositories\/api\/commits\/([^/]+)\/changes$/);
+    if (chg) {
+      if (!az.commits.has(chg[1])) return notFound;
+      assert.equal(q.get('$top'), '300');
+      const changes = az.changes?.[chg[1]] || [];
+      return { body: { changeCounts: { Edit: changes.length }, changes, allChangesIncluded: !az.moreChanges } };
+    }
     const one = p.match(/\/repositories\/api\/commits\/([^/]+)$/);
     if (one) return az.commits.has(one[1]) ? { body: az.commits.get(one[1]) } : notFound;
     if (p === REPO + '/pullrequests') {
@@ -336,10 +343,43 @@ test('los enlaces de la API solo valen si cuelgan de dev.azure.com', async () =>
   assert.equal(src.webUrl(`${HOST}/acme/web/_git/api`), `${HOST}/acme/web/_git/api`);
 });
 
-test('todavía sin árbol de archivos, sin cambios de commit y sin edición', () => {
+test('los cambios de un commit: la lista de archivos con su tipo de cambio, sin tramos, una consulta', async () => {
+  const az = fakeAzure();
+  az.push('main', 'm1');
+  az.changes = {
+    m1: [
+      { changeType: 'add', item: { path: '/src/nuevo.js', objectId: 'a' } },
+      { changeType: 'edit', item: { path: '/README.md', objectId: 'b' } },
+      { changeType: 'delete', item: { path: '/viejo ñ.txt', objectId: 'c' } },
+      { changeType: 'rename', item: { path: '/b.txt', objectId: 'd' }, sourceServerItem: '/a.txt' },
+      { changeType: 'edit, rename', item: { path: '/d/y.txt' }, sourceServerItem: '/d/x.txt' },
+      { changeType: 'add', item: { path: '/src', isFolder: true } },
+    ],
+  };
+  const { src } = connect(az);
+  const r = await src.commitDiff('m1');
+  const plain = JSON.parse(JSON.stringify(r));
+  assert.equal(plain.truncated, false);
+  assert.deepEqual(plain.files.map((f) => [f.path, f.status, f.from]), [
+    ['src/nuevo.js', 'added', null],
+    ['README.md', 'modified', null],
+    ['viejo ñ.txt', 'removed', null],
+    ['b.txt', 'renamed', 'a.txt'],
+    ['d/y.txt', 'renamed', 'd/x.txt'],
+  ]);
+  assert.equal(plain.files[0].patch, null);
+  assert.equal(plain.files[0].url, `${WEB}?path=/src/nuevo.js&version=GCm1`);
+  assert.equal(plain.files[2].url, null, 'un archivo borrado no tiene enlace');
+  assert.equal(az.calls.filter((c) => c.includes('/changes')).length, 1);
+  az.moreChanges = true;
+  assert.equal((await src.commitDiff('m1')).truncated, true, 'Azure dice que faltan cambios');
+  await assert.rejects(src.commitDiff('nope'), (e) => e.kind === 'notfound');
+});
+
+test('todavía sin árbol de archivos y sin edición; los cambios de commit sí', () => {
   const { src } = connect(fakeAzure());
   assert.equal(src.files, null);
-  assert.equal(src.commitDiff, null);
+  assert.equal(typeof src.commitDiff, 'function');
   assert.equal(src.canEdit(), false);
 });
 

@@ -603,45 +603,41 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 6. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-7. [Rendimiento] El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta salir de
-    «cargando» (con un repo local de 1.000 ramas y `--lang=ar`); los siguientes, 1,3–1,6 s en es, ar y ta.
-    Es el arranque en frío de Electron (caché de disco), no el repo ni el idioma; sin medir sin repo.
-    Reproducción: `xvfb-run npx playwright test` con `launch` + `--local=` sobre 1.000 ramas, primer `launch`.
-8. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+7. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-9. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
+8. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-10. [QA] A 320 px el grafo sigue a ~420 px del inicio con la demo (antes 522; con un repo real, más: barra de
+9. [QA] A 320 px el grafo sigue a ~420 px del inicio con la demo (antes 522; con un repo real, más: barra de
     vistas, bitácora) y el 3D no arma etiquetas hasta verse. La iteración 167 compactó las cifras (tres columnas
     sin la línea de detalle, 245 → 144 px); falta una forma de llegar al grafo sin recorrer la página (ancla o
     tarjetas plegables en celular). Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la
     auditoría → `.graph-panel` empieza bajo los 400 px; `#graph3d` fuera de la pantalla.
-11. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+10. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-12. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
+11. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
     `WebFetch` a `releases.electronjs.org` dio HTTP 500 en la iteración 119. Repetir la comparación
     cuando la página responda y subir si hay una estable más nueva.
     Reproducción: `WebFetch https://releases.electronjs.org/release/stable` → `HTTP 500`.
-13. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
+12. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
     corta a los 120 s; documentar en «Cómo validar» que se corra en segundo plano, como `audit --langs`.
     Reproducción: `time node tools/smoke.mjs` → ~480 s.
-14. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
+13. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
     `npm run check` en la iteración 128 (la repetición pasó), aun con la espera de la 127.
     Reproducción: `npm run check` → `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
 
-15. [QA] El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 del repositorio o la cuota
+14. [QA] El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 del repositorio o la cuota
     agotada, aunque el mensaje de abajo es exacto («No se encontró acme/web…»): en celular, donde solo se ve el
     indicador, confunde. Distinguir «No encontrado» / «Cuota agotada» de «Sin conexión».
     Reproducción: Playwright, 320×640, `?repo=acme/web&lang=es` con la API respondiendo 404 → `#status-text` = «Sin conexión».
-16. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+15. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-17. [QA] A ≤560 px las cifras ya no muestran su línea de detalle (`.stat-sub`: «de N en total», la hora de la última
+16. [QA] A ≤560 px las cifras ya no muestran su línea de detalle (`.stat-sub`: «de N en total», la hora de la última
     actividad): se perdió información en celular. Devolverla como `title`/texto accesible de la tarjeta o en un
     plegable. Reproducción: Playwright, 320×640 → `getComputedStyle(#st-branches-sub).display` = `none`.
 
@@ -777,3 +773,16 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/170, sin colisión
 - Validado: 497 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera corrida falló solo en «historial de un archivo» (intermitencia conocida, pendiente 2); la repetida pasó entera.
 - **Siguiente:** iteración 171, mantenimiento · Rendimiento: pendiente 7 (El primer arranque de la app de escritorio en una sesión tardó 14,7 s hasta sal…)
+
+### 2026-10-30 · Iteración 171 · Mantenimiento · Rendimiento
+
+- **Arreglo: el arranque en frío de Electron no es de la app, el pendiente se cierra** (pendiente 7). Medido con Playwright y `xvfb-run` (perfil nuevo en cada arranque, sin red, `--lang=es`, demo): la primera corrida de la sesión tardó 18,4 s hasta la primera ventana y 19,1 s hasta salir de «cargando»; las cuatro siguientes, 0,36–0,42 s y 0,84–1,10 s. Con el binario ya leído del disco (`electron --version` antes), una corrida con perfil nuevo dio 0,58 s y 1,20 s, y otras cuatro 0,80–0,93 s. El tiempo extra queda antes de `app.whenReady` (carga fría del binario y de sus librerías, la caché de disco del contenedor); el código de la app, desde que arranca el proceso, no pasa de ~1 s. No hay una causa en `electron/main.js` que arreglar: `createWindow` espera a `localArgs` solo con `--local=`, y con la demo no hay trabajo en el camino. Sin cambio de código, ninguna medida del caso web cambia.
+- **Reproducción:** `xvfb-run -a node arranque.mjs` (cinco `electron.launch` con perfil nuevo) → primera corrida 19,1 s en la sesión recién abierta; con el binario caliente, 1,2 s o menos.
+- **Pruebas que fallan sin el arreglo:** ninguna: no hay arreglo; una prueba con un tope de tiempo de arranque sería intermitente por el disco frío del contenedor.
+- README: sin cambios.
+- QA: arranque de escritorio medido (primer arranque y reaperturas); auditoría web con `--repetir 3` como base (cargaMs 2090, fps2d 51,2, fps3d 8,6, 10 consultas al cargar); no toca la página.
+- Skills: no aplica: una medición sobre código propio, sin dominio nuevo.
+- Arena: no aplica: no hay implementación que decidir (la medición descarta el arreglo).
+- Reclamo: loop/171, sin colisión
+- Validado: 497 pruebas (`node --test`), smoke, i18n (0 errores) en verde; auditoría y e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 172, expansión: ítem 122 (Capa para streaming, undécima entrega, Plataformas)

@@ -229,6 +229,12 @@ cada iteración lo repite (`node tools/loop.mjs --salud` lo imprime) y se quita 
    estructura ARIA y el teclado con Playwright. Abre la demo, pulsa el botón de las líneas y recórrela con NVDA,
    VoiceOver u Orca (¿la región viva anuncia sin repetir? ¿el foco se queda al actualizar?); lo que falle va a
    Mantenimiento y lo que salga bien se anota en el README, en «Límites conocidos».
+6. **La Routine del loop no aparece** (desde 2026-10-31). `list_triggers` de la cuenta no lista «GraphBranch:
+   iteración del loop (sesión nueva por disparo)» (cron `3 */2 * * *`), así que su prompt no se pudo comparar con
+   `.claude/skills/iteracion/PROMPT.md`, y `--salud` da un hueco de 27,4 h (2026-10-30 16:16 → 2026-10-31 19:42
+   UTC): la 172, la 173 y la 174 se lanzaron a la vez y quedaron esperándose, y la 172 la retomó otra sesión. Si la
+   Routine sigue siendo la vía, recrearla en claude.ai/code → Routines con ese prompt byte a byte; si ya no, decirlo
+   en la sección «Routine» de la skill y en el README.
 
 ## Mapa de alcance
 
@@ -796,8 +802,9 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: capa `?embed=1` con la demo en 2D y en 3D (sin `&pr`, con `&pr=1`, `&pr=0`, `&pr=1&max=2` y `&pr=1&branch=` con una rama sin PR), cada cabeza que queda lleva su PR (el paso del smoke, corrido solo, en verde con la capacidad y en rojo sin ella: sin el cambio `develop` sigue en la capa); en la app de escritorio, con Playwright y `xvfb-run` sobre `app://graphbranch/index.html?embed=1&view=2d&pr=1`: quedan `main` y las tres ramas con PR de la demo, sin errores de consola; sin textos nuevos de interfaz; auditoría: ver Validado.
 - Skills: no aplica: un parámetro más de la capa sobre un filtro propio, sin dominio nuevo.
 - Arena: no aplica: una sola forma obvia (un filtro más en `drawGraph`, como `&branch=` y `&max=`); además, 18 iteraciones simultáneas en un contenedor de 4 CPU, pedido del dueño.
+- OMC: no disponible (llegó a `dev` con #225, después de construida la 172, y la sesión que la retomó no tiene la herramienta Agent para lanzar los `omc-*`; en su lugar, revisión propia del diff contra el ítem, `CLAUDE.md` y la skill, sin hallazgos)
 - Replica: paridad, sin pasada nueva (81,1/100, must hechos 12 de 13); ítem 125, lo mínimo para que la hoja no baje de 10 en esta tanda de tres iteraciones pedida por Benjamin (la reposición hasta 15 la hace la 174). Las filas «Azure DevOps» (must, `partial`) y «Ocultar una rama o dejarla sola» (`no`) de `replica/features.csv` quedaron atrasadas respecto de #214 y #210.
-- Reclamo: loop/172, sin colisión; ronda de tres iteraciones simultáneas (172, 173 y 174) pedida por Benjamin en persona, no un disparo de la Routine.
+- Reclamo: loop/172, sin colisión; ronda de tres iteraciones simultáneas (172, 173 y 174) pedida por Benjamin en persona, no un disparo de la Routine. Reanudada el 2026-10-31 por otra sesión (`--reclamar` dio Vencida: 26 h sin commits, con #222 abierto): merge de `origin/dev` (#225) sin conflictos y `npm run check` de nuevo.
 - Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
 - Validado: PENDIENTE
 - **Siguiente:** iteración 173, expansión: ítem 123 (Práctica: branch -m, Público)

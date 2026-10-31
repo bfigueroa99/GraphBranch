@@ -1,0 +1,5 @@
+# oh-my-claudecode vendorizado por .claude/skills/omc/sync.sh
+repo: https://github.com/Yeachan-Heo/oh-my-claudecode.git
+tag: v5.7.23
+commit: 82602887b71a3984e040fac2839ec8d27a7c67b6
+agentes: planner architect critic code-reviewer security-reviewer verifier tracer debugger test-engineer

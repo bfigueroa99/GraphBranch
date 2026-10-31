@@ -177,6 +177,27 @@ test('limitBranches: deja la rama por defecto y las de commit más reciente, sin
   assert.deepEqual([...S.limitBranches(data, 1).branches.keys()], ['main', 'esperando']);
 });
 
+test('withOpenPr deja las ramas con un PR abierto de la misma repo, la por defecto y las sin historia, sin mutar', () => {
+  const br = (name, sha) => [name, { name, sha }];
+  const pr = (n, head, sameRepo = true) => [n, { number: n, head, sameRepo }];
+  const data = {
+    repo: { defaultBranch: 'main' },
+    commits: new Map([['a', {}], ['b', {}], ['c', {}], ['d', {}]]),
+    branches: new Map([br('main', 'a'), br('con-pr', 'b'), br('sin-pr', 'c'), br('fork-homonima', 'd'), br('esperando', 'zz')]),
+    // un PR desde un fork con el mismo nombre de rama no cuenta: su rama no es la de este repo
+    pulls: new Map([pr(1, 'con-pr'), pr(2, 'fork-homonima', false)]),
+  };
+  const v = S.withOpenPr(data);
+  assert.deepEqual([...v.branches.keys()], ['main', 'con-pr', 'esperando']);
+  assert.deepEqual([...v.pulls.keys()], [1, 2]);
+  assert.equal(data.branches.size, 5);
+  // sin ningún PR abierto queda solo la rama por defecto (y la que espera su historia)
+  assert.deepEqual([...S.withOpenPr({ ...data, pulls: new Map() }).branches.keys()], ['main', 'esperando']);
+  // si todas tienen PR, no hay nada que quitar
+  const all = { ...data, branches: new Map([br('main', 'a'), br('con-pr', 'b')]) };
+  assert.equal(S.withOpenPr(all), all);
+});
+
 test('byBranches oculta ramas o deja una sola, siempre con la rama por defecto y sin mutar', () => {
   const br = (name, sha) => [name, { name, sha }];
   const data = {

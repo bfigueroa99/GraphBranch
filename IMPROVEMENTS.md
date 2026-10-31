@@ -593,6 +593,10 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     demo publica en ese momento.
     En la iteración 167, 2 de 3 corridas del smoke fallaron en «historial de un archivo: un botón del diff aplica el filtro
     por ruta…» (`elementHandle.click: Element is not attached to the DOM` y `waitForSelector: Timeout 15000ms`); la tercera pasó.
+    En la reanudación de la 172 (2026-10-31, carga 7 en 4 CPU) falló «editar sin token: …» con `intentó escribir sin
+    token`: el paso compara `gh.calls.length` antes y después de abrir Ajustes, pero `fakeGitHub` anota cada consulta
+    (`calls.push(u.pathname)`), también los GET del sondeo en vivo, así que una consulta de lectura en esa ventana parece
+    una escritura. Contar solo los PUT/POST/PATCH/DELETE.
 
 ### Baja
 
@@ -806,5 +810,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Replica: paridad, sin pasada nueva (81,1/100, must hechos 12 de 13); ítem 125, lo mínimo para que la hoja no baje de 10 en esta tanda de tres iteraciones pedida por Benjamin (la reposición hasta 15 la hace la 174). Las filas «Azure DevOps» (must, `partial`) y «Ocultar una rama o dejarla sola» (`no`) de `replica/features.csv` quedaron atrasadas respecto de #214 y #210.
 - Reclamo: loop/172, sin colisión; ronda de tres iteraciones simultáneas (172, 173 y 174) pedida por Benjamin en persona, no un disparo de la Routine. Reanudada el 2026-10-31 por otra sesión (`--reclamar` dio Vencida: 26 h sin commits, con #222 abierto): merge de `origin/dev` (#225) sin conflictos y `npm run check` de nuevo.
 - Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
-- Validado: PENDIENTE
+- Validado: 499 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera corrida de la reanudación falló solo en «editar sin token» (ajeno al cambio; la causa va al pendiente 2) y la repetida pasó entera.
 - **Siguiente:** iteración 173, expansión: ítem 123 (Práctica: branch -m, Público)

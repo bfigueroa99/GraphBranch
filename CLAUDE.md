@@ -8,7 +8,9 @@ Las iteraciones del loop siguen `IMPROVEMENTS.md`. Desde la iteración 20 su obj
 
 Cada iteración programada sigue `.claude/skills/iteracion/SKILL.md` (reclamo con `node tools/loop.mjs --reclamar`, puerta `npm run check`, guarda `node tools/loop.mjs --check`); el prompt de la Routine solo apunta a esa skill, y `--check` vigila que la skill y el prompt nombren lo que existe.
 
-El loop también corre en OpenCode con un modelo detrás de OmniRoute: `node tools/opencode.mjs` prepara un worktree limpio y lanza `/iteracion` (`.opencode/commands/iteracion.md`: el prompt de la Routine y las herramientas que cambian, como `gh` en lugar del MCP de GitHub). OpenCode lee este archivo (no hay `AGENTS.md`) y las skills de `.claude/skills/`, así que lo de arriba vale igual ahí. Cómo dejarlo andar y en un cron: «Correr el loop en OpenCode» en el README.
+Esa skill cita en sus pasos las recetas de `.claude/skills/omc/` (oh-my-claudecode, vendorizado y fijado en `UPSTREAM`): plan por consenso solo para lo grande o difícil de deshacer, revisión en dos ejes y verificación con evidencia antes de publicar, y diagnóstico cuando la puerta falla. Sus agentes son los `omc-*` de `.claude/agents/`, que regenera `sync.sh` y no se editan a mano. No se usan los modos persistentes de OMC (`autopilot`, `ralph`, `team`…) ni se declara su plugin en `.claude/settings.json`: el loop ya es el bucle de la sesión.
+
+El loop también corre en OpenCode con un modelo detrás de OmniRoute: `node tools/opencode.mjs` prepara un worktree limpio y lanza `/iteracion` (`.opencode/commands/iteracion.md`: el prompt de la Routine y las herramientas que cambian, como `gh` en lugar del MCP de GitHub). OpenCode lee este archivo (no hay `AGENTS.md`) y las skills de `.claude/skills/`, así que lo de arriba vale igual ahí; `.claude/agents/` no lo lee, y los `omc-*` se lanzan con el fallback que da la skill omc (el comando lo dice). Cómo dejarlo andar y en un cron: «Correr el loop en OpenCode» en el README.
 
 ## Pull requests y merge
 

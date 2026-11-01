@@ -524,3 +524,51 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
 - Validado: 505 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. En la reanudación (carga de 9 a 20 en 4 CPU), las dos primeras corridas cayeron en el smoke, en pasos ajenos al cambio: «historial de un archivo» las dos veces (y «filtro por autor» y «ocultar una rama o dejarla sola» la primera). Fallar dos veces es `dev` en rojo (paso 3 de la skill), así que el paso se arregló aquí, en su propio commit («Smoke: historial de un archivo…»): el paso anterior deja el grafo en el primer commit cargado y, con unos minutos de demo, la etiqueta que elegía queda fuera de la vista (`display: none`), el foco no llega y Enter no abre su ficha; ahora vuelve a lo último y elige una rama vigente y a la vista, como el paso siguiente. Va en este PR y no en otro porque a `dev` se llega solo por el PR de `loop/N` y sin él la 173 no pasa la puerta; lo que queda del patrón, en el pendiente 2. Con el arreglo, la tercera corrida pasó el smoke y cayó solo en la e2e de escritorio «--bitbucket-url…» (ajena al cambio: una carrera de la prueba con el llavero, pendiente 3, nuevo), y la cuarta pasó entera.
 - **Siguiente:** iteración 174, expansión: ítem 99 (Salud del repo: tendencia de ramas nuevas, Análisis)
+
+### 2026-11-01 · Cambio de maquinaria: lo largo se espera en primer plano, la hoja hecha aparte y la cola sin Acción
+
+- **Medido** (git de `origin/dev` y de las `loop/*`, la bitácora, `--salud` y una puerta corrida sobre `dev` sin
+  tocar, el 2026-11-01): `npm run check` tardó 14 min 56 s sin e2e ni auditoría (el smoke solo, 14 min 37 s, con
+  la máquina a carga 10 a 13 en 4 CPU) y falló en tres pasos que nadie había tocado («el 3D arranca con un solo
+  contexto WebGL», «historial de un archivo» y «editar sin token»). La herramienta de shell corta una llamada en
+  primer plano a los 600 s, manda al fondo la que pasa de 120 s sin `timeout` y bloquea un `sleep` suelto; en
+  una Routine el turno terminado es la corrida terminada, y la skill no decía cómo esperar: los pendientes 8 y 12
+  pedían correr el smoke y la auditoría «en segundo plano», que es justo la trampa (loop/135 dio su última señal a
+  los 24 minutos y la relevó el disparo siguiente; la Routine de otro proyecto de Benjamin cerró así su corrida
+  del 2026-11-01). En 13 de las 21 iteraciones de la 152 a la 172 la puerta se repitió por pasos ajenos
+  intermitentes, y la 168 gastó cinco corridas y un relevo (4 h). La 172, la 173 y la 174 se reclamaron a la vez
+  el 2026-10-30, se quedaron esperándose y la reanudación de la 172 se fusionó sola: la 173 quedó 32 h con su PR
+  abierto (la reanudó otra sesión el 2026-11-01, mientras se hacía este cambio) y la 174 sigue con el suyo (#223);
+  `--salud` lo decía como `Acción: loop/174 … revisar a mano`, que ninguna sesión desatendida puede atender.
+  `IMPROVEMENTS.md` pesaba 106 KB, 37 de ellos de los 116 ítems hechos de la hoja de ruta, y cada sesión lo lee
+  entero.
+- **Lo nuevo:** `tools/esperar.mjs` lanza un comando desprendido (`--lanzar <nombre> -- <comando>`) y lo espera en
+  primer plano de a tramos de 9 minutos: sale con el código del comando, 124 si sigue (se vuelve a llamar en el
+  mismo turno) o 125 si murió sin dejarlo; el estado vive fuera del repo (las e2e vacían `test-results/`). La
+  skill suma «Lo que se lee» y «Comandos largos», y la puerta, la QA, el rendimiento y la reanudación lanzan y
+  esperan con él; R8 da error si un bloque de código de la skill corre `npm run check`, el smoke, la auditoría o
+  las e2e sueltos. La puerta se repite a lo sumo tres veces por pasos ajenos distintos; a la tercera, el PR queda
+  abierto con `Validado: sin verde` para el disparo siguiente. Una reanudación no es la iteración del disparo: se
+  sigue con `--reclamar`. Si `git merge origin/dev` no trae nada y solo cambió la bitácora, el paso 5.2 no repite
+  la puerta entera. El prompt de la Routine dice que el turno terminado es la corrida terminada (R8: hasta 750
+  bytes y rutas que existen) y el comando de OpenCode espera igual. `--salud` da `En cola: loop/K` (sin Acción)
+  para una iteración reclamada antes de su turno. `node tools/loop.mjs --rotar` lleva además los ítems hechos de
+  la hoja a `docs/HOJA.md` en orden de número (en este cambio, los 116: `IMPROVEMENTS.md` baja de 106 a 61 KB);
+  `--siguiente`, `--check`, `--reclamar` y `--salud` leen las dos hojas, R2 da error si `docs/HOJA.md` tiene un
+  pendiente, R14 avisa con más de 10 hechos en `IMPROVEMENTS.md` y `--siguiente` dice el número de un ítem nuevo.
+  El smoke cuenta las escrituras aparte: «editar sin token» comparaba todas las consultas y un GET del sondeo en
+  vivo parecía una escritura.
+- **Cierra:** los pendientes de Deuda «`audit --langs` tarda ~145 s» y «el smoke tarda ~8 min» (los dos pedían
+  segundo plano) y la parte de «editar sin token» del pendiente 2; los demás se renumeran.
+- **Pruebas que fallan sin el cambio:** `tools/esperar.test.mjs` (10: el código del comando, 124 sin matarlo, 125
+  con el vigilante muerto, un nombre a la vez, el estado fuera del repo) y `tools/loop.test.mjs` (de 104 a 110):
+  R8 con cada comando largo suelto y el prompt con una ruta que no existe, `En cola` sin Acción, y `rotarHoja`
+  (los hechos al archivo en orden, idempotente, el aviso aunque la cabecera ya enlace el archivo, R2 y R14);
+  mutados, cada guarda hace fallar su prueba. La rotación real conserva cada línea (comparadas ordenadas).
+- README: `tools/esperar.mjs` y `docs/HOJA.md` en la estructura, `--rotar` y cuánto tarda la puerta; `CLAUDE.md`
+  y «Cómo validar un cambio», cómo esperarla.
+- QA: no toca la página ni el escritorio; `esperar.mjs` probado en esta sesión de Claude Code (lanzado en una
+  llamada y esperado en otra: 124 a los 10 s y el código 4 a los 25 s); `--salud` contra origin (`En cola:
+  loop/174`, sin acciones); `--rotar` sobre una copia y sobre el repo.
+- Validado: 521 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio). Antes, con la máquina compartida a carga 10 a 34 en 4 CPU: la puerta sobre `dev` sin tocar falló en 3 pasos del smoke, y cuatro corridas con el cambio (16 a 47 min cada una, lanzadas y esperadas con `tools/esperar.mjs`) fallaron en 2, 6, 51 (todos `page.goto` vencidos) y 2 pasos que el cambio no toca; «editar sin token» pasó en las cinco.
+- **Siguiente:** iteración 174, expansión: ítem 99 (Salud del repo: tendencia de ramas nuevas, Análisis)

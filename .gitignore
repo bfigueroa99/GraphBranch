@@ -11,3 +11,6 @@ replica/screens/
 
 # las corridas de la arena (.claude/skills/arena): tareas, soluciones y veredictos, nunca se versionan
 .arena/
+
+# el estado local de OMC (.claude/skills/omc) si alguien corre su plugin a mano: nunca se versiona
+.omc/

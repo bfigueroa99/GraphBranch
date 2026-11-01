@@ -3640,6 +3640,37 @@ console.log('Capa para streaming: &branch= deja una rama (?embed=1)');
   await page.context().close();
 }
 
+console.log('Capa para streaming: &pr=1 deja las ramas con un PR abierto (?embed=1)');
+{
+  const page = await openPage({ viewport: { width: 640, height: 400 } });
+  await step(page, '&pr=1 deja la rama por defecto y solo las ramas con PR abierto (2D y 3D); se combina con &max= y &branch=; &pr=0 no filtra', async () => {
+    const open = async (q) => {
+      await page.goto(`${base}/index.html?lang=es&embed=1${q}`);
+      await loaded(page);
+      await page.waitForSelector('#graph3d canvas, #graph svg .head', { timeout: T(30000), state: 'attached' });
+      return page.evaluate(() => ({
+        marked: Number(document.querySelector('.graph-stage').dataset.embedBranches ?? -1),
+        heads: [...document.querySelectorAll('#graph svg .head:not(.ghost)')].map((g) => ({ name: g.__name, def: g.classList.contains('default'), pr: !!g.querySelector('.h-pr') })),
+      }));
+    };
+    const all = await open('&view=2d');
+    if (all.marked !== -1) throw new Error('sin &pr=1 la capa marca ramas');
+    if (!all.heads.some((h) => !h.def && !h.pr)) throw new Error('la demo no trae una rama sin PR con que probar: ' + JSON.stringify(all.heads));
+    const only = await open('&view=2d&pr=1');
+    const rest = only.heads.filter((h) => !h.def);
+    if (!only.heads.some((h) => h.def)) throw new Error('&pr=1 quitó la rama por defecto');
+    if (!rest.length || rest.some((h) => !h.pr)) throw new Error('&pr=1 deja ramas sin PR o ninguna con PR: ' + JSON.stringify(only.heads));
+    if (only.marked !== only.heads.length) throw new Error(`la marca (${only.marked}) no cuenta las ramas dibujadas (${only.heads.length})`);
+    const in3d = await open('&view=3d&pr=1');
+    if (in3d.marked !== only.marked) throw new Error(`en 3D &pr=1 deja ${in3d.marked} ramas y en 2D ${only.marked}`);
+    if ((await open('&view=2d&pr=1&max=2')).marked !== 2) throw new Error('&pr=1&max=2 no deja 2 ramas');
+    const sinPr = all.heads.find((h) => !h.def && !h.pr).name;
+    if ((await open('&view=2d&pr=1&branch=' + encodeURIComponent(sinPr))).marked !== 1) throw new Error('&pr=1&branch= con una rama sin PR no deja solo la por defecto');
+    if ((await open('&view=2d&pr=0')).marked !== -1) throw new Error('&pr=0 filtra la capa');
+  });
+  await page.context().close();
+}
+
 console.log('Filtro por ruta desde la URL (?path=)');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

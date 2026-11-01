@@ -15,6 +15,7 @@ Corrés en OpenCode (lo lanza `node tools/opencode.mjs`, normalmente con un mode
   - `list_pull_requests` (head `loop/N`, state `open`) → `gh pr list --head loop/N --state open --json number,url`.
 - **La Routine**: `mcp__claude-code-remote__list_triggers` y `get_trigger` no existen acá; ese control se salta y el resumen dice «Routine: sin herramientas para compararla (OpenCode)». Este disparo lo programó Benjamin; no crees otro.
 - **Subagentes** (la arena y sus jueces): la herramienta `task` con `subagent_type: "general"`. Sin ella, la arena no aplica y se dice, como prevé la skill.
+- **Agentes de OMC** (`omc-planner`, `omc-critic`…, de las recetas de `.claude/skills/omc/SKILL.md`): OpenCode lee `.claude/skills/` pero no `.claude/agents/`, así que no existen como tipo. Va el fallback de la skill omc («Cómo se lanzan»): `task` con `subagent_type: "general"` y, como prompt, el cuerpo de su archivo en `.claude/agents/` desde `<Adaptacion_Loop>` seguido del brief.
 - **Web**: `webfetch` sí; `websearch` solo si OpenCode la trae activada. Sin búsqueda, se dice en la bitácora, como prevé la skill.
 - **Comandos largos**: la herramienta `bash` corta a los 2 minutos; a `npm run check` pasale `timeout: 1800000`.
 - **Temporales**: en `/tmp/opencode` o en un `mktemp -d`, nunca dentro del repo.

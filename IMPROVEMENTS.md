@@ -588,68 +588,81 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     lo que cambió esa iteración) y una corrida del smoke sobre `dev` limpio falló en otro, «al cerrar el último repo
     de la organización deja de seguirse». Medir con 5 corridas del paso y esperar el estado en lugar de comparar con
     el conteo base de ramas (la demo sigue publicando). Reproducción: `xvfb-run -a node tools/smoke.mjs` →
-    `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
+    `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`. Volvió a fallar 1 de 2 en la reanudación
+    de la 173 (2026-11-01, carga 9 en 4 CPU).
     En la iteración 160 falló una vez, y pasó a la repetición, «vista de texto: árbol con teclado, nombres accesibles y
     Enter lleva al grafo» (`el release de la demo no se dice (2): Novedades: 0 ramas, 1 commits`): depende de lo que la
     demo publica en ese momento.
-    En la iteración 167, 2 de 3 corridas del smoke fallaron en «historial de un archivo: un botón del diff aplica el filtro
-    por ruta…» (`elementHandle.click: Element is not attached to the DOM` y `waitForSelector: Timeout 15000ms`); la tercera pasó.
+    «historial de un archivo» (2 de 3 en la iteración 167, 2 de 2 en la reanudación de la 173) quedó arreglado en #224:
+    el paso anterior deja el grafo en el primer commit cargado y, con unos minutos de demo, `heads[3]` es una etiqueta
+    fuera de la vista (`display: none`), el foco no llega y Enter no abre su ficha (3 de 3 con 6 min de demo, también
+    sobre `origin/dev`). El mismo patrón (`heads[heads.length > 3 ? 3 : 0].focus()` sin mirar si está a la vista ni si
+    sale) sigue en «ocultar una rama o dejarla sola…» (falló 1 de 2 en esa reanudación, `waitForFunction: Timeout
+    15000ms`) y en «cambios de un commit: desde su ficha, con teclado…» (1 de 3 en la misma reproducción): elegir la
+    rama como lo hacen ahora «historial de un archivo» y el paso siguiente (End, etiquetas a la vista, sin `.exit`).
     En la reanudación de la 172 (2026-10-31, carga 7 en 4 CPU) falló «editar sin token: …» con `intentó escribir sin
     token`: el paso compara `gh.calls.length` antes y después de abrir Ajustes, pero `fakeGitHub` anota cada consulta
     (`calls.push(u.pathname)`), también los GET del sondeo en vivo, así que una consulta de lectura en esa ventana parece
     una escritura. Contar solo los PUT/POST/PATCH/DELETE.
+3. [Deuda] La e2e de escritorio «--bitbucket-url suma solo ese host a las conexiones del CSP…» falló 1 de 2 en la
+    reanudación de la 173 (2026-11-01, carga 18 en 4 CPU; la repetición pasó): `#azure-token-input` vacío al abrir
+    Ajustes. Es una carrera de la prueba: guarda el token de Azure con `GBDesktop.setToken(…, 'azure')` con la página ya
+    arrancada, y `loadDesktopToken` (`js/app.js`) lee el llavero una sola vez al arrancar; si ya leyó `azure`, el campo
+    queda vacío. Guardar el token y reabrir la app antes de mirar Ajustes, como «el token de GitLab… vuelve al reabrir».
+    Reproducción: `xvfb-run -a npx playwright test e2e/desktop.spec.mjs -g "bitbucket-url"` con el equipo cargado →
+    `expect(locator('#azure-token-input')).toHaveValue('az-e2e')` · `Received: ""`.
 
 ### Baja
 
-3. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+4. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-4. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+5. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-5. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+6. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-6. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+7. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-7. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+8. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-8. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
+9. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
     manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
     `run_in_background` o partir `--langs` por lotes de idiomas.
     Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-9. [QA] A 320 px el grafo sigue a ~420 px del inicio con la demo (antes 522; con un repo real, más: barra de
+10. [QA] A 320 px el grafo sigue a ~420 px del inicio con la demo (antes 522; con un repo real, más: barra de
     vistas, bitácora) y el 3D no arma etiquetas hasta verse. La iteración 167 compactó las cifras (tres columnas
     sin la línea de detalle, 245 → 144 px); falta una forma de llegar al grafo sin recorrer la página (ancla o
     tarjetas plegables en celular). Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la
     auditoría → `.graph-panel` empieza bajo los 400 px; `#graph3d` fuera de la pantalla.
-10. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+11. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-11. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
+12. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
     `WebFetch` a `releases.electronjs.org` dio HTTP 500 en la iteración 119. Repetir la comparación
     cuando la página responda y subir si hay una estable más nueva.
     Reproducción: `WebFetch https://releases.electronjs.org/release/stable` → `HTTP 500`.
-12. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
+13. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
     corta a los 120 s; documentar en «Cómo validar» que se corra en segundo plano, como `audit --langs`.
     Reproducción: `time node tools/smoke.mjs` → ~480 s.
-13. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
+14. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
     `npm run check` en la iteración 128 (la repetición pasó), aun con la espera de la 127.
     Reproducción: `npm run check` → `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
 
-14. [QA] El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 del repositorio o la cuota
+15. [QA] El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 del repositorio o la cuota
     agotada, aunque el mensaje de abajo es exacto («No se encontró acme/web…»): en celular, donde solo se ve el
     indicador, confunde. Distinguir «No encontrado» / «Cuota agotada» de «Sin conexión».
     Reproducción: Playwright, 320×640, `?repo=acme/web&lang=es` con la API respondiendo 404 → `#status-text` = «Sin conexión».
-15. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+16. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-16. [QA] A ≤560 px las cifras ya no muestran su línea de detalle (`.stat-sub`: «de N en total», la hora de la última
+17. [QA] A ≤560 px las cifras ya no muestran su línea de detalle (`.stat-sub`: «de N en total», la hora de la última
     actividad): se perdió información en celular. Devolverla como `title`/texto accesible de la tarjeta o en un
     plegable. Reproducción: Playwright, 320×640 → `getComputedStyle(#st-branches-sub).display` = `none`.
 
@@ -819,11 +832,12 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - **Capacidad nueva: `branch -m` en la terminal de práctica** (ítem 123 de la hoja de ruta, parte del 31): `branch -m [vieja] nueva` (también `--move`) renombra una rama con sus commits; sin la vieja, la actual. HEAD y la rama por defecto la siguen (el grafo la sigue dibujando como la principal), el `reflog` lo anota como git (`Branch: renamed refs/heads/main to refs/heads/trunk`), `-M` pisa una rama que ya existe salvo la que está en uso, y los errores son los de git 2.43 (sin nombre, demasiados argumentos, rama que no existe, nombre tomado o inválido, HEAD desprendido, la rama de un rebase a medias) sin tocar nada. El panel de actividad lo cuenta como «Rama renombrada · Rama main renombrada a trunk» (tipo nuevo `branch-rename`, en la categoría Ramas y sin puntos de logro) en vez de una rama borrada y otra creada (textos nuevos `act.branchRenamed` y `kind.branch-rename`). Sirve también en los ejercicios propios (`exists:` y `missing:`) y en el ensayo sobre un repo real.
 - **Pruebas que fallan sin la capacidad:** `node --test tools/gitsim.test.mjs` → `not ok 5 - branch -m renombra una rama…` y cuatro más (errores de git sin tocar nada, rebase a medias y repo vacío, un ejercicio propio que pide renombrar, el panel de actividad de la fuente de práctica), `node --test tools/i18n.test.mjs` → `falta kind.branch-rename en en.js` (cada tipo del panel con su rótulo); y un paso del smoke («la práctica renombra ramas con branch -m…»).
 - README: la lista de funciones (Aprender git), Pruebas y Límites conocidos.
-- QA: terminal de práctica (renombrar otra rama y la actual, `-M`, errores, `reflog`, HEAD desprendido), con Playwright contra `e2e/serve.mjs`: grafo 3D en inglés con tema claro y 2D en árabe con tema oscuro, panel de actividad y avisos, sin errores de consola; el paso del smoke en español; textos nuevos en los 40 idiomas (`check-i18n` 0 errores); auditoría: ver Validado.
+- QA: terminal de práctica (renombrar otra rama y la actual, `-M`, errores, `reflog`, HEAD desprendido), con Playwright contra `e2e/serve.mjs`: grafo 3D en inglés con tema claro y 2D en árabe con tema oscuro, panel de actividad y avisos, sin errores de consola; el paso del smoke en español; textos nuevos en los 40 idiomas (`check-i18n` 0 errores); en la reanudación, el paso «historial de un archivo» del smoke reproducido con un script de Playwright contra `e2e/serve.mjs` tras 6 min de demo (3 de 3 fallan en esta rama y 2 de 2 sobre `origin/dev`; con el arreglo, las 2 corridas que llegaron al paso pasan); auditoría: ver Validado.
 - Skills: no aplica: un subcomando más del intérprete propio, sin dominio nuevo.
 - Arena: no aplica: una sola forma obvia (un caso más de `branch` que cambia la clave en el mapa de ramas); y 18 iteraciones simultáneas en un contenedor de 4 CPU, pedido del dueño.
-- OMC: no disponible (la sesión que la retomó no tiene la herramienta Agent para lanzar los `omc-*`; en su lugar, revisión propia del diff contra el ítem 123, `CLAUDE.md` y la skill: `renameBranch` contra git real en lo que el ítem pide, el reflog solo cuando se mueve HEAD, nombres que pasan por `validName` y llegan al panel con `U.esc`, la fuente de práctica sobre su propio objeto `repo`; sin hallazgos)
+- OMC: no disponible (la sesión que la retomó no tiene la herramienta Agent para lanzar los `omc-*`; en su lugar, revisión propia del diff contra el ítem 123, `CLAUDE.md` y la skill: `renameBranch` contra git real en lo que el ítem pide, el reflog solo cuando se mueve HEAD, nombres que pasan por `validName` y llegan al panel con `U.esc`, la fuente de práctica sobre su propio objeto `repo`; y el arreglo del smoke contra lo que el paso comprobaba, que sigue igual: el botón Historial con nombre, el filtro con la ruta de ese archivo y en la URL; sin hallazgos)
 - Replica: sin pasada ni paridad nuevas; el ítem 126 («Varias cuentas del mismo servicio», Fuentes, 1×2/2) sale de las reseñas de la pasada del 2026-10-28 (`replica/fixes.md`, fila «Varios perfiles o cuentas», `no`) solo para no bajar de 10 pendientes sin adelantar al ítem 99 de la 174; se escribió como el 125 y al integrar `dev` pasó a ser el 126, porque la 172 ya había sumado «Alias de las pestañas» como el 125. La hoja queda en 10 pendientes: no bajó de 10, así que la regla 5 no pide reponer en esta.
 - Reclamo: loop/173, sin colisión (a mano: tanda de tres iteraciones simultáneas que Benjamin pidió en persona, no un disparo de la Routine; la 172 y la 174 en otras ranuras). Reanudada el 2026-11-01 por otra sesión (`--reclamar` dio Vencida: 31 h sin commits, con #224 abierto): merge de `origin/dev` (#225 y #222) con conflicto solo en `IMPROVEMENTS.md` (la hoja de ruta, donde los dos lados sumaban un ítem 125, y el final de la bitácora), resuelto conservando las dos partes, y `npm run check` de nuevo. `loop/174` (#223) sigue abierta y se retoma como la 174; esta sesión no la toca.
-- Validado: PENDIENTE (npm run check tras fusionar la 172)
+- Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
+- Validado: 505 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. En la reanudación (carga de 9 a 20 en 4 CPU), las dos primeras corridas cayeron en el smoke, en pasos ajenos al cambio: «historial de un archivo» las dos veces (y «filtro por autor» y «ocultar una rama o dejarla sola» la primera). Fallar dos veces es `dev` en rojo (paso 3 de la skill), así que el paso se arregló aquí, en su propio commit («Smoke: historial de un archivo…»): el paso anterior deja el grafo en el primer commit cargado y, con unos minutos de demo, la etiqueta que elegía queda fuera de la vista (`display: none`), el foco no llega y Enter no abre su ficha; ahora vuelve a lo último y elige una rama vigente y a la vista, como el paso siguiente. Va en este PR y no en otro porque a `dev` se llega solo por el PR de `loop/N` y sin él la 173 no pasa la puerta; lo que queda del patrón, en el pendiente 2. Con el arreglo, la tercera corrida pasó el smoke y cayó solo en la e2e de escritorio «--bitbucket-url…» (ajena al cambio: una carrera de la prueba con el llavero, pendiente 3, nuevo), y la cuarta pasó entera.
 - **Siguiente:** iteración 174, expansión: ítem 99 (Salud del repo: tendencia de ramas nuevas, Análisis)

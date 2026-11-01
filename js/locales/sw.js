@@ -289,6 +289,7 @@ GB.i18n.define('sw', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Tawi jipya',
+  'kind.branch-rename': 'Tawi limepewa jina jipya',
   'kind.branch-delete': 'Tawi limefutwa',
   'kind.branch-delete-unmerged': 'Tawi limefutwa bila kuunganishwa',
   'kind.pr-open': 'Pull request',
@@ -314,6 +315,7 @@ GB.i18n.define('sw', {
 
   /* ---------- vichwa na maelezo ya shughuli ---------- */
   'act.branchCreated': 'Tawi {name} limeundwa',
+  'act.branchRenamed': 'Tawi {old} limepewa jina jipya {name}',
   'act.branchFrom': 'Limetokana na {from} kwenye {sha}',
   'act.branchFromOnly': 'Limetokana na {from}',
   'act.branchAt': 'Kwenye {sha}',

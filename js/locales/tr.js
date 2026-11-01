@@ -289,6 +289,7 @@ GB.i18n.define('tr', {
   'kind.merge': 'Birleştirme',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Yeni dal',
+  'kind.branch-rename': 'Dal yeniden adlandırıldı',
   'kind.branch-delete': 'Dal silindi',
   'kind.branch-delete-unmerged': 'Dal birleştirilmeden silindi',
   'kind.pr-open': 'Pull request',
@@ -314,6 +315,7 @@ GB.i18n.define('tr', {
 
   /* ---------- etkinlik başlıkları ve ayrıntıları ---------- */
   'act.branchCreated': '{name} dalı oluşturuldu',
+  'act.branchRenamed': '{old} dalının adı {name} olarak değiştirildi',
   'act.branchFrom': '{from} dalından, {sha} noktasında ayrıldı',
   'act.branchFromOnly': '{from} dalından ayrıldı',
   'act.branchAt': '{sha} noktasında',

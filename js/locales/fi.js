@@ -289,6 +289,7 @@ GB.i18n.define('fi', {
   'kind.merge': 'Yhdistäminen',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Uusi haara',
+  'kind.branch-rename': 'Haara nimetty uudelleen',
   'kind.branch-delete': 'Haara poistettu',
   'kind.branch-delete-unmerged': 'Haara poistettu yhdistämättä',
   'kind.pr-open': 'Pull request',
@@ -314,6 +315,7 @@ GB.i18n.define('fi', {
 
   /* ---------- toiminnan otsikot ja tiedot ---------- */
   'act.branchCreated': 'Haara {name} luotu',
+  'act.branchRenamed': 'Haara {old} nimetty uudelleen: {name}',
   'act.branchFrom': 'Luotu haarasta {from} kohdassa {sha}',
   'act.branchFromOnly': 'Luotu haarasta {from}',
   'act.branchAt': 'Kohdassa {sha}',

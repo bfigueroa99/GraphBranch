@@ -295,6 +295,7 @@ GB.i18n.define('sk', {
   'kind.merge': 'Zlúčenie',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Nová vetva',
+  'kind.branch-rename': 'Vetva premenovaná',
   'kind.branch-delete': 'Vetva odstránená',
   'kind.branch-delete-unmerged': 'Vetva odstránená bez zlúčenia',
   'kind.pr-open': 'Pull request',
@@ -320,6 +321,7 @@ GB.i18n.define('sk', {
 
   /* ---------- activity titles and details ---------- */
   'act.branchCreated': 'Vetva {name} vytvorená',
+  'act.branchRenamed': 'Vetva {old} premenovaná na {name}',
   'act.branchFrom': 'Vznikla z {from} pri {sha}',
   'act.branchFromOnly': 'Vznikla z {from}',
   'act.branchAt': 'Na {sha}',

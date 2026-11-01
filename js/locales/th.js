@@ -290,6 +290,7 @@ GB.i18n.define('th', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Branch ใหม่',
+  'kind.branch-rename': 'เปลี่ยนชื่อ branch แล้ว',
   'kind.branch-delete': 'ลบ branch แล้ว',
   'kind.branch-delete-unmerged': 'ลบ branch โดยไม่ได้ merge',
   'kind.pr-open': 'Pull request',
@@ -315,6 +316,7 @@ GB.i18n.define('th', {
 
   /* ---------- activity titles and details ---------- */
   'act.branchCreated': 'สร้าง branch {name} แล้ว',
+  'act.branchRenamed': 'เปลี่ยนชื่อ branch {old} เป็น {name} แล้ว',
   'act.branchFrom': 'แตกมาจาก {from} ที่ {sha}',
   'act.branchFromOnly': 'แตกมาจาก {from}',
   'act.branchAt': 'ที่ {sha}',

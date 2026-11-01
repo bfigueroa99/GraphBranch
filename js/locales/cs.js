@@ -295,6 +295,7 @@ GB.i18n.define('cs', {
   'kind.merge': 'Sloučení',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Nová větev',
+  'kind.branch-rename': 'Větev přejmenována',
   'kind.branch-delete': 'Větev smazána',
   'kind.branch-delete-unmerged': 'Větev smazána bez sloučení',
   'kind.pr-open': 'Pull request',
@@ -320,6 +321,7 @@ GB.i18n.define('cs', {
 
   /* ---------- názvy a podrobnosti událostí ---------- */
   'act.branchCreated': 'Vytvořena větev {name}',
+  'act.branchRenamed': 'Větev {old} přejmenována na {name}',
   'act.branchFrom': 'Odvozeno z {from} v commitu {sha}',
   'act.branchFromOnly': 'Odvozeno z {from}',
   'act.branchAt': 'V commitu {sha}',

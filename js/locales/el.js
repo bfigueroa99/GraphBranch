@@ -289,6 +289,7 @@ GB.i18n.define('el', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Νέο branch',
+  'kind.branch-rename': 'Μετονομασία branch',
   'kind.branch-delete': 'Διαγραφή branch',
   'kind.branch-delete-unmerged': 'Διαγραφή branch χωρίς merge',
   'kind.pr-open': 'Pull request',
@@ -314,6 +315,7 @@ GB.i18n.define('el', {
 
   /* ---------- τίτλοι και λεπτομέρειες δραστηριότητας ---------- */
   'act.branchCreated': 'Δημιουργήθηκε το branch {name}',
+  'act.branchRenamed': 'Το branch {old} μετονομάστηκε σε {name}',
   'act.branchFrom': 'Δημιουργήθηκε από το {from} στο {sha}',
   'act.branchFromOnly': 'Δημιουργήθηκε από το {from}',
   'act.branchAt': 'Στο {sha}',

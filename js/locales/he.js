@@ -334,6 +334,7 @@ GB.i18n.define('he', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'ענף חדש',
+  'kind.branch-rename': 'ענף ששמו שונה',
   'kind.branch-delete': 'ענף נמחק',
   'kind.branch-delete-unmerged': 'ענף נמחק ללא merge',
   'kind.pr-open': 'Pull request',
@@ -359,6 +360,7 @@ GB.i18n.define('he', {
 
   /* ---------- activity titles and details ---------- */
   'act.branchCreated': 'הענף {name} נוצר',
+  'act.branchRenamed': 'שם הענף {old} שונה ל-{name}',
   'act.branchFrom': 'הסתעף מ-{from} ב-{sha}',
   'act.branchFromOnly': 'הסתעף מ-{from}',
   'act.branchAt': 'ב-{sha}',

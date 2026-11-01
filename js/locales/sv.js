@@ -289,6 +289,7 @@ GB.i18n.define('sv', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Ny branch',
+  'kind.branch-rename': 'Branch bytte namn',
   'kind.branch-delete': 'Branch raderad',
   'kind.branch-delete-unmerged': 'Branch raderad utan merge',
   'kind.pr-open': 'Pull request',
@@ -314,6 +315,7 @@ GB.i18n.define('sv', {
 
   /* ---------- aktivitetstitlar och detaljer ---------- */
   'act.branchCreated': 'Branch {name} skapad',
+  'act.branchRenamed': 'Branch {old} bytte namn till {name}',
   'act.branchFrom': 'Skapad från {from} vid {sha}',
   'act.branchFromOnly': 'Skapad från {from}',
   'act.branchAt': 'Vid {sha}',

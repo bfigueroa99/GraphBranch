@@ -289,6 +289,7 @@ GB.i18n.define('ko', {
   'kind.merge': '머지',
   'kind.force': '강제 푸시',
   'kind.branch-create': '새 브랜치',
+  'kind.branch-rename': '브랜치 이름 변경됨',
   'kind.branch-delete': '브랜치 삭제됨',
   'kind.branch-delete-unmerged': '머지되지 않은 브랜치 삭제됨',
   'kind.pr-open': '풀 리퀘스트',
@@ -314,6 +315,7 @@ GB.i18n.define('ko', {
 
   /* ---------- 활동 제목과 상세 ---------- */
   'act.branchCreated': '브랜치 {name} 생성됨',
+  'act.branchRenamed': '브랜치 {old} 이름을 {name}(으)로 변경함',
   'act.branchFrom': '{from}의 {sha}에서 분기',
   'act.branchFromOnly': '{from}에서 분기',
   'act.branchAt': '{sha} 기준',

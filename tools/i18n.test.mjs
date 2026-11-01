@@ -53,3 +53,13 @@ test('setLocale: si se eligen dos idiomas seguidos, gana el último elegido aunq
   assert.deepEqual(avisos, ['fr']);
   assert.equal(await a, 'fr', 'la llamada vieja devuelve el idioma vigente');
 });
+
+test('cada tipo del panel de actividad (GB.Feed.KINDS) tiene su rótulo kind.* en inglés', () => {
+  const feed = readFileSync(join(root, 'js', 'feed.js'), 'utf8');
+  const bloque = feed.slice(feed.indexOf('const KINDS = {'), feed.indexOf('};', feed.indexOf('const KINDS = {')));
+  const tipos = [...bloque.matchAll(/^\s+'?([\w-]+)'?: \{ cat:/gm)].map((m) => m[1]);
+  assert.ok(tipos.includes('branch-rename') && tipos.length > 20, `tipos leídos: ${tipos.join(', ')}`);
+  let en = null;
+  vm.runInNewContext(readFileSync(join(root, 'js', 'locales', 'en.js'), 'utf8'), { GB: { i18n: { define: (c, dict) => (en = dict) } } });
+  for (const k of tipos) assert.equal(typeof en[`kind.${k}`], 'string', `falta kind.${k} en en.js`);
+});

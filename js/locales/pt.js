@@ -290,6 +290,7 @@ GB.i18n.define('pt', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Novo branch',
+  'kind.branch-rename': 'Branch renomeado',
   'kind.branch-delete': 'Branch excluído',
   'kind.branch-delete-unmerged': 'Branch excluído sem merge',
   'kind.pr-open': 'Pull request',
@@ -315,6 +316,7 @@ GB.i18n.define('pt', {
 
   /* ---------- títulos e detalhes das atividades ---------- */
   'act.branchCreated': 'Branch {name} criado',
+  'act.branchRenamed': 'Branch {old} renomeado para {name}',
   'act.branchFrom': 'Criado a partir de {from} em {sha}',
   'act.branchFromOnly': 'Criado a partir de {from}',
   'act.branchAt': 'Em {sha}',

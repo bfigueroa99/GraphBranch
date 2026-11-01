@@ -289,6 +289,7 @@ GB.i18n.define('ca', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Branca nova',
+  'kind.branch-rename': 'Branca reanomenada',
   'kind.branch-delete': 'Branca eliminada',
   'kind.branch-delete-unmerged': 'Branca eliminada sense fusionar',
   'kind.pr-open': 'Pull request',
@@ -314,6 +315,7 @@ GB.i18n.define('ca', {
 
   /* ---------- títols i detalls de l'activitat ---------- */
   'act.branchCreated': 'Branca {name} creada',
+  'act.branchRenamed': 'Branca {old} reanomenada a {name}',
   'act.branchFrom': 'Surt de {from} a {sha}',
   'act.branchFromOnly': 'Surt de {from}',
   'act.branchAt': 'A {sha}',

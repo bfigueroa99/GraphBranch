@@ -1217,20 +1217,39 @@ console.log('Escritorio (1280×800)');
   });
 
   await step(page, 'historial de un archivo: un botón del diff aplica el filtro por ruta a ese archivo y lo deja en la URL', async () => {
+    const wait = (what, p) => p.catch((err) => {
+      throw new Error(`${what}: ${err.message.split('\n')[0]}`);
+    });
     await page.click('#view-2d');
-    const heads = await page.$$('#graph svg .head[role=button]');
-    await heads[heads.length > 3 ? 3 : 0].focus();
-    await page.keyboard.press('Enter');
-    const btn = await page.waitForSelector('#graph .tip .tip-diff', { timeout: T(5000) });
+    // el paso anterior dejó el grafo en el primer commit cargado: con unos minutos de demo, las etiquetas de rama
+    // quedan fuera de la vista (display: none), el foco no llega a ninguna y Enter no abre su ficha
+    await page.focus('#graph');
+    await page.keyboard.press('End');
+    await wait('las etiquetas de rama a la vista', page.waitForFunction(() => [...document.querySelectorAll('#graph svg .head[role=button]:not(.exit)')].some((h) => getComputedStyle(h).display !== 'none'), null, { timeout: T(3000) }));
+    // la ficha de una rama vigente y a la vista (la demo borra ramas fusionadas: una etiqueta puede estar saliendo)
+    let btn = null;
+    const shownHeads = [];
+    for (const h of await page.$$('#graph svg .head[role=button]:not(.exit)')) if (await h.isVisible()) shownHeads.push(h);
+    for (const h of shownHeads.slice(0, 6)) {
+      await h.focus();
+      await page.keyboard.press('Enter');
+      btn = await page.waitForSelector('#graph .tip:not([hidden]) .tip-diff', { timeout: T(1000) }).catch(() => null);
+      if (btn) break;
+      await page.keyboard.press('Escape');
+    }
+    if (!btn) throw new Error('la ficha de la rama: ninguna de las primeras 6 ramas a la vista abrió su ficha con Ver cambios');
     await btn.focus();
     await page.keyboard.press('Enter');
-    await page.waitForSelector('#diff-panel:not([hidden]) .df-file', { timeout: T(5000) });
-    await page.locator('#diff-panel .df-file').first().evaluate((d) => (d.open = true)); // el primero ya suele venir abierto: un clic lo cerraría
-    const hist = await page.waitForSelector('#diff-panel .df-file[open] .df-history', { timeout: T(5000) });
-    const path = await page.$eval('#diff-panel .df-file[open] .df-path', (n) => n.textContent.split(' → ').pop());
+    await wait('el panel de cambios', page.waitForSelector('#diff-panel:not([hidden]) .df-file', { timeout: T(5000) }));
+    // con localizadores y no con el elemento: si la demo vuelve a dibujar el panel, se busca otra vez
+    const file = page.locator('#diff-panel .df-file').first();
+    await file.evaluate((d) => (d.open = true)); // el primero ya suele venir abierto: un clic lo cerraría
+    const hist = file.locator('.df-history');
+    await wait('el botón Historial', hist.waitFor({ timeout: T(5000) }));
+    const path = await file.locator('.df-path').evaluate((n) => n.textContent.split(' → ').pop());
     if (!/\S/.test((await hist.getAttribute('aria-label')) || '') || /diff\.|undefined/.test(await hist.textContent())) throw new Error('el botón Historial no tiene nombre');
-    await hist.click();
-    await page.waitForSelector('#search-path-clear:not([hidden])', { state: 'attached', timeout: T(5000) });
+    await wait('el clic en Historial', hist.click({ timeout: T(5000) }));
+    await wait('el filtro por ruta', page.waitForSelector('#search-path-clear:not([hidden])', { state: 'attached', timeout: T(5000) }));
     const on = await page.evaluate(() => ({ value: document.querySelector('#search-path').value, url: location.search }));
     if (on.value !== path) throw new Error(`el filtro quedó en «${on.value}», no en «${path}»`);
     if (!on.url.includes('path=')) throw new Error('el historial no dejó la ruta en la URL: ' + on.url);
@@ -1975,6 +1994,26 @@ console.log('Varios repos a la vez');
       const out = t.slice(t.lastIndexOf('log --oneline'));
       return /Une feature/.test(out) && /Merge made by the 'ort' strategy/.test(t) && !/Fast-forward/.test(t.slice(t.lastIndexOf('merge --no-ff')));
     }, null, { timeout: T(5000) });
+  });
+  await step(lab, 'la práctica renombra ramas con branch -m: el grafo, el reflog y el panel de actividad lo dicen', async () => {
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await lab.selectOption('.pr-ex', '1');
+    for (const c of ['branch -m feature feature/login', 'branch -m trunk', 'reflog']) await send(c);
+    await lab.waitForFunction(() => {
+      const heads = [...document.querySelectorAll('#graph svg .head .h-name')].map((n) => n.textContent.trim());
+      const log = document.querySelector('.pr-log')?.textContent || '';
+      const feed = document.querySelector('#feed')?.textContent || '';
+      return (
+        heads.includes('trunk') && heads.includes('feature/login') && !heads.includes('main') && !heads.includes('feature') &&
+        log.includes('Branch: renamed refs/heads/main to refs/heads/trunk') &&
+        feed.includes('Rama feature renombrada a feature/login') && feed.includes('Rama main renombrada a trunk')
+      );
+    }, null, { timeout: T(5000) });
+    await send('branch -m nope x');
+    await lab.waitForFunction(() => (document.querySelector('.pr-log')?.textContent || '').includes("fatal: no branch named 'nope'"), null, { timeout: T(5000) });
   });
   await step(lab, 'un ejercicio propio se crea, se comparte por URL y la URL lo abre y se resuelve', async () => {
     await lab.click('.pr-make summary');

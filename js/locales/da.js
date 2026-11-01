@@ -289,6 +289,7 @@ GB.i18n.define('da', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Ny branch',
+  'kind.branch-rename': 'Branch omdøbt',
   'kind.branch-delete': 'Branch slettet',
   'kind.branch-delete-unmerged': 'Branch slettet uden merge',
   'kind.pr-open': 'Pull request',
@@ -314,6 +315,7 @@ GB.i18n.define('da', {
 
   /* ---------- aktivitetstitler og detaljer ---------- */
   'act.branchCreated': 'Branch {name} oprettet',
+  'act.branchRenamed': 'Branch {old} omdøbt til {name}',
   'act.branchFrom': 'Oprettet fra {from} ved {sha}',
   'act.branchFromOnly': 'Oprettet fra {from}',
   'act.branchAt': 'Ved {sha}',

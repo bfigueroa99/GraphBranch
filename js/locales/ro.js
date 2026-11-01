@@ -293,6 +293,7 @@ GB.i18n.define('ro', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'Ramură nouă',
+  'kind.branch-rename': 'Ramură redenumită',
   'kind.branch-delete': 'Ramură ștearsă',
   'kind.branch-delete-unmerged': 'Ramură ștearsă fără îmbinare',
   'kind.pr-open': 'Pull request',
@@ -318,6 +319,7 @@ GB.i18n.define('ro', {
 
   /* ---------- titluri și detalii de activitate ---------- */
   'act.branchCreated': 'Ramura {name} creată',
+  'act.branchRenamed': 'Ramura {old} redenumită în {name}',
   'act.branchFrom': 'Ramificată din {from} la {sha}',
   'act.branchFromOnly': 'Ramificată din {from}',
   'act.branchAt': 'La {sha}',

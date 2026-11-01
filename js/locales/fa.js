@@ -323,6 +323,7 @@ GB.i18n.define('fa', {
   'kind.merge': 'Merge',
   'kind.force': 'Force-push',
   'kind.branch-create': 'شاخه جدید',
+  'kind.branch-rename': 'شاخه تغییر نام داد',
   'kind.branch-delete': 'شاخه حذف شد',
   'kind.branch-delete-unmerged': 'شاخه بدون merge حذف شد',
   'kind.pr-open': 'Pull request',
@@ -348,6 +349,7 @@ GB.i18n.define('fa', {
 
   /* ---------- activity titles and details ---------- */
   'act.branchCreated': 'شاخه {name} ایجاد شد',
+  'act.branchRenamed': 'نام شاخه {old} به {name} تغییر کرد',
   'act.branchFrom': 'منشعب از {from} در {sha}',
   'act.branchFromOnly': 'منشعب از {from}',
   'act.branchAt': 'در {sha}',

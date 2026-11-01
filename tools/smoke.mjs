@@ -1538,6 +1538,9 @@ function fakeGitHub() {
   const repos = new Map();
   const orgs = new Set(); // los dueños que son organizaciones (los demás, usuarios)
   const calls = [];
+  // las escrituras aparte: `calls` anota también los GET del sondeo en vivo, y una lectura en la ventana de un
+  // paso parecía una escritura (falló así «editar sin token» en la 172 y el 2026-11-01, a carga 7 a 12 en 4 CPU)
+  const writes = [];
   let n = 0;
   const sha = (s) => createHash('sha1').update(s).digest('hex');
   /** `at` (ms) fecha el commit a mano, para una rama sin actividad hace semanas; sin él, ahora. */
@@ -1609,6 +1612,7 @@ function fakeGitHub() {
   };
   return {
     calls,
+    writes,
     repo,
     org: (name) => orgs.add(name),
     orgEvent: (ev) => orgEvents.unshift({ id: String(orgEvents.length + 1), actor: { login: 'ana' }, created_at: new Date().toISOString(), payload: {}, ...ev }),
@@ -1616,6 +1620,8 @@ function fakeGitHub() {
     handle: (r) => {
       const u = new URL(r.request().url());
       calls.push(u.pathname);
+      const method = r.request().method();
+      if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) writes.push(`${method} ${u.pathname}`);
       const { status = 200, body } = route(u.pathname, u.searchParams);
       return r.fulfill({
         status,
@@ -1846,12 +1852,12 @@ console.log('Varios repos a la vez');
     }));
     if (!st.settings || !st.save) throw new Error('sin token deja hacer commit o no ofrece Ajustes: ' + JSON.stringify(st));
     if (st.repo !== 'o/b' || st.branch !== 'main') throw new Error('el editor abrió otro repo o rama: ' + JSON.stringify(st));
-    const puts = gh.calls.length;
+    const puts = gh.writes.length;
     await page.click('#editor .ed-settings');
     await page.waitForSelector('#settings[open]', { timeout: T(3000) });
     const focus = await page.evaluate(() => document.activeElement?.id);
     if (focus !== 'token-input') throw new Error(`Ajustes abrió con el foco en ${focus}`);
-    if (gh.calls.length !== puts) throw new Error('intentó escribir sin token');
+    if (gh.writes.length !== puts) throw new Error(`intentó escribir sin token (${gh.writes.slice(puts).join(', ')})`);
     await page.click('#settings-cancel');
     await page.click('#all-tab'); // deja la vista conjunta como estaba para los pasos que siguen
     await page.waitForSelector('#all-panel', { state: 'hidden', timeout: T(3000) });

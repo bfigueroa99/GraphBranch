@@ -1,7 +1,8 @@
 # Mejora continua
 
 Hoja de ruta, pendientes y bitácora de las iteraciones del loop (una cada 2 horas). Las entradas viejas
-de la bitácora están en [`docs/BITACORA.md`](docs/BITACORA.md) (las lleva `node tools/loop.mjs --rotar`).
+de la bitácora están en [`docs/BITACORA.md`](docs/BITACORA.md) y los ítems hechos de la hoja de ruta en
+[`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tools/loop.mjs --rotar`): son historia y no hace falta leerlos.
 
 ## Directiva vigente: ampliar el alcance
 
@@ -229,12 +230,14 @@ cada iteración lo repite (`node tools/loop.mjs --salud` lo imprime) y se quita 
    estructura ARIA y el teclado con Playwright. Abre la demo, pulsa el botón de las líneas y recórrela con NVDA,
    VoiceOver u Orca (¿la región viva anuncia sin repetir? ¿el foco se queda al actualizar?); lo que falle va a
    Mantenimiento y lo que salga bien se anota en el README, en «Límites conocidos».
-6. **La Routine del loop no aparece** (desde 2026-10-31). `list_triggers` de la cuenta no lista «GraphBranch:
-   iteración del loop (sesión nueva por disparo)» (cron `3 */2 * * *`), así que su prompt no se pudo comparar con
-   `.claude/skills/iteracion/PROMPT.md`, y `--salud` da un hueco de 27,4 h (2026-10-30 16:16 → 2026-10-31 19:42
-   UTC): la 172, la 173 y la 174 se lanzaron a la vez y quedaron esperándose, y la 172 la retomó otra sesión. Si la
-   Routine sigue siendo la vía, recrearla en claude.ai/code → Routines con ese prompt byte a byte; si ya no, decirlo
-   en la sección «Routine» de la skill y en el README.
+6. **El loop no tiene quién lo dispare** (desde 2026-10-31). `list_triggers` de la cuenta no lista «GraphBranch:
+   iteración del loop (sesión nueva por disparo)» (cron `3 */2 * * *`; el 2026-11-01 tampoco) y en toda la historia
+   no hay un solo commit de `OpenCode <opencode@localhost>`, así que tampoco corre el cron de `tools/opencode.mjs`.
+   `--salud` da un hueco de 27,4 h (2026-10-30 16:16 → 2026-10-31 19:42 UTC) y otro de 5,5 h desde la fusión de
+   #222 (2026-10-31 22:04 UTC) hasta que otra sesión reanudó la 173 (2026-11-01 03:32). Recrear la Routine en claude.ai/code →
+   Routines con `.claude/skills/iteracion/PROMPT.md` byte a byte (cambió el 2026-11-01: suma que el turno
+   terminado es la corrida terminada y que lo largo se espera con `node tools/esperar.mjs`), o poner el cron de
+   OpenCode del README; si la vía es otra, decirlo en la sección «Routine» de la skill y en el README.
 
 ## Mapa de alcance
 
@@ -525,8 +528,10 @@ se comprueban antes de construir sobre ellas.
 ## Cómo validar un cambio
 
 `npm run check` corre todo lo de abajo en orden (elige Chromium y Electron solo, y las e2e si el
-cambio toca la página o el escritorio) e imprime la línea `Validado:` de la bitácora. Los comandos
-sueltos:
+cambio toca la página o el escritorio) e imprime la línea `Validado:` de la bitácora. Tarda de 8 a 15
+minutos (el smoke solo, unos 8): en una sesión se lanza con `node tools/esperar.mjs --lanzar puerta -- npm
+run check` y se espera con `node tools/esperar.mjs puerta` (`timeout: 600000`; sale 124 mientras sigue), como
+dice «Comandos largos» en la skill; lo mismo el smoke y la auditoría sueltos. Los comandos sueltos:
 
 ```sh
 node --test                    # lógica contra una API de GitHub simulada y el service worker (tools/*.test.mjs)
@@ -600,10 +605,6 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     sale) sigue en «ocultar una rama o dejarla sola…» (falló 1 de 2 en esa reanudación, `waitForFunction: Timeout
     15000ms`) y en «cambios de un commit: desde su ficha, con teclado…» (1 de 3 en la misma reproducción): elegir la
     rama como lo hacen ahora «historial de un archivo» y el paso siguiente (End, etiquetas a la vista, sin `.exit`).
-    En la reanudación de la 172 (2026-10-31, carga 7 en 4 CPU) falló «editar sin token: …» con `intentó escribir sin
-    token`: el paso compara `gh.calls.length` antes y después de abrir Ajustes, pero `fakeGitHub` anota cada consulta
-    (`calls.push(u.pathname)`), también los GET del sondeo en vivo, así que una consulta de lectura en esa ventana parece
-    una escritura. Contar solo los PUT/POST/PATCH/DELETE.
 3. [Deuda] La e2e de escritorio «--bitbucket-url suma solo ese host a las conexiones del CSP…» falló 1 de 2 en la
     reanudación de la 173 (2026-11-01, carga 18 en 4 CPU; la repetición pasó): `#azure-token-input` vacío al abrir
     Ajustes. Es una carrera de la prueba: guarda el token de Azure con `GBDesktop.setToken(…, 'azure')` con la página ya
@@ -632,37 +633,30 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-9. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
-    manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
-    `run_in_background` o partir `--langs` por lotes de idiomas.
-    Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-10. [QA] A 320 px el grafo sigue a ~420 px del inicio con la demo (antes 522; con un repo real, más: barra de
+9. [QA] A 320 px el grafo sigue a ~420 px del inicio con la demo (antes 522; con un repo real, más: barra de
     vistas, bitácora) y el 3D no arma etiquetas hasta verse. La iteración 167 compactó las cifras (tres columnas
     sin la línea de detalle, 245 → 144 px); falta una forma de llegar al grafo sin recorrer la página (ancla o
     tarjetas plegables en celular). Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la
     auditoría → `.graph-panel` empieza bajo los 400 px; `#graph3d` fuera de la pantalla.
-11. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+10. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-12. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
+11. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
     `WebFetch` a `releases.electronjs.org` dio HTTP 500 en la iteración 119. Repetir la comparación
     cuando la página responda y subir si hay una estable más nueva.
     Reproducción: `WebFetch https://releases.electronjs.org/release/stable` → `HTTP 500`.
-13. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
-    corta a los 120 s; documentar en «Cómo validar» que se corra en segundo plano, como `audit --langs`.
-    Reproducción: `time node tools/smoke.mjs` → ~480 s.
-14. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
+12. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
     `npm run check` en la iteración 128 (la repetición pasó), aun con la espera de la 127.
     Reproducción: `npm run check` → `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
 
-15. [QA] El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 del repositorio o la cuota
+13. [QA] El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 del repositorio o la cuota
     agotada, aunque el mensaje de abajo es exacto («No se encontró acme/web…»): en celular, donde solo se ve el
     indicador, confunde. Distinguir «No encontrado» / «Cuota agotada» de «Sin conexión».
     Reproducción: Playwright, 320×640, `?repo=acme/web&lang=es` con la API respondiendo 404 → `#status-text` = «Sin conexión».
-16. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+14. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-17. [QA] A ≤560 px las cifras ya no muestran su línea de detalle (`.stat-sub`: «de N en total», la hora de la última
+15. [QA] A ≤560 px las cifras ya no muestran su línea de detalle (`.stat-sub`: «de N en total», la hora de la última
     actividad): se perdió información en celular. Devolverla como `title`/texto accesible de la tarjeta o en un
     plegable. Reproducción: Playwright, 320×640 → `getComputedStyle(#st-branches-sub).display` = `none`.
 

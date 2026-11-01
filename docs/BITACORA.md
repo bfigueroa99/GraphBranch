@@ -2818,3 +2818,65 @@ bitácoras juntas (la rotación de los subtipos de mantenimiento, la numeración
 - Reclamo: loop/160, sin colisión
 - Validado: 482 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Una primera corrida falló en un paso ajeno (vista de texto, release de la demo) y pasó a la repetición: anotado en el pendiente 2 de Mantenimiento.
 - **Siguiente:** iteración 161, expansión: ítem 112 (Vista de un PR: descripción y comentarios, Datos)
+
+### 2026-10-29 · Iteración 161 · Expansión · Datos
+
+- **Capacidad nueva: vista de un PR, descripción y comentarios** (ítem 112 de la hoja de ruta, `[replica 2026-10-28]`). La ficha de una rama con PR de GitHub (2D, 3D y demo) suma «Ver descripción y comentarios»: al pulsarlo pide el PR (`prDetail`: `/pulls/N` y, si tiene comentarios, la última página de `/issues/N/comments`) y muestra la descripción y los últimos 5 comentarios, todo como texto y recortado; pulsarlo otra vez lo esconde. Fila «Vista de un PR» de `replica/features.csv` a `yes`. El ítem 119 (`?pr=N`) sigue en la hoja.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/github.test.mjs` («la vista de un PR…», las dos consultas y los 5 últimos) y el paso del smoke «vista de un PR».
+- README: función en la lista y Límites conocidos.
+- QA: ficha de rama en 2D con teclado (foco en el botón, `aria-expanded`, región viva), demo sin consultas a la API, 40 idiomas; auditoría: ver Validado.
+- Skills: no aplica: una vista más en la ficha, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (consulta al pulsar, mismo cableado que «Ver cambios»).
+- Reclamo: loop/161, sin colisión
+- Validado: 483 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Tres corridas previas de `npm run check` fallaron cada una en un paso distinto del smoke (ocultar rama, historial de archivo, editar sin token); en `origin/dev` limpio el smoke falló también en 2 de 2 corridas (autor, ruta, ocultar, historial): es la intermitencia del pendiente 2 de Mantenimiento, que en este sandbox de 4 núcleos se agrava.
+- **Siguiente:** iteración 162, expansión: ítem 111 (Primer padre en el grafo, Análisis)
+
+### 2026-10-29 · Iteración 162 · Expansión · Análisis
+
+- **Capacidad nueva: primer padre en el grafo** (ítem 111 de la hoja de ruta, con la URL que era el 117, `[replica 2026-10-28]`). En el cuadro de la lupa, el interruptor «Solo el primer padre» deja en el grafo (2D, 3D y vista de texto) solo la cadena `parents[0]` de cada rama, como `git log --first-parent`, con lo ya cargado y sin consultas (`GB.search.firstParent`, compuesto después de los filtros de autor y de ramas). Se recuerda por repo y viaja en la URL: `?firstparent=1` abre ya activo (sobre lo recordado) y la dirección sigue al interruptor; la lupa se subraya mientras está activo.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/search.test.mjs` («firstParent…», «firstParentParam…») y el paso del smoke «Grafo de primer padre (?firstparent=1)».
+- README: función en la lista, Límites conocidos y Seguridad.
+- QA: interruptor con nombre y foco en el cuadro, URL y marca del filtro, 40 idiomas; auditoría: ver Validado.
+- Skills: no aplica: un filtro propio sobre datos ya cargados, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (recortar `parents` por rama, compuesto como los otros filtros).
+- Reclamo: loop/162, sin colisión
+- Validado: 485 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera corrida falló en un paso ajeno (historial de un archivo) y la repetición pasó: la intermitencia del pendiente 2 de Mantenimiento.
+- **Siguiente:** iteración 163, mantenimiento · Errores: pendiente 3 (`mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (r…)
+
+### 2026-10-29 · Iteración 163 · Mantenimiento · Errores
+
+- **Arreglo: `mapPull` compara con el nombre que da el servidor** (pendiente 3). `sameRepo` se calculaba contra el `owner/nombre` escrito en la dirección; en un repo renombrado o transferido, GitHub devuelve el nombre nuevo en `head.repo.full_name` y todos sus PRs se tomaban por forks (la rama no se marcaba con su PR). Ahora se compara con `base.repo.full_name` (GitHub y Codeberg) o `destination.repository.full_name` (Bitbucket), y solo si falta se cae al nombre escrito. El mismo patrón estaba en `codeberg.js` y `bitbucket.js`; GitLab, Azure y Bitbucket Server comparan por ids o por la marca de fork del servidor y no lo tienen.
+- **Reproducción:** `node --test tools/github.test.mjs tools/codeberg.test.mjs tools/bitbucket.test.mjs` → `not ok … mapPull: un repo renombrado sigue marcando sus PRs de la misma repo` (`expected: true, actual: false`) en las tres.
+- **Pruebas que fallan sin el arreglo:** las tres de `mapPull` en `tools/github.test.mjs`, `tools/codeberg.test.mjs` y `tools/bitbucket.test.mjs` (rama propia, fork y base ausente).
+- README: sin cambios (no cambia ninguna función visible).
+- QA: sin cambios de interfaz; auditoría: no toca la página.
+- Skills: no aplica: arreglo de una línea en el mapeo, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (comparar con la base que da el servidor).
+- Reclamo: loop/163, sin colisión
+- Validado: 488 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera corrida falló en el paso «historial de un archivo» (ajeno al cambio) y la repetición pasó: la intermitencia del pendiente 2 de Mantenimiento.
+- **Siguiente:** iteración 164, expansión: ítem 113 (Token para Azure DevOps (proyectos privados), Fuentes)
+
+### 2026-10-29 · Iteración 164 · Expansión · Fuentes
+
+- **Capacidad nueva: token para Azure DevOps (proyectos privados)** (ítem 113 de la hoja de ruta). Un campo «Token de Azure DevOps» en Ajustes (token de acceso personal con `Code (Read)`) se envía como `Authorization: Basic` en cada consulta, solo a dev.azure.com; se guarda como el de Bitbucket (`U.secret`; en escritorio, servicio `azure` cifrado con el llavero). Con token, la redirección al inicio de sesión, el 203 con la página de acceso, el 401 y el 403 son «token rechazado» (`err.authAzure`, lleva a Ajustes); un 404 sigue siendo «no se encontró». Guardar el token reconecta solo las pestañas de Azure.
+- **Pruebas que fallan sin la capacidad:** cuatro en `tools/azure.test.mjs` (privado leído con token y Basic en cada consulta, rechazo por redirección/203/401/403, 404 con token, sin token no cambia nada), dos pasos del smoke (token enviado y guardado; token rechazado) y el token `azure` del llavero en `e2e/desktop.spec.mjs`.
+- README: función, Límites conocidos (CORS con `Authorization` solo probado con API simulada) y Seguridad.
+- QA: Ajustes (campo, mostrar/ocultar, borrar tokens), pestaña Azure reconectada al cambiar el token, error con enlace a Ajustes; 40 idiomas (`check-i18n` 0 errores); auditoría: ver Validado.
+- Skills: no aplica: mismo patrón que el token de Bitbucket, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (replicar el token de Bitbucket con la cabecera Basic de Azure).
+- Replica: paridad, sin pasada nueva; hoja de ruta repuesta con los ítems 119 a 124 (continuaciones de ítems hechos)
+- Reclamo: loop/164, sin colisión
+- Validado: 492 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Una corrida previa del smoke falló en «ocultar una rama o dejarla sola» (ajeno al cambio; la intermitencia del pendiente 2 de Mantenimiento) y la repetición pasó.
+- **Siguiente:** iteración 165, expansión: ítem 114 (Capa para streaming, décima entrega, Plataformas)
+
+### 2026-10-30 · Iteración 165 · Expansión · Plataformas
+
+- **Capacidad nueva: `&branch=nombre` en la capa para streaming** (ítem 114 de la hoja de ruta, Capa para streaming, décima entrega): `?embed=1&branch=develop` deja en la capa solo esa rama y la rama por defecto (reusa `byBranches` con `solo`, sin tocar el filtro guardado de la persona); el nombre se compara tal cual (sin caracteres de control, hasta 200) y nunca entra al DOM como HTML; se combina con `&max=`. Sin conexiones nuevas ni CSP distinta; en la web y en la app de escritorio. Sin textos nuevos de interfaz.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/embed.test.mjs` → `embedOptions: branch deja el nombre tal cual…` (sin la capacidad, `branch` es `undefined`); y un paso del smoke («&branch=develop deja 2 ramas…»)
+- README: la lista de funciones (widget embebible) y Seguridad (`&branch=` es solo un nombre comparado como texto)
+- QA: capa `?embed=1` (rama existente, inexistente, nombre con HTML, sin `&branch=`); auditoría: la corre `npm run check`
+- Skills: no aplica: un parámetro más de la URL sobre código propio, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia (pasar el nombre a `byBranches` como `solo`).
+- Reclamo: loop/165, sin colisión
+- Validado: 493 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 166, expansión: ítem 115 (Práctica: merge --no-ff, Público)

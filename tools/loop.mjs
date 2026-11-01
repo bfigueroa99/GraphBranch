@@ -10,14 +10,16 @@
      node tools/loop.mjs --salud [--sin-red]      la salud del loop: disparos perdidos, reclamos, ramas, issues sin
                                                   triar, la cola Para Benjamin; cada «Acción:» se atiende
      node tools/loop.mjs --rotar [--repo <dir>]   deja las últimas entradas de la bitácora en IMPROVEMENTS.md y
-                                                  lleva las demás a docs/BITACORA.md
+                                                  lleva las demás a docs/BITACORA.md, y los ítems hechos de la
+                                                  hoja de ruta a docs/HOJA.md
      node tools/loop.mjs --limpiar [--borrar] [--repo <dir>]
                                                   las ramas loop/K de iteraciones ya fusionadas; --borrar las borra
                                                   de origin en un solo push (desde un PC: en la nube, el proxy lo niega)
      --archivo <ruta> | --ref <ref>               leen otro IMPROVEMENTS.md: un archivo, o git show <ref>:IMPROVEMENTS.md
 
    La bitácora vive en dos archivos: las últimas entradas en IMPROVEMENTS.md y las anteriores en
-   docs/BITACORA.md. --siguiente, --check, --reclamar y --salud leen las dos juntas.
+   docs/BITACORA.md; la hoja de ruta también: los pendientes en IMPROVEMENTS.md y los hechos en docs/HOJA.md.
+   --siguiente, --check, --reclamar y --salud leen los cuatro juntos.
 
    Códigos de salida. --siguiente y --check: 0 bien, 1 formato (o algún ERROR), 2 sin ítem.
    --reclamar: 0 reclamada o relevada · 1 formato · 2 sin ítem · 3 ocupada · 4 vencida · 5 sin remoto.
@@ -86,6 +88,20 @@ export const MARCA_SKILLS = 'Cambio de maquinaria: find-skills';
 /** Los ítems de la hoja de ruta hasta este son anteriores a docs/investigacion.md; los que vienen después
     citan su fuente («[inv. AAAA-MM-DD]») o, si son una entrega más de otro, «[parte del ítem K]». */
 export const HOJA_SIN_FUENTE = 26;
+/** Lo que tarda más que una llamada en primer plano de la herramienta de shell (la corta a los 600 s y la manda
+    al fondo a los 120 s sin `timeout`): en un bloque de código de la skill va lanzado con tools/esperar.mjs y
+    esperado en primer plano, nunca suelto (R8). En una Routine el turno terminado es la corrida terminada, y una
+    sesión que deja la puerta en el fondo y cierra el turno «esperando» deja el reclamo vivo y nada fusionado.
+    Medido: `npm run check` sin e2e, 15 min a carga 12 en 4 CPU (2026-11-01); el smoke solo, ~8 min en la nube. */
+export const LARGOS = [
+  [/^npm run check\b/, 'npm run check'],
+  [/^node tools\/smoke\.mjs\b/, 'node tools/smoke.mjs'],
+  [/^node tools\/audit\.mjs\b(?!.*\s--base\b)/, 'node tools/audit.mjs'],
+  [/^(?:xvfb-run(?:\s+-a)?\s+)?(?:npm run test:e2e|npx playwright test)\b/, 'las e2e'],
+];
+/** Bytes del prompt de la Routine: solo apunta a la skill y dice lo que la skill no puede decir antes de que la
+    sesión la lea (sincronizar con dev y que el turno terminado es la corrida terminada). */
+export const PROMPT_MAX = 750;
 /** La cola «Para Benjamin» es corta a propósito: con más ítems, aviso. */
 export const PARA_BENJAMIN_MAX = 8;
 /** Cada cuántas horas dispara la Routine, por tramos: cron `3 *\/4 * * *` desde la fusión de #44 (la directiva)
@@ -105,6 +121,12 @@ export const DESDE_DIRECTIVA = CADENCIAS[0].desde;
 export const ARCHIVO_BITACORA = 'docs/BITACORA.md';
 export const ROTAR_DEJA = 8;
 export const ROTAR_MAX = 16;
+/** Los ítems hechos de la hoja de ruta: --rotar los lleva ahí, en orden de número, y en IMPROVEMENTS.md quedan
+    los pendientes. Eran 37 de los 40 KB de la hoja (115 de 125 ítems, 2026-11-01) en un archivo que cada sesión
+    lee; --siguiente, --check, --reclamar y --salud leen los dos (la numeración, los «hecho en #K» y los
+    «[parte del ítem K]» ven la hoja entera). Con más de HOJA_MAX hechos en IMPROVEMENTS.md, R14 avisa. */
+export const ARCHIVO_HOJA = 'docs/HOJA.md';
+export const HOJA_MAX = 10;
 
 const USO = `node tools/loop.mjs --siguiente [--json]     qué iteración toca: número, tipo, eje, ítem y por qué
 node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill, el prompt y la pasada de Replica (sin red)
@@ -112,7 +134,8 @@ node tools/loop.mjs --reclamar [--relevo] [--sin-red] [--horas ${RECLAMO_H}] [--
                                              reclama la rama loop/N en origin: el push es el candado
 node tools/loop.mjs --publicado              compara la web de GitHub Pages con origin/${RELEASE} (el release)
 node tools/loop.mjs --salud [--sin-red]      disparos perdidos, reclamos, ramas, issues sin triar y Para Benjamin
-node tools/loop.mjs --rotar [--repo <dir>]   deja las últimas ${ROTAR_DEJA} entradas de la bitácora y lleva las demás a ${ARCHIVO_BITACORA}
+node tools/loop.mjs --rotar [--repo <dir>]   deja las últimas ${ROTAR_DEJA} entradas de la bitácora y lleva las demás a ${ARCHIVO_BITACORA},
+                                             y los ítems hechos de la hoja de ruta a ${ARCHIVO_HOJA}
 node tools/loop.mjs --limpiar [--borrar] [--repo <dir>]
                                              las ramas loop/K de iteraciones ya fusionadas (--borrar: las borra de origin)
 --archivo <ruta> | --ref <ref>               leen otro IMPROVEMENTS.md: un archivo, o git show <ref>:IMPROVEMENTS.md
@@ -150,8 +173,10 @@ const RE_ITEM_VIEJO = /(?<![\p{L}\p{N}])(?:es el|toca el) (\d+)/gu;
 
 /** Lee IMPROVEMENTS.md: Para Benjamin, Mapa de alcance, Hoja de ruta, Mantenimiento y Bitácora. Con `archivo`
     (el texto de docs/BITACORA.md), sus entradas van antes que las de IMPROVEMENTS.md, con `origen`: así la
-    rotación de los subtipos, la numeración y las marcas del protocolo ven la bitácora entera. */
-export function parse(texto, { archivo = null } = {}) {
+    rotación de los subtipos, la numeración y las marcas del protocolo ven la bitácora entera. Con `hoja` (el
+    texto de docs/HOJA.md, los ítems hechos que llevó --rotar), sus ítems se suman a la hoja en orden de número,
+    con `origen`. */
+export function parse(texto, { archivo = null, hoja = null } = {}) {
   const out = { secciones: [], benjamin: [], mapa: [], hoja: [], mantenimiento: [], subsecciones: [], bitacora: [], errores: [] };
   let seccion = '';
   let sub = '';
@@ -219,7 +244,13 @@ export function parse(texto, { archivo = null } = {}) {
   for (const p of out.mantenimiento) if (p.texto.includes('**Alta**')) p.alta = true;
   for (const it of out.hoja) it.must = RE_MUST.test(it.texto);
   out.propias = out.bitacora.length;
+  out.propiasHoja = out.hoja.length;
   if (archivo) out.bitacora = [...parse(archivo).bitacora.map((e) => ({ ...e, origen: ARCHIVO_BITACORA })), ...out.bitacora];
+  if (hoja) {
+    const h = parse(hoja);
+    out.hoja = [...h.hoja.map((it) => ({ ...it, origen: ARCHIVO_HOJA })), ...out.hoja].sort((a, b) => a.n - b.n);
+    out.errores.push(...h.errores.map((x) => ({ ...x, origen: ARCHIVO_HOJA })));
+  }
   return out;
 }
 
@@ -295,8 +326,8 @@ const textoNecesidad = (x) => `${x.subtipo} ${x.valor} (espera ${x.espera}, ${x.
 
 /** Qué iteración toca según IMPROVEMENTS.md (y `archivo`, la bitácora vieja): número, tipo, eje o subtipo,
     ítem y por qué. Lanza LoopError. */
-export function siguiente(texto, { archivo = null } = {}) {
-  const doc = parse(texto, { archivo });
+export function siguiente(texto, { archivo = null, hoja = null } = {}) {
+  const doc = parse(texto, { archivo, hoja });
   const its = doc.bitacora.filter((e) => e.n !== null);
   if (!its.length) throw new LoopError('no hay ninguna «Iteración N» en la bitácora', 1);
   const M = Math.max(...its.map((e) => e.n));
@@ -348,6 +379,7 @@ export function siguiente(texto, { archivo = null } = {}) {
     declarado: vineta(ultima.cuerpo, RE_SIGUIENTE),
     pendientes: pend.length,
     hechos: doc.hoja.length - pend.length,
+    proximo: Math.max(0, ...doc.hoja.map((i) => i.n)) + 1,
     mantenimiento: doc.mantenimiento.length,
     ultima: ultima.n === null ? `«${ultima.titulo}»` : `la iteración ${ultima.n}`,
   };
@@ -376,7 +408,7 @@ export function textoSiguiente(s) {
     `Por qué: ${s.motivo}`,
     `Rama: ${s.rama}`,
     `Declarado en ${s.ultima}: ${s.declarado ?? '(sin Siguiente)'}`,
-    `Hoja de ruta: ${s.pendientes} pendientes, ${s.hechos} hechos · mantenimiento: ${s.mantenimiento} pendientes`,
+    `Hoja de ruta: ${s.pendientes} pendientes, ${s.hechos} hechos (un ítem nuevo es el ${s.proximo}) · mantenimiento: ${s.mantenimiento} pendientes`,
     `Siguiente: ${s.siguiente}`,
   ].join('\n');
 }
@@ -394,11 +426,13 @@ const esSuperficial = (dir) => git(dir, ['rev-parse', '--is-shallow-repository']
 /** El fetch de los modos que salen a la red: completa la historia si el clon es superficial, porque R3, la
     cadencia y los huecos de --salud la necesitan (con --depth 50, --salud veía un hueco falso de 172 h). */
 const fetchOrigin = (dir, refspecs) => git(dir, ['fetch', '-q', '--prune', ...(esSuperficial(dir) ? ['--unshallow'] : []), 'origin', ...refspecs]);
-/** IMPROVEMENTS.md y la bitácora vieja tal como están en un ref; `archivo` es null si ese ref no la tiene. */
+/** IMPROVEMENTS.md, la bitácora vieja y la hoja hecha tal como están en un ref; `archivo` y `hoja` son null si
+    ese ref no los tiene. */
 function deRef(dir, ref) {
   const t = git(dir, ['show', `${ref}:IMPROVEMENTS.md`]);
   const a = git(dir, ['show', `${ref}:${ARCHIVO_BITACORA}`]);
-  return { status: t.status, stderr: t.stderr, texto: t.stdout, archivo: a.status === 0 ? a.stdout : null };
+  const h = git(dir, ['show', `${ref}:${ARCHIVO_HOJA}`]);
+  return { status: t.status, stderr: t.stderr, texto: t.stdout, archivo: a.status === 0 ? a.stdout : null, hoja: h.status === 0 ? h.stdout : null };
 }
 
 /** Las filas de un CSV como el que escribe Replica: comillas dobles (con "" dentro), comas y saltos de
@@ -497,8 +531,8 @@ export function parseInvestigacion(texto) {
 /** Las reglas R1–R14. `log` (títulos de commits), `superficial` (el clon no tiene toda la historia), `skill`,
     `prompt`, `settings`, `investigacion` y `auditBase` (textos) y `hoy` se inyectan en las pruebas; si no, se
     leen del repo y del reloj. `archivo` es docs/BITACORA.md (la bitácora vieja), que pasa quien lee el repo. */
-export function check(texto, { archivo = null, log, superficial, skill, prompt, settings, opencode, investigacion, auditBase, recon, features, hoy = new Date(), dir = root } = {}) {
-  const doc = parse(texto, { archivo });
+export function check(texto, { archivo = null, hoja = null, log, superficial, skill, prompt, settings, opencode, investigacion, auditBase, recon, features, hoy = new Date(), dir = root } = {}) {
+  const doc = parse(texto, { archivo, hoja });
   // la pasada de Replica: la leen R10 (los ítems que la citan) y R13
   const reconTxt = recon ?? leer(join(dir, 'replica', 'recon.md'));
   const featuresTxt = features ?? leer(join(dir, 'replica', 'features.csv'));
@@ -519,9 +553,11 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
   }
   // R2: hoja de ruta numerada 1..n, cada ítem con el patrón y un eje válido
   {
-    const e = doc.errores.map((x) => `línea ${x.linea}: «${corta(x.texto, 60)}» no cumple «N. **Título** · Eje.» ni «N. ~~**Título**~~ hecho en #K · Eje.»`);
+    const de = (x) => (x.origen ? ` de ${x.origen}` : '');
+    const e = doc.errores.map((x) => `línea ${x.linea}${de(x)}: «${corta(x.texto, 60)}» no cumple «N. **Título** · Eje.» ni «N. ~~**Título**~~ hecho en #K · Eje.»`);
     const mal = doc.hoja.findIndex((it, i) => it.n !== i + 1);
-    if (mal >= 0) e.push(`hoja de ruta: el ítem ${mal + 1} está numerado ${doc.hoja[mal].n} (línea ${doc.hoja[mal].linea})`);
+    if (mal >= 0) e.push(`hoja de ruta: el ítem ${mal + 1} está numerado ${doc.hoja[mal].n} (línea ${doc.hoja[mal].linea}${de(doc.hoja[mal])})`);
+    for (const it of doc.hoja.filter((x) => x.origen && !x.hecho)) e.push(`${ARCHIVO_HOJA} tiene el ítem ${it.n} sin hacer (línea ${it.linea}): los pendientes van en IMPROVEMENTS.md`);
     if (!doc.hoja.length) e.push('hoja de ruta vacía');
     regla('R2', e, [], `hoja de ruta: ${doc.hoja.length} ítems numerados 1..${doc.hoja.length}`);
   }
@@ -636,7 +672,7 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
       else {
         let s = null;
         try {
-          s = siguiente(texto, { archivo });
+          s = siguiente(texto, { archivo, hoja });
         } catch (err) {
           e.push(`no se puede calcular la siguiente iteración: ${err.message}`);
         }
@@ -688,6 +724,7 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
       const comandos = new Set();
       const arena = [];
       const cliSkills = [];
+      const largos = [];
       let enBloque = false;
       for (const linea of skillTxt.split('\n')) {
         // flags que siguen a loop.mjs en la misma línea (hasta el fin del comando)
@@ -713,12 +750,20 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
           const toks = seg.trim().split(/\s+/).filter(Boolean);
           while (toks.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(toks[0])) toks.shift();
           if (!toks.length || toks[0].startsWith('#')) continue;
+          const largo = LARGOS.find(([re]) => re.test(toks.join(' ')));
+          if (largo) largos.push([largo[1], linea.trim()]);
           const [c, sub] = toks;
           if (c === 'git' || c === 'npm' || c === 'npx') comandos.add(sub ? `${c} ${sub}` : c);
           else if (c === 'node' || c === 'xvfb-run') comandos.add(c);
         }
       }
       for (const f of flags) e.push(`SKILL.md nombra ${f}, que loop.mjs no tiene`);
+      // lo largo, lanzado y esperado en primer plano: suelto, la herramienta de shell lo manda al fondo y la
+      // sesión cierra el turno esperándolo (en una Routine, la corrida termina ahí)
+      for (const que of new Set(largos.map(([q]) => q))) {
+        const l = largos.find(([q]) => q === que)[1];
+        e.push(`SKILL.md corre ${que} suelto («${corta(l, 50)}»), y tarda más que una llamada de la herramienta de shell: va con node tools/esperar.mjs --lanzar <nombre> -- … y se espera con node tools/esperar.mjs <nombre>`);
+      }
       for (const r of rutas) e.push(`SKILL.md nombra ${r}, que no existe`);
       // la arena: ruta escrita entera (las variables de la skill solo se expanden al invocarla) y de 1 a
       // ARENA_MAX competidores, nunca los 100 por defecto ni --quick
@@ -756,7 +801,11 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
         else e.push(`SKILL.md usa «${cmd}» y .claude/settings.json no lo permite (Bash(${cmd}:*))`);
       }
       const bytes = Buffer.byteLength(promptTxt);
-      if (bytes > 600) e.push(`PROMPT.md tiene ${bytes} bytes (máximo 600)`);
+      if (bytes > PROMPT_MAX) e.push(`PROMPT.md tiene ${bytes} bytes (máximo ${PROMPT_MAX})`);
+      for (const m of promptTxt.matchAll(/(?:^|[\s`("'])((?:tools|e2e|\.claude)\/[\w./-]*)/g)) {
+        const ruta = m[1].replace(/[.,;:]+$/, '');
+        if (!existsSync(join(dir, ruta))) e.push(`PROMPT.md nombra ${ruta}, que no existe`);
+      }
       const podridos = [
         [/(?<![.\w])claude\//, 'una rama claude/'],
         [/chromium-\d/, 'una ruta de Chromium'],
@@ -905,7 +954,10 @@ export function check(texto, { archivo = null, log, superficial, skill, prompt, 
     const primeraPropia = Math.min(Infinity, ...propias.map((x) => x.n));
     if (ultimaVieja && ultimaVieja >= primeraPropia) e.push(`${ARCHIVO_BITACORA} llega a la iteración ${ultimaVieja} y la bitácora de IMPROVEMENTS.md empieza en la ${primeraPropia}: una entrada nueva va al final de IMPROVEMENTS.md`);
     if (doc.propias > ROTAR_MAX) a.push(`la bitácora de IMPROVEMENTS.md tiene ${doc.propias} entradas (más de ${ROTAR_MAX}): node tools/loop.mjs --rotar deja las últimas ${ROTAR_DEJA} y lleva las demás a ${ARCHIVO_BITACORA}`);
-    regla('R14', e, a, `bitácora: ${doc.propias} entradas en IMPROVEMENTS.md${doc.bitacora.length > doc.propias ? ` y ${doc.bitacora.length - doc.propias} en ${ARCHIVO_BITACORA}` : ''}`);
+    const hechosAqui = doc.hoja.filter((x) => !x.origen && x.hecho).length;
+    const hechosAlla = doc.hoja.filter((x) => x.origen).length;
+    if (hechosAqui > HOJA_MAX) a.push(`la hoja de ruta de IMPROVEMENTS.md tiene ${hechosAqui} ítems hechos (más de ${HOJA_MAX}): node tools/loop.mjs --rotar los lleva a ${ARCHIVO_HOJA}`);
+    regla('R14', e, a, `bitácora: ${doc.propias} entradas en IMPROVEMENTS.md${doc.bitacora.length > doc.propias ? ` y ${doc.bitacora.length - doc.propias} en ${ARCHIVO_BITACORA}` : ''}; hoja: ${hechosAqui} hechos en IMPROVEMENTS.md${hechosAlla ? ` y ${hechosAlla} en ${ARCHIVO_HOJA}` : ''}`);
   }
 
   const cuenta = (nivel) => lineas.filter((l) => l.nivel === nivel).length;
@@ -962,7 +1014,7 @@ export async function reclamar({ relevo = false, sinRed = false, horas = RECLAMO
     }
     let s;
     try {
-      s = siguiente(show.texto, { archivo: show.archivo });
+      s = siguiente(show.texto, { archivo: show.archivo, hoja: show.hoja });
     } catch (err) {
       if (!(err instanceof LoopError)) throw err;
       print(`ERROR: ${err.message}`);
@@ -1163,7 +1215,9 @@ export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], 
     const edad = ahora - r.fecha;
     if (k <= M) continue;
     else if (k === M + 1) lineas.push(edad < horas * 3600e3 ? `En curso: ${r.nombre} (último commit hace ${Math.round(edad / 60e3)} min)` : `Vencida: ${r.nombre} lleva ${horasDe(edad)} h sin commits: --reclamar la releva`);
-    else accion(`${r.nombre} va más allá de la iteración que toca (${M + 1}): revisar a mano, sin borrarla`);
+    // reclamada antes de su turno (la 173 y la 174 junto con la 172, el 2026-10-30): no hay nada que hacer a mano;
+    // cuando le toque, --reclamar la da vencida (4) y se reanuda su PR. Como Acción, ninguna sesión podía atenderla
+    else lineas.push(`En cola: ${r.nombre} (último commit hace ${edad <= 3600e3 ? `${Math.round(edad / 60e3)} min` : `${horasDe(edad)} h`}) se reclamó antes de su turno: se retoma cuando toque la ${k}, con --reclamar (4: reanudar su PR); no se borra ni se reclama otra encima`);
   }
   if (!loops.length) lineas.push('Reclamos: ninguna rama loop/N en origin');
   if (conservadas.length) lineas.push(`Trabajo de relevos conservado: ${conservadas.map((r) => `${r.nombre} (${fechaUTC(r.fecha).slice(0, 10)})`).join(', ')}`);
@@ -1260,7 +1314,7 @@ export async function salud({ sinRed = false, repo = root, fetchFn = globalThis.
       }
     }
   }
-  const { lineas, acciones } = diagnostico({ ahora, doc: parse(show.texto, { archivo: show.archivo }), texto: show.texto, merges, ramas, issues, superficial: esSuperficial(repo), release });
+  const { lineas, acciones } = diagnostico({ ahora, doc: parse(show.texto, { archivo: show.archivo, hoja: show.hoja }), texto: show.texto, merges, ramas, issues, superficial: esSuperficial(repo), release });
   for (const l of lineas) print(l);
   return acciones ? 3 : 0;
 }
@@ -1354,6 +1408,74 @@ export function rotar(texto, archivo = null, deja = ROTAR_DEJA) {
   };
 }
 
+const CABECERA_HOJA = `# Hoja de ruta: ítems hechos
+
+Los ítems de la hoja de ruta de \`IMPROVEMENTS.md\` que ya se hicieron, en orden de número: \`node tools/loop.mjs
+--rotar\` los trae aquí (allá quedan los pendientes, que son lo que lee cada iteración). Es historia: no se
+edita, y un ítem nuevo va siempre a \`IMPROVEMENTS.md\`, con el número que dice \`node tools/loop.mjs --siguiente\`.
+\`--siguiente\`, \`--check\`, \`--reclamar\` y \`--salud\` leen las dos hojas juntas (la numeración, los
+«hecho en #K» y los «[parte del ítem K]»).
+
+## Hoja de ruta
+`;
+const AVISO_HOJA = `Los ítems hechos están en [\`${ARCHIVO_HOJA}\`](${ARCHIVO_HOJA}) (los lleva \`node tools/loop.mjs --rotar\`); el loop lee las dos hojas, y un ítem nuevo lleva el número que dice \`--siguiente\`.`;
+
+/** Los bloques de ítems de la sección «## Hoja de ruta» de un texto: [{n, hecho, lineas}] con sus líneas de
+    continuación, y los índices de línea que ocupan. */
+function bloquesHoja(lineas) {
+  const ini = lineas.findIndex((l) => /^## Hoja de ruta\s*$/.test(l));
+  if (ini < 0) return null;
+  let fin = lineas.findIndex((l, i) => i > ini && l.startsWith('## '));
+  if (fin < 0) fin = lineas.length;
+  const bloques = [];
+  for (let i = ini + 1; i < fin; i++) {
+    const m = RE_HOJA.exec(lineas[i]);
+    if (!m) continue;
+    let j = i + 1;
+    while (j < fin && /^\s+\S/.test(lineas[j])) j++;
+    bloques.push({ n: +m[1], hecho: !!m[2], desde: i, hasta: j, lineas: lineas.slice(i, j) });
+    i = j - 1;
+  }
+  return { ini, fin, bloques };
+}
+
+/** Lleva los ítems hechos de la hoja de ruta de IMPROVEMENTS.md a docs/HOJA.md (`hoja`, o uno nuevo), en orden de
+    número junto con los que ya estaban, y deja en IMPROVEMENTS.md los pendientes y el aviso. Pura: devuelve
+    {texto, hoja, cuantos, primero, ultimo} o null si no hay ítems hechos que llevar. Lanza LoopError si
+    IMPROVEMENTS.md no tiene «## Hoja de ruta». */
+export function rotarHoja(texto, hoja = null) {
+  const lineas = texto.split('\n');
+  const b = bloquesHoja(lineas);
+  if (!b) throw new LoopError('IMPROVEMENTS.md sin «## Hoja de ruta»', 1);
+  const hechos = b.bloques.filter((x) => x.hecho);
+  if (!hechos.length) return null;
+  const fuera = new Set(hechos.flatMap((x) => Array.from({ length: x.hasta - x.desde }, (_, k) => x.desde + k)));
+  const quedan = lineas.filter((_, i) => !fuera.has(i));
+  // el aviso, una vez, antes del primer ítem (se mira solo la sección: la cabecera del archivo también enlaza
+  // docs/HOJA.md)
+  if (!lineas.slice(b.ini, b.fin).some((l) => l.includes(`](${ARCHIVO_HOJA})`))) {
+    const q = bloquesHoja(quedan);
+    const antes = q.bloques.length ? q.bloques[0].desde : q.fin;
+    let k = antes;
+    while (k > q.ini + 1 && !quedan[k - 1].trim()) k--;
+    quedan.splice(k, antes - k, '', AVISO_HOJA, '');
+  }
+  const base = (hoja ?? CABECERA_HOJA).replace(/\s+$/, '');
+  const ls = base.split('\n');
+  const v = bloquesHoja(ls) ?? { ini: ls.length, fin: ls.length, bloques: [] };
+  const todos = [...v.bloques, ...hechos].sort((x, y) => x.n - y.n);
+  const cabeza = ls.slice(0, v.bloques.length ? v.bloques[0].desde : v.fin);
+  while (cabeza.length && !cabeza[cabeza.length - 1].trim()) cabeza.pop();
+  const cola = ls.slice(v.fin);
+  return {
+    texto: quedan.join('\n').replace(/\n{3,}/g, '\n\n'),
+    hoja: `${[...cabeza, '', ...todos.flatMap((x) => x.lineas), ...(cola.length ? ['', ...cola] : [])].join('\n')}\n`,
+    cuantos: hechos.length,
+    primero: hechos[0].n,
+    ultimo: hechos[hechos.length - 1].n,
+  };
+}
+
 /* --------------------------------------------------------------------- CLI */
 
 function opciones(argv) {
@@ -1383,13 +1505,13 @@ function opciones(argv) {
 /** El IMPROVEMENTS.md que se lee y su bitácora vieja: los del árbol de trabajo, los de un ref (--ref) o los de
     un archivo (--archivo, con el docs/BITACORA.md de su carpeta, si lo hay). */
 function textoDe(o) {
-  if (o.archivo) return { texto: readFileSync(o.archivo, 'utf8'), archivo: leer(join(dirname(o.archivo), ARCHIVO_BITACORA)) };
+  if (o.archivo) return { texto: readFileSync(o.archivo, 'utf8'), archivo: leer(join(dirname(o.archivo), ARCHIVO_BITACORA)), hoja: leer(join(dirname(o.archivo), ARCHIVO_HOJA)) };
   if (o.ref) {
     const r = deRef(root, o.ref);
     if (r.status !== 0) throw new LoopError(`no se pudo leer ${o.ref}:IMPROVEMENTS.md (${primera(r.stderr)})`, 1);
-    return { texto: r.texto, archivo: r.archivo };
+    return { texto: r.texto, archivo: r.archivo, hoja: r.hoja };
   }
-  return { texto: readFileSync(join(root, 'IMPROVEMENTS.md'), 'utf8'), archivo: leer(join(root, ARCHIVO_BITACORA)) };
+  return { texto: readFileSync(join(root, 'IMPROVEMENTS.md'), 'utf8'), archivo: leer(join(root, ARCHIVO_BITACORA)), hoja: leer(join(root, ARCHIVO_HOJA)) };
 }
 
 /** El fetch de Node no mira HTTPS_PROXY por sí solo: en una sesión cloud (proxy obligatorio) los modos
@@ -1414,8 +1536,8 @@ async function main(argv) {
   const relanzado = conProxy(argv, o);
   if (relanzado !== null) return relanzado;
   if (o.modo === 'siguiente') {
-    const { texto, archivo } = textoDe(o);
-    const s = siguiente(texto, { archivo });
+    const { texto, archivo, hoja } = textoDe(o);
+    const s = siguiente(texto, { archivo, hoja });
     if (o.json) {
       const { ultima, ...json } = s;
       console.log(JSON.stringify(json, null, 2));
@@ -1423,22 +1545,30 @@ async function main(argv) {
     return 0;
   }
   if (o.modo === 'check') {
-    const { texto, archivo } = textoDe(o);
-    const r = check(texto, { archivo });
+    const { texto, archivo, hoja } = textoDe(o);
+    const r = check(texto, { archivo, hoja });
     console.log(r.salida);
     return r.errores ? 1 : 0;
   }
   if (o.modo === 'rotar') {
     const ruta = join(o.repo, ARCHIVO_BITACORA);
-    const r = rotar(readFileSync(join(o.repo, 'IMPROVEMENTS.md'), 'utf8'), leer(ruta));
-    if (!r) {
-      console.log(`Nada que rotar: la bitácora de IMPROVEMENTS.md tiene ${ROTAR_DEJA} entradas o menos`);
-      return 0;
+    const rutaHoja = join(o.repo, ARCHIVO_HOJA);
+    const mejoras = join(o.repo, 'IMPROVEMENTS.md');
+    const r = rotar(readFileSync(mejoras, 'utf8'), leer(ruta));
+    if (r) {
+      mkdirSync(dirname(ruta), { recursive: true });
+      writeFileSync(ruta, r.archivo);
+      writeFileSync(mejoras, r.texto);
+      console.log(`Rotadas ${r.cuantas} entradas a ${ARCHIVO_BITACORA} (de «${r.primera}» a «${r.ultima}»); quedan ${ROTAR_DEJA} en IMPROVEMENTS.md`);
     }
-    mkdirSync(dirname(ruta), { recursive: true });
-    writeFileSync(ruta, r.archivo);
-    writeFileSync(join(o.repo, 'IMPROVEMENTS.md'), r.texto);
-    console.log(`Rotadas ${r.cuantas} entradas a ${ARCHIVO_BITACORA} (de «${r.primera}» a «${r.ultima}»); quedan ${ROTAR_DEJA} en IMPROVEMENTS.md`);
+    const h = rotarHoja(readFileSync(mejoras, 'utf8'), leer(rutaHoja));
+    if (h) {
+      mkdirSync(dirname(rutaHoja), { recursive: true });
+      writeFileSync(rutaHoja, h.hoja);
+      writeFileSync(mejoras, h.texto);
+      console.log(`Llevados ${h.cuantos} ítems hechos a ${ARCHIVO_HOJA} (del ${h.primero} al ${h.ultimo}); en IMPROVEMENTS.md quedan los pendientes`);
+    }
+    if (!r && !h) console.log(`Nada que rotar: la bitácora de IMPROVEMENTS.md tiene ${ROTAR_DEJA} entradas o menos y su hoja de ruta, ningún ítem hecho`);
     return 0;
   }
   if (o.modo === 'reclamar') return reclamar({ relevo: o.relevo, sinRed: o.sinRed, horas: o.horas, repo: o.repo });

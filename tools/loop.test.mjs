@@ -13,7 +13,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { ARCHIVO_BITACORA, ARENA_MAX, AUDITABLES, BASE, CADENCIAS, RELEASE, CRON_H, EJES, FLAGS, HOJA_SIN_FUENTE, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SUBTIPOS, appReferencia, check, diagnostico, disparosEntre, matrizReplica, necesidades, ordenHoja, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, siguiente, tramos } from './loop.mjs';
+import { ARCHIVO_BITACORA, ARCHIVO_HOJA, ARENA_MAX, AUDITABLES, BASE, CADENCIAS, RELEASE, CRON_H, EJES, FLAGS, HOJA_MAX, HOJA_SIN_FUENTE, LARGOS, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, PROMPT_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SUBTIPOS, appReferencia, check, diagnostico, disparosEntre, matrizReplica, necesidades, ordenHoja, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, rotarHoja, siguiente, tramos } from './loop.mjs';
 import { TIPOS } from './audit.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -583,7 +583,8 @@ Primero \`node tools/loop.mjs --check\`; después reclamar:
 
 \`\`\`sh
 git fetch origin master
-node tools/loop.mjs --reclamar --sin-red && npm run check -- --e2e
+node tools/loop.mjs --reclamar --sin-red && node tools/esperar.mjs --lanzar puerta -- npm run check -- --e2e
+node tools/esperar.mjs puerta
 [ -x node_modules/.bin/playwright ] || npm ci
 \`\`\`
 `;
@@ -652,8 +653,46 @@ node tools/loop.mjs --reclamar --sin-red && npm run check -- --e2e
       assert.equal(nivel(r, 'R8'), 'ERROR', podrido);
       assert.match(texto(r, 'R8'), que);
     }
-    const largo = r8({ prompt: 'x'.repeat(601) });
-    assert.match(texto(largo, 'R8'), /601 bytes/);
+    const largo = r8({ prompt: 'x'.repeat(PROMPT_MAX + 1) });
+    assert.match(texto(largo, 'R8'), new RegExp(`${PROMPT_MAX + 1} bytes`));
+  });
+
+  test('el prompt de la Routine entra en el tope y nombra rutas que existen (el de verdad, también)', () => {
+    const real = readFileSync(join(root, '.claude', 'skills', 'iteracion', 'PROMPT.md'), 'utf8');
+    assert.ok(Buffer.byteLength(real) <= PROMPT_MAX, `PROMPT.md tiene ${Buffer.byteLength(real)} bytes`);
+    assert.match(real, /turno terminado es la corrida terminada/);
+    assert.equal(nivel(r8({ prompt: real }), 'R8'), 'ok', r8({ prompt: real }).salida);
+    const r = r8({ prompt: PROMPT + ' Lo largo, con `node tools/espera.mjs`.' });
+    assert.equal(nivel(r, 'R8'), 'ERROR');
+    assert.match(texto(r, 'R8'), /PROMPT\.md nombra tools\/espera\.mjs, que no existe/);
+  });
+
+  test('lo que tarda más que una llamada de la herramienta de shell va lanzado y esperado con tools/esperar.mjs, nunca suelto', () => {
+    // en la prosa se puede nombrar; en un bloque de código, solo lanzado
+    assert.equal(nivel(r8({ skill: SKILL + '\nNunca `npm run check` suelto.\n' }), 'R8'), 'ok');
+    for (const [malo, que] of [
+      ['npm run check', /corre npm run check suelto/],
+      ['git merge origin/dev && npm run check && git push', /corre npm run check suelto/],
+      ['node tools/smoke.mjs --langs', /corre node tools\/smoke\.mjs suelto/],
+      ['node tools/audit.mjs --repetir 3 --json test-results/antes.json', /corre node tools\/audit\.mjs suelto/],
+      ['xvfb-run -a npm run test:e2e -- --grep-invert @lento', /corre las e2e suelto/],
+      ['node tools/esperar.mjs --lanzar a -- node tools/smoke.mjs && npm run check', /corre npm run check suelto/],
+    ]) {
+      const r = r8({ skill: SKILL + `\n\`\`\`sh\n${malo}\n\`\`\`\n` });
+      assert.equal(nivel(r, 'R8'), 'ERROR', malo);
+      assert.match(texto(r, 'R8'), que);
+      assert.match(texto(r, 'R8'), /node tools\/esperar\.mjs --lanzar/);
+    }
+    // la auditoría con --base es corta: suelta, vale
+    assert.equal(nivel(r8({ skill: SKILL + '\n```sh\nnode tools/audit.mjs --base\n```\n' }), 'R8'), 'ok');
+  });
+
+  test('la skill del repo espera lo largo con tools/esperar.mjs y lo explica', () => {
+    const real = readFileSync(join(root, '.claude', 'skills', 'iteracion', 'SKILL.md'), 'utf8');
+    assert.match(real, /node tools\/esperar\.mjs --lanzar puerta -- npm run check/);
+    assert.match(real, /turno terminado es la corrida terminada/);
+    assert.match(real, /timeout: 600000/);
+    assert.ok(LARGOS.length >= 4);
   });
 
   test(`la arena va con su ruta entera y de 1 a ${ARENA_MAX} competidores, nunca los 100 por defecto ni --quick`, () => {
@@ -958,7 +997,7 @@ describe('rotar() y la bitácora en dos archivos', () => {
     assert.match(texto(c(largo), 'R14'), /tiene 34 entradas \(más de 16\): node tools\/loop\.mjs --rotar/);
     const r = rotar(largo);
     assert.equal(nivel(c(r.texto, { archivo: r.archivo }), 'R14'), 'ok');
-    assert.match(texto(c(r.texto, { archivo: r.archivo }), 'R14'), new RegExp(`^bitácora: ${ROTAR_DEJA} entradas en IMPROVEMENTS\\.md y ${34 - ROTAR_DEJA} en docs/BITACORA\\.md$`));
+    assert.match(texto(c(r.texto, { archivo: r.archivo }), 'R14'), new RegExp(`^bitácora: ${ROTAR_DEJA} entradas en IMPROVEMENTS\\.md y ${34 - ROTAR_DEJA} en docs/BITACORA\\.md; hoja: 6 hechos en IMPROVEMENTS\\.md$`));
     // una entrada nueva escrita por error en el archivo: R14 y R5 lo dicen
     const mal = `${r.archivo}\n${entrada({ n: 30, tipo: 'Expansión', eje: 'Datos' })}\n`;
     const m = c(r.texto, { archivo: mal });
@@ -967,6 +1006,81 @@ describe('rotar() y la bitácora en dos archivos', () => {
     assert.match(texto(m, 'R5'), /iteración 30 repetida/);
     const dup = c(r.texto, { archivo: `${r.archivo}\n${entrada({ n: 5 })}\n` });
     assert.match(texto(dup, 'R5'), /iteración 5 repetida \(línea \d+ de docs\/BITACORA\.md\)/);
+  });
+});
+
+describe('rotarHoja() y la hoja de ruta en dos archivos', () => {
+  // 26 ítems, 16 hechos y salteados, como la hoja real (el 99 sigue pendiente entre el 98 y el 100 hechos)
+  const PEND = [3, 9, 14, 18, 20, 21, 22, 24, 25, 26];
+  const hechos = Object.fromEntries(Array.from({ length: 26 }, (_, i) => i + 1).filter((k) => !PEND.includes(k)).map((k, i) => [k, 100 + i]));
+  const logHoja = Object.values(hechos).map((k) => `un cambio (#${k})`);
+  const doc = (() => {
+    const t = fixture({ items: 26, hechos, siguiente: 'POR CALCULAR' });
+    return t.replace('POR CALCULAR', siguiente(t).siguiente);
+  })();
+  const c = (t, extra = {}) => check(t, { log: logHoja, ...extra });
+
+  test('lleva los hechos a docs/HOJA.md, deja los pendientes con el aviso y el loop elige y valida lo mismo', () => {
+    const r = rotarHoja(doc);
+    assert.equal(r.cuantos, 16);
+    assert.equal(r.primero, 1);
+    assert.equal(r.ultimo, 23);
+    assert.deepEqual(parse(r.texto).hoja.map((i) => i.n), PEND);
+    assert.ok(parse(r.texto).hoja.every((i) => !i.hecho));
+    assert.deepEqual(parse(r.texto, { hoja: r.hoja }).hoja.map((i) => i.n), Array.from({ length: 26 }, (_, i) => i + 1));
+    assert.match(r.hoja, /^# Hoja de ruta: ítems hechos\n[^]*\n## Hoja de ruta\n\n1\. ~~\*\*Ítem 1\*\*~~ hecho en #100/);
+    assert.equal(r.texto.split(`](${ARCHIVO_HOJA})`).length - 1, 1, 'el aviso, una vez');
+    assert.ok(Buffer.byteLength(r.texto) < Buffer.byteLength(doc));
+    // cada línea de la hoja está en uno de los dos archivos, una sola vez
+    const items = (t) => t.split('\n').filter((l) => /^\d+\. /.test(l) || /^   en dos líneas\.$/.test(l));
+    assert.equal(items(r.texto).length + items(r.hoja).length, items(doc).length);
+    const { proximo, ...antes } = siguiente(doc);
+    const { proximo: p2, ...despues } = siguiente(r.texto, { hoja: r.hoja });
+    assert.deepEqual(despues, antes);
+    assert.equal(p2, 27);
+    assert.equal(proximo, 27);
+    const a = c(doc);
+    const d = c(r.texto, { hoja: r.hoja });
+    assert.equal(d.errores, 0, d.salida);
+    for (const regla of ['R2', 'R3', 'R4', 'R6', 'R10']) assert.equal(texto(d, regla), texto(a, regla), regla);
+    // sin la hoja hecha, la numeración tiene huecos: por eso se leen las dos
+    assert.equal(nivel(c(r.texto), 'R2'), 'ERROR');
+  });
+
+  test('una segunda rotación suma los nuevos hechos en orden de número y es idempotente', () => {
+    const r = rotarHoja(doc);
+    assert.equal(rotarHoja(r.texto, r.hoja), null);
+    // se hacen el 3 y el 24 (el 3 entra entre el 2 y el 4 del archivo)
+    const t = r.texto.replace('3. **Ítem 3** · Salidas · 2×2/2. Detalle del ítem\n   en dos líneas.', '3. ~~**Ítem 3**~~ hecho en #200 · Salidas. Detalle.').replace(/24\. \*\*Ítem 24\*\* · (\S+) · 2×2\/2\./, '24. ~~**Ítem 24**~~ hecho en #201 · $1.');
+    const otra = rotarHoja(t, r.hoja);
+    assert.equal(otra.cuantos, 2);
+    assert.deepEqual(parse(otra.hoja).hoja.map((i) => i.n).slice(0, 4), [1, 2, 3, 4]);
+    assert.equal(parse(otra.hoja).hoja.length, 18);
+    assert.ok(!/24\. \*\*Ítem 24\*\*|en dos líneas\.\n\n   en dos/.test(otra.texto), 'quedó una línea suelta del ítem llevado');
+    assert.equal(otra.texto.split(`](${ARCHIVO_HOJA})`).length - 1, 1, 'el aviso no se repite');
+    assert.equal(otra.hoja.split('# Hoja de ruta: ítems hechos').length - 1, 1, 'la cabecera no se repite');
+    // otra sección que enlaza docs/HOJA.md (la cabecera del archivo real) no reemplaza el aviso de la hoja
+    const conCabecera = rotarHoja(doc.replace('# Mejora continua\n', `# Mejora continua\n\nLos hechos, en [\`${ARCHIVO_HOJA}\`](${ARCHIVO_HOJA}).\n`));
+    const seccion = conCabecera.texto.slice(conCabecera.texto.indexOf('## Hoja de ruta'), conCabecera.texto.indexOf('## Cómo validar'));
+    assert.ok(seccion.includes(`](${ARCHIVO_HOJA})`), 'sin el aviso en la hoja de ruta');
+    assert.throws(() => rotarHoja('# Sin hoja\n'), LoopError);
+  });
+
+  test(`R2 y R14: un pendiente en docs/HOJA.md es un error; más de ${HOJA_MAX} hechos en IMPROVEMENTS.md, un aviso para rotar`, () => {
+    assert.equal(nivel(c(doc), 'R14'), 'aviso');
+    assert.match(texto(c(doc), 'R14'), new RegExp(`16 ítems hechos \\(más de ${HOJA_MAX}\\): node tools/loop\\.mjs --rotar los lleva a docs/HOJA\\.md`));
+    const r = rotarHoja(doc);
+    // la bitácora del fixture tiene 27 entradas (su propio aviso): rotadas las dos, R14 queda en ok
+    const b = rotar(r.texto);
+    assert.equal(nivel(c(b.texto, { archivo: b.archivo, hoja: r.hoja }), 'R14'), 'ok');
+    assert.match(texto(c(b.texto, { archivo: b.archivo, hoja: r.hoja }), 'R14'), /hoja: 0 hechos en IMPROVEMENTS\.md y 16 en docs\/HOJA\.md$/);
+    const mal = `${r.hoja}27. **Ítem 27** · Datos · 2×2/2. Pendiente escrito en el archivo.\n`;
+    const m = c(r.texto, { hoja: mal });
+    assert.equal(nivel(m, 'R2'), 'ERROR');
+    assert.match(texto(m, 'R2'), /docs\/HOJA\.md tiene el ítem 27 sin hacer \(línea \d+\): los pendientes van en IMPROVEMENTS\.md/);
+    // un número repetido entre los dos archivos lo dice la numeración, con el archivo
+    const dup = c(r.texto, { hoja: r.hoja.replace('2. ~~**Ítem 2**~~', '3. ~~**Ítem 2**~~') });
+    assert.match(texto(dup, 'R2'), /el ítem 2 está numerado 3 \(línea \d+ de docs\/HOJA\.md\)/);
   });
 });
 
@@ -993,7 +1107,7 @@ describe('diagnostico() de --salud', () => {
     assert.ok(r.lineas.some((l) => /^Acción: el loop no fusiona nada desde hace 46,0 h/.test(l)), r.lineas.join('\n'));
   });
 
-  test('reclamos: las loop/K fusionadas van en una línea sin Acción, la que toca está en curso o vencida, una más allá se revisa; la conservada se informa', () => {
+  test('reclamos: las loop/K fusionadas van en una línea sin Acción, la que toca está en curso o vencida, una más allá queda en cola; la conservada se informa', () => {
     const ramas = [
       { nombre: 'loop/24', fecha: base.ahora - 40 * H },
       { nombre: 'loop/25', fecha: base.ahora - 35 * H },
@@ -1008,9 +1122,14 @@ describe('diagnostico() de --salud', () => {
     assert.ok(!r.lineas.some((l) => /^Acción: borrar/.test(l)), r.lineas.join('\n'));
     assert.ok(r.lineas.some((l) => l.startsWith('Ramas loop/K de iteraciones ya fusionadas: 4 (loop/22, 24–26), inocuas;') && l.includes('node tools/loop.mjs --limpiar --borrar')), r.lineas.join('\n'));
     assert.ok(r.lineas.includes('En curso: loop/28 (último commit hace 30 min)'), r.lineas.join('\n'));
-    assert.ok(r.lineas.some((l) => /^Acción: loop\/30 va más allá de la iteración que toca \(28\)/.test(l)));
+    // reclamada antes de su turno (la 173 y la 174, 2026-10-30): se reanuda cuando le toque; como Acción
+    // («revisar a mano») ninguna sesión desatendida podía hacer nada con ella
+    assert.ok(r.lineas.includes('En cola: loop/30 (último commit hace 60 min) se reclamó antes de su turno: se retoma cuando toque la 30, con --reclamar (4: reanudar su PR); no se borra ni se reclama otra encima'), r.lineas.join('\n'));
+    assert.ok(!r.lineas.some((l) => /^Acción: loop\/30/.test(l)), r.lineas.join('\n'));
     assert.ok(r.lineas.some((l) => /^Trabajo de relevos conservado: loop\/27-vencida-abc1234/.test(l)));
-    assert.equal(r.acciones, 1);
+    assert.equal(r.acciones, 0);
+    const vieja = diagnostico({ ...base, ramas: [{ nombre: 'loop/29', fecha: base.ahora - 32 * H }] });
+    assert.ok(vieja.lineas.some((l) => l.startsWith('En cola: loop/29 (último commit hace 32,0 h)')), vieja.lineas.join('\n'));
     const vencida = diagnostico({ ...base, ramas: [{ nombre: 'loop/28', fecha: base.ahora - 7 * H }] });
     assert.ok(vencida.lineas.includes('Vencida: loop/28 lleva 7,0 h sin commits: --reclamar la releva'));
     assert.ok(diagnostico(base).lineas.includes('Reclamos: ninguna rama loop/N en origin'));
@@ -1139,7 +1258,7 @@ describe('el CLI', () => {
     assert.equal(lineas[1], 'Ítem 6 de la hoja de ruta: Ítem 6');
     assert.equal(lineas[3], 'Rama: loop/28');
     assert.match(lineas[4], /^Declarado en la iteración 27: iteración 28/);
-    assert.equal(lineas[5], 'Hoja de ruta: 18 pendientes, 6 hechos · mantenimiento: 13 pendientes');
+    assert.equal(lineas[5], 'Hoja de ruta: 18 pendientes, 6 hechos (un ítem nuevo es el 25) · mantenimiento: 13 pendientes');
     const j = JSON.parse(cli('--siguiente', '--json', '--archivo', archivo).stdout);
     assert.equal(j.item, 6);
     assert.equal(j.rama, 'loop/28');
@@ -1168,12 +1287,14 @@ describe('el CLI', () => {
     const antes = cli('--siguiente', '--archivo', join(repo, 'IMPROVEMENTS.md')).stdout;
     const r = cli('--rotar', '--repo', repo);
     assert.equal(r.status, 0, r.stdout + r.stderr);
-    assert.equal(r.stdout, `Rotadas ${27 - ROTAR_DEJA} entradas a docs/BITACORA.md (de «2026-10-12 · Iteración 1» a «2026-10-12 · Iteración ${27 - ROTAR_DEJA}»); quedan ${ROTAR_DEJA} en IMPROVEMENTS.md\n`);
+    assert.equal(r.stdout, `Rotadas ${27 - ROTAR_DEJA} entradas a docs/BITACORA.md (de «2026-10-12 · Iteración 1» a «2026-10-12 · Iteración ${27 - ROTAR_DEJA}»); quedan ${ROTAR_DEJA} en IMPROVEMENTS.md\nLlevados 6 ítems hechos a docs/HOJA.md (del 1 al 7); en IMPROVEMENTS.md quedan los pendientes\n`);
     assert.equal(parse(readFileSync(join(repo, ARCHIVO_BITACORA), 'utf8')).bitacora.length, 27 - ROTAR_DEJA);
+    assert.equal(parse(readFileSync(join(repo, ARCHIVO_HOJA), 'utf8')).hoja.length, 6);
     assert.equal(cli('--siguiente', '--archivo', join(repo, 'IMPROVEMENTS.md')).stdout, antes);
     const ch = cli('--check', '--archivo', join(repo, 'IMPROVEMENTS.md'));
     assert.match(ch.stdout, new RegExp(`^ok  R5 27 iteraciones, 1\\.\\.27`, 'm'));
-    assert.match(ch.stdout, /^ok  R14 bitácora: 8 entradas en IMPROVEMENTS\.md y 19 en docs\/BITACORA\.md$/m);
+    assert.match(ch.stdout, /^ok  R2 hoja de ruta: 24 ítems numerados 1\.\.24$/m);
+    assert.match(ch.stdout, /^ok  R14 bitácora: 8 entradas en IMPROVEMENTS\.md y 19 en docs\/BITACORA\.md; hoja: 0 hechos en IMPROVEMENTS\.md y 6 en docs\/HOJA\.md$/m);
     const otra = cli('--rotar', '--repo', repo);
     assert.equal(otra.status, 0);
     assert.match(otra.stdout, /^Nada que rotar/);
@@ -1193,19 +1314,22 @@ describe('IMPROVEMENTS.md real', () => {
   const real = readFileSync(join(root, 'IMPROVEMENTS.md'), 'utf8');
   const ruta = join(root, ARCHIVO_BITACORA);
   const archivo = existsSync(ruta) ? readFileSync(ruta, 'utf8') : null;
+  const rutaHoja = join(root, ARCHIVO_HOJA);
+  const hoja = existsSync(rutaHoja) ? readFileSync(rutaHoja, 'utf8') : null;
 
   test('cumple todas las reglas sin ningún ERROR', () => {
-    const r = check(real, { archivo });
+    const r = check(real, { archivo, hoja });
     assert.equal(r.errores, 0, r.salida);
   });
 
   test('--siguiente da la iteración que sigue a la última de la bitácora', () => {
     const M = Math.max(...parse(real, { archivo }).bitacora.filter((e) => e.n !== null).map((e) => e.n));
-    const s = siguiente(real, { archivo });
+    const s = siguiente(real, { archivo, hoja });
     assert.equal(s.n, M + 1);
     assert.equal(s.rama, `loop/${M + 1}`);
     if (s.tipo === 'Expansión') assert.ok(EJES.includes(s.eje));
   });
+
 });
 
 /* ------------------------------------------------------------- reclamar */

@@ -1,7 +1,8 @@
 # Mejora continua
 
 Hoja de ruta, pendientes y bitácora de las iteraciones del loop (una cada 2 horas). Las entradas viejas
-de la bitácora están en [`docs/BITACORA.md`](docs/BITACORA.md) (las lleva `node tools/loop.mjs --rotar`).
+de la bitácora están en [`docs/BITACORA.md`](docs/BITACORA.md) y los ítems hechos de la hoja de ruta en
+[`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tools/loop.mjs --rotar`): son historia y no hace falta leerlos.
 
 ## Directiva vigente: ampliar el alcance
 
@@ -229,12 +230,14 @@ cada iteración lo repite (`node tools/loop.mjs --salud` lo imprime) y se quita 
    estructura ARIA y el teclado con Playwright. Abre la demo, pulsa el botón de las líneas y recórrela con NVDA,
    VoiceOver u Orca (¿la región viva anuncia sin repetir? ¿el foco se queda al actualizar?); lo que falle va a
    Mantenimiento y lo que salga bien se anota en el README, en «Límites conocidos».
-6. **La Routine del loop no aparece** (desde 2026-10-31). `list_triggers` de la cuenta no lista «GraphBranch:
-   iteración del loop (sesión nueva por disparo)» (cron `3 */2 * * *`), así que su prompt no se pudo comparar con
-   `.claude/skills/iteracion/PROMPT.md`, y `--salud` da un hueco de 27,4 h (2026-10-30 16:16 → 2026-10-31 19:42
-   UTC): la 172, la 173 y la 174 se lanzaron a la vez y quedaron esperándose, y la 172 la retomó otra sesión. Si la
-   Routine sigue siendo la vía, recrearla en claude.ai/code → Routines con ese prompt byte a byte; si ya no, decirlo
-   en la sección «Routine» de la skill y en el README.
+6. **El loop no tiene quién lo dispare** (desde 2026-10-31). `list_triggers` de la cuenta no lista «GraphBranch:
+   iteración del loop (sesión nueva por disparo)» (cron `3 */2 * * *`; el 2026-11-01 tampoco) y en toda la historia
+   no hay un solo commit de `OpenCode <opencode@localhost>`, así que tampoco corre el cron de `tools/opencode.mjs`.
+   `--salud` da un hueco de 27,4 h (2026-10-30 16:16 → 2026-10-31 19:42 UTC) y otro de 5,5 h desde la fusión de
+   #222 (2026-10-31 22:04 UTC) hasta que otra sesión reanudó la 173 (2026-11-01 03:32). Recrear la Routine en claude.ai/code →
+   Routines con `.claude/skills/iteracion/PROMPT.md` byte a byte (cambió el 2026-11-01: suma que el turno
+   terminado es la corrida terminada y que lo largo se espera con `node tools/esperar.mjs`), o poner el cron de
+   OpenCode del README; si la vía es otra, decirlo en la sección «Routine» de la skill y en el README.
 
 ## Mapa de alcance
 
@@ -260,264 +263,15 @@ cada uno, en [`docs/investigacion.md`](docs/investigacion.md)), la primera entre
 sirve) y cómo comprobarla. Las notas técnicas son un punto de partida:
 se comprueban antes de construir sobre ellas.
 
-1. ~~**Instalable y sin conexión (PWA)**~~ hecho en #45 · Plataformas. `manifest.webmanifest` con íconos (sale de
-   `electron/icon.png`) y un service worker que guarda la página, `css/`, `js/` y `vendor/`, así se
-   instala en el celular o el escritorio sin Electron y abre sin red (con la demo y el aviso de sin
-   conexión). Nunca guarda respuestas de la API: llevan datos privados si hay token. CSP: hace falta
-   `manifest-src 'self'` (con `default-src 'none'` el manifiesto queda bloqueado). Registrar el worker
-   solo en `https:` o `localhost`, no en `app://` de la app de escritorio. Comprobar: una e2e web que
-   carga, pasa a sin conexión, recarga y ve la demo.
-2. ~~**Exportar imagen**~~ hecho en #46 · Salidas. El botón de la cámara de fotos guarda la vista
-   como PNG, en 3D y en 2D, con las etiquetas y una franja con el repo y la fecha; en la app de
-   escritorio va a la carpeta de descargas.
-3. ~~**Grabar el Replay en video**~~ hecho en #49 · Salidas. Un botón en la barra del Replay graba
-   la historia desde el principio a WebM (MP4 en Safari) con `MediaRecorder`, cuadro a cuadro desde el
-   compositor de `js/snapshot.js`, con la fecha grande y los rótulos; al terminar se guarda solo, con
-   la duración que MediaRecorder no anota. Sin audio.
-4. ~~**GitLab**~~ hecho en #47 · Fuentes. Proyectos públicos de gitlab.com (con subgrupos), sin
-   token: ramas, commits y merge requests en vivo, galaxias con sus archivos, la Replay con sus MRs.
-   `GitLabSource` hereda de `GitHubSource` el ciclo, los reintentos y las actividades.
-5. ~~**GitLab, segunda entrega: proyectos privados**~~ hecho en #50 · Fuentes. Un **Token de GitLab**
-   en Ajustes (permiso `read_api`; en escritorio, cifrado con el llavero en su propio archivo) abre
-   los proyectos privados de gitlab.com; va solo a gitlab.com y el de GitHub, solo a GitHub.
-6. ~~**GitLab, tercera entrega**~~ hecho en #54 · Fuentes. Los eventos del proyecto (`/events`: issues,
-   comentarios, tags, aprobaciones) con su historial en el panel, como el feed de GitHub. Un GitLab
-   propio, partido, es el ítem 25.
-7. ~~**Una organización o un usuario entero**~~ hecho en #51 · Escala. `org:nombre`, `@usuario` o la
-   URL de su perfil siguen sus repos con push más reciente, sin forks ni archivados, hasta el tope de
-   pestañas (una consulta; dos para un usuario). También `?repo=org:nombre`.
-8. ~~**Una organización entera, segunda entrega**~~ hecho en #55 · Escala. La organización queda seguida
-   (se guarda `org:nombre` con los repos que ya vio su lista; cada 30 minutos se renueva y los nuevos
-   se suman solos, sin traer de vuelta los que se cerraron). Los eventos de la organización, los
-   grupos de GitLab y la constelación son el ítem 26.
-9. ~~**CI en el grafo**~~ hecho en #56 · Datos. El estado de los checks (✓, ✗, ●) en la etiqueta y el
-   detalle de la rama por defecto, las fijadas, las que se mueven y los PRs, y un aviso al ponerse en
-   rojo la rama por defecto. Con token, en la misma consulta GraphQL (`statusCheckRollup`); sin token,
-   check-runs de la rama por defecto y las fijadas. Los commit statuses sin token, el CI de GitLab y
-   el de todas las ramas del listado quedan sin hacer.
-10. ~~**Repos locales en la app de escritorio**~~ hecho en #59 · Fuentes. **Abrir carpeta…** (diálogo del
-   sistema) o `--local=ruta` siguen un repo de la máquina con `LocalGitSource`: `electron/git.js` lee ramas
-   y commits con `git` (`execFile`, sin shell) y vigila `.git`, y la página solo conoce el id de cada
-   carpeta elegida (`GBDesktop.git`). Sin GitHub ni cuota. Los repos remotos (`origin/…`), los worktrees
-   y la demo con un repo local quedan sin hacer.
-11. ~~**Widget embebible y capa para streaming**~~ hecho en #60 · Plataformas. `?embed=1`: solo el grafo y los
-   avisos, sin barras, para un iframe (el README trae el código para pegar); `&bg=transparent` para OBS.
-   No sigue ni guarda los repos de la persona y no entra en modo TV. Sin hacer: tamaño y tema por
-   parámetro (`&theme=`), y un modo sin avisos.
-12. ~~**Salud del repo**~~ hecho en #61 · Análisis. El botón del pulso abre un panel con lo ya cargado, sin
-   consultas nuevas: ramas sin actividad hace más de 30 días y sin PR, PRs abiertos por edad, tiempo de
-   abierto a fusionado (mediana y el más lento de los últimos 20) y ritmo de merges y releases. Cada fila
-   lleva a su rama en el grafo. Los cálculos viven en `js/health.js`.
-13. ~~**GitHub Enterprise Server**~~ hecho en #63 · Fuentes. `?api=https://host/api/v3` (web) y `--api-url=` (escritorio):
-   `GitHubSource` toma la URL de la API (REST ahí, GraphQL en `/api/graphql`, enlaces al host); solo https.
-   La app de escritorio suma ese host, y solo ese, al `connect-src` del CSP; en la web lo hace quien sirve la
-   página (README). Un servidor por sesión, sin claves propias para sus repos ni token aparte.
-14. ~~**Choques entre ramas**~~ hecho en #64 · Análisis. En el panel de salud, «Buscar choques» compara con la rama
-    por defecto cada rama con PR abierto (hasta 20, una consulta por rama, solo al pedirlo) y lista los archivos
-    que tocan varias a la vez; cada fila lleva a una de las ramas. Cálculo puro en `js/health.js`.
-15. ~~**Avisos a Slack y Discord**~~ hecho en #65 · Salidas. En la app de escritorio, Ajustes guarda una URL de
-    webhook por servicio (cifrada como un token) y los eventos que recibe cada una: release, merge a la rama por
-    defecto, CI en rojo y force-push en ella. Envío desde el proceso principal (`electron/webhooks.js`), decisión
-    en `js/hooks.js`; botón «Enviar prueba».
-16. ~~**Aprender git**~~ hecho en #67 · Público. El botón «Practicar git» abre un repo de práctica con una terminal
-    bajo el grafo: `commit`, `branch`, `checkout`/`switch`, `merge`, `rebase`, `reset`, `log` y `status` sobre un
-    repo en memoria (`js/gitsim.js`), y el grafo 2D o 3D responde al instante. Cuatro ejercicios guiados que se dan
-    por resueltos solos. Segunda entrega posible: `cherry-pick`, `stash`, `tag` y conflictos.
-17. ~~**Tags y despliegues**~~ hecho en #68 · Datos. Los tags son un banderín sobre su commit en 2D y un obelisco en
-    3D; el commit que corre cada entorno de despliegue (según `/deployments`) lleva una placa con su nombre. La ficha
-    del commit los nombra. Dos consultas más al abrir un repo de GitHub y dos cada 15 minutos (con ETag), apagables en
-    Ajustes; la demo los trae. Segunda entrega posible: el estado de cada despliegue, tags de GitLab y de repos locales.
-18. ~~**Vista de texto accesible**~~ hecho en #69 · Público. El botón de las líneas abre las ramas y sus últimos 10
-    commits como un árbol (`role=tree`) que se recorre con el teclado (↑ ↓ → ← Inicio Fin, Enter lleva al grafo), con
-    nombres accesibles (mensaje, autor, antigüedad, merge, tags). Segunda entrega posible: avisar de los cambios en
-    vivo mientras está abierta y probarla con un lector de pantalla real.
-19. ~~**Búsqueda y filtro por autor**~~ hecho en #71 · Análisis. La lupa abre un cuadro que busca entre los commits
-    ya cargados por mensaje, SHA o autor (`@ana`), con un selector de autor y Enter para volar hasta el commit
-    (2D y 3D). Sin consultas nuevas. Sin hacer: esconder del grafo las ramas de los demás autores (ítem 34).
-20. ~~**Comparar dos ramas**~~ hecho en #73 · Análisis. En el panel de salud, «Comparar dos ramas»: dos selectores,
-    los commits que lleva cada una por delante y el commit desde donde se separaron (con lo ya cargado, sin
-    consultas; cada línea lleva al grafo) y, al pulsar, los archivos que cambió solo una, solo la otra o las dos
-    (dos consultas). Sin hacer: resaltar en el grafo el tramo de cada rama y la comparación directa A...B por API.
-21. ~~**Gitea, Forgejo y Codeberg**~~ hecho en #72 · Fuentes. codeberg.org (CORS abierto, comprobado) con la API de
-    Forgejo: ramas, historia y PRs en vivo, galaxias con el árbol, sin token y solo repos públicos. Sin hacer:
-    otros servidores de Gitea/Forgejo (uno propio entra con el ítem 25) y Codeberg con token.
-22. ~~**Bitbucket Cloud**~~ hecho en #75 · Fuentes. `api.bitbucket.org/2.0` (CORS abierto, comprobado): ramas, historia y PRs
-    en vivo y galaxias con el árbol, sin token y solo repos públicos. Sin hacer: Bitbucket con token (repos
-    privados, mejor cuota) y los pipelines como CI.
-23. ~~**Resumen de la semana**~~ hecho en #77 · Salidas. El panel de salud suma una ficha con los últimos 7 días
-    (commits, PRs fusionados, releases, quién aportó y la rama más activa) para copiar o guardar como
-    Markdown, con lo ya cargado. Sin hacer: guardarlo como imagen y juntar varios repos.
-24. ~~**Extensión de VS Code**~~ hecho en #78 · Plataformas. `vscode/`: un panel con la app, servida por un servidor local en
-    127.0.0.1 bajo una clave al azar, con la sesión de GitHub de VS Code (`vscode.authentication`) y el repo del
-    `origin` del espacio de trabajo. Sin hacer: publicarla en el Marketplace (Benjamin), tokens de GitLab, textos
-    en los 40 idiomas (recordar los repos entre sesiones: hecho en #126).
-25. ~~**GitLab propio**~~ hecho en #80 · Fuentes. `?gitlab=https://gitlab.miempresa.com` (web) y `--gitlab-url=` (escritorio,
-    que suma solo ese host a `connect-src`): la API v4, los enlaces y el token van a esa instancia y a ninguna
-    otra; sin https vuelve a gitlab.com. Sin hacer: reconocer una URL de la instancia en el cuadro de repos y
-    los avatares (ítem 35); el listado de commits con token sale más caro que las comparaciones, sin cambios.
-26. ~~**Una organización entera, tercera entrega**~~ hecho en #81 · Escala. Los eventos de la organización
-    (`/orgs/{org}/events`, una consulta con ETag cada 5 minutos para todos sus repos) llegan al panel con el
-    nombre de su repo, solo los de repos sin pestaña. Los grupos de GitLab y la constelación son el ítem 41.
-27. ~~**Replay por tramo de fechas y con rótulos propios**~~ hecho en #82 · Salidas · 2×2/1. [inv. 2026-10-13] Elegir desde y hasta qué día se graba o
-    se reproduce el Replay y poner un título y un pie de foto al video, para mostrar un sprint o un lanzamiento.
-    Comprobar: prueba del recorte de fechas y un paso del smoke con el tramo elegido.
-28. ~~**Ejercicios de Aprender git compartidos por URL**~~ hecho en #85 · Público · 2×2/1. [parte del ítem 16] Un ejercicio propio
-    (título, meta, comandos de partida y condiciones de una lista cerrada) viaja en `?practice=<código>`; se crea en
-    «Crear un ejercicio para compartir» y se copia con «Copiar enlace del ejercicio». `?practice=1` a `4` abre los de la lista.
-29. ~~**Filtrar el grafo por ruta de archivo**~~ hecho en #86 · Análisis · 2×2/2. [inv. 2026-10-13] En el cuadro de búsqueda, «Filtrar grafo» con un
-    archivo o carpeta (`/commits?path=` por cabeza, 5 como mucho) deja a plena luz los commits que la tocaron y atenúa el resto
-    en el grafo 2D; «Quitar filtro» lo deshace. Solo GitHub y la demo (donde la ruta se compara con el mensaje).
-30. ~~**Los forks en el grafo**~~ hecho en #87 · Datos · 2×2/2. [inv. 2026-10-13] Los forks con actividad reciente (`/forks`, push
-    propio en 90 días, el más nuevo primero) en el panel de salud; dibujarlos como ramas atenuadas queda por hacer.
-31. ~~**Ensayar un comando sobre el repo real**~~ hecho en #89 · Público · 2×3/3. [inv. 2026-10-13] «Ensayar un comando» (con un repo real a la vista)
-    abre la terminal de práctica sobre una copia en memoria de sus ramas y commits ya cargados: un `merge` o `rebase` se
-    ve en el grafo sin tocar el repo ni gastar consultas. Solo ve lo ya cargado; sin conflictos.
-32. ~~**Ramas apiladas**~~ hecho en #90 · Datos · 1×2/2. [inv. 2026-10-13] Un PR cuya base es la rama de otro PR se dibuja encadenado a él, con el
-    orden de la pila. Comprobar: prueba del layout con PRs apilados.
-33. ~~**Vista de texto, segunda entrega**~~ hecho en #91 · Público · 1×2/2. [parte del ítem 18] Que el árbol avise con una región viva
-    (sin anunciar de más) de las ramas y commits nuevos mientras está abierto, que filtre por nombre de rama y que
-    se escriba en el README cómo se probó con NVDA, VoiceOver y Orca. Comprobar: paso del smoke con un evento en vivo
-    de la demo y la región viva sin repetir lo ya leído.
-34. ~~**Filtrar el grafo por autor**~~ hecho en #93 · Análisis · 2×2/2. [parte del ítem 19] En el cuadro de búsqueda, «Mostrar solo las
-    ramas de…» deja en el grafo 2D y 3D y en la vista de texto la rama por defecto y las ramas con commits de esa persona
-    (`GB.search.byAuthor`), en todas las fuentes, guardado por repo. Comprobar: un paso del smoke en la demo y una prueba por fuente.
-35. ~~**GitLab propio, segunda entrega**~~ hecho en #94 · Fuentes. [parte del ítem 25] Pegar la URL de un proyecto de la instancia propia
-    (https o `git@host:`, también con ruta y con `/-/tree/…`) se reconoce (`U.gitlabBase`, solo ese host y por
-    prefijo exacto); sus claves llevan el host (`gitlab@host:`), aparte de las de gitlab.com; y en escritorio sus
-    avatares salen de ese host (`img-src`, solo el elegido con `--gitlab-url`). En la web siguen sin avatares.
-36. ~~**Gitea y Forgejo propios**~~ hecho en #97 · Fuentes. [parte del ítem 21] La URL de un servidor propio de Forgejo/Gitea
-    (`--forge-url=`), con la misma regla de CSP que GitLab propio y el token solo a ese host. Comprobar:
-    `tools/codeberg.test.mjs` con otra URL base.
-37. ~~**Tokens para Codeberg y Bitbucket**~~ hecho en #99 · Fuentes · 2×2/2. [parte del ítem 21] Repos privados y más cuota:
-    el token de cada servicio en Ajustes (y en el llavero en escritorio), enviado solo a su host. Comprobar: una
-    prueba por fuente de que el token va en cada consulta y a ningún otro lado.
-38. ~~**Vocabulario DORA en la salud**~~ hecho en #95 · Análisis. [inv. 2026-10-13]
-39. ~~**PRs por estado**~~ hecho en #98 · Análisis. [inv. 2026-10-13]
-40. ~~**Resaltar el tramo de cada rama comparada**~~ hecho en #101 · Análisis. [parte del ítem 20]
-41. ~~**Una organización entera, cuarta entrega**~~ hecho en #102 · Escala. [parte del ítem 26] `group:ruta` (o la URL `gitlab.com/groups/ruta`) sigue
-    los proyectos de un grupo de GitLab con sus subgrupos, en una consulta, sin forks ni archivados. La constelación es el ítem 52.
-42. ~~**Replay por tramo, segunda entrega**~~ hecho en #103 · Salidas · 1×2/1. [parte del ítem 27] El tramo y los rótulos viajan en la
-    URL (`?replay=2026-09-01..2026-09-14&title=…`) y el Replay arranca solo con ellos.
-43. ~~**Ejercicios compartidos, segunda entrega**~~ hecho en #105 · Público · 1×2/1. [parte del ítem 28] Un ejercicio propio admite
-    hasta 3 pistas que se muestran con un botón, y condiciones sobre el mensaje del último commit (`tip:`) y sobre ramas
-    sin fusionar (`unmerged:`).
-44. ~~**Filtrar por ruta, segunda entrega**~~ hecho en #106 · Análisis · 1×2/1. [parte del ítem 29] El filtro por ruta también atenúa el grafo 3D
-    y viaja en la URL (`?path=src/`) para compartir la vista ya filtrada. Comprobar: prueba de la lectura de la URL y un
-    paso del smoke en 3D.
-45. ~~**Filtro por autor en la URL**~~ hecho en #109 · Análisis · 1×2/1. [parte del ítem 34] `?author=ana` abre el repo ya filtrado por
-    esa persona, para compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
-46. ~~**Capa para streaming, segunda entrega**~~ hecho en #107 · Plataformas · 2×2/1. [inv. 2026-10-13] Parámetros de la URL para la capa
-    de OBS: fondo transparente y ocultar paneles, con los de siempre por defecto. Comprobar: un paso del smoke con
-    el enlace y prueba de la lectura.
-47. ~~**Resumen de la semana de una organización**~~ hecho en #110 · Salidas · 2×2/2. [inv. 2026-10-13] El resumen de la semana de todos
-    los repos seguidos de una organización, como Markdown para pegar. Comprobar: `tools/digest.test.mjs` con dos repos.
-48. ~~**Tasa de fallos de CI en la salud**~~ hecho en #111 · Análisis · 2×2/2. [inv. 2026-10-13] La proporción de ejecuciones en rojo de
-    la rama por defecto, con lo ya cargado de CI. Comprobar: `tools/health.test.mjs` con ejecuciones fabricadas.
-49. ~~**Extensión de VS Code, segunda entrega**~~ hecho en #113 · Plataformas · 2×2/2. [parte del ítem 24] La extensión sigue la sesión
-    de GitHub de VS Code con el panel abierto: si la persona inicia o cierra sesión (`onDidChangeSessions`), la página se
-    recarga con el token nuevo o sin él (se borra el guardado). Comprobar: `tools/vscode.test.mjs` con la sesión simulada.
-50. ~~**Bitbucket propio**~~ hecho en #114 · Fuentes · 1×2/3. [parte del ítem 22] Un Bitbucket Data Center o Server (`--bitbucket-url=`),
-    con la misma regla de CSP que GitLab propio. Comprobar: `tools/bitbucket.test.mjs` con otra URL base.
-    (Hecho en la iteración 85 como `js/sources/bitbucket-server.js`, API REST 1.0, y su prueba `tools/bitbucket-server.test.mjs`: la de Data Center no es la API 2.0 de Cloud, así que es otra fuente.)
-51. ~~**Tiempo de entrega desde el primer commit**~~ hecho en #115 · Análisis · 1×2/2. [parte del ítem 38] El tiempo de entrega de la
-    salud cuenta desde el primer commit del PR (una consulta de `/pulls/:n/commits` por PR fusionado reciente, solo al
-    abrir el panel) y no desde su apertura. Comprobar: `tools/github.test.mjs` con la API simulada y
-    `tools/health.test.mjs`.
-    (Hecho en la iteración 86: `syncFirstCommits` en `js/sources/github.js` y `leadSource` en `js/health.js`.)
-52. ~~**Constelación de repos**~~ hecho en #117 · Escala. [parte del ítem 41] Cada repo seguido es una galaxia en un diálogo (`js/constellation.js`): tamaño por commits cargados, color por nombre, novedades sin ver; Tab y Intro abren su pestaña.
-53. ~~**Frecuencia de despliegue en la salud**~~ hecho en #118 · Análisis · 2×2/2. [inv. 2026-10-13] La salud cuenta los despliegues por semana
-    (los releases de las últimas 8; los tags y despliegues de GitHub no traen fecha en lo ya cargado). Comprobado con `tools/health.test.mjs`.
-54. ~~**Resumen de la semana como imagen**~~ hecho en #119 · Salidas · 2×2/2. [inv. 2026-10-13] El resumen de la semana también sale como imagen
-    PNG para compartir, además del Markdown. Comprobar: prueba del lienzo y un paso del smoke que baja el archivo.
-55. ~~**Práctica: cherry-pick y tag**~~ hecho en #121 · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `cherry-pick <sha>` y
-    `tag <nombre>`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
-56. ~~**Búsqueda en la URL**~~ hecho en #122 · Análisis · 1×2/1. [parte del ítem 19] `?q=texto` abre el repo con la búsqueda ya escrita, para
-    compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
-57. ~~**Avisos a Microsoft Teams**~~ hecho en #123 · Salidas · 2×2/2. [parte del ítem 15] El mismo aviso de actividad que ya va a Slack y Discord,
-    con el formato de Teams. Comprobar: `tools/webhooks.test.mjs` con el cuerpo esperado.
-58. ~~**Ejercicios compartidos, tercera entrega**~~ hecho en #125 · Público · 1×2/1. [parte del ítem 28] Un enlace de ejercicio con la solución
-    propuesta (`?practice=<código>&solution=1`) que la muestra paso a paso en la terminal. Comprobar: prueba del codificado y
-    un paso del smoke.
-59. ~~**Extensión de VS Code: recordar repos**~~ hecho en #126 · Plataformas · 1×2/2. [parte del ítem 24] Los repos seguidos y el tema sobreviven
-    entre sesiones del panel (el puerto cambia cada vez, así que se guardan en el estado de la extensión y se entregan con
-    el token). Comprobar: `tools/vscode.test.mjs` con el estado simulado.
-60. ~~**Práctica: rebase y revert**~~ hecho en #128 · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `rebase <rama>` y
-    `revert <sha>`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
-61. ~~**Capa para streaming, tercera entrega**~~ hecho en #131 · Plataformas · 2×2/2. [parte del ítem 11] `?embed=1&rotate=30` alterna entre los
-    repos seguidos cada tantos segundos, para una escena de OBS sin tocarla. Comprobar: prueba de la lectura de la URL y un paso
-    del smoke con dos repos.
-62. ~~**Lanzamientos en el resumen de la semana**~~ hecho en #132 · Salidas · 1×2/1. [parte del ítem 23] El resumen de la semana lista los tags y
-    lanzamientos de la semana con lo ya cargado. Comprobar: `tools/digest.test.mjs` con tags fabricados.
-63. ~~**Vista de texto: filtro por autor**~~ hecho en #133 · Público · 1×2/2. [parte del ítem 33]
-64. ~~**Choques entre ramas en la URL**~~ hecho en #135 · Análisis · 1×2/1. [parte del ítem 14] `?conflicts=1` abre el repo con los choques ya
-    marcados, para compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
-65. ~~**Token para un Bitbucket propio**~~ hecho en #136 · Fuentes · 2×2/2. [parte del ítem 50] Un token de acceso personal (`Authorization: Bearer …`)
-    para un Bitbucket Data Center propio, guardado aparte (llavero en escritorio), que va solo a ese host: la mayoría de los
-    servidores no dejan leer sin iniciar sesión. Comprobar: `tools/bitbucket-server.test.mjs` con el token y sin él.
-66. ~~**Salud del repo en la URL**~~ hecho en #139 · Análisis · 1×2/1. [parte del ítem 12] `?health=1` abre el repo con el panel de salud ya
-    desplegado, para compartir la vista. Comprobar: prueba de la lectura de la URL y un paso del smoke en la demo.
-67. ~~**Búsqueda por fecha**~~ hecho en #143 · Análisis · 1×2/2. [parte del ítem 19] La lupa entiende `desde:2026-09-01` y `hasta:2026-09-14`
-    junto al texto, sobre lo ya cargado. Comprobar: `tools/search.test.mjs` con fechas fabricadas.
-68. ~~**Práctica: stash y reset**~~ hecho en #142 · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `stash`, `stash pop` y
-    `reset --hard <sha>`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
-69. ~~**Resumen de la organización como imagen**~~ hecho en #144 · Salidas · 1×2/2. [parte del ítem 47] El resumen de la semana de una
-    organización también se baja como imagen PNG, como el de un repo. Comprobar: `tools/digest.test.mjs` con la imagen simulada.
-70. ~~**Los forks en el grafo, segunda entrega**~~ hecho en #147 · Datos · 1×2/2. [parte del ítem 30] Los forks se pueden ocultar o mostrar desde
-    un interruptor del panel y la elección viaja en la URL. Comprobar: prueba de la lectura de la URL y un paso del smoke.
-71. ~~**Vista de texto: filtro por ruta en la URL**~~ hecho en #148 · Público · 1×2/1. [parte del ítem 33] La vista de texto abre con `?path=` y
-    `?q=` aplicados y lo anuncia a quien usa lector de pantalla. Comprobar: prueba de la vista y un paso del smoke.
-72. ~~**Resumen de la semana: pull requests abiertos**~~ hecho en #150 · Salidas · 1×2/2. [parte del ítem 23] El resumen de la semana suma cuántos pull requests se abrieron en los últimos 7 días, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con PRs fabricados.
-73. ~~**Vista de texto: tags**~~ hecho en #152 · Público · 1×2/2. [parte del ítem 33] La vista de texto dice qué commits llevan tag y lo anuncia a quien usa lector de pantalla. Comprobar: prueba de la vista y un paso del smoke.
-74. ~~**Capa para streaming, cuarta entrega**~~ hecho en #153 · Plataformas · 1×2/1. [parte del ítem 11] `&theme=light|dark` fija el tema de la capa sin tocar el de la página. Comprobar: prueba de la lectura de la URL y un paso del smoke.
-75. ~~**Los forks en el grafo, tercera entrega**~~ hecho en #154 · Datos · 1×2/2. [parte del ítem 30] Los forks se ordenan por actividad reciente en el panel. Comprobar: prueba del orden con forks fabricados.
-76. ~~**Constelación ordenada por actividad**~~ hecho en #156 · Escala. [parte del ítem 26] Un selector de orden (pestañas, actividad o nombre) reordena las galaxias, también el recorrido con Tab, y lo anuncia en una región viva (`C.sortItems` en `js/constellation.js`).
-77. ~~**Práctica: branch -d y merge --abort**~~ hecho en #157 · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `branch -d` y `merge --abort`, y un ejercicio nuevo los usa. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
-78. ~~**Vista de texto: abrirla desde la URL**~~ hecho en #160 · Público · 1×2/1. [parte del ítem 33] `?view=text` abre el repo con la vista de texto ya abierta, con su filtro por autor o por ruta si los trae, para compartir el enlace con quien usa lector de pantalla. Comprobar: prueba de la lectura de la URL y un paso del smoke.
-79. ~~**Resumen de la semana: issues cerrados**~~ hecho en #158 · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana suma cuántos issues se cerraron en los últimos 7 días, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con issues fabricados.
-80. ~~**Vista de texto: releases**~~ hecho en #162 · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] La vista de texto dice qué commits llevan release y lo anuncia a quien usa lector de pantalla. Comprobar: prueba de la vista y un paso del smoke.
-81. ~~**Práctica: switch y restore**~~ hecho en #165 · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `switch`, `switch -c` y `restore`. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
-82. ~~**Capa para streaming, quinta entrega**~~ hecho en #161 · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&title=` pone un rótulo propio sobre la capa, escapado. Comprobar: prueba de la lectura de la URL y un paso del smoke.
-83. ~~**Salud del repo: tendencia de merges**~~ hecho en #164 · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los PRs fusionados por semana de las últimas 8, como ya hace con los despliegues. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
-84. ~~**Constelación ordenada, en la URL**~~ hecho en #166 · Escala. [parte del ítem 26] `?order=activity` abre la constelación ya ordenada por actividad (`C.orderParam` en `js/constellation.js`).
-85. ~~**Práctica: tag -d y cherry-pick --abort**~~ hecho en #168 · Público. [parte del ítem 31] `cherry-pick --no-commit` deja el pick a medias hasta un `commit` o `cherry-pick --continue`; `cherry-pick --abort` lo cancela; noveno ejercicio («tagabort»).
-86. ~~**Vista de texto: forks activos**~~ hecho en #169 · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] La vista de texto lista los forks activos ya cargados, el más reciente primero, y lo anuncia a quien usa lector de pantalla. Comprobar: prueba de la vista y un paso del smoke.
-87. ~~**Salud del repo: tendencia de PRs abiertos**~~ hecho en #170 · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra cuántos PRs se abrieron por semana en las últimas 8. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
-88. ~~**Capa para streaming, sexta entrega**~~ hecho en #173 · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&max=N` limita cuántas ramas muestra la capa, escapando y acotando el valor. Comprobar: `tools/embed.test.mjs` y un paso del smoke.
-89. ~~**Los forks en el grafo, cuarta entrega**~~ hecho en #174 · Datos · 1×2/2. [inv. 2026-10-13] [parte del ítem 30] El panel de forks suma las estrellas de cada fork (ya vienen en `/forks`) y deja ordenar por ellas. Comprobar: `tools/health.test.mjs` con forks fabricados.
-90. ~~**Práctica: revert --abort y rebase --abort**~~ hecho en #176 · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `revert --abort` y `rebase --abort`, y vuelve al estado de antes del comando. Comprobar: prueba del simulador y un paso del smoke.
-91. ~~**Resumen de la semana: autores nuevos**~~ hecho en #178 · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana dice cuántas personas aportaron por primera vez en el repo, con los datos ya cargados. Comprobar: prueba del resumen y un paso del smoke.
-92. ~~**Capa para streaming, séptima entrega**~~ hecho en #181 · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&hide=` oculta partes de la capa (leyenda, rótulo o reloj) para quien arma su escena de OBS. Comprobar: prueba de `embedOptions` y un paso del smoke.
-93. ~~**Constelación ordenada por nombre, en la URL**~~ hecho en #189 · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] `?order=name` abre la constelación ordenada alfabéticamente, junto a `?order=activity`. Comprobar: prueba de la lectura de la URL y un paso del smoke.
-94. ~~**Vista de texto: PRs abiertos por rama**~~ hecho en #191 · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de cada rama dice cuántos PRs abiertos tiene, con los PRs ya cargados. Comprobar: prueba de la vista y un paso del smoke.
-95. ~~**Salud del repo: tendencia de issues cerrados**~~ hecho en #192 · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los issues cerrados por semana de las últimas 8, con las actividades ya cargadas. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
-96. ~~**Resumen de la semana: commits por día**~~ hecho en #193 · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana suma los commits de cada uno de los 7 días, en una línea de siete cifras, para ver el ritmo. Comprobar: `tools/digest.test.mjs` con commits fabricados.
-97. ~~**Vista de texto: ramas quietas**~~ hecho en #195 · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama sin commits en 30 días lo dice («sin actividad»), con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
-98. ~~**Capa para streaming, octava entrega**~~ hecho en #203 · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&spin=0` apaga la rotación lenta de la vista 3D de la capa, para una escena de OBS quieta (el tema ya lo fija `&theme=`, ítem 74). Comprobar: prueba de `embedOptions` y un paso del smoke.
+Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tools/loop.mjs --rotar`); el loop lee las dos hojas, y un ítem nuevo lleva el número que dice `--siguiente`.
+
 99. **Salud del repo: tendencia de ramas nuevas** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra cuántas ramas se crearon por semana en las últimas 8, con las actividades ya cargadas. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
-100. ~~**Práctica: reset --mixed y reflog**~~ hecho en #204 · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `reset --mixed` y `reflog`, para recuperar un commit tras un `reset --hard`. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
-101. ~~**Constelación: filtrar por nombre en la URL**~~ hecho en #206 · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] `?constellation=texto` deja en la constelación solo los repos cuyo nombre lo contiene. Comprobar: prueba de la lectura de la URL y un paso del smoke.
 102. **Resumen de la semana: ramas nuevas** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana dice cuántas ramas se crearon en los últimos 7 días, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con ramas fabricadas.
 103. **Vista de texto: ramas fusionadas** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama ya fusionada en la por defecto lo dice, con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
 104. **Salud del repo: tendencia de commits** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los commits por semana de las últimas 8, con lo ya cargado. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
-105. ~~**Capa para streaming, novena entrega**~~ hecho en #207 · Plataformas · 1×2/1. [inv. 2026-10-13] [parte del ítem 11] `&lang=` ya fija el idioma; `&view=2d|3d` fija la vista de la capa sin tocar la de la página. Comprobar: prueba de `embedOptions` y un paso del smoke.
-106. ~~**Práctica: commit --amend**~~ hecho en #208 · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 31] La terminal de práctica entiende `commit --amend` (con `-m`), para corregir el último commit. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
-107. ~~**Fuente Azure DevOps**~~ hecho en #200 · Fuentes · 2×3/3. [replica must 2026-10-28] El primer must que falta frente a GitKraken (su ayuda «Azure DevOps», <https://help.gitkraken.com/gitkraken-desktop/azure-devops/>; `replica/parity.md`): conectar `azure:org/proyecto/repo` y dibujar sus ramas y commits con la API REST de Azure DevOps, primero repos públicos y sin token; la CSP suma solo `https://dev.azure.com`. Si esa API no admite CORS desde la página, la primera entrega es de la app de escritorio, dicho en el README. Comprobar: `tools/azure.test.mjs` con la API simulada y un paso del smoke.
-108. ~~**Launchpad: los PRs de todos los repos seguidos, por estado**~~ hecho en #199 · Escala · 2×3/2. [replica must 2026-10-28] El otro must que falta (ayuda «Launchpad», <https://help.gitkraken.com/gitkraken-desktop/gitkraken-launchpad/>): con dos o más repos abiertos, la vista conjunta «Todos» suma una lista única de sus PRs abiertos agrupados por estado (borrador, checks en rojo, aprobados, esperando revisión), con lo ya cargado de cada pestaña; cada fila lleva a su rama en su pestaña. Comprobar: prueba de la agrupación con PRs fabricados y un paso del smoke con la API simulada.
-109. ~~**Historial de un archivo**~~ hecho en #202 · Análisis · 2×2/1. [replica 2026-10-28] Frente al historial de archivo de GitKraken (ayuda «Diffs, File History and Blame», <https://help.gitkraken.com/gitkraken-desktop/diff/>): cada archivo de los cambios de un commit suma «Historial», que aplica el filtro por ruta a ese archivo (`?path=`) y deja a la vista los commits ya cargados que lo tocaron. Comprobar: un paso del smoke (de un archivo del diff al grafo filtrado por su ruta).
-110. ~~**Ocultar una rama o dejarla sola**~~ hecho en #210 · Análisis · 2×2/2. [replica 2026-10-28] Frente a «Hide and Solo» del grafo de GitKraken (ayuda «Interface», <https://help.gitkraken.com/gitkraken-desktop/interface/>): la ficha de una rama suma «Ocultar» y «Solo esta», en 2D y en 3D, recordados por repo y con un botón para volver a verlas todas. Comprobar: prueba de la selección de ramas y un paso del smoke.
-111. ~~**Primer padre en el grafo**~~ hecho en #212 · Análisis · 2×2/2. [replica 2026-10-28] Lo pide un usuario de GitKraken, que no lo tiene («it lacks the ability to show first parent only», <https://news.ycombinator.com/item?id=40486993>; `replica/fixes.md`): un interruptor deja en el grafo 2D solo la cadena del primer padre de cada rama, como `git log --first-parent`, con lo ya cargado, y viaja en la URL. Comprobar: prueba de la selección de commits y un paso del smoke.
-112. ~~**Vista de un PR: descripción y comentarios**~~ hecho en #211 · Datos · 2×2/2. [replica 2026-10-28] Frente a la vista de PR de GitKraken (ayuda «Pull Requests», <https://help.gitkraken.com/gitkraken-desktop/pull-requests/>): la ficha de una rama con PR de GitHub suma la descripción del PR y sus últimos comentarios, con una consulta solo al pulsar. Comprobar: `tools/github.test.mjs` con la API simulada y un paso del smoke.
-113. ~~**Token para Azure DevOps (proyectos privados)**~~ hecho en #214 · Fuentes · 2×2/2. [parte del ítem 107] La primera entrega de Azure DevOps lee solo proyectos públicos: un campo «Token de Azure DevOps» en Ajustes (un token de acceso personal con el permiso `Code (Read)`, enviado como `Authorization: Basic` solo a `dev.azure.com`, guardado como el de Bitbucket y cifrado con el llavero en escritorio) abre los privados, y con él una redirección al inicio de sesión deja de ser «no encontrado» para ser «token rechazado». Comprobar: `tools/azure.test.mjs` (el token va solo a dev.azure.com y en cada consulta) y el paso del smoke del token.
-114. ~~**Capa para streaming, décima entrega**~~ hecho en #215 · Plataformas · 1×2/1. [parte del ítem 11] `&branch=nombre` deja en la capa solo esa rama y la rama por defecto (el nombre se compara tal cual, sin tocar el DOM como HTML). Comprobar: prueba de `embedOptions` y un paso del smoke.
-115. ~~**Práctica: merge --no-ff**~~ hecho en #216 · Público · 2×2/2. [parte del ítem 31] La terminal de práctica entiende `merge --no-ff`, que crea el commit de fusión aunque se pudiera avanzar. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
-116. ~~**Ocultar o dejar sola una rama, en la URL**~~ hecho en #218 · Análisis · 1×2/1. [parte del ítem 110] `?solo=rama` y `?ocultar=rama` abren el repo ya con ese filtro. Comprobar: prueba de la lectura de la URL y un paso del smoke.
 117. **Azure DevOps: los PRs en el grafo** · Datos · 1×2/2. [parte del ítem 107] Los pull requests de un repo de Azure DevOps salen en el grafo como los de GitHub. Comprobar: `node --test` con la API simulada y un paso del smoke.
-118. ~~**Vista de un PR en la URL**~~ hecho en #219 · Datos · 1×2/1. [parte del ítem 112] `?pr=N` abre la vista del PR (descripción y comentarios). Comprobar: prueba de la lectura de la URL y un paso del smoke.
 119. **Azure DevOps: tags en el grafo** · Datos · 1×2/2. [parte del ítem 107] Los tags de un repo de Azure DevOps (`refs?filter=tags/`) salen en el grafo como los de GitHub. Comprobar: `tools/azure.test.mjs` con la API simulada y un paso del smoke.
-120. ~~**Azure DevOps: cambios de un commit**~~ hecho en #220 · Análisis · 2×2/2. [parte del ítem 107] La ficha de un commit de Azure DevOps muestra sus archivos cambiados (`commits/{id}/changes`), como los de GitHub. Comprobar: `tools/azure.test.mjs` con la API simulada y un paso del smoke.
 121. **Primer padre en el grafo 3D** · Análisis · 1×2/2. [parte del ítem 111] El interruptor de primer padre también deja en el 3D solo la cadena del primer padre de cada rama. Comprobar: prueba de la selección de commits y un paso del smoke en 3D.
-122. ~~**Capa para streaming, undécima entrega**~~ hecho en #222 · Plataformas · 1×2/1. [parte del ítem 11] `&pr=1` deja en la capa solo las ramas con un PR abierto. Comprobar: prueba de `embedOptions` y un paso del smoke.
-123. ~~**Práctica: branch -m**~~ hecho en #224 · Público · 1×2/1. [parte del ítem 31] La terminal de práctica entiende `branch -m` para renombrar una rama. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
 124. **Vista de texto: ocultar una rama** · Público · 1×2/2. [parte del ítem 110] El árbol de la vista de texto respeta las ramas ocultas o «solo esta» y deja ocultarlas desde ahí. Comprobar: `tools/textview.test.mjs` y un paso del smoke.
 125. **Alias de las pestañas** · Escala · 1×1/1. [replica 2026-10-28] Frente a las pestañas con alias de GitKraken (ayuda «Interface», <https://help.gitkraken.com/gitkraken-desktop/interface/>; fila «Pestañas por repo con alias» de `replica/features.csv`, hoy `partial`): la pestaña de un repo se renombra con un alias propio, recordado por repo en este navegador, sin cambiar el repo ni su URL; el nombre real sigue en el título del grafo y en el nombre accesible de la pestaña. Comprobar: prueba del alias guardado y un paso del smoke.
 126. **Varias cuentas del mismo servicio** · Fuentes · 1×2/2. [replica 2026-10-28] Lo piden usuarios de GitKraken («GitKraken doesn't support connecting to multiple Azure DevOps organizations within the same profile», <https://news.ycombinator.com/item?id=31883470>; `replica/fixes.md` y fila «Varios perfiles o cuentas» de `replica/features.csv`, hoy `no`): un segundo token del mismo servicio, atado a un dueño u organización, para seguir a la vez repos privados de dos cuentas; cada token va solo a su API y solo con los repos de su dueño. Comprobar: `node --test` con la API simulada (cada repo con su token) y un paso del smoke.
@@ -525,8 +279,10 @@ se comprueban antes de construir sobre ellas.
 ## Cómo validar un cambio
 
 `npm run check` corre todo lo de abajo en orden (elige Chromium y Electron solo, y las e2e si el
-cambio toca la página o el escritorio) e imprime la línea `Validado:` de la bitácora. Los comandos
-sueltos:
+cambio toca la página o el escritorio) e imprime la línea `Validado:` de la bitácora. Tarda de 8 a 15
+minutos (el smoke solo, unos 8): en una sesión se lanza con `node tools/esperar.mjs --lanzar puerta -- npm
+run check` y se espera con `node tools/esperar.mjs puerta` (`timeout: 600000`; sale 124 mientras sigue), como
+dice «Comandos largos» en la skill; lo mismo el smoke y la auditoría sueltos. Los comandos sueltos:
 
 ```sh
 node --test                    # lógica contra una API de GitHub simulada y el service worker (tools/*.test.mjs)
@@ -600,10 +356,6 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     sale) sigue en «ocultar una rama o dejarla sola…» (falló 1 de 2 en esa reanudación, `waitForFunction: Timeout
     15000ms`) y en «cambios de un commit: desde su ficha, con teclado…» (1 de 3 en la misma reproducción): elegir la
     rama como lo hacen ahora «historial de un archivo» y el paso siguiente (End, etiquetas a la vista, sin `.exit`).
-    En la reanudación de la 172 (2026-10-31, carga 7 en 4 CPU) falló «editar sin token: …» con `intentó escribir sin
-    token`: el paso compara `gh.calls.length` antes y después de abrir Ajustes, pero `fakeGitHub` anota cada consulta
-    (`calls.push(u.pathname)`), también los GET del sondeo en vivo, así que una consulta de lectura en esa ventana parece
-    una escritura. Contar solo los PUT/POST/PATCH/DELETE.
 3. [Deuda] La e2e de escritorio «--bitbucket-url suma solo ese host a las conexiones del CSP…» falló 1 de 2 en la
     reanudación de la 173 (2026-11-01, carga 18 en 4 CPU; la repetición pasó): `#azure-token-input` vacío al abrir
     Ajustes. Es una carrera de la prueba: guarda el token de Azure con `GBDesktop.setToken(…, 'azure')` con la página ya
@@ -632,37 +384,30 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-9. [Deuda] `node tools/audit.mjs --langs` tarda ~145 s en la sesión cloud y la herramienta de shell lo
-    manda al fondo a los 120 s; la puerta normal no. Documentar en «Cómo validar» que se corra con
-    `run_in_background` o partir `--langs` por lotes de idiomas.
-    Reproducción: `time node tools/audit.mjs --langs` → ~145 s.
-10. [QA] A 320 px el grafo sigue a ~420 px del inicio con la demo (antes 522; con un repo real, más: barra de
+9. [QA] A 320 px el grafo sigue a ~420 px del inicio con la demo (antes 522; con un repo real, más: barra de
     vistas, bitácora) y el 3D no arma etiquetas hasta verse. La iteración 167 compactó las cifras (tres columnas
     sin la línea de detalle, 245 → 144 px); falta una forma de llegar al grafo sin recorrer la página (ancla o
     tarjetas plegables en celular). Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la
     auditoría → `.graph-panel` empieza bajo los 400 px; `#graph3d` fuera de la pantalla.
-11. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+10. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-12. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
+11. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
     `WebFetch` a `releases.electronjs.org` dio HTTP 500 en la iteración 119. Repetir la comparación
     cuando la página responda y subir si hay una estable más nueva.
     Reproducción: `WebFetch https://releases.electronjs.org/release/stable` → `HTTP 500`.
-13. [Deuda] `node tools/smoke.mjs` tarda ~8 min en la sesión cloud (Chromium sin GPU) y la herramienta de shell lo
-    corta a los 120 s; documentar en «Cómo validar» que se corra en segundo plano, como `audit --langs`.
-    Reproducción: `time node tools/smoke.mjs` → ~480 s.
-14. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
+12. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
     `npm run check` en la iteración 128 (la repetición pasó), aun con la espera de la 127.
     Reproducción: `npm run check` → `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
 
-15. [QA] El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 del repositorio o la cuota
+13. [QA] El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 del repositorio o la cuota
     agotada, aunque el mensaje de abajo es exacto («No se encontró acme/web…»): en celular, donde solo se ve el
     indicador, confunde. Distinguir «No encontrado» / «Cuota agotada» de «Sin conexión».
     Reproducción: Playwright, 320×640, `?repo=acme/web&lang=es` con la API respondiendo 404 → `#status-text` = «Sin conexión».
-16. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+14. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-17. [QA] A ≤560 px las cifras ya no muestran su línea de detalle (`.stat-sub`: «de N en total», la hora de la última
+15. [QA] A ≤560 px las cifras ya no muestran su línea de detalle (`.stat-sub`: «de N en total», la hora de la última
     actividad): se perdió información en celular. Devolverla como `title`/texto accesible de la tarjeta o en un
     plegable. Reproducción: Playwright, 320×640 → `getComputedStyle(#st-branches-sub).display` = `none`.
 
@@ -674,68 +419,6 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 ## Bitácora
 
 Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las lleva `node tools/loop.mjs --rotar`); el loop lee las dos.
-
-### 2026-10-29 · Iteración 161 · Expansión · Datos
-
-- **Capacidad nueva: vista de un PR, descripción y comentarios** (ítem 112 de la hoja de ruta, `[replica 2026-10-28]`). La ficha de una rama con PR de GitHub (2D, 3D y demo) suma «Ver descripción y comentarios»: al pulsarlo pide el PR (`prDetail`: `/pulls/N` y, si tiene comentarios, la última página de `/issues/N/comments`) y muestra la descripción y los últimos 5 comentarios, todo como texto y recortado; pulsarlo otra vez lo esconde. Fila «Vista de un PR» de `replica/features.csv` a `yes`. El ítem 119 (`?pr=N`) sigue en la hoja.
-- **Pruebas que fallan sin la capacidad:** `node --test tools/github.test.mjs` («la vista de un PR…», las dos consultas y los 5 últimos) y el paso del smoke «vista de un PR».
-- README: función en la lista y Límites conocidos.
-- QA: ficha de rama en 2D con teclado (foco en el botón, `aria-expanded`, región viva), demo sin consultas a la API, 40 idiomas; auditoría: ver Validado.
-- Skills: no aplica: una vista más en la ficha, sin dominio nuevo.
-- Arena: no aplica: una sola forma obvia (consulta al pulsar, mismo cableado que «Ver cambios»).
-- Reclamo: loop/161, sin colisión
-- Validado: 483 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Tres corridas previas de `npm run check` fallaron cada una en un paso distinto del smoke (ocultar rama, historial de archivo, editar sin token); en `origin/dev` limpio el smoke falló también en 2 de 2 corridas (autor, ruta, ocultar, historial): es la intermitencia del pendiente 2 de Mantenimiento, que en este sandbox de 4 núcleos se agrava.
-- **Siguiente:** iteración 162, expansión: ítem 111 (Primer padre en el grafo, Análisis)
-
-### 2026-10-29 · Iteración 162 · Expansión · Análisis
-
-- **Capacidad nueva: primer padre en el grafo** (ítem 111 de la hoja de ruta, con la URL que era el 117, `[replica 2026-10-28]`). En el cuadro de la lupa, el interruptor «Solo el primer padre» deja en el grafo (2D, 3D y vista de texto) solo la cadena `parents[0]` de cada rama, como `git log --first-parent`, con lo ya cargado y sin consultas (`GB.search.firstParent`, compuesto después de los filtros de autor y de ramas). Se recuerda por repo y viaja en la URL: `?firstparent=1` abre ya activo (sobre lo recordado) y la dirección sigue al interruptor; la lupa se subraya mientras está activo.
-- **Pruebas que fallan sin la capacidad:** `node --test tools/search.test.mjs` («firstParent…», «firstParentParam…») y el paso del smoke «Grafo de primer padre (?firstparent=1)».
-- README: función en la lista, Límites conocidos y Seguridad.
-- QA: interruptor con nombre y foco en el cuadro, URL y marca del filtro, 40 idiomas; auditoría: ver Validado.
-- Skills: no aplica: un filtro propio sobre datos ya cargados, sin dominio nuevo.
-- Arena: no aplica: una sola forma obvia (recortar `parents` por rama, compuesto como los otros filtros).
-- Reclamo: loop/162, sin colisión
-- Validado: 485 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera corrida falló en un paso ajeno (historial de un archivo) y la repetición pasó: la intermitencia del pendiente 2 de Mantenimiento.
-- **Siguiente:** iteración 163, mantenimiento · Errores: pendiente 3 (`mapPull` compara con el owner/nombre escrito, no con el que devuelve GitHub (r…)
-
-### 2026-10-29 · Iteración 163 · Mantenimiento · Errores
-
-- **Arreglo: `mapPull` compara con el nombre que da el servidor** (pendiente 3). `sameRepo` se calculaba contra el `owner/nombre` escrito en la dirección; en un repo renombrado o transferido, GitHub devuelve el nombre nuevo en `head.repo.full_name` y todos sus PRs se tomaban por forks (la rama no se marcaba con su PR). Ahora se compara con `base.repo.full_name` (GitHub y Codeberg) o `destination.repository.full_name` (Bitbucket), y solo si falta se cae al nombre escrito. El mismo patrón estaba en `codeberg.js` y `bitbucket.js`; GitLab, Azure y Bitbucket Server comparan por ids o por la marca de fork del servidor y no lo tienen.
-- **Reproducción:** `node --test tools/github.test.mjs tools/codeberg.test.mjs tools/bitbucket.test.mjs` → `not ok … mapPull: un repo renombrado sigue marcando sus PRs de la misma repo` (`expected: true, actual: false`) en las tres.
-- **Pruebas que fallan sin el arreglo:** las tres de `mapPull` en `tools/github.test.mjs`, `tools/codeberg.test.mjs` y `tools/bitbucket.test.mjs` (rama propia, fork y base ausente).
-- README: sin cambios (no cambia ninguna función visible).
-- QA: sin cambios de interfaz; auditoría: no toca la página.
-- Skills: no aplica: arreglo de una línea en el mapeo, sin dominio nuevo.
-- Arena: no aplica: una sola forma obvia (comparar con la base que da el servidor).
-- Reclamo: loop/163, sin colisión
-- Validado: 488 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera corrida falló en el paso «historial de un archivo» (ajeno al cambio) y la repetición pasó: la intermitencia del pendiente 2 de Mantenimiento.
-- **Siguiente:** iteración 164, expansión: ítem 113 (Token para Azure DevOps (proyectos privados), Fuentes)
-
-### 2026-10-29 · Iteración 164 · Expansión · Fuentes
-
-- **Capacidad nueva: token para Azure DevOps (proyectos privados)** (ítem 113 de la hoja de ruta). Un campo «Token de Azure DevOps» en Ajustes (token de acceso personal con `Code (Read)`) se envía como `Authorization: Basic` en cada consulta, solo a dev.azure.com; se guarda como el de Bitbucket (`U.secret`; en escritorio, servicio `azure` cifrado con el llavero). Con token, la redirección al inicio de sesión, el 203 con la página de acceso, el 401 y el 403 son «token rechazado» (`err.authAzure`, lleva a Ajustes); un 404 sigue siendo «no se encontró». Guardar el token reconecta solo las pestañas de Azure.
-- **Pruebas que fallan sin la capacidad:** cuatro en `tools/azure.test.mjs` (privado leído con token y Basic en cada consulta, rechazo por redirección/203/401/403, 404 con token, sin token no cambia nada), dos pasos del smoke (token enviado y guardado; token rechazado) y el token `azure` del llavero en `e2e/desktop.spec.mjs`.
-- README: función, Límites conocidos (CORS con `Authorization` solo probado con API simulada) y Seguridad.
-- QA: Ajustes (campo, mostrar/ocultar, borrar tokens), pestaña Azure reconectada al cambiar el token, error con enlace a Ajustes; 40 idiomas (`check-i18n` 0 errores); auditoría: ver Validado.
-- Skills: no aplica: mismo patrón que el token de Bitbucket, sin dominio nuevo.
-- Arena: no aplica: una sola forma obvia (replicar el token de Bitbucket con la cabecera Basic de Azure).
-- Replica: paridad, sin pasada nueva; hoja de ruta repuesta con los ítems 119 a 124 (continuaciones de ítems hechos)
-- Reclamo: loop/164, sin colisión
-- Validado: 492 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Una corrida previa del smoke falló en «ocultar una rama o dejarla sola» (ajeno al cambio; la intermitencia del pendiente 2 de Mantenimiento) y la repetición pasó.
-- **Siguiente:** iteración 165, expansión: ítem 114 (Capa para streaming, décima entrega, Plataformas)
-
-### 2026-10-30 · Iteración 165 · Expansión · Plataformas
-
-- **Capacidad nueva: `&branch=nombre` en la capa para streaming** (ítem 114 de la hoja de ruta, Capa para streaming, décima entrega): `?embed=1&branch=develop` deja en la capa solo esa rama y la rama por defecto (reusa `byBranches` con `solo`, sin tocar el filtro guardado de la persona); el nombre se compara tal cual (sin caracteres de control, hasta 200) y nunca entra al DOM como HTML; se combina con `&max=`. Sin conexiones nuevas ni CSP distinta; en la web y en la app de escritorio. Sin textos nuevos de interfaz.
-- **Pruebas que fallan sin la capacidad:** `node --test tools/embed.test.mjs` → `embedOptions: branch deja el nombre tal cual…` (sin la capacidad, `branch` es `undefined`); y un paso del smoke («&branch=develop deja 2 ramas…»)
-- README: la lista de funciones (widget embebible) y Seguridad (`&branch=` es solo un nombre comparado como texto)
-- QA: capa `?embed=1` (rama existente, inexistente, nombre con HTML, sin `&branch=`); auditoría: la corre `npm run check`
-- Skills: no aplica: un parámetro más de la URL sobre código propio, sin dominio nuevo.
-- Arena: no aplica: una sola forma obvia (pasar el nombre a `byBranches` como `solo`).
-- Reclamo: loop/165, sin colisión
-- Validado: 493 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 166, expansión: ítem 115 (Práctica: merge --no-ff, Público)
 
 ### 2026-10-30 · Iteración 166 · Expansión · Público
 
@@ -840,4 +523,52 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/173, sin colisión (a mano: tanda de tres iteraciones simultáneas que Benjamin pidió en persona, no un disparo de la Routine; la 172 y la 174 en otras ranuras). Reanudada el 2026-11-01 por otra sesión (`--reclamar` dio Vencida: 31 h sin commits, con #224 abierto): merge de `origin/dev` (#225 y #222) con conflicto solo en `IMPROVEMENTS.md` (la hoja de ruta, donde los dos lados sumaban un ítem 125, y el final de la bitácora), resuelto conservando las dos partes, y `npm run check` de nuevo. `loop/174` (#223) sigue abierta y se retoma como la 174; esta sesión no la toca.
 - Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
 - Validado: 505 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. En la reanudación (carga de 9 a 20 en 4 CPU), las dos primeras corridas cayeron en el smoke, en pasos ajenos al cambio: «historial de un archivo» las dos veces (y «filtro por autor» y «ocultar una rama o dejarla sola» la primera). Fallar dos veces es `dev` en rojo (paso 3 de la skill), así que el paso se arregló aquí, en su propio commit («Smoke: historial de un archivo…»): el paso anterior deja el grafo en el primer commit cargado y, con unos minutos de demo, la etiqueta que elegía queda fuera de la vista (`display: none`), el foco no llega y Enter no abre su ficha; ahora vuelve a lo último y elige una rama vigente y a la vista, como el paso siguiente. Va en este PR y no en otro porque a `dev` se llega solo por el PR de `loop/N` y sin él la 173 no pasa la puerta; lo que queda del patrón, en el pendiente 2. Con el arreglo, la tercera corrida pasó el smoke y cayó solo en la e2e de escritorio «--bitbucket-url…» (ajena al cambio: una carrera de la prueba con el llavero, pendiente 3, nuevo), y la cuarta pasó entera.
+- **Siguiente:** iteración 174, expansión: ítem 99 (Salud del repo: tendencia de ramas nuevas, Análisis)
+
+### 2026-11-01 · Cambio de maquinaria: lo largo se espera en primer plano, la hoja hecha aparte y la cola sin Acción
+
+- **Medido** (git de `origin/dev` y de las `loop/*`, la bitácora, `--salud` y una puerta corrida sobre `dev` sin
+  tocar, el 2026-11-01): `npm run check` tardó 14 min 56 s sin e2e ni auditoría (el smoke solo, 14 min 37 s, con
+  la máquina a carga 10 a 13 en 4 CPU) y falló en tres pasos que nadie había tocado («el 3D arranca con un solo
+  contexto WebGL», «historial de un archivo» y «editar sin token»). La herramienta de shell corta una llamada en
+  primer plano a los 600 s, manda al fondo la que pasa de 120 s sin `timeout` y bloquea un `sleep` suelto; en
+  una Routine el turno terminado es la corrida terminada, y la skill no decía cómo esperar: los pendientes 8 y 12
+  pedían correr el smoke y la auditoría «en segundo plano», que es justo la trampa (loop/135 dio su última señal a
+  los 24 minutos y la relevó el disparo siguiente; la Routine de otro proyecto de Benjamin cerró así su corrida
+  del 2026-11-01). En 13 de las 21 iteraciones de la 152 a la 172 la puerta se repitió por pasos ajenos
+  intermitentes, y la 168 gastó cinco corridas y un relevo (4 h). La 172, la 173 y la 174 se reclamaron a la vez
+  el 2026-10-30, se quedaron esperándose y la reanudación de la 172 se fusionó sola: la 173 quedó 32 h con su PR
+  abierto (la reanudó otra sesión el 2026-11-01, mientras se hacía este cambio) y la 174 sigue con el suyo (#223);
+  `--salud` lo decía como `Acción: loop/174 … revisar a mano`, que ninguna sesión desatendida puede atender.
+  `IMPROVEMENTS.md` pesaba 106 KB, 37 de ellos de los 116 ítems hechos de la hoja de ruta, y cada sesión lo lee
+  entero.
+- **Lo nuevo:** `tools/esperar.mjs` lanza un comando desprendido (`--lanzar <nombre> -- <comando>`) y lo espera en
+  primer plano de a tramos de 9 minutos: sale con el código del comando, 124 si sigue (se vuelve a llamar en el
+  mismo turno) o 125 si murió sin dejarlo; el estado vive fuera del repo (las e2e vacían `test-results/`). La
+  skill suma «Lo que se lee» y «Comandos largos», y la puerta, la QA, el rendimiento y la reanudación lanzan y
+  esperan con él; R8 da error si un bloque de código de la skill corre `npm run check`, el smoke, la auditoría o
+  las e2e sueltos. La puerta se repite a lo sumo tres veces por pasos ajenos distintos; a la tercera, el PR queda
+  abierto con `Validado: sin verde` para el disparo siguiente. Una reanudación no es la iteración del disparo: se
+  sigue con `--reclamar`. Si `git merge origin/dev` no trae nada y solo cambió la bitácora, el paso 5.2 no repite
+  la puerta entera. El prompt de la Routine dice que el turno terminado es la corrida terminada (R8: hasta 750
+  bytes y rutas que existen) y el comando de OpenCode espera igual. `--salud` da `En cola: loop/K` (sin Acción)
+  para una iteración reclamada antes de su turno. `node tools/loop.mjs --rotar` lleva además los ítems hechos de
+  la hoja a `docs/HOJA.md` en orden de número (en este cambio, los 116: `IMPROVEMENTS.md` baja de 106 a 61 KB);
+  `--siguiente`, `--check`, `--reclamar` y `--salud` leen las dos hojas, R2 da error si `docs/HOJA.md` tiene un
+  pendiente, R14 avisa con más de 10 hechos en `IMPROVEMENTS.md` y `--siguiente` dice el número de un ítem nuevo.
+  El smoke cuenta las escrituras aparte: «editar sin token» comparaba todas las consultas y un GET del sondeo en
+  vivo parecía una escritura.
+- **Cierra:** los pendientes de Deuda «`audit --langs` tarda ~145 s» y «el smoke tarda ~8 min» (los dos pedían
+  segundo plano) y la parte de «editar sin token» del pendiente 2; los demás se renumeran.
+- **Pruebas que fallan sin el cambio:** `tools/esperar.test.mjs` (10: el código del comando, 124 sin matarlo, 125
+  con el vigilante muerto, un nombre a la vez, el estado fuera del repo) y `tools/loop.test.mjs` (de 104 a 110):
+  R8 con cada comando largo suelto y el prompt con una ruta que no existe, `En cola` sin Acción, y `rotarHoja`
+  (los hechos al archivo en orden, idempotente, el aviso aunque la cabecera ya enlace el archivo, R2 y R14);
+  mutados, cada guarda hace fallar su prueba. La rotación real conserva cada línea (comparadas ordenadas).
+- README: `tools/esperar.mjs` y `docs/HOJA.md` en la estructura, `--rotar` y cuánto tarda la puerta; `CLAUDE.md`
+  y «Cómo validar un cambio», cómo esperarla.
+- QA: no toca la página ni el escritorio; `esperar.mjs` probado en esta sesión de Claude Code (lanzado en una
+  llamada y esperado en otra: 124 a los 10 s y el código 4 a los 25 s); `--salud` contra origin (`En cola:
+  loop/174`, sin acciones); `--rotar` sobre una copia y sobre el repo.
+- Validado: 521 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio). Antes, con la máquina compartida a carga 10 a 34 en 4 CPU: la puerta sobre `dev` sin tocar falló en 3 pasos del smoke, y cuatro corridas con el cambio (16 a 47 min cada una, lanzadas y esperadas con `tools/esperar.mjs`) fallaron en 2, 6, 51 (todos `page.goto` vencidos) y 2 pasos que el cambio no toca; «editar sin token» pasó en las cinco.
 - **Siguiente:** iteración 174, expansión: ítem 99 (Salud del repo: tendencia de ramas nuevas, Análisis)

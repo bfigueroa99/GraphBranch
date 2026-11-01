@@ -314,7 +314,7 @@ Además, `node --test` prueba la lógica de `js/sources/github.js`, `js/sources/
 
 `node tools/audit.mjs` es una auditoría exploratoria en Chromium: recorre la demo en 3D y 2D, los diálogos, el Replay, las galaxias y el vuelo, el modo TV, el celular en español, árabe, alemán y tamil (con `--langs`, los 40 idiomas) y un repo con una API de GitHub simulada, y busca errores de consola, violaciones del CSP, peticiones a otros sitios, desbordes, controles sin nombre o de menos de 24 px, foco perdido o escondido, ids repetidos, texto sin traducir, animaciones que no respetan el movimiento reducido y consultas de más a la API; además mide la carga, las tareas largas y los cuadros por segundo. Nunca sale a internet. Con `--puerta` compara contra `tools/audit-base.json` (los hallazgos ya conocidos, cada uno con su pendiente en `IMPROVEMENTS.md`) y falla si aparece uno nuevo en dos corridas seguidas.
 
-`npm run check` corre todo lo anterior en orden (y `node --check`, `node tools/check-i18n.mjs` y `node tools/loop.mjs --check`), encuentra Chromium y Electron solo, y corre la auditoría cuando el cambio toca la página (`--auditar` siempre, `--sin-auditar` nunca) y las e2e cuando toca la página o la app de escritorio (`--e2e` siempre, `--sin-e2e` nunca).
+`npm run check` corre todo lo anterior en orden (y `node --check`, `node tools/check-i18n.mjs` y `node tools/loop.mjs --check`), encuentra Chromium y Electron solo, y corre la auditoría cuando el cambio toca la página (`--auditar` siempre, `--sin-auditar` nunca) y las e2e cuando toca la página o la app de escritorio (`--e2e` siempre, `--sin-e2e` nunca). Tarda de 8 a 15 minutos (el smoke solo, unos 8); en una sesión de Claude Code, donde una llamada a la herramienta de shell se corta a los 10 minutos, se lanza con `node tools/esperar.mjs --lanzar puerta -- npm run check` y se espera con `node tools/esperar.mjs puerta`, que sale 124 mientras sigue corriendo.
 
 ## Correr el loop en OpenCode
 
@@ -380,13 +380,15 @@ vendor/               copias locales de d3, Three.js, OrbitControls y las fuente
 tools/check-i18n.mjs  verifica las traducciones contra el inglés
 tools/vendor.mjs      descarga a vendor/ las librerías (comprobando su hash) y las fuentes
 tools/smoke.mjs       prueba de humo: abre la demo en Chromium y recorre lo principal
-tools/loop.mjs        el loop: elige la iteración y rota el subtipo del mantenimiento (--siguiente), vigila IMPROVEMENTS.md, la skill, la investigación y la pasada de Replica (--check), reclama la rama (--reclamar), mide su propia salud (--salud) y la web publicada (--publicado), lleva la bitácora vieja a docs/BITACORA.md (--rotar) y lista o borra las ramas loop/K ya fusionadas (--limpiar [--borrar], desde un PC)
+tools/loop.mjs        el loop: elige la iteración y rota el subtipo del mantenimiento (--siguiente), vigila IMPROVEMENTS.md, la skill, la investigación y la pasada de Replica (--check), reclama la rama (--reclamar), mide su propia salud (--salud) y la web publicada (--publicado), lleva la bitácora vieja a docs/BITACORA.md y los ítems hechos de la hoja de ruta a docs/HOJA.md (--rotar) y lista o borra las ramas loop/K ya fusionadas (--limpiar [--borrar], desde un PC)
 tools/audit.mjs       auditoría exploratoria en Chromium (errores, CSP, desbordes, accesibilidad, cuota, rendimiento); --puerta compara con tools/audit-base.json
 tools/check.mjs       la puerta: npm run check (node --check, node --test, i18n, loop --check, smoke, auditoría y e2e)
+tools/esperar.mjs     corre un comando largo (la puerta, el smoke, la auditoría) desprendido y lo espera en primer plano de a tramos de 9 minutos
 tools/opencode.mjs    una iteración del loop en OpenCode con un modelo de OmniRoute: worktree limpio, proveedor y /iteracion
 tools/*.test.mjs      pruebas de la lógica contra APIs de GitHub, GitLab, Codeberg, Bitbucket y Azure DevOps simuladas, del service worker, de los archivos que arma snapshot.js, del loop (y su lanzador de OpenCode) y de la auditoría (`node --test`)
 docs/investigacion.md la investigación de mercado, fechada y con fuentes, de la que sale la hoja de ruta
 docs/BITACORA.md      las entradas viejas de la bitácora del loop (IMPROVEMENTS.md guarda las últimas; el loop lee las dos)
+docs/HOJA.md          los ítems hechos de la hoja de ruta (IMPROVEMENTS.md guarda los pendientes; el loop lee las dos)
 e2e/                  pruebas de punta a punta de la app de escritorio y la web (npm run test:e2e)
 .claude/skills/iteracion/  cómo hace una iteración el loop (reclamo, protocolos de QA y de cada subtipo de mantenimiento, puerta, registro, PR); PROMPT.md es el prompt de la Routine
 .opencode/commands/iteracion.md  el /iteracion de OpenCode: el prompt de la Routine y qué herramienta reemplaza a cada una de Claude Code

@@ -389,6 +389,9 @@
     // el filtro por ruta es del repo a la vista: no existe en la vista conjunta ni en una fuente que no lo sepa
     canHistory: () => !allOn && typeof source?.commitsByPath === 'function' && diffSrc() === source,
     onHistory: (path) => fileHistory(path),
+    // «Quién lo tocó»: los últimos commits del archivo desde ese commit, de la fuente del diff
+    canBlame: () => typeof diffSrc()?.fileLog === 'function',
+    fileLog: (path, sha) => diffSrc().fileLog(path, sha),
     onClose: () => {
       el.main.classList.remove('diffing', 'diff-wide');
       selectCommit(null);

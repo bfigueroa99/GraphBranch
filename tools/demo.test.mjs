@@ -61,6 +61,16 @@ test('commitsByPath: el historial de un archivo del diff de la demo incluye al c
   assert.ok(probados, 'la demo no tiene un commit con ámbito del que sacar un archivo');
 });
 
+test('fileLog: la demo da los commits que tocaron el archivo, del más nuevo al más viejo y sin pasar del commit pedido', async () => {
+  const { src } = demo(7);
+  const c = [...src.data.commits.values()].find((x) => /^\w+\((\w+)\)!?:/.test(x.message || '') && !/\(deps\)/.test(x.message));
+  const { files } = await src.commitDiff(c.sha);
+  const log = await src.fileLog(files[0].path, c.sha);
+  assert.ok(log.length >= 1 && log.length <= 8);
+  assert.ok(log.every((e, i) => e.date <= c.date && (i === 0 || log[i - 1].date >= e.date)));
+  assert.ok(log.every((e) => e.sha && typeof e.message === 'string' && 'author' in e));
+});
+
 test('los commits de agente de la demo llevan sus trailers, y el filtro por ruta solo mira el titular', async () => {
   const { src } = demo(7);
   const signed = [...src.data.commits.values()].filter((c) => /\nClaude-Session: https:\/\/claude\.ai\/code\/session_\w+$/.test(c.message));

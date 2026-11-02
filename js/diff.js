@@ -298,6 +298,7 @@
    *   onWide(on): la persona pidió el panel ancho (o lo devolvió a su ancho)
    *   canEdit() → ¿se pueden editar los archivos de este repo?; onEdit(path, sha): editar ese archivo (visto en ese commit)
    *   canHistory() → ¿se puede filtrar el grafo por una ruta?; onHistory(path): dejar a la vista los commits que tocaron ese archivo
+   *   canBlame() → ¿la fuente sabe quién tocó un archivo?; fileLog(path, sha) → Promise de [{ sha, author, date, message }]: los últimos commits que lo cambiaron
    * Devuelve { open(sha, { focusGraph }), close(), step(dir), reset(), relocalize(), refresh(), get sha(), get isOpen(), get wide() }.
    */
   function mount(root, opts) {
@@ -573,6 +574,46 @@
           h.addEventListener('click', () => opts.onHistory?.(f.path));
           acts.append(h);
         }
+        let blameOut = null;
+        if (opts.canBlame?.()) {
+          const b = mk('button', 'btn btn-ghost df-blame', t('diff.blame'));
+          b.type = 'button';
+          b.setAttribute('aria-label', t('diff.blameOf', { path: f.path }));
+          b.setAttribute('aria-expanded', 'false');
+          const out = (blameOut = mk('div', 'df-blamelog'));
+          out.hidden = true;
+          out.setAttribute('role', 'status');
+          let token = 0;
+          b.addEventListener('click', async () => {
+            if (!out.hidden) {
+              out.hidden = true;
+              b.setAttribute('aria-expanded', 'false');
+              return;
+            }
+            const mine = ++token;
+            out.hidden = false;
+            b.setAttribute('aria-expanded', 'true');
+            out.textContent = t('diff.loading');
+            try {
+              const log = await opts.fileLog(f.path, sha);
+              if (mine !== token) return;
+              if (!log.length) return void (out.textContent = t('diff.blameNone'));
+              const ol = mk('ol', 'df-blamelist');
+              for (const e of log) {
+                const li = mk('li');
+                li.append(mk('b', 'df-blame-who', e.author || '?'), ' ');
+                const when = mk('span', 'df-when', e.date ? opts.ago(e.date) : '');
+                if (e.date) when.title = opts.dateTime(e.date);
+                li.append(when, ' · ', mk('span', 'df-blame-msg', e.message));
+                ol.append(li);
+              }
+              out.replaceChildren(ol);
+            } catch {
+              if (mine === token) out.textContent = t('diff.fail');
+            }
+          });
+          acts.append(b);
+        }
         if (f.status !== 'removed' && opts.canEdit?.()) {
           const b = mk('button', 'btn btn-ghost df-edit', t('editor.edit'));
           b.type = 'button';
@@ -588,6 +629,7 @@
           acts.append(a);
         }
         if (acts.childNodes.length) sec.append(acts);
+        if (blameOut) sec.append(blameOut);
         if (f.patch) sec.append(codeOf(f));
         else sec.append(mk('p', 'df-note', t('diff.noPatch')));
       };

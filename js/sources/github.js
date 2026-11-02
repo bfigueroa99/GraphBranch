@@ -1405,6 +1405,20 @@
       return out;
     }
 
+    /** Los últimos commits que tocaron `path` hasta `sha` (el primero, el propio `sha` si lo cambió): una consulta
+        `/commits?sha=&path=`. Devuelve [{ sha, author, date, message }], sin líneas (eso es otra entrega). */
+    async fileLog(path, sha, n = 8) {
+      const clean = String(path || '').trim().replace(/^\/+|\/+$/g, '');
+      if (!clean || !sha) return [];
+      const { data } = await this.api(`${this.base}/commits?sha=${encodeURIComponent(sha)}&path=${encodeURIComponent(clean)}&per_page=${n}`, { allow: [404, 409, 422] });
+      return (data || []).slice(0, n).map((c) => ({
+        sha: c.sha,
+        author: c.commit?.author?.name || c.author?.login || '',
+        date: Date.parse(c.commit?.committer?.date || c.commit?.author?.date) || 0,
+        message: U.firstLine(c.commit?.message || ''),
+      }));
+    }
+
     /* ---------- commits ---------- */
 
     /**

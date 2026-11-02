@@ -1,13 +1,13 @@
-## Parity: 86.6 / 100
+## Parity: 88.4 / 100
 
-features 86.6  (38 counted, must-haves 13 of 13 done)
+features 88.4  (38 counted, must-haves 13 of 13 done)
 
 ## By area, weakest first
-- navegación                     0.0  (1 features)
 - cuentas                        0.0  (1 features)
+- navegación                    50.0  (1 features)
 - launchpad                     60.0  (3 features)
 - varios repos                  75.0  (3 features)
-- diffs                         80.0  (5 features)
+- diffs                         90.0  (5 features)
 - grafo                         91.7  (8 features)
 - integraciones                 94.7  (7 features)
 - búsqueda                     100.0  (1 features)
@@ -20,14 +20,14 @@ features 86.6  (38 counted, must-haves 13 of 13 done)
 
 ## Missing, in build order
 - [should] cuentas: Varios perfiles o cuentas, no  (un token por servicio)
-- [should] diffs: Blame de un archivo (autor y fecha por línea), no
+- [should] diffs: Blame de un archivo (autor y fecha por línea), partial  (Quién lo tocó (README, Cambios de cada commit): últimos commits del archivo con autor; falta el autor por línea)
 - [should] grafo: Columnas de autor fecha y SHA a la vista en el grafo, partial  (autor fecha y SHA están en la ficha del commit y en la vista de texto; el grafo no tiene columnas)
 - [should] integraciones: Issues de rastreadores (Jira Trello GitHub Issues), partial  (issues de GitHub GitLab Codeberg y Bitbucket en el panel de actividad y la salud; sin Jira ni Trello)
 - [should] varios repos: Pestañas por repo con alias, partial  (pestañas por repo, sin alias)
 - [could] launchpad: Launchpad: fijar y posponer PRs e issues, no
 - [could] launchpad: Launchpad: vista de equipo filtrada por colaborador, no
-- [could] navegación: Paleta de comandos, no  (atajos de teclado sí; no hay paleta de comandos)
 - [could] grafo: Cargar más historia (límite de commits configurable), partial  (README: Repositorios con miles de ramas; el tope de commits por rama no se elige desde la interfaz)
+- [could] navegación: Paleta de comandos, partial  (Ctrl+K con las acciones de los botones (README: Paleta de comandos); falta saltar a una rama o commit)
 - [could] varios repos: Workspaces compartidos con el equipo, partial  (se comparten por URL con sus repos; sin cuentas ni nube (lo que no cambia))
 
 ## Left out on purpose (not scored)

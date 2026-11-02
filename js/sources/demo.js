@@ -147,6 +147,18 @@
       return out;
     }
 
+    /** Como en GitHub: los últimos commits que tocaron la ruta, del más nuevo al más viejo, desde `sha`. */
+    async fileLog(path, sha, n = 8) {
+      const upTo = this.data.commits.get(sha)?.date ?? Infinity;
+      const touched = await this.commitsByPath(path);
+      return [...touched]
+        .map((id) => this.data.commits.get(id))
+        .filter((c) => c && c.date <= upTo)
+        .sort((a, b) => b.date - a.date)
+        .slice(0, n)
+        .map((c) => ({ sha: c.sha, author: c.author?.name || c.author?.login || '', date: c.date, message: U.firstLine(c.message) }));
+    }
+
     createBranch(name, from, scope, time) {
       const base = this.data.branches.get(from);
       this.data.branches.set(name, {

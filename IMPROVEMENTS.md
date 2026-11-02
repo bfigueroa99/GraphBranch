@@ -275,7 +275,7 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 124. **Vista de texto: ocultar una rama** · Público · 1×2/2. [parte del ítem 110] El árbol de la vista de texto respeta las ramas ocultas o «solo esta» y deja ocultarlas desde ahí. Comprobar: `tools/textview.test.mjs` y un paso del smoke.
 125. **Alias de las pestañas** · Escala · 1×1/1. [replica 2026-10-28] Frente a las pestañas con alias de GitKraken (ayuda «Interface», <https://help.gitkraken.com/gitkraken-desktop/interface/>; fila «Pestañas por repo con alias» de `replica/features.csv`, hoy `partial`): la pestaña de un repo se renombra con un alias propio, recordado por repo en este navegador, sin cambiar el repo ni su URL; el nombre real sigue en el título del grafo y en el nombre accesible de la pestaña. Comprobar: prueba del alias guardado y un paso del smoke.
 126. **Varias cuentas del mismo servicio** · Fuentes · 1×2/2. [replica 2026-10-28] Lo piden usuarios de GitKraken («GitKraken doesn't support connecting to multiple Azure DevOps organizations within the same profile», <https://news.ycombinator.com/item?id=31883470>; `replica/fixes.md` y fila «Varios perfiles o cuentas» de `replica/features.csv`, hoy `no`): un segundo token del mismo servicio, atado a un dueño u organización, para seguir a la vez repos privados de dos cuentas; cada token va solo a su API y solo con los repos de su dueño. Comprobar: `node --test` con la API simulada (cada repo con su token) y un paso del smoke.
-127. **Resaltar una rama al pasar el puntero** · Análisis · 2×1/1. [replica 2026-10-28] Frente a GitKraken (ayuda «Interface», <https://help.gitkraken.com/gitkraken-desktop/interface/>; `replica/features.csv`): al pasar el puntero (o el foco) por el nombre de una rama en la leyenda o la lista, el grafo atenúa lo que no es de esa rama; sin cambiar el filtro ni la URL. Comprobar: prueba de la selección de commits resaltados y un paso del smoke.
+127. ~~**Resaltar una rama al pasar el puntero**~~ hecho en #231 · Análisis. [replica 2026-10-28]
 128. **Paleta de comandos** · Público · 2×2/2. [replica 2026-10-28] Frente a GitKraken (ayuda «Interface»): `Ctrl+K` abre una lista con buscador de las acciones de la app (paneles, filtros, temas, 2D/3D), operable solo con teclado y con nombre accesible. Comprobar: prueba de la lista de acciones y un paso del smoke.
 129. **Columnas de autor y fecha en el grafo 2D** · Análisis · 1×2/2. [replica 2026-10-28] Un interruptor deja, junto a cada commit del grafo 2D, su autor y su fecha, con lo ya cargado. Comprobar: prueba del formato de la fila y un paso del smoke.
 130. **Blame de un archivo, primera entrega** · Datos · 2×2/3. [replica 2026-10-28] [parte de «Blame de un archivo»] Desde la ficha de un archivo cambiado por un commit, lista los últimos commits que lo tocaron con su autor (GitHub, `commits?path=`), sin líneas. Comprobar: `node --test` con la API simulada y un paso del smoke.
@@ -668,3 +668,25 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/175, sin colisión
 - Validado: 535 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
 - **Siguiente:** iteración 176, expansión: ítem 127 (Resaltar una rama al pasar el puntero, Análisis)
+
+### 2026-11-02 · Iteración 176 · Expansión · Análisis
+
+- **Capacidad nueva: resaltar una rama al pasar el puntero, comprobada** (ítem 127 de la hoja de ruta). Al revisar el
+  código, la capacidad ya existía: pasar el puntero o el foco por el nombre de una rama en la leyenda y las cabezas del
+  grafo 2D, o por su etiqueta en el 3D, resalta la rama entera y atenúa el resto sin tocar el filtro ni la URL (README,
+  Vista 2D y Vista 3D). Lo que faltaba era la prueba del puntero en la leyenda (el smoke solo cubría el foco) y la
+  fila de `replica/features.csv`, que seguía en `partial`. Esta entrega suma el paso del smoke y pasa la fila a `yes`
+  (paridad 86,6/100). Las listas de los paneles (salud, bitácora) son diálogos modales que tapan el grafo: resaltar
+  desde ellas no se ve, así que no se hizo.
+- **Pruebas que fallan sin la capacidad:** el paso nuevo del smoke «pasar el puntero por el nombre de una rama de la
+  leyenda 2D resalta solo sus commits, sin tocar filtro ni URL»; no falla sin el cambio porque la capacidad ya estaba:
+  protege contra una regresión, no se vio fallar.
+- README: no cambia (ya lo dice en Vista 2D y Vista 3D).
+- QA: la fila de la leyenda 2D con puntero y teclado, mirada con el paso del smoke (puntero) y el existente (foco); 3D sin
+  cambios; auditoría: no toca la página.
+- Skills: no aplica: la capacidad ya existía; el cambio es una prueba y una fila de la matriz.
+- Arena: no aplica: una sola forma obvia (un paso del smoke).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/176, sin colisión
+- Validado: 535 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 177, expansión: ítem 128 (Paleta de comandos, Público)

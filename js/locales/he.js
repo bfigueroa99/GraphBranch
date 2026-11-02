@@ -942,4 +942,10 @@ GB.i18n.define('he', {
   'agents.commits': 'קומיטים: {n}',
   'agents.openSession': 'פתיחת הסשן ב-Claude Code',
   'tip.agent': 'סוכן: {name}',
+  'cmdk.title': 'לוח פקודות',
+  'cmdk.placeholder': 'הקלידו פעולה…',
+  'cmdk.help': 'Ctrl+K פותח רשימה זו. הקלידו כדי לסנן, חצים כדי לנוע, Enter כדי להריץ, Esc כדי לסגור.',
+  'cmdk.empty': 'אין פעולה תואמת.',
+  'cmdk.view3d': 'מעבר לתצוגת 3D',
+  'cmdk.view2d': 'מעבר לתצוגת 2D',
 });

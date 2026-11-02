@@ -938,6 +938,33 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
+  await step(page, 'paleta de comandos: Ctrl+K abre la lista, filtra con teclado, Enter acciona y Esc cierra', async () => {
+    await page.keyboard.press('Control+k');
+    await page.waitForSelector('#cmdk[open]', { timeout: T(3000) });
+    const first = await page.evaluate(() => ({
+      focus: document.activeElement?.id === 'cmdk-input',
+      opts: document.querySelectorAll('#cmdk .ck-opt').length,
+      name: !!document.querySelector('#cmdk-input').getAttribute('aria-label') && !/cmdk\./.test(document.querySelector('#cmdk-input').getAttribute('aria-label')),
+      text: document.querySelector('#cmdk').textContent,
+    }));
+    if (!first.focus) throw new Error('al abrir, el foco no está en el campo de la paleta');
+    if (first.opts < 5) throw new Error(`la paleta lista ${first.opts} acciones`);
+    if (!first.name || /cmdk\./.test(first.text)) throw new Error('texto sin resolver en la paleta');
+    await page.fill('#cmdk-input', 'zzzz-no-existe');
+    if (await page.evaluate(() => document.querySelectorAll('#cmdk .ck-opt').length)) throw new Error('sin coincidencias no debería listar nada');
+    await page.fill('#cmdk-input', '');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#cmdk:not([open])', { state: 'attached', timeout: T(3000) });
+    await page.keyboard.press('Control+k');
+    await page.waitForSelector('#cmdk[open]', { timeout: T(3000) });
+    await page.fill('#cmdk-input', await page.evaluate(() => document.querySelector('#search-btn').getAttribute('aria-label')));
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    if (await page.evaluate(() => document.querySelector('#cmdk').open)) throw new Error('la paleta sigue abierta tras accionar');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
+  });
+
   await step(page, 'búsqueda de commits: por mensaje y por autor, con teclado, y Enter vuela al commit', async () => {
     await page.click('#search-btn');
     await page.waitForSelector('#search[open]', { timeout: T(3000) });

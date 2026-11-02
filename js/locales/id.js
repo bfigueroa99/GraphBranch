@@ -885,4 +885,10 @@ GB.i18n.define('id', {
   'agents.commits': 'commit: {n}',
   'agents.openSession': 'Buka sesi di Claude Code',
   'tip.agent': 'Agen: {name}',
+  'cmdk.title': 'Palet perintah',
+  'cmdk.placeholder': 'Ketik sebuah aksi…',
+  'cmdk.help': 'Ctrl+K membuka daftar ini. Ketik untuk menyaring, panah untuk bergerak, Enter untuk menjalankan, Esc untuk menutup.',
+  'cmdk.empty': 'Tidak ada aksi yang cocok.',
+  'cmdk.view3d': 'Beralih ke tampilan 3D',
+  'cmdk.view2d': 'Beralih ke tampilan 2D',
 });

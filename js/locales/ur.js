@@ -928,4 +928,10 @@ GB.i18n.define('ur', {
   'agents.commits': 'کمٹ: {n}',
   'agents.openSession': 'Claude Code میں سیشن کھولیں',
   'tip.agent': 'ایجنٹ: {name}',
+  'cmdk.title': 'کمانڈ پیلیٹ',
+  'cmdk.placeholder': 'کوئی عمل لکھیں…',
+  'cmdk.help': 'Ctrl+K یہ فہرست کھولتا ہے۔ فلٹر کرنے کے لیے لکھیں، حرکت کے لیے تیر، چلانے کے لیے Enter، بند کرنے کے لیے Esc۔',
+  'cmdk.empty': 'کوئی عمل مماثل نہیں۔',
+  'cmdk.view3d': '3D منظر پر جائیں',
+  'cmdk.view2d': '2D منظر پر جائیں',
 });

@@ -885,4 +885,10 @@ GB.i18n.define('ja', {
   'agents.commits': 'コミット：{n}',
   'agents.openSession': 'Claude Code でセッションを開く',
   'tip.agent': 'エージェント：{name}',
+  'cmdk.title': 'コマンドパレット',
+  'cmdk.placeholder': '操作を入力…',
+  'cmdk.help': 'Ctrl+K でこの一覧を開きます。入力で絞り込み、矢印キーで移動、Enter で実行、Esc で閉じます。',
+  'cmdk.empty': '一致する操作はありません。',
+  'cmdk.view3d': '3D 表示に切り替える',
+  'cmdk.view2d': '2D 表示に切り替える',
 });

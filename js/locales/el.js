@@ -885,4 +885,10 @@ GB.i18n.define('el', {
   'agents.commits': 'commits: {n}',
   'agents.openSession': 'Άνοιγμα της συνεδρίας στο Claude Code',
   'tip.agent': 'Πράκτορας: {name}',
+  'cmdk.title': 'Παλέτα εντολών',
+  'cmdk.placeholder': 'Πληκτρολογήστε μια ενέργεια…',
+  'cmdk.help': 'Το Ctrl+K ανοίγει αυτή τη λίστα. Πληκτρολογήστε για φιλτράρισμα, βέλη για μετακίνηση, Enter για εκτέλεση, Esc για κλείσιμο.',
+  'cmdk.empty': 'Καμία ενέργεια δεν ταιριάζει.',
+  'cmdk.view3d': 'Αλλαγή σε προβολή 3D',
+  'cmdk.view2d': 'Αλλαγή σε προβολή 2D',
 });

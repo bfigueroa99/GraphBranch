@@ -885,4 +885,10 @@ GB.i18n.define('fi', {
   'agents.commits': 'commitit: {n}',
   'agents.openSession': 'Avaa istunto Claude Codessa',
   'tip.agent': 'Agentti: {name}',
+  'cmdk.title': 'Komentopaletti',
+  'cmdk.placeholder': 'Kirjoita toiminto…',
+  'cmdk.help': 'Ctrl+K avaa tämän luettelon. Kirjoita suodattaaksesi, nuolilla liikut, Enter suorittaa, Esc sulkee.',
+  'cmdk.empty': 'Mikään toiminto ei täsmää.',
+  'cmdk.view3d': 'Vaihda 3D-näkymään',
+  'cmdk.view2d': 'Vaihda 2D-näkymään',
 });

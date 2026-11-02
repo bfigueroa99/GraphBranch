@@ -673,6 +673,16 @@
   </div>
 </dialog>
 
+<dialog class="settings cmdk" id="cmdk" aria-labelledby="cmdk-title" aria-describedby="cmdk-help">
+  <div class="tr-wrap">
+    <h2 id="cmdk-title" class="sr-only" data-i18n="cmdk.title">Command palette</h2>
+    <p class="help" id="cmdk-help" data-i18n="cmdk.help">Type to filter, arrows to move, Enter to run, Esc to close.</p>
+    <input id="cmdk-input" type="text" role="combobox" aria-expanded="true" aria-controls="cmdk-list" aria-autocomplete="list" placeholder="Type an action…" aria-label="Command palette" aria-describedby="cmdk-help" data-i18n-attr="placeholder:cmdk.placeholder;aria-label:cmdk.title" spellcheck="false" autocapitalize="off" autocomplete="off">
+    <ul id="cmdk-list" class="ck-list" role="listbox" aria-labelledby="cmdk-title"></ul>
+    <p class="help" id="cmdk-status" role="status"></p>
+  </div>
+</dialog>
+
 <dialog class="settings trophies health" id="search" aria-labelledby="search-title">
   <div class="tr-wrap">
     <div class="tr-head">
@@ -747,6 +757,7 @@
 <script src="js/overview.js"></script>
 <script src="js/editor.js"></script>
 <script src="js/search.js"></script>
+<script src="js/cmdk.js"></script>
 <script src="js/practice-ui.js"></script>
 <script src="js/hooks.js"></script>
 <script src="js/feed.js"></script>

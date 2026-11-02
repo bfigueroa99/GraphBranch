@@ -886,4 +886,10 @@ GB.i18n.define('fil', {
   'agents.commits': 'mga commit: {n}',
   'agents.openSession': 'Buksan ang session sa Claude Code',
   'tip.agent': 'Agent: {name}',
+  'cmdk.title': 'Command palette',
+  'cmdk.placeholder': 'Mag-type ng aksyon…',
+  'cmdk.help': 'Binubuksan ng Ctrl+K ang listahang ito. Mag-type para mag-filter, mga arrow para gumalaw, Enter para patakbuhin, Esc para isara.',
+  'cmdk.empty': 'Walang tumutugmang aksyon.',
+  'cmdk.view3d': 'Lumipat sa 3D na view',
+  'cmdk.view2d': 'Lumipat sa 2D na view',
 });

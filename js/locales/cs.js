@@ -896,4 +896,10 @@ GB.i18n.define('cs', {
   'agents.commits': 'commity: {n}',
   'agents.openSession': 'Otevřít relaci v Claude Code',
   'tip.agent': 'Agent: {name}',
+  'cmdk.title': 'Paleta příkazů',
+  'cmdk.placeholder': 'Napište akci…',
+  'cmdk.help': 'Ctrl+K otevře tento seznam. Pište pro filtrování, šipky pro pohyb, Enter pro spuštění, Esc pro zavření.',
+  'cmdk.empty': 'Žádná akce neodpovídá.',
+  'cmdk.view3d': 'Přepnout na pohled 3D',
+  'cmdk.view2d': 'Přepnout na pohled 2D',
 });

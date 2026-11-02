@@ -891,4 +891,10 @@ GB.i18n.define('en', {
   'agents.commits': 'commits: {n}',
   'agents.openSession': 'Open the session in Claude Code',
   'tip.agent': 'Agent: {name}',
+  'cmdk.title': 'Command palette',
+  'cmdk.placeholder': 'Type an action…',
+  'cmdk.help': 'Ctrl+K opens this list. Type to filter, arrows to move, Enter to run, Esc to close.',
+  'cmdk.empty': 'No action matches.',
+  'cmdk.view3d': 'Switch to 3D view',
+  'cmdk.view2d': 'Switch to 2D view',
 });

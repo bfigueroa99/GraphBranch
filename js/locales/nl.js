@@ -886,4 +886,10 @@ GB.i18n.define('nl', {
   'agents.commits': 'commits: {n}',
   'agents.openSession': 'Open de sessie in Claude Code',
   'tip.agent': 'Agent: {name}',
+  'cmdk.title': 'Opdrachtenpalet',
+  'cmdk.placeholder': 'Typ een actie…',
+  'cmdk.help': 'Ctrl+K opent deze lijst. Typ om te filteren, pijltjes om te bewegen, Enter om uit te voeren, Esc om te sluiten.',
+  'cmdk.empty': 'Geen actie komt overeen.',
+  'cmdk.view3d': 'Naar 3D-weergave',
+  'cmdk.view2d': 'Naar 2D-weergave',
 });

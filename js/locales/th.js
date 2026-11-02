@@ -886,4 +886,10 @@ GB.i18n.define('th', {
   'agents.commits': 'คอมมิต: {n}',
   'agents.openSession': 'เปิดเซสชันใน Claude Code',
   'tip.agent': 'เอเจนต์: {name}',
+  'cmdk.title': 'พาเลตคำสั่ง',
+  'cmdk.placeholder': 'พิมพ์การทำงาน…',
+  'cmdk.help': 'Ctrl+K เปิดรายการนี้ พิมพ์เพื่อกรอง ใช้ลูกศรเพื่อเลื่อน Enter เพื่อเรียกใช้ Esc เพื่อปิด',
+  'cmdk.empty': 'ไม่มีการทำงานที่ตรงกัน',
+  'cmdk.view3d': 'สลับเป็นมุมมอง 3D',
+  'cmdk.view2d': 'สลับเป็นมุมมอง 2D',
 });

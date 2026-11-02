@@ -885,4 +885,10 @@ GB.i18n.define('ko', {
   'agents.commits': '커밋: {n}',
   'agents.openSession': 'Claude Code에서 세션 열기',
   'tip.agent': '에이전트: {name}',
+  'cmdk.title': '명령 팔레트',
+  'cmdk.placeholder': '동작을 입력하세요…',
+  'cmdk.help': 'Ctrl+K로 이 목록을 엽니다. 입력해 필터링하고, 화살표로 이동하고, Enter로 실행하고, Esc로 닫습니다.',
+  'cmdk.empty': '일치하는 동작이 없습니다.',
+  'cmdk.view3d': '3D 보기로 전환',
+  'cmdk.view2d': '2D 보기로 전환',
 });

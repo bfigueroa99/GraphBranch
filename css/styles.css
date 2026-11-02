@@ -6349,3 +6349,29 @@ a.hl-row:focus-visible {
     display: none;
   }
 }
+
+/* ---------- paleta de comandos ---------- */
+#cmdk .tr-wrap {
+  grid-template-columns: minmax(0, 1fr);
+}
+#cmdk-input {
+  width: 100%;
+}
+.ck-list {
+  margin: 8px 0 0;
+  padding: 0;
+  max-height: min(50vh, 420px);
+  overflow: auto;
+  list-style: none;
+}
+.ck-opt {
+  min-height: 32px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.ck-opt[aria-selected='true'] {
+  background: var(--surface-2);
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+}

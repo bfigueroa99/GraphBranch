@@ -304,6 +304,10 @@ GB.i18n.define('ar', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} → <code>{base}</code> (مسودة)',
   'tip.viewPr': 'عرض PR',
+  'tip.reviewers': 'المراجعون: {list}',
+  'tip.voteYes': 'وافق',
+  'tip.voteNo': 'رفض',
+  'tip.voteWait': 'بانتظار المؤلف',
   'tip.stacked': 'مكدّس فوق PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'عرض MR',
   'tip.mergeOf': {

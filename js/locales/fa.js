@@ -268,6 +268,10 @@ GB.i18n.define('fa', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} → <code>{base}</code> (پیش‌نویس)',
   'tip.viewPr': 'مشاهده PR',
+  'tip.reviewers': 'بازبین‌ها: {list}',
+  'tip.voteYes': 'تأیید کرد',
+  'tip.voteNo': 'رد کرد',
+  'tip.voteWait': 'منتظر نویسنده',
   'tip.stacked': 'روی PR #{num} (<code>{parent}</code>) انباشته شده',
   'tip.viewMr': 'مشاهده MR',
   'tip.mergeOf': {

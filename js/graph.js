@@ -152,6 +152,11 @@
       const stack = ctx.stacks?.get(branch);
       if (stack) rows.push(`<span class="tip-stack">${i18n.html('tip.stacked', { num: stack.parentNum, parent: stack.parent })}</span>`);
       if (pr) rows.push(`<span>${i18n.html(prKey(pr, pr.draft ? 'tip.prDraft' : 'tip.pr'), { num: pr.number, base: pr.base })}${U.safeUrl(pr.url) ? ` · <a href="${U.esc(U.safeUrl(pr.url))}" target="_blank" rel="noopener">${U.esc(tr(prKey(pr, 'tip.viewPr')))}</a>` : ''}</span>`);
+      if (pr?.reviewers?.length) {
+        const VOTES = { yes: 'tip.voteYes', no: 'tip.voteNo', wait: 'tip.voteWait' };
+        const list = pr.reviewers.map((r) => (VOTES[r.vote] ? `${r.name} (${tr(VOTES[r.vote])})` : r.name)).join(', ');
+        rows.push(`<span class="tip-reviewers">${U.esc(tr('tip.reviewers', { list }))}</span>`);
+      }
     }
     return `
       <div class="tip-head">${U.avatarHTML(c.author, 22)}<span class="tip-author">${U.esc(c.author.name || tr('author.unknown'))}</span><span class="tip-time" title="${U.esc(U.fmtDateTime(c.date))}">${U.timeAgo(c.date)}</span></div>

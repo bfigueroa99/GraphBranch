@@ -246,6 +246,10 @@ GB.i18n.define('uk', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} (чернетка) → <code>{base}</code>',
   'tip.viewPr': 'відкрити PR',
+  'tip.reviewers': 'Рецензенти: {list}',
+  'tip.voteYes': 'схвалив',
+  'tip.voteNo': 'відхилив',
+  'tip.voteWait': 'чекає на автора',
   'tip.stacked': 'Поверх PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'відкрити MR',
   'tip.mergeOf': {

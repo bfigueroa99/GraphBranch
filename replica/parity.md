@@ -1,8 +1,6 @@
-## Parity: 83.5 / 100
+## Parity: 85.4 / 100
 
-features 83.5  (38 counted, must-haves 12 of 13 done)
-
-Not shippable yet: 1 must-have features are not done.
+features 85.4  (38 counted, must-haves 13 of 13 done)
 
 ## By area, weakest first
 - navegación                     0.0  (1 features)
@@ -11,7 +9,7 @@ Not shippable yet: 1 must-have features are not done.
 - varios repos                  75.0  (3 features)
 - diffs                         80.0  (5 features)
 - grafo                         86.1  (8 features)
-- integraciones                 86.8  (7 features)
+- integraciones                 94.7  (7 features)
 - búsqueda                     100.0  (1 features)
 - pull requests                100.0  (3 features)
 - ci                           100.0  (1 features)
@@ -21,7 +19,6 @@ Not shippable yet: 1 must-have features are not done.
 - compartir                    100.0  (1 features)
 
 ## Missing, in build order
-- [must] integraciones: Azure DevOps, partial  (README: También Azure DevOps (públicos y, con token, privados: #214; los archivos de un commit, sin el diff: #220); faltan los PRs en el grafo (ítem 117))
 - [should] cuentas: Varios perfiles o cuentas, no  (un token por servicio)
 - [should] diffs: Blame de un archivo (autor y fecha por línea), no
 - [should] grafo: Columnas de autor fecha y SHA a la vista en el grafo, partial  (autor fecha y SHA están en la ficha del commit y en la vista de texto; el grafo no tiene columnas)

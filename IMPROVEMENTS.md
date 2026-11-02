@@ -269,7 +269,7 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 102. **Resumen de la semana: ramas nuevas** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana dice cuántas ramas se crearon en los últimos 7 días, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con ramas fabricadas.
 103. **Vista de texto: ramas fusionadas** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama ya fusionada en la por defecto lo dice, con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
 104. **Salud del repo: tendencia de commits** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los commits por semana de las últimas 8, con lo ya cargado. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
-117. **Azure DevOps: los PRs en el grafo** · Datos · 1×2/2. [parte del ítem 107] [replica must 2026-10-28] Lo que le falta al must «Azure DevOps» frente a GitKraken (su ayuda «Azure DevOps», <https://help.gitkraken.com/gitkraken-desktop/azure-devops/>, nombra los PRs y sus revisores; `replica/parity.md`): los pull requests de un repo de Azure DevOps salen en el grafo como los de GitHub. Comprobar: `node --test` con la API simulada y un paso del smoke.
+117. ~~**Azure DevOps: los PRs en el grafo**~~ hecho en #229 · Datos · 1×2/2. [parte del ítem 107] [replica must 2026-10-28] Lo que le falta al must «Azure DevOps» frente a GitKraken (su ayuda «Azure DevOps», <https://help.gitkraken.com/gitkraken-desktop/azure-devops/>, nombra los PRs y sus revisores; `replica/parity.md`): los pull requests de un repo de Azure DevOps salen en el grafo como los de GitHub. Comprobar: `node --test` con la API simulada y un paso del smoke.
 119. **Azure DevOps: tags en el grafo** · Datos · 1×2/2. [parte del ítem 107] Los tags de un repo de Azure DevOps (`refs?filter=tags/`) salen en el grafo como los de GitHub. Comprobar: `tools/azure.test.mjs` con la API simulada y un paso del smoke.
 121. **Primer padre en el grafo 3D** · Análisis · 1×2/2. [parte del ítem 111] El interruptor de primer padre también deja en el 3D solo la cadena del primer padre de cada rama. Comprobar: prueba de la selección de commits y un paso del smoke en 3D.
 124. **Vista de texto: ocultar una rama** · Público · 1×2/2. [parte del ítem 110] El árbol de la vista de texto respeta las ramas ocultas o «solo esta» y deja ocultarlas desde ahí. Comprobar: `tools/textview.test.mjs` y un paso del smoke.
@@ -632,3 +632,25 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
   red es `role="img"` con su resumen y las listas dicen lo mismo), CSP sin cambios.
 - Validado: 533 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Electron no estaba en la sesión (su instalador falla con el proxy): se bajó el zip de la versión fijada con `curl`, se comprobó su SHA-256 contra `SHASUMS256.txt` y se extrajo como lo hace el instalador. La primera puerta cayó en los cuatro pasos de arriba; la segunda, ya con los arreglos, solo en «filtro por autor…: quitar el filtro no deja el grafo como estaba» (el pendiente 12, intermitente en `dev` con el mismo mensaje; en la primera había pasado), y la tercera pasó entera.
 - **Siguiente:** iteración 174, expansión: ítem 117 (Azure DevOps: los PRs en el grafo, Datos)
+
+### 2026-11-02 · Iteración 174 · Expansión · Datos
+
+- **Capacidad nueva: los revisores de un PR de Azure DevOps** (ítem 117 de la hoja de ruta). Los PRs de Azure ya salían
+  en el grafo desde #214 (etiqueta `#N`, borradores, fusionados y cerrados; lo comprobaban `tools/azure.test.mjs` y un
+  paso del smoke), así que el ítem estaba hecho a medias sin que la hoja lo supiera. Lo que faltaba frente a GitKraken
+  («los PRs y sus revisores») eran los revisores: la ficha de una rama con PR de Azure suma «Revisores: Cy (aprobó), Di
+  (espera al autor), Ed» con el voto de cada uno (10 y 5 aprobaron, -5 espera al autor, -10 rechazó, 0 aún nada); los
+  grupos (equipos) no se listan y se muestran hasta 8. Sin consultas nuevas: la lista de PRs activos ya traía
+  `reviewers`. Funciona igual en 2D y 3D (misma ficha) y en las pestañas de Azure; en GitHub y las demás fuentes no
+  cambia nada (no traen `reviewers`).
+- **Pruebas que fallan sin la capacidad:** `tools/azure.test.mjs` (de 16 a 17: votos, grupo y vacíos) y el paso del smoke
+  «la ficha de la rama con PR de Azure DevOps lista sus revisores con el voto».
+- README: la función de Azure DevOps y Límites conocidos; la fila de Replica pasa a `yes`.
+- QA: ficha de la rama en 2D con tema claro (el texto va escapado con `U.esc`, nombres recortados a 60 letras); 4 textos
+  nuevos en los 40 idiomas (`check-i18n` 0 errores); la CSP no cambia; sin consultas nuevas; auditoría: ver Validado.
+- Skills: no aplica: un campo más de una API ya consumida, que no entra en un dominio de guía experta.
+- Arena: no aplica: una sola forma obvia (leer `reviewers` y sumarlo a la ficha).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: relevo de loop/174 (1ea0916)
+- Validado: pendiente
+- **Siguiente:** iteración 175, mantenimiento · Deuda: pendiente 1 (El paso del smoke «editar el código: desde los cambios de un commit se abre su …)

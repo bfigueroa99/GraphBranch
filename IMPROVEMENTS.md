@@ -280,7 +280,7 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 129. **Columnas de autor y fecha en el grafo 2D** · Análisis · 1×2/2. [replica 2026-10-28] Un interruptor deja, junto a cada commit del grafo 2D, su autor y su fecha, con lo ya cargado. Comprobar: prueba del formato de la fila y un paso del smoke.
 130. ~~**Blame de un archivo, primera entrega**~~ hecho en #233 · Datos. [replica 2026-10-28]
 131. **Issues de Jira y Trello, primera entrega** · Fuentes · 1×2/3. [replica 2026-10-28] [parte de «Issues de Jira y Trello»] Las claves tipo `ABC-123` de los mensajes de commit y de PR se vuelven enlaces a una URL de Jira que el usuario configura (guardada en este navegador), sin consultas nuevas. Comprobar: prueba del reconocimiento de claves y un paso del smoke.
-132. **Paleta de comandos, segunda entrega** · Público · 1×2/1. [parte del ítem 128] La paleta también salta a una rama o a un commit por nombre o SHA entre lo ya cargado. Comprobar: prueba de la búsqueda y un paso del smoke.
+132. ~~**Paleta de comandos, segunda entrega**~~ hecho en #235 · Público. [parte del ítem 128]
 133. **Blame de un archivo, segunda entrega** · Datos · 2×3/3. [parte del ítem 130] Autor y fecha por línea del archivo abierto en el diff (GraphQL `blame` de GitHub, con token), con la misma lista de «Quién lo tocó» como respaldo sin token. Comprobar: `node --test` con la API simulada de GraphQL y un paso del smoke con la demo.
 
 ## Cómo validar un cambio
@@ -742,3 +742,20 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/179, sin colisión
 - Validado: 542 pruebas (`node --test`), smoke, i18n (0 errores) y 28 e2e en verde. La primera corrida falló en «ocultar una rama o dejarla sola» (ajeno al cambio; intermitente, anotado en el pendiente 10).
 - **Siguiente:** iteración 180, expansión: ítem 132 (Paleta de comandos, segunda entrega, Público)
+
+### 2026-11-02 · Iteración 180 · Expansión · Público
+
+- **Capacidad nueva: la paleta de comandos salta a una rama o a un commit** (ítem 132 de la hoja de ruta, segunda entrega del 128).
+  Al escribir en `Ctrl+K`, además de las acciones, aparecen hasta 8 saltos: las ramas cuyo nombre contiene lo escrito (sin
+  acentos ni mayúsculas) y los commits cuyo SHA empieza por 4 o más caracteres hexadecimales, solo entre lo ya cargado y sin
+  consultas; Enter lleva el grafo hasta ahí (`focusBranch`/`focusSha`). `jumpTargets` en `js/cmdk.js`, `targets`/`jump` en
+  `js/app.js`. 2 claves nuevas (`cmdk.toBranch`, `cmdk.toCommit`) en los 40 idiomas; sin CSP nueva.
+- **Pruebas que fallan sin la capacidad:** `tools/cmdk.test.mjs` (`jumpTargets` y los saltos en `mount`) y el paso del smoke «paleta de comandos: escribir el nombre de una rama o el SHA de un commit ofrece saltar a él, sin consultas».
+- README: Paleta de comandos, Estructura, Límites conocidos y Seguridad; fila «Paleta de comandos» de Replica a `yes`; Mapa de alcance.
+- QA: nombre accesible y sin claves sin resolver, ninguna petición al saltar y consulta sin coincidencias, mirados con el paso del smoke; 40 idiomas con `check-i18n`; auditoría en la puerta (0 hallazgos nuevos).
+- Skills: no aplica: una extensión de la lista de un diálogo que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (buscar en lo ya cargado y sumarlo a la lista).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/180, sin colisión
+- Validado: 544 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 181, expansión: ítem 133 (Blame de un archivo, segunda entrega, Datos)

@@ -1419,6 +1419,44 @@
       }));
     }
 
+    /** Blame por líneas (GraphQL `Commit.blame`, solo con token): quién escribió cada tramo del archivo en `sha`.
+        Devuelve [{ from, to, sha, author, date, message }] ordenado por línea, o null si no hay token o GitHub no lo da
+        (el que llama cae a `fileLog`). Una consulta. */
+    async fileBlame(path, sha, max = 400) {
+      const clean = String(path || '').trim().replace(/^\/+|\/+$/g, '');
+      if (!this.token || !clean || !sha) return null;
+      let data;
+      try {
+        data = await this.gql(
+          `query($owner: String!, $name: String!, $oid: GitObjectID!, $path: String!) {
+            repository(owner: $owner, name: $name) {
+              object(oid: $oid) { ... on Commit { blame(path: $path) { ranges {
+                startingLine endingLine
+                commit { oid messageHeadline author { name date user { login } } }
+              } } } }
+            }
+          }`,
+          { oid: sha, path: clean },
+        );
+      } catch (err) {
+        if (err?.kind === 'rate') throw err;
+        return null;
+      }
+      const ranges = data?.repository?.object?.blame?.ranges;
+      if (!Array.isArray(ranges) || !ranges.length) return null;
+      return ranges
+        .slice(0, max)
+        .map((r) => ({
+          from: r.startingLine,
+          to: r.endingLine,
+          sha: r.commit?.oid || '',
+          author: r.commit?.author?.name || r.commit?.author?.user?.login || '',
+          date: Date.parse(r.commit?.author?.date) || 0,
+          message: U.firstLine(r.commit?.messageHeadline || ''),
+        }))
+        .sort((a, b) => a.from - b.from);
+    }
+
     /* ---------- commits ---------- */
 
     /**

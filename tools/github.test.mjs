@@ -777,6 +777,40 @@ test('fileLog: pide /commits?sha=&path= desde ese commit y devuelve autor, fecha
   assert.equal(gh.calls.length, 0, 'sin ruta no gasta cuota');
 });
 
+test('fileBlame: con token pide el blame por GraphQL (una consulta) y devuelve tramos de líneas con autor, fecha y titular; sin token no consulta', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const ranges = [
+    { startingLine: 21, endingLine: 40, commit: { oid: 'a2', messageHeadline: 'segundo\n\ncuerpo', author: { name: 'Ana', date: '2026-01-02T00:00:00Z', user: { login: 'ana' } } } },
+    { startingLine: 1, endingLine: 20, commit: { oid: 'a1', messageHeadline: 'primero', author: { name: null, date: '2026-01-01T00:00:00Z', user: { login: 'bob' } } } },
+  ];
+  const { src } = connect(gh, 'tok');
+  await src.cycle();
+  const sent = [];
+  gh.override = (path, opts) => {
+    if (path !== '/graphql') return null;
+    const b = JSON.parse(opts.body);
+    if (!/blame\(path/.test(b.query)) return null;
+    sent.push(b.variables);
+    return { body: { data: { repository: { object: { blame: { ranges } } } } } };
+  };
+  const out = await src.fileBlame('/src/app.js', 'a2');
+  assert.equal(sent.length, 1, 'una sola consulta');
+  assert.deepEqual({ oid: sent[0].oid, path: sent[0].path }, { oid: 'a2', path: 'src/app.js' });
+  assert.equal(JSON.stringify(out.map((r) => [r.from, r.to, r.sha, r.author, r.message])), JSON.stringify([
+    [1, 20, 'a1', 'bob', 'primero'],
+    [21, 40, 'a2', 'Ana', 'segundo'],
+  ]));
+  assert.ok(out.every((r) => typeof r.date === 'number' && r.date > 0));
+  // un error de GraphQL (archivo binario, permiso) no rompe: el diff cae al historial del archivo
+  gh.override = (path) => (path === '/graphql' ? { body: { data: { repository: { object: null } } } } : null);
+  assert.equal(await src.fileBlame('src/app.js', 'a2'), null);
+  const anon = connect(gh).src;
+  gh.calls.length = 0;
+  assert.equal(await anon.fileBlame('src/app.js', 'a2'), null);
+  assert.equal(gh.calls.length, 0, 'sin token no gasta cuota');
+});
+
 /* Forks activos: /forks, solo los que hicieron push propio en los últimos 90 días. */
 
 test('forks: solo los activos, el push más nuevo primero, y una consulta cada 15 minutos, solo al pedirlos', async () => {

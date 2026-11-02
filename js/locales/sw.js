@@ -652,6 +652,7 @@ GB.i18n.define('sw', {
   'diff.blame': 'Nani alikigusa',
   'diff.blameOf': 'Mabadiliko ya hivi karibuni ya {path}',
   'diff.blameNone': 'Hakuna commit ya awali iliyogusa faili hii.',
+  'diff.blameLines': 'Mistari {from}–{to}',
   'diff.tooLong': 'Mistari {n} ya kwanza pekee ndiyo inaonyeshwa.',
   'diff.lines': '{add} zimeongezwa, {del} zimeondolewa',
   'diff.mode': 'Jinsi mabadiliko yanavyoonyeshwa',

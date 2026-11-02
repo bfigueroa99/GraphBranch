@@ -392,6 +392,7 @@
     // «Quién lo tocó»: los últimos commits del archivo desde ese commit, de la fuente del diff
     canBlame: () => typeof diffSrc()?.fileLog === 'function',
     fileLog: (path, sha) => diffSrc().fileLog(path, sha),
+    fileBlame: (path, sha) => (typeof diffSrc()?.fileBlame === 'function' ? diffSrc().fileBlame(path, sha) : null),
     onClose: () => {
       el.main.classList.remove('diffing', 'diff-wide');
       selectCommit(null);

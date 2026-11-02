@@ -652,6 +652,7 @@ GB.i18n.define('vi', {
   'diff.blame': 'Ai đã sửa',
   'diff.blameOf': 'Thay đổi gần đây của {path}',
   'diff.blameNone': 'Không có commit trước đó nào sửa tệp này.',
+  'diff.blameLines': 'Dòng {from}–{to}',
   'diff.tooLong': 'Chỉ hiển thị {n} dòng đầu tiên.',
   'diff.lines': 'thêm {add}, bớt {del}',
   'diff.mode': 'Cách hiển thị thay đổi',

@@ -159,6 +159,15 @@
         .map((c) => ({ sha: c.sha, author: c.author?.name || c.author?.login || '', date: c.date, message: U.firstLine(c.message) }));
     }
 
+    /** Blame de la demo: las líneas (120, inventadas) se reparten entre los commits de `fileLog`, el más nuevo al final. */
+    async fileBlame(path, sha) {
+      const log = await this.fileLog(path, sha, 6);
+      if (!log.length) return null;
+      const total = 120;
+      const size = Math.ceil(total / log.length);
+      return [...log].reverse().map((e, i) => ({ ...e, from: i * size + 1, to: Math.min(total, (i + 1) * size) }));
+    }
+
     createBranch(name, from, scope, time) {
       const base = this.data.branches.get(from);
       this.data.branches.set(name, {

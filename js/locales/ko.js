@@ -652,6 +652,7 @@ GB.i18n.define('ko', {
   'diff.blame': '누가 수정했나',
   'diff.blameOf': '{path}의 최근 변경',
   'diff.blameNone': '이전에 이 파일을 수정한 커밋이 없습니다.',
+  'diff.blameLines': '{from}–{to}행',
   'diff.tooLong': '처음 {n}줄만 표시됩니다.',
   'diff.lines': '{add}줄 추가, {del}줄 삭제',
   'diff.mode': '변경 사항 표시 방식',

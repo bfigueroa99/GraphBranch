@@ -652,6 +652,7 @@ GB.i18n.define('hi', {
   'diff.blame': 'किसने बदला',
   'diff.blameOf': '{path} के हाल के बदलाव',
   'diff.blameNone': 'इससे पहले किसी कमिट ने इस फ़ाइल को नहीं बदला।',
+  'diff.blameLines': 'पंक्तियाँ {from}–{to}',
   'diff.tooLong': 'केवल पहली {n} पंक्तियाँ दिखाई गई हैं।',
   'diff.lines': '{add} जोड़ी गईं, {del} हटाई गईं',
   'diff.mode': 'बदलाव कैसे दिखाए जाएँ',

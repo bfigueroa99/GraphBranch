@@ -6256,6 +6256,10 @@ a.hl-row:focus-visible {
 .df-blamelist li {
   overflow-wrap: anywhere;
 }
+.df-blame-lines {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted, inherit);
+}
 .editor {
   width: min(920px, calc(100vw - 2 * var(--gutter)));
 }

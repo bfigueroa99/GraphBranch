@@ -663,6 +663,7 @@ GB.i18n.define('cs', {
   'diff.blame': 'Kdo ho měnil',
   'diff.blameOf': 'Poslední změny souboru {path}',
   'diff.blameNone': 'Tento soubor dříve žádný commit neměnil.',
+  'diff.blameLines': 'Řádky {from}–{to}',
   'diff.tooLong': 'Zobrazeno je jen prvních {n} řádků.',
   'diff.lines': 'přidáno {add}, odebráno {del}',
   'diff.mode': 'Jak se změny zobrazují',

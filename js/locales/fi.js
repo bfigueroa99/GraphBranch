@@ -652,6 +652,7 @@ GB.i18n.define('fi', {
   'diff.blame': 'Kuka muutti',
   'diff.blameOf': 'Tiedoston {path} viimeisimmät muutokset',
   'diff.blameNone': 'Mikään aiempi commit ei muuttanut tätä tiedostoa.',
+  'diff.blameLines': 'Rivit {from}–{to}',
   'diff.tooLong': 'Vain ensimmäiset {n} riviä näytetään.',
   'diff.lines': '{add} lisätty, {del} poistettu',
   'diff.mode': 'Miten muutokset näytetään',

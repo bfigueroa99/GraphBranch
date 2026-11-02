@@ -709,6 +709,7 @@ GB.i18n.define('he', {
   'diff.blame': 'מי נגע בו',
   'diff.blameOf': 'השינויים האחרונים ב-{path}',
   'diff.blameNone': 'אף קומיט קודם לא שינה את הקובץ הזה.',
+  'diff.blameLines': 'שורות {from}–{to}',
   'diff.tooLong': 'מוצגות רק {n} השורות הראשונות.',
   'diff.lines': '{add} נוספו, {del} הוסרו',
   'diff.mode': 'איך מוצגים השינויים',

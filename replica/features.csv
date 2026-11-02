@@ -12,7 +12,7 @@ Paleta de comandos,navegación,could,yes,yes,"Ctrl+K con las acciones de los bot
 Cambios de un commit archivo por archivo,diffs,must,yes,yes,"README: Cambios de cada commit (#183)"
 Diff lado a lado con las palabras que cambiaron,diffs,should,yes,yes,"README: Cambios de cada commit (unificado o lado a lado, palabras marcadas)"
 Historial de un archivo,diffs,should,yes,yes,"README: Cambios de cada commit (el botón «Historial» de cada archivo aplica el filtro por ruta a ese archivo)"
-Blame de un archivo (autor y fecha por línea),diffs,should,yes,partial,"Quién lo tocó (README, Cambios de cada commit): últimos commits del archivo con autor; falta el autor por línea"
+Blame de un archivo (autor y fecha por línea),diffs,should,yes,yes,"Quién lo tocó (README, Cambios de cada commit): autor y fecha por tramo de líneas con GraphQL (token) y, sin él, los últimos commits del archivo"
 Editar un archivo y hacer commit desde el diff,diffs,could,yes,yes,"README: Editar el código (#186)"
 PRs abiertos con su estado de CI y de revisión,pull requests,must,yes,yes,"README: Salud del repo (PRs por estado) y la marca del PR en el grafo"
 Vista de un PR (descripción comentarios revisores checks),pull requests,should,yes,yes,"README: Descripción y comentarios de un PR (ficha de la rama; GitHub y demo; sin revisores ni checks por línea)"

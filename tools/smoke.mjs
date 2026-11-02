@@ -1325,6 +1325,7 @@ console.log('Escritorio (1280×800)');
     if ((await btn.getAttribute('aria-expanded')) !== 'true') throw new Error('aria-expanded no pasó a true');
     const row = await file.locator('.df-blamelist li').first().textContent();
     if (/undefined|diff\./.test(row) || row.trim().length < 5) throw new Error('fila vacía o con claves: ' + row);
+    if (!/\d+\D+\d+/.test(await file.locator('.df-blamelist li .df-blame-lines').first().textContent())) throw new Error('la demo no mostró tramos de líneas');
     await btn.click();
     if (await file.locator('.df-blamelog').isVisible()) throw new Error('el segundo clic no cerró la lista');
   });

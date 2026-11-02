@@ -660,6 +660,7 @@ GB.i18n.define('hr', {
   'diff.blame': 'Tko ga je mijenjao',
   'diff.blameOf': 'Posljednje promjene datoteke {path}',
   'diff.blameNone': 'Nijedan raniji commit nije mijenjao ovu datoteku.',
+  'diff.blameLines': 'Retci {from}–{to}',
   'diff.tooLong': 'Prikazano je samo prvih {n} redaka.',
   'diff.lines': 'dodano {add}, uklonjeno {del}',
   'diff.mode': 'Kako se prikazuju promjene',

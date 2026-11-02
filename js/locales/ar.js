@@ -751,6 +751,7 @@ GB.i18n.define('ar', {
   'diff.blame': 'من عدّله',
   'diff.blameOf': 'آخر التغييرات في {path}',
   'diff.blameNone': 'لم يعدّل أي إيداع سابق هذا الملف.',
+  'diff.blameLines': 'الأسطر {from}–{to}',
   'diff.tooLong': 'تُعرض أول {n} سطر فقط.',
   'diff.lines': '{add} مضافة، {del} محذوفة',
   'diff.mode': 'طريقة عرض التغييرات',

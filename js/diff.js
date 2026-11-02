@@ -299,6 +299,7 @@
    *   canEdit() → ¿se pueden editar los archivos de este repo?; onEdit(path, sha): editar ese archivo (visto en ese commit)
    *   canHistory() → ¿se puede filtrar el grafo por una ruta?; onHistory(path): dejar a la vista los commits que tocaron ese archivo
    *   canBlame() → ¿la fuente sabe quién tocó un archivo?; fileLog(path, sha) → Promise de [{ sha, author, date, message }]: los últimos commits que lo cambiaron
+   *   fileBlame(path, sha) → Promise de [{ from, to, sha, author, date, message }] por tramo de líneas, o null si la fuente no puede (entonces rige fileLog)
    * Devuelve { open(sha, { focusGraph }), close(), step(dir), reset(), relocalize(), refresh(), get sha(), get isOpen(), get wide() }.
    */
   function mount(root, opts) {
@@ -595,12 +596,15 @@
             b.setAttribute('aria-expanded', 'true');
             out.textContent = t('diff.loading');
             try {
-              const log = await opts.fileLog(f.path, sha);
+              // por líneas si la fuente puede (GitHub con token, la demo); si no, los últimos commits del archivo
+              const lines = f.status === 'removed' ? null : await Promise.resolve(opts.fileBlame?.(f.path, sha)).catch(() => null);
+              const log = lines?.length ? lines : await opts.fileLog(f.path, sha);
               if (mine !== token) return;
               if (!log.length) return void (out.textContent = t('diff.blameNone'));
               const ol = mk('ol', 'df-blamelist');
               for (const e of log) {
                 const li = mk('li');
+                if (e.from) li.append(mk('span', 'df-blame-lines', t('diff.blameLines', { from: opts.num(e.from), to: opts.num(e.to) })), ' ');
                 li.append(mk('b', 'df-blame-who', e.author || '?'), ' ');
                 const when = mk('span', 'df-when', e.date ? opts.ago(e.date) : '');
                 if (e.date) when.title = opts.dateTime(e.date);

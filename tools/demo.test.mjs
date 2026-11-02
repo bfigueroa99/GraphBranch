@@ -71,6 +71,17 @@ test('fileLog: la demo da los commits que tocaron el archivo, del más nuevo al 
   assert.ok(log.every((e) => e.sha && typeof e.message === 'string' && 'author' in e));
 });
 
+test('fileBlame: la demo reparte las líneas entre los commits del archivo, sin huecos ni solapes', async () => {
+  const { src } = demo(7);
+  const c = [...src.data.commits.values()].find((x) => /^\w+\((\w+)\)!?:/.test(x.message || '') && !/\(deps\)/.test(x.message));
+  const { files } = await src.commitDiff(c.sha);
+  const blame = await src.fileBlame(files[0].path, c.sha);
+  assert.ok(blame.length >= 1);
+  assert.equal(blame[0].from, 1);
+  blame.forEach((r, i) => i && assert.equal(r.from, blame[i - 1].to + 1));
+  assert.ok(blame.every((r) => r.to >= r.from && r.sha && typeof r.message === 'string'));
+});
+
 test('los commits de agente de la demo llevan sus trailers, y el filtro por ruta solo mira el titular', async () => {
   const { src } = demo(7);
   const signed = [...src.data.commits.values()].filter((c) => /\nClaude-Session: https:\/\/claude\.ai\/code\/session_\w+$/.test(c.message));

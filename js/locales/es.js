@@ -652,6 +652,7 @@ GB.i18n.define('es', {
   'diff.blame': 'Quién lo tocó',
   'diff.blameOf': 'Últimos cambios de {path}',
   'diff.blameNone': 'Ningún commit anterior tocó este archivo.',
+  'diff.blameLines': 'Líneas {from}–{to}',
   'diff.tooLong': 'Se muestran solo las primeras {n} líneas.',
   'diff.lines': '{add} agregadas, {del} quitadas',
   'diff.mode': 'Cómo se muestran los cambios',

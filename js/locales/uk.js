@@ -668,6 +668,7 @@ GB.i18n.define('uk', {
   'diff.blame': 'Хто змінював',
   'diff.blameOf': 'Останні зміни {path}',
   'diff.blameNone': 'Жоден раніший коміт не змінював цей файл.',
+  'diff.blameLines': 'Рядки {from}–{to}',
   'diff.tooLong': 'Показано лише перші {n} рядків.',
   'diff.lines': 'додано: {add}, вилучено: {del}',
   'diff.mode': 'Як показувати зміни',

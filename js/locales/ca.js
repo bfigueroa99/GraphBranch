@@ -652,6 +652,7 @@ GB.i18n.define('ca', {
   'diff.blame': 'Qui l\'ha tocat',
   'diff.blameOf': 'Últims canvis de {path}',
   'diff.blameNone': 'Cap comissió anterior ha tocat aquest fitxer.',
+  'diff.blameLines': 'Línies {from}–{to}',
   'diff.tooLong': 'Només es mostren les primeres {n} línies.',
   'diff.lines': '{add} afegides, {del} tretes',
   'diff.mode': 'Com es mostren els canvis',

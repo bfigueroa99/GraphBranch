@@ -652,6 +652,7 @@ GB.i18n.define('hu', {
   'diff.blame': 'Ki módosította',
   'diff.blameOf': '{path} legutóbbi változásai',
   'diff.blameNone': 'Korábbi commit nem módosította ezt a fájlt.',
+  'diff.blameLines': '{from}–{to}. sor',
   'diff.tooLong': 'Csak az első {n} sor látszik.',
   'diff.lines': '{add} hozzáadva, {del} eltávolítva',
   'diff.mode': 'A változások megjelenítése',

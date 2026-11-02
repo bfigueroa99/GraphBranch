@@ -275,7 +275,7 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 126. **Varias cuentas del mismo servicio** · Fuentes · 1×2/2. [replica 2026-10-28] Lo piden usuarios de GitKraken («GitKraken doesn't support connecting to multiple Azure DevOps organizations within the same profile», <https://news.ycombinator.com/item?id=31883470>; `replica/fixes.md` y fila «Varios perfiles o cuentas» de `replica/features.csv`, hoy `no`): un segundo token del mismo servicio, atado a un dueño u organización, para seguir a la vez repos privados de dos cuentas; cada token va solo a su API y solo con los repos de su dueño. Comprobar: `node --test` con la API simulada (cada repo con su token) y un paso del smoke.
 129. **Columnas de autor y fecha en el grafo 2D** · Análisis · 1×2/2. [replica 2026-10-28] Un interruptor deja, junto a cada commit del grafo 2D, su autor y su fecha, con lo ya cargado. Comprobar: prueba del formato de la fila y un paso del smoke.
 131. **Issues de Jira y Trello, primera entrega** · Fuentes · 1×2/3. [replica 2026-10-28] [parte de «Issues de Jira y Trello»] Las claves tipo `ABC-123` de los mensajes de commit y de PR se vuelven enlaces a una URL de Jira que el usuario configura (guardada en este navegador), sin consultas nuevas. Comprobar: prueba del reconocimiento de claves y un paso del smoke.
-133. **Blame de un archivo, segunda entrega** · Datos · 2×3/3. [parte del ítem 130] Autor y fecha por línea del archivo abierto en el diff (GraphQL `blame` de GitHub, con token), con la misma lista de «Quién lo tocó» como respaldo sin token. Comprobar: `node --test` con la API simulada de GraphQL y un paso del smoke con la demo.
+~~**Blame de un archivo, segunda entrega**~~ hecho en #236 · Datos.
 
 ## Cómo validar un cambio
 
@@ -600,3 +600,20 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/180, sin colisión
 - Validado: 544 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 181, expansión: ítem 133 (Blame de un archivo, segunda entrega, Datos)
+
+### 2026-11-02 · Iteración 181 · Expansión · Datos
+
+- **Capacidad nueva: «Quién lo tocó» pasa a blame por tramos de líneas** (ítem 133 de la hoja de ruta, segunda entrega del 130).
+  Con token de GitHub, el botón del diff pide el `blame` de GraphQL del archivo en ese commit (una consulta) y lista cada
+  tramo («Líneas 1–20») con autor, fecha y titular; si no hay token, GitHub no lo da o el archivo se quitó, cae a la lista de
+  commits de antes. La demo reparte 120 líneas inventadas entre los commits del archivo. `fileBlame` en `js/sources/github.js`
+  y `demo.js`, `js/diff.js`, `js/app.js`. 1 clave nueva (`diff.blameLines`) en los 40 idiomas; sin CSP nueva.
+- **Pruebas que fallan sin la capacidad:** `tools/github.test.mjs` (`fileBlame` con GraphQL simulado: una consulta, orden, null sin token), `tools/demo.test.mjs` (tramos sin huecos) y el paso del smoke «quién tocó un archivo», que exige tramos de líneas en la demo.
+- README: Cambios de cada commit, Límites conocidos y pruebas; fila de Replica «Blame de un archivo» a `yes`.
+- QA: botón con nombre y sin claves sin resolver, doble clic que cierra, mirados en el smoke; 40 idiomas con `check-i18n`; auditoría en la puerta.
+- Skills: no aplica: una consulta GraphQL más sobre la fuente existente, que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (`Commit.blame` de GraphQL).
+- OMC: plan=— · revisión=— · verificación=— (el plan por consenso y la revisión no corrieron: los agentes `omc-*` no están registrados en esta sesión; el ítem lleva esfuerzo 3 pero se entregó acotado a una consulta)
+- Reclamo: loop/181, sin colisión
+- Validado: PENDIENTE
+- **Siguiente:** iteración 182, expansión: ítem 102 (Resumen de la semana: ramas nuevas, Salidas)

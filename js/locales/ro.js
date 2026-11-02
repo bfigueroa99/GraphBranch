@@ -660,6 +660,7 @@ GB.i18n.define('ro', {
   'diff.blame': 'Cine l-a modificat',
   'diff.blameOf': 'Ultimele modificări ale {path}',
   'diff.blameNone': 'Niciun commit anterior nu a modificat acest fișier.',
+  'diff.blameLines': 'Liniile {from}–{to}',
   'diff.tooLong': 'Se afișează doar primele {n} rânduri.',
   'diff.lines': '{add} adăugate, {del} eliminate',
   'diff.mode': 'Cum sunt afișate modificările',

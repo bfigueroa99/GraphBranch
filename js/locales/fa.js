@@ -695,6 +695,7 @@ GB.i18n.define('fa', {
   'diff.blame': 'چه کسی آن را تغییر داده',
   'diff.blameOf': 'آخرین تغییرات {path}',
   'diff.blameNone': 'هیچ کامیت قبلی این فایل را تغییر نداده است.',
+  'diff.blameLines': 'خط‌های {from}–{to}',
   'diff.tooLong': 'فقط {n} خط نخست نشان داده می‌شود.',
   'diff.lines': '{add} افزوده، {del} حذف‌شده',
   'diff.mode': 'نحوهٔ نمایش تغییرات',

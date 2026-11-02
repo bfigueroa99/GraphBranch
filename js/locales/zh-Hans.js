@@ -652,6 +652,7 @@ GB.i18n.define('zh-Hans', {
   'diff.blame': '谁改过',
   'diff.blameOf': '{path} 的最近更改',
   'diff.blameNone': '此前没有提交改过这个文件。',
+  'diff.blameLines': '第 {from}–{to} 行',
   'diff.tooLong': '仅显示前 {n} 行。',
   'diff.lines': '新增 {add} 行，删除 {del} 行',
   'diff.mode': '变更的显示方式',

@@ -620,5 +620,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
   desborde: los nombres largos pasan a dos líneas; la flecha en RTL), 27 textos nuevos en los 40 idiomas
   (`check-i18n` 0 errores), teclado (el botón con Intro, Tab por las filas, Esc vuelve al botón), lector de pantalla (la
   red es `role="img"` con su resumen y las listas dicen lo mismo), CSP sin cambios.
-- Validado: pendiente
+- Validado: 533 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Electron no estaba en la sesión (su instalador falla con el proxy): se bajó el zip de la versión fijada con `curl`, se comprobó su SHA-256 contra `SHASUMS256.txt` y se extrajo como lo hace el instalador. La primera puerta cayó en los cuatro pasos de arriba; la segunda, ya con los arreglos, solo en «filtro por autor…: quitar el filtro no deja el grafo como estaba» (el pendiente 12, intermitente en `dev` con el mismo mensaje; en la primera había pasado), y la tercera pasó entera.
 - **Siguiente:** iteración 174, expansión: ítem 99 (Salud del repo: tendencia de ramas nuevas, Análisis)

@@ -265,7 +265,7 @@ se comprueban antes de construir sobre ellas.
 
 Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tools/loop.mjs --rotar`); el loop lee las dos hojas, y un ítem nuevo lleva el número que dice `--siguiente`.
 
-99. ~~**Salud del repo: tendencia de ramas nuevas**~~ hecho en #223 · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra cuántas ramas se crearon por semana en las últimas 8, con las actividades ya cargadas. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
+99. ~~**Salud del repo: tendencia de ramas nuevas**~~ hecho en #228 · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra cuántas ramas se crearon por semana en las últimas 8, con las actividades ya cargadas. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
 102. **Resumen de la semana: ramas nuevas** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana dice cuántas ramas se crearon en los últimos 7 días, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con ramas fabricadas.
 103. **Vista de texto: ramas fusionadas** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama ya fusionada en la por defecto lo dice, con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
 104. **Salud del repo: tendencia de commits** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los commits por semana de las últimas 8, con lo ya cargado. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
@@ -275,6 +275,12 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 124. **Vista de texto: ocultar una rama** · Público · 1×2/2. [parte del ítem 110] El árbol de la vista de texto respeta las ramas ocultas o «solo esta» y deja ocultarlas desde ahí. Comprobar: `tools/textview.test.mjs` y un paso del smoke.
 125. **Alias de las pestañas** · Escala · 1×1/1. [replica 2026-10-28] Frente a las pestañas con alias de GitKraken (ayuda «Interface», <https://help.gitkraken.com/gitkraken-desktop/interface/>; fila «Pestañas por repo con alias» de `replica/features.csv`, hoy `partial`): la pestaña de un repo se renombra con un alias propio, recordado por repo en este navegador, sin cambiar el repo ni su URL; el nombre real sigue en el título del grafo y en el nombre accesible de la pestaña. Comprobar: prueba del alias guardado y un paso del smoke.
 126. **Varias cuentas del mismo servicio** · Fuentes · 1×2/2. [replica 2026-10-28] Lo piden usuarios de GitKraken («GitKraken doesn't support connecting to multiple Azure DevOps organizations within the same profile», <https://news.ycombinator.com/item?id=31883470>; `replica/fixes.md` y fila «Varios perfiles o cuentas» de `replica/features.csv`, hoy `no`): un segundo token del mismo servicio, atado a un dueño u organización, para seguir a la vez repos privados de dos cuentas; cada token va solo a su API y solo con los repos de su dueño. Comprobar: `node --test` con la API simulada (cada repo con su token) y un paso del smoke.
+127. **Resaltar una rama al pasar el puntero** · Análisis · 2×1/1. [replica 2026-10-28] Frente a GitKraken (ayuda «Interface», <https://help.gitkraken.com/gitkraken-desktop/interface/>; `replica/features.csv`): al pasar el puntero (o el foco) por el nombre de una rama en la leyenda o la lista, el grafo atenúa lo que no es de esa rama; sin cambiar el filtro ni la URL. Comprobar: prueba de la selección de commits resaltados y un paso del smoke.
+128. **Paleta de comandos** · Público · 2×2/2. [replica 2026-10-28] Frente a GitKraken (ayuda «Interface»): `Ctrl+K` abre una lista con buscador de las acciones de la app (paneles, filtros, temas, 2D/3D), operable solo con teclado y con nombre accesible. Comprobar: prueba de la lista de acciones y un paso del smoke.
+129. **Columnas de autor y fecha en el grafo 2D** · Análisis · 1×2/2. [replica 2026-10-28] Un interruptor deja, junto a cada commit del grafo 2D, su autor y su fecha, con lo ya cargado. Comprobar: prueba del formato de la fila y un paso del smoke.
+130. **Blame de un archivo, primera entrega** · Datos · 2×2/3. [replica 2026-10-28] [parte de «Blame de un archivo»] Desde la ficha de un archivo cambiado por un commit, lista los últimos commits que lo tocaron con su autor (GitHub, `commits?path=`), sin líneas. Comprobar: `node --test` con la API simulada y un paso del smoke.
+131. **Issues de Jira y Trello, primera entrega** · Fuentes · 1×2/3. [replica 2026-10-28] [parte de «Issues de Jira y Trello»] Las claves tipo `ABC-123` de los mensajes de commit y de PR se vuelven enlaces a una URL de Jira que el usuario configura (guardada en este navegador), sin consultas nuevas. Comprobar: prueba del reconocimiento de claves y un paso del smoke.
+132. **Paleta de comandos, segunda entrega** · Público · 1×2/1. [parte del ítem 128] La paleta también salta a una rama o a un commit por nombre o SHA entre lo ya cargado. Comprobar: prueba de la búsqueda y un paso del smoke.
 
 ## Cómo validar un cambio
 
@@ -410,7 +416,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 15. [QA] A ≤560 px las cifras ya no muestran su línea de detalle (`.stat-sub`: «de N en total», la hora de la última
     actividad): se perdió información en celular. Devolverla como `title`/texto accesible de la tarjeta o en un
     plegable. Reproducción: Playwright, 320×640 → `getComputedStyle(#st-branches-sub).display` = `none`.
-17. [QA] A 320 px el panel de salud se desborda hacia la derecha (28 px; 46 en tamil): la cabecera, los contadores de
+16. [QA] A 320 px el panel de salud se desborda hacia la derecha (28 px; 46 en tamil): la cabecera, los contadores de
     cada sección y la edad de los forks quedan cortados y el panel se desliza de lado. Visto en la iteración 174, igual
     sin su cambio. Reproducción: Playwright, 320×640, demo `?lang=es&health=1` → `#health .tr-wrap` con `scrollWidth`
     312 y `clientWidth` 284.
@@ -625,4 +631,4 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
   (`check-i18n` 0 errores), teclado (el botón con Intro, Tab por las filas, Esc vuelve al botón), lector de pantalla (la
   red es `role="img"` con su resumen y las listas dicen lo mismo), CSP sin cambios.
 - Validado: 533 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Electron no estaba en la sesión (su instalador falla con el proxy): se bajó el zip de la versión fijada con `curl`, se comprobó su SHA-256 contra `SHASUMS256.txt` y se extrajo como lo hace el instalador. La primera puerta cayó en los cuatro pasos de arriba; la segunda, ya con los arreglos, solo en «filtro por autor…: quitar el filtro no deja el grafo como estaba» (el pendiente 12, intermitente en `dev` con el mismo mensaje; en la primera había pasado), y la tercera pasó entera.
-- **Siguiente:** iteración 174, expansión: ítem 99 (Salud del repo: tendencia de ramas nuevas, Análisis)
+- **Siguiente:** iteración 174, expansión: ítem 117 (Azure DevOps: los PRs en el grafo, Datos)

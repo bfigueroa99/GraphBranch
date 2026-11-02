@@ -278,13 +278,13 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Ocultar una rama o dejarla sola | Análisis | 2×2/2 | 2,0 | Replica (GitKraken) | ítem 110 |
 | Primer padre en el grafo | Análisis | 2×2/2 | 2,0 | Replica (reseñas) | ítem 111 |
 | Vista de un PR: descripción y comentarios | Datos | 2×2/2 | 2,0 | Replica (GitKraken) | ítem 112 |
-| Resaltar una rama al pasar el puntero | Análisis | 2×1/1 | 2,0 | Replica (GitKraken) | candidata |
-| Paleta de comandos | Público | 2×2/2 | 2,0 | Replica (GitKraken) | candidata |
-| Blame de un archivo | Datos | 2×2/3 | 1,3 | Replica (GitKraken) | candidata |
+| Resaltar una rama al pasar el puntero | Análisis | 2×1/1 | 2,0 | Replica (GitKraken) | ítem 127 |
+| Paleta de comandos | Público | 2×2/2 | 2,0 | Replica (GitKraken) | ítem 128 |
+| Blame de un archivo | Datos | 2×2/3 | 1,3 | Replica (GitKraken) | ítem 130 |
 | Varias cuentas del mismo servicio | Fuentes | 1×2/2 | 1,0 | Replica (reseñas) | ítem 126 |
-| Columnas de autor y fecha en el grafo 2D | Análisis | 1×2/2 | 1,0 | Replica (GitKraken) | candidata |
+| Columnas de autor y fecha en el grafo 2D | Análisis | 1×2/2 | 1,0 | Replica (GitKraken) | ítem 129 |
 | Alias de las pestañas | Escala | 1×1/1 | 1,0 | Replica (GitKraken) | ítem 125 |
-| Issues de Jira y Trello | Fuentes | 1×2/3 | 0,7 | Replica (GitKraken) | candidata |
+| Issues de Jira y Trello | Fuentes | 1×2/3 | 0,7 | Replica (GitKraken) | ítem 131 |
 
 ## Públicos
 

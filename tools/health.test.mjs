@@ -87,7 +87,7 @@ test('ritmo: merges en 7 y 30 días y releases en 30, sin repetir una actividad'
     { id: '6', kind: 'push', time: ago(1) },
   ];
   const pace = compute(repo(), acts, NOW).pace;
-  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks], closedWeeks: [...pace.closedWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], closedWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
+  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks], closedWeeks: [...pace.closedWeeks], branchWeeks: [...pace.branchWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], closedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], branchWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
 });
 
 test('DORA: despliegues en 30 días, mediana entre releases y tiempo de entrega', () => {
@@ -341,4 +341,25 @@ test('tendencia de issues cerrados: cada issue cuenta una vez, por semana, de la
   const h = compute(repo(), acts, NOW);
   assert.deepEqual([...h.pace.closedWeeks], [0, 0, 0, 0, 0, 1, 1, 2], 'el 1 y el 2 (cerrado dos veces, cuenta una) esta semana, el 3 la pasada, el 4 hace tres; el 5 fuera de las 8, el 6 (futuro) y el issue abierto no cuentan');
   assert.deepEqual([...compute(repo(), [], NOW).pace.closedWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
+});
+
+test('tendencia de ramas nuevas: cada rama cuenta una vez, por semana, de la más vieja a la actual', () => {
+  const cr = (id, days, branch) => ({ kind: 'branch-create', id, branch, time: ago(days) });
+  const acts = [
+    cr('a', 0.5, 'feature/a'),
+    cr('b', 2, 'fix/b'),
+    cr('c', 2.1, 'fix/b'), // la misma rama vista dos veces (feed de eventos y comparación en vivo)
+    cr('d', 9, 'feature/d'),
+    cr('e', 1, 'feature/d'), // borrada y creada otra vez: cuenta con su primera creación
+    cr('f', 27, 'old/f'),
+    cr('g', 60, 'way/g'), // fuera de las 8 semanas
+    cr('h', -1, 'future/h'), // en el futuro: no cuenta
+    { kind: 'branch-create', id: 'i', branch: 'no-time' }, // sin hora: no cuenta
+    { kind: 'branch-delete', id: 'j', branch: 'feature/a', time: ago(0.2) },
+    { kind: 'push', id: 'k', branch: 'feature/a', time: ago(0.3) },
+    { kind: 'branch-create', id: 'l', time: ago(3) }, // sin nombre: cuenta por su id
+  ];
+  const h = compute(repo(), acts, NOW);
+  assert.deepEqual([...h.pace.branchWeeks], [0, 0, 0, 0, 1, 0, 1, 3], 'esta semana feature/a, fix/b (una vez) y la sin nombre; la pasada feature/d (con su primera creación, hace 9 días); hace tres, old/f; way/g, future/h, la sin hora, el borrado y el push no cuentan');
+  assert.deepEqual([...compute(repo(), [], NOW).pace.branchWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
 });

@@ -600,11 +600,21 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - **Pruebas que fallan sin el cambio:** `tools/agents.test.mjs` (nueva, 9: detección por cuenta, nombre, co-autor,
   firma y sesión; personas que se llaman como un agente; `compute` con dos sesiones del loop, un merge, revisiones,
   comentarios y una petición de revisión; la sesión heredada por un merge sin trailer; el SVG escapado),
-  `tools/github.test.mjs` (de 34 a 36: el cuerpo de GraphQL da el agente sin guardarse; el número de los comentarios de
+  `tools/demo.test.mjs` (de 2 a 3: los trailers de la demo y el filtro por ruta), `tools/github.test.mjs` (de 34 a 36: el cuerpo de GraphQL da el agente sin guardarse; el número de los comentarios de
   PR y `request` en «review_requested») y el paso del smoke «Agentes e interacciones (?agents=1)» (la red con un
   vínculo entre agentes, Copilot → Claude Code, una sesión que retoma la de otra, «Solo entre agentes», el foco, la URL
   y la ficha 2D de un commit de agente). Sobre la historia real de este repo (400 commits): 100 sesiones de Claude y 9
   vínculos solo entre agentes.
+- **Lo que la demo nueva destapó** (la primera puerta cayó en cuatro pasos del smoke; los tres ajenos, reproducidos
+  con Playwright aquí y sobre `origin/dev`): el panel de búsqueda se desbordaba 5 px con un autor de nombre largo
+  (`dependabot[bot] (1)` en sus selectores; en `dev`, 0 px): su columna ya no crece con el contenido
+  (`minmax(0, 1fr)`); «?vista=texto» sacaba una palabra del commit más nuevo y recargaba otra demo, y la semilla
+  terminaba en un commit de agente con mensaje al azar: los commits de agente van antes de los últimos de la semilla
+  y con mensajes fijos; «?firstparent=1» contaba los nodos del SVG en dos cargas distintas (en `dev` pasaba por uno:
+  17 de 18; aquí, 22 de 21), y el 2D solo crea los que están en pantalla: ahora compara la cifra de commits del grafo
+  en la misma página, con el interruptor y sin él. El filtro por ruta de la demo solo mira el titular
+  («Co-Authored-By» contiene «auth»; prueba en `tools/demo.test.mjs`). El paso nuevo esperaba la URL antes del evento
+  `close` del diálogo: ahora espera, como el de `?health=1`.
 - README: la función en la lista, los controles, el mapa de archivos, Límites conocidos y Seguridad.
 - QA: demo en 3D y 2D (la ficha del commit), español con tema claro a 1280 px y árabe con tema oscuro a 390 px (sin
   desborde: los nombres largos pasan a dos líneas; la flecha en RTL), 27 textos nuevos en los 40 idiomas

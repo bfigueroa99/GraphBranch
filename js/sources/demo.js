@@ -231,13 +231,9 @@
       H.push(this.act('issue-open', { title: MSG('act.issueOpened', { num: ++this.issueSeq }), detail: this.C.issues[0], actor: this.actor(C) }, step(5, 20)));
       this.openIssues.push(this.issueSeq);
       H.push(this.act('issue-close', { title: MSG('act.issueClosed', { num: 84 }), detail: S.resolved, actor: this.actor(M), number: 84 }, step(5, 20)));
-      const dev = push('develop', D, S.vite);
-      this.data.deploys.set('staging', { sha: dev.sha });
-      create('fix/rate-limit', 'main', 'api', M);
-      push('fix/rate-limit', M, S.retryAfter);
-      push('feature/login', J, S.loginE2e);
       // agentes: Dependabot sube una dependencia y Matías la fusiona; una sesión de Claude Code empieza una rama y
-      // otra sesión la retoma
+      // otra sesión la retoma. Antes de los últimos commits de la semilla y con mensajes fijos: lo más nuevo de la
+      // historia inicial sigue siendo lo mismo de siempre
       const deps = 'dependabot/npm_and_yarn/vite-5.4.2';
       create(deps, 'develop', 'deps', DEPENDABOT);
       push(deps, DEPENDABOT, 'chore(deps): bump vite from 5.4.1 to 5.4.2');
@@ -245,9 +241,15 @@
       merge(deps, 'develop', 35, M, true);
       create('claude/search-index', 'develop', 'search', CLAUDE_A);
       const agentBranch = this.data.branches.get('claude/search-index');
-      push('claude/search-index', CLAUDE_A, this.message(agentBranch));
-      push('claude/search-index', CLAUDE_A, this.message(agentBranch));
-      push('claude/search-index', CLAUDE_B, this.message(agentBranch));
+      const agentMsg = (i) => this.C.feature[i].replace('{s}', 'search');
+      push('claude/search-index', CLAUDE_A, agentMsg(0));
+      push('claude/search-index', CLAUDE_A, agentMsg(1));
+      push('claude/search-index', CLAUDE_B, agentMsg(3));
+      const dev = push('develop', D, S.vite);
+      this.data.deploys.set('staging', { sha: dev.sha });
+      create('fix/rate-limit', 'main', 'api', M);
+      push('fix/rate-limit', M, S.retryAfter);
+      push('feature/login', J, S.loginE2e);
 
       const openPR = (head, base, title, user, draft = false) => {
         const n = ++this.prSeq;

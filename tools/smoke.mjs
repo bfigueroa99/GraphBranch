@@ -3928,15 +3928,13 @@ console.log('Grafo de primer padre (?firstparent=1)');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'deja menos commits que el grafo entero, queda en la URL y el interruptor lo apaga', async () => {
-    const nodes = () => page.evaluate(() => document.querySelectorAll('#graph svg .node').length);
-    await page.goto(`${base}/index.html?lang=es`);
-    await loaded(page);
-    const all = await nodes();
+    // los commits del grafo dibujado (la cifra del resumen, que sale del layout), no los nodos del SVG: el 2D crea
+    // solo los que están en pantalla, y con menos carriles caben más. Todo en la misma demo: otra carga es otra historia
+    const commits = () => page.evaluate(() => Number(document.querySelector('#st-commits').textContent.replace(/\D/g, '')) || 0);
     await page.goto(`${base}/index.html?lang=es&firstparent=1`);
     await loaded(page);
-    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length < n, all, { timeout: T(5000) }).catch(() => {});
-    const on = await page.evaluate(() => ({ n: document.querySelectorAll('#graph svg .node').length, mark: document.querySelector('#search-btn').classList.contains('filtered'), url: location.search }));
-    if (!(on.n > 0 && on.n < all)) throw new Error(`?firstparent=1 no acota los commits (${on.n} de ${all})`);
+    const on = await page.evaluate(() => ({ mark: document.querySelector('#search-btn').classList.contains('filtered'), url: location.search }));
+    on.n = await commits();
     if (!on.mark) throw new Error('?firstparent=1 no marca el filtro');
     if (!on.url.includes('firstparent=1')) throw new Error('la URL perdió firstparent: ' + on.url);
     await page.click('#search-btn');
@@ -3944,8 +3942,9 @@ console.log('Grafo de primer padre (?firstparent=1)');
     if (!(await page.locator('#graph-firstparent').isChecked())) throw new Error('el interruptor no refleja ?firstparent=1');
     if (!(await page.evaluate(() => !!document.querySelector('#graph-firstparent').closest('label')?.textContent.trim()))) throw new Error('el interruptor no tiene nombre');
     await page.uncheck('#graph-firstparent');
-    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length === n, all, { timeout: T(5000) }).catch(() => {});
-    if ((await nodes()) !== all) throw new Error('apagar el interruptor no devuelve todos los commits');
+    await page.waitForFunction((n) => Number(document.querySelector('#st-commits').textContent.replace(/\D/g, '')) > n, on.n, { timeout: T(5000) }).catch(() => {});
+    const all = await commits();
+    if (!(on.n > 0 && on.n < all)) throw new Error(`?firstparent=1 no acota los commits (${on.n} con el interruptor, ${all} sin él)`);
     if ((await page.evaluate(() => location.search)).includes('firstparent')) throw new Error('apagarlo deja firstparent en la URL');
   });
   await page.context().close();
@@ -4076,7 +4075,9 @@ console.log('Agentes e interacciones (?agents=1)');
   });
   await step(page, 'una fila lleva a su commit y cierra el panel; Esc lo cierra, el foco vuelve al botón y agents= sale de la URL', async () => {
     await page.click('#ag-list button.hl-row[data-sha]');
-    await page.waitForSelector('#agents:not([open])', { state: 'attached', timeout: T(3000) });
+    // el evento close del diálogo llega en una tarea aparte: la URL se limpia un instante después de cerrarse
+    await page.waitForFunction(() => !document.querySelector('#agents').open && !location.search.includes('agents='), null, { timeout: T(3000) }).catch(() => {});
+    if (await page.evaluate(() => document.querySelector('#agents').open)) throw new Error('la fila no cerró el panel');
     if ((await page.evaluate(() => location.search)).includes('agents=')) throw new Error('cerrar el panel deja agents= en la URL');
     await page.focus('#agents-btn');
     await page.keyboard.press('Enter');

@@ -5201,6 +5201,10 @@ a.hl-row:focus-visible {
 }
 
 /* ---------- búsqueda de commits ---------- */
+/* la columna no crece con el contenido: un autor de nombre largo en los selectores (dependabot[bot]) no desborda */
+#search .tr-wrap {
+  grid-template-columns: minmax(0, 1fr);
+}
 .sr-row {
   display: flex;
   flex-wrap: wrap;

@@ -435,7 +435,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - **Capacidad nueva: `merge --no-ff` en la terminal de práctica** (ítem 115 de la hoja de ruta): el commit de fusión se crea aunque se pudiera avanzar; `merge -m "mensaje"` lo nombra (antes `-m` se leía como la rama) y `--no-ff` junto a `--ff-only` da el error de git sin mover nada. La bandera ya se aceptaba sin prueba; ahora es una función completa y comprobada.
 - **Pruebas que fallan sin la capacidad:** `node --test tools/gitsim.test.mjs` → `not ok 7 - merge --no-ff: hace el commit de fusión…` (sin el cambio `-m` rompe y `--no-ff --ff-only` no da error); y un paso del smoke («la práctica hace un commit de fusión con merge --no-ff…»).
 - README: la lista de funciones (Aprender git) dice `--no-ff`, `-m` y que no se combina con `--ff-only`.
-- QA: terminal de práctica (fast-forward evitado, ya al día, `-m`, bandera en conflicto); sin textos nuevos de interfaz (la ayuda de la terminal es inglés fijo); auditoría: ver Validado.
+- QA: terminal de práctica (fast-forward evitado, ya al día, `-m`, bandera en conflicto); sin textos nuevos de interfaz (la ayuda de la terminal es inglés fijo); auditoría: 0 hallazgos nuevos.
 - Skills: no aplica: una bandera más sobre código propio, sin dominio nuevo.
 - Arena: no aplica: una sola forma obvia (leer `-m` y comprobar el choque en `merge`).
 - Reclamo: loop/166, sin colisión
@@ -461,7 +461,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - **Capacidad nueva: ocultar o dejar sola una rama, en la URL** (ítem 116 de la hoja de ruta, parte del 110): `?solo=rama` y `?ocultar=a&ocultar=b` abren el repo con ese filtro (mandan sobre lo recordado, solo al abrir), la dirección sigue a «Ocultar», «Ver solo» y «Ver todas las ramas», y `GB.search.branchViewParam` lee los nombres como texto (sin caracteres de control, hasta 200).
 - **Pruebas que fallan sin la capacidad:** `node --test tools/search.test.mjs` → `branchViewParam` no existe; y un paso del smoke («?ocultar= y ?solo= abren el grafo con menos ramas…»).
 - README: «Ocultar una rama o dejarla sola» explica las dos URL; Límites conocidos ya no dice que no viajan.
-- QA: filtro de ramas (2D, demo, URL con rama que existe y «Ver todas» que limpia la dirección); sin textos nuevos de interfaz; auditoría: ver Validado.
+- QA: filtro de ramas (2D, demo, URL con rama que existe y «Ver todas» que limpia la dirección); sin textos nuevos de interfaz; auditoría: 0 hallazgos nuevos.
 - Skills: no aplica: dos parámetros de URL sobre código propio, sin dominio nuevo.
 - Arena: no aplica: una sola forma obvia (leer la URL en `showTab` como `?author=`).
 - Reclamo: relevo de loop/168 (661adc4)
@@ -473,7 +473,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - **Capacidad nueva: la vista de un PR en la URL** (ítem 118 de la hoja de ruta, parte del 112): `?pr=N` (o `?pr=%23N`) abre, al cargar el repo, un diálogo con la descripción y los últimos comentarios del PR (la misma `prDetail` y el mismo HTML de la ficha de la rama, una sola consulta), con el foco en él y Esc para cerrarlo. `GB.search.prParam` solo acepta un entero positivo de hasta 9 cifras; se ignora en `?embed=1` y en fuentes sin `prDetail`.
 - **Pruebas que fallan sin la capacidad:** `node --test tools/search.test.mjs` → `S.prParam is not a function`; y un paso del smoke («?pr=N abre la vista del PR…»).
 - README: la función «Descripción y comentarios de un PR» explica `?pr=N`; Límites conocidos y Seguridad al día.
-- QA: demo con `?pr=36` y `?pr=abc`; texto nuevo (`prview.title`) en los 40 idiomas; auditoría: ver Validado.
+- QA: demo con `?pr=36` y `?pr=abc`; texto nuevo (`prview.title`) en los 40 idiomas; auditoría: 0 hallazgos nuevos.
 - Skills: no aplica: un parámetro de URL y un diálogo sobre código propio, sin dominio nuevo.
 - Arena: no aplica: una sola forma obvia (leer la URL como `?vista=texto` y reutilizar `prDetail`).
 - Reclamo: loop/169, sin colisión
@@ -485,7 +485,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - **Capacidad nueva: cambios de un commit en Azure DevOps** (ítem 120 de la hoja de ruta, parte del 107): `AzureSource.commitDiff` pide `commits/{id}/changes` (hasta 300 archivos) y la ficha de un commit abre el panel con sus archivos y su tipo de cambio (añadido, editado, borrado, renombrado). Azure no da el diff, así que `patch` va en null y el panel lo dice como con un archivo muy grande; `diffCheap` sigue en falso (solo se piden al abrir).
 - **Pruebas que fallan sin la capacidad:** `node --test tools/azure.test.mjs` → `src.commitDiff` era null (`typeof … 'function'`); y un paso del smoke («cambios de un commit de Azure DevOps…»).
 - README: la lista de «Cambios de cada commit» nombra a Azure (sin el diff); Límites conocidos de Azure ya no dice que no hay cambios de commit.
-- QA: panel de cambios de commit con la API simulada (ficha → Ver cambios → archivos → Esc); sin textos nuevos de interfaz; auditoría: ver Validado.
+- QA: panel de cambios de commit con la API simulada (ficha → Ver cambios → archivos → Esc); sin textos nuevos de interfaz; auditoría: 0 hallazgos nuevos.
 - Skills: no aplica: un endpoint más de una fuente propia, sin dominio nuevo.
 - Arena: no aplica: una sola forma obvia (el mismo `commitDiff` que ya usan GitLab y Bitbucket).
 - Reclamo: loop/170, sin colisión
@@ -510,7 +510,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - **Capacidad nueva: `&pr=1` en la capa para streaming** (ítem 122 de la hoja de ruta, Capa para streaming, undécima entrega): `?embed=1&pr=1` (también `on`, `true` o `yes`) deja en la capa solo la rama por defecto y las ramas con un PR abierto del mismo repo, en 2D y en 3D (`GB.search.withOpenPr`, sobre los PRs ya cargados y sin consultas); se combina con `&branch=` y `&max=` (en ese orden). Dentro de la capa `?pr=N` ya no abría la vista del PR, así que el nombre queda libre; fuera de `?embed=1` sigue siendo la vista del PR N. Sin conexiones nuevas ni CSP distinta; en la web y en la app de escritorio. Sin textos nuevos de interfaz.
 - **Pruebas que fallan sin la capacidad:** `node --test tools/embed.test.mjs tools/search.test.mjs` → `not ok … embedOptions: pr=1 (o on, true, yes)…` (`pr` es `undefined`) y `not ok … withOpenPr…` (`TypeError`); y un paso del smoke («&pr=1 deja la rama por defecto y solo las ramas con PR abierto…»), que sin la capacidad deja `develop` sin PR en la capa.
 - README: la lista de funciones (widget embebible), Límites conocidos (solo los PRs ya cargados y del mismo repo) y Seguridad (`&pr=` solo se enciende con cuatro valores).
-- QA: capa `?embed=1` con la demo en 2D y en 3D (sin `&pr`, con `&pr=1`, `&pr=0`, `&pr=1&max=2` y `&pr=1&branch=` con una rama sin PR), cada cabeza que queda lleva su PR (el paso del smoke, corrido solo, en verde con la capacidad y en rojo sin ella: sin el cambio `develop` sigue en la capa); en la app de escritorio, con Playwright y `xvfb-run` sobre `app://graphbranch/index.html?embed=1&view=2d&pr=1`: quedan `main` y las tres ramas con PR de la demo, sin errores de consola; sin textos nuevos de interfaz; auditoría: ver Validado.
+- QA: capa `?embed=1` con la demo en 2D y en 3D (sin `&pr`, con `&pr=1`, `&pr=0`, `&pr=1&max=2` y `&pr=1&branch=` con una rama sin PR), cada cabeza que queda lleva su PR (el paso del smoke, corrido solo, en verde con la capacidad y en rojo sin ella: sin el cambio `develop` sigue en la capa); en la app de escritorio, con Playwright y `xvfb-run` sobre `app://graphbranch/index.html?embed=1&view=2d&pr=1`: quedan `main` y las tres ramas con PR de la demo, sin errores de consola; sin textos nuevos de interfaz; auditoría: 0 hallazgos nuevos.
 - Skills: no aplica: un parámetro más de la capa sobre un filtro propio, sin dominio nuevo.
 - Arena: no aplica: una sola forma obvia (un filtro más en `drawGraph`, como `&branch=` y `&max=`); además, 18 iteraciones simultáneas en un contenedor de 4 CPU, pedido del dueño.
 - OMC: no disponible (llegó a `dev` con #225, después de construida la 172, y la sesión que la retomó no tiene la herramienta Agent para lanzar los `omc-*`; en su lugar, revisión propia del diff contra el ítem, `CLAUDE.md` y la skill, sin hallazgos)
@@ -525,7 +525,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - **Capacidad nueva: `branch -m` en la terminal de práctica** (ítem 123 de la hoja de ruta, parte del 31): `branch -m [vieja] nueva` (también `--move`) renombra una rama con sus commits; sin la vieja, la actual. HEAD y la rama por defecto la siguen (el grafo la sigue dibujando como la principal), el `reflog` lo anota como git (`Branch: renamed refs/heads/main to refs/heads/trunk`), `-M` pisa una rama que ya existe salvo la que está en uso, y los errores son los de git 2.43 (sin nombre, demasiados argumentos, rama que no existe, nombre tomado o inválido, HEAD desprendido, la rama de un rebase a medias) sin tocar nada. El panel de actividad lo cuenta como «Rama renombrada · Rama main renombrada a trunk» (tipo nuevo `branch-rename`, en la categoría Ramas y sin puntos de logro) en vez de una rama borrada y otra creada (textos nuevos `act.branchRenamed` y `kind.branch-rename`). Sirve también en los ejercicios propios (`exists:` y `missing:`) y en el ensayo sobre un repo real.
 - **Pruebas que fallan sin la capacidad:** `node --test tools/gitsim.test.mjs` → `not ok 5 - branch -m renombra una rama…` y cuatro más (errores de git sin tocar nada, rebase a medias y repo vacío, un ejercicio propio que pide renombrar, el panel de actividad de la fuente de práctica), `node --test tools/i18n.test.mjs` → `falta kind.branch-rename en en.js` (cada tipo del panel con su rótulo); y un paso del smoke («la práctica renombra ramas con branch -m…»).
 - README: la lista de funciones (Aprender git), Pruebas y Límites conocidos.
-- QA: terminal de práctica (renombrar otra rama y la actual, `-M`, errores, `reflog`, HEAD desprendido), con Playwright contra `e2e/serve.mjs`: grafo 3D en inglés con tema claro y 2D en árabe con tema oscuro, panel de actividad y avisos, sin errores de consola; el paso del smoke en español; textos nuevos en los 40 idiomas (`check-i18n` 0 errores); en la reanudación, el paso «historial de un archivo» del smoke reproducido con un script de Playwright contra `e2e/serve.mjs` tras 6 min de demo (3 de 3 fallan en esta rama y 2 de 2 sobre `origin/dev`; con el arreglo, las 2 corridas que llegaron al paso pasan); auditoría: ver Validado.
+- QA: terminal de práctica (renombrar otra rama y la actual, `-M`, errores, `reflog`, HEAD desprendido), con Playwright contra `e2e/serve.mjs`: grafo 3D en inglés con tema claro y 2D en árabe con tema oscuro, panel de actividad y avisos, sin errores de consola; el paso del smoke en español; textos nuevos en los 40 idiomas (`check-i18n` 0 errores); en la reanudación, el paso «historial de un archivo» del smoke reproducido con un script de Playwright contra `e2e/serve.mjs` tras 6 min de demo (3 de 3 fallan en esta rama y 2 de 2 sobre `origin/dev`; con el arreglo, las 2 corridas que llegaron al paso pasan); auditoría: 0 hallazgos nuevos.
 - Skills: no aplica: un subcomando más del intérprete propio, sin dominio nuevo.
 - Arena: no aplica: una sola forma obvia (un caso más de `branch` que cambia la clave en el mapa de ramas); y 18 iteraciones simultáneas en un contenedor de 4 CPU, pedido del dueño.
 - OMC: no disponible (la sesión que la retomó no tiene la herramienta Agent para lanzar los `omc-*`; en su lugar, revisión propia del diff contra el ítem 123, `CLAUDE.md` y la skill: `renameBranch` contra git real en lo que el ítem pide, el reflog solo cuando se mueve HEAD, nombres que pasan por `validName` y llegan al panel con `U.esc`, la fuente de práctica sobre su propio objeto `repo`; y el arreglo del smoke contra lo que el paso comprobaba, que sigue igual: el botón Historial con nombre, el filtro con la ruta de ese archivo y en la URL; sin hallazgos)
@@ -647,10 +647,10 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
   «la ficha de la rama con PR de Azure DevOps lista sus revisores con el voto».
 - README: la función de Azure DevOps y Límites conocidos; la fila de Replica pasa a `yes`.
 - QA: ficha de la rama en 2D con tema claro (el texto va escapado con `U.esc`, nombres recortados a 60 letras); 4 textos
-  nuevos en los 40 idiomas (`check-i18n` 0 errores); la CSP no cambia; sin consultas nuevas; auditoría: ver Validado.
+  nuevos en los 40 idiomas (`check-i18n` 0 errores); la CSP no cambia; sin consultas nuevas; auditoría: 0 hallazgos nuevos.
 - Skills: no aplica: un campo más de una API ya consumida, que no entra en un dominio de guía experta.
 - Arena: no aplica: una sola forma obvia (leer `reviewers` y sumarlo a la ficha).
 - OMC: plan=— · revisión=— · verificación=—
 - Reclamo: relevo de loop/174 (1ea0916)
-- Validado: pendiente
+- Validado: 535 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 175, mantenimiento · Deuda: pendiente 1 (El paso del smoke «editar el código: desde los cambios de un commit se abre su …)

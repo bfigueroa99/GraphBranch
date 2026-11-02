@@ -905,4 +905,6 @@ GB.i18n.define('sk', {
   'cmdk.empty': 'Žiadna akcia nezodpovedá.',
   'cmdk.view3d': 'Prepnúť na pohľad 3D',
   'cmdk.view2d': 'Prepnúť na pohľad 2D',
+  'cmdk.toBranch': 'Prejsť na vetvu {name}',
+  'cmdk.toCommit': 'Prejsť na commit {sha}: {msg}',
 });

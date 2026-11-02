@@ -894,4 +894,6 @@ GB.i18n.define('zh-Hant', {
   'cmdk.empty': '沒有符合的操作。',
   'cmdk.view3d': '切換到 3D 檢視',
   'cmdk.view2d': '切換到 2D 檢視',
+  'cmdk.toBranch': '前往分支 {name}',
+  'cmdk.toCommit': '前往提交 {sha}：{msg}',
 });

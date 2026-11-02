@@ -910,4 +910,6 @@ GB.i18n.define('uk', {
   'cmdk.empty': 'Немає відповідних дій.',
   'cmdk.view3d': 'Перейти до 3D-вигляду',
   'cmdk.view2d': 'Перейти до 2D-вигляду',
+  'cmdk.toBranch': 'Перейти до гілки {name}',
+  'cmdk.toCommit': 'Перейти до коміту {sha}: {msg}',
 });

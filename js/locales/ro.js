@@ -902,4 +902,6 @@ GB.i18n.define('ro', {
   'cmdk.empty': 'Nicio acțiune nu se potrivește.',
   'cmdk.view3d': 'Treceți la vizualizarea 3D',
   'cmdk.view2d': 'Treceți la vizualizarea 2D',
+  'cmdk.toBranch': 'Mergi la ramura {name}',
+  'cmdk.toCommit': 'Mergi la commitul {sha}: {msg}',
 });

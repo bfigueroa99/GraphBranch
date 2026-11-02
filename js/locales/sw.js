@@ -894,4 +894,6 @@ GB.i18n.define('sw', {
   'cmdk.empty': 'Hakuna kitendo kinacholingana.',
   'cmdk.view3d': 'Badilisha hadi mwonekano wa 3D',
   'cmdk.view2d': 'Badilisha hadi mwonekano wa 2D',
+  'cmdk.toBranch': 'Nenda kwenye tawi {name}',
+  'cmdk.toCommit': 'Nenda kwenye commit {sha}: {msg}',
 });

@@ -937,4 +937,6 @@ GB.i18n.define('ur', {
   'cmdk.empty': 'کوئی عمل مماثل نہیں۔',
   'cmdk.view3d': '3D منظر پر جائیں',
   'cmdk.view2d': '2D منظر پر جائیں',
+  'cmdk.toBranch': 'برانچ {name} پر جائیں',
+  'cmdk.toCommit': 'کمٹ {sha} پر جائیں: {msg}',
 });

@@ -894,4 +894,6 @@ GB.i18n.define('bn', {
   'cmdk.empty': 'কোনো কাজ মেলেনি।',
   'cmdk.view3d': '3D ভিউতে যান',
   'cmdk.view2d': '2D ভিউতে যান',
+  'cmdk.toBranch': 'ব্রাঞ্চ {name}-এ যান',
+  'cmdk.toCommit': 'কমিট {sha}-এ যান: {msg}',
 });

@@ -894,4 +894,6 @@ GB.i18n.define('nb', {
   'cmdk.empty': 'Ingen handling samsvarer.',
   'cmdk.view3d': 'Bytt til 3D-visning',
   'cmdk.view2d': 'Bytt til 2D-visning',
+  'cmdk.toBranch': 'Gå til grenen {name}',
+  'cmdk.toCommit': 'Gå til commit {sha}: {msg}',
 });

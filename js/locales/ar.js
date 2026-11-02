@@ -993,4 +993,6 @@ GB.i18n.define('ar', {
   'cmdk.empty': 'لا يوجد إجراء مطابق.',
   'cmdk.view3d': 'التبديل إلى عرض 3D',
   'cmdk.view2d': 'التبديل إلى عرض 2D',
+  'cmdk.toBranch': 'الانتقال إلى الفرع {name}',
+  'cmdk.toCommit': 'الانتقال إلى الإيداع {sha}: {msg}',
 });

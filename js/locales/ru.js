@@ -910,4 +910,6 @@ GB.i18n.define('ru', {
   'cmdk.empty': 'Нет подходящих действий.',
   'cmdk.view3d': 'Перейти к 3D-виду',
   'cmdk.view2d': 'Перейти к 2D-виду',
+  'cmdk.toBranch': 'Перейти к ветке {name}',
+  'cmdk.toCommit': 'Перейти к коммиту {sha}: {msg}',
 });

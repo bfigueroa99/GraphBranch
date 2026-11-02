@@ -937,4 +937,6 @@ GB.i18n.define('fa', {
   'cmdk.empty': 'هیچ عملی مطابقت ندارد.',
   'cmdk.view3d': 'رفتن به نمای 3D',
   'cmdk.view2d': 'رفتن به نمای 2D',
+  'cmdk.toBranch': 'رفتن به شاخه {name}',
+  'cmdk.toCommit': 'رفتن به کامیت {sha}: {msg}',
 });

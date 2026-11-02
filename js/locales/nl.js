@@ -895,4 +895,6 @@ GB.i18n.define('nl', {
   'cmdk.empty': 'Geen actie komt overeen.',
   'cmdk.view3d': 'Naar 3D-weergave',
   'cmdk.view2d': 'Naar 2D-weergave',
+  'cmdk.toBranch': 'Ga naar branch {name}',
+  'cmdk.toCommit': 'Ga naar commit {sha}: {msg}',
 });

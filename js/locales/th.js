@@ -895,4 +895,6 @@ GB.i18n.define('th', {
   'cmdk.empty': 'ไม่มีการทำงานที่ตรงกัน',
   'cmdk.view3d': 'สลับเป็นมุมมอง 3D',
   'cmdk.view2d': 'สลับเป็นมุมมอง 2D',
+  'cmdk.toBranch': 'ไปที่แบรนช์ {name}',
+  'cmdk.toCommit': 'ไปที่คอมมิต {sha}: {msg}',
 });

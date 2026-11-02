@@ -894,4 +894,6 @@ GB.i18n.define('el', {
   'cmdk.empty': 'Καμία ενέργεια δεν ταιριάζει.',
   'cmdk.view3d': 'Αλλαγή σε προβολή 3D',
   'cmdk.view2d': 'Αλλαγή σε προβολή 2D',
+  'cmdk.toBranch': 'Μετάβαση στο κλάδο {name}',
+  'cmdk.toCommit': 'Μετάβαση στο commit {sha}: {msg}',
 });

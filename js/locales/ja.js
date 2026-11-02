@@ -894,4 +894,6 @@ GB.i18n.define('ja', {
   'cmdk.empty': '一致する操作はありません。',
   'cmdk.view3d': '3D 表示に切り替える',
   'cmdk.view2d': '2D 表示に切り替える',
+  'cmdk.toBranch': 'ブランチ {name} へ移動',
+  'cmdk.toCommit': 'コミット {sha} へ移動: {msg}',
 });

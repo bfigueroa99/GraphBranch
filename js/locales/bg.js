@@ -894,4 +894,6 @@ GB.i18n.define('bg', {
   'cmdk.empty': 'Няма съвпадащо действие.',
   'cmdk.view3d': 'Превключване към 3D изглед',
   'cmdk.view2d': 'Превключване към 2D изглед',
+  'cmdk.toBranch': 'Към клона {name}',
+  'cmdk.toCommit': 'Към комита {sha}: {msg}',
 });

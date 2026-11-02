@@ -894,4 +894,6 @@ GB.i18n.define('ms', {
   'cmdk.empty': 'Tiada tindakan yang sepadan.',
   'cmdk.view3d': 'Tukar ke paparan 3D',
   'cmdk.view2d': 'Tukar ke paparan 2D',
+  'cmdk.toBranch': 'Pergi ke cabang {name}',
+  'cmdk.toCommit': 'Pergi ke commit {sha}: {msg}',
 });

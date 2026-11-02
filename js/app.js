@@ -2443,12 +2443,14 @@
     const palette = GB.cmdk.mount(
       { dialog: $('#cmdk'), input: $('#cmdk-input'), list: $('#cmdk-list'), status: $('#cmdk-status') },
       {
-        text: (k) => t(k),
+        text: (k, p) => t(k, p),
         available: (a) => {
           const b = cmdBtn(a);
           return !!b && !b.disabled && !b.closest('[hidden]');
         },
         run: (a) => cmdBtn(a)?.click(),
+        targets: (q) => GB.cmdk.jumpTargets(source.data, q),
+        jump: (j) => (j.kind === 'branch' ? shownGraph().focusBranch(j.name) : shownGraph().focusSha?.(j.sha)),
       }
     );
     document.addEventListener('keydown', (ev) => {

@@ -894,4 +894,6 @@ GB.i18n.define('fi', {
   'cmdk.empty': 'Mikään toiminto ei täsmää.',
   'cmdk.view3d': 'Vaihda 3D-näkymään',
   'cmdk.view2d': 'Vaihda 2D-näkymään',
+  'cmdk.toBranch': 'Siirry haaraan {name}',
+  'cmdk.toCommit': 'Siirry commitiin {sha}: {msg}',
 });

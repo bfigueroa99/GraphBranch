@@ -894,4 +894,6 @@ GB.i18n.define('ta', {
   'cmdk.empty': 'பொருந்தும் செயல் இல்லை.',
   'cmdk.view3d': '3D காட்சிக்கு மாறு',
   'cmdk.view2d': '2D காட்சிக்கு மாறு',
+  'cmdk.toBranch': '{name} கிளைக்குச் செல்',
+  'cmdk.toCommit': '{sha} கமிட்டுக்குச் செல்: {msg}',
 });

@@ -894,4 +894,6 @@ GB.i18n.define('tr', {
   'cmdk.empty': 'Eşleşen eylem yok.',
   'cmdk.view3d': '3B görünüme geç',
   'cmdk.view2d': '2B görünüme geç',
+  'cmdk.toBranch': '{name} dalına git',
+  'cmdk.toCommit': '{sha} commit\'ine git: {msg}',
 });

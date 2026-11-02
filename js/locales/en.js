@@ -900,4 +900,6 @@ GB.i18n.define('en', {
   'cmdk.empty': 'No action matches.',
   'cmdk.view3d': 'Switch to 3D view',
   'cmdk.view2d': 'Switch to 2D view',
+  'cmdk.toBranch': 'Go to branch {name}',
+  'cmdk.toCommit': 'Go to commit {sha}: {msg}',
 });

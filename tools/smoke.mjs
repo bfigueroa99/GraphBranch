@@ -965,6 +965,27 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
+  await step(page, 'paleta de comandos: escribir el nombre de una rama o el SHA de un commit ofrece saltar a él, sin consultas', async () => {
+    const reqs = [];
+    const onReq = (r) => reqs.push(r.url());
+    page.on('request', onReq);
+    await page.keyboard.press('Control+k');
+    await page.waitForSelector('#cmdk[open]', { timeout: T(3000) });
+    await page.fill('#cmdk-input', 'develop');
+    const branch = await page.evaluate(() => [...document.querySelectorAll('#cmdk .ck-opt')].map((n) => n.textContent));
+    if (!branch.some((x) => x.includes('develop') && !/cmdk\./.test(x))) throw new Error(`sin salto a la rama develop: ${JSON.stringify(branch)}`);
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#cmdk:not([open])', { state: 'attached', timeout: T(3000) });
+    page.off('request', onReq);
+    if (reqs.some((u) => /api\.github\.com|\/repos\//.test(u))) throw new Error(`el salto hizo consultas: ${reqs.join(' ')}`);
+    await page.keyboard.press('Control+k');
+    await page.waitForSelector('#cmdk[open]', { timeout: T(3000) });
+    await page.fill('#cmdk-input', 'zzzz-no-existe');
+    if (await page.evaluate(() => document.querySelectorAll('#cmdk .ck-opt').length)) throw new Error('una consulta sin rama ni SHA no debería ofrecer saltos');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#cmdk:not([open])', { state: 'attached', timeout: T(3000) });
+  });
+
   await step(page, 'búsqueda de commits: por mensaje y por autor, con teclado, y Enter vuela al commit', async () => {
     await page.click('#search-btn');
     await page.waitForSelector('#search[open]', { timeout: T(3000) });

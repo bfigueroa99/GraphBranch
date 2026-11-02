@@ -394,25 +394,23 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 9. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-10. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
-    `WebFetch` a `releases.electronjs.org` dio HTTP 500 en la iteración 119. Repetir la comparación
-    cuando la página responda y subir si hay una estable más nueva.
-    Reproducción: `WebFetch https://releases.electronjs.org/release/stable` → `HTTP 500`.
-11. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
+10. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
     `npm run check` en la iteración 128 (la repetición pasó), aun con la espera de la 127.
     Reproducción: `npm run check` → `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
+    También «ocultar una rama o dejarla sola» (`page.waitForFunction: Timeout 15000ms exceeded`): falló en la
+    primera puerta de la iteración 179 y pasó en la repetición (antes, en la 166).
 
-12. [QA] El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 del repositorio o la cuota
+11. [QA] El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 del repositorio o la cuota
     agotada, aunque el mensaje de abajo es exacto («No se encontró acme/web…»): en celular, donde solo se ve el
     indicador, confunde. Distinguir «No encontrado» / «Cuota agotada» de «Sin conexión».
     Reproducción: Playwright, 320×640, `?repo=acme/web&lang=es` con la API respondiendo 404 → `#status-text` = «Sin conexión».
-13. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+12. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-14. [QA] A ≤560 px las cifras ya no muestran su línea de detalle (`.stat-sub`: «de N en total», la hora de la última
+13. [QA] A ≤560 px las cifras ya no muestran su línea de detalle (`.stat-sub`: «de N en total», la hora de la última
     actividad): se perdió información en celular. Devolverla como `title`/texto accesible de la tarjeta o en un
     plegable. Reproducción: Playwright, 320×640 → `getComputedStyle(#st-branches-sub).display` = `none`.
-15. [QA] A 320 px el panel de salud se desborda hacia la derecha (28 px; 46 en tamil): la cabecera, los contadores de
+14. [QA] A 320 px el panel de salud se desborda hacia la derecha (28 px; 46 en tamil): la cabecera, los contadores de
     cada sección y la edad de los forks quedan cortados y el panel se desliza de lado. Visto en la iteración 174, igual
     sin su cambio. Reproducción: Playwright, 320×640, demo `?lang=es&health=1` → `#health .tr-wrap` con `scrollWidth`
     312 y `clientWidth` 284.
@@ -727,3 +725,20 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/178, sin colisión
 - Validado: 542 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 179, mantenimiento · Seguridad: pendiente 10 (La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la …)
+
+### 2026-11-02 · Iteración 179 · Mantenimiento · Seguridad
+
+- **Arreglo: Electron sube de 44.4.5 a 45.2.1, la última estable** (pendiente 10). `npm view electron` dio `latest` 45.2.1
+  (la página de releases ya no hace falta); `package.json` y `package-lock.json` fijan 45.2.1. Sin cambios en `electron/`:
+  el aislamiento, el preload, la navegación y las descargas siguen igual y las e2e del escritorio pasan con la nueva versión.
+- **Reproducción:** `npm view electron dist-tags.latest` → `45.2.1`, con `package.json` en `44.4.5` (una mayor atrás).
+- **Pruebas que fallan sin el arreglo:** las e2e de escritorio (`e2e/desktop.spec.mjs`) corren con la versión instalada; la
+  comparación con la última estable fue manual (no hay prueba que falle por una versión más vieja).
+- README: sin cambios (no nombra la versión).
+- QA: Seguridad 4: versión de Electron frente a la última estable, vigente; el resto del protocolo no se tocó (solo cambia una dependencia); auditoría: no toca la página.
+- Skills: no aplica: subida de versión de una dependencia ya existente.
+- Arena: no aplica: una sola forma obvia.
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/179, sin colisión
+- Validado: 542 pruebas (`node --test`), smoke, i18n (0 errores) y 28 e2e en verde. La primera corrida falló en «ocultar una rama o dejarla sola» (ajeno al cambio; intermitente, anotado en el pendiente 10).
+- **Siguiente:** iteración 180, expansión: ítem 132 (Paleta de comandos, segunda entrega, Público)

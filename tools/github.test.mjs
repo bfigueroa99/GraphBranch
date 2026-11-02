@@ -755,6 +755,28 @@ test('commitsByPath: pide /commits?path= por cabeza y devuelve solo los commits 
   assert.equal(gh.calls.length, 0, 'una ruta vacía no gasta cuota');
 });
 
+test('fileLog: pide /commits?sha=&path= desde ese commit y devuelve autor, fecha y titular de los que tocaron el archivo', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  gh.push('main', 'a2', 'a1');
+  gh.push('main', 'a3', 'a2');
+  gh.touched = { 'src/app.js': ['a1', 'a3'] };
+  const { src } = connect(gh);
+  await src.cycle();
+  gh.calls.length = 0;
+
+  const log = await src.fileLog('/src/app.js', 'a3');
+  assert.deepEqual([...log.map((e) => e.sha)], ['a3', 'a1']);
+  assert.ok(log.every((e) => 'author' in e && typeof e.date === 'number' && typeof e.message === 'string'));
+  const asked = gh.calls.filter((c) => c.includes('path='));
+  assert.equal(asked.length, 1, 'una sola consulta');
+  assert.ok(asked[0].includes('sha=a3') && asked[0].includes('path=src%2Fapp.js') && asked[0].includes('per_page=8'));
+  assert.equal((await src.fileLog('docs', 'a3')).length, 0);
+  gh.calls.length = 0;
+  assert.equal((await src.fileLog('', 'a3')).length, 0);
+  assert.equal(gh.calls.length, 0, 'sin ruta no gasta cuota');
+});
+
 /* Forks activos: /forks, solo los que hicieron push propio en los últimos 90 días. */
 
 test('forks: solo los activos, el push más nuevo primero, y una consulta cada 15 minutos, solo al pedirlos', async () => {

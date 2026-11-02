@@ -55,6 +55,7 @@
       this.rebasing = null; // { orig, branch, base, rest } mientras un rebase -i espera su --continue
       this.rebaseAborts = 0; // cuántos rebase se cancelaron con rebase --abort
       this.reflog = []; // { sha, msg }, el más nuevo al final (HEAD@{0}); cada vez que HEAD se mueve
+      this.renamed = null; // { from, to } si el último comando renombró una rama (branch -m): el panel de actividad lo dice así
       this.defaultBranch = branch;
       this.branches.set(branch, null);
     }
@@ -180,6 +181,7 @@
       if (cmd === 'commit') return `commit: ${flags['-m'] ?? this.commits.get(this.headSha).message}`;
       if (cmd === 'checkout' || cmd === 'switch') return `checkout: moving from ${from} to ${this.head.branch ?? this.short(this.headSha)}`;
       if (cmd === 'reset') return `reset: moving to ${rest[0] || 'HEAD'}`;
+      if (cmd === 'branch') return `Branch: renamed refs/heads/${from} to refs/heads/${this.head.branch}`;
       return `${cmd}${args.length ? ` ${args.join(' ')}` : ''}`;
     }
 
@@ -200,6 +202,7 @@
       const [cmd, ...args] = words;
       const headBefore = this.head.branch ?? null;
       const shaBefore = this.headSha;
+      this.renamed = null;
       // la primera línea del reflog es de dónde partió HEAD
       if (!this.reflog.length && shaBefore) this.reflog.push({ sha: shaBefore, msg: `commit: ${this.commits.get(shaBefore).message}` });
       const before = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
@@ -247,6 +250,7 @@
       return [
         'commit -m "msg"             save a snapshot on the current branch (--amend [-m "msg"] redoes the last one)',
         'branch [name] [-d name]     list, create or delete branches',
+        'branch -m [old] <new>       rename a branch (the current one without old; -M replaces an existing one)',
         'checkout [-b] <name|sha>    move to a branch or commit (also: switch [-c|--detach])',
         'restore <file|.>            throw away the uncommitted changes of a file (see touch)',
         'merge <branch>              bring another branch into this one (--no-ff always makes a merge commit, --ff-only, --no-commit, -m "msg")',
@@ -379,6 +383,9 @@
     branch(args) {
       const { flags, rest } = parse(args);
       const del = flags['-d'] || flags['-D'] || flags['--delete'];
+      const move = flags['-m'] || flags['-M'] || flags['--move'];
+      if (del && move) fail('usage: branch (-m | -M) [<old-branch>] <new-branch>');
+      if (move) return renameBranch.call(this, rest, !!(flags['-M'] || flags['-f'] || flags['--force']));
       if (del) {
         if (!rest.length) fail('fatal: branch name required');
         const out = [];
@@ -637,6 +644,31 @@
       return this.reflog.map((e, i) => `${this.short(e.sha)} HEAD@{${this.reflog.length - 1 - i}}: ${e.msg}`).reverse();
     },
   };
+  /** `branch -m [vieja] nueva`: renombra la rama (sin vieja, la actual) con sus commits; HEAD y la rama por defecto la
+      siguen. Como git: `-M` pisa una rama que ya existe, salvo la que está en uso; con el mismo nombre no hace nada. */
+  function renameBranch(rest, force) {
+    if (!rest.length) fail('fatal: branch name required');
+    if (rest.length > 2) fail('fatal: too many arguments for a rename operation');
+    if (rest.length === 1 && !this.head.branch) fail('fatal: cannot rename the current branch while not on any');
+    const [old, name] = rest.length === 2 ? rest : [this.head.branch, rest[0]];
+    if (!this.branches.has(old)) fail(`fatal: no branch named '${old}'`);
+    if (this.rebasing?.branch === old) fail(`fatal: branch refs/heads/${old} is being rebased`);
+    if (!validName(name)) fail(`fatal: '${name}' is not a valid branch name`);
+    if (old === name) return [];
+    if (this.branches.has(name)) {
+      if (!force) fail(`fatal: a branch named '${name}' already exists`);
+      if (this.head.branch === name || this.rebasing?.branch === name) fail(`fatal: cannot force update the branch '${name}' used by worktree`);
+    }
+    // en su mismo lugar de la lista: el grafo no reordena los carriles por un cambio de nombre
+    const entries = [...this.branches].filter(([n]) => n !== name).map(([n, s]) => [n === old ? name : n, s]);
+    this.branches.clear();
+    for (const [n, s] of entries) this.branches.set(n, s);
+    if (this.head.branch === old) this.head = { branch: name };
+    if (this.defaultBranch === old) this.defaultBranch = name;
+    this.renamed = { from: old, to: name };
+    return [];
+  }
+
   /** `switch` solo mueve entre ramas: `-c` crea, `--detach` va a un commit; un commit a secas no vale. */
   Repo.prototype.commands.switch = function (args) {
     const { flags, rest } = parse(args);

@@ -159,6 +159,7 @@
         author: { name: c.name || '', login: null, avatar: null },
         date: c.date || Date.now(),
         url: null,
+        ...(GB.agents ? { agent: GB.agents.detect({ name: c.name, email: c.email }, c.message) } : {}), // js/agents.js
       });
       this.kids = null;
       return true;

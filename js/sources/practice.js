@@ -57,6 +57,7 @@
       const old = new Map(branches);
       branches.clear();
       commits.clear();
+      this.data.repo.defaultBranch = g.defaultBranch; // branch -m puede renombrar la rama por defecto
       for (const [name, sha] of g.branches) {
         if (!sha) continue;
         const prev = old.get(name);
@@ -84,14 +85,20 @@
       return { ...res, solved: this.check() };
     }
 
-    /** Qué pasó con cada rama: nueva, borrada, con commits nuevos o reescrita. */
+    /** Qué pasó con cada rama: nueva, borrada, renombrada, con commits nuevos o reescrita. */
     activities(before) {
       const acts = [];
       const g = this.git;
       const now = Date.now();
       const act = (kind, fields) => ({ id: `practice:${kind}:${now}:${acts.length}`, kind, time: now, actor: YOU, ...fields });
+      // branch -m: una rama renombrada, no una borrada y otra creada (con -M, la que tenía ese nombre se pisa sin aviso aparte)
+      const ren = g.renamed;
+      if (ren && g.branches.get(ren.to)) {
+        const sha = g.branches.get(ren.to);
+        acts.push(act('branch-rename', { title: MSG('act.branchRenamed', { old: ren.from, name: ren.to }), detail: U.firstLine(g.commits.get(sha).message), branch: ren.to, sha }));
+      }
       for (const [name, sha] of g.branches) {
-        if (!sha) continue;
+        if (!sha || name === ren?.to) continue;
         const prev = before.get(name);
         if (prev === undefined) {
           acts.push(act('branch-create', { title: MSG('act.branchCreated', { name }), detail: MSG('act.branchFrom', { from: g.defaultBranch, sha: U.shortSha(sha) }), branch: name, sha }));
@@ -108,7 +115,7 @@
         }
       }
       for (const name of before.keys()) {
-        if (!g.branches.has(name)) acts.push(act('branch-delete', { title: MSG('act.branchDeleted', { name }), branch: name }));
+        if (!g.branches.has(name) && name !== ren?.from) acts.push(act('branch-delete', { title: MSG('act.branchDeleted', { name }), branch: name }));
       }
       return acts;
     }

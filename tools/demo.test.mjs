@@ -60,3 +60,12 @@ test('commitsByPath: el historial de un archivo del diff de la demo incluye al c
   }
   assert.ok(probados, 'la demo no tiene un commit con ámbito del que sacar un archivo');
 });
+
+test('los commits de agente de la demo llevan sus trailers, y el filtro por ruta solo mira el titular', async () => {
+  const { src } = demo(7);
+  const signed = [...src.data.commits.values()].filter((c) => /\nClaude-Session: https:\/\/claude\.ai\/code\/session_\w+$/.test(c.message));
+  assert.ok(signed.length >= 3, `${signed.length} commits de sesiones de Claude en la semilla`);
+  // «Co-Authored-By» contiene «auth»: no por eso un commit de agente toca src/auth
+  const auth = await src.commitsByPath('src/auth');
+  for (const c of signed) if (!/auth/i.test(c.message.split('\n')[0])) assert.equal(auth.has(c.sha), false, c.message.split('\n')[0]);
+});

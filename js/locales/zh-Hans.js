@@ -885,4 +885,10 @@ GB.i18n.define('zh-Hans', {
   'agents.commits': '提交：{n}',
   'agents.openSession': '在 Claude Code 中打开会话',
   'tip.agent': '智能体：{name}',
+  'cmdk.title': '命令面板',
+  'cmdk.placeholder': '输入一个操作…',
+  'cmdk.help': 'Ctrl+K 打开此列表。输入以筛选，方向键移动，Enter 执行，Esc 关闭。',
+  'cmdk.empty': '没有匹配的操作。',
+  'cmdk.view3d': '切换到 3D 视图',
+  'cmdk.view2d': '切换到 2D 视图',
 });

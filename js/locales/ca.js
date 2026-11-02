@@ -885,4 +885,10 @@ GB.i18n.define('ca', {
   'agents.commits': 'commits: {n}',
   'agents.openSession': 'Obre la sessió a Claude Code',
   'tip.agent': 'Agent: {name}',
+  'cmdk.title': 'Paleta d’ordres',
+  'cmdk.placeholder': 'Escriu una acció…',
+  'cmdk.help': 'Ctrl+K obre aquesta llista. Escriu per filtrar, fletxes per moure’t, Intro per executar, Esc per tancar.',
+  'cmdk.empty': 'Cap acció coincideix.',
+  'cmdk.view3d': 'Canvia a la vista 3D',
+  'cmdk.view2d': 'Canvia a la vista 2D',
 });

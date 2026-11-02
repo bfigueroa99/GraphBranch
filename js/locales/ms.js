@@ -885,4 +885,10 @@ GB.i18n.define('ms', {
   'agents.commits': 'komit: {n}',
   'agents.openSession': 'Buka sesi dalam Claude Code',
   'tip.agent': 'Ejen: {name}',
+  'cmdk.title': 'Palet arahan',
+  'cmdk.placeholder': 'Taip satu tindakan…',
+  'cmdk.help': 'Ctrl+K membuka senarai ini. Taip untuk menapis, anak panah untuk bergerak, Enter untuk menjalankan, Esc untuk menutup.',
+  'cmdk.empty': 'Tiada tindakan yang sepadan.',
+  'cmdk.view3d': 'Tukar ke paparan 3D',
+  'cmdk.view2d': 'Tukar ke paparan 2D',
 });

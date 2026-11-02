@@ -885,4 +885,10 @@ GB.i18n.define('ta', {
   'agents.commits': 'கமிட்கள்: {n}',
   'agents.openSession': 'Claude Code-இல் அமர்வைத் திற',
   'tip.agent': 'முகவர்: {name}',
+  'cmdk.title': 'கட்டளைப் பலகை',
+  'cmdk.placeholder': 'ஒரு செயலை உள்ளிடவும்…',
+  'cmdk.help': 'Ctrl+K இந்தப் பட்டியலைத் திறக்கும். வடிகட்ட தட்டச்சு செய்யவும், நகர அம்புகள், இயக்க Enter, மூட Esc.',
+  'cmdk.empty': 'பொருந்தும் செயல் இல்லை.',
+  'cmdk.view3d': '3D காட்சிக்கு மாறு',
+  'cmdk.view2d': '2D காட்சிக்கு மாறு',
 });

@@ -885,4 +885,10 @@ GB.i18n.define('vi', {
   'agents.commits': 'commit: {n}',
   'agents.openSession': 'Mở phiên trong Claude Code',
   'tip.agent': 'Tác tử: {name}',
+  'cmdk.title': 'Bảng lệnh',
+  'cmdk.placeholder': 'Nhập một thao tác…',
+  'cmdk.help': 'Ctrl+K mở danh sách này. Gõ để lọc, phím mũi tên để di chuyển, Enter để chạy, Esc để đóng.',
+  'cmdk.empty': 'Không có thao tác nào khớp.',
+  'cmdk.view3d': 'Chuyển sang chế độ xem 3D',
+  'cmdk.view2d': 'Chuyển sang chế độ xem 2D',
 });

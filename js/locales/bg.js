@@ -885,4 +885,10 @@ GB.i18n.define('bg', {
   'agents.commits': 'комити: {n}',
   'agents.openSession': 'Отвори сесията в Claude Code',
   'tip.agent': 'Агент: {name}',
+  'cmdk.title': 'Палитра с команди',
+  'cmdk.placeholder': 'Въведете действие…',
+  'cmdk.help': 'Ctrl+K отваря този списък. Пишете за филтриране, стрелки за движение, Enter за изпълнение, Esc за затваряне.',
+  'cmdk.empty': 'Няма съвпадащо действие.',
+  'cmdk.view3d': 'Превключване към 3D изглед',
+  'cmdk.view2d': 'Превключване към 2D изглед',
 });

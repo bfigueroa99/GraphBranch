@@ -2433,6 +2433,28 @@
     $('#search-input').focus();
   }
   $('#search-btn').addEventListener('click', openSearch);
+
+  /* ---------- paleta de comandos, Ctrl+K (ver cmdk.js) ---------- */
+  if (!EMBED) {
+    const cmdBtn = (a) => $(a.btn);
+    const palette = GB.cmdk.mount(
+      { dialog: $('#cmdk'), input: $('#cmdk-input'), list: $('#cmdk-list'), status: $('#cmdk-status') },
+      {
+        text: (k) => t(k),
+        available: (a) => {
+          const b = cmdBtn(a);
+          return !!b && !b.disabled && !b.closest('[hidden]');
+        },
+        run: (a) => cmdBtn(a)?.click(),
+      }
+    );
+    document.addEventListener('keydown', (ev) => {
+      if (!GB.cmdk.isShortcut(ev) || ev.defaultPrevented) return;
+      ev.preventDefault();
+      if ($('#cmdk').open) palette.close();
+      else if (!document.querySelector('dialog[open]')) palette.open();
+    });
+  }
   $('#search-input').addEventListener('input', () => {
     if (!initialQuery) setUrlParam('q', $('#search-input').value.trim().slice(0, 100)); // la búsqueda se comparte con la URL
   });

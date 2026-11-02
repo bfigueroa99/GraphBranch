@@ -901,4 +901,10 @@ GB.i18n.define('uk', {
   'agents.commits': 'коміти: {n}',
   'agents.openSession': 'Відкрити сесію в Claude Code',
   'tip.agent': 'Агент: {name}',
+  'cmdk.title': 'Палітра команд',
+  'cmdk.placeholder': 'Введіть дію…',
+  'cmdk.help': 'Ctrl+K відкриває цей список. Друкуйте для фільтрації, стрілки для переходу, Enter для запуску, Esc для закриття.',
+  'cmdk.empty': 'Немає відповідних дій.',
+  'cmdk.view3d': 'Перейти до 3D-вигляду',
+  'cmdk.view2d': 'Перейти до 2D-вигляду',
 });

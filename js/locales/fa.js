@@ -928,4 +928,10 @@ GB.i18n.define('fa', {
   'agents.commits': 'کامیت‌ها: {n}',
   'agents.openSession': 'باز کردن نشست در Claude Code',
   'tip.agent': 'عامل: {name}',
+  'cmdk.title': 'پالت فرمان',
+  'cmdk.placeholder': 'یک عمل را بنویسید…',
+  'cmdk.help': 'Ctrl+K این فهرست را باز می‌کند. برای فیلتر بنویسید، با کلیدهای جهت‌دار حرکت کنید، با Enter اجرا کنید و با Esc ببندید.',
+  'cmdk.empty': 'هیچ عملی مطابقت ندارد.',
+  'cmdk.view3d': 'رفتن به نمای 3D',
+  'cmdk.view2d': 'رفتن به نمای 2D',
 });

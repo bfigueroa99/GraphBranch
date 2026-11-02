@@ -984,4 +984,10 @@ GB.i18n.define('ar', {
   'agents.commits': 'الالتزامات: {n}',
   'agents.openSession': 'فتح الجلسة في Claude Code',
   'tip.agent': 'الوكيل: {name}',
+  'cmdk.title': 'لوحة الأوامر',
+  'cmdk.placeholder': 'اكتب إجراءً…',
+  'cmdk.help': 'Ctrl+K يفتح هذه القائمة. اكتب للتصفية، الأسهم للتنقل، Enter للتنفيذ، Esc للإغلاق.',
+  'cmdk.empty': 'لا يوجد إجراء مطابق.',
+  'cmdk.view3d': 'التبديل إلى عرض 3D',
+  'cmdk.view2d': 'التبديل إلى عرض 2D',
 });

@@ -885,4 +885,10 @@ GB.i18n.define('tr', {
   'agents.commits': 'commit’ler: {n}',
   'agents.openSession': 'Oturumu Claude Code’da aç',
   'tip.agent': 'Ajan: {name}',
+  'cmdk.title': 'Komut paleti',
+  'cmdk.placeholder': 'Bir eylem yazın…',
+  'cmdk.help': 'Ctrl+K bu listeyi açar. Süzmek için yazın, gezinmek için oklar, çalıştırmak için Enter, kapatmak için Esc.',
+  'cmdk.empty': 'Eşleşen eylem yok.',
+  'cmdk.view3d': '3B görünüme geç',
+  'cmdk.view2d': '2B görünüme geç',
 });

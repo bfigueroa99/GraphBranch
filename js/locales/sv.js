@@ -885,4 +885,10 @@ GB.i18n.define('sv', {
   'agents.commits': 'commits: {n}',
   'agents.openSession': 'Öppna sessionen i Claude Code',
   'tip.agent': 'Agent: {name}',
+  'cmdk.title': 'Kommandopalett',
+  'cmdk.placeholder': 'Skriv en åtgärd…',
+  'cmdk.help': 'Ctrl+K öppnar den här listan. Skriv för att filtrera, piltangenter för att flytta, Enter för att köra, Esc för att stänga.',
+  'cmdk.empty': 'Ingen åtgärd matchar.',
+  'cmdk.view3d': 'Byt till 3D-vy',
+  'cmdk.view2d': 'Byt till 2D-vy',
 });

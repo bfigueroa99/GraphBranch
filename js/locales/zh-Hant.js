@@ -885,4 +885,10 @@ GB.i18n.define('zh-Hant', {
   'agents.commits': '提交：{n}',
   'agents.openSession': '在 Claude Code 中開啟工作階段',
   'tip.agent': '代理：{name}',
+  'cmdk.title': '命令面板',
+  'cmdk.placeholder': '輸入一個操作…',
+  'cmdk.help': 'Ctrl+K 開啟此清單。輸入以篩選，方向鍵移動，Enter 執行，Esc 關閉。',
+  'cmdk.empty': '沒有符合的操作。',
+  'cmdk.view3d': '切換到 3D 檢視',
+  'cmdk.view2d': '切換到 2D 檢視',
 });

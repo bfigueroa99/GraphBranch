@@ -893,4 +893,10 @@ GB.i18n.define('hr', {
   'agents.commits': 'commitovi: {n}',
   'agents.openSession': 'Otvori sesiju u Claude Code',
   'tip.agent': 'Agent: {name}',
+  'cmdk.title': 'Paleta naredbi',
+  'cmdk.placeholder': 'Upišite radnju…',
+  'cmdk.help': 'Ctrl+K otvara ovaj popis. Upišite za filtriranje, strelice za kretanje, Enter za izvršavanje, Esc za zatvaranje.',
+  'cmdk.empty': 'Nijedna radnja ne odgovara.',
+  'cmdk.view3d': 'Prebaci na 3D prikaz',
+  'cmdk.view2d': 'Prebaci na 2D prikaz',
 });

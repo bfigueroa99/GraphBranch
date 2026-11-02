@@ -885,4 +885,10 @@ GB.i18n.define('hu', {
   'agents.commits': 'commitok: {n}',
   'agents.openSession': 'Munkamenet megnyitása a Claude Code-ban',
   'tip.agent': 'Ügynök: {name}',
+  'cmdk.title': 'Parancspaletta',
+  'cmdk.placeholder': 'Írjon be egy műveletet…',
+  'cmdk.help': 'A Ctrl+K megnyitja ezt a listát. Gépeljen a szűréshez, nyilakkal mozoghat, Enter futtatja, Esc bezárja.',
+  'cmdk.empty': 'Nincs egyező művelet.',
+  'cmdk.view3d': 'Váltás 3D nézetre',
+  'cmdk.view2d': 'Váltás 2D nézetre',
 });

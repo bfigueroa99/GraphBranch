@@ -885,4 +885,10 @@ GB.i18n.define('sw', {
   'agents.commits': 'commit: {n}',
   'agents.openSession': 'Fungua kipindi katika Claude Code',
   'tip.agent': 'Wakala: {name}',
+  'cmdk.title': 'Paleti ya amri',
+  'cmdk.placeholder': 'Andika kitendo…',
+  'cmdk.help': 'Ctrl+K hufungua orodha hii. Andika kuchuja, mishale kusogea, Enter kuendesha, Esc kufunga.',
+  'cmdk.empty': 'Hakuna kitendo kinacholingana.',
+  'cmdk.view3d': 'Badilisha hadi mwonekano wa 3D',
+  'cmdk.view2d': 'Badilisha hadi mwonekano wa 2D',
 });

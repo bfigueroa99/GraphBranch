@@ -893,4 +893,10 @@ GB.i18n.define('ro', {
   'agents.commits': 'commituri: {n}',
   'agents.openSession': 'Deschide sesiunea în Claude Code',
   'tip.agent': 'Agent: {name}',
+  'cmdk.title': 'Paleta de comenzi',
+  'cmdk.placeholder': 'Scrieți o acțiune…',
+  'cmdk.help': 'Ctrl+K deschide această listă. Scrieți pentru a filtra, săgeți pentru a vă deplasa, Enter pentru a rula, Esc pentru a închide.',
+  'cmdk.empty': 'Nicio acțiune nu se potrivește.',
+  'cmdk.view3d': 'Treceți la vizualizarea 3D',
+  'cmdk.view2d': 'Treceți la vizualizarea 2D',
 });

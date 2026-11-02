@@ -885,4 +885,10 @@ GB.i18n.define('bn', {
   'agents.commits': 'কমিট: {n}',
   'agents.openSession': 'Claude Code-এ সেশন খুলুন',
   'tip.agent': 'এজেন্ট: {name}',
+  'cmdk.title': 'কমান্ড প্যালেট',
+  'cmdk.placeholder': 'একটি কাজ লিখুন…',
+  'cmdk.help': 'Ctrl+K এই তালিকা খোলে। ফিল্টার করতে লিখুন, সরতে তীর, চালাতে Enter, বন্ধ করতে Esc।',
+  'cmdk.empty': 'কোনো কাজ মেলেনি।',
+  'cmdk.view3d': '3D ভিউতে যান',
+  'cmdk.view2d': '2D ভিউতে যান',
 });

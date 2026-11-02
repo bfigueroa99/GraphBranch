@@ -885,4 +885,10 @@ GB.i18n.define('hi', {
   'agents.commits': 'कमिट: {n}',
   'agents.openSession': 'Claude Code में सेशन खोलें',
   'tip.agent': 'एजेंट: {name}',
+  'cmdk.title': 'कमांड पैलेट',
+  'cmdk.placeholder': 'कोई कार्रवाई लिखें…',
+  'cmdk.help': 'Ctrl+K यह सूची खोलता है। फ़िल्टर करने के लिए लिखें, चलने के लिए तीर, चलाने के लिए Enter, बंद करने के लिए Esc।',
+  'cmdk.empty': 'कोई कार्रवाई मेल नहीं खाती।',
+  'cmdk.view3d': '3D दृश्य पर जाएँ',
+  'cmdk.view2d': '2D दृश्य पर जाएँ',
 });

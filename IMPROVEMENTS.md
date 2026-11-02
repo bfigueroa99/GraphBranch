@@ -615,5 +615,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (`Commit.blame` de GraphQL).
 - OMC: plan=— · revisión=— · verificación=— (el plan por consenso y la revisión no corrieron: los agentes `omc-*` no están registrados en esta sesión; el ítem lleva esfuerzo 3 pero se entregó acotado a una consulta)
 - Reclamo: loop/181, sin colisión
-- Validado: PENDIENTE
+- Validado: 546 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 182, expansión: ítem 102 (Resumen de la semana: ramas nuevas, Salidas)

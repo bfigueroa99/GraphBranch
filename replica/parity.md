@@ -1,6 +1,6 @@
-## Parity: 85.4 / 100
+## Parity: 86.6 / 100
 
-features 85.4  (38 counted, must-haves 13 of 13 done)
+features 86.6  (38 counted, must-haves 13 of 13 done)
 
 ## By area, weakest first
 - navegación                     0.0  (1 features)
@@ -8,7 +8,7 @@ features 85.4  (38 counted, must-haves 13 of 13 done)
 - launchpad                     60.0  (3 features)
 - varios repos                  75.0  (3 features)
 - diffs                         80.0  (5 features)
-- grafo                         86.1  (8 features)
+- grafo                         91.7  (8 features)
 - integraciones                 94.7  (7 features)
 - búsqueda                     100.0  (1 features)
 - pull requests                100.0  (3 features)
@@ -22,7 +22,6 @@ features 85.4  (38 counted, must-haves 13 of 13 done)
 - [should] cuentas: Varios perfiles o cuentas, no  (un token por servicio)
 - [should] diffs: Blame de un archivo (autor y fecha por línea), no
 - [should] grafo: Columnas de autor fecha y SHA a la vista en el grafo, partial  (autor fecha y SHA están en la ficha del commit y en la vista de texto; el grafo no tiene columnas)
-- [should] grafo: Resaltar los commits de una rama y atenuar el resto, partial  (comparar dos ramas resalta sus tramos y el filtro por autor o ruta atenúa; no al pasar el puntero por una rama)
 - [should] integraciones: Issues de rastreadores (Jira Trello GitHub Issues), partial  (issues de GitHub GitLab Codeberg y Bitbucket en el panel de actividad y la salud; sin Jira ni Trello)
 - [should] varios repos: Pestañas por repo con alias, partial  (pestañas por repo, sin alias)
 - [could] launchpad: Launchpad: fijar y posponer PRs e issues, no

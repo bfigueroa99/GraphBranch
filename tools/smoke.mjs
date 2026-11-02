@@ -3147,6 +3147,35 @@ console.log('Fijar una rama con el teclado');
     if (fantasma) throw new Error('las filas de ramas ya fusionadas no deben ser enfocables');
   });
 
+  await step(page, 'pasar el puntero por el nombre de una rama de la leyenda 2D resalta solo sus commits, sin tocar filtro ni URL', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=o/f`);
+    await loaded(page);
+    await page.click('#view-2d');
+    await page.waitForSelector('#graph svg .legend-item[role=button]', { timeout: T(10000) });
+    const urlAntes = page.url();
+    const filas = await page.$$('#graph svg .legend-item[role=button]');
+    let visto = null;
+    for (const fila of filas) {
+      await fila.hover();
+      visto = await page.evaluate(() => ({
+        atenuado: !!document.querySelector('#graph svg.dimmed'),
+        luz: document.querySelectorAll('#graph svg .node.hl').length,
+        resto: document.querySelectorAll('#graph svg .node:not(.hl)').length,
+      }));
+      if (visto.luz && visto.resto) break;
+    }
+    if (!visto?.atenuado || !visto.luz || !visto.resto) throw new Error(`el puntero sobre la leyenda no deja una rama a la luz y el resto atenuado: ${JSON.stringify(visto)}`);
+    await page.mouse.move(2, 2);
+    const fuera = await page.evaluate(() => ({
+      atenuado: !!document.querySelector('#graph svg.dimmed'),
+      luz: document.querySelectorAll('#graph svg .hl').length,
+      filtro: document.querySelector('#branch-filter').value,
+    }));
+    if (fuera.atenuado || fuera.luz) throw new Error(`al salir de la leyenda el resaltado se queda: ${JSON.stringify(fuera)}`);
+    if (fuera.filtro) throw new Error('resaltar una rama cambió el filtro');
+    if (page.url() !== urlAntes) throw new Error(`resaltar una rama cambió la URL: ${urlAntes} → ${page.url()}`);
+  });
+
   // abierta con el teclado, la ficha recibe el foco (si no, para llegar a sus botones habría que
   // recorrer con Tab todas las etiquetas) y Esc la cierra y lo devuelve a la etiqueta
   const focusRoundTrip = async (view, label) => {

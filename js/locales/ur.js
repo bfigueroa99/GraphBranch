@@ -268,6 +268,10 @@ GB.i18n.define('ur', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} → <code>{base}</code> (مسودہ)',
   'tip.viewPr': 'PR دیکھیں',
+  'tip.reviewers': 'جائزہ لینے والے: {list}',
+  'tip.voteYes': 'منظور',
+  'tip.voteNo': 'مسترد',
+  'tip.voteWait': 'مصنف کا منتظر',
   'tip.stacked': 'PR #{num} (<code>{parent}</code>) کے اوپر اسٹیک کیا گیا',
   'tip.viewMr': 'MR دیکھیں',
   'tip.mergeOf': {

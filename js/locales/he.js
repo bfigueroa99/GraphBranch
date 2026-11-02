@@ -277,6 +277,10 @@ GB.i18n.define('he', {
   'tip.mr': 'MR !{num} → <code>{base}</code>',
   'tip.mrDraft': 'MR !{num} → <code>{base}</code> (טיוטה)',
   'tip.viewPr': 'הצג PR',
+  'tip.reviewers': 'סוקרים: {list}',
+  'tip.voteYes': 'אישר',
+  'tip.voteNo': 'דחה',
+  'tip.voteWait': 'ממתין למחבר',
   'tip.stacked': 'מוערם על PR #{num} (<code>{parent}</code>)',
   'tip.viewMr': 'הצג MR',
   'tip.mergeOf': {

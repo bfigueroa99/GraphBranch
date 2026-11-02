@@ -38,6 +38,7 @@
   const MAX_BRANCHES = 500; // ramas pedidas como mucho
   const DETAIL_PARALLEL = 6; // consultas de commit suelto a la vez
   const DETAIL_MAX = 150; // y como mucho por historia pedida: más allá la rama queda cortada
+  const MAX_REVIEWERS = 8; // revisores de un PR que se muestran
   const CHANGES_MAX = 300; // archivos por commit que se piden
   const LOADS = 6; // ramas por ciclo que se cargan de la lista de espera
   const WAIT_429 = 60000;
@@ -308,8 +309,24 @@
       return { login: u.uniqueName || u.displayName || null, name: u.displayName || u.uniqueName || '', avatar: null };
     }
 
+    /** Los revisores de un PR con su voto: 10 y 5 aprobaron, -5 espera al autor, -10 rechazó, 0 aún nada.
+        Los grupos (equipos) no son personas y se dejan; hasta MAX_REVIEWERS. */
+    reviewersOf(p) {
+      const out = [];
+      for (const r of Array.isArray(p.reviewers) ? p.reviewers : []) {
+        if (!r || r.isContainer) continue;
+        const name = String(r.displayName || r.uniqueName || '').slice(0, 60);
+        if (!name) continue;
+        const vote = r.vote >= 5 ? 'yes' : r.vote === -10 ? 'no' : r.vote === -5 ? 'wait' : '';
+        out.push({ name, vote });
+        if (out.length >= MAX_REVIEWERS) break;
+      }
+      return out;
+    }
+
     mapPull(p) {
       return {
+        reviewers: this.reviewersOf(p),
         number: p.pullRequestId,
         title: p.title || '',
         head: branchOf(p.sourceRefName),

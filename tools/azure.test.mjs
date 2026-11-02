@@ -230,6 +230,32 @@ test('carga un repo: ramas, historia con sus padres y PRs, sin token y solo cont
   assert.ok(updates.length >= 1);
 });
 
+test('los revisores de un PR salen con su voto; los grupos y los vacíos se dejan', async () => {
+  const az = repo();
+  az.pull(8, 'feature', 'main', {
+    reviewers: [
+      { displayName: 'Bea', uniqueName: 'bea@example.com', vote: 10 },
+      { displayName: 'Cy', vote: -10 },
+      { displayName: 'Di', vote: -5 },
+      { displayName: 'Ed', vote: 0 },
+      { displayName: '[web]\\Equipo', isContainer: true, vote: 0 },
+      { vote: 10 },
+    ],
+  });
+  az.pull(9, 'fix', 'main');
+  const { src, errors } = connect(az);
+  const plain = (x) => JSON.parse(JSON.stringify(x));
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  assert.deepEqual(plain(src.data.pulls.get(8).reviewers), [
+    { name: 'Bea', vote: 'yes' },
+    { name: 'Cy', vote: 'no' },
+    { name: 'Di', vote: 'wait' },
+    { name: 'Ed', vote: '' },
+  ]);
+  assert.deepEqual(plain(src.data.pulls.get(9).reviewers), [], 'sin revisores en la respuesta, lista vacía');
+});
+
 test('los commits que otra rama ya trajo no se piden otra vez', async () => {
   const az = repo();
   const { src, errors } = connect(az);

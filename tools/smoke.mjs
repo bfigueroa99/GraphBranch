@@ -2940,7 +2940,7 @@ function fakeAzure() {
       const one = p.match(/\/repositories\/api\/commits\/(\w+)$/);
       if (one && commits.has(one[1])) return route.fulfill(json(commits.get(one[1])));
       if (p === `${REPO}/pullrequests`) {
-        const pr = { pullRequestId: 3, title: 'Agrega la función x', status: 'active', isDraft: false, sourceRefName: 'refs/heads/feature/x', targetRefName: 'refs/heads/main', createdBy: { displayName: 'Bea', uniqueName: 'bea@example.com' }, creationDate: new Date().toISOString() };
+        const pr = { pullRequestId: 3, title: 'Agrega la función x', status: 'active', isDraft: false, sourceRefName: 'refs/heads/feature/x', targetRefName: 'refs/heads/main', createdBy: { displayName: 'Bea', uniqueName: 'bea@example.com' }, creationDate: new Date().toISOString(), reviewers: [{ displayName: 'Cy', vote: 10 }, { displayName: 'Di', vote: -5 }, { displayName: 'Ed', vote: 0 }] };
         return route.fulfill(json({ count: 1, value: [pr] }));
       }
       return route.fulfill({ status: 404, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"message":"TF401019: The Git repository does not exist or you do not have permissions."}' });
@@ -2977,6 +2977,17 @@ console.log('Azure DevOps');
     if ((await label.textContent()) !== '#3') throw new Error(`la etiqueta dice ${await label.textContent()}`);
     const names = await page.$$eval('#graph .head', (hs) => hs.map((h) => h.getAttribute('aria-label')).join(' | '));
     if (!names.includes('feature/x') || !names.includes('main')) throw new Error(`ramas: ${names}`);
+  });
+
+  await step(page, 'la ficha de la rama con PR de Azure DevOps lista sus revisores con el voto', async () => {
+    const head = await page.$('#graph svg .head[role=button][aria-label*="feature/x"]');
+    if (!head) throw new Error('no está la cabeza de feature/x');
+    await head.focus();
+    await page.keyboard.press('Enter');
+    const row = await page.waitForSelector('#graph .tip .tip-reviewers', { timeout: T(5000) });
+    const text = await row.textContent();
+    if (text !== 'Revisores: Cy (aprobó), Di (espera al autor), Ed') throw new Error(`la ficha dice ${text}`);
+    await page.keyboard.press('Escape');
   });
 
   await step(page, 'cambios de un commit de Azure DevOps: la ficha abre el panel con sus archivos (commits/{id}/changes)', async () => {

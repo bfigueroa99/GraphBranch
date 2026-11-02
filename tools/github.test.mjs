@@ -43,6 +43,7 @@ function load(gh) {
        timeAgo: () => '', fmtNum: String, fmtDate: String, fmtDateTime: String };`,
     ctx,
   );
+  vm.runInContext(code('agents.js'), ctx, { filename: 'agents.js' });
   vm.runInContext(code('sources/github.js'), ctx, { filename: 'sources/github.js' });
   return ctx.GB;
 }
@@ -467,7 +468,7 @@ test('eventos de una organización: un usuario (404) no da nada y no falla', asy
    que se pone en rojo avisa una sola vez. */
 
 /** GraphQL falso: responde la consulta del ciclo y las de historia con el estado de checks de `ci`. */
-function fakeGraphQL(gh, ci) {
+function fakeGraphQL(gh, ci, commit = {}) {
   const fetch = gh.fetch;
   gh.fetch = (url, opts = {}) => {
     if (!url.endsWith('/graphql')) return fetch(url, opts);
@@ -485,7 +486,7 @@ function fakeGraphQL(gh, ci) {
       });
     }
     for (const m of query.matchAll(/(h\d+): object\(oid: "([^"]+)"/g)) {
-      repository[m[1]] = { history: { nodes: [{ oid: m[2], url: 'u', committedDate: '2026-01-01T00:00:00Z', messageHeadline: 'c', author: null, parents: { nodes: [] } }] } };
+      repository[m[1]] = { history: { nodes: [{ oid: m[2], url: 'u', committedDate: '2026-01-01T00:00:00Z', messageHeadline: 'c', author: null, parents: { nodes: [] }, ...commit }] } };
     }
     const body = JSON.stringify({ data: { rateLimit: { cost: 1, remaining: 4000, limit: 5000, resetAt: '2030-01-01T00:00:00Z' }, repository } });
     return Promise.resolve({ status: 200, ok: true, headers: { get: () => null }, text: async () => body, json: async () => JSON.parse(body) });
@@ -519,6 +520,46 @@ test('CI con GraphQL: estado en la rama por defecto y en los PRs, y un aviso al 
   ci.main = null; // sin checks: sin estado
   await src.cycle();
   assert.equal(src.data.ci.has('main'), false);
+});
+
+test('GraphQL: el cuerpo del commit dice si lo escribió un agente y en qué sesión, sin guardar el cuerpo', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  fakeGraphQL(gh, { main: 'SUCCESS', pr: null }, {
+    messageHeadline: 'Vista de texto: ramas quietas',
+    messageBody: 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01CqYLDWb4ozXDK5nmAkKCeJ',
+    author: { name: 'Claude', email: 'noreply@anthropic.com', user: null },
+  });
+  const sent = [];
+  const fetch = gh.fetch;
+  gh.fetch = (url, opts = {}) => (url.endsWith('/graphql') && sent.push(JSON.parse(opts.body).query), fetch(url, opts));
+  const { src } = connect(gh, 'tok');
+  await src.cycle();
+  assert.equal(src.mode, 'graphql');
+  assert.ok(sent.some((q) => q.includes('messageBody') && q.includes('email')), 'la historia pide el cuerpo y el correo');
+  const c = src.data.commits.get('a1');
+  assert.equal(c.message, 'Vista de texto: ramas quietas'); // solo el titular, como antes
+  assert.equal(c.agent.id, 'claude');
+  assert.equal(c.agent.model, 'Opus 5.5');
+  assert.equal(c.agent.session, '01CqYLDWb4ozXDK5nmAkKCeJ');
+});
+
+test('los comentarios de un PR llevan su número para las interacciones; pedir revisión no es revisar', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const { src } = connect(gh);
+  const ev = (type, payload, id) => ({ id, type, actor: { login: 'Copilot', avatar_url: '' }, created_at: '2026-10-28T12:00:00Z', payload });
+  const a = src.mapEvent(ev('IssueCommentEvent', { action: 'created', issue: { number: 9, pull_request: {} }, comment: { body: 'ok' } }, '1'));
+  assert.equal(a.number, 9);
+  assert.equal(a.pr, true);
+  const b = src.mapEvent(ev('IssueCommentEvent', { action: 'created', issue: { number: 10 }, comment: { body: 'ok' } }, '2'));
+  assert.equal(b.number, undefined); // de un issue: no es de un PR
+  const c = src.mapEvent(ev('PullRequestReviewCommentEvent', { action: 'created', number: 9, pull_request: { number: 9 }, comment: { body: 'x' } }, '3'));
+  assert.equal(c.number, 9);
+  assert.equal(c.pr, true);
+  const d = src.mapEvent(ev('PullRequestEvent', { action: 'review_requested', number: 9, pull_request: { number: 9 } }, '4'));
+  assert.equal(d.kind, 'review');
+  assert.equal(d.request, true);
 });
 
 test('CI sin token: los check-runs de la rama por defecto, una consulta por commit', async () => {

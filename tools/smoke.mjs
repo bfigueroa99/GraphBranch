@@ -3928,15 +3928,13 @@ console.log('Grafo de primer padre (?firstparent=1)');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'deja menos commits que el grafo entero, queda en la URL y el interruptor lo apaga', async () => {
-    const nodes = () => page.evaluate(() => document.querySelectorAll('#graph svg .node').length);
-    await page.goto(`${base}/index.html?lang=es`);
-    await loaded(page);
-    const all = await nodes();
+    // los commits del grafo dibujado (la cifra del resumen, que sale del layout), no los nodos del SVG: el 2D crea
+    // solo los que están en pantalla, y con menos carriles caben más. Todo en la misma demo: otra carga es otra historia
+    const commits = () => page.evaluate(() => Number(document.querySelector('#st-commits').textContent.replace(/\D/g, '')) || 0);
     await page.goto(`${base}/index.html?lang=es&firstparent=1`);
     await loaded(page);
-    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length < n, all, { timeout: T(5000) }).catch(() => {});
-    const on = await page.evaluate(() => ({ n: document.querySelectorAll('#graph svg .node').length, mark: document.querySelector('#search-btn').classList.contains('filtered'), url: location.search }));
-    if (!(on.n > 0 && on.n < all)) throw new Error(`?firstparent=1 no acota los commits (${on.n} de ${all})`);
+    const on = await page.evaluate(() => ({ mark: document.querySelector('#search-btn').classList.contains('filtered'), url: location.search }));
+    on.n = await commits();
     if (!on.mark) throw new Error('?firstparent=1 no marca el filtro');
     if (!on.url.includes('firstparent=1')) throw new Error('la URL perdió firstparent: ' + on.url);
     await page.click('#search-btn');
@@ -3944,8 +3942,9 @@ console.log('Grafo de primer padre (?firstparent=1)');
     if (!(await page.locator('#graph-firstparent').isChecked())) throw new Error('el interruptor no refleja ?firstparent=1');
     if (!(await page.evaluate(() => !!document.querySelector('#graph-firstparent').closest('label')?.textContent.trim()))) throw new Error('el interruptor no tiene nombre');
     await page.uncheck('#graph-firstparent');
-    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length === n, all, { timeout: T(5000) }).catch(() => {});
-    if ((await nodes()) !== all) throw new Error('apagar el interruptor no devuelve todos los commits');
+    await page.waitForFunction((n) => Number(document.querySelector('#st-commits').textContent.replace(/\D/g, '')) > n, on.n, { timeout: T(5000) }).catch(() => {});
+    const all = await commits();
+    if (!(on.n > 0 && on.n < all)) throw new Error(`?firstparent=1 no acota los commits (${on.n} con el interruptor, ${all} sin él)`);
     if ((await page.evaluate(() => location.search)).includes('firstparent')) throw new Error('apagarlo deja firstparent en la URL');
   });
   await page.context().close();
@@ -4016,6 +4015,95 @@ console.log('Salud del repo directa (?health=1)');
     await loaded(page);
     await page.waitForTimeout(500);
     if (await page.evaluate(() => document.querySelector('#health').open)) throw new Error('health=0 abrió el panel');
+  });
+  await page.context().close();
+}
+
+console.log('Agentes e interacciones (?agents=1)');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, 'abre la demo con el panel de agentes: la red, quién con quién (también entre agentes), las sesiones y lo último', async () => {
+    await page.goto(`${base}/index.html?lang=es&agents=1`);
+    await loaded(page);
+    await page.waitForSelector('#agents[open]', { timeout: T(5000) }).catch(() => {
+      throw new Error('?agents=1 no abrió el panel de agentes');
+    });
+    const info = await page.evaluate(() => {
+      const d = document.querySelector('#agents');
+      const w = d.querySelector('.tr-wrap');
+      const texts = (sel) => [...d.querySelectorAll(sel)].map((x) => x.textContent.replace(/[\u2068\u2069]/g, '')); // sin los aislantes de cada nombre
+      return {
+        agents: d.querySelectorAll('svg.ag-net .ag-agent').length,
+        people: d.querySelectorAll('svg.ag-net .ag-person').length,
+        between: d.querySelectorAll('svg.ag-net .ag-edge-agents').length,
+        aria: d.querySelector('svg.ag-net')?.getAttribute('aria-label') || '',
+        pairs: texts('#ag-pairs .hl-main'),
+        list: texts('#ag-list .hl-main'),
+        recent: texts('#ag-recent .hl-main'),
+        rows: d.querySelectorAll('#agents-body button.hl-row[data-sha]').length,
+        links: d.querySelectorAll('#agents-body a[href]').length,
+        text: d.textContent,
+        overflow: w.scrollWidth - w.clientWidth,
+      };
+    });
+    if (info.agents < 3 || !info.people) throw new Error(`la red: ${info.agents} agentes y ${info.people} personas`);
+    if (!info.between) throw new Error('la red no distingue ningún vínculo entre dos agentes');
+    if (!/\d/.test(info.aria)) throw new Error('la red no dice cuántos participantes y vínculos tiene: ' + info.aria);
+    if (!info.pairs.some((p) => p === 'GitHub Copilot → Claude Code')) throw new Error('falta Copilot → Claude Code (su revisión del PR de la app de Claude): ' + info.pairs.join(' | '));
+    if (!info.pairs.some((p) => /^Claude Code · sesión \w{6} → Claude Code · sesión \w{6}$/.test(p))) throw new Error('falta la sesión de Claude que retoma la rama de otra: ' + info.pairs.join(' | '));
+    if (!info.list.some((x) => /^Claude Code · sesión \w{6} · Opus 5\.5$/.test(x)) || !info.list.includes('Dependabot')) throw new Error('la lista de agentes: ' + info.list.join(' | '));
+    if (!info.recent.length || !info.rows) throw new Error('sin interacciones recientes o sin filas que lleven al grafo');
+    if (info.links) throw new Error('la demo enlaza sesiones de Claude Code, que son ficticias');
+    if (/undefined|NaN|agents\.|tip\./.test(info.text)) throw new Error('texto sin resolver en el panel: ' + info.text.slice(0, 160));
+    if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
+  });
+  await step(page, 'solo entre agentes: la red y las listas dejan fuera a las personas, se recuerda y el foco se queda en el interruptor', async () => {
+    await page.click('#agents-only');
+    const r = await page.evaluate(() => ({
+      people: document.querySelectorAll('#agents svg.ag-net .ag-person').length,
+      agents: document.querySelectorAll('#agents svg.ag-net .ag-agent').length,
+      pairs: [...document.querySelectorAll('#ag-pairs .hl-main')].map((x) => x.textContent.replace(/[\u2068\u2069]/g, '')),
+      focus: document.activeElement?.id,
+      stored: localStorage.getItem('graphbranch:agentsOnly'),
+    }));
+    if (r.people || !r.agents) throw new Error(`solo entre agentes dejó ${r.people} personas y ${r.agents} agentes en la red`);
+    if (!r.pairs.length || r.pairs.some((p) => !/^(Claude Code|GitHub Copilot|Dependabot)\b.* → (Claude Code|GitHub Copilot|Dependabot)\b/.test(p))) throw new Error('quién con quién, solo entre agentes: ' + r.pairs.join(' | '));
+    if (r.focus !== 'agents-only') throw new Error(`el foco quedó en ${r.focus}`);
+    if (r.stored !== 'true') throw new Error('no se recuerda: ' + r.stored);
+    await page.click('#agents-only');
+    if (await page.evaluate(() => localStorage.getItem('graphbranch:agentsOnly'))) throw new Error('apagado sigue guardado');
+  });
+  await step(page, 'una fila lleva a su commit y cierra el panel; Esc lo cierra, el foco vuelve al botón y agents= sale de la URL', async () => {
+    await page.click('#ag-list button.hl-row[data-sha]');
+    // el evento close del diálogo llega en una tarea aparte: la URL se limpia un instante después de cerrarse
+    await page.waitForFunction(() => !document.querySelector('#agents').open && !location.search.includes('agents='), null, { timeout: T(3000) }).catch(() => {});
+    if (await page.evaluate(() => document.querySelector('#agents').open)) throw new Error('la fila no cerró el panel');
+    if ((await page.evaluate(() => location.search)).includes('agents=')) throw new Error('cerrar el panel deja agents= en la URL');
+    await page.focus('#agents-btn');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#agents[open]', { timeout: T(3000) });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#agents:not([open])', { state: 'attached', timeout: T(3000) });
+    const focus = await page.evaluate(() => document.activeElement?.id);
+    if (focus !== 'agents-btn') throw new Error(`al cerrar, el foco quedó en ${focus}`);
+  });
+  await step(page, 'la ficha de un commit de agente dice cuál es, con su modelo y su sesión (2D)', async () => {
+    await page.click('#pause-btn'); // la demo quieta: las cabezas no cambian mientras se recorren
+    await page.click('#view-2d');
+    await page.focus('#graph');
+    await page.keyboard.press('End');
+    await page.waitForTimeout(800);
+    let tip = '';
+    for (const h of await page.$$('#graph svg .head[role=button]:not(.exit)')) {
+      if (!(await h.isVisible())) continue;
+      await h.focus();
+      await page.keyboard.press('Enter');
+      tip = await page.waitForSelector('#graph .tip:not([hidden]) .tip-agent', { timeout: T(800) }).then((x) => x.textContent(), () => '');
+      await page.keyboard.press('Escape');
+      if (tip) break;
+    }
+    if (!/^Agente: (Claude Code · Opus 5\.5 · sesión \w{6}|GitHub Copilot|Dependabot)$/.test(tip)) throw new Error('ninguna ficha de rama dice su agente: ' + JSON.stringify(tip));
+    await page.click('#pause-btn');
   });
   await page.context().close();
 }

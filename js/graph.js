@@ -131,6 +131,9 @@
     const heads = node.heads;
     const parents = c.parents.length;
     const rows = [];
+    // de un agente (Claude Code, Copilot, un bot…): cuál, con su modelo y su sesión si el commit los firma (js/agents.js)
+    const agent = GB.agents?.of(c);
+    if (agent) rows.push(`<span class="tip-agent">${U.esc(tr('tip.agent', { name: [agent.name, agent.model, agent.session ? tr('agents.session', { id: GB.agents.shortSession(agent.session) }) : ''].filter(Boolean).join(' · ') }))}</span>`);
     if (heads.length) rows.push(`<span class="tip-refs">${heads.map((h) => `<code>${U.esc(h)}</code>`).join(' ')}</span>`);
     if (node.chain.startsWith('g:')) {
       const gname = ghostNames?.get(node.chain);

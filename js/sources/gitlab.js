@@ -300,6 +300,7 @@
         author: { name: c.author_name || '', login: null, avatar: null },
         date: Date.parse(c.committed_date || c.authored_date || c.created_at) || Date.now(),
         url: c.web_url || this.link('commit', c.id),
+        ...(GB.agents ? { agent: GB.agents.detect({ name: c.author_name, email: c.author_email }, c.message || c.title) } : {}), // js/agents.js
       });
       this.kids = null;
       return true;

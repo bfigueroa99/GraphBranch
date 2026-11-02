@@ -99,6 +99,9 @@
       <button class="icon-btn" type="button" id="health-btn" title="Repo health" aria-label="Repo health" data-i18n-attr="title:health.title;aria-label:health.title">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8.5h3l1.7-4.5 3 8 1.8-3.5h3.5"/></svg>
       </button>
+      <button class="icon-btn" type="button" id="agents-btn" aria-haspopup="dialog" title="Who works with whom: people and agents (Claude Code, Copilot, Codex, bots…)" aria-label="Agents and interactions" data-i18n-attr="title:agents.btnTitle;aria-label:agents.title">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="5.5" width="10" height="7.5" rx="2"/><path d="M8 5.5V3M8 3h.01M6 9.2h.01M10 9.2h.01M1.5 8.5v2M14.5 8.5v2"/></svg>
+      </button>
       <button class="icon-btn" type="button" id="search-btn" title="Search commits" aria-label="Search commits" data-i18n-attr="title:search.title;aria-label:search.title">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 2.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM10.3 10.3l3.2 3.2"/></svg>
       </button>
@@ -152,7 +155,22 @@
       <span class="stat-value" id="st-last">–</span>
       <span class="stat-sub" id="st-last-sub"></span>
     </div>
-    <!-- la bitácora en vivo (js/bitacora.js): su nota y sus hallazgos, y abre el panel con todo -->
+    <!-- agentes e interacciones (js/agents.js): quién continuó, fusionó o revisó el trabajo de quién, entre personas y agentes -->
+<dialog class="settings trophies health agents" id="agents" aria-labelledby="agents-title" aria-describedby="agents-help">
+  <div class="tr-wrap">
+    <div class="tr-head">
+      <h2 id="agents-title" data-i18n="agents.title">Agents and interactions</h2>
+      <button type="button" class="icon-btn" id="agents-close" title="Close" aria-label="Close" data-i18n-attr="title:toast.close;aria-label:toast.close">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <p class="help" id="agents-help" data-i18n="agents.help">From what is already loaded, with no extra requests. An agent is recognized by its account (Copilot, dependabot[bot]…) or by what its commits sign (Co-Authored-By, Claude-Session), and each session of an agent counts on its own.</p>
+    <label class="hl-switch"><input type="checkbox" id="agents-only"> <span data-i18n="agents.onlyAgents">Only between agents</span></label>
+    <div id="agents-body" class="hl-body"></div>
+  </div>
+</dialog>
+
+<!-- la bitácora en vivo (js/bitacora.js): su nota y sus hallazgos, y abre el panel con todo -->
     <button type="button" class="stat stat-bitacora" id="st-bitacora" aria-haspopup="dialog" title="Open the live logbook" data-i18n-attr="title:bitacora.open">
       <span class="stat-label"><span class="live-dot" aria-hidden="true"></span><span id="st-bitacora-label">Logbook</span></span>
       <span class="stat-value"><span id="st-bitacora-score">–</span><span class="bt-of">/100</span><span class="bt-trend" id="st-bitacora-trend"></span></span>
@@ -697,6 +715,7 @@
 <script src="vendor/OrbitControls.js"></script>
 <script src="js/util.js"></script>
 <script src="js/diff.js"></script>
+<script src="js/agents.js"></script>
 <script src="js/sources/github.js"></script>
 <script src="js/sources/gitlab.js"></script>
 <script src="js/sources/codeberg.js"></script>

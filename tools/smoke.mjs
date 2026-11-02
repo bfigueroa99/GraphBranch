@@ -4020,6 +4020,93 @@ console.log('Salud del repo directa (?health=1)');
   await page.context().close();
 }
 
+console.log('Agentes e interacciones (?agents=1)');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, 'abre la demo con el panel de agentes: la red, quién con quién (también entre agentes), las sesiones y lo último', async () => {
+    await page.goto(`${base}/index.html?lang=es&agents=1`);
+    await loaded(page);
+    await page.waitForSelector('#agents[open]', { timeout: T(5000) }).catch(() => {
+      throw new Error('?agents=1 no abrió el panel de agentes');
+    });
+    const info = await page.evaluate(() => {
+      const d = document.querySelector('#agents');
+      const w = d.querySelector('.tr-wrap');
+      const texts = (sel) => [...d.querySelectorAll(sel)].map((x) => x.textContent.replace(/[\u2068\u2069]/g, '')); // sin los aislantes de cada nombre
+      return {
+        agents: d.querySelectorAll('svg.ag-net .ag-agent').length,
+        people: d.querySelectorAll('svg.ag-net .ag-person').length,
+        between: d.querySelectorAll('svg.ag-net .ag-edge-agents').length,
+        aria: d.querySelector('svg.ag-net')?.getAttribute('aria-label') || '',
+        pairs: texts('#ag-pairs .hl-main'),
+        list: texts('#ag-list .hl-main'),
+        recent: texts('#ag-recent .hl-main'),
+        rows: d.querySelectorAll('#agents-body button.hl-row[data-sha]').length,
+        links: d.querySelectorAll('#agents-body a[href]').length,
+        text: d.textContent,
+        overflow: w.scrollWidth - w.clientWidth,
+      };
+    });
+    if (info.agents < 3 || !info.people) throw new Error(`la red: ${info.agents} agentes y ${info.people} personas`);
+    if (!info.between) throw new Error('la red no distingue ningún vínculo entre dos agentes');
+    if (!/\d/.test(info.aria)) throw new Error('la red no dice cuántos participantes y vínculos tiene: ' + info.aria);
+    if (!info.pairs.some((p) => p === 'GitHub Copilot → Claude Code')) throw new Error('falta Copilot → Claude Code (su revisión del PR de la app de Claude): ' + info.pairs.join(' | '));
+    if (!info.pairs.some((p) => /^Claude Code · sesión \w{6} → Claude Code · sesión \w{6}$/.test(p))) throw new Error('falta la sesión de Claude que retoma la rama de otra: ' + info.pairs.join(' | '));
+    if (!info.list.some((x) => /^Claude Code · sesión \w{6} · Opus 5\.5$/.test(x)) || !info.list.includes('Dependabot')) throw new Error('la lista de agentes: ' + info.list.join(' | '));
+    if (!info.recent.length || !info.rows) throw new Error('sin interacciones recientes o sin filas que lleven al grafo');
+    if (info.links) throw new Error('la demo enlaza sesiones de Claude Code, que son ficticias');
+    if (/undefined|NaN|agents\.|tip\./.test(info.text)) throw new Error('texto sin resolver en el panel: ' + info.text.slice(0, 160));
+    if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
+  });
+  await step(page, 'solo entre agentes: la red y las listas dejan fuera a las personas, se recuerda y el foco se queda en el interruptor', async () => {
+    await page.click('#agents-only');
+    const r = await page.evaluate(() => ({
+      people: document.querySelectorAll('#agents svg.ag-net .ag-person').length,
+      agents: document.querySelectorAll('#agents svg.ag-net .ag-agent').length,
+      pairs: [...document.querySelectorAll('#ag-pairs .hl-main')].map((x) => x.textContent.replace(/[\u2068\u2069]/g, '')),
+      focus: document.activeElement?.id,
+      stored: localStorage.getItem('graphbranch:agentsOnly'),
+    }));
+    if (r.people || !r.agents) throw new Error(`solo entre agentes dejó ${r.people} personas y ${r.agents} agentes en la red`);
+    if (!r.pairs.length || r.pairs.some((p) => !/^(Claude Code|GitHub Copilot|Dependabot)\b.* → (Claude Code|GitHub Copilot|Dependabot)\b/.test(p))) throw new Error('quién con quién, solo entre agentes: ' + r.pairs.join(' | '));
+    if (r.focus !== 'agents-only') throw new Error(`el foco quedó en ${r.focus}`);
+    if (r.stored !== 'true') throw new Error('no se recuerda: ' + r.stored);
+    await page.click('#agents-only');
+    if (await page.evaluate(() => localStorage.getItem('graphbranch:agentsOnly'))) throw new Error('apagado sigue guardado');
+  });
+  await step(page, 'una fila lleva a su commit y cierra el panel; Esc lo cierra, el foco vuelve al botón y agents= sale de la URL', async () => {
+    await page.click('#ag-list button.hl-row[data-sha]');
+    await page.waitForSelector('#agents:not([open])', { state: 'attached', timeout: T(3000) });
+    if ((await page.evaluate(() => location.search)).includes('agents=')) throw new Error('cerrar el panel deja agents= en la URL');
+    await page.focus('#agents-btn');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#agents[open]', { timeout: T(3000) });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#agents:not([open])', { state: 'attached', timeout: T(3000) });
+    const focus = await page.evaluate(() => document.activeElement?.id);
+    if (focus !== 'agents-btn') throw new Error(`al cerrar, el foco quedó en ${focus}`);
+  });
+  await step(page, 'la ficha de un commit de agente dice cuál es, con su modelo y su sesión (2D)', async () => {
+    await page.click('#pause-btn'); // la demo quieta: las cabezas no cambian mientras se recorren
+    await page.click('#view-2d');
+    await page.focus('#graph');
+    await page.keyboard.press('End');
+    await page.waitForTimeout(800);
+    let tip = '';
+    for (const h of await page.$$('#graph svg .head[role=button]:not(.exit)')) {
+      if (!(await h.isVisible())) continue;
+      await h.focus();
+      await page.keyboard.press('Enter');
+      tip = await page.waitForSelector('#graph .tip:not([hidden]) .tip-agent', { timeout: T(800) }).then((x) => x.textContent(), () => '');
+      await page.keyboard.press('Escape');
+      if (tip) break;
+    }
+    if (!/^Agente: (Claude Code · Opus 5\.5 · sesión \w{6}|GitHub Copilot|Dependabot)$/.test(tip)) throw new Error('ninguna ficha de rama dice su agente: ' + JSON.stringify(tip));
+    await page.click('#pause-btn');
+  });
+  await page.context().close();
+}
+
 console.log(`Celular (390×844), ${langs.length} idiomas`);
 {
   const page = await openPage(phone);

@@ -16,6 +16,17 @@
     { name: 'Tomás Araya', login: 'taraya' },
   ];
 
+  /* agentes de la demo (js/agents.js los reconoce como en un repo real): dos sesiones de Claude Code que se pasan una
+     rama, la app de Claude que abre su PR, Copilot que revisa y Dependabot que sube una dependencia */
+  const CLAUDE_A = { name: 'Claude', login: null, session: '01DemoOrbitaKq7Xz2' };
+  const CLAUDE_B = { name: 'Claude', login: null, session: '01DemoOrbitaRf4Wd9' };
+  const CLAUDES = [CLAUDE_A, CLAUDE_B];
+  const CLAUDE_APP = { name: 'claude[bot]', login: 'claude[bot]' };
+  const COPILOT = { name: 'Copilot', login: 'Copilot' };
+  const DEPENDABOT = { name: 'dependabot[bot]', login: 'dependabot[bot]' };
+  /** El mensaje de un commit de una sesión de Claude Code, con los trailers que deja la herramienta. */
+  const signed = (msg, a) => (a.session ? `${msg}\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_${a.session}` : msg);
+
   /* ramas de ejemplo: [nombre, ámbito]. Son identificadores, así que van en inglés para cualquier idioma */
   const NEW_BRANCHES = [
     ['feature/notifications', 'notif'],
@@ -30,6 +41,8 @@
     ['feature/webhooks', 'hooks'],
     ['feature/charts', 'charts'],
     ['fix/worker-memory', 'worker'],
+    ['claude/csv-import', 'import'], // las ramas claude/* las trabajan las sesiones de Claude Code
+    ['claude/a11y-audit', 'a11y'],
   ];
 
   function mulberry32(seed) {
@@ -106,7 +119,7 @@
       const c = {
         sha: this.sha(),
         parents: [b.sha, ...extraParents].filter(Boolean),
-        message,
+        message: signed(message, author),
         author: this.actor(author),
         date: time,
         url: null,
@@ -119,15 +132,16 @@
       return c;
     }
 
-    /** En la demo no hay archivos: una ruta "toca" los commits cuyo mensaje nombra su último tramo (p. ej. `src/auth`);
-        si ninguno lo nombra, su nombre sin extensión (`tests/auth/auth.test.ts` → auth) o la carpeta que lo contiene. */
+    /** En la demo no hay archivos: una ruta "toca" los commits cuyo titular nombra su último tramo (p. ej. `src/auth`);
+        si ninguno lo nombra, su nombre sin extensión (`tests/auth/auth.test.ts` → auth) o la carpeta que lo contiene.
+        Solo el titular: los trailers de los commits de agente (`Co-Authored-By`, `Claude-Session`) no nombran rutas. */
     async commitsByPath(path) {
       const parts = String(path || '').trim().replace(/\/+$/g, '').toLowerCase().split('/');
       const last = parts.pop() || '';
       const out = new Set();
       for (const word of [last, last.split('.')[0], parts.pop()]) {
         if (!word) continue;
-        for (const c of this.data.commits.values()) if (String(c.message || '').toLowerCase().includes(word)) out.add(c.sha);
+        for (const c of this.data.commits.values()) if (U.firstLine(c.message).toLowerCase().includes(word)) out.add(c.sha);
         if (out.size) break;
       }
       return out;
@@ -222,6 +236,18 @@
       create('fix/rate-limit', 'main', 'api', M);
       push('fix/rate-limit', M, S.retryAfter);
       push('feature/login', J, S.loginE2e);
+      // agentes: Dependabot sube una dependencia y Matías la fusiona; una sesión de Claude Code empieza una rama y
+      // otra sesión la retoma
+      const deps = 'dependabot/npm_and_yarn/vite-5.4.2';
+      create(deps, 'develop', 'deps', DEPENDABOT);
+      push(deps, DEPENDABOT, 'chore(deps): bump vite from 5.4.1 to 5.4.2');
+      this.data.branches.get(deps).prTitle = 'Bump vite from 5.4.1 to 5.4.2';
+      merge(deps, 'develop', 35, M, true);
+      create('claude/search-index', 'develop', 'search', CLAUDE_A);
+      const agentBranch = this.data.branches.get('claude/search-index');
+      push('claude/search-index', CLAUDE_A, this.message(agentBranch));
+      push('claude/search-index', CLAUDE_A, this.message(agentBranch));
+      push('claude/search-index', CLAUDE_B, this.message(agentBranch));
 
       const openPR = (head, base, title, user, draft = false) => {
         const n = ++this.prSeq;
@@ -233,8 +259,12 @@
       this.data.pulls.get(this.prSeq).review = 'approved';
       openPR('feature/dark-mode', 'feature/login', S.prDark, T, true);
       openPR('fix/rate-limit', 'main', S.prRetry, M);
-      for (const [name, st] of [['main', 'success'], ['develop', 'success'], ['feature/login', 'success'], ['feature/dark-mode', 'pending'], ['fix/rate-limit', 'failure']]) this.setCi(name, st);
-      H.push(this.act('comment', { title: MSG('act.commentPr', { num: 38 }), detail: this.C.comments[0], actor: this.actor(V) }, t + 120e3));
+      openPR('claude/search-index', 'develop', this.prTitleOf(agentBranch), CLAUDE_APP);
+      const agentPr = this.prSeq;
+      for (const [name, st] of [['main', 'success'], ['develop', 'success'], ['feature/login', 'success'], ['feature/dark-mode', 'pending'], ['fix/rate-limit', 'failure'], ['claude/search-index', 'success']]) this.setCi(name, st);
+      H.push(this.act('pr-open', { title: MSG('act.prOpened', { num: agentPr }), detail: this.data.pulls.get(agentPr).title, ref: 'claude/search-index → develop', branch: 'claude/search-index', actor: this.actor(CLAUDE_APP), number: agentPr }, t + 60e3));
+      H.push(this.act('review-changes', { title: MSG('act.prChanges', { num: agentPr }), detail: this.C.comments[1] || this.C.comments[0], branch: 'claude/search-index', actor: this.actor(COPILOT), number: agentPr }, t + 100e3));
+      H.push(this.act('comment', { title: MSG('act.commentPr', { num: 38 }), detail: this.C.comments[0], actor: this.actor(V), number: 38, pr: true }, t + 120e3));
       H.push(this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login: 'pgarrido' }) }, t + 140e3));
       this.data.totalBranches = this.data.branches.size;
     }
@@ -283,11 +313,24 @@
       });
     }
 
+    /** Quién hace un commit en la rama `b`: en las ramas claude/* casi siempre una sesión de Claude Code; en las
+        demás, una persona y a veces una sesión que ayuda. */
+    authorFor(b) {
+      if (b.name.startsWith('claude/')) return this.chance(0.85) ? this.pick(CLAUDES) : this.pick(AUTHORS);
+      return b.name !== 'main' && this.chance(0.12) ? this.pick(CLAUDES) : this.pick(AUTHORS);
+    }
+
+    /** El título de un PR a partir del último commit de su rama, sin el prefijo convencional. */
+    prTitleOf(b) {
+      const title = U.firstLine(this.data.commits.get(b.sha).message).replace(/^\w+\([^)]*\):\s*/, '');
+      return title[0].toUpperCase() + title.slice(1);
+    }
+
     doCommit(b) {
       this.runCi(b.name);
       const acts = [];
       const n = this.chance(0.75) ? 1 : 2 + Math.floor(this.rnd() * 2);
-      const author = this.pick(AUTHORS);
+      const author = this.authorFor(b);
       let c;
       for (let i = 0; i < n; i++) c = this.commit(b.name, this.message(b), author, Date.now() - (n - 1 - i) * 1500);
       acts.push(this.act('push', { title: MSG('act.pushNew', { n, name: b.name }), detail: U.firstLine(c.message), branch: b.name, sha: c.sha, actor: this.actor(author) }));
@@ -300,7 +343,7 @@
       const [name, scope] = this.pick(free);
       const from = name.startsWith('fix/') && this.chance(0.5) ? 'main' : 'develop';
       this.createBranch(name, from, scope, Date.now());
-      const author = this.pick(AUTHORS);
+      const author = name.startsWith('claude/') ? this.pick(CLAUDES) : this.pick(AUTHORS);
       const b = this.data.branches.get(name);
       const acts = [this.act('branch-create', { title: MSG('act.branchCreated', { name }), detail: MSG('act.branchFrom', { from, sha: U.shortSha(b.sha) }), branch: name, sha: b.sha, actor: this.actor(author) })];
       if (this.chance(0.5)) {
@@ -312,17 +355,17 @@
     doOpenPR() {
       const b = this.pick([...this.data.branches.values()].filter((x) => !x.isDefault && x.name !== 'develop' && !x.pr && x.own > 0));
       const n = ++this.prSeq;
-      const title = U.firstLine(this.data.commits.get(b.sha).message).replace(/^\w+\([^)]*\):\s*/, '');
+      const title = this.prTitleOf(b);
       const draft = this.chance(0.2);
-      const user = this.pick(AUTHORS);
+      const user = b.name.startsWith('claude/') ? CLAUDE_APP : this.pick(AUTHORS);
       b.pr = n;
-      this.data.pulls.set(n, { number: n, title: title[0].toUpperCase() + title.slice(1), head: b.name, base: b.base, sameRepo: true, url: null, draft, user: this.actor(user), createdAt: Date.now(), ci: this.data.ci.get(b.name) });
+      this.data.pulls.set(n, { number: n, title, head: b.name, base: b.base, sameRepo: true, url: null, draft, user: this.actor(user), createdAt: Date.now(), ci: this.data.ci.get(b.name) });
       return [this.act('pr-open', { title: MSG(draft ? 'act.prOpenedDraft' : 'act.prOpened', { num: n }), detail: this.data.pulls.get(n).title, ref: `${b.name} → ${b.base}`, branch: b.name, sha: b.sha, actor: this.actor(user), number: n })];
     }
 
     doReview() {
       const pr = this.pick([...this.data.pulls.values()]);
-      const who = this.actor(this.pick(AUTHORS.filter((a) => a.login !== pr.user.login)));
+      const who = this.actor(this.chance(0.3) && pr.user.login !== COPILOT.login ? COPILOT : this.pick(AUTHORS.filter((a) => a.login !== pr.user.login)));
       const r = this.rnd();
       if (pr.draft && this.chance(0.5)) {
         pr.draft = false;
@@ -330,7 +373,7 @@
       }
       if (r < 0.55) return [this.act('review-ok', { title: MSG('act.prApproved', { num: pr.number }), detail: pr.title, branch: pr.head, actor: who, number: pr.number })];
       if (r < 0.8) return [this.act('review-changes', { title: MSG('act.prChanges', { num: pr.number }), detail: this.pick(this.C.comments), branch: pr.head, actor: who, number: pr.number })];
-      return [this.act('comment', { title: MSG('act.commentPr', { num: pr.number }), detail: this.pick(this.C.comments), branch: pr.head, actor: who, number: pr.number })];
+      return [this.act('comment', { title: MSG('act.commentPr', { num: pr.number }), detail: this.pick(this.C.comments), branch: pr.head, actor: who, number: pr.number, pr: true })];
     }
 
     doMerge() {

@@ -3287,6 +3287,19 @@ kbd {
   font-size: 12px;
   color: var(--ink-2);
 }
+.tip-agent {
+  color: var(--ink);
+  font-weight: 500;
+}
+.tip-agent::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-inline-end: 6px;
+  border-radius: 2px;
+  background: var(--s7);
+}
 .tip-refs code {
   padding: 1px 5px;
   border-radius: 5px;
@@ -4985,6 +4998,119 @@ a.hl-row:focus-visible {
 .hl-stat span {
   color: var(--ink-3);
   font-size: 12px;
+}
+
+/* ---------- agentes e interacciones (js/agents.js) ---------- */
+#agents-body {
+  grid-template-columns: minmax(0, 1fr);
+}
+/* los nombres de quien actúa y de quien recibe no se cortan: la fila pasa a dos líneas si hace falta */
+.agents .hl-row {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+.agents .hl-main {
+  flex: 1 1 14em;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.agents .hl-aside {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-inline-start: auto;
+}
+.ag-net {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 340px;
+  direction: ltr; /* las posiciones del dibujo no se espejan; los nombres siguen su escritura */
+}
+.ag-edge {
+  fill: none;
+  stroke: var(--ink-3);
+  opacity: 0.55;
+}
+.ag-edge-agents {
+  stroke: var(--s7);
+  opacity: 0.9;
+}
+.ag-arrow {
+  fill: var(--ink-3);
+}
+.ag-arrow-agents {
+  fill: var(--s7);
+}
+.ag-node {
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+.ag-agent {
+  fill: var(--s7);
+}
+.ag-person {
+  fill: var(--s1);
+}
+.ag-label {
+  fill: var(--ink);
+  font: 500 11px var(--font-ui);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.ag-sub {
+  fill: var(--ink-3);
+  font: 10px var(--font-mono);
+}
+.ag-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 0;
+  color: var(--ink-3);
+  font-size: 12px;
+}
+.ag-key {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-inline-start: 8px;
+}
+.ag-key:first-child {
+  margin-inline-start: 0;
+}
+.ag-key-agent {
+  border-radius: 3px;
+  background: var(--s7);
+}
+.ag-key-person {
+  border-radius: 50%;
+  background: var(--s1);
+}
+.ag-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.ag-item .hl-row {
+  flex: 1;
+  min-width: 0;
+}
+.ag-open {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 6px;
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.ag-open:hover,
+.ag-open:focus-visible {
+  background: var(--surface-2);
 }
 
 /* ---------- vista de texto ---------- */

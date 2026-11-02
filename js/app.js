@@ -54,6 +54,10 @@
     healthBtn: $('#health-btn'),
     health: $('#health'),
     healthBody: $('#health-body'),
+    agentsBtn: $('#agents-btn'),
+    agents: $('#agents'),
+    agentsBody: $('#agents-body'),
+    agentsOnly: $('#agents-only'),
     stBit: $('#st-bitacora'),
     stBitLabel: $('#st-bitacora-label'),
     stBitScore: $('#st-bitacora-score'),
@@ -1254,6 +1258,8 @@
     if (el.bitacora.open) scheduleBitacora();
     if (initialBitacora && L.nodes.length) openBitacora();
     if (initialHealth && tab === active && L.nodes.length) openHealth();
+    if (el.agents.open) scheduleAgents();
+    if (initialAgents && tab === active && L.nodes.length) openAgents();
     if (initialReplay && L.nodes.length) startUrlReplay();
     if (initialText && tab === active && L.nodes.length) startUrlText();
     if (initialPr && tab === active && L.nodes.length) startUrlPr();
@@ -1942,6 +1948,120 @@
     const btn = $('#hl-clash-go');
     if (btn && !btn.hidden && !btn.disabled) findClashes(data, btn);
   }
+
+  /* ---------- agentes e interacciones: quién trabaja con quién, entre personas y agentes (ver agents.js) ---------- */
+  const AGENTS_EVERY = 1500; // con el panel abierto, se rehace a lo más cada 1,5 s
+  const AGENTS_ROWS = 12; // filas de cada lista
+  const AG_KIND = { continued: 'agents.kind.continued', merged: 'agents.kind.merged', reviewed: 'agents.kind.reviewed', commented: 'agents.kind.commented' };
+  const AG_EVENT = { continued: 'agents.ev.continued', merged: 'agents.ev.merged', reviewed: 'agents.ev.reviewed', commented: 'agents.ev.commented' };
+  let initialAgents = false; // ?agents=1: el panel se abre solo en cuanto el repo a la vista tiene grafo
+  let agentsOnly = U.store.get('agentsOnly', false) === true; // solo los vínculos entre dos agentes
+  let agentsTimer = 0;
+  let agentsHtml = ''; // el último HTML: si no cambió, no se toca (ni el foco ni el desplazamiento)
+  const agentSession = (a) => (a?.session ? t('agents.session', { id: GB.agents.shortSession(a.session) }) : '');
+  /** Cómo se nombra a un participante: una persona, por su nombre; un agente, por su producto y su sesión, si la tiene.
+      Va aislado (FSI…PDI): dos nombres latinos en una frase en árabe no dan vuelta la flecha ni el orden. */
+  const actorName = (x) => '\u2068' + (!x ? t('author.unknown') : x.agent ? [x.agent.name, agentSession(x.agent)].filter(Boolean).join(' · ') : x.name || x.login || t('author.unknown')) + '\u2069';
+  const kindsText = (k) => Object.keys(AG_KIND).filter((x) => k[x]).map((x) => `${t(AG_KIND[x])}: ${U.fmtNum(k[x])}`).join(' · ');
+
+  function agentsMarkup() {
+    const data = source.view ? source.view() : source.data;
+    const acts = feed.items.filter((a) => a.repo === active?.key);
+    const r = GB.agents.compute(data, acts, { max: Infinity });
+    const byKey = new Map(r.actors.map((a) => [a.key, a]));
+    const both = (x) => !!(byKey.get(x.from)?.agent && byKey.get(x.to)?.agent);
+    const links = agentsOnly ? r.links.filter(both) : r.links;
+    const events = (agentsOnly ? r.events.filter(both) : r.events).slice(0, AGENTS_ROWS);
+    const agents = r.actors.filter((a) => a.agent);
+    const people = r.actors.filter((a) => !a.agent);
+    const net = GB.agents.network(r, { onlyAgents: agentsOnly });
+    const none = `<p class="hl-none">${U.esc(t('health.none'))}</p>`;
+    const stat = (label, n) => `<div class="hl-stat"><b>${U.fmtNum(n)}</b><span>${U.esc(label)}</span></div>`;
+    /** Una fila: lleva al commit `sha` en el grafo si lo hay; `extra`, algo más junto a ella (el enlace a la sesión). */
+    const row = (main, aside, sha, extra = '') => {
+      const body = `<span class="hl-main">${U.esc(main)}</span><span class="hl-aside">${U.esc(aside)}</span>`;
+      const item = sha && data.commits.has(sha) ? `<button type="button" class="hl-row" data-sha="${U.esc(sha)}" title="${U.esc(t('feed.locate'))}">${body}</button>` : `<span class="hl-row">${body}</span>`;
+      return `<li${extra ? ' class="ag-item"' : ''}>${item}${extra}</li>`;
+    };
+    const list = (rows) => (rows.length ? `<ul class="hl-list">${rows.join('')}</ul>` : none);
+    const legend = `<p class="ag-legend" aria-hidden="true"><span class="ag-key ag-key-agent"></span>${U.esc(t('agents.legendAgent'))}<span class="ag-key ag-key-person"></span>${U.esc(t('agents.legendPerson'))}</p>`;
+    const netHtml = net.nodes.length
+      ? GB.agents.svg(net, {
+          label: (n) => (n.agent ? n.agent.name : n.name || n.login || t('author.unknown')),
+          sub: (n) => (n.agent ? agentSession(n.agent) : ''),
+          title: (l) => `${t('agents.pair', { from: actorName(byKey.get(l.from)), to: actorName(byKey.get(l.to)) })}: ${kindsText(l.kinds)}`,
+          aria: t('agents.netAria', { nodes: net.nodes.length, links: net.links.length }),
+        }) + legend
+      : none;
+    const pairs = links.slice(0, AGENTS_ROWS).map((l) => row(t('agents.pair', { from: actorName(byKey.get(l.from)), to: actorName(byKey.get(l.to)) }), kindsText(l.kinds), l.sha));
+    const demo = !!data.repo?.demo;
+    const agentRows = agents.slice(0, AGENTS_ROWS).map((a) => {
+      const main = [a.agent.name, agentSession(a.agent), a.agent.model].filter(Boolean).join(' · ');
+      const aside = [t('agents.commits', { n: U.fmtNum(a.commits) }), a.last ? U.timeAgo(a.last) : ''].filter(Boolean).join(' · ');
+      const url = demo ? null : U.safeUrl(GB.agents.sessionUrl(a.agent));
+      const open = url ? `<a class="ag-open" href="${U.esc(U.safeUrl(url))}" target="_blank" rel="noopener noreferrer" title="${U.esc(t('agents.openSession'))}" aria-label="${U.esc(t('agents.openSession') + ': ' + main)}">↗</a>` : '';
+      return row(main, aside, a.sha, open);
+    });
+    const eventRows = events.map((e) =>
+      row(t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) }), [e.number != null ? `#${e.number}` : '', e.time ? U.timeAgo(e.time) : ''].filter(Boolean).join(' · '), e.sha),
+    );
+    return (
+      `<div class="hl-stats">${stat(t('agents.statAgents'), agents.length)}${stat(t('agents.statPeople'), people.length)}${stat(t('agents.statLinks'), links.reduce((n, l) => n + l.total, 0))}</div>` +
+      (agents.length ? '' : `<p class="hl-line" id="ag-noagents">${U.esc(t('agents.noAgents'))}</p>`) +
+      `<section class="hl-sec" id="ag-net"><h3>${U.esc(t('agents.network'))}</h3>${netHtml}</section>` +
+      `<section class="hl-sec" id="ag-pairs"><h3>${U.esc(t('agents.pairs'))} <span class="hl-n">${U.fmtNum(links.length)}</span></h3>${list(pairs)}</section>` +
+      `<section class="hl-sec" id="ag-list"><h3>${U.esc(t('agents.statAgents'))} <span class="hl-n">${U.fmtNum(agents.length)}</span></h3>${list(agentRows)}</section>` +
+      `<section class="hl-sec" id="ag-recent"><h3>${U.esc(t('agents.recent'))}</h3>${list(eventRows)}</section>`
+    );
+  }
+
+  /** Rehace el panel. Si nada cambió no toca el DOM; si cambió con el foco adentro, lo deja en el mismo control. */
+  function renderAgents() {
+    clearTimeout(agentsTimer);
+    agentsTimer = 0;
+    const html = agentsMarkup();
+    if (html === agentsHtml) return;
+    const focusables = () => [...el.agentsBody.querySelectorAll('button, a')];
+    const at = el.agentsBody.contains(document.activeElement) ? focusables().indexOf(document.activeElement) : -1;
+    agentsHtml = html;
+    el.agentsBody.innerHTML = html;
+    if (at >= 0) (focusables()[at] || focusables().pop() || el.agentsOnly).focus({ preventScroll: true });
+  }
+  function scheduleAgents() {
+    if (!agentsTimer) agentsTimer = setTimeout(() => el.agents.open && renderAgents(), AGENTS_EVERY);
+  }
+  function openAgents() {
+    initialAgents = false;
+    if (el.agents.open) return;
+    el.agentsOnly.checked = agentsOnly;
+    agentsHtml = '';
+    renderAgents();
+    if (typeof el.agents.showModal === 'function') el.agents.showModal();
+    else el.agents.setAttribute('open', '');
+  }
+  function closeAgents() {
+    if (typeof el.agents.close === 'function') el.agents.close();
+    else el.agents.removeAttribute('open');
+  }
+  el.agentsBtn.addEventListener('click', openAgents);
+  $('#agents-close').addEventListener('click', closeAgents);
+  el.agents.addEventListener('close', () => {
+    clearTimeout(agentsTimer);
+    agentsTimer = 0;
+    setUrlParam('agents', null);
+  });
+  el.agentsOnly.addEventListener('change', () => {
+    agentsOnly = el.agentsOnly.checked;
+    U.store.set('agentsOnly', agentsOnly || null);
+    renderAgents();
+  });
+  // cada fila lleva a su commit en el grafo (el enlace a la sesión de Claude Code abre aparte)
+  el.agentsBody.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-sha]');
+    if (!b) return;
+    closeAgents();
+    shownGraph().focusSha?.(b.dataset.sha);
+  });
 
   /* ---------- bitácora en vivo: lo que hizo el repo desde la anterior, con su nota y sus hallazgos (ver bitacora.js) ---------- */
   const BIT_EVERY = 1500; // con el panel abierto, se rehace a lo más cada 1,5 s
@@ -3219,6 +3339,7 @@
     if (allOn) renderAllSum();
     diffView.relocalize();
     if (lp.dialog.open) lpRender();
+    if (el.agents.open && source) renderAgents();
     if (!source) return;
     // la demo inventa mensajes, incidencias y comentarios en el idioma activo: se reinicia para no mezclarlos
     if (source.data.repo.practice) practice.render(); // su historia no se inventa: se queda como está
@@ -3242,6 +3363,7 @@
     const q0 = new URLSearchParams(location.search);
     initialBitacora = !EMBED && q0.has('bitacora') && !/^(0|false|no|off)$/i.test(q0.get('bitacora'));
     initialHealth = !EMBED && GB.health.healthParam(q0);
+    initialAgents = !EMBED && GB.agents.openParam(q0);
     showForks = GB.health.forksParam(q0);
   } catch {
     /* sin query string */

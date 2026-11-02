@@ -43,7 +43,7 @@
     }
   };
   const GQL_COMMIT =
-    'oid url committedDate messageHeadline author { name user { login avatarUrl } } parents(first: 4) { nodes { oid } }';
+    'oid url committedDate messageHeadline messageBody author { name email user { login avatarUrl } } parents(first: 4) { nodes { oid } }';
   const GQL_TARGET = 'target { oid ... on Commit { committedDate } }';
   const GQL_TARGET_CI = 'target { oid ... on Commit { committedDate statusCheckRollup { state } } }'; // con el estado de los checks
   /** Estado de los checks de GitHub (rollup o check-runs) en uno de tres: 'success', 'failure' o 'pending'. */
@@ -53,6 +53,8 @@
     if (s === 'FAILURE' || s === 'ERROR') return 'failure';
     return s ? 'pending' : null;
   };
+  /** El agente de un commit al traerlo (js/agents.js): `{ agent }` para sumarlo al commit, o nada si no se cargó. */
+  const agentOf = (author, message) => (GB.agents ? { agent: GB.agents.detect(author, message) } : {});
   const FORK_DAYS = 90; // un fork cuenta como activo si hizo push en los últimos 90 días
   const FORK_MAX = 30;
   /** Los forks con push propio reciente, el más nuevo primero: [{ fullName, url, pushedAt, stars }]. Un fork
@@ -1488,6 +1490,7 @@
         },
         date: Date.parse(c.commit?.committer?.date || c.commit?.author?.date) || Date.now(),
         url: c.html_url || `${this.data.repo.url}/commit/${c.sha}`,
+        ...agentOf({ name: c.commit?.author?.name, login: c.author?.login, email: c.commit?.author?.email }, c.commit?.message),
       });
       this.kids = null;
       return true;
@@ -1506,6 +1509,8 @@
         },
         date: Date.parse(c.committedDate) || Date.now(),
         url: c.url || `${this.data.repo.url}/commit/${c.oid}`,
+        // el cuerpo no se guarda (solo el titular): de él sale el agente, si lo firma uno (Co-Authored-By, sesión)
+        ...agentOf({ name: c.author?.name, login: c.author?.user?.login, email: c.author?.email }, c.messageBody ? `${c.messageHeadline || ''}\n\n${c.messageBody}` : c.messageHeadline),
       });
       this.kids = null;
       return true;
@@ -1937,7 +1942,7 @@
               title: pr.base?.ref ? M('act.prMergedInto', { num: prNum, base: pr.base.ref }) : M('act.prMerged', num),
             });
           if (p.action === 'closed') return mk('pr-close', { ...fields, title: M('act.prClosed', num) });
-          if (p.action === 'review_requested') return mk('review', { ...fields, title: M('act.reviewRequested', num) });
+          if (p.action === 'review_requested') return mk('review', { ...fields, request: true, title: M('act.reviewRequested', num) });
           return null;
         }
         case 'PullRequestReviewEvent': {
@@ -1952,6 +1957,7 @@
             title: M('act.prCodeComment', { num: prNum }),
             detail: U.truncate(U.firstLine(p.comment?.body), 160),
             url: p.comment?.html_url || prUrl,
+            ...(prNum != null ? { number: prNum, pr: true } : {}), // para las interacciones (js/agents.js)
           });
         case 'IssuesEvent': {
           const n = issue.number;
@@ -1966,6 +1972,7 @@
             title: M(issue.pull_request ? 'act.commentPr' : 'act.commentIssue', { num: issue.number }),
             detail: U.truncate(U.firstLine(p.comment?.body), 160),
             url: p.comment?.html_url || issue.html_url || repoUrl,
+            ...(issue.pull_request && issue.number != null ? { number: issue.number, pr: true } : {}), // para las interacciones (js/agents.js)
           });
         case 'CommitCommentEvent':
           return mk('comment', {

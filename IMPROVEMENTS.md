@@ -340,12 +340,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Media
 
-1. [Deuda] El paso del smoke «editar el código: desde los cambios de un commit se abre su archivo en la rama…» falló
-    1 de 3 corridas en la iteración 148 (sesión cloud con otras cinco corriendo a la vez), en una copia sin el cambio
-    de esa iteración: un clic sobre un elemento que la demo ya había reemplazado. Medir con 5 corridas y esperar
-    al elemento estable en lugar de guardar su handle. Reproducción: `node tools/smoke.mjs` →
-    `✗ editar el código: …: elementHandle.click: Element is not attached to the DOM`.
-2. [Deuda] Pasos del smoke intermitentes en la sesión cloud: en la iteración 152, `npm run check` falló 2 de 3 veces
+1. [Deuda] Pasos del smoke intermitentes en la sesión cloud: en la iteración 152, `npm run check` falló 2 de 3 veces
     en «filtro por autor: el grafo y el árbol de texto muestran solo sus ramas…» (la tercera pasó, y el paso no toca
     lo que cambió esa iteración) y una corrida del smoke sobre `dev` limpio falló en otro, «al cerrar el último repo
     de la organización deja de seguirse». Medir con 5 corridas del paso y esperar el estado en lugar de comparar con
@@ -362,7 +357,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     sale) sigue en «ocultar una rama o dejarla sola…» (falló 1 de 2 en esa reanudación, `waitForFunction: Timeout
     15000ms`) y en «cambios de un commit: desde su ficha, con teclado…» (1 de 3 en la misma reproducción): elegir la
     rama como lo hacen ahora «historial de un archivo» y el paso siguiente (End, etiquetas a la vista, sin `.exit`).
-3. [Deuda] La e2e de escritorio «--bitbucket-url suma solo ese host a las conexiones del CSP…» falló 1 de 2 en la
+2. [Deuda] La e2e de escritorio «--bitbucket-url suma solo ese host a las conexiones del CSP…» falló 1 de 2 en la
     reanudación de la 173 (2026-11-01, carga 18 en 4 CPU; la repetición pasó): `#azure-token-input` vacío al abrir
     Ajustes. Es una carrera de la prueba: guarda el token de Azure con `GBDesktop.setToken(…, 'azure')` con la página ya
     arrancada, y `loadDesktopToken` (`js/app.js`) lee el llavero una sola vez al arrancar; si ya leyó `azure`, el campo
@@ -372,51 +367,51 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Baja
 
-4. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+3. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-5. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+4. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-6. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+5. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-7. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+6. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-8. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+7. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-9. [QA] A 320 px el grafo sigue a ~420 px del inicio con la demo (antes 522; con un repo real, más: barra de
+8. [QA] A 320 px el grafo sigue a ~420 px del inicio con la demo (antes 522; con un repo real, más: barra de
     vistas, bitácora) y el 3D no arma etiquetas hasta verse. La iteración 167 compactó las cifras (tres columnas
     sin la línea de detalle, 245 → 144 px); falta una forma de llegar al grafo sin recorrer la página (ancla o
     tarjetas plegables en celular). Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la
     auditoría → `.graph-panel` empieza bajo los 400 px; `#graph3d` fuera de la pantalla.
-10. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+9. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-11. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
+10. [Seguridad] La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la última estable:
     `WebFetch` a `releases.electronjs.org` dio HTTP 500 en la iteración 119. Repetir la comparación
     cuando la página responda y subir si hay una estable más nueva.
     Reproducción: `WebFetch https://releases.electronjs.org/release/stable` → `HTTP 500`.
-12. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
+11. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
     `npm run check` en la iteración 128 (la repetición pasó), aun con la espera de la 127.
     Reproducción: `npm run check` → `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
 
-13. [QA] El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 del repositorio o la cuota
+12. [QA] El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 del repositorio o la cuota
     agotada, aunque el mensaje de abajo es exacto («No se encontró acme/web…»): en celular, donde solo se ve el
     indicador, confunde. Distinguir «No encontrado» / «Cuota agotada» de «Sin conexión».
     Reproducción: Playwright, 320×640, `?repo=acme/web&lang=es` con la API respondiendo 404 → `#status-text` = «Sin conexión».
-14. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+13. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-15. [QA] A ≤560 px las cifras ya no muestran su línea de detalle (`.stat-sub`: «de N en total», la hora de la última
+14. [QA] A ≤560 px las cifras ya no muestran su línea de detalle (`.stat-sub`: «de N en total», la hora de la última
     actividad): se perdió información en celular. Devolverla como `title`/texto accesible de la tarjeta o en un
     plegable. Reproducción: Playwright, 320×640 → `getComputedStyle(#st-branches-sub).display` = `none`.
-16. [QA] A 320 px el panel de salud se desborda hacia la derecha (28 px; 46 en tamil): la cabecera, los contadores de
+15. [QA] A 320 px el panel de salud se desborda hacia la derecha (28 px; 46 en tamil): la cabecera, los contadores de
     cada sección y la edad de los forks quedan cortados y el panel se desliza de lado. Visto en la iteración 174, igual
     sin su cambio. Reproducción: Playwright, 320×640, demo `?lang=es&health=1` → `#health .tr-wrap` con `scrollWidth`
     312 y `clientWidth` 284.
@@ -654,3 +649,22 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: relevo de loop/174 (1ea0916)
 - Validado: 535 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 175, mantenimiento · Deuda: pendiente 1 (El paso del smoke «editar el código: desde los cambios de un commit se abre su …)
+
+### 2026-11-02 · Iteración 175 · Mantenimiento · Deuda
+
+- **Arreglo: el paso del smoke «editar el código…» ya no guarda handles** (pendiente 1). El paso tomaba la ficha de la
+  rama (`tipDiff`) y el botón Editar (`edit`) como handles y hacía clic después de otras esperas; si la demo volvía a
+  dibujar el panel entre medias, el handle apuntaba a un nodo desmontado. Ahora enfoca y hace clic por selector, que
+  Playwright resuelve en el momento (y reintenta) del clic.
+- **Reproducción:** `node tools/smoke.mjs` → `✗ editar el código: …: elementHandle.click: Element is not attached to the DOM`
+  (la de la iteración 148; es intermitente y no se pudo provocar a voluntad en esta sesión).
+- **Pruebas que fallan sin el arreglo:** el mismo paso del smoke; no se midió con 5 corridas (el smoke tarda unos 7 min):
+  queda una corrida en verde, no una estadística. Si vuelve a fallar con otro mensaje, se reabre como pendiente.
+- README: no cambia (solo `tools/smoke.mjs`).
+- QA: no toca la página; auditoría: no toca la página.
+- Skills: no aplica: un cambio de selectores en una prueba, que no entra en un dominio de guía experta.
+- Arena: no aplica: una sola forma obvia (selector en lugar de handle).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/175, sin colisión
+- Validado: 535 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 176, expansión: ítem 127 (Resaltar una rama al pasar el puntero, Análisis)

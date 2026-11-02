@@ -1385,12 +1385,14 @@ console.log('Escritorio (1280×800)');
       await page.keyboard.press('Escape');
     }
     if (!tipDiff) throw new Error('ninguna rama a la vista abrió su ficha con Ver cambios');
-    await tipDiff.focus();
+    // sin guardar handles: la demo vuelve a dibujar la ficha y el panel, y un handle viejo ya no está en el DOM
+    await page.focus('#graph .tip:not([hidden]) .tip-diff');
     await page.keyboard.press('Enter');
-    const edit = await page.waitForSelector('#diff-panel .df-file[open] .df-edit', { timeout: T(5000) });
-    const label = await edit.getAttribute('aria-label');
+    const editSel = '#diff-panel .df-file[open] .df-edit';
+    await page.waitForSelector(editSel, { timeout: T(5000) });
+    const label = await page.getAttribute(editSel, 'aria-label');
     const branchOf = await page.$eval('#diff-panel .df-branch', (n) => n.textContent).catch(() => '');
-    await edit.click();
+    await page.click(editSel, { timeout: T(5000) });
     await page.waitForSelector('#editor[open]', { timeout: T(3000) });
     await page.waitForFunction(() => {
       const a = document.querySelector('#editor-text');

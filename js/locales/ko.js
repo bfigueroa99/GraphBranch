@@ -894,4 +894,6 @@ GB.i18n.define('ko', {
   'cmdk.empty': '일치하는 동작이 없습니다.',
   'cmdk.view3d': '3D 보기로 전환',
   'cmdk.view2d': '2D 보기로 전환',
+  'cmdk.toBranch': '브랜치 {name}(으)로 이동',
+  'cmdk.toCommit': '커밋 {sha}(으)로 이동: {msg}',
 });

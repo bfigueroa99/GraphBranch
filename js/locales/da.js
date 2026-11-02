@@ -894,4 +894,6 @@ GB.i18n.define('da', {
   'cmdk.empty': 'Ingen handling passer.',
   'cmdk.view3d': 'Skift til 3D-visning',
   'cmdk.view2d': 'Skift til 2D-visning',
+  'cmdk.toBranch': 'Gå til grenen {name}',
+  'cmdk.toCommit': 'Gå til commit {sha}: {msg}',
 });

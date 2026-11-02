@@ -894,4 +894,6 @@ GB.i18n.define('vi', {
   'cmdk.empty': 'Không có thao tác nào khớp.',
   'cmdk.view3d': 'Chuyển sang chế độ xem 3D',
   'cmdk.view2d': 'Chuyển sang chế độ xem 2D',
+  'cmdk.toBranch': 'Đến nhánh {name}',
+  'cmdk.toCommit': 'Đến commit {sha}: {msg}',
 });

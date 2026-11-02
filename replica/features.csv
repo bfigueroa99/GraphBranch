@@ -8,7 +8,7 @@ Ocultar una rama o dejarla sola en el grafo,grafo,should,yes,yes,"README: Oculta
 Filtrar el grafo por autor,grafo,should,yes,yes,"README: «Mostrar solo las ramas de…» y ?author="
 Cargar más historia (límite de commits configurable),grafo,could,yes,partial,"README: Repositorios con miles de ramas; el tope de commits por rama no se elige desde la interfaz"
 Buscar commits por mensaje SHA o autor,búsqueda,must,yes,yes,"README: Búsqueda de commits (también ?q= y por fecha)"
-Paleta de comandos,navegación,could,yes,partial,"Ctrl+K con las acciones de los botones (README: Paleta de comandos); falta saltar a una rama o commit"
+Paleta de comandos,navegación,could,yes,yes,"Ctrl+K con las acciones de los botones y saltos a una rama o commit por nombre o SHA (README: Paleta de comandos)"
 Cambios de un commit archivo por archivo,diffs,must,yes,yes,"README: Cambios de cada commit (#183)"
 Diff lado a lado con las palabras que cambiaron,diffs,should,yes,yes,"README: Cambios de cada commit (unificado o lado a lado, palabras marcadas)"
 Historial de un archivo,diffs,should,yes,yes,"README: Cambios de cada commit (el botón «Historial» de cada archivo aplica el filtro por ruta a ese archivo)"

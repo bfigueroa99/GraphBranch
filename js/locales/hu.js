@@ -894,4 +894,6 @@ GB.i18n.define('hu', {
   'cmdk.empty': 'Nincs egyező művelet.',
   'cmdk.view3d': 'Váltás 3D nézetre',
   'cmdk.view2d': 'Váltás 2D nézetre',
+  'cmdk.toBranch': 'Ugrás a(z) {name} ágra',
+  'cmdk.toCommit': 'Ugrás a(z) {sha} commitra: {msg}',
 });

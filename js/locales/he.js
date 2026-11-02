@@ -951,4 +951,6 @@ GB.i18n.define('he', {
   'cmdk.empty': 'אין פעולה תואמת.',
   'cmdk.view3d': 'מעבר לתצוגת 3D',
   'cmdk.view2d': 'מעבר לתצוגת 2D',
+  'cmdk.toBranch': 'מעבר לענף {name}',
+  'cmdk.toCommit': 'מעבר לקומיט {sha}: {msg}',
 });

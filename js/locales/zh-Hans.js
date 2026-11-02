@@ -894,4 +894,6 @@ GB.i18n.define('zh-Hans', {
   'cmdk.empty': '没有匹配的操作。',
   'cmdk.view3d': '切换到 3D 视图',
   'cmdk.view2d': '切换到 2D 视图',
+  'cmdk.toBranch': '转到分支 {name}',
+  'cmdk.toCommit': '转到提交 {sha}：{msg}',
 });

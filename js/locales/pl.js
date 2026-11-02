@@ -905,4 +905,6 @@ GB.i18n.define('pl', {
   'cmdk.empty': 'Żadna akcja nie pasuje.',
   'cmdk.view3d': 'Przełącz na widok 3D',
   'cmdk.view2d': 'Przełącz na widok 2D',
+  'cmdk.toBranch': 'Przejdź do gałęzi {name}',
+  'cmdk.toCommit': 'Przejdź do commita {sha}: {msg}',
 });

@@ -895,4 +895,6 @@ GB.i18n.define('fil', {
   'cmdk.empty': 'Walang tumutugmang aksyon.',
   'cmdk.view3d': 'Lumipat sa 3D na view',
   'cmdk.view2d': 'Lumipat sa 2D na view',
+  'cmdk.toBranch': 'Pumunta sa branch na {name}',
+  'cmdk.toCommit': 'Pumunta sa commit na {sha}: {msg}',
 });

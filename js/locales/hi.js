@@ -894,4 +894,6 @@ GB.i18n.define('hi', {
   'cmdk.empty': 'कोई कार्रवाई मेल नहीं खाती।',
   'cmdk.view3d': '3D दृश्य पर जाएँ',
   'cmdk.view2d': '2D दृश्य पर जाएँ',
+  'cmdk.toBranch': 'ब्रांच {name} पर जाएँ',
+  'cmdk.toCommit': 'कमिट {sha} पर जाएँ: {msg}',
 });

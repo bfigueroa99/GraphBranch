@@ -55,15 +55,49 @@
     return scored.sort((a, b) => a.rank - b.rank || a.i - b.i).map((s) => s.it);
   }
 
+  const JUMP_MAX = 8; // saltos que se suman a la lista (ramas y commits)
+
+  /** Los saltos que la consulta pide sobre lo ya cargado de `data` ({ branches, commits }): las ramas cuyo nombre contiene
+      todas las palabras y los commits cuyo SHA empieza por la consulta (4 caracteres hexadecimales o más). Solo ramas con
+      su commit cargado, porque son las que el grafo puede mostrar. Devuelve [{ id, kind: 'branch'|'commit', name | sha,
+      message }], las ramas que empiezan por la consulta primero; sin consulta, nada. No hace consultas ni muta. */
+  function jumpTargets(data, query, max = JUMP_MAX) {
+    const q = String(query || '').trim();
+    if (!data || !q) return [];
+    const out = [];
+    const words = norm(q).split(/\s+/).filter(Boolean);
+    const branches = [];
+    for (const [name, b] of data.branches || []) {
+      const l = norm(name);
+      if (!data.commits?.has(b.sha) || !words.every((w) => l.includes(w))) continue;
+      branches.push({ id: `branch:${name}`, kind: 'branch', name, rank: l.startsWith(words.join(' ')) ? 0 : 1 });
+    }
+    branches.sort((a, b) => a.rank - b.rank || (a.name < b.name ? -1 : 1));
+    out.push(...branches.map(({ rank, ...r }) => r));
+    if (/^[0-9a-f]{4,40}$/i.test(q)) {
+      const sha = q.toLowerCase();
+      for (const [full, c] of data.commits || []) {
+        if (full.toLowerCase().startsWith(sha)) out.push({ id: `commit:${full}`, kind: 'commit', sha: full, message: String(c.message || '').split('\n')[0] });
+      }
+    }
+    return out.slice(0, max);
+  }
+
   /** ¿Es Ctrl+K (⌘K en Mac) sin más modificadores? */
   const isShortcut = (ev) => (ev.ctrlKey || ev.metaKey) && !ev.altKey && !ev.shiftKey && (ev.key || '').toLowerCase() === 'k';
 
-  /** Monta la paleta. els: { dialog, input, list, status }. ctx: { text(key), available(action) → bool, run(action) }.
+  /** Monta la paleta. els: { dialog, input, list, status }. ctx: { text(key, params), available(action) → bool, run(action), targets?(query) → saltos de `jumpTargets`,
+      jump?(salto) }.
       Devuelve { open, close, visible } (visible: las acciones que la consulta deja). */
   function mount(els, ctx) {
     let shown = [];
     let active = 0;
     const items = () => ACTIONS.filter((a) => ctx.available(a)).map((a) => ({ ...a, label: ctx.text(a.key) }));
+    const jumps = () =>
+      (ctx.targets?.(els.input.value) || []).map((j) => ({
+        ...j,
+        label: j.kind === 'branch' ? ctx.text('cmdk.toBranch', { name: j.name }) : ctx.text('cmdk.toCommit', { sha: j.sha.slice(0, 7), msg: j.message }),
+      }));
     const optId = (i) => `cmdk-opt-${i}`;
 
     function setActive(i) {
@@ -77,7 +111,7 @@
     }
 
     function render() {
-      shown = filter(items(), els.input.value);
+      shown = [...filter(items(), els.input.value), ...jumps()];
       els.list.textContent = '';
       shown.forEach((a, i) => {
         const li = document.createElement('li');
@@ -101,7 +135,8 @@
       const a = shown[i];
       if (!a) return;
       close();
-      ctx.run(a);
+      if (a.kind) ctx.jump?.(a);
+      else ctx.run(a);
     }
 
     function open() {
@@ -123,5 +158,5 @@
     return { open, close, visible: () => shown.map((a) => a.id) };
   }
 
-  GB.cmdk = { ACTIONS, filter, isShortcut, mount };
+  GB.cmdk = { ACTIONS, filter, jumpTargets, isShortcut, mount };
 })(window.GB);

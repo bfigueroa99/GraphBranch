@@ -63,3 +63,42 @@ test('el atajo y el diálogo existen en la página y el service worker guarda el
   assert.match(html, /<script src="js\/cmdk\.js">/);
   assert.match(readFileSync(join(root, 'sw.js'), 'utf8'), /'js\/cmdk\.js'/);
 });
+
+test('jumpTargets: ramas por nombre y commits por SHA, solo lo cargado; sin consulta, nada', () => {
+  const data = {
+    branches: new Map([['main', { sha: 'aaaa1111' }], ['feature/login', { sha: 'bbbb2222' }], ['fix-login', { sha: 'cccc3333' }], ['sin-historia', { sha: 'zzzz' }]]),
+    commits: new Map([['aaaa1111', { message: 'primero\ndetalle' }], ['bbbb2222', { message: 'login' }], ['cccc3333', { message: 'arreglo' }]]),
+  };
+  assert.deepEqual(ids(C.jumpTargets(data, '')), []);
+  assert.deepEqual(ids(C.jumpTargets(null, 'main')), []);
+  assert.deepEqual(ids(C.jumpTargets(data, 'LOGIN')), ['branch:feature/login', 'branch:fix-login']);
+  assert.deepEqual(ids(C.jumpTargets(data, 'fix')), ['branch:fix-login']);
+  assert.deepEqual(ids(C.jumpTargets(data, 'sin-hist')), [], 'una rama sin su commit cargado no se ofrece');
+  const sha = C.jumpTargets(data, 'AAAA11');
+  assert.deepEqual(ids(sha), ['commit:aaaa1111']);
+  assert.equal(sha[0].message, 'primero');
+  assert.deepEqual(ids(C.jumpTargets(data, 'aaa')), [], 'menos de 4 caracteres no busca SHA');
+  assert.equal(C.jumpTargets({ branches: new Map(Array.from({ length: 30 }, (_, i) => [`r${i}`, { sha: 'a' }])), commits: new Map([['a', {}]]) }, 'r').length, 8);
+});
+
+test('mount: los saltos se suman a la lista y Enter los lleva con jump', () => {
+  const mk = () => ({ children: [], append(li) { this.children.push(li); }, set textContent(_) { this.children = []; } });
+  const input = { value: '', _l: {}, addEventListener(e, f) { this._l[e] = f; }, setAttribute() {}, removeAttribute() {}, focus() {} };
+  const list = mk();
+  const doc = { createElement: () => ({ setAttribute() {}, addEventListener() {}, set textContent(v) { this.t = v; } }) };
+  ctx.document = doc;
+  const jumped = [];
+  const els = { dialog: { close() {}, setAttribute() {}, removeAttribute() {} }, input, list, status: {} };
+  const C2 = vm.runInContext('window.GB.cmdk', Object.assign(ctx, { document: doc }));
+  const p = C2.mount(els, {
+    text: (k, prm) => (prm ? `${k}:${Object.values(prm).join('|')}` : k),
+    available: () => false,
+    run() {},
+    targets: () => [{ id: 'branch:dev', kind: 'branch', name: 'dev' }],
+    jump: (j) => jumped.push(j.id),
+  });
+  p.open();
+  assert.deepEqual(Array.from(p.visible()), ['branch:dev']);
+  input._l.keydown({ key: 'Enter', preventDefault() {} });
+  assert.deepEqual(jumped, ['branch:dev']);
+});

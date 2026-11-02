@@ -894,4 +894,6 @@ GB.i18n.define('id', {
   'cmdk.empty': 'Tidak ada aksi yang cocok.',
   'cmdk.view3d': 'Beralih ke tampilan 3D',
   'cmdk.view2d': 'Beralih ke tampilan 2D',
+  'cmdk.toBranch': 'Buka cabang {name}',
+  'cmdk.toCommit': 'Buka commit {sha}: {msg}',
 });

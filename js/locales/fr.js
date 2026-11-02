@@ -895,4 +895,6 @@ GB.i18n.define('fr', {
   'cmdk.empty': 'Aucune action ne correspond.',
   'cmdk.view3d': 'Passer à la vue 3D',
   'cmdk.view2d': 'Passer à la vue 2D',
+  'cmdk.toBranch': 'Aller à la branche {name}',
+  'cmdk.toCommit': 'Aller au commit {sha} : {msg}',
 });

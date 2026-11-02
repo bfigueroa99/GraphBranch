@@ -902,4 +902,6 @@ GB.i18n.define('hr', {
   'cmdk.empty': 'Nijedna radnja ne odgovara.',
   'cmdk.view3d': 'Prebaci na 3D prikaz',
   'cmdk.view2d': 'Prebaci na 2D prikaz',
+  'cmdk.toBranch': 'Idi na granu {name}',
+  'cmdk.toCommit': 'Idi na commit {sha}: {msg}',
 });

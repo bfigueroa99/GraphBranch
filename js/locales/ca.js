@@ -894,4 +894,6 @@ GB.i18n.define('ca', {
   'cmdk.empty': 'Cap acció coincideix.',
   'cmdk.view3d': 'Canvia a la vista 3D',
   'cmdk.view2d': 'Canvia a la vista 2D',
+  'cmdk.toBranch': 'Ves a la branca {name}',
+  'cmdk.toCommit': 'Ves al commit {sha}: {msg}',
 });

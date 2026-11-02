@@ -894,4 +894,6 @@ GB.i18n.define('sv', {
   'cmdk.empty': 'Ingen åtgärd matchar.',
   'cmdk.view3d': 'Byt till 3D-vy',
   'cmdk.view2d': 'Byt till 2D-vy',
+  'cmdk.toBranch': 'Gå till grenen {name}',
+  'cmdk.toCommit': 'Gå till commit {sha}: {msg}',
 });

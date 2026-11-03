@@ -637,5 +637,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (reusar el conteo de la salud).
 - OMC: plan=— · revisión=— · verificación=—
 - Reclamo: loop/182, sin colisión
-- Validado: pendiente
+- Validado: sin verde: node --test, i18n, auditoría y e2e en verde; el smoke falló en tres corridas en pasos ajenos al cambio y distintos cada vez (1.ª: «filtro por autor», «ocultar una rama o dejarla sola» y «editar el código»; 2.ª: «quién tocó un archivo»; 3.ª: «ocultar una rama o dejarla sola»), intermitencias de la sesión cloud (pendiente 1 de Mantenimiento). Lo reanuda el disparo siguiente.
 - **Siguiente:** iteración 183, mantenimiento · QA: pendiente 8 (A 320 px el grafo sigue a ~420 px del inicio con la demo (antes 522; con un rep…)

@@ -640,9 +640,13 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - **Arreglo: a 320 px un enlace «ir al grafo» llega al panel sin recorrer la página** (pendiente 8).
   Bajo la cabecera, solo a ≤560 px, un enlace (`#to-graph`, texto de `graph.aria2d`, ya traducido a los 40 idiomas) salta a
   `#graph-panel`, que recibe el foco (`tabindex="-1"`, sin contorno). No hay texto ni clave nuevos; sin CSP nueva.
-- **Reproducción:** `node tools/smoke.mjs` (paso «a 320 px, un enlace «ir al grafo» salta al panel…») → sin el arreglo, `#to-graph` no existe y el paso falla.
+- **Arreglo previo, porque `dev` estaba en rojo en este entorno (3 de 3 corridas, también sobre `origin/dev` limpio): el historial de un archivo en la demo
+  dejaba fuera al commit que lo cambia.** `fileLog` de `js/sources/demo.js` buscaba solo por palabras del titular; para
+  `src/api/index.ts` no traía ni «chore: initial project structure», y el paso «quién tocó un archivo» del smoke no veía ninguna fila
+  (`diff.blameNone`). Ahora suma siempre el commit desde el que se pregunta.
+- **Reproducción:** `node --test tools/demo.test.mjs` → «el historial de src/api/index.ts no trae al commit «chore: initial project structure» que lo cambia (semilla 7)»; y `node tools/smoke.mjs` (paso «a 320 px, un enlace «ir al grafo» salta al panel…») → sin el arreglo, `#to-graph` no existe y el paso falla.
 - **Hallazgos:** 0 nuevos, 0 a la base de la auditoría (auditoría completa sin `--langs`: 0 hallazgos, 79 s; el smoke tres veces y el recorrido a mano de bordes no se hicieron: solo la puerta, una vez)
-- **Pruebas que fallan sin el arreglo:** ese paso del smoke (enlace visible a 320 px, con texto traducido, el foco en el panel y el panel a menos de 60 px del borde).
+- **Pruebas que fallan sin el arreglo:** `tools/demo.test.mjs` («el historial de un archivo de un commit siempre incluye ese commit») y ese paso del smoke (enlace visible a 320 px, con texto traducido, el foco en el panel y el panel a menos de 60 px del borde).
 - README: sin cambios (no es una función nueva; el detalle está en la bitácora).
 - QA: celular angosto (320 px) mirado con el paso del smoke; 40 idiomas con `check-i18n` (sin claves nuevas); auditoría en la puerta.
 - Skills: no aplica: un enlace ancla con CSS que cubren las reglas del repo.

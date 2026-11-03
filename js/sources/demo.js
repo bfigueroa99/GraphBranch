@@ -150,7 +150,9 @@
     /** Como en GitHub: los últimos commits que tocaron la ruta, del más nuevo al más viejo, desde `sha`. */
     async fileLog(path, sha, n = 8) {
       const upTo = this.data.commits.get(sha)?.date ?? Infinity;
-      const touched = await this.commitsByPath(path);
+      const touched = new Set(await this.commitsByPath(path));
+      // el commit desde el que se pregunta cambió el archivo (está en su diff): nunca queda fuera de su historial
+      if (this.data.commits.has(sha)) touched.add(sha);
       return [...touched]
         .map((id) => this.data.commits.get(id))
         .filter((c) => c && c.date <= upTo)

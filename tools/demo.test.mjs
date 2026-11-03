@@ -71,6 +71,19 @@ test('fileLog: la demo da los commits que tocaron el archivo, del más nuevo al 
   assert.ok(log.every((e) => e.sha && typeof e.message === 'string' && 'author' in e));
 });
 
+test('fileLog: el historial de un archivo de un commit siempre incluye ese commit, sea cual sea el commit', async () => {
+  for (const seed of [7, 8, 9]) {
+    const { src } = demo(seed);
+    for (const c of [...src.data.commits.values()].slice(0, 60)) {
+      const { files } = await src.commitDiff(c.sha);
+      for (const f of files.slice(0, 3)) {
+        const log = await src.fileLog(f.path, c.sha);
+        assert.ok(log.some((e) => e.sha === c.sha), `el historial de ${f.path} no trae al commit «${c.message}» que lo cambia (semilla ${seed})`);
+      }
+    }
+  }
+});
+
 test('fileBlame: la demo reparte las líneas entre los commits del archivo, sin huecos ni solapes', async () => {
   const { src } = demo(7);
   const c = [...src.data.commits.values()].find((x) => /^\w+\((\w+)\)!?:/.test(x.message || '') && !/\(deps\)/.test(x.message));

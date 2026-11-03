@@ -98,6 +98,10 @@ function fakeAzure() {
     assert.equal(q.get('api-version'), '7.1', 'siempre pide la versión de la API');
     if (p === REPO) return { body: { id: 'r1', name: 'api', webUrl: WEB, defaultBranch: 'refs/heads/main', project: { name: 'web', visibility: az.private ? 'private' : 'public', description: 'un proyecto' } } };
     if (p === REPO + '/refs') {
+      if (q.get('filter') === 'tags/') {
+        const value = [...(az.tags || [])].map(([name, objectId, peeledObjectId]) => ({ name: `refs/tags/${name}`, objectId, ...(peeledObjectId ? { peeledObjectId } : {}) }));
+        return { body: { count: value.length, value } };
+      }
       assert.equal(q.get('filter'), 'heads/');
       const all = [...az.branches].map(([name, objectId]) => ({ name: `refs/heads/${name}`, objectId })).sort((a, b) => a.name.localeCompare(b.name));
       const top = Number(q.get('$top') || 1000);
@@ -451,4 +455,29 @@ test('sin token, un 203 no se toma por error de token y una redirección sigue s
   const { src, errors } = connect(az);
   await src.cycle();
   assert.equal(errors[0]?.message.key, 'err.notFoundAzure');
+});
+
+test('los tags salen de refs?filter=tags/ (el anotado, por su commit pelado), una consulta cada 15 minutos', async () => {
+  const az = repo();
+  az.tags = [['v1.0', 'm1'], ['v2.0', 'tagobj9', 'm3'], ['v2.0-rc', 'm3'], ['fuera', 'zzz']];
+  const { src, updates } = connect(az);
+  await src.cycle();
+  const tags = src.data.tags;
+  assert.deepEqual(JSON.parse(JSON.stringify([...tags])), [['m1', ['v1.0']], ['m3', ['v2.0', 'v2.0-rc']], ['zzz', ['fuera']]]);
+  assert.equal(az.calls.filter((c) => c.includes('filter=tags/')).length, 1);
+  await src.cycle();
+  assert.equal(az.calls.filter((c) => c.includes('filter=tags/')).length, 1, 'no vuelve a pedirlos antes de 15 minutos');
+});
+
+test('si los tags fallan (403) el grafo sigue sin ellos; con marks apagado ni se piden', async () => {
+  const az = repo();
+  az.override = (path) => (path.includes('filter=tags/') ? { status: 403, body: { message: 'TF401019: x' } } : null);
+  const a = connect(az);
+  await a.src.cycle();
+  assert.equal(a.errors.length, 0);
+  assert.equal(a.src.data.tags.size, 0);
+  const b = connect(repo(), { marks: false });
+  const calls = b.src;
+  await calls.cycle();
+  assert.equal(b.src.data.tags.size, 0);
 });

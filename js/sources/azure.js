@@ -22,7 +22,9 @@
      (de a DETAIL_PARALLEL a la vez). Los commits que ya están cargados desde otra rama no se piden otra vez.
    - Los PRs son los de siempre ("#12"): activos, y los que dejan de estarlo se miran uno por uno
      (completado = fusionado, abandonado = cerrado).
-   - Sin feed de eventos, ni tags, ni despliegues, ni checks, ni árbol de archivos, ni cambios de un commit, ni
+   - Los tags salen de `refs?filter=tags/` (hasta MAX_TAGS, una consulta cada 15 minutos): en un tag anotado
+     el commit es `peeledObjectId` (el `objectId` es el del objeto tag); si falla, el grafo sigue sin ellos.
+   - Sin feed de eventos, ni despliegues, ni checks, ni árbol de archivos, ni cambios de un commit, ni
      avatares (los de Azure DevOps piden sesión): el panel cuenta lo que se ve comparando ciclos.
    - Sin cuota publicada para consultas anónimas: el ritmo es POLL_MS entre ciclos y, si el servicio contesta
      429, se espera un minuto. */
@@ -38,6 +40,8 @@
   const MAX_BRANCHES = 500; // ramas pedidas como mucho
   const DETAIL_PARALLEL = 6; // consultas de commit suelto a la vez
   const DETAIL_MAX = 150; // y como mucho por historia pedida: más allá la rama queda cortada
+  const MAX_TAGS = 100; // tags pedidos como mucho
+  const MARKS_MS = 15 * 60000; // entre consultas de tags
   const MAX_REVIEWERS = 8; // revisores de un PR que se muestran
   const CHANGES_MAX = 300; // archivos por commit que se piden
   const LOADS = 6; // ramas por ciclo que se cargan de la lista de espera
@@ -54,6 +58,7 @@
   };
   const enc = encodeURIComponent;
   const HEADS = 'refs/heads/';
+  const TAGS = 'refs/tags/';
   const branchOf = (ref) => (typeof ref === 'string' && ref.startsWith(HEADS) ? ref.slice(HEADS.length) : '');
 
   class AzureSource extends GB.GitHubSource {
@@ -135,7 +140,7 @@
     }
 
     due(name) {
-      const period = { pulls: PULLS_MS }[name];
+      const period = { pulls: PULLS_MS, marks: MARKS_MS }[name];
       return !!period && Date.now() - (this.lastPoll[name] || 0) >= period - 500;
     }
 
@@ -173,6 +178,7 @@
       }
       if (initial || this.due('pulls')) await this.syncPulls(acts, initial);
       await this.fillBacklog(deadline);
+      if (this.marks && (initial || this.due('marks'))) await this.syncMarks();
       this.data.mode = this.mode;
       this.reseeded = reseed;
       this.gc();
@@ -207,6 +213,27 @@
       }
       await this.applyBranchList(acts, quiet, remote);
       this.data.totalExact = !headers?.get?.('x-ms-continuationtoken') && values.length < MAX_BRANCHES;
+    }
+
+    /** Tags (nombre -> commit): una consulta cada 15 minutos. Si falla (sin permisos) el grafo sigue sin ellos; la cuota o la red cortan el ciclo. */
+    async syncMarks() {
+      this.lastPoll.marks = Date.now();
+      let data;
+      try {
+        ({ data } = await this.api(`${this.base}/refs?filter=tags/&$top=${MAX_TAGS}`));
+      } catch (err) {
+        if (!['http', 'notfound', 'auth'].includes(err.kind)) throw err;
+        return;
+      }
+      if (!Array.isArray(data?.value)) return;
+      const byCommit = new Map();
+      for (const r of data.value) {
+        const name = typeof r?.name === 'string' && r.name.startsWith(TAGS) ? r.name.slice(TAGS.length) : '';
+        const sha = r?.peeledObjectId || r?.objectId; // anotado: el commit es el pelado
+        if (!name || !sha) continue;
+        (byCommit.get(sha) || byCommit.set(sha, []).get(sha)).push(name);
+      }
+      this.data.tags = byCommit;
     }
 
     /* ---------- commits ---------- */

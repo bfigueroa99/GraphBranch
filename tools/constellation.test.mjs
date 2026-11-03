@@ -71,6 +71,10 @@ test('el orden: pestañas tal cual, actividad por commits y nombre sin mayúscul
   assert.deepEqual(keys('desconocido'), keys('tabs'));
   assert.deepEqual(keys('activity'), ['o/a', 'o/b', 'o/c', 'o/d']);
   assert.deepEqual(keys('name'), ['o/d', 'o/a', 'o/b', 'o/c']);
+  const withPrs = items.map((it, i) => ({ ...it, prs: [0, 2, 7, 2][i] }));
+  assert.deepEqual(C.sortItems(withPrs, 'prs').map((i) => i.key), ['o/c', 'o/a', 'o/d', 'o/b'], 'más PRs abiertos primero; empata por pestaña');
+  assert.deepEqual(C.sortItems(items, 'prs').map((i) => i.key), keys('tabs'), 'sin PRs cargados queda el orden de las pestañas');
+  assert.equal(C.orderParam(new URLSearchParams('order=%20PRS%20')), 'prs');
   assert.deepEqual(items.map((i) => i.key), ['o/b', 'o/a', 'o/c', 'o/d'], 'no toca la lista original');
 });
 

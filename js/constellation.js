@@ -41,19 +41,20 @@
       .map((p) => ({ key: p.key, x: 50 + p.x * k, y: 50 + p.y * k, r: p.r * k }));
   }
 
-  /** Los repos en el orden pedido: `tabs` (el de las pestañas), `activity` (más commits cargados primero) o
+  /** Los repos en el orden pedido: `tabs` (el de las pestañas), `activity` (más commits cargados primero), `prs` (más pull requests abiertos primero) o
       `name` (alfabético, sin mayúsculas ni acentos). Empata por el orden de las pestañas; no toca `items`. */
   function sortItems(items, mode) {
     const list = items.map((it, idx) => ({ it, idx }));
     if (mode === 'activity') list.sort((a, b) => (b.it.commits || 0) - (a.it.commits || 0) || a.idx - b.idx);
+    else if (mode === 'prs') list.sort((a, b) => (b.it.prs || 0) - (a.it.prs || 0) || a.idx - b.idx);
     else if (mode === 'name') list.sort((a, b) => String(a.it.name).localeCompare(String(b.it.name), undefined, { sensitivity: 'base', numeric: true }) || a.idx - b.idx);
     return list.map((x) => x.it);
   }
 
-  /** `?order=activity` o `?order=name`: el orden con que abre la constelación. Lo que no se conoce (o falta) es `null`: queda el de las pestañas. */
+  /** `?order=activity`, `?order=prs` o `?order=name`: el orden con que abre la constelación. Lo que no se conoce (o falta) es `null`: queda el de las pestañas. */
   function orderParam(q) {
     const v = String(q.get('order') || '').trim().toLowerCase();
-    return v === 'activity' || v === 'name' ? v : null;
+    return v === 'activity' || v === 'prs' || v === 'name' ? v : null;
   }
 
   /** Minúsculas y sin acentos, para comparar nombres. */
@@ -132,10 +133,10 @@
     if (select) select.addEventListener('change', () => setOrder(select.value, true));
     /** Cambia el orden (el de Tab y el de lector de pantalla) y, si lo pidió la persona, lo anuncia. */
     function setOrder(next, announce) {
-      mode = ['activity', 'name'].includes(next) ? next : 'tabs';
+      mode = ['activity', 'prs', 'name'].includes(next) ? next : 'tabs';
       if (select) select.value = mode;
       draw();
-      if (announce && status) status.textContent = text('constellation.ordered', { order: text('constellation.order' + mode[0].toUpperCase() + mode.slice(1)) });
+      if (announce && status) status.textContent = text('constellation.ordered', { order: text(mode === 'prs' ? 'stats.prs' : 'constellation.order' + mode[0].toUpperCase() + mode.slice(1)) });
     }
     /** Deja solo los repos cuyo nombre contiene `next` (`''`: todos). */
     function setFilter(next) {

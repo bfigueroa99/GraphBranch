@@ -192,6 +192,7 @@
       const ul = mk('ul', 'tv-tree');
       ul.setAttribute('role', 'tree');
       ul.setAttribute('aria-label', text('textview.title'));
+      ul.setAttribute('aria-describedby', 'textview-help'); // las teclas del árbol se leen al entrar en él (en un div sin rol se ignoraba)
       shown.forEach((b, i) => {
         const li = mk('li', 'tv-branch');
         li.setAttribute('role', 'treeitem');

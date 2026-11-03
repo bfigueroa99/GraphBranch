@@ -855,6 +855,8 @@ console.log('Escritorio (1280×800)');
       const items = [...d.querySelectorAll('[role="treeitem"]')];
       return {
         tree: !!tree,
+        treeHelp: tree && document.getElementById(tree.getAttribute('aria-describedby') || '-')?.textContent.trim(),
+        bodyDescribed: document.querySelector('#textview-body').hasAttribute('aria-describedby'),
         branches: d.querySelectorAll('.tv-branch').length,
         unnamed: items.filter((n) => !n.getAttribute('aria-label')).length,
         focusInTree: tree && tree.contains(document.activeElement),
@@ -864,6 +866,7 @@ console.log('Escritorio (1280×800)');
     });
     if (!info.tree || info.branches < 2) throw new Error(`árbol incompleto: ${info.branches} ramas`);
     if (info.unnamed) throw new Error(`${info.unnamed} nodos sin nombre accesible`);
+    if (!info.treeHelp || info.bodyDescribed) throw new Error(`las teclas del árbol no se describen en el árbol: ${JSON.stringify({ help: info.treeHelp, body: info.bodyDescribed })}`);
     if (!info.focusInTree) throw new Error('al abrir, el foco no está en el árbol');
     if (/undefined|NaN|textview\./.test(info.text)) throw new Error('texto sin resolver: ' + info.text.slice(0, 120));
     if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);

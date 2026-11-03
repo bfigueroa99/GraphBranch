@@ -2392,7 +2392,7 @@
   });
   el.constellation = $('#constellation');
   try {
-    // ?order=activity|name: la constelación abre ya ordenada (sin anunciarlo: no la pidió nadie con el selector)
+    // ?order=activity|prs|name: la constelación abre ya ordenada (sin anunciarlo: no la pidió nadie con el selector)
     const order = GB.constellation.orderParam(new URLSearchParams(location.search));
     if (order) constellation.setOrder(order, false);
     // ?constellation=texto: solo los repos cuyo nombre lo contiene
@@ -2418,6 +2418,7 @@
           commits: x.source.data.commits?.size || 0,
           last: lastCommitAt(x.source.data),
           branches: x.source.data.branches?.size || 0,
+          prs: Math.max(x.source.data.totalPulls || 0, x.source.data.pulls?.size || 0),
           state: x.status?.state || 'loading',
           unread: x.unread,
           active: x === active,

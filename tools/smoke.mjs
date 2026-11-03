@@ -2388,6 +2388,16 @@ console.log('Varios repos a la vez');
       await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
       if ((await full.$eval('#constellation-order', (s) => s.value)) !== 'activity') throw new Error('?order=activity no deja el selector en actividad');
       await full.click('#constellation-close');
+      // ?order=prs: abre ordenada por PRs abiertos, con el selector de acuerdo
+      await full.goto(`${base}/index.html?lang=es&order=prs&repo=o/a`);
+      await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });
+      await full.click('#constellation-btn');
+      await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
+      if ((await full.$eval('#constellation-order', (s) => s.value)) !== 'prs') throw new Error('?order=prs no deja el selector en PRs abiertos');
+      await full.selectOption('#constellation-order', 'prs');
+      const prsSaid = await full.$eval('#constellation-status', (e) => e.textContent.trim());
+      if (!/PR/.test(prsSaid) || /undefined|constellation\./.test(prsSaid)) throw new Error('el orden por PRs no se anuncia: ' + prsSaid);
+      await full.click('#constellation-close');
       // ?order=name: abre ordenada por nombre
       await full.goto(`${base}/index.html?lang=es&order=name&repo=o/a`);
       await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });

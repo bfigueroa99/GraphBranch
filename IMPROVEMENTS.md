@@ -410,6 +410,16 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     sin su cambio. Reproducción: Playwright, 320×640, demo `?lang=es&health=1` → `#health .tr-wrap` con `scrollWidth`
     312 y `clientWidth` 284.
 
+14. [Accesibilidad] La salud del repo repite cinco líneas casi iguales («… por semana, últimas 8 semanas (de la más vieja a la
+    actual): 0 · 0 · 0 · 0 · 0 · 0 · 0 · 3»): un lector de pantalla lee la frase larga cinco veces y los ceros uno por uno.
+    Dejar la frase una vez (encabezado «Por semana, de la más vieja a la actual») o resumir («3 en la última semana, 0 en
+    las 7 anteriores»). Reproducción: Playwright, `?lang=es`, abrir `#health-btn` → `#hl-mergeweeks`, `#hl-openedweeks`,
+    `#hl-closedweeks`, `#hl-branchweeks`, `#hl-commitweeks` repiten «últimas 8 semanas (de la más vieja a la actual)».
+15. [Accesibilidad] En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…», «sin actividad…», PRs) y la
+    nota de cada commit (`.tv-aside`) ya van en el `aria-label` del `treeitem`, pero son texto del nodo: según el lector se
+    leen dos veces. Marcarlas `aria-hidden="true"` y comprobarlo con un lector real (ver Para Benjamin, 5).
+    Reproducción: Playwright, abrir `#textview-btn` → `.tv-tag` dentro de `[role=treeitem][aria-label]` sin `aria-hidden`.
+
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); `placeLabels`/`placeNotes` crean arreglos por cuadro
   (`graph3d.js:2611`); el contenedor 2D enfocable no tiene rol ni nombre (`graph.js:306`); las marcas
@@ -699,3 +709,21 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/186, sin colisión
 - Validado: 551 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 187, mantenimiento · Accesibilidad: auditoría (sin pendientes de Accesibilidad)
+
+### 2026-11-03 · Iteración 187 · Mantenimiento · Accesibilidad
+
+- **Auditoría de Accesibilidad: las teclas de la vista de texto se leen al entrar en el árbol.** La ayuda («Arriba y Abajo mueven…») se
+  enlazaba con `aria-describedby` desde `#textview-body`, un `div` sin rol: los lectores de pantalla lo ignoran. Ahora la lleva el
+  `ul[role=tree]` que recibe el foco. Auditoría completa y recorrido a mano de la vista de texto y la salud (foco al abrir y al
+  cerrar, un solo `tabindex=0`, nombres de los 55 nodos, estado vacío anunciado): sin trampas, sin errores de consola.
+- **Hallazgos:** 3 nuevos (pendientes 14 y 15; el tercero, el `aria-describedby` huérfano, arreglado aquí), 0 a la base de la auditoría. La
+  auditoría completa sumó una sola medida fuera de la base, `fps2d` 2,9 (≥ 10) en Chromium sin GPU con la máquina cargada: ruido, no se carga.
+- **Pruebas que fallan sin el arreglo:** el paso del smoke «vista de texto: árbol con teclado…» (`las teclas del árbol no se describen en el árbol`).
+- README: sin cambios (no cambia lo que hace la función).
+- QA: vista de texto (foco, roles, filtro sin resultados, flechas) y salud (títulos, líneas por semana) con Playwright sobre la demo; auditoría completa con `--langs`.
+- Skills: no aplica: un atributo ARIA que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (el atributo va en el elemento con rol).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/187, sin colisión
+- Validado: PENDIENTE
+- **Siguiente:** iteración 188, expansión: ítem 119 (Azure DevOps: tags en el grafo, Datos)

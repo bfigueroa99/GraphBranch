@@ -3033,3 +3033,203 @@ bitácoras juntas (la rotación de los subtipos de mantenimiento, la numeración
   loop/174`, sin acciones); `--rotar` sobre una copia y sobre el repo.
 - Validado: 521 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio). Antes, con la máquina compartida a carga 10 a 34 en 4 CPU: la puerta sobre `dev` sin tocar falló en 3 pasos del smoke, y cuatro corridas con el cambio (16 a 47 min cada una, lanzadas y esperadas con `tools/esperar.mjs`) fallaron en 2, 6, 51 (todos `page.goto` vencidos) y 2 pasos que el cambio no toca; «editar sin token» pasó en las cinco.
 - **Siguiente:** iteración 174, expansión: ítem 99 (Salud del repo: tendencia de ramas nuevas, Análisis)
+
+### 2026-11-02 · Pedido de Benjamin: ver las interacciones también entre agentes
+
+- **Pedido de Benjamin:** «Poder ver las interacciones tambien entre agentes». No es una iteración numerada y la
+  proporción de la regla 2 no cambia.
+- **Lo nuevo:** el botón del robot (y `?agents=1`) abre **Agentes e interacciones** (`js/agents.js`), con lo ya
+  cargado y sin consultas nuevas. Un commit es de un agente si lo dice su cuenta (Copilot, `claude[bot]`, Codex, Devin,
+  Jules, Gemini, Dependabot, Renovate, GitHub Actions, cualquier `…[bot]`), su nombre (`Claude` con correo de Anthropic
+  o sin correo, `Cursor Agent`, `… (aider)`) o su mensaje (`Co-Authored-By` de Claude, Copilot, Cursor, OpenCode o
+  Aider, «Generated with Claude Code»), y cada **sesión** es un participante aparte cuando el commit la nombra
+  (`Claude-Session: …/session_…`, `…-Session:` o «sesión cse_…» de los reclamos), con su modelo («Opus 5.5»); un merge
+  sin trailer entre commits de una sesión es de esa sesión. Las interacciones: **continuó** (un commit sobre el de otro,
+  en una línea sin bifurcaciones: la sesión que retoma la rama que reclamó otra), **fusionó** (un merge trae el trabajo
+  de quienes hicieron la rama fusionada, hasta donde salió, con su número de PR), **revisó** y **comentó** (las
+  revisiones y comentarios de un PR, frente a quien lo abrió; un PR fusionado sin su merge cargado cuenta por la
+  actividad). El panel trae las cifras, la red en SVG (agentes cuadrados, personas redondas, flechas de quien actúa a
+  quien recibe, en violeta entre dos agentes), **Quién con quién**, **Agentes** (sesión, modelo, commits, último; fuera
+  de la demo, un enlace a la sesión en Claude Code armado solo con su id) y **Lo último**; cada fila lleva a su commit,
+  **Solo entre agentes** se recuerda y el panel se rehace en vivo sin perder el foco. La ficha de cada commit de agente
+  lo dice. Con token, la consulta GraphQL de GitHub pide además `messageBody` y `email` (texto, sin costo de cuota) y
+  guarda solo el agente; GitLab y los repos locales lo leen del correo y del mensaje que ya traían. Los comentarios de
+  PR de GitHub llevan su número y «pedir revisión» ya no cuenta como revisar. Los nombres van aislados (FSI…PDI) para
+  que en árabe, hebreo, persa y urdu la flecha y el orden no se den vuelta. La demo suma dos sesiones de Claude Code que
+  se pasan `claude/search-index`, la app de Claude que abre su PR, Copilot que lo revisa y Dependabot que Matías
+  fusiona; en vivo, las ramas `claude/*` las trabajan las sesiones y Copilot revisa a veces.
+- **Pruebas que fallan sin el cambio:** `tools/agents.test.mjs` (nueva, 9: detección por cuenta, nombre, co-autor,
+  firma y sesión; personas que se llaman como un agente; `compute` con dos sesiones del loop, un merge, revisiones,
+  comentarios y una petición de revisión; la sesión heredada por un merge sin trailer; el SVG escapado),
+  `tools/demo.test.mjs` (de 2 a 3: los trailers de la demo y el filtro por ruta), `tools/github.test.mjs` (de 34 a 36: el cuerpo de GraphQL da el agente sin guardarse; el número de los comentarios de
+  PR y `request` en «review_requested») y el paso del smoke «Agentes e interacciones (?agents=1)» (la red con un
+  vínculo entre agentes, Copilot → Claude Code, una sesión que retoma la de otra, «Solo entre agentes», el foco, la URL
+  y la ficha 2D de un commit de agente). Sobre la historia real de este repo (400 commits): 100 sesiones de Claude y 9
+  vínculos solo entre agentes.
+- **Lo que la demo nueva destapó** (la primera puerta cayó en cuatro pasos del smoke; los tres ajenos, reproducidos
+  con Playwright aquí y sobre `origin/dev`): el panel de búsqueda se desbordaba 5 px con un autor de nombre largo
+  (`dependabot[bot] (1)` en sus selectores; en `dev`, 0 px): su columna ya no crece con el contenido
+  (`minmax(0, 1fr)`); «?vista=texto» sacaba una palabra del commit más nuevo y recargaba otra demo, y la semilla
+  terminaba en un commit de agente con mensaje al azar: los commits de agente van antes de los últimos de la semilla
+  y con mensajes fijos; «?firstparent=1» contaba los nodos del SVG en dos cargas distintas (en `dev` pasaba por uno:
+  17 de 18; aquí, 22 de 21), y el 2D solo crea los que están en pantalla: ahora compara la cifra de commits del grafo
+  en la misma página, con el interruptor y sin él. El filtro por ruta de la demo solo mira el titular
+  («Co-Authored-By» contiene «auth»; prueba en `tools/demo.test.mjs`). El paso nuevo esperaba la URL antes del evento
+  `close` del diálogo: ahora espera, como el de `?health=1`.
+- README: la función en la lista, los controles, el mapa de archivos, Límites conocidos y Seguridad.
+- QA: demo en 3D y 2D (la ficha del commit), español con tema claro a 1280 px y árabe con tema oscuro a 390 px (sin
+  desborde: los nombres largos pasan a dos líneas; la flecha en RTL), 27 textos nuevos en los 40 idiomas
+  (`check-i18n` 0 errores), teclado (el botón con Intro, Tab por las filas, Esc vuelve al botón), lector de pantalla (la
+  red es `role="img"` con su resumen y las listas dicen lo mismo), CSP sin cambios.
+- Validado: 533 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Electron no estaba en la sesión (su instalador falla con el proxy): se bajó el zip de la versión fijada con `curl`, se comprobó su SHA-256 contra `SHASUMS256.txt` y se extrajo como lo hace el instalador. La primera puerta cayó en los cuatro pasos de arriba; la segunda, ya con los arreglos, solo en «filtro por autor…: quitar el filtro no deja el grafo como estaba» (el pendiente 12, intermitente en `dev` con el mismo mensaje; en la primera había pasado), y la tercera pasó entera.
+- **Siguiente:** iteración 174, expansión: ítem 117 (Azure DevOps: los PRs en el grafo, Datos)
+
+### 2026-11-02 · Iteración 174 · Expansión · Datos
+
+- **Capacidad nueva: los revisores de un PR de Azure DevOps** (ítem 117 de la hoja de ruta). Los PRs de Azure ya salían
+  en el grafo desde #214 (etiqueta `#N`, borradores, fusionados y cerrados; lo comprobaban `tools/azure.test.mjs` y un
+  paso del smoke), así que el ítem estaba hecho a medias sin que la hoja lo supiera. Lo que faltaba frente a GitKraken
+  («los PRs y sus revisores») eran los revisores: la ficha de una rama con PR de Azure suma «Revisores: Cy (aprobó), Di
+  (espera al autor), Ed» con el voto de cada uno (10 y 5 aprobaron, -5 espera al autor, -10 rechazó, 0 aún nada); los
+  grupos (equipos) no se listan y se muestran hasta 8. Sin consultas nuevas: la lista de PRs activos ya traía
+  `reviewers`. Funciona igual en 2D y 3D (misma ficha) y en las pestañas de Azure; en GitHub y las demás fuentes no
+  cambia nada (no traen `reviewers`).
+- **Pruebas que fallan sin la capacidad:** `tools/azure.test.mjs` (de 16 a 17: votos, grupo y vacíos) y el paso del smoke
+  «la ficha de la rama con PR de Azure DevOps lista sus revisores con el voto».
+- README: la función de Azure DevOps y Límites conocidos; la fila de Replica pasa a `yes`.
+- QA: ficha de la rama en 2D con tema claro (el texto va escapado con `U.esc`, nombres recortados a 60 letras); 4 textos
+  nuevos en los 40 idiomas (`check-i18n` 0 errores); la CSP no cambia; sin consultas nuevas; auditoría: 0 hallazgos nuevos.
+- Skills: no aplica: un campo más de una API ya consumida, que no entra en un dominio de guía experta.
+- Arena: no aplica: una sola forma obvia (leer `reviewers` y sumarlo a la ficha).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: relevo de loop/174 (1ea0916)
+- Validado: 535 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 175, mantenimiento · Deuda: pendiente 1 (El paso del smoke «editar el código: desde los cambios de un commit se abre su …)
+
+### 2026-11-02 · Iteración 175 · Mantenimiento · Deuda
+
+- **Arreglo: el paso del smoke «editar el código…» ya no guarda handles** (pendiente 1). El paso tomaba la ficha de la
+  rama (`tipDiff`) y el botón Editar (`edit`) como handles y hacía clic después de otras esperas; si la demo volvía a
+  dibujar el panel entre medias, el handle apuntaba a un nodo desmontado. Ahora enfoca y hace clic por selector, que
+  Playwright resuelve en el momento (y reintenta) del clic.
+- **Reproducción:** `node tools/smoke.mjs` → `✗ editar el código: …: elementHandle.click: Element is not attached to the DOM`
+  (la de la iteración 148; es intermitente y no se pudo provocar a voluntad en esta sesión).
+- **Pruebas que fallan sin el arreglo:** el mismo paso del smoke; no se midió con 5 corridas (el smoke tarda unos 7 min):
+  queda una corrida en verde, no una estadística. Si vuelve a fallar con otro mensaje, se reabre como pendiente.
+- README: no cambia (solo `tools/smoke.mjs`).
+- QA: no toca la página; auditoría: no toca la página.
+- Skills: no aplica: un cambio de selectores en una prueba, que no entra en un dominio de guía experta.
+- Arena: no aplica: una sola forma obvia (selector en lugar de handle).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/175, sin colisión
+- Validado: 535 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 176, expansión: ítem 127 (Resaltar una rama al pasar el puntero, Análisis)
+
+### 2026-11-02 · Iteración 176 · Expansión · Análisis
+
+- **Capacidad nueva: resaltar una rama al pasar el puntero, comprobada** (ítem 127 de la hoja de ruta). Al revisar el
+  código, la capacidad ya existía: pasar el puntero o el foco por el nombre de una rama en la leyenda y las cabezas del
+  grafo 2D, o por su etiqueta en el 3D, resalta la rama entera y atenúa el resto sin tocar el filtro ni la URL (README,
+  Vista 2D y Vista 3D). Lo que faltaba era la prueba del puntero en la leyenda (el smoke solo cubría el foco) y la
+  fila de `replica/features.csv`, que seguía en `partial`. Esta entrega suma el paso del smoke y pasa la fila a `yes`
+  (paridad 86,6/100). Las listas de los paneles (salud, bitácora) son diálogos modales que tapan el grafo: resaltar
+  desde ellas no se ve, así que no se hizo.
+- **Pruebas que fallan sin la capacidad:** el paso nuevo del smoke «pasar el puntero por el nombre de una rama de la
+  leyenda 2D resalta solo sus commits, sin tocar filtro ni URL»; no falla sin el cambio porque la capacidad ya estaba:
+  protege contra una regresión, no se vio fallar.
+- README: no cambia (ya lo dice en Vista 2D y Vista 3D).
+- QA: la fila de la leyenda 2D con puntero y teclado, mirada con el paso del smoke (puntero) y el existente (foco); 3D sin
+  cambios; auditoría: no toca la página.
+- Skills: no aplica: la capacidad ya existía; el cambio es una prueba y una fila de la matriz.
+- Arena: no aplica: una sola forma obvia (un paso del smoke).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/176, sin colisión
+- Validado: 535 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 177, expansión: ítem 128 (Paleta de comandos, Público)
+
+### 2026-11-02 · Iteración 177 · Expansión · Público
+
+- **Capacidad nueva: paleta de comandos con Ctrl+K** (ítem 128 de la hoja de ruta). `Ctrl+K` (o `⌘K`) abre un diálogo con
+  un buscador y la lista de las acciones de la app (paneles, 2D/3D, Replay, TV, vuelo, galaxias, zoom, pausa, ajustes…);
+  filtra sin acentos ni mayúsculas, ↑ ↓ Home End mueven, Enter acciona y Esc cierra. Cada acción hace `click()` sobre el
+  botón que ya existe (`js/cmdk.js`), y solo aparecen las disponibles. Sin consultas, sin CSP nueva. Los nombres reutilizan
+  las claves de los botones; 6 claves nuevas (`cmdk.*`) en los 40 idiomas. Lo de «temas» del ítem no aplica: no hay un
+  cambio de tema (sigue al sistema); el salto a rama o commit es el ítem 132.
+- **Pruebas que fallan sin la capacidad:** `tools/cmdk.test.mjs` (filtro, atajo, cada acción apunta a un botón y a un
+  texto que existen) y el paso del smoke «paleta de comandos: Ctrl+K abre la lista…».
+- README: Controles, Estructura, Límites conocidos y Seguridad; fila de Replica a `partial`.
+- QA: foco al abrir, nombre accesible, teclado completo y Esc, mirados con el paso del smoke; auditoría: la puerta la corre.
+- Skills: no aplica: un diálogo con teclado que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (accionar los botones existentes).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/177, sin colisión
+- Validado: 540 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 178, expansión: ítem 130 (Blame de un archivo, primera entrega, Datos)
+
+### 2026-11-02 · Iteración 178 · Expansión · Datos
+
+- **Capacidad nueva: «Quién lo tocó» en cada archivo del diff** (ítem 130 de la hoja de ruta, primera entrega de *blame*). Un
+  botón junto a Historial despliega, bajo el archivo, los últimos 8 commits que lo cambiaron hasta ese commit, con autor,
+  cuánto hace y titular (GitHub: `/commits?sha=&path=&per_page=8`, una consulta solo al pulsar; la demo lo deduce como el
+  filtro por ruta). `fileLog` en `js/sources/github.js` y `demo.js`; `canBlame`/`fileLog` en `js/diff.js` y `js/app.js`.
+  Sin autor por línea todavía (ítem 133, nuevo). 3 claves nuevas (`diff.blame*`) en los 40 idiomas; sin CSP nueva.
+- **Pruebas que fallan sin la capacidad:** `tools/github.test.mjs` y `tools/demo.test.mjs` (`fileLog`) y el paso del smoke «quién tocó un archivo…».
+- README: Cambios de cada commit, Límites conocidos y pruebas; fila de Replica «Blame de un archivo» a `partial`.
+- QA: demo sin token y cuota (una consulta por pulsación), nombre accesible y `aria-expanded`, mirados con el paso del smoke; 40 idiomas con `check-i18n`; auditoría en la puerta (0 hallazgos nuevos).
+- Skills: no aplica: un botón y una lista que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (una consulta de la API y una lista).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/178, sin colisión
+- Validado: 542 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 179, mantenimiento · Seguridad: pendiente 10 (La versión de Electron (`44.4.5` en `package.json`) no se pudo comparar con la …)
+
+### 2026-11-02 · Iteración 179 · Mantenimiento · Seguridad
+
+- **Arreglo: Electron sube de 44.4.5 a 45.2.1, la última estable** (pendiente 10). `npm view electron` dio `latest` 45.2.1
+  (la página de releases ya no hace falta); `package.json` y `package-lock.json` fijan 45.2.1. Sin cambios en `electron/`:
+  el aislamiento, el preload, la navegación y las descargas siguen igual y las e2e del escritorio pasan con la nueva versión.
+- **Reproducción:** `npm view electron dist-tags.latest` → `45.2.1`, con `package.json` en `44.4.5` (una mayor atrás).
+- **Pruebas que fallan sin el arreglo:** las e2e de escritorio (`e2e/desktop.spec.mjs`) corren con la versión instalada; la
+  comparación con la última estable fue manual (no hay prueba que falle por una versión más vieja).
+- README: sin cambios (no nombra la versión).
+- QA: Seguridad 4: versión de Electron frente a la última estable, vigente; el resto del protocolo no se tocó (solo cambia una dependencia); auditoría: no toca la página.
+- Skills: no aplica: subida de versión de una dependencia ya existente.
+- Arena: no aplica: una sola forma obvia.
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/179, sin colisión
+- Validado: 542 pruebas (`node --test`), smoke, i18n (0 errores) y 28 e2e en verde. La primera corrida falló en «ocultar una rama o dejarla sola» (ajeno al cambio; intermitente, anotado en el pendiente 10).
+- **Siguiente:** iteración 180, expansión: ítem 132 (Paleta de comandos, segunda entrega, Público)
+
+### 2026-11-02 · Iteración 180 · Expansión · Público
+
+- **Capacidad nueva: la paleta de comandos salta a una rama o a un commit** (ítem 132 de la hoja de ruta, segunda entrega del 128).
+  Al escribir en `Ctrl+K`, además de las acciones, aparecen hasta 8 saltos: las ramas cuyo nombre contiene lo escrito (sin
+  acentos ni mayúsculas) y los commits cuyo SHA empieza por 4 o más caracteres hexadecimales, solo entre lo ya cargado y sin
+  consultas; Enter lleva el grafo hasta ahí (`focusBranch`/`focusSha`). `jumpTargets` en `js/cmdk.js`, `targets`/`jump` en
+  `js/app.js`. 2 claves nuevas (`cmdk.toBranch`, `cmdk.toCommit`) en los 40 idiomas; sin CSP nueva.
+- **Pruebas que fallan sin la capacidad:** `tools/cmdk.test.mjs` (`jumpTargets` y los saltos en `mount`) y el paso del smoke «paleta de comandos: escribir el nombre de una rama o el SHA de un commit ofrece saltar a él, sin consultas».
+- README: Paleta de comandos, Estructura, Límites conocidos y Seguridad; fila «Paleta de comandos» de Replica a `yes`; Mapa de alcance.
+- QA: nombre accesible y sin claves sin resolver, ninguna petición al saltar y consulta sin coincidencias, mirados con el paso del smoke; 40 idiomas con `check-i18n`; auditoría en la puerta (0 hallazgos nuevos).
+- Skills: no aplica: una extensión de la lista de un diálogo que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (buscar en lo ya cargado y sumarlo a la lista).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/180, sin colisión
+- Validado: 544 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 181, expansión: ítem 133 (Blame de un archivo, segunda entrega, Datos)
+
+### 2026-11-02 · Iteración 181 · Expansión · Datos
+
+- **Capacidad nueva: «Quién lo tocó» pasa a blame por tramos de líneas** (ítem 133 de la hoja de ruta, segunda entrega del 130).
+  Con token de GitHub, el botón del diff pide el `blame` de GraphQL del archivo en ese commit (una consulta) y lista cada
+  tramo («Líneas 1–20») con autor, fecha y titular; si no hay token, GitHub no lo da o el archivo se quitó, cae a la lista de
+  commits de antes. La demo reparte 120 líneas inventadas entre los commits del archivo. `fileBlame` en `js/sources/github.js`
+  y `demo.js`, `js/diff.js`, `js/app.js`. 1 clave nueva (`diff.blameLines`) en los 40 idiomas; sin CSP nueva.
+- **Pruebas que fallan sin la capacidad:** `tools/github.test.mjs` (`fileBlame` con GraphQL simulado: una consulta, orden, null sin token), `tools/demo.test.mjs` (tramos sin huecos) y el paso del smoke «quién tocó un archivo», que exige tramos de líneas en la demo.
+- README: Cambios de cada commit, Límites conocidos y pruebas; fila de Replica «Blame de un archivo» a `yes`.
+- QA: botón con nombre y sin claves sin resolver, doble clic que cierra, mirados en el smoke; 40 idiomas con `check-i18n`; auditoría en la puerta.
+- Skills: no aplica: una consulta GraphQL más sobre la fuente existente, que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (`Commit.blame` de GraphQL).
+- OMC: plan=— · revisión=— · verificación=— (el plan por consenso y la revisión no corrieron: los agentes `omc-*` no están registrados en esta sesión; el ítem lleva esfuerzo 3 pero se entregó acotado a una consulta)
+- Reclamo: loop/181, sin colisión
+- Validado: 546 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 182, expansión: ítem 102 (Resumen de la semana: ramas nuevas, Salidas)

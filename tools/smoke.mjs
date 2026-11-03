@@ -4120,6 +4120,37 @@ console.log('Grafo de primer padre (?firstparent=1)');
   await page.context().close();
 }
 
+console.log('Grafo de primer padre en el 3D');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, 'el interruptor de primer padre también deja menos commits en el grafo 3D, y al apagarlo vuelven', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    if (!(await page.evaluate(() => !!window.GB?.Graph3D))) return; // sin WebGL no hay grafo 3D
+    await page.evaluate(() => {
+      const G3 = window.GB.Graph3D.prototype;
+      window.__g3n = [];
+      const orig = G3.update;
+      G3.update = function (L, ...a) {
+        window.__g3n.push(L?.nodes?.length ?? -1);
+        return orig.call(this, L, ...a);
+      };
+    });
+    const last = () => page.evaluate(() => window.__g3n[window.__g3n.length - 1]);
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    await page.check('#graph-firstparent');
+    await page.waitForFunction(() => window.__g3n.length > 0, null, { timeout: T(5000) });
+    const on = await last();
+    await page.uncheck('#graph-firstparent');
+    const n = await page.evaluate(() => window.__g3n.length);
+    await page.waitForFunction((k) => window.__g3n.length > k, n - 1, { timeout: T(5000) });
+    const off = await last();
+    if (!(on > 0 && on < off)) throw new Error(`el 3D no recibió menos commits con el primer padre (${on} con el interruptor, ${off} sin él)`);
+  });
+  await page.context().close();
+}
+
 console.log('Ramas ocultas o solas desde la URL (?solo=, ?ocultar=)');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

@@ -356,9 +356,12 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     el paso anterior deja el grafo en el primer commit cargado y, con unos minutos de demo, `heads[3]` es una etiqueta
     fuera de la vista (`display: none`), el foco no llega y Enter no abre su ficha (3 de 3 con 6 min de demo, también
     sobre `origin/dev`). El mismo patrón (`heads[heads.length > 3 ? 3 : 0].focus()` sin mirar si está a la vista ni si
-    sale) sigue en «ocultar una rama o dejarla sola…» (falló 1 de 2 en esa reanudación, `waitForFunction: Timeout
-    15000ms`) y en «cambios de un commit: desde su ficha, con teclado…» (1 de 3 en la misma reproducción): elegir la
-    rama como lo hacen ahora «historial de un archivo» y el paso siguiente (End, etiquetas a la vista, sin `.exit`).
+    sale) estaba en «ocultar una rama o dejarla sola…» (falló 1 de 2 en esa reanudación, `waitForFunction: Timeout
+    15000ms`) y en «cambios de un commit: desde su ficha, con teclado…» (1 de 3 en la misma reproducción): arreglado en
+    la iteración 191 con `openBranchTip` (`tools/smoke.mjs`: End, etiquetas a la vista, sin `.exit` y sin la rama por
+    defecto, que no se oculta) y esperando por conteo de etiquetas vigentes; «filtro por autor» ya no compara con el
+    conteo base sino con el filtrado. Queda por medir con 5 corridas seguidas del smoke (la 191 vio una en verde tras el
+    arreglo) y la intermitencia de «vista de texto: árbol con teclado…» y «al cerrar el último repo…».
 2. [Deuda] La e2e de escritorio «--bitbucket-url suma solo ese host a las conexiones del CSP…» falló 1 de 2 en la
     reanudación de la 173 (2026-11-01, carga 18 en 4 CPU; la repetición pasó): `#azure-token-input` vacío al abrir
     Ajustes. Es una carrera de la prueba: guarda el token de Azure con `GBDesktop.setToken(…, 'azure')` con la página ya
@@ -569,3 +572,17 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/190, sin colisión
 - Validado: 556 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 191, mantenimiento · Deuda: pendiente 1
+
+### 2026-11-03 · Iteración 191 · Mantenimiento · Deuda
+
+- **Arreglo: pasos del smoke intermitentes por elegir la rama a ciegas** (pendiente 1, parcial: sigue abierto con lo que falta medir). Un helper `openBranchTip` (`tools/smoke.mjs`) abre la ficha de una rama vigente, a la vista y que no sea la por defecto; lo usan «ocultar una rama o dejarla sola» y «cambios de un commit», que elegían `heads[3]` sin mirar si estaba a la vista. «Ocultar…» espera por conteo de etiquetas vigentes y «filtro por autor» deja de comparar con el conteo base.
+- **Reproducción:** `xvfb-run -a node tools/smoke.mjs` → `✗ ocultar una rama o dejarla sola…: page.waitForFunction: Timeout 15000ms exceeded` (iteración 191, antes del arreglo); el de «filtro por autor»: `quitar el filtro no deja el grafo como estaba`.
+- **Pruebas que fallan sin el arreglo:** el propio smoke con la demo viva (intermitente, 1 de 1 fallo observado en esta sesión antes del arreglo); 1 corrida en verde después (no son las 5 pedidas).
+- README: no toca.
+- QA: no toca la página (solo `tools/smoke.mjs`); auditoría: no toca la página.
+- Skills: no aplica: un arreglo del propio smoke que las reglas del repo ya cubren.
+- Arena: no aplica: una sola forma obvia.
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; sin subagentes OMC en esta corrida)
+- Reclamo: loop/191, sin colisión
+- Validado: 556 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 192, expansión: ítem 143 (Constelación: ordenar por PRs abiertos, Escala)

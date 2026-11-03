@@ -386,31 +386,26 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-8. [QA] A 320 px el grafo sigue a ~420 px del inicio con la demo (antes 522; con un repo real, más: barra de
-    vistas, bitácora) y el 3D no arma etiquetas hasta verse. La iteración 167 compactó las cifras (tres columnas
-    sin la línea de detalle, 245 → 144 px); falta una forma de llegar al grafo sin recorrer la página (ancla o
-    tarjetas plegables en celular). Reproducción: Playwright, 320×640, `?repo=acme/web` con la API simulada de la
-    auditoría → `.graph-panel` empieza bajo los 400 px; `#graph3d` fuera de la pantalla.
-9. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+8. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-10. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
+9. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
     `npm run check` en la iteración 128 (la repetición pasó), aun con la espera de la 127.
     Reproducción: `npm run check` → `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
     También «ocultar una rama o dejarla sola» (`page.waitForFunction: Timeout 15000ms exceeded`): falló en la
     primera puerta de la iteración 179 y pasó en la repetición (antes, en la 166).
 
-11. [QA] El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 del repositorio o la cuota
+10. [QA] El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 del repositorio o la cuota
     agotada, aunque el mensaje de abajo es exacto («No se encontró acme/web…»): en celular, donde solo se ve el
     indicador, confunde. Distinguir «No encontrado» / «Cuota agotada» de «Sin conexión».
     Reproducción: Playwright, 320×640, `?repo=acme/web&lang=es` con la API respondiendo 404 → `#status-text` = «Sin conexión».
-12. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+11. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-13. [QA] A ≤560 px las cifras ya no muestran su línea de detalle (`.stat-sub`: «de N en total», la hora de la última
+12. [QA] A ≤560 px las cifras ya no muestran su línea de detalle (`.stat-sub`: «de N en total», la hora de la última
     actividad): se perdió información en celular. Devolverla como `title`/texto accesible de la tarjeta o en un
     plegable. Reproducción: Playwright, 320×640 → `getComputedStyle(#st-branches-sub).display` = `none`.
-14. [QA] A 320 px el panel de salud se desborda hacia la derecha (28 px; 46 en tamil): la cabecera, los contadores de
+13. [QA] A 320 px el panel de salud se desborda hacia la derecha (28 px; 46 en tamil): la cabecera, los contadores de
     cada sección y la edad de los forks quedan cortados y el panel se desliza de lado. Visto en la iteración 174, igual
     sin su cambio. Reproducción: Playwright, 320×640, demo `?lang=es&health=1` → `#health .tr-wrap` con `scrollWidth`
     312 y `clientWidth` 284.
@@ -639,3 +634,19 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: relevo de loop/182 (36ac818), reanudada por el disparo siguiente
 - Validado: 547 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. (La primera sesión vio el smoke fallar tres veces en pasos ajenos y distintos; al reanudar pasó entero.)
 - **Siguiente:** iteración 183, mantenimiento · QA: pendiente 8 (A 320 px el grafo sigue a ~420 px del inicio con la demo (antes 522; con un rep…)
+
+### 2026-11-03 · Iteración 183 · Mantenimiento · QA
+
+- **Arreglo: a 320 px un enlace «ir al grafo» llega al panel sin recorrer la página** (pendiente 8).
+  Bajo la cabecera, solo a ≤560 px, un enlace (`#to-graph`, texto de `graph.aria2d`, ya traducido a los 40 idiomas) salta a
+  `#graph-panel`, que recibe el foco (`tabindex="-1"`, sin contorno). No hay texto ni clave nuevos; sin CSP nueva.
+- **Reproducción:** `node tools/smoke.mjs` (paso «a 320 px, un enlace «ir al grafo» salta al panel…») → sin el arreglo, `#to-graph` no existe y el paso falla.
+- **Pruebas que fallan sin el arreglo:** ese paso del smoke (enlace visible a 320 px, con texto traducido, el foco en el panel y el panel a menos de 60 px del borde).
+- README: sin cambios (no es una función nueva; el detalle está en la bitácora).
+- QA: celular angosto (320 px) mirado con el paso del smoke; 40 idiomas con `check-i18n` (sin claves nuevas); auditoría en la puerta.
+- Skills: no aplica: un enlace ancla con CSS que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (ancla al panel).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/183, sin colisión
+- Validado: pendiente
+- **Siguiente:** iteración 184, expansión: ítem 138 (Constelación: solo los repos con actividad reciente, en la URL, Escala)

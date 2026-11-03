@@ -509,6 +509,7 @@ GB.i18n.define('hu', {
   'health.openedWeeks': 'Megnyitott pull requestek hetente, az utolsó {n} hét (a legrégebbitől a jelenlegiig): {list}',
   'health.closedWeeks': 'Lezárt issue-k hetente, az utolsó {n} hét (a legrégebbitől a jelenlegiig): {list}',
   'health.branchWeeks': 'Új ágak hetente, az utolsó {n} hét (a legrégebbitől a jelenlegiig): {list}',
+  'health.commitWeeks': 'Commitok hetente, az utolsó {n} hét (a legrégebbitől a jelenlegiig): {list}',
   'health.ci': 'CI-hibák',
   'health.ciPrs': 'Sikertelen ellenőrzésű nyitott PR-ek: {failing} / {total} ({pct}%)',
   'health.ciFeed': 'Hányszor vált pirossá az alapértelmezett ág 30 nap alatt: {n}',

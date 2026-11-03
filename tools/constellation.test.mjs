@@ -98,3 +98,24 @@ test('?constellation=texto deja los repos cuyo nombre lo contiene, sin mayúscul
   assert.deepEqual(C.filterItems(items, '  '), items);
   assert.notEqual(C.filterItems(items, ''), items, 'no devuelve la misma lista');
 });
+
+test('?recent=N deja los repos con actividad en los últimos N días; sin fecha conocida se conserva', () => {
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(C.recentParam(q('recent=30')), 30);
+  assert.equal(C.recentParam(q('recent=%207%20')), 7);
+  assert.equal(C.recentParam(q('recent=0.5')), 0.5);
+  assert.equal(C.recentParam(q('recent=99999')), 3650);
+  for (const bad of ['recent=', 'recent=0', 'recent=-3', 'recent=abc', 'recent=Infinity', 'repo=o/a']) assert.equal(C.recentParam(q(bad)), null, bad);
+  const now = Date.UTC(2026, 10, 3);
+  const items = [
+    { name: 'o/hoy', last: now - 3600e3 },
+    { name: 'o/mes', last: now - 29 * 864e5 },
+    { name: 'o/viejo', last: now - 31 * 864e5 },
+    { name: 'o/cargando', last: null },
+    { name: 'o/sin', last: undefined },
+  ];
+  assert.deepEqual(C.recentItems(items, 30, now).map((i) => i.name), ['o/hoy', 'o/mes', 'o/cargando', 'o/sin']);
+  assert.deepEqual(C.recentItems(items, 1, now).map((i) => i.name), ['o/hoy', 'o/cargando', 'o/sin']);
+  assert.deepEqual(C.recentItems(items, null, now), items);
+  assert.notEqual(C.recentItems(items, null, now), items, 'no devuelve la misma lista');
+});

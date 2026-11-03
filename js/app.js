@@ -2389,8 +2389,16 @@
     if (order) constellation.setOrder(order, false);
     // ?constellation=texto: solo los repos cuyo nombre lo contiene
     constellation.setFilter(GB.constellation.filterParam(new URLSearchParams(location.search)));
+    // ?recent=30: solo los repos con algún commit en los últimos 30 días
+    constellation.setRecent(GB.constellation.recentParam(new URLSearchParams(location.search)));
   } catch {
     /* sin query string */
+  }
+  /** Fecha (ms) del commit más reciente cargado, o `null` si aún no hay ninguno. */
+  function lastCommitAt(data) {
+    let last = null;
+    for (const c of data.commits?.values() || []) if (Number.isFinite(c.date) && (last === null || c.date > last)) last = c.date;
+    return last;
   }
   $('#constellation-btn').addEventListener('click', () => {
     constellation.render(
@@ -2400,6 +2408,7 @@
           key: x.key,
           name: nameOf(x),
           commits: x.source.data.commits?.size || 0,
+          last: lastCommitAt(x.source.data),
           branches: x.source.data.branches?.size || 0,
           state: x.status?.state || 'loading',
           unread: x.unread,

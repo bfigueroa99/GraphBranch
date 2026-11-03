@@ -72,6 +72,20 @@
     return f ? items.filter((it) => fold(it.name).includes(f)) : items.slice();
   }
 
+  /** `?recent=N`: solo los repos con actividad en los últimos N días (`?recent=30` es el mes). Falta, no es un número o no es positivo: `null` (sin filtro); se acota a 3650 días. */
+  function recentParam(q) {
+    const raw = String(q.get('recent') ?? '').trim();
+    const n = raw === '' ? NaN : Number(raw);
+    return Number.isFinite(n) && n > 0 ? Math.min(n, 3650) : null;
+  }
+
+  /** Los repos con algún commit en los últimos `days` días contados desde `now`. `it.last` es la fecha (ms) de su commit más reciente; sin ella (el repo aún carga) no se sabe que esté inactivo y se conserva. Sin `days`, todos. No toca `items`. */
+  function recentItems(items, days, now = Date.now()) {
+    if (!(days > 0)) return items.slice();
+    const from = now - days * 864e5;
+    return items.filter((it) => !Number.isFinite(it.last) || it.last >= from);
+  }
+
   /** Tono (0–359) estable para un nombre. */
   function hueOf(name) {
     let h = 0;
@@ -114,6 +128,7 @@
     let items = [];
     let mode = 'tabs';
     let filter = '';
+    let recent = null;
     if (select) select.addEventListener('change', () => setOrder(select.value, true));
     /** Cambia el orden (el de Tab y el de lector de pantalla) y, si lo pidió la persona, lo anuncia. */
     function setOrder(next, announce) {
@@ -127,13 +142,23 @@
       filter = String(next || '').trim();
       draw();
     }
+    /** Deja solo los repos con actividad en los últimos `days` días (`null`: todos). */
+    function setRecent(days) {
+      recent = days > 0 ? days : null;
+      draw();
+    }
+    function visible() {
+      return recentItems(filterItems(items, filter), recent);
+    }
     function render(list) {
       items = list;
       draw();
-      if (status) status.textContent = filter ? text('constellation.filtered', { filter, shown: fmt(filterItems(items, filter).length), total: fmt(items.length) }) : '';
+      // el aviso nombra el filtro con las mismas palabras de siempre: el texto y/o «≤ N d» (sin texto nuevo que traducir)
+      const label = [filter, recent ? `≤ ${fmt(recent)} d` : ''].filter(Boolean).join(' · ');
+      if (status) status.textContent = label ? text('constellation.filtered', { filter: label, shown: fmt(visible().length), total: fmt(items.length) }) : '';
     }
     function draw() {
-      const shown = sortItems(filterItems(items, filter), mode);
+      const shown = sortItems(visible(), mode);
       const had = document.activeElement?.closest?.('.cs-gx') ? document.activeElement.dataset.key : null;
       root.textContent = '';
       const spots = place(shown);
@@ -170,8 +195,8 @@
       });
       if (had) [...root.children].find((n) => n.dataset.key === had)?.focus();
     }
-    return { render, setOrder, setFilter };
+    return { render, setOrder, setFilter, setRecent };
   }
 
-  GB.constellation = { place, sortItems, orderParam, filterParam, filterItems, radiusOf, hueOf, mount };
+  GB.constellation = { place, sortItems, orderParam, filterParam, filterItems, recentParam, recentItems, radiusOf, hueOf, mount };
 })(window.GB);

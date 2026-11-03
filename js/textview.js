@@ -137,9 +137,24 @@
     return out.join('. ');
   }
 
+  /** Qué pide una tecla sobre una rama: H la oculta, S la deja sola; con Ctrl, Alt o Meta (atajos del navegador), nada. */
+  function viewAction(ev) {
+    if (!ev || ev.ctrlKey || ev.altKey || ev.metaKey) return null;
+    const k = String(ev.key || '').toLowerCase();
+    return k === 'h' ? 'hide' : k === 's' ? 'solo' : null;
+  }
+
+  /** Lo que dice la vista tras ocultar o dejar sola una rama: `solo` es la rama que quedó sola ('' si ya no hay ninguna). */
+  function viewNote(how, name, solo, text) {
+    if (how === 'hide') return text('textview.hidden', { name });
+    return solo === name ? text('textview.soloed', { name }) : text('branchview.reset');
+  }
+
   /** Monta el árbol en `root`. `text(key, params)`: traductor; `onGo({ branch, sha })`: Enter sobre un nodo.
-      Teclado: ↑ ↓ recorren lo visible, → abre o baja al primer hijo, ← cierra o sube al padre, Inicio y Fin. */
-  function mount(root, { text, ago, onGo, filterInput, live, scopeEl }) {
+      `onView(name, how)` (how: 'hide' | 'solo') y `canHide()`: ocultar una rama o dejarla sola desde aquí (H y S, o sus botones);
+      la rama por defecto no se oculta. Teclado: ↑ ↓ recorren lo visible, → abre o baja al primer hijo, ← cierra o sube al padre, Inicio y Fin. */
+  function mount(root, { text, ago, onGo, onView, canHide, filterInput, live, scopeEl }) {
+    const hideOk = (b) => !!onView && !b.isDefault && (!canHide || canHide());
     const seen = { branches: new Set(), shas: new Set() };
     const open = new Set(); // ramas abiertas
     let tree = { total: 0, branches: [] };
@@ -206,6 +221,17 @@
         if (b.prs) head.appendChild(mk('span', 'tv-tag', text('textview.prs', { n: b.prs })));
         if (b.quiet) head.appendChild(mk('span', 'tv-tag', text('textview.quiet')));
         if (b.merged) head.appendChild(mk('span', 'tv-tag', text('textview.merged')));
+        if (hideOk(b)) {
+          for (const [how, glyph] of [['hide', '⊘'], ['solo', '◎']]) {
+            const btn = mk('button', 'tv-act', glyph);
+            btn.type = 'button';
+            btn.tabIndex = -1;
+            btn.dataset.act = how;
+            btn.setAttribute('aria-label', text(how === 'hide' ? 'textview.hideBranch' : 'textview.soloBranch', { name: b.name }));
+            btn.title = btn.getAttribute('aria-label');
+            head.appendChild(btn);
+          }
+        }
         li.appendChild(head);
         const group = mk('ul', 'tv-commits');
         group.setAttribute('role', 'group');
@@ -265,17 +291,27 @@
     }
 
     /** Con el árbol abierto y datos nuevos: redibuja sin perder el foco ni lo abierto, y avisa solo de lo que no se había leído. */
-    function update(next) {
+    function update(next, scope) {
       const fresh = news(next, seen);
       const inside = root.contains(document.activeElement) ? document.activeElement.closest?.('[role="treeitem"]') : null;
       const key = inside && keyOf(inside);
+      const pos = inside ? items().indexOf(inside) : -1;
       tree = next;
+      if (scope !== undefined && scopeEl) {
+        const note = scopeText(scope, text);
+        scopeEl.textContent = note;
+        scopeEl.hidden = !note;
+      }
       for (const b of next.branches) seen.branches.add(b.name);
       for (const c of fresh.commits) seen.shas.add(c);
       draw();
       if (key) {
         const back = [...root.querySelectorAll('[role="treeitem"]')].find((n) => keyOf(n) === key && !n.parentElement.closest('[hidden]'));
         if (back) focus(back);
+        else if (pos >= 0) {
+          const vis = items(); // la rama con el foco ya no está (se ocultó): el foco queda en el lugar que ocupaba
+          focus(vis[Math.min(pos, vis.length - 1)] || filterInput);
+        }
       }
       if (fresh.branches.length || fresh.commits.length) say(text('textview.live', { branches: fresh.branches.length, commits: fresh.commits.length }));
     }
@@ -305,6 +341,16 @@
       const vis = items();
       const i = vis.indexOf(n);
       const isBranch = n.classList.contains('tv-branch');
+      const how = viewAction(ev);
+      if (how && onView) {
+        const b = branchOf(n);
+        const row = tree.branches.find((x) => x.name === b.dataset.branch);
+        if (row && hideOk(row)) {
+          onView(row.name, how);
+          ev.preventDefault();
+        }
+        return;
+      }
       let handled = true;
       if (ev.key === 'ArrowDown') focus(vis[Math.min(vis.length - 1, i + 1)]);
       else if (ev.key === 'ArrowUp') focus(vis[Math.max(0, i - 1)]);
@@ -325,6 +371,8 @@
       const n = ev.target.closest?.('[role="treeitem"]');
       if (!n) return;
       ev.stopPropagation();
+      const act = ev.target.closest?.('.tv-act');
+      if (act && onView) return onView(branchOf(n).dataset.branch, act.dataset.act);
       focus(n);
       if (n.classList.contains('tv-branch') && ev.target.closest('.tv-head')) setOpen(n, n.getAttribute('aria-expanded') !== 'true');
       else onGo({ branch: branchOf(n).dataset.branch, sha: n.dataset.sha || null });
@@ -340,7 +388,7 @@
       say([note, text('textview.filtered', { shown: filter(tree, q).length, total: tree.branches.length })].filter(Boolean).join('. '));
     }
 
-    return { render, update, setFilter };
+    return { render, update, setFilter, say };
   }
 
   /** ¿Pide la URL abrir la vista de texto (?vista=texto o ?view=text)? Con ?path= y ?q= ya aplicados. */
@@ -353,5 +401,5 @@
     return is('vista', 'texto') || is('view', 'text');
   }
 
-  GB.textview = { build, forks, news, taggedCount, releasedCount, releaseMarks, filter, scopeText, mount, openParam, PER_BRANCH, MAX_BRANCHES, MAX_FORKS, QUIET_DAYS };
+  GB.textview = { build, forks, news, taggedCount, releasedCount, releaseMarks, filter, scopeText, viewAction, viewNote, mount, openParam, PER_BRANCH, MAX_BRANCHES, MAX_FORKS, QUIET_DAYS };
 })((window.GB = window.GB || {}));

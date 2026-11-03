@@ -928,6 +928,35 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
+  await step(page, 'vista de texto: H oculta una rama, S la deja sola y el foco y el aviso siguen en el árbol', async () => {
+    await page.click('#textview-btn');
+    await page.waitForSelector('#textview[open]', { timeout: T(3000) });
+    const names = () => page.$$eval('#textview .tv-branch', (bs) => bs.map((n) => n.dataset.branch));
+    const before = await names();
+    if (before.length < 3) throw new Error('la demo trae menos de 3 ramas: ' + before.join(', '));
+    const target = before[1];
+    const btns = await page.$$eval(`#textview .tv-branch[data-branch="${target}"] .tv-act`, (bs) => bs.map((b) => b.getAttribute('aria-label')));
+    const defBtns = await page.$$eval('#textview .tv-branch:first-child .tv-act', (bs) => bs.length);
+    if (btns.length !== 2 || btns.some((l) => !l || !l.includes(target)) || defBtns) throw new Error('botones de ocultar mal: ' + JSON.stringify({ btns, defBtns }));
+    await page.evaluate((n) => document.querySelector(`#textview .tv-branch[data-branch="${n}"]`).focus(), target);
+    await page.keyboard.press('h');
+    const after = await names();
+    const st = await page.evaluate(() => ({ live: document.querySelector('#textview-live').textContent, scope: document.querySelector('#textview-scope').textContent, hiddenScope: document.querySelector('#textview-scope').hidden, inTree: !!document.activeElement.closest('#textview [role="tree"]'), url: location.search }));
+    if (after.includes(target) || after.length !== before.length - 1) throw new Error('H no oculta la rama: ' + JSON.stringify({ before, after }));
+    if (!st.live.includes(target) || st.hiddenScope || !st.scope || !st.inTree || !st.url.includes('ocultar=')) throw new Error('H no avisa, no deja el foco en el árbol o no actualiza la nota: ' + JSON.stringify(st));
+    // «solo esta» sobre la siguiente, y repetirlo las vuelve a mostrar todas (menos la oculta antes, que sigue oculta)
+    const other = after[1];
+    await page.evaluate((n) => document.querySelector(`#textview .tv-branch[data-branch="${n}"]`).focus(), other);
+    await page.keyboard.press('s');
+    const solo = await names();
+    if (solo.length !== 2 || !solo.includes(other)) throw new Error('S no deja la rama sola: ' + solo.join(', '));
+    await page.keyboard.press('s');
+    if ((await names()).length !== before.length) throw new Error('repetir S no vuelve a mostrar las ramas');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: T(3000) });
+    await page.evaluate(() => document.querySelector('#branch-view-reset').click()); // la demo vuelve a verse entera para lo que sigue
+  });
+
   await step(page, 'vista de texto: filtra por rama y avisa en la región viva de lo nuevo sin repetir', async () => {
     await page.click('#textview-btn');
     await page.waitForSelector('#textview[open]', { timeout: T(3000) });

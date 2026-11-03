@@ -2306,6 +2306,12 @@
     scopeEl: $('#textview-scope'),
     text: (k, p) => t(k, p),
     ago: (ms) => U.timeAgo(ms),
+    canHide: () => !allOn, // en la vista conjunta no se ocultan ramas (como en el grafo)
+    onView: (name, how) => {
+      onBranchView(name, how);
+      textview.update(textTree(viewOf(source.view ? source.view() : source.data).data), textScope());
+      textview.say(GB.textview.viewNote(how, name, branchView.solo, t));
+    },
     onGo: ({ branch, sha }) => {
       closeTextview();
       if (sha && shownGraph().focusSha) shownGraph().focusSha(sha);
@@ -2315,11 +2321,13 @@
   /** El árbol de `data` con los filtros de ruta y los releases que el feed dice de este repo. */
   const textTree = (data) => GB.textview.build(data, { withForks: showForks, paths: pathShas, releases: GB.textview.releaseMarks(feed.items.filter((a) => a.repo === active?.key)) });
   /** El árbol con los filtros del grafo (autor y ruta) y una nota que los dice, también para el lector de pantalla. */
-  function openTextview() {
+  function textScope() {
     const v = viewOf(source.view ? source.view() : source.data);
     const name = authorFilter && (GB.search.authors(source.data).find((a) => a.key === authorFilter)?.name || authorFilter);
-    const scope = authorFilter || pathShas || branchViewOn() || firstParentOn ? { author: name, shown: v.shown, total: v.total, branches: branchViewOn() ? { shown: v.shown, total: v.total } : null, path: pathShas ? pathText : '', count: pathShas ? pathShas.size : 0 } : null;
-    textview.render(textTree(v.data), scope);
+    return authorFilter || pathShas || branchViewOn() || firstParentOn ? { author: name, shown: v.shown, total: v.total, branches: branchViewOn() ? { shown: v.shown, total: v.total } : null, path: pathShas ? pathText : '', count: pathShas ? pathShas.size : 0 } : null;
+  }
+  function openTextview() {
+    textview.render(textTree(viewOf(source.view ? source.view() : source.data).data), textScope());
   }
   function showTextview() {
     openTextview();

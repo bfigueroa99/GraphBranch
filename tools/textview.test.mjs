@@ -219,3 +219,22 @@ test('una rama cuya punta ya está en la por defecto se dice fusionada; la por d
   d.branches.delete('main');
   assert.ok(Object.values(merged()).every((m) => !m));
 });
+
+test('viewAction: H oculta, S deja sola; con Ctrl, Alt o Meta o con otra tecla, nada', () => {
+  const act = ctx.window.GB.textview.viewAction;
+  assert.equal(act({ key: 'h' }), 'hide');
+  assert.equal(act({ key: 'H' }), 'hide');
+  assert.equal(act({ key: 's' }), 'solo');
+  assert.equal(act({ key: 's', ctrlKey: true }), null);
+  assert.equal(act({ key: 'h', metaKey: true }), null);
+  assert.equal(act({ key: 'Enter' }), null);
+  assert.equal(act(null), null);
+});
+
+test('viewNote: lo que dice la vista tras ocultar o dejar sola una rama', () => {
+  const note = ctx.window.GB.textview.viewNote;
+  const text = (k, p) => `${k}:${p?.name ?? ''}`;
+  assert.equal(note('hide', 'x', '', text), 'textview.hidden:x');
+  assert.equal(note('solo', 'x', 'x', text), 'textview.soloed:x');
+  assert.equal(note('solo', 'x', '', text), 'branchview.reset:');
+});

@@ -5210,6 +5210,26 @@ a.hl-row:focus-visible {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.tv-act {
+  flex: none;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--line, currentColor);
+  border-radius: 6px;
+  background: none;
+  color: var(--ink-3);
+  font: inherit;
+  cursor: pointer;
+}
+.tv-act:first-of-type {
+  margin-inline-start: auto;
+}
+.tv-act:hover,
+.tv-act:focus-visible {
+  background: var(--surface-2);
+  color: inherit;
+}
 .tv-head:hover,
 .tv-commit:hover,
 .tv-branch:focus-visible > .tv-head,

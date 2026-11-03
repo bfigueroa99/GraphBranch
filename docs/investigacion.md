@@ -291,6 +291,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Resumen de la semana de la organización: rama más activa | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 136 |
 | Salud del repo: tendencia de issues abiertos | Análisis | 1×2/2 | 1,0 | DORA | ítem 137 |
 | Constelación: solo los repos con actividad reciente, en la URL | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 138 |
+| Vista de texto: ver todas las ramas desde la vista | Público | 1×2/1 | 2,0 | (ítem 110) | ítem 138 |
+| Vista de texto: CI de cada rama | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 139 |
+| Vista de texto: autor de la punta de cada rama | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 140 |
+| Salud del repo: tendencia de PRs fusionados | Análisis | 1×2/2 | 1,0 | DORA | ítem 141 |
+| Resumen de la semana: PRs fusionados por autor | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 142 |
+| Constelación: ordenar por PRs abiertos | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 143 |
 
 ## Públicos
 

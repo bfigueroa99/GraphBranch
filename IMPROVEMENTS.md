@@ -393,7 +393,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     `npm run check` en la iteración 128 (la repetición pasó), aun con la espera de la 127.
     Reproducción: `npm run check` → `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
     También «ocultar una rama o dejarla sola» (`page.waitForFunction: Timeout 15000ms exceeded`): falló en la
-    primera puerta de la iteración 179 y pasó en la repetición (antes, en la 166).
+    primera puerta de la iteración 179 y pasó en la repetición (antes, en la 166). Los dos juntos fallaron
+    en la primera puerta de la 188 y pasaron en la repetición.
 
 10. [QA] El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 del repositorio o la cuota
     agotada, aunque el mensaje de abajo es exacto («No se encontró acme/web…»): en celular, donde solo se ve el
@@ -738,5 +739,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (la misma estructura `data.tags` que usa GitHub).
 - OMC: plan=— · revisión=— · verificación=—
 - Reclamo: loop/188, sin colisión
-- Validado: pendiente
+- Validado: 553 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera puerta falló en dos pasos ajenos e intermitentes («filtro por autor» y «ocultar una rama», pendiente de Deuda 9); la repetición pasó.
 - **Siguiente:** iteración 189, expansión: ítem 121 (Primer padre en el grafo 3D, Análisis)

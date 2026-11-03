@@ -103,6 +103,26 @@ async function openPage(contextOptions = {}) {
   return page;
 }
 
+/** Abre con teclado la ficha de una rama vigente y a la vista, y devuelve el selector que se pidió dentro de ella.
+    Elegir `heads[3]` a ciegas fallaba con la demo viva: una etiqueta puede estar fuera de la vista (`display: none`)
+    o saliendo (`.exit`), y entonces el foco no llega y Enter no abre su ficha. Se lleva el grafo al último commit
+    (End) para que haya etiquetas, y se prueban las primeras 6 a la vista. */
+async function openBranchTip(page, inner) {
+  await page.focus('#graph');
+  await page.keyboard.press('End');
+  await page.waitForFunction(() => [...document.querySelectorAll('#graph svg .head[role=button]:not(.exit)')].some((h) => getComputedStyle(h).display !== 'none'), null, { timeout: T(3000) });
+  const shown = [];
+  for (const h of await page.$$('#graph svg .head[role=button]:not(.exit)')) if (await h.isVisible()) shown.push(h);
+  for (const h of shown.slice(0, 6)) {
+    await h.focus();
+    await page.keyboard.press('Enter');
+    const found = await page.waitForSelector(`#graph .tip:not([hidden]) ${inner}`, { timeout: T(1000) }).catch(() => null);
+    if (found) return found;
+    await page.keyboard.press('Escape');
+  }
+  throw new Error(`ninguna de las primeras 6 ramas a la vista abrió su ficha con ${inner}`);
+}
+
 /** `allow`: errores de consola que el paso provoca a propósito (por ejemplo, un 404 de la API simulada). */
 async function step(page, name, fn, { allow = null } = {}) {
   const before = page.errors.length;
@@ -1188,18 +1208,13 @@ console.log('Escritorio (1280×800)');
     await page.click('#view-2d');
     const count = () => page.evaluate(() => document.querySelectorAll('#graph svg .head').length);
     const all = await count();
-    const openTip = async () => {
-      const heads = await page.$$('#graph svg .head[role=button]');
-      await heads[heads.length > 3 ? 3 : 0].focus();
-      await page.keyboard.press('Enter');
-    };
-    await openTip();
+    await openBranchTip(page, '.tip-hide');
     await page.click('#graph .tip .tip-hide');
     await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, all, { timeout: T(5000) });
     const hid = await count();
     const saved = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('graphbranch:bview:')).length);
     if (!saved) throw new Error('las ramas ocultas no se guardaron por repo');
-    await openTip();
+    await openBranchTip(page, '.tip-solo');
     await page.click('#graph .tip .tip-solo');
     await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, hid, { timeout: T(5000) });
     await page.click('#search-btn');
@@ -1247,10 +1262,7 @@ console.log('Escritorio (1280×800)');
   await step(page, 'cambios de un commit: desde su ficha, con teclado se pasa al anterior y se vuelve, y Esc cierra', async () => {
     await page.keyboard.press('Escape'); // ninguna ficha abierta de antes
     await page.click('#view-2d');
-    const heads = await page.$$('#graph svg .head[role=button]');
-    await heads[heads.length > 3 ? 3 : 0].focus();
-    await page.keyboard.press('Enter');
-    const btn = await page.waitForSelector('#graph .tip .tip-diff', { timeout: T(5000) });
+    const btn = await openBranchTip(page, '.tip-diff');
     await btn.focus();
     await page.keyboard.press('Enter');
     await page.waitForSelector('#diff-panel:not([hidden]) .df-file', { timeout: T(5000) });

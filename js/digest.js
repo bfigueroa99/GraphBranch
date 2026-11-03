@@ -54,6 +54,14 @@
       if (n && (!branch || n > branch.commits || (n === branch.commits && b.name < branch.name))) branch = { name: b.name, commits: n };
     }
 
+    // ramas nacidas en la semana: cada nombre cuenta una vez (la misma rama vista por el feed y por la comparación en vivo, o borrada y creada otra vez, no suma dos)
+    const bornNames = new Set();
+    for (const a of acts) {
+      if (a.kind !== 'branch-create' || !a.time || !(a.time > since && a.time <= now)) continue;
+      const k = a.branch ? `b:${a.branch}` : a.id;
+      if (k != null) bornNames.add(k);
+    }
+
     const seenIds = new Set();
     const inWeek = (a, kind) => a.kind === kind && a.time && a.time > since && a.time <= now && !seenIds.has(a.id) && seenIds.add(a.id);
     const merged = acts
@@ -95,6 +103,7 @@
       days,
       commits: week.size,
       perDay,
+      newBranches: bornNames.size, // ramas creadas en la semana, de las actividades ya cargadas
       newcomers: [...people.keys()].filter((who) => !before.has(who)).length, // con lo cargado: sin commit anterior a la semana
       merged: { total: merged.length, rows: merged.slice(0, LIST) },
       opened: { total: opened.length, rows: opened.slice(0, LIST) },
@@ -115,6 +124,7 @@
     const out = [`# ${md(t.head.replace('{repo}', repo))}`, '', `${fmtDate(d.since)} – ${fmtDate(d.now)}`, '', `- ${t.commits.replace('{n}', d.commits)}`];
     if (d.commits && t.perday) out.push(`- ${t.perday.replace('{n}', d.perDay.join(' · '))}`);
     if (d.newcomers && t.newcomers) out.push(`- ${t.newcomers.replace('{n}', d.newcomers)}`);
+    if (d.newBranches && t.newbranches) out.push(`- ${t.newbranches.replace('{n}', d.newBranches)}`);
     if (d.branch) out.push(`- ${t.branch}: \`${String(d.branch.name).replace(/`/g, "'")}\` (${d.branch.commits})`);
     const link = (r, text) => (r.url && /^https?:\/\//.test(r.url) ? `[${text}](${r.url.replace(/[()\s]/g, encodeURIComponent)})` : text);
     out.push('', `## ${t.merged} (${d.merged.total})`, '');
@@ -165,6 +175,7 @@
     L.push({ text: t.commits.replace('{n}', d.commits), kind: 'head' });
     if (d.commits && t.perday) L.push({ text: cut(t.perday.replace('{n}', d.perDay.join(' · '))), kind: 'row' });
     if (d.newcomers && t.newcomers) L.push({ text: cut(t.newcomers.replace('{n}', d.newcomers)), kind: 'row' });
+    if (d.newBranches && t.newbranches) L.push({ text: cut(t.newbranches.replace('{n}', d.newBranches)), kind: 'row' });
     if (d.branch) L.push({ text: cut(`${t.branch}: ${flat(d.branch.name)} (${d.branch.commits})`), kind: 'row' });
     const section = (label, total, rows) => {
       L.push({ text: `${label} (${total})`, kind: 'head' });

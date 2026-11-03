@@ -683,6 +683,7 @@ GB.i18n.define('hu', {
   'digest.people': 'Kik járultak hozzá (commitok)',
   'digest.perday': 'Commitok naponta: {n}',
   'digest.newcomers': 'Új közreműködők: {n}',
+  'digest.newbranches': 'Új ágak: {n}',
   'digest.branch': 'Legaktívabb ág',
   'digest.org': '{owner} heti összefoglalója',
   'constellation.title': 'Csillagkép',

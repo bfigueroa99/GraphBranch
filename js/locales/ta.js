@@ -683,6 +683,7 @@ GB.i18n.define('ta', {
   'digest.people': 'யார் பங்களித்தனர் (கமிட்கள்)',
   'digest.perday': 'நாளுக்கான commit: {n}',
   'digest.newcomers': 'புதிய பங்களிப்பாளர்கள்: {n}',
+  'digest.newbranches': 'புதிய கிளைகள்: {n}',
   'digest.branch': 'மிகச் செயலில் உள்ள கிளை',
   'digest.org': '{owner} வாராந்திர சுருக்கம்',
   'constellation.title': 'விண்மீன் தொகுதி',

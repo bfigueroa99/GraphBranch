@@ -683,6 +683,7 @@ GB.i18n.define('fi', {
   'digest.people': 'Ketkä osallistuivat (commitit)',
   'digest.perday': 'Commitit päivittäin: {n}',
   'digest.newcomers': 'Uudet tekijät: {n}',
+  'digest.newbranches': 'Uudet haarat: {n}',
   'digest.branch': 'Aktiivisin haara',
   'digest.org': 'Viikon yhteenveto: {owner}',
   'constellation.title': 'Tähtikuvio',

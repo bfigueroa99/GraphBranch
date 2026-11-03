@@ -699,6 +699,7 @@ GB.i18n.define('uk', {
   'digest.people': 'Хто зробив внесок (коміти)',
   'digest.perday': 'Коміти за днями: {n}',
   'digest.newcomers': 'Нові автори: {n}',
+  'digest.newbranches': 'Нові гілки: {n}',
   'digest.branch': 'Найактивніша гілка',
   'digest.org': 'Підсумки тижня для {owner}',
   'constellation.title': 'Сузір’я',

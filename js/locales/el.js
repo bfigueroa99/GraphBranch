@@ -683,6 +683,7 @@ GB.i18n.define('el', {
   'digest.people': 'Ποιος συνεισέφερε (commits)',
   'digest.perday': 'Commits ανά ημέρα: {n}',
   'digest.newcomers': 'Νέοι συνεισφέροντες: {n}',
+  'digest.newbranches': 'Νέοι κλάδοι: {n}',
   'digest.branch': 'Πιο ενεργός κλάδος',
   'digest.org': 'Εβδομαδιαία σύνοψη του {owner}',
   'constellation.title': 'Αστερισμός',

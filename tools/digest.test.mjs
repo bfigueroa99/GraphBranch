@@ -238,6 +238,19 @@ test('autores nuevos: quienes no tienen commit cargado anterior a la semana', ()
   assert.doesNotMatch(toMarkdown(sin, 'a/b', t), /Nuevos/);
 });
 
+test('ramas nuevas: las creadas en la semana, cada nombre una vez', () => {
+  const mk = (id, branch, days) => ({ id, kind: 'branch-create', branch, time: NOW - days * 864e5 });
+  const nuevas = [mk('1', 'feat/a', 2), mk('2', 'feat/a', 1), mk('3', 'feat/b', 3), mk('4', 'vieja', 20), { id: '5', kind: 'branch-create', branch: 'x' }];
+  const d = compute(repo(), [...acts, ...nuevas], NOW);
+  assert.equal(d.newBranches, 2); // feat/a (una vez) y feat/b; «vieja» es de hace 20 días y «x» no tiene hora
+  const t = { head: 'S', commits: 'C {n}', merged: 'M', releases: 'R', people: 'P', branch: 'B', newbranches: 'Ramas: {n}' };
+  assert.match(toMarkdown(d, 'a/b', t), /- Ramas: 2\n/);
+  assert.ok(imageLines(d, 'a/b', t).some((l) => l.text === 'Ramas: 2'));
+  const sin = compute(repo(), acts, NOW);
+  assert.equal(sin.newBranches, 0);
+  assert.doesNotMatch(toMarkdown(sin, 'a/b', t), /Ramas:/);
+});
+
 test('commits por día: siete cifras, del día más viejo al de hoy', () => {
   const d = compute(repo(), acts, NOW);
   assert.deepEqual([...d.perDay], [0, 1, 0, 0, 1, 1, 2]); // el de hace 40 días no cuenta; el de «ahora» cae en el último día

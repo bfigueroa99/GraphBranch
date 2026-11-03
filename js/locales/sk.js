@@ -694,6 +694,7 @@ GB.i18n.define('sk', {
   'digest.people': 'Kto prispel (commity)',
   'digest.perday': 'Commity za deň: {n}',
   'digest.newcomers': 'Noví prispievatelia: {n}',
+  'digest.newbranches': 'Nové vetvy: {n}',
   'digest.branch': 'Najaktívnejšia vetva',
   'digest.org': 'Súhrn týždňa pre {owner}',
   'constellation.title': 'Súhvezdie',

@@ -683,6 +683,7 @@ GB.i18n.define('ja', {
   'digest.people': '貢献した人(コミット)',
   'digest.perday': '1日ごとのコミット: {n}',
   'digest.newcomers': '新しい貢献者: {n}',
+  'digest.newbranches': '新しいブランチ: {n}',
   'digest.branch': '最も活発なブランチ',
   'digest.org': '{owner} の週間サマリー',
   'constellation.title': '星座',

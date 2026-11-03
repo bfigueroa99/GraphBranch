@@ -684,6 +684,7 @@ GB.i18n.define('th', {
   'digest.people': 'ผู้ร่วมพัฒนา (คอมมิต)',
   'digest.perday': 'คอมมิตต่อวัน: {n}',
   'digest.newcomers': 'ผู้ร่วมพัฒนาใหม่: {n}',
+  'digest.newbranches': 'สาขาใหม่: {n}',
   'digest.branch': 'เบรนช์ที่คึกคักที่สุด',
   'digest.org': 'สรุปประจำสัปดาห์ของ {owner}',
   'constellation.title': 'กลุ่มดาว',

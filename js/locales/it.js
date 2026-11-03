@@ -684,6 +684,7 @@ GB.i18n.define('it', {
   'digest.people': 'Chi ha contribuito (commit)',
   'digest.perday': 'Commit al giorno: {n}',
   'digest.newcomers': 'Nuovi autori: {n}',
+  'digest.newbranches': 'Nuovi branch: {n}',
   'digest.branch': 'Branch più attivo',
   'digest.org': 'Riepilogo della settimana di {owner}',
   'constellation.title': 'Costellazione',

@@ -726,6 +726,7 @@ GB.i18n.define('fa', {
   'digest.people': 'چه کسی مشارکت کرد (کامیت‌ها)',
   'digest.perday': 'کامیت در هر روز: {n}',
   'digest.newcomers': 'مشارکت‌کنندگان جدید: {n}',
+  'digest.newbranches': 'شاخه‌های جدید: {n}',
   'digest.branch': 'فعال‌ترین شاخه',
   'digest.org': 'خلاصه هفته {owner}',
   'constellation.title': 'صورت فلکی',

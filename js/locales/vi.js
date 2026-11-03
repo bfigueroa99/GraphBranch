@@ -683,6 +683,7 @@ GB.i18n.define('vi', {
   'digest.people': 'Ai đã đóng góp (commit)',
   'digest.perday': 'Commit mỗi ngày: {n}',
   'digest.newcomers': 'Người đóng góp mới: {n}',
+  'digest.newbranches': 'Nhánh mới: {n}',
   'digest.branch': 'Nhánh hoạt động nhất',
   'digest.org': 'Tóm tắt tuần của {owner}',
   'constellation.title': 'Chòm sao',

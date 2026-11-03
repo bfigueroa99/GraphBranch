@@ -726,6 +726,7 @@ GB.i18n.define('ur', {
   'digest.people': 'کس نے حصہ ڈالا (کمٹس)',
   'digest.perday': 'روزانہ کمٹ: {n}',
   'digest.newcomers': 'نئے معاونین: {n}',
+  'digest.newbranches': 'نئی برانچیں: {n}',
   'digest.branch': 'سب سے فعال برانچ',
   'digest.org': '{owner} کا ہفتہ وار خلاصہ',
   'constellation.title': 'برج',

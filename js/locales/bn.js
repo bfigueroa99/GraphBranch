@@ -591,6 +591,7 @@ GB.i18n.define('bn', {
   'textview.fork': '{name}, সর্বশেষ push {when}',
   'textview.prs': 'খোলা PR: {n}',
   'textview.quiet': '৩০ দিনের বেশি নিষ্ক্রিয়',
+  'textview.merged': 'মূল শাখায় মার্জ করা',
   'search.title': 'কমিট খুঁজুন',
   'search.help': 'বার্তা, SHA বা লেখক (@নাম) দিয়ে খুঁজুন। নিচের তীর ফলাফলে যায়, Enter কমিটে উড়ে যায়।',
   'search.placeholder': 'বার্তা, SHA বা @লেখক…',

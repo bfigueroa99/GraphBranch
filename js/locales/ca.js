@@ -591,6 +591,7 @@ GB.i18n.define('ca', {
   'textview.fork': '{name}, darrer push {when}',
   'textview.prs': 'PR oberts: {n}',
   'textview.quiet': 'sense activitat fa més de 30 dies',
+  'textview.merged': 'fusionada a la principal',
   'search.title': 'Cerca commits',
   'search.help': 'Cerca per missatge, SHA o autor (@nom). La fletxa avall va als resultats, Intro vola fins al commit.',
   'search.placeholder': 'Missatge, SHA o @autor…',

@@ -591,6 +591,7 @@ GB.i18n.define('vi', {
   'textview.fork': '{name}, push gần nhất {when}',
   'textview.prs': 'PR đang mở: {n}',
   'textview.quiet': 'không hoạt động hơn 30 ngày',
+  'textview.merged': 'đã gộp vào nhánh mặc định',
   'search.title': 'Tìm commit',
   'search.help': 'Tìm theo thông điệp, SHA hoặc tác giả (@tên). Mũi tên xuống đi tới kết quả, Enter bay tới commit.',
   'search.placeholder': 'Thông điệp, SHA hoặc @tác giả…',

@@ -599,6 +599,7 @@ GB.i18n.define('ro', {
   'textview.fork': '{name}, ultimul push {when}',
   'textview.prs': 'PR-uri deschise: {n}',
   'textview.quiet': 'fără activitate de peste 30 de zile',
+  'textview.merged': 'îmbinată în ramura implicită',
   'search.title': 'Caută commituri',
   'search.help': 'Caută după mesaj, SHA sau autor (@nume). Săgeata în jos merge la rezultate, Enter zboară la commit.',
   'search.placeholder': 'Mesaj, SHA sau @autor…',

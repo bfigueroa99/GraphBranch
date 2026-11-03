@@ -591,6 +591,7 @@ GB.i18n.define('zh-Hant', {
   'textview.fork': '{name}，最近一次 push {when}',
   'textview.prs': '開啟中的 PR：{n}',
   'textview.quiet': '超過 30 天沒有動靜',
+  'textview.merged': '已合併到預設分支',
   'search.title': '搜尋提交',
   'search.help': '依提交訊息、SHA 或作者（@名稱）搜尋。向下鍵進入結果，Enter 飛到該提交。',
   'search.placeholder': '訊息、SHA 或 @作者…',

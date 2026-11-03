@@ -591,6 +591,7 @@ GB.i18n.define('hi', {
   'textview.fork': '{name}, आख़िरी push {when}',
   'textview.prs': 'खुले PR: {n}',
   'textview.quiet': '30 दिन से अधिक निष्क्रिय',
+  'textview.merged': 'डिफ़ॉल्ट ब्रांच में मर्ज हो चुकी',
   'search.title': 'कमिट खोजें',
   'search.help': 'संदेश, SHA या लेखक (@नाम) से खोजें। नीचे का तीर नतीजों पर जाता है, Enter कमिट तक उड़ाता है।',
   'search.placeholder': 'संदेश, SHA या @लेखक…',

@@ -634,6 +634,7 @@ GB.i18n.define('fa', {
   'textview.fork': '{name}، آخرین push {when}',
   'textview.prs': 'PR باز: {n}',
   'textview.quiet': 'بدون فعالیت بیش از ۳۰ روز',
+  'textview.merged': 'در شاخهٔ اصلی ادغام شده',
   'search.title': 'جستجوی کامیت‌ها',
   'search.help': 'با پیام، SHA یا نویسنده (@نام) جستجو کنید. پیکان پایین به نتایج می‌رود و Enter به کامیت پرواز می‌کند.',
   'search.placeholder': 'پیام، SHA یا ‎@نویسنده…',

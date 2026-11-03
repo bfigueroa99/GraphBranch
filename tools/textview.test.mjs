@@ -200,3 +200,22 @@ test('una rama sin actividad en más de 30 días se dice quieta, también la por
   assert.deepEqual(quiet(d, { paths: new Set(['a1']) }), { main: false, feature: false });
   assert.equal(ctx.window.GB.textview.QUIET_DAYS, 30); // los textos de 'textview.quiet' dicen 30 en los 40 idiomas
 });
+
+test('una rama cuya punta ya está en la por defecto se dice fusionada; la por defecto, la recién creada y la que lleva commits propios no', () => {
+  const d = repo();
+  const merged = () => Object.fromEntries(build(d).branches.map((b) => [b.name, b.merged]));
+  assert.deepEqual(merged(), { main: false, feature: true }); // f2 es segundo padre de m3
+  // una rama creada ahora sobre la punta de la por defecto no tiene nada que fusionar
+  d.branches.set('nueva', { name: 'nueva', sha: 'm3', movedAt: 5 });
+  assert.equal(merged().nueva, false);
+  // con un commit propio ya no está dentro de la por defecto
+  d.commits.set('n4', { sha: 'n4', parents: ['m3'], message: 'propio', date: 6, author: { name: 'Ana' } });
+  d.branches.get('nueva').sha = 'n4';
+  assert.equal(merged().nueva, false);
+  // una rama vieja, de antes del último merge, sí
+  d.branches.set('vieja', { name: 'vieja', sha: 'a2', movedAt: 2 });
+  assert.equal(merged().vieja, true);
+  // sin rama por defecto cargada no se sabe qué está fusionado
+  d.branches.delete('main');
+  assert.ok(Object.values(merged()).every((m) => !m));
+});

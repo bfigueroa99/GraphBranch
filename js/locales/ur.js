@@ -634,6 +634,7 @@ GB.i18n.define('ur', {
   'textview.fork': '{name}، آخری push {when}',
   'textview.prs': 'کھلے PR: {n}',
   'textview.quiet': '30 دن سے زیادہ غیر فعال',
+  'textview.merged': 'ڈیفالٹ برانچ میں ضم ہو چکی',
   'search.title': 'کمٹس تلاش کریں',
   'search.help': 'پیغام، SHA یا مصنف (@نام) سے تلاش کریں۔ نیچے کا تیر نتائج پر جاتا ہے، Enter کمٹ تک اڑاتا ہے۔',
   'search.placeholder': 'پیغام، SHA یا ‎@مصنف…',

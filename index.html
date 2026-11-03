@@ -46,6 +46,8 @@
         <circle class="logo-n3" cx="24" cy="23" r="3"/>
       </svg>
       <span class="wordmark">GraphBranch</span>
+      <!-- solo en celular angosto: salta al grafo sin recorrer las cifras ni la bitácora -->
+      <a class="to-graph" href="#graph-panel" id="to-graph" data-i18n="graph.aria2d">Branch and commit graph</a>
     </div>
 
     <form class="repo-form" id="repo-form" autocomplete="off" novalidate>
@@ -132,8 +134,6 @@
       </button>
       <div class="repo-tabs" id="repo-tabs" role="group" aria-label="Followed repositories" data-i18n-attr="aria-label:tabs.aria" hidden></div>
     </div>
-    <!-- solo en celular angosto: salta a las cifras y la bitácora sin recorrerlas -->
-    <a class="to-graph" href="#graph-panel" id="to-graph" data-i18n="graph.aria2d">Branch and commit graph</a>
   </header>
 
   <section class="stats" aria-label="Repository summary" data-i18n-attr="aria-label:stats.aria">

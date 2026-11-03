@@ -132,6 +132,8 @@
       </button>
       <div class="repo-tabs" id="repo-tabs" role="group" aria-label="Followed repositories" data-i18n-attr="aria-label:tabs.aria" hidden></div>
     </div>
+    <!-- solo en celular angosto: salta a las cifras y la bitácora sin recorrerlas -->
+    <a class="to-graph" href="#graph-panel" id="to-graph" data-i18n="graph.aria2d">Branch and commit graph</a>
   </header>
 
   <section class="stats" aria-label="Repository summary" data-i18n-attr="aria-label:stats.aria">
@@ -179,7 +181,7 @@
   </section>
 
   <main class="main">
-    <section class="panel graph-panel" aria-labelledby="graph-title">
+    <section class="panel graph-panel" id="graph-panel" tabindex="-1" aria-labelledby="graph-title">
       <div class="panel-head">
         <div class="repo-title">
           <h1 id="graph-title"><a id="repo-link" target="_blank" rel="noopener">acme/orbita</a></h1>

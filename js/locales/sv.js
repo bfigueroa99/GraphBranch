@@ -591,6 +591,7 @@ GB.i18n.define('sv', {
   'textview.fork': '{name}, senaste push {when}',
   'textview.prs': 'öppna PR: {n}',
   'textview.quiet': 'utan aktivitet på över 30 dagar',
+  'textview.merged': 'sammanfogad med standardgrenen',
   'search.title': 'Sök commits',
   'search.help': 'Sök på meddelande, SHA eller författare (@namn). Pil ned går till resultaten, Enter flyger till committen.',
   'search.placeholder': 'Meddelande, SHA eller @författare…',

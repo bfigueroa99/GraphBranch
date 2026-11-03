@@ -602,6 +602,7 @@ GB.i18n.define('sk', {
   'textview.fork': '{name}, posledný push {when}',
   'textview.prs': 'otvorené PR: {n}',
   'textview.quiet': 'bez aktivity viac ako 30 dní',
+  'textview.merged': 'zlúčené do predvolenej vetvy',
   'search.title': 'Hľadať commity',
   'search.help': 'Hľadajte podľa správy, SHA alebo autora (@meno). Šípka nadol prejde na výsledky, Enter preletí ku commitu.',
   'search.placeholder': 'Správa, SHA alebo @autor…',

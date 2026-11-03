@@ -591,6 +591,7 @@ GB.i18n.define('bg', {
   'textview.fork': '{name}, последен push {when}',
   'textview.prs': 'отворени PR: {n}',
   'textview.quiet': 'без активност над 30 дни',
+  'textview.merged': 'слята в основния клон',
   'search.title': 'Търсене на комити',
   'search.help': 'Търсете по съобщение, SHA или автор (@име). Стрелка надолу отива към резултатите, Enter лети до комита.',
   'search.placeholder': 'Съобщение, SHA или @автор…',

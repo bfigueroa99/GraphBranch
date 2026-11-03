@@ -607,6 +607,7 @@ GB.i18n.define('uk', {
   'textview.fork': '{name}, останній push {when}',
   'textview.prs': 'відкриті PR: {n}',
   'textview.quiet': 'без активності понад 30 днів',
+  'textview.merged': 'злито в основну гілку',
   'search.title': 'Пошук комітів',
   'search.help': 'Шукайте за повідомленням, SHA або автором (@ім’я). Стрілка вниз переходить до результатів, Enter летить до коміту.',
   'search.placeholder': 'Повідомлення, SHA або @автор…',

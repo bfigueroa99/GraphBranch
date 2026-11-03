@@ -34,6 +34,15 @@
       .filter((b) => b.sha && data.commits.has(b.sha))
       .sort((a, b) => (b.isDefault || b.name === def) - (a.isDefault || a.name === def) || (b.movedAt || 0) - (a.movedAt || 0) || (a.name < b.name ? -1 : 1));
     const total = list.length;
+    // lo ya fusionado en la por defecto: lo alcanzable desde su punta por cualquier padre, con lo cargado (un squash no deja rastro)
+    const defTip = list.find((b) => b.isDefault || b.name === def)?.sha;
+    const inDef = new Set();
+    for (const stack = defTip ? [defTip] : []; stack.length;) {
+      const sha = stack.pop();
+      if (inDef.has(sha) || !data.commits.has(sha)) continue;
+      inDef.add(sha);
+      for (const p of data.commits.get(sha).parents || []) stack.push(p);
+    }
     // PRs abiertos ya cargados por rama (los de forks no cuentan: su rama no es de este repo)
     const open = new Map();
     for (const p of data.pulls?.values?.() || []) if (p && p.sameRepo && p.head) open.set(p.head, (open.get(p.head) || 0) + 1);
@@ -68,7 +77,10 @@
       // hoy desde un commit viejo no está quieta); con el filtro por ruta cuenta igual la punta, no el último commit que la tocó
       const last = Math.max(at(data.commits.get(b.sha)?.date), at(b.movedAt));
       const quiet = last > 0 && now - last > QUIET_DAYS * DAY;
-      return { name: b.name, isDefault: !!(b.isDefault || b.name === def), prs: open.get(b.name) || 0, quiet, commits };
+      const isDefault = !!(b.isDefault || b.name === def);
+      // fusionada: su punta ya está en la por defecto y no es la misma punta (una rama recién creada no es una fusionada)
+      const merged = !isDefault && inDef.has(b.sha) && b.sha !== defTip;
+      return { name: b.name, isDefault, prs: open.get(b.name) || 0, quiet, merged, commits };
     }).filter((b) => !paths || b.commits.length);
     return { total, branches: rows, forks: withForks ? forks(data) : { total: 0, rows: [] } };
   }
@@ -184,7 +196,7 @@
         const li = mk('li', 'tv-branch');
         li.setAttribute('role', 'treeitem');
         li.setAttribute('aria-expanded', open.has(b.name) ? 'true' : 'false');
-        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}${b.quiet ? ', ' + text('textview.quiet') : ''}, ${text('textview.shown', { n: b.commits.length })}`);
+        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}${b.quiet ? ', ' + text('textview.quiet') : ''}${b.merged ? ', ' + text('textview.merged') : ''}, ${text('textview.shown', { n: b.commits.length })}`);
         li.tabIndex = i === 0 ? 0 : -1;
         li.dataset.branch = b.name;
         const head = mk('span', 'tv-head');
@@ -192,6 +204,7 @@
         if (b.isDefault) head.appendChild(mk('span', 'tv-tag', text('textview.default')));
         if (b.prs) head.appendChild(mk('span', 'tv-tag', text('textview.prs', { n: b.prs })));
         if (b.quiet) head.appendChild(mk('span', 'tv-tag', text('textview.quiet')));
+        if (b.merged) head.appendChild(mk('span', 'tv-tag', text('textview.merged')));
         li.appendChild(head);
         const group = mk('ul', 'tv-commits');
         group.setAttribute('role', 'group');

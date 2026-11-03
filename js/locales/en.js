@@ -597,6 +597,7 @@ GB.i18n.define('en', {
   'textview.fork': '{name}, last push {when}',
   'textview.prs': 'open PRs: {n}',
   'textview.quiet': 'no activity for 30+ days',
+  'textview.merged': 'merged into the default branch',
   'search.title': 'Search commits',
   'search.help': 'Search by message, SHA or author (@name). Down arrow goes to the results, Enter flies to the commit.',
   'search.placeholder': 'Message, SHA or @author…',

@@ -591,6 +591,7 @@ GB.i18n.define('ms', {
   'textview.fork': '{name}, push terakhir {when}',
   'textview.prs': 'PR terbuka: {n}',
   'textview.quiet': 'tanpa aktiviti lebih 30 hari',
+  'textview.merged': 'sudah digabungkan ke cabang lalai',
   'search.title': 'Cari commit',
   'search.help': 'Cari mengikut mesej, SHA atau penulis (@nama). Anak panah bawah ke hasil, Enter terbang ke commit.',
   'search.placeholder': 'Mesej, SHA atau @penulis…',

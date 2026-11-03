@@ -602,6 +602,7 @@ GB.i18n.define('pl', {
   'textview.fork': '{name}, ostatni push {when}',
   'textview.prs': 'otwarte PR-y: {n}',
   'textview.quiet': 'bez aktywności od ponad 30 dni',
+  'textview.merged': 'scalona z domyślną gałęzią',
   'search.title': 'Szukaj commitów',
   'search.help': 'Szukaj po komunikacie, SHA lub autorze (@nazwa). Strzałka w dół przechodzi do wyników, Enter leci do commita.',
   'search.placeholder': 'Komunikat, SHA lub @autor…',

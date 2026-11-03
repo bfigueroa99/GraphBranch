@@ -266,7 +266,7 @@ se comprueban antes de construir sobre ellas.
 Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tools/loop.mjs --rotar`); el loop lee las dos hojas, y un ítem nuevo lleva el número que dice `--siguiente`.
 
 102. ~~**Resumen de la semana: ramas nuevas**~~ hecho en #237 · Salidas. [inv. 2026-10-13] [parte del ítem 23]
-103. **Vista de texto: ramas fusionadas** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama ya fusionada en la por defecto lo dice, con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
+103. ~~**Vista de texto: ramas fusionadas**~~ hecho en #240 · Público. [inv. 2026-10-13] [parte del ítem 33]
 104. **Salud del repo: tendencia de commits** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los commits por semana de las últimas 8, con lo ya cargado. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
 119. **Azure DevOps: tags en el grafo** · Datos · 1×2/2. [parte del ítem 107] Los tags de un repo de Azure DevOps (`refs?filter=tags/`) salen en el grafo como los de GitHub. Comprobar: `tools/azure.test.mjs` con la API simulada y un paso del smoke.
 121. **Primer padre en el grafo 3D** · Análisis · 1×2/2. [parte del ítem 111] El interruptor de primer padre también deja en el 3D solo la cadena del primer padre de cada rama. Comprobar: prueba de la selección de commits y un paso del smoke en 3D.
@@ -671,3 +671,18 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/184, sin colisión
 - Validado: 549 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. (Antes, el paso del smoke de `?recent` falló dos veces por el umbral y por los repos vacíos: ajustados.)
 - **Siguiente:** iteración 185, expansión: ítem 103 (Vista de texto: ramas fusionadas, Público)
+
+### 2026-11-03 · Iteración 185 · Expansión · Público
+
+- **Capacidad nueva: la vista de texto dice qué ramas ya están fusionadas** (ítem 103 de la hoja de ruta). Una rama cuya punta
+  está en la historia de la por defecto (por cualquier padre, con lo ya cargado) lo dice en su nombre accesible («fusionada en la
+  rama por defecto») y con una marca junto al nombre; la por defecto y una rama recién creada sobre su misma punta no cuentan.
+- **Pruebas que fallan sin la capacidad:** `tools/textview.test.mjs` («una rama cuya punta ya está en la por defecto se dice fusionada…»: `merged` indefinido sin el cambio) y el paso del smoke de la vista de texto (árbol montado con una historia fija).
+- README: Vista de texto y Límites conocidos (un squash o un rebase no se marca).
+- QA: nombres accesibles y marca visible mirados en el smoke; 40 idiomas con `check-i18n` (clave `textview.merged` en todos); auditoría en la puerta. La demo no quedó con una rama fusionada sin borrar: dejar `fix/empty-payload` rompía dos pasos del smoke que cuentan ramas ocultas, así que el paso monta el árbol aparte.
+- Skills: no aplica: una marca más en un árbol que ya cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (alcanzabilidad desde la punta de la por defecto).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/185, sin colisión
+- Validado: 550 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. (Antes, dos corridas fallaron por el cambio de la demo, revertido.)
+- **Siguiente:** iteración 186, expansión: ítem 104 (Salud del repo: tendencia de commits, Análisis)

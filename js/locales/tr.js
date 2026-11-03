@@ -591,6 +591,7 @@ GB.i18n.define('tr', {
   'textview.fork': '{name}, son push {when}',
   'textview.prs': 'açık PR: {n}',
   'textview.quiet': '30 günden uzun süredir hareketsiz',
+  'textview.merged': 'varsayılan dala birleştirildi',
   'search.title': 'Commit ara',
   'search.help': 'İletiye, SHA’ya veya yazara (@ad) göre arayın. Aşağı ok sonuçlara gider, Enter commit’e uçurur.',
   'search.placeholder': 'İleti, SHA veya @yazar…',

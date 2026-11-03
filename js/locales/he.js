@@ -648,6 +648,7 @@ GB.i18n.define('he', {
   'textview.fork': '{name}, push אחרון {when}',
   'textview.prs': 'PRs פתוחים: {n}',
   'textview.quiet': 'בלי פעילות מעל 30 יום',
+  'textview.merged': 'מוזג לענף ברירת המחדל',
   'search.title': 'חיפוש קומיטים',
   'search.help': 'חפשו לפי הודעה, SHA או כותב (@שם). חץ למטה עובר לתוצאות, Enter טס אל הקומיט.',
   'search.placeholder': 'הודעה, SHA או ‎@כותב…',

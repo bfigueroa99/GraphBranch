@@ -592,6 +592,7 @@ GB.i18n.define('nl', {
   'textview.fork': '{name}, laatste push {when}',
   'textview.prs': 'open PR\'s: {n}',
   'textview.quiet': 'geen activiteit in meer dan 30 dagen',
+  'textview.merged': 'samengevoegd in de standaardbranch',
   'search.title': 'Commits zoeken',
   'search.help': 'Zoek op bericht, SHA of auteur (@naam). Pijl omlaag gaat naar de resultaten, Enter vliegt naar de commit.',
   'search.placeholder': 'Bericht, SHA of @auteur…',

@@ -897,6 +897,18 @@ console.log('Escritorio (1280×800)');
     // la historia de la demo es de los últimos días: ninguna rama está quieta (la que sí, en «Vista de texto: ramas quietas»)
     const quiet = await page.$$eval('#textview .tv-branch', (bs) => bs.filter((n) => /sin actividad/.test(n.getAttribute('aria-label') + n.querySelector('.tv-head').textContent)).map((n) => n.dataset.branch));
     if (quiet.length) throw new Error('la vista de texto dice sin actividad ramas de la demo con commits de esta semana: ' + quiet.join(', '));
+    // una rama ya fusionada en la por defecto lo dice en su nombre y con una marca (la demo no deja ninguna sin borrar:
+    // el árbol se monta aparte con una historia fija, sin tocar la de la página)
+    const mergedBr = await page.evaluate(() => {
+      const c = (sha, parents, date) => [sha, { sha, parents, message: sha, date, author: { name: 'Ana' } }];
+      const data = { repo: { defaultBranch: 'main' }, commits: new Map([c('a', [], 1), c('b', ['a'], 2), c('m', ['b', 'f'], 4), c('f', ['b'], 3), c('g', ['m'], 5)]), branches: new Map([['main', { name: 'main', sha: 'm', isDefault: true }], ['hecha', { name: 'hecha', sha: 'f' }], ['viva', { name: 'viva', sha: 'g' }]]) };
+      const box = document.createElement('div');
+      const view = GB.textview.mount(box, { text: (k, p) => GB.i18n.t(k, p), ago: () => "", onGo() {} });
+      view.render(GB.textview.build(data, { now: 6 }));
+      return [...box.querySelectorAll('.tv-branch')].map((n) => ({ b: n.dataset.branch, label: /fusionada en la rama por defecto/.test(n.getAttribute('aria-label')), chip: /fusionada en la rama por defecto/.test(n.querySelector('.tv-head').textContent) }));
+    });
+    const gotMerged = mergedBr.filter((m) => m.label || m.chip);
+    if (gotMerged.length !== 1 || gotMerged[0].b !== 'hecha' || !gotMerged[0].label || !gotMerged[0].chip) throw new Error('la vista de texto no dice la rama fusionada: ' + JSON.stringify(mergedBr));
     // la rama por defecto viene abierta: ↓ baja a su primer commit; ← sube a la rama y otra ← la cierra
     await page.keyboard.press('ArrowDown');
     const onCommit = await page.evaluate(() => document.activeElement.classList.contains('tv-commit'));

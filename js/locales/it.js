@@ -592,6 +592,7 @@ GB.i18n.define('it', {
   'textview.fork': '{name}, ultimo push {when}',
   'textview.prs': 'PR aperte: {n}',
   'textview.quiet': 'senza attività da oltre 30 giorni',
+  'textview.merged': 'unita al ramo predefinito',
   'search.title': 'Cerca commit',
   'search.help': 'Cerca per messaggio, SHA o autore (@nome). La freccia giù va ai risultati, Invio vola fino al commit.',
   'search.placeholder': 'Messaggio, SHA o @autore…',

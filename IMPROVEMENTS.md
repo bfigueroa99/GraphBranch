@@ -669,5 +669,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (filtro puro como `filterItems`).
 - OMC: plan=— · revisión=— · verificación=—
 - Reclamo: loop/184, sin colisión
-- Validado: pendiente
+- Validado: 549 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. (Antes, el paso del smoke de `?recent` falló dos veces por el umbral y por los repos vacíos: ajustados.)
 - **Siguiente:** iteración 185, expansión: ítem 103 (Vista de texto: ramas fusionadas, Público)

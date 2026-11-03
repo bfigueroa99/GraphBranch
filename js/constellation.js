@@ -79,11 +79,11 @@
     return Number.isFinite(n) && n > 0 ? Math.min(n, 3650) : null;
   }
 
-  /** Los repos con algún commit en los últimos `days` días contados desde `now`. `it.last` es la fecha (ms) de su commit más reciente; sin ella (el repo aún carga) no se sabe que esté inactivo y se conserva. Sin `days`, todos. No toca `items`. */
+  /** Los repos con algún commit en los últimos `days` días contados desde `now`. `it.last` es la fecha (ms) de su commit más reciente; sin ella, el repo se conserva solo mientras carga (`state: 'loading'`); ya cargado o con error no tiene actividad que mostrar. Sin `days`, todos. No toca `items`. */
   function recentItems(items, days, now = Date.now()) {
     if (!(days > 0)) return items.slice();
     const from = now - days * 864e5;
-    return items.filter((it) => !Number.isFinite(it.last) || it.last >= from);
+    return items.filter((it) => (Number.isFinite(it.last) ? it.last >= from : it.state === 'loading'));
   }
 
   /** Tono (0–359) estable para un nombre. */

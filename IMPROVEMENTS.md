@@ -660,7 +660,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 
 - **Capacidad nueva: la constelación solo con los repos de actividad reciente, desde la URL** (ítem 138 de la hoja de ruta).
   `?recent=N` deja en la constelación los repos con algún commit cargado en los últimos N días (`?recent=30` es el mes; acepta
-  fracciones, se acota a 3650; vacío, 0, negativo o no numérico no filtra). Un repo que aún carga (sin commits) se conserva. Se
+  fracciones, se acota a 3650; vacío, 0, negativo o no numérico no filtra). Un repo sin commits se conserva solo mientras carga. Se
   combina con `?constellation=texto` y lo anuncia con el texto de siempre («Filtradas por «≤ 30 d»: n de m»): sin claves nuevas.
 - **Pruebas que fallan sin la capacidad:** `tools/constellation.test.mjs` («?recent=N deja los repos con actividad…»: `recentParam` indefinido sin el cambio) y el paso del smoke de `?recent` (10 galaxias con 30 días, 0 con 0,01).
 - README: Constelación (barra superior) y Mapa de alcance; sin cambios en Seguridad (lee un número de la URL, nunca al DOM).

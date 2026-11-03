@@ -510,6 +510,7 @@ GB.i18n.define('fr', {
   'health.openedWeeks': 'Pull requests ouvertes par semaine, {n} dernières semaines (de la plus ancienne à l’actuelle) : {list}',
   'health.closedWeeks': 'Issues fermées par semaine, {n} dernières semaines (de la plus ancienne à l’actuelle) : {list}',
   'health.branchWeeks': 'Nouvelles branches par semaine, {n} dernières semaines (de la plus ancienne à l’actuelle) : {list}',
+  'health.commitWeeks': 'Commits par semaine, {n} dernières semaines (de la plus ancienne à l’actuelle) : {list}',
   'health.ci': 'Échecs de CI',
   'health.ciPrs': 'PR ouvertes avec des checks en échec : {failing} sur {total} ({pct} %)',
   'health.ciFeed': 'Fois où la branche par défaut est passée au rouge en 30 jours : {n}',

@@ -509,6 +509,7 @@ GB.i18n.define('tr', {
   'health.openedWeeks': 'Haftalık açılan pull request’ler, son {n} hafta (en eskiden mevcut haftaya): {list}',
   'health.closedWeeks': 'Haftalık kapatılan issue’lar, son {n} hafta (en eskiden mevcut haftaya): {list}',
   'health.branchWeeks': 'Haftalık yeni dallar, son {n} hafta (en eskiden mevcut haftaya): {list}',
+  'health.commitWeeks': 'Haftalık commit sayısı, son {n} hafta (en eskiden mevcut haftaya): {list}',
   'health.ci': 'CI hataları',
   'health.ciPrs': 'Kontrolleri başarısız açık PR\'ler: {total} içinde {failing} (%{pct})',
   'health.ciFeed': 'Varsayılan dalın 30 günde kırmızıya döndüğü sayı: {n}',

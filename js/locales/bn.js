@@ -509,6 +509,7 @@ GB.i18n.define('bn', {
   'health.openedWeeks': 'প্রতি সপ্তাহে খোলা pull request, শেষ {n} সপ্তাহ (পুরোনো থেকে বর্তমান): {list}',
   'health.closedWeeks': 'প্রতি সপ্তাহে বন্ধ হওয়া issue, শেষ {n} সপ্তাহ (পুরোনো থেকে বর্তমান): {list}',
   'health.branchWeeks': 'প্রতি সপ্তাহে নতুন ব্রাঞ্চ, শেষ {n} সপ্তাহ (পুরোনো থেকে বর্তমান): {list}',
+  'health.commitWeeks': 'প্রতি সপ্তাহে কমিট, শেষ {n} সপ্তাহ (পুরনো থেকে বর্তমান): {list}',
   'health.ci': 'CI ব্যর্থতা',
   'health.ciPrs': 'ব্যর্থ চেকসহ খোলা PR: {total}-এর মধ্যে {failing} ({pct}%)',
   'health.ciFeed': '৩০ দিনে ডিফল্ট ব্রাঞ্চ লাল হওয়ার সংখ্যা: {n}',

@@ -552,6 +552,7 @@ GB.i18n.define('ur', {
   'health.openedWeeks': 'ہفتہ وار کھلے pull request، آخری {n} ہفتے (سب سے پرانے سے موجودہ تک): {list}',
   'health.closedWeeks': 'ہفتہ وار بند ہونے والے issue، آخری {n} ہفتے (سب سے پرانے سے موجودہ تک): {list}',
   'health.branchWeeks': 'ہفتہ وار نئی برانچیں، آخری {n} ہفتے (سب سے پرانے سے موجودہ تک): {list}',
+  'health.commitWeeks': 'ہفتہ وار کمٹس، آخری {n} ہفتے (سب سے پرانے سے موجودہ تک): {list}',
   'health.ci': 'CI کی ناکامیاں',
   'health.ciPrs': 'ناکام چیکس والے کھلے PR: {total} میں سے {failing} ({pct}٪)',
   'health.ciFeed': '30 دنوں میں ڈیفالٹ برانچ کتنی بار سرخ ہوئی: {n}',

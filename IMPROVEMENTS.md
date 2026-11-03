@@ -347,7 +347,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     de la organización deja de seguirse». Medir con 5 corridas del paso y esperar el estado en lugar de comparar con
     el conteo base de ramas (la demo sigue publicando). Reproducción: `xvfb-run -a node tools/smoke.mjs` →
     `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`. Volvió a fallar 1 de 2 en la reanudación
-    de la 173 (2026-11-01, carga 9 en 4 CPU).
+    de la 173 y, el 2026-11-03 (iteración 183), 4 pasos a la vez en una corrida (con «vista de un PR» y «cambios de un commit: con teclado») que pasó entera a la repetición (2026-11-01, carga 9 en 4 CPU).
     En la iteración 160 falló una vez, y pasó a la repetición, «vista de texto: árbol con teclado, nombres accesibles y
     Enter lleva al grafo» (`el release de la demo no se dice (2): Novedades: 0 ramas, 1 commits`): depende de lo que la
     demo publica en ese momento.
@@ -653,5 +653,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (ancla al panel).
 - OMC: plan=— · revisión=— · verificación=—
 - Reclamo: loop/183, sin colisión
-- Validado: pendiente
+- Validado: 548 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. (Antes, una corrida falló en «filtro por autor», «ocultar una rama», «vista de un PR» y «cambios de un commit: con teclado» —intermitentes del pendiente Media 1— y otra por el alto de 19 px del enlace nuevo, arreglado; la tercera pasó entera.)
 - **Siguiente:** iteración 184, expansión: ítem 138 (Constelación: solo los repos con actividad reciente, en la URL, Escala)

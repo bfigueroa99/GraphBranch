@@ -3035,6 +3035,7 @@ function fakeAzure() {
       if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization,content-type' } });
       if (az.reject && route.request().headers().authorization) return route.fulfill({ status: 401, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"message":"TF400813: The user is not authorized to access this resource."}' });
       if (p === REPO) return route.fulfill(json({ id: 'r1', name: 'api', webUrl: WEB, defaultBranch: 'refs/heads/main', project: { name: 'web', visibility: 'public', description: 'Un repo de Azure DevOps' } }));
+      if (p === `${REPO}/refs` && u.searchParams.get('filter') === 'tags/') return route.fulfill(json({ count: 1, value: [{ name: 'refs/tags/v1.0-azure', objectId: 'a'.repeat(40), peeledObjectId: branches.get('main') }] })); // anotado: el commit es el pelado
       if (p === `${REPO}/refs`) return route.fulfill(json({ count: branches.size, value: [...branches].map(([name, objectId]) => ({ name: `refs/heads/${name}`, objectId })) }));
       if (p === `${REPO}/commits`) {
         const list = chain(u.searchParams.get('searchCriteria.itemVersion.version')).slice(0, Number(u.searchParams.get('searchCriteria.$top') || 100)).map(({ parents, ...c }) => c);
@@ -3082,6 +3083,13 @@ console.log('Azure DevOps');
     if ((await label.textContent()) !== '#3') throw new Error(`la etiqueta dice ${await label.textContent()}`);
     const names = await page.$$eval('#graph .head', (hs) => hs.map((h) => h.getAttribute('aria-label')).join(' | '));
     if (!names.includes('feature/x') || !names.includes('main')) throw new Error(`ramas: ${names}`);
+  });
+
+  await step(page, 'los tags de Azure DevOps (refs?filter=tags/, el anotado por su commit pelado) salen como bandera en el grafo', async () => {
+    await page.waitForSelector('#graph .tag-flag .tag-text', { timeout: T(15000) });
+    const text = await page.$eval('#graph .tag-flag .tag-text', (n) => n.textContent);
+    if (text !== 'v1.0-azure') throw new Error(`la bandera dice ${text}`);
+    if (!az.calls.some((c) => c.includes('filter=tags/'))) throw new Error('no pidió refs?filter=tags/');
   });
 
   await step(page, 'la ficha de la rama con PR de Azure DevOps lista sus revisores con el voto', async () => {

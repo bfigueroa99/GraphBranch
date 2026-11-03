@@ -669,5 +669,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (filtro puro como `filterItems`).
 - OMC: plan=— · revisión=— · verificación=—
 - Reclamo: loop/184, sin colisión
-- Validado: PENDIENTE
-- **Siguiente:** PENDIENTE
+- Validado: pendiente
+- **Siguiente:** iteración 185, expansión: ítem 103 (Vista de texto: ramas fusionadas, Público)

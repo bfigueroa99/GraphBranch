@@ -636,6 +636,6 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Skills: no aplica: una cifra más en un resumen que cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (reusar el conteo de la salud).
 - OMC: plan=— · revisión=— · verificación=—
-- Reclamo: loop/182, sin colisión
-- Validado: sin verde: node --test, i18n, auditoría y e2e en verde; el smoke falló en tres corridas en pasos ajenos al cambio y distintos cada vez (1.ª: «filtro por autor», «ocultar una rama o dejarla sola» y «editar el código»; 2.ª: «quién tocó un archivo»; 3.ª: «ocultar una rama o dejarla sola»), intermitencias de la sesión cloud (pendiente 1 de Mantenimiento). Lo reanuda el disparo siguiente.
+- Reclamo: relevo de loop/182 (36ac818), reanudada por el disparo siguiente
+- Validado: 547 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. (La primera sesión vio el smoke fallar tres veces en pasos ajenos y distintos; al reanudar pasó entero.)
 - **Siguiente:** iteración 183, mantenimiento · QA: pendiente 8 (A 320 px el grafo sigue a ~420 px del inicio con la demo (antes 522; con un rep…)

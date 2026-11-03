@@ -266,7 +266,7 @@ se comprueban antes de construir sobre ellas.
 Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tools/loop.mjs --rotar`); el loop lee las dos hojas, y un ítem nuevo lleva el número que dice `--siguiente`.
 
 102. ~~**Resumen de la semana: ramas nuevas**~~ hecho en #237 · Salidas. [inv. 2026-10-13] [parte del ítem 23]
-~~**Vista de texto: ramas fusionadas**~~ hecho en #240 · Público.
+103. ~~**Vista de texto: ramas fusionadas**~~ hecho en #240 · Público. [inv. 2026-10-13] [parte del ítem 33]
 104. **Salud del repo: tendencia de commits** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] El panel de salud muestra los commits por semana de las últimas 8, con lo ya cargado. Comprobar: `tools/health.test.mjs` con fechas fabricadas.
 119. **Azure DevOps: tags en el grafo** · Datos · 1×2/2. [parte del ítem 107] Los tags de un repo de Azure DevOps (`refs?filter=tags/`) salen en el grafo como los de GitHub. Comprobar: `tools/azure.test.mjs` con la API simulada y un paso del smoke.
 121. **Primer padre en el grafo 3D** · Análisis · 1×2/2. [parte del ítem 111] El interruptor de primer padre también deja en el 3D solo la cadena del primer padre de cada rama. Comprobar: prueba de la selección de commits y un paso del smoke en 3D.

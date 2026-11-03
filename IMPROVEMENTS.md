@@ -564,8 +564,8 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: filas de teclado y lector de pantalla (foco que no cae a `<body>`, región viva, nombres de los botones) con el paso del smoke; 40 idiomas con `check-i18n`; auditoría en la puerta.
 - Skills: no aplica: una función del árbol que las reglas del repo ya cubren.
 - Arena: no aplica: una sola forma obvia (reusar `onBranchView` y `update` del árbol).
-- OMC: plan=— · revisión=— · verificación=—
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; sin subagentes OMC en esta corrida)
 - Hoja de ruta repuesta a 15 (ítems 138 a 143: seguimientos de la vista de texto, la salud, el resumen y la constelación; sin pasada nueva de Replica ni investigación vencida).
 - Reclamo: loop/190, sin colisión
-- Validado: pendiente
+- Validado: 556 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 191, mantenimiento · Deuda: pendiente 1

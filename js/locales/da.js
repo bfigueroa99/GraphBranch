@@ -683,6 +683,7 @@ GB.i18n.define('da', {
   'digest.people': 'Hvem der har bidraget (commits)',
   'digest.perday': 'Commits pr. dag: {n}',
   'digest.newcomers': 'Nye bidragydere: {n}',
+  'digest.newbranches': 'Nye grene: {n}',
   'digest.branch': 'Mest aktive gren',
   'digest.org': 'Ugens resumé for {owner}',
   'constellation.title': 'Konstellation',

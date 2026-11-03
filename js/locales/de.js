@@ -684,6 +684,7 @@ GB.i18n.define('de', {
   'digest.people': 'Wer beigetragen hat (Commits)',
   'digest.perday': 'Commits pro Tag: {n}',
   'digest.newcomers': 'Neue Mitwirkende: {n}',
+  'digest.newbranches': 'Neue Branches: {n}',
   'digest.branch': 'Aktivster Branch',
   'digest.org': 'Wochenrückblick für {owner}',
   'constellation.title': 'Sternbild',

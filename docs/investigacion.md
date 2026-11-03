@@ -285,6 +285,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Columnas de autor y fecha en el grafo 2D | Análisis | 1×2/2 | 1,0 | Replica (GitKraken) | ítem 129 |
 | Alias de las pestañas | Escala | 1×1/1 | 1,0 | Replica (GitKraken) | ítem 125 |
 | Issues de Jira y Trello | Fuentes | 1×2/3 | 0,7 | Replica (GitKraken) | ítem 131 |
+| Resumen de la semana de la organización: ramas nuevas | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 133 |
+| Salud del repo: tendencia de releases | Análisis | 1×2/2 | 1,0 | DORA | ítem 134 |
+| Vista de texto: ramas nuevas | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 135 |
+| Resumen de la semana de la organización: rama más activa | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 136 |
+| Salud del repo: tendencia de issues abiertos | Análisis | 1×2/2 | 1,0 | DORA | ítem 137 |
+| Constelación: solo los repos con actividad reciente, en la URL | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 138 |
 
 ## Públicos
 

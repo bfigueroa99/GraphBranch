@@ -782,6 +782,7 @@ GB.i18n.define('ar', {
   'digest.people': 'من ساهم (الإيداعات)',
   'digest.perday': 'الالتزامات يوميًا: {n}',
   'digest.newcomers': 'مساهمون جدد: {n}',
+  'digest.newbranches': 'فروع جديدة: {n}',
   'digest.branch': 'أنشط فرع',
   'digest.org': 'ملخص الأسبوع لـ {owner}',
   'constellation.title': 'كوكبة',

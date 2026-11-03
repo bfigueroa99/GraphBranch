@@ -683,6 +683,7 @@ GB.i18n.define('ca', {
   'digest.people': 'Qui ha aportat (commits)',
   'digest.perday': 'Commits per dia: {n}',
   'digest.newcomers': 'Autors nous: {n}',
+  'digest.newbranches': 'Branques noves: {n}',
   'digest.branch': 'Branca més activa',
   'digest.org': 'Resum de la setmana de {owner}',
   'constellation.title': 'Constel·lació',

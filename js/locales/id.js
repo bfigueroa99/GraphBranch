@@ -683,6 +683,7 @@ GB.i18n.define('id', {
   'digest.people': 'Siapa yang berkontribusi (commit)',
   'digest.perday': 'Commit per hari: {n}',
   'digest.newcomers': 'Kontributor baru: {n}',
+  'digest.newbranches': 'Cabang baru: {n}',
   'digest.branch': 'Cabang paling aktif',
   'digest.org': 'Ringkasan mingguan {owner}',
   'constellation.title': 'Rasi bintang',

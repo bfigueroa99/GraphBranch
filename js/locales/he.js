@@ -740,6 +740,7 @@ GB.i18n.define('he', {
   'digest.people': 'מי תרם (קומיטים)',
   'digest.perday': 'קומיטים ליום: {n}',
   'digest.newcomers': 'תורמים חדשים: {n}',
+  'digest.newbranches': 'ענפים חדשים: {n}',
   'digest.branch': 'הענף הפעיל ביותר',
   'digest.org': 'סיכום השבוע של {owner}',
   'constellation.title': 'קבוצת כוכבים',

@@ -684,6 +684,7 @@ GB.i18n.define('fil', {
   'digest.people': 'Sino ang nag-ambag (mga commit)',
   'digest.perday': 'Mga commit kada araw: {n}',
   'digest.newcomers': 'Mga bagong contributor: {n}',
+  'digest.newbranches': 'Mga bagong branch: {n}',
   'digest.branch': 'Pinakaaktibong branch',
   'digest.org': 'Buod ng linggo ng {owner}',
   'constellation.title': 'Konstelasyon',

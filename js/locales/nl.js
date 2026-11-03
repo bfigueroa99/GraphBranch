@@ -684,6 +684,7 @@ GB.i18n.define('nl', {
   'digest.people': 'Wie heeft bijgedragen (commits)',
   'digest.perday': 'Commits per dag: {n}',
   'digest.newcomers': 'Nieuwe bijdragers: {n}',
+  'digest.newbranches': 'Nieuwe branches: {n}',
   'digest.branch': 'Actiefste branch',
   'digest.org': 'Weekoverzicht van {owner}',
   'constellation.title': 'Sterrenbeeld',

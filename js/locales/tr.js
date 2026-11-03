@@ -683,6 +683,7 @@ GB.i18n.define('tr', {
   'digest.people': 'Kimler katkı verdi (commit)',
   'digest.perday': 'Günlük commit: {n}',
   'digest.newcomers': 'Yeni katkıda bulunanlar: {n}',
+  'digest.newbranches': 'Yeni dallar: {n}',
   'digest.branch': 'En etkin dal',
   'digest.org': '{owner} haftalık özeti',
   'constellation.title': 'Takımyıldızı',

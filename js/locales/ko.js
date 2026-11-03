@@ -683,6 +683,7 @@ GB.i18n.define('ko', {
   'digest.people': '기여한 사람(커밋)',
   'digest.perday': '일별 커밋: {n}',
   'digest.newcomers': '새 기여자: {n}',
+  'digest.newbranches': '새 브랜치: {n}',
   'digest.branch': '가장 활발한 브랜치',
   'digest.org': '{owner} 주간 요약',
   'constellation.title': '별자리',

@@ -683,6 +683,7 @@ GB.i18n.define('sw', {
   'digest.people': 'Nani alichangia (commit)',
   'digest.perday': 'Commit kwa siku: {n}',
   'digest.newcomers': 'Wachangiaji wapya: {n}',
+  'digest.newbranches': 'Matawi mapya: {n}',
   'digest.branch': 'Tawi lenye shughuli zaidi',
   'digest.org': 'Muhtasari wa wiki wa {owner}',
   'constellation.title': 'Kundinyota',

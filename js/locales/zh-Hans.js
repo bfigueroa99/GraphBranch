@@ -683,6 +683,7 @@ GB.i18n.define('zh-Hans', {
   'digest.people': '谁做了贡献(提交)',
   'digest.perday': '每日提交: {n}',
   'digest.newcomers': '新贡献者:{n}',
+  'digest.newbranches': '新分支:{n}',
   'digest.branch': '最活跃的分支',
   'digest.org': '{owner} 的每周摘要',
   'constellation.title': '星座',

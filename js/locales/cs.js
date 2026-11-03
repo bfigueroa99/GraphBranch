@@ -694,6 +694,7 @@ GB.i18n.define('cs', {
   'digest.people': 'Kdo přispěl (commity)',
   'digest.perday': 'Commity za den: {n}',
   'digest.newcomers': 'Noví přispěvatelé: {n}',
+  'digest.newbranches': 'Nové větve: {n}',
   'digest.branch': 'Nejaktivnější větev',
   'digest.org': 'Souhrn týdne pro {owner}',
   'constellation.title': 'Souhvězdí',

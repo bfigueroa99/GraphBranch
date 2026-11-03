@@ -106,7 +106,7 @@ async function openPage(contextOptions = {}) {
 /** Abre con teclado la ficha de una rama vigente y a la vista, y devuelve el selector que se pidió dentro de ella.
     Elegir `heads[3]` a ciegas fallaba con la demo viva: una etiqueta puede estar fuera de la vista (`display: none`)
     o saliendo (`.exit`), y entonces el foco no llega y Enter no abre su ficha. Se lleva el grafo al último commit
-    (End) para que haya etiquetas, y se prueban las primeras 6 a la vista. */
+    (End) para que haya etiquetas, y se prueban las primeras 6 a la vista, salvo la rama por defecto. */
 async function openBranchTip(page, inner) {
   await page.focus('#graph');
   await page.keyboard.press('End');
@@ -114,6 +114,7 @@ async function openBranchTip(page, inner) {
   const shown = [];
   for (const h of await page.$$('#graph svg .head[role=button]:not(.exit)')) if (await h.isVisible()) shown.push(h);
   for (const h of shown.slice(0, 6)) {
+    if (await h.evaluate((n) => n.classList.contains('default'))) continue; // la rama por defecto no se oculta
     await h.focus();
     await page.keyboard.press('Enter');
     const found = await page.waitForSelector(`#graph .tip:not([hidden]) ${inner}`, { timeout: T(1000) }).catch(() => null);
@@ -1132,10 +1133,12 @@ console.log('Escritorio (1280×800)');
     await page.click('#search-btn');
     await page.waitForSelector('#search[open]', { timeout: T(3000) });
     await page.selectOption('#graph-author', '');
-    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length === n, all, { timeout: T(5000) }).catch(() => {});
+    // la demo sigue publicando: no se compara con el conteo de antes sino con el filtrado, que tiene que quedar por debajo
+    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length > n, best.n, { timeout: T(5000) }).catch(() => {});
     await page.waitForFunction(() => !document.querySelector('#search-btn').classList.contains('filtered') && !document.querySelector('#graph-author-status').textContent, null, { timeout: T(3000) }).catch(() => {});
     const off = await page.evaluate(() => ({ mark: document.querySelector('#search-btn').classList.contains('filtered'), status: document.querySelector('#graph-author-status').textContent }));
-    if (off.mark || off.status || (await count()) !== all) throw new Error('quitar el filtro no deja el grafo como estaba');
+    const back = await count();
+    if (off.mark || off.status || back <= best.n) throw new Error(`quitar el filtro no deja el grafo como estaba (${back} etiquetas, con el filtro ${best.n}, antes ${all})`);
     await page.keyboard.press('Escape');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
     await page.click('#textview-btn');
@@ -1206,23 +1209,33 @@ console.log('Escritorio (1280×800)');
   await step(page, 'ocultar una rama o dejarla sola: desde su ficha, lo dice, se guarda por repo y un botón las vuelve a mostrar', async () => {
     await page.keyboard.press('Escape'); // ninguna ficha abierta de antes
     await page.click('#view-2d');
-    const count = () => page.evaluate(() => document.querySelectorAll('#graph svg .head').length);
-    const all = await count();
-    await openBranchTip(page, '.tip-hide');
-    await page.click('#graph .tip .tip-hide');
-    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, all, { timeout: T(5000) });
-    const hid = await count();
+    // por nombre y sin las etiquetas que se están yendo (`.exit`): la demo sigue publicando y borrando ramas
+    const names = () => page.evaluate(() => [...document.querySelectorAll('#graph svg .head:not(.exit)')].map((h) => h.__name));
+    const gone = async (what, before) => {
+      try {
+        await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head:not(.exit)').length < n, before.length, { timeout: T(5000) });
+      } catch {
+        throw new Error(`${what}: las etiquetas no bajaron de ${before.length} (ahora ${(await names()).length}: ${(await names()).join(', ')})`);
+      }
+    };
+    const all = await names();
+    const hideBtn = await openBranchTip(page, '.tip-hide');
+    const hidden = await hideBtn.getAttribute('data-branch');
+    await hideBtn.click();
+    await gone('ocultar «' + hidden + '»', all);
+    const hid = await names();
     const saved = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('graphbranch:bview:')).length);
     if (!saved) throw new Error('las ramas ocultas no se guardaron por repo');
-    await openBranchTip(page, '.tip-solo');
-    await page.click('#graph .tip .tip-solo');
-    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, hid, { timeout: T(5000) });
+    const soloBtn = await openBranchTip(page, '.tip-solo');
+    const solo = await soloBtn.getAttribute('data-branch');
+    await soloBtn.click();
+    await gone('dejar sola «' + solo + '»', hid);
     await page.click('#search-btn');
     await page.waitForSelector('#search[open]', { timeout: T(3000) });
     const on = await page.evaluate(() => ({ status: document.querySelector('#branch-view-status').textContent, mark: document.querySelector('#search-btn').classList.contains('filtered'), reset: !document.querySelector('#branch-view-reset').hidden }));
     if (!on.status || /undefined|NaN|branchview\./.test(on.status) || !on.mark || !on.reset) throw new Error('sin aviso de las ramas ocultas: ' + JSON.stringify(on));
     await page.click('#branch-view-reset');
-    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length === n, all, { timeout: T(5000) });
+    await page.waitForFunction((b) => [...document.querySelectorAll('#graph svg .head:not(.exit)')].some((h) => h.__name === b), hidden, { timeout: T(5000) });
     const off = await page.evaluate(() => ({ status: document.querySelector('#branch-view-status').textContent, mark: document.querySelector('#search-btn').classList.contains('filtered'), keys: Object.keys(localStorage).filter((k) => k.startsWith('graphbranch:bview:')).length, focus: document.activeElement?.id }));
     if (off.status || off.mark || off.keys || off.focus !== 'graph-author') throw new Error('«Ver todas» no deja el grafo como estaba: ' + JSON.stringify(off));
     await page.keyboard.press('Escape');

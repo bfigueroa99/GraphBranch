@@ -698,4 +698,4 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - OMC: plan=— · revisión=— · verificación=—
 - Reclamo: loop/186, sin colisión
 - Validado: pendiente
-- **Siguiente:** pendiente
+- **Siguiente:** iteración 187, mantenimiento · Accesibilidad: auditoría (sin pendientes de Accesibilidad)

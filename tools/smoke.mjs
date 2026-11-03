@@ -3299,6 +3299,21 @@ console.log('Celular angosto: etiquetas 3D pisadas');
     if (r.grafo > 450) throw new Error(`el grafo empieza a ${r.grafo} px del inicio de la página`);
     if (r.ancho > 320) throw new Error(`la página se desborda a ${r.ancho} px`);
   });
+  await step(page, 'a 320 px, un enlace «ir al grafo» salta al panel sin recorrer las cifras', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    const link = page.locator('#to-graph');
+    if (!(await link.isVisible())) throw new Error('el enlace al grafo no se ve a 320 px');
+    const nombre = (await link.textContent()).trim();
+    if (!nombre || /^graph\./.test(nombre)) throw new Error(`el enlace no tiene texto traducido: «${nombre}»`);
+    await link.click();
+    const r = await page.evaluate(() => ({
+      foco: document.activeElement && document.activeElement.id,
+      arriba: Math.round(document.querySelector('.graph-panel').getBoundingClientRect().top),
+    }));
+    if (r.foco !== 'graph-panel') throw new Error(`el foco quedó en «${r.foco}», no en el panel del grafo`);
+    if (r.arriba > 60) throw new Error(`el panel del grafo quedó a ${r.arriba} px del borde superior de la pantalla`);
+  });
   await page.context().close();
 }
 

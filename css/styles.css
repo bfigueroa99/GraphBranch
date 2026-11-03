@@ -144,6 +144,27 @@ kbd {
   border-radius: 4px;
   font-size: 0.85em;
 }
+.to-graph {
+  display: none;
+}
+@media (max-width: 560px) {
+  .brand {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .to-graph {
+    display: block;
+    min-height: 24px;
+    line-height: 24px;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: inherit;
+    font-size: 0.8rem;
+    text-decoration: underline;
+  }
+}
 .sr-only {
   position: absolute;
   width: 1px;
@@ -6391,4 +6412,8 @@ a.hl-row:focus-visible {
   background: var(--surface-2);
   outline: 2px solid currentColor;
   outline-offset: -2px;
+}
+
+.graph-panel:focus {
+  outline: none;
 }

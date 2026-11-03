@@ -46,6 +46,8 @@
         <circle class="logo-n3" cx="24" cy="23" r="3"/>
       </svg>
       <span class="wordmark">GraphBranch</span>
+      <!-- solo en celular angosto: salta al grafo sin recorrer las cifras ni la bitácora -->
+      <a class="to-graph" href="#graph-panel" id="to-graph" data-i18n="graph.aria2d">Branch and commit graph</a>
     </div>
 
     <form class="repo-form" id="repo-form" autocomplete="off" novalidate>
@@ -179,7 +181,7 @@
   </section>
 
   <main class="main">
-    <section class="panel graph-panel" aria-labelledby="graph-title">
+    <section class="panel graph-panel" id="graph-panel" tabindex="-1" aria-labelledby="graph-title">
       <div class="panel-head">
         <div class="repo-title">
           <h1 id="graph-title"><a id="repo-link" target="_blank" rel="noopener">acme/orbita</a></h1>

@@ -973,6 +973,20 @@ console.log('Escritorio (1280×800)');
     if (solo.length !== 2 || !solo.includes(other)) throw new Error('S no deja la rama sola: ' + solo.join(', '));
     await page.keyboard.press('s');
     if ((await names()).length !== before.length) throw new Error('repetir S no vuelve a mostrar las ramas');
+    // «Ver todas las ramas»: oculta sin botón visible; con una rama oculta aparece, y la tecla A y el botón las devuelven
+    const showAll = () => page.evaluate(() => ({ hidden: document.querySelector('#textview-showall').hidden, inTree: !!document.activeElement.closest('#textview [role="tree"]'), live: document.querySelector('#textview-live').textContent }));
+    if (!(await showAll()).hidden) throw new Error('«Ver todas las ramas» se ve sin ramas ocultas');
+    await page.evaluate((n) => document.querySelector(`#textview .tv-branch[data-branch="${n}"]`).focus(), target);
+    await page.keyboard.press('h');
+    const hid = await showAll();
+    if (hid.hidden || (await names()).length !== before.length - 1) throw new Error('con una rama oculta no aparece «Ver todas las ramas»: ' + JSON.stringify(hid));
+    await page.keyboard.press('a');
+    const viaKey = await showAll();
+    if ((await names()).length !== before.length || !viaKey.hidden || !viaKey.inTree || !viaKey.live) throw new Error('A no vuelve a mostrar todas las ramas o pierde el foco: ' + JSON.stringify(viaKey));
+    await page.keyboard.press('h');
+    await page.click('#textview-showall');
+    const viaBtn = await showAll();
+    if ((await names()).length !== before.length || !viaBtn.hidden || !viaBtn.inTree || new URL(page.url()).search.includes('ocultar=')) throw new Error('el botón no vuelve a mostrar todas las ramas: ' + JSON.stringify(viaBtn));
     await page.keyboard.press('Escape');
     await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: T(3000) });
     await page.evaluate(() => document.querySelector('#branch-view-reset').click()); // la demo vuelve a verse entera para lo que sigue

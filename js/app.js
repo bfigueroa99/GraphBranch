@@ -2304,6 +2304,7 @@
     filterInput: el.textviewFilter,
     live: el.textviewLive,
     scopeEl: $('#textview-scope'),
+    showAllEl: $('#textview-showall'),
     text: (k, p) => t(k, p),
     ago: (ms) => U.timeAgo(ms),
     canHide: () => !allOn, // en la vista conjunta no se ocultan ramas (como en el grafo)
@@ -2311,6 +2312,11 @@
       onBranchView(name, how);
       textview.update(textTree(viewOf(source.view ? source.view() : source.data).data), textScope());
       textview.say(GB.textview.viewNote(how, name, branchView.solo, t));
+    },
+    onReset: () => {
+      setBranchView({ hidden: [], solo: '' });
+      textview.update(textTree(viewOf(source.view ? source.view() : source.data).data), textScope());
+      textview.say(GB.textview.viewNote('all', '', '', t));
     },
     onGo: ({ branch, sha }) => {
       closeTextview();

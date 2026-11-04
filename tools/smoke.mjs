@@ -1381,9 +1381,14 @@ console.log('Escritorio (1280×800)');
     await file.evaluate((d) => (d.open = true)); // el primero ya suele venir abierto: un clic lo cerraría
     const hist = file.locator('.df-history');
     await wait('el botón Historial', hist.waitFor({ timeout: T(5000) }));
-    const path = await file.locator('.df-path').evaluate((n) => n.textContent.split(' → ').pop());
     if (!/\S/.test((await hist.getAttribute('aria-label')) || '') || /diff\.|undefined/.test(await hist.textContent())) throw new Error('el botón Historial no tiene nombre');
-    await wait('el clic en Historial', hist.click({ timeout: T(5000) }));
+    // la ruta y el clic en un solo paso: si la demo vuelve a dibujar el panel entre los dos, «el primer archivo» sería otro
+    await wait('el clic en Historial', hist.waitFor({ state: 'visible', timeout: T(5000) }));
+    const path = await hist.evaluate((b) => {
+      const p = b.closest('.df-file').querySelector('.df-path').textContent.split(' → ').pop();
+      b.click();
+      return p;
+    });
     await wait('el filtro por ruta', page.waitForSelector('#search-path-clear:not([hidden])', { state: 'attached', timeout: T(5000) }));
     const on = await page.evaluate(() => ({ value: document.querySelector('#search-path').value, url: location.search }));
     if (on.value !== path) throw new Error(`el filtro quedó en «${on.value}», no en «${path}»`);

@@ -267,7 +267,7 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 
 124. ~~**Vista de texto: ocultar una rama**~~ hecho en #245 · Público · 1×2/2. [parte del ítem 110] El árbol de la vista de texto respeta las ramas ocultas o «solo esta» y deja ocultarlas desde ahí. Comprobar: `tools/textview.test.mjs` y un paso del smoke.
 125. ~~**Alias de las pestañas**~~ hecho en #249 · Escala · 1×1/1. [replica 2026-10-28] La pestaña de un repo se renombra con un alias propio (doble clic o F2), recordado por repo en este navegador.
-~~**Varias cuentas del mismo servicio**~~ hecho en #251 · Fuentes.
+126. ~~**Varias cuentas del mismo servicio**~~ hecho en #251 · Fuentes · 1×2/2. [replica 2026-10-28]
 129. **Columnas de autor y fecha en el grafo 2D** · Análisis · 1×2/2. [replica 2026-10-28] Un interruptor deja, junto a cada commit del grafo 2D, su autor y su fecha, con lo ya cargado. Comprobar: prueba del formato de la fila y un paso del smoke.
 131. **Issues de Jira y Trello, primera entrega** · Fuentes · 1×2/3. [replica 2026-10-28] [parte de «Issues de Jira y Trello»] Las claves tipo `ABC-123` de los mensajes de commit y de PR se vuelven enlaces a una URL de Jira que el usuario configura (guardada en este navegador), sin consultas nuevas. Comprobar: prueba del reconocimiento de claves y un paso del smoke.
 ~~**Blame de un archivo, segunda entrega**~~ hecho en #236 · Datos.

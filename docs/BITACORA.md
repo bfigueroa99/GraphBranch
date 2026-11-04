@@ -3233,3 +3233,142 @@ bitácoras juntas (la rotación de los subtipos de mantenimiento, la numeración
 - Reclamo: loop/181, sin colisión
 - Validado: 546 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 182, expansión: ítem 102 (Resumen de la semana: ramas nuevas, Salidas)
+
+### 2026-11-03 · Iteración 182 · Expansión · Salidas
+
+- **Capacidad nueva: el resumen de la semana dice cuántas ramas se crearon** (ítem 102 de la hoja de ruta, parte del 23).
+  `compute` de `js/digest.js` suma `newBranches`: las actividades «rama creada» ya cargadas de los últimos 7 días, cada nombre una
+  vez (como las ramas nuevas por semana de la salud); sale como línea del Markdown y de la imagen PNG, y no aparece si es 0. Sin
+  consultas. 1 clave nueva (`digest.newbranches`) en los 40 idiomas; sin CSP nueva.
+- **Pruebas que fallan sin la capacidad:** `tools/digest.test.mjs` («ramas nuevas: las creadas en la semana, cada nombre una vez»: falla con `newBranches` indefinido sin el cambio).
+- README: Salud del repo (Resumen de la semana) y Límites conocidos; Mapa de alcance.
+- QA: nombre sin clave sin resolver y sección ausente con 0, mirados con la prueba; 40 idiomas con `check-i18n`; auditoría en la puerta.
+- Skills: no aplica: una cifra más en un resumen que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (reusar el conteo de la salud).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: relevo de loop/182 (36ac818), reanudada por el disparo siguiente
+- Validado: 547 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. (La primera sesión vio el smoke fallar tres veces en pasos ajenos y distintos; al reanudar pasó entero.)
+- **Siguiente:** iteración 183, mantenimiento · QA: pendiente 8 (A 320 px el grafo sigue a ~420 px del inicio con la demo (antes 522; con un rep…)
+
+### 2026-11-03 · Iteración 183 · Mantenimiento · QA
+
+- **Arreglo: a 320 px un enlace «ir al grafo» llega al panel sin recorrer la página** (pendiente 8).
+  Bajo la cabecera, solo a ≤560 px, un enlace (`#to-graph`, texto de `graph.aria2d`, ya traducido a los 40 idiomas) salta a
+  `#graph-panel`, que recibe el foco (`tabindex="-1"`, sin contorno). No hay texto ni clave nuevos; sin CSP nueva.
+- **Arreglo previo, porque `dev` estaba en rojo en este entorno (3 de 3 corridas, también sobre `origin/dev` limpio): el historial de un archivo en la demo
+  dejaba fuera al commit que lo cambia.** `fileLog` de `js/sources/demo.js` buscaba solo por palabras del titular; para
+  `src/api/index.ts` no traía ni «chore: initial project structure», y el paso «quién tocó un archivo» del smoke no veía ninguna fila
+  (`diff.blameNone`). Ahora suma siempre el commit desde el que se pregunta.
+- **Reproducción:** `node --test tools/demo.test.mjs` → «el historial de src/api/index.ts no trae al commit «chore: initial project structure» que lo cambia (semilla 7)»; y `node tools/smoke.mjs` (paso «a 320 px, un enlace «ir al grafo» salta al panel…») → sin el arreglo, `#to-graph` no existe y el paso falla.
+- **Hallazgos:** 0 nuevos, 0 a la base de la auditoría (auditoría completa sin `--langs`: 0 hallazgos, 79 s; el smoke tres veces y el recorrido a mano de bordes no se hicieron: solo la puerta, una vez)
+- **Pruebas que fallan sin el arreglo:** `tools/demo.test.mjs` («el historial de un archivo de un commit siempre incluye ese commit») y ese paso del smoke (enlace visible a 320 px, con texto traducido, el foco en el panel y el panel a menos de 60 px del borde).
+- README: sin cambios (no es una función nueva; el detalle está en la bitácora).
+- QA: celular angosto (320 px) mirado con el paso del smoke; 40 idiomas con `check-i18n` (sin claves nuevas); auditoría en la puerta.
+- Skills: no aplica: un enlace ancla con CSS que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (ancla al panel).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/183, sin colisión
+- Validado: 548 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. (Antes, una corrida falló en «filtro por autor», «ocultar una rama», «vista de un PR» y «cambios de un commit: con teclado» —intermitentes del pendiente Media 1— y otra por el alto de 19 px del enlace nuevo, arreglado; la tercera pasó entera.)
+- **Siguiente:** iteración 184, expansión: ítem 138 (Constelación: solo los repos con actividad reciente, en la URL, Escala)
+
+### 2026-11-03 · Iteración 184 · Expansión · Escala
+
+- **Capacidad nueva: la constelación solo con los repos de actividad reciente, desde la URL** (ítem 138 de la hoja de ruta).
+  `?recent=N` deja en la constelación los repos con algún commit cargado en los últimos N días (`?recent=30` es el mes; acepta
+  fracciones, se acota a 3650; vacío, 0, negativo o no numérico no filtra). Un repo sin commits se conserva solo mientras carga. Se
+  combina con `?constellation=texto` y lo anuncia con el texto de siempre («Filtradas por «≤ 30 d»: n de m»): sin claves nuevas.
+- **Pruebas que fallan sin la capacidad:** `tools/constellation.test.mjs` («?recent=N deja los repos con actividad…»: `recentParam` indefinido sin el cambio) y el paso del smoke de `?recent` (10 galaxias con 30 días, 0 con 0,01).
+- README: Constelación (barra superior) y Mapa de alcance; sin cambios en Seguridad (lee un número de la URL, nunca al DOM).
+- QA: URL con valores raros mirados con la prueba; 40 idiomas con `check-i18n` (sin claves nuevas); auditoría en la puerta.
+- Skills: no aplica: un filtro más sobre una lista que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (filtro puro como `filterItems`).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/184, sin colisión
+- Validado: 549 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. (Antes, el paso del smoke de `?recent` falló dos veces por el umbral y por los repos vacíos: ajustados.)
+- **Siguiente:** iteración 185, expansión: ítem 103 (Vista de texto: ramas fusionadas, Público)
+
+### 2026-11-03 · Iteración 185 · Expansión · Público
+
+- **Capacidad nueva: la vista de texto dice qué ramas ya están fusionadas** (ítem 103 de la hoja de ruta). Una rama cuya punta
+  está en la historia de la por defecto (por cualquier padre, con lo ya cargado) lo dice en su nombre accesible («fusionada en la
+  rama por defecto») y con una marca junto al nombre; la por defecto y una rama recién creada sobre su misma punta no cuentan.
+- **Pruebas que fallan sin la capacidad:** `tools/textview.test.mjs` («una rama cuya punta ya está en la por defecto se dice fusionada…»: `merged` indefinido sin el cambio) y el paso del smoke de la vista de texto (árbol montado con una historia fija).
+- README: Vista de texto y Límites conocidos (un squash o un rebase no se marca).
+- QA: nombres accesibles y marca visible mirados en el smoke; 40 idiomas con `check-i18n` (clave `textview.merged` en todos); auditoría en la puerta. La demo no quedó con una rama fusionada sin borrar: dejar `fix/empty-payload` rompía dos pasos del smoke que cuentan ramas ocultas, así que el paso monta el árbol aparte.
+- Skills: no aplica: una marca más en un árbol que ya cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (alcanzabilidad desde la punta de la por defecto).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/185, sin colisión
+- Validado: 550 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. (Antes, dos corridas fallaron por el cambio de la demo, revertido.)
+- **Siguiente:** iteración 186, expansión: ítem 104 (Salud del repo: tendencia de commits, Análisis)
+
+### 2026-11-03 · Iteración 186 · Expansión · Análisis
+
+- **Capacidad nueva: la salud del repo muestra los commits por semana** (ítem 104 de la hoja de ruta). Una línea más junto a las otras tendencias del ritmo: los commits de las últimas 8 semanas, de la más vieja a la actual, con los commits ya cargados (sin consultas); los de fecha futura o inválida no cuentan.
+- **Pruebas que fallan sin la capacidad:** `tools/health.test.mjs` («tendencia de commits…» y el ritmo con `commitWeeks`: `undefined` sin el cambio) y el paso del smoke de la salud (`#hl-commitweeks` con 8 cifras sobre la demo).
+- README: Salud del repo y Límites conocidos (solo cuenta los commits cargados).
+- QA: 40 idiomas con `check-i18n` (clave `health.commitWeeks` en todos); texto de la línea y demo mirados en el smoke; auditoría en la puerta.
+- Skills: no aplica: una línea más en un panel que ya cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (contar por semana con el mismo `weekly` de las otras tendencias).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/186, sin colisión
+- Validado: 551 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 187, mantenimiento · Accesibilidad: auditoría (sin pendientes de Accesibilidad)
+
+### 2026-11-03 · Iteración 187 · Mantenimiento · Accesibilidad
+
+- **Auditoría de Accesibilidad: las teclas de la vista de texto se leen al entrar en el árbol.** La ayuda («Arriba y Abajo mueven…») se
+  enlazaba con `aria-describedby` desde `#textview-body`, un `div` sin rol: los lectores de pantalla lo ignoran. Ahora la lleva el
+  `ul[role=tree]` que recibe el foco. Auditoría completa y recorrido a mano de la vista de texto y la salud (foco al abrir y al
+  cerrar, un solo `tabindex=0`, nombres de los 55 nodos, estado vacío anunciado): sin trampas, sin errores de consola.
+- **Hallazgos:** 3 nuevos (pendientes 14 y 15; el tercero, el `aria-describedby` huérfano, arreglado aquí), 0 a la base de la auditoría. La
+  auditoría completa sumó una sola medida fuera de la base, `fps2d` 2,9 (≥ 10) en Chromium sin GPU con la máquina cargada: ruido, no se carga.
+- **Pruebas que fallan sin el arreglo:** el paso del smoke «vista de texto: árbol con teclado…» (`las teclas del árbol no se describen en el árbol`).
+- README: sin cambios (no cambia lo que hace la función).
+- QA: vista de texto (foco, roles, filtro sin resultados, flechas) y salud (títulos, líneas por semana) con Playwright sobre la demo; auditoría completa con `--langs`.
+- Skills: no aplica: un atributo ARIA que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (el atributo va en el elemento con rol).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/187, sin colisión
+- Validado: 551 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 188, expansión: ítem 119 (Azure DevOps: tags en el grafo, Datos)
+
+### 2026-11-03 · Iteración 188 · Expansión · Datos
+
+- **Capacidad nueva: los tags de Azure DevOps salen en el grafo** (ítem 119 de la hoja de ruta, parte del ítem 107). La fuente de Azure pide `refs?filter=tags/` (hasta 100, una consulta cada 15 minutos y solo con «Mostrar tags» activado) y los dibuja como los banderines de GitHub; en un tag anotado el commit es `peeledObjectId`. Si la consulta falla (403, 404), el grafo sigue sin ellos; la cuota o la red cortan el ciclo como siempre.
+- **Pruebas que fallan sin la capacidad:** `tools/azure.test.mjs` («los tags salen de refs?filter=tags/…»: sin el cambio `src.data.tags` queda vacío) y el paso del smoke de Azure DevOps (`#graph .tag-flag .tag-text` = `v1.0-azure`).
+- README: la lista de Azure DevOps, Límites conocidos (tags y despliegues; Azure DevOps) y la estructura de `azure.js`.
+- QA: banderín en 2D y consulta única cada 15 minutos con la API simulada; sin texto nuevo (no hay claves de i18n); auditoría en la puerta.
+- Skills: no aplica: una consulta más en una fuente que las reglas del repo ya cubren.
+- Arena: no aplica: una sola forma obvia (la misma estructura `data.tags` que usa GitHub).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/188, sin colisión
+- Validado: 553 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera puerta falló en dos pasos ajenos e intermitentes («filtro por autor» y «ocultar una rama», pendiente de Deuda 9); la repetición pasó.
+- **Siguiente:** iteración 189, expansión: ítem 121 (Primer padre en el grafo 3D, Análisis)
+
+### 2026-11-03 · Iteración 189 · Expansión · Análisis
+
+- **Capacidad nueva: el primer padre se comprueba también en el grafo 3D** (ítem 121 de la hoja de ruta, parte del ítem 111). Al revisar el camino, `drawGraph` ya le pasa al 3D el mismo layout filtrado que al 2D (`viewOf` aplica `firstParent` antes de `layout.compute`), así que el interruptor ya dejaba en el 3D solo la cadena del primer padre; faltaba la prueba que lo fijara y el README ya lo decía. No hay código de la app nuevo: la entrega son las dos pruebas.
+- **Pruebas que fallan sin la capacidad:** `tools/layout.test.mjs` («el layout del primer padre … sin aristas de merge»: falla si el layout de `firstParent` deja nodos de la rama fusionada o aristas de merge) y el paso del smoke «el interruptor de primer padre también deja menos commits en el grafo 3D…» (falla si `Graph3D.update` no recibe menos nodos con el interruptor). Honestidad: no fallan «sin el cambio» porque el cambio ya estaba; fallarían si alguien desconecta el 3D del filtro.
+- README: sin cambios (ya decía «2D, 3D y vista de texto»); el Mapa de alcance lo nombra.
+- QA: interruptor con el 3D en Chromium por software (paso del smoke); sin texto nuevo (no hay claves de i18n); auditoría en la puerta.
+- Skills: no aplica: una prueba sobre código que las reglas del repo ya cubren.
+- Arena: no aplica: una sola forma obvia (espiar `Graph3D.update` como en los otros pasos del smoke).
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/189, sin colisión
+- Validado: 554 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 190, expansión: ítem 124 (Vista de texto: ocultar una rama, Público)
+
+### 2026-11-03 · Iteración 190 · Expansión · Público
+
+- **Capacidad nueva: ocultar una rama o dejarla sola desde la vista de texto** (ítem 124 de la hoja de ruta, parte del ítem 110). El árbol ya respetaba las ramas ocultas (`viewOf`); ahora sobre una rama que no es la por defecto **H** la oculta y **S** la deja sola (repetir S las vuelve a mostrar), o los botones ⊘ y ◎ de su fila, con el mismo `onBranchView` del grafo (se recuerda por repo y viaja en la URL). El árbol y la nota se actualizan sin cerrarse, el foco pasa a la rama que ocupaba su lugar y la región viva lo dice. En la vista conjunta no se ofrece. 5 textos nuevos en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `tools/textview.test.mjs` («viewAction…», «viewNote…»: sin las funciones no existen) y el paso del smoke «vista de texto: H oculta una rama, S la deja sola…» (sin el cambio no hay botones ni la tecla oculta nada).
+- README: la sección de la vista de texto, Límites conocidos (vista conjunta) y el Mapa de alcance.
+- QA: filas de teclado y lector de pantalla (foco que no cae a `<body>`, región viva, nombres de los botones) con el paso del smoke; 40 idiomas con `check-i18n`; auditoría en la puerta.
+- Skills: no aplica: una función del árbol que las reglas del repo ya cubren.
+- Arena: no aplica: una sola forma obvia (reusar `onBranchView` y `update` del árbol).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; sin subagentes OMC en esta corrida)
+- Hoja de ruta repuesta a 15 (ítems 138 a 143: seguimientos de la vista de texto, la salud, el resumen y la constelación; sin pasada nueva de Replica ni investigación vencida).
+- Reclamo: loop/190, sin colisión
+- Validado: 556 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 191, mantenimiento · Deuda: pendiente 1

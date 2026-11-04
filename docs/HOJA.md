@@ -266,7 +266,13 @@ edita, y un ítem nuevo va siempre a `IMPROVEMENTS.md`, con el número que dice 
 121. ~~**Primer padre en el grafo 3D**~~ hecho en #244 · Análisis · 1×2/2. [parte del ítem 111] El interruptor de primer padre también deja en el 3D solo la cadena del primer padre de cada rama. Comprobar: prueba de la selección de commits y un paso del smoke en 3D.
 122. ~~**Capa para streaming, undécima entrega**~~ hecho en #222 · Plataformas · 1×2/1. [parte del ítem 11] `&pr=1` deja en la capa solo las ramas con un PR abierto. Comprobar: prueba de `embedOptions` y un paso del smoke.
 123. ~~**Práctica: branch -m**~~ hecho en #224 · Público · 1×2/1. [parte del ítem 31] La terminal de práctica entiende `branch -m` para renombrar una rama. Comprobar: `tools/gitsim.test.mjs` y un paso del smoke.
+124. ~~**Vista de texto: ocultar una rama**~~ hecho en #245 · Público · 1×2/2. [parte del ítem 110] El árbol de la vista de texto respeta las ramas ocultas o «solo esta» y deja ocultarlas desde ahí. Comprobar: `tools/textview.test.mjs` y un paso del smoke.
+125. ~~**Alias de las pestañas**~~ hecho en #249 · Escala · 1×1/1. [replica 2026-10-28] La pestaña de un repo se renombra con un alias propio (doble clic o F2), recordado por repo en este navegador.
+126. ~~**Varias cuentas del mismo servicio**~~ hecho en #251 · Fuentes · 1×2/2. [replica 2026-10-28]
 127. ~~**Resaltar una rama al pasar el puntero**~~ hecho en #231 · Análisis. [replica 2026-10-28]
 128. ~~**Paleta de comandos**~~ hecho en #232 · Público. [replica 2026-10-28]
+129. ~~**Columnas de autor y fecha en el grafo 2D**~~ hecho en #252 · Análisis · 1×2/2. [replica 2026-10-28] Un interruptor deja, junto a cada commit del grafo 2D, su autor y su fecha, con lo ya cargado. Comprobar: prueba del formato de la fila y un paso del smoke.
 130. ~~**Blame de un archivo, primera entrega**~~ hecho en #233 · Datos. [replica 2026-10-28]
 132. ~~**Paleta de comandos, segunda entrega**~~ hecho en #235 · Público. [parte del ítem 128]
+133. ~~**Resumen de la semana de la organización: ramas nuevas**~~ hecho en #253 · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] El resumen de la semana de una organización suma las ramas nuevas de cada repo seguido, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
+138. ~~**Vista de texto: ver todas las ramas desde la vista**~~ hecho en #248 · Público · 1×2/1. [inv. 2026-10-13] [parte del ítem 110] Con ramas ocultas, la vista de texto suma un botón «Ver todas las ramas» (y la tecla A) que limpia el filtro como el del grafo, sin cerrar el árbol. Comprobar: `tools/textview.test.mjs` y un paso del smoke.

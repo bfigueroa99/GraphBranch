@@ -353,7 +353,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     de la organización deja de seguirse». Medir con 5 corridas del paso y esperar el estado en lugar de comparar con
     el conteo base de ramas (la demo sigue publicando). Reproducción: `xvfb-run -a node tools/smoke.mjs` →
     `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`. Volvió a fallar 1 de 2 en la reanudación
-    de la 173 y, el 2026-11-03 (iteración 183), 4 pasos a la vez en una corrida (con «vista de un PR» y «cambios de un commit: con teclado») que pasó entera a la repetición (2026-11-01, carga 9 en 4 CPU).
+    de la 173 y, el 2026-11-03 (iteración 183), 4 pasos a la vez en una corrida (con «vista de un PR» y «cambios de un commit: con teclado») que pasó entera a la repetición (2026-11-01, carga 9 en 4 CPU). El 2026-11-04 (iteración 202) falló «ocultar una rama o dejarla sola: …las etiquetas no bajaron de 4» y la repetición pasó.
     En la iteración 160 falló una vez, y pasó a la repetición, «vista de texto: árbol con teclado, nombres accesibles y
     Enter lleva al grafo» (`el release de la demo no se dice (2): Novedades: 0 ramas, 1 commits`): depende de lo que la
     demo publica en ese momento.
@@ -617,5 +617,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (la misma línea que ya usa el resumen de un repo).
 - OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML`)
 - Reclamo: loop/202, sin colisión
-- Validado: pendiente
+- Validado: 566 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera corrida falló en un paso ajeno («ocultar una rama o dejarla sola»: las etiquetas no bajaron de 4) y la segunda pasó: intermitencia, anotada en el pendiente 1 de Deuda.
 - **Siguiente:** iteración 203, mantenimiento · Deuda: pendiente 1 (Pasos del smoke intermitentes en la sesión cloud: en la iteración 152, `npm run…)

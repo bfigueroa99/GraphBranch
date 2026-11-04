@@ -207,6 +207,7 @@
       L.push({ text: cut(flat(repo)), kind: 'head' });
       const parts = [t.commits.replace('{n}', d.commits)];
       if (d.newBranches && t.newbranches) parts.push(t.newbranches.replace('{n}', d.newBranches));
+      if (d.branch) parts.push(`${t.branch}: ${flat(d.branch.name)} (${d.branch.commits})`);
       if (d.merged.total) parts.push(`${t.merged}: ${d.merged.rows.map((r) => (r.number ? `#${r.number}` : flat(r.title))).join(', ')}`);
       if (d.releases.total) parts.push(`${t.releases}: ${d.releases.rows.map((r) => flat(r.title)).join(', ')}`);
       L.push({ text: cut(parts.join(' · ')), kind: 'row' });

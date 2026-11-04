@@ -362,6 +362,11 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     defecto, que no se oculta) y esperando por conteo de etiquetas vigentes; «filtro por autor» ya no compara con el
     conteo base sino con el filtrado. Queda por medir con 5 corridas seguidas del smoke (la 191 vio una en verde tras el
     arreglo) y la intermitencia de «vista de texto: árbol con teclado…» y «al cerrar el último repo…».
+    El 2026-11-04 (iteración 196, carga alta en la nube) el smoke falló en tres corridas seguidas, cada una en pasos ajenos
+    al cambio: «historial de un archivo» y «quién tocó un archivo» (2 de 2, también sobre `origin/dev` limpio: la ruta se
+    leía del primer archivo del panel y el clic llegaba después, con la demo ya redibujado; la 196 las hizo atómicas),
+    «vista de texto: árbol con teclado…» (1 de 3) y «filtro por autor…» (`quitar el filtro no deja el grafo como estaba (3
+    etiquetas, con el filtro 3, antes 8)`, 1 de 3).
 2. [Deuda] La e2e de escritorio «--bitbucket-url suma solo ese host a las conexiones del CSP…» falló 1 de 2 en la
     reanudación de la 173 (2026-11-01, carga 18 en 4 CPU; la repetición pasó): `#azure-token-input` vacío al abrir
     Ajustes. Es una carrera de la prueba: guarda el token de Azure con `GBDesktop.setToken(…, 'azure')` con la página ya

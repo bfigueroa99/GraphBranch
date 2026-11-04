@@ -433,6 +433,17 @@
       <p class="help" data-i18n-html="settings.azureTokenHelp">For private projects on dev.azure.com: a personal access token with the <code>Code (Read)</code> scope. Public projects don't need one.</p>
       <p class="help" id="azure-token-where" data-i18n="settings.azureTokenWhere">The token is stored only in this browser and is sent only to dev.azure.com.</p>
     </div>
+    <div class="field">
+      <label for="token2-owner"><span data-i18n="settings.token2">Second GitHub account</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <div class="field-row">
+        <input id="token2-owner" type="text" autocomplete="off" spellcheck="false" maxlength="39" placeholder="org">
+      </div>
+      <div class="field-row">
+        <input id="token2-input" type="password" autocomplete="off" spellcheck="false" aria-label="Second GitHub account token" data-i18n-attr="aria-label:settings.token2Token">
+        <button type="button" class="btn btn-ghost" id="token2-toggle">Show</button>
+      </div>
+      <p class="help" data-i18n="settings.token2Help">A second token for the private repos of another user or organization (type its name above). It is used only for that owner's repos; every other repo uses the token above. Both go only to api.github.com.</p>
+    </div>
     <div class="field" id="bbdc-token-field" hidden>
       <label for="bbdc-token-input"><span data-i18n="settings.bbdcToken">Token for your Bitbucket server</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
       <div class="field-row">

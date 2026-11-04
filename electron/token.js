@@ -11,7 +11,7 @@ const path = require('node:path');
 const file = (name) => path.join(app.getPath('userData'), name);
 /** Los servicios con token. Cada uno, en `<servicio>-token.enc`: cifrado (con el llavero o, en Linux
     sin llavero, con la clave fija de Chromium) o, si no hay cifrado, en claro en `<servicio>-token.txt`. */
-const SERVICES = ['github', 'gitlab', 'codeberg', 'bitbucket', 'bitbucketdc', 'azure', 'slack', 'discord', 'teams']; // 'bitbucketdc' guarda el token atado a su servidor (JSON, ver js/sources/bitbucket-server.js); los tres últimos, la URL de un webhook (electron/webhooks.js)
+const SERVICES = ['github', 'gitlab', 'codeberg', 'bitbucket', 'bitbucketdc', 'github2', 'azure', 'slack', 'discord', 'teams']; // 'bitbucketdc' guarda el token atado a su servidor (JSON, ver js/sources/bitbucket-server.js); 'github2' guarda la segunda cuenta de GitHub, el token atado a su dueño (JSON, ver js/sources/github.js); los tres últimos, la URL de un webhook (electron/webhooks.js)
 const names = (service) => {
   if (!SERVICES.includes(service)) throw new Error('servicio desconocido');
   return { ENCRYPTED: `${service}-token.enc`, PLAIN: `${service}-token.txt` };

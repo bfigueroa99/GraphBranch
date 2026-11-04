@@ -1002,3 +1002,38 @@ test('mapPull: un repo renombrado sigue marcando sus PRs de la misma repo (compa
   assert.equal(src.mapPull(pr({ full_name: 'ana/nombre' }, nueva)).sameRepo, false, 'un fork sigue siendo de afuera');
   assert.equal(src.mapPull(pr({ full_name: 'o/r' }, undefined)).sameRepo, true, 'sin base.repo se cae al nombre escrito');
 });
+
+test('segunda cuenta: tokenFor da el token de la segunda solo a los repos de su dueño', () => {
+  const GB = load(fakeGitHub());
+  const second = GB.GitHubSource.unpack2(GB.GitHubSource.pack2('@Acme-Corp', ' tok-b '));
+  assert.deepEqual({ ...second }, { owner: 'Acme-Corp', token: 'tok-b' });
+  assert.equal(GB.GitHubSource.tokenFor('acme-corp', 'tok-a', second), 'tok-b', 'el dueño no distingue mayúsculas');
+  assert.equal(GB.GitHubSource.tokenFor('o', 'tok-a', second), 'tok-a', 'otro dueño usa el principal');
+  assert.equal(GB.GitHubSource.tokenFor('o', '', second), '', 'sin principal, otro dueño va sin token (nunca con el de la segunda)');
+  assert.equal(GB.GitHubSource.tokenFor('acme-corp', 'tok-a', { owner: '', token: '' }), 'tok-a');
+  // sin dueño, sin token o con un dueño que no vale, no hay segunda cuenta
+  for (const [o, t] of [['', 'x'], ['acme', ''], ['../x', 'x'], ['a b', 'x']]) assert.equal(GB.GitHubSource.pack2(o, t), '', `${o}|${t}`);
+  for (const bad of ['', 'basura', '{"owner":"a"}', '{"owner":"a/b","token":"x"}']) assert.deepEqual({ ...GB.GitHubSource.unpack2(bad) }, { owner: '', token: '' }, bad);
+});
+
+test('segunda cuenta: cada repo manda solo su token a la API', async () => {
+  const GB = load(fakeGitHub());
+  const second = GB.GitHubSource.unpack2(GB.GitHubSource.pack2('o', 'tok-b'));
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const sent = [];
+  const fetch = gh.fetch;
+  gh.fetch = (url, opts = {}) => (sent.push([url, opts.headers?.Authorization]), fetch(url, opts));
+  const GB2 = load(gh);
+  const run = async (owner) => {
+    const src = new GB2.GitHubSource({ owner, name: 'r', token: GB2.GitHubSource.tokenFor(owner, 'tok-a', second) });
+    src.running = true;
+    await src.loop();
+    clearTimeout(src.timer);
+  };
+  await run('o');
+  await run('x');
+  assert.ok(sent.filter(([u]) => u.includes('/repos/o/')).every(([, a]) => a === 'Bearer tok-b'), 'el repo del dueño de la segunda va con la segunda');
+  assert.ok(sent.filter(([u]) => u.includes('/repos/x/')).length && sent.filter(([u]) => u.includes('/repos/x/')).every(([, a]) => a === 'Bearer tok-a'), 'el de otro dueño, con la principal');
+  assert.ok(sent.every(([u]) => u.startsWith('https://api.github.com/')), 'ninguno sale a otro host');
+});

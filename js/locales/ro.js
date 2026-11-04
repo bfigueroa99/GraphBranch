@@ -263,6 +263,7 @@ GB.i18n.define('ro', {
   'branchview.status': '{n} din {total} ramuri la vedere',
   'branchview.reset': 'Arată toate ramurile',
   'search.firstParent': 'Doar primul părinte (ca git log --first-parent)',
+  'search.columns': 'Afișează autorul și data lângă fiecare commit (graf 2D)',
   'author.unknown': 'necunoscut',
 
   /* ---------- strat peste graf ---------- */

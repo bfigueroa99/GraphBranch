@@ -938,8 +938,29 @@
       }
     }
 
+    /** Columnas de autor y fecha: «Autor · fecha» en diagonal junto al commit; con poco zoom no caben y se callan. */
+    paintMeta(it) {
+      const on = this.columns && this.geo && this.geo.S >= 22;
+      if (!on) {
+        if (it.meta) (it.meta.remove(), (it.meta = it.metaKey = null));
+        return;
+      }
+      const text = GB.search.columnText(it.data.commit, U.fmtDate, tr('author.unknown'));
+      if (it.metaKey === text) return;
+      it.metaKey = text;
+      if (!it.meta) it.meta = mk('text', { class: 'node-meta', x: 7, y: 15, transform: 'rotate(38 7 15)', 'aria-hidden': 'true' }, it.el);
+      it.meta.textContent = U.truncate(text, 34);
+    }
+
+    /** Interruptor de las columnas de autor y fecha (se guarda aparte, para todos los repos). */
+    setColumns(on) {
+      this.columns = !!on;
+      this.relabel();
+    }
+
     paintNode(it) {
       this.paintRefs(it);
+      this.paintMeta(it);
       const cls = it.cls + (it.el.classList.contains('enter') ? ' enter' : '') + (it.el.classList.contains('hl') ? ' hl' : '') + (it.data.sha === this.selSha ? ' sel' : '') + (this.pathSet && !this.pathSet.has(it.data.sha) ? ' pfx' : '') + this.cmpClass(it.data.sha);
       if (it.el.getAttribute('class') !== cls) it.el.setAttribute('class', cls);
     }
@@ -1076,6 +1097,7 @@
       }
       for (const d of this.days.values()) (d.text = null), this.dayLabel(d);
       for (const it of this.ghostLabels.values()) it.fit = null;
+      for (const it of this.nodes.values()) it.metaKey = null; // la fecha cambia con el idioma
       this.requestDraw();
     }
 
@@ -1132,6 +1154,7 @@
         const vis = it.px > -M && it.px < this.W + M && it.py > -M && it.py < VH + M;
         this.show(it, vis, this.makeNode);
         if (vis) it.el.setAttribute('transform', `translate(${r1(it.px)},${r1(it.py)})`);
+        if (vis && this.columns) this.paintMeta(it); // el zoom decide si caben
       }
 
       for (const it of this.edges.values()) {

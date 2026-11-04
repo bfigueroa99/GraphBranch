@@ -2594,6 +2594,13 @@
     setBranchView({ hidden: [], solo: '' });
     graphAuthor.focus(); // el botón se esconde: el foco no se pierde
   });
+  const columnsEl = $('#graph-columns');
+  columnsEl.checked = U.store.get('columns', false) === true; // autor y fecha junto a cada commit del 2D: de quien lo enciende, en todos sus repos
+  graph2d?.setColumns?.(columnsEl.checked);
+  columnsEl.addEventListener('change', () => {
+    U.store.set('columns', columnsEl.checked ? true : null);
+    graph2d?.setColumns?.(columnsEl.checked);
+  });
   $('#graph-firstparent').addEventListener('change', (e) => {
     firstParentOn = e.target.checked;
     U.store.set('firstparent:' + repoKey(), firstParentOn ? true : null);

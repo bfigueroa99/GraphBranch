@@ -259,6 +259,7 @@ GB.i18n.define('vi', {
   'branchview.status': 'Đang hiện {n} trên {total} nhánh',
   'branchview.reset': 'Hiện tất cả nhánh',
   'search.firstParent': 'Chỉ commit cha đầu tiên (như git log --first-parent)',
+  'search.columns': 'Hiện tác giả và ngày bên cạnh mỗi commit (đồ thị 2D)',
   'author.unknown': 'không rõ',
 
   /* ---------- lớp phủ trên biểu đồ ---------- */

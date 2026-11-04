@@ -4271,6 +4271,32 @@ console.log('Grafo de primer padre (?firstparent=1)');
   await page.context().close();
 }
 
+console.log('Columnas de autor y fecha en el 2D');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, 'el interruptor de columnas pone «autor · fecha» junto a los commits del 2D, se recuerda y al apagarlo se quitan', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    const metas = () => page.evaluate(() => [...document.querySelectorAll('.graph-svg .node .node-meta')].map((t) => t.textContent));
+    if ((await metas()).length) throw new Error('las columnas salen sin encender el interruptor');
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    if (!(await page.evaluate(() => !!document.querySelector('#graph-columns').closest('label')?.textContent.trim()))) throw new Error('el interruptor no tiene nombre');
+    await page.check('#graph-columns');
+    await page.waitForFunction(() => document.querySelectorAll('.graph-svg .node .node-meta').length > 0, null, { timeout: T(5000) });
+    const on = await metas();
+    if (!on.every((x) => x.includes(' · '))) throw new Error('una columna no es «autor · fecha»: ' + JSON.stringify(on.slice(0, 3)));
+    await page.reload();
+    await loaded(page);
+    await page.waitForFunction(() => document.querySelectorAll('.graph-svg .node .node-meta').length > 0, null, { timeout: T(5000) });
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    await page.uncheck('#graph-columns');
+    await page.waitForFunction(() => !document.querySelector('.graph-svg .node .node-meta'), null, { timeout: T(5000) });
+  });
+  await page.context().close();
+}
+
 console.log('Grafo de primer padre en el 3D');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

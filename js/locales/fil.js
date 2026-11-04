@@ -259,6 +259,7 @@ GB.i18n.define('fil', {
   'branchview.status': '{n} sa {total} branch ang nakikita',
   'branchview.reset': 'Ipakita ang lahat ng branch',
   'search.firstParent': 'Unang parent lang (tulad ng git log --first-parent)',
+  'search.columns': 'Ipakita ang may-akda at petsa sa tabi ng bawat commit (2D na graph)',
   'author.unknown': 'hindi kilala',
 
   /* ---------- graph overlay ---------- */

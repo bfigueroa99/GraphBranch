@@ -289,6 +289,7 @@ GB.i18n.define('fa', {
   'branchview.status': '{n} از {total} شاخه نمایش داده می‌شود',
   'branchview.reset': 'نمایش همهٔ شاخه‌ها',
   'search.firstParent': 'فقط والد اول (مانند git log --first-parent)',
+  'search.columns': 'نمایش نویسنده و تاریخ کنار هر کامیت (نمودار دوبعدی)',
   'author.unknown': 'ناشناس',
 
   /* ---------- graph overlay ---------- */

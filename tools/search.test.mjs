@@ -272,3 +272,11 @@ test('prParam lee ?pr= de la URL: un entero positivo, con o sin #; todo lo demá
   for (const bad of ['pr=', 'pr=0x1', 'pr=-3', 'pr=1.5', 'pr=abc', 'pr=1234567890', 'pr=<b>1</b>']) assert.equal(S.prParam(q(bad)), 0, bad);
   assert.equal(S.prParam(null), 0);
 });
+
+test('columnText arma «Autor · fecha» para las columnas del grafo 2D, con lo que falte', () => {
+  const fmt = (ms) => `d${ms}`;
+  assert.equal(S.columnText({ author: { name: 'Ana Pérez', login: 'ana' }, date: 5 }, fmt), 'Ana Pérez · d5');
+  assert.equal(S.columnText({ author: { name: '', login: 'ana' }, date: 5 }, fmt), 'ana · d5');
+  assert.equal(S.columnText({ author: {}, date: 5 }, fmt, 'Desconocido'), 'Desconocido · d5');
+  assert.equal(S.columnText({ author: { name: 'Luis' } }, fmt), 'Luis');
+});

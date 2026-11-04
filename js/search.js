@@ -296,5 +296,12 @@
     return v.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 100);
   }
 
-  GB.search = { authors, authorParam, branchViewParam, byAuthor, byBranches, firstParent, firstParentParam, limitBranches, find, mount, pathParam, prParam, queryParam, withOpenPr, LIMIT };
+  /** Texto de las columnas de autor y fecha junto a un commit: «Autor · fecha». `fmt` da la fecha en el idioma activo. */
+  function columnText(c, fmt, unknown = '') {
+    const who = String(c?.author?.name || c?.author?.login || unknown || '').trim();
+    const when = c?.date ? fmt(c.date) : '';
+    return [who, when].filter(Boolean).join(' · ');
+  }
+
+  GB.search = { columnText, authors, authorParam, branchViewParam, byAuthor, byBranches, firstParent, firstParentParam, limitBranches, find, mount, pathParam, prParam, queryParam, withOpenPr, LIMIT };
 })((window.GB = window.GB || {}));

@@ -259,6 +259,7 @@ GB.i18n.define('hu', {
   'branchview.status': '{n} / {total} ág látszik',
   'branchview.reset': 'Minden ág mutatása',
   'search.firstParent': 'Csak az első szülő (mint a git log --first-parent)',
+  'search.columns': 'Szerző és dátum megjelenítése minden commit mellett (2D gráf)',
   'author.unknown': 'ismeretlen',
 
   /* ---------- a gráf fölötti réteg ---------- */

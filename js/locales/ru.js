@@ -269,6 +269,7 @@ GB.i18n.define('ru', {
   'branchview.status': 'Видно веток: {n} из {total}',
   'branchview.reset': 'Показать все ветки',
   'search.firstParent': 'Только первый родитель (как git log --first-parent)',
+  'search.columns': 'Показывать автора и дату рядом с каждым коммитом (2D-граф)',
   'author.unknown': 'неизвестен',
 
   /* ---------- слой поверх графа ---------- */

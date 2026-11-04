@@ -259,6 +259,7 @@ GB.i18n.define('fi', {
   'branchview.status': '{n} / {total} haaraa näkyvissä',
   'branchview.reset': 'Näytä kaikki haarat',
   'search.firstParent': 'Vain ensimmäinen vanhempi (kuten git log --first-parent)',
+  'search.columns': 'Näytä tekijä ja päivämäärä jokaisen commitin vieressä (2D-kaavio)',
   'author.unknown': 'tuntematon',
 
   /* ---------- kaavion päällä oleva kerros ---------- */

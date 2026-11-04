@@ -274,7 +274,7 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 ~~**Blame de un archivo, segunda entrega**~~ hecho en #236 · Datos.
 134. **Salud del repo: tendencia de releases** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] La salud muestra los releases por semana de las últimas 8, como ya hace con los merges. Comprobar: `tools/health.test.mjs` con releases fabricados.
 135. ~~**Vista de texto: ramas nuevas**~~ hecho en #255 · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama creada en los últimos 7 días lo dice, con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
-136. **Resumen de la semana de la organización: rama más activa** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] Cada repo del resumen de la organización nombra su rama más activa de la semana. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
+136. ~~**Resumen de la semana de la organización: rama más activa**~~ hecho en #257 · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] Cada repo del resumen de la organización nombra su rama más activa de la semana. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
 137. **Salud del repo: tendencia de issues abiertos** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] La salud muestra los issues abiertos por semana de las últimas 8, con lo ya cargado. Comprobar: `tools/health.test.mjs` con issues fabricados.
 139. **Vista de texto: CI de cada rama** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama dice si su último CI ya cargado falló («CI fallando»), con una marca. Comprobar: prueba de la vista con `data.ci` fabricado y un paso del smoke.
 140. **Vista de texto: autor de la punta de cada rama** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama dice quién hizo el commit de su punta, con lo ya cargado. Comprobar: `tools/textview.test.mjs` y un paso del smoke.
@@ -606,3 +606,16 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/201, sin colisión
 - Validado: 565 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 202, expansión: ítem 136 (Resumen de la semana de la organización: rama más activa, Salidas)
+
+### 2026-11-04 · Iteración 202 · Expansión · Salidas
+
+- **Capacidad nueva: la imagen del resumen de la organización nombra la rama más activa de cada repo** (ítem 136 de la hoja de ruta, parte del 47). El Markdown de la organización ya traía esa línea desde #110, pero sin prueba (como el 134 de la 201, Para Benjamin 7); lo que faltaba era la imagen: `imageLinesOrg` (`js/digest.js`) suma «Rama: x (n)» a la fila de cada repo. Sin consultas ni textos nuevos (`digest.branch` ya existe en los 40 idiomas); sin CSP nueva.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/digest.test.mjs` («organización: cada repo nombra su rama más activa…») → la fila `C: 5 · Rama: main (5)` no está en la imagen sin el cambio.
+- README: Salud del repo (resumen de la organización) y Límites conocidos.
+- QA: texto de la rama aplanado (`flat`) y recortado a 70 caracteres en la imagen, escapado en el Markdown; repo sin ramas cargadas no muestra la línea (prueba); sin consultas; auditoría en la puerta.
+- Skills: no aplica: una línea más en una función pura que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (la misma línea que ya usa el resumen de un repo).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML`)
+- Reclamo: loop/202, sin colisión
+- Validado: pendiente
+- **Siguiente:** iteración 203, mantenimiento · Deuda: pendiente 1 (Pasos del smoke intermitentes en la sesión cloud: en la iteración 152, `npm run…)

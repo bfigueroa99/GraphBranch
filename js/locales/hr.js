@@ -37,6 +37,8 @@ GB.i18n.define('hr', {
   'status.limited': 'Uživo, sporije',
   'status.paused': 'Pauzirano',
   'status.error': 'Izvan mreže',
+  'status.errorNotFound': 'Nije pronađeno',
+  'status.errorRate': 'Kvota iskorištena',
   'status.retryIn': 'ponovni pokušaj za {time}',
   'status.stopped': 'zaustavljeno',
   'status.resumeHint': 'pokrenite ponovno za nastavak',

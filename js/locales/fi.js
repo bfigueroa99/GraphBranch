@@ -37,6 +37,8 @@ GB.i18n.define('fi', {
   'status.limited': 'Live, hitaampi',
   'status.paused': 'Keskeytetty',
   'status.error': 'Ei yhteyttä',
+  'status.errorNotFound': 'Ei löytynyt',
+  'status.errorRate': 'Kiintiö täynnä',
   'status.retryIn': 'yritetään uudelleen {time} kuluttua',
   'status.stopped': 'pysäytetty',
   'status.resumeHint': 'jatka painamalla Jatka',

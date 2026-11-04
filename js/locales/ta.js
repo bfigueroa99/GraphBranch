@@ -37,6 +37,8 @@ GB.i18n.define('ta', {
   'status.limited': 'நேரலை, மெதுவாக',
   'status.paused': 'இடைநிறுத்தப்பட்டது',
   'status.error': 'ஆஃப்லைன்',
+  'status.errorNotFound': 'கிடைக்கவில்லை',
+  'status.errorRate': 'ஒதுக்கீடு தீர்ந்தது',
   'status.retryIn': 'மீண்டும் முயற்சி: {time} கழித்து',
   'status.stopped': 'நிறுத்தப்பட்டது',
   'status.resumeHint': 'தொடர மீண்டும் இயக்கவும்',

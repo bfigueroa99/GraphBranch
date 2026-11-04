@@ -37,6 +37,8 @@ GB.i18n.define('ko', {
   'status.limited': '실시간(느림)',
   'status.paused': '일시정지됨',
   'status.error': '오프라인',
+  'status.errorNotFound': '찾을 수 없음',
+  'status.errorRate': '할당량 소진',
   'status.retryIn': '{time} 후 재시도',
   'status.stopped': '중지됨',
   'status.resumeHint': '재개하면 계속 갱신됩니다',

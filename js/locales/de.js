@@ -37,6 +37,8 @@ GB.i18n.define('de', {
   'status.limited': 'Live, langsamer',
   'status.paused': 'Pausiert',
   'status.error': 'Offline',
+  'status.errorNotFound': 'Nicht gefunden',
+  'status.errorRate': 'Kontingent erschöpft',
   'status.retryIn': 'neuer Versuch in {time}',
   'status.stopped': 'angehalten',
   'status.resumeHint': 'zum Fortfahren fortsetzen',

@@ -37,6 +37,8 @@ GB.i18n.define('ms', {
   'status.limited': 'Langsung, lebih perlahan',
   'status.paused': 'Dijeda',
   'status.error': 'Luar talian',
+  'status.errorNotFound': 'Tidak ditemui',
+  'status.errorRate': 'Kuota habis',
   'status.retryIn': 'cuba semula dalam {time}',
   'status.stopped': 'dihentikan',
   'status.resumeHint': 'sambung semula untuk meneruskan',

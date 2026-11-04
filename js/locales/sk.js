@@ -37,6 +37,8 @@ GB.i18n.define('sk', {
   'status.limited': 'Naživo, pomalšie',
   'status.paused': 'Pozastavené',
   'status.error': 'Offline',
+  'status.errorNotFound': 'Nenájdené',
+  'status.errorRate': 'Limit vyčerpaný',
   'status.retryIn': 'ďalší pokus o {time}',
   'status.stopped': 'zastavené',
   'status.resumeHint': 'pre pokračovanie stlačte Pokračovať',

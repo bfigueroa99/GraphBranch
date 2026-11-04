@@ -37,6 +37,8 @@ GB.i18n.define('fil', {
   'status.limited': 'Live, mas mabagal',
   'status.paused': 'Naka-pause',
   'status.error': 'Offline',
+  'status.errorNotFound': 'Hindi nahanap',
+  'status.errorRate': 'Naubos ang quota',
   'status.retryIn': 'susubukan muli sa loob ng {time}',
   'status.stopped': 'huminto',
   'status.resumeHint': 'ituloy para magpatuloy',

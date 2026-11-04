@@ -37,6 +37,8 @@ GB.i18n.define('el', {
   'status.limited': 'Ζωντανά, πιο αργά',
   'status.paused': 'Σε παύση',
   'status.error': 'Εκτός σύνδεσης',
+  'status.errorNotFound': 'Δεν βρέθηκε',
+  'status.errorRate': 'Εξαντλήθηκε το όριο',
   'status.retryIn': 'νέα προσπάθεια σε {time}',
   'status.stopped': 'σταματημένο',
   'status.resumeHint': 'πατήστε Συνέχιση για να προχωρήσετε',

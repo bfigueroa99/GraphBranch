@@ -37,6 +37,8 @@ GB.i18n.define('uk', {
   'status.limited': 'Наживо, повільніше',
   'status.paused': 'На паузі',
   'status.error': "Немає зв'язку",
+  'status.errorNotFound': 'Не знайдено',
+  'status.errorRate': 'Ліміт вичерпано',
   'status.retryIn': 'повтор через {time}',
   'status.stopped': 'зупинено',
   'status.resumeHint': 'відновіть, щоб продовжити',

@@ -37,6 +37,8 @@ GB.i18n.define('bn', {
   'status.limited': 'লাইভ, ধীরগতি',
   'status.paused': 'বিরতিতে',
   'status.error': 'অফলাইন',
+  'status.errorNotFound': 'পাওয়া যায়নি',
+  'status.errorRate': 'কোটা শেষ',
   'status.retryIn': '{time} পরে আবার চেষ্টা',
   'status.stopped': 'থেমে আছে',
   'status.resumeHint': 'চালিয়ে যেতে আবার চালু করুন',

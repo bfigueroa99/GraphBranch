@@ -37,6 +37,8 @@ GB.i18n.define('th', {
   'status.limited': 'สด แต่ช้าลง',
   'status.paused': 'หยุดชั่วคราว',
   'status.error': 'ออฟไลน์',
+  'status.errorNotFound': 'ไม่พบ',
+  'status.errorRate': 'โควตาหมด',
   'status.retryIn': 'ลองใหม่ใน {time}',
   'status.stopped': 'หยุดแล้ว',
   'status.resumeHint': 'กดดำเนินการต่อเพื่อใช้งานต่อ',

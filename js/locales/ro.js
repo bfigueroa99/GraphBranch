@@ -37,6 +37,8 @@ GB.i18n.define('ro', {
   'status.limited': 'În direct, mai lent',
   'status.paused': 'În pauză',
   'status.error': 'Offline',
+  'status.errorNotFound': 'Negăsit',
+  'status.errorRate': 'Cotă epuizată',
   'status.retryIn': 'reîncercare în {time}',
   'status.stopped': 'oprit',
   'status.resumeHint': 'reluați pentru a continua',

@@ -238,6 +238,11 @@ cada iteración lo repite (`node tools/loop.mjs --salud` lo imprime) y se quita 
    Routines con `.claude/skills/iteracion/PROMPT.md` byte a byte (cambió el 2026-11-01: suma que el turno
    terminado es la corrida terminada y que lo largo se espera con `node tools/esperar.mjs`), o poner el cron de
    OpenCode del README; si la vía es otra, decirlo en la sección «Routine» de la skill y en el README.
+7. **Ítems 134 y 141 de la hoja de ruta ya estaban hechos** (desde 2026-11-04). «Tendencia de releases» (134) y «tendencia
+   de PRs fusionados» (141) son lo que la salud ya muestra como «Despliegues por semana» (#118) y «Merges por semana»
+   (#164). `--check` (R3) no deja tacharlos con un `hecho en #K` repetido, así que quedan sin tachar y la iteración que los
+   toque no debe construirlos: hay que reemplazarlos por un ítem nuevo (misma numeración) o aceptar `hecho en #K` repetido
+   en la regla R3 de `tools/loop.mjs` (es la puerta del loop: lo decidís vos).
 
 ## Mapa de alcance
 
@@ -267,13 +272,13 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 
 131. **Issues de Jira y Trello, primera entrega** · Fuentes · 1×2/3. [replica 2026-10-28] [parte de «Issues de Jira y Trello»] Las claves tipo `ABC-123` de los mensajes de commit y de PR se vuelven enlaces a una URL de Jira que el usuario configura (guardada en este navegador), sin consultas nuevas. Comprobar: prueba del reconocimiento de claves y un paso del smoke.
 ~~**Blame de un archivo, segunda entrega**~~ hecho en #236 · Datos.
-~~**Salud del repo: tendencia de releases**~~ hecho en #118 · Análisis (ya existía: «Despliegues por semana» de la salud, `dora.weeks`; la iteración 200 lo comprobó y lo dio por hecho).
-~~**Vista de texto: ramas nuevas**~~ hecho en #255 · Público.
+134. **Salud del repo: tendencia de releases** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] La salud muestra los releases por semana de las últimas 8, como ya hace con los merges. Comprobar: `tools/health.test.mjs` con releases fabricados.
+135. ~~**Vista de texto: ramas nuevas**~~ hecho en #255 · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama creada en los últimos 7 días lo dice, con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
 136. **Resumen de la semana de la organización: rama más activa** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] Cada repo del resumen de la organización nombra su rama más activa de la semana. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
 137. **Salud del repo: tendencia de issues abiertos** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] La salud muestra los issues abiertos por semana de las últimas 8, con lo ya cargado. Comprobar: `tools/health.test.mjs` con issues fabricados.
 139. **Vista de texto: CI de cada rama** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama dice si su último CI ya cargado falló («CI fallando»), con una marca. Comprobar: prueba de la vista con `data.ci` fabricado y un paso del smoke.
 140. **Vista de texto: autor de la punta de cada rama** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama dice quién hizo el commit de su punta, con lo ya cargado. Comprobar: `tools/textview.test.mjs` y un paso del smoke.
-~~**Salud del repo: tendencia de PRs fusionados**~~ hecho en #164 · Análisis (ya existía: «Merges por semana» de la salud, `mergeWeeks`; lo vio la iteración 200).
+141. **Salud del repo: tendencia de PRs fusionados** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] La salud muestra los PRs fusionados por semana de las últimas 8, como ya hace con los merges, con lo ya cargado. Comprobar: `tools/health.test.mjs` con PRs fabricados.
 142. **Resumen de la semana: PRs fusionados por autor** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana nombra quién fusionó más PRs, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con PRs fabricados.
 143. **Resumen de la semana de la organización: PRs abiertos** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] El resumen de la semana de una organización suma los PRs abiertos en la semana de cada repo seguido, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
 144. **Resumen de la semana de la organización: autores nuevos** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] El resumen de la semana de una organización suma los autores nuevos de cada repo seguido, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
@@ -578,7 +583,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 
 ### 2026-11-04 · Iteración 200 · Expansión · Público
 
-- **Capacidad nueva: la vista de texto dice qué ramas son nuevas** (ítem 135 de la hoja de ruta, parte del 33). `freshBranches` (`js/textview.js`) toma de los eventos `branch-create` ya cargados las ramas creadas en los últimos 7 días; `build` marca `fresh` (nunca la por defecto) y el árbol lo dice en el nombre accesible y en una marca («creada en los últimos 7 días»). Sin consultas. Texto nuevo `textview.fresh` en los 40 idiomas; sin CSP nueva. Los ítems 134 y 141 ya existían (#118, #164: despliegues y merges por semana en la salud) y se tacharon como hechos, sin código.
+- **Capacidad nueva: la vista de texto dice qué ramas son nuevas** (ítem 135 de la hoja de ruta, parte del 33). `freshBranches` (`js/textview.js`) toma de los eventos `branch-create` ya cargados las ramas creadas en los últimos 7 días; `build` marca `fresh` (nunca la por defecto) y el árbol lo dice en el nombre accesible y en una marca («creada en los últimos 7 días»). Sin consultas. Texto nuevo `textview.fresh` en los 40 idiomas; sin CSP nueva. Los ítems 134 y 141 ya existen desde antes (#118 y #164: despliegues y merges por semana en la salud): no se pueden tachar sin repetir un PR (R3), así que quedan en la hoja y los siguientes iteraciones los toman como «ya hecho» (Para Benjamin).
 - **Pruebas que fallan sin la capacidad:** `node --test tools/textview.test.mjs` («una rama creada en los últimos 7 días se dice nueva…») → `ctx.window.GB.textview.freshBranches is not a function` sin el cambio.
 - README: Vista de texto y Mapa de alcance (Público).
 - QA: filas de teclado/lector de pantalla e idiomas: el texto va en `aria-label` y en `textContent` de una marca (sin `innerHTML`); 40 idiomas con `check-i18n`; ventana de 7 días, futuro, sin hora y la por defecto, miradas con la prueba; auditoría en la puerta.
@@ -586,5 +591,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (los eventos `branch-create` que ya usa la salud).
 - OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML`)
 - Reclamo: loop/200, sin colisión
-- Validado: pendiente
-- **Siguiente:** iteración 201, expansión: ítem 136 (Resumen de la semana de la organización: rama más activa, Salidas)
+- Validado: 564 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 201, expansión: ítem 134 (Salud del repo: tendencia de releases, Análisis)

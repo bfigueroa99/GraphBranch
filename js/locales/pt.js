@@ -518,6 +518,7 @@ GB.i18n.define('pt', {
   'health.closedWeeks': 'Issues fechados por semana, últimas {n} semanas (da mais antiga à atual): {list}',
   'health.branchWeeks': 'Branches novos por semana, últimas {n} semanas (da mais antiga à atual): {list}',
   'health.commitWeeks': 'Commits por semana, últimas {n} semanas (da mais antiga à atual): {list}',
+  'health.tagWeeks': 'Tags por semana, últimas {n} semanas (da mais antiga à atual): {list}',
   'health.ci': 'Falhas de CI',
   'health.ciPrs': 'PRs abertos com checks falhando: {failing} de {total} ({pct}%)',
   'health.ciFeed': 'Vezes em que a branch padrão ficou vermelha em 30 dias: {n}',

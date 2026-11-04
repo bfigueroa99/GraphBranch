@@ -137,6 +137,14 @@
 
     const forks = (data.forks || []).filter((f) => f.pushedAt && f.url).map((f) => ({ fullName: f.fullName, url: f.url, idle: Math.max(0, now - at(f.pushedAt)), stars: Math.max(0, Math.floor(Number(f.stars)) || 0) })).sort((a, b) => (forkSort === 'stars' ? b.stars - a.stars : 0) || a.idle - b.idle); // el push más reciente primero (o las estrellas, con el desempate por push), venga como venga la lista
 
+    // tags por semana: cada nombre cuenta en la fecha de su commit, si ese commit está cargado
+    const tagTimes = [];
+    if (data.tags) for (const [sha, names] of data.tags) {
+      const c = data.commits.get(sha);
+      const time = c && at(c.date);
+      if (time) for (const name of names) if (name) tagTimes.push({ time });
+    }
+
     return {
       forks: { total: forks.length, rows: forks.slice(0, ROWS) },
       stale: { total: stale.length, rows: stale.slice(0, ROWS) },
@@ -146,7 +154,7 @@
       dora,
       leadSource: { fromCommit, total: lead.length },
       ci,
-      pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now) }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
+      pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), tagWeeks: weekly(tagTimes, now) }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
     };
   }
 

@@ -528,6 +528,7 @@ GB.i18n.define('cs', {
   'health.closedWeeks': 'Uzavřené issues za týden, posledních {n} týdnů (od nejstaršího po aktuální): {list}',
   'health.branchWeeks': 'Nové větve za týden, posledních {n} týdnů (od nejstaršího po aktuální): {list}',
   'health.commitWeeks': 'Commity za týden, posledních {n} týdnů (od nejstaršího po aktuální): {list}',
+  'health.tagWeeks': 'Tagy za týden, posledních {n} týdnů (od nejstaršího po aktuální): {list}',
   'health.ci': 'Selhání CI',
   'health.ciPrs': 'Otevřené PR s červenými kontrolami: {failing} z {total} ({pct} %)',
   'health.ciFeed': 'Kolikrát výchozí větev zčervenala za 30 dní: {n}',

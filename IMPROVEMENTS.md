@@ -613,5 +613,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (reusar `setBranchView` y `update` del árbol).
 - OMC: plan=— · revisión=— · verificación=— (esfuerzo 1, un solo frente; revisión propia del diff)
 - Reclamo: loop/193, sin colisión
-- Validado: PENDIENTE
+- Validado: 556 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera puerta falló en mi propio paso del smoke (el botón dejaba el foco en el filtro y no en el árbol): arreglado y repetido.
 - **Siguiente:** iteración 194, expansión: ítem 125 (Alias de las pestañas, Escala)

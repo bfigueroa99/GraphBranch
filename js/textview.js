@@ -345,9 +345,10 @@
       showAllEl.hidden = true;
       showAllEl.addEventListener('click', () => {
         if (!onReset || !viewOn) return;
-        const focusBack = !!showAllEl.contains(document.activeElement) || document.activeElement === showAllEl;
+        const focusBack = document.activeElement === showAllEl;
         onReset();
-        if (focusBack) focus(root.querySelector('[role="treeitem"]')) || filterInput?.focus(); // el botón se esconde: el foco no se pierde
+        const first = root.querySelector('[role="treeitem"]'); // el botón se esconde: el foco pasa al árbol (o al filtro si quedó vacío)
+        if (focusBack) first ? focus(first) : filterInput?.focus();
       });
     }
     const branchOf = (n) => (n.classList.contains('tv-branch') ? n : n.closest('.tv-branch'));

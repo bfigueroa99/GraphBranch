@@ -30,3 +30,11 @@ test('las aristas del 3D usan materiales Lambert: el programa PBR compilaba ~170
   assert.match(s, /this\.ghostMat = new THREE\.MeshLambertMaterial\(/);
   assert.match(s, /this\.nodeMat = new THREE\.MeshStandardMaterial\(/, 'los commits conservan el brillo de vidrio');
 });
+
+test('placeLabels no ordena las fechas del eje en cada cuadro: el orden se guarda y se invalida al sincronizarlas', () => {
+  const s = src('graph3d.js');
+  const cuerpo = s.slice(s.indexOf('placeLabels() {'), s.indexOf('placeNotes(hits, cells, grid, hl) {'));
+  assert.doesNotMatch(cuerpo, /\? \[\] : \[\.\.\.this\.days/, 'el sort de las fechas no corre por cuadro');
+  assert.match(cuerpo, /\? \[\] : this\.daysByZ \|\| \(this\.daysByZ = /);
+  assert.match(s, /this\.daysByZ = null; \/\/ el orden de las fechas/, 'se invalida cuando cambian las fechas');
+});

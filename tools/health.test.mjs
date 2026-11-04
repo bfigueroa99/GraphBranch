@@ -87,7 +87,7 @@ test('ritmo: merges en 7 y 30 días y releases en 30, sin repetir una actividad'
     { id: '6', kind: 'push', time: ago(1) },
   ];
   const pace = compute(repo(), acts, NOW).pace;
-  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks], closedWeeks: [...pace.closedWeeks], branchWeeks: [...pace.branchWeeks], commitWeeks: [...pace.commitWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], closedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], branchWeeks: [0, 0, 0, 0, 0, 0, 0, 0], commitWeeks: [0, 1, 0, 2, 0, 0, 0, 1] });
+  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks], closedWeeks: [...pace.closedWeeks], branchWeeks: [...pace.branchWeeks], commitWeeks: [...pace.commitWeeks], tagWeeks: [...pace.tagWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], closedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], branchWeeks: [0, 0, 0, 0, 0, 0, 0, 0], commitWeeks: [0, 1, 0, 2, 0, 0, 0, 1], tagWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
 });
 
 test('DORA: despliegues en 30 días, mediana entre releases y tiempo de entrega', () => {
@@ -380,4 +380,24 @@ test('tendencia de commits: los cargados por semana, de la más vieja a la actua
   assert.deepEqual([...h.pace.commitWeeks], [0, 0, 0, 0, 1, 0, 1, 2], 'esta semana a y b, la pasada c, hace tres d; e (60 días), f (futuro), g y h (sin fecha válida) no cuentan');
   data.commits = new Map();
   assert.deepEqual([...compute(data, [], NOW).pace.commitWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
+});
+
+test('tendencia de tags: los cargados por semana, de la más vieja a la actual', () => {
+  const data = repo();
+  data.commits = new Map([
+    ['a', { date: ago(0.1) }],
+    ['b', { date: ago(9) }],
+    ['c', { date: ago(60) }], // fuera de las 8 semanas
+    ['d', {}], // sin fecha: no cuenta
+  ]);
+  data.tags = new Map([
+    ['a', ['v3', 'latest']],
+    ['b', ['v2']],
+    ['c', ['v0']],
+    ['d', ['v-1']],
+    ['zzz', ['v-fantasma']], // su commit no está cargado
+  ]);
+  assert.deepEqual([...compute(data, [], NOW).pace.tagWeeks], [0, 0, 0, 0, 0, 0, 1, 2], 'esta semana v3 y latest, la pasada v2; v0, v-1 y v-fantasma no cuentan');
+  data.tags = undefined;
+  assert.deepEqual([...compute(data, [], NOW).pace.tagWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
 });

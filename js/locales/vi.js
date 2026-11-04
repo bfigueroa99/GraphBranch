@@ -517,6 +517,7 @@ GB.i18n.define('vi', {
   'health.closedWeeks': 'Issue đã đóng mỗi tuần, {n} tuần gần nhất (từ cũ nhất đến hiện tại): {list}',
   'health.branchWeeks': 'Nhánh mới mỗi tuần, {n} tuần gần nhất (từ cũ nhất đến hiện tại): {list}',
   'health.commitWeeks': 'Commit mỗi tuần, {n} tuần gần nhất (từ cũ nhất đến hiện tại): {list}',
+  'health.tagWeeks': 'Thẻ mỗi tuần, {n} tuần gần nhất (từ cũ nhất đến hiện tại): {list}',
   'health.ci': 'Lỗi CI',
   'health.ciPrs': 'PR đang mở có kiểm tra thất bại: {failing}/{total} ({pct}%)',
   'health.ciFeed': 'Số lần nhánh mặc định chuyển đỏ trong 30 ngày: {n}',

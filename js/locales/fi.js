@@ -517,6 +517,7 @@ GB.i18n.define('fi', {
   'health.closedWeeks': 'Suljetut issuet viikossa, viimeiset {n} viikkoa (vanhimmasta nykyiseen): {list}',
   'health.branchWeeks': 'Uudet haarat viikossa, viimeiset {n} viikkoa (vanhimmasta nykyiseen): {list}',
   'health.commitWeeks': 'Commitit viikossa, viimeiset {n} viikkoa (vanhimmasta nykyiseen): {list}',
+  'health.tagWeeks': 'Tagit viikossa, viimeiset {n} viikkoa (vanhimmasta nykyiseen): {list}',
   'health.ci': 'CI-virheet',
   'health.ciPrs': 'Avoimet PR:t, joiden tarkistukset epäonnistuvat: {failing} / {total} ({pct} %)',
   'health.ciFeed': 'Kertaa, jolloin oletushaara punastui 30 päivässä: {n}',

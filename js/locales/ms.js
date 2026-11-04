@@ -517,6 +517,7 @@ GB.i18n.define('ms', {
   'health.closedWeeks': 'Isu yang ditutup setiap minggu, {n} minggu terakhir (dari yang tertua hingga kini): {list}',
   'health.branchWeeks': 'Branch baharu setiap minggu, {n} minggu terakhir (dari yang tertua hingga kini): {list}',
   'health.commitWeeks': 'Commit setiap minggu, {n} minggu terakhir (dari yang tertua hingga kini): {list}',
+  'health.tagWeeks': 'Tag setiap minggu, {n} minggu terakhir (dari yang tertua hingga kini): {list}',
   'health.ci': 'Kegagalan CI',
   'health.ciPrs': 'PR terbuka dengan semakan gagal: {failing} daripada {total} ({pct}%)',
   'health.ciFeed': 'Bilangan cabang lalai bertukar merah dalam 30 hari: {n}',

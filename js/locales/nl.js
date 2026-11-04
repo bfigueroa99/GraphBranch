@@ -518,6 +518,7 @@ GB.i18n.define('nl', {
   'health.closedWeeks': 'Gesloten issues per week, laatste {n} weken (van oudste naar huidige): {list}',
   'health.branchWeeks': 'Nieuwe branches per week, laatste {n} weken (van oudste naar huidige): {list}',
   'health.commitWeeks': 'Commits per week, laatste {n} weken (van oudste naar huidige): {list}',
+  'health.tagWeeks': 'Tags per week, laatste {n} weken (van oudste naar huidige): {list}',
   'health.ci': 'CI-fouten',
   'health.ciPrs': 'Open PR\'s met mislukte checks: {failing} van {total} ({pct}%)',
   'health.ciFeed': 'Aantal keren dat de standaardbranch in 30 dagen rood werd: {n}',

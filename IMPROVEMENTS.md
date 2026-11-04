@@ -655,5 +655,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (elegir el token por el dueño del repo en un único punto).
 - OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; toca tokens y `electron/token.js` pero solo suma un servicio a la lista, con la misma validación del IPC)
 - Reclamo: loop/196, sin colisión
-- Validado: pendiente
+- Validado: sin verde: node --test (558+2) y el resto de la puerta en verde; el smoke falló solo en pasos ajenos al cambio y distintos en cada corrida (1.ª: historial de un archivo, quién tocó un archivo, y mi paso nuevo por un selector; 2.ª: historial, quién tocó y vista de texto; 3.ª: filtro por autor; 4.ª: editar el código). Mi paso de la segunda cuenta pasó en las tres últimas; el disparo siguiente lo reanuda.
 - **Siguiente:** iteración 197, expansión: ítem 129 (Columnas de autor y fecha en el grafo 2D, Análisis)

@@ -16,6 +16,7 @@ GB.i18n.define('he', {
   'owner.empty': 'ל-{owner} אין מאגרים לעקוב אחריהם (לא כולל forks ומאגרים בארכיון).',
   'tabs.aria': 'מאגרים במעקב',
   'tabs.close': 'הפסק לעקוב אחרי {repo}',
+  'tabs.rename': 'שינוי שם של {repo} (לחיצה כפולה או F2)',
   'tabs.unread': { one: 'עדכון חדש אחד', two: 'שני עדכונים חדשים', other: '{n} עדכונים חדשים' },
   'badge.demo': 'סימולציה',
   'badge.private': 'פרטי',

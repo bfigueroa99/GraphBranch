@@ -16,6 +16,7 @@ GB.i18n.define('fr', {
   'owner.empty': '{owner} n’a aucun dépôt à suivre (sans compter les forks ni les dépôts archivés).',
   'tabs.aria': 'Dépôts suivis',
   'tabs.close': 'Ne plus suivre {repo}',
+  'tabs.rename': 'Renommer {repo} (double-clic ou F2)',
   'tabs.unread': { one: '{n} nouvelle mise à jour', other: '{n} nouvelles mises à jour' },
   'badge.demo': 'simulation',
   'badge.private': 'privé',

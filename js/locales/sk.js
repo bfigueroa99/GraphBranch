@@ -16,6 +16,7 @@ GB.i18n.define('sk', {
   'owner.empty': '{owner} nemá žiadne repozitáre na sledovanie (forky a archivované sa nerátajú).',
   'tabs.aria': 'Sledované repozitáre',
   'tabs.close': 'Prestať sledovať {repo}',
+  'tabs.rename': 'Premenovať {repo} (dvojklik alebo F2)',
   'tabs.unread': { one: '{n} nová aktualizácia', few: '{n} nové aktualizácie', many: '{n} novej aktualizácie', other: '{n} nových aktualizácií' },
   'badge.demo': 'simulácia',
   'badge.private': 'súkromný',

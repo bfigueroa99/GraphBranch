@@ -16,6 +16,7 @@ GB.i18n.define('ur', {
   'owner.empty': '{owner} کے پاس فالو کرنے کے لیے کوئی ریپوزٹری نہیں (فورک اور آرکائیو شدہ شمار نہیں ہوتیں)۔',
   'tabs.aria': 'فالو کی گئی ریپوزٹریز',
   'tabs.close': '{repo} کو فالو کرنا بند کریں',
+  'tabs.rename': '{repo} کا نام بدلیں (ڈبل کلک یا F2)',
   'tabs.unread': { one: '{n} نئی اپ ڈیٹ', other: '{n} نئی اپ ڈیٹس' },
   'badge.demo': 'سمولیشن',
   'badge.private': 'نجی',

@@ -16,6 +16,7 @@ GB.i18n.define('da', {
   'owner.empty': '{owner} har ingen repositories at følge (forks og arkiverede tæller ikke med).',
   'tabs.aria': 'Repositories, du følger',
   'tabs.close': 'Stop med at følge {repo}',
+  'tabs.rename': 'Omdøb {repo} (dobbeltklik eller F2)',
   'tabs.unread': { one: '{n} ny opdatering', other: '{n} nye opdateringer' },
   'badge.demo': 'simulation',
   'badge.private': 'privat',

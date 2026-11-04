@@ -16,6 +16,7 @@ GB.i18n.define('sv', {
   'owner.empty': '{owner} har inga repon att följa (forkar och arkiverade räknas inte).',
   'tabs.aria': 'Repon du följer',
   'tabs.close': 'Sluta följa {repo}',
+  'tabs.rename': 'Byt namn på {repo} (dubbelklicka eller F2)',
   'tabs.unread': { one: '{n} ny uppdatering', other: '{n} nya uppdateringar' },
   'badge.demo': 'simulering',
   'badge.private': 'privat',

@@ -16,6 +16,7 @@ GB.i18n.define('id', {
   'owner.empty': '{owner} tidak punya repositori untuk diikuti (fork dan yang diarsipkan tidak dihitung).',
   'tabs.aria': 'Repositori yang diikuti',
   'tabs.close': 'Berhenti mengikuti {repo}',
+  'tabs.rename': 'Ganti nama {repo} (klik dua kali atau F2)',
   'tabs.unread': '{n} pembaruan baru',
   'badge.demo': 'simulasi',
   'badge.private': 'privat',

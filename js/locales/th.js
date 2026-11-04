@@ -16,6 +16,7 @@ GB.i18n.define('th', {
   'owner.empty': '{owner} ไม่มี repository ให้ติดตาม (ไม่นับ fork และที่เก็บถาวรแล้ว)',
   'tabs.aria': 'repository ที่ติดตาม',
   'tabs.close': 'เลิกติดตาม {repo}',
+  'tabs.rename': 'เปลี่ยนชื่อ {repo} (ดับเบิลคลิกหรือ F2)',
   'tabs.unread': 'อัปเดตใหม่ {n} รายการ',
   'badge.demo': 'การจำลอง',
   'badge.private': 'ส่วนตัว',

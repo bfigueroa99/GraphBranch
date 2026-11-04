@@ -522,7 +522,8 @@
 
   /** Suma una pestaña al final, con su fuente, sin mostrarla ni arrancarla. */
   function addTab(src) {
-    const tab = { key: keyOf(src), demo: !!src.data.repo.demo, source: null, layout: null, game: null, unread: 0, status: null, el: null, startTimer: 0 };
+    const tab = { key: keyOf(src), demo: !!src.data.repo.demo, alias: '', source: null, layout: null, game: null, unread: 0, status: null, el: null, startTimer: 0 };
+    if (!tab.demo) tab.alias = U.cleanAlias(U.store.get('alias:' + tab.key, '')); // el alias es de este navegador, por repo
     tab.game = new GB.Game(gameHooks(tab));
     tab.game.load(tab.key); // cada repo tiene sus logros, su nivel y su misión
     setSource(tab, src);
@@ -961,7 +962,61 @@
       </button><button type="button" class="rt-close">${GB.Feed.icon('close')}</button>`;
     node.querySelector('.rt-main').addEventListener('click', () => openTab(tab));
     node.querySelector('.rt-close').addEventListener('click', () => closeTab(tab));
+    const main = node.querySelector('.rt-main');
+    main.addEventListener('dblclick', () => renameTab(tab));
+    main.addEventListener('keydown', (ev) => {
+      if (ev.key === 'F2' && !ev.altKey && !ev.ctrlKey && !ev.metaKey) {
+        ev.preventDefault();
+        renameTab(tab);
+      }
+    });
     return node;
+  }
+
+  /** Renombra la pestaña con un alias propio (doble clic o F2): Enter lo guarda, Esc lo deja como estaba y vacío lo quita.
+      Solo cambia lo que se ve en la pestaña; el repo, su URL y su título siguen siendo los reales. */
+  function renameTab(tab) {
+    const node = tab.el;
+    if (!node || tab.demo || node.querySelector('.rt-alias')) return;
+    const main = node.querySelector('.rt-main');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'rt-alias';
+    input.maxLength = U.ALIAS_MAX;
+    input.value = tab.alias || nameOf(tab);
+    input.setAttribute('aria-label', t('tabs.rename', { repo: nameOf(tab) }));
+    input.title = input.getAttribute('aria-label');
+    input.dir = 'auto';
+    let done = false;
+    const finish = (save) => {
+      if (done) return;
+      done = true;
+      const alias = U.cleanAlias(input.value);
+      if (save) {
+        tab.alias = alias === nameOf(tab) ? '' : alias;
+        U.store.set('alias:' + tab.key, tab.alias || null);
+      }
+      const focused = document.activeElement === input;
+      input.remove();
+      main.hidden = false;
+      renderTab(tab);
+      if (focused) main.focus({ preventScroll: true });
+    };
+    input.addEventListener('keydown', (ev) => {
+      ev.stopPropagation();
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        finish(true);
+      } else if (ev.key === 'Escape') {
+        ev.preventDefault();
+        finish(false);
+      }
+    });
+    input.addEventListener('blur', () => finish(true));
+    main.hidden = true;
+    main.after(input);
+    input.focus();
+    input.select();
   }
 
   /** Estado, nombre y novedades sin ver de una pestaña (cambia solo lo que cambió). */
@@ -980,11 +1035,12 @@
     const main = node.firstElementChild;
     if (shown) main.setAttribute('aria-current', 'true');
     else main.removeAttribute('aria-current');
+    const shownName = tab.alias || name;
     main.title = `${name} · ${stateText}`;
-    setText(node.querySelector('.rt-name'), name);
+    setText(node.querySelector('.rt-name'), shownName);
     setText(node.querySelector('.rt-n'), n ? (n > 99 ? '99+' : U.fmtNum(n)) : '');
     // el lector de pantalla oye el estado si no es el normal, y cuántas novedades esperan
-    const extra = [st === 'live' ? '' : stateText, n ? t('tabs.unread', { n }) : ''].filter(Boolean).join(', ');
+    const extra = [tab.alias ? name : '', st === 'live' ? '' : stateText, n ? t('tabs.unread', { n }) : ''].filter(Boolean).join(', ');
     setText(node.querySelector('.rt-sr'), extra ? `, ${extra}` : '');
     const close = node.querySelector('.rt-close');
     const label = t('tabs.close', { repo: name });

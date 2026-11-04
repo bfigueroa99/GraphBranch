@@ -16,6 +16,7 @@ GB.i18n.define('hu', {
   'owner.empty': '{owner} nem rendelkezik követhető repozitóriummal (a forkok és az archiváltak nem számítanak).',
   'tabs.aria': 'Követett repozitóriumok',
   'tabs.close': '{repo} követésének leállítása',
+  'tabs.rename': '{repo} átnevezése (dupla kattintás vagy F2)',
   'tabs.unread': { one: '{n} új frissítés', other: '{n} új frissítés' },
   'badge.demo': 'szimuláció',
   'badge.private': 'privát',

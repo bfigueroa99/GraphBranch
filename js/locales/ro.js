@@ -16,6 +16,7 @@ GB.i18n.define('ro', {
   'owner.empty': '{owner} nu are depozite de urmărit (fără fork-uri și arhivate).',
   'tabs.aria': 'Depozite urmărite',
   'tabs.close': 'Nu mai urmăriți {repo}',
+  'tabs.rename': 'Redenumește {repo} (dublu clic sau F2)',
   'tabs.unread': { one: '{n} actualizare nouă', few: '{n} actualizări noi', other: '{n} de actualizări noi' },
   'badge.demo': 'simulare',
   'badge.private': 'privat',

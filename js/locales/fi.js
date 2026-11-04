@@ -16,6 +16,7 @@ GB.i18n.define('fi', {
   'owner.empty': '{owner}: ei seurattavia repositorioita (forkkeja ja arkistoituja ei lasketa).',
   'tabs.aria': 'Seuratut repositoriot',
   'tabs.close': 'Lopeta repositorion {repo} seuraaminen',
+  'tabs.rename': 'Nimeä {repo} uudelleen (kaksoisnapsautus tai F2)',
   'tabs.unread': { one: '{n} uusi päivitys', other: '{n} uutta päivitystä' },
   'badge.demo': 'simulaatio',
   'badge.private': 'yksityinen',

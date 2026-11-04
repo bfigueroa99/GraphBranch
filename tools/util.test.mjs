@@ -88,3 +88,13 @@ test('ningún enlace de la interfaz arma su href con una URL de la API sin pasar
   }
   assert.deepEqual(sueltos, []);
 });
+
+test('cleanAlias: recorta, junta espacios, limita a 40 letras y vacío es sin alias', () => {
+  const U = load({});
+  assert.equal(U.cleanAlias('  mi   repo \n'), 'mi repo');
+  assert.equal(U.cleanAlias('   '), '');
+  assert.equal(U.cleanAlias(null), '');
+  assert.equal(U.cleanAlias(42), '');
+  assert.equal([...U.cleanAlias('a'.repeat(100))].length, 40);
+  assert.equal([...U.cleanAlias('😀'.repeat(60))].length, 40); // por letras, sin partir un emoji
+});

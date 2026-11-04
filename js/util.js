@@ -154,6 +154,10 @@ window.GB = window.GB || {};
     return parts.length && parts.every((p) => /^[\w.-]+$/.test(p) && !/^\.+$/.test(p)) ? { group: parts.join('/') } : null;
   };
 
+  /** El alias de una pestaña: sin saltos ni espacios de más y de hasta ALIAS_MAX letras (vacío = sin alias). */
+  U.ALIAS_MAX = 40;
+  U.cleanAlias = (v) => (typeof v === 'string' ? [...v.replace(/\s+/g, ' ').trim()].slice(0, U.ALIAS_MAX).join('').trim() : '');
+
   /** localStorage envuelto: puede no existir o lanzar (modo privado, sandbox). Un valor guardado que no es
       del tipo del `fallback` (lista, texto, número, booleano) está corrupto: se devuelve el `fallback`. */
   U.store = {

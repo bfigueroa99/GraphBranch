@@ -16,6 +16,7 @@ GB.i18n.define('fil', {
   'owner.empty': 'Walang repository ang {owner} na puwedeng sundan (hindi kasama ang mga fork at naka-archive).',
   'tabs.aria': 'Mga sinusundang repository',
   'tabs.close': 'Huwag nang sundan ang {repo}',
+  'tabs.rename': 'Palitan ang pangalan ng {repo} (double-click o F2)',
   'tabs.unread': { one: '{n} bagong update', other: '{n} bagong update' },
   'badge.demo': 'simulation',
   'badge.private': 'pribado',

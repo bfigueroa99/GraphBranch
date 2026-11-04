@@ -33,7 +33,7 @@ Repos locales,integraciones,must,yes,yes,"app de escritorio: carpeta local con g
 Estado de CI en ramas y PRs,ci,should,yes,yes,"README: CI de GitHub en la cabeza de las ramas y los PRs"
 Workspaces: agrupar repos y verlos juntos,varios repos,must,yes,yes,"README: Varios repos a la vez (hasta 10) y org:nombre"
 Workspaces compartidos con el equipo,varios repos,could,yes,partial,"se comparten por URL con sus repos; sin cuentas ni nube (lo que no cambia)"
-Pestañas por repo con alias,varios repos,should,yes,partial,"pestañas por repo, sin alias"
+Pestañas por repo con alias,varios repos,should,yes,yes,"README: Varios repos a la vez (doble clic o F2 en la pestaña)"
 Fetch y pull de varios repos a la vez,varios repos,could,yes,skip,"opera sobre clones locales; GraphBranch no los modifica"
 Insights: cómo se fusionan los PRs y sus tendencias,análisis,should,yes,yes,"README: Salud del repo (tiempo a fusionar, PRs por semana, DORA)"
 Aviso temprano de choques entre ramas,conflictos,should,yes,yes,"README: Buscar choques (?conflicts=1)"

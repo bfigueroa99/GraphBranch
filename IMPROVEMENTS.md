@@ -668,5 +668,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (un texto SVG por nodo, creado al entrar en pantalla).
 - OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML`)
 - Reclamo: loop/197, sin colisión
-- Validado: PENDIENTE
+- Validado: 561 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 198, expansión: ítem 133 (Resumen de la semana de la organización: ramas nuevas, Salidas)

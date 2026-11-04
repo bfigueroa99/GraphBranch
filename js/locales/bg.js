@@ -259,6 +259,7 @@ GB.i18n.define('bg', {
   'branchview.status': '{n} от {total} клона се виждат',
   'branchview.reset': 'Показване на всички клонове',
   'search.firstParent': 'Само първият родител (като git log --first-parent)',
+  'search.columns': 'Показване на автор и дата до всеки къмит (2D графика)',
   'author.unknown': 'неизвестен',
 
   /* ---------- слой върху графиката ---------- */

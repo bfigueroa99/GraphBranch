@@ -259,6 +259,7 @@ GB.i18n.define('ms', {
   'branchview.status': '{n} daripada {total} cabang kelihatan',
   'branchview.reset': 'Tunjuk semua cabang',
   'search.firstParent': 'Induk pertama sahaja (seperti git log --first-parent)',
+  'search.columns': 'Tunjukkan penulis dan tarikh di sebelah setiap commit (graf 2D)',
   'author.unknown': 'tidak diketahui',
 
   /* ---------- lapisan di atas graf ---------- */

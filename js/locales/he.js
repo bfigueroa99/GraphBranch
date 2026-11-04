@@ -299,6 +299,7 @@ GB.i18n.define('he', {
   'branchview.status': '{n} מתוך {total} ענפים מוצגים',
   'branchview.reset': 'הצגת כל הענפים',
   'search.firstParent': 'רק האב הראשון (כמו git log --first-parent)',
+  'search.columns': 'הצג מחבר ותאריך ליד כל קומיט (גרף דו־ממדי)',
   'author.unknown': 'לא ידוע',
 
   /* ---------- graph overlay ---------- */

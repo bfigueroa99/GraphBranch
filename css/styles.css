@@ -1194,6 +1194,14 @@ kbd {
   stroke: var(--surface);
   stroke-width: 0.8;
 }
+.node .node-meta {
+  fill: var(--muted, var(--ink));
+  font: 500 10px var(--font-mono);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  pointer-events: none;
+}
 .node .tag-text {
   fill: var(--ink);
   font: 600 10px var(--font-mono);

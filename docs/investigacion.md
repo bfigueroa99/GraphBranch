@@ -286,6 +286,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Alias de las pestañas | Escala | 1×1/1 | 1,0 | Replica (GitKraken) | ítem 125 |
 | Issues de Jira y Trello | Fuentes | 1×2/3 | 0,7 | Replica (GitKraken) | ítem 131 |
 | Resumen de la semana de la organización: ramas nuevas | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 133 |
+| Resumen de la semana de la organización: PRs abiertos | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 143 |
+| Resumen de la semana de la organización: autores nuevos | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 144 |
+| Salud del repo: tendencia de tags | Análisis | 1×2/2 | 1,0 | DORA | ítem 145 |
+| Vista de texto: ramas sin PR | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 146 |
+| Constelación: ordenar por ramas nuevas | Escala | 1×2/2 | 1,0 | Red de ramas de GitHub | ítem 147 |
+| Práctica: restore --staged y clean | Público | 1×2/2 | 1,0 | git-sim | ítem 148 |
 | Salud del repo: tendencia de releases | Análisis | 1×2/2 | 1,0 | DORA | ítem 134 |
 | Vista de texto: ramas nuevas | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 135 |
 | Resumen de la semana de la organización: rama más activa | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 136 |

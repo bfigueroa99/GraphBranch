@@ -242,3 +242,21 @@ test('viewNote: lo que dice la vista tras ocultar o dejar sola una rama', () => 
   assert.equal(note('solo', 'x', '', text), 'branchview.reset:');
   assert.equal(note('all', '', '', text), 'branchview.reset:');
 });
+
+test('una rama creada en los últimos 7 días se dice nueva, con lo ya cargado del feed; la por defecto, las viejas y las del futuro no', () => {
+  const DAY = 864e5;
+  const now = Date.UTC(2026, 10, 4);
+  const acts = [
+    { kind: 'branch-create', branch: 'feature', time: now - 2 * DAY },
+    { kind: 'branch-create', branch: 'main', time: now - 1 * DAY },
+    { kind: 'branch-create', branch: 'viejo', time: now - 9 * DAY },
+    { kind: 'branch-create', branch: 'futuro', time: now + 3 * DAY },
+    { kind: 'branch-create', branch: 'sin-hora' },
+    { kind: 'push', branch: 'otra', time: now - DAY },
+  ];
+  const fresh = ctx.window.GB.textview.freshBranches(acts, now);
+  assert.deepEqual([...fresh].sort(), ['feature', 'main']);
+  const by = (opts) => Object.fromEntries(build(repo(), { now, ...opts }).branches.map((b) => [b.name, b.fresh]));
+  assert.deepEqual(by({ fresh }), { main: false, feature: true }, 'la por defecto nunca es nueva');
+  assert.deepEqual(by({}), { main: false, feature: false }, 'sin feed, ninguna se sabe nueva');
+});

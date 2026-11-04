@@ -641,6 +641,7 @@ GB.i18n.define('ur', {
   'textview.forks': 'فعال فورکس: {n}',
   'textview.fork': '{name}، آخری push {when}',
   'textview.prs': 'کھلے PR: {n}',
+  'textview.fresh': 'پچھلے 7 دنوں میں بنائی گئی',
   'textview.quiet': '30 دن سے زیادہ غیر فعال',
   'textview.merged': 'ڈیفالٹ برانچ میں ضم ہو چکی',
   'textview.hideBranch': '{name} چھپائیں',

@@ -598,6 +598,7 @@ GB.i18n.define('ms', {
   'textview.forks': 'Fork aktif: {n}',
   'textview.fork': '{name}, push terakhir {when}',
   'textview.prs': 'PR terbuka: {n}',
+  'textview.fresh': 'dicipta dalam 7 hari lalu',
   'textview.quiet': 'tanpa aktiviti lebih 30 hari',
   'textview.merged': 'sudah digabungkan ke cabang lalai',
   'textview.hideBranch': 'Sembunyikan {name}',

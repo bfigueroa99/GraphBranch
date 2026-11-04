@@ -606,6 +606,7 @@ GB.i18n.define('hr', {
   'textview.forks': 'Aktivni forkovi: {n}',
   'textview.fork': '{name}, zadnji push {when}',
   'textview.prs': 'otvoreni PR-ovi: {n}',
+  'textview.fresh': 'stvorena u posljednjih 7 dana',
   'textview.quiet': 'bez aktivnosti dulje od 30 dana',
   'textview.merged': 'spojeno u zadanu granu',
   'textview.hideBranch': 'Sakrij {name}',

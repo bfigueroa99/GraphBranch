@@ -598,6 +598,7 @@ GB.i18n.define('hu', {
   'textview.forks': 'Aktív forkok: {n}',
   'textview.fork': '{name}, utolsó push {when}',
   'textview.prs': 'nyitott PR-ek: {n}',
+  'textview.fresh': 'az elmúlt 7 napban jött létre',
   'textview.quiet': '30 napnál régebben inaktív',
   'textview.merged': 'beolvasztva az alapértelmezett ágba',
   'textview.hideBranch': '{name} elrejtése',

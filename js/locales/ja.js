@@ -598,6 +598,7 @@ GB.i18n.define('ja', {
   'textview.forks': 'アクティブなフォーク: {n}',
   'textview.fork': '{name}、最後の push {when}',
   'textview.prs': 'オープンな PR: {n}',
+  'textview.fresh': '過去7日間に作成',
   'textview.quiet': '30日以上動きなし',
   'textview.merged': 'デフォルトブランチにマージ済み',
   'textview.hideBranch': '{name} を非表示',

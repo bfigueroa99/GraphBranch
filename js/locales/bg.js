@@ -598,6 +598,7 @@ GB.i18n.define('bg', {
   'textview.forks': 'Активни форкове: {n}',
   'textview.fork': '{name}, последен push {when}',
   'textview.prs': 'отворени PR: {n}',
+  'textview.fresh': 'създаден през последните 7 дни',
   'textview.quiet': 'без активност над 30 дни',
   'textview.merged': 'слята в основния клон',
   'textview.hideBranch': 'Скриване на {name}',

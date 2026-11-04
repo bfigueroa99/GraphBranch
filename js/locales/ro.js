@@ -606,6 +606,7 @@ GB.i18n.define('ro', {
   'textview.forks': 'Fork-uri active: {n}',
   'textview.fork': '{name}, ultimul push {when}',
   'textview.prs': 'PR-uri deschise: {n}',
+  'textview.fresh': 'creată în ultimele 7 zile',
   'textview.quiet': 'fără activitate de peste 30 de zile',
   'textview.merged': 'îmbinată în ramura implicită',
   'textview.hideBranch': 'Ascunde {name}',

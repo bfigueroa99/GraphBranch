@@ -561,3 +561,17 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/198, sin colisión
 - Validado: 562 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 199, mantenimiento · Rendimiento: auditoría (sin pendientes de Rendimiento)
+
+### 2026-11-04 · Iteración 199 · Mantenimiento · Rendimiento
+
+- **Auditoría de Rendimiento: el camino caliente del 3D no tiene nada caro** (sin pendientes previos). Base (mejor de 3): carga 1758 ms, 10 consultas, tareas largas 895 ms, 3D 10,6 fps y 2D 50,6 fps sin GPU. Con 1.000 ramas en 3D, por cuadro: `placeLabels` 0,36 ms, `placeNotes` 0,03 ms, `stepScene` 1,1 ms (el cuadro lo domina el render por software). El perfil de CPU de la carga no deja ninguna función de la app sobre 70 ms (`drawFx`, los fuegos de la carga). Arreglo: `placeLabels` ordenaba las fechas del eje (`[...days].sort(...)`) en cada cuadro; ahora guarda el orden (`daysByZ`) y lo invalida al sincronizarlas.
+- **Hallazgos:** 3 nuevos (pendientes 15, 16 y 17, Baja), 0 a la base de la auditoría
+- **Pruebas que fallan sin el arreglo:** `node --test tools/rendimiento.test.mjs` («placeLabels no ordena las fechas del eje en cada cuadro…») → `el sort de las fechas no corre por cuadro` sin el cambio.
+- README: no cambia (sin función nueva).
+- QA: 3D con la demo y con 1.000 ramas, medido con la auditoría completa antes y después (0 hallazgos); `--comparar`: carga +4 %, tareas largas +4 %, 3D −8 % (mejor), nada pasa del 10 %. Es ruido de la máquina, no del cambio (el sort de unas decenas de fechas no se nota).
+- Skills: no aplica: perfilar y ajustar un camino caliente propio, que las reglas del repo ya cubren.
+- Arena: no aplica: una sola forma obvia (guardar el orden y invalidarlo donde cambian las fechas).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML`)
+- Reclamo: loop/199, sin colisión
+- Validado: 563 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 200, expansión: ítem 134 (Salud del repo: tendencia de releases, Análisis)

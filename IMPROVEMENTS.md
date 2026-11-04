@@ -425,6 +425,19 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     nota de cada commit (`.tv-aside`) ya van en el `aria-label` del `treeitem`, pero son texto del nodo: según el lector se
     leen dos veces. Marcarlas `aria-hidden="true"` y comprobarlo con un lector real (ver Para Benjamin, 5).
     Reproducción: Playwright, abrir `#textview-btn` → `.tv-tag` dentro de `[role=treeitem][aria-label]` sin `aria-hidden`.
+15. [Rendimiento] `placeLabels` (`js/graph3d.js`) crea por cuadro un `{x, y}` por `project()`, un objeto por candidata, la grilla (`Map`) y
+    sus cierres. Medido en la iteración 199 con 1.000 ramas en 3D: 0,36 ms por cuadro (19 cuadros en 4 s sin GPU), así que
+    hoy no pesa; si algún día se mide más, reusar el punto de `project()` (devolver un objeto compartido y revisar quién lo
+    guarda) y un arreglo de candidatas. Reproducción: Playwright, `?repo=acme/web` con 1.000 ramas, envolver
+    `GB.Graph3D.prototype.placeLabels` con `performance.now()` → ~0,36 ms por llamada.
+16. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
+    `placeLabels`. El cuadro lo domina el render por software (~200 ms por cuadro sin GPU, 10 fps), que con GPU no existe;
+    medir con GPU real antes de tocarlo. Reproducción: la misma envoltura sobre `stepScene` → ~1,1 ms por llamada.
+17. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
+    (895 ms en total, sin GPU); el perfil de CPU de los primeros 6 s no deja ninguna función de la app por encima de 70 ms
+    (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
+    que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
+    Reproducción: `node tools/audit.mjs --repetir 3` → `consultas: 10`, `tareasLargasMs: 895`.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); `placeLabels`/`placeNotes` crean arreglos por cuadro

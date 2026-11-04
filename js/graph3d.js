@@ -1247,6 +1247,7 @@
         it.el.remove();
         this.days.delete(id);
       }
+      this.daysByZ = null; // el orden de las fechas solo cambia aquí: placeLabels lo ordena una vez, no por cuadro
     }
 
     /** Texto de la fecha de un día y su ancho estimado (mismo tipo y rellenos que el CSS), para que no se pisen. */
@@ -2790,7 +2791,7 @@
       }
       // fechas del eje: del presente al pasado, sin pisarse entre ellas ni a las etiquetas de rama
       const top = this.tmpB;
-      const days = space ? [] : [...this.days.values()].sort((a, b) => b.mesh.position.z - a.mesh.position.z);
+      const days = space ? [] : this.daysByZ || (this.daysByZ = [...this.days.values()].sort((a, b) => b.mesh.position.z - a.mesh.position.z));
       for (const d of days) {
         top.set(0, (this.dayR || this.radius) + 0.7, d.mesh.position.z);
         const p = this.project(top);
@@ -2885,6 +2886,7 @@
       for (const d of this.days.values()) (this.gDays.remove(d.mesh), d.el.remove());
       for (const r of this.ripples) (this.gFx.remove(r.mesh), r.mesh.material.dispose());
       for (const m of [this.nodes, this.edges, this.heads, this.pointers, this.days]) m.clear();
+      this.daysByZ = null;
       for (const f of this.fx) {
         this.gFx.remove(f.mesh);
         if (f.mesh.geometry !== this.geo.beam) f.mesh.geometry.dispose();

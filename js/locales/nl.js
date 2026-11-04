@@ -599,6 +599,7 @@ GB.i18n.define('nl', {
   'textview.forks': 'Actieve forks: {n}',
   'textview.fork': '{name}, laatste push {when}',
   'textview.prs': 'open PR\'s: {n}',
+  'textview.fresh': 'in de afgelopen 7 dagen gemaakt',
   'textview.quiet': 'geen activiteit in meer dan 30 dagen',
   'textview.merged': 'samengevoegd in de standaardbranch',
   'textview.hideBranch': '{name} verbergen',

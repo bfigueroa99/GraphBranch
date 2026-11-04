@@ -598,6 +598,7 @@ GB.i18n.define('hi', {
   'textview.forks': 'सक्रिय फ़ोर्क: {n}',
   'textview.fork': '{name}, आख़िरी push {when}',
   'textview.prs': 'खुले PR: {n}',
+  'textview.fresh': 'पिछले 7 दिनों में बनी',
   'textview.quiet': '30 दिन से अधिक निष्क्रिय',
   'textview.merged': 'डिफ़ॉल्ट ब्रांच में मर्ज हो चुकी',
   'textview.hideBranch': '{name} छिपाएँ',

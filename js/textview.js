@@ -10,6 +10,7 @@
   const DAY = 864e5;
   // una rama quieta: los mismos 30 días de las ramas olvidadas de la salud (js/health.js); los textos de 'textview.quiet' dicen 30
   const QUIET_DAYS = 30;
+  const FRESH_DAYS = 7; // una rama creada en los últimos 7 días se dice nueva (los textos de 'textview.fresh' dicen 7)
 
   const at = (x) => (typeof x === 'number' ? x : Date.parse(x) || 0);
 
@@ -23,8 +24,8 @@
   }
 
   /** Ramas (la por defecto primero, luego las más movidas) con sus últimos commits, del más nuevo al más viejo.
-      `quiet`: la rama no tuvo actividad en más de QUIET_DAYS días hasta `now`. */
-  function build(data, { perBranch = PER_BRANCH, maxBranches = MAX_BRANCHES, paths = null, releases = null, withForks = false, now = Date.now() } = {}) {
+      `quiet`: la rama no tuvo actividad en más de QUIET_DAYS días hasta `now`; `fresh`: la rama (no la por defecto) está en el Set `fresh` de `freshBranches`. */
+  function build(data, { perBranch = PER_BRANCH, maxBranches = MAX_BRANCHES, paths = null, releases = null, fresh = null, withForks = false, now = Date.now() } = {}) {
     const marks = new Map(); // sha -> [tag]
     if (data.tags) for (const [sha, names] of data.tags) marks.set(sha, [...names]);
     const relTags = releases?.tags || new Set();
@@ -80,7 +81,7 @@
       const isDefault = !!(b.isDefault || b.name === def);
       // fusionada: su punta ya está en la por defecto y no es la misma punta (una rama recién creada no es una fusionada)
       const merged = !isDefault && inDef.has(b.sha) && b.sha !== defTip;
-      return { name: b.name, isDefault, prs: open.get(b.name) || 0, quiet, merged, commits };
+      return { name: b.name, isDefault, prs: open.get(b.name) || 0, quiet, merged, fresh: !isDefault && !!fresh?.has(b.name), commits };
     }).filter((b) => !paths || b.commits.length);
     return { total, branches: rows, forks: withForks ? forks(data) : { total: 0, rows: [] } };
   }
@@ -96,6 +97,16 @@
       if (tag && a.sha) shas.set(a.sha, tag);
     }
     return { tags, shas };
+  }
+
+  /** Los nombres de las ramas creadas en los últimos FRESH_DAYS días según los eventos ya cargados (`branch-create`); sin hora o en el futuro no cuentan. */
+  function freshBranches(acts, now = Date.now()) {
+    const names = new Set();
+    for (const a of acts || []) {
+      if (!a || a.kind !== 'branch-create' || !a.branch || !(a.time > 0)) continue;
+      if (a.time <= now && now - a.time <= FRESH_DAYS * DAY) names.add(String(a.branch));
+    }
+    return names;
   }
 
   /** Qué hay de nuevo en `tree` frente a lo ya leído (`seen`: { branches:Set, shas:Set }): ramas y commits sin repetir. */
@@ -218,13 +229,14 @@
         const li = mk('li', 'tv-branch');
         li.setAttribute('role', 'treeitem');
         li.setAttribute('aria-expanded', open.has(b.name) ? 'true' : 'false');
-        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}${b.quiet ? ', ' + text('textview.quiet') : ''}${b.merged ? ', ' + text('textview.merged') : ''}, ${text('textview.shown', { n: b.commits.length })}`);
+        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}${b.fresh ? ', ' + text('textview.fresh') : ''}${b.quiet ? ', ' + text('textview.quiet') : ''}${b.merged ? ', ' + text('textview.merged') : ''}, ${text('textview.shown', { n: b.commits.length })}`);
         li.tabIndex = i === 0 ? 0 : -1;
         li.dataset.branch = b.name;
         const head = mk('span', 'tv-head');
         head.appendChild(mk('span', 'tv-name', b.name));
         if (b.isDefault) head.appendChild(mk('span', 'tv-tag', text('textview.default')));
         if (b.prs) head.appendChild(mk('span', 'tv-tag', text('textview.prs', { n: b.prs })));
+        if (b.fresh) head.appendChild(mk('span', 'tv-tag', text('textview.fresh')));
         if (b.quiet) head.appendChild(mk('span', 'tv-tag', text('textview.quiet')));
         if (b.merged) head.appendChild(mk('span', 'tv-tag', text('textview.merged')));
         if (hideOk(b)) {
@@ -426,5 +438,5 @@
     return is('vista', 'texto') || is('view', 'text');
   }
 
-  GB.textview = { build, forks, news, taggedCount, releasedCount, releaseMarks, filter, scopeText, viewAction, viewNote, mount, openParam, PER_BRANCH, MAX_BRANCHES, MAX_FORKS, QUIET_DAYS };
+  GB.textview = { build, forks, news, taggedCount, releasedCount, releaseMarks, freshBranches, filter, scopeText, viewAction, viewNote, mount, openParam, PER_BRANCH, MAX_BRANCHES, MAX_FORKS, QUIET_DAYS };
 })((window.GB = window.GB || {}));

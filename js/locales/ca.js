@@ -598,6 +598,7 @@ GB.i18n.define('ca', {
   'textview.forks': 'Forks actius: {n}',
   'textview.fork': '{name}, darrer push {when}',
   'textview.prs': 'PR oberts: {n}',
+  'textview.fresh': 'creada en els últims 7 dies',
   'textview.quiet': 'sense activitat fa més de 30 dies',
   'textview.merged': 'fusionada a la principal',
   'textview.hideBranch': 'Amaga {name}',

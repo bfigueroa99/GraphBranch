@@ -614,6 +614,7 @@ GB.i18n.define('ru', {
   'textview.forks': 'Активные форки: {n}',
   'textview.fork': '{name}, последний push {when}',
   'textview.prs': 'открытые PR: {n}',
+  'textview.fresh': 'создана за последние 7 дней',
   'textview.quiet': 'без активности более 30 дней',
   'textview.merged': 'слита в основную ветку',
   'textview.hideBranch': 'Скрыть {name}',

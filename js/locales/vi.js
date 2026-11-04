@@ -598,6 +598,7 @@ GB.i18n.define('vi', {
   'textview.forks': 'Fork đang hoạt động: {n}',
   'textview.fork': '{name}, push gần nhất {when}',
   'textview.prs': 'PR đang mở: {n}',
+  'textview.fresh': 'được tạo trong 7 ngày qua',
   'textview.quiet': 'không hoạt động hơn 30 ngày',
   'textview.merged': 'đã gộp vào nhánh mặc định',
   'textview.hideBranch': 'Ẩn {name}',

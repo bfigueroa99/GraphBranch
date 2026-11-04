@@ -697,6 +697,7 @@ GB.i18n.define('ar', {
   'textview.forks': 'الفروع المنسوخة النشطة: {n}',
   'textview.fork': '{name}، آخر push {when}',
   'textview.prs': 'PR مفتوحة: {n}',
+  'textview.fresh': 'أُنشئ في آخر 7 أيام',
   'textview.quiet': 'بلا نشاط منذ أكثر من 30 يومًا',
   'textview.merged': 'مدموجة في الرئيسية',
   'textview.hideBranch': 'إخفاء {name}',

@@ -598,6 +598,7 @@ GB.i18n.define('fi', {
   'textview.forks': 'Aktiiviset forkit: {n}',
   'textview.fork': '{name}, viimeisin push {when}',
   'textview.prs': 'avoimet PR:t: {n}',
+  'textview.fresh': 'luotu viimeisen 7 päivän aikana',
   'textview.quiet': 'ei toimintaa yli 30 päivään',
   'textview.merged': 'yhdistetty oletushaaraan',
   'textview.hideBranch': 'Piilota {name}',

@@ -37,6 +37,8 @@ GB.i18n.define('he', {
   'status.limited': 'חי, לאט יותר',
   'status.paused': 'מושהה',
   'status.error': 'לא מחובר',
+  'status.errorNotFound': 'לא נמצא',
+  'status.errorRate': 'המכסה נוצלה',
   'status.retryIn': 'ניסיון חוזר בעוד {time}',
   'status.stopped': 'נעצר',
   'status.resumeHint': 'לחץ על המשך כדי להמשיך',

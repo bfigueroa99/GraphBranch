@@ -37,6 +37,8 @@ GB.i18n.define('sv', {
   'status.limited': 'Live, långsammare',
   'status.paused': 'Pausad',
   'status.error': 'Offline',
+  'status.errorNotFound': 'Hittades inte',
+  'status.errorRate': 'Kvoten är slut',
   'status.retryIn': 'försöker igen om {time}',
   'status.stopped': 'stoppad',
   'status.resumeHint': 'återuppta för att fortsätta',

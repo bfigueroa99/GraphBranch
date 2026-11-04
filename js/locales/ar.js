@@ -37,6 +37,8 @@ GB.i18n.define('ar', {
   'status.limited': 'مباشر، بوتيرة أبطأ',
   'status.paused': 'متوقف مؤقتًا',
   'status.error': 'غير متصل',
+  'status.errorNotFound': 'غير موجود',
+  'status.errorRate': 'انتهت الحصة',
   'status.retryIn': 'إعادة المحاولة بعد {time}',
   'status.stopped': 'متوقف',
   'status.resumeHint': 'استأنف للمتابعة',

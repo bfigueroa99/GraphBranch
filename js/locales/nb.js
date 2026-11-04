@@ -37,6 +37,8 @@ GB.i18n.define('nb', {
   'status.limited': 'Live, tregere',
   'status.paused': 'På pause',
   'status.error': 'Frakoblet',
+  'status.errorNotFound': 'Ikke funnet',
+  'status.errorRate': 'Kvoten er brukt opp',
   'status.retryIn': 'prøver igjen om {time}',
   'status.stopped': 'stoppet',
   'status.resumeHint': 'fortsett for å gå videre',

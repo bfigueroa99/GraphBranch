@@ -37,6 +37,8 @@ GB.i18n.define('ja', {
   'status.limited': 'ライブ（低速）',
   'status.paused': '一時停止中',
   'status.error': 'オフライン',
+  'status.errorNotFound': '見つかりません',
+  'status.errorRate': '上限に達しました',
   'status.retryIn': '{time}後に再試行',
   'status.stopped': '停止中',
   'status.resumeHint': '再開すると更新を続けます',

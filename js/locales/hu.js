@@ -37,6 +37,8 @@ GB.i18n.define('hu', {
   'status.limited': 'Élő, lassabban',
   'status.paused': 'Szüneteltetve',
   'status.error': 'Nincs kapcsolat',
+  'status.errorNotFound': 'Nem található',
+  'status.errorRate': 'A keret elfogyott',
   'status.retryIn': 'újrapróbálkozás {time} múlva',
   'status.stopped': 'leállítva',
   'status.resumeHint': 'folytasd a továbbhaladáshoz',

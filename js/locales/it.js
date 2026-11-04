@@ -37,6 +37,8 @@ GB.i18n.define('it', {
   'status.limited': 'Live, più lento',
   'status.paused': 'In pausa',
   'status.error': 'Offline',
+  'status.errorNotFound': 'Non trovato',
+  'status.errorRate': 'Quota esaurita',
   'status.retryIn': 'nuovo tentativo tra {time}',
   'status.stopped': 'fermo',
   'status.resumeHint': 'riprendi per continuare',

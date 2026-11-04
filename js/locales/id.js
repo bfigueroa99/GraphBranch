@@ -37,6 +37,8 @@ GB.i18n.define('id', {
   'status.limited': 'Langsung, lebih lambat',
   'status.paused': 'Dijeda',
   'status.error': 'Offline',
+  'status.errorNotFound': 'Tidak ditemukan',
+  'status.errorRate': 'Kuota habis',
   'status.retryIn': 'mencoba lagi dalam {time}',
   'status.stopped': 'dihentikan',
   'status.resumeHint': 'lanjutkan untuk meneruskan',

@@ -37,6 +37,8 @@ GB.i18n.define('ca', {
   'status.limited': 'En directe, més lent',
   'status.paused': 'En pausa',
   'status.error': 'Sense connexió',
+  'status.errorNotFound': 'No trobat',
+  'status.errorRate': 'Quota esgotada',
   'status.retryIn': 'reintent en {time}',
   'status.stopped': 'aturat',
   'status.resumeHint': 'reprèn per continuar',

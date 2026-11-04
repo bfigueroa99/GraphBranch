@@ -37,6 +37,8 @@ GB.i18n.define('ur', {
   'status.limited': 'لائیو، سست رفتار',
   'status.paused': 'رکا ہوا',
   'status.error': 'آف لائن',
+  'status.errorNotFound': 'نہیں ملا',
+  'status.errorRate': 'کوٹا ختم',
   'status.retryIn': '{time} میں دوبارہ کوشش',
   'status.stopped': 'رک گیا',
   'status.resumeHint': 'آگے بڑھنے کے لیے “جاری رکھیں” دبائیں',

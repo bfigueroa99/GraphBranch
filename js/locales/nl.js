@@ -37,6 +37,8 @@ GB.i18n.define('nl', {
   'status.limited': 'Live, trager',
   'status.paused': 'Gepauzeerd',
   'status.error': 'Offline',
+  'status.errorNotFound': 'Niet gevonden',
+  'status.errorRate': 'Limiet bereikt',
   'status.retryIn': 'opnieuw proberen over {time}',
   'status.stopped': 'gestopt',
   'status.resumeHint': 'hervat om door te gaan',

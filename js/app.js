@@ -1025,7 +1025,7 @@
     if (!node || !tab.source) return;
     const st = tab.status?.state || 'loading';
     const name = nameOf(tab);
-    const stateText = tab.demo && st === 'live' ? t('status.demoLive') : t(STATE_TEXT[st] || 'status.loading');
+    const stateText = tab.demo && st === 'live' ? t('status.demoLive') : t(U.statusKey(tab.status) || 'status.loading');
     const n = tab.unread;
     node.dataset.state = st;
     // con la vista conjunta ninguna pestaña es «la que se ve»: se ven todas
@@ -1114,7 +1114,7 @@
       .filter((x) => x.source)
       .map((x) => {
         const st = x.status?.state || 'loading';
-        return { key: x.key, name: nameOf(x), state: st, stateText: x.demo && st === 'live' ? t('status.demoLive') : t(STATE_TEXT[st] || 'status.loading'), badge: badgeOf(x.source.data.repo), demo: x.demo };
+        return { key: x.key, name: nameOf(x), state: st, stateText: x.demo && st === 'live' ? t('status.demoLive') : t(U.statusKey(x.status) || 'status.loading'), badge: badgeOf(x.source.data.repo), demo: x.demo };
       });
   }
 
@@ -2776,14 +2776,6 @@
 
   /* ---------- estado de conexión ---------- */
 
-  const STATE_TEXT = {
-    loading: 'status.loading',
-    live: 'status.live',
-    limited: 'status.limited',
-    paused: 'status.paused',
-    error: 'status.error',
-  };
-
   function onStatus(tab, s) {
     const changed = tab.status?.state !== s.state;
     tab.status = s;
@@ -2802,7 +2794,7 @@
     // un repo que todavía no empezó a consultar (los que arrancan juntos esperan su turno)
     const s = status || { state: 'loading', demo: !!active?.demo };
     el.status.dataset.state = s.state;
-    const text = s.demo && s.state === 'live' ? t('status.demoLive') : STATE_TEXT[s.state] ? t(STATE_TEXT[s.state]) : s.state;
+    const text = s.demo && s.state === 'live' ? t('status.demoLive') : U.statusKey(s) ? t(U.statusKey(s)) : s.state;
     // es región viva y esto corre cada segundo: reescribir el mismo texto podría volver a anunciarlo
     if (el.statusText.textContent !== text) el.statusText.textContent = text;
     const now = Date.now();

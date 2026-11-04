@@ -37,6 +37,8 @@ GB.i18n.define('vi', {
   'status.limited': 'Trực tiếp, chậm hơn',
   'status.paused': 'Đã tạm dừng',
   'status.error': 'Ngoại tuyến',
+  'status.errorNotFound': 'Không tìm thấy',
+  'status.errorRate': 'Hết hạn mức',
   'status.retryIn': 'thử lại sau {time}',
   'status.stopped': 'đã dừng',
   'status.resumeHint': 'hãy tiếp tục để chạy lại',

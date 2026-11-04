@@ -37,6 +37,8 @@ GB.i18n.define('hi', {
   'status.limited': 'लाइव, धीमा',
   'status.paused': 'रुका हुआ',
   'status.error': 'ऑफ़लाइन',
+  'status.errorNotFound': 'नहीं मिला',
+  'status.errorRate': 'कोटा समाप्त',
   'status.retryIn': 'फिर कोशिश: {time} बाद',
   'status.stopped': 'बंद',
   'status.resumeHint': 'जारी रखने के लिए फिर शुरू करें',

@@ -37,6 +37,8 @@ GB.i18n.define('cs', {
   'status.limited': 'Živě, pomaleji',
   'status.paused': 'Pozastaveno',
   'status.error': 'Bez připojení',
+  'status.errorNotFound': 'Nenalezeno',
+  'status.errorRate': 'Limit vyčerpán',
   'status.retryIn': 'další pokus za {time}',
   'status.stopped': 'zastaveno',
   'status.resumeHint': 'pro pokračování obnovte',

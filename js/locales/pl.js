@@ -37,6 +37,8 @@ GB.i18n.define('pl', {
   'status.limited': 'Na żywo, wolniej',
   'status.paused': 'Wstrzymano',
   'status.error': 'Brak połączenia',
+  'status.errorNotFound': 'Nie znaleziono',
+  'status.errorRate': 'Limit wyczerpany',
   'status.retryIn': 'ponowna próba za {time}',
   'status.stopped': 'zatrzymano',
   'status.resumeHint': 'wznów, aby kontynuować',

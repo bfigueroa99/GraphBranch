@@ -98,3 +98,13 @@ test('cleanAlias: recorta, junta espacios, limita a 40 letras y vacío es sin al
   assert.equal([...U.cleanAlias('a'.repeat(100))].length, 40);
   assert.equal([...U.cleanAlias('😀'.repeat(60))].length, 40); // por letras, sin partir un emoji
 });
+
+test('statusKey: un 404 o la cuota agotada no se rotulan «Sin conexión»', () => {
+  const U = load({});
+  assert.equal(U.statusKey({ state: 'live' }), 'status.live');
+  assert.equal(U.statusKey({ state: 'error', error: { kind: 'notfound' } }), 'status.errorNotFound');
+  assert.equal(U.statusKey({ state: 'error', error: { kind: 'rate' } }), 'status.errorRate');
+  assert.equal(U.statusKey({ state: 'error', error: { kind: 'network' } }), 'status.error');
+  assert.equal(U.statusKey({ state: 'error' }), 'status.error');
+  assert.equal(U.statusKey({ state: 'inventado' }), null);
+});

@@ -37,6 +37,8 @@ GB.i18n.define('da', {
   'status.limited': 'Live, langsommere',
   'status.paused': 'På pause',
   'status.error': 'Offline',
+  'status.errorNotFound': 'Ikke fundet',
+  'status.errorRate': 'Kvote opbrugt',
   'status.retryIn': 'prøver igen om {time}',
   'status.stopped': 'stoppet',
   'status.resumeHint': 'genoptag for at fortsætte',

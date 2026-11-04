@@ -37,6 +37,8 @@ GB.i18n.define('zh-Hans', {
   'status.limited': '实时（较慢）',
   'status.paused': '已暂停',
   'status.error': '已离线',
+  'status.errorNotFound': '未找到',
+  'status.errorRate': '配额已用尽',
   'status.retryIn': '{time}后重试',
   'status.stopped': '已停止',
   'status.resumeHint': '点击“继续”恢复更新',

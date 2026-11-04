@@ -37,6 +37,8 @@ GB.i18n.define('bg', {
   'status.limited': 'На живо, по-бавно',
   'status.paused': 'На пауза',
   'status.error': 'Няма връзка',
+  'status.errorNotFound': 'Не е намерено',
+  'status.errorRate': 'Квотата е изчерпана',
   'status.retryIn': 'нов опит след {time}',
   'status.stopped': 'спряно',
   'status.resumeHint': 'възобновете, за да продължите',

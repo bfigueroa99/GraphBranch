@@ -279,3 +279,17 @@ test('organización: suma las ramas nuevas de cada repo (cada nombre una vez por
   assert.ok(imageLinesOrg(o, 'acme', t).some((l) => /C 5 · Ramas nuevas: 2/.test(l.text)));
   assert.doesNotMatch(toMarkdownOrg(computeOrg([{ repo: 'a/b', data: repo(), acts: [] }], NOW), 'a', t), /Ramas nuevas/);
 });
+
+test('organización: cada repo nombra su rama más activa, en el Markdown y en la imagen', () => {
+  const quiet = { commits: new Map([c('q', 1, [], 'ana')]), branches: new Map([['dev', { name: 'dev', sha: 'q' }]]) };
+  const o = computeOrg([{ repo: 'acme/web', data: repo(), acts: [] }, { repo: 'acme/api', data: quiet, acts: [] }], NOW);
+  const t = { head: 'S · {repo}', commits: 'C: {n}', merged: 'M', releases: 'R', people: 'P', branch: 'Rama' };
+  const md = toMarkdownOrg(o, 'acme', t);
+  assert.match(md, /## acme\/web\n\n- C: 5\n- Rama: `main` \(5\)\n/);
+  assert.match(md, /## acme\/api\n\n- C: 1\n- Rama: `dev` \(1\)\n/);
+  const rows = imageLinesOrg(o, 'acme', t).filter((l) => l.kind === 'row').map((l) => l.text);
+  assert.ok(rows.includes('C: 5 · Rama: main (5)'), rows.join('|'));
+  assert.ok(rows.includes('C: 1 · Rama: dev (1)'));
+  const sin = computeOrg([{ repo: 'acme/x', data: { commits: new Map([c('z', 1, [], 'a')]), branches: new Map() }, acts: [] }], NOW);
+  assert.doesNotMatch(imageLinesOrg(sin, 'acme', t).map((l) => l.text).join('\n'), /Rama:/);
+});

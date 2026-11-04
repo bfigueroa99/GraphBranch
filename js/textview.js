@@ -137,29 +137,35 @@
     return out.join('. ');
   }
 
-  /** Qué pide una tecla sobre una rama: H la oculta, S la deja sola; con Ctrl, Alt o Meta (atajos del navegador), nada. */
+  /** Qué pide una tecla sobre una rama: H la oculta, S la deja sola, A vuelve a ver todas; con Ctrl, Alt o Meta (atajos del navegador), nada. */
   function viewAction(ev) {
     if (!ev || ev.ctrlKey || ev.altKey || ev.metaKey) return null;
     const k = String(ev.key || '').toLowerCase();
-    return k === 'h' ? 'hide' : k === 's' ? 'solo' : null;
+    return k === 'h' ? 'hide' : k === 's' ? 'solo' : k === 'a' ? 'all' : null;
   }
 
   /** Lo que dice la vista tras ocultar o dejar sola una rama: `solo` es la rama que quedó sola ('' si ya no hay ninguna). */
   function viewNote(how, name, solo, text) {
     if (how === 'hide') return text('textview.hidden', { name });
+    if (how === 'all') return text('branchview.reset');
     return solo === name ? text('textview.soloed', { name }) : text('branchview.reset');
   }
 
   /** Monta el árbol en `root`. `text(key, params)`: traductor; `onGo({ branch, sha })`: Enter sobre un nodo.
       `onView(name, how)` (how: 'hide' | 'solo') y `canHide()`: ocultar una rama o dejarla sola desde aquí (H y S, o sus botones);
-      la rama por defecto no se oculta. Teclado: ↑ ↓ recorren lo visible, → abre o baja al primer hijo, ← cierra o sube al padre, Inicio y Fin. */
-  function mount(root, { text, ago, onGo, onView, canHide, filterInput, live, scopeEl }) {
+      la rama por defecto no se oculta. `onReset()` (tecla A o el botón `showAllEl`, visibles solo con ramas ocultas): vuelve a ver todas. Teclado: ↑ ↓ recorren lo visible, → abre o baja al primer hijo, ← cierra o sube al padre, Inicio y Fin. */
+  function mount(root, { text, ago, onGo, onView, canHide, filterInput, live, scopeEl, showAllEl, onReset }) {
     const hideOk = (b) => !!onView && !b.isDefault && (!canHide || canHide());
     const seen = { branches: new Set(), shas: new Set() };
     const open = new Set(); // ramas abiertas
     let tree = { total: 0, branches: [] };
     let query = '';
     let timer = 0;
+    let viewOn = false; // hay ramas ocultas o «solo una» en el grafo: lo dice el `scope` que llega con el árbol
+    const syncAll = (scope) => {
+      viewOn = !!scope?.branches;
+      if (showAllEl) showAllEl.hidden = !viewOn || !onReset;
+    };
     const say = (msg) => {
       if (live) live.textContent = msg;
     };
@@ -273,6 +279,7 @@
     /** Primera vez (al abrir): todo lo que hay cuenta como leído y solo la rama por defecto viene abierta. */
     function render(next, scope) {
       tree = next;
+      syncAll(scope);
       const note = scopeText(scope, text);
       if (scopeEl) {
         scopeEl.textContent = note;
@@ -297,6 +304,7 @@
       const key = inside && keyOf(inside);
       const pos = inside ? items().indexOf(inside) : -1;
       tree = next;
+      if (scope !== undefined) syncAll(scope);
       if (scope !== undefined && scopeEl) {
         const note = scopeText(scope, text);
         scopeEl.textContent = note;
@@ -333,6 +341,15 @@
         }
       });
     }
+    if (showAllEl) {
+      showAllEl.hidden = true;
+      showAllEl.addEventListener('click', () => {
+        if (!onReset || !viewOn) return;
+        const focusBack = !!showAllEl.contains(document.activeElement) || document.activeElement === showAllEl;
+        onReset();
+        if (focusBack) focus(root.querySelector('[role="treeitem"]')) || filterInput?.focus(); // el botón se esconde: el foco no se pierde
+      });
+    }
     const branchOf = (n) => (n.classList.contains('tv-branch') ? n : n.closest('.tv-branch'));
 
     root.addEventListener('keydown', (ev) => {
@@ -342,6 +359,13 @@
       const i = vis.indexOf(n);
       const isBranch = n.classList.contains('tv-branch');
       const how = viewAction(ev);
+      if (how === 'all') {
+        if (onReset && viewOn) {
+          onReset();
+          ev.preventDefault();
+        }
+        return;
+      }
       if (how && onView) {
         const b = branchOf(n);
         const row = tree.branches.find((x) => x.name === b.dataset.branch);

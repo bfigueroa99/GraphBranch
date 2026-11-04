@@ -16,6 +16,7 @@ GB.i18n.define('pl', {
   'owner.empty': '{owner} nie ma repozytoriów do obserwowania (forki i zarchiwizowane się nie liczą).',
   'tabs.aria': 'Obserwowane repozytoria',
   'tabs.close': 'Przestań obserwować {repo}',
+  'tabs.rename': 'Zmień nazwę {repo} (dwukrotne kliknięcie lub F2)',
   'tabs.unread': { one: '{n} nowa aktualizacja', few: '{n} nowe aktualizacje', many: '{n} nowych aktualizacji', other: '{n} nowej aktualizacji' },
   'badge.demo': 'symulacja',
   'badge.private': 'prywatne',

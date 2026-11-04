@@ -16,6 +16,7 @@ GB.i18n.define('sw', {
   'owner.empty': '{owner} hana hazina za kufuatilia (fork na zilizohifadhiwa kwenye kumbukumbu hazihesabiwi).',
   'tabs.aria': 'Hazina zinazofuatiliwa',
   'tabs.close': 'Acha kufuatilia {repo}',
+  'tabs.rename': 'Badilisha jina la {repo} (bofya mara mbili au F2)',
   'tabs.unread': { one: 'Sasisho {n} jipya', other: 'Masasisho {n} mapya' },
   'badge.demo': 'uigaji',
   'badge.private': 'ya faragha',

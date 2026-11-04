@@ -16,6 +16,7 @@ GB.i18n.define('ja', {
   'owner.empty': '{owner} にはフォローできるリポジトリがありません（フォークとアーカイブ済みは除きます）。',
   'tabs.aria': 'フォロー中のリポジトリ',
   'tabs.close': '{repo} のフォローをやめる',
+  'tabs.rename': '{repo} の名前を変更（ダブルクリックまたは F2）',
   'tabs.unread': '新しい更新 {n} 件',
   'badge.demo': 'シミュレーション',
   'badge.private': 'プライベート',

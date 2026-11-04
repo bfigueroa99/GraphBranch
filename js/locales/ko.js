@@ -16,6 +16,7 @@ GB.i18n.define('ko', {
   'owner.empty': '{owner}에게는 팔로우할 저장소가 없습니다(포크와 보관된 저장소는 제외).',
   'tabs.aria': '팔로우 중인 저장소',
   'tabs.close': '{repo} 팔로우 중지',
+  'tabs.rename': '{repo} 이름 바꾸기 (더블 클릭 또는 F2)',
   'tabs.unread': '새 업데이트 {n}건',
   'badge.demo': '시뮬레이션',
   'badge.private': '비공개',

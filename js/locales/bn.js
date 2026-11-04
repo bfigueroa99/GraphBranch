@@ -16,6 +16,7 @@ GB.i18n.define('bn', {
   'owner.empty': '{owner}-এর অনুসরণ করার মতো কোনো রিপোজিটরি নেই (ফর্ক ও আর্কাইভ করা বাদে)।',
   'tabs.aria': 'অনুসরণ করা রিপোজিটরি',
   'tabs.close': '{repo} অনুসরণ করা বন্ধ করুন',
+  'tabs.rename': '{repo} এর নাম বদলান (ডাবল ক্লিক বা F2)',
   'tabs.unread': { one: '{n}টি নতুন আপডেট', other: '{n}টি নতুন আপডেট' },
   'badge.demo': 'সিমুলেশন',
   'badge.private': 'প্রাইভেট',

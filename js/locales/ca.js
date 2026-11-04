@@ -16,6 +16,7 @@ GB.i18n.define('ca', {
   'owner.empty': '{owner} no té repositoris per seguir (sense comptar forks ni arxivats).',
   'tabs.aria': 'Repositoris seguits',
   'tabs.close': 'Deixa de seguir {repo}',
+  'tabs.rename': 'Canvia el nom de {repo} (doble clic o F2)',
   'tabs.unread': { one: '{n} novetat', other: '{n} novetats' },
   'badge.demo': 'simulació',
   'badge.private': 'privat',

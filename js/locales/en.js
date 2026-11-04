@@ -21,6 +21,7 @@ GB.i18n.define('en', {
   'owner.empty': "{owner} has no repositories to follow (forks and archived ones don't count).",
   'tabs.aria': 'Followed repositories',
   'tabs.close': 'Stop following {repo}',
+  'tabs.rename': 'Rename {repo} (double-click or F2)',
   'tabs.unread': { one: '{n} new update', other: '{n} new updates' },
   'badge.demo': 'simulation',
   'badge.private': 'private',

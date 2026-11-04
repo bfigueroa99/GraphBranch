@@ -16,6 +16,7 @@ GB.i18n.define('tr', {
   'owner.empty': '{owner} hesabının takip edilecek deposu yok (fork’lar ve arşivlenmiş olanlar sayılmaz).',
   'tabs.aria': 'Takip edilen depolar',
   'tabs.close': '{repo} deposunu takip etmeyi bırak',
+  'tabs.rename': '{repo} yeniden adlandır (çift tıklama veya F2)',
   'tabs.unread': { one: '{n} yeni güncelleme', other: '{n} yeni güncelleme' },
   'badge.demo': 'simülasyon',
   'badge.private': 'özel',

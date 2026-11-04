@@ -16,6 +16,7 @@ GB.i18n.define('ms', {
   'owner.empty': '{owner} tiada repositori untuk diikuti (fork dan yang diarkibkan tidak dikira).',
   'tabs.aria': 'Repositori yang diikuti',
   'tabs.close': 'Berhenti mengikuti {repo}',
+  'tabs.rename': 'Namakan semula {repo} (klik dua kali atau F2)',
   'tabs.unread': '{n} kemas kini baharu',
   'badge.demo': 'simulasi',
   'badge.private': 'peribadi',

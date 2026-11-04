@@ -1905,6 +1905,42 @@ console.log('Varios repos a la vez');
     if (url !== 'o/b o/a') throw new Error(`la URL lleva ${url}`);
   });
 
+  await step(page, 'alias de una pestaña: F2 la renombra, se recuerda y el nombre real sigue accesible', async () => {
+    await page.focus('#repo-tabs .rt:nth-child(2) .rt-main');
+    await page.keyboard.press('F2');
+    const input = page.locator('#repo-tabs .rt-alias');
+    await input.waitFor({ timeout: T(3000) });
+    if (!(await page.evaluate(() => document.activeElement?.classList.contains('rt-alias')))) throw new Error('F2 no dejó el foco en el campo del alias');
+    await page.keyboard.type('  Mi   producto ');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#repo-tabs .rt-alias', { state: 'detached', timeout: T(3000) });
+    const tab = (await repoTabs(page))[1];
+    if (tab.name !== 'Mi producto') throw new Error(`la pestaña dice «${tab.name}»`);
+    const real = await page.evaluate(() => ({
+      sr: document.querySelector('#repo-tabs .rt:nth-child(2) .rt-sr').textContent,
+      title: document.querySelector('#repo-tabs .rt:nth-child(2) .rt-main').title,
+      close: document.querySelector('#repo-tabs .rt:nth-child(2) .rt-close').getAttribute('aria-label'),
+      saved: localStorage.getItem('graphbranch:alias:github:o/b') ?? localStorage.getItem('graphbranch:alias:o/b'),
+      link: document.querySelector('#repo-link')?.textContent,
+      url: new URLSearchParams(location.search).getAll('repo').join(' '),
+      focus: document.activeElement?.className,
+    }));
+    if (!real.sr.includes('o/b') || !real.title.includes('o/b') || !real.close.includes('o/b')) throw new Error(`el nombre real se perdió: ${JSON.stringify(real)}`);
+    if (real.saved !== '"Mi producto"') throw new Error(`no se guardó el alias: ${real.saved}`);
+    if (real.link !== 'o/b' || real.url !== 'o/b o/a') throw new Error(`el alias tocó el repo o la URL: ${JSON.stringify(real)}`);
+    if (real.focus !== 'rt-main') throw new Error(`el foco quedó en ${real.focus}`);
+    // Esc deja el alias como estaba y vacío lo quita
+    await page.keyboard.press('F2');
+    await page.keyboard.type('otro');
+    await page.keyboard.press('Escape');
+    if ((await repoTabs(page))[1].name !== 'Mi producto') throw new Error('Esc cambió el alias');
+    await page.keyboard.press('F2');
+    await page.keyboard.press('Control+A');
+    await page.keyboard.press('Backspace');
+    await page.keyboard.press('Enter');
+    if ((await repoTabs(page))[1].name !== 'o/b') throw new Error('vaciar el alias no devolvió el nombre real');
+  });
+
   await step(page, 'clic en una actividad de otro repo lleva a su pestaña', async () => {
     gh.push('o/a', 'main', 'cambio en a');
     const item = page.locator('#feed .act', { has: page.locator('.act-repo', { hasText: 'o/a' }) }).first();

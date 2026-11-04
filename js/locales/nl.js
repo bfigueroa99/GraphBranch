@@ -16,6 +16,7 @@ GB.i18n.define('nl', {
   'owner.empty': '{owner} heeft geen repository’s om te volgen (forks en gearchiveerde tellen niet mee).',
   'tabs.aria': 'Gevolgde repository’s',
   'tabs.close': '{repo} niet meer volgen',
+  'tabs.rename': '{repo} hernoemen (dubbelklik of F2)',
   'tabs.unread': { one: '{n} nieuwe update', other: '{n} nieuwe updates' },
   'badge.demo': 'simulatie',
   'badge.private': 'privé',

@@ -16,6 +16,7 @@ GB.i18n.define('cs', {
   'owner.empty': '{owner} nemá žádné repozitáře ke sledování (forky a archivované se nepočítají).',
   'tabs.aria': 'Sledované repozitáře',
   'tabs.close': 'Přestat sledovat {repo}',
+  'tabs.rename': 'Přejmenovat {repo} (dvojklik nebo F2)',
   'tabs.unread': { one: '{n} nová aktualizace', few: '{n} nové aktualizace', many: '{n} nové aktualizace', other: '{n} nových aktualizací' },
   'badge.demo': 'simulace',
   'badge.private': 'soukromý',

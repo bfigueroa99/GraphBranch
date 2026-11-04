@@ -16,6 +16,7 @@ GB.i18n.define('nb', {
   'owner.empty': '{owner} har ingen repoer å følge (forker og arkiverte teller ikke).',
   'tabs.aria': 'Repoer du følger',
   'tabs.close': 'Slutt å følge {repo}',
+  'tabs.rename': 'Gi {repo} nytt navn (dobbeltklikk eller F2)',
   'tabs.unread': { one: '{n} ny oppdatering', other: '{n} nye oppdateringer' },
   'badge.demo': 'simulering',
   'badge.private': 'privat',

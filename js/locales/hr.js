@@ -16,6 +16,7 @@ GB.i18n.define('hr', {
   'owner.empty': '{owner} nema repozitorija za praćenje (ne računaju se forkovi ni arhivirani).',
   'tabs.aria': 'Praćeni repozitoriji',
   'tabs.close': 'Prestani pratiti {repo}',
+  'tabs.rename': 'Preimenuj {repo} (dvoklik ili F2)',
   'tabs.unread': { one: '{n} novo ažuriranje', few: '{n} nova ažuriranja', other: '{n} novih ažuriranja' },
   'badge.demo': 'simulacija',
   'badge.private': 'privatno',

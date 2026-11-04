@@ -16,6 +16,7 @@ GB.i18n.define('zh-Hant', {
   'owner.empty': '{owner} 沒有可關注的儲存庫（不計分叉和已封存的儲存庫）。',
   'tabs.aria': '已關注的儲存庫',
   'tabs.close': '取消關注 {repo}',
+  'tabs.rename': '重新命名 {repo}（按兩下或 F2）',
   'tabs.unread': '{n} 則新動態',
   'badge.demo': '模擬',
   'badge.private': '私人',

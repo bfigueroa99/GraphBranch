@@ -16,6 +16,7 @@ GB.i18n.define('zh-Hans', {
   'owner.empty': '{owner} 没有可关注的仓库（不计复刻和已归档的仓库）。',
   'tabs.aria': '已关注的仓库',
   'tabs.close': '取消关注 {repo}',
+  'tabs.rename': '重命名 {repo}（双击或 F2）',
   'tabs.unread': '{n} 条新动态',
   'badge.demo': '模拟',
   'badge.private': '私有',

@@ -16,6 +16,7 @@ GB.i18n.define('vi', {
   'owner.empty': '{owner} không có kho nào để theo dõi (không tính fork và kho đã lưu trữ).',
   'tabs.aria': 'Các kho đang theo dõi',
   'tabs.close': 'Bỏ theo dõi {repo}',
+  'tabs.rename': 'Đổi tên {repo} (nhấp đúp hoặc F2)',
   'tabs.unread': '{n} cập nhật mới',
   'badge.demo': 'mô phỏng',
   'badge.private': 'riêng tư',

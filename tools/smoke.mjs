@@ -3328,6 +3328,38 @@ console.log('Bitbucket propio con token');
   await page.context().close();
 }
 
+console.log('Segunda cuenta de GitHub');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  const auths = [];
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', (route) => {
+    const u = new URL(route.request().url());
+    auths.push([u.pathname, route.request().headers().authorization || '']);
+    return route.fulfill({ status: 404, contentType: 'application/json', body: '{"message":"Not Found"}' });
+  });
+  await step(page, 'el token de la segunda cuenta va solo a los repos de su dueño y el principal a los demás', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    await page.fill('#token-input', 'tok-principal0123');
+    await page.fill('#token2-owner', 'Acme');
+    await page.fill('#token2-input', 'tok-segunda0123');
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForFunction(() => !document.querySelector('#settings').open, null, { timeout: T(3000) });
+    const saved = await page.evaluate(() => JSON.parse(JSON.parse(localStorage.getItem('graphbranch:account2'))));
+    if (saved.owner !== 'Acme' || saved.token !== 'tok-segunda0123') throw new Error(`se guardó ${JSON.stringify(saved)}`);
+    await page.goto(`${base}/index.html?lang=es&repo=acme/web&repo=otro/api`);
+    await page.waitForTimeout(3000);
+    const of = (owner) => auths.filter(([path]) => path.startsWith(`/repos/${owner}/`));
+    if (!of('acme').length || !of('otro').length) throw new Error(`no se consultaron los dos repos: ${JSON.stringify(auths)}`);
+    if (of('acme').some(([, a]) => a !== 'Bearer tok-segunda0123')) throw new Error(`acme salió con ${JSON.stringify(of('acme'))}`);
+    if (of('otro').some(([, a]) => a !== 'Bearer tok-principal0123')) throw new Error(`otro salió con ${JSON.stringify(of('otro'))}`);
+  }, { allow: /404/ });
+  await page.context().close();
+}
+
 console.log('Fijar una rama con el teclado');
 {
   const gh = fakeGitHub();

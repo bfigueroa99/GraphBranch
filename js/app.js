@@ -153,6 +153,9 @@
     bbdcTokenInput: $('#bbdc-token-input'),
     bbdcTokenToggle: $('#bbdc-token-toggle'),
     bbdcTokenWhere: $('#bbdc-token-where'),
+    token2Owner: $('#token2-owner'),
+    token2Input: $('#token2-input'),
+    token2Toggle: $('#token2-toggle'),
     hooksBox: $('#hooks-box'),
     hooksList: $('#hooks-list'),
     depth: $('#depth'),
@@ -218,6 +221,8 @@
     azureToken: desktop ? '' : U.secret.get('azureToken', ''),
     // el de un Bitbucket propio, aparte y atado a su dirección: si ?bitbucket= es otro, no se usa (ni se pisa hasta guardar Ajustes)
     bbdcToken: desktop ? '' : GB.BitbucketServerSource.unpack(U.secret.get('bbdcToken', ''), BITBUCKET_URL),
+    // la segunda cuenta de GitHub: un token atado a un dueño u organización, solo para sus repos
+    account2: desktop ? { owner: '', token: '' } : GB.GitHubSource.unpack2(U.secret.get('account2', '')),
     depth: U.store.get('depth', 40),
     marks: U.store.get('marks', true) !== false, // tags y entornos de despliegue (2 consultas más por repo de GitHub)
   };
@@ -517,7 +522,7 @@
     if (host === 'codeberg') return new GB.CodebergSource({ owner, name, token: settings.codebergToken, ...remembered });
     if (host === 'forgejo') return new GB.CodebergSource({ owner, name, webUrl: FORGE_URL, avatars: desktop, ...remembered });
     if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, webUrl: GITLAB_URL, avatars: desktop, ...remembered });
-    return new GB.GitHubSource({ owner, name, token: settings.token, apiUrl: API_URL, ...remembered });
+    return new GB.GitHubSource({ owner, name, token: GB.GitHubSource.tokenFor(owner, settings.token, settings.account2), apiUrl: API_URL, ...remembered });
   }
 
   /** Suma una pestaña al final, con su fuente, sin mostrarla ni arrancarla. */
@@ -718,7 +723,7 @@
     if (!refresh) el.repoForm.setAttribute('aria-busy', 'true');
     let list;
     try {
-      list = await GB.GitHubSource.ownerRepos(owner, { token: settings.token, apiUrl: API_URL });
+      list = await GB.GitHubSource.ownerRepos(owner, { token: GB.GitHubSource.tokenFor(owner, settings.token, settings.account2), apiUrl: API_URL });
     } catch (err) {
       return refresh ? undefined : repoNote(i18n.text(err.msg || err.message));
     } finally {
@@ -800,8 +805,9 @@
     if (paused || document.hidden || EMBED) return;
     for (const owner of Object.keys(followedOwners)) {
       let entry = orgFeeds.get(owner);
-      if (!entry || entry.token !== settings.token) {
-        entry = { token: settings.token, feed: GB.GitHubSource.orgFeed(owner, { token: settings.token, apiUrl: API_URL }), first: true };
+      const tk = GB.GitHubSource.tokenFor(owner, settings.token, settings.account2);
+      if (!entry || entry.token !== tk) {
+        entry = { token: tk, feed: GB.GitHubSource.orgFeed(owner, { token: tk, apiUrl: API_URL }), first: true };
         orgFeeds.set(owner, entry);
       }
       let acts;
@@ -3211,6 +3217,8 @@
     el.bitbucketTokenInput.value = settings.bitbucketToken;
     el.azureTokenInput.value = settings.azureToken;
     el.bbdcTokenInput.value = settings.bbdcToken;
+    el.token2Owner.value = settings.account2.owner;
+    el.token2Input.value = settings.account2.token;
     for (const [input, toggle] of tokenFields) {
       input.type = 'password';
       toggle.textContent = t('settings.show');
@@ -3278,6 +3286,7 @@
     [el.bitbucketTokenInput, el.bitbucketTokenToggle],
     [el.azureTokenInput, el.azureTokenToggle],
     [el.bbdcTokenInput, el.bbdcTokenToggle],
+    [el.token2Input, el.token2Toggle],
     ...hookFields.map((f) => [f.input, f.toggle]),
   ];
   const showToggle = (input, toggle) => (toggle.textContent = input.type === 'password' ? t('settings.show') : t('settings.hide'));
@@ -3298,6 +3307,8 @@
     el.bitbucketTokenInput.value = '';
     el.azureTokenInput.value = '';
     el.bbdcTokenInput.value = '';
+    el.token2Owner.value = '';
+    el.token2Input.value = '';
     for (const f of hookFields) f.input.value = '';
     el.tokenInput.focus();
   });
@@ -3310,6 +3321,8 @@
     settings.bitbucketToken = el.bitbucketTokenInput.value.trim();
     settings.azureToken = el.azureTokenInput.value.trim();
     if (BITBUCKET_URL) settings.bbdcToken = el.bbdcTokenInput.value.trim(); // sin servidor elegido, el campo no se ve y lo guardado queda como está
+    const account2Stored = GB.GitHubSource.pack2(el.token2Owner.value, el.token2Input.value); // sin dueño o sin token, no hay segunda cuenta
+    settings.account2 = GB.GitHubSource.unpack2(account2Stored);
     const bbdcStored = GB.BitbucketServerSource.pack(settings.bbdcToken, BITBUCKET_URL) || null;
     settings.depth = Math.max(10, Math.min(100, Number(el.depth.value) || 40));
     settings.marks = el.marks.checked;
@@ -3321,6 +3334,7 @@
       desktop.setToken(settings.bitbucketToken, 'bitbucket').catch(failed);
       desktop.setToken(settings.azureToken, 'azure').catch(failed);
       if (BITBUCKET_URL) desktop.setToken(bbdcStored || '', 'bitbucketdc').catch(failed);
+      desktop.setToken(account2Stored, 'github2').catch(failed);
     } else {
       U.secret.set('token', settings.token || null);
       U.secret.set('gitlabToken', settings.gitlabToken || null);
@@ -3328,6 +3342,7 @@
       U.secret.set('bitbucketToken', settings.bitbucketToken || null);
       U.secret.set('azureToken', settings.azureToken || null);
       if (BITBUCKET_URL) U.secret.set('bbdcToken', bbdcStored);
+      U.secret.set('account2', account2Stored || null);
     }
     U.store.set('depth', settings.depth);
     U.store.set('marks', settings.marks ? null : false);
@@ -3341,7 +3356,7 @@
     // se reconecta lo que cambió: un token de GitLab nuevo no gasta la cuota de GitHub. Si no cambió
     // nada, todo, como dice el botón
     const changed = (tab) =>
-      settings.depth !== before.depth || settings.marks !== before.marks || ({ gitlab: settings.gitlabToken !== before.gitlabToken, codeberg: settings.codebergToken !== before.codebergToken, bitbucket: settings.bitbucketToken !== before.bitbucketToken, forgejo: false, azure: settings.azureToken !== before.azureToken, bitbucketdc: settings.bbdcToken !== before.bbdcToken }[tab.source.host] ?? settings.token !== before.token);
+      settings.depth !== before.depth || settings.marks !== before.marks || ({ gitlab: settings.gitlabToken !== before.gitlabToken, codeberg: settings.codebergToken !== before.codebergToken, bitbucket: settings.bitbucketToken !== before.bitbucketToken, forgejo: false, azure: settings.azureToken !== before.azureToken, bitbucketdc: settings.bbdcToken !== before.bbdcToken }[tab.source.host] ?? (settings.token !== before.token || settings.account2.token !== before.account2.token || settings.account2.owner !== before.account2.owner));
     if (realTabs().length) reconnectAll(realTabs().some(changed) ? changed : undefined);
     else el.tokenBanner.hidden = true;
   });
@@ -3386,6 +3401,7 @@
     settings.bitbucketToken = (await desktop.getToken('bitbucket')).token;
     settings.azureToken = (await desktop.getToken('azure')).token;
     if (BITBUCKET_URL) settings.bbdcToken = GB.BitbucketServerSource.unpack((await desktop.getToken('bitbucketdc')).token, BITBUCKET_URL);
+    settings.account2 = GB.GitHubSource.unpack2((await desktop.getToken('github2')).token);
     for (const service of GB.hooks.SERVICES) hookUrls[service] = (await desktop.getToken(service)).token;
     showTokenWhere(where);
   }

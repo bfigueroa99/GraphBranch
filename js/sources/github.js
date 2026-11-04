@@ -2114,6 +2114,25 @@
     };
   };
 
+  /** La segunda cuenta de GitHub, como se guarda: el token atado a su dueño u organización ('' si falta uno o el dueño no vale). */
+  const OWNER_RE = /^[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,38})$/;
+  GitHubSource.pack2 = (owner, token) => {
+    owner = String(owner || '').trim().replace(/^@/, '');
+    return owner && OWNER_RE.test(owner) && token ? JSON.stringify({ owner, token: String(token).trim() }) : '';
+  };
+  /** Lo guardado de la segunda cuenta → { owner, token } (vacíos si no hay o está roto). */
+  GitHubSource.unpack2 = (stored) => {
+    try {
+      const v = JSON.parse(String(stored || ''));
+      return v && OWNER_RE.test(v.owner) && typeof v.token === 'string' && v.token ? { owner: v.owner, token: v.token } : { owner: '', token: '' };
+    } catch {
+      return { owner: '', token: '' };
+    }
+  };
+  /** El token que corresponde a los repos de `owner`: el de la segunda cuenta solo si es su dueño; para todo lo demás, el principal. */
+  GitHubSource.tokenFor = (owner, main, second) =>
+    second?.token && second.owner && String(owner || '').toLowerCase() === second.owner.toLowerCase() ? second.token : main || '';
+
   GitHubSource.endpoints = endpoints;
   GitHubSource.ApiError = ApiError;
   GitHubSource.editError = editError; // para las fuentes que heredan de esta (GitLab, Codeberg)

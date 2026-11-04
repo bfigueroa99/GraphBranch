@@ -2,7 +2,7 @@ feature,area,priority,original,clone,notes
 Grafo de commits con ramas y merges,grafo,must,yes,yes,"README: Vista 3D y Vista 2D tipo metro"
 Ramas y tags rotulados en el grafo,grafo,must,yes,yes,"README: tags y despliegues (banderín en el commit con tag)"
 Detalle de un commit (mensaje autor fecha SHA),grafo,must,yes,yes,"ficha del commit en 2D y 3D"
-Columnas de autor fecha y SHA a la vista en el grafo,grafo,should,yes,partial,"autor fecha y SHA están en la ficha del commit y en la vista de texto; el grafo no tiene columnas"
+Columnas de autor fecha y SHA a la vista en el grafo,grafo,should,yes,partial,"autor y fecha junto a cada commit del grafo 2D con un interruptor (README: Búsqueda de commits); falta el SHA y el 3D"
 Resaltar los commits de una rama y atenuar el resto,grafo,should,yes,yes,"pasar el puntero o el foco por el nombre de una rama (leyenda y cabezas 2D, etiquetas 3D) o por un commit resalta la rama y atenúa el resto sin tocar filtro ni URL (README, Vista 2D); comparar ramas y los filtros por autor o ruta también atenúan"
 Ocultar una rama o dejarla sola en el grafo,grafo,should,yes,yes,"README: Ocultar una rama o dejarla sola (#210; en 2D y 3D, por repo) y en la URL con ?solo= y ?ocultar= (#218)"
 Filtrar el grafo por autor,grafo,should,yes,yes,"README: «Mostrar solo las ramas de…» y ?author="

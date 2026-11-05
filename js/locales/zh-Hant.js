@@ -518,6 +518,7 @@ GB.i18n.define('zh-Hant', {
   'health.branchWeeks': '每週新建的分支，最近 {n} 週（從最早到目前）：{list}',
   'health.commitWeeks': '每週提交數，最近 {n} 週（從最早到目前）：{list}',
   'health.tagWeeks': '每週標籤數，最近 {n} 週（從最早到目前）：{list}',
+  'health.issueWeeks': '每週開啟的議題，最近 {n} 週（從最早到目前）：{list}',
   'health.ci': 'CI 失敗',
   'health.ciPrs': '檢查失敗的開啟中 PR:{failing} / {total}({pct}%)',
   'health.ciFeed': '預設分支在 30 天內變紅的次數:{n}',

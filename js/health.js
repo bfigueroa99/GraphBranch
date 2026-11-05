@@ -78,6 +78,13 @@
       const k = a.number != null ? `#${a.number}` : a.id;
       if (!closed.has(k) || a.time < closed.get(k).time) closed.set(k, { time: a.time });
     }
+    // issues abiertos: cada número cuenta una vez, con la hora de su primera apertura (un issue reabierto no suma dos)
+    const issueOpened = new Map();
+    for (const a of acts) {
+      if (a.kind !== 'issue-open' || !a.time) continue;
+      const k = a.number != null ? `#${a.number}` : a.id;
+      if (!issueOpened.has(k) || a.time < issueOpened.get(k).time) issueOpened.set(k, { time: a.time });
+    }
     // ramas nuevas: cada nombre cuenta una vez, con la hora de su primera creación (la misma rama vista por el feed de
     // eventos y por la comparación en vivo, o borrada y creada otra vez, no suma dos)
     const created = new Map();
@@ -154,7 +161,7 @@
       dora,
       leadSource: { fromCommit, total: lead.length },
       ci,
-      pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), tagWeeks: weekly(tagTimes, now) }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
+      pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), tagWeeks: weekly(tagTimes, now), issueWeeks: weekly([...issueOpened.values()], now) }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
     };
   }
 

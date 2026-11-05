@@ -135,7 +135,8 @@ async function quieta(page, fn) {
   try {
     await fn();
   } finally {
-    if (!page.isClosed() && (await pressed()) !== was) await toggle();
+    // si la página ya no responde, el error que cuenta es el del paso
+    try { if (!page.isClosed() && (await pressed()) !== was) await toggle(); } catch {}
   }
 }
 
@@ -1146,7 +1147,7 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
-  // compara las etiquetas con el filtro y sin él: con la demo quieta, quitarlo devuelve las mismas de antes
+  // compara las etiquetas con el filtro y sin él: con la demo quieta, ninguna rama nueva se mezcla en la cuenta
   await step(page, 'filtro por autor: el grafo y el árbol de texto muestran solo sus ramas, lo dice y se quita', () => quieta(page, async () => {
     await page.click('#view-2d');
     const count = () => page.evaluate(() => document.querySelectorAll('#graph svg .head').length);
@@ -2645,14 +2646,21 @@ console.log('Una organización o un usuario entero');
     await page.fill('#repo-input', 'ana/notas');
     await page.press('#repo-input', 'Enter');
     await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 4, null, { timeout: T(15000) });
-    // cada cierre se espera antes del siguiente (la barra se rehace al cerrar) y lo guardado, hasta que se escribe
-    for (const [i, n] of ['acme/api', 'acme/web', 'acme/nuevo'].entries()) {
-      await page.locator('.rt', { hasText: n }).locator('.rt-close').click();
-      await page.waitForFunction((k) => document.querySelectorAll('#repo-tabs .rt').length === k, 3 - i, { timeout: T(5000) });
+    // la lista de acme tarda más que el intervalo de renovación: al cerrar siempre hay una renovación en vuelo,
+    // y al volver no puede guardar de nuevo la organización ni reabrir sus repos (fallaba a veces, por esa carrera)
+    const slow = async (route) => { await new Promise((r) => setTimeout(r, 2000)); return gh.handle(route); };
+    await page.route('https://api.github.com/orgs/acme/repos**', slow);
+    try {
+      await page.waitForTimeout(2000);
+      for (const n of ['acme/api', 'acme/web', 'acme/nuevo']) await page.locator('.rt', { hasText: n }).locator('.rt-close').click();
+      await page.waitForTimeout(3000); // la renovación en vuelo termina
+    } finally {
+      await page.unroute('https://api.github.com/orgs/acme/repos**', slow);
     }
-    await page.waitForFunction(() => localStorage.getItem('graphbranch:owners') === null, null, { timeout: T(5000) }).catch(() => {});
     const owners = await page.evaluate(() => localStorage.getItem('graphbranch:owners'));
     if (owners !== null) throw new Error(`sigue guardada: ${owners}`);
+    const left = await names();
+    if (left !== 'ana/notas*') throw new Error(`volvieron repos de la organización dejada: ${left}`);
     await page.fill('#repo-input', 'org:acme');
     await page.press('#repo-input', 'Enter');
     await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 5, null, { timeout: T(15000) });

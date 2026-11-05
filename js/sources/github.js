@@ -1073,6 +1073,7 @@
       }
 
       const prs = repo.pullRequests || { totalCount: 0, nodes: [] }; // null si el token no tiene permiso de PRs
+      this.data.pullsUnknown = !repo.pullRequests; // sin permiso no se sabe qué ramas tienen PR (js/textview.js: «sin PR abierto»)
       const pulls = prs.nodes.map((p) => ({
         number: p.number,
         title: p.title || '',

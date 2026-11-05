@@ -604,6 +604,7 @@ GB.i18n.define('zh-Hans', {
   'textview.forks': '活跃的复刻：{n}',
   'textview.fork': '{name}，最近一次 push {when}',
   'textview.prs': '打开的 PR：{n}',
+  'textview.noPr': '没有打开的 PR',
   'textview.fresh': '最近 7 天内创建',
   'textview.quiet': '超过 30 天没有动静',
   'textview.merged': '已合并到默认分支',

@@ -479,7 +479,7 @@ function fakeGraphQL(gh, ci, commit = {}) {
       Object.assign(repository, {
         defaultBranchRef: { name: 'main', target: target('a1', ci.main) },
         all: { totalCount: 1 },
-        pullRequests: {
+        pullRequests: ci.noPulls ? null : { // null: el token no puede leer PRs
           totalCount: 1,
           nodes: [{ number: 7, title: 'x', isDraft: false, url: 'u', headRefName: 'feat', baseRefName: 'main', isCrossRepository: false, createdAt: '2020-01-01T00:00:00Z', author: null, commits: { nodes: [{ commit: { statusCheckRollup: { state: ci.pr } } }] } }],
         },
@@ -520,6 +520,21 @@ test('CI con GraphQL: estado en la rama por defecto y en los PRs, y un aviso al 
   ci.main = null; // sin checks: sin estado
   await src.cycle();
   assert.equal(src.data.ci.has('main'), false);
+});
+
+test('GraphQL: un token sin permiso de PRs deja la lista de PRs como desconocida, no como vacía', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const ci = { main: 'SUCCESS', pr: null, noPulls: true };
+  fakeGraphQL(gh, ci);
+  const { src } = connect(gh, 'tok');
+  await src.cycle();
+  assert.equal(src.mode, 'graphql');
+  assert.equal(src.data.pulls.size, 0);
+  assert.equal(src.data.pullsUnknown, true);
+  ci.noPulls = false; // con permiso, la lista vuelve a saberse
+  await src.cycle();
+  assert.equal(src.data.pullsUnknown, false);
 });
 
 test('GraphQL: el cuerpo del commit dice si lo escribió un agente y en qué sesión, sin guardar el cuerpo', async () => {

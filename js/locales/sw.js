@@ -604,6 +604,7 @@ GB.i18n.define('sw', {
   'textview.forks': 'Fork zinazoendelea: {n}',
   'textview.fork': '{name}, push ya mwisho {when}',
   'textview.prs': 'PR zilizo wazi: {n}',
+  'textview.noPr': 'hakuna PR iliyo wazi',
   'textview.fresh': 'imeundwa katika siku 7 zilizopita',
   'textview.quiet': 'bila shughuli kwa zaidi ya siku 30',
   'textview.merged': 'imeunganishwa na tawi chaguomsingi',

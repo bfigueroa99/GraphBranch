@@ -615,6 +615,7 @@ GB.i18n.define('pl', {
   'textview.forks': 'Aktywne forki: {n}',
   'textview.fork': '{name}, ostatni push {when}',
   'textview.prs': 'otwarte PR-y: {n}',
+  'textview.noPr': 'brak otwartego PR',
   'textview.fresh': 'utworzona w ostatnich 7 dniach',
   'textview.quiet': 'bez aktywności od ponad 30 dni',
   'textview.merged': 'scalona z domyślną gałęzią',

@@ -604,6 +604,7 @@ GB.i18n.define('el', {
   'textview.forks': 'Ενεργά forks: {n}',
   'textview.fork': '{name}, τελευταίο push {when}',
   'textview.prs': 'ανοιχτά PR: {n}',
+  'textview.noPr': 'χωρίς ανοιχτό PR',
   'textview.fresh': 'δημιουργήθηκε τις τελευταίες 7 ημέρες',
   'textview.quiet': 'χωρίς δραστηριότητα πάνω από 30 ημέρες',
   'textview.merged': 'συγχωνευμένο στον κύριο κλάδο',

@@ -604,6 +604,7 @@ GB.i18n.define('ta', {
   'textview.forks': 'செயலில் உள்ள ஃபோர்க்குகள்: {n}',
   'textview.fork': '{name}, கடைசி push {when}',
   'textview.prs': 'திறந்த PR: {n}',
+  'textview.noPr': 'திறந்த PR இல்லை',
   'textview.fresh': 'கடந்த 7 நாட்களில் உருவாக்கப்பட்டது',
   'textview.quiet': '30 நாட்களுக்கு மேல் செயல்பாடு இல்லை',
   'textview.merged': 'இயல்புநிலை கிளையில் இணைக்கப்பட்டது',

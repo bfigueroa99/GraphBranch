@@ -604,6 +604,7 @@ GB.i18n.define('fi', {
   'textview.forks': 'Aktiiviset forkit: {n}',
   'textview.fork': '{name}, viimeisin push {when}',
   'textview.prs': 'avoimet PR:t: {n}',
+  'textview.noPr': 'ei avointa PR:ää',
   'textview.fresh': 'luotu viimeisen 7 päivän aikana',
   'textview.quiet': 'ei toimintaa yli 30 päivään',
   'textview.merged': 'yhdistetty oletushaaraan',

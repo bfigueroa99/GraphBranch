@@ -604,6 +604,7 @@ GB.i18n.define('zh-Hant', {
   'textview.forks': '活躍的分叉：{n}',
   'textview.fork': '{name}，最近一次 push {when}',
   'textview.prs': '開啟中的 PR：{n}',
+  'textview.noPr': '沒有開啟中的 PR',
   'textview.fresh': '最近 7 天內建立',
   'textview.quiet': '超過 30 天沒有動靜',
   'textview.merged': '已合併到預設分支',

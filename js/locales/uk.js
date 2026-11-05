@@ -620,6 +620,7 @@ GB.i18n.define('uk', {
   'textview.forks': 'Активні форки: {n}',
   'textview.fork': '{name}, останній push {when}',
   'textview.prs': 'відкриті PR: {n}',
+  'textview.noPr': 'немає відкритих PR',
   'textview.fresh': 'створена за останні 7 днів',
   'textview.quiet': 'без активності понад 30 днів',
   'textview.merged': 'злито в основну гілку',

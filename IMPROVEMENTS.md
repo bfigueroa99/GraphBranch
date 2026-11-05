@@ -371,6 +371,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     el conteo de etiquetas bajara, y la demo puede sumar una rama mientras otra se oculta; ahora espera a que las ramas
     concretas se vayan (la rama por defecto se queda). Queda por medir con 5 corridas seguidas y la intermitencia de «vista
     de texto: árbol con teclado…» y «al cerrar el último repo…».
+    En la iteración 208, «vista de texto: H oculta una rama, S la deja sola…» falló 1 de 3 sin que el diff tocara la vista
+    (`el botón no vuelve a mostrar todas las ramas: {"hidden":true,"inTree":true,"live":"Ver todas las ramas"}`).
 2. [Deuda] La e2e de escritorio «--bitbucket-url suma solo ese host a las conexiones del CSP…» falló 1 de 2 en la
     reanudación de la 173 (2026-11-01, carga 18 en 4 CPU; la repetición pasó): `#azure-token-input` vacío al abrir
     Ajustes. Es una carrera de la prueba: guarda el token de Azure con `GBDesktop.setToken(…, 'azure')` con la página ya
@@ -566,7 +568,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: enlaces de las cinco plataformas, dentro de un texto con puntuación (también de ancho completo), hosts parecidos, gist y páginas propias de GitHub, `javascript:` y nada compartido (prueba); a mano con Playwright contra `node e2e/serve.mjs 4173`: la pestaña abre, se guarda y la dirección queda en `?repo=ana/notas`, sin errores de consola; auditoría en la puerta.
 - Skills: no aplica: la búsqueda con `npx skills@1.7.4 find` fue denegada por el clasificador de permisos de la sesión; el `share_target` lo cubren el manifiesto y las reglas del repo.
 - Arena: no aplica: una sola forma obvia (GET a la propia página, la única que funciona sin servidor y sin conexión).
-- OMC: plan=— · revisión=5 hallazgos (3 arreglados: host exacto y páginas propias de GitHub, MEDIUM; hosts parecidos y puntuación de ancho completo, LOW; quedan 2 LOW documentados: desplazar un repo guardado con 10 pestañas, como `?repo=`, y el recorte a 4.000 caracteres) · verificación=—
+- OMC: plan=— · revisión=5 hallazgos (3 arreglados: host exacto y páginas propias de GitHub, MEDIUM; hosts parecidos y puntuación de ancho completo, LOW; quedan 2 LOW documentados: desplazar un repo guardado con 10 pestañas, como `?repo=`, y el recorte a 4.000 caracteres) · verificación=PASS
 - Reclamo: loop/208, sin colisión
-- Validado: pendiente
+- Validado: 572 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (la primera corrida falló en el smoke «vista de texto: H oculta una rama…», ajeno al cambio: anotado en el pendiente 1).
 - **Siguiente:** iteración 209, expansión: ítem 151 (Más de 10 repos: subir el tope a 20, Escala)

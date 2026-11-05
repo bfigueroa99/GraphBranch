@@ -154,7 +154,7 @@
   }
 
   /** El resumen de la semana de varios repos (los seguidos de una organización): `entries` es
-      [{ repo, data, acts }]. Los repos sin nada en la semana no salen; los demás, por commits. */
+      [{ repo, data, acts }]. Los repos sin nada en la semana (commits, PRs fusionados o abiertos, releases) no salen; los demás, por commits. */
   function computeOrg(entries, now = Date.now(), days = 7, text = (x) => x) {
     const rows = entries.map((e) => ({ repo: e.repo, d: compute(e.data, e.acts || [], now, days, text) }));
     const busy = rows.filter((r) => r.d.commits || r.d.merged.total || r.d.opened.total || r.d.releases.total);
@@ -177,7 +177,7 @@
       out.push('', `## ${md(repo)}`, '', `- ${t.commits.replace('{n}', d.commits)}`);
       if (d.newBranches && t.newbranches) out.push(`- ${t.newbranches.replace('{n}', d.newBranches)}`);
       if (d.branch) out.push(`- ${t.branch}: \`${String(d.branch.name).replace(/`/g, "'")}\` (${d.branch.commits})`);
-      if (d.merged.total) out.push(`- ${t.merged}: ${d.merged.rows.map((r) => (r.number ? `#${r.number}` : md(r.title))).join(', ')}`);
+      if (d.merged.total) out.push(`- ${t.merged}: ${shortList(d.merged, (r) => (r.number ? `#${r.number}` : md(r.title)))}`);
       if (d.opened.total && t.opened) out.push(`- ${t.opened}: ${shortList(d.opened, (r) => (r.number ? `#${r.number}` : md(r.title)))}`);
       if (d.releases.total) out.push(`- ${t.releases}: ${d.releases.rows.map((r) => md(r.title)).join(', ')}`);
     }
@@ -228,7 +228,7 @@
       const parts = [t.commits.replace('{n}', d.commits)];
       if (d.newBranches && t.newbranches) parts.push(t.newbranches.replace('{n}', d.newBranches));
       if (d.branch) parts.push(`${t.branch}: ${flat(d.branch.name)} (${d.branch.commits})`);
-      if (d.merged.total) parts.push(`${t.merged}: ${d.merged.rows.map((r) => (r.number ? `#${r.number}` : flat(r.title))).join(', ')}`);
+      if (d.merged.total) parts.push(`${t.merged}: ${shortList(d.merged, (r) => (r.number ? `#${r.number}` : flat(r.title)))}`);
       if (d.opened.total && t.opened) parts.push(`${t.opened}: ${shortList(d.opened, (r) => (r.number ? `#${r.number}` : flat(r.title)))}`);
       if (d.releases.total) parts.push(`${t.releases}: ${d.releases.rows.map((r) => flat(r.title)).join(', ')}`);
       L.push({ text: cut(parts.join(' · ')), kind: 'row' });

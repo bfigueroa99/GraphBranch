@@ -739,6 +739,7 @@ GB.i18n.define('ru', {
   'all.graphAria': 'Граф веток {repo}',
   'all.stats': 'ветки: {branches} · коммиты: {commits} · открытые PR: {prs}',
   'all.summary': 'репозитории: {repos} · ветки: {branches} · открытые PR: {prs}',
+  'all.heavy': 'всего больше {n} веток: вид может тормозить, закройте часть репозиториев',
   'all.prs.title': 'Открытые pull request: {n}',
   'all.prs.draft': 'Черновики',
   'all.prs.failing': 'Проверки не пройдены',

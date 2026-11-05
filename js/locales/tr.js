@@ -723,6 +723,7 @@ GB.i18n.define('tr', {
   'all.graphAria': '{repo} dal grafiği',
   'all.stats': 'dal: {branches} · commit: {commits} · açık PR: {prs}',
   'all.summary': 'depo: {repos} · dal: {branches} · açık PR: {prs}',
+  'all.heavy': 'toplamda {n} daldan fazla: görünüm yavaşlayabilir, bazı depoları kapat',
   'all.prs.title': 'Açık pull request\'ler: {n}',
   'all.prs.draft': 'Taslaklar',
   'all.prs.failing': 'Başarısız denetimler',

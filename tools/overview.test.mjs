@@ -53,6 +53,16 @@ test('summary: ramas, commits del grafo (o los cargados), PRs abiertos y el últ
   assert.equal(O.summary(data(), null).lastAt, 0);
 });
 
+test('heavy: avisa cuando las ramas de todos los repos pasan lo que la vista aguanta', () => {
+  const twenty = Array.from({ length: 20 }, () => ({ branches: 70, prs: 1 }));
+  assert.equal(O.totals(twenty).repos, 20);
+  assert.equal(O.heavy(O.totals(twenty)), false);
+  const many = Array.from({ length: 20 }, () => ({ branches: 80, prs: 1 }));
+  assert.equal(O.heavy(O.totals(many)), true);
+  assert.equal(O.heavy({ branches: O.HEAVY_BRANCHES }), false);
+  assert.equal(O.heavy({}), false);
+});
+
 test('totals: repos, ramas y PRs abiertos de todas las tarjetas', () => {
   assert.deepEqual(plain(O.totals([{ branches: 3, prs: 1 }, { branches: 2, prs: 0 }, { branches: 1, prs: 4 }])), { repos: 3, branches: 6, prs: 5 });
   assert.deepEqual(plain(O.totals([])), { repos: 0, branches: 0, prs: 0 });

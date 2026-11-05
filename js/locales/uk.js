@@ -739,6 +739,7 @@ GB.i18n.define('uk', {
   'all.graphAria': 'Граф гілок {repo}',
   'all.stats': 'гілки: {branches} · коміти: {commits} · відкриті PR: {prs}',
   'all.summary': 'репозиторії: {repos} · гілки: {branches} · відкриті PR: {prs}',
+  'all.heavy': 'разом понад {n} гілок: вигляд може гальмувати, закрийте частину репозиторіїв',
   'all.prs.title': 'Відкриті pull request: {n}',
   'all.prs.draft': 'Чернетки',
   'all.prs.failing': 'Невдалі перевірки',

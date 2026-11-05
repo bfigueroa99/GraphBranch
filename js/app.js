@@ -236,7 +236,7 @@
   /* repos seguidos: cada uno en su pestaña, con su fuente, que sigue consultando GitHub aunque no
      esté a la vista; así sus novedades llegan al panel de actividad, a los avisos y a la pestaña.
      El grafo, las cifras, el Replay y los logros que se ven son del repo a la vista (`active`). */
-  const MAX_REPOS = 10;
+  const MAX_REPOS = 20;
   const tabs = []; // { key, demo, source, layout, game, unread, status, el, startTimer }
   let active = null;
   let source = null; // la fuente del repo a la vista
@@ -1156,7 +1156,8 @@
   /** La cabecera de la vista conjunta: repos, ramas y PRs abiertos entre todos (de lo ya cargado). */
   function renderAllSum(list = overview.stats()) {
     const sum = GB.overview.totals(list);
-    setText(el.allSum, t('all.summary', { repos: U.fmtNum(tabs.length), branches: U.fmtNum(sum.branches), prs: U.fmtNum(sum.prs) }));
+    const line = t('all.summary', { repos: U.fmtNum(tabs.length), branches: U.fmtNum(sum.branches), prs: U.fmtNum(sum.prs) });
+    setText(el.allSum, GB.overview.heavy(sum) ? `${line} · ${t('all.heavy', { n: U.fmtNum(GB.overview.HEAVY_BRANCHES) })}` : line);
     renderAllPrs();
   }
 

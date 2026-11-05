@@ -731,6 +731,7 @@ GB.i18n.define('ro', {
   'all.graphAria': 'Graful ramurilor din {repo}',
   'all.stats': 'ramuri: {branches} · commit-uri: {commits} · PR-uri deschise: {prs}',
   'all.summary': 'depozite: {repos} · ramuri: {branches} · PR-uri deschise: {prs}',
+  'all.heavy': 'peste {n} ramuri în total: vizualizarea poate încetini, închide câteva depozite',
   'all.prs.title': 'Pull requesturi deschise: {n}',
   'all.prs.draft': 'Ciorne',
   'all.prs.failing': 'Verificări eșuate',

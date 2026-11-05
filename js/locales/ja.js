@@ -723,6 +723,7 @@ GB.i18n.define('ja', {
   'all.graphAria': '{repo} のブランチグラフ',
   'all.stats': 'ブランチ: {branches} · コミット: {commits} · オープンな PR: {prs}',
   'all.summary': 'リポジトリ: {repos} · ブランチ: {branches} · オープンな PR: {prs}',
+  'all.heavy': '合計 {n} 本を超えるブランチ: 表示が重くなることがあります。いくつかのリポジトリを閉じてください',
   'all.prs.title': 'オープンなプルリクエスト: {n}',
   'all.prs.draft': '下書き',
   'all.prs.failing': 'チェック失敗',

@@ -723,6 +723,7 @@ GB.i18n.define('hi', {
   'all.graphAria': '{repo} का ब्रांच ग्राफ़',
   'all.stats': 'ब्रांच: {branches} · कमिट: {commits} · खुले PR: {prs}',
   'all.summary': 'रिपॉज़िटरी: {repos} · ब्रांच: {branches} · खुले PR: {prs}',
+  'all.heavy': 'कुल मिलाकर {n} से अधिक ब्रांच: व्यू धीमा हो सकता है, कुछ रेपो बंद करें',
   'all.prs.title': 'खुले पुल रिक्वेस्ट: {n}',
   'all.prs.draft': 'ड्राफ्ट',
   'all.prs.failing': 'विफल जाँचें',

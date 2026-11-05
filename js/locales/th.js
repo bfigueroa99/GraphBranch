@@ -724,6 +724,7 @@ GB.i18n.define('th', {
   'all.graphAria': 'กราฟสาขาของ {repo}',
   'all.stats': 'สาขา: {branches} · คอมมิต: {commits} · PR ที่เปิดอยู่: {prs}',
   'all.summary': 'repository: {repos} · สาขา: {branches} · PR ที่เปิดอยู่: {prs}',
+  'all.heavy': 'รวมกว่า {n} แบรนช์: มุมมองอาจช้าลง ปิดบางรีโปลง',
   'all.prs.title': 'pull request ที่เปิดอยู่: {n}',
   'all.prs.draft': 'ฉบับร่าง',
   'all.prs.failing': 'การตรวจสอบที่ล้มเหลว',

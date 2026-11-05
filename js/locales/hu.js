@@ -723,6 +723,7 @@ GB.i18n.define('hu', {
   'all.graphAria': '{repo} ággráfja',
   'all.stats': 'ágak: {branches} · commitok: {commits} · nyitott PR-ok: {prs}',
   'all.summary': 'repozitóriumok: {repos} · ágak: {branches} · nyitott PR-ok: {prs}',
+  'all.heavy': 'összesen több mint {n} ág: a nézet lassulhat, zárj be néhány tárolót',
   'all.prs.title': 'Nyitott pull requestek: {n}',
   'all.prs.draft': 'Piszkozatok',
   'all.prs.failing': 'Hibás ellenőrzések',

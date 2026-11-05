@@ -724,6 +724,7 @@ GB.i18n.define('nl', {
   'all.graphAria': 'Branchgraaf van {repo}',
   'all.stats': 'branches: {branches} · commits: {commits} · open PR’s: {prs}',
   'all.summary': 'repository’s: {repos} · branches: {branches} · open PR’s: {prs}',
+  'all.heavy': 'meer dan {n} branches in totaal: de weergave kan traag worden, sluit enkele repositories',
   'all.prs.title': 'Open pull requests: {n}',
   'all.prs.draft': 'Concepten',
   'all.prs.failing': 'Mislukte checks',

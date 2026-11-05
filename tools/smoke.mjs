@@ -2482,7 +2482,7 @@ console.log('Varios repos a la vez');
       const filteredSaid = await full.$eval('#constellation-status', (e) => e.textContent.trim());
       if (!filteredSaid.includes('R1') || /undefined|constellation\./.test(filteredSaid)) throw new Error('el filtro no se anuncia: ' + filteredSaid);
       await full.click('#constellation-close');
-      // ?recent=30: los commits del mock son de hace una hora o de ahora, así que siguen los 20; con ?recent=0.000001 (unos 86 ms) ya no queda ninguno
+      // ?recent=30: los commits del mock son de hace una hora o de ahora, así que siguen (mientras cargan, hasta los 20; con tantas pestañas escalonadas las que ya dieron 404 salen antes de que arranque la última, así que basta con que quede alguna); con ?recent=0.000001 (unos 86 ms) ya no queda ninguno
       for (const [days, want] of [['30', 20], ['0.000001', 0]]) {
         await full.goto(`${base}/index.html?lang=es&recent=${days}&repo=o/a`);
         await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });
@@ -2490,15 +2490,16 @@ console.log('Varios repos a la vez');
         // las pestañas que aún cargan no tienen commits y no se descartan: se reabre la constelación hasta que todas hayan cargado
         let n = -1;
         let said = '';
-        for (let tries = 0; tries < 20 && n !== want; tries++) {
+        const ok = () => (want ? n > 0 : n === 0);
+        for (let tries = 0; tries < 20 && !ok(); tries++) {
           if (tries) await full.waitForTimeout(500);
           await full.click('#constellation-btn');
           await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
           n = (await full.$$('#constellation .cs-gx')).length;
           said = await full.$eval('#constellation-status', (e) => e.textContent.trim());
-          if (n !== want) await full.click('#constellation-close');
+          if (!ok()) await full.click('#constellation-close');
         }
-        if (n !== want) throw new Error(`?recent=${days}: ${n} galaxias, se esperaban ${want}`);
+        if (!ok()) throw new Error(`?recent=${days}: ${n} galaxias, se esperaban ${want ? 'alguna' : 'ninguna'}`);
         if (want < 20 && (!said || /undefined|constellation\./.test(said))) throw new Error('?recent no se anuncia: ' + said);
         await full.click('#constellation-close');
       }

@@ -301,7 +301,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Vista de texto: CI de cada rama | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 139 |
 | Vista de texto: autor de la punta de cada rama | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 140 |
 | Salud del repo: tendencia de PRs fusionados | Análisis | 1×2/2 | 1,0 | DORA | ítem 141 |
-| Resumen de la semana: PRs fusionados por autor | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 142 |
+| Resumen de la semana: PRs fusionados por autor | Salidas | 1×2/2 | 1,0 | GitHub Pulse | hecho en #273 |
 | Constelación: ordenar por PRs abiertos | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 143 |
 | Extensión de Chrome y Firefox, primera entrega | Plataformas | 2×2/3 | 1,3 | GitLens (llevar el grafo donde se lee el repo) | ítem 149 |
 | Extensión de Chrome y Firefox: GitLab, Codeberg y Bitbucket | Plataformas | 1×2/2 | 1,0 | GitLens (llevar el grafo donde se lee el repo) | ítem 155 |
@@ -310,6 +310,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | CI de GitLab, primera entrega | Datos | 2×2/2 | 2,0 | GitButler, DORA | ítem 152 |
 | Estado de los despliegues, primera entrega | Datos | 1×2/2 | 1,0 | DORA | ítem 153 |
 | Resumen de la semana de la organización: issues cerrados | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 154 |
+| Grafo 2D: el SHA junto a cada commit | Análisis | 1×2/1 | 2,0 | Replica (GitKraken) | ítem 156 |
+| Launchpad: fijar un PR arriba | Escala | 1×2/2 | 1,0 | Replica (GitKraken) | ítem 157 |
+| Launchpad: filtrar por persona | Escala | 1×2/2 | 1,0 | Replica (GitKraken) | ítem 158 |
+| CI de GitLab en el resto de las ramas | Datos | 1×2/2 | 1,0 | GitButler, DORA | ítem 159 |
+| Token para un Forgejo o Gitea propio | Fuentes | 1×2/2 | 1,0 | GitLens (autolinks) | ítem 160 |
+| Resumen de la semana de la organización: quién fusionó | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 161 |
 
 ## Públicos
 

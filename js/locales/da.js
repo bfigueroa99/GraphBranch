@@ -519,6 +519,7 @@ GB.i18n.define('da', {
   'health.commitWeeks': 'Commits pr. uge, seneste {n} uger (fra ældste til nuværende): {list}',
   'health.tagWeeks': 'Tags pr. uge, seneste {n} uger (fra ældste til nuværende): {list}',
   'health.issueWeeks': 'Åbnede issues pr. uge, seneste {n} uger (fra ældste til nuværende): {list}',
+  'health.prCloseWeeks': 'Pull requests lukket uden at blive flettet pr. uge, seneste {n} uger (fra ældste til nuværende): {list}',
   'health.ci': 'CI-fejl',
   'health.ciPrs': 'Åbne PR\'er med fejlende checks: {failing} af {total} ({pct} %)',
   'health.ciFeed': 'Gange standardgrenen blev rød inden for 30 dage: {n}',

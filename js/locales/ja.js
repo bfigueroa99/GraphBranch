@@ -519,6 +519,7 @@ GB.i18n.define('ja', {
   'health.commitWeeks': '週ごとのコミット数、直近{n}週間（古い順から今週まで）：{list}',
   'health.tagWeeks': '週ごとのタグ数、直近{n}週間（古い順から今週まで）：{list}',
   'health.issueWeeks': '週ごとにオープンされたイシュー、直近{n}週間（古い順から今週まで）：{list}',
+  'health.prCloseWeeks': 'マージされずにクローズされたプルリクエスト（週ごと）、直近{n}週間（古い順から今週まで）：{list}',
   'health.ci': 'CI の失敗',
   'health.ciPrs': 'チェックが失敗している公開中の PR: {total} 件中 {failing} 件({pct}%)',
   'health.ciFeed': '30 日間でデフォルトブランチが赤になった回数: {n}',

@@ -85,6 +85,16 @@
       const k = a.number != null ? `#${a.number}` : a.id;
       if (!issueOpened.has(k) || a.time < issueOpened.get(k).time) issueOpened.set(k, { time: a.time });
     }
+    // PRs cerrados sin fusionar: cada número cuenta una vez, con la hora de su primer cierre; uno que el feed también vio
+    // fusionado no entra (un cierre y un merge del mismo número es un PR fusionado)
+    const mergedNums = new Set(acts.filter((a) => a.kind === 'pr-merge' && a.number != null).map((a) => `#${a.number}`));
+    const prClosed = new Map();
+    for (const a of acts) {
+      if (a.kind !== 'pr-close' || !a.time) continue;
+      const k = a.number != null ? `#${a.number}` : a.id;
+      if (mergedNums.has(k)) continue;
+      if (!prClosed.has(k) || a.time < prClosed.get(k).time) prClosed.set(k, { time: a.time });
+    }
     // ramas nuevas: cada nombre cuenta una vez, con la hora de su primera creación (la misma rama vista por el feed de
     // eventos y por la comparación en vivo, o borrada y creada otra vez, no suma dos)
     const created = new Map();
@@ -161,7 +171,7 @@
       dora,
       leadSource: { fromCommit, total: lead.length },
       ci,
-      pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), tagWeeks: weekly(tagTimes, now), issueWeeks: weekly([...issueOpened.values()], now) }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
+      pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), tagWeeks: weekly(tagTimes, now), issueWeeks: weekly([...issueOpened.values()], now), prCloseWeeks: weekly([...prClosed.values()], now) }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
     };
   }
 

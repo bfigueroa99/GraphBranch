@@ -530,6 +530,7 @@ GB.i18n.define('sk', {
   'health.commitWeeks': 'Commity za týždeň, posledných {n} týždňov (od najstaršieho po aktuálny): {list}',
   'health.tagWeeks': 'Tagy za týždeň, posledných {n} týždňov (od najstaršieho po aktuálny): {list}',
   'health.issueWeeks': 'Otvorené issues za týždeň, posledných {n} týždňov (od najstaršieho po aktuálny): {list}',
+  'health.prCloseWeeks': 'Pull requesty zatvorené bez zlúčenia za týždeň, posledných {n} týždňov (od najstaršieho po aktuálny): {list}',
   'health.ci': 'Zlyhania CI',
   'health.ciPrs': 'Otvorené PR s neúspešnými kontrolami: {failing} z {total} ({pct} %)',
   'health.ciFeed': 'Koľkokrát predvolená vetva sčervenala za 30 dní: {n}',

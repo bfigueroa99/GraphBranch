@@ -519,6 +519,7 @@ GB.i18n.define('sv', {
   'health.commitWeeks': 'Commits per vecka, senaste {n} veckorna (från äldsta till nuvarande): {list}',
   'health.tagWeeks': 'Taggar per vecka, senaste {n} veckorna (från äldsta till nuvarande): {list}',
   'health.issueWeeks': 'Öppnade issues per vecka, senaste {n} veckorna (från äldsta till nuvarande): {list}',
+  'health.prCloseWeeks': 'Pull requests stängda utan sammanslagning per vecka, senaste {n} veckorna (från äldsta till nuvarande): {list}',
   'health.ci': 'CI-fel',
   'health.ciPrs': 'Öppna PR:er med misslyckade kontroller: {failing} av {total} ({pct} %)',
   'health.ciFeed': 'Gånger standardgrenen blev röd på 30 dagar: {n}',

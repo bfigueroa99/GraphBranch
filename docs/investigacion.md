@@ -303,6 +303,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Salud del repo: tendencia de PRs fusionados | Análisis | 1×2/2 | 1,0 | DORA | ítem 141 |
 | Resumen de la semana: PRs fusionados por autor | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 142 |
 | Constelación: ordenar por PRs abiertos | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 143 |
+| Extensión de Chrome y Firefox, primera entrega | Plataformas | 2×2/3 | 1,3 | GitLens (llevar el grafo donde se lee el repo) | ítem 149 |
+| App móvil, primera entrega: compartir hacia la PWA | Plataformas | 2×2/2 | 2,0 | (mapa de alcance) | ítem 150 |
+| Más de 10 repos: subir el tope a 20 | Escala | 2×2/2 | 2,0 | Red de ramas de GitHub | ítem 151 |
+| CI de GitLab, primera entrega | Datos | 2×2/2 | 2,0 | GitButler, DORA | ítem 152 |
+| Estado de los despliegues, primera entrega | Datos | 1×2/2 | 1,0 | DORA | ítem 153 |
+| Resumen de la semana de la organización: issues cerrados | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 154 |
 
 ## Públicos
 

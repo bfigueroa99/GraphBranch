@@ -698,6 +698,7 @@ GB.i18n.define('hi', {
   'digest.head': 'सप्ताह का सारांश · {repo}',
   'digest.commits': 'कमिट: {n}',
   'digest.merged': 'मर्ज किए गए पुल रिक्वेस्ट',
+  'digest.mergers': 'किसने मर्ज किया',
   'digest.opened': 'खोले गए पुल रिक्वेस्ट',
   'digest.closed': 'बंद किए गए इश्यू',
   'digest.releases': 'रिलीज़',

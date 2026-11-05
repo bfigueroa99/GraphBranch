@@ -709,6 +709,7 @@ GB.i18n.define('sk', {
   'digest.head': 'Súhrn týždňa · {repo}',
   'digest.commits': 'Commity: {n}',
   'digest.merged': 'Zlúčené pull requesty',
+  'digest.mergers': 'Kto zlúčil',
   'digest.opened': 'Otvorené pull requesty',
   'digest.closed': 'Uzavreté issues',
   'digest.releases': 'Vydania',

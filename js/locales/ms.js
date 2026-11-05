@@ -698,6 +698,7 @@ GB.i18n.define('ms', {
   'digest.head': 'Ringkasan minggu ini · {repo}',
   'digest.commits': 'Commit: {n}',
   'digest.merged': 'Pull request yang digabungkan',
+  'digest.mergers': 'Siapa yang menggabungkan',
   'digest.opened': 'Pull request yang dibuka',
   'digest.closed': 'Isu yang ditutup',
   'digest.releases': 'Keluaran',

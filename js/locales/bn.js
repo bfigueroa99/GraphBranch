@@ -698,6 +698,7 @@ GB.i18n.define('bn', {
   'digest.head': 'সপ্তাহের সারসংক্ষেপ · {repo}',
   'digest.commits': 'কমিট: {n}',
   'digest.merged': 'মার্জ হওয়া পুল রিকোয়েস্ট',
+  'digest.mergers': 'কে মার্জ করেছে',
   'digest.opened': 'খোলা পুল রিকোয়েস্ট',
   'digest.closed': 'বন্ধ হওয়া ইস্যু',
   'digest.releases': 'রিলিজ',

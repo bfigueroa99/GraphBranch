@@ -755,6 +755,7 @@ GB.i18n.define('he', {
   'digest.head': 'סיכום השבוע · {repo}',
   'digest.commits': 'קומיטים: {n}',
   'digest.merged': 'בקשות מיזוג שמוזגו',
+  'digest.mergers': 'מי מיזג',
   'digest.opened': 'בקשות מיזוג שנפתחו',
   'digest.closed': 'תקלות שנסגרו',
   'digest.releases': 'גרסאות',

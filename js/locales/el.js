@@ -698,6 +698,7 @@ GB.i18n.define('el', {
   'digest.head': 'Περίληψη εβδομάδας · {repo}',
   'digest.commits': 'Commits: {n}',
   'digest.merged': 'Συγχωνευμένα pull requests',
+  'digest.mergers': 'Ποιος συγχώνευσε',
   'digest.opened': 'Ανοιχτά pull requests',
   'digest.closed': 'Κλειστά issues',
   'digest.releases': 'Εκδόσεις',

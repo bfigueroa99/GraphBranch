@@ -741,6 +741,7 @@ GB.i18n.define('ur', {
   'digest.head': 'ہفتے کا خلاصہ · {repo}',
   'digest.commits': 'کمٹس: {n}',
   'digest.merged': 'ضم شدہ پل ریکویسٹس',
+  'digest.mergers': 'کس نے ضم کیا',
   'digest.opened': 'کھولی گئی پل ریکویسٹس',
   'digest.closed': 'بند کیے گئے مسائل',
   'digest.releases': 'ریلیزز',

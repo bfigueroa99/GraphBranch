@@ -698,6 +698,7 @@ GB.i18n.define('es', {
   'digest.head': 'Resumen de la semana · {repo}',
   'digest.commits': 'Commits: {n}',
   'digest.merged': 'Pull requests fusionados',
+  'digest.mergers': 'Quién fusionó',
   'digest.opened': 'Pull requests abiertos',
   'digest.closed': 'Issues cerrados',
   'digest.releases': 'Releases',

@@ -706,6 +706,7 @@ GB.i18n.define('hr', {
   'digest.head': 'Sažetak tjedna · {repo}',
   'digest.commits': 'Commitovi: {n}',
   'digest.merged': 'Spojeni pull requestovi',
+  'digest.mergers': 'Tko je spojio',
   'digest.opened': 'Otvoreni pull requestovi',
   'digest.closed': 'Zatvoreni issuei',
   'digest.releases': 'Izdanja',

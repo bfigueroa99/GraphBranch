@@ -1,5 +1,5 @@
 /* GraphBranch — resumen de la semana: lo que pasó en los últimos 7 días, con lo ya cargado.
-   Commits, pull requests fusionados y abiertos, issues cerrados, releases, quién aportó y la rama más activa. No hace ninguna
+   Commits, pull requests fusionados (y quién los fusionó) y abiertos, issues cerrados, releases, quién aportó y la rama más activa. No hace ninguna
    consulta; sale como Markdown para copiar o guardar. Lo que no llegó a cargarse no cuenta: es un
    resumen de lo visible, no del repo entero. */
 (function (GB) {
@@ -64,10 +64,16 @@
 
     const seenIds = new Set();
     const inWeek = (a, kind) => a.kind === kind && a.time && a.time > since && a.time <= now && !seenIds.has(a.id) && seenIds.add(a.id);
-    const merged = acts
-      .filter((a) => inWeek(a, 'pr-merge'))
-      .sort((a, b) => b.time - a.time)
-      .map((a) => ({ number: a.number, title: text(a.detail) || text(a.title), url: a.url || null, time: a.time }));
+    const mergedActs = acts.filter((a) => inWeek(a, 'pr-merge')).sort((a, b) => b.time - a.time);
+    const merged = mergedActs.map((a) => ({ number: a.number, title: text(a.detail) || text(a.title), url: a.url || null, time: a.time }));
+    // quién fusionó: la cuenta que hizo el merge (el actor de la actividad), una vez por PR; sin actor no suma
+    const mergers = new Map();
+    const mergedNums = new Set();
+    for (const a of mergedActs) {
+      if (a.number != null && (mergedNums.has(a.number) || !mergedNums.add(a.number))) continue;
+      const who = a.actor?.login || a.actor?.name;
+      if (who) mergers.set(who, (mergers.get(who) || 0) + 1);
+    }
     // PRs abiertos en la semana: un PR reabierto o marcado como listo no cuenta dos veces
     const openedNums = new Set();
     const opened = acts
@@ -110,6 +116,7 @@
       closed: { total: closed.length, rows: closed.slice(0, LIST) },
       releases: { total: releases.length, rows: releases.slice(0, LIST) },
       tags: { total: tags.length, rows: tags.slice(0, LIST) },
+      mergers: { total: mergers.size, rows: [...mergers].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, prs]) => ({ name, prs })) },
       people: { total: people.size, rows: [...people].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, commits]) => ({ name, commits })) },
       branch,
     };
@@ -118,7 +125,7 @@
   /** Texto que va en una línea de Markdown: sin saltos ni caracteres que lo rompan. */
   const md = (s) => String(s ?? '').replace(/\s+/g, ' ').trim().replace(/([\\`*_{}[\]<>|])/g, '\\$1');
 
-  /** Markdown del resumen. `t`: las etiquetas ya traducidas { head, commits, perday, merged, closed, releases, tags, people,
+  /** Markdown del resumen. `t`: las etiquetas ya traducidas { head, commits, perday, merged, mergers, closed, releases, tags, people,
       branch }; `none`: el texto de «nada»; `fmtDate`: cómo escribir un día. */
   function toMarkdown(d, repo, t, fmtDate = (ms) => new Date(ms).toISOString().slice(0, 10), none = '—') {
     const out = [`# ${md(t.head.replace('{repo}', repo))}`, '', `${fmtDate(d.since)} – ${fmtDate(d.now)}`, '', `- ${t.commits.replace('{n}', d.commits)}`];
@@ -130,6 +137,7 @@
     out.push('', `## ${t.merged} (${d.merged.total})`, '');
     if (d.merged.rows.length) for (const r of d.merged.rows) out.push(`- ${link(r, `${r.number ? `#${r.number} ` : ''}${md(r.title)}`)}`);
     else out.push(none);
+    if (d.mergers?.rows.length && t.mergers) out.push('', `${t.mergers}: ${d.mergers.rows.map((r) => `${md(r.name)} (${r.prs})`).join(' · ')}`);
     if (d.opened?.total) out.push('', `## ${t.opened} (${d.opened.total})`, '', ...d.opened.rows.map((r) => `- ${link(r, `${r.number ? `#${r.number} ` : ''}${md(r.title)}`)}`));
     if (d.closed?.total) out.push('', `## ${t.closed} (${d.closed.total})`, '', ...d.closed.rows.map((r) => `- ${link(r, `${r.number ? `#${r.number} ` : ''}${md(r.title)}`)}`));
     out.push('', `## ${t.releases} (${d.releases.total})`, '');
@@ -185,6 +193,7 @@
       else L.push({ text: none, kind: 'row' });
     };
     section(t.merged, d.merged.total, d.merged.rows.map((r) => `${r.number ? `#${r.number} ` : ''}${flat(r.title)}`));
+    if (d.mergers?.rows.length && t.mergers) L.push({ text: cut(`${t.mergers}: ${d.mergers.rows.map((r) => `${flat(r.name)} (${r.prs})`).join(' · ')}`), kind: 'row' });
     if (d.opened?.total) section(t.opened, d.opened.total, d.opened.rows.map((r) => `${r.number ? `#${r.number} ` : ''}${flat(r.title)}`));
     if (d.closed?.total) section(t.closed, d.closed.total, d.closed.rows.map((r) => `${r.number ? `#${r.number} ` : ''}${flat(r.title)}`));
     section(t.releases, d.releases.total, d.releases.rows.map((r) => flat(r.title)));

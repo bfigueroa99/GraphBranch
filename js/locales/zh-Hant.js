@@ -698,6 +698,7 @@ GB.i18n.define('zh-Hant', {
   'digest.head': '本週摘要 · {repo}',
   'digest.commits': '提交:{n}',
   'digest.merged': '已合併的拉取請求',
+  'digest.mergers': '合併者',
   'digest.opened': '已開啟的拉取請求',
   'digest.closed': '已關閉的 issue',
   'digest.releases': '發布',

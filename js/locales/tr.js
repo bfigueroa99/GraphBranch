@@ -698,6 +698,7 @@ GB.i18n.define('tr', {
   'digest.head': 'Haftanın özeti · {repo}',
   'digest.commits': 'Commit: {n}',
   'digest.merged': 'Birleştirilen pull request\'ler',
+  'digest.mergers': 'Kim birleştirdi',
   'digest.opened': 'Açılan pull request\'ler',
   'digest.closed': 'Kapatılan issue\'lar',
   'digest.releases': 'Sürümler',

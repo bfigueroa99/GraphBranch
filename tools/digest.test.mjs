@@ -293,3 +293,28 @@ test('organización: cada repo nombra su rama más activa, en el Markdown y en l
   const sin = computeOrg([{ repo: 'acme/x', data: { commits: new Map([c('z', 1, [], 'a')]), branches: new Map() }, acts: [] }], NOW);
   assert.doesNotMatch(imageLinesOrg(sin, 'acme', t).map((l) => l.text).join('\n'), /Rama:/);
 });
+
+test('quién fusionó: cuenta los PRs de la semana por la cuenta que los fusionó, una vez por PR, en Markdown e imagen', () => {
+  const ana = { login: 'ana' };
+  const merges = [
+    { id: 'm1', kind: 'pr-merge', time: ago(1), number: 1, detail: 'uno', actor: ana },
+    { id: 'm1', kind: 'pr-merge', time: ago(1), number: 1, detail: 'uno', actor: ana }, // la misma actividad dos veces
+    { id: 'm1b', kind: 'pr-merge', time: ago(1), number: 1, detail: 'uno', actor: ana }, // el mismo PR por el feed y por el sondeo
+    { id: 'm2', kind: 'pr-merge', time: ago(2), number: 2, detail: 'dos', actor: { login: 'beto' } },
+    { id: 'm3', kind: 'pr-merge', time: ago(3), number: 3, detail: 'tres', actor: ana },
+    { id: 'm4', kind: 'pr-merge', time: ago(3), number: 4, detail: 'cuatro', actor: { name: 'Ca*rla' } }, // sin usuario: su nombre
+    { id: 'm5', kind: 'pr-merge', time: ago(4), number: 5, detail: 'sin actor' },
+    { id: 'm6', kind: 'pr-merge', time: ago(9), number: 6, detail: 'vieja', actor: { login: 'dora' } },
+  ];
+  const d = compute(repo(), merges, NOW);
+  assert.equal(d.mergers.total, 3);
+  assert.deepEqual(JSON.parse(JSON.stringify(d.mergers.rows)), [{ name: 'ana', prs: 2 }, { name: 'Ca*rla', prs: 1 }, { name: 'beto', prs: 1 }]);
+  const t = { head: 'Semana de {repo}', commits: 'Commits: {n}', merged: 'Fusionados', mergers: 'Quién fusionó', releases: 'Releases', people: 'Personas', branch: 'Rama' };
+  const text = toMarkdown(d, 'o/r', t);
+  assert.match(text, /\nQuién fusionó: ana \(2\) · Ca\\\*rla \(1\) · beto \(1\)\n/);
+  assert.ok(imageLines(d, 'o/r', t).some((l) => l.kind === 'row' && l.text === 'Quién fusionó: ana (2) · Ca*rla (1) · beto (1)'));
+  // sin PRs fusionados con actor, la línea no sale
+  const quiet = compute(repo(), [{ id: 'z', kind: 'pr-merge', time: ago(1), number: 9 }], NOW);
+  assert.equal(quiet.mergers.total, 0);
+  assert.doesNotMatch(toMarkdown(quiet, 'o/r', t), /Quién fusionó/);
+});

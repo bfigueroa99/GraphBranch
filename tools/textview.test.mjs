@@ -270,3 +270,13 @@ test('cada rama dice si su último CI cargado falló (data.ci)', () => {
   d.ci = new Map([['feature', 'pending']]);
   assert.equal(failing().feature, false); // en curso no es fallo
 });
+
+test('cada rama dice quién hizo el commit de su punta (nombre, o el login si no hay), aunque el filtro por ruta lo deje fuera', () => {
+  const d = repo();
+  d.commits.get('f2').author = { login: 'beto' };
+  const tips = (opts) => Object.fromEntries(build(d, opts).branches.map((b) => [b.name, b.tipAuthor]));
+  assert.deepEqual(tips(), { main: 'Ana', feature: 'beto' });
+  assert.deepEqual(tips({ paths: new Set(['a2']) }), { main: 'Ana', feature: 'beto' }, 'la punta, no el último commit que tocó la ruta');
+  d.commits.get('m3').author = null;
+  assert.equal(tips().main, '', 'sin autor no se inventa');
+});

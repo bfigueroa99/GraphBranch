@@ -632,6 +632,7 @@ GB.i18n.define('fa', {
   'textview.default': 'شاخهٔ پیش‌فرض',
   'textview.shown': 'commitهای نمایش‌داده‌شده: {n}',
   'textview.by': 'از {author}',
+  'textview.tipBy': 'آخرین commit از {author}',
   'textview.merge': 'ادغام',
   'textview.tag': 'برچسب {name}',
   'textview.tagged': 'کامیت‌های دارای برچسب: {n}',

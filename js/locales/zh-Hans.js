@@ -589,6 +589,7 @@ GB.i18n.define('zh-Hans', {
   'textview.default': '默认分支',
   'textview.shown': '显示的提交：{n}',
   'textview.by': '作者 {author}',
+  'textview.tipBy': '最后一次提交的作者 {author}',
   'textview.merge': '合并',
   'textview.tag': '标签 {name}',
   'textview.tagged': '带标签的提交：{n}',

@@ -589,6 +589,7 @@ GB.i18n.define('sv', {
   'textview.default': 'standardgren',
   'textview.shown': 'visade commits: {n}',
   'textview.by': 'av {author}',
+  'textview.tipBy': 'senaste commit av {author}',
   'textview.merge': 'sammanslagning',
   'textview.tag': 'tagg {name}',
   'textview.tagged': 'Commits med tagg: {n}',

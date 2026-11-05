@@ -929,6 +929,10 @@ console.log('Escritorio (1280×800)');
       return { named: named.length, chips: bs.filter((n) => /PRs abiertos: \d+/.test(n.querySelector('.tv-head').textContent)).length, total: bs.reduce((a, n) => a + (Number((n.getAttribute('aria-label').match(/PRs abiertos: (\d+)/) || [])[1]) || 0), 0) };
     });
     if (!prs.named || prs.named !== prs.chips || !prs.total) throw new Error('la vista de texto no dice los PRs abiertos de cada rama: ' + JSON.stringify(prs));
+    // cada rama dice en su nombre accesible quién hizo el commit de su punta, el mismo autor que dice su primer commit
+    const tips = await page.$$eval('#textview .tv-branch', (bs) => bs.map((n) => ({ branch: n.dataset.branch, tip: (n.getAttribute('aria-label').match(/, último commit de ([^,]+),/) || [])[1] || '', first: n.querySelector('.tv-commit')?.getAttribute('aria-label') || '' })));
+    const badTips = tips.filter((r) => !r.tip || !r.first.includes(`, de ${r.tip}`));
+    if (!tips.length || badTips.length) throw new Error('la vista de texto no dice el autor de la punta de cada rama: ' + JSON.stringify(badTips.slice(0, 3)));
     // la historia de la demo es de los últimos días: ninguna rama está quieta (la que sí, en «Vista de texto: ramas quietas»)
     const quiet = await page.$$eval('#textview .tv-branch', (bs) => bs.filter((n) => /sin actividad/.test(n.getAttribute('aria-label') + n.querySelector('.tv-head').textContent)).map((n) => n.dataset.branch));
     if (quiet.length) throw new Error('la vista de texto dice sin actividad ramas de la demo con commits de esta semana: ' + quiet.join(', '));

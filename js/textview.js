@@ -81,7 +81,10 @@
       const isDefault = !!(b.isDefault || b.name === def);
       // fusionada: su punta ya está en la por defecto y no es la misma punta (una rama recién creada no es una fusionada)
       const merged = !isDefault && inDef.has(b.sha) && b.sha !== defTip;
-      return { name: b.name, isDefault, prs: open.get(b.name) || 0, quiet, merged, ciFailing: data.ci?.get?.(b.name) === 'failure', fresh: !isDefault && !!fresh?.has(b.name), commits };
+      // quién hizo el commit de la punta (con el filtro por ruta, igual la punta: la rama es de quien la movió último)
+      const tip = data.commits.get(b.sha)?.author;
+      const tipAuthor = String(tip?.name || tip?.login || '');
+      return { name: b.name, isDefault, tipAuthor, prs: open.get(b.name) || 0, quiet, merged, ciFailing: data.ci?.get?.(b.name) === 'failure', fresh: !isDefault && !!fresh?.has(b.name), commits };
     }).filter((b) => !paths || b.commits.length);
     return { total, branches: rows, forks: withForks ? forks(data) : { total: 0, rows: [] } };
   }
@@ -229,7 +232,7 @@
         const li = mk('li', 'tv-branch');
         li.setAttribute('role', 'treeitem');
         li.setAttribute('aria-expanded', open.has(b.name) ? 'true' : 'false');
-        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}${b.fresh ? ', ' + text('textview.fresh') : ''}${b.quiet ? ', ' + text('textview.quiet') : ''}${b.merged ? ', ' + text('textview.merged') : ''}${b.ciFailing ? ', ' + text('textview.ciFailing') : ''}, ${text('textview.shown', { n: b.commits.length })}`);
+        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}${b.fresh ? ', ' + text('textview.fresh') : ''}${b.quiet ? ', ' + text('textview.quiet') : ''}${b.merged ? ', ' + text('textview.merged') : ''}${b.ciFailing ? ', ' + text('textview.ciFailing') : ''}${b.tipAuthor ? ', ' + text('textview.tipBy', { author: b.tipAuthor }) : ''}, ${text('textview.shown', { n: b.commits.length })}`);
         li.tabIndex = i === 0 ? 0 : -1;
         li.dataset.branch = b.name;
         const head = mk('span', 'tv-head');

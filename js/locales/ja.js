@@ -589,6 +589,7 @@ GB.i18n.define('ja', {
   'textview.default': 'デフォルトブランチ',
   'textview.shown': '表示中のコミット: {n}',
   'textview.by': '作成者 {author}',
+  'textview.tipBy': '最後のコミットの作成者 {author}',
   'textview.merge': 'マージ',
   'textview.tag': 'タグ {name}',
   'textview.tagged': 'タグ付きコミット: {n}',

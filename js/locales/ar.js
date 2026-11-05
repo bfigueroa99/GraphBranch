@@ -688,6 +688,7 @@ GB.i18n.define('ar', {
   'textview.default': 'الفرع الافتراضي',
   'textview.shown': 'الـ commits المعروضة: {n}',
   'textview.by': 'بواسطة {author}',
+  'textview.tipBy': 'آخر commit بواسطة {author}',
   'textview.merge': 'دمج',
   'textview.tag': 'وسم {name}',
   'textview.tagged': 'الإيداعات ذات الوسم: {n}',

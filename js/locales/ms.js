@@ -589,6 +589,7 @@ GB.i18n.define('ms', {
   'textview.default': 'cabang lalai',
   'textview.shown': 'commit dipaparkan: {n}',
   'textview.by': 'oleh {author}',
+  'textview.tipBy': 'commit terakhir oleh {author}',
   'textview.merge': 'merge',
   'textview.tag': 'tag {name}',
   'textview.tagged': 'Commit dengan tag: {n}',

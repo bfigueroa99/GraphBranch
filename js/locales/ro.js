@@ -597,6 +597,7 @@ GB.i18n.define('ro', {
   'textview.default': 'ramura implicită',
   'textview.shown': 'commituri afișate: {n}',
   'textview.by': 'de {author}',
+  'textview.tipBy': 'ultimul commit de {author}',
   'textview.merge': 'merge',
   'textview.tag': 'etichetă {name}',
   'textview.tagged': 'Commituri cu etichetă: {n}',

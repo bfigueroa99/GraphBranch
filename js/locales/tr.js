@@ -589,6 +589,7 @@ GB.i18n.define('tr', {
   'textview.default': 'varsayılan dal',
   'textview.shown': 'gösterilen commit: {n}',
   'textview.by': 'yazar {author}',
+  'textview.tipBy': 'son commit, yazar {author}',
   'textview.merge': 'birleştirme',
   'textview.tag': 'etiket {name}',
   'textview.tagged': 'Etiketli commit: {n}',

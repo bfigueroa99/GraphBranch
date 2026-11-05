@@ -589,6 +589,7 @@ GB.i18n.define('sw', {
   'textview.default': 'tawi chaguomsingi',
   'textview.shown': 'commit zinazoonyeshwa: {n}',
   'textview.by': 'na {author}',
+  'textview.tipBy': 'commit ya mwisho na {author}',
   'textview.merge': 'muunganisho',
   'textview.tag': 'lebo {name}',
   'textview.tagged': 'Commit zenye lebo: {n}',

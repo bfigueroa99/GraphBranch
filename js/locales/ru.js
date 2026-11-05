@@ -605,6 +605,7 @@ GB.i18n.define('ru', {
   'textview.default': 'ветка по умолчанию',
   'textview.shown': 'показано коммитов: {n}',
   'textview.by': 'автор {author}',
+  'textview.tipBy': 'последний коммит, автор {author}',
   'textview.merge': 'слияние',
   'textview.tag': 'тег {name}',
   'textview.tagged': 'Коммиты с тегом: {n}',

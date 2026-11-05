@@ -590,6 +590,7 @@ GB.i18n.define('nl', {
   'textview.default': 'standaardbranch',
   'textview.shown': 'getoonde commits: {n}',
   'textview.by': 'door {author}',
+  'textview.tipBy': 'laatste commit door {author}',
   'textview.merge': 'merge',
   'textview.tag': 'tag {name}',
   'textview.tagged': 'Commits met tag: {n}',

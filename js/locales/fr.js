@@ -590,6 +590,7 @@ GB.i18n.define('fr', {
   'textview.default': 'branche par défaut',
   'textview.shown': 'commits affichés : {n}',
   'textview.by': 'par {author}',
+  'textview.tipBy': 'dernier commit par {author}',
   'textview.merge': 'fusion',
   'textview.tag': 'tag {name}',
   'textview.tagged': 'Commits avec tag : {n}',

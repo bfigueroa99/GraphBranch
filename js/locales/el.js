@@ -589,6 +589,7 @@ GB.i18n.define('el', {
   'textview.default': 'προεπιλεγμένος κλάδος',
   'textview.shown': 'εμφανιζόμενα commits: {n}',
   'textview.by': 'από {author}',
+  'textview.tipBy': 'τελευταίο commit από {author}',
   'textview.merge': 'συγχώνευση',
   'textview.tag': 'ετικέτα {name}',
   'textview.tagged': 'Commits με ετικέτα: {n}',

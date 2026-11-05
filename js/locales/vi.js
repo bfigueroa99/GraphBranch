@@ -589,6 +589,7 @@ GB.i18n.define('vi', {
   'textview.default': 'nhánh mặc định',
   'textview.shown': 'commit đang hiện: {n}',
   'textview.by': 'bởi {author}',
+  'textview.tipBy': 'commit cuối bởi {author}',
   'textview.merge': 'merge',
   'textview.tag': 'thẻ {name}',
   'textview.tagged': 'Commit có thẻ: {n}',

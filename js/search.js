@@ -296,11 +296,13 @@
     return v.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 100);
   }
 
-  /** Texto de las columnas de autor y fecha junto a un commit: «Autor · fecha». `fmt` da la fecha en el idioma activo. */
+  /** Texto de las columnas junto a un commit: «SHA corto · Autor · fecha» (el SHA, de 7 caracteres, va primero para que el
+      recorte del grafo no lo corte). `fmt` da la fecha en el idioma activo. */
   function columnText(c, fmt, unknown = '') {
+    const sha = typeof c?.sha === 'string' ? c.sha.trim().slice(0, 7) : '';
     const who = String(c?.author?.name || c?.author?.login || unknown || '').trim();
     const when = c?.date ? fmt(c.date) : '';
-    return [who, when].filter(Boolean).join(' · ');
+    return [sha, who, when].filter(Boolean).join(' · ');
   }
 
   GB.search = { columnText, authors, authorParam, branchViewParam, byAuthor, byBranches, firstParent, firstParentParam, limitBranches, find, mount, pathParam, prParam, queryParam, withOpenPr, LIMIT };

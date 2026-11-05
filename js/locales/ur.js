@@ -289,7 +289,7 @@ GB.i18n.define('ur', {
   'branchview.status': '{total} میں سے {n} شاخیں نظر آ رہی ہیں',
   'branchview.reset': 'تمام شاخیں دکھائیں',
   'search.firstParent': 'صرف پہلا والد (جیسے git log --first-parent)',
-  'search.columns': 'ہر کمٹ کے ساتھ مصنف اور تاریخ دکھائیں (2D گراف)',
+  'search.columns': 'ہر کمٹ کے ساتھ SHA، مصنف اور تاریخ دکھائیں (2D گراف)',
   'author.unknown': 'نامعلوم',
 
   /* ---------- graph overlay ---------- */

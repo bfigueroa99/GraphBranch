@@ -4322,10 +4322,10 @@ console.log('Grafo de primer padre (?firstparent=1)');
   await page.context().close();
 }
 
-console.log('Columnas de autor y fecha en el 2D');
+console.log('Columnas de SHA, autor y fecha en el 2D');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
-  await step(page, 'el interruptor de columnas pone «autor · fecha» junto a los commits del 2D, se recuerda y al apagarlo se quitan', async () => {
+  await step(page, 'el interruptor de columnas pone «SHA · autor · fecha» junto a los commits del 2D, se recuerda y al apagarlo se quitan', async () => {
     await page.goto(`${base}/index.html?lang=es`);
     await loaded(page);
     const metas = () => page.evaluate(() => [...document.querySelectorAll('.graph-svg .node .node-meta')].map((t) => t.textContent));
@@ -4336,7 +4336,14 @@ console.log('Columnas de autor y fecha en el 2D');
     await page.check('#graph-columns');
     await page.waitForFunction(() => document.querySelectorAll('.graph-svg .node .node-meta').length > 0, null, { timeout: T(5000) });
     const on = await metas();
-    if (!on.every((x) => x.includes(' · '))) throw new Error('una columna no es «autor · fecha»: ' + JSON.stringify(on.slice(0, 3)));
+    // el SHA corto va primero (7 caracteres hexadecimales) y es el comienzo del SHA de un commit cargado: la lupa lo encuentra
+    const bad = on.find((x) => !/^[0-9a-f]{7} · .+ · /.test(x));
+    if (bad) throw new Error('una columna no es «SHA · autor · fecha»: ' + JSON.stringify(bad));
+    const sha = on[0].slice(0, 7);
+    await page.fill('#search-input', sha);
+    const hits = await page.evaluate((p) => [...document.querySelectorAll('#search .sr-hit')].filter((b) => b.dataset.sha.startsWith(p)).length, sha);
+    if (hits < 1) throw new Error(`ningún commit cargado empieza por el SHA de una columna (${sha})`);
+    await page.fill('#search-input', '');
     await page.reload();
     await loaded(page);
     await page.waitForFunction(() => document.querySelectorAll('.graph-svg .node .node-meta').length > 0, null, { timeout: T(5000) });

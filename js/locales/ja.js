@@ -259,7 +259,7 @@ GB.i18n.define('ja', {
   'branchview.status': '{total} 本中 {n} 本のブランチを表示中',
   'branchview.reset': 'すべてのブランチを表示',
   'search.firstParent': '第一親のみ（git log --first-parent と同じ）',
-  'search.columns': '各コミットの横に作者と日付を表示（2Dグラフ）',
+  'search.columns': '各コミットの横に SHA・作者・日付を表示（2Dグラフ）',
   'author.unknown': '不明',
 
   /* ---------- グラフ上のオーバーレイ ---------- */

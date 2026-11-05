@@ -259,7 +259,7 @@ GB.i18n.define('da', {
   'branchview.status': '{n} af {total} grene vises',
   'branchview.reset': 'Vis alle grene',
   'search.firstParent': 'Kun første forælder (som git log --first-parent)',
-  'search.columns': 'Vis forfatter og dato ved siden af hver commit (2D-graf)',
+  'search.columns': 'Vis SHA, forfatter og dato ved siden af hver commit (2D-graf)',
   'author.unknown': 'ukendt',
 
   /* ---------- lag over grafen ---------- */

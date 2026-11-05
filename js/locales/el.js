@@ -259,7 +259,7 @@ GB.i18n.define('el', {
   'branchview.status': '{n} από {total} κλάδοι σε προβολή',
   'branchview.reset': 'Εμφάνιση όλων των κλάδων',
   'search.firstParent': 'Μόνο ο πρώτος γονέας (όπως το git log --first-parent)',
-  'search.columns': 'Εμφάνιση συγγραφέα και ημερομηνίας δίπλα σε κάθε commit (γράφημα 2D)',
+  'search.columns': 'Εμφάνιση SHA, συγγραφέα και ημερομηνίας δίπλα σε κάθε commit (γράφημα 2D)',
   'author.unknown': 'άγνωστος',
 
   /* ---------- επίστρωμα γραφήματος ---------- */

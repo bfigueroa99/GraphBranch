@@ -259,7 +259,7 @@ GB.i18n.define('sv', {
   'branchview.status': '{n} av {total} grenar visas',
   'branchview.reset': 'Visa alla grenar',
   'search.firstParent': 'Bara första föräldern (som git log --first-parent)',
-  'search.columns': 'Visa författare och datum bredvid varje commit (2D-graf)',
+  'search.columns': 'Visa SHA, författare och datum bredvid varje commit (2D-graf)',
   'author.unknown': 'okänd',
 
   /* ---------- lager över grafen ---------- */

@@ -11,6 +11,7 @@
     { id: 'constellation', btn: '#constellation-btn', key: 'constellation.title' },
     { id: 'health', btn: '#health-btn', key: 'health.title' },
     { id: 'agents', btn: '#agents-btn', key: 'agents.title' },
+    { id: 'agentGraph', btn: '#agents-graph', key: 'agents.onGraph' }, // el interruptor del panel, también con el panel cerrado
     { id: 'bitacora', btn: '#st-bitacora', key: 'bitacora.open' },
     { id: 'trophies', btn: '#trophy-btn', key: 'game.trophies' },
     { id: 'view3d', btn: '#view-3d', key: 'cmdk.view3d' },

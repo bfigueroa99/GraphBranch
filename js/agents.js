@@ -11,6 +11,14 @@
   const WALK = 60; // commits que se recorren hacia atrás desde la cabeza de una rama fusionada
   const EVENTS = 12; // interacciones recientes que se listan; el total se dice aparte
   const NODES = 14; // participantes que entran en la red
+  /* sobre el grafo (2D y 3D): los arcos y las insignias más recientes, con tope para que miles de sesiones no tapen las
+     ramas ni frenen el cuadro. Cada uno de los 7 agentes más activos tiene su color (--ag1…--ag7, validados para
+     daltonismo en los dos temas) y los demás van juntos como «otros agentes» (--ag8): un color generado o repetido
+     haría pasar dos sesiones por una. Las personas, en gris (0). */
+  const ARCS = 240;
+  const PINS = 120;
+  const COLORS = 7;
+  const OTHERS = COLORS + 1;
 
   /* Agentes conocidos. `login`: su cuenta en el servicio; `author`: el nombre con que firma sus commits; `email`: su
      correo (si se conoce, tiene que calzar con `author`); `co`: cómo se nombra en un `Co-Authored-By:`. */
@@ -154,7 +162,10 @@
         actors: [{ key, name, login, agent, commits, last, sha, links }] (agentes y personas, el más activo primero)
         links:  [{ from, to, kinds: { continued, merged, reviewed, commented }, total, last, sha }] (de quien actúa a quien
                 recibe; `sha`, el commit de la más reciente, si lo hay)
-        events: [{ kind, from, to, time, sha, number }] (las más recientes, hasta `max`), y `total` (todas). */
+        events: [{ kind, from, to, time, sha, target, number }] (las más recientes, hasta `max`), y `total` (todas).
+                `target` es el commit de quien recibe: el anterior, si continuó; el más nuevo suyo en la rama
+                fusionada, si fusionó; la punta del PR, si lo revisó o lo comentó (o si se fusionó sin su merge cargado).
+        owners: Map sha -> key, de quién es cada commit (lo que el grafo marca). */
   function compute(data, acts = [], { max = EVENTS } = {}) {
     const actors = new Map();
     const actor = (key, fill) => {
@@ -229,10 +240,11 @@
       }
       from.links++;
       to.links++;
-      events.push({ kind, from: from.key, to: to.key, time: ev.time || 0, sha: ev.sha || null, number: ev.number ?? null });
+      events.push({ kind, from: from.key, to: to.key, time: ev.time || 0, sha: ev.sha || null, target: ev.target || null, number: ev.number ?? null });
     };
 
     const mergedPrs = new Set();
+    const mergeOf = new Map(); // número de PR -> su commit de merge (la punta del PR, si su rama ya no está)
     for (const c of commits.values()) {
       const me = who.get(c.sha);
       if (!me) continue;
@@ -241,22 +253,23 @@
         // un merge: el trabajo que entra por los otros padres, desde su cabeza hasta donde salió la rama
         const number = prNumber(c.message);
         if (number != null) mergedPrs.add(number);
-        const got = new Set();
+        if (number != null && !mergeOf.has(number)) mergeOf.set(number, c.sha);
+        const got = new Map(); // participante -> su commit más nuevo de lo que entra (a donde apunta el arco en el grafo)
         for (const head of parents.slice(1)) {
           let sha = head;
           for (let i = 0; sha && i < WALK; i++) {
             const x = commits.get(sha);
             if (!x || (sha !== head && (kids.get(sha) || 0) > 1)) break;
             const a = who.get(sha);
-            if (a) got.add(a);
+            if (a && !got.has(a)) got.set(a, sha);
             sha = (x.parents || [])[0];
           }
         }
-        for (const a of got) add(me, a, 'merged', { time: c.date, sha: c.sha, number });
+        for (const [a, target] of got) add(me, a, 'merged', { time: c.date, sha: c.sha, target, number });
       } else if (parents.length === 1 && (kids.get(parents[0]) || 0) === 1) {
         // sigue la misma línea, sin que nadie más salga de ahí: continuó lo que dejó el anterior
         const prev = who.get(parents[0]);
-        if (prev) add(me, prev, 'continued', { time: c.date, sha: c.sha });
+        if (prev) add(me, prev, 'continued', { time: c.date, sha: c.sha, target: parents[0] });
       }
     }
 
@@ -264,6 +277,15 @@
     const prAuthor = new Map();
     for (const p of data?.pulls?.values?.() || []) if (p?.user && p.number != null) prAuthor.set(p.number, p.user);
     for (const a of acts) if (a?.kind === 'pr-open' && a.number != null && a.actor && !prAuthor.has(a.number)) prAuthor.set(a.number, a.actor);
+    // la punta de cada PR en el grafo: la cabeza de su rama (la de los PRs abiertos o la que dijo su apertura o una
+    // revisión; la de un fork no está en el grafo) o, si ya no está, su commit de merge
+    const prBranch = new Map();
+    for (const p of data?.pulls?.values?.() || []) if (p?.number != null && p.head && p.sameRepo !== false) prBranch.set(p.number, p.head);
+    for (const a of acts) if (a?.number != null && a.branch && /^(pr-open|review)/.test(a.kind || '') && !prBranch.has(a.number)) prBranch.set(a.number, a.branch);
+    const prTip = (n) => {
+      const head = data?.branches?.get?.(prBranch.get(n))?.sha;
+      return head && commits.has(head) ? head : mergeOf.get(n) || null;
+    };
     const seen = new Set();
     for (const a of acts) {
       if (!a?.actor || a.number == null || (a.id && seen.has(a.id))) continue;
@@ -276,7 +298,7 @@
       if (!kind) continue;
       const author = prAuthor.get(a.number);
       if (!author) continue;
-      add(eventActor(a.actor), eventActor(author), kind, { time: a.time, sha: a.sha, number: a.number });
+      add(eventActor(a.actor), eventActor(author), kind, { time: a.time, sha: a.sha, target: prTip(a.number), number: a.number });
     }
 
     events.sort((x, y) => y.time - x.time);
@@ -286,6 +308,63 @@
       links: [...links.values()].sort((x, y) => y.total - x.total || y.last - x.last),
       events: events.slice(0, max),
       total: events.length,
+      owners: new Map([...who].map(([sha, a]) => [sha, a.key])),
+    };
+  }
+
+  /** Lo que se dibuja sobre el grafo, en 2D y en 3D. `res`: lo de compute con todas las interacciones (`max: Infinity`).
+      Solo las de un agente: las que van entre dos personas se quedan en el panel (en un repo de equipo serían la mayoría
+      de los trazos y taparían lo que se vino a ver); con `onlyAgents`, solo las que van entre dos agentes. Las marcas de
+      los commits de agente son siempre todas. Devuelve:
+        actors: [{ key, name, login, agent, slot, n, sha }] quienes aparecen: primero los que más interacciones tienen en el
+                grafo, después los agentes sin ninguna (sus commits también se marcan); `slot`, su color: de 1 a 7 los 7
+                agentes más activos de todo `res` (así «Solo entre agentes» no le cambia el color a nadie), 8 los demás
+                agentes y 0 las personas, en gris; `n`, sus interacciones en el grafo; `sha`, su último commit
+        marks:  Map sha -> slot, cada commit de un agente
+        arcs:   [{ kind, from, to, a, b, n, time, slot }] continuó y fusionó: de un commit de quien actúa (`a`) a uno de
+                quien recibe (`b`), con su color; `n`, las veces (una por par de commits). Los más recientes, hasta `arcs`.
+        pins:   [{ kind, from, to, at, n, time, number, slot, agent }] lo que pasó en un PR sin un commit de quien actúa
+                (revisó, comentó, o lo fusionó sin su merge cargado): una insignia sobre la punta del PR (`at`). Hasta `pins`.
+        total:  cuántas interacciones quedan en el grafo, contando las repetidas */
+  function overlay(res, { onlyAgents = false, arcs: maxArcs = ARCS, pins: maxPins = PINS } = {}) {
+    const byKey = new Map(res.actors.map((a) => [a.key, a]));
+    const arcs = new Map();
+    const pins = new Map();
+    for (const e of res.events) {
+      const n = !!byKey.get(e.from)?.agent + !!byKey.get(e.to)?.agent; // cuántos de los dos son agentes
+      if (!e.target || !n || (onlyAgents && n < 2)) continue;
+      const onCommit = !!e.sha && e.sha !== e.target && (e.kind === 'continued' || e.kind === 'merged');
+      const id = onCommit ? `${e.kind}|${e.sha}|${e.target}|${e.from}|${e.to}` : `${e.kind}|${e.target}|${e.from}|${e.to}`;
+      const into = onCommit ? arcs : pins;
+      let x = into.get(id);
+      if (!x) into.set(id, (x = onCommit ? { kind: e.kind, from: e.from, to: e.to, a: e.sha, b: e.target, n: 0, time: 0 } : { kind: e.kind, from: e.from, to: e.to, at: e.target, n: 0, time: 0, number: null }));
+      x.n++;
+      if (e.time >= x.time) {
+        x.time = e.time;
+        if (!onCommit) x.number = e.number ?? x.number;
+      }
+    }
+    const recent = (m, max) => [...m.values()].sort((x, y) => y.time - x.time).slice(0, max);
+    const A = recent(arcs, maxArcs);
+    const P = recent(pins, maxPins);
+    const weight = new Map();
+    for (const x of [...A, ...P]) for (const k of [x.from, x.to]) weight.set(k, (weight.get(k) || 0) + x.n);
+    const w = (a) => weight.get(a.key) || 0;
+    // el color sigue al participante, no a lo que se ve: sale del orden de compute (por interacciones y commits)
+    const slot = new Map();
+    let i = 0;
+    for (const a of res.actors) slot.set(a.key, a.agent ? Math.min(++i, OTHERS) : 0);
+    const actors = res.actors
+      .filter((a) => weight.has(a.key) || a.agent)
+      .sort((x, y) => w(y) - w(x) || y.commits - x.commits || (x.name < y.name ? -1 : 1));
+    const marks = new Map();
+    for (const [sha, key] of res.owners || []) if (slot.get(key)) marks.set(sha, slot.get(key));
+    return {
+      actors: actors.map((a) => ({ key: a.key, name: a.name, login: a.login, agent: a.agent, slot: slot.get(a.key), n: w(a), sha: a.sha })),
+      marks,
+      arcs: A.map((x) => ({ ...x, slot: slot.get(x.from) ?? 0 })),
+      pins: P.map((x) => ({ ...x, slot: slot.get(x.from) ?? 0, agent: !!byKey.get(x.from)?.agent })),
+      total: [...A, ...P].reduce((n, x) => n + x.n, 0),
     };
   }
 
@@ -378,11 +457,18 @@
     return !!q && typeof q.has === 'function' && q.has('agents') && !/^(0|false|no|off)$/i.test(String(q.get('agents')).trim());
   }
 
+  /** ?interactions=1 (o solo ?interactions): las interacciones sobre el grafo; 0, false, no u off las apagan; sin el
+      parámetro, null (manda lo que se guardó). */
+  function graphParam(q) {
+    if (!q || typeof q.has !== 'function' || !q.has('interactions')) return null;
+    return !/^(0|false|no|off)$/i.test(String(q.get('interactions')).trim());
+  }
+
   /** La dirección de una sesión de Claude Code, armada solo con su id (nunca con lo que traiga el commit). */
   const sessionUrl = (agent) => (agent?.id === 'claude' && agent.session && /^[A-Za-z0-9_-]{4,80}$/.test(agent.session) ? `https://claude.ai/code/session_${agent.session}` : null);
 
   /** Un id de sesión, corto para mostrar: los últimos 6 caracteres (los primeros suelen repetirse entre sesiones). */
   const shortSession = (s) => (s ? String(s).slice(-6) : '');
 
-  GB.agents = { detect, detectActor, of, coAuthors, sessionOf, compute, network, svg, openParam, prNumber, sessionUrl, shortSession, KNOWN: KNOWN.map((k) => k.id) };
+  GB.agents = { detect, detectActor, of, coAuthors, sessionOf, compute, network, overlay, svg, openParam, graphParam, prNumber, sessionUrl, shortSession, COLORS, OTHERS, KNOWN: KNOWN.map((k) => k.id) };
 })(window.GB);

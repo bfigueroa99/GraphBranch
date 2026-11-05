@@ -717,6 +717,7 @@ GB.i18n.define('sv', {
   'constellation.orderTabs': 'Flikar',
   'constellation.orderActivity': 'Aktivitet',
   'constellation.orderName': 'Namn',
+  'constellation.orderNew': 'Nya grenar',
   'constellation.ordered': 'Sorterat efter {order}',
   'constellation.filtered': 'Filtrerat på «{filter}»: {shown} av {total}',
   'all.tab': 'Alla',

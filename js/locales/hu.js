@@ -717,6 +717,7 @@ GB.i18n.define('hu', {
   'constellation.orderTabs': 'Lapok',
   'constellation.orderActivity': 'Aktivitás',
   'constellation.orderName': 'Név',
+  'constellation.orderNew': 'Új ágak',
   'constellation.ordered': 'Rendezés: {order}',
   'constellation.filtered': 'Szűrés: «{filter}», {shown} / {total}',
   'all.tab': 'Mind',

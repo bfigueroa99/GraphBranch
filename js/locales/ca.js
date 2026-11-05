@@ -717,6 +717,7 @@ GB.i18n.define('ca', {
   'constellation.orderTabs': 'Pestanyes',
   'constellation.orderActivity': 'Activitat',
   'constellation.orderName': 'Nom',
+  'constellation.orderNew': 'Branques noves',
   'constellation.ordered': 'Ordenat per {order}',
   'constellation.filtered': 'Filtrades per «{filter}»: {shown} de {total}',
   'all.tab': 'Tots',

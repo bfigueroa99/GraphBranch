@@ -717,6 +717,7 @@ GB.i18n.define('ms', {
   'constellation.orderTabs': 'Tab',
   'constellation.orderActivity': 'Aktiviti',
   'constellation.orderName': 'Nama',
+  'constellation.orderNew': 'Cabang baharu',
   'constellation.ordered': 'Disusun mengikut {order}',
   'constellation.filtered': 'Ditapis mengikut «{filter}»: {shown} daripada {total}',
   'all.tab': 'Semua',

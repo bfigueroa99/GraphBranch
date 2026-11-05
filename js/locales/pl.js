@@ -728,6 +728,7 @@ GB.i18n.define('pl', {
   'constellation.orderTabs': 'Karty',
   'constellation.orderActivity': 'Aktywność',
   'constellation.orderName': 'Nazwa',
+  'constellation.orderNew': 'Nowe gałęzie',
   'constellation.ordered': 'Posortowano według: {order}',
   'constellation.filtered': 'Filtr «{filter}»: {shown} z {total}',
   'all.tab': 'Wszystkie',

@@ -718,6 +718,7 @@ GB.i18n.define('th', {
   'constellation.orderTabs': 'แท็บ',
   'constellation.orderActivity': 'กิจกรรม',
   'constellation.orderName': 'ชื่อ',
+  'constellation.orderNew': 'สาขาใหม่',
   'constellation.ordered': 'เรียงตาม{order}',
   'constellation.filtered': 'กรองด้วย «{filter}»: {shown} จาก {total}',
   'all.tab': 'ทั้งหมด',

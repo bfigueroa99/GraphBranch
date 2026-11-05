@@ -728,6 +728,7 @@ GB.i18n.define('cs', {
   'constellation.orderTabs': 'Karty',
   'constellation.orderActivity': 'Aktivita',
   'constellation.orderName': 'Název',
+  'constellation.orderNew': 'Nové větve',
   'constellation.ordered': 'Seřazeno podle: {order}',
   'constellation.filtered': 'Filtr „{filter}“: {shown} z {total}',
   'all.tab': 'Vše',

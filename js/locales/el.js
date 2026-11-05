@@ -717,6 +717,7 @@ GB.i18n.define('el', {
   'constellation.orderTabs': 'Καρτέλες',
   'constellation.orderActivity': 'Δραστηριότητα',
   'constellation.orderName': 'Όνομα',
+  'constellation.orderNew': 'Νέοι κλάδοι',
   'constellation.ordered': 'Ταξινόμηση κατά: {order}',
   'constellation.filtered': 'Φίλτρο «{filter}»: {shown} από {total}',
   'all.tab': 'Όλα',

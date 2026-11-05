@@ -728,6 +728,7 @@ GB.i18n.define('sk', {
   'constellation.orderTabs': 'Karty',
   'constellation.orderActivity': 'Aktivita',
   'constellation.orderName': 'Názov',
+  'constellation.orderNew': 'Nové vetvy',
   'constellation.ordered': 'Zoradené podľa: {order}',
   'constellation.filtered': 'Filter „{filter}“: {shown} z {total}',
   'all.tab': 'Všetky',

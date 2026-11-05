@@ -717,6 +717,7 @@ GB.i18n.define('tr', {
   'constellation.orderTabs': 'Sekmeler',
   'constellation.orderActivity': 'Etkinlik',
   'constellation.orderName': 'Ad',
+  'constellation.orderNew': 'Yeni dallar',
   'constellation.ordered': 'Şuna göre sıralandı: {order}',
   'constellation.filtered': '«{filter}» ile süzüldü: {total} içinden {shown}',
   'all.tab': 'Tümü',

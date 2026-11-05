@@ -717,6 +717,7 @@ GB.i18n.define('id', {
   'constellation.orderTabs': 'Tab',
   'constellation.orderActivity': 'Aktivitas',
   'constellation.orderName': 'Nama',
+  'constellation.orderNew': 'Cabang baru',
   'constellation.ordered': 'Diurutkan menurut {order}',
   'constellation.filtered': 'Disaring dengan «{filter}»: {shown} dari {total}',
   'all.tab': 'Semua',

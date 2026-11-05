@@ -717,6 +717,7 @@ GB.i18n.define('sw', {
   'constellation.orderTabs': 'Vichupo',
   'constellation.orderActivity': 'Shughuli',
   'constellation.orderName': 'Jina',
+  'constellation.orderNew': 'Matawi mapya',
   'constellation.ordered': 'Imepangwa kwa {order}',
   'constellation.filtered': 'Imechujwa kwa «{filter}»: {shown} kati ya {total}',
   'all.tab': 'Zote',

@@ -717,6 +717,7 @@ GB.i18n.define('ko', {
   'constellation.orderTabs': '탭',
   'constellation.orderActivity': '활동',
   'constellation.orderName': '이름',
+  'constellation.orderNew': '새 브랜치',
   'constellation.ordered': '{order} 순으로 정렬됨',
   'constellation.filtered': '«{filter}» 필터: {total}개 중 {shown}개',
   'all.tab': '전체',

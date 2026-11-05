@@ -717,6 +717,7 @@ GB.i18n.define('fi', {
   'constellation.orderTabs': 'Välilehdet',
   'constellation.orderActivity': 'Aktiviteetti',
   'constellation.orderName': 'Nimi',
+  'constellation.orderNew': 'Uudet haarat',
   'constellation.ordered': 'Lajiteltu: {order}',
   'constellation.filtered': 'Suodatus «{filter}»: {shown} / {total}',
   'all.tab': 'Kaikki',

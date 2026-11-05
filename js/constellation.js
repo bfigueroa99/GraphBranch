@@ -9,6 +9,7 @@
   const R_MIN = 1; // radios relativos: la galaxia más grande mide R_MAX veces la más chica
   const R_MAX = 2.4;
   const PAD = 4; // margen del cuadro, en % del lado
+  const ORDERS = ['activity', 'prs', 'new', 'name']; // los órdenes que no son el de las pestañas (el selector y ?order=)
 
   /** Tamaño relativo de una galaxia según sus commits: crece con la raíz y se queda entre R_MIN y R_MAX. */
   function radiusOf(commits, maxCommits) {
@@ -41,20 +42,35 @@
       .map((p) => ({ key: p.key, x: 50 + p.x * k, y: 50 + p.y * k, r: p.r * k }));
   }
 
-  /** Los repos en el orden pedido: `tabs` (el de las pestañas), `activity` (más commits cargados primero), `prs` (más pull requests abiertos primero) o
+  /** Los repos en el orden pedido: `tabs` (el de las pestañas), `activity` (más commits cargados primero), `prs` (más pull requests abiertos primero), `new` (más ramas nuevas de la semana primero) o
       `name` (alfabético, sin mayúsculas ni acentos). Empata por el orden de las pestañas; no toca `items`. */
   function sortItems(items, mode) {
     const list = items.map((it, idx) => ({ it, idx }));
     if (mode === 'activity') list.sort((a, b) => (b.it.commits || 0) - (a.it.commits || 0) || a.idx - b.idx);
     else if (mode === 'prs') list.sort((a, b) => (b.it.prs || 0) - (a.it.prs || 0) || a.idx - b.idx);
+    else if (mode === 'new') list.sort((a, b) => (b.it.fresh || 0) - (a.it.fresh || 0) || a.idx - b.idx);
     else if (mode === 'name') list.sort((a, b) => String(a.it.name).localeCompare(String(b.it.name), undefined, { sensitivity: 'base', numeric: true }) || a.idx - b.idx);
     return list.map((x) => x.it);
   }
 
-  /** `?order=activity`, `?order=prs` o `?order=name`: el orden con que abre la constelación. Lo que no se conoce (o falta) es `null`: queda el de las pestañas. */
+  /** Ramas creadas en los últimos `days` días (hasta `now`) según la actividad ya cargada de un repo: cada nombre
+      cuenta una vez (la misma rama vista por el feed y por la comparación en vivo, o borrada y creada otra vez, no
+      suma dos), como en el resumen de la semana. */
+  function newBranches(acts = [], now = Date.now(), days = 7) {
+    const since = now - days * 864e5;
+    const names = new Set();
+    for (const a of acts) {
+      if (!a || a.kind !== 'branch-create' || !a.time || !(a.time > since && a.time <= now)) continue;
+      const k = a.branch ? `b:${a.branch}` : a.id;
+      if (k != null) names.add(k);
+    }
+    return names.size;
+  }
+
+  /** `?order=activity`, `?order=prs`, `?order=new` o `?order=name`: el orden con que abre la constelación. Lo que no se conoce (o falta) es `null`: queda el de las pestañas. */
   function orderParam(q) {
     const v = String(q.get('order') || '').trim().toLowerCase();
-    return v === 'activity' || v === 'prs' || v === 'name' ? v : null;
+    return ORDERS.includes(v) ? v : null;
   }
 
   /** Minúsculas y sin acentos, para comparar nombres. */
@@ -133,7 +149,7 @@
     if (select) select.addEventListener('change', () => setOrder(select.value, true));
     /** Cambia el orden (el de Tab y el de lector de pantalla) y, si lo pidió la persona, lo anuncia. */
     function setOrder(next, announce) {
-      mode = ['activity', 'prs', 'name'].includes(next) ? next : 'tabs';
+      mode = ORDERS.includes(next) ? next : 'tabs';
       if (select) select.value = mode;
       draw();
       if (announce && status) status.textContent = text('constellation.ordered', { order: text(mode === 'prs' ? 'stats.prs' : 'constellation.order' + mode[0].toUpperCase() + mode.slice(1)) });
@@ -199,5 +215,5 @@
     return { render, setOrder, setFilter, setRecent };
   }
 
-  GB.constellation = { place, sortItems, orderParam, filterParam, filterItems, recentParam, recentItems, radiusOf, hueOf, mount };
+  GB.constellation = { place, sortItems, newBranches, orderParam, filterParam, filterItems, recentParam, recentItems, radiusOf, hueOf, mount };
 })(window.GB);

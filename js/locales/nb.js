@@ -717,6 +717,7 @@ GB.i18n.define('nb', {
   'constellation.orderTabs': 'Faner',
   'constellation.orderActivity': 'Aktivitet',
   'constellation.orderName': 'Navn',
+  'constellation.orderNew': 'Nye grener',
   'constellation.ordered': 'Sortert etter {order}',
   'constellation.filtered': 'Filtrert på «{filter}»: {shown} av {total}',
   'all.tab': 'Alle',

@@ -717,6 +717,7 @@ GB.i18n.define('es', {
   'constellation.orderTabs': 'Pestañas',
   'constellation.orderActivity': 'Actividad',
   'constellation.orderName': 'Nombre',
+  'constellation.orderNew': 'Ramas nuevas',
   'constellation.ordered': 'Ordenadas por {order}',
   'constellation.filtered': 'Filtradas por «{filter}»: {shown} de {total}',
   'all.tab': 'Todos',

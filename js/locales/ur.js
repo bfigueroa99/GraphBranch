@@ -760,6 +760,7 @@ GB.i18n.define('ur', {
   'constellation.orderTabs': 'ٹیبز',
   'constellation.orderActivity': 'سرگرمی',
   'constellation.orderName': 'نام',
+  'constellation.orderNew': 'نئی برانچیں',
   'constellation.ordered': '{order} کے مطابق ترتیب',
   'constellation.filtered': '«{filter}» سے فلٹر: {total} میں سے {shown}',
   'all.tab': 'سب',

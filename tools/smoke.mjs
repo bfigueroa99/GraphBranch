@@ -2507,6 +2507,16 @@ console.log('Varios repos a la vez');
       const prsSaid = await full.$eval('#constellation-status', (e) => e.textContent.trim());
       if (!/PR/.test(prsSaid) || /undefined|constellation\./.test(prsSaid)) throw new Error('el orden por PRs no se anuncia: ' + prsSaid);
       await full.click('#constellation-close');
+      // ?order=new: abre ordenada por ramas nuevas de la semana, con el selector de acuerdo y el anuncio traducido
+      await full.goto(`${base}/index.html?lang=es&order=new&repo=o/a`);
+      await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });
+      await full.click('#constellation-btn');
+      await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
+      if ((await full.$eval('#constellation-order', (s) => s.value)) !== 'new') throw new Error('?order=new no deja el selector en ramas nuevas');
+      await full.selectOption('#constellation-order', 'new');
+      const newSaid = await full.$eval('#constellation-status', (e) => e.textContent.trim());
+      if (!/Ramas nuevas/.test(newSaid) || /undefined|constellation\./.test(newSaid)) throw new Error('el orden por ramas nuevas no se anuncia: ' + newSaid);
+      await full.click('#constellation-close');
       // ?order=name: abre ordenada por nombre
       await full.goto(`${base}/index.html?lang=es&order=name&repo=o/a`);
       await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });

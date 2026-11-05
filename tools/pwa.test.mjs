@@ -216,6 +216,12 @@ test('compartir hacia la PWA: el manifiesto declara share_target y el enlace com
   assert.equal(shared({ shared_url: 'https://github.com/a/b', shared_text: 'https://gitlab.com/c/d' }), 'https://github.com/a/b');
   assert.equal(shared({ shared_url: 'https://example.com/a/b', shared_text: 'https://gitlab.com/c/d' }), 'https://gitlab.com/c/d');
   // nada que abrir: sin enlace, un «a/b» suelto, un perfil, otro esquema o nada compartido
+  // la coma de ancho completo (o cualquier carácter no ASCII) cierra el enlace
+  assert.equal(shared({ shared_text: '看 https://gitlab.com/a/b，看' }), 'https://gitlab.com/a/b');
+  // solo el host exacto de cada servicio, y en github.com solo un dueño de verdad (no sus páginas propias)
+  for (const link of ['https://evil.example/github.com/a/b', 'https://notgitlab.com/a/b', 'https://gist.github.com/ana/abc123', 'https://github.com/orgs/acme/repositories', 'https://github.com/settings/tokens', 'https://github.com/sponsors/ana', 'https://github.com/marketplace/actions/x'])
+    assert.equal(shared({ shared_url: link }), '', link);
+  assert.equal(shared({ shared_url: 'https://www.github.com/a/b' }), 'https://www.github.com/a/b');
   for (const o of [{}, { shared_text: 'a/b' }, { shared_url: 'https://example.com/a/b' }, { shared_url: 'javascript:alert(1)//github.com/a/b' }, { shared_text: 'sin enlace' }])
     assert.equal(shared(o), '', JSON.stringify(o));
   assert.equal(U.sharedRepo(null), '');

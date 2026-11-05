@@ -629,7 +629,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: filas de fuentes y vista de texto cubiertas por la prueba con la API simulada; auditoría: no toca la página.
 - Skills: no aplica: una cabecera más leída en una fuente que ya existe; lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (leer la cabecera que el servidor ya manda).
-- OMC: no disponible (iteración desatendida de una sola línea de código con su prueba; revisión propia del diff) · plan=— · revisión=— · verificación=—
+- OMC: plan=— · revisión=— · verificación=— (no se lanzaron los agentes: el cambio es una cabecera leída en una fuente, con su prueba; revisión propia del diff)
 - Reclamo: loop/223, sin colisión
-- Validado: pendiente
+- Validado: 595 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 224, expansión: ítem 148 (Práctica: restore --staged y clean, Público)

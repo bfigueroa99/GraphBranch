@@ -304,6 +304,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Resumen de la semana: PRs fusionados por autor | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 142 |
 | Constelación: ordenar por PRs abiertos | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 143 |
 | Extensión de Chrome y Firefox, primera entrega | Plataformas | 2×2/3 | 1,3 | GitLens (llevar el grafo donde se lee el repo) | ítem 149 |
+| Extensión de Chrome y Firefox: GitLab, Codeberg y Bitbucket | Plataformas | 1×2/2 | 1,0 | GitLens (llevar el grafo donde se lee el repo) | ítem 155 |
 | App móvil, primera entrega: compartir hacia la PWA | Plataformas | 2×2/2 | 2,0 | (mapa de alcance) | ítem 150 |
 | Más de 10 repos: subir el tope a 20 | Escala | 2×2/2 | 2,0 | Red de ramas de GitHub | ítem 151 |
 | CI de GitLab, primera entrega | Datos | 2×2/2 | 2,0 | GitButler, DORA | ítem 152 |

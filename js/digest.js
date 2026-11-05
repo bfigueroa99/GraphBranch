@@ -157,15 +157,20 @@
       [{ repo, data, acts }]. Los repos sin nada en la semana no salen; los demás, por commits. */
   function computeOrg(entries, now = Date.now(), days = 7, text = (x) => x) {
     const rows = entries.map((e) => ({ repo: e.repo, d: compute(e.data, e.acts || [], now, days, text) }));
-    const busy = rows.filter((r) => r.d.commits || r.d.merged.total || r.d.releases.total);
+    const busy = rows.filter((r) => r.d.commits || r.d.merged.total || r.d.opened.total || r.d.releases.total);
     busy.sort((a, b) => b.d.commits - a.d.commits || (a.repo < b.repo ? -1 : 1));
     const sum = (f) => rows.reduce((n, r) => n + f(r.d), 0);
-    return { since: now - days * DAY, now, days, repos: rows.length, commits: sum((d) => d.commits), merged: sum((d) => d.merged.total), releases: sum((d) => d.releases.total), newBranches: sum((d) => d.newBranches), rows: busy.slice(0, ORG_REPOS), hidden: Math.max(0, busy.length - ORG_REPOS) };
+    return { since: now - days * DAY, now, days, repos: rows.length, commits: sum((d) => d.commits), merged: sum((d) => d.merged.total), opened: sum((d) => d.opened.total), releases: sum((d) => d.releases.total), newBranches: sum((d) => d.newBranches), rows: busy.slice(0, ORG_REPOS), hidden: Math.max(0, busy.length - ORG_REPOS) };
   }
+
+  /** La lista corta de una sección por repo: sus filas y, si la semana trae más, cuántas faltan. */
+  const shortList = (sec, f) => sec.rows.map(f).join(', ') + (sec.total > sec.rows.length ? ` … +${sec.total - sec.rows.length}` : '');
 
   /** Markdown del resumen de la organización: los totales y una sección por repo con actividad. */
   function toMarkdownOrg(o, owner, t, fmtDate = (ms) => new Date(ms).toISOString().slice(0, 10), none = '—') {
-    const out = [`# ${md(t.head.replace('{repo}', owner))}`, '', `${fmtDate(o.since)} – ${fmtDate(o.now)}`, '', `- ${t.commits.replace('{n}', o.commits)}`, `- ${t.merged}: ${o.merged}`, `- ${t.releases}: ${o.releases}`];
+    const out = [`# ${md(t.head.replace('{repo}', owner))}`, '', `${fmtDate(o.since)} – ${fmtDate(o.now)}`, '', `- ${t.commits.replace('{n}', o.commits)}`, `- ${t.merged}: ${o.merged}`];
+    if (o.opened && t.opened) out.push(`- ${t.opened}: ${o.opened}`);
+    out.push(`- ${t.releases}: ${o.releases}`);
     if (o.newBranches && t.newbranches) out.push(`- ${t.newbranches.replace('{n}', o.newBranches)}`);
     if (!o.rows.length) out.push('', none);
     for (const { repo, d } of o.rows) {
@@ -173,6 +178,7 @@
       if (d.newBranches && t.newbranches) out.push(`- ${t.newbranches.replace('{n}', d.newBranches)}`);
       if (d.branch) out.push(`- ${t.branch}: \`${String(d.branch.name).replace(/`/g, "'")}\` (${d.branch.commits})`);
       if (d.merged.total) out.push(`- ${t.merged}: ${d.merged.rows.map((r) => (r.number ? `#${r.number}` : md(r.title))).join(', ')}`);
+      if (d.opened.total && t.opened) out.push(`- ${t.opened}: ${shortList(d.opened, (r) => (r.number ? `#${r.number}` : md(r.title)))}`);
       if (d.releases.total) out.push(`- ${t.releases}: ${d.releases.rows.map((r) => md(r.title)).join(', ')}`);
     }
     if (o.hidden) out.push('', `… +${o.hidden}`);
@@ -212,7 +218,9 @@
     const cut = (s) => (s.length > 70 ? s.slice(0, 69) + '…' : s);
     const L = [{ text: cut(flat(t.head.replace('{repo}', owner))), kind: 'title' }, { text: `${fmtDate(o.since)} – ${fmtDate(o.now)}`, kind: 'sub' }];
     L.push({ text: t.commits.replace('{n}', o.commits), kind: 'head' });
-    L.push({ text: `${t.merged}: ${o.merged}`, kind: 'row' }, { text: `${t.releases}: ${o.releases}`, kind: 'row' });
+    L.push({ text: `${t.merged}: ${o.merged}`, kind: 'row' });
+    if (o.opened && t.opened) L.push({ text: cut(`${t.opened}: ${o.opened}`), kind: 'row' });
+    L.push({ text: `${t.releases}: ${o.releases}`, kind: 'row' });
     if (o.newBranches && t.newbranches) L.push({ text: cut(t.newbranches.replace('{n}', o.newBranches)), kind: 'row' });
     if (!o.rows.length) L.push({ text: none, kind: 'row' });
     for (const { repo, d } of o.rows.slice(0, ORG_IMAGE_REPOS)) {
@@ -221,6 +229,7 @@
       if (d.newBranches && t.newbranches) parts.push(t.newbranches.replace('{n}', d.newBranches));
       if (d.branch) parts.push(`${t.branch}: ${flat(d.branch.name)} (${d.branch.commits})`);
       if (d.merged.total) parts.push(`${t.merged}: ${d.merged.rows.map((r) => (r.number ? `#${r.number}` : flat(r.title))).join(', ')}`);
+      if (d.opened.total && t.opened) parts.push(`${t.opened}: ${shortList(d.opened, (r) => (r.number ? `#${r.number}` : flat(r.title)))}`);
       if (d.releases.total) parts.push(`${t.releases}: ${d.releases.rows.map((r) => flat(r.title)).join(', ')}`);
       L.push({ text: cut(parts.join(' · ')), kind: 'row' });
     }

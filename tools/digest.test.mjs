@@ -325,3 +325,34 @@ test('quién fusionó: cuenta los PRs de la semana por la cuenta que los fusion�
   assert.equal(quiet.mergers.total, 0);
   assert.doesNotMatch(toMarkdown(quiet, 'o/r', t), /Quién fusionó/);
 });
+
+test('organización: suma los PRs abiertos en la semana de cada repo y los muestra en Markdown e imagen', () => {
+  const op = (id, number, days, detail = `PR ${number}`) => ({ id, kind: 'pr-open', number, detail, title: `PR #${number}`, time: NOW - days * 864e5 });
+  const quiet = { commits: new Map([c('v', 30, [], 'ana')]), branches: new Map([['main', { name: 'main', sha: 'v' }]]) };
+  const o = computeOrg([
+    // web: el #3 llega dos veces (feed y sondeo) y cuenta una; el #1 es de hace 20 días y no suma
+    { repo: 'acme/web', data: repo(), acts: [op('1', 3, 2), op('2', 3, 2), op('3', 4, 1), op('4', 1, 20)] },
+    // api: sin commits en la semana, solo un PR abierto: igual sale en el resumen
+    { repo: 'acme/api', data: quiet, acts: [op('5', 9, 3)] },
+    { repo: 'acme/quieto', data: quiet, acts: [] },
+  ], NOW);
+  assert.equal(o.opened, 3);
+  assert.equal(o.rows.find((r) => r.repo === 'acme/web').d.opened.total, 2);
+  assert.deepEqual(o.rows.map((r) => r.repo), ['acme/web', 'acme/api']);
+  const t = { head: 'S {repo}', commits: 'C {n}', merged: 'M', opened: 'Abiertos', releases: 'R', people: 'P', branch: 'B' };
+  const md = toMarkdownOrg(o, 'acme', t);
+  assert.match(md, /\n- M: 0\n- Abiertos: 3\n- R: 0\n/);
+  assert.match(md, /## acme\/web\n[^#]*- Abiertos: #4, #3\n/);
+  assert.match(md, /## acme\/api\n\n- C 0\n- Abiertos: #9\n/);
+  const lines = imageLinesOrg(o, 'acme', t).map((l) => l.text);
+  assert.ok(lines.includes('Abiertos: 3'));
+  assert.ok(lines.some((l) => /^C 0 · Abiertos: #9$/.test(l)));
+  // sin PRs abiertos, ni la línea del total ni la del repo
+  const sin = computeOrg([{ repo: 'a/b', data: repo(), acts: [] }], NOW);
+  assert.equal(sin.opened, 0);
+  assert.doesNotMatch(toMarkdownOrg(sin, 'a', t), /Abiertos/);
+  assert.doesNotMatch(imageLinesOrg(sin, 'a', t).map((l) => l.text).join('\n'), /Abiertos/);
+  // más de 10 en un repo: la lista dice cuántos faltan
+  const many = computeOrg([{ repo: 'a/b', data: repo(), acts: Array.from({ length: 12 }, (_, i) => op(`m${i}`, 100 + i, 1)) }], NOW);
+  assert.match(toMarkdownOrg(many, 'a', t), /- Abiertos: (#\d+, ){9}#\d+ … \+2\n/);
+});

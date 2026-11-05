@@ -736,6 +736,8 @@
       if (!refresh) el.repoForm.removeAttribute('aria-busy');
     }
     if (!list.length) return refresh ? undefined : repoNote(t('owner.empty', { owner }));
+    // se dejó de seguir mientras llegaba la lista (se cerró su último repo): no se guarda de nuevo ni reabre nada
+    if (refresh && !followedOwners[owner]) return;
     // la organización queda seguida: lo que ya se vio de su lista no vuelve a avisar como nuevo
     const seen = new Set(followedOwners[owner]);
     followedOwners[owner] = list.map((p) => p.name).concat([...seen]).filter((n, i, a) => a.indexOf(n) === i).slice(0, OWNER_SEEN_MAX);

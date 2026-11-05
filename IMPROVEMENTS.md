@@ -343,38 +343,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Media
 
-1. [Deuda] Pasos del smoke intermitentes en la sesión cloud: en la iteración 152, `npm run check` falló 2 de 3 veces
-    en «filtro por autor: el grafo y el árbol de texto muestran solo sus ramas…» (la tercera pasó, y el paso no toca
-    lo que cambió esa iteración) y una corrida del smoke sobre `dev` limpio falló en otro, «al cerrar el último repo
-    de la organización deja de seguirse». Medir con 5 corridas del paso y esperar el estado en lugar de comparar con
-    el conteo base de ramas (la demo sigue publicando). Reproducción: `xvfb-run -a node tools/smoke.mjs` →
-    `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`. Volvió a fallar 1 de 2 en la reanudación
-    de la 173 y, el 2026-11-03 (iteración 183), 4 pasos a la vez en una corrida (con «vista de un PR» y «cambios de un commit: con teclado») que pasó entera a la repetición (2026-11-01, carga 9 en 4 CPU). El 2026-11-04 (iteración 202) falló «ocultar una rama o dejarla sola: …las etiquetas no bajaron de 4» y la repetición pasó.
-    En la iteración 160 falló una vez, y pasó a la repetición, «vista de texto: árbol con teclado, nombres accesibles y
-    Enter lleva al grafo» (`el release de la demo no se dice (2): Novedades: 0 ramas, 1 commits`): depende de lo que la
-    demo publica en ese momento.
-    «historial de un archivo» (2 de 3 en la iteración 167, 2 de 2 en la reanudación de la 173) quedó arreglado en #224:
-    el paso anterior deja el grafo en el primer commit cargado y, con unos minutos de demo, `heads[3]` es una etiqueta
-    fuera de la vista (`display: none`), el foco no llega y Enter no abre su ficha (3 de 3 con 6 min de demo, también
-    sobre `origin/dev`). El mismo patrón (`heads[heads.length > 3 ? 3 : 0].focus()` sin mirar si está a la vista ni si
-    sale) estaba en «ocultar una rama o dejarla sola…» (falló 1 de 2 en esa reanudación, `waitForFunction: Timeout
-    15000ms`) y en «cambios de un commit: desde su ficha, con teclado…» (1 de 3 en la misma reproducción): arreglado en
-    la iteración 191 con `openBranchTip` (`tools/smoke.mjs`: End, etiquetas a la vista, sin `.exit` y sin la rama por
-    defecto, que no se oculta) y esperando por conteo de etiquetas vigentes; «filtro por autor» ya no compara con el
-    conteo base sino con el filtrado. Queda por medir con 5 corridas seguidas del smoke (la 191 vio una en verde tras el
-    arreglo) y la intermitencia de «vista de texto: árbol con teclado…» y «al cerrar el último repo…».
-    El 2026-11-04 (iteración 196, carga alta en la nube) el smoke falló en tres corridas seguidas, cada una en pasos ajenos
-    al cambio: «historial de un archivo» y «quién tocó un archivo» (2 de 2, también sobre `origin/dev` limpio: la ruta se
-    leía del primer archivo del panel y el clic llegaba después, con la demo ya redibujado; la 196 las hizo atómicas),
-    «vista de texto: árbol con teclado…» (1 de 3) y «filtro por autor…» (`quitar el filtro no deja el grafo como estaba (3
-    etiquetas, con el filtro 3, antes 8)`, 1 de 3).
-    En la iteración 203 se arregló «ocultar una rama o dejarla sola…» (`las etiquetas no bajaron de 4`, 202): esperaba que
-    el conteo de etiquetas bajara, y la demo puede sumar una rama mientras otra se oculta; ahora espera a que las ramas
-    concretas se vayan (la rama por defecto se queda). Queda por medir con 5 corridas seguidas y la intermitencia de «vista
-    de texto: árbol con teclado…» y «al cerrar el último repo…».
-    En la iteración 208, «vista de texto: H oculta una rama, S la deja sola…» falló 1 de 3 sin que el diff tocara la vista
-    (`el botón no vuelve a mostrar todas las ramas: {"hidden":true,"inTree":true,"live":"Ver todas las ramas"}`).
-2. [Deuda] La e2e de escritorio «--bitbucket-url suma solo ese host a las conexiones del CSP…» falló 1 de 2 en la
+1. [Deuda] La e2e de escritorio «--bitbucket-url suma solo ese host a las conexiones del CSP…» falló 1 de 2 en la
     reanudación de la 173 (2026-11-01, carga 18 en 4 CPU; la repetición pasó): `#azure-token-input` vacío al abrir
     Ajustes. Es una carrera de la prueba: guarda el token de Azure con `GBDesktop.setToken(…, 'azure')` con la página ya
     arrancada, y `loadDesktopToken` (`js/app.js`) lee el llavero una sola vez al arrancar; si ya leyó `azure`, el campo
@@ -384,55 +353,48 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Baja
 
-3. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+2. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-4. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+3. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-5. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+4. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-6. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+5. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-7. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+6. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-8. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+7. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-9. [Deuda] El paso del smoke «filtro por autor…» sigue siendo intermitente en la sesión cloud: falló 1 de 2
-    `npm run check` en la iteración 128 (la repetición pasó), aun con la espera de la 127.
-    Reproducción: `npm run check` → `✗ filtro por autor: …: quitar el filtro no deja el grafo como estaba`.
-    También «ocultar una rama o dejarla sola» (`page.waitForFunction: Timeout 15000ms exceeded`): falló en la
-    primera puerta de la iteración 179 y pasó en la repetición (antes, en la 166). Los dos juntos fallaron
-    en la primera puerta de la 188 y pasaron en la repetición.
-
-10. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+8. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-11. [QA] A 320 px el panel de salud se desborda hacia la derecha (28 px; 46 en tamil): la cabecera, los contadores de
+9. [QA] A 320 px el panel de salud se desborda hacia la derecha (28 px; 46 en tamil): la cabecera, los contadores de
     cada sección y la edad de los forks quedan cortados y el panel se desliza de lado. Visto en la iteración 174, igual
     sin su cambio. Reproducción: Playwright, 320×640, demo `?lang=es&health=1` → `#health .tr-wrap` con `scrollWidth`
     312 y `clientWidth` 284.
 
-12. [Accesibilidad] En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…», «sin actividad…», PRs) y la
+10. [Accesibilidad] En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…», «sin actividad…», PRs) y la
     nota de cada commit (`.tv-aside`) ya van en el `aria-label` del `treeitem`, pero son texto del nodo: según el lector se
     leen dos veces. Marcarlas `aria-hidden="true"` y comprobarlo con un lector real (ver Para Benjamin, 5).
     Reproducción: Playwright, abrir `#textview-btn` → `.tv-tag` dentro de `[role=treeitem][aria-label]` sin `aria-hidden`.
-13. [Rendimiento] `placeLabels` (`js/graph3d.js`) crea por cuadro un `{x, y}` por `project()`, un objeto por candidata, la grilla (`Map`) y
+11. [Rendimiento] `placeLabels` (`js/graph3d.js`) crea por cuadro un `{x, y}` por `project()`, un objeto por candidata, la grilla (`Map`) y
     sus cierres. Medido en la iteración 199 con 1.000 ramas en 3D: 0,36 ms por cuadro (19 cuadros en 4 s sin GPU), así que
     hoy no pesa; si algún día se mide más, reusar el punto de `project()` (devolver un objeto compartido y revisar quién lo
     guarda) y un arreglo de candidatas. Reproducción: Playwright, `?repo=acme/web` con 1.000 ramas, envolver
     `GB.Graph3D.prototype.placeLabels` con `performance.now()` → ~0,36 ms por llamada.
-14. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
+12. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
     `placeLabels`. El cuadro lo domina el render por software (~200 ms por cuadro sin GPU, 10 fps), que con GPU no existe;
     medir con GPU real antes de tocarlo. Reproducción: la misma envoltura sobre `stepScene` → ~1,1 ms por llamada.
-15. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
+13. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
     (895 ms en total, sin GPU); el perfil de CPU de los primeros 6 s no deja ninguna función de la app por encima de 70 ms
     (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
     que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
@@ -594,3 +556,17 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/218, sin colisión
 - Validado: 587 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 219, mantenimiento · Deuda: pendiente 1 (Pasos del smoke intermitentes en la sesión cloud: en la iteración 152, `npm run…)
+
+### 2026-11-05 · Iteración 219 · Mantenimiento · Deuda
+
+- **Arreglo: los pasos intermitentes del smoke en la nube, y la carrera de la app que tapaba uno** (pendiente 1; cierra también el 9, el mismo «filtro por autor»). Los pasos que cuentan ramas o leen la región viva («vista de texto: árbol con teclado…», «vista de texto: H oculta una rama, S la deja sola…», «filtro por autor…») corren ahora con la demo en pausa (`quieta` en `tools/smoke.mjs`: pausa con `#pause-btn` y la deja como estaba, también si el paso falla): la demo publicaba a mitad y descuadraba la cuenta o cambiaba la región viva a «Novedades». «Al cerrar el último repo de la organización…» era un fallo de la app: una renovación de la lista de la organización en vuelo, al volver tras cerrar su último repo, la guardaba de nuevo y reabría sus repos como nuevos; `connectOwner` (`js/app.js`) ya no sigue si la organización se dejó mientras llegaba la lista.
+- **Reproducción:** con la demo sin pausa, abrir la vista de texto y leer la región viva 9 s después (script de Playwright en el scratchpad) → `Novedades: 0 ramas, 1 commits` (el fallo del paso); con pausa no cambia. `node tools/smoke.mjs` con el paso nuevo y sin el arreglo de `js/app.js` → `✗ al cerrar el último repo de la organización deja de seguirse: sigue guardada: {"acme":["nuevo","api","web","viejo"]}`.
+- **Pruebas que fallan sin el arreglo:** el paso del smoke «al cerrar el último repo de la organización deja de seguirse», ahora determinista: la lista de acme tarda 2 s (más que el intervalo de renovación del smoke), así que al cerrar siempre hay una renovación en vuelo, y además de lo guardado comprueba que no vuelvan las pestañas. Medida: antes, una reproducción puntual (no una tasa) y el historial del pendiente; después, 5 corridas seguidas en verde de los tres pasos con `quieta` (4 smoke sueltos y una puerta, antes de tocar `connectOwner`) y una puerta completa con todo (el paso de la organización, que ahora fuerza la carrera, falla sin el arreglo y pasa con él).
+- README: sin cambios (ni la función ni sus límites cambian: el arreglo deja la app como el README ya la describe).
+- QA: seguir una organización (paso del smoke con la renovación en vuelo) y vista de texto y filtro por autor (sus pasos del smoke, 6 de 6; el de la organización con su forma nueva, en la puerta final); auditoría: ver Validado.
+- Skills: no aplica: pruebas del smoke propias y una carrera de la app; lo cubren las reglas del repo y el Protocolo de QA.
+- Arena: no aplica: una sola forma obvia (quietar la demo durante el paso, como ya hacían otros, y cortar la renovación de una organización dejada).
+- OMC: plan=— · revisión=3 hallazgos (HIGH arreglado: la causa de «al cerrar el último repo…» era la carrera de `connectOwner`, no la prueba; MEDIUM arreglado: el comentario de «filtro por autor» decía más de lo que comprueba; LOW arreglado: si la página cae, el `finally` de `quieta` no tapa el error del paso) · verificación=PASS
+- Reclamo: loop/219, sin colisión
+- Validado: 587 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 220, expansión: ítem 146 (Vista de texto: ramas sin PR, Público)

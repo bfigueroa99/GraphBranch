@@ -259,7 +259,7 @@ GB.i18n.define('zh-Hant', {
   'branchview.status': '顯示 {total} 個分支中的 {n} 個',
   'branchview.reset': '顯示所有分支',
   'search.firstParent': '僅第一個父提交（同 git log --first-parent）',
-  'search.columns': '在每個提交旁顯示作者與日期（2D 圖）',
+  'search.columns': '在每個提交旁顯示 SHA、作者與日期（2D 圖）',
   'author.unknown': '未知',
 
   /* ---------- 圖形上層提示 ---------- */

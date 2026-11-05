@@ -259,7 +259,7 @@ GB.i18n.define('fr', {
   'branchview.status': '{n} branches sur {total} affichées',
   'branchview.reset': 'Afficher toutes les branches',
   'search.firstParent': 'Premier parent seulement (comme git log --first-parent)',
-  'search.columns': 'Afficher l\'auteur et la date à côté de chaque commit (graphe 2D)',
+  'search.columns': 'Afficher le SHA, l\'auteur et la date à côté de chaque commit (graphe 2D)',
   'author.unknown': 'inconnu',
 
   /* ---------- couche au-dessus du graphe ---------- */

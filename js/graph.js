@@ -946,7 +946,7 @@
       }
     }
 
-    /** Columnas de autor y fecha: «Autor · fecha» en diagonal junto al commit; con poco zoom no caben y se callan. */
+    /** Columnas de SHA, autor y fecha: «SHA · Autor · fecha» en diagonal junto al commit; con poco zoom no caben y se callan. */
     paintMeta(it) {
       const on = this.columns && this.geo && this.geo.S >= 22;
       if (!on) {
@@ -957,10 +957,10 @@
       if (it.metaKey === text) return;
       it.metaKey = text;
       if (!it.meta) it.meta = mk('text', { class: 'node-meta', x: 7, y: 15, transform: 'rotate(38 7 15)', 'aria-hidden': 'true' }, it.el);
-      it.meta.textContent = U.truncate(text, 34);
+      it.meta.textContent = U.truncate(text, 44); // el SHA (7 y su « · ») más los 34 de autor y fecha
     }
 
-    /** Interruptor de las columnas de autor y fecha (se guarda aparte, para todos los repos). */
+    /** Interruptor de las columnas de SHA, autor y fecha (se guarda aparte, para todos los repos). */
     setColumns(on) {
       this.columns = !!on;
       this.relabel();

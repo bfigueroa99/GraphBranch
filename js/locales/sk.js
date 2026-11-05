@@ -264,7 +264,7 @@ GB.i18n.define('sk', {
   'branchview.status': 'Zobrazených {n} z {total} vetiev',
   'branchview.reset': 'Zobraziť všetky vetvy',
   'search.firstParent': 'Iba prvý rodič (ako git log --first-parent)',
-  'search.columns': 'Zobraziť autora a dátum pri každom commite (2D graf)',
+  'search.columns': 'Zobraziť SHA, autora a dátum pri každom commite (2D graf)',
   'author.unknown': 'neznámy',
 
   /* ---------- graph overlay ---------- */

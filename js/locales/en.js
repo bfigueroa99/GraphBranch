@@ -264,7 +264,7 @@ GB.i18n.define('en', {
   'branchview.status': '{n} of {total} branches in view',
   'branchview.reset': 'Show all branches',
   'search.firstParent': 'First parent only (like git log --first-parent)',
-  'search.columns': 'Show author and date next to each commit (2D graph)',
+  'search.columns': 'Show SHA, author and date next to each commit (2D graph)',
   'author.unknown': 'unknown',
 
   /* ---------- graph overlay ---------- */

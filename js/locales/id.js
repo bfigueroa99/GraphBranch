@@ -259,7 +259,7 @@ GB.i18n.define('id', {
   'branchview.status': '{n} dari {total} cabang terlihat',
   'branchview.reset': 'Tampilkan semua cabang',
   'search.firstParent': 'Hanya induk pertama (seperti git log --first-parent)',
-  'search.columns': 'Tampilkan penulis dan tanggal di samping setiap commit (grafik 2D)',
+  'search.columns': 'Tampilkan SHA, penulis, dan tanggal di samping setiap commit (grafik 2D)',
   'author.unknown': 'tidak diketahui',
 
   /* ---------- lapisan di atas grafik ---------- */

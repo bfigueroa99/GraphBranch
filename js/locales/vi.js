@@ -517,6 +517,7 @@ GB.i18n.define('vi', {
   'health.closedWeeks': 'Issue đã đóng mỗi tuần, {n} tuần gần nhất (từ cũ nhất đến hiện tại): {list}',
   'health.branchWeeks': 'Nhánh mới mỗi tuần, {n} tuần gần nhất (từ cũ nhất đến hiện tại): {list}',
   'health.commitWeeks': 'Commit mỗi tuần, {n} tuần gần nhất (từ cũ nhất đến hiện tại): {list}',
+  'health.authorWeeks': 'Số tác giả khác nhau mỗi tuần, {n} tuần gần nhất (từ cũ nhất đến hiện tại): {list}',
   'health.tagWeeks': 'Thẻ mỗi tuần, {n} tuần gần nhất (từ cũ nhất đến hiện tại): {list}',
   'health.issueWeeks': 'Issue đã mở mỗi tuần, {n} tuần gần nhất (từ cũ nhất đến hiện tại): {list}',
   'health.prCloseWeeks': 'Pull request đóng mà không hợp nhất mỗi tuần, {n} tuần gần nhất (từ cũ nhất đến hiện tại): {list}',

@@ -517,6 +517,7 @@ GB.i18n.define('ja', {
   'health.closedWeeks': '週ごとにクローズされたイシュー、直近{n}週間（古い順から今週まで）：{list}',
   'health.branchWeeks': '週ごとの新しいブランチ、直近{n}週間（古い順から今週まで）：{list}',
   'health.commitWeeks': '週ごとのコミット数、直近{n}週間（古い順から今週まで）：{list}',
+  'health.authorWeeks': '週ごとの異なる作成者数、直近{n}週間（古い順から今週まで）：{list}',
   'health.tagWeeks': '週ごとのタグ数、直近{n}週間（古い順から今週まで）：{list}',
   'health.issueWeeks': '週ごとにオープンされたイシュー、直近{n}週間（古い順から今週まで）：{list}',
   'health.prCloseWeeks': 'マージされずにクローズされたプルリクエスト（週ごと）、直近{n}週間（古い順から今週まで）：{list}',

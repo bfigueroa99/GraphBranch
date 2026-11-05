@@ -518,6 +518,7 @@ GB.i18n.define('fr', {
   'health.closedWeeks': 'Issues fermées par semaine, {n} dernières semaines (de la plus ancienne à l’actuelle) : {list}',
   'health.branchWeeks': 'Nouvelles branches par semaine, {n} dernières semaines (de la plus ancienne à l’actuelle) : {list}',
   'health.commitWeeks': 'Commits par semaine, {n} dernières semaines (de la plus ancienne à l’actuelle) : {list}',
+  'health.authorWeeks': 'Auteurs distincts par semaine, {n} dernières semaines (de la plus ancienne à l’actuelle) : {list}',
   'health.tagWeeks': 'Tags par semaine, {n} dernières semaines (de la plus ancienne à l’actuelle) : {list}',
   'health.issueWeeks': 'Issues ouvertes par semaine, {n} dernières semaines (de la plus ancienne à l’actuelle) : {list}',
   'health.prCloseWeeks': 'Pull requests fermées sans fusion par semaine, {n} dernières semaines (de la plus ancienne à l’actuelle) : {list}',

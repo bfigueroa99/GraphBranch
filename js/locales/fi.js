@@ -517,6 +517,7 @@ GB.i18n.define('fi', {
   'health.closedWeeks': 'Suljetut issuet viikossa, viimeiset {n} viikkoa (vanhimmasta nykyiseen): {list}',
   'health.branchWeeks': 'Uudet haarat viikossa, viimeiset {n} viikkoa (vanhimmasta nykyiseen): {list}',
   'health.commitWeeks': 'Commitit viikossa, viimeiset {n} viikkoa (vanhimmasta nykyiseen): {list}',
+  'health.authorWeeks': 'Eri tekijöitä viikossa, viimeiset {n} viikkoa (vanhimmasta nykyiseen): {list}',
   'health.tagWeeks': 'Tagit viikossa, viimeiset {n} viikkoa (vanhimmasta nykyiseen): {list}',
   'health.issueWeeks': 'Avatut issuet viikossa, viimeiset {n} viikkoa (vanhimmasta nykyiseen): {list}',
   'health.prCloseWeeks': 'Ilman yhdistämistä suljetut pull requestit viikossa, viimeiset {n} viikkoa (vanhimmasta nykyiseen): {list}',

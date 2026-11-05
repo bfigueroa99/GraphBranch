@@ -518,6 +518,7 @@ GB.i18n.define('fil', {
   'health.closedWeeks': 'Mga issue na isinara kada linggo, huling {n} linggo (pinakaluma hanggang kasalukuyan): {list}',
   'health.branchWeeks': 'Mga bagong branch kada linggo, huling {n} linggo (pinakaluma hanggang kasalukuyan): {list}',
   'health.commitWeeks': 'Mga commit kada linggo, huling {n} linggo (pinakaluma hanggang kasalukuyan): {list}',
+  'health.authorWeeks': 'Magkakaibang may-akda kada linggo, huling {n} linggo (pinakaluma hanggang kasalukuyan): {list}',
   'health.tagWeeks': 'Mga tag kada linggo, huling {n} linggo (pinakaluma hanggang kasalukuyan): {list}',
   'health.issueWeeks': 'Mga issue na binuksan kada linggo, huling {n} linggo (pinakaluma hanggang kasalukuyan): {list}',
   'health.prCloseWeeks': 'Mga pull request na isinara nang hindi na-merge kada linggo, huling {n} linggo (pinakaluma hanggang kasalukuyan): {list}',

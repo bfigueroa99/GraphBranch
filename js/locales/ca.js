@@ -517,6 +517,7 @@ GB.i18n.define('ca', {
   'health.closedWeeks': 'Issues tancats per setmana, últimes {n} setmanes (de la més vella a l’actual): {list}',
   'health.branchWeeks': 'Branques noves per setmana, últimes {n} setmanes (de la més vella a l’actual): {list}',
   'health.commitWeeks': 'Commits per setmana, últimes {n} setmanes (de la més vella a l’actual): {list}',
+  'health.authorWeeks': 'Autors diferents per setmana, últimes {n} setmanes (de la més vella a l’actual): {list}',
   'health.tagWeeks': 'Etiquetes per setmana, últimes {n} setmanes (de la més vella a l’actual): {list}',
   'health.issueWeeks': 'Issues oberts per setmana, últimes {n} setmanes (de la més vella a l’actual): {list}',
   'health.prCloseWeeks': 'Pull requests tancats sense fusionar per setmana, últimes {n} setmanes (de la més vella a l’actual): {list}',

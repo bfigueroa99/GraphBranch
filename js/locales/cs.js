@@ -528,6 +528,7 @@ GB.i18n.define('cs', {
   'health.closedWeeks': 'Uzavřené issues za týden, posledních {n} týdnů (od nejstaršího po aktuální): {list}',
   'health.branchWeeks': 'Nové větve za týden, posledních {n} týdnů (od nejstaršího po aktuální): {list}',
   'health.commitWeeks': 'Commity za týden, posledních {n} týdnů (od nejstaršího po aktuální): {list}',
+  'health.authorWeeks': 'Různí autoři za týden, posledních {n} týdnů (od nejstaršího po aktuální): {list}',
   'health.tagWeeks': 'Tagy za týden, posledních {n} týdnů (od nejstaršího po aktuální): {list}',
   'health.issueWeeks': 'Otevřené issues za týden, posledních {n} týdnů (od nejstaršího po aktuální): {list}',
   'health.prCloseWeeks': 'Pull requesty zavřené bez sloučení za týden, posledních {n} týdnů (od nejstaršího po aktuální): {list}',

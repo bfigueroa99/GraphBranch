@@ -517,6 +517,7 @@ GB.i18n.define('hu', {
   'health.closedWeeks': 'Lezárt issue-k hetente, az utolsó {n} hét (a legrégebbitől a jelenlegiig): {list}',
   'health.branchWeeks': 'Új ágak hetente, az utolsó {n} hét (a legrégebbitől a jelenlegiig): {list}',
   'health.commitWeeks': 'Commitok hetente, az utolsó {n} hét (a legrégebbitől a jelenlegiig): {list}',
+  'health.authorWeeks': 'Különböző szerzők hetente, az utolsó {n} hét (a legrégebbitől a jelenlegiig): {list}',
   'health.tagWeeks': 'Címkék hetente, az utolsó {n} hét (a legrégebbitől a jelenlegiig): {list}',
   'health.issueWeeks': 'Megnyitott issue-k hetente, az utolsó {n} hét (a legrégebbitől a jelenlegiig): {list}',
   'health.prCloseWeeks': 'Összefésülés nélkül lezárt pull requestek hetente, az utolsó {n} hét (a legrégebbitől a jelenlegiig): {list}',

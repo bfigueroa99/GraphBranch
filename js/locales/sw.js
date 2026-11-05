@@ -517,6 +517,7 @@ GB.i18n.define('sw', {
   'health.closedWeeks': 'Issue zilizofungwa kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',
   'health.branchWeeks': 'Matawi mapya kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',
   'health.commitWeeks': 'Commit kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',
+  'health.authorWeeks': 'Waandishi tofauti kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',
   'health.tagWeeks': 'Lebo kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',
   'health.issueWeeks': 'Issue zilizofunguliwa kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',
   'health.prCloseWeeks': 'Pull request zilizofungwa bila kuunganishwa kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',

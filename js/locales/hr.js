@@ -525,6 +525,7 @@ GB.i18n.define('hr', {
   'health.closedWeeks': 'Zatvoreni issuei tjedno, zadnjih {n} tjedana (od najstarijeg do trenutnog): {list}',
   'health.branchWeeks': 'Nove grane tjedno, zadnjih {n} tjedana (od najstarijeg do trenutnog): {list}',
   'health.commitWeeks': 'Commitovi tjedno, zadnjih {n} tjedana (od najstarijeg do trenutnog): {list}',
+  'health.authorWeeks': 'Različiti autori tjedno, zadnjih {n} tjedana (od najstarijeg do trenutnog): {list}',
   'health.tagWeeks': 'Tagovi tjedno, zadnjih {n} tjedana (od najstarijeg do trenutnog): {list}',
   'health.issueWeeks': 'Otvoreni issuei tjedno, zadnjih {n} tjedana (od najstarijeg do trenutnog): {list}',
   'health.prCloseWeeks': 'Pull requestovi zatvoreni bez spajanja tjedno, zadnjih {n} tjedana (od najstarijeg do trenutnog): {list}',

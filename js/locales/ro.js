@@ -525,6 +525,7 @@ GB.i18n.define('ro', {
   'health.closedWeeks': 'Issue-uri închise pe săptămână, ultimele {n} săptămâni (de la cea mai veche la cea curentă): {list}',
   'health.branchWeeks': 'Ramuri noi pe săptămână, ultimele {n} săptămâni (de la cea mai veche la cea curentă): {list}',
   'health.commitWeeks': 'Commituri pe săptămână, ultimele {n} săptămâni (de la cea mai veche la cea curentă): {list}',
+  'health.authorWeeks': 'Autori diferiți pe săptămână, ultimele {n} săptămâni (de la cea mai veche la cea curentă): {list}',
   'health.tagWeeks': 'Taguri pe săptămână, ultimele {n} săptămâni (de la cea mai veche la cea curentă): {list}',
   'health.issueWeeks': 'Issue-uri deschise pe săptămână, ultimele {n} săptămâni (de la cea mai veche la cea curentă): {list}',
   'health.prCloseWeeks': 'Pull request-uri închise fără îmbinare pe săptămână, ultimele {n} săptămâni (de la cea mai veche la cea curentă): {list}',

@@ -518,6 +518,7 @@ GB.i18n.define('nl', {
   'health.closedWeeks': 'Gesloten issues per week, laatste {n} weken (van oudste naar huidige): {list}',
   'health.branchWeeks': 'Nieuwe branches per week, laatste {n} weken (van oudste naar huidige): {list}',
   'health.commitWeeks': 'Commits per week, laatste {n} weken (van oudste naar huidige): {list}',
+  'health.authorWeeks': 'Verschillende auteurs per week, laatste {n} weken (van oudste naar huidige): {list}',
   'health.tagWeeks': 'Tags per week, laatste {n} weken (van oudste naar huidige): {list}',
   'health.issueWeeks': 'Geopende issues per week, laatste {n} weken (van oudste naar huidige): {list}',
   'health.prCloseWeeks': 'Zonder merge gesloten pull requests per week, laatste {n} weken (van oudste naar huidige): {list}',

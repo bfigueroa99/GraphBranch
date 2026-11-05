@@ -519,6 +519,7 @@ GB.i18n.define('sw', {
   'health.commitWeeks': 'Commit kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',
   'health.tagWeeks': 'Lebo kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',
   'health.issueWeeks': 'Issue zilizofunguliwa kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',
+  'health.prCloseWeeks': 'Pull request zilizofungwa bila kuunganishwa kwa wiki, wiki {n} za mwisho (kutoka ya zamani hadi ya sasa): {list}',
   'health.ci': 'Kushindwa kwa CI',
   'health.ciPrs': 'PR wazi zenye ukaguzi uliofeli: {failing} kati ya {total} ({pct}%)',
   'health.ciFeed': 'Mara ambazo tawi chaguomsingi liligeuka nyekundu ndani ya siku 30: {n}',

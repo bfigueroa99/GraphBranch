@@ -519,6 +519,7 @@ GB.i18n.define('zh-Hans', {
   'health.commitWeeks': '每周提交数，最近 {n} 周（从最早到当前）：{list}',
   'health.tagWeeks': '每周标签数，最近 {n} 周（从最早到当前）：{list}',
   'health.issueWeeks': '每周开启的议题，最近 {n} 周（从最早到当前）：{list}',
+  'health.prCloseWeeks': '每周未合并即关闭的拉取请求，最近 {n} 周（从最早到当前）：{list}',
   'health.ci': 'CI 失败',
   'health.ciPrs': '检查失败的未关闭 PR:{failing} / {total}({pct}%)',
   'health.ciFeed': '默认分支在 30 天内变红的次数:{n}',

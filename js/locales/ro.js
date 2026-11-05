@@ -527,6 +527,7 @@ GB.i18n.define('ro', {
   'health.commitWeeks': 'Commituri pe săptămână, ultimele {n} săptămâni (de la cea mai veche la cea curentă): {list}',
   'health.tagWeeks': 'Taguri pe săptămână, ultimele {n} săptămâni (de la cea mai veche la cea curentă): {list}',
   'health.issueWeeks': 'Issue-uri deschise pe săptămână, ultimele {n} săptămâni (de la cea mai veche la cea curentă): {list}',
+  'health.prCloseWeeks': 'Pull request-uri închise fără îmbinare pe săptămână, ultimele {n} săptămâni (de la cea mai veche la cea curentă): {list}',
   'health.ci': 'Eșecuri CI',
   'health.ciPrs': 'PR-uri deschise cu verificări eșuate: {failing} din {total} ({pct}%)',
   'health.ciFeed': 'De câte ori a devenit roșie ramura implicită în 30 de zile: {n}',

@@ -562,6 +562,7 @@ GB.i18n.define('fa', {
   'health.commitWeeks': 'کامیت‌ها در هفته، {n} هفتهٔ اخیر (از قدیمی‌ترین تا فعلی): {list}',
   'health.tagWeeks': 'برچسب‌ها در هفته، {n} هفتهٔ اخیر (از قدیمی‌ترین تا فعلی): {list}',
   'health.issueWeeks': 'issueهای بازشده در هفته، {n} هفتهٔ اخیر (از قدیمی‌ترین تا فعلی): {list}',
+  'health.prCloseWeeks': 'pull requestهای بسته‌شده بدون ادغام در هفته، {n} هفتهٔ اخیر (از قدیمی‌ترین تا فعلی): {list}',
   'health.ci': 'شکست‌های CI',
   'health.ciPrs': 'PRهای باز با بررسی‌های ناموفق: {failing} از {total} ({pct}٪)',
   'health.ciFeed': 'دفعاتی که شاخه پیش‌فرض در ۳۰ روز قرمز شد: {n}',

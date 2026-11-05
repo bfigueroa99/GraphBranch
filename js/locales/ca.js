@@ -519,6 +519,7 @@ GB.i18n.define('ca', {
   'health.commitWeeks': 'Commits per setmana, últimes {n} setmanes (de la més vella a l’actual): {list}',
   'health.tagWeeks': 'Etiquetes per setmana, últimes {n} setmanes (de la més vella a l’actual): {list}',
   'health.issueWeeks': 'Issues oberts per setmana, últimes {n} setmanes (de la més vella a l’actual): {list}',
+  'health.prCloseWeeks': 'Pull requests tancats sense fusionar per setmana, últimes {n} setmanes (de la més vella a l’actual): {list}',
   'health.ci': 'Errors de CI',
   'health.ciPrs': 'PR oberts amb els checks en vermell: {failing} de {total} ({pct} %)',
   'health.ciFeed': 'Vegades que la branca per defecte ha passat a vermell en 30 dies: {n}',

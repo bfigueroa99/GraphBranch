@@ -87,7 +87,7 @@ test('ritmo: merges en 7 y 30 días y releases en 30, sin repetir una actividad'
     { id: '6', kind: 'push', time: ago(1) },
   ];
   const pace = compute(repo(), acts, NOW).pace;
-  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks], closedWeeks: [...pace.closedWeeks], branchWeeks: [...pace.branchWeeks], commitWeeks: [...pace.commitWeeks], tagWeeks: [...pace.tagWeeks], issueWeeks: [...pace.issueWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], closedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], branchWeeks: [0, 0, 0, 0, 0, 0, 0, 0], commitWeeks: [0, 1, 0, 2, 0, 0, 0, 1], tagWeeks: [0, 0, 0, 0, 0, 0, 0, 0], issueWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
+  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks], closedWeeks: [...pace.closedWeeks], branchWeeks: [...pace.branchWeeks], commitWeeks: [...pace.commitWeeks], tagWeeks: [...pace.tagWeeks], issueWeeks: [...pace.issueWeeks], prCloseWeeks: [...pace.prCloseWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], closedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], branchWeeks: [0, 0, 0, 0, 0, 0, 0, 0], commitWeeks: [0, 1, 0, 2, 0, 0, 0, 1], tagWeeks: [0, 0, 0, 0, 0, 0, 0, 0], issueWeeks: [0, 0, 0, 0, 0, 0, 0, 0], prCloseWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
 });
 
 test('DORA: despliegues en 30 días, mediana entre releases y tiempo de entrega', () => {
@@ -414,4 +414,12 @@ test('la salud cuenta los issues abiertos por semana, una vez cada número', () 
   ];
   assert.deepEqual([...compute(repo(), acts, NOW).pace.issueWeeks], [0, 0, 0, 0, 0, 0, 1, 2]);
   assert.deepEqual([...compute(repo(), [], NOW).pace.issueWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
+});
+
+test('PRs cerrados sin fusionar por semana: cada número una vez, sin los fusionados, de la más vieja a la actual', () => {
+  const cl = (id, days, number) => ({ kind: 'pr-close', id, number, time: ago(days) });
+  const acts = [cl('a', 0.5, 1), cl('b', 3, 2), cl('c', 3.5, 2), cl('d', 8, 3), cl('e', 20, 4), cl('f', 70, 5), cl('g', -1, 6), cl('h', 1, 7), { kind: 'pr-merge', id: 'm', number: 7, time: ago(1) }, { kind: 'issue-close', id: 'i', number: 8, time: ago(1) }];
+  const h = compute(repo(), acts, NOW);
+  assert.deepEqual([...h.pace.prCloseWeeks], [0, 0, 0, 0, 0, 1, 1, 2], 'el 1 y el 2 (dos cierres, una vez) esta semana, el 3 la pasada, el 4 hace tres; el 5 fuera de las 8, el 6 (futuro), el 7 (fusionado) y el issue no cuentan');
+  assert.deepEqual([...compute(repo(), [], NOW).pace.prCloseWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
 });

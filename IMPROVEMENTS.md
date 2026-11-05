@@ -632,5 +632,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (la misma de `syncCiRest`, con el endpoint de GitLab).
 - OMC: no disponible (la sesión programada no corrió plan ni revisión; entrega de esfuerzo 2 en un solo frente)
 - Reclamo: loop/210, sin colisión
-- Validado: pendiente
+- Validado: 578 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (el smoke falló una vez, antes, en «se siguen hasta 20 repos a la vez: ?recent=…», ajeno al cambio, y pasó en la puerta).
 - **Siguiente:** iteración 211, mantenimiento · Seguridad: auditoría (sin pendientes de Seguridad)

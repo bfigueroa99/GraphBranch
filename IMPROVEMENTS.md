@@ -632,3 +632,16 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/203, sin colisión
 - Validado: 566 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
 - **Siguiente:** iteración 204, expansión: ítem 134 (Salud del repo: tendencia de releases, Análisis)
+
+### 2026-11-05 · Iteración 204 · Expansión · Análisis
+
+- **Capacidad nueva: la salud muestra los issues abiertos por semana** (ítem 137 de la hoja de ruta, parte del 12). El ítem 134 que tocaba ya estaba hecho (#118, Para Benjamin 7): en vez de dejarlo atascar otra vez al loop, los ítems 134 y 141 (también hecho, #164) se reemplazaron por ítems nuevos con la misma numeración (PRs cerrados sin fusionar y autores de commits por semana) y se quitó la nota 7 de Para Benjamin. `compute` (`js/health.js`) suma `pace.issueWeeks`: cada número de issue cuenta una vez, con su primera apertura (`issue-open`), y el panel lo dice en `#hl-issueweeks` (solo con algún issue). Sin consultas. Texto nuevo `health.issueWeeks` en los 40 idiomas; sin CSP nueva.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/health.test.mjs` («la salud cuenta los issues abiertos por semana…») → `pace.issueWeeks` indefinido sin el cambio.
+- README: Salud del repo y Límites conocidos.
+- QA: texto escapado con `U.esc`; 40 idiomas con `check-i18n`; duplicados, cierres, eventos sin hora y fuera de las 8 semanas mirados con la prueba; paso de formato en el smoke (solo si la línea aparece); auditoría en la puerta.
+- Skills: no aplica: una línea más en un panel que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (la que ya usan las otras tendencias).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML` con texto de afuera)
+- Reclamo: loop/204, sin colisión
+- Validado: 567 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 205, expansión: ítem 139 (Vista de texto: CI de cada rama, Público)

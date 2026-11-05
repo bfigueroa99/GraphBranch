@@ -267,7 +267,7 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 
 131. **Issues de Jira y Trello, primera entrega** · Fuentes · 1×2/3. [replica 2026-10-28] [parte de «Issues de Jira y Trello»] Las claves tipo `ABC-123` de los mensajes de commit y de PR se vuelven enlaces a una URL de Jira que el usuario configura (guardada en este navegador), sin consultas nuevas. Comprobar: prueba del reconocimiento de claves y un paso del smoke.
 ~~**Blame de un archivo, segunda entrega**~~ hecho en #236 · Datos.
-~~**Salud del repo: PRs cerrados sin fusionar por semana**~~ hecho en #261 · Análisis.
+134. ~~**Salud del repo: PRs cerrados sin fusionar por semana**~~ hecho en #261 · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] La salud muestra los PRs cerrados sin fusionar por semana de las últimas 8, con lo ya cargado. Comprobar: `tools/health.test.mjs` con cierres fabricados.
 135. ~~**Vista de texto: ramas nuevas**~~ hecho en #255 · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama creada en los últimos 7 días lo dice, con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
 136. ~~**Resumen de la semana de la organización: rama más activa**~~ hecho en #257 · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] Cada repo del resumen de la organización nombra su rama más activa de la semana. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
 137. ~~**Salud del repo: tendencia de issues abiertos**~~ hecho en #259 · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] La salud muestra los issues abiertos por semana de las últimas 8, con lo ya cargado. Comprobar: `tools/health.test.mjs` con issues fabricados.

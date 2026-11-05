@@ -3623,6 +3623,19 @@
     const q = new URLSearchParams(location.search);
     // ?repo=a/b&repo=c/d (o separados por comas): los repos a seguir, el primero a la vista
     urlRepos = q.getAll('repo').flatMap((r) => r.split(',')).map((r) => r.trim()).filter(Boolean);
+    // compartido desde el menú del móvil (share_target del manifiesto): ese repo se abre a la vista, y los
+    // ?shared_*= salen de la dirección (recargar o copiar el enlace no los arrastra; ?repo= lo pone saveTabs)
+    const shared = EMBED ? '' : U.sharedRepo(q);
+    if (shared) urlRepos.unshift(shared);
+    if (U.SHARE_PARAMS.some((k) => q.has(k))) {
+      const url = new URL(location.href);
+      for (const k of U.SHARE_PARAMS) url.searchParams.delete(k);
+      try {
+        history.replaceState(null, '', url);
+      } catch {
+        /* algunos visores no permiten cambiar la URL */
+      }
+    }
     initialPractice = !EMBED && q.has('practice') ? GB.gitsim.decodeExercise(q.get('practice').trim()) : null;
     if (initialPractice) initialPractice.solution = q.get('solution') === '1'; // ?solution=1: muestra la solución propuesta, si el ejercicio la trae
     initialReplay = GB.Replay.paramsOf(q);

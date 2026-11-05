@@ -128,6 +128,48 @@ window.GB = window.GB || {};
     return m && !/^\.+$/.test(m[1]) && !/^\.+$/.test(m[2]) ? { owner: m[1], name: m[2] } : null;
   };
 
+  /** Lo que llega al compartir hacia la PWA (el `share_target` del manifiesto: ?shared_url=, ?shared_text= y
+      ?shared_title=, con nombres propios para no chocar con ?title= del Replay y de la capa):
+      el primer enlace http(s) que parseRepo reconoce, buscado en ese orden. Muchas apps del móvil mandan
+      el enlace dentro del texto («Mira esto https://github.com/a/b»), por eso se buscan los enlaces en
+      los tres campos. Solo enlaces: un «a/b» suelto en un texto no es un repo. '' si no hay ninguno. */
+  const SHARE_PARAMS = ['shared_url', 'shared_text', 'shared_title'];
+  U.SHARE_PARAMS = SHARE_PARAMS;
+  // rutas de github.com que no son un dueño: compartir la página de una de ellas no abre un repo
+  const GITHUB_RESERVED = new Set('about apps codespaces collections contact customer-stories enterprise events explore features issues login logout marketplace new notifications orgs organizations pricing pulls search security settings site sponsors stars topics trending users'.split(' '));
+  /** El host del enlace tiene que ser exactamente el de un servicio que se sigue (o el de un servidor propio ya configurado): «evil.example/github.com/a/b» o «gist.github.com» no cuentan. */
+  const sharedHostOk = (link) => {
+    let url;
+    try {
+      url = new URL(link);
+    } catch {
+      return false;
+    }
+    const host = url.hostname.toLowerCase();
+    if (host === 'github.com' || host === 'www.github.com') return !GITHUB_RESERVED.has((url.pathname.split('/')[1] || '').toLowerCase());
+    if (['gitlab.com', 'www.gitlab.com', 'codeberg.org', 'bitbucket.org', 'dev.azure.com'].includes(host)) return true;
+    return [U.gitlabBase, U.forgeBase, U.bitbucketBase].some((base) => {
+      try {
+        return !!base && new URL(base).hostname.toLowerCase() === host;
+      } catch {
+        return false;
+      }
+    });
+  };
+  U.sharedRepo = (q) => {
+    if (!q || typeof q.get !== 'function') return '';
+    for (const key of SHARE_PARAMS) {
+      // el enlace termina en el primer espacio o carácter que no es ASCII (la coma de ancho completo de «…/a/b，看»)
+      const links = String(q.get(key) || '').slice(0, 4000).match(/https?:\/\/[!#-&(-;=?-~]+/gi) || [];
+      for (const raw of links) {
+        const link = raw.replace(/[.,;:!?)\]}]+$/, ''); // la puntuación que cierra la frase no es del enlace
+        const p = sharedHostOk(link) && U.parseRepo(link);
+        if (p && p.host !== 'local') return link;
+      }
+    }
+    return '';
+  };
+
   /** Una organización o un usuario de GitHub entero: org:nombre, user:nombre, @nombre o la URL de su
       perfil (github.com/nombre, github.com/orgs/nombre). null si no es eso: un nombre suelto no
       cuenta, para no confundirlo con un repo mal escrito. */

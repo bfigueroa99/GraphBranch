@@ -2632,6 +2632,16 @@ console.log('Una organización o un usuario entero');
     const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
     if (saved !== '["ana/notas"]') throw new Error(`se guardó ${saved}`);
   }, { allow: /404/ });
+
+  await step(page, 'compartir hacia la PWA: el enlace dentro del texto abre ese repo y sale de la dirección', async () => {
+    await page.evaluate(() => localStorage.clear());
+    const text = encodeURIComponent('Mira este PR: https://github.com/ana/notas/pull/1.');
+    await page.goto(`${base}/index.html?lang=es&shared_title=Notas&shared_text=${text}`);
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'ana/notas', null, { timeout: T(15000) });
+    await page.waitForFunction(() => new URLSearchParams(location.search).get('repo') === 'ana/notas', null, { timeout: T(5000) });
+    const left = await page.evaluate(() => [...new URLSearchParams(location.search).keys()].filter((k) => k.startsWith('shared_')));
+    if (left.length) throw new Error(`la dirección sigue con ${left}`);
+  }, { allow: /404/ });
   await page.context().close();
 }
 

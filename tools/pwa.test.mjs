@@ -179,3 +179,44 @@ test('el manifiesto, sus íconos y el CSP dejan instalar la página', () => {
   assert.ok(directive('img-src').includes("'self'"), 'los íconos del manifiesto se cargan como imágenes del propio sitio');
   assert.deepEqual(directive('connect-src'), ['https://api.github.com', 'https://gitlab.com', 'https://codeberg.org', 'https://api.bitbucket.org', 'https://dev.azure.com'], 'el CSP sigue cerrado: solo las APIs de GitHub, GitLab, Codeberg, Bitbucket y Azure DevOps');
 });
+
+test('compartir hacia la PWA: el manifiesto declara share_target y el enlace compartido se reconoce', () => {
+  const manifest = JSON.parse(read('manifest.webmanifest'));
+  const share = manifest.share_target;
+  assert.ok(share, 'falta share_target en el manifiesto');
+  // GET a la propia página: funciona sin conexión (el service worker sirve index.html con cualquier query) y sin consultas nuevas
+  assert.equal(share.action, './');
+  assert.equal(share.method, 'GET');
+  assert.equal(share.enctype, undefined, 'con GET no hay cuerpo que codificar');
+  assert.deepEqual(share.params, { title: 'shared_title', text: 'shared_text', url: 'shared_url' }, 'nombres propios: ?title= ya es del Replay y de la capa');
+
+  const ctx = vm.createContext({ URL, document: { addEventListener() {} }, localStorage: { getItem: () => null, setItem() {}, removeItem() {} }, addEventListener() {} });
+  ctx.window = ctx;
+  vm.runInContext(read('js/util.js').toString(), ctx, { filename: 'util.js' });
+  const U = ctx.GB.U;
+  assert.ok(U && typeof U.sharedRepo === 'function', 'falta U.sharedRepo');
+  assert.deepEqual([...U.SHARE_PARAMS].sort(), Object.values(share.params).sort(), 'la página lee los mismos campos que declara el manifiesto');
+  const shared = (o) => U.sharedRepo(new URLSearchParams(o));
+  // un enlace por plataforma, en ?shared_url=
+  for (const [link, host] of [
+    ['https://github.com/torvalds/linux', undefined],
+    ['https://github.com/torvalds/linux/pull/12', undefined],
+    ['https://gitlab.com/gitlab-org/gitlab-runner/-/merge_requests/3', 'gitlab'],
+    ['https://codeberg.org/forgejo/forgejo', 'codeberg'],
+    ['https://bitbucket.org/atlassian/python-bitbucket', 'bitbucket'],
+    ['https://dev.azure.com/org/proyecto/_git/repo', 'azure'],
+  ]) {
+    assert.equal(shared({ shared_url: link }), link, link);
+    assert.equal(U.parseRepo(shared({ shared_url: link })).host, host, link);
+  }
+  // muchas apps mandan el enlace dentro del texto, con la puntuación de la frase pegada
+  assert.equal(shared({ shared_text: 'Mira esto: https://github.com/a/b.' }), 'https://github.com/a/b');
+  assert.equal(shared({ shared_title: 'GraphBranch', shared_text: '(https://codeberg.org/x/y)' }), 'https://codeberg.org/x/y');
+  // ?shared_url= manda sobre el texto; un enlace que no es de un repo se salta y vale el siguiente
+  assert.equal(shared({ shared_url: 'https://github.com/a/b', shared_text: 'https://gitlab.com/c/d' }), 'https://github.com/a/b');
+  assert.equal(shared({ shared_url: 'https://example.com/a/b', shared_text: 'https://gitlab.com/c/d' }), 'https://gitlab.com/c/d');
+  // nada que abrir: sin enlace, un «a/b» suelto, un perfil, otro esquema o nada compartido
+  for (const o of [{}, { shared_text: 'a/b' }, { shared_url: 'https://example.com/a/b' }, { shared_url: 'javascript:alert(1)//github.com/a/b' }, { shared_text: 'sin enlace' }])
+    assert.equal(shared(o), '', JSON.stringify(o));
+  assert.equal(U.sharedRepo(null), '');
+});

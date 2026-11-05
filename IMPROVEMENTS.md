@@ -590,7 +590,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: el resumen de la organización no está en la demo (pide seguir `org:`); lo cubren la prueba nueva (Markdown, imagen, sin PRs, más de 10) y el paso del smoke «el resumen de la semana de la organización junta sus repos abiertos» (Markdown sin `undefined`, `.md` y `.png`); 40 idiomas (`check-i18n`, 0 errores: la etiqueta ya existía); auditoría: ver Validado.
 - Skills: no aplica: una cifra más en un resumen que ya existe, con lo ya cargado; lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (sumar el `opened` que `compute` ya da por repo, como `merged`).
-- OMC: plan=— · revisión=3 hallazgos LOW (2 arreglados: la lista de PRs fusionados de cada repo también dice «… +n» cuando pasa de 10, y el comentario de `computeOrg` nombra qué cuenta como actividad; 1 aceptado: en la imagen la línea de cada repo se recorta a 70 caracteres y, con muchos PRs, lo último queda fuera, como ya pasaba con los fusionados) · verificación=pendiente
+- OMC: plan=— · revisión=3 hallazgos LOW (2 arreglados: la lista de PRs fusionados de cada repo también dice «… +n» cuando pasa de 10, y el comentario de `computeOrg` nombra qué cuenta como actividad; 1 aceptado: en la imagen la línea de cada repo se recorta a 70 caracteres y, con muchos PRs, lo último queda fuera, como ya pasaba con los fusionados) · verificación=PASS
 - Reclamo: loop/218, sin colisión
-- Validado: pendiente
+- Validado: 587 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 219, mantenimiento · Deuda: pendiente 1 (Pasos del smoke intermitentes en la sesión cloud: en la iteración 152, `npm run…)

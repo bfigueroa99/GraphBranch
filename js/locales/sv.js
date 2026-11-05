@@ -723,6 +723,7 @@ GB.i18n.define('sv', {
   'all.graphAria': 'Grengraf för {repo}',
   'all.stats': 'grenar: {branches} · commits: {commits} · öppna PR: {prs}',
   'all.summary': 'repon: {repos} · grenar: {branches} · öppna PR: {prs}',
+  'all.heavy': 'mer än {n} grenar totalt: vyn kan bli långsam, stäng några repon',
   'all.prs.title': 'Öppna pull requests: {n}',
   'all.prs.draft': 'Utkast',
   'all.prs.failing': 'Misslyckade kontroller',

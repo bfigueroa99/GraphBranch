@@ -724,6 +724,7 @@ GB.i18n.define('it', {
   'all.graphAria': 'Grafo dei rami di {repo}',
   'all.stats': 'rami: {branches} · commit: {commits} · PR aperte: {prs}',
   'all.summary': 'repository: {repos} · rami: {branches} · PR aperte: {prs}',
+  'all.heavy': 'più di {n} branch in totale: la vista può rallentare, chiudi qualche repo',
   'all.prs.title': 'Pull request aperte: {n}',
   'all.prs.draft': 'Bozze',
   'all.prs.failing': 'Controlli falliti',

@@ -766,6 +766,7 @@ GB.i18n.define('ur', {
   'all.graphAria': '{repo} کا برانچ گراف',
   'all.stats': 'برانچیں: {branches} · کمٹ: {commits} · کھلے PRs: {prs}',
   'all.summary': 'ریپوزٹریز: {repos} · برانچیں: {branches} · کھلے PRs: {prs}',
+  'all.heavy': 'کل ملا کر {n} سے زیادہ برانچیں: منظر سست ہو سکتا ہے، کچھ ریپو بند کریں',
   'all.prs.title': 'کھلی پل ریکویسٹس: {n}',
   'all.prs.draft': 'مسودے',
   'all.prs.failing': 'ناکام جانچیں',

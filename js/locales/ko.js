@@ -723,6 +723,7 @@ GB.i18n.define('ko', {
   'all.graphAria': '{repo}의 브랜치 그래프',
   'all.stats': '브랜치: {branches} · 커밋: {commits} · 열린 PR: {prs}',
   'all.summary': '저장소: {repos} · 브랜치: {branches} · 열린 PR: {prs}',
+  'all.heavy': '전체 브랜치가 {n}개를 넘습니다: 화면이 느려질 수 있으니 저장소를 몇 개 닫으세요',
   'all.prs.title': '열린 풀 리퀘스트: {n}',
   'all.prs.draft': '초안',
   'all.prs.failing': '실패한 검사',

@@ -724,6 +724,7 @@ GB.i18n.define('de', {
   'all.graphAria': 'Branch-Graph von {repo}',
   'all.stats': 'Branches: {branches} · Commits: {commits} · offene PRs: {prs}',
   'all.summary': 'Repositorys: {repos} · Branches: {branches} · offene PRs: {prs}',
+  'all.heavy': 'insgesamt mehr als {n} Branches: die Ansicht kann langsam werden, schließe einige Repos',
   'all.prs.title': 'Offene Pull Requests: {n}',
   'all.prs.draft': 'Entwürfe',
   'all.prs.failing': 'Fehlgeschlagene Checks',

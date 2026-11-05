@@ -734,6 +734,7 @@ GB.i18n.define('sk', {
   'all.graphAria': 'Graf vetiev {repo}',
   'all.stats': 'vetvy: {branches} · commity: {commits} · otvorené PR: {prs}',
   'all.summary': 'repozitáre: {repos} · vetvy: {branches} · otvorené PR: {prs}',
+  'all.heavy': 'spolu viac ako {n} vetiev: zobrazenie môže spomaliť, zatvorte niektoré repozitáre',
   'all.prs.title': 'Otvorené pull requesty: {n}',
   'all.prs.draft': 'Koncepty',
   'all.prs.failing': 'Zlyhané kontroly',

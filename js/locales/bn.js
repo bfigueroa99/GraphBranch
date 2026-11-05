@@ -723,6 +723,7 @@ GB.i18n.define('bn', {
   'all.graphAria': '{repo}-এর ব্রাঞ্চ গ্রাফ',
   'all.stats': 'ব্রাঞ্চ: {branches} · কমিট: {commits} · খোলা PR: {prs}',
   'all.summary': 'রিপোজিটরি: {repos} · ব্রাঞ্চ: {branches} · খোলা PR: {prs}',
+  'all.heavy': 'মোট {n}টির বেশি ব্র্যাঞ্চ: দৃশ্য ধীর হতে পারে, কিছু রেপো বন্ধ করুন',
   'all.prs.title': 'খোলা পুল রিকোয়েস্ট: {n}',
   'all.prs.draft': 'খসড়া',
   'all.prs.failing': 'ব্যর্থ চেক',

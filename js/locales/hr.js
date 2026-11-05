@@ -731,6 +731,7 @@ GB.i18n.define('hr', {
   'all.graphAria': 'Graf grana repozitorija {repo}',
   'all.stats': 'grane: {branches} · commitovi: {commits} · otvoreni PR-ovi: {prs}',
   'all.summary': 'repozitoriji: {repos} · grane: {branches} · otvoreni PR-ovi: {prs}',
+  'all.heavy': 'ukupno više od {n} grana: prikaz može biti spor, zatvori neke repozitorije',
   'all.prs.title': 'Otvoreni pull requestovi: {n}',
   'all.prs.draft': 'Nacrti',
   'all.prs.failing': 'Neuspjele provjere',

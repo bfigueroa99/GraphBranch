@@ -2411,22 +2411,22 @@ console.log('Varios repos a la vez');
   });
   await step(
     full,
-    'se siguen hasta 10 repos a la vez',
+    'se siguen hasta 20 repos a la vez',
     async () => {
-      const ten = Array.from({ length: 10 }, (_, i) => `repo=o/r${i}`).join('&'); // no existen: dan 404, da igual
+      const ten = Array.from({ length: 20 }, (_, i) => `repo=o/r${i}`).join('&'); // no existen: dan 404, da igual
       await full.goto(`${base}/index.html?lang=es&${ten}`);
       await full.waitForSelector('#repo-tabs:not([hidden])', { timeout: T(10000) });
       await full.fill('#repo-input', 'o/a');
       await full.press('#repo-input', 'Enter');
       const why = await full.$eval('#repo-input', (i) => i.validationMessage);
       const n = await full.locator('#repo-tabs .rt').count();
-      if (n !== 10) throw new Error(`hay ${n} pestañas`);
-      if (!why) throw new Error('no dice por qué no se suma el repo 11');
+      if (n !== 20) throw new Error(`hay ${n} pestañas`);
+      if (!why) throw new Error('no dice por qué no se suma el repo 21');
       // la constelación: una galaxia por repo seguido, con nombre, sin tocarse, y Intro lleva a su pestaña
       await full.click('#constellation-btn');
       await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
       const gx = await full.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => ({ label: b.getAttribute('aria-label'), r: b.getBoundingClientRect().toJSON() })));
-      if (gx.length !== 10) throw new Error(`la constelación tiene ${gx.length} galaxias`);
+      if (gx.length !== 20) throw new Error(`la constelación tiene ${gx.length} galaxias`);
       if (gx.some((g) => !g.label || /undefined|NaN|constellation\./.test(g.label))) throw new Error('galaxia sin nombre o con texto sin resolver: ' + JSON.stringify(gx.map((g) => g.label)));
       for (let i = 0; i < gx.length; i++)
         for (let j = i + 1; j < gx.length; j++) {
@@ -2441,7 +2441,7 @@ console.log('Varios repos a la vez');
       const said = await full.$eval('#constellation-status', (e) => e.textContent.trim());
       if (!said || /undefined|constellation\./.test(said)) throw new Error('el orden no se anuncia: ' + said);
       await full.selectOption('#constellation-order', 'activity');
-      if ((await full.$$('#constellation .cs-gx')).length !== 10) throw new Error('al ordenar por actividad cambia el número de galaxias');
+      if ((await full.$$('#constellation .cs-gx')).length !== 20) throw new Error('al ordenar por actividad cambia el número de galaxias');
       await full.selectOption('#constellation-order', 'tabs');
       await full.focus('#constellation .cs-gx');
       await full.press('#constellation .cs-gx:focus', 'Tab');
@@ -2478,35 +2478,36 @@ console.log('Varios repos a la vez');
       await full.click('#constellation-btn');
       await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
       const filtered = await full.$$eval('#constellation .cs-gx', (b) => b.map((x) => x.dataset.key));
-      if (!filtered.length || filtered.some((k) => !/r1/i.test(k)) || filtered.length >= 10) throw new Error('?constellation=R1 no filtra por nombre: ' + filtered);
+      if (!filtered.length || filtered.some((k) => !/r1/i.test(k)) || filtered.length >= 20) throw new Error('?constellation=R1 no filtra por nombre: ' + filtered);
       const filteredSaid = await full.$eval('#constellation-status', (e) => e.textContent.trim());
       if (!filteredSaid.includes('R1') || /undefined|constellation\./.test(filteredSaid)) throw new Error('el filtro no se anuncia: ' + filteredSaid);
       await full.click('#constellation-close');
-      // ?recent=30: los commits del mock son de hace una hora o de ahora, así que siguen los 10; con ?recent=0.000001 (unos 86 ms) ya no queda ninguno
-      for (const [days, want] of [['30', 10], ['0.000001', 0]]) {
+      // ?recent=30: los commits del mock son de hace una hora o de ahora, así que siguen (mientras cargan, hasta los 20; con tantas pestañas escalonadas las que ya dieron 404 salen antes de que arranque la última, así que basta con que quede alguna); con ?recent=0.000001 (unos 86 ms) ya no queda ninguno
+      for (const [days, want] of [['30', 20], ['0.000001', 0]]) {
         await full.goto(`${base}/index.html?lang=es&recent=${days}&repo=o/a`);
         await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });
-        await full.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt-main').length === 10, null, { timeout: T(10000) });
+        await full.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt-main').length === 20, null, { timeout: T(10000) });
         // las pestañas que aún cargan no tienen commits y no se descartan: se reabre la constelación hasta que todas hayan cargado
         let n = -1;
         let said = '';
-        for (let tries = 0; tries < 20 && n !== want; tries++) {
+        const ok = () => (want ? n > 0 : n === 0);
+        for (let tries = 0; tries < 20 && !ok(); tries++) {
           if (tries) await full.waitForTimeout(500);
           await full.click('#constellation-btn');
           await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
           n = (await full.$$('#constellation .cs-gx')).length;
           said = await full.$eval('#constellation-status', (e) => e.textContent.trim());
-          if (n !== want) await full.click('#constellation-close');
+          if (!ok()) await full.click('#constellation-close');
         }
-        if (n !== want) throw new Error(`?recent=${days}: ${n} galaxias, se esperaban ${want}`);
-        if (want < 10 && (!said || /undefined|constellation\./.test(said))) throw new Error('?recent no se anuncia: ' + said);
+        if (!ok()) throw new Error(`?recent=${days}: ${n} galaxias, se esperaban ${want ? 'alguna' : 'ninguna'}`);
+        if (want < 20 && (!said || /undefined|constellation\./.test(said))) throw new Error('?recent no se anuncia: ' + said);
         await full.click('#constellation-close');
       }
-      // un enlace a otro repo, con los 10 ya seguidos: entra el del enlace y sale el último guardado
+      // un enlace a otro repo, con los 20 ya seguidos: entra el del enlace y sale el último guardado
       await full.goto(`${base}/index.html?lang=es&repo=o/a`);
       await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });
       const names = await full.locator('#repo-tabs .rt-name').allTextContents();
-      if (names.length !== 10 || names.at(-1) !== 'o/a' || names.includes('o/r9')) throw new Error(`pestañas tras el enlace: ${names.join(' ')}`);
+      if (names.length !== 20 || names.at(-1) !== 'o/a' || names.includes('o/r19')) throw new Error(`pestañas tras el enlace: ${names.join(' ')}`);
     },
     { allow: /status of 404/ },
   );

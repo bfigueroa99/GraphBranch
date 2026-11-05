@@ -734,6 +734,7 @@ GB.i18n.define('pl', {
   'all.graphAria': 'Graf gałęzi {repo}',
   'all.stats': 'gałęzie: {branches} · commity: {commits} · otwarte PR-y: {prs}',
   'all.summary': 'repozytoria: {repos} · gałęzie: {branches} · otwarte PR-y: {prs}',
+  'all.heavy': 'łącznie ponad {n} gałęzi: widok może zwolnić, zamknij kilka repozytoriów',
   'all.prs.title': 'Otwarte pull requesty: {n}',
   'all.prs.draft': 'Szkice',
   'all.prs.failing': 'Nieudane testy',

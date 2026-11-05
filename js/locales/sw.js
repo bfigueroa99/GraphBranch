@@ -723,6 +723,7 @@ GB.i18n.define('sw', {
   'all.graphAria': 'Grafu ya matawi ya {repo}',
   'all.stats': 'matawi: {branches} · commit: {commits} · PR zilizo wazi: {prs}',
   'all.summary': 'hazina: {repos} · matawi: {branches} · PR zilizo wazi: {prs}',
+  'all.heavy': 'zaidi ya matawi {n} kwa jumla: mwonekano unaweza kuwa polepole, funga baadhi ya hazina',
   'all.prs.title': 'Pull request zilizo wazi: {n}',
   'all.prs.draft': 'Rasimu',
   'all.prs.failing': 'Ukaguzi ulioshindwa',

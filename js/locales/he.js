@@ -780,6 +780,7 @@ GB.i18n.define('he', {
   'all.graphAria': 'גרף הענפים של {repo}',
   'all.stats': 'ענפים: {branches} · קומיטים: {commits} · PR פתוחים: {prs}',
   'all.summary': 'מאגרים: {repos} · ענפים: {branches} · PR פתוחים: {prs}',
+  'all.heavy': 'יותר מ-{n} ענפים בסך הכול: התצוגה עלולה להאט, סגור כמה מאגרים',
   'all.prs.title': 'בקשות משיכה פתוחות: {n}',
   'all.prs.draft': 'טיוטות',
   'all.prs.failing': 'בדיקות כושלות',

@@ -723,6 +723,7 @@ GB.i18n.define('id', {
   'all.graphAria': 'Grafik cabang {repo}',
   'all.stats': 'cabang: {branches} · commit: {commits} · PR terbuka: {prs}',
   'all.summary': 'repositori: {repos} · cabang: {branches} · PR terbuka: {prs}',
+  'all.heavy': 'lebih dari {n} cabang secara total: tampilan bisa melambat, tutup beberapa repo',
   'all.prs.title': 'Pull request terbuka: {n}',
   'all.prs.draft': 'Draf',
   'all.prs.failing': 'Pemeriksaan gagal',

@@ -724,6 +724,7 @@ GB.i18n.define('fil', {
   'all.graphAria': 'Graph ng mga branch ng {repo}',
   'all.stats': 'mga branch: {branches} · mga commit: {commits} · mga bukas na PR: {prs}',
   'all.summary': 'mga repository: {repos} · mga branch: {branches} · mga bukas na PR: {prs}',
+  'all.heavy': 'mahigit {n} branch sa kabuuan: maaaring bumagal ang view, magsara ng ilang repo',
   'all.prs.title': 'Mga bukás na pull request: {n}',
   'all.prs.draft': 'Mga draft',
   'all.prs.failing': 'Bigong checks',

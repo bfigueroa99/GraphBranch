@@ -723,6 +723,7 @@ GB.i18n.define('bg', {
   'all.graphAria': 'Граф на клоновете на {repo}',
   'all.stats': 'клонове: {branches} · комити: {commits} · отворени PR-и: {prs}',
   'all.summary': 'хранилища: {repos} · клонове: {branches} · отворени PR-и: {prs}',
+  'all.heavy': 'над {n} клона общо: изгледът може да се забави, затворете някои хранилища',
   'all.prs.title': 'Отворени pull заявки: {n}',
   'all.prs.draft': 'Чернови',
   'all.prs.failing': 'Неуспешни проверки',

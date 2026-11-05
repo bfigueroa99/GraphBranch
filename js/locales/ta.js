@@ -723,6 +723,7 @@ GB.i18n.define('ta', {
   'all.graphAria': '{repo} இன் கிளை வரைபடம்',
   'all.stats': 'கிளைகள்: {branches} · கமிட்கள்: {commits} · திறந்துள்ள PR: {prs}',
   'all.summary': 'களஞ்சியங்கள்: {repos} · கிளைகள்: {branches} · திறந்துள்ள PR: {prs}',
+  'all.heavy': 'மொத்தம் {n}-க்கும் மேற்பட்ட கிளைகள்: காட்சி மெதுவாகலாம், சில ரெப்போக்களை மூடவும்',
   'all.prs.title': 'திறந்த இழுப்புக் கோரிக்கைகள்: {n}',
   'all.prs.draft': 'வரைவுகள்',
   'all.prs.failing': 'தோல்வியடைந்த சோதனைகள்',

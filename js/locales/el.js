@@ -723,6 +723,7 @@ GB.i18n.define('el', {
   'all.graphAria': 'Γράφημα κλάδων του {repo}',
   'all.stats': 'κλάδοι: {branches} · commits: {commits} · ανοιχτά PR: {prs}',
   'all.summary': 'αποθετήρια: {repos} · κλάδοι: {branches} · ανοιχτά PR: {prs}',
+  'all.heavy': 'πάνω από {n} κλάδοι συνολικά: η προβολή μπορεί να αργεί, κλείσε κάποια repos',
   'all.prs.title': 'Ανοιχτά pull requests: {n}',
   'all.prs.draft': 'Πρόχειρα',
   'all.prs.failing': 'Αποτυχημένοι έλεγχοι',

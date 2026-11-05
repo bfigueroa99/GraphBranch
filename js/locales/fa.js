@@ -766,6 +766,7 @@ GB.i18n.define('fa', {
   'all.graphAria': 'نمودار شاخه‌های {repo}',
   'all.stats': 'شاخه‌ها: {branches} · کامیت‌ها: {commits} · PR باز: {prs}',
   'all.summary': 'مخزن‌ها: {repos} · شاخه‌ها: {branches} · PR باز: {prs}',
+  'all.heavy': 'در مجموع بیش از {n} شاخه: نما ممکن است کند شود، چند مخزن را ببندید',
   'all.prs.title': 'درخواست‌های ادغام باز: {n}',
   'all.prs.draft': 'پیش‌نویس‌ها',
   'all.prs.failing': 'بررسی‌های ناموفق',

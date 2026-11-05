@@ -723,6 +723,7 @@ GB.i18n.define('zh-Hans', {
   'all.graphAria': '{repo} 的分支图',
   'all.stats': '分支：{branches} · 提交：{commits} · 打开的 PR：{prs}',
   'all.summary': '仓库：{repos} · 分支：{branches} · 打开的 PR：{prs}',
+  'all.heavy': '分支总数超过 {n} 个：视图可能变慢，请关闭一些仓库',
   'all.prs.title': '未合并的拉取请求：{n}',
   'all.prs.draft': '草稿',
   'all.prs.failing': '检查失败',

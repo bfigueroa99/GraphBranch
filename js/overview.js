@@ -36,6 +36,10 @@
     return list.reduce((t, s) => ({ repos: t.repos + 1, branches: t.branches + (s.branches || 0), prs: t.prs + (s.prs || 0) }), { repos: 0, branches: 0, prs: 0 });
   }
 
+  /** Más ramas que estas entre todos los repos a la vez y la vista conjunta empieza a ir lenta (con 20 repos se llega fácil). */
+  const HEAVY_BRANCHES = 1500;
+  const heavy = (sum) => (sum.branches || 0) > HEAVY_BRANCHES;
+
   /** Los grupos del Launchpad, en el orden en que se muestran. */
   const PR_GROUPS = ['draft', 'failing', 'approved', 'waiting'];
 
@@ -282,5 +286,5 @@
     };
   }
 
-  GB.overview = { allParam, lastCommit, summary, totals, prGroup, groupPulls, mount };
+  GB.overview = { allParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, prGroup, groupPulls, mount };
 })(window.GB);

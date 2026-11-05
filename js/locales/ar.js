@@ -822,6 +822,7 @@ GB.i18n.define('ar', {
   'all.graphAria': 'مخطط فروع {repo}',
   'all.stats': 'فروع: {branches} · commits: {commits} · PR المفتوحة: {prs}',
   'all.summary': 'مستودعات: {repos} · فروع: {branches} · PR المفتوحة: {prs}',
+  'all.heavy': 'أكثر من {n} فرع في المجموع: قد تبطؤ العرض، أغلق بعض المستودعات',
   'all.prs.title': 'طلبات السحب المفتوحة: {n}',
   'all.prs.draft': 'مسودات',
   'all.prs.failing': 'فحوصات فاشلة',

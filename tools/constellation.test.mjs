@@ -37,6 +37,15 @@ test('10 repos: en el orden dado, dentro del cuadro y sin tocarse', () => {
       assert.ok(Math.hypot(spots[i].x - spots[j].x, spots[i].y - spots[j].y) >= spots[i].r + spots[j].r, `${i} toca a ${j}`);
 });
 
+test('20 repos (el tope): todos caben en el cuadro y sin tocarse', () => {
+  const spots = place(repos(20));
+  assert.equal(spots.length, 20);
+  for (const s of spots) assert.ok(s.r > 0 && s.x - s.r >= 0 && s.x + s.r <= 100 && s.y - s.r >= 0 && s.y + s.r <= 100, JSON.stringify(s));
+  for (let i = 0; i < spots.length; i++)
+    for (let j = i + 1; j < spots.length; j++)
+      assert.ok(Math.hypot(spots[i].x - spots[j].x, spots[i].y - spots[j].y) >= spots[i].r + spots[j].r, `${i} toca a ${j}`);
+});
+
 test('más commits, galaxia más grande, y la mayor queda al centro', () => {
   const spots = place([{ key: 'chico', commits: 3 }, { key: 'grande', commits: 900 }, { key: 'medio', commits: 80 }]);
   const by = Object.fromEntries(spots.map((s) => [s.key, s]));

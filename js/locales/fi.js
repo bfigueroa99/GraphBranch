@@ -723,6 +723,7 @@ GB.i18n.define('fi', {
   'all.graphAria': 'Repositorion {repo} haarakaavio',
   'all.stats': 'haarat: {branches} · commitit: {commits} · avoimet PR:t: {prs}',
   'all.summary': 'repositoriot: {repos} · haarat: {branches} · avoimet PR:t: {prs}',
+  'all.heavy': 'yli {n} haaraa yhteensä: näkymä voi hidastua, sulje joitakin repoja',
   'all.prs.title': 'Avoimet pull requestit: {n}',
   'all.prs.draft': 'Luonnokset',
   'all.prs.failing': 'Epäonnistuneet tarkistukset',

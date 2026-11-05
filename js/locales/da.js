@@ -723,6 +723,7 @@ GB.i18n.define('da', {
   'all.graphAria': 'Grengraf for {repo}',
   'all.stats': 'grene: {branches} · commits: {commits} · åbne PR\'er: {prs}',
   'all.summary': 'repositories: {repos} · grene: {branches} · åbne PR\'er: {prs}',
+  'all.heavy': 'mere end {n} grene i alt: visningen kan blive langsom, luk nogle repos',
   'all.prs.title': 'Åbne pull requests: {n}',
   'all.prs.draft': 'Kladder',
   'all.prs.failing': 'Fejlende checks',

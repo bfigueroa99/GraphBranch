@@ -723,6 +723,7 @@ GB.i18n.define('zh-Hant', {
   'all.graphAria': '{repo} 的分支圖',
   'all.stats': '分支：{branches} · 提交：{commits} · 開啟中的 PR：{prs}',
   'all.summary': '儲存庫：{repos} · 分支：{branches} · 開啟中的 PR：{prs}',
+  'all.heavy': '分支總數超過 {n} 個：檢視可能變慢，請關閉一些儲存庫',
   'all.prs.title': '未合併的拉取請求：{n}',
   'all.prs.draft': '草稿',
   'all.prs.failing': '檢查失敗',

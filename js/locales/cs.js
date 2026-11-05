@@ -734,6 +734,7 @@ GB.i18n.define('cs', {
   'all.graphAria': 'Graf větví {repo}',
   'all.stats': 'větve: {branches} · commity: {commits} · otevřené PR: {prs}',
   'all.summary': 'repozitáře: {repos} · větve: {branches} · otevřené PR: {prs}',
+  'all.heavy': 'celkem více než {n} větví: zobrazení může zpomalit, zavřete některé repozitáře',
   'all.prs.title': 'Otevřené pull requesty: {n}',
   'all.prs.draft': 'Rozpracované',
   'all.prs.failing': 'Neúspěšné kontroly',

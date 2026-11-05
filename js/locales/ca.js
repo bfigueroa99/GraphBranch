@@ -723,6 +723,7 @@ GB.i18n.define('ca', {
   'all.graphAria': 'Graf de branques de {repo}',
   'all.stats': 'branques: {branches} · commits: {commits} · PR oberts: {prs}',
   'all.summary': 'repositoris: {repos} · branques: {branches} · PR oberts: {prs}',
+  'all.heavy': 'més de {n} branques en total: la vista pot anar lenta, tanca algun repo',
   'all.prs.title': 'Pull requests oberts: {n}',
   'all.prs.draft': 'Esborranys',
   'all.prs.failing': 'Comprovacions fallides',

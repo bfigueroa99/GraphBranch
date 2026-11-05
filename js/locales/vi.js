@@ -723,6 +723,7 @@ GB.i18n.define('vi', {
   'all.graphAria': 'Đồ thị nhánh của {repo}',
   'all.stats': 'nhánh: {branches} · commit: {commits} · PR đang mở: {prs}',
   'all.summary': 'kho: {repos} · nhánh: {branches} · PR đang mở: {prs}',
+  'all.heavy': 'tổng cộng hơn {n} nhánh: giao diện có thể chậm, hãy đóng bớt kho',
   'all.prs.title': 'Pull request đang mở: {n}',
   'all.prs.draft': 'Bản nháp',
   'all.prs.failing': 'Kiểm tra thất bại',

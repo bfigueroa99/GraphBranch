@@ -677,5 +677,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML` con texto de afuera)
 - Replica: paridad, sin pasada nueva; la reposición salió del Mapa de alcance (columna Siguiente).
 - Reclamo: loop/206, sin colisión
-- Validado: pendiente
+- Validado: 569 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 207, mantenimiento · QA: pendiente 11

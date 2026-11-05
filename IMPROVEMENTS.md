@@ -572,12 +572,12 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 ### 2026-11-05 · Iteración 217 · Expansión · Análisis
 
 - **Capacidad nueva: las columnas del grafo 2D suman el SHA corto de cada commit** (ítem 156 de la hoja de ruta, parte de «Columnas de autor fecha y SHA a la vista en el grafo» de Replica). `GB.search.columnText` antepone los 7 primeros caracteres del SHA a «Autor · fecha» («2b7a0aa · Valentina Rojas · 2 nov 2026»), con el mismo interruptor de la lupa, que pasa a llamarse «Mostrar SHA, autor y fecha junto a cada commit (grafo 2D)» (clave `search.columns`, reescrita en los 40 idiomas). El SHA va primero para que el recorte (de 34 a 44 caracteres) nunca lo corte; un SHA que no es texto no se escribe. Sin consultas nuevas, con lo ya cargado; funciona en la demo y con todas las fuentes.
-- **Pruebas que fallan sin la capacidad:** `node --test tools/search.test.mjs` («columnText antepone el SHA corto…») → `actual: 'Ana · d5'`; paso del smoke de las columnas: cada una empieza por 7 caracteres hexadecimales distintos y buscar ese SHA en la lupa da exactamente 1 commit.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/search.test.mjs` («columnText antepone el SHA corto…») → `actual: 'Ana · d5'`; paso del smoke de las columnas: cada una es «SHA · autor · fecha» con 7 caracteres hexadecimales primero, y buscar ese SHA en la lupa encuentra un commit cargado que empieza por él.
 - README: Búsqueda de commits (lista de funciones), Límites conocidos (recorte a 44 y prefijos repetidos en repos enormes) y Seguridad; `replica/features.csv`: la fila sigue `partial`, ahora solo le falta el 3D.
 - QA: columnas a mano con Playwright en la demo (es y ta a 1280 px, ar a 320 px: el interruptor con su texto nuevo, 21 a 25 columnas «SHA · autor · fecha», la búsqueda por el SHA de la primera da 1 commit, sin errores de consola; captura del 2D: se pisan con muchos commits seguidos, como ya decía Límites conocidos); 40 idiomas (`check-i18n`); auditoría: ver Validado.
 - Skills: no aplica: un dato más en una columna del grafo que ya existe; lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (anteponer el SHA corto al texto que ya arma `columnText`).
-- OMC: plan=— · revisión=— · verificación=—
+- OMC: plan=— · revisión=4 hallazgos (1 MEDIUM y 1 LOW arreglados: el paso del smoke ya no exige exactamente 1 resultado ni prefijos distintos, que con los SHA al azar de la demo y la búsqueda por subcadena podían fallar alguna vez, y su mensaje dice «SHA · autor · fecha»; 2 LOW aceptados: el número del PR se confirma al abrirlo, y en árabe, hebreo, persa y urdu el bidi puede dejar el SHA al otro extremo de la diagonal, que se sigue leyendo) · verificación=—
 - Reclamo: loop/217, sin colisión
 - Validado: pendiente
 - **Siguiente:** iteración 218, expansión: ítem 143 (Resumen de la semana de la organización: PRs abiertos, Salidas)

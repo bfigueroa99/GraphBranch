@@ -4336,15 +4336,13 @@ console.log('Columnas de SHA, autor y fecha en el 2D');
     await page.check('#graph-columns');
     await page.waitForFunction(() => document.querySelectorAll('.graph-svg .node .node-meta').length > 0, null, { timeout: T(5000) });
     const on = await metas();
-    if (!on.every((x) => x.includes(' · '))) throw new Error('una columna no es «autor · fecha»: ' + JSON.stringify(on.slice(0, 3)));
-    // el SHA corto va primero: 7 caracteres hexadecimales, todos distintos, y la búsqueda por SHA encuentra ese commit
-    const bad = on.find((x) => !/^[0-9a-f]{7} · /.test(x));
-    if (bad) throw new Error('una columna no empieza por el SHA corto: ' + JSON.stringify(bad));
-    if (new Set(on.map((x) => x.slice(0, 7))).size !== on.length) throw new Error('dos columnas con el mismo SHA corto');
+    // el SHA corto va primero (7 caracteres hexadecimales) y es el comienzo del SHA de un commit cargado: la lupa lo encuentra
+    const bad = on.find((x) => !/^[0-9a-f]{7} · .+ · /.test(x));
+    if (bad) throw new Error('una columna no es «SHA · autor · fecha»: ' + JSON.stringify(bad));
     const sha = on[0].slice(0, 7);
     await page.fill('#search-input', sha);
-    const hits = await page.evaluate(() => document.querySelectorAll('#search .sr-hit').length);
-    if (hits !== 1) throw new Error(`buscar el SHA de una columna (${sha}) da ${hits} commits, no 1`);
+    const hits = await page.evaluate((p) => [...document.querySelectorAll('#search .sr-hit')].filter((b) => b.dataset.sha.startsWith(p)).length, sha);
+    if (hits < 1) throw new Error(`ningún commit cargado empieza por el SHA de una columna (${sha})`);
     await page.fill('#search-input', '');
     await page.reload();
     await loaded(page);

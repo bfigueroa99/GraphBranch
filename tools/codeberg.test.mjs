@@ -518,3 +518,29 @@ test('mapPull: un repo renombrado sigue marcando sus PRs de la misma repo', () =
   assert.equal(src.mapPull(pr({ full_name: 'nuevo/nombre' })).sameRepo, true);
   assert.equal(src.mapPull(pr({ full_name: 'ana/nombre' })).sameRepo, false);
 });
+
+test('un servidor propio con un tope menor que 50: el total sale de X-Total-Count y la lista recortada no dice «sin PR abierto»', async () => {
+  const cb = repo();
+  for (let i = 1; i <= 40; i++) cb.pull(i, `r${i}`, 'main');
+  const todos = cb.pulls.map((p) => p);
+  cb.override = (path) => {
+    if (!path.startsWith(REPO + '/pulls?')) return null;
+    return { body: todos.slice(0, 30), headers: { 'X-Total-Count': 40, Link: `<${WEB}/next>; rel="next"` } }; // MAX_RESPONSE_ITEMS = 30
+  };
+  const { src, errors } = connect(cb);
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  assert.equal(src.data.pulls.size, 30);
+  assert.equal(src.data.totalPulls, 40, 'el total es el del servidor, no lo que llegó');
+  const GB = globalThis.GB;
+  if (GB?.textview?.pullsComplete) assert.equal(GB.textview.pullsComplete(src.data), false);
+});
+
+test('sin X-Total-Count el total sigue siendo lo que llegó', async () => {
+  const cb = repo();
+  cb.pull(5, 'feature', 'main');
+  cb.override = (path) => (path.startsWith(REPO + '/pulls?') ? { body: cb.pulls } : null);
+  const { src } = connect(cb);
+  await src.cycle();
+  assert.equal(src.data.totalPulls, 1);
+});

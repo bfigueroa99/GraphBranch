@@ -405,12 +405,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
     que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
     Reproducción: `node tools/audit.mjs --repetir 3` → `consultas: 10`, `tareasLargasMs: 895`.
-15. [Errores] Forgejo o Gitea propio: los PRs abiertos se piden con `limit=50` (`js/sources/codeberg.js`), pero el servidor
-    recorta a su `MAX_RESPONSE_ITEMS`, que se configura; con un tope menor y más PRs que él, la lista llega recortada sin
-    decirlo (`total` null) y la vista de texto puede decir «sin PR abierto» de una rama que sí lo tiene. Pasar la cabecera
-    `X-Total-Count` como total a `applyPulls`. Reproducción: `tools/codeberg.test.mjs` con 40 PRs y un servidor que
-    devuelve 30 → `data.totalPulls` 30 y `GB.textview.pullsComplete` true.
-16. [Errores] Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el repo del PR con
+15. [Errores] Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el repo del PR con
     `owner/name` tal como se escribieron; con un repo renombrado (abierto por su nombre viejo) ningún PR cuenta como del
     mismo repo: sus ramas pierden el «PRs abiertos» y dicen «sin PR abierto». Comparar `fromRef.repository` con
     `toRef.repository`. Reproducción: API simulada con el repo `nuevo` y abrir `CLAVE/viejo` → `sameRepo` false.
@@ -624,3 +619,17 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/222, sin colisión
 - Validado: 593 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (la primera corrida tras el último commit falló en un paso ajeno, la vista de texto «sin PR abierto»: intermitente, la repetición pasó; pendiente 2 de Mantenimiento).
 - **Siguiente:** iteración 223, mantenimiento · Errores: pendiente 15 (Forgejo o Gitea propio: los PRs abiertos se piden con `limit=50` (`js/sources/c…)
+
+### 2026-11-05 · Iteración 223 · Mantenimiento · Errores
+
+- **Arreglo: un Forgejo o Gitea propio con tope menor que 50 ya no recorta los PRs abiertos sin decirlo** (pendiente 15). `syncPulls` de `js/sources/codeberg.js` pasa a `applyPulls` el total de la cabecera `X-Total-Count` (si falta o no es válida, sigue siendo lo que llegó): con un servidor que recorta a 30 y 40 PRs, `totalPulls` es 40 y la vista de texto ya no dice «sin PR abierto» de una rama que sí lo tiene. Mismo patrón buscado en las demás fuentes: Bitbucket Data Center pagina con `isLastPage`, sin el problema.
+- **Reproducción:** `node --test tools/codeberg.test.mjs` → `un servidor propio con un tope menor que 50…`: `expected: 40, actual: 30` (`data.totalPulls`).
+- **Pruebas que fallan sin el arreglo:** la misma («…el total sale de X-Total-Count…») y su contraparte «sin X-Total-Count el total sigue siendo lo que llegó».
+- README: sin cambios (no cambia lo que hace la función, solo cuándo dice «sin PR abierto»).
+- QA: filas de fuentes y vista de texto cubiertas por la prueba con la API simulada; auditoría: no toca la página.
+- Skills: no aplica: una cabecera más leída en una fuente que ya existe; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (leer la cabecera que el servidor ya manda).
+- OMC: plan=— · revisión=— · verificación=— (no se lanzaron los agentes: el cambio es una cabecera leída en una fuente, con su prueba; revisión propia del diff)
+- Reclamo: loop/223, sin colisión
+- Validado: 595 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 224, expansión: ítem 148 (Práctica: restore --staged y clean, Público)

@@ -301,9 +301,11 @@
     }
 
     async syncPulls(acts, initial) {
-      const { data } = await this.api(`${this.base}/pulls?state=open&sort=recentupdate&limit=${PAGE}`);
+      const { data, headers } = await this.api(`${this.base}/pulls?state=open&sort=recentupdate&limit=${PAGE}`);
       this.lastPoll.pulls = Date.now();
-      await this.applyPulls(acts, initial, (data || []).map((p) => this.mapPull(p)), null);
+      // Un Forgejo propio recorta a su MAX_RESPONSE_ITEMS: el total lo da X-Total-Count, no lo que llegó.
+      const total = Number(headers?.get('X-Total-Count'));
+      await this.applyPulls(acts, initial, (data || []).map((p) => this.mapPull(p)), Number.isFinite(total) && total > 0 ? total : null);
     }
 
     /** Qué pasó con los PRs que dejaron de estar abiertos: una consulta por PR (son pocos por ciclo). */

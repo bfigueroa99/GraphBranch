@@ -271,7 +271,7 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 143. ~~**Resumen de la semana de la organización: PRs abiertos**~~ hecho en #275 · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] El resumen de la semana de una organización suma los PRs abiertos en la semana de cada repo seguido, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
 144. ~~**Resumen de la semana de la organización: autores nuevos**~~ hecho en #278 · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] El resumen de la semana de una organización suma los autores nuevos de cada repo seguido, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
 146. ~~**Vista de texto: ramas sin PR**~~ hecho en #277 · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de cada rama dice si no tiene pull request abierto, con lo ya cargado. Comprobar: `node --test` con ramas y PRs fabricados.
-147. **Constelación: ordenar por ramas nuevas** · Escala · 1×2/2. [inv. 2026-10-13] [parte del ítem 26] La constelación se ordena también por ramas nuevas de la semana, con lo ya cargado de cada repo. Comprobar: `node --test` con repos fabricados.
+147. ~~**Constelación: ordenar por ramas nuevas**~~ hecho en #279 · Escala · 1×2/2. [inv. 2026-10-13] [parte del ítem 26] La constelación se ordena también por ramas nuevas de la semana, con lo ya cargado de cada repo. Comprobar: `node --test` con repos fabricados.
 148. **Práctica: restore --staged y clean** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 16] La práctica de git admite `restore --staged` y `clean` con su ejercicio en los 40 idiomas. Comprobar: `node --test` de la práctica.
 153. **Estado de los despliegues, primera entrega** · Datos · 1×2/2. [inv. 2026-10-13] [parte del mapa: Datos] El panel de salud dice el estado del último despliegue de cada entorno de GitHub (producción, preview…) con lo que ya trae la carga de despliegues, sin consultas nuevas. Comprobar: `tools/health.test.mjs` con despliegues fabricados.
 154. **Resumen de la semana de la organización: issues cerrados** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] El resumen de la semana de una organización suma los issues cerrados de cada repo seguido, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
@@ -605,3 +605,16 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/221, sin colisión
 - Validado: 591 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 222, expansión: ítem 147 (Constelación: ordenar por ramas nuevas, Escala)
+
+### 2026-11-05 · Iteración 222 · Expansión · Escala
+
+- **Capacidad nueva: la constelación ordenada por ramas nuevas de la semana** (ítem 147 de la hoja de ruta, parte del ítem 26). El selector de orden suma «Ramas nuevas» (más ramas creadas en los últimos 7 días primero; empata por el orden de las pestañas) junto a pestañas, actividad, PRs abiertos y nombre, y `?order=new` abre la constelación ya ordenada así. `GB.constellation.newBranches` cuenta las creaciones de rama de la actividad ya cargada de cada repo con la misma regla que el resumen de la semana (cada nombre una vez, la ventana `(ahora − 7 d, ahora]`); la lista de órdenes queda en una sola constante (`ORDERS`) que comparten el selector y la URL. Clave nueva `constellation.orderNew` en los 40 idiomas (la misma frase que «Ramas nuevas: {n}» del resumen). Sin consultas nuevas.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/constellation.test.mjs` («el orden…»: `sortItems(…, 'new')` deja el orden de las pestañas y `orderParam('NEW')` da `null`; «las ramas nuevas de la semana…» y «ordenar por ramas nuevas con la actividad de cada repo…», con repos fabricados → `TypeError`: `newBranches` no existe) y el paso del smoke de `?order=new` (selector en «new» y anuncio «Ordenadas por Ramas nuevas»).
+- README: Constelación (lista de funciones: el orden, `?order=new` y de dónde sale la cifra) y Mapa de alcance; sin cambios en Seguridad (lee una palabra de la URL contra una lista fija).
+- QA: selector, URL y anuncio en el smoke (40 idiomas); 40 idiomas con `check-i18n` (0 errores); auditoría en la puerta.
+- Skills: no aplica: un orden más en un selector que ya existe, con lo ya cargado; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (contar las creaciones de rama como ya hace el resumen de la semana y ordenar como los demás órdenes).
+- OMC: plan=— · revisión=5 hallazgos LOW, 0 de seguridad (2 arreglados: la lista de órdenes repetida pasa a `ORDERS` y una prueba encadena la actividad de dos repos con el orden; 3 aceptados: el conteo repite el de `js/digest.js` en vez de compartirlo, la etiqueta no dice «7 días» y la galaxia no muestra su cifra, igual que con los PRs abiertos) · verificación=PASS
+- Reclamo: loop/222, sin colisión
+- Validado: pendiente
+- **Siguiente:** iteración 223, mantenimiento · Errores: pendiente 14 (Forgejo o Gitea propio: los PRs abiertos se piden con `limit=50` (`js/sources/c…)

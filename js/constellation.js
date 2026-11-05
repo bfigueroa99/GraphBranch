@@ -9,6 +9,7 @@
   const R_MIN = 1; // radios relativos: la galaxia más grande mide R_MAX veces la más chica
   const R_MAX = 2.4;
   const PAD = 4; // margen del cuadro, en % del lado
+  const ORDERS = ['activity', 'prs', 'new', 'name']; // los órdenes que no son el de las pestañas (el selector y ?order=)
 
   /** Tamaño relativo de una galaxia según sus commits: crece con la raíz y se queda entre R_MIN y R_MAX. */
   function radiusOf(commits, maxCommits) {
@@ -69,7 +70,7 @@
   /** `?order=activity`, `?order=prs`, `?order=new` o `?order=name`: el orden con que abre la constelación. Lo que no se conoce (o falta) es `null`: queda el de las pestañas. */
   function orderParam(q) {
     const v = String(q.get('order') || '').trim().toLowerCase();
-    return ['activity', 'prs', 'new', 'name'].includes(v) ? v : null;
+    return ORDERS.includes(v) ? v : null;
   }
 
   /** Minúsculas y sin acentos, para comparar nombres. */
@@ -148,7 +149,7 @@
     if (select) select.addEventListener('change', () => setOrder(select.value, true));
     /** Cambia el orden (el de Tab y el de lector de pantalla) y, si lo pidió la persona, lo anuncia. */
     function setOrder(next, announce) {
-      mode = ['activity', 'prs', 'new', 'name'].includes(next) ? next : 'tabs';
+      mode = ORDERS.includes(next) ? next : 'tabs';
       if (select) select.value = mode;
       draw();
       if (announce && status) status.textContent = text('constellation.ordered', { order: text(mode === 'prs' ? 'stats.prs' : 'constellation.order' + mode[0].toUpperCase() + mode.slice(1)) });

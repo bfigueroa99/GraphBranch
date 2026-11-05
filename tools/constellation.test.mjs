@@ -157,3 +157,16 @@ test('las ramas nuevas de la semana: cada nombre una vez, solo los Ãºltimos 7 dÃ
   assert.equal(C.newBranches([], now), 0);
   assert.equal(C.newBranches(undefined, now), 0);
 });
+
+test('ordenar por ramas nuevas con la actividad de cada repo, como la arma la app', () => {
+  const now = Date.UTC(2026, 10, 5, 12);
+  const feed = [
+    { id: 'a1', repo: 'o/a', kind: 'branch-create', branch: 'x', time: now - 1000 },
+    { id: 'b1', repo: 'o/b', kind: 'branch-create', branch: 'x', time: now - 1000 },
+    { id: 'b2', repo: 'o/b', kind: 'branch-create', branch: 'y', time: now - 2000 },
+    { id: 'c1', repo: 'o/c', kind: 'push', branch: 'z', time: now - 1000 },
+  ];
+  const tabs = ['o/c', 'o/a', 'o/b'].map((key) => ({ key, name: key, fresh: C.newBranches(feed.filter((a) => a.repo === key), now) }));
+  assert.deepEqual(tabs.map((t) => t.fresh), [0, 1, 2], 'cada repo cuenta solo lo suyo');
+  assert.deepEqual(C.sortItems(tabs, 'new').map((t) => t.key), ['o/b', 'o/a', 'o/c']);
+});

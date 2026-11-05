@@ -519,6 +519,7 @@ GB.i18n.define('fil', {
   'health.branchWeeks': 'Mga bagong branch kada linggo, huling {n} linggo (pinakaluma hanggang kasalukuyan): {list}',
   'health.commitWeeks': 'Mga commit kada linggo, huling {n} linggo (pinakaluma hanggang kasalukuyan): {list}',
   'health.tagWeeks': 'Mga tag kada linggo, huling {n} linggo (pinakaluma hanggang kasalukuyan): {list}',
+  'health.issueWeeks': 'Mga issue na binuksan kada linggo, huling {n} linggo (pinakaluma hanggang kasalukuyan): {list}',
   'health.ci': 'Mga pagkabigo ng CI',
   'health.ciPrs': 'Mga bukas na PR na bigo ang checks: {failing} sa {total} ({pct}%)',
   'health.ciFeed': 'Ilang beses naging pula ang default na branch sa 30 araw: {n}',

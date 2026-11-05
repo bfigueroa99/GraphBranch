@@ -87,7 +87,7 @@ test('ritmo: merges en 7 y 30 días y releases en 30, sin repetir una actividad'
     { id: '6', kind: 'push', time: ago(1) },
   ];
   const pace = compute(repo(), acts, NOW).pace;
-  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks], closedWeeks: [...pace.closedWeeks], branchWeeks: [...pace.branchWeeks], commitWeeks: [...pace.commitWeeks], tagWeeks: [...pace.tagWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], closedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], branchWeeks: [0, 0, 0, 0, 0, 0, 0, 0], commitWeeks: [0, 1, 0, 2, 0, 0, 0, 1], tagWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
+  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks], closedWeeks: [...pace.closedWeeks], branchWeeks: [...pace.branchWeeks], commitWeeks: [...pace.commitWeeks], tagWeeks: [...pace.tagWeeks], issueWeeks: [...pace.issueWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], closedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], branchWeeks: [0, 0, 0, 0, 0, 0, 0, 0], commitWeeks: [0, 1, 0, 2, 0, 0, 0, 1], tagWeeks: [0, 0, 0, 0, 0, 0, 0, 0], issueWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
 });
 
 test('DORA: despliegues en 30 días, mediana entre releases y tiempo de entrega', () => {
@@ -400,4 +400,18 @@ test('tendencia de tags: los cargados por semana, de la más vieja a la actual',
   assert.deepEqual([...compute(data, [], NOW).pace.tagWeeks], [0, 0, 0, 0, 0, 0, 1, 2], 'esta semana v3 y latest, la pasada v2; v0, v-1 y v-fantasma no cuentan');
   data.tags = undefined;
   assert.deepEqual([...compute(data, [], NOW).pace.tagWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
+});
+
+test('la salud cuenta los issues abiertos por semana, una vez cada número', () => {
+  const acts = [
+    { id: 'a', kind: 'issue-open', number: 1, time: ago(1) },
+    { id: 'b', kind: 'issue-open', number: 1, time: ago(2) }, // el mismo issue visto dos veces: cuenta la primera apertura
+    { id: 'c', kind: 'issue-open', number: 2, time: ago(1) },
+    { id: 'd', kind: 'issue-open', number: 3, time: ago(10) },
+    { id: 'e', kind: 'issue-open', number: 4, time: ago(80) }, // fuera de las 8 semanas
+    { id: 'f', kind: 'issue-close', number: 5, time: ago(1) }, // un cierre no es una apertura
+    { id: 'g', kind: 'issue-open', number: 6 }, // sin hora
+  ];
+  assert.deepEqual([...compute(repo(), acts, NOW).pace.issueWeeks], [0, 0, 0, 0, 0, 0, 1, 2]);
+  assert.deepEqual([...compute(repo(), [], NOW).pace.issueWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
 });

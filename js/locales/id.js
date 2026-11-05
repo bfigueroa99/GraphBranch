@@ -518,6 +518,7 @@ GB.i18n.define('id', {
   'health.branchWeeks': 'Branch baru per minggu, {n} minggu terakhir (dari terlama ke terkini): {list}',
   'health.commitWeeks': 'Commit per minggu, {n} minggu terakhir (dari terlama ke terkini): {list}',
   'health.tagWeeks': 'Tag per minggu, {n} minggu terakhir (dari terlama ke terkini): {list}',
+  'health.issueWeeks': 'Issue yang dibuka per minggu, {n} minggu terakhir (dari terlama ke terkini): {list}',
   'health.ci': 'Kegagalan CI',
   'health.ciPrs': 'PR terbuka dengan pemeriksaan gagal: {failing} dari {total} ({pct}%)',
   'health.ciFeed': 'Berapa kali cabang default menjadi merah dalam 30 hari: {n}',

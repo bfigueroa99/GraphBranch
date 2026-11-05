@@ -575,6 +575,7 @@ GB.i18n.define('he', {
   'health.branchWeeks': 'ענפים חדשים בשבוע, {n} השבועות האחרונים (מהישן לנוכחי): {list}',
   'health.commitWeeks': 'קומיטים בשבוע, {n} השבועות האחרונים (מהישן לנוכחי): {list}',
   'health.tagWeeks': 'תגיות בשבוע, {n} השבועות האחרונים (מהישן לנוכחי): {list}',
+  'health.issueWeeks': 'Issues שנפתחו בשבוע, {n} השבועות האחרונים (מהישן לנוכחי): {list}',
   'health.ci': 'כשלי CI',
   'health.ciPrs': 'PRs פתוחים עם בדיקות שנכשלו: {failing} מתוך {total} ({pct}%)',
   'health.ciFeed': 'מספר הפעמים שענף ברירת המחדל הפך לאדום ב-30 ימים: {n}',

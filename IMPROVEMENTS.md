@@ -606,5 +606,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (GET a la propia página, la única que funciona sin servidor y sin conexión).
 - OMC: plan=— · revisión=5 hallazgos (3 arreglados: host exacto y páginas propias de GitHub, MEDIUM; hosts parecidos y puntuación de ancho completo, LOW; quedan 2 LOW documentados: desplazar un repo guardado con 10 pestañas, como `?repo=`, y el recorte a 4.000 caracteres) · verificación=PASS
 - Reclamo: loop/208, sin colisión
-- Validado: 572 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (la primera corrida falló en el smoke «vista de texto: H oculta una rama…», ajeno al cambio: anotado en el pendiente 1).
+- Validado: 574 pruebas (`node --test`, ya sobre el #264), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (la primera corrida falló en el smoke «vista de texto: H oculta una rama…», ajeno al cambio: anotado en el pendiente 1).
 - **Siguiente:** iteración 209, expansión: ítem 151 (Más de 10 repos: subir el tope a 20, Escala)

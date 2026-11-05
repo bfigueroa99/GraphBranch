@@ -126,7 +126,7 @@
   }
 
   /** Contenido del detalle de un commit (lo usan las vistas 2D y 3D). */
-  function tipHTML(node, ctx, { pin = false, branchName = null, ghostNames = null } = {}) {
+  function tipHTML(node, ctx, { pin = false, branchName = null, ghostNames = null, notes = null } = {}) {
     const c = node.commit;
     const heads = node.heads;
     const parents = c.parents.length;
@@ -134,6 +134,9 @@
     // de un agente (Claude Code, Copilot, un bot…): cuál, con su modelo y su sesión si el commit los firma (js/agents.js)
     const agent = GB.agents?.of(c);
     if (agent) rows.push(`<span class="tip-agent">${U.esc(tr('tip.agent', { name: [agent.name, agent.model, agent.session ? tr('agents.session', { id: GB.agents.shortSession(agent.session) }) : ''].filter(Boolean).join(' · ') }))}</span>`);
+    // con las interacciones en el grafo: las que salen de este commit o llegan a él (ya traducidas; aquí se escapan)
+    for (const n of (notes || []).slice(0, 4)) rows.push(`<span class="tip-ag">${U.esc(n)}</span>`);
+    if (notes?.length > 4) rows.push(`<span class="tip-ag tip-ag-more">${U.esc(tr('agents.moreHere', { n: notes.length - 4 }))}</span>`);
     if (heads.length) rows.push(`<span class="tip-refs">${heads.map((h) => `<code>${U.esc(h)}</code>`).join(' ')}</span>`);
     if (node.chain.startsWith('g:')) {
       const gname = ghostNames?.get(node.chain);
@@ -304,9 +307,11 @@
       this.gBands = mk('g', { class: 'bands' }, this.svg);
       this.gDays = mk('g', { class: 'days' }, this.svg);
       this.gEdges = mk('g', { class: 'edges' }, this.svg);
+      this.gAgArcs = mk('g', { class: 'ag-arcs', 'aria-hidden': 'true' }, this.svg); // interacciones: arcos entre commits
       this.gGhosts = mk('g', { class: 'ghost-labels' }, this.svg);
       this.gPointers = mk('g', { class: 'pointers' }, this.svg);
       this.gNodes = mk('g', { class: 'nodes' }, this.svg);
+      this.gAgPins = mk('g', { class: 'ag-pins', 'aria-hidden': 'true' }, this.svg); // …e insignias sobre la punta de un PR
       this.gHeads = mk('g', { class: 'heads' }, this.svg);
       this.gLegend = mk('g', { class: 'legend' }, this.svg);
       this.legendBg = mk('rect', { class: 'legend-bg', x: 0, y: 0 }, this.gLegend);
@@ -350,6 +355,9 @@
       this.legend = new Map();
       this.days = new Map();
       this.ghostLabels = new Map(); // nombres de las ramas ya fusionadas y borradas, sobre su tramo gris
+      this.ag = null; // las interacciones sobre el grafo (ver setAgents)
+      this.agArcs = new Map();
+      this.agPins = new Map();
       this.byChain = new Map(); // cadena -> elementos, para resaltar una rama sin recorrer todo
       this.hlChain = null;
       this.bands = [];
@@ -958,9 +966,25 @@
       this.relabel();
     }
 
+    /** Un commit de agente lleva un marco cuadrado del color de su participante (los agentes son cuadrados, como en la
+        red del panel), con las interacciones sobre el grafo. */
+    paintAgent(it) {
+      const slot = this.ag?.marks.get(it.data.sha) || 0;
+      if (it.agSlot === slot) return;
+      it.agSlot = slot;
+      if (!slot) {
+        it.agRing?.remove();
+        it.agRing = null;
+        return;
+      }
+      it.agRing ||= mk('rect', { x: -7.5, y: -7.5, width: 15, height: 15, rx: 3.5, 'aria-hidden': 'true' }, it.el);
+      it.agRing.setAttribute('class', 'ag-ring ag-s' + slot);
+    }
+
     paintNode(it) {
       this.paintRefs(it);
       this.paintMeta(it);
+      this.paintAgent(it);
       const cls = it.cls + (it.el.classList.contains('enter') ? ' enter' : '') + (it.el.classList.contains('hl') ? ' hl' : '') + (it.data.sha === this.selSha ? ' sel' : '') + (this.pathSet && !this.pathSet.has(it.data.sha) ? ' pfx' : '') + this.cmpClass(it.data.sha);
       if (it.el.getAttribute('class') !== cls) it.el.setAttribute('class', cls);
     }
@@ -1173,6 +1197,8 @@
         if (vis) it.el.setAttribute('d', edgePath(e.kind, a.px, a.py, b.px, b.py, S));
       }
 
+      if (this.ag) this.drawAgents(S, lane, M);
+
       // el nombre va sobre el tramo gris, entre la curva de donde nace y la de su merge; si el
       // tramo empieza bajo la leyenda, el nombre se queda pegado a ella (como las fechas del eje)
       const bend = S * 0.95 + 4; // lo que ocupa cada curva (ver edgePath)
@@ -1262,6 +1288,130 @@
 
       if (this.tipSha && !this.tip.hidden) this.placeTip();
       return active;
+    }
+
+    /** Interacciones: cada arco, de un commit de quien actúa a uno de quien recibe, se curva hacia arriba (o a la
+        izquierda, si va casi en vertical) y termina en una punta de flecha; cada insignia, sobre la punta de su PR. */
+    drawAgents(S, lane, M) {
+      for (const it of this.agArcs.values()) {
+        const a = this.nodes.get(it.data.a);
+        const b = this.nodes.get(it.data.b);
+        if (!a || !b) {
+          this.show(it, false, this.makeAgArc);
+          continue;
+        }
+        const dx = b.px - a.px;
+        const dy = b.py - a.py;
+        const len = Math.hypot(dx, dy) || 1;
+        let nx = -dy / len;
+        let ny = dx / len;
+        if (Math.abs(ny) > 0.2 ? ny > 0 : nx > 0) (nx = -nx), (ny = -ny);
+        const h = clamp(len * 0.32, 9, lane * 0.9);
+        const cx = (a.px + b.px) / 2 + nx * h * 2;
+        const cy = (a.py + b.py) / 2 + ny * h * 2;
+        const vis = Math.max(a.px, b.px, cx) > -M && Math.min(a.px, b.px, cx) < this.W + M && Math.max(a.py, b.py, cy) > -M && Math.min(a.py, b.py, cy) < this.viewH + M;
+        this.show(it, vis, this.makeAgArc);
+        if (!vis) continue;
+        // las puntas, recortadas por fuera del commit; la flecha, en la dirección con que llega la curva
+        const cut = (px, py, qx, qy, r) => {
+          const l = Math.hypot(qx - px, qy - py) || 1;
+          return [px + ((qx - px) / l) * r, py + ((qy - py) / l) * r];
+        };
+        const [x0, y0] = cut(a.px, a.py, cx, cy, 7);
+        const [tx, ty] = cut(b.px, b.py, cx, cy, 7.5);
+        const ux = (tx - cx) / (Math.hypot(tx - cx, ty - cy) || 1);
+        const uy = (ty - cy) / (Math.hypot(tx - cx, ty - cy) || 1);
+        const bx = tx - ux * 6;
+        const by = ty - uy * 6;
+        it.line.setAttribute('d', `M${r1(x0)},${r1(y0)}Q${r1(cx)},${r1(cy)} ${r1(bx)},${r1(by)}`);
+        it.head.setAttribute('d', `M${r1(tx)},${r1(ty)}L${r1(bx - uy * 3.4)},${r1(by + ux * 3.4)}L${r1(bx + uy * 3.4)},${r1(by - ux * 3.4)}Z`);
+      }
+      for (const it of this.agPins.values()) {
+        const n = this.nodes.get(it.data.at);
+        const vis = !!n && n.px > -M && n.px < this.W + M && n.py > -M && n.py < this.viewH + M;
+        this.show(it, vis, this.makeAgPin);
+        if (vis) it.el.setAttribute('transform', `translate(${r1(n.px)},${r1(n.py - (n.flag ? 14 : 0))})`);
+      }
+    }
+
+    makeAgArc(it) {
+      it.el = mk('g', null, this.gAgArcs);
+      it.line = mk('path', { class: 'ag-line' }, it.el);
+      it.head = mk('path', { class: 'ag-head' }, it.el);
+      it.title = mk('title', null, it.el);
+      this.paintAgArc(it);
+    }
+
+    paintAgArc(it) {
+      const d = it.data;
+      it.el.setAttribute('class', `ag-arc ag-s${d.slot} ag-k-${d.kind}`);
+      it.line.setAttribute('stroke-width', r1(1.4 + 0.7 * Math.min(3, Math.log2(d.n || 1))));
+      it.title.textContent = d.title || '';
+    }
+
+    /** Una insignia: el participante (cuadrado si es un agente, redondo si es una persona) con lo que hizo (✓ revisó,
+        … comentó, una Y fusionó), unida al commit por un tallo; varias sobre el mismo commit, una al lado de la otra. */
+    makeAgPin(it) {
+      it.el = mk('g', null, this.gAgPins);
+      it.stem = mk('line', { class: 'ag-stem', x1: 0, y1: -6 }, it.el);
+      it.badge = null;
+      it.glyph = mk('path', { class: 'ag-glyph' }, it.el);
+      it.title = mk('title', null, it.el);
+      this.paintAgPin(it);
+    }
+
+    paintAgPin(it) {
+      const d = it.data;
+      const x = (d.idx - (d.of - 1) / 2) * 15;
+      const y = -22;
+      it.el.setAttribute('class', `ag-pin ag-s${d.slot} ag-k-${d.kind}`);
+      it.stem.setAttribute('x2', r1(x));
+      it.stem.setAttribute('y2', y + 6);
+      const shape = d.agent ? 'rect' : 'circle';
+      if (it.badge?.tagName !== shape) {
+        it.badge?.remove();
+        it.badge = mk(shape, { class: 'ag-badge' });
+        it.el.insertBefore(it.badge, it.glyph);
+      }
+      if (d.agent) for (const [k, v] of Object.entries({ x: r1(x - 6), y: y - 6, width: 12, height: 12, rx: 3 })) it.badge.setAttribute(k, v);
+      else for (const [k, v] of Object.entries({ cx: r1(x), cy: y, r: 6.5 })) it.badge.setAttribute(k, v);
+      const G = { reviewed: 'M-2.8,0.2L-0.8,2.2L2.8,-2', commented: 'M-2.6,0h.01M0,0h.01M2.6,0h.01', merged: 'M-2.6,-2.6L0,0L2.6,-2.6M0,0V2.8' };
+      it.glyph.setAttribute('d', G[d.kind] || G.commented);
+      it.glyph.setAttribute('transform', `translate(${r1(x)},${y})`);
+      it.title.textContent = d.title || '';
+    }
+
+    /** Las interacciones de agentes (y de personas) sobre el grafo: lo de `GB.agents.overlay` con sus textos ya puestos,
+        { marks: Map sha -> color, arcs: [{ id, a, b, kind, slot, n, title }], pins: [{ id, at, kind, slot, agent, n,
+        title }], notes: Map sha -> [texto] }. null las quita. */
+    setAgents(ov) {
+      if (!ov && !this.ag) return; // apagadas y sin nada dibujado: cada novedad del repo pasa por aquí
+      this.ag = ov || null;
+      // varias insignias sobre un mismo commit: cada una sabe su lugar en la fila
+      const row = new Map();
+      for (const p of ov?.pins || []) row.set(p.at, (row.get(p.at) || 0) + 1);
+      const at = new Map();
+      const sync = (map, list, make, paint, place) => {
+        const seen = new Set();
+        for (const x of list || []) {
+          seen.add(x.id);
+          let it = map.get(x.id);
+          if (!it) map.set(x.id, (it = { el: null }));
+          const data = place ? place(x) : x;
+          const same = it.data && JSON.stringify(it.data) === JSON.stringify(data);
+          it.data = data;
+          if (it.el && !same) paint.call(this, it);
+        }
+        for (const [id, it] of map) if (!seen.has(id)) (it.el?.remove(), map.delete(id));
+      };
+      sync(this.agArcs, ov?.arcs, this.makeAgArc, this.paintAgArc);
+      sync(this.agPins, ov?.pins, this.makeAgPin, this.paintAgPin, (p) => {
+        const idx = at.get(p.at) || 0;
+        at.set(p.at, idx + 1);
+        return { ...p, idx, of: row.get(p.at) };
+      });
+      for (const it of this.nodes.values()) if (it.el) this.paintAgent(it);
+      this.requestDraw();
     }
 
     makePointer(p) {
@@ -1980,7 +2130,7 @@
     showTip(sha, pin, branchName) {
       const it = this.nodes.get(sha);
       if (!it) return;
-      this.tip.innerHTML = tipHTML(it.data, this.ctx || {}, { pin, branchName, ghostNames: this.ghostNames });
+      this.tip.innerHTML = tipHTML(it.data, this.ctx || {}, { pin, branchName, ghostNames: this.ghostNames, notes: this.ag?.notes?.get(sha) });
       this.tip.hidden = false;
       this.tipBox = null;
       this.tip.classList.toggle('pinned', !!pin);
@@ -2016,7 +2166,10 @@
 
     clear() {
       this.cmpMarks = null;
-      for (const m of [this.nodes, this.edges, this.heads, this.pointers, this.legend, this.ghostLabels]) for (const it of m.values()) it.el?.remove();
+      for (const m of [this.nodes, this.edges, this.heads, this.pointers, this.legend, this.ghostLabels, this.agArcs, this.agPins]) for (const it of m.values()) it.el?.remove();
+      this.agArcs.clear();
+      this.agPins.clear();
+      this.ag = null;
       for (const d of this.days.values()) (d.line.remove(), d.label.remove());
       for (const m of [this.nodes, this.edges, this.heads, this.pointers, this.legend, this.ghostLabels, this.days, this.byChain, this.gone]) m.clear();
       this.fx = [];

@@ -4495,6 +4495,92 @@ console.log('Agentes e interacciones (?agents=1)');
     if (!/^Agente: (Claude Code · Opus 5\.5 · sesión \w{6}|GitHub Copilot|Dependabot)$/.test(tip)) throw new Error('ninguna ficha de rama dice su agente: ' + JSON.stringify(tip));
     await page.click('#pause-btn');
   });
+  await step(page, 'interacciones en el grafo (?interactions=1): en 2D, el marco de cada commit de agente, los arcos y las insignias, con su leyenda', async () => {
+    await page.goto(`${base}/index.html?lang=es&interactions=1`);
+    await loaded(page);
+    await page.click('#pause-btn'); // la demo quieta: lo que se cuenta no cambia a mitad
+    await page.click('#view-2d');
+    await page.waitForSelector('#graph .ag-arc', { timeout: T(5000) }).catch(() => {
+      throw new Error('?interactions=1 no dibujó ningún arco en el grafo 2D');
+    });
+    const r = await page.evaluate(() => {
+      const plain = (x) => x.textContent.replace(/[⁨⁩]/g, '');
+      const key = document.querySelector('#ag-key');
+      return {
+        key: !key.hidden && key.getBoundingClientRect().height > 0,
+        rows: [...key.querySelectorAll('.agk-name')].map(plain),
+        locate: key.querySelectorAll('button.agk-row[data-sha]').length,
+        text: key.textContent,
+        rings: document.querySelectorAll('#graph .node .ag-ring').length,
+        arcs: [...document.querySelectorAll('#graph .ag-arc title')].map(plain),
+        pins: [...document.querySelectorAll('#graph .ag-pin title')].map(plain),
+        heads: document.querySelectorAll('#graph .ag-arc .ag-head').length,
+        checked: document.querySelector('#agents-graph').checked,
+        url: location.search,
+      };
+    });
+    if (!r.key) throw new Error('la leyenda de las interacciones no se ve');
+    if (r.rings < 3) throw new Error(`solo ${r.rings} commits de agente llevan su marco`);
+    if (!r.arcs.some((x) => /^Claude Code · sesión \w{6} continuó el trabajo de Claude Code · sesión \w{6}$/.test(x))) throw new Error('falta el arco de la sesión de Claude que retoma la rama de otra: ' + r.arcs.join(' | '));
+    if (r.heads !== r.arcs.length) throw new Error(`${r.arcs.length} arcos y ${r.heads} puntas de flecha`);
+    if (!r.pins.some((x) => /^GitHub Copilot revisó el PR de Claude Code · #\d+$/.test(x))) throw new Error('falta la insignia de la revisión de Copilot: ' + r.pins.join(' | '));
+    if (r.arcs.some((x) => !/Claude Code|Copilot|Dependabot/.test(x))) throw new Error('un arco entre dos personas: ' + r.arcs.join(' | '));
+    if (!r.rows.some((x) => /^Claude Code · sesión \w{6}$/.test(x)) || !r.rows.includes('GitHub Copilot')) throw new Error('la leyenda: ' + r.rows.join(' | '));
+    if (!r.locate) throw new Error('ninguna fila de la leyenda lleva a su commit');
+    if (/undefined|NaN|agents\./.test(r.text)) throw new Error('texto sin resolver en la leyenda: ' + r.text.slice(0, 160));
+    if (!r.checked || !r.url.includes('interactions=1')) throw new Error(`el interruptor (${r.checked}) o la URL (${r.url})`);
+  });
+  await step(page, 'interacciones en el grafo: en 3D, los cubos, los arcos y las insignias; la ficha de un commit las dice', async () => {
+    await page.click('#view-3d');
+    // sin WebGL no hay lienzo: la app se queda en la 2D, que ya se miró
+    if ((await page.locator('#graph3d canvas').count()) > 0) {
+      const seen = await page
+        .waitForFunction(() => document.querySelector('#graph3d')?.dataset.agents?.split(' ').map(Number), null, { timeout: T(5000) })
+        .then((h) => h.jsonValue(), () => null);
+      if (!seen) throw new Error('la vista 3D no dibujó las interacciones');
+      const [arcs, pins, boxes] = seen;
+      if (arcs < 1 || pins < 1 || boxes < 3) throw new Error(`en 3D: ${arcs} arcos, ${pins} insignias y ${boxes} cubos`);
+    }
+    // la ficha (la misma en 2D y 3D: graph.js tipHTML) de la punta del PR de la app de Claude dice quién lo revisó
+    await page.click('#view-2d');
+    await page.focus('#graph');
+    await page.keyboard.press('End');
+    await page.waitForTimeout(500);
+    let tip = '';
+    for (const h of await page.$$('#graph svg .head[role=button]:not(.exit)')) {
+      if (!(await h.isVisible())) continue;
+      await h.focus();
+      await page.keyboard.press('Enter');
+      tip = await page.waitForSelector('#graph .tip:not([hidden]) .tip-ag', { timeout: T(800) }).then((x) => x.textContent(), () => '');
+      await page.keyboard.press('Escape');
+      if (tip) break;
+    }
+    if (!/ (continuó|fusionó|revisó|comentó) /.test(tip)) throw new Error('ninguna ficha de rama dice sus interacciones: ' + JSON.stringify(tip));
+  });
+  await step(page, 'solo entre agentes vale también en el grafo; × quita las interacciones, el foco no se pierde y se olvida', async () => {
+    await page.click('#agents-btn');
+    await page.waitForSelector('#agents[open]', { timeout: T(3000) });
+    await page.click('#agents-only');
+    await page.keyboard.press('Escape');
+    const only = await page.evaluate(() => [...document.querySelectorAll('#graph .ag-arc title, #graph .ag-pin title')].map((x) => x.textContent.replace(/[⁨⁩]/g, '')));
+    const both = /^(Claude Code|GitHub Copilot|Dependabot)\b.* (continuó|fusionó|revisó|comentó) .*(Claude Code|GitHub Copilot|Dependabot)/;
+    if (!only.length || only.some((x) => !both.test(x))) throw new Error('solo entre agentes, en el grafo: ' + only.join(' | '));
+    await page.evaluate(() => localStorage.removeItem('graphbranch:agentsOnly'));
+    await page.click('#ag-key-close');
+    await page.waitForTimeout(300);
+    const off = await page.evaluate(() => ({
+      key: document.querySelector('#ag-key').hidden,
+      left: document.querySelectorAll('#graph .ag-arc, #graph .ag-pin, #graph .ag-ring').length,
+      url: location.search,
+      stored: localStorage.getItem('graphbranch:agentGraph'),
+      checked: document.querySelector('#agents-graph').checked,
+      focus: document.activeElement === document.body ? 'body' : document.activeElement?.id || document.activeElement?.className,
+    }));
+    if (!off.key || off.left || off.checked) throw new Error(`× dejó la leyenda (${!off.key}), ${off.left} marcas o el interruptor (${off.checked})`);
+    if (off.url.includes('interactions=') || off.stored) throw new Error(`× dejó interactions= en la URL (${off.url}) o guardado (${off.stored})`);
+    if (off.focus === 'body') throw new Error('al quitar las interacciones el foco cayó a <body>');
+    await page.click('#pause-btn');
+  });
   await page.context().close();
 }
 

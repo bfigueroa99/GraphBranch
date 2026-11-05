@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} } });
 vm.runInContext(readFileSync(join(root, 'js', 'agents.js'), 'utf8'), ctx, { filename: 'agents.js' });
-const { detect, detectActor, of, coAuthors, sessionOf, compute, network, svg, openParam, prNumber, sessionUrl, shortSession } = ctx.window.GB.agents;
+const { detect, detectActor, of, coAuthors, sessionOf, compute, network, overlay, svg, openParam, graphParam, prNumber, sessionUrl, shortSession, COLORS, OTHERS } = ctx.window.GB.agents;
 const plain = (x) => JSON.parse(JSON.stringify(x));
 
 const S1 = '01CqYLDWb4ozXDK5nmAkKCeJ';
@@ -93,6 +93,10 @@ test('sesiones, co-autores y números de PR', () => {
   assert.equal(openParam(new URLSearchParams('agents')), true);
   assert.equal(openParam(new URLSearchParams('agents=0')), false);
   assert.equal(openParam(new URLSearchParams('repo=a/b')), false);
+  assert.equal(graphParam(new URLSearchParams('interactions=1')), true);
+  assert.equal(graphParam(new URLSearchParams('interactions')), true);
+  assert.equal(graphParam(new URLSearchParams('interactions=off')), false);
+  assert.equal(graphParam(new URLSearchParams('agents=1')), null); // sin el parámetro manda lo guardado
 });
 
 test('of: lo que dejó la fuente manda, y si no, se calcula una vez sin ensuciar el commit', () => {
@@ -180,9 +184,106 @@ test('compute: quién continuó, fusionó y revisó el trabajo de quién, tambi�
   assert.ok(all.links.every((l) => all.nodes.some((n) => n.key === l.from) && all.nodes.some((n) => n.key === l.to)));
 });
 
+test('overlay: de qué commit a qué commit va cada interacción en el grafo, con un color por agente', () => {
+  const T = Date.UTC(2026, 9, 28, 20);
+  const acts = [
+    { id: 'e1', kind: 'review-changes', actor: { login: 'Copilot' }, number: 200, time: T },
+    { id: 'e2', kind: 'review-ok', actor: { login: 'bfigueroa99' }, number: 200, time: T + 1 },
+    { id: 'e3', kind: 'comment', pr: true, actor: { login: 'Copilot' }, number: 200, time: T + 2 },
+    { id: 'e3b', kind: 'comment', pr: true, actor: { login: 'Copilot' }, number: 200, time: T + 3 }, // otro comentario: la misma insignia, dos veces
+    // el PR #193 ya se fusionó y su rama no está: su revisión va sobre el commit de merge
+    { id: 'e4', kind: 'pr-open', actor: { login: 'claude[bot]' }, number: 193, branch: 'loop/146', time: T - 9e6 },
+    { id: 'e5', kind: 'review-ok', actor: { login: 'Copilot' }, number: 193, time: T - 8e6 },
+  ];
+  const r = compute(repo(), acts, { max: Infinity });
+  const s1 = `a:claude:${S1}`;
+  const s2 = `a:claude:${S2}`;
+  const yvc = 'a:claude:01CqYLDYvC4PU5V29bhYPPCG';
+  // el commit de quien recibe: el anterior, el más nuevo suyo en la rama fusionada o la punta del PR
+  const ev = (kind, from, to) => plain(r.events.filter((e) => e.kind === kind && e.from === from && e.to === to).map((e) => [e.sha, e.target]));
+  assert.deepEqual(ev('continued', s2, yvc), [['w1', 'r1']]);
+  assert.deepEqual(ev('continued', 'a:copilot', s1), [['a2', 'a1']]);
+  assert.deepEqual(ev('merged', 'u:bfigueroa99', s2), [['m1', 'w2']]);
+  assert.deepEqual(ev('merged', 'u:bfigueroa99', yvc), [['m1', 'r1']]);
+  assert.deepEqual(ev('reviewed', 'a:copilot', 'a:claude').map(([, t]) => t).sort(), ['a2', 'm1']);
+  assert.equal(r.owners.get('w1'), s2);
+  assert.equal(r.owners.get('m1'), 'u:bfigueroa99');
+
+  const ov = overlay(r);
+  const arc = (a, b) => ov.arcs.find((x) => x.a === a && x.b === b);
+  assert.equal(ov.arcs.length, 4);
+  assert.equal(arc('w1', 'r1').kind, 'continued');
+  assert.equal(arc('m1', 'w2').kind, 'merged');
+  assert.equal(arc('m1', 'r1').kind, 'merged');
+  assert.equal(arc('a2', 'a1').from, 'a:copilot');
+  const pin = (at, kind, from) => ov.pins.find((x) => x.at === at && x.kind === kind && x.from === from);
+  assert.equal(pin('a2', 'commented', 'a:copilot').n, 2);
+  assert.equal(pin('a2', 'reviewed', 'u:bfigueroa99').agent, false);
+  assert.equal(pin('m1', 'reviewed', 'a:copilot').number, 193);
+  assert.equal(ov.pins.length, 4);
+  assert.equal(ov.total, 4 + 5);
+  // las marcas: cada commit de agente, con el color de su participante; las personas, sin color y sin marca
+  assert.deepEqual(plain([...ov.marks.keys()].sort()), ['a1', 'a2', 'r1', 'w1', 'w2']);
+  const slot = (key) => ov.actors.find((a) => a.key === key)?.slot;
+  assert.equal(slot('u:bfigueroa99'), 0);
+  assert.equal(ov.marks.get('w1'), slot(s2));
+  assert.equal(ov.arcs.find((x) => x.from === 'u:bfigueroa99').slot, 0);
+  const agentSlots = ov.actors.filter((a) => a.agent).map((a) => a.slot);
+  assert.equal(new Set(agentSlots).size, agentSlots.length, 'con menos de ocho agentes, cada uno con su color');
+  assert.ok(agentSlots.every((x) => x >= 1 && x <= COLORS));
+  assert.equal(ov.actors[0].n >= ov.actors[ov.actors.length - 1].n, true); // el de más interacciones primero
+  // la app de Claude no tiene commits pero recibe las revisiones: está, con su color
+  assert.ok(slot('a:claude') >= 1);
+
+  // solo entre agentes: sin los merges ni la revisión de Benjamin, y los commits de agente siguen marcados
+  const only = overlay(r, { onlyAgents: true });
+  assert.deepEqual(plain(only.arcs.map((x) => x.a + '>' + x.b).sort()), ['a2>a1', 'w1>r1']);
+  assert.ok(only.pins.every((x) => x.from === 'a:copilot'));
+  assert.equal(only.marks.size, 5);
+  assert.equal(only.actors.some((a) => !a.agent), false);
+  // el color sigue al participante: dejar fuera a las personas no repinta a ningún agente
+  for (const a of only.actors) assert.equal(a.slot, slot(a.key), a.key);
+  // el tope deja los más recientes
+  const few = overlay(r, { arcs: 1, pins: 1 });
+  assert.deepEqual(plain(few.arcs.map((x) => x.a)), ['a2']);
+  assert.deepEqual(plain(few.pins.map((x) => x.kind + ':' + x.n)), ['commented:2']);
+});
+
+test('overlay: desde el octavo agente van juntos como «otros agentes», y sin compute completo no falla', () => {
+  const commits = new Map();
+  let prev = null;
+  for (let i = 0; i < 11; i++) {
+    const sha = 'c' + i;
+    commits.set(sha, { sha, parents: prev ? [prev] : [], author: { name: 'Claude' }, message: `Paso ${i}\n\n${claude('Sesion' + String(i).padStart(4, '0'))}`, date: i });
+    prev = sha;
+  }
+  const ov = overlay(compute({ commits, pulls: new Map() }, [], { max: Infinity }));
+  assert.equal(ov.actors.length, 11);
+  assert.equal(ov.arcs.length, 10); // cada sesión continuó la anterior
+  const slots = ov.actors.map((a) => a.slot);
+  assert.deepEqual(plain([...new Set(slots)].sort((a, b) => a - b)), [1, 2, 3, 4, 5, 6, 7, OTHERS]);
+  assert.equal(slots.filter((x) => x === OTHERS).length, 11 - COLORS); // ningún color se repite entre dos agentes
+  assert.equal(ov.marks.size, 11);
+  // entre dos personas no se dibuja nada: eso queda en el panel
+  const people = new Map([
+    ['p1', { sha: 'p1', parents: [], author: { name: 'Ana', login: 'ana' }, message: 'Inicio', date: 1 }],
+    ['p2', { sha: 'p2', parents: ['p1'], author: { name: 'Beto', login: 'beto' }, message: 'Sigue', date: 2 }],
+  ]);
+  const pr = compute({ commits: people, pulls: new Map() }, [], { max: Infinity });
+  assert.equal(pr.total, 1);
+  assert.equal(overlay(pr).arcs.length, 0);
+  assert.equal(overlay(pr).actors.length, 0);
+  // un resultado sin `owners` (de antes) da las mismas líneas y ninguna marca
+  const r = compute({ commits, pulls: new Map() }, [], { max: Infinity });
+  delete r.owners;
+  assert.equal(overlay(r).marks.size, 0);
+});
+
 test('compute: sin commits ni actividad no falla', () => {
   const r = compute({ commits: new Map(), branches: new Map(), pulls: new Map() }, []);
-  assert.deepEqual(plain(r), { actors: [], links: [], events: [], total: 0 });
+  assert.deepEqual(plain(r), { actors: [], links: [], events: [], total: 0, owners: {} });
+  const ov = overlay(r);
+  assert.deepEqual(plain({ ...ov, marks: [...ov.marks] }), { actors: [], marks: [], arcs: [], pins: [], total: 0 });
   assert.deepEqual(plain(network(r).nodes), []);
 });
 

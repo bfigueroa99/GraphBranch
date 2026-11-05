@@ -732,6 +732,16 @@ console.log('Escritorio (1280×800)');
     if (iweeks && (!/(\d+ · ){7}\d+$/.test(iweeks) || /^(0 · ){7}0$/.test(iweeks.split(': ').pop()))) throw new Error(`la tendencia de issues abiertos por semana no trae 8 cifras con algún issue: ${iweeks}`);
     const pcweeks = await page.$eval('#hl-prcloseweeks', (p) => p.textContent).catch(() => '');
     if (pcweeks && (!/(\d+ · ){7}\d+$/.test(pcweeks) || /^(0 · ){7}0$/.test(pcweeks.split(': ').pop()))) throw new Error(`la tendencia de PRs cerrados sin fusionar por semana no trae 8 cifras con algún PR: ${pcweeks}`);
+    // El periodo de las series por semana se dice una vez, como encabezado del grupo, y no en cada línea (pendiente 12).
+    const weekly = await page.evaluate(() => {
+      const g = document.querySelector('#hl-weekly[role="group"]');
+      const head = g && document.getElementById(g.getAttribute('aria-labelledby'));
+      return g && head && { head: head.textContent, lines: [...g.querySelectorAll('.hl-line:not(.hl-weekly-head)')].map((p) => p.textContent) };
+    });
+    if (!weekly) throw new Error('las series por semana no van en un grupo con su encabezado');
+    if (!/\b8\b/.test(weekly.head)) throw new Error(`el encabezado de las series por semana no dice el periodo: ${weekly.head}`);
+    const largas = weekly.lines.filter((l) => /\d/.test(l.split(': ')[0]));
+    if (weekly.lines.length < 6 || largas.length) throw new Error(`las series por semana repiten el periodo en cada línea: ${largas.join(' | ') || weekly.lines.length + ' líneas'}`);
     const ciLines = await page.$$eval('#hl-ci .hl-line', (ps) => ps.map((p) => p.textContent));
     if (!ciLines.length || ciLines.some((l) => !/\d/.test(l))) throw new Error(`la tasa de fallos de CI no sale en la salud: ${ciLines.join(' | ')}`);
     if (info.stats !== 3) throw new Error(`${info.stats} cifras de ritmo, se esperaban 3`);

@@ -5068,6 +5068,11 @@ a.hl-row:focus-visible {
   margin: 0;
   color: var(--ink-3);
 }
+.hl-weekly-head {
+  margin-top: 6px;
+  color: var(--ink-2);
+  font-weight: 600;
+}
 .hl-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));

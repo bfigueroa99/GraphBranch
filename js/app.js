@@ -2768,10 +2768,19 @@
     renderBitacoraCard();
   }
 
+  /** El detalle de cada cifra, de title de su tarjeta: a ≤560 px la línea se esconde a la vista. */
+  function syncStatTitles() {
+    for (const sub of [el.st.branchesSub, el.st.commitsSub, el.st.prsSub, el.st.lastSub]) {
+      const card = sub.closest('.stat');
+      if (card) card.title = sub.textContent;
+    }
+  }
+
   /** Cifras en blanco hasta que el repo recién conectado traiga las suyas. */
   function clearStats() {
     for (const [key, node] of Object.entries(el.st)) node.textContent = key.endsWith('Sub') ? '' : '–';
     el.st.branchesSub.title = '';
+    syncStatTitles();
     clearTimeout(bitCard.timer);
     bitCard = { at: 0, key: null, timer: 0 };
     el.stBitScore.textContent = '–';
@@ -2785,6 +2794,7 @@
     const last = active ? feed.lastTime(active.key) : null;
     el.st.last.textContent = last ? U.timeAgo(last) : '–';
     el.st.lastSub.textContent = last ? U.fmtDateTime(last) : t('stats.noEvents');
+    syncStatTitles();
   }
 
   /* ---------- estado de conexión ---------- */

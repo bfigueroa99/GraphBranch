@@ -267,17 +267,11 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 
 131. **Issues de Jira y Trello, primera entrega** · Fuentes · 1×2/3. [replica 2026-10-28] [parte de «Issues de Jira y Trello»] Las claves tipo `ABC-123` de los mensajes de commit y de PR se vuelven enlaces a una URL de Jira que el usuario configura (guardada en este navegador), sin consultas nuevas. Comprobar: prueba del reconocimiento de claves y un paso del smoke.
 ~~**Blame de un archivo, segunda entrega**~~ hecho en #236 · Datos.
-134. ~~**Salud del repo: PRs cerrados sin fusionar por semana**~~ hecho en #262 · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] La salud muestra los PRs cerrados sin fusionar por semana de las últimas 8, con lo ya cargado. Comprobar: `tools/health.test.mjs` con cierres fabricados.
-135. ~~**Vista de texto: ramas nuevas**~~ hecho en #255 · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama creada en los últimos 7 días lo dice, con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
-136. ~~**Resumen de la semana de la organización: rama más activa**~~ hecho en #257 · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] Cada repo del resumen de la organización nombra su rama más activa de la semana. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
-137. ~~**Salud del repo: tendencia de issues abiertos**~~ hecho en #259 · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] La salud muestra los issues abiertos por semana de las últimas 8, con lo ya cargado. Comprobar: `tools/health.test.mjs` con issues fabricados.
-139. ~~**Vista de texto: CI de cada rama**~~ hecho en #260 · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama dice si su último CI ya cargado falló («CI fallando»), con una marca. Comprobar: prueba de la vista con `data.ci` fabricado y un paso del smoke.
 140. **Vista de texto: autor de la punta de cada rama** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama dice quién hizo el commit de su punta, con lo ya cargado. Comprobar: `tools/textview.test.mjs` y un paso del smoke.
 141. **Salud del repo: autores de commits por semana** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] La salud muestra cuántos autores distintos hicieron commits cada semana de las últimas 8, con los commits ya cargados. Comprobar: `tools/health.test.mjs` con commits fabricados.
 142. **Resumen de la semana: PRs fusionados por autor** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana nombra quién fusionó más PRs, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con PRs fabricados.
 143. **Resumen de la semana de la organización: PRs abiertos** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] El resumen de la semana de una organización suma los PRs abiertos en la semana de cada repo seguido, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
 144. **Resumen de la semana de la organización: autores nuevos** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] El resumen de la semana de una organización suma los autores nuevos de cada repo seguido, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
-145. ~~**Salud del repo: tendencia de tags**~~ hecho en #256 · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] La salud suma los tags nuevos por semana de las últimas 8, con los tags cargados. Comprobar: `tools/health.test.mjs` con tags fabricados.
 146. **Vista de texto: ramas sin PR** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de cada rama dice si no tiene pull request abierto, con lo ya cargado. Comprobar: `node --test` con ramas y PRs fabricados.
 147. **Constelación: ordenar por ramas nuevas** · Escala · 1×2/2. [inv. 2026-10-13] [parte del ítem 26] La constelación se ordena también por ramas nuevas de la semana, con lo ya cargado de cada repo. Comprobar: `node --test` con repos fabricados.
 148. **Práctica: restore --staged y clean** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 16] La práctica de git admite `restore --staged` y `clean` con su ejercicio en los 40 idiomas. Comprobar: `node --test` de la práctica.
@@ -418,32 +412,29 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 10. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-11. [QA] A ≤560 px las cifras ya no muestran su línea de detalle (`.stat-sub`: «de N en total», la hora de la última
-    actividad): se perdió información en celular. Devolverla como `title`/texto accesible de la tarjeta o en un
-    plegable. Reproducción: Playwright, 320×640 → `getComputedStyle(#st-branches-sub).display` = `none`.
-12. [QA] A 320 px el panel de salud se desborda hacia la derecha (28 px; 46 en tamil): la cabecera, los contadores de
+11. [QA] A 320 px el panel de salud se desborda hacia la derecha (28 px; 46 en tamil): la cabecera, los contadores de
     cada sección y la edad de los forks quedan cortados y el panel se desliza de lado. Visto en la iteración 174, igual
     sin su cambio. Reproducción: Playwright, 320×640, demo `?lang=es&health=1` → `#health .tr-wrap` con `scrollWidth`
     312 y `clientWidth` 284.
 
-13. [Accesibilidad] La salud del repo repite cinco líneas casi iguales («… por semana, últimas 8 semanas (de la más vieja a la
+12. [Accesibilidad] La salud del repo repite cinco líneas casi iguales («… por semana, últimas 8 semanas (de la más vieja a la
     actual): 0 · 0 · 0 · 0 · 0 · 0 · 0 · 3»): un lector de pantalla lee la frase larga cinco veces y los ceros uno por uno.
     Dejar la frase una vez (encabezado «Por semana, de la más vieja a la actual») o resumir («3 en la última semana, 0 en
     las 7 anteriores»). Reproducción: Playwright, `?lang=es`, abrir `#health-btn` → `#hl-mergeweeks`, `#hl-openedweeks`,
     `#hl-closedweeks`, `#hl-branchweeks`, `#hl-commitweeks` repiten «últimas 8 semanas (de la más vieja a la actual)».
-14. [Accesibilidad] En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…», «sin actividad…», PRs) y la
+13. [Accesibilidad] En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…», «sin actividad…», PRs) y la
     nota de cada commit (`.tv-aside`) ya van en el `aria-label` del `treeitem`, pero son texto del nodo: según el lector se
     leen dos veces. Marcarlas `aria-hidden="true"` y comprobarlo con un lector real (ver Para Benjamin, 5).
     Reproducción: Playwright, abrir `#textview-btn` → `.tv-tag` dentro de `[role=treeitem][aria-label]` sin `aria-hidden`.
-15. [Rendimiento] `placeLabels` (`js/graph3d.js`) crea por cuadro un `{x, y}` por `project()`, un objeto por candidata, la grilla (`Map`) y
+14. [Rendimiento] `placeLabels` (`js/graph3d.js`) crea por cuadro un `{x, y}` por `project()`, un objeto por candidata, la grilla (`Map`) y
     sus cierres. Medido en la iteración 199 con 1.000 ramas en 3D: 0,36 ms por cuadro (19 cuadros en 4 s sin GPU), así que
     hoy no pesa; si algún día se mide más, reusar el punto de `project()` (devolver un objeto compartido y revisar quién lo
     guarda) y un arreglo de candidatas. Reproducción: Playwright, `?repo=acme/web` con 1.000 ramas, envolver
     `GB.Graph3D.prototype.placeLabels` con `performance.now()` → ~0,36 ms por llamada.
-16. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
+15. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
     `placeLabels`. El cuadro lo domina el render por software (~200 ms por cuadro sin GPU, 10 fps), que con GPU no existe;
     medir con GPU real antes de tocarlo. Reproducción: la misma envoltura sobre `stepScene` → ~1,1 ms por llamada.
-17. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
+16. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
     (895 ms en total, sin GPU); el perfil de CPU de los primeros 6 s no deja ninguna función de la app por encima de 70 ms
     (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
     que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
@@ -457,134 +448,6 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 ## Bitácora
 
 Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las lleva `node tools/loop.mjs --rotar`); el loop lee las dos.
-
-### 2026-11-03 · Iteración 191 · Mantenimiento · Deuda
-
-- **Arreglo: pasos del smoke intermitentes por elegir la rama a ciegas** (pendiente 1, parcial: sigue abierto con lo que falta medir). Un helper `openBranchTip` (`tools/smoke.mjs`) abre la ficha de una rama vigente, a la vista y que no sea la por defecto; lo usan «ocultar una rama o dejarla sola» y «cambios de un commit», que elegían `heads[3]` sin mirar si estaba a la vista. «Ocultar…» espera por conteo de etiquetas vigentes y «filtro por autor» deja de comparar con el conteo base.
-- **Reproducción:** `xvfb-run -a node tools/smoke.mjs` → `✗ ocultar una rama o dejarla sola…: page.waitForFunction: Timeout 15000ms exceeded` (iteración 191, antes del arreglo); el de «filtro por autor»: `quitar el filtro no deja el grafo como estaba`.
-- **Pruebas que fallan sin el arreglo:** el propio smoke con la demo viva (intermitente, 1 de 1 fallo observado en esta sesión antes del arreglo); 1 corrida en verde después (no son las 5 pedidas).
-- README: no toca.
-- QA: no toca la página (solo `tools/smoke.mjs`); auditoría: no toca la página.
-- Skills: no aplica: un arreglo del propio smoke que las reglas del repo ya cubren.
-- Arena: no aplica: una sola forma obvia.
-- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; sin subagentes OMC en esta corrida)
-- Reclamo: loop/191, sin colisión
-- Validado: 556 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
-- **Siguiente:** iteración 192, expansión: ítem 143 (Constelación: ordenar por PRs abiertos, Escala)
-
-### 2026-11-03 · Iteración 192 · Expansión · Escala
-
-- **Capacidad nueva: la constelación ordenada por PRs abiertos** (ítem 143 de la hoja de ruta).
-  El selector de orden suma «PRs abiertos» (más PRs primero; empata por el orden de las pestañas) junto a pestañas, actividad y nombre,
-  y `?order=prs` abre la constelación ya ordenada así. Cuenta `max(totalPulls, pulls.size)` de lo ya cargado: ninguna consulta nueva.
-  Reusa el texto `stats.prs` del selector y del aviso («Ordenadas por …»): sin claves nuevas en los 40 idiomas.
-- **Pruebas que fallan sin la capacidad:** `tools/constellation.test.mjs` («el orden…»: `sortItems(…, 'prs')` deja el orden de las pestañas y `orderParam('prs')` da `null`) y el paso del smoke de `?order=prs`.
-- README: Constelación (barra superior) y Mapa de alcance; sin cambios en Seguridad (lee una palabra de la URL contra una lista fija).
-- QA: 40 idiomas con `check-i18n` (sin claves nuevas); selector y aviso en el smoke; auditoría en la puerta.
-- Skills: no aplica: un orden más en un selector, sin dominio nuevo.
-- Arena: no aplica: una sola forma obvia.
-- OMC: plan=— · revisión=— · verificación=— (esfuerzo 1, un solo frente; revisión propia del diff)
-- Reclamo: loop/192, sin colisión
-- Validado: 556 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 193, expansión: ítem 138 (Vista de texto: ver todas las ramas desde la vista, Público)
-
-### 2026-11-04 · Iteración 193 · Expansión · Público
-
-- **Capacidad nueva: ver todas las ramas desde la vista de texto** (ítem 138 de la hoja de ruta, parte del ítem 110). Con ramas ocultas o «solo una», la vista de texto suma el botón «Ver todas las ramas» (visible solo entonces) y la tecla **A** desde el árbol: limpian el filtro con el mismo `setBranchView` del grafo, sin cerrar el árbol, el foco queda en él y la región viva lo dice. Reusa el texto `branchview.reset`: sin claves nuevas en los 40 idiomas.
-- **Pruebas que fallan sin la capacidad:** `tools/textview.test.mjs` («viewAction…», «viewNote…»: A no da `all`) y el paso del smoke «vista de texto: H oculta una rama, S la deja sola…» ampliado (sin el cambio no existe `#textview-showall` ni A hace nada).
-- README: la sección de la vista de texto y Límites conocidos; Mapa de alcance (Público).
-- QA: teclado y lector de pantalla (foco que no cae a `<body>` al esconderse el botón, región viva, botón oculto sin filtro) con el paso del smoke; 40 idiomas con `check-i18n`; auditoría en la puerta.
-- Skills: no aplica: una función del árbol que las reglas del repo ya cubren.
-- Arena: no aplica: una sola forma obvia (reusar `setBranchView` y `update` del árbol).
-- OMC: plan=— · revisión=— · verificación=— (esfuerzo 1, un solo frente; revisión propia del diff)
-- Reclamo: loop/193, sin colisión
-- Validado: 556 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera puerta falló en mi propio paso del smoke (el botón dejaba el foco en el filtro y no en el árbol): arreglado y repetido.
-- **Siguiente:** iteración 194, expansión: ítem 125 (Alias de las pestañas, Escala)
-
-### 2026-11-04 · Iteración 194 · Expansión · Escala
-
-- **Capacidad nueva: alias de las pestañas** (ítem 125 de la hoja de ruta, fila «Pestañas por repo con alias» de Replica). Doble clic (o **F2** con la pestaña enfocada) abre un campo en la pestaña: Intro guarda el alias, Esc lo descarta y vacío lo quita (hasta 40 letras, `U.cleanAlias`). Se recuerda por repo en este navegador (`alias:<repo>`), sin tocar el repo, la URL ni el título del grafo; el nombre real queda en el título, el texto para lectores de pantalla y el botón de cerrar de la pestaña. La demo no lleva alias. Una sola clave nueva (`tabs.rename`) en los 40 idiomas.
-- **Pruebas que fallan sin la capacidad:** `tools/util.test.mjs` («cleanAlias…») y el paso del smoke «alias de una pestaña: F2 la renombra, se recuerda y el nombre real sigue accesible» (F2, guardado, nombre real accesible, URL intacta, foco, Esc y vaciar).
-- README: Varios repos a la vez, lista de funciones de abajo y Límites conocidos; `replica/features.csv` (la fila pasa a `yes`) y Mapa de alcance (Escala).
-- QA: teclado (F2, Intro, Esc; el foco vuelve a la pestaña), nombre accesible con el nombre real, 40 idiomas con `check-i18n`; auditoría en la puerta.
-- Skills: no aplica: un campo de texto en la pestaña, que las reglas del repo ya cubren.
-- Arena: no aplica: una sola forma obvia (campo en línea sobre la pestaña, guardado como el resto de lo por repo).
-- OMC: plan=— · revisión=— · verificación=— (esfuerzo 1, un solo frente; revisión propia del diff)
-- Reclamo: loop/194, sin colisión
-- Validado: 557 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 195, mantenimiento · QA: pendiente 10 (El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 …)
-
-### 2026-11-04 · Iteración 195 · Mantenimiento · QA
-
-- **Arreglo: el indicador de estado ya no dice «Sin conexión» ante un 404 o la cuota agotada** (pendiente 10). `U.statusKey` (`js/util.js`) elige el rótulo del indicador, de la pestaña y de la vista conjunta según el tipo del error: `notfound` → «No encontrado» y `rate` → «Cuota agotada»; lo demás sigue siendo «Sin conexión». Dos claves nuevas (`status.errorNotFound`, `status.errorRate`) en los 40 idiomas.
-- **Reproducción:** Playwright, 320×640, `?repo=acme/web&lang=es` con la API en 404 → `#status-text` = «Sin conexión» (antes del arreglo); después, «No encontrado», y con 403 de cuota, «Cuota agotada».
-- **Hallazgos:** 0 nuevos, 0 a la base de la auditoría (auditoría completa sin `--langs`: 0 hallazgos, 63 s; el smoke tres veces y el recorrido a mano de todos los bordes no se hicieron: solo 404 y cuota agotada a 320 px, y la puerta, una vez)
-- **Pruebas que fallan sin el arreglo:** `node --test tools/util.test.mjs` («statusKey…») → `U.statusKey is not a function`.
-- README: no toca.
-- QA: celular angosto (320 px) y 40 idiomas a mano con Playwright contra `node e2e/serve.mjs 4173` (404 y cuota agotada); `check-i18n`; auditoría en la puerta.
-- Skills: no aplica: un arreglo de un rótulo que las reglas del repo ya cubren.
-- Arena: no aplica: una sola forma obvia (elegir la clave por el tipo del error).
-- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff)
-- Reclamo: loop/195, sin colisión
-- Validado: 558 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 196, expansión: ítem 126 (Varias cuentas del mismo servicio, Fuentes)
-
-### 2026-11-04 · Iteración 196 · Expansión · Fuentes
-
-- **Capacidad nueva: segunda cuenta de GitHub** (ítem 126 de la hoja de ruta, primera entrega que lo cierra). Ajustes suma «Segunda cuenta de GitHub»: un dueño (usuario u organización) y un segundo token. `GitHubSource.tokenFor` (`js/sources/github.js`) da ese token solo a los repos, a las listas `org:`/`@` y al feed de organización de ese dueño (sin distinguir mayúsculas); todo lo demás usa el principal, y nunca el de la segunda. Se guarda atada a su dueño (`pack2`/`unpack2`; web: `account2` en el almacén de secretos; escritorio: servicio `github2` cifrado con el llavero). Una sola cuenta extra, de GitHub.
-- **Pruebas que fallan sin la capacidad:** `node --test tools/github.test.mjs` («segunda cuenta: …», dos pruebas: `tokenFor`/`pack2`/`unpack2` y que cada repo manda solo su token a la API simulada) → `GB.GitHubSource.unpack2 is not a function`; paso del smoke «el token de la segunda cuenta va solo a los repos de su dueño…».
-- README: Token (la segunda cuenta), Límites conocidos y Seguridad; `replica/features.csv` fila «Varios perfiles o cuentas» a `partial`.
-- QA: Ajustes (campo nuevo con nombre accesible y botón Mostrar/Ocultar, «Borrar tokens» también lo vacía) y recorrido con Playwright contra la API simulada: `acme/web` sale con la segunda y `otro/api` con la principal; auditoría en la puerta.
-- Skills: no aplica: un campo más de Ajustes y una regla de qué token va a qué repo, que las reglas del repo ya cubren.
-- Arena: no aplica: una sola forma obvia (elegir el token por el dueño del repo en un único punto).
-- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; toca tokens y `electron/token.js` pero solo suma un servicio a la lista, con la misma validación del IPC)
-- Reclamo: loop/196, sin colisión
-- Validado: 560 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. (Reanudada: antes de ese verde el smoke falló 5 corridas en pasos ajenos y cambiantes —historial de un archivo, quién tocó, vista de texto, filtro por autor, editar el código—; la 6.ª pasó entera.)
-- **Siguiente:** iteración 197, expansión: ítem 129 (Columnas de autor y fecha en el grafo 2D, Análisis)
-
-### 2026-11-04 · Iteración 197 · Expansión · Análisis
-
-- **Capacidad nueva: columnas de autor y fecha en el grafo 2D** (ítem 129 de la hoja de ruta). En la lupa, el interruptor «Mostrar autor y fecha junto a cada commit (grafo 2D)» escribe, en diagonal junto a cada commit, «Autor · fecha» (`GB.search.columnText` + `Graph.paintMeta`/`setColumns`), con lo ya cargado: sin consultas. Se recuerda en el navegador (`columns`) para todos los repos; con menos de 22 px entre commits no se dibuja. Solo 2D.
-- **Pruebas que fallan sin la capacidad:** `node --test tools/search.test.mjs` («columnText arma «Autor · fecha»…») → `S.columnText is not a function`; paso del smoke «el interruptor de columnas pone «autor · fecha» junto a los commits del 2D, se recuerda y al apagarlo se quitan».
-- README: Búsqueda de commits, Límites conocidos y Seguridad; `replica/features.csv` fila «Columnas de autor fecha y SHA» sigue en `partial` (falta el SHA y el 3D).
-- QA: 2D con la demo (el interruptor tiene nombre, el texto entra con `textContent`, se recuerda al recargar, se quita al apagarlo); el texto nuevo en los 40 idiomas (`check-i18n`); auditoría en la puerta.
-- Skills: no aplica: un interruptor y una etiqueta SVG, que las reglas del repo ya cubren.
-- Arena: no aplica: una sola forma obvia (un texto SVG por nodo, creado al entrar en pantalla).
-- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML`)
-- Reclamo: loop/197, sin colisión
-- Validado: 561 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 198, expansión: ítem 133 (Resumen de la semana de la organización: ramas nuevas, Salidas)
-
-### 2026-11-04 · Iteración 198 · Expansión · Salidas
-
-- **Capacidad nueva: el resumen de la semana de la organización suma las ramas nuevas** (ítem 133 de la hoja de ruta, parte del 47).
-  `computeOrg` de `js/digest.js` suma `newBranches` de cada repo (el conteo de `compute`: cada nombre una vez por repo, con lo ya
-  cargado); sale como línea de totales y como línea de cada repo en el Markdown y en la imagen PNG, y no aparece si es 0. Sin consultas.
-  Reusa la clave `digest.newbranches` (ya en los 40 idiomas); sin CSP nueva.
-- **Pruebas que fallan sin la capacidad:** `node --test tools/digest.test.mjs` («organización: suma las ramas nuevas de cada repo…») → falla con `o.newBranches` indefinido sin el cambio.
-- README: Salud del repo (Resumen de la semana de la organización) y Límites conocidos.
-- QA: sección ausente con 0 y nombre repetido en otro repo contado aparte, mirados con la prueba; sin texto nuevo (`check-i18n`); auditoría en la puerta.
-- Skills: no aplica: una cifra más en un resumen que cubren las reglas del repo.
-- Arena: no aplica: una sola forma obvia (reusar el conteo de `compute`).
-- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML`)
-- Replica: paridad, sin pasada nueva; repuse la hoja de ruta con los ítems 143 a 148 (ideas de `docs/investigacion.md`)
-- Reclamo: loop/198, sin colisión
-- Validado: 562 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 199, mantenimiento · Rendimiento: auditoría (sin pendientes de Rendimiento)
-
-### 2026-11-04 · Iteración 199 · Mantenimiento · Rendimiento
-
-- **Auditoría de Rendimiento: el camino caliente del 3D no tiene nada caro** (sin pendientes previos). Base (mejor de 3): carga 1758 ms, 10 consultas, tareas largas 895 ms, 3D 10,6 fps y 2D 50,6 fps sin GPU. Con 1.000 ramas en 3D, por cuadro: `placeLabels` 0,36 ms, `placeNotes` 0,03 ms, `stepScene` 1,1 ms (el cuadro lo domina el render por software). El perfil de CPU de la carga no deja ninguna función de la app sobre 70 ms (`drawFx`, los fuegos de la carga). Arreglo: `placeLabels` ordenaba las fechas del eje (`[...days].sort(...)`) en cada cuadro; ahora guarda el orden (`daysByZ`) y lo invalida al sincronizarlas.
-- **Hallazgos:** 3 nuevos (pendientes 15, 16 y 17, Baja), 0 a la base de la auditoría
-- **Pruebas que fallan sin el arreglo:** `node --test tools/rendimiento.test.mjs` («placeLabels no ordena las fechas del eje en cada cuadro…») → `el sort de las fechas no corre por cuadro` sin el cambio.
-- README: no cambia (sin función nueva).
-- QA: 3D con la demo y con 1.000 ramas, medido con la auditoría completa antes y después (0 hallazgos); `--comparar`: carga +4 %, tareas largas +4 %, 3D −8 % (mejor), nada pasa del 10 %. Es ruido de la máquina, no del cambio (el sort de unas decenas de fechas no se nota).
-- Skills: no aplica: perfilar y ajustar un camino caliente propio, que las reglas del repo ya cubren.
-- Arena: no aplica: una sola forma obvia (guardar el orden y invalidarlo donde cambian las fechas).
-- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML`)
-- Reclamo: loop/199, sin colisión
-- Validado: 563 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 200, expansión: ítem 135 (Vista de texto: ramas nuevas, Público)
 
 ### 2026-11-04 · Iteración 200 · Expansión · Público
 
@@ -679,3 +542,18 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/206, sin colisión
 - Validado: 569 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 207, mantenimiento · QA: pendiente 11
+
+### 2026-11-05 · Iteración 207 · Mantenimiento · QA
+
+- **Arreglo: a ≤560 px las cifras conservan su línea de detalle** (pendiente 11). La regla de celular angosto dejaba `.stat-sub` en `display: none`, que la sacaba también del lector de pantalla; ahora queda escondida a la vista con el recorte de `.sr-only` (el alto de las tarjetas no cambia) y `syncStatTitles` (`js/app.js`) pone el detalle de cada cifra de `title` de su tarjeta, en todos los anchos.
+- **Reproducción:** `node --test tools/stats-celular.test.mjs` → «a ≤560 px .stat-sub no usa display:none» y «cada cifra lleva su detalle como title de la tarjeta» fallan sin el arreglo.
+- **Hallazgos:** 0 nuevos, 0 a la base de la auditoría (iteración de un pendiente: sin pasada exploratoria completa)
+- **Pruebas que fallan sin el arreglo:** `tools/stats-celular.test.mjs` (2 pruebas; sin el arreglo, 0 de 2 pasan).
+- README: sin cambios (comportamiento de celular ya descrito; no hay texto nuevo).
+- QA: fila «Celular angosto» y «Teclado y lector de pantalla»: el detalle sigue en el DOM a 320 px y en la tarjeta como `title`; auditoría en la puerta. Se cerró el pendiente 11; no se hizo la pasada completa de QA exploratoria (auditoría `--langs`, smoke ×3), por ser una iteración de un pendiente.
+- Skills: no aplica: un arreglo de CSS y un `title` que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia.
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML`)
+- Reclamo: loop/207, sin colisión
+- Validado: 571 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 208, expansión: ítem 150 (App móvil, primera entrega: compartir hacia la PWA, Plataformas)

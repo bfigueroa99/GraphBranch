@@ -3372,3 +3372,131 @@ bitácoras juntas (la rotación de los subtipos de mantenimiento, la numeración
 - Reclamo: loop/190, sin colisión
 - Validado: 556 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 191, mantenimiento · Deuda: pendiente 1
+
+### 2026-11-03 · Iteración 191 · Mantenimiento · Deuda
+
+- **Arreglo: pasos del smoke intermitentes por elegir la rama a ciegas** (pendiente 1, parcial: sigue abierto con lo que falta medir). Un helper `openBranchTip` (`tools/smoke.mjs`) abre la ficha de una rama vigente, a la vista y que no sea la por defecto; lo usan «ocultar una rama o dejarla sola» y «cambios de un commit», que elegían `heads[3]` sin mirar si estaba a la vista. «Ocultar…» espera por conteo de etiquetas vigentes y «filtro por autor» deja de comparar con el conteo base.
+- **Reproducción:** `xvfb-run -a node tools/smoke.mjs` → `✗ ocultar una rama o dejarla sola…: page.waitForFunction: Timeout 15000ms exceeded` (iteración 191, antes del arreglo); el de «filtro por autor»: `quitar el filtro no deja el grafo como estaba`.
+- **Pruebas que fallan sin el arreglo:** el propio smoke con la demo viva (intermitente, 1 de 1 fallo observado en esta sesión antes del arreglo); 1 corrida en verde después (no son las 5 pedidas).
+- README: no toca.
+- QA: no toca la página (solo `tools/smoke.mjs`); auditoría: no toca la página.
+- Skills: no aplica: un arreglo del propio smoke que las reglas del repo ya cubren.
+- Arena: no aplica: una sola forma obvia.
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; sin subagentes OMC en esta corrida)
+- Reclamo: loop/191, sin colisión
+- Validado: 556 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 192, expansión: ítem 143 (Constelación: ordenar por PRs abiertos, Escala)
+
+### 2026-11-03 · Iteración 192 · Expansión · Escala
+
+- **Capacidad nueva: la constelación ordenada por PRs abiertos** (ítem 143 de la hoja de ruta).
+  El selector de orden suma «PRs abiertos» (más PRs primero; empata por el orden de las pestañas) junto a pestañas, actividad y nombre,
+  y `?order=prs` abre la constelación ya ordenada así. Cuenta `max(totalPulls, pulls.size)` de lo ya cargado: ninguna consulta nueva.
+  Reusa el texto `stats.prs` del selector y del aviso («Ordenadas por …»): sin claves nuevas en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `tools/constellation.test.mjs` («el orden…»: `sortItems(…, 'prs')` deja el orden de las pestañas y `orderParam('prs')` da `null`) y el paso del smoke de `?order=prs`.
+- README: Constelación (barra superior) y Mapa de alcance; sin cambios en Seguridad (lee una palabra de la URL contra una lista fija).
+- QA: 40 idiomas con `check-i18n` (sin claves nuevas); selector y aviso en el smoke; auditoría en la puerta.
+- Skills: no aplica: un orden más en un selector, sin dominio nuevo.
+- Arena: no aplica: una sola forma obvia.
+- OMC: plan=— · revisión=— · verificación=— (esfuerzo 1, un solo frente; revisión propia del diff)
+- Reclamo: loop/192, sin colisión
+- Validado: 556 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 193, expansión: ítem 138 (Vista de texto: ver todas las ramas desde la vista, Público)
+
+### 2026-11-04 · Iteración 193 · Expansión · Público
+
+- **Capacidad nueva: ver todas las ramas desde la vista de texto** (ítem 138 de la hoja de ruta, parte del ítem 110). Con ramas ocultas o «solo una», la vista de texto suma el botón «Ver todas las ramas» (visible solo entonces) y la tecla **A** desde el árbol: limpian el filtro con el mismo `setBranchView` del grafo, sin cerrar el árbol, el foco queda en él y la región viva lo dice. Reusa el texto `branchview.reset`: sin claves nuevas en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `tools/textview.test.mjs` («viewAction…», «viewNote…»: A no da `all`) y el paso del smoke «vista de texto: H oculta una rama, S la deja sola…» ampliado (sin el cambio no existe `#textview-showall` ni A hace nada).
+- README: la sección de la vista de texto y Límites conocidos; Mapa de alcance (Público).
+- QA: teclado y lector de pantalla (foco que no cae a `<body>` al esconderse el botón, región viva, botón oculto sin filtro) con el paso del smoke; 40 idiomas con `check-i18n`; auditoría en la puerta.
+- Skills: no aplica: una función del árbol que las reglas del repo ya cubren.
+- Arena: no aplica: una sola forma obvia (reusar `setBranchView` y `update` del árbol).
+- OMC: plan=— · revisión=— · verificación=— (esfuerzo 1, un solo frente; revisión propia del diff)
+- Reclamo: loop/193, sin colisión
+- Validado: 556 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera puerta falló en mi propio paso del smoke (el botón dejaba el foco en el filtro y no en el árbol): arreglado y repetido.
+- **Siguiente:** iteración 194, expansión: ítem 125 (Alias de las pestañas, Escala)
+
+### 2026-11-04 · Iteración 194 · Expansión · Escala
+
+- **Capacidad nueva: alias de las pestañas** (ítem 125 de la hoja de ruta, fila «Pestañas por repo con alias» de Replica). Doble clic (o **F2** con la pestaña enfocada) abre un campo en la pestaña: Intro guarda el alias, Esc lo descarta y vacío lo quita (hasta 40 letras, `U.cleanAlias`). Se recuerda por repo en este navegador (`alias:<repo>`), sin tocar el repo, la URL ni el título del grafo; el nombre real queda en el título, el texto para lectores de pantalla y el botón de cerrar de la pestaña. La demo no lleva alias. Una sola clave nueva (`tabs.rename`) en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `tools/util.test.mjs` («cleanAlias…») y el paso del smoke «alias de una pestaña: F2 la renombra, se recuerda y el nombre real sigue accesible» (F2, guardado, nombre real accesible, URL intacta, foco, Esc y vaciar).
+- README: Varios repos a la vez, lista de funciones de abajo y Límites conocidos; `replica/features.csv` (la fila pasa a `yes`) y Mapa de alcance (Escala).
+- QA: teclado (F2, Intro, Esc; el foco vuelve a la pestaña), nombre accesible con el nombre real, 40 idiomas con `check-i18n`; auditoría en la puerta.
+- Skills: no aplica: un campo de texto en la pestaña, que las reglas del repo ya cubren.
+- Arena: no aplica: una sola forma obvia (campo en línea sobre la pestaña, guardado como el resto de lo por repo).
+- OMC: plan=— · revisión=— · verificación=— (esfuerzo 1, un solo frente; revisión propia del diff)
+- Reclamo: loop/194, sin colisión
+- Validado: 557 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 195, mantenimiento · QA: pendiente 10 (El indicador de estado dice «Sin conexión» (`status.error`) también con un 404 …)
+
+### 2026-11-04 · Iteración 195 · Mantenimiento · QA
+
+- **Arreglo: el indicador de estado ya no dice «Sin conexión» ante un 404 o la cuota agotada** (pendiente 10). `U.statusKey` (`js/util.js`) elige el rótulo del indicador, de la pestaña y de la vista conjunta según el tipo del error: `notfound` → «No encontrado» y `rate` → «Cuota agotada»; lo demás sigue siendo «Sin conexión». Dos claves nuevas (`status.errorNotFound`, `status.errorRate`) en los 40 idiomas.
+- **Reproducción:** Playwright, 320×640, `?repo=acme/web&lang=es` con la API en 404 → `#status-text` = «Sin conexión» (antes del arreglo); después, «No encontrado», y con 403 de cuota, «Cuota agotada».
+- **Hallazgos:** 0 nuevos, 0 a la base de la auditoría (auditoría completa sin `--langs`: 0 hallazgos, 63 s; el smoke tres veces y el recorrido a mano de todos los bordes no se hicieron: solo 404 y cuota agotada a 320 px, y la puerta, una vez)
+- **Pruebas que fallan sin el arreglo:** `node --test tools/util.test.mjs` («statusKey…») → `U.statusKey is not a function`.
+- README: no toca.
+- QA: celular angosto (320 px) y 40 idiomas a mano con Playwright contra `node e2e/serve.mjs 4173` (404 y cuota agotada); `check-i18n`; auditoría en la puerta.
+- Skills: no aplica: un arreglo de un rótulo que las reglas del repo ya cubren.
+- Arena: no aplica: una sola forma obvia (elegir la clave por el tipo del error).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff)
+- Reclamo: loop/195, sin colisión
+- Validado: 558 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 196, expansión: ítem 126 (Varias cuentas del mismo servicio, Fuentes)
+
+### 2026-11-04 · Iteración 196 · Expansión · Fuentes
+
+- **Capacidad nueva: segunda cuenta de GitHub** (ítem 126 de la hoja de ruta, primera entrega que lo cierra). Ajustes suma «Segunda cuenta de GitHub»: un dueño (usuario u organización) y un segundo token. `GitHubSource.tokenFor` (`js/sources/github.js`) da ese token solo a los repos, a las listas `org:`/`@` y al feed de organización de ese dueño (sin distinguir mayúsculas); todo lo demás usa el principal, y nunca el de la segunda. Se guarda atada a su dueño (`pack2`/`unpack2`; web: `account2` en el almacén de secretos; escritorio: servicio `github2` cifrado con el llavero). Una sola cuenta extra, de GitHub.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/github.test.mjs` («segunda cuenta: …», dos pruebas: `tokenFor`/`pack2`/`unpack2` y que cada repo manda solo su token a la API simulada) → `GB.GitHubSource.unpack2 is not a function`; paso del smoke «el token de la segunda cuenta va solo a los repos de su dueño…».
+- README: Token (la segunda cuenta), Límites conocidos y Seguridad; `replica/features.csv` fila «Varios perfiles o cuentas» a `partial`.
+- QA: Ajustes (campo nuevo con nombre accesible y botón Mostrar/Ocultar, «Borrar tokens» también lo vacía) y recorrido con Playwright contra la API simulada: `acme/web` sale con la segunda y `otro/api` con la principal; auditoría en la puerta.
+- Skills: no aplica: un campo más de Ajustes y una regla de qué token va a qué repo, que las reglas del repo ya cubren.
+- Arena: no aplica: una sola forma obvia (elegir el token por el dueño del repo en un único punto).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; toca tokens y `electron/token.js` pero solo suma un servicio a la lista, con la misma validación del IPC)
+- Reclamo: loop/196, sin colisión
+- Validado: 560 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. (Reanudada: antes de ese verde el smoke falló 5 corridas en pasos ajenos y cambiantes —historial de un archivo, quién tocó, vista de texto, filtro por autor, editar el código—; la 6.ª pasó entera.)
+- **Siguiente:** iteración 197, expansión: ítem 129 (Columnas de autor y fecha en el grafo 2D, Análisis)
+
+### 2026-11-04 · Iteración 197 · Expansión · Análisis
+
+- **Capacidad nueva: columnas de autor y fecha en el grafo 2D** (ítem 129 de la hoja de ruta). En la lupa, el interruptor «Mostrar autor y fecha junto a cada commit (grafo 2D)» escribe, en diagonal junto a cada commit, «Autor · fecha» (`GB.search.columnText` + `Graph.paintMeta`/`setColumns`), con lo ya cargado: sin consultas. Se recuerda en el navegador (`columns`) para todos los repos; con menos de 22 px entre commits no se dibuja. Solo 2D.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/search.test.mjs` («columnText arma «Autor · fecha»…») → `S.columnText is not a function`; paso del smoke «el interruptor de columnas pone «autor · fecha» junto a los commits del 2D, se recuerda y al apagarlo se quitan».
+- README: Búsqueda de commits, Límites conocidos y Seguridad; `replica/features.csv` fila «Columnas de autor fecha y SHA» sigue en `partial` (falta el SHA y el 3D).
+- QA: 2D con la demo (el interruptor tiene nombre, el texto entra con `textContent`, se recuerda al recargar, se quita al apagarlo); el texto nuevo en los 40 idiomas (`check-i18n`); auditoría en la puerta.
+- Skills: no aplica: un interruptor y una etiqueta SVG, que las reglas del repo ya cubren.
+- Arena: no aplica: una sola forma obvia (un texto SVG por nodo, creado al entrar en pantalla).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML`)
+- Reclamo: loop/197, sin colisión
+- Validado: 561 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 198, expansión: ítem 133 (Resumen de la semana de la organización: ramas nuevas, Salidas)
+
+### 2026-11-04 · Iteración 198 · Expansión · Salidas
+
+- **Capacidad nueva: el resumen de la semana de la organización suma las ramas nuevas** (ítem 133 de la hoja de ruta, parte del 47).
+  `computeOrg` de `js/digest.js` suma `newBranches` de cada repo (el conteo de `compute`: cada nombre una vez por repo, con lo ya
+  cargado); sale como línea de totales y como línea de cada repo en el Markdown y en la imagen PNG, y no aparece si es 0. Sin consultas.
+  Reusa la clave `digest.newbranches` (ya en los 40 idiomas); sin CSP nueva.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/digest.test.mjs` («organización: suma las ramas nuevas de cada repo…») → falla con `o.newBranches` indefinido sin el cambio.
+- README: Salud del repo (Resumen de la semana de la organización) y Límites conocidos.
+- QA: sección ausente con 0 y nombre repetido en otro repo contado aparte, mirados con la prueba; sin texto nuevo (`check-i18n`); auditoría en la puerta.
+- Skills: no aplica: una cifra más en un resumen que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (reusar el conteo de `compute`).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML`)
+- Replica: paridad, sin pasada nueva; repuse la hoja de ruta con los ítems 143 a 148 (ideas de `docs/investigacion.md`)
+- Reclamo: loop/198, sin colisión
+- Validado: 562 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 199, mantenimiento · Rendimiento: auditoría (sin pendientes de Rendimiento)
+
+### 2026-11-04 · Iteración 199 · Mantenimiento · Rendimiento
+
+- **Auditoría de Rendimiento: el camino caliente del 3D no tiene nada caro** (sin pendientes previos). Base (mejor de 3): carga 1758 ms, 10 consultas, tareas largas 895 ms, 3D 10,6 fps y 2D 50,6 fps sin GPU. Con 1.000 ramas en 3D, por cuadro: `placeLabels` 0,36 ms, `placeNotes` 0,03 ms, `stepScene` 1,1 ms (el cuadro lo domina el render por software). El perfil de CPU de la carga no deja ninguna función de la app sobre 70 ms (`drawFx`, los fuegos de la carga). Arreglo: `placeLabels` ordenaba las fechas del eje (`[...days].sort(...)`) en cada cuadro; ahora guarda el orden (`daysByZ`) y lo invalida al sincronizarlas.
+- **Hallazgos:** 3 nuevos (pendientes 15, 16 y 17, Baja), 0 a la base de la auditoría
+- **Pruebas que fallan sin el arreglo:** `node --test tools/rendimiento.test.mjs` («placeLabels no ordena las fechas del eje en cada cuadro…») → `el sort de las fechas no corre por cuadro` sin el cambio.
+- README: no cambia (sin función nueva).
+- QA: 3D con la demo y con 1.000 ramas, medido con la auditoría completa antes y después (0 hallazgos); `--comparar`: carga +4 %, tareas largas +4 %, 3D −8 % (mejor), nada pasa del 10 %. Es ruido de la máquina, no del cambio (el sort de unas decenas de fechas no se nota).
+- Skills: no aplica: perfilar y ajustar un camino caliente propio, que las reglas del repo ya cubren.
+- Arena: no aplica: una sola forma obvia (guardar el orden y invalidarlo donde cambian las fechas).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML`)
+- Reclamo: loop/199, sin colisión
+- Validado: 563 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 200, expansión: ítem 135 (Vista de texto: ramas nuevas, Público)

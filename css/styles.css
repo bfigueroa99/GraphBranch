@@ -6403,7 +6403,7 @@ a.hl-row:focus-visible {
   }
 }
 
-/* celular angosto: las cifras en tres columnas y sin la línea de detalle, para que el grafo quede a
+/* celular angosto: las cifras en tres columnas y con la línea de detalle solo para el lector y el title, para que el grafo quede a
    una pantalla de la barra y no bajo 245 px de tarjetas */
 @media (max-width: 560px) {
   .stats,
@@ -6427,8 +6427,17 @@ a.hl-row:focus-visible {
     grid-column: span 2;
     border-radius: 0 0 var(--radius) 0;
   }
+  /* escondida a la vista pero no del lector de pantalla: el detalle también va de title en la tarjeta */
   .stat-sub {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .stat {
+    position: relative;
   }
 }
 

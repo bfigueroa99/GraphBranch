@@ -207,6 +207,7 @@ test('la lista de PRs está completa solo si la fuente los trae, ya cargó y no 
   assert.equal(ok(d({ pulls: pulls(50), totalPulls: 50 })), false); // una página llena: puede faltar alguno
   assert.equal(ok(d({ repo: { defaultBranch: 'main', local: true } })), false); // repo local: sin PRs
   assert.equal(ok(d({ repo: { defaultBranch: 'main', practice: true } })), false); // práctica de git: sin PRs
+  assert.equal(ok(d({ pullsUnknown: true, pulls: new Map(), totalPulls: 0 })), false); // token de GitHub sin permiso de PRs
   assert.equal(ok(d({ pulls: undefined })), false);
   assert.equal(ok(null), false);
 });

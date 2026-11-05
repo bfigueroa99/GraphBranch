@@ -4228,7 +4228,7 @@ console.log('Vista de texto: ramas quietas (GitHub simulado)');
     const rows = await page.$$eval('#textview .tv-branch', (bs) => bs.map((n) => ({ name: n.dataset.branch, label: n.getAttribute('aria-label'), head: n.querySelector('.tv-head').textContent })));
     const old = rows.find((r) => r.name === 'gh-pages');
     const main = rows.find((r) => r.name === 'main');
-    if (!old || !/^gh-pages, sin actividad hace más de 30 días, último commit de [^,]+, commits mostrados: 1$/.test(old.label)) throw new Error('la rama de hace 45 días no lo dice en su nombre accesible: ' + JSON.stringify(old));
+    if (!old || !/^gh-pages, sin PR abierto, sin actividad hace más de 30 días, último commit de [^,]+, commits mostrados: 1$/.test(old.label)) throw new Error('la rama de hace 45 días no lo dice en su nombre accesible: ' + JSON.stringify(old));
     if (!old.head.includes('sin actividad hace más de 30 días')) throw new Error('la rama de hace 45 días no lleva la marca visible: ' + old.head);
     if (!main || /sin actividad/.test(main.label + main.head)) throw new Error('la rama por defecto, con commits de hoy, se dice quieta: ' + JSON.stringify(main));
   });

@@ -16,11 +16,11 @@
   const PULLS_PAGE = 50; // las fuentes traen los PRs abiertos de a 50 (los más recientes): con 50 o más puede faltar alguno
 
   /** Si la lista de PRs abiertos ya cargada está completa, para decir de una rama que no tiene ninguno: la fuente los
-      trae (no un repo local ni la práctica de git), no se recortó (menos de una página y no menos que el total que da
+      trae (no un repo local ni la práctica de git) y el token puede leerlos (`pullsUnknown`), no se recortó (menos de una página y no menos que el total que da
       la fuente) y el repo ya cargó. Va sobre el estado sin filtrar: una vista filtrada pierde los PRs de sus ramas quitadas. */
   function pullsComplete(data) {
     const r = data?.repo || {};
-    if (!data?.loaded || r.local || r.practice || typeof data.pulls?.size !== 'number') return false;
+    if (!data?.loaded || data.pullsUnknown || r.local || r.practice || typeof data.pulls?.size !== 'number') return false;
     const n = data.pulls.size;
     return n < PULLS_PAGE && (Number(data.totalPulls) || 0) <= n;
   }

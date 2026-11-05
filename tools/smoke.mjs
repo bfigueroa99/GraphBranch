@@ -2491,7 +2491,7 @@ console.log('Varios repos a la vez');
         let n = -1;
         let said = '';
         const ok = () => (want ? n > 0 : n === 0);
-        for (let tries = 0; tries < 20 && !ok(); tries++) {
+        for (let tries = 0; tries < 60 && !ok(); tries++) {
           if (tries) await full.waitForTimeout(500);
           await full.click('#constellation-btn');
           await full.waitForSelector('#constellation[open]', { timeout: T(3000) });

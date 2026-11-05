@@ -3500,3 +3500,148 @@ bitácoras juntas (la rotación de los subtipos de mantenimiento, la numeración
 - Reclamo: loop/199, sin colisión
 - Validado: 563 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 200, expansión: ítem 135 (Vista de texto: ramas nuevas, Público)
+
+### 2026-11-04 · Iteración 200 · Expansión · Público
+
+- **Capacidad nueva: la vista de texto dice qué ramas son nuevas** (ítem 135 de la hoja de ruta, parte del 33). `freshBranches` (`js/textview.js`) toma de los eventos `branch-create` ya cargados las ramas creadas en los últimos 7 días; `build` marca `fresh` (nunca la por defecto) y el árbol lo dice en el nombre accesible y en una marca («creada en los últimos 7 días»). Sin consultas. Texto nuevo `textview.fresh` en los 40 idiomas; sin CSP nueva. Los ítems 134 y 141 ya existen desde antes (#118 y #164: despliegues y merges por semana en la salud): no se pueden tachar sin repetir un PR (R3), así que quedan en la hoja y los siguientes iteraciones los toman como «ya hecho» (Para Benjamin).
+- **Pruebas que fallan sin la capacidad:** `node --test tools/textview.test.mjs` («una rama creada en los últimos 7 días se dice nueva…») → `ctx.window.GB.textview.freshBranches is not a function` sin el cambio.
+- README: Vista de texto y Mapa de alcance (Público).
+- QA: filas de teclado/lector de pantalla e idiomas: el texto va en `aria-label` y en `textContent` de una marca (sin `innerHTML`); 40 idiomas con `check-i18n`; ventana de 7 días, futuro, sin hora y la por defecto, miradas con la prueba; auditoría en la puerta.
+- Skills: no aplica: una marca más en un árbol que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (los eventos `branch-create` que ya usa la salud).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML`)
+- Reclamo: loop/200, sin colisión
+- Validado: 564 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 201, expansión: ítem 134 (Salud del repo: tendencia de releases, Análisis)
+
+### 2026-11-04 · Iteración 201 · Expansión · Análisis
+
+- **Capacidad nueva: la salud muestra los tags por semana** (ítem 145 de la hoja de ruta, parte del 12). El ítem 134 que tocaba ya estaba hecho (#118, Para Benjamin 7): no se reconstruyó y se tomó el siguiente del mismo eje. `compute` (`js/health.js`) suma `pace.tagWeeks`: cada tag cuenta en la fecha de su commit si está cargado, y el panel lo dice en `#hl-tagweeks` (solo con algún tag). Sin consultas. Texto nuevo `health.tagWeeks` en los 40 idiomas; sin CSP nueva.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/health.test.mjs` («tendencia de tags…») → `Cannot read properties of undefined (reading 'tagWeeks')`/`pace.tagWeeks` indefinido sin el cambio.
+- README: Salud del repo y Límites conocidos.
+- QA: texto escapado con `U.esc`; 40 idiomas con `check-i18n`; tags sin commit cargado, sin fecha, fuera de las 8 semanas y sin `data.tags` miradas con la prueba; paso de formato en el smoke (solo si la línea aparece); auditoría en la puerta.
+- Skills: no aplica: una línea más en un panel que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (la que ya usan las otras tendencias).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML` con texto de afuera)
+- Reclamo: loop/201, sin colisión
+- Validado: 565 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 202, expansión: ítem 136 (Resumen de la semana de la organización: rama más activa, Salidas)
+
+### 2026-11-04 · Iteración 202 · Expansión · Salidas
+
+- **Capacidad nueva: la imagen del resumen de la organización nombra la rama más activa de cada repo** (ítem 136 de la hoja de ruta, parte del 47). El Markdown de la organización ya traía esa línea desde #110, pero sin prueba (como el 134 de la 201, Para Benjamin 7); lo que faltaba era la imagen: `imageLinesOrg` (`js/digest.js`) suma «Rama: x (n)» a la fila de cada repo. Sin consultas ni textos nuevos (`digest.branch` ya existe en los 40 idiomas); sin CSP nueva.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/digest.test.mjs` («organización: cada repo nombra su rama más activa…») → la fila `C: 5 · Rama: main (5)` no está en la imagen sin el cambio.
+- README: Salud del repo (resumen de la organización) y Límites conocidos.
+- QA: texto de la rama aplanado (`flat`) y recortado a 70 caracteres en la imagen, escapado en el Markdown; repo sin ramas cargadas no muestra la línea (prueba); sin consultas; auditoría en la puerta.
+- Skills: no aplica: una línea más en una función pura que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (la misma línea que ya usa el resumen de un repo).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML`)
+- Reclamo: loop/202, sin colisión
+- Validado: 566 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera corrida falló en un paso ajeno («ocultar una rama o dejarla sola»: las etiquetas no bajaron de 4) y la segunda pasó: intermitencia, anotada en el pendiente 1 de Deuda.
+- **Siguiente:** iteración 203, mantenimiento · Deuda: pendiente 1 (Pasos del smoke intermitentes en la sesión cloud: en la iteración 152, `npm run…)
+
+### 2026-11-05 · Iteración 203 · Mantenimiento · Deuda
+
+- **Arreglo: «ocultar una rama o dejarla sola» del smoke ya no depende del conteo de etiquetas** (pendiente 1, parte). Fallaba (202) con `las etiquetas no bajaron de 4`: la demo sigue publicando y una rama nueva compensaba la que se ocultaba. `tools/smoke.mjs` espera ahora a que las ramas concretas dejen de estar (`gone`), sin contar la rama por defecto, que «Solo esta» conserva (`js/search.js`).
+- **Reproducción:** `xvfb-run -a node tools/smoke.mjs` → `✗ ocultar una rama o dejarla sola: …: las etiquetas no bajaron de 4` (intermitente, 202; con carga de la demo).
+- **Pruebas que fallan sin el arreglo:** el propio paso del smoke, intermitente: no se pudo forzar a demanda; el arreglo quita la condición de carrera (comparar un conteo con la demo viva).
+- README: no toca.
+- QA: no toca la página; solo `tools/smoke.mjs`. Smoke de 165 pasos en verde una vez; las 5 corridas del pendiente quedan abiertas.
+- Skills: no aplica: un ajuste de una espera en el smoke que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (esperar por nombre, como ya hace «filtro por autor»).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; solo `tools/smoke.mjs`)
+- Reclamo: loop/203, sin colisión
+- Validado: 566 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 204, expansión: ítem 134 (Salud del repo: tendencia de releases, Análisis)
+
+### 2026-11-05 · Iteración 204 · Expansión · Análisis
+
+- **Capacidad nueva: la salud muestra los issues abiertos por semana** (ítem 137 de la hoja de ruta, parte del 12). El ítem 134 que tocaba ya estaba hecho (#118, Para Benjamin 7): en vez de dejarlo atascar otra vez al loop, los ítems 134 y 141 (también hecho, #164) se reemplazaron por ítems nuevos con la misma numeración (PRs cerrados sin fusionar y autores de commits por semana) y se quitó la nota 7 de Para Benjamin. `compute` (`js/health.js`) suma `pace.issueWeeks`: cada número de issue cuenta una vez, con su primera apertura (`issue-open`), y el panel lo dice en `#hl-issueweeks` (solo con algún issue). Sin consultas. Texto nuevo `health.issueWeeks` en los 40 idiomas; sin CSP nueva.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/health.test.mjs` («la salud cuenta los issues abiertos por semana…») → `pace.issueWeeks` indefinido sin el cambio.
+- README: Salud del repo y Límites conocidos.
+- QA: texto escapado con `U.esc`; 40 idiomas con `check-i18n`; duplicados, cierres, eventos sin hora y fuera de las 8 semanas mirados con la prueba; paso de formato en el smoke (solo si la línea aparece); auditoría en la puerta.
+- Skills: no aplica: una línea más en un panel que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (la que ya usan las otras tendencias).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML` con texto de afuera)
+- Reclamo: loop/204, sin colisión
+- Validado: 567 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 205, expansión: ítem 139 (Vista de texto: CI de cada rama, Público)
+
+### 2026-11-05 · Iteración 205 · Expansión · Público
+
+- **Capacidad nueva: la vista de texto dice qué ramas tienen el CI fallando** (ítem 139 de la hoja de ruta, parte del 33). `build` (`js/textview.js`) suma `ciFailing` (el estado `failure` de `data.ci` de la rama); el nodo lo dice en su nombre accesible («CI fallando») y con una marca ✗ en rojo (`.tv-ci-fail`). Sin consultas: parte de lo ya cargado; en curso o en verde no se marca. Texto nuevo `textview.ciFailing` en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/textview.test.mjs` («cada rama dice si su último CI cargado falló…») → `ciFailing` indefinido sin el cambio; paso del smoke: la marca, si aparece, está en el nombre accesible.
+- README: Vista de texto y Límites conocidos.
+- QA: sin `data.ci`, con `success` y con `pending` no marca (prueba); texto con `textContent`; color con `--bad` en claro y oscuro; auditoría en la puerta.
+- Skills: no aplica: una marca más en una vista que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (la misma de «fusionada» y «quieta»).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML`)
+- Reclamo: loop/205, sin colisión
+- Validado: 568 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 206, expansión: ítem 134 (Salud del repo: PRs cerrados sin fusionar por semana, Análisis)
+
+### 2026-11-05 · Iteración 206 · Expansión · Análisis
+
+- **Capacidad nueva: la salud cuenta los PRs cerrados sin fusionar por semana** (ítem 134 de la hoja de ruta, parte del 12). `compute` (`js/health.js`) suma `pace.prCloseWeeks`: las actividades `pr-close` ya cargadas, cada número una vez con su primer cierre y sin los que el feed también vio fusionados; el panel lo dice en `#hl-prcloseweeks`. Sin consultas nuevas. Texto nuevo `health.prCloseWeeks` en los 40 idiomas.
+- Hoja de ruta repuesta hasta 15 por encargo de Benjamin (2026-11-05): ítems 149 (extensión de Chrome y Firefox), 150 (app móvil: compartir hacia la PWA), 151 (más de 10 repos: tope de 20), 152 (CI de GitLab), 153 (estado de los despliegues) y 154 (resumen de la organización: issues cerrados), puntuados con `a×i/e` y en la tabla de ideas de `docs/investigacion.md`.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/health.test.mjs` («PRs cerrados sin fusionar por semana…») → `prCloseWeeks` indefinido sin el cambio; paso del smoke: la línea, si aparece, trae 8 cifras con algún PR.
+- README: Salud del repo y Límites conocidos.
+- QA: cierres repetidos, fusionados, futuros, fuera de las 8 semanas y de issues no cuentan (prueba); línea con `U.esc`; sin PR cerrado la línea no sale; auditoría en la puerta.
+- Skills: no aplica: una línea más en un panel que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (la de issues cerrados y abiertos).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML` con texto de afuera)
+- Replica: paridad, sin pasada nueva; la reposición salió del Mapa de alcance (columna Siguiente).
+- Reclamo: loop/206, sin colisión
+- Validado: 569 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 207, mantenimiento · QA: pendiente 11
+
+### 2026-11-05 · Iteración 207 · Mantenimiento · QA
+
+- **Arreglo: a ≤560 px las cifras conservan su línea de detalle** (pendiente 11). La regla de celular angosto dejaba `.stat-sub` en `display: none`, que la sacaba también del lector de pantalla; ahora queda escondida a la vista con el recorte de `.sr-only` (el alto de las tarjetas no cambia) y `syncStatTitles` (`js/app.js`) pone el detalle de cada cifra de `title` de su tarjeta, en todos los anchos.
+- **Reproducción:** `node --test tools/stats-celular.test.mjs` → «a ≤560 px .stat-sub no usa display:none» y «cada cifra lleva su detalle como title de la tarjeta» fallan sin el arreglo.
+- **Hallazgos:** 0 nuevos, 0 a la base de la auditoría (iteración de un pendiente: sin pasada exploratoria completa)
+- **Pruebas que fallan sin el arreglo:** `tools/stats-celular.test.mjs` (2 pruebas; sin el arreglo, 0 de 2 pasan).
+- README: sin cambios (comportamiento de celular ya descrito; no hay texto nuevo).
+- QA: fila «Celular angosto» y «Teclado y lector de pantalla»: el detalle sigue en el DOM a 320 px y en la tarjeta como `title`; auditoría en la puerta. Se cerró el pendiente 11; no se hizo la pasada completa de QA exploratoria (auditoría `--langs`, smoke ×3), por ser una iteración de un pendiente.
+- Skills: no aplica: un arreglo de CSS y un `title` que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia.
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML`)
+- Reclamo: loop/207, sin colisión
+- Validado: 571 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 208, expansión: ítem 150 (App móvil, primera entrega: compartir hacia la PWA, Plataformas)
+
+### 2026-11-05 · Pedido de Benjamin: las interacciones de los agentes en el grafo, en 2D y 3D
+
+- **Pedido de Benjamin:** «En Graph branch quiero que se vea las interacciones de los agentes ahi tanto en graficos de 2D
+  como en 3D». No es una iteración numerada y la proporción de la regla 2 no cambia.
+- **Lo nuevo:** **Verlas en el grafo** (interruptor del panel de agentes, `?interactions=1` y la paleta de comandos)
+  dibuja las interacciones sobre el grafo mismo. `GB.agents.compute` dice ahora de qué commit a qué commit va cada una
+  (`target`: el anterior si continuó, el más nuevo de quien recibe en la rama fusionada si fusionó, la punta del PR (la
+  cabeza de su rama o su merge) si revisó o comentó) y de quién es cada commit (`owners`); `GB.agents.overlay` arma lo que
+  se dibuja: el color de cada participante (los 7 agentes más activos de todo lo cargado, para que «Solo entre agentes» no
+  repinte a nadie; desde el octavo, «otros agentes»; las personas en gris), las marcas, los arcos y las insignias (los
+  240 y 120 más recientes), sin las interacciones entre dos personas. En 2D (`js/graph.js`, `setAgents`): un marco
+  cuadrado en cada commit de agente, un arco curvo con punta de flecha (a trazos si fusionó) y una insignia con ✓ o …
+  sobre la punta del PR, cada uno con su `<title>`. En 3D (`js/graph3d.js`, `setAgents` y `writeAgents`): un cubo de
+  vidrio alrededor de cada commit de agente, arcos de tubos instanciados que se curvan hacia afuera del tronco con un
+  cono de punta, e insignias que flotan sobre el commit con su tallo (seis lotes instanciados nuevos, que se reescriben
+  con las aristas). La ficha de cada commit (la misma en las dos vistas) cuenta sus interacciones. La leyenda va en una
+  franja bajo el grafo (flotando tapaba lo más nuevo, que queda a la derecha), se pliega, en el celular empieza plegada,
+  y su × las quita sin dejar el foco en `<body>`. Los 8 colores (`--ag1`…`--ag8`, claros y oscuros) pasaron el validador
+  de paletas: banda de luminosidad, croma, separación con daltonismo y contraste ≥ 3:1 sobre `--surface`. Las
+  interacciones se dibujan después de que la actividad nueva llega al panel: antes, con la demo en pausa, la revisión de
+  Copilot no salía (lo encontró el smoke).
+- **Pruebas que fallan sin el cambio:** `tools/agents.test.mjs` (de 9 a 11: `target` y `owners` de cada interacción,
+  `overlay` con sus arcos, insignias, marcas y colores, «Solo entre agentes» sin repintar, el tope, los «otros agentes»
+  desde el octavo y nada entre dos personas) y tres pasos del smoke en «Agentes e interacciones»: en 2D los marcos, el
+  arco de la sesión que retoma la de otra, la insignia de Copilot, la leyenda y la URL; en 3D los cubos, arcos e
+  insignias (`data-agents` del contenedor, porque el lienzo no se puede consultar) y la ficha; «Solo entre agentes» en el
+  grafo y el ×.
+- README: la función, los controles, el mapa de archivos, Seguridad y Límites conocidos.
+- QA: demo en 2D y 3D en español claro a 1280 px (de lejos y de cerca, con la ficha), árabe oscuro a 1280 px (RTL),
+  tamil a 390 px y alemán a 320 px (sin desborde; con la leyenda desplegada el grafo conserva su alto: en el celular el
+  panel crece), 10 textos nuevos en los 40 idiomas (`check-i18n` 0 errores), teclado (las filas de la leyenda y sus dos
+  botones son botones, Tab y Enter), movimiento reducido (nada se anima de más: los arcos son fijos), CSP sin cambios y
+  sin consultas nuevas.
+- Validado: 573 pruebas (`node --test`, ya sobre las iteraciones 206 y 207), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Electron no estaba en la sesión (su instalador falla con el proxy): se bajó el zip de la 45.2.1 con `curl`, se comprobó su SHA-256 contra `SHASUMS256.txt` y se extrajo como lo hace el instalador. La primera puerta cayó solo en «editar el código» (intermitente en la sesión cloud, ya anotado en la iteración 200; no pasa por nada de esto); las tres siguientes, enteras.
+- **Siguiente:** iteración 208, expansión: ítem 150 (App móvil, primera entrega: compartir hacia la PWA, Plataformas)

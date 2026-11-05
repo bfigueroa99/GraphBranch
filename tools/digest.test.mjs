@@ -313,6 +313,13 @@ test('quién fusionó: cuenta los PRs de la semana por la cuenta que los fusion�
   const text = toMarkdown(d, 'o/r', t);
   assert.match(text, /\nQuién fusionó: ana \(2\) · Ca\\\*rla \(1\) · beto \(1\)\n/);
   assert.ok(imageLines(d, 'o/r', t).some((l) => l.kind === 'row' && l.text === 'Quién fusionó: ana (2) · Ca*rla (1) · beto (1)'));
+  // el sondeo dice quién fusionó en `mergedBy` (su actor puede ser quien abrió el PR); una copia sin cuenta no tapa a la que la trae
+  const polled = compute(repo(), [
+    { id: 'p7', kind: 'pr-merge', time: ago(1), number: 7, actor: { login: 'autora' }, mergedBy: null },
+    { id: 'ev:7', kind: 'pr-merge', time: ago(2), number: 7, actor: { login: 'ana' } },
+    { id: 'p8', kind: 'pr-merge', time: ago(1), number: 8, actor: { login: 'autora' }, mergedBy: { login: 'beto' } },
+  ], NOW);
+  assert.deepEqual(JSON.parse(JSON.stringify(polled.mergers.rows)), [{ name: 'ana', prs: 1 }, { name: 'beto', prs: 1 }]);
   // sin PRs fusionados con actor, la línea no sale
   const quiet = compute(repo(), [{ id: 'z', kind: 'pr-merge', time: ago(1), number: 9 }], NOW);
   assert.equal(quiet.mergers.total, 0);

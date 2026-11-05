@@ -66,13 +66,16 @@
     const inWeek = (a, kind) => a.kind === kind && a.time && a.time > since && a.time <= now && !seenIds.has(a.id) && seenIds.add(a.id);
     const mergedActs = acts.filter((a) => inWeek(a, 'pr-merge')).sort((a, b) => b.time - a.time);
     const merged = mergedActs.map((a) => ({ number: a.number, title: text(a.detail) || text(a.title), url: a.url || null, time: a.time }));
-    // quién fusionó: la cuenta que hizo el merge (el actor de la actividad), una vez por PR; sin actor no suma
+    // quién fusionó: la cuenta que hizo el merge, una vez por PR; sin ella no suma. Una actividad del sondeo
+    // trae `mergedBy` (su actor puede ser quien abrió el PR); la del feed, su actor. Si el mismo PR llega
+    // dos veces, cuenta la primera que dice quién lo fusionó.
     const mergers = new Map();
     const mergedNums = new Set();
     for (const a of mergedActs) {
-      if (a.number != null && (mergedNums.has(a.number) || !mergedNums.add(a.number))) continue;
-      const who = a.actor?.login || a.actor?.name;
-      if (who) mergers.set(who, (mergers.get(who) || 0) + 1);
+      const by = 'mergedBy' in a ? a.mergedBy : a.actor;
+      const who = by?.login || by?.name;
+      if (!who || (a.number != null && (mergedNums.has(a.number) || !mergedNums.add(a.number)))) continue;
+      mergers.set(who, (mergers.get(who) || 0) + 1);
     }
     // PRs abiertos en la semana: un PR reabierto o marcado como listo no cuenta dos veces
     const openedNums = new Set();

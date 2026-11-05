@@ -647,6 +647,7 @@ GB.i18n.define('fa', {
   'textview.forks': 'فورک‌های فعال: {n}',
   'textview.fork': '{name}، آخرین push {when}',
   'textview.prs': 'PR باز: {n}',
+  'textview.noPr': 'بدون PR باز',
   'textview.fresh': 'در ۷ روز گذشته ساخته شده',
   'textview.quiet': 'بدون فعالیت بیش از ۳۰ روز',
   'textview.merged': 'در شاخهٔ اصلی ادغام شده',

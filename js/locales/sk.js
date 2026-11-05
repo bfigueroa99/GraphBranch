@@ -615,6 +615,7 @@ GB.i18n.define('sk', {
   'textview.forks': 'Aktívne forky: {n}',
   'textview.fork': '{name}, posledný push {when}',
   'textview.prs': 'otvorené PR: {n}',
+  'textview.noPr': 'bez otvoreného PR',
   'textview.fresh': 'vytvorená za posledných 7 dní',
   'textview.quiet': 'bez aktivity viac ako 30 dní',
   'textview.merged': 'zlúčené do predvolenej vetvy',

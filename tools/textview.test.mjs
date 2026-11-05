@@ -177,6 +177,40 @@ test('cada rama cuenta los PRs abiertos ya cargados que salen de ella, sin los d
   assert.equal(build(repo()).branches[0].prs, 0); // sin PRs cargados, ninguno
 });
 
+test('con la lista de PRs completa, una rama sin PR abierto propio lo dice; la por defecto y las fusionadas no', () => {
+  const d = repo(); // feature ya está en la historia de main: fusionada, no «sin PR»
+  const c = (sha, date) => d.commits.set(sha, { sha, parents: ['m3'], message: sha, date, author: { name: 'Ana' } });
+  c('s5', 5);
+  c('p6', 6);
+  c('k7', 7);
+  d.branches.set('sola', { name: 'sola', sha: 's5', movedAt: 5 });
+  d.branches.set('conpr', { name: 'conpr', sha: 'p6', movedAt: 6 });
+  d.branches.set('defork', { name: 'defork', sha: 'k7', movedAt: 7 });
+  d.pulls = new Map([
+    [1, { number: 1, head: 'conpr', sameRepo: true }],
+    [2, { number: 2, head: 'defork', sameRepo: false }], // de un fork con el mismo nombre de rama: no es un PR de esta
+  ]);
+  const by = (t) => Object.fromEntries(t.branches.map((b) => [b.name, b.noPr]));
+  assert.deepEqual(by(build(d, { pullsKnown: true })), { main: false, defork: true, conpr: false, sola: true, feature: false });
+  // sin saber si la lista está completa, ninguna lo dice
+  assert.deepEqual(Object.values(by(build(d))).filter(Boolean), []);
+});
+
+test('la lista de PRs está completa solo si la fuente los trae, ya cargó y no se recortó', () => {
+  const ok = ctx.window.GB.textview.pullsComplete;
+  const pulls = (n) => new Map(Array.from({ length: n }, (_, i) => [i + 1, { number: i + 1 }]));
+  const d = (over = {}) => ({ repo: { defaultBranch: 'main' }, loaded: true, pulls: pulls(3), totalPulls: 3, ...over });
+  assert.equal(ok(d()), true);
+  assert.equal(ok(d({ pulls: new Map(), totalPulls: 0 })), true); // sin PRs abiertos: todas sin PR
+  assert.equal(ok(d({ loaded: false })), false); // aún cargando
+  assert.equal(ok(d({ totalPulls: 80 })), false); // la fuente dice que hay más que los cargados
+  assert.equal(ok(d({ pulls: pulls(50), totalPulls: 50 })), false); // una página llena: puede faltar alguno
+  assert.equal(ok(d({ repo: { defaultBranch: 'main', local: true } })), false); // repo local: sin PRs
+  assert.equal(ok(d({ repo: { defaultBranch: 'main', practice: true } })), false); // práctica de git: sin PRs
+  assert.equal(ok(d({ pulls: undefined })), false);
+  assert.equal(ok(null), false);
+});
+
 test('una rama sin actividad en más de 30 días se dice quieta, también la por defecto; sin fecha no se sabe', () => {
   const DAY = 864e5;
   const now = Date.UTC(2026, 9, 28);

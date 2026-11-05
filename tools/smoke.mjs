@@ -959,6 +959,11 @@ console.log('Escritorio (1280×800)');
       return { named: named.length, chips: bs.filter((n) => /PRs abiertos: \d+/.test(n.querySelector('.tv-head').textContent)).length, total: bs.reduce((a, n) => a + (Number((n.getAttribute('aria-label').match(/PRs abiertos: (\d+)/) || [])[1]) || 0), 0) };
     });
     if (!prs.named || prs.named !== prs.chips || !prs.total) throw new Error('la vista de texto no dice los PRs abiertos de cada rama: ' + JSON.stringify(prs));
+    // la demo trae todos sus PRs abiertos: cada rama que no es la por defecto, sin PR abierto y sin fusionar lo dice
+    // («sin PR abierto») en su nombre accesible, y ninguna con PRs abiertos, fusionada o la por defecto lo dice
+    const noPr = await page.$$eval('#textview .tv-branch', (bs) => bs.map((n) => n.getAttribute('aria-label')).map((l) => ({ l, says: /, sin PR abierto,/.test(l), should: !/, rama por defecto|, PRs abiertos: \d+|, fusionada/.test(l) })));
+    const badNoPr = noPr.filter((r) => r.says !== r.should);
+    if (!noPr.some((r) => r.says) || badNoPr.length) throw new Error('la vista de texto no dice qué ramas no tienen PR abierto: ' + JSON.stringify(badNoPr.slice(0, 3).map((r) => r.l)));
     // cada rama dice en su nombre accesible quién hizo el commit de su punta, el mismo autor que dice su primer commit
     const tips = await page.$$eval('#textview .tv-branch', (bs) => bs.map((n) => ({ branch: n.dataset.branch, label: n.getAttribute('aria-label'), first: n.querySelector('.tv-commit')?.getAttribute('aria-label') || '' })));
     // el autor del primer commit (la punta) sale de su nombre «mensaje, de Autor, hace…» y la rama lo dice entero, seguido de una coma

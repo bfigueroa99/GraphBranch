@@ -661,6 +661,7 @@ GB.i18n.define('he', {
   'textview.forks': 'פורקים פעילים: {n}',
   'textview.fork': '{name}, push אחרון {when}',
   'textview.prs': 'PRs פתוחים: {n}',
+  'textview.noPr': 'אין PR פתוח',
   'textview.fresh': 'נוצר ב-7 הימים האחרונים',
   'textview.quiet': 'בלי פעילות מעל 30 יום',
   'textview.merged': 'מוזג לענף ברירת המחדל',

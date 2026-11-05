@@ -604,6 +604,7 @@ GB.i18n.define('tr', {
   'textview.forks': 'Etkin fork\'lar: {n}',
   'textview.fork': '{name}, son push {when}',
   'textview.prs': 'açık PR: {n}',
+  'textview.noPr': 'açık PR yok',
   'textview.fresh': 'son 7 günde oluşturuldu',
   'textview.quiet': '30 günden uzun süredir hareketsiz',
   'textview.merged': 'varsayılan dala birleştirildi',

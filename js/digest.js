@@ -1,5 +1,5 @@
 /* GraphBranch — resumen de la semana: lo que pasó en los últimos 7 días, con lo ya cargado.
-   Commits, pull requests fusionados (y quién los fusionó) y abiertos, issues cerrados, releases, quién aportó y la rama más activa. No hace ninguna
+   Commits, autores nuevos, pull requests fusionados (y quién los fusionó) y abiertos, issues cerrados, releases, quién aportó y la rama más activa. No hace ninguna
    consulta; sale como Markdown para copiar o guardar. Lo que no llegó a cargarse no cuenta: es un
    resumen de lo visible, no del repo entero. */
 (function (GB) {
@@ -13,6 +13,21 @@
 
   const at = (x) => (typeof x === 'number' ? x : Date.parse(x) || 0);
 
+  /** Quién firmó los commits cargados: `people`, cuántos commits de la semana tiene cada autor; `before`,
+      quienes ya firmaron uno anterior a la semana. Un autor es su cuenta o, sin ella, su nombre. */
+  function authors(data, since, now) {
+    const people = new Map();
+    const before = new Set();
+    for (const c of data.commits.values()) {
+      const who = c.author?.login || c.author?.name;
+      if (!who) continue;
+      const d = at(c.date);
+      if (d > since && d <= now) people.set(who, (people.get(who) || 0) + 1);
+      else if (d <= since) before.add(who);
+    }
+    return { people, before };
+  }
+
   /** `data`: el estado del repo; `acts`: su actividad ya cargada; `text`: pasa a texto los títulos que
       llegan como mensajes por traducir (i18n.text). */
   function compute(data, acts = [], now = Date.now(), days = 7, text = (x) => x) {
@@ -24,18 +39,11 @@
 
     const week = new Set();
     const perDay = new Array(days).fill(0); // commits de cada día de la semana, del más viejo al de hoy
-    const people = new Map();
-    const before = new Set(); // quienes ya firmaron un commit cargado anterior a la semana
+    const { people, before } = authors(data, since, now);
     for (const c of data.commits.values()) {
-      if (!recent(c)) {
-        const old = c.author?.login || c.author?.name;
-        if (old && at(c.date) <= since) before.add(old);
-        continue;
-      }
+      if (!recent(c)) continue;
       week.add(c.sha);
       perDay[Math.min(days - 1, Math.floor((at(c.date) - since) / DAY))]++;
-      const who = c.author?.login || c.author?.name;
-      if (who) people.set(who, (people.get(who) || 0) + 1);
     }
 
     // la rama más activa: la que más commits de la semana alcanza desde su punta
@@ -156,11 +164,22 @@
   /** El resumen de la semana de varios repos (los seguidos de una organización): `entries` es
       [{ repo, data, acts }]. Los repos sin nada en la semana (commits, PRs fusionados o abiertos, releases) no salen; los demás, por commits. */
   function computeOrg(entries, now = Date.now(), days = 7, text = (x) => x) {
+    const since = now - days * DAY;
     const rows = entries.map((e) => ({ repo: e.repo, d: compute(e.data, e.acts || [], now, days, text) }));
     const busy = rows.filter((r) => r.d.commits || r.d.merged.total || r.d.opened.total || r.d.releases.total);
     busy.sort((a, b) => b.d.commits - a.d.commits || (a.repo < b.repo ? -1 : 1));
     const sum = (f) => rows.reduce((n, r) => n + f(r.d), 0);
-    return { since: now - days * DAY, now, days, repos: rows.length, commits: sum((d) => d.commits), merged: sum((d) => d.merged.total), opened: sum((d) => d.opened.total), releases: sum((d) => d.releases.total), newBranches: sum((d) => d.newBranches), rows: busy.slice(0, ORG_REPOS), hidden: Math.max(0, busy.length - ORG_REPOS) };
+    // autores nuevos de la organización: firmaron en la semana en algún repo seguido y en ninguno antes
+    // (con lo cargado); quien es nuevo en dos repos cuenta una vez, y quien ya firmaba en otro, no cuenta
+    const week = new Set();
+    const before = new Set();
+    for (const e of entries) {
+      const a = authors(e.data, since, now);
+      for (const who of a.people.keys()) week.add(who);
+      for (const who of a.before) before.add(who);
+    }
+    const newcomers = [...week].filter((who) => !before.has(who)).length;
+    return { since, now, days, repos: rows.length, commits: sum((d) => d.commits), newcomers, merged: sum((d) => d.merged.total), opened: sum((d) => d.opened.total), releases: sum((d) => d.releases.total), newBranches: sum((d) => d.newBranches), rows: busy.slice(0, ORG_REPOS), hidden: Math.max(0, busy.length - ORG_REPOS) };
   }
 
   /** La lista corta de una sección por repo: sus filas y, si la semana trae más, cuántas faltan. */
@@ -168,13 +187,16 @@
 
   /** Markdown del resumen de la organización: los totales y una sección por repo con actividad. */
   function toMarkdownOrg(o, owner, t, fmtDate = (ms) => new Date(ms).toISOString().slice(0, 10), none = '—') {
-    const out = [`# ${md(t.head.replace('{repo}', owner))}`, '', `${fmtDate(o.since)} – ${fmtDate(o.now)}`, '', `- ${t.commits.replace('{n}', o.commits)}`, `- ${t.merged}: ${o.merged}`];
+    const out = [`# ${md(t.head.replace('{repo}', owner))}`, '', `${fmtDate(o.since)} – ${fmtDate(o.now)}`, '', `- ${t.commits.replace('{n}', o.commits)}`];
+    if (o.newcomers && t.newcomers) out.push(`- ${t.newcomers.replace('{n}', o.newcomers)}`);
+    out.push(`- ${t.merged}: ${o.merged}`);
     if (o.opened && t.opened) out.push(`- ${t.opened}: ${o.opened}`);
     out.push(`- ${t.releases}: ${o.releases}`);
     if (o.newBranches && t.newbranches) out.push(`- ${t.newbranches.replace('{n}', o.newBranches)}`);
     if (!o.rows.length) out.push('', none);
     for (const { repo, d } of o.rows) {
       out.push('', `## ${md(repo)}`, '', `- ${t.commits.replace('{n}', d.commits)}`);
+      if (d.newcomers && t.newcomers) out.push(`- ${t.newcomers.replace('{n}', d.newcomers)}`);
       if (d.newBranches && t.newbranches) out.push(`- ${t.newbranches.replace('{n}', d.newBranches)}`);
       if (d.branch) out.push(`- ${t.branch}: \`${String(d.branch.name).replace(/`/g, "'")}\` (${d.branch.commits})`);
       if (d.merged.total) out.push(`- ${t.merged}: ${shortList(d.merged, (r) => (r.number ? `#${r.number}` : md(r.title)))}`);
@@ -218,6 +240,7 @@
     const cut = (s) => (s.length > 70 ? s.slice(0, 69) + '…' : s);
     const L = [{ text: cut(flat(t.head.replace('{repo}', owner))), kind: 'title' }, { text: `${fmtDate(o.since)} – ${fmtDate(o.now)}`, kind: 'sub' }];
     L.push({ text: t.commits.replace('{n}', o.commits), kind: 'head' });
+    if (o.newcomers && t.newcomers) L.push({ text: cut(t.newcomers.replace('{n}', o.newcomers)), kind: 'row' });
     L.push({ text: `${t.merged}: ${o.merged}`, kind: 'row' });
     if (o.opened && t.opened) L.push({ text: cut(`${t.opened}: ${o.opened}`), kind: 'row' });
     L.push({ text: `${t.releases}: ${o.releases}`, kind: 'row' });
@@ -226,6 +249,7 @@
     for (const { repo, d } of o.rows.slice(0, ORG_IMAGE_REPOS)) {
       L.push({ text: cut(flat(repo)), kind: 'head' });
       const parts = [t.commits.replace('{n}', d.commits)];
+      if (d.newcomers && t.newcomers) parts.push(t.newcomers.replace('{n}', d.newcomers));
       if (d.newBranches && t.newbranches) parts.push(t.newbranches.replace('{n}', d.newBranches));
       if (d.branch) parts.push(`${t.branch}: ${flat(d.branch.name)} (${d.branch.commits})`);
       if (d.merged.total) parts.push(`${t.merged}: ${shortList(d.merged, (r) => (r.number ? `#${r.number}` : flat(r.title)))}`);

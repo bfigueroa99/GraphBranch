@@ -356,3 +356,26 @@ test('organización: suma los PRs abiertos en la semana de cada repo y los muest
   const many = computeOrg([{ repo: 'a/b', data: repo(), acts: Array.from({ length: 12 }, (_, i) => op(`m${i}`, 100 + i, 1)) }], NOW);
   assert.match(toMarkdownOrg(many, 'a', t), /- Abiertos: (#\d+, ){9}#\d+ … \+2\n/);
 });
+
+test('organización: suma los autores nuevos de los repos seguidos, cada persona una vez, en Markdown e imagen', () => {
+  // web: ana firma antes de la semana; beto y caro son nuevos en web
+  const web = { commits: new Map([c('a', 40, [], 'ana'), c('b', 2, ['a'], 'beto'), c('k', 1, ['b'], 'caro')]), branches: new Map([['main', { name: 'main', sha: 'k' }]]) };
+  // api: beto ya firmaba antes de la semana (no es nuevo en la organización); dani y caro son nuevos en api
+  const api = { commits: new Map([c('p', 30, [], 'beto'), c('q', 3, ['p'], 'dani'), c('r', 1, ['q'], 'caro')]), branches: new Map([['main', { name: 'main', sha: 'r' }]]) };
+  const o = computeOrg([{ repo: 'acme/web', data: web, acts: [] }, { repo: 'acme/api', data: api, acts: [] }], NOW);
+  assert.equal(o.newcomers, 2); // caro (nueva en los dos, cuenta una vez) y dani; beto ya firmaba en api
+  assert.equal(o.rows.find((r) => r.repo === 'acme/web').d.newcomers, 2);
+  assert.equal(o.rows.find((r) => r.repo === 'acme/api').d.newcomers, 2);
+  const t = { head: 'S {repo}', commits: 'C {n}', newcomers: 'Autores nuevos: {n}', merged: 'M', releases: 'R', people: 'P', branch: 'B' };
+  const md = toMarkdownOrg(o, 'acme', t);
+  assert.match(md, /\n- C 4\n- Autores nuevos: 2\n- M: 0\n/);
+  assert.match(md, /## acme\/web\n\n- C 2\n- Autores nuevos: 2\n/);
+  const lines = imageLinesOrg(o, 'acme', t).map((l) => l.text);
+  assert.ok(lines.includes('Autores nuevos: 2'), lines.join('|'));
+  assert.ok(lines.some((l) => /^C 2 · Autores nuevos: 2 · /.test(l)), lines.join('|'));
+  // sin autores nuevos (todos firmaban antes), ni la línea del total ni la del repo
+  const sin = computeOrg([{ repo: 'a/b', data: { commits: new Map([c('v', 30, [], 'ana'), c('w', 1, ['v'], 'ana')]), branches: new Map() }, acts: [] }], NOW);
+  assert.equal(sin.newcomers, 0);
+  assert.doesNotMatch(toMarkdownOrg(sin, 'a', t), /Autores nuevos/);
+  assert.doesNotMatch(imageLinesOrg(sin, 'a', t).map((l) => l.text).join('\n'), /Autores nuevos/);
+});

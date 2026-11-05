@@ -563,8 +563,8 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: resumen de la semana en la demo a mano con Playwright (`?demo=1&health=1`, español y japonés a 1280 px y árabe a 320 px: «Quién fusionó: vrojas (2) · msoto (1)», sin desborde ni errores de consola); 40 idiomas (`check-i18n`, 0 errores, los mismos 39 avisos que en `dev`); auditoría: ver Validado.
 - Skills: no aplica: una línea más en un resumen que ya existe, con lo ya cargado; lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (contar los `pr-merge` de la semana por su actor, como «Quién aportó» cuenta los commits).
-- OMC: plan=— · revisión=5 hallazgos (2 MEDIUM y 1 LOW arreglados: una copia del mismo PR sin cuenta ya no tapa a la que la trae; el sondeo guarda `mergedBy` aparte, así que quien abrió el PR no pasa por quien lo fusionó; el README nombra las fuentes y la excepción de Bitbucket Data Center. 2 LOW aceptados: el desempate distingue mayúsculas como «Quién aportó», y `md()` no escapa `&`, como antes) · verificación=pendiente
+- OMC: plan=— · revisión=5 hallazgos (2 MEDIUM y 1 LOW arreglados: una copia del mismo PR sin cuenta ya no tapa a la que la trae; el sondeo guarda `mergedBy` aparte, así que quien abrió el PR no pasa por quien lo fusionó; el README nombra las fuentes y la excepción de Bitbucket Data Center. 2 LOW aceptados: el desempate distingue mayúsculas como «Quién aportó», y `md()` no escapa `&`, como antes) · verificación=PASS
 - Replica: paridad, sin pasada nueva (92,7/100, must hechos 13 de 13); ítems 156, 157 y 158 de lo que falta («should» y «could»), los demás del Mapa de alcance.
 - Reclamo: loop/216, sin colisión
-- Validado: pendiente
+- Validado: 585 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 217, expansión: ítem 156 (Grafo 2D: el SHA junto a cada commit, Análisis)

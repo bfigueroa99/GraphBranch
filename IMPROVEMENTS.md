@@ -634,3 +634,18 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/210, sin colisión
 - Validado: 578 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (el smoke falló una vez, antes, en «se siguen hasta 20 repos a la vez: ?recent=…», ajeno al cambio, y pasó en la puerta).
 - **Siguiente:** iteración 211, mantenimiento · Seguridad: auditoría (sin pendientes de Seguridad)
+
+### 2026-11-05 · Iteración 211 · Mantenimiento · Seguridad
+
+- **Auditoría de Seguridad: Electron sube de 45.2.1 a 45.2.3, la última estable.** El protocolo entero se revisó contra el código de `dev`: CSP sin directivas de más; los `innerHTML` con texto de afuera pasan por `U.esc`/`U.safeUrl` (el HTML de la bitácora ya filtra las URL con `isUrl` en origen); cada token va solo a su API (`Authorization`, nunca a la URL; `sw.js` no guarda respuestas de la API); en `electron/` quedan el aislamiento de contexto y el `sandbox`, el preload mínimo, navegación y ventanas nuevas bloqueadas (`openOutside` solo https), descargas solo de `blob:app://graphbranch/`, webhooks con `redirect: 'error'`, `serve` sin salir de `PUBLIC`, los `git` locales con `execFile` y SHA validados; `npm audit --omit=dev` da 0. El único hallazgo real fue la versión. Se probó (y se descartó) que `git diff --name-status/--numstat` corran el `textconv` del repo: no lo corren (era `git log -p` en el ensayo), así que no hay cambio en `electron/git.js`.
+- **Reproducción:** `npm view electron version` → `45.2.3`, con `package.json` en `45.2.1` (dos parches atrás).
+- **Hallazgos:** 1 nuevo (el de Electron, arreglado en esta iteración), 0 a la base de la auditoría. No se cargan 3 pendientes porque no se encontraron 3 reales.
+- **Pruebas que fallan sin el arreglo:** ninguna; las e2e de escritorio corren con la versión instalada (45.2.3) y la comparación con la última estable es manual (como en la iteración 179).
+- README: sin cambios (no nombra la versión).
+- QA: Seguridad 1 a 5 (CSP, `innerHTML`, tokens, escritorio, versión de Electron frente a la última estable); auditoría: no toca la página.
+- Skills: no aplica: subida de versión de una dependencia ya existente.
+- Arena: no aplica: una sola forma obvia.
+- OMC: no disponible (la sesión programada no corrió revisión; subida de un parche de la dependencia, sin tocar código)
+- Reclamo: loop/211, sin colisión
+- Validado: pendiente
+- **Siguiente:** iteración 212, expansión: ítem 149 (Extensión de Chrome y Firefox, primera entrega, Plataformas)

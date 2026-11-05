@@ -698,6 +698,7 @@ GB.i18n.define('hu', {
   'digest.head': 'Heti összefoglaló · {repo}',
   'digest.commits': 'Commitok: {n}',
   'digest.merged': 'Egyesített pull requestek',
+  'digest.mergers': 'Ki olvasztotta be',
   'digest.opened': 'Megnyitott pull requestek',
   'digest.closed': 'Lezárt issue-k',
   'digest.releases': 'Kiadások',

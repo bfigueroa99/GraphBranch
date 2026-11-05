@@ -698,6 +698,7 @@ GB.i18n.define('sv', {
   'digest.head': 'Veckosammanfattning · {repo}',
   'digest.commits': 'Commits: {n}',
   'digest.merged': 'Sammanslagna pull requests',
+  'digest.mergers': 'Vem som sammanfogade',
   'digest.opened': 'Öppnade pull requests',
   'digest.closed': 'Stängda ärenden',
   'digest.releases': 'Releaser',

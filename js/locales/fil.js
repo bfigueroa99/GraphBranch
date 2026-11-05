@@ -699,6 +699,7 @@ GB.i18n.define('fil', {
   'digest.head': 'Buod ng linggo · {repo}',
   'digest.commits': 'Mga commit: {n}',
   'digest.merged': 'Mga pull request na na-merge',
+  'digest.mergers': 'Sino ang nag-merge',
   'digest.opened': 'Mga pull request na binuksan',
   'digest.closed': 'Mga naisarang issue',
   'digest.releases': 'Mga release',

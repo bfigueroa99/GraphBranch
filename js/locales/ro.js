@@ -706,6 +706,7 @@ GB.i18n.define('ro', {
   'digest.head': 'Rezumatul săptămânii · {repo}',
   'digest.commits': 'Commituri: {n}',
   'digest.merged': 'Pull request-uri îmbinate',
+  'digest.mergers': 'Cine a îmbinat',
   'digest.opened': 'Pull request-uri deschise',
   'digest.closed': 'Issue-uri închise',
   'digest.releases': 'Lansări',

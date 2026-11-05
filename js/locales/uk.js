@@ -714,6 +714,7 @@ GB.i18n.define('uk', {
   'digest.head': 'Підсумки тижня · {repo}',
   'digest.commits': 'Коміти: {n}',
   'digest.merged': 'Злиті pull request’и',
+  'digest.mergers': 'Хто злив',
   'digest.opened': 'Відкриті pull request’и',
   'digest.closed': 'Закриті задачі',
   'digest.releases': 'Релізи',

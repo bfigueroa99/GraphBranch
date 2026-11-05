@@ -741,6 +741,7 @@ GB.i18n.define('fa', {
   'digest.head': 'خلاصهٔ هفته · {repo}',
   'digest.commits': 'کامیت‌ها: {n}',
   'digest.merged': 'پول‌ریکوئست‌های ادغام‌شده',
+  'digest.mergers': 'چه کسی ادغام کرد',
   'digest.opened': 'پول‌ریکوئست‌های بازشده',
   'digest.closed': 'ایشوهای بسته‌شده',
   'digest.releases': 'نسخه‌ها',

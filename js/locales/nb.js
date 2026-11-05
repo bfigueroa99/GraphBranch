@@ -698,6 +698,7 @@ GB.i18n.define('nb', {
   'digest.head': 'Ukesammendrag · {repo}',
   'digest.commits': 'Commits: {n}',
   'digest.merged': 'Flettede pull requests',
+  'digest.mergers': 'Hvem flettet',
   'digest.opened': 'Åpnede pull requests',
   'digest.closed': 'Lukkede issues',
   'digest.releases': 'Releaser',

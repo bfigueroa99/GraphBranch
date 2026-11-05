@@ -699,6 +699,7 @@ GB.i18n.define('it', {
   'digest.head': 'Riepilogo della settimana · {repo}',
   'digest.commits': 'Commit: {n}',
   'digest.merged': 'Pull request unite',
+  'digest.mergers': 'Chi ha unito',
   'digest.opened': 'Pull request aperte',
   'digest.closed': 'Issue chiuse',
   'digest.releases': 'Release',

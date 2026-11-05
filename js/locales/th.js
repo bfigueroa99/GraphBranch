@@ -699,6 +699,7 @@ GB.i18n.define('th', {
   'digest.head': 'สรุปประจำสัปดาห์ · {repo}',
   'digest.commits': 'คอมมิต: {n}',
   'digest.merged': 'Pull request ที่ผสานแล้ว',
+  'digest.mergers': 'ใครเป็นผู้ผสาน',
   'digest.opened': 'Pull request ที่เปิดใหม่',
   'digest.closed': 'issue ที่ปิดแล้ว',
   'digest.releases': 'รีลีส',

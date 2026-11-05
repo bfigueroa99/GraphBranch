@@ -797,6 +797,7 @@ GB.i18n.define('ar', {
   'digest.head': 'ملخص الأسبوع · {repo}',
   'digest.commits': 'الإيداعات: {n}',
   'digest.merged': 'طلبات السحب المدموجة',
+  'digest.mergers': 'من دمج',
   'digest.opened': 'طلبات السحب المفتوحة',
   'digest.closed': 'القضايا المغلقة',
   'digest.releases': 'الإصدارات',

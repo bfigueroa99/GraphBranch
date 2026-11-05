@@ -1768,6 +1768,7 @@
               ref: `${pr.head} → ${pr.base}`,
               branch: s.merged ? pr.base : null,
               actor: s.by || pr.user,
+              ...(s.merged ? { mergedBy: s.by || null } : {}), // quién fusionó, sin el respaldo de quien lo abrió (resumen de la semana)
               url: pr.url,
               number: pr.number,
               openedAt: pr.createdAt, // para la salud del repo: cuánto tardó en fusionarse

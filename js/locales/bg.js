@@ -698,6 +698,7 @@ GB.i18n.define('bg', {
   'digest.head': 'Обобщение на седмицата · {repo}',
   'digest.commits': 'Комити: {n}',
   'digest.merged': 'Слети pull request-и',
+  'digest.mergers': 'Кой сля',
   'digest.opened': 'Отворени pull request-и',
   'digest.closed': 'Затворени проблеми',
   'digest.releases': 'Издания',

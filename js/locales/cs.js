@@ -709,6 +709,7 @@ GB.i18n.define('cs', {
   'digest.head': 'Souhrn týdne · {repo}',
   'digest.commits': 'Commity: {n}',
   'digest.merged': 'Sloučené pull requesty',
+  'digest.mergers': 'Kdo sloučil',
   'digest.opened': 'Otevřené pull requesty',
   'digest.closed': 'Uzavřené issues',
   'digest.releases': 'Vydání',

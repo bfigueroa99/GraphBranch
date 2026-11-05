@@ -603,6 +603,7 @@ GB.i18n.define('el', {
   'textview.fresh': 'δημιουργήθηκε τις τελευταίες 7 ημέρες',
   'textview.quiet': 'χωρίς δραστηριότητα πάνω από 30 ημέρες',
   'textview.merged': 'συγχωνευμένο στον κύριο κλάδο',
+  'textview.ciFailing': 'Το CI αποτυγχάνει',
   'textview.hideBranch': 'Απόκρυψη του {name}',
   'textview.soloBranch': 'Εμφάνιση μόνο του {name}',
   'textview.hidden': 'Το {name} κρύφτηκε',

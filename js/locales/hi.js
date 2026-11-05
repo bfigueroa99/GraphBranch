@@ -603,6 +603,7 @@ GB.i18n.define('hi', {
   'textview.fresh': 'पिछले 7 दिनों में बनी',
   'textview.quiet': '30 दिन से अधिक निष्क्रिय',
   'textview.merged': 'डिफ़ॉल्ट ब्रांच में मर्ज हो चुकी',
+  'textview.ciFailing': 'CI विफल हो रहा है',
   'textview.hideBranch': '{name} छिपाएँ',
   'textview.soloBranch': 'केवल {name} दिखाएँ',
   'textview.hidden': '{name} छिपा दी गई',

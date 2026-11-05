@@ -604,6 +604,7 @@ GB.i18n.define('nl', {
   'textview.fresh': 'in de afgelopen 7 dagen gemaakt',
   'textview.quiet': 'geen activiteit in meer dan 30 dagen',
   'textview.merged': 'samengevoegd in de standaardbranch',
+  'textview.ciFailing': 'CI faalt',
   'textview.hideBranch': '{name} verbergen',
   'textview.soloBranch': 'Alleen {name} tonen',
   'textview.hidden': '{name} verborgen',

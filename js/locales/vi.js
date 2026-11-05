@@ -603,6 +603,7 @@ GB.i18n.define('vi', {
   'textview.fresh': 'được tạo trong 7 ngày qua',
   'textview.quiet': 'không hoạt động hơn 30 ngày',
   'textview.merged': 'đã gộp vào nhánh mặc định',
+  'textview.ciFailing': 'CI đang lỗi',
   'textview.hideBranch': 'Ẩn {name}',
   'textview.soloBranch': 'Chỉ hiện {name}',
   'textview.hidden': 'Đã ẩn {name}',

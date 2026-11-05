@@ -603,6 +603,7 @@ GB.i18n.define('fi', {
   'textview.fresh': 'luotu viimeisen 7 päivän aikana',
   'textview.quiet': 'ei toimintaa yli 30 päivään',
   'textview.merged': 'yhdistetty oletushaaraan',
+  'textview.ciFailing': 'CI epäonnistuu',
   'textview.hideBranch': 'Piilota {name}',
   'textview.soloBranch': 'Näytä vain {name}',
   'textview.hidden': '{name} piilotettu',

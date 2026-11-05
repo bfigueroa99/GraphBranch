@@ -603,6 +603,7 @@ GB.i18n.define('tr', {
   'textview.fresh': 'son 7 günde oluşturuldu',
   'textview.quiet': '30 günden uzun süredir hareketsiz',
   'textview.merged': 'varsayılan dala birleştirildi',
+  'textview.ciFailing': 'CI başarısız',
   'textview.hideBranch': '{name} dalını gizle',
   'textview.soloBranch': 'Yalnızca {name} dalını göster',
   'textview.hidden': '{name} gizlendi',

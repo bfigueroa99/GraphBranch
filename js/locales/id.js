@@ -603,6 +603,7 @@ GB.i18n.define('id', {
   'textview.fresh': 'dibuat dalam 7 hari terakhir',
   'textview.quiet': 'tanpa aktivitas lebih dari 30 hari',
   'textview.merged': 'sudah digabung ke cabang bawaan',
+  'textview.ciFailing': 'CI gagal',
   'textview.hideBranch': 'Sembunyikan {name}',
   'textview.soloBranch': 'Tampilkan hanya {name}',
   'textview.hidden': '{name} disembunyikan',

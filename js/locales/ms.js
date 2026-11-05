@@ -603,6 +603,7 @@ GB.i18n.define('ms', {
   'textview.fresh': 'dicipta dalam 7 hari lalu',
   'textview.quiet': 'tanpa aktiviti lebih 30 hari',
   'textview.merged': 'sudah digabungkan ke cabang lalai',
+  'textview.ciFailing': 'CI gagal',
   'textview.hideBranch': 'Sembunyikan {name}',
   'textview.soloBranch': 'Tunjuk {name} sahaja',
   'textview.hidden': '{name} disembunyikan',

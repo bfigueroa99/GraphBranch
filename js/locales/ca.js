@@ -603,6 +603,7 @@ GB.i18n.define('ca', {
   'textview.fresh': 'creada en els últims 7 dies',
   'textview.quiet': 'sense activitat fa més de 30 dies',
   'textview.merged': 'fusionada a la principal',
+  'textview.ciFailing': 'CI fallant',
   'textview.hideBranch': 'Amaga {name}',
   'textview.soloBranch': 'Mostra només {name}',
   'textview.hidden': '{name} amagada',

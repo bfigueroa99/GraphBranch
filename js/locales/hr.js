@@ -611,6 +611,7 @@ GB.i18n.define('hr', {
   'textview.fresh': 'stvorena u posljednjih 7 dana',
   'textview.quiet': 'bez aktivnosti dulje od 30 dana',
   'textview.merged': 'spojeno u zadanu granu',
+  'textview.ciFailing': 'CI pada',
   'textview.hideBranch': 'Sakrij {name}',
   'textview.soloBranch': 'Prikaži samo {name}',
   'textview.hidden': '{name} je skrivena',

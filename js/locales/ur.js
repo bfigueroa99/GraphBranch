@@ -646,6 +646,7 @@ GB.i18n.define('ur', {
   'textview.fresh': 'پچھلے 7 دنوں میں بنائی گئی',
   'textview.quiet': '30 دن سے زیادہ غیر فعال',
   'textview.merged': 'ڈیفالٹ برانچ میں ضم ہو چکی',
+  'textview.ciFailing': 'CI ناکام ہے',
   'textview.hideBranch': '{name} چھپائیں',
   'textview.soloBranch': 'صرف {name} دکھائیں',
   'textview.hidden': '{name} چھپا دی گئی',

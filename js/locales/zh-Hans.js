@@ -603,6 +603,7 @@ GB.i18n.define('zh-Hans', {
   'textview.fresh': '最近 7 天内创建',
   'textview.quiet': '超过 30 天没有动静',
   'textview.merged': '已合并到默认分支',
+  'textview.ciFailing': 'CI 失败中',
   'textview.hideBranch': '隐藏 {name}',
   'textview.soloBranch': '仅显示 {name}',
   'textview.hidden': '已隐藏 {name}',

@@ -603,6 +603,7 @@ GB.i18n.define('zh-Hant', {
   'textview.fresh': '最近 7 天內建立',
   'textview.quiet': '超過 30 天沒有動靜',
   'textview.merged': '已合併到預設分支',
+  'textview.ciFailing': 'CI 失敗中',
   'textview.hideBranch': '隱藏 {name}',
   'textview.soloBranch': '僅顯示 {name}',
   'textview.hidden': '已隱藏 {name}',

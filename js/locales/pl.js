@@ -614,6 +614,7 @@ GB.i18n.define('pl', {
   'textview.fresh': 'utworzona w ostatnich 7 dniach',
   'textview.quiet': 'bez aktywności od ponad 30 dni',
   'textview.merged': 'scalona z domyślną gałęzią',
+  'textview.ciFailing': 'CI nie przechodzi',
   'textview.hideBranch': 'Ukryj {name}',
   'textview.soloBranch': 'Pokaż tylko {name}',
   'textview.hidden': 'Ukryto {name}',

@@ -611,6 +611,7 @@ GB.i18n.define('ro', {
   'textview.fresh': 'creată în ultimele 7 zile',
   'textview.quiet': 'fără activitate de peste 30 de zile',
   'textview.merged': 'îmbinată în ramura implicită',
+  'textview.ciFailing': 'CI eșuează',
   'textview.hideBranch': 'Ascunde {name}',
   'textview.soloBranch': 'Arată doar {name}',
   'textview.hidden': '{name} ascunsă',

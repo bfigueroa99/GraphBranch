@@ -604,6 +604,7 @@ GB.i18n.define('pt', {
   'textview.fresh': 'criada nos últimos 7 dias',
   'textview.quiet': 'sem atividade há mais de 30 dias',
   'textview.merged': 'mesclada na branch padrão',
+  'textview.ciFailing': 'CI falhando',
   'textview.hideBranch': 'Ocultar {name}',
   'textview.soloBranch': 'Ver só {name}',
   'textview.hidden': '{name} oculta',

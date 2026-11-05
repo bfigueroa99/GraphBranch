@@ -661,5 +661,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (script de contenido que arma un enlace; sin permisos no hay otra).
 - OMC: no disponible (la sesión programada no corrió plan ni revisión; la primera entrega es un solo frente, sin permisos, sin red y sin tocar `js/` ni `electron/`)
 - Reclamo: loop/212, sin colisión
-- Validado: pendiente
+- Validado: 582 pruebas (`node --test`), smoke (170 pasos) e i18n (0 errores) en verde; auditoría y e2e no corridas (no toca la página ni el escritorio).
 - **Siguiente:** iteración 213, expansión: ítem 140 (Vista de texto: autor de la punta de cada rama, Público)

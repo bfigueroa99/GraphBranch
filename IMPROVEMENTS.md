@@ -647,5 +647,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia.
 - OMC: no disponible (la sesión programada no corrió revisión; subida de un parche de la dependencia, sin tocar código)
 - Reclamo: loop/211, sin colisión
-- Validado: pendiente
+- Validado: 578 pruebas (`node --test`), smoke, i18n (0 errores) y 28 e2e en verde (con Electron 45.2.3). Las dos primeras corridas del smoke fallaron en el mismo paso ajeno, «se siguen hasta 20 repos a la vez: ?recent=0.000001: 1 galaxias, se esperaban ninguna»: con 20 pestañas escalonadas, las que aún cargan no se descartan y el paso esperaba solo 10 s; ahora espera hasta 30 s (`tools/smoke.mjs`), y la tercera pasó entera.
 - **Siguiente:** iteración 212, expansión: ítem 149 (Extensión de Chrome y Firefox, primera entrega, Plataformas)

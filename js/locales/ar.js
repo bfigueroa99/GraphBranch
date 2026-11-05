@@ -702,6 +702,7 @@ GB.i18n.define('ar', {
   'textview.fresh': 'أُنشئ في آخر 7 أيام',
   'textview.quiet': 'بلا نشاط منذ أكثر من 30 يومًا',
   'textview.merged': 'مدموجة في الرئيسية',
+  'textview.ciFailing': 'CI فاشل',
   'textview.hideBranch': 'إخفاء {name}',
   'textview.soloBranch': 'عرض {name} فقط',
   'textview.hidden': 'تم إخفاء {name}',

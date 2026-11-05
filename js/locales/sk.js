@@ -614,6 +614,7 @@ GB.i18n.define('sk', {
   'textview.fresh': 'vytvorená za posledných 7 dní',
   'textview.quiet': 'bez aktivity viac ako 30 dní',
   'textview.merged': 'zlúčené do predvolenej vetvy',
+  'textview.ciFailing': 'CI zlyháva',
   'textview.hideBranch': 'Skryť {name}',
   'textview.soloBranch': 'Zobraziť iba {name}',
   'textview.hidden': '{name} je skrytá',

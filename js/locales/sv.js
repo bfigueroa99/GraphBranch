@@ -603,6 +603,7 @@ GB.i18n.define('sv', {
   'textview.fresh': 'skapad de senaste 7 dagarna',
   'textview.quiet': 'utan aktivitet på över 30 dagar',
   'textview.merged': 'sammanfogad med standardgrenen',
+  'textview.ciFailing': 'CI misslyckas',
   'textview.hideBranch': 'Dölj {name}',
   'textview.soloBranch': 'Visa bara {name}',
   'textview.hidden': '{name} dold',

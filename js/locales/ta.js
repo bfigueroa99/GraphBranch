@@ -603,6 +603,7 @@ GB.i18n.define('ta', {
   'textview.fresh': 'கடந்த 7 நாட்களில் உருவாக்கப்பட்டது',
   'textview.quiet': '30 நாட்களுக்கு மேல் செயல்பாடு இல்லை',
   'textview.merged': 'இயல்புநிலை கிளையில் இணைக்கப்பட்டது',
+  'textview.ciFailing': 'CI தோல்வியடைகிறது',
   'textview.hideBranch': '{name} ஐ மறை',
   'textview.soloBranch': '{name} மட்டும் காட்டு',
   'textview.hidden': '{name} மறைக்கப்பட்டது',

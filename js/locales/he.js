@@ -660,6 +660,7 @@ GB.i18n.define('he', {
   'textview.fresh': 'נוצר ב-7 הימים האחרונים',
   'textview.quiet': 'בלי פעילות מעל 30 יום',
   'textview.merged': 'מוזג לענף ברירת המחדל',
+  'textview.ciFailing': 'CI נכשל',
   'textview.hideBranch': 'הסתרת {name}',
   'textview.soloBranch': 'הצגת {name} בלבד',
   'textview.hidden': '{name} הוסתר',

@@ -619,6 +619,7 @@ GB.i18n.define('uk', {
   'textview.fresh': 'створена за останні 7 днів',
   'textview.quiet': 'без активності понад 30 днів',
   'textview.merged': 'злито в основну гілку',
+  'textview.ciFailing': 'CI падає',
   'textview.hideBranch': 'Приховати {name}',
   'textview.soloBranch': 'Показати лише {name}',
   'textview.hidden': '{name} приховано',

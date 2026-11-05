@@ -619,6 +619,7 @@ GB.i18n.define('ru', {
   'textview.fresh': 'создана за последние 7 дней',
   'textview.quiet': 'без активности более 30 дней',
   'textview.merged': 'слита в основную ветку',
+  'textview.ciFailing': 'CI падает',
   'textview.hideBranch': 'Скрыть {name}',
   'textview.soloBranch': 'Показать только {name}',
   'textview.hidden': '{name} скрыта',

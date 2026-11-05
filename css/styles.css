@@ -5223,6 +5223,10 @@ a.hl-row:focus-visible {
   color: var(--ink-3);
   font: 12px var(--font-mono);
 }
+.tv-tag.tv-ci-fail {
+  color: var(--bad);
+  font-weight: 600;
+}
 .tv-msg {
   min-width: 8em;
   flex: 1;

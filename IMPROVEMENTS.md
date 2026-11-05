@@ -271,7 +271,7 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 135. ~~**Vista de texto: ramas nuevas**~~ hecho en #255 · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama creada en los últimos 7 días lo dice, con lo ya cargado. Comprobar: prueba de la vista y un paso del smoke.
 136. ~~**Resumen de la semana de la organización: rama más activa**~~ hecho en #257 · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] Cada repo del resumen de la organización nombra su rama más activa de la semana. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
 137. ~~**Salud del repo: tendencia de issues abiertos**~~ hecho en #259 · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] La salud muestra los issues abiertos por semana de las últimas 8, con lo ya cargado. Comprobar: `tools/health.test.mjs` con issues fabricados.
-139. **Vista de texto: CI de cada rama** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama dice si su último CI ya cargado falló («CI fallando»), con una marca. Comprobar: prueba de la vista con `data.ci` fabricado y un paso del smoke.
+139. ~~**Vista de texto: CI de cada rama**~~ hecho en #260 · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama dice si su último CI ya cargado falló («CI fallando»), con una marca. Comprobar: prueba de la vista con `data.ci` fabricado y un paso del smoke.
 140. **Vista de texto: autor de la punta de cada rama** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 33] El nombre accesible de una rama dice quién hizo el commit de su punta, con lo ya cargado. Comprobar: `tools/textview.test.mjs` y un paso del smoke.
 141. **Salud del repo: autores de commits por semana** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del ítem 12] La salud muestra cuántos autores distintos hicieron commits cada semana de las últimas 8, con los commits ya cargados. Comprobar: `tools/health.test.mjs` con commits fabricados.
 142. **Resumen de la semana: PRs fusionados por autor** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 23] El resumen de la semana nombra quién fusionó más PRs, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con PRs fabricados.
@@ -645,3 +645,16 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/204, sin colisión
 - Validado: 567 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 205, expansión: ítem 139 (Vista de texto: CI de cada rama, Público)
+
+### 2026-11-05 · Iteración 205 · Expansión · Público
+
+- **Capacidad nueva: la vista de texto dice qué ramas tienen el CI fallando** (ítem 139 de la hoja de ruta, parte del 33). `build` (`js/textview.js`) suma `ciFailing` (el estado `failure` de `data.ci` de la rama); el nodo lo dice en su nombre accesible («CI fallando») y con una marca ✗ en rojo (`.tv-ci-fail`). Sin consultas: parte de lo ya cargado; en curso o en verde no se marca. Texto nuevo `textview.ciFailing` en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/textview.test.mjs` («cada rama dice si su último CI cargado falló…») → `ciFailing` indefinido sin el cambio; paso del smoke: la marca, si aparece, está en el nombre accesible.
+- README: Vista de texto y Límites conocidos.
+- QA: sin `data.ci`, con `success` y con `pending` no marca (prueba); texto con `textContent`; color con `--bad` en claro y oscuro; auditoría en la puerta.
+- Skills: no aplica: una marca más en una vista que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (la misma de «fusionada» y «quieta»).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; no toca tokens, CSP ni `innerHTML`)
+- Reclamo: loop/205, sin colisión
+- Validado: 568 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 206, expansión: ítem 134 (Salud del repo: PRs cerrados sin fusionar por semana, Análisis)

@@ -604,6 +604,7 @@ GB.i18n.define('th', {
   'textview.fresh': 'สร้างในช่วง 7 วันที่ผ่านมา',
   'textview.quiet': 'ไม่มีความเคลื่อนไหวเกิน 30 วัน',
   'textview.merged': 'รวมเข้ากับสาขาหลักแล้ว',
+  'textview.ciFailing': 'CI ล้มเหลว',
   'textview.hideBranch': 'ซ่อน {name}',
   'textview.soloBranch': 'แสดงเฉพาะ {name}',
   'textview.hidden': 'ซ่อน {name} แล้ว',

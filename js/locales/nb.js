@@ -603,6 +603,7 @@ GB.i18n.define('nb', {
   'textview.fresh': 'opprettet de siste 7 dagene',
   'textview.quiet': 'uten aktivitet på over 30 dager',
   'textview.merged': 'slått sammen med standardgrenen',
+  'textview.ciFailing': 'CI feiler',
   'textview.hideBranch': 'Skjul {name}',
   'textview.soloBranch': 'Vis bare {name}',
   'textview.hidden': '{name} skjult',

@@ -646,6 +646,7 @@ GB.i18n.define('fa', {
   'textview.fresh': 'در ۷ روز گذشته ساخته شده',
   'textview.quiet': 'بدون فعالیت بیش از ۳۰ روز',
   'textview.merged': 'در شاخهٔ اصلی ادغام شده',
+  'textview.ciFailing': 'CI در حال شکست',
   'textview.hideBranch': 'پنهان کردن {name}',
   'textview.soloBranch': 'نمایش فقط {name}',
   'textview.hidden': '{name} پنهان شد',

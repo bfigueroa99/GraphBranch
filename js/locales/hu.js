@@ -603,6 +603,7 @@ GB.i18n.define('hu', {
   'textview.fresh': 'az elmúlt 7 napban jött létre',
   'textview.quiet': '30 napnál régebben inaktív',
   'textview.merged': 'beolvasztva az alapértelmezett ágba',
+  'textview.ciFailing': 'a CI hibás',
   'textview.hideBranch': '{name} elrejtése',
   'textview.soloBranch': 'Csak {name} megjelenítése',
   'textview.hidden': '{name} elrejtve',

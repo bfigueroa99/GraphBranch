@@ -895,6 +895,9 @@ console.log('Escritorio (1280×800)');
     if (!info.focusInTree) throw new Error('al abrir, el foco no está en el árbol');
     if (/undefined|NaN|textview\./.test(info.text)) throw new Error('texto sin resolver: ' + info.text.slice(0, 120));
     if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
+    // la marca «CI fallando» de una rama (si la demo tiene alguna con el CI en rojo) también está en su nombre accesible
+    const ciMarks = await page.evaluate(() => [...document.querySelectorAll('#textview .tv-ci-fail')].map((n) => ({ tag: n.textContent.replace(/^✗\s*/, ''), label: n.closest('[role="treeitem"]').getAttribute('aria-label') })));
+    for (const m of ciMarks) if (!m.tag || !m.label.includes(m.tag)) throw new Error('«CI fallando» no está en el nombre accesible: ' + JSON.stringify(m));
     // los commits con tag lo dicen en su nombre accesible («tag v1.0.0») y la región viva cuenta cuántos hay al abrir
     const marks = await page.evaluate(() => {
       const commits = [...document.querySelectorAll('#textview .tv-commit')];

@@ -614,6 +614,7 @@ GB.i18n.define('cs', {
   'textview.fresh': 'vytvořena za posledních 7 dní',
   'textview.quiet': 'bez aktivity přes 30 dní',
   'textview.merged': 'sloučeno do hlavní větve',
+  'textview.ciFailing': 'CI selhává',
   'textview.hideBranch': 'Skrýt {name}',
   'textview.soloBranch': 'Zobrazit jen {name}',
   'textview.hidden': '{name} je skrytá',

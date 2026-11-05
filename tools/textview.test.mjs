@@ -260,3 +260,13 @@ test('una rama creada en los últimos 7 días se dice nueva, con lo ya cargado d
   assert.deepEqual(by({ fresh }), { main: false, feature: true }, 'la por defecto nunca es nueva');
   assert.deepEqual(by({}), { main: false, feature: false }, 'sin feed, ninguna se sabe nueva');
 });
+
+test('cada rama dice si su último CI cargado falló (data.ci)', () => {
+  const d = repo();
+  const failing = () => Object.fromEntries(build(d).branches.map((b) => [b.name, b.ciFailing]));
+  assert.deepEqual(failing(), { main: false, feature: false }); // sin data.ci
+  d.ci = new Map([['feature', 'failure'], ['main', 'success']]);
+  assert.deepEqual(failing(), { main: false, feature: true });
+  d.ci = new Map([['feature', 'pending']]);
+  assert.equal(failing().feature, false); // en curso no es fallo
+});

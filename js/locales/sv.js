@@ -517,6 +517,7 @@ GB.i18n.define('sv', {
   'health.closedWeeks': 'Stängda issues per vecka, senaste {n} veckorna (från äldsta till nuvarande): {list}',
   'health.branchWeeks': 'Nya branches per vecka, senaste {n} veckorna (från äldsta till nuvarande): {list}',
   'health.commitWeeks': 'Commits per vecka, senaste {n} veckorna (från äldsta till nuvarande): {list}',
+  'health.authorWeeks': 'Olika författare per vecka, senaste {n} veckorna (från äldsta till nuvarande): {list}',
   'health.tagWeeks': 'Taggar per vecka, senaste {n} veckorna (från äldsta till nuvarande): {list}',
   'health.issueWeeks': 'Öppnade issues per vecka, senaste {n} veckorna (från äldsta till nuvarande): {list}',
   'health.prCloseWeeks': 'Pull requests stängda utan sammanslagning per vecka, senaste {n} veckorna (från äldsta till nuvarande): {list}',

@@ -517,6 +517,7 @@ GB.i18n.define('zh-Hans', {
   'health.closedWeeks': '每周关闭的议题，最近 {n} 周（从最早到当前）：{list}',
   'health.branchWeeks': '每周新建的分支，最近 {n} 周（从最早到当前）：{list}',
   'health.commitWeeks': '每周提交数，最近 {n} 周（从最早到当前）：{list}',
+  'health.authorWeeks': '每周不同作者数，最近 {n} 周（从最早到当前）：{list}',
   'health.tagWeeks': '每周标签数，最近 {n} 周（从最早到当前）：{list}',
   'health.issueWeeks': '每周开启的议题，最近 {n} 周（从最早到当前）：{list}',
   'health.prCloseWeeks': '每周未合并即关闭的拉取请求，最近 {n} 周（从最早到当前）：{list}',

@@ -517,6 +517,7 @@ GB.i18n.define('ms', {
   'health.closedWeeks': 'Isu yang ditutup setiap minggu, {n} minggu terakhir (dari yang tertua hingga kini): {list}',
   'health.branchWeeks': 'Branch baharu setiap minggu, {n} minggu terakhir (dari yang tertua hingga kini): {list}',
   'health.commitWeeks': 'Commit setiap minggu, {n} minggu terakhir (dari yang tertua hingga kini): {list}',
+  'health.authorWeeks': 'Pengarang berbeza setiap minggu, {n} minggu terakhir (dari yang tertua hingga kini): {list}',
   'health.tagWeeks': 'Tag setiap minggu, {n} minggu terakhir (dari yang tertua hingga kini): {list}',
   'health.issueWeeks': 'Isu yang dibuka setiap minggu, {n} minggu terakhir (dari yang tertua hingga kini): {list}',
   'health.prCloseWeeks': 'Pull request yang ditutup tanpa digabungkan setiap minggu, {n} minggu terakhir (dari yang tertua hingga kini): {list}',

@@ -517,6 +517,7 @@ GB.i18n.define('ko', {
   'health.closedWeeks': '주별 닫힌 이슈, 최근 {n}주(오래된 순에서 현재까지): {list}',
   'health.branchWeeks': '주별 새 브랜치, 최근 {n}주(오래된 순에서 현재까지): {list}',
   'health.commitWeeks': '주별 커밋, 최근 {n}주(오래된 순에서 현재까지): {list}',
+  'health.authorWeeks': '주별 서로 다른 작성자 수, 최근 {n}주(오래된 순에서 현재까지): {list}',
   'health.tagWeeks': '주별 태그, 최근 {n}주(오래된 순에서 현재까지): {list}',
   'health.issueWeeks': '주별 열린 이슈, 최근 {n}주(오래된 순에서 현재까지): {list}',
   'health.prCloseWeeks': '병합 없이 닫힌 풀 리퀘스트(주별), 최근 {n}주(오래된 순에서 현재까지): {list}',

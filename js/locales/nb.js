@@ -517,6 +517,7 @@ GB.i18n.define('nb', {
   'health.closedWeeks': 'Lukkede issues per uke, siste {n} uker (fra eldste til nåværende): {list}',
   'health.branchWeeks': 'Nye branches per uke, siste {n} uker (fra eldste til nåværende): {list}',
   'health.commitWeeks': 'Commits per uke, siste {n} uker (fra eldste til nåværende): {list}',
+  'health.authorWeeks': 'Ulike forfattere per uke, siste {n} uker (fra eldste til nåværende): {list}',
   'health.tagWeeks': 'Tagger per uke, siste {n} uker (fra eldste til nåværende): {list}',
   'health.issueWeeks': 'Åpnede issues per uke, siste {n} uker (fra eldste til nåværende): {list}',
   'health.prCloseWeeks': 'Pull requests lukket uten å bli flettet per uke, siste {n} uker (fra eldste til nåværende): {list}',

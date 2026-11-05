@@ -528,6 +528,7 @@ GB.i18n.define('sk', {
   'health.closedWeeks': 'Uzavreté issues za týždeň, posledných {n} týždňov (od najstaršieho po aktuálny): {list}',
   'health.branchWeeks': 'Nové vetvy za týždeň, posledných {n} týždňov (od najstaršieho po aktuálny): {list}',
   'health.commitWeeks': 'Commity za týždeň, posledných {n} týždňov (od najstaršieho po aktuálny): {list}',
+  'health.authorWeeks': 'Rôzni autori za týždeň, posledných {n} týždňov (od najstaršieho po aktuálny): {list}',
   'health.tagWeeks': 'Tagy za týždeň, posledných {n} týždňov (od najstaršieho po aktuálny): {list}',
   'health.issueWeeks': 'Otvorené issues za týždeň, posledných {n} týždňov (od najstaršieho po aktuálny): {list}',
   'health.prCloseWeeks': 'Pull requesty zatvorené bez zlúčenia za týždeň, posledných {n} týždňov (od najstaršieho po aktuálny): {list}',

@@ -517,6 +517,7 @@ GB.i18n.define('tr', {
   'health.closedWeeks': 'Haftalık kapatılan issue’lar, son {n} hafta (en eskiden mevcut haftaya): {list}',
   'health.branchWeeks': 'Haftalık yeni dallar, son {n} hafta (en eskiden mevcut haftaya): {list}',
   'health.commitWeeks': 'Haftalık commit sayısı, son {n} hafta (en eskiden mevcut haftaya): {list}',
+  'health.authorWeeks': 'Haftalık farklı yazar sayısı, son {n} hafta (en eskiden mevcut haftaya): {list}',
   'health.tagWeeks': 'Haftalık etiket sayısı, son {n} hafta (en eskiden mevcut haftaya): {list}',
   'health.issueWeeks': 'Haftalık açılan issue’lar, son {n} hafta (en eskiden mevcut haftaya): {list}',
   'health.prCloseWeeks': 'Birleştirilmeden kapatılan pull request’ler (haftalık), son {n} hafta (en eskiden mevcut haftaya): {list}',

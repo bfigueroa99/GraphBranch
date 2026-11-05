@@ -238,6 +238,19 @@ test('autores nuevos: quienes no tienen commit cargado anterior a la semana', ()
   assert.doesNotMatch(toMarkdown(sin, 'a/b', t), /Nuevos/);
 });
 
+test('ramas nuevas: las creadas en la semana, cada nombre una vez', () => {
+  const mk = (id, branch, days) => ({ id, kind: 'branch-create', branch, time: NOW - days * 864e5 });
+  const nuevas = [mk('1', 'feat/a', 2), mk('2', 'feat/a', 1), mk('3', 'feat/b', 3), mk('4', 'vieja', 20), { id: '5', kind: 'branch-create', branch: 'x' }];
+  const d = compute(repo(), [...acts, ...nuevas], NOW);
+  assert.equal(d.newBranches, 2); // feat/a (una vez) y feat/b; «vieja» es de hace 20 días y «x» no tiene hora
+  const t = { head: 'S', commits: 'C {n}', merged: 'M', releases: 'R', people: 'P', branch: 'B', newbranches: 'Ramas: {n}' };
+  assert.match(toMarkdown(d, 'a/b', t), /- Ramas: 2\n/);
+  assert.ok(imageLines(d, 'a/b', t).some((l) => l.text === 'Ramas: 2'));
+  const sin = compute(repo(), acts, NOW);
+  assert.equal(sin.newBranches, 0);
+  assert.doesNotMatch(toMarkdown(sin, 'a/b', t), /Ramas:/);
+});
+
 test('commits por día: siete cifras, del día más viejo al de hoy', () => {
   const d = compute(repo(), acts, NOW);
   assert.deepEqual([...d.perDay], [0, 1, 0, 0, 1, 1, 2]); // el de hace 40 días no cuenta; el de «ahora» cae en el último día
@@ -248,4 +261,35 @@ test('commits por día: siete cifras, del día más viejo al de hoy', () => {
   const sin = compute({ commits: new Map([c('q', 30, [], 'ana')]), branches: new Map() }, [], NOW);
   assert.deepEqual([...sin.perDay], [0, 0, 0, 0, 0, 0, 0]);
   assert.doesNotMatch(toMarkdown(sin, 'a/b', t), /Por día/);
+});
+
+test('organización: suma las ramas nuevas de cada repo (cada nombre una vez por repo) y las muestra en Markdown e imagen', () => {
+  const mk = (id, branch, days) => ({ id, kind: 'branch-create', branch, time: NOW - days * 864e5 });
+  const o = computeOrg([
+    { repo: 'acme/web', data: repo(), acts: [mk('1', 'feat/a', 2), mk('2', 'feat/a', 1), mk('3', 'feat/b', 3), mk('4', 'vieja', 20)] },
+    { repo: 'acme/api', data: repo(), acts: [mk('5', 'feat/a', 2)] },
+  ], NOW);
+  assert.equal(o.newBranches, 3); // feat/a y feat/b en web, feat/a en api: el mismo nombre en otro repo cuenta aparte
+  assert.equal(o.rows.find((r) => r.repo === 'acme/web').d.newBranches, 2);
+  const t = { head: 'S {repo}', commits: 'C {n}', merged: 'M', releases: 'R', people: 'P', branch: 'B', newbranches: 'Ramas nuevas: {n}' };
+  const md = toMarkdownOrg(o, 'acme', t);
+  assert.match(md, /\n- Ramas nuevas: 3\n/);
+  assert.match(md, /## acme\/web\n\n- C 5\n- Ramas nuevas: 2\n/);
+  assert.ok(imageLinesOrg(o, 'acme', t).some((l) => l.text === 'Ramas nuevas: 3'));
+  assert.ok(imageLinesOrg(o, 'acme', t).some((l) => /C 5 · Ramas nuevas: 2/.test(l.text)));
+  assert.doesNotMatch(toMarkdownOrg(computeOrg([{ repo: 'a/b', data: repo(), acts: [] }], NOW), 'a', t), /Ramas nuevas/);
+});
+
+test('organización: cada repo nombra su rama más activa, en el Markdown y en la imagen', () => {
+  const quiet = { commits: new Map([c('q', 1, [], 'ana')]), branches: new Map([['dev', { name: 'dev', sha: 'q' }]]) };
+  const o = computeOrg([{ repo: 'acme/web', data: repo(), acts: [] }, { repo: 'acme/api', data: quiet, acts: [] }], NOW);
+  const t = { head: 'S · {repo}', commits: 'C: {n}', merged: 'M', releases: 'R', people: 'P', branch: 'Rama' };
+  const md = toMarkdownOrg(o, 'acme', t);
+  assert.match(md, /## acme\/web\n\n- C: 5\n- Rama: `main` \(5\)\n/);
+  assert.match(md, /## acme\/api\n\n- C: 1\n- Rama: `dev` \(1\)\n/);
+  const rows = imageLinesOrg(o, 'acme', t).filter((l) => l.kind === 'row').map((l) => l.text);
+  assert.ok(rows.includes('C: 5 · Rama: main (5)'), rows.join('|'));
+  assert.ok(rows.includes('C: 1 · Rama: dev (1)'));
+  const sin = computeOrg([{ repo: 'acme/x', data: { commits: new Map([c('z', 1, [], 'a')]), branches: new Map() }, acts: [] }], NOW);
+  assert.doesNotMatch(imageLinesOrg(sin, 'acme', t).map((l) => l.text).join('\n'), /Rama:/);
 });

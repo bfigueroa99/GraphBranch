@@ -48,6 +48,39 @@
     return { data: { ...data, branches, pulls }, shown, total };
   }
 
+  /** La vista de `data` sin las ramas ocultas (`view.hidden`, nombres) o con solo una (`view.solo`): la rama por defecto
+      y las que aún no tienen historia cargada siempre quedan, y los PR de las ramas quitadas se van con ellas. Devuelve
+      { data, shown, total } (ramas con historia cargada); sin nada oculto ni solo, `data` tal cual. No muta. */
+  function byBranches(data, view) {
+    const total = [...data.branches.values()].filter((b) => data.commits.has(b.sha)).length;
+    const hidden = new Set(view?.hidden || []);
+    const solo = view?.solo || '';
+    if (!hidden.size && !solo) return { data, shown: total, total };
+    const def = data.repo?.defaultBranch;
+    const branches = new Map();
+    for (const [name, b] of data.branches) {
+      const keep = name === def || b.isDefault || !data.commits.has(b.sha) || (solo ? name === solo : !hidden.has(name));
+      if (keep) branches.set(name, b);
+    }
+    const pulls = new Map([...data.pulls].filter(([, p]) => !p.sameRepo || branches.has(p.head)));
+    const shown = [...branches.values()].filter((b) => data.commits.has(b.sha)).length;
+    return { data: { ...data, branches, pulls }, shown, total };
+  }
+
+  /** La vista de `data` con solo las ramas que tienen un PR abierto de la misma repo (`data.pulls` guarda solo los
+      abiertos): la rama por defecto y las que aún no tienen historia cargada siempre quedan, como en `byBranches`.
+      Sin ramas que quitar, `data` tal cual. No muta. */
+  function withOpenPr(data) {
+    const heads = new Set();
+    for (const p of data.pulls.values()) if (p.sameRepo && p.head) heads.add(p.head);
+    const def = data.repo?.defaultBranch;
+    const branches = new Map();
+    for (const [name, b] of data.branches) if (name === def || b.isDefault || !data.commits.has(b.sha) || heads.has(name)) branches.set(name, b);
+    if (branches.size === data.branches.size) return data;
+    const pulls = new Map([...data.pulls].filter(([, p]) => !p.sameRepo || branches.has(p.head)));
+    return { ...data, branches, pulls };
+  }
+
   /** La vista de `data` con solo `max` ramas con historia: la rama por defecto (cuenta como una) y las de commit más
       reciente. Las que aún no tienen historia cargada no se tocan, y los PR de las quitadas se van con ellas.
       `max` 0 o inválido: `data` tal cual. No muta. */
@@ -194,6 +227,42 @@
     return { open, run };
   }
 
+  /** La vista de `data` con solo la cadena del primer padre de cada rama, como `git log --first-parent`: por cada
+      cabeza se sigue `parents[0]`, y lo que solo alcanza un segundo padre (lo que una fusión trajo) se va; cada commit
+      que queda conserva únicamente su primer padre. Sin consultas: usa lo ya cargado. No muta. */
+  function firstParent(data) {
+    const commits = new Map();
+    for (const b of data.branches.values()) {
+      let sha = b.sha;
+      while (sha && !commits.has(sha) && data.commits.has(sha)) {
+        const c = data.commits.get(sha);
+        const first = c.parents?.length ? [c.parents[0]] : [];
+        commits.set(sha, { ...c, parents: first });
+        sha = first[0];
+      }
+    }
+    return { ...data, commits };
+  }
+
+  /** ?firstparent=1 (o solo ?firstparent): abrir el grafo con el primer padre ya activo. 0, false, no u off lo apagan. */
+  function firstParentParam(q) {
+    return !!q && typeof q.has === 'function' && q.has('firstparent') && !/^(0|false|no|off)$/i.test(String(q.get('firstparent')).trim());
+  }
+
+  const NAME_MAX = 200;
+  const cleanName = (v) => String(v).replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, NAME_MAX); // eslint-disable-line no-control-regex
+
+  /** ?solo=rama o ?ocultar=a&ocultar=b: abrir el repo con esas ramas ocultas o con una sola. Los nombres se leen como
+      texto (sin caracteres de control, hasta 200); cada `ocultar` es una rama (sin partir por comas: git las admite en
+      un nombre) y `solo` manda sobre `ocultar`. null si la URL no pide nada. */
+  function branchViewParam(q) {
+    if (!q || typeof q.get !== 'function') return null;
+    const solo = cleanName(q.get('solo') ?? '');
+    if (solo) return { hidden: [], solo };
+    const hidden = [...new Set((q.getAll('ocultar') || []).map(cleanName).filter(Boolean))].slice(0, 50);
+    return hidden.length ? { hidden, solo: '' } : null;
+  }
+
   const PATH_MAX = 200;
 
   /** La ruta que pide la URL (?path=src/): recortada, sin barra inicial ni caracteres de control, de hasta 200; '' si no hay. */
@@ -202,6 +271,13 @@
     if (typeof v !== 'string') return '';
     // eslint-disable-next-line no-control-regex
     return v.replace(/[\u0000-\u001f\u007f]/g, '').trim().replace(/^\/+/, '').slice(0, PATH_MAX);
+  }
+
+  /** El pull request que pide la URL (?pr=12 o ?pr=#12): un entero positivo; 0 si no hay o no es uno. */
+  function prParam(q) {
+    const v = q && typeof q.get === 'function' ? q.get('pr') : null;
+    const m = typeof v === 'string' ? /^#?(\d{1,9})$/.exec(v.trim()) : null;
+    return m ? Number(m[1]) : 0;
   }
 
   /** La persona que pide la URL (?author=ana): recortada, sin caracteres de control, de hasta 100; '' si no hay. */
@@ -220,5 +296,12 @@
     return v.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 100);
   }
 
-  GB.search = { authors, authorParam, byAuthor, limitBranches, find, mount, pathParam, queryParam, LIMIT };
+  /** Texto de las columnas de autor y fecha junto a un commit: «Autor · fecha». `fmt` da la fecha en el idioma activo. */
+  function columnText(c, fmt, unknown = '') {
+    const who = String(c?.author?.name || c?.author?.login || unknown || '').trim();
+    const when = c?.date ? fmt(c.date) : '';
+    return [who, when].filter(Boolean).join(' · ');
+  }
+
+  GB.search = { columnText, authors, authorParam, branchViewParam, byAuthor, byBranches, firstParent, firstParentParam, limitBranches, find, mount, pathParam, prParam, queryParam, withOpenPr, LIMIT };
 })((window.GB = window.GB || {}));

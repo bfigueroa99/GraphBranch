@@ -412,3 +412,10 @@ test('los enlaces que no cuelgan de bitbucket.org (PR, commit) se descartan y se
   assert.equal(src.data.pulls.get(6).url, `${WEB}/pull-requests/6`);
   assert.equal(src.data.commits.get('f2').url, `${WEB}/commits/f2`);
 });
+
+test('mapPull: un repo renombrado sigue marcando sus PRs de la misma repo', () => {
+  const { src } = connect(fakeBitbucket());
+  const pr = (from) => ({ id: 1, title: 't', source: { branch: { name: 'f' }, repository: { full_name: from } }, destination: { branch: { name: 'main' }, repository: { full_name: 'Nuevo/Nombre' } }, author: { display_name: 'ana' }, created_on: '2026-10-01T00:00:00Z' });
+  assert.equal(src.mapPull(pr('nuevo/nombre')).sameRepo, true);
+  assert.equal(src.mapPull(pr('ana/nombre')).sameRepo, false);
+});

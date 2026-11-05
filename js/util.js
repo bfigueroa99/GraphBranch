@@ -96,6 +96,22 @@ window.GB = window.GB || {};
       if (parts.length < 2 || !parts.every((p) => /^[\w.-]+$/.test(p) && !/^\.+$/.test(p))) return null;
       return { host: 'gitlab', owner: parts.slice(0, -1).join('/'), name: parts[parts.length - 1] };
     }
+    // Azure DevOps: azure:org/proyecto/repo, dev.azure.com/org/proyecto/_git/repo (con o sin usuario@, o una ruta dentro) o git@ssh.dev.azure.com:v3/org/proyecto/repo
+    const az = s.match(/^azure:(.+)$/i) || s.match(/^https:\/\/(?:[^@/]+@)?dev\.azure\.com\/(.+)$/i) || s.match(/^(?:ssh:\/\/)?git@ssh\.dev\.azure\.com[:/]v3\/(.+)$/i);
+    if (az) {
+      let parts;
+      try {
+        parts = az[1].split('/').filter(Boolean).map(decodeURIComponent);
+      } catch {
+        return null;
+      }
+      const git = parts.indexOf('_git');
+      // la URL web lleva `_git` entre el proyecto y el repo (y sin proyecto aparte, el repo se llama como él); las demás formas, org/proyecto/repo
+      if (git > -1) parts = git === 1 ? [parts[0], parts[2], parts[2]] : git === 2 ? [parts[0], parts[1], parts[3]] : [];
+      else parts = parts.slice(0, 3);
+      if (parts.length < 3 || !parts.every((p) => p && p.length <= 100 && !/^\.+$/.test(p) && !/[\\/?#%:@\u0000-\u001f]/.test(p))) return null;
+      return { host: 'azure', owner: `${parts[0]}/${parts[1]}`, name: parts[2].replace(/\.git$/, '') };
+    }
     const bb = s.match(/^bitbucket:(.+)$/i) || s.match(/bitbucket\.org[/:](.+)$/i);
     if (bb) {
       const parts = bb[1].split('/').filter(Boolean);
@@ -137,6 +153,16 @@ window.GB = window.GB || {};
     const parts = String(rest || '').split('/').filter(Boolean);
     return parts.length && parts.every((p) => /^[\w.-]+$/.test(p) && !/^\.+$/.test(p)) ? { group: parts.join('/') } : null;
   };
+
+  /** El alias de una pestaña: sin saltos ni espacios de más y de hasta ALIAS_MAX letras (vacío = sin alias). */
+  U.ALIAS_MAX = 40;
+  U.cleanAlias = (v) => (typeof v === 'string' ? [...v.replace(/\s+/g, ' ').trim()].slice(0, U.ALIAS_MAX).join('').trim() : '');
+
+  /** La clave del texto del indicador de estado. Un 404 del repo o la cuota agotada dicen lo que son, no
+      «Sin conexión» (en celular el indicador es lo único que se ve). null si el estado no existe. */
+  const STATUS_KEYS = { loading: 'status.loading', live: 'status.live', limited: 'status.limited', paused: 'status.paused', error: 'status.error' };
+  const STATUS_ERROR_KEYS = { notfound: 'status.errorNotFound', rate: 'status.errorRate' };
+  U.statusKey = (s) => (s?.state === 'error' && STATUS_ERROR_KEYS[s.error?.kind]) || STATUS_KEYS[s?.state] || null;
 
   /** localStorage envuelto: puede no existir o lanzar (modo privado, sandbox). Un valor guardado que no es
       del tipo del `fallback` (lista, texto, número, booleano) está corrupto: se devuelve el `fallback`. */

@@ -131,6 +131,9 @@
     const heads = node.heads;
     const parents = c.parents.length;
     const rows = [];
+    // de un agente (Claude Code, Copilot, un bot…): cuál, con su modelo y su sesión si el commit los firma (js/agents.js)
+    const agent = GB.agents?.of(c);
+    if (agent) rows.push(`<span class="tip-agent">${U.esc(tr('tip.agent', { name: [agent.name, agent.model, agent.session ? tr('agents.session', { id: GB.agents.shortSession(agent.session) }) : ''].filter(Boolean).join(' · ') }))}</span>`);
     if (heads.length) rows.push(`<span class="tip-refs">${heads.map((h) => `<code>${U.esc(h)}</code>`).join(' ')}</span>`);
     if (node.chain.startsWith('g:')) {
       const gname = ghostNames?.get(node.chain);
@@ -149,16 +152,23 @@
       const stack = ctx.stacks?.get(branch);
       if (stack) rows.push(`<span class="tip-stack">${i18n.html('tip.stacked', { num: stack.parentNum, parent: stack.parent })}</span>`);
       if (pr) rows.push(`<span>${i18n.html(prKey(pr, pr.draft ? 'tip.prDraft' : 'tip.pr'), { num: pr.number, base: pr.base })}${U.safeUrl(pr.url) ? ` · <a href="${U.esc(U.safeUrl(pr.url))}" target="_blank" rel="noopener">${U.esc(tr(prKey(pr, 'tip.viewPr')))}</a>` : ''}</span>`);
+      if (pr?.reviewers?.length) {
+        const VOTES = { yes: 'tip.voteYes', no: 'tip.voteNo', wait: 'tip.voteWait' };
+        const list = pr.reviewers.map((r) => (VOTES[r.vote] ? `${r.name} (${tr(VOTES[r.vote])})` : r.name)).join(', ');
+        rows.push(`<span class="tip-reviewers">${U.esc(tr('tip.reviewers', { list }))}</span>`);
+      }
     }
     return `
       <div class="tip-head">${U.avatarHTML(c.author, 22)}<span class="tip-author">${U.esc(c.author.name || tr('author.unknown'))}</span><span class="tip-time" title="${U.esc(U.fmtDateTime(c.date))}">${U.timeAgo(c.date)}</span></div>
       <p class="tip-msg">${U.esc(U.firstLine(c.message))}</p>
       <p class="tip-meta"><code>${U.shortSha(c.sha)}</code>${parents > 1 ? ` · ${U.esc(tr('tip.mergeOf', { n: parents }))}` : ''}</p>
       ${rows.length ? `<p class="tip-extra">${rows.join('')}</p>` : ''}
-      ${pin && (c.url || ctx.canDiff || (branch && ctx.canPin)) ? `<div class="tip-actions">
+      ${pin && (c.url || ctx.canDiff || (branch && (ctx.canPin || ctx.canHide || ctx.canPrView))) ? `<div class="tip-actions">
         ${ctx.canDiff ? `<button type="button" class="tip-diff" data-sha="${U.esc(c.sha)}">${U.esc(tr('diff.show'))}</button>` : ''}
         ${U.safeUrl(c.url) ? `<a class="tip-link" href="${U.esc(U.safeUrl(c.url))}" target="_blank" rel="noopener">${U.esc(tr('tip.openCommit'))} ↗</a>` : ''}
+        ${branch && ctx.canPrView && ctx.prs?.get(branch) && !ctx.prs.get(branch).mr ? `<button type="button" class="tip-prview" data-pr="${Number(ctx.prs.get(branch).number)}" aria-expanded="false">${U.esc(tr('prview.show'))}</button>` : ''}
         ${branch && ctx.canPin ? pinButtonHTML(branch, !!ctx.pins?.has(branch)) : ''}
+        ${branch && ctx.canHide ? viewButtonsHTML(branch) : ''}
       </div>` : ''}`;
   }
 
@@ -166,6 +176,13 @@
 
   function pinButtonHTML(branch, on) {
     return `<button type="button" class="tip-pin" data-branch="${U.esc(branch)}" data-on="${on}">${pinLabel(branch, on)}</button>`;
+  }
+
+  /** «Ocultar» y «Solo esta» de la ficha de una rama (el grafo muestra menos ramas; ver search.byBranches). */
+  function viewButtonsHTML(branch) {
+    const name = U.truncate(branch, 28);
+    return `<button type="button" class="tip-view tip-hide" data-branch="${U.esc(branch)}">${i18n.html('tip.hide', { branch: name })}</button>
+        <button type="button" class="tip-view tip-solo" data-branch="${U.esc(branch)}">${i18n.html('tip.solo', { branch: name })}</button>`;
   }
 
   /** Cómo se nombra un PR: "#12" en GitHub; una merge request de GitLab, "!12". Y la clave de sus textos
@@ -204,6 +221,57 @@
     });
   }
 
+  /** El cuerpo de la vista de un PR (descripción y últimos comentarios) como HTML: todo texto de afuera, escapado. */
+  function prBodyHTML(d) {
+    const body = String(d.body || '').trim();
+    const comments = (d.comments || [])
+      .map((c) => `<li><span class="pv-who">${U.avatarHTML(c.user, 16)}<b>${U.esc(c.user?.login || tr('author.unknown'))}</b>${c.date ? ` <span class="pv-time">${U.esc(U.timeAgo(c.date))}</span>` : ''}</span><p>${U.esc(U.truncate(String(c.body).trim(), 400))}</p></li>`)
+      .join('');
+    return `<p class="pv-body">${body ? U.esc(U.truncate(body, 1200)) : `<i>${U.esc(tr('prview.noBody'))}</i>`}</p>
+      <p class="pv-head">${U.esc(tr('prview.comments'))}</p>
+      ${comments ? `<ul class="pv-list">${comments}</ul>` : `<p class="pv-none">${U.esc(tr('prview.noComments'))}</p>`}`;
+  }
+
+  /** Conecta el botón de la vista del PR de la ficha de una rama: `load(número)` da {body, comments}; una consulta,
+      solo al pulsarlo, y pulsarlo otra vez esconde la vista. */
+  function wirePrButton(tip, load) {
+    tip.addEventListener('click', async (ev) => {
+      const b = ev.target.closest('.tip-prview');
+      if (!b || !load || b.dataset.busy) return;
+      let box = tip.querySelector('.tip-prbody');
+      if (box && b.getAttribute('aria-expanded') === 'true') {
+        box.hidden = true;
+        b.setAttribute('aria-expanded', 'false');
+        return;
+      }
+      if (!box) {
+        box = document.createElement('div');
+        box.className = 'tip-prbody';
+        box.setAttribute('role', 'region');
+        box.setAttribute('aria-live', 'polite');
+        box.setAttribute('aria-label', tr('prview.show'));
+        tip.append(box);
+      }
+      box.hidden = false;
+      b.setAttribute('aria-expanded', 'true');
+      if (box.dataset.pr === b.dataset.pr && box.dataset.ok) return;
+      box.dataset.pr = b.dataset.pr;
+      delete box.dataset.ok;
+      box.textContent = tr('prview.busy');
+      b.dataset.busy = '1';
+      try {
+        const d = await load(Number(b.dataset.pr));
+        if (box.dataset.pr !== b.dataset.pr) return;
+        box.innerHTML = prBodyHTML(d || {});
+        box.dataset.ok = '1';
+      } catch (e) {
+        box.textContent = tr('prview.fail');
+      } finally {
+        delete b.dataset.busy;
+      }
+    });
+  }
+
   /** Conecta el botón "Fijar" de un tooltip con la acción de la app. */
   function wirePinButton(tip, onTogglePin) {
     tip.addEventListener('click', (ev) => {
@@ -213,6 +281,14 @@
       // se actualiza en su lugar (no con outerHTML): el botón conserva el foco de quien lo pulsó con el teclado
       b.dataset.on = String(on);
       b.innerHTML = pinLabel(b.dataset.branch, on);
+    });
+  }
+
+  /** Conecta «Ocultar» y «Solo esta» de un tooltip con la acción de la app: (nombre, 'hide' | 'solo'). */
+  function wireViewButtons(tip, onBranchView) {
+    tip.addEventListener('click', (ev) => {
+      const b = ev.target.closest('.tip-hide, .tip-solo');
+      if (b) onBranchView?.(b.dataset.branch, b.classList.contains('tip-solo') ? 'solo' : 'hide');
     });
   }
 
@@ -335,7 +411,9 @@
         if (!ev.target.closest('.node, .head')) this.unpin();
       });
       wirePinButton(this.tip, (name) => this.opts.onTogglePin?.(name));
+      wireViewButtons(this.tip, (name, how) => this.opts.onBranchView?.(name, how));
       wireDiffButton(this.tip, (sha) => this.opts.onDiff?.(sha));
+      wirePrButton(this.tip, (n) => this.opts.onPrView?.(n));
       this.bindGroups();
       this.bindKeys();
       this.bindMini();
@@ -483,6 +561,19 @@
         if (!it) return;
         ev.stopPropagation();
         if (!it.data.ghost) this.focusBranch(it.data.name);
+      });
+      this.gLegend.addEventListener('keydown', (ev) => {
+        const it = row(ev);
+        if (!it || it.data.ghost || (ev.key !== 'Enter' && ev.key !== ' ')) return;
+        ev.preventDefault();
+        this.focusBranch(it.data.name);
+      });
+      this.gLegend.addEventListener('focusin', (ev) => {
+        const chain = row(ev)?.data.chain;
+        if (chain) this.highlight(chain);
+      });
+      this.gLegend.addEventListener('focusout', (ev) => {
+        if (row(ev)) this.highlight(null);
       });
     }
 
@@ -847,8 +938,29 @@
       }
     }
 
+    /** Columnas de autor y fecha: «Autor · fecha» en diagonal junto al commit; con poco zoom no caben y se callan. */
+    paintMeta(it) {
+      const on = this.columns && this.geo && this.geo.S >= 22;
+      if (!on) {
+        if (it.meta) (it.meta.remove(), (it.meta = it.metaKey = null));
+        return;
+      }
+      const text = GB.search.columnText(it.data.commit, U.fmtDate, tr('author.unknown'));
+      if (it.metaKey === text) return;
+      it.metaKey = text;
+      if (!it.meta) it.meta = mk('text', { class: 'node-meta', x: 7, y: 15, transform: 'rotate(38 7 15)', 'aria-hidden': 'true' }, it.el);
+      it.meta.textContent = U.truncate(text, 34);
+    }
+
+    /** Interruptor de las columnas de autor y fecha (se guarda aparte, para todos los repos). */
+    setColumns(on) {
+      this.columns = !!on;
+      this.relabel();
+    }
+
     paintNode(it) {
       this.paintRefs(it);
+      this.paintMeta(it);
       const cls = it.cls + (it.el.classList.contains('enter') ? ' enter' : '') + (it.el.classList.contains('hl') ? ' hl' : '') + (it.data.sha === this.selSha ? ' sel' : '') + (this.pathSet && !this.pathSet.has(it.data.sha) ? ' pfx' : '') + this.cmpClass(it.data.sha);
       if (it.el.getAttribute('class') !== cls) it.el.setAttribute('class', cls);
     }
@@ -946,7 +1058,16 @@
       if (it.key === key) return;
       it.key = key;
       g.textContent = '';
-      mk('rect', { class: 'l-bg', x: 0, y: -10, height: 20, rx: 10, width: this.legendW }, g);
+      if (r.ghost) {
+        g.removeAttribute('tabindex');
+        g.removeAttribute('role');
+        g.removeAttribute('aria-label');
+      } else {
+        g.setAttribute('tabindex', '0');
+        g.setAttribute('role', 'button');
+        g.setAttribute('aria-label', tr('branch.aria', { name: r.name }));
+      }
+      mk('rect', { class: 'l-bg', x: 0, y: -12, height: 24, rx: 12, width: this.legendW }, g);
       mk('circle', { class: 'l-dot', cx: 10, cy: 0, r: 3.5 }, g);
       const t = mk('text', { class: 'l-name', x: 19, y: 0, dy: '0.35em' }, g);
       t.textContent = fitText(name, SMALL_FONT, this.legendW - 26);
@@ -976,6 +1097,7 @@
       }
       for (const d of this.days.values()) (d.text = null), this.dayLabel(d);
       for (const it of this.ghostLabels.values()) it.fit = null;
+      for (const it of this.nodes.values()) it.metaKey = null; // la fecha cambia con el idioma
       this.requestDraw();
     }
 
@@ -1032,6 +1154,7 @@
         const vis = it.px > -M && it.px < this.W + M && it.py > -M && it.py < VH + M;
         this.show(it, vis, this.makeNode);
         if (vis) it.el.setAttribute('transform', `translate(${r1(it.px)},${r1(it.py)})`);
+        if (vis && this.columns) this.paintMeta(it); // el zoom decide si caben
       }
 
       for (const it of this.edges.values()) {
@@ -1917,5 +2040,5 @@
   }
 
   GB.Graph = Graph;
-  GB.graphShared = { tipHTML, wirePinButton, wireDiffButton, focusTip, returnFocus, measure, fitText, prRef, prKey, CI_MARK, ciText, LABEL_FONT, SMALL_FONT };
+  GB.graphShared = { tipHTML, wirePinButton, wireViewButtons, wireDiffButton, wirePrButton, prBodyHTML, focusTip, returnFocus, measure, fitText, prRef, prKey, CI_MARK, ciText, LABEL_FONT, SMALL_FONT };
 })(window.GB);

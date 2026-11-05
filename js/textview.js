@@ -10,6 +10,7 @@
   const DAY = 864e5;
   // una rama quieta: los mismos 30 días de las ramas olvidadas de la salud (js/health.js); los textos de 'textview.quiet' dicen 30
   const QUIET_DAYS = 30;
+  const FRESH_DAYS = 7; // una rama creada en los últimos 7 días se dice nueva (los textos de 'textview.fresh' dicen 7)
 
   const at = (x) => (typeof x === 'number' ? x : Date.parse(x) || 0);
 
@@ -23,8 +24,8 @@
   }
 
   /** Ramas (la por defecto primero, luego las más movidas) con sus últimos commits, del más nuevo al más viejo.
-      `quiet`: la rama no tuvo actividad en más de QUIET_DAYS días hasta `now`. */
-  function build(data, { perBranch = PER_BRANCH, maxBranches = MAX_BRANCHES, paths = null, releases = null, withForks = false, now = Date.now() } = {}) {
+      `quiet`: la rama no tuvo actividad en más de QUIET_DAYS días hasta `now`; `fresh`: la rama (no la por defecto) está en el Set `fresh` de `freshBranches`. */
+  function build(data, { perBranch = PER_BRANCH, maxBranches = MAX_BRANCHES, paths = null, releases = null, fresh = null, withForks = false, now = Date.now() } = {}) {
     const marks = new Map(); // sha -> [tag]
     if (data.tags) for (const [sha, names] of data.tags) marks.set(sha, [...names]);
     const relTags = releases?.tags || new Set();
@@ -34,6 +35,15 @@
       .filter((b) => b.sha && data.commits.has(b.sha))
       .sort((a, b) => (b.isDefault || b.name === def) - (a.isDefault || a.name === def) || (b.movedAt || 0) - (a.movedAt || 0) || (a.name < b.name ? -1 : 1));
     const total = list.length;
+    // lo ya fusionado en la por defecto: lo alcanzable desde su punta por cualquier padre, con lo cargado (un squash no deja rastro)
+    const defTip = list.find((b) => b.isDefault || b.name === def)?.sha;
+    const inDef = new Set();
+    for (const stack = defTip ? [defTip] : []; stack.length;) {
+      const sha = stack.pop();
+      if (inDef.has(sha) || !data.commits.has(sha)) continue;
+      inDef.add(sha);
+      for (const p of data.commits.get(sha).parents || []) stack.push(p);
+    }
     // PRs abiertos ya cargados por rama (los de forks no cuentan: su rama no es de este repo)
     const open = new Map();
     for (const p of data.pulls?.values?.() || []) if (p && p.sameRepo && p.head) open.set(p.head, (open.get(p.head) || 0) + 1);
@@ -68,7 +78,10 @@
       // hoy desde un commit viejo no está quieta); con el filtro por ruta cuenta igual la punta, no el último commit que la tocó
       const last = Math.max(at(data.commits.get(b.sha)?.date), at(b.movedAt));
       const quiet = last > 0 && now - last > QUIET_DAYS * DAY;
-      return { name: b.name, isDefault: !!(b.isDefault || b.name === def), prs: open.get(b.name) || 0, quiet, commits };
+      const isDefault = !!(b.isDefault || b.name === def);
+      // fusionada: su punta ya está en la por defecto y no es la misma punta (una rama recién creada no es una fusionada)
+      const merged = !isDefault && inDef.has(b.sha) && b.sha !== defTip;
+      return { name: b.name, isDefault, prs: open.get(b.name) || 0, quiet, merged, ciFailing: data.ci?.get?.(b.name) === 'failure', fresh: !isDefault && !!fresh?.has(b.name), commits };
     }).filter((b) => !paths || b.commits.length);
     return { total, branches: rows, forks: withForks ? forks(data) : { total: 0, rows: [] } };
   }
@@ -84,6 +97,16 @@
       if (tag && a.sha) shas.set(a.sha, tag);
     }
     return { tags, shas };
+  }
+
+  /** Los nombres de las ramas creadas en los últimos FRESH_DAYS días según los eventos ya cargados (`branch-create`); sin hora o en el futuro no cuentan. */
+  function freshBranches(acts, now = Date.now()) {
+    const names = new Set();
+    for (const a of acts || []) {
+      if (!a || a.kind !== 'branch-create' || !a.branch || !(a.time > 0)) continue;
+      if (a.time <= now && now - a.time <= FRESH_DAYS * DAY) names.add(String(a.branch));
+    }
+    return names;
   }
 
   /** Qué hay de nuevo en `tree` frente a lo ya leído (`seen`: { branches:Set, shas:Set }): ramas y commits sin repetir. */
@@ -115,23 +138,45 @@
     return shas.size;
   }
 
-  /** Lo que dice la vista de los filtros activos: `scope` = { author, shown, total, path, count }. Vacío sin filtros. */
+  /** Lo que dice la vista de los filtros activos: `scope` = { author, shown, total, branches: { shown, total }, path, count }. Vacío sin filtros. */
   function scopeText(scope, text) {
     if (!scope) return '';
     const out = [];
     if (scope.author) out.push(text('textview.scopeAuthor', { author: scope.author, shown: scope.shown, total: scope.total }));
+    if (scope.branches) out.push(text('branchview.status', { n: scope.branches.shown, total: scope.branches.total }));
     if (scope.path) out.push(text('textview.scopePath', { path: scope.path, n: scope.count }));
     return out.join('. ');
   }
 
+  /** Qué pide una tecla sobre una rama: H la oculta, S la deja sola, A vuelve a ver todas; con Ctrl, Alt o Meta (atajos del navegador), nada. */
+  function viewAction(ev) {
+    if (!ev || ev.ctrlKey || ev.altKey || ev.metaKey) return null;
+    const k = String(ev.key || '').toLowerCase();
+    return k === 'h' ? 'hide' : k === 's' ? 'solo' : k === 'a' ? 'all' : null;
+  }
+
+  /** Lo que dice la vista tras ocultar o dejar sola una rama: `solo` es la rama que quedó sola ('' si ya no hay ninguna). */
+  function viewNote(how, name, solo, text) {
+    if (how === 'hide') return text('textview.hidden', { name });
+    if (how === 'all') return text('branchview.reset');
+    return solo === name ? text('textview.soloed', { name }) : text('branchview.reset');
+  }
+
   /** Monta el árbol en `root`. `text(key, params)`: traductor; `onGo({ branch, sha })`: Enter sobre un nodo.
-      Teclado: ↑ ↓ recorren lo visible, → abre o baja al primer hijo, ← cierra o sube al padre, Inicio y Fin. */
-  function mount(root, { text, ago, onGo, filterInput, live, scopeEl }) {
+      `onView(name, how)` (how: 'hide' | 'solo') y `canHide()`: ocultar una rama o dejarla sola desde aquí (H y S, o sus botones);
+      la rama por defecto no se oculta. `onReset()` (tecla A o el botón `showAllEl`, visibles solo con ramas ocultas): vuelve a ver todas. Teclado: ↑ ↓ recorren lo visible, → abre o baja al primer hijo, ← cierra o sube al padre, Inicio y Fin. */
+  function mount(root, { text, ago, onGo, onView, canHide, filterInput, live, scopeEl, showAllEl, onReset }) {
+    const hideOk = (b) => !!onView && !b.isDefault && (!canHide || canHide());
     const seen = { branches: new Set(), shas: new Set() };
     const open = new Set(); // ramas abiertas
     let tree = { total: 0, branches: [] };
     let query = '';
     let timer = 0;
+    let viewOn = false; // hay ramas ocultas o «solo una» en el grafo: lo dice el `scope` que llega con el árbol
+    const syncAll = (scope) => {
+      viewOn = !!scope?.branches;
+      if (showAllEl) showAllEl.hidden = !viewOn || !onReset;
+    };
     const say = (msg) => {
       if (live) live.textContent = msg;
     };
@@ -179,18 +224,33 @@
       const ul = mk('ul', 'tv-tree');
       ul.setAttribute('role', 'tree');
       ul.setAttribute('aria-label', text('textview.title'));
+      ul.setAttribute('aria-describedby', 'textview-help'); // las teclas del árbol se leen al entrar en él (en un div sin rol se ignoraba)
       shown.forEach((b, i) => {
         const li = mk('li', 'tv-branch');
         li.setAttribute('role', 'treeitem');
         li.setAttribute('aria-expanded', open.has(b.name) ? 'true' : 'false');
-        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}${b.quiet ? ', ' + text('textview.quiet') : ''}, ${text('textview.shown', { n: b.commits.length })}`);
+        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}${b.fresh ? ', ' + text('textview.fresh') : ''}${b.quiet ? ', ' + text('textview.quiet') : ''}${b.merged ? ', ' + text('textview.merged') : ''}${b.ciFailing ? ', ' + text('textview.ciFailing') : ''}, ${text('textview.shown', { n: b.commits.length })}`);
         li.tabIndex = i === 0 ? 0 : -1;
         li.dataset.branch = b.name;
         const head = mk('span', 'tv-head');
         head.appendChild(mk('span', 'tv-name', b.name));
         if (b.isDefault) head.appendChild(mk('span', 'tv-tag', text('textview.default')));
         if (b.prs) head.appendChild(mk('span', 'tv-tag', text('textview.prs', { n: b.prs })));
+        if (b.fresh) head.appendChild(mk('span', 'tv-tag', text('textview.fresh')));
         if (b.quiet) head.appendChild(mk('span', 'tv-tag', text('textview.quiet')));
+        if (b.merged) head.appendChild(mk('span', 'tv-tag', text('textview.merged')));
+        if (b.ciFailing) head.appendChild(mk('span', 'tv-tag tv-ci-fail', '✗ ' + text('textview.ciFailing')));
+        if (hideOk(b)) {
+          for (const [how, glyph] of [['hide', '⊘'], ['solo', '◎']]) {
+            const btn = mk('button', 'tv-act', glyph);
+            btn.type = 'button';
+            btn.tabIndex = -1;
+            btn.dataset.act = how;
+            btn.setAttribute('aria-label', text(how === 'hide' ? 'textview.hideBranch' : 'textview.soloBranch', { name: b.name }));
+            btn.title = btn.getAttribute('aria-label');
+            head.appendChild(btn);
+          }
+        }
         li.appendChild(head);
         const group = mk('ul', 'tv-commits');
         group.setAttribute('role', 'group');
@@ -232,6 +292,7 @@
     /** Primera vez (al abrir): todo lo que hay cuenta como leído y solo la rama por defecto viene abierta. */
     function render(next, scope) {
       tree = next;
+      syncAll(scope);
       const note = scopeText(scope, text);
       if (scopeEl) {
         scopeEl.textContent = note;
@@ -250,17 +311,28 @@
     }
 
     /** Con el árbol abierto y datos nuevos: redibuja sin perder el foco ni lo abierto, y avisa solo de lo que no se había leído. */
-    function update(next) {
+    function update(next, scope) {
       const fresh = news(next, seen);
       const inside = root.contains(document.activeElement) ? document.activeElement.closest?.('[role="treeitem"]') : null;
       const key = inside && keyOf(inside);
+      const pos = inside ? items().indexOf(inside) : -1;
       tree = next;
+      if (scope !== undefined) syncAll(scope);
+      if (scope !== undefined && scopeEl) {
+        const note = scopeText(scope, text);
+        scopeEl.textContent = note;
+        scopeEl.hidden = !note;
+      }
       for (const b of next.branches) seen.branches.add(b.name);
       for (const c of fresh.commits) seen.shas.add(c);
       draw();
       if (key) {
         const back = [...root.querySelectorAll('[role="treeitem"]')].find((n) => keyOf(n) === key && !n.parentElement.closest('[hidden]'));
         if (back) focus(back);
+        else if (pos >= 0) {
+          const vis = items(); // la rama con el foco ya no está (se ocultó): el foco queda en el lugar que ocupaba
+          focus(vis[Math.min(pos, vis.length - 1)] || filterInput);
+        }
       }
       if (fresh.branches.length || fresh.commits.length) say(text('textview.live', { branches: fresh.branches.length, commits: fresh.commits.length }));
     }
@@ -282,6 +354,16 @@
         }
       });
     }
+    if (showAllEl) {
+      showAllEl.hidden = true;
+      showAllEl.addEventListener('click', () => {
+        if (!onReset || !viewOn) return;
+        const focusBack = document.activeElement === showAllEl;
+        onReset();
+        const first = root.querySelector('[role="treeitem"]'); // el botón se esconde: el foco pasa al árbol (o al filtro si quedó vacío)
+        if (focusBack) first ? focus(first) : filterInput?.focus();
+      });
+    }
     const branchOf = (n) => (n.classList.contains('tv-branch') ? n : n.closest('.tv-branch'));
 
     root.addEventListener('keydown', (ev) => {
@@ -290,6 +372,23 @@
       const vis = items();
       const i = vis.indexOf(n);
       const isBranch = n.classList.contains('tv-branch');
+      const how = viewAction(ev);
+      if (how === 'all') {
+        if (onReset && viewOn) {
+          onReset();
+          ev.preventDefault();
+        }
+        return;
+      }
+      if (how && onView) {
+        const b = branchOf(n);
+        const row = tree.branches.find((x) => x.name === b.dataset.branch);
+        if (row && hideOk(row)) {
+          onView(row.name, how);
+          ev.preventDefault();
+        }
+        return;
+      }
       let handled = true;
       if (ev.key === 'ArrowDown') focus(vis[Math.min(vis.length - 1, i + 1)]);
       else if (ev.key === 'ArrowUp') focus(vis[Math.max(0, i - 1)]);
@@ -310,6 +409,8 @@
       const n = ev.target.closest?.('[role="treeitem"]');
       if (!n) return;
       ev.stopPropagation();
+      const act = ev.target.closest?.('.tv-act');
+      if (act && onView) return onView(branchOf(n).dataset.branch, act.dataset.act);
       focus(n);
       if (n.classList.contains('tv-branch') && ev.target.closest('.tv-head')) setOpen(n, n.getAttribute('aria-expanded') !== 'true');
       else onGo({ branch: branchOf(n).dataset.branch, sha: n.dataset.sha || null });
@@ -325,7 +426,7 @@
       say([note, text('textview.filtered', { shown: filter(tree, q).length, total: tree.branches.length })].filter(Boolean).join('. '));
     }
 
-    return { render, update, setFilter };
+    return { render, update, setFilter, say };
   }
 
   /** ¿Pide la URL abrir la vista de texto (?vista=texto o ?view=text)? Con ?path= y ?q= ya aplicados. */
@@ -338,5 +439,5 @@
     return is('vista', 'texto') || is('view', 'text');
   }
 
-  GB.textview = { build, forks, news, taggedCount, releasedCount, releaseMarks, filter, scopeText, mount, openParam, PER_BRANCH, MAX_BRANCHES, MAX_FORKS, QUIET_DAYS };
+  GB.textview = { build, forks, news, taggedCount, releasedCount, releaseMarks, freshBranches, filter, scopeText, viewAction, viewNote, mount, openParam, PER_BRANCH, MAX_BRANCHES, MAX_FORKS, QUIET_DAYS };
 })((window.GB = window.GB || {}));

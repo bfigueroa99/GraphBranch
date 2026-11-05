@@ -264,7 +264,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Resumen de la semana: commits por día | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 97 |
 | Vista de texto: ramas quietas | Público | 1×2/2 | 1,0 | (accesibilidad) | hecho en #195 |
 | Capa para streaming, octava entrega | Plataformas | 1×2/1 | 2,0 | Capas para OBS | ítem 99 |
-| Salud del repo: tendencia de ramas nuevas | Análisis | 1×2/2 | 1,0 | DORA | ítem 100 |
+| Salud del repo: tendencia de ramas nuevas | Análisis | 1×2/2 | 1,0 | DORA | hecho en #223 |
 | Práctica: reset --mixed y reflog | Público | 2×2/2 | 2,0 | git-sim | ítem 101 |
 | Constelación: filtrar por nombre en la URL | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 102 |
 | Resumen de la semana: ramas nuevas | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 103 |
@@ -278,13 +278,31 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Ocultar una rama o dejarla sola | Análisis | 2×2/2 | 2,0 | Replica (GitKraken) | ítem 110 |
 | Primer padre en el grafo | Análisis | 2×2/2 | 2,0 | Replica (reseñas) | ítem 111 |
 | Vista de un PR: descripción y comentarios | Datos | 2×2/2 | 2,0 | Replica (GitKraken) | ítem 112 |
-| Resaltar una rama al pasar el puntero | Análisis | 2×1/1 | 2,0 | Replica (GitKraken) | candidata |
-| Paleta de comandos | Público | 2×2/2 | 2,0 | Replica (GitKraken) | candidata |
-| Blame de un archivo | Datos | 2×2/3 | 1,3 | Replica (GitKraken) | candidata |
-| Varias cuentas del mismo servicio | Fuentes | 1×2/2 | 1,0 | Replica (reseñas) | candidata |
-| Columnas de autor y fecha en el grafo 2D | Análisis | 1×2/2 | 1,0 | Replica (GitKraken) | candidata |
-| Alias de las pestañas | Escala | 1×1/1 | 1,0 | Replica (GitKraken) | candidata |
-| Issues de Jira y Trello | Fuentes | 1×2/3 | 0,7 | Replica (GitKraken) | candidata |
+| Resaltar una rama al pasar el puntero | Análisis | 2×1/1 | 2,0 | Replica (GitKraken) | ítem 127 |
+| Paleta de comandos | Público | 2×2/2 | 2,0 | Replica (GitKraken) | ítem 128 |
+| Blame de un archivo | Datos | 2×2/3 | 1,3 | Replica (GitKraken) | ítem 130 |
+| Varias cuentas del mismo servicio | Fuentes | 1×2/2 | 1,0 | Replica (reseñas) | ítem 126 |
+| Columnas de autor y fecha en el grafo 2D | Análisis | 1×2/2 | 1,0 | Replica (GitKraken) | ítem 129 |
+| Alias de las pestañas | Escala | 1×1/1 | 1,0 | Replica (GitKraken) | ítem 125 |
+| Issues de Jira y Trello | Fuentes | 1×2/3 | 0,7 | Replica (GitKraken) | ítem 131 |
+| Resumen de la semana de la organización: ramas nuevas | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 133 |
+| Resumen de la semana de la organización: PRs abiertos | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 143 |
+| Resumen de la semana de la organización: autores nuevos | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 144 |
+| Salud del repo: tendencia de tags | Análisis | 1×2/2 | 1,0 | DORA | ítem 145 |
+| Vista de texto: ramas sin PR | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 146 |
+| Constelación: ordenar por ramas nuevas | Escala | 1×2/2 | 1,0 | Red de ramas de GitHub | ítem 147 |
+| Práctica: restore --staged y clean | Público | 1×2/2 | 1,0 | git-sim | ítem 148 |
+| Salud del repo: tendencia de releases | Análisis | 1×2/2 | 1,0 | DORA | ítem 134 |
+| Vista de texto: ramas nuevas | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 135 |
+| Resumen de la semana de la organización: rama más activa | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 136 |
+| Salud del repo: tendencia de issues abiertos | Análisis | 1×2/2 | 1,0 | DORA | ítem 137 |
+| Constelación: solo los repos con actividad reciente, en la URL | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 138 |
+| Vista de texto: ver todas las ramas desde la vista | Público | 1×2/1 | 2,0 | (ítem 110) | ítem 138 |
+| Vista de texto: CI de cada rama | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 139 |
+| Vista de texto: autor de la punta de cada rama | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 140 |
+| Salud del repo: tendencia de PRs fusionados | Análisis | 1×2/2 | 1,0 | DORA | ítem 141 |
+| Resumen de la semana: PRs fusionados por autor | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 142 |
+| Constelación: ordenar por PRs abiertos | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 143 |
 
 ## Públicos
 

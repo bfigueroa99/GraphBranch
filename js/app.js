@@ -54,6 +54,10 @@
     healthBtn: $('#health-btn'),
     health: $('#health'),
     healthBody: $('#health-body'),
+    agentsBtn: $('#agents-btn'),
+    agents: $('#agents'),
+    agentsBody: $('#agents-body'),
+    agentsOnly: $('#agents-only'),
     stBit: $('#st-bitacora'),
     stBitLabel: $('#st-bitacora-label'),
     stBitScore: $('#st-bitacora-score'),
@@ -71,6 +75,9 @@
     btCloseHelp: $('#bt-close-help'),
     btOutText: $('#bt-out-text'),
     btUndo: $('#bt-undo'),
+    prview: $('#prview'),
+    prviewBody: $('#prview-body'),
+    prviewTitle: $('#prview-title'),
     textview: $('#textview'),
     textviewBody: $('#textview-body'),
     textviewFilter: $('#textview-filter'),
@@ -139,10 +146,16 @@
     bitbucketTokenInput: $('#bitbucket-token-input'),
     bitbucketTokenToggle: $('#bitbucket-token-toggle'),
     bitbucketTokenWhere: $('#bitbucket-token-where'),
+    azureTokenInput: $('#azure-token-input'),
+    azureTokenToggle: $('#azure-token-toggle'),
+    azureTokenWhere: $('#azure-token-where'),
     bbdcTokenField: $('#bbdc-token-field'),
     bbdcTokenInput: $('#bbdc-token-input'),
     bbdcTokenToggle: $('#bbdc-token-toggle'),
     bbdcTokenWhere: $('#bbdc-token-where'),
+    token2Owner: $('#token2-owner'),
+    token2Input: $('#token2-input'),
+    token2Toggle: $('#token2-toggle'),
     hooksBox: $('#hooks-box'),
     hooksList: $('#hooks-list'),
     depth: $('#depth'),
@@ -197,14 +210,19 @@
   })();
   U.bitbucketBase = BITBUCKET_URL;
   const EMBED = document.documentElement.classList.contains('embed'); // ?embed=1, ver i18n.js
+  const embedBranch = EMBED ? GB.embedOptions(location.search)?.branch || '' : ''; // &branch=nombre: solo esa rama y la por defecto
+  const embedPr = EMBED ? !!GB.embedOptions(location.search)?.pr : false; // &pr=1: solo las ramas con un PR abierto
   const embedMax = EMBED ? GB.embedOptions(location.search)?.max || 0 : 0; // &max=N: tope de ramas de la capa
   const settings = {
     token: desktop ? '' : U.secret.get('token', ''),
     gitlabToken: desktop ? '' : U.secret.get('gitlabToken', ''),
     codebergToken: desktop ? '' : U.secret.get('codebergToken', ''),
     bitbucketToken: desktop ? '' : U.secret.get('bitbucketToken', ''),
+    azureToken: desktop ? '' : U.secret.get('azureToken', ''),
     // el de un Bitbucket propio, aparte y atado a su dirección: si ?bitbucket= es otro, no se usa (ni se pisa hasta guardar Ajustes)
     bbdcToken: desktop ? '' : GB.BitbucketServerSource.unpack(U.secret.get('bbdcToken', ''), BITBUCKET_URL),
+    // la segunda cuenta de GitHub: un token atado a un dueño u organización, solo para sus repos
+    account2: desktop ? { owner: '', token: '' } : GB.GitHubSource.unpack2(U.secret.get('account2', '')),
     depth: U.store.get('depth', 40),
     marks: U.store.get('marks', true) !== false, // tags y entornos de despliegue (2 consultas más por repo de GitHub)
   };
@@ -234,7 +252,9 @@
   const graph2d = new GB.Graph(el.graph, {
     onFollowChange: (v) => graph === graph2d && followUI(v),
     onTogglePin: (name) => togglePin(name),
+    onBranchView: (name, how) => onBranchView(name, how),
     onDiff: (sha) => openDiff(sha),
+    onPrView: (n) => active.source.prDetail(n),
     diffing: () => diffView.isOpen,
   });
   let graph3d = null;
@@ -243,7 +263,9 @@
       graph3d = new GB.Graph3D(el.graph3d, {
         onFollowChange: (v) => graph === graph3d && followUI(v),
         onTogglePin: (name) => togglePin(name),
+        onBranchView: (name, how) => onBranchView(name, how),
         onDiff: (sha) => openDiff(sha),
+        onPrView: (n) => active.source.prDetail(n),
         diffing: () => diffView.isOpen,
         onFlightChange: (on) => setPressed(el.flyBtn, on),
         // zumbido del motor mientras se vuela (solo con el sonido activado)
@@ -369,6 +391,13 @@
     onWide: (on) => el.main.classList.toggle('diff-wide', on && diffView.isOpen),
     canEdit: () => canEditTab(diffTab || active),
     onEdit: (path, sha) => openEditor(diffTab || active, path, { sha }),
+    // el filtro por ruta es del repo a la vista: no existe en la vista conjunta ni en una fuente que no lo sepa
+    canHistory: () => !allOn && typeof source?.commitsByPath === 'function' && diffSrc() === source,
+    onHistory: (path) => fileHistory(path),
+    // «Quién lo tocó»: los últimos commits del archivo desde ese commit, de la fuente del diff
+    canBlame: () => typeof diffSrc()?.fileLog === 'function',
+    fileLog: (path, sha) => diffSrc().fileLog(path, sha),
+    fileBlame: (path, sha) => (typeof diffSrc()?.fileBlame === 'function' ? diffSrc().fileBlame(path, sha) : null),
     onClose: () => {
       el.main.classList.remove('diffing', 'diff-wide');
       selectCommit(null);
@@ -419,7 +448,7 @@
   /** ¿Se pueden editar los archivos de este repo? (GitHub, GitLab, Codeberg y la demo; no la práctica ni la capa embebida) */
   const canEditTab = (tab) => !!tab?.source?.canEdit?.() && !EMBED && !tab.source.data.repo.practice;
   /** El campo de Ajustes del token que escribe en el servicio de ese repo. */
-  const tokenFieldOf = (tab) => ({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput })[tab?.source?.host] || el.tokenInput;
+  const tokenFieldOf = (tab) => ({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput, azure: el.azureTokenInput })[tab?.source?.host] || el.tokenInput;
   const editor = GB.editor.mount($('#editor'), {
     text: (k, p) => t(k, p),
     num: (n) => U.fmtNum(n),
@@ -466,9 +495,9 @@
   const STAGGER = 700; // los repos que arrancan juntos, escalonados: GitHub no recibe todo a la vez
   /** Clave de un repo (de su fuente o de { owner, name }): con ella se guarda lo suyo (fijadas, filtro, logros). */
   /** Los proyectos de GitLab llevan "gitlab:" delante (en la clave, en lo que se guarda y en la URL). */
-  const hostPrefix = (src) => (src.host === 'gitlab' ? 'gitlab:' : src.host === 'codeberg' ? 'codeberg:' : src.host === 'forgejo' ? 'forgejo:' : src.host === 'bitbucket' ? 'bitbucket:' : src.host === 'bitbucketdc' ? 'bitbucketdc:' : src.host === 'local' ? 'local:' : '');
+  const hostPrefix = (src) => (src.host === 'gitlab' ? 'gitlab:' : src.host === 'codeberg' ? 'codeberg:' : src.host === 'forgejo' ? 'forgejo:' : src.host === 'bitbucket' ? 'bitbucket:' : src.host === 'bitbucketdc' ? 'bitbucketdc:' : src.host === 'azure' ? 'azure:' : src.host === 'local' ? 'local:' : '');
   /** Los servicios que no son GitHub, con el nombre que lleva su etiqueta. */
-  const FORGES = { gitlab: 'GitLab', codeberg: 'Codeberg', forgejo: 'Forgejo', bitbucket: 'Bitbucket', bitbucketdc: 'Bitbucket' };
+  const FORGES = { gitlab: 'GitLab', codeberg: 'Codeberg', forgejo: 'Forgejo', bitbucket: 'Bitbucket', bitbucketdc: 'Bitbucket', azure: 'Azure DevOps' };
   /** Las claves de un GitLab propio llevan su host: lo guardado de `grupo/proyecto` en gitlab.com no se mezcla con el suyo. */
   const keyPrefix = (src) =>
     src.host === 'gitlab' && GITLAB_URL ? `gitlab@${new URL(GITLAB_URL).host}:` : src.host === 'forgejo' && FORGE_URL ? `forgejo@${new URL(FORGE_URL).host}:` : src.host === 'bitbucketdc' && BITBUCKET_URL ? `bitbucketdc@${new URL(BITBUCKET_URL).host}:` : hostPrefix(src);
@@ -487,17 +516,19 @@
     const key = keyOf({ host, owner, name });
     const remembered = { depth: settings.depth, marks: settings.marks, filter: U.store.get('filter:' + key, ''), pins: U.store.get('pins:' + key, []) };
     if (host === 'local') return new GB.LocalGitSource({ id: owner, name, ...remembered });
+    if (host === 'azure') return new GB.AzureSource({ owner, name, token: settings.azureToken, ...remembered });
     if (host === 'bitbucketdc') return new GB.BitbucketServerSource({ owner, name, webUrl: BITBUCKET_URL, serverToken: settings.bbdcToken, ...remembered });
     if (host === 'bitbucket') return new GB.BitbucketSource({ owner, name, token: settings.bitbucketToken, ...remembered });
     if (host === 'codeberg') return new GB.CodebergSource({ owner, name, token: settings.codebergToken, ...remembered });
     if (host === 'forgejo') return new GB.CodebergSource({ owner, name, webUrl: FORGE_URL, avatars: desktop, ...remembered });
     if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, webUrl: GITLAB_URL, avatars: desktop, ...remembered });
-    return new GB.GitHubSource({ owner, name, token: settings.token, apiUrl: API_URL, ...remembered });
+    return new GB.GitHubSource({ owner, name, token: GB.GitHubSource.tokenFor(owner, settings.token, settings.account2), apiUrl: API_URL, ...remembered });
   }
 
   /** Suma una pestaña al final, con su fuente, sin mostrarla ni arrancarla. */
   function addTab(src) {
-    const tab = { key: keyOf(src), demo: !!src.data.repo.demo, source: null, layout: null, game: null, unread: 0, status: null, el: null, startTimer: 0 };
+    const tab = { key: keyOf(src), demo: !!src.data.repo.demo, alias: '', source: null, layout: null, game: null, unread: 0, status: null, el: null, startTimer: 0 };
+    if (!tab.demo) tab.alias = U.cleanAlias(U.store.get('alias:' + tab.key, '')); // el alias es de este navegador, por repo
     tab.game = new GB.Game(gameHooks(tab));
     tab.game.load(tab.key); // cada repo tiene sus logros, su nivel y su misión
     setSource(tab, src);
@@ -591,6 +622,14 @@
     authorFilter = initialAuthor || U.store.get('author:' + tab.key, ''); // ?author=ana manda sobre lo guardado, solo al abrir
     initialAuthor = '';
     setUrlParam('author', authorFilter);
+    firstParentOn = initialFirstParent ?? U.store.get('firstparent:' + tab.key, false) === true; // ?firstparent=1 manda sobre lo guardado, solo al abrir
+    initialFirstParent = null;
+    setUrlParam('firstparent', firstParentOn ? '1' : '');
+    $('#graph-firstparent').checked = firstParentOn;
+    branchView = initialBranchView || loadBranchView(tab.key); // la URL manda sobre lo guardado, solo al abrir
+    if (initialBranchView) U.store.set('bview:' + tab.key, branchView);
+    initialBranchView = null;
+    setBranchViewUrl();
     syncFiltered();
     layout = tab.layout;
     game = tab.game;
@@ -629,6 +668,7 @@
       feed.setDefaultBranch(data.repo.defaultBranch);
       renderSummary(data, L);
       if (initialText && L.nodes.length) startUrlText();
+      if (initialPr && L.nodes.length) startUrlPr();
       if (initialQuery && L.nodes.length) startUrlQuery();
       if (initialPath && L.nodes.length) startUrlPath(); // la demo y los repos ya cargados no pasan por onUpdate
       if (initialConflicts && L.nodes.length) startUrlConflicts();
@@ -683,7 +723,7 @@
     if (!refresh) el.repoForm.setAttribute('aria-busy', 'true');
     let list;
     try {
-      list = await GB.GitHubSource.ownerRepos(owner, { token: settings.token, apiUrl: API_URL });
+      list = await GB.GitHubSource.ownerRepos(owner, { token: GB.GitHubSource.tokenFor(owner, settings.token, settings.account2), apiUrl: API_URL });
     } catch (err) {
       return refresh ? undefined : repoNote(i18n.text(err.msg || err.message));
     } finally {
@@ -765,8 +805,9 @@
     if (paused || document.hidden || EMBED) return;
     for (const owner of Object.keys(followedOwners)) {
       let entry = orgFeeds.get(owner);
-      if (!entry || entry.token !== settings.token) {
-        entry = { token: settings.token, feed: GB.GitHubSource.orgFeed(owner, { token: settings.token, apiUrl: API_URL }), first: true };
+      const tk = GB.GitHubSource.tokenFor(owner, settings.token, settings.account2);
+      if (!entry || entry.token !== tk) {
+        entry = { token: tk, feed: GB.GitHubSource.orgFeed(owner, { token: tk, apiUrl: API_URL }), first: true };
         orgFeeds.set(owner, entry);
       }
       let acts;
@@ -791,7 +832,7 @@
   function pruneOwners() {
     let changed = false;
     for (const owner of Object.keys(followedOwners)) {
-      const has = realTabs().some((x) => !['gitlab', 'codeberg', 'forgejo', 'bitbucket', 'bitbucketdc', 'local'].includes(x.source.host) && String(x.source.owner).toLowerCase() === owner.toLowerCase());
+      const has = realTabs().some((x) => !['gitlab', 'codeberg', 'forgejo', 'bitbucket', 'bitbucketdc', 'azure', 'local'].includes(x.source.host) && String(x.source.owner).toLowerCase() === owner.toLowerCase());
       if (!has) {
         delete followedOwners[owner];
         orgFeeds.delete(owner);
@@ -927,7 +968,61 @@
       </button><button type="button" class="rt-close">${GB.Feed.icon('close')}</button>`;
     node.querySelector('.rt-main').addEventListener('click', () => openTab(tab));
     node.querySelector('.rt-close').addEventListener('click', () => closeTab(tab));
+    const main = node.querySelector('.rt-main');
+    main.addEventListener('dblclick', () => renameTab(tab));
+    main.addEventListener('keydown', (ev) => {
+      if (ev.key === 'F2' && !ev.altKey && !ev.ctrlKey && !ev.metaKey) {
+        ev.preventDefault();
+        renameTab(tab);
+      }
+    });
     return node;
+  }
+
+  /** Renombra la pestaña con un alias propio (doble clic o F2): Enter lo guarda, Esc lo deja como estaba y vacío lo quita.
+      Solo cambia lo que se ve en la pestaña; el repo, su URL y su título siguen siendo los reales. */
+  function renameTab(tab) {
+    const node = tab.el;
+    if (!node || tab.demo || node.querySelector('.rt-alias')) return;
+    const main = node.querySelector('.rt-main');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'rt-alias';
+    input.maxLength = U.ALIAS_MAX;
+    input.value = tab.alias || nameOf(tab);
+    input.setAttribute('aria-label', t('tabs.rename', { repo: nameOf(tab) }));
+    input.title = input.getAttribute('aria-label');
+    input.dir = 'auto';
+    let done = false;
+    const finish = (save) => {
+      if (done) return;
+      done = true;
+      const alias = U.cleanAlias(input.value);
+      if (save) {
+        tab.alias = alias === nameOf(tab) ? '' : alias;
+        U.store.set('alias:' + tab.key, tab.alias || null);
+      }
+      const focused = document.activeElement === input;
+      input.remove();
+      main.hidden = false;
+      renderTab(tab);
+      if (focused) main.focus({ preventScroll: true });
+    };
+    input.addEventListener('keydown', (ev) => {
+      ev.stopPropagation();
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        finish(true);
+      } else if (ev.key === 'Escape') {
+        ev.preventDefault();
+        finish(false);
+      }
+    });
+    input.addEventListener('blur', () => finish(true));
+    main.hidden = true;
+    main.after(input);
+    input.focus();
+    input.select();
   }
 
   /** Estado, nombre y novedades sin ver de una pestaña (cambia solo lo que cambió). */
@@ -936,7 +1031,7 @@
     if (!node || !tab.source) return;
     const st = tab.status?.state || 'loading';
     const name = nameOf(tab);
-    const stateText = tab.demo && st === 'live' ? t('status.demoLive') : t(STATE_TEXT[st] || 'status.loading');
+    const stateText = tab.demo && st === 'live' ? t('status.demoLive') : t(U.statusKey(tab.status) || 'status.loading');
     const n = tab.unread;
     node.dataset.state = st;
     // con la vista conjunta ninguna pestaña es «la que se ve»: se ven todas
@@ -946,11 +1041,12 @@
     const main = node.firstElementChild;
     if (shown) main.setAttribute('aria-current', 'true');
     else main.removeAttribute('aria-current');
+    const shownName = tab.alias || name;
     main.title = `${name} · ${stateText}`;
-    setText(node.querySelector('.rt-name'), name);
+    setText(node.querySelector('.rt-name'), shownName);
     setText(node.querySelector('.rt-n'), n ? (n > 99 ? '99+' : U.fmtNum(n)) : '');
     // el lector de pantalla oye el estado si no es el normal, y cuántas novedades esperan
-    const extra = [st === 'live' ? '' : stateText, n ? t('tabs.unread', { n }) : ''].filter(Boolean).join(', ');
+    const extra = [tab.alias ? name : '', st === 'live' ? '' : stateText, n ? t('tabs.unread', { n }) : ''].filter(Boolean).join(', ');
     setText(node.querySelector('.rt-sr'), extra ? `, ${extra}` : '');
     const close = node.querySelector('.rt-close');
     const label = t('tabs.close', { repo: name });
@@ -1003,6 +1099,14 @@
     canDiff: (key) => canDiffTab(tabs.find((x) => x.key === key)),
     diffing: () => diffView.isOpen,
     onStats: (list) => renderAllSum(list),
+    prsRoot: $('#all-prs'),
+    onOpenPr: (key, head) => {
+      const tab = tabs.find((x) => x.key === key);
+      if (!tab) return;
+      openTab(tab);
+      if (head) graph.focusBranch(head);
+      tab.el?.querySelector('.rt-main')?.focus({ preventScroll: true });
+    },
   });
 
   /** La etiqueta de un repo (la del encabezado y la de su tarjeta): simulación, local, privado o su servicio. */
@@ -1016,7 +1120,7 @@
       .filter((x) => x.source)
       .map((x) => {
         const st = x.status?.state || 'loading';
-        return { key: x.key, name: nameOf(x), state: st, stateText: x.demo && st === 'live' ? t('status.demoLive') : t(STATE_TEXT[st] || 'status.loading'), badge: badgeOf(x.source.data.repo), demo: x.demo };
+        return { key: x.key, name: nameOf(x), state: st, stateText: x.demo && st === 'live' ? t('status.demoLive') : t(U.statusKey(x.status) || 'status.loading'), badge: badgeOf(x.source.data.repo), demo: x.demo };
       });
   }
 
@@ -1047,6 +1151,12 @@
   function renderAllSum(list = overview.stats()) {
     const sum = GB.overview.totals(list);
     setText(el.allSum, t('all.summary', { repos: U.fmtNum(tabs.length), branches: U.fmtNum(sum.branches), prs: U.fmtNum(sum.prs) }));
+    renderAllPrs();
+  }
+
+  /** El Launchpad de la vista conjunta: los PRs abiertos de lo ya cargado en cada pestaña, por estado. */
+  function renderAllPrs() {
+    overview.setPulls(tabs.filter((x) => x.source?.data.loaded).map((x) => ({ key: x.key, name: nameOf(x), pulls: x.source.data.pulls.values() })));
   }
 
   /** Entra o sale de la vista conjunta (se recuerda y viaja en la URL, ?all=1). Con un solo repo no hay. */
@@ -1084,8 +1194,55 @@
   /* Filtro por autor: el grafo (2D, 3D) y el árbol de texto muestran solo las ramas con commits de esa persona
      (y la rama por defecto). Se guarda por repo; no hace ninguna consulta. */
   let authorFilter = '';
+  let firstParentOn = false; // el grafo solo con la cadena del primer padre de cada rama (?firstparent=1)
+  let initialFirstParent = null; // ?firstparent=1: el repo a la vista abre con el grafo de primer padre
+  let initialBranchView = null; // ?solo=rama u ?ocultar=rama: el repo a la vista abre con esas ramas quitadas del grafo
   let initialAuthor = ''; // ?author=ana: el repo a la vista abre ya filtrado por esa persona
   const authorView = (data) => GB.search.byAuthor(data, authorFilter);
+
+  /* Ramas ocultas o «solo esta» (desde la ficha de una rama): el grafo muestra menos. Se guarda por repo; la rama por
+     defecto siempre queda. Sin consultas. */
+  let branchView = { hidden: [], solo: '' };
+  const loadBranchView = (key) => {
+    const v = U.store.get('bview:' + key, null);
+    return { hidden: Array.isArray(v?.hidden) ? v.hidden.filter((n) => typeof n === 'string') : [], solo: typeof v?.solo === 'string' ? v.solo : '' };
+  };
+  const branchViewOn = () => !!(branchView.hidden.length || branchView.solo);
+  /** Lo que se dibuja: los filtros por autor y por rama, uno sobre el otro. */
+  const viewOf = (data) => {
+    const v = GB.search.byBranches(authorView(data).data, branchView);
+    return firstParentOn ? { ...v, data: GB.search.firstParent(v.data) } : v;
+  };
+  /** La dirección sigue a las ramas quitadas: ?solo=rama, o ?ocultar= una vez por rama. */
+  function setBranchViewUrl() {
+    try {
+      const url = new URL(location.href);
+      url.searchParams.delete('solo');
+      url.searchParams.delete('ocultar');
+      if (branchView.solo) url.searchParams.set('solo', branchView.solo);
+      else for (const n of branchView.hidden) url.searchParams.append('ocultar', n);
+      history.replaceState(null, '', url);
+    } catch {
+      /* algunos visores no permiten cambiar la URL */
+    }
+  }
+  function setBranchView(next) {
+    branchView = next;
+    U.store.set('bview:' + repoKey(), branchViewOn() ? next : null);
+    setBranchViewUrl();
+    syncFiltered();
+    branchViewStatus();
+    if (lastRender) {
+      const { data, L } = drawGraph(false, true);
+      renderSummary(data, L);
+    }
+  }
+  /** «Ocultar» o «Solo esta» de la ficha de `name`; repetir «Solo esta» sobre la misma vuelve a verlas todas. */
+  function onBranchView(name, how) {
+    if (how === 'solo') return setBranchView({ hidden: [], solo: branchView.solo === name ? '' : name });
+    const hidden = branchView.hidden.includes(name) ? branchView.hidden : [...branchView.hidden, name];
+    setBranchView({ hidden, solo: '' });
+  }
 
   /* `calm`: llegan ramas que esperaban su historia (la carga de a poco de un repo grande): se
      suman sin efectos de llegada, que son para lo nuevo */
@@ -1098,7 +1255,9 @@
     refs: refsBySha(data),
     pins: data.repo.demo ? new Set() : tab === active ? getPins() : new Set(U.store.get('pins:' + tab.key, [])),
     canPin: !data.repo.demo && tab === active && !allOn, // fijar una rama es del grafo de la vista
+    canHide: tab === active && !allOn, // y ocultarla o dejarla sola, también en la demo
     canDiff: canDiffTab(tab),
+    canPrView: !!tab.source.prDetail && !EMBED && tab === active && !allOn, // la vista del PR pide su descripción al pulsarla
   });
 
   /** Lo que miran los logros: el estado del repo de ahora (`L`, su layout, si está a la vista). */
@@ -1112,10 +1271,12 @@
   /** Calcula el layout del repo a la vista y dibuja el grafo (salvo durante el Replay). */
   function drawGraph(initial, calm = false) {
     const data = source.view ? source.view() : source.data;
-    const shownData = GB.search.limitBranches(authorView(data).data, embedMax); // &max=N: solo la capa embebida
+    const only = embedBranch ? GB.search.byBranches(viewOf(data).data, { solo: embedBranch }).data : viewOf(data).data; // &branch=: solo la capa embebida
+    const withPr = embedPr ? GB.search.withOpenPr(only) : only; // &pr=1: solo la capa embebida
+    const shownData = GB.search.limitBranches(withPr, embedMax); // &max=N: solo la capa embebida
     const L = layout.compute(shownData);
     lastRender = { data, L };
-    if (embedMax) document.querySelector('.graph-stage')?.setAttribute('data-embed-branches', String(L.heads.filter((h) => h.color !== 'ghost').length)); // lo que comprueba el smoke
+    if (embedMax || embedBranch || embedPr) document.querySelector('.graph-stage')?.setAttribute('data-embed-branches', String(L.heads.filter((h) => h.color !== 'ghost').length)); // lo que comprueba el smoke
     // durante el Replay el grafo muestra el pasado; lo nuevo sigue llegando al panel y se dibuja al volver
     if (!replay.active) {
       const gctx = liveCtx(shownData, initial, calm);
@@ -1147,7 +1308,7 @@
     if (news && tv.attract && replay.active) replay.stop();
     if (news) tv.lastNews = Date.now();
     const { data, L } = drawGraph(initial, calm);
-    if (el.textview.open) textview.update(textTree(authorView(data).data)); // con la vista de texto abierta, avisa de lo nuevo
+    if (el.textview.open) textview.update(textTree(viewOf(data).data)); // con la vista de texto abierta, avisa de lo nuevo
     feed.setDefaultBranch(data.repo.defaultBranch);
     feed.add(activities, { live: !initial });
     if (news) game.observe(activities, gameCtx(activities, data, L));
@@ -1163,8 +1324,11 @@
     if (el.bitacora.open) scheduleBitacora();
     if (initialBitacora && L.nodes.length) openBitacora();
     if (initialHealth && tab === active && L.nodes.length) openHealth();
+    if (el.agents.open) scheduleAgents();
+    if (initialAgents && tab === active && L.nodes.length) openAgents();
     if (initialReplay && L.nodes.length) startUrlReplay();
     if (initialText && tab === active && L.nodes.length) startUrlText();
+    if (initialPr && tab === active && L.nodes.length) startUrlPr();
     if (initialQuery && tab === active && L.nodes.length) startUrlQuery();
     if (initialPath && tab === active && L.nodes.length) startUrlPath();
     if (initialConflicts && tab === active && L.nodes.length) startUrlConflicts();
@@ -1553,7 +1717,7 @@
         .join('') || `<p class="hl-none">${U.esc(t('health.none'))}</p>`}</section>` +
       `<section class="hl-sec"><h3>${U.esc(t('health.merged'))}</h3>${
         h.merged ? `<p class="hl-line">${U.esc(t('health.mergedStat', { median: span(h.merged.median), max: span(h.merged.max) }))}</p>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
-      }${h.pace.mergeWeeks.some(Boolean) ? `<p class="hl-line" id="hl-mergeweeks">${U.esc(t('health.mergeWeeks', { n: h.pace.mergeWeeks.length, list: h.pace.mergeWeeks.join(' · ') }))}</p>` : ''}${h.pace.openedWeeks.some(Boolean) ? `<p class="hl-line" id="hl-openedweeks">${U.esc(t('health.openedWeeks', { n: h.pace.openedWeeks.length, list: h.pace.openedWeeks.join(' · ') }))}</p>` : ''}${h.pace.closedWeeks.some(Boolean) ? `<p class="hl-line" id="hl-closedweeks">${U.esc(t('health.closedWeeks', { n: h.pace.closedWeeks.length, list: h.pace.closedWeeks.join(' · ') }))}</p>` : ''}</section>` +
+      }${h.pace.mergeWeeks.some(Boolean) ? `<p class="hl-line" id="hl-mergeweeks">${U.esc(t('health.mergeWeeks', { n: h.pace.mergeWeeks.length, list: h.pace.mergeWeeks.join(' · ') }))}</p>` : ''}${h.pace.openedWeeks.some(Boolean) ? `<p class="hl-line" id="hl-openedweeks">${U.esc(t('health.openedWeeks', { n: h.pace.openedWeeks.length, list: h.pace.openedWeeks.join(' · ') }))}</p>` : ''}${h.pace.closedWeeks.some(Boolean) ? `<p class="hl-line" id="hl-closedweeks">${U.esc(t('health.closedWeeks', { n: h.pace.closedWeeks.length, list: h.pace.closedWeeks.join(' · ') }))}</p>` : ''}${h.pace.branchWeeks.some(Boolean) ? `<p class="hl-line" id="hl-branchweeks">${U.esc(t('health.branchWeeks', { n: h.pace.branchWeeks.length, list: h.pace.branchWeeks.join(' · ') }))}</p>` : ''}${h.pace.commitWeeks.some(Boolean) ? `<p class="hl-line" id="hl-commitweeks">${U.esc(t('health.commitWeeks', { n: h.pace.commitWeeks.length, list: h.pace.commitWeeks.join(' · ') }))}</p>` : ''}${h.pace.tagWeeks.some(Boolean) ? `<p class="hl-line" id="hl-tagweeks">${U.esc(t('health.tagWeeks', { n: h.pace.tagWeeks.length, list: h.pace.tagWeeks.join(' · ') }))}</p>` : ''}${h.pace.issueWeeks.some(Boolean) ? `<p class="hl-line" id="hl-issueweeks">${U.esc(t('health.issueWeeks', { n: h.pace.issueWeeks.length, list: h.pace.issueWeeks.join(' · ') }))}</p>` : ''}</section>` +
       `<section class="hl-sec" id="hl-dora"><h3>${U.esc(t('health.dora'))}</h3>${
         h.dora.deploys30 || h.dora.gap != null || h.dora.lead != null || h.dora.weeks.some(Boolean)
           ? `<p class="hl-line">${U.esc(t('health.doraFreq', { n: h.dora.deploys30, gap: h.dora.gap != null ? span(h.dora.gap) : '—' }))}</p><p class="hl-line" id="hl-weeks">${U.esc(t('health.doraWeeks', { n: h.dora.weeks.length, list: h.dora.weeks.join(' · ') }))}</p><p class="hl-line">${U.esc(h.leadSource.fromCommit ? t('health.doraLeadCommit', { median: span(h.dora.lead), n: h.leadSource.fromCommit, total: h.leadSource.total }) : t('health.doraLead', { median: h.dora.lead != null ? span(h.dora.lead) : '—' }))}</p>`
@@ -1780,7 +1944,7 @@
   const DIGEST_COLORS = { bg: '#0e1514', fg: '#e6efed', dim: '#93a5a1', accent: '#4ade80' };
   const digestLabels = () => {
     const label = (k) => t('digest.' + k);
-    return { head: label('head'), commits: label('commits'), perday: label('perday'), newcomers: label('newcomers'), merged: label('merged'), opened: label('opened'), closed: label('closed'), releases: label('releases'), tags: label('tags'), people: label('people'), branch: label('branch') };
+    return { head: label('head'), commits: label('commits'), perday: label('perday'), newcomers: label('newcomers'), newbranches: label('newbranches'), merged: label('merged'), opened: label('opened'), closed: label('closed'), releases: label('releases'), tags: label('tags'), people: label('people'), branch: label('branch') };
   };
 
   /** El resumen de la semana (js/digest.js): se arma con lo ya cargado, se copia o se baja como .md. */
@@ -1850,6 +2014,120 @@
     const btn = $('#hl-clash-go');
     if (btn && !btn.hidden && !btn.disabled) findClashes(data, btn);
   }
+
+  /* ---------- agentes e interacciones: quién trabaja con quién, entre personas y agentes (ver agents.js) ---------- */
+  const AGENTS_EVERY = 1500; // con el panel abierto, se rehace a lo más cada 1,5 s
+  const AGENTS_ROWS = 12; // filas de cada lista
+  const AG_KIND = { continued: 'agents.kind.continued', merged: 'agents.kind.merged', reviewed: 'agents.kind.reviewed', commented: 'agents.kind.commented' };
+  const AG_EVENT = { continued: 'agents.ev.continued', merged: 'agents.ev.merged', reviewed: 'agents.ev.reviewed', commented: 'agents.ev.commented' };
+  let initialAgents = false; // ?agents=1: el panel se abre solo en cuanto el repo a la vista tiene grafo
+  let agentsOnly = U.store.get('agentsOnly', false) === true; // solo los vínculos entre dos agentes
+  let agentsTimer = 0;
+  let agentsHtml = ''; // el último HTML: si no cambió, no se toca (ni el foco ni el desplazamiento)
+  const agentSession = (a) => (a?.session ? t('agents.session', { id: GB.agents.shortSession(a.session) }) : '');
+  /** Cómo se nombra a un participante: una persona, por su nombre; un agente, por su producto y su sesión, si la tiene.
+      Va aislado (FSI…PDI): dos nombres latinos en una frase en árabe no dan vuelta la flecha ni el orden. */
+  const actorName = (x) => '\u2068' + (!x ? t('author.unknown') : x.agent ? [x.agent.name, agentSession(x.agent)].filter(Boolean).join(' · ') : x.name || x.login || t('author.unknown')) + '\u2069';
+  const kindsText = (k) => Object.keys(AG_KIND).filter((x) => k[x]).map((x) => `${t(AG_KIND[x])}: ${U.fmtNum(k[x])}`).join(' · ');
+
+  function agentsMarkup() {
+    const data = source.view ? source.view() : source.data;
+    const acts = feed.items.filter((a) => a.repo === active?.key);
+    const r = GB.agents.compute(data, acts, { max: Infinity });
+    const byKey = new Map(r.actors.map((a) => [a.key, a]));
+    const both = (x) => !!(byKey.get(x.from)?.agent && byKey.get(x.to)?.agent);
+    const links = agentsOnly ? r.links.filter(both) : r.links;
+    const events = (agentsOnly ? r.events.filter(both) : r.events).slice(0, AGENTS_ROWS);
+    const agents = r.actors.filter((a) => a.agent);
+    const people = r.actors.filter((a) => !a.agent);
+    const net = GB.agents.network(r, { onlyAgents: agentsOnly });
+    const none = `<p class="hl-none">${U.esc(t('health.none'))}</p>`;
+    const stat = (label, n) => `<div class="hl-stat"><b>${U.fmtNum(n)}</b><span>${U.esc(label)}</span></div>`;
+    /** Una fila: lleva al commit `sha` en el grafo si lo hay; `extra`, algo más junto a ella (el enlace a la sesión). */
+    const row = (main, aside, sha, extra = '') => {
+      const body = `<span class="hl-main">${U.esc(main)}</span><span class="hl-aside">${U.esc(aside)}</span>`;
+      const item = sha && data.commits.has(sha) ? `<button type="button" class="hl-row" data-sha="${U.esc(sha)}" title="${U.esc(t('feed.locate'))}">${body}</button>` : `<span class="hl-row">${body}</span>`;
+      return `<li${extra ? ' class="ag-item"' : ''}>${item}${extra}</li>`;
+    };
+    const list = (rows) => (rows.length ? `<ul class="hl-list">${rows.join('')}</ul>` : none);
+    const legend = `<p class="ag-legend" aria-hidden="true"><span class="ag-key ag-key-agent"></span>${U.esc(t('agents.legendAgent'))}<span class="ag-key ag-key-person"></span>${U.esc(t('agents.legendPerson'))}</p>`;
+    const netHtml = net.nodes.length
+      ? GB.agents.svg(net, {
+          label: (n) => (n.agent ? n.agent.name : n.name || n.login || t('author.unknown')),
+          sub: (n) => (n.agent ? agentSession(n.agent) : ''),
+          title: (l) => `${t('agents.pair', { from: actorName(byKey.get(l.from)), to: actorName(byKey.get(l.to)) })}: ${kindsText(l.kinds)}`,
+          aria: t('agents.netAria', { nodes: net.nodes.length, links: net.links.length }),
+        }) + legend
+      : none;
+    const pairs = links.slice(0, AGENTS_ROWS).map((l) => row(t('agents.pair', { from: actorName(byKey.get(l.from)), to: actorName(byKey.get(l.to)) }), kindsText(l.kinds), l.sha));
+    const demo = !!data.repo?.demo;
+    const agentRows = agents.slice(0, AGENTS_ROWS).map((a) => {
+      const main = [a.agent.name, agentSession(a.agent), a.agent.model].filter(Boolean).join(' · ');
+      const aside = [t('agents.commits', { n: U.fmtNum(a.commits) }), a.last ? U.timeAgo(a.last) : ''].filter(Boolean).join(' · ');
+      const url = demo ? null : U.safeUrl(GB.agents.sessionUrl(a.agent));
+      const open = url ? `<a class="ag-open" href="${U.esc(U.safeUrl(url))}" target="_blank" rel="noopener noreferrer" title="${U.esc(t('agents.openSession'))}" aria-label="${U.esc(t('agents.openSession') + ': ' + main)}">↗</a>` : '';
+      return row(main, aside, a.sha, open);
+    });
+    const eventRows = events.map((e) =>
+      row(t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) }), [e.number != null ? `#${e.number}` : '', e.time ? U.timeAgo(e.time) : ''].filter(Boolean).join(' · '), e.sha),
+    );
+    return (
+      `<div class="hl-stats">${stat(t('agents.statAgents'), agents.length)}${stat(t('agents.statPeople'), people.length)}${stat(t('agents.statLinks'), links.reduce((n, l) => n + l.total, 0))}</div>` +
+      (agents.length ? '' : `<p class="hl-line" id="ag-noagents">${U.esc(t('agents.noAgents'))}</p>`) +
+      `<section class="hl-sec" id="ag-net"><h3>${U.esc(t('agents.network'))}</h3>${netHtml}</section>` +
+      `<section class="hl-sec" id="ag-pairs"><h3>${U.esc(t('agents.pairs'))} <span class="hl-n">${U.fmtNum(links.length)}</span></h3>${list(pairs)}</section>` +
+      `<section class="hl-sec" id="ag-list"><h3>${U.esc(t('agents.statAgents'))} <span class="hl-n">${U.fmtNum(agents.length)}</span></h3>${list(agentRows)}</section>` +
+      `<section class="hl-sec" id="ag-recent"><h3>${U.esc(t('agents.recent'))}</h3>${list(eventRows)}</section>`
+    );
+  }
+
+  /** Rehace el panel. Si nada cambió no toca el DOM; si cambió con el foco adentro, lo deja en el mismo control. */
+  function renderAgents() {
+    clearTimeout(agentsTimer);
+    agentsTimer = 0;
+    const html = agentsMarkup();
+    if (html === agentsHtml) return;
+    const focusables = () => [...el.agentsBody.querySelectorAll('button, a')];
+    const at = el.agentsBody.contains(document.activeElement) ? focusables().indexOf(document.activeElement) : -1;
+    agentsHtml = html;
+    el.agentsBody.innerHTML = html;
+    if (at >= 0) (focusables()[at] || focusables().pop() || el.agentsOnly).focus({ preventScroll: true });
+  }
+  function scheduleAgents() {
+    if (!agentsTimer) agentsTimer = setTimeout(() => el.agents.open && renderAgents(), AGENTS_EVERY);
+  }
+  function openAgents() {
+    initialAgents = false;
+    if (el.agents.open) return;
+    el.agentsOnly.checked = agentsOnly;
+    agentsHtml = '';
+    renderAgents();
+    if (typeof el.agents.showModal === 'function') el.agents.showModal();
+    else el.agents.setAttribute('open', '');
+  }
+  function closeAgents() {
+    if (typeof el.agents.close === 'function') el.agents.close();
+    else el.agents.removeAttribute('open');
+  }
+  el.agentsBtn.addEventListener('click', openAgents);
+  $('#agents-close').addEventListener('click', closeAgents);
+  el.agents.addEventListener('close', () => {
+    clearTimeout(agentsTimer);
+    agentsTimer = 0;
+    setUrlParam('agents', null);
+  });
+  el.agentsOnly.addEventListener('change', () => {
+    agentsOnly = el.agentsOnly.checked;
+    U.store.set('agentsOnly', agentsOnly || null);
+    renderAgents();
+  });
+  // cada fila lleva a su commit en el grafo (el enlace a la sesión de Claude Code abre aparte)
+  el.agentsBody.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-sha]');
+    if (!b) return;
+    closeAgents();
+    shownGraph().focusSha?.(b.dataset.sha);
+  });
 
   /* ---------- bitácora en vivo: lo que hizo el repo desde la anterior, con su nota y sus hallazgos (ver bitacora.js) ---------- */
   const BIT_EVERY = 1500; // con el panel abierto, se rehace a lo más cada 1,5 s
@@ -2088,8 +2366,20 @@
     filterInput: el.textviewFilter,
     live: el.textviewLive,
     scopeEl: $('#textview-scope'),
+    showAllEl: $('#textview-showall'),
     text: (k, p) => t(k, p),
     ago: (ms) => U.timeAgo(ms),
+    canHide: () => !allOn, // en la vista conjunta no se ocultan ramas (como en el grafo)
+    onView: (name, how) => {
+      onBranchView(name, how);
+      textview.update(textTree(viewOf(source.view ? source.view() : source.data).data), textScope());
+      textview.say(GB.textview.viewNote(how, name, branchView.solo, t));
+    },
+    onReset: () => {
+      setBranchView({ hidden: [], solo: '' });
+      textview.update(textTree(viewOf(source.view ? source.view() : source.data).data), textScope());
+      textview.say(GB.textview.viewNote('all', '', '', t));
+    },
     onGo: ({ branch, sha }) => {
       closeTextview();
       if (sha && shownGraph().focusSha) shownGraph().focusSha(sha);
@@ -2097,13 +2387,15 @@
     },
   });
   /** El árbol de `data` con los filtros de ruta y los releases que el feed dice de este repo. */
-  const textTree = (data) => GB.textview.build(data, { withForks: showForks, paths: pathShas, releases: GB.textview.releaseMarks(feed.items.filter((a) => a.repo === active?.key)) });
+  const textTree = (data) => GB.textview.build(data, { withForks: showForks, paths: pathShas, releases: GB.textview.releaseMarks(feed.items.filter((a) => a.repo === active?.key)), fresh: GB.textview.freshBranches(feed.items.filter((a) => a.repo === active?.key)) });
   /** El árbol con los filtros del grafo (autor y ruta) y una nota que los dice, también para el lector de pantalla. */
-  function openTextview() {
-    const v = authorView(source.view ? source.view() : source.data);
+  function textScope() {
+    const v = viewOf(source.view ? source.view() : source.data);
     const name = authorFilter && (GB.search.authors(source.data).find((a) => a.key === authorFilter)?.name || authorFilter);
-    const scope = authorFilter || pathShas ? { author: name, shown: v.shown, total: v.total, path: pathShas ? pathText : '', count: pathShas ? pathShas.size : 0 } : null;
-    textview.render(textTree(v.data), scope);
+    return authorFilter || pathShas || branchViewOn() || firstParentOn ? { author: name, shown: v.shown, total: v.total, branches: branchViewOn() ? { shown: v.shown, total: v.total } : null, path: pathShas ? pathText : '', count: pathShas ? pathShas.size : 0 } : null;
+  }
+  function openTextview() {
+    textview.render(textTree(viewOf(source.view ? source.view() : source.data).data), textScope());
   }
   function showTextview() {
     openTextview();
@@ -2112,6 +2404,30 @@
     el.textviewBody.querySelector('[tabindex="0"]')?.focus();
   }
   $('#textview-btn').addEventListener('click', showTextview);
+  let initialPr = 0; // ?pr=N: la vista de ese pull request (descripción y comentarios) al abrir, una vez
+  /** La vista del PR que pide la URL: una consulta (`prDetail`), en un diálogo; sin soporte de la fuente, no abre nada. */
+  async function startUrlPr() {
+    const n = initialPr;
+    const src = source;
+    initialPr = 0;
+    if (!n || !src.prDetail) return;
+    el.prviewTitle.textContent = t('prview.title', { n });
+    el.prviewBody.textContent = t('prview.busy');
+    if (typeof el.prview.showModal === 'function') el.prview.showModal();
+    else el.prview.setAttribute('open', '');
+    el.prviewBody.focus();
+    try {
+      const d = await src.prDetail(n);
+      if (src !== source || !el.prview.open) return;
+      el.prviewBody.innerHTML = GB.graphShared.prBodyHTML(d || {});
+    } catch {
+      el.prviewBody.textContent = t('prview.fail');
+    }
+  }
+  $('#prview-close').addEventListener('click', () => {
+    if (typeof el.prview.close === 'function') el.prview.close();
+    else el.prview.removeAttribute('open');
+  });
   let initialText = false; // ?vista=texto: se abre una vez, con ?path= y ?q= aplicados a la vista
   /** La vista de texto que pide la URL: espera al filtro por ruta, lo abre y escribe el ?q= en su filtro de ramas. */
   async function startUrlText() {
@@ -2144,11 +2460,21 @@
   });
   el.constellation = $('#constellation');
   try {
-    // ?order=activity|name: la constelación abre ya ordenada (sin anunciarlo: no la pidió nadie con el selector)
+    // ?order=activity|prs|name: la constelación abre ya ordenada (sin anunciarlo: no la pidió nadie con el selector)
     const order = GB.constellation.orderParam(new URLSearchParams(location.search));
     if (order) constellation.setOrder(order, false);
+    // ?constellation=texto: solo los repos cuyo nombre lo contiene
+    constellation.setFilter(GB.constellation.filterParam(new URLSearchParams(location.search)));
+    // ?recent=30: solo los repos con algún commit en los últimos 30 días
+    constellation.setRecent(GB.constellation.recentParam(new URLSearchParams(location.search)));
   } catch {
     /* sin query string */
+  }
+  /** Fecha (ms) del commit más reciente cargado, o `null` si aún no hay ninguno. */
+  function lastCommitAt(data) {
+    let last = null;
+    for (const c of data.commits?.values() || []) if (Number.isFinite(c.date) && (last === null || c.date > last)) last = c.date;
+    return last;
   }
   $('#constellation-btn').addEventListener('click', () => {
     constellation.render(
@@ -2158,7 +2484,9 @@
           key: x.key,
           name: nameOf(x),
           commits: x.source.data.commits?.size || 0,
+          last: lastCommitAt(x.source.data),
           branches: x.source.data.branches?.size || 0,
+          prs: Math.max(x.source.data.totalPulls || 0, x.source.data.pulls?.size || 0),
           state: x.status?.state || 'loading',
           unread: x.unread,
           active: x === active,
@@ -2195,6 +2523,30 @@
     $('#search-input').focus();
   }
   $('#search-btn').addEventListener('click', openSearch);
+
+  /* ---------- paleta de comandos, Ctrl+K (ver cmdk.js) ---------- */
+  if (!EMBED) {
+    const cmdBtn = (a) => $(a.btn);
+    const palette = GB.cmdk.mount(
+      { dialog: $('#cmdk'), input: $('#cmdk-input'), list: $('#cmdk-list'), status: $('#cmdk-status') },
+      {
+        text: (k, p) => t(k, p),
+        available: (a) => {
+          const b = cmdBtn(a);
+          return !!b && !b.disabled && !b.closest('[hidden]');
+        },
+        run: (a) => cmdBtn(a)?.click(),
+        targets: (q) => GB.cmdk.jumpTargets(source.data, q),
+        jump: (j) => (j.kind === 'branch' ? shownGraph().focusBranch(j.name) : shownGraph().focusSha?.(j.sha)),
+      }
+    );
+    document.addEventListener('keydown', (ev) => {
+      if (!GB.cmdk.isShortcut(ev) || ev.defaultPrevented) return;
+      ev.preventDefault();
+      if ($('#cmdk').open) palette.close();
+      else if (!document.querySelector('dialog[open]')) palette.open();
+    });
+  }
   $('#search-input').addEventListener('input', () => {
     if (!initialQuery) setUrlParam('q', $('#search-input').value.trim().slice(0, 100)); // la búsqueda se comparte con la URL
   });
@@ -2207,7 +2559,7 @@
   }
   $('#search-close').addEventListener('click', closeSearch);
 
-  const syncFiltered = () => $('#search-btn').classList.toggle('filtered', !!authorFilter || !pathEl.clear.hidden);
+  const syncFiltered = () => $('#search-btn').classList.toggle('filtered', !!authorFilter || !pathEl.clear.hidden || branchViewOn() || firstParentOn);
   const graphAuthor = $('#graph-author');
   function fillGraphAuthor() {
     graphAuthor.textContent = '';
@@ -2225,11 +2577,40 @@
     }
     graphAuthor.value = authorFilter;
     graphAuthorStatus();
+    branchViewStatus();
   }
   function graphAuthorStatus() {
     const { shown, total } = authorView(source.view ? source.view() : source.data);
     $('#graph-author-status').textContent = authorFilter ? t('search.graphAuthorCount', { n: shown, total }) : '';
   }
+  const branchViewReset = $('#branch-view-reset');
+  function branchViewStatus() {
+    const on = branchViewOn();
+    branchViewReset.hidden = !on;
+    const { shown, total } = viewOf(source.view ? source.view() : source.data);
+    $('#branch-view-status').textContent = on ? t('branchview.status', { n: shown, total }) : '';
+  }
+  branchViewReset.addEventListener('click', () => {
+    setBranchView({ hidden: [], solo: '' });
+    graphAuthor.focus(); // el botón se esconde: el foco no se pierde
+  });
+  const columnsEl = $('#graph-columns');
+  columnsEl.checked = U.store.get('columns', false) === true; // autor y fecha junto a cada commit del 2D: de quien lo enciende, en todos sus repos
+  graph2d?.setColumns?.(columnsEl.checked);
+  columnsEl.addEventListener('change', () => {
+    U.store.set('columns', columnsEl.checked ? true : null);
+    graph2d?.setColumns?.(columnsEl.checked);
+  });
+  $('#graph-firstparent').addEventListener('change', (e) => {
+    firstParentOn = e.target.checked;
+    U.store.set('firstparent:' + repoKey(), firstParentOn ? true : null);
+    setUrlParam('firstparent', firstParentOn ? '1' : '');
+    syncFiltered();
+    if (lastRender) {
+      const { data, L } = drawGraph(false, true);
+      renderSummary(data, L);
+    }
+  });
   graphAuthor.addEventListener('change', () => {
     authorFilter = graphAuthor.value;
     U.store.set('author:' + repoKey(), authorFilter || null);
@@ -2282,6 +2663,13 @@
     } finally {
       pathEl.go.disabled = false;
     }
+  }
+  /** «Historial» de un archivo del diff: el filtro por ruta aplicado a ese archivo, con un aviso de cuántos commits tocó. */
+  async function fileHistory(path) {
+    pathEl.input.value = path;
+    await applyPathFilter();
+    if (pathEl.input.value !== path) return; // otro filtro pisó a este mientras la consulta volvía
+    feed.toast({ kind: 'other', title: t('diff.historyOf', { path }), detail: pathEl.status.textContent, time: Date.now() });
   }
   /** El filtro que pide la URL, una sola vez y con la primera historia que llega. */
   function startUrlPath() {
@@ -2401,14 +2789,6 @@
 
   /* ---------- estado de conexión ---------- */
 
-  const STATE_TEXT = {
-    loading: 'status.loading',
-    live: 'status.live',
-    limited: 'status.limited',
-    paused: 'status.paused',
-    error: 'status.error',
-  };
-
   function onStatus(tab, s) {
     const changed = tab.status?.state !== s.state;
     tab.status = s;
@@ -2427,7 +2807,7 @@
     // un repo que todavía no empezó a consultar (los que arrancan juntos esperan su turno)
     const s = status || { state: 'loading', demo: !!active?.demo };
     el.status.dataset.state = s.state;
-    const text = s.demo && s.state === 'live' ? t('status.demoLive') : STATE_TEXT[s.state] ? t(STATE_TEXT[s.state]) : s.state;
+    const text = s.demo && s.state === 'live' ? t('status.demoLive') : U.statusKey(s) ? t(U.statusKey(s)) : s.state;
     // es región viva y esto corre cada segundo: reescribir el mismo texto podría volver a anunciarlo
     if (el.statusText.textContent !== text) el.statusText.textContent = text;
     const now = Date.now();
@@ -2508,7 +2888,7 @@
       showOverlay('loading', i18n.msg('status.retrying'));
       source.refreshNow();
     } else if (action === 'demo') startDemo();
-    else if (action === 'settings') openSettings({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput, bitbucket: el.bitbucketTokenInput, bitbucketdc: el.bbdcTokenInput }[source?.host] || el.tokenInput);
+    else if (action === 'settings') openSettings({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput, bitbucket: el.bitbucketTokenInput, bitbucketdc: el.bbdcTokenInput, azure: el.azureTokenInput }[source?.host] || el.tokenInput);
   });
 
   /* ---------- controles ---------- */
@@ -2821,12 +3201,14 @@
   function renderWebglNote() {
     el.view3d.title = graph3d ? '' : t('webgl.missing');
   }
+  if (graph3d && EMBED && GB.embedOptions(location.search)?.spin === false) graph3d.spin = false; // &spin=0: capa quieta, sin guardarlo
   setPressed(el.spinBtn, !!graph3d?.spin);
   el.spinBtn.addEventListener('click', () => {
     graph3d?.setSpin(!graph3d.spin);
     setPressed(el.spinBtn, !!graph3d?.spin);
   });
-  setView(U.store.get('view', '3d'));
+  const embedView = EMBED ? GB.embedOptions(location.search)?.view || '' : ''; // &view=2d|3d: la vista de la capa, sin guardarla
+  setView(embedView || U.store.get('view', '3d'), !embedView);
   director?.setOn(!!U.store.get('director', false));
   renderDirector();
   renderPause();
@@ -2840,7 +3222,10 @@
     el.gitlabTokenInput.value = settings.gitlabToken;
     el.codebergTokenInput.value = settings.codebergToken;
     el.bitbucketTokenInput.value = settings.bitbucketToken;
+    el.azureTokenInput.value = settings.azureToken;
     el.bbdcTokenInput.value = settings.bbdcToken;
+    el.token2Owner.value = settings.account2.owner;
+    el.token2Input.value = settings.account2.token;
     for (const [input, toggle] of tokenFields) {
       input.type = 'password';
       toggle.textContent = t('settings.show');
@@ -2906,7 +3291,9 @@
     [el.gitlabTokenInput, el.gitlabTokenToggle],
     [el.codebergTokenInput, el.codebergTokenToggle],
     [el.bitbucketTokenInput, el.bitbucketTokenToggle],
+    [el.azureTokenInput, el.azureTokenToggle],
     [el.bbdcTokenInput, el.bbdcTokenToggle],
+    [el.token2Input, el.token2Toggle],
     ...hookFields.map((f) => [f.input, f.toggle]),
   ];
   const showToggle = (input, toggle) => (toggle.textContent = input.type === 'password' ? t('settings.show') : t('settings.hide'));
@@ -2925,7 +3312,10 @@
     el.gitlabTokenInput.value = '';
     el.codebergTokenInput.value = '';
     el.bitbucketTokenInput.value = '';
+    el.azureTokenInput.value = '';
     el.bbdcTokenInput.value = '';
+    el.token2Owner.value = '';
+    el.token2Input.value = '';
     for (const f of hookFields) f.input.value = '';
     el.tokenInput.focus();
   });
@@ -2936,7 +3326,10 @@
     settings.gitlabToken = el.gitlabTokenInput.value.trim();
     settings.codebergToken = el.codebergTokenInput.value.trim();
     settings.bitbucketToken = el.bitbucketTokenInput.value.trim();
+    settings.azureToken = el.azureTokenInput.value.trim();
     if (BITBUCKET_URL) settings.bbdcToken = el.bbdcTokenInput.value.trim(); // sin servidor elegido, el campo no se ve y lo guardado queda como está
+    const account2Stored = GB.GitHubSource.pack2(el.token2Owner.value, el.token2Input.value); // sin dueño o sin token, no hay segunda cuenta
+    settings.account2 = GB.GitHubSource.unpack2(account2Stored);
     const bbdcStored = GB.BitbucketServerSource.pack(settings.bbdcToken, BITBUCKET_URL) || null;
     settings.depth = Math.max(10, Math.min(100, Number(el.depth.value) || 40));
     settings.marks = el.marks.checked;
@@ -2946,13 +3339,17 @@
       desktop.setToken(settings.gitlabToken, 'gitlab').catch(failed);
       desktop.setToken(settings.codebergToken, 'codeberg').catch(failed);
       desktop.setToken(settings.bitbucketToken, 'bitbucket').catch(failed);
+      desktop.setToken(settings.azureToken, 'azure').catch(failed);
       if (BITBUCKET_URL) desktop.setToken(bbdcStored || '', 'bitbucketdc').catch(failed);
+      desktop.setToken(account2Stored, 'github2').catch(failed);
     } else {
       U.secret.set('token', settings.token || null);
       U.secret.set('gitlabToken', settings.gitlabToken || null);
       U.secret.set('codebergToken', settings.codebergToken || null);
       U.secret.set('bitbucketToken', settings.bitbucketToken || null);
+      U.secret.set('azureToken', settings.azureToken || null);
       if (BITBUCKET_URL) U.secret.set('bbdcToken', bbdcStored);
+      U.secret.set('account2', account2Stored || null);
     }
     U.store.set('depth', settings.depth);
     U.store.set('marks', settings.marks ? null : false);
@@ -2966,7 +3363,7 @@
     // se reconecta lo que cambió: un token de GitLab nuevo no gasta la cuota de GitHub. Si no cambió
     // nada, todo, como dice el botón
     const changed = (tab) =>
-      settings.depth !== before.depth || settings.marks !== before.marks || ({ gitlab: settings.gitlabToken !== before.gitlabToken, codeberg: settings.codebergToken !== before.codebergToken, bitbucket: settings.bitbucketToken !== before.bitbucketToken, forgejo: false, bitbucketdc: settings.bbdcToken !== before.bbdcToken }[tab.source.host] ?? settings.token !== before.token);
+      settings.depth !== before.depth || settings.marks !== before.marks || ({ gitlab: settings.gitlabToken !== before.gitlabToken, codeberg: settings.codebergToken !== before.codebergToken, bitbucket: settings.bitbucketToken !== before.bitbucketToken, forgejo: false, azure: settings.azureToken !== before.azureToken, bitbucketdc: settings.bbdcToken !== before.bbdcToken }[tab.source.host] ?? (settings.token !== before.token || settings.account2.token !== before.account2.token || settings.account2.owner !== before.account2.owner));
     if (realTabs().length) reconnectAll(realTabs().some(changed) ? changed : undefined);
     else el.tokenBanner.hidden = true;
   });
@@ -2978,7 +3375,8 @@
     el.gitlabTokenWhere.dataset.i18n = keychain ? 'settings.gitlabTokenWhereKeychain' : 'settings.gitlabTokenWherePlain';
     el.codebergTokenWhere.dataset.i18n = keychain ? 'settings.codebergTokenWhereKeychain' : 'settings.codebergTokenWherePlain';
     el.bitbucketTokenWhere.dataset.i18n = keychain ? 'settings.bitbucketTokenWhereKeychain' : 'settings.bitbucketTokenWherePlain';
-    for (const note of [el.tokenWhere, el.gitlabTokenWhere, el.codebergTokenWhere, el.bitbucketTokenWhere]) note.textContent = t(note.dataset.i18n);
+    el.azureTokenWhere.dataset.i18n = keychain ? 'settings.azureTokenWhereKeychain' : 'settings.azureTokenWherePlain';
+    for (const note of [el.tokenWhere, el.gitlabTokenWhere, el.codebergTokenWhere, el.bitbucketTokenWhere, el.azureTokenWhere]) note.textContent = t(note.dataset.i18n);
     bbdcWhere = keychain ? 'settings.bbdcTokenWhereKeychain' : 'settings.bbdcTokenWherePlain';
     renderBbdcField();
   }
@@ -3008,7 +3406,9 @@
     settings.gitlabToken = (await desktop.getToken('gitlab')).token;
     settings.codebergToken = (await desktop.getToken('codeberg')).token;
     settings.bitbucketToken = (await desktop.getToken('bitbucket')).token;
+    settings.azureToken = (await desktop.getToken('azure')).token;
     if (BITBUCKET_URL) settings.bbdcToken = GB.BitbucketServerSource.unpack((await desktop.getToken('bitbucketdc')).token, BITBUCKET_URL);
+    settings.account2 = GB.GitHubSource.unpack2((await desktop.getToken('github2')).token);
     for (const service of GB.hooks.SERVICES) hookUrls[service] = (await desktop.getToken(service)).token;
     showTokenWhere(where);
   }
@@ -3062,6 +3462,7 @@
     if (allOn) renderAllSum();
     diffView.relocalize();
     if (lp.dialog.open) lpRender();
+    if (el.agents.open && source) renderAgents();
     if (!source) return;
     // la demo inventa mensajes, incidencias y comentarios en el idioma activo: se reinicia para no mezclarlos
     if (source.data.repo.practice) practice.render(); // su historia no se inventa: se queda como está
@@ -3085,6 +3486,7 @@
     const q0 = new URLSearchParams(location.search);
     initialBitacora = !EMBED && q0.has('bitacora') && !/^(0|false|no|off)$/i.test(q0.get('bitacora'));
     initialHealth = !EMBED && GB.health.healthParam(q0);
+    initialAgents = !EMBED && GB.agents.openParam(q0);
     showForks = GB.health.forksParam(q0);
   } catch {
     /* sin query string */
@@ -3098,8 +3500,11 @@
     initialReplay = GB.Replay.paramsOf(q);
     initialPath = EMBED ? '' : GB.search.pathParam(q);
     initialAuthor = EMBED ? '' : GB.search.authorParam(q);
+    initialFirstParent = !EMBED && q.has('firstparent') ? GB.search.firstParentParam(q) : null;
+    initialBranchView = EMBED ? null : GB.search.branchViewParam(q);
     initialQuery = EMBED ? '' : GB.search.queryParam(q);
     initialText = !EMBED && GB.textview.openParam(q);
+    initialPr = EMBED ? 0 : GB.search.prParam(q);
     initialConflicts = !EMBED && GB.health.conflictsParam(q);
     initialTV = !EMBED && q.has('tv') && !/^(0|false|no|off)$/i.test(q.get('tv'));
     initialAll = EMBED ? false : GB.overview.allParam(q);

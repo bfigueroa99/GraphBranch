@@ -88,3 +88,23 @@ test('ningún enlace de la interfaz arma su href con una URL de la API sin pasar
   }
   assert.deepEqual(sueltos, []);
 });
+
+test('cleanAlias: recorta, junta espacios, limita a 40 letras y vacío es sin alias', () => {
+  const U = load({});
+  assert.equal(U.cleanAlias('  mi   repo \n'), 'mi repo');
+  assert.equal(U.cleanAlias('   '), '');
+  assert.equal(U.cleanAlias(null), '');
+  assert.equal(U.cleanAlias(42), '');
+  assert.equal([...U.cleanAlias('a'.repeat(100))].length, 40);
+  assert.equal([...U.cleanAlias('😀'.repeat(60))].length, 40); // por letras, sin partir un emoji
+});
+
+test('statusKey: un 404 o la cuota agotada no se rotulan «Sin conexión»', () => {
+  const U = load({});
+  assert.equal(U.statusKey({ state: 'live' }), 'status.live');
+  assert.equal(U.statusKey({ state: 'error', error: { kind: 'notfound' } }), 'status.errorNotFound');
+  assert.equal(U.statusKey({ state: 'error', error: { kind: 'rate' } }), 'status.errorRate');
+  assert.equal(U.statusKey({ state: 'error', error: { kind: 'network' } }), 'status.error');
+  assert.equal(U.statusKey({ state: 'error' }), 'status.error');
+  assert.equal(U.statusKey({ state: 'inventado' }), null);
+});

@@ -511,3 +511,10 @@ test('la url de un PR que no cuelga del servidor se descarta: no llega a la acti
   assert.equal(src.data.pulls.get(5).url, `${WEB}/pulls/5`);
   assert.equal(src.data.pulls.get(6).url, `${WEB}/pulls/6`);
 });
+
+test('mapPull: un repo renombrado sigue marcando sus PRs de la misma repo', () => {
+  const { src } = connect(fakeCodeberg());
+  const pr = (head) => ({ number: 1, title: 't', head: { ref: 'f', repo: head }, base: { ref: 'main', repo: { full_name: 'Nuevo/Nombre' } }, user: { login: 'ana' }, created_at: '2026-10-01T00:00:00Z' });
+  assert.equal(src.mapPull(pr({ full_name: 'nuevo/nombre' })).sameRepo, true);
+  assert.equal(src.mapPull(pr({ full_name: 'ana/nombre' })).sameRepo, false);
+});

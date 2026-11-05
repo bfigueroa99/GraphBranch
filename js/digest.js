@@ -54,6 +54,14 @@
       if (n && (!branch || n > branch.commits || (n === branch.commits && b.name < branch.name))) branch = { name: b.name, commits: n };
     }
 
+    // ramas nacidas en la semana: cada nombre cuenta una vez (la misma rama vista por el feed y por la comparación en vivo, o borrada y creada otra vez, no suma dos)
+    const bornNames = new Set();
+    for (const a of acts) {
+      if (a.kind !== 'branch-create' || !a.time || !(a.time > since && a.time <= now)) continue;
+      const k = a.branch ? `b:${a.branch}` : a.id;
+      if (k != null) bornNames.add(k);
+    }
+
     const seenIds = new Set();
     const inWeek = (a, kind) => a.kind === kind && a.time && a.time > since && a.time <= now && !seenIds.has(a.id) && seenIds.add(a.id);
     const merged = acts
@@ -95,6 +103,7 @@
       days,
       commits: week.size,
       perDay,
+      newBranches: bornNames.size, // ramas creadas en la semana, de las actividades ya cargadas
       newcomers: [...people.keys()].filter((who) => !before.has(who)).length, // con lo cargado: sin commit anterior a la semana
       merged: { total: merged.length, rows: merged.slice(0, LIST) },
       opened: { total: opened.length, rows: opened.slice(0, LIST) },
@@ -115,6 +124,7 @@
     const out = [`# ${md(t.head.replace('{repo}', repo))}`, '', `${fmtDate(d.since)} – ${fmtDate(d.now)}`, '', `- ${t.commits.replace('{n}', d.commits)}`];
     if (d.commits && t.perday) out.push(`- ${t.perday.replace('{n}', d.perDay.join(' · '))}`);
     if (d.newcomers && t.newcomers) out.push(`- ${t.newcomers.replace('{n}', d.newcomers)}`);
+    if (d.newBranches && t.newbranches) out.push(`- ${t.newbranches.replace('{n}', d.newBranches)}`);
     if (d.branch) out.push(`- ${t.branch}: \`${String(d.branch.name).replace(/`/g, "'")}\` (${d.branch.commits})`);
     const link = (r, text) => (r.url && /^https?:\/\//.test(r.url) ? `[${text}](${r.url.replace(/[()\s]/g, encodeURIComponent)})` : text);
     out.push('', `## ${t.merged} (${d.merged.total})`, '');
@@ -139,15 +149,17 @@
     const busy = rows.filter((r) => r.d.commits || r.d.merged.total || r.d.releases.total);
     busy.sort((a, b) => b.d.commits - a.d.commits || (a.repo < b.repo ? -1 : 1));
     const sum = (f) => rows.reduce((n, r) => n + f(r.d), 0);
-    return { since: now - days * DAY, now, days, repos: rows.length, commits: sum((d) => d.commits), merged: sum((d) => d.merged.total), releases: sum((d) => d.releases.total), rows: busy.slice(0, ORG_REPOS), hidden: Math.max(0, busy.length - ORG_REPOS) };
+    return { since: now - days * DAY, now, days, repos: rows.length, commits: sum((d) => d.commits), merged: sum((d) => d.merged.total), releases: sum((d) => d.releases.total), newBranches: sum((d) => d.newBranches), rows: busy.slice(0, ORG_REPOS), hidden: Math.max(0, busy.length - ORG_REPOS) };
   }
 
   /** Markdown del resumen de la organización: los totales y una sección por repo con actividad. */
   function toMarkdownOrg(o, owner, t, fmtDate = (ms) => new Date(ms).toISOString().slice(0, 10), none = '—') {
     const out = [`# ${md(t.head.replace('{repo}', owner))}`, '', `${fmtDate(o.since)} – ${fmtDate(o.now)}`, '', `- ${t.commits.replace('{n}', o.commits)}`, `- ${t.merged}: ${o.merged}`, `- ${t.releases}: ${o.releases}`];
+    if (o.newBranches && t.newbranches) out.push(`- ${t.newbranches.replace('{n}', o.newBranches)}`);
     if (!o.rows.length) out.push('', none);
     for (const { repo, d } of o.rows) {
       out.push('', `## ${md(repo)}`, '', `- ${t.commits.replace('{n}', d.commits)}`);
+      if (d.newBranches && t.newbranches) out.push(`- ${t.newbranches.replace('{n}', d.newBranches)}`);
       if (d.branch) out.push(`- ${t.branch}: \`${String(d.branch.name).replace(/`/g, "'")}\` (${d.branch.commits})`);
       if (d.merged.total) out.push(`- ${t.merged}: ${d.merged.rows.map((r) => (r.number ? `#${r.number}` : md(r.title))).join(', ')}`);
       if (d.releases.total) out.push(`- ${t.releases}: ${d.releases.rows.map((r) => md(r.title)).join(', ')}`);
@@ -165,6 +177,7 @@
     L.push({ text: t.commits.replace('{n}', d.commits), kind: 'head' });
     if (d.commits && t.perday) L.push({ text: cut(t.perday.replace('{n}', d.perDay.join(' · '))), kind: 'row' });
     if (d.newcomers && t.newcomers) L.push({ text: cut(t.newcomers.replace('{n}', d.newcomers)), kind: 'row' });
+    if (d.newBranches && t.newbranches) L.push({ text: cut(t.newbranches.replace('{n}', d.newBranches)), kind: 'row' });
     if (d.branch) L.push({ text: cut(`${t.branch}: ${flat(d.branch.name)} (${d.branch.commits})`), kind: 'row' });
     const section = (label, total, rows) => {
       L.push({ text: `${label} (${total})`, kind: 'head' });
@@ -188,10 +201,13 @@
     const L = [{ text: cut(flat(t.head.replace('{repo}', owner))), kind: 'title' }, { text: `${fmtDate(o.since)} – ${fmtDate(o.now)}`, kind: 'sub' }];
     L.push({ text: t.commits.replace('{n}', o.commits), kind: 'head' });
     L.push({ text: `${t.merged}: ${o.merged}`, kind: 'row' }, { text: `${t.releases}: ${o.releases}`, kind: 'row' });
+    if (o.newBranches && t.newbranches) L.push({ text: cut(t.newbranches.replace('{n}', o.newBranches)), kind: 'row' });
     if (!o.rows.length) L.push({ text: none, kind: 'row' });
     for (const { repo, d } of o.rows.slice(0, ORG_IMAGE_REPOS)) {
       L.push({ text: cut(flat(repo)), kind: 'head' });
       const parts = [t.commits.replace('{n}', d.commits)];
+      if (d.newBranches && t.newbranches) parts.push(t.newbranches.replace('{n}', d.newBranches));
+      if (d.branch) parts.push(`${t.branch}: ${flat(d.branch.name)} (${d.branch.commits})`);
       if (d.merged.total) parts.push(`${t.merged}: ${d.merged.rows.map((r) => (r.number ? `#${r.number}` : flat(r.title))).join(', ')}`);
       if (d.releases.total) parts.push(`${t.releases}: ${d.releases.rows.map((r) => flat(r.title)).join(', ')}`);
       L.push({ text: cut(parts.join(' · ')), kind: 'row' });

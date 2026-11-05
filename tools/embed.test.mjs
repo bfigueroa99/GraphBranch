@@ -124,3 +124,41 @@ test('embedOptions: max acepta de 1 a 200 y por defecto muestra todas las ramas'
   for (const bad of ['0', '201', '-3', '1.5', 'abc', '', '9999', '1e2', '5%20']) assert.equal(GB.embedOptions('?embed=1&max=' + bad).max, bad === '5%20' ? 5 : 0, bad);
   assert.equal(GB.embedOptions('?max=5'), null);
 });
+
+test('embedOptions: branch deja el nombre tal cual, sin control ni más de 200 caracteres', () => {
+  const { GB } = load('');
+  assert.equal(GB.embedOptions('?embed=1').branch, '');
+  assert.equal(GB.embedOptions('?embed=1&branch=fix/empty-payload').branch, 'fix/empty-payload');
+  assert.equal(GB.embedOptions('?embed=1&branch=%20feature%2FA%20').branch, 'feature/A');
+  assert.equal(GB.embedOptions('?embed=1&branch=a%0Ab%00c').branch, 'abc');
+  assert.equal(GB.embedOptions('?embed=1&branch=%3Cb%3Ex').branch, '<b>x'); // se compara como texto, nunca como HTML
+  assert.equal(GB.embedOptions('?embed=1&branch=' + 'x'.repeat(500)).branch.length, 200);
+  assert.equal(GB.embedOptions('?branch=main'), null);
+});
+
+test('embedOptions: pr=1 (o on, true, yes) deja solo las ramas con PR; por defecto, todas', () => {
+  const { GB } = load('');
+  assert.equal(GB.embedOptions('?embed=1').pr, false);
+  for (const on of ['1', 'on', 'TRUE', 'yes', ' 1 ']) assert.equal(GB.embedOptions('?embed=1&pr=' + on).pr, true, on);
+  // fuera de la capa ?pr=N abre la vista del PR N: dentro, un número que no es 1 no enciende el filtro
+  for (const off of ['0', '', '12', '#1', 'x', 'off', '01']) assert.equal(GB.embedOptions('?embed=1&pr=' + encodeURIComponent(off)).pr, false, off);
+  assert.equal(GB.embedOptions('?pr=1'), null);
+});
+
+test('embedOptions: view=2d|3d fija la vista; cualquier otro valor la deja como estaba', () => {
+  const { GB } = load('');
+  assert.equal(GB.embedOptions('?embed=1').view, '');
+  assert.equal(GB.embedOptions('?embed=1&view=2d').view, '2d');
+  assert.equal(GB.embedOptions('?embed=1&view=3D').view, '3d');
+  assert.equal(GB.embedOptions('?embed=1&view= 2d ').view, '2d');
+  for (const bad of ['', '4d', '2', 'galaxy', '2d3d']) assert.equal(GB.embedOptions('?embed=1&view=' + bad).view, '', bad);
+  assert.equal(GB.embedOptions('?view=2d'), null);
+});
+
+test('embedOptions: spin=0 (o off, false, no) apaga la rotación; por defecto gira', () => {
+  const { GB } = load('');
+  assert.equal(GB.embedOptions('?embed=1').spin, true);
+  for (const off of ['0', 'off', 'FALSE', 'no', ' 0 ']) assert.equal(GB.embedOptions('?embed=1&spin=' + off).spin, false, off);
+  for (const on of ['1', 'on', 'x', '', '00']) assert.equal(GB.embedOptions('?embed=1&spin=' + on).spin, true, on);
+  assert.equal(GB.embedOptions('?spin=0'), null);
+});

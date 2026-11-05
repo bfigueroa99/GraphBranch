@@ -103,6 +103,27 @@ async function openPage(contextOptions = {}) {
   return page;
 }
 
+/** Abre con teclado la ficha de una rama vigente y a la vista, y devuelve el selector que se pidió dentro de ella.
+    Elegir `heads[3]` a ciegas fallaba con la demo viva: una etiqueta puede estar fuera de la vista (`display: none`)
+    o saliendo (`.exit`), y entonces el foco no llega y Enter no abre su ficha. Se lleva el grafo al último commit
+    (End) para que haya etiquetas, y se prueban las primeras 6 a la vista, salvo la rama por defecto. */
+async function openBranchTip(page, inner) {
+  await page.focus('#graph');
+  await page.keyboard.press('End');
+  await page.waitForFunction(() => [...document.querySelectorAll('#graph svg .head[role=button]:not(.exit)')].some((h) => getComputedStyle(h).display !== 'none'), null, { timeout: T(3000) });
+  const shown = [];
+  for (const h of await page.$$('#graph svg .head[role=button]:not(.exit)')) if (await h.isVisible()) shown.push(h);
+  for (const h of shown.slice(0, 6)) {
+    if (await h.evaluate((n) => n.classList.contains('default'))) continue; // la rama por defecto no se oculta
+    await h.focus();
+    await page.keyboard.press('Enter');
+    const found = await page.waitForSelector(`#graph .tip:not([hidden]) ${inner}`, { timeout: T(1000) }).catch(() => null);
+    if (found) return found;
+    await page.keyboard.press('Escape');
+  }
+  throw new Error(`ninguna de las primeras 6 ramas a la vista abrió su ficha con ${inner}`);
+}
+
 /** `allow`: errores de consola que el paso provoca a propósito (por ejemplo, un 404 de la API simulada). */
 async function step(page, name, fn, { allow = null } = {}) {
   const before = page.errors.length;
@@ -698,6 +719,14 @@ console.log('Escritorio (1280×800)');
     if (!/(\d+ · ){7}\d+$/.test(oweeks) || /^(0 · ){7}0$/.test(oweeks.split(': ').pop())) throw new Error(`la tendencia de PRs abiertos por semana no trae 8 cifras con algún PR abierto: ${oweeks}`);
     const cweeks = await page.$eval('#hl-closedweeks', (p) => p.textContent).catch(() => '');
     if (!/(\d+ · ){7}\d+$/.test(cweeks) || /^(0 · ){7}0$/.test(cweeks.split(': ').pop())) throw new Error(`la tendencia de issues cerrados por semana no trae 8 cifras con algún issue cerrado: ${cweeks}`);
+    const bweeks = await page.$eval('#hl-branchweeks', (p) => p.textContent).catch(() => '');
+    if (!/(\d+ · ){7}\d+$/.test(bweeks) || /^(0 · ){7}0$/.test(bweeks.split(': ').pop())) throw new Error(`la tendencia de ramas nuevas por semana no trae 8 cifras con alguna rama creada: ${bweeks}`);
+    const kweeks = await page.$eval('#hl-commitweeks', (p) => p.textContent).catch(() => '');
+    if (!/(\d+ · ){7}\d+$/.test(kweeks) || /^(0 · ){7}0$/.test(kweeks.split(': ').pop())) throw new Error(`la tendencia de commits por semana no trae 8 cifras con algún commit: ${kweeks}`);
+    const tweeks = await page.$eval('#hl-tagweeks', (p) => p.textContent).catch(() => '');
+    if (tweeks && (!/(\d+ · ){7}\d+$/.test(tweeks) || /^(0 · ){7}0$/.test(tweeks.split(': ').pop()))) throw new Error(`la tendencia de tags por semana no trae 8 cifras con algún tag: ${tweeks}`);
+    const iweeks = await page.$eval('#hl-issueweeks', (p) => p.textContent).catch(() => '');
+    if (iweeks && (!/(\d+ · ){7}\d+$/.test(iweeks) || /^(0 · ){7}0$/.test(iweeks.split(': ').pop()))) throw new Error(`la tendencia de issues abiertos por semana no trae 8 cifras con algún issue: ${iweeks}`);
     const ciLines = await page.$$eval('#hl-ci .hl-line', (ps) => ps.map((p) => p.textContent));
     if (!ciLines.length || ciLines.some((l) => !/\d/.test(l))) throw new Error(`la tasa de fallos de CI no sale en la salud: ${ciLines.join(' | ')}`);
     if (info.stats !== 3) throw new Error(`${info.stats} cifras de ritmo, se esperaban 3`);
@@ -851,6 +880,8 @@ console.log('Escritorio (1280×800)');
       const items = [...d.querySelectorAll('[role="treeitem"]')];
       return {
         tree: !!tree,
+        treeHelp: tree && document.getElementById(tree.getAttribute('aria-describedby') || '-')?.textContent.trim(),
+        bodyDescribed: document.querySelector('#textview-body').hasAttribute('aria-describedby'),
         branches: d.querySelectorAll('.tv-branch').length,
         unnamed: items.filter((n) => !n.getAttribute('aria-label')).length,
         focusInTree: tree && tree.contains(document.activeElement),
@@ -860,9 +891,13 @@ console.log('Escritorio (1280×800)');
     });
     if (!info.tree || info.branches < 2) throw new Error(`árbol incompleto: ${info.branches} ramas`);
     if (info.unnamed) throw new Error(`${info.unnamed} nodos sin nombre accesible`);
+    if (!info.treeHelp || info.bodyDescribed) throw new Error(`las teclas del árbol no se describen en el árbol: ${JSON.stringify({ help: info.treeHelp, body: info.bodyDescribed })}`);
     if (!info.focusInTree) throw new Error('al abrir, el foco no está en el árbol');
     if (/undefined|NaN|textview\./.test(info.text)) throw new Error('texto sin resolver: ' + info.text.slice(0, 120));
     if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
+    // la marca «CI fallando» de una rama (si la demo tiene alguna con el CI en rojo) también está en su nombre accesible
+    const ciMarks = await page.evaluate(() => [...document.querySelectorAll('#textview .tv-ci-fail')].map((n) => ({ tag: n.textContent.replace(/^✗\s*/, ''), label: n.closest('[role="treeitem"]').getAttribute('aria-label') })));
+    for (const m of ciMarks) if (!m.tag || !m.label.includes(m.tag)) throw new Error('«CI fallando» no está en el nombre accesible: ' + JSON.stringify(m));
     // los commits con tag lo dicen en su nombre accesible («tag v1.0.0») y la región viva cuenta cuántos hay al abrir
     const marks = await page.evaluate(() => {
       const commits = [...document.querySelectorAll('#textview .tv-commit')];
@@ -895,6 +930,18 @@ console.log('Escritorio (1280×800)');
     // la historia de la demo es de los últimos días: ninguna rama está quieta (la que sí, en «Vista de texto: ramas quietas»)
     const quiet = await page.$$eval('#textview .tv-branch', (bs) => bs.filter((n) => /sin actividad/.test(n.getAttribute('aria-label') + n.querySelector('.tv-head').textContent)).map((n) => n.dataset.branch));
     if (quiet.length) throw new Error('la vista de texto dice sin actividad ramas de la demo con commits de esta semana: ' + quiet.join(', '));
+    // una rama ya fusionada en la por defecto lo dice en su nombre y con una marca (la demo no deja ninguna sin borrar:
+    // el árbol se monta aparte con una historia fija, sin tocar la de la página)
+    const mergedBr = await page.evaluate(() => {
+      const c = (sha, parents, date) => [sha, { sha, parents, message: sha, date, author: { name: 'Ana' } }];
+      const data = { repo: { defaultBranch: 'main' }, commits: new Map([c('a', [], 1), c('b', ['a'], 2), c('m', ['b', 'f'], 4), c('f', ['b'], 3), c('g', ['m'], 5)]), branches: new Map([['main', { name: 'main', sha: 'm', isDefault: true }], ['hecha', { name: 'hecha', sha: 'f' }], ['viva', { name: 'viva', sha: 'g' }]]) };
+      const box = document.createElement('div');
+      const view = GB.textview.mount(box, { text: (k, p) => GB.i18n.t(k, p), ago: () => "", onGo() {} });
+      view.render(GB.textview.build(data, { now: 6 }));
+      return [...box.querySelectorAll('.tv-branch')].map((n) => ({ b: n.dataset.branch, label: /fusionada en la rama por defecto/.test(n.getAttribute('aria-label')), chip: /fusionada en la rama por defecto/.test(n.querySelector('.tv-head').textContent) }));
+    });
+    const gotMerged = mergedBr.filter((m) => m.label || m.chip);
+    if (gotMerged.length !== 1 || gotMerged[0].b !== 'hecha' || !gotMerged[0].label || !gotMerged[0].chip) throw new Error('la vista de texto no dice la rama fusionada: ' + JSON.stringify(mergedBr));
     // la rama por defecto viene abierta: ↓ baja a su primer commit; ← sube a la rama y otra ← la cierra
     await page.keyboard.press('ArrowDown');
     const onCommit = await page.evaluate(() => document.activeElement.classList.contains('tv-commit'));
@@ -907,6 +954,49 @@ console.log('Escritorio (1280×800)');
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press('Enter');
     await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: T(3000) });
+  });
+
+  await step(page, 'vista de texto: H oculta una rama, S la deja sola y el foco y el aviso siguen en el árbol', async () => {
+    await page.click('#textview-btn');
+    await page.waitForSelector('#textview[open]', { timeout: T(3000) });
+    const names = () => page.$$eval('#textview .tv-branch', (bs) => bs.map((n) => n.dataset.branch));
+    const before = await names();
+    if (before.length < 3) throw new Error('la demo trae menos de 3 ramas: ' + before.join(', '));
+    const target = before[1];
+    const btns = await page.$$eval(`#textview .tv-branch[data-branch="${target}"] .tv-act`, (bs) => bs.map((b) => b.getAttribute('aria-label')));
+    const defBtns = await page.$$eval('#textview .tv-branch:first-child .tv-act', (bs) => bs.length);
+    if (btns.length !== 2 || btns.some((l) => !l || !l.includes(target)) || defBtns) throw new Error('botones de ocultar mal: ' + JSON.stringify({ btns, defBtns }));
+    await page.evaluate((n) => document.querySelector(`#textview .tv-branch[data-branch="${n}"]`).focus(), target);
+    await page.keyboard.press('h');
+    const after = await names();
+    const st = await page.evaluate(() => ({ live: document.querySelector('#textview-live').textContent, scope: document.querySelector('#textview-scope').textContent, hiddenScope: document.querySelector('#textview-scope').hidden, inTree: !!document.activeElement.closest('#textview [role="tree"]'), url: location.search }));
+    if (after.includes(target) || after.length !== before.length - 1) throw new Error('H no oculta la rama: ' + JSON.stringify({ before, after }));
+    if (!st.live.includes(target) || st.hiddenScope || !st.scope || !st.inTree || !st.url.includes('ocultar=')) throw new Error('H no avisa, no deja el foco en el árbol o no actualiza la nota: ' + JSON.stringify(st));
+    // «solo esta» sobre la siguiente, y repetirlo las vuelve a mostrar todas (menos la oculta antes, que sigue oculta)
+    const other = after[1];
+    await page.evaluate((n) => document.querySelector(`#textview .tv-branch[data-branch="${n}"]`).focus(), other);
+    await page.keyboard.press('s');
+    const solo = await names();
+    if (solo.length !== 2 || !solo.includes(other)) throw new Error('S no deja la rama sola: ' + solo.join(', '));
+    await page.keyboard.press('s');
+    if ((await names()).length !== before.length) throw new Error('repetir S no vuelve a mostrar las ramas');
+    // «Ver todas las ramas»: oculta sin botón visible; con una rama oculta aparece, y la tecla A y el botón las devuelven
+    const showAll = () => page.evaluate(() => ({ hidden: document.querySelector('#textview-showall').hidden, inTree: !!document.activeElement.closest('#textview [role="tree"]'), live: document.querySelector('#textview-live').textContent }));
+    if (!(await showAll()).hidden) throw new Error('«Ver todas las ramas» se ve sin ramas ocultas');
+    await page.evaluate((n) => document.querySelector(`#textview .tv-branch[data-branch="${n}"]`).focus(), target);
+    await page.keyboard.press('h');
+    const hid = await showAll();
+    if (hid.hidden || (await names()).length !== before.length - 1) throw new Error('con una rama oculta no aparece «Ver todas las ramas»: ' + JSON.stringify(hid));
+    await page.keyboard.press('a');
+    const viaKey = await showAll();
+    if ((await names()).length !== before.length || !viaKey.hidden || !viaKey.inTree || !viaKey.live) throw new Error('A no vuelve a mostrar todas las ramas o pierde el foco: ' + JSON.stringify(viaKey));
+    await page.keyboard.press('h');
+    await page.click('#textview-showall');
+    const viaBtn = await showAll();
+    if ((await names()).length !== before.length || !viaBtn.hidden || !viaBtn.inTree || new URL(page.url()).search.includes('ocultar=')) throw new Error('el botón no vuelve a mostrar todas las ramas: ' + JSON.stringify(viaBtn));
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: T(3000) });
+    await page.evaluate(() => document.querySelector('#branch-view-reset').click()); // la demo vuelve a verse entera para lo que sigue
   });
 
   await step(page, 'vista de texto: filtra por rama y avisa en la región viva de lo nuevo sin repetir', async () => {
@@ -934,6 +1024,54 @@ console.log('Escritorio (1280×800)');
     if (unnamed) throw new Error(`${unnamed} nodos sin nombre accesible tras la actualización en vivo`);
     await page.keyboard.press('Escape');
     await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: T(3000) });
+  });
+
+  await step(page, 'paleta de comandos: Ctrl+K abre la lista, filtra con teclado, Enter acciona y Esc cierra', async () => {
+    await page.keyboard.press('Control+k');
+    await page.waitForSelector('#cmdk[open]', { timeout: T(3000) });
+    const first = await page.evaluate(() => ({
+      focus: document.activeElement?.id === 'cmdk-input',
+      opts: document.querySelectorAll('#cmdk .ck-opt').length,
+      name: !!document.querySelector('#cmdk-input').getAttribute('aria-label') && !/cmdk\./.test(document.querySelector('#cmdk-input').getAttribute('aria-label')),
+      text: document.querySelector('#cmdk').textContent,
+    }));
+    if (!first.focus) throw new Error('al abrir, el foco no está en el campo de la paleta');
+    if (first.opts < 5) throw new Error(`la paleta lista ${first.opts} acciones`);
+    if (!first.name || /cmdk\./.test(first.text)) throw new Error('texto sin resolver en la paleta');
+    await page.fill('#cmdk-input', 'zzzz-no-existe');
+    if (await page.evaluate(() => document.querySelectorAll('#cmdk .ck-opt').length)) throw new Error('sin coincidencias no debería listar nada');
+    await page.fill('#cmdk-input', '');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#cmdk:not([open])', { state: 'attached', timeout: T(3000) });
+    await page.keyboard.press('Control+k');
+    await page.waitForSelector('#cmdk[open]', { timeout: T(3000) });
+    await page.fill('#cmdk-input', await page.evaluate(() => document.querySelector('#search-btn').getAttribute('aria-label')));
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    if (await page.evaluate(() => document.querySelector('#cmdk').open)) throw new Error('la paleta sigue abierta tras accionar');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
+  });
+
+  await step(page, 'paleta de comandos: escribir el nombre de una rama o el SHA de un commit ofrece saltar a él, sin consultas', async () => {
+    const reqs = [];
+    const onReq = (r) => reqs.push(r.url());
+    page.on('request', onReq);
+    await page.keyboard.press('Control+k');
+    await page.waitForSelector('#cmdk[open]', { timeout: T(3000) });
+    await page.fill('#cmdk-input', 'develop');
+    const branch = await page.evaluate(() => [...document.querySelectorAll('#cmdk .ck-opt')].map((n) => n.textContent));
+    if (!branch.some((x) => x.includes('develop') && !/cmdk\./.test(x))) throw new Error(`sin salto a la rama develop: ${JSON.stringify(branch)}`);
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#cmdk:not([open])', { state: 'attached', timeout: T(3000) });
+    page.off('request', onReq);
+    if (reqs.some((u) => /api\.github\.com|\/repos\//.test(u))) throw new Error(`el salto hizo consultas: ${reqs.join(' ')}`);
+    await page.keyboard.press('Control+k');
+    await page.waitForSelector('#cmdk[open]', { timeout: T(3000) });
+    await page.fill('#cmdk-input', 'zzzz-no-existe');
+    if (await page.evaluate(() => document.querySelectorAll('#cmdk .ck-opt').length)) throw new Error('una consulta sin rama ni SHA no debería ofrecer saltos');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#cmdk:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
   await step(page, 'búsqueda de commits: por mensaje y por autor, con teclado, y Enter vuela al commit', async () => {
@@ -974,7 +1112,14 @@ console.log('Escritorio (1280×800)');
   await step(page, 'filtro por autor: el grafo y el árbol de texto muestran solo sus ramas, lo dice y se quita', async () => {
     await page.click('#view-2d');
     const count = () => page.evaluate(() => document.querySelectorAll('#graph svg .head').length);
-    const all = await count();
+    // bajo carga el grafo aún reparte ramas: se espera a que el conteo quede quieto antes de tomarlo como base
+    let all = await count();
+    for (let quiet = 0, i = 0; quiet < 3 && i < 40; i++) {
+      await page.waitForTimeout(250);
+      const n = await count();
+      quiet = n === all && n > 0 ? quiet + 1 : 0;
+      all = n;
+    }
     await page.click('#search-btn');
     await page.waitForSelector('#search[open]', { timeout: T(3000) });
     const options = await page.evaluate(() => [...document.querySelectorAll('#graph-author option')].map((o) => o.value));
@@ -982,7 +1127,7 @@ console.log('Escritorio (1280×800)');
     let best = null;
     for (const who of options.filter(Boolean)) {
       await page.selectOption('#graph-author', who);
-      await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, all, { timeout: T(1500) }).catch(() => {}); // las ramas salen con su transición
+      await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, all, { timeout: T(4000) }).catch(() => {}); // las ramas salen con su transición, más lenta bajo carga
       const n = await count();
       if (n < all && (!best || n < best.n)) best = { who, n };
     }
@@ -1009,10 +1154,12 @@ console.log('Escritorio (1280×800)');
     await page.click('#search-btn');
     await page.waitForSelector('#search[open]', { timeout: T(3000) });
     await page.selectOption('#graph-author', '');
-    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length === n, all, { timeout: T(5000) }).catch(() => {});
+    // la demo sigue publicando: no se compara con el conteo de antes sino con el filtrado, que tiene que quedar por debajo
+    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length > n, best.n, { timeout: T(5000) }).catch(() => {});
     await page.waitForFunction(() => !document.querySelector('#search-btn').classList.contains('filtered') && !document.querySelector('#graph-author-status').textContent, null, { timeout: T(3000) }).catch(() => {});
     const off = await page.evaluate(() => ({ mark: document.querySelector('#search-btn').classList.contains('filtered'), status: document.querySelector('#graph-author-status').textContent }));
-    if (off.mark || off.status || (await count()) !== all) throw new Error('quitar el filtro no deja el grafo como estaba');
+    const back = await count();
+    if (off.mark || off.status || back <= best.n) throw new Error(`quitar el filtro no deja el grafo como estaba (${back} etiquetas, con el filtro ${best.n}, antes ${all})`);
     await page.keyboard.press('Escape');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
     await page.click('#textview-btn');
@@ -1043,6 +1190,7 @@ console.log('Escritorio (1280×800)');
     if (!on.dim || on.dim >= on.all) throw new Error(`el filtro no acota: ${on.dim} atenuados de ${on.all}`);
     if (!on.status || /undefined|NaN|search\./.test(on.status) || !on.mark) throw new Error('sin aviso del filtro: ' + on.status);
     await page.click('#search-path-clear');
+    await page.waitForFunction(() => !document.querySelectorAll('#graph svg .node.pfx').length, null, { timeout: T(3000) }).catch(() => {});
     const off = await page.evaluate(() => ({ dim: document.querySelectorAll('#graph svg .node.pfx').length, mark: document.querySelector('#search-btn').classList.contains('filtered') }));
     if (off.dim || off.mark) throw new Error('quitar el filtro no deja el grafo como estaba');
     await page.keyboard.press('Escape');
@@ -1079,13 +1227,79 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
+  await step(page, 'ocultar una rama o dejarla sola: desde su ficha, lo dice, se guarda por repo y un botón las vuelve a mostrar', async () => {
+    await page.keyboard.press('Escape'); // ninguna ficha abierta de antes
+    await page.click('#view-2d');
+    // por nombre y sin las etiquetas que se están yendo (`.exit`): la demo sigue publicando y borrando ramas
+    const names = () => page.evaluate(() => [...document.querySelectorAll('#graph svg .head:not(.exit)')].map((h) => h.__name));
+    // se espera la desaparición de las ramas concretas, no un conteo: la demo puede sumar una rama mientras otra se oculta
+    const gone = async (what, going) => {
+      try {
+        await page.waitForFunction((g) => ![...document.querySelectorAll('#graph svg .head:not(.exit)')].some((h) => g.includes(h.__name)), going, { timeout: T(5000) });
+      } catch {
+        throw new Error(`${what}: las etiquetas ${going.join(', ')} no se fueron (ahora ${(await names()).join(', ')})`);
+      }
+    };
+    const all = await names();
+    const hideBtn = await openBranchTip(page, '.tip-hide');
+    const hidden = await hideBtn.getAttribute('data-branch');
+    await hideBtn.click();
+    await gone('ocultar «' + hidden + '»', [hidden]);
+    const hid = await names();
+    const saved = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('graphbranch:bview:')).length);
+    if (!saved) throw new Error('las ramas ocultas no se guardaron por repo');
+    const soloBtn = await openBranchTip(page, '.tip-solo');
+    const solo = await soloBtn.getAttribute('data-branch');
+    await soloBtn.click();
+    // la rama por defecto se queda siempre (no se oculta)
+    const def = await page.evaluate(() => [...document.querySelectorAll('#graph svg .head.default')].map((h) => h.__name));
+    await gone('dejar sola «' + solo + '»', hid.filter((n) => n !== solo && !def.includes(n)));
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    const on = await page.evaluate(() => ({ status: document.querySelector('#branch-view-status').textContent, mark: document.querySelector('#search-btn').classList.contains('filtered'), reset: !document.querySelector('#branch-view-reset').hidden }));
+    if (!on.status || /undefined|NaN|branchview\./.test(on.status) || !on.mark || !on.reset) throw new Error('sin aviso de las ramas ocultas: ' + JSON.stringify(on));
+    await page.click('#branch-view-reset');
+    await page.waitForFunction((b) => [...document.querySelectorAll('#graph svg .head:not(.exit)')].some((h) => h.__name === b), hidden, { timeout: T(5000) });
+    const off = await page.evaluate(() => ({ status: document.querySelector('#branch-view-status').textContent, mark: document.querySelector('#search-btn').classList.contains('filtered'), keys: Object.keys(localStorage).filter((k) => k.startsWith('graphbranch:bview:')).length, focus: document.activeElement?.id }));
+    if (off.status || off.mark || off.keys || off.focus !== 'graph-author') throw new Error('«Ver todas» no deja el grafo como estaba: ' + JSON.stringify(off));
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
+  });
+
+  await step(page, 'vista de un PR: la ficha de una rama con PR muestra su descripción y comentarios al pulsar, sin consultar api.github.com', async () => {
+    await page.keyboard.press('Escape');
+    await page.click('#view-2d');
+    const heads = await page.$$('#graph svg .head[role=button]');
+    let btn = null;
+    for (const h of heads) {
+      await h.focus();
+      await page.keyboard.press('Enter');
+      btn = await page.$('#graph .tip .tip-prview');
+      if (btn) break;
+      await page.keyboard.press('Escape');
+    }
+    if (!btn) throw new Error('ninguna ficha de rama con PR trae «Ver descripción y comentarios»');
+    await btn.focus();
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#graph .tip .tip-prbody .pv-list li', { timeout: T(5000) });
+    const r = await page.evaluate(() => ({
+      expanded: document.querySelector('.tip-prview').getAttribute('aria-expanded'),
+      body: document.querySelector('.tip-prbody .pv-body').textContent,
+      n: document.querySelectorAll('.tip-prbody .pv-list li').length,
+      focus: document.activeElement?.className,
+    }));
+    if (r.expanded !== 'true' || !r.body.trim() || !r.n || r.focus !== 'tip-prview') throw new Error('vista del PR rota: ' + JSON.stringify(r));
+    if (/undefined|NaN|prview\./.test(r.body)) throw new Error('texto sin resolver: ' + r.body);
+    await page.keyboard.press('Enter');
+    const hidden = await page.$eval('.tip-prbody', (b) => b.hidden);
+    if (!hidden) throw new Error('pulsarlo otra vez no esconde la vista del PR');
+    await page.keyboard.press('Escape');
+  });
+
   await step(page, 'cambios de un commit: desde su ficha, con teclado se pasa al anterior y se vuelve, y Esc cierra', async () => {
     await page.keyboard.press('Escape'); // ninguna ficha abierta de antes
     await page.click('#view-2d');
-    const heads = await page.$$('#graph svg .head[role=button]');
-    await heads[heads.length > 3 ? 3 : 0].focus();
-    await page.keyboard.press('Enter');
-    const btn = await page.waitForSelector('#graph .tip .tip-diff', { timeout: T(5000) });
+    const btn = await openBranchTip(page, '.tip-diff');
     await btn.focus();
     await page.keyboard.press('Enter');
     await page.waitForSelector('#diff-panel:not([hidden]) .df-file', { timeout: T(5000) });
@@ -1147,6 +1361,74 @@ console.log('Escritorio (1280×800)');
     if (closed.sel) throw new Error('al cerrar, el grafo sigue marcando el commit');
   });
 
+  await step(page, 'historial de un archivo: un botón del diff aplica el filtro por ruta a ese archivo y lo deja en la URL', async () => {
+    const wait = (what, p) => p.catch((err) => {
+      throw new Error(`${what}: ${err.message.split('\n')[0]}`);
+    });
+    await page.click('#view-2d');
+    // el paso anterior dejó el grafo en el primer commit cargado: con unos minutos de demo, las etiquetas de rama
+    // quedan fuera de la vista (display: none), el foco no llega a ninguna y Enter no abre su ficha
+    await page.focus('#graph');
+    await page.keyboard.press('End');
+    await wait('las etiquetas de rama a la vista', page.waitForFunction(() => [...document.querySelectorAll('#graph svg .head[role=button]:not(.exit)')].some((h) => getComputedStyle(h).display !== 'none'), null, { timeout: T(3000) }));
+    // la ficha de una rama vigente y a la vista (la demo borra ramas fusionadas: una etiqueta puede estar saliendo)
+    let btn = null;
+    const shownHeads = [];
+    for (const h of await page.$$('#graph svg .head[role=button]:not(.exit)')) if (await h.isVisible()) shownHeads.push(h);
+    for (const h of shownHeads.slice(0, 6)) {
+      await h.focus();
+      await page.keyboard.press('Enter');
+      btn = await page.waitForSelector('#graph .tip:not([hidden]) .tip-diff', { timeout: T(1000) }).catch(() => null);
+      if (btn) break;
+      await page.keyboard.press('Escape');
+    }
+    if (!btn) throw new Error('la ficha de la rama: ninguna de las primeras 6 ramas a la vista abrió su ficha con Ver cambios');
+    await btn.focus();
+    await page.keyboard.press('Enter');
+    await wait('el panel de cambios', page.waitForSelector('#diff-panel:not([hidden]) .df-file', { timeout: T(5000) }));
+    // con localizadores y no con el elemento: si la demo vuelve a dibujar el panel, se busca otra vez
+    const file = page.locator('#diff-panel .df-file').first();
+    await file.evaluate((d) => (d.open = true)); // el primero ya suele venir abierto: un clic lo cerraría
+    const hist = file.locator('.df-history');
+    await wait('el botón Historial', hist.waitFor({ timeout: T(5000) }));
+    if (!/\S/.test((await hist.getAttribute('aria-label')) || '') || /diff\.|undefined/.test(await hist.textContent())) throw new Error('el botón Historial no tiene nombre');
+    // la ruta y el clic en un solo paso: si la demo vuelve a dibujar el panel entre los dos, «el primer archivo» sería otro
+    await wait('el clic en Historial', hist.waitFor({ state: 'visible', timeout: T(5000) }));
+    const path = await hist.evaluate((b) => {
+      const p = b.closest('.df-file').querySelector('.df-path').textContent.split(' → ').pop();
+      b.click();
+      return p;
+    });
+    await wait('el filtro por ruta', page.waitForSelector('#search-path-clear:not([hidden])', { state: 'attached', timeout: T(5000) }));
+    const on = await page.evaluate(() => ({ value: document.querySelector('#search-path').value, url: location.search }));
+    if (on.value !== path) throw new Error(`el filtro quedó en «${on.value}», no en «${path}»`);
+    if (!on.url.includes('path=')) throw new Error('el historial no dejó la ruta en la URL: ' + on.url);
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    await page.click('#search-path-clear');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
+    await page.keyboard.press('Escape');
+  });
+
+
+  await step(page, 'quién tocó un archivo: el botón del diff lista los últimos commits con su autor, y otro clic lo cierra', async () => {
+    const file = page.locator('#diff-panel .df-file').first();
+    await file.evaluate((d) => (d.open = true));
+    const btn = file.locator('.df-blame');
+    await btn.waitFor({ timeout: T(5000) });
+    if (!/\S/.test((await btn.getAttribute('aria-label')) || '') || /diff\.|undefined/.test(await btn.textContent())) throw new Error('el botón no tiene nombre');
+    await btn.click({ timeout: T(5000) });
+    await file.locator('.df-blamelist li').first().waitFor({ timeout: T(5000) }).catch(() => {
+      throw new Error('no apareció ningún commit: ' + ('' + 'sin lista'));
+    });
+    if ((await btn.getAttribute('aria-expanded')) !== 'true') throw new Error('aria-expanded no pasó a true');
+    const row = await file.locator('.df-blamelist li').first().textContent();
+    if (/undefined|diff\./.test(row) || row.trim().length < 5) throw new Error('fila vacía o con claves: ' + row);
+    if (!/\d+\D+\d+/.test(await file.locator('.df-blamelist li .df-blame-lines').first().textContent())) throw new Error('la demo no mostró tramos de líneas');
+    await btn.click();
+    if (await file.locator('.df-blamelog').isVisible()) throw new Error('el segundo clic no cerró la lista');
+  });
   await step(page, 'cambios de un commit: un clic en el grafo cambia de commit, lado a lado con palabras marcadas, filtro y panel ancho', async () => {
     // cada espera dice cuál fue si vence (la corrida larga trae mucha historia de la demo y lo recorta)
     const wait = (what, p) => p.catch((err) => {
@@ -1269,12 +1551,14 @@ console.log('Escritorio (1280×800)');
       await page.keyboard.press('Escape');
     }
     if (!tipDiff) throw new Error('ninguna rama a la vista abrió su ficha con Ver cambios');
-    await tipDiff.focus();
+    // sin guardar handles: la demo vuelve a dibujar la ficha y el panel, y un handle viejo ya no está en el DOM
+    await page.focus('#graph .tip:not([hidden]) .tip-diff');
     await page.keyboard.press('Enter');
-    const edit = await page.waitForSelector('#diff-panel .df-file[open] .df-edit', { timeout: T(5000) });
-    const label = await edit.getAttribute('aria-label');
+    const editSel = '#diff-panel .df-file[open] .df-edit';
+    await page.waitForSelector(editSel, { timeout: T(5000) });
+    const label = await page.getAttribute(editSel, 'aria-label');
     const branchOf = await page.$eval('#diff-panel .df-branch', (n) => n.textContent).catch(() => '');
-    await edit.click();
+    await page.click(editSel, { timeout: T(5000) });
     await page.waitForSelector('#editor[open]', { timeout: T(3000) });
     await page.waitForFunction(() => {
       const a = document.querySelector('#editor-text');
@@ -1424,6 +1708,9 @@ function fakeGitHub() {
   const repos = new Map();
   const orgs = new Set(); // los dueños que son organizaciones (los demás, usuarios)
   const calls = [];
+  // las escrituras aparte: `calls` anota también los GET del sondeo en vivo, y una lectura en la ventana de un
+  // paso parecía una escritura (falló así «editar sin token» en la 172 y el 2026-11-01, a carga 7 a 12 en 4 CPU)
+  const writes = [];
   let n = 0;
   const sha = (s) => createHash('sha1').update(s).digest('hex');
   /** `at` (ms) fecha el commit a mano, para una rama sin actividad hace semanas; sin él, ahora. */
@@ -1472,6 +1759,10 @@ function fakeGitHub() {
     const rest = m[2] || '';
     if (!rest) return { body: { name, owner: { login: owner }, default_branch: 'main', html_url: `https://github.com/${m[1]}`, private: false, description: '' } };
     if (rest === '/branches') return { body: [...r.branches].map(([b, s]) => ({ name: b, commit: { sha: s }, protected: false })) };
+    if (rest === '/pulls' && m[1] === 'o/b') {
+      const pr = (number, title, draft) => ({ number, title, html_url: `https://github.com/o/b/pull/${number}`, state: 'open', draft, head: { ref: 'main', repo: { full_name: 'o/b' } }, base: { ref: 'main' }, user: { login: 'bea', avatar_url: null }, created_at: new Date(Date.now() - number * 60000).toISOString() });
+      return { body: [pr(7, 'Cambio en revisión', false), pr(8, 'Borrador a medias', true)] };
+    }
     if (rest === '/events' || rest === '/pulls' || rest === '/tags' || rest === '/deployments' || rest === '/forks' || rest === '/activity') return { body: [] }; // /activity: solo con token
     if (rest === '/commits') {
       let s = r.branches.get(q.get('sha')) || q.get('sha');
@@ -1491,6 +1782,7 @@ function fakeGitHub() {
   };
   return {
     calls,
+    writes,
     repo,
     org: (name) => orgs.add(name),
     orgEvent: (ev) => orgEvents.unshift({ id: String(orgEvents.length + 1), actor: { login: 'ana' }, created_at: new Date().toISOString(), payload: {}, ...ev }),
@@ -1498,6 +1790,8 @@ function fakeGitHub() {
     handle: (r) => {
       const u = new URL(r.request().url());
       calls.push(u.pathname);
+      const method = r.request().method();
+      if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) writes.push(`${method} ${u.pathname}`);
       const { status = 200, body } = route(u.pathname, u.searchParams);
       return r.fulfill({
         status,
@@ -1626,6 +1920,42 @@ console.log('Varios repos a la vez');
     if (url !== 'o/b o/a') throw new Error(`la URL lleva ${url}`);
   });
 
+  await step(page, 'alias de una pestaña: F2 la renombra, se recuerda y el nombre real sigue accesible', async () => {
+    await page.focus('#repo-tabs .rt:nth-child(2) .rt-main');
+    await page.keyboard.press('F2');
+    const input = page.locator('#repo-tabs .rt-alias');
+    await input.waitFor({ timeout: T(3000) });
+    if (!(await page.evaluate(() => document.activeElement?.classList.contains('rt-alias')))) throw new Error('F2 no dejó el foco en el campo del alias');
+    await page.keyboard.type('  Mi   producto ');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#repo-tabs .rt-alias', { state: 'detached', timeout: T(3000) });
+    const tab = (await repoTabs(page))[1];
+    if (tab.name !== 'Mi producto') throw new Error(`la pestaña dice «${tab.name}»`);
+    const real = await page.evaluate(() => ({
+      sr: document.querySelector('#repo-tabs .rt:nth-child(2) .rt-sr').textContent,
+      title: document.querySelector('#repo-tabs .rt:nth-child(2) .rt-main').title,
+      close: document.querySelector('#repo-tabs .rt:nth-child(2) .rt-close').getAttribute('aria-label'),
+      saved: localStorage.getItem('graphbranch:alias:github:o/b') ?? localStorage.getItem('graphbranch:alias:o/b'),
+      link: document.querySelector('#repo-link')?.textContent,
+      url: new URLSearchParams(location.search).getAll('repo').join(' '),
+      focus: document.activeElement?.className,
+    }));
+    if (!real.sr.includes('o/b') || !real.title.includes('o/b') || !real.close.includes('o/b')) throw new Error(`el nombre real se perdió: ${JSON.stringify(real)}`);
+    if (real.saved !== '"Mi producto"') throw new Error(`no se guardó el alias: ${real.saved}`);
+    if (real.link !== 'o/b' || real.url !== 'o/b o/a') throw new Error(`el alias tocó el repo o la URL: ${JSON.stringify(real)}`);
+    if (real.focus !== 'rt-main') throw new Error(`el foco quedó en ${real.focus}`);
+    // Esc deja el alias como estaba y vacío lo quita
+    await page.keyboard.press('F2');
+    await page.keyboard.type('otro');
+    await page.keyboard.press('Escape');
+    if ((await repoTabs(page))[1].name !== 'Mi producto') throw new Error('Esc cambió el alias');
+    await page.keyboard.press('F2');
+    await page.keyboard.press('Control+A');
+    await page.keyboard.press('Backspace');
+    await page.keyboard.press('Enter');
+    if ((await repoTabs(page))[1].name !== 'o/b') throw new Error('vaciar el alias no devolvió el nombre real');
+  });
+
   await step(page, 'clic en una actividad de otro repo lleva a su pestaña', async () => {
     gh.push('o/a', 'main', 'cambio en a');
     const item = page.locator('#feed .act', { has: page.locator('.act-repo', { hasText: 'o/a' }) }).first();
@@ -1669,6 +1999,17 @@ console.log('Varios repos a la vez');
       if (bad.length) throw new Error(`${colorScheme}: ${bad.length} textos con poco contraste, como ${bad.slice(0, 3).join(', ')}`);
     }
     await page.emulateMedia({ colorScheme: 'light' });
+    // el Launchpad: los PRs abiertos de todos los repos por estado; una fila lleva a su repo, en su pestaña
+    const lp = await page.evaluate(() => ({
+      title: document.querySelector('#all-prs .ap-title')?.textContent,
+      groups: [...document.querySelectorAll('#all-prs .ap-group')].map((g) => ({ id: g.dataset.group, rows: [...g.querySelectorAll('.ap-row')].map((r) => r.querySelector('.ap-t').textContent + ' | ' + r.querySelector('.ap-m').textContent + ' | ' + r.getAttribute('aria-label')) })),
+    }));
+    const want = [['draft', '#8 Borrador a medias | o/b · main · bea'], ['waiting', '#7 Cambio en revisión | o/b · main · bea']];
+    if (!/2/.test(lp.title || '') || lp.groups.length !== 2 || want.some(([id, row], i) => lp.groups[i].id !== id || lp.groups[i].rows.length !== 1 || !lp.groups[i].rows[0].startsWith(row)) || /\{|undefined|NaN/.test(lp.title + lp.groups.map((g) => g.rows.join()).join())) throw new Error('el Launchpad: ' + JSON.stringify(lp));
+    await page.click('#all-prs .ap-row[data-number="7"]');
+    await page.waitForFunction(() => document.querySelector('#all-panel').hidden && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
+    await page.click('#all-tab');
+    await page.waitForSelector('#all-panel:not([hidden]) .rc-card .graph-svg .node', { timeout: T(5000) });
     // lo nuevo de o/b llega a su tarjeta, sin quedar «sin ver» en su pestaña
     const commitsOf = (name) => page.$eval(`.rc-card[data-key="${name}"] .rc-stats`, (n) => Number(/(\d+)\D+(\d+)/.exec(n.textContent)?.[2]));
     const before = await commitsOf('o/b');
@@ -1717,12 +2058,12 @@ console.log('Varios repos a la vez');
     }));
     if (!st.settings || !st.save) throw new Error('sin token deja hacer commit o no ofrece Ajustes: ' + JSON.stringify(st));
     if (st.repo !== 'o/b' || st.branch !== 'main') throw new Error('el editor abrió otro repo o rama: ' + JSON.stringify(st));
-    const puts = gh.calls.length;
+    const puts = gh.writes.length;
     await page.click('#editor .ed-settings');
     await page.waitForSelector('#settings[open]', { timeout: T(3000) });
     const focus = await page.evaluate(() => document.activeElement?.id);
     if (focus !== 'token-input') throw new Error(`Ajustes abrió con el foco en ${focus}`);
-    if (gh.calls.length !== puts) throw new Error('intentó escribir sin token');
+    if (gh.writes.length !== puts) throw new Error(`intentó escribir sin token (${gh.writes.slice(puts).join(', ')})`);
     await page.click('#settings-cancel');
     await page.click('#all-tab'); // deja la vista conjunta como estaba para los pasos que siguen
     await page.waitForSelector('#all-panel', { state: 'hidden', timeout: T(3000) });
@@ -1829,6 +2170,62 @@ console.log('Varios repos a la vez');
     await lab.selectOption('.pr-ex', '2');
     for (const c of ['checkout feature', 'rebase -i main', 'status', 'rebase --abort', 'status']) await send(c);
     await lab.waitForFunction(() => /interactive rebase in progress/.test(document.querySelector('.pr-log')?.textContent || '') && /On branch feature\s*nothing to commit/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+  });
+  await step(lab, 'la práctica muestra el reflog y recupera un commit tras reset --hard', async () => {
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await lab.selectOption('.pr-ex', '3');
+    for (const c of ['reset --hard HEAD~1', 'reflog', 'reset --hard HEAD@{1}', 'log --oneline']) await send(c);
+    await lab.waitForFunction(() => /HEAD@\{0\}: reset: moving to HEAD~1/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    await lab.waitForFunction(() => /HEAD is now at [0-9a-f]{7} Oops: debug logging left in/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+  });
+  await step(lab, 'la práctica corrige el último commit con commit --amend', async () => {
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await lab.selectOption('.pr-ex', '1');
+    for (const c of ['commit -m "Fix tpyo"', 'commit --amend -m "Fix typo"', 'log --oneline']) await send(c);
+    await lab.waitForFunction(() => {
+      const t = document.querySelector('.pr-log')?.textContent || '';
+      const out = t.slice(t.lastIndexOf('log --oneline'));
+      return /\) Fix typo/.test(out) && !out.includes('Fix tpyo');
+    }, null, { timeout: T(5000) });
+  });
+  await step(lab, 'la práctica hace un commit de fusión con merge --no-ff aunque se pudiera avanzar', async () => {
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await lab.selectOption('.pr-ex', '1');
+    for (const c of ['checkout -b feature', 'commit -m uno', 'checkout main', 'merge --no-ff -m "Une feature" feature', 'log --oneline']) await send(c);
+    await lab.waitForFunction(() => {
+      const t = document.querySelector('.pr-log')?.textContent || '';
+      const out = t.slice(t.lastIndexOf('log --oneline'));
+      return /Une feature/.test(out) && /Merge made by the 'ort' strategy/.test(t) && !/Fast-forward/.test(t.slice(t.lastIndexOf('merge --no-ff')));
+    }, null, { timeout: T(5000) });
+  });
+  await step(lab, 'la práctica renombra ramas con branch -m: el grafo, el reflog y el panel de actividad lo dicen', async () => {
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await lab.selectOption('.pr-ex', '1');
+    for (const c of ['branch -m feature feature/login', 'branch -m trunk', 'reflog']) await send(c);
+    await lab.waitForFunction(() => {
+      const heads = [...document.querySelectorAll('#graph svg .head .h-name')].map((n) => n.textContent.trim());
+      const log = document.querySelector('.pr-log')?.textContent || '';
+      const feed = document.querySelector('#feed')?.textContent || '';
+      return (
+        heads.includes('trunk') && heads.includes('feature/login') && !heads.includes('main') && !heads.includes('feature') &&
+        log.includes('Branch: renamed refs/heads/main to refs/heads/trunk') &&
+        feed.includes('Rama feature renombrada a feature/login') && feed.includes('Rama main renombrada a trunk')
+      );
+    }, null, { timeout: T(5000) });
+    await send('branch -m nope x');
+    await lab.waitForFunction(() => (document.querySelector('.pr-log')?.textContent || '').includes("fatal: no branch named 'nope'"), null, { timeout: T(5000) });
   });
   await step(lab, 'un ejercicio propio se crea, se comparte por URL y la URL lo abre y se resuelve', async () => {
     await lab.click('.pr-make summary');
@@ -2056,6 +2453,16 @@ console.log('Varios repos a la vez');
       await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
       if ((await full.$eval('#constellation-order', (s) => s.value)) !== 'activity') throw new Error('?order=activity no deja el selector en actividad');
       await full.click('#constellation-close');
+      // ?order=prs: abre ordenada por PRs abiertos, con el selector de acuerdo
+      await full.goto(`${base}/index.html?lang=es&order=prs&repo=o/a`);
+      await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });
+      await full.click('#constellation-btn');
+      await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
+      if ((await full.$eval('#constellation-order', (s) => s.value)) !== 'prs') throw new Error('?order=prs no deja el selector en PRs abiertos');
+      await full.selectOption('#constellation-order', 'prs');
+      const prsSaid = await full.$eval('#constellation-status', (e) => e.textContent.trim());
+      if (!/PR/.test(prsSaid) || /undefined|constellation\./.test(prsSaid)) throw new Error('el orden por PRs no se anuncia: ' + prsSaid);
+      await full.click('#constellation-close');
       // ?order=name: abre ordenada por nombre
       await full.goto(`${base}/index.html?lang=es&order=name&repo=o/a`);
       await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });
@@ -2063,6 +2470,36 @@ console.log('Varios repos a la vez');
       await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
       if ((await full.$eval('#constellation-order', (s) => s.value)) !== 'name') throw new Error('?order=name no deja el selector en nombre');
       await full.click('#constellation-close');
+      // ?constellation=r1: solo las galaxias cuyo nombre contiene el texto, y lo anuncia
+      await full.goto(`${base}/index.html?lang=es&constellation=R1&repo=o/a`);
+      await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });
+      await full.click('#constellation-btn');
+      await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
+      const filtered = await full.$$eval('#constellation .cs-gx', (b) => b.map((x) => x.dataset.key));
+      if (!filtered.length || filtered.some((k) => !/r1/i.test(k)) || filtered.length >= 10) throw new Error('?constellation=R1 no filtra por nombre: ' + filtered);
+      const filteredSaid = await full.$eval('#constellation-status', (e) => e.textContent.trim());
+      if (!filteredSaid.includes('R1') || /undefined|constellation\./.test(filteredSaid)) throw new Error('el filtro no se anuncia: ' + filteredSaid);
+      await full.click('#constellation-close');
+      // ?recent=30: los commits del mock son de hace una hora o de ahora, así que siguen los 10; con ?recent=0.000001 (unos 86 ms) ya no queda ninguno
+      for (const [days, want] of [['30', 10], ['0.000001', 0]]) {
+        await full.goto(`${base}/index.html?lang=es&recent=${days}&repo=o/a`);
+        await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });
+        await full.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt-main').length === 10, null, { timeout: T(10000) });
+        // las pestañas que aún cargan no tienen commits y no se descartan: se reabre la constelación hasta que todas hayan cargado
+        let n = -1;
+        let said = '';
+        for (let tries = 0; tries < 20 && n !== want; tries++) {
+          if (tries) await full.waitForTimeout(500);
+          await full.click('#constellation-btn');
+          await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
+          n = (await full.$$('#constellation .cs-gx')).length;
+          said = await full.$eval('#constellation-status', (e) => e.textContent.trim());
+          if (n !== want) await full.click('#constellation-close');
+        }
+        if (n !== want) throw new Error(`?recent=${days}: ${n} galaxias, se esperaban ${want}`);
+        if (want < 10 && (!said || /undefined|constellation\./.test(said))) throw new Error('?recent no se anuncia: ' + said);
+        await full.click('#constellation-close');
+      }
       // un enlace a otro repo, con los 10 ya seguidos: entra el del enlace y sale el último guardado
       await full.goto(`${base}/index.html?lang=es&repo=o/a`);
       await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });
@@ -2688,6 +3125,170 @@ console.log('Bitbucket');
   await page.context().close();
 }
 
+/* ---------- Azure DevOps ---------- */
+
+/** dev.azure.com simulado para la web: acme/web/api con main, una rama con dos commits y un PR activo. La lista de commits no trae los padres, como la real. */
+function fakeAzure() {
+  const WEB = 'https://dev.azure.com/acme/web/_git/api';
+  const REPO = '/acme/web/_apis/git/repositories/api';
+  const commits = new Map();
+  const branches = new Map();
+  const calls = [];
+  const auths = [];
+  let n = 0;
+  const commit = (branch, title) => {
+    const commitId = createHash('sha1').update(`az:${++n}`).digest('hex');
+    const date = new Date(Date.now() - 3600e3 + n * 1000).toISOString();
+    commits.set(commitId, { commitId, author: { name: 'Bea', date }, committer: { name: 'Bea', date }, comment: title, parents: branches.has(branch) ? [branches.get(branch)] : [] });
+    branches.set(branch, commitId);
+  };
+  for (let i = 0; i < 4; i++) commit('main', `inicio ${i}`);
+  branches.set('feature/x', branches.get('main'));
+  commit('feature/x', 'feat: primera parte');
+  commit('feature/x', 'feat: segunda parte');
+  const chain = (id) => {
+    const out = [];
+    for (let s = id; s && commits.has(s); s = commits.get(s).parents[0]) out.push(commits.get(s));
+    return out;
+  };
+  const json = (body) => ({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(body) });
+  const az = {
+    calls,
+    auths,
+    reject: false, // el servicio rechaza el token: 401 en cada consulta con Authorization
+    handle: (route) => {
+      const u = new URL(route.request().url());
+      auths.push(route.request().headers().authorization || null);
+      calls.push(u.pathname + u.search);
+      const p = u.pathname;
+      if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization,content-type' } });
+      if (az.reject && route.request().headers().authorization) return route.fulfill({ status: 401, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"message":"TF400813: The user is not authorized to access this resource."}' });
+      if (p === REPO) return route.fulfill(json({ id: 'r1', name: 'api', webUrl: WEB, defaultBranch: 'refs/heads/main', project: { name: 'web', visibility: 'public', description: 'Un repo de Azure DevOps' } }));
+      if (p === `${REPO}/refs` && u.searchParams.get('filter') === 'tags/') return route.fulfill(json({ count: 1, value: [{ name: 'refs/tags/v1.0-azure', objectId: 'a'.repeat(40), peeledObjectId: branches.get('main') }] })); // anotado: el commit es el pelado
+      if (p === `${REPO}/refs`) return route.fulfill(json({ count: branches.size, value: [...branches].map(([name, objectId]) => ({ name: `refs/heads/${name}`, objectId })) }));
+      if (p === `${REPO}/commits`) {
+        const list = chain(u.searchParams.get('searchCriteria.itemVersion.version')).slice(0, Number(u.searchParams.get('searchCriteria.$top') || 100)).map(({ parents, ...c }) => c);
+        return route.fulfill(json({ count: list.length, value: list }));
+      }
+      const chg = p.match(/\/repositories\/api\/commits\/(\w+)\/changes$/);
+      if (chg && commits.has(chg[1])) return route.fulfill(json({ changes: [{ changeType: 'edit', item: { path: '/src/azure-cambio.js' } }, { changeType: 'add', item: { path: '/docs/nuevo.md' } }], allChangesIncluded: true }));
+      const one = p.match(/\/repositories\/api\/commits\/(\w+)$/);
+      if (one && commits.has(one[1])) return route.fulfill(json(commits.get(one[1])));
+      if (p === `${REPO}/pullrequests`) {
+        const pr = { pullRequestId: 3, title: 'Agrega la función x', status: 'active', isDraft: false, sourceRefName: 'refs/heads/feature/x', targetRefName: 'refs/heads/main', createdBy: { displayName: 'Bea', uniqueName: 'bea@example.com' }, creationDate: new Date().toISOString(), reviewers: [{ displayName: 'Cy', vote: 10 }, { displayName: 'Di', vote: -5 }, { displayName: 'Ed', vote: 0 }] };
+        return route.fulfill(json({ count: 1, value: [pr] }));
+      }
+      return route.fulfill({ status: 404, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"message":"TF401019: The Git repository does not exist or you do not have permissions."}' });
+    },
+  };
+  return az;
+}
+
+console.log('Azure DevOps');
+{
+  const az = fakeAzure();
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.route('https://dev.azure.com/**', az.handle);
+
+  await step(page, 'conecta un repo de Azure DevOps (azure:acme/web/api), con su etiqueta y sin token', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=azure:acme/web/api`);
+    await loaded(page);
+    const link = await page.evaluate(() => {
+      const a = document.querySelector('#repo-link');
+      const b = document.querySelector('#repo-badge');
+      return { text: a.textContent, href: a.href, badge: b.hidden ? null : b.textContent, banner: !document.querySelector('#token-banner').hidden };
+    });
+    if (link.text !== 'acme/web/api' || link.href !== 'https://dev.azure.com/acme/web/_git/api') throw new Error(`el título dice ${link.text} (${link.href})`);
+    if (link.badge !== 'Azure DevOps') throw new Error(`la etiqueta dice ${link.badge}`);
+    if (link.banner) throw new Error('muestra el aviso del token de GitHub');
+    const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
+    if (saved !== '["azure:acme/web/api"]') throw new Error(`se guardó ${saved}`);
+    if (az.auths.some(Boolean)) throw new Error('una consulta a Azure DevOps llevó un encabezado Authorization');
+  });
+
+  await step(page, 'en 2D se ven sus dos ramas y el PR #3', async () => {
+    await page.click('#view-2d');
+    const label = await page.waitForSelector('#graph .head .h-pr', { timeout: T(15000) });
+    if ((await label.textContent()) !== '#3') throw new Error(`la etiqueta dice ${await label.textContent()}`);
+    const names = await page.$$eval('#graph .head', (hs) => hs.map((h) => h.getAttribute('aria-label')).join(' | '));
+    if (!names.includes('feature/x') || !names.includes('main')) throw new Error(`ramas: ${names}`);
+  });
+
+  await step(page, 'los tags de Azure DevOps (refs?filter=tags/, el anotado por su commit pelado) salen como bandera en el grafo', async () => {
+    await page.waitForSelector('#graph .tag-flag .tag-text', { timeout: T(15000) });
+    const text = await page.$eval('#graph .tag-flag .tag-text', (n) => n.textContent);
+    if (text !== 'v1.0-azure') throw new Error(`la bandera dice ${text}`);
+    if (!az.calls.some((c) => c.includes('filter=tags/'))) throw new Error('no pidió refs?filter=tags/');
+  });
+
+  await step(page, 'la ficha de la rama con PR de Azure DevOps lista sus revisores con el voto', async () => {
+    const head = await page.$('#graph svg .head[role=button][aria-label*="feature/x"]');
+    if (!head) throw new Error('no está la cabeza de feature/x');
+    await head.focus();
+    await page.keyboard.press('Enter');
+    const row = await page.waitForSelector('#graph .tip .tip-reviewers', { timeout: T(5000) });
+    const text = await row.textContent();
+    if (text !== 'Revisores: Cy (aprobó), Di (espera al autor), Ed') throw new Error(`la ficha dice ${text}`);
+    await page.keyboard.press('Escape');
+  });
+
+  await step(page, 'cambios de un commit de Azure DevOps: la ficha abre el panel con sus archivos (commits/{id}/changes)', async () => {
+    const heads = await page.$$('#graph svg .head[role=button]');
+    await heads[0].focus();
+    await page.keyboard.press('Enter');
+    const btn = await page.waitForSelector('#graph .tip .tip-diff', { timeout: T(5000) });
+    await btn.focus();
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#diff-panel:not([hidden]) .df-file', { timeout: T(5000) });
+    const names = await page.$$eval('#diff-panel .df-jump', (b) => b.map((x) => x.textContent).join(' | '));
+    if (!names.includes('azure-cambio.js') || !names.includes('nuevo.md')) throw new Error(`archivos del panel: ${names}`);
+    if (!az.calls.some((c) => /\/commits\/\w+\/changes\?/.test(c))) throw new Error('no pidió commits/{id}/changes');
+    await page.keyboard.press('Escape');
+  });
+
+  await step(page, 'el token de Azure DevOps de Ajustes va en cada consulta como Basic, solo a dev.azure.com', async () => {
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    await page.fill('#azure-token-input', 'az-smoke0123');
+    const from = az.auths.length;
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForFunction(() => document.querySelector('#overlay').hidden && document.querySelector('#repo-link')?.textContent === 'acme/web/api', null, { timeout: T(15000) });
+    await page.waitForTimeout(500);
+    const sent = az.auths.slice(from);
+    const want = `Basic ${Buffer.from(':az-smoke0123').toString('base64')}`;
+    if (!sent.length) throw new Error('al guardar el token no se reconectó el repo');
+    if (sent.some((a) => a !== want)) throw new Error(`a Azure DevOps fue ${[...new Set(sent)]}`);
+    const saved = await page.evaluate(() => [localStorage.getItem('graphbranch:azureToken'), localStorage.getItem('graphbranch:token')]);
+    if (saved[0] !== JSON.stringify('az-smoke0123') || saved[1] !== null) throw new Error(`se guardó ${saved}`);
+  });
+
+  await step(page, 'si Azure DevOps rechaza el token, el aviso lo dice y lleva a Ajustes', async () => {
+    az.reject = true;
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    await page.fill('#azure-token-input', 'az-vencido');
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: T(15000) });
+    const text = await page.textContent('#overlay');
+    if (!text.includes('El token de Azure DevOps no es válido')) throw new Error(`el aviso dice ${text}`);
+    az.reject = false;
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    await page.click('#token-clear');
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForFunction(() => document.querySelector('#overlay').hidden && document.querySelector('#repo-link')?.textContent === 'acme/web/api', null, { timeout: T(15000) });
+  }, { allow: /401/ });
+
+  await step(page, 'se acepta pegar la URL de dev.azure.com y un repo que no existe lo dice con el texto de Azure DevOps', async () => {
+    await page.fill('#repo-input', 'https://dev.azure.com/acme/web/_git/nada');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: T(15000) });
+    const text = await page.textContent('#overlay');
+    if (!text.includes('No se encontró acme/web/nada en Azure DevOps. Solo se leen proyectos públicos.')) throw new Error(`el aviso dice ${text}`);
+  }, { allow: /404/ });
+  await page.context().close();
+}
+
 console.log('Bitbucket propio con token');
 {
   // el CSP de la web no nombra hosts propios (eso lo hace la app de escritorio con --bitbucket-url=): aquí se salta para ver qué sale
@@ -2742,6 +3343,38 @@ console.log('Bitbucket propio con token');
   await page.context().close();
 }
 
+console.log('Segunda cuenta de GitHub');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  const auths = [];
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', (route) => {
+    const u = new URL(route.request().url());
+    auths.push([u.pathname, route.request().headers().authorization || '']);
+    return route.fulfill({ status: 404, contentType: 'application/json', body: '{"message":"Not Found"}' });
+  });
+  await step(page, 'el token de la segunda cuenta va solo a los repos de su dueño y el principal a los demás', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    await page.fill('#token-input', 'tok-principal0123');
+    await page.fill('#token2-owner', 'Acme');
+    await page.fill('#token2-input', 'tok-segunda0123');
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForFunction(() => !document.querySelector('#settings').open, null, { timeout: T(3000) });
+    const saved = await page.evaluate(() => JSON.parse(JSON.parse(localStorage.getItem('graphbranch:account2'))));
+    if (saved.owner !== 'Acme' || saved.token !== 'tok-segunda0123') throw new Error(`se guardó ${JSON.stringify(saved)}`);
+    await page.goto(`${base}/index.html?lang=es&repo=acme/web&repo=otro/api`);
+    await page.waitForTimeout(3000);
+    const of = (owner) => auths.filter(([path]) => path.startsWith(`/repos/${owner}/`));
+    if (!of('acme').length || !of('otro').length) throw new Error(`no se consultaron los dos repos: ${JSON.stringify(auths)}`);
+    if (of('acme').some(([, a]) => a !== 'Bearer tok-segunda0123')) throw new Error(`acme salió con ${JSON.stringify(of('acme'))}`);
+    if (of('otro').some(([, a]) => a !== 'Bearer tok-principal0123')) throw new Error(`otro salió con ${JSON.stringify(of('otro'))}`);
+  }, { allow: /404/ });
+  await page.context().close();
+}
+
 console.log('Fijar una rama con el teclado');
 {
   const gh = fakeGitHub();
@@ -2769,6 +3402,50 @@ console.log('Fijar una rama con el teclado');
     });
     if (after.focus !== 'tip-pin') throw new Error(`tras fijar, el foco quedó en ${after.focus}`);
     if (after.pressed === before) throw new Error('el botón no cambió de estado');
+  });
+
+  await step(page, 'la leyenda 2D se recorre con Tab y Enter lleva al commit de la rama', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=o/f`);
+    await loaded(page);
+    await page.click('#view-2d');
+    const fila = await page.waitForSelector('#graph svg .legend-item[role=button]', { timeout: T(10000) });
+    const r = await fila.evaluate((el) => ({ tab: el.getAttribute('tabindex'), nombre: el.getAttribute('aria-label'), titulo: el.querySelector('title')?.textContent }));
+    if (r.tab !== '0' || !r.nombre?.includes(r.titulo)) throw new Error(`la fila de la leyenda no es enfocable con nombre: ${JSON.stringify(r)}`);
+    await fila.focus();
+    if (!(await page.evaluate(() => !!document.querySelector('#graph svg.dimmed')))) throw new Error('enfocar la fila no resalta su rama');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#graph svg .head.moved, #graph svg .node.moved', { timeout: T(4000) });
+    const fantasma = await page.$$eval('#graph svg .legend-item.ghost-row[tabindex]', (xs) => xs.length);
+    if (fantasma) throw new Error('las filas de ramas ya fusionadas no deben ser enfocables');
+  });
+
+  await step(page, 'pasar el puntero por el nombre de una rama de la leyenda 2D resalta solo sus commits, sin tocar filtro ni URL', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=o/f`);
+    await loaded(page);
+    await page.click('#view-2d');
+    await page.waitForSelector('#graph svg .legend-item[role=button]', { timeout: T(10000) });
+    const urlAntes = page.url();
+    const filas = await page.$$('#graph svg .legend-item[role=button]');
+    let visto = null;
+    for (const fila of filas) {
+      await fila.hover();
+      visto = await page.evaluate(() => ({
+        atenuado: !!document.querySelector('#graph svg.dimmed'),
+        luz: document.querySelectorAll('#graph svg .node.hl').length,
+        resto: document.querySelectorAll('#graph svg .node:not(.hl)').length,
+      }));
+      if (visto.luz && visto.resto) break;
+    }
+    if (!visto?.atenuado || !visto.luz || !visto.resto) throw new Error(`el puntero sobre la leyenda no deja una rama a la luz y el resto atenuado: ${JSON.stringify(visto)}`);
+    await page.mouse.move(2, 2);
+    const fuera = await page.evaluate(() => ({
+      atenuado: !!document.querySelector('#graph svg.dimmed'),
+      luz: document.querySelectorAll('#graph svg .hl').length,
+      filtro: document.querySelector('#branch-filter').value,
+    }));
+    if (fuera.atenuado || fuera.luz) throw new Error(`al salir de la leyenda el resaltado se queda: ${JSON.stringify(fuera)}`);
+    if (fuera.filtro) throw new Error('resaltar una rama cambió el filtro');
+    if (page.url() !== urlAntes) throw new Error(`resaltar una rama cambió la URL: ${urlAntes} → ${page.url()}`);
   });
 
   // abierta con el teclado, la ficha recibe el foco (si no, para llegar a sus botones habría que
@@ -2815,6 +3492,33 @@ console.log('Celular angosto: etiquetas 3D pisadas');
     if (!r.tapadas) throw new Error('ninguna etiqueta quedó tapada: el caso no se probó');
     if (r.tactiles.length) throw new Error(`etiquetas atenuadas que reciben el toque: ${r.tactiles.join(', ')}`);
     if (!r.tab) throw new Error('una etiqueta tapada quedó fuera del orden de Tab');
+  });
+  await step(page, 'a 320 px, las cifras ocupan tres columnas compactas y el grafo empieza antes', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    const r = await page.evaluate(() => {
+      const stats = document.querySelector('.stats').getBoundingClientRect();
+      const graph = document.querySelector('.graph-panel').getBoundingClientRect();
+      return { alto: Math.round(stats.height), grafo: Math.round(graph.top + scrollY), ancho: document.documentElement.scrollWidth };
+    });
+    if (r.alto > 170) throw new Error(`las cifras ocupan ${r.alto} px de alto (compactas: hasta 170)`);
+    if (r.grafo > 450) throw new Error(`el grafo empieza a ${r.grafo} px del inicio de la página`);
+    if (r.ancho > 320) throw new Error(`la página se desborda a ${r.ancho} px`);
+  });
+  await step(page, 'a 320 px, un enlace «ir al grafo» salta al panel sin recorrer las cifras', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    const link = page.locator('#to-graph');
+    if (!(await link.isVisible())) throw new Error('el enlace al grafo no se ve a 320 px');
+    const nombre = (await link.textContent()).trim();
+    if (!nombre || /^graph\./.test(nombre)) throw new Error(`el enlace no tiene texto traducido: «${nombre}»`);
+    await link.click();
+    const r = await page.evaluate(() => ({
+      foco: document.activeElement && document.activeElement.id,
+      arriba: Math.round(document.querySelector('.graph-panel').getBoundingClientRect().top),
+    }));
+    if (r.foco !== 'graph-panel') throw new Error(`el foco quedó en «${r.foco}», no en el panel del grafo`);
+    if (r.arriba > 60) throw new Error(`el panel del grafo quedó a ${r.arriba} px del borde superior de la pantalla`);
   });
   await page.context().close();
 }
@@ -3203,6 +3907,42 @@ console.log('Capa para streaming: &theme= fija el tema (?embed=1)');
   await page.context().close();
 }
 
+console.log('Capa para streaming: &spin=0 apaga la rotación 3D (?embed=1)');
+{
+  const page = await openPage({ viewport: { width: 640, height: 400 } });
+  await step(page, '&spin=0 deja la vista 3D quieta sin guardarlo; sin &spin= gira como siempre', async () => {
+    const spin = () => page.getAttribute('#spin-btn', 'aria-pressed');
+    await page.goto(`${base}/index.html?lang=es&embed=1&spin=0`);
+    await loaded(page);
+    if ((await spin()) !== 'false') throw new Error('&spin=0 no apaga la rotación');
+    if (await page.evaluate(() => localStorage.getItem('graphbranch:spin3d'))) throw new Error('&spin=0 guardó la preferencia');
+    await page.goto(`${base}/index.html?lang=es&embed=1`);
+    await loaded(page);
+    if ((await spin()) !== 'true') throw new Error('sin &spin= la rotación no sigue encendida');
+  });
+  await page.context().close();
+}
+
+console.log('Capa para streaming: &view= fija la vista (?embed=1)');
+{
+  const page = await openPage({ viewport: { width: 640, height: 400 } });
+  await step(page, '&view=2d y &view=3d fijan la vista sin guardarla; sin &view= manda la guardada', async () => {
+    const pressed = (id) => page.getAttribute(id, 'aria-pressed');
+    await page.goto(`${base}/index.html?lang=es&embed=1&view=2d`);
+    await loaded(page);
+    if ((await pressed('#view-2d')) !== 'true') throw new Error('&view=2d no deja la vista 2D');
+    if (await page.evaluate(() => localStorage.getItem('graphbranch:view'))) throw new Error('&view=2d guardó la vista');
+    await page.goto(`${base}/index.html?lang=es&embed=1&view=3d`);
+    await loaded(page);
+    if ((await pressed('#view-3d')) !== 'true') throw new Error('&view=3d no deja la vista 3D');
+    await page.evaluate(() => localStorage.setItem('graphbranch:view', JSON.stringify('2d')));
+    await page.goto(`${base}/index.html?lang=es&embed=1`);
+    await loaded(page);
+    if ((await pressed('#view-2d')) !== 'true') throw new Error('sin &view= no manda la vista guardada');
+  });
+  await page.context().close();
+}
+
 console.log('Capa para streaming: &title= pone un rótulo propio (?embed=1)');
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
@@ -3234,6 +3974,55 @@ console.log('Capa para streaming: &max= limita las ramas (?embed=1)');
     if ((await shown('&max=2')) !== 2) throw new Error('&max=2 no deja 2 ramas');
     if (await shown('')  !== -1) throw new Error('sin &max= la capa marca ramas');
     if (await shown('&max=0') !== -1 || await shown('&max=abc') !== -1) throw new Error('un &max= inválido limita');
+  });
+  await page.context().close();
+}
+
+console.log('Capa para streaming: &branch= deja una rama (?embed=1)');
+{
+  const page = await openPage({ viewport: { width: 640, height: 400 } });
+  await step(page, '&branch=develop deja 2 ramas (develop y la por defecto); una que no existe, solo la por defecto; sin &branch= ninguna marca', async () => {
+    const shown = async (q) => {
+      await page.goto(`${base}/index.html?lang=es&embed=1${q}`);
+      await loaded(page);
+      await page.waitForSelector('#graph3d canvas, #graph canvas', { timeout: T(30000) });
+      return page.evaluate(() => Number(document.querySelector('.graph-stage').dataset.embedBranches ?? -1));
+    };
+    if ((await shown('&branch=develop')) !== 2) throw new Error('&branch=develop no deja 2 ramas');
+    if ((await shown('&branch=no-existe')) !== 1) throw new Error('una rama inexistente no deja solo la por defecto');
+    if ((await shown('&branch=%3Cb%3Ex')) !== 1) throw new Error('un nombre con HTML no se compara como texto');
+    if ((await shown('')) !== -1) throw new Error('sin &branch= la capa marca ramas');
+  });
+  await page.context().close();
+}
+
+console.log('Capa para streaming: &pr=1 deja las ramas con un PR abierto (?embed=1)');
+{
+  const page = await openPage({ viewport: { width: 640, height: 400 } });
+  await step(page, '&pr=1 deja la rama por defecto y solo las ramas con PR abierto (2D y 3D); se combina con &max= y &branch=; &pr=0 no filtra', async () => {
+    const open = async (q) => {
+      await page.goto(`${base}/index.html?lang=es&embed=1${q}`);
+      await loaded(page);
+      await page.waitForSelector('#graph3d canvas, #graph svg .head', { timeout: T(30000), state: 'attached' });
+      return page.evaluate(() => ({
+        marked: Number(document.querySelector('.graph-stage').dataset.embedBranches ?? -1),
+        heads: [...document.querySelectorAll('#graph svg .head:not(.ghost)')].map((g) => ({ name: g.__name, def: g.classList.contains('default'), pr: !!g.querySelector('.h-pr') })),
+      }));
+    };
+    const all = await open('&view=2d');
+    if (all.marked !== -1) throw new Error('sin &pr=1 la capa marca ramas');
+    if (!all.heads.some((h) => !h.def && !h.pr)) throw new Error('la demo no trae una rama sin PR con que probar: ' + JSON.stringify(all.heads));
+    const only = await open('&view=2d&pr=1');
+    const rest = only.heads.filter((h) => !h.def);
+    if (!only.heads.some((h) => h.def)) throw new Error('&pr=1 quitó la rama por defecto');
+    if (!rest.length || rest.some((h) => !h.pr)) throw new Error('&pr=1 deja ramas sin PR o ninguna con PR: ' + JSON.stringify(only.heads));
+    if (only.marked !== only.heads.length) throw new Error(`la marca (${only.marked}) no cuenta las ramas dibujadas (${only.heads.length})`);
+    const in3d = await open('&view=3d&pr=1');
+    if (in3d.marked !== only.marked) throw new Error(`en 3D &pr=1 deja ${in3d.marked} ramas y en 2D ${only.marked}`);
+    if ((await open('&view=2d&pr=1&max=2')).marked !== 2) throw new Error('&pr=1&max=2 no deja 2 ramas');
+    const sinPr = all.heads.find((h) => !h.def && !h.pr).name;
+    if ((await open('&view=2d&pr=1&branch=' + encodeURIComponent(sinPr))).marked !== 1) throw new Error('&pr=1&branch= con una rama sin PR no deja solo la por defecto');
+    if ((await open('&view=2d&pr=0')).marked !== -1) throw new Error('&pr=0 filtra la capa');
   });
   await page.context().close();
 }
@@ -3270,6 +4059,32 @@ console.log('Filtro por ruta desde la URL (?path=)');
     await page.waitForSelector('#search[open]', { timeout: T(3000) });
     await page.click('#search-path-clear');
     if ((await page.evaluate(() => location.search)).includes('path=')) throw new Error('quitar el filtro deja la ruta en la URL');
+  });
+  await page.context().close();
+}
+
+console.log('Vista de un PR desde la URL (?pr=N)');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, '?pr=N abre la vista del PR con su descripción y comentarios, y Esc la cierra', async () => {
+    await page.goto(`${base}/index.html?lang=es&pr=36`);
+    await loaded(page);
+    await page.waitForSelector('#prview[open] #prview-body .pv-list li', { timeout: T(5000) }).catch(() => {
+      throw new Error('?pr=36 no abrió la vista del PR');
+    });
+    const r = await page.evaluate(() => ({
+      title: document.querySelector('#prview-title').textContent,
+      body: document.querySelector('#prview-body').textContent,
+      n: document.querySelectorAll('#prview-body .pv-list li').length,
+    }));
+    if (!r.title.includes('36') || !r.n || /undefined|NaN|prview\./.test(r.title + r.body)) throw new Error('vista del PR rota: ' + JSON.stringify(r));
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#prview:not([open])', { state: 'attached', timeout: T(3000) });
+  });
+  await step(page, '?pr=abc no abre nada', async () => {
+    await page.goto(`${base}/index.html?lang=es&pr=abc`);
+    await loaded(page);
+    if (await page.$('#prview[open]')) throw new Error('?pr=abc abrió la vista del PR');
   });
   await page.context().close();
 }
@@ -3440,6 +4255,120 @@ console.log('Filtro por autor desde la URL (?author=)');
   await page.context().close();
 }
 
+console.log('Grafo de primer padre (?firstparent=1)');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, 'deja menos commits que el grafo entero, queda en la URL y el interruptor lo apaga', async () => {
+    // los commits del grafo dibujado (la cifra del resumen, que sale del layout), no los nodos del SVG: el 2D crea
+    // solo los que están en pantalla, y con menos carriles caben más. Todo en la misma demo: otra carga es otra historia
+    const commits = () => page.evaluate(() => Number(document.querySelector('#st-commits').textContent.replace(/\D/g, '')) || 0);
+    await page.goto(`${base}/index.html?lang=es&firstparent=1`);
+    await loaded(page);
+    const on = await page.evaluate(() => ({ mark: document.querySelector('#search-btn').classList.contains('filtered'), url: location.search }));
+    on.n = await commits();
+    if (!on.mark) throw new Error('?firstparent=1 no marca el filtro');
+    if (!on.url.includes('firstparent=1')) throw new Error('la URL perdió firstparent: ' + on.url);
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    if (!(await page.locator('#graph-firstparent').isChecked())) throw new Error('el interruptor no refleja ?firstparent=1');
+    if (!(await page.evaluate(() => !!document.querySelector('#graph-firstparent').closest('label')?.textContent.trim()))) throw new Error('el interruptor no tiene nombre');
+    await page.uncheck('#graph-firstparent');
+    await page.waitForFunction((n) => Number(document.querySelector('#st-commits').textContent.replace(/\D/g, '')) > n, on.n, { timeout: T(5000) }).catch(() => {});
+    const all = await commits();
+    if (!(on.n > 0 && on.n < all)) throw new Error(`?firstparent=1 no acota los commits (${on.n} con el interruptor, ${all} sin él)`);
+    if ((await page.evaluate(() => location.search)).includes('firstparent')) throw new Error('apagarlo deja firstparent en la URL');
+  });
+  await page.context().close();
+}
+
+console.log('Columnas de autor y fecha en el 2D');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, 'el interruptor de columnas pone «autor · fecha» junto a los commits del 2D, se recuerda y al apagarlo se quitan', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    const metas = () => page.evaluate(() => [...document.querySelectorAll('.graph-svg .node .node-meta')].map((t) => t.textContent));
+    if ((await metas()).length) throw new Error('las columnas salen sin encender el interruptor');
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    if (!(await page.evaluate(() => !!document.querySelector('#graph-columns').closest('label')?.textContent.trim()))) throw new Error('el interruptor no tiene nombre');
+    await page.check('#graph-columns');
+    await page.waitForFunction(() => document.querySelectorAll('.graph-svg .node .node-meta').length > 0, null, { timeout: T(5000) });
+    const on = await metas();
+    if (!on.every((x) => x.includes(' · '))) throw new Error('una columna no es «autor · fecha»: ' + JSON.stringify(on.slice(0, 3)));
+    await page.reload();
+    await loaded(page);
+    await page.waitForFunction(() => document.querySelectorAll('.graph-svg .node .node-meta').length > 0, null, { timeout: T(5000) });
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    await page.uncheck('#graph-columns');
+    await page.waitForFunction(() => !document.querySelector('.graph-svg .node .node-meta'), null, { timeout: T(5000) });
+  });
+  await page.context().close();
+}
+
+console.log('Grafo de primer padre en el 3D');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, 'el interruptor de primer padre también deja menos commits en el grafo 3D, y al apagarlo vuelven', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    if (!(await page.evaluate(() => !!window.GB?.Graph3D))) return; // sin WebGL no hay grafo 3D
+    await page.evaluate(() => {
+      const G3 = window.GB.Graph3D.prototype;
+      window.__g3n = [];
+      const orig = G3.update;
+      G3.update = function (L, ...a) {
+        window.__g3n.push(L?.nodes?.length ?? -1);
+        return orig.call(this, L, ...a);
+      };
+    });
+    const last = () => page.evaluate(() => window.__g3n[window.__g3n.length - 1]);
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    await page.check('#graph-firstparent');
+    await page.waitForFunction(() => window.__g3n.length > 0, null, { timeout: T(5000) });
+    const on = await last();
+    await page.uncheck('#graph-firstparent');
+    const n = await page.evaluate(() => window.__g3n.length);
+    await page.waitForFunction((k) => window.__g3n.length > k, n - 1, { timeout: T(5000) });
+    const off = await last();
+    if (!(on > 0 && on < off)) throw new Error(`el 3D no recibió menos commits con el primer padre (${on} con el interruptor, ${off} sin él)`);
+  });
+  await page.context().close();
+}
+
+console.log('Ramas ocultas o solas desde la URL (?solo=, ?ocultar=)');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, '?ocultar= y ?solo= abren el grafo con menos ramas, la URL las sigue y «Ver todas» las limpia', async () => {
+    const count = () => page.evaluate(() => document.querySelectorAll('#graph svg .head').length);
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    const all = await count();
+    await page.goto(`${base}/index.html?lang=es&ocultar=feature/login&ocultar=fix/rate-limit`);
+    await loaded(page);
+    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, all, { timeout: T(5000) });
+    const hid = await count();
+    if (hid !== all - 2) throw new Error(`?ocultar= quitó ${all - hid} ramas, no 2`);
+    const url = await page.evaluate(() => location.search);
+    if ((url.match(/ocultar=/g) || []).length !== 2) throw new Error('la URL perdió ocultar: ' + url);
+    await page.goto(`${base}/index.html?lang=es&solo=feature/login`);
+    await loaded(page);
+    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, hid, { timeout: T(5000) });
+    const solo = await count();
+    if (solo !== 2) throw new Error(`?solo= dejó ${solo} ramas, no 2 (la elegida y la por defecto)`);
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    if (!(await page.evaluate(() => document.querySelector('#search-btn').classList.contains('filtered')))) throw new Error('?solo= no marca el filtro');
+    await page.click('#branch-view-reset');
+    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length === n, all, { timeout: T(5000) });
+    const after = await page.evaluate(() => location.search);
+    if (/solo=|ocultar=/.test(after)) throw new Error('«Ver todas» deja la rama en la URL: ' + after);
+  });
+  await page.context().close();
+}
+
 console.log('Modo TV directo (?tv=1)');
 {
   const page = await openPage({ viewport: { width: 1920, height: 1080 } });
@@ -3474,6 +4403,95 @@ console.log('Salud del repo directa (?health=1)');
     await loaded(page);
     await page.waitForTimeout(500);
     if (await page.evaluate(() => document.querySelector('#health').open)) throw new Error('health=0 abrió el panel');
+  });
+  await page.context().close();
+}
+
+console.log('Agentes e interacciones (?agents=1)');
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await step(page, 'abre la demo con el panel de agentes: la red, quién con quién (también entre agentes), las sesiones y lo último', async () => {
+    await page.goto(`${base}/index.html?lang=es&agents=1`);
+    await loaded(page);
+    await page.waitForSelector('#agents[open]', { timeout: T(5000) }).catch(() => {
+      throw new Error('?agents=1 no abrió el panel de agentes');
+    });
+    const info = await page.evaluate(() => {
+      const d = document.querySelector('#agents');
+      const w = d.querySelector('.tr-wrap');
+      const texts = (sel) => [...d.querySelectorAll(sel)].map((x) => x.textContent.replace(/[\u2068\u2069]/g, '')); // sin los aislantes de cada nombre
+      return {
+        agents: d.querySelectorAll('svg.ag-net .ag-agent').length,
+        people: d.querySelectorAll('svg.ag-net .ag-person').length,
+        between: d.querySelectorAll('svg.ag-net .ag-edge-agents').length,
+        aria: d.querySelector('svg.ag-net')?.getAttribute('aria-label') || '',
+        pairs: texts('#ag-pairs .hl-main'),
+        list: texts('#ag-list .hl-main'),
+        recent: texts('#ag-recent .hl-main'),
+        rows: d.querySelectorAll('#agents-body button.hl-row[data-sha]').length,
+        links: d.querySelectorAll('#agents-body a[href]').length,
+        text: d.textContent,
+        overflow: w.scrollWidth - w.clientWidth,
+      };
+    });
+    if (info.agents < 3 || !info.people) throw new Error(`la red: ${info.agents} agentes y ${info.people} personas`);
+    if (!info.between) throw new Error('la red no distingue ningún vínculo entre dos agentes');
+    if (!/\d/.test(info.aria)) throw new Error('la red no dice cuántos participantes y vínculos tiene: ' + info.aria);
+    if (!info.pairs.some((p) => p === 'GitHub Copilot → Claude Code')) throw new Error('falta Copilot → Claude Code (su revisión del PR de la app de Claude): ' + info.pairs.join(' | '));
+    if (!info.pairs.some((p) => /^Claude Code · sesión \w{6} → Claude Code · sesión \w{6}$/.test(p))) throw new Error('falta la sesión de Claude que retoma la rama de otra: ' + info.pairs.join(' | '));
+    if (!info.list.some((x) => /^Claude Code · sesión \w{6} · Opus 5\.5$/.test(x)) || !info.list.includes('Dependabot')) throw new Error('la lista de agentes: ' + info.list.join(' | '));
+    if (!info.recent.length || !info.rows) throw new Error('sin interacciones recientes o sin filas que lleven al grafo');
+    if (info.links) throw new Error('la demo enlaza sesiones de Claude Code, que son ficticias');
+    if (/undefined|NaN|agents\.|tip\./.test(info.text)) throw new Error('texto sin resolver en el panel: ' + info.text.slice(0, 160));
+    if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
+  });
+  await step(page, 'solo entre agentes: la red y las listas dejan fuera a las personas, se recuerda y el foco se queda en el interruptor', async () => {
+    await page.click('#agents-only');
+    const r = await page.evaluate(() => ({
+      people: document.querySelectorAll('#agents svg.ag-net .ag-person').length,
+      agents: document.querySelectorAll('#agents svg.ag-net .ag-agent').length,
+      pairs: [...document.querySelectorAll('#ag-pairs .hl-main')].map((x) => x.textContent.replace(/[\u2068\u2069]/g, '')),
+      focus: document.activeElement?.id,
+      stored: localStorage.getItem('graphbranch:agentsOnly'),
+    }));
+    if (r.people || !r.agents) throw new Error(`solo entre agentes dejó ${r.people} personas y ${r.agents} agentes en la red`);
+    if (!r.pairs.length || r.pairs.some((p) => !/^(Claude Code|GitHub Copilot|Dependabot)\b.* → (Claude Code|GitHub Copilot|Dependabot)\b/.test(p))) throw new Error('quién con quién, solo entre agentes: ' + r.pairs.join(' | '));
+    if (r.focus !== 'agents-only') throw new Error(`el foco quedó en ${r.focus}`);
+    if (r.stored !== 'true') throw new Error('no se recuerda: ' + r.stored);
+    await page.click('#agents-only');
+    if (await page.evaluate(() => localStorage.getItem('graphbranch:agentsOnly'))) throw new Error('apagado sigue guardado');
+  });
+  await step(page, 'una fila lleva a su commit y cierra el panel; Esc lo cierra, el foco vuelve al botón y agents= sale de la URL', async () => {
+    await page.click('#ag-list button.hl-row[data-sha]');
+    // el evento close del diálogo llega en una tarea aparte: la URL se limpia un instante después de cerrarse
+    await page.waitForFunction(() => !document.querySelector('#agents').open && !location.search.includes('agents='), null, { timeout: T(3000) }).catch(() => {});
+    if (await page.evaluate(() => document.querySelector('#agents').open)) throw new Error('la fila no cerró el panel');
+    if ((await page.evaluate(() => location.search)).includes('agents=')) throw new Error('cerrar el panel deja agents= en la URL');
+    await page.focus('#agents-btn');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#agents[open]', { timeout: T(3000) });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#agents:not([open])', { state: 'attached', timeout: T(3000) });
+    const focus = await page.evaluate(() => document.activeElement?.id);
+    if (focus !== 'agents-btn') throw new Error(`al cerrar, el foco quedó en ${focus}`);
+  });
+  await step(page, 'la ficha de un commit de agente dice cuál es, con su modelo y su sesión (2D)', async () => {
+    await page.click('#pause-btn'); // la demo quieta: las cabezas no cambian mientras se recorren
+    await page.click('#view-2d');
+    await page.focus('#graph');
+    await page.keyboard.press('End');
+    await page.waitForTimeout(800);
+    let tip = '';
+    for (const h of await page.$$('#graph svg .head[role=button]:not(.exit)')) {
+      if (!(await h.isVisible())) continue;
+      await h.focus();
+      await page.keyboard.press('Enter');
+      tip = await page.waitForSelector('#graph .tip:not([hidden]) .tip-agent', { timeout: T(800) }).then((x) => x.textContent(), () => '');
+      await page.keyboard.press('Escape');
+      if (tip) break;
+    }
+    if (!/^Agente: (Claude Code · Opus 5\.5 · sesión \w{6}|GitHub Copilot|Dependabot)$/.test(tip)) throw new Error('ninguna ficha de rama dice su agente: ' + JSON.stringify(tip));
+    await page.click('#pause-btn');
   });
   await page.context().close();
 }

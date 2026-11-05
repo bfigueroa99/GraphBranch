@@ -200,3 +200,73 @@ test('una rama sin actividad en más de 30 días se dice quieta, también la por
   assert.deepEqual(quiet(d, { paths: new Set(['a1']) }), { main: false, feature: false });
   assert.equal(ctx.window.GB.textview.QUIET_DAYS, 30); // los textos de 'textview.quiet' dicen 30 en los 40 idiomas
 });
+
+test('una rama cuya punta ya está en la por defecto se dice fusionada; la por defecto, la recién creada y la que lleva commits propios no', () => {
+  const d = repo();
+  const merged = () => Object.fromEntries(build(d).branches.map((b) => [b.name, b.merged]));
+  assert.deepEqual(merged(), { main: false, feature: true }); // f2 es segundo padre de m3
+  // una rama creada ahora sobre la punta de la por defecto no tiene nada que fusionar
+  d.branches.set('nueva', { name: 'nueva', sha: 'm3', movedAt: 5 });
+  assert.equal(merged().nueva, false);
+  // con un commit propio ya no está dentro de la por defecto
+  d.commits.set('n4', { sha: 'n4', parents: ['m3'], message: 'propio', date: 6, author: { name: 'Ana' } });
+  d.branches.get('nueva').sha = 'n4';
+  assert.equal(merged().nueva, false);
+  // una rama vieja, de antes del último merge, sí
+  d.branches.set('vieja', { name: 'vieja', sha: 'a2', movedAt: 2 });
+  assert.equal(merged().vieja, true);
+  // sin rama por defecto cargada no se sabe qué está fusionado
+  d.branches.delete('main');
+  assert.ok(Object.values(merged()).every((m) => !m));
+});
+
+test('viewAction: H oculta, S deja sola, A vuelve a ver todas; con Ctrl, Alt o Meta o con otra tecla, nada', () => {
+  const act = ctx.window.GB.textview.viewAction;
+  assert.equal(act({ key: 'h' }), 'hide');
+  assert.equal(act({ key: 'H' }), 'hide');
+  assert.equal(act({ key: 's' }), 'solo');
+  assert.equal(act({ key: 'a' }), 'all');
+  assert.equal(act({ key: 'A' }), 'all');
+  assert.equal(act({ key: 'a', ctrlKey: true }), null);
+  assert.equal(act({ key: 's', ctrlKey: true }), null);
+  assert.equal(act({ key: 'h', metaKey: true }), null);
+  assert.equal(act({ key: 'Enter' }), null);
+  assert.equal(act(null), null);
+});
+
+test('viewNote: lo que dice la vista tras ocultar o dejar sola una rama', () => {
+  const note = ctx.window.GB.textview.viewNote;
+  const text = (k, p) => `${k}:${p?.name ?? ''}`;
+  assert.equal(note('hide', 'x', '', text), 'textview.hidden:x');
+  assert.equal(note('solo', 'x', 'x', text), 'textview.soloed:x');
+  assert.equal(note('solo', 'x', '', text), 'branchview.reset:');
+  assert.equal(note('all', '', '', text), 'branchview.reset:');
+});
+
+test('una rama creada en los últimos 7 días se dice nueva, con lo ya cargado del feed; la por defecto, las viejas y las del futuro no', () => {
+  const DAY = 864e5;
+  const now = Date.UTC(2026, 10, 4);
+  const acts = [
+    { kind: 'branch-create', branch: 'feature', time: now - 2 * DAY },
+    { kind: 'branch-create', branch: 'main', time: now - 1 * DAY },
+    { kind: 'branch-create', branch: 'viejo', time: now - 9 * DAY },
+    { kind: 'branch-create', branch: 'futuro', time: now + 3 * DAY },
+    { kind: 'branch-create', branch: 'sin-hora' },
+    { kind: 'push', branch: 'otra', time: now - DAY },
+  ];
+  const fresh = ctx.window.GB.textview.freshBranches(acts, now);
+  assert.deepEqual([...fresh].sort(), ['feature', 'main']);
+  const by = (opts) => Object.fromEntries(build(repo(), { now, ...opts }).branches.map((b) => [b.name, b.fresh]));
+  assert.deepEqual(by({ fresh }), { main: false, feature: true }, 'la por defecto nunca es nueva');
+  assert.deepEqual(by({}), { main: false, feature: false }, 'sin feed, ninguna se sabe nueva');
+});
+
+test('cada rama dice si su último CI cargado falló (data.ci)', () => {
+  const d = repo();
+  const failing = () => Object.fromEntries(build(d).branches.map((b) => [b.name, b.ciFailing]));
+  assert.deepEqual(failing(), { main: false, feature: false }); // sin data.ci
+  d.ci = new Map([['feature', 'failure'], ['main', 'success']]);
+  assert.deepEqual(failing(), { main: false, feature: true });
+  d.ci = new Map([['feature', 'pending']]);
+  assert.equal(failing().feature, false); // en curso no es fallo
+});

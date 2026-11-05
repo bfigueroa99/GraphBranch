@@ -41,19 +41,50 @@
       .map((p) => ({ key: p.key, x: 50 + p.x * k, y: 50 + p.y * k, r: p.r * k }));
   }
 
-  /** Los repos en el orden pedido: `tabs` (el de las pestañas), `activity` (más commits cargados primero) o
+  /** Los repos en el orden pedido: `tabs` (el de las pestañas), `activity` (más commits cargados primero), `prs` (más pull requests abiertos primero) o
       `name` (alfabético, sin mayúsculas ni acentos). Empata por el orden de las pestañas; no toca `items`. */
   function sortItems(items, mode) {
     const list = items.map((it, idx) => ({ it, idx }));
     if (mode === 'activity') list.sort((a, b) => (b.it.commits || 0) - (a.it.commits || 0) || a.idx - b.idx);
+    else if (mode === 'prs') list.sort((a, b) => (b.it.prs || 0) - (a.it.prs || 0) || a.idx - b.idx);
     else if (mode === 'name') list.sort((a, b) => String(a.it.name).localeCompare(String(b.it.name), undefined, { sensitivity: 'base', numeric: true }) || a.idx - b.idx);
     return list.map((x) => x.it);
   }
 
-  /** `?order=activity` o `?order=name`: el orden con que abre la constelación. Lo que no se conoce (o falta) es `null`: queda el de las pestañas. */
+  /** `?order=activity`, `?order=prs` o `?order=name`: el orden con que abre la constelación. Lo que no se conoce (o falta) es `null`: queda el de las pestañas. */
   function orderParam(q) {
     const v = String(q.get('order') || '').trim().toLowerCase();
-    return v === 'activity' || v === 'name' ? v : null;
+    return v === 'activity' || v === 'prs' || v === 'name' ? v : null;
+  }
+
+  /** Minúsculas y sin acentos, para comparar nombres. */
+  function fold(s) {
+    return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  /** `?constellation=texto`: lo que tiene que contener el nombre de un repo para quedar en la constelación. Vacío o ausente es `''` (sin filtro). */
+  function filterParam(q) {
+    return String(q.get('constellation') || '').trim().slice(0, 100);
+  }
+
+  /** Los repos cuyo nombre contiene `text` (sin mayúsculas ni acentos); sin texto, todos. No toca `items`. */
+  function filterItems(items, text) {
+    const f = fold(String(text || '').trim());
+    return f ? items.filter((it) => fold(it.name).includes(f)) : items.slice();
+  }
+
+  /** `?recent=N`: solo los repos con actividad en los últimos N días (`?recent=30` es el mes). Falta, no es un número o no es positivo: `null` (sin filtro); se acota a 3650 días. */
+  function recentParam(q) {
+    const raw = String(q.get('recent') ?? '').trim();
+    const n = raw === '' ? NaN : Number(raw);
+    return Number.isFinite(n) && n > 0 ? Math.min(n, 3650) : null;
+  }
+
+  /** Los repos con algún commit en los últimos `days` días contados desde `now`. `it.last` es la fecha (ms) de su commit más reciente; sin ella, el repo se conserva solo mientras carga (`state: 'loading'`); ya cargado o con error no tiene actividad que mostrar. Sin `days`, todos. No toca `items`. */
+  function recentItems(items, days, now = Date.now()) {
+    if (!(days > 0)) return items.slice();
+    const from = now - days * 864e5;
+    return items.filter((it) => (Number.isFinite(it.last) ? it.last >= from : it.state === 'loading'));
   }
 
   /** Tono (0–359) estable para un nombre. */
@@ -97,21 +128,38 @@
   function mount(root, { text, fmt = String, onGo, select = null, status = null }) {
     let items = [];
     let mode = 'tabs';
+    let filter = '';
+    let recent = null;
     if (select) select.addEventListener('change', () => setOrder(select.value, true));
     /** Cambia el orden (el de Tab y el de lector de pantalla) y, si lo pidió la persona, lo anuncia. */
     function setOrder(next, announce) {
-      mode = ['activity', 'name'].includes(next) ? next : 'tabs';
+      mode = ['activity', 'prs', 'name'].includes(next) ? next : 'tabs';
       if (select) select.value = mode;
       draw();
-      if (announce && status) status.textContent = text('constellation.ordered', { order: text('constellation.order' + mode[0].toUpperCase() + mode.slice(1)) });
+      if (announce && status) status.textContent = text('constellation.ordered', { order: text(mode === 'prs' ? 'stats.prs' : 'constellation.order' + mode[0].toUpperCase() + mode.slice(1)) });
+    }
+    /** Deja solo los repos cuyo nombre contiene `next` (`''`: todos). */
+    function setFilter(next) {
+      filter = String(next || '').trim();
+      draw();
+    }
+    /** Deja solo los repos con actividad en los últimos `days` días (`null`: todos). */
+    function setRecent(days) {
+      recent = days > 0 ? days : null;
+      draw();
+    }
+    function visible() {
+      return recentItems(filterItems(items, filter), recent);
     }
     function render(list) {
       items = list;
-      if (status) status.textContent = '';
       draw();
+      // el aviso nombra el filtro con las mismas palabras de siempre: el texto y/o «≤ N d» (sin texto nuevo que traducir)
+      const label = [filter, recent ? `≤ ${fmt(recent)} d` : ''].filter(Boolean).join(' · ');
+      if (status) status.textContent = label ? text('constellation.filtered', { filter: label, shown: fmt(visible().length), total: fmt(items.length) }) : '';
     }
     function draw() {
-      const shown = sortItems(items, mode);
+      const shown = sortItems(visible(), mode);
       const had = document.activeElement?.closest?.('.cs-gx') ? document.activeElement.dataset.key : null;
       root.textContent = '';
       const spots = place(shown);
@@ -148,8 +196,8 @@
       });
       if (had) [...root.children].find((n) => n.dataset.key === had)?.focus();
     }
-    return { render, setOrder };
+    return { render, setOrder, setFilter, setRecent };
   }
 
-  GB.constellation = { place, sortItems, orderParam, radiusOf, hueOf, mount };
+  GB.constellation = { place, sortItems, orderParam, filterParam, filterItems, recentParam, recentItems, radiusOf, hueOf, mount };
 })(window.GB);

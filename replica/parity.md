@@ -1,19 +1,17 @@
-## Parity: 75.0 / 100
+## Parity: 92.7 / 100
 
-features 75.0  (38 counted, must-haves 11 of 13 done)
-
-Not shippable yet: 2 must-have features are not done.
+features 92.7  (38 counted, must-haves 13 of 13 done)
 
 ## By area, weakest first
-- navegación                     0.0  (1 features)
-- cuentas                        0.0  (1 features)
-- launchpad                     30.0  (3 features)
-- diffs                         70.0  (5 features)
-- grafo                         75.0  (8 features)
-- varios repos                  75.0  (3 features)
-- integraciones                 78.9  (7 features)
-- pull requests                 83.3  (3 features)
+- cuentas                       50.0  (1 features)
+- launchpad                     60.0  (3 features)
+- grafo                         91.7  (8 features)
+- varios repos                  91.7  (3 features)
+- integraciones                 94.7  (7 features)
 - búsqueda                     100.0  (1 features)
+- navegación                   100.0  (1 features)
+- diffs                        100.0  (5 features)
+- pull requests                100.0  (3 features)
 - ci                           100.0  (1 features)
 - análisis                     100.0  (1 features)
 - conflictos                   100.0  (1 features)
@@ -21,20 +19,11 @@ Not shippable yet: 2 must-have features are not done.
 - compartir                    100.0  (1 features)
 
 ## Missing, in build order
-- [must] integraciones: Azure DevOps, no  (no hay fuente de Azure DevOps)
-- [must] launchpad: Launchpad: PRs de varios repos agrupados por estado, partial  (la salud agrupa por estado los PRs de un repo y «Todos» muestra cada repo en su tarjeta; falta una lista única de los PRs de todos los repos seguidos por estado)
-- [should] cuentas: Varios perfiles o cuentas, no  (un token por servicio)
-- [should] diffs: Blame de un archivo (autor y fecha por línea), no
-- [should] grafo: Ocultar una rama o dejarla sola en el grafo, no  (hay Fijar ramas (las sube) y el filtro por autor; no ocultar ni dejar sola una rama elegida)
-- [should] diffs: Historial de un archivo, partial  (el filtro por ruta (?path=) deja los commits que la tocaron; no hay una vista del historial de un archivo)
+- [should] cuentas: Varios perfiles o cuentas, partial  (un token por servicio y una segunda cuenta de GitHub atada a un dueño (README, Token); faltan perfiles completos y más de dos cuentas)
 - [should] grafo: Columnas de autor fecha y SHA a la vista en el grafo, partial  (autor fecha y SHA están en la ficha del commit y en la vista de texto; el grafo no tiene columnas)
-- [should] grafo: Resaltar los commits de una rama y atenuar el resto, partial  (comparar dos ramas resalta sus tramos y el filtro por autor o ruta atenúa; no al pasar el puntero por una rama)
 - [should] integraciones: Issues de rastreadores (Jira Trello GitHub Issues), partial  (issues de GitHub GitLab Codeberg y Bitbucket en el panel de actividad y la salud; sin Jira ni Trello)
-- [should] pull requests: Vista de un PR (descripción comentarios revisores checks), partial  (la ficha de la rama dice su PR y sus checks y enlaza al servicio; sin descripción ni comentarios)
-- [should] varios repos: Pestañas por repo con alias, partial  (pestañas por repo, sin alias)
 - [could] launchpad: Launchpad: fijar y posponer PRs e issues, no
 - [could] launchpad: Launchpad: vista de equipo filtrada por colaborador, no
-- [could] navegación: Paleta de comandos, no  (atajos de teclado sí; no hay paleta de comandos)
 - [could] grafo: Cargar más historia (límite de commits configurable), partial  (README: Repositorios con miles de ramas; el tope de commits por rama no se elige desde la interfaz)
 - [could] varios repos: Workspaces compartidos con el equipo, partial  (se comparten por URL con sus repos; sin cuentas ni nube (lo que no cambia))
 

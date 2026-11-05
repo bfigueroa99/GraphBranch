@@ -8,8 +8,8 @@
      Las librerías y las fuentes son copias locales en vendor/ (tools/vendor.mjs), así que
      scripts, estilos y fuentes solo pueden venir del propio sitio. El manifiesto y el service worker
      (sw.js, que la deja abrir sin red) también son del propio sitio. Las conexiones van a las APIs de
-     GitHub, de gitlab.com, de codeberg.org y de api.bitbucket.org, y las imágenes de otro sitio son los avatares de cada uno
-     (los de Bitbucket no se cargan). -->
+     GitHub, de gitlab.com, de codeberg.org, de api.bitbucket.org y de dev.azure.com, y las imágenes de otro sitio son los avatares de cada uno
+     (los de Bitbucket y los de Azure DevOps no se cargan). -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'none';
   script-src 'self';
@@ -18,7 +18,7 @@
   manifest-src 'self';
   worker-src 'self';
   img-src 'self' data: https://avatars.githubusercontent.com https://gitlab.com https://codeberg.org;
-  connect-src https://api.github.com https://gitlab.com https://codeberg.org https://api.bitbucket.org;
+  connect-src https://api.github.com https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com;
   base-uri 'none';
   form-action 'none'">
 <title>GraphBranch</title>
@@ -46,6 +46,8 @@
         <circle class="logo-n3" cx="24" cy="23" r="3"/>
       </svg>
       <span class="wordmark">GraphBranch</span>
+      <!-- solo en celular angosto: salta al grafo sin recorrer las cifras ni la bitácora -->
+      <a class="to-graph" href="#graph-panel" id="to-graph" data-i18n="graph.aria2d">Branch and commit graph</a>
     </div>
 
     <form class="repo-form" id="repo-form" autocomplete="off" novalidate>
@@ -98,6 +100,9 @@
       </label>
       <button class="icon-btn" type="button" id="health-btn" title="Repo health" aria-label="Repo health" data-i18n-attr="title:health.title;aria-label:health.title">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8.5h3l1.7-4.5 3 8 1.8-3.5h3.5"/></svg>
+      </button>
+      <button class="icon-btn" type="button" id="agents-btn" aria-haspopup="dialog" title="Who works with whom: people and agents (Claude Code, Copilot, Codex, bots…)" aria-label="Agents and interactions" data-i18n-attr="title:agents.btnTitle;aria-label:agents.title">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="5.5" width="10" height="7.5" rx="2"/><path d="M8 5.5V3M8 3h.01M6 9.2h.01M10 9.2h.01M1.5 8.5v2M14.5 8.5v2"/></svg>
       </button>
       <button class="icon-btn" type="button" id="search-btn" title="Search commits" aria-label="Search commits" data-i18n-attr="title:search.title;aria-label:search.title">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 2.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM10.3 10.3l3.2 3.2"/></svg>
@@ -152,7 +157,22 @@
       <span class="stat-value" id="st-last">–</span>
       <span class="stat-sub" id="st-last-sub"></span>
     </div>
-    <!-- la bitácora en vivo (js/bitacora.js): su nota y sus hallazgos, y abre el panel con todo -->
+    <!-- agentes e interacciones (js/agents.js): quién continuó, fusionó o revisó el trabajo de quién, entre personas y agentes -->
+<dialog class="settings trophies health agents" id="agents" aria-labelledby="agents-title" aria-describedby="agents-help">
+  <div class="tr-wrap">
+    <div class="tr-head">
+      <h2 id="agents-title" data-i18n="agents.title">Agents and interactions</h2>
+      <button type="button" class="icon-btn" id="agents-close" title="Close" aria-label="Close" data-i18n-attr="title:toast.close;aria-label:toast.close">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <p class="help" id="agents-help" data-i18n="agents.help">From what is already loaded, with no extra requests. An agent is recognized by its account (Copilot, dependabot[bot]…) or by what its commits sign (Co-Authored-By, Claude-Session), and each session of an agent counts on its own.</p>
+    <label class="hl-switch"><input type="checkbox" id="agents-only"> <span data-i18n="agents.onlyAgents">Only between agents</span></label>
+    <div id="agents-body" class="hl-body"></div>
+  </div>
+</dialog>
+
+<!-- la bitácora en vivo (js/bitacora.js): su nota y sus hallazgos, y abre el panel con todo -->
     <button type="button" class="stat stat-bitacora" id="st-bitacora" aria-haspopup="dialog" title="Open the live logbook" data-i18n-attr="title:bitacora.open">
       <span class="stat-label"><span class="live-dot" aria-hidden="true"></span><span id="st-bitacora-label">Logbook</span></span>
       <span class="stat-value"><span id="st-bitacora-score">–</span><span class="bt-of">/100</span><span class="bt-trend" id="st-bitacora-trend"></span></span>
@@ -161,7 +181,7 @@
   </section>
 
   <main class="main">
-    <section class="panel graph-panel" aria-labelledby="graph-title">
+    <section class="panel graph-panel" id="graph-panel" tabindex="-1" aria-labelledby="graph-title">
       <div class="panel-head">
         <div class="repo-title">
           <h1 id="graph-title"><a id="repo-link" target="_blank" rel="noopener">acme/orbita</a></h1>
@@ -304,6 +324,7 @@
           <p class="repo-desc" id="all-sum"></p>
         </div>
       </div>
+      <section class="ap" id="all-prs" hidden></section>
       <div class="rc-grid" id="all-grid"></div>
       <p class="hint" data-i18n="all.hint">Each card follows its repository live. Click a commit for its details and its changes; the name opens the repository in its tab.</p>
     </section>
@@ -402,6 +423,26 @@
       </div>
       <p class="help" data-i18n-html="settings.bitbucketTokenHelp">For private repos on bitbucket.org: a repository or workspace access token with the <code>repository</code> scope. Public repos don't need one.</p>
       <p class="help" id="bitbucket-token-where" data-i18n="settings.bitbucketTokenWhere">The token is stored only in this browser and is sent only to bitbucket.org.</p>
+    </div>
+    <div class="field">
+      <label for="azure-token-input"><span data-i18n="settings.azureToken">Azure DevOps token</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <div class="field-row">
+        <input id="azure-token-input" type="password" autocomplete="off" spellcheck="false">
+        <button type="button" class="btn btn-ghost" id="azure-token-toggle">Show</button>
+      </div>
+      <p class="help" data-i18n-html="settings.azureTokenHelp">For private projects on dev.azure.com: a personal access token with the <code>Code (Read)</code> scope. Public projects don't need one.</p>
+      <p class="help" id="azure-token-where" data-i18n="settings.azureTokenWhere">The token is stored only in this browser and is sent only to dev.azure.com.</p>
+    </div>
+    <div class="field">
+      <label for="token2-owner"><span data-i18n="settings.token2">Second GitHub account</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <div class="field-row">
+        <input id="token2-owner" type="text" autocomplete="off" spellcheck="false" maxlength="39" placeholder="org">
+      </div>
+      <div class="field-row">
+        <input id="token2-input" type="password" autocomplete="off" spellcheck="false" aria-label="Second GitHub account token" data-i18n-attr="aria-label:settings.token2Token">
+        <button type="button" class="btn btn-ghost" id="token2-toggle">Show</button>
+      </div>
+      <p class="help" data-i18n="settings.token2Help">A second token for the private repos of another user or organization (type its name above). It is used only for that owner's repos; every other repo uses the token above. Both go only to api.github.com.</p>
     </div>
     <div class="field" id="bbdc-token-field" hidden>
       <label for="bbdc-token-input"><span data-i18n="settings.bbdcToken">Token for your Bitbucket server</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
@@ -593,6 +634,18 @@
   </form>
 </dialog>
 
+<dialog class="settings trophies health" id="prview" aria-labelledby="prview-title">
+  <div class="tr-wrap">
+    <div class="tr-head">
+      <h2 id="prview-title" data-i18n="prview.title">Pull request</h2>
+      <button type="button" class="icon-btn" id="prview-close" title="Close" aria-label="Close" data-i18n-attr="title:toast.close;aria-label:toast.close">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <div class="tip-prbody" id="prview-body" role="region" aria-live="polite" tabindex="0" aria-labelledby="prview-title"></div>
+  </div>
+</dialog>
+
 <dialog class="settings trophies health" id="textview" aria-labelledby="textview-title">
   <div class="tr-wrap">
     <div class="tr-head">
@@ -601,13 +654,14 @@
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>
       </button>
     </div>
-    <p class="help" id="textview-help" data-i18n="textview.help">The branches and their latest commits as a tree. Up and Down move, Right and Left open and close a branch, Enter shows it in the graph.</p>
+    <p class="help" id="textview-help"><span data-i18n="textview.help">The branches and their latest commits as a tree. Up and Down move, Right and Left open and close a branch, Enter shows it in the graph.</span> <span data-i18n="textview.hideHelp">On a branch, H hides it and S shows only that one.</span></p>
     <p class="help" id="textview-scope" hidden></p>
+    <button type="button" class="btn" id="textview-showall" data-i18n="branchview.reset" hidden>Show all branches</button>
     <div class="sr-row">
       <input id="textview-filter" type="search" placeholder="Filter branches…" aria-label="Filter branches…" aria-describedby="textview-help" data-i18n-attr="placeholder:filter.placeholder;aria-label:filter.placeholder" spellcheck="false" autocapitalize="off" autocomplete="off">
     </div>
     <div id="textview-live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
-    <div id="textview-body" class="tv-body" aria-describedby="textview-help"></div>
+    <div id="textview-body" class="tv-body"></div>
   </div>
 </dialog>
 
@@ -625,11 +679,22 @@
       <select id="constellation-order">
         <option value="tabs" data-i18n="constellation.orderTabs">Tabs</option>
         <option value="activity" data-i18n="constellation.orderActivity">Activity</option>
+        <option value="prs" data-i18n="stats.prs">Open PRs</option>
         <option value="name" data-i18n="constellation.orderName">Name</option>
       </select>
     </label>
     <p id="constellation-status" class="sr-only" role="status" aria-live="polite"></p>
     <div id="constellation-body" class="cs-body" aria-describedby="constellation-help"></div>
+  </div>
+</dialog>
+
+<dialog class="settings cmdk" id="cmdk" aria-labelledby="cmdk-title" aria-describedby="cmdk-help">
+  <div class="tr-wrap">
+    <h2 id="cmdk-title" class="sr-only" data-i18n="cmdk.title">Command palette</h2>
+    <p class="help" id="cmdk-help" data-i18n="cmdk.help">Type to filter, arrows to move, Enter to run, Esc to close.</p>
+    <input id="cmdk-input" type="text" role="combobox" aria-expanded="true" aria-controls="cmdk-list" aria-autocomplete="list" placeholder="Type an action…" aria-label="Command palette" aria-describedby="cmdk-help" data-i18n-attr="placeholder:cmdk.placeholder;aria-label:cmdk.title" spellcheck="false" autocapitalize="off" autocomplete="off">
+    <ul id="cmdk-list" class="ck-list" role="listbox" aria-labelledby="cmdk-title"></ul>
+    <p class="help" id="cmdk-status" role="status"></p>
   </div>
 </dialog>
 
@@ -651,6 +716,12 @@
       <select id="graph-author"></select>
     </div>
     <p class="help" id="graph-author-status" role="status"></p>
+    <label class="marks-toggle"><input type="checkbox" id="graph-firstparent"> <span data-i18n="search.firstParent">First parent only (like git log --first-parent)</span></label>
+    <label class="marks-toggle"><input type="checkbox" id="graph-columns"> <span data-i18n="search.columns">Show author and date next to each commit (2D graph)</span></label>
+    <div class="sr-row">
+      <p class="help" id="branch-view-status" role="status"></p>
+      <button type="button" class="btn" id="branch-view-reset" hidden data-i18n="branchview.reset">Show all branches</button>
+    </div>
     <div class="sr-row">
       <input id="search-path" type="text" placeholder="File or folder, e.g. src/" aria-label="Filter the graph by path" data-i18n-attr="placeholder:search.pathPlaceholder;aria-label:search.pathLabel" spellcheck="false" autocapitalize="off" autocomplete="off">
       <button type="button" class="btn" id="search-path-go" data-i18n="search.pathApply">Filter graph</button>
@@ -670,11 +741,13 @@
 <script src="vendor/OrbitControls.js"></script>
 <script src="js/util.js"></script>
 <script src="js/diff.js"></script>
+<script src="js/agents.js"></script>
 <script src="js/sources/github.js"></script>
 <script src="js/sources/gitlab.js"></script>
 <script src="js/sources/codeberg.js"></script>
 <script src="js/sources/bitbucket.js"></script>
 <script src="js/sources/bitbucket-server.js"></script>
+<script src="js/sources/azure.js"></script>
 <script src="js/sources/local.js"></script>
 <script src="js/sources/demo-content.js"></script>
 <script src="js/sources/demo.js"></script>
@@ -700,6 +773,7 @@
 <script src="js/overview.js"></script>
 <script src="js/editor.js"></script>
 <script src="js/search.js"></script>
+<script src="js/cmdk.js"></script>
 <script src="js/practice-ui.js"></script>
 <script src="js/hooks.js"></script>
 <script src="js/feed.js"></script>

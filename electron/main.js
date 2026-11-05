@@ -64,7 +64,7 @@ async function serve(request) {
     const fg = FORGE_ARG ? ` ${FORGE_ARG.origin}` : '';
     const bb = BITBUCKET_ARG ? ` ${BITBUCKET_ARG.origin}` : '';
     if (GITLAB_ARG || FORGE_ARG || BITBUCKET_ARG) {
-      html = html.replace('https://gitlab.com https://codeberg.org https://api.bitbucket.org;', `https://gitlab.com${gl} https://codeberg.org${fg} https://api.bitbucket.org${bb};`);
+      html = html.replace('https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com;', `https://gitlab.com${gl} https://codeberg.org${fg} https://api.bitbucket.org${bb} https://dev.azure.com;`);
       html = html.replace('img-src \'self\' data: https://avatars.githubusercontent.com https://gitlab.com https://codeberg.org;', `img-src 'self' data: https://avatars.githubusercontent.com https://gitlab.com${gl} https://codeberg.org${fg};`);
     }
     return new Response(html, { status: res.status, headers: { 'content-type': 'text/html; charset=utf-8' } });

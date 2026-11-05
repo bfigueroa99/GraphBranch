@@ -17,7 +17,7 @@ const ctx = vm.createContext({
   document: { hidden: false, documentElement: {}, addEventListener() {}, removeEventListener() {} },
   localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
 });
-for (const f of ['util.js', 'palette.js', 'layout.js']) vm.runInContext(readFileSync(join(root, 'js', f), 'utf8'), ctx, { filename: f });
+for (const f of ['util.js', 'palette.js', 'search.js', 'layout.js']) vm.runInContext(readFileSync(join(root, 'js', f), 'utf8'), ctx, { filename: f });
 const { Layout } = ctx.window.GB;
 
 const T0 = Date.UTC(2026, 0, 1);
@@ -68,4 +68,23 @@ test('la etiqueta de las ramas fusionadas de la leyenda sale del idioma, no del 
   assert.doesNotMatch(readFileSync(join(root, 'js/layout.js'), 'utf8'), /['"`]fusionadas['"`]/);
   for (const f of readdirSync(join(root, 'js/locales')).filter((n) => n.endsWith('.js')))
     assert.match(readFileSync(join(root, 'js/locales', f), 'utf8'), /'legend\.merged':/, f);
+});
+
+test('el layout del primer padre (el que dibujan el 2D y el 3D) deja menos nodos y sin aristas de merge', () => {
+  const T = Date.UTC(2026, 0, 1);
+  const c = (sha, parents, h) => [sha, { sha, parents, message: sha, date: T + h * 36e5, author: { name: 'a', login: 'a' } }];
+  const data = {
+    commits: new Map([c('r', [], 0), c('m1', ['r'], 1), c('f1', ['r'], 2), c('f2', ['f1'], 3), c('mm', ['m1', 'f2'], 4)]),
+    branches: new Map([['main', { name: 'main', sha: 'mm', protected: true }]]),
+    pulls: new Map(),
+    repo: { defaultBranch: 'main' },
+  };
+  const all = new Layout().compute(data);
+  const fp = new Layout().compute(ctx.window.GB.search.firstParent(data));
+  assert.equal(all.nodes.length, 5);
+  assert.deepEqual([...fp.nodes.map((n) => n.sha)].sort(), ['m1', 'mm', 'r']);
+  assert.ok(fp.nodes.length < all.nodes.length);
+  assert.ok(fp.edges.every((e) => e.kind !== 'merge' && (e.from === null || fp.nodeOf.has(e.from))));
+  assert.ok(all.edges.some((e) => e.kind === 'merge'));
+  assert.equal(data.commits.size, 5); // no muta lo cargado
 });

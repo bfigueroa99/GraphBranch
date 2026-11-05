@@ -36,6 +36,40 @@
     return list.reduce((t, s) => ({ repos: t.repos + 1, branches: t.branches + (s.branches || 0), prs: t.prs + (s.prs || 0) }), { repos: 0, branches: 0, prs: 0 });
   }
 
+  /** Los grupos del Launchpad, en el orden en que se muestran. */
+  const PR_GROUPS = ['draft', 'failing', 'approved', 'waiting'];
+
+  const PR_GROUP_KEY = { draft: 'all.prs.draft', failing: 'all.prs.failing', approved: 'all.prs.approved', waiting: 'all.prs.waiting' };
+
+  /** En qué grupo cae un PR abierto: borrador, checks en rojo, aprobado o esperando revisión (en ese orden de prioridad). */
+  function prGroup(p) {
+    if (p.draft) return 'draft';
+    if (p.ci === 'failure') return 'failing';
+    if (p.review === 'approved') return 'approved';
+    return 'waiting';
+  }
+
+  /** Los PRs abiertos de varios repos, agrupados por estado: `entries` es [{ key, name, pulls: iterable de PRs }].
+      Devuelve solo los grupos con PRs, [{ id, items }], cada uno del más nuevo al más viejo. */
+  function groupPulls(entries) {
+    const by = new Map(PR_GROUPS.map((g) => [g, []]));
+    for (const e of entries) {
+      for (const p of e.pulls || []) {
+        by.get(prGroup(p)).push({
+          key: e.key,
+          repo: e.name,
+          number: p.number,
+          title: p.title || '',
+          head: p.head || '',
+          user: p.user?.login || p.user?.name || '',
+          createdAt: p.createdAt || 0,
+        });
+      }
+    }
+    for (const items of by.values()) items.sort((a, b) => b.createdAt - a.createdAt || (a.repo < b.repo ? -1 : a.repo > b.repo ? 1 : a.number - b.number));
+    return PR_GROUPS.map((id) => ({ id, items: by.get(id) })).filter((g) => g.items.length);
+  }
+
   /**
    * Monta la cuadrícula en `root`. Opciones:
    *   text(key, params), num(n), ago(ms), dateTime(ms): textos y formatos de la página
@@ -43,6 +77,7 @@
    *   diffing() → ¿está abierto el panel de cambios? (entonces un clic en un commit muestra los suyos)
    *   onStats(list): las cifras de todas las tarjetas, para los totales de la cabecera
    *   canDiff(key) → ¿se pueden ver los cambios de los commits de ese repo?
+   *   prsRoot, onOpenPr(key, head): el Launchpad (los PRs de todos los repos por estado) y la salida de una fila
    * Devuelve { sync(items), draw(key, data, ctx), stats(), celebrate(key, acts), focus(key, { sha, branch }), select(key, sha),
    *   graphOf(key), layoutOf(key), relocalize(), size }.
    */
@@ -164,9 +199,55 @@
     /** Las cifras de las tarjetas ya dibujadas. */
     const stats = () => [...cards.values()].filter((c) => c.stats).map((c) => c.stats);
 
+    /** El Launchpad: los PRs abiertos de todos los repos, por estado. Solo se repinta si cambió algo (así no pierde el foco). */
+    let prSig = '';
+    function setPulls(entries) {
+      const box = opts.prsRoot;
+      if (!box) return;
+      const groups = groupPulls(entries);
+      const sig = JSON.stringify(groups);
+      if (sig === prSig) return;
+      prSig = sig;
+      const t = opts.text;
+      const num = opts.num || String;
+      const total = groups.reduce((n, g) => n + g.items.length, 0);
+      box.hidden = !total;
+      box.replaceChildren();
+      if (!total) return;
+      box.append(mk('h3', 'ap-title', t('all.prs.title', { n: num(total) })));
+      const cols = mk('div', 'ap-groups');
+      for (const g of groups) {
+        const sec = mk('section', 'ap-group');
+        sec.dataset.group = g.id;
+        sec.append(mk('h4', 'ap-gname', `${t(PR_GROUP_KEY[g.id])} · ${num(g.items.length)}`));
+        const ul = mk('ul', 'ap-list');
+        for (const it of g.items) {
+          const li = mk('li');
+          const b = mk('button', 'ap-row');
+          b.type = 'button';
+          b.dataset.key = it.key;
+          b.dataset.number = String(it.number);
+          const title = mk('span', 'ap-t', `#${it.number} ${it.title}`);
+          const meta = mk('span', 'ap-m', [it.repo, it.head, it.user].filter(Boolean).join(' · '));
+          title.dir = meta.dir = 'auto';
+          b.append(title, meta);
+          const label = t('all.prs.open', { num: it.number, repo: it.repo, title: GB.U.truncate(it.title, 80) });
+          b.setAttribute('aria-label', label);
+          b.title = label;
+          b.addEventListener('click', () => opts.onOpenPr?.(it.key, it.head));
+          li.append(b);
+          ul.append(li);
+        }
+        sec.append(ul);
+        cols.append(sec);
+      }
+      box.append(cols);
+    }
+
     return {
       sync,
       draw,
+      setPulls,
       stats,
       /** Los efectos de lo que acaba de llegar, en la tarjeta de su repo. */
       celebrate(key, acts) {
@@ -193,6 +274,7 @@
           c.graph.relocalize();
           if (c.stats) paintStats(c);
         }
+        prSig = ''; // los títulos del Launchpad cambian de idioma
       },
       get size() {
         return cards.size;
@@ -200,5 +282,5 @@
     };
   }
 
-  GB.overview = { allParam, lastCommit, summary, totals, mount };
+  GB.overview = { allParam, lastCommit, summary, totals, prGroup, groupPulls, mount };
 })(window.GB);

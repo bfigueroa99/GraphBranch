@@ -1,6 +1,6 @@
 /* GraphBranch — salud del repo: lo que ya está cargado, leído como señales de equipo.
    Ramas sin actividad hace más de 30 días y sin PR, pull requests abiertos por edad y por estado (borrador, checks en rojo, aprobado, esperando revisión), cuánto tardaron
-   en fusionarse los últimos, el ritmo de merges y releases y, los PRs fusionados y abiertos y los issues cerrados por semana y, en el idioma de DORA, la frecuencia de
+   en fusionarse los últimos, el ritmo de merges y releases y, los PRs fusionados y abiertos, los issues cerrados y las ramas nuevas y los commits por semana y, en el idioma de DORA, la frecuencia de
    despliegues (cada release cuenta como uno, también por semana) y el tiempo de entrega (de abierto a fusionado). No hace ninguna consulta: parte del
    estado del grafo y de la actividad que ya llegó, y cuenta lo que pasa en el repo, no a personas. */
 (function (GB) {
@@ -10,7 +10,7 @@
   const STALE_DAYS = 30;
   const RECENT_MERGES = 20; // cuántos PRs fusionados entran en el tiempo de abierto a fusionado
   const RECENT_RELEASES = 10; // cuántos releases entran en el tiempo entre despliegues
-  const WEEKS = 8; // semanas que entran en la frecuencia de despliegue y en las tendencias de merges, de PRs abiertos y de issues cerrados
+  const WEEKS = 8; // semanas que entran en la frecuencia de despliegue y en las tendencias de merges, de PRs abiertos, de issues cerrados, de ramas nuevas y de commits
   const ROWS = 8; // filas que muestra cada lista
 
   const at = (x) => (typeof x === 'number' ? x : Date.parse(x) || 0);
@@ -20,7 +20,7 @@
     return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
   };
 
-  /** Cuenta los eventos (releases, PRs fusionados, PRs abiertos o issues cerrados) de cada una de las últimas WEEKS semanas (bloques de 7 días hacia atrás desde `now`). */
+  /** Cuenta los eventos (releases, PRs fusionados, PRs abiertos, issues cerrados o ramas creadas) de cada una de las últimas WEEKS semanas (bloques de 7 días hacia atrás desde `now`). */
   function weekly(list, now) {
     const weeks = new Array(WEEKS).fill(0);
     for (const a of list) {
@@ -78,6 +78,22 @@
       const k = a.number != null ? `#${a.number}` : a.id;
       if (!closed.has(k) || a.time < closed.get(k).time) closed.set(k, { time: a.time });
     }
+    // issues abiertos: cada número cuenta una vez, con la hora de su primera apertura (un issue reabierto no suma dos)
+    const issueOpened = new Map();
+    for (const a of acts) {
+      if (a.kind !== 'issue-open' || !a.time) continue;
+      const k = a.number != null ? `#${a.number}` : a.id;
+      if (!issueOpened.has(k) || a.time < issueOpened.get(k).time) issueOpened.set(k, { time: a.time });
+    }
+    // ramas nuevas: cada nombre cuenta una vez, con la hora de su primera creación (la misma rama vista por el feed de
+    // eventos y por la comparación en vivo, o borrada y creada otra vez, no suma dos)
+    const created = new Map();
+    for (const a of acts) {
+      if (a.kind !== 'branch-create' || !a.time) continue;
+      const k = a.branch ? `b:${a.branch}` : a.id;
+      if (k == null) continue;
+      if (!created.has(k) || a.time < created.get(k).time) created.set(k, { time: a.time });
+    }
     // el tiempo de entrega cuenta desde el primer commit del PR si ya se conoce (data.firstCommits), si no desde su apertura
     let fromCommit = 0;
     const lead = merges
@@ -128,6 +144,14 @@
 
     const forks = (data.forks || []).filter((f) => f.pushedAt && f.url).map((f) => ({ fullName: f.fullName, url: f.url, idle: Math.max(0, now - at(f.pushedAt)), stars: Math.max(0, Math.floor(Number(f.stars)) || 0) })).sort((a, b) => (forkSort === 'stars' ? b.stars - a.stars : 0) || a.idle - b.idle); // el push más reciente primero (o las estrellas, con el desempate por push), venga como venga la lista
 
+    // tags por semana: cada nombre cuenta en la fecha de su commit, si ese commit está cargado
+    const tagTimes = [];
+    if (data.tags) for (const [sha, names] of data.tags) {
+      const c = data.commits.get(sha);
+      const time = c && at(c.date);
+      if (time) for (const name of names) if (name) tagTimes.push({ time });
+    }
+
     return {
       forks: { total: forks.length, rows: forks.slice(0, ROWS) },
       stale: { total: stale.length, rows: stale.slice(0, ROWS) },
@@ -137,7 +161,7 @@
       dora,
       leadSource: { fromCommit, total: lead.length },
       ci,
-      pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now) }, // mergeWeeks, openedWeeks y closedWeeks: de la semana más vieja a la actual
+      pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), tagWeeks: weekly(tagTimes, now), issueWeeks: weekly([...issueOpened.values()], now) }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
     };
   }
 

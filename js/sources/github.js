@@ -43,7 +43,7 @@
     }
   };
   const GQL_COMMIT =
-    'oid url committedDate messageHeadline author { name user { login avatarUrl } } parents(first: 4) { nodes { oid } }';
+    'oid url committedDate messageHeadline messageBody author { name email user { login avatarUrl } } parents(first: 4) { nodes { oid } }';
   const GQL_TARGET = 'target { oid ... on Commit { committedDate } }';
   const GQL_TARGET_CI = 'target { oid ... on Commit { committedDate statusCheckRollup { state } } }'; // con el estado de los checks
   /** Estado de los checks de GitHub (rollup o check-runs) en uno de tres: 'success', 'failure' o 'pending'. */
@@ -53,6 +53,8 @@
     if (s === 'FAILURE' || s === 'ERROR') return 'failure';
     return s ? 'pending' : null;
   };
+  /** El agente de un commit al traerlo (js/agents.js): `{ agent }` para sumarlo al commit, o nada si no se cargó. */
+  const agentOf = (author, message) => (GB.agents ? { agent: GB.agents.detect(author, message) } : {});
   const FORK_DAYS = 90; // un fork cuenta como activo si hizo push en los últimos 90 días
   const FORK_MAX = 30;
   /** Los forks con push propio reciente, el más nuevo primero: [{ fullName, url, pushedAt, stars }]. Un fork
@@ -716,6 +718,26 @@
         url: f.status === 'removed' || !repoUrl ? null : blob(f.filename),
       }));
       return { files, truncated: /rel="next"/.test(headers?.get?.('Link') || '') };
+    }
+
+    /** La descripción de un PR y sus últimos comentarios (los de la conversación, no los de revisión): hasta dos
+        consultas, y solo al pedir la vista del PR desde la ficha de su rama. */
+    async prDetail(number) {
+      const n = Number(number);
+      const { data: pr } = await this.api(`${this.base}/pulls/${n}`);
+      const total = pr?.comments || 0;
+      const page = Math.max(1, Math.ceil(total / 100));
+      const list = total ? (await this.api(`${this.base}/issues/${n}/comments?per_page=100&page=${page}`)).data || [] : [];
+      return {
+        number: n,
+        body: pr?.body || '',
+        total,
+        comments: list.slice(-5).map((c) => ({
+          user: { login: c.user?.login, name: c.user?.login, avatar: c.user?.avatar_url },
+          body: c.body || '',
+          date: Date.parse(c.created_at) || 0,
+        })),
+      };
     }
 
     /** Pedir los cambios de un commit sin token gasta una de 60 consultas por hora: entonces solo se piden los que se abren. */
@@ -1383,6 +1405,58 @@
       return out;
     }
 
+    /** Los últimos commits que tocaron `path` hasta `sha` (el primero, el propio `sha` si lo cambió): una consulta
+        `/commits?sha=&path=`. Devuelve [{ sha, author, date, message }], sin líneas (eso es otra entrega). */
+    async fileLog(path, sha, n = 8) {
+      const clean = String(path || '').trim().replace(/^\/+|\/+$/g, '');
+      if (!clean || !sha) return [];
+      const { data } = await this.api(`${this.base}/commits?sha=${encodeURIComponent(sha)}&path=${encodeURIComponent(clean)}&per_page=${n}`, { allow: [404, 409, 422] });
+      return (data || []).slice(0, n).map((c) => ({
+        sha: c.sha,
+        author: c.commit?.author?.name || c.author?.login || '',
+        date: Date.parse(c.commit?.committer?.date || c.commit?.author?.date) || 0,
+        message: U.firstLine(c.commit?.message || ''),
+      }));
+    }
+
+    /** Blame por líneas (GraphQL `Commit.blame`, solo con token): quién escribió cada tramo del archivo en `sha`.
+        Devuelve [{ from, to, sha, author, date, message }] ordenado por línea, o null si no hay token o GitHub no lo da
+        (el que llama cae a `fileLog`). Una consulta. */
+    async fileBlame(path, sha, max = 400) {
+      const clean = String(path || '').trim().replace(/^\/+|\/+$/g, '');
+      if (!this.token || !clean || !sha) return null;
+      let data;
+      try {
+        data = await this.gql(
+          `query($owner: String!, $name: String!, $oid: GitObjectID!, $path: String!) {
+            repository(owner: $owner, name: $name) {
+              object(oid: $oid) { ... on Commit { blame(path: $path) { ranges {
+                startingLine endingLine
+                commit { oid messageHeadline author { name date user { login } } }
+              } } } }
+            }
+          }`,
+          { oid: sha, path: clean },
+        );
+      } catch (err) {
+        if (err?.kind === 'rate') throw err;
+        return null;
+      }
+      const ranges = data?.repository?.object?.blame?.ranges;
+      if (!Array.isArray(ranges) || !ranges.length) return null;
+      return ranges
+        .slice(0, max)
+        .map((r) => ({
+          from: r.startingLine,
+          to: r.endingLine,
+          sha: r.commit?.oid || '',
+          author: r.commit?.author?.name || r.commit?.author?.user?.login || '',
+          date: Date.parse(r.commit?.author?.date) || 0,
+          message: U.firstLine(r.commit?.messageHeadline || ''),
+        }))
+        .sort((a, b) => a.from - b.from);
+    }
+
     /* ---------- commits ---------- */
 
     /**
@@ -1468,6 +1542,7 @@
         },
         date: Date.parse(c.commit?.committer?.date || c.commit?.author?.date) || Date.now(),
         url: c.html_url || `${this.data.repo.url}/commit/${c.sha}`,
+        ...agentOf({ name: c.commit?.author?.name, login: c.author?.login, email: c.commit?.author?.email }, c.commit?.message),
       });
       this.kids = null;
       return true;
@@ -1486,6 +1561,8 @@
         },
         date: Date.parse(c.committedDate) || Date.now(),
         url: c.url || `${this.data.repo.url}/commit/${c.oid}`,
+        // el cuerpo no se guarda (solo el titular): de él sale el agente, si lo firma uno (Co-Authored-By, sesión)
+        ...agentOf({ name: c.author?.name, login: c.author?.user?.login, email: c.author?.email }, c.messageBody ? `${c.messageHeadline || ''}\n\n${c.messageBody}` : c.messageHeadline),
       });
       this.kids = null;
       return true;
@@ -1634,7 +1711,8 @@
     /* ---------- pull requests ---------- */
 
     mapPull(p) {
-      const full = `${this.owner}/${this.name}`.toLowerCase();
+      // la base es este repo tal como lo nombra GitHub hoy (un repo renombrado ya no es `owner/name` escrito)
+      const full = (p.base?.repo?.full_name || `${this.owner}/${this.name}`).toLowerCase();
       return {
         number: p.number,
         title: p.title || '',
@@ -1916,7 +1994,7 @@
               title: pr.base?.ref ? M('act.prMergedInto', { num: prNum, base: pr.base.ref }) : M('act.prMerged', num),
             });
           if (p.action === 'closed') return mk('pr-close', { ...fields, title: M('act.prClosed', num) });
-          if (p.action === 'review_requested') return mk('review', { ...fields, title: M('act.reviewRequested', num) });
+          if (p.action === 'review_requested') return mk('review', { ...fields, request: true, title: M('act.reviewRequested', num) });
           return null;
         }
         case 'PullRequestReviewEvent': {
@@ -1931,6 +2009,7 @@
             title: M('act.prCodeComment', { num: prNum }),
             detail: U.truncate(U.firstLine(p.comment?.body), 160),
             url: p.comment?.html_url || prUrl,
+            ...(prNum != null ? { number: prNum, pr: true } : {}), // para las interacciones (js/agents.js)
           });
         case 'IssuesEvent': {
           const n = issue.number;
@@ -1945,6 +2024,7 @@
             title: M(issue.pull_request ? 'act.commentPr' : 'act.commentIssue', { num: issue.number }),
             detail: U.truncate(U.firstLine(p.comment?.body), 160),
             url: p.comment?.html_url || issue.html_url || repoUrl,
+            ...(issue.pull_request && issue.number != null ? { number: issue.number, pr: true } : {}), // para las interacciones (js/agents.js)
           });
         case 'CommitCommentEvent':
           return mk('comment', {
@@ -2033,6 +2113,25 @@
       },
     };
   };
+
+  /** La segunda cuenta de GitHub, como se guarda: el token atado a su dueño u organización ('' si falta uno o el dueño no vale). */
+  const OWNER_RE = /^[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,38})$/;
+  GitHubSource.pack2 = (owner, token) => {
+    owner = String(owner || '').trim().replace(/^@/, '');
+    return owner && OWNER_RE.test(owner) && token ? JSON.stringify({ owner, token: String(token).trim() }) : '';
+  };
+  /** Lo guardado de la segunda cuenta → { owner, token } (vacíos si no hay o está roto). */
+  GitHubSource.unpack2 = (stored) => {
+    try {
+      const v = JSON.parse(String(stored || ''));
+      return v && OWNER_RE.test(v.owner) && typeof v.token === 'string' && v.token ? { owner: v.owner, token: v.token } : { owner: '', token: '' };
+    } catch {
+      return { owner: '', token: '' };
+    }
+  };
+  /** El token que corresponde a los repos de `owner`: el de la segunda cuenta solo si es su dueño; para todo lo demás, el principal. */
+  GitHubSource.tokenFor = (owner, main, second) =>
+    second?.token && second.owner && String(owner || '').toLowerCase() === second.owner.toLowerCase() ? second.token : main || '';
 
   GitHubSource.endpoints = endpoints;
   GitHubSource.ApiError = ApiError;

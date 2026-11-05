@@ -176,3 +176,107 @@ test('limitBranches: deja la rama por defecto y las de commit más reciente, sin
   assert.equal(S.limitBranches(data, 5), data);
   assert.deepEqual([...S.limitBranches(data, 1).branches.keys()], ['main', 'esperando']);
 });
+
+test('withOpenPr deja las ramas con un PR abierto de la misma repo, la por defecto y las sin historia, sin mutar', () => {
+  const br = (name, sha) => [name, { name, sha }];
+  const pr = (n, head, sameRepo = true) => [n, { number: n, head, sameRepo }];
+  const data = {
+    repo: { defaultBranch: 'main' },
+    commits: new Map([['a', {}], ['b', {}], ['c', {}], ['d', {}]]),
+    branches: new Map([br('main', 'a'), br('con-pr', 'b'), br('sin-pr', 'c'), br('fork-homonima', 'd'), br('esperando', 'zz')]),
+    // un PR desde un fork con el mismo nombre de rama no cuenta: su rama no es la de este repo
+    pulls: new Map([pr(1, 'con-pr'), pr(2, 'fork-homonima', false)]),
+  };
+  const v = S.withOpenPr(data);
+  assert.deepEqual([...v.branches.keys()], ['main', 'con-pr', 'esperando']);
+  assert.deepEqual([...v.pulls.keys()], [1, 2]);
+  assert.equal(data.branches.size, 5);
+  // sin ningún PR abierto queda solo la rama por defecto (y la que espera su historia)
+  assert.deepEqual([...S.withOpenPr({ ...data, pulls: new Map() }).branches.keys()], ['main', 'esperando']);
+  // si todas tienen PR, no hay nada que quitar
+  const all = { ...data, branches: new Map([br('main', 'a'), br('con-pr', 'b')]) };
+  assert.equal(S.withOpenPr(all), all);
+});
+
+test('byBranches oculta ramas o deja una sola, siempre con la rama por defecto y sin mutar', () => {
+  const br = (name, sha) => [name, { name, sha }];
+  const data = {
+    repo: { defaultBranch: 'main' },
+    commits: new Map([['a', {}], ['b', {}], ['c', {}]]),
+    branches: new Map([br('main', 'a'), br('f1', 'b'), br('f2', 'c'), br('lejana', 'zz')]),
+    pulls: new Map([[1, { head: 'f1', sameRepo: true }], [2, { head: 'f2', sameRepo: true }]]),
+  };
+  const none = S.byBranches(data, { hidden: [], solo: '' });
+  assert.equal(none.data, data);
+  assert.equal(none.total, 3);
+  const hid = S.byBranches(data, { hidden: ['f1', 'main'], solo: '' });
+  assert.deepEqual([...hid.data.branches.keys()], ['main', 'f2', 'lejana']);
+  assert.deepEqual([...hid.data.pulls.keys()], [2]);
+  assert.equal(hid.shown, 2);
+  const solo = S.byBranches(data, { hidden: [], solo: 'f2' });
+  assert.deepEqual([...solo.data.branches.keys()], ['main', 'f2', 'lejana']);
+  assert.equal(data.branches.size, 4);
+});
+
+test('firstParent deja la cadena del primer padre de cada rama, sin mutar', () => {
+  const c = (sha, parents = []) => [sha, { sha, parents, message: sha, date: 1 }];
+  const data = {
+    commits: new Map([c('r'), c('m1', ['r']), c('f1', ['r']), c('f2', ['f1']), c('mm', ['m1', 'f2']), c('x1', ['mm']), c('lonely', ['ausente'])]),
+    branches: new Map([
+      ['main', { name: 'main', sha: 'x1' }],
+      ['viva', { name: 'viva', sha: 'f2' }],
+      ['sin-historia', { name: 'sin-historia', sha: 'nada' }],
+      ['huerfana', { name: 'huerfana', sha: 'lonely' }],
+    ]),
+    pulls: new Map(),
+  };
+  const r = S.firstParent(data);
+  assert.deepEqual(plain([...r.commits.keys()].sort()), ['f1', 'f2', 'lonely', 'm1', 'mm', 'r', 'x1']);
+  assert.deepEqual(plain(r.commits.get('mm').parents), ['m1']);
+  assert.deepEqual(plain(r.commits.get('lonely').parents), ['ausente']);
+  assert.equal(r.branches, data.branches);
+  assert.deepEqual(plain(data.commits.get('mm').parents), ['m1', 'f2']); // no muta
+  // sin la rama viva, lo que solo trajo el merge desaparece
+  const solo = S.firstParent({ ...data, branches: new Map([['main', data.branches.get('main')]]) });
+  assert.deepEqual(plain([...solo.commits.keys()].sort()), ['m1', 'mm', 'r', 'x1']);
+});
+
+test('firstParentParam lee ?firstparent= de la URL: presente enciende, 0/false/no/off apagan', () => {
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(S.firstParentParam(q('firstparent=1')), true);
+  assert.equal(S.firstParentParam(q('firstparent')), true);
+  assert.equal(S.firstParentParam(q('firstparent=0')), false);
+  assert.equal(S.firstParentParam(q('firstparent=OFF')), false);
+  assert.equal(S.firstParentParam(q('x=1')), false);
+  assert.equal(S.firstParentParam(null), false);
+});
+
+test('branchViewParam lee ?solo= y ?ocultar= de la URL: solo manda, ocultar se repite, sin caracteres de control', () => {
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(S.branchViewParam(q('')), null);
+  assert.equal(S.branchViewParam(null), null);
+  assert.equal(JSON.stringify(S.branchViewParam(q('solo=feature%2Fa'))), JSON.stringify({ hidden: [], solo: 'feature/a' }));
+  assert.equal(JSON.stringify(S.branchViewParam(q('ocultar=a&ocultar=b,c&ocultar=a'))), JSON.stringify({ hidden: ['a', 'b,c'], solo: '' }));
+  assert.equal(JSON.stringify(S.branchViewParam(q('solo=x&ocultar=y'))), JSON.stringify({ hidden: [], solo: 'x' }));
+  assert.equal(S.branchViewParam(q('solo=%20&ocultar=')), null);
+  assert.equal(S.branchViewParam(q('solo=a%00b')).solo, 'ab');
+  assert.equal(S.branchViewParam(q('solo=' + 'x'.repeat(500))).solo.length, 200);
+});
+
+test('prParam lee ?pr= de la URL: un entero positivo, con o sin #; todo lo demás es 0', () => {
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(S.prParam(q('')), 0);
+  assert.equal(S.prParam(q('pr=12')), 12);
+  assert.equal(S.prParam(q('pr=%2312')), 12);
+  assert.equal(S.prParam(q('pr=%20 7 ')), 7);
+  for (const bad of ['pr=', 'pr=0x1', 'pr=-3', 'pr=1.5', 'pr=abc', 'pr=1234567890', 'pr=<b>1</b>']) assert.equal(S.prParam(q(bad)), 0, bad);
+  assert.equal(S.prParam(null), 0);
+});
+
+test('columnText arma «Autor · fecha» para las columnas del grafo 2D, con lo que falte', () => {
+  const fmt = (ms) => `d${ms}`;
+  assert.equal(S.columnText({ author: { name: 'Ana Pérez', login: 'ana' }, date: 5 }, fmt), 'Ana Pérez · d5');
+  assert.equal(S.columnText({ author: { name: '', login: 'ana' }, date: 5 }, fmt), 'ana · d5');
+  assert.equal(S.columnText({ author: {}, date: 5 }, fmt, 'Desconocido'), 'Desconocido · d5');
+  assert.equal(S.columnText({ author: { name: 'Luis' } }, fmt), 'Luis');
+});

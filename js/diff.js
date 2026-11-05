@@ -297,6 +297,9 @@
    *   errText(err) → el motivo de un fallo, en el idioma activo
    *   onWide(on): la persona pidió el panel ancho (o lo devolvió a su ancho)
    *   canEdit() → ¿se pueden editar los archivos de este repo?; onEdit(path, sha): editar ese archivo (visto en ese commit)
+   *   canHistory() → ¿se puede filtrar el grafo por una ruta?; onHistory(path): dejar a la vista los commits que tocaron ese archivo
+   *   canBlame() → ¿la fuente sabe quién tocó un archivo?; fileLog(path, sha) → Promise de [{ sha, author, date, message }]: los últimos commits que lo cambiaron
+   *   fileBlame(path, sha) → Promise de [{ from, to, sha, author, date, message }] por tramo de líneas, o null si la fuente no puede (entonces rige fileLog)
    * Devuelve { open(sha, { focusGraph }), close(), step(dir), reset(), relocalize(), refresh(), get sha(), get isOpen(), get wide() }.
    */
   function mount(root, opts) {
@@ -565,6 +568,56 @@
         sec.dataset.filled = '1';
         // arriba, lo que se hace con el archivo: editarlo (si el servicio deja) y abrirlo en el servicio
         const acts = mk('p', 'df-note df-factions');
+        if (opts.canHistory?.()) {
+          const h = mk('button', 'btn btn-ghost df-history', t('diff.history'));
+          h.type = 'button';
+          h.setAttribute('aria-label', t('diff.historyOf', { path: f.path }));
+          h.addEventListener('click', () => opts.onHistory?.(f.path));
+          acts.append(h);
+        }
+        let blameOut = null;
+        if (opts.canBlame?.()) {
+          const b = mk('button', 'btn btn-ghost df-blame', t('diff.blame'));
+          b.type = 'button';
+          b.setAttribute('aria-label', t('diff.blameOf', { path: f.path }));
+          b.setAttribute('aria-expanded', 'false');
+          const out = (blameOut = mk('div', 'df-blamelog'));
+          out.hidden = true;
+          out.setAttribute('role', 'status');
+          let token = 0;
+          b.addEventListener('click', async () => {
+            if (!out.hidden) {
+              out.hidden = true;
+              b.setAttribute('aria-expanded', 'false');
+              return;
+            }
+            const mine = ++token;
+            out.hidden = false;
+            b.setAttribute('aria-expanded', 'true');
+            out.textContent = t('diff.loading');
+            try {
+              // por líneas si la fuente puede (GitHub con token, la demo); si no, los últimos commits del archivo
+              const lines = f.status === 'removed' ? null : await Promise.resolve(opts.fileBlame?.(f.path, sha)).catch(() => null);
+              const log = lines?.length ? lines : await opts.fileLog(f.path, sha);
+              if (mine !== token) return;
+              if (!log.length) return void (out.textContent = t('diff.blameNone'));
+              const ol = mk('ol', 'df-blamelist');
+              for (const e of log) {
+                const li = mk('li');
+                if (e.from) li.append(mk('span', 'df-blame-lines', t('diff.blameLines', { from: opts.num(e.from), to: opts.num(e.to) })), ' ');
+                li.append(mk('b', 'df-blame-who', e.author || '?'), ' ');
+                const when = mk('span', 'df-when', e.date ? opts.ago(e.date) : '');
+                if (e.date) when.title = opts.dateTime(e.date);
+                li.append(when, ' · ', mk('span', 'df-blame-msg', e.message));
+                ol.append(li);
+              }
+              out.replaceChildren(ol);
+            } catch {
+              if (mine === token) out.textContent = t('diff.fail');
+            }
+          });
+          acts.append(b);
+        }
         if (f.status !== 'removed' && opts.canEdit?.()) {
           const b = mk('button', 'btn btn-ghost df-edit', t('editor.edit'));
           b.type = 'button';
@@ -580,6 +633,7 @@
           acts.append(a);
         }
         if (acts.childNodes.length) sec.append(acts);
+        if (blameOut) sec.append(blameOut);
         if (f.patch) sec.append(codeOf(f));
         else sec.append(mk('p', 'df-note', t('diff.noPatch')));
       };

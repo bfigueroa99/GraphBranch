@@ -557,3 +557,16 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/207, sin colisión
 - Validado: 571 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 208, expansión: ítem 150 (App móvil, primera entrega: compartir hacia la PWA, Plataformas)
+
+### 2026-11-05 · Iteración 208 · Expansión · Plataformas
+
+- **Capacidad nueva: compartir hacia la PWA** (ítem 150 de la hoja de ruta, parte del mapa: Plataformas). `manifest.webmanifest` declara `share_target` (GET a `./` con `shared_title`, `shared_text` y `shared_url`, nombres propios para no chocar con `?title=`); `U.sharedRepo` (`js/util.js`) toma el primer enlace http(s) de esos campos cuyo host es exactamente el de un servicio que se sigue (sin las páginas propias de github.com como `orgs/` o `settings/`) y que `parseRepo` acepta; `js/app.js` lo pone primero entre los repos de la URL y quita los `shared_*` de la dirección. Sin consultas nuevas ni CSP nueva; sin conexión abre igual (el service worker sirve `index.html` con cualquier query).
+- **Pruebas que fallan sin la capacidad:** `node --test tools/pwa.test.mjs` («compartir hacia la PWA…») → sin `share_target` ni `U.sharedRepo`; paso del smoke «compartir hacia la PWA: el enlace dentro del texto abre ese repo y sale de la dirección».
+- README: Instalable y sin conexión, la estructura, Límites conocidos y Seguridad.
+- QA: enlaces de las cinco plataformas, dentro de un texto con puntuación (también de ancho completo), hosts parecidos, gist y páginas propias de GitHub, `javascript:` y nada compartido (prueba); a mano con Playwright contra `node e2e/serve.mjs 4173`: la pestaña abre, se guarda y la dirección queda en `?repo=ana/notas`, sin errores de consola; auditoría en la puerta.
+- Skills: no aplica: la búsqueda con `npx skills@1.7.4 find` fue denegada por el clasificador de permisos de la sesión; el `share_target` lo cubren el manifiesto y las reglas del repo.
+- Arena: no aplica: una sola forma obvia (GET a la propia página, la única que funciona sin servidor y sin conexión).
+- OMC: plan=— · revisión=5 hallazgos (3 arreglados: host exacto y páginas propias de GitHub, MEDIUM; hosts parecidos y puntuación de ancho completo, LOW; quedan 2 LOW documentados: desplazar un repo guardado con 10 pestañas, como `?repo=`, y el recorte a 4.000 caracteres) · verificación=—
+- Reclamo: loop/208, sin colisión
+- Validado: pendiente
+- **Siguiente:** iteración 209, expansión: ítem 151 (Más de 10 repos: subir el tope a 20, Escala)

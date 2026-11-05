@@ -124,6 +124,21 @@ async function openBranchTip(page, inner) {
   throw new Error(`ninguna de las primeras 6 ramas a la vista abrió su ficha con ${inner}`);
 }
 
+/** Corre `fn` con la demo en pausa y la deja como estaba, también si falla: un paso que compara lo que
+    ve antes y después (ramas, etiquetas, la región viva) no puede depender de que la demo no publique a
+    mitad, y bajo carga en la nube la demo publica a mitad (pendiente 1 de Mantenimiento). */
+async function quieta(page, fn) {
+  const pressed = () => page.evaluate(() => document.querySelector('#pause-btn').getAttribute('aria-pressed') === 'true');
+  const toggle = () => page.evaluate(() => document.querySelector('#pause-btn').click());
+  const was = await pressed();
+  if (!was) await toggle();
+  try {
+    await fn();
+  } finally {
+    if (!page.isClosed() && (await pressed()) !== was) await toggle();
+  }
+}
+
 /** `allow`: errores de consola que el paso provoca a propósito (por ejemplo, un 404 de la API simulada). */
 async function step(page, name, fn, { allow = null } = {}) {
   const before = page.errors.length;
@@ -886,7 +901,8 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#loop-prompt:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
-  await step(page, 'vista de texto: árbol con teclado, nombres accesibles y Enter lleva al grafo', async () => {
+  // la región viva dice al abrir los tags, releases y forks; si la demo publica antes de leerla ya dice «Novedades»
+  await step(page, 'vista de texto: árbol con teclado, nombres accesibles y Enter lleva al grafo', () => quieta(page, async () => {
     await page.click('#textview-btn');
     await page.waitForSelector('#textview[open]', { timeout: T(3000) });
     const info = await page.evaluate(() => {
@@ -974,9 +990,10 @@ console.log('Escritorio (1280×800)');
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press('Enter');
     await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: T(3000) });
-  });
+  }));
 
-  await step(page, 'vista de texto: H oculta una rama, S la deja sola y el foco y el aviso siguen en el árbol', async () => {
+  // cuenta las ramas antes y después de cada tecla: una rama nueva de la demo a mitad lo descuadra
+  await step(page, 'vista de texto: H oculta una rama, S la deja sola y el foco y el aviso siguen en el árbol', () => quieta(page, async () => {
     await page.click('#textview-btn');
     await page.waitForSelector('#textview[open]', { timeout: T(3000) });
     const names = () => page.$$eval('#textview .tv-branch', (bs) => bs.map((n) => n.dataset.branch));
@@ -1017,7 +1034,7 @@ console.log('Escritorio (1280×800)');
     await page.keyboard.press('Escape');
     await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: T(3000) });
     await page.evaluate(() => document.querySelector('#branch-view-reset').click()); // la demo vuelve a verse entera para lo que sigue
-  });
+  }));
 
   await step(page, 'vista de texto: filtra por rama y avisa en la región viva de lo nuevo sin repetir', async () => {
     await page.click('#textview-btn');
@@ -1129,7 +1146,8 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
-  await step(page, 'filtro por autor: el grafo y el árbol de texto muestran solo sus ramas, lo dice y se quita', async () => {
+  // compara las etiquetas con el filtro y sin él: con la demo quieta, quitarlo devuelve las mismas de antes
+  await step(page, 'filtro por autor: el grafo y el árbol de texto muestran solo sus ramas, lo dice y se quita', () => quieta(page, async () => {
     await page.click('#view-2d');
     const count = () => page.evaluate(() => document.querySelectorAll('#graph svg .head').length);
     // bajo carga el grafo aún reparte ramas: se espera a que el conteo quede quieto antes de tomarlo como base
@@ -1174,8 +1192,8 @@ console.log('Escritorio (1280×800)');
     await page.click('#search-btn');
     await page.waitForSelector('#search[open]', { timeout: T(3000) });
     await page.selectOption('#graph-author', '');
-    // la demo sigue publicando: no se compara con el conteo de antes sino con el filtrado, que tiene que quedar por debajo
-    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length > n, best.n, { timeout: T(5000) }).catch(() => {});
+    // las ramas vuelven con su transición, más lenta bajo carga; se compara con el filtrado, que tiene que quedar por debajo
+    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length > n, best.n, { timeout: T(10000) }).catch(() => {});
     await page.waitForFunction(() => !document.querySelector('#search-btn').classList.contains('filtered') && !document.querySelector('#graph-author-status').textContent, null, { timeout: T(3000) }).catch(() => {});
     const off = await page.evaluate(() => ({ mark: document.querySelector('#search-btn').classList.contains('filtered'), status: document.querySelector('#graph-author-status').textContent }));
     const back = await count();
@@ -1187,7 +1205,7 @@ console.log('Escritorio (1280×800)');
     if (!(await page.evaluate(() => document.querySelector('#textview-scope').hidden && !/^Filtrado/.test(document.querySelector('#textview-live').textContent)))) throw new Error('sin filtro, la vista de texto sigue diciendo uno');
     await page.keyboard.press('Escape');
     await page.waitForSelector('#textview:not([open])', { state: 'attached', timeout: T(3000) });
-  });
+  }));
 
   await step(page, 'filtro por ruta: atenúa los commits que no la tocaron, lo dice y se quita', async () => {
     await page.click('#view-2d');
@@ -2627,7 +2645,12 @@ console.log('Una organización o un usuario entero');
     await page.fill('#repo-input', 'ana/notas');
     await page.press('#repo-input', 'Enter');
     await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 4, null, { timeout: T(15000) });
-    for (const n of ['acme/api', 'acme/web', 'acme/nuevo']) await page.locator('.rt', { hasText: n }).locator('.rt-close').click();
+    // cada cierre se espera antes del siguiente (la barra se rehace al cerrar) y lo guardado, hasta que se escribe
+    for (const [i, n] of ['acme/api', 'acme/web', 'acme/nuevo'].entries()) {
+      await page.locator('.rt', { hasText: n }).locator('.rt-close').click();
+      await page.waitForFunction((k) => document.querySelectorAll('#repo-tabs .rt').length === k, 3 - i, { timeout: T(5000) });
+    }
+    await page.waitForFunction(() => localStorage.getItem('graphbranch:owners') === null, null, { timeout: T(5000) }).catch(() => {});
     const owners = await page.evaluate(() => localStorage.getItem('graphbranch:owners'));
     if (owners !== null) throw new Error(`sigue guardada: ${owners}`);
     await page.fill('#repo-input', 'org:acme');

@@ -597,7 +597,7 @@ GB.i18n.define('hr', {
   'textview.default': 'zadana grana',
   'textview.shown': 'prikazani commitovi: {n}',
   'textview.by': 'autor {author}',
-  'textview.tipBy': 'zadnji commit, autor {author}',
+  'textview.tipBy': 'zadnji commit autora {author}',
   'textview.merge': 'merge',
   'textview.tag': 'oznaka {name}',
   'textview.tagged': 'Commitovi s oznakom: {n}',

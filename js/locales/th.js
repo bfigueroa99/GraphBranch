@@ -590,7 +590,7 @@ GB.i18n.define('th', {
   'textview.default': 'แบรนช์เริ่มต้น',
   'textview.shown': 'คอมมิตที่แสดง: {n}',
   'textview.by': 'โดย {author}',
-  'textview.tipBy': 'commit ล่าสุดโดย {author}',
+  'textview.tipBy': 'คอมมิตล่าสุดโดย {author}',
   'textview.merge': 'เมิร์จ',
   'textview.tag': 'แท็ก {name}',
   'textview.tagged': 'คอมมิตที่มีแท็ก: {n}',

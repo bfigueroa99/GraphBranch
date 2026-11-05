@@ -589,7 +589,7 @@ GB.i18n.define('bg', {
   'textview.default': 'клон по подразбиране',
   'textview.shown': 'показани комити: {n}',
   'textview.by': 'от {author}',
-  'textview.tipBy': 'последен commit от {author}',
+  'textview.tipBy': 'последен комит от {author}',
   'textview.merge': 'сливане',
   'textview.tag': 'таг {name}',
   'textview.tagged': 'Комити с таг: {n}',

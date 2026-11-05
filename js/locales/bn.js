@@ -589,7 +589,7 @@ GB.i18n.define('bn', {
   'textview.default': 'ডিফল্ট শাখা',
   'textview.shown': 'দেখানো কমিট: {n}',
   'textview.by': '{author}-এর',
-  'textview.tipBy': 'শেষ commit {author}-এর',
+  'textview.tipBy': '{author}-এর শেষ কমিট',
   'textview.merge': 'মার্জ',
   'textview.tag': 'ট্যাগ {name}',
   'textview.tagged': 'ট্যাগসহ কমিট: {n}',

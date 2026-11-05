@@ -589,7 +589,7 @@ GB.i18n.define('hi', {
   'textview.default': 'डिफ़ॉल्ट शाखा',
   'textview.shown': 'दिखाए गए कमिट: {n}',
   'textview.by': '{author} द्वारा',
-  'textview.tipBy': 'अंतिम commit {author} द्वारा',
+  'textview.tipBy': 'अंतिम कमिट {author} द्वारा',
   'textview.merge': 'मर्ज',
   'textview.tag': 'टैग {name}',
   'textview.tagged': 'टैग वाले कमिट: {n}',

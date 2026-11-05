@@ -81,7 +81,7 @@
       const isDefault = !!(b.isDefault || b.name === def);
       // fusionada: su punta ya está en la por defecto y no es la misma punta (una rama recién creada no es una fusionada)
       const merged = !isDefault && inDef.has(b.sha) && b.sha !== defTip;
-      // quién hizo el commit de la punta (con el filtro por ruta, igual la punta: la rama es de quien la movió último)
+      // el autor del commit de la punta (no quien empujó la rama); con el filtro por ruta, igual la punta
       const tip = data.commits.get(b.sha)?.author;
       const tipAuthor = String(tip?.name || tip?.login || '');
       return { name: b.name, isDefault, tipAuthor, prs: open.get(b.name) || 0, quiet, merged, ciFailing: data.ci?.get?.(b.name) === 'failure', fresh: !isDefault && !!fresh?.has(b.name), commits };

@@ -589,7 +589,7 @@ GB.i18n.define('ta', {
   'textview.default': 'இயல்புநிலைக் கிளை',
   'textview.shown': 'காட்டப்படும் கமிட்கள்: {n}',
   'textview.by': '{author} மூலம்',
-  'textview.tipBy': 'கடைசி commit {author} மூலம்',
+  'textview.tipBy': 'கடைசி கமிட் {author} மூலம்',
   'textview.merge': 'இணைப்பு',
   'textview.tag': 'குறிச்சொல் {name}',
   'textview.tagged': 'குறிச்சொல் உள்ள கமிட்கள்: {n}',

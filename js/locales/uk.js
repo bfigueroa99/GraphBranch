@@ -605,7 +605,7 @@ GB.i18n.define('uk', {
   'textview.default': 'гілка за замовчуванням',
   'textview.shown': 'показано комітів: {n}',
   'textview.by': 'автор {author}',
-  'textview.tipBy': 'останній коміт, автор {author}',
+  'textview.tipBy': 'останній коміт від {author}',
   'textview.merge': 'злиття',
   'textview.tag': 'тег {name}',
   'textview.tagged': 'Коміти з тегом: {n}',

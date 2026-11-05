@@ -577,7 +577,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: columnas a mano con Playwright en la demo (es y ta a 1280 px, ar a 320 px: el interruptor con su texto nuevo, 21 a 25 columnas «SHA · autor · fecha», la búsqueda por el SHA de la primera da 1 commit, sin errores de consola; captura del 2D: se pisan con muchos commits seguidos, como ya decía Límites conocidos); 40 idiomas (`check-i18n`); auditoría: ver Validado.
 - Skills: no aplica: un dato más en una columna del grafo que ya existe; lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (anteponer el SHA corto al texto que ya arma `columnText`).
-- OMC: plan=— · revisión=4 hallazgos (1 MEDIUM y 1 LOW arreglados: el paso del smoke ya no exige exactamente 1 resultado ni prefijos distintos, que con los SHA al azar de la demo y la búsqueda por subcadena podían fallar alguna vez, y su mensaje dice «SHA · autor · fecha»; 2 LOW aceptados: el número del PR se confirma al abrirlo, y en árabe, hebreo, persa y urdu el bidi puede dejar el SHA al otro extremo de la diagonal, que se sigue leyendo) · verificación=—
+- OMC: plan=— · revisión=4 hallazgos (1 MEDIUM y 1 LOW arreglados: el paso del smoke ya no exige exactamente 1 resultado ni prefijos distintos, que con los SHA al azar de la demo y la búsqueda por subcadena podían fallar alguna vez, y su mensaje dice «SHA · autor · fecha»; 2 LOW aceptados: el número del PR se confirma al abrirlo, y en árabe, hebreo, persa y urdu el bidi puede dejar el SHA al otro extremo de la diagonal, que se sigue leyendo) · verificación=PASS
 - Reclamo: loop/217, sin colisión
-- Validado: pendiente
+- Validado: 586 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 218, expansión: ítem 143 (Resumen de la semana de la organización: PRs abiertos, Salidas)

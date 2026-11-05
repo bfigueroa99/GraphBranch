@@ -672,8 +672,8 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: vista de texto en la demo con el smoke (nombre accesible de cada rama frente al autor de su primer commit; sin textos sin resolver); 40 idiomas (`check-i18n`, 0 errores; «commit» unificado con el término que ya usa cada idioma tras la revisión); auditoría: ver Validado.
 - Skills: no aplica: un texto más en un `aria-label` que ya existe; la accesibilidad de la vista la cubren el smoke y el Protocolo de QA.
 - Arena: no aplica: una sola forma obvia (el autor del commit de la punta, ya cargado).
-- OMC: plan=— · revisión=6 hallazgos (6 arreglados: comentario que contradecía el README, el paso del smoke sin regex frágil ni prefijos, «commit» en bg, hi, ta, th y bn, el orden en bn y las comas dentro de fi, hr, pl, ru, uk y tr) · verificación=—
+- OMC: plan=— · revisión=6 hallazgos (6 arreglados: comentario que contradecía el README, el paso del smoke sin regex frágil ni prefijos, «commit» en bg, hi, ta, th y bn, el orden en bn y las comas dentro de fi, hr, pl, ru, uk y tr) · verificación=PASS
 - Reclamo: loop/213, sin colisión
-- Validado: pendiente
+- Validado: 583 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera corrida falló en el smoke «una rama sin actividad hace más de 30 días…», que compara el nombre accesible entero y no esperaba el autor: del propio cambio, se ajustó a la frase nueva.
 - **Siguiente:** iteración 214, expansión: ítem 141 (Salud del repo: autores de commits por semana, Análisis)
 

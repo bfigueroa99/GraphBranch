@@ -1227,25 +1227,28 @@ console.log('Escritorio (1280×800)');
     await page.click('#view-2d');
     // por nombre y sin las etiquetas que se están yendo (`.exit`): la demo sigue publicando y borrando ramas
     const names = () => page.evaluate(() => [...document.querySelectorAll('#graph svg .head:not(.exit)')].map((h) => h.__name));
-    const gone = async (what, before) => {
+    // se espera la desaparición de las ramas concretas, no un conteo: la demo puede sumar una rama mientras otra se oculta
+    const gone = async (what, going) => {
       try {
-        await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head:not(.exit)').length < n, before.length, { timeout: T(5000) });
+        await page.waitForFunction((g) => ![...document.querySelectorAll('#graph svg .head:not(.exit)')].some((h) => g.includes(h.__name)), going, { timeout: T(5000) });
       } catch {
-        throw new Error(`${what}: las etiquetas no bajaron de ${before.length} (ahora ${(await names()).length}: ${(await names()).join(', ')})`);
+        throw new Error(`${what}: las etiquetas ${going.join(', ')} no se fueron (ahora ${(await names()).join(', ')})`);
       }
     };
     const all = await names();
     const hideBtn = await openBranchTip(page, '.tip-hide');
     const hidden = await hideBtn.getAttribute('data-branch');
     await hideBtn.click();
-    await gone('ocultar «' + hidden + '»', all);
+    await gone('ocultar «' + hidden + '»', [hidden]);
     const hid = await names();
     const saved = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('graphbranch:bview:')).length);
     if (!saved) throw new Error('las ramas ocultas no se guardaron por repo');
     const soloBtn = await openBranchTip(page, '.tip-solo');
     const solo = await soloBtn.getAttribute('data-branch');
     await soloBtn.click();
-    await gone('dejar sola «' + solo + '»', hid);
+    // la rama por defecto se queda siempre (no se oculta)
+    const def = await page.evaluate(() => [...document.querySelectorAll('#graph svg .head.default')].map((h) => h.__name));
+    await gone('dejar sola «' + solo + '»', hid.filter((n) => n !== solo && !def.includes(n)));
     await page.click('#search-btn');
     await page.waitForSelector('#search[open]', { timeout: T(3000) });
     const on = await page.evaluate(() => ({ status: document.querySelector('#branch-view-status').textContent, mark: document.querySelector('#search-btn').classList.contains('filtered'), reset: !document.querySelector('#branch-view-reset').hidden }));

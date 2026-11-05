@@ -372,6 +372,10 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     leía del primer archivo del panel y el clic llegaba después, con la demo ya redibujado; la 196 las hizo atómicas),
     «vista de texto: árbol con teclado…» (1 de 3) y «filtro por autor…» (`quitar el filtro no deja el grafo como estaba (3
     etiquetas, con el filtro 3, antes 8)`, 1 de 3).
+    En la iteración 203 se arregló «ocultar una rama o dejarla sola…» (`las etiquetas no bajaron de 4`, 202): esperaba que
+    el conteo de etiquetas bajara, y la demo puede sumar una rama mientras otra se oculta; ahora espera a que las ramas
+    concretas se vayan (la rama por defecto se queda). Queda por medir con 5 corridas seguidas y la intermitencia de «vista
+    de texto: árbol con teclado…» y «al cerrar el último repo…».
 2. [Deuda] La e2e de escritorio «--bitbucket-url suma solo ese host a las conexiones del CSP…» falló 1 de 2 en la
     reanudación de la 173 (2026-11-01, carga 18 en 4 CPU; la repetición pasó): `#azure-token-input` vacío al abrir
     Ajustes. Es una carrera de la prueba: guarda el token de Azure con `GBDesktop.setToken(…, 'azure')` con la página ya
@@ -619,3 +623,17 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/202, sin colisión
 - Validado: 566 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera corrida falló en un paso ajeno («ocultar una rama o dejarla sola»: las etiquetas no bajaron de 4) y la segunda pasó: intermitencia, anotada en el pendiente 1 de Deuda.
 - **Siguiente:** iteración 203, mantenimiento · Deuda: pendiente 1 (Pasos del smoke intermitentes en la sesión cloud: en la iteración 152, `npm run…)
+
+### 2026-11-05 · Iteración 203 · Mantenimiento · Deuda
+
+- **Arreglo: «ocultar una rama o dejarla sola» del smoke ya no depende del conteo de etiquetas** (pendiente 1, parte). Fallaba (202) con `las etiquetas no bajaron de 4`: la demo sigue publicando y una rama nueva compensaba la que se ocultaba. `tools/smoke.mjs` espera ahora a que las ramas concretas dejen de estar (`gone`), sin contar la rama por defecto, que «Solo esta» conserva (`js/search.js`).
+- **Reproducción:** `xvfb-run -a node tools/smoke.mjs` → `✗ ocultar una rama o dejarla sola: …: las etiquetas no bajaron de 4` (intermitente, 202; con carga de la demo).
+- **Pruebas que fallan sin el arreglo:** el propio paso del smoke, intermitente: no se pudo forzar a demanda; el arreglo quita la condición de carrera (comparar un conteo con la demo viva).
+- README: no toca.
+- QA: no toca la página; solo `tools/smoke.mjs`. Smoke de 165 pasos en verde una vez; las 5 corridas del pendiente quedan abiertas.
+- Skills: no aplica: un ajuste de una espera en el smoke que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (esperar por nombre, como ya hace «filtro por autor»).
+- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff; solo `tools/smoke.mjs`)
+- Reclamo: loop/203, sin colisión
+- Validado: 566 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 204, expansión: ítem 134 (Salud del repo: tendencia de releases, Análisis)

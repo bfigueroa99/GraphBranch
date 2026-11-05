@@ -65,6 +65,7 @@ function fakeGitLab(web = 'https://gitlab.com') {
     calls: [],
     misses: [], // consultas que respondieron 404 (el navegador las anota como errores en la consola)
     visibility: 'public',
+    pipelines: [], // { ref, sha, status }, el último de cada ref es el más nuevo
     tokens: new Map(), // token -> sus permisos
     expect: null, // el token que tiene que llevar cada consulta (null: ninguno)
   };
@@ -165,6 +166,11 @@ function fakeGitLab(web = 'https://gitlab.com') {
       const state = q.get('state');
       const list = gl.mrs.filter((m) => state === 'all' || m.state === state).sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
       return { body: list.slice(0, Number(q.get('per_page'))) };
+    }
+    if (p === PROJECT + '/pipelines') {
+      if (gl.noPipelines) return { status: 403, body: { message: '403 Forbidden' } };
+      const ref = q.get('ref');
+      return { body: gl.pipelines.filter((x) => x.ref === ref).slice(-1) };
     }
     if (p === PROJECT + '/events') return { body: [...gl.events].reverse().slice(0, Number(q.get('per_page'))) }; // los más nuevos primero
     return { status: 404, body: { message: '404 Not Found' } };
@@ -319,6 +325,63 @@ test('en vivo: push, rama nueva, MR abierta y fusionada, force-push y rama borra
   await src.cycle();
   assert.deepEqual(acts(updates).filter((a) => a.kind.startsWith('branch-delete')).map((a) => a.branch), ['fix/x']);
   assert.ok(!gl.calls.some((c) => c.startsWith(PROJECT + '/repository/commits?')));
+});
+
+test('CI: el estado del pipeline de la cabeza va a data.ci, una consulta por rama que se movió, y el rojo de la rama por defecto avisa', async () => {
+  const gl = project();
+  gl.pipelines.push({ ref: 'main', sha: 'm3', status: 'success' });
+  const { src, updates, errors } = connect(gl);
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  assert.equal(src.data.ci.get('main'), 'success');
+  const asked = () => gl.calls.filter((c) => c.startsWith(PROJECT + '/pipelines')).length;
+  assert.equal(asked(), 1);
+  await src.cycle();
+  assert.equal(asked(), 1, 'la misma cabeza no se vuelve a preguntar');
+
+  // un push sin pipeline todavía: sin estado; después corre y falla
+  gl.push('main', 'm4', 'm3');
+  await src.cycle();
+  assert.equal(src.data.ci.get('main'), undefined);
+  gl.pipelines.push({ ref: 'main', sha: 'm4', status: 'running' });
+  await src.cycle();
+  assert.equal(src.data.ci.get('main'), 'pending');
+  gl.pipelines.push({ ref: 'main', sha: 'm4', status: 'failed' });
+  await src.cycle();
+  assert.equal(src.data.ci.get('main'), 'failure');
+  assert.ok(acts(updates).some((a) => a.kind === 'ci-fail' && a.branch === 'main'));
+  const n = asked();
+  await src.cycle();
+  assert.equal(asked(), n);
+  assert.ok(gl.calls.filter((c) => c.startsWith(PROJECT + '/pipelines')).every((c) => c.includes('per_page=1')));
+});
+
+test('CI: una rama con MR abierta también; un proyecto sin pipelines (403) deja de preguntar; privado sin token no pregunta', async () => {
+  const gl = project();
+  gl.push('fix/x', 'x1', 'm3');
+  gl.mr(6, 'fix/x', 'main');
+  gl.pipelines.push({ ref: 'fix/x', sha: 'x1', status: 'canceled' }, { ref: 'main', sha: 'm3', status: 'skipped' });
+  const { src } = connect(gl);
+  await src.cycle();
+  assert.equal(src.data.ci.get('fix/x'), 'failure');
+  assert.equal(src.data.ci.get('main'), undefined);
+
+  const off = project();
+  off.noPipelines = true;
+  const b = connect(off);
+  await b.src.cycle();
+  await b.src.cycle();
+  assert.equal(off.calls.filter((c) => c.startsWith(PROJECT + '/pipelines')).length, 1);
+  assert.equal(b.src.data.ci.size, 0);
+
+  const priv = project();
+  priv.visibility = 'private';
+  priv.pipelines.push({ ref: 'main', sha: 'm3', status: 'success' });
+  priv.tokens.set('glpat-x', { read_api: true });
+  const noTok = connect(priv);
+  noTok.src.data.repo.private = true;
+  await noTok.src.syncCiGitlab([], true);
+  assert.equal(priv.calls.filter((c) => c.startsWith(PROJECT + '/pipelines')).length, 0);
 });
 
 test('un proyecto que no existe (o es privado) lo dice y no insiste', async () => {

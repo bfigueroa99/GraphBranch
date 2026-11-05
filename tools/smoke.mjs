@@ -2765,6 +2765,11 @@ function fakeGitLab() {
       const author = { username: 'ana', name: 'Ana', avatar_url: 'https://secure.gravatar.com/avatar/x' };
       return { body: [{ id: 1, action_name: 'opened', target_type: 'Issue', target_iid: 9, target_title: 'Falla al abrir', created_at: new Date().toISOString(), author }] };
     }
+    if (rest === '/pipelines') {
+      const ref = q.get('ref');
+      const sha = branches.get(ref);
+      return { body: sha ? [{ id: 1, ref, sha, status: ref === 'main' ? 'success' : 'running' }] : [] };
+    }
     if (rest === '/merge_requests') return { body: mrs.filter((m) => q.get('state') === 'all' || m.state === q.get('state')) };
     return { status: 404, body: { message: '404 Not Found' } };
   };
@@ -2850,6 +2855,11 @@ console.log('GitLab');
     if ((await label.textContent()) !== '!5') throw new Error(`la etiqueta dice ${await label.textContent()}`);
     const aria = await page.$$eval('#graph .head', (hs) => hs.map((h) => h.getAttribute('aria-label')).join(' | '));
     if (!aria.includes('MR !5')) throw new Error(`etiquetas: ${aria}`);
+  });
+
+  await step(page, 'CI de GitLab: la rama por defecto lleva la marca de su último pipeline', async () => {
+    await page.waitForSelector('.h-ci.ci-success, .h3-ci.ci-success', { state: 'attached', timeout: T(15000) }); // la vista 2D de este paso puede estar fuera del cuadro
+    if (!gl.calls.some((c) => c.startsWith('/api/v4/projects/g%2Fsub%2Fp/pipelines?ref=main'))) throw new Error('no preguntó por los pipelines de main');
   });
 
   await step(page, 'lo nuevo llega al panel: un push y la MR fusionada', async () => {

@@ -589,6 +589,7 @@ GB.i18n.define('hu', {
   'textview.default': 'alapértelmezett ág',
   'textview.shown': 'megjelenített commitok: {n}',
   'textview.by': 'szerző: {author}',
+  'textview.tipBy': 'utolsó commit szerzője: {author}',
   'textview.merge': 'merge',
   'textview.tag': 'címke {name}',
   'textview.tagged': 'Címkés commitok: {n}',

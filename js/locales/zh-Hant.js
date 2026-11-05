@@ -589,6 +589,7 @@ GB.i18n.define('zh-Hant', {
   'textview.default': '預設分支',
   'textview.shown': '顯示的提交：{n}',
   'textview.by': '作者 {author}',
+  'textview.tipBy': '最後一次提交的作者 {author}',
   'textview.merge': '合併',
   'textview.tag': '標籤 {name}',
   'textview.tagged': '帶標籤的提交：{n}',

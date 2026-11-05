@@ -589,6 +589,7 @@ GB.i18n.define('fi', {
   'textview.default': 'oletushaara',
   'textview.shown': 'näytetyt commitit: {n}',
   'textview.by': 'tekijä {author}',
+  'textview.tipBy': 'viimeisimmän commitin tekijä {author}',
   'textview.merge': 'yhdistäminen',
   'textview.tag': 'tagi {name}',
   'textview.tagged': 'Commitit tagilla: {n}',

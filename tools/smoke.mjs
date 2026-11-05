@@ -929,6 +929,11 @@ console.log('Escritorio (1280×800)');
       return { named: named.length, chips: bs.filter((n) => /PRs abiertos: \d+/.test(n.querySelector('.tv-head').textContent)).length, total: bs.reduce((a, n) => a + (Number((n.getAttribute('aria-label').match(/PRs abiertos: (\d+)/) || [])[1]) || 0), 0) };
     });
     if (!prs.named || prs.named !== prs.chips || !prs.total) throw new Error('la vista de texto no dice los PRs abiertos de cada rama: ' + JSON.stringify(prs));
+    // cada rama dice en su nombre accesible quién hizo el commit de su punta, el mismo autor que dice su primer commit
+    const tips = await page.$$eval('#textview .tv-branch', (bs) => bs.map((n) => ({ branch: n.dataset.branch, label: n.getAttribute('aria-label'), first: n.querySelector('.tv-commit')?.getAttribute('aria-label') || '' })));
+    // el autor del primer commit (la punta) sale de su nombre «mensaje, de Autor, hace…» y la rama lo dice entero, seguido de una coma
+    const badTips = tips.filter((r) => !r.first || !r.first.split(', ').some((p) => p.startsWith('de ') && r.label.includes(`, último commit ${p}, `)));
+    if (!tips.length || badTips.length) throw new Error('la vista de texto no dice el autor de la punta de cada rama: ' + JSON.stringify(badTips.slice(0, 3)));
     // la historia de la demo es de los últimos días: ninguna rama está quieta (la que sí, en «Vista de texto: ramas quietas»)
     const quiet = await page.$$eval('#textview .tv-branch', (bs) => bs.filter((n) => /sin actividad/.test(n.getAttribute('aria-label') + n.querySelector('.tv-head').textContent)).map((n) => n.dataset.branch));
     if (quiet.length) throw new Error('la vista de texto dice sin actividad ramas de la demo con commits de esta semana: ' + quiet.join(', '));
@@ -4174,7 +4179,7 @@ console.log('Vista de texto: ramas quietas (GitHub simulado)');
     const rows = await page.$$eval('#textview .tv-branch', (bs) => bs.map((n) => ({ name: n.dataset.branch, label: n.getAttribute('aria-label'), head: n.querySelector('.tv-head').textContent })));
     const old = rows.find((r) => r.name === 'gh-pages');
     const main = rows.find((r) => r.name === 'main');
-    if (!old || !/^gh-pages, sin actividad hace más de 30 días, commits mostrados: 1$/.test(old.label)) throw new Error('la rama de hace 45 días no lo dice en su nombre accesible: ' + JSON.stringify(old));
+    if (!old || !/^gh-pages, sin actividad hace más de 30 días, último commit de [^,]+, commits mostrados: 1$/.test(old.label)) throw new Error('la rama de hace 45 días no lo dice en su nombre accesible: ' + JSON.stringify(old));
     if (!old.head.includes('sin actividad hace más de 30 días')) throw new Error('la rama de hace 45 días no lleva la marca visible: ' + old.head);
     if (!main || /sin actividad/.test(main.label + main.head)) throw new Error('la rama por defecto, con commits de hoy, se dice quieta: ' + JSON.stringify(main));
   });

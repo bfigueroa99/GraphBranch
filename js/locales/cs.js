@@ -600,6 +600,7 @@ GB.i18n.define('cs', {
   'textview.default': 'výchozí větev',
   'textview.shown': 'zobrazené commity: {n}',
   'textview.by': 'od {author}',
+  'textview.tipBy': 'poslední commit od {author}',
   'textview.merge': 'merge',
   'textview.tag': 'tag {name}',
   'textview.tagged': 'Commity se značkou: {n}',

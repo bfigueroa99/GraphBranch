@@ -589,6 +589,7 @@ GB.i18n.define('ca', {
   'textview.default': 'branca per defecte',
   'textview.shown': 'commits mostrats: {n}',
   'textview.by': 'de {author}',
+  'textview.tipBy': 'darrer commit de {author}',
   'textview.merge': 'merge',
   'textview.tag': 'etiqueta {name}',
   'textview.tagged': 'Commits amb etiqueta: {n}',

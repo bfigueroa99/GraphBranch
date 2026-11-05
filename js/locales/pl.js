@@ -600,6 +600,7 @@ GB.i18n.define('pl', {
   'textview.default': 'gałąź domyślna',
   'textview.shown': 'pokazane commity: {n}',
   'textview.by': 'autor {author}',
+  'textview.tipBy': 'ostatni commit autorstwa {author}',
   'textview.merge': 'merge',
   'textview.tag': 'tag {name}',
   'textview.tagged': 'Commity z tagiem: {n}',

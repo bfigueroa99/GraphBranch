@@ -632,6 +632,7 @@ GB.i18n.define('ur', {
   'textview.default': 'طے شدہ شاخ',
   'textview.shown': 'دکھائے گئے commits: {n}',
   'textview.by': 'از {author}',
+  'textview.tipBy': 'آخری commit از {author}',
   'textview.merge': 'انضمام',
   'textview.tag': 'ٹیگ {name}',
   'textview.tagged': 'ٹیگ والے کمٹ: {n}',

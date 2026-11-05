@@ -646,6 +646,7 @@ GB.i18n.define('he', {
   'textview.default': 'ענף ברירת מחדל',
   'textview.shown': 'commits מוצגים: {n}',
   'textview.by': 'מאת {author}',
+  'textview.tipBy': 'commit אחרון מאת {author}',
   'textview.merge': 'מיזוג',
   'textview.tag': 'תגית {name}',
   'textview.tagged': 'קומיטים עם תגית: {n}',

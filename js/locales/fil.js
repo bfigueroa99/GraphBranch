@@ -590,6 +590,7 @@ GB.i18n.define('fil', {
   'textview.default': 'default na branch',
   'textview.shown': 'mga commit na ipinapakita: {n}',
   'textview.by': 'ni {author}',
+  'textview.tipBy': 'huling commit ni {author}',
   'textview.merge': 'merge',
   'textview.tag': 'tag {name}',
   'textview.tagged': 'Mga commit na may tag: {n}',

@@ -589,6 +589,7 @@ GB.i18n.define('id', {
   'textview.default': 'cabang bawaan',
   'textview.shown': 'commit ditampilkan: {n}',
   'textview.by': 'oleh {author}',
+  'textview.tipBy': 'commit terakhir oleh {author}',
   'textview.merge': 'merge',
   'textview.tag': 'tag {name}',
   'textview.tagged': 'Commit dengan tag: {n}',

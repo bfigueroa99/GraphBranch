@@ -589,6 +589,7 @@ GB.i18n.define('da', {
   'textview.default': 'standardgren',
   'textview.shown': 'viste commits: {n}',
   'textview.by': 'af {author}',
+  'textview.tipBy': 'seneste commit af {author}',
   'textview.merge': 'sammenfletning',
   'textview.tag': 'tag {name}',
   'textview.tagged': 'Commits med tag: {n}',

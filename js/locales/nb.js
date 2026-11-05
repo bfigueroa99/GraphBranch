@@ -589,6 +589,7 @@ GB.i18n.define('nb', {
   'textview.default': 'standardgren',
   'textview.shown': 'viste commits: {n}',
   'textview.by': 'av {author}',
+  'textview.tipBy': 'siste commit av {author}',
   'textview.merge': 'sammenslåing',
   'textview.tag': 'tag {name}',
   'textview.tagged': 'Commits med tag: {n}',

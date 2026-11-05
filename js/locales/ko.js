@@ -589,6 +589,7 @@ GB.i18n.define('ko', {
   'textview.default': '기본 브랜치',
   'textview.shown': '표시된 커밋: {n}',
   'textview.by': '작성자 {author}',
+  'textview.tipBy': '마지막 커밋 작성자 {author}',
   'textview.merge': '병합',
   'textview.tag': '태그 {name}',
   'textview.tagged': '태그가 있는 커밋: {n}',

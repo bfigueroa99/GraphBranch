@@ -564,6 +564,8 @@ GB.i18n.define('nl', {
   'practice.ex9.goal': 'Iemand heeft de tag v2 te vroeg gezet: verwijder hem met tag -d. Probeer daarna de fix van feature te kopiëren met cherry-pick feature --no-commit en breek af met cherry-pick --abort.',
   'practice.ex10.title': 'Een add ongedaan maken en opruimen',
   'practice.ex10.goal': 'Je voerde per ongeluk add . uit: debug.log staat klaar voor de commit en er slingeren twee niet-gevolgde bestanden rond. Haal debug.log eruit met restore --staged, bekijk de rommel met clean -n en verwijder hem met clean -f. Houd de wijziging in app.js.',
+  'practice.ex11.title': 'Alleen het klaargezette committen',
+  'practice.ex11.goal': 'Je hebt login.js en debug.js gewijzigd, maar alleen de loginfix hoort in de commit. Zet login.js klaar met add en voer commit -m uit: debug.js moet gewijzigd en zonder commit blijven. Let op: commit -a zou ze allebei meenemen.',
   'practice.share': 'Link van de oefening kopiëren',
   'practice.link': 'Link van de oefening',
   'practice.copied': 'Link gekopieerd.',

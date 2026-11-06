@@ -563,6 +563,8 @@ GB.i18n.define('fi', {
   'practice.ex9.goal': 'Joku merkitsi tagin v2 liian aikaisin: poista se komennolla tag -d. Kokeile sitten kopioida korjaus haarasta feature komennolla cherry-pick feature --no-commit ja peruuta se komennolla cherry-pick --abort.',
   'practice.ex10.title': 'Peru add ja siivoa',
   'practice.ex10.goal': 'Ajoit vahingossa add .: debug.log on lisätty valmisteluun ja kaksi tiedostoa on seurannan ulkopuolella. Ota debug.log pois komennolla restore --staged, katso roskat komennolla clean -n ja poista ne komennolla clean -f. Säilytä app.js:n muutos.',
+  'practice.ex11.title': 'Commit vain valmistellusta',
+  'practice.ex11.goal': 'Muutit tiedostoja login.js ja debug.js, mutta committiin kuuluu vain kirjautumisen korjaus. Valmistele login.js komennolla add ja aja commit -m: debug.js:n on jäätävä muutetuksi ilman committia. Varo: commit -a veisi molemmat.',
   'practice.share': 'Kopioi tehtävän linkki',
   'practice.link': 'Tehtävän linkki',
   'practice.copied': 'Linkki kopioitu.',

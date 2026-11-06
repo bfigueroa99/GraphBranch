@@ -563,6 +563,8 @@ GB.i18n.define('nb', {
   'practice.ex9.goal': 'Noen satte taggen v2 for tidlig: slett den med tag -d. Prøv deretter å kopiere rettelsen fra feature med cherry-pick feature --no-commit og avbryt den med cherry-pick --abort.',
   'practice.ex10.title': 'Angre en add og rydd opp',
   'practice.ex10.goal': 'Du kjørte add . ved en feil: debug.log er stage-et, og to filer som git ikke følger ligger igjen. Ta debug.log ut med restore --staged, se søppelet med clean -n og slett det med clean -f. Behold endringen i app.js.',
+  'practice.ex11.title': 'Commit bare det forberedte',
+  'practice.ex11.goal': 'Du har endret login.js og debug.js, men bare innloggingsrettelsen hører hjemme i committen. Forbered login.js med add og kjør commit -m: debug.js skal fortsatt være endret og uten commit. Pass på: commit -a ville tatt begge.',
   'practice.share': 'Kopier lenken til oppgaven',
   'practice.link': 'Oppgavelenke',
   'practice.copied': 'Lenken er kopiert.',

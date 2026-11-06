@@ -606,6 +606,8 @@ GB.i18n.define('ur', {
   'practice.ex9.goal': 'کسی نے ٹیگ v2 وقت سے پہلے لگا دیا: اسے tag -d سے مٹائیں۔ پھر cherry-pick feature --no-commit سے feature کی درستی کاپی کر کے دیکھیں اور cherry-pick --abort سے منسوخ کریں۔',
   'practice.ex10.title': 'add کو واپس کرنا اور صفائی',
   'practice.ex10.goal': 'آپ نے غلطی سے add . چلا دیا: debug.log اسٹیج ہو گئی ہے اور دو ایسی فائلیں پڑی ہیں جنہیں git ٹریک نہیں کرتا۔ restore --staged سے debug.log کو نکالیں، clean -n سے کچرا دیکھیں اور clean -f سے مٹا دیں۔ app.js کی تبدیلی برقرار رکھیں۔',
+  'practice.ex11.title': 'صرف تیار کیا ہوا commit کریں',
+  'practice.ex11.goal': 'آپ نے login.js اور debug.js بدلے، لیکن commit میں صرف لاگ اِن کی درستی جانی چاہیے۔ add سے login.js تیار کریں اور commit -m چلائیں: debug.js بدلا ہوا اور commit کے بغیر رہنا چاہیے۔ خیال رہے: commit -a دونوں لے جائے گا۔',
   'practice.share': 'مشق کا لنک کاپی کریں',
   'practice.link': 'مشق کا لنک',
   'practice.copied': 'لنک کاپی ہو گیا۔',

@@ -606,6 +606,8 @@ GB.i18n.define('fa', {
   'practice.ex9.goal': 'کسی برچسب v2 را زودتر از موعد گذاشته: آن را با tag -d حذف کن. سپس با cherry-pick feature --no-commit رفع‌اشکال feature را کپی کن و با cherry-pick --abort لغوش کن.',
   'practice.ex10.title': 'برگرداندن add و پاک‌سازی',
   'practice.ex10.goal': 'اشتباهی add . اجرا کردی: debug.log آماده‌ی کامیت شده و دو فایل دنبال‌نشده هم مانده است. debug.log را با restore --staged بیرون بیاور، زباله‌ها را با clean -n ببین و با clean -f پاک کن. تغییر app.js را نگه دار.',
+  'practice.ex11.title': 'کامیت فقط آماده‌شده‌ها',
+  'practice.ex11.goal': 'login.js و debug.js را تغییر دادی، اما فقط اصلاح ورود باید در کامیت باشد. login.js را با add آماده کن و commit -m را اجرا کن: debug.js باید تغییریافته و بدون کامیت بماند. مراقب باش: commit -a هر دو را می‌برد.',
   'practice.share': 'کپی پیوند تمرین',
   'practice.link': 'پیوند تمرین',
   'practice.copied': 'پیوند کپی شد.',

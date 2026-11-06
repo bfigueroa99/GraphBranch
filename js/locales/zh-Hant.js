@@ -563,6 +563,8 @@ GB.i18n.define('zh-Hant', {
   'practice.ex9.goal': '有人過早打了標籤 v2：用 tag -d 刪掉它。然後試著用 cherry-pick feature --no-commit 複製 feature 上的修復，再用 cherry-pick --abort 取消。',
   'practice.ex10.title': '撤銷 add 並清理',
   'practice.ex10.goal': '你誤執行了 add .：debug.log 被暫存了，還有兩個未追蹤的檔案。用 restore --staged 把 debug.log 取出，用 clean -n 檢視垃圾檔案，再用 clean -f 刪除。保留 app.js 的變更。',
+  'practice.ex11.title': '只提交已暫存的',
+  'practice.ex11.goal': '你改了 login.js 和 debug.js，但只有登入的修正該進提交。用 add 暫存 login.js，再執行 commit -m：debug.js 要保持已修改且未提交。小心：commit -a 會把兩個都帶走。',
   'practice.share': '複製練習連結',
   'practice.link': '練習連結',
   'practice.copied': '連結已複製。',

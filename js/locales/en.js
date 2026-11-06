@@ -569,6 +569,8 @@ GB.i18n.define('en', {
   'practice.ex9.goal': 'Someone tagged v2 too early: delete it with tag -d. Then try copying the fix from feature with cherry-pick feature --no-commit and cancel it with cherry-pick --abort.',
   'practice.ex10.title': 'Unstage and clean',
   'practice.ex10.goal': 'You ran add . by mistake: debug.log is staged and two untracked files are lying around. Take debug.log back out with restore --staged, look at the junk with clean -n, then delete it with clean -f. Keep the change in app.js.',
+  'practice.ex11.title': 'Commit only what is staged',
+  'practice.ex11.goal': 'You changed login.js and debug.js, but only the login fix belongs in the commit. Stage login.js with add and run commit -m: debug.js must stay changed and uncommitted. Careful: commit -a would take both.',
   'practice.share': 'Copy exercise link',
   'practice.link': 'Exercise link',
   'practice.copied': 'Link copied.',

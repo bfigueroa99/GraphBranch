@@ -563,6 +563,8 @@ GB.i18n.define('id', {
   'practice.ex9.goal': 'Seseorang memasang tag v2 terlalu cepat: hapus dengan tag -d. Lalu coba salin perbaikan dari feature dengan cherry-pick feature --no-commit dan batalkan dengan cherry-pick --abort.',
   'practice.ex10.title': 'Batalkan add dan bersihkan',
   'practice.ex10.goal': 'Kamu tak sengaja menjalankan add .: debug.log ter-stage dan ada dua berkas yang tidak dilacak. Keluarkan debug.log dengan restore --staged, lihat sampahnya dengan clean -n, lalu hapus dengan clean -f. Pertahankan perubahan di app.js.',
+  'practice.ex11.title': 'Commit hanya yang di-stage',
+  'practice.ex11.goal': 'Kamu mengubah login.js dan debug.js, tetapi hanya perbaikan login yang masuk commit. Stage login.js dengan add lalu jalankan commit -m: debug.js harus tetap berubah dan tanpa commit. Hati-hati: commit -a akan mengambil keduanya.',
   'practice.share': 'Salin tautan latihan',
   'practice.link': 'Tautan latihan',
   'practice.copied': 'Tautan disalin.',

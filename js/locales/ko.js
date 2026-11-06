@@ -563,6 +563,8 @@ GB.i18n.define('ko', {
   'practice.ex9.goal': '누군가 v2 태그를 너무 일찍 달았습니다. tag -d로 지우세요. 그다음 cherry-pick feature --no-commit으로 feature의 수정을 복사해 보고 cherry-pick --abort로 취소하세요.',
   'practice.ex10.title': 'add 되돌리기와 정리',
   'practice.ex10.goal': '실수로 add . 를 실행해 debug.log가 스테이지되고 추적되지 않는 파일 두 개가 남았습니다. restore --staged 로 debug.log를 빼고, clean -n 으로 쓰레기를 확인한 뒤 clean -f 로 지우세요. app.js의 변경은 그대로 두세요.',
+  'practice.ex11.title': '스테이징한 것만 커밋',
+  'practice.ex11.goal': 'login.js와 debug.js를 바꿨지만 커밋에는 로그인 수정만 들어가야 합니다. add로 login.js를 스테이징하고 commit -m을 실행하세요. debug.js는 바뀐 채로 커밋 없이 남아야 합니다. 주의: commit -a는 둘 다 가져갑니다.',
   'practice.share': '연습 링크 복사',
   'practice.link': '연습 링크',
   'practice.copied': '링크를 복사했습니다.',

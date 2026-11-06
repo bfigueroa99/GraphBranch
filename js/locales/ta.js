@@ -563,6 +563,8 @@ GB.i18n.define('ta', {
   'practice.ex9.goal': 'யாரோ v2 குறிச்சொல்லை முன்கூட்டியே இட்டுவிட்டார்: tag -d மூலம் அழிக்கவும். பிறகு cherry-pick feature --no-commit மூலம் feature-இன் திருத்தத்தை நகலெடுத்துப் பார்த்து cherry-pick --abort மூலம் ரத்து செய்யவும்.',
   'practice.ex10.title': 'add-ஐ திரும்பப்பெற்று சுத்தம் செய்தல்',
   'practice.ex10.goal': 'தவறுதலாக add . ஓட்டிவிட்டாய்: debug.log ஸ்டேஜ் ஆகிவிட்டது, கண்காணிக்கப்படாத இரண்டு கோப்புகளும் உள்ளன. restore --staged மூலம் debug.log-ஐ வெளியே எடு, clean -n மூலம் குப்பையைப் பார், clean -f மூலம் நீக்கு. app.js மாற்றத்தை வைத்திரு.',
+  'practice.ex11.title': 'தயார்செய்ததை மட்டும் commit செய்',
+  'practice.ex11.goal': 'நீ login.js, debug.js இரண்டையும் மாற்றினாய், ஆனால் commit-இல் உள்நுழைவுத் திருத்தம் மட்டுமே போக வேண்டும். add மூலம் login.js-ஐத் தயார்செய்து commit -m இயக்கு: debug.js மாற்றப்பட்டபடியே commit இல்லாமல் இருக்க வேண்டும். கவனம்: commit -a இரண்டையும் எடுத்துக்கொள்ளும்.',
   'practice.share': 'பயிற்சி இணைப்பை நகலெடு',
   'practice.link': 'பயிற்சி இணைப்பு',
   'practice.copied': 'இணைப்பு நகலெடுக்கப்பட்டது.',

@@ -579,6 +579,8 @@ GB.i18n.define('ru', {
   'practice.ex9.goal': 'Кто-то слишком рано поставил тег v2: удалите его командой tag -d. Затем попробуйте скопировать исправление из feature командой cherry-pick feature --no-commit и отмените его командой cherry-pick --abort.',
   'practice.ex10.title': 'Отменить add и очистить',
   'practice.ex10.goal': 'Вы случайно выполнили add .: debug.log попал в индекс, а ещё лежат два неотслеживаемых файла. Уберите debug.log командой restore --staged, посмотрите мусор через clean -n и удалите его через clean -f. Изменение в app.js сохраните.',
+  'practice.ex11.title': 'Коммит только подготовленного',
+  'practice.ex11.goal': 'Ты изменил login.js и debug.js, но в коммит должно попасть только исправление входа. Подготовь login.js командой add и выполни commit -m: debug.js должен остаться изменённым и без коммита. Осторожно: commit -a заберёт оба.',
   'practice.share': 'Скопировать ссылку на упражнение',
   'practice.link': 'Ссылка на упражнение',
   'practice.copied': 'Ссылка скопирована.',

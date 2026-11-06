@@ -45,11 +45,14 @@ test('commit --amend reemplaza el último commit con los mismos padres', () => {
   assert.deepEqual(plain(r.commits.get(r.headSha).parents), [parent]);
   assert.equal(r.commits.size, count + 1);
   assert.ok(!r.log(r.headSha).includes(typo), 'el commit viejo ya no está en la rama');
-  // sin -m conserva el mensaje y recoge los archivos cambiados
+  // sin -m conserva el mensaje; sin -a deja lo cambiado sin preparar, con -a lo recoge
   r.run('touch a.txt');
   assert.ok(r.run('commit --amend').ok);
   assert.equal(r.commits.get(r.headSha).message, 'Add search');
+  assert.deepEqual(plain(r.work), ['a.txt']);
+  assert.ok(r.run('commit --amend -a').ok);
   assert.deepEqual(plain(r.work), []);
+  assert.deepEqual(plain(r.commits.get(r.headSha).files), ['a.txt']);
   assert.match(r.run('reflog').lines.join('\n'), /commit \(amend\): Add search/);
 });
 
@@ -293,6 +296,7 @@ test('cada ejercicio parte sin resolver y se resuelve con sus comandos', () => {
     ['merge feature --no-commit', 'merge --abort'],
     ['tag -d v2', 'cherry-pick feature --no-commit', 'cherry-pick --abort'],
     ['restore --staged debug.log', 'clean -n', 'clean -f'],
+    ['add login.js', 'commit -m "Fix login"'],
   ];
   assert.equal(solutions.length, EXERCISES.length);
   EXERCISES.forEach((ex, i) => {
@@ -451,7 +455,8 @@ test('la práctica dice «rama renombrada» en el panel, no una borrada y otra c
 
 test('los números de la URL piden un ejercicio de la lista; lo demás se descarta', () => {
   assert.deepEqual(plain(decodeExercise('3')), { index: 2 });
-  for (const bad of ['0', '11', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
+  assert.deepEqual(plain(decodeExercise('11')), { index: 10 });
+  for (const bad of ['0', '12', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
 });
 
 test('un ejercicio propio mal hecho no entra: sin meta, condición inventada, comando que falla o demasiados', () => {
@@ -627,8 +632,8 @@ test('stash guarda los cambios a medias, deja cambiar de rama y pop los devuelve
   assert.deepEqual(plain(r.work), ['app.js', 'notes.md', 'other.txt']);
   assert.equal(r.run('stash pop').lines[0], 'error: No stash entries found.');
   assert.equal(r.run('stash frobnicate').ok, false);
-  // el commit se lleva los cambios
-  r.run('commit -m "Use the stash"');
+  // el commit -a se lleva los cambios
+  r.run('commit -am "Use the stash"');
   assert.deepEqual(plain(r.work), []);
 });
 
@@ -869,6 +874,58 @@ test('el ejercicio de limpiar no se da por resuelto con el atajo equivocado', ()
   run(noClean, 'restore --staged debug.log');
   assert.equal(ex.done(noClean), false, 'sin clean -f quedan archivos sin seguir');
   const committed = start(i, NOW);
-  run(committed, 'restore --staged debug.log', 'clean -f', 'commit -m "x"');
+  run(committed, 'restore --staged debug.log', 'clean -f', 'commit -am "x"');
   assert.equal(ex.done(committed), false, 'un commit de más no es la solución');
+});
+
+test('commit guarda solo lo preparado; con -a, todo lo cambiado (nunca lo sin seguir)', () => {
+  const r = fresh();
+  const tip = r.headSha;
+  run(r, 'touch a.txt b.txt', 'touch --new n.txt');
+  // sin nada preparado no hay commit: git dice que falta add o -a
+  const refused = r.run('commit -m "Nada preparado"');
+  assert.equal(refused.ok, false);
+  assert.match(refused.lines.join('\n'), /no changes added to commit \(use "git add" and\/or "git commit -a"\)/);
+  assert.equal(r.headSha, tip, 'no se hizo ningún commit');
+  // con a.txt preparado, el commit se lleva solo a.txt y b.txt sigue cambiado
+  run(r, 'add a.txt');
+  const res = r.run('commit -m "Solo a"');
+  assert.ok(res.ok && res.changed);
+  assert.deepEqual(plain(res.lines.slice(1)), [' 1 file changed']);
+  assert.deepEqual(plain(r.commits.get(r.headSha).files), ['a.txt']);
+  assert.deepEqual(plain(r.work), ['b.txt']);
+  assert.deepEqual(plain(r.untracked), ['n.txt']);
+  assert.deepEqual(plain(r.run('status').lines), ['On branch main', 'Changes not staged for commit:', '\tmodified:   b.txt', 'Untracked files:', '\tn.txt']);
+  // un archivo preparado y cambiado otra vez: entra lo preparado y el cambio nuevo queda sin preparar
+  run(r, 'add b.txt', 'touch b.txt', 'commit -m "b preparado"');
+  assert.deepEqual(plain(r.work), ['b.txt']);
+  // -a (y -am) se lleva lo cambiado pero no lo sin seguir
+  run(r, 'touch c.txt');
+  assert.ok(r.run('commit -am "Todo"').ok);
+  assert.deepEqual(plain(r.commits.get(r.headSha).files), ['b.txt', 'c.txt']);
+  assert.deepEqual(plain(r.work), []);
+  assert.deepEqual(plain(r.untracked), ['n.txt']);
+  // un archivo nuevo entra solo con add; con el árbol limpio el commit sigue pudiendo ir vacío
+  run(r, 'add n.txt');
+  assert.ok(r.run('commit -a -m "Nuevo"').ok);
+  assert.deepEqual(plain(r.commits.get(r.headSha).files), ['n.txt']);
+  assert.ok(r.run('commit -m "Vacío"').ok);
+  assert.equal(r.commits.get(r.headSha).files, undefined);
+});
+
+test('el ejercicio de commit parcial no se resuelve con commit -a ni sin add', () => {
+  const i = EXERCISES.findIndex((e) => e.id === 'stage');
+  const ex = EXERCISES[i];
+  const all = start(i, NOW);
+  run(all, 'commit -am "Fix login"');
+  assert.equal(ex.done(all), false, '-a se lleva también debug.js');
+  const noAdd = start(i, NOW);
+  assert.equal(noAdd.run('commit -m "Fix login"').ok, false);
+  assert.equal(ex.done(noAdd), false, 'sin add no hay commit');
+  const both = start(i, NOW);
+  run(both, 'add .', 'commit -m "Fix login"');
+  assert.equal(ex.done(both), false, 'add . prepara los dos');
+  const fixed = start(i, NOW);
+  run(fixed, 'add .', 'restore --staged debug.js', 'commit -m "Fix login"');
+  assert.equal(ex.done(fixed), true, 'sacar debug.js de lo preparado también vale');
 });

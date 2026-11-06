@@ -563,6 +563,8 @@ GB.i18n.define('tr', {
   'practice.ex9.goal': 'Biri v2 etiketini erken koymuş: tag -d ile sil. Sonra feature\'daki düzeltmeyi cherry-pick feature --no-commit ile kopyalamayı dene ve cherry-pick --abort ile iptal et.',
   'practice.ex10.title': 'Bir add\'i geri al ve temizle',
   'practice.ex10.goal': 'Yanlışlıkla add . çalıştırdın: debug.log hazırlığa alındı ve izlenmeyen iki dosya ortada duruyor. debug.log\'u restore --staged ile geri çıkar, çöpü clean -n ile gör ve clean -f ile sil. app.js\'deki değişikliği koru.',
+  'practice.ex11.title': 'Yalnızca hazırlananı commit et',
+  'practice.ex11.goal': 'login.js ve debug.js dosyalarını değiştirdin ama commit’e yalnızca giriş düzeltmesi girmeli. login.js’i add ile hazırla ve commit -m çalıştır: debug.js değişmiş ve commit’siz kalmalı. Dikkat: commit -a ikisini birden alır.',
   'practice.share': 'Alıştırma bağlantısını kopyala',
   'practice.link': 'Alıştırma bağlantısı',
   'practice.copied': 'Bağlantı kopyalandı.',

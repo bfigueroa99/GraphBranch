@@ -571,6 +571,8 @@ GB.i18n.define('hr', {
   'practice.ex9.goal': 'Netko je prerano postavio oznaku v2: izbriši je naredbom tag -d. Zatim pokušaj kopirati ispravak iz feature naredbom cherry-pick feature --no-commit i otkaži ga naredbom cherry-pick --abort.',
   'practice.ex10.title': 'Poništi add i počisti',
   'practice.ex10.goal': 'Slučajno si pokrenuo add .: debug.log je u pripremi, a dvije datoteke koje git ne prati samo stoje. Izvadi debug.log s restore --staged, pogledaj smeće s clean -n i obriši ga s clean -f. Zadrži promjenu u app.js.',
+  'practice.ex11.title': 'Commit samo pripremljenog',
+  'practice.ex11.goal': 'Promijenio si login.js i debug.js, ali u commit ide samo popravak prijave. Pripremi login.js s add i pokreni commit -m: debug.js mora ostati promijenjen i bez commita. Pazi: commit -a uzeo bi oba.',
   'practice.share': 'Kopiraj poveznicu vježbe',
   'practice.link': 'Poveznica vježbe',
   'practice.copied': 'Poveznica kopirana.',

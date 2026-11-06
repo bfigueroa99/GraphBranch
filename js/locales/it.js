@@ -564,6 +564,8 @@ GB.i18n.define('it', {
   'practice.ex9.goal': 'Qualcuno ha messo il tag v2 troppo presto: eliminalo con tag -d. Poi prova a copiare la correzione di feature con cherry-pick feature --no-commit e annullala con cherry-pick --abort.',
   'practice.ex10.title': 'Annullare un add e pulire',
   'practice.ex10.goal': 'Hai eseguito add . per errore: debug.log è in staging e ci sono due file non tracciati. Togli debug.log con restore --staged, guarda la spazzatura con clean -n e cancellala con clean -f. Mantieni la modifica di app.js.',
+  'practice.ex11.title': 'Commit solo di ciò che è nello stage',
+  'practice.ex11.goal': 'Hai modificato login.js e debug.js, ma nel commit va solo la correzione del login. Prepara login.js con add ed esegui commit -m: debug.js deve restare modificato e senza commit. Attenzione: commit -a li prenderebbe entrambi.',
   'practice.share': 'Copia il link dell\'esercizio',
   'practice.link': 'Link dell\'esercizio',
   'practice.copied': 'Link copiato.',

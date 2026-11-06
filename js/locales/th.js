@@ -564,6 +564,8 @@ GB.i18n.define('th', {
   'practice.ex9.goal': 'มีคนติดแท็ก v2 เร็วเกินไป: ลบด้วย tag -d จากนั้นลองคัดลอกการแก้ไขจาก feature ด้วย cherry-pick feature --no-commit แล้วยกเลิกด้วย cherry-pick --abort',
   'practice.ex10.title': 'ยกเลิก add และล้างไฟล์ที่ไม่ได้ติดตาม',
   'practice.ex10.goal': 'คุณเผลอรัน add . ทำให้ debug.log ถูกสเตจ และยังมีไฟล์ที่ไม่ได้ติดตามอีกสองไฟล์ นำ debug.log ออกด้วย restore --staged ดูขยะด้วย clean -n แล้วลบด้วย clean -f เก็บการแก้ไขใน app.js ไว้',
+  'practice.ex11.title': 'commit เฉพาะที่ stage ไว้',
+  'practice.ex11.goal': 'คุณแก้ login.js และ debug.js แต่ใน commit ควรมีแค่การแก้ไขการเข้าสู่ระบบ ให้ stage login.js ด้วย add แล้วรัน commit -m: debug.js ต้องยังถูกแก้อยู่และไม่ถูก commit ระวัง: commit -a จะเอาไปทั้งสองไฟล์',
   'practice.share': 'คัดลอกลิงก์แบบฝึกหัด',
   'practice.link': 'ลิงก์แบบฝึกหัด',
   'practice.copied': 'คัดลอกลิงก์แล้ว',

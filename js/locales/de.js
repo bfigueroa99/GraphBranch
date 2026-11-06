@@ -564,6 +564,8 @@ GB.i18n.define('de', {
   'practice.ex9.goal': 'Jemand hat den Tag v2 zu früh gesetzt: Lösche ihn mit tag -d. Probiere dann, den Fix aus feature mit cherry-pick feature --no-commit zu kopieren, und brich ihn mit cherry-pick --abort ab.',
   'practice.ex10.title': 'Add rückgängig machen und aufräumen',
   'practice.ex10.goal': 'Du hast versehentlich add . ausgeführt: debug.log ist vorgemerkt, und zwei nicht verfolgte Dateien liegen herum. Nimm debug.log mit restore --staged wieder heraus, sieh dir den Müll mit clean -n an und lösche ihn mit clean -f. Behalte die Änderung in app.js.',
+  'practice.ex11.title': 'Nur Vorgemerktes committen',
+  'practice.ex11.goal': 'Du hast login.js und debug.js geändert, aber nur die Login-Korrektur gehört in den Commit. Merke login.js mit add vor und führe commit -m aus: debug.js muss geändert und ohne Commit bleiben. Vorsicht: commit -a würde beide mitnehmen.',
   'practice.share': 'Link zur Übung kopieren',
   'practice.link': 'Link zur Übung',
   'practice.copied': 'Link kopiert.',

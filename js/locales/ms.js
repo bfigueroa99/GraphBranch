@@ -563,6 +563,8 @@ GB.i18n.define('ms', {
   'practice.ex9.goal': 'Seseorang meletakkan tag v2 terlalu awal: padamkannya dengan tag -d. Kemudian cuba salin pembetulan daripada feature dengan cherry-pick feature --no-commit dan batalkannya dengan cherry-pick --abort.',
   'practice.ex10.title': 'Batalkan add dan bersihkan',
   'practice.ex10.goal': 'Anda tersilap menjalankan add .: debug.log sudah dipentaskan dan ada dua fail yang tidak dijejak. Keluarkan debug.log dengan restore --staged, lihat sampahnya dengan clean -n, kemudian padam dengan clean -f. Kekalkan perubahan dalam app.js.',
+  'practice.ex11.title': 'Commit hanya yang disediakan',
+  'practice.ex11.goal': 'Anda mengubah login.js dan debug.js, tetapi hanya pembaikan log masuk yang patut masuk commit. Sediakan login.js dengan add dan jalankan commit -m: debug.js mesti kekal berubah dan tanpa commit. Awas: commit -a akan mengambil kedua-duanya.',
   'practice.share': 'Salin pautan latihan',
   'practice.link': 'Pautan latihan',
   'practice.copied': 'Pautan disalin.',

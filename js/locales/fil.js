@@ -564,6 +564,8 @@ GB.i18n.define('fil', {
   'practice.ex9.goal': 'May naglagay ng tag na v2 nang maaga: burahin ito gamit ang tag -d. Subukan pagkatapos kopyahin ang ayos mula sa feature gamit ang cherry-pick feature --no-commit at kanselahin gamit ang cherry-pick --abort.',
   'practice.ex10.title': 'I-undo ang add at maglinis',
   'practice.ex10.goal': 'Hindi sinasadyang na-run mo ang add .: naka-stage ang debug.log at may dalawang file na hindi sinusubaybayan. Alisin ang debug.log gamit ang restore --staged, tingnan ang basura gamit ang clean -n, at burahin gamit ang clean -f. Panatilihin ang pagbabago sa app.js.',
+  'practice.ex11.title': 'I-commit lang ang naka-stage',
+  'practice.ex11.goal': 'Binago mo ang login.js at debug.js, pero ang ayos lang sa login ang dapat nasa commit. I-stage ang login.js gamit ang add at patakbuhin ang commit -m: dapat manatiling binago at walang commit ang debug.js. Ingat: dadalhin ng commit -a ang dalawa.',
   'practice.share': 'Kopyahin ang link ng ehersisyo',
   'practice.link': 'Link ng ehersisyo',
   'practice.copied': 'Nakopya ang link.',

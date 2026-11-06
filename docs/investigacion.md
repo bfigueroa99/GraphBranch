@@ -316,6 +316,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | CI de GitLab en el resto de las ramas | Datos | 1×2/2 | 1,0 | GitButler, DORA | ítem 159 |
 | Token para un Forgejo o Gitea propio | Fuentes | 1×2/2 | 1,0 | GitLens (autolinks) | ítem 160 |
 | Resumen de la semana de la organización: quién fusionó | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 161 |
+| Práctica: commit de solo lo preparado | Público | 2×2/2 | 2,0 | git-sim | ítem 162 |
+| Práctica: stash -u | Público | 1×2/2 | 1,0 | git-sim | ítem 163 |
+| Resumen de la semana de la organización: PRs cerrados sin fusionar | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 164 |
+| Constelación: ordenar por issues abiertos | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 165 |
+| Launchpad: posponer un PR | Escala | 1×2/2 | 1,0 | Replica (GitKraken) | ítem 166 |
+| Salud del repo: tendencia de estrellas | Análisis | 1×2/2 | 1,0 | DORA | ítem 167 |
 
 ## Públicos
 

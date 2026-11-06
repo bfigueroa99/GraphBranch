@@ -20,7 +20,7 @@ features 92.7  (38 counted, must-haves 13 of 13 done)
 
 ## Missing, in build order
 - [should] cuentas: Varios perfiles o cuentas, partial  (un token por servicio y una segunda cuenta de GitHub atada a un dueño (README, Token); faltan perfiles completos y más de dos cuentas)
-- [should] grafo: Columnas de autor fecha y SHA a la vista en el grafo, partial  (autor fecha y SHA están en la ficha del commit y en la vista de texto; el grafo no tiene columnas)
+- [should] grafo: Columnas de autor fecha y SHA a la vista en el grafo, partial  (SHA corto, autor y fecha junto a cada commit del grafo 2D con un interruptor (README: Búsqueda de commits); falta el 3D)
 - [should] integraciones: Issues de rastreadores (Jira Trello GitHub Issues), partial  (issues de GitHub GitLab Codeberg y Bitbucket en el panel de actividad y la salud; sin Jira ni Trello)
 - [could] launchpad: Launchpad: fijar y posponer PRs e issues, no
 - [could] launchpad: Launchpad: vista de equipo filtrada por colaborador, no

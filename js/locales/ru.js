@@ -577,6 +577,8 @@ GB.i18n.define('ru', {
   'practice.ex8.goal': 'Вы хотите проверить, сольётся ли feature с main, но не оставлять результат. Начните с merge feature --no-commit и отмените командой merge --abort.',
   'practice.ex9.title': 'Лишний тег и отменённый cherry-pick',
   'practice.ex9.goal': 'Кто-то слишком рано поставил тег v2: удалите его командой tag -d. Затем попробуйте скопировать исправление из feature командой cherry-pick feature --no-commit и отмените его командой cherry-pick --abort.',
+  'practice.ex10.title': 'Отменить add и очистить',
+  'practice.ex10.goal': 'Вы случайно выполнили add .: debug.log попал в индекс, а ещё лежат два неотслеживаемых файла. Уберите debug.log командой restore --staged, посмотрите мусор через clean -n и удалите его через clean -f. Изменение в app.js сохраните.',
   'practice.share': 'Скопировать ссылку на упражнение',
   'practice.link': 'Ссылка на упражнение',
   'practice.copied': 'Ссылка скопирована.',

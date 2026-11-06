@@ -561,6 +561,8 @@ GB.i18n.define('es', {
   'practice.ex8.goal': 'Quieres ver si feature se fusionaría con main, pero sin quedarte con el resultado. Empieza con merge feature --no-commit y cancélala con merge --abort.',
   'practice.ex9.title': 'Etiqueta de más y cherry-pick cancelado',
   'practice.ex9.goal': 'Alguien puso la etiqueta v2 antes de tiempo: bórrala con tag -d. Luego prueba copiar el arreglo de feature con cherry-pick feature --no-commit y cancélalo con cherry-pick --abort.',
+  'practice.ex10.title': 'Deshacer un add y limpiar',
+  'practice.ex10.goal': 'Ejecutaste add . sin querer: debug.log quedó preparado y hay dos archivos sin seguir. Saca debug.log con restore --staged, mira la basura con clean -n y bórrala con clean -f. Conserva el cambio de app.js.',
   'practice.share': 'Copiar enlace del ejercicio',
   'practice.link': 'Enlace del ejercicio',
   'practice.copied': 'Enlace copiado.',

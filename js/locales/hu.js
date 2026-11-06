@@ -561,6 +561,8 @@ GB.i18n.define('hu', {
   'practice.ex8.goal': 'Meg szeretnéd nézni, hogy a feature egyesíthető-e a main-nel, de az eredményt nem akarod megtartani. Indítsd a merge feature --no-commit paranccsal, majd szakítsd meg a merge --abort paranccsal.',
   'practice.ex9.title': 'Fölösleges címke és megszakított cherry-pick',
   'practice.ex9.goal': 'Valaki túl korán felcímkézte a v2-t: töröld a tag -d paranccsal. Utána próbáld átmásolni a javítást a feature ágból a cherry-pick feature --no-commit paranccsal, és szakítsd meg a cherry-pick --abort paranccsal.',
+  'practice.ex10.title': 'Add visszavonása és takarítás',
+  'practice.ex10.goal': 'Véletlenül lefuttattad az add . parancsot: a debug.log előkészített állapotba került, és két nem követett fájl hever. Vedd ki a debug.log-ot a restore --staged paranccsal, nézd meg a szemetet a clean -n paranccsal, és töröld a clean -f paranccsal. Az app.js módosítását tartsd meg.',
   'practice.share': 'Feladat linkjének másolása',
   'practice.link': 'A feladat linkje',
   'practice.copied': 'Link másolva.',

@@ -561,6 +561,8 @@ GB.i18n.define('zh-Hant', {
   'practice.ex8.goal': '你想看看 feature 能否合併進 main，但不保留結果。先用 merge feature --no-commit 開始，再用 merge --abort 取消。',
   'practice.ex9.title': '多餘的標籤與取消 cherry-pick',
   'practice.ex9.goal': '有人過早打了標籤 v2：用 tag -d 刪掉它。然後試著用 cherry-pick feature --no-commit 複製 feature 上的修復，再用 cherry-pick --abort 取消。',
+  'practice.ex10.title': '撤銷 add 並清理',
+  'practice.ex10.goal': '你誤執行了 add .：debug.log 被暫存了，還有兩個未追蹤的檔案。用 restore --staged 把 debug.log 取出，用 clean -n 檢視垃圾檔案，再用 clean -f 刪除。保留 app.js 的變更。',
   'practice.share': '複製練習連結',
   'practice.link': '練習連結',
   'practice.copied': '連結已複製。',

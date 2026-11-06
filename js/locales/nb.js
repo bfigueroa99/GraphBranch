@@ -561,6 +561,8 @@ GB.i18n.define('nb', {
   'practice.ex8.goal': 'Du vil se om feature lar seg slå sammen med main, men uten å beholde resultatet. Start med merge feature --no-commit og avbryt med merge --abort.',
   'practice.ex9.title': 'Overflødig tagg og avbrutt cherry-pick',
   'practice.ex9.goal': 'Noen satte taggen v2 for tidlig: slett den med tag -d. Prøv deretter å kopiere rettelsen fra feature med cherry-pick feature --no-commit og avbryt den med cherry-pick --abort.',
+  'practice.ex10.title': 'Angre en add og rydd opp',
+  'practice.ex10.goal': 'Du kjørte add . ved en feil: debug.log er stage-et, og to filer som git ikke følger ligger igjen. Ta debug.log ut med restore --staged, se søppelet med clean -n og slett det med clean -f. Behold endringen i app.js.',
   'practice.share': 'Kopier lenken til oppgaven',
   'practice.link': 'Oppgavelenke',
   'practice.copied': 'Lenken er kopiert.',

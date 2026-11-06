@@ -660,6 +660,8 @@ GB.i18n.define('ar', {
   'practice.ex8.goal': 'تريد أن ترى هل سيندمج feature في main دون الاحتفاظ بالنتيجة. ابدأ بـ merge feature --no-commit ثم ألغه بـ merge --abort.',
   'practice.ex9.title': 'وسم زائد وcherry-pick ملغى',
   'practice.ex9.goal': 'وضع أحدهم الوسم v2 مبكرًا: احذفه بـ tag -d. ثم جرّب نسخ الإصلاح من feature بالأمر cherry-pick feature --no-commit وألغِه بـ cherry-pick --abort.',
+  'practice.ex10.title': 'إلغاء التجهيز والتنظيف',
+  'practice.ex10.goal': 'نفّذت add . بالخطأ: debug.log صار مجهّزًا وهناك ملفان غير متتبَّعين. أخرج debug.log بـ restore --staged، واطّلع على النفايات بـ clean -n ثم احذفها بـ clean -f. أبقِ تعديل app.js.',
   'practice.share': 'نسخ رابط التمرين',
   'practice.link': 'رابط التمرين',
   'practice.copied': 'تم نسخ الرابط.',

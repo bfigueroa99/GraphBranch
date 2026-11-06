@@ -561,6 +561,8 @@ GB.i18n.define('sw', {
   'practice.ex8.goal': 'Unataka kuona kama feature ingeunganishwa na main, bila kuhifadhi matokeo. Anza na merge feature --no-commit, kisha ighairi kwa merge --abort.',
   'practice.ex9.title': 'Lebo ya ziada na cherry-pick iliyoghairiwa',
   'practice.ex9.goal': 'Mtu ameweka lebo v2 mapema mno: ifute kwa tag -d. Kisha jaribu kunakili marekebisho kutoka feature kwa cherry-pick feature --no-commit na uyaghairi kwa cherry-pick --abort.',
+  'practice.ex10.title': 'Tengua add na usafishe',
+  'practice.ex10.goal': 'Umeendesha add . kwa bahati mbaya: debug.log imewekwa kwenye staging na kuna faili mbili zisizofuatiliwa. Itoe debug.log kwa restore --staged, tazama takataka kwa clean -n, kisha zifute kwa clean -f. Weka mabadiliko ya app.js.',
   'practice.share': 'Nakili kiungo cha zoezi',
   'practice.link': 'Kiungo cha zoezi',
   'practice.copied': 'Kiungo kimenakiliwa.',

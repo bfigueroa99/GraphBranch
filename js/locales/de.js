@@ -562,6 +562,8 @@ GB.i18n.define('de', {
   'practice.ex8.goal': 'Du willst sehen, ob feature sich in main mergen ließe, das Ergebnis aber nicht behalten. Starte mit merge feature --no-commit und brich es mit merge --abort ab.',
   'practice.ex9.title': 'Überflüssiger Tag und abgebrochener Cherry-Pick',
   'practice.ex9.goal': 'Jemand hat den Tag v2 zu früh gesetzt: Lösche ihn mit tag -d. Probiere dann, den Fix aus feature mit cherry-pick feature --no-commit zu kopieren, und brich ihn mit cherry-pick --abort ab.',
+  'practice.ex10.title': 'Add rückgängig machen und aufräumen',
+  'practice.ex10.goal': 'Du hast versehentlich add . ausgeführt: debug.log ist vorgemerkt, und zwei nicht verfolgte Dateien liegen herum. Nimm debug.log mit restore --staged wieder heraus, sieh dir den Müll mit clean -n an und lösche ihn mit clean -f. Behalte die Änderung in app.js.',
   'practice.share': 'Link zur Übung kopieren',
   'practice.link': 'Link zur Übung',
   'practice.copied': 'Link kopiert.',

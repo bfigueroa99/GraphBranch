@@ -561,6 +561,8 @@ GB.i18n.define('zh-Hans', {
   'practice.ex8.goal': '你想看看 feature 能否合并进 main，但不保留结果。先用 merge feature --no-commit 开始，再用 merge --abort 取消。',
   'practice.ex9.title': '多余的标签与取消 cherry-pick',
   'practice.ex9.goal': '有人过早打了标签 v2：用 tag -d 删掉它。然后试着用 cherry-pick feature --no-commit 复制 feature 上的修复，再用 cherry-pick --abort 取消。',
+  'practice.ex10.title': '撤销 add 并清理',
+  'practice.ex10.goal': '你误运行了 add .：debug.log 被暂存了，还有两个未跟踪的文件。用 restore --staged 把 debug.log 取出，用 clean -n 查看垃圾文件，再用 clean -f 删除。保留 app.js 的改动。',
   'practice.share': '复制练习链接',
   'practice.link': '练习链接',
   'practice.copied': '链接已复制。',

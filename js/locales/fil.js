@@ -562,6 +562,8 @@ GB.i18n.define('fil', {
   'practice.ex8.goal': 'Gusto mong makita kung puwedeng i-merge ang feature sa main, pero hindi itatago ang resulta. Simulan sa merge feature --no-commit, tapos kanselahin gamit ang merge --abort.',
   'practice.ex9.title': 'Sobrang tag at kinanselang cherry-pick',
   'practice.ex9.goal': 'May naglagay ng tag na v2 nang maaga: burahin ito gamit ang tag -d. Subukan pagkatapos kopyahin ang ayos mula sa feature gamit ang cherry-pick feature --no-commit at kanselahin gamit ang cherry-pick --abort.',
+  'practice.ex10.title': 'I-undo ang add at maglinis',
+  'practice.ex10.goal': 'Hindi sinasadyang na-run mo ang add .: naka-stage ang debug.log at may dalawang file na hindi sinusubaybayan. Alisin ang debug.log gamit ang restore --staged, tingnan ang basura gamit ang clean -n, at burahin gamit ang clean -f. Panatilihin ang pagbabago sa app.js.',
   'practice.share': 'Kopyahin ang link ng ehersisyo',
   'practice.link': 'Link ng ehersisyo',
   'practice.copied': 'Nakopya ang link.',

@@ -447,3 +447,11 @@ test('PRs cerrados sin fusionar por semana: cada número una vez, sin los fusion
   assert.deepEqual([...h.pace.prCloseWeeks], [0, 0, 0, 0, 0, 1, 1, 2], 'el 1 y el 2 (dos cierres, una vez) esta semana, el 3 la pasada, el 4 hace tres; el 5 fuera de las 8, el 6 (futuro), el 7 (fusionado) y el issue no cuentan');
   assert.deepEqual([...compute(repo(), [], NOW).pace.prCloseWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
 });
+
+test('el panel de salud tiene una columna que puede encogerse (a 320 px no se desborda, pendiente 11)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../css/styles.css', import.meta.url), 'utf8');
+  const m = css.match(/#health \.tr-wrap,\s*\.hl-body,\s*\.hl-list \{([^}]*)\}/);
+  assert.ok(m, 'falta la regla de columna del panel de salud');
+  assert.match(m[1], /grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+});

@@ -4516,6 +4516,20 @@ console.log('Salud del repo directa (?health=1)');
     if (await page.evaluate(() => document.querySelector('#health').open)) throw new Error('el panel no se cierra');
     if ((await page.evaluate(() => location.search)).includes('health=')) throw new Error('cerrar el panel deja health= en la URL');
   });
+  await step(page, 'a 320 px el panel de salud no se desborda hacia el lado (en español y en tamil)', async () => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    for (const lang of ['es', 'ta']) {
+      await page.goto(`${base}/index.html?lang=${lang}&health=1`);
+      await loaded(page);
+      await page.waitForSelector('#health[open]', { timeout: T(5000) });
+      const m = await page.evaluate(() => {
+        const w = document.querySelector('#health .tr-wrap');
+        return { sw: w.scrollWidth, cw: w.clientWidth };
+      });
+      if (m.sw > m.cw) throw new Error(`[${lang}] el panel de salud se desborda a 320 px: scrollWidth ${m.sw} > clientWidth ${m.cw}`);
+    }
+    await page.setViewportSize({ width: 1280, height: 800 });
+  });
   await step(page, 'sin el parámetro (o con health=0) el panel no se abre solo', async () => {
     await page.goto(`${base}/index.html?lang=es&health=0`);
     await loaded(page);

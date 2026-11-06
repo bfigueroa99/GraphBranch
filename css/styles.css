@@ -4977,6 +4977,13 @@ kbd {
 }
 
 /* ---------- salud del repo ---------- */
+/* una sola columna que puede encogerse: sin esto la columna implícita toma el ancho mínimo de su contenido y a
+   320 px el panel se desbordaba hacia la derecha (pendiente 11) */
+#health .tr-wrap,
+.hl-body,
+.hl-list {
+  grid-template-columns: minmax(0, 1fr);
+}
 .hl-body {
   display: grid;
   gap: 14px;

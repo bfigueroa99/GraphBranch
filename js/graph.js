@@ -1342,9 +1342,26 @@
       this.paintAgArc(it);
     }
 
+    /** La clase de un arco o una insignia: su color, su tipo y, si hay un participante iluminado desde la leyenda,
+        si es suyo (`ag-hot`) o de otro (`ag-dim`). */
+    agClass(kind, d) {
+      const f = this.agFocus;
+      const state = !f ? '' : d.from === f || d.to === f ? ' ag-hot' : ' ag-dim';
+      return `${kind} ag-s${d.slot} ag-k-${d.kind}${state}`;
+    }
+
+    /** Ilumina las interacciones de un participante (como al pasar por su fila en la leyenda): las suyas quedan a pleno
+        color y las demás tenues; null las deja todas iguales. */
+    focusAgent(key) {
+      if ((key || null) === (this.agFocus || null)) return;
+      this.agFocus = key || null;
+      for (const it of this.agArcs.values()) if (it.el) it.el.setAttribute('class', this.agClass('ag-arc', it.data));
+      for (const it of this.agPins.values()) if (it.el) it.el.setAttribute('class', this.agClass('ag-pin', it.data));
+    }
+
     paintAgArc(it) {
       const d = it.data;
-      it.el.setAttribute('class', `ag-arc ag-s${d.slot} ag-k-${d.kind}`);
+      it.el.setAttribute('class', this.agClass('ag-arc', d));
       it.line.setAttribute('stroke-width', r1(1.4 + 0.7 * Math.min(3, Math.log2(d.n || 1))));
       it.title.textContent = d.title || '';
     }
@@ -1364,7 +1381,7 @@
       const d = it.data;
       const x = (d.idx - (d.of - 1) / 2) * 15;
       const y = -22;
-      it.el.setAttribute('class', `ag-pin ag-s${d.slot} ag-k-${d.kind}`);
+      it.el.setAttribute('class', this.agClass('ag-pin', d));
       it.stem.setAttribute('x2', r1(x));
       it.stem.setAttribute('y2', y + 6);
       const shape = d.agent ? 'rect' : 'circle';

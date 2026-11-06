@@ -177,7 +177,11 @@ test('el manifiesto, sus íconos y el CSP dejan instalar la página', () => {
   assert.deepEqual(directive('manifest-src'), ["'self'"]);
   assert.deepEqual(directive('worker-src'), ["'self'"]);
   assert.ok(directive('img-src').includes("'self'"), 'los íconos del manifiesto se cargan como imágenes del propio sitio');
-  assert.deepEqual(directive('connect-src'), ['https://api.github.com', 'https://gitlab.com', 'https://codeberg.org', 'https://api.bitbucket.org', 'https://dev.azure.com'], 'el CSP sigue cerrado: solo las APIs de GitHub, GitLab, Codeberg, Bitbucket y Azure DevOps');
+  assert.deepEqual(
+    directive('connect-src'),
+    ['https://api.github.com', 'https://gitlab.com', 'https://codeberg.org', 'https://api.bitbucket.org', 'https://dev.azure.com', 'https://api.anthropic.com', 'https://api.openai.com', 'https://openrouter.ai', 'http://localhost:20128', 'http://127.0.0.1:20128'],
+    'el CSP sigue cerrado: solo las APIs de GitHub, GitLab, Codeberg, Bitbucket y Azure DevOps, y las del gasto en IA (Anthropic, OpenAI, OpenRouter y un OmniRoute local en su puerto)',
+  );
 });
 
 test('compartir hacia la PWA: el manifiesto declara share_target y el enlace compartido se reconoce', () => {

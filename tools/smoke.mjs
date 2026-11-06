@@ -4585,50 +4585,70 @@ console.log('Salud del repo directa (?health=1)');
   await page.context().close();
 }
 
-console.log('Agentes e interacciones (?agents=1)');
+console.log('Agentes e interacciones, en vivo, en el lugar del grafo (?agents=1)');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
-  await step(page, 'abre la demo con el panel de agentes: la red, quién con quién (también entre agentes), las sesiones y lo último', async () => {
+  await step(page, 'abre la demo en la vista de agentes: la red, la línea de tiempo, lo último, quién con quién y el gasto de ejemplo', async () => {
     await page.goto(`${base}/index.html?lang=es&agents=1`);
     await loaded(page);
-    await page.waitForSelector('#agents[open]', { timeout: T(5000) }).catch(() => {
-      throw new Error('?agents=1 no abrió el panel de agentes');
+    await page.waitForSelector('#agents:not([hidden]) .ag-net', { timeout: T(5000) }).catch(() => {
+      throw new Error('?agents=1 no abrió la vista de agentes');
     });
     const info = await page.evaluate(() => {
       const d = document.querySelector('#agents');
-      const w = d.querySelector('.tr-wrap');
-      const texts = (sel) => [...d.querySelectorAll(sel)].map((x) => x.textContent.replace(/[\u2068\u2069]/g, '')); // sin los aislantes de cada nombre
+      const texts = (sel) => [...d.querySelectorAll(sel)].map((x) => x.textContent.replace(/[⁨⁩]/g, '')); // sin los aislantes de cada nombre
       return {
+        pressed: document.querySelector('#view-agents').getAttribute('aria-pressed'),
+        stage: getComputedStyle(document.querySelector('.graph-stage')).display,
         agents: d.querySelectorAll('svg.ag-net .ag-agent').length,
         people: d.querySelectorAll('svg.ag-net .ag-person').length,
         between: d.querySelectorAll('svg.ag-net .ag-edge-agents').length,
+        heads: d.querySelectorAll('svg.ag-net .ag-ehead').length,
+        edges: d.querySelectorAll('svg.ag-net .ag-edge').length,
+        colored: new Set([...d.querySelectorAll('svg.ag-net .ag-agent')].map((x) => getComputedStyle(x).fill)).size,
         aria: d.querySelector('svg.ag-net')?.getAttribute('aria-label') || '',
+        traces: d.querySelectorAll('svg.ag-time .ag-ev').length,
+        lanes: d.querySelectorAll('svg.ag-time .ag-lane').length,
         pairs: texts('#ag-pairs .hl-main'),
         list: texts('#ag-list .hl-main'),
         recent: texts('#ag-recent .hl-main'),
         rows: d.querySelectorAll('#agents-body button.hl-row[data-sha]').length,
         links: d.querySelectorAll('#agents-body a[href]').length,
+        spendBadge: !!d.querySelector('#ag-spend .sp-badge'),
+        spendServices: d.querySelectorAll('#sp-services .sp-row').length,
+        spendAgents: texts('#sp-agents .sp-name'),
         text: d.textContent,
-        overflow: w.scrollWidth - w.clientWidth,
+        overflow: d.scrollWidth - d.clientWidth,
       };
     });
+    if (info.pressed !== 'true' || info.stage !== 'none') throw new Error(`el botón Agentes (${info.pressed}) o el grafo sigue a la vista (${info.stage})`);
     if (info.agents < 3 || !info.people) throw new Error(`la red: ${info.agents} agentes y ${info.people} personas`);
     if (!info.between) throw new Error('la red no distingue ningún vínculo entre dos agentes');
+    if (info.heads !== info.edges) throw new Error(`${info.edges} vínculos y ${info.heads} puntas de flecha`);
+    if (info.colored < 3) throw new Error(`los agentes de la red no llevan su color: ${info.colored} colores`);
     if (!/\d/.test(info.aria)) throw new Error('la red no dice cuántos participantes y vínculos tiene: ' + info.aria);
+    if (info.traces < 3 || info.lanes < 3) throw new Error(`la línea de tiempo: ${info.traces} trazos en ${info.lanes} filas`);
     if (!info.pairs.some((p) => p === 'GitHub Copilot → Claude Code')) throw new Error('falta Copilot → Claude Code (su revisión del PR de la app de Claude): ' + info.pairs.join(' | '));
     if (!info.pairs.some((p) => /^Claude Code · sesión \w{6} → Claude Code · sesión \w{6}$/.test(p))) throw new Error('falta la sesión de Claude que retoma la rama de otra: ' + info.pairs.join(' | '));
     if (!info.list.some((x) => /^Claude Code · sesión \w{6} · Opus 5\.5$/.test(x)) || !info.list.includes('Dependabot')) throw new Error('la lista de agentes: ' + info.list.join(' | '));
     if (!info.recent.length || !info.rows) throw new Error('sin interacciones recientes o sin filas que lleven al grafo');
     if (info.links) throw new Error('la demo enlaza sesiones de Claude Code, que son ficticias');
-    if (/undefined|NaN|agents\.|tip\./.test(info.text)) throw new Error('texto sin resolver en el panel: ' + info.text.slice(0, 160));
-    if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
+    if (!info.spendBadge || info.spendServices !== 4 || !info.spendAgents.some((x) => /^Claude Code/.test(x))) throw new Error(`el gasto de ejemplo: marca ${info.spendBadge}, ${info.spendServices} servicios, agentes ${info.spendAgents.join(' | ')}`);
+    if (/undefined|NaN|agents\.|spend\.|tip\./.test(info.text)) throw new Error('texto sin resolver en la vista: ' + info.text.slice(0, 160));
+    if (info.overflow > 1) throw new Error(`la vista se desborda ${info.overflow}px`);
+  });
+  await step(page, 'en vivo: lo que llega mientras se mira se anima (lo último y la línea de tiempo)', async () => {
+    const fresh = await page
+      .waitForFunction(() => document.querySelectorAll('#agents .is-new').length, null, { timeout: T(45000) })
+      .then((h) => h.jsonValue(), () => 0);
+    if (!fresh) throw new Error('en 45 s de demo no llegó ninguna interacción nueva a la vista');
   });
   await step(page, 'solo entre agentes: la red y las listas dejan fuera a las personas, se recuerda y el foco se queda en el interruptor', async () => {
     await page.click('#agents-only');
     const r = await page.evaluate(() => ({
       people: document.querySelectorAll('#agents svg.ag-net .ag-person').length,
       agents: document.querySelectorAll('#agents svg.ag-net .ag-agent').length,
-      pairs: [...document.querySelectorAll('#ag-pairs .hl-main')].map((x) => x.textContent.replace(/[\u2068\u2069]/g, '')),
+      pairs: [...document.querySelectorAll('#ag-pairs .hl-main')].map((x) => x.textContent.replace(/[⁨⁩]/g, '')),
       focus: document.activeElement?.id,
       stored: localStorage.getItem('graphbranch:agentsOnly'),
     }));
@@ -4639,19 +4659,48 @@ console.log('Agentes e interacciones (?agents=1)');
     await page.click('#agents-only');
     if (await page.evaluate(() => localStorage.getItem('graphbranch:agentsOnly'))) throw new Error('apagado sigue guardado');
   });
-  await step(page, 'una fila lleva a su commit y cierra el panel; Esc lo cierra, el foco vuelve al botón y agents= sale de la URL', async () => {
+  await step(page, 'elegir a alguien en la red centra las listas en él; Enter lo suelta y el foco se queda en su nodo', async () => {
+    await page.click('#pause-btn'); // la demo quieta: lo que se cuenta no cambia a mitad
+    try {
+      const node = page.locator('#agents .ag-net .ag-n[data-key^="a:claude:"]').first();
+      const key = await node.getAttribute('data-key');
+      await node.locator('.ag-node').click(); // en su figura: el centro del grupo cae entre ella y su rótulo
+      const r = await page.evaluate((key) => ({
+        chip: (document.querySelector('#ag-focus .ag-focus-name')?.textContent || '').replace(/[⁨⁩]/g, ''),
+        pressed: document.querySelector(`#agents .ag-n[data-key="${CSS.escape(key)}"]`)?.getAttribute('aria-pressed'),
+        pairs: [...document.querySelectorAll('#ag-pairs .hl-main')].map((x) => x.textContent.replace(/[⁨⁩]/g, '')),
+        focus: document.activeElement?.getAttribute('data-key'),
+      }), key);
+      if (!/^Solo con Claude Code · sesión \w{6}/.test(r.chip) || r.pressed !== 'true') throw new Error(`elegir: «${r.chip}», aria-pressed ${r.pressed}`);
+      if (!r.pairs.length || r.pairs.some((p) => !p.includes('sesión'))) throw new Error('las listas no se centraron en la sesión elegida: ' + r.pairs.join(' | '));
+      if (r.focus !== key) throw new Error(`el foco quedó en ${r.focus}`);
+      await page.keyboard.press('Enter');
+      if (await page.locator('#ag-focus').count()) throw new Error('Enter no soltó al participante elegido');
+    } finally {
+      await page.click('#pause-btn'); // la demo sigue como estaba, también si algo falló
+    }
+  });
+  await step(page, 'el gasto: el diálogo de claves rechaza una dirección de OmniRoute que no es http(s) y se cierra sin guardar', async () => {
+    await page.click('#spend-connect');
+    await page.waitForSelector('#spend-keys[open]', { timeout: T(3000) });
+    await page.fill('#spend-omniroute-url', 'javascript:alert(1)');
+    await page.click('#spend-form button[type=submit]');
+    const r = await page.evaluate(() => ({ open: document.querySelector('#spend-keys').open, valid: document.querySelector('#spend-omniroute-url').checkValidity() }));
+    if (!r.open || r.valid) throw new Error(`una dirección javascript: se aceptó (abierto ${r.open}, válida ${r.valid})`);
+    await page.click('#spend-cancel');
+    const stored = await page.evaluate(() => Object.keys(localStorage).concat(Object.keys(sessionStorage)).filter((k) => k.includes('spend:')));
+    if (stored.length) throw new Error('cancelar dejó claves guardadas: ' + stored.join(', '));
+  });
+  await step(page, 'una fila lleva a su commit y vuelve al grafo; el botón de arriba entra y sale de la vista y agents= sale de la URL', async () => {
     await page.click('#ag-list button.hl-row[data-sha]');
-    // el evento close del diálogo llega en una tarea aparte: la URL se limpia un instante después de cerrarse
-    await page.waitForFunction(() => !document.querySelector('#agents').open && !location.search.includes('agents='), null, { timeout: T(3000) }).catch(() => {});
-    if (await page.evaluate(() => document.querySelector('#agents').open)) throw new Error('la fila no cerró el panel');
-    if ((await page.evaluate(() => location.search)).includes('agents=')) throw new Error('cerrar el panel deja agents= en la URL');
-    await page.focus('#agents-btn');
-    await page.keyboard.press('Enter');
-    await page.waitForSelector('#agents[open]', { timeout: T(3000) });
-    await page.keyboard.press('Escape');
-    await page.waitForSelector('#agents:not([open])', { state: 'attached', timeout: T(3000) });
-    const focus = await page.evaluate(() => document.activeElement?.id);
-    if (focus !== 'agents-btn') throw new Error(`al cerrar, el foco quedó en ${focus}`);
+    await page.waitForFunction(() => document.querySelector('#agents').hidden && !location.search.includes('agents='), null, { timeout: T(3000) }).catch(() => {});
+    const back = await page.evaluate(() => ({ hidden: document.querySelector('#agents').hidden, url: location.search, stage: getComputedStyle(document.querySelector('.graph-stage')).display }));
+    if (!back.hidden || back.stage === 'none') throw new Error('la fila no volvió al grafo');
+    if (back.url.includes('agents=')) throw new Error('volver al grafo deja agents= en la URL');
+    await page.click('#agents-btn');
+    if (await page.evaluate(() => document.querySelector('#agents').hidden || document.querySelector('#agents-btn').getAttribute('aria-pressed') !== 'true')) throw new Error('el botón de arriba no abrió la vista');
+    await page.click('#agents-btn');
+    if (!(await page.evaluate(() => document.querySelector('#agents').hidden))) throw new Error('el botón de arriba no volvió al grafo');
   });
   await step(page, 'la ficha de un commit de agente dice cuál es, con su modelo y su sesión (2D)', async () => {
     await page.click('#pause-btn'); // la demo quieta: las cabezas no cambian mientras se recorren
@@ -4733,11 +4782,20 @@ console.log('Agentes e interacciones (?agents=1)');
     }
     if (!/ (continuó|fusionó|revisó|comentó) /.test(tip)) throw new Error('ninguna ficha de rama dice sus interacciones: ' + JSON.stringify(tip));
   });
+  await step(page, 'pasar por un agente de la leyenda enciende sus interacciones en el grafo y deja tenues las demás', async () => {
+    await page.hover('#ag-key-body .agk-row[data-key]');
+    const r = await page.evaluate(() => ({ dim: document.querySelectorAll('#graph .ag-arc.ag-dim, #graph .ag-pin.ag-dim').length, hot: document.querySelectorAll('#graph .ag-arc.ag-hot, #graph .ag-pin.ag-hot').length }));
+    if (!r.hot || !r.dim) throw new Error(`la leyenda no ilumina: ${r.hot} encendidas y ${r.dim} tenues`);
+    await page.mouse.move(5, 5);
+    await page.waitForFunction(() => !document.querySelector('#graph .ag-dim'), null, { timeout: T(2000) }).catch(() => {
+      throw new Error('al salir de la leyenda las interacciones siguen tenues');
+    });
+  });
   await step(page, 'solo entre agentes vale también en el grafo; × quita las interacciones, el foco no se pierde y se olvida', async () => {
-    await page.click('#agents-btn');
-    await page.waitForSelector('#agents[open]', { timeout: T(3000) });
+    await page.click('#view-agents');
+    await page.waitForSelector('#agents:not([hidden])', { timeout: T(3000) });
     await page.click('#agents-only');
-    await page.keyboard.press('Escape');
+    await page.click('#view-2d');
     const only = await page.evaluate(() => [...document.querySelectorAll('#graph .ag-arc title, #graph .ag-pin title')].map((x) => x.textContent.replace(/[⁨⁩]/g, '')));
     const both = /^(Claude Code|GitHub Copilot|Dependabot)\b.* (continuó|fusionó|revisó|comentó) .*(Claude Code|GitHub Copilot|Dependabot)/;
     if (!only.length || only.some((x) => !both.test(x))) throw new Error('solo entre agentes, en el grafo: ' + only.join(' | '));

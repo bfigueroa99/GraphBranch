@@ -35,6 +35,7 @@
     graph3d: $('#graph3d'),
     view3d: $('#view-3d'),
     view2d: $('#view-2d'),
+    viewAgents: $('#view-agents'),
     spinBtn: $('#spin-btn'),
     fullscreenBtn: $('#fullscreen-btn'),
     replayBtn: $('#replay-btn'),
@@ -302,15 +303,17 @@
   const director = graph3d?.director || null;
 
   let view = '2d';
+  let agentsOn = false; // la vista de agentes, en el lugar del grafo (ver setAgentsView)
 
   function setView(v, save = true) {
     if (v === '3d' && !graph3d) v = '2d';
+    if (agentsOn) setAgentsView(false, { save }); // 3D o 2D vuelven al grafo
     view = v;
     graph = v === '3d' ? graph3d : graph2d;
     el.graph3d.hidden = v !== '3d';
     el.graph.hidden = v !== '2d';
     el.graph.parentElement.dataset.view = v; // el Replay acomoda su fecha según la vista
-    graph3d?.setActive(v === '3d' && !allOn); // con la vista conjunta el grafo no se ve: el 3D no dibuja
+    graph3d?.setActive(v === '3d' && !allOn && !agentsOn); // con la vista conjunta o la de agentes el grafo no se ve: el 3D no dibuja
     setPressed(el.view3d, v === '3d');
     setPressed(el.view2d, v === '2d');
     el.spinBtn.hidden = v !== '3d';
@@ -1185,7 +1188,7 @@
       for (const x of tabs) drawCard(x, { initial: true }); // lo que llegó mientras no se veía
       renderAllSum();
     }
-    graph3d?.setActive(view === '3d' && !on);
+    graph3d?.setActive(view === '3d' && !on && !agentsOn);
     renderTabs();
     if (save) U.store.set('all', on || null);
     setUrlParam('all', on ? '1' : null);
@@ -1195,6 +1198,7 @@
       texto deja la vista conjunta. */
   const shownGraph = () => {
     if (allOn) setAll(false);
+    if (agentsOn) setAgentsView(false);
     return graph;
   };
 
@@ -1336,8 +1340,8 @@
     if (el.bitacora.open) scheduleBitacora();
     if (initialBitacora && L.nodes.length) openBitacora();
     if (initialHealth && tab === active && L.nodes.length) openHealth();
-    if (el.agents.open) scheduleAgents();
-    if (initialAgents && tab === active && L.nodes.length) openAgents();
+    if (agentsOn) scheduleAgents();
+    if (initialAgents && tab === active && L.nodes.length) setAgentsView(true, { save: false });
     if (initialReplay && L.nodes.length) startUrlReplay();
     if (initialText && tab === active && L.nodes.length) startUrlText();
     if (initialPr && tab === active && L.nodes.length) startUrlPr();
@@ -2051,11 +2055,23 @@
   let agentsOnly = U.store.get('agentsOnly', false) === true; // solo los vínculos entre dos agentes
   let agentsTimer = 0;
   let agentsHtml = ''; // el último HTML: si no cambió, no se toca (ni el foco ni el desplazamiento)
+  let agentsSel = null; // el participante elegido en la red: las listas y la línea de tiempo se centran en él
+  let agentsSeen = null; // lo que ya se mostró ({ ev: Set, edges: Map }): lo que llega después se anima
+  let agentsLit = null; // a quién se ilumina en la red (puntero o foco): sobrevive a que el tablero se rehaga
+  /** El id de una interacción, el mismo en cada vuelta: para saber cuál es nueva. */
+  const agentEventId = (e) => [e.kind, e.from, e.to, e.time, e.sha || '', e.number ?? ''].join('|');
   const agentSession = (a) => (a?.session ? t('agents.session', { id: GB.agents.shortSession(a.session) }) : '');
   /** Cómo se nombra a un participante: una persona, por su nombre; un agente, por su producto y su sesión, si la tiene.
       Va aislado (FSI…PDI): dos nombres latinos en una frase en árabe no dan vuelta la flecha ni el orden. */
   const actorName = (x) => '\u2068' + (!x ? t('author.unknown') : x.agent ? [x.agent.name, agentSession(x.agent)].filter(Boolean).join(' · ') : x.name || x.login || t('author.unknown')) + '\u2069';
   const kindsText = (k) => Object.keys(AG_KIND).filter((x) => k[x]).map((x) => `${t(AG_KIND[x])}: ${U.fmtNum(k[x])}`).join(' · ');
+
+  /** Qué es cada trazo (continuó, fusionó, revisó, comentó): en la leyenda del grafo y en la del panel. */
+  const kindsLegend = () =>
+    `<span class="agk-k"><span class="agk-line" aria-hidden="true"></span>${U.esc(t('agents.kind.continued'))}</span>` +
+    `<span class="agk-k"><span class="agk-line agk-dash" aria-hidden="true"></span>${U.esc(t('agents.kind.merged'))}</span>` +
+    `<span class="agk-k"><span class="agk-glyph" aria-hidden="true">✓</span>${U.esc(t('agents.kind.reviewed'))}</span>` +
+    `<span class="agk-k"><span class="agk-glyph" aria-hidden="true">…</span>${U.esc(t('agents.kind.commented'))}</span>`;
 
   function agentsMarkup() {
     const data = source.view ? source.view() : source.data;
@@ -2063,48 +2079,99 @@
     const r = GB.agents.compute(data, acts, { max: Infinity });
     const byKey = new Map(r.actors.map((a) => [a.key, a]));
     const both = (x) => !!(byKey.get(x.from)?.agent && byKey.get(x.to)?.agent);
-    const links = agentsOnly ? r.links.filter(both) : r.links;
-    const events = (agentsOnly ? r.events.filter(both) : r.events).slice(0, AGENTS_ROWS);
+    if (agentsSel && !byKey.has(agentsSel)) agentsSel = null; // quien estaba elegido ya no está en lo cargado
+    const mine = (x) => !agentsSel || x.from === agentsSel || x.to === agentsSel;
+    const links = (agentsOnly ? r.links.filter(both) : r.links).filter(mine);
+    const events = (agentsOnly ? r.events.filter(both) : r.events).filter(mine).slice(0, AGENTS_ROWS);
     const agents = r.actors.filter((a) => a.agent);
     const people = r.actors.filter((a) => !a.agent);
     const net = GB.agents.network(r, { onlyAgents: agentsOnly });
+    const slot = net.slot;
     const none = `<p class="hl-none">${U.esc(t('health.none'))}</p>`;
     const stat = (label, n) => `<div class="hl-stat"><b>${U.fmtNum(n)}</b><span>${U.esc(label)}</span></div>`;
-    /** Una fila: lleva al commit `sha` en el grafo si lo hay; `extra`, algo más junto a ella (el enlace a la sesión). */
-    const row = (main, aside, sha, extra = '') => {
-      const body = `<span class="hl-main">${U.esc(main)}</span><span class="hl-aside">${U.esc(aside)}</span>`;
+    /** Una fila: lleva al commit `sha` en el grafo si lo hay; `aside`, HTML ya escapado; `extra`, algo más junto a ella (el
+        enlace a la sesión). */
+    const row = (main, aside, sha, extra = '', mainHtml = null) => {
+      const body = `<span class="hl-main">${mainHtml ?? U.esc(main)}</span><span class="hl-aside">${aside}</span>`;
       const item = sha && data.commits.has(sha) ? `<button type="button" class="hl-row" data-sha="${U.esc(sha)}" title="${U.esc(t('feed.locate'))}">${body}</button>` : `<span class="hl-row">${body}</span>`;
       return `<li${extra ? ' class="ag-item"' : ''}>${item}${extra}</li>`;
     };
     const list = (rows) => (rows.length ? `<ul class="hl-list">${rows.join('')}</ul>` : none);
-    const legend = `<p class="ag-legend" aria-hidden="true"><span class="ag-key ag-key-agent"></span>${U.esc(t('agents.legendAgent'))}<span class="ag-key ag-key-person"></span>${U.esc(t('agents.legendPerson'))}</p>`;
+    /** La marca de color de un participante: cuadrada si es un agente, redonda si es una persona. */
+    const sw = (key) => `<span class="agk-sw ag-s${slot.get(key) ?? 0}${byKey.get(key)?.agent ? ' agk-agent' : ''}" aria-hidden="true"></span>`;
+    /** Quién → quién, cada uno con su color: se lee igual (el texto va entero y aislado), y se ve de un vistazo. */
+    const pairHtml = (from, to) => `${sw(from)}${U.esc(t('agents.pair', { from: actorName(byKey.get(from)), to: actorName(byKey.get(to)) }))}${sw(to).replace('agk-sw', 'agk-sw agk-sw-to')}`;
+    const chips = (k) =>
+      Object.keys(AG_KIND)
+        .filter((x) => k[x])
+        .map((x) => `<span class="ag-chip ag-k-${x}"><span class="ag-chip-g" aria-hidden="true"></span>${U.esc(t(AG_KIND[x]))}: ${U.fmtNum(k[x])}</span>`)
+        .join('');
+    const legend = `<p class="ag-legend"><span class="ag-key ag-key-agent" aria-hidden="true"></span>${U.esc(t('agents.legendAgent'))}<span class="ag-key ag-key-person" aria-hidden="true"></span>${U.esc(t('agents.legendPerson'))}<span class="ag-legend-kinds">${kindsLegend()}</span></p>`;
     const netHtml = net.nodes.length
-      ? GB.agents.svg(net, {
-          label: (n) => (n.agent ? n.agent.name : n.name || n.login || t('author.unknown')),
-          sub: (n) => (n.agent ? agentSession(n.agent) : ''),
-          title: (l) => `${t('agents.pair', { from: actorName(byKey.get(l.from)), to: actorName(byKey.get(l.to)) })}: ${kindsText(l.kinds)}`,
-          aria: t('agents.netAria', { nodes: net.nodes.length, links: net.links.length }),
-        }) + legend
+      ? GB.agents.svg(
+          net,
+          {
+            label: (n) => (n.agent ? n.agent.name : n.name || n.login || t('author.unknown')),
+            sub: (n) => (n.agent ? agentSession(n.agent) : ''),
+            title: (l) => `${t('agents.pair', { from: actorName(byKey.get(l.from)), to: actorName(byKey.get(l.to)) })}: ${kindsText(l.kinds)}`,
+            node: (n) => `${actorName(n)} · ${t('agents.statLinks')}: ${U.fmtNum(net.weight.get(n.key) || 0)}`,
+            aria: t('agents.netAria', { nodes: net.nodes.length, links: net.links.length }),
+          },
+          { sel: agentsSel },
+        ) +
+        legend +
+        `<p class="hl-line ag-hint">${U.esc(t('agents.netHint'))}</p>`
       : none;
-    const pairs = links.slice(0, AGENTS_ROWS).map((l) => row(t('agents.pair', { from: actorName(byKey.get(l.from)), to: actorName(byKey.get(l.to)) }), kindsText(l.kinds), l.sha));
+    const tl = GB.agents.timeline(r, { onlyAgents: agentsOnly });
+    const sayEvent = (e) => `${t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) })}${e.number != null ? ` · #${e.number}` : ''} · ${U.fmtDateTime(e.time)}`;
+    const timeHtml = tl
+      ? GB.agents.timelineSvg(
+          tl,
+          {
+            label: (l) => actorName(l).replace(/[⁨⁩]/g, ''),
+            event: sayEvent,
+            id: agentEventId,
+            tick: (ms) => (tl.t1 - tl.t0 < 3 * 864e5 ? U.fmtDateTime(ms) : U.fmtDate(ms)), // en pocos días, la fecha sola se repite
+            aria: t('agents.timelineAria', { n: tl.events.length }),
+          },
+          { sel: agentsSel },
+        )
+      : none;
+    const pairs = links.slice(0, AGENTS_ROWS).map((l) => row('', chips(l.kinds), l.sha, '', pairHtml(l.from, l.to)));
     const demo = !!data.repo?.demo;
     const agentRows = agents.slice(0, AGENTS_ROWS).map((a) => {
       const main = [a.agent.name, agentSession(a.agent), a.agent.model].filter(Boolean).join(' · ');
       const aside = [t('agents.commits', { n: U.fmtNum(a.commits) }), a.last ? U.timeAgo(a.last) : ''].filter(Boolean).join(' · ');
       const url = demo ? null : U.safeUrl(GB.agents.sessionUrl(a.agent));
       const open = url ? `<a class="ag-open" href="${U.esc(U.safeUrl(url))}" target="_blank" rel="noopener noreferrer" title="${U.esc(t('agents.openSession'))}" aria-label="${U.esc(t('agents.openSession') + ': ' + main)}">↗</a>` : '';
-      return row(main, aside, a.sha, open);
+      return row(main, U.esc(aside), a.sha, open, `${sw(a.key)}${U.esc(main)}`);
     });
     const eventRows = events.map((e) =>
-      row(t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) }), [e.number != null ? `#${e.number}` : '', e.time ? U.timeAgo(e.time) : ''].filter(Boolean).join(' · '), e.sha),
+      row(
+        t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) }),
+        U.esc([e.number != null ? `#${e.number}` : '', e.time ? U.timeAgo(e.time) : ''].filter(Boolean).join(' · ')),
+        e.sha,
+        '',
+        `<span class="ag-chip ag-k-${e.kind} ag-chip-dot" aria-hidden="true"><span class="ag-chip-g"></span></span>${U.esc(t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) }))}`,
+      ).replace('<li', `<li data-ev="${U.esc(agentEventId(e))}"`),
     );
+    const focus = agentsSel
+      ? `<p class="ag-focus" id="ag-focus">${sw(agentsSel)}<span class="ag-focus-name">${U.esc(t('agents.focus', { name: actorName(byKey.get(agentsSel)) }))}</span><button type="button" class="btn btn-ghost ag-focus-clear" id="ag-focus-clear">${U.esc(t('agents.focusClear'))}</button></p>`
+      : '';
     return (
-      `<div class="hl-stats">${stat(t('agents.statAgents'), agents.length)}${stat(t('agents.statPeople'), people.length)}${stat(t('agents.statLinks'), links.reduce((n, l) => n + l.total, 0))}</div>` +
+      `<div class="hl-stats ab-stats">${stat(t('agents.statAgents'), agents.length)}${stat(t('agents.statPeople'), people.length)}${stat(t('agents.statLinks'), links.reduce((n, l) => n + l.total, 0))}</div>` +
       (agents.length ? '' : `<p class="hl-line" id="ag-noagents">${U.esc(t('agents.noAgents'))}</p>`) +
-      `<section class="hl-sec" id="ag-net"><h3>${U.esc(t('agents.network'))}</h3>${netHtml}</section>` +
-      `<section class="hl-sec" id="ag-pairs"><h3>${U.esc(t('agents.pairs'))} <span class="hl-n">${U.fmtNum(links.length)}</span></h3>${list(pairs)}</section>` +
-      `<section class="hl-sec" id="ag-list"><h3>${U.esc(t('agents.statAgents'))} <span class="hl-n">${U.fmtNum(agents.length)}</span></h3>${list(agentRows)}</section>` +
-      `<section class="hl-sec" id="ag-recent"><h3>${U.esc(t('agents.recent'))}</h3>${list(eventRows)}</section>`
+      focus +
+      `<div class="ab-row">` +
+      `<section class="hl-sec ab-card" id="ag-net"><h3>${U.esc(t('agents.network'))}</h3>${netHtml.replace(/^(<svg[\s\S]*?<\/svg>)/, '<div class="ab-scroll">$1</div>')}</section>` +
+      `<section class="hl-sec ab-card ab-live" id="ag-recent"><h3><span class="live-dot" aria-hidden="true"></span>${U.esc(t('agents.recent'))}</h3>${list(eventRows)}</section>` +
+      `</div>` +
+      `<section class="hl-sec ab-card" id="ag-time"><h3>${U.esc(t('agents.timeline'))}${tl ? ` <span class="hl-n">${U.fmtNum(tl.events.length)}</span>` : ''}</h3>${tl ? `<div class="ab-scroll">${timeHtml}</div>` : timeHtml}</section>` +
+      `<div class="ab-row ab-row3">` +
+      spendMarkup(data, r, slot) +
+      `<section class="hl-sec ab-card" id="ag-pairs"><h3>${U.esc(t('agents.pairs'))} <span class="hl-n">${U.fmtNum(links.length)}</span></h3>${list(pairs)}</section>` +
+      `<section class="hl-sec ab-card" id="ag-list"><h3>${U.esc(t('agents.statAgents'))} <span class="hl-n">${U.fmtNum(agents.length)}</span></h3>${list(agentRows)}</section>` +
+      `</div>`
     );
   }
 
@@ -2112,36 +2179,105 @@
   function renderAgents() {
     clearTimeout(agentsTimer);
     agentsTimer = 0;
+    if (!source) return;
     const html = agentsMarkup();
     if (html === agentsHtml) return;
-    const focusables = () => [...el.agentsBody.querySelectorAll('button, a')];
+    const focusables = () => [...el.agentsBody.querySelectorAll('button, a, select, [tabindex="0"]')];
     const at = el.agentsBody.contains(document.activeElement) ? focusables().indexOf(document.activeElement) : -1;
     agentsHtml = html;
     el.agentsBody.innerHTML = html;
     if (at >= 0) (focusables()[at] || focusables().pop() || el.agentsOnly).focus({ preventScroll: true });
+    // en vivo: lo que no estaba en la vuelta anterior se anima (una interacción nueva, un vínculo que suma una vez)
+    const evs = [...el.agentsBody.querySelectorAll('[data-ev]')];
+    const edges = [...el.agentsBody.querySelectorAll('.ag-net .ag-e')];
+    const edgeKey = (g) => g.dataset.from + '>' + g.dataset.to;
+    // otro repo, «solo entre agentes» o alguien elegido muestran otras cosas, pero no nuevas: no se anima nada
+    const mode = `${active?.key}|${agentsOnly}|${agentsSel}`;
+    if (agentsSeen && agentsSeen.mode !== mode) agentsSeen = null;
+    if (agentsSeen) {
+      for (const n of evs) if (!agentsSeen.ev.has(n.dataset.ev)) n.classList.add('is-new');
+      for (const g of edges) if ((agentsSeen.edges.get(edgeKey(g)) || 0) < Number(g.dataset.n)) g.classList.add('is-new');
+    }
+    agentsSeen = { mode, ev: new Set([...(agentsSeen?.ev || []), ...evs.map((n) => n.dataset.ev)]), edges: new Map(edges.map((g) => [edgeKey(g), Number(g.dataset.n)])) };
+    if (agentsLit) lightAgent([...el.agentsBody.querySelectorAll('.ag-net .ag-n[data-key]')].find((n) => n.dataset.key === agentsLit) || null);
   }
   function scheduleAgents() {
-    if (!agentsTimer) agentsTimer = setTimeout(() => el.agents.open && renderAgents(), AGENTS_EVERY);
+    if (Date.now() - spendState.at > SPEND_EVERY) refreshSpend(); // con la vista abierta, el gasto se renueva solo
+    if (!agentsTimer) agentsTimer = setTimeout(() => agentsOn && renderAgents(), AGENTS_EVERY);
   }
-  function openAgents() {
+  /** La vista de agentes, en el lugar del grafo: el tablero en vivo (la red, la línea de tiempo, lo último, quién con
+      quién y el gasto de IA). 3D o 2D, o ir a un commit, vuelven al grafo. Se recuerda como la vista. */
+  function setAgentsView(on, { save = true } = {}) {
+    on = !!on && !EMBED;
     initialAgents = false;
-    if (el.agents.open) return;
-    el.agentsOnly.checked = agentsOnly;
-    agentsHtml = '';
-    renderAgents();
-    if (typeof el.agents.showModal === 'function') el.agents.showModal();
-    else el.agents.setAttribute('open', '');
-  }
-  function closeAgents() {
-    if (typeof el.agents.close === 'function') el.agents.close();
-    else el.agents.removeAttribute('open');
-  }
-  el.agentsBtn.addEventListener('click', openAgents);
-  $('#agents-close').addEventListener('click', closeAgents);
-  el.agents.addEventListener('close', () => {
+    if (on === agentsOn) {
+      if (on && source) renderAgents();
+      return;
+    }
+    agentsOn = on;
+    el.graphPanel.classList.toggle('agents-on', on);
+    el.agents.hidden = !on;
+    setPressed(el.viewAgents, on);
+    setPressed(el.agentsBtn, on);
+    setPressed(el.view3d, !on && view === '3d');
+    setPressed(el.view2d, !on && view === '2d');
+    graph3d?.setActive(view === '3d' && !allOn && !on);
     clearTimeout(agentsTimer);
     agentsTimer = 0;
-    setUrlParam('agents', null);
+    if (on) {
+      graph.unpin?.(); // una ficha fijada quedaría flotando sobre el tablero
+      lowerThird(null);
+      el.agentsOnly.checked = agentsOnly;
+      agentsHtml = '';
+      agentsSeen = null; // lo que ya está no se anima: solo lo que llegue mientras se mira
+      if (source) renderAgents();
+      refreshSpend();
+    } else {
+      agentsSel = null; // la próxima vez se abre con todos
+      lightAgent(null);
+    }
+    if (save) U.store.set('agentsView', on || null);
+    setUrlParam('agents', on ? '1' : null);
+  }
+  el.viewAgents.addEventListener('click', () => setAgentsView(true));
+  el.agentsBtn.addEventListener('click', () => {
+    if (allOn) setAll(false);
+    setAgentsView(!agentsOn);
+    if (agentsOn) el.graphPanel.scrollIntoView?.({ block: 'nearest' });
+  });
+  /** Elige (o suelta, si ya estaba elegido) a un participante de la red: las listas y la línea de tiempo se centran
+      en él. El foco se queda en su nodo (o en el botón de soltarlo). */
+  function selectAgent(key) {
+    const prev = agentsSel;
+    agentsSel = key && key !== agentsSel ? key : null;
+    renderAgents();
+    const want = agentsSel || prev;
+    const node = [...el.agentsBody.querySelectorAll('.ag-net .ag-n[data-key]')].find((n) => n.dataset.key === want);
+    (node || el.agentsOnly).focus({ preventScroll: true });
+  }
+  /** Al pasar o enfocar un participante de la red, él y sus vínculos se encienden y lo demás queda tenue. */
+  function lightAgent(g) {
+    const key = g?.dataset.key || null;
+    agentsLit = key;
+    const svg = el.agentsBody.querySelector('.ag-net');
+    if (!svg) return;
+    svg.classList.toggle('ag-hl', !!key);
+    for (const e of svg.querySelectorAll('.ag-e')) e.classList.toggle('hl', !!key && (e.dataset.from === key || e.dataset.to === key));
+    const near = new Set(key ? [key] : []);
+    if (key) for (const e of svg.querySelectorAll('.ag-e.hl')) near.add(e.dataset.from).add(e.dataset.to);
+    for (const n of svg.querySelectorAll('.ag-n')) n.classList.toggle('hl', near.has(n.dataset.key));
+  }
+  el.agentsBody.addEventListener('pointerover', (e) => lightAgent(e.target.closest?.('.ag-net .ag-n')));
+  el.agentsBody.addEventListener('pointerleave', () => lightAgent(null));
+  el.agentsBody.addEventListener('focusin', (e) => lightAgent(e.target.closest?.('.ag-net .ag-n')));
+  el.agentsBody.addEventListener('focusout', (e) => {
+    if (!e.relatedTarget?.closest?.('.ag-net .ag-n')) lightAgent(null);
+  });
+  el.agentsBody.addEventListener('keydown', (e) => {
+    const g = e.target.closest?.('.ag-net .ag-n[data-key]');
+    if (!g || (e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault();
+    selectAgent(g.dataset.key);
   });
   el.agentsOnly.addEventListener('change', () => {
     agentsOnly = el.agentsOnly.checked;
@@ -2190,17 +2326,13 @@
       .filter((a) => a.agent && a.slot < GB.agents.OTHERS)
       .map((a) => {
         const body = `${sw(a.slot, true)}<span class="agk-name">${U.esc(actorName(ov.byKey.get(a.key) || a))}</span>${a.n ? `<span class="agk-n">${U.fmtNum(a.n)}</span>` : ''}`;
-        return `<li>${a.sha ? `<button type="button" class="agk-row" data-sha="${U.esc(a.sha)}" title="${U.esc(t('agents.keyLocate'))}">${body}</button>` : `<span class="agk-row">${body}</span>`}</li>`;
+        return `<li>${a.sha ? `<button type="button" class="agk-row" data-sha="${U.esc(a.sha)}" data-key="${U.esc(a.key)}" title="${U.esc(t('agents.keyLocate'))}">${body}</button>` : `<span class="agk-row" data-key="${U.esc(a.key)}">${body}</span>`}</li>`;
       });
     const others = ov.actors.filter((a) => a.agent && a.slot === GB.agents.OTHERS).length;
     const people = ov.actors.filter((a) => !a.agent).length;
     if (others) rows.push(line(GB.agents.OTHERS, true, t('agents.others', { n: U.fmtNum(others) })));
     if (people) rows.push(line(0, false, t('agents.people', { n: U.fmtNum(people) })));
-    const kinds =
-      `<span class="agk-k"><span class="agk-line" aria-hidden="true"></span>${U.esc(t('agents.kind.continued'))}</span>` +
-      `<span class="agk-k"><span class="agk-line agk-dash" aria-hidden="true"></span>${U.esc(t('agents.kind.merged'))}</span>` +
-      `<span class="agk-k"><span class="agk-glyph" aria-hidden="true">✓</span>${U.esc(t('agents.kind.reviewed'))}</span>` +
-      `<span class="agk-k"><span class="agk-glyph" aria-hidden="true">…</span>${U.esc(t('agents.kind.commented'))}</span>`;
+    const kinds = kindsLegend();
     el.agKeyN.textContent = ov.total ? U.fmtNum(ov.total) : '';
     el.agKeyN.title = ov.total ? t('agents.keyShown', { n: U.fmtNum(ov.total) }) : '';
     const html =
@@ -2247,6 +2379,19 @@
     foldAgentKey(!agKeyOpen);
     U.store.set('agentKeyOpen', agKeyOpen); // también desplegada: en el celular empieza plegada
   });
+  // al pasar o enfocar a un participante de la leyenda, sus interacciones se encienden en el grafo y las demás quedan
+  // tenues (en 2D y en 3D)
+  const keyFocus = (row) => {
+    const key = row?.dataset.key || null;
+    graph2d?.focusAgent?.(key);
+    graph3d?.focusAgent?.(key);
+  };
+  el.agKeyBody.addEventListener('pointerover', (e) => keyFocus(e.target.closest?.('.agk-row[data-key]')));
+  el.agKeyBody.addEventListener('pointerleave', () => keyFocus(null));
+  el.agKeyBody.addEventListener('focusin', (e) => keyFocus(e.target.closest?.('.agk-row[data-key]')));
+  el.agKeyBody.addEventListener('focusout', (e) => {
+    if (!e.relatedTarget?.closest?.('#ag-key-body .agk-row[data-key]')) keyFocus(null);
+  });
   // cada participante de la leyenda lleva a su último commit en el grafo
   el.agKeyBody.addEventListener('click', (e) => {
     const b = e.target.closest('button[data-sha]');
@@ -2254,10 +2399,231 @@
   });
   // cada fila lleva a su commit en el grafo (el enlace a la sesión de Claude Code abre aparte)
   el.agentsBody.addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-sha]');
+    const g = e.target.closest('.ag-net .ag-n[data-key]');
+    if (g) return selectAgent(g.dataset.key);
+    if (e.target.closest('#ag-focus-clear')) return selectAgent(null);
+    const b = e.target.closest('button[data-sha], .ag-time .ag-ev[data-sha]');
     if (!b) return;
-    closeAgents();
-    shownGraph().focusSha?.(b.dataset.sha);
+    shownGraph().focusSha?.(b.dataset.sha); // deja la vista de agentes y va al commit
+  });
+
+  /* ---------- gasto en IA (js/spend.js): lo de cada servicio conectado y, con OmniRoute, lo de cada agente ---------- */
+  const SPEND_EVERY = 5 * 60_000; // con la vista de agentes abierta, el gasto se vuelve a consultar cada 5 minutos
+  let spendDays = U.store.get('spendDays', 30) === 7 ? 7 : 30;
+  /* keys: las claves ({ anthropic, openai, openrouter, omniroute: { url, key } }); results: Map servicio -> lo de
+     collect o { error, status }; at: cuándo se consultó; loaded: si las claves ya se leyeron */
+  const spendState = { keys: {}, results: new Map(), at: 0, busy: false, loaded: false };
+  const spendEl = {
+    dialog: $('#spend-keys'),
+    form: $('#spend-form'),
+    anthropic: $('#spend-anthropic'),
+    openai: $('#spend-openai'),
+    openrouter: $('#spend-openrouter'),
+    omnirouteUrl: $('#spend-omniroute-url'),
+    omniroute: $('#spend-omniroute'),
+    where: $('#spend-where'),
+  };
+  const spendConnected = (s) => (s === 'omniroute' ? !!GB.spend.baseUrl(spendState.keys.omniroute?.url || '') && !!spendState.keys.omniroute?.url : !!spendState.keys[s]);
+  const spendAny = () => GB.spend.SERVICES.some(spendConnected);
+
+  /** Lee las claves guardadas: en la web, de este navegador (U.secret); en escritorio, del llavero. */
+  async function loadSpendKeys() {
+    const k = {};
+    for (const s of GB.spend.SERVICES) {
+      const raw = desktop ? (await desktop.getToken(s).catch(() => ({ token: '' }))).token : U.secret.get('spend:' + s, '');
+      if (s !== 'omniroute') k[s] = String(raw || '');
+      else {
+        let o = raw;
+        if (typeof raw === 'string') {
+          try {
+            o = JSON.parse(raw || '{}');
+          } catch {
+            o = {};
+          }
+        }
+        k.omniroute = { url: String(o?.url || ''), key: String(o?.key || '') };
+      }
+    }
+    spendState.keys = k;
+    spendState.loaded = true;
+  }
+
+  /** Una consulta desde la página (la web): sin cookies ni referer, con un tope de 15 s. */
+  async function spendFetchJson(req) {
+    const r = await fetch(req.url, { headers: req.headers, credentials: 'omit', referrerPolicy: 'no-referrer', cache: 'no-store', signal: AbortSignal.timeout?.(15_000) });
+    let json = null;
+    try {
+      json = await r.json();
+    } catch {
+      /* no era JSON: lo dice collect */
+    }
+    return { status: r.status, json };
+  }
+
+  /** Consulta el gasto de cada servicio conectado (en escritorio, lo hace el proceso principal) y rehace el tablero. */
+  async function refreshSpend({ force = false } = {}) {
+    if (spendState.busy || (!force && Date.now() - spendState.at < SPEND_EVERY)) return;
+    spendState.busy = true;
+    try {
+      if (!spendState.loaded) await loadSpendKeys();
+      spendState.at = Date.now();
+      const results = new Map();
+      await Promise.all(
+        GB.spend.SERVICES.filter(spendConnected).map(async (s) => {
+          let r;
+          if (desktop?.spend) r = await desktop.spend(s, { days: spendDays }).catch(() => ({ error: 'net' }));
+          else {
+            const cfg = s === 'omniroute' ? { ...spendState.keys.omniroute, days: spendDays, browser: true } : { key: spendState.keys[s], days: spendDays, browser: true };
+            r = await GB.spend.collect(s, cfg, spendFetchJson).catch((err) => ({ error: err.kind || 'net', status: err.status || 0 }));
+          }
+          results.set(s, { service: s, ...r });
+        }),
+      );
+      spendState.results = results;
+    } finally {
+      spendState.busy = false;
+    }
+    if (agentsOn) {
+      agentsHtml = '';
+      renderAgents();
+    }
+  }
+
+  /** La tarjeta del gasto en el tablero: el total, las barras por día (un color por servicio), cada servicio con sus
+      modelos y, con OmniRoute, cada agente (su clave), con su color si el agente trabaja en este repo. En la demo, sin
+      servicios conectados, un ejemplo que lo dice. */
+  function spendMarkup(data, r, slot) {
+    const demo = !!data.repo?.demo && !spendAny();
+    const results = demo ? GB.spend.demo({ days: spendDays }) : [...spendState.results.values()];
+    const name = (s) => GB.spend.NAMES[s] || s;
+    const select = `<select id="spend-days" class="sp-days" aria-label="${U.esc(t('spend.title'))}">${GB.spend.PERIODS.map((n) => `<option value="${n}"${n === spendDays ? ' selected' : ''}>${U.esc(t('spend.days', { n }))}</option>`).join('')}</select>`;
+    const connect = `<button type="button" class="btn btn-ghost sp-connect" id="spend-connect">${U.esc(t('spend.connect'))}</button>`;
+    const sum = GB.spend.combine(results, { days: spendDays });
+    const head = `<h3>${U.esc(t('spend.title'))}${results.length ? ` <span class="hl-n">${U.esc(U.fmtUsd(sum.total))}</span>` : ''}${demo ? ` <span class="sp-badge">${U.esc(t('spend.example'))}</span>` : ''}</h3>`;
+    const tools = `<div class="sp-tools">${select}${connect}</div>`;
+    if (!results.length) {
+      const msg = spendState.busy ? t('spend.loading') : t('spend.none');
+      return `<section class="hl-sec ab-card ab-spend" id="ag-spend">${head}${tools}<p class="hl-line">${U.esc(msg)}</p></section>`;
+    }
+    // las barras: un día por columna, cada servicio apilado con su color
+    const W = 600;
+    const H = 120;
+    const max = Math.max(1e-9, ...sum.days.map((_, i) => sum.series.reduce((n, x) => n + x.values[i], 0)));
+    const bw = W / sum.days.length;
+    const bars = sum.days
+      .map((d, i) => {
+        let y = H;
+        const parts = sum.series
+          .map((x) => {
+            const h = (x.values[i] / max) * (H - 4);
+            if (h <= 0) return '';
+            y -= h;
+            return `<rect class="sp-bar sp-${x.service}" x="${(i * bw + 1).toFixed(1)}" y="${y.toFixed(1)}" width="${Math.max(1, bw - 2).toFixed(1)}" height="${h.toFixed(1)}"/>`;
+          })
+          .join('');
+        const tip = `${U.fmtDate(Date.parse(d))}: ${sum.series.filter((x) => x.values[i]).map((x) => `${name(x.service)} ${U.fmtUsd(x.values[i])}`).join(' · ') || U.fmtUsd(0)}`;
+        return `<g>${parts}<rect class="sp-hit" x="${(i * bw).toFixed(1)}" y="0" width="${bw.toFixed(1)}" height="${H}"><title>${U.esc(tip)}</title></rect></g>`;
+      })
+      .join('');
+    const chart = `<svg class="sp-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${U.esc(t('spend.chartAria', { total: U.fmtUsd(sum.total) }))}">${bars}</svg><p class="sp-axis"><span>${U.esc(U.fmtDate(Date.parse(sum.days[0])))}</span><span>${U.esc(U.fmtUsd(max))}</span><span>${U.esc(U.fmtDate(Date.parse(sum.days[sum.days.length - 1])))}</span></p>`;
+    const err = (x) =>
+      x.error === 'auth' ? t('spend.err.auth') : x.error === 'net' ? t('spend.err.net', { service: name(x.service) }) : t('spend.err.http', { service: name(x.service), status: x.status || '' });
+    const services = results
+      .map((x) => {
+        const detail = x.error
+          ? `<span class="sp-err">${U.esc(err(x))}</span>`
+          : `${x.window ? `<span class="sp-win">${U.esc(t(x.window === 'month' ? 'spend.month' : 'spend.week'))}</span>` : ''}${x.models
+              .slice(0, 3)
+              .map(([m, usd]) => `<span class="sp-model">${U.esc(m)} <b>${U.esc(U.fmtUsd(usd))}</b></span>`)
+              .join('')}`;
+        return `<li class="sp-row"><span class="sp-name"><span class="sp-sw sp-${x.service}" aria-hidden="true"></span>${U.esc(name(x.service))}</span><b class="sp-usd">${x.error ? '–' : U.esc(U.fmtUsd(x.total))}</b><span class="sp-detail">${detail}</span></li>`;
+      })
+      .join('');
+    // por agente: las claves de OmniRoute; si nombran un agente que trabaja en este repo, con su color y sus sesiones
+    const firstSlot = new Map();
+    const sessions = new Map();
+    for (const a of r.actors)
+      if (a.agent) {
+        if (!firstSlot.has(a.agent.id)) firstSlot.set(a.agent.id, slot.get(a.key) ?? 0);
+        sessions.set(a.agent.id, (sessions.get(a.agent.id) || 0) + 1);
+      }
+    const agents = results.flatMap((x) => x.agents || []);
+    const agentRows = agents
+      .map((a) => {
+        const sw = a.agent && firstSlot.has(a.agent) ? `<span class="agk-sw agk-agent ag-s${firstSlot.get(a.agent)}" aria-hidden="true"></span>` : `<span class="agk-sw agk-agent ag-s0" aria-hidden="true"></span>`;
+        const sub = [a.requests ? t('spend.requests', { n: U.fmtNum(a.requests) }) : '', a.agent && sessions.get(a.agent) ? t('spend.sessions', { n: U.fmtNum(sessions.get(a.agent)) }) : ''].filter(Boolean).join(' · ');
+        return `<li class="sp-row"><span class="sp-name">${sw}${U.esc(a.name)}</span><b class="sp-usd">${U.esc(U.fmtUsd(a.usd))}</b>${sub ? `<span class="sp-detail">${U.esc(sub)}</span>` : ''}</li>`;
+      })
+      .join('');
+    return (
+      `<section class="hl-sec ab-card ab-spend" id="ag-spend">${head}${tools}${demo ? `<p class="hl-line sp-note">${U.esc(t('spend.exampleNote'))}</p>` : ''}${chart}` +
+      `<ul class="sp-list" id="sp-services">${services}</ul>` +
+      (agentRows ? `<h4 class="sp-h4">${U.esc(t('spend.byAgent'))}</h4><ul class="sp-list" id="sp-agents">${agentRows}</ul>` : '') +
+      `</section>`
+    );
+  }
+
+  /** El diálogo de las claves: abre con lo guardado (escondido) y guarda cada una donde va. */
+  async function openSpendKeys() {
+    if (!spendState.loaded) await loadSpendKeys();
+    const k = spendState.keys;
+    spendEl.anthropic.value = k.anthropic || '';
+    spendEl.openai.value = k.openai || '';
+    spendEl.openrouter.value = k.openrouter || '';
+    spendEl.omnirouteUrl.value = k.omniroute?.url || '';
+    spendEl.omniroute.value = k.omniroute?.key || '';
+    spendEl.where.textContent = t(desktop ? 'spend.whereDesktop' : 'spend.whereWeb');
+    spendEl.omnirouteUrl.setCustomValidity('');
+    if (typeof spendEl.dialog.showModal === 'function') spendEl.dialog.showModal();
+    else spendEl.dialog.setAttribute('open', '');
+  }
+  const closeSpendKeys = () => (typeof spendEl.dialog.close === 'function' ? spendEl.dialog.close() : spendEl.dialog.removeAttribute('open'));
+  spendEl.form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const url = spendEl.omnirouteUrl.value.trim();
+    if (url && !GB.spend.baseUrl(url)) {
+      spendEl.omnirouteUrl.setCustomValidity(t('spend.badUrl'));
+      spendEl.omnirouteUrl.reportValidity();
+      return;
+    }
+    const keys = {
+      anthropic: spendEl.anthropic.value.trim(),
+      openai: spendEl.openai.value.trim(),
+      openrouter: spendEl.openrouter.value.trim(),
+      omniroute: { url, key: spendEl.omniroute.value.trim() },
+    };
+    for (const s of GB.spend.SERVICES) {
+      const v = s === 'omniroute' ? (keys.omniroute.url ? JSON.stringify(keys.omniroute) : '') : keys[s];
+      if (desktop) await desktop.setToken(v, s).catch((err) => console.error('No se pudo guardar la clave:', err));
+      else U.secret.set('spend:' + s, s === 'omniroute' ? (keys.omniroute.url ? keys.omniroute : null) : v || null);
+    }
+    spendState.keys = keys;
+    spendState.loaded = true;
+    spendState.results = new Map();
+    closeSpendKeys();
+    if (agentsOn) {
+      agentsHtml = '';
+      renderAgents();
+    }
+    refreshSpend({ force: true });
+  });
+  spendEl.omnirouteUrl.addEventListener('input', () => spendEl.omnirouteUrl.setCustomValidity(''));
+  $('#spend-cancel').addEventListener('click', closeSpendKeys);
+  $('#spend-clear').addEventListener('click', () => {
+    for (const f of [spendEl.anthropic, spendEl.openai, spendEl.openrouter, spendEl.omnirouteUrl, spendEl.omniroute]) f.value = '';
+    spendEl.anthropic.focus();
+  });
+  // los controles de la tarjeta viven en el tablero, que se rehace: se escuchan desde él
+  el.agentsBody.addEventListener('change', (e) => {
+    if (e.target.id !== 'spend-days') return;
+    spendDays = Number(e.target.value) === 7 ? 7 : 30;
+    U.store.set('spendDays', spendDays === 30 ? null : spendDays);
+    agentsHtml = '';
+    renderAgents();
+    refreshSpend({ force: true });
+  });
+  el.agentsBody.addEventListener('click', (e) => {
+    if (e.target.closest('#spend-connect')) openSpendKeys();
   });
 
   /* ---------- bitácora en vivo: lo que hizo el repo desde la anterior, con su nota y sus hallazgos (ver bitacora.js) ---------- */
@@ -3354,6 +3720,7 @@
   });
   const embedView = EMBED ? GB.embedOptions(location.search)?.view || '' : ''; // &view=2d|3d: la vista de la capa, sin guardarla
   setView(embedView || U.store.get('view', '3d'), !embedView);
+  if (!EMBED && U.store.get('agentsView', false) === true) setAgentsView(true, { save: false }); // se dejó en la vista de agentes
   director?.setOn(!!U.store.get('director', false));
   renderDirector();
   renderPause();
@@ -3607,7 +3974,7 @@
     if (allOn) renderAllSum();
     diffView.relocalize();
     if (lp.dialog.open) lpRender();
-    if (el.agents.open && source) renderAgents();
+    if (agentsOn && source) renderAgents();
     if (!source) return;
     // la demo inventa mensajes, incidencias y comentarios en el idioma activo: se reinicia para no mezclarlos
     if (source.data.repo.practice) practice.render(); // su historia no se inventa: se queda como está

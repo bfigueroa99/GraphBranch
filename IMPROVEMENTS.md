@@ -391,29 +391,24 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 10. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-11. [QA] A 320 px el panel de salud se desborda hacia la derecha (28 px; 46 en tamil): la cabecera, los contadores de
-    cada sección y la edad de los forks quedan cortados y el panel se desliza de lado. Visto en la iteración 174, igual
-    sin su cambio. Reproducción: Playwright, 320×640, demo `?lang=es&health=1` → `#health .tr-wrap` con `scrollWidth`
-    312 y `clientWidth` 284.
-
-12. [Accesibilidad] En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…», «sin actividad…», PRs) y la
+11. [Accesibilidad] En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…», «sin actividad…», PRs) y la
     nota de cada commit (`.tv-aside`) ya van en el `aria-label` del `treeitem`, pero son texto del nodo: según el lector se
     leen dos veces. Marcarlas `aria-hidden="true"` y comprobarlo con un lector real (ver Para Benjamin, 5).
     Reproducción: Playwright, abrir `#textview-btn` → `.tv-tag` dentro de `[role=treeitem][aria-label]` sin `aria-hidden`.
-13. [Rendimiento] `placeLabels` (`js/graph3d.js`) crea por cuadro un `{x, y}` por `project()`, un objeto por candidata, la grilla (`Map`) y
+12. [Rendimiento] `placeLabels` (`js/graph3d.js`) crea por cuadro un `{x, y}` por `project()`, un objeto por candidata, la grilla (`Map`) y
     sus cierres. Medido en la iteración 199 con 1.000 ramas en 3D: 0,36 ms por cuadro (19 cuadros en 4 s sin GPU), así que
     hoy no pesa; si algún día se mide más, reusar el punto de `project()` (devolver un objeto compartido y revisar quién lo
     guarda) y un arreglo de candidatas. Reproducción: Playwright, `?repo=acme/web` con 1.000 ramas, envolver
     `GB.Graph3D.prototype.placeLabels` con `performance.now()` → ~0,36 ms por llamada.
-14. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
+13. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
     `placeLabels`. El cuadro lo domina el render por software (~200 ms por cuadro sin GPU, 10 fps), que con GPU no existe;
     medir con GPU real antes de tocarlo. Reproducción: la misma envoltura sobre `stepScene` → ~1,1 ms por llamada.
-15. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
+14. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
     (895 ms en total, sin GPU); el perfil de CPU de los primeros 6 s no deja ninguna función de la app por encima de 70 ms
     (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
     que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
     Reproducción: `node tools/audit.mjs --repetir 3` → `consultas: 10`, `tareasLargasMs: 895`.
-16. [Errores] Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el repo del PR con
+15. [Errores] Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el repo del PR con
     `owner/name` tal como se escribieron; con un repo renombrado (abierto por su nombre viejo) ningún PR cuenta como del
     mismo repo: sus ramas pierden el «PRs abiertos» y dicen «sin PR abierto». Comparar `fromRef.repository` con
     `toRef.repository`. Reproducción: API simulada con el repo `nuevo` y abrir `CLAVE/viejo` → `sameRepo` false.
@@ -562,3 +557,18 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/226, sin colisión
 - Validado: 600 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 227, mantenimiento · QA: pendiente 11 (A 320 px el panel de salud se desborda hacia la derecha (28 px; 46 en tamil): l…)
+
+### 2026-11-06 · Iteración 227 · Mantenimiento · QA
+
+- **Arreglo: el panel de salud ya no se desborda a 320 px** (pendiente 11). `.tr-wrap` (el contenedor del diálogo), `.hl-body` y `.hl-list` eran cuadrículas de una columna automática, que toma el ancho mínimo de su contenido (272 px de las filas, 290 en tamil) aunque el diálogo ofrezca 244: el panel se deslizaba de lado y cortaba la cabecera, los contadores y la edad de los forks. Las tres pasan a `grid-template-columns: minmax(0, 1fr)`, como ya hace `#agents-body`; las filas ya cortaban su texto con puntos suspensivos (`.hl-main`).
+- **Reproducción:** Playwright, 320×640, `?lang=es&health=1` → `#health .tr-wrap` con `scrollWidth` 312 y `clientWidth` 284 (en tamil, 330); con el arreglo, 284 y 284 en español, tamil y árabe.
+- **Pruebas que fallan sin el arreglo:** el paso nuevo del smoke «a 320 px el panel de salud no se desborda hacia el lado (en español y en tamil)» y `node --test tools/health.test.mjs` («el panel de salud tiene una columna que puede encogerse…»).
+- **Hallazgos:** ninguno nuevo; la iteración cerró el pendiente 11 sin auditoría completa (el pendiente trae su reproducción).
+- README: sin cambios (un arreglo de CSS sin función nueva ni límite nuevo).
+- QA: panel de salud a 320 px en es, ta y ar con Playwright; el resto lo cubre la puerta; auditoría en la puerta.
+- Skills: no aplica: un arreglo de CSS de una regla; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (la columna `minmax(0, 1fr)` que el repo ya usa en `#agents-body`).
+- OMC: PENDIENTE_OMC
+- Reclamo: loop/227, sin colisión
+- Validado: PENDIENTE_VALIDADO
+- **Siguiente:** PENDIENTE_SIG

@@ -725,6 +725,7 @@ GB.i18n.define('sv', {
   'constellation.orderIssues': 'Öppna issues',
   'constellation.orderStars': 'Stjärnor',
   'constellation.orderForks': 'Forkar',
+  'constellation.orderRecent': 'Senaste commit',
   'constellation.ordered': 'Sorterat efter {order}',
   'constellation.filtered': 'Filtrerat på «{filter}»: {shown} av {total}',
   'all.tab': 'Alla',

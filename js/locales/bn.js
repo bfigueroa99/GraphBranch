@@ -725,6 +725,7 @@ GB.i18n.define('bn', {
   'constellation.orderIssues': 'খোলা issue',
   'constellation.orderStars': 'স্টার',
   'constellation.orderForks': 'ফর্ক',
+  'constellation.orderRecent': 'সর্বশেষ কমিট',
   'constellation.ordered': 'সাজানো: {order}',
   'constellation.filtered': '«{filter}» দিয়ে ছাঁকা: {total}-এর মধ্যে {shown}',
   'all.tab': 'সব',

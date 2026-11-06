@@ -725,6 +725,7 @@ GB.i18n.define('id', {
   'constellation.orderIssues': 'Issue terbuka',
   'constellation.orderStars': 'Bintang',
   'constellation.orderForks': 'Fork',
+  'constellation.orderRecent': 'Commit terakhir',
   'constellation.ordered': 'Diurutkan menurut {order}',
   'constellation.filtered': 'Disaring dengan «{filter}»: {shown} dari {total}',
   'all.tab': 'Semua',

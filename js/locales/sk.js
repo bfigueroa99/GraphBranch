@@ -736,6 +736,7 @@ GB.i18n.define('sk', {
   'constellation.orderIssues': 'Otvorené issues',
   'constellation.orderStars': 'Hviezdičky',
   'constellation.orderForks': 'Forky',
+  'constellation.orderRecent': 'Posledný commit',
   'constellation.ordered': 'Zoradené podľa: {order}',
   'constellation.filtered': 'Filter „{filter}“: {shown} z {total}',
   'all.tab': 'Všetky',

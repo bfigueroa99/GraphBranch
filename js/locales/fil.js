@@ -726,6 +726,7 @@ GB.i18n.define('fil', {
   'constellation.orderIssues': 'Mga bukas na issue',
   'constellation.orderStars': 'Mga star',
   'constellation.orderForks': 'Mga fork',
+  'constellation.orderRecent': 'Huling commit',
   'constellation.ordered': 'Inayos ayon sa {order}',
   'constellation.filtered': 'Naka-filter sa «{filter}»: {shown} sa {total}',
   'all.tab': 'Lahat',

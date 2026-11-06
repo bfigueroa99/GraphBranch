@@ -736,6 +736,7 @@ GB.i18n.define('cs', {
   'constellation.orderIssues': 'Otevřené issues',
   'constellation.orderStars': 'Hvězdičky',
   'constellation.orderForks': 'Forky',
+  'constellation.orderRecent': 'Poslední commit',
   'constellation.ordered': 'Seřazeno podle: {order}',
   'constellation.filtered': 'Filtr „{filter}“: {shown} z {total}',
   'all.tab': 'Vše',

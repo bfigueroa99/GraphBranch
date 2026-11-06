@@ -725,6 +725,7 @@ GB.i18n.define('sw', {
   'constellation.orderIssues': 'Issues zilizo wazi',
   'constellation.orderStars': 'Nyota',
   'constellation.orderForks': 'Forks',
+  'constellation.orderRecent': 'Commit ya mwisho',
   'constellation.ordered': 'Imepangwa kwa {order}',
   'constellation.filtered': 'Imechujwa kwa «{filter}»: {shown} kati ya {total}',
   'all.tab': 'Zote',

@@ -725,6 +725,7 @@ GB.i18n.define('ca', {
   'constellation.orderIssues': 'Issues obertes',
   'constellation.orderStars': 'Estrelles',
   'constellation.orderForks': 'Forks',
+  'constellation.orderRecent': 'Últim commit',
   'constellation.ordered': 'Ordenat per {order}',
   'constellation.filtered': 'Filtrades per «{filter}»: {shown} de {total}',
   'all.tab': 'Tots',

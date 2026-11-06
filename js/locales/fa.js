@@ -768,6 +768,7 @@ GB.i18n.define('fa', {
   'constellation.orderIssues': 'issueهای باز',
   'constellation.orderStars': 'ستاره‌ها',
   'constellation.orderForks': 'فورک‌ها',
+  'constellation.orderRecent': 'آخرین کامیت',
   'constellation.ordered': 'مرتب‌شده بر اساس {order}',
   'constellation.filtered': 'فیلتر «{filter}»: {shown} از {total}',
   'all.tab': 'همه',

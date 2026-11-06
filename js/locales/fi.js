@@ -725,6 +725,7 @@ GB.i18n.define('fi', {
   'constellation.orderIssues': 'Avoimet issuet',
   'constellation.orderStars': 'Tähdet',
   'constellation.orderForks': 'Haarukat',
+  'constellation.orderRecent': 'Viimeisin commit',
   'constellation.ordered': 'Lajiteltu: {order}',
   'constellation.filtered': 'Suodatus «{filter}»: {shown} / {total}',
   'all.tab': 'Kaikki',

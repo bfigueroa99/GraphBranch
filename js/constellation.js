@@ -9,7 +9,7 @@
   const R_MIN = 1; // radios relativos: la galaxia más grande mide R_MAX veces la más chica
   const R_MAX = 2.4;
   const PAD = 4; // margen del cuadro, en % del lado
-  const ORDERS = ['activity', 'prs', 'issues', 'stars', 'forks', 'new', 'name']; // los órdenes que no son el de las pestañas (el selector y ?order=)
+  const ORDERS = ['activity', 'recent', 'prs', 'issues', 'stars', 'forks', 'new', 'name']; // los órdenes que no son el de las pestañas (el selector y ?order=)
 
   /** Tamaño relativo de una galaxia según sus commits: crece con la raíz y se queda entre R_MIN y R_MAX. */
   function radiusOf(commits, maxCommits) {
@@ -42,12 +42,15 @@
       .map((p) => ({ key: p.key, x: 50 + p.x * k, y: 50 + p.y * k, r: p.r * k }));
   }
 
-  /** Los repos en el orden pedido: `tabs` (el de las pestañas), `activity` (más commits cargados primero), `prs` (más pull requests abiertos primero), `issues` (más issues abiertos primero), `stars` (más estrellas primero), `forks` (más forks primero), `new` (más ramas nuevas de la semana primero) o
+  /** Los repos en el orden pedido: `tabs` (el de las pestañas), `activity` (más commits cargados primero), `recent` (el commit más reciente ya cargado primero; los que cargan o están vacíos, sin `last`, al final), `prs` (más pull requests abiertos primero), `issues` (más issues abiertos primero), `stars` (más estrellas primero), `forks` (más forks primero), `new` (más ramas nuevas de la semana primero) o
       `name` (alfabético, sin mayúsculas ni acentos). Empata por el orden de las pestañas; no toca `items`. */
   function sortItems(items, mode) {
     const list = items.map((it, idx) => ({ it, idx }));
     if (mode === 'activity') list.sort((a, b) => (b.it.commits || 0) - (a.it.commits || 0) || a.idx - b.idx);
-    else if (mode === 'prs') list.sort((a, b) => (b.it.prs || 0) - (a.it.prs || 0) || a.idx - b.idx);
+    else if (mode === 'recent') {
+      const at = (it) => (Number.isFinite(it.last) ? it.last : -Infinity);
+      list.sort((a, b) => (at(b.it) === at(a.it) ? 0 : at(b.it) > at(a.it) ? 1 : -1) || a.idx - b.idx);
+    } else if (mode === 'prs') list.sort((a, b) => (b.it.prs || 0) - (a.it.prs || 0) || a.idx - b.idx);
     else if (mode === 'issues') list.sort((a, b) => (b.it.issues || 0) - (a.it.issues || 0) || a.idx - b.idx);
     else if (mode === 'stars') list.sort((a, b) => (b.it.stars || 0) - (a.it.stars || 0) || a.idx - b.idx);
     else if (mode === 'forks') list.sort((a, b) => (b.it.forks || 0) - (a.it.forks || 0) || a.idx - b.idx);
@@ -96,7 +99,7 @@
     return names.size;
   }
 
-  /** `?order=activity`, `?order=prs`, `?order=issues`, `?order=stars`, `?order=forks`, `?order=new` o `?order=name`: el orden con que abre la constelación. Lo que no se conoce (o falta) es `null`: queda el de las pestañas. */
+  /** `?order=activity`, `?order=recent`, `?order=prs`, `?order=issues`, `?order=stars`, `?order=forks`, `?order=new` o `?order=name`: el orden con que abre la constelación. Lo que no se conoce (o falta) es `null`: queda el de las pestañas. */
   function orderParam(q) {
     const v = String(q.get('order') || '').trim().toLowerCase();
     return ORDERS.includes(v) ? v : null;

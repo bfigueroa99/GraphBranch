@@ -725,6 +725,7 @@ GB.i18n.define('tr', {
   'constellation.orderIssues': 'Açık issue',
   'constellation.orderStars': 'Yıldızlar',
   'constellation.orderForks': 'Fork’lar',
+  'constellation.orderRecent': 'Son commit',
   'constellation.ordered': 'Şuna göre sıralandı: {order}',
   'constellation.filtered': '«{filter}» ile süzüldü: {total} içinden {shown}',
   'all.tab': 'Tümü',

@@ -741,6 +741,7 @@ GB.i18n.define('ru', {
   'constellation.orderIssues': 'Открытые issues',
   'constellation.orderStars': 'Звёзды',
   'constellation.orderForks': 'Форки',
+  'constellation.orderRecent': 'Последний коммит',
   'constellation.ordered': 'Отсортировано: {order}',
   'constellation.filtered': 'Фильтр «{filter}»: {shown} из {total}',
   'all.tab': 'Все',

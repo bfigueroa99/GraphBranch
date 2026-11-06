@@ -768,6 +768,7 @@ GB.i18n.define('ur', {
   'constellation.orderIssues': 'کھلے issues',
   'constellation.orderStars': 'ستارے',
   'constellation.orderForks': 'فورکس',
+  'constellation.orderRecent': 'آخری کمٹ',
   'constellation.ordered': '{order} کے مطابق ترتیب',
   'constellation.filtered': '«{filter}» سے فلٹر: {total} میں سے {shown}',
   'all.tab': 'سب',

@@ -100,6 +100,12 @@ test('el orden: pestañas tal cual, actividad por commits y nombre sin mayúscul
   assert.deepEqual(C.sortItems(withForks, 'forks').map((i) => i.key), ['o/c', 'o/b', 'o/d', 'o/a'], 'más forks primero; sin dato cuenta como 0; empata por pestaña');
   assert.deepEqual(C.sortItems(items, 'forks').map((i) => i.key), keys('tabs'), 'sin forks cargados queda el orden de las pestañas');
   assert.equal(C.orderParam(new URLSearchParams('order=%20Forks')), 'forks');
+  const withLast = items.map((it, i) => ({ ...it, last: [2e12, null, 3e12, 2e12][i], state: ['live', 'loading', 'live', 'live'][i] }));
+  assert.deepEqual(C.sortItems(withLast, 'recent').map((i) => i.key), ['o/c', 'o/b', 'o/d', 'o/a'], 'el commit más reciente primero; empata por pestaña; sin fecha (cargando o vacío) al final');
+  const someEmpty = items.map((it, i) => ({ ...it, last: [null, 5e11, undefined, 9e11][i] }));
+  assert.deepEqual(C.sortItems(someEmpty, 'recent').map((i) => i.key), ['o/d', 'o/a', 'o/b', 'o/c'], 'los que no tienen commits van al final, en el orden de las pestañas');
+  assert.deepEqual(C.sortItems(items, 'recent').map((i) => i.key), keys('tabs'), 'sin fechas cargadas queda el orden de las pestañas');
+  assert.equal(C.orderParam(new URLSearchParams('order=RECENT')), 'recent');
   assert.deepEqual(items.map((i) => i.key), ['o/b', 'o/a', 'o/c', 'o/d'], 'no toca la lista original');
 });
 

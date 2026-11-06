@@ -1,7 +1,7 @@
 /* GraphBranch — salud del repo: lo que ya está cargado, leído como señales de equipo.
    Ramas sin actividad hace más de 30 días y sin PR, pull requests abiertos por edad y por estado (borrador, checks en rojo, aprobado, esperando revisión), cuánto tardaron
    en fusionarse los últimos, el ritmo de merges y releases y, los PRs fusionados y abiertos, los issues cerrados y las ramas nuevas y los commits y sus autores distintos por semana y, en el idioma de DORA, la frecuencia de
-   despliegues (cada release cuenta como uno, también por semana) y el tiempo de entrega (de abierto a fusionado). No hace ninguna consulta: parte del
+   despliegues (cada release cuenta como uno, también por semana) y el tiempo de entrega (de abierto a fusionado), y el estado del último despliegue de cada entorno. No hace ninguna consulta: parte del
    estado del grafo y de la actividad que ya llegó, y cuenta lo que pasa en el repo, no a personas. */
 (function (GB) {
   'use strict';
@@ -44,6 +44,35 @@
       if (k < WEEKS) weeks[WEEKS - 1 - k].add(key);
     }
     return weeks.map((w) => w.size);
+  }
+
+  /** El estado del último despliegue de un entorno con lo ya cargado: `current` si su commit es la punta de su rama
+      (la de `ref` si está cargada, si no la rama por defecto), `behind` con cuántos commits lleva la rama que el
+      despliegue no tiene, y `unknown` si la rama no está cargada o no contiene el commit desplegado. Sin consultas. */
+  function deployState(data, d) {
+    const branch = (d.ref && data.branches.get(d.ref)) || data.branches.get(data.repo?.defaultBranch);
+    if (!branch) return { state: 'unknown', branch: null };
+    if (branch.sha === d.sha) return { state: 'current', branch: branch.name };
+    if (!data.commits.has(d.sha)) return { state: 'unknown', branch: branch.name };
+    const walk = (from, skip) => {
+      const seen = new Set();
+      const stack = [from];
+      while (stack.length) {
+        const s = stack.pop();
+        if (seen.has(s) || skip?.has(s)) continue;
+        const c = data.commits.get(s);
+        if (!c) continue;
+        seen.add(s);
+        for (const p of c.parents || []) stack.push(p);
+      }
+      return seen;
+    };
+    const deployed = walk(d.sha);
+    const newer = walk(branch.sha, deployed);
+    // la rama no llega al commit desplegado (otra rama, historia reescrita o aún sin cargar): no se sabe
+    const reaches = [...newer].some((s) => (data.commits.get(s).parents || []).some((p) => deployed.has(p)));
+    if (!reaches) return { state: 'unknown', branch: branch.name };
+    return { state: 'behind', branch: branch.name, behind: newer.size };
   }
 
   /** `data`: el estado del repo (ramas, commits, PRs abiertos); `acts`: su actividad ya cargada.
@@ -177,7 +206,18 @@
       if (time) for (const name of names) if (name) tagTimes.push({ time });
     }
 
+    // el último despliegue de cada entorno (lo que trae la carga de despliegues), el más reciente primero
+    const deploys = [...(data.deploys || [])]
+      .filter(([env, d]) => env && d?.sha)
+      .map(([env, d]) => {
+        const time = at(d.at) || at(data.commits.get(d.sha)?.date);
+        const st = deployState(data, d);
+        return { env, sha: d.sha, ref: d.ref || '', head: st.branch, state: st.state, behind: st.behind || 0, time, age: time && time <= now ? now - time : null };
+      })
+      .sort((a, b) => b.time - a.time || (a.env < b.env ? -1 : 1));
+
     return {
+      deploys: { total: deploys.length, rows: deploys.slice(0, ROWS) },
       forks: { total: forks.length, rows: forks.slice(0, ROWS) },
       stale: { total: stale.length, rows: stale.slice(0, ROWS) },
       prs: { total: prs.length, rows: prs.slice(0, ROWS) },

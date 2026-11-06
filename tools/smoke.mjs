@@ -760,6 +760,13 @@ console.log('Escritorio (1280×800)');
     if (weekly.lines.length < 6 || largas.length) throw new Error(`las series por semana repiten el periodo en cada línea: ${largas.join(' | ') || weekly.lines.length + ' líneas'}`);
     const ciLines = await page.$$eval('#hl-ci .hl-line', (ps) => ps.map((p) => p.textContent));
     if (!ciLines.length || ciLines.some((l) => !/\d/.test(l))) throw new Error(`la tasa de fallos de CI no sale en la salud: ${ciLines.join(' | ')}`);
+    // el último despliegue de cada entorno de la demo (producción en main y staging, que sigue a develop), con su estado
+    const deploys = await page.$$eval('#hl-deploys .hl-list .hl-row', (rs) => rs.map((r) => [r.querySelector('.hl-main').textContent, r.querySelector('.hl-aside').textContent, r.matches('[data-go]')]));
+    const envs = deploys.map(([e]) => e).sort().join(',');
+    if (envs !== 'production,staging') throw new Error(`los despliegues por entorno no son los de la demo: ${JSON.stringify(deploys)}`);
+    const stg = deploys.find(([e]) => e === 'staging');
+    if (!/^\S{7} · al día con develop( · |$)/.test(stg[1]) || !stg[2]) throw new Error(`staging no sale al día con develop ni lleva a su rama: ${stg[1]}`);
+    if (deploys.some(([, a]) => /health\.|\{/.test(a))) throw new Error(`un despliegue sale con una clave cruda: ${JSON.stringify(deploys)}`);
     if (info.stats !== 3) throw new Error(`${info.stats} cifras de ritmo, se esperaban 3`);
     if (!info.rows) throw new Error('la demo tiene PRs abiertos y no salen en la lista');
     const forks = await page.$$eval('#hl-forks a.hl-row[href^="https://"][rel~="noopener"]', (as) => as.map((a) => a.textContent));

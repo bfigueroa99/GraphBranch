@@ -455,3 +455,44 @@ test('el panel de salud tiene una columna que puede encogerse (a 320 px no se de
   assert.ok(m, 'falta la regla de columna del panel de salud');
   assert.match(m[1], /grid-template-columns:\s*minmax\(0,\s*1fr\)/);
 });
+
+test('despliegues por entorno: al día con su rama, commits nuevos detrás o sin su rama, el más reciente primero', () => {
+  const commits = new Map([
+    ['r0', { date: ago(5), parents: [] }],
+    ['r1', { date: ago(4), parents: ['r0'] }],
+    ['s1', { date: ago(3), parents: ['r1'] }], // una rama que se fusiona en main
+    ['r2', { date: ago(2), parents: ['r1', 's1'] }],
+    ['r3', { date: ago(1), parents: ['r2'] }],
+    ['d1', { date: ago(0.5), parents: ['r1'] }],
+    ['x1', { date: ago(6), parents: [] }], // fuera de toda rama cargada
+  ]);
+  const br = (name, sha, extra = {}) => [name, { name, sha, ...extra }];
+  const data = {
+    repo: { defaultBranch: 'main' },
+    commits,
+    branches: new Map([br('main', 'r3', { isDefault: true }), br('develop', 'd1')]),
+    pulls: new Map(),
+    deploys: new Map([
+      ['production', { sha: 'r1', ref: 'main', at: new Date(ago(0.2)).toISOString() }], // main lleva r3, r2 y s1 que no tiene
+      ['staging', { sha: 'd1', ref: 'develop' }], // la punta de develop; sin `at`, cuenta la fecha del commit
+      ['preview', { sha: 'x1', ref: 'v1.0.0' }], // ref que no es una rama cargada: se compara con main, que no lo contiene
+      ['vacío', { sha: '' }], // sin commit: no entra
+    ]),
+  };
+  const h = compute(data, [], NOW);
+  assert.equal(h.deploys.total, 3);
+  const rows = JSON.parse(JSON.stringify(h.deploys.rows));
+  assert.deepEqual(rows.map((r) => r.env), ['production', 'staging', 'preview']);
+  assert.deepEqual(rows.map((r) => [r.state, r.head, r.behind]), [['behind', 'main', 3], ['current', 'develop', 0], ['unknown', 'main', 0]]);
+  assert.equal(rows[0].age, NOW - ago(0.2));
+  assert.equal(rows[1].age, NOW - ago(0.5));
+  // el despliegue de la punta de la rama por defecto, sin `ref`, está al día
+  data.deploys = new Map([['production', { sha: 'r3' }]]);
+  assert.equal(compute(data, [], NOW).deploys.rows[0].state, 'current');
+  // un commit desplegado que no está cargado: no se sabe
+  data.deploys = new Map([['production', { sha: 'zz', ref: 'main' }]]);
+  assert.equal(compute(data, [], NOW).deploys.rows[0].state, 'unknown');
+  // sin carga de despliegues (otras fuentes), nada
+  delete data.deploys;
+  assert.equal(compute(data, [], NOW).deploys.total, 0);
+});

@@ -534,5 +534,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - OMC: plan=— · revisión=3 hallazgos LOW (1 arreglado: el commit del smoke ya no lleva una fecha futura; quedan sin cambio la nota de que la bitácora no estaba aún —se escribe en este paso— y «最近提交» en chino, aceptable) · verificación=PASS
 - Hoja de ruta: repuesta a 15 con el ítem 174 (Constelación: cuánto hace el último commit, otra parte del ítem 26).
 - Reclamo: loop/233, sin colisión
-- Validado: 606 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- Validado: 622 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 234, expansión: ítem 153 (Estado de los despliegues, primera entrega, Datos)

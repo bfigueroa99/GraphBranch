@@ -569,6 +569,8 @@ GB.i18n.define('hr', {
   'practice.ex8.goal': 'Želiš vidjeti bi li se feature spojio s main, ali bez zadržavanja rezultata. Počni s merge feature --no-commit, a zatim ga otkaži s merge --abort.',
   'practice.ex9.title': 'Suvišna oznaka i otkazani cherry-pick',
   'practice.ex9.goal': 'Netko je prerano postavio oznaku v2: izbriši je naredbom tag -d. Zatim pokušaj kopirati ispravak iz feature naredbom cherry-pick feature --no-commit i otkaži ga naredbom cherry-pick --abort.',
+  'practice.ex10.title': 'Poništi add i počisti',
+  'practice.ex10.goal': 'Slučajno si pokrenuo add .: debug.log je u pripremi, a dvije datoteke koje git ne prati samo stoje. Izvadi debug.log s restore --staged, pogledaj smeće s clean -n i obriši ga s clean -f. Zadrži promjenu u app.js.',
   'practice.share': 'Kopiraj poveznicu vježbe',
   'practice.link': 'Poveznica vježbe',
   'practice.copied': 'Poveznica kopirana.',

@@ -561,6 +561,8 @@ GB.i18n.define('ms', {
   'practice.ex8.goal': 'Anda mahu tahu sama ada feature boleh digabungkan ke main, tetapi tanpa menyimpan hasilnya. Mulakan dengan merge feature --no-commit, kemudian batalkan dengan merge --abort.',
   'practice.ex9.title': 'Tag berlebihan dan cherry-pick dibatalkan',
   'practice.ex9.goal': 'Seseorang meletakkan tag v2 terlalu awal: padamkannya dengan tag -d. Kemudian cuba salin pembetulan daripada feature dengan cherry-pick feature --no-commit dan batalkannya dengan cherry-pick --abort.',
+  'practice.ex10.title': 'Batalkan add dan bersihkan',
+  'practice.ex10.goal': 'Anda tersilap menjalankan add .: debug.log sudah dipentaskan dan ada dua fail yang tidak dijejak. Keluarkan debug.log dengan restore --staged, lihat sampahnya dengan clean -n, kemudian padam dengan clean -f. Kekalkan perubahan dalam app.js.',
   'practice.share': 'Salin pautan latihan',
   'practice.link': 'Pautan latihan',
   'practice.copied': 'Pautan disalin.',

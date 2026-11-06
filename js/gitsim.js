@@ -45,7 +45,10 @@
       this.branches = new Map(); // nombre -> sha
       this.tags = new Map(); // nombre -> sha
       this.head = { branch }; // { branch } o { sha } (desprendido)
-      this.work = []; // archivos con cambios sin commit, en orden de llegada
+      this.work = []; // archivos con cambios sin commit y sin preparar, en orden de llegada
+      this.staged = []; // { file, isNew }: lo preparado con add, a la espera del commit
+      this.untracked = []; // archivos nuevos que git no sigue (touch --new): clean los borra
+      this.cleans = 0; // cuántas veces clean -f borró archivos sin seguir
       this.stashes = []; // { files, branch, sha }, el más nuevo primero (stash@{0})
       this.merging = null; // { name, theirs } mientras una fusión (merge --no-commit) espera su commit
       this.aborts = 0; // cuántas fusiones se cancelaron con merge --abort
@@ -171,6 +174,7 @@
       const sha = this.make(message, this.headSha ? [this.headSha] : []);
       this.moveHead(sha);
       this.work = [];
+      this.staged = [];
       return sha;
     }
 
@@ -185,11 +189,27 @@
       return `${cmd}${args.length ? ` ${args.join(' ')}` : ''}`;
     }
 
+    /** Saca de lo preparado esos archivos: los cambiados vuelven a «sin preparar» y los nuevos a «sin seguir». */
+    unstage(files) {
+      for (const f of files) {
+        const i = this.staged.findIndex((s) => s.file === f);
+        if (i < 0) continue;
+        const [gone] = this.staged.splice(i, 1);
+        const list = gone.isNew ? this.untracked : this.work;
+        if (!list.includes(f)) list.push(f);
+      }
+    }
+
+    /** Los archivos con cambios sin commit, preparados o no (los sin seguir no cuentan). */
+    dirty() {
+      return [...new Set([...this.staged.map((s) => s.file), ...this.work])];
+    }
+
     /** Falla como git si hay cambios sin commit: en esta simulación, ir a otro commit siempre pisa los archivos cambiados. */
     needClean(verb) {
       if (this.picking) fail(`error: You have not concluded your ${this.picking.revert ? 'revert' : 'cherry-pick'} (${this.picking.revert ? 'REVERT_HEAD' : 'CHERRY_PICK_HEAD'} exists).\nPlease, commit your changes or use '${this.picking.revert ? 'revert' : 'cherry-pick'} --abort' before you ${verb === 'checkout' ? 'switch branches' : verb}.`);
-      if (!this.work.length) return;
-      fail(`error: Your local changes to the following files would be overwritten by ${verb}:\n${this.work.map((f) => `\t${f}`).join('\n')}\nPlease commit your changes or stash them before you ${verb === 'checkout' ? 'switch branches' : verb}.\nAborting`);
+      if (!this.dirty().length) return;
+      fail(`error: Your local changes to the following files would be overwritten by ${verb}:\n${this.dirty().map((f) => `\t${f}`).join('\n')}\nPlease commit your changes or stash them before you ${verb === 'checkout' ? 'switch branches' : verb}.\nAborting`);
     }
 
     /* ---------- los comandos ---------- */
@@ -260,7 +280,10 @@
         'reset [--soft|--mixed|--hard] <to>  move the branch back (HEAD~1, a sha, HEAD@{1}); --hard drops changes',
         'reflog                      where HEAD has been (HEAD@{n}): find a commit again after a reset --hard',
         'stash [list|pop|apply|drop] put uncommitted changes aside and bring them back',
-        'touch <file>                change a file (uncommitted work, for stash)',
+        'add <file|.>                prepare changes (and new files) for the next commit',
+        'restore --staged <file|.>   take a file back out of what is prepared',
+        'clean [-n|-f]               delete files git does not track (-n only lists them, -f deletes)',
+        'touch [--new] <file>        change a file (uncommitted work); --new makes an untracked one',
         'cherry-pick <commit>        copy one commit on top of the current branch (-n holds it until commit or --continue)',
         'cherry-pick --abort        cancel a cherry-pick that is waiting for its commit',
         'revert <commit>             undo a commit with a new one, keeping the history (-n holds it until commit or --continue)',
@@ -285,6 +308,7 @@
         const sha = this.make(text, old.parents);
         this.moveHead(sha);
         this.work = [];
+        this.staged = [];
         return [`[${this.head.branch || 'detached HEAD'} ${this.short(sha)}] ${text}`];
       }
       if (!msg || msg === true) fail('Aborting commit due to empty commit message.\n(use: commit -m "message")');
@@ -293,6 +317,7 @@
         const merged = this.make(msg, [this.headSha, theirs]);
         this.moveHead(merged);
         this.work = [];
+        this.staged = [];
         this.merging = null;
         return [`[${this.head.branch} ${this.short(merged)}] ${msg}`];
       }
@@ -310,16 +335,23 @@
         const verb = this.picking.revert ? 'revert' : 'cherry-pick';
         return [where, `You are currently ${this.picking.revert ? 'reverting' : 'cherry-picking'} commit ${this.short(this.picking.sha)}.`, `  (use "git ${verb} --continue" to commit it)`, `  (use "git ${verb} --abort" to cancel the ${verb} operation)`];
       }
-      if (!this.work.length) return [where, 'nothing to commit, working tree clean'];
-      return [where, 'Changes not staged for commit:', ...this.work.map((f) => `\tmodified:   ${f}`)];
+      if (!this.dirty().length && !this.untracked.length) return [where, 'nothing to commit, working tree clean'];
+      const out = [where];
+      if (this.staged.length) out.push('Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', ...this.staged.map((s) => `\t${s.isNew ? 'new file' : 'modified'}:   ${s.file}`));
+      if (this.work.length) out.push('Changes not staged for commit:', ...this.work.map((f) => `\tmodified:   ${f}`));
+      if (this.untracked.length) out.push('Untracked files:', ...this.untracked.map((f) => `\t${f}`));
+      return out;
     },
 
     touch(args) {
-      const { rest } = parse(args);
-      if (!rest.length) fail('usage: touch <file>');
+      const { flags, rest } = parse(args);
+      const fresh = !!(flags['--new'] || flags['-n']);
+      if (!rest.length) fail('usage: touch [--new] <file>');
       for (const f of rest) {
         if (!/^[\w][\w./-]{0,60}$/.test(f) || f.includes('..')) fail(`touch: invalid file name '${f}'`);
-        if (!this.work.includes(f)) this.work.push(f);
+        if (fresh) {
+          if (!this.untracked.includes(f) && !this.staged.some((s) => s.file === f)) this.untracked.push(f);
+        } else if (!this.work.includes(f)) this.work.push(f);
       }
       return [];
     },
@@ -336,12 +368,13 @@
         return i;
       };
       if (sub === 'push' || sub === 'save') {
-        if (!this.work.length) return ['No local changes to save'];
+        if (!this.dirty().length) return ['No local changes to save'];
         if (!this.headSha) fail('You do not have the initial commit yet');
         const branch = this.head.branch || '(no branch)';
         const line = typeof msg === 'string' && msg ? `On ${branch}: ${msg}` : `WIP on ${branch}: ${this.short(this.headSha)} ${this.commits.get(this.headSha).message}`;
-        this.stashes.unshift({ files: this.work, line });
+        this.stashes.unshift({ files: this.dirty(), line });
         this.work = [];
+        this.staged = [];
         return [`Saved working directory and index state ${line}`];
       }
       if (sub === 'list') return this.stashes.map((s, i) => `stash@{${i}}: ${s.line}`);
@@ -353,7 +386,7 @@
       if (sub === 'pop' || sub === 'apply') {
         const i = pick();
         const entry = this.stashes[i];
-        const clash = entry.files.filter((f) => this.work.includes(f));
+        const clash = entry.files.filter((f) => this.dirty().includes(f));
         if (clash.length) fail(`error: Your local changes to the following files would be overwritten by merge:\n${clash.map((f) => `\t${f}`).join('\n')}\nPlease commit your changes or stash them before you merge.\nAborting`);
         this.work = [...this.work, ...entry.files];
         const out = this.commands.status.call(this);
@@ -445,6 +478,7 @@
         if (!this.merging) fail('fatal: There is no merge to abort (MERGE_HEAD missing).');
         this.merging = null;
         this.work = [];
+        this.staged = [];
         this.aborts++;
         return [];
       }
@@ -500,7 +534,7 @@
       const onto = this.resolve(name);
       if (!onto) fail(`fatal: invalid upstream '${name}'`);
       const tip = this.headSha;
-      if (this.work.length) fail('error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.');
+      if (this.dirty().length) fail('error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.');
       if (this.isAncestor(onto, tip)) return [`Current branch ${this.head.branch} is up to date.`];
       if (this.isAncestor(tip, onto)) {
         this.moveHead(onto);
@@ -627,7 +661,10 @@
       const sha = this.resolve(to);
       if (!sha) fail(`fatal: ambiguous argument '${to}': unknown revision`);
       this.moveHead(sha);
-      if (flags['--hard']) this.work = [];
+      if (flags['--hard']) {
+        this.work = [];
+        this.staged = [];
+      } else if (!flags['--soft']) this.unstage(this.staged.map((s) => s.file));
       this.merging = null;
       this.picking = null;
       if (flags['--hard']) return [`HEAD is now at ${this.short(sha)} ${this.commits.get(sha).message}`];
@@ -695,10 +732,39 @@
     return Repo.prototype.commands.checkout.call(this, [target]);
   };
 
+  /** `add <archivo>…` o `add .` prepara los cambios (y los archivos nuevos) para el próximo commit. */
+  Repo.prototype.commands.add = function (args) {
+    const { rest } = parse(args);
+    if (!rest.length) return ['Nothing specified, nothing added.', 'hint: Maybe you wanted to say \'git add .\'?'];
+    const all = rest.includes('.');
+    const known = new Set([...this.work, ...this.untracked]);
+    for (const f of rest) if (f !== '.' && !known.has(f) && !this.staged.some((s) => s.file === f)) fail(`fatal: pathspec '${f}' did not match any files`);
+    for (const f of all ? [...known] : rest) {
+      if (this.staged.some((s) => s.file === f)) continue;
+      const isNew = this.untracked.includes(f);
+      this.work = this.work.filter((w) => w !== f);
+      this.untracked = this.untracked.filter((u) => u !== f);
+      if (isNew || known.has(f)) this.staged.push({ file: f, isNew });
+    }
+    return [];
+  };
+
+  /** `clean -n` lista lo que borraría, `clean -f` lo borra: solo archivos sin seguir; nunca lo preparado ni lo cambiado. */
+  Repo.prototype.commands.clean = function (args) {
+    const { flags } = parse(args);
+    const dry = !!(flags['-n'] || flags['--dry-run']);
+    if (!dry && !flags['-f'] && !flags['--force']) fail('fatal: clean.requireForce defaults to true and neither -i, -n, nor -f given; refusing to clean');
+    if (dry) return this.untracked.map((f) => `Would remove ${f}`);
+    const gone = this.untracked;
+    this.untracked = [];
+    if (gone.length) this.cleans++;
+    return gone.map((f) => `Removing ${f}`);
+  };
+
   /** `restore <archivo>…` o `restore .` deja los archivos como en HEAD: tira los cambios sin commit de esos archivos. */
   Repo.prototype.commands.restore = function (args) {
     const { flags, rest } = parse(args);
-    if (flags['--staged'] || flags['-S']) fail('error: this practice has no staging area: restore works on files with changes (touch <file>)');
+    const staged = !!(flags['--staged'] || flags['-S']);
     const source = Object.keys(flags).find((f) => f.startsWith('--source='));
     const from = source ? this.resolve(source.slice(9)) : this.headSha;
     if (!from) fail(`fatal: could not resolve ${source.slice(9)}`);
@@ -706,6 +772,13 @@
     if (!this.headSha) fail('fatal: could not resolve HEAD');
     for (const f of rest) {
       if (f !== '.' && (!/^[\w][\w./-]{0,60}$/.test(f) || f.includes('..'))) fail(`error: pathspec '${f}' did not match any file(s) known to git`);
+    }
+    if (staged) {
+      // restore --staged: lo preparado vuelve a su sitio, sin tocar los archivos
+      const known = new Set(this.staged.map((x) => x.file));
+      for (const f of rest) if (f !== '.' && !known.has(f)) fail(`error: pathspec '${f}' did not match any file(s) known to git`);
+      this.unstage(rest.includes('.') ? [...known] : rest);
+      return [];
     }
     if (from !== this.headSha) {
       // otra fuente que HEAD: los archivos quedan distintos de HEAD, o sea cambiados sin commit
@@ -844,6 +917,19 @@
         const feature = r.branches.get('feature');
         // la etiqueta puesta de más se borró, el cherry-pick se probó y se canceló: main y feature intactas y nada a medias
         return !!feature && !r.tags.has('v2') && r.pickAborts > 0 && !r.picking && r.head.branch === 'main' && r.log(main).length === BASE.length && !r.isAncestor(feature, main);
+      },
+    },
+    {
+      id: 'clean',
+      setup: (r) => {
+        r.work = ['app.js'];
+        r.staged = [{ file: 'debug.log', isNew: true }];
+        r.untracked = ['tmp.txt', 'notes.tmp'];
+      },
+      done: (r) => {
+        const main = r.branches.get('main');
+        // lo preparado por error salió, lo que git no seguía se borró con clean y el cambio de verdad sigue ahí, sin commits de más
+        return !!main && r.cleans > 0 && !r.staged.length && !r.untracked.length && r.work.join() === 'app.js' && r.log(main).length === BASE.length;
       },
     },
   ];

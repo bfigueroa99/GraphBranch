@@ -186,7 +186,7 @@ test('switch y restore: solo ramas, desprender a propósito y tirar cambios sin 
   assert.ok(r.run('restore a.txt').ok);
   assert.equal(r.work.join(), 'b.txt');
   assert.equal(r.run('restore').ok, false);
-  assert.equal(r.run('restore --staged b.txt').ok, false);
+  assert.equal(r.run('restore --staged b.txt').ok, false, 'b.txt no está preparado');
   assert.equal(r.run('restore ../x').ok, false);
   assert.ok(r.run('restore .').ok);
   assert.equal(r.work.length, 0);
@@ -292,6 +292,7 @@ test('cada ejercicio parte sin resolver y se resuelve con sus comandos', () => {
     ['stash', 'checkout main', 'commit -m "Fix login redirect"', 'checkout feature', 'stash pop'],
     ['merge feature --no-commit', 'merge --abort'],
     ['tag -d v2', 'cherry-pick feature --no-commit', 'cherry-pick --abort'],
+    ['restore --staged debug.log', 'clean -n', 'clean -f'],
   ];
   assert.equal(solutions.length, EXERCISES.length);
   EXERCISES.forEach((ex, i) => {
@@ -450,7 +451,7 @@ test('la práctica dice «rama renombrada» en el panel, no una borrada y otra c
 
 test('los números de la URL piden un ejercicio de la lista; lo demás se descarta', () => {
   assert.deepEqual(plain(decodeExercise('3')), { index: 2 });
-  for (const bad of ['0', '10', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
+  for (const bad of ['0', '11', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
 });
 
 test('un ejercicio propio mal hecho no entra: sin meta, condición inventada, comando que falla o demasiados', () => {
@@ -818,4 +819,56 @@ test('reflog anota el cambio de rama y reset --mixed deja los cambios sin commit
   assert.equal(r.run('reset --soft --hard HEAD').ok, false, 'los modos no se mezclan');
   assert.ok(r.run('reset --hard').ok);
   assert.deepEqual(plain(r.work), []);
+});
+
+test('add, restore --staged y clean: preparar, sacar y borrar lo que git no sigue', () => {
+  const r = fresh();
+  run(r, 'touch a.txt', 'touch --new n.txt');
+  assert.match(plain(r.run('status').lines).join('\n'), /Untracked files:[\s\S]*n\.txt/);
+  assert.equal(r.run('add nope.txt').ok, false);
+  assert.ok(r.run('add .').ok);
+  const st = plain(r.run('status').lines).join('\n');
+  assert.match(st, /Changes to be committed:/);
+  assert.match(st, /modified:   a\.txt/);
+  assert.match(st, /new file:   n\.txt/);
+  assert.equal(r.run('rebase main').ok, false, 'lo preparado también bloquea el rebase');
+  assert.equal(r.run('restore --staged nope.txt').ok, false);
+  assert.ok(r.run('restore --staged n.txt').ok);
+  assert.equal(r.staged.map((s) => s.file).join(), 'a.txt');
+  assert.equal(r.untracked.join(), 'n.txt', 'lo nuevo vuelve a «sin seguir»');
+  assert.ok(r.run('restore --staged .').ok);
+  assert.equal(r.work.join(), 'a.txt', 'lo cambiado vuelve a «sin preparar»');
+  // clean pide -f y no toca lo cambiado
+  const refuse = r.run('clean');
+  assert.equal(refuse.ok, false);
+  assert.match(refuse.lines[0], /requireForce/);
+  assert.deepEqual(plain(r.run('clean -n').lines), ['Would remove n.txt']);
+  assert.equal(r.untracked.length, 1, '-n no borra');
+  assert.deepEqual(plain(r.run('clean -f').lines), ['Removing n.txt']);
+  assert.equal(r.untracked.length, 0);
+  assert.equal(r.work.join(), 'a.txt');
+  // commit se lleva lo preparado y deja lo sin seguir; stash guarda lo preparado y reset --hard lo tira
+  run(r, 'touch --new k.txt', 'add a.txt', 'stash');
+  assert.equal(r.dirty().length, 0);
+  run(r, 'stash pop');
+  assert.equal(r.work.join(), 'a.txt');
+  run(r, 'add a.txt', 'reset');
+  assert.equal(r.work.join(), 'a.txt', 'reset mixto saca lo preparado');
+  run(r, 'add a.txt', 'reset --hard');
+  assert.equal(r.dirty().length, 0);
+  assert.equal(r.untracked.join(), 'k.txt');
+});
+
+test('el ejercicio de limpiar no se da por resuelto con el atajo equivocado', () => {
+  const ex = EXERCISES.find((e) => e.id === 'clean');
+  const i = EXERCISES.indexOf(ex);
+  const hard = start(i, NOW);
+  run(hard, 'reset --hard', 'clean -f');
+  assert.equal(ex.done(hard), false, 'reset --hard tira también el cambio de app.js');
+  const noClean = start(i, NOW);
+  run(noClean, 'restore --staged debug.log');
+  assert.equal(ex.done(noClean), false, 'sin clean -f quedan archivos sin seguir');
+  const committed = start(i, NOW);
+  run(committed, 'restore --staged debug.log', 'clean -f', 'commit -m "x"');
+  assert.equal(ex.done(committed), false, 'un commit de más no es la solución');
 });

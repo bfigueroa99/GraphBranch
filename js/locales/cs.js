@@ -572,6 +572,8 @@ GB.i18n.define('cs', {
   'practice.ex8.goal': 'Chcete zjistit, zda by se feature sloučila do main, ale výsledek si nechat nechcete. Začněte příkazem merge feature --no-commit a zrušte ho příkazem merge --abort.',
   'practice.ex9.title': 'Zbytečný tag a zrušený cherry-pick',
   'practice.ex9.goal': 'Někdo dal tag v2 příliš brzy: smaž ho příkazem tag -d. Pak zkus zkopírovat opravu z feature pomocí cherry-pick feature --no-commit a zruš ji příkazem cherry-pick --abort.',
+  'practice.ex10.title': 'Vrátit add a uklidit',
+  'practice.ex10.goal': 'Omylem jsi spustil add .: debug.log je připravený a poletují tu dva nesledované soubory. Vyndej debug.log přes restore --staged, odpad si prohlédni přes clean -n a smaž ho přes clean -f. Změnu v app.js ponech.',
   'practice.share': 'Zkopírovat odkaz na úlohu',
   'practice.link': 'Odkaz na úlohu',
   'practice.copied': 'Odkaz zkopírován.',

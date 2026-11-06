@@ -562,6 +562,8 @@ GB.i18n.define('fr', {
   'practice.ex8.goal': 'Vous voulez voir si feature fusionnerait dans main, sans garder le résultat. Lancez merge feature --no-commit, puis annulez avec merge --abort.',
   'practice.ex9.title': 'Tag en trop et cherry-pick annulé',
   'practice.ex9.goal': 'Quelqu\'un a posé le tag v2 trop tôt : supprime-le avec tag -d. Essaie ensuite de copier le correctif de feature avec cherry-pick feature --no-commit, puis annule-le avec cherry-pick --abort.',
+  'practice.ex10.title': 'Annuler un add et nettoyer',
+  'practice.ex10.goal': 'Tu as lancé add . par erreur : debug.log est indexé et deux fichiers non suivis traînent. Retire debug.log avec restore --staged, regarde les déchets avec clean -n puis supprime-les avec clean -f. Garde la modification d\'app.js.',
   'practice.share': 'Copier le lien de l\'exercice',
   'practice.link': 'Lien de l\'exercice',
   'practice.copied': 'Lien copié.',

@@ -562,6 +562,8 @@ GB.i18n.define('nl', {
   'practice.ex8.goal': 'Je wilt zien of feature in main zou mergen, maar het resultaat niet houden. Begin met merge feature --no-commit en annuleer met merge --abort.',
   'practice.ex9.title': 'Overbodige tag en afgebroken cherry-pick',
   'practice.ex9.goal': 'Iemand heeft de tag v2 te vroeg gezet: verwijder hem met tag -d. Probeer daarna de fix van feature te kopiëren met cherry-pick feature --no-commit en breek af met cherry-pick --abort.',
+  'practice.ex10.title': 'Een add ongedaan maken en opruimen',
+  'practice.ex10.goal': 'Je voerde per ongeluk add . uit: debug.log staat klaar voor de commit en er slingeren twee niet-gevolgde bestanden rond. Haal debug.log eruit met restore --staged, bekijk de rommel met clean -n en verwijder hem met clean -f. Houd de wijziging in app.js.',
   'practice.share': 'Link van de oefening kopiëren',
   'practice.link': 'Link van de oefening',
   'practice.copied': 'Link gekopieerd.',

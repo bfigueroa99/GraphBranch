@@ -618,6 +618,8 @@ GB.i18n.define('he', {
   'practice.ex8.goal': 'אתם רוצים לראות אם feature תתמזג ל־main, בלי לשמור את התוצאה. התחילו עם merge feature --no-commit ובטלו עם merge --abort.',
   'practice.ex9.title': 'תג מיותר ו-cherry-pick שבוטל',
   'practice.ex9.goal': 'מישהו הוסיף את התג v2 מוקדם מדי: מחקו אותו עם tag -d. אחר כך נסו להעתיק את התיקון מ-feature עם cherry-pick feature --no-commit ובטלו אותו עם cherry-pick --abort.',
+  'practice.ex10.title': 'ביטול add וניקוי',
+  'practice.ex10.goal': 'הרצת add . בטעות: debug.log הוכנס לאזור ההכנה ויש שני קבצים שאינם במעקב. הוציאו את debug.log עם restore --staged, הציצו בפסולת עם clean -n ומחקו אותה עם clean -f. השאירו את השינוי ב-app.js.',
   'practice.share': 'העתקת קישור התרגיל',
   'practice.link': 'קישור התרגיל',
   'practice.copied': 'הקישור הועתק.',

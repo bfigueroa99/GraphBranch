@@ -572,6 +572,8 @@ GB.i18n.define('pl', {
   'practice.ex8.goal': 'Chcesz sprawdzić, czy feature scaliłaby się z main, ale bez zachowywania wyniku. Zacznij od merge feature --no-commit i anuluj poleceniem merge --abort.',
   'practice.ex9.title': 'Zbędny tag i anulowany cherry-pick',
   'practice.ex9.goal': 'Ktoś za wcześnie dodał tag v2: usuń go poleceniem tag -d. Potem spróbuj skopiować poprawkę z feature poleceniem cherry-pick feature --no-commit i anuluj ją poleceniem cherry-pick --abort.',
+  'practice.ex10.title': 'Cofnij add i posprzątaj',
+  'practice.ex10.goal': 'Przez pomyłkę uruchomiono add .: debug.log trafił do poczekalni, a dwa nieśledzone pliki leżą luzem. Wyjmij debug.log przez restore --staged, obejrzyj śmieci przez clean -n i usuń je przez clean -f. Zostaw zmianę w app.js.',
   'practice.share': 'Kopiuj link do ćwiczenia',
   'practice.link': 'Link do ćwiczenia',
   'practice.copied': 'Skopiowano link.',

@@ -561,6 +561,8 @@ GB.i18n.define('el', {
   'practice.ex8.goal': 'Θέλεις να δεις αν το feature θα συγχωνευόταν στο main, χωρίς να κρατήσεις το αποτέλεσμα. Ξεκίνα με merge feature --no-commit και ακύρωσέ την με merge --abort.',
   'practice.ex9.title': 'Περιττή ετικέτα και ακυρωμένο cherry-pick',
   'practice.ex9.goal': 'Κάποιος έβαλε την ετικέτα v2 νωρίς: διέγραψέ την με tag -d. Μετά δοκίμασε να αντιγράψεις τη διόρθωση από το feature με cherry-pick feature --no-commit και ακύρωσέ την με cherry-pick --abort.',
+  'practice.ex10.title': 'Αναίρεση add και καθαρισμός',
+  'practice.ex10.goal': 'Έτρεξες add . κατά λάθος: το debug.log είναι έτοιμο για commit και υπάρχουν δύο αρχεία που το git δεν παρακολουθεί. Βγάλε το debug.log με restore --staged, δες τα σκουπίδια με clean -n και σβήσε τα με clean -f. Κράτα την αλλαγή στο app.js.',
   'practice.share': 'Αντιγραφή συνδέσμου άσκησης',
   'practice.link': 'Σύνδεσμος άσκησης',
   'practice.copied': 'Ο σύνδεσμος αντιγράφηκε.',

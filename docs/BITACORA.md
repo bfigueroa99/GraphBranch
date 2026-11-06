@@ -3645,3 +3645,125 @@ bitácoras juntas (la rotación de los subtipos de mantenimiento, la numeración
   sin consultas nuevas.
 - Validado: 573 pruebas (`node --test`, ya sobre las iteraciones 206 y 207), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. Electron no estaba en la sesión (su instalador falla con el proxy): se bajó el zip de la 45.2.1 con `curl`, se comprobó su SHA-256 contra `SHASUMS256.txt` y se extrajo como lo hace el instalador. La primera puerta cayó solo en «editar el código» (intermitente en la sesión cloud, ya anotado en la iteración 200; no pasa por nada de esto); las tres siguientes, enteras.
 - **Siguiente:** iteración 208, expansión: ítem 150 (App móvil, primera entrega: compartir hacia la PWA, Plataformas)
+
+### 2026-11-05 · Iteración 208 · Expansión · Plataformas
+
+- **Capacidad nueva: compartir hacia la PWA** (ítem 150 de la hoja de ruta, parte del mapa: Plataformas). `manifest.webmanifest` declara `share_target` (GET a `./` con `shared_title`, `shared_text` y `shared_url`, nombres propios para no chocar con `?title=`); `U.sharedRepo` (`js/util.js`) toma el primer enlace http(s) de esos campos cuyo host es exactamente el de un servicio que se sigue (sin las páginas propias de github.com como `orgs/` o `settings/`) y que `parseRepo` acepta; `js/app.js` lo pone primero entre los repos de la URL y quita los `shared_*` de la dirección. Sin consultas nuevas ni CSP nueva; sin conexión abre igual (el service worker sirve `index.html` con cualquier query).
+- **Pruebas que fallan sin la capacidad:** `node --test tools/pwa.test.mjs` («compartir hacia la PWA…») → sin `share_target` ni `U.sharedRepo`; paso del smoke «compartir hacia la PWA: el enlace dentro del texto abre ese repo y sale de la dirección».
+- README: Instalable y sin conexión, la estructura, Límites conocidos y Seguridad.
+- QA: enlaces de las cinco plataformas, dentro de un texto con puntuación (también de ancho completo), hosts parecidos, gist y páginas propias de GitHub, `javascript:` y nada compartido (prueba); a mano con Playwright contra `node e2e/serve.mjs 4173`: la pestaña abre, se guarda y la dirección queda en `?repo=ana/notas`, sin errores de consola; auditoría en la puerta.
+- Skills: no aplica: la búsqueda con `npx skills@1.7.4 find` fue denegada por el clasificador de permisos de la sesión; el `share_target` lo cubren el manifiesto y las reglas del repo.
+- Arena: no aplica: una sola forma obvia (GET a la propia página, la única que funciona sin servidor y sin conexión).
+- OMC: plan=— · revisión=5 hallazgos (3 arreglados: host exacto y páginas propias de GitHub, MEDIUM; hosts parecidos y puntuación de ancho completo, LOW; quedan 2 LOW documentados: desplazar un repo guardado con 10 pestañas, como `?repo=`, y el recorte a 4.000 caracteres) · verificación=PASS
+- Reclamo: loop/208, sin colisión
+- Validado: 574 pruebas (`node --test`, ya sobre el #264), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (la primera corrida falló en el smoke «vista de texto: H oculta una rama…», ajeno al cambio: anotado en el pendiente 1).
+- **Siguiente:** iteración 209, expansión: ítem 151 (Más de 10 repos: subir el tope a 20, Escala)
+
+### 2026-11-05 · Iteración 209 · Expansión · Escala
+
+- **Capacidad nueva: hasta 20 repos a la vez** (ítem 151 de la hoja de ruta, parte del ítem 26: Escala). `MAX_REPOS` pasa de 10 a 20: las pestañas, `org:`/`@usuario`, los repos guardados y de la URL, y la constelación admiten 20 (el reparto de cuota de la API es el que ya había: `share` por pestaña). La vista conjunta avisa en su cabecera («más de 1.500 ramas entre todos: la vista puede ir lenta, cierra algún repo», `all.heavy` en los 40 idiomas) cuando la suma de ramas pasa `GB.overview.HEAVY_BRANCHES`.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/overview.test.mjs` («heavy…») y `tools/constellation.test.mjs` («20 repos (el tope)…»); el paso del smoke «se siguen hasta 20 repos a la vez» (20 pestañas, la 21 se rechaza, 20 galaxias, el enlace a otro repo desplaza al último).
+- README: Varios repos a la vez, Una organización entera, Límites conocidos (tope de 20 pestañas, constelación y resumen de la organización).
+- QA: el smoke con 20 pestañas (constelación llena, orden, filtro, `?recent`); a mano con Playwright, 20 repos que dan 404: la constelación pierde galaxias a medida que cada pestaña termina de cargar (comportamiento previo, ahora visible por el escalonado de 700 ms × 20), por eso el paso `?recent=30` pide «alguna» y no «las 20»; auditoría en la puerta.
+- Skills: no aplica: subir un tope y un aviso de texto no entran en un dominio con guía experta.
+- Arena: no aplica: una sola forma obvia (la constante y la suma de ramas que la vista ya calculaba).
+- OMC: no disponible (la sesión programada no corrió plan ni revisión; cambio de una constante, un aviso y sus pruebas)
+- Reclamo: loop/209, sin colisión
+- Validado: 576 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 210, expansión: ítem 152 (CI de GitLab, primera entrega, Datos)
+
+### 2026-11-05 · Iteración 210 · Expansión · Datos
+
+- **Capacidad nueva: CI de GitLab, primera entrega** (ítem 152 de la hoja de ruta, parte del mapa: Datos). `GitLabSource.syncCiGitlab` pregunta `/projects/:id/pipelines?ref=…&per_page=1` por la rama por defecto, las fijadas y las de una MR abierta (hasta 6 por ciclo, solo las que se movieron) y deja el estado ('success', 'failure', 'pending'; `skipped` y `manual` no cuentan) en el mismo `data.ci` que GitHub: la marca del grafo, el tooltip, la salud, la vista de texto y el aviso `ci-fail` de la rama por defecto salen solos. Un pipeline de otro commit que la cabeza no cuenta y se vuelve a preguntar; sin pipelines (403/404) deja de preguntar; un proyecto privado sin token no pregunta.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/gitlab.test.mjs` («CI: el estado del pipeline…» y «CI: una rama con MR abierta también…») → `data.ci.get('main')` da `undefined` en vez de `success`; paso del smoke «CI de GitLab: la rama por defecto lleva la marca de su último pipeline».
+- README: También GitLab y Límites conocidos (el CI de GitLab).
+- QA: marca de CI en 2D con la API simulada (success en main, pending en la rama de la MR; a mano con Playwright salen las dos marcas); 40 idiomas: sin textos nuevos (reusa `ci.*` y `act.ciFailed`); sin servidor nuevo en la CSP; auditoría: ver Validado.
+- Skills: no aplica: una consulta REST más en una fuente que ya las hace; la API de pipelines no pide una guía experta.
+- Arena: no aplica: una sola forma obvia (la misma de `syncCiRest`, con el endpoint de GitLab).
+- OMC: no disponible (la sesión programada no corrió plan ni revisión; entrega de esfuerzo 2 en un solo frente)
+- Reclamo: loop/210, sin colisión
+- Validado: 578 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (el smoke falló una vez, antes, en «se siguen hasta 20 repos a la vez: ?recent=…», ajeno al cambio, y pasó en la puerta).
+- **Siguiente:** iteración 211, mantenimiento · Seguridad: auditoría (sin pendientes de Seguridad)
+
+### 2026-11-05 · Iteración 211 · Mantenimiento · Seguridad
+
+- **Auditoría de Seguridad: Electron sube de 45.2.1 a 45.2.3, la última estable.** El protocolo entero se revisó contra el código de `dev`: CSP sin directivas de más; los `innerHTML` con texto de afuera pasan por `U.esc`/`U.safeUrl` (el HTML de la bitácora ya filtra las URL con `isUrl` en origen); cada token va solo a su API (`Authorization`, nunca a la URL; `sw.js` no guarda respuestas de la API); en `electron/` quedan el aislamiento de contexto y el `sandbox`, el preload mínimo, navegación y ventanas nuevas bloqueadas (`openOutside` solo https), descargas solo de `blob:app://graphbranch/`, webhooks con `redirect: 'error'`, `serve` sin salir de `PUBLIC`, los `git` locales con `execFile` y SHA validados; `npm audit --omit=dev` da 0. El único hallazgo real fue la versión. Se probó (y se descartó) que `git diff --name-status/--numstat` corran el `textconv` del repo: no lo corren (era `git log -p` en el ensayo), así que no hay cambio en `electron/git.js`.
+- **Reproducción:** `npm view electron version` → `45.2.3`, con `package.json` en `45.2.1` (dos parches atrás).
+- **Hallazgos:** 1 nuevo (el de Electron, arreglado en esta iteración), 0 a la base de la auditoría. No se cargan 3 pendientes porque no se encontraron 3 reales.
+- **Pruebas que fallan sin el arreglo:** ninguna; las e2e de escritorio corren con la versión instalada (45.2.3) y la comparación con la última estable es manual (como en la iteración 179).
+- README: sin cambios (no nombra la versión).
+- QA: Seguridad 1 a 5 (CSP, `innerHTML`, tokens, escritorio, versión de Electron frente a la última estable); auditoría: no toca la página.
+- Skills: no aplica: subida de versión de una dependencia ya existente.
+- Arena: no aplica: una sola forma obvia.
+- OMC: no disponible (la sesión programada no corrió revisión; subida de un parche de la dependencia, sin tocar código)
+- Reclamo: loop/211, sin colisión
+- Validado: 578 pruebas (`node --test`), smoke, i18n (0 errores) y 28 e2e en verde (con Electron 45.2.3). Las dos primeras corridas del smoke fallaron en el mismo paso ajeno, «se siguen hasta 20 repos a la vez: ?recent=0.000001: 1 galaxias, se esperaban ninguna»: con 20 pestañas escalonadas, las que aún cargan no se descartan y el paso esperaba solo 10 s; ahora espera hasta 30 s (`tools/smoke.mjs`), y la tercera pasó entera.
+- **Siguiente:** iteración 212, expansión: ítem 149 (Extensión de Chrome y Firefox, primera entrega, Plataformas)
+
+### 2026-11-05 · Iteración 212 · Expansión · Plataformas
+
+- **Capacidad nueva: extensión de Chrome y Firefox, primera entrega** (ítem 149 de la hoja de ruta, parte del mapa: Plataformas). `browser-extension/` (Manifest V3, sin dependencias, CDN ni compilación): un script de contenido en `https://github.com/*` añade «Abrir en GraphBranch» en las páginas de un repo, con el enlace `…/GraphBranch/?repo=dueño/repo` a la web publicada (`repo.js` saca el repo de la URL, sin las páginas propias de GitHub, y lo codifica). Sin permisos ni `host_permissions`; solo lee `location.href`. Carpeta lista para cargar en Chrome y Firefox, sin publicar en las tiendas (de Benjamin). El resto (GitLab, Codeberg y Bitbucket) queda como ítem 155.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/browser-extension.test.mjs` (4 pruebas: manifiesto sin permisos y solo github.com, código sin red ni almacenamiento, `repoFromUrl` con perfiles, `settings`, hosts parecidos, http y puertos, y `appUrl`).
+- README: lista de funciones, sección «Extensión de Chrome y Firefox», estructura, Límites conocidos y Seguridad.
+- QA: a mano con Playwright (github.com simulado): el botón sale en `/o/r/pull/3` con el enlace correcto, desaparece en `/settings/profile` y reaparece en `/a/b` al navegar sin recargar, sin errores de consola; sin textos de la app (no hay i18n nuevo); no toca la página: auditoría no aplica.
+- Skills: no aplica: un manifiesto MV3 de un script de contenido, sin permisos, entra en lo que cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (script de contenido que arma un enlace; sin permisos no hay otra).
+- OMC: no disponible (la sesión programada no corrió plan ni revisión; la primera entrega es un solo frente, sin permisos, sin red y sin tocar `js/` ni `electron/`)
+- Reclamo: loop/212, sin colisión
+- Validado: 582 pruebas (`node --test`), smoke (170 pasos) e i18n (0 errores) en verde; auditoría y e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 213, expansión: ítem 140 (Vista de texto: autor de la punta de cada rama, Público)
+
+### 2026-11-05 · Iteración 213 · Expansión · Público
+
+- **Capacidad nueva: la vista de texto dice el autor de la punta de cada rama** (ítem 140 de la hoja de ruta, parte del ítem 33; parte del mapa: Público). `GB.textview.build` suma `tipAuthor` a cada rama (el nombre del autor del commit de su punta, o su usuario si no hay nombre; vacío si la fuente no lo trae) con lo ya cargado y sin consultas; con el filtro por ruta sigue siendo la punta. El nombre accesible de la rama lo dice como «último commit de Ana» (clave `textview.tipBy`, en los 40 idiomas).
+- **Pruebas que fallan sin la capacidad:** `node --test tools/textview.test.mjs` («cada rama dice quién hizo el commit de su punta…») → `tipAuthor` da `undefined` en vez de `'Ana'`; paso del smoke de la vista de texto «cada rama dice … quién hizo el commit de su punta» (y el de la rama quieta, que compara el nombre accesible entero, pasa a esperarlo).
+- README: Vista de texto (lista de funciones), Límites conocidos (es el autor del commit, no quien empujó la rama).
+- QA: vista de texto en la demo con el smoke (nombre accesible de cada rama frente al autor de su primer commit; sin textos sin resolver); 40 idiomas (`check-i18n`, 0 errores; «commit» unificado con el término que ya usa cada idioma tras la revisión); auditoría: ver Validado.
+- Skills: no aplica: un texto más en un `aria-label` que ya existe; la accesibilidad de la vista la cubren el smoke y el Protocolo de QA.
+- Arena: no aplica: una sola forma obvia (el autor del commit de la punta, ya cargado).
+- OMC: plan=— · revisión=6 hallazgos (6 arreglados: comentario que contradecía el README, el paso del smoke sin regex frágil ni prefijos, «commit» en bg, hi, ta, th y bn, el orden en bn y las comas dentro de fi, hr, pl, ru, uk y tr) · verificación=PASS
+- Reclamo: loop/213, sin colisión
+- Validado: 583 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde. La primera corrida falló en el smoke «una rama sin actividad hace más de 30 días…», que compara el nombre accesible entero y no esperaba el autor: del propio cambio, se ajustó a la frase nueva.
+- **Siguiente:** iteración 214, expansión: ítem 141 (Salud del repo: autores de commits por semana, Análisis)
+
+### 2026-11-05 · Iteración 214 · Expansión · Análisis
+
+- **Capacidad nueva: la salud del repo dice cuántos autores distintos hicieron commits cada semana** (ítem 141 de la hoja de ruta, parte del ítem 12). `GB.health.compute` suma `pace.authorWeeks`: las últimas 8 semanas (de la más vieja a la actual), cada una con cuántas personas distintas tienen un commit cargado en ella, con su usuario o, sin él, su nombre (sin distinguir mayúsculas, como la búsqueda por autor) y sin consultas nuevas. Un commit sin autor no suma. El panel lo muestra en `#hl-authorweeks` (clave `health.authorWeeks`, en los 40 idiomas) y se oculta si todas las semanas dan cero. Dice cuántas personas, nunca quiénes ni cuánto hizo cada una.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/health.test.mjs` («autores por semana…», y la del ritmo, que ahora compara `authorWeeks`) → `pace.authorWeeks is not iterable`; paso del smoke de la salud «los autores por semana no traen 8 cifras con algún autor» (y que ninguna semana tenga más autores que commits).
+- README: Salud del repo (lista de funciones) y Límites conocidos (cómo se identifica a un autor y cuándo cuenta de más o de menos).
+- QA: salud en la demo a mano con Playwright (`?demo=1&health=1`, español y árabe, 1280 y 320 px: la línea sale con 8 cifras, 8 autores frente a 23 commits esta semana, sin desborde ni errores de consola); 40 idiomas (`check-i18n`, 0 errores); auditoría: ver Validado.
+- Skills: no aplica: una cuenta más sobre los commits ya cargados en un panel que ya existe; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (agrupar los commits cargados por semana y contar autores distintos).
+- OMC: plan=— · revisión=3 hallazgos LOW (1 arreglado: el README dice también que un usuario y otra persona sin usuario con el mismo nombre cuentan una vez; los otros dos, aceptados: en un repo de una sola persona la línea repite su actividad, como la de commits, y la comparación del smoke con los commits es redundante con el paso anterior) · verificación=PASS
+- Reclamo: loop/214, sin colisión
+- Validado: 584 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 215, mantenimiento · Accesibilidad: pendiente 12 (La salud del repo repite cinco líneas casi iguales («… por semana, últimas 8 se…)
+
+### 2026-11-05 · Iteración 215 · Mantenimiento · Accesibilidad
+
+- **Arreglo: la salud del repo dice una sola vez el periodo de sus series por semana** (pendiente 12). Las nueve series del bloque de ritmo (PRs fusionados, abiertos y cerrados sin fusionar, issues cerrados y abiertos, ramas nuevas, commits, autores distintos y tags) van juntas en `#hl-weekly`, un grupo (`role="group"`, `aria-labelledby`) cuyo encabezado dice el periodo una vez («Últimas 8 semanas (de la más vieja a la actual)», clave nueva `health.weeksHead`); cada línea queda en «Commits por semana: 0 · … · 23». Las nueve claves se reescribieron en los 40 idiomas partiendo la frase que ya tenían (sin traducir de nuevo). `weeklyLines` (`js/app.js`) reemplaza los nueve bloques copiados; los ids de cada línea no cambian. La línea de despliegues de la entrega (DORA) va sola en su sección y queda igual. Los ceros siguen leyéndose uno por uno: resumirlos era la otra opción del pendiente y queda fuera.
+- **Reproducción:** Playwright, demo `?demo=1&health=1&lang=es`, sin el arreglo → sin `#hl-weekly[role=group]` y 9 líneas `#health .hl-line[id$=weeks]` con «últimas 8 semanas (…)» antes de sus cifras.
+- **Pruebas que fallan sin el arreglo:** paso del smoke «salud del repo: listas y ritmo…» → `las series por semana no van en un grupo con su encabezado` (con el arreglo exige el encabezado con el 8 y ninguna línea con una cifra antes de sus dos puntos).
+- README: Salud del repo (lista de funciones).
+- QA: salud en la demo a mano con Playwright (es, ja y ar, 320 y 1280 px: el grupo con su encabezado, 8 series, sin errores de consola; el desborde a 320 px, 28 px en español, es el del pendiente 11 y está igual sin el cambio); 40 idiomas (`check-i18n`, 0 errores, los mismos 39 avisos que en `dev`); auditoría: ver Validado.
+- Skills: no aplica: un grupo con encabezado en un panel que ya existe; la accesibilidad la cubren el Protocolo de QA y el smoke.
+- Arena: no aplica: una sola forma obvia (el periodo como encabezado del grupo, la primera opción del pendiente).
+- OMC: plan=— · revisión=3 hallazgos LOW (0 arreglados: el encabezado es un `<p>` y no un `<h4>`, aceptado porque el grupo ya lo nombra y un `h4` partiría la jerarquía del panel; «古い順から今週まで» en japonés viene tal cual de la frase anterior; el texto no es el «Por semana, …» que proponía el pendiente porque cada línea ya dice «por semana») · verificación=PASS
+- Reclamo: loop/215, sin colisión
+- Validado: 584 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 216, expansión: ítem 142 (Resumen de la semana: PRs fusionados por autor, Salidas)
+
+### 2026-11-05 · Iteración 216 · Expansión · Salidas
+
+- **Capacidad nueva: el resumen de la semana dice quién fusionó los pull requests** (ítem 142 de la hoja de ruta, parte del ítem 23). `GB.digest.compute` suma `mergers`: las cuentas que fusionaron los PRs de la semana (el actor de cada actividad `pr-merge` ya cargada: en GitHub, el autor del evento o quien lo fusionó según la API), cada PR una vez aunque llegue por el feed y por el sondeo (cuenta la primera copia que dice quién lo fusionó; el sondeo lo guarda en `mergedBy`, sin el respaldo de quien abrió el PR), hasta 5 y ordenadas por PRs y por nombre; un merge sin cuenta no suma. Sale como una línea bajo «Pull requests fusionados» en el Markdown (escapada) y en la imagen PNG (clave nueva `digest.mergers`, en los 40 idiomas). Sin consultas nuevas.
+- Hoja de ruta repuesta hasta 15: ítems 156 (SHA junto a cada commit del grafo 2D), 157 (Launchpad: fijar un PR), 158 (Launchpad: filtrar por persona), 159 (CI de GitLab en el resto de las ramas), 160 (token para un Forgejo o Gitea propio) y 161 (resumen de la organización: quién fusionó), puntuados con `a×i/e` y en la tabla de ideas de `docs/investigacion.md`.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/digest.test.mjs` («quién fusionó: cuenta los PRs de la semana por la cuenta que los fusionó…») → `Cannot read properties of undefined (reading 'total')`.
+- README: Salud del repo (resumen de la semana, lista de funciones), Límites conocidos (de dónde sale la cuenta que fusionó y qué no suma) y la estructura (`js/digest.js`).
+- QA: resumen de la semana en la demo a mano con Playwright (`?demo=1&health=1`, español y japonés a 1280 px y árabe a 320 px: «Quién fusionó: vrojas (2) · msoto (1)», sin desborde ni errores de consola); 40 idiomas (`check-i18n`, 0 errores, los mismos 39 avisos que en `dev`); auditoría: ver Validado.
+- Skills: no aplica: una línea más en un resumen que ya existe, con lo ya cargado; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (contar los `pr-merge` de la semana por su actor, como «Quién aportó» cuenta los commits).
+- OMC: plan=— · revisión=5 hallazgos (2 MEDIUM y 1 LOW arreglados: una copia del mismo PR sin cuenta ya no tapa a la que la trae; el sondeo guarda `mergedBy` aparte, así que quien abrió el PR no pasa por quien lo fusionó; el README nombra las fuentes y la excepción de Bitbucket Data Center. 2 LOW aceptados: el desempate distingue mayúsculas como «Quién aportó», y `md()` no escapa `&`, como antes) · verificación=PASS
+- Replica: paridad, sin pasada nueva (92,7/100, must hechos 13 de 13); ítems 156, 157 y 158 de lo que falta («should» y «could»), los demás del Mapa de alcance.
+- Reclamo: loop/216, sin colisión
+- Validado: 585 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 217, expansión: ítem 156 (Grafo 2D: el SHA junto a cada commit, Análisis)

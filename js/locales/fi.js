@@ -561,6 +561,8 @@ GB.i18n.define('fi', {
   'practice.ex8.goal': 'Haluat nähdä, yhdistyisikö feature main-haaraan, mutta et halua pitää tulosta. Aloita komennolla merge feature --no-commit ja peru se komennolla merge --abort.',
   'practice.ex9.title': 'Turha tagi ja peruttu cherry-pick',
   'practice.ex9.goal': 'Joku merkitsi tagin v2 liian aikaisin: poista se komennolla tag -d. Kokeile sitten kopioida korjaus haarasta feature komennolla cherry-pick feature --no-commit ja peruuta se komennolla cherry-pick --abort.',
+  'practice.ex10.title': 'Peru add ja siivoa',
+  'practice.ex10.goal': 'Ajoit vahingossa add .: debug.log on lisätty valmisteluun ja kaksi tiedostoa on seurannan ulkopuolella. Ota debug.log pois komennolla restore --staged, katso roskat komennolla clean -n ja poista ne komennolla clean -f. Säilytä app.js:n muutos.',
   'practice.share': 'Kopioi tehtävän linkki',
   'practice.link': 'Tehtävän linkki',
   'practice.copied': 'Linkki kopioitu.',

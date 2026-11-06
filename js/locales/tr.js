@@ -561,6 +561,8 @@ GB.i18n.define('tr', {
   'practice.ex8.goal': 'feature\'ın main ile birleşip birleşmeyeceğini görmek istiyorsun ama sonucu tutmak istemiyorsun. merge feature --no-commit ile başla, merge --abort ile iptal et.',
   'practice.ex9.title': 'Fazla etiket ve iptal edilen cherry-pick',
   'practice.ex9.goal': 'Biri v2 etiketini erken koymuş: tag -d ile sil. Sonra feature\'daki düzeltmeyi cherry-pick feature --no-commit ile kopyalamayı dene ve cherry-pick --abort ile iptal et.',
+  'practice.ex10.title': 'Bir add\'i geri al ve temizle',
+  'practice.ex10.goal': 'Yanlışlıkla add . çalıştırdın: debug.log hazırlığa alındı ve izlenmeyen iki dosya ortada duruyor. debug.log\'u restore --staged ile geri çıkar, çöpü clean -n ile gör ve clean -f ile sil. app.js\'deki değişikliği koru.',
   'practice.share': 'Alıştırma bağlantısını kopyala',
   'practice.link': 'Alıştırma bağlantısı',
   'practice.copied': 'Bağlantı kopyalandı.',

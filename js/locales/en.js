@@ -567,6 +567,8 @@ GB.i18n.define('en', {
   'practice.ex8.goal': 'You want to see whether feature would merge into main, but not keep the result. Start it with merge feature --no-commit, then cancel it with merge --abort.',
   'practice.ex9.title': 'Stray tag and a cancelled cherry-pick',
   'practice.ex9.goal': 'Someone tagged v2 too early: delete it with tag -d. Then try copying the fix from feature with cherry-pick feature --no-commit and cancel it with cherry-pick --abort.',
+  'practice.ex10.title': 'Unstage and clean',
+  'practice.ex10.goal': 'You ran add . by mistake: debug.log is staged and two untracked files are lying around. Take debug.log back out with restore --staged, look at the junk with clean -n, then delete it with clean -f. Keep the change in app.js.',
   'practice.share': 'Copy exercise link',
   'practice.link': 'Exercise link',
   'practice.copied': 'Link copied.',

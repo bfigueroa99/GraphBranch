@@ -561,6 +561,8 @@ GB.i18n.define('bg', {
   'practice.ex8.goal': 'Искате да видите дали feature ще се слее с main, но без да запазите резултата. Започнете с merge feature --no-commit и го отменете с merge --abort.',
   'practice.ex9.title': 'Излишен таг и отменен cherry-pick',
   'practice.ex9.goal': 'Някой е сложил тага v2 преждевременно: изтрий го с tag -d. После опитай да копираш поправката от feature с cherry-pick feature --no-commit и я отмени с cherry-pick --abort.',
+  'practice.ex10.title': 'Връщане на add и почистване',
+  'practice.ex10.goal': 'Изпълни add . по грешка: debug.log е подготвен и има два неследени файла. Извади debug.log с restore --staged, виж боклука с clean -n и го изтрий с clean -f. Запази промяната в app.js.',
   'practice.share': 'Копиране на връзката към упражнението',
   'practice.link': 'Връзка към упражнението',
   'practice.copied': 'Връзката е копирана.',

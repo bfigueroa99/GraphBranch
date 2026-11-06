@@ -561,6 +561,8 @@ GB.i18n.define('vi', {
   'practice.ex8.goal': 'Bạn muốn xem feature có merge được vào main không nhưng không giữ kết quả. Bắt đầu bằng merge feature --no-commit rồi hủy bằng merge --abort.',
   'practice.ex9.title': 'Tag thừa và cherry-pick bị hủy',
   'practice.ex9.goal': 'Ai đó đã đặt tag v2 quá sớm: hãy xóa nó bằng tag -d. Sau đó thử sao chép bản sửa từ feature bằng cherry-pick feature --no-commit rồi hủy bằng cherry-pick --abort.',
+  'practice.ex10.title': 'Hoàn tác add và dọn dẹp',
+  'practice.ex10.goal': 'Bạn lỡ chạy add .: debug.log đã vào vùng chuẩn bị và còn hai tệp chưa được theo dõi. Lấy debug.log ra bằng restore --staged, xem đống rác bằng clean -n rồi xóa bằng clean -f. Giữ lại thay đổi ở app.js.',
   'practice.share': 'Sao chép liên kết bài tập',
   'practice.link': 'Liên kết bài tập',
   'practice.copied': 'Đã sao chép liên kết.',

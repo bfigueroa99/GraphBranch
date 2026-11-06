@@ -561,6 +561,8 @@ GB.i18n.define('ko', {
   'practice.ex8.goal': 'feature가 main에 병합될지 확인하고 싶지만 결과는 남기고 싶지 않습니다. merge feature --no-commit으로 시작한 뒤 merge --abort로 취소하세요.',
   'practice.ex9.title': '불필요한 태그와 cherry-pick 취소',
   'practice.ex9.goal': '누군가 v2 태그를 너무 일찍 달았습니다. tag -d로 지우세요. 그다음 cherry-pick feature --no-commit으로 feature의 수정을 복사해 보고 cherry-pick --abort로 취소하세요.',
+  'practice.ex10.title': 'add 되돌리기와 정리',
+  'practice.ex10.goal': '실수로 add . 를 실행해 debug.log가 스테이지되고 추적되지 않는 파일 두 개가 남았습니다. restore --staged 로 debug.log를 빼고, clean -n 으로 쓰레기를 확인한 뒤 clean -f 로 지우세요. app.js의 변경은 그대로 두세요.',
   'practice.share': '연습 링크 복사',
   'practice.link': '연습 링크',
   'practice.copied': '링크를 복사했습니다.',

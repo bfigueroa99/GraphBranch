@@ -561,6 +561,8 @@ GB.i18n.define('ja', {
   'practice.ex8.goal': 'feature が main にマージできるか確かめたいが、結果は残したくありません。merge feature --no-commit で始め、merge --abort で取り消してください。',
   'practice.ex9.title': '余計なタグとcherry-pickの取り消し',
   'practice.ex9.goal': '誰かがタグ v2 を早く付けすぎました。tag -d で削除してください。次に cherry-pick feature --no-commit で feature の修正をコピーしてみて、cherry-pick --abort で取り消してください。',
+  'practice.ex10.title': 'addの取り消しとクリーン',
+  'practice.ex10.goal': 'うっかり add . を実行してしまい、debug.log がステージされ、追跡されていないファイルが2つ残っています。restore --staged で debug.log を外し、clean -n でごみを確認して、clean -f で削除してください。app.js の変更は残してください。',
   'practice.share': '演習のリンクをコピー',
   'practice.link': '演習のリンク',
   'practice.copied': 'リンクをコピーしました。',

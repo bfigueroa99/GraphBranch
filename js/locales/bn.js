@@ -561,6 +561,8 @@ GB.i18n.define('bn', {
   'practice.ex8.goal': 'feature, main-এ মার্জ হবে কি না দেখতে চান, কিন্তু ফলাফল রাখতে চান না। merge feature --no-commit দিয়ে শুরু করুন, তারপর merge --abort দিয়ে বাতিল করুন।',
   'practice.ex9.title': 'বাড়তি ট্যাগ ও বাতিল cherry-pick',
   'practice.ex9.goal': 'কেউ আগেভাগেই v2 ট্যাগ দিয়েছে: tag -d দিয়ে মুছে ফেলুন। তারপর cherry-pick feature --no-commit দিয়ে feature-এর সমাধানটি কপি করে দেখুন এবং cherry-pick --abort দিয়ে বাতিল করুন।',
+  'practice.ex10.title': 'add ফেরানো ও পরিষ্কার করা',
+  'practice.ex10.goal': 'ভুলে add . চালিয়েছ: debug.log স্টেজ হয়ে গেছে আর দুটি ট্র্যাক-না-করা ফাইল পড়ে আছে। restore --staged দিয়ে debug.log বের করো, clean -n দিয়ে জঞ্জাল দেখো, তারপর clean -f দিয়ে মুছে দাও। app.js-এর পরিবর্তন রেখে দাও।',
   'practice.share': 'অনুশীলনীর লিংক কপি করুন',
   'practice.link': 'অনুশীলনীর লিংক',
   'practice.copied': 'লিংক কপি হয়েছে।',

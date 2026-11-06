@@ -561,6 +561,8 @@ GB.i18n.define('da', {
   'practice.ex8.goal': 'Du vil se, om feature kan flettes ind i main, men uden at beholde resultatet. Start med merge feature --no-commit og annuller den med merge --abort.',
   'practice.ex9.title': 'Overflødigt tag og annulleret cherry-pick',
   'practice.ex9.goal': 'Nogen har sat tagget v2 for tidligt: slet det med tag -d. Prøv derefter at kopiere rettelsen fra feature med cherry-pick feature --no-commit og annuller den med cherry-pick --abort.',
+  'practice.ex10.title': 'Fortryd et add og ryd op',
+  'practice.ex10.goal': 'Du kørte add . ved en fejl: debug.log er stagelagt, og der ligger to filer, git ikke følger. Tag debug.log ud med restore --staged, se skraldet med clean -n og slet det med clean -f. Behold ændringen i app.js.',
   'practice.share': 'Kopiér opgavens link',
   'practice.link': 'Opgavens link',
   'practice.copied': 'Link kopieret.',

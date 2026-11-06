@@ -561,6 +561,8 @@ GB.i18n.define('hi', {
   'practice.ex8.goal': 'आप देखना चाहते हैं कि feature, main में मर्ज होगी या नहीं, पर नतीजा रखना नहीं चाहते। merge feature --no-commit से शुरू करें और merge --abort से रद्द करें।',
   'practice.ex9.title': 'फ़ालतू टैग और रद्द किया cherry-pick',
   'practice.ex9.goal': 'किसी ने टैग v2 समय से पहले लगा दिया: उसे tag -d से मिटाइए। फिर cherry-pick feature --no-commit से feature का सुधार कॉपी करके देखिए और cherry-pick --abort से रद्द कीजिए।',
+  'practice.ex10.title': 'add को पलटना और सफ़ाई',
+  'practice.ex10.goal': 'तुमने गलती से add . चला दिया: debug.log स्टेज हो गई है और दो अनट्रैक्ड फ़ाइलें पड़ी हैं। restore --staged से debug.log को बाहर निकालो, clean -n से कचरा देखो और clean -f से मिटा दो। app.js का बदलाव रहने दो।',
   'practice.share': 'अभ्यास का लिंक कॉपी करें',
   'practice.link': 'अभ्यास का लिंक',
   'practice.copied': 'लिंक कॉपी हो गया।',

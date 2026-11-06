@@ -561,6 +561,8 @@ GB.i18n.define('sv', {
   'practice.ex8.goal': 'Du vill se om feature går att slå ihop med main, men utan att behålla resultatet. Börja med merge feature --no-commit och avbryt med merge --abort.',
   'practice.ex9.title': 'Överflödig tagg och avbruten cherry-pick',
   'practice.ex9.goal': 'Någon satte taggen v2 för tidigt: ta bort den med tag -d. Prova sedan att kopiera rättningen från feature med cherry-pick feature --no-commit och avbryt med cherry-pick --abort.',
+  'practice.ex10.title': 'Ångra ett add och städa',
+  'practice.ex10.goal': 'Du körde add . av misstag: debug.log är stagead och två filer som git inte följer ligger kvar. Ta ut debug.log med restore --staged, titta på skräpet med clean -n och ta bort det med clean -f. Behåll ändringen i app.js.',
   'practice.share': 'Kopiera övningens länk',
   'practice.link': 'Övningens länk',
   'practice.copied': 'Länken har kopierats.',

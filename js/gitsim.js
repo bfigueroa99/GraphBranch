@@ -763,7 +763,8 @@
    *  `add -u` (`--update`) prepara solo lo cambiado que git ya sigue y deja fuera lo sin seguir;
    *  `add -A` (`--all`) prepara todo, lo cambiado y lo sin seguir: sin rutas es `add .`. */
   Repo.prototype.commands.add = function (args) {
-    const { flags, rest } = parse(args);
+    // las banderas cortas juntas (-Au, -uA) son dos, como en git
+    const { flags, rest } = parse(args.flatMap((a) => (/^-[Au]{2,}$/.test(a) ? [...a.slice(1)].map((c) => `-${c}`) : [a])));
     const update = !!(flags['-u'] || flags['--update']);
     if (flags['-A'] || flags['--all']) {
       if (update) fail("fatal: options '-A' and '-u' cannot be used together");
@@ -787,7 +788,11 @@
     const known = new Set([...this.work, ...this.untracked]);
     for (const f of rest) if (f !== '.' && !known.has(f) && !this.staged.some((s) => s.file === f)) fail(`fatal: pathspec '${f}' did not match any files`);
     for (const f of all ? [...known] : rest) {
-      if (this.staged.some((s) => s.file === f)) continue;
+      // preparado y cambiado otra vez: add vuelve a prepararlo (sale de lo sin preparar)
+      if (this.staged.some((s) => s.file === f)) {
+        this.work = this.work.filter((w) => w !== f);
+        continue;
+      }
       const isNew = this.untracked.includes(f);
       this.work = this.work.filter((w) => w !== f);
       this.untracked = this.untracked.filter((u) => u !== f);

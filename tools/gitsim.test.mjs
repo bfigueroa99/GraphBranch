@@ -1011,6 +1011,15 @@ test('add -A prepara todo: lo cambiado y lo sin seguir, como add . y a diferenci
   const both = some.run('add -A -u');
   assert.equal(both.ok, false);
   assert.match(plain(both.lines).join('\n'), /'-A' and '-u' cannot be used together/);
+  for (const c of ['add -Au', 'add -uA']) assert.match(plain(some.run(c).lines).join('\n'), /cannot be used together/, `${c} son dos banderas`);
+  // preparado y cambiado otra vez: add -A (y add .) prepara también el cambio nuevo
+  const again = fresh();
+  run(again, 'touch a.txt', 'add a.txt', 'touch a.txt', 'add -A');
+  assert.deepEqual(plain(again.work), [], 'el cambio nuevo queda preparado');
+  assert.deepEqual(plain(again.staged.map((s) => s.file)), ['a.txt'], 'sin duplicarlo');
+  const againDot = fresh();
+  run(againDot, 'touch a.txt', 'add a.txt', 'touch a.txt', 'add .');
+  assert.deepEqual(plain(againDot.work), []);
   // sin nada que preparar, -A no falla
   const clean = fresh();
   assert.ok(clean.run('add -A').ok);

@@ -179,6 +179,7 @@
         url: typeof p.html_url === 'string' && p.html_url.startsWith(this.ep.web + '/') ? p.html_url : this.data.repo.url,
         private: !!p.private,
         description: p.description || '',
+        openIssues: Number.isFinite(p.open_issues_count) ? p.open_issues_count : null, // solo issues: los PRs van en open_pr_counter
       });
     }
 

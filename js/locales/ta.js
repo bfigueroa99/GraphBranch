@@ -720,6 +720,7 @@ GB.i18n.define('ta', {
   'constellation.orderActivity': 'செயல்பாடு',
   'constellation.orderName': 'பெயர்',
   'constellation.orderNew': 'புதிய கிளைகள்',
+  'constellation.orderIssues': 'திறந்துள்ள issue',
   'constellation.ordered': '{order} படி வரிசைப்படுத்தப்பட்டது',
   'constellation.filtered': '«{filter}» மூலம் வடிகட்டியது: {total}-ல் {shown}',
   'all.tab': 'அனைத்தும்',

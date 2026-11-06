@@ -720,6 +720,7 @@ GB.i18n.define('hu', {
   'constellation.orderActivity': 'Aktivitás',
   'constellation.orderName': 'Név',
   'constellation.orderNew': 'Új ágak',
+  'constellation.orderIssues': 'Nyitott issue-k',
   'constellation.ordered': 'Rendezés: {order}',
   'constellation.filtered': 'Szűrés: «{filter}», {shown} / {total}',
   'all.tab': 'Mind',

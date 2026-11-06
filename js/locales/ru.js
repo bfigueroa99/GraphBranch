@@ -736,6 +736,7 @@ GB.i18n.define('ru', {
   'constellation.orderActivity': 'Активность',
   'constellation.orderName': 'Название',
   'constellation.orderNew': 'Новые ветки',
+  'constellation.orderIssues': 'Открытые issues',
   'constellation.ordered': 'Отсортировано: {order}',
   'constellation.filtered': 'Фильтр «{filter}»: {shown} из {total}',
   'all.tab': 'Все',

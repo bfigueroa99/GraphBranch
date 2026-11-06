@@ -720,6 +720,7 @@ GB.i18n.define('hi', {
   'constellation.orderActivity': 'गतिविधि',
   'constellation.orderName': 'नाम',
   'constellation.orderNew': 'नई ब्रांच',
+  'constellation.orderIssues': 'खुले issue',
   'constellation.ordered': 'क्रम: {order}',
   'constellation.filtered': '«{filter}» से फ़िल्टर: {total} में से {shown}',
   'all.tab': 'सभी',

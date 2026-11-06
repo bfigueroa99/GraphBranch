@@ -728,6 +728,7 @@ GB.i18n.define('hr', {
   'constellation.orderActivity': 'Aktivnost',
   'constellation.orderName': 'Naziv',
   'constellation.orderNew': 'Nove grane',
+  'constellation.orderIssues': 'Otvoreni issueji',
   'constellation.ordered': 'Poredano po: {order}',
   'constellation.filtered': 'Filtrirano po «{filter}»: {shown} od {total}',
   'all.tab': 'Sve',

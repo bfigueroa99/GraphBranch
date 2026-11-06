@@ -108,7 +108,7 @@ function fakeCodeberg(site = 'https://codeberg.org') {
     const u = new URL(`${site}/api/v1` + path);
     const p = u.pathname.replace('/api/v1', '');
     const q = u.searchParams;
-    if (p === REPO) return { body: { name: 'api', owner: { login: 'ana' }, default_branch: 'main', html_url: web, private: cb.private, description: 'un repo' } };
+    if (p === REPO) return { body: { name: 'api', owner: { login: 'ana' }, default_branch: 'main', html_url: web, private: cb.private, description: 'un repo', open_issues_count: 3, open_pr_counter: 1 } };
     if (p === REPO + '/branches') {
       const all = [...cb.branches].sort((a, b) => a[0].localeCompare(b[0])).map(([name, sha]) => ({ name, commit: { id: sha }, protected: name === 'main' }));
       return paged(all, q);
@@ -205,6 +205,7 @@ test('carga un repo: ramas, historia y PRs, sin token y solo contra codeberg.org
   const { repo: r, branches, commits, pulls } = src.data;
   assert.equal(r.url, WEB);
   assert.equal(r.host, 'codeberg');
+  assert.equal(r.openIssues, 3, 'los issues abiertos salen de la consulta del repo, sin contar los PRs');
   assert.equal(src.host, 'codeberg');
   assert.deepEqual([...branches.keys()].sort(), ['feature', 'main']);
   for (const sha of ['m1', 'm2', 'm3', 'f1', 'f2']) assert.ok(commits.has(sha), `falta ${sha}`);

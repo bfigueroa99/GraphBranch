@@ -249,7 +249,7 @@ segunda columna a la primera.
 | Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (API de Forgejo, repos públicos y, con token, privados), bitbucket.org (API 2.0 de Bitbucket Cloud, repos públicos y, con token, privados), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP), Bitbucket Data Center propio (`?bitbucket=` / `--bitbucket-url`, con su CSP y, con su token aparte y atado al servidor, privados), dev.azure.com (API REST 7.1 de Azure Repos, proyectos públicos y, con token de acceso personal, privados), repos locales (app de escritorio, con `git`), demo | token para un Forgejo/Gitea propio Una segunda cuenta de GitHub atada a un dueño u organización (su token solo va a los repos de ese dueño). |
 | Datos | ramas, commits, PRs (y las pilas de PRs apilados, y la descripción y los últimos comentarios de un PR de GitHub desde la ficha de su rama o con `?pr=N`), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, por push más reciente o por estrellas, en el panel de salud, con un interruptor y `?forks=0`), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs) y de GitLab (pipeline de la cabeza de la rama por defecto, las fijadas y las de una MR abierta), tags de GitHub y de Azure DevOps y despliegues de GitHub (banderín y placa en el grafo), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes, y quién tocó cada archivo en GitHub y la demo), el agente de cada commit (Claude Code, Copilot, Codex, Cursor, Devin, Jules, Gemini, OpenCode, Aider, OpenHands y los bots), con su modelo y su sesión, por su cuenta, su nombre o sus trailers (`Co-Authored-By`, `Claude-Session`) | CI de GitLab en el resto de las ramas, estado de los despliegues |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA, que en Android aparece en el menú Compartir y abre el repo del enlace compartido), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color, `&hide=` (avisos, combo, leyenda, rótulo y fechas), `&rotate=` entre repos, `&theme=` claro u oscuro y `&title=` con un rótulo propio, `&max=` con el tope de ramas y `&spin=0` que aquieta la vista 3D, `&view=2d|3d` que fija la vista, `&branch=` que deja una sola rama, `&pr=1` que deja solo las ramas con un PR abierto), extensión de VS Code (sigue la sesión de GitHub del editor y recuerda repos, vista e idioma entre sesiones; paquete listo, sin publicar), extensión de Chrome y Firefox (botón «Abrir en GraphBranch» en las páginas de un repo de GitHub; carpeta lista para cargar, sin publicar) | la extensión en GitLab, Codeberg y Bitbucket, app móvil (más allá de compartir hacia la PWA) |
-| Escala | hasta 20 repos con alias propio en cada pestaña (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia, ordenable por pestañas, actividad, PRs abiertos, ramas nuevas de la semana o nombre, también desde la URL con `?order=activity`, `?order=prs`, `?order=new` o `?order=name`, filtrable por nombre con `?constellation=texto` y por actividad con `?recent=30`), miles de ramas por repo, el Launchpad de la vista conjunta (los PRs abiertos de todos los repos seguidos, por estado: borrador, checks en rojo, aprobados y esperando revisión) | una organización entera con más de 20 repos a la vez |
+| Escala | hasta 20 repos con alias propio en cada pestaña (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia, ordenable por pestañas, actividad, PRs abiertos, issues abiertos, ramas nuevas de la semana o nombre, también desde la URL con `?order=activity`, `?order=prs`, `?order=issues`, `?order=new` o `?order=name`, filtrable por nombre con `?constellation=texto` y por actividad con `?recent=30`), miles de ramas por repo, el Launchpad de la vista conjunta (los PRs abiertos de todos los repos seguidos, por estado: borrador, checks en rojo, aprobados y esperando revisión) | una organización entera con más de 20 repos a la vez |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack, Discord y Teams (escritorio), resumen de la semana (Markdown, con quién fusionó los PRs, PRs abiertos, issues cerrados, releases, tags, autores nuevos, ramas nuevas y commits por día, de un repo o de una organización seguida, la de la organización con los PRs abiertos y los autores nuevos de cada repo; PNG, de un repo o de una organización), prompt del loop autónomo para cualquier repo (español o inglés, con repo, ramas y objetivo; se copia o se guarda como `.md`) | el resumen de la semana de una organización con sus issues cerrados y quién fusionó |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo, issues cerrados, ramas nuevas, commits, autores distintos, tags, issues abiertos y PRs cerrados sin fusionar por semana), choques entre ramas, también desde la URL (`?conflicts=1`), los archivos que cambió un commit de Azure DevOps (sin el diff), comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`) y desde el botón «Historial» de cada archivo del diff, filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), ocultar una rama o dejarla sola desde su ficha (2D y 3D, por repo), el grafo de primer padre (2D, 3D y vista de texto) como `git log --first-parent`, también desde la URL (`?firstparent=1`), búsqueda de commits también desde la URL (`?q=`), búsqueda por fecha (`desde:` y `hasta:`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, PRs fusionados y abiertos por semana en la salud (las últimas 8), vocabulario DORA en la salud (despliegues en 30 días y por semana, mediana entre releases, tiempo de entrega desde el primer commit del PR), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días), el panel de salud abierto desde la URL (`?health=1`), ramas ocultas o sola una desde la URL (`?ocultar=`, `?solo=`), bitácora en vivo al estilo de Brunell_Node (la quinta cifra del resumen: desde la bitácora anterior, lo grande, commits por día, nota del 1 al 100 de ritmo, publicado y salud con su origen, hallazgos con su gravedad y su seguimiento, cronología y qué sigue; se cierra, se guarda en el navegador y sale en Markdown o `estado.json`), agentes e interacciones (quién continuó, fusionó, revisó o comentó el trabajo de quién, entre personas, entre agentes y entre unos y otros, con cada sesión de un agente aparte, en una red y en listas, «Solo entre agentes», también desde la URL con `?agents=1`, y dibujadas sobre el grafo 2D y 3D: marco o cubo de color en cada commit de agente, arcos con flecha de un commit a otro, insignias sobre la punta del PR y su leyenda bajo el grafo, también con `?interactions=1`) , columnas de SHA corto, autor y fecha junto a cada commit del grafo 2D | ver la hoja de ruta |
 | Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal (`add`, `restore --staged` y `clean`, `cherry-pick` (con `--no-commit`/`--abort`), `revert` (con `--no-commit`/`--abort`), `rebase -i` (con `--abort`/`--continue`), `stash`, `tag` (con `-d`), `reset` (`--soft`/`--mixed`/`--hard`, con `HEAD@{n}`), `commit --amend` (con `-m`) y `reflog`, `switch`, `restore`, `branch -m` (con `-M`) y `merge --no-ff` (con `-m`), `--no-commit` y `--abort` incluidos) y ejercicios, también propios compartidos por URL con pistas, solución propuesta que se muestra paso a paso con `solution=1` y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), paleta de comandos con Ctrl+K (acciones de la barra y del grafo, y saltos a una rama o un commit por nombre o SHA, con teclado), quien usa lector de pantalla (vista de texto (también desde la URL con `?vista=texto`): árbol de ramas y commits con teclado, ocultar una rama o dejarla sola con H y S y volver a ver todas con A o su botón, filtro por rama, por autor y por ruta con su aviso, tags dichos en cada commit, forks activos, PRs abiertos por rama ya cargados y las ramas sin PR abierto, ramas sin actividad hace más de 30 días, ramas creadas en los últimos 7 días y el autor de la punta dichos en su nombre y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
@@ -278,9 +278,10 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 162. **Práctica: commit de solo lo preparado** · Público · 2×2/2. [inv. 2026-10-13] [parte del ítem 16] En la práctica de git, `commit` guarda solo lo preparado con `add` y deja lo demás sin commit (con `-a` guarda todo lo cambiado), y un ejercicio lo practica. Comprobar: `node --test tools/gitsim.test.mjs` (qué queda tras `commit` con y sin `-a`) y el ejercicio nuevo en los 40 idiomas.
 163. **Práctica: stash -u** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 16] `stash -u` aparta también los archivos sin seguir y `stash pop` los devuelve; sin `-u` se quedan. Comprobar: `node --test tools/gitsim.test.mjs` con un archivo de `touch --new`.
 164. **Resumen de la semana de la organización: PRs cerrados sin fusionar** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] El resumen de la semana de una organización suma los PRs cerrados sin fusionar de los repos seguidos, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
-165. **Constelación: ordenar por issues abiertos** · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] La constelación se ordena también por issues abiertos (con lo ya cargado de cada repo) y `?order=issues` la abre así. Comprobar: `node --test tools/constellation.test.mjs` y un paso del smoke.
+165. ~~**Constelación: ordenar por issues abiertos**~~ hecho en #282 · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] La constelación se ordena también por issues abiertos (con lo ya cargado de cada repo) y `?order=issues` la abre así. Comprobar: `node --test tools/constellation.test.mjs` y un paso del smoke.
 166. **Launchpad: posponer un PR** · Escala · 1×2/2. [replica 2026-10-28] [parte de «Launchpad: fijar y posponer PRs e issues»] Cada PR del Launchpad de la vista conjunta se puede posponer (baja al final de la lista hasta que pase un día) y se recuerda en este navegador. Comprobar: `node --test` del orden con PRs fabricados y un paso del smoke.
 167. **Salud del repo: tendencia de estrellas** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del mapa: Análisis] El panel de salud compara las estrellas nuevas de la semana con las de la anterior, con lo ya cargado y sin consultas nuevas. Comprobar: `node --test tools/health.test.mjs` con estrellas fabricadas.
+168. **Constelación: ordenar por estrellas** · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] La constelación se ordena también por estrellas, con el total que ya trae la consulta del repo de cada fuente que lo da (sin consultas nuevas), y `?order=stars` la abre así. Comprobar: `node --test tools/constellation.test.mjs` y un paso del smoke.
 ~~**Constelación: ordenar por PRs abiertos**~~ hecho en #247 · Escala.
 ~~**Constelación: solo los repos con actividad reciente, en la URL**~~ hecho en #239 · Escala.
 
@@ -350,61 +351,68 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     Reproducción: `xvfb-run -a npx playwright test e2e/desktop.spec.mjs -g "bitbucket-url"` con el equipo cargado →
     `expect(locator('#azure-token-input')).toHaveValue('az-e2e')` · `Received: ""`.
 2. [Deuda] El paso del smoke «vista de texto: árbol con teclado, nombres accesibles y Enter lleva al grafo» falló 1 de 2
-    en la puerta de la iteración 222 (2026-11-05; la repetición pasó): ninguna rama de la demo decía «sin PR abierto»
+    en la puerta de la iteración 222 (2026-11-05; la repetición pasó) y otra vez en la segunda de la 225 (2026-11-06): ninguna rama de la demo decía «sin PR abierto»
     (`badNoPr` vacío, así que no fue una rama mal marcada sino ninguna marcada). Hipótesis: la demo sigue viva y a veces
     abre un PR o fusiona la rama que lo decía justo antes de leer la vista; quietar la demo durante el paso, como ya hacen
     otros (`quieta`). Reproducción: `node tools/smoke.mjs` repetido → `la vista de texto no dice qué ramas no tienen PR
     abierto: []`.
 
+3. [Deuda] El paso del smoke «editar el código: desde los cambios de un commit se abre su archivo en la rama, se cambia
+    y el commit llega al grafo con sus cambios» falló 1 de 1 en la tercera puerta de la iteración 225 (2026-11-06, carga 4
+    en 4 CPU), en una sección que el cambio no toca (las dos corridas anteriores lo pasaron): un `waitForFunction` de
+    15 s se venció. Medir cuántas fallas en N corridas, ver qué espera (el commit en el grafo tras el ciclo en vivo) y
+    atarla a una señal en vez de al tiempo. Reproducción: `node tools/smoke.mjs` repetido → `editar el código: …:
+    page.waitForFunction: Timeout 15000ms exceeded.`
+
 ### Baja
 
-3. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+4. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-4. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+5. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-5. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+6. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-6. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+7. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-7. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+8. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-8. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+9. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-9. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+10. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-10. [QA] A 320 px el panel de salud se desborda hacia la derecha (28 px; 46 en tamil): la cabecera, los contadores de
+11. [QA] A 320 px el panel de salud se desborda hacia la derecha (28 px; 46 en tamil): la cabecera, los contadores de
     cada sección y la edad de los forks quedan cortados y el panel se desliza de lado. Visto en la iteración 174, igual
     sin su cambio. Reproducción: Playwright, 320×640, demo `?lang=es&health=1` → `#health .tr-wrap` con `scrollWidth`
     312 y `clientWidth` 284.
 
-11. [Accesibilidad] En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…», «sin actividad…», PRs) y la
+12. [Accesibilidad] En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…», «sin actividad…», PRs) y la
     nota de cada commit (`.tv-aside`) ya van en el `aria-label` del `treeitem`, pero son texto del nodo: según el lector se
     leen dos veces. Marcarlas `aria-hidden="true"` y comprobarlo con un lector real (ver Para Benjamin, 5).
     Reproducción: Playwright, abrir `#textview-btn` → `.tv-tag` dentro de `[role=treeitem][aria-label]` sin `aria-hidden`.
-12. [Rendimiento] `placeLabels` (`js/graph3d.js`) crea por cuadro un `{x, y}` por `project()`, un objeto por candidata, la grilla (`Map`) y
+13. [Rendimiento] `placeLabels` (`js/graph3d.js`) crea por cuadro un `{x, y}` por `project()`, un objeto por candidata, la grilla (`Map`) y
     sus cierres. Medido en la iteración 199 con 1.000 ramas en 3D: 0,36 ms por cuadro (19 cuadros en 4 s sin GPU), así que
     hoy no pesa; si algún día se mide más, reusar el punto de `project()` (devolver un objeto compartido y revisar quién lo
     guarda) y un arreglo de candidatas. Reproducción: Playwright, `?repo=acme/web` con 1.000 ramas, envolver
     `GB.Graph3D.prototype.placeLabels` con `performance.now()` → ~0,36 ms por llamada.
-13. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
+14. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
     `placeLabels`. El cuadro lo domina el render por software (~200 ms por cuadro sin GPU, 10 fps), que con GPU no existe;
     medir con GPU real antes de tocarlo. Reproducción: la misma envoltura sobre `stepScene` → ~1,1 ms por llamada.
-14. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
+15. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
     (895 ms en total, sin GPU); el perfil de CPU de los primeros 6 s no deja ninguna función de la app por encima de 70 ms
     (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
     que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
     Reproducción: `node tools/audit.mjs --repetir 3` → `consultas: 10`, `tareasLargasMs: 895`.
-15. [Errores] Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el repo del PR con
+16. [Errores] Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el repo del PR con
     `owner/name` tal como se escribieron; con un repo renombrado (abierto por su nombre viejo) ningún PR cuenta como del
     mismo repo: sus ramas pierden el «PRs abiertos» y dicen «sin PR abierto». Comparar `fromRef.repository` con
     `toRef.repository`. Reproducción: API simulada con el repo `nuevo` y abrir `CLAVE/viejo` → `sameRepo` false.
@@ -524,3 +532,18 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/224, sin colisión
 - Validado: 597 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 225, expansión: ítem 165 (Constelación: ordenar por issues abiertos, Escala)
+
+### 2026-11-06 · Iteración 225 · Expansión · Escala
+
+- **Capacidad nueva: la constelación ordenada por issues abiertos** (ítem 165 de la hoja de ruta, parte del ítem 26). El selector de orden suma «Issues abiertos» (más issues abiertos primero; empata por el orden de las pestañas) y `?order=issues` abre la constelación ya ordenada así. El número sale del `open_issues_count` de la consulta del repo que cada fuente ya hacía al abrirlo, sin consultas nuevas: GitLab y Forgejo/Gitea/Codeberg lo dan solo de issues (`repo.openIssues`); GitHub lo da junto con los PRs (`repo.openItems`) y `GB.constellation.openIssues` le resta los PRs abiertos conocidos (nunca baja de 0). Bitbucket, Azure DevOps y los repos locales no lo dan: cuentan como 0. Clave nueva `constellation.orderIssues` en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/constellation.test.mjs` («el orden…»: `sortItems(…, 'issues')` deja el orden de las pestañas y `orderParam('Issues')` da `null`; «issues abiertos con lo ya cargado…» → `TypeError`: `openIssues` no existe), `tools/github.test.mjs`, `tools/gitlab.test.mjs` y `tools/codeberg.test.mjs` (el total sale de la consulta del repo) y el paso del smoke de `?order=issues` (tres repos simulados con 1, 3 y 4 issues, el de 3 con 2 PRs que no cuentan: `o/c o/b o/a`, y el anuncio «Ordenadas por Issues abiertos»).
+- README: Constelación (el orden nuevo y `?order=issues`) y Límites conocidos (el total no se refresca con el repo abierto; sin token, con más de 50 PRs abiertos en GitHub los issues salen de más; las fuentes sin el dato cuentan como 0).
+- QA: constelación con teclado y anuncio en la región viva por el smoke; 40 idiomas con `check-i18n` (0 errores); auditoría y e2e en la puerta.
+- Skills: no aplica: un orden más en un selector que ya existe, con un campo de una consulta que ya se hacía; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (el mismo camino que el orden por PRs abiertos, con el total que ya da la API).
+- OMC: plan=— · revisión=3 hallazgos LOW (1 arreglado: el smoke vuelve los totales a 0 en un `finally`; los otros 2, el tope de 50 PRs sin token y el total sin refrescar, documentados en Límites conocidos) · verificación=PASS
+- Puerta: cuatro corridas; la 1.ª y la 2.ª fallaron por el paso nuevo del smoke (las 20 pestañas del paso anterior; después, los repos que sumaba a las pestañas guardadas: pasó a una página aparte); la 2.ª además en «vista de texto…» (pendiente 2) y la 3.ª solo en «editar el código…», ajeno (pendiente 3, nuevo); la 4.ª en verde.
+- Hoja de ruta: repuesta a 15 con el ítem 168 (Constelación: ordenar por estrellas, otra parte del ítem 26).
+- Reclamo: loop/225, sin colisión
+- Validado: 598 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 226, expansión: ítem 162 (Práctica: commit de solo lo preparado, Público)

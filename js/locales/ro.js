@@ -728,6 +728,7 @@ GB.i18n.define('ro', {
   'constellation.orderActivity': 'Activitate',
   'constellation.orderName': 'Nume',
   'constellation.orderNew': 'Ramuri noi',
+  'constellation.orderIssues': 'Issue-uri deschise',
   'constellation.ordered': 'Sortate după {order}',
   'constellation.filtered': 'Filtrate după «{filter}»: {shown} din {total}',
   'all.tab': 'Toate',

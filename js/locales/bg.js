@@ -720,6 +720,7 @@ GB.i18n.define('bg', {
   'constellation.orderActivity': 'Активност',
   'constellation.orderName': 'Име',
   'constellation.orderNew': 'Нови клонове',
+  'constellation.orderIssues': 'Отворени issues',
   'constellation.ordered': 'Подредено по: {order}',
   'constellation.filtered': 'Филтър «{filter}»: {shown} от {total}',
   'all.tab': 'Всички',

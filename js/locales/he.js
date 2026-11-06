@@ -777,6 +777,7 @@ GB.i18n.define('he', {
   'constellation.orderActivity': 'פעילות',
   'constellation.orderName': 'שם',
   'constellation.orderNew': 'ענפים חדשים',
+  'constellation.orderIssues': 'issues פתוחים',
   'constellation.ordered': 'ממוין לפי {order}',
   'constellation.filtered': 'מסונן לפי «{filter}»: {shown} מתוך {total}',
   'all.tab': 'הכול',

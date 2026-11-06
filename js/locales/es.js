@@ -720,6 +720,7 @@ GB.i18n.define('es', {
   'constellation.orderActivity': 'Actividad',
   'constellation.orderName': 'Nombre',
   'constellation.orderNew': 'Ramas nuevas',
+  'constellation.orderIssues': 'Issues abiertos',
   'constellation.ordered': 'Ordenadas por {order}',
   'constellation.filtered': 'Filtradas por «{filter}»: {shown} de {total}',
   'all.tab': 'Todos',

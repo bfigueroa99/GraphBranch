@@ -112,7 +112,7 @@ function fakeGitLab(web = 'https://gitlab.com') {
     const u = new URL(gl.web + '/api/v4' + path);
     const p = u.pathname.replace(new URL(gl.web).pathname.replace(/\/$/, '') + '/api/v4', '');
     const q = u.searchParams;
-    if (p === PROJECT) return { body: { id: 7, path_with_namespace: 'g/sub/p', default_branch: 'main', web_url: gl.web + '/g/sub/p', visibility: gl.visibility, description: 'un proyecto' } };
+    if (p === PROJECT) return { body: { id: 7, path_with_namespace: 'g/sub/p', default_branch: 'main', web_url: gl.web + '/g/sub/p', visibility: gl.visibility, description: 'un proyecto', open_issues_count: 4 } };
     const grp = p.match(/^\/groups\/([^/]+)\/projects$/);
     if (grp) {
       const g = decodeURIComponent(grp[1]);
@@ -411,6 +411,7 @@ test('con un token, un proyecto privado carga, y el token va en cada consulta', 
   await src.cycle();
   assert.deepEqual(errors, []);
   assert.equal(src.data.repo.private, true);
+  assert.equal(src.data.repo.openIssues, 4, 'los issues abiertos salen de la consulta del proyecto');
   assert.deepEqual([...src.data.branches.keys()].sort(), ['feature', 'main']);
   for (const sha of ['m1', 'm2', 'm3', 'f1', 'f2']) assert.ok(src.data.commits.has(sha), `falta ${sha}`);
   assert.ok(src.data.pulls.has(5));

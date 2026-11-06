@@ -574,6 +574,8 @@ GB.i18n.define('cs', {
   'practice.ex9.goal': 'Někdo dal tag v2 příliš brzy: smaž ho příkazem tag -d. Pak zkus zkopírovat opravu z feature pomocí cherry-pick feature --no-commit a zruš ji příkazem cherry-pick --abort.',
   'practice.ex10.title': 'Vrátit add a uklidit',
   'practice.ex10.goal': 'Omylem jsi spustil add .: debug.log je připravený a poletují tu dva nesledované soubory. Vyndej debug.log přes restore --staged, odpad si prohlédni přes clean -n a smaž ho přes clean -f. Změnu v app.js ponech.',
+  'practice.ex11.title': 'Commit jen připraveného',
+  'practice.ex11.goal': 'Změnil jsi login.js a debug.js, ale do commitu patří jen oprava přihlášení. Připrav login.js pomocí add a spusť commit -m: debug.js musí zůstat změněný a bez commitu. Pozor: commit -a by vzal oba.',
   'practice.share': 'Zkopírovat odkaz na úlohu',
   'practice.link': 'Odkaz na úlohu',
   'practice.copied': 'Odkaz zkopírován.',

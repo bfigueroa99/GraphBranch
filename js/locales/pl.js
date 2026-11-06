@@ -574,6 +574,8 @@ GB.i18n.define('pl', {
   'practice.ex9.goal': 'Ktoś za wcześnie dodał tag v2: usuń go poleceniem tag -d. Potem spróbuj skopiować poprawkę z feature poleceniem cherry-pick feature --no-commit i anuluj ją poleceniem cherry-pick --abort.',
   'practice.ex10.title': 'Cofnij add i posprzątaj',
   'practice.ex10.goal': 'Przez pomyłkę uruchomiono add .: debug.log trafił do poczekalni, a dwa nieśledzone pliki leżą luzem. Wyjmij debug.log przez restore --staged, obejrzyj śmieci przez clean -n i usuń je przez clean -f. Zostaw zmianę w app.js.',
+  'practice.ex11.title': 'Commit tylko tego, co przygotowane',
+  'practice.ex11.goal': 'Zmieniłeś login.js i debug.js, ale do commita należy tylko poprawka logowania. Przygotuj login.js poleceniem add i uruchom commit -m: debug.js ma zostać zmieniony i bez commita. Uwaga: commit -a zabrałby oba.',
   'practice.share': 'Kopiuj link do ćwiczenia',
   'practice.link': 'Link do ćwiczenia',
   'practice.copied': 'Skopiowano link.',

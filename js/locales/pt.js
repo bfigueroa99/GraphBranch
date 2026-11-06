@@ -564,6 +564,8 @@ GB.i18n.define('pt', {
   'practice.ex9.goal': 'Alguém pôs a tag v2 cedo demais: apague-a com tag -d. Depois tente copiar a correção de feature com cherry-pick feature --no-commit e cancele com cherry-pick --abort.',
   'practice.ex10.title': 'Desfazer um add e limpar',
   'practice.ex10.goal': 'Você executou add . sem querer: debug.log ficou preparado e há dois arquivos não rastreados. Tire debug.log com restore --staged, veja o lixo com clean -n e apague-o com clean -f. Mantenha a alteração de app.js.',
+  'practice.ex11.title': 'Commit só do que está preparado',
+  'practice.ex11.goal': 'Você alterou login.js e debug.js, mas só a correção do login vai no commit. Prepare login.js com add e faça commit -m: debug.js tem que ficar alterado e sem commit. Cuidado: commit -a levaria os dois.',
   'practice.share': 'Copiar link do exercício',
   'practice.link': 'Link do exercício',
   'practice.copied': 'Link copiado.',

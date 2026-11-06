@@ -563,6 +563,8 @@ GB.i18n.define('sw', {
   'practice.ex9.goal': 'Mtu ameweka lebo v2 mapema mno: ifute kwa tag -d. Kisha jaribu kunakili marekebisho kutoka feature kwa cherry-pick feature --no-commit na uyaghairi kwa cherry-pick --abort.',
   'practice.ex10.title': 'Tengua add na usafishe',
   'practice.ex10.goal': 'Umeendesha add . kwa bahati mbaya: debug.log imewekwa kwenye staging na kuna faili mbili zisizofuatiliwa. Itoe debug.log kwa restore --staged, tazama takataka kwa clean -n, kisha zifute kwa clean -f. Weka mabadiliko ya app.js.',
+  'practice.ex11.title': 'Commit kilichoandaliwa tu',
+  'practice.ex11.goal': 'Ulibadilisha login.js na debug.js, lakini ni marekebisho ya kuingia pekee yanayopaswa kuingia kwenye commit. Andaa login.js kwa add kisha endesha commit -m: debug.js lazima ibaki imebadilishwa bila commit. Tahadhari: commit -a ingechukua zote mbili.',
   'practice.share': 'Nakili kiungo cha zoezi',
   'practice.link': 'Kiungo cha zoezi',
   'practice.copied': 'Kiungo kimenakiliwa.',

@@ -49,6 +49,7 @@
       this.staged = []; // { file, isNew }: lo preparado con add, a la espera del commit
       this.untracked = []; // archivos nuevos que git no sigue (touch --new): clean los borra
       this.cleans = 0; // cuántas veces clean -f borró archivos sin seguir
+      this.adds = 0; // cuántas veces add preparó algo
       this.stashes = []; // { files, branch, sha }, el más nuevo primero (stash@{0})
       this.merging = null; // { name, theirs } mientras una fusión (merge --no-commit) espera su commit
       this.aborts = 0; // cuántas fusiones se cancelaron con merge --abort
@@ -178,6 +179,17 @@
       return sha;
     }
 
+    /** Lo que se lleva el próximo commit: lo preparado y, con `all` (commit -a), también lo cambiado sin preparar.
+        Lo sin seguir nunca entra. Lo que se lleva sale de las listas y se suma a lo anotado en el commit (`files`). */
+    take(sha, all) {
+      const files = [...new Set([...this.staged.map((s) => s.file), ...(all ? this.work : [])])];
+      this.staged = [];
+      if (all) this.work = [];
+      const c = this.commits.get(sha);
+      if (files.length) c.files = [...new Set([...(c.files || []), ...files])];
+      return files;
+    }
+
     /** Lo que git anota en el reflog de HEAD por ese comando. */
     reflogMessage(cmd, args, from) {
       const { flags, rest } = parse(args, ['-m']);
@@ -268,7 +280,8 @@
   Repo.prototype.commands = {
     help() {
       return [
-        'commit -m "msg"             save a snapshot on the current branch (--amend [-m "msg"] redoes the last one)',
+        'commit -m "msg"             save what is prepared (add) on the current branch; -a also takes every changed file',
+        'commit --amend [-m "msg"]   redo the last commit (with what is prepared)',
         'branch [name] [-d name]     list, create or delete branches',
         'branch -m [old] <new>       rename a branch (the current one without old; -M replaces an existing one)',
         'checkout [-b] <name|sha>    move to a branch or commit (also: switch [-c|--detach])',
@@ -295,8 +308,10 @@
     },
 
     commit(args) {
-      const { flags } = parse(args, ['-m', '--message']);
+      // -am "msg" es -a -m "msg", como en git
+      const { flags } = parse(args.flatMap((a, i) => (a === '-am' && args[i - 1] !== '-m' && args[i - 1] !== '--message' ? ['-a', '-m'] : [a])), ['-m', '--message']);
       const msg = flags['-m'] ?? flags['--message'];
+      const all = !!(flags['-a'] || flags['--all']);
       if (flags['--amend']) {
         if (!this.headSha) fail('fatal: You have nothing to amend.');
         if (this.merging) fail('fatal: You are in the middle of a merge -- cannot amend.');
@@ -306,9 +321,9 @@
         const text = msg || old.message;
         // como git: el commit viejo se reemplaza por uno nuevo con los mismos padres (el viejo queda en el reflog)
         const sha = this.make(text, old.parents);
+        if (old.files) this.commits.get(sha).files = old.files.slice();
         this.moveHead(sha);
-        this.work = [];
-        this.staged = [];
+        this.take(sha, all);
         return [`[${this.head.branch || 'detached HEAD'} ${this.short(sha)}] ${text}`];
       }
       if (!msg || msg === true) fail('Aborting commit due to empty commit message.\n(use: commit -m "message")');
@@ -316,15 +331,22 @@
         const { theirs } = this.merging;
         const merged = this.make(msg, [this.headSha, theirs]);
         this.moveHead(merged);
-        this.work = [];
-        this.staged = [];
+        this.take(merged, all);
         this.merging = null;
         return [`[${this.head.branch} ${this.short(merged)}] ${msg}`];
       }
+      // los commits de esta práctica pueden ir vacíos («una foto» de la rama); pero con cambios sin preparar
+      // y nada preparado, git no hace el commit: hay que elegir qué entra con add, o llevarse todo con -a
+      if (!this.picking && !all && !this.staged.length && this.work.length) {
+        fail(`no changes added to commit (use "git add" and/or "git commit -a")\n${this.commands.status.call(this)[0]}\nChanges not staged for commit:\n${this.work.map((f) => `\tmodified:   ${f}`).join('\n')}`);
+      }
       if (this.picking) this.picking = null;
-      const sha = this.commit(msg);
+      const sha = this.make(msg, this.headSha ? [this.headSha] : []);
+      this.moveHead(sha);
+      this.take(sha, all);
       const where = this.head.branch || 'detached HEAD';
-      return [`[${where} ${this.short(sha)}] ${msg}`];
+      const files = this.commits.get(sha).files;
+      return [`[${where} ${this.short(sha)}] ${msg}`, ...(files ? [` ${files.length} file${files.length > 1 ? 's' : ''} changed`] : [])];
     },
 
     status() {
@@ -574,7 +596,10 @@
         this.picking = null;
         const c = this.commits.get(pick);
         const msg = revert ? `Revert "${c.message}"` : c.message;
-        const sha = this.commit(msg);
+        // como commit: lo cambiado después del --no-commit queda sin commit
+        const sha = this.make(msg, [this.headSha]);
+        this.moveHead(sha);
+        this.take(sha, false);
         return [`[${this.head.branch} ${this.short(sha)}] ${msg}`];
       }
       if (!rest.length) fail('fatal: you must specify a commit to cherry-pick');
@@ -744,7 +769,10 @@
       const isNew = this.untracked.includes(f);
       this.work = this.work.filter((w) => w !== f);
       this.untracked = this.untracked.filter((u) => u !== f);
-      if (isNew || known.has(f)) this.staged.push({ file: f, isNew });
+      if (isNew || known.has(f)) {
+        this.staged.push({ file: f, isNew });
+        this.adds++;
+      }
     }
     return [];
   };
@@ -930,6 +958,17 @@
         const main = r.branches.get('main');
         // lo preparado por error salió, lo que git no seguía se borró con clean y el cambio de verdad sigue ahí, sin commits de más
         return !!main && r.cleans > 0 && !r.staged.length && !r.untracked.length && r.work.join() === 'app.js' && r.log(main).length === BASE.length;
+      },
+    },
+    {
+      id: 'stage',
+      setup: (r) => {
+        r.work = ['login.js', 'debug.js'];
+      },
+      done: (r) => {
+        const main = r.branches.get('main');
+        // un solo commit nuevo con login.js y nada más, preparado con add; debug.js sigue cambiado sin commit (ni preparado)
+        return !!main && r.adds > 0 && r.head.branch === 'main' && r.log(main).length === BASE.length + 1 && r.commits.get(main).files?.join() === 'login.js' && r.work.join() === 'debug.js' && !r.staged.length;
       },
     },
   ];

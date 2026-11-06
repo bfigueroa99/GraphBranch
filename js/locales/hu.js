@@ -563,6 +563,8 @@ GB.i18n.define('hu', {
   'practice.ex9.goal': 'Valaki túl korán felcímkézte a v2-t: töröld a tag -d paranccsal. Utána próbáld átmásolni a javítást a feature ágból a cherry-pick feature --no-commit paranccsal, és szakítsd meg a cherry-pick --abort paranccsal.',
   'practice.ex10.title': 'Add visszavonása és takarítás',
   'practice.ex10.goal': 'Véletlenül lefuttattad az add . parancsot: a debug.log előkészített állapotba került, és két nem követett fájl hever. Vedd ki a debug.log-ot a restore --staged paranccsal, nézd meg a szemetet a clean -n paranccsal, és töröld a clean -f paranccsal. Az app.js módosítását tartsd meg.',
+  'practice.ex11.title': 'Csak az előkészített commitolása',
+  'practice.ex11.goal': 'Módosítottad a login.js-t és a debug.js-t, de a commitba csak a bejelentkezés javítása kerül. Készítsd elő a login.js-t az add paranccsal, és futtasd a commit -m-et: a debug.js maradjon módosítva, commit nélkül. Vigyázz: a commit -a mindkettőt vinné.',
   'practice.share': 'Feladat linkjének másolása',
   'practice.link': 'A feladat linkje',
   'practice.copied': 'Link másolva.',

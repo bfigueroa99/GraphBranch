@@ -563,6 +563,8 @@ GB.i18n.define('vi', {
   'practice.ex9.goal': 'Ai đó đã đặt tag v2 quá sớm: hãy xóa nó bằng tag -d. Sau đó thử sao chép bản sửa từ feature bằng cherry-pick feature --no-commit rồi hủy bằng cherry-pick --abort.',
   'practice.ex10.title': 'Hoàn tác add và dọn dẹp',
   'practice.ex10.goal': 'Bạn lỡ chạy add .: debug.log đã vào vùng chuẩn bị và còn hai tệp chưa được theo dõi. Lấy debug.log ra bằng restore --staged, xem đống rác bằng clean -n rồi xóa bằng clean -f. Giữ lại thay đổi ở app.js.',
+  'practice.ex11.title': 'Chỉ commit những gì đã stage',
+  'practice.ex11.goal': 'Bạn đã sửa login.js và debug.js, nhưng chỉ bản sửa đăng nhập mới được vào commit. Hãy stage login.js bằng add rồi chạy commit -m: debug.js phải vẫn bị sửa và chưa commit. Cẩn thận: commit -a sẽ lấy cả hai.',
   'practice.share': 'Sao chép liên kết bài tập',
   'practice.link': 'Liên kết bài tập',
   'practice.copied': 'Đã sao chép liên kết.',

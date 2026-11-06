@@ -563,6 +563,8 @@ GB.i18n.define('hi', {
   'practice.ex9.goal': 'किसी ने टैग v2 समय से पहले लगा दिया: उसे tag -d से मिटाइए। फिर cherry-pick feature --no-commit से feature का सुधार कॉपी करके देखिए और cherry-pick --abort से रद्द कीजिए।',
   'practice.ex10.title': 'add को पलटना और सफ़ाई',
   'practice.ex10.goal': 'तुमने गलती से add . चला दिया: debug.log स्टेज हो गई है और दो अनट्रैक्ड फ़ाइलें पड़ी हैं। restore --staged से debug.log को बाहर निकालो, clean -n से कचरा देखो और clean -f से मिटा दो। app.js का बदलाव रहने दो।',
+  'practice.ex11.title': 'सिर्फ़ तैयार किया हुआ commit करें',
+  'practice.ex11.goal': 'तुमने login.js और debug.js बदले, पर commit में सिर्फ़ लॉगिन का सुधार जाना चाहिए। add से login.js तैयार करो और commit -m चलाओ: debug.js बदला हुआ और बिना commit के रहना चाहिए। ध्यान दो: commit -a दोनों ले लेगा।',
   'practice.share': 'अभ्यास का लिंक कॉपी करें',
   'practice.link': 'अभ्यास का लिंक',
   'practice.copied': 'लिंक कॉपी हो गया।',

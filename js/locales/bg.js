@@ -563,6 +563,8 @@ GB.i18n.define('bg', {
   'practice.ex9.goal': 'Някой е сложил тага v2 преждевременно: изтрий го с tag -d. После опитай да копираш поправката от feature с cherry-pick feature --no-commit и я отмени с cherry-pick --abort.',
   'practice.ex10.title': 'Връщане на add и почистване',
   'practice.ex10.goal': 'Изпълни add . по грешка: debug.log е подготвен и има два неследени файла. Извади debug.log с restore --staged, виж боклука с clean -n и го изтрий с clean -f. Запази промяната в app.js.',
+  'practice.ex11.title': 'Commit само на подготвеното',
+  'practice.ex11.goal': 'Промени login.js и debug.js, но в commit-а влиза само поправката на входа. Подготви login.js с add и изпълни commit -m: debug.js трябва да остане променен и без commit. Внимание: commit -a би взел и двата.',
   'practice.share': 'Копиране на връзката към упражнението',
   'practice.link': 'Връзка към упражнението',
   'practice.copied': 'Връзката е копирана.',

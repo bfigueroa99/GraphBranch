@@ -563,6 +563,8 @@ GB.i18n.define('el', {
   'practice.ex9.goal': 'Κάποιος έβαλε την ετικέτα v2 νωρίς: διέγραψέ την με tag -d. Μετά δοκίμασε να αντιγράψεις τη διόρθωση από το feature με cherry-pick feature --no-commit και ακύρωσέ την με cherry-pick --abort.',
   'practice.ex10.title': 'Αναίρεση add και καθαρισμός',
   'practice.ex10.goal': 'Έτρεξες add . κατά λάθος: το debug.log είναι έτοιμο για commit και υπάρχουν δύο αρχεία που το git δεν παρακολουθεί. Βγάλε το debug.log με restore --staged, δες τα σκουπίδια με clean -n και σβήσε τα με clean -f. Κράτα την αλλαγή στο app.js.',
+  'practice.ex11.title': 'Commit μόνο όσων είναι έτοιμα',
+  'practice.ex11.goal': 'Άλλαξες τα login.js και debug.js, αλλά στο commit ανήκει μόνο η διόρθωση της σύνδεσης. Ετοίμασε το login.js με add και τρέξε commit -m: το debug.js πρέπει να μείνει αλλαγμένο και χωρίς commit. Προσοχή: το commit -a θα έπαιρνε και τα δύο.',
   'practice.share': 'Αντιγραφή συνδέσμου άσκησης',
   'practice.link': 'Σύνδεσμος άσκησης',
   'practice.copied': 'Ο σύνδεσμος αντιγράφηκε.',

@@ -612,8 +612,8 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: constelación con el selector y `?order=` cubierta por el smoke (orden, anuncio sin claves crudas, selector al abrir); auditoría y e2e en la puerta.
 - Skills: no aplica: un orden más en un selector que ya existe, con el mismo patrón que el de estrellas; lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (el total de la consulta del repo que ya se hace, como las estrellas).
-- OMC: plan=— · revisión=pendiente · verificación=pendiente
+- OMC: plan=— · revisión=5 hallazgos LOW (3 arreglados: la etiqueta en zh-Hant, el apóstrofo en turco y el paréntesis de más en hebreo y árabe, más una nota en el JSDoc de `forksOf`; quedan sin cambio el aviso de que GitHub cuenta solo los forks directos y otra palabra en zh-Hant) · verificación=PASS
 - Hoja de ruta: repuesta a 15 con el ítem 172 (Constelación: ordenar por último commit, otra parte del ítem 26).
 - Reclamo: loop/230, sin colisión
-- Validado: pendiente
+- Validado: 604 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 231, mantenimiento · Rendimiento: pendiente 12 (`placeLabels` (`js/graph3d.js`) crea por cuadro un `{x, y}` por `project()`, un…)

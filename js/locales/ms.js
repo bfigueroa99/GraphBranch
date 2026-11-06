@@ -525,7 +525,7 @@ GB.i18n.define('ms', {
   'health.deploys': 'Pelaksanaan mengikut persekitaran',
   'health.deployCurrent': 'terkini dengan {branch}',
   'health.deployBehind': 'komit baharu pada {branch}: {n}',
-  'health.deployUnknown': 'cabangnya belum dimuatkan',
+  'health.deployUnknown': 'tiada dalam cabangnya yang dimuatkan',
   'health.ci': 'Kegagalan CI',
   'health.ciPrs': 'PR terbuka dengan semakan gagal: {failing} daripada {total} ({pct}%)',
   'health.ciFeed': 'Bilangan cabang lalai bertukar merah dalam 30 hari: {n}',

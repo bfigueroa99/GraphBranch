@@ -525,7 +525,7 @@ GB.i18n.define('bn', {
   'health.deploys': 'পরিবেশ অনুযায়ী ডিপ্লয়মেন্ট',
   'health.deployCurrent': '{branch}-এর সাথে হালনাগাদ',
   'health.deployBehind': '{branch}-এ নতুন কমিট: {n}',
-  'health.deployUnknown': 'এর ব্রাঞ্চ লোড হয়নি',
+  'health.deployUnknown': 'লোড হওয়া ব্রাঞ্চে নেই',
   'health.ci': 'CI ব্যর্থতা',
   'health.ciPrs': 'ব্যর্থ চেকসহ খোলা PR: {total}-এর মধ্যে {failing} ({pct}%)',
   'health.ciFeed': '৩০ দিনে ডিফল্ট ব্রাঞ্চ লাল হওয়ার সংখ্যা: {n}',

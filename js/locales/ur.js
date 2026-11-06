@@ -568,7 +568,7 @@ GB.i18n.define('ur', {
   'health.deploys': 'ماحول کے لحاظ سے ڈیپلائمنٹ',
   'health.deployCurrent': '{branch} کے ساتھ تازہ',
   'health.deployBehind': '{branch} پر نئی کمٹس: {n}',
-  'health.deployUnknown': 'اس کی برانچ لوڈ نہیں ہوئی',
+  'health.deployUnknown': 'اس کی لوڈ شدہ برانچ میں نہیں',
   'health.ci': 'CI کی ناکامیاں',
   'health.ciPrs': 'ناکام چیکس والے کھلے PR: {total} میں سے {failing} ({pct}٪)',
   'health.ciFeed': '30 دنوں میں ڈیفالٹ برانچ کتنی بار سرخ ہوئی: {n}',

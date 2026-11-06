@@ -525,7 +525,7 @@ GB.i18n.define('ta', {
   'health.deploys': 'சூழல் வாரியாக வெளியீடுகள்',
   'health.deployCurrent': '{branch} உடன் புதுப்பித்தது',
   'health.deployBehind': '{branch} இல் புதிய கமிட்கள்: {n}',
-  'health.deployUnknown': 'அதன் கிளை ஏற்றப்படவில்லை',
+  'health.deployUnknown': 'ஏற்றப்பட்ட அதன் கிளையில் இல்லை',
   'health.ci': 'CI தோல்விகள்',
   'health.ciPrs': 'சரிபார்ப்புகள் தோல்வியடைந்த திறந்த PRகள்: {total}-இல் {failing} ({pct}%)',
   'health.ciFeed': '30 நாட்களில் இயல்புநிலைக் கிளை சிவப்பானது எத்தனை முறை: {n}',

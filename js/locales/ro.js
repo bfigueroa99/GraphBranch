@@ -533,7 +533,7 @@ GB.i18n.define('ro', {
   'health.deploys': 'Implementări pe mediu',
   'health.deployCurrent': 'la zi cu {branch}',
   'health.deployBehind': 'commituri noi pe {branch}: {n}',
-  'health.deployUnknown': 'ramura sa nu este încărcată',
+  'health.deployUnknown': 'nu e pe ramura sa încărcată',
   'health.ci': 'Eșecuri CI',
   'health.ciPrs': 'PR-uri deschise cu verificări eșuate: {failing} din {total} ({pct}%)',
   'health.ciFeed': 'De câte ori a devenit roșie ramura implicită în 30 de zile: {n}',

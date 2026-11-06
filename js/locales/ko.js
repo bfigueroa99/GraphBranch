@@ -525,7 +525,7 @@ GB.i18n.define('ko', {
   'health.deploys': '환경별 배포',
   'health.deployCurrent': '{branch}와 최신 상태',
   'health.deployBehind': '{branch}의 새 커밋: {n}',
-  'health.deployUnknown': '브랜치가 로드되지 않음',
+  'health.deployUnknown': '로드된 브랜치에 없음',
   'health.ci': 'CI 실패',
   'health.ciPrs': '체크가 실패한 열린 PR: {total}개 중 {failing}개({pct}%)',
   'health.ciFeed': '30일 동안 기본 브랜치가 빨간색이 된 횟수: {n}',

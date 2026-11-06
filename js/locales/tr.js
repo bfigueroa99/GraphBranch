@@ -525,7 +525,7 @@ GB.i18n.define('tr', {
   'health.deploys': 'Ortama göre dağıtımlar',
   'health.deployCurrent': '{branch} ile güncel',
   'health.deployBehind': '{branch} üzerinde yeni commit: {n}',
-  'health.deployUnknown': 'dalı yüklenmedi',
+  'health.deployUnknown': 'yüklü dalında yok',
   'health.ci': 'CI hataları',
   'health.ciPrs': 'Kontrolleri başarısız açık PR\'ler: {total} içinde {failing} (%{pct})',
   'health.ciFeed': 'Varsayılan dalın 30 günde kırmızıya döndüğü sayı: {n}',

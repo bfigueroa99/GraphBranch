@@ -525,7 +525,7 @@ GB.i18n.define('fi', {
   'health.deploys': 'Julkaisut ympäristöittäin',
   'health.deployCurrent': 'ajan tasalla haaran {branch} kanssa',
   'health.deployBehind': 'uusia committeja haarassa {branch}: {n}',
-  'health.deployUnknown': 'sen haaraa ei ole ladattu',
+  'health.deployUnknown': 'ei ole sen ladatussa haarassa',
   'health.ci': 'CI-virheet',
   'health.ciPrs': 'Avoimet PR:t, joiden tarkistukset epäonnistuvat: {failing} / {total} ({pct} %)',
   'health.ciFeed': 'Kertaa, jolloin oletushaara punastui 30 päivässä: {n}',

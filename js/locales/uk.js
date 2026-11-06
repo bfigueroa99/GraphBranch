@@ -541,7 +541,7 @@ GB.i18n.define('uk', {
   'health.deploys': 'Розгортання за середовищами',
   'health.deployCurrent': 'актуально з {branch}',
   'health.deployBehind': 'нових комітів у {branch}: {n}',
-  'health.deployUnknown': 'його гілку не завантажено',
+  'health.deployUnknown': 'немає в завантаженій гілці',
   'health.ci': 'Збої CI',
   'health.ciPrs': 'Відкриті PR із невдалими перевірками: {failing} із {total} ({pct} %)',
   'health.ciFeed': 'Скільки разів основна гілка червоніла за 30 днів: {n}',

@@ -525,7 +525,7 @@ GB.i18n.define('ja', {
   'health.deploys': '環境ごとのデプロイ',
   'health.deployCurrent': '{branch} と同じ',
   'health.deployBehind': '{branch} の新しいコミット: {n}',
-  'health.deployUnknown': 'ブランチが読み込まれていません',
+  'health.deployUnknown': '読み込まれたブランチにありません',
   'health.ci': 'CI の失敗',
   'health.ciPrs': 'チェックが失敗している公開中の PR: {total} 件中 {failing} 件({pct}%)',
   'health.ciFeed': '30 日間でデフォルトブランチが赤になった回数: {n}',

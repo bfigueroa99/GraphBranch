@@ -533,7 +533,7 @@ GB.i18n.define('hr', {
   'health.deploys': 'Implementacije po okruženju',
   'health.deployCurrent': 'ažurno s {branch}',
   'health.deployBehind': 'novi commitovi na {branch}: {n}',
-  'health.deployUnknown': 'njegova grana nije učitana',
+  'health.deployUnknown': 'nije na njegovoj učitanoj grani',
   'health.ci': 'Neuspjesi CI-ja',
   'health.ciPrs': 'Otvoreni PR-ovi s neuspjelim provjerama: {failing} od {total} ({pct} %)',
   'health.ciFeed': 'Koliko je puta zadana grana pocrvenjela u 30 dana: {n}',

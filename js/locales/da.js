@@ -525,7 +525,7 @@ GB.i18n.define('da', {
   'health.deploys': 'Udrulninger pr. miljø',
   'health.deployCurrent': 'opdateret med {branch}',
   'health.deployBehind': 'nye commits på {branch}: {n}',
-  'health.deployUnknown': 'dens gren er ikke indlæst',
+  'health.deployUnknown': 'ikke på dens indlæste gren',
   'health.ci': 'CI-fejl',
   'health.ciPrs': 'Åbne PR\'er med fejlende checks: {failing} af {total} ({pct} %)',
   'health.ciFeed': 'Gange standardgrenen blev rød inden for 30 dage: {n}',

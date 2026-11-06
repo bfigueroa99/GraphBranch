@@ -483,9 +483,15 @@ test('despliegues por entorno: al día con su rama, commits nuevos detrás o sin
   assert.equal(h.deploys.total, 3);
   const rows = JSON.parse(JSON.stringify(h.deploys.rows));
   assert.deepEqual(rows.map((r) => r.env), ['production', 'staging', 'preview']);
-  assert.deepEqual(rows.map((r) => [r.state, r.head, r.behind]), [['behind', 'main', 3], ['current', 'develop', 0], ['unknown', 'main', 0]]);
+  assert.deepEqual(rows.map((r) => [r.state, r.head, r.behind]), [['behind', 'main', 3], ['current', 'develop', 0], ['unknown', null, 0]]);
   assert.equal(rows[0].age, NOW - ago(0.2));
   assert.equal(rows[1].age, NOW - ago(0.5));
+  // un commit de otra rama (develop) que main no contiene, aunque compartan ancestros: no se sabe, y no lleva a ninguna rama
+  data.deploys = new Map([['preview', { sha: 'd1', ref: 'pr-12' }]]);
+  assert.deepEqual(JSON.parse(JSON.stringify(compute(data, [], NOW).deploys.rows.map((r) => [r.state, r.head]))), [['unknown', null]]);
+  // un sha que no es texto no rompe el panel
+  data.deploys = new Map([['raro', { sha: 1 }]]);
+  assert.equal(compute(data, [], NOW).deploys.total, 0);
   // el despliegue de la punta de la rama por defecto, sin `ref`, está al día
   data.deploys = new Map([['production', { sha: 'r3' }]]);
   assert.equal(compute(data, [], NOW).deploys.rows[0].state, 'current');

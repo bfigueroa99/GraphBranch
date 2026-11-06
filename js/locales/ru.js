@@ -541,7 +541,7 @@ GB.i18n.define('ru', {
   'health.deploys': 'Развёртывания по окружениям',
   'health.deployCurrent': 'актуально с {branch}',
   'health.deployBehind': 'новых коммитов в {branch}: {n}',
-  'health.deployUnknown': 'его ветка не загружена',
+  'health.deployUnknown': 'нет в загруженной ветке',
   'health.ci': 'Сбои CI',
   'health.ciPrs': 'Открытые PR с упавшими проверками: {failing} из {total} ({pct} %)',
   'health.ciFeed': 'Сколько раз основная ветка краснела за 30 дней: {n}',

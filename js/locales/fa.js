@@ -568,7 +568,7 @@ GB.i18n.define('fa', {
   'health.deploys': 'استقرارها بر اساس محیط',
   'health.deployCurrent': 'به‌روز با {branch}',
   'health.deployBehind': 'کامیت‌های تازه در {branch}: {n}',
-  'health.deployUnknown': 'شاخهٔ آن بارگذاری نشده',
+  'health.deployUnknown': 'در شاخهٔ بارگذاری‌شده‌اش نیست',
   'health.ci': 'شکست‌های CI',
   'health.ciPrs': 'PRهای باز با بررسی‌های ناموفق: {failing} از {total} ({pct}٪)',
   'health.ciFeed': 'دفعاتی که شاخه پیش‌فرض در ۳۰ روز قرمز شد: {n}',

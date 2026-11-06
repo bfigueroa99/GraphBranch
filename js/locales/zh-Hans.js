@@ -525,7 +525,7 @@ GB.i18n.define('zh-Hans', {
   'health.deploys': '各环境的部署',
   'health.deployCurrent': '与 {branch} 一致',
   'health.deployBehind': '{branch} 上的新提交：{n}',
-  'health.deployUnknown': '其分支尚未加载',
+  'health.deployUnknown': '不在已加载的分支上',
   'health.ci': 'CI 失败',
   'health.ciPrs': '检查失败的未关闭 PR:{failing} / {total}({pct}%)',
   'health.ciFeed': '默认分支在 30 天内变红的次数:{n}',

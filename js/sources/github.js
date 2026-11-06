@@ -600,7 +600,7 @@
       const deploys = await get('deployments?per_page=30', 'deploys');
       if (Array.isArray(deploys)) {
         const byEnv = new Map();
-        for (const d of deploys) if (d?.sha && typeof d.environment === 'string' && !byEnv.has(d.environment)) byEnv.set(d.environment, { sha: d.sha, ref: d.ref || '', at: d.created_at || '' }); // el más nuevo va primero
+        for (const d of deploys) if (typeof d?.sha === 'string' && typeof d.environment === 'string' && !byEnv.has(d.environment)) byEnv.set(d.environment, { sha: d.sha, ref: typeof d.ref === 'string' ? d.ref : '', at: typeof d.created_at === 'string' ? d.created_at : '' }); // el más nuevo va primero
         this.data.deploys = byEnv;
       }
     }

@@ -536,7 +536,7 @@ GB.i18n.define('pl', {
   'health.deploys': 'Wdrożenia według środowiska',
   'health.deployCurrent': 'aktualne z {branch}',
   'health.deployBehind': 'nowe commity w {branch}: {n}',
-  'health.deployUnknown': 'jego gałąź nie jest wczytana',
+  'health.deployUnknown': 'nie ma go w wczytanej gałęzi',
   'health.ci': 'Błędy CI',
   'health.ciPrs': 'Otwarte PR-y z nieudanymi sprawdzeniami: {failing} z {total} ({pct}%)',
   'health.ciFeed': 'Ile razy domyślna gałąź zaczerwieniła się w 30 dni: {n}',

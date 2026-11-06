@@ -525,7 +525,7 @@ GB.i18n.define('nb', {
   'health.deploys': 'Utrullinger per miljø',
   'health.deployCurrent': 'oppdatert med {branch}',
   'health.deployBehind': 'nye commits på {branch}: {n}',
-  'health.deployUnknown': 'grenen er ikke lastet inn',
+  'health.deployUnknown': 'ikke på den innlastede grenen',
   'health.ci': 'CI-feil',
   'health.ciPrs': 'Åpne PR-er med feilende sjekker: {failing} av {total} ({pct} %)',
   'health.ciFeed': 'Ganger standardgrenen ble rød på 30 dager: {n}',

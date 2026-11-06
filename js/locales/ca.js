@@ -525,7 +525,7 @@ GB.i18n.define('ca', {
   'health.deploys': 'Desplegaments per entorn',
   'health.deployCurrent': 'al dia amb {branch}',
   'health.deployBehind': 'commits nous a {branch}: {n}',
-  'health.deployUnknown': 'la seva branca no està carregada',
+  'health.deployUnknown': 'no és a la seva branca carregada',
   'health.ci': 'Errors de CI',
   'health.ciPrs': 'PR oberts amb els checks en vermell: {failing} de {total} ({pct} %)',
   'health.ciFeed': 'Vegades que la branca per defecte ha passat a vermell en 30 dies: {n}',

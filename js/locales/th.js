@@ -526,7 +526,7 @@ GB.i18n.define('th', {
   'health.deploys': 'การดีพลอยตามสภาพแวดล้อม',
   'health.deployCurrent': 'ตรงกับ {branch}',
   'health.deployBehind': 'คอมมิตใหม่บน {branch}: {n}',
-  'health.deployUnknown': 'ยังไม่ได้โหลดสาขาของมัน',
+  'health.deployUnknown': 'ไม่อยู่ในสาขาที่โหลดไว้',
   'health.ci': 'CI ล้มเหลว',
   'health.ciPrs': 'PR ที่เปิดอยู่และการตรวจสอบล้มเหลว: {failing} จาก {total} ({pct}%)',
   'health.ciFeed': 'จำนวนครั้งที่เบรนช์เริ่มต้นเป็นสีแดงใน 30 วัน: {n}',

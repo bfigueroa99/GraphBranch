@@ -526,7 +526,7 @@ GB.i18n.define('fr', {
   'health.deploys': 'Déploiements par environnement',
   'health.deployCurrent': 'à jour avec {branch}',
   'health.deployBehind': 'nouveaux commits sur {branch} : {n}',
-  'health.deployUnknown': 'sa branche n’est pas chargée',
+  'health.deployUnknown': 'absent de sa branche chargée',
   'health.ci': 'Échecs de CI',
   'health.ciPrs': 'PR ouvertes avec des checks en échec : {failing} sur {total} ({pct} %)',
   'health.ciFeed': 'Fois où la branche par défaut est passée au rouge en 30 jours : {n}',

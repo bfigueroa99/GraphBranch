@@ -48,18 +48,18 @@
 
   /** El estado del último despliegue de un entorno con lo ya cargado: `current` si su commit es la punta de su rama
       (la de `ref` si está cargada, si no la rama por defecto), `behind` con cuántos commits lleva la rama que el
-      despliegue no tiene, y `unknown` si la rama no está cargada o no contiene el commit desplegado. Sin consultas. */
+      despliegue no tiene (como `git rev-list desplegado..rama`), y `unknown` si la rama no está cargada o su historia
+      cargada no contiene el commit desplegado (otra rama, un tag, historia reescrita o aún sin cargar). Sin consultas. */
   function deployState(data, d) {
     const branch = (d.ref && data.branches.get(d.ref)) || data.branches.get(data.repo?.defaultBranch);
     if (!branch) return { state: 'unknown', branch: null };
     if (branch.sha === d.sha) return { state: 'current', branch: branch.name };
-    if (!data.commits.has(d.sha)) return { state: 'unknown', branch: branch.name };
-    const walk = (from, skip) => {
+    const walk = (from) => {
       const seen = new Set();
       const stack = [from];
       while (stack.length) {
         const s = stack.pop();
-        if (seen.has(s) || skip?.has(s)) continue;
+        if (seen.has(s)) continue;
         const c = data.commits.get(s);
         if (!c) continue;
         seen.add(s);
@@ -67,12 +67,12 @@
       }
       return seen;
     };
+    const tip = walk(branch.sha);
+    if (!tip.has(d.sha)) return { state: 'unknown', branch: null };
     const deployed = walk(d.sha);
-    const newer = walk(branch.sha, deployed);
-    // la rama no llega al commit desplegado (otra rama, historia reescrita o aún sin cargar): no se sabe
-    const reaches = [...newer].some((s) => (data.commits.get(s).parents || []).some((p) => deployed.has(p)));
-    if (!reaches) return { state: 'unknown', branch: branch.name };
-    return { state: 'behind', branch: branch.name, behind: newer.size };
+    let behind = 0;
+    for (const s of tip) if (!deployed.has(s)) behind++;
+    return { state: 'behind', branch: branch.name, behind };
   }
 
   /** `data`: el estado del repo (ramas, commits, PRs abiertos); `acts`: su actividad ya cargada.
@@ -208,7 +208,7 @@
 
     // el último despliegue de cada entorno (lo que trae la carga de despliegues), el más reciente primero
     const deploys = [...(data.deploys || [])]
-      .filter(([env, d]) => env && d?.sha)
+      .filter(([env, d]) => env && typeof d?.sha === 'string' && d.sha)
       .map(([env, d]) => {
         const time = at(d.at) || at(data.commits.get(d.sha)?.date);
         const st = deployState(data, d);

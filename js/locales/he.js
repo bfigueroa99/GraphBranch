@@ -582,7 +582,7 @@ GB.i18n.define('he', {
   'health.deploys': 'פריסות לפי סביבה',
   'health.deployCurrent': 'מעודכן מול {branch}',
   'health.deployBehind': 'קומיטים חדשים ב-{branch}: {n}',
-  'health.deployUnknown': 'הענף שלו לא נטען',
+  'health.deployUnknown': 'לא נמצא בענף הטעון שלו',
   'health.ci': 'כשלי CI',
   'health.ciPrs': 'PRs פתוחים עם בדיקות שנכשלו: {failing} מתוך {total} ({pct}%)',
   'health.ciFeed': 'מספר הפעמים שענף ברירת המחדל הפך לאדום ב-30 ימים: {n}',

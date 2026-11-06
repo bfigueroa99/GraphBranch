@@ -525,7 +525,7 @@ GB.i18n.define('bg', {
   'health.deploys': 'Внедрявания по среда',
   'health.deployCurrent': 'актуално спрямо {branch}',
   'health.deployBehind': 'нови комити в {branch}: {n}',
-  'health.deployUnknown': 'клонът му не е зареден',
+  'health.deployUnknown': 'не е в заредения му клон',
   'health.ci': 'Неуспехи на CI',
   'health.ciPrs': 'Отворени PR с неуспешни проверки: {failing} от {total} ({pct} %)',
   'health.ciFeed': 'Пъти, когато основният клон стана червен за 30 дни: {n}',

@@ -531,7 +531,7 @@ GB.i18n.define('en', {
   'health.deploys': 'Deployments by environment',
   'health.deployCurrent': 'up to date with {branch}',
   'health.deployBehind': 'new commits on {branch}: {n}',
-  'health.deployUnknown': 'its branch is not loaded',
+  'health.deployUnknown': 'not on its loaded branch',
   'health.ci': 'CI failures',
   'health.ciPrs': 'Open PRs with failing checks: {failing} of {total} ({pct}%)',
   'health.ciFeed': 'Times the default branch turned red in 30 days: {n}',

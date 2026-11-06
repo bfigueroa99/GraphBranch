@@ -525,7 +525,7 @@ GB.i18n.define('id', {
   'health.deploys': 'Deployment per lingkungan',
   'health.deployCurrent': 'mutakhir dengan {branch}',
   'health.deployBehind': 'commit baru di {branch}: {n}',
-  'health.deployUnknown': 'branch-nya belum dimuat',
+  'health.deployUnknown': 'tidak ada di branch-nya yang dimuat',
   'health.ci': 'Kegagalan CI',
   'health.ciPrs': 'PR terbuka dengan pemeriksaan gagal: {failing} dari {total} ({pct}%)',
   'health.ciFeed': 'Berapa kali cabang default menjadi merah dalam 30 hari: {n}',

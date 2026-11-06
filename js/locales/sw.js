@@ -525,7 +525,7 @@ GB.i18n.define('sw', {
   'health.deploys': 'Usambazaji kwa mazingira',
   'health.deployCurrent': 'imesasishwa na {branch}',
   'health.deployBehind': 'commit mpya kwenye {branch}: {n}',
-  'health.deployUnknown': 'tawi lake halijapakiwa',
+  'health.deployUnknown': 'haiko kwenye tawi lake lililopakiwa',
   'health.ci': 'Kushindwa kwa CI',
   'health.ciPrs': 'PR wazi zenye ukaguzi uliofeli: {failing} kati ya {total} ({pct}%)',
   'health.ciFeed': 'Mara ambazo tawi chaguomsingi liligeuka nyekundu ndani ya siku 30: {n}',

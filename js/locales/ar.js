@@ -624,7 +624,7 @@ GB.i18n.define('ar', {
   'health.deploys': 'عمليات النشر حسب البيئة',
   'health.deployCurrent': 'محدّث مع {branch}',
   'health.deployBehind': 'إيداعات جديدة في {branch}: {n}',
-  'health.deployUnknown': 'فرعه غير محمّل',
+  'health.deployUnknown': 'ليس في فرعه المحمّل',
   'health.ci': 'إخفاقات CI',
   'health.ciPrs': 'طلبات السحب المفتوحة ذات الفحوص الفاشلة: {failing} من {total} ({pct}٪)',
   'health.ciFeed': 'مرات تحوّل الفرع الافتراضي إلى الأحمر خلال 30 يومًا: {n}',

@@ -536,7 +536,7 @@ GB.i18n.define('cs', {
   'health.deploys': 'Nasazení podle prostředí',
   'health.deployCurrent': 'aktuální s {branch}',
   'health.deployBehind': 'nové commity v {branch}: {n}',
-  'health.deployUnknown': 'jeho větev není načtená',
+  'health.deployUnknown': 'není v jeho načtené větvi',
   'health.ci': 'Selhání CI',
   'health.ciPrs': 'Otevřené PR s červenými kontrolami: {failing} z {total} ({pct} %)',
   'health.ciFeed': 'Kolikrát výchozí větev zčervenala za 30 dní: {n}',

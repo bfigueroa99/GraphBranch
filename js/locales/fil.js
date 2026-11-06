@@ -526,7 +526,7 @@ GB.i18n.define('fil', {
   'health.deploys': 'Mga deployment ayon sa environment',
   'health.deployCurrent': 'updated sa {branch}',
   'health.deployBehind': 'mga bagong commit sa {branch}: {n}',
-  'health.deployUnknown': 'hindi naka-load ang branch nito',
+  'health.deployUnknown': 'wala sa naka-load na branch nito',
   'health.ci': 'Mga pagkabigo ng CI',
   'health.ciPrs': 'Mga bukas na PR na bigo ang checks: {failing} sa {total} ({pct}%)',
   'health.ciFeed': 'Ilang beses naging pula ang default na branch sa 30 araw: {n}',

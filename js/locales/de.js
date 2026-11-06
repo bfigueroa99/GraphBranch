@@ -526,7 +526,7 @@ GB.i18n.define('de', {
   'health.deploys': 'Deployments nach Umgebung',
   'health.deployCurrent': 'aktuell mit {branch}',
   'health.deployBehind': 'neue Commits auf {branch}: {n}',
-  'health.deployUnknown': 'sein Branch ist nicht geladen',
+  'health.deployUnknown': 'nicht im geladenen Branch',
   'health.ci': 'CI-Fehlschläge',
   'health.ciPrs': 'Offene PRs mit fehlgeschlagenen Checks: {failing} von {total} ({pct} %)',
   'health.ciFeed': 'Wie oft der Standard-Branch in 30 Tagen rot wurde: {n}',

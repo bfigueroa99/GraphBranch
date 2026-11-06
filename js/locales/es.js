@@ -525,7 +525,7 @@ GB.i18n.define('es', {
   'health.deploys': 'Despliegues por entorno',
   'health.deployCurrent': 'al día con {branch}',
   'health.deployBehind': 'commits nuevos en {branch}: {n}',
-  'health.deployUnknown': 'sin su rama cargada',
+  'health.deployUnknown': 'no está en su rama cargada',
   'health.ci': 'Fallos de CI',
   'health.ciPrs': 'PRs abiertos con los checks en rojo: {failing} de {total} ({pct} %)',
   'health.ciFeed': 'Veces que la rama por defecto pasó a rojo en 30 días: {n}',

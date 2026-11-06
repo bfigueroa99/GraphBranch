@@ -525,7 +525,7 @@ GB.i18n.define('vi', {
   'health.deploys': 'Triển khai theo môi trường',
   'health.deployCurrent': 'khớp với {branch}',
   'health.deployBehind': 'commit mới trên {branch}: {n}',
-  'health.deployUnknown': 'nhánh của nó chưa được tải',
+  'health.deployUnknown': 'không có trên nhánh đã tải',
   'health.ci': 'Lỗi CI',
   'health.ciPrs': 'PR đang mở có kiểm tra thất bại: {failing}/{total} ({pct}%)',
   'health.ciFeed': 'Số lần nhánh mặc định chuyển đỏ trong 30 ngày: {n}',

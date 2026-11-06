@@ -5065,6 +5065,13 @@ a.hl-row:focus-visible {
   color: var(--ink-3);
   font: 12px var(--font-mono);
 }
+/* los despliegues dicen commit, estado y edad: en una pantalla angosta el texto se parte en vez de desbordar */
+#hl-deploys .hl-aside {
+  flex: 0 1 auto;
+  min-width: 0;
+  text-align: end;
+  overflow-wrap: anywhere;
+}
 .hl-switch {
   display: flex;
   align-items: center;

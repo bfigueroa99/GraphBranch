@@ -526,7 +526,7 @@ GB.i18n.define('nl', {
   'health.deploys': 'Deployments per omgeving',
   'health.deployCurrent': 'bij met {branch}',
   'health.deployBehind': 'nieuwe commits op {branch}: {n}',
-  'health.deployUnknown': 'de branch is niet geladen',
+  'health.deployUnknown': 'niet op de geladen branch',
   'health.ci': 'CI-fouten',
   'health.ciPrs': 'Open PR\'s met mislukte checks: {failing} van {total} ({pct}%)',
   'health.ciFeed': 'Aantal keren dat de standaardbranch in 30 dagen rood werd: {n}',

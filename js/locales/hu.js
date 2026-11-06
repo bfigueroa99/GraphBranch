@@ -525,7 +525,7 @@ GB.i18n.define('hu', {
   'health.deploys': 'Telepítések környezetenként',
   'health.deployCurrent': 'naprakész ezzel: {branch}',
   'health.deployBehind': 'új commitok itt: {branch}: {n}',
-  'health.deployUnknown': 'az ága nincs betöltve',
+  'health.deployUnknown': 'nincs a betöltött ágán',
   'health.ci': 'CI-hibák',
   'health.ciPrs': 'Sikertelen ellenőrzésű nyitott PR-ek: {failing} / {total} ({pct}%)',
   'health.ciFeed': 'Hányszor vált pirossá az alapértelmezett ág 30 nap alatt: {n}',

@@ -525,7 +525,7 @@ GB.i18n.define('el', {
   'health.deploys': 'Αναπτύξεις ανά περιβάλλον',
   'health.deployCurrent': 'ενημερωμένο με {branch}',
   'health.deployBehind': 'νέα commit στο {branch}: {n}',
-  'health.deployUnknown': 'ο κλάδος του δεν έχει φορτωθεί',
+  'health.deployUnknown': 'δεν είναι στον φορτωμένο κλάδο του',
   'health.ci': 'Αποτυχίες CI',
   'health.ciPrs': 'Ανοιχτά PR με αποτυχημένους ελέγχους: {failing} από {total} ({pct}%)',
   'health.ciFeed': 'Φορές που ο προεπιλεγμένος κλάδος έγινε κόκκινος σε 30 ημέρες: {n}',

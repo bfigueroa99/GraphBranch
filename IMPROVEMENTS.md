@@ -398,27 +398,21 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     nota de cada commit (`.tv-aside`) ya van en el `aria-label` del `treeitem`, pero son texto del nodo: según el lector se
     leen dos veces. Marcarlas `aria-hidden="true"` y comprobarlo con un lector real (ver Para Benjamin, 5).
     Reproducción: Playwright, abrir `#textview-btn` → `.tv-tag` dentro de `[role=treeitem][aria-label]` sin `aria-hidden`.
-12. [Rendimiento] `placeLabels` (`js/graph3d.js`) crea por cuadro un `{x, y}` por `project()`, un objeto por candidata, la grilla (`Map`) y
-    sus cierres. Medido en la iteración 199 con 1.000 ramas en 3D: 0,36 ms por cuadro (19 cuadros en 4 s sin GPU), así que
-    hoy no pesa; si algún día se mide más, reusar el punto de `project()` (devolver un objeto compartido y revisar quién lo
-    guarda) y un arreglo de candidatas. Reproducción: Playwright, `?repo=acme/web` con 1.000 ramas, envolver
-    `GB.Graph3D.prototype.placeLabels` con `performance.now()` → ~0,36 ms por llamada.
-13. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
+12. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
     `placeLabels`. El cuadro lo domina el render por software (~200 ms por cuadro sin GPU, 10 fps), que con GPU no existe;
     medir con GPU real antes de tocarlo. Reproducción: la misma envoltura sobre `stepScene` → ~1,1 ms por llamada.
-14. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
+13. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
     (895 ms en total, sin GPU); el perfil de CPU de los primeros 6 s no deja ninguna función de la app por encima de 70 ms
     (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
     que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
     Reproducción: `node tools/audit.mjs --repetir 3` → `consultas: 10`, `tareasLargasMs: 895`.
-15. [Errores] Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el repo del PR con
+14. [Errores] Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el repo del PR con
     `owner/name` tal como se escribieron; con un repo renombrado (abierto por su nombre viejo) ningún PR cuenta como del
     mismo repo: sus ramas pierden el «PRs abiertos» y dicen «sin PR abierto». Comparar `fromRef.repository` con
     `toRef.repository`. Reproducción: API simulada con el repo `nuevo` y abrir `CLAVE/viejo` → `sameRepo` false.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
-  entradas y no tamaño (`galaxy.js:1987`); `placeLabels`/`placeNotes` crean arreglos por cuadro
-  (`graph3d.js:2611`); el contenedor 2D enfocable no tiene rol ni nombre (`graph.js:306`); las marcas
+  entradas y no tamaño (`galaxy.js:1987`); el contenedor 2D enfocable no tiene rol ni nombre (`graph.js:306`); las marcas
   de la brújula del mundo abierto son botones que se mueven y ocultan cada cuadro (`world.js:849`).
 
 ## Bitácora
@@ -617,3 +611,17 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/230, sin colisión
 - Validado: 604 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 231, mantenimiento · Rendimiento: pendiente 12 (`placeLabels` (`js/graph3d.js`) crea por cuadro un `{x, y}` por `project()`, un…)
+
+### 2026-11-06 · Iteración 231 · Mantenimiento · Rendimiento
+
+- **Arreglo: `placeLabels` del 3D ya no deja basura por cuadro** (pendiente 12). `project()` devuelve un punto compartido (`projOut`) en vez de un `{x, y}` nuevo por llamada (sus nueve llamadores en `js/graph3d.js` y `js/galaxy.js` copian x e y en el acto; el JSDoc lo dice); las candidatas de las etiquetas de rama salen de un pool que se reusa (y suelta las ramas que ya no están); la grilla de choques pasa a métodos (`gridReset`, `gridRect`, `gridHits`, `gridAdd`) con su `Map` y sus celdas vivas entre cuadros, sin los cierres por cuadro, y los rectángulos de fechas y de notas (`placeNotes`) salen de otro pool. Mismas condiciones de choque, márgenes y orden.
+- **Reproducción:** Playwright, `?repo=acme/web` con 1.000 ramas en 3D, `placeLabels` llamado 2.000 veces seguidas sobre la misma instancia (la mejor de 5) → 0,0170 y 0,0142 ms por llamada sin el arreglo; 0,0145 y 0,0138 con él (mediana 0,0187 → 0,0161). La envoltura por cuadro del pendiente ya no lo distingue: 0,2 ms en las dos versiones, en el límite del reloj.
+- **Pruebas que fallan sin el arreglo:** `node --test tools/rendimiento.test.mjs` («placeLabels no deja basura por cuadro…») → falla sin el cambio (`project() no crea un objeto por llamada`).
+- README: no cambia (sin función nueva ni límite nuevo).
+- QA: 3D con 1.000 ramas antes y después (mismas 33 etiquetas a la vista, sin errores de consola); `--comparar` contra la base: carga 1581 → 1520 ms (−4 %), tareas largas 963 → 824 ms (−14 %), 3D 11,7 → 12,2 fps, 2D 52,7 → 52,6 fps, 10 consultas, ninguna medida peor; auditoría completa 0 hallazgos antes y después.
+- Skills: no aplica: reusar objetos en un camino caliente propio; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (la que el pendiente describe: el punto compartido y pools).
+- OMC: plan=— · revisión=5 hallazgos, 1 MEDIUM y 4 LOW (2 arreglados: la prueba prometía más de lo que mira sobre quién retiene el punto, y el corte del fuente dependía del orden de los métodos; quedan sin cambio, por despreciables, las celdas vacías tras achicar la ventana, el pool que retiene las ramas del último cuadro hasta el siguiente, y `near` de `placeNotes`, que sigue creando un `{ it, d2 }` por commit cercano) · verificación=PASS
+- Reclamo: loop/231, sin colisión
+- Validado: 605 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 232, expansión: ítem 171 (Práctica: add -A, Público)

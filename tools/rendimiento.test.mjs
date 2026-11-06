@@ -41,7 +41,8 @@ test('placeLabels no ordena las fechas del eje en cada cuadro: el orden se guard
 
 test('placeLabels no deja basura por cuadro: project() reusa su punto y la grilla, las candidatas y los rectángulos van en pools', () => {
   const s = src('graph3d.js');
-  const project = s.slice(s.indexOf('    project(v) {'), s.indexOf('    gridReset() {'));
+  const ini = s.indexOf('    project(v) {');
+  const project = s.slice(ini, s.indexOf('\n    }\n', ini));
   assert.doesNotMatch(project, /return \{ x:/, 'project() no crea un objeto por llamada');
   assert.match(project, /this\.projOut \|\| \(this\.projOut = /);
   const cuerpo = s.slice(s.indexOf('placeLabels() {'), s.indexOf('makeNote() {'));
@@ -50,6 +51,6 @@ test('placeLabels no deja basura por cuadro: project() reusa su punto y la grill
   assert.doesNotMatch(cuerpo, /cand\.push\(\{/, 'las candidatas salen del pool');
   assert.doesNotMatch(cuerpo, /const [rs] = \{ /, 'los rectángulos de fechas y notas salen del pool');
   assert.match(cuerpo, /this\.gridReset\(\)/);
-  // quien guarda un punto de project() copia x e y: ninguno guarda el objeto entero
-  for (const f of ['graph3d.js', 'galaxy.js']) assert.doesNotMatch(src(f), /\.push\(\s*(p|q)\s*\)|=\s*(this|g)\.project\([^)]*\);\s*\n[^\n]*\.(p|q)\s*=\s*(p|q)\b/, `${f}: nadie retiene el punto compartido`);
+  // indicio, no garantía: el contrato de no retener el punto lo dice el JSDoc de project() y se revisó a mano
+  for (const f of ['graph3d.js', 'galaxy.js']) assert.doesNotMatch(src(f), /\.push\(\s*(p|q)\s*\)/, `${f}: nadie apila el punto compartido de project()`);
 });

@@ -281,6 +281,7 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 165. ~~**Constelación: ordenar por issues abiertos**~~ hecho en #282 · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] La constelación se ordena también por issues abiertos (con lo ya cargado de cada repo) y `?order=issues` la abre así. Comprobar: `node --test tools/constellation.test.mjs` y un paso del smoke.
 166. **Launchpad: posponer un PR** · Escala · 1×2/2. [replica 2026-10-28] [parte de «Launchpad: fijar y posponer PRs e issues»] Cada PR del Launchpad de la vista conjunta se puede posponer (baja al final de la lista hasta que pase un día) y se recuerda en este navegador. Comprobar: `node --test` del orden con PRs fabricados y un paso del smoke.
 167. **Salud del repo: tendencia de estrellas** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del mapa: Análisis] El panel de salud compara las estrellas nuevas de la semana con las de la anterior, con lo ya cargado y sin consultas nuevas. Comprobar: `node --test tools/health.test.mjs` con estrellas fabricadas.
+168. **Constelación: ordenar por estrellas** · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] La constelación se ordena también por estrellas, con el total que ya trae la consulta del repo de cada fuente que lo da (sin consultas nuevas), y `?order=stars` la abre así. Comprobar: `node --test tools/constellation.test.mjs` y un paso del smoke.
 ~~**Constelación: ordenar por PRs abiertos**~~ hecho en #247 · Escala.
 ~~**Constelación: solo los repos con actividad reciente, en la URL**~~ hecho en #239 · Escala.
 
@@ -350,7 +351,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     Reproducción: `xvfb-run -a npx playwright test e2e/desktop.spec.mjs -g "bitbucket-url"` con el equipo cargado →
     `expect(locator('#azure-token-input')).toHaveValue('az-e2e')` · `Received: ""`.
 2. [Deuda] El paso del smoke «vista de texto: árbol con teclado, nombres accesibles y Enter lleva al grafo» falló 1 de 2
-    en la puerta de la iteración 222 (2026-11-05; la repetición pasó): ninguna rama de la demo decía «sin PR abierto»
+    en la puerta de la iteración 222 (2026-11-05; la repetición pasó) y otra vez en la segunda de la 225 (2026-11-06): ninguna rama de la demo decía «sin PR abierto»
     (`badNoPr` vacío, así que no fue una rama mal marcada sino ninguna marcada). Hipótesis: la demo sigue viva y a veces
     abre un PR o fusiona la rama que lo decía justo antes de leer la vista; quietar la demo durante el paso, como ya hacen
     otros (`quieta`). Reproducción: `node tools/smoke.mjs` repetido → `la vista de texto no dice qué ramas no tienen PR
@@ -534,6 +535,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Skills: no aplica: un orden más en un selector que ya existe, con un campo de una consulta que ya se hacía; lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (el mismo camino que el orden por PRs abiertos, con el total que ya da la API).
 - OMC: plan=— · revisión=3 hallazgos LOW (1 arreglado: el smoke vuelve los totales a 0 en un `finally`; los otros 2, el tope de 50 PRs sin token y el total sin refrescar, documentados en Límites conocidos) · verificación=—
+- Hoja de ruta: repuesta a 15 con el ítem 168 (Constelación: ordenar por estrellas, otra parte del ítem 26).
 - Reclamo: loop/225, sin colisión
 - Validado: pendiente
 - **Siguiente:** iteración 226, expansión: ítem 162 (Práctica: commit de solo lo preparado, Público)

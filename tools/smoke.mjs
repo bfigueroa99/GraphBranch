@@ -2511,21 +2511,25 @@ console.log('Varios repos a la vez');
       gh.repo('o/a').openItems = 1; // 1 issue
       gh.repo('o/b').openItems = 5; // 3 issues y sus 2 PRs abiertos
       gh.repo('o/c').openItems = 4; // 4 issues
+      // en una página aparte: sus tres repos no se suman a las 20 pestañas guardadas que siguen usando los pasos de abajo
+      const iss = await openPage({ viewport: { width: 1280, height: 800 } });
+      await iss.unroute('https://api.github.com/**');
+      await iss.route('https://api.github.com/**', gh.handle);
       try {
-        await full.goto(`${base}/index.html?lang=es&order=issues&repo=o/a&repo=o/b&repo=o/c`);
-        await full.waitForFunction(() => [...document.querySelectorAll('#repo-tabs .rt')].filter((t) => t.dataset.state === 'live').length === 3, null, { timeout: T(15000) });
-        await full.click('#constellation-btn');
-        await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
-        if ((await full.$eval('#constellation-order', (s) => s.value)) !== 'issues') throw new Error('?order=issues no deja el selector en issues abiertos');
-        // las 20 pestañas del paso anterior siguen (no existen: sin issues, al final, en su orden)
-        const byIssues = await full.$$eval('#constellation .cs-gx', (bs) => bs.slice(0, 4).map((b) => b.dataset.key).join(' '));
-        if (byIssues !== 'o/c o/b o/a o/r0') throw new Error('la constelación no se ordena por issues abiertos (sin contar los PRs): ' + byIssues);
-        await full.selectOption('#constellation-order', 'issues');
-        const issuesSaid = await full.$eval('#constellation-status', (e) => e.textContent.trim());
+        await iss.goto(`${base}/index.html?lang=es&order=issues&repo=o/a&repo=o/b&repo=o/c`);
+        await iss.waitForFunction(() => [...document.querySelectorAll('#repo-tabs .rt')].filter((t) => t.dataset.state === 'live').length === 3, null, { timeout: T(15000) });
+        await iss.click('#constellation-btn');
+        await iss.waitForSelector('#constellation[open]', { timeout: T(3000) });
+        if ((await iss.$eval('#constellation-order', (s) => s.value)) !== 'issues') throw new Error('?order=issues no deja el selector en issues abiertos');
+        const byIssues = await iss.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => b.dataset.key).join(' '));
+        if (byIssues !== 'o/c o/b o/a') throw new Error('la constelación no se ordena por issues abiertos (sin contar los PRs): ' + byIssues);
+        await iss.selectOption('#constellation-order', 'issues');
+        const issuesSaid = await iss.$eval('#constellation-status', (e) => e.textContent.trim());
         if (!/Issues abiertos/.test(issuesSaid) || /undefined|constellation\./.test(issuesSaid)) throw new Error('el orden por issues no se anuncia: ' + issuesSaid);
-        await full.click('#constellation-close');
+        await iss.click('#constellation-close');
       } finally {
         for (const r of ['o/a', 'o/b', 'o/c']) gh.repo(r).openItems = 0;
+        await iss.context().close();
       }
       // ?order=new: abre ordenada por ramas nuevas de la semana, con el selector de acuerdo y el anuncio traducido
       await full.goto(`${base}/index.html?lang=es&order=new&repo=o/a`);

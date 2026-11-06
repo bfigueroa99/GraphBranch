@@ -938,3 +938,42 @@ test('el ejercicio de commit parcial no se resuelve con commit -a ni sin add', (
   run(fixed, 'add .', 'restore --staged debug.js', 'commit -m "Fix login"');
   assert.equal(ex.done(fixed), true, 'sacar debug.js de lo preparado también vale');
 });
+
+test('add -u prepara solo lo cambiado que git sigue; add . también lo sin seguir', () => {
+  const u = fresh();
+  run(u, 'touch a.txt', 'touch --new n.txt');
+  assert.ok(u.run('add -u').ok);
+  assert.deepEqual(plain(u.staged), [{ file: 'a.txt', isNew: false }], '-u prepara el cambiado');
+  assert.deepEqual(plain(u.untracked), ['n.txt'], 'lo sin seguir queda fuera');
+  assert.deepEqual(plain(u.work), []);
+  const st = plain(u.run('status').lines).join('\n');
+  assert.match(st, /Changes to be committed:[\s\S]*modified:   a\.txt/);
+  assert.match(st, /Untracked files:[\s\S]*n\.txt/);
+  assert.doesNotMatch(st, /new file:/);
+  // el commit lleva solo a.txt; n.txt sigue sin seguir
+  run(u, 'commit -m "solo a"');
+  assert.equal(u.untracked.join(), 'n.txt');
+  assert.equal(u.staged.length, 0);
+
+  const dot = fresh();
+  run(dot, 'touch a.txt', 'touch --new n.txt', 'add .');
+  assert.deepEqual(plain(dot.staged.map((s) => s.file).sort()), ['a.txt', 'n.txt'], 'add . prepara los dos');
+  assert.equal(dot.untracked.length, 0);
+
+  // --update es lo mismo; con rutas, solo las cambiadas que git sigue
+  const long = fresh();
+  run(long, 'touch a.txt', 'touch b.txt', 'touch --new n.txt');
+  assert.ok(long.run('add --update b.txt n.txt').ok, 'un archivo sin seguir con -u no es un error');
+  assert.deepEqual(plain(long.staged.map((s) => s.file)), ['b.txt']);
+  assert.deepEqual(plain(long.work), ['a.txt']);
+  assert.deepEqual(plain(long.untracked), ['n.txt']);
+  assert.equal(long.run('add -u nope.txt').ok, false, 'una ruta que no existe sí');
+  assert.ok(long.run('add -u .').ok);
+  assert.deepEqual(plain(long.staged.map((s) => s.file)), ['b.txt', 'a.txt']);
+  assert.deepEqual(plain(long.untracked), ['n.txt']);
+  // sin nada cambiado, -u no prepara nada ni falla
+  const clean = fresh();
+  assert.ok(clean.run('add -u').ok);
+  assert.equal(clean.staged.length, 0);
+  assert.match(plain(clean.run('help').lines).join('\n'), /add -u/);
+});

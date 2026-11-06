@@ -92,6 +92,10 @@ test('el orden: pestañas tal cual, actividad por commits y nombre sin mayúscul
   assert.deepEqual(C.sortItems(withIssues, 'issues').map((i) => i.key), ['o/c', 'o/b', 'o/d', 'o/a'], 'más issues abiertos primero; sin dato cuenta como 0; empata por pestaña');
   assert.deepEqual(C.sortItems(items, 'issues').map((i) => i.key), keys('tabs'), 'sin issues cargados queda el orden de las pestañas');
   assert.equal(C.orderParam(new URLSearchParams('order=%20Issues')), 'issues');
+  const withStars = items.map((it, i) => ({ ...it, stars: [40, null, 1200, 40][i] }));
+  assert.deepEqual(C.sortItems(withStars, 'stars').map((i) => i.key), ['o/c', 'o/b', 'o/d', 'o/a'], 'más estrellas primero; sin dato cuenta como 0; empata por pestaña');
+  assert.deepEqual(C.sortItems(items, 'stars').map((i) => i.key), keys('tabs'), 'sin estrellas cargadas queda el orden de las pestañas');
+  assert.equal(C.orderParam(new URLSearchParams('order=STARS')), 'stars');
   assert.deepEqual(items.map((i) => i.key), ['o/b', 'o/a', 'o/c', 'o/d'], 'no toca la lista original');
 });
 
@@ -183,4 +187,13 @@ test('issues abiertos con lo ya cargado: aparte si la API los da aparte; si vien
   assert.equal(C.openIssues({ repo: {} }), null, 'sin dato (Bitbucket, Azure, un repo local): null');
   assert.equal(C.openIssues({ repo: { openItems: null } }), null);
   assert.equal(C.openIssues(null), null);
+});
+
+test('estrellas con lo ya cargado: el total de la consulta del repo, o null si la fuente no lo da', () => {
+  assert.equal(C.starsOf({ repo: { stars: 1234 } }), 1234);
+  assert.equal(C.starsOf({ repo: { stars: 0 } }), 0, 'cero estrellas es un dato, no un hueco');
+  assert.equal(C.starsOf({ repo: { stars: -3 } }), 0, 'nunca negativo');
+  assert.equal(C.starsOf({ repo: {} }), null, 'sin dato (Bitbucket, Azure, un repo local): null');
+  assert.equal(C.starsOf({ repo: { stars: null } }), null);
+  assert.equal(C.starsOf(null), null);
 });

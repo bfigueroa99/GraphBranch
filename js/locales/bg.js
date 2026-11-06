@@ -723,6 +723,7 @@ GB.i18n.define('bg', {
   'constellation.orderName': 'Име',
   'constellation.orderNew': 'Нови клонове',
   'constellation.orderIssues': 'Отворени issues',
+  'constellation.orderStars': 'Звезди',
   'constellation.ordered': 'Подредено по: {order}',
   'constellation.filtered': 'Филтър «{filter}»: {shown} от {total}',
   'all.tab': 'Всички',

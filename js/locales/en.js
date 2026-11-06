@@ -729,6 +729,7 @@ GB.i18n.define('en', {
   'constellation.orderName': 'Name',
   'constellation.orderNew': 'New branches',
   'constellation.orderIssues': 'Open issues',
+  'constellation.orderStars': 'Stars',
   'constellation.ordered': 'Sorted by {order}',
   'constellation.filtered': 'Filtered by “{filter}”: {shown} of {total}',
   'all.tab': 'All',

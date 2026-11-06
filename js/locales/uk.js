@@ -739,6 +739,7 @@ GB.i18n.define('uk', {
   'constellation.orderName': 'Назва',
   'constellation.orderNew': 'Нові гілки',
   'constellation.orderIssues': 'Відкриті issues',
+  'constellation.orderStars': 'Зірки',
   'constellation.ordered': 'Відсортовано: {order}',
   'constellation.filtered': 'Фільтр «{filter}»: {shown} з {total}',
   'all.tab': 'Усі',

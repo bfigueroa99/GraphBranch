@@ -723,6 +723,7 @@ GB.i18n.define('id', {
   'constellation.orderName': 'Nama',
   'constellation.orderNew': 'Cabang baru',
   'constellation.orderIssues': 'Issue terbuka',
+  'constellation.orderStars': 'Bintang',
   'constellation.ordered': 'Diurutkan menurut {order}',
   'constellation.filtered': 'Disaring dengan «{filter}»: {shown} dari {total}',
   'all.tab': 'Semua',

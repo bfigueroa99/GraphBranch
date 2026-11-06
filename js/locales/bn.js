@@ -723,6 +723,7 @@ GB.i18n.define('bn', {
   'constellation.orderName': 'নাম',
   'constellation.orderNew': 'নতুন ব্রাঞ্চ',
   'constellation.orderIssues': 'খোলা issue',
+  'constellation.orderStars': 'স্টার',
   'constellation.ordered': 'সাজানো: {order}',
   'constellation.filtered': '«{filter}» দিয়ে ছাঁকা: {total}-এর মধ্যে {shown}',
   'all.tab': 'সব',

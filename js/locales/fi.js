@@ -723,6 +723,7 @@ GB.i18n.define('fi', {
   'constellation.orderName': 'Nimi',
   'constellation.orderNew': 'Uudet haarat',
   'constellation.orderIssues': 'Avoimet issuet',
+  'constellation.orderStars': 'Tähdet',
   'constellation.ordered': 'Lajiteltu: {order}',
   'constellation.filtered': 'Suodatus «{filter}»: {shown} / {total}',
   'all.tab': 'Kaikki',

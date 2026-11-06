@@ -723,6 +723,7 @@ GB.i18n.define('da', {
   'constellation.orderName': 'Navn',
   'constellation.orderNew': 'Nye grene',
   'constellation.orderIssues': 'Åbne issues',
+  'constellation.orderStars': 'Stjerner',
   'constellation.ordered': 'Sorteret efter {order}',
   'constellation.filtered': 'Filtreret på «{filter}»: {shown} af {total}',
   'all.tab': 'Alle',

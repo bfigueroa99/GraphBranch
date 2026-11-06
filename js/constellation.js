@@ -75,7 +75,8 @@
   }
 
   /** Forks de un repo con lo que ya se cargó, sin consultas nuevas: el total que trae la consulta del repo
-      (GitHub, GitLab, Gitea, Forgejo, Codeberg). `null` si la fuente no lo da (Bitbucket Cloud y Data Center, Azure, un repo local, la demo). */
+      (GitHub, GitLab, Gitea, Forgejo, Codeberg). `null` si la fuente no lo da (Bitbucket Cloud y Data Center, Azure, un repo local, la demo).
+      Es un número (`repo.forks`), no la lista de forks activos del panel de salud (`data.forks`). */
   function forksOf(data) {
     const n = data?.repo?.forks;
     return Number.isFinite(n) ? Math.max(0, n) : null;

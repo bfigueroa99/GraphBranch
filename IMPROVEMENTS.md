@@ -542,7 +542,8 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Skills: no aplica: un orden más en un selector que ya existe, con un campo de una consulta que ya se hacía; lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (el mismo camino que el orden por PRs abiertos, con el total que ya da la API).
 - OMC: plan=— · revisión=3 hallazgos LOW (1 arreglado: el smoke vuelve los totales a 0 en un `finally`; los otros 2, el tope de 50 PRs sin token y el total sin refrescar, documentados en Límites conocidos) · verificación=—
+- Puerta: cuatro corridas; la 1.ª y la 2.ª fallaron por el paso nuevo del smoke (las 20 pestañas del paso anterior; después, los repos que sumaba a las pestañas guardadas: pasó a una página aparte); la 2.ª además en «vista de texto…» (pendiente 2) y la 3.ª solo en «editar el código…», ajeno (pendiente 3, nuevo); la 4.ª en verde.
 - Hoja de ruta: repuesta a 15 con el ítem 168 (Constelación: ordenar por estrellas, otra parte del ítem 26).
 - Reclamo: loop/225, sin colisión
-- Validado: pendiente
+- Validado: 598 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 226, expansión: ítem 162 (Práctica: commit de solo lo preparado, Público)

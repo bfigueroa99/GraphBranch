@@ -181,6 +181,7 @@
         description: p.description || '',
         openIssues: Number.isFinite(p.open_issues_count) ? p.open_issues_count : null, // solo issues: los PRs van en open_pr_counter
         stars: Number.isFinite(p.stars_count) ? p.stars_count : null,
+        forks: Number.isFinite(p.forks_count) ? p.forks_count : null,
       });
     }
 

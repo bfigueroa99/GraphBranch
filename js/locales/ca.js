@@ -724,6 +724,7 @@ GB.i18n.define('ca', {
   'constellation.orderNew': 'Branques noves',
   'constellation.orderIssues': 'Issues obertes',
   'constellation.orderStars': 'Estrelles',
+  'constellation.orderForks': 'Forks',
   'constellation.ordered': 'Ordenat per {order}',
   'constellation.filtered': 'Filtrades per «{filter}»: {shown} de {total}',
   'all.tab': 'Tots',

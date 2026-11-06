@@ -229,6 +229,7 @@
         description: p.description || '',
         openIssues: Number.isFinite(p.open_issues_count) ? p.open_issues_count : null, // falta si el proyecto no tiene issues
         stars: Number.isFinite(p.star_count) ? p.star_count : null,
+        forks: Number.isFinite(p.forks_count) ? p.forks_count : null,
       });
     }
 

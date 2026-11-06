@@ -9,7 +9,7 @@
   const R_MIN = 1; // radios relativos: la galaxia más grande mide R_MAX veces la más chica
   const R_MAX = 2.4;
   const PAD = 4; // margen del cuadro, en % del lado
-  const ORDERS = ['activity', 'prs', 'issues', 'stars', 'new', 'name']; // los órdenes que no son el de las pestañas (el selector y ?order=)
+  const ORDERS = ['activity', 'prs', 'issues', 'stars', 'forks', 'new', 'name']; // los órdenes que no son el de las pestañas (el selector y ?order=)
 
   /** Tamaño relativo de una galaxia según sus commits: crece con la raíz y se queda entre R_MIN y R_MAX. */
   function radiusOf(commits, maxCommits) {
@@ -42,7 +42,7 @@
       .map((p) => ({ key: p.key, x: 50 + p.x * k, y: 50 + p.y * k, r: p.r * k }));
   }
 
-  /** Los repos en el orden pedido: `tabs` (el de las pestañas), `activity` (más commits cargados primero), `prs` (más pull requests abiertos primero), `issues` (más issues abiertos primero), `stars` (más estrellas primero), `new` (más ramas nuevas de la semana primero) o
+  /** Los repos en el orden pedido: `tabs` (el de las pestañas), `activity` (más commits cargados primero), `prs` (más pull requests abiertos primero), `issues` (más issues abiertos primero), `stars` (más estrellas primero), `forks` (más forks primero), `new` (más ramas nuevas de la semana primero) o
       `name` (alfabético, sin mayúsculas ni acentos). Empata por el orden de las pestañas; no toca `items`. */
   function sortItems(items, mode) {
     const list = items.map((it, idx) => ({ it, idx }));
@@ -50,6 +50,7 @@
     else if (mode === 'prs') list.sort((a, b) => (b.it.prs || 0) - (a.it.prs || 0) || a.idx - b.idx);
     else if (mode === 'issues') list.sort((a, b) => (b.it.issues || 0) - (a.it.issues || 0) || a.idx - b.idx);
     else if (mode === 'stars') list.sort((a, b) => (b.it.stars || 0) - (a.it.stars || 0) || a.idx - b.idx);
+    else if (mode === 'forks') list.sort((a, b) => (b.it.forks || 0) - (a.it.forks || 0) || a.idx - b.idx);
     else if (mode === 'new') list.sort((a, b) => (b.it.fresh || 0) - (a.it.fresh || 0) || a.idx - b.idx);
     else if (mode === 'name') list.sort((a, b) => String(a.it.name).localeCompare(String(b.it.name), undefined, { sensitivity: 'base', numeric: true }) || a.idx - b.idx);
     return list.map((x) => x.it);
@@ -73,6 +74,14 @@
     return Number.isFinite(n) ? Math.max(0, n) : null;
   }
 
+  /** Forks de un repo con lo que ya se cargó, sin consultas nuevas: el total que trae la consulta del repo
+      (GitHub, GitLab, Gitea, Forgejo, Codeberg). `null` si la fuente no lo da (Bitbucket Cloud y Data Center, Azure, un repo local, la demo).
+      Es un número (`repo.forks`), no la lista de forks activos del panel de salud (`data.forks`). */
+  function forksOf(data) {
+    const n = data?.repo?.forks;
+    return Number.isFinite(n) ? Math.max(0, n) : null;
+  }
+
   /** Ramas creadas en los últimos `days` días (hasta `now`) según la actividad ya cargada de un repo: cada nombre
       cuenta una vez (la misma rama vista por el feed y por la comparación en vivo, o borrada y creada otra vez, no
       suma dos), como en el resumen de la semana. */
@@ -87,7 +96,7 @@
     return names.size;
   }
 
-  /** `?order=activity`, `?order=prs`, `?order=issues`, `?order=stars`, `?order=new` o `?order=name`: el orden con que abre la constelación. Lo que no se conoce (o falta) es `null`: queda el de las pestañas. */
+  /** `?order=activity`, `?order=prs`, `?order=issues`, `?order=stars`, `?order=forks`, `?order=new` o `?order=name`: el orden con que abre la constelación. Lo que no se conoce (o falta) es `null`: queda el de las pestañas. */
   function orderParam(q) {
     const v = String(q.get('order') || '').trim().toLowerCase();
     return ORDERS.includes(v) ? v : null;
@@ -235,5 +244,5 @@
     return { render, setOrder, setFilter, setRecent };
   }
 
-  GB.constellation = { place, sortItems, openIssues, starsOf, newBranches, orderParam, filterParam, filterItems, recentParam, recentItems, radiusOf, hueOf, mount };
+  GB.constellation = { place, sortItems, openIssues, starsOf, forksOf, newBranches, orderParam, filterParam, filterItems, recentParam, recentItems, radiusOf, hueOf, mount };
 })(window.GB);

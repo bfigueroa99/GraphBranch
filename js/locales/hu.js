@@ -724,6 +724,7 @@ GB.i18n.define('hu', {
   'constellation.orderNew': 'Új ágak',
   'constellation.orderIssues': 'Nyitott issue-k',
   'constellation.orderStars': 'Csillagok',
+  'constellation.orderForks': 'Forkok',
   'constellation.ordered': 'Rendezés: {order}',
   'constellation.filtered': 'Szűrés: «{filter}», {shown} / {total}',
   'all.tab': 'Mind',

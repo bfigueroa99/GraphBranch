@@ -96,6 +96,10 @@ test('el orden: pestañas tal cual, actividad por commits y nombre sin mayúscul
   assert.deepEqual(C.sortItems(withStars, 'stars').map((i) => i.key), ['o/c', 'o/b', 'o/d', 'o/a'], 'más estrellas primero; sin dato cuenta como 0; empata por pestaña');
   assert.deepEqual(C.sortItems(items, 'stars').map((i) => i.key), keys('tabs'), 'sin estrellas cargadas queda el orden de las pestañas');
   assert.equal(C.orderParam(new URLSearchParams('order=STARS')), 'stars');
+  const withForks = items.map((it, i) => ({ ...it, forks: [5, null, 90, 5][i] }));
+  assert.deepEqual(C.sortItems(withForks, 'forks').map((i) => i.key), ['o/c', 'o/b', 'o/d', 'o/a'], 'más forks primero; sin dato cuenta como 0; empata por pestaña');
+  assert.deepEqual(C.sortItems(items, 'forks').map((i) => i.key), keys('tabs'), 'sin forks cargados queda el orden de las pestañas');
+  assert.equal(C.orderParam(new URLSearchParams('order=%20Forks')), 'forks');
   assert.deepEqual(items.map((i) => i.key), ['o/b', 'o/a', 'o/c', 'o/d'], 'no toca la lista original');
 });
 
@@ -196,4 +200,13 @@ test('estrellas con lo ya cargado: el total de la consulta del repo, o null si l
   assert.equal(C.starsOf({ repo: {} }), null, 'sin dato (Bitbucket, Azure, un repo local): null');
   assert.equal(C.starsOf({ repo: { stars: null } }), null);
   assert.equal(C.starsOf(null), null);
+});
+
+test('forks con lo ya cargado: el total de la consulta del repo, o null si la fuente no lo da', () => {
+  assert.equal(C.forksOf({ repo: { forks: 87 } }), 87);
+  assert.equal(C.forksOf({ repo: { forks: 0 } }), 0, 'cero forks es un dato, no un hueco');
+  assert.equal(C.forksOf({ repo: { forks: -2 } }), 0, 'nunca negativo');
+  assert.equal(C.forksOf({ repo: { stars: 5 } }), null, 'sin dato (Bitbucket, Azure, un repo local): null; no toma las estrellas');
+  assert.equal(C.forksOf({ repo: { forks: null } }), null);
+  assert.equal(C.forksOf(null), null);
 });

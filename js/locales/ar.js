@@ -823,6 +823,7 @@ GB.i18n.define('ar', {
   'constellation.orderNew': 'فروع جديدة',
   'constellation.orderIssues': 'المشكلات المفتوحة',
   'constellation.orderStars': 'النجوم',
+  'constellation.orderForks': 'التفريعات',
   'constellation.ordered': 'مرتبة حسب {order}',
   'constellation.filtered': 'مصفاة بـ «{filter}»: {shown} من {total}',
   'all.tab': 'الكل',

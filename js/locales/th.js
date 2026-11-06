@@ -725,6 +725,7 @@ GB.i18n.define('th', {
   'constellation.orderNew': 'สาขาใหม่',
   'constellation.orderIssues': 'issue ที่เปิดอยู่',
   'constellation.orderStars': 'ดาว',
+  'constellation.orderForks': 'ฟอร์ก',
   'constellation.ordered': 'เรียงตาม{order}',
   'constellation.filtered': 'กรองด้วย «{filter}»: {shown} จาก {total}',
   'all.tab': 'ทั้งหมด',

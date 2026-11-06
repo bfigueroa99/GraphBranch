@@ -322,6 +322,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Constelación: ordenar por issues abiertos | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 165 |
 | Launchpad: posponer un PR | Escala | 1×2/2 | 1,0 | Replica (GitKraken) | ítem 166 |
 | Salud del repo: tendencia de estrellas | Análisis | 1×2/2 | 1,0 | DORA | ítem 167 |
+| Constelación: ordenar por último commit | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 172 |
 
 ## Públicos
 

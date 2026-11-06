@@ -119,7 +119,7 @@
         pulls: new Map(),
         ci: new Map(), // rama -> 'success' | 'failure' | 'pending': el estado de los checks de su cabeza
         tags: new Map(), // commit -> [nombre de tag]
-        deploys: new Map(), // entorno -> { sha, ref }: el último despliegue de cada uno
+        deploys: new Map(), // entorno -> { sha, ref, at }: el último despliegue de cada uno (at: cuándo se creó)
         forks: [], // forks con actividad reciente, el push más nuevo primero
         pins: this.pins, // van justo debajo de la rama por defecto (ver layout.js)
         mode: null,
@@ -600,7 +600,7 @@
       const deploys = await get('deployments?per_page=30', 'deploys');
       if (Array.isArray(deploys)) {
         const byEnv = new Map();
-        for (const d of deploys) if (d?.sha && typeof d.environment === 'string' && !byEnv.has(d.environment)) byEnv.set(d.environment, { sha: d.sha, ref: d.ref || '' }); // el más nuevo va primero
+        for (const d of deploys) if (typeof d?.sha === 'string' && typeof d.environment === 'string' && !byEnv.has(d.environment)) byEnv.set(d.environment, { sha: d.sha, ref: typeof d.ref === 'string' ? d.ref : '', at: typeof d.created_at === 'string' ? d.created_at : '' }); // el más nuevo va primero
         this.data.deploys = byEnv;
       }
     }

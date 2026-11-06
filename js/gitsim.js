@@ -295,6 +295,7 @@
         'stash [list|pop|apply|drop] put uncommitted changes aside and bring them back',
         'add <file|.>                prepare changes (and new files) for the next commit',
         'add -u [file|.]             prepare only changed files git already tracks (new files stay out)',
+        'add -A [file|.]             prepare everything: changed files and new ones (like add .)',
         'restore --staged <file|.>   take a file back out of what is prepared',
         'clean [-n|-f]               delete files git does not track (-n only lists them, -f deletes)',
         'touch [--new] <file>        change a file (uncommitted work); --new makes an untracked one',
@@ -759,10 +760,17 @@
   };
 
   /** `add <archivo>…` o `add .` prepara los cambios (y los archivos nuevos) para el próximo commit;
-   *  `add -u` (`--update`) prepara solo lo cambiado que git ya sigue y deja fuera lo sin seguir. */
+   *  `add -u` (`--update`) prepara solo lo cambiado que git ya sigue y deja fuera lo sin seguir;
+   *  `add -A` (`--all`) prepara todo, lo cambiado y lo sin seguir: sin rutas es `add .`. */
   Repo.prototype.commands.add = function (args) {
-    const { flags, rest } = parse(args);
-    if (flags['-u'] || flags['--update']) {
+    // las banderas cortas juntas (-Au, -uA) son dos, como en git
+    const { flags, rest } = parse(args.flatMap((a) => (/^-[Au]{2,}$/.test(a) ? [...a.slice(1)].map((c) => `-${c}`) : [a])));
+    const update = !!(flags['-u'] || flags['--update']);
+    if (flags['-A'] || flags['--all']) {
+      if (update) fail("fatal: options '-A' and '-u' cannot be used together");
+      if (!rest.length) rest.push('.');
+    }
+    if (update) {
       // sin rutas, -u toma todo el árbol; con rutas, solo las que git sigue y están cambiadas
       const tracked = new Set([...this.work, ...this.staged.filter((s) => !s.isNew).map((s) => s.file)]);
       for (const f of rest) if (f !== '.' && !tracked.has(f) && !this.untracked.includes(f) && !this.staged.some((s) => s.file === f)) fail(`fatal: pathspec '${f}' did not match any files`);
@@ -780,7 +788,11 @@
     const known = new Set([...this.work, ...this.untracked]);
     for (const f of rest) if (f !== '.' && !known.has(f) && !this.staged.some((s) => s.file === f)) fail(`fatal: pathspec '${f}' did not match any files`);
     for (const f of all ? [...known] : rest) {
-      if (this.staged.some((s) => s.file === f)) continue;
+      // preparado y cambiado otra vez: add vuelve a prepararlo (sale de lo sin preparar)
+      if (this.staged.some((s) => s.file === f)) {
+        this.work = this.work.filter((w) => w !== f);
+        continue;
+      }
       const isNew = this.untracked.includes(f);
       this.work = this.work.filter((w) => w !== f);
       this.untracked = this.untracked.filter((u) => u !== f);

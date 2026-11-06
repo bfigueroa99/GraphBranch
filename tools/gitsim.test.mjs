@@ -977,3 +977,52 @@ test('add -u prepara solo lo cambiado que git sigue; add . también lo sin segui
   assert.equal(clean.staged.length, 0);
   assert.match(plain(clean.run('help').lines).join('\n'), /add -u/);
 });
+
+test('add -A prepara todo: lo cambiado y lo sin seguir, como add . y a diferencia de add -u', () => {
+  const setup = (cmd) => {
+    const r = fresh();
+    run(r, 'touch a.txt', 'touch --new n.txt');
+    assert.ok(r.run(cmd).ok, cmd);
+    return r;
+  };
+  const files = (r) => plain(r.staged.map((s) => s.file).sort());
+  const all = setup('add -A');
+  assert.deepEqual(files(all), ['a.txt', 'n.txt'], '-A prepara los dos');
+  assert.deepEqual(plain(all.staged.find((s) => s.file === 'n.txt')), { file: 'n.txt', isNew: true }, 'n.txt entra como archivo nuevo');
+  assert.equal(all.untracked.length, 0);
+  assert.equal(all.work.length, 0);
+  assert.match(plain(all.run('status').lines).join('\n'), /new file:   n\.txt/);
+  assert.deepEqual(files(setup('add --all')), ['a.txt', 'n.txt'], '--all es lo mismo');
+  assert.deepEqual(files(setup('add .')), files(all), 'igual que add .');
+  const u = setup('add -u');
+  assert.deepEqual(files(u), ['a.txt'], 'add -u deja fuera n.txt');
+  assert.deepEqual(plain(u.untracked), ['n.txt']);
+  // el commit tras -A se lleva los dos
+  run(all, 'commit -m "todo"');
+  assert.equal(all.staged.length + all.untracked.length + all.work.length, 0);
+
+  // con rutas, solo esas; -A y -u juntos se niegan como git
+  const some = fresh();
+  run(some, 'touch a.txt', 'touch b.txt', 'touch --new n.txt');
+  assert.ok(some.run('add -A n.txt').ok);
+  assert.deepEqual(plain(some.staged.map((s) => s.file)), ['n.txt']);
+  assert.deepEqual(plain(some.work.sort()), ['a.txt', 'b.txt']);
+  assert.equal(some.run('add -A nope.txt').ok, false, 'una ruta que no existe es un error');
+  const both = some.run('add -A -u');
+  assert.equal(both.ok, false);
+  assert.match(plain(both.lines).join('\n'), /'-A' and '-u' cannot be used together/);
+  for (const c of ['add -Au', 'add -uA']) assert.match(plain(some.run(c).lines).join('\n'), /cannot be used together/, `${c} son dos banderas`);
+  // preparado y cambiado otra vez: add -A (y add .) prepara también el cambio nuevo
+  const again = fresh();
+  run(again, 'touch a.txt', 'add a.txt', 'touch a.txt', 'add -A');
+  assert.deepEqual(plain(again.work), [], 'el cambio nuevo queda preparado');
+  assert.deepEqual(plain(again.staged.map((s) => s.file)), ['a.txt'], 'sin duplicarlo');
+  const againDot = fresh();
+  run(againDot, 'touch a.txt', 'add a.txt', 'touch a.txt', 'add .');
+  assert.deepEqual(plain(againDot.work), []);
+  // sin nada que preparar, -A no falla
+  const clean = fresh();
+  assert.ok(clean.run('add -A').ok);
+  assert.equal(clean.staged.length, 0);
+  assert.match(plain(clean.run('help').lines).join('\n'), /add -A/);
+});

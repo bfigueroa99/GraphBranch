@@ -1801,7 +1801,7 @@ function fakeGitHub() {
     const r = repos.get(m[1]);
     const [owner, name] = m[1].split('/');
     const rest = m[2] || '';
-    if (!rest) return { body: { name, owner: { login: owner }, default_branch: 'main', html_url: `https://github.com/${m[1]}`, private: false, description: '', open_issues_count: r.openItems ?? 0 } }; // GitHub cuenta issues y PRs juntos
+    if (!rest) return { body: { name, owner: { login: owner }, default_branch: 'main', html_url: `https://github.com/${m[1]}`, private: false, description: '', open_issues_count: r.openItems ?? 0, stargazers_count: r.stars ?? 0 } }; // GitHub cuenta issues y PRs juntos
     if (rest === '/branches') return { body: [...r.branches].map(([b, s]) => ({ name: b, commit: { sha: s }, protected: false })) };
     if (rest === '/pulls' && m[1] === 'o/b') {
       const pr = (number, title, draft) => ({ number, title, html_url: `https://github.com/o/b/pull/${number}`, state: 'open', draft, head: { ref: 'main', repo: { full_name: 'o/b' } }, base: { ref: 'main' }, user: { login: 'bea', avatar_url: null }, created_at: new Date(Date.now() - number * 60000).toISOString() });
@@ -2511,6 +2511,8 @@ console.log('Varios repos a la vez');
       gh.repo('o/a').openItems = 1; // 1 issue
       gh.repo('o/b').openItems = 5; // 3 issues y sus 2 PRs abiertos
       gh.repo('o/c').openItems = 4; // 4 issues
+      gh.repo('o/a').stars = 50; // y estrellas, en otro orden: o/a, o/c, o/b
+      gh.repo('o/c').stars = 7;
       // en una página aparte: sus tres repos no se suman a las 20 pestañas guardadas que siguen usando los pasos de abajo
       const iss = await openPage({ viewport: { width: 1280, height: 800 } });
       await iss.unroute('https://api.github.com/**');
@@ -2526,9 +2528,15 @@ console.log('Varios repos a la vez');
         await iss.selectOption('#constellation-order', 'issues');
         const issuesSaid = await iss.$eval('#constellation-status', (e) => e.textContent.trim());
         if (!/Issues abiertos/.test(issuesSaid) || /undefined|constellation\./.test(issuesSaid)) throw new Error('el orden por issues no se anuncia: ' + issuesSaid);
+        // por estrellas: el total de la misma consulta del repo, sin otra
+        await iss.selectOption('#constellation-order', 'stars');
+        const byStars = await iss.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => b.dataset.key).join(' '));
+        if (byStars !== 'o/a o/c o/b') throw new Error('la constelación no se ordena por estrellas: ' + byStars);
+        const starsSaid = await iss.$eval('#constellation-status', (e) => e.textContent.trim());
+        if (!/Estrellas/.test(starsSaid) || /undefined|constellation\./.test(starsSaid)) throw new Error('el orden por estrellas no se anuncia: ' + starsSaid);
         await iss.click('#constellation-close');
       } finally {
-        for (const r of ['o/a', 'o/b', 'o/c']) gh.repo(r).openItems = 0;
+        for (const r of ['o/a', 'o/b', 'o/c']) Object.assign(gh.repo(r), { openItems: 0, stars: 0 });
         await iss.context().close();
       }
       // ?order=new: abre ordenada por ramas nuevas de la semana, con el selector de acuerdo y el anuncio traducido

@@ -723,6 +723,7 @@ GB.i18n.define('hu', {
   'constellation.orderName': 'Név',
   'constellation.orderNew': 'Új ágak',
   'constellation.orderIssues': 'Nyitott issue-k',
+  'constellation.orderStars': 'Csillagok',
   'constellation.ordered': 'Rendezés: {order}',
   'constellation.filtered': 'Szűrés: «{filter}», {shown} / {total}',
   'all.tab': 'Mind',

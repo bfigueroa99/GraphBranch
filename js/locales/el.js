@@ -723,6 +723,7 @@ GB.i18n.define('el', {
   'constellation.orderName': 'Όνομα',
   'constellation.orderNew': 'Νέοι κλάδοι',
   'constellation.orderIssues': 'Ανοιχτά issues',
+  'constellation.orderStars': 'Αστέρια',
   'constellation.ordered': 'Ταξινόμηση κατά: {order}',
   'constellation.filtered': 'Φίλτρο «{filter}»: {shown} από {total}',
   'all.tab': 'Όλα',

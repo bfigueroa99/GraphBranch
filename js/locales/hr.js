@@ -733,6 +733,7 @@ GB.i18n.define('hr', {
   'constellation.orderIssues': 'Otvoreni issueji',
   'constellation.orderStars': 'Zvjezdice',
   'constellation.orderForks': 'Forkovi',
+  'constellation.orderRecent': 'Zadnji commit',
   'constellation.ordered': 'Poredano po: {order}',
   'constellation.filtered': 'Filtrirano po «{filter}»: {shown} od {total}',
   'all.tab': 'Sve',

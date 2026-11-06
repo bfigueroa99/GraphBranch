@@ -726,6 +726,7 @@ GB.i18n.define('nl', {
   'constellation.orderIssues': 'Open issues',
   'constellation.orderStars': 'Sterren',
   'constellation.orderForks': 'Forks',
+  'constellation.orderRecent': 'Laatste commit',
   'constellation.ordered': 'Gesorteerd op {order}',
   'constellation.filtered': 'Gefilterd op «{filter}»: {shown} van {total}',
   'all.tab': 'Alle',

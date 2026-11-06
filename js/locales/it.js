@@ -726,6 +726,7 @@ GB.i18n.define('it', {
   'constellation.orderIssues': 'Issue aperte',
   'constellation.orderStars': 'Stelle',
   'constellation.orderForks': 'Fork',
+  'constellation.orderRecent': 'Ultimo commit',
   'constellation.ordered': 'Ordinate per {order}',
   'constellation.filtered': 'Filtrate per «{filter}»: {shown} di {total}',
   'all.tab': 'Tutti',

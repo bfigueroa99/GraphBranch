@@ -726,6 +726,7 @@ GB.i18n.define('th', {
   'constellation.orderIssues': 'issue ที่เปิดอยู่',
   'constellation.orderStars': 'ดาว',
   'constellation.orderForks': 'ฟอร์ก',
+  'constellation.orderRecent': 'คอมมิตล่าสุด',
   'constellation.ordered': 'เรียงตาม{order}',
   'constellation.filtered': 'กรองด้วย «{filter}»: {shown} จาก {total}',
   'all.tab': 'ทั้งหมด',

@@ -725,6 +725,7 @@ GB.i18n.define('ta', {
   'constellation.orderIssues': 'திறந்துள்ள issue',
   'constellation.orderStars': 'நட்சத்திரங்கள்',
   'constellation.orderForks': 'ஃபோர்க்குகள்',
+  'constellation.orderRecent': 'கடைசி கமிட்',
   'constellation.ordered': '{order} படி வரிசைப்படுத்தப்பட்டது',
   'constellation.filtered': '«{filter}» மூலம் வடிகட்டியது: {total}-ல் {shown}',
   'all.tab': 'அனைத்தும்',

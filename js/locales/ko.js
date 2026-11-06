@@ -725,6 +725,7 @@ GB.i18n.define('ko', {
   'constellation.orderIssues': '열린 이슈',
   'constellation.orderStars': '스타',
   'constellation.orderForks': '포크',
+  'constellation.orderRecent': '최근 커밋',
   'constellation.ordered': '{order} 순으로 정렬됨',
   'constellation.filtered': '«{filter}» 필터: {total}개 중 {shown}개',
   'all.tab': '전체',

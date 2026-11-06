@@ -2552,6 +2552,21 @@ console.log('Varios repos a la vez');
         const openForks = await iss.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => b.dataset.key).join(' '));
         if (openForks !== 'o/b o/a o/c') throw new Error('?order=forks no abre la constelación ordenada por forks: ' + openForks);
         await iss.click('#constellation-close');
+        // ?order=recent: el commit más reciente ya cargado primero, sin consultas nuevas (repos aparte, para no mover los de arriba)
+        for (const r of ['rec/dos', 'rec/uno', 'rec/tres']) gh.repo(r); // en ese orden: sus commits, del más viejo al más nuevo
+        gh.push('rec/uno', 'main', 'lo más nuevo', Date.now() + 60e3);
+        await iss.goto(`${base}/index.html?lang=es&order=recent&repo=rec/tres&repo=rec/dos&repo=rec/uno`);
+        await iss.waitForFunction(() => [...document.querySelectorAll('#repo-tabs .rt')].filter((t) => t.dataset.state === 'live').length === 3, null, { timeout: T(15000) });
+        await iss.click('#constellation-btn');
+        await iss.waitForSelector('#constellation[open]', { timeout: T(3000) });
+        if ((await iss.$eval('#constellation-order', (s) => s.value)) !== 'recent') throw new Error('?order=recent no deja el selector en último commit');
+        const byRecent = await iss.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => b.dataset.key).join(' '));
+        if (byRecent !== 'rec/uno rec/tres rec/dos') throw new Error('?order=recent no abre la constelación con el commit más reciente primero: ' + byRecent);
+        await iss.selectOption('#constellation-order', 'tabs');
+        await iss.selectOption('#constellation-order', 'recent');
+        const recentSaid = await iss.$eval('#constellation-status', (e) => e.textContent.trim());
+        if (!/Último commit/.test(recentSaid) || /undefined|constellation\./.test(recentSaid)) throw new Error('el orden por último commit no se anuncia: ' + recentSaid);
+        await iss.click('#constellation-close');
       } finally {
         for (const r of ['o/a', 'o/b', 'o/c']) Object.assign(gh.repo(r), { openItems: 0, stars: 0, forks: 0 });
         await iss.context().close();

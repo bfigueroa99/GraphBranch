@@ -782,6 +782,7 @@ GB.i18n.define('he', {
   'constellation.orderIssues': 'issues פתוחים',
   'constellation.orderStars': 'כוכבים',
   'constellation.orderForks': 'מזלגות',
+  'constellation.orderRecent': 'הקומיט האחרון',
   'constellation.ordered': 'ממוין לפי {order}',
   'constellation.filtered': 'מסונן לפי «{filter}»: {shown} מתוך {total}',
   'all.tab': 'הכול',

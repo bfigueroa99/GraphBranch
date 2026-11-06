@@ -725,6 +725,7 @@ GB.i18n.define('hi', {
   'constellation.orderIssues': 'खुले issue',
   'constellation.orderStars': 'स्टार',
   'constellation.orderForks': 'फ़ोर्क',
+  'constellation.orderRecent': 'आख़िरी कमिट',
   'constellation.ordered': 'क्रम: {order}',
   'constellation.filtered': '«{filter}» से फ़िल्टर: {total} में से {shown}',
   'all.tab': 'सभी',

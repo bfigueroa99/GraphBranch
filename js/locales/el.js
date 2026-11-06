@@ -725,6 +725,7 @@ GB.i18n.define('el', {
   'constellation.orderIssues': 'Ανοιχτά issues',
   'constellation.orderStars': 'Αστέρια',
   'constellation.orderForks': 'Forks',
+  'constellation.orderRecent': 'Τελευταίο commit',
   'constellation.ordered': 'Ταξινόμηση κατά: {order}',
   'constellation.filtered': 'Φίλτρο «{filter}»: {shown} από {total}',
   'all.tab': 'Όλα',

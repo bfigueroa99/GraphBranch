@@ -725,6 +725,7 @@ GB.i18n.define('zh-Hant', {
   'constellation.orderIssues': '開啟中的 issue',
   'constellation.orderStars': '星號',
   'constellation.orderForks': 'Fork',
+  'constellation.orderRecent': '最近提交',
   'constellation.ordered': '已依{order}排序',
   'constellation.filtered': '依「{filter}」篩選：{total} 個中的 {shown} 個',
   'all.tab': '全部',

@@ -67,7 +67,7 @@
   }
 
   /** Estrellas de un repo con lo que ya se cargó, sin consultas nuevas: el total que trae la consulta del repo
-      (GitHub, GitLab, Gitea, Forgejo, Codeberg). `null` si la fuente no lo da (Bitbucket, Azure, un repo local). */
+      (GitHub, GitLab, Gitea, Forgejo, Codeberg). `null` si la fuente no lo da (Bitbucket Cloud y Data Center, Azure, un repo local, la demo). */
   function starsOf(data) {
     const n = data?.repo?.stars;
     return Number.isFinite(n) ? Math.max(0, n) : null;

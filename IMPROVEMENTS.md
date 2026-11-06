@@ -510,7 +510,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: filas de fuentes y vista de texto cubiertas por la prueba con la API simulada; auditoría: no toca la página.
 - Skills: no aplica: una cabecera más leída en una fuente que ya existe; lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (leer la cabecera que el servidor ya manda).
-- OMC: plan=— · revisión=— · verificación=— (no se lanzaron los agentes: el cambio es una cabecera leída en una fuente, con su prueba; revisión propia del diff)
+- OMC: plan=— · revisión=3 hallazgos LOW (0 arreglados: la regla repetida de `#agents-body`, la prueba que busca el texto del CSS y el viewport del smoke sin `finally`; quedan como están, sin efecto) · verificación=— (no se lanzaron los agentes: el cambio es una cabecera leída en una fuente, con su prueba; revisión propia del diff)
 - Reclamo: loop/223, sin colisión
 - Validado: 595 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 224, expansión: ítem 148 (Práctica: restore --staged y clean, Público)
@@ -523,7 +523,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: terminal y ejercicio cubiertos por `node --test`; 40 idiomas con `check-i18n` (0 errores); auditoría y smoke en la puerta.
 - Skills: no aplica: más comandos en un intérprete que ya existe, con lo ya cargado; lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (una lista de preparados junto a la de cambios, como ya hace `stash`).
-- OMC: plan=— · revisión=— · verificación=— (revisión propia del diff: sin DOM, sin red, sin textos de afuera; los archivos de `touch` pasan por la misma validación)
+- OMC: plan=— · revisión=3 hallazgos LOW (0 arreglados: la regla repetida de `#agents-body`, la prueba que busca el texto del CSS y el viewport del smoke sin `finally`; quedan como están, sin efecto) · verificación=— (revisión propia del diff: sin DOM, sin red, sin textos de afuera; los archivos de `touch` pasan por la misma validación)
 - Replica: paridad 92,7/100, sin pasada nueva (13 de 13 must hechos); ítems 162 a 167
 - Reclamo: loop/224, sin colisión
 - Validado: 597 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
@@ -568,7 +568,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: panel de salud a 320 px en es, ta y ar con Playwright; el resto lo cubre la puerta; auditoría en la puerta.
 - Skills: no aplica: un arreglo de CSS de una regla; lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (la columna `minmax(0, 1fr)` que el repo ya usa en `#agents-body`).
-- OMC: plan=— · revisión=— · verificación=—
+- OMC: plan=— · revisión=3 hallazgos LOW (0 arreglados: la regla repetida de `#agents-body`, la prueba que busca el texto del CSS y el viewport del smoke sin `finally`; quedan como están, sin efecto) · verificación=—
 - Reclamo: loop/227, sin colisión
-- Validado: pendiente
+- Validado: 601 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 228, expansión: ítem 168 (Constelación: ordenar por estrellas, Escala)

@@ -34,6 +34,8 @@ contextBridge.exposeInMainWorld('GBDesktop', {
   /** Avisos a Slack, Discord o Teams: lo manda el proceso principal con la URL guardada de `service`
       ('slack', 'discord' o 'teams'). ev = { repo, kind, title, detail, url } → { ok, status }. */
   webhook: (service, ev) => ipcRenderer.invoke('webhook:send', String(service), ev && typeof ev === 'object' ? ev : {}),
+  /** El gasto de un servicio de IA (js/spend.js) con la clave guardada: lo consulta el proceso principal. */
+  spend: (service, opts) => ipcRenderer.invoke('spend:fetch', String(service), { days: Number(opts?.days) || 30 }),
   /** Trae la ventana aunque esté en la bandeja (al hacer clic en una notificación). */
   show: () => ipcRenderer.send('show'),
 });

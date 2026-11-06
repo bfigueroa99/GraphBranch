@@ -1460,9 +1460,19 @@
     }
 
     /** El color de un participante, apagado hacia el fondo si hay una rama resaltada y no toca a esta (`lit`). */
-    agTint(slot, lit) {
+    agTint(slot, lit, off = false) {
       const c = this.tmpAg.copy(this.agCols[slot] || this.agCols[0]);
+      if (off) return c.lerp(this.bg, 0.82); // otro participante está iluminado desde la leyenda
       return !this.hlAmt || lit ? c : c.lerp(this.bg, this.hlAmt * DIM);
+    }
+
+    /** Ilumina las interacciones de un participante (las suyas a pleno color, las demás casi del fondo), como al pasar
+        por su fila en la leyenda; null las deja todas iguales. */
+    focusAgent(key) {
+      if ((key || null) === (this.agFocus || null)) return;
+      this.agFocus = key || null;
+      this.dirtyNodes = this.dirtyEdges = true;
+      this.needsRender = true;
     }
 
     focusSha(sha, dist = 15) {
@@ -2185,7 +2195,7 @@
         const cx = mx + ux * h;
         const cy = my + uy * h;
         const cz = (A.z + B.z) / 2;
-        const col = this.agTint(x.slot, lit(na, nb));
+        const col = this.agTint(x.slot, lit(na, nb), !!this.agFocus && x.from !== this.agFocus && x.to !== this.agFocus);
         const r = 0.06 + 0.025 * Math.min(3, Math.log2(x.n || 1));
         // la punta queda fuera de la esfera de quien recibe, en la dirección con que llega la curva
         const R = (nb.data.merge ? 0.61 : NODE_R) * (nb.data.heads.length ? HEAD_SCALE : 1) + 0.08;
@@ -2236,7 +2246,7 @@
         const z = v.z + (idx - (row.get(p.at) - 1) / 2) * 0.8;
         const top = v.y + (it.data.heads.length ? 0.65 : 0.45) + (marks?.get(p.at)?.tags.length ? 1.6 : 0);
         const y = top + 1.1;
-        const col = this.agTint(p.slot, lit(it));
+        const col = this.agTint(p.slot, lit(it), !!this.agFocus && p.from !== this.agFocus && p.to !== this.agFocus);
         this.iAgArc.segment(v.x, top, v.z, v.x, y - 0.22, z, 0.03, col);
         if (p.agent) this.iAgPin.point(v.x, y, z, 0.46, col);
         else this.iAgPinP.point(v.x, y, z, 0.6, col);

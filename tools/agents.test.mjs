@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} } });
 vm.runInContext(readFileSync(join(root, 'js', 'agents.js'), 'utf8'), ctx, { filename: 'agents.js' });
-const { detect, detectActor, of, coAuthors, sessionOf, compute, network, overlay, svg, openParam, graphParam, prNumber, sessionUrl, shortSession, COLORS, OTHERS } = ctx.window.GB.agents;
+const { detect, detectActor, of, coAuthors, sessionOf, compute, network, overlay, svg, timeline, timelineSvg, slots, mono, mainKind, openParam, graphParam, prNumber, sessionUrl, shortSession, COLORS, OTHERS } = ctx.window.GB.agents;
 const plain = (x) => JSON.parse(JSON.stringify(x));
 
 const S1 = '01CqYLDWb4ozXDK5nmAkKCeJ';
@@ -313,9 +313,9 @@ test('svg: un nodo por participante (agentes cuadrados, personas círculos), una
     title: (l) => `${l.from} → ${l.to}: ${l.total}`,
     aria: 'Red "de" prueba',
   });
-  assert.match(out, /^<svg class="ag-net"[^>]* role="img" aria-label="Red &quot;de&quot; prueba">/);
-  assert.equal((out.match(/<rect class="ag-node ag-agent"/g) || []).length, net.nodes.filter((n) => n.agent).length);
-  assert.equal((out.match(/<circle class="ag-node ag-person"/g) || []).length, net.nodes.filter((n) => !n.agent).length);
+  assert.match(out, /^<svg class="ag-net"[^>]* role="group" aria-label="Red &quot;de&quot; prueba">/);
+  assert.equal((out.match(/<rect class="ag-node ag-agent ag-s\d"/g) || []).length, net.nodes.filter((n) => n.agent).length);
+  assert.equal((out.match(/<circle class="ag-node ag-person ag-s0"/g) || []).length, net.nodes.filter((n) => !n.agent).length);
   assert.equal((out.match(/<path class="ag-edge/g) || []).length, net.links.length);
   assert.ok(out.includes('ag-edge ag-edge-agents'), 'el vínculo entre dos agentes se distingue');
   assert.ok(!out.includes('<b>'), 'los nombres se escapan');
@@ -324,4 +324,94 @@ test('svg: un nodo por participante (agentes cuadrados, personas círculos), una
   // un solo participante, al centro y sin vínculos
   const one = svg({ nodes: [net.nodes[0]], links: [], weight: net.weight }, { label: () => 'x', sub: () => '', title: () => '', aria: 'a' });
   assert.doesNotMatch(one, /NaN|undefined/);
+});
+
+test('slots: cada participante tiene el mismo color en el grafo, la red y la línea de tiempo', () => {
+  const r = compute(repo(), []);
+  const slot = slots(r);
+  const ov = overlay(r);
+  for (const a of ov.actors) assert.equal(a.slot, slot.get(a.key), a.key);
+  const net = network(r);
+  for (const n of net.nodes) assert.equal(net.slot.get(n.key), slot.get(n.key), n.key);
+  // las personas, en gris; los agentes, de 1 a 8 sin repetirse entre los siete primeros
+  for (const a of r.actors) assert.equal(slot.get(a.key) === 0, !a.agent, a.key);
+  const firsts = r.actors.filter((a) => a.agent).slice(0, COLORS).map((a) => slot.get(a.key));
+  assert.equal(new Set(firsts).size, firsts.length);
+  assert.equal(slots(null).size, 0);
+});
+
+test('svg: cada vínculo con su color, su punta, sus veces y el trazo de lo que más hizo; cada participante es un botón', () => {
+  const r = compute(repo(), []);
+  const net = network(r);
+  const out = svg(net, { label: (n) => n.name, sub: () => '', title: () => 't', node: (n) => `nodo ${n.name}`, aria: 'red 1' });
+  assert.equal((out.match(/<path class="ag-ehead /g) || []).length, net.links.length, 'una punta por vínculo');
+  assert.equal((out.match(/<g class="ag-n[^"]*" data-key="/g) || []).length, net.nodes.length);
+  assert.match(out, /tabindex="0" role="button" aria-pressed="false" aria-label="nodo /);
+  for (const l of net.links) {
+    assert.ok(out.includes(`data-from="${l.from}" data-to="${l.to}" data-n="${l.total}"`), 'el vínculo dice entre quiénes y cuántas veces');
+    assert.ok(out.includes(`ag-s${net.slot.get(l.from)} ag-k-${mainKind(l.kinds)}`), 'del color de quien actúa y con el trazo de lo que más hizo');
+  }
+  const twice = net.links.find((l) => l.total > 1);
+  if (twice) assert.ok(out.includes(`>×${twice.total}</text>`), 'las veces, junto a la curva');
+  // con alguien elegido: él y sus vecinos encendidos
+  const key = net.nodes[0].key;
+  const sel = svg(net, { label: (n) => n.name, sub: () => '', title: () => 't', aria: 'a' }, { sel: key });
+  assert.match(sel, /^<svg class="ag-net has-sel"/);
+  assert.ok(sel.includes(`<g class="ag-n on sel" data-key="${key}" tabindex="0" role="button" aria-pressed="true"`));
+  assert.doesNotMatch(sel, /NaN|undefined/);
+});
+
+test('mono y mainKind: la inicial de cada uno y lo que más hizo un vínculo', () => {
+  assert.equal(mono({ agent: { name: 'Claude Code' } }), 'C');
+  assert.equal(mono({ name: 'Matías Soto' }), 'MS');
+  assert.equal(mono({ login: 'ana' }), 'A');
+  assert.equal(mono({ name: 'Ñandú Ávila' }), 'ÑÁ');
+  assert.equal(mono({}), '?');
+  assert.equal(mainKind({ continued: 1, merged: 3 }), 'merged');
+  assert.equal(mainKind({ reviewed: 2, commented: 2 }), 'reviewed'); // a igualdad, en el orden de siempre
+  assert.equal(mainKind({}), 'continued');
+});
+
+test('timeline: una fila por participante (los agentes primero) y cada interacción de la más vieja a la más nueva', () => {
+  const T = Date.UTC(2026, 9, 28, 20);
+  const acts = [
+    { id: 'e1', kind: 'review-changes', actor: { login: 'Copilot' }, number: 200, time: T },
+    { id: 'e3', kind: 'comment', pr: true, actor: { login: 'Copilot' }, number: 200, time: T + 2 },
+  ];
+  const r = compute(repo(), acts, { max: Infinity });
+  const tl = timeline(r);
+  assert.ok(tl.lanes.length >= 3);
+  const firstPerson = tl.lanes.findIndex((l) => !l.agent);
+  if (firstPerson >= 0) assert.ok(tl.lanes.slice(firstPerson).every((l) => !l.agent), 'los agentes, arriba');
+  for (let i = 1; i < tl.events.length; i++) assert.ok(tl.events[i].time >= tl.events[i - 1].time);
+  assert.equal(tl.t0, tl.events[0].time);
+  assert.equal(tl.t1, tl.events.at(-1).time);
+  const keys = new Set(tl.lanes.map((l) => l.key));
+  assert.ok(tl.events.every((e) => keys.has(e.from) && keys.has(e.to)));
+  // solo entre agentes: ninguna persona; con pocas filas, solo lo que cabe en ellas
+  assert.ok(timeline(r, { onlyAgents: true }).lanes.every((l) => l.agent));
+  const two = timeline(r, { lanes: 2 });
+  assert.equal(two.lanes.length, 2);
+  assert.ok(two.events.every((e) => two.lanes.some((l) => l.key === e.from) && two.lanes.some((l) => l.key === e.to)));
+  assert.equal(timeline(compute({ commits: new Map() }, [])), null, 'sin interacciones, nada que dibujar');
+});
+
+test('timelineSvg: un trazo por interacción, con su punto, su punta, su commit y su id; todo escapado', () => {
+  const r = compute(repo(), [], { max: Infinity });
+  const tl = timeline(r);
+  const out = timelineSvg(tl, { label: (l) => `<i>${l.name}</i>`, event: (e) => `${e.kind}`, id: (e) => `id-${e.time}`, tick: (t) => `t${t}`, aria: 'tiempo "x"' });
+  assert.match(out, /^<svg class="ag-time" viewBox="0 0 760 \d+" role="img" aria-label="tiempo &quot;x&quot;">/);
+  assert.equal((out.match(/<g class="ag-ev /g) || []).length, tl.events.length);
+  assert.equal((out.match(/class="ag-ev-tip"/g) || []).length, tl.events.length);
+  assert.equal((out.match(/<g class="ag-lane[^"]*" data-key=/g) || []).length, tl.lanes.length);
+  assert.ok(out.includes(' data-ev="id-'));
+  assert.ok(!out.includes('<i>'), 'los nombres se escapan');
+  assert.match(out, /class="ag-axis"/);
+  // con alguien elegido: lo suyo encendido, lo demás tenue
+  const sel = timelineSvg(tl, { label: (l) => l.name, event: () => '', tick: () => '', aria: 'a' }, { sel: tl.lanes[0].key });
+  assert.match(sel, /^<svg class="ag-time has-sel"/);
+  assert.match(sel, / on"| off"/);
+  // todas en el mismo instante: al medio, sin dividir por cero
+  const one = timelineSvg({ ...tl, events: tl.events.slice(0, 1), t0: tl.events[0].time, t1: tl.events[0].time }, { label: () => 'x', event: () => '', tick: () => 't', aria: 'a' });
+  assert.doesNotMatch(one, /NaN|undefined|Infinity/);
 });

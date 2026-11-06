@@ -568,7 +568,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: panel de salud a 320 px en es, ta y ar con Playwright; el resto lo cubre la puerta; auditoría en la puerta.
 - Skills: no aplica: un arreglo de CSS de una regla; lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (la columna `minmax(0, 1fr)` que el repo ya usa en `#agents-body`).
-- OMC: PENDIENTE_OMC
+- OMC: plan=— · revisión=— · verificación=—
 - Reclamo: loop/227, sin colisión
-- Validado: PENDIENTE_VALIDADO
-- **Siguiente:** PENDIENTE_SIG
+- Validado: pendiente
+- **Siguiente:** iteración 228, expansión: ítem 168 (Constelación: ordenar por estrellas, Escala)

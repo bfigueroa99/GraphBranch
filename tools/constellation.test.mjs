@@ -37,6 +37,15 @@ test('10 repos: en el orden dado, dentro del cuadro y sin tocarse', () => {
       assert.ok(Math.hypot(spots[i].x - spots[j].x, spots[i].y - spots[j].y) >= spots[i].r + spots[j].r, `${i} toca a ${j}`);
 });
 
+test('20 repos (el tope): todos caben en el cuadro y sin tocarse', () => {
+  const spots = place(repos(20));
+  assert.equal(spots.length, 20);
+  for (const s of spots) assert.ok(s.r > 0 && s.x - s.r >= 0 && s.x + s.r <= 100 && s.y - s.r >= 0 && s.y + s.r <= 100, JSON.stringify(s));
+  for (let i = 0; i < spots.length; i++)
+    for (let j = i + 1; j < spots.length; j++)
+      assert.ok(Math.hypot(spots[i].x - spots[j].x, spots[i].y - spots[j].y) >= spots[i].r + spots[j].r, `${i} toca a ${j}`);
+});
+
 test('más commits, galaxia más grande, y la mayor queda al centro', () => {
   const spots = place([{ key: 'chico', commits: 3 }, { key: 'grande', commits: 900 }, { key: 'medio', commits: 80 }]);
   const by = Object.fromEntries(spots.map((s) => [s.key, s]));
@@ -75,6 +84,22 @@ test('el orden: pestañas tal cual, actividad por commits y nombre sin mayúscul
   assert.deepEqual(C.sortItems(withPrs, 'prs').map((i) => i.key), ['o/c', 'o/a', 'o/d', 'o/b'], 'más PRs abiertos primero; empata por pestaña');
   assert.deepEqual(C.sortItems(items, 'prs').map((i) => i.key), keys('tabs'), 'sin PRs cargados queda el orden de las pestañas');
   assert.equal(C.orderParam(new URLSearchParams('order=%20PRS%20')), 'prs');
+  const withNew = items.map((it, i) => ({ ...it, fresh: [1, 0, 3, 1][i] }));
+  assert.deepEqual(C.sortItems(withNew, 'new').map((i) => i.key), ['o/c', 'o/b', 'o/d', 'o/a'], 'más ramas nuevas primero; empata por pestaña');
+  assert.deepEqual(C.sortItems(items, 'new').map((i) => i.key), keys('tabs'), 'sin ramas nuevas queda el orden de las pestañas');
+  assert.equal(C.orderParam(new URLSearchParams('order=NEW')), 'new');
+  const withIssues = items.map((it, i) => ({ ...it, issues: [3, null, 12, 3][i] }));
+  assert.deepEqual(C.sortItems(withIssues, 'issues').map((i) => i.key), ['o/c', 'o/b', 'o/d', 'o/a'], 'más issues abiertos primero; sin dato cuenta como 0; empata por pestaña');
+  assert.deepEqual(C.sortItems(items, 'issues').map((i) => i.key), keys('tabs'), 'sin issues cargados queda el orden de las pestañas');
+  assert.equal(C.orderParam(new URLSearchParams('order=%20Issues')), 'issues');
+  const withStars = items.map((it, i) => ({ ...it, stars: [40, null, 1200, 40][i] }));
+  assert.deepEqual(C.sortItems(withStars, 'stars').map((i) => i.key), ['o/c', 'o/b', 'o/d', 'o/a'], 'más estrellas primero; sin dato cuenta como 0; empata por pestaña');
+  assert.deepEqual(C.sortItems(items, 'stars').map((i) => i.key), keys('tabs'), 'sin estrellas cargadas queda el orden de las pestañas');
+  assert.equal(C.orderParam(new URLSearchParams('order=STARS')), 'stars');
+  const withForks = items.map((it, i) => ({ ...it, forks: [5, null, 90, 5][i] }));
+  assert.deepEqual(C.sortItems(withForks, 'forks').map((i) => i.key), ['o/c', 'o/b', 'o/d', 'o/a'], 'más forks primero; sin dato cuenta como 0; empata por pestaña');
+  assert.deepEqual(C.sortItems(items, 'forks').map((i) => i.key), keys('tabs'), 'sin forks cargados queda el orden de las pestañas');
+  assert.equal(C.orderParam(new URLSearchParams('order=%20Forks')), 'forks');
   assert.deepEqual(items.map((i) => i.key), ['o/b', 'o/a', 'o/c', 'o/d'], 'no toca la lista original');
 });
 
@@ -123,4 +148,65 @@ test('?recent=N deja los repos con actividad en los últimos N días; sin fecha 
   assert.deepEqual(C.recentItems(items, 1, now).map((i) => i.name), ['o/hoy', 'o/cargando']);
   assert.deepEqual(C.recentItems(items, null, now), items);
   assert.notEqual(C.recentItems(items, null, now), items, 'no devuelve la misma lista');
+});
+
+test('las ramas nuevas de la semana: cada nombre una vez, solo los últimos 7 días y solo creaciones', () => {
+  const now = Date.UTC(2026, 10, 5, 12);
+  const day = 864e5;
+  const acts = [
+    { id: 1, kind: 'branch-create', branch: 'feat/a', time: now - day },
+    { id: 2, kind: 'branch-create', branch: 'feat/a', time: now - 2 * day }, // la misma rama vista dos veces
+    { id: 3, kind: 'branch-create', branch: 'feat/b', time: now - 6 * day },
+    { id: 4, kind: 'branch-create', branch: 'vieja', time: now - 8 * day }, // fuera de la semana
+    { id: 5, kind: 'branch-create', branch: 'futura', time: now + day }, // después de ahora
+    { id: 6, kind: 'push', branch: 'feat/c', time: now - day }, // no es una creación
+    { id: 7, kind: 'branch-create', time: now - day }, // sin nombre: cuenta por su id
+    { id: 8, kind: 'branch-create', branch: 'sin-hora' },
+    null,
+  ];
+  assert.equal(C.newBranches(acts, now), 3);
+  assert.equal(C.newBranches(acts, now, 1.5), 2, 'otra ventana de días');
+  assert.equal(C.newBranches([], now), 0);
+  assert.equal(C.newBranches(undefined, now), 0);
+});
+
+test('ordenar por ramas nuevas con la actividad de cada repo, como la arma la app', () => {
+  const now = Date.UTC(2026, 10, 5, 12);
+  const feed = [
+    { id: 'a1', repo: 'o/a', kind: 'branch-create', branch: 'x', time: now - 1000 },
+    { id: 'b1', repo: 'o/b', kind: 'branch-create', branch: 'x', time: now - 1000 },
+    { id: 'b2', repo: 'o/b', kind: 'branch-create', branch: 'y', time: now - 2000 },
+    { id: 'c1', repo: 'o/c', kind: 'push', branch: 'z', time: now - 1000 },
+  ];
+  const tabs = ['o/c', 'o/a', 'o/b'].map((key) => ({ key, name: key, fresh: C.newBranches(feed.filter((a) => a.repo === key), now) }));
+  assert.deepEqual(tabs.map((t) => t.fresh), [0, 1, 2], 'cada repo cuenta solo lo suyo');
+  assert.deepEqual(C.sortItems(tabs, 'new').map((t) => t.key), ['o/b', 'o/a', 'o/c']);
+});
+
+test('issues abiertos con lo ya cargado: aparte si la API los da aparte; si vienen con los PRs, se restan los PRs', () => {
+  assert.equal(C.openIssues({ repo: { openIssues: 7 }, totalPulls: 3 }), 7, 'GitLab y Gitea los dan aparte: los PRs no se restan');
+  assert.equal(C.openIssues({ repo: { openItems: 10 }, totalPulls: 4, pulls: new Map([[1, {}]]) }), 6, 'GitHub: issues y PRs juntos, menos los PRs');
+  assert.equal(C.openIssues({ repo: { openItems: 10 }, totalPulls: 2, pulls: new Map([[1, {}], [2, {}], [3, {}]]) }), 7, 'cuenta los PRs que haya, del total o de la lista');
+  assert.equal(C.openIssues({ repo: { openItems: 2 }, totalPulls: 5 }), 0, 'nunca negativo (el total del repo es de antes)');
+  assert.equal(C.openIssues({ repo: {} }), null, 'sin dato (Bitbucket, Azure, un repo local): null');
+  assert.equal(C.openIssues({ repo: { openItems: null } }), null);
+  assert.equal(C.openIssues(null), null);
+});
+
+test('estrellas con lo ya cargado: el total de la consulta del repo, o null si la fuente no lo da', () => {
+  assert.equal(C.starsOf({ repo: { stars: 1234 } }), 1234);
+  assert.equal(C.starsOf({ repo: { stars: 0 } }), 0, 'cero estrellas es un dato, no un hueco');
+  assert.equal(C.starsOf({ repo: { stars: -3 } }), 0, 'nunca negativo');
+  assert.equal(C.starsOf({ repo: {} }), null, 'sin dato (Bitbucket, Azure, un repo local): null');
+  assert.equal(C.starsOf({ repo: { stars: null } }), null);
+  assert.equal(C.starsOf(null), null);
+});
+
+test('forks con lo ya cargado: el total de la consulta del repo, o null si la fuente no lo da', () => {
+  assert.equal(C.forksOf({ repo: { forks: 87 } }), 87);
+  assert.equal(C.forksOf({ repo: { forks: 0 } }), 0, 'cero forks es un dato, no un hueco');
+  assert.equal(C.forksOf({ repo: { forks: -2 } }), 0, 'nunca negativo');
+  assert.equal(C.forksOf({ repo: { stars: 5 } }), null, 'sin dato (Bitbucket, Azure, un repo local): null; no toma las estrellas');
+  assert.equal(C.forksOf({ repo: { forks: null } }), null);
+  assert.equal(C.forksOf(null), null);
 });

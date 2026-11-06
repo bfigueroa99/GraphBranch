@@ -168,6 +168,7 @@
     </div>
     <p class="help" id="agents-help" data-i18n="agents.help">From what is already loaded, with no extra requests. An agent is recognized by its account (Copilot, dependabot[bot]…) or by what its commits sign (Co-Authored-By, Claude-Session), and each session of an agent counts on its own.</p>
     <label class="hl-switch"><input type="checkbox" id="agents-only"> <span data-i18n="agents.onlyAgents">Only between agents</span></label>
+    <label class="hl-switch"><input type="checkbox" id="agents-graph"> <span data-i18n="agents.onGraph">Show them on the graph (2D and 3D)</span></label>
     <div id="agents-body" class="hl-body"></div>
   </div>
 </dialog>
@@ -312,6 +313,20 @@
           </div>
         </div>
       </div>
+      <!-- interacciones en el grafo (js/agents.js): de quién es cada color y qué dice cada trazo, bajo el grafo para no
+           tapar lo más nuevo; × las quita del grafo -->
+      <section class="agk-panel" id="ag-key" hidden aria-labelledby="ag-key-title">
+        <h2 class="agk-title" id="ag-key-title"><span data-i18n="agents.keyTitle">Interactions</span> <span class="agk-total" id="ag-key-n"></span></h2>
+        <div class="agk-body" id="ag-key-body"></div>
+        <div class="agk-btns">
+          <button type="button" class="icon-btn agk-btn" id="ag-key-fold" aria-expanded="true" aria-controls="ag-key-body" title="Show or hide the key" aria-label="Show or hide the key" data-i18n-attr="title:agents.keyFold;aria-label:agents.keyFold">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 10 4-4 4 4"/></svg>
+          </button>
+          <button type="button" class="icon-btn agk-btn" id="ag-key-close" title="Remove the interactions from the graph" aria-label="Remove the interactions from the graph" data-i18n-attr="title:agents.keyClose;aria-label:agents.keyClose">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>
+          </button>
+        </div>
+      </section>
       <form class="practice" id="practice" hidden></form>
       <p class="hint" id="hint"></p>
     </section>
@@ -680,6 +695,10 @@
         <option value="tabs" data-i18n="constellation.orderTabs">Tabs</option>
         <option value="activity" data-i18n="constellation.orderActivity">Activity</option>
         <option value="prs" data-i18n="stats.prs">Open PRs</option>
+        <option value="issues" data-i18n="constellation.orderIssues">Open issues</option>
+        <option value="stars" data-i18n="constellation.orderStars">Stars</option>
+        <option value="forks" data-i18n="constellation.orderForks">Forks</option>
+        <option value="new" data-i18n="constellation.orderNew">New branches</option>
         <option value="name" data-i18n="constellation.orderName">Name</option>
       </select>
     </label>
@@ -717,7 +736,7 @@
     </div>
     <p class="help" id="graph-author-status" role="status"></p>
     <label class="marks-toggle"><input type="checkbox" id="graph-firstparent"> <span data-i18n="search.firstParent">First parent only (like git log --first-parent)</span></label>
-    <label class="marks-toggle"><input type="checkbox" id="graph-columns"> <span data-i18n="search.columns">Show author and date next to each commit (2D graph)</span></label>
+    <label class="marks-toggle"><input type="checkbox" id="graph-columns"> <span data-i18n="search.columns">Show SHA, author and date next to each commit (2D graph)</span></label>
     <div class="sr-row">
       <p class="help" id="branch-view-status" role="status"></p>
       <button type="button" class="btn" id="branch-view-reset" hidden data-i18n="branchview.reset">Show all branches</button>

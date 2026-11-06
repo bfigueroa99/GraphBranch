@@ -646,6 +646,9 @@
         url: repo.html_url,
         private: !!repo.private,
         description: repo.description || '',
+        openItems: Number.isFinite(repo.open_issues_count) ? repo.open_issues_count : null, // issues y PRs abiertos juntos (así lo cuenta GitHub)
+        stars: Number.isFinite(repo.stargazers_count) ? repo.stargazers_count : null,
+        forks: Number.isFinite(repo.forks_count) ? repo.forks_count : null,
       });
       try {
         await this.syncEvents(acts, true); // historial del feed + qué ramas se movieron hace poco
@@ -1073,6 +1076,7 @@
       }
 
       const prs = repo.pullRequests || { totalCount: 0, nodes: [] }; // null si el token no tiene permiso de PRs
+      this.data.pullsUnknown = !repo.pullRequests; // sin permiso no se sabe qué ramas tienen PR (js/textview.js: «sin PR abierto»)
       const pulls = prs.nodes.map((p) => ({
         number: p.number,
         title: p.title || '',
@@ -1768,6 +1772,7 @@
               ref: `${pr.head} → ${pr.base}`,
               branch: s.merged ? pr.base : null,
               actor: s.by || pr.user,
+              ...(s.merged ? { mergedBy: s.by || null } : {}), // quién fusionó, sin el respaldo de quien lo abrió (resumen de la semana)
               url: pr.url,
               number: pr.number,
               openedAt: pr.createdAt, // para la salud del repo: cuánto tardó en fusionarse

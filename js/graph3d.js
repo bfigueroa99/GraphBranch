@@ -48,6 +48,7 @@
   const SWAY_T = 95; // …en tantos segundos de ida y vuelta (a la misma velocidad que el giro)
   const CURVE_SEGS = 18; // tramos de una curva lejana (las cortas, menos)
   const MAX_LABELS = 160; // etiquetas de rama a la vez, como mucho
+  const GRID_CELL = 96; // lado en píxeles de cada celda de la grilla de etiquetas
   const FADE_MAX = 60; // hasta tantas ramas a la vista las tapadas se atenúan; con más, se ocultan
   const NOTE_D = 19; // a menos de esta distancia de la cámara (en la vista general, más), cada commit muestra su mensaje
   const MAX_NOTES = 14; // mensajes a la vez, como mucho
@@ -662,6 +663,9 @@
         // obelisco de un tag: base cuadrada, punta afilada, apoyado sobre el commit
         obelisk: new THREE.CylinderGeometry(0.05, 0.16, 1, 4, 1, false).rotateY(Math.PI / 4).translate(0, 0.5, 0),
         plate: new THREE.BoxGeometry(0.5, 0.12, 0.5),
+        box: new THREE.BoxGeometry(1, 1, 1), // el cubo de un commit de agente y la insignia de un agente
+        // la punta de un arco de interacción: va de z = 0 (base) a z = 1 (punta), como el tubo unitario
+        cone: new THREE.ConeGeometry(1, 1, 12).rotateX(Math.PI / 2).translate(0, 0, 0.5),
       };
 
       this.flowLive = flowHook(this.u.flow, this.u.time, this.u.fog, this.u.thin, this.u.near);
@@ -685,6 +689,17 @@
       this.iTorus = new Instances(this.gNodes, this.geo.torus, this.nodeMat);
       this.iObelisk = new Instances(this.gNodes, this.geo.obelisk, this.nodeMat); // tags
       this.iPlate = new Instances(this.gNodes, this.geo.plate, this.nodeMat); // entornos de despliegue
+      /* interacciones de agentes (ver setAgents): cada commit de agente dentro de un cubo de vidrio de su color, un arco con
+         punta de un commit a otro (continuó, fusionó) e insignias sobre la punta de un PR (revisó, comentó) */
+      this.agMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, roughness: 0.3, metalness: 0.05, transparent: true, opacity: 0.34, depthWrite: false });
+      this.agMat.onBeforeCompile = nodeHook(this.u);
+      this.iAgBox = new Instances(this.gNodes, this.geo.box, this.agMat);
+      this.iAgPin = new Instances(this.gNodes, this.geo.box, this.nodeMat);
+      this.iAgPinP = new Instances(this.gNodes, this.geo.sphereLo, this.nodeMat);
+      this.iAgArc = new Instances(this.gEdges, this.geo.tube, this.lineMat);
+      this.iAgHead = new Instances(this.gEdges, this.geo.cone, this.lineMat);
+      this.ag = null;
+      this.tmpAg = new THREE.Color();
       this.iLine = new Instances(this.gEdges, this.geo.tube, this.lineMat);
       this.iGhost = new Instances(this.gEdges, this.geo.tube, this.ghostMat);
       this.iStub = new Instances(this.gEdges, this.geo.tube, this.stubMat);
@@ -884,6 +899,9 @@
       this.nodeMat.emissiveIntensity = dark ? 0.5 : 0.2;
       this.u.rim.value = dark ? 0.85 : 0.28;
       this.lineMat.emissiveIntensity = dark ? 0.42 : 0.14;
+      this.agMat.emissiveIntensity = dark ? 0.55 : 0.25;
+      // el color de cada participante de las interacciones (0, las personas; 8, los demás agentes)
+      this.agCols = Array.from({ length: 9 }, (_, i) => new THREE.Color(v('--ag' + i, '#7f8a86')));
       this.ghostMat.emissiveIntensity = dark ? 0.45 : 0.15;
 
       const blend = dark ? THREE.AdditiveBlending : THREE.NormalBlending;
@@ -1432,6 +1450,21 @@
       this.dirtyNodes = true;
     }
 
+    /** Las interacciones de agentes (y de personas) sobre el grafo: lo mismo que recibe la vista 2D (ver graph.js,
+        setAgents). null las quita. */
+    setAgents(ov) {
+      if (!ov && !this.ag) return; // apagadas y sin nada dibujado: cada novedad del repo pasa por aquí
+      this.ag = ov || null;
+      this.dirtyNodes = this.dirtyEdges = true;
+      this.needsRender = true;
+    }
+
+    /** El color de un participante, apagado hacia el fondo si hay una rama resaltada y no toca a esta (`lit`). */
+    agTint(slot, lit) {
+      const c = this.tmpAg.copy(this.agCols[slot] || this.agCols[0]);
+      return !this.hlAmt || lit ? c : c.lerp(this.bg, this.hlAmt * DIM);
+    }
+
     focusSha(sha, dist = 15) {
       const it = this.nodes.get(sha);
       if (!it) return false;
@@ -1633,7 +1666,7 @@
       this.tipFile = null;
       this.pinFile = false;
       this.tip.setAttribute('aria-label', tr('tip.aria'));
-      this.tip.innerHTML = GB.graphShared.tipHTML(it.data, this.ctx || {}, { pin, branchName, ghostNames: this.ghostNames });
+      this.tip.innerHTML = GB.graphShared.tipHTML(it.data, this.ctx || {}, { pin, branchName, ghostNames: this.ghostNames, notes: this.ag?.notes?.get(sha) });
       const ride = branchName || (it.data.chain.startsWith('b:') ? it.data.chain.slice(2) : null);
       const action = (text, fn) => {
         let actions = this.tip.querySelector('.tip-actions');
@@ -1733,10 +1766,63 @@
       }
     }
 
+    /** Punto en pantalla de `v`, o null detrás de la cámara. El objeto es uno solo y se pisa en la
+        llamada siguiente (se llama miles de veces por cuadro): quien lo guarde, que copie x e y. */
     project(v) {
       const p = this.tmpP.copy(v).project(this.camera);
       if (p.z > 1 || p.z < -1) return null;
-      return { x: (p.x + 1) * 0.5 * this.W, y: (1 - p.y) * 0.5 * this.H };
+      const o = this.projOut || (this.projOut = { x: 0, y: 0 });
+      o.x = (p.x + 1) * 0.5 * this.W;
+      o.y = (1 - p.y) * 0.5 * this.H;
+      return o;
+    }
+
+    /* La grilla de placeLabels y placeNotes vive entre cuadros: celdas (arreglos) y rectángulos se
+       vacían y se reusan, así ubicar las etiquetas no deja basura por cuadro. */
+    gridReset() {
+      if (!this.grid) (this.grid = new Map()), (this.rects = []);
+      for (const a of this.grid.values()) a.length = 0;
+      this.nRects = 0;
+    }
+
+    /** Un rectángulo del pool, válido hasta el próximo gridReset. */
+    gridRect(x, y, w, h) {
+      const r = this.rects[this.nRects] || (this.rects[this.nRects] = { x: 0, y: 0, w: 0, h: 0 });
+      this.nRects++;
+      r.x = x;
+      r.y = y;
+      r.w = w;
+      r.h = h;
+      return r;
+    }
+
+    /** ¿Pisa `s` algo ya ubicado? Solo mira las celdas de su caja. */
+    gridHits(s) {
+      const x0 = Math.floor((s.x - 4) / GRID_CELL), x1 = Math.floor((s.x + s.w + 4) / GRID_CELL);
+      const y0 = Math.floor(s.y / GRID_CELL), y1 = Math.floor((s.y + s.h + 2) / GRID_CELL);
+      for (let cx = x0; cx <= x1; cx++)
+        for (let cy = y0; cy <= y1; cy++) {
+          const cell = this.grid.get(cx * 4099 + cy);
+          if (!cell) continue;
+          for (let i = 0; i < cell.length; i++) {
+            const r = cell[i];
+            if (s.x < r.x + r.w + 4 && r.x < s.x + s.w + 4 && s.y < r.y + r.h + 2 && r.y < s.y + s.h + 2) return true;
+          }
+        }
+      return false;
+    }
+
+    /** Ubica `s` en las celdas que cubre. */
+    gridAdd(s) {
+      const x0 = Math.floor((s.x - 4) / GRID_CELL), x1 = Math.floor((s.x + s.w + 4) / GRID_CELL);
+      const y0 = Math.floor(s.y / GRID_CELL), y1 = Math.floor((s.y + s.h + 2) / GRID_CELL);
+      for (let cx = x0; cx <= x1; cx++)
+        for (let cy = y0; cy <= y1; cy++) {
+          const key = cx * 4099 + cy;
+          let cell = this.grid.get(key);
+          if (!cell) this.grid.set(key, (cell = []));
+          cell.push(s);
+        }
     }
 
     /* ---------- recorrer una rama ---------- */
@@ -1938,6 +2024,7 @@
         if (this.dirtyEdges || moving || this.edgeAnim) {
           this.edgeAnim = this.writeEdges(now);
           this.writePointers();
+          this.writeAgents();
         }
         this.nodeAnim = anim;
         this.dirtyNodes = this.dirtyEdges = false;
@@ -2015,6 +2102,8 @@
       this.iObelisk.begin(marks ? marks.size : 0);
       this.iPlate.begin(marks ? marks.size : 0);
       this.halos.begin(n + (gals ? gals.size : 0));
+      const agMarks = this.ag?.marks;
+      this.iAgBox.begin(agMarks ? n : 0);
       const dark = this.dark;
       // el núcleo de cada galaxia brilla, también de canto
       if (gals) {
@@ -2041,6 +2130,8 @@
         const side = cm?.get(d.sha);
         const k = s * (1 + 0.3 * it.hov) * (cm ? (side ? (side === 'base' ? 1.8 : 1.35) : 0.55) : 1) * (off ? 0.6 : 1);
         (d.merge ? this.iTorus : this.iSphere).point(v.x, v.y, v.z, (head ? HEAD_SCALE : 1) * k, col);
+        const ag = agMarks?.get(d.sha);
+        if (ag) this.iAgBox.point(v.x, v.y, v.z, (head ? HEAD_SCALE : 1) * k * 1.3, this.agTint(ag, lit));
         const mk = marks?.get(d.sha);
         if (mk?.tags.length) this.iObelisk.point(v.x, v.y + 0.35 * k, v.z, 1.5 * k, this.warmWhite);
         if (mk?.envs.length) this.iPlate.point(v.x, v.y - 0.55 * k, v.z, k, this.envCol);
@@ -2055,7 +2146,111 @@
       this.iTorus.end();
       this.iObelisk.end();
       this.iPlate.end();
+      this.iAgBox.end();
       this.halos.end();
+    }
+
+    /** Los arcos de las interacciones (se curvan hacia afuera del tronco y hacia arriba; en el espacio, hacia arriba) y
+        las insignias sobre la punta de cada PR, unidas a su commit por un tallo. */
+    writeAgents() {
+      const arcs = this.ag?.arcs || [];
+      const pins = this.ag?.pins || [];
+      const N = 14; // tramos de cada arco
+      this.iAgArc.begin(arcs.length * N + pins.length);
+      this.iAgHead.begin(arcs.length);
+      this.iAgPin.begin(pins.length);
+      this.iAgPinP.begin(pins.length);
+      const lit = (...items) => !this.hlAmt || items.some((it) => it.data.chain === this.hlChain);
+      let drawn = 0;
+      for (const x of arcs) {
+        const na = this.nodes.get(x.a);
+        const nb = this.nodes.get(x.b);
+        if (!na || !nb) continue;
+        drawn++;
+        const A = na.curV;
+        const B = nb.curV;
+        let ux = 0;
+        let uy = 1;
+        const mx = (A.x + B.x) / 2;
+        const my = (A.y + B.y) / 2;
+        const rr = Math.hypot(mx, my);
+        if (!this.galaxy && rr > 0.5) {
+          ux = (mx / rr) * 0.8;
+          uy = (my / rr) * 0.8 + 0.6;
+          const l = Math.hypot(ux, uy);
+          ux /= l;
+          uy /= l;
+        }
+        const h = clamp(A.distanceTo(B) * 0.4, 1.4, 8) * 2; // el punto de control: la curva sube la mitad
+        const cx = mx + ux * h;
+        const cy = my + uy * h;
+        const cz = (A.z + B.z) / 2;
+        const col = this.agTint(x.slot, lit(na, nb));
+        const r = 0.06 + 0.025 * Math.min(3, Math.log2(x.n || 1));
+        // la punta queda fuera de la esfera de quien recibe, en la dirección con que llega la curva
+        const R = (nb.data.merge ? 0.61 : NODE_R) * (nb.data.heads.length ? HEAD_SCALE : 1) + 0.08;
+        let tx = B.x - cx;
+        let ty = B.y - cy;
+        let tz = B.z - cz;
+        const tl = Math.hypot(tx, ty, tz) || 1;
+        tx /= tl;
+        ty /= tl;
+        tz /= tl;
+        const hx = B.x - tx * R;
+        const hy = B.y - ty * R;
+        const hz = B.z - tz * R;
+        const bx = hx - tx * 0.62;
+        const by = hy - ty * 0.62;
+        const bz = hz - tz * 0.62;
+        let px = A.x;
+        let py = A.y;
+        let pz = A.z;
+        for (let i = 1; i <= N; i++) {
+          const t = i / N;
+          const u = 1 - t;
+          let qx = u * u * A.x + 2 * u * t * cx + t * t * B.x;
+          let qy = u * u * A.y + 2 * u * t * cy + t * t * B.y;
+          let qz = u * u * A.z + 2 * u * t * cz + t * t * B.z;
+          const last = i === N || Math.hypot(qx - B.x, qy - B.y, qz - B.z) < R + 0.62;
+          if (last) (qx = bx), (qy = by), (qz = bz);
+          this.iAgArc.segment(px, py, pz, qx, qy, qz, r, col, r * 0.6);
+          if (last) break;
+          px = qx;
+          py = qy;
+          pz = qz;
+        }
+        this.iAgHead.segment(bx, by, bz, hx, hy, hz, r * 3.2 + 0.06, col);
+      }
+      const marks = this.ctx?.refs;
+      const row = new Map();
+      for (const p of pins) row.set(p.at, (row.get(p.at) || 0) + 1);
+      const at = new Map();
+      let shown = 0;
+      for (const p of pins) {
+        const it = this.nodes.get(p.at);
+        if (!it) continue;
+        shown++;
+        const v = it.curV;
+        const idx = at.get(p.at) || 0;
+        at.set(p.at, idx + 1);
+        const z = v.z + (idx - (row.get(p.at) - 1) / 2) * 0.8;
+        const top = v.y + (it.data.heads.length ? 0.65 : 0.45) + (marks?.get(p.at)?.tags.length ? 1.6 : 0);
+        const y = top + 1.1;
+        const col = this.agTint(p.slot, lit(it));
+        this.iAgArc.segment(v.x, top, v.z, v.x, y - 0.22, z, 0.03, col);
+        if (p.agent) this.iAgPin.point(v.x, y, z, 0.46, col);
+        else this.iAgPinP.point(v.x, y, z, 0.6, col);
+      }
+      this.iAgArc.end();
+      this.iAgHead.end();
+      this.iAgPin.end();
+      this.iAgPinP.end();
+      // lo que se ve, para el smoke (el lienzo no se puede consultar): «arcos insignias cubos»
+      const seen = this.ag ? `${drawn} ${shown} ${this.iAgBox.n}` : null;
+      if ((this.wrap.dataset.agents ?? null) !== seen) {
+        if (seen) this.wrap.dataset.agents = seen;
+        else delete this.wrap.dataset.agents;
+      }
     }
 
     /** Todas las aristas al lote instanciado: las rectas, un tramo; las curvas, varios (ver curvePoints). */
@@ -2727,26 +2922,28 @@
       const reach = space ? Math.max(260, this.radius * 2.4) : Math.max(160, this.radius * 1.3); // en grafos enormes la cámara está más lejos
       const range = space ? Math.max(140, this.radius * 2) : Math.max(80, this.radius * 2);
       const z = this.labelScale();
-      const cand = [];
+      // candidatas de un pool: un objeto por rama que se reusa entre cuadros
+      const pool = this.candPool || (this.candPool = []);
+      const cand = this.cand || (this.cand = []);
+      cand.length = 0;
       for (const it of this.heads.values()) {
         const dist = camPos.distanceTo(it.curV);
         const p = dist < reach ? this.project(it.curV) : null;
-        if (p && p.x > -40 && p.x < this.W + 40 && p.y > -20 && p.y < this.H + 20) cand.push({ it, px: p.x, py: p.y, dist });
-        else if (it.el) this.setStyle(it, 'display', 'none');
+        if (p && p.x > -40 && p.x < this.W + 40 && p.y > -20 && p.y < this.H + 20) {
+          const c = pool[cand.length] || (pool[cand.length] = { it: null, px: 0, py: 0, dist: 0, x: 0, y: 0, w: 0, h: 0 });
+          c.it = it;
+          c.px = p.x;
+          c.py = p.y;
+          c.dist = dist;
+          cand.push(c);
+        } else if (it.el) this.setStyle(it, 'display', 'none');
       }
+      for (let i = cand.length; i < pool.length && pool[i].it; i++) pool[i].it = null; // no retener ramas que ya no están
       const hl = this.hlAmt ? this.hlChain : null;
       // la etiqueta de la rama resaltada se ubica primero: nunca queda tapada ni oculta
       cand.sort((a, b) => (b.it.data.chain === hl) - (a.it.data.chain === hl) || b.it.data.isDefault - a.it.data.isDefault || a.dist - b.dist);
       const crowd = cand.length > FADE_MAX;
-      const CELL = 96;
-      const grid = new Map();
-      const cells = (r, fn) => {
-        for (let cx = Math.floor((r.x - 4) / CELL); cx <= Math.floor((r.x + r.w + 4) / CELL); cx++)
-          for (let cy = Math.floor(r.y / CELL); cy <= Math.floor((r.y + r.h + 2) / CELL); cy++) if (fn(cx * 4099 + cy)) return true;
-        return false;
-      };
-      const hits = (s) =>
-        cells(s, (key) => (grid.get(key) || []).some((r) => s.x < r.x + r.w + 4 && r.x < s.x + s.w + 4 && s.y < r.y + r.h + 2 && r.y < s.y + s.h + 2));
+      this.gridReset();
       let shown = 0;
       for (const s of cand) {
         const it = s.it;
@@ -2768,13 +2965,13 @@
         s.h = Math.ceil(22 * z);
         s.x = clamp(s.px + dx * off - (dx < -0.2 ? s.w : 0), 4, Math.max(4, this.W - s.w - 4));
         s.y = s.py + dy * off - s.h / 2;
-        const hit = hits(s);
+        const hit = this.gridHits(s);
         if (hit && crowd) {
           if (it.el) this.setStyle(it, 'display', 'none');
           continue;
         }
         if (!hit) {
-          cells(s, (key) => void (grid.get(key) || grid.set(key, []).get(key)).push(s));
+          this.gridAdd(s);
           shown++;
         }
         if (!it.el) this.makeHead(it);
@@ -2798,11 +2995,11 @@
         const dist = camPos.distanceTo(top);
         let vis = p && p.x > 0 && p.x < this.W - 40 && p.y > 4 && p.y < this.H - 10 && dist < reach * 0.75;
         if (vis) {
-          const r = { w: Math.ceil(d.w * z), h: Math.ceil(17 * z) };
-          r.x = p.x - r.w / 2;
-          r.y = p.y - r.h;
-          vis = !hits(r);
-          if (vis) cells(r, (key) => void (grid.get(key) || grid.set(key, []).get(key)).push(r));
+          const w = Math.ceil(d.w * z), h = Math.ceil(17 * z);
+          const r = this.gridRect(p.x - w / 2, p.y - h, w, h);
+          vis = !this.gridHits(r);
+          if (vis) this.gridAdd(r);
+          else this.nRects--; // no quedó en la grilla: el rectángulo vuelve al pool
         }
         this.setStyle(d, 'display', vis ? '' : 'none');
         if (vis) {
@@ -2811,7 +3008,7 @@
         }
       }
       if (space) for (const d of this.days.values()) this.setStyle(d, 'display', 'none');
-      this.placeNotes(hits, cells, grid, hl);
+      this.placeNotes(hl);
       if (space) this.gx.placeLabels();
       if ((this.tipSha || this.tipFile) && !this.tip.hidden) this.placeTip();
     }
@@ -2821,7 +3018,7 @@
      * primero, sin pisar las etiquetas ni a los demás y con un tope. Solo en el valle: en el
      * espacio los rótulos son de las galaxias y los planetas.
      */
-    placeNotes(hits, cells, grid, hl) {
+    placeNotes(hl) {
       let n = 0;
       if (!this.galaxy && this.nodes.size) {
         const cam = this.camera.position;
@@ -2846,10 +3043,13 @@
           if (!it.note) continue;
           const dist = Math.sqrt(d2);
           const r = (NODE_R * (it.data.heads.length ? HEAD_SCALE : 1) * px) / dist; // radio del commit en pantalla
-          const s = { x: p.x + r + 6, w: Math.ceil(it.noteW * z), h: Math.ceil(17 * z) };
-          s.y = p.y - s.h / 2;
-          if (s.x + s.w > this.W - 4 || hits(s)) continue;
-          cells(s, (key) => void (grid.get(key) || grid.set(key, []).get(key)).push(s));
+          const h = Math.ceil(17 * z);
+          const s = this.gridRect(p.x + r + 6, p.y - h / 2, Math.ceil(it.noteW * z), h);
+          if (s.x + s.w > this.W - 4 || this.gridHits(s)) {
+            this.nRects--; // no quedó en la grilla: el rectángulo vuelve al pool
+            continue;
+          }
+          this.gridAdd(s);
           const note = this.notes[n] || (this.notes[n] = this.makeNote());
           n++;
           if (note.text !== it.note) note.el.textContent = note.text = it.note;
@@ -2882,6 +3082,7 @@
 
     clear() {
       this.cmpMarks = null;
+      this.ag = null;
       for (const it of this.heads.values()) it.el?.remove();
       for (const d of this.days.values()) (this.gDays.remove(d.mesh), d.el.remove());
       for (const r of this.ripples) (this.gFx.remove(r.mesh), r.mesh.material.dispose());

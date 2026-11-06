@@ -108,7 +108,7 @@ function fakeCodeberg(site = 'https://codeberg.org') {
     const u = new URL(`${site}/api/v1` + path);
     const p = u.pathname.replace('/api/v1', '');
     const q = u.searchParams;
-    if (p === REPO) return { body: { name: 'api', owner: { login: 'ana' }, default_branch: 'main', html_url: web, private: cb.private, description: 'un repo' } };
+    if (p === REPO) return { body: { name: 'api', owner: { login: 'ana' }, default_branch: 'main', html_url: web, private: cb.private, description: 'un repo', open_issues_count: 3, open_pr_counter: 1, stars_count: 9, forks_count: 2 } };
     if (p === REPO + '/branches') {
       const all = [...cb.branches].sort((a, b) => a[0].localeCompare(b[0])).map(([name, sha]) => ({ name, commit: { id: sha }, protected: name === 'main' }));
       return paged(all, q);
@@ -205,6 +205,9 @@ test('carga un repo: ramas, historia y PRs, sin token y solo contra codeberg.org
   const { repo: r, branches, commits, pulls } = src.data;
   assert.equal(r.url, WEB);
   assert.equal(r.host, 'codeberg');
+  assert.equal(r.openIssues, 3, 'los issues abiertos salen de la consulta del repo, sin contar los PRs');
+  assert.equal(r.stars, 9, 'las estrellas salen de la consulta del repo, sin otra');
+  assert.equal(r.forks, 2, 'los forks también, sin otra');
   assert.equal(src.host, 'codeberg');
   assert.deepEqual([...branches.keys()].sort(), ['feature', 'main']);
   for (const sha of ['m1', 'm2', 'm3', 'f1', 'f2']) assert.ok(commits.has(sha), `falta ${sha}`);
@@ -517,4 +520,30 @@ test('mapPull: un repo renombrado sigue marcando sus PRs de la misma repo', () =
   const pr = (head) => ({ number: 1, title: 't', head: { ref: 'f', repo: head }, base: { ref: 'main', repo: { full_name: 'Nuevo/Nombre' } }, user: { login: 'ana' }, created_at: '2026-10-01T00:00:00Z' });
   assert.equal(src.mapPull(pr({ full_name: 'nuevo/nombre' })).sameRepo, true);
   assert.equal(src.mapPull(pr({ full_name: 'ana/nombre' })).sameRepo, false);
+});
+
+test('un servidor propio con un tope menor que 50: el total sale de X-Total-Count y la lista recortada no dice «sin PR abierto»', async () => {
+  const cb = repo();
+  for (let i = 1; i <= 40; i++) cb.pull(i, `r${i}`, 'main');
+  const todos = cb.pulls.map((p) => p);
+  cb.override = (path) => {
+    if (!path.startsWith(REPO + '/pulls?')) return null;
+    return { body: todos.slice(0, 30), headers: { 'X-Total-Count': 40, Link: `<${WEB}/next>; rel="next"` } }; // MAX_RESPONSE_ITEMS = 30
+  };
+  const { src, errors } = connect(cb);
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  assert.equal(src.data.pulls.size, 30);
+  assert.equal(src.data.totalPulls, 40, 'el total es el del servidor, no lo que llegó');
+  const GB = globalThis.GB;
+  if (GB?.textview?.pullsComplete) assert.equal(GB.textview.pullsComplete(src.data), false);
+});
+
+test('sin X-Total-Count el total sigue siendo lo que llegó', async () => {
+  const cb = repo();
+  cb.pull(5, 'feature', 'main');
+  cb.override = (path) => (path.startsWith(REPO + '/pulls?') ? { body: cb.pulls } : null);
+  const { src } = connect(cb);
+  await src.cycle();
+  assert.equal(src.data.totalPulls, 1);
 });

@@ -13,6 +13,17 @@
   const FRESH_DAYS = 7; // una rama creada en los últimos 7 días se dice nueva (los textos de 'textview.fresh' dicen 7)
 
   const at = (x) => (typeof x === 'number' ? x : Date.parse(x) || 0);
+  const PULLS_PAGE = 50; // las fuentes traen los PRs abiertos de a 50 (los más recientes): con 50 o más puede faltar alguno
+
+  /** Si la lista de PRs abiertos ya cargada está completa, para decir de una rama que no tiene ninguno: la fuente los
+      trae (no un repo local ni la práctica de git) y el token puede leerlos (`pullsUnknown`), no se recortó (menos de una página y no menos que el total que da
+      la fuente) y el repo ya cargó. Va sobre el estado sin filtrar: una vista filtrada pierde los PRs de sus ramas quitadas. */
+  function pullsComplete(data) {
+    const r = data?.repo || {};
+    if (!data?.loaded || data.pullsUnknown || r.local || r.practice || typeof data.pulls?.size !== 'number') return false;
+    const n = data.pulls.size;
+    return n < PULLS_PAGE && (Number(data.totalPulls) || 0) <= n;
+  }
 
   /** Los forks activos ya cargados (`data.forks`), el push más reciente primero; sin url https o sin push no cuentan. */
   function forks(data, max = MAX_FORKS) {
@@ -24,8 +35,10 @@
   }
 
   /** Ramas (la por defecto primero, luego las más movidas) con sus últimos commits, del más nuevo al más viejo.
-      `quiet`: la rama no tuvo actividad en más de QUIET_DAYS días hasta `now`; `fresh`: la rama (no la por defecto) está en el Set `fresh` de `freshBranches`. */
-  function build(data, { perBranch = PER_BRANCH, maxBranches = MAX_BRANCHES, paths = null, releases = null, fresh = null, withForks = false, now = Date.now() } = {}) {
+      `quiet`: la rama no tuvo actividad en más de QUIET_DAYS días hasta `now`; `fresh`: la rama (no la por defecto) está en el Set `fresh` de `freshBranches`.
+      `noPr`: con `pullsKnown` (lo da `pullsComplete` sobre el estado sin filtrar), la rama no es la por defecto, no está
+      fusionada y no sale de ella ningún PR abierto de este repo. */
+  function build(data, { perBranch = PER_BRANCH, maxBranches = MAX_BRANCHES, paths = null, releases = null, fresh = null, withForks = false, pullsKnown = false, now = Date.now() } = {}) {
     const marks = new Map(); // sha -> [tag]
     if (data.tags) for (const [sha, names] of data.tags) marks.set(sha, [...names]);
     const relTags = releases?.tags || new Set();
@@ -81,7 +94,12 @@
       const isDefault = !!(b.isDefault || b.name === def);
       // fusionada: su punta ya está en la por defecto y no es la misma punta (una rama recién creada no es una fusionada)
       const merged = !isDefault && inDef.has(b.sha) && b.sha !== defTip;
-      return { name: b.name, isDefault, prs: open.get(b.name) || 0, quiet, merged, ciFailing: data.ci?.get?.(b.name) === 'failure', fresh: !isDefault && !!fresh?.has(b.name), commits };
+      // el autor del commit de la punta (no quien empujó la rama); con el filtro por ruta, igual la punta
+      const tip = data.commits.get(b.sha)?.author;
+      const tipAuthor = String(tip?.name || tip?.login || '');
+      const prs = open.get(b.name) || 0;
+      const noPr = !!pullsKnown && !isDefault && !merged && !prs;
+      return { name: b.name, isDefault, tipAuthor, prs, noPr, quiet, merged, ciFailing: data.ci?.get?.(b.name) === 'failure', fresh: !isDefault && !!fresh?.has(b.name), commits };
     }).filter((b) => !paths || b.commits.length);
     return { total, branches: rows, forks: withForks ? forks(data) : { total: 0, rows: [] } };
   }
@@ -229,7 +247,7 @@
         const li = mk('li', 'tv-branch');
         li.setAttribute('role', 'treeitem');
         li.setAttribute('aria-expanded', open.has(b.name) ? 'true' : 'false');
-        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}${b.fresh ? ', ' + text('textview.fresh') : ''}${b.quiet ? ', ' + text('textview.quiet') : ''}${b.merged ? ', ' + text('textview.merged') : ''}${b.ciFailing ? ', ' + text('textview.ciFailing') : ''}, ${text('textview.shown', { n: b.commits.length })}`);
+        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}${b.noPr ? ', ' + text('textview.noPr') : ''}${b.fresh ? ', ' + text('textview.fresh') : ''}${b.quiet ? ', ' + text('textview.quiet') : ''}${b.merged ? ', ' + text('textview.merged') : ''}${b.ciFailing ? ', ' + text('textview.ciFailing') : ''}${b.tipAuthor ? ', ' + text('textview.tipBy', { author: b.tipAuthor }) : ''}, ${text('textview.shown', { n: b.commits.length })}`);
         li.tabIndex = i === 0 ? 0 : -1;
         li.dataset.branch = b.name;
         const head = mk('span', 'tv-head');
@@ -439,5 +457,5 @@
     return is('vista', 'texto') || is('view', 'text');
   }
 
-  GB.textview = { build, forks, news, taggedCount, releasedCount, releaseMarks, freshBranches, filter, scopeText, viewAction, viewNote, mount, openParam, PER_BRANCH, MAX_BRANCHES, MAX_FORKS, QUIET_DAYS };
+  GB.textview = { build, pullsComplete, forks, news, taggedCount, releasedCount, releaseMarks, freshBranches, filter, scopeText, viewAction, viewNote, mount, openParam, PER_BRANCH, MAX_BRANCHES, MAX_FORKS, QUIET_DAYS, PULLS_PAGE };
 })((window.GB = window.GB || {}));

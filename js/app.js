@@ -58,6 +58,11 @@
     agents: $('#agents'),
     agentsBody: $('#agents-body'),
     agentsOnly: $('#agents-only'),
+    agentsGraph: $('#agents-graph'),
+    agKey: $('#ag-key'),
+    agKeyBody: $('#ag-key-body'),
+    agKeyFold: $('#ag-key-fold'),
+    agKeyN: $('#ag-key-n'),
     stBit: $('#st-bitacora'),
     stBitLabel: $('#st-bitacora-label'),
     stBitScore: $('#st-bitacora-score'),
@@ -231,7 +236,7 @@
   /* repos seguidos: cada uno en su pestaña, con su fuente, que sigue consultando GitHub aunque no
      esté a la vista; así sus novedades llegan al panel de actividad, a los avisos y a la pestaña.
      El grafo, las cifras, el Replay y los logros que se ven son del repo a la vista (`active`). */
-  const MAX_REPOS = 10;
+  const MAX_REPOS = 20;
   const tabs = []; // { key, demo, source, layout, game, unread, status, el, startTimer }
   let active = null;
   let source = null; // la fuente del repo a la vista
@@ -643,6 +648,7 @@
     tab.unread = 0;
     graph2d.clear();
     graph3d?.clear();
+    paintAgentGraph(); // la leyenda de las interacciones ya es la del repo nuevo (con lo que tenga cargado)
     graph3d?.world?.load(tab.key); // y sus ramas descubiertas en el modo vuelo
     graph3d?.gx?.reset(); // los archivos que se habían pedido eran de otro repo
     followUI(true);
@@ -730,6 +736,8 @@
       if (!refresh) el.repoForm.removeAttribute('aria-busy');
     }
     if (!list.length) return refresh ? undefined : repoNote(t('owner.empty', { owner }));
+    // se dejó de seguir mientras llegaba la lista (se cerró su último repo): no se guarda de nuevo ni reabre nada
+    if (refresh && !followedOwners[owner]) return;
     // la organización queda seguida: lo que ya se vio de su lista no vuelve a avisar como nuevo
     const seen = new Set(followedOwners[owner]);
     followedOwners[owner] = list.map((p) => p.name).concat([...seen]).filter((n, i, a) => a.indexOf(n) === i).slice(0, OWNER_SEEN_MAX);
@@ -1150,7 +1158,8 @@
   /** La cabecera de la vista conjunta: repos, ramas y PRs abiertos entre todos (de lo ya cargado). */
   function renderAllSum(list = overview.stats()) {
     const sum = GB.overview.totals(list);
-    setText(el.allSum, t('all.summary', { repos: U.fmtNum(tabs.length), branches: U.fmtNum(sum.branches), prs: U.fmtNum(sum.prs) }));
+    const line = t('all.summary', { repos: U.fmtNum(tabs.length), branches: U.fmtNum(sum.branches), prs: U.fmtNum(sum.prs) });
+    setText(el.allSum, GB.overview.heavy(sum) ? `${line} · ${t('all.heavy', { n: U.fmtNum(GB.overview.HEAVY_BRANCHES) })}` : line);
     renderAllPrs();
   }
 
@@ -1268,8 +1277,9 @@
     recordDay: acts.some((a) => a.kind === 'push') && isRecordDay(data),
   });
 
-  /** Calcula el layout del repo a la vista y dibuja el grafo (salvo durante el Replay). */
-  function drawGraph(initial, calm = false) {
+  /** Calcula el layout del repo a la vista y dibuja el grafo (salvo durante el Replay). `agents`: también las
+      interacciones sobre el grafo (onUpdate las dibuja después, cuando la actividad nueva ya está en el panel). */
+  function drawGraph(initial, calm = false, agents = true) {
     const data = source.view ? source.view() : source.data;
     const only = embedBranch ? GB.search.byBranches(viewOf(data).data, { solo: embedBranch }).data : viewOf(data).data; // &branch=: solo la capa embebida
     const withPr = embedPr ? GB.search.withOpenPr(only) : only; // &pr=1: solo la capa embebida
@@ -1283,6 +1293,7 @@
       graph2d.update(L, gctx);
       graph3d?.update(L, gctx);
     }
+    if (agents) paintAgentGraph(data);
     return { data, L };
   }
 
@@ -1307,10 +1318,11 @@
     // en modo TV lo que pasa ahora manda: el Replay de ambiente deja paso al presente
     if (news && tv.attract && replay.active) replay.stop();
     if (news) tv.lastNews = Date.now();
-    const { data, L } = drawGraph(initial, calm);
+    const { data, L } = drawGraph(initial, calm, false);
     if (el.textview.open) textview.update(textTree(viewOf(data).data)); // con la vista de texto abierta, avisa de lo nuevo
     feed.setDefaultBranch(data.repo.defaultBranch);
     feed.add(activities, { live: !initial });
+    paintAgentGraph(data); // con las revisiones y los comentarios que acaban de llegar
     if (news) game.observe(activities, gameCtx(activities, data, L));
     // cada tipo de evento con su efecto, en la vista que esté a la vista
     if (!initial && !replay.active) {
@@ -1493,6 +1505,7 @@
     if (!lastRender) return;
     graph2d.clear();
     graph3d?.clear();
+    paintAgentGraph(); // en el Replay cada arco aparece cuando llegan sus dos commits
     replayFrame = null;
     if (!replay.start(lastRender.data, feed.itemsOf(active.key), replayOpts)) {
       showLive();
@@ -1563,6 +1576,7 @@
     const gctx = liveCtx(lastRender.data, true);
     graph2d.update(lastRender.L, gctx);
     graph3d?.update(lastRender.L, gctx);
+    paintAgentGraph(lastRender.data);
   }
 
   /* ---------- capa de juego: logros del repo, nivel y misión del día (ver game.js) ---------- */
@@ -1683,6 +1697,19 @@
 
   /* ---------- salud del repo: lo ya cargado como señales de equipo (ver health.js) ---------- */
 
+  // Las series por semana del panel de salud: el periodo («últimas 8 semanas, de la más vieja a la actual») va una sola
+  // vez, como encabezado del grupo, y cada línea dice solo qué cuenta y sus cifras (pendiente 12: un lector de pantalla
+  // leía la frase larga en cada una). Las que dan cero todas las semanas no salen; sin ninguna, tampoco el encabezado.
+  const WEEKLY_SERIES = [['merge', 'mergeWeeks'], ['opened', 'openedWeeks'], ['closed', 'closedWeeks'], ['branch', 'branchWeeks'], ['commit', 'commitWeeks'], ['author', 'authorWeeks'], ['tag', 'tagWeeks'], ['issue', 'issueWeeks'], ['prclose', 'prCloseWeeks']];
+  function weeklyLines(pace) {
+    const shown = WEEKLY_SERIES.filter(([, k]) => pace[k].some(Boolean));
+    if (!shown.length) return '';
+    const n = pace[shown[0][1]].length;
+    return `<div class="hl-weekly" id="hl-weekly" role="group" aria-labelledby="hl-weekly-head"><p class="hl-line hl-weekly-head" id="hl-weekly-head">${U.esc(t('health.weeksHead', { n }))}</p>${shown
+      .map(([id, k]) => `<p class="hl-line" id="hl-${id}weeks">${U.esc(t('health.' + k, { list: pace[k].join(' · ') }))}</p>`)
+      .join('')}</div>`;
+  }
+
   /** Una lista de filas; cada una lleva a su rama en el grafo. */
   function healthList(id, title, block, rowOf, sub = false) {
     const rows = block.rows
@@ -1717,7 +1744,7 @@
         .join('') || `<p class="hl-none">${U.esc(t('health.none'))}</p>`}</section>` +
       `<section class="hl-sec"><h3>${U.esc(t('health.merged'))}</h3>${
         h.merged ? `<p class="hl-line">${U.esc(t('health.mergedStat', { median: span(h.merged.median), max: span(h.merged.max) }))}</p>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
-      }${h.pace.mergeWeeks.some(Boolean) ? `<p class="hl-line" id="hl-mergeweeks">${U.esc(t('health.mergeWeeks', { n: h.pace.mergeWeeks.length, list: h.pace.mergeWeeks.join(' · ') }))}</p>` : ''}${h.pace.openedWeeks.some(Boolean) ? `<p class="hl-line" id="hl-openedweeks">${U.esc(t('health.openedWeeks', { n: h.pace.openedWeeks.length, list: h.pace.openedWeeks.join(' · ') }))}</p>` : ''}${h.pace.closedWeeks.some(Boolean) ? `<p class="hl-line" id="hl-closedweeks">${U.esc(t('health.closedWeeks', { n: h.pace.closedWeeks.length, list: h.pace.closedWeeks.join(' · ') }))}</p>` : ''}${h.pace.branchWeeks.some(Boolean) ? `<p class="hl-line" id="hl-branchweeks">${U.esc(t('health.branchWeeks', { n: h.pace.branchWeeks.length, list: h.pace.branchWeeks.join(' · ') }))}</p>` : ''}${h.pace.commitWeeks.some(Boolean) ? `<p class="hl-line" id="hl-commitweeks">${U.esc(t('health.commitWeeks', { n: h.pace.commitWeeks.length, list: h.pace.commitWeeks.join(' · ') }))}</p>` : ''}${h.pace.tagWeeks.some(Boolean) ? `<p class="hl-line" id="hl-tagweeks">${U.esc(t('health.tagWeeks', { n: h.pace.tagWeeks.length, list: h.pace.tagWeeks.join(' · ') }))}</p>` : ''}${h.pace.issueWeeks.some(Boolean) ? `<p class="hl-line" id="hl-issueweeks">${U.esc(t('health.issueWeeks', { n: h.pace.issueWeeks.length, list: h.pace.issueWeeks.join(' · ') }))}</p>` : ''}</section>` +
+      }${weeklyLines(h.pace)}</section>` +
       `<section class="hl-sec" id="hl-dora"><h3>${U.esc(t('health.dora'))}</h3>${
         h.dora.deploys30 || h.dora.gap != null || h.dora.lead != null || h.dora.weeks.some(Boolean)
           ? `<p class="hl-line">${U.esc(t('health.doraFreq', { n: h.dora.deploys30, gap: h.dora.gap != null ? span(h.dora.gap) : '—' }))}</p><p class="hl-line" id="hl-weeks">${U.esc(t('health.doraWeeks', { n: h.dora.weeks.length, list: h.dora.weeks.join(' · ') }))}</p><p class="hl-line">${U.esc(h.leadSource.fromCommit ? t('health.doraLeadCommit', { median: span(h.dora.lead), n: h.leadSource.fromCommit, total: h.leadSource.total }) : t('health.doraLead', { median: h.dora.lead != null ? span(h.dora.lead) : '—' }))}</p>`
@@ -1944,7 +1971,7 @@
   const DIGEST_COLORS = { bg: '#0e1514', fg: '#e6efed', dim: '#93a5a1', accent: '#4ade80' };
   const digestLabels = () => {
     const label = (k) => t('digest.' + k);
-    return { head: label('head'), commits: label('commits'), perday: label('perday'), newcomers: label('newcomers'), newbranches: label('newbranches'), merged: label('merged'), opened: label('opened'), closed: label('closed'), releases: label('releases'), tags: label('tags'), people: label('people'), branch: label('branch') };
+    return { head: label('head'), commits: label('commits'), perday: label('perday'), newcomers: label('newcomers'), newbranches: label('newbranches'), merged: label('merged'), mergers: label('mergers'), opened: label('opened'), closed: label('closed'), releases: label('releases'), tags: label('tags'), people: label('people'), branch: label('branch') };
   };
 
   /** El resumen de la semana (js/digest.js): se arma con lo ya cargado, se copia o se baja como .md. */
@@ -2120,6 +2147,110 @@
     agentsOnly = el.agentsOnly.checked;
     U.store.set('agentsOnly', agentsOnly || null);
     renderAgents();
+    paintAgentGraph(); // «Solo entre agentes» vale también para lo que se ve en el grafo
+  });
+
+  /* ---------- las interacciones sobre el grafo, en 2D y en 3D (ver agents.js, overlay) ---------- */
+  let agentGraph = U.store.get('agentGraph', false) === true; // de quien lo enciende, en todos sus repos
+  // la leyenda desplegada o solo su título; sin decirlo, en el celular empieza plegada (taparía medio grafo)
+  let agKeyOpen = U.store.get('agentKeyOpen', null) ?? !window.matchMedia?.('(max-width: 640px)').matches;
+  let agKeyHtml = '';
+  /** Las interacciones del repo a la vista con sus textos: lo que reciben graph.js y graph3d.js (setAgents). */
+  function agentGraphData(data) {
+    const acts = feed.items.filter((a) => a.repo === active?.key);
+    const r = GB.agents.compute(data, acts, { max: Infinity });
+    const ov = GB.agents.overlay(r, { onlyAgents: agentsOnly });
+    const byKey = new Map(r.actors.map((a) => [a.key, a]));
+    const say = (x) =>
+      t(AG_EVENT[x.kind], { from: actorName(byKey.get(x.from)), to: actorName(byKey.get(x.to)) }) +
+      (x.number != null ? ` · #${x.number}` : '') +
+      (x.n > 1 ? ` · ×${U.fmtNum(x.n)}` : '');
+    const notes = new Map(); // sha -> lo que dice su ficha: las interacciones que salen de él o llegan a él
+    const note = (sha, text) => (notes.get(sha) || notes.set(sha, []).get(sha)).push(text);
+    const arcs = ov.arcs.map((x) => {
+      const title = say(x);
+      note(x.a, title);
+      note(x.b, title);
+      return { ...x, id: `${x.kind}|${x.a}|${x.b}|${x.from}|${x.to}`, title };
+    });
+    const pins = ov.pins.map((x) => {
+      const title = say(x);
+      note(x.at, title);
+      return { ...x, id: `${x.kind}|${x.at}|${x.from}|${x.to}`, title };
+    });
+    return { ...ov, arcs, pins, notes, byKey };
+  }
+  /** La leyenda sobre el grafo: cada agente con su color (los de más interacciones primero; cada fila lleva a su último
+      commit), los demás agentes y las personas en una línea cada uno, y qué es cada trazo. Si nada cambió no toca el DOM
+      (ni el foco). */
+  function renderAgentKey(ov) {
+    const sw = (slot, agent) => `<span class="agk-sw ag-s${slot}${agent ? ' agk-agent' : ''}" aria-hidden="true"></span>`;
+    const line = (slot, agent, text) => `<li><span class="agk-row">${sw(slot, agent)}<span class="agk-name">${U.esc(text)}</span></span></li>`;
+    const rows = ov.actors
+      .filter((a) => a.agent && a.slot < GB.agents.OTHERS)
+      .map((a) => {
+        const body = `${sw(a.slot, true)}<span class="agk-name">${U.esc(actorName(ov.byKey.get(a.key) || a))}</span>${a.n ? `<span class="agk-n">${U.fmtNum(a.n)}</span>` : ''}`;
+        return `<li>${a.sha ? `<button type="button" class="agk-row" data-sha="${U.esc(a.sha)}" title="${U.esc(t('agents.keyLocate'))}">${body}</button>` : `<span class="agk-row">${body}</span>`}</li>`;
+      });
+    const others = ov.actors.filter((a) => a.agent && a.slot === GB.agents.OTHERS).length;
+    const people = ov.actors.filter((a) => !a.agent).length;
+    if (others) rows.push(line(GB.agents.OTHERS, true, t('agents.others', { n: U.fmtNum(others) })));
+    if (people) rows.push(line(0, false, t('agents.people', { n: U.fmtNum(people) })));
+    const kinds =
+      `<span class="agk-k"><span class="agk-line" aria-hidden="true"></span>${U.esc(t('agents.kind.continued'))}</span>` +
+      `<span class="agk-k"><span class="agk-line agk-dash" aria-hidden="true"></span>${U.esc(t('agents.kind.merged'))}</span>` +
+      `<span class="agk-k"><span class="agk-glyph" aria-hidden="true">✓</span>${U.esc(t('agents.kind.reviewed'))}</span>` +
+      `<span class="agk-k"><span class="agk-glyph" aria-hidden="true">…</span>${U.esc(t('agents.kind.commented'))}</span>`;
+    el.agKeyN.textContent = ov.total ? U.fmtNum(ov.total) : '';
+    el.agKeyN.title = ov.total ? t('agents.keyShown', { n: U.fmtNum(ov.total) }) : '';
+    const html =
+      (ov.total ? '' : `<p class="agk-none">${U.esc(t('agents.keyNone'))}</p>`) +
+      (rows.length ? `<ul class="agk-list">${rows.join('')}</ul>` : '') +
+      `<p class="agk-kinds">${kinds}</p>`;
+    if (html === agKeyHtml) return;
+    const had = el.agKeyBody.contains(document.activeElement) ? [...el.agKeyBody.querySelectorAll('button')].indexOf(document.activeElement) : -1;
+    agKeyHtml = html;
+    el.agKeyBody.innerHTML = html;
+    if (had >= 0) ([...el.agKeyBody.querySelectorAll('button')][had] || el.agKeyFold).focus({ preventScroll: true });
+  }
+  function foldAgentKey(open) {
+    agKeyOpen = open;
+    el.agKey.classList.toggle('folded', !open);
+    el.agKeyFold.setAttribute('aria-expanded', String(open));
+    el.agKeyBody.hidden = !open;
+  }
+  /** Dibuja (o quita) las interacciones en las dos vistas con lo ya cargado del repo a la vista. `data`, si ya se tiene. */
+  function paintAgentGraph(data) {
+    const on = agentGraph && !EMBED && !!source;
+    const ov = on ? agentGraphData(data || (source.view ? source.view() : source.data)) : null;
+    graph2d?.setAgents?.(ov);
+    graph3d?.setAgents?.(ov);
+    el.agKey.hidden = !ov;
+    if (ov) renderAgentKey(ov);
+    else agKeyHtml = '';
+  }
+  function setAgentGraph(on, { save = true } = {}) {
+    agentGraph = !!on;
+    el.agentsGraph.checked = agentGraph;
+    if (save) U.store.set('agentGraph', agentGraph || null);
+    setUrlParam('interactions', agentGraph ? '1' : null);
+    paintAgentGraph();
+  }
+  el.agentsGraph.checked = agentGraph;
+  foldAgentKey(agKeyOpen);
+  el.agentsGraph.addEventListener('change', () => setAgentGraph(el.agentsGraph.checked));
+  $('#ag-key-close').addEventListener('click', () => {
+    setAgentGraph(false);
+    (el.agentsBtn.offsetParent ? el.agentsBtn : shownGraph().wrap)?.focus?.({ preventScroll: true }); // el foco no cae a <body>
+  });
+  el.agKeyFold.addEventListener('click', () => {
+    foldAgentKey(!agKeyOpen);
+    U.store.set('agentKeyOpen', agKeyOpen); // también desplegada: en el celular empieza plegada
+  });
+  // cada participante de la leyenda lleva a su último commit en el grafo
+  el.agKeyBody.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-sha]');
+    if (b) shownGraph().focusSha?.(b.dataset.sha);
   });
   // cada fila lleva a su commit en el grafo (el enlace a la sesión de Claude Code abre aparte)
   el.agentsBody.addEventListener('click', (e) => {
@@ -2387,7 +2518,7 @@
     },
   });
   /** El árbol de `data` con los filtros de ruta y los releases que el feed dice de este repo. */
-  const textTree = (data) => GB.textview.build(data, { withForks: showForks, paths: pathShas, releases: GB.textview.releaseMarks(feed.items.filter((a) => a.repo === active?.key)), fresh: GB.textview.freshBranches(feed.items.filter((a) => a.repo === active?.key)) });
+  const textTree = (data) => GB.textview.build(data, { withForks: showForks, pullsKnown: GB.textview.pullsComplete(source?.data), paths: pathShas, releases: GB.textview.releaseMarks(feed.items.filter((a) => a.repo === active?.key)), fresh: GB.textview.freshBranches(feed.items.filter((a) => a.repo === active?.key)) });
   /** El árbol con los filtros del grafo (autor y ruta) y una nota que los dice, también para el lector de pantalla. */
   function textScope() {
     const v = viewOf(source.view ? source.view() : source.data);
@@ -2460,7 +2591,7 @@
   });
   el.constellation = $('#constellation');
   try {
-    // ?order=activity|prs|name: la constelación abre ya ordenada (sin anunciarlo: no la pidió nadie con el selector)
+    // ?order=activity|prs|issues|stars|forks|new|name: la constelación abre ya ordenada (sin anunciarlo: no la pidió nadie con el selector)
     const order = GB.constellation.orderParam(new URLSearchParams(location.search));
     if (order) constellation.setOrder(order, false);
     // ?constellation=texto: solo los repos cuyo nombre lo contiene
@@ -2487,6 +2618,10 @@
           last: lastCommitAt(x.source.data),
           branches: x.source.data.branches?.size || 0,
           prs: Math.max(x.source.data.totalPulls || 0, x.source.data.pulls?.size || 0),
+          issues: GB.constellation.openIssues(x.source.data),
+          stars: GB.constellation.starsOf(x.source.data),
+          forks: GB.constellation.forksOf(x.source.data),
+          fresh: GB.constellation.newBranches(feed.items.filter((a) => a.repo === x.key), Date.now()),
           state: x.status?.state || 'loading',
           unread: x.unread,
           active: x === active,
@@ -2768,10 +2903,19 @@
     renderBitacoraCard();
   }
 
+  /** El detalle de cada cifra, de title de su tarjeta: a ≤560 px la línea se esconde a la vista. */
+  function syncStatTitles() {
+    for (const sub of [el.st.branchesSub, el.st.commitsSub, el.st.prsSub, el.st.lastSub]) {
+      const card = sub.closest('.stat');
+      if (card) card.title = sub.textContent;
+    }
+  }
+
   /** Cifras en blanco hasta que el repo recién conectado traiga las suyas. */
   function clearStats() {
     for (const [key, node] of Object.entries(el.st)) node.textContent = key.endsWith('Sub') ? '' : '–';
     el.st.branchesSub.title = '';
+    syncStatTitles();
     clearTimeout(bitCard.timer);
     bitCard = { at: 0, key: null, timer: 0 };
     el.stBitScore.textContent = '–';
@@ -2785,6 +2929,7 @@
     const last = active ? feed.lastTime(active.key) : null;
     el.st.last.textContent = last ? U.timeAgo(last) : '–';
     el.st.lastSub.textContent = last ? U.fmtDateTime(last) : t('stats.noEvents');
+    syncStatTitles();
   }
 
   /* ---------- estado de conexión ---------- */
@@ -3487,6 +3632,9 @@
     initialBitacora = !EMBED && q0.has('bitacora') && !/^(0|false|no|off)$/i.test(q0.get('bitacora'));
     initialHealth = !EMBED && GB.health.healthParam(q0);
     initialAgents = !EMBED && GB.agents.openParam(q0);
+    const ig = EMBED ? null : GB.agents.graphParam(q0); // ?interactions=1 manda sobre lo guardado (y =0 lo apaga)
+    if (ig != null) setAgentGraph(ig, { save: false });
+    else if (agentGraph) setUrlParam('interactions', '1');
     showForks = GB.health.forksParam(q0);
   } catch {
     /* sin query string */
@@ -3495,6 +3643,19 @@
     const q = new URLSearchParams(location.search);
     // ?repo=a/b&repo=c/d (o separados por comas): los repos a seguir, el primero a la vista
     urlRepos = q.getAll('repo').flatMap((r) => r.split(',')).map((r) => r.trim()).filter(Boolean);
+    // compartido desde el menú del móvil (share_target del manifiesto): ese repo se abre a la vista, y los
+    // ?shared_*= salen de la dirección (recargar o copiar el enlace no los arrastra; ?repo= lo pone saveTabs)
+    const shared = EMBED ? '' : U.sharedRepo(q);
+    if (shared) urlRepos.unshift(shared);
+    if (U.SHARE_PARAMS.some((k) => q.has(k))) {
+      const url = new URL(location.href);
+      for (const k of U.SHARE_PARAMS) url.searchParams.delete(k);
+      try {
+        history.replaceState(null, '', url);
+      } catch {
+        /* algunos visores no permiten cambiar la URL */
+      }
+    }
     initialPractice = !EMBED && q.has('practice') ? GB.gitsim.decodeExercise(q.get('practice').trim()) : null;
     if (initialPractice) initialPractice.solution = q.get('solution') === '1'; // ?solution=1: muestra la solución propuesta, si el ejercicio la trae
     initialReplay = GB.Replay.paramsOf(q);

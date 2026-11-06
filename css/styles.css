@@ -33,6 +33,18 @@
   --s8: #e34948;
   --ghost: #b4bdb9;
 
+  /* participantes de las interacciones sobre el grafo (js/agents.js): los 7 agentes más activos, «otros agentes» (8) y
+     las personas (0). Validados para daltonismo y contraste sobre --surface; distintos de los de rama (--s*) */
+  --ag0: var(--ink-3);
+  --ag1: #c2410c;
+  --ag2: #2563eb;
+  --ag3: #4d7c0f;
+  --ag4: #c026d3;
+  --ag5: #a16207;
+  --ag6: #0891b2;
+  --ag7: #be123c;
+  --ag8: #7c7391;
+
   /* cielo de la vista 3D: tinte de los colores de rama y viñeta en los bordes */
   --nebula: 4%;
   --vignette: rgb(16 22 20 / 0.07);
@@ -69,6 +81,14 @@
     --s7: #9085e9;
     --s8: #e66767;
     --ghost: #3d4945;
+    --ag1: #d9580f;
+    --ag2: #4a7fe8;
+    --ag3: #5f9a12;
+    --ag4: #c25ae0;
+    --ag5: #b98a06;
+    --ag6: #1a9fbd;
+    --ag7: #e04568;
+    --ag8: #9a92ad;
     --nebula: 7%;
     --vignette: rgb(0 0 0 / 0.38);
     color-scheme: dark;
@@ -99,6 +119,14 @@
   --s7: #9085e9;
   --s8: #e66767;
   --ghost: #3d4945;
+  --ag1: #d9580f;
+  --ag2: #4a7fe8;
+  --ag3: #5f9a12;
+  --ag4: #c25ae0;
+  --ag5: #b98a06;
+  --ag6: #1a9fbd;
+  --ag7: #e04568;
+  --ag8: #9a92ad;
   --nebula: 7%;
   --vignette: rgb(0 0 0 / 0.38);
   color-scheme: dark;
@@ -1373,6 +1401,10 @@ kbd {
 .dimmed .pointer:not(.hl),
 .dimmed .ghost-label:not(.hl) {
   opacity: 0.2;
+}
+.dimmed .ag-arc,
+.dimmed .ag-pin {
+  opacity: 0.25;
 }
 
 #search-btn.filtered {
@@ -4781,6 +4813,21 @@ html.embed .diff-panel {
   .graph-panel {
     height: max(380px, 64vh);
   }
+  /* en el celular la página se desplaza: con la leyenda de las interacciones, el panel crece en vez de achicar el grafo */
+  .graph-panel:has(> .agk-panel:not([hidden])) {
+    height: auto;
+  }
+  .graph-panel:has(> .agk-panel:not([hidden])) .graph-stage {
+    flex: none;
+    height: max(280px, 42vh);
+  }
+  .agk-panel {
+    max-height: none;
+  }
+  .agk-name {
+    white-space: normal; /* angosto: el nombre de la sesión entero, en dos líneas, mejor que cortado */
+    overflow-wrap: anywhere;
+  }
   .feed-panel {
     max-height: 80vh;
   }
@@ -4930,6 +4977,13 @@ kbd {
 }
 
 /* ---------- salud del repo ---------- */
+/* una sola columna que puede encogerse: sin esto la columna implícita toma el ancho mínimo de su contenido y a
+   320 px el panel se desbordaba hacia la derecha (pendiente 11) */
+#health .tr-wrap,
+.hl-body,
+.hl-list {
+  grid-template-columns: minmax(0, 1fr);
+}
 .hl-body {
   display: grid;
   gap: 14px;
@@ -5020,6 +5074,11 @@ a.hl-row:focus-visible {
 .hl-line {
   margin: 0;
   color: var(--ink-3);
+}
+.hl-weekly-head {
+  margin-top: 6px;
+  color: var(--ink-2);
+  font-weight: 600;
 }
 .hl-stats {
   display: grid;
@@ -5152,6 +5211,247 @@ a.hl-row:focus-visible {
 .ag-open:hover,
 .ag-open:focus-visible {
   background: var(--surface-2);
+}
+
+/* ---------- interacciones sobre el grafo: marcos, arcos, insignias y su leyenda ---------- */
+.ag-s0 {
+  --agc: var(--ag0);
+}
+.ag-s1 {
+  --agc: var(--ag1);
+}
+.ag-s2 {
+  --agc: var(--ag2);
+}
+.ag-s3 {
+  --agc: var(--ag3);
+}
+.ag-s4 {
+  --agc: var(--ag4);
+}
+.ag-s5 {
+  --agc: var(--ag5);
+}
+.ag-s6 {
+  --agc: var(--ag6);
+}
+.ag-s7 {
+  --agc: var(--ag7);
+}
+.ag-s8 {
+  --agc: var(--ag8);
+}
+.node .ag-ring {
+  fill: none;
+  stroke: var(--agc);
+  stroke-width: 1.8;
+  pointer-events: none;
+}
+.node.is-head .ag-ring {
+  transform: scale(1.3);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.ag-arc {
+  transition: opacity 0.2s;
+}
+.ag-arc .ag-line {
+  fill: none;
+  stroke: var(--agc);
+  stroke-linecap: round;
+  pointer-events: visibleStroke;
+}
+.ag-arc.ag-k-merged .ag-line {
+  stroke-dasharray: 5 3;
+}
+.ag-arc .ag-head {
+  fill: var(--agc);
+  stroke: var(--surface);
+  stroke-width: 1;
+  paint-order: stroke;
+}
+.ag-pin {
+  transition: opacity 0.2s;
+}
+.ag-pin .ag-stem {
+  stroke: var(--agc);
+  stroke-width: 1.2;
+}
+.ag-pin .ag-badge {
+  fill: var(--agc);
+  stroke: var(--surface);
+  stroke-width: 1.5;
+}
+.ag-pin .ag-glyph {
+  fill: none;
+  stroke: var(--surface);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.ag-pin.ag-k-commented .ag-glyph {
+  stroke-width: 2.2;
+}
+.tip-ag {
+  color: var(--ink-2);
+}
+.tip-ag::before {
+  content: "↪";
+  margin-inline-end: 6px;
+  color: var(--ink-3);
+}
+.tip-ag-more::before {
+  content: "";
+  margin: 0;
+}
+/* la leyenda: una franja bajo el grafo (no tapa lo más nuevo, que queda a la derecha) y dentro del panel, así se ve
+   también en pantalla completa; plegada, solo su título */
+.agk-panel {
+  display: flex;
+  flex: none;
+  align-items: flex-start;
+  gap: 4px 10px;
+  max-height: 40%; /* con muchos agentes, en una pantalla baja: se desplaza ella y el grafo no se queda sin alto */
+  overflow-y: auto;
+  margin: 6px 8px 0;
+  padding: 3px 4px 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+}
+.agk-title {
+  flex: none;
+  margin: 0;
+  padding: 5px 0;
+  font: 600 12px var(--font-ui);
+  white-space: nowrap;
+}
+.agk-total {
+  color: var(--ink-3);
+  font: 500 11px var(--font-mono);
+}
+.agk-body {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 12px;
+  min-width: 0;
+}
+.agk-btns {
+  display: flex;
+  flex: none;
+  margin-inline-start: auto;
+}
+.agk-btn {
+  width: 28px;
+  height: 28px;
+}
+.agk-panel.folded #ag-key-fold .ico {
+  rotate: 180deg;
+}
+.agk-none {
+  margin: 0;
+  padding: 5px 0;
+  color: var(--ink-3);
+}
+.agk-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 4px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.agk-list li {
+  min-width: 0;
+  max-width: 100%;
+}
+.agk-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 28px;
+  padding: 1px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+}
+button.agk-row {
+  cursor: pointer;
+}
+button.agk-row:hover,
+button.agk-row:focus-visible {
+  background: var(--surface-2);
+}
+.agk-sw {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--agc);
+}
+.agk-sw.agk-agent {
+  border-radius: 2px;
+}
+.agk-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agk-n {
+  flex: none;
+  color: var(--ink-3);
+  font: 500 11px var(--font-mono);
+}
+.agk-kinds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  margin: 0;
+  padding: 5px 0;
+  color: var(--ink-3);
+  font-size: 11.5px;
+}
+.agk-k {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.agk-line {
+  width: 16px;
+  border-top: 2px solid var(--ink-2);
+}
+.agk-line.agk-dash {
+  border-top-style: dashed;
+}
+.agk-glyph {
+  display: inline-grid;
+  place-items: center;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--ink-2);
+  color: var(--surface);
+  font-size: 9px;
+  line-height: 1;
+}
+/* en la vista conjunta no hay grafo; en el modo TV la leyenda se queda, sin botones (la pantalla no se toca) */
+.all-on .agk-panel {
+  display: none;
+}
+html.tv .agk-btn {
+  display: none;
 }
 
 /* ---------- vista de texto ---------- */
@@ -6403,7 +6703,7 @@ a.hl-row:focus-visible {
   }
 }
 
-/* celular angosto: las cifras en tres columnas y sin la línea de detalle, para que el grafo quede a
+/* celular angosto: las cifras en tres columnas y con la línea de detalle solo para el lector y el title, para que el grafo quede a
    una pantalla de la barra y no bajo 245 px de tarjetas */
 @media (max-width: 560px) {
   .stats,
@@ -6427,8 +6727,17 @@ a.hl-row:focus-visible {
     grid-column: span 2;
     border-radius: 0 0 var(--radius) 0;
   }
+  /* escondida a la vista pero no del lector de pantalla: el detalle también va de title en la tarjeta */
   .stat-sub {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .stat {
+    position: relative;
   }
 }
 

@@ -66,6 +66,15 @@
   /** Cada parte de una ruta (grupos, ramas con "/") escapada por separado: las barras quedan. */
   const segs = (path) => String(path).split('/').map(encodeURIComponent).join('/');
 
+  const CI_MAX = 6; // ramas cuyo pipeline se pregunta por ciclo
+  /** El estado de un pipeline de GitLab en uno de tres ('success', 'failure', 'pending'); 'skipped' y 'manual' no cuentan. */
+  const pipelineState = (s) => {
+    if (s === 'success') return 'success';
+    if (s === 'failed' || s === 'canceled' || s === 'canceling') return 'failure';
+    if (!s || s === 'skipped' || s === 'manual') return null;
+    return 'pending';
+  };
+
   class GitLabSource extends GB.GitHubSource {
     /** `path`: grupo(s) y proyecto, como en su URL (`gitlab-org/gitlab-runner`, `grupo/sub/proyecto`).
         `token`: el de GitLab. No va en `this.token`, que es el de GitHub y decide cosas de GitHub. */
@@ -174,11 +183,37 @@
       const before = this.cost;
       await this.fillBacklog(deadline);
       this.bulkCost += this.cost - before;
+      await this.syncCiGitlab(acts, quiet);
       this.data.mode = this.mode;
       this.reseeded = reseed;
       this.gc();
       this.countPending();
       return acts;
+    }
+
+    /** El estado del último pipeline de la cabeza de la rama por defecto, las fijadas y las de una MR abierta
+        (`/pipelines?ref=`, una consulta por rama que se movió, como mucho CI_MAX por ciclo), en el mismo
+        `data.ci` que usa GitHub. Un proyecto privado sin token ni se pregunta; sin pipelines (403/404) se
+        deja de preguntar. Un pipeline de otro commit que la cabeza no cuenta: se vuelve a preguntar luego. */
+    async syncCiGitlab(acts, quiet) {
+      if (this.noCi || (this.data.repo.private && !this.gitlabToken)) return;
+      const { branches, repo } = this.data;
+      const heads = [...this.data.pulls.values()].filter((p) => p.sameRepo !== false && p.state !== 'merged').map((p) => p.head);
+      let left = CI_MAX;
+      for (const name of new Set([repo.defaultBranch, ...this.pins, ...heads])) {
+        const sha = branches.get(name)?.sha;
+        if (!sha || this.ciSha.get(name) === sha) continue;
+        if (left-- <= 0) break;
+        const res = await this.api(`${this.base}/pipelines?ref=${encodeURIComponent(name)}&per_page=1&order_by=id&sort=desc`, { allow: [403, 404] });
+        if (!res.data) {
+          this.noCi = true;
+          return;
+        }
+        const last = res.data[0];
+        const state = last && last.sha === sha ? pipelineState(last.status) : null;
+        if (!last || (last.sha === sha && state !== 'pending')) this.ciSha.set(name, sha); // uno en curso o de otro commit: se vuelve a preguntar
+        this.setCi(name, state, acts, quiet);
+      }
     }
 
     async loadRepo() {
@@ -192,6 +227,9 @@
         url: p.web_url || `${this.ep.web}/${segs(path)}`,
         private: !!p.visibility && p.visibility !== 'public',
         description: p.description || '',
+        openIssues: Number.isFinite(p.open_issues_count) ? p.open_issues_count : null, // falta si el proyecto no tiene issues
+        stars: Number.isFinite(p.star_count) ? p.star_count : null,
+        forks: Number.isFinite(p.forks_count) ? p.forks_count : null,
       });
     }
 

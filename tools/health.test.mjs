@@ -87,7 +87,7 @@ test('ritmo: merges en 7 y 30 días y releases en 30, sin repetir una actividad'
     { id: '6', kind: 'push', time: ago(1) },
   ];
   const pace = compute(repo(), acts, NOW).pace;
-  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks], closedWeeks: [...pace.closedWeeks], branchWeeks: [...pace.branchWeeks], commitWeeks: [...pace.commitWeeks], tagWeeks: [...pace.tagWeeks], issueWeeks: [...pace.issueWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], closedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], branchWeeks: [0, 0, 0, 0, 0, 0, 0, 0], commitWeeks: [0, 1, 0, 2, 0, 0, 0, 1], tagWeeks: [0, 0, 0, 0, 0, 0, 0, 0], issueWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
+  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks], closedWeeks: [...pace.closedWeeks], branchWeeks: [...pace.branchWeeks], commitWeeks: [...pace.commitWeeks], authorWeeks: [...pace.authorWeeks], tagWeeks: [...pace.tagWeeks], issueWeeks: [...pace.issueWeeks], prCloseWeeks: [...pace.prCloseWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], closedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], branchWeeks: [0, 0, 0, 0, 0, 0, 0, 0], commitWeeks: [0, 1, 0, 2, 0, 0, 0, 1], authorWeeks: [0, 0, 0, 0, 0, 0, 0, 0], tagWeeks: [0, 0, 0, 0, 0, 0, 0, 0], issueWeeks: [0, 0, 0, 0, 0, 0, 0, 0], prCloseWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
 });
 
 test('DORA: despliegues en 30 días, mediana entre releases y tiempo de entrega', () => {
@@ -382,6 +382,30 @@ test('tendencia de commits: los cargados por semana, de la más vieja a la actua
   assert.deepEqual([...compute(data, [], NOW).pace.commitWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
 });
 
+test('autores por semana: cuántas personas distintas hicieron commits cada semana, de la más vieja a la actual', () => {
+  const data = repo();
+  data.commits = new Map([
+    ['a', { date: ago(0.1), author: { login: 'ana', name: 'Ana' } }],
+    ['b', { date: ago(1), author: { login: 'ana', name: 'Ana P.' } }], // la misma usuaria con otro nombre: una vez
+    ['c', { date: ago(2), author: { name: 'Bruno' } }], // sin usuario: cuenta por su nombre
+    ['d', { date: ago(3), author: { name: 'bruno' } }], // el mismo nombre en otra caja: una vez
+    ['e', { date: ago(4), author: { login: 'carla' } }],
+    ['f', { date: ago(9), author: { login: 'ana' } }], // la pasada: vuelve a contar en su semana
+    ['g', { date: ago(27), author: { login: 'dani' } }],
+    ['h', { date: ago(27.5), author: { login: 'eva' } }],
+    ['i', { date: ago(60), author: { login: 'fede' } }], // fuera de las 8 semanas
+    ['j', { date: ago(-1), author: { login: 'gabi' } }], // en el futuro: no cuenta
+    ['k', { date: ago(1) }], // sin autor: no suma
+    ['l', { date: ago(1), author: { name: '  ' } }], // nombre vacío: no suma
+    ['m', { author: { login: 'hugo' } }], // sin fecha: no cuenta
+  ]);
+  const h = compute(data, [], NOW);
+  assert.deepEqual([...h.pace.authorWeeks], [0, 0, 0, 0, 2, 0, 1, 3], 'esta semana ana, bruno y carla; la pasada ana; hace tres dani y eva; fede, gabi, los sin autor y hugo no cuentan');
+  assert.deepEqual([...h.pace.commitWeeks], [0, 0, 0, 0, 2, 0, 1, 7], 'los commits siguen contando todos, con o sin autor');
+  data.commits = new Map();
+  assert.deepEqual([...compute(data, [], NOW).pace.authorWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
+});
+
 test('tendencia de tags: los cargados por semana, de la más vieja a la actual', () => {
   const data = repo();
   data.commits = new Map([
@@ -414,4 +438,20 @@ test('la salud cuenta los issues abiertos por semana, una vez cada número', () 
   ];
   assert.deepEqual([...compute(repo(), acts, NOW).pace.issueWeeks], [0, 0, 0, 0, 0, 0, 1, 2]);
   assert.deepEqual([...compute(repo(), [], NOW).pace.issueWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
+});
+
+test('PRs cerrados sin fusionar por semana: cada número una vez, sin los fusionados, de la más vieja a la actual', () => {
+  const cl = (id, days, number) => ({ kind: 'pr-close', id, number, time: ago(days) });
+  const acts = [cl('a', 0.5, 1), cl('b', 3, 2), cl('c', 3.5, 2), cl('d', 8, 3), cl('e', 20, 4), cl('f', 70, 5), cl('g', -1, 6), cl('h', 1, 7), { kind: 'pr-merge', id: 'm', number: 7, time: ago(1) }, { kind: 'issue-close', id: 'i', number: 8, time: ago(1) }];
+  const h = compute(repo(), acts, NOW);
+  assert.deepEqual([...h.pace.prCloseWeeks], [0, 0, 0, 0, 0, 1, 1, 2], 'el 1 y el 2 (dos cierres, una vez) esta semana, el 3 la pasada, el 4 hace tres; el 5 fuera de las 8, el 6 (futuro), el 7 (fusionado) y el issue no cuentan');
+  assert.deepEqual([...compute(repo(), [], NOW).pace.prCloseWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
+});
+
+test('el panel de salud tiene una columna que puede encogerse (a 320 px no se desborda, pendiente 11)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../css/styles.css', import.meta.url), 'utf8');
+  const m = css.match(/#health \.tr-wrap,\s*\.hl-body,\s*\.hl-list \{([^}]*)\}/);
+  assert.ok(m, 'falta la regla de columna del panel de salud');
+  assert.match(m[1], /grid-template-columns:\s*minmax\(0,\s*1fr\)/);
 });

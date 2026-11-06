@@ -557,7 +557,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: terminal y ejercicio cubiertos por `node --test`; 40 idiomas con `check-i18n` (0 errores); smoke (los pasos de práctica siguen en verde), auditoría y e2e en la puerta.
 - Skills: no aplica: una regla más en un intérprete que ya existe, con lo ya cargado; lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (el commit toma la lista de preparados que ya existe).
-- OMC: plan=— · revisión=6 hallazgos, 1 MEDIUM y 5 LOW (5 arreglados: `--continue` perdía lo no preparado, el ejercicio se resolvía sin `add`, `-m "-am"`, la razón de la negativa primero; 2 documentados en Límites conocidos: `reset --soft` y las banderas pegadas) · verificación=PASS (criterios del ítem contra la puerta y las pruebas)
+- OMC: plan=— · revisión=6 hallazgos, 1 MEDIUM y 5 LOW (4 arreglados: `--continue` perdía lo no preparado, el ejercicio se resolvía sin `add`, `-m "-am"`, la razón de la negativa primero; 2 documentados en Límites conocidos: `reset --soft` y las banderas pegadas) · verificación=PASS (criterios del ítem contra la puerta y las pruebas)
 - Hoja de ruta: repuesta a 15 con el ítem 169 (Práctica: `add -u`, otra parte del ítem 16).
 - Reclamo: loop/226, sin colisión
 - Validado: 600 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.

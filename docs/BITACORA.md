@@ -3767,3 +3767,125 @@ bitácoras juntas (la rotación de los subtipos de mantenimiento, la numeración
 - Reclamo: loop/216, sin colisión
 - Validado: 585 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 217, expansión: ítem 156 (Grafo 2D: el SHA junto a cada commit, Análisis)
+
+### 2026-11-05 · Iteración 217 · Expansión · Análisis
+
+- **Capacidad nueva: las columnas del grafo 2D suman el SHA corto de cada commit** (ítem 156 de la hoja de ruta, parte de «Columnas de autor fecha y SHA a la vista en el grafo» de Replica). `GB.search.columnText` antepone los 7 primeros caracteres del SHA a «Autor · fecha» («2b7a0aa · Valentina Rojas · 2 nov 2026»), con el mismo interruptor de la lupa, que pasa a llamarse «Mostrar SHA, autor y fecha junto a cada commit (grafo 2D)» (clave `search.columns`, reescrita en los 40 idiomas). El SHA va primero para que el recorte (de 34 a 44 caracteres) nunca lo corte; un SHA que no es texto no se escribe. Sin consultas nuevas, con lo ya cargado; funciona en la demo y con todas las fuentes.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/search.test.mjs` («columnText antepone el SHA corto…») → `actual: 'Ana · d5'`; paso del smoke de las columnas: cada una es «SHA · autor · fecha» con 7 caracteres hexadecimales primero, y buscar ese SHA en la lupa encuentra un commit cargado que empieza por él.
+- README: Búsqueda de commits (lista de funciones), Límites conocidos (recorte a 44 y prefijos repetidos en repos enormes) y Seguridad; `replica/features.csv`: la fila sigue `partial`, ahora solo le falta el 3D.
+- QA: columnas a mano con Playwright en la demo (es y ta a 1280 px, ar a 320 px: el interruptor con su texto nuevo, 21 a 25 columnas «SHA · autor · fecha», la búsqueda por el SHA de la primera da 1 commit, sin errores de consola; captura del 2D: se pisan con muchos commits seguidos, como ya decía Límites conocidos); 40 idiomas (`check-i18n`); auditoría: ver Validado.
+- Skills: no aplica: un dato más en una columna del grafo que ya existe; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (anteponer el SHA corto al texto que ya arma `columnText`).
+- OMC: plan=— · revisión=4 hallazgos (1 MEDIUM y 1 LOW arreglados: el paso del smoke ya no exige exactamente 1 resultado ni prefijos distintos, que con los SHA al azar de la demo y la búsqueda por subcadena podían fallar alguna vez, y su mensaje dice «SHA · autor · fecha»; 2 LOW aceptados: el número del PR se confirma al abrirlo, y en árabe, hebreo, persa y urdu el bidi puede dejar el SHA al otro extremo de la diagonal, que se sigue leyendo) · verificación=PASS
+- Reclamo: loop/217, sin colisión
+- Validado: 586 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 218, expansión: ítem 143 (Resumen de la semana de la organización: PRs abiertos, Salidas)
+
+### 2026-11-05 · Iteración 218 · Expansión · Salidas
+
+- **Capacidad nueva: el resumen de la semana de la organización suma los pull requests abiertos** (ítem 143 de la hoja de ruta, parte del ítem 47). `GB.digest.computeOrg` suma `opened`: los PRs abiertos en la semana de cada repo seguido, con el mismo conteo que el resumen de un repo (las actividades `pr-open` ya cargadas, cada número una vez). El Markdown y la imagen PNG de la organización llevan el total bajo «Pull requests fusionados» y, en la sección de cada repo, los números de sus PRs abiertos (hasta 10, con «… +n» por el resto); un repo cuyo único movimiento de la semana es un PR abierto ahora sale en el resumen. Usa la etiqueta `digest.opened` que ya estaba en los 40 idiomas: sin textos nuevos y sin consultas nuevas.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/digest.test.mjs` («organización: suma los PRs abiertos en la semana de cada repo…», con dos repos fabricados) → `expected: 3` (`o.opened` sin el cambio es `undefined`).
+- README: Salud del repo (resumen de la semana de la organización, lista de funciones) y Límites conocidos (qué repos salen y cómo se cuentan sus PRs abiertos).
+- QA: el resumen de la organización no está en la demo (pide seguir `org:`); lo cubren la prueba nueva (Markdown, imagen, sin PRs, más de 10) y el paso del smoke «el resumen de la semana de la organización junta sus repos abiertos» (Markdown sin `undefined`, `.md` y `.png`); 40 idiomas (`check-i18n`, 0 errores: la etiqueta ya existía); auditoría: ver Validado.
+- Skills: no aplica: una cifra más en un resumen que ya existe, con lo ya cargado; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (sumar el `opened` que `compute` ya da por repo, como `merged`).
+- OMC: plan=— · revisión=3 hallazgos LOW (2 arreglados: la lista de PRs fusionados de cada repo también dice «… +n» cuando pasa de 10, y el comentario de `computeOrg` nombra qué cuenta como actividad; 1 aceptado: en la imagen la línea de cada repo se recorta a 70 caracteres y, con muchos PRs, lo último queda fuera, como ya pasaba con los fusionados) · verificación=PASS
+- Reclamo: loop/218, sin colisión
+- Validado: 587 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 219, mantenimiento · Deuda: pendiente 1 (Pasos del smoke intermitentes en la sesión cloud: en la iteración 152, `npm run…)
+
+### 2026-11-05 · Iteración 219 · Mantenimiento · Deuda
+
+- **Arreglo: los pasos intermitentes del smoke en la nube, y la carrera de la app que tapaba uno** (pendiente 1; cierra también el 9, el mismo «filtro por autor»). Los pasos que cuentan ramas o leen la región viva («vista de texto: árbol con teclado…», «vista de texto: H oculta una rama, S la deja sola…», «filtro por autor…») corren ahora con la demo en pausa (`quieta` en `tools/smoke.mjs`: pausa con `#pause-btn` y la deja como estaba, también si el paso falla): la demo publicaba a mitad y descuadraba la cuenta o cambiaba la región viva a «Novedades». «Al cerrar el último repo de la organización…» era un fallo de la app: una renovación de la lista de la organización en vuelo, al volver tras cerrar su último repo, la guardaba de nuevo y reabría sus repos como nuevos; `connectOwner` (`js/app.js`) ya no sigue si la organización se dejó mientras llegaba la lista.
+- **Reproducción:** con la demo sin pausa, abrir la vista de texto y leer la región viva 9 s después (script de Playwright en el scratchpad) → `Novedades: 0 ramas, 1 commits` (el fallo del paso); con pausa no cambia. `node tools/smoke.mjs` con el paso nuevo y sin el arreglo de `js/app.js` → `✗ al cerrar el último repo de la organización deja de seguirse: sigue guardada: {"acme":["nuevo","api","web","viejo"]}`.
+- **Pruebas que fallan sin el arreglo:** el paso del smoke «al cerrar el último repo de la organización deja de seguirse», ahora determinista: la lista de acme tarda 2 s (más que el intervalo de renovación del smoke), así que al cerrar siempre hay una renovación en vuelo, y además de lo guardado comprueba que no vuelvan las pestañas. Medida: antes, una reproducción puntual (no una tasa) y el historial del pendiente; después, 5 corridas seguidas en verde de los tres pasos con `quieta` (4 smoke sueltos y una puerta, antes de tocar `connectOwner`) y una puerta completa con todo (el paso de la organización, que ahora fuerza la carrera, falla sin el arreglo y pasa con él).
+- README: sin cambios (ni la función ni sus límites cambian: el arreglo deja la app como el README ya la describe).
+- QA: seguir una organización (paso del smoke con la renovación en vuelo) y vista de texto y filtro por autor (sus pasos del smoke, 6 de 6; el de la organización con su forma nueva, en la puerta final); auditoría: ver Validado.
+- Skills: no aplica: pruebas del smoke propias y una carrera de la app; lo cubren las reglas del repo y el Protocolo de QA.
+- Arena: no aplica: una sola forma obvia (quietar la demo durante el paso, como ya hacían otros, y cortar la renovación de una organización dejada).
+- OMC: plan=— · revisión=3 hallazgos (HIGH arreglado: la causa de «al cerrar el último repo…» era la carrera de `connectOwner`, no la prueba; MEDIUM arreglado: el comentario de «filtro por autor» decía más de lo que comprueba; LOW arreglado: si la página cae, el `finally` de `quieta` no tapa el error del paso) · verificación=PASS
+- Reclamo: loop/219, sin colisión
+- Validado: 587 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 220, expansión: ítem 146 (Vista de texto: ramas sin PR, Público)
+
+### 2026-11-05 · Iteración 220 · Expansión · Público
+
+- **Capacidad nueva: la vista de texto dice qué ramas no tienen pull request abierto** (ítem 146 de la hoja de ruta, parte del ítem 33; parte del mapa: Público). `GB.textview.build` suma `noPr` a cada rama que no es la por defecto ni está fusionada y de la que no sale ningún PR abierto del mismo repo (uno de un fork con el mismo nombre de rama no cuenta); su nombre accesible lo dice como «sin PR abierto» (clave `textview.noPr`, en los 40 idiomas). Solo cuando la lista ya cargada está completa: `GB.textview.pullsComplete`, sobre el estado sin filtrar, pide que la fuente traiga PRs (no un repo local ni la práctica de git), que el repo ya cargó, que haya menos de 50 abiertos y no menos que el total que da la fuente, y que el token pueda leerlos (`pullsUnknown`, nuevo en `js/sources/github.js`: con GraphQL, un token sin permiso de PRs ya no deja la lista como vacía). Sin consultas nuevas.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/textview.test.mjs` («con la lista de PRs completa, una rama sin PR abierto propio lo dice…») → `actual` sin `noPr`, y «la lista de PRs está completa solo si…» → `TypeError` (`pullsComplete` no existe); `node --test tools/github.test.mjs` («GraphQL: un token sin permiso de PRs deja la lista… como desconocida») → `undefined !== true`; paso del smoke de la vista de texto: en la demo, cada rama dice «sin PR abierto» si y solo si no es la por defecto, no tiene PRs abiertos y no está fusionada (y el de las ramas quietas ahora la exige en `gh-pages`).
+- README: Vista de texto (lista de funciones) y Límites conocidos (cuándo se dice, el tope de 50, los forks, el token sin permiso y los Forgejo propios con otro tope).
+- QA: vista de texto en la demo a mano con Playwright (`?demo=1&view=text`, español a 1280 px, inglés y árabe a 320 px: `develop` dice «sin PR abierto», las ramas con PR y `main` no; sin errores de consola ni desborde); 40 idiomas (`check-i18n`, 0 errores); auditoría: ver Validado.
+- Skills: no aplica: una marca más en el nombre accesible de una vista que ya existe, con lo ya cargado; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (contar los PRs abiertos por rama, como ya hace `prs`, y decir el cero solo con la lista completa).
+- OMC: plan=— · revisión=4 hallazgos (1 MEDIUM arreglado: un token de GitHub sin permiso de PRs hacía decir «sin PR abierto» de todas las ramas; 1 MEDIUM y 1 LOW a Mantenimiento como pendientes 14 y 15: un Forgejo propio con tope menor que 50 y `sameRepo` de Bitbucket Data Center con un repo renombrado; 1 LOW aceptado: sin token, un PR recién abierto tarda hasta 3 min en quitar la marca, «con lo ya cargado») · verificación=PASS
+- Reclamo: loop/220, sin colisión
+- Validado: 590 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 221, expansión: ítem 144 (Resumen de la semana de la organización: autores nuevos, Salidas)
+
+### 2026-11-05 · Iteración 221 · Expansión · Salidas
+
+- **Capacidad nueva: el resumen de la semana de la organización suma los autores nuevos** (ítem 144 de la hoja de ruta, parte del ítem 47). `GB.digest.computeOrg` suma `newcomers`: las personas que firmaron un commit de la semana en algún repo seguido y ninguno cargado anterior a la semana en cualquiera de ellos (quien es nueva en dos repos cuenta una vez; quien ya firmaba en otro repo de la organización no es nueva en ella), con los commits ya cargados de cada pestaña. El Markdown y la imagen PNG de la organización llevan el total bajo los commits y, en la sección de cada repo, sus autores nuevos en ese repo. El conteo de autores de `compute` pasa a una función `authors()` que comparten los dos, sin cambiar lo que da `compute`. Usa la etiqueta `digest.newcomers` que ya estaba en los 40 idiomas: sin textos nuevos y sin consultas nuevas.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/digest.test.mjs` («organización: suma los autores nuevos de los repos seguidos, cada persona una vez…», con dos repos fabricados) → `expected: 2` (`o.newcomers` sin el cambio es `undefined`).
+- README: Salud del repo (resumen de la semana de la organización, lista de funciones) y Límites conocidos (cómo se cuentan los autores nuevos de la organización y por qué el total puede ser menor que la suma de los repos).
+- QA: el resumen de la organización no está en la demo (pide seguir `org:`); lo cubren la prueba nueva (Markdown, imagen, sin autores nuevos) y el paso del smoke «el resumen de la semana de la organización junta sus repos abiertos» (Markdown sin `undefined`, `.md` y `.png`); 40 idiomas (`check-i18n`, 0 errores: la etiqueta ya existía); auditoría: ver Validado.
+- Skills: no aplica: una cifra más en un resumen que ya existe, con lo ya cargado; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (juntar los autores de la semana y los de antes de cada repo, como `compute` ya hace por repo).
+- OMC: plan=— · revisión=4 hallazgos (0 arreglados; 1 MEDIUM aceptado: «Autores nuevos» del total es nuevo en la organización y el de cada repo es nuevo en ese repo, así que el total puede ser menor que la suma, como dice el README; 3 LOW aceptados: `authors()` recorre los commits de cada repo dos veces, O(n); la misma persona con usuario en un repo y solo nombre en otro cuenta dos veces, ya documentado; la prueba no fija un commit con fecha futura o sin autor en la organización, que el código descarta igual que en un repo) · verificación=PASS
+- Reclamo: loop/221, sin colisión
+- Validado: 591 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 222, expansión: ítem 147 (Constelación: ordenar por ramas nuevas, Escala)
+
+### 2026-11-05 · Iteración 222 · Expansión · Escala
+
+- **Capacidad nueva: la constelación ordenada por ramas nuevas de la semana** (ítem 147 de la hoja de ruta, parte del ítem 26). El selector de orden suma «Ramas nuevas» (más ramas creadas en los últimos 7 días primero; empata por el orden de las pestañas) junto a pestañas, actividad, PRs abiertos y nombre, y `?order=new` abre la constelación ya ordenada así. `GB.constellation.newBranches` cuenta las creaciones de rama de la actividad ya cargada de cada repo con la misma regla que el resumen de la semana (cada nombre una vez, la ventana `(ahora − 7 d, ahora]`); la lista de órdenes queda en una sola constante (`ORDERS`) que comparten el selector y la URL. Clave nueva `constellation.orderNew` en los 40 idiomas (la misma frase que «Ramas nuevas: {n}» del resumen). Sin consultas nuevas.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/constellation.test.mjs` («el orden…»: `sortItems(…, 'new')` deja el orden de las pestañas y `orderParam('NEW')` da `null`; «las ramas nuevas de la semana…» y «ordenar por ramas nuevas con la actividad de cada repo…», con repos fabricados → `TypeError`: `newBranches` no existe) y el paso del smoke de `?order=new` (selector en «new» y anuncio «Ordenadas por Ramas nuevas»).
+- README: Constelación (lista de funciones: el orden, `?order=new` y de dónde sale la cifra) y Mapa de alcance; sin cambios en Seguridad (lee una palabra de la URL contra una lista fija).
+- QA: selector, URL y anuncio en el smoke (40 idiomas); 40 idiomas con `check-i18n` (0 errores); auditoría en la puerta.
+- Skills: no aplica: un orden más en un selector que ya existe, con lo ya cargado; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (contar las creaciones de rama como ya hace el resumen de la semana y ordenar como los demás órdenes).
+- OMC: plan=— · revisión=5 hallazgos LOW, 0 de seguridad (2 arreglados: la lista de órdenes repetida pasa a `ORDERS` y una prueba encadena la actividad de dos repos con el orden; 3 aceptados: el conteo repite el de `js/digest.js` en vez de compartirlo, la etiqueta no dice «7 días» y la galaxia no muestra su cifra, igual que con los PRs abiertos) · verificación=PASS
+- Reclamo: loop/222, sin colisión
+- Validado: 593 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde (la primera corrida tras el último commit falló en un paso ajeno, la vista de texto «sin PR abierto»: intermitente, la repetición pasó; pendiente 2 de Mantenimiento).
+- **Siguiente:** iteración 223, mantenimiento · Errores: pendiente 15 (Forgejo o Gitea propio: los PRs abiertos se piden con `limit=50` (`js/sources/c…)
+
+### 2026-11-05 · Iteración 223 · Mantenimiento · Errores
+
+- **Arreglo: un Forgejo o Gitea propio con tope menor que 50 ya no recorta los PRs abiertos sin decirlo** (pendiente 15). `syncPulls` de `js/sources/codeberg.js` pasa a `applyPulls` el total de la cabecera `X-Total-Count` (si falta o no es válida, sigue siendo lo que llegó): con un servidor que recorta a 30 y 40 PRs, `totalPulls` es 40 y la vista de texto ya no dice «sin PR abierto» de una rama que sí lo tiene. Mismo patrón buscado en las demás fuentes: Bitbucket Data Center pagina con `isLastPage`, sin el problema.
+- **Reproducción:** `node --test tools/codeberg.test.mjs` → `un servidor propio con un tope menor que 50…`: `expected: 40, actual: 30` (`data.totalPulls`).
+- **Pruebas que fallan sin el arreglo:** la misma («…el total sale de X-Total-Count…») y su contraparte «sin X-Total-Count el total sigue siendo lo que llegó».
+- README: sin cambios (no cambia lo que hace la función, solo cuándo dice «sin PR abierto»).
+- QA: filas de fuentes y vista de texto cubiertas por la prueba con la API simulada; auditoría: no toca la página.
+- Skills: no aplica: una cabecera más leída en una fuente que ya existe; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (leer la cabecera que el servidor ya manda).
+- OMC: plan=— · revisión=3 hallazgos LOW (0 arreglados: la regla repetida de `#agents-body`, la prueba que busca el texto del CSS y el viewport del smoke sin `finally`; quedan como están, sin efecto) · verificación=— (no se lanzaron los agentes: el cambio es una cabecera leída en una fuente, con su prueba; revisión propia del diff)
+- Reclamo: loop/223, sin colisión
+- Validado: 595 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 224, expansión: ítem 148 (Práctica: restore --staged y clean, Público)
+
+### 2026-11-06 · Iteración 224 · Expansión · Público
+
+- **Capacidad nueva: la práctica de git con área de preparación y `clean`** (ítem 148 de la hoja de ruta, parte del ítem 16). El intérprete suma `add <archivo>|.`, `restore --staged <archivo>|.`, `clean` (`-n` lista, `-f` borra; sin bandera se niega como git) y `touch --new` (un archivo sin seguir); `status` separa «Changes to be committed», «Changes not staged» y «Untracked files»; lo preparado bloquea cambiar de commit y el rebase, `stash` lo guarda y `reset` lo saca (`--hard` lo tira). Ejercicio 10 «Deshacer un add y limpiar» (`?practice=10`) con su título y meta en los 40 idiomas. `commit` sigue guardando todo (sin commit de solo lo preparado).
+- **Pruebas que fallan sin la capacidad:** `node --test tools/gitsim.test.mjs` («add, restore --staged y clean…», «el ejercicio de limpiar no se da por resuelto con el atajo equivocado» y «cada ejercicio parte sin resolver…») → fallan los tres sin el cambio (`add` no es un comando de git).
+- README: Aprender git (comandos, diez ejercicios, `?practice=1` a `10`, pruebas) y Límites conocidos (el área de preparación es una lista; `commit` guarda todo).
+- QA: terminal y ejercicio cubiertos por `node --test`; 40 idiomas con `check-i18n` (0 errores); auditoría y smoke en la puerta.
+- Skills: no aplica: más comandos en un intérprete que ya existe, con lo ya cargado; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (una lista de preparados junto a la de cambios, como ya hace `stash`).
+- OMC: plan=— · revisión=3 hallazgos LOW (0 arreglados: la regla repetida de `#agents-body`, la prueba que busca el texto del CSS y el viewport del smoke sin `finally`; quedan como están, sin efecto) · verificación=— (revisión propia del diff: sin DOM, sin red, sin textos de afuera; los archivos de `touch` pasan por la misma validación)
+- Replica: paridad 92,7/100, sin pasada nueva (13 de 13 must hechos); ítems 162 a 167
+- Reclamo: loop/224, sin colisión
+- Validado: 597 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 225, expansión: ítem 165 (Constelación: ordenar por issues abiertos, Escala)
+
+### 2026-11-06 · Iteración 225 · Expansión · Escala
+
+- **Capacidad nueva: la constelación ordenada por issues abiertos** (ítem 165 de la hoja de ruta, parte del ítem 26). El selector de orden suma «Issues abiertos» (más issues abiertos primero; empata por el orden de las pestañas) y `?order=issues` abre la constelación ya ordenada así. El número sale del `open_issues_count` de la consulta del repo que cada fuente ya hacía al abrirlo, sin consultas nuevas: GitLab y Forgejo/Gitea/Codeberg lo dan solo de issues (`repo.openIssues`); GitHub lo da junto con los PRs (`repo.openItems`) y `GB.constellation.openIssues` le resta los PRs abiertos conocidos (nunca baja de 0). Bitbucket, Azure DevOps y los repos locales no lo dan: cuentan como 0. Clave nueva `constellation.orderIssues` en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/constellation.test.mjs` («el orden…»: `sortItems(…, 'issues')` deja el orden de las pestañas y `orderParam('Issues')` da `null`; «issues abiertos con lo ya cargado…» → `TypeError`: `openIssues` no existe), `tools/github.test.mjs`, `tools/gitlab.test.mjs` y `tools/codeberg.test.mjs` (el total sale de la consulta del repo) y el paso del smoke de `?order=issues` (tres repos simulados con 1, 3 y 4 issues, el de 3 con 2 PRs que no cuentan: `o/c o/b o/a`, y el anuncio «Ordenadas por Issues abiertos»).
+- README: Constelación (el orden nuevo y `?order=issues`) y Límites conocidos (el total no se refresca con el repo abierto; sin token, con más de 50 PRs abiertos en GitHub los issues salen de más; las fuentes sin el dato cuentan como 0).
+- QA: constelación con teclado y anuncio en la región viva por el smoke; 40 idiomas con `check-i18n` (0 errores); auditoría y e2e en la puerta.
+- Skills: no aplica: un orden más en un selector que ya existe, con un campo de una consulta que ya se hacía; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (el mismo camino que el orden por PRs abiertos, con el total que ya da la API).
+- OMC: plan=— · revisión=3 hallazgos LOW (1 arreglado: el smoke vuelve los totales a 0 en un `finally`; los otros 2, el tope de 50 PRs sin token y el total sin refrescar, documentados en Límites conocidos) · verificación=PASS
+- Puerta: cuatro corridas; la 1.ª y la 2.ª fallaron por el paso nuevo del smoke (las 20 pestañas del paso anterior; después, los repos que sumaba a las pestañas guardadas: pasó a una página aparte); la 2.ª además en «vista de texto…» (pendiente 2) y la 3.ª solo en «editar el código…», ajeno (pendiente 3, nuevo); la 4.ª en verde.
+- Hoja de ruta: repuesta a 15 con el ítem 168 (Constelación: ordenar por estrellas, otra parte del ítem 26).
+- Reclamo: loop/225, sin colisión
+- Validado: 598 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
+- **Siguiente:** iteración 226, expansión: ítem 162 (Práctica: commit de solo lo preparado, Público)

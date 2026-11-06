@@ -49,6 +49,7 @@
       this.staged = []; // { file, isNew }: lo preparado con add, a la espera del commit
       this.untracked = []; // archivos nuevos que git no sigue (touch --new): clean los borra
       this.cleans = 0; // cuántas veces clean -f borró archivos sin seguir
+      this.adds = 0; // cuántas veces add preparó algo
       this.stashes = []; // { files, branch, sha }, el más nuevo primero (stash@{0})
       this.merging = null; // { name, theirs } mientras una fusión (merge --no-commit) espera su commit
       this.aborts = 0; // cuántas fusiones se cancelaron con merge --abort
@@ -308,7 +309,7 @@
 
     commit(args) {
       // -am "msg" es -a -m "msg", como en git
-      const { flags } = parse(args.flatMap((a) => (a === '-am' ? ['-a', '-m'] : [a])), ['-m', '--message']);
+      const { flags } = parse(args.flatMap((a, i) => (a === '-am' && args[i - 1] !== '-m' && args[i - 1] !== '--message' ? ['-a', '-m'] : [a])), ['-m', '--message']);
       const msg = flags['-m'] ?? flags['--message'];
       const all = !!(flags['-a'] || flags['--all']);
       if (flags['--amend']) {
@@ -337,7 +338,7 @@
       // los commits de esta práctica pueden ir vacíos («una foto» de la rama); pero con cambios sin preparar
       // y nada preparado, git no hace el commit: hay que elegir qué entra con add, o llevarse todo con -a
       if (!this.picking && !all && !this.staged.length && this.work.length) {
-        fail(`${this.commands.status.call(this)[0]}\nChanges not staged for commit:\n${this.work.map((f) => `\tmodified:   ${f}`).join('\n')}\nno changes added to commit (use "git add" and/or "git commit -a")`);
+        fail(`no changes added to commit (use "git add" and/or "git commit -a")\n${this.commands.status.call(this)[0]}\nChanges not staged for commit:\n${this.work.map((f) => `\tmodified:   ${f}`).join('\n')}`);
       }
       if (this.picking) this.picking = null;
       const sha = this.make(msg, this.headSha ? [this.headSha] : []);
@@ -595,7 +596,10 @@
         this.picking = null;
         const c = this.commits.get(pick);
         const msg = revert ? `Revert "${c.message}"` : c.message;
-        const sha = this.commit(msg);
+        // como commit: lo cambiado después del --no-commit queda sin commit
+        const sha = this.make(msg, [this.headSha]);
+        this.moveHead(sha);
+        this.take(sha, false);
         return [`[${this.head.branch} ${this.short(sha)}] ${msg}`];
       }
       if (!rest.length) fail('fatal: you must specify a commit to cherry-pick');
@@ -765,7 +769,10 @@
       const isNew = this.untracked.includes(f);
       this.work = this.work.filter((w) => w !== f);
       this.untracked = this.untracked.filter((u) => u !== f);
-      if (isNew || known.has(f)) this.staged.push({ file: f, isNew });
+      if (isNew || known.has(f)) {
+        this.staged.push({ file: f, isNew });
+        this.adds++;
+      }
     }
     return [];
   };
@@ -960,8 +967,8 @@
       },
       done: (r) => {
         const main = r.branches.get('main');
-        // un solo commit nuevo con login.js y nada más; debug.js sigue cambiado sin commit (ni preparado)
-        return !!main && r.head.branch === 'main' && r.log(main).length === BASE.length + 1 && r.commits.get(main).files?.join() === 'login.js' && r.work.join() === 'debug.js' && !r.staged.length;
+        // un solo commit nuevo con login.js y nada más, preparado con add; debug.js sigue cambiado sin commit (ni preparado)
+        return !!main && r.adds > 0 && r.head.branch === 'main' && r.log(main).length === BASE.length + 1 && r.commits.get(main).files?.join() === 'login.js' && r.work.join() === 'debug.js' && !r.staged.length;
       },
     },
   ];

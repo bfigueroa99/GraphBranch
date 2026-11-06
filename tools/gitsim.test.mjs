@@ -885,7 +885,7 @@ test('commit guarda solo lo preparado; con -a, todo lo cambiado (nunca lo sin se
   // sin nada preparado no hay commit: git dice que falta add o -a
   const refused = r.run('commit -m "Nada preparado"');
   assert.equal(refused.ok, false);
-  assert.match(refused.lines.join('\n'), /no changes added to commit \(use "git add" and\/or "git commit -a"\)/);
+  assert.match(refused.lines[0], /no changes added to commit \(use "git add" and\/or "git commit -a"\)/);
   assert.equal(r.headSha, tip, 'no se hizo ningún commit');
   // con a.txt preparado, el commit se lleva solo a.txt y b.txt sigue cambiado
   run(r, 'add a.txt');
@@ -910,7 +910,13 @@ test('commit guarda solo lo preparado; con -a, todo lo cambiado (nunca lo sin se
   assert.ok(r.run('commit -a -m "Nuevo"').ok);
   assert.deepEqual(plain(r.commits.get(r.headSha).files), ['n.txt']);
   assert.ok(r.run('commit -m "Vacío"').ok);
-  assert.equal(r.commits.get(r.headSha).files, undefined);
+  assert.equal(r.commits.get(r.headSha).files, undefined);  // -m "-am" es un mensaje, no la bandera
+  assert.equal(r.run('commit -m -am').ok, true);
+  assert.equal(r.commits.get(r.headSha).message, '-am');
+  // cherry-pick --continue, como commit, deja fuera lo cambiado después del --no-commit
+  run(r, 'checkout -b f', 'commit -m p', 'checkout main', 'cherry-pick f --no-commit', 'touch x.txt');
+  assert.ok(r.run('cherry-pick --continue').ok);
+  assert.deepEqual(plain(r.work), ['x.txt']);
 });
 
 test('el ejercicio de commit parcial no se resuelve con commit -a ni sin add', () => {
@@ -925,6 +931,9 @@ test('el ejercicio de commit parcial no se resuelve con commit -a ni sin add', (
   const both = start(i, NOW);
   run(both, 'add .', 'commit -m "Fix login"');
   assert.equal(ex.done(both), false, 'add . prepara los dos');
+  const restored = start(i, NOW);
+  run(restored, 'restore debug.js', 'commit -am "Fix login"', 'touch debug.js');
+  assert.equal(ex.done(restored), false, 'sin add no vale, aunque el estado final se parezca');
   const fixed = start(i, NOW);
   run(fixed, 'add .', 'restore --staged debug.js', 'commit -m "Fix login"');
   assert.equal(ex.done(fixed), true, 'sacar debug.js de lo preparado también vale');

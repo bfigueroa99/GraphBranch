@@ -294,6 +294,7 @@
         'reflog                      where HEAD has been (HEAD@{n}): find a commit again after a reset --hard',
         'stash [list|pop|apply|drop] put uncommitted changes aside and bring them back',
         'add <file|.>                prepare changes (and new files) for the next commit',
+        'add -u [file|.]             prepare only changed files git already tracks (new files stay out)',
         'restore --staged <file|.>   take a file back out of what is prepared',
         'clean [-n|-f]               delete files git does not track (-n only lists them, -f deletes)',
         'touch [--new] <file>        change a file (uncommitted work); --new makes an untracked one',
@@ -757,9 +758,23 @@
     return Repo.prototype.commands.checkout.call(this, [target]);
   };
 
-  /** `add <archivo>…` o `add .` prepara los cambios (y los archivos nuevos) para el próximo commit. */
+  /** `add <archivo>…` o `add .` prepara los cambios (y los archivos nuevos) para el próximo commit;
+   *  `add -u` (`--update`) prepara solo lo cambiado que git ya sigue y deja fuera lo sin seguir. */
   Repo.prototype.commands.add = function (args) {
-    const { rest } = parse(args);
+    const { flags, rest } = parse(args);
+    if (flags['-u'] || flags['--update']) {
+      // sin rutas, -u toma todo el árbol; con rutas, solo las que git sigue y están cambiadas
+      const tracked = new Set([...this.work, ...this.staged.filter((s) => !s.isNew).map((s) => s.file)]);
+      for (const f of rest) if (f !== '.' && !tracked.has(f) && !this.untracked.includes(f) && !this.staged.some((s) => s.file === f)) fail(`fatal: pathspec '${f}' did not match any files`);
+      const pick = !rest.length || rest.includes('.') ? [...this.work] : this.work.filter((w) => rest.includes(w));
+      for (const f of pick) {
+        this.work = this.work.filter((w) => w !== f);
+        if (this.staged.some((s) => s.file === f)) continue;
+        this.staged.push({ file: f, isNew: false });
+        this.adds++;
+      }
+      return [];
+    }
     if (!rest.length) return ['Nothing specified, nothing added.', 'hint: Maybe you wanted to say \'git add .\'?'];
     const all = rest.includes('.');
     const known = new Set([...this.work, ...this.untracked]);

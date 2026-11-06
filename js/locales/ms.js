@@ -724,6 +724,7 @@ GB.i18n.define('ms', {
   'constellation.orderNew': 'Cabang baharu',
   'constellation.orderIssues': 'Isu terbuka',
   'constellation.orderStars': 'Bintang',
+  'constellation.orderForks': 'Fork',
   'constellation.ordered': 'Disusun mengikut {order}',
   'constellation.filtered': 'Ditapis mengikut «{filter}»: {shown} daripada {total}',
   'all.tab': 'Semua',

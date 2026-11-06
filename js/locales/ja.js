@@ -724,6 +724,7 @@ GB.i18n.define('ja', {
   'constellation.orderNew': '新しいブランチ',
   'constellation.orderIssues': 'オープンな issue',
   'constellation.orderStars': 'スター',
+  'constellation.orderForks': 'フォーク',
   'constellation.ordered': '{order}順に並べました',
   'constellation.filtered': '「{filter}」で絞り込み：{total} 件中 {shown} 件',
   'all.tab': 'すべて',

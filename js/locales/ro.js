@@ -732,6 +732,7 @@ GB.i18n.define('ro', {
   'constellation.orderNew': 'Ramuri noi',
   'constellation.orderIssues': 'Issue-uri deschise',
   'constellation.orderStars': 'Stele',
+  'constellation.orderForks': 'Fork-uri',
   'constellation.ordered': 'Sortate după {order}',
   'constellation.filtered': 'Filtrate după «{filter}»: {shown} din {total}',
   'all.tab': 'Toate',

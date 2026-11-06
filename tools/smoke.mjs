@@ -1801,7 +1801,7 @@ function fakeGitHub() {
     const r = repos.get(m[1]);
     const [owner, name] = m[1].split('/');
     const rest = m[2] || '';
-    if (!rest) return { body: { name, owner: { login: owner }, default_branch: 'main', html_url: `https://github.com/${m[1]}`, private: false, description: '', open_issues_count: r.openItems ?? 0, stargazers_count: r.stars ?? 0 } }; // GitHub cuenta issues y PRs juntos
+    if (!rest) return { body: { name, owner: { login: owner }, default_branch: 'main', html_url: `https://github.com/${m[1]}`, private: false, description: '', open_issues_count: r.openItems ?? 0, stargazers_count: r.stars ?? 0, forks_count: r.forks ?? 0 } }; // GitHub cuenta issues y PRs juntos
     if (rest === '/branches') return { body: [...r.branches].map(([b, s]) => ({ name: b, commit: { sha: s }, protected: false })) };
     if (rest === '/pulls' && m[1] === 'o/b') {
       const pr = (number, title, draft) => ({ number, title, html_url: `https://github.com/o/b/pull/${number}`, state: 'open', draft, head: { ref: 'main', repo: { full_name: 'o/b' } }, base: { ref: 'main' }, user: { login: 'bea', avatar_url: null }, created_at: new Date(Date.now() - number * 60000).toISOString() });
@@ -2513,6 +2513,8 @@ console.log('Varios repos a la vez');
       gh.repo('o/c').openItems = 4; // 4 issues
       gh.repo('o/a').stars = 50; // y estrellas, en otro orden: o/a, o/c, o/b
       gh.repo('o/c').stars = 7;
+      gh.repo('o/b').forks = 30; // y forks, en otro: o/b, o/a, o/c
+      gh.repo('o/a').forks = 3;
       // en una página aparte: sus tres repos no se suman a las 20 pestañas guardadas que siguen usando los pasos de abajo
       const iss = await openPage({ viewport: { width: 1280, height: 800 } });
       await iss.unroute('https://api.github.com/**');
@@ -2534,9 +2536,24 @@ console.log('Varios repos a la vez');
         if (byStars !== 'o/a o/c o/b') throw new Error('la constelación no se ordena por estrellas: ' + byStars);
         const starsSaid = await iss.$eval('#constellation-status', (e) => e.textContent.trim());
         if (!/Estrellas/.test(starsSaid) || /undefined|constellation\./.test(starsSaid)) throw new Error('el orden por estrellas no se anuncia: ' + starsSaid);
+        // por forks: también el total de la misma consulta del repo
+        await iss.selectOption('#constellation-order', 'forks');
+        const byForks = await iss.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => b.dataset.key).join(' '));
+        if (byForks !== 'o/b o/a o/c') throw new Error('la constelación no se ordena por forks: ' + byForks);
+        const forksSaid = await iss.$eval('#constellation-status', (e) => e.textContent.trim());
+        if (!/Forks/.test(forksSaid) || /undefined|constellation\./.test(forksSaid)) throw new Error('el orden por forks no se anuncia: ' + forksSaid);
+        await iss.click('#constellation-close');
+        // ?order=forks: abre ya ordenada por forks, con el selector de acuerdo
+        await iss.goto(`${base}/index.html?lang=es&order=forks&repo=o/a&repo=o/b&repo=o/c`);
+        await iss.waitForFunction(() => [...document.querySelectorAll('#repo-tabs .rt')].filter((t) => t.dataset.state === 'live').length === 3, null, { timeout: T(15000) });
+        await iss.click('#constellation-btn');
+        await iss.waitForSelector('#constellation[open]', { timeout: T(3000) });
+        if ((await iss.$eval('#constellation-order', (s) => s.value)) !== 'forks') throw new Error('?order=forks no deja el selector en forks');
+        const openForks = await iss.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => b.dataset.key).join(' '));
+        if (openForks !== 'o/b o/a o/c') throw new Error('?order=forks no abre la constelación ordenada por forks: ' + openForks);
         await iss.click('#constellation-close');
       } finally {
-        for (const r of ['o/a', 'o/b', 'o/c']) Object.assign(gh.repo(r), { openItems: 0, stars: 0 });
+        for (const r of ['o/a', 'o/b', 'o/c']) Object.assign(gh.repo(r), { openItems: 0, stars: 0, forks: 0 });
         await iss.context().close();
       }
       // ?order=new: abre ordenada por ramas nuevas de la semana, con el selector de acuerdo y el anuncio traducido

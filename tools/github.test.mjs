@@ -304,11 +304,13 @@ test('modo lista: los PRs que solo salen de la página de abiertos no se consult
     });
   gh.repo.open_issues_count = 64; // GitHub cuenta issues y PRs juntos: 4 issues y 60 PRs
   gh.repo.stargazers_count = 321;
+  gh.repo.forks_count = 42;
   const { src, updates } = connect(gh);
   await src.cycle();
   assert.equal(src.data.pulls.size, 50); // la página de los 50 actualizados más recientemente
   assert.equal(src.data.repo.openItems, 64, 'el total de issues y PRs abiertos sale de la consulta del repo, sin otra');
   assert.equal(src.data.repo.stars, 321, 'las estrellas salen de la misma consulta del repo');
+  assert.equal(src.data.repo.forks, 42, 'los forks también, sin otra consulta');
 
   // tres PRs viejos se actualizan (entran a la página y desplazan a otros tres, que siguen abiertos),
   // uno de la página se fusiona y otro se cierra

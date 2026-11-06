@@ -724,6 +724,7 @@ GB.i18n.define('sw', {
   'constellation.orderNew': 'Matawi mapya',
   'constellation.orderIssues': 'Issues zilizo wazi',
   'constellation.orderStars': 'Nyota',
+  'constellation.orderForks': 'Forks',
   'constellation.ordered': 'Imepangwa kwa {order}',
   'constellation.filtered': 'Imechujwa kwa «{filter}»: {shown} kati ya {total}',
   'all.tab': 'Zote',

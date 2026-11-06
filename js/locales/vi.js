@@ -724,6 +724,7 @@ GB.i18n.define('vi', {
   'constellation.orderNew': 'Nhánh mới',
   'constellation.orderIssues': 'Issue đang mở',
   'constellation.orderStars': 'Sao',
+  'constellation.orderForks': 'Fork',
   'constellation.ordered': 'Đã sắp xếp theo {order}',
   'constellation.filtered': 'Lọc theo «{filter}»: {shown} trên {total}',
   'all.tab': 'Tất cả',

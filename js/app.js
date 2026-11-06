@@ -2591,7 +2591,7 @@
   });
   el.constellation = $('#constellation');
   try {
-    // ?order=activity|prs|issues|stars|new|name: la constelación abre ya ordenada (sin anunciarlo: no la pidió nadie con el selector)
+    // ?order=activity|prs|issues|stars|forks|new|name: la constelación abre ya ordenada (sin anunciarlo: no la pidió nadie con el selector)
     const order = GB.constellation.orderParam(new URLSearchParams(location.search));
     if (order) constellation.setOrder(order, false);
     // ?constellation=texto: solo los repos cuyo nombre lo contiene
@@ -2620,6 +2620,7 @@
           prs: Math.max(x.source.data.totalPulls || 0, x.source.data.pulls?.size || 0),
           issues: GB.constellation.openIssues(x.source.data),
           stars: GB.constellation.starsOf(x.source.data),
+          forks: GB.constellation.forksOf(x.source.data),
           fresh: GB.constellation.newBranches(feed.items.filter((a) => a.repo === x.key), Date.now()),
           state: x.status?.state || 'loading',
           unread: x.unread,

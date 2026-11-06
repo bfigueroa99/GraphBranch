@@ -721,6 +721,7 @@ GB.i18n.define('fil', {
   'constellation.orderActivity': 'Aktibidad',
   'constellation.orderName': 'Pangalan',
   'constellation.orderNew': 'Mga bagong branch',
+  'constellation.orderIssues': 'Mga bukas na issue',
   'constellation.ordered': 'Inayos ayon sa {order}',
   'constellation.filtered': 'Naka-filter sa «{filter}»: {shown} sa {total}',
   'all.tab': 'Lahat',

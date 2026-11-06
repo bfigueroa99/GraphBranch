@@ -763,6 +763,7 @@ GB.i18n.define('ur', {
   'constellation.orderActivity': 'سرگرمی',
   'constellation.orderName': 'نام',
   'constellation.orderNew': 'نئی برانچیں',
+  'constellation.orderIssues': 'کھلے issues',
   'constellation.ordered': '{order} کے مطابق ترتیب',
   'constellation.filtered': '«{filter}» سے فلٹر: {total} میں سے {shown}',
   'all.tab': 'سب',

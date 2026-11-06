@@ -227,6 +227,7 @@
         url: p.web_url || `${this.ep.web}/${segs(path)}`,
         private: !!p.visibility && p.visibility !== 'public',
         description: p.description || '',
+        openIssues: Number.isFinite(p.open_issues_count) ? p.open_issues_count : null, // falta si el proyecto no tiene issues
       });
     }
 

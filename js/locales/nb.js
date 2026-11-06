@@ -720,6 +720,7 @@ GB.i18n.define('nb', {
   'constellation.orderActivity': 'Aktivitet',
   'constellation.orderName': 'Navn',
   'constellation.orderNew': 'Nye grener',
+  'constellation.orderIssues': 'Åpne issues',
   'constellation.ordered': 'Sortert etter {order}',
   'constellation.filtered': 'Filtrert på «{filter}»: {shown} av {total}',
   'all.tab': 'Alle',

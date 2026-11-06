@@ -763,6 +763,7 @@ GB.i18n.define('fa', {
   'constellation.orderActivity': 'فعالیت',
   'constellation.orderName': 'نام',
   'constellation.orderNew': 'شاخه‌های جدید',
+  'constellation.orderIssues': 'issueهای باز',
   'constellation.ordered': 'مرتب‌شده بر اساس {order}',
   'constellation.filtered': 'فیلتر «{filter}»: {shown} از {total}',
   'all.tab': 'همه',

@@ -720,6 +720,7 @@ GB.i18n.define('zh-Hans', {
   'constellation.orderActivity': '活跃度',
   'constellation.orderName': '名称',
   'constellation.orderNew': '新分支',
+  'constellation.orderIssues': '打开的 issue',
   'constellation.ordered': '已按{order}排序',
   'constellation.filtered': '按“{filter}”筛选：{total} 个中的 {shown} 个',
   'all.tab': '全部',

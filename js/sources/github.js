@@ -646,6 +646,7 @@
         url: repo.html_url,
         private: !!repo.private,
         description: repo.description || '',
+        openItems: Number.isFinite(repo.open_issues_count) ? repo.open_issues_count : null, // issues y PRs abiertos juntos (así lo cuenta GitHub)
       });
       try {
         await this.syncEvents(acts, true); // historial del feed + qué ramas se movieron hace poco

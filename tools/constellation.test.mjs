@@ -88,6 +88,10 @@ test('el orden: pestañas tal cual, actividad por commits y nombre sin mayúscul
   assert.deepEqual(C.sortItems(withNew, 'new').map((i) => i.key), ['o/c', 'o/b', 'o/d', 'o/a'], 'más ramas nuevas primero; empata por pestaña');
   assert.deepEqual(C.sortItems(items, 'new').map((i) => i.key), keys('tabs'), 'sin ramas nuevas queda el orden de las pestañas');
   assert.equal(C.orderParam(new URLSearchParams('order=NEW')), 'new');
+  const withIssues = items.map((it, i) => ({ ...it, issues: [3, null, 12, 3][i] }));
+  assert.deepEqual(C.sortItems(withIssues, 'issues').map((i) => i.key), ['o/c', 'o/b', 'o/d', 'o/a'], 'más issues abiertos primero; sin dato cuenta como 0; empata por pestaña');
+  assert.deepEqual(C.sortItems(items, 'issues').map((i) => i.key), keys('tabs'), 'sin issues cargados queda el orden de las pestañas');
+  assert.equal(C.orderParam(new URLSearchParams('order=%20Issues')), 'issues');
   assert.deepEqual(items.map((i) => i.key), ['o/b', 'o/a', 'o/c', 'o/d'], 'no toca la lista original');
 });
 
@@ -169,4 +173,14 @@ test('ordenar por ramas nuevas con la actividad de cada repo, como la arma la ap
   const tabs = ['o/c', 'o/a', 'o/b'].map((key) => ({ key, name: key, fresh: C.newBranches(feed.filter((a) => a.repo === key), now) }));
   assert.deepEqual(tabs.map((t) => t.fresh), [0, 1, 2], 'cada repo cuenta solo lo suyo');
   assert.deepEqual(C.sortItems(tabs, 'new').map((t) => t.key), ['o/b', 'o/a', 'o/c']);
+});
+
+test('issues abiertos con lo ya cargado: aparte si la API los da aparte; si vienen con los PRs, se restan los PRs', () => {
+  assert.equal(C.openIssues({ repo: { openIssues: 7 }, totalPulls: 3 }), 7, 'GitLab y Gitea los dan aparte: los PRs no se restan');
+  assert.equal(C.openIssues({ repo: { openItems: 10 }, totalPulls: 4, pulls: new Map([[1, {}]]) }), 6, 'GitHub: issues y PRs juntos, menos los PRs');
+  assert.equal(C.openIssues({ repo: { openItems: 10 }, totalPulls: 2, pulls: new Map([[1, {}], [2, {}], [3, {}]]) }), 7, 'cuenta los PRs que haya, del total o de la lista');
+  assert.equal(C.openIssues({ repo: { openItems: 2 }, totalPulls: 5 }), 0, 'nunca negativo (el total del repo es de antes)');
+  assert.equal(C.openIssues({ repo: {} }), null, 'sin dato (Bitbucket, Azure, un repo local): null');
+  assert.equal(C.openIssues({ repo: { openItems: null } }), null);
+  assert.equal(C.openIssues(null), null);
 });

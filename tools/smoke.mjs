@@ -1801,7 +1801,7 @@ function fakeGitHub() {
     const r = repos.get(m[1]);
     const [owner, name] = m[1].split('/');
     const rest = m[2] || '';
-    if (!rest) return { body: { name, owner: { login: owner }, default_branch: 'main', html_url: `https://github.com/${m[1]}`, private: false, description: '' } };
+    if (!rest) return { body: { name, owner: { login: owner }, default_branch: 'main', html_url: `https://github.com/${m[1]}`, private: false, description: '', open_issues_count: r.openItems ?? 0 } }; // GitHub cuenta issues y PRs juntos
     if (rest === '/branches') return { body: [...r.branches].map(([b, s]) => ({ name: b, commit: { sha: s }, protected: false })) };
     if (rest === '/pulls' && m[1] === 'o/b') {
       const pr = (number, title, draft) => ({ number, title, html_url: `https://github.com/o/b/pull/${number}`, state: 'open', draft, head: { ref: 'main', repo: { full_name: 'o/b' } }, base: { ref: 'main' }, user: { login: 'bea', avatar_url: null }, created_at: new Date(Date.now() - number * 60000).toISOString() });
@@ -2507,6 +2507,22 @@ console.log('Varios repos a la vez');
       const prsSaid = await full.$eval('#constellation-status', (e) => e.textContent.trim());
       if (!/PR/.test(prsSaid) || /undefined|constellation\./.test(prsSaid)) throw new Error('el orden por PRs no se anuncia: ' + prsSaid);
       await full.click('#constellation-close');
+      // ?order=issues: abre ordenada por issues abiertos (los de la consulta del repo, menos sus PRs), con el anuncio traducido
+      gh.repo('o/a').openItems = 1; // 1 issue
+      gh.repo('o/b').openItems = 5; // 3 issues y sus 2 PRs abiertos
+      gh.repo('o/c').openItems = 4; // 4 issues
+      await full.goto(`${base}/index.html?lang=es&order=issues&repo=o/a&repo=o/b&repo=o/c`);
+      await full.waitForFunction(() => [...document.querySelectorAll('#repo-tabs .rt')].filter((t) => t.dataset.state === 'live').length === 3, null, { timeout: T(15000) });
+      await full.click('#constellation-btn');
+      await full.waitForSelector('#constellation[open]', { timeout: T(3000) });
+      if ((await full.$eval('#constellation-order', (s) => s.value)) !== 'issues') throw new Error('?order=issues no deja el selector en issues abiertos');
+      const byIssues = await full.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => b.dataset.key).join(' '));
+      if (byIssues !== 'o/c o/b o/a') throw new Error('la constelación no se ordena por issues abiertos (sin contar los PRs): ' + byIssues);
+      await full.selectOption('#constellation-order', 'issues');
+      const issuesSaid = await full.$eval('#constellation-status', (e) => e.textContent.trim());
+      if (!/Issues abiertos/.test(issuesSaid) || /undefined|constellation\./.test(issuesSaid)) throw new Error('el orden por issues no se anuncia: ' + issuesSaid);
+      await full.click('#constellation-close');
+      for (const r of ['o/a', 'o/b', 'o/c']) gh.repo(r).openItems = 0;
       // ?order=new: abre ordenada por ramas nuevas de la semana, con el selector de acuerdo y el anuncio traducido
       await full.goto(`${base}/index.html?lang=es&order=new&repo=o/a`);
       await full.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'o/a', null, { timeout: T(10000) });

@@ -720,6 +720,7 @@ GB.i18n.define('zh-Hant', {
   'constellation.orderActivity': '活躍度',
   'constellation.orderName': '名稱',
   'constellation.orderNew': '新分支',
+  'constellation.orderIssues': '開啟中的 issue',
   'constellation.ordered': '已依{order}排序',
   'constellation.filtered': '依「{filter}」篩選：{total} 個中的 {shown} 個',
   'all.tab': '全部',

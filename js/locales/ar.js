@@ -819,6 +819,7 @@ GB.i18n.define('ar', {
   'constellation.orderActivity': 'النشاط',
   'constellation.orderName': 'الاسم',
   'constellation.orderNew': 'فروع جديدة',
+  'constellation.orderIssues': 'المشكلات المفتوحة',
   'constellation.ordered': 'مرتبة حسب {order}',
   'constellation.filtered': 'مصفاة بـ «{filter}»: {shown} من {total}',
   'all.tab': 'الكل',

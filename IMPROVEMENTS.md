@@ -522,5 +522,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - OMC: plan=— · revisión=— · verificación=— (revisión propia del diff: sin DOM, sin red, sin textos de afuera; los archivos de `touch` pasan por la misma validación)
 - Replica: paridad 92,7/100, sin pasada nueva (13 de 13 must hechos); ítems 162 a 167
 - Reclamo: loop/224, sin colisión
-- Validado: pendiente
+- Validado: 597 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
 - **Siguiente:** iteración 225, expansión: ítem 165 (Constelación: ordenar por issues abiertos, Escala)

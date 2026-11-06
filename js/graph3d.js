@@ -48,6 +48,7 @@
   const SWAY_T = 95; // …en tantos segundos de ida y vuelta (a la misma velocidad que el giro)
   const CURVE_SEGS = 18; // tramos de una curva lejana (las cortas, menos)
   const MAX_LABELS = 160; // etiquetas de rama a la vez, como mucho
+  const GRID_CELL = 96; // lado en píxeles de cada celda de la grilla de etiquetas
   const FADE_MAX = 60; // hasta tantas ramas a la vista las tapadas se atenúan; con más, se ocultan
   const NOTE_D = 19; // a menos de esta distancia de la cámara (en la vista general, más), cada commit muestra su mensaje
   const MAX_NOTES = 14; // mensajes a la vez, como mucho
@@ -1765,10 +1766,63 @@
       }
     }
 
+    /** Punto en pantalla de `v`, o null detrás de la cámara. El objeto es uno solo y se pisa en la
+        llamada siguiente (se llama miles de veces por cuadro): quien lo guarde, que copie x e y. */
     project(v) {
       const p = this.tmpP.copy(v).project(this.camera);
       if (p.z > 1 || p.z < -1) return null;
-      return { x: (p.x + 1) * 0.5 * this.W, y: (1 - p.y) * 0.5 * this.H };
+      const o = this.projOut || (this.projOut = { x: 0, y: 0 });
+      o.x = (p.x + 1) * 0.5 * this.W;
+      o.y = (1 - p.y) * 0.5 * this.H;
+      return o;
+    }
+
+    /* La grilla de placeLabels y placeNotes vive entre cuadros: celdas (arreglos) y rectángulos se
+       vacían y se reusan, así ubicar las etiquetas no deja basura por cuadro. */
+    gridReset() {
+      if (!this.grid) (this.grid = new Map()), (this.rects = []);
+      for (const a of this.grid.values()) a.length = 0;
+      this.nRects = 0;
+    }
+
+    /** Un rectángulo del pool, válido hasta el próximo gridReset. */
+    gridRect(x, y, w, h) {
+      const r = this.rects[this.nRects] || (this.rects[this.nRects] = { x: 0, y: 0, w: 0, h: 0 });
+      this.nRects++;
+      r.x = x;
+      r.y = y;
+      r.w = w;
+      r.h = h;
+      return r;
+    }
+
+    /** ¿Pisa `s` algo ya ubicado? Solo mira las celdas de su caja. */
+    gridHits(s) {
+      const x0 = Math.floor((s.x - 4) / GRID_CELL), x1 = Math.floor((s.x + s.w + 4) / GRID_CELL);
+      const y0 = Math.floor(s.y / GRID_CELL), y1 = Math.floor((s.y + s.h + 2) / GRID_CELL);
+      for (let cx = x0; cx <= x1; cx++)
+        for (let cy = y0; cy <= y1; cy++) {
+          const cell = this.grid.get(cx * 4099 + cy);
+          if (!cell) continue;
+          for (let i = 0; i < cell.length; i++) {
+            const r = cell[i];
+            if (s.x < r.x + r.w + 4 && r.x < s.x + s.w + 4 && s.y < r.y + r.h + 2 && r.y < s.y + s.h + 2) return true;
+          }
+        }
+      return false;
+    }
+
+    /** Ubica `s` en las celdas que cubre. */
+    gridAdd(s) {
+      const x0 = Math.floor((s.x - 4) / GRID_CELL), x1 = Math.floor((s.x + s.w + 4) / GRID_CELL);
+      const y0 = Math.floor(s.y / GRID_CELL), y1 = Math.floor((s.y + s.h + 2) / GRID_CELL);
+      for (let cx = x0; cx <= x1; cx++)
+        for (let cy = y0; cy <= y1; cy++) {
+          const key = cx * 4099 + cy;
+          let cell = this.grid.get(key);
+          if (!cell) this.grid.set(key, (cell = []));
+          cell.push(s);
+        }
     }
 
     /* ---------- recorrer una rama ---------- */
@@ -2868,26 +2922,28 @@
       const reach = space ? Math.max(260, this.radius * 2.4) : Math.max(160, this.radius * 1.3); // en grafos enormes la cámara está más lejos
       const range = space ? Math.max(140, this.radius * 2) : Math.max(80, this.radius * 2);
       const z = this.labelScale();
-      const cand = [];
+      // candidatas de un pool: un objeto por rama que se reusa entre cuadros
+      const pool = this.candPool || (this.candPool = []);
+      const cand = this.cand || (this.cand = []);
+      cand.length = 0;
       for (const it of this.heads.values()) {
         const dist = camPos.distanceTo(it.curV);
         const p = dist < reach ? this.project(it.curV) : null;
-        if (p && p.x > -40 && p.x < this.W + 40 && p.y > -20 && p.y < this.H + 20) cand.push({ it, px: p.x, py: p.y, dist });
-        else if (it.el) this.setStyle(it, 'display', 'none');
+        if (p && p.x > -40 && p.x < this.W + 40 && p.y > -20 && p.y < this.H + 20) {
+          const c = pool[cand.length] || (pool[cand.length] = { it: null, px: 0, py: 0, dist: 0, x: 0, y: 0, w: 0, h: 0 });
+          c.it = it;
+          c.px = p.x;
+          c.py = p.y;
+          c.dist = dist;
+          cand.push(c);
+        } else if (it.el) this.setStyle(it, 'display', 'none');
       }
+      for (let i = cand.length; i < pool.length && pool[i].it; i++) pool[i].it = null; // no retener ramas que ya no están
       const hl = this.hlAmt ? this.hlChain : null;
       // la etiqueta de la rama resaltada se ubica primero: nunca queda tapada ni oculta
       cand.sort((a, b) => (b.it.data.chain === hl) - (a.it.data.chain === hl) || b.it.data.isDefault - a.it.data.isDefault || a.dist - b.dist);
       const crowd = cand.length > FADE_MAX;
-      const CELL = 96;
-      const grid = new Map();
-      const cells = (r, fn) => {
-        for (let cx = Math.floor((r.x - 4) / CELL); cx <= Math.floor((r.x + r.w + 4) / CELL); cx++)
-          for (let cy = Math.floor(r.y / CELL); cy <= Math.floor((r.y + r.h + 2) / CELL); cy++) if (fn(cx * 4099 + cy)) return true;
-        return false;
-      };
-      const hits = (s) =>
-        cells(s, (key) => (grid.get(key) || []).some((r) => s.x < r.x + r.w + 4 && r.x < s.x + s.w + 4 && s.y < r.y + r.h + 2 && r.y < s.y + s.h + 2));
+      this.gridReset();
       let shown = 0;
       for (const s of cand) {
         const it = s.it;
@@ -2909,13 +2965,13 @@
         s.h = Math.ceil(22 * z);
         s.x = clamp(s.px + dx * off - (dx < -0.2 ? s.w : 0), 4, Math.max(4, this.W - s.w - 4));
         s.y = s.py + dy * off - s.h / 2;
-        const hit = hits(s);
+        const hit = this.gridHits(s);
         if (hit && crowd) {
           if (it.el) this.setStyle(it, 'display', 'none');
           continue;
         }
         if (!hit) {
-          cells(s, (key) => void (grid.get(key) || grid.set(key, []).get(key)).push(s));
+          this.gridAdd(s);
           shown++;
         }
         if (!it.el) this.makeHead(it);
@@ -2939,11 +2995,11 @@
         const dist = camPos.distanceTo(top);
         let vis = p && p.x > 0 && p.x < this.W - 40 && p.y > 4 && p.y < this.H - 10 && dist < reach * 0.75;
         if (vis) {
-          const r = { w: Math.ceil(d.w * z), h: Math.ceil(17 * z) };
-          r.x = p.x - r.w / 2;
-          r.y = p.y - r.h;
-          vis = !hits(r);
-          if (vis) cells(r, (key) => void (grid.get(key) || grid.set(key, []).get(key)).push(r));
+          const w = Math.ceil(d.w * z), h = Math.ceil(17 * z);
+          const r = this.gridRect(p.x - w / 2, p.y - h, w, h);
+          vis = !this.gridHits(r);
+          if (vis) this.gridAdd(r);
+          else this.nRects--; // no quedó en la grilla: el rectángulo vuelve al pool
         }
         this.setStyle(d, 'display', vis ? '' : 'none');
         if (vis) {
@@ -2952,7 +3008,7 @@
         }
       }
       if (space) for (const d of this.days.values()) this.setStyle(d, 'display', 'none');
-      this.placeNotes(hits, cells, grid, hl);
+      this.placeNotes(hl);
       if (space) this.gx.placeLabels();
       if ((this.tipSha || this.tipFile) && !this.tip.hidden) this.placeTip();
     }
@@ -2962,7 +3018,7 @@
      * primero, sin pisar las etiquetas ni a los demás y con un tope. Solo en el valle: en el
      * espacio los rótulos son de las galaxias y los planetas.
      */
-    placeNotes(hits, cells, grid, hl) {
+    placeNotes(hl) {
       let n = 0;
       if (!this.galaxy && this.nodes.size) {
         const cam = this.camera.position;
@@ -2987,10 +3043,13 @@
           if (!it.note) continue;
           const dist = Math.sqrt(d2);
           const r = (NODE_R * (it.data.heads.length ? HEAD_SCALE : 1) * px) / dist; // radio del commit en pantalla
-          const s = { x: p.x + r + 6, w: Math.ceil(it.noteW * z), h: Math.ceil(17 * z) };
-          s.y = p.y - s.h / 2;
-          if (s.x + s.w > this.W - 4 || hits(s)) continue;
-          cells(s, (key) => void (grid.get(key) || grid.set(key, []).get(key)).push(s));
+          const h = Math.ceil(17 * z);
+          const s = this.gridRect(p.x + r + 6, p.y - h / 2, Math.ceil(it.noteW * z), h);
+          if (s.x + s.w > this.W - 4 || this.gridHits(s)) {
+            this.nRects--; // no quedó en la grilla: el rectángulo vuelve al pool
+            continue;
+          }
+          this.gridAdd(s);
           const note = this.notes[n] || (this.notes[n] = this.makeNote());
           n++;
           if (note.text !== it.note) note.el.textContent = note.text = it.note;

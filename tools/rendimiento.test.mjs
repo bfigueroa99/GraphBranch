@@ -33,8 +33,24 @@ test('las aristas del 3D usan materiales Lambert: el programa PBR compilaba ~170
 
 test('placeLabels no ordena las fechas del eje en cada cuadro: el orden se guarda y se invalida al sincronizarlas', () => {
   const s = src('graph3d.js');
-  const cuerpo = s.slice(s.indexOf('placeLabels() {'), s.indexOf('placeNotes(hits, cells, grid, hl) {'));
+  const cuerpo = s.slice(s.indexOf('placeLabels() {'), s.indexOf('placeNotes(hl) {'));
   assert.doesNotMatch(cuerpo, /\? \[\] : \[\.\.\.this\.days/, 'el sort de las fechas no corre por cuadro');
   assert.match(cuerpo, /\? \[\] : this\.daysByZ \|\| \(this\.daysByZ = /);
   assert.match(s, /this\.daysByZ = null; \/\/ el orden de las fechas/, 'se invalida cuando cambian las fechas');
+});
+
+test('placeLabels no deja basura por cuadro: project() reusa su punto y la grilla, las candidatas y los rectángulos van en pools', () => {
+  const s = src('graph3d.js');
+  const ini = s.indexOf('    project(v) {');
+  const project = s.slice(ini, s.indexOf('\n    }\n', ini));
+  assert.doesNotMatch(project, /return \{ x:/, 'project() no crea un objeto por llamada');
+  assert.match(project, /this\.projOut \|\| \(this\.projOut = /);
+  const cuerpo = s.slice(s.indexOf('placeLabels() {'), s.indexOf('makeNote() {'));
+  assert.doesNotMatch(cuerpo, /new Map\(\)/, 'la grilla no se crea en cada cuadro');
+  assert.doesNotMatch(cuerpo, /const (cells|hits) = /, 'sin cierres nuevos por cuadro');
+  assert.doesNotMatch(cuerpo, /cand\.push\(\{/, 'las candidatas salen del pool');
+  assert.doesNotMatch(cuerpo, /const [rs] = \{ /, 'los rectángulos de fechas y notas salen del pool');
+  assert.match(cuerpo, /this\.gridReset\(\)/);
+  // indicio, no garantía: el contrato de no retener el punto lo dice el JSDoc de project() y se revisó a mano
+  for (const f of ['graph3d.js', 'galaxy.js']) assert.doesNotMatch(src(f), /\.push\(\s*(p|q)\s*\)/, `${f}: nadie apila el punto compartido de project()`);
 });

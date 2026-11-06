@@ -4824,6 +4824,13 @@ html.embed .diff-panel {
   .agk-panel {
     max-height: none;
   }
+  /* la vista de agentes en el celular: el tablero se lee con la página, sin un desplazamiento dentro de otro */
+  .graph-panel.agents-on {
+    height: auto;
+  }
+  .graph-panel.agents-on .agents-board {
+    overflow: visible;
+  }
   .agk-name {
     white-space: normal; /* angosto: el nombre de la sesión entero, en dos líneas, mejor que cortado */
     overflow-wrap: anywhere;
@@ -5105,55 +5112,238 @@ a.hl-row:focus-visible {
   grid-template-columns: minmax(0, 1fr);
 }
 /* los nombres de quien actúa y de quien recibe no se cortan: la fila pasa a dos líneas si hace falta */
-.agents .hl-row {
+.agents-board .hl-row {
   flex-wrap: wrap;
   row-gap: 0;
 }
-.agents .hl-main {
+.agents-board .hl-main {
   flex: 1 1 14em;
   overflow-wrap: anywhere;
   white-space: normal;
 }
-.agents .hl-aside {
+.agents-board .hl-aside {
   flex: 0 1 auto;
   min-width: 0;
   margin-inline-start: auto;
+}
+/* la vista de agentes: el tablero en el lugar del grafo, con su propio desplazamiento; lo del grafo se esconde */
+.agents-board {
+  display: grid;
+  flex: 1 1 auto;
+  align-content: start;
+  gap: 10px;
+  min-height: 0;
+  overflow: auto;
+  padding: 2px 14px 14px;
+}
+.agents-board[hidden] {
+  display: none;
+}
+.graph-panel.agents-on .graph-stage,
+.graph-panel.agents-on .agk-panel,
+.graph-panel.agents-on .hint,
+.graph-panel.agents-on .practice,
+.graph-panel.agents-on .toolbar > :not(.view-switch) {
+  display: none !important;
+}
+.ab-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 18px;
+}
+.ab-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font: 650 16px/1.25 var(--font-display);
+}
+.ab-switches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 18px;
+}
+.ab-switches .hl-switch {
+  margin: 0;
+}
+.ab-help {
+  max-width: 100ch;
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 12px;
+}
+.ab-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+.ab-stats .hl-stat {
+  padding: 8px 12px;
+}
+.ab-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+.ab-row3 {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+}
+@media (max-width: 980px) {
+  .ab-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.ab-card {
+  min-width: 0;
+  padding: 10px 12px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+/* la red y la línea de tiempo no se achican hasta no leerse: en una pantalla angosta se desplazan de lado */
+.ab-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+@media (max-width: 640px) {
+  .ab-scroll > .ag-net,
+  .ab-scroll > .ag-time {
+    min-width: 560px;
+  }
+}
+.ab-live h3 .live-dot {
+  flex: none;
+}
+/* en vivo: lo que acaba de llegar entra con un destello; un vínculo que suma una vez late */
+@keyframes ag-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+@keyframes ag-glow {
+  from {
+    background: color-mix(in srgb, var(--accent, var(--ag2)) 26%, transparent);
+  }
+}
+@keyframes ag-beat {
+  50% {
+    opacity: 0.25;
+  }
+}
+@keyframes ag-ping {
+  0% {
+    r: 3.6px;
+  }
+  45% {
+    r: 9px;
+  }
+  100% {
+    r: 3.6px;
+  }
+}
+.ab-live li.is-new {
+  border-radius: 6px;
+  animation: ag-in 0.45s ease-out, ag-glow 3s ease-out;
+}
+.ag-net .ag-e.is-new {
+  animation: ag-beat 0.9s ease-in-out 3;
+}
+.ag-time .ag-ev.is-new .ag-ev-dot {
+  animation: ag-ping 1.4s ease-out 2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ab-live li.is-new,
+  .ag-net .ag-e.is-new,
+  .ag-time .ag-ev.is-new .ag-ev-dot {
+    animation: none;
+  }
+  .ab-live li.is-new {
+    background: color-mix(in srgb, var(--accent, var(--ag2)) 14%, transparent);
+  }
 }
 .ag-net {
   display: block;
   width: 100%;
   height: auto;
-  max-height: 340px;
+  max-height: 400px;
   direction: ltr; /* las posiciones del dibujo no se espejan; los nombres siguen su escritura */
+}
+/* cada vínculo: del color de quien actúa, con el trazo de lo que más hizo (como en el grafo) */
+.ag-e,
+.ag-n {
+  transition: opacity 0.15s;
 }
 .ag-edge {
   fill: none;
-  stroke: var(--ink-3);
-  opacity: 0.55;
+  stroke: var(--agc);
+  stroke-linecap: round;
+  opacity: 0.85;
 }
-.ag-edge-agents {
-  stroke: var(--s7);
-  opacity: 0.9;
+.ag-edge.ag-k-merged {
+  stroke-dasharray: 7 4;
 }
-.ag-arrow {
-  fill: var(--ink-3);
+.ag-edge.ag-k-reviewed,
+.ag-edge.ag-k-commented {
+  stroke-dasharray: 0.5 5;
 }
-.ag-arrow-agents {
-  fill: var(--s7);
+.ag-ehead {
+  fill: var(--agc);
+}
+.ag-cnt {
+  fill: var(--ink-2);
+  font: 600 10px var(--font-mono);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
 }
 .ag-node {
   stroke: var(--surface);
   stroke-width: 2;
 }
 .ag-agent {
-  fill: var(--s7);
+  fill: var(--agc);
 }
 .ag-person {
-  fill: var(--s1);
+  fill: color-mix(in srgb, var(--ink-3) 22%, var(--surface));
+  stroke: var(--ink-3);
+  stroke-width: 1.5;
+}
+.ag-mono {
+  fill: var(--surface);
+  font: 700 12px var(--font-ui);
+  pointer-events: none;
+}
+.ag-person + .ag-mono {
+  fill: var(--ink);
+}
+.ag-n {
+  cursor: pointer;
+  outline: none;
+}
+.ag-n:focus-visible .ag-node,
+.ag-n.sel .ag-node {
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+/* al pasar o enfocar a alguien: él y sus vínculos encendidos, lo demás tenue; con alguien elegido, lo mismo */
+.ag-net.has-sel .ag-e:not(.on),
+.ag-net.has-sel .ag-n:not(.on),
+.ag-net.ag-hl .ag-e:not(.hl),
+.ag-net.ag-hl .ag-n:not(.hl) {
+  opacity: 0.16;
+}
+.ag-net.ag-hl .ag-e.hl,
+.ag-net.ag-hl .ag-n.hl {
+  opacity: 1;
 }
 .ag-label {
   fill: var(--ink);
-  font: 500 11px var(--font-ui);
+  font: 500 11.5px var(--font-ui);
   paint-order: stroke;
   stroke: var(--surface);
   stroke-width: 3px;
@@ -5162,6 +5352,144 @@ a.hl-row:focus-visible {
 .ag-sub {
   fill: var(--ink-3);
   font: 10px var(--font-mono);
+}
+/* la línea de tiempo: una fila por participante y un trazo por interacción, de quien actúa a quien recibe */
+.ag-time {
+  display: block;
+  width: 100%;
+  height: auto;
+  direction: ltr;
+}
+.ag-lane-bg {
+  fill: transparent;
+}
+.ag-lane-bg.odd {
+  fill: var(--surface-2);
+}
+.ag-lane-line,
+.ag-tick {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.ag-lane-line {
+  stroke-dasharray: 2 4;
+}
+.ag-lane-name {
+  font-size: 11px;
+}
+.ag-lane.on .ag-lane-name {
+  font-weight: 700;
+}
+.ag-axis {
+  fill: var(--ink-3);
+  font: 10px var(--font-mono);
+}
+.ag-ev {
+  transition: opacity 0.15s;
+}
+.ag-ev[data-sha] {
+  cursor: pointer;
+}
+.ag-ev-hit {
+  stroke: transparent;
+  stroke-width: 10;
+}
+.ag-ev-line {
+  stroke: var(--agc);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.ag-ev.ag-k-merged .ag-ev-line {
+  stroke-dasharray: 4 3;
+}
+.ag-ev.ag-k-reviewed .ag-ev-line,
+.ag-ev.ag-k-commented .ag-ev-line {
+  stroke-dasharray: 0.5 4;
+}
+.ag-ev-dot {
+  fill: var(--agc);
+  stroke: var(--surface);
+  stroke-width: 1.5;
+}
+.ag-ev-tip {
+  fill: var(--agc);
+}
+.ag-ev:hover .ag-ev-line {
+  stroke-width: 3.2;
+}
+.ag-time.has-sel .ag-ev.off {
+  opacity: 0.14;
+}
+/* el participante elegido en la red, con el botón para volver a ver a todos */
+.ag-focus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 0;
+  padding: 6px 6px 6px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+.ag-focus-name {
+  flex: 1 1 12em;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+.ag-focus-clear {
+  margin-inline-start: auto;
+}
+/* en las listas: la marca de color de cada participante y lo que hizo, como etiquetas */
+.agents-board .hl-main .agk-sw {
+  display: inline-block;
+  margin-inline-end: 6px;
+  vertical-align: -1px;
+}
+.agents-board .hl-main .agk-sw-to {
+  margin-inline: 6px 0;
+}
+.agents-board .hl-aside {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+}
+.ag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink-2);
+  font: 11px var(--font-ui);
+  white-space: nowrap;
+}
+.ag-chip-g {
+  display: inline-block;
+  width: 12px;
+  border-top: 2px solid var(--ink-3);
+}
+.ag-chip.ag-k-merged .ag-chip-g {
+  border-top-style: dashed;
+}
+.ag-chip.ag-k-reviewed .ag-chip-g,
+.ag-chip.ag-k-commented .ag-chip-g {
+  border-top-style: dotted;
+}
+.ag-chip.ag-chip-dot {
+  padding: 0;
+  margin-inline-end: 8px;
+  border: 0;
+  vertical-align: middle;
+}
+.ag-legend-kinds {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  margin-inline-start: 14px;
 }
 .ag-legend {
   display: flex;
@@ -5183,11 +5511,13 @@ a.hl-row:focus-visible {
 }
 .ag-key-agent {
   border-radius: 3px;
-  background: var(--s7);
+  background: var(--ink-2);
 }
 .ag-key-person {
+  box-sizing: border-box;
+  border: 1.5px solid var(--ink-3);
   border-radius: 50%;
-  background: var(--s1);
+  background: color-mix(in srgb, var(--ink-3) 22%, var(--surface));
 }
 .ag-item {
   display: flex;
@@ -5292,6 +5622,10 @@ a.hl-row:focus-visible {
 }
 .ag-pin.ag-k-commented .ag-glyph {
   stroke-width: 2.2;
+}
+.ag-arc.ag-dim,
+.ag-pin.ag-dim {
+  opacity: 0.12;
 }
 .tip-ag {
   color: var(--ink-2);
@@ -6769,4 +7103,153 @@ html.tv .agk-btn {
 
 .graph-panel:focus {
   outline: none;
+}
+
+/* ---------- gasto en IA (js/spend.js), en el tablero de agentes ---------- */
+.sp-anthropic {
+  --spc: var(--ag1);
+}
+.sp-openai {
+  --spc: var(--ag3);
+}
+.sp-openrouter {
+  --spc: var(--ag6);
+}
+.sp-omniroute {
+  --spc: var(--ag4);
+}
+.ab-spend {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.ab-spend h3 {
+  margin: 0;
+}
+.sp-badge {
+  padding: 0 7px;
+  border: 1px dashed var(--ink-3);
+  border-radius: 9px;
+  color: var(--ink-3);
+  font: 600 10.5px/17px var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.sp-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+.sp-days {
+  min-height: 32px;
+  padding: 2px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12.5px;
+}
+.sp-connect {
+  min-height: 32px;
+  margin-inline-start: auto;
+}
+.sp-note {
+  font-size: 12px;
+}
+.sp-chart {
+  display: block;
+  width: 100%;
+  height: 96px;
+  border-bottom: 1px solid var(--line);
+}
+.sp-bar {
+  fill: var(--spc);
+}
+.sp-hit {
+  fill: transparent;
+}
+.sp-hit:hover {
+  fill: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+.sp-axis {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: -4px 0 0;
+  color: var(--ink-3);
+  font: 10.5px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.sp-list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sp-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 10px;
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+.sp-row:nth-child(odd) {
+  background: color-mix(in srgb, var(--surface-2) 60%, transparent);
+}
+.sp-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+.sp-sw {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--spc);
+}
+.sp-usd {
+  font: 600 13px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+.sp-detail {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  gap: 2px 10px;
+  color: var(--ink-3);
+  font-size: 11.5px;
+}
+.sp-model b {
+  color: var(--ink-2);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.sp-err {
+  color: var(--bad);
+}
+.sp-win {
+  font-style: italic;
+}
+.sp-h4 {
+  margin: 4px 0 0;
+  font: 600 12px var(--font-display);
+  color: var(--ink-2);
+}
+.spend-keys {
+  width: min(560px, calc(100vw - 2 * var(--gutter)));
+}
+.spend-keys .field input {
+  width: 100%;
+}
+.spend-keys .spend-sub {
+  display: block;
+  margin-top: 8px;
 }

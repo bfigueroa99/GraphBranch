@@ -23,7 +23,7 @@ test('arranca sin red: la demo, las librerías y las fuentes van dentro de la ap
   });
   expect(info.libs).toEqual(['object', 'object', 'function']);
   expect(info.node).toEqual(['undefined', 'undefined']); // la página no ve Node
-  expect(info.bridge).toEqual(['getToken', 'git', 'setLabels', 'setToken', 'show', 'webhook']);
+  expect(info.bridge).toEqual(['getToken', 'git', 'setLabels', 'setToken', 'show', 'spend', 'webhook']);
   expect(info.fonts).toEqual(['Bricolage Grotesque', 'Instrument Sans', 'JetBrains Mono']);
   await app.close();
 });
@@ -134,7 +134,7 @@ test('--gitlab-url suma solo ese host al CSP y la página lo recibe; sin https s
   const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
   let { app, page } = await launch(testInfo, { args: ['--lang=es', '--gitlab-url=https://git.example.com'] });
   try {
-    expect(await csp(page)).toContain('https://gitlab.com https://git.example.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com;');
+    expect(await csp(page)).toContain('https://gitlab.com https://git.example.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com https://api.anthropic.com');
     expect(await csp(page)).toContain('https://gitlab.com https://git.example.com https://codeberg.org;');
     expect(page.url()).toContain('gitlab=' + encodeURIComponent('https://git.example.com'));
   } finally {
@@ -153,7 +153,7 @@ test('--forge-url suma solo ese host al CSP (conexiones y avatares) y la página
   const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
   let { app, page } = await launch(testInfo, { args: ['--lang=es', '--forge-url=https://forge.example.com'] });
   try {
-    expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://forge.example.com https://api.bitbucket.org https://dev.azure.com;');
+    expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://forge.example.com https://api.bitbucket.org https://dev.azure.com https://api.anthropic.com');
     expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://forge.example.com;');
     expect(page.url()).toContain('forge=' + encodeURIComponent('https://forge.example.com'));
   } finally {
@@ -172,7 +172,7 @@ test('--api-url suma solo ese host al CSP y los repos de GitHub salen de él; si
   const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
   let { app, page } = await launch(testInfo, { args: ['--lang=es', '--repo=o/r', '--api-url=https://ghe.example.com/api/v3'] });
   try {
-    expect(await csp(page)).toContain('connect-src https://api.github.com https://ghe.example.com https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com;');
+    expect(await csp(page)).toContain('connect-src https://api.github.com https://ghe.example.com https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com https://api.anthropic.com');
     expect(page.url()).toContain('api=' + encodeURIComponent('https://ghe.example.com/api/v3'));
   } finally {
     await app.close();
@@ -258,6 +258,44 @@ test('el token de GitLab se guarda cifrado, aparte del de GitHub, y vuelve al re
   await page.click('#settings-form button[type=submit]');
   await expect.poll(services).toEqual(['github-token']);
   await app.close();
+});
+
+test('el gasto en IA: la clave de OmniRoute queda en el llavero y la consulta la hace el proceso principal', async ({}, testInfo) => {
+  const got = [];
+  const server = createServer((req, res) => {
+    got.push({ url: req.url, auth: req.headers.authorization || '', origin: req.headers.origin || '' });
+    if (req.headers.authorization !== 'Bearer sk-e2e-manage') return res.writeHead(401, { 'content-type': 'application/json' }).end('{}');
+    const today = new Date().toISOString().slice(0, 10);
+    res.writeHead(200, { 'content-type': 'application/json' }).end(
+      JSON.stringify({ summary: { totalCost: 7.5 }, dailyTrend: [{ date: today, cost: 7.5 }], byModel: [{ model: 'cc/claude-opus-5-5', cost: 7.5 }], byApiKey: [{ apiKeyName: 'Claude Code · loop', cost: 7.5, requests: 42 }] }),
+    );
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    const { app, page, dir } = await launch(testInfo, { args: ['--lang=es'] });
+    await loaded(page);
+    // sin clave guardada, un servicio dice que falta y no consulta nada
+    expect(await page.evaluate(() => window.GBDesktop.spend('anthropic', { days: 7 }))).toEqual({ error: 'auth', status: 0 });
+    // se conecta OmniRoute desde la vista de agentes
+    await page.click('#view-agents');
+    await page.click('#spend-connect');
+    await page.fill('#spend-omniroute-url', base);
+    await page.fill('#spend-omniroute', 'sk-e2e-manage');
+    await page.click('#spend-form button[type=submit]');
+    await expect(page.locator('#sp-agents .sp-name')).toHaveText(['Claude Code · loop']);
+    await expect(page.locator('#ag-spend h3 .hl-n')).toContainText('7,50');
+    await expect(page.locator('#ag-spend .sp-badge')).toHaveCount(0); // con un servicio de verdad, ya no es el ejemplo
+    expect(got.length).toBeGreaterThan(0);
+    expect(got.every((g) => g.url === '/api/usage/analytics?range=30d' && g.auth === 'Bearer sk-e2e-manage')).toBe(true);
+    expect(got.every((g) => !g.origin)).toBe(true); // la hizo el proceso principal, no la página
+    // la clave, en su archivo de la app y no en el almacenamiento de la página
+    expect(readdirSync(dir).some((f) => /^omniroute-token\.(enc|txt)$/.test(f))).toBe(true);
+    expect(await page.evaluate(() => JSON.stringify({ ...localStorage }) + JSON.stringify({ ...sessionStorage }))).not.toContain('sk-e2e-manage');
+    await app.close();
+  } finally {
+    server.close();
+  }
 });
 
 test('los avisos a Slack, Discord y Teams: la URL se guarda cifrada y la prueba llega al webhook', async ({}, testInfo) => {
@@ -502,7 +540,7 @@ test('--bitbucket-url suma solo ese host a las conexiones del CSP (sin avatares)
   const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
   let { app, page } = await launch(testInfo, { args: ['--lang=es', '--bitbucket-url=https://bb.example.com'] });
   try {
-    expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://api.bitbucket.org https://bb.example.com https://dev.azure.com;');
+    expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://api.bitbucket.org https://bb.example.com https://dev.azure.com https://api.anthropic.com');
     expect(await csp(page)).toContain('img-src \'self\' data: https://avatars.githubusercontent.com https://gitlab.com https://codeberg.org;');
     expect(page.url()).toContain('bitbucket=' + encodeURIComponent('https://bb.example.com'));
     // su token, aparte en el llavero ('bitbucketdc') y atado a ese servidor; Ajustes muestra su campo nombrando el host

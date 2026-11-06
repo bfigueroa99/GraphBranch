@@ -8,7 +8,8 @@
      Las librerías y las fuentes son copias locales en vendor/ (tools/vendor.mjs), así que
      scripts, estilos y fuentes solo pueden venir del propio sitio. El manifiesto y el service worker
      (sw.js, que la deja abrir sin red) también son del propio sitio. Las conexiones van a las APIs de
-     GitHub, de gitlab.com, de codeberg.org, de api.bitbucket.org y de dev.azure.com, y las imágenes de otro sitio son los avatares de cada uno
+     GitHub, de gitlab.com, de codeberg.org, de api.bitbucket.org y de dev.azure.com (y, con la vista de agentes, al gasto de
+     Anthropic, OpenAI, OpenRouter y un OmniRoute local, solo si se conectan), y las imágenes de otro sitio son los avatares de cada uno
      (los de Bitbucket y los de Azure DevOps no se cargan). -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'none';
@@ -18,7 +19,7 @@
   manifest-src 'self';
   worker-src 'self';
   img-src 'self' data: https://avatars.githubusercontent.com https://gitlab.com https://codeberg.org;
-  connect-src https://api.github.com https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com;
+  connect-src https://api.github.com https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com https://api.anthropic.com https://api.openai.com https://openrouter.ai http://localhost:20128 http://127.0.0.1:20128;
   base-uri 'none';
   form-action 'none'">
 <title>GraphBranch</title>
@@ -101,7 +102,7 @@
       <button class="icon-btn" type="button" id="health-btn" title="Repo health" aria-label="Repo health" data-i18n-attr="title:health.title;aria-label:health.title">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8.5h3l1.7-4.5 3 8 1.8-3.5h3.5"/></svg>
       </button>
-      <button class="icon-btn" type="button" id="agents-btn" aria-haspopup="dialog" title="Who works with whom: people and agents (Claude Code, Copilot, Codex, bots…)" aria-label="Agents and interactions" data-i18n-attr="title:agents.btnTitle;aria-label:agents.title">
+      <button class="icon-btn" type="button" id="agents-btn" aria-pressed="false" title="Who works with whom: people and agents (Claude Code, Copilot, Codex, bots…)" aria-label="Agents and interactions" data-i18n-attr="title:agents.btnTitle;aria-label:agents.title">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="5.5" width="10" height="7.5" rx="2"/><path d="M8 5.5V3M8 3h.01M6 9.2h.01M10 9.2h.01M1.5 8.5v2M14.5 8.5v2"/></svg>
       </button>
       <button class="icon-btn" type="button" id="search-btn" title="Search commits" aria-label="Search commits" data-i18n-attr="title:search.title;aria-label:search.title">
@@ -157,21 +158,6 @@
       <span class="stat-value" id="st-last">–</span>
       <span class="stat-sub" id="st-last-sub"></span>
     </div>
-    <!-- agentes e interacciones (js/agents.js): quién continuó, fusionó o revisó el trabajo de quién, entre personas y agentes -->
-<dialog class="settings trophies health agents" id="agents" aria-labelledby="agents-title" aria-describedby="agents-help">
-  <div class="tr-wrap">
-    <div class="tr-head">
-      <h2 id="agents-title" data-i18n="agents.title">Agents and interactions</h2>
-      <button type="button" class="icon-btn" id="agents-close" title="Close" aria-label="Close" data-i18n-attr="title:toast.close;aria-label:toast.close">
-        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>
-      </button>
-    </div>
-    <p class="help" id="agents-help" data-i18n="agents.help">From what is already loaded, with no extra requests. An agent is recognized by its account (Copilot, dependabot[bot]…) or by what its commits sign (Co-Authored-By, Claude-Session), and each session of an agent counts on its own.</p>
-    <label class="hl-switch"><input type="checkbox" id="agents-only"> <span data-i18n="agents.onlyAgents">Only between agents</span></label>
-    <label class="hl-switch"><input type="checkbox" id="agents-graph"> <span data-i18n="agents.onGraph">Show them on the graph (2D and 3D)</span></label>
-    <div id="agents-body" class="hl-body"></div>
-  </div>
-</dialog>
 
 <!-- la bitácora en vivo (js/bitacora.js): su nota y sus hallazgos, y abre el panel con todo -->
     <button type="button" class="stat stat-bitacora" id="st-bitacora" aria-haspopup="dialog" title="Open the live logbook" data-i18n-attr="title:bitacora.open">
@@ -193,6 +179,7 @@
           <div class="view-switch" role="group" aria-label="View type" data-i18n-attr="aria-label:view.aria">
             <button type="button" id="view-3d" aria-pressed="true">3D</button>
             <button type="button" id="view-2d" aria-pressed="false">2D</button>
+            <button type="button" id="view-agents" aria-pressed="false" title="Who works with whom, live: people and agents" data-i18n="agents.view" data-i18n-attr="title:agents.viewTitle">Agents</button>
           </div>
           <div class="filter-field">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
@@ -313,6 +300,19 @@
           </div>
         </div>
       </div>
+      <!-- agentes e interacciones (js/agents.js), en el lugar del grafo: quién continuó, fusionó o revisó el trabajo de
+           quién, entre personas y agentes, en vivo; y lo que gastan los servicios de IA conectados -->
+      <section class="agents-board" id="agents" hidden aria-labelledby="agents-title" aria-describedby="agents-help">
+        <div class="ab-head">
+          <h2 class="ab-title" id="agents-title"><span class="live-dot" aria-hidden="true"></span><span data-i18n="agents.title">Agents and interactions</span></h2>
+          <div class="ab-switches">
+            <label class="hl-switch"><input type="checkbox" id="agents-only"> <span data-i18n="agents.onlyAgents">Only between agents</span></label>
+            <label class="hl-switch"><input type="checkbox" id="agents-graph"> <span data-i18n="agents.onGraph">Show them on the graph (2D and 3D)</span></label>
+          </div>
+        </div>
+        <p class="help ab-help" id="agents-help" data-i18n="agents.help">From what is already loaded, with no extra requests. An agent is recognized by its account (Copilot, dependabot[bot]…) or by what its commits sign (Co-Authored-By, Claude-Session), and each session of an agent counts on its own.</p>
+        <div id="agents-body" class="ab-body"></div>
+      </section>
       <!-- interacciones en el grafo (js/agents.js): de quién es cada color y qué dice cada trazo, bajo el grafo para no
            tapar lo más nuevo; × las quita del grafo -->
       <section class="agk-panel" id="ag-key" hidden aria-labelledby="ag-key-title">
@@ -399,6 +399,40 @@
 </div>
 
 <div class="toasts" id="toasts" aria-live="polite"></div>
+
+<!-- el gasto en IA (js/spend.js): las claves de cada servicio, cada una solo para el suyo -->
+<dialog class="settings spend-keys" id="spend-keys" aria-labelledby="spend-keys-title">
+  <form id="spend-form">
+    <h2 id="spend-keys-title" data-i18n="spend.keysTitle">AI services</h2>
+    <p class="help" data-i18n="spend.keysHelp">Read-only access to spend. Anthropic and OpenAI need an admin key (Admin API); OpenRouter, the account key; OmniRoute, its address and a key with the manage permission if it asks for one. Each key goes only to its own service.</p>
+    <div class="field">
+      <label for="spend-anthropic"><span data-i18n="spend.keyAnthropic">Anthropic admin key</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <input id="spend-anthropic" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-admin01-…">
+    </div>
+    <div class="field">
+      <label for="spend-openai"><span data-i18n="spend.keyOpenai">OpenAI admin key</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <input id="spend-openai" type="password" autocomplete="off" spellcheck="false" placeholder="sk-admin-…">
+    </div>
+    <div class="field">
+      <label for="spend-openrouter"><span data-i18n="spend.keyOpenrouter">OpenRouter key</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <input id="spend-openrouter" type="password" autocomplete="off" spellcheck="false" placeholder="sk-or-v1-…">
+    </div>
+    <div class="field">
+      <label for="spend-omniroute-url"><span data-i18n="spend.omnirouteUrl">OmniRoute address</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <input id="spend-omniroute-url" type="url" autocomplete="off" spellcheck="false" placeholder="http://localhost:20128">
+      <label for="spend-omniroute" class="spend-sub" data-i18n="spend.keyOmniroute">OmniRoute key (manage permission)</label>
+      <input id="spend-omniroute" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…">
+      <p class="help" id="spend-omniroute-help" data-i18n="spend.omnirouteHelp">Give each agent its own OmniRoute key named after it (for example «Claude Code · loop»): that is how its spend is told apart. On the web, OmniRoute must allow this page in CORS_ALLOWED_ORIGINS; the desktop app does not need it.</p>
+    </div>
+    <p class="help" id="spend-where" data-i18n="spend.whereWeb">On the web the keys stay only in this browser; in the desktop app, encrypted with the system keychain.</p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-ghost" id="spend-clear" data-i18n="spend.clear">Delete keys</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn-ghost" id="spend-cancel" data-i18n="settings.cancel">Cancel</button>
+      <button type="submit" class="btn btn-primary" data-i18n="spend.save">Save</button>
+    </div>
+  </form>
+</dialog>
 
 <dialog class="settings" id="settings" aria-labelledby="settings-title">
   <form id="settings-form">
@@ -761,6 +795,7 @@
 <script src="js/util.js"></script>
 <script src="js/diff.js"></script>
 <script src="js/agents.js"></script>
+<script src="js/spend.js"></script>
 <script src="js/sources/github.js"></script>
 <script src="js/sources/gitlab.js"></script>
 <script src="js/sources/codeberg.js"></script>

@@ -31,6 +31,7 @@ window.GB = window.GB || {};
   U.fmtDate = (ms) => GB.i18n.fmtDate(ms);
   U.fmtDateTime = (ms) => GB.i18n.fmtDateTime(ms);
   U.fmtNum = (n) => GB.i18n.fmtNum(n);
+  U.fmtUsd = (n) => GB.i18n.fmtUsd(n);
   U.dayKey = (ms) => {
     const d = new Date(ms);
     return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;

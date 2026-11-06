@@ -22,6 +22,7 @@ const { pathToFileURL } = require('node:url');
 const local = require('./git');
 const token = require('./token');
 const webhooks = require('./webhooks');
+const spend = require('../js/spend.js'); // el gasto de los servicios de IA: el mismo código que la web, sin CORS aquí
 const tray = require('./tray');
 
 const SCHEME = 'app';
@@ -64,7 +65,7 @@ async function serve(request) {
     const fg = FORGE_ARG ? ` ${FORGE_ARG.origin}` : '';
     const bb = BITBUCKET_ARG ? ` ${BITBUCKET_ARG.origin}` : '';
     if (GITLAB_ARG || FORGE_ARG || BITBUCKET_ARG) {
-      html = html.replace('https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com;', `https://gitlab.com${gl} https://codeberg.org${fg} https://api.bitbucket.org${bb} https://dev.azure.com;`);
+      html = html.replace('https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com', `https://gitlab.com${gl} https://codeberg.org${fg} https://api.bitbucket.org${bb} https://dev.azure.com`); // solo en connect-src: en img-src no va Bitbucket ni Azure
       html = html.replace('img-src \'self\' data: https://avatars.githubusercontent.com https://gitlab.com https://codeberg.org;', `img-src 'self' data: https://avatars.githubusercontent.com https://gitlab.com${gl} https://codeberg.org${fg};`);
     }
     return new Response(html, { status: res.status, headers: { 'content-type': 'text/html; charset=utf-8' } });
@@ -314,6 +315,40 @@ if (!app.requestSingleInstanceLock()) {
       fromApp(ev, service);
       if (!webhooks.SERVICES.includes(service)) throw new Error('servicio desconocido');
       return webhooks.send(service, await token.read(service), event, net.fetch, testPrefix);
+    });
+    // el gasto de los servicios de IA (js/spend.js): la clave no sale del proceso principal y la consulta no choca
+    // con CORS. La página pide un servicio y un período; la dirección de cada API la arma spend.request
+    ipcMain.handle('spend:fetch', async (ev, service, opts = {}) => {
+      fromApp(ev, service);
+      if (!spend.SERVICES.includes(service)) throw new Error('servicio desconocido');
+      const days = spend.PERIODS.includes(Number(opts?.days)) ? Number(opts.days) : 30;
+      const stored = await token.read(service);
+      let cfg = { key: stored, days };
+      if (service === 'omniroute') {
+        let o = {};
+        try {
+          o = JSON.parse(stored || '{}');
+        } catch {
+          /* guardado a mano o dañado: como si no hubiera */
+        }
+        cfg = { key: String(o.key || ''), url: String(o.url || ''), days };
+        if (!spend.baseUrl(cfg.url)) return { error: 'shape' };
+      } else if (!stored) return { error: 'auth', status: 0 };
+      const fetchJson = async (req) => {
+        const r = await net.fetch(req.url, { headers: req.headers, signal: AbortSignal.timeout(15_000) });
+        let json = null;
+        try {
+          json = await r.json();
+        } catch {
+          /* no era JSON: lo dice collect */
+        }
+        return { status: r.status, json };
+      };
+      try {
+        return await spend.collect(service, cfg, fetchJson);
+      } catch (err) {
+        return { error: err.kind || 'net', status: err.status || 0 };
+      }
     });
     // repositorios locales (electron/git.js): la página trabaja con ids de carpetas que el usuario eligió
     const guard = (fn) => async (ev, ...args) => {

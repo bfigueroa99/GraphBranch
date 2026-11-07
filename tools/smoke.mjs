@@ -4634,7 +4634,7 @@ console.log('Agentes e interacciones, en vivo, en el lugar del grafo (?agents=1)
     if (!info.recent.length || !info.rows) throw new Error('sin interacciones recientes o sin filas que lleven al grafo');
     if (info.links) throw new Error('la demo enlaza sesiones de Claude Code, que son ficticias');
     if (!info.spendBadge || info.spendServices !== 4 || !info.spendAgents.some((x) => /^Claude Code/.test(x))) throw new Error(`el gasto de ejemplo: marca ${info.spendBadge}, ${info.spendServices} servicios, agentes ${info.spendAgents.join(' | ')}`);
-    if (/undefined|NaN|agents\.|spend\.|tip\./.test(info.text)) throw new Error('texto sin resolver en la vista: ' + info.text.slice(0, 160));
+    if (/undefined|NaN|agents\.|spend\.|tip\.|swarm\./.test(info.text)) throw new Error('texto sin resolver en la vista: ' + info.text.slice(0, 160));
     if (info.overflow > 1) throw new Error(`la vista se desborda ${info.overflow}px`);
   });
   await step(page, 'en vivo: lo que llega mientras se mira se anima (lo último y la línea de tiempo)', async () => {
@@ -4678,6 +4678,89 @@ console.log('Agentes e interacciones, en vivo, en el lugar del grafo (?agents=1)
       if (await page.locator('#ag-focus').count()) throw new Error('Enter no soltó al participante elegido');
     } finally {
       await page.click('#pause-btn'); // la demo sigue como estaba, también si algo falló
+    }
+  });
+  await step(page, 'el enjambre: los indicadores, la corteza con sus cortes y su ficha, el ingreso de tareas, el hilo, el ritmo, las barras, el log y el reloj', async () => {
+    await page.waitForSelector('#sw-cortex .sw-viz .sw-label', { timeout: T(5000) }).catch(() => {
+      throw new Error('la corteza no llegó al tablero');
+    });
+    const r = await page.evaluate(() => {
+      const d = document.querySelector('#agents');
+      return {
+        kpis: d.querySelectorAll('#sw-kpis .sw-kpi').length,
+        sparks: d.querySelectorAll('#sw-kpis .sw-spark').length,
+        gl: !!d.querySelector('#sw-cortex .sw-canvas'),
+        flat: !!d.querySelector('#sw-cortex .sw-stage.is-flat'),
+        labels: [...d.querySelectorAll('#sw-cortex .sw-label')].map((b) => (b.getAttribute('aria-label') || '').replace(/[⁨⁩]/g, '')),
+        caps: [...d.querySelectorAll('#sw-cortex .sw-slice figcaption')].map((x) => x.textContent),
+        drawn: [...d.querySelectorAll('#sw-cortex .sw-slice canvas')].filter((c) => c.width > 0 && c.height > 0).length,
+        insp: d.querySelector('#sw-insp dl')?.textContent || '',
+        tasks: d.querySelectorAll('#sw-ingest li').length,
+        routed: d.querySelector('#sw-ingest h3 .hl-n')?.textContent || '',
+        tabs: d.querySelectorAll('#sw-thread .sw-tab[data-pick]').length,
+        msgs: d.querySelectorAll('#sw-thread .sw-msg').length,
+        rate: d.querySelectorAll('#sw-rate svg .sw-rate-l, #sw-rate svg .sw-rate-p').length,
+        bars: d.querySelectorAll('#sw-per .sw-bar-fill').length,
+        log: d.querySelectorAll('#sw-log li').length,
+        clock: document.querySelector('#agents-clock').textContent,
+      };
+    });
+    if (r.kpis !== 7 || r.sparks < 2) throw new Error(`los indicadores: ${r.kpis} y ${r.sparks} curvas`);
+    if (!r.gl && !r.flat) throw new Error('la corteza no se dibujó ni en 3D ni como lista');
+    if (r.labels.length < 3 || r.labels.some((x) => !/ · (escribe|integra|revisa|comenta)$/.test(x))) throw new Error('los rótulos de la corteza no dicen quién es y su rol: ' + r.labels.join(' | '));
+    if (r.caps.length !== 3 || !r.caps.every((x) => /^(Axial|Coronal|Sagital) · [xyz] [+−]\d\.\d\d$/.test(x))) throw new Error('los cortes: ' + r.caps.join(' | '));
+    if (r.drawn !== 3) throw new Error(`se dibujaron ${r.drawn} de 3 cortes`);
+    if (!/Rol/.test(r.insp)) throw new Error('la ficha no dice el rol: ' + r.insp);
+    if (!r.tasks || !/^\d+\/\d+ con un agente$/.test(r.routed)) throw new Error(`el ingreso de tareas: ${r.tasks} filas, «${r.routed}»`);
+    if (!r.tabs || !r.msgs) throw new Error(`el hilo: ${r.tabs} pestañas y ${r.msgs} mensajes`);
+    if (r.rate !== 2 || !r.bars || !r.log) throw new Error(`el ritmo (${r.rate} series), las barras (${r.bars}) o el log (${r.log})`);
+    if (!/\d\d:\d\d:\d\d/.test(r.clock)) throw new Error('el reloj del tablero: ' + JSON.stringify(r.clock));
+  });
+  await step(page, 'elegir a alguien en la corteza (o en una pestaña del hilo) lo elige en todo el tablero, el foco se queda ahí y Enter lo suelta', async () => {
+    await page.click('#pause-btn'); // la demo quieta: lo que se cuenta no cambia a mitad
+    try {
+      const label = page.locator('#sw-cortex .sw-label[data-key^="a:claude:"]').first();
+      const key = await label.getAttribute('data-key');
+      await label.focus();
+      await page.keyboard.press('Enter');
+      const r = await page.evaluate((key) => ({
+        chip: (document.querySelector('#ag-focus .ag-focus-name')?.textContent || '').replace(/[⁨⁩]/g, ''),
+        pressed: document.querySelector(`#sw-cortex .sw-label[data-key="${CSS.escape(key)}"]`)?.getAttribute('aria-pressed'),
+        focus: document.activeElement?.dataset?.key,
+        tab: document.querySelector('#sw-thread .sw-tab.on')?.dataset.pick,
+        insp: (document.querySelector('#sw-insp .sw-insp-name')?.textContent || '').replace(/[⁨⁩]/g, ''),
+      }), key);
+      if (!/^Solo con Claude Code · sesión \w{6}/.test(r.chip) || r.pressed !== 'true') throw new Error(`elegir en la corteza: «${r.chip}», aria-pressed ${r.pressed}`);
+      if (r.focus !== key) throw new Error(`el foco quedó en ${r.focus}`);
+      if (r.tab !== key || !/^Claude Code · sesión \w{6}$/.test(r.insp)) throw new Error(`el hilo (${r.tab}) o la ficha («${r.insp}») no siguieron al elegido`);
+      await page.keyboard.press('Enter');
+      if (await page.locator('#ag-focus').count()) throw new Error('Enter no soltó al elegido desde la corteza');
+      const tab = page.locator('#sw-thread .sw-tab[data-pick]').nth(1);
+      const pick = await tab.getAttribute('data-pick');
+      await tab.click();
+      const t = await page.evaluate(() => ({ on: document.querySelector('#sw-thread .sw-tab.on')?.dataset.pick, focus: document.activeElement?.dataset?.pick, chip: !!document.querySelector('#ag-focus') }));
+      if (t.on !== pick || t.focus !== pick || !t.chip) throw new Error(`la pestaña del hilo: ${JSON.stringify(t)} (se esperaba ${pick})`);
+      await page.click('#ag-focus-clear');
+    } finally {
+      await page.click('#pause-btn'); // la demo sigue como estaba, también si algo falló
+    }
+  });
+  await step(page, 'a 320 px el tablero de agentes, con el enjambre, no se desborda hacia el lado (en español y en tamil)', async () => {
+    const back = page.url();
+    await page.setViewportSize({ width: 320, height: 640 });
+    try {
+      for (const lang of ['es', 'ta']) {
+        await page.goto(`${base}/index.html?lang=${lang}&agents=1`);
+        await loaded(page);
+        await page.waitForSelector('#agents:not([hidden]) #sw-kpis', { timeout: T(5000) });
+        const m = await page.evaluate(() => ({ board: document.querySelector('#agents').scrollWidth - document.querySelector('#agents').clientWidth, doc: document.documentElement.scrollWidth - document.documentElement.clientWidth }));
+        if (m.board > 1 || m.doc > 1) throw new Error(`[${lang}] a 320 px se desborda: tablero ${m.board}px, página ${m.doc}px`);
+      }
+    } finally {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(back);
+      await loaded(page);
+      await page.waitForSelector('#agents:not([hidden]) .ag-net', { timeout: T(5000) });
     }
   });
   await step(page, 'el gasto: el diálogo de claves rechaza una dirección de OmniRoute que no es http(s) y se cierra sin guardar', async () => {

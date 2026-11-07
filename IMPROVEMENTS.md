@@ -350,7 +350,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     Reproducción: `xvfb-run -a npx playwright test e2e/desktop.spec.mjs -g "bitbucket-url"` con el equipo cargado →
     `expect(locator('#azure-token-input')).toHaveValue('az-e2e')` · `Received: ""`.
 2. [Deuda] El paso del smoke «vista de texto: árbol con teclado, nombres accesibles y Enter lleva al grafo» falló 1 de 2
-    en la puerta de la iteración 222 (2026-11-05; la repetición pasó) y otra vez en la segunda de la 225 (2026-11-06): ninguna rama de la demo decía «sin PR abierto»
+    en la puerta de la iteración 222 (2026-11-05; la repetición pasó), otra vez en la segunda de la 225 (2026-11-06) y en la segunda del enjambre (2026-11-07, sin tocar la vista de texto): ninguna rama de la demo decía «sin PR abierto»
     (`badNoPr` vacío, así que no fue una rama mal marcada sino ninguna marcada). Hipótesis: la demo sigue viva y a veces
     abre un PR o fusiona la rama que lo decía justo antes de leer la vista; quietar la demo durante el paso, como ya hacen
     otros (`quieta`). Reproducción: `node tools/smoke.mjs` repetido → `la vista de texto no dice qué ramas no tienen PR

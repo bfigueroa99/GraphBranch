@@ -305,6 +305,7 @@
       <section class="agents-board" id="agents" hidden aria-labelledby="agents-title" aria-describedby="agents-help">
         <div class="ab-head">
           <h2 class="ab-title" id="agents-title"><span class="live-dot" aria-hidden="true"></span><span data-i18n="agents.title">Agents and interactions</span></h2>
+          <time class="ab-clock" id="agents-clock" aria-hidden="true"></time>
           <div class="ab-switches">
             <label class="hl-switch"><input type="checkbox" id="agents-only"> <span data-i18n="agents.onlyAgents">Only between agents</span></label>
             <label class="hl-switch"><input type="checkbox" id="agents-graph"> <span data-i18n="agents.onGraph">Show them on the graph (2D and 3D)</span></label>
@@ -796,6 +797,8 @@
 <script src="js/util.js"></script>
 <script src="js/diff.js"></script>
 <script src="js/agents.js"></script>
+<script src="js/swarm.js"></script>
+<script src="js/cortex.js"></script>
 <script src="js/spend.js"></script>
 <script src="js/sources/github.js"></script>
 <script src="js/sources/gitlab.js"></script>

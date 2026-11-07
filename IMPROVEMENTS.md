@@ -349,21 +349,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     queda vacío. Guardar el token y reabrir la app antes de mirar Ajustes, como «el token de GitLab… vuelve al reabrir».
     Reproducción: `xvfb-run -a npx playwright test e2e/desktop.spec.mjs -g "bitbucket-url"` con el equipo cargado →
     `expect(locator('#azure-token-input')).toHaveValue('az-e2e')` · `Received: ""`.
-2. [Deuda] El paso del smoke «vista de texto: árbol con teclado, nombres accesibles y Enter lleva al grafo» falló 1 de 2
-    en la puerta de la iteración 222 (2026-11-05; la repetición pasó) y otra vez en la segunda de la 225 (2026-11-06): ninguna rama de la demo decía «sin PR abierto»
-    (`badNoPr` vacío, así que no fue una rama mal marcada sino ninguna marcada). Hipótesis: la demo sigue viva y a veces
-    abre un PR o fusiona la rama que lo decía justo antes de leer la vista; quietar la demo durante el paso, como ya hacen
-    otros (`quieta`). Reproducción: `node tools/smoke.mjs` repetido → `la vista de texto no dice qué ramas no tienen PR
-    abierto: []`.
-
-3. [Deuda] El paso del smoke «editar el código: desde los cambios de un commit se abre su archivo en la rama, se cambia
+2. [Deuda] El paso del smoke «editar el código: desde los cambios de un commit se abre su archivo en la rama, se cambia
     y el commit llega al grafo con sus cambios» falló 1 de 1 en la tercera puerta de la iteración 225 (2026-11-06, carga 4
     en 4 CPU), en una sección que el cambio no toca (las dos corridas anteriores lo pasaron): un `waitForFunction` de
     15 s se venció. Medir cuántas fallas en N corridas, ver qué espera (el commit en el grafo tras el ciclo en vivo) y
     atarla a una señal en vez de al tiempo. Reproducción: `node tools/smoke.mjs` repetido → `editar el código: …:
     page.waitForFunction: Timeout 15000ms exceeded.`
 
-4. [Deuda] El paso del smoke «quién tocó un archivo: el botón del diff lista los últimos commits con su autor, y otro
+3. [Deuda] El paso del smoke «quién tocó un archivo: el botón del diff lista los últimos commits con su autor, y otro
     clic lo cierra» falló 1 de 2 en la puerta de la iteración 233 (2026-11-06; la repetición pasó), en una sección que el
     cambio no toca: el segundo clic sobre el botón no cerró la lista. Hipótesis: el segundo clic llega mientras la lista
     todavía carga (o se vuelve a pintar) y la reabre; esperar a que la lista esté completa antes del segundo clic, o atar
@@ -372,47 +365,47 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Baja
 
-5. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+4. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-6. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+5. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-7. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+6. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-8. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+7. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-9. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+8. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-10. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+9. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-11. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+10. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-12. [Accesibilidad] En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…», «sin actividad…», PRs) y la
+11. [Accesibilidad] En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…», «sin actividad…», PRs) y la
     nota de cada commit (`.tv-aside`) ya van en el `aria-label` del `treeitem`, pero son texto del nodo: según el lector se
     leen dos veces. Marcarlas `aria-hidden="true"` y comprobarlo con un lector real (ver Para Benjamin, 5).
     Reproducción: Playwright, abrir `#textview-btn` → `.tv-tag` dentro de `[role=treeitem][aria-label]` sin `aria-hidden`.
-13. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
+12. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
     `placeLabels`. El cuadro lo domina el render por software (~200 ms por cuadro sin GPU, 10 fps), que con GPU no existe;
     medir con GPU real antes de tocarlo. Reproducción: la misma envoltura sobre `stepScene` → ~1,1 ms por llamada.
-14. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
+13. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
     (895 ms en total, sin GPU); el perfil de CPU de los primeros 6 s no deja ninguna función de la app por encima de 70 ms
     (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
     que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
     Reproducción: `node tools/audit.mjs --repetir 3` → `consultas: 10`, `tareasLargasMs: 895`.
-15. [Errores] Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el repo del PR con
+14. [Errores] Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el repo del PR con
     `owner/name` tal como se escribieron; con un repo renombrado (abierto por su nombre viejo) ningún PR cuenta como del
     mismo repo: sus ramas pierden el «PRs abiertos» y dicen «sin PR abierto». Comparar `fromRef.repository` con
     `toRef.repository`. Reproducción: API simulada con el repo `nuevo` y abrir `CLAVE/viejo` → `sameRepo` false.
-16. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
+15. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
     prepara de verdad en vez de solo listar, y `add -p` prepara todo. Negarse con el `error: unknown switch` de git (o
     admitir `-n`). Reproducción: `node --test` con `touch a.txt`, `add -n .` → `a.txt` queda preparado.
 

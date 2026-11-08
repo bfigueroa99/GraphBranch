@@ -15,6 +15,10 @@
      node tools/loop.mjs --limpiar [--borrar] [--repo <dir>]
                                                   las ramas loop/K de iteraciones ya fusionadas; --borrar las borra
                                                   de origin en un solo push (desde un PC: en la nube, el proxy lo niega)
+     node tools/loop.mjs --frontera [--repo <dir>]
+                                                  la frontera (tools/frontera.py) sobre lo que se va a publicar: sin
+                                                  pruebas borradas ni debilitadas, umbrales ni config de la puerta
+                                                  tocados sin declarar; la corre npm run check
      --archivo <ruta> | --ref <ref>               leen otro IMPROVEMENTS.md: un archivo, o git show <ref>:IMPROVEMENTS.md
 
    La bitácora vive en dos archivos: las últimas entradas en IMPROVEMENTS.md y las anteriores en
@@ -25,8 +29,10 @@
    --reclamar: 0 reclamada o relevada · 1 formato · 2 sin ítem · 3 ocupada · 4 vencida · 5 sin remoto.
    --publicado: 0 al día · 2 atrasada o sin publicar · 4 no se pudo comprobar.
    --salud: 0 sin acciones · 3 con alguna «Acción:» · 5 sin acceso a origin.
-   --rotar: 0 rotada o nada que rotar · 1 formato. --limpiar: 0 bien · 5 sin acceso a origin o push negado. */
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+   --rotar: 0 rotada o nada que rotar · 1 formato. --limpiar: 0 bien · 5 sin acceso a origin o push negado.
+   --frontera: 0 en verde · 1 rota · 2 no evaluada (sin python3, sin origin/dev o sin la frontera). */
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -38,7 +44,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 /** Los ejes del Mapa de alcance, en su orden. */
 export const EJES = ['Fuentes', 'Datos', 'Plataformas', 'Escala', 'Salidas', 'Análisis', 'Público'];
 /** Todos los flags del CLI: --check (R8) comprueba que la skill no nombre otros. */
-export const FLAGS = ['--siguiente', '--check', '--reclamar', '--publicado', '--salud', '--rotar', '--limpiar', '--borrar', '--relevo', '--sin-red', '--horas', '--repo', '--archivo', '--ref', '--json', '--help'];
+export const FLAGS = ['--siguiente', '--check', '--reclamar', '--publicado', '--salud', '--rotar', '--limpiar', '--frontera', '--borrar', '--relevo', '--sin-red', '--horas', '--repo', '--archivo', '--ref', '--json', '--help'];
 /** Horas sin commits a partir de las cuales una rama loop/N se da por abandonada y se puede relevar. Tiene
     que ser menos que CRON_H: si no, el disparo siguiente a una sesión muerta la encuentra «Ocupada» y se
     pierde también ese (loop/128: reclamada el 2026-10-23 a las 16:05 y dejada sin fusionar a las 16:30; el
@@ -99,6 +105,12 @@ export const LARGOS = [
   [/^node tools\/audit\.mjs\b(?!.*\s--base\b)/, 'node tools/audit.mjs'],
   [/^(?:xvfb-run(?:\s+-a)?\s+)?(?:npm run test:e2e|npx playwright test)\b/, 'las e2e'],
 ];
+/** La guardia del loop (copia vendorizada; lo propio del repo en .claude/hooks/guardia.json): el hook PreToolUse
+    que frena el push forzado, el push a master, main o dev, saltarse los hooks de git y escribir con el MCP de
+    GitHub en una rama protegida. --check (R8) exige que .claude/settings.json la registre para Bash y para estas
+    herramientas del MCP. */
+export const GUARDIA = '.claude/hooks/guardia.py';
+export const MCP_ESCRITURA = ['mcp__github__push_files', 'mcp__github__create_or_update_file', 'mcp__github__delete_file'];
 /** Bytes del prompt de la Routine: solo apunta a la skill y dice lo que la skill no puede decir antes de que la
     sesión la lea (sincronizar con dev y que el turno terminado es la corrida terminada). */
 export const PROMPT_MAX = 750;
@@ -138,6 +150,8 @@ node tools/loop.mjs --rotar [--repo <dir>]   deja las últimas ${ROTAR_DEJA} ent
                                              y los ítems hechos de la hoja de ruta a ${ARCHIVO_HOJA}
 node tools/loop.mjs --limpiar [--borrar] [--repo <dir>]
                                              las ramas loop/K de iteraciones ya fusionadas (--borrar: las borra de origin)
+node tools/loop.mjs --frontera [--repo <dir>]
+                                             la frontera (tools/frontera.py) sobre lo que se va a publicar (la corre npm run check)
 --archivo <ruta> | --ref <ref>               leen otro IMPROVEMENTS.md: un archivo, o git show <ref>:IMPROVEMENTS.md
 --help                                       esta ayuda`;
 
@@ -708,7 +722,8 @@ export function check(texto, { archivo = null, hoja = null, log, superficial, sk
     const por = PRIORIDADES.map((pr) => `${m.filter((p) => p.prioridad === pr).length} ${pr}`).join(', ');
     regla('R7', e, a, `mantenimiento: ${m.length} pendientes numerados 1..${m.length} (${por}), cada uno con su subtipo`);
   }
-  // R8: la skill nombra flags, rutas y comandos que existen y están permitidos; el prompt no se pudre
+  // R8: la skill nombra flags, rutas y comandos que existen y están permitidos; el prompt no se pudre; la guardia
+  // está registrada
   {
     const e = [];
     const a = [];
@@ -788,10 +803,22 @@ export function check(texto, { archivo = null, hoja = null, log, superficial, sk
       // cada subtipo que puede elegir --siguiente tiene su protocolo en la skill
       for (const st of SUBTIPOS) if (!new RegExp(`^#{3,4} ${st}\\b`, 'm').test(skillTxt)) e.push(`SKILL.md sin el protocolo del subtipo ${st} («#### ${st}»)`);
       let allow = [];
+      let ajustes = null;
       try {
-        allow = JSON.parse(settingsTxt ?? '{}').permissions?.allow ?? [];
+        ajustes = JSON.parse(settingsTxt ?? '{}');
+        allow = ajustes.permissions?.allow ?? [];
       } catch (err) {
         e.push(`.claude/settings.json no es JSON válido: ${err.message}`);
+      }
+      // la guardia: PreToolUse de Bash y de las escrituras del MCP de GitHub. Sin ella, «nunca force-push, nunca
+      // a dev ni a master a mano, nunca saltarse los hooks de git» vuelve a ser solo prosa de esta skill
+      if (ajustes) {
+        const cubre = (matcher, herramienta) => !matcher || matcher === '*' || new RegExp(`^(?:${matcher})$`).test(herramienta);
+        const registros = (ajustes.hooks?.PreToolUse ?? []).filter((h) => (h.hooks ?? []).some((x) => x.type === 'command' && String(x.command ?? '').includes(GUARDIA)));
+        const faltan = ['Bash', ...MCP_ESCRITURA].filter((t) => !registros.some((h) => cubre(h.matcher, t)));
+        if (!registros.length) e.push(`.claude/settings.json no registra la guardia (${GUARDIA}) en hooks.PreToolUse`);
+        else if (faltan.length) e.push(`.claude/settings.json registra la guardia sin cubrir ${faltan.join(', ')} (matcher de hooks.PreToolUse)`);
+        if (registros.length && !existsSync(join(dir, GUARDIA))) e.push(`.claude/settings.json registra la guardia y ${GUARDIA} no existe`);
       }
       for (const cmd of comandos) {
         if (allow.includes(`Bash(${cmd}:*)`) || allow.includes(`Bash(${cmd})`)) continue;
@@ -827,7 +854,7 @@ export function check(texto, { archivo = null, hoja = null, log, superficial, sk
         }
       }
     }
-    regla('R8', e, a, `la skill nombra flags, rutas y comandos que existen y están permitidos, tiene el protocolo de cada subtipo, corre la arena con su ruta y de 1 a ${ARENA_MAX} competidores y la CLI de skills fija y sin telemetría; el prompt no lleva hechos que se pudren y el comando de OpenCode lo pasa tal cual`);
+    regla('R8', e, a, `la skill nombra flags, rutas y comandos que existen y están permitidos, tiene el protocolo de cada subtipo, corre la arena con su ruta y de 1 a ${ARENA_MAX} competidores y la CLI de skills fija y sin telemetría; el prompt no lleva hechos que se pudren y el comando de OpenCode lo pasa tal cual; settings.json registra la guardia`);
   }
   // R9: sin flujos de GitHub Actions (CLAUDE.md: no hay CI)
   {
@@ -1476,6 +1503,78 @@ export function rotarHoja(texto, hoja = null) {
   };
 }
 
+/* --------------------------------------------------------------- frontera */
+
+/** Dónde vive la frontera: tools/frontera.py es la copia vendorizada (la misma en cada proyecto de Benjamin, no se
+    edita aquí) y tools/frontera.json, lo propio de este repo. */
+export const FRONTERA = { script: 'tools/frontera.py', config: 'tools/frontera.json' };
+
+/** La frontera anti-Goodhart: que la puerta siga siendo la de ayer. Juzga con tools/frontera.py lo que se va a
+    publicar, merge-base(origin/dev, HEAD)..HEAD, y lo marca si borra o debilita pruebas, afloja un umbral o toca la
+    puerta sin una línea `Frontera: <motivo>` en un commit (un umbral, ni declarado). Dos decisiones:
+    - Con cambios sin commitear también los juzga (un commit temporal fuera de toda rama, en un worktree sin
+      checkout): la puerta del paso 3 corre antes del commit del paso 5, y en el 5.2 «solo cambió IMPROVEMENTS.md»
+      no la repite; sin esto, lo que se publica no lo habría juzgado nunca.
+    - Juzga con las reglas de origin/dev (su frontera.py y su frontera.json) si las tiene: un cambio que afloja la
+      frontera no se juzga con la frontera aflojada.
+    Devuelve 0 (en verde), 1 (rota) o 2 (no evaluada: sin python3, sin origin/dev o sin la frontera), como la
+    puerta: no evaluada es rojo, nunca un paso que se salta. `python` se inyecta en las pruebas. */
+export function frontera({ repo = root, python = 'python3', print = console.log } = {}) {
+  const base = `origin/${BASE}`;
+  const noEvaluada = (motivo) => {
+    print(`Frontera no evaluada: ${motivo}`);
+    return 2;
+  };
+  if (git(repo, ['rev-parse', '--verify', '-q', `${base}^{commit}`]).status !== 0) return noEvaluada(`sin ${base} (git fetch origin ${REF_BASE})`);
+  const version = spawnSync(python, ['--version'], { encoding: 'utf8' });
+  if (version.error || version.status !== 0) return noEvaluada(`sin ${python}, que corre ${FRONTERA.script}: hay que instalarlo, la frontera no se salta`);
+  const tmp = mkdtempSync(join(tmpdir(), 'frontera-'));
+  let arbol = null;
+  try {
+    let script = join(repo, FRONTERA.script);
+    let config = join(repo, FRONTERA.config);
+    let reglas = 'las del árbol (origin/dev todavía no tiene la frontera)';
+    const py = git(repo, ['show', `${base}:${FRONTERA.script}`]);
+    const cfg = git(repo, ['show', `${base}:${FRONTERA.config}`]);
+    if (py.status === 0 && cfg.status === 0) {
+      writeFileSync((script = join(tmp, 'frontera.py')), py.stdout);
+      writeFileSync((config = join(tmp, 'frontera.json')), cfg.stdout);
+      reglas = `las de ${base}`;
+    } else if (!existsSync(script) || !existsSync(config)) return noEvaluada(`sin ${FRONTERA.script} o ${FRONTERA.config}`);
+    let dir = repo;
+    const sucio = git(repo, ['status', '--porcelain', '--untracked-files=all']).stdout.trim().split('\n').filter(Boolean).length;
+    if (sucio) {
+      // el árbol de trabajo entero (lo que .gitignore deja) en un índice aparte, sin tocar el de la sesión; el
+      // mensaje no empieza por «Frontera:», que lo contaría como declaración
+      const indice = { GIT_INDEX_FILE: join(tmp, 'index') };
+      const autor = { GIT_AUTHOR_NAME: 'frontera', GIT_AUTHOR_EMAIL: 'frontera@local', GIT_COMMITTER_NAME: 'frontera', GIT_COMMITTER_EMAIL: 'frontera@local' };
+      const pasos = [['read-tree', 'HEAD'], ['add', '-A']];
+      for (const args of pasos) {
+        const r = git(repo, args, indice);
+        if (r.status !== 0) return noEvaluada(`git ${args.join(' ')} sobre lo sin commitear: ${primera(r.stderr)}`);
+      }
+      const tree = git(repo, ['write-tree'], indice);
+      const commit = tree.status === 0 ? git(repo, ['commit-tree', tree.stdout.trim(), '-p', 'HEAD', '-m', 'Lo sin commitear, juntado para juzgarlo'], autor) : tree;
+      if (commit.status !== 0) return noEvaluada(`no se pudo juntar lo sin commitear: ${primera(commit.stderr)}`);
+      dir = join(tmp, 'arbol');
+      const wt = git(repo, ['worktree', 'add', '--no-checkout', '--detach', dir, commit.stdout.trim()]);
+      if (wt.status !== 0) return noEvaluada(`git worktree add: ${primera(wt.stderr)}`);
+      arbol = dir;
+    }
+    print(`Frontera: reglas ${reglas}; juzga ${base}...HEAD${sucio ? ` y ${sucio} archivo(s) sin commitear` : ''}`);
+    const r = spawnSync(python, [script, '-C', dir, '--config', config, '--base', base], { encoding: 'utf8' });
+    if (r.stdout) print(r.stdout.trimEnd());
+    if (r.status === 0 || r.status === 1) return r.status;
+    return noEvaluada(primera(r.stderr || r.error?.message));
+  } finally {
+    if (arbol) {
+      git(repo, ['worktree', 'remove', '--force', arbol]);
+      git(repo, ['worktree', 'prune']);
+    }
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
 /* --------------------------------------------------------------------- CLI */
 
 function opciones(argv) {
@@ -1486,7 +1585,7 @@ function opciones(argv) {
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (['--siguiente', '--check', '--reclamar', '--publicado', '--salud', '--rotar', '--limpiar'].includes(a)) o.modo = a.slice(2);
+    if (['--siguiente', '--check', '--reclamar', '--publicado', '--salud', '--rotar', '--limpiar', '--frontera'].includes(a)) o.modo = a.slice(2);
     else if (a === '--json') o.json = true;
     else if (a === '--relevo') o.relevo = true;
     else if (a === '--borrar') o.borrar = true;
@@ -1574,6 +1673,7 @@ async function main(argv) {
   if (o.modo === 'reclamar') return reclamar({ relevo: o.relevo, sinRed: o.sinRed, horas: o.horas, repo: o.repo });
   if (o.modo === 'salud') return salud({ sinRed: o.sinRed, repo: o.repo });
   if (o.modo === 'limpiar') return limpiar({ borrar: o.borrar, repo: o.repo });
+  if (o.modo === 'frontera') return frontera({ repo: o.repo });
   const p = await publicado();
   console.log(p.linea);
   return p.codigo;

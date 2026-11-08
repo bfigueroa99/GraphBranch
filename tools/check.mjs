@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-/* La puerta antes de subir un cambio: corre en orden node --check, node --test, las traducciones,
-   loop --check, el smoke en Chromium, la auditoría (si el cambio toca la página) y, si el cambio toca la
-   página o la app de escritorio, las e2e. Se detiene en el primer rojo e imprime la línea «Validado:» que
+/* La puerta antes de subir un cambio: corre en orden node --check, node --test, la frontera (loop.mjs
+   --frontera: sin pruebas borradas ni debilitadas, umbrales ni config de la puerta tocados sin declarar),
+   las traducciones, loop --check, el smoke en Chromium, la auditoría (si el cambio toca la página) y, si el
+   cambio toca la página o la app de escritorio, las e2e. Se detiene en el primer rojo e imprime la línea «Validado:» que
    va a la bitácora.
 
      npm run check                  las e2e solo si el diff con origin/dev toca la página o el escritorio
@@ -13,8 +14,8 @@
      npm run check -- --sin-auditar la auditoría nunca
 
    Salida: 0 todo en verde · 1 un paso falló (FALLA <paso> y sus últimas 40 líneas) · 2 no se pudo
-   verificar (sin Chromium, sin Electron o sin pantalla ni xvfb-run). Elige el Chromium solo:
-   PLAYWRIGHT_CHROMIUM_PATH, el de playwright-core, el más nuevo de /opt/pw-browsers o de
+   verificar (sin Chromium, sin Electron, sin pantalla ni xvfb-run, o la frontera sin python3 u origin/dev).
+   Elige el Chromium solo: PLAYWRIGHT_CHROMIUM_PATH, el de playwright-core, el más nuevo de /opt/pw-browsers o de
    PLAYWRIGHT_BROWSERS_PATH, o lo instala. Los logs completos quedan en test-results/check/ (las e2e
    vacían test-results/ al empezar: tras ellas queda solo e2e.log). */
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
@@ -81,7 +82,7 @@ function diff() {
   return [...d.stdout.split('\n'), ...otros.split('\n')].filter(Boolean);
 }
 
-/* 5. el Chromium del smoke y de las e2e */
+/* 6. el Chromium del smoke y de las e2e */
 function chromiumInstalados() {
   const bases = ['/opt/pw-browsers', process.env.PLAYWRIGHT_BROWSERS_PATH].filter(Boolean);
   const rutas = [];
@@ -183,31 +184,40 @@ async function main() {
   if (tests.status !== 0 || nFail > 0 || !nTests) falla('node --test', tests);
   console.log(`ok  node --test ${nTests - nFail}/${nTests} (${dur(tests.ms)})`);
 
-  // 3. traducciones
+  // 3. la frontera: que la puerta siga siendo la de ayer. Rota es un paso en rojo (se arregla el código, o se
+  // declara con «Frontera: <motivo>» en un commit); no evaluada, la puerta sin verificar: nunca se salta
+  const fr = correr('frontera', process.execPath, [join(root, 'tools', 'loop.mjs'), '--frontera']);
+  if (fr.status === 2) sinVerificar(`la frontera no se pudo evaluar: ${fr.salida.trim().split('\n').pop()}`);
+  if (fr.status !== 0) falla('frontera', fr);
+  const declarados = (fr.salida.match(/^\s*⚑ declarado/gm) || []).length;
+  const fronteraTxt = declarados ? `frontera (${declarados} declaración(es) «Frontera:»)` : 'frontera';
+  console.log(`ok  ${fronteraTxt} (${dur(fr.ms)})`);
+
+  // 4. traducciones
   const i18n = correr('i18n', process.execPath, [join(root, 'tools', 'check-i18n.mjs')]);
   const mI18n = /(\d+) idioma\(s\) revisados, (\d+) error\(es\)/.exec(i18n.salida);
   if (i18n.status !== 0 || !mI18n || +mI18n[2] > 0) falla('i18n', i18n);
   console.log(`ok  i18n ${mI18n[1]} idiomas, ${mI18n[2]} errores (${dur(i18n.ms)})`);
 
-  // 4. las reglas del loop
+  // 5. las reglas del loop
   const lp = correr('loop-check', process.execPath, [join(root, 'tools', 'loop.mjs'), '--check']);
   if (lp.status !== 0) falla('loop --check', lp);
   console.log(`ok  loop --check (${dur(lp.ms)})`);
 
-  // 5. el entorno de las pruebas en el navegador (antes del smoke, que tarda 2 minutos)
+  // 6. el entorno de las pruebas en el navegador (antes del smoke, que tarda 2 minutos)
   const ruta = chromium();
   if (pedido(ruta)) console.log(`Chromium: ${ruta}`);
   const entorno = { ...process.env, PLAYWRIGHT_CHROMIUM_PATH: ruta };
   const prefijo = conE2E ? entornoE2E() : [];
 
-  // 6. el smoke
+  // 7. el smoke
   const smoke = correr('smoke', process.execPath, [join(root, 'tools', 'smoke.mjs'), ...(langs ? ['--langs'] : [])], entorno);
   if (smoke.status !== 0) falla('smoke', smoke);
   const pasos = (smoke.salida.match(/✓/g) || []).length;
   const idiomas = (/(\d+) idiomas/.exec(smoke.salida) || [])[1];
   console.log(`ok  smoke ${pasos} pasos${langs ? `, ${idiomas} idiomas` : ''} (${dur(smoke.ms)})`);
 
-  // 7. la auditoría: hallazgos nuevos frente a tools/audit-base.json (falla solo si se repiten en dos corridas)
+  // 8. la auditoría: hallazgos nuevos frente a tools/audit-base.json (falla solo si se repiten en dos corridas)
   let audit = null;
   if (conAudit) {
     const r = correr('auditoria', process.execPath, [join(root, 'tools', 'audit.mjs'), '--puerta'], entorno);
@@ -219,7 +229,7 @@ async function main() {
     console.log(`ok  auditoría ${audit.nuevos} hallazgos nuevos, ${audit.conocidos} conocidos (${dur(r.ms)})`);
   } else console.log(opciones.has('--sin-auditar') ? 'auditoría: saltada por --sin-auditar' : 'auditoría: no corrida (el cambio no toca la página)');
 
-  // 8. las e2e
+  // 9. las e2e
   let e2e = null;
   if (conE2E) {
     const args = [playwrightCli, 'test', ...(opciones.has('--lento') ? [] : ['--grep-invert', '@lento'])];
@@ -232,7 +242,7 @@ async function main() {
 
   const smokeTxt = langs ? `smoke (${idiomas} idiomas)` : 'smoke';
   const auditTxt = audit ? `, auditoría (${audit.nuevos} hallazgos nuevos, ${audit.conocidos} conocidos)` : '';
-  const base = `Validado: ${nTests} pruebas (\`node --test\`), ${smokeTxt}, i18n (${mI18n[2]} errores)${auditTxt}`;
+  const base = `Validado: ${nTests} pruebas (\`node --test\`), ${fronteraTxt}, ${smokeTxt}, i18n (${mI18n[2]} errores)${auditTxt}`;
   console.log(e2e === null ? `${base} en verde; e2e no corridas (${opciones.has('--sin-e2e') ? 'saltadas por --sin-e2e' : 'no toca la página ni el escritorio'}).` : `${base} y ${e2e} e2e en verde.`);
 }
 

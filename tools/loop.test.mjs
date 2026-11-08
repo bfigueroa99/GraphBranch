@@ -13,7 +13,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { ARCHIVO_BITACORA, ARCHIVO_HOJA, ARENA_MAX, AUDITABLES, BASE, CADENCIAS, RELEASE, CRON_H, EJES, FLAGS, HOJA_MAX, HOJA_SIN_FUENTE, LARGOS, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, PROMPT_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SUBTIPOS, appReferencia, check, diagnostico, disparosEntre, matrizReplica, necesidades, ordenHoja, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, rotarHoja, siguiente, tramos } from './loop.mjs';
+import { ARCHIVO_BITACORA, ARCHIVO_HOJA, ARENA_MAX, AUDITABLES, BASE, CADENCIAS, RELEASE, CRON_H, EJES, FLAGS, FRONTERA, GUARDIA, HOJA_MAX, MCP_ESCRITURA, HOJA_SIN_FUENTE, LARGOS, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, PROMPT_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SUBTIPOS, appReferencia, check, diagnostico, disparosEntre, frontera, matrizReplica, necesidades, ordenHoja, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, rotarHoja, siguiente, tramos } from './loop.mjs';
 import { TIPOS } from './audit.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -588,7 +588,9 @@ node tools/esperar.mjs puerta
 [ -x node_modules/.bin/playwright ] || npm ci
 \`\`\`
 `;
-  const SETTINGS = JSON.stringify({ permissions: { allow: ['Bash(git fetch:*)', 'Bash(node:*)', 'Bash(npm run:*)', 'Bash(npm ci)'] } });
+  // la guardia registrada como en .claude/settings.json: sin ella, R8 es un error
+  const PRE_TOOL_USE = [{ matcher: ['Bash', ...MCP_ESCRITURA].join('|'), hooks: [{ type: 'command', command: `python3 "$CLAUDE_PROJECT_DIR/${GUARDIA}"`, timeout: 10 }] }];
+  const SETTINGS = JSON.stringify({ hooks: { PreToolUse: PRE_TOOL_USE }, permissions: { allow: ['Bash(git fetch:*)', 'Bash(node:*)', 'Bash(npm run:*)', 'Bash(npm ci)'] } });
   const PROMPT = 'Seguí la skill `iteracion` del repo (`.claude/skills/iteracion/SKILL.md`).';
   const r8 = (extra) => check(fixture(), { log: LOG, skill: SKILL, prompt: PROMPT, settings: SETTINGS, ...extra });
 
@@ -625,6 +627,21 @@ node tools/esperar.mjs puerta
     const ruta = r8({ opencode: bien + 'Y corré `tools/no-existe.mjs`.\n' });
     assert.equal(nivel(ruta, 'R8'), 'ERROR');
     assert.match(texto(ruta, 'R8'), /iteracion\.md nombra tools\/no-existe\.mjs/);
+  });
+
+  test('settings.json sin la guardia como PreToolUse de Bash y de las escrituras del MCP es un error', () => {
+    const con = (hooks) => r8({ settings: JSON.stringify({ hooks, permissions: JSON.parse(SETTINGS).permissions }) });
+    const sin = con({});
+    assert.equal(nivel(sin, 'R8'), 'ERROR');
+    assert.match(texto(sin, 'R8'), /no registra la guardia \(\.claude\/hooks\/guardia\.py\) en hooks\.PreToolUse/);
+    // registrada solo para Bash: el MCP de GitHub podría escribir en dev o en master
+    const soloBash = con({ PreToolUse: [{ ...PRE_TOOL_USE[0], matcher: 'Bash' }] });
+    assert.equal(nivel(soloBash, 'R8'), 'ERROR');
+    assert.match(texto(soloBash, 'R8'), /sin cubrir mcp__github__push_files, mcp__github__create_or_update_file, mcp__github__delete_file/);
+    // otro hook en PreToolUse no la reemplaza; un matcher vacío o «*» la cubre toda
+    assert.equal(nivel(con({ PreToolUse: [{ matcher: 'Bash', hooks: [{ type: 'command', command: 'echo otro' }] }] }), 'R8'), 'ERROR');
+    assert.equal(nivel(con({ PreToolUse: [{ ...PRE_TOOL_USE[0], matcher: '*' }] }), 'R8'), 'ok');
+    assert.equal(nivel(con({ PreToolUse: [{ hooks: PRE_TOOL_USE[0].hooks }] }), 'R8'), 'ok');
   });
 
   test('un subtipo de mantenimiento sin su protocolo en la skill es un error', () => {
@@ -717,7 +734,7 @@ node tools/esperar.mjs puerta
   test(`find-skills corre npx ${SKILLS_CLI} sin telemetría, solo find, use y add (copiado, al proyecto)`, () => {
     const CLI = `\n\`\`\`sh\nDISABLE_TELEMETRY=1 npx ${SKILLS_CLI} find <consulta>\nDISABLE_TELEMETRY=1 npx ${SKILLS_CLI} use <dueño/repo>@<skill>\nDISABLE_TELEMETRY=1 npx ${SKILLS_CLI} add <dueño/repo> --skill <nombre> -a claude-code --copy -y\n\`\`\`\n`;
     const con = (bloque, settings = SETTINGS) => r8({ skill: SKILL + bloque, settings });
-    const permitido = JSON.stringify({ permissions: { allow: [...JSON.parse(SETTINGS).permissions.allow, `Bash(npx ${SKILLS_CLI}:*)`] } });
+    const permitido = JSON.stringify({ ...JSON.parse(SETTINGS), permissions: { allow: [...JSON.parse(SETTINGS).permissions.allow, `Bash(npx ${SKILLS_CLI}:*)`] } });
     assert.equal(nivel(con(CLI, permitido), 'R8'), 'ok', con(CLI, permitido).salida);
     // sin el permiso es un aviso, no un error: los permisos los decide Benjamin
     assert.equal(nivel(con(CLI), 'R8'), 'aviso');
@@ -1330,6 +1347,185 @@ describe('IMPROVEMENTS.md real', () => {
     if (s.tipo === 'Expansión') assert.ok(EJES.includes(s.eje));
   });
 
+});
+
+/* ------------------------------------------------- la guardia y la frontera */
+
+describe('la guardia y la frontera (el arnés)', () => {
+  const guardia = join(root, GUARDIA);
+  const script = join(root, FRONTERA.script);
+  const python = (args, opciones = {}) => spawnSync('python3', args, { cwd: root, encoding: 'utf8', ...opciones });
+  const sinPython = () => assert.fail('sin python3: la guardia y la frontera lo necesitan (también en npm run check)');
+
+  test('las autopruebas de la guardia y de la frontera, y la config de la frontera, en verde', () => {
+    for (const [args, que] of [
+      [[guardia, '--probar'], /^guardia v\d+: (\d+)\/\1 casos bien$/m],
+      [[script, '--probar'], /^frontera v\d+: (\d+)\/\1 casos bien$/m],
+      [[script, '--validar-config'], /^CONFIG OK$/m],
+    ]) {
+      const r = python(args);
+      if (r.error) sinPython();
+      assert.equal(r.status, 0, `${args.join(' ')}\n${r.stdout}${r.stderr}`);
+      assert.match(r.stdout, que);
+    }
+  });
+
+  test('.claude/settings.json registra la guardia como PreToolUse de Bash (y R8 lo exige: ver «check() R8»)', () => {
+    const ajustes = JSON.parse(readFileSync(join(root, '.claude', 'settings.json'), 'utf8'));
+    const pre = ajustes.hooks.PreToolUse.find((h) => h.hooks.some((x) => x.command === `python3 "$CLAUDE_PROJECT_DIR/${GUARDIA}"`));
+    assert.ok(pre, 'sin el hook de la guardia');
+    for (const t of ['Bash', ...MCP_ESCRITURA]) assert.match(t, new RegExp(`^(?:${pre.matcher})$`));
+    // el SessionStart de siempre sigue ahí
+    assert.ok(ajustes.hooks.SessionStart.some((h) => h.hooks.some((x) => x.command.includes('session-start.sh'))));
+  });
+
+  /** Los `git push` que la skill y el comando de OpenCode le piden escribir a la sesión, con loop/N hecho loop/234. */
+  const pushes = (texto) => [...texto.matchAll(/\bgit push\b[^`\n|;&]*/g)].map((m) => m[0].trim().replace(/\bloop\/N\b/g, 'loop/234'));
+  /** Lo que decide la guardia sobre un comando de Bash, parada en `rama`: 0 pasa, 2 frena. */
+  const decide = (comando, rama = 'loop/234') => {
+    const dir = mkdtempSync(join(tmpdir(), 'guardia-')); // sin .git: el bloqueo no se anota en el repo real
+    try {
+      const r = python([guardia], { input: JSON.stringify({ tool_name: 'Bash', tool_input: { command: comando }, cwd: root }), env: { ...process.env, GUARDIA_RAMA_ACTUAL: rama, CLAUDE_PROJECT_DIR: dir } });
+      if (r.error) sinPython();
+      return r.status;
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  };
+
+  test('cada git push que el protocolo pide escribir pasa la guardia; uno a dev o a master, no', () => {
+    const skill = readFileSync(join(root, '.claude', 'skills', 'iteracion', 'SKILL.md'), 'utf8');
+    const opencode = readFileSync(join(root, '.opencode', 'commands', 'iteracion.md'), 'utf8');
+    const lista = [...new Set([...pushes(skill), ...pushes(opencode)])];
+    // la skill empuja loop/N (con -u, sin refspec parada en loop/N, y lo borra fuera de la nube)
+    assert.ok(lista.length >= 3, lista.join('\n'));
+    for (const c of lista) assert.equal(decide(c), 0, `la guardia frena «${c}», que el protocolo pide`);
+    // la misma comprobación ve una skill que pida empujar a dev a mano: dev está en .claude/hooks/guardia.json
+    const inyectada = pushes(skill + '\n```sh\ngit push origin HEAD:dev\n```\n');
+    assert.equal(decide(inyectada.at(-1)), 2);
+    assert.equal(decide('git push origin master'), 2);
+    assert.equal(decide('git push', 'dev'), 2);
+  });
+
+  test('npm run check corre la frontera después de node --test y antes de las traducciones', () => {
+    const fuente = readFileSync(join(root, 'tools', 'check.mjs'), 'utf8');
+    const i = (re) => fuente.search(re);
+    const paso = i(/correr\('frontera', process\.execPath, \[join\(root, 'tools', 'loop\.mjs'\), '--frontera'\]\)/);
+    assert.ok(paso > 0, 'check.mjs no corre loop.mjs --frontera');
+    assert.ok(i(/correr\('node-test'/) < paso && paso < i(/correr\('i18n'/), 'la frontera va entre node --test y las traducciones');
+    // rota es un paso en rojo y no evaluada, la puerta sin verificar (2): ninguna de las dos se salta
+    assert.match(fuente, /fr\.status === 2\) sinVerificar\(/);
+    assert.match(fuente, /fr\.status !== 0\) falla\('frontera', fr\)/);
+    // y npm run check es esa puerta
+    assert.equal(JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).scripts.check, 'node tools/check.mjs');
+  });
+
+  describe('frontera() en un repositorio temporal', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'frontera-'));
+    const ENV = { ...process.env, GIT_AUTHOR_NAME: 'prueba', GIT_AUTHOR_EMAIL: 'p@p', GIT_COMMITTER_NAME: 'prueba', GIT_COMMITTER_EMAIL: 'p@p' };
+    const git = (args) => {
+      const r = spawnSync('git', args, { cwd: dir, encoding: 'utf8', env: ENV });
+      assert.equal(r.status, 0, `git ${args.join(' ')}: ${r.stderr}`);
+      return r.stdout.trim();
+    };
+    const escribir = (ruta, texto) => {
+      mkdirSync(dirname(join(dir, ruta)), { recursive: true });
+      writeFileSync(join(dir, ruta), texto);
+    };
+    const juzgar = (opciones = {}) => {
+      const lineas = [];
+      const codigo = frontera({ repo: dir, print: (l) => lineas.push(l), ...opciones });
+      return { codigo, salida: lineas.join('\n') };
+    };
+    /** Vuelve a la rama de trabajo en origin/dev, limpia. */
+    const desdeBase = () => {
+      git(['checkout', '-q', '-f', '-B', 'loop/1', 'origin/dev']);
+      git(['clean', '-qfd']);
+    };
+
+    before(() => {
+      git(['init', '-q', '-b', 'dev']);
+      // las reglas de verdad: la copia vendorizada y la config del repo, en origin/dev
+      escribir(FRONTERA.script, readFileSync(script, 'utf8'));
+      escribir(FRONTERA.config, readFileSync(join(root, FRONTERA.config), 'utf8'));
+      escribir('tools/suma.test.mjs', "import { test } from 'node:test';\ntest('suma', () => {});\ntest('resta', () => {});\n");
+      escribir('tools/check.mjs', '// la puerta\n');
+      escribir('js/app.js', 'export const x = 1;\n');
+      git(['add', '-A']);
+      git(['commit', '-q', '-m', 'base']);
+      git(['update-ref', 'refs/remotes/origin/dev', 'HEAD']);
+    });
+    after(() => rmSync(dir, { recursive: true, force: true }));
+
+    test('sin cambios, o con código y pruebas nuevas, está en verde', () => {
+      desdeBase();
+      assert.equal(juzgar().codigo, 0);
+      escribir('js/app.js', 'export const x = 2;\n');
+      escribir('tools/resta.test.mjs', "import { test } from 'node:test';\ntest('otra', () => {});\n");
+      git(['add', '-A']);
+      git(['commit', '-q', '-m', 'código y una prueba nueva']);
+      const r = juzgar();
+      assert.equal(r.codigo, 0, r.salida);
+      assert.match(r.salida, /^Frontera: reglas las de origin\/dev; juzga origin\/dev\.\.\.HEAD$/m);
+      assert.match(r.salida, /^FRONTERA OK$/m);
+    });
+
+    test('una prueba borrada en un commit la rompe (1), aunque el mismo cambio afloje frontera.json', () => {
+      desdeBase();
+      rmSync(join(dir, 'tools', 'suma.test.mjs'));
+      git(['add', '-A']);
+      git(['commit', '-q', '-m', 'fuera la prueba que falla']);
+      const r = juzgar();
+      assert.equal(r.codigo, 1, r.salida);
+      assert.match(r.salida, /✗ prueba borrada: tools\/suma\.test\.mjs/);
+      // juzga con las reglas de origin/dev: sacar las pruebas de la config en la misma rama no la salva
+      const cfg = JSON.parse(readFileSync(join(dir, FRONTERA.config), 'utf8'));
+      escribir(FRONTERA.config, JSON.stringify({ ...cfg, pruebas: ['nada/**'], protegidos: [] }));
+      git(['commit', '-q', '-am', 'la frontera, más corta']);
+      assert.equal(juzgar().codigo, 1);
+    });
+
+    test('también juzga lo sin commitear, sin tocar el índice de la sesión ni dejar worktrees', () => {
+      desdeBase();
+      escribir('tools/suma.test.mjs', "import { test } from 'node:test';\ntest('suma', () => {});\n");
+      const r = juzgar();
+      assert.equal(r.codigo, 1, r.salida);
+      assert.match(r.salida, /y 1 archivo\(s\) sin commitear/);
+      assert.match(r.salida, /✗ menos definiciones de prueba: 2 → 1/);
+      assert.equal(git(['status', '--porcelain']), 'M tools/suma.test.mjs');
+      assert.equal(git(['worktree', 'list', '--porcelain']).split('\n').filter((l) => l.startsWith('worktree ')).length, 1);
+      assert.equal(git(['diff', '--cached', '--name-only']), '');
+    });
+
+    test('tocar la puerta pasa solo declarado con «Frontera: <motivo>» en un commit; lo sin commitear no se declara', () => {
+      desdeBase();
+      escribir('tools/check.mjs', '// la puerta, con un paso más\n');
+      assert.equal(juzgar().codigo, 1);
+      git(['commit', '-q', '-am', 'puerta']);
+      const sin = juzgar();
+      assert.equal(sin.codigo, 1);
+      assert.match(sin.salida, /✗ archivo protegido tocado: tools\/check\.mjs/);
+      git(['commit', '-q', '--amend', '-m', 'Puerta: un paso más\n\nFrontera: META, la puerta suma un paso']);
+      const con = juzgar();
+      assert.equal(con.codigo, 0, con.salida);
+      assert.match(con.salida, /⚑ declarado en [0-9a-f]+: Frontera: META, la puerta suma un paso/);
+    });
+
+    test('sin python3 o sin origin/dev no se evalúa (2), y lo dice: nunca se salta', () => {
+      desdeBase();
+      const sinPy = juzgar({ python: 'python3-que-no-existe' });
+      assert.equal(sinPy.codigo, 2);
+      assert.match(sinPy.salida, /^Frontera no evaluada: sin python3-que-no-existe/m);
+      git(['update-ref', '-d', 'refs/remotes/origin/dev']);
+      try {
+        const sinBase = juzgar();
+        assert.equal(sinBase.codigo, 2);
+        assert.match(sinBase.salida, /^Frontera no evaluada: sin origin\/dev \(git fetch origin \+refs\/heads\/dev:refs\/remotes\/origin\/dev\)$/m);
+      } finally {
+        git(['update-ref', 'refs/remotes/origin/dev', 'dev']);
+      }
+    });
+  });
 });
 
 /* ------------------------------------------------------------- reclamar */

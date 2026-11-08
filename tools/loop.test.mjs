@@ -13,7 +13,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { ARCHIVO_BITACORA, ARCHIVO_HOJA, ARENA_MAX, AUDITABLES, BASE, CADENCIAS, RELEASE, CRON_H, EJES, FLAGS, FRONTERA, GUARDIA, HOJA_MAX, MCP_ESCRITURA, HOJA_SIN_FUENTE, LARGOS, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, PROMPT_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SUBTIPOS, appReferencia, check, diagnostico, disparosEntre, frontera, matrizReplica, necesidades, ordenHoja, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, rotarHoja, siguiente, tramos } from './loop.mjs';
+import { ARCHIVO_BITACORA, ARCHIVO_HOJA, ARENA_MAX, AUDITABLES, BASE, CADENCIAS, RELEASE, CRON_H, CUMPLIMIENTO_N, EJES, FLAGS, FRONTERA, GUARDIA, HOJA_MAX, MCP_ESCRITURA, HOJA_SIN_FUENTE, LARGOS, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, PROMPT_MAX, REBANADO_MAX, REBANADO_N, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SUBTIPOS, appReferencia, check, cumplimiento, diagnostico, disparosEntre, frontera, matrizReplica, necesidades, ordenHoja, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, rotarHoja, siguiente, tramos } from './loop.mjs';
 import { TIPOS } from './audit.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -1240,6 +1240,54 @@ describe('diagnostico() de --salud', () => {
     assert.ok(r.lineas.includes('Para Benjamin (1): 1. Activar Pages (desde 2026-10-12)'), r.lineas.join('\n'));
     assert.ok(r.lineas.some((l) => /^IMPROVEMENTS\.md: \d+ KB \(bitácora \d+ KB\)/.test(l)));
     assert.equal(r.lineas.at(-1), '--salud: 1 acción(es)');
+  });
+
+  /** Un IMPROVEMENTS.md con las iteraciones 1..27 y, desde la 24, las entradas de `ultimas` ({ n, eje, item, cuerpo });
+      `hoja` cambia ítems de la hoja: { k: { e, parte } } (su esfuerzo y de qué ítem es parte). */
+  const conUltimas = (ultimas, hoja = {}) => {
+    const base = iteraciones(27).slice(0, 27 - ultimas.length);
+    const propias = ultimas.map(({ n, eje = 'Fuentes', item, cuerpo = '' }) => entrada({ n, tipo: 'Expansión', eje, cuerpo: `${item ? ` (ítem ${item} de la hoja de ruta)` : ''}${cuerpo}` }));
+    let t = fixture({ entradas: [...base, ...propias] });
+    for (const [k, { e = 2, parte }] of Object.entries(hoja)) t = t.replace(new RegExp(`^(${k}\\. \\*\\*Ítem ${k}\\*\\* · [^·]+?) · 2×2/2\\. `, 'm'), `$1 · 2×2/${e}. ${parte ? `[parte del ítem ${parte}] ` : ''}`);
+    return parse(t);
+  };
+
+  test(`Cumplimiento: de las últimas ${CUMPLIMIENTO_N}, el verificador, el plan en ítems de esfuerzo 3, Skills y Arena`, () => {
+    const doc = conUltimas([
+      { n: 25, item: 10, cuerpo: '\n- Skills: no aplica: una línea más.\n- Arena: no disponible (sin subagentes)\n- OMC: plan=— · revisión=— · verificación=FAIL' },
+      { n: 26, item: 11, cuerpo: '\n- Skills: "webgl" → a/b@c, consultada (el bucle de cuadros)\n- Arena: N 4, seed 7, 2 rondas; ganador a (b), 9 a 7\n- OMC: plan=APPROVE · revisión=2 hallazgos (2 arreglados) · verificación=PASS' },
+      { n: 27, item: 12, cuerpo: '\n- Skills: no aplica: un arreglo.\n- Arena: no aplica: una sola forma obvia.\n- OMC: plan=— · revisión=— · verificación=—' },
+    ], { 10: { e: 3 }, 11: { e: 3 } });
+    // la 25 y la 26 son de esfuerzo 3 y solo la 26 lleva plan; «no aplica», «no disponible» y «—» no cuentan
+    assert.deepEqual(cumplimiento(doc), [`Cumplimiento (últimas ${CUMPLIMIENTO_N}): verificador 2/${CUMPLIMIENTO_N} · plan 1/2 en ítems de esfuerzo 3 · Skills consultadas 1/${CUMPLIMIENTO_N} · Arena 1/${CUMPLIMIENTO_N}`]);
+    assert.equal(cumplimiento(doc, { n: 1 })[0], 'Cumplimiento (últimas 1): verificador 0/1 · plan 0/0 en ítems de esfuerzo 3 · Skills consultadas 0/1 · Arena 0/1');
+    // va en --salud antes de Mantenimiento y no es una Acción
+    const r = diagnostico({ doc, texto: '', desde: '2026-10-10T00:00:00Z', ahora: Date.parse('2026-10-12T00:00:00Z') });
+    const i = r.lineas.findIndex((l) => l.startsWith('Cumplimiento'));
+    assert.ok(i >= 0 && i < r.lineas.findIndex((l) => l.startsWith('Mantenimiento:')), r.lineas.join('\n'));
+    assert.equal(r.acciones, 0);
+    assert.deepEqual(cumplimiento(parse('# Nada\n\n## Bitácora\n')), []);
+  });
+
+  test(`Rebanado: ${REBANADO_MAX} o más de las últimas ${REBANADO_N} capacidades nuevas del mismo ítem es un aviso, no una Acción`, () => {
+    // las 25, 26 y 27: partes del ítem 4 (dos por su ítem de la hoja, una por la entrada, con su ítem ya fuera de la hoja)
+    const ultimas = [
+      { n: 25, item: 10 },
+      { n: 26, item: 11 },
+      { n: 27, item: 99, cuerpo: ', parte del ítem 4' },
+    ];
+    const hoja = { 10: { parte: 4 }, 11: { parte: 4 }, 12: { parte: 5 } };
+    const r = cumplimiento(conUltimas(ultimas, hoja));
+    assert.equal(r.length, 2, r.join('\n'));
+    // el fixture tiene 7 expansiones (de la 20 a la 27, sin la 23 de mantenimiento): menos que REBANADO_N
+    assert.equal(r[1], `Rebanado: 3 de las últimas 7 capacidades nuevas son partes del ítem 4 (ítems 10, 11, 99): riesgo de contar entregas en vez de alcance; al reponer la hoja de ruta, la próxima parte de 4 junta lo que falta o el ítem se da por cubierto`);
+    // dos no alcanzan; y fuera de las últimas REBANADO_N tampoco cuentan
+    assert.equal(cumplimiento(conUltimas(ultimas.slice(1), hoja)).length, 1);
+    assert.equal(cumplimiento(conUltimas(ultimas, hoja), { rebanadoN: 2 }).length, 1);
+    // en --salud, sin Acción
+    const d = diagnostico({ doc: conUltimas(ultimas, hoja), texto: '', desde: '2026-10-10T00:00:00Z', ahora: Date.parse('2026-10-12T00:00:00Z') });
+    assert.ok(d.lineas.some((l) => l.startsWith('Rebanado: 3 de las últimas')));
+    assert.equal(d.acciones, 0);
   });
 });
 

@@ -8,7 +8,8 @@
                                                   reclama la rama loop/N en origin: el push es el candado
      node tools/loop.mjs --publicado              compara la web de GitHub Pages con origin/master (el release)
      node tools/loop.mjs --salud [--sin-red]      la salud del loop: disparos perdidos, reclamos, ramas, issues sin
-                                                  triar, la cola Para Benjamin; cada «Acción:» se atiende
+                                                  triar, cumplimiento de la skill, rebanado de un ítem y la cola
+                                                  Para Benjamin; cada «Acción:» se atiende
      node tools/loop.mjs --rotar [--repo <dir>]   deja las últimas entradas de la bitácora en IMPROVEMENTS.md y
                                                   lleva las demás a docs/BITACORA.md, y los ítems hechos de la
                                                   hoja de ruta a docs/HOJA.md
@@ -145,7 +146,7 @@ node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la s
 node tools/loop.mjs --reclamar [--relevo] [--sin-red] [--horas ${RECLAMO_H}] [--repo <dir>]
                                              reclama la rama loop/N en origin: el push es el candado
 node tools/loop.mjs --publicado              compara la web de GitHub Pages con origin/${RELEASE} (el release)
-node tools/loop.mjs --salud [--sin-red]      disparos perdidos, reclamos, ramas, issues sin triar y Para Benjamin
+node tools/loop.mjs --salud [--sin-red]      disparos perdidos, reclamos, ramas, issues sin triar, cumplimiento, rebanado y Para Benjamin
 node tools/loop.mjs --rotar [--repo <dir>]   deja las últimas ${ROTAR_DEJA} entradas de la bitácora y lleva las demás a ${ARCHIVO_BITACORA},
                                              y los ítems hechos de la hoja de ruta a ${ARCHIVO_HOJA}
 node tools/loop.mjs --limpiar [--borrar] [--repo <dir>]
@@ -1195,6 +1196,57 @@ export function disparosEntre(a, b, cadencias = CADENCIAS) {
   return total;
 }
 
+/** Las iteraciones que mira la línea «Cumplimiento» de --salud: lo que la skill pide en cada una y no frena nada si
+    se salta (medido el 2026-11-08 sobre la bitácora entera: la arena corrió en 0 de 122 iteraciones, find-skills en
+    0 de 96, el plan por consenso en 0 de 56 ítems grandes; el verificador, en 17 de las últimas 20). Sin la cifra a
+    la vista, «no aplica» se vuelve la respuesta por defecto sin que nadie lo note. */
+export const CUMPLIMIENTO_N = 20;
+/** El aviso de rebanado de --salud: si de las últimas REBANADO_N capacidades nuevas REBANADO_MAX o más son entregas
+    del mismo ítem («[parte del ítem K]»), el loop puede estar contando capacidades en vez de alcance (Goodhart:
+    cada rebanada fina suma una iteración «de expansión» y el ítem grande no se termina). */
+export const REBANADO_N = 10;
+export const REBANADO_MAX = 3;
+const RE_OMC = /^- OMC:\s*/;
+const RE_ITEM_DE_LA_HOJA = /\(ítem (\d+) de la hoja de ruta/;
+const RE_PARTE = /\[parte del ítem (\d+)\]/;
+
+/** Las líneas de cumplimiento de --salud (puras): cuántas de las últimas `n` iteraciones registran el verificador
+    de OMC, Skills consultadas y la arena corrida, y cuántas expansiones de un ítem de esfuerzo 3 (las que la skill
+    manda a plan por consenso) llevan su plan; y el aviso de rebanado si toca. Una viñeta que dice «no aplica» o «no
+    disponible», o un `—` en la de OMC, no cuenta como hecho. */
+export function cumplimiento(doc, { n = CUMPLIMIENTO_N, rebanadoN = REBANADO_N, rebanadoMax = REBANADO_MAX } = {}) {
+  const its = doc.bitacora.filter((e) => e.n !== null).sort((a, b) => a.n - b.n);
+  const ultimas = its.slice(-n);
+  if (!ultimas.length) return [];
+  const hoja = new Map(doc.hoja.map((it) => [it.n, it]));
+  const itemDe = (e) => +(RE_ITEM_DE_LA_HOJA.exec(e.cuerpo) || [])[1] || null;
+  const omc = (e) => vineta(e.cuerpo, RE_OMC) ?? '';
+  const hecha = (e, nombre) => {
+    const v = vineta(e.cuerpo, new RegExp(`^- ${nombre}:\\s*`));
+    return !!v && !/^no (aplica|disponible)\b/i.test(v);
+  };
+  const verificadas = ultimas.filter((e) => /verificación=(PASS|FAIL|INCOMPLETE)\b/.test(omc(e))).length;
+  const grandes = ultimas.filter((e) => e.tipo === 'Expansión' && hoja.get(itemDe(e))?.puntaje?.e === 3);
+  const conPlan = grandes.filter((e) => /plan=(APPROVE|ITERATE|REJECT)\b/.test(omc(e))).length;
+  const skills = ultimas.filter((e) => hecha(e, 'Skills')).length;
+  const arena = ultimas.filter((e) => hecha(e, 'Arena')).length;
+  const lineas = [`Cumplimiento (últimas ${ultimas.length}): verificador ${verificadas}/${ultimas.length} · plan ${conPlan}/${grandes.length} en ítems de esfuerzo 3 · Skills consultadas ${skills}/${ultimas.length} · Arena ${arena}/${ultimas.length}`];
+  // el rebanado: de qué ítem es parte cada una de las últimas capacidades nuevas (su ítem de la hoja lo dice con
+  // «[parte del ítem K]»; si el ítem ya no está, la entrada de la bitácora, «parte del ítem K»)
+  const capacidades = its.filter((e) => e.tipo === 'Expansión').slice(-rebanadoN);
+  const partes = new Map();
+  for (const e of capacidades) {
+    const k = itemDe(e);
+    const cabeza = e.cuerpo.split('\n').find((l) => l.startsWith('- ')) ?? '';
+    const m = RE_PARTE.exec(hoja.get(k)?.texto ?? '') || /parte del ítem (\d+)/.exec(cabeza);
+    if (m) partes.set(+m[1], [...(partes.get(+m[1]) ?? []), k ?? e.n]);
+  }
+  for (const [padre, hijos] of [...partes].sort((a, b) => b[1].length - a[1].length || a[0] - b[0])) {
+    if (hijos.length >= rebanadoMax) lineas.push(`Rebanado: ${hijos.length} de las últimas ${capacidades.length} capacidades nuevas son partes del ítem ${padre} (ítems ${hijos.join(', ')}): riesgo de contar entregas en vez de alcance; al reponer la hoja de ruta, la próxima parte de ${padre} junta lo que falta o el ítem se da por cubierto`);
+  }
+  return lineas;
+}
+
 /** La salud del loop con los datos ya reunidos (pura: la prueban las pruebas). Devuelve las líneas y
     cuántas son «Acción:», lo que la sesión tiene que atender antes de seguir.
       merges: [{ fecha (ms), titulo }] de origin/dev · ramas: [{ nombre, fecha (ms), contenida, pr }] de origin
@@ -1270,6 +1322,8 @@ export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], 
   // lo que va antes que todo y lo que solo puede hacer Benjamin
   const altas = doc.mantenimiento.filter((p) => p.alta);
   if (altas.length) accion(`${altas.length} pendiente(s) Alta en Mantenimiento: van antes que todo (${altas.map((p) => p.n).join(', ')})`);
+  // lo que la skill pide y no frena nada si se salta, y el rebanado fino de un ítem
+  lineas.push(...cumplimiento(doc));
   lineas.push(`Mantenimiento: ${PRIORIDADES.map((pr) => `${doc.mantenimiento.filter((p) => p.prioridad === pr).length} ${pr}`).join(', ')}`);
   lineas.push(`Para Benjamin (${doc.benjamin.length}): ${doc.benjamin.map((b) => `${b.n}. ${corta(b.texto.replace(/\*\*/g, '').split('. ')[0], 70)}`).join(' · ') || 'nada'}`);
   const kb = (t) => Math.round(Buffer.byteLength(t) / 1024);

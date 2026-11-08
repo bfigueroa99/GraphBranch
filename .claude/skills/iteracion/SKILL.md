@@ -70,8 +70,12 @@ clon sigue superficial, `--check` lo avisa en R3 y `--salud` y `--reclamar` lo c
   (`--reclamar` ya lo elige). Las `loop/K` ya fusionadas salen en una sola línea y no son una Acción: la
   sesión no las borra (en la nube el proxy niega el push `--delete`) ni lo anota; son de Benjamin (Para
   Benjamin). `En cola: loop/K` es una iteración reclamada antes de su turno: no se toca, se reanuda cuando
-  le toque (código 4). Las líneas `Cadencia`, `Hueco` y `Para Benjamin` van al resumen; un hueco nuevo de
-  más de un día va a Para Benjamin.
+  le toque (código 4). Las líneas `Cadencia`, `Hueco`, `Cumplimiento` y `Para Benjamin` van al resumen; un
+  hueco nuevo de más de un día va a Para Benjamin. `Cumplimiento` cuenta, de las últimas iteraciones, cuántas
+  registran el verificador, el plan en los ítems de esfuerzo 3, Skills consultadas y la arena: un «no aplica»
+  que se repite siempre se mira. Una línea `Rebanado` (3 o más de las últimas capacidades nuevas son partes
+  del mismo ítem) va al resumen y, al reponer la hoja de ruta, la próxima parte de ese ítem junta lo que falta
+  o el ítem se da por cubierto.
 - `node --test` en rojo sin haber tocado nada: `dev` está en rojo. Se repite una vez; si sigue, la
   iteración pasa a arreglarlo (como un pendiente Alta, `[Errores]` o `[Deuda]`) y lo dice la bitácora.
 - La Routine: `mcp__claude-code-remote__list_triggers` y `get_trigger` (de lectura) dan su prompt; si no

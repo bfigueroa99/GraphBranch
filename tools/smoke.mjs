@@ -1180,6 +1180,8 @@ console.log('Escritorio (1280×800)');
     await page.evaluate(() => document.activeElement?.blur());
     // la demo trae actividad cada 3 a 7 s y un aviso común dura 6: se espera a tener dos a la vez
     await page.waitForFunction(() => document.querySelectorAll('#toasts .toast:not(.leaving)').length >= 2, null, { timeout: T(45000) });
+    // el aviso de atrás se pliega con una transición de max-height (0,25 s): bajo carga se medía a medio plegar
+    await page.waitForFunction(() => [...document.querySelectorAll('#toasts .toast:not(.leaving)')].every((t) => t.dataset.depth === '0' || t.getBoundingClientRect().height <= 20), null, { timeout: T(2000) }).catch(() => {});
     const deck = await page.evaluate(() => {
       const ts = [...document.querySelectorAll('#toasts .toast:not(.leaving)')];
       return { depths: ts.map((t) => t.dataset.depth), back: ts.filter((t) => t.dataset.depth !== '0').map((t) => Math.round(t.getBoundingClientRect().height)), front: Math.round(ts.find((t) => t.dataset.depth === '0')?.getBoundingClientRect().height || 0) };
@@ -1734,9 +1736,15 @@ console.log('Escritorio (1280×800)');
     // se avanza hasta él, y sus cambios son los de verdad
     for (let i = 0; i < 6 && (await page.textContent('#diff-panel .df-msg')) !== opened.msg; i++) {
       await page.waitForFunction(() => !document.querySelector('#diff-panel .df-newer').disabled, null, { timeout: T(5000) });
+      const was = await page.textContent('#diff-panel .df-msg');
       await page.focus('#diff-panel .df-newer');
       await page.keyboard.press('Enter');
-      await page.waitForTimeout(200);
+      // una señal y no 200 ms: bajo carga el commit siguiente tarda en cargar, y un segundo Enter sobre el panel a
+      // medio cambiar se pasaba del commit buscado (el panel queda en uno más nuevo y el mensaje nunca coincide)
+      await page.waitForFunction((w) => {
+        const m = document.querySelector('#diff-panel .df-msg')?.textContent;
+        return m && m !== w && !document.querySelector('#diff-panel.loading');
+      }, was, { timeout: T(5000) });
     }
     await page.waitForFunction((m) => document.querySelector('#diff-panel .df-msg')?.textContent === m, opened.msg, { timeout: T(5000) });
     await page.waitForSelector('#diff-panel:not(.loading) .df-file .dl-add', { timeout: T(5000) });

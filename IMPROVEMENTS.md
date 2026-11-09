@@ -269,12 +269,7 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 
 131. **Issues de Jira y Trello, primera entrega** · Fuentes · 1×2/3. [replica 2026-10-28] [parte de «Issues de Jira y Trello»] Las claves tipo `ABC-123` de los mensajes de commit y de PR se vuelven enlaces a una URL de Jira que el usuario configura (guardada en este navegador), sin consultas nuevas. Comprobar: prueba del reconocimiento de claves y un paso del smoke.
 ~~**Blame de un archivo, segunda entrega**~~ hecho en #236 · Datos.
-153. ~~**Estado de los despliegues, primera entrega**~~ hecho en #293 · Datos · 1×2/2. [inv. 2026-10-13] [parte del mapa: Datos] El panel de salud dice el estado del último despliegue de cada entorno de GitHub (producción, preview…) con lo que ya trae la carga de despliegues, sin consultas nuevas. Comprobar: `tools/health.test.mjs` con despliegues fabricados.
-154. ~~**Resumen de la semana de la organización: issues cerrados**~~ hecho en #298 · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] El resumen de la semana de una organización suma los issues cerrados de cada repo seguido, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
-155. ~~**Extensión de Chrome y Firefox: GitLab, Codeberg y Bitbucket**~~ hecho en #302 · Plataformas · 1×2/2. [parte del ítem 149] El botón «Abrir en GraphBranch» también aparece en las páginas de un proyecto de gitlab.com, codeberg.org y bitbucket.org, con el repo armado como `?repo=https://…`, sin más permisos que los hosts de esas páginas. Comprobar: `tools/browser-extension.test.mjs` con URL de las tres plataformas.
-157. ~~**Launchpad: fijar un PR arriba**~~ hecho en #303 · Escala · 1×2/2. [replica 2026-10-28] [parte de «Launchpad: fijar y posponer PRs e issues»] Cada PR del Launchpad de la vista conjunta se puede fijar arriba de su grupo; lo fijado se guarda en este navegador (por repo y número, sin títulos) y se suelta con el mismo botón. Comprobar: `node --test` del orden con PRs fijados y un paso del smoke.
 158. **Launchpad: filtrar por persona** · Escala · 1×2/2. [replica 2026-10-28] [parte de «Launchpad: vista de equipo filtrada por colaborador»] El Launchpad de la vista conjunta se filtra por autor del PR (las personas que ya salen en él), con lo ya cargado y sin consultas. Comprobar: `node --test` del filtro con PRs fabricados de dos autores.
-159. ~~**CI de GitLab en el resto de las ramas**~~ hecho en #305 · Datos · 1×2/2. [inv. 2026-10-13] [parte del ítem 152] El estado del último pipeline llega también a las ramas que no son la por defecto, las fijadas ni las de una MR abierta, hasta un tope por ciclo y solo con el proyecto visible. Comprobar: `tools/gitlab.test.mjs` con la API simulada (cuántas consultas por ciclo).
 160. **Token para un Forgejo o Gitea propio** · Fuentes · 1×2/2. [inv. 2026-10-13] [parte del ítem 36] Un token aparte, atado al servidor de `?forge=` / `--forge-url` (como el de Bitbucket Data Center), para ver sus repos privados; solo va a ese host. Comprobar: `node --test` con la API simulada (el token sale solo hacia ese servidor) y un paso del smoke.
 161. **Resumen de la semana de la organización: quién fusionó** · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] El resumen de la semana de una organización suma quién fusionó los PRs de cada repo seguido (hasta 5 cuentas), con lo ya cargado. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
 163. **Práctica: stash -u** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 16] `stash -u` aparta también los archivos sin seguir y `stash pop` los devuelve; sin `-u` se quedan. Comprobar: `node --test tools/gitsim.test.mjs` con un archivo de `touch --new`.
@@ -282,9 +277,7 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 166. **Launchpad: posponer un PR** · Escala · 1×2/2. [replica 2026-10-28] [parte de «Launchpad: fijar y posponer PRs e issues»] Cada PR del Launchpad de la vista conjunta se puede posponer (baja al final de la lista hasta que pase un día) y se recuerda en este navegador. Comprobar: `node --test` del orden con PRs fabricados y un paso del smoke.
 167. **Salud del repo: tendencia de estrellas** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del mapa: Análisis] El panel de salud compara las estrellas nuevas de la semana con las de la anterior, con lo ya cargado y sin consultas nuevas. Comprobar: `node --test tools/health.test.mjs` con estrellas fabricadas.
 173. **Práctica: rm y mv** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 16] En la práctica de git, `rm <archivo>` borra un archivo que git sigue y deja el borrado preparado (`rm --cached` lo deja sin seguir), `mv vieja nueva` lo renombra preparado, y `add -A` prepara también los borrados hechos a mano. Comprobar: `node --test tools/gitsim.test.mjs` (qué muestra `status` y qué guarda el commit tras `rm`, `rm --cached` y `mv`).
-174. ~~**Constelación: cuánto hace el último commit**~~ hecho en #297 · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] Cada galaxia de la constelación dice, junto a sus commits y ramas, cuánto hace de su commit más reciente ya cargado («hace 3 h», con el formato relativo que ya usa la app y en los 40 idiomas; nada si carga o está vacía), sin consultas nuevas, y el lector de pantalla lo lee en el nombre de la galaxia. Comprobar: `node --test tools/constellation.test.mjs` y un paso del smoke.
 175. **Estado de los despliegues, segunda entrega** · Datos · 1×2/2. [parte del ítem 153] El panel de salud suma si el último despliegue de cada entorno de GitHub salió bien, falló o sigue en curso (`/deployments/:id/statuses`, una consulta por entorno, solo con el panel abierto y no más de una cada 15 minutos). Comprobar: `tools/github.test.mjs` con la API simulada (cuántas consultas y solo con el panel abierto).
-176. ~~**Constelación: las galaxias quietas, tenues**~~ hecho en #299 · Escala · 1×2/1. [inv. 2026-10-13] [parte del ítem 26] La galaxia de un repo cuyo commit más reciente ya cargado tiene más de 30 días se dibuja tenue y su nombre accesible lo dice («sin actividad hace más de 30 días», como las ramas quietas de la vista de texto), con lo ya cargado y sin consultas nuevas; las que cargan o están vacías no cambian. Comprobar: `node --test tools/constellation.test.mjs` y un paso del smoke.
 ~~**Constelación: ordenar por PRs abiertos**~~ hecho en #247 · Escala.
 ~~**Constelación: solo los repos con actividad reciente, en la URL**~~ hecho en #239 · Escala.
 
@@ -434,133 +427,6 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 ## Bitácora
 
 Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las lleva `node tools/loop.mjs --rotar`); el loop lee las dos.
-
-### 2026-11-06 · Iteración 226 · Expansión · Público
-
-- **Capacidad nueva: `commit` de solo lo preparado en la práctica de git** (ítem 162 de la hoja de ruta, parte del ítem 16). `commit` se lleva lo preparado con `add` y deja lo cambiado sin preparar fuera; con cambios sin preparar y nada preparado se niega como git («no changes added to commit (use "git add" and/or "git commit -a")»); `-a`, `--all` y `-am` se llevan todo lo cambiado, nunca lo sin seguir; `--amend`, el commit que cierra una fusión a medias y `cherry-pick`/`revert --continue` siguen la misma regla. Cada commit anota sus archivos (`files`) y la salida dice « N file(s) changed». Con el árbol limpio el commit sigue pudiendo ir vacío (los ejercicios lo usan). Ejercicio 11 «Commit de solo lo preparado» (`?practice=11`): de `login.js` y `debug.js` cambiados, un commit con solo `login.js` preparado con `add`; título y meta en los 40 idiomas.
-- **Pruebas que fallan sin la capacidad:** `node --test tools/gitsim.test.mjs` («commit guarda solo lo preparado; con -a, todo lo cambiado…», «el ejercicio de commit parcial no se resuelve con commit -a ni sin add», «cada ejercicio parte sin resolver…» y «los números de la URL…» con `?practice=11`) → fallan sin el cambio (el commit sin `add` pasa y se lleva todo; no hay ejercicio 11). Tres asserts viejos que daban por hecho que `commit` se llevaba todo pasan a la semántica nueva (`--amend -a`, `commit -am`), sin aflojar lo que miran.
-- README: Aprender git (el `commit` nuevo, once ejercicios, `?practice=1` a `11`, pruebas) y Límites conocidos (commit vacío con el árbol limpio, `reset --soft` no vuelve a preparar, banderas pegadas que no se admiten, enlaces de ejercicios propios viejos que hacían `touch` y `commit` sin `add`).
-- QA: terminal y ejercicio cubiertos por `node --test`; 40 idiomas con `check-i18n` (0 errores); smoke (los pasos de práctica siguen en verde), auditoría y e2e en la puerta.
-- Skills: no aplica: una regla más en un intérprete que ya existe, con lo ya cargado; lo cubren las reglas del repo.
-- Arena: no aplica: una sola forma obvia (el commit toma la lista de preparados que ya existe).
-- OMC: plan=— · revisión=6 hallazgos, 1 MEDIUM y 5 LOW (4 arreglados: `--continue` perdía lo no preparado, el ejercicio se resolvía sin `add`, `-m "-am"`, la razón de la negativa primero; 2 documentados en Límites conocidos: `reset --soft` y las banderas pegadas) · verificación=PASS (criterios del ítem contra la puerta y las pruebas)
-- Hoja de ruta: repuesta a 15 con el ítem 169 (Práctica: `add -u`, otra parte del ítem 16).
-- Reclamo: loop/226, sin colisión
-- Validado: 600 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 227, mantenimiento · QA: pendiente 11 (A 320 px el panel de salud se desborda hacia la derecha (28 px; 46 en tamil): l…)
-
-### 2026-11-06 · Iteración 227 · Mantenimiento · QA
-
-- **Arreglo: el panel de salud ya no se desborda a 320 px** (pendiente 11). `.tr-wrap` (el contenedor del diálogo), `.hl-body` y `.hl-list` eran cuadrículas de una columna automática, que toma el ancho mínimo de su contenido (272 px de las filas, 290 en tamil) aunque el diálogo ofrezca 244: el panel se deslizaba de lado y cortaba la cabecera, los contadores y la edad de los forks. Las tres pasan a `grid-template-columns: minmax(0, 1fr)`, como ya hace `#agents-body`; las filas ya cortaban su texto con puntos suspensivos (`.hl-main`).
-- **Reproducción:** Playwright, 320×640, `?lang=es&health=1` → `#health .tr-wrap` con `scrollWidth` 312 y `clientWidth` 284 (en tamil, 330); con el arreglo, 284 y 284 en español, tamil y árabe.
-- **Pruebas que fallan sin el arreglo:** el paso nuevo del smoke «a 320 px el panel de salud no se desborda hacia el lado (en español y en tamil)» y `node --test tools/health.test.mjs` («el panel de salud tiene una columna que puede encogerse…»).
-- **Hallazgos:** ninguno nuevo; la iteración cerró el pendiente 11 sin auditoría completa (el pendiente trae su reproducción).
-- README: sin cambios (un arreglo de CSS sin función nueva ni límite nuevo).
-- QA: panel de salud a 320 px en es, ta y ar con Playwright; el resto lo cubre la puerta; auditoría en la puerta.
-- Skills: no aplica: un arreglo de CSS de una regla; lo cubren las reglas del repo.
-- Arena: no aplica: una sola forma obvia (la columna `minmax(0, 1fr)` que el repo ya usa en `#agents-body`).
-- OMC: plan=— · revisión=3 hallazgos LOW (0 arreglados: la regla repetida de `#agents-body`, la prueba que busca el texto del CSS y el viewport del smoke sin `finally`; quedan como están, sin efecto) · verificación=—
-- Reclamo: loop/227, sin colisión
-- Validado: 601 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 228, expansión: ítem 168 (Constelación: ordenar por estrellas, Escala)
-
-### 2026-11-06 · Iteración 228 · Expansión · Escala
-
-- **Capacidad nueva: la constelación ordenada por estrellas** (ítem 168 de la hoja de ruta, parte del ítem 26). El selector de orden suma «Estrellas» (más estrellas primero; empata por el orden de las pestañas) y `?order=stars` abre la constelación ya ordenada así. El total sale de la consulta del repo que cada fuente ya hacía al abrirlo, sin consultas nuevas: `stargazers_count` en GitHub, `star_count` en GitLab y `stars_count` en Forgejo/Gitea/Codeberg, guardado como `repo.stars`; `GB.constellation.starsOf` lo lee (nunca negativo, `null` sin dato). Bitbucket, Azure DevOps, los repos locales y la demo no lo dan: cuentan como 0. Clave nueva `constellation.orderStars` en los 40 idiomas.
-- **Pruebas que fallan sin la capacidad:** `node --test tools/constellation.test.mjs` («el orden…»: `sortItems(…, 'stars')` deja el orden de las pestañas y `orderParam('STARS')` da `null`; «estrellas con lo ya cargado…» → `TypeError`: `starsOf` no existe), `tools/github.test.mjs`, `tools/gitlab.test.mjs` y `tools/codeberg.test.mjs` (el total sale de la consulta del repo: 5 pruebas en rojo sin el cambio) y el paso del smoke de la constelación por estrellas (tres repos simulados con 50, 0 y 7 estrellas: `o/a o/c o/b`, y el anuncio «Ordenadas por Estrellas»).
-- README: Constelación (el orden nuevo y `?order=stars`) y Límites conocidos (el total no se refresca con el repo abierto; las fuentes sin el dato cuentan como 0).
-- QA: constelación con el selector y el anuncio en la región viva por el smoke; 40 idiomas con `check-i18n` (0 errores); auditoría y e2e en la puerta.
-- Skills: no aplica: un orden más en un selector que ya existe, con un campo de una consulta que ya se hacía; lo cubren las reglas del repo.
-- Arena: no aplica: una sola forma obvia (el mismo camino que el orden por issues abiertos, con el total que ya da la API).
-- Hoja de ruta: repuesta a 15 con el ítem 170 (Constelación: ordenar por forks, otra parte del ítem 26).
-- OMC: plan=— · revisión=2 hallazgos LOW (1 arreglado: el comentario de `starsOf` nombra todas las fuentes sin el dato; el otro, el número del PR provisional, se confirma al abrirlo) · verificación=PASS
-- Reclamo: loop/228, sin colisión
-- Validado: 602 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 229, expansión: ítem 169 (Práctica: add -u, Público)
-
-### 2026-11-06 · Iteración 229 · Expansión · Público
-
-- **Capacidad nueva: `add -u` en la práctica de git** (ítem 169 de la hoja de ruta, parte del ítem 16). `add -u` (o `--update`) prepara solo lo cambiado que git ya sigue y deja fuera los archivos sin seguir de `touch --new`, que `add .` sí prepara. Sin rutas o con `.` toma todo el árbol; con rutas, solo las cambiadas que git sigue: un archivo sin seguir nombrado se queda fuera sin error (como git) y una ruta que no existe da `fatal: pathspec`. Sin nada cambiado no prepara nada ni falla. La ayuda de la terminal suma la línea de `add -u` (en inglés, como la salida de git; sin claves nuevas de interfaz).
-- **Pruebas que fallan sin la capacidad:** `node --test tools/gitsim.test.mjs` («add -u prepara solo lo cambiado que git sigue; add . también lo sin seguir») → sin el cambio `add -u` responde «Nothing specified, nothing added.» y no prepara `a.txt`.
-- README: Aprender git (`add -u`/`--update` en la lista de comandos y en Pruebas) y Límites conocidos (`add` admite `-u`, no `-A`; un archivo sin seguir con `-u` queda fuera sin aviso).
-- QA: terminal de práctica cubierta por `node --test` (con `status`, `commit` y `help` después de `add -u`); los pasos de práctica del smoke siguen en verde; auditoría y e2e en la puerta.
-- Skills: no aplica: una bandera más en un intérprete que ya existe; lo cubren las reglas del repo.
-- Arena: no aplica: una sola forma obvia (pasar a lo preparado la lista de cambiados que ya existe, sin los sin seguir).
-- OMC: plan=— · revisión=4 hallazgos LOW (0 arreglados: una condición redundante en la validación de rutas, `-uv` pegado que no se admite —como las demás banderas pegadas, ya en Límites conocidos—, y dos que ya tenía `add`: rutas de directorio y archivos sin cambios nombrados) · verificación=PASS
-- Hoja de ruta: repuesta a 15 con el ítem 171 (Práctica: `add -A`, otra parte del ítem 16).
-- Reclamo: loop/229, sin colisión
-- Validado: 603 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 230, expansión: ítem 170 (Constelación: ordenar por forks, Escala)
-
-### 2026-11-06 · Iteración 230 · Expansión · Escala
-
-- **Capacidad nueva: la constelación se ordena por forks** (ítem 170 de la hoja de ruta, parte del ítem 26). El selector de orden suma «Forks» (entre estrellas y ramas nuevas) y `?order=forks` abre la constelación así; reordena también el recorrido con Tab y se anuncia a los lectores de pantalla. El total sale de la consulta del repo que ya se hace al abrirlo (`forks_count` en GitHub, GitLab, Gitea, Forgejo y Codeberg), sin consultas nuevas; Bitbucket, Azure DevOps, los repos locales y la demo no lo dan y cuentan como 0. La etiqueta nueva (`constellation.orderForks`) va en los 40 idiomas.
-- **Pruebas que fallan sin la capacidad:** `node --test tools/constellation.test.mjs tools/github.test.mjs tools/gitlab.test.mjs tools/codeberg.test.mjs` → sin el cambio fallan 5 (el orden `forks`, `forksOf` y el total de forks de las tres fuentes); el smoke ordena tres repos simulados por forks (`o/b o/a o/c`, distinto del orden por estrellas) con el anuncio en español y abre `?order=forks` con el selector de acuerdo.
-- README: Constelación (forks en el selector y `?order=forks`) y Límites conocidos (el total de forks, como el de estrellas, no se refresca con el repo abierto y falta en Bitbucket, Azure, locales y demo).
-- QA: constelación con el selector y `?order=` cubierta por el smoke (orden, anuncio sin claves crudas, selector al abrir); auditoría y e2e en la puerta.
-- Skills: no aplica: un orden más en un selector que ya existe, con el mismo patrón que el de estrellas; lo cubren las reglas del repo.
-- Arena: no aplica: una sola forma obvia (el total de la consulta del repo que ya se hace, como las estrellas).
-- OMC: plan=— · revisión=5 hallazgos LOW (3 arreglados: la etiqueta en zh-Hant, el apóstrofo en turco y el paréntesis de más en hebreo y árabe, más una nota en el JSDoc de `forksOf`; quedan sin cambio el aviso de que GitHub cuenta solo los forks directos y otra palabra en zh-Hant) · verificación=PASS
-- Hoja de ruta: repuesta a 15 con el ítem 172 (Constelación: ordenar por último commit, otra parte del ítem 26).
-- Reclamo: loop/230, sin colisión
-- Validado: 604 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 231, mantenimiento · Rendimiento: pendiente 12 (`placeLabels` (`js/graph3d.js`) crea por cuadro un `{x, y}` por `project()`, un…)
-
-### 2026-11-06 · Iteración 231 · Mantenimiento · Rendimiento
-
-- **Arreglo: `placeLabels` del 3D ya no deja basura por cuadro** (pendiente 12). `project()` devuelve un punto compartido (`projOut`) en vez de un `{x, y}` nuevo por llamada (sus nueve llamadores en `js/graph3d.js` y `js/galaxy.js` copian x e y en el acto; el JSDoc lo dice); las candidatas de las etiquetas de rama salen de un pool que se reusa (y suelta las ramas que ya no están); la grilla de choques pasa a métodos (`gridReset`, `gridRect`, `gridHits`, `gridAdd`) con su `Map` y sus celdas vivas entre cuadros, sin los cierres por cuadro, y los rectángulos de fechas y de notas (`placeNotes`) salen de otro pool. Mismas condiciones de choque, márgenes y orden.
-- **Reproducción:** Playwright, `?repo=acme/web` con 1.000 ramas en 3D, `placeLabels` llamado 2.000 veces seguidas sobre la misma instancia (la mejor de 5) → 0,0170 y 0,0142 ms por llamada sin el arreglo; 0,0145 y 0,0138 con él (mediana 0,0187 → 0,0161). La envoltura por cuadro del pendiente ya no lo distingue: 0,2 ms en las dos versiones, en el límite del reloj.
-- **Pruebas que fallan sin el arreglo:** `node --test tools/rendimiento.test.mjs` («placeLabels no deja basura por cuadro…») → falla sin el cambio (`project() no crea un objeto por llamada`).
-- README: no cambia (sin función nueva ni límite nuevo).
-- QA: 3D con 1.000 ramas antes y después (mismas 33 etiquetas a la vista, sin errores de consola); `--comparar` contra la base: carga 1581 → 1520 ms (−4 %), tareas largas 963 → 824 ms (−14 %), 3D 11,7 → 12,2 fps, 2D 52,7 → 52,6 fps, 10 consultas, ninguna medida peor; auditoría completa 0 hallazgos antes y después.
-- Skills: no aplica: reusar objetos en un camino caliente propio; lo cubren las reglas del repo.
-- Arena: no aplica: una sola forma obvia (la que el pendiente describe: el punto compartido y pools).
-- OMC: plan=— · revisión=5 hallazgos, 1 MEDIUM y 4 LOW (2 arreglados: la prueba prometía más de lo que mira sobre quién retiene el punto, y el corte del fuente dependía del orden de los métodos; quedan sin cambio, por despreciables, las celdas vacías tras achicar la ventana, el pool que retiene las ramas del último cuadro hasta el siguiente, y `near` de `placeNotes`, que sigue creando un `{ it, d2 }` por commit cercano) · verificación=PASS
-- Reclamo: loop/231, sin colisión
-- Validado: 605 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 232, expansión: ítem 171 (Práctica: add -A, Público)
-
-### 2026-11-06 · Iteración 232 · Expansión · Público
-
-- **Capacidad nueva: `add -A` en la práctica de git** (ítem 171 de la hoja de ruta, parte del ítem 16). `add -A` (o `--all`) prepara todo, lo cambiado y los archivos sin seguir de `touch --new`, como `add .` y a diferencia de `add -u`: sin rutas toma todo el árbol y con rutas solo esas (una que no existe da `fatal: pathspec`). Junto a `-u`, también pegadas (`-Au`, `-uA`), se niega con el mensaje de git (`options '-A' and '-u' cannot be used together`). De paso, `add .`, `add -A` y `add <archivo>` vuelven a preparar un archivo preparado y cambiado otra vez (antes el cambio nuevo quedaba sin preparar; `add -u` ya lo hacía). La ayuda de la terminal suma la línea de `add -A` (en inglés, como la salida de git; sin claves nuevas de interfaz).
-- **Pruebas que fallan sin la capacidad:** `node --test tools/gitsim.test.mjs` («add -A prepara todo: lo cambiado y lo sin seguir, como add . y a diferencia de add -u») → sin el cambio `add -A` responde «Nothing specified, nothing added.» y no prepara ni `a.txt` ni `n.txt`.
-- README: Aprender git (`add -A`/`--all` en la lista de comandos y en Pruebas) y Límites conocidos (`add` admite `-u` y `-A`; `add -A` no prepara borrados porque el árbol no los tiene).
-- QA: terminal de práctica en la página real con Playwright contra `node e2e/serve.mjs` (390 px, tema oscuro y claro): `add -A -u` se niega, `add -A` deja `a.txt` modificado y `n.txt` nuevo en lo preparado, `help` lista `add -A`, consola sin errores; los pasos de práctica del smoke siguen en verde; auditoría y e2e en la puerta.
-- Skills: no aplica: una bandera más en un intérprete que ya existe; lo cubren las reglas del repo.
-- Arena: no aplica: una sola forma obvia (`-A` sin rutas es `add .`, que ya existe).
-- OMC: plan=— · revisión=3 hallazgos, 1 MEDIUM y 2 LOW (2 arreglados: el archivo preparado y cambiado otra vez que `add .` no volvía a preparar, y `-Au` pegadas que se ignoraban; el tercero, `add -n` que prepara de verdad, va a Mantenimiento como pendiente 15) · verificación=PASS
-- Hoja de ruta: repuesta a 15 con el ítem 173 (Práctica: `rm` y `mv`, otra parte del ítem 16).
-- Reclamo: loop/232, sin colisión
-- Validado: 606 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 28 e2e en verde.
-- **Siguiente:** iteración 233, expansión: ítem 172 (Constelación: ordenar por último commit, Escala)
-
-### 2026-11-06 · Iteración 233 · Expansión · Escala
-
-- **Capacidad nueva: la constelación se ordena por último commit** (ítem 172 de la hoja de ruta, parte del ítem 26). El selector de orden suma «Último commit» (tras «Actividad») y `?order=recent` abre la constelación así: el repo con el commit más reciente ya cargado primero; los que cargan o están vacíos, sin fecha, al final en el orden de las pestañas. Reordena también el recorrido con Tab y se anuncia a los lectores de pantalla. La fecha es la que ya calculaba `lastCommitAt` para `?recent=` (la del committer), sin consultas nuevas. La etiqueta nueva (`constellation.orderRecent`) va en los 40 idiomas.
-- **Pruebas que fallan sin la capacidad:** `node --test tools/constellation.test.mjs` → sin el cambio falla «el orden: pestañas tal cual…» (`recent` deja el orden de las pestañas y `?order=RECENT` da `null`); el smoke abre `?order=recent` con tres repos simulados en una página aparte (`rec/uno rec/tres rec/dos`, distinto del de las pestañas y del de nombre), con el selector de acuerdo y el anuncio en español.
-- README: Constelación (último commit en el selector y `?order=recent`) y Límites conocidos (la fecha es la del committer del commit más reciente ya cargado, no la del push).
-- QA: constelación con el selector y `?order=` cubierta por el smoke (orden, empate y sin fecha al final en la prueba unitaria; anuncio sin claves crudas; selector al abrir); auditoría y e2e en la puerta.
-- Skills: no aplica: un orden más en un selector que ya existe, con el mismo patrón que el de forks; lo cubren las reglas del repo.
-- Arena: no aplica: una sola forma obvia (la fecha que `?recent=` ya calcula para cada repo).
-- OMC: plan=— · revisión=3 hallazgos LOW (1 arreglado: el commit del smoke ya no lleva una fecha futura; quedan sin cambio la nota de que la bitácora no estaba aún —se escribe en este paso— y «最近提交» en chino, aceptable) · verificación=PASS
-- Hoja de ruta: repuesta a 15 con el ítem 174 (Constelación: cuánto hace el último commit, otra parte del ítem 26).
-- Reclamo: loop/233, sin colisión
-- Validado: 622 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
-- **Siguiente:** iteración 234, expansión: ítem 153 (Estado de los despliegues, primera entrega, Datos)
-
-### 2026-11-06 · Iteración 234 · Expansión · Datos
-
-- **Capacidad nueva: el estado del último despliegue de cada entorno en el panel de salud** (ítem 153 de la hoja de ruta, primera entrega). La sección «Despliegues por entorno» (GitHub y la demo) lista el último despliegue de cada entorno, el más reciente primero, con su commit, si está **al día** con la punta de su rama (la de su `ref` o, si no es una rama cargada, la por defecto), cuántos **commits nuevos** tiene la rama que el despliegue no (como `git rev-list desplegado..rama`, con la historia cargada) o «no está en su rama cargada», y hace cuánto se creó (`created_at`, que ya traía `/deployments`; en la demo, la fecha del commit). Cada fila con rama lleva a ella en el grafo. Sin consultas nuevas; las fuentes sin despliegues no muestran la sección. Si salió bien o falló (`/statuses`, una consulta por entorno) queda como segunda entrega (ítem 175). Cuatro claves nuevas (`health.deploys`, `health.deployCurrent`, `health.deployBehind`, `health.deployUnknown`) en los 40 idiomas.
-- **Pruebas que fallan sin la capacidad:** `node --test tools/health.test.mjs` («despliegues por entorno: al día con su rama, commits nuevos detrás o sin su rama…») → sin el cambio, `TypeError` (`compute` no devuelve `deploys`); el smoke abre la salud de la demo y exige producción y staging, staging «al día con develop» y con su botón a la rama, sin claves crudas.
-- README: Salud del repo (los despliegues por entorno), Pruebas (tags y despliegues), Límites conocidos (sin el estado de éxito o fallo; commits que faltan con la historia cargada) y Seguridad (la misma carga, ninguna consulta más).
-- QA: panel de salud de la demo en la página real con Playwright contra `node e2e/serve.mjs 4173`, en español, árabe y tamil, a 1280, 390 y 320 px, tema claro y oscuro: sin desborde (a 320 px la primera puerta lo encontró —el texto lateral no se partía— y se arregló con `#hl-deploys .hl-aside`), Enter en la fila de staging cierra el panel y lleva a develop, consola limpia; auditoría 0 hallazgos nuevos y e2e en la puerta.
-- Skills: no aplica: una sección más del panel de salud con datos que ya se cargan; lo cubren las reglas del repo.
-- Arena: no aplica: una sola forma obvia (los ancestros cargados de la punta de la rama frente a los del commit desplegado).
-- OMC: plan=— · revisión=7 hallazgos, 1 HIGH, 2 MEDIUM y 4 LOW (5 arreglados: el HIGH —un ancestro común bastaba para decir «detrás» de una rama que no contiene el commit—, la fila sin rama que llevaba a la por defecto, el `ref` de tag o sha que se comparaba con la por defecto sin contener el commit, la sección vacía en repos sin despliegues y un `sha` que no es texto; quedan el clic en una rama filtrada, el mismo patrón que las otras listas, y el costo de recorrer la historia por entorno al abrir el panel, aceptable) · verificación=PASS
-- Hoja de ruta: 15 ítems con el 175 (Estado de los despliegues, segunda entrega).
-- Reclamo: loop/234, sin colisión
-- Validado: 623 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
-- **Siguiente:** iteración 235, mantenimiento · Deuda: pendiente 1 (La e2e de escritorio «--bitbucket-url suma solo ese host a las conexiones del C…)
 
 ### 2026-11-09 · Iteración 235 · Mantenimiento · Deuda
 

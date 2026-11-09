@@ -538,13 +538,17 @@ test('la página no puede pedir carpetas que el usuario no eligió', async ({}, 
 
 test('--bitbucket-url suma solo ese host a las conexiones del CSP (sin avatares) y la página lo recibe; sin https se ignora', async ({}, testInfo) => {
   const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
-  let { app, page } = await launch(testInfo, { args: ['--lang=es', '--bitbucket-url=https://bb.example.com'] });
+  const args = ['--lang=es', '--bitbucket-url=https://bb.example.com'];
+  let { app, page, dir } = await launch(testInfo, { args });
+  const packed = JSON.stringify({ base: 'https://bb.example.com', token: 'dc-e2e' });
   try {
     expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://api.bitbucket.org https://bb.example.com https://dev.azure.com https://api.anthropic.com');
     expect(await csp(page)).toContain('img-src \'self\' data: https://avatars.githubusercontent.com https://gitlab.com https://codeberg.org;');
     expect(page.url()).toContain('bitbucket=' + encodeURIComponent('https://bb.example.com'));
+    // la app lee el llavero una sola vez al arrancar (loadDesktopToken): se guarda con la página ya cargada y se mira
+    // al reabrir; guardarlo mientras arrancaba era una carrera que perdía con el equipo cargado
+    await loaded(page);
     // su token, aparte en el llavero ('bitbucketdc') y atado a ese servidor; Ajustes muestra su campo nombrando el host
-    const packed = JSON.stringify({ base: 'https://bb.example.com', token: 'dc-e2e' });
     const back = await page.evaluate(async (v) => {
       await window.GBDesktop.setToken(v, 'bitbucketdc');
       return (await window.GBDesktop.getToken('bitbucketdc')).token;
@@ -555,9 +559,15 @@ test('--bitbucket-url suma solo ese host a las conexiones del CSP (sin avatares)
       await window.GBDesktop.setToken('az-e2e', 'azure');
       return (await window.GBDesktop.getToken('azure')).token;
     })).toBe('az-e2e');
+  } finally {
+    await app.close();
+  }
+  ({ app, page } = await launch(testInfo, { dir, args }));
+  try {
     await loaded(page);
     await page.click('#settings-btn');
     await expect(page.locator('#bbdc-token-field')).toBeVisible();
+    await expect(page.locator('#bbdc-token-input')).toHaveValue('dc-e2e');
     await expect(page.locator('#azure-token-input')).toHaveValue('az-e2e');
     await expect(page.locator('#bbdc-token-where')).toContainText('bb.example.com');
   } finally {

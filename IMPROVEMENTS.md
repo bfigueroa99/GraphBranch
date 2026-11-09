@@ -237,7 +237,9 @@ cada iteración lo repite (`node tools/loop.mjs --salud` lo imprime) y se quita 
    #222 (2026-10-31 22:04 UTC) hasta que otra sesión reanudó la 173 (2026-11-01 03:32). Recrear la Routine en claude.ai/code →
    Routines con `.claude/skills/iteracion/PROMPT.md` byte a byte (cambió el 2026-11-01: suma que el turno
    terminado es la corrida terminada y que lo largo se espera con `node tools/esperar.mjs`), o poner el cron de
-   OpenCode del README; si la vía es otra, decirlo en la sección «Routine» de la skill y en el README.
+   OpenCode del README; si la vía es otra, decirlo en la sección «Routine» de la skill y en el README. El 2026-11-09
+   `list_triggers` tampoco la lista y `--salud` daba 46,7 h sin fusiones (desde el 2026-11-07 04:46 UTC) hasta que una
+   sesión encargada a mano reanudó la 234 y siguió con la 235.
 
 ## Mapa de alcance
 
@@ -343,22 +345,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Media
 
-1. [Deuda] La e2e de escritorio «--bitbucket-url suma solo ese host a las conexiones del CSP…» falló 1 de 2 en la
-    reanudación de la 173 (2026-11-01, carga 18 en 4 CPU; la repetición pasó) y otra vez 1 de 2 en la reanudación de
-    la 234 (2026-11-09, carga 16 en 4 CPU; la repetición pasó): `#azure-token-input` vacío al abrir
-    Ajustes. Es una carrera de la prueba: guarda el token de Azure con `GBDesktop.setToken(…, 'azure')` con la página ya
-    arrancada, y `loadDesktopToken` (`js/app.js`) lee el llavero una sola vez al arrancar; si ya leyó `azure`, el campo
-    queda vacío. Guardar el token y reabrir la app antes de mirar Ajustes, como «el token de GitLab… vuelve al reabrir».
-    Reproducción: `xvfb-run -a npx playwright test e2e/desktop.spec.mjs -g "bitbucket-url"` con el equipo cargado →
-    `expect(locator('#azure-token-input')).toHaveValue('az-e2e')` · `Received: ""`.
-2. [Deuda] El paso del smoke «editar el código: desde los cambios de un commit se abre su archivo en la rama, se cambia
+1. [Deuda] El paso del smoke «editar el código: desde los cambios de un commit se abre su archivo en la rama, se cambia
     y el commit llega al grafo con sus cambios» falló 1 de 1 en la tercera puerta de la iteración 225 (2026-11-06, carga 4
-    en 4 CPU), en una sección que el cambio no toca (las dos corridas anteriores lo pasaron): un `waitForFunction` de
-    15 s se venció. Medir cuántas fallas en N corridas, ver qué espera (el commit en el grafo tras el ciclo en vivo) y
+    en 4 CPU), en una sección que el cambio no toca (las dos corridas anteriores lo pasaron), y otra vez 1 de 2 en la puerta de la
+    iteración 235 (2026-11-09, con otras sesiones cargando el equipo; la repetición pasó): un `waitForFunction` de 15 s se
+    venció. Medir cuántas fallas en N corridas, ver qué espera (el commit en el grafo tras el ciclo en vivo) y
     atarla a una señal en vez de al tiempo. Reproducción: `node tools/smoke.mjs` repetido → `editar el código: …:
     page.waitForFunction: Timeout 15000ms exceeded.`
 
-3. [Deuda] El paso del smoke «quién tocó un archivo: el botón del diff lista los últimos commits con su autor, y otro
+2. [Deuda] El paso del smoke «quién tocó un archivo: el botón del diff lista los últimos commits con su autor, y otro
     clic lo cierra» falló 1 de 2 en la puerta de la iteración 233 (2026-11-06; la repetición pasó), en una sección que el
     cambio no toca: el segundo clic sobre el botón no cerró la lista. Hipótesis: el segundo clic llega mientras la lista
     todavía carga (o se vuelve a pintar) y la reabre; esperar a que la lista esté completa antes del segundo clic, o atar
@@ -367,47 +362,47 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Baja
 
-4. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+3. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-5. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+4. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-6. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+5. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-7. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+6. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-8. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+7. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-9. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+8. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-10. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+9. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-11. [Accesibilidad] En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…», «sin actividad…», PRs) y la
+10. [Accesibilidad] En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…», «sin actividad…», PRs) y la
     nota de cada commit (`.tv-aside`) ya van en el `aria-label` del `treeitem`, pero son texto del nodo: según el lector se
     leen dos veces. Marcarlas `aria-hidden="true"` y comprobarlo con un lector real (ver Para Benjamin, 5).
     Reproducción: Playwright, abrir `#textview-btn` → `.tv-tag` dentro de `[role=treeitem][aria-label]` sin `aria-hidden`.
-12. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
+11. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
     `placeLabels`. El cuadro lo domina el render por software (~200 ms por cuadro sin GPU, 10 fps), que con GPU no existe;
     medir con GPU real antes de tocarlo. Reproducción: la misma envoltura sobre `stepScene` → ~1,1 ms por llamada.
-13. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
+12. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
     (895 ms en total, sin GPU); el perfil de CPU de los primeros 6 s no deja ninguna función de la app por encima de 70 ms
     (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
     que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
     Reproducción: `node tools/audit.mjs --repetir 3` → `consultas: 10`, `tareasLargasMs: 895`.
-14. [Errores] Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el repo del PR con
+13. [Errores] Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el repo del PR con
     `owner/name` tal como se escribieron; con un repo renombrado (abierto por su nombre viejo) ningún PR cuenta como del
     mismo repo: sus ramas pierden el «PRs abiertos» y dicen «sin PR abierto». Comparar `fromRef.repository` con
     `toRef.repository`. Reproducción: API simulada con el repo `nuevo` y abrir `CLAVE/viejo` → `sameRepo` false.
-15. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
+14. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
     prepara de verdad en vez de solo listar, y `add -p` prepara todo. Negarse con el `error: unknown switch` de git (o
     admitir `-n`). Reproducción: `node --test` con `touch a.txt`, `add -n .` → `a.txt` queda preparado.
 
@@ -545,3 +540,17 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/234, sin colisión
 - Validado: 623 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 235, mantenimiento · Deuda: pendiente 1 (La e2e de escritorio «--bitbucket-url suma solo ese host a las conexiones del C…)
+
+### 2026-11-09 · Iteración 235 · Mantenimiento · Deuda
+
+- **Arreglo: la e2e de escritorio de `--bitbucket-url` ya no compite con el arranque de la app** (pendiente 1). Guardaba los tokens de Bitbucket Data Center y de Azure DevOps con `GBDesktop.setToken` mientras la página arrancaba y miraba Ajustes en la misma ventana; `loadDesktopToken` (`js/app.js`) lee el llavero una sola vez al arrancar, así que si ya había leído `azure` el campo quedaba vacío. Ahora los guarda con la app ya cargada, la cierra, la reabre con el mismo perfil (como «el token de GitLab… vuelve al reabrir») y recién entonces mira Ajustes; de paso exige también que vuelva el token del servidor (`#bbdc-token-input`), que tenía la misma carrera y no se miraba. La app no cambia: el fallo era de la prueba.
+- **Reproducción:** la prueba con `await loaded(page)` antes de guardar los tokens (el orden que perdía con el equipo cargado), `xvfb-run -a npx playwright test e2e/desktop.spec.mjs -g "bitbucket-url"` → `expect(locator('#azure-token-input')).toHaveValue('az-e2e')` · `Received: ""`, a demanda.
+- **Pruebas que fallan sin el arreglo:** la misma e2e, que ahora fija ese orden: sin reabrir la app falla siempre, no solo cuando el arranque ganaba la carrera. Medida: antes, 0 fallas en 20 corridas sueltas (`--repeat-each=20`, carga 6 en 4 CPU) y 2 en las 4 puertas de las reanudaciones de la 173 y la 234 (carga 16 a 18); después, 20 de 20 en verde sueltas y las 29 e2e en la puerta. Ninguna otra e2e guarda un token con `GBDesktop.setToken` (`grep`).
+- README: no cambia (ni la función ni sus límites cambian).
+- QA: no toca la página; la e2e de `--bitbucket-url` 20 veces seguidas y las 29 e2e en la puerta; auditoría: no toca la página.
+- Skills: no aplica: una carrera de una prueba propia, arreglada con el patrón que el mismo archivo ya usa (reabrir con el mismo perfil).
+- Arena: no aplica: una sola forma obvia (la que describe el pendiente), y la sesión no tiene la herramienta de subagentes.
+- OMC: no disponible (la sesión no tiene la herramienta de subagentes)
+- Reclamo: loop/235, sin colisión
+- Validado: 632 pruebas (`node --test`), smoke, i18n (0 errores) y 29 e2e en verde (la primera corrida falló en un paso ajeno del smoke, «editar el código…»: intermitente, la repetición pasó; anotado en el pendiente 1 de Mantenimiento).
+- **Siguiente:** iteración 236, expansión: ítem 174 (Constelación: cuánto hace el último commit, Escala)

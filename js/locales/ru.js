@@ -764,6 +764,8 @@ GB.i18n.define('ru', {
   'all.prs.approved': 'Одобрены',
   'all.prs.waiting': 'Ждут ревью',
   'all.prs.open': 'PR #{num} в {repo}: {title}. Открыть его ветку',
+  'all.prs.pin': 'Закрепить PR #{num} из {repo} вверху',
+  'all.prs.unpin': 'Открепить PR #{num} из {repo}',
   'all.lastCommit': 'Последний коммит: {msg} · {who} · {when}. Показать изменения',
   'editor.edit': 'Изменить',
   'editor.editFile': 'Изменить {path}',

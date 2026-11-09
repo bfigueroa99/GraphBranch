@@ -748,6 +748,8 @@ GB.i18n.define('da', {
   'all.prs.approved': 'Godkendt',
   'all.prs.waiting': 'Afventer gennemgang',
   'all.prs.open': 'PR #{num} i {repo}: {title}. Åbn dens gren',
+  'all.prs.pin': 'Fastgør PR #{num} i {repo} øverst',
+  'all.prs.unpin': 'Frigør PR #{num} i {repo}',
   'all.lastCommit': 'Seneste commit: {msg} · {who} · {when}. Se ændringerne',
   'editor.edit': 'Redigér',
   'editor.editFile': 'Redigér {path}',

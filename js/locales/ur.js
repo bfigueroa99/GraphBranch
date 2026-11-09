@@ -791,6 +791,8 @@ GB.i18n.define('ur', {
   'all.prs.approved': 'منظور شدہ',
   'all.prs.waiting': 'جائزے کے منتظر',
   'all.prs.open': '{repo} کی PR #{num}: {title}۔ اس کی شاخ کھولیں',
+  'all.prs.pin': '{repo} کا PR #{num} اوپر پن کریں',
+  'all.prs.unpin': '{repo} کا PR #{num} ان پن کریں',
   'all.lastCommit': 'آخری کمٹ: {msg} · {who} · {when}۔ اس کی تبدیلیاں دیکھیں',
   'editor.edit': 'ترمیم',
   'editor.editFile': '{path} میں ترمیم',

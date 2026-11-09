@@ -748,6 +748,8 @@ GB.i18n.define('ja', {
   'all.prs.approved': '承認済み',
   'all.prs.waiting': 'レビュー待ち',
   'all.prs.open': '{repo} の PR #{num}: {title}。そのブランチを開く',
+  'all.prs.pin': '{repo} の PR #{num} を先頭に固定',
+  'all.prs.unpin': '{repo} の PR #{num} の固定を解除',
   'all.lastCommit': '最新のコミット: {msg} · {who} · {when}。変更を表示',
   'editor.edit': '編集',
   'editor.editFile': '{path} を編集',

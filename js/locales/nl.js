@@ -749,6 +749,8 @@ GB.i18n.define('nl', {
   'all.prs.approved': 'Goedgekeurd',
   'all.prs.waiting': 'Wacht op review',
   'all.prs.open': 'PR #{num} van {repo}: {title}. Open de branch',
+  'all.prs.pin': 'PR #{num} van {repo} bovenaan vastzetten',
+  'all.prs.unpin': 'PR #{num} van {repo} losmaken',
   'all.lastCommit': 'Laatste commit: {msg} · {who} · {when}. Wijzigingen bekijken',
   'editor.edit': 'Bewerken',
   'editor.editFile': '{path} bewerken',

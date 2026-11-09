@@ -756,6 +756,8 @@ GB.i18n.define('ro', {
   'all.prs.approved': 'Aprobate',
   'all.prs.waiting': 'Așteaptă revizuirea',
   'all.prs.open': 'PR #{num} din {repo}: {title}. Deschide ramura',
+  'all.prs.pin': 'Fixează PR #{num} din {repo} sus',
+  'all.prs.unpin': 'Desprinde PR #{num} din {repo}',
   'all.lastCommit': 'Ultimul commit: {msg} · {who} · {when}. Vezi modificările',
   'editor.edit': 'Editează',
   'editor.editFile': 'Editează {path}',

@@ -748,6 +748,8 @@ GB.i18n.define('hi', {
   'all.prs.approved': 'स्वीकृत',
   'all.prs.waiting': 'समीक्षा की प्रतीक्षा में',
   'all.prs.open': '{repo} का PR #{num}: {title}। उसकी शाखा खोलें',
+  'all.prs.pin': '{repo} का PR #{num} ऊपर पिन करें',
+  'all.prs.unpin': '{repo} का PR #{num} अनपिन करें',
   'all.lastCommit': 'आख़िरी कमिट: {msg} · {who} · {when}। इसके बदलाव देखें',
   'editor.edit': 'संपादित करें',
   'editor.editFile': '{path} संपादित करें',

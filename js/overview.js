@@ -45,6 +45,9 @@
 
   const PR_GROUP_KEY = { draft: 'all.prs.draft', failing: 'all.prs.failing', approved: 'all.prs.approved', waiting: 'all.prs.waiting' };
 
+  /** La identidad de un PR para fijarlo: repo y número, nunca el título. */
+  const pinId = (key, number) => `${key}#${number}`;
+
   /** En qué grupo cae un PR abierto: borrador, checks en rojo, aprobado o esperando revisión (en ese orden de prioridad). */
   function prGroup(p) {
     if (p.draft) return 'draft';
@@ -54,8 +57,10 @@
   }
 
   /** Los PRs abiertos de varios repos, agrupados por estado: `entries` es [{ key, name, pulls: iterable de PRs }].
-      Devuelve solo los grupos con PRs, [{ id, items }], cada uno del más nuevo al más viejo. */
-  function groupPulls(entries) {
+      Devuelve solo los grupos con PRs, [{ id, items }], cada uno del más nuevo al más viejo; los fijados (`pinned`: un Set
+      de `pinId`) van arriba de su grupo, con `pinned: true`. */
+  function groupPulls(entries, pinned) {
+    const isPinned = (key, number) => !!pinned?.has?.(pinId(key, number));
     const by = new Map(PR_GROUPS.map((g) => [g, []]));
     for (const e of entries) {
       for (const p of e.pulls || []) {
@@ -67,10 +72,11 @@
           head: p.head || '',
           user: p.user?.login || p.user?.name || '',
           createdAt: p.createdAt || 0,
+          pinned: isPinned(e.key, p.number),
         });
       }
     }
-    for (const items of by.values()) items.sort((a, b) => b.createdAt - a.createdAt || (a.repo < b.repo ? -1 : a.repo > b.repo ? 1 : a.number - b.number));
+    for (const items of by.values()) items.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.createdAt - a.createdAt || (a.repo < b.repo ? -1 : a.repo > b.repo ? 1 : a.number - b.number));
     return PR_GROUPS.map((id) => ({ id, items: by.get(id) })).filter((g) => g.items.length);
   }
 
@@ -81,6 +87,7 @@
    *   diffing() → ¿está abierto el panel de cambios? (entonces un clic en un commit muestra los suyos)
    *   onStats(list): las cifras de todas las tarjetas, para los totales de la cabecera
    *   canDiff(key) → ¿se pueden ver los cambios de los commits de ese repo?
+   *   getPins(): los PRs fijados (lista de pinId); onPin(id, on): fijar o soltar uno
    *   prsRoot, onOpenPr(key, head): el Launchpad (los PRs de todos los repos por estado) y la salida de una fila
    * Devuelve { sync(items), draw(key, data, ctx), stats(), celebrate(key, acts), focus(key, { sha, branch }), select(key, sha),
    *   graphOf(key), layoutOf(key), relocalize(), size }.
@@ -205,10 +212,13 @@
 
     /** El Launchpad: los PRs abiertos de todos los repos, por estado. Solo se repinta si cambió algo (así no pierde el foco). */
     let prSig = '';
+    let lastEntries = [];
     function setPulls(entries) {
+      lastEntries = entries;
       const box = opts.prsRoot;
       if (!box) return;
-      const groups = groupPulls(entries);
+      const pins = new Set(opts.getPins?.() || []);
+      const groups = groupPulls(entries, pins);
       const sig = JSON.stringify(groups);
       if (sig === prSig) return;
       prSig = sig;
@@ -240,6 +250,21 @@
           b.title = label;
           b.addEventListener('click', () => opts.onOpenPr?.(it.key, it.head));
           li.append(b);
+          const pin = mk('button', 'ap-pin');
+          pin.type = 'button';
+          pin.textContent = '📌';
+          pin.setAttribute('aria-pressed', String(it.pinned));
+          const plabel = t(it.pinned ? 'all.prs.unpin' : 'all.prs.pin', { num: it.number, repo: it.repo });
+          pin.setAttribute('aria-label', plabel);
+          pin.title = plabel;
+          pin.addEventListener('click', () => {
+            opts.onPin?.(pinId(it.key, it.number), !it.pinned);
+            setPulls(lastEntries);
+            // el repintado reemplaza la fila: el foco vuelve a su botón de fijar
+            [...box.querySelectorAll('.ap-pin')].find((x) => x.closest('li')?.querySelector('.ap-row')?.dataset.key === it.key && x.closest('li').querySelector('.ap-row').dataset.number === String(it.number))?.focus();
+          });
+          li.classList.toggle('pinned', it.pinned);
+          li.append(pin);
           ul.append(li);
         }
         sec.append(ul);
@@ -286,5 +311,5 @@
     };
   }
 
-  GB.overview = { allParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, prGroup, groupPulls, mount };
+  GB.overview = { allParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, prGroup, groupPulls, pinId, mount };
 })(window.GB);

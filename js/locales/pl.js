@@ -759,6 +759,8 @@ GB.i18n.define('pl', {
   'all.prs.approved': 'Zatwierdzone',
   'all.prs.waiting': 'Czekają na przegląd',
   'all.prs.open': 'PR #{num} w {repo}: {title}. Otwórz jego gałąź',
+  'all.prs.pin': 'Przypnij PR #{num} z {repo} u góry',
+  'all.prs.unpin': 'Odepnij PR #{num} z {repo}',
   'all.lastCommit': 'Ostatni commit: {msg} · {who} · {when}. Zobacz zmiany',
   'editor.edit': 'Edytuj',
   'editor.editFile': 'Edytuj {path}',

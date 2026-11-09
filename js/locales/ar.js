@@ -847,6 +847,8 @@ GB.i18n.define('ar', {
   'all.prs.approved': 'موافق عليها',
   'all.prs.waiting': 'بانتظار المراجعة',
   'all.prs.open': 'طلب السحب #{num} في {repo}: {title}. افتح فرعه',
+  'all.prs.pin': 'تثبيت طلب السحب #{num} في {repo} في الأعلى',
+  'all.prs.unpin': 'إلغاء تثبيت طلب السحب #{num} في {repo}',
   'all.lastCommit': 'آخر commit: {msg} · {who} · {when}. اعرض تغييراته',
   'editor.edit': 'تحرير',
   'editor.editFile': 'تحرير {path}',

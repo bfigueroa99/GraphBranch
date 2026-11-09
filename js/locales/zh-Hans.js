@@ -748,6 +748,8 @@ GB.i18n.define('zh-Hans', {
   'all.prs.approved': '已批准',
   'all.prs.waiting': '等待评审',
   'all.prs.open': '{repo} 的 PR #{num}：{title}。打开它的分支',
+  'all.prs.pin': '将 {repo} 的 PR #{num} 置顶',
+  'all.prs.unpin': '取消置顶 {repo} 的 PR #{num}',
   'all.lastCommit': '最新提交：{msg} · {who} · {when}。查看其变更',
   'editor.edit': '编辑',
   'editor.editFile': '编辑 {path}',

@@ -748,6 +748,8 @@ GB.i18n.define('zh-Hant', {
   'all.prs.approved': '已核准',
   'all.prs.waiting': '等待審查',
   'all.prs.open': '{repo} 的 PR #{num}：{title}。開啟它的分支',
+  'all.prs.pin': '將 {repo} 的 PR #{num} 置頂',
+  'all.prs.unpin': '取消置頂 {repo} 的 PR #{num}',
   'all.lastCommit': '最新提交：{msg} · {who} · {when}。查看其變更',
   'editor.edit': '編輯',
   'editor.editFile': '編輯 {path}',

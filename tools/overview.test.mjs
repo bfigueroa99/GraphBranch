@@ -92,3 +92,17 @@ test('groupPulls: los PRs de todos los repos por estado, del más nuevo al más 
   assert.deepEqual(plain(O.groupPulls([{ key: 'a', name: 'o/a', pulls: [pr(1)] }])).map((x) => x.id), ['waiting'], 'solo los grupos con PRs');
   assert.deepEqual(plain(O.groupPulls([])), []);
 });
+
+test('groupPulls: los PRs fijados van arriba de su grupo, por repo y número, y no cambian de grupo', () => {
+  const pr = (number, extra = {}) => ({ number, title: `PR ${number}`, head: `rama-${number}`, createdAt: number * 10, ...extra });
+  const entries = [
+    { key: 'a', name: 'o/a', pulls: [pr(1), pr(2), pr(3, { draft: true })] },
+    { key: 'b', name: 'o/b', pulls: [pr(1), pr(4)] },
+  ];
+  const order = (g) => plain(g).map((x) => [x.id, x.items.map((i) => `${i.key}#${i.number}${i.pinned ? '*' : ''}`)]);
+  assert.deepEqual(order(O.groupPulls(entries)), [['draft', ['a#3']], ['waiting', ['b#4', 'a#2', 'a#1', 'b#1']]], 'sin fijados, el orden de siempre');
+  assert.deepEqual(order(O.groupPulls(entries, new Set([O.pinId('b', 1), O.pinId('a', 1), O.pinId('a', 3)]))),
+    [['draft', ['a#3*']], ['waiting', ['a#1*', 'b#1*', 'b#4', 'a#2']]], 'los fijados primero, y #1 de b no es #1 de a');
+  assert.deepEqual(order(O.groupPulls(entries, new Set(['a#99']))), order(O.groupPulls(entries)), 'un fijado que ya no existe no hace nada');
+  assert.equal(O.pinId('o/a', 7), 'o/a#7');
+});

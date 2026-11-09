@@ -748,6 +748,8 @@ GB.i18n.define('sw', {
   'all.prs.approved': 'Zilizoidhinishwa',
   'all.prs.waiting': 'Zinasubiri ukaguzi',
   'all.prs.open': 'PR #{num} ya {repo}: {title}. Fungua tawi lake',
+  'all.prs.pin': 'Bandika PR #{num} ya {repo} juu',
+  'all.prs.unpin': 'Ondoa PR #{num} ya {repo} juu',
   'all.lastCommit': 'Commit ya mwisho: {msg} · {who} · {when}. Tazama mabadiliko yake',
   'editor.edit': 'Hariri',
   'editor.editFile': 'Hariri {path}',

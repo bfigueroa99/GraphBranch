@@ -4795,6 +4795,57 @@ console.log('Agentes e interacciones, en vivo, en el lugar del grafo (?agents=1)
       await page.waitForSelector('#agents:not([hidden]) .ag-net', { timeout: T(5000) });
     }
   });
+  await step(page, 'en modo TV el tablero de agentes entra entero en la pantalla: entrar desde la vista lo conserva, el robot de la barra y la A pasan al grafo y vuelven, y al salir queda la vista de antes sin guardar nada', async () => {
+    const st = () =>
+      page.evaluate(() => ({
+        tv: document.documentElement.classList.contains('tv'),
+        agents: !document.querySelector('#agents').hidden,
+        bar: document.querySelector('#tv-bar').parentNode.classList.contains('ab-head') ? 'tablero' : document.querySelector('#tv-bar').parentNode.classList.contains('graph-stage') ? 'grafo' : 'otro',
+        pressed: document.querySelector('#tv-agents').getAttribute('aria-pressed'),
+        focus: document.activeElement?.id || document.activeElement?.tagName,
+        stored: localStorage.getItem('graphbranch:agentsView'),
+      }));
+    // cada cambio de pantalla es inmediato (el clic o la tecla lo hacen en el momento)
+    const want = async (what, ok) => {
+      const s = await st();
+      if (!ok(s)) throw new Error(`${what}: ${JSON.stringify(s)}`);
+    };
+    const before = await st();
+    if (!before.agents) throw new Error('la vista de agentes no estaba abierta');
+    try {
+      await page.click('#tv-btn'); // el botón TV se ve también en la vista de agentes
+      await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: T(5000) });
+      await want('al entrar desde la vista de agentes', (s) => s.agents && s.bar === 'tablero' && s.pressed === 'true' && s.focus === 'graph-panel');
+      const fit = await page.evaluate(() => {
+        const shown = (sel) => !!document.querySelector(sel)?.getClientRects().length;
+        const b = document.querySelector('#agents');
+        const stage = document.querySelector('#sw-cortex .sw-stage')?.getBoundingClientRect();
+        const card = document.querySelector('#sw-cortex-card')?.getBoundingClientRect();
+        return {
+          over: b.scrollHeight - b.clientHeight,
+          page: document.documentElement.scrollHeight - document.documentElement.clientHeight,
+          shown: ['#sw-kpis', '#sw-cortex-card', '#ag-recent', '#sw-log', '#tv-agents'].filter((x) => !shown(x)),
+          hidden: ['.ab-switches', '.ab-help', '#ag-net', '#ag-time', '#ag-spend', '#sw-thread'].filter(shown),
+          cortex: stage && card ? Math.round(card.bottom - stage.bottom) : null,
+        };
+      });
+      if (fit.over > 1 || fit.page > 1) throw new Error(`el tablero no entra en la pantalla: se desplaza ${fit.over}px (la página, ${fit.page}px)`);
+      if (fit.shown.length || fit.hidden.length) throw new Error(`en TV faltan ${fit.shown.join(', ') || 'nada'} y sobran ${fit.hidden.join(', ') || 'nada'}`);
+      if (fit.cortex == null || fit.cortex < 0) throw new Error(`la corteza se sale de su tarjeta (${fit.cortex}px)`);
+      await page.click('#tv-agents');
+      await want('el robot de la barra vuelve al grafo', (s) => s.tv && !s.agents && s.bar === 'grafo' && s.pressed === 'false' && s.focus === 'graph3d');
+      await page.keyboard.press('a');
+      await want('la A vuelve al tablero', (s) => s.tv && s.agents && s.bar === 'tablero' && s.pressed === 'true');
+      await page.keyboard.press('a');
+      await want('la A pasa otra vez al grafo', (s) => s.tv && !s.agents && s.bar === 'grafo');
+      await page.keyboard.press('Escape');
+      await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: T(5000) });
+      await want('al salir queda la vista de agentes, como antes de entrar', (s) => s.agents && s.bar === 'tablero' && s.focus === 'tv-btn' && s.stored === before.stored);
+      if (new URL(page.url()).searchParams.has('tv')) throw new Error('la URL sigue con ?tv');
+    } finally {
+      if (await page.evaluate(() => document.documentElement.classList.contains('tv'))) await page.keyboard.press('Escape');
+    }
+  });
   await step(page, 'el gasto: el diálogo de claves rechaza una dirección de OmniRoute que no es http(s) y se cierra sin guardar', async () => {
     await page.click('#spend-connect');
     await page.waitForSelector('#spend-keys[open]', { timeout: T(3000) });

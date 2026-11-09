@@ -46,6 +46,7 @@
     directorBtn: $('#director-btn'),
     tvBtn: $('#tv-btn'),
     tvClock: $('#tv-clock'),
+    tvAgents: $('#tv-agents'),
     tvPause: $('#tv-pause'),
     tvSound: $('#tv-sound'),
     tvFs: $('#tv-fs'),
@@ -1199,7 +1200,7 @@
       texto deja la vista conjunta. */
   const shownGraph = () => {
     if (allOn) setAll(false);
-    if (agentsOn) setAgentsView(false);
+    if (agentsOn) setAgentsView(false, { save: !document.documentElement.classList.contains('tv') }); // en TV no se guarda
     return graph;
   };
 
@@ -2257,8 +2258,10 @@
     }
     if (cortex.host.parentNode !== slotEl) slotEl.append(cortex.host);
     cortex.update(swarmView.model, swarmView.text);
-    cortex.setActive(agentsOn);
+    cortex.setActive(cortexLive());
   }
+  /** La corteza se anima mientras se ve, salvo con el modo TV en pausa (ahí la pausa detiene todo lo que se mueve). */
+  const cortexLive = () => agentsOn && !(paused && tv.on);
 
   /** El reloj del tablero, al segundo, mientras se mira. */
   let clockTimer = 0;
@@ -2405,6 +2408,20 @@
     }
     agentsSeen = { mode, ev: new Set([...(agentsSeen?.ev || []), ...evs.map((n) => n.dataset.ev)]), edges: new Map(edges.map((g) => [edgeKey(g), Number(g.dataset.n)])) };
     if (agentsLit) lightAgent([...el.agentsBody.querySelectorAll('.ag-net .ag-n[data-key]')].find((n) => n.dataset.key === agentsLit) || null);
+    markCut();
+  }
+  /** En el modo TV el tablero no se desplaza: lo último y el log muestran lo que cabe y, si algo queda cortado (lo más
+      viejo: abajo en lo último, arriba en el log), lo dicen desvaneciéndose de ese lado. */
+  function markCut() {
+    if (!agentsOn || !document.documentElement.classList.contains('tv')) return; // fuera del modo TV la marca no se usa
+    for (const [sel, top] of [['#ag-recent .hl-list', false], ['#sw-log .sw-log-list', true]]) {
+      const list = el.agentsBody.querySelector(sel);
+      const edge = top ? list?.firstElementChild : list?.lastElementChild;
+      if (!edge) continue;
+      const a = list.getBoundingClientRect();
+      const b = edge.getBoundingClientRect();
+      list.classList.toggle('is-cut', top ? b.top < a.top - 1 : b.bottom > a.bottom + 1);
+    }
   }
   function scheduleAgents() {
     if (Date.now() - spendState.at > SPEND_EVERY) refreshSpend(); // con la vista abierta, el gasto se renueva solo
@@ -2424,13 +2441,15 @@
     el.agents.hidden = !on;
     setPressed(el.viewAgents, on);
     setPressed(el.agentsBtn, on);
+    setPressed(el.tvAgents, on);
+    placeTvBar();
     setPressed(el.view3d, !on && view === '3d');
     setPressed(el.view2d, !on && view === '2d');
     graph3d?.setActive(view === '3d' && !allOn && !on);
     clearTimeout(agentsTimer);
     agentsTimer = 0;
     tickClock();
-    cortex?.setActive(on);
+    cortex?.setActive(cortexLive());
     if (on) {
       graph.unpin?.(); // una ficha fijada quedaría flotando sobre el tablero
       lowerThird(null);
@@ -3655,6 +3674,7 @@
     renderPause();
     for (const x of tabs) x.source.setPaused(v);
     graph3d?.setHold(v);
+    cortex?.setActive(cortexLive());
     if (tv.attract && replay.active) {
       if (v) replay.pause();
       else if (replay.u >= replay.U) replay.stop();
@@ -3781,7 +3801,34 @@
 
   const ATTRACT_IDLE = 3 * 60e3; // sin novedades durante este tiempo…
   const ATTRACT_EVERY = 10 * 60e3; // …se reproduce la historia, como mucho una vez cada tanto
-  const tv = { on: false, prevView: null, lock: null, locking: false, attract: false, lastNews: 0, lastAttract: 0, lastSwitch: 0, idleTimer: 0 };
+  const tv = { on: false, prevView: null, prevAgents: false, lock: null, locking: false, attract: false, lastNews: 0, lastAttract: 0, lastSwitch: 0, idleTimer: 0 };
+  const tvBarHome = el.tvBar.parentNode; // sobre el grafo; con la vista de agentes va a la cabecera del tablero
+
+  /** La barra del modo TV, donde se ve: sobre el grafo o, con la vista de agentes, en la cabecera del tablero (el grafo
+      queda escondido y ella con él). Si tenía el foco, lo conserva. */
+  function placeTvBar() {
+    const host = agentsOn ? el.agents.querySelector('.ab-head') : tvBarHome;
+    if (!host || el.tvBar.parentNode === host) return;
+    const had = el.tvBar.contains(document.activeElement) ? document.activeElement : null;
+    host.append(el.tvBar);
+    had?.focus({ preventScroll: true });
+  }
+
+  /** El foco del modo TV: en lo que se ve (el grafo o, con la vista de agentes, su panel), donde están los atajos del
+      modo; no en la barra, que no se escondería mientras lo tenga. */
+  const tvFocus = () => (agentsOn ? el.graphPanel : graph3d ? el.graph3d : el.graph).focus({ preventScroll: true });
+
+  /** En modo TV, la pantalla pasa del grafo (con el director) al tablero de agentes y vuelve. No cambia lo guardado:
+      al salir del modo TV queda la vista que había antes de entrar. */
+  function tvShowAgents(on) {
+    if (!tv.on) return;
+    const before = document.activeElement;
+    if (on && tv.attract && replay.active) replay.stop(); // el tablero es el presente: el Replay de ambiente se acaba
+    tv.attract = false;
+    setAgentsView(on, { save: false });
+    // el foco no se queda en lo que se escondió (ni en la barra): pasa a lo que ahora se ve
+    if (!before || before === document.body || el.graphPanel.contains(before)) tvFocus();
+  }
 
   /** Entra o sale del modo TV. `user`: viene de un clic (solo así se puede pedir pantalla completa). */
   function setTV(on, user = false) {
@@ -3796,8 +3843,10 @@
       setAll(false, { save: false }); // la pantalla compartida es la del grafo, con el director (pasa sola de un repo a otro)
       diffView.close(); // la pantalla compartida es del grafo
       tv.prevView = view;
+      tv.prevAgents = agentsOn || initialAgents; // con ?tv=1&agents=1 el tablero llega cuando el repo tiene grafo
       tv.lastNews = tv.lastAttract = Date.now();
-      if (graph3d) setView('3d', false);
+      if (graph3d) setView('3d', false); // detrás, el grafo en 3D con el director
+      if (tv.prevAgents && !initialAgents) setAgentsView(true, { save: false }); // desde la vista de agentes, se queda en ella
       feed.sound = false; // en un espacio compartido el sonido llega a todos: se enciende a mano
       graph3d?.flight?.exit(); // la pantalla compartida la lleva el director, no un piloto
       director?.setTV(true);
@@ -3805,9 +3854,9 @@
       if (user && fullscreenOK && !fullscreenEl()) requestFs(root);
       tvScale();
       lockScreen();
-      // el foco pasa al grafo, donde están los atajos del modo (espacio, F, Esc); no a la barra, que
-      // no se escondería mientras tenga el foco
-      if (lostFocus || document.activeElement === document.body) (graph3d ? el.graph3d : el.graph).focus({ preventScroll: true });
+      // el foco pasa al grafo (o al tablero de agentes), donde están los atajos del modo (espacio, F, A, Esc); no a la
+      // barra, que no se escondería mientras tenga el foco
+      if (lostFocus || document.activeElement === document.body) tvFocus();
     } else {
       if (tv.attract && replay.active) replay.stop();
       tv.attract = false;
@@ -3816,13 +3865,18 @@
       director?.setOn(!!U.store.get('director', false));
       if (fullscreenEl() === root) exitFs();
       setView(tv.prevView || view, false);
+      if (tv.prevAgents) setAgentsView(true, { save: false }); // se vuelve a la vista de agentes si se entró desde ella
       tv.lock?.release().catch(() => {});
       tv.lock = null;
       root.style.removeProperty('--tvz');
-      if (lostFocus) el.tvBtn.focus({ preventScroll: true });
+      // también si lo que tenía el foco se escondió (el grafo, al volver a la vista de agentes): el navegador lo suelta
+      // recién al dibujar, así que se mira si todavía se ve
+      const at = document.activeElement;
+      if (lostFocus || !at || at === document.body || !at.getClientRects().length) el.tvBtn.focus({ preventScroll: true });
     }
     setPressed(el.soundBtn, feed.sound);
     setPressed(el.tvSound, feed.sound);
+    cortex?.setActive(cortexLive()); // la pausa del modo TV también detiene la corteza
     graph3d?.gx?.pokeAmbience(); // el zumbido del espacio sigue al sonido, como con sus botones
     setUrlParam('tv', on ? '1' : null);
     graph3d?.restyle();
@@ -3836,6 +3890,7 @@
     const z = Math.min(2.2, Math.max(1, Math.min(innerWidth / 1500, innerHeight / 860)));
     document.documentElement.style.setProperty('--tvz', z.toFixed(3));
     graph3d?.restyle();
+    markCut(); // con otra letra, en lo último y en el log cabe otra cantidad
   }
 
   /** Pantalla siempre encendida (Screen Wake Lock); el navegador la suelta al ocultar la pestaña. */
@@ -3868,7 +3923,8 @@
     if (!tv.on) return;
     const now = Date.now();
     el.tvClock.textContent = i18n.fmtTime(now);
-    if (paused || replay.active || !lastRender || lastRender.L.nodes.length < 8) return;
+    // con el tablero de agentes a la vista no hay grafo que reproducir: el tablero ya es lo que pasa ahora
+    if (paused || replay.active || agentsOn || !lastRender || lastRender.L.nodes.length < 8) return;
     if (now - tv.lastNews < ATTRACT_IDLE || now - tv.lastAttract < ATTRACT_EVERY) return;
     tv.lastAttract = now;
     tv.attract = true;
@@ -3877,6 +3933,7 @@
   }
 
   el.tvBtn.addEventListener('click', () => setTV(!tv.on, true));
+  el.tvAgents.addEventListener('click', () => tvShowAgents(!agentsOn));
   el.tvExit.addEventListener('click', () => setTV(false));
   el.tvFs.addEventListener('click', toggleFullscreen);
   el.tvFs.hidden = !fullscreenOK;
@@ -3899,7 +3956,8 @@
     } else graph3d?.gx?.pokeAmbience();
   });
   for (const type of ['pointermove', 'pointerdown', 'keydown']) document.addEventListener(type, () => tv.on && wake(), { passive: true });
-  // en modo TV: espacio pausa todo, F pone la página entera en pantalla completa y Esc sale del modo
+  // en modo TV: espacio pausa todo, F pone la página entera en pantalla completa, A pasa del grafo al tablero de agentes
+  // (y vuelve) y Esc sale del modo
   document.addEventListener('keydown', (ev) => {
     if (!tv.on || ev.defaultPrevented || ev.ctrlKey || ev.metaKey || ev.altKey) return;
     // Esc sirve también con el foco en un botón; si el grafo la usó para cerrar una ficha, ya lo marcó
@@ -3915,6 +3973,9 @@
     } else if (k === 'f' && fullscreenOK) {
       ev.preventDefault();
       toggleFullscreen();
+    } else if (k === 'a') {
+      ev.preventDefault();
+      tvShowAgents(!agentsOn);
     }
   });
 

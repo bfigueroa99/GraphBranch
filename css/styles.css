@@ -5136,7 +5136,8 @@ a.hl-row:focus-visible {
   min-width: 0;
   margin-inline-start: auto;
 }
-/* la vista de agentes: el tablero en el lugar del grafo, con su propio desplazamiento; lo del grafo se esconde */
+/* la vista de agentes: el tablero en el lugar del grafo, con su propio desplazamiento; lo del grafo se esconde (menos el
+   modo TV, que también muestra el tablero) */
 .agents-board {
   display: grid;
   flex: 1 1 auto;
@@ -5153,7 +5154,7 @@ a.hl-row:focus-visible {
 .graph-panel.agents-on .agk-panel,
 .graph-panel.agents-on .hint,
 .graph-panel.agents-on .practice,
-.graph-panel.agents-on .toolbar > :not(.view-switch) {
+.graph-panel.agents-on .toolbar > :not(.view-switch, #tv-btn) {
   display: none !important;
 }
 .ab-head {
@@ -7865,5 +7866,172 @@ button.sw-log-row:hover {
   .sw-slice figcaption {
     padding: 2px 4px 3px;
     font-size: 9.5px;
+  }
+}
+
+/* ---------- el tablero de agentes en el modo TV: lo que se lee de lejos y en vivo ----------
+   Los indicadores, la corteza (con las interacciones viajando por ella), lo último que pasó entre agentes y personas y
+   el log; sin los controles ni el resto del análisis (la red, la línea de tiempo, el gasto…), que piden desplazarse. La
+   barra del modo TV va en la cabecera del tablero (app.js la mueve) y la letra crece con la pantalla (--tvz), como en el
+   resto del modo; el lienzo de la corteza no se agranda con zoom (se vería borroso): lo hacen sus rótulos. */
+html.tv .agents-board .ab-help,
+html.tv .agents-board .ab-switches,
+html.tv .agents-board .ag-hint,
+html.tv #sw-ingest,
+html.tv #sw-thread,
+html.tv #sw-rate,
+html.tv #sw-per,
+html.tv #ag-net,
+html.tv #ag-time,
+html.tv #ag-spend,
+html.tv #ag-pairs,
+html.tv #ag-list {
+  display: none !important;
+}
+html.tv .agents-board .ab-head,
+html.tv #sw-kpis,
+html.tv #ag-noagents,
+html.tv #ag-focus,
+html.tv #sw-cortex-card > h3,
+html.tv #ag-recent,
+html.tv #sw-log {
+  zoom: var(--tvz, 1);
+}
+html.tv .agents-board .ab-head {
+  position: relative;
+  flex-wrap: nowrap;
+}
+html.tv .agents-board .ab-title {
+  font-size: 20px;
+}
+html.tv .agents-board .ab-clock {
+  font-size: 15px;
+}
+/* la barra flota sobre el reloj del tablero, como sobre el grafo (se va con el puntero quieto); dentro de la cabecera,
+   que ya crece con la pantalla, no crece otra vez */
+html.tv .agents-board .tv-bar {
+  top: 50%;
+  right: auto;
+  inset-inline-end: 0;
+  transform: translateY(-50%);
+  zoom: 1;
+}
+html.tv .agents-board .sw-label {
+  max-width: calc(190px * var(--tvz, 1));
+  padding: calc(2px * var(--tvz, 1)) calc(6px * var(--tvz, 1));
+  font-size: calc(11px * var(--tvz, 1));
+}
+html.tv .agents-board .sw-label span {
+  font-size: calc(10px * var(--tvz, 1));
+}
+html.tv .agents-board .sw-insp {
+  width: min(calc(260px * var(--tvz, 1)), calc(100% - 250px));
+  font-size: calc(12px * var(--tvz, 1));
+}
+html.tv .agents-board .sw-insp dt {
+  font-size: calc(10.5px * var(--tvz, 1));
+}
+html.tv .agents-board .sw-insp-foot {
+  font-size: calc(11px * var(--tvz, 1));
+}
+html.tv .agents-board .sw-slice figcaption {
+  font-size: calc(10.5px * var(--tvz, 1));
+}
+/* el log es un tail -f: lo más nuevo, abajo, siempre a la vista */
+html.tv #sw-log .sw-log-list {
+  max-height: none;
+}
+@media (min-width: 861px) {
+  /* el tablero entra entero en la pantalla: la corteza a la izquierda, lo último y el log a la derecha */
+  html.tv .graph-panel.agents-on .agents-board {
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
+  }
+  html.tv #agents-body {
+    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-areas:
+      'kpis kpis'
+      'noag noag'
+      'focus focus'
+      'cortex recent'
+      'cortex log';
+    row-gap: 0;
+    min-height: 0;
+  }
+  html.tv #agents-body > .ab-row {
+    display: contents;
+  }
+  html.tv #sw-kpis {
+    grid-area: kpis;
+    margin-bottom: 12px;
+  }
+  html.tv #ag-noagents {
+    grid-area: noag;
+    margin: 0 0 10px;
+  }
+  html.tv #ag-focus {
+    grid-area: focus;
+    margin: 0 0 10px;
+  }
+  html.tv #sw-cortex-card {
+    grid-area: cortex;
+  }
+  html.tv #ag-recent {
+    grid-area: recent;
+  }
+  html.tv #sw-log {
+    grid-area: log;
+    margin-top: 12px;
+  }
+  html.tv #sw-cortex-card,
+  html.tv #ag-recent,
+  html.tv #sw-log {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+  html.tv #sw-cortex-card .sw-cortex-wrap,
+  html.tv #ag-recent .hl-list,
+  html.tv #sw-log .sw-log-list {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  html.tv #sw-cortex,
+  html.tv #sw-cortex .sw-viz {
+    height: 100%;
+  }
+  html.tv #sw-cortex .sw-viz {
+    grid-template-columns: minmax(0, 1fr) minmax(150px, calc(210px * var(--tvz, 1)));
+    grid-template-rows: minmax(0, 1fr);
+  }
+  html.tv #sw-cortex .sw-stage,
+  html.tv #sw-cortex .sw-slices {
+    height: auto;
+    min-height: 0;
+  }
+  /* lo último, de lo más nuevo hacia abajo: lo que no cabe es lo más viejo y, si algo queda cortado (app.js lo marca),
+     se desvanece abajo */
+  html.tv #ag-recent .hl-list {
+    overflow: hidden;
+  }
+  html.tv #ag-recent .hl-list.is-cut {
+    -webkit-mask-image: linear-gradient(to top, transparent, #000 2em);
+    mask-image: linear-gradient(to top, transparent, #000 2em);
+  }
+  /* el log, de lo más viejo a lo más nuevo: lo que no cabe se va por arriba, desvaneciéndose */
+  html.tv #sw-log .sw-log-list {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+  }
+  html.tv #sw-log .sw-log-list.is-cut {
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 2.5em);
+    mask-image: linear-gradient(to bottom, transparent, #000 2.5em);
+  }
+  html.tv #sw-log .sw-caret {
+    flex: none;
   }
 }

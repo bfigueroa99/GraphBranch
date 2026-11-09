@@ -6013,6 +6013,9 @@ html.tv .agk-btn {
 .cs-gx[data-state='loading'] {
   opacity: 0.5;
 }
+.cs-gx[data-quiet='true'] svg {
+  opacity: 0.4;
+}
 .cs-gx:hover svg,
 .cs-gx:focus-visible svg {
   filter: brightness(1.25);

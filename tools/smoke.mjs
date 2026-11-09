@@ -2588,6 +2588,23 @@ console.log('Varios repos a la vez');
         } finally {
           await rec.context().close();
         }
+        // una galaxia quieta (su commit más reciente cargado tiene más de 30 días) lo dice en su nombre y su globo; la reciente no
+        const old = Date.now() - 45 * 864e5;
+        for (const c of gh.repo('rec/viejo').commits.values()) c.commit.author.date = c.commit.committer.date = new Date(old).toISOString();
+        const qui = await openPage({ viewport: { width: 1280, height: 800 } });
+        try {
+          await qui.unroute('https://api.github.com/**');
+          await qui.route('https://api.github.com/**', gh.handle);
+          await qui.goto(`${base}/index.html?lang=es&repo=rec/viejo&repo=rec/uno`);
+          await qui.waitForFunction(() => { const t = [...document.querySelectorAll('#repo-tabs .rt')]; return t.length === 2 && t.every((x) => x.dataset.state === 'live'); }, null, { timeout: T(15000) });
+          await qui.click('#constellation-btn');
+          await qui.waitForSelector('#constellation[open]', { timeout: T(3000) });
+          const quiet = await qui.$$eval('#constellation .cs-gx', (bs) => Object.fromEntries(bs.map((b) => [b.dataset.key, { label: b.getAttribute('aria-label'), title: b.title, quiet: b.dataset.quiet === 'true' }])));
+          if (!/sin actividad hace más de 30 días/.test(quiet['rec/viejo'].label) || !/sin actividad hace más de 30 días/.test(quiet['rec/viejo'].title) || !quiet['rec/viejo'].quiet) throw new Error('la galaxia quieta no lo dice: ' + JSON.stringify(quiet['rec/viejo']));
+          if (/sin actividad/.test(quiet['rec/uno'].label) || quiet['rec/uno'].quiet) throw new Error('la galaxia reciente dice que está quieta: ' + JSON.stringify(quiet['rec/uno']));
+        } finally {
+          await qui.context().close();
+        }
       } finally {
         for (const r of ['o/a', 'o/b', 'o/c']) Object.assign(gh.repo(r), { openItems: 0, stars: 0, forks: 0 });
         await iss.context().close();

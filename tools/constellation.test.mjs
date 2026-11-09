@@ -236,3 +236,22 @@ test('cada galaxia dice, junto a sus commits y ramas, cuánto hace de su commit 
   // quien monta la constelación sin `ago` sigue viendo nombre y cifras
   assert.equal(C.describe({ name: 'o/c', commits: 1, branches: 1, last: NOW }, { text }).title, 'o/c · commits: 1 · ramas: 1');
 });
+
+test('una galaxia quieta (su commit más reciente cargado tiene más de 30 días) lo dice en su nombre y su globo; las que cargan o no tienen fecha no', () => {
+  const NOW = 1_800_000_000_000;
+  const DAY = 864e5;
+  const text = (k, p) => (k === 'constellation.stats' ? `c${p.commits}/r${p.branches}` : k === 'textview.quiet' ? 'sin actividad hace más de 30 días' : k);
+  const ago = () => 'hace mucho';
+  assert.equal(C.QUIET_DAYS, 30);
+  assert.equal(C.isQuiet({ last: NOW - 31 * DAY }, NOW), true);
+  assert.equal(C.isQuiet({ last: NOW - 30 * DAY }, NOW), false, 'justo 30 días aún no es quieta');
+  assert.equal(C.isQuiet({ last: NOW - 2 * DAY }, NOW), false);
+  for (const last of [null, undefined, NaN, 'ayer']) assert.equal(C.isQuiet({ last, state: 'loading' }, NOW), false, 'sin fecha no hay nada que decir');
+  const q = C.describe({ name: 'o/q', commits: 4, branches: 1, last: NOW - 90 * DAY, unread: 1 }, { text, ago, now: NOW });
+  assert.equal(q.label, 'o/q, c4/r1, hace mucho, sin actividad hace más de 30 días, tabs.unread');
+  assert.equal(q.title, 'o/q · c4/r1 · hace mucho · sin actividad hace más de 30 días');
+  const live = C.describe({ name: 'o/v', commits: 4, branches: 1, last: NOW - DAY }, { text, ago, now: NOW });
+  assert.ok(!/sin actividad/.test(live.label + live.title));
+  const loading = C.describe({ name: 'o/l', commits: 0, branches: 0, state: 'loading' }, { text, ago, now: NOW });
+  assert.ok(!/sin actividad/.test(loading.label));
+});

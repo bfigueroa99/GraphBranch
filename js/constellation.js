@@ -172,15 +172,24 @@
     return svg;
   }
 
+  /** Los mismos 30 días de las ramas quietas de la vista de texto (`GB.textview.QUIET_DAYS`). */
+  const QUIET_DAYS = 30;
+
+  /** Una galaxia quieta: su commit más reciente ya cargado (`it.last`) tiene más de QUIET_DAYS días a `now`. Sin `last`, o mientras la pestaña carga, no es quieta: no hay fecha que lo diga. */
+  function isQuiet(it, now = Date.now()) {
+    return it.state !== 'loading' && Number.isFinite(it.last) && now - it.last > QUIET_DAYS * 864e5;
+  }
+
   /** Lo que dice una galaxia: `label` (su nombre accesible) y `title` (su globo). Nombre, commits y ramas, cuánto hace de
       su commit más reciente ya cargado (`it.last`, con `ago(ms)`, el formato relativo de la app: nada si carga o está
-      vacía, sin `last`) y, solo en `label`, las novedades sin ver. */
-  function describe(it, { text, fmt = String, ago = null }) {
+      vacía, sin `last`), si está quieta («sin actividad hace más de 30 días») y, solo en `label`, las novedades sin ver. */
+  function describe(it, { text, fmt = String, ago = null, now = Date.now() }) {
     const stats = text('constellation.stats', { commits: fmt(it.commits || 0), branches: fmt(it.branches || 0) });
     const when = ago && Number.isFinite(it.last) ? ago(it.last) : '';
+    const quiet = isQuiet(it, now) ? text('textview.quiet') : '';
     return {
-      label: [it.name, stats, when, it.unread ? text('tabs.unread', { n: it.unread }) : ''].filter(Boolean).join(', '),
-      title: [it.name, stats, when].filter(Boolean).join(' · '),
+      label: [it.name, stats, when, quiet, it.unread ? text('tabs.unread', { n: it.unread }) : ''].filter(Boolean).join(', '),
+      title: [it.name, stats, when, quiet].filter(Boolean).join(' · '),
     };
   }
 
@@ -230,6 +239,7 @@
         b.className = 'cs-gx';
         b.dataset.key = it.key;
         b.dataset.state = it.state || 'live';
+        if (isQuiet(it)) b.dataset.quiet = 'true';
         if (it.active) b.setAttribute('aria-current', 'true');
         b.style.left = `${s.x - s.r}%`;
         b.style.top = `${s.y - s.r}%`;
@@ -259,5 +269,5 @@
     return { render, setOrder, setFilter, setRecent };
   }
 
-  GB.constellation = { place, sortItems, describe, openIssues, starsOf, forksOf, newBranches, orderParam, filterParam, filterItems, recentParam, recentItems, radiusOf, hueOf, mount };
+  GB.constellation = { place, sortItems, describe, openIssues, starsOf, forksOf, newBranches, orderParam, filterParam, filterItems, isQuiet, QUIET_DAYS, recentParam, recentItems, radiusOf, hueOf, mount };
 })(window.GB);

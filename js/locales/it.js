@@ -749,6 +749,8 @@ GB.i18n.define('it', {
   'all.prs.approved': 'Approvate',
   'all.prs.waiting': 'In attesa di revisione',
   'all.prs.open': 'PR #{num} di {repo}: {title}. Apri il suo branch',
+  'all.prs.pin': 'Fissa la PR #{num} di {repo} in alto',
+  'all.prs.unpin': 'Sblocca la PR #{num} di {repo}',
   'all.lastCommit': 'Ultimo commit: {msg} · {who} · {when}. Vedi le modifiche',
   'editor.edit': 'Modifica',
   'editor.editFile': 'Modifica {path}',

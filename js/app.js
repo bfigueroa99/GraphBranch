@@ -1113,6 +1113,13 @@
     diffing: () => diffView.isOpen,
     onStats: (list) => renderAllSum(list),
     prsRoot: $('#all-prs'),
+    getPins: () => U.store.get('prpins', []),
+    onPin: (id, on) => {
+      const set = new Set(U.store.get('prpins', []));
+      if (on) set.add(id);
+      else set.delete(id);
+      U.store.set('prpins', set.size ? [...set] : null);
+    },
     onOpenPr: (key, head) => {
       const tab = tabs.find((x) => x.key === key);
       if (!tab) return;

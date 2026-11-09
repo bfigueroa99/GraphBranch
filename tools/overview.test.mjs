@@ -92,3 +92,36 @@ test('groupPulls: los PRs de todos los repos por estado, del más nuevo al más 
   assert.deepEqual(plain(O.groupPulls([{ key: 'a', name: 'o/a', pulls: [pr(1)] }])).map((x) => x.id), ['waiting'], 'solo los grupos con PRs');
   assert.deepEqual(plain(O.groupPulls([])), []);
 });
+
+test('groupPulls: los PRs fijados van arriba de su grupo, por repo y número, y no cambian de grupo', () => {
+  const pr = (number, extra = {}) => ({ number, title: `PR ${number}`, head: `rama-${number}`, createdAt: number * 10, ...extra });
+  const entries = [
+    { key: 'a', name: 'o/a', pulls: [pr(1), pr(2), pr(3, { draft: true })] },
+    { key: 'b', name: 'o/b', pulls: [pr(1), pr(4)] },
+  ];
+  const order = (g) => plain(g).map((x) => [x.id, x.items.map((i) => `${i.key}#${i.number}${i.pinned ? '*' : ''}`)]);
+  assert.deepEqual(order(O.groupPulls(entries)), [['draft', ['a#3']], ['waiting', ['b#4', 'a#2', 'a#1', 'b#1']]], 'sin fijados, el orden de siempre');
+  assert.deepEqual(order(O.groupPulls(entries, new Set([O.pinId('b', 1), O.pinId('a', 1), O.pinId('a', 3)]))),
+    [['draft', ['a#3*']], ['waiting', ['a#1*', 'b#1*', 'b#4', 'a#2']]], 'los fijados primero, y #1 de b no es #1 de a');
+  assert.deepEqual(order(O.groupPulls(entries, new Set(['a#99']))), order(O.groupPulls(entries)), 'un fijado que ya no existe no hace nada');
+  assert.equal(O.pinId('o/a', 7), 'o/a#7');
+});
+
+test('mount: fijar repinta con los mismos PRs aunque `pulls` sea un iterador de un solo uso', () => {
+  const els = [];
+  const mkEl = (tag) => {
+    const el = { tag, children: [], dataset: {}, attrs: {}, classList: { toggle() {} }, hidden: false, listeners: {}, append(...c) { this.children.push(...c); }, replaceChildren(...c) { this.children = c; }, setAttribute(k, v) { this.attrs[k] = v; }, addEventListener(t, f) { this.listeners[t] = f; }, querySelectorAll: () => [], querySelector: () => null, focus() {}, closest: () => null };
+    els.push(el);
+    return el;
+  };
+  const c2 = vm.createContext({ window: { GB: { U: { truncate: (x) => x } }, matchMedia: null }, document: { createElement: mkEl } });
+  vm.runInContext(readFileSync(join(root, 'js', 'overview.js'), 'utf8'), c2, { filename: 'overview.js' });
+  const pins = new Set();
+  const box = mkEl('div');
+  const ov = c2.window.GB.overview.mount(mkEl('div'), { prsRoot: box, text: (k) => k, num: String, getPins: () => [...pins], onPin: (id, on) => (on ? pins.add(id) : pins.delete(id)) });
+  ov.setPulls([{ key: 'a', name: 'o/a', pulls: new Map([[1, { number: 1, title: 'x', createdAt: 1 }]]).values() }]);
+  const pinBtn = els.find((e) => e.tag === 'button' && e.className === 'ap-pin');
+  pinBtn.listeners.click();
+  assert.deepEqual([...pins], ['a#1']);
+  assert.equal(box.hidden, false, 'tras fijar, el Launchpad sigue con su PR');
+});

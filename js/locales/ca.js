@@ -748,6 +748,8 @@ GB.i18n.define('ca', {
   'all.prs.approved': 'Aprovats',
   'all.prs.waiting': 'Esperant revisió',
   'all.prs.open': 'PR #{num} de {repo}: {title}. Obre la seva branca',
+  'all.prs.pin': 'Fixa el PR #{num} de {repo} a dalt',
+  'all.prs.unpin': 'Deixa de fixar el PR #{num} de {repo}',
   'all.lastCommit': 'Últim commit: {msg} · {who} · {when}. Mostra’n els canvis',
   'editor.edit': 'Edita',
   'editor.editFile': 'Edita {path}',

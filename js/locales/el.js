@@ -748,6 +748,8 @@ GB.i18n.define('el', {
   'all.prs.approved': 'Εγκεκριμένα',
   'all.prs.waiting': 'Αναμένουν έλεγχο',
   'all.prs.open': 'PR #{num} του {repo}: {title}. Άνοιγμα του κλάδου του',
+  'all.prs.pin': 'Καρφίτσωμα του PR #{num} του {repo} στην κορυφή',
+  'all.prs.unpin': 'Ξεκαρφίτσωμα του PR #{num} του {repo}',
   'all.lastCommit': 'Τελευταίο commit: {msg} · {who} · {when}. Δείτε τις αλλαγές του',
   'editor.edit': 'Επεξεργασία',
   'editor.editFile': 'Επεξεργασία {path}',

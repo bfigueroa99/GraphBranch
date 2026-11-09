@@ -791,6 +791,8 @@ GB.i18n.define('fa', {
   'all.prs.approved': 'تأییدشده',
   'all.prs.waiting': 'در انتظار بازبینی',
   'all.prs.open': 'PR #{num} در {repo}: {title}. باز کردن شاخه آن',
+  'all.prs.pin': 'سنجاق کردن PR #{num} از {repo} در بالا',
+  'all.prs.unpin': 'برداشتن سنجاق PR #{num} از {repo}',
   'all.lastCommit': 'آخرین کامیت: {msg} · {who} · {when}. دیدن تغییراتش',
   'editor.edit': 'ویرایش',
   'editor.editFile': 'ویرایش {path}',

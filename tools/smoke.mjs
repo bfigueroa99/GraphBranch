@@ -2059,6 +2059,14 @@ console.log('Varios repos a la vez');
     }));
     const want = [['draft', '#8 Borrador a medias | o/b · main · bea'], ['waiting', '#7 Cambio en revisión | o/b · main · bea']];
     if (!/2/.test(lp.title || '') || lp.groups.length !== 2 || want.some(([id, row], i) => lp.groups[i].id !== id || lp.groups[i].rows.length !== 1 || !lp.groups[i].rows[0].startsWith(row)) || /\{|undefined|NaN/.test(lp.title + lp.groups.map((g) => g.rows.join()).join())) throw new Error('el Launchpad: ' + JSON.stringify(lp));
+    // fijar un PR arriba: se recuerda por repo y número (sin el título) y el mismo botón lo suelta
+    const pinSel = '#all-prs .ap-row[data-number="7"] + .ap-pin';
+    await page.click(pinSel);
+    const pinned = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), label: document.querySelector(sel)?.getAttribute('aria-label'), saved: localStorage.getItem('graphbranch:prpins'), focus: document.activeElement?.matches(sel) }), pinSel);
+    if (pinned.pressed !== 'true' || pinned.saved !== '["o/b#7"]' || !pinned.focus || /\{|undefined/.test(pinned.label || '')) throw new Error('fijar un PR del Launchpad: ' + JSON.stringify(pinned));
+    await page.click(pinSel);
+    const unpinned = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), saved: localStorage.getItem('graphbranch:prpins') }), pinSel);
+    if (unpinned.pressed !== 'false' || unpinned.saved !== null) throw new Error('soltar un PR del Launchpad: ' + JSON.stringify(unpinned));
     await page.click('#all-prs .ap-row[data-number="7"]');
     await page.waitForFunction(() => document.querySelector('#all-panel').hidden && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
     await page.click('#all-tab');

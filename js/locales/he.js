@@ -805,6 +805,8 @@ GB.i18n.define('he', {
   'all.prs.approved': 'מאושרות',
   'all.prs.waiting': 'ממתינות לבדיקה',
   'all.prs.open': 'PR #{num} ב-{repo}: {title}. פתיחת הענף שלה',
+  'all.prs.pin': 'הצמד את PR #{num} של {repo} למעלה',
+  'all.prs.unpin': 'בטל הצמדה של PR #{num} של {repo}',
   'all.lastCommit': 'קומיט אחרון: {msg} · {who} · {when}. הצגת השינויים שלו',
   'editor.edit': 'עריכה',
   'editor.editFile': 'עריכת {path}',

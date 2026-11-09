@@ -748,6 +748,8 @@ GB.i18n.define('ms', {
   'all.prs.approved': 'Diluluskan',
   'all.prs.waiting': 'Menunggu semakan',
   'all.prs.open': 'PR #{num} dalam {repo}: {title}. Buka cabangnya',
+  'all.prs.pin': 'Semat PR #{num} {repo} di atas',
+  'all.prs.unpin': 'Nyahsemat PR #{num} {repo}',
   'all.lastCommit': 'Commit terakhir: {msg} · {who} · {when}. Lihat perubahannya',
   'editor.edit': 'Sunting',
   'editor.editFile': 'Sunting {path}',

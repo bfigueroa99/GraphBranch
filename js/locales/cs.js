@@ -759,6 +759,8 @@ GB.i18n.define('cs', {
   'all.prs.approved': 'Schválené',
   'all.prs.waiting': 'Čekají na revizi',
   'all.prs.open': 'PR #{num} z {repo}: {title}. Otevřít jeho větev',
+  'all.prs.pin': 'Připnout PR #{num} z {repo} nahoru',
+  'all.prs.unpin': 'Odepnout PR #{num} z {repo}',
   'all.lastCommit': 'Poslední commit: {msg} · {who} · {when}. Zobrazit jeho změny',
   'editor.edit': 'Upravit',
   'editor.editFile': 'Upravit {path}',

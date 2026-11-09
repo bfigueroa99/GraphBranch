@@ -749,6 +749,8 @@ GB.i18n.define('fil', {
   'all.prs.approved': 'Aprubado',
   'all.prs.waiting': 'Naghihintay ng review',
   'all.prs.open': 'PR #{num} ng {repo}: {title}. Buksan ang branch nito',
+  'all.prs.pin': 'I-pin sa itaas ang PR #{num} ng {repo}',
+  'all.prs.unpin': 'I-unpin ang PR #{num} ng {repo}',
   'all.lastCommit': 'Huling commit: {msg} · {who} · {when}. Tingnan ang mga pagbabago nito',
   'editor.edit': 'I-edit',
   'editor.editFile': 'I-edit ang {path}',

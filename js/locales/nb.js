@@ -748,6 +748,8 @@ GB.i18n.define('nb', {
   'all.prs.approved': 'Godkjent',
   'all.prs.waiting': 'Venter på gjennomgang',
   'all.prs.open': 'PR #{num} i {repo}: {title}. Åpne grenen',
+  'all.prs.pin': 'Fest PR #{num} i {repo} øverst',
+  'all.prs.unpin': 'Løsne PR #{num} i {repo}',
   'all.lastCommit': 'Siste commit: {msg} · {who} · {when}. Se endringene',
   'editor.edit': 'Rediger',
   'editor.editFile': 'Rediger {path}',

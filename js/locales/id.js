@@ -748,6 +748,8 @@ GB.i18n.define('id', {
   'all.prs.approved': 'Disetujui',
   'all.prs.waiting': 'Menunggu ulasan',
   'all.prs.open': 'PR #{num} di {repo}: {title}. Buka branch-nya',
+  'all.prs.pin': 'Sematkan PR #{num} dari {repo} di atas',
+  'all.prs.unpin': 'Lepas sematan PR #{num} dari {repo}',
   'all.lastCommit': 'Commit terakhir: {msg} · {who} · {when}. Lihat perubahannya',
   'editor.edit': 'Edit',
   'editor.editFile': 'Edit {path}',

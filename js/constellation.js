@@ -1,6 +1,6 @@
 /* GraphBranch — constelación de repos: cada repo seguido es una galaxia, para ver más repos de los que caben
-   en pestañas. Una galaxia es un botón (se recorre con Tab y se abre con Intro) con su nombre, sus cifras y,
-   si hay, las novedades sin ver; el tamaño sale de los commits cargados y el color, del nombre. No hace
+   en pestañas. Una galaxia es un botón (se recorre con Tab y se abre con Intro) con su nombre, sus cifras, cuánto
+   hace de su commit más reciente ya cargado y, si hay, las novedades sin ver; el tamaño sale de los commits cargados y el color, del nombre. No hace
    ninguna consulta: parte del estado ya cargado. Todo texto entra con textContent. */
 (function (GB) {
   'use strict';
@@ -172,8 +172,20 @@
     return svg;
   }
 
-  /** Monta la constelación en `root`. `text(key, params)`: traductor; `fmt(n)`: número; `onGo(key)`: Intro sobre una galaxia. */
-  function mount(root, { text, fmt = String, onGo, select = null, status = null }) {
+  /** Lo que dice una galaxia: `label` (su nombre accesible) y `title` (su globo). Nombre, commits y ramas, cuánto hace de
+      su commit más reciente ya cargado (`it.last`, con `ago(ms)`, el formato relativo de la app: nada si carga o está
+      vacía, sin `last`) y, solo en `label`, las novedades sin ver. */
+  function describe(it, { text, fmt = String, ago = null }) {
+    const stats = text('constellation.stats', { commits: fmt(it.commits || 0), branches: fmt(it.branches || 0) });
+    const when = ago && Number.isFinite(it.last) ? ago(it.last) : '';
+    return {
+      label: [it.name, stats, when, it.unread ? text('tabs.unread', { n: it.unread }) : ''].filter(Boolean).join(', '),
+      title: [it.name, stats, when].filter(Boolean).join(' · '),
+    };
+  }
+
+  /** Monta la constelación en `root`. `text(key, params)`: traductor; `fmt(n)`: número; `ago(ms)`: «hace 3 h»; `onGo(key)`: Intro sobre una galaxia. */
+  function mount(root, { text, fmt = String, ago = null, onGo, select = null, status = null }) {
     let items = [];
     let mode = 'tabs';
     let filter = '';
@@ -222,9 +234,9 @@
         b.style.left = `${s.x - s.r}%`;
         b.style.top = `${s.y - s.r}%`;
         b.style.width = b.style.height = `${s.r * 2}%`;
-        const stats = text('constellation.stats', { commits: fmt(it.commits || 0), branches: fmt(it.branches || 0) });
-        b.setAttribute('aria-label', [it.name, stats, it.unread ? text('tabs.unread', { n: it.unread }) : ''].filter(Boolean).join(', '));
-        b.title = `${it.name} · ${stats}`;
+        const said = describe(it, { text, fmt, ago });
+        b.setAttribute('aria-label', said.label);
+        b.title = said.title;
         b.appendChild(disc(hueOf(it.name)));
         const name = document.createElement('span');
         name.className = 'cs-name';
@@ -247,5 +259,5 @@
     return { render, setOrder, setFilter, setRecent };
   }
 
-  GB.constellation = { place, sortItems, openIssues, starsOf, forksOf, newBranches, orderParam, filterParam, filterItems, recentParam, recentItems, radiusOf, hueOf, mount };
+  GB.constellation = { place, sortItems, describe, openIssues, starsOf, forksOf, newBranches, orderParam, filterParam, filterItems, recentParam, recentItems, radiusOf, hueOf, mount };
 })(window.GB);

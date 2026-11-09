@@ -2479,6 +2479,8 @@ console.log('Varios repos a la vez');
       const gx = await full.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => ({ label: b.getAttribute('aria-label'), r: b.getBoundingClientRect().toJSON() })));
       if (gx.length !== 20) throw new Error(`la constelación tiene ${gx.length} galaxias`);
       if (gx.some((g) => !g.label || /undefined|NaN|constellation\./.test(g.label))) throw new Error('galaxia sin nombre o con texto sin resolver: ' + JSON.stringify(gx.map((g) => g.label)));
+      // repos que no cargaron ningún commit (dan 404): su galaxia no dice cuánto hace de un commit que no hay
+      if (gx.some((g) => /\bhace\b|\bahora\b/.test(g.label))) throw new Error('una galaxia sin commits dice cuánto hace: ' + JSON.stringify(gx.map((g) => g.label)));
       for (let i = 0; i < gx.length; i++)
         for (let j = i + 1; j < gx.length; j++) {
           const a = gx[i].r, b = gx[j].r;
@@ -2575,6 +2577,10 @@ console.log('Varios repos a la vez');
           if ((await rec.$eval('#constellation-order', (s) => s.value)) !== 'recent') throw new Error('?order=recent no deja el selector en último commit');
           const byRecent = await rec.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => b.dataset.key).join(' '));
           if (byRecent !== 'rec/uno rec/tres rec/dos') throw new Error('?order=recent no abre la constelación con el commit más reciente primero: ' + byRecent);
+          // cada galaxia dice cuánto hace de su commit más reciente ya cargado, en su nombre accesible y en su globo
+          const when = await rec.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => [b.getAttribute('aria-label'), b.title]));
+          for (const [label, title] of when)
+            if (!/, (ahora|hace \d+ (s|min))(,|$)/.test(label) || !/ · (ahora|hace \d+ (s|min))$/.test(title)) throw new Error('la galaxia no dice cuánto hace de su último commit: ' + JSON.stringify(when));
           await rec.selectOption('#constellation-order', 'tabs');
           await rec.selectOption('#constellation-order', 'recent');
           const recentSaid = await rec.$eval('#constellation-status', (e) => e.textContent.trim());

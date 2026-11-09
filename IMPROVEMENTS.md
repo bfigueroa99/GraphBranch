@@ -633,3 +633,17 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/239, sin colisión
 - Validado: 636 pruebas (`node --test`), smoke, i18n (0 errores) y 29 e2e en verde.
 - **Siguiente:** iteración 240, expansión: ítem 155 (Extensión de Chrome y Firefox: GitLab, Codeberg y Bitbucket, Plataformas)
+
+### 2026-11-09 · Iteración 240 · Expansión · Plataformas
+
+- **Capacidad nueva: la extensión de Chrome y Firefox también en GitLab, Codeberg y Bitbucket** (ítem 155 de la hoja de ruta, parte del 149). El botón «Abrir en GraphBranch» aparece en las páginas de un proyecto de gitlab.com (con sus subgrupos, cortando en `/-/`), codeberg.org y bitbucket.org, con `?repo=https://…`; las páginas que no son un repo (perfiles, `explore`, `account`, `dashboard`…), `http`, puertos, credenciales, `www.` y dominios parecidos no lo llevan. El manifiesto suma solo los cuatro hosts a `content_scripts.matches`, sin permisos ni `host_permissions`.
+- **Pruebas que fallan sin la capacidad:** `tools/browser-extension.test.mjs` («targetFromUrl…», «lo que arma la extensión lo entiende la web», y el manifiesto con los cuatro hosts).
+- README: la función en la lista, su sección, Límites conocidos y Seguridad.
+- QA: la extensión no toca la página ni textos de la web (el botón va en español, como antes); `parseRepo` de la web reconoce lo que arma (prueba); auditoría: no toca la página.
+- Skills: no aplica: URL de tres plataformas con el patrón de `repoFromUrl`; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (una función de URL a destino más el manifiesto).
+- OMC: no disponible (la iteración no lanzó subagentes; el diff es una función pura y una lista de hosts, leído a mano contra la CSP y los permisos mínimos)
+- Reclamo: loop/240, sin colisión
+- Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
+- Validado: 638 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio). La primera corrida falló en un paso ajeno del smoke («la ficha de un commit de agente dice cuál es… (2D)»: intermitente, no lo toca el diff); la segunda pasó.
+- **Siguiente:** iteración 241, expansión: ítem 157 (Launchpad: fijar un PR arriba, Escala)

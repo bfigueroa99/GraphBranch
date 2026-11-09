@@ -66,7 +66,9 @@
   /** Cada parte de una ruta (grupos, ramas con "/") escapada por separado: las barras quedan. */
   const segs = (path) => String(path).split('/').map(encodeURIComponent).join('/');
 
-  const CI_MAX = 6; // ramas cuyo pipeline se pregunta por ciclo
+  const CI_MAX = 6; // ramas (por defecto, fijadas, de una MR) cuyo pipeline se pregunta por ciclo
+  const CI_REST = 2; // y, además, ramas del resto por ciclo,
+  const CI_REST_TOP = 20; // entre las 20 más recientes del listado
   /** El estado de un pipeline de GitLab en uno de tres ('success', 'failure', 'pending'); 'skipped' y 'manual' no cuentan. */
   const pipelineState = (s) => {
     if (s === 'success') return 'success';
@@ -193,17 +195,21 @@
 
     /** El estado del último pipeline de la cabeza de la rama por defecto, las fijadas y las de una MR abierta
         (`/pipelines?ref=`, una consulta por rama que se movió, como mucho CI_MAX por ciclo), en el mismo
-        `data.ci` que usa GitHub. Un proyecto privado sin token ni se pregunta; sin pipelines (403/404) se
+        `data.ci` que usa GitHub. Después, y con su propio tope (CI_REST por ciclo), las 20 ramas más
+        recientes del resto, para que no queden sin marca. Un proyecto privado sin token ni se pregunta; sin pipelines (403/404) se
         deja de preguntar. Un pipeline de otro commit que la cabeza no cuenta: se vuelve a preguntar luego. */
     async syncCiGitlab(acts, quiet) {
       if (this.noCi || (this.data.repo.private && !this.gitlabToken)) return;
       const { branches, repo } = this.data;
       const heads = [...this.data.pulls.values()].filter((p) => p.sameRepo !== false && p.state !== 'merged').map((p) => p.head);
       let left = CI_MAX;
-      for (const name of new Set([repo.defaultBranch, ...this.pins, ...heads])) {
+      const first = new Set([repo.defaultBranch, ...this.pins, ...heads]);
+      const rest = [...branches.keys()].filter((n) => !first.has(n)).slice(0, CI_REST_TOP);
+      let more = CI_REST;
+      for (const name of [...first, ...rest]) {
         const sha = branches.get(name)?.sha;
         if (!sha || this.ciSha.get(name) === sha) continue;
-        if (left-- <= 0) break;
+        if (first.has(name) ? left-- <= 0 : more-- <= 0) { if (first.has(name)) continue; break; }
         const res = await this.api(`${this.base}/pipelines?ref=${encodeURIComponent(name)}&per_page=1&order_by=id&sort=desc`, { allow: [403, 404] });
         if (!res.data) {
           this.noCi = true;

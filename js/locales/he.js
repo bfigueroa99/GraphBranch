@@ -809,6 +809,8 @@ GB.i18n.define('he', {
   'all.prs.open': 'PR #{num} ב-{repo}: {title}. פתיחת הענף שלה',
   'all.prs.pin': 'הצמד את PR #{num} של {repo} למעלה',
   'all.prs.unpin': 'בטל הצמדה של PR #{num} של {repo}',
+  'all.prs.person': 'סינון ה-Launchpad לפי אדם',
+  'all.prs.everyone': 'כל האנשים',
   'all.lastCommit': 'קומיט אחרון: {msg} · {who} · {when}. הצגת השינויים שלו',
   'editor.edit': 'עריכה',
   'editor.editFile': 'עריכת {path}',

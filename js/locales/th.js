@@ -753,6 +753,8 @@ GB.i18n.define('th', {
   'all.prs.open': 'PR #{num} ของ {repo}: {title} เปิดสาขาของมัน',
   'all.prs.pin': 'ปักหมุด PR #{num} ของ {repo} ไว้ด้านบน',
   'all.prs.unpin': 'เลิกปักหมุด PR #{num} ของ {repo}',
+  'all.prs.person': 'กรอง Launchpad ตามบุคคล',
+  'all.prs.everyone': 'ทุกคน',
   'all.lastCommit': 'คอมมิตล่าสุด: {msg} · {who} · {when} ดูการเปลี่ยนแปลง',
   'editor.edit': 'แก้ไข',
   'editor.editFile': 'แก้ไข {path}',

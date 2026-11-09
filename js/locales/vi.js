@@ -752,6 +752,8 @@ GB.i18n.define('vi', {
   'all.prs.open': 'PR #{num} của {repo}: {title}. Mở nhánh của nó',
   'all.prs.pin': 'Ghim PR #{num} của {repo} lên đầu',
   'all.prs.unpin': 'Bỏ ghim PR #{num} của {repo}',
+  'all.prs.person': 'Lọc Launchpad theo người',
+  'all.prs.everyone': 'Tất cả mọi người',
   'all.lastCommit': 'Commit mới nhất: {msg} · {who} · {when}. Xem thay đổi',
   'editor.edit': 'Sửa',
   'editor.editFile': 'Sửa {path}',

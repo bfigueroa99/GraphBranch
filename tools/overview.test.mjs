@@ -93,6 +93,21 @@ test('groupPulls: los PRs de todos los repos por estado, del más nuevo al más 
   assert.deepEqual(plain(O.groupPulls([])), []);
 });
 
+test('groupPulls y prAuthors: el Launchpad se filtra por la persona que abrió el PR, con lo ya cargado', () => {
+  const pr = (number, login, extra = {}) => ({ number, title: `PR ${number}`, head: `r${number}`, user: { login }, createdAt: number, ...extra });
+  const entries = [
+    { key: 'a', name: 'o/a', pulls: [pr(1, 'Ana'), pr(2, 'beto', { draft: true })] },
+    { key: 'b', name: 'o/b', pulls: new Set([pr(3, 'ana', { ci: 'failure' }), pr(4, 'Ana'), { number: 5, title: 'sin autor', createdAt: 5 }]) },
+  ];
+  assert.deepEqual(plain(O.prAuthors(entries)), ['Ana', 'ana', 'beto'], 'sin repetir, alfabético y sin los PRs sin autor');
+  const nums = (g) => g.flatMap((x) => x.items.map((i) => i.number)).sort();
+  assert.deepEqual(nums(plain(O.groupPulls(entries, null, 'Ana'))), [1, 4], 'solo los de esa persona, de todos los repos');
+  assert.deepEqual(nums(plain(O.groupPulls(entries, null, 'beto'))), [2]);
+  assert.deepEqual(nums(plain(O.groupPulls(entries, null, ''))), [1, 2, 3, 4, 5], 'sin filtro, todos');
+  assert.deepEqual(plain(O.groupPulls(entries, null, 'nadie')), [], 'una persona sin PRs no deja grupos');
+  assert.deepEqual(plain(O.prAuthors([])), []);
+});
+
 test('groupPulls: los PRs fijados van arriba de su grupo, por repo y número, y no cambian de grupo', () => {
   const pr = (number, extra = {}) => ({ number, title: `PR ${number}`, head: `rama-${number}`, createdAt: number * 10, ...extra });
   const entries = [

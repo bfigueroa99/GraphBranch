@@ -768,6 +768,8 @@ GB.i18n.define('ru', {
   'all.prs.open': 'PR #{num} в {repo}: {title}. Открыть его ветку',
   'all.prs.pin': 'Закрепить PR #{num} из {repo} вверху',
   'all.prs.unpin': 'Открепить PR #{num} из {repo}',
+  'all.prs.person': 'Фильтр Launchpad по человеку',
+  'all.prs.everyone': 'Все люди',
   'all.lastCommit': 'Последний коммит: {msg} · {who} · {when}. Показать изменения',
   'editor.edit': 'Изменить',
   'editor.editFile': 'Изменить {path}',

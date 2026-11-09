@@ -752,6 +752,8 @@ GB.i18n.define('bg', {
   'all.prs.open': 'PR #{num} на {repo}: {title}. Отвори клона му',
   'all.prs.pin': 'Закачи PR #{num} на {repo} най-горе',
   'all.prs.unpin': 'Откачи PR #{num} на {repo}',
+  'all.prs.person': 'Филтриране на Launchpad по човек',
+  'all.prs.everyone': 'Всички хора',
   'all.lastCommit': 'Последен комит: {msg} · {who} · {when}. Вижте промените му',
   'editor.edit': 'Редактиране',
   'editor.editFile': 'Редактиране на {path}',

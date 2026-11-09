@@ -752,6 +752,8 @@ GB.i18n.define('ko', {
   'all.prs.open': '{repo}의 PR #{num}: {title}. 해당 브랜치 열기',
   'all.prs.pin': '{repo}의 PR #{num}을(를) 맨 위에 고정',
   'all.prs.unpin': '{repo}의 PR #{num} 고정 해제',
+  'all.prs.person': '사람별로 Launchpad 필터링',
+  'all.prs.everyone': '모든 사람',
   'all.lastCommit': '마지막 커밋: {msg} · {who} · {when}. 변경 사항 보기',
   'editor.edit': '편집',
   'editor.editFile': '{path} 편집',

@@ -752,6 +752,8 @@ GB.i18n.define('zh-Hans', {
   'all.prs.open': '{repo} 的 PR #{num}：{title}。打开它的分支',
   'all.prs.pin': '将 {repo} 的 PR #{num} 置顶',
   'all.prs.unpin': '取消置顶 {repo} 的 PR #{num}',
+  'all.prs.person': '按人员筛选 Launchpad',
+  'all.prs.everyone': '所有人',
   'all.lastCommit': '最新提交：{msg} · {who} · {when}。查看其变更',
   'editor.edit': '编辑',
   'editor.editFile': '编辑 {path}',

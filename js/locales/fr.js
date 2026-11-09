@@ -753,6 +753,8 @@ GB.i18n.define('fr', {
   'all.prs.open': 'PR #{num} de {repo} : {title}. Ouvrir sa branche',
   'all.prs.pin': 'Épingler la PR #{num} de {repo} en haut',
   'all.prs.unpin': 'Détacher la PR #{num} de {repo}',
+  'all.prs.person': 'Filtrer le Launchpad par personne',
+  'all.prs.everyone': 'Toutes les personnes',
   'all.lastCommit': 'Dernier commit : {msg} · {who} · {when}. Voir ses modifications',
   'editor.edit': 'Modifier',
   'editor.editFile': 'Modifier {path}',

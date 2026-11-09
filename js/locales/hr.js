@@ -760,6 +760,8 @@ GB.i18n.define('hr', {
   'all.prs.open': 'PR #{num} u {repo}: {title}. Otvori njegovu granu',
   'all.prs.pin': 'Prikvači PR #{num} iz {repo} na vrh',
   'all.prs.unpin': 'Otkvači PR #{num} iz {repo}',
+  'all.prs.person': 'Filtriraj Launchpad po osobi',
+  'all.prs.everyone': 'Sve osobe',
   'all.lastCommit': 'Zadnji commit: {msg} · {who} · {when}. Pogledaj promjene',
   'editor.edit': 'Uredi',
   'editor.editFile': 'Uredi {path}',

@@ -752,6 +752,8 @@ GB.i18n.define('el', {
   'all.prs.open': 'PR #{num} του {repo}: {title}. Άνοιγμα του κλάδου του',
   'all.prs.pin': 'Καρφίτσωμα του PR #{num} του {repo} στην κορυφή',
   'all.prs.unpin': 'Ξεκαρφίτσωμα του PR #{num} του {repo}',
+  'all.prs.person': 'Φιλτράρισμα του Launchpad ανά άτομο',
+  'all.prs.everyone': 'Όλα τα άτομα',
   'all.lastCommit': 'Τελευταίο commit: {msg} · {who} · {when}. Δείτε τις αλλαγές του',
   'editor.edit': 'Επεξεργασία',
   'editor.editFile': 'Επεξεργασία {path}',

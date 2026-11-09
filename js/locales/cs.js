@@ -763,6 +763,8 @@ GB.i18n.define('cs', {
   'all.prs.open': 'PR #{num} z {repo}: {title}. Otevřít jeho větev',
   'all.prs.pin': 'Připnout PR #{num} z {repo} nahoru',
   'all.prs.unpin': 'Odepnout PR #{num} z {repo}',
+  'all.prs.person': 'Filtrovat Launchpad podle osoby',
+  'all.prs.everyone': 'Všichni',
   'all.lastCommit': 'Poslední commit: {msg} · {who} · {when}. Zobrazit jeho změny',
   'editor.edit': 'Upravit',
   'editor.editFile': 'Upravit {path}',

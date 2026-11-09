@@ -795,6 +795,8 @@ GB.i18n.define('fa', {
   'all.prs.open': 'PR #{num} در {repo}: {title}. باز کردن شاخه آن',
   'all.prs.pin': 'سنجاق کردن PR #{num} از {repo} در بالا',
   'all.prs.unpin': 'برداشتن سنجاق PR #{num} از {repo}',
+  'all.prs.person': 'فیلتر Launchpad بر اساس فرد',
+  'all.prs.everyone': 'همه افراد',
   'all.lastCommit': 'آخرین کامیت: {msg} · {who} · {when}. دیدن تغییراتش',
   'editor.edit': 'ویرایش',
   'editor.editFile': 'ویرایش {path}',

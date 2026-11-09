@@ -753,6 +753,8 @@ GB.i18n.define('fil', {
   'all.prs.open': 'PR #{num} ng {repo}: {title}. Buksan ang branch nito',
   'all.prs.pin': 'I-pin sa itaas ang PR #{num} ng {repo}',
   'all.prs.unpin': 'I-unpin ang PR #{num} ng {repo}',
+  'all.prs.person': 'I-filter ang Launchpad ayon sa tao',
+  'all.prs.everyone': 'Lahat ng tao',
   'all.lastCommit': 'Huling commit: {msg} · {who} · {when}. Tingnan ang mga pagbabago nito',
   'editor.edit': 'I-edit',
   'editor.editFile': 'I-edit ang {path}',

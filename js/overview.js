@@ -56,14 +56,22 @@
     return 'waiting';
   }
 
+  /** Las personas que abrieron los PRs de varios repos (los mismos `entries` de `groupPulls`), sin repetir y en orden alfabético. */
+  function prAuthors(entries) {
+    const set = new Set();
+    for (const e of entries) for (const p of e.pulls || []) { const u = p.user?.login || p.user?.name || ''; if (u) set.add(u); }
+    return [...set].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }) || (a < b ? -1 : 1));
+  }
+
   /** Los PRs abiertos de varios repos, agrupados por estado: `entries` es [{ key, name, pulls: iterable de PRs }].
       Devuelve solo los grupos con PRs, [{ id, items }], cada uno del más nuevo al más viejo; los fijados (`pinned`: un Set
       de `pinId`) van arriba de su grupo, con `pinned: true`. */
-  function groupPulls(entries, pinned) {
+  function groupPulls(entries, pinned, author = '') {
     const isPinned = (key, number) => !!pinned?.has?.(pinId(key, number));
     const by = new Map(PR_GROUPS.map((g) => [g, []]));
     for (const e of entries) {
       for (const p of e.pulls || []) {
+        if (author && (p.user?.login || p.user?.name || '') !== author) continue;
         by.get(prGroup(p)).push({
           key: e.key,
           repo: e.name,
@@ -213,23 +221,40 @@
     /** El Launchpad: los PRs abiertos de todos los repos, por estado. Solo se repinta si cambió algo (así no pierde el foco). */
     let prSig = '';
     let lastEntries = [];
+    let prPerson = ''; // el filtro por persona del Launchpad ('' = todas); solo de esta sesión
     function setPulls(entries) {
       lastEntries = entries.map((e) => ({ ...e, pulls: [...(e.pulls || [])] })); // `pulls` puede ser un iterador, de un solo uso
       entries = lastEntries;
       const box = opts.prsRoot;
       if (!box) return;
       const pins = new Set(opts.getPins?.() || []);
-      const groups = groupPulls(entries, pins);
-      const sig = JSON.stringify(groups);
+      const people = prAuthors(entries);
+      if (prPerson && !people.includes(prPerson)) prPerson = ''; // la persona ya no tiene PRs abiertos
+      const groups = groupPulls(entries, pins, prPerson);
+      const sig = JSON.stringify([groups, people, prPerson]);
       if (sig === prSig) return;
       prSig = sig;
       const t = opts.text;
       const num = opts.num || String;
       const total = groups.reduce((n, g) => n + g.items.length, 0);
-      box.hidden = !total;
+      box.hidden = !people.length && !total;
       box.replaceChildren();
-      if (!total) return;
+      if (box.hidden) return;
       box.append(mk('h3', 'ap-title', t('all.prs.title', { n: num(total) })));
+      if (people.length > 1) {
+        const sel = mk('select', 'ap-person');
+        sel.setAttribute('aria-label', t('all.prs.person'));
+        sel.title = t('all.prs.person');
+        sel.append(new Option(t('all.prs.everyone'), ''));
+        for (const u of people) sel.append(new Option(u, u));
+        sel.value = prPerson;
+        sel.addEventListener('change', () => {
+          prPerson = sel.value;
+          setPulls(lastEntries);
+          box.querySelector('.ap-person')?.focus(); // el repintado reemplaza el selector: el foco vuelve a él
+        });
+        box.append(sel);
+      }
       const cols = mk('div', 'ap-groups');
       for (const g of groups) {
         const sec = mk('section', 'ap-group');
@@ -312,5 +337,5 @@
     };
   }
 
-  GB.overview = { allParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, prGroup, groupPulls, pinId, mount };
+  GB.overview = { allParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, prGroup, groupPulls, prAuthors, pinId, mount };
 })(window.GB);

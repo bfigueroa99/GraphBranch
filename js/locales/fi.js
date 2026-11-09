@@ -752,6 +752,8 @@ GB.i18n.define('fi', {
   'all.prs.open': 'PR #{num} repossa {repo}: {title}. Avaa sen haara',
   'all.prs.pin': 'Kiinnitä PR #{num} ({repo}) ylös',
   'all.prs.unpin': 'Irrota PR #{num} ({repo})',
+  'all.prs.person': 'Suodata Launchpad henkilön mukaan',
+  'all.prs.everyone': 'Kaikki henkilöt',
   'all.lastCommit': 'Viimeisin commit: {msg} · {who} · {when}. Näytä muutokset',
   'editor.edit': 'Muokkaa',
   'editor.editFile': 'Muokkaa: {path}',

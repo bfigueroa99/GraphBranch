@@ -795,6 +795,8 @@ GB.i18n.define('ur', {
   'all.prs.open': '{repo} کی PR #{num}: {title}۔ اس کی شاخ کھولیں',
   'all.prs.pin': '{repo} کا PR #{num} اوپر پن کریں',
   'all.prs.unpin': '{repo} کا PR #{num} ان پن کریں',
+  'all.prs.person': 'Launchpad کو فرد کے لحاظ سے فلٹر کریں',
+  'all.prs.everyone': 'سب لوگ',
   'all.lastCommit': 'آخری کمٹ: {msg} · {who} · {when}۔ اس کی تبدیلیاں دیکھیں',
   'editor.edit': 'ترمیم',
   'editor.editFile': '{path} میں ترمیم',

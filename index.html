@@ -247,7 +247,11 @@
         <div class="lower" id="lower" aria-hidden="true"></div>
         <!-- aviso de "imagen guardada": se ve unos segundos y lo lee el lector de pantalla -->
         <p class="snap-note" id="snap-note" role="status"></p>
+        <!-- la barra del modo TV: vive sobre el grafo y, con la vista de agentes, en la cabecera del tablero (app.js la mueve) -->
         <div class="tv-bar" id="tv-bar">
+          <button class="icon-btn" type="button" id="tv-agents" aria-pressed="false" title="Who works with whom: people and agents (Claude Code, Copilot, Codex, bots…)" aria-label="Agents and interactions" data-i18n-attr="title:agents.btnTitle;aria-label:agents.title">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="5.5" width="10" height="7.5" rx="2"/><path d="M8 5.5V3M8 3h.01M6 9.2h.01M10 9.2h.01M1.5 8.5v2M14.5 8.5v2"/></svg>
+          </button>
           <button class="icon-btn" type="button" id="tv-pause" aria-pressed="false" title="Pause" aria-label="Pause" data-i18n-attr="title:ctl.pause;aria-label:ctl.pause">
             <svg class="ico when-off" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.5v9M10.5 3.5v9"/></svg>
             <svg class="ico when-on" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6L12.5 8z"/></svg>

@@ -653,10 +653,10 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - **Capacidad nueva: fijar un PR arriba en el Launchpad** (ítem 157 de la hoja de ruta, parte de «Launchpad: fijar y posponer PRs e issues»). Cada fila lleva un 📌 (`aria-pressed`, con nombre «Fijar el PR #N de repo arriba» / «Soltar…») que sube el PR al principio de su grupo y lo suelta con el mismo botón; el foco vuelve al botón tras repintar. Lo fijado se guarda en este navegador como `repo#número` (`prpins`, sin títulos); un fijado que ya no existe no hace nada. Sin consultas nuevas.
 - **Pruebas que fallan sin la capacidad:** `tools/overview.test.mjs` («groupPulls: los PRs fijados van arriba…») un montaje con `pulls` como iterador de un solo uso (el smoke lo encontró: la app pasa `Map.values()` y repintar al fijar vaciaba el Launchpad) y un paso del smoke (fijar y soltar el PR #7: `aria-pressed`, `prpins`, foco).
 - README: la función en el Launchpad de la lista, Límites conocidos y Seguridad.
-- QA: filas de la vista conjunta y del Launchpad; textos en 40 idiomas (`check-i18n`); auditoría: la corrida de la puerta.
+- QA: filas de la vista conjunta y del Launchpad; textos en 40 idiomas (`check-i18n`); auditoría: 0 hallazgos nuevos.
 - Skills: no aplica: un botón y un orden sobre el Launchpad existente; lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (un Set de `repo#número` en `U.store`).
 - OMC: no disponible (la iteración no lanzó subagentes; el diff es chico y se leyó a mano contra la CSP y el escape: nada nuevo entra por `innerHTML`)
 - Reclamo: loop/241, sin colisión
-- Validado: pendiente
+- Validado: 640 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde. La primera corrida del smoke falló en mi paso nuevo (el iterador, arreglado) y en «editar sin token» (ajeno, intermitente: pasó en la segunda).
 - **Siguiente:** iteración 242, expansión: ítem 159 (CI de GitLab en el resto de las ramas, Datos)

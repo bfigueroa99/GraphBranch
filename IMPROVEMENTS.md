@@ -414,6 +414,18 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 15. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
     prepara de verdad en vez de solo listar, y `add -p` prepara todo. Negarse con el `error: unknown switch` de git (o
     admitir `-n`). Reproducción: `node --test` con `touch a.txt`, `add -n .` → `a.txt` queda preparado.
+16. [Seguridad] Avisos a Slack (`electron/webhooks.js`, `payload`): `slackText` escapa `&`, `<` y `>` (sin menciones ni
+    enlaces), pero no el formato `mrkdwn` (`*`, `_`, `` ` ``, `~`): un título de PR como `*URGENTE*` sale en negrita en el
+    canal. Solo formato, sin enlaces ni menciones; escaparlo como se hizo con Discord. Reproducción: `payload('slack',
+    {title: '*x*'})` → `*x*` sin escapar.
+17. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
+    la iteración 239: la sesión no pudo consultar su página de versiones. Comprobarla con `WebFetch` en la próxima
+    auditoría de Seguridad y, si hay una estable más nueva con arreglos de seguridad, subirla (cambio de `electron/`: plan
+    por consenso). Reproducción: `npm view electron version` frente a `package.json`.
+18. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
+    largo se lleva la línea `<enlace>` del final (el aviso queda sin enlace). Recortar título y detalle antes y dejar el
+    enlace siempre. Reproducción: `payload('discord', {title: 'x'.repeat(5000), url: 'https://github.com/a/b'})` →
+    `content` sin `<https://github.com/a/b>`.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); el contenedor 2D enfocable no tiene rol ni nombre (`graph.js:306`); las marcas
@@ -606,3 +618,18 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
 - Validado: 635 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde (la primera corrida falló en un paso ajeno del smoke, «editar el código»; la repetición pasó).
 - **Siguiente:** iteración 239, mantenimiento · Seguridad: auditoría (sin pendientes de Seguridad)
+
+### 2026-11-09 · Iteración 239 · Mantenimiento · Seguridad
+
+- **Auditoría de Seguridad: avisos a Discord con Markdown de un texto ajeno** (pendiente: auditoría). Se revisó el CSP de `index.html` (cerrado, sin `eval` ni scripts en línea), los `innerHTML` (los de datos de afuera pasan por `U.esc`; avatares con `data-fb` escapado), los tokens y el preload, la navegación, las descargas y los permisos de `electron/main.js`, los argumentos de `git` (SHA validados, `execFile` sin shell, `--no-ext-diff --no-textconv`) y `electron/webhooks.js`. Lo peor: `payload('discord', …)` no escapaba el Markdown, así que un título o detalle de PR con `[login](https://evil.example)` llegaba al canal como enlace enmascarado (Slack y Teams ya lo evitaban). Arreglo: `discordText` escapa el Markdown de repo, tipo, título y detalle.
+- **Reproducción:** `node --test tools/webhooks.test.mjs` → sin el arreglo, `not ok 3 - Discord: un título de GitHub no arma un enlace enmascarado ni formato`.
+- **Hallazgos:** 3 nuevos (pendientes 16, 17 y 18), 0 a la base de la auditoría
+- **Pruebas que fallan sin el arreglo:** `tools/webhooks.test.mjs` («Discord: un título de GitHub no arma un enlace enmascarado ni formato»).
+- README: sin cambios (el aviso sigue igual; el texto llega escapado).
+- QA: no toca la página ni textos; auditoría: no toca la página.
+- Skills: no aplica: un escape de Markdown con el patrón de `slackText` y `teamsText`; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (escapar como Teams).
+- OMC: no disponible (la iteración no lanzó subagentes de revisión; el diff es un escape de 3 líneas leído a mano contra `teamsText`)
+- Reclamo: loop/239, sin colisión
+- Validado: 636 pruebas (`node --test`), smoke, i18n (0 errores) y 29 e2e en verde.
+- **Siguiente:** iteración 240, expansión: ítem 155 (Extensión de Chrome y Firefox: GitLab, Codeberg y Bitbucket, Plataformas)

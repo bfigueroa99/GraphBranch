@@ -344,7 +344,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 ### Media
 
 1. [Deuda] La e2e de escritorio «--bitbucket-url suma solo ese host a las conexiones del CSP…» falló 1 de 2 en la
-    reanudación de la 173 (2026-11-01, carga 18 en 4 CPU; la repetición pasó): `#azure-token-input` vacío al abrir
+    reanudación de la 173 (2026-11-01, carga 18 en 4 CPU; la repetición pasó) y otra vez 1 de 2 en la reanudación de
+    la 234 (2026-11-09, carga 16 en 4 CPU; la repetición pasó): `#azure-token-input` vacío al abrir
     Ajustes. Es una carrera de la prueba: guarda el token de Azure con `GBDesktop.setToken(…, 'azure')` con la página ya
     arrancada, y `loadDesktopToken` (`js/app.js`) lee el llavero una sola vez al arrancar; si ya leyó `azure`, el campo
     queda vacío. Guardar el token y reabrir la app antes de mirar Ajustes, como «el token de GitLab… vuelve al reabrir».

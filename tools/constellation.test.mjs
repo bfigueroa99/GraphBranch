@@ -246,6 +246,7 @@ test('una galaxia quieta (su commit más reciente cargado tiene más de 30 días
   assert.equal(C.isQuiet({ last: NOW - 31 * DAY }, NOW), true);
   assert.equal(C.isQuiet({ last: NOW - 30 * DAY }, NOW), false, 'justo 30 días aún no es quieta');
   assert.equal(C.isQuiet({ last: NOW - 2 * DAY }, NOW), false);
+  assert.equal(C.isQuiet({ last: NOW - 90 * DAY, state: 'loading' }, NOW), false, 'a medio cargar, con commits viejos todavía, no se marca');
   for (const last of [null, undefined, NaN, 'ayer']) assert.equal(C.isQuiet({ last, state: 'loading' }, NOW), false, 'sin fecha no hay nada que decir');
   const q = C.describe({ name: 'o/q', commits: 4, branches: 1, last: NOW - 90 * DAY, unread: 1 }, { text, ago, now: NOW });
   assert.equal(q.label, 'o/q, c4/r1, hace mucho, sin actividad hace más de 30 días, tabs.unread');

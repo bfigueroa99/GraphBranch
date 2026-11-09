@@ -175,9 +175,9 @@
   /** Los mismos 30 días de las ramas quietas de la vista de texto (`GB.textview.QUIET_DAYS`). */
   const QUIET_DAYS = 30;
 
-  /** Una galaxia quieta: su commit más reciente ya cargado (`it.last`) tiene más de QUIET_DAYS días a `now`. Sin `last` (carga, vacía, con error) no es quieta: no hay fecha que lo diga. */
+  /** Una galaxia quieta: su commit más reciente ya cargado (`it.last`) tiene más de QUIET_DAYS días a `now`. Sin `last`, o mientras la pestaña carga, no es quieta: no hay fecha que lo diga. */
   function isQuiet(it, now = Date.now()) {
-    return Number.isFinite(it.last) && now - it.last > QUIET_DAYS * 864e5;
+    return it.state !== 'loading' && Number.isFinite(it.last) && now - it.last > QUIET_DAYS * 864e5;
   }
 
   /** Lo que dice una galaxia: `label` (su nombre accesible) y `title` (su globo). Nombre, commits y ramas, cuánto hace de

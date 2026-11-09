@@ -357,6 +357,33 @@ test('organización: suma los PRs abiertos en la semana de cada repo y los muest
   assert.match(toMarkdownOrg(many, 'a', t), /- Abiertos: (#\d+, ){9}#\d+ … \+2\n/);
 });
 
+test('organización: suma los issues cerrados en la semana de cada repo y los muestra en Markdown e imagen', () => {
+  const cl = (id, number, days) => ({ id, kind: 'issue-close', number, detail: `Issue ${number}`, time: NOW - days * 864e5 });
+  const quiet = { commits: new Map([c('v', 30, [], 'ana')]), branches: new Map([['main', { name: 'main', sha: 'v' }]]) };
+  const o = computeOrg([
+    // web: el #7 llega dos veces y cuenta una; el #1 es de hace 20 días y no suma
+    { repo: 'acme/web', data: repo(), acts: [cl('1', 7, 2), cl('2', 7, 2), cl('3', 8, 1), cl('4', 1, 20)] },
+    // api: sin commits, solo un issue cerrado: igual sale
+    { repo: 'acme/api', data: quiet, acts: [cl('5', 9, 3)] },
+    { repo: 'acme/quieto', data: quiet, acts: [] },
+  ], NOW);
+  assert.equal(o.closed, 3);
+  assert.equal(o.rows.find((r) => r.repo === 'acme/web').d.closed.total, 2);
+  assert.deepEqual(o.rows.map((r) => r.repo), ['acme/web', 'acme/api']);
+  const t = { head: 'S {repo}', commits: 'C {n}', merged: 'M', closed: 'Cerrados', releases: 'R', people: 'P', branch: 'B' };
+  const md = toMarkdownOrg(o, 'acme', t);
+  assert.match(md, /\n- M: 0\n- Cerrados: 3\n- R: 0\n/);
+  assert.match(md, /## acme\/web\n[^#]*- Cerrados: #8, #7\n/);
+  assert.match(md, /## acme\/api\n\n- C 0\n- Cerrados: #9\n/);
+  const lines = imageLinesOrg(o, 'acme', t).map((l) => l.text);
+  assert.ok(lines.includes('Cerrados: 3'));
+  assert.ok(lines.some((l) => /^C 0 · Cerrados: #9$/.test(l)));
+  const sin = computeOrg([{ repo: 'a/b', data: repo(), acts: [] }], NOW);
+  assert.equal(sin.closed, 0);
+  assert.doesNotMatch(toMarkdownOrg(sin, 'a', t), /Cerrados/);
+  assert.doesNotMatch(imageLinesOrg(sin, 'a', t).map((l) => l.text).join('\n'), /Cerrados/);
+});
+
 test('organización: suma los autores nuevos de los repos seguidos, cada persona una vez, en Markdown e imagen', () => {
   // web: ana firma antes de la semana; beto y caro son nuevos en web
   const web = { commits: new Map([c('a', 40, [], 'ana'), c('b', 2, ['a'], 'beto'), c('k', 1, ['b'], 'caro')]), branches: new Map([['main', { name: 'main', sha: 'k' }]]) };

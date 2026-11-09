@@ -3157,6 +3157,7 @@
   const constellation = GB.constellation.mount($('#constellation-body'), {
     text: t,
     fmt: U.fmtNum,
+    ago: (ms) => U.timeAgo(ms),
     select: $('#constellation-order'),
     status: $('#constellation-status'),
     onGo(key) {

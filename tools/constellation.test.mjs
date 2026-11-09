@@ -216,3 +216,23 @@ test('forks con lo ya cargado: el total de la consulta del repo, o null si la fu
   assert.equal(C.forksOf({ repo: { forks: null } }), null);
   assert.equal(C.forksOf(null), null);
 });
+
+test('cada galaxia dice, junto a sus commits y ramas, cuánto hace de su commit más reciente ya cargado; nada si carga o está vacía', () => {
+  const NOW = 1_800_000_000_000;
+  const text = (k, p) => (k === 'constellation.stats' ? `commits: ${p.commits} · ramas: ${p.branches}` : k === 'tabs.unread' ? `${p.n} sin ver` : k);
+  const ago = (ms) => `hace ${(NOW - ms) / 3600e3} h`;
+  const fmt = (n) => `#${n}`;
+  const d = C.describe({ name: 'o/a', commits: 12, branches: 3, last: NOW - 3 * 3600e3, unread: 2 }, { text, fmt, ago });
+  // el lector de pantalla lo lee en el nombre de la galaxia; el globo lo muestra junto a las cifras
+  assert.equal(d.label, 'o/a, commits: #12 · ramas: #3, hace 3 h, 2 sin ver');
+  assert.equal(d.title, 'o/a · commits: #12 · ramas: #3 · hace 3 h');
+  // la que carga o está vacía no tiene `last`: no dice nada de tiempo (y ni siquiera se llama al formato)
+  const never = () => assert.fail('sin commit cargado no se formatea ninguna fecha');
+  for (const last of [null, undefined, NaN, 'ayer']) {
+    const e = C.describe({ name: 'o/b', commits: 0, branches: 0, last, state: 'loading' }, { text, ago: never });
+    assert.equal(e.label, 'o/b, commits: 0 · ramas: 0');
+    assert.equal(e.title, 'o/b · commits: 0 · ramas: 0');
+  }
+  // quien monta la constelación sin `ago` sigue viendo nombre y cifras
+  assert.equal(C.describe({ name: 'o/c', commits: 1, branches: 1, last: NOW }, { text }).title, 'o/c · commits: 1 · ramas: 1');
+});

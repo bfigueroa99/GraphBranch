@@ -629,7 +629,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: no toca la página ni textos; auditoría: no toca la página.
 - Skills: no aplica: un escape de Markdown con el patrón de `slackText` y `teamsText`; lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (escapar como Teams).
-- OMC: plan=— · revisión=— · verificación=—
+- OMC: no disponible (la iteración no lanzó subagentes de revisión; el diff es un escape de 3 líneas leído a mano contra `teamsText`)
 - Reclamo: loop/239, sin colisión
-- Validado: pendiente
+- Validado: 636 pruebas (`node --test`), smoke, i18n (0 errores) y 29 e2e en verde.
 - **Siguiente:** iteración 240, expansión: ítem 155 (Extensión de Chrome y Firefox: GitLab, Codeberg y Bitbucket, Plataformas)

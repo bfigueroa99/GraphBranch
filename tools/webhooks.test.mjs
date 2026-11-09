@@ -66,6 +66,14 @@ test('el cuerpo no deja que un texto de GitHub mencione a nadie ni abra enlaces 
   assert.ok(wh.payload('discord', { title: 'x'.repeat(5000) }).content.length <= 2000);
 });
 
+test('Discord: un título de GitHub no arma un enlace enmascarado ni formato', () => {
+  const ev = { repo: 'acme/**app**', kind: 'PR', title: 'Arregla [login](https://evil.example) y ~~esto~~ `x` # h', detail: '[a](https://evil.example)\n> cita' };
+  const d = wh.payload('discord', ev);
+  assert.ok(!/(^|[^\\])\[[^\]]*\]\(/.test(d.content), d.content); // ningún [texto](url) sin escapar
+  assert.match(d.content, /\\\[login\\\]\\\(https/);
+  assert.ok(!/(^|[^\\])\*\*app/.test(d.content.split('\n')[0].replace(/^\*\*acme/, '')));
+});
+
 test('el cuerpo de Teams es una tarjeta adaptable sin menciones ni enlaces ajenos', () => {
   const ev = { repo: 'acme/app', kind: 'Release', title: 'v1 <at>Todos</at> [x](https://evil.example) *grueso*', detail: '@everyone', url: 'https://github.com/acme/app/releases/tag/v(1)' };
   const p = wh.payload('teams', ev);

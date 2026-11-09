@@ -31,6 +31,8 @@ function clean(ev = {}) {
 
 const slackText = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); // sin @canal ni enlaces ajenos
 
+const discordText = (s) => s.replace(/([\\`*_~|>[\]()#-])/g, '\\$1'); // Markdown de Discord: sin enlaces enmascarados [x](url) ni formato de un texto ajeno
+
 const teamsText = (s) => s.replace(/([\\`*_{}[\]()#+!|<>~&@:-])/g, '\\$1'); // Markdown de la tarjeta, sin @menciones ni enlaces ajenos
 
 /** El cuerpo JSON que cada servicio espera. Un texto de GitHub no puede mencionar a nadie. */
@@ -55,8 +57,8 @@ function payload(service, ev) {
       attachments: [{ contentType: 'application/vnd.microsoft.card.adaptive', content: { $schema: 'http://adaptivecards.io/schemas/adaptive-card.json', type: 'AdaptiveCard', version: '1.4', body } }],
     };
   }
-  const head = [e.repo && `**${e.repo}**`, e.kind].filter(Boolean).join(' · ');
-  const lines = [head, e.title, e.detail && `> ${e.detail.replace(/\n/g, ' ')}`, e.url && `<${e.url}>`].filter(Boolean);
+  const head = [e.repo && `**${discordText(e.repo)}**`, discordText(e.kind)].filter(Boolean).join(' · ');
+  const lines = [head, discordText(e.title), e.detail && `> ${discordText(e.detail.replace(/\n/g, ' '))}`, e.url && `<${e.url}>`].filter(Boolean);
   return { content: lines.join('\n').slice(0, 2000), allowed_mentions: { parse: [] } };
 }
 

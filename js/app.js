@@ -60,6 +60,7 @@
     agentsBody: $('#agents-body'),
     agentsOnly: $('#agents-only'),
     agentsGraph: $('#agents-graph'),
+    agentsClock: $('#agents-clock'),
     agKey: $('#ag-key'),
     agKeyBody: $('#ag-key-body'),
     agKeyFold: $('#ag-key-fold'),
@@ -2074,6 +2075,206 @@
     `<span class="agk-k"><span class="agk-glyph" aria-hidden="true">✓</span>${U.esc(t('agents.kind.reviewed'))}</span>` +
     `<span class="agk-k"><span class="agk-glyph" aria-hidden="true">…</span>${U.esc(t('agents.kind.commented'))}</span>`;
 
+  /* ---------- el enjambre: la vista de agentes como una consola en vivo (ver swarm.js y cortex.js) ---------- */
+  const SWARM_TABS = 6; // pestañas del hilo
+  const SWARM_LINES = 12; // líneas del hilo
+  const SWARM_LOG = 14; // líneas del log
+  const SWARM_PULSES = 16; // interacciones que viajan por la corteza
+  const SWARM_TASKS = 9; // filas del ingreso de tareas
+  const SWARM_BARS = 6; // agentes en las barras
+  const CI_STATES = new Set(['success', 'failure', 'pending']);
+  const SW_ROLE = { writes: 'swarm.role.writes', integrates: 'swarm.role.integrates', reviews: 'swarm.role.reviews', comments: 'swarm.role.comments' };
+  let cortex = null; // la corteza 3D: una sola, sobrevive a que el tablero se rehaga (ver pushCortex)
+  let swarmView = null; // lo último que se armó para ella: { model, text }, o null si no hay a quién mostrar
+  const r2 = (x) => Math.round(x * 100) / 100;
+  const fmtPct = (x) => new Intl.NumberFormat(i18n.locale, { style: 'percent', maximumFractionDigits: 0 }).format(x);
+  const fmtClock = (ms) => new Intl.DateTimeFormat(i18n.locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(ms);
+
+  /** Las partes del enjambre en el tablero: los indicadores, la corteza (con la ficha de quien está elegido), el ingreso
+      de tareas, el hilo de un agente, el ritmo, las barras por agente y el log. Deja en `swarmView` lo que recibe la
+      corteza. `ctx`: lo que agentsMarkup ya tiene a mano. */
+  function swarmParts({ data, r, byKey, net, slot, sw, row, none }) {
+    const S = GB.swarm;
+    const now = Date.now();
+    const k = S.kpis(r, data, { now });
+    const roleMap = S.roles(r, data);
+    const keys = net.nodes.map((n) => n.key);
+    const hubKey = S.hub(roleMap, keys);
+    const pos = S.place(keys, roleMap, hubKey);
+    const roleOf = (key) => t(SW_ROLE[roleMap.get(key)?.role] || SW_ROLE.writes);
+    const topAgent = r.actors.find((a) => a.agent)?.key || null;
+    const pick = agentsSel && byKey.has(agentsSel) ? agentsSel : null;
+    const name = (key) => actorName(byKey.get(key));
+    const plainName = (key) => name(key).replace(/[⁨⁩]/g, '');
+    /** Corto, para las pestañas, las barras y el log: el producto y los últimos 6 de su sesión; una persona, su nombre. */
+    const short = (key) => {
+      const a = byKey.get(key);
+      return a?.agent ? [a.agent.name, a.agent.session ? GB.agents.shortSession(a.agent.session) : ''].filter(Boolean).join(' · ') : plainName(key);
+    };
+    const span = t('swarm.window', { span: i18n.fmtSpan(k.win.span) });
+    const evText = (x) => U.esc(t(AG_EVENT[x.kind], { from: name(x.from), to: name(x.to) })) + (x.number != null ? ` · #${U.esc(x.number)}` : '');
+
+    // los indicadores: lo que es, el número en grande, una línea más y, si tiene, su curva en la ventana (decorativa)
+    const tile = (id, label, value, sub, series = null, cls = '') =>
+      `<div class="sw-kpi${cls}" id="${id}"><span class="sw-kpi-label">${U.esc(label)}</span><b class="sw-kpi-n">${U.esc(value)}</b>${sub ? `<span class="sw-kpi-sub">${U.esc(sub)}</span>` : ''}${series ? S.spark(series) : ''}</div>`;
+    const kpis =
+      `<div class="sw-kpis" id="sw-kpis">` +
+      tile('sw-k-active', t('swarm.kpiActive'), `${U.fmtNum(k.active.n)}/${U.fmtNum(k.active.total)}`, t('agents.people', { n: U.fmtNum(r.actors.length - k.active.total) })) +
+      tile('sw-k-commits', t('swarm.kpiCommits'), U.fmtNum(k.commits.n), k.commits.share == null ? span : `${t('swarm.kpiShare', { pct: fmtPct(k.commits.share) })} · ${span}`, k.commits.series) +
+      tile('sw-k-links', t('agents.statLinks'), U.fmtNum(k.links.n), span, k.links.series) +
+      tile('sw-k-ci', t('swarm.kpiCi'), k.ci ? fmtPct(k.ci.ok / k.ci.known) : '—', k.ci ? `${U.fmtNum(k.ci.ok)}/${U.fmtNum(k.ci.known)}` : '', null, k.ci && k.ci.ok < k.ci.known ? ' is-warn' : '') +
+      tile('sw-k-queue', t('swarm.kpiQueue'), U.fmtNum(k.queue), '') +
+      tile('sw-k-waiting', t('swarm.kpiWaiting'), U.fmtNum(k.waiting), '', null, k.waiting ? ' is-ask' : '') +
+      tile('sw-k-last', t('swarm.kpiLast'), k.last ? U.timeAgo(k.last.time, now) : '—', k.last ? short(k.last.key) : '') +
+      `</div>`;
+
+    // la corteza: cada participante de la red en el lóbulo de su rol; los vínculos y las últimas interacciones, por dentro
+    const maxW = Math.max(1, ...keys.map((x) => net.weight.get(x) || 0));
+    const maxT = Math.max(1, ...net.links.map((l) => l.total));
+    const linked = new Set(net.links.map((l) => l.from + '>' + l.to));
+    const pulses = r.events.filter((e) => linked.has(e.from + '>' + e.to)).slice(0, SWARM_PULSES);
+    const focusKey = pick && pos.has(pick) ? pick : hubKey || keys[0] || null;
+    swarmView = keys.length
+      ? {
+          model: {
+            nodes: net.nodes.map((n) => ({
+              key: n.key,
+              label: n.agent ? n.agent.name : n.name || n.login || t('author.unknown'),
+              sub: [n.agent?.session ? GB.agents.shortSession(n.agent.session) : '', roleOf(n.key)].filter(Boolean).join(' · '),
+              title: `${plainName(n.key)} · ${roleOf(n.key)}`,
+              slot: slot.get(n.key) ?? 0,
+              agent: !!n.agent,
+              w: r2((net.weight.get(n.key) || 0) / maxW),
+              pos: pos.get(n.key),
+            })),
+            links: net.links.map((l) => ({ from: l.from, to: l.to, slot: slot.get(l.from) ?? 0, w: r2(l.total / maxT) })),
+            pulses: pulses.map((e) => ({ id: agentEventId(e), from: e.from, to: e.to, slot: slot.get(e.from) ?? 0 })),
+            sel: pick,
+            focus: focusKey,
+          },
+          text: {
+            aria: t('swarm.cortexAria', { nodes: net.nodes.length, links: net.links.length }),
+            noGl: t('swarm.noGl'),
+            planes: { axial: t('swarm.axial'), coronal: t('swarm.coronal'), sagittal: t('swarm.sagittal') },
+          },
+        }
+      : null;
+    // la ficha: quien está elegido (o el orquestador, o el agente más activo), su rol y en qué anda
+    const inspKey = pick || hubKey || topAgent;
+    const insp = byKey.get(inspKey);
+    let inspHtml = '';
+    if (insp) {
+      const task = U.firstLine(data.commits.get(insp.sha)?.message || '');
+      const rows = [[t('swarm.fRole'), roleOf(inspKey)], task ? [t('swarm.fTask'), task] : null, insp.agent?.model ? [t('swarm.fModel'), insp.agent.model] : null, insp.last ? [t('swarm.fLast'), U.timeAgo(insp.last, now)] : null].filter(Boolean);
+      inspHtml =
+        `<div class="sw-insp" id="sw-insp"><p class="sw-insp-name">${sw(inspKey)}<span>${U.esc(name(inspKey))}</span></p>` +
+        `<dl>${rows.map(([a, b]) => `<div><dt>${U.esc(a)}</dt><dd>${U.esc(b)}</dd></div>`).join('')}</dl>` +
+        `<p class="sw-insp-foot">${U.esc(t('agents.commits', { n: U.fmtNum(insp.commits) }))} · ${U.esc(t('agents.statLinks'))}: ${U.fmtNum(insp.links)}</p></div>`;
+    }
+    const cortexHtml = swarmView
+      ? `<section class="hl-sec ab-card sw-cortex-card" id="sw-cortex-card"><h3>${U.esc(t('swarm.cortex'))} <span class="hl-n">${U.fmtNum(keys.length)}</span></h3>` +
+        `<div class="sw-cortex-wrap"><div class="sw-slot" id="sw-cortex"></div>${inspHtml}</div><p class="hl-line ag-hint">${U.esc(t('swarm.cortexHint'))}</p></section>`
+      : '';
+
+    // el ingreso de tareas: los PRs abiertos y las ramas sin PR, y a quién le tocó cada uno
+    const g = S.ingest(r, data, { max: SWARM_TASKS });
+    const ciMark = (ci) => (CI_STATES.has(ci) ? `<span class="sw-ci sw-ci-${ci}" role="img" aria-label="${U.esc(t('ci.' + ci))}" title="${U.esc(t('ci.' + ci))}"></span>` : '');
+    const taskRows = g.items.map((x) => {
+      const tag = x.kind === 'branch' ? `<span class="sw-tag" aria-hidden="true">⎇</span>` : `<span class="sw-tag">#${U.esc(x.number)}</span>`;
+      const draft = x.kind === 'draft' ? `<span class="sw-chip">${U.esc(t('health.prState.draft'))}</span>` : '';
+      const ask = x.waiting ? `<span class="sw-chip sw-chip-ask">${U.esc(t('swarm.waits'))}</span>` : '';
+      const to = x.who && byKey.has(x.who) ? `<span class="sw-to">→ ${sw(x.who)}${U.esc(short(x.who))}</span>` : '';
+      return row('', `${ciMark(x.ci)}${to}`, x.sha, '', `${tag}<span class="sw-task">${U.esc(x.title || x.branch)}</span>${draft}${ask}`);
+    });
+    const ingestHtml =
+      `<section class="hl-sec ab-card" id="sw-ingest"><h3>${U.esc(t('swarm.ingest'))}${g.total ? ` <span class="hl-n">${U.esc(t('swarm.routed', { n: U.fmtNum(g.routed), m: U.fmtNum(g.total) }))}</span>` : ''}</h3>` +
+      (taskRows.length ? `<ul class="hl-list">${taskRows.join('')}</ul>` : none) +
+      `</section>`;
+
+    // el hilo: lo que escribió un agente (sus commits) y lo que pasó con él (sus interacciones), como una conversación
+    const threadKey = pick || topAgent || hubKey;
+    const tabKeys = r.actors.filter((a) => a.agent).slice(0, SWARM_TABS).map((a) => a.key);
+    if (threadKey && !tabKeys.includes(threadKey)) tabKeys.splice(0, tabKeys.length >= SWARM_TABS ? 1 : 0, threadKey);
+    const tabs = tabKeys.map((key) => `<button type="button" class="sw-tab${key === threadKey ? ' on' : ''}" data-pick="${U.esc(key)}" aria-pressed="${key === pick}">${sw(key)}${U.esc(short(key))}</button>`).join('');
+    const msgs = (threadKey ? S.lines(r, data, threadKey, { max: SWARM_LINES }) : []).map((x) => {
+      const text = x.type === 'commit' ? U.esc(x.text) : evText(x);
+      const body = `<span class="sw-msg-head">${sw(x.key)}<b>${U.esc(short(x.key))}</b><time>${U.esc(U.fmtDateTime(x.time))}</time></span><span class="sw-msg-text">${text}</span>`;
+      const cls = `sw-msg${x.key === threadKey ? ' mine' : ''}${x.type === 'event' ? ' is-ev' : ''}`;
+      return x.sha && data.commits.has(x.sha) ? `<li class="${cls}"><button type="button" class="sw-msg-btn" data-sha="${U.esc(x.sha)}" title="${U.esc(t('feed.locate'))}">${body}</button></li>` : `<li class="${cls}"><div class="sw-msg-btn">${body}</div></li>`;
+    });
+    const threadHtml =
+      `<section class="hl-sec ab-card sw-thread" id="sw-thread"><h3>${U.esc(t('swarm.thread'))}</h3>` +
+      (tabs ? `<div class="sw-tabs" role="group" aria-label="${U.esc(t('swarm.thread'))}">${tabs}</div>` : '') +
+      (msgs.length ? `<ol class="sw-msgs">${msgs.join('')}</ol>` : none) +
+      `</section>`;
+
+    // el ritmo: commits de agentes y de personas por tramo de la ventana
+    const edge = (ms) => (k.win.span <= 7 * 864e5 ? U.fmtDateTime(ms) : U.fmtDate(ms));
+    const rateHtml =
+      `<section class="hl-sec ab-card" id="sw-rate"><h3>${U.esc(t('swarm.throughput'))} <span class="hl-n">${U.esc(span)}</span></h3>` +
+      S.rate(k, { aria: t('swarm.rateAria', { a: U.fmtNum(k.commits.n), p: U.fmtNum(k.people.n), span: i18n.fmtSpan(k.win.span) }), start: edge(k.win.t0), end: edge(k.win.t1) }) +
+      `<p class="sw-legend"><span class="sw-key sw-key-a" aria-hidden="true"></span>${U.esc(t('agents.statAgents'))}<span class="sw-key sw-key-p" aria-hidden="true"></span>${U.esc(t('agents.statPeople'))}</p></section>`;
+
+    // por agente: sus commits, en barras de su color
+    const per = S.perAgent(r, { max: SWARM_BARS });
+    const maxC = Math.max(1, ...per.map((x) => x.commits));
+    const bars = per.map(
+      (x) =>
+        `<li class="sw-bar-row"><span class="sw-bar-name">${sw(x.key)}<span>${U.esc(short(x.key))}</span></span><span class="sw-bar" aria-hidden="true"><span class="sw-bar-fill ag-s${slot.get(x.key) ?? 0}" style="width:${Math.max(2, Math.round((x.commits / maxC) * 100))}%"></span></span><b class="sw-bar-n">${U.fmtNum(x.commits)}</b></li>`,
+    );
+    const perHtml =
+      `<section class="hl-sec ab-card" id="sw-per"><h3>${U.esc(t('swarm.perAgent'))} <span class="hl-n">${U.esc(t('agents.commits', { n: U.fmtNum(per.reduce((n, x) => n + x.commits, 0)) }))}</span></h3>` +
+      (bars.length ? `<ul class="sw-bars">${bars.join('')}</ul>` : none) +
+      `</section>`;
+
+    // el log: todo lo de los agentes, de lo más viejo a lo más nuevo, como un tail -f
+    const logRows = S.lines(r, data, null, { max: SWARM_LOG }).map((x) => {
+      // un commit: su sha corto y su titular; una interacción: qué hizo y con quién (quién la hizo ya va al lado)
+      const what =
+        x.type === 'commit'
+          ? `<span class="sw-log-sha">${U.esc(x.sha.slice(0, 7))}</span> ${U.esc(x.text)}`
+          : `<span class="sw-log-kind">${U.esc(t(AG_KIND[x.kind]))}</span> → ${U.esc(short(x.to))}${x.number != null ? ` · #${U.esc(x.number)}` : ''}`;
+      const when = x.time > now - 864e5 ? fmtClock(x.time) : U.fmtDateTime(x.time);
+      const body = `<time>${U.esc(when)}</time><span class="sw-log-who ag-s${slot.get(x.key) ?? 0}">${U.esc(short(x.key))}</span><span class="sw-log-what">${what}</span>`;
+      const id = x.type === 'commit' ? `log|c|${x.sha}` : `log|${agentEventId(x)}`;
+      return `<li data-ev="${U.esc(id)}">${x.sha && data.commits.has(x.sha) ? `<button type="button" class="sw-log-row" data-sha="${U.esc(x.sha)}" title="${U.esc(t('feed.locate'))}">${body}</button>` : `<span class="sw-log-row">${body}</span>`}</li>`;
+    });
+    const logHtml =
+      `<section class="hl-sec ab-card ab-live sw-log" id="sw-log"><h3><span class="live-dot" aria-hidden="true"></span><code>tail -f ${U.esc(t('swarm.log'))}</code></h3>` +
+      (logRows.length ? `<ol class="sw-log-list">${logRows.join('')}</ol><span class="sw-caret" aria-hidden="true"></span>` : none) +
+      `</section>`;
+
+    return { kpis, cortex: cortexHtml, ingest: ingestHtml, thread: threadHtml, rate: rateHtml, per: perHtml, log: logHtml };
+  }
+
+  /** La corteza en su lugar del tablero recién rehecho, con lo último que se armó para ella. Se crea la primera vez. */
+  function pushCortex() {
+    const slotEl = el.agentsBody.querySelector('#sw-cortex');
+    if (!slotEl || !swarmView || !GB.cortex) return cortex?.setActive(false);
+    if (!cortex) {
+      cortex = GB.cortex.create({ onPick: (key) => selectAgent(key, '.sw-label[data-key]') });
+      U.onThemeChange(() => cortex.retheme());
+    }
+    if (cortex.host.parentNode !== slotEl) slotEl.append(cortex.host);
+    cortex.update(swarmView.model, swarmView.text);
+    cortex.setActive(agentsOn);
+  }
+
+  /** El reloj del tablero, al segundo, mientras se mira. */
+  let clockTimer = 0;
+  function tickClock() {
+    clearInterval(clockTimer);
+    clockTimer = 0;
+    if (!agentsOn || !el.agentsClock) return;
+    const put = () => {
+      const now = Date.now();
+      el.agentsClock.textContent = `${new Intl.DateTimeFormat(i18n.locale, { weekday: 'short' }).format(now)} ${fmtClock(now)}`;
+      el.agentsClock.dateTime = new Date(now).toISOString();
+    };
+    put();
+    clockTimer = setInterval(put, 1000);
+  }
+
   function agentsMarkup() {
     const data = source.view ? source.view() : source.data;
     const acts = feed.items.filter((a) => a.repo === active?.key);
@@ -2085,11 +2286,9 @@
     const links = (agentsOnly ? r.links.filter(both) : r.links).filter(mine);
     const events = (agentsOnly ? r.events.filter(both) : r.events).filter(mine).slice(0, AGENTS_ROWS);
     const agents = r.actors.filter((a) => a.agent);
-    const people = r.actors.filter((a) => !a.agent);
     const net = GB.agents.network(r, { onlyAgents: agentsOnly });
     const slot = net.slot;
     const none = `<p class="hl-none">${U.esc(t('health.none'))}</p>`;
-    const stat = (label, n) => `<div class="hl-stat"><b>${U.fmtNum(n)}</b><span>${U.esc(label)}</span></div>`;
     /** Una fila: lleva al commit `sha` en el grafo si lo hay; `aside`, HTML ya escapado; `extra`, algo más junto a ella (el
         enlace a la sesión). */
     const row = (main, aside, sha, extra = '', mainHtml = null) => {
@@ -2159,10 +2358,14 @@
     const focus = agentsSel
       ? `<p class="ag-focus" id="ag-focus">${sw(agentsSel)}<span class="ag-focus-name">${U.esc(t('agents.focus', { name: actorName(byKey.get(agentsSel)) }))}</span><button type="button" class="btn btn-ghost ag-focus-clear" id="ag-focus-clear">${U.esc(t('agents.focusClear'))}</button></p>`
       : '';
+    const swarm = swarmParts({ data, r, byKey, net, slot, sw, row, none });
     return (
-      `<div class="hl-stats ab-stats">${stat(t('agents.statAgents'), agents.length)}${stat(t('agents.statPeople'), people.length)}${stat(t('agents.statLinks'), links.reduce((n, l) => n + l.total, 0))}</div>` +
+      swarm.kpis +
       (agents.length ? '' : `<p class="hl-line" id="ag-noagents">${U.esc(t('agents.noAgents'))}</p>`) +
       focus +
+      swarm.cortex +
+      `<div class="ab-row">${swarm.ingest}${swarm.thread}</div>` +
+      `<div class="ab-row sw-row3">${swarm.rate}${swarm.per}${swarm.log}</div>` +
       `<div class="ab-row">` +
       `<section class="hl-sec ab-card" id="ag-net"><h3>${U.esc(t('agents.network'))}</h3>${netHtml.replace(/^(<svg[\s\S]*?<\/svg>)/, '<div class="ab-scroll">$1</div>')}</section>` +
       `<section class="hl-sec ab-card ab-live" id="ag-recent"><h3><span class="live-dot" aria-hidden="true"></span>${U.esc(t('agents.recent'))}</h3>${list(eventRows)}</section>` +
@@ -2182,11 +2385,12 @@
     agentsTimer = 0;
     if (!source) return;
     const html = agentsMarkup();
-    if (html === agentsHtml) return;
+    if (html === agentsHtml) return pushCortex(); // la corteza igual recibe lo nuevo (un pulso más, por ejemplo)
     const focusables = () => [...el.agentsBody.querySelectorAll('button, a, select, [tabindex="0"]')];
     const at = el.agentsBody.contains(document.activeElement) ? focusables().indexOf(document.activeElement) : -1;
     agentsHtml = html;
     el.agentsBody.innerHTML = html;
+    pushCortex(); // antes de devolver el foco: sus rótulos cuentan entre los controles
     if (at >= 0) (focusables()[at] || focusables().pop() || el.agentsOnly).focus({ preventScroll: true });
     // en vivo: lo que no estaba en la vuelta anterior se anima (una interacción nueva, un vínculo que suma una vez)
     const evs = [...el.agentsBody.querySelectorAll('[data-ev]')];
@@ -2225,6 +2429,8 @@
     graph3d?.setActive(view === '3d' && !allOn && !on);
     clearTimeout(agentsTimer);
     agentsTimer = 0;
+    tickClock();
+    cortex?.setActive(on);
     if (on) {
       graph.unpin?.(); // una ficha fijada quedaría flotando sobre el tablero
       lowerThird(null);
@@ -2248,12 +2454,14 @@
   });
   /** Elige (o suelta, si ya estaba elegido) a un participante de la red: las listas y la línea de tiempo se centran
       en él. El foco se queda en su nodo (o en el botón de soltarlo). */
-  function selectAgent(key) {
+  function selectAgent(key, from = null) {
     const prev = agentsSel;
     agentsSel = key && key !== agentsSel ? key : null;
     renderAgents();
     const want = agentsSel || prev;
-    const node = [...el.agentsBody.querySelectorAll('.ag-net .ag-n[data-key]')].find((n) => n.dataset.key === want);
+    // el foco vuelve a donde se eligió (un rótulo de la corteza, una pestaña del hilo) o, si no, a su nodo en la red
+    const find = (sel) => [...el.agentsBody.querySelectorAll(sel)].find((n) => (n.dataset.key ?? n.dataset.pick) === want);
+    const node = (from && find(from)) || find('.ag-net .ag-n[data-key]');
     (node || el.agentsOnly).focus({ preventScroll: true });
   }
   /** Al pasar o enfocar un participante de la red, él y sus vínculos se encienden y lo demás queda tenue. */
@@ -2403,6 +2611,8 @@
     const g = e.target.closest('.ag-net .ag-n[data-key]');
     if (g) return selectAgent(g.dataset.key);
     if (e.target.closest('#ag-focus-clear')) return selectAgent(null);
+    const tab = e.target.closest('.sw-tab[data-pick]');
+    if (tab) return selectAgent(tab.dataset.pick, '.sw-tab[data-pick]');
     const b = e.target.closest('button[data-sha], .ag-time .ag-ev[data-sha]');
     if (!b) return;
     shownGraph().focusSha?.(b.dataset.sha); // deja la vista de agentes y va al commit

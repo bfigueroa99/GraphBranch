@@ -359,61 +359,62 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     abiertos y con el equipo cargado se agota lo que Chromium tiene para pedir archivos; contar los contextos vivos en
     ese paso y cerrar los que ya no se usan. Reproducción: `node tools/smoke.mjs` con el equipo cargado → `consola: Failed
     to load resource: net::ERR_INSUFFICIENT_RESOURCES (…/js/i18n.js) | excepción: GB is not defined`.
+3. [Deuda] Dos pasos ajenos del smoke fallaron en las puertas de la iteración 244 (2026-11-09; en la tercera pasaron): «editar el código: desde los cambios de un commit se abre su archivo…» (`page.waitForFunction: Timeout 15000ms`, ya cubierto por el pendiente [Deuda] anterior de esa sección) y «la ficha de un commit de agente dice cuál es, con su modelo y su sesión (2D)» (`ninguna ficha de rama dice su agente: ""`). Hipótesis del segundo: el paso mira la ficha antes de que el repintado de las ramas del agente la llene; esperar una señal del DOM en vez de leerla al instante. Reproducción: `node tools/smoke.mjs` repetido → `la ficha de un commit de agente dice cuál es…: ninguna ficha de rama dice su agente: ""`.
 
 ### Baja
 
-3. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+4. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-4. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+5. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-5. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+6. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-6. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+7. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-7. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+8. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-8. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+9. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-9. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+10. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-10. [Accesibilidad] En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…», «sin actividad…», PRs) y la
+11. [Accesibilidad] En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…», «sin actividad…», PRs) y la
     nota de cada commit (`.tv-aside`) ya van en el `aria-label` del `treeitem`, pero son texto del nodo: según el lector se
     leen dos veces. Marcarlas `aria-hidden="true"` y comprobarlo con un lector real (ver Para Benjamin, 5).
     Reproducción: Playwright, abrir `#textview-btn` → `.tv-tag` dentro de `[role=treeitem][aria-label]` sin `aria-hidden`.
-11. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
+12. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
     `placeLabels`. El cuadro lo domina el render por software (~200 ms por cuadro sin GPU, 10 fps), que con GPU no existe;
     medir con GPU real antes de tocarlo. Reproducción: la misma envoltura sobre `stepScene` → ~1,1 ms por llamada.
-12. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
+13. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
     (895 ms en total, sin GPU); el perfil de CPU de los primeros 6 s no deja ninguna función de la app por encima de 70 ms
     (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
     que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
     Reproducción: `node tools/audit.mjs --repetir 3` → `consultas: 10`, `tareasLargasMs: 895`.
-13. [Errores] Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el repo del PR con
+14. [Errores] Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el repo del PR con
     `owner/name` tal como se escribieron; con un repo renombrado (abierto por su nombre viejo) ningún PR cuenta como del
     mismo repo: sus ramas pierden el «PRs abiertos» y dicen «sin PR abierto». Comparar `fromRef.repository` con
     `toRef.repository`. Reproducción: API simulada con el repo `nuevo` y abrir `CLAVE/viejo` → `sameRepo` false.
-14. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
+15. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
     prepara de verdad en vez de solo listar, y `add -p` prepara todo. Negarse con el `error: unknown switch` de git (o
     admitir `-n`). Reproducción: `node --test` con `touch a.txt`, `add -n .` → `a.txt` queda preparado.
-15. [Seguridad] Avisos a Slack (`electron/webhooks.js`, `payload`): `slackText` escapa `&`, `<` y `>` (sin menciones ni
+16. [Seguridad] Avisos a Slack (`electron/webhooks.js`, `payload`): `slackText` escapa `&`, `<` y `>` (sin menciones ni
     enlaces), pero no el formato `mrkdwn` (`*`, `_`, `` ` ``, `~`): un título de PR como `*URGENTE*` sale en negrita en el
     canal. Solo formato, sin enlaces ni menciones; escaparlo como se hizo con Discord. Reproducción: `payload('slack',
     {title: '*x*'})` → `*x*` sin escapar.
-16. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
+17. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
     la iteración 239: la sesión no pudo consultar su página de versiones. Comprobarla con `WebFetch` en la próxima
     auditoría de Seguridad y, si hay una estable más nueva con arreglos de seguridad, subirla (cambio de `electron/`: plan
     por consenso). Reproducción: `npm view electron version` frente a `package.json`.
-17. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
+18. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
     largo se lleva la línea `<enlace>` del final (el aviso queda sin enlace). Recortar título y detalle antes y dejar el
     enlace siempre. Reproducción: `payload('discord', {title: 'x'.repeat(5000), url: 'https://github.com/a/b'})` →
     `content` sin `<https://github.com/a/b>`.
@@ -562,5 +563,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (filtrar en `groupPulls` y repintar).
 - OMC: no disponible (la iteración no lanzó subagentes; el diff son unas líneas de `js/overview.js`, leído a mano)
 - Reclamo: loop/244, sin colisión
-- Validado: PENDIENTE
+- Validado: 642 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde (a la tercera corrida: dos pasos ajenos del smoke fallaron antes, uno por corrida, anotados en Mantenimiento · Deuda).
 - **Siguiente:** iteración 245, expansión: ítem 177 (Launchpad: el filtro por persona en la URL, Escala)

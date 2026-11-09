@@ -106,3 +106,22 @@ test('groupPulls: los PRs fijados van arriba de su grupo, por repo y número, y 
   assert.deepEqual(order(O.groupPulls(entries, new Set(['a#99']))), order(O.groupPulls(entries)), 'un fijado que ya no existe no hace nada');
   assert.equal(O.pinId('o/a', 7), 'o/a#7');
 });
+
+test('mount: fijar repinta con los mismos PRs aunque `pulls` sea un iterador de un solo uso', () => {
+  const els = [];
+  const mkEl = (tag) => {
+    const el = { tag, children: [], dataset: {}, attrs: {}, classList: { toggle() {} }, hidden: false, listeners: {}, append(...c) { this.children.push(...c); }, replaceChildren(...c) { this.children = c; }, setAttribute(k, v) { this.attrs[k] = v; }, addEventListener(t, f) { this.listeners[t] = f; }, querySelectorAll: () => [], querySelector: () => null, focus() {}, closest: () => null };
+    els.push(el);
+    return el;
+  };
+  const c2 = vm.createContext({ window: { GB: { U: { truncate: (x) => x } }, matchMedia: null }, document: { createElement: mkEl } });
+  vm.runInContext(readFileSync(join(root, 'js', 'overview.js'), 'utf8'), c2, { filename: 'overview.js' });
+  const pins = new Set();
+  const box = mkEl('div');
+  const ov = c2.window.GB.overview.mount(mkEl('div'), { prsRoot: box, text: (k) => k, num: String, getPins: () => [...pins], onPin: (id, on) => (on ? pins.add(id) : pins.delete(id)) });
+  ov.setPulls([{ key: 'a', name: 'o/a', pulls: new Map([[1, { number: 1, title: 'x', createdAt: 1 }]]).values() }]);
+  const pinBtn = els.find((e) => e.tag === 'button' && e.className === 'ap-pin');
+  pinBtn.listeners.click();
+  assert.deepEqual([...pins], ['a#1']);
+  assert.equal(box.hidden, false, 'tras fijar, el Launchpad sigue con su PR');
+});

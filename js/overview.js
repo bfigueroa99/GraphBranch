@@ -214,7 +214,8 @@
     let prSig = '';
     let lastEntries = [];
     function setPulls(entries) {
-      lastEntries = entries;
+      lastEntries = entries.map((e) => ({ ...e, pulls: [...(e.pulls || [])] })); // `pulls` puede ser un iterador, de un solo uso
+      entries = lastEntries;
       const box = opts.prsRoot;
       if (!box) return;
       const pins = new Set(opts.getPins?.() || []);

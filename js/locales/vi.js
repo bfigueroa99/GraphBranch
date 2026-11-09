@@ -276,6 +276,8 @@ GB.i18n.define('vi', {
   'feed.title': 'Hoạt động',
   'feed.filterAria': 'Lọc hoạt động theo loại',
   'feed.listAria': 'Hoạt động gần đây',
+  'feed.fold': 'Ẩn hoặc hiện bảng hoạt động',
+  'feed.resize': 'Đổi độ rộng bảng hoạt động (kéo nó, hoặc dùng các phím mũi tên)',
   'feed.empty': 'Hoạt động của kho lưu trữ sẽ hiện ở đây.',
   'feed.emptyFiltered': 'Không có hoạt động nào khớp với bộ lọc đang bật.',
   'feed.locate': 'Hiện trong biểu đồ',

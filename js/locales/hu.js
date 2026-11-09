@@ -276,6 +276,8 @@ GB.i18n.define('hu', {
   'feed.title': 'Aktivitás',
   'feed.filterAria': 'Aktivitás szűrése típus szerint',
   'feed.listAria': 'Legutóbbi aktivitás',
+  'feed.fold': 'Tevékenységpanel elrejtése vagy megjelenítése',
+  'feed.resize': 'A tevékenységpanel szélességének módosítása (húzza, vagy használja a nyílbillentyűket)',
   'feed.empty': 'A repozitórium aktivitása itt fog megjelenni.',
   'feed.emptyFiltered': 'Egyetlen aktivitás sem felel meg az aktív szűrőknek.',
   'feed.locate': 'Mutatás a gráfon',

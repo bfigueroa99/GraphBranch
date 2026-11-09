@@ -380,7 +380,106 @@
     },
     // con la vista 3D, cada sonido sale del lado de la pantalla donde está su rama (si es del repo a la vista)
     panOf: (a) => (graph === graph3d && (a.repo == null || a.repo === active?.key) ? graph3d.panOf(a.branch) : 0),
+    onLive: (n) => feedPanel.arrived(n),
   });
+
+  /* ---------- el panel de actividad: su borde se arrastra (o se mueve con las flechas) y se pliega a una franja ----------
+     Los dos se recuerdan en este navegador. Solo en pantallas anchas: en una columna el panel va debajo del grafo. */
+  const feedPanel = (() => {
+    const grip = $('#feed-resize');
+    const fold = $('#feed-fold');
+    const unseenEl = $('#feed-unseen');
+    const MIN = 280;
+    const MAX = 720;
+    const DEF = 370;
+    const GRAPH_MIN = 420; // lo que el grafo conserva siempre a su lado
+    let unseen = 0;
+    const rtl = () => document.documentElement.dir === 'rtl';
+    const maxNow = () => Math.max(MIN, Math.min(MAX, el.main.clientWidth - 12 - GRAPH_MIN));
+    const shownWidth = () => Math.round($('#feed-panel').getBoundingClientRect().width);
+    const folded = () => el.main.classList.contains('feed-folded');
+    /** Ancho pedido, dentro de lo que cabe; `save` lo recuerda (el de siempre no se guarda). */
+    function setWidth(w, save) {
+      const v = Math.round(Math.min(maxNow(), Math.max(MIN, w)));
+      el.main.style.setProperty('--feed-w', v + 'px');
+      grip.setAttribute('aria-valuemax', String(maxNow()));
+      grip.setAttribute('aria-valuenow', String(v));
+      if (save) U.store.set('feedWidth', v === DEF ? null : v);
+    }
+    function setFolded(on, save) {
+      el.main.classList.toggle('feed-folded', on);
+      fold.setAttribute('aria-expanded', String(!on));
+      if (!on) {
+        unseen = 0;
+        unseenEl.hidden = true;
+      }
+      if (save) U.store.set('feedFolded', on || null);
+    }
+    const saved = Number(U.store.get('feedWidth', 0));
+    if (saved >= MIN && saved <= MAX) {
+      el.main.style.setProperty('--feed-w', saved + 'px'); // sin recortar todavía: el CSS ya lo deja en la mitad como mucho
+      grip.setAttribute('aria-valuenow', String(saved));
+    }
+    if (U.store.get('feedFolded', false) === true) setFolded(true, false);
+
+    fold.addEventListener('click', () => setFolded(!folded(), true));
+    grip.addEventListener('dblclick', () => setWidth(DEF, true));
+    grip.addEventListener('pointerdown', (ev) => {
+      if (ev.button !== 0) return;
+      ev.preventDefault();
+      const x0 = ev.clientX;
+      const w0 = shownWidth();
+      let want = w0;
+      let frame = 0;
+      grip.setPointerCapture?.(ev.pointerId);
+      grip.classList.add('dragging');
+      document.documentElement.classList.add('resizing-feed');
+      // un cambio por cuadro: el grafo se redibuja con cada ancho nuevo
+      const move = (e) => {
+        want = w0 + (x0 - e.clientX) * (rtl() ? -1 : 1);
+        frame ||= requestAnimationFrame(() => ((frame = 0), setWidth(want, false)));
+      };
+      const up = () => {
+        cancelAnimationFrame(frame);
+        grip.removeEventListener('pointermove', move);
+        grip.removeEventListener('pointerup', up);
+        grip.removeEventListener('pointercancel', up);
+        grip.classList.remove('dragging');
+        document.documentElement.classList.remove('resizing-feed');
+        setWidth(want, false);
+        setWidth(shownWidth(), true); // lo que de verdad quedó (el CSS lo topa en la mitad)
+      };
+      grip.addEventListener('pointermove', move);
+      grip.addEventListener('pointerup', up);
+      grip.addEventListener('pointercancel', up);
+    });
+    // teclado (patrón de separador de WAI-ARIA): flechas de a 24 px (con Mayús, de a 96), Inicio y Fin a los topes,
+    // Enter pliega el panel
+    grip.addEventListener('keydown', (ev) => {
+      if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+      const step = ev.shiftKey ? 96 : 24;
+      const wider = rtl() ? 'ArrowRight' : 'ArrowLeft';
+      const narrower = rtl() ? 'ArrowLeft' : 'ArrowRight';
+      if (ev.key === wider) setWidth(shownWidth() + step, true);
+      else if (ev.key === narrower) setWidth(shownWidth() - step, true);
+      else if (ev.key === 'Home') setWidth(MIN, true);
+      else if (ev.key === 'End') setWidth(maxNow(), true);
+      else if (ev.key === 'Enter') {
+        setFolded(true, true);
+        fold.focus();
+      } else return;
+      ev.preventDefault();
+    });
+    return {
+      /** Llegó actividad en vivo: con el panel plegado, la franja la cuenta. */
+      arrived(n) {
+        if (!folded() || !n) return;
+        unseen += n;
+        unseenEl.textContent = '+' + U.fmtNum(Math.min(unseen, 999));
+        unseenEl.hidden = false;
+      },
+    };
+  })();
 
   /* ---------- los cambios de cada commit (ver diff.js): un panel junto al grafo para pasar de un commit a otro ---------- */
   const diffView = GB.diff.mount(el.diffPanel, {
@@ -3272,6 +3371,8 @@
         text: (k, p) => t(k, p),
         available: (a) => {
           const b = cmdBtn(a);
+          // plegar el panel de actividad solo tiene sentido con el panel al lado del grafo (en una columna va debajo)
+          if (a.id === 'feedFold' && !matchMedia('(min-width: 861px)').matches) return false;
           return !!b && !b.disabled && !b.closest('[hidden]');
         },
         run: (a) => cmdBtn(a)?.click(),
@@ -3285,7 +3386,10 @@
       if ($('#cmdk').open) palette.close();
       else if (!document.querySelector('dialog[open]')) palette.open();
     });
-  }
+    // el botón de la barra: la misma paleta, para quien no sabe del atajo (que se ve a su lado: ⌘K en Mac)
+    if (/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '')) $('#cmdk-kbd').textContent = '⌘K';
+    $('#cmdk-btn').addEventListener('click', () => palette.open());
+  } else $('#cmdk-btn').hidden = true;
   $('#search-input').addEventListener('input', () => {
     if (!initialQuery) setUrlParam('q', $('#search-input').value.trim().slice(0, 100)); // la búsqueda se comparte con la URL
   });

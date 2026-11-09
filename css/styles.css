@@ -395,7 +395,51 @@ kbd {
 .controls {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 2px;
+}
+/* los tres grupos de la barra (en vivo · explorar · preferencias), separados por una raya fina */
+.ctl-sep {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  margin-inline: 6px;
+  background: var(--line-strong);
+}
+/* la paleta de comandos, a la vista: icono y atajo (el atajo no se muestra en pantallas táctiles, donde no hay teclado) */
+.icon-btn.cmdk-btn {
+  width: auto;
+  grid-auto-flow: column;
+  gap: 6px;
+  padding-inline: 8px 6px;
+  border-color: var(--line-strong);
+  background: var(--surface);
+}
+.icon-btn.cmdk-btn:hover {
+  background: var(--surface-2);
+}
+.cmdk-kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font: 500 10.5px/1.4 var(--font-mono);
+  white-space: nowrap;
+}
+@media (pointer: coarse), (max-width: 560px) {
+  .cmdk-kbd {
+    display: none;
+  }
+  .icon-btn.cmdk-btn {
+    width: 34px;
+    padding: 0;
+  }
+}
+@media (max-width: 860px) {
+  .ctl-sep {
+    margin-inline: 3px;
+  }
 }
 
 /* estado de conexión */
@@ -714,11 +758,28 @@ kbd {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* pantallas bajas (un portátil de 720 o 768 px de alto): cada cifra con su detalle al lado, en una franja más baja que le
+   deja ese alto al grafo */
+@media (min-width: 861px) and (max-height: 860px) {
+  .stat {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    column-gap: 9px;
+    padding-block: 7px 8px;
+  }
+  .stat-label {
+    grid-column: 1 / -1;
+  }
+  .stat-value {
+    font-size: 20px;
+  }
+}
 
 /* ---------- paneles ---------- */
 .main {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 370px);
+  /* el ancho del panel de actividad lo elige quien mira (su borde se arrastra: --feed-w, js/app.js), nunca más de la mitad */
+  grid-template-columns: minmax(0, 1fr) minmax(280px, min(var(--feed-w, 370px), 50%));
   gap: 12px;
   min-height: 0;
 }
@@ -3473,9 +3534,124 @@ kbd {
 .avatar-i.t5 { background: #7a4a4a; }
 
 /* ---------- feed de actividad ---------- */
+.feed-panel {
+  position: relative;
+}
 .feed-panel .panel-head {
   align-items: baseline;
   justify-content: flex-start;
+}
+/* plegar el panel: el botón al final de la cabecera */
+.feed-fold {
+  align-self: center;
+  margin-block: -6px;
+  margin-inline-start: auto;
+}
+.feed-fold .ico {
+  transition: transform 0.2s;
+}
+[dir="rtl"] .feed-fold .ico,
+.feed-fold[aria-expanded="false"] .ico {
+  transform: scaleX(-1);
+}
+[dir="rtl"] .feed-fold[aria-expanded="false"] .ico {
+  transform: none;
+}
+/* lo que llegó con el panel plegado */
+.feed-unseen {
+  padding: 0 6px;
+  border-radius: 9px;
+  background: var(--ink);
+  color: var(--surface);
+  font: 600 11px/18px var(--font-mono);
+}
+/* el borde que se arrastra: 24 px de ancho (lo que pide WCAG 2.5.8) centrados en el hueco entre los dos paneles, con una
+   manija que se ve siempre y una raya entera al pasar, al arrastrar o con el foco */
+.feed-resize {
+  position: absolute;
+  inset-block: 12px;
+  inset-inline-start: -19px;
+  z-index: 3;
+  width: 24px;
+  border-radius: 6px;
+  cursor: col-resize;
+  touch-action: none;
+}
+.feed-resize::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 10px;
+  width: 4px;
+  height: 36px;
+  border-radius: 2px;
+  background: var(--line-strong);
+  transform: translateY(-50%);
+  transition: height 0.15s, background-color 0.15s;
+}
+.feed-resize:hover::after,
+.feed-resize:focus-visible::after,
+.feed-resize.dragging::after {
+  height: 100%;
+  background: var(--ink-3);
+}
+.feed-resize:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+html.resizing-feed,
+html.resizing-feed * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+@media (min-width: 861px) {
+  /* plegado: una franja con el botón, el título de lado y lo nuevo; el grafo se queda con el resto */
+  html:not(.tv) .main.feed-folded:not(.diffing) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  html:not(.tv) .main.feed-folded .feed-panel {
+    width: 48px;
+  }
+  html:not(.tv) .main.feed-folded .feed-resize,
+  html:not(.tv) .main.feed-folded .chips,
+  html:not(.tv) .main.feed-folded .feed,
+  html:not(.tv) .main.feed-folded .feed-empty {
+    display: none;
+  }
+  html:not(.tv) .main.feed-folded .feed-panel .panel-head {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 0;
+  }
+  html:not(.tv) .main.feed-folded .feed-fold {
+    order: -1;
+    margin: 0;
+  }
+  html:not(.tv) .main.feed-folded .feed-panel h2,
+  html:not(.tv) .main.feed-folded .feed-count {
+    writing-mode: vertical-rl;
+  }
+}
+@media (max-width: 860px) {
+  /* en una sola columna el panel va debajo del grafo: ni se pliega ni se ensancha */
+  .feed-resize,
+  .feed-fold,
+  .feed-unseen {
+    display: none;
+  }
+}
+html.tv .feed-resize,
+html.tv .feed-fold,
+html.tv .feed-unseen {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .feed-fold .ico,
+  .feed-resize::after {
+    transition: none;
+  }
 }
 .feed-count {
   color: var(--ink-3);
@@ -3671,6 +3847,43 @@ button.act-main:hover {
 .toast.leaving {
   animation: toast-out 0.25s ease-in forwards;
 }
+/* el mazo (js/feed.js, restack): el aviso más nuevo entero y los anteriores asomando detrás, más angostos, como bordes de
+   tarjeta; con el puntero encima o el foco adentro se despliegan todos. El contenedor recibe el puntero solo mientras
+   está desplegado, para que el hueco entre dos avisos no lo vuelva a plegar */
+.toasts:hover,
+.toasts:focus-within {
+  pointer-events: auto;
+}
+.toast {
+  max-height: 240px;
+  transition: max-height 0.25s ease, margin 0.25s ease, opacity 0.2s;
+}
+.toast[data-depth="0"] {
+  z-index: 4;
+}
+.toast[data-depth="1"] {
+  z-index: 3;
+}
+.toast[data-depth="2"] {
+  z-index: 2;
+}
+.toasts:not(:hover, :focus-within) > .toast:not([data-depth="0"], .leaving) {
+  max-height: 16px;
+  margin-bottom: -14px;
+  margin-inline: 10px;
+  box-shadow: none;
+  opacity: 0.9;
+}
+.toasts:not(:hover, :focus-within) > .toast[data-depth="2"]:not(.leaving),
+.toasts:not(:hover, :focus-within) > .toast[data-depth="3"]:not(.leaving) {
+  margin-inline: 20px;
+  opacity: 0.75;
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    transition: none;
+  }
+}
 .toast-main {
   flex: 1;
   min-width: 0;
@@ -3763,6 +3976,28 @@ button.act-main:hover {
 }
 .settings::backdrop {
   background: rgb(5 10 8 / 0.45);
+}
+/* los paneles de datos (salud, vista de texto, búsqueda, constelación, agentes, el PR) más anchos y más altos en
+   pantallas grandes: se lee más de una vez y se baja menos. La salud, que es la más larga, en dos columnas */
+.settings.health {
+  width: min(780px, calc(100vw - 2 * var(--gutter)));
+}
+.settings.health .tr-wrap {
+  max-height: min(86vh, 960px);
+}
+.settings.health#health {
+  width: min(1080px, calc(100vw - 2 * var(--gutter)));
+}
+@media (min-width: 900px) {
+  #health-body {
+    display: block;
+    columns: 2 400px;
+    column-gap: 32px;
+  }
+  #health-body > * {
+    break-inside: avoid;
+    margin: 0 0 18px;
+  }
 }
 .settings form {
   display: grid;
@@ -5891,7 +6126,22 @@ html.tv .agk-btn {
   font: inherit;
   cursor: pointer;
 }
-.tv-act:first-of-type {
+/* la cabecera de una rama: flecha, nombre y marcas (en una o más líneas) y, al final de la primera, sus dos botones */
+.tv-head {
+  flex-wrap: nowrap;
+}
+.tv-info {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-width: 0;
+}
+.tv-acts {
+  display: flex;
+  flex: none;
+  gap: 6px;
   margin-inline-start: auto;
 }
 .tv-act:hover,

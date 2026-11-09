@@ -65,13 +65,14 @@
   const detailOf = (a) => i18n.text(a.detail);
 
   class Feed {
-    constructor({ list, empty, chips, toasts, count, onSelect, panOf }) {
+    constructor({ list, empty, chips, toasts, count, onSelect, panOf, onLive }) {
       this.list = list;
       this.empty = empty;
       this.chipsEl = chips;
       this.toastsEl = toasts;
       this.countEl = count;
       this.onSelect = onSelect;
+      this.onLive = onLive; // llegó actividad en vivo (cuántas): el panel plegado la cuenta
       this.items = [];
       this.els = new Map();
       this.multi = false; // se siguen varios repos: cada elemento lleva el nombre del suyo
@@ -125,7 +126,10 @@
         .slice(0, MAX_ITEMS);
       this.forget();
       this.render();
-      if (live) this.alert(fresh);
+      if (live) {
+        this.alert(fresh);
+        this.onLive?.(fresh.length);
+      }
     }
 
     /** Se dejó de seguir un repo: fuera su actividad. */
@@ -298,6 +302,7 @@
           next?.querySelector('.toast-main').focus({ preventScroll: true });
         }
         el.classList.add('leaving');
+        this.restack();
         setTimeout(() => el.remove(), 260);
       };
       let timer = setTimeout(close, ttl);
@@ -329,9 +334,17 @@
         close();
       });
       this.toastsEl.appendChild(el);
+      this.restack();
       // más de tres: se va el más viejo, salvo los que se están leyendo
       const all = this.toastsEl.querySelectorAll('.toast:not(.leaving)');
       if (all.length > 3) this.toastsEl.querySelector('.toast:not(.leaving):not(.paused)')?.querySelector('.toast-close').click();
+    }
+
+    /** Los avisos van en mazo: el más nuevo (profundidad 0) se ve entero y los anteriores asoman detrás, así no tapan el
+        panel de actividad; el CSS los despliega al pasar el puntero o con el foco adentro. */
+    restack() {
+      const shown = [...this.toastsEl.querySelectorAll('.toast:not(.leaving)')].reverse();
+      shown.forEach((t, i) => (t.dataset.depth = String(Math.min(i, 3))));
     }
 
     summaryToast(n) {

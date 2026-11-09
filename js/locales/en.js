@@ -281,6 +281,8 @@ GB.i18n.define('en', {
   'feed.title': 'Activity',
   'feed.filterAria': 'Filter activity by type',
   'feed.listAria': 'Recent activity',
+  'feed.fold': 'Hide or show the activity panel',
+  'feed.resize': 'Resize the activity panel (drag it, or use the arrow keys)',
   'feed.empty': "The repository's activity will show up here.",
   'feed.emptyFiltered': 'No activity matches the active filters.',
   'feed.locate': 'Show in graph',

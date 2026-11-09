@@ -276,6 +276,8 @@ GB.i18n.define('nl', {
   'feed.title': 'Activiteit',
   'feed.filterAria': 'Activiteit filteren op type',
   'feed.listAria': 'Recente activiteit',
+  'feed.fold': 'Activiteitenpaneel verbergen of tonen',
+  'feed.resize': 'Breedte van het activiteitenpaneel wijzigen (sleep het, of gebruik de pijltjestoetsen)',
   'feed.empty': 'De activiteit van de repository verschijnt hier.',
   'feed.emptyFiltered': 'Geen activiteit komt overeen met de actieve filters.',
   'feed.locate': 'Tonen in graaf',

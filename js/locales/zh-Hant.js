@@ -276,6 +276,8 @@ GB.i18n.define('zh-Hant', {
   'feed.title': '動態',
   'feed.filterAria': '依類型篩選動態',
   'feed.listAria': '最近動態',
+  'feed.fold': '隱藏或顯示動態面板',
+  'feed.resize': '調整動態面板的寬度（拖曳，或使用方向鍵）',
   'feed.empty': '儲存庫的動態會顯示在這裡。',
   'feed.emptyFiltered': '沒有符合目前篩選條件的動態。',
   'feed.locate': '在圖中定位',

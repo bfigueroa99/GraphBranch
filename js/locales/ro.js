@@ -280,6 +280,8 @@ GB.i18n.define('ro', {
   'feed.title': 'Activitate',
   'feed.filterAria': 'Filtrare activitate după tip',
   'feed.listAria': 'Activitate recentă',
+  'feed.fold': 'Ascunde sau afișează panoul de activitate',
+  'feed.resize': 'Schimbă lățimea panoului de activitate (trage-l sau folosește săgețile)',
   'feed.empty': 'Activitatea depozitului va apărea aici.',
   'feed.emptyFiltered': 'Nicio activitate nu corespunde filtrelor active.',
   'feed.locate': 'Afișați în graf',

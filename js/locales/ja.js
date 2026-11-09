@@ -276,6 +276,8 @@ GB.i18n.define('ja', {
   'feed.title': 'アクティビティ',
   'feed.filterAria': '種類でアクティビティを絞り込み',
   'feed.listAria': '最近のアクティビティ',
+  'feed.fold': 'アクティビティパネルを隠す/表示する',
+  'feed.resize': 'アクティビティパネルの幅を変える (ドラッグするか矢印キーを使用)',
   'feed.empty': 'リポジトリのアクティビティがここに表示されます。',
   'feed.emptyFiltered': '有効なフィルターに一致するアクティビティはありません。',
   'feed.locate': 'グラフで表示',

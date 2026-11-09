@@ -276,6 +276,8 @@ GB.i18n.define('nb', {
   'feed.title': 'Aktivitet',
   'feed.filterAria': 'Filtrer aktivitet etter type',
   'feed.listAria': 'Nylig aktivitet',
+  'feed.fold': 'Skjul eller vis aktivitetspanelet',
+  'feed.resize': 'Endre bredden på aktivitetspanelet (dra i det, eller bruk piltastene)',
   'feed.empty': 'Aktiviteten i repoet vises her.',
   'feed.emptyFiltered': 'Ingen aktivitet samsvarer med de aktive filtrene.',
   'feed.locate': 'Vis i grafen',

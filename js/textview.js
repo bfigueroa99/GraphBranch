@@ -250,15 +250,21 @@
         li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}${b.noPr ? ', ' + text('textview.noPr') : ''}${b.fresh ? ', ' + text('textview.fresh') : ''}${b.quiet ? ', ' + text('textview.quiet') : ''}${b.merged ? ', ' + text('textview.merged') : ''}${b.ciFailing ? ', ' + text('textview.ciFailing') : ''}${b.tipAuthor ? ', ' + text('textview.tipBy', { author: b.tipAuthor }) : ''}, ${text('textview.shown', { n: b.commits.length })}`);
         li.tabIndex = i === 0 ? 0 : -1;
         li.dataset.branch = b.name;
+        // el nombre y sus marcas se acomodan en una o más líneas; los botones de ocultar y de dejarla sola, siempre juntos
+        // al final de la primera (antes uno podía quedar solo en la línea de abajo)
         const head = mk('span', 'tv-head');
-        head.appendChild(mk('span', 'tv-name', b.name));
-        if (b.isDefault) head.appendChild(mk('span', 'tv-tag', text('textview.default')));
-        if (b.prs) head.appendChild(mk('span', 'tv-tag', text('textview.prs', { n: b.prs })));
-        if (b.fresh) head.appendChild(mk('span', 'tv-tag', text('textview.fresh')));
-        if (b.quiet) head.appendChild(mk('span', 'tv-tag', text('textview.quiet')));
-        if (b.merged) head.appendChild(mk('span', 'tv-tag', text('textview.merged')));
-        if (b.ciFailing) head.appendChild(mk('span', 'tv-tag tv-ci-fail', '✗ ' + text('textview.ciFailing')));
+        const info = mk('span', 'tv-info');
+        head.appendChild(info);
+        info.appendChild(mk('span', 'tv-name', b.name));
+        if (b.isDefault) info.appendChild(mk('span', 'tv-tag', text('textview.default')));
+        if (b.prs) info.appendChild(mk('span', 'tv-tag', text('textview.prs', { n: b.prs })));
+        if (b.fresh) info.appendChild(mk('span', 'tv-tag', text('textview.fresh')));
+        if (b.quiet) info.appendChild(mk('span', 'tv-tag', text('textview.quiet')));
+        if (b.merged) info.appendChild(mk('span', 'tv-tag', text('textview.merged')));
+        if (b.ciFailing) info.appendChild(mk('span', 'tv-tag tv-ci-fail', '✗ ' + text('textview.ciFailing')));
         if (hideOk(b)) {
+          const acts = mk('span', 'tv-acts');
+          head.appendChild(acts);
           for (const [how, glyph] of [['hide', '⊘'], ['solo', '◎']]) {
             const btn = mk('button', 'tv-act', glyph);
             btn.type = 'button';
@@ -266,7 +272,7 @@
             btn.dataset.act = how;
             btn.setAttribute('aria-label', text(how === 'hide' ? 'textview.hideBranch' : 'textview.soloBranch', { name: b.name }));
             btn.title = btn.getAttribute('aria-label');
-            head.appendChild(btn);
+            acts.appendChild(btn);
           }
         }
         li.appendChild(head);

@@ -276,6 +276,8 @@ GB.i18n.define('fil', {
   'feed.title': 'Aktibidad',
   'feed.filterAria': 'I-filter ang aktibidad ayon sa uri',
   'feed.listAria': 'Kamakailang aktibidad',
+  'feed.fold': 'Itago o ipakita ang panel ng aktibidad',
+  'feed.resize': 'Baguhin ang lapad ng panel ng aktibidad (hilahin ito o gamitin ang mga arrow key)',
   'feed.empty': 'Dito lalabas ang aktibidad ng repository.',
   'feed.emptyFiltered': 'Walang aktibidad na tumutugma sa mga aktibong filter.',
   'feed.locate': 'Ipakita sa graph',

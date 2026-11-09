@@ -276,6 +276,8 @@ GB.i18n.define('zh-Hans', {
   'feed.title': '动态',
   'feed.filterAria': '按类型筛选动态',
   'feed.listAria': '最近动态',
+  'feed.fold': '隐藏或显示动态面板',
+  'feed.resize': '调整动态面板的宽度（拖动，或使用方向键）',
   'feed.empty': '仓库的动态会显示在这里。',
   'feed.emptyFiltered': '没有符合当前筛选条件的动态。',
   'feed.locate': '在图中定位',

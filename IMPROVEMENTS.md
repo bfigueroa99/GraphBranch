@@ -590,5 +590,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - OMC: plan=— · revisión=— · verificación=—
 - Reclamo: loop/237, sin colisión
 - Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
-- Validado: pendiente
+- Validado: 634 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 238, expansión: ítem 176 (Constelación: las galaxias quietas, tenues, Escala)

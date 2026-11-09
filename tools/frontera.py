@@ -14,9 +14,10 @@ sigue siendo la misma que ayer.
 Mira el rango `merge-base(base, HEAD)..HEAD` (lo que se va a publicar) y marca:
   - prueba borrada: un archivo de pruebas que desaparece                     (declarable)
   - menos definiciones de prueba en los archivos tocados                     (declarable)
-  - saltos añadidos en pruebas: skip, only, xfail no estricto, todo…         (declarable)
+  - saltos añadidos en pruebas: skip, skipif, only, xfail no estricto, todo… (declarable)
   - debilitadores añadidos en cualquier archivo: `--no-verify`,
-    `pragma: no cover`, `eslint-disable`, `noqa`, `@ts-ignore`…             (declarable)
+    `pragma: no cover`, `eslint-disable`, `noqa`, `nosec`, `istanbul ignore`,
+    `@ts-ignore`… en blanco (las que nombran su regla pasan)                 (declarable)
   - archivos protegidos tocados: la propia puerta, su configuración y
     la del lint                                                              (declarable)
   - umbral que se mueve en la dirección floja (cobertura, tope…)             (NO declarable)
@@ -43,7 +44,7 @@ import subprocess
 import sys
 import tempfile
 
-VERSION = "1"
+VERSION = "2"
 # La guardia y la frontera citan los patrones que vigilan: no se vigilan a sí mismas.
 PROPIOS = {"frontera.py", "frontera.json", "guardia.py", "guardia.json"}
 DECLARACION = re.compile(r"^\s*Frontera:\s*(\S.*)$", re.IGNORECASE | re.MULTILINE)
@@ -55,12 +56,18 @@ CONFIG_POR_DEFECTO = {
                      r"^\s*(it|test|describe)(\.each\([^)]*\))?\s*\(\s*['\"`]"],
     "saltos": [r"@pytest\.mark\.skip\b", r"\bpytest\.skip\(", r"@unittest\.skip",
                r"@pytest\.mark\.xfail\b(?![^)\n]*strict\s*=\s*True)",
-               r"\b(it|test|describe)\.(skip|only|todo)\s*\(", r"\b(xit|xtest|xdescribe|fit|fdescribe)\s*\("],
+               r"\b(it|test|describe)\.(skip|only|todo)\s*\(", r"\b(xit|xtest|xdescribe|fit|fdescribe)\s*\(",
+               # v2: los condicionales también apagan una prueba (revisión del PR #587 de cit_sanmiguel)
+               r"@pytest\.mark\.skipif\b", r"\.(skipIf|runIf)\s*\(", r"\bself\.skipTest\(",
+               r"^\s*@skip(If|Unless)?\b"],
     # Solo las supresiones en blanco: `# noqa: E402` o `eslint-disable-line regla` nombran lo
     # que callan y se revisan como cualquier línea; `# noqa` o `/* eslint-disable */` callan todo.
     "debilitadores": [r"--no-verify", r"#\s*pragma:\s*no\s*cover",
                       r"eslint-disable(-next-line|-line)?(?!-)(?!\s+[\w@/-])",
-                      r"#\s*noqa\b(?!\s*:)", r"@ts-(ignore|nocheck)", r"#\s*type:\s*ignore(?!\[)"],
+                      r"#\s*noqa\b(?!\s*:)", r"@ts-(ignore|nocheck)", r"#\s*type:\s*ignore(?!\[)",
+                      # v2: `# nosec B602` y `nosemgrep: regla` nombran lo que callan; en blanco callan todo
+                      r"#\s*nosec\b(?![\s:]+B\d)", r"#\s*ruff:\s*noqa\b(?!\s*:)", r"\bnosemgrep\b(?!\s*:)",
+                      r"gitleaks:allow", r"\b(istanbul|c8|v8)\s+ignore\b", r"pylint:\s*disable\s*=\s*all\b"],
     "debilitadores_excluir": ["**/*.md", "docs/**"],
     "aserciones": [r"\bassert\b", r"\bexpect\s*\(", r"self\.assert\w+\("],
     "protegidos": [],
@@ -74,7 +81,8 @@ class ErrorDeUso(Exception):
 
 
 def git(*args: str, cwd: str | None = None, ok: bool = False) -> str:
-    r = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
+    # Sin `quotepath=off`, `docs/año.md` sale como `"docs/a\303\261o.md"` y no casa con ningún patrón.
+    r = subprocess.run(["git", "-c", "core.quotepath=off", *args], cwd=cwd, capture_output=True, text=True)
     if r.returncode != 0 and not ok:
         raise ErrorDeUso(f"git {' '.join(args)}: {r.stderr.strip() or r.returncode}")
     return r.stdout if r.returncode == 0 else ""
@@ -100,13 +108,32 @@ def cargar_config(ruta: str | None) -> dict:
     return config
 
 
+def variantes(patron: str) -> set[str]:
+    """`**/` vale por cero o más directorios: `src/**/*.test.*` también es `src/*.test.*`."""
+    out, pendientes = {patron}, [patron]
+    while pendientes:
+        p = pendientes.pop()
+        i = p.find("**/")
+        while i != -1:
+            q = p[:i] + p[i + 3:]
+            if q not in out:
+                out.add(q)
+                pendientes.append(q)
+            i = p.find("**/", i + 1)
+    return out
+
+
 def coincide(ruta: str, patrones: list[str]) -> bool:
-    for p in patrones:
-        if fnmatch.fnmatchcase(ruta, p):
-            return True
-        if p.startswith("**/") and fnmatch.fnmatchcase(ruta, p[3:]):
-            return True
-    return False
+    return any(fnmatch.fnmatchcase(ruta, v) for p in patrones for v in variantes(p))
+
+
+def ruta_de_cabecera(texto: str) -> str:
+    """La ruta de una línea `+++ b/…`: sin el tab final que git pone si hay espacios, y sin comillas C."""
+    texto = texto.rstrip("\t")
+    if len(texto) >= 2 and texto[0] == texto[-1] == '"':
+        crudo = texto[1:-1].encode("latin-1", "backslashreplace").decode("unicode_escape")
+        texto = crudo.encode("latin-1", "replace").decode("utf-8", "replace")
+    return texto
 
 
 def contenido(ref: str, ruta: str, cwd: str) -> str | None:
@@ -129,12 +156,12 @@ def lineas_del_diff(mb: str, cwd: str) -> dict[str, dict[str, list[str]]]:
     texto = git("diff", "-U0", "--no-color", "-M", f"{mb}..HEAD", cwd=cwd)
     for linea in texto.splitlines():
         if linea.startswith("+++ "):
-            ruta = linea[4:]
+            ruta = ruta_de_cabecera(linea[4:])
             actual = None if ruta == "/dev/null" else ruta.removeprefix("b/")
             if actual:
                 out.setdefault(actual, {"+": [], "-": []})
         elif linea.startswith("--- "):
-            ruta = linea[4:]
+            ruta = ruta_de_cabecera(linea[4:])
             if ruta != "/dev/null":
                 previa = ruta.removeprefix("a/")
                 out.setdefault(previa, {"+": [], "-": []})
@@ -343,13 +370,51 @@ ESCENARIOS = [
      "puerta\n\nFrontera: META, la puerta suma un paso", True),
     ("baja el umbral aun declarado", {"puerta.sh": "#!/bin/sh\nCOV_MIN=95\n"},
      "umbral\n\nFrontera: no alcanza", False),
+    # v2: lo que encontró la revisión del PR #587 de cit_sanmiguel
+    ("skipif en pytest", {"tests/test_a.py": "import pytest\n@pytest.mark.skipif(True, reason='x')\n"
+                          + PY_BASE}, "salta si", False),
+    ("skipTest en unittest", {"tests/test_a.py": PY_BASE + "\n\ndef test_tres(self):\n    self.skipTest('x')\n"},
+     "salta dentro", False),
+    ("@skip de unittest importado", {"tests/test_a.py": "from unittest import skip\n@skip('x')\n" + PY_BASE},
+     "salta importado", False),
+    ("it.skipIf en vitest", {"web/suma.test.js": JS_BASE.replace("it('suma'", "it.skipIf(true)('suma'")},
+     "salta si js", False),
+    ("nosec en blanco", {"src/app.py": "import subprocess  # nosec\n"}, "calla bandit", False),
+    ("nosec con id pasa", {"src/app.py": "import subprocess  # nosec B404\n"}, "calla uno bandit", True),
+    ("ruff noqa de archivo", {"src/app.py": "# ruff: noqa\nx = 1\n"}, "calla ruff", False),
+    ("istanbul ignore", {"web/app.js": "/* istanbul ignore next */\nlet x = 1\n"}, "calla cobertura js", False),
+    ("c8 ignore", {"web/app.js": "/* c8 ignore start */\nlet x = 1\n"}, "calla c8", False),
+    ("gitleaks allow", {"src/app.py": "CLAVE = 'abc'  # gitleaks:allow\n"}, "calla secretos", False),
+    ("prosa con acento puede nombrar --no-verify", {"docs/guía.md": "Nunca --no-verify.\n"}, "acento", True),
+    ("prosa con espacio puede nombrar --no-verify", {"notas/con espacio.md": "Nunca --no-verify.\n"},
+     "espacio", True),
+    ("prosa con comillas puede nombrar --no-verify", {'notas/co"mi.md': "Nunca --no-verify.\n"},
+     "comillas", True),
+    ("borra una prueba con acento", {"tests/test_año.py": None}, "fuera acento", False),
+    ("it.skipIf en vitest junto a las demás", {"web/suma.test.js": JS_BASE
+                                               + "it.skipIf(process.env.CI)('nueva', () => {})\n"},
+     "salta si js nueva", False),
     ("sube el umbral declarado", {"puerta.sh": "#!/bin/sh\nCOV_MIN=100\nexit 0\n"},
      "más\n\nFrontera: endurece", True),
 ]
 
 
+GLOBS = [
+    # (ruta, patrón, ¿coincide?): `**/` vale por cero o más directorios, como en git y en los linters
+    ("src/api.test.js", "src/**/*.test.*", True),
+    ("src/a/b/api.test.js", "src/**/*.test.*", True),
+    ("web/api.test.js", "src/**/*.test.*", False),
+    ("tests/test_a.py", "**/tests/**", True),
+    ("pkg/tests/x/test_a.py", "**/tests/**/test_*.py", True),
+]
+
+
 def probar() -> int:
     fallas = 0
+    for ruta, patron, esperado in GLOBS:
+        if coincide(ruta, [patron]) != esperado:
+            fallas += 1
+            print(f"FALLA glob: {ruta!r} contra {patron!r} debía {'coincidir' if esperado else 'no coincidir'}")
     config = {k: list(v) if isinstance(v, list) else v for k, v in CONFIG_POR_DEFECTO.items()}
     config["protegidos"] = ["puerta.sh"]
     config["umbrales"] = [{"archivo": "puerta.sh", "patron": r"COV_MIN=(\d+)", "nombre": "COV_MIN"}]
@@ -357,6 +422,7 @@ def probar() -> int:
         subprocess.run(["git", "init", "-q", "-b", "base", raiz], check=True)
         _escribir(raiz, "tests/test_a.py", PY_BASE)
         _escribir(raiz, "web/suma.test.js", JS_BASE)
+        _escribir(raiz, "tests/test_año.py", "def test_ñ():\n    assert 1\n")
         _escribir(raiz, "src/app.py", "x = 1\n")
         _escribir(raiz, "puerta.sh", "#!/bin/sh\nCOV_MIN=100\n")
         _commit(raiz, "base")
@@ -375,7 +441,8 @@ def probar() -> int:
                 fallas += 1
                 print(f"FALLA: «{nombre}» dio {'ok' if r['ok'] else 'rota'}, se esperaba "
                       f"{'ok' if esperado else 'rota'}: {r['violaciones']}")
-    print(f"frontera v{VERSION}: {len(ESCENARIOS) + 1 - fallas}/{len(ESCENARIOS) + 1} casos bien")
+    total = len(ESCENARIOS) + len(GLOBS) + 1
+    print(f"frontera v{VERSION}: {total - fallas}/{total} casos bien")
     return 1 if fallas else 0
 
 

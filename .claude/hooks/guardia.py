@@ -22,6 +22,17 @@ Qué frena (sale 2 y el motivo llega al agente por stderr):
   4. `rm -r` sobre `/`, `~`, `$HOME` o un `.git`.
   5. Escribir en una rama protegida con el MCP de GitHub (`push_files`,
      `create_or_update_file`, `delete_file`).
+  6. (v3) Lo que la guardia no puede leer con certeza: un `git push` con `$` o comillas
+     invertidas en sus argumentos, `xargs … git push`, y `git -c alias.*|remote.*|push.*`
+     o `git config alias.*|push.*|remote.*.push`, que cambian lo que hace un push.
+
+Cómo lee el comando (v3, tras la revisión del PR #587 de cit_sanmiguel): quita
+redirecciones (`2>&1`), palabras de la shell (`{`, `then`, `!`), envoltorios hasta el
+primer comando vigilado (`timeout -k 5 60 git …`), sigue `bash -lc`/`sh -ec`, `eval` y
+`` `…` ``, resuelve prefijos de opciones largas como git (`--mirro`) y normaliza
+`refs/heads/x`, `heads/x` y los globs de refspec contra las ramas protegidas.
+Si la propia guardia revienta, deja pasar y lo dice por stderr: un hook roto con exit 2
+trabaría todas las herramientas de la sesión.
 
 `guardia.json` admite:
   - `ramas_protegidas`: ramas que se suman a `master` y `main`;
@@ -38,6 +49,7 @@ Uso:
 """
 from __future__ import annotations
 
+import fnmatch
 import json
 import os
 import re
@@ -45,11 +57,23 @@ import shlex
 import subprocess
 import sys
 
-VERSION = "2"
+VERSION = "3"
 SIEMPRE_PROTEGIDAS = ("master", "main")
-ENVOLTORIOS = {"sudo", "env", "command", "exec", "nice", "nohup", "time", "stdbuf", "ionice"}
-CONCHAS = {"bash", "sh", "zsh", "dash"}
+ENVOLTORIOS = {"sudo", "env", "command", "exec", "nice", "nohup", "time", "stdbuf", "ionice", "timeout",
+               "xargs", "watch", "flock", "setsid", "unbuffer", "chronic", "doas", "caffeinate"}
+CONCHAS = {"bash", "sh", "zsh", "dash", "ksh"}
+VIGILADOS = {"git", "rm", "eval"} | CONCHAS
+# Palabras de la shell que pueden abrir un segmento sin ser el comando: `{ git push -f; }`, `if …; then git …`.
+PALABRAS_SHELL = {"{", "}", "!", "if", "then", "else", "elif", "fi", "do", "done", "while", "until"}
 OPERADORES = {"&&", "||", ";", "|", "&", "(", ")", ";;", "|&"}
+REDIRECCIONES = {">", ">>", "<", "<<", "<<<", ">&", "<&", "&>", "&>>", ">|", "<>"}
+# Opciones largas de `git push`: git acepta cualquier prefijo que no sea ambiguo (`--mirro` es `--mirror`).
+PUSH_LARGAS = ("--all", "--branches", "--prune", "--mirror", "--dry-run", "--porcelain", "--delete", "--tags",
+               "--follow-tags", "--signed", "--no-signed", "--atomic", "--no-atomic", "--push-option",
+               "--receive-pack", "--exec", "--force-with-lease", "--no-force-with-lease", "--force",
+               "--force-if-includes", "--no-force-if-includes", "--repo", "--set-upstream", "--thin",
+               "--no-thin", "--quiet", "--verbose", "--progress", "--recurse-submodules", "--verify",
+               "--no-verify", "--ipv4", "--ipv6")
 MCP_ESCRITURA = (
     "mcp__github__push_files",
     "mcp__github__create_or_update_file",
@@ -116,24 +140,38 @@ def segmentos(toks: list[str]) -> list[list[str]]:
     return out
 
 
-def quitar_envoltorios(seg: list[str]) -> list[str]:
-    i = 0
+def limpiar(seg: list[str]) -> list[str]:
+    """Quita redirecciones (`2>&1`, `> f`, `<<EOF`) y palabras de la shell al comienzo del segmento.
+
+    Sin esto, `git push 2>&1 | tail` tomaba `>&` y `1` como refspecs y dejaba pasar un push sin
+    refspec parado en una rama protegida (revisión del PR #587 de cit_sanmiguel)."""
+    out, i = [], 0
     while i < len(seg):
         t = seg[i]
-        base = os.path.basename(t)
-        if re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", t):
-            i += 1
-        elif base in ENVOLTORIOS:
-            i += 1
-            while i < len(seg) and seg[i].startswith("-"):
-                i += 1
-        elif base == "timeout":
-            i += 1
-            while i < len(seg) and seg[i].startswith("-"):
-                i += 1
-            i += 1  # la duración
-        else:
-            break
+        if t in REDIRECCIONES or (t and set(t) <= set("<>&|") and ("<" in t or ">" in t)):
+            if out and out[-1].isdigit():
+                out.pop()  # el número de descriptor de `2>&1`
+            i += 2  # el operador y su destino
+            continue
+        out.append(t)
+        i += 1
+    while out and out[0] in PALABRAS_SHELL:
+        out.pop(0)
+    return out
+
+
+def quitar_envoltorios(seg: list[str]) -> list[str]:
+    """Salta asignaciones y envoltorios (`sudo -u x`, `timeout -k 5 60`, `env A=1`) hasta el comando real.
+
+    Con un envoltorio delante no se adivina cuántos argumentos toma: se busca el primer comando vigilado."""
+    i = 0
+    while i < len(seg) and re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", seg[i]):
+        i += 1
+    if i < len(seg) and os.path.basename(seg[i]) in ENVOLTORIOS:
+        for j in range(i + 1, len(seg)):
+            if os.path.basename(seg[j]) in VIGILADOS:
+                return seg[j:]
+        return []
     return seg[i:]
 
 
@@ -145,15 +183,30 @@ def destino(refspec: str, actual: str | None) -> tuple[str | None, bool]:
         borra = src == ""
     else:
         dst, borra = ref, False
-    dst = dst.removeprefix("refs/heads/")
+    # git resuelve `refs/heads/x`, `heads/x` y `x` a la misma rama (`HEAD:heads/master` escribe en master).
+    dst = dst.removeprefix("refs/").removeprefix("heads/")
     if dst in ("HEAD", "@"):
         dst = actual or ""
     return (dst or None), borra
 
 
+def resolver_larga(nombre: str) -> str:
+    """`--mirro` → `--mirror`; un prefijo ambiguo que incluye una opción peligrosa vale como esa."""
+    if nombre in PUSH_LARGAS:
+        return nombre
+    candidatas = [o for o in PUSH_LARGAS if o.startswith(nombre)]
+    for peligrosa in ("--force", "--mirror", "--all", "--branches", "--no-verify", "--delete"):
+        if peligrosa in candidatas:
+            return peligrosa
+    return candidatas[0] if len(candidatas) == 1 else nombre
+
+
 def revisar_push(args: list[str], cwd: str, prot: set[str]) -> str | None:
     con_valor = {"--repo", "-o", "--push-option", "--receive-pack", "--exec"}
     pos, borrar, lease = [], False, False
+    if any("$" in a or "`" in a for a in args):
+        return ("un `git push` con variables o `$(…)` no se puede leer con certeza: escribe el remoto y "
+                "la rama tal cual")
     i = 0
     while i < len(args):
         a = args[i]
@@ -164,7 +217,7 @@ def revisar_push(args: list[str], cwd: str, prot: set[str]) -> str | None:
             i += 2
             continue
         if a.startswith("--"):
-            nombre = a.split("=", 1)[0]
+            nombre = resolver_larga(a.split("=", 1)[0])
             if nombre in ("--force", "--mirror"):
                 return f"`git push {nombre}` reescribe historia ajena; usa --force-with-lease sobre tu rama"
             if nombre in ("--all", "--branches"):
@@ -195,6 +248,11 @@ def revisar_push(args: list[str], cwd: str, prot: set[str]) -> str | None:
         return None
     for r in refspecs:
         dst, borra = destino(r, actual)
+        if dst and any(c in dst for c in "*?["):
+            tocadas = sorted(p for p in prot if fnmatch.fnmatchcase(p, dst))
+            if tocadas:
+                return f"el refspec `{r}` alcanza ramas protegidas ({', '.join(tocadas)})"
+            continue
         if dst in prot:
             if borrar or borra:
                 return f"borrar la rama protegida `{dst}` no lo hace el loop"
@@ -205,19 +263,35 @@ def revisar_push(args: list[str], cwd: str, prot: set[str]) -> str | None:
     return None
 
 
+def es_no_verify(a: str) -> bool:
+    """`--no-verify` o un prefijo suyo que git aceptaría (`--no-verif`)."""
+    nombre = a.split("=", 1)[0]
+    return nombre.startswith("--no-ver") and "--no-verify".startswith(nombre)
+
+
 def commit_sin_hooks(args: list[str]) -> bool:
     con_valor = set("mFCctS")
-    for a in args:
+    largas_con_valor = {"--message", "--file", "--reuse-message", "--reedit-message", "--author", "--date",
+                        "--template", "--fixup", "--squash", "--trailer", "--cleanup"}
+    i = 0
+    while i < len(args):
+        a = args[i]
         if a == "--":
             return False
-        if a == "--no-verify":
+        if es_no_verify(a):
             return True
+        if a in largas_con_valor:
+            i += 2  # `-m "-n …"` y `--message "-n"` son texto, no la opción
+            continue
         if a.startswith("-") and not a.startswith("--") and len(a) > 1:
-            for c in a[1:]:
+            for k, c in enumerate(a[1:]):
                 if c == "n":
                     return True
                 if c in con_valor:
+                    if k == len(a) - 2:
+                        i += 1  # el valor va en el token siguiente
                     break
+        i += 1
     return False
 
 
@@ -229,8 +303,12 @@ def revisar_git(seg: list[str], cwd: str, prot: set[str]) -> str | None:
             cwd = os.path.join(cwd, os.path.expanduser(seg[i + 1]))
             i += 2
         elif a == "-c" and i + 1 < len(seg):
-            if seg[i + 1].lower().startswith("core.hookspath"):
+            clave = seg[i + 1].lower()
+            if clave.startswith("core.hookspath"):
                 return "`-c core.hooksPath` apaga los hooks de git"
+            if clave.startswith(("alias.", "remote.")) or clave.startswith("push."):
+                return (f"`git -c {seg[i + 1].split('=', 1)[0]}=…` cambia a qué rama o con qué fuerza se "
+                        "empuja sin que la guardia lo vea; escribe el comando sin `-c`")
             i += 2
         elif a.startswith("--git-dir") or a.startswith("--work-tree") or a.startswith("--namespace"):
             i += 1 if "=" in a else 2
@@ -245,10 +323,16 @@ def revisar_git(seg: list[str], cwd: str, prot: set[str]) -> str | None:
         return revisar_push(args, cwd, prot)
     if sub == "commit" and commit_sin_hooks(args):
         return "`git commit --no-verify`/`-n` se salta los hooks; arregla lo que frenan"
-    if sub in ("merge", "rebase", "am", "cherry-pick", "revert") and "--no-verify" in args:
+    if sub in ("merge", "rebase", "am", "cherry-pick", "revert") and any(es_no_verify(a) for a in args):
         return f"`git {sub} --no-verify` se salta los hooks de git"
-    if sub == "config" and any(a.lower() == "core.hookspath" for a in args):
-        return "cambiar `core.hooksPath` apaga los hooks de git"
+    if sub == "config":
+        claves = [a.lower() for a in args if not a.startswith("-")]
+        if any(k == "core.hookspath" for k in claves):
+            return "cambiar `core.hooksPath` apaga los hooks de git"
+        if any(k.startswith(("alias.", "push.")) or (k.startswith("remote.") and k.endswith((".push", ".mirror")))
+               for k in claves):
+            return ("un alias, un `push.*` o un `remote.*.push` nuevo cambia lo que hace un push sin que la "
+                    "guardia lo vea")
     return None
 
 
@@ -277,17 +361,28 @@ def revisar_comando(comando: str, cwd: str, prot: set[str], profundidad: int = 0
         if re.search(r"--no-verify|\bpush\b[^\n]*\s(-f|--force)(\s|$)", comando):
             return "comando con comillas rotas que parece saltarse una regla de la guardia"
         return None
-    for seg in segmentos(toks):
-        seg = quitar_envoltorios(seg)
+    # `` `git push -f` `` no pasa por shlex como comando: se revisa lo que va entre las comillas invertidas.
+    for interior in re.findall(r"`([^`]*)`", comando):
+        motivo = revisar_comando(interior, cwd, prot, profundidad + 1)
+        if motivo:
+            return motivo
+    for crudo in segmentos(toks):
+        limpio = limpiar(crudo)
+        seg = quitar_envoltorios(limpio)
         if not seg:
             continue
         cmd = os.path.basename(seg[0])
+        envoltorios = {os.path.basename(t) for t in limpio[:len(limpio) - len(seg)]}
+        if "xargs" in envoltorios and cmd == "git" and "push" in seg:
+            return "`xargs … git push` decide el destino en tiempo de ejecución; escribe el push entero"
         if cmd == "cd" and len(seg) > 1:
             cwd = os.path.join(cwd, os.path.expanduser(seg[1]))
             continue
-        if cmd in CONCHAS and "-c" in seg[1:]:
-            j = seg.index("-c")
-            if j + 1 < len(seg):
+        if cmd in CONCHAS:
+            # `bash -c`, `bash -lc`, `sh -ec`: el comando va en el token siguiente al grupo con `c`.
+            j = next((k for k, a in enumerate(seg[1:], 1)
+                      if a.startswith("-") and not a.startswith("--") and "c" in a[1:]), None)
+            if j is not None and j + 1 < len(seg):
                 motivo = revisar_comando(seg[j + 1], cwd, prot, profundidad + 1)
                 if motivo:
                     return motivo
@@ -386,6 +481,48 @@ CASOS = [
     ("rm -rf node_modules build", "loop/12", [], False),
     ("rm -f .git/index.lock", "loop/12", [], False),
     ("sudo rm -rf /", "loop/12", [], True),
+    # v3: los rodeos que encontró la revisión del PR #587 de cit_sanmiguel
+    ("git push origin HEAD:heads/master", "loop/12", [], True),
+    ("git push origin 'refs/heads/*:refs/heads/*'", "loop/12", [], True),
+    ("git push origin 'refs/heads/loop/*:refs/heads/loop/*'", "loop/12", [], False),
+    ("git push origin 'loop/*:ma*'", "loop/12", [], True),
+    ("git push --mirro origin", "loop/12", [], True),
+    ("git push --forc origin loop/12", "loop/12", [], True),
+    ("git push --force-w origin loop/12", "loop/12", [], False),
+    ("git push --no-verif origin loop/12", "loop/12", [], True),
+    ("{ git push -f origin x; }", "loop/12", [], True),
+    ("if true; then git push origin main; fi", "loop/12", [], True),
+    ("! git push -f origin x", "loop/12", [], True),
+    ("timeout -k 5 60 git push -f origin x", "loop/12", [], True),
+    ("sudo -u nadie env A=1 git push origin main", "loop/12", [], True),
+    ("time git push -f origin x", "loop/12", [], True),
+    ("bash -lc 'git push -f origin x'", "loop/12", [], True),
+    ("sh -ec 'git push origin master'", "loop/12", [], True),
+    ("bash -l script.sh", "loop/12", [], False),
+    ("echo `git push -f origin x`", "loop/12", [], True),
+    ("echo $(git push origin main)", "loop/12", [], True),
+    ("git push 2>&1 | tail -3", "master", [], True),
+    ("git push 2>&1 | tail -3", "loop/12", [], False),
+    ("git push origin 2>&1 | tail -3", "master", [], True),
+    ("git push origin loop/12 >/dev/null 2>&1", "loop/12", [], False),
+    ("git push origin \"$RAMA\"", "loop/12", [], True),
+    ("git push origin HEAD:$(cat rama)", "loop/12", [], True),
+    ("echo main | xargs git push origin", "loop/12", [], True),
+    ("git -c alias.p='push -f' p origin x", "loop/12", [], True),
+    ("git -c remote.origin.push=refs/heads/*:refs/heads/* push", "loop/12", [], True),
+    ("git -c push.default=matching push", "loop/12", [], True),
+    ("git config alias.publicar 'push -f'", "loop/12", [], True),
+    ("git config remote.origin.push HEAD:master", "loop/12", [], True),
+    ("git config push.default matching", "loop/12", [], True),
+    ("git config user.name bot", "loop/12", [], False),
+    ("git -c user.email=a@b commit -m x", "loop/12", [], False),
+    ("git commit -m \"-n no es no-verify\"", "loop/12", [], False),
+    ("git commit --message -n", "loop/12", [], False),
+    ("git commit -m x -n", "loop/12", [], True),
+    ("git commit -F - -n", "loop/12", [], True),
+    ("git commit --no-verif -m x", "loop/12", [], True),
+    ("git merge --no-verif dev", "loop/12", [], True),
+    ("git commit -mn", "loop/12", [], False),
 ]
 
 CASOS_MCP = [
@@ -438,8 +575,14 @@ def main(argv: list[str]) -> int:
         return 0  # sin JSON no hay nada que revisar; la guardia no rompe la sesión
     if not isinstance(evento, dict):
         return 0
-    config = cargar_config(os.path.dirname(os.path.abspath(__file__)))
-    motivo = revisar(evento, config)
+    try:
+        config = cargar_config(os.path.dirname(os.path.abspath(__file__)))
+        motivo = revisar(evento, config)
+    except Exception as e:  # noqa: BLE001 — un error propio no puede trabar todas las herramientas
+        # Falla abierta y lo dice: con exit 2 cualquier bug de la guardia frenaría todo Bash.
+        print(f"guardia del loop: error interno ({type(e).__name__}: {e}); se deja pasar sin revisar",
+              file=sys.stderr)
+        return 0
     if not motivo:
         return 0
     anotar(evento, motivo)

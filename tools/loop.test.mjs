@@ -1405,6 +1405,10 @@ describe('la guardia y la frontera (el arnés)', () => {
   const python = (args, opciones = {}) => spawnSync('python3', args, { cwd: root, encoding: 'utf8', ...opciones });
   const sinPython = () => assert.fail('sin python3: la guardia y la frontera lo necesitan (también en npm run check)');
 
+  // Corre la guardia si existe y, si no, deja pasar: `python3` sobre un archivo que falta sale 2, y un hook que sale 2
+  // frena todo Bash en cuanto la sesión cambia a una rama sin la guardia (revisión del PR #587 de cit_sanmiguel).
+  const REGISTRO_GUARDIA = `f="$CLAUDE_PROJECT_DIR/${GUARDIA}"; [ -f "$f" ] || exit 0; exec python3 "$f"`;
+
   test('las autopruebas de la guardia y de la frontera, y la config de la frontera, en verde', () => {
     for (const [args, que] of [
       [[guardia, '--probar'], /^guardia v\d+: (\d+)\/\1 casos bien$/m],
@@ -1420,11 +1424,23 @@ describe('la guardia y la frontera (el arnés)', () => {
 
   test('.claude/settings.json registra la guardia como PreToolUse de Bash (y R8 lo exige: ver «check() R8»)', () => {
     const ajustes = JSON.parse(readFileSync(join(root, '.claude', 'settings.json'), 'utf8'));
-    const pre = ajustes.hooks.PreToolUse.find((h) => h.hooks.some((x) => x.command === `python3 "$CLAUDE_PROJECT_DIR/${GUARDIA}"`));
+    const pre = ajustes.hooks.PreToolUse.find((h) => h.hooks.some((x) => x.command === REGISTRO_GUARDIA));
     assert.ok(pre, 'sin el hook de la guardia');
     for (const t of ['Bash', ...MCP_ESCRITURA]) assert.match(t, new RegExp(`^(?:${pre.matcher})$`));
     // el SessionStart de siempre sigue ahí
     assert.ok(ajustes.hooks.SessionStart.some((h) => h.hooks.some((x) => x.command.includes('session-start.sh'))));
+  });
+
+  test('el hook registrado no traba Bash en una rama sin la guardia, y frena con ella', () => {
+    const evento = JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'git push origin master' }, cwd: tmpdir() });
+    const correr = (proyecto) => spawnSync('bash', ['-c', REGISTRO_GUARDIA], { input: evento, encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: proyecto, GUARDIA_RAMA_ACTUAL: 'loop/234' } });
+    const vacio = mkdtempSync(join(tmpdir(), 'sin-guardia-'));
+    try {
+      assert.equal(correr(vacio).status, 0, 'sin guardia.py el hook tiene que dejar pasar');
+    } finally {
+      rmSync(vacio, { recursive: true, force: true });
+    }
+    assert.equal(correr(root).status, 2, 'con la guardia, un push a master se frena');
   });
 
   /** Los `git push` que la skill y el comando de OpenCode le piden escribir a la sesión, con loop/N hecho loop/234. */

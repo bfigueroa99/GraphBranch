@@ -276,6 +276,8 @@ GB.i18n.define('es', {
   'feed.title': 'Actividad',
   'feed.filterAria': 'Filtrar actividad por tipo',
   'feed.listAria': 'Actividad reciente',
+  'feed.fold': 'Ocultar o mostrar el panel de actividad',
+  'feed.resize': 'Cambiar el ancho del panel de actividad (arrástralo o usa las flechas)',
   'feed.empty': 'La actividad del repositorio aparecerá aquí.',
   'feed.emptyFiltered': 'Ninguna actividad coincide con los filtros activos.',
   'feed.locate': 'Ubicar en el grafo',

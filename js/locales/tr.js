@@ -276,6 +276,8 @@ GB.i18n.define('tr', {
   'feed.title': 'Etkinlik',
   'feed.filterAria': 'Etkinliği türe göre filtrele',
   'feed.listAria': 'Son etkinlikler',
+  'feed.fold': 'Etkinlik panelini gizle veya göster',
+  'feed.resize': 'Etkinlik panelinin genişliğini değiştir (sürükleyin veya ok tuşlarını kullanın)',
   'feed.empty': 'Deponun etkinliği burada görünecek.',
   'feed.emptyFiltered': 'Etkin filtrelerle eşleşen etkinlik yok.',
   'feed.locate': 'Grafikte göster',

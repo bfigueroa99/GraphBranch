@@ -276,6 +276,8 @@ GB.i18n.define('sw', {
   'feed.title': 'Shughuli',
   'feed.filterAria': 'Chuja shughuli kwa aina',
   'feed.listAria': 'Shughuli za hivi karibuni',
+  'feed.fold': 'Ficha au onyesha paneli ya shughuli',
+  'feed.resize': 'Badilisha upana wa paneli ya shughuli (iburute, au tumia vitufe vya mishale)',
   'feed.empty': 'Shughuli za hazina zitaonekana hapa.',
   'feed.emptyFiltered': 'Hakuna shughuli inayolingana na vichujio vilivyowashwa.',
   'feed.locate': 'Onyesha kwenye mchoro',

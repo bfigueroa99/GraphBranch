@@ -276,6 +276,8 @@ GB.i18n.define('ca', {
   'feed.title': 'Activitat',
   'feed.filterAria': "Filtra l'activitat per tipus",
   'feed.listAria': 'Activitat recent',
+  'feed.fold': 'Amaga o mostra el tauler d\'activitat',
+  'feed.resize': 'Canvia l\'amplada del tauler d\'activitat (arrossega\'l o fes servir les fletxes)',
   'feed.empty': "L'activitat del repositori apareixerà aquí.",
   'feed.emptyFiltered': 'Cap activitat coincideix amb els filtres actius.',
   'feed.locate': 'Ubica al graf',

@@ -13,6 +13,7 @@
     { id: 'agents', btn: '#agents-btn', key: 'agents.title' },
     { id: 'agentGraph', btn: '#agents-graph', key: 'agents.onGraph' }, // el interruptor del panel, también con el panel cerrado
     { id: 'bitacora', btn: '#st-bitacora', key: 'bitacora.open' },
+    { id: 'feedFold', btn: '#feed-fold', key: 'feed.fold' }, // solo en pantallas anchas (app.js)
     { id: 'trophies', btn: '#trophy-btn', key: 'game.trophies' },
     { id: 'view3d', btn: '#view-3d', key: 'cmdk.view3d' },
     { id: 'view2d', btn: '#view-2d', key: 'cmdk.view2d' },

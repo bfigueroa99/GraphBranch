@@ -276,6 +276,8 @@ GB.i18n.define('fi', {
   'feed.title': 'Toiminta',
   'feed.filterAria': 'Suodata toimintaa tyypin mukaan',
   'feed.listAria': 'Viimeaikainen toiminta',
+  'feed.fold': 'Piilota tai näytä toimintapaneeli',
+  'feed.resize': 'Muuta toimintapaneelin leveyttä (vedä tai käytä nuolinäppäimiä)',
   'feed.empty': 'Repositorion toiminta näkyy tässä.',
   'feed.emptyFiltered': 'Mikään toiminta ei vastaa aktiivisia suodattimia.',
   'feed.locate': 'Näytä kaaviossa',

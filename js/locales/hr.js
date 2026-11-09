@@ -280,6 +280,8 @@ GB.i18n.define('hr', {
   'feed.title': 'Aktivnost',
   'feed.filterAria': 'Filtriranje aktivnosti po vrsti',
   'feed.listAria': 'Nedavna aktivnost',
+  'feed.fold': 'Sakrij ili prikaži ploču aktivnosti',
+  'feed.resize': 'Promijeni širinu ploče aktivnosti (povuci je ili koristi strelice)',
   'feed.empty': 'Aktivnost repozitorija pojavit će se ovdje.',
   'feed.emptyFiltered': 'Nijedna aktivnost ne odgovara aktivnim filtrima.',
   'feed.locate': 'Prikažite u grafu',

@@ -276,6 +276,8 @@ GB.i18n.define('fr', {
   'feed.title': 'Activité',
   'feed.filterAria': 'Filtrer l’activité par type',
   'feed.listAria': 'Activité récente',
+  'feed.fold': 'Masquer ou afficher le panneau d\'activité',
+  'feed.resize': 'Redimensionner le panneau d\'activité (faites-le glisser ou utilisez les flèches)',
   'feed.empty': 'L’activité du dépôt apparaîtra ici.',
   'feed.emptyFiltered': 'Aucune activité ne correspond aux filtres actifs.',
   'feed.locate': 'Afficher dans le graphe',

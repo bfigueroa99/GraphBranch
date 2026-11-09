@@ -276,6 +276,8 @@ GB.i18n.define('sv', {
   'feed.title': 'Aktivitet',
   'feed.filterAria': 'Filtrera aktivitet efter typ',
   'feed.listAria': 'Senaste aktivitet',
+  'feed.fold': 'Dölj eller visa aktivitetspanelen',
+  'feed.resize': 'Ändra bredden på aktivitetspanelen (dra i den eller använd piltangenterna)',
   'feed.empty': 'Repots aktivitet visas här.',
   'feed.emptyFiltered': 'Ingen aktivitet matchar de aktiva filtren.',
   'feed.locate': 'Visa i grafen',

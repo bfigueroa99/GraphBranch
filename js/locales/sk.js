@@ -281,6 +281,8 @@ GB.i18n.define('sk', {
   'feed.title': 'Aktivita',
   'feed.filterAria': 'Filtrovať aktivitu podľa typu',
   'feed.listAria': 'Nedávna aktivita',
+  'feed.fold': 'Skryť alebo zobraziť panel aktivity',
+  'feed.resize': 'Zmeniť šírku panela aktivity (potiahnite ho alebo použite šípky)',
   'feed.empty': 'Tu sa zobrazí aktivita repozitára.',
   'feed.emptyFiltered': 'Aktívnym filtrom nezodpovedá žiadna aktivita.',
   'feed.locate': 'Zobraziť v grafe',

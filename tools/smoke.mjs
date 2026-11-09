@@ -1105,6 +1105,93 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
+  await step(page, 'barra superior: tres grupos y un botón que abre la paleta de comandos, con su atajo a la vista', async () => {
+    const bar = await page.evaluate(() => ({
+      seps: document.querySelectorAll('.controls > .ctl-sep').length,
+      kbd: document.querySelector('#cmdk-kbd')?.textContent || '',
+      kbdShown: !!document.querySelector('#cmdk-kbd')?.checkVisibility?.(),
+      name: document.querySelector('#cmdk-btn')?.getAttribute('aria-label') || '',
+    }));
+    if (bar.seps !== 2) throw new Error(`la barra tiene ${bar.seps} separadores (se esperan 2: en vivo · explorar · preferencias)`);
+    if (!bar.kbdShown || !/K$/.test(bar.kbd)) throw new Error(`el atajo no se ve junto al botón: «${bar.kbd}»`);
+    if (!bar.name || /cmdk\./.test(bar.name)) throw new Error(`el botón de la paleta sin nombre traducido: «${bar.name}»`);
+    await page.click('#cmdk-btn');
+    await page.waitForSelector('#cmdk[open]', { timeout: T(3000) });
+    if (!(await page.evaluate(() => document.activeElement?.id === 'cmdk-input'))) throw new Error('al abrir con el botón, el foco no está en el campo');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#cmdk:not([open])', { state: 'attached', timeout: T(3000) });
+    if (!(await page.evaluate(() => document.activeElement?.id === 'cmdk-btn'))) throw new Error('al cerrar, el foco no vuelve al botón de la paleta');
+  });
+
+  await step(page, 'panel de actividad: su borde se mueve con el teclado y el ratón, se pliega a una franja que cuenta lo nuevo y se recuerda', async () => {
+    const width = () => page.evaluate(() => Math.round(document.querySelector('#feed-panel').getBoundingClientRect().width));
+    const stored = (k) => page.evaluate((key) => localStorage.getItem('graphbranch:' + key), k);
+    const w0 = await width();
+    await page.focus('#feed-resize');
+    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('ArrowLeft');
+    const w1 = await width();
+    if (Math.abs(w1 - (w0 + 48)) > 2) throw new Error(`dos flechas a la izquierda: ${w0} → ${w1} px (se esperaban ${w0 + 48})`);
+    const now = await page.evaluate(() => Number(document.querySelector('#feed-resize').getAttribute('aria-valuenow')));
+    if (Math.abs(now - w1) > 2) throw new Error(`aria-valuenow dice ${now} y el panel mide ${w1}`);
+    await page.keyboard.press('Home');
+    if (Math.abs((await width()) - 280) > 2 || (await stored('feedWidth')) !== '280') throw new Error(`Inicio no lo deja en 280 px ni lo recuerda: ${await width()} px, guardado ${await stored('feedWidth')}`);
+    await page.dblclick('#feed-resize');
+    if (Math.abs((await width()) - 370) > 2 || (await stored('feedWidth')) !== null) throw new Error(`doble clic no vuelve al ancho de siempre: ${await width()} px`);
+    // con el ratón: el borde se arrastra 100 px hacia el grafo
+    const r = await page.$eval('#feed-resize', (e) => e.getBoundingClientRect().toJSON());
+    await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(r.x + r.width / 2 - 100, r.y + r.height / 2, { steps: 6 });
+    await page.mouse.up();
+    await page.waitForFunction(() => Math.abs(document.querySelector('#feed-panel').getBoundingClientRect().width - 470) <= 4, null, { timeout: T(3000) });
+    await page.dblclick('#feed-resize');
+    // plegado: una franja angosta, el grafo más ancho y lo que llega en vivo contado en la franja
+    const g0 = await page.evaluate(() => document.querySelector('#graph-panel').getBoundingClientRect().width);
+    await page.click('#feed-fold');
+    const folded = await page.evaluate(() => ({
+      on: document.querySelector('.main').classList.contains('feed-folded'),
+      w: document.querySelector('#feed-panel').getBoundingClientRect().width,
+      list: document.querySelector('#feed').checkVisibility(),
+      expanded: document.querySelector('#feed-fold').getAttribute('aria-expanded'),
+      graph: document.querySelector('#graph-panel').getBoundingClientRect().width,
+    }));
+    if (!folded.on || folded.w > 60 || folded.list || folded.expanded !== 'false') throw new Error(`el panel no se pliega: ${JSON.stringify(folded)}`);
+    if (folded.graph < g0 + 250) throw new Error(`el grafo no gana el ancho del panel: ${Math.round(g0)} → ${Math.round(folded.graph)} px`);
+    if ((await stored('feedFolded')) !== 'true') throw new Error('el panel plegado no se recuerda');
+    await page.waitForFunction(() => /^\+\d+$/.test(document.querySelector('#feed-unseen').textContent) && !document.querySelector('#feed-unseen').hidden, null, { timeout: T(20000) });
+    await page.click('#feed-fold');
+    const back = await page.evaluate(() => ({ list: document.querySelector('#feed').checkVisibility(), unseen: document.querySelector('#feed-unseen').hidden, expanded: document.querySelector('#feed-fold').getAttribute('aria-expanded') }));
+    if (!back.list || !back.unseen || back.expanded !== 'true') throw new Error(`el panel no vuelve entero: ${JSON.stringify(back)}`);
+    if ((await stored('feedFolded')) !== null) throw new Error('desplegado, el panel sigue guardado como plegado');
+  });
+
+  await step(page, 'salud del repo: en pantalla ancha, sus secciones en dos columnas', async () => {
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #health-body .hl-sec', { timeout: T(5000) });
+    const cols = await page.evaluate(() => new Set([...document.querySelectorAll('#health-body > .hl-sec')].map((s) => Math.round(s.getBoundingClientRect().left))).size);
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
+    if (cols < 2) throw new Error(`las secciones de la salud están en ${cols} columna`);
+  });
+
+  await step(page, 'avisos en mazo: el más nuevo entero y los anteriores asomando detrás, desplegados con el puntero', async () => {
+    await page.mouse.move(5, 5);
+    await page.evaluate(() => document.activeElement?.blur());
+    // la demo trae actividad cada 3 a 7 s y un aviso común dura 6: se espera a tener dos a la vez
+    await page.waitForFunction(() => document.querySelectorAll('#toasts .toast:not(.leaving)').length >= 2, null, { timeout: T(45000) });
+    const deck = await page.evaluate(() => {
+      const ts = [...document.querySelectorAll('#toasts .toast:not(.leaving)')];
+      return { depths: ts.map((t) => t.dataset.depth), back: ts.filter((t) => t.dataset.depth !== '0').map((t) => Math.round(t.getBoundingClientRect().height)), front: Math.round(ts.find((t) => t.dataset.depth === '0')?.getBoundingClientRect().height || 0) };
+    });
+    if (deck.depths.filter((d) => d === '0').length !== 1) throw new Error(`profundidades: ${deck.depths.join(',')} (se espera un solo aviso al frente)`);
+    if (deck.front < 40 || deck.back.some((h) => h > 20)) throw new Error(`el mazo no se pliega: al frente ${deck.front} px, detrás ${deck.back.join(', ')} px`);
+    await page.hover('#toasts .toast[data-depth="0"]');
+    // desplegado: los de atrás vuelven a su alto (o ya se fueron, que también vale)
+    await page.waitForFunction(() => [...document.querySelectorAll('#toasts .toast:not(.leaving):not([data-depth="0"])')].every((t) => t.getBoundingClientRect().height > 30), null, { timeout: T(3000) });
+    await page.mouse.move(5, 5);
+  });
+
   await step(page, 'paleta de comandos: escribir el nombre de una rama o el SHA de un commit ofrece saltar a él, sin consultas', async () => {
     const reqs = [];
     const onReq = (r) => reqs.push(r.url());

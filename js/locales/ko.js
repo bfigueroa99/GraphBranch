@@ -276,6 +276,8 @@ GB.i18n.define('ko', {
   'feed.title': '활동',
   'feed.filterAria': '유형별 활동 필터링',
   'feed.listAria': '최근 활동',
+  'feed.fold': '활동 패널 숨기기 또는 표시',
+  'feed.resize': '활동 패널 너비 조절 (끌거나 화살표 키 사용)',
   'feed.empty': '저장소의 활동이 여기에 표시됩니다.',
   'feed.emptyFiltered': '적용된 필터와 일치하는 활동이 없습니다.',
   'feed.locate': '그래프에서 보기',

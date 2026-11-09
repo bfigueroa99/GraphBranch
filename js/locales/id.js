@@ -276,6 +276,8 @@ GB.i18n.define('id', {
   'feed.title': 'Aktivitas',
   'feed.filterAria': 'Filter aktivitas berdasarkan jenis',
   'feed.listAria': 'Aktivitas terbaru',
+  'feed.fold': 'Sembunyikan atau tampilkan panel aktivitas',
+  'feed.resize': 'Ubah lebar panel aktivitas (seret, atau gunakan tombol panah)',
   'feed.empty': 'Aktivitas repositori akan muncul di sini.',
   'feed.emptyFiltered': 'Tidak ada aktivitas yang cocok dengan filter aktif.',
   'feed.locate': 'Tampilkan di grafik',

@@ -276,6 +276,8 @@ GB.i18n.define('ms', {
   'feed.title': 'Aktiviti',
   'feed.filterAria': 'Tapis aktiviti mengikut jenis',
   'feed.listAria': 'Aktiviti terkini',
+  'feed.fold': 'Sembunyikan atau tunjukkan panel aktiviti',
+  'feed.resize': 'Ubah lebar panel aktiviti (seretnya, atau gunakan kekunci anak panah)',
   'feed.empty': 'Aktiviti repositori akan muncul di sini.',
   'feed.emptyFiltered': 'Tiada aktiviti yang sepadan dengan penapis aktif.',
   'feed.locate': 'Tunjukkan dalam graf',

@@ -463,6 +463,8 @@ GB.i18n.define('zh-Hans', {
   'settings.bbdcTokenWhere': '令牌只保存在此浏览器中,与其他令牌分开并绑定到 {host}:只会发送到那里。',
   'settings.bbdcTokenWhereKeychain': '令牌只保存在这台电脑上,用系统钥匙串加密并绑定到 {host}:只会发送到那里。',
   'settings.bbdcTokenWherePlain': '令牌只保存在这台电脑上,但未加密:系统没有可用的钥匙串。它绑定到 {host},只会发送到那里。',
+  'settings.forgeToken': '你自己的 Forgejo 或 Gitea 服务器的令牌',
+  'settings.forgeTokenHelp': '用于自建的 Forgejo 或 Gitea:带有 <code>read:repository</code> 范围的访问令牌,用来查看私有仓库。公开仓库不需要。',
   'settings.hooks': '发送到 Slack、Discord 和 Teams 的通知',
   'settings.hooksHelp': '每个 Webhook 会收到你勾选的事件：发布、合并到默认分支、CI 变红，以及对默认分支的强制推送。URL 是机密：它只保存在这台电脑上（系统有钥匙串时加密），并且只会发送给对应的服务。',
   'settings.webhook': '{service} Webhook',

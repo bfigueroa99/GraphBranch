@@ -463,6 +463,8 @@ GB.i18n.define('ca', {
   'settings.bbdcTokenWhere': 'El token es desa només en aquest navegador, a part dels altres i lligat a {host}: només s\'envia allà.',
   'settings.bbdcTokenWhereKeychain': 'El token es desa només en aquest ordinador, xifrat amb el clauer del sistema i lligat a {host}: només s\'envia allà.',
   'settings.bbdcTokenWherePlain': 'El token es desa només en aquest ordinador, però sense xifrar: el sistema no té cap clauer disponible. Està lligat a {host} i només s\'envia allà.',
+  'settings.forgeToken': 'Token del teu Forgejo o Gitea propi',
+  'settings.forgeTokenHelp': 'Per a un Forgejo o Gitea propi: un token d’accés amb l’abast <code>read:repository</code>, per veure repositoris privats. Els públics no el necessiten.',
   'settings.hooks': 'Avisos a Slack, Discord i Teams',
   'settings.hooksHelp': 'Cada webhook rep els esdeveniments que marquis: llançaments, fusions a la branca per defecte, CI en vermell i force-push en aquesta. L\'URL és un secret: es queda en aquest equip (xifrada si el sistema té clauer) i només s\'envia al seu propi servei.',
   'settings.webhook': 'Webhook de {service}',

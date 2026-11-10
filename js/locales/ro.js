@@ -471,6 +471,8 @@ GB.i18n.define('ro', {
   'settings.bbdcTokenWhere': 'Tokenul este păstrat doar în acest browser, separat de celelalte și legat de {host}: este trimis doar acolo.',
   'settings.bbdcTokenWhereKeychain': 'Tokenul este păstrat doar pe acest computer, criptat cu breloul de chei al sistemului și legat de {host}: este trimis doar acolo.',
   'settings.bbdcTokenWherePlain': 'Tokenul este păstrat doar pe acest computer, dar necriptat: sistemul nu are un breloc de chei disponibil. Este legat de {host} și trimis doar acolo.',
+  'settings.forgeToken': 'Token pentru serverul tău Forgejo sau Gitea',
+  'settings.forgeTokenHelp': 'Pentru un Forgejo sau Gitea propriu: un token de acces cu domeniul <code>read:repository</code>, pentru a vedea depozitele private. Cele publice nu au nevoie de el.',
   'settings.hooks': 'Notificări către Slack, Discord și Teams',
   'settings.hooksHelp': 'Fiecare webhook primește evenimentele bifate: lansări, îmbinări în ramura implicită, CI care devine roșu și force-push pe ea. URL-ul este secret: rămâne pe acest calculator (criptat dacă sistemul are un breloc) și se trimite doar propriului serviciu.',
   'settings.webhook': 'Webhook {service}',

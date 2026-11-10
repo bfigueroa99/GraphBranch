@@ -464,6 +464,8 @@ GB.i18n.define('fil', {
   'settings.bbdcTokenWhere': 'Sa browser na ito lang naka-imbak ang token, hiwalay sa iba at nakatali sa {host}: doon lang ito ipinapadala.',
   'settings.bbdcTokenWhereKeychain': 'Sa computer na ito lang naka-imbak ang token, naka-encrypt gamit ang keychain ng system at nakatali sa {host}: doon lang ito ipinapadala.',
   'settings.bbdcTokenWherePlain': 'Sa computer na ito lang naka-imbak ang token, pero hindi naka-encrypt: walang available na keychain ang system. Nakatali ito sa {host} at doon lang ipinapadala.',
+  'settings.forgeToken': 'Token para sa iyong Forgejo o Gitea server',
+  'settings.forgeTokenHelp': 'Para sa sarili mong Forgejo o Gitea: isang access token na may saklaw na <code>read:repository</code>, para makita ang mga pribadong repository. Hindi ito kailangan ng mga pampubliko.',
   'settings.hooks': 'Mga abiso sa Slack, Discord at Teams',
   'settings.hooksHelp': 'Natatanggap ng bawat webhook ang mga event na tinick mo: mga release, merge sa default na branch, CI na nagiging pula, at force-push dito. Lihim ang URL: nananatili ito sa computer na ito (naka-encrypt kung may keychain ang system) at sa sarili lang nitong serbisyo ipinapadala.',
   'settings.webhook': 'Webhook ng {service}',

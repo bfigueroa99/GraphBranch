@@ -464,6 +464,8 @@ GB.i18n.define('pt', {
   'settings.bbdcTokenWhere': 'O token é guardado só neste navegador, separado dos outros e ligado a {host}: é enviado apenas para lá.',
   'settings.bbdcTokenWhereKeychain': 'O token é guardado só neste computador, cifrado com o chaveiro do sistema e ligado a {host}: é enviado apenas para lá.',
   'settings.bbdcTokenWherePlain': 'O token é guardado só neste computador, mas sem cifrar: o sistema não tem um chaveiro disponível. Está ligado a {host} e é enviado apenas para lá.',
+  'settings.forgeToken': 'Token do seu servidor Forgejo ou Gitea',
+  'settings.forgeTokenHelp': 'Para um Forgejo ou Gitea próprio: um token de acesso com o escopo <code>read:repository</code>, para ver repositórios privados. Os públicos não precisam dele.',
   'settings.hooks': 'Avisos para Slack, Discord e Teams',
   'settings.hooksHelp': 'Cada webhook recebe os eventos que você marcar: releases, merges na branch padrão, CI ficando vermelho e force-push nela. A URL é um segredo: fica neste computador (cifrada se o sistema tiver um chaveiro) e é enviada só ao seu próprio serviço.',
   'settings.webhook': 'Webhook do {service}',

@@ -463,6 +463,8 @@ GB.i18n.define('zh-Hant', {
   'settings.bbdcTokenWhere': '權杖只儲存在此瀏覽器中,與其他權杖分開並綁定到 {host}:只會傳送到那裡。',
   'settings.bbdcTokenWhereKeychain': '權杖只儲存在這台電腦上,以系統鑰匙圈加密並綁定到 {host}:只會傳送到那裡。',
   'settings.bbdcTokenWherePlain': '權杖只儲存在這台電腦上,但未加密:系統沒有可用的鑰匙圈。它綁定到 {host},只會傳送到那裡。',
+  'settings.forgeToken': '你自己的 Forgejo 或 Gitea 伺服器的權杖',
+  'settings.forgeTokenHelp': '用於自架的 Forgejo 或 Gitea:具備 <code>read:repository</code> 範圍的存取權杖,用來檢視私有儲存庫。公開儲存庫不需要。',
   'settings.hooks': '傳送到 Slack、Discord 和 Teams 的通知',
   'settings.hooksHelp': '每個 Webhook 會收到你勾選的事件：發布、合併到預設分支、CI 變紅，以及對預設分支的強制推送。URL 是機密：它只保存在這台電腦上（系統有鑰匙圈時會加密），而且只會傳送給對應的服務。',
   'settings.webhook': '{service} Webhook',

@@ -463,6 +463,8 @@ GB.i18n.define('tr', {
   'settings.bbdcTokenWhere': 'Belirteç yalnızca bu tarayıcıda, diğerlerinden ayrı ve {host} adresine bağlı olarak saklanır: yalnızca oraya gönderilir.',
   'settings.bbdcTokenWhereKeychain': 'Belirteç yalnızca bu bilgisayarda, sistem anahtar zinciriyle şifrelenmiş ve {host} adresine bağlı olarak saklanır: yalnızca oraya gönderilir.',
   'settings.bbdcTokenWherePlain': 'Belirteç yalnızca bu bilgisayarda saklanır, ancak şifrelenmeden: sistemde kullanılabilir bir anahtar zinciri yok. {host} adresine bağlıdır ve yalnızca oraya gönderilir.',
+  'settings.forgeToken': 'Forgejo veya Gitea sunucunuzun jetonu',
+  'settings.forgeTokenHelp': 'Kendi Forgejo veya Gitea sunucunuz için: özel depoları görmek üzere <code>read:repository</code> kapsamlı bir erişim jetonu. Herkese açık depolar buna ihtiyaç duymaz.',
   'settings.hooks': 'Slack, Discord ve Teams bildirimleri',
   'settings.hooksHelp': 'Her webhook, işaretlediğiniz olayları alır: sürümler, varsayılan dala birleştirmeler, kırmızıya dönen CI ve o dala force-push. URL bir sırdır: bu bilgisayarda kalır (sistemde anahtar zinciri varsa şifreli) ve yalnızca kendi hizmetine gönderilir.',
   'settings.webhook': '{service} webhook\'u',

@@ -463,6 +463,8 @@ GB.i18n.define('fi', {
   'settings.bbdcTokenWhere': 'Tunnus tallennetaan vain tähän selaimeen, erillään muista ja sidottuna kohteeseen {host}: se lähetetään vain sinne.',
   'settings.bbdcTokenWhereKeychain': 'Tunnus tallennetaan vain tälle tietokoneelle, salattuna järjestelmän avainnipulla ja sidottuna kohteeseen {host}: se lähetetään vain sinne.',
   'settings.bbdcTokenWherePlain': 'Tunnus tallennetaan vain tälle tietokoneelle, mutta salaamattomana: järjestelmässä ei ole avainnippua. Se on sidottu kohteeseen {host} ja lähetetään vain sinne.',
+  'settings.forgeToken': 'Forgejo- tai Gitea-palvelimesi tunnus',
+  'settings.forgeTokenHelp': 'Omalle Forgejolle tai Giteallesi: käyttötunnus, jolla on <code>read:repository</code>-oikeus, yksityisten repojen näkemiseen. Julkiset eivät tarvitse sitä.',
   'settings.hooks': 'Ilmoitukset Slackiin, Discordiin ja Teamsiin',
   'settings.hooksHelp': 'Jokainen webhook saa valitsemasi tapahtumat: julkaisut, yhdistämiset oletushaaraan, punaiseksi muuttuvan CI:n ja sen force-pushit. URL on salaisuus: se pysyy tällä tietokoneella (salattuna, jos järjestelmässä on avainnippu) ja lähetetään vain omalle palvelulleen.',
   'settings.webhook': '{service}-webhook',

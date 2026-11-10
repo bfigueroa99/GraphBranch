@@ -3706,6 +3706,57 @@ console.log('Bitbucket propio con token');
   await page.context().close();
 }
 
+console.log('Forgejo propio con token');
+{
+  // como el de arriba: el CSP de la web no nombra hosts propios, aquí se salta para ver qué sale
+  const page = await openPage({ viewport: { width: 1280, height: 800 }, bypassCSP: true });
+  const auths = [];
+  await page.route(/^https:\/\/(fg|otro)\.example\.com\//, (route) => {
+    auths.push([new URL(route.request().url()).host, route.request().headers().authorization || '']);
+    return route.fulfill({ status: 404, contentType: 'application/json', body: '{"message":"no existe"}' });
+  });
+
+  await step(page, 'sin ?forge= no hay campo de token propio; con él, nombra su host y el token va solo ahí, atado a esa dirección', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    if (await page.isVisible('#forge-token-field')) throw new Error('el campo se ve sin un servidor elegido');
+    await page.goto(`${base}/index.html?lang=es&forge=https://fg.example.com&repo=forgejo:ana/api`);
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: T(15000) });
+    if (auths.some(([, a]) => a)) throw new Error('sin token, una consulta llevó credenciales');
+    await page.click('#overlay [data-ov=settings]');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    if (!(await page.evaluate(() => document.activeElement?.id === 'forge-token-input'))) throw new Error('«Abrir Ajustes» no lleva al campo del token propio');
+    const where = await page.textContent('#forge-token-where');
+    if (!where.includes('fg.example.com')) throw new Error(`el aviso dice ${where}`);
+    await page.fill('#forge-token-input', 'fg-smoke0123');
+    const from = auths.length;
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForFunction(() => document.querySelector('#overlay:not([hidden])')?.textContent.includes('el token no puede leerlo'), null, { timeout: T(15000) });
+    await page.waitForTimeout(500);
+    const sent = auths.slice(from);
+    if (!sent.length) throw new Error('al guardar el token no se reconectó el repo');
+    if (sent.some(([h, a]) => h !== 'fg.example.com' || a !== 'token fg-smoke0123')) throw new Error(`salió ${JSON.stringify(sent)}`);
+    const saved = await page.evaluate(() => [JSON.parse(JSON.parse(localStorage.getItem('graphbranch:forgeToken'))), localStorage.getItem('graphbranch:codebergToken')]);
+    if (saved[0].base !== 'https://fg.example.com' || saved[0].token !== 'fg-smoke0123' || saved[1] !== null) throw new Error(`se guardó ${JSON.stringify(saved)}`);
+  }, { allow: /404/ });
+
+  await step(page, 'con otro ?forge= el token guardado no se usa ni se muestra', async () => {
+    const from = auths.length;
+    await page.evaluate(() => localStorage.removeItem('graphbranch:repos'));
+    await page.goto(`${base}/index.html?lang=es&forge=https://otro.example.com&repo=forgejo:ana/api`);
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: T(15000) });
+    const sent = auths.slice(from);
+    if (!sent.length || sent.some(([h, a]) => h !== 'otro.example.com' || a)) throw new Error(`salió ${JSON.stringify(sent)}`);
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    if ((await page.inputValue('#forge-token-input')) !== '') throw new Error('el campo muestra el token de otro servidor');
+    if (!(await page.textContent('#forge-token-where')).includes('otro.example.com')) throw new Error('el aviso no nombra el servidor elegido');
+  }, { allow: /404/ });
+  await page.context().close();
+}
+
 console.log('Segunda cuenta de GitHub');
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

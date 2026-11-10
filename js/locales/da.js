@@ -463,6 +463,8 @@ GB.i18n.define('da', {
   'settings.bbdcTokenWhere': 'Tokenet gemmes kun i denne browser, adskilt fra de andre og bundet til {host}: det sendes kun dertil.',
   'settings.bbdcTokenWhereKeychain': 'Tokenet gemmes kun på denne computer, krypteret med systemets nøglering og bundet til {host}: det sendes kun dertil.',
   'settings.bbdcTokenWherePlain': 'Tokenet gemmes kun på denne computer, men ukrypteret: systemet har ingen nøglering. Det er bundet til {host} og sendes kun dertil.',
+  'settings.forgeToken': 'Token til din Forgejo- eller Gitea-server',
+  'settings.forgeTokenHelp': 'Til din egen Forgejo eller Gitea: et adgangstoken med omfanget <code>read:repository</code> for at se private repositories. Offentlige kræver det ikke.',
   'settings.hooks': 'Beskeder til Slack, Discord og Teams',
   'settings.hooksHelp': 'Hver webhook får de hændelser, du markerer: udgivelser, fletninger til standardgrenen, CI der bliver rød og force-push til den. URL\'en er en hemmelighed: den bliver på denne computer (krypteret, hvis systemet har en nøglering) og sendes kun til sin egen tjeneste.',
   'settings.webhook': '{service}-webhook',

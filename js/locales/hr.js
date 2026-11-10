@@ -471,6 +471,8 @@ GB.i18n.define('hr', {
   'settings.bbdcTokenWhere': 'Token se sprema samo u ovom pregledniku, odvojeno od ostalih i vezan uz {host}: šalje se samo tamo.',
   'settings.bbdcTokenWhereKeychain': 'Token se sprema samo na ovom računalu, šifriran privjeskom za ključeve sustava i vezan uz {host}: šalje se samo tamo.',
   'settings.bbdcTokenWherePlain': 'Token se sprema samo na ovom računalu, ali nešifriran: sustav nema dostupan privjesak za ključeve. Vezan je uz {host} i šalje se samo tamo.',
+  'settings.forgeToken': 'Token za vaš Forgejo ili Gitea poslužitelj',
+  'settings.forgeTokenHelp': 'Za vlastiti Forgejo ili Gitea: pristupni token s ovlasti <code>read:repository</code> za pregled privatnih repozitorija. Javni ga ne trebaju.',
   'settings.hooks': 'Obavijesti na Slack, Discord i Teams',
   'settings.hooksHelp': 'Svaki webhook prima događaje koje označite: izdanja, spajanja u zadanu granu, CI koji postaje crven i force-push na nju. URL je tajna: ostaje na ovom računalu (šifriran ako sustav ima privjesak ključeva) i šalje se samo vlastitoj usluzi.',
   'settings.webhook': 'Webhook za {service}',

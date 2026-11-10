@@ -716,6 +716,7 @@ GB.i18n.define('tr', {
   'digest.mergers': 'Kim birleştirdi',
   'digest.opened': 'Açılan pull request\'ler',
   'digest.closed': 'Kapatılan issue\'lar',
+  'digest.dropped': 'Birleştirilmeden kapatılan pull request’ler',
   'digest.releases': 'Sürümler',
   'digest.tags': 'Etiketler',
   'digest.people': 'Kimler katkı verdi (commit)',

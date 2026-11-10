@@ -716,6 +716,7 @@ GB.i18n.define('zh-Hant', {
   'digest.mergers': '合併者',
   'digest.opened': '已開啟的拉取請求',
   'digest.closed': '已關閉的 issue',
+  'digest.dropped': '未合併即關閉的拉取請求',
   'digest.releases': '發布',
   'digest.tags': '標籤',
   'digest.people': '誰做了貢獻(提交)',

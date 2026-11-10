@@ -815,6 +815,7 @@ GB.i18n.define('ar', {
   'digest.mergers': 'من دمج',
   'digest.opened': 'طلبات السحب المفتوحة',
   'digest.closed': 'القضايا المغلقة',
+  'digest.dropped': 'طلبات السحب المغلقة دون دمج',
   'digest.releases': 'الإصدارات',
   'digest.tags': 'الوسوم',
   'digest.people': 'من ساهم (الإيداعات)',

@@ -717,6 +717,7 @@ GB.i18n.define('pt', {
   'digest.mergers': 'Quem fez o merge',
   'digest.opened': 'Pull requests abertos',
   'digest.closed': 'Issues fechadas',
+  'digest.dropped': 'Pull requests fechados sem fusão',
   'digest.releases': 'Releases',
   'digest.tags': 'Tags',
   'digest.people': 'Quem contribuiu (commits)',

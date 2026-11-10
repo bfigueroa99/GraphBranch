@@ -716,6 +716,7 @@ GB.i18n.define('zh-Hans', {
   'digest.mergers': '合并者',
   'digest.opened': '已打开的拉取请求',
   'digest.closed': '已关闭的 issue',
+  'digest.dropped': '未合并即关闭的拉取请求',
   'digest.releases': '发布',
   'digest.tags': '标签',
   'digest.people': '谁做了贡献(提交)',

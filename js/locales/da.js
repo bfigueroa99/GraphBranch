@@ -716,6 +716,7 @@ GB.i18n.define('da', {
   'digest.mergers': 'Hvem flettede',
   'digest.opened': 'Åbnede pull requests',
   'digest.closed': 'Lukkede issues',
+  'digest.dropped': 'Pull requests lukket uden at blive flettet',
   'digest.releases': 'Releases',
   'digest.tags': 'Tags',
   'digest.people': 'Hvem der har bidraget (commits)',

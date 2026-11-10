@@ -717,6 +717,7 @@ GB.i18n.define('th', {
   'digest.mergers': 'ใครเป็นผู้ผสาน',
   'digest.opened': 'Pull request ที่เปิดใหม่',
   'digest.closed': 'issue ที่ปิดแล้ว',
+  'digest.dropped': 'pull request ที่ปิดโดยไม่ได้รวม',
   'digest.releases': 'รีลีส',
   'digest.tags': 'แท็ก',
   'digest.people': 'ผู้ร่วมพัฒนา (คอมมิต)',

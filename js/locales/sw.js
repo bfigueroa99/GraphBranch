@@ -716,6 +716,7 @@ GB.i18n.define('sw', {
   'digest.mergers': 'Nani aliunganisha',
   'digest.opened': 'Pull request zilizofunguliwa',
   'digest.closed': 'Masuala yaliyofungwa',
+  'digest.dropped': 'Pull request zilizofungwa bila kuunganishwa',
   'digest.releases': 'Matoleo',
   'digest.tags': 'Lebo (tags)',
   'digest.people': 'Nani alichangia (commit)',

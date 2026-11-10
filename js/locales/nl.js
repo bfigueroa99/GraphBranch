@@ -758,6 +758,8 @@ GB.i18n.define('nl', {
   'all.prs.unpin': 'PR #{num} van {repo} losmaken',
   'all.prs.person': 'Launchpad filteren op persoon',
   'all.prs.everyone': 'Alle personen',
+  'all.prs.repo': 'Launchpad filteren op repo',
+  'all.prs.allRepos': 'Alle repo’s',
   'all.lastCommit': 'Laatste commit: {msg} · {who} · {when}. Wijzigingen bekijken',
   'editor.edit': 'Bewerken',
   'editor.editFile': '{path} bewerken',

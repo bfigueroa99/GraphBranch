@@ -757,6 +757,8 @@ GB.i18n.define('el', {
   'all.prs.unpin': 'Ξεκαρφίτσωμα του PR #{num} του {repo}',
   'all.prs.person': 'Φιλτράρισμα του Launchpad ανά άτομο',
   'all.prs.everyone': 'Όλα τα άτομα',
+  'all.prs.repo': 'Φιλτράρισμα του Launchpad ανά αποθετήριο',
+  'all.prs.allRepos': 'Όλα τα αποθετήρια',
   'all.lastCommit': 'Τελευταίο commit: {msg} · {who} · {when}. Δείτε τις αλλαγές του',
   'editor.edit': 'Επεξεργασία',
   'editor.editFile': 'Επεξεργασία {path}',

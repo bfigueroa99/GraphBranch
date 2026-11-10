@@ -758,6 +758,8 @@ GB.i18n.define('de', {
   'all.prs.unpin': 'PR #{num} in {repo} lösen',
   'all.prs.person': 'Launchpad nach Person filtern',
   'all.prs.everyone': 'Alle Personen',
+  'all.prs.repo': 'Launchpad nach Repo filtern',
+  'all.prs.allRepos': 'Alle Repos',
   'all.lastCommit': 'Letzter Commit: {msg} · {who} · {when}. Änderungen ansehen',
   'editor.edit': 'Bearbeiten',
   'editor.editFile': '{path} bearbeiten',

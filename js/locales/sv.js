@@ -757,6 +757,8 @@ GB.i18n.define('sv', {
   'all.prs.unpin': 'Lossa PR #{num} i {repo}',
   'all.prs.person': 'Filtrera Launchpad efter person',
   'all.prs.everyone': 'Alla personer',
+  'all.prs.repo': 'Filtrera Launchpad efter repo',
+  'all.prs.allRepos': 'Alla repon',
   'all.lastCommit': 'Senaste commit: {msg} · {who} · {when}. Visa ändringarna',
   'editor.edit': 'Redigera',
   'editor.editFile': 'Redigera {path}',

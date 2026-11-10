@@ -757,6 +757,8 @@ GB.i18n.define('ms', {
   'all.prs.unpin': 'Nyahsemat PR #{num} {repo}',
   'all.prs.person': 'Tapis Launchpad mengikut orang',
   'all.prs.everyone': 'Semua orang',
+  'all.prs.repo': 'Tapis Launchpad mengikut repo',
+  'all.prs.allRepos': 'Semua repo',
   'all.lastCommit': 'Commit terakhir: {msg} · {who} · {when}. Lihat perubahannya',
   'editor.edit': 'Sunting',
   'editor.editFile': 'Sunting {path}',

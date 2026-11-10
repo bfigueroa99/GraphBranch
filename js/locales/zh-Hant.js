@@ -757,6 +757,8 @@ GB.i18n.define('zh-Hant', {
   'all.prs.unpin': '取消置頂 {repo} 的 PR #{num}',
   'all.prs.person': '依人員篩選 Launchpad',
   'all.prs.everyone': '所有人',
+  'all.prs.repo': '依儲存庫篩選 Launchpad',
+  'all.prs.allRepos': '所有儲存庫',
   'all.lastCommit': '最新提交：{msg} · {who} · {when}。查看其變更',
   'editor.edit': '編輯',
   'editor.editFile': '編輯 {path}',

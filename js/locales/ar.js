@@ -856,6 +856,8 @@ GB.i18n.define('ar', {
   'all.prs.unpin': 'إلغاء تثبيت طلب السحب #{num} في {repo}',
   'all.prs.person': 'تصفية Launchpad حسب الشخص',
   'all.prs.everyone': 'كل الأشخاص',
+  'all.prs.repo': 'تصفية Launchpad حسب المستودع',
+  'all.prs.allRepos': 'كل المستودعات',
   'all.lastCommit': 'آخر commit: {msg} · {who} · {when}. اعرض تغييراته',
   'editor.edit': 'تحرير',
   'editor.editFile': 'تحرير {path}',

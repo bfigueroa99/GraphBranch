@@ -85,6 +85,13 @@
     return [...set].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }) || (a < b ? -1 : 1));
   }
 
+  /** Los repos que tienen PRs abiertos (los mismos `entries`), en orden alfabético: [{ key, name, n }]. */
+  function prRepos(entries) {
+    const out = [];
+    for (const e of entries) { const n = [...(e.pulls || [])].length; if (n) out.push({ key: e.key, name: e.name, n }); }
+    return out.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }) || (a.key < b.key ? -1 : 1));
+  }
+
   /** Cuántos PRs abiertos tiene cada persona (los mismos `entries`): { login: n }, con lo ya cargado y sin consultar nada. */
   function prCounts(entries) {
     const n = {};
@@ -95,10 +102,11 @@
   /** Los PRs abiertos de varios repos, agrupados por estado: `entries` es [{ key, name, pulls: iterable de PRs }].
       Devuelve solo los grupos con PRs, [{ id, items }], cada uno del más nuevo al más viejo; los fijados (`pinned`: un Set
       de `pinId`) van arriba de su grupo, con `pinned: true`. */
-  function groupPulls(entries, pinned, author = '') {
+  function groupPulls(entries, pinned, author = '', repoKey = '') {
     const isPinned = (key, number) => !!pinned?.has?.(pinId(key, number));
     const by = new Map(PR_GROUPS.map((g) => [g, []]));
     for (const e of entries) {
+      if (repoKey && e.key !== repoKey) continue;
       for (const p of e.pulls || []) {
         if (author && (p.user?.login || p.user?.name || '') !== author) continue;
         by.get(prGroup(p)).push({
@@ -252,6 +260,7 @@
     let prSig = '';
     let lastEntries = [];
     let prPerson = opts.person || ''; // el filtro por persona del Launchpad ('' = todas); viaja en ?by=
+    let prRepo = ''; // el filtro por repo ('' = todos); no se recuerda ni viaja en la URL
     function setPulls(entries) {
       lastEntries = entries.map((e) => ({ ...e, pulls: [...(e.pulls || [])] })); // `pulls` puede ser un iterador, de un solo uso
       entries = lastEntries;
@@ -262,8 +271,10 @@
       const counts = prCounts(entries);
       // la persona sin PRs abiertos (o desconocida, o aún sin cargar) no filtra; se recuerda por si sus PRs llegan después
       const who = people.find((u) => u === prPerson) || people.find((u) => u.toLowerCase() === prPerson.toLowerCase()) || '';
-      const groups = groupPulls(entries, pins, who);
-      const sig = JSON.stringify([groups, people, counts, who]);
+      const repos = prRepos(entries);
+      const repo = repos.find((r) => r.key === prRepo)?.key || ''; // un repo sin PRs abiertos no filtra
+      const groups = groupPulls(entries, pins, who, repo);
+      const sig = JSON.stringify([groups, people, counts, who, repos, repo]);
       if (sig === prSig) return;
       prSig = sig;
       const t = opts.text;
@@ -285,6 +296,20 @@
           opts.onPerson?.(prPerson);
           setPulls(lastEntries);
           box.querySelector('.ap-person')?.focus(); // el repintado reemplaza el selector: el foco vuelve a él
+        });
+        box.append(sel);
+      }
+      if (repos.length > 1) {
+        const sel = mk('select', 'ap-repo');
+        sel.setAttribute('aria-label', t('all.prs.repo'));
+        sel.title = t('all.prs.repo');
+        sel.append(new Option(t('all.prs.allRepos'), ''));
+        for (const r of repos) sel.append(new Option(`${r.name} (${num(r.n)})`, r.key));
+        sel.value = repo;
+        sel.addEventListener('change', () => {
+          prRepo = sel.value;
+          setPulls(lastEntries);
+          box.querySelector('.ap-repo')?.focus();
         });
         box.append(sel);
       }
@@ -378,5 +403,5 @@
     };
   }
 
-  GB.overview = { allParam, personParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, fitGrid, prGroup, groupPulls, prAuthors, prCounts, pinId, mount };
+  GB.overview = { allParam, personParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, fitGrid, prGroup, groupPulls, prAuthors, prRepos, prCounts, pinId, mount };
 })(window.GB);

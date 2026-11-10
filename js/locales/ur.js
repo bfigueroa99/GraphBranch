@@ -800,6 +800,8 @@ GB.i18n.define('ur', {
   'all.prs.unpin': '{repo} کا PR #{num} ان پن کریں',
   'all.prs.person': 'Launchpad کو فرد کے لحاظ سے فلٹر کریں',
   'all.prs.everyone': 'سب لوگ',
+  'all.prs.repo': 'Launchpad کو ریپو کے لحاظ سے فلٹر کریں',
+  'all.prs.allRepos': 'تمام ریپوز',
   'all.lastCommit': 'آخری کمٹ: {msg} · {who} · {when}۔ اس کی تبدیلیاں دیکھیں',
   'editor.edit': 'ترمیم',
   'editor.editFile': '{path} میں ترمیم',

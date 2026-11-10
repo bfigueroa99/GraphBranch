@@ -768,6 +768,8 @@ GB.i18n.define('sk', {
   'all.prs.unpin': 'Odopnúť PR #{num} z {repo}',
   'all.prs.person': 'Filtrovať Launchpad podľa osoby',
   'all.prs.everyone': 'Všetci',
+  'all.prs.repo': 'Filtrovať Launchpad podľa repozitára',
+  'all.prs.allRepos': 'Všetky repozitáre',
   'all.lastCommit': 'Posledný commit: {msg} · {who} · {when}. Zobraziť zmeny',
   'editor.edit': 'Upraviť',
   'editor.editFile': 'Upraviť {path}',

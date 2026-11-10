@@ -757,6 +757,8 @@ GB.i18n.define('sw', {
   'all.prs.unpin': 'Ondoa PR #{num} ya {repo} juu',
   'all.prs.person': 'Chuja Launchpad kwa mtu',
   'all.prs.everyone': 'Watu wote',
+  'all.prs.repo': 'Chuja Launchpad kwa hazina',
+  'all.prs.allRepos': 'Hazina zote',
   'all.lastCommit': 'Commit ya mwisho: {msg} · {who} · {when}. Tazama mabadiliko yake',
   'editor.edit': 'Hariri',
   'editor.editFile': 'Hariri {path}',

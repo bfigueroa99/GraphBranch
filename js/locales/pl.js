@@ -768,6 +768,8 @@ GB.i18n.define('pl', {
   'all.prs.unpin': 'Odepnij PR #{num} z {repo}',
   'all.prs.person': 'Filtruj Launchpad według osoby',
   'all.prs.everyone': 'Wszystkie osoby',
+  'all.prs.repo': 'Filtruj Launchpad według repozytorium',
+  'all.prs.allRepos': 'Wszystkie repozytoria',
   'all.lastCommit': 'Ostatni commit: {msg} · {who} · {when}. Zobacz zmiany',
   'editor.edit': 'Edytuj',
   'editor.editFile': 'Edytuj {path}',

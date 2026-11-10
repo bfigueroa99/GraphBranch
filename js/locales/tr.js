@@ -757,6 +757,8 @@ GB.i18n.define('tr', {
   'all.prs.unpin': '{repo} deposundaki #{num} PR\'inin sabitlemesini kaldır',
   'all.prs.person': 'Launchpad\'i kişiye göre süz',
   'all.prs.everyone': 'Herkes',
+  'all.prs.repo': 'Launchpad’i depoya göre filtrele',
+  'all.prs.allRepos': 'Tüm depolar',
   'all.lastCommit': 'Son commit: {msg} · {who} · {when}. Değişikliklerini gör',
   'editor.edit': 'Düzenle',
   'editor.editFile': '{path} düzenle',

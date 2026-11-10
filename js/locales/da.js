@@ -757,6 +757,8 @@ GB.i18n.define('da', {
   'all.prs.unpin': 'Frigør PR #{num} i {repo}',
   'all.prs.person': 'Filtrér Launchpad efter person',
   'all.prs.everyone': 'Alle personer',
+  'all.prs.repo': 'Filtrer Launchpad efter repo',
+  'all.prs.allRepos': 'Alle repos',
   'all.lastCommit': 'Seneste commit: {msg} · {who} · {when}. Se ændringerne',
   'editor.edit': 'Redigér',
   'editor.editFile': 'Redigér {path}',

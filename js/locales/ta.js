@@ -757,6 +757,8 @@ GB.i18n.define('ta', {
   'all.prs.unpin': '{repo} இன் PR #{num} ஐ அன்பின் செய்',
   'all.prs.person': 'Launchpad-ஐ நபர் வாரியாக வடிகட்டு',
   'all.prs.everyone': 'அனைவரும்',
+  'all.prs.repo': 'Launchpad-ஐ ரெப்போவின்படி வடிகட்டு',
+  'all.prs.allRepos': 'அனைத்து ரெப்போக்கள்',
   'all.lastCommit': 'கடைசி கமிட்: {msg} · {who} · {when}. அதன் மாற்றங்களைப் பார்',
   'editor.edit': 'திருத்து',
   'editor.editFile': '{path} திருத்து',

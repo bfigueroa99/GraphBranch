@@ -727,6 +727,7 @@ GB.i18n.define('sk', {
   'digest.mergers': 'Kto zlúčil',
   'digest.opened': 'Otvorené pull requesty',
   'digest.closed': 'Uzavreté issues',
+  'digest.dropped': 'Pull requesty zatvorené bez zlúčenia',
   'digest.releases': 'Vydania',
   'digest.tags': 'Tagy',
   'digest.people': 'Kto prispel (commity)',

@@ -716,6 +716,7 @@ GB.i18n.define('bg', {
   'digest.mergers': 'Кой сля',
   'digest.opened': 'Отворени pull request-и',
   'digest.closed': 'Затворени проблеми',
+  'digest.dropped': 'Pull request-и, затворени без сливане',
   'digest.releases': 'Издания',
   'digest.tags': 'Тагове',
   'digest.people': 'Кой е допринесъл (комити)',

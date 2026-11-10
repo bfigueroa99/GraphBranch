@@ -727,6 +727,7 @@ GB.i18n.define('pl', {
   'digest.mergers': 'Kto scalił',
   'digest.opened': 'Otwarte pull requesty',
   'digest.closed': 'Zamknięte zgłoszenia',
+  'digest.dropped': 'Pull requesty zamknięte bez scalenia',
   'digest.releases': 'Wydania',
   'digest.tags': 'Tagi',
   'digest.people': 'Kto wniósł wkład (commity)',

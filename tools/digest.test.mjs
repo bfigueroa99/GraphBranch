@@ -384,6 +384,31 @@ test('organización: suma los issues cerrados en la semana de cada repo y los mu
   assert.doesNotMatch(imageLinesOrg(sin, 'a', t).map((l) => l.text).join('\n'), /Cerrados/);
 });
 
+test('organización: suma los PRs cerrados sin fusionar de los repos seguidos, sin los fusionados ni los repetidos, en Markdown e imagen', () => {
+  const dr = (id, number, days, kind = 'pr-close') => ({ id, kind, number, detail: `PR ${number}`, time: NOW - days * 864e5 });
+  const quiet = { commits: new Map([c('v', 30, [], 'ana')]), branches: new Map([['main', { name: 'main', sha: 'v' }]]) };
+  const o = computeOrg([
+    // web: el #7 llega dos veces y cuenta una; el #9 se cerró y luego se fusionó (no es «sin fusionar»); el #1 es viejo
+    { repo: 'acme/web', data: repo(), acts: [dr('1', 7, 2), dr('2', 7, 1), dr('3', 8, 1), dr('4', 1, 20), dr('5', 9, 3), dr('6', 9, 1, 'pr-merge')] },
+    { repo: 'acme/api', data: quiet, acts: [dr('7', 4, 3)] },
+    { repo: 'acme/quieto', data: quiet, acts: [] },
+  ], NOW);
+  assert.equal(o.dropped, 3);
+  assert.equal(o.rows.find((r) => r.repo === 'acme/web').d.dropped.total, 2);
+  const t = { head: 'S {repo}', commits: 'C {n}', merged: 'M', dropped: 'Sin fusionar', releases: 'R', people: 'P', branch: 'B' };
+  const md = toMarkdownOrg(o, 'acme', t);
+  assert.match(md, /\n- Sin fusionar: 3\n- R: 0\n/);
+  assert.match(md, /## acme\/web\n[\s\S]*?- Sin fusionar: #8, #7\n/);
+  assert.match(md, /## acme\/api\n\n- C 0\n- Sin fusionar: #4\n/);
+  const lines = imageLinesOrg(o, 'acme', t).map((l) => l.text);
+  assert.ok(lines.includes('Sin fusionar: 3'));
+  const sin = computeOrg([{ repo: 'a/b', data: repo(), acts: [] }], NOW);
+  assert.equal(sin.dropped, 0);
+  assert.doesNotMatch(toMarkdownOrg(sin, 'a', t), /Sin fusionar/);
+  const one = compute(repo(), [dr('1', 7, 2)], NOW);
+  assert.match(toMarkdown(one, 'a/b', t), /## Sin fusionar \(1\)\n\n- #7 PR 7\n/);
+});
+
 test('organización: suma los autores nuevos de los repos seguidos, cada persona una vez, en Markdown e imagen', () => {
   // web: ana firma antes de la semana; beto y caro son nuevos en web
   const web = { commits: new Map([c('a', 40, [], 'ana'), c('b', 2, ['a'], 'beto'), c('k', 1, ['b'], 'caro')]), branches: new Map([['main', { name: 'main', sha: 'k' }]]) };

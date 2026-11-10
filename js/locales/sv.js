@@ -716,6 +716,7 @@ GB.i18n.define('sv', {
   'digest.mergers': 'Vem som sammanfogade',
   'digest.opened': 'Öppnade pull requests',
   'digest.closed': 'Stängda ärenden',
+  'digest.dropped': 'Pull requests stängda utan sammanslagning',
   'digest.releases': 'Releaser',
   'digest.tags': 'Tags',
   'digest.people': 'Vem som bidragit (commits)',

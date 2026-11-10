@@ -716,6 +716,7 @@ GB.i18n.define('fi', {
   'digest.mergers': 'Kuka yhdisti',
   'digest.opened': 'Avatut pull requestit',
   'digest.closed': 'Suljetut issuet',
+  'digest.dropped': 'Ilman yhdistämistä suljetut pull requestit',
   'digest.releases': 'Julkaisut',
   'digest.tags': 'Tagit',
   'digest.people': 'Ketkä osallistuivat (commitit)',

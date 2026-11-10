@@ -716,6 +716,7 @@ GB.i18n.define('ko', {
   'digest.mergers': '병합한 사람',
   'digest.opened': '열린 풀 리퀘스트',
   'digest.closed': '닫힌 이슈',
+  'digest.dropped': '병합 없이 닫힌 풀 리퀘스트',
   'digest.releases': '릴리스',
   'digest.tags': '태그',
   'digest.people': '기여한 사람(커밋)',

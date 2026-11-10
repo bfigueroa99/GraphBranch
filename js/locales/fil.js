@@ -717,6 +717,7 @@ GB.i18n.define('fil', {
   'digest.mergers': 'Sino ang nag-merge',
   'digest.opened': 'Mga pull request na binuksan',
   'digest.closed': 'Mga naisarang issue',
+  'digest.dropped': 'Mga pull request na isinara nang hindi na-merge',
   'digest.releases': 'Mga release',
   'digest.tags': 'Mga tag',
   'digest.people': 'Sino ang nag-ambag (mga commit)',

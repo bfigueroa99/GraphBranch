@@ -716,6 +716,7 @@ GB.i18n.define('vi', {
   'digest.mergers': 'Ai đã hợp nhất',
   'digest.opened': 'Pull request đã mở',
   'digest.closed': 'Issue đã đóng',
+  'digest.dropped': 'Pull request đóng mà không hợp nhất',
   'digest.releases': 'Bản phát hành',
   'digest.tags': 'Thẻ (tag)',
   'digest.people': 'Ai đã đóng góp (commit)',

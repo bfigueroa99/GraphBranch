@@ -716,6 +716,7 @@ GB.i18n.define('ca', {
   'digest.mergers': 'Qui ha fusionat',
   'digest.opened': 'Pull requests oberts',
   'digest.closed': 'Issues tancats',
+  'digest.dropped': 'Pull requests tancats sense fusionar',
   'digest.releases': 'Releases',
   'digest.tags': 'Tags',
   'digest.people': 'Qui ha aportat (commits)',

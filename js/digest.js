@@ -97,6 +97,12 @@
       .filter((a) => inWeek(a, 'issue-close') && (a.number == null || (!closedNums.has(a.number) && closedNums.add(a.number))))
       .sort((a, b) => b.time - a.time)
       .map((a) => ({ number: a.number, title: text(a.detail) || text(a.title), url: a.url || null, time: a.time }));
+    // PRs cerrados sin fusionar en la semana: uno que se fusionó o que cerró dos veces cuenta una sola vez, y los fusionados no entran
+    const droppedNums = new Set();
+    const dropped = acts
+      .filter((a) => inWeek(a, 'pr-close') && (a.number == null || (!droppedNums.has(a.number) && !mergedActs.some((m) => m.number === a.number) && droppedNums.add(a.number))))
+      .sort((a, b) => b.time - a.time)
+      .map((a) => ({ number: a.number, title: text(a.detail) || text(a.title), url: a.url || null, time: a.time }));
     const releases = acts
       .filter((a) => inWeek(a, 'release'))
       .sort((a, b) => b.time - a.time)
@@ -125,6 +131,7 @@
       merged: { total: merged.length, rows: merged.slice(0, LIST) },
       opened: { total: opened.length, rows: opened.slice(0, LIST) },
       closed: { total: closed.length, rows: closed.slice(0, LIST) },
+      dropped: { total: dropped.length, rows: dropped.slice(0, LIST) },
       releases: { total: releases.length, rows: releases.slice(0, LIST) },
       tags: { total: tags.length, rows: tags.slice(0, LIST) },
       mergers: { total: mergers.size, all: [...mergers], rows: [...mergers].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, prs]) => ({ name, prs })) },
@@ -151,6 +158,7 @@
     if (d.mergers?.rows.length && t.mergers) out.push('', `${t.mergers}: ${d.mergers.rows.map((r) => `${md(r.name)} (${r.prs})`).join(' · ')}`);
     if (d.opened?.total) out.push('', `## ${t.opened} (${d.opened.total})`, '', ...d.opened.rows.map((r) => `- ${link(r, `${r.number ? `#${r.number} ` : ''}${md(r.title)}`)}`));
     if (d.closed?.total) out.push('', `## ${t.closed} (${d.closed.total})`, '', ...d.closed.rows.map((r) => `- ${link(r, `${r.number ? `#${r.number} ` : ''}${md(r.title)}`)}`));
+    if (d.dropped?.total && t.dropped) out.push('', `## ${t.dropped} (${d.dropped.total})`, '', ...d.dropped.rows.map((r) => `- ${link(r, `${r.number ? `#${r.number} ` : ''}${md(r.title)}`)}`));
     out.push('', `## ${t.releases} (${d.releases.total})`, '');
     if (d.releases.rows.length) for (const r of d.releases.rows) out.push(`- ${link(r, md(r.title))}`);
     else out.push(none);
@@ -166,7 +174,7 @@
   function computeOrg(entries, now = Date.now(), days = 7, text = (x) => x) {
     const since = now - days * DAY;
     const rows = entries.map((e) => ({ repo: e.repo, d: compute(e.data, e.acts || [], now, days, text) }));
-    const busy = rows.filter((r) => r.d.commits || r.d.merged.total || r.d.opened.total || r.d.closed.total || r.d.releases.total);
+    const busy = rows.filter((r) => r.d.commits || r.d.merged.total || r.d.opened.total || r.d.closed.total || r.d.dropped.total || r.d.releases.total);
     busy.sort((a, b) => b.d.commits - a.d.commits || (a.repo < b.repo ? -1 : 1));
     const sum = (f) => rows.reduce((n, r) => n + f(r.d), 0);
     // autores nuevos de la organización: firmaron en la semana en algún repo seguido y en ninguno antes
@@ -183,7 +191,7 @@
     const byMerger = new Map();
     for (const r of rows) for (const [who, n] of r.d.mergers.all) byMerger.set(who, (byMerger.get(who) || 0) + n);
     const mergers = { total: byMerger.size, rows: [...byMerger].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, prs]) => ({ name, prs })) };
-    return { since, now, days, repos: rows.length, commits: sum((d) => d.commits), newcomers, mergers, merged: sum((d) => d.merged.total), opened: sum((d) => d.opened.total), closed: sum((d) => d.closed.total), releases: sum((d) => d.releases.total), newBranches: sum((d) => d.newBranches), rows: busy.slice(0, ORG_REPOS), hidden: Math.max(0, busy.length - ORG_REPOS) };
+    return { since, now, days, repos: rows.length, commits: sum((d) => d.commits), newcomers, mergers, merged: sum((d) => d.merged.total), opened: sum((d) => d.opened.total), closed: sum((d) => d.closed.total), dropped: sum((d) => d.dropped.total), releases: sum((d) => d.releases.total), newBranches: sum((d) => d.newBranches), rows: busy.slice(0, ORG_REPOS), hidden: Math.max(0, busy.length - ORG_REPOS) };
   }
 
   /** La lista corta de una sección por repo: sus filas y, si la semana trae más, cuántas faltan. */
@@ -197,6 +205,7 @@
     if (o.mergers?.rows.length && t.mergers) out.push(`- ${t.mergers}: ${o.mergers.rows.map((r) => `${md(r.name)} (${r.prs})`).join(', ')}`);
     if (o.opened && t.opened) out.push(`- ${t.opened}: ${o.opened}`);
     if (o.closed && t.closed) out.push(`- ${t.closed}: ${o.closed}`);
+    if (o.dropped && t.dropped) out.push(`- ${t.dropped}: ${o.dropped}`);
     out.push(`- ${t.releases}: ${o.releases}`);
     if (o.newBranches && t.newbranches) out.push(`- ${t.newbranches.replace('{n}', o.newBranches)}`);
     if (!o.rows.length) out.push('', none);
@@ -208,6 +217,7 @@
       if (d.merged.total) out.push(`- ${t.merged}: ${shortList(d.merged, (r) => (r.number ? `#${r.number}` : md(r.title)))}`);
       if (d.opened.total && t.opened) out.push(`- ${t.opened}: ${shortList(d.opened, (r) => (r.number ? `#${r.number}` : md(r.title)))}`);
       if (d.closed.total && t.closed) out.push(`- ${t.closed}: ${shortList(d.closed, (r) => (r.number ? `#${r.number}` : md(r.title)))}`);
+      if (d.dropped.total && t.dropped) out.push(`- ${t.dropped}: ${shortList(d.dropped, (r) => (r.number ? `#${r.number}` : md(r.title)))}`);
       if (d.releases.total) out.push(`- ${t.releases}: ${d.releases.rows.map((r) => md(r.title)).join(', ')}`);
     }
     if (o.hidden) out.push('', `… +${o.hidden}`);
@@ -234,6 +244,7 @@
     if (d.mergers?.rows.length && t.mergers) L.push({ text: cut(`${t.mergers}: ${d.mergers.rows.map((r) => `${flat(r.name)} (${r.prs})`).join(' · ')}`), kind: 'row' });
     if (d.opened?.total) section(t.opened, d.opened.total, d.opened.rows.map((r) => `${r.number ? `#${r.number} ` : ''}${flat(r.title)}`));
     if (d.closed?.total) section(t.closed, d.closed.total, d.closed.rows.map((r) => `${r.number ? `#${r.number} ` : ''}${flat(r.title)}`));
+    if (d.dropped?.total && t.dropped) section(t.dropped, d.dropped.total, d.dropped.rows.map((r) => `${r.number ? `#${r.number} ` : ''}${flat(r.title)}`));
     section(t.releases, d.releases.total, d.releases.rows.map((r) => flat(r.title)));
     if (d.tags?.total) section(t.tags, d.tags.total, d.tags.rows.map((r) => flat(r.name)));
     section(t.people, d.people.total, d.people.rows.map((r) => `${flat(r.name)}: ${r.commits}`));
@@ -252,6 +263,7 @@
     if (o.mergers?.rows.length && t.mergers) L.push({ text: cut(`${t.mergers}: ${o.mergers.rows.map((r) => `${flat(r.name)} (${r.prs})`).join(' · ')}`), kind: 'row' });
     if (o.opened && t.opened) L.push({ text: cut(`${t.opened}: ${o.opened}`), kind: 'row' });
     if (o.closed && t.closed) L.push({ text: cut(`${t.closed}: ${o.closed}`), kind: 'row' });
+    if (o.dropped && t.dropped) L.push({ text: cut(`${t.dropped}: ${o.dropped}`), kind: 'row' });
     L.push({ text: `${t.releases}: ${o.releases}`, kind: 'row' });
     if (o.newBranches && t.newbranches) L.push({ text: cut(t.newbranches.replace('{n}', o.newBranches)), kind: 'row' });
     if (!o.rows.length) L.push({ text: none, kind: 'row' });
@@ -264,6 +276,7 @@
       if (d.merged.total) parts.push(`${t.merged}: ${shortList(d.merged, (r) => (r.number ? `#${r.number}` : flat(r.title)))}`);
       if (d.opened.total && t.opened) parts.push(`${t.opened}: ${shortList(d.opened, (r) => (r.number ? `#${r.number}` : flat(r.title)))}`);
       if (d.closed.total && t.closed) parts.push(`${t.closed}: ${shortList(d.closed, (r) => (r.number ? `#${r.number}` : flat(r.title)))}`);
+      if (d.dropped.total && t.dropped) parts.push(`${t.dropped}: ${shortList(d.dropped, (r) => (r.number ? `#${r.number}` : flat(r.title)))}`);
       if (d.releases.total) parts.push(`${t.releases}: ${d.releases.rows.map((r) => flat(r.title)).join(', ')}`);
       L.push({ text: cut(parts.join(' · ')), kind: 'row' });
     }

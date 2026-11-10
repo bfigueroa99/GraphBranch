@@ -716,6 +716,7 @@ GB.i18n.define('hu', {
   'digest.mergers': 'Ki olvasztotta be',
   'digest.opened': 'Megnyitott pull requestek',
   'digest.closed': 'Lezárt issue-k',
+  'digest.dropped': 'Összefésülés nélkül lezárt pull requestek',
   'digest.releases': 'Kiadások',
   'digest.tags': 'Címkék',
   'digest.people': 'Kik járultak hozzá (commitok)',

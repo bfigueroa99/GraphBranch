@@ -724,6 +724,7 @@ GB.i18n.define('ro', {
   'digest.mergers': 'Cine a îmbinat',
   'digest.opened': 'Pull request-uri deschise',
   'digest.closed': 'Issue-uri închise',
+  'digest.dropped': 'Pull request-uri închise fără îmbinare',
   'digest.releases': 'Lansări',
   'digest.tags': 'Etichete (tags)',
   'digest.people': 'Cine a contribuit (commituri)',

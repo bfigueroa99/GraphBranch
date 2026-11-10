@@ -773,6 +773,7 @@ GB.i18n.define('he', {
   'digest.mergers': 'מי מיזג',
   'digest.opened': 'בקשות מיזוג שנפתחו',
   'digest.closed': 'תקלות שנסגרו',
+  'digest.dropped': 'Pull requests שנסגרו בלי מיזוג',
   'digest.releases': 'גרסאות',
   'digest.tags': 'תגיות',
   'digest.people': 'מי תרם (קומיטים)',

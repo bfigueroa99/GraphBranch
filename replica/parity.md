@@ -1,10 +1,10 @@
-## Parity: 92.7 / 100
+## Parity: 93.3 / 100
 
-features 92.7  (38 counted, must-haves 13 of 13 done)
+features 93.3  (38 counted, must-haves 13 of 13 done)
 
 ## By area, weakest first
 - cuentas                       50.0  (1 features)
-- launchpad                     60.0  (3 features)
+- launchpad                     70.0  (3 features)
 - grafo                         91.7  (8 features)
 - varios repos                  91.7  (3 features)
 - integraciones                 94.7  (7 features)
@@ -22,9 +22,9 @@ features 92.7  (38 counted, must-haves 13 of 13 done)
 - [should] cuentas: Varios perfiles o cuentas, partial  (un token por servicio y una segunda cuenta de GitHub atada a un dueño (README, Token); faltan perfiles completos y más de dos cuentas)
 - [should] grafo: Columnas de autor fecha y SHA a la vista en el grafo, partial  (SHA corto, autor y fecha junto a cada commit del grafo 2D con un interruptor (README: Búsqueda de commits); falta el 3D)
 - [should] integraciones: Issues de rastreadores (Jira Trello GitHub Issues), partial  (issues de GitHub GitLab Codeberg y Bitbucket en el panel de actividad y la salud; sin Jira ni Trello)
-- [could] launchpad: Launchpad: fijar y posponer PRs e issues, no
 - [could] launchpad: Launchpad: vista de equipo filtrada por colaborador, no
 - [could] grafo: Cargar más historia (límite de commits configurable), partial  (README: Repositorios con miles de ramas; el tope de commits por rama no se elige desde la interfaz)
+- [could] launchpad: Launchpad: fijar y posponer PRs e issues, partial  (README, «Todos a la vez»: el 📌 fija un PR arriba de su grupo y el 💤 lo pospone un día; faltan los issues (el Launchpad solo lista PRs))
 - [could] varios repos: Workspaces compartidos con el equipo, partial  (se comparten por URL con sus repos; sin cuentas ni nube (lo que no cambia))
 
 ## Left out on purpose (not scored)

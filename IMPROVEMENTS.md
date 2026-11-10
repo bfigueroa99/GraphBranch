@@ -536,5 +536,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (una lista `untracked` en la entrada del stash).
 - OMC: plan=— · revisión=— · verificación=— (diff pequeño, leído a mano; sin subagentes)
 - Reclamo: loop/252, sin colisión
-- Validado: PENDIENTE
+- Validado: 654 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 253, expansión: ítem 164 (Resumen de la semana de la organización: PRs cerrados sin fusionar, Salidas)

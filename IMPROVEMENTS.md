@@ -278,7 +278,7 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 167. **Salud del repo: tendencia de estrellas** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del mapa: Análisis] El panel de salud compara las estrellas nuevas de la semana con las de la anterior, con lo ya cargado y sin consultas nuevas. Comprobar: `node --test tools/health.test.mjs` con estrellas fabricadas.
 173. **Práctica: rm y mv** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 16] En la práctica de git, `rm <archivo>` borra un archivo que git sigue y deja el borrado preparado (`rm --cached` lo deja sin seguir), `mv vieja nueva` lo renombra preparado, y `add -A` prepara también los borrados hechos a mano. Comprobar: `node --test tools/gitsim.test.mjs` (qué muestra `status` y qué guarda el commit tras `rm`, `rm --cached` y `mv`).
 175. **Estado de los despliegues, segunda entrega** · Datos · 1×2/2. [parte del ítem 153] El panel de salud suma si el último despliegue de cada entorno de GitHub salió bien, falló o sigue en curso (`/deployments/:id/statuses`, una consulta por entorno, solo con el panel abierto y no más de una cada 15 minutos). Comprobar: `tools/github.test.mjs` con la API simulada (cuántas consultas y solo con el panel abierto).
-177. **Launchpad: el filtro por persona en la URL** · Escala · 1×2/1. [parte del ítem 158] El filtro por persona del Launchpad viaja en `?by=login` (se lee al abrir la vista conjunta y se escribe al elegir), para compartir la vista de una persona. Comprobar: `node --test` de leer y escribir el parámetro, con un login desconocido que se ignora.
+177. ~~**Launchpad: el filtro por persona en la URL**~~ hecho en #308 · Escala · 1×2/1. [parte del ítem 158] El filtro por persona del Launchpad viaja en `?by=login` (se lee al abrir la vista conjunta y se escribe al elegir), para compartir la vista de una persona. Comprobar: `node --test` de leer y escribir el parámetro, con un login desconocido que se ignora.
 178. **Launchpad: cuántos PRs tiene cada persona** · Escala · 1×2/1. [parte del ítem 158] Cada opción del selector de personas del Launchpad dice cuántos PRs abiertos tiene (`ana (3)`), con lo ya cargado. Comprobar: `node --test` del conteo por persona con PRs fabricados de tres autores.
 179. **Resumen de la semana: quién abrió más PRs** · Salidas · 1×2/2. [parte del ítem 23] El resumen de la semana suma las personas que más PRs abrieron en la semana, con lo ya cargado. Comprobar: `node --test` del conteo con PRs fabricados de dos semanas.
 180. **Salud del repo: PRs sin revisión hace días** · Análisis · 1×2/2. [parte del ítem 12] El panel de salud cuenta los PRs abiertos que llevan más de 7 días sin revisión, con lo ya cargado. Comprobar: `node --test` con PRs de distintas edades, borradores excluidos.
@@ -565,3 +565,16 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/244, sin colisión
 - Validado: 642 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde (a la tercera corrida: dos pasos ajenos del smoke fallaron antes, uno por corrida, anotados en Mantenimiento · Deuda).
 - **Siguiente:** iteración 245, expansión: ítem 177 (Launchpad: el filtro por persona en la URL, Escala)
+
+### 2026-11-10 · Iteración 245 · Expansión · Escala
+
+- **Capacidad nueva: el filtro por persona del Launchpad viaja en la URL** (ítem 177 de la hoja de ruta, parte del ítem 158). `?by=login` se lee al abrir (`personParam`, `js/overview.js`) y el Launchpad abre ya filtrado; elegir otra persona (o «Todas») lo escribe o lo quita de la dirección. El login se reconoce sin distinguir mayúsculas (si hay dos iguales salvo la capitalización, gana el exacto) y uno desconocido, o de alguien cuyos PRs aún no cargan, no filtra nada y se conserva hasta que lleguen. Sin textos nuevos ni consultas nuevas; `embed=1` lo ignora.
+- **Pruebas que fallan sin la capacidad:** `tools/overview.test.mjs` («personParam…» y «mount: el Launchpad abre con la persona de ?by=…»).
+- README: la lista de la vista conjunta y sus Límites conocidos.
+- QA: lógica cubierta con el `mount` simulado (apertura con persona, login desconocido, aviso al elegir); no se mira a mano en navegador; auditoría: la puerta la corre.
+- Skills: no aplica: un parámetro de URL sobre una vista existente; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (leer el parámetro y avisar al elegir).
+- OMC: plan=— · revisión=— · verificación=— (diff de unas líneas, leído a mano; sin subagentes)
+- Reclamo: loop/245, sin colisión
+- Validado: PENDIENTE
+- **Siguiente:** iteración 246, expansión: ítem 160 (Token para un Forgejo o Gitea propio, Fuentes)

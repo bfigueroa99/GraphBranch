@@ -140,3 +140,41 @@ test('mount: fijar repinta con los mismos PRs aunque `pulls` sea un iterador de 
   assert.deepEqual([...pins], ['a#1']);
   assert.equal(box.hidden, false, 'tras fijar, el Launchpad sigue con su PR');
 });
+
+test('personParam: ?by=login lleva el filtro por persona del Launchpad', () => {
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(O.personParam(q('by=ana')), 'ana');
+  assert.equal(O.personParam(q('by=%20ana%20')), 'ana', 'sin espacios alrededor');
+  assert.equal(O.personParam(q('by=')), '');
+  assert.equal(O.personParam(q('all=1')), '', 'sin decirlo, no filtra');
+  assert.equal(O.personParam(q(`by=${'x'.repeat(300)}`)).length, 100, 'un login absurdo se acorta');
+});
+
+test('mount: el Launchpad abre con la persona de ?by=, ignora una desconocida y avisa al elegir otra', () => {
+  const run = (person) => {
+    const els = [];
+    const mkEl = (tag) => {
+      const el = { tag, children: [], dataset: {}, attrs: {}, classList: { toggle() {} }, hidden: false, listeners: {}, value: '', options: [], append(...c) { this.children.push(...c); }, replaceChildren(...c) { this.children = c; }, setAttribute(k, v) { this.attrs[k] = v; }, addEventListener(t, f) { this.listeners[t] = f; }, querySelectorAll: () => [], querySelector: () => null, focus() {}, closest: () => null };
+      els.push(el);
+      return el;
+    };
+    const c2 = vm.createContext({ window: { GB: { U: { truncate: (x) => x } }, matchMedia: null }, document: { createElement: mkEl }, Option: function (t, v) { this.text = t; this.value = v; } });
+    vm.runInContext(readFileSync(join(root, 'js', 'overview.js'), 'utf8'), c2, { filename: 'overview.js' });
+    const chosen = [];
+    const box = mkEl('div');
+    const ov = c2.window.GB.overview.mount(mkEl('div'), { prsRoot: box, text: (k) => k, num: String, person, onPerson: (u) => chosen.push(u) });
+    const pr = (n, login) => ({ number: n, title: `PR ${n}`, createdAt: n, user: { login } });
+    ov.setPulls([{ key: 'a', name: 'o/a', pulls: [pr(1, 'Ana'), pr(2, 'beto')] }]);
+    return { els, chosen };
+  };
+  const shown = (r) => r.els.filter((e) => e.className === 'ap-row').map((e) => e.dataset.number);
+  const a = run('ana'); // otra capitalización: igual se reconoce
+  assert.deepEqual(shown(a), ['1'], 'abre solo con los PRs de la persona de la URL');
+  assert.equal(a.els.find((e) => e.className === 'ap-person').value, 'Ana');
+  const x = run('nadie');
+  assert.deepEqual(shown(x).sort(), ['1', '2'], 'un login desconocido se ignora: se ven todos');
+  const sel = x.els.find((e) => e.className === 'ap-person');
+  sel.value = 'beto';
+  sel.listeners.change();
+  assert.deepEqual(x.chosen, ['beto'], 'elegir avisa para escribirlo en la URL');
+});

@@ -359,7 +359,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     abiertos y con el equipo cargado se agota lo que Chromium tiene para pedir archivos; contar los contextos vivos en
     ese paso y cerrar los que ya no se usan. Reproducción: `node tools/smoke.mjs` con el equipo cargado → `consola: Failed
     to load resource: net::ERR_INSUFFICIENT_RESOURCES (…/js/i18n.js) | excepción: GB is not defined`.
-3. [Deuda] Dos pasos ajenos del smoke fallaron en las puertas de la iteración 244 (2026-11-09; en la tercera pasaron): «editar el código: desde los cambios de un commit se abre su archivo…» (`page.waitForFunction: Timeout 15000ms`, ya cubierto por el pendiente [Deuda] anterior de esa sección) y «la ficha de un commit de agente dice cuál es, con su modelo y su sesión (2D)» (`ninguna ficha de rama dice su agente: ""`). Hipótesis del segundo: el paso mira la ficha antes de que el repintado de las ramas del agente la llene; esperar una señal del DOM en vez de leerla al instante. Reproducción: `node tools/smoke.mjs` repetido → `la ficha de un commit de agente dice cuál es…: ninguna ficha de rama dice su agente: ""`.
+3. [Deuda] Dos pasos ajenos del smoke fallaron en las puertas de la iteración 244 (2026-11-09; en la tercera pasaron): «editar el código: desde los cambios de un commit se abre su archivo…» (`page.waitForFunction: Timeout 15000ms`, ya cubierto por el pendiente [Deuda] anterior de esa sección) y «la ficha de un commit de agente dice cuál es, con su modelo y su sesión (2D)» (`ninguna ficha de rama dice su agente: ""`). Hipótesis del segundo: el paso mira la ficha antes de que el repintado de las ramas del agente la llene; esperar una señal del DOM en vez de leerla al instante. Reproducción: `node tools/smoke.mjs` repetido → `la ficha de un commit de agente dice cuál es…: ninguna ficha de rama dice su agente: ""`. Iteración 248 (2026-11-10): otro paso ajeno falló una vez y pasó al repetir la puerta: «filtro por autor: el grafo y el árbol de texto muestran solo sus ramas, lo dice y se quita» (`quitar el filtro no deja el grafo como estaba (3 etiquetas, con el filtro 3, antes 6)`: lee las etiquetas antes de que el grafo se repinte).
 
 ### Baja
 
@@ -612,5 +612,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (contar al pintar).
 - OMC: plan=— · revisión=— · verificación=— (diff de unas líneas, leído a mano; sin subagentes)
 - Reclamo: loop/248, sin colisión
-- Validado: pendiente
+- Validado: 650 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde (la primera puerta falló en un paso ajeno e intermitente, anotado en el pendiente 3 de Deuda; la segunda pasó).
 - **Siguiente:** iteración 249, expansión: ítem 161 (Resumen de la semana de la organización: quién fusionó, Salidas)

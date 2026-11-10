@@ -156,6 +156,7 @@ GB.i18n.define('id', {
   'tv.label': 'Mode TV',
   'tv.title': 'Mode TV: untuk layar bersama, dengan kamera otomatis dan layar tetap menyala',
   'tv.exit': 'Keluar dari mode TV',
+  'tv.allTitle': 'Semua repositori yang diikuti sekaligus, masing-masing di kartunya (R)',
 
   /* ---------- lapisan permainan: pencapaian repositori, level, dan misi hari ini ---------- */
   'game.trophies': 'Trofi',

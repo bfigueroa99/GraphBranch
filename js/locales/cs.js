@@ -161,6 +161,7 @@ GB.i18n.define('cs', {
   'tv.label': 'Režim TV',
   'tv.title': 'Režim TV: pro sdílenou obrazovku, s automatickou kamerou a stále zapnutou obrazovkou',
   'tv.exit': 'Ukončit režim TV',
+  'tv.allTitle': 'Všechny sledované repozitáře najednou, každý na své kartě (R)',
 
   /* ---------- herní vrstva: úspěchy repozitáře, úroveň a mise dne ---------- */
   'game.trophies': 'Trofeje',

@@ -2225,6 +2225,77 @@ console.log('Varios repos a la vez');
     await page.waitForSelector('#all-panel', { state: 'hidden', timeout: T(3000) });
   });
 
+  await step(page, 'modo TV en la vista conjunta: entra con todos los repos a la vista y sin desplazarse, R pasa al grafo y vuelve, y al salir queda como estaba sin guardar nada', async () => {
+    await page.click('#all-tab');
+    await page.waitForSelector('#all-panel:not([hidden]) .rc-card', { timeout: T(5000) });
+    const saved = await page.evaluate(() => localStorage.getItem('graphbranch:all'));
+    await page.click('#all-tv-btn'); // el botón de la cabecera: el de la barra del grafo no se ve con la vista conjunta
+    await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: T(3000) });
+    const tvState = () =>
+      page.evaluate(() => {
+        const grid = document.querySelector('#all-grid');
+        const bar = document.querySelector('#tv-bar');
+        return {
+          all: document.querySelector('.app').classList.contains('all-on') && !document.querySelector('#all-panel').hidden,
+          graph: document.querySelector('#graph-panel').checkVisibility(),
+          bar: bar.closest('#all-panel') ? 'todos' : bar.closest('#graph-panel') ? 'grafo' : 'otro',
+          barShown: bar.checkVisibility(),
+          pressed: document.querySelector('#tv-all').getAttribute('aria-pressed'),
+          grid: `${grid.style.getPropertyValue('--tv-cols')}x${grid.style.getPropertyValue('--tv-rows')}`,
+          scroll: grid.scrollHeight - grid.clientHeight,
+          inside: [...grid.querySelectorAll('.rc-card')].every((c) => {
+            const r = c.getBoundingClientRect();
+            return r.height > 120 && r.top >= 0 && r.bottom <= innerHeight + 1;
+          }),
+          controls: ['#all-panel .hint', '.ap-pin', '.ap-person'].filter((s) => document.querySelector(s)?.checkVisibility()),
+          focus: document.activeElement?.id || '',
+        };
+      });
+    const on = await tvState();
+    if (!on.all || on.bar !== 'todos' || !on.barShown || on.pressed !== 'true') throw new Error(`al entrar desde la vista conjunta no se queda en ella con su barra: ${JSON.stringify(on)}`);
+    if (on.grid !== '2x1' || on.scroll > 1 || !on.inside) throw new Error(`las tarjetas no entran en la pantalla: ${JSON.stringify(on)}`);
+    if (on.controls.length) throw new Error(`en TV se ven controles: ${on.controls.join(', ')}`);
+    if (on.focus !== 'all-panel') throw new Error(`el foco quedó en ${on.focus || 'el documento'} y no en la vista`);
+    // lo que llega a un repo enciende su tarjeta (en la vista conjunta no se salta de un repo a otro)
+    gh.push('o/b', 'main', 'llega en la TV');
+    await page.waitForSelector('.rc-card[data-key="o/b"].rc-news', { timeout: T(15000) });
+    if (!(await tvState()).all) throw new Error('una novedad sacó la pantalla de la vista conjunta');
+    await page.keyboard.press('r');
+    await page.waitForFunction(() => !document.querySelector('.app').classList.contains('all-on'), null, { timeout: T(3000) });
+    const graph = await tvState();
+    if (!graph.graph || graph.bar !== 'grafo' || graph.pressed !== 'false') throw new Error(`R no pasa al grafo con su barra: ${JSON.stringify(graph)}`);
+    await page.click('#tv-all');
+    await page.waitForFunction(() => document.querySelector('.app').classList.contains('all-on'), null, { timeout: T(3000) });
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: T(3000) });
+    const off = await page.evaluate(() => ({ all: document.querySelector('.app').classList.contains('all-on'), saved: localStorage.getItem('graphbranch:all'), url: new URL(location.href).searchParams.get('tv') }));
+    if (!off.all || off.saved !== saved || off.url) throw new Error(`al salir del modo TV no queda como estaba: ${JSON.stringify(off)} (guardado antes: ${saved})`);
+    // el foco no se pierde: sigue en la vista (como en el grafo al salir con Esc)
+    if (!(await page.evaluate(() => document.activeElement && document.activeElement !== document.body && document.activeElement.getClientRects().length > 0))) throw new Error('al salir del modo TV, el foco se perdió');
+    await page.click('#all-tab'); // deja la vista conjunta como estaba para los pasos que siguen
+    await page.waitForSelector('#all-panel', { state: 'hidden', timeout: T(3000) });
+  });
+
+  await step(page, '?all=1&tv=1 abre el modo TV con todos los repos a la vista; ?tv=1 solo, con el grafo', async () => {
+    for (const [query, want] of [['all=1&tv=1', true], ['tv=1', false]]) {
+      const p = await openPage({ viewport: { width: 1280, height: 800 } });
+      await p.unroute('https://api.github.com/**');
+      await p.route('https://api.github.com/**', gh.handle);
+      await p.addInitScript(quickCycles);
+      try {
+        await p.goto(`${base}/index.html?lang=es&repo=o/a&repo=o/b&${query}`);
+        await p.waitForFunction(() => document.documentElement.classList.contains('tv') && document.querySelectorAll('#repo-tabs .rt').length === 2, null, { timeout: T(15000) });
+        if (want) await p.waitForSelector('#all-panel:not([hidden]) .rc-card', { timeout: T(10000) });
+        else await p.waitForTimeout(1500);
+        const got = await p.evaluate(() => ({ all: document.querySelector('.app').classList.contains('all-on'), btn: !document.querySelector('#tv-all').hidden }));
+        if (got.all !== want || !got.btn) throw new Error(`?${query}: ${JSON.stringify(got)}`);
+        if (p.errors.length) throw new Error(`?${query}: ${p.errors.join(' | ')}`);
+      } finally {
+        await p.context().close();
+      }
+    }
+  });
+
   await step(page, 'cerrar la pestaña deja de seguir el repo', async () => {
     await page.focus('#repo-tabs .rt:nth-child(1) .rt-close'); // o/a, con el teclado
     await page.keyboard.press('Enter');

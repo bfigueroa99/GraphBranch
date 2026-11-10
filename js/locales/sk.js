@@ -161,6 +161,7 @@ GB.i18n.define('sk', {
   'tv.label': 'Režim TV',
   'tv.title': 'Režim TV: na zdieľanú obrazovku, s automatickou kamerou a stále zapnutou obrazovkou',
   'tv.exit': 'Ukončiť režim TV',
+  'tv.allTitle': 'Všetky sledované repozitáre naraz, každý na svojej karte (R)',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'Trofeje',

@@ -156,6 +156,7 @@ GB.i18n.define('sv', {
   'tv.label': 'TV-läge',
   'tv.title': 'TV-läge: för en delad skärm, med automatisk kamera och skärmen alltid på',
   'tv.exit': 'Avsluta TV-läge',
+  'tv.allTitle': 'Alla följda repon på en gång, vart och ett i sitt kort (R)',
 
   /* ---------- spellager: repots prestationer, nivå och dagens uppdrag ---------- */
   'game.trophies': 'Troféer',

@@ -156,6 +156,7 @@ GB.i18n.define('nb', {
   'tv.label': 'TV-modus',
   'tv.title': 'TV-modus: for en delt skjerm, med automatisk kamera og skjermen alltid på',
   'tv.exit': 'Avslutt TV-modus',
+  'tv.allTitle': 'Alle fulgte repositorier på én gang, hvert i sitt kort (R)',
 
   /* ---------- spillag: repoets prestasjoner, nivå og dagens oppdrag ---------- */
   'game.trophies': 'Troféer',

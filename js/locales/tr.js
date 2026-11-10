@@ -156,6 +156,7 @@ GB.i18n.define('tr', {
   'tv.label': 'TV modu',
   'tv.title': 'TV modu: Ortak ekran için, otomatik kamera ve sürekli açık kalan ekranla',
   'tv.exit': 'TV modundan çık',
+  'tv.allTitle': 'Takip edilen tüm depolar bir arada, her biri kendi kartında (R)',
 
   /* ---------- oyun katmanı: depo başarımları, seviye ve günün görevi ---------- */
   'game.trophies': 'Kupalar',

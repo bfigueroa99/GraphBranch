@@ -177,6 +177,7 @@ GB.i18n.define('ar', {
   'tv.label': 'وضع التلفاز',
   'tv.title': 'وضع التلفاز: لشاشة مشتركة، مع كاميرا تلقائية وإبقاء الشاشة قيد التشغيل',
   'tv.exit': 'الخروج من وضع التلفاز',
+  'tv.allTitle': 'كل المستودعات المتابَعة معًا، كلٌّ في بطاقته (R)',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'الجوائز',

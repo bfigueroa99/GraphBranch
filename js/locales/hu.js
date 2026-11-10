@@ -156,6 +156,7 @@ GB.i18n.define('hu', {
   'tv.label': 'TV mód',
   'tv.title': 'TV mód: közös kijelzőre, automatikus kamerával és mindig bekapcsolva maradó képernyővel',
   'tv.exit': 'Kilépés a TV módból',
+  'tv.allTitle': 'Az összes követett tároló egyszerre, mindegyik a saját kártyáján (R)',
 
   /* ---------- játékréteg: a repozitórium eredményei, szintje és a nap küldetése ---------- */
   'game.trophies': 'Trófeák',

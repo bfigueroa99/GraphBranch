@@ -156,6 +156,7 @@ GB.i18n.define('fr', {
   'tv.label': 'Mode TV',
   'tv.title': 'Mode TV : pour un écran partagé, avec caméra automatique et écran toujours allumé',
   'tv.exit': 'Quitter le mode TV',
+  'tv.allTitle': 'Tous les dépôts suivis à la fois, chacun dans sa carte (R)',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'Trophées',

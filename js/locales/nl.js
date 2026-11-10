@@ -156,6 +156,7 @@ GB.i18n.define('nl', {
   'tv.label': 'Tv-modus',
   'tv.title': 'Tv-modus: voor een gedeeld scherm, met automatische camera en een scherm dat aan blijft',
   'tv.exit': 'Tv-modus verlaten',
+  'tv.allTitle': 'Alle gevolgde repository’s tegelijk, elk in een eigen kaart (R)',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'Trofeeën',

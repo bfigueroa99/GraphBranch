@@ -156,6 +156,7 @@ GB.i18n.define('de', {
   'tv.label': 'TV-Modus',
   'tv.title': 'TV-Modus: für einen gemeinsamen Bildschirm, mit automatischer Kamera und eingeschaltet bleibendem Bildschirm',
   'tv.exit': 'TV-Modus beenden',
+  'tv.allTitle': 'Alle verfolgten Repositorys auf einmal, jedes in seiner Karte (R)',
 
   /* ---------- Spielebene: Erfolge des Repositorys, Level und Mission des Tages ---------- */
   'game.trophies': 'Trophäen',

@@ -165,6 +165,7 @@ GB.i18n.define('ur', {
   'tv.label': 'ٹی وی موڈ',
   'tv.title': 'ٹی وی موڈ: مشترکہ اسکرین کے لیے، خودکار کیمرے اور ہمیشہ آن رہنے والی اسکرین کے ساتھ',
   'tv.exit': 'ٹی وی موڈ سے باہر نکلیں',
+  'tv.allTitle': 'تمام فالو کی گئی ریپوزٹریز ایک ساتھ، ہر ایک اپنے کارڈ میں (R)',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'ٹرافیاں',

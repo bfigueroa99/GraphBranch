@@ -104,6 +104,7 @@ test('statusKey: un 404 o la cuota agotada no se rotulan «Sin conexión»', () 
   assert.equal(U.statusKey({ state: 'live' }), 'status.live');
   assert.equal(U.statusKey({ state: 'error', error: { kind: 'notfound' } }), 'status.errorNotFound');
   assert.equal(U.statusKey({ state: 'error', error: { kind: 'rate' } }), 'status.errorRate');
+  assert.equal(U.statusKey({ state: 'error', error: { kind: 'auth' } }), 'status.errorAuth');
   assert.equal(U.statusKey({ state: 'error', error: { kind: 'network' } }), 'status.error');
   assert.equal(U.statusKey({ state: 'error' }), 'status.error');
   assert.equal(U.statusKey({ state: 'inventado' }), null);

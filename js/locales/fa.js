@@ -39,6 +39,7 @@ GB.i18n.define('fa', {
   'status.error': 'بدون اتصال',
   'status.errorNotFound': 'پیدا نشد',
   'status.errorRate': 'سهمیه تمام شد',
+  'status.errorAuth': 'توکن نامعتبر',
   'status.retryIn': 'تلاش دوباره پس از {time}',
   'status.stopped': 'متوقف شد',
   'status.resumeHint': 'برای ادامه، دکمه «ادامه» را بزنید',

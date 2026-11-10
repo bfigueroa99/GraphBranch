@@ -39,6 +39,7 @@ GB.i18n.define('nl', {
   'status.error': 'Offline',
   'status.errorNotFound': 'Niet gevonden',
   'status.errorRate': 'Limiet bereikt',
+  'status.errorAuth': 'Ongeldig token',
   'status.retryIn': 'opnieuw proberen over {time}',
   'status.stopped': 'gestopt',
   'status.resumeHint': 'hervat om door te gaan',

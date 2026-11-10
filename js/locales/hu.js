@@ -39,6 +39,7 @@ GB.i18n.define('hu', {
   'status.error': 'Nincs kapcsolat',
   'status.errorNotFound': 'Nem található',
   'status.errorRate': 'A keret elfogyott',
+  'status.errorAuth': 'Érvénytelen token',
   'status.retryIn': 'újrapróbálkozás {time} múlva',
   'status.stopped': 'leállítva',
   'status.resumeHint': 'folytasd a továbbhaladáshoz',

@@ -39,6 +39,7 @@ GB.i18n.define('hr', {
   'status.error': 'Izvan mreže',
   'status.errorNotFound': 'Nije pronađeno',
   'status.errorRate': 'Kvota iskorištena',
+  'status.errorAuth': 'Nevažeći token',
   'status.retryIn': 'ponovni pokušaj za {time}',
   'status.stopped': 'zaustavljeno',
   'status.resumeHint': 'pokrenite ponovno za nastavak',

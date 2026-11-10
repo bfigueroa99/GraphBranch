@@ -39,6 +39,7 @@ GB.i18n.define('ms', {
   'status.error': 'Luar talian',
   'status.errorNotFound': 'Tidak ditemui',
   'status.errorRate': 'Kuota habis',
+  'status.errorAuth': 'Token tidak sah',
   'status.retryIn': 'cuba semula dalam {time}',
   'status.stopped': 'dihentikan',
   'status.resumeHint': 'sambung semula untuk meneruskan',

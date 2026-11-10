@@ -39,6 +39,7 @@ GB.i18n.define('pt', {
   'status.error': 'Offline',
   'status.errorNotFound': 'Não encontrado',
   'status.errorRate': 'Cota esgotada',
+  'status.errorAuth': 'Token inválido',
   'status.retryIn': 'nova tentativa em {time}',
   'status.stopped': 'parado',
   'status.resumeHint': 'retome para continuar',

@@ -39,6 +39,7 @@ GB.i18n.define('ru', {
   'status.error': 'Нет связи',
   'status.errorNotFound': 'Не найдено',
   'status.errorRate': 'Лимит исчерпан',
+  'status.errorAuth': 'Недействительный токен',
   'status.retryIn': 'повтор через {time}',
   'status.stopped': 'остановлено',
   'status.resumeHint': 'возобновите, чтобы продолжить',

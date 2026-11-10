@@ -39,6 +39,7 @@ GB.i18n.define('hi', {
   'status.error': 'ऑफ़लाइन',
   'status.errorNotFound': 'नहीं मिला',
   'status.errorRate': 'कोटा समाप्त',
+  'status.errorAuth': 'टोकन अमान्य',
   'status.retryIn': 'फिर कोशिश: {time} बाद',
   'status.stopped': 'बंद',
   'status.resumeHint': 'जारी रखने के लिए फिर शुरू करें',

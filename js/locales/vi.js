@@ -39,6 +39,7 @@ GB.i18n.define('vi', {
   'status.error': 'Ngoại tuyến',
   'status.errorNotFound': 'Không tìm thấy',
   'status.errorRate': 'Hết hạn mức',
+  'status.errorAuth': 'Token không hợp lệ',
   'status.retryIn': 'thử lại sau {time}',
   'status.stopped': 'đã dừng',
   'status.resumeHint': 'hãy tiếp tục để chạy lại',

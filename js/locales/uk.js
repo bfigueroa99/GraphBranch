@@ -39,6 +39,7 @@ GB.i18n.define('uk', {
   'status.error': "Немає зв'язку",
   'status.errorNotFound': 'Не знайдено',
   'status.errorRate': 'Ліміт вичерпано',
+  'status.errorAuth': 'Недійсний токен',
   'status.retryIn': 'повтор через {time}',
   'status.stopped': 'зупинено',
   'status.resumeHint': 'відновіть, щоб продовжити',

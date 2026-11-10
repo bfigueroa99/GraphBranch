@@ -39,6 +39,7 @@ GB.i18n.define('fr', {
   'status.error': 'Hors ligne',
   'status.errorNotFound': 'Introuvable',
   'status.errorRate': 'Quota épuisé',
+  'status.errorAuth': 'Jeton invalide',
   'status.retryIn': 'nouvel essai dans {time}',
   'status.stopped': 'arrêté',
   'status.resumeHint': 'reprenez pour continuer',

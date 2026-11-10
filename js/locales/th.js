@@ -39,6 +39,7 @@ GB.i18n.define('th', {
   'status.error': 'ออฟไลน์',
   'status.errorNotFound': 'ไม่พบ',
   'status.errorRate': 'โควตาหมด',
+  'status.errorAuth': 'โทเคนไม่ถูกต้อง',
   'status.retryIn': 'ลองใหม่ใน {time}',
   'status.stopped': 'หยุดแล้ว',
   'status.resumeHint': 'กดดำเนินการต่อเพื่อใช้งานต่อ',

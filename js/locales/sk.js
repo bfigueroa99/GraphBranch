@@ -39,6 +39,7 @@ GB.i18n.define('sk', {
   'status.error': 'Offline',
   'status.errorNotFound': 'Nenájdené',
   'status.errorRate': 'Limit vyčerpaný',
+  'status.errorAuth': 'Neplatný token',
   'status.retryIn': 'ďalší pokus o {time}',
   'status.stopped': 'zastavené',
   'status.resumeHint': 'pre pokračovanie stlačte Pokračovať',

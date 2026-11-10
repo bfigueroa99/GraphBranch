@@ -39,6 +39,7 @@ GB.i18n.define('sw', {
   'status.error': 'Nje ya mtandao',
   'status.errorNotFound': 'Haijapatikana',
   'status.errorRate': 'Kiwango kimeisha',
+  'status.errorAuth': 'Tokeni si halali',
   'status.retryIn': 'itajaribu tena baada ya {time}',
   'status.stopped': 'imesimama',
   'status.resumeHint': 'bofya Endelea ili kuendelea',

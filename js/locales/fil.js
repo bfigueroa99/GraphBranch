@@ -39,6 +39,7 @@ GB.i18n.define('fil', {
   'status.error': 'Offline',
   'status.errorNotFound': 'Hindi nahanap',
   'status.errorRate': 'Naubos ang quota',
+  'status.errorAuth': 'Di-wastong token',
   'status.retryIn': 'susubukan muli sa loob ng {time}',
   'status.stopped': 'huminto',
   'status.resumeHint': 'ituloy para magpatuloy',

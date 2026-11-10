@@ -44,6 +44,7 @@ GB.i18n.define('en', {
   'status.error': 'Offline',
   'status.errorNotFound': 'Not found',
   'status.errorRate': 'Quota exhausted',
+  'status.errorAuth': 'Invalid token',
   'status.retryIn': 'retrying in {time}',
   'status.stopped': 'stopped',
   'status.resumeHint': 'resume to continue',

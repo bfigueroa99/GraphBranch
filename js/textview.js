@@ -204,6 +204,12 @@
       if (txt != null) n.textContent = txt;
       return n;
     };
+    // texto que el nombre accesible del nodo (su aria-label) ya dice: el lector no lo repite al leer el contenido
+    const mkSilent = (cls, txt) => {
+      const n = mk('span', cls, txt);
+      n.setAttribute('aria-hidden', 'true');
+      return n;
+    };
 
     function draw() {
       root.textContent = '';
@@ -256,12 +262,12 @@
         const info = mk('span', 'tv-info');
         head.appendChild(info);
         info.appendChild(mk('span', 'tv-name', b.name));
-        if (b.isDefault) info.appendChild(mk('span', 'tv-tag', text('textview.default')));
-        if (b.prs) info.appendChild(mk('span', 'tv-tag', text('textview.prs', { n: b.prs })));
-        if (b.fresh) info.appendChild(mk('span', 'tv-tag', text('textview.fresh')));
-        if (b.quiet) info.appendChild(mk('span', 'tv-tag', text('textview.quiet')));
-        if (b.merged) info.appendChild(mk('span', 'tv-tag', text('textview.merged')));
-        if (b.ciFailing) info.appendChild(mk('span', 'tv-tag tv-ci-fail', '✗ ' + text('textview.ciFailing')));
+        if (b.isDefault) info.appendChild(mkSilent('tv-tag', text('textview.default')));
+        if (b.prs) info.appendChild(mkSilent('tv-tag', text('textview.prs', { n: b.prs })));
+        if (b.fresh) info.appendChild(mkSilent('tv-tag', text('textview.fresh')));
+        if (b.quiet) info.appendChild(mkSilent('tv-tag', text('textview.quiet')));
+        if (b.merged) info.appendChild(mkSilent('tv-tag', text('textview.merged')));
+        if (b.ciFailing) info.appendChild(mkSilent('tv-tag tv-ci-fail', '✗ ' + text('textview.ciFailing')));
         if (hideOk(b)) {
           const acts = mk('span', 'tv-acts');
           head.appendChild(acts);
@@ -289,7 +295,7 @@
           ci.setAttribute('aria-label', parts.filter(Boolean).join(', '));
           ci.appendChild(mk('span', 'tv-sha', c.sha.slice(0, 7)));
           ci.appendChild(mk('span', 'tv-msg', c.message || ''));
-          ci.appendChild(mk('span', 'tv-aside', [c.merge && text('textview.merge'), ...c.releases.map((t) => text('textview.release', { name: t })), ...c.tags, when].filter(Boolean).join(' · ')));
+          ci.appendChild(mkSilent('tv-aside', [c.merge && text('textview.merge'), ...c.releases.map((t) => text('textview.release', { name: t })), ...c.tags, when].filter(Boolean).join(' · ')));
           group.appendChild(ci);
         }
         li.appendChild(group);

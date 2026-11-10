@@ -937,6 +937,9 @@ console.log('Escritorio (1280×800)');
     // la marca «CI fallando» de una rama (si la demo tiene alguna con el CI en rojo) también está en su nombre accesible
     const ciMarks = await page.evaluate(() => [...document.querySelectorAll('#textview .tv-ci-fail')].map((n) => ({ tag: n.textContent.replace(/^✗\s*/, ''), label: n.closest('[role="treeitem"]').getAttribute('aria-label') })));
     for (const m of ciMarks) if (!m.tag || !m.label.includes(m.tag)) throw new Error('«CI fallando» no está en el nombre accesible: ' + JSON.stringify(m));
+    // las marcas de una rama y la nota de un commit ya van en el nombre accesible de su nodo: no se leen dos veces
+    const loud = await page.evaluate(() => [...document.querySelectorAll('#textview [role="treeitem"][aria-label] :is(.tv-tag, .tv-aside)')].filter((n) => !n.closest('[aria-hidden="true"]')).map((n) => n.className + ': ' + n.textContent));
+    if (loud.length) throw new Error('marcas que el lector leería dos veces (sin aria-hidden): ' + loud.slice(0, 3).join(' | '));
     // los commits con tag lo dicen en su nombre accesible («tag v1.0.0») y la región viva cuenta cuántos hay al abrir
     const marks = await page.evaluate(() => {
       const commits = [...document.querySelectorAll('#textview .tv-commit')];

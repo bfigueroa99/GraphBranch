@@ -127,7 +127,7 @@
       closed: { total: closed.length, rows: closed.slice(0, LIST) },
       releases: { total: releases.length, rows: releases.slice(0, LIST) },
       tags: { total: tags.length, rows: tags.slice(0, LIST) },
-      mergers: { total: mergers.size, rows: [...mergers].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, prs]) => ({ name, prs })) },
+      mergers: { total: mergers.size, all: [...mergers], rows: [...mergers].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, prs]) => ({ name, prs })) },
       people: { total: people.size, rows: [...people].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, commits]) => ({ name, commits })) },
       branch,
     };
@@ -179,7 +179,11 @@
       for (const who of a.before) before.add(who);
     }
     const newcomers = [...week].filter((who) => !before.has(who)).length;
-    return { since, now, days, repos: rows.length, commits: sum((d) => d.commits), newcomers, merged: sum((d) => d.merged.total), opened: sum((d) => d.opened.total), closed: sum((d) => d.closed.total), releases: sum((d) => d.releases.total), newBranches: sum((d) => d.newBranches), rows: busy.slice(0, ORG_REPOS), hidden: Math.max(0, busy.length - ORG_REPOS) };
+    // quién fusionó en la organización: la misma cuenta suma sus PRs de todos los repos seguidos
+    const byMerger = new Map();
+    for (const r of rows) for (const [who, n] of r.d.mergers.all) byMerger.set(who, (byMerger.get(who) || 0) + n);
+    const mergers = { total: byMerger.size, rows: [...byMerger].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, prs]) => ({ name, prs })) };
+    return { since, now, days, repos: rows.length, commits: sum((d) => d.commits), newcomers, mergers, merged: sum((d) => d.merged.total), opened: sum((d) => d.opened.total), closed: sum((d) => d.closed.total), releases: sum((d) => d.releases.total), newBranches: sum((d) => d.newBranches), rows: busy.slice(0, ORG_REPOS), hidden: Math.max(0, busy.length - ORG_REPOS) };
   }
 
   /** La lista corta de una sección por repo: sus filas y, si la semana trae más, cuántas faltan. */
@@ -190,6 +194,7 @@
     const out = [`# ${md(t.head.replace('{repo}', owner))}`, '', `${fmtDate(o.since)} – ${fmtDate(o.now)}`, '', `- ${t.commits.replace('{n}', o.commits)}`];
     if (o.newcomers && t.newcomers) out.push(`- ${t.newcomers.replace('{n}', o.newcomers)}`);
     out.push(`- ${t.merged}: ${o.merged}`);
+    if (o.mergers?.rows.length && t.mergers) out.push(`- ${t.mergers}: ${o.mergers.rows.map((r) => `${md(r.name)} (${r.prs})`).join(', ')}`);
     if (o.opened && t.opened) out.push(`- ${t.opened}: ${o.opened}`);
     if (o.closed && t.closed) out.push(`- ${t.closed}: ${o.closed}`);
     out.push(`- ${t.releases}: ${o.releases}`);
@@ -244,6 +249,7 @@
     L.push({ text: t.commits.replace('{n}', o.commits), kind: 'head' });
     if (o.newcomers && t.newcomers) L.push({ text: cut(t.newcomers.replace('{n}', o.newcomers)), kind: 'row' });
     L.push({ text: `${t.merged}: ${o.merged}`, kind: 'row' });
+    if (o.mergers?.rows.length && t.mergers) L.push({ text: cut(`${t.mergers}: ${o.mergers.rows.map((r) => `${flat(r.name)} (${r.prs})`).join(' · ')}`), kind: 'row' });
     if (o.opened && t.opened) L.push({ text: cut(`${t.opened}: ${o.opened}`), kind: 'row' });
     if (o.closed && t.closed) L.push({ text: cut(`${t.closed}: ${o.closed}`), kind: 'row' });
     L.push({ text: `${t.releases}: ${o.releases}`, kind: 'row' });

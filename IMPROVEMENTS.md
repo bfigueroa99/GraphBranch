@@ -576,5 +576,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (leer el parámetro y avisar al elegir).
 - OMC: plan=— · revisión=— · verificación=— (diff de unas líneas, leído a mano; sin subagentes)
 - Reclamo: loop/245, sin colisión
-- Validado: PENDIENTE
+- Validado: 644 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 246, expansión: ítem 160 (Token para un Forgejo o Gitea propio, Fuentes)

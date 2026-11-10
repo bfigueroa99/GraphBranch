@@ -463,6 +463,8 @@ GB.i18n.define('vi', {
   'settings.bbdcTokenWhere': 'Token chỉ được lưu trong trình duyệt này, tách riêng với các token khác và gắn với {host}: chỉ được gửi đến đó.',
   'settings.bbdcTokenWhereKeychain': 'Token chỉ được lưu trên máy tính này, được mã hóa bằng chuỗi khóa của hệ thống và gắn với {host}: chỉ được gửi đến đó.',
   'settings.bbdcTokenWherePlain': 'Token chỉ được lưu trên máy tính này nhưng không mã hóa: hệ thống không có chuỗi khóa. Token gắn với {host} và chỉ được gửi đến đó.',
+  'settings.forgeToken': 'Token cho máy chủ Forgejo hoặc Gitea của bạn',
+  'settings.forgeTokenHelp': 'Cho Forgejo hoặc Gitea riêng của bạn: một token truy cập có phạm vi <code>read:repository</code> để xem kho riêng tư. Kho công khai không cần.',
   'settings.hooks': 'Thông báo tới Slack, Discord và Teams',
   'settings.hooksHelp': 'Mỗi webhook nhận các sự kiện bạn đánh dấu: bản phát hành, hợp nhất vào nhánh mặc định, CI chuyển sang đỏ và force-push lên nhánh đó. URL là bí mật: nó chỉ nằm trên máy này (được mã hóa nếu hệ thống có chuỗi khóa) và chỉ được gửi tới dịch vụ của nó.',
   'settings.webhook': 'Webhook {service}',

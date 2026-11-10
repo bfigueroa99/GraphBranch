@@ -151,11 +151,29 @@ test('--gitlab-url suma solo ese host al CSP y la página lo recibe; sin https s
 
 test('--forge-url suma solo ese host al CSP (conexiones y avatares) y la página lo recibe; sin https se ignora', async ({}, testInfo) => {
   const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
-  let { app, page } = await launch(testInfo, { args: ['--lang=es', '--forge-url=https://forge.example.com'] });
+  const args = ['--lang=es', '--forge-url=https://forge.example.com'];
+  let { app, page, dir } = await launch(testInfo, { args });
+  const packed = JSON.stringify({ base: 'https://forge.example.com', token: 'fg-e2e' });
   try {
     expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://forge.example.com https://api.bitbucket.org https://dev.azure.com https://api.anthropic.com');
     expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://forge.example.com;');
     expect(page.url()).toContain('forge=' + encodeURIComponent('https://forge.example.com'));
+    await loaded(page);
+    // su token, aparte en el llavero ('forgejo') y atado a ese servidor
+    expect(await page.evaluate(async (v) => {
+      await window.GBDesktop.setToken(v, 'forgejo');
+      return (await window.GBDesktop.getToken('forgejo')).token;
+    }, packed)).toBe(packed);
+  } finally {
+    await app.close();
+  }
+  ({ app, page } = await launch(testInfo, { dir, args }));
+  try {
+    await loaded(page);
+    await page.click('#settings-btn');
+    await expect(page.locator('#forge-token-field')).toBeVisible();
+    await expect(page.locator('#forge-token-input')).toHaveValue('fg-e2e');
+    await expect(page.locator('#forge-token-where')).toContainText('forge.example.com');
   } finally {
     await app.close();
   }

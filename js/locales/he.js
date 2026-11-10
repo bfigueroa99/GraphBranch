@@ -520,6 +520,8 @@ GB.i18n.define('he', {
   'settings.bbdcTokenWhere': 'האסימון נשמר רק בדפדפן הזה, בנפרד מהאחרים וקשור ל-{host}: הוא נשלח רק לשם.',
   'settings.bbdcTokenWhereKeychain': 'האסימון נשמר רק במחשב הזה, מוצפן במחזיק המפתחות של המערכת וקשור ל-{host}: הוא נשלח רק לשם.',
   'settings.bbdcTokenWherePlain': 'האסימון נשמר רק במחשב הזה, אבל ללא הצפנה: אין למערכת מחזיק מפתחות זמין. הוא קשור ל-{host} ונשלח רק לשם.',
+  'settings.forgeToken': 'אסימון לשרת Forgejo או Gitea שלך',
+  'settings.forgeTokenHelp': 'עבור Forgejo או Gitea משלך: אסימון גישה עם ההיקף <code>read:repository</code> לצפייה במאגרים פרטיים. מאגרים ציבוריים אינם זקוקים לו.',
   'settings.hooks': 'התראות ל-Slack, ל-Discord ול-Teams',
   'settings.hooksHelp': 'כל webhook מקבל את האירועים שסימנת: גרסאות, מיזוגים לענף ברירת המחדל, CI שהופך לאדום ו-force-push אליו. הכתובת היא סוד: היא נשארת במחשב הזה (מוצפנת אם למערכת יש מחזיקת מפתחות) ונשלחת רק לשירות שלה.',
   'settings.webhook': 'webhook של {service}',

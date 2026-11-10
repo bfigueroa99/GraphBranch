@@ -463,6 +463,8 @@ GB.i18n.define('ko', {
   'settings.bbdcTokenWhere': '토큰은 이 브라우저에만, 다른 토큰과 따로 {host}에 묶여 저장되며 그곳으로만 전송됩니다.',
   'settings.bbdcTokenWhereKeychain': '토큰은 이 컴퓨터에만, 시스템 키체인으로 암호화되고 {host}에 묶여 저장되며 그곳으로만 전송됩니다.',
   'settings.bbdcTokenWherePlain': '토큰은 이 컴퓨터에만 저장되지만 암호화되지 않습니다: 시스템에 사용할 수 있는 키체인이 없습니다. {host}에 묶여 있으며 그곳으로만 전송됩니다.',
+  'settings.forgeToken': '내 Forgejo 또는 Gitea 서버의 토큰',
+  'settings.forgeTokenHelp': '직접 운영하는 Forgejo 또는 Gitea용: 비공개 저장소를 보기 위한 <code>read:repository</code> 범위의 액세스 토큰. 공개 저장소에는 필요하지 않습니다.',
   'settings.hooks': 'Slack, Discord 및 Teams 알림',
   'settings.hooksHelp': '각 웹훅은 선택한 이벤트를 받습니다: 릴리스, 기본 브랜치로의 머지, 빨간색으로 바뀐 CI, 기본 브랜치에 대한 강제 푸시. URL은 비밀입니다. 이 컴퓨터에만 남고(시스템에 키체인이 있으면 암호화됨) 해당 서비스로만 전송됩니다.',
   'settings.webhook': '{service} 웹훅',

@@ -533,6 +533,15 @@
       <p class="help" data-i18n-html="settings.bbdcTokenHelp">For your own Bitbucket Data Center or Server: a personal or HTTP access token with read permission on the repositories. Most servers don't let anyone read without signing in.</p>
       <p class="help" id="bbdc-token-where"></p>
     </div>
+    <div class="field" id="forge-token-field" hidden>
+      <label for="forge-token-input"><span data-i18n="settings.forgeToken">Token for your Forgejo or Gitea server</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <div class="field-row">
+        <input id="forge-token-input" type="password" autocomplete="off" spellcheck="false">
+        <button type="button" class="btn btn-ghost" id="forge-token-toggle">Show</button>
+      </div>
+      <p class="help" data-i18n-html="settings.forgeTokenHelp">For your own Forgejo or Gitea: an access token with the <code>read:repository</code> scope, to see private repositories. Public ones don't need one.</p>
+      <p class="help" id="forge-token-where"></p>
+    </div>
     <fieldset class="field hooks" id="hooks-box" hidden>
       <legend data-i18n="settings.hooks">Notices to Slack, Discord and Teams</legend>
       <p class="help" data-i18n="settings.hooksHelp">Each webhook gets the events you tick: releases, merges to the default branch, CI turning red and force-pushes on it. The URL is a secret: it is stored encrypted on this computer and is sent only to its own service.</p>

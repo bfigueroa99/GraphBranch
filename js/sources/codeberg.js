@@ -20,7 +20,8 @@
      10 minutos por IP, así que el sondeo va cada POLL_MS. Un repo privado responde 404, como uno
      que no existe. Con el token de Codeberg de Ajustes (`Authorization: token …`) se ven también los
      repos privados y la cuota es la de la cuenta: va en cada consulta, y solo a codeberg.org. Un
-     Forgejo/Gitea propio nunca lo recibe. */
+     Forgejo/Gitea propio nunca lo recibe: tiene el suyo, aparte y atado a la dirección del servidor
+     (`serverToken`, `pack`/`unpack`), que va solo a ese host; un 401 con él es el token. */
 (function (GB) {
   'use strict';
   const { U, i18n } = GB;
@@ -65,11 +66,12 @@
 
   class CodebergSource extends GB.GitHubSource {
     /** `webUrl` vacío es codeberg.org; con la dirección de un Forgejo/Gitea propio (?forge=, --forge-url=), ese servidor. Sin token en ningún caso.
-        `token`: el de Codeberg; no va en `this.token` (el de GitHub) y solo se usa contra codeberg.org. */
-    constructor({ owner, name, token = '', depth = 40, filter = '', pins = [], webUrl = '', avatars = false }) {
+        `token`: el de Codeberg; no va en `this.token` (el de GitHub) y solo se usa contra codeberg.org.
+        `serverToken`: el del servidor propio; solo se usa con `webUrl` válida, y es el único que ese servidor recibe. */
+    constructor({ owner, name, token = '', depth = 40, filter = '', pins = [], webUrl = '', avatars = false, serverToken = '' }) {
       super({ owner, name, token: '', depth, filter, pins });
       const own = !!webUrl && !!endpoints(webUrl); // una dirección que no sea https no se usa: queda codeberg.org
-      this.codebergToken = own ? '' : token;
+      this.codebergToken = own ? String(serverToken || '') : token;
       this.ep = (own && endpoints(webUrl)) || endpoints('');
       this.own = own;
       this.avatars = !own || avatars; // los de un servidor propio, solo si el CSP nombra su host en img-src (escritorio)
@@ -104,11 +106,13 @@
     }
 
     notFound() {
+      if (this.own && this.codebergToken) return new ApiError(M('err.notFoundBbdc', { repo: `${this.owner}/${this.name}` }), { status: 404, kind: 'notfound' });
       return new ApiError(M(this.own ? 'err.notFoundForge' : 'err.notFoundCodeberg', { repo: `${this.owner}/${this.name}` }), { status: 404, kind: 'notfound' });
     }
 
     toError(res, body) {
       if (res.status === 404) return this.notFound();
+      if (res.status === 401 && this.own && this.codebergToken) return new ApiError(M('err.authBbdc', { host: new URL(this.ep.web).host }), { status: 401, kind: 'auth' });
       if (res.status === 429) {
         const wait = Number(res.headers.get('Retry-After'));
         return new ApiError(M(this.own ? 'err.rateForge' : 'err.rateCodeberg'), { status: 429, kind: 'rate', resetAt: Date.now() + (wait > 0 ? wait * 1000 : 60000) });
@@ -405,5 +409,20 @@
   }
 
   CodebergSource.endpoints = endpoints;
+  /** El token de un Forgejo/Gitea propio como se guarda: atado a la dirección del servidor, '' si no hay token o la dirección no vale. */
+  CodebergSource.pack = (token, webUrl) => {
+    const ep = webUrl ? endpoints(webUrl) : null;
+    return token && ep ? JSON.stringify({ base: ep.web, token: String(token) }) : '';
+  };
+  /** El token guardado, solo si es del servidor `webUrl`; si no, ''. */
+  CodebergSource.unpack = (stored, webUrl) => {
+    const ep = webUrl ? endpoints(webUrl) : null;
+    try {
+      const v = JSON.parse(String(stored || ''));
+      return ep && v && v.base === ep.web && typeof v.token === 'string' ? v.token : '';
+    } catch {
+      return '';
+    }
+  };
   GB.CodebergSource = CodebergSource;
 })(window.GB);

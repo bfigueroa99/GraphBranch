@@ -463,6 +463,8 @@ GB.i18n.define('hu', {
   'settings.bbdcTokenWhere': 'A token csak ebben a böngészőben tárolódik, a többitől külön és a(z) {host} címhez kötve: csak oda kerül elküldésre.',
   'settings.bbdcTokenWhereKeychain': 'A token csak ezen a gépen tárolódik, a rendszer kulcstartójával titkosítva és a(z) {host} címhez kötve: csak oda kerül elküldésre.',
   'settings.bbdcTokenWherePlain': 'A token csak ezen a gépen tárolódik, de titkosítás nélkül: a rendszernek nincs elérhető kulcstartója. A(z) {host} címhez kötött, és csak oda kerül elküldésre.',
+  'settings.forgeToken': 'A saját Forgejo- vagy Gitea-kiszolgálód tokenje',
+  'settings.forgeTokenHelp': 'Saját Forgejóhoz vagy Giteához: <code>read:repository</code> hatókörű hozzáférési token a privát tárolók megtekintéséhez. A nyilvánosakhoz nem kell.',
   'settings.hooks': 'Értesítések Slackre, Discordra és Teamsre',
   'settings.hooksHelp': 'Minden webhook megkapja a bejelölt eseményeket: kiadások, összefésülések az alapértelmezett ágba, pirosra váltó CI és force-push arra. Az URL titok: ezen a számítógépen marad (titkosítva, ha a rendszernek van kulcstartója), és csak a saját szolgáltatásának küldi el.',
   'settings.webhook': '{service}-webhook',

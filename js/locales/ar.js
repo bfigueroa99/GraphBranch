@@ -562,6 +562,8 @@ GB.i18n.define('ar', {
   'settings.bbdcTokenWhere': 'يُحفظ الرمز في هذا المتصفح فقط، منفصلًا عن غيره ومرتبطًا بـ {host}: ولا يُرسل إلا إليه.',
   'settings.bbdcTokenWhereKeychain': 'يُحفظ الرمز على هذا الحاسوب فقط، مشفّرًا بسلسلة مفاتيح النظام ومرتبطًا بـ {host}: ولا يُرسل إلا إليه.',
   'settings.bbdcTokenWherePlain': 'يُحفظ الرمز على هذا الحاسوب فقط، لكن دون تشفير: لا تتوفر سلسلة مفاتيح في النظام. وهو مرتبط بـ {host} ولا يُرسل إلا إليه.',
+  'settings.forgeToken': 'رمز خادم Forgejo أو Gitea الخاص بك',
+  'settings.forgeTokenHelp': 'لخادم Forgejo أو Gitea خاص بك: رمز وصول بصلاحية <code>read:repository</code> لعرض المستودعات الخاصة. المستودعات العامة لا تحتاج إليه.',
   'settings.hooks': 'إشعارات إلى Slack وDiscord وTeams',
   'settings.hooksHelp': 'يتلقى كل webhook الأحداث التي تحددها: الإصدارات، والدمج في الفرع الافتراضي، وتحوّل CI إلى الأحمر، والدفع القسري إليه. العنوان سرّي: يبقى على هذا الحاسوب (مشفّرًا إن وُجد سلسلة مفاتيح في النظام) ويُرسل إلى خدمته فقط.',
   'settings.webhook': 'webhook الخاص بـ {service}',

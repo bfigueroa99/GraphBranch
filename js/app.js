@@ -163,6 +163,10 @@
     bbdcTokenInput: $('#bbdc-token-input'),
     bbdcTokenToggle: $('#bbdc-token-toggle'),
     bbdcTokenWhere: $('#bbdc-token-where'),
+    forgeTokenField: $('#forge-token-field'),
+    forgeTokenInput: $('#forge-token-input'),
+    forgeTokenToggle: $('#forge-token-toggle'),
+    forgeTokenWhere: $('#forge-token-where'),
     token2Owner: $('#token2-owner'),
     token2Input: $('#token2-input'),
     token2Toggle: $('#token2-toggle'),
@@ -231,6 +235,8 @@
     azureToken: desktop ? '' : U.secret.get('azureToken', ''),
     // el de un Bitbucket propio, aparte y atado a su dirección: si ?bitbucket= es otro, no se usa (ni se pisa hasta guardar Ajustes)
     bbdcToken: desktop ? '' : GB.BitbucketServerSource.unpack(U.secret.get('bbdcToken', ''), BITBUCKET_URL),
+    // el de un Forgejo/Gitea propio, igual: aparte y atado a su dirección (?forge=)
+    forgeToken: desktop ? '' : GB.CodebergSource.unpack(U.secret.get('forgeToken', ''), FORGE_URL),
     // la segunda cuenta de GitHub: un token atado a un dueño u organización, solo para sus repos
     account2: desktop ? { owner: '', token: '' } : GB.GitHubSource.unpack2(U.secret.get('account2', '')),
     depth: U.store.get('depth', 40),
@@ -631,7 +637,7 @@
     if (host === 'bitbucketdc') return new GB.BitbucketServerSource({ owner, name, webUrl: BITBUCKET_URL, serverToken: settings.bbdcToken, ...remembered });
     if (host === 'bitbucket') return new GB.BitbucketSource({ owner, name, token: settings.bitbucketToken, ...remembered });
     if (host === 'codeberg') return new GB.CodebergSource({ owner, name, token: settings.codebergToken, ...remembered });
-    if (host === 'forgejo') return new GB.CodebergSource({ owner, name, webUrl: FORGE_URL, avatars: desktop, ...remembered });
+    if (host === 'forgejo') return new GB.CodebergSource({ owner, name, webUrl: FORGE_URL, avatars: desktop, serverToken: settings.forgeToken, ...remembered });
     if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, webUrl: GITLAB_URL, avatars: desktop, ...remembered });
     return new GB.GitHubSource({ owner, name, token: GB.GitHubSource.tokenFor(owner, settings.token, settings.account2), apiUrl: API_URL, ...remembered });
   }
@@ -3760,7 +3766,7 @@
       showOverlay('loading', i18n.msg('status.retrying'));
       source.refreshNow();
     } else if (action === 'demo') startDemo();
-    else if (action === 'settings') openSettings({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput, bitbucket: el.bitbucketTokenInput, bitbucketdc: el.bbdcTokenInput, azure: el.azureTokenInput }[source?.host] || el.tokenInput);
+    else if (action === 'settings') openSettings({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput, bitbucket: el.bitbucketTokenInput, bitbucketdc: el.bbdcTokenInput, forgejo: el.forgeTokenInput, azure: el.azureTokenInput }[source?.host] || el.tokenInput);
   });
 
   /* ---------- controles ---------- */
@@ -4175,6 +4181,7 @@
     el.bitbucketTokenInput.value = settings.bitbucketToken;
     el.azureTokenInput.value = settings.azureToken;
     el.bbdcTokenInput.value = settings.bbdcToken;
+    el.forgeTokenInput.value = settings.forgeToken;
     el.token2Owner.value = settings.account2.owner;
     el.token2Input.value = settings.account2.token;
     for (const [input, toggle] of tokenFields) {
@@ -4244,6 +4251,7 @@
     [el.bitbucketTokenInput, el.bitbucketTokenToggle],
     [el.azureTokenInput, el.azureTokenToggle],
     [el.bbdcTokenInput, el.bbdcTokenToggle],
+    [el.forgeTokenInput, el.forgeTokenToggle],
     [el.token2Input, el.token2Toggle],
     ...hookFields.map((f) => [f.input, f.toggle]),
   ];
@@ -4265,6 +4273,7 @@
     el.bitbucketTokenInput.value = '';
     el.azureTokenInput.value = '';
     el.bbdcTokenInput.value = '';
+    el.forgeTokenInput.value = '';
     el.token2Owner.value = '';
     el.token2Input.value = '';
     for (const f of hookFields) f.input.value = '';
@@ -4279,9 +4288,11 @@
     settings.bitbucketToken = el.bitbucketTokenInput.value.trim();
     settings.azureToken = el.azureTokenInput.value.trim();
     if (BITBUCKET_URL) settings.bbdcToken = el.bbdcTokenInput.value.trim(); // sin servidor elegido, el campo no se ve y lo guardado queda como está
+    if (FORGE_URL) settings.forgeToken = el.forgeTokenInput.value.trim();
     const account2Stored = GB.GitHubSource.pack2(el.token2Owner.value, el.token2Input.value); // sin dueño o sin token, no hay segunda cuenta
     settings.account2 = GB.GitHubSource.unpack2(account2Stored);
     const bbdcStored = GB.BitbucketServerSource.pack(settings.bbdcToken, BITBUCKET_URL) || null;
+    const forgeStored = GB.CodebergSource.pack(settings.forgeToken, FORGE_URL) || null;
     settings.depth = Math.max(10, Math.min(100, Number(el.depth.value) || 40));
     settings.marks = el.marks.checked;
     if (desktop) {
@@ -4292,6 +4303,7 @@
       desktop.setToken(settings.bitbucketToken, 'bitbucket').catch(failed);
       desktop.setToken(settings.azureToken, 'azure').catch(failed);
       if (BITBUCKET_URL) desktop.setToken(bbdcStored || '', 'bitbucketdc').catch(failed);
+      if (FORGE_URL) desktop.setToken(forgeStored || '', 'forgejo').catch(failed);
       desktop.setToken(account2Stored, 'github2').catch(failed);
     } else {
       U.secret.set('token', settings.token || null);
@@ -4300,6 +4312,7 @@
       U.secret.set('bitbucketToken', settings.bitbucketToken || null);
       U.secret.set('azureToken', settings.azureToken || null);
       if (BITBUCKET_URL) U.secret.set('bbdcToken', bbdcStored);
+      if (FORGE_URL) U.secret.set('forgeToken', forgeStored);
       U.secret.set('account2', account2Stored || null);
     }
     U.store.set('depth', settings.depth);
@@ -4314,7 +4327,7 @@
     // se reconecta lo que cambió: un token de GitLab nuevo no gasta la cuota de GitHub. Si no cambió
     // nada, todo, como dice el botón
     const changed = (tab) =>
-      settings.depth !== before.depth || settings.marks !== before.marks || ({ gitlab: settings.gitlabToken !== before.gitlabToken, codeberg: settings.codebergToken !== before.codebergToken, bitbucket: settings.bitbucketToken !== before.bitbucketToken, forgejo: false, azure: settings.azureToken !== before.azureToken, bitbucketdc: settings.bbdcToken !== before.bbdcToken }[tab.source.host] ?? (settings.token !== before.token || settings.account2.token !== before.account2.token || settings.account2.owner !== before.account2.owner));
+      settings.depth !== before.depth || settings.marks !== before.marks || ({ gitlab: settings.gitlabToken !== before.gitlabToken, codeberg: settings.codebergToken !== before.codebergToken, bitbucket: settings.bitbucketToken !== before.bitbucketToken, forgejo: settings.forgeToken !== before.forgeToken, azure: settings.azureToken !== before.azureToken, bitbucketdc: settings.bbdcToken !== before.bbdcToken }[tab.source.host] ?? (settings.token !== before.token || settings.account2.token !== before.account2.token || settings.account2.owner !== before.account2.owner));
     if (realTabs().length) reconnectAll(realTabs().some(changed) ? changed : undefined);
     else el.tokenBanner.hidden = true;
   });
@@ -4330,6 +4343,7 @@
     for (const note of [el.tokenWhere, el.gitlabTokenWhere, el.codebergTokenWhere, el.bitbucketTokenWhere, el.azureTokenWhere]) note.textContent = t(note.dataset.i18n);
     bbdcWhere = keychain ? 'settings.bbdcTokenWhereKeychain' : 'settings.bbdcTokenWherePlain';
     renderBbdcField();
+    renderForgeField();
   }
 
   /** El campo del token de un Bitbucket propio: solo con un servidor elegido (?bitbucket=, --bitbucket-url=), y su aviso nombra ese host. */
@@ -4339,6 +4353,13 @@
     el.bbdcTokenWhere.textContent = BITBUCKET_URL ? t(bbdcWhere, { host: new URL(BITBUCKET_URL).host }) : '';
   }
   renderBbdcField();
+
+  /** El campo del token de un Forgejo/Gitea propio: igual, solo con ?forge= / --forge-url=. Usa los avisos del Bitbucket propio (dicen lo mismo). */
+  function renderForgeField() {
+    el.forgeTokenField.hidden = !FORGE_URL;
+    el.forgeTokenWhere.textContent = FORGE_URL ? t(bbdcWhere, { host: new URL(FORGE_URL).host }) : '';
+  }
+  renderForgeField();
 
   /** En la app de escritorio, el ícono de la bandeja y su aviso van en el idioma de la página. */
   function sendDesktopLabels() {
@@ -4359,6 +4380,7 @@
     settings.bitbucketToken = (await desktop.getToken('bitbucket')).token;
     settings.azureToken = (await desktop.getToken('azure')).token;
     if (BITBUCKET_URL) settings.bbdcToken = GB.BitbucketServerSource.unpack((await desktop.getToken('bitbucketdc')).token, BITBUCKET_URL);
+    if (FORGE_URL) settings.forgeToken = GB.CodebergSource.unpack((await desktop.getToken('forgejo')).token, FORGE_URL);
     settings.account2 = GB.GitHubSource.unpack2((await desktop.getToken('github2')).token);
     for (const service of GB.hooks.SERVICES) hookUrls[service] = (await desktop.getToken(service)).token;
     showTokenWhere(where);
@@ -4399,6 +4421,7 @@
     renderWebglNote();
     for (const [input, toggle] of tokenFields) showToggle(input, toggle);
     renderBbdcField();
+    renderForgeField();
     el.repoInput.setCustomValidity('');
     graph2d.relocalize();
     graph3d?.relocalize();

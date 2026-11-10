@@ -463,6 +463,8 @@ GB.i18n.define('ms', {
   'settings.bbdcTokenWhere': 'Token disimpan hanya dalam pelayar ini, berasingan daripada yang lain dan terikat kepada {host}: ia dihantar hanya ke sana.',
   'settings.bbdcTokenWhereKeychain': 'Token disimpan hanya pada komputer ini, disulitkan dengan rantai kunci sistem dan terikat kepada {host}: ia dihantar hanya ke sana.',
   'settings.bbdcTokenWherePlain': 'Token disimpan hanya pada komputer ini, tetapi tanpa penyulitan: sistem tiada rantai kunci. Ia terikat kepada {host} dan dihantar hanya ke sana.',
+  'settings.forgeToken': 'Token untuk pelayan Forgejo atau Gitea anda',
+  'settings.forgeTokenHelp': 'Untuk Forgejo atau Gitea anda sendiri: token akses dengan skop <code>read:repository</code>, untuk melihat repositori persendirian. Repositori awam tidak memerlukannya.',
   'settings.hooks': 'Pemberitahuan ke Slack, Discord dan Teams',
   'settings.hooksHelp': 'Setiap webhook menerima peristiwa yang anda tandakan: keluaran, gabungan ke cabang lalai, CI bertukar merah dan force-push padanya. URL ialah rahsia: kekal pada komputer ini (disulitkan jika sistem ada keychain) dan hanya dihantar ke perkhidmatannya sendiri.',
   'settings.webhook': 'Webhook {service}',

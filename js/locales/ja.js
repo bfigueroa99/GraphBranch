@@ -463,6 +463,8 @@ GB.i18n.define('ja', {
   'settings.bbdcTokenWhere': 'トークンはこのブラウザーにだけ、ほかのトークンとは別に {host} に結び付けて保存され、そこにだけ送信されます。',
   'settings.bbdcTokenWhereKeychain': 'トークンはこのコンピューターにだけ、システムのキーチェーンで暗号化し {host} に結び付けて保存され、そこにだけ送信されます。',
   'settings.bbdcTokenWherePlain': 'トークンはこのコンピューターにだけ保存されますが、暗号化されていません:システムに利用できるキーチェーンがありません。{host} に結び付けられ、そこにだけ送信されます。',
+  'settings.forgeToken': '自前の Forgejo / Gitea サーバーのトークン',
+  'settings.forgeTokenHelp': '自前の Forgejo または Gitea 用:非公開リポジトリを見るための <code>read:repository</code> スコープ付きアクセストークン。公開リポジトリには不要です。',
   'settings.hooks': 'Slack、Discord、Teams への通知',
   'settings.hooksHelp': '各 Webhook には、チェックしたイベントが届きます。リリース、デフォルトブランチへのマージ、CI の失敗、そこへの強制プッシュです。URL は秘密です。このコンピューターにのみ保存され（システムにキーチェーンがあれば暗号化）、対応するサービスにだけ送信されます。',
   'settings.webhook': '{service} の Webhook',

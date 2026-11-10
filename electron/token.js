@@ -11,7 +11,7 @@ const path = require('node:path');
 const file = (name) => path.join(app.getPath('userData'), name);
 /** Los servicios con token. Cada uno, en `<servicio>-token.enc`: cifrado (con el llavero o, en Linux
     sin llavero, con la clave fija de Chromium) o, si no hay cifrado, en claro en `<servicio>-token.txt`. */
-const SERVICES = ['github', 'gitlab', 'codeberg', 'bitbucket', 'bitbucketdc', 'github2', 'azure', 'slack', 'discord', 'teams', 'anthropic', 'openai', 'openrouter', 'omniroute']; // 'bitbucketdc' guarda el token atado a su servidor (JSON, ver js/sources/bitbucket-server.js); 'github2' guarda la segunda cuenta de GitHub, el token atado a su dueño (JSON, ver js/sources/github.js); 'slack', 'discord' y 'teams', la URL de un webhook (electron/webhooks.js); los cuatro últimos, las claves de los servicios de IA para leer su gasto (js/spend.js; 'omniroute' guarda su dirección y su clave en JSON)
+const SERVICES = ['github', 'gitlab', 'codeberg', 'bitbucket', 'bitbucketdc', 'forgejo', 'github2', 'azure', 'slack', 'discord', 'teams', 'anthropic', 'openai', 'openrouter', 'omniroute']; // 'bitbucketdc' y 'forgejo' guardan el token atado a su servidor (JSON, ver js/sources/bitbucket-server.js y codeberg.js); 'github2' guarda la segunda cuenta de GitHub, el token atado a su dueño (JSON, ver js/sources/github.js); 'slack', 'discord' y 'teams', la URL de un webhook (electron/webhooks.js); los cuatro últimos, las claves de los servicios de IA para leer su gasto (js/spend.js; 'omniroute' guarda su dirección y su clave en JSON)
 const names = (service) => {
   if (!SERVICES.includes(service)) throw new Error('servicio desconocido');
   return { ENCRYPTED: `${service}-token.enc`, PLAIN: `${service}-token.txt` };

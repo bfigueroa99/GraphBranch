@@ -464,6 +464,8 @@ GB.i18n.define('de', {
   'settings.bbdcTokenWhere': 'Das Token wird nur in diesem Browser gespeichert, getrennt von den anderen und an {host} gebunden: Es wird nur dorthin gesendet.',
   'settings.bbdcTokenWhereKeychain': 'Das Token wird nur auf diesem Computer gespeichert, mit dem Schlüsselbund des Systems verschlüsselt und an {host} gebunden: Es wird nur dorthin gesendet.',
   'settings.bbdcTokenWherePlain': 'Das Token wird nur auf diesem Computer gespeichert, aber unverschlüsselt: Das System hat keinen Schlüsselbund. Es ist an {host} gebunden und wird nur dorthin gesendet.',
+  'settings.forgeToken': 'Token für deinen Forgejo- oder Gitea-Server',
+  'settings.forgeTokenHelp': 'Für dein eigenes Forgejo oder Gitea: ein Zugriffstoken mit dem Scope <code>read:repository</code>, um private Repositories zu sehen. Öffentliche brauchen keines.',
   'settings.hooks': 'Benachrichtigungen an Slack, Discord und Teams',
   'settings.hooksHelp': 'Jeder Webhook erhält die Ereignisse, die du ankreuzt: Releases, Merges in den Standard-Branch, rot werdende CI und Force-Pushes darauf. Die URL ist geheim: Sie bleibt auf diesem Computer (verschlüsselt, wenn das System einen Schlüsselbund hat) und wird nur an ihren eigenen Dienst gesendet.',
   'settings.webhook': '{service}-Webhook',

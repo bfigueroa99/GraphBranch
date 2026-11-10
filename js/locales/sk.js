@@ -474,6 +474,8 @@ GB.i18n.define('sk', {
   'settings.bbdcTokenWhere': 'Token sa ukladá len v tomto prehliadači, oddelene od ostatných a viazaný na {host}: posiela sa len tam.',
   'settings.bbdcTokenWhereKeychain': 'Token sa ukladá len v tomto počítači, šifrovaný kľúčenkou systému a viazaný na {host}: posiela sa len tam.',
   'settings.bbdcTokenWherePlain': 'Token sa ukladá len v tomto počítači, ale nešifrovaný: systém nemá dostupnú kľúčenku. Je viazaný na {host} a posiela sa len tam.',
+  'settings.forgeToken': 'Token pre váš server Forgejo alebo Gitea',
+  'settings.forgeTokenHelp': 'Pre vlastný Forgejo alebo Gitea: prístupový token s oprávnením <code>read:repository</code> na zobrazenie súkromných repozitárov. Verejné ho nepotrebujú.',
   'settings.hooks': 'Oznámenia do Slacku, Discordu a Teams',
   'settings.hooksHelp': 'Každý webhook dostáva udalosti, ktoré zaškrtnete: vydania, zlúčenia do predvolenej vetvy, červené CI a force-push do nej. URL je tajomstvo: zostáva v tomto počítači (šifrovaná, ak má systém kľúčenku) a posiela sa len svojej službe.',
   'settings.webhook': 'Webhook služby {service}',

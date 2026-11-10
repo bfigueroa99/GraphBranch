@@ -463,6 +463,8 @@ GB.i18n.define('sw', {
   'settings.bbdcTokenWhere': 'Tokeni huhifadhiwa kwenye kivinjari hiki pekee, kando na nyingine na imefungwa kwa {host}: hutumwa huko pekee.',
   'settings.bbdcTokenWhereKeychain': 'Tokeni huhifadhiwa kwenye kompyuta hii pekee, imesimbwa kwa mnyororo wa funguo wa mfumo na imefungwa kwa {host}: hutumwa huko pekee.',
   'settings.bbdcTokenWherePlain': 'Tokeni huhifadhiwa kwenye kompyuta hii pekee, lakini bila kusimbwa: mfumo hauna mnyororo wa funguo. Imefungwa kwa {host} na hutumwa huko pekee.',
+  'settings.forgeToken': 'Tokeni ya seva yako ya Forgejo au Gitea',
+  'settings.forgeTokenHelp': 'Kwa Forgejo au Gitea yako mwenyewe: tokeni ya ufikiaji yenye wigo wa <code>read:repository</code>, ili kuona hazina za faragha. Za umma hazihitaji.',
   'settings.hooks': 'Arifa kwa Slack, Discord na Teams',
   'settings.hooksHelp': 'Kila webhook hupokea matukio unayoyachagua: matoleo, muunganisho kwenye tawi chaguomsingi, CI kuwa nyekundu na force-push kwenye tawi hilo. URL ni siri: hubaki kwenye kompyuta hii (imesimbwa kama mfumo una keychain) na hutumwa kwa huduma yake pekee.',
   'settings.webhook': 'Webhook ya {service}',

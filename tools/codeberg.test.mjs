@@ -432,6 +432,60 @@ test('los errores del servidor propio llevan sus textos y no nombran a Codeberg'
   assert.equal(c.src.term('err.timeout'), 'err.timeoutForge');
 });
 
+test('el servidor propio recibe solo su token, atado a su dirección; el de Codeberg nunca sale hacia él', async () => {
+  const cb = repo2();
+  cb.expectAuth = 'token mio-0123';
+  const { src } = connect(cb, { webUrl: OWN, token: 'de-codeberg', serverToken: 'mio-0123' });
+  await src.cycle();
+  assert.ok(cb.auths.length > 0);
+  assert.ok(cb.auths.every((a) => a === 'token mio-0123'), `salió ${JSON.stringify(cb.auths)}`);
+  // sin token propio no se manda nada, aunque haya uno de Codeberg
+  const cb2 = repo2();
+  const c2 = connect(cb2, { webUrl: OWN, token: 'de-codeberg' });
+  await c2.src.cycle();
+  assert.ok(cb2.auths.every((a) => !a), `salió ${JSON.stringify(cb2.auths)}`);
+  // y el token propio no sale hacia codeberg.org
+  const cb3 = fakeCodeberg();
+  cb3.push('main', 'm1');
+  const c3 = connect(cb3, { serverToken: 'mio-0123' });
+  await c3.src.cycle();
+  assert.ok(cb3.auths.every((a) => !a), `salió ${JSON.stringify(cb3.auths)}`);
+  // una dirección que no vale no usa el token propio
+  const c4 = connect(fakeCodeberg(), { webUrl: 'http://forge.example.com', serverToken: 'mio-0123' });
+  assert.equal(c4.src.codebergToken, '');
+});
+
+test('pack y unpack atan el token a la dirección del servidor', async () => {
+  const { GB } = connect(fakeCodeberg());
+  const { pack, unpack } = GB.CodebergSource;
+  assert.equal(pack('', OWN), '');
+  assert.equal(pack('t', ''), '', 'sin servidor elegido no hay a qué atarlo');
+  assert.equal(pack('t', 'http://forge.example.com'), '');
+  const stored = pack('t-1', OWN + '/');
+  assert.equal(unpack(stored, OWN), 't-1');
+  assert.equal(unpack(stored, 'https://otro.example.com'), '', 'otro servidor no lo ve');
+  assert.equal(unpack(stored, ''), '');
+  assert.equal(unpack('t-1', OWN), '', 'un texto suelto no vale');
+  assert.equal(unpack(null, OWN), '');
+});
+
+test('con token propio, un 401 es el token y un 404 es el repo o sus permisos', async () => {
+  const cb = repo2();
+  cb.expectAuth = 'token mio-0123';
+  cb.override = () => ({ status: 401, body: { message: 'bad' } });
+  let c = connect(cb, { webUrl: OWN, serverToken: 'mio-0123' });
+  await c.src.cycle();
+  assert.equal(c.errors[0].message.key, 'err.authBbdc');
+  assert.equal(c.errors[0].message.params.host, 'forge.example.com');
+  const cb2 = repo2();
+  cb2.private = true;
+  cb2.expectAuth = 'token mio-0123';
+  cb2.override = () => ({ status: 404, body: { message: 'not found' } });
+  c = connect(cb2, { webUrl: OWN, serverToken: 'mio-0123' });
+  await c.src.cycle();
+  assert.equal(c.errors[0].message.key, 'err.notFoundBbdc');
+});
+
 function repo2() {
   const cb = fakeCodeberg(OWN);
   cb.push('main', 'm1');

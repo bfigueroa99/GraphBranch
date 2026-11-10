@@ -509,6 +509,8 @@ GB.i18n.define('ro', {
   'health.forks': 'Fork-uri cu activitate recentă, cel mai nou push primul',
   'health.forksShow': 'Afișează fork-urile',
   'health.forksByStars': 'Sortează fork-urile după stele',
+  'health.stars': 'Stele noi',
+  'health.starsWeek': '{week} săptămâna aceasta · {prev} săptămâna trecută ({delta})',
   'health.stale': 'Ramuri fără activitate de peste 30 de zile și fără pull request',
   'health.prs': 'Pull request-uri deschise, cele mai vechi primele',
   'health.prStates': 'Pull request-uri deschise după stare',

@@ -501,6 +501,8 @@ GB.i18n.define('sv', {
   'health.forks': 'Forkar med nylig aktivitet, senaste push först',
   'health.forksShow': 'Visa forkar',
   'health.forksByStars': 'Sortera forkar efter stjärnor',
+  'health.stars': 'Nya stjärnor',
+  'health.starsWeek': '{week} den här veckan · {prev} förra veckan ({delta})',
   'health.stale': 'Grenar utan aktivitet på över 30 dagar och utan pull request',
   'health.prs': 'Öppna pull requests, äldst först',
   'health.prStates': 'Öppna pull requests efter status',

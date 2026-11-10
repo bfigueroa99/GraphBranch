@@ -501,6 +501,8 @@ GB.i18n.define('ta', {
   'health.forks': 'சமீபத்திய செயல்பாடுள்ள ஃபோர்க்குகள், புதிய புஷ் முதலில்',
   'health.forksShow': 'ஃபோர்க்குகளைக் காட்டு',
   'health.forksByStars': 'ஃபோர்க்குகளை நட்சத்திரங்களால் வரிசைப்படுத்து',
+  'health.stars': 'புதிய நட்சத்திரங்கள்',
+  'health.starsWeek': 'இந்த வாரம் {week} · கடந்த வாரம் {prev} ({delta})',
   'health.stale': '30 நாட்களுக்கு மேல் செயல்பாடு இல்லாத, pull request இல்லாத கிளைகள்',
   'health.prs': 'திறந்த pull request, பழையவை முதலில்',
   'health.prStates': 'நிலைப்படி திறந்த புல் ரிக்வெஸ்ட்கள்',

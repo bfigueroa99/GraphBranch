@@ -502,6 +502,8 @@ GB.i18n.define('th', {
   'health.forks': 'ฟอร์กที่มีความเคลื่อนไหวล่าสุด เรียงพุชใหม่สุดก่อน',
   'health.forksShow': 'แสดงฟอร์ก',
   'health.forksByStars': 'เรียงฟอร์กตามจำนวนดาว',
+  'health.stars': 'ดาวใหม่',
+  'health.starsWeek': 'สัปดาห์นี้ {week} · สัปดาห์ก่อน {prev} ({delta})',
   'health.stale': 'บรานช์ที่ไม่มีความเคลื่อนไหวเกิน 30 วันและไม่มี pull request',
   'health.prs': 'pull request ที่เปิดอยู่ เก่าสุดก่อน',
   'health.prStates': 'Pull request ที่เปิดอยู่ตามสถานะ',

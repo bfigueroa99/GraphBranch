@@ -501,6 +501,8 @@ GB.i18n.define('ca', {
   'health.forks': 'Forks amb activitat recent, l\'últim push primer',
   'health.forksShow': 'Mostra els forks',
   'health.forksByStars': 'Ordena els forks per estrelles',
+  'health.stars': 'Estrelles noves',
+  'health.starsWeek': '{week} aquesta setmana · {prev} la setmana anterior ({delta})',
   'health.stale': 'Branques sense activitat fa més de 30 dies i sense pull request',
   'health.prs': 'Pull requests oberts, els més vells primer',
   'health.prStates': 'Pull requests oberts per estat',

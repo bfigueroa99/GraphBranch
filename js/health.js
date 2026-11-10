@@ -1,7 +1,7 @@
 /* GraphBranch — salud del repo: lo que ya está cargado, leído como señales de equipo.
    Ramas sin actividad hace más de 30 días y sin PR, pull requests abiertos por edad y por estado (borrador, checks en rojo, aprobado, esperando revisión), cuánto tardaron
    en fusionarse los últimos, el ritmo de merges y releases y, los PRs fusionados y abiertos, los issues cerrados y las ramas nuevas y los commits y sus autores distintos por semana y, en el idioma de DORA, la frecuencia de
-   despliegues (cada release cuenta como uno, también por semana) y el tiempo de entrega (de abierto a fusionado), y el estado del último despliegue de cada entorno. No hace ninguna consulta: parte del
+   despliegues (cada release cuenta como uno, también por semana) y el tiempo de entrega (de abierto a fusionado), el estado del último despliegue de cada entorno y las estrellas nuevas de la semana frente a las de la anterior. No hace ninguna consulta: parte del
    estado del grafo y de la actividad que ya llegó, y cuenta lo que pasa en el repo, no a personas. */
 (function (GB) {
   'use strict';
@@ -148,6 +148,17 @@
       if (k == null) continue;
       if (!created.has(k) || a.time < created.get(k).time) created.set(k, { time: a.time });
     }
+    // estrellas nuevas: cada usuario cuenta una vez, con la hora de su primera estrella vista (quitarla y volver a ponerla no
+    // suma dos); sin usuario, cada actividad cuenta sola
+    const starred = new Map();
+    for (const a of acts) {
+      if (a.kind !== 'star' || !a.time) continue;
+      const login = String(a.actor?.login || '').trim().toLowerCase();
+      const k = login ? `u:${login}` : a.id;
+      if (k == null) continue;
+      if (!starred.has(k) || a.time < starred.get(k).time) starred.set(k, { time: a.time });
+    }
+    const starWeeks = weekly([...starred.values()], now);
     // el tiempo de entrega cuenta desde el primer commit del PR si ya se conoce (data.firstCommits), si no desde su apertura
     let fromCommit = 0;
     const lead = merges
@@ -226,6 +237,7 @@
       dora,
       leadSource: { fromCommit, total: lead.length },
       ci,
+      stars: { week: starWeeks[WEEKS - 1], prev: starWeeks[WEEKS - 2] }, // estrellas nuevas en los últimos 7 días y en los 7 anteriores
       pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), authorWeeks: authorsWeekly(data.commits.values(), now), tagWeeks: weekly(tagTimes, now), issueWeeks: weekly([...issueOpened.values()], now), prCloseWeeks: weekly([...prClosed.values()], now) }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
     };
   }

@@ -502,6 +502,8 @@ GB.i18n.define('it', {
   'health.forks': 'Fork con attività recente, il push più recente per primo',
   'health.forksShow': 'Mostra i fork',
   'health.forksByStars': 'Ordina i fork per stelle',
+  'health.stars': 'Nuove stelle',
+  'health.starsWeek': '{week} questa settimana · {prev} la settimana scorsa ({delta})',
   'health.stale': 'Branch senza attività da oltre 30 giorni e senza pull request',
   'health.prs': 'Pull request aperte, le più vecchie prima',
   'health.prStates': 'Pull request aperte per stato',

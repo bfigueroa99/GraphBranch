@@ -501,6 +501,8 @@ GB.i18n.define('ko', {
   'health.forks': '최근 활동이 있는 포크, 최신 푸시 순',
   'health.forksShow': '포크 표시',
   'health.forksByStars': '포크를 스타 수로 정렬',
+  'health.stars': '새 스타',
+  'health.starsWeek': '이번 주 {week} · 지난주 {prev} ({delta})',
   'health.stale': '30일 넘게 활동이 없고 풀 리퀘스트도 없는 브랜치',
   'health.prs': '열린 풀 리퀘스트(오래된 순)',
   'health.prStates': '상태별 열린 풀 리퀘스트',

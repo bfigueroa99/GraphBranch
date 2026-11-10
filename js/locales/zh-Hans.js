@@ -501,6 +501,8 @@ GB.i18n.define('zh-Hans', {
   'health.forks': '近期有动静的 fork,最新推送在前',
   'health.forksShow': '显示复刻',
   'health.forksByStars': '按星标数排序复刻',
+  'health.stars': '新增星标',
+  'health.starsWeek': '本周 {week} · 上周 {prev}（{delta}）',
   'health.stale': '超过 30 天没有动静且没有拉取请求的分支',
   'health.prs': '未关闭的拉取请求（最旧的在前）',
   'health.prStates': '按状态划分的开放拉取请求',

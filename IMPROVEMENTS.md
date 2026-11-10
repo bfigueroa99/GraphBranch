@@ -277,6 +277,12 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 179. **Resumen de la semana: quién abrió más PRs** · Salidas · 1×2/2. [parte del ítem 23] El resumen de la semana suma las personas que más PRs abrieron en la semana, con lo ya cargado. Comprobar: `node --test` del conteo con PRs fabricados de dos semanas.
 180. **Salud del repo: PRs sin revisión hace días** · Análisis · 1×2/2. [parte del ítem 12] El panel de salud cuenta los PRs abiertos que llevan más de 7 días sin revisión, con lo ya cargado. Comprobar: `node --test` con PRs de distintas edades, borradores excluidos.
 181. **Práctica: git clean** · Público · 1×2/2. [parte del ítem 16] En la práctica de git, `clean` borra los archivos sin seguir del directorio de trabajo, con su ejercicio y su comprobación. Comprobar: `node --test` del simulador (`js/gitsim.js`) antes y después de `clean`.
+183. **Práctica: stash show** · Público · 1×2/2. [parte del ítem 16] En la práctica de git, `stash show [<stash>]` lista los archivos que guarda un stash sin devolverlos, con su ejercicio. Comprobar: `node --test` del simulador (`js/gitsim.js`) con `stash show` antes y después de un `pop`.
+184. **Práctica: tag anotado** · Público · 1×2/2. [parte del ítem 16] En la práctica de git, `tag -a <nombre> -m "mensaje"` crea una etiqueta con mensaje y el `log` la sigue mostrando como `tag:`. Comprobar: `node --test` del simulador con `tag -a`.
+185. **Práctica: branch -c** · Público · 1×2/2. [parte del ítem 16] En la práctica de git, `branch -c [vieja] <nueva>` copia una rama con sus commits sin mover HEAD. Comprobar: `node --test` del simulador con `branch -c` y el `reflog`.
+186. **Resumen de la semana de la organización: quién abrió más PRs** · Salidas · 1×2/2. [parte del ítem 179] El resumen de la semana de una organización suma las personas que más PRs abrieron en la semana, con lo ya cargado. Comprobar: `node --test` del resumen con PRs simulados de dos repos.
+187. **Salud del repo: tendencia de forks** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del mapa: Análisis] El panel de salud compara los forks nuevos de la semana con los de la anterior, con lo ya cargado. Comprobar: `node --test` de `js/health.js` con forks simulados de dos semanas.
+188. **Vista de texto: PRs con CI fallido** · Público · 1×2/2. [parte del ítem 110] La vista de texto lista los PRs abiertos cuya rama tiene el último CI en rojo, con lo ya cargado y sin consultas nuevas. Comprobar: `node --test` de `js/textview.js` con CI simulado.
 ~~**Constelación: ordenar por PRs abiertos**~~ hecho en #247 · Escala.
 ~~**Constelación: solo los repos con actividad reciente, en la URL**~~ hecho en #239 · Escala.
 
@@ -526,6 +532,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - README: la lista de comandos de Aprender git (`stash -u`) y Límites conocidos (`-a` no existe; el choque al devolver).
 - QA: terminal de práctica (comando nuevo, estado `status` tras apartar y devolver); auditoría: no toca la página más que la simulación.
 - Skills: no aplica: una bandera más de un comando del intérprete; lo cubren las reglas del repo.
+- Hoja de ruta repuesta de 9 a 15 con ideas vigentes de `docs/investigacion.md` (ítems 183 a 188, sin pasada nueva de Replica).
 - Arena: no aplica: una sola forma obvia (una lista `untracked` en la entrada del stash).
 - OMC: plan=— · revisión=— · verificación=— (diff pequeño, leído a mano; sin subagentes)
 - Reclamo: loop/252, sin colisión

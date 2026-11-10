@@ -323,6 +323,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Launchpad: posponer un PR | Escala | 1×2/2 | 1,0 | Replica (GitKraken) | ítem 166 |
 | Salud del repo: tendencia de estrellas | Análisis | 1×2/2 | 1,0 | DORA | ítem 167 |
 | Constelación: ordenar por último commit | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 172 |
+| Práctica: stash show | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 183 |
+| Práctica: tag anotado | Público | 1×2/2 | 1,0 | git-sim | ítem 184 |
+| Práctica: branch -c | Público | 1×2/2 | 1,0 | git-sim | ítem 185 |
+| Resumen de la semana de la organización: quién abrió más PRs | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 186 |
+| Salud del repo: tendencia de forks | Análisis | 1×2/2 | 1,0 | DORA | ítem 187 |
+| Vista de texto: PRs con CI fallido | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 188 |
 
 ## Públicos
 

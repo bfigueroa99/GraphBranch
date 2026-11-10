@@ -4016,3 +4016,142 @@ bitácoras juntas (la rotación de los subtipos de mantenimiento, la numeración
 - Reclamo: loop/234, sin colisión
 - Validado: 623 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 235, mantenimiento · Deuda: pendiente 1 (La e2e de escritorio «--bitbucket-url suma solo ese host a las conexiones del C…)
+
+### 2026-11-09 · Iteración 235 · Mantenimiento · Deuda
+
+- **Arreglo: la e2e de escritorio de `--bitbucket-url` ya no compite con el arranque de la app** (pendiente 1). Guardaba los tokens de Bitbucket Data Center y de Azure DevOps con `GBDesktop.setToken` mientras la página arrancaba y miraba Ajustes en la misma ventana; `loadDesktopToken` (`js/app.js`) lee el llavero una sola vez al arrancar, así que si ya había leído `azure` el campo quedaba vacío. Ahora los guarda con la app ya cargada, la cierra, la reabre con el mismo perfil (como «el token de GitLab… vuelve al reabrir») y recién entonces mira Ajustes; de paso exige también que vuelva el token del servidor (`#bbdc-token-input`), que tenía la misma carrera y no se miraba. La app no cambia: el fallo era de la prueba.
+- **Reproducción:** la prueba con `await loaded(page)` antes de guardar los tokens (el orden que perdía con el equipo cargado), `xvfb-run -a npx playwright test e2e/desktop.spec.mjs -g "bitbucket-url"` → `expect(locator('#azure-token-input')).toHaveValue('az-e2e')` · `Received: ""`, a demanda.
+- **Pruebas que fallan sin el arreglo:** la misma e2e, que ahora fija ese orden: sin reabrir la app falla siempre, no solo cuando el arranque ganaba la carrera. Medida: antes, 0 fallas en 20 corridas sueltas (`--repeat-each=20`, carga 6 en 4 CPU) y 2 en las 4 puertas de las reanudaciones de la 173 y la 234 (carga 16 a 18); después, 20 de 20 en verde sueltas y las 29 e2e en la puerta. Ninguna otra e2e guarda un token con `GBDesktop.setToken` (`grep`).
+- README: no cambia (ni la función ni sus límites cambian).
+- QA: no toca la página; la e2e de `--bitbucket-url` 20 veces seguidas y las 29 e2e en la puerta; auditoría: no toca la página.
+- Skills: no aplica: una carrera de una prueba propia, arreglada con el patrón que el mismo archivo ya usa (reabrir con el mismo perfil).
+- Arena: no aplica: una sola forma obvia (la que describe el pendiente), y la sesión no tiene la herramienta de subagentes.
+- OMC: no disponible (la sesión no tiene la herramienta de subagentes)
+- Reclamo: loop/235, sin colisión
+- Validado: 632 pruebas (`node --test`), smoke, i18n (0 errores) y 29 e2e en verde (la primera corrida falló en un paso ajeno del smoke, «editar el código…»: intermitente, la repetición pasó; anotado en el pendiente 1 de Mantenimiento).
+- **Siguiente:** iteración 236, expansión: ítem 174 (Constelación: cuánto hace el último commit, Escala)
+
+### 2026-11-09 · Iteración 236 · Expansión · Escala
+
+- **Capacidad nueva: cada galaxia de la constelación dice cuánto hace de su último commit** (ítem 174 de la hoja de ruta, parte del ítem 26). Junto a sus commits y ramas, en el globo de la galaxia y en el nombre que lee el lector de pantalla, va cuánto hace de su commit más reciente ya cargado, con el formato relativo de la app (`U.timeAgo`: «hace 3 h», «2 日前», «قبل يومين»; pasado un mes, la fecha) en el idioma activo; nada si aún carga o está vacía. `GB.constellation.describe` arma los dos textos. La fecha es la que ya ordena `?order=recent` (`lastCommitAt`, la del committer): sin consultas nuevas ni claves nuevas (el formato lo da `Intl.RelativeTimeFormat` en los 40 idiomas).
+- **Pruebas que fallan sin la capacidad:** `node --test tools/constellation.test.mjs` («cada galaxia dice, junto a sus commits y ramas, cuánto hace…») → sin el cambio, `TypeError` (`describe` no existe); el smoke exige «ahora» o «hace N s|min» en el nombre accesible y en el globo de las tres galaxias de `?order=recent`, y que ninguna de las 20 galaxias de repos sin commits (404) diga nada de tiempo.
+- README: Constelación (la lista de funciones) y Límites conocidos (la fecha es la del committer y se calcula al abrir la constelación, sin correr mientras sigue abierta).
+- QA: la constelación de la demo en la página real con Playwright contra `node e2e/serve.mjs 4173`, solo con teclado (Enter la abre, el foco entra a la galaxia, Esc la cierra), en español a 1280 px y tema oscuro, árabe a 390 px y claro, tamil a 320 px y oscuro y japonés a 1280 px y claro: «hace 2 d», «قبل يومين», «2 நாட்களுக்கு முன்» y «2 日前» en el nombre y en el globo, sin desborde y con la consola limpia; auditoría 0 hallazgos nuevos y e2e en la puerta.
+- Skills: no aplica: un texto más en la constelación con el formato relativo que la app ya usa; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (la fecha que ya calcula `lastCommitAt` con el `timeAgo` de siempre), y la sesión no tiene la herramienta de subagentes.
+- OMC: no disponible (la sesión no tiene la herramienta de subagentes)
+- Hoja de ruta: repuesta a 15 con el ítem 176 (Constelación: las galaxias quietas, tenues, otra parte del ítem 26); Replica: paridad, sin pasada nueva (92,7/100, must hechos 13 de 13).
+- Reclamo: loop/236, sin colisión
+- Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
+- Validado: 633 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde (la primera corrida falló en un paso ajeno del smoke, «abre la vista de texto con el filtro por ruta…», por `net::ERR_INSUFFICIENT_RESOURCES` con el equipo a carga 18: intermitente, la repetición pasó; pendiente 3 de Mantenimiento).
+- **Siguiente:** iteración 237, expansión: ítem 154 (Resumen de la semana de la organización: issues cerrados, Salidas)
+
+### 2026-11-09 · Iteración 237 · Expansión · Salidas
+
+- **Capacidad nueva: el resumen de la semana de la organización suma los issues cerrados** (ítem 154 de la hoja de ruta, parte del ítem 47). `computeOrg` (`js/digest.js`) suma los issues cerrados de cada repo seguido (cada número una vez, con lo ya cargado, sin consultas); el Markdown y la imagen llevan el total y, por repo, sus números (hasta 10 y «… +n»); un repo cuyo único movimiento es un issue cerrado sale en el resumen. Sin issues cerrados, ni la línea del total ni la del repo. Usa la etiqueta `digest.closed` que ya está en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/digest.test.mjs` («organización: suma los issues cerrados en la semana…») → sin el cambio, falla (`o.closed` es `undefined`).
+- README: la lista de funciones (Salud del repo), Límites conocidos (se quita «los issues cerrados no entran al resumen de la organización» y se dice cómo cuentan) y el Mapa de alcance.
+- QA: filas del resumen de la semana: lo cubre la prueba con dos repos fabricados (duplicados, fuera de la semana, repo sin commits, sin issues cerrados, más de 10); no toca el DOM ni textos nuevos; auditoría: no cambia la página más que el texto del resumen.
+- Skills: no aplica: un total más en un resumen que ya existe, con el mismo patrón que «abiertos»; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (copiar el patrón de los PRs abiertos), y la sesión no usa subagentes en una entrega de esfuerzo 1.
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/237, sin colisión
+- Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
+- Validado: 634 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+- **Siguiente:** iteración 238, expansión: ítem 176 (Constelación: las galaxias quietas, tenues, Escala)
+
+### 2026-11-09 · Iteración 238 · Expansión · Escala
+
+- **Capacidad nueva: las galaxias quietas de la constelación se dibujan tenues y lo dicen** (ítem 176 de la hoja de ruta, parte del ítem 26). `isQuiet` (`js/constellation.js`): si el commit más reciente ya cargado de un repo (`last`) tiene más de 30 días, su galaxia lleva `data-quiet`, se dibuja a 0,4 de opacidad y su nombre accesible y su globo suman «sin actividad hace más de 30 días» (la clave `textview.quiet` que ya existe en los 40 idiomas: sin texto nuevo). Sin `last` (carga, vacía, con error) no se marca. Sin consultas nuevas.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/constellation.test.mjs` («una galaxia quieta…») → sin el cambio, `C.isQuiet is not a function`; y un paso del smoke con un repo de 45 días y otro reciente.
+- README: la lista de funciones (Constelación) y Límites conocidos; el Mapa de alcance.
+- QA: constelación en el smoke (repo quieto contra reciente, nombre accesible y globo); la opacidad es la misma que la de las galaxias que cargan; auditoría: 0 hallazgos nuevos.
+- Skills: no aplica: un matiz más en la constelación con un texto y un umbral que el repo ya tiene.
+- Arena: no aplica: una sola forma obvia (el umbral de `textview.js` aplicado a `last`).
+- OMC: plan=— · revisión=3 hallazgos (1 arreglado: una galaxia que aún carga no se marca quieta; 2 LOW sin tocar) · verificación=—
+- Reclamo: loop/238, sin colisión
+- Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
+- Validado: 635 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde (la primera corrida falló en un paso ajeno del smoke, «editar el código»; la repetición pasó).
+- **Siguiente:** iteración 239, mantenimiento · Seguridad: auditoría (sin pendientes de Seguridad)
+
+### 2026-11-09 · Iteración 239 · Mantenimiento · Seguridad
+
+- **Auditoría de Seguridad: avisos a Discord con Markdown de un texto ajeno** (pendiente: auditoría). Se revisó el CSP de `index.html` (cerrado, sin `eval` ni scripts en línea), los `innerHTML` (los de datos de afuera pasan por `U.esc`; avatares con `data-fb` escapado), los tokens y el preload, la navegación, las descargas y los permisos de `electron/main.js`, los argumentos de `git` (SHA validados, `execFile` sin shell, `--no-ext-diff --no-textconv`) y `electron/webhooks.js`. Lo peor: `payload('discord', …)` no escapaba el Markdown, así que un título o detalle de PR con `[login](https://evil.example)` llegaba al canal como enlace enmascarado (Slack y Teams ya lo evitaban). Arreglo: `discordText` escapa el Markdown de repo, tipo, título y detalle.
+- **Reproducción:** `node --test tools/webhooks.test.mjs` → sin el arreglo, `not ok 3 - Discord: un título de GitHub no arma un enlace enmascarado ni formato`.
+- **Hallazgos:** 3 nuevos (pendientes 16, 17 y 18), 0 a la base de la auditoría
+- **Pruebas que fallan sin el arreglo:** `tools/webhooks.test.mjs` («Discord: un título de GitHub no arma un enlace enmascarado ni formato»).
+- README: sin cambios (el aviso sigue igual; el texto llega escapado).
+- QA: no toca la página ni textos; auditoría: no toca la página.
+- Skills: no aplica: un escape de Markdown con el patrón de `slackText` y `teamsText`; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (escapar como Teams).
+- OMC: no disponible (la iteración no lanzó subagentes de revisión; el diff es un escape de 3 líneas leído a mano contra `teamsText`)
+- Reclamo: loop/239, sin colisión
+- Validado: 636 pruebas (`node --test`), smoke, i18n (0 errores) y 29 e2e en verde.
+- **Siguiente:** iteración 240, expansión: ítem 155 (Extensión de Chrome y Firefox: GitLab, Codeberg y Bitbucket, Plataformas)
+
+### 2026-11-09 · Iteración 240 · Expansión · Plataformas
+
+- **Capacidad nueva: la extensión de Chrome y Firefox también en GitLab, Codeberg y Bitbucket** (ítem 155 de la hoja de ruta, parte del 149). El botón «Abrir en GraphBranch» aparece en las páginas de un proyecto de gitlab.com (con sus subgrupos, cortando en `/-/`), codeberg.org y bitbucket.org, con `?repo=https://…`; las páginas que no son un repo (perfiles, `explore`, `account`, `dashboard`…), `http`, puertos, credenciales, `www.` y dominios parecidos no lo llevan. El manifiesto suma solo los cuatro hosts a `content_scripts.matches`, sin permisos ni `host_permissions`.
+- **Pruebas que fallan sin la capacidad:** `tools/browser-extension.test.mjs` («targetFromUrl…», «lo que arma la extensión lo entiende la web», y el manifiesto con los cuatro hosts).
+- README: la función en la lista, su sección, Límites conocidos y Seguridad.
+- QA: la extensión no toca la página ni textos de la web (el botón va en español, como antes); `parseRepo` de la web reconoce lo que arma (prueba); auditoría: no toca la página.
+- Skills: no aplica: URL de tres plataformas con el patrón de `repoFromUrl`; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (una función de URL a destino más el manifiesto).
+- OMC: no disponible (la iteración no lanzó subagentes; el diff es una función pura y una lista de hosts, leído a mano contra la CSP y los permisos mínimos)
+- Reclamo: loop/240, sin colisión
+- Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
+- Validado: 638 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio). La primera corrida falló en un paso ajeno del smoke («la ficha de un commit de agente dice cuál es… (2D)»: intermitente, no lo toca el diff); la segunda pasó.
+- **Siguiente:** iteración 241, expansión: ítem 157 (Launchpad: fijar un PR arriba, Escala)
+
+### 2026-11-09 · Iteración 241 · Expansión · Escala
+
+- **Capacidad nueva: fijar un PR arriba en el Launchpad** (ítem 157 de la hoja de ruta, parte de «Launchpad: fijar y posponer PRs e issues»). Cada fila lleva un 📌 (`aria-pressed`, con nombre «Fijar el PR #N de repo arriba» / «Soltar…») que sube el PR al principio de su grupo y lo suelta con el mismo botón; el foco vuelve al botón tras repintar. Lo fijado se guarda en este navegador como `repo#número` (`prpins`, sin títulos); un fijado que ya no existe no hace nada. Sin consultas nuevas.
+- **Pruebas que fallan sin la capacidad:** `tools/overview.test.mjs` («groupPulls: los PRs fijados van arriba…») un montaje con `pulls` como iterador de un solo uso (el smoke lo encontró: la app pasa `Map.values()` y repintar al fijar vaciaba el Launchpad) y un paso del smoke (fijar y soltar el PR #7: `aria-pressed`, `prpins`, foco).
+- README: la función en el Launchpad de la lista, Límites conocidos y Seguridad.
+- QA: filas de la vista conjunta y del Launchpad; textos en 40 idiomas (`check-i18n`); auditoría: 0 hallazgos nuevos.
+- Skills: no aplica: un botón y un orden sobre el Launchpad existente; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (un Set de `repo#número` en `U.store`).
+- OMC: no disponible (la iteración no lanzó subagentes; el diff es chico y se leyó a mano contra la CSP y el escape: nada nuevo entra por `innerHTML`)
+- Reclamo: loop/241, sin colisión
+- Validado: 640 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde. La primera corrida del smoke falló en mi paso nuevo (el iterador, arreglado) y en «editar sin token» (ajeno, intermitente: pasó en la segunda).
+- **Siguiente:** iteración 242, expansión: ítem 159 (CI de GitLab en el resto de las ramas, Datos)
+
+### 2026-11-09 · Iteración 242 · Expansión · Datos
+
+- **Capacidad nueva: la marca del último pipeline de GitLab en el resto de las ramas** (ítem 159 de la hoja de ruta, parte del ítem 152). `syncCiGitlab` (`js/sources/gitlab.js`) pregunta, además de la rama por defecto, las fijadas y las de una MR abierta (tope `CI_MAX` = 6), por las 20 ramas más recientes del listado que no son esas, con tope propio de 2 consultas por ciclo (`CI_REST`); una cabeza ya resuelta no se vuelve a preguntar y las mismas guardas (privado sin token, 403/404 → deja de preguntar) valen para todas.
+- **Pruebas que fallan sin la capacidad:** `tools/gitlab.test.mjs` («CI: el resto de las ramas también…» y el conteo de consultas de «CI: el estado del pipeline de la cabeza…», que ahora incluye `feature`).
+- README: el párrafo de CI de «Límites conocidos».
+- QA: sin cambios en la página ni en textos; la API simulada cuenta las consultas por ciclo; auditoría: no toca la página.
+- Skills: no aplica: ampliar un bucle de consultas existente; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (un segundo presupuesto de consultas en el mismo bucle).
+- OMC: no disponible (la iteración no lanzó subagentes; el diff es de unas líneas y se leyó a mano)
+- Reclamo: loop/242, sin colisión
+- Validado: 641 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+- **Siguiente:** iteración 243, mantenimiento · Deuda: pendiente 1 (El paso del smoke «editar el código: desde los cambios de un commit se abre su …)
+
+### 2026-11-09 · Iteración 243 · Mantenimiento · Deuda
+
+- **Arreglo: dos esperas por tiempo del smoke ahora esperan una señal** (pendiente 1). En «editar el código…» el avance con «Siguiente» esperaba 200 ms fijos; bajo carga el commit siguiente tarda en cargar y un segundo Enter sobre el panel a medio cambiar se pasaba del commit buscado (la hipótesis más probable del `waitForFunction` de 15 s vencido: no se pudo reproducir a voluntad en una sola sesión), así que ahora espera a que cambie `.df-msg` y termine `.loading`. En «avisos en mazo…» (falló en dos puertas seguidas de esta sesión: «detrás 61 px») se medía el aviso de atrás a mitad de su transición de `max-height` de 0,25 s; ahora espera a que se pliegue antes de medir.
+- **Reproducción:** `npm run check` → `✗ avisos en mazo: …: el mazo no se pliega: al frente 60 px, detrás 61 px` (2 de 2 sin el arreglo); con él, 1 de 1 en verde, y «editar el código» pasó en las 3 puertas de la sesión.
+- **Pruebas que fallan sin el arreglo:** el propio smoke (es el paso intermitente); no hay prueba unitaria posible de una carrera de temporización.
+- README: sin cambios (herramienta interna).
+- QA: no toca la página ni textos; auditoría: no toca la página.
+- Skills: no aplica: ajuste de esperas de un script del repo.
+- Arena: no aplica: una sola forma obvia (esperar una señal del DOM).
+- OMC: no disponible (la iteración no lanzó subagentes; el diff son dos esperas en `tools/smoke.mjs`, leído a mano)
+- Reclamo: loop/243, sin colisión
+- Validado: 641 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 244, expansión: ítem 158 (Launchpad: filtrar por persona, Escala)
+
+### 2026-11-09 · Iteración 244 · Expansión · Escala
+
+- **Capacidad nueva: el Launchpad se filtra por persona** (ítem 158 de la hoja de ruta, parte de «Launchpad: vista de equipo filtrada por colaborador»). Con PRs de dos o más personas, un selector sobre los grupos del Launchpad deja solo los PRs de quien los abrió (todos los repos, con lo ya cargado y sin consultas); «Todas las personas» lo quita y, si la persona elegida ya no tiene PRs, vuelve solo a todas. `groupPulls` recibe la persona y `prAuthors` lista las que hay (`js/overview.js`). La hoja de ruta bajó a 9 y se repuso hasta 15 con seis entregas de ítems ya existentes (177 a 182), sin pasada nueva de Replica.
+- **Pruebas que fallan sin la capacidad:** `tools/overview.test.mjs` («groupPulls y prAuthors: el Launchpad se filtra por la persona…»).
+- README: la lista de la vista conjunta y sus Límites conocidos (el filtro vive mientras la página está abierta).
+- QA: el selector hereda el repintado del Launchpad (el foco vuelve al selector); textos `all.prs.person` y `all.prs.everyone` en los 40 idiomas; no se mira a mano en navegador; auditoría: la puerta la corre.
+- Skills: no aplica: un selector sobre una vista existente; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (filtrar en `groupPulls` y repintar).
+- OMC: no disponible (la iteración no lanzó subagentes; el diff son unas líneas de `js/overview.js`, leído a mano)
+- Reclamo: loop/244, sin colisión
+- Validado: 642 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde (a la tercera corrida: dos pasos ajenos del smoke fallaron antes, uno por corrida, anotados en Mantenimiento · Deuda).
+- **Siguiente:** iteración 245, expansión: ítem 177 (Launchpad: el filtro por persona en la URL, Escala)

@@ -406,3 +406,22 @@ test('organización: suma los autores nuevos de los repos seguidos, cada persona
   assert.doesNotMatch(toMarkdownOrg(sin, 'a', t), /Autores nuevos/);
   assert.doesNotMatch(imageLinesOrg(sin, 'a', t).map((l) => l.text).join('\n'), /Autores nuevos/);
 });
+
+test('organización: suma quién fusionó entre los repos seguidos (la misma cuenta una vez, hasta 5) en Markdown e imagen', () => {
+  const mg = (id, number, days, who) => ({ id, kind: 'pr-merge', number, detail: `PR ${number}`, time: NOW - days * 864e5, actor: { login: who } });
+  const o = computeOrg([
+    { repo: 'acme/web', data: repo(), acts: [mg('1', 1, 1, 'ana'), mg('2', 2, 1, 'ana'), mg('3', 3, 2, 'beto'), mg('4', 4, 20, 'vieja')] },
+    { repo: 'acme/api', data: repo(), acts: [mg('5', 1, 1, 'ana'), mg('6', 2, 2, 'caro'), mg('7', 3, 2, 'd1'), mg('8', 4, 2, 'd2'), mg('9', 5, 2, 'd3'), mg('10', 6, 2, 'd4')] },
+  ], NOW);
+  assert.equal(o.mergers.total, 7); // ana (en los dos repos, una cuenta), beto, caro, d1..d4
+  assert.deepEqual(JSON.parse(JSON.stringify(o.mergers.rows[0])), { name: 'ana', prs: 3 });
+  assert.equal(o.mergers.rows.length, 5);
+  const t = { head: 'S {repo}', commits: 'C {n}', merged: 'M', mergers: 'Quién fusionó', releases: 'R', people: 'P', branch: 'B' };
+  assert.match(toMarkdownOrg(o, 'acme', t), /\n- M: 9\n- Quién fusionó: ana \(3\), beto \(1\), caro \(1\), d1 \(1\), d2 \(1\)\n/);
+  assert.ok(imageLinesOrg(o, 'acme', t).some((l) => l.text === 'Quién fusionó: ana (3) · beto (1) · caro (1) · d1 (1) · d2 (1)'));
+  // sin cuentas, la línea no sale
+  const sin = computeOrg([{ repo: 'a/b', data: repo(), acts: [{ id: 'z', kind: 'pr-merge', number: 9, time: NOW - 864e5 }] }], NOW);
+  assert.equal(sin.mergers.total, 0);
+  assert.doesNotMatch(toMarkdownOrg(sin, 'a', t), /Quién fusionó/);
+  assert.doesNotMatch(imageLinesOrg(sin, 'a', t).map((l) => l.text).join('\n'), /Quién fusionó/);
+});

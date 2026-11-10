@@ -587,7 +587,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: campo oculto sin servidor, aviso con el host, «Abrir Ajustes» lleva al campo, otro `?forge=` no usa el token guardado (smoke); auditoría: la puerta la corre.
 - Skills: no aplica: replica un patrón del repo (el token del Bitbucket propio).
 - Arena: no aplica: una sola forma obvia (copiar el diseño ya probado del Bitbucket propio).
-- OMC: plan=— · revisión=— · verificación=— (sin subagentes; el diff espeja el del Bitbucket propio, leído a mano)
+- OMC: plan=— · revisión=— · verificación=— (sin subagentes; el diff espeja el del Bitbucket propio y se leyó a mano: el token sale solo con `webUrl` válida, hacia ese host)
 - Reclamo: loop/246, sin colisión
-- Validado: pendiente
+- Validado: 649 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 247, mantenimiento · Accesibilidad: pendiente 11 (En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…»,…)

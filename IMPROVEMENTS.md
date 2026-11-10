@@ -269,7 +269,7 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 
 131. **Issues de Jira y Trello, primera entrega** · Fuentes · 1×2/3. [replica 2026-10-28] [parte de «Issues de Jira y Trello»] Las claves tipo `ABC-123` de los mensajes de commit y de PR se vuelven enlaces a una URL de Jira que el usuario configura (guardada en este navegador), sin consultas nuevas. Comprobar: prueba del reconocimiento de claves y un paso del smoke.
 ~~**Blame de un archivo, segunda entrega**~~ hecho en #236 · Datos.
-~~**Resumen de la semana de la organización: PRs cerrados sin fusionar**~~ hecho en #317 · Salidas.
+164. ~~**Resumen de la semana de la organización: PRs cerrados sin fusionar**~~ hecho en #317 · Salidas · 1×2/2. [inv. 2026-10-13] [parte del ítem 47] El resumen de la semana de una organización suma los PRs cerrados sin fusionar de los repos seguidos, con lo ya cargado. Comprobar: `tools/digest.test.mjs` con dos repos fabricados.
 166. **Launchpad: posponer un PR** · Escala · 1×2/2. [replica 2026-10-28] [parte de «Launchpad: fijar y posponer PRs e issues»] Cada PR del Launchpad de la vista conjunta se puede posponer (baja al final de la lista hasta que pase un día) y se recuerda en este navegador. Comprobar: `node --test` del orden con PRs fabricados y un paso del smoke.
 167. **Salud del repo: tendencia de estrellas** · Análisis · 1×2/2. [inv. 2026-10-13] [parte del mapa: Análisis] El panel de salud compara las estrellas nuevas de la semana con las de la anterior, con lo ya cargado y sin consultas nuevas. Comprobar: `node --test tools/health.test.mjs` con estrellas fabricadas.
 173. **Práctica: rm y mv** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 16] En la práctica de git, `rm <archivo>` borra un archivo que git sigue y deja el borrado preparado (`rm --cached` lo deja sin seguir), `mv vieja nueva` lo renombra preparado, y `add -A` prepara también los borrados hechos a mano. Comprobar: `node --test tools/gitsim.test.mjs` (qué muestra `status` y qué guarda el commit tras `rm`, `rm --cached` y `mv`).
@@ -549,5 +549,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (copiar el patrón de los issues cerrados).
 - OMC: plan=— · revisión=— · verificación=— (diff pequeño, leído a mano; sin subagentes)
 - Reclamo: loop/253, sin colisión
-- Validado: PENDIENTE
-- **Siguiente:** PENDIENTE
+- Validado: 655 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+- **Siguiente:** iteración 254, expansión: ítem 166 (Launchpad: posponer un PR, Escala)

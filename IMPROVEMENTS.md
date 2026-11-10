@@ -394,36 +394,32 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
     que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
     Reproducción: `node tools/audit.mjs --repetir 3` → `consultas: 10`, `tareasLargasMs: 895`.
-13. [Errores] Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el repo del PR con
-    `owner/name` tal como se escribieron; con un repo renombrado (abierto por su nombre viejo) ningún PR cuenta como del
-    mismo repo: sus ramas pierden el «PRs abiertos» y dicen «sin PR abierto». Comparar `fromRef.repository` con
-    `toRef.repository`. Reproducción: API simulada con el repo `nuevo` y abrir `CLAVE/viejo` → `sameRepo` false.
-14. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
+13. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
     prepara de verdad en vez de solo listar, y `add -p` prepara todo. Negarse con el `error: unknown switch` de git (o
     admitir `-n`). Reproducción: `node --test` con `touch a.txt`, `add -n .` → `a.txt` queda preparado.
-15. [Seguridad] Avisos a Slack (`electron/webhooks.js`, `payload`): `slackText` escapa `&`, `<` y `>` (sin menciones ni
+14. [Seguridad] Avisos a Slack (`electron/webhooks.js`, `payload`): `slackText` escapa `&`, `<` y `>` (sin menciones ni
     enlaces), pero no el formato `mrkdwn` (`*`, `_`, `` ` ``, `~`): un título de PR como `*URGENTE*` sale en negrita en el
     canal. Solo formato, sin enlaces ni menciones; escaparlo como se hizo con Discord. Reproducción: `payload('slack',
     {title: '*x*'})` → `*x*` sin escapar.
-16. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
+15. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
     la iteración 239: la sesión no pudo consultar su página de versiones. Comprobarla con `WebFetch` en la próxima
     auditoría de Seguridad y, si hay una estable más nueva con arreglos de seguridad, subirla (cambio de `electron/`: plan
     por consenso). Reproducción: `npm view electron version` frente a `package.json`.
-17. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
+16. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
     largo se lleva la línea `<enlace>` del final (el aviso queda sin enlace). Recortar título y detalle antes y dejar el
     enlace siempre. Reproducción: `payload('discord', {title: 'x'.repeat(5000), url: 'https://github.com/a/b'})` →
     `content` sin `<https://github.com/a/b>`.
 
-18. [QA] Un repo vacío (GitHub responde 409 «Git Repository is empty» en ramas y commits) se rotula «Sin conexión» y
+17. [QA] Un repo vacío (GitHub responde 409 «Git Repository is empty» en ramas y commits) se rotula «Sin conexión» y
     reintenta cada pocos segundos, sin decir que el repo está vacío. Un estado propio («Repo vacío») sin reintento rápido.
     Reproducción: API simulada con 409 en `/commits` y `/branches`, `index.html?repo=acme/x` → `Sin conexión | reintento en 2s`.
-19. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
+18. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
     `js/util.js` solo distingue notfound, rate y auth), aunque haya red: la persona busca su wifi y el servicio es quien falla.
     Un rótulo «Error del servicio» en los 40 idiomas. Reproducción: `U.statusKey({state: 'error', error: {kind: 'http'}})` → `status.error`.
-20. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
+19. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
     el service worker instalado (solo los estados de error de la carga, en es y ar a 1280 y 320 px). Mirarlos en la
     próxima QA. Reproducción: `node e2e/serve.mjs 4173` + Playwright con la API simulada de `tools/audit.mjs`.
-21. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
+20. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
     que se pospone o se fija otro: `setPrSnooze` (`js/app.js`) es lo único que limpia. Inocuo (`liveSnoozes` los ignora),
     pero crece sin tope. Limpiar también al leer. Reproducción: posponer un PR, adelantar el reloj un día y recargar →
     la entrada sigue en `localStorage`.
@@ -568,3 +564,17 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/254, sin colisión
 - Validado: 657 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 255, mantenimiento · Errores: pendiente 13 (Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el…)
+
+### 2026-11-10 · Iteración 255 · Mantenimiento · Errores
+
+- **Arreglo: en Bitbucket Data Center, un PR de un repo renombrado vuelve a contar como del mismo repo** (pendiente 13). `mapPull` de `js/sources/bitbucket-server.js` compara el repo de origen del PR (`fromRef.repository`) con el de destino (`toRef.repository`, el nuestro) por su `id` si los dos lo traen y si no por proyecto y slug sin distinguir mayúsculas, en vez de compararlo con el `owner/name` que se escribió: abierto por su nombre viejo, sus ramas ya no pierden el «PR abierto». Sin `toRef` se cae a lo de antes. Mismo patrón buscado en las demás fuentes: Bitbucket Cloud, GitHub y Codeberg ya comparan con el repo de destino, y GitLab y Azure con ids o banderas; sin pendientes nuevos.
+- **Reproducción:** `node --test tools/bitbucket-server.test.mjs` → `un repo renombrado (abierto por su nombre viejo)…`: `el PR del repo renombrado es del mismo repo` (`actual: false`).
+- **Pruebas que fallan sin el arreglo:** la misma, que también fija que un PR desde un fork personal (`~beto/api`) sigue sin contar como del mismo repo.
+- README: sin cambios (no cambia lo que hace la función, solo qué PRs cuentan como del repo).
+- QA: fila de fuentes cubierta con la API simulada de Bitbucket Data Center (repo renombrado y fork); auditoría: no toca la página más que la fuente, 0 hallazgos nuevos.
+- Skills: no aplica: una comparación corregida en una fuente que ya existe; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (la que dice el pendiente: origen contra destino).
+- OMC: plan=— · revisión=2 hallazgos LOW (0 arreglados: sin prueba propia para el respaldo sin `toRef` ni para el renombrado sin `id`; la lógica es la misma vía de la clave que ya prueban los PRs por defecto) · verificación=—
+- Reclamo: loop/255, sin colisión
+- Validado: 658 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+- **Siguiente:** iteración 256, expansión: ítem 167 (Salud del repo: tendencia de estrellas, Análisis)

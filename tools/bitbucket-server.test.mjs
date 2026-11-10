@@ -243,6 +243,21 @@ test('carga el repo: solo habla con el servidor propio, sin credenciales, y los 
   assert.ok(bb.calls.length > 0);
 });
 
+test('un repo renombrado (abierto por su nombre viejo) sigue viendo sus PRs como del mismo repo; los de un fork no', async () => {
+  const bb = repo();
+  const nuevo = { id: 7, slug: 'api-nuevo', project: { key: 'ANA' } };
+  bb.pull(5, 'feature', 'main', { fromRef: { displayId: 'feature', repository: nuevo }, toRef: { displayId: 'main', repository: nuevo } });
+  bb.pull(6, 'feature', 'main', {
+    fromRef: { displayId: 'feature', repository: { id: 9, slug: 'api', project: { key: '~beto' } } },
+    toRef: { displayId: 'main', repository: nuevo },
+  });
+  const { src, errors } = connect(bb);
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  assert.equal(src.data.pulls.get(5).sameRepo, true, 'el PR del repo renombrado es del mismo repo');
+  assert.equal(src.data.pulls.get(6).sameRepo, false, 'el PR desde un fork no');
+});
+
 test('un repo personal (~ana) usa /users/ana/repos para sus enlaces', async () => {
   const { src } = connect(repo(), { owner: '~ana' });
   assert.equal(src.data.repo.url, `${OWN}/users/ana/repos/api`);

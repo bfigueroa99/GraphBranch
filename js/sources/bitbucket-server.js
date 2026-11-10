@@ -298,8 +298,12 @@
     }
 
     mapPull(p) {
-      const ref = p.fromRef?.repository;
-      const sameRepo = (ref?.slug || '').toLowerCase() === this.name.toLowerCase() && (ref?.project?.key || '').toLowerCase() === this.owner.toLowerCase();
+      /* Se compara el repo de origen con el de destino (el nuestro), no con el owner/name que se escribió: un repo
+         renombrado se abre por su nombre viejo y su slug ya no coincide. Por id si los dos lo traen. */
+      const from = p.fromRef?.repository;
+      const to = p.toRef?.repository || { slug: this.name, project: { key: this.owner } };
+      const key = (r) => `${(r?.project?.key || '').toLowerCase()}/${(r?.slug || '').toLowerCase()}`;
+      const sameRepo = !!from && (from.id != null && to.id != null ? from.id === to.id : key(from) === key(to));
       const href = p.links?.self?.[0]?.href;
       return {
         number: p.id,

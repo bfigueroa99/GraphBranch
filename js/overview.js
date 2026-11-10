@@ -12,6 +12,12 @@
     return !/^(0|false|no|off)$/i.test(q.get('all') || '');
   }
 
+  /** `?by=login`: el filtro por persona del Launchpad (se compara sin tocar mayúsculas contra quienes abrieron PRs, así
+      que un login desconocido no filtra nada). '' si no lo dice o viene vacío. */
+  function personParam(q) {
+    return (q.get('by') || '').trim().slice(0, 100);
+  }
+
   /** El commit más nuevo de lo cargado (por fecha; a igual fecha, el primero que llegó). */
   function lastCommit(data) {
     let best = null;
@@ -95,6 +101,7 @@
    *   diffing() → ¿está abierto el panel de cambios? (entonces un clic en un commit muestra los suyos)
    *   onStats(list): las cifras de todas las tarjetas, para los totales de la cabecera
    *   canDiff(key) → ¿se pueden ver los cambios de los commits de ese repo?
+   *   person: la persona con la que abre el Launchpad (`?by=`); onPerson(login): se eligió otra ('' = todas)
    *   getPins(): los PRs fijados (lista de pinId); onPin(id, on): fijar o soltar uno
    *   prsRoot, onOpenPr(key, head): el Launchpad (los PRs de todos los repos por estado) y la salida de una fila
    * Devuelve { sync(items), draw(key, data, ctx), stats(), celebrate(key, acts), focus(key, { sha, branch }), select(key, sha),
@@ -221,7 +228,7 @@
     /** El Launchpad: los PRs abiertos de todos los repos, por estado. Solo se repinta si cambió algo (así no pierde el foco). */
     let prSig = '';
     let lastEntries = [];
-    let prPerson = ''; // el filtro por persona del Launchpad ('' = todas); solo de esta sesión
+    let prPerson = opts.person || ''; // el filtro por persona del Launchpad ('' = todas); viaja en ?by=
     function setPulls(entries) {
       lastEntries = entries.map((e) => ({ ...e, pulls: [...(e.pulls || [])] })); // `pulls` puede ser un iterador, de un solo uso
       entries = lastEntries;
@@ -229,9 +236,10 @@
       if (!box) return;
       const pins = new Set(opts.getPins?.() || []);
       const people = prAuthors(entries);
-      if (prPerson && !people.includes(prPerson)) prPerson = ''; // la persona ya no tiene PRs abiertos
-      const groups = groupPulls(entries, pins, prPerson);
-      const sig = JSON.stringify([groups, people, prPerson]);
+      // la persona sin PRs abiertos (o desconocida, o aún sin cargar) no filtra; se recuerda por si sus PRs llegan después
+      const who = people.find((u) => u === prPerson) || people.find((u) => u.toLowerCase() === prPerson.toLowerCase()) || '';
+      const groups = groupPulls(entries, pins, who);
+      const sig = JSON.stringify([groups, people, who]);
       if (sig === prSig) return;
       prSig = sig;
       const t = opts.text;
@@ -247,9 +255,10 @@
         sel.title = t('all.prs.person');
         sel.append(new Option(t('all.prs.everyone'), ''));
         for (const u of people) sel.append(new Option(u, u));
-        sel.value = prPerson;
+        sel.value = who;
         sel.addEventListener('change', () => {
           prPerson = sel.value;
+          opts.onPerson?.(prPerson);
           setPulls(lastEntries);
           box.querySelector('.ap-person')?.focus(); // el repintado reemplaza el selector: el foco vuelve a él
         });
@@ -337,5 +346,5 @@
     };
   }
 
-  GB.overview = { allParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, prGroup, groupPulls, prAuthors, pinId, mount };
+  GB.overview = { allParam, personParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, prGroup, groupPulls, prAuthors, pinId, mount };
 })(window.GB);

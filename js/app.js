@@ -1195,6 +1195,12 @@
   /* ---------- vista conjunta: todos los repos seguidos a la vez, cada uno en su tarjeta (ver overview.js) ---------- */
 
   let wantAll = false; // ?all=1 o lo recordado: se aplica en cuanto hay más de un repo
+  let initialBy = ''; // ?by=login: la persona con que abre el Launchpad
+  try {
+    initialBy = EMBED ? '' : GB.overview.personParam(new URLSearchParams(location.search));
+  } catch {
+    /* sin query string */
+  }
   const overview = GB.overview.mount($('#all-grid'), {
     text: (k, p) => t(k, p),
     num: (n) => U.fmtNum(n),
@@ -1212,6 +1218,8 @@
     diffing: () => diffView.isOpen,
     onStats: (list) => renderAllSum(list),
     prsRoot: $('#all-prs'),
+    person: initialBy,
+    onPerson: (login) => setUrlParam('by', login),
     getPins: () => U.store.get('prpins', []),
     onPin: (id, on) => {
       const set = new Set(U.store.get('prpins', []));

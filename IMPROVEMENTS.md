@@ -279,7 +279,7 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 173. **Práctica: rm y mv** · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 16] En la práctica de git, `rm <archivo>` borra un archivo que git sigue y deja el borrado preparado (`rm --cached` lo deja sin seguir), `mv vieja nueva` lo renombra preparado, y `add -A` prepara también los borrados hechos a mano. Comprobar: `node --test tools/gitsim.test.mjs` (qué muestra `status` y qué guarda el commit tras `rm`, `rm --cached` y `mv`).
 175. **Estado de los despliegues, segunda entrega** · Datos · 1×2/2. [parte del ítem 153] El panel de salud suma si el último despliegue de cada entorno de GitHub salió bien, falló o sigue en curso (`/deployments/:id/statuses`, una consulta por entorno, solo con el panel abierto y no más de una cada 15 minutos). Comprobar: `tools/github.test.mjs` con la API simulada (cuántas consultas y solo con el panel abierto).
 177. ~~**Launchpad: el filtro por persona en la URL**~~ hecho en #308 · Escala · 1×2/1. [parte del ítem 158] El filtro por persona del Launchpad viaja en `?by=login` (se lee al abrir la vista conjunta y se escribe al elegir), para compartir la vista de una persona. Comprobar: `node --test` de leer y escribir el parámetro, con un login desconocido que se ignora.
-178. **Launchpad: cuántos PRs tiene cada persona** · Escala · 1×2/1. [parte del ítem 158] Cada opción del selector de personas del Launchpad dice cuántos PRs abiertos tiene (`ana (3)`), con lo ya cargado. Comprobar: `node --test` del conteo por persona con PRs fabricados de tres autores.
+178. ~~**Launchpad: cuántos PRs tiene cada persona**~~ hecho en #312 · Escala · 1×2/1. [parte del ítem 158] Cada opción del selector de personas del Launchpad dice cuántos PRs abiertos tiene (`ana (3)`), con lo ya cargado. Comprobar: `node --test` del conteo por persona con PRs fabricados de tres autores.
 179. **Resumen de la semana: quién abrió más PRs** · Salidas · 1×2/2. [parte del ítem 23] El resumen de la semana suma las personas que más PRs abrieron en la semana, con lo ya cargado. Comprobar: `node --test` del conteo con PRs fabricados de dos semanas.
 180. **Salud del repo: PRs sin revisión hace días** · Análisis · 1×2/2. [parte del ítem 12] El panel de salud cuenta los PRs abiertos que llevan más de 7 días sin revisión, con lo ya cargado. Comprobar: `node --test` con PRs de distintas edades, borradores excluidos.
 181. **Práctica: git clean** · Público · 1×2/2. [parte del ítem 16] En la práctica de git, `clean` borra los archivos sin seguir del directorio de trabajo, con su ejercicio y su comprobación. Comprobar: `node --test` del simulador (`js/gitsim.js`) antes y después de `clean`.
@@ -601,3 +601,16 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/247, sin colisión
 - Validado: 649 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 248, expansión: ítem 178 (Launchpad: cuántos PRs tiene cada persona, Escala)
+
+### 2026-11-10 · Iteración 248 · Expansión · Escala
+
+- **Capacidad nueva: el selector de personas del Launchpad dice cuántos PRs tiene cada una** (ítem 178 de la hoja de ruta, parte del 158). Cada opción es `ana (3)`: `prCounts` (`js/overview.js`) cuenta los PRs abiertos por quien los abrió con lo ya cargado, sin consultas; el valor de la opción sigue siendo el login, así que `?by=` no cambia, y el conteo entra en la firma del repintado.
+- **Pruebas que fallan sin la capacidad:** `node --test` (`tools/overview.test.mjs`, «prCounts: cada persona dice cuántos PRs abiertos tiene…»: tres autores en dos repos, iterador de un solo uso y PRs sin autor).
+- README: la sección «Todos a la vez» dice que cada opción lleva su conteo.
+- QA: Launchpad de la vista conjunta (selector, filtro, foco tras elegir); sin texto nuevo, solo el número con el formato local (`num`), así que no suma claves de idioma; auditoría: la puerta la corre.
+- Skills: no aplica: una línea sobre una vista existente; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (contar al pintar).
+- OMC: plan=— · revisión=— · verificación=— (diff de unas líneas, leído a mano; sin subagentes)
+- Reclamo: loop/248, sin colisión
+- Validado: pendiente
+- **Siguiente:** iteración 249, expansión: ítem 161 (Resumen de la semana de la organización: quién fusionó, Salidas)

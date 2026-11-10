@@ -663,5 +663,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (una clave más en el mapa de rótulos).
 - OMC: plan=— · revisión=— · verificación=— (diff pequeño, leído a mano; sin subagentes)
 - Reclamo: loop/251, sin colisión
-- Validado: pendiente
+- Validado: 653 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 252, expansión: ítem 163 (Práctica: stash -u, Público)

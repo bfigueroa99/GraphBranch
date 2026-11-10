@@ -387,34 +387,30 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 10. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-11. [Accesibilidad] En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…», «sin actividad…», PRs) y la
-    nota de cada commit (`.tv-aside`) ya van en el `aria-label` del `treeitem`, pero son texto del nodo: según el lector se
-    leen dos veces. Marcarlas `aria-hidden="true"` y comprobarlo con un lector real (ver Para Benjamin, 5).
-    Reproducción: Playwright, abrir `#textview-btn` → `.tv-tag` dentro de `[role=treeitem][aria-label]` sin `aria-hidden`.
-12. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
+11. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
     `placeLabels`. El cuadro lo domina el render por software (~200 ms por cuadro sin GPU, 10 fps), que con GPU no existe;
     medir con GPU real antes de tocarlo. Reproducción: la misma envoltura sobre `stepScene` → ~1,1 ms por llamada.
-13. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
+12. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
     (895 ms en total, sin GPU); el perfil de CPU de los primeros 6 s no deja ninguna función de la app por encima de 70 ms
     (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
     que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
     Reproducción: `node tools/audit.mjs --repetir 3` → `consultas: 10`, `tareasLargasMs: 895`.
-14. [Errores] Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el repo del PR con
+13. [Errores] Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el repo del PR con
     `owner/name` tal como se escribieron; con un repo renombrado (abierto por su nombre viejo) ningún PR cuenta como del
     mismo repo: sus ramas pierden el «PRs abiertos» y dicen «sin PR abierto». Comparar `fromRef.repository` con
     `toRef.repository`. Reproducción: API simulada con el repo `nuevo` y abrir `CLAVE/viejo` → `sameRepo` false.
-15. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
+14. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
     prepara de verdad en vez de solo listar, y `add -p` prepara todo. Negarse con el `error: unknown switch` de git (o
     admitir `-n`). Reproducción: `node --test` con `touch a.txt`, `add -n .` → `a.txt` queda preparado.
-16. [Seguridad] Avisos a Slack (`electron/webhooks.js`, `payload`): `slackText` escapa `&`, `<` y `>` (sin menciones ni
+15. [Seguridad] Avisos a Slack (`electron/webhooks.js`, `payload`): `slackText` escapa `&`, `<` y `>` (sin menciones ni
     enlaces), pero no el formato `mrkdwn` (`*`, `_`, `` ` ``, `~`): un título de PR como `*URGENTE*` sale en negrita en el
     canal. Solo formato, sin enlaces ni menciones; escaparlo como se hizo con Discord. Reproducción: `payload('slack',
     {title: '*x*'})` → `*x*` sin escapar.
-17. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
+16. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
     la iteración 239: la sesión no pudo consultar su página de versiones. Comprobarla con `WebFetch` en la próxima
     auditoría de Seguridad y, si hay una estable más nueva con arreglos de seguridad, subirla (cambio de `electron/`: plan
     por consenso). Reproducción: `npm view electron version` frente a `package.json`.
-18. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
+17. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
     largo se lleva la línea `<enlace>` del final (el aviso queda sin enlace). Recortar título y detalle antes y dejar el
     enlace siempre. Reproducción: `payload('discord', {title: 'x'.repeat(5000), url: 'https://github.com/a/b'})` →
     `content` sin `<https://github.com/a/b>`.
@@ -591,3 +587,17 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/246, sin colisión
 - Validado: 649 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 247, mantenimiento · Accesibilidad: pendiente 11 (En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…»,…)
+
+### 2026-11-10 · Iteración 247 · Mantenimiento · Accesibilidad
+
+- **Arreglo: la vista de texto ya no se lee dos veces** (pendiente 11). Las marcas de una rama (`.tv-tag`: por defecto, PRs, nueva, sin actividad, fusionada, CI fallando) y la nota de cada commit (`.tv-aside`) van `aria-hidden="true"` (`mkSilent`, `js/textview.js`): ya están en el `aria-label` de su `treeitem`, y según el lector se anunciaban dos veces. Se ven igual. Falta confirmarlo con un lector real (Para Benjamin, 5).
+- **Reproducción:** Playwright contra la demo, `#textview-btn` → `.tv-tag` y `.tv-aside` dentro de `[role=treeitem][aria-label]` sin `aria-hidden` → 60 de 60 sin el arreglo, 0 con él.
+- **Pruebas que fallan sin el arreglo:** el paso de la vista de texto del smoke («marcas que el lector leería dos veces (sin aria-hidden)»).
+- README: sin cambios (no cambia lo que hace la función, solo cómo la lee un lector).
+- QA: la vista de texto abierta en la demo, marcas y notas con `aria-hidden` y el nombre accesible del nodo intacto; auditoría: la puerta la corre.
+- Skills: no aplica: un atributo ARIA sobre una vista existente; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (`aria-hidden` en las marcas repetidas).
+- OMC: plan=— · revisión=— · verificación=— (diff de unas líneas, leído a mano; sin subagentes)
+- Reclamo: loop/247, sin colisión
+- Validado: PENDIENTE
+- **Siguiente:** PENDIENTE

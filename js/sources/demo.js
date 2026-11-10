@@ -290,7 +290,7 @@
       H.push(this.act('pr-open', { title: MSG('act.prOpened', { num: agentPr }), detail: this.data.pulls.get(agentPr).title, ref: 'claude/search-index → develop', branch: 'claude/search-index', actor: this.actor(CLAUDE_APP), number: agentPr }, t + 60e3));
       H.push(this.act('review-changes', { title: MSG('act.prChanges', { num: agentPr }), detail: this.C.comments[1] || this.C.comments[0], branch: 'claude/search-index', actor: this.actor(COPILOT), number: agentPr }, t + 100e3));
       H.push(this.act('comment', { title: MSG('act.commentPr', { num: 38 }), detail: this.C.comments[0], actor: this.actor(V), number: 38, pr: true }, t + 120e3));
-      H.push(this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login: 'pgarrido' }) }, t + 140e3));
+      H.push(this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login: 'pgarrido' }), actor: this.actor({ name: 'pgarrido', login: 'pgarrido' }) }, t + 140e3));
       this.data.totalBranches = this.data.branches.size;
     }
 
@@ -308,7 +308,7 @@
         [7, prs.length > 0, () => this.doReview()],
         [9, prs.some((p) => !p.draft && this.data.branches.get(p.head)?.own >= 2), () => this.doMerge()],
         [6, true, () => this.doIssue()],
-        [3, true, () => [this.chance(0.7) ? this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login: this.pick(['pgarrido', 'nlagos', 'fvera', 'icortes']) }) }) : this.act('fork', { title: MSG('act.fork'), detail: `${this.pick(['nlagos', 'fvera'])}/orbita` })]],
+        [3, true, () => [this.chance(0.7) ? ((login) => this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login }), actor: this.actor({ name: login, login }) }))(this.pick(['pgarrido', 'nlagos', 'fvera', 'icortes'])) : this.act('fork', { title: MSG('act.fork'), detail: `${this.pick(['nlagos', 'fvera'])}/orbita` })]],
         [2, topics.some((x) => x.own >= 2), () => this.doForcePush()],
         [2, true, () => this.doHotfix()],
         [3, prs.every((p) => p.head !== 'develop') && this.data.branches.get('develop').own >= 3, () => this.doReleasePR()],

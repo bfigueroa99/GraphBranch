@@ -757,6 +757,8 @@ GB.i18n.define('ko', {
   'all.prs.open': '{repo}의 PR #{num}: {title}. 해당 브랜치 열기',
   'all.prs.pin': '{repo}의 PR #{num}을(를) 맨 위에 고정',
   'all.prs.unpin': '{repo}의 PR #{num} 고정 해제',
+  'all.prs.snooze': '{repo}의 PR #{num} 하루 미루기',
+  'all.prs.unsnooze': '{repo}의 PR #{num} 미루기 해제',
   'all.prs.person': '사람별로 Launchpad 필터링',
   'all.prs.everyone': '모든 사람',
   'all.prs.repo': 'Launchpad를 저장소별로 필터링',

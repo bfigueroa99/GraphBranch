@@ -1209,6 +1209,15 @@
   } catch {
     /* sin query string */
   }
+  /** Pospone un PR del Launchpad un día (o deja de posponerlo); se guarda por repo y número, sin el título, y lo vencido se
+      limpia al guardar. */
+  function setPrSnooze(id, on) {
+    const m = GB.overview.liveSnoozes(U.store.get('prsnooze', {}));
+    if (on) m[id] = Date.now() + GB.overview.SNOOZE_MS;
+    else delete m[id];
+    U.store.set('prsnooze', Object.keys(m).length ? m : null);
+  }
+
   const overview = GB.overview.mount($('#all-grid'), {
     text: (k, p) => t(k, p),
     num: (n) => U.fmtNum(n),
@@ -1234,6 +1243,16 @@
       if (on) set.add(id);
       else set.delete(id);
       U.store.set('prpins', set.size ? [...set] : null);
+      if (on) setPrSnooze(id, false); // fijar gana a posponer
+    },
+    getSnoozes: () => GB.overview.liveSnoozes(U.store.get('prsnooze', {})),
+    onSnooze: (id, on) => {
+      setPrSnooze(id, on);
+      if (on) {
+        // posponer suelta el PR si estaba fijado: no puede ir arriba y abajo a la vez
+        const set = new Set(U.store.get('prpins', []));
+        if (set.delete(id)) U.store.set('prpins', set.size ? [...set] : null);
+      }
     },
     onOpenPr: (key, head) => {
       const tab = tabs.find((x) => x.key === key);

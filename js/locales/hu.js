@@ -757,6 +757,8 @@ GB.i18n.define('hu', {
   'all.prs.open': 'PR #{num} ebben: {repo}: {title}. Ágának megnyitása',
   'all.prs.pin': 'A(z) {repo} #{num} PR-jának kitűzése felülre',
   'all.prs.unpin': 'A(z) {repo} #{num} PR-jának levétele',
+  'all.prs.snooze': 'A(z) {repo} #{num} PR-jának elhalasztása egy napra',
+  'all.prs.unsnooze': 'A(z) {repo} #{num} PR-ja halasztásának megszüntetése',
   'all.prs.person': 'A Launchpad szűrése személy szerint',
   'all.prs.everyone': 'Mindenki',
   'all.prs.repo': 'A Launchpad szűrése tárolóra',

@@ -757,6 +757,8 @@ GB.i18n.define('bn', {
   'all.prs.open': '{repo}-এর PR #{num}: {title}। এর শাখা খুলুন',
   'all.prs.pin': '{repo}-এর PR #{num} উপরে পিন করুন',
   'all.prs.unpin': '{repo}-এর PR #{num} আনপিন করুন',
+  'all.prs.snooze': '{repo}-এর PR #{num} এক দিনের জন্য স্থগিত করুন',
+  'all.prs.unsnooze': '{repo}-এর PR #{num} স্থগিত রাখা বন্ধ করুন',
   'all.prs.person': 'ব্যক্তি অনুযায়ী Launchpad ফিল্টার করুন',
   'all.prs.everyone': 'সবাই',
   'all.prs.repo': 'Launchpad রেপো অনুযায়ী ফিল্টার করুন',

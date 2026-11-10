@@ -768,6 +768,8 @@ GB.i18n.define('sk', {
   'all.prs.open': 'PR #{num} z {repo}: {title}. Otvoriť jeho vetvu',
   'all.prs.pin': 'Pripnúť PR #{num} z {repo} nahor',
   'all.prs.unpin': 'Odopnúť PR #{num} z {repo}',
+  'all.prs.snooze': 'Odložiť PR #{num} z {repo} o deň',
+  'all.prs.unsnooze': 'Zrušiť odloženie PR #{num} z {repo}',
   'all.prs.person': 'Filtrovať Launchpad podľa osoby',
   'all.prs.everyone': 'Všetci',
   'all.prs.repo': 'Filtrovať Launchpad podľa repozitára',

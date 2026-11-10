@@ -757,6 +757,8 @@ GB.i18n.define('bg', {
   'all.prs.open': 'PR #{num} на {repo}: {title}. Отвори клона му',
   'all.prs.pin': 'Закачи PR #{num} на {repo} най-горе',
   'all.prs.unpin': 'Откачи PR #{num} на {repo}',
+  'all.prs.snooze': 'Отложи PR #{num} на {repo} за един ден',
+  'all.prs.unsnooze': 'Спри отлагането на PR #{num} на {repo}',
   'all.prs.person': 'Филтриране на Launchpad по човек',
   'all.prs.everyone': 'Всички хора',
   'all.prs.repo': 'Филтриране на Launchpad по хранилище',

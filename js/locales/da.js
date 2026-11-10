@@ -757,6 +757,8 @@ GB.i18n.define('da', {
   'all.prs.open': 'PR #{num} i {repo}: {title}. Åbn dens gren',
   'all.prs.pin': 'Fastgør PR #{num} i {repo} øverst',
   'all.prs.unpin': 'Frigør PR #{num} i {repo}',
+  'all.prs.snooze': 'Udsæt PR #{num} i {repo} en dag',
+  'all.prs.unsnooze': 'Stop udsættelsen af PR #{num} i {repo}',
   'all.prs.person': 'Filtrér Launchpad efter person',
   'all.prs.everyone': 'Alle personer',
   'all.prs.repo': 'Filtrer Launchpad efter repo',

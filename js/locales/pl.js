@@ -768,6 +768,8 @@ GB.i18n.define('pl', {
   'all.prs.open': 'PR #{num} w {repo}: {title}. Otwórz jego gałąź',
   'all.prs.pin': 'Przypnij PR #{num} z {repo} u góry',
   'all.prs.unpin': 'Odepnij PR #{num} z {repo}',
+  'all.prs.snooze': 'Odłóż PR #{num} z {repo} na jeden dzień',
+  'all.prs.unsnooze': 'Przestań odkładać PR #{num} z {repo}',
   'all.prs.person': 'Filtruj Launchpad według osoby',
   'all.prs.everyone': 'Wszystkie osoby',
   'all.prs.repo': 'Filtruj Launchpad według repozytorium',

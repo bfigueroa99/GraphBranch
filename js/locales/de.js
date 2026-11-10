@@ -758,6 +758,8 @@ GB.i18n.define('de', {
   'all.prs.open': 'PR #{num} in {repo}: {title}. Branch öffnen',
   'all.prs.pin': 'PR #{num} in {repo} oben anheften',
   'all.prs.unpin': 'PR #{num} in {repo} lösen',
+  'all.prs.snooze': 'PR #{num} in {repo} um einen Tag zurückstellen',
+  'all.prs.unsnooze': 'Zurückstellen von PR #{num} in {repo} aufheben',
   'all.prs.person': 'Launchpad nach Person filtern',
   'all.prs.everyone': 'Alle Personen',
   'all.prs.repo': 'Launchpad nach Repo filtern',

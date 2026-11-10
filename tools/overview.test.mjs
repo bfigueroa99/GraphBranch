@@ -132,6 +132,29 @@ test('groupPulls: los PRs fijados van arriba de su grupo, por repo y número, y 
   assert.equal(O.pinId('o/a', 7), 'o/a#7');
 });
 
+test('groupPulls: un PR pospuesto baja al final de su grupo hasta que vence, y fijar gana a posponer', () => {
+  const pr = (number, extra = {}) => ({ number, title: `PR ${number}`, head: `rama-${number}`, createdAt: number * 10, ...extra });
+  const entries = [
+    { key: 'a', name: 'o/a', pulls: [pr(1), pr(2), pr(3, { draft: true }), pr(5, { draft: true })] },
+    { key: 'b', name: 'o/b', pulls: [pr(1), pr(4)] },
+  ];
+  const now = 1_000_000;
+  const order = (g) => plain(g).map((x) => [x.id, x.items.map((i) => `${i.key}#${i.number}${i.pinned ? '*' : ''}${i.snoozed ? 'z' : ''}`)]);
+  const later = now + O.SNOOZE_MS;
+  assert.deepEqual(order(O.groupPulls(entries, null, '', '', { 'b#4': later, 'a#5': later }, now)),
+    [['draft', ['a#3', 'a#5z']], ['waiting', ['a#2', 'a#1', 'b#1', 'b#4z']]], 'el más nuevo baja al final de su grupo y no cambia de grupo');
+  assert.deepEqual(order(O.groupPulls(entries, null, '', '', { 'b#4': now - 1, 'a#5': now }, now)), order(O.groupPulls(entries)), 'vencido, vuelve a su lugar');
+  assert.deepEqual(order(O.groupPulls(entries, new Set(['b#4']), '', '', { 'b#4': later, 'a#2': later }, now)),
+    [['draft', ['a#5', 'a#3']], ['waiting', ['b#4*', 'a#1', 'b#1', 'a#2z']]], 'fijado y pospuesto: va arriba, fijado');
+  assert.deepEqual(order(O.groupPulls(entries, null, '', '', { 'b#4': later, 'a#2': later }, now + O.SNOOZE_MS)), order(O.groupPulls(entries)), 'pasado un día, nada queda pospuesto');
+  assert.equal(O.SNOOZE_MS, 86_400_000, 'un día');
+});
+
+test('liveSnoozes: solo los pospuestos vigentes, y nada de lo que no es { id: número }', () => {
+  assert.deepEqual(plain(O.liveSnoozes({ 'a#1': 20, 'a#2': 10, 'a#3': 'x', 'a#4': 11 }, 10)), { 'a#1': 20, 'a#4': 11 });
+  for (const bad of [null, undefined, 'a#1', 5, ['a#1']]) assert.deepEqual(plain(O.liveSnoozes(bad, 0)), {}, String(bad));
+});
+
 test('mount: fijar repinta con los mismos PRs aunque `pulls` sea un iterador de un solo uso', () => {
   const els = [];
   const mkEl = (tag) => {

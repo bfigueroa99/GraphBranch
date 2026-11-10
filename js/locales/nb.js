@@ -757,6 +757,8 @@ GB.i18n.define('nb', {
   'all.prs.open': 'PR #{num} i {repo}: {title}. Åpne grenen',
   'all.prs.pin': 'Fest PR #{num} i {repo} øverst',
   'all.prs.unpin': 'Løsne PR #{num} i {repo}',
+  'all.prs.snooze': 'Utsett PR #{num} i {repo} en dag',
+  'all.prs.unsnooze': 'Slutt å utsette PR #{num} i {repo}',
   'all.prs.person': 'Filtrer Launchpad etter person',
   'all.prs.everyone': 'Alle personer',
   'all.prs.repo': 'Filtrer Launchpad etter repo',

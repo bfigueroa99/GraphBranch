@@ -773,6 +773,8 @@ GB.i18n.define('uk', {
   'all.prs.open': 'PR #{num} у {repo}: {title}. Відкрити його гілку',
   'all.prs.pin': 'Закріпити PR #{num} з {repo} вгорі',
   'all.prs.unpin': 'Відкріпити PR #{num} з {repo}',
+  'all.prs.snooze': 'Відкласти PR #{num} з {repo} на день',
+  'all.prs.unsnooze': 'Скасувати відкладення PR #{num} з {repo}',
   'all.prs.person': 'Фільтр Launchpad за людиною',
   'all.prs.everyone': 'Усі люди',
   'all.prs.repo': 'Фільтрувати Launchpad за репозиторієм',

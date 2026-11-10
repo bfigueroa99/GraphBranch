@@ -757,6 +757,8 @@ GB.i18n.define('zh-Hant', {
   'all.prs.open': '{repo} 的 PR #{num}：{title}。開啟它的分支',
   'all.prs.pin': '將 {repo} 的 PR #{num} 置頂',
   'all.prs.unpin': '取消置頂 {repo} 的 PR #{num}',
+  'all.prs.snooze': '將 {repo} 的 PR #{num} 延後一天',
+  'all.prs.unsnooze': '取消延後 {repo} 的 PR #{num}',
   'all.prs.person': '依人員篩選 Launchpad',
   'all.prs.everyone': '所有人',
   'all.prs.repo': '依儲存庫篩選 Launchpad',

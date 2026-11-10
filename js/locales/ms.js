@@ -757,6 +757,8 @@ GB.i18n.define('ms', {
   'all.prs.open': 'PR #{num} dalam {repo}: {title}. Buka cabangnya',
   'all.prs.pin': 'Semat PR #{num} {repo} di atas',
   'all.prs.unpin': 'Nyahsemat PR #{num} {repo}',
+  'all.prs.snooze': 'Tangguhkan PR #{num} {repo} selama sehari',
+  'all.prs.unsnooze': 'Batalkan penangguhan PR #{num} {repo}',
   'all.prs.person': 'Tapis Launchpad mengikut orang',
   'all.prs.everyone': 'Semua orang',
   'all.prs.repo': 'Tapis Launchpad mengikut repo',

@@ -757,6 +757,8 @@ GB.i18n.define('ta', {
   'all.prs.open': '{repo} இன் PR #{num}: {title}. அதன் கிளையைத் திறக்கவும்',
   'all.prs.pin': '{repo} இன் PR #{num} ஐ மேலே பின் செய்',
   'all.prs.unpin': '{repo} இன் PR #{num} ஐ அன்பின் செய்',
+  'all.prs.snooze': '{repo} இன் PR #{num} ஐ ஒரு நாள் தள்ளிவை',
+  'all.prs.unsnooze': '{repo} இன் PR #{num} ஐ தள்ளிவைப்பதை நிறுத்து',
   'all.prs.person': 'Launchpad-ஐ நபர் வாரியாக வடிகட்டு',
   'all.prs.everyone': 'அனைவரும்',
   'all.prs.repo': 'Launchpad-ஐ ரெப்போவின்படி வடிகட்டு',

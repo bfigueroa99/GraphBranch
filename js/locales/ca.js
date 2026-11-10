@@ -757,6 +757,8 @@ GB.i18n.define('ca', {
   'all.prs.open': 'PR #{num} de {repo}: {title}. Obre la seva branca',
   'all.prs.pin': 'Fixa el PR #{num} de {repo} a dalt',
   'all.prs.unpin': 'Deixa de fixar el PR #{num} de {repo}',
+  'all.prs.snooze': 'Posposa el PR #{num} de {repo} un dia',
+  'all.prs.unsnooze': 'Deixa de posposar el PR #{num} de {repo}',
   'all.prs.person': 'Filtra el Launchpad per persona',
   'all.prs.everyone': 'Totes les persones',
   'all.prs.repo': 'Filtra el Launchpad per repositori',

@@ -757,6 +757,8 @@ GB.i18n.define('id', {
   'all.prs.open': 'PR #{num} di {repo}: {title}. Buka branch-nya',
   'all.prs.pin': 'Sematkan PR #{num} dari {repo} di atas',
   'all.prs.unpin': 'Lepas sematan PR #{num} dari {repo}',
+  'all.prs.snooze': 'Tunda PR #{num} dari {repo} selama sehari',
+  'all.prs.unsnooze': 'Batalkan penundaan PR #{num} dari {repo}',
   'all.prs.person': 'Filter Launchpad menurut orang',
   'all.prs.everyone': 'Semua orang',
   'all.prs.repo': 'Filter Launchpad menurut repo',

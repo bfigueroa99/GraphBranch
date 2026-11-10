@@ -108,6 +108,16 @@ test('groupPulls y prAuthors: el Launchpad se filtra por la persona que abrió e
   assert.deepEqual(plain(O.prAuthors([])), []);
 });
 
+test('prCounts: cada persona dice cuántos PRs abiertos tiene, de todos los repos y sin contar los PRs sin autor', () => {
+  const pr = (number, login) => ({ number, title: `PR ${number}`, user: login ? { login } : undefined });
+  const entries = [
+    { key: 'a', name: 'o/a', pulls: [pr(1, 'ana'), pr(2, 'beto'), pr(3, 'ana')] },
+    { key: 'b', name: 'o/b', pulls: new Set([pr(4, 'ana'), pr(5, 'Ana'), pr(6)]) },
+  ];
+  assert.deepEqual(plain(O.prCounts(entries)), { ana: 3, beto: 1, Ana: 1 });
+  assert.deepEqual(plain(O.prCounts([])), {});
+});
+
 test('groupPulls: los PRs fijados van arriba de su grupo, por repo y número, y no cambian de grupo', () => {
   const pr = (number, extra = {}) => ({ number, title: `PR ${number}`, head: `rama-${number}`, createdAt: number * 10, ...extra });
   const entries = [

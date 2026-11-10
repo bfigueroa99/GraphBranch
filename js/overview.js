@@ -85,6 +85,13 @@
     return [...set].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }) || (a < b ? -1 : 1));
   }
 
+  /** Cuántos PRs abiertos tiene cada persona (los mismos `entries`): { login: n }, con lo ya cargado y sin consultar nada. */
+  function prCounts(entries) {
+    const n = {};
+    for (const e of entries) for (const p of e.pulls || []) { const u = p.user?.login || p.user?.name || ''; if (u) n[u] = (n[u] || 0) + 1; }
+    return n;
+  }
+
   /** Los PRs abiertos de varios repos, agrupados por estado: `entries` es [{ key, name, pulls: iterable de PRs }].
       Devuelve solo los grupos con PRs, [{ id, items }], cada uno del más nuevo al más viejo; los fijados (`pinned`: un Set
       de `pinId`) van arriba de su grupo, con `pinned: true`. */
@@ -252,10 +259,11 @@
       if (!box) return;
       const pins = new Set(opts.getPins?.() || []);
       const people = prAuthors(entries);
+      const counts = prCounts(entries);
       // la persona sin PRs abiertos (o desconocida, o aún sin cargar) no filtra; se recuerda por si sus PRs llegan después
       const who = people.find((u) => u === prPerson) || people.find((u) => u.toLowerCase() === prPerson.toLowerCase()) || '';
       const groups = groupPulls(entries, pins, who);
-      const sig = JSON.stringify([groups, people, who]);
+      const sig = JSON.stringify([groups, people, counts, who]);
       if (sig === prSig) return;
       prSig = sig;
       const t = opts.text;
@@ -270,7 +278,7 @@
         sel.setAttribute('aria-label', t('all.prs.person'));
         sel.title = t('all.prs.person');
         sel.append(new Option(t('all.prs.everyone'), ''));
-        for (const u of people) sel.append(new Option(u, u));
+        for (const u of people) sel.append(new Option(`${u} (${num(counts[u])})`, u));
         sel.value = who;
         sel.addEventListener('change', () => {
           prPerson = sel.value;
@@ -370,5 +378,5 @@
     };
   }
 
-  GB.overview = { allParam, personParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, fitGrid, prGroup, groupPulls, prAuthors, pinId, mount };
+  GB.overview = { allParam, personParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, fitGrid, prGroup, groupPulls, prAuthors, prCounts, pinId, mount };
 })(window.GB);

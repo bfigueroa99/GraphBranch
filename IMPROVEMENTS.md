@@ -599,5 +599,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (`aria-hidden` en las marcas repetidas).
 - OMC: plan=— · revisión=— · verificación=— (diff de unas líneas, leído a mano; sin subagentes)
 - Reclamo: loop/247, sin colisión
-- Validado: PENDIENTE
-- **Siguiente:** PENDIENTE
+- Validado: 649 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+- **Siguiente:** iteración 248, expansión: ítem 178 (Launchpad: cuántos PRs tiene cada persona, Escala)

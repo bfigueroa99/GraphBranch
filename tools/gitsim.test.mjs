@@ -1026,3 +1026,36 @@ test('add -A prepara todo: lo cambiado y lo sin seguir, como add . y a diferenci
   assert.equal(clean.staged.length, 0);
   assert.match(plain(clean.run('help').lines).join('\n'), /add -A/);
 });
+
+test('stash -u aparta también los archivos sin seguir y pop los devuelve; sin -u se quedan', () => {
+  const r = fresh();
+  run(r, 'touch --new tmp.txt');
+  assert.match(r.run('stash').lines[0], /No local changes/, 'sin -u un archivo sin seguir no cuenta');
+  assert.match(r.run('stash -u').lines[0], /^Saved working directory/);
+  assert.deepEqual(plain(r.untracked), []);
+  assert.match(r.run('status').lines.join('\n'), /nothing to commit, working tree clean/);
+  run(r, 'stash pop');
+  assert.deepEqual(plain(r.untracked), ['tmp.txt']);
+  assert.equal(r.stashes.length, 0);
+
+  run(r, 'touch app.js');
+  assert.match(r.run('stash').lines[0], /^Saved/);
+  assert.deepEqual(plain(r.untracked), ['tmp.txt'], 'sin -u el archivo nuevo se queda');
+  run(r, 'stash pop');
+  assert.deepEqual(plain(r.work), ['app.js']);
+
+  run(r, 'stash --include-untracked');
+  assert.deepEqual(plain(r.untracked), []);
+  assert.deepEqual(plain(r.work), []);
+  run(r, 'stash pop stash@{0}');
+  assert.deepEqual(plain(r.untracked), ['tmp.txt']);
+  assert.deepEqual(plain(r.work), ['app.js']);
+
+  run(r, 'stash push -u -m "con nuevos"');
+  assert.match(r.run('stash list').lines[0], /^stash@\{0\}: On main: con nuevos$/);
+  run(r, 'touch --new tmp.txt');
+  const clash = r.run('stash apply');
+  assert.equal(clash.ok, false);
+  assert.match(clash.lines.join('\n'), /tmp\.txt already exists, no checkout/);
+  assert.equal(r.stashes.length, 1);
+});

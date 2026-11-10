@@ -292,7 +292,7 @@
         'rebase --abort|--continue  cancel a stopped rebase, or replay the rest of it',
         'reset [--soft|--mixed|--hard] <to>  move the branch back (HEAD~1, a sha, HEAD@{1}); --hard drops changes',
         'reflog                      where HEAD has been (HEAD@{n}): find a commit again after a reset --hard',
-        'stash [list|pop|apply|drop] put uncommitted changes aside and bring them back',
+        'stash [-u] [list|pop|apply|drop] put uncommitted changes aside (-u also the untracked files) and bring them back',
         'add <file|.>                prepare changes (and new files) for the next commit',
         'add -u [file|.]             prepare only changed files git already tracks (new files stay out)',
         'add -A [file|.]             prepare everything: changed files and new ones (like add .)',
@@ -384,6 +384,7 @@
       const { flags, rest } = parse(args, ['-m', '--message']);
       const [sub = 'push', ref] = rest;
       const msg = flags['-m'] ?? flags['--message'];
+      const withNew = !!(flags['-u'] || flags['--include-untracked']);
       const pick = () => {
         if (!this.stashes.length) fail('error: No stash entries found.');
         const m = /^(?:stash@\{(\d+)\}|(\d+))$/.exec(ref ?? '0');
@@ -392,13 +393,14 @@
         return i;
       };
       if (sub === 'push' || sub === 'save') {
-        if (!this.dirty().length) return ['No local changes to save'];
+        if (!this.dirty().length && !(withNew && this.untracked.length)) return ['No local changes to save'];
         if (!this.headSha) fail('You do not have the initial commit yet');
         const branch = this.head.branch || '(no branch)';
         const line = typeof msg === 'string' && msg ? `On ${branch}: ${msg}` : `WIP on ${branch}: ${this.short(this.headSha)} ${this.commits.get(this.headSha).message}`;
-        this.stashes.unshift({ files: this.dirty(), line });
+        this.stashes.unshift({ files: this.dirty(), untracked: withNew ? this.untracked : [], line });
         this.work = [];
         this.staged = [];
+        if (withNew) this.untracked = [];
         return [`Saved working directory and index state ${line}`];
       }
       if (sub === 'list') return this.stashes.map((s, i) => `stash@{${i}}: ${s.line}`);
@@ -412,7 +414,10 @@
         const entry = this.stashes[i];
         const clash = entry.files.filter((f) => this.dirty().includes(f));
         if (clash.length) fail(`error: Your local changes to the following files would be overwritten by merge:\n${clash.map((f) => `\t${f}`).join('\n')}\nPlease commit your changes or stash them before you merge.\nAborting`);
+        const taken = entry.untracked.filter((f) => this.untracked.includes(f) || this.dirty().includes(f));
+        if (taken.length) fail(`${taken.map((f) => `${f} already exists, no checkout`).join('\n')}\nerror: could not restore untracked files from stash`);
         this.work = [...this.work, ...entry.files];
+        this.untracked = [...this.untracked, ...entry.untracked];
         const out = this.commands.status.call(this);
         if (sub === 'pop') {
           this.stashes.splice(i, 1);
@@ -420,7 +425,7 @@
         }
         return out;
       }
-      fail(`error: unknown subcommand: '${sub}'\nusage: stash [push | list | pop | apply | drop]`);
+      fail(`error: unknown subcommand: '${sub}'\nusage: stash [push [-u] | list | pop | apply | drop]`);
     },
 
     log(args) {

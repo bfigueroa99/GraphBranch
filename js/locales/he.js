@@ -814,6 +814,8 @@ GB.i18n.define('he', {
   'all.prs.unpin': 'בטל הצמדה של PR #{num} של {repo}',
   'all.prs.person': 'סינון ה-Launchpad לפי אדם',
   'all.prs.everyone': 'כל האנשים',
+  'all.prs.repo': 'סינון ה-Launchpad לפי מאגר',
+  'all.prs.allRepos': 'כל המאגרים',
   'all.lastCommit': 'קומיט אחרון: {msg} · {who} · {when}. הצגת השינויים שלו',
   'editor.edit': 'עריכה',
   'editor.editFile': 'עריכת {path}',

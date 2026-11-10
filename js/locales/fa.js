@@ -800,6 +800,8 @@ GB.i18n.define('fa', {
   'all.prs.unpin': 'برداشتن سنجاق PR #{num} از {repo}',
   'all.prs.person': 'فیلتر Launchpad بر اساس فرد',
   'all.prs.everyone': 'همه افراد',
+  'all.prs.repo': 'فیلتر Launchpad بر اساس مخزن',
+  'all.prs.allRepos': 'همه مخزن‌ها',
   'all.lastCommit': 'آخرین کامیت: {msg} · {who} · {when}. دیدن تغییراتش',
   'editor.edit': 'ویرایش',
   'editor.editFile': 'ویرایش {path}',

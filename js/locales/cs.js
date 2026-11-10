@@ -768,6 +768,8 @@ GB.i18n.define('cs', {
   'all.prs.unpin': 'Odepnout PR #{num} z {repo}',
   'all.prs.person': 'Filtrovat Launchpad podle osoby',
   'all.prs.everyone': 'Všichni',
+  'all.prs.repo': 'Filtrovat Launchpad podle repozitáře',
+  'all.prs.allRepos': 'Všechny repozitáře',
   'all.lastCommit': 'Poslední commit: {msg} · {who} · {when}. Zobrazit jeho změny',
   'editor.edit': 'Upravit',
   'editor.editFile': 'Upravit {path}',

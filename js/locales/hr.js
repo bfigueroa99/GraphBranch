@@ -765,6 +765,8 @@ GB.i18n.define('hr', {
   'all.prs.unpin': 'Otkvači PR #{num} iz {repo}',
   'all.prs.person': 'Filtriraj Launchpad po osobi',
   'all.prs.everyone': 'Sve osobe',
+  'all.prs.repo': 'Filtriraj Launchpad po repozitoriju',
+  'all.prs.allRepos': 'Svi repozitoriji',
   'all.lastCommit': 'Zadnji commit: {msg} · {who} · {when}. Pogledaj promjene',
   'editor.edit': 'Uredi',
   'editor.editFile': 'Uredi {path}',

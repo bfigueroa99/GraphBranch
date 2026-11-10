@@ -757,6 +757,8 @@ GB.i18n.define('bn', {
   'all.prs.unpin': '{repo}-এর PR #{num} আনপিন করুন',
   'all.prs.person': 'ব্যক্তি অনুযায়ী Launchpad ফিল্টার করুন',
   'all.prs.everyone': 'সবাই',
+  'all.prs.repo': 'Launchpad রেপো অনুযায়ী ফিল্টার করুন',
+  'all.prs.allRepos': 'সব রেপো',
   'all.lastCommit': 'শেষ কমিট: {msg} · {who} · {when}। এর পরিবর্তন দেখুন',
   'editor.edit': 'সম্পাদনা',
   'editor.editFile': '{path} সম্পাদনা',

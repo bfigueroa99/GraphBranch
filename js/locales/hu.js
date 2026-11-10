@@ -757,6 +757,8 @@ GB.i18n.define('hu', {
   'all.prs.unpin': 'A(z) {repo} #{num} PR-jának levétele',
   'all.prs.person': 'A Launchpad szűrése személy szerint',
   'all.prs.everyone': 'Mindenki',
+  'all.prs.repo': 'A Launchpad szűrése tárolóra',
+  'all.prs.allRepos': 'Minden tároló',
   'all.lastCommit': 'Utolsó commit: {msg} · {who} · {when}. Változások megtekintése',
   'editor.edit': 'Szerkesztés',
   'editor.editFile': '{path} szerkesztése',

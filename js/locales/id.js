@@ -757,6 +757,8 @@ GB.i18n.define('id', {
   'all.prs.unpin': 'Lepas sematan PR #{num} dari {repo}',
   'all.prs.person': 'Filter Launchpad menurut orang',
   'all.prs.everyone': 'Semua orang',
+  'all.prs.repo': 'Filter Launchpad menurut repo',
+  'all.prs.allRepos': 'Semua repo',
   'all.lastCommit': 'Commit terakhir: {msg} · {who} · {when}. Lihat perubahannya',
   'editor.edit': 'Edit',
   'editor.editFile': 'Edit {path}',

@@ -189,6 +189,53 @@ test('mount: el Launchpad abre con la persona de ?by=, ignora una desconocida y 
   assert.deepEqual(x.chosen, ['beto'], 'elegir avisa para escribirlo en la URL');
 });
 
+test('groupPulls y prRepos: el Launchpad se filtra por repo, con lo ya cargado y combinado con la persona', () => {
+  const pr = (number, login) => ({ number, title: `PR ${number}`, user: { login }, createdAt: number });
+  const entries = [
+    { key: 'b', name: 'o/Beta', pulls: new Set([pr(3, 'ana'), pr(4, 'beto')]) },
+    { key: 'a', name: 'o/alfa', pulls: [pr(1, 'ana'), pr(2, 'ana')] },
+    { key: 'c', name: 'o/vacio', pulls: [] },
+  ];
+  const nums = (g) => g.flatMap((x) => x.items.map((i) => i.number)).sort();
+  assert.deepEqual(plain(O.prRepos(entries)), [{ key: 'a', name: 'o/alfa', n: 2 }, { key: 'b', name: 'o/Beta', n: 2 }], 'solo los repos con PRs, alfabético');
+  assert.deepEqual(nums(plain(O.groupPulls(entries, null, '', 'a'))), [1, 2], 'solo los PRs de ese repo');
+  assert.deepEqual(nums(plain(O.groupPulls(entries, null, '', 'b'))), [3, 4]);
+  assert.deepEqual(nums(plain(O.groupPulls(entries, null, '', ''))), [1, 2, 3, 4], 'sin filtro, todos');
+  assert.deepEqual(nums(plain(O.groupPulls(entries, null, 'ana', 'b'))), [3], 'persona y repo se combinan');
+  assert.deepEqual(plain(O.groupPulls(entries, null, '', 'c')), [], 'un repo sin PRs no deja grupos');
+  assert.deepEqual(plain(O.prRepos([])), []);
+});
+
+test('mount: el selector de repo del Launchpad filtra al elegir y no aparece con un solo repo', () => {
+  const els = [];
+  const mkEl = (tag) => {
+    const e = { tag, className: '', dataset: {}, children: [], hidden: false, listeners: {}, classList: { toggle() {} }, value: '',
+      append(...k) { this.children.push(...k); }, replaceChildren() { this.children = []; },
+      setAttribute() {}, addEventListener(n, f) { this.listeners[n] = f; }, querySelector() { return null; }, focus() {} };
+    els.push(e);
+    return e;
+  };
+  const c = vm.createContext({ window: { GB: { U: { truncate: (x) => x } }, matchMedia: null }, document: { createElement: mkEl }, Option: function (t, v) { this.text = t; this.value = v; } });
+  vm.runInContext(readFileSync(join(root, 'js', 'overview.js'), 'utf8'), c, { filename: 'overview.js' });
+  const box = mkEl('div');
+  const ov = c.window.GB.overview.mount(mkEl('div'), { prsRoot: box, text: (k) => k, num: String });
+  const pr = (n) => ({ number: n, title: `PR ${n}`, createdAt: n, user: { login: 'ana' } });
+  ov.setPulls([{ key: 'a', name: 'o/a', pulls: [pr(1)] }]);
+  assert.equal(els.some((e) => e.className === 'ap-repo'), false, 'con un solo repo no hay selector');
+  els.length = 0;
+  const box2 = mkEl('div');
+  const ov2 = c.window.GB.overview.mount(mkEl('div'), { prsRoot: box2, text: (k) => k, num: String });
+  ov2.setPulls([{ key: 'a', name: 'o/a', pulls: [pr(1)] }, { key: 'b', name: 'o/b', pulls: [pr(2)] }]);
+  const sel = els.find((e) => e.className === 'ap-repo');
+  assert.ok(sel, 'con dos repos con PRs, el selector aparece');
+  assert.equal(sel.children.length, 3, 'todos los repos más las opciones por repo');
+  els.length = 0;
+  sel.value = 'b';
+  sel.listeners.change();
+  const rows = els.filter((e) => e.className === 'ap-row').map((e) => e.dataset.key);
+  assert.deepEqual(rows, ['b'], 'elegir un repo deja solo sus PRs');
+});
+
 test('fitGrid: reparte las tarjetas para que entren todas, lo más grandes posible', () => {
   const g = (n, w, h) => plain(O.fitGrid(n, w, h));
   assert.deepEqual(g(1, 900, 500), { cols: 1, rows: 1 });

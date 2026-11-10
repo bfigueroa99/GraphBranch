@@ -765,6 +765,8 @@ GB.i18n.define('ro', {
   'all.prs.unpin': 'Desprinde PR #{num} din {repo}',
   'all.prs.person': 'Filtrează Launchpad după persoană',
   'all.prs.everyone': 'Toate persoanele',
+  'all.prs.repo': 'Filtrează Launchpad după depozit',
+  'all.prs.allRepos': 'Toate depozitele',
   'all.lastCommit': 'Ultimul commit: {msg} · {who} · {when}. Vezi modificările',
   'editor.edit': 'Editează',
   'editor.editFile': 'Editează {path}',

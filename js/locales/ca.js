@@ -757,6 +757,8 @@ GB.i18n.define('ca', {
   'all.prs.unpin': 'Deixa de fixar el PR #{num} de {repo}',
   'all.prs.person': 'Filtra el Launchpad per persona',
   'all.prs.everyone': 'Totes les persones',
+  'all.prs.repo': 'Filtra el Launchpad per repositori',
+  'all.prs.allRepos': 'Tots els repositoris',
   'all.lastCommit': 'Últim commit: {msg} · {who} · {when}. Mostra’n els canvis',
   'editor.edit': 'Edita',
   'editor.editFile': 'Edita {path}',

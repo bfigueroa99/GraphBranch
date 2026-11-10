@@ -757,6 +757,8 @@ GB.i18n.define('fi', {
   'all.prs.unpin': 'Irrota PR #{num} ({repo})',
   'all.prs.person': 'Suodata Launchpad henkilön mukaan',
   'all.prs.everyone': 'Kaikki henkilöt',
+  'all.prs.repo': 'Suodata Launchpad repon mukaan',
+  'all.prs.allRepos': 'Kaikki repot',
   'all.lastCommit': 'Viimeisin commit: {msg} · {who} · {when}. Näytä muutokset',
   'editor.edit': 'Muokkaa',
   'editor.editFile': 'Muokkaa: {path}',

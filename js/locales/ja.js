@@ -757,6 +757,8 @@ GB.i18n.define('ja', {
   'all.prs.unpin': '{repo} の PR #{num} の固定を解除',
   'all.prs.person': 'Launchpad を人で絞り込む',
   'all.prs.everyone': '全員',
+  'all.prs.repo': 'Launchpad をリポジトリで絞り込む',
+  'all.prs.allRepos': 'すべてのリポジトリ',
   'all.lastCommit': '最新のコミット: {msg} · {who} · {when}。変更を表示',
   'editor.edit': '編集',
   'editor.editFile': '{path} を編集',

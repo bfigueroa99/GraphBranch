@@ -757,6 +757,8 @@ GB.i18n.define('hi', {
   'all.prs.unpin': '{repo} का PR #{num} अनपिन करें',
   'all.prs.person': 'Launchpad को व्यक्ति के अनुसार फ़िल्टर करें',
   'all.prs.everyone': 'सभी लोग',
+  'all.prs.repo': 'Launchpad को रेपो के अनुसार फ़िल्टर करें',
+  'all.prs.allRepos': 'सभी रेपो',
   'all.lastCommit': 'आख़िरी कमिट: {msg} · {who} · {when}। इसके बदलाव देखें',
   'editor.edit': 'संपादित करें',
   'editor.editFile': '{path} संपादित करें',

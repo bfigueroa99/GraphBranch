@@ -773,6 +773,8 @@ GB.i18n.define('uk', {
   'all.prs.unpin': 'Відкріпити PR #{num} з {repo}',
   'all.prs.person': 'Фільтр Launchpad за людиною',
   'all.prs.everyone': 'Усі люди',
+  'all.prs.repo': 'Фільтрувати Launchpad за репозиторієм',
+  'all.prs.allRepos': 'Усі репозиторії',
   'all.lastCommit': 'Останній коміт: {msg} · {who} · {when}. Переглянути зміни',
   'editor.edit': 'Змінити',
   'editor.editFile': 'Змінити {path}',

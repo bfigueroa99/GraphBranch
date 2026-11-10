@@ -502,6 +502,8 @@ GB.i18n.define('nl', {
   'health.forks': 'Forks met recente activiteit, nieuwste push eerst',
   'health.forksShow': 'Forks tonen',
   'health.forksByStars': 'Forks sorteren op sterren',
+  'health.stars': 'Nieuwe sterren',
+  'health.starsWeek': '{week} deze week · {prev} vorige week ({delta})',
   'health.stale': 'Branches zonder activiteit gedurende meer dan 30 dagen en zonder pull request',
   'health.prs': 'Open pull requests, oudste eerst',
   'health.prStates': 'Open pull requests per status',

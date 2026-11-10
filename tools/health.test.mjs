@@ -502,3 +502,26 @@ test('despliegues por entorno: al día con su rama, commits nuevos detrás o sin
   delete data.deploys;
   assert.equal(compute(data, [], NOW).deploys.total, 0);
 });
+
+test('estrellas nuevas: la semana actual frente a la anterior, cada usuario una vez y sin consultas', () => {
+  const star = (id, d, login) => ({ id, kind: 'star', time: ago(d), ...(login ? { actor: { login } } : {}) });
+  const acts = [
+    star('s1', 1, 'ana'),
+    star('s2', 2, 'Beto'),
+    star('s3', 6.9, null), // sin usuario: cuenta sola
+    star('s4', 3, 'beto'), // el mismo usuario (sin distinguir mayúsculas) que volvió a ponerla: no suma
+    star('s5', 8, 'carla'),
+    star('s6', 13, 'dani'),
+    star('s7', 15, 'eva'), // hace más de dos semanas: no entra en ninguna
+    star('s8', -1, 'futuro'), // con la hora en el futuro: no cuenta
+    { id: 'f1', kind: 'fork', time: ago(1) }, // un fork no es una estrella
+    { id: 's9', kind: 'star' }, // sin hora: no cuenta
+  ];
+  const h = compute(repo(), acts, NOW);
+  assert.equal(h.stars.week, 3);
+  assert.equal(h.stars.prev, 2);
+  // la primera vez que se vio una estrella decide su semana: ana la puso hace 10 días y otra vez ayer
+  const again = compute(repo(), [star('a', 10, 'ana'), star('b', 1, 'ana')], NOW);
+  assert.deepEqual({ ...again.stars }, { week: 0, prev: 1 });
+  assert.deepEqual({ ...compute(repo(), [], NOW).stars }, { week: 0, prev: 0 });
+});

@@ -783,6 +783,10 @@ console.log('Escritorio (1280×800)');
     await page.click('#hl-forks-toggle');
     if ((await page.$$eval('#hl-forks a.hl-row', (as) => as.length)) !== 2 || (await page.evaluate(() => new URL(location.href).searchParams.has('forks')))) throw new Error('el interruptor «Mostrar forks» encendido no devuelve los 2 forks ni quita forks de la URL');
     if (/undefined|NaN|health\./.test(info.text)) throw new Error('texto sin resolver en el panel: ' + info.text.slice(0, 120));
+    // la demo trae una estrella de hace unos días (y suma otras en vivo): la semana actual frente a la anterior
+    const stars = await page.$eval('#hl-stars', (s) => s.querySelector('.hl-line')?.textContent || '');
+    const sm = /^(\d+) esta semana · (\d+) la anterior \(([+−]\d+|±0)\)$/.exec(stars);
+    if (!sm || Number(sm[1]) < 1) throw new Error(`las estrellas nuevas de la demo no salen en la salud: «${stars}»`);
     if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
     await page.click('#hl-clash-go');
     await page.waitForFunction(() => document.querySelector('#hl-clash-out')?.textContent.trim() && !document.querySelector('#hl-clash-go').disabled, null, { timeout: T(8000) });

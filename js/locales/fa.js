@@ -544,6 +544,8 @@ GB.i18n.define('fa', {
   'health.forks': 'فورک‌های با فعالیت اخیر، تازه‌ترین پوش اول',
   'health.forksShow': 'نمایش فورک‌ها',
   'health.forksByStars': 'مرتب‌سازی فورک‌ها بر اساس ستاره',
+  'health.stars': 'ستاره\u200cهای تازه',
+  'health.starsWeek': '{week} این هفته · {prev} هفتهٔ قبل ({delta})',
   'health.stale': 'شاخه‌های بدون فعالیت بیش از ۳۰ روز و بدون pull request',
   'health.prs': 'pull requestهای باز، قدیمی‌ترین‌ها اول',
   'health.prStates': 'درخواست‌های ادغام باز بر اساس وضعیت',

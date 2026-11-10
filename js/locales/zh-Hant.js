@@ -501,6 +501,8 @@ GB.i18n.define('zh-Hant', {
   'health.forks': '近期有動靜的 fork,最新推送在前',
   'health.forksShow': '顯示分叉',
   'health.forksByStars': '依星號數排序分叉',
+  'health.stars': '新增星號',
+  'health.starsWeek': '本週 {week} · 上週 {prev}（{delta}）',
   'health.stale': '超過 30 天沒有動靜且沒有拉取請求的分支',
   'health.prs': '未關閉的拉取請求（最舊的在前）',
   'health.prStates': '依狀態分類的開放拉取請求',

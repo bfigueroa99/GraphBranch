@@ -501,6 +501,8 @@ GB.i18n.define('fi', {
   'health.forks': 'Forkit, joissa on ollut toimintaa äskettäin, uusin push ensin',
   'health.forksShow': 'Näytä forkit',
   'health.forksByStars': 'Järjestä forkit tähtien mukaan',
+  'health.stars': 'Uudet tähdet',
+  'health.starsWeek': '{week} tällä viikolla · {prev} edellisellä viikolla ({delta})',
   'health.stale': 'Haarat, joissa ei ole ollut toimintaa yli 30 päivään ja joilla ei ole pull requestia',
   'health.prs': 'Avoimet pull requestit, vanhimmat ensin',
   'health.prStates': 'Avoimet pull requestit tilan mukaan',

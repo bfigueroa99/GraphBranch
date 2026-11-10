@@ -501,6 +501,8 @@ GB.i18n.define('ja', {
   'health.forks': '最近動きのあるフォーク(最新のプッシュ順)',
   'health.forksShow': 'フォークを表示',
   'health.forksByStars': 'フォークをスター数で並べ替え',
+  'health.stars': '新しいスター',
+  'health.starsWeek': '今週 {week} · 先週 {prev}（{delta}）',
   'health.stale': '30日以上動きがなく、プルリクエストもないブランチ',
   'health.prs': 'オープン中のプルリクエスト（古い順）',
   'health.prStates': 'オープン中のプルリクエスト（状態別）',

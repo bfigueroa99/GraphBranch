@@ -517,6 +517,8 @@ GB.i18n.define('uk', {
   'health.forks': 'Форки з недавньою активністю, спершу найновіший push',
   'health.forksShow': 'Показувати форки',
   'health.forksByStars': 'Сортувати форки за зірками',
+  'health.stars': 'Нові зірки',
+  'health.starsWeek': '{week} цього тижня · {prev} минулого тижня ({delta})',
   'health.stale': 'Гілки без активності понад 30 днів і без pull request',
   'health.prs': 'Відкриті pull request, спочатку найстарші',
   'health.prStates': 'Відкриті pull request за станом',

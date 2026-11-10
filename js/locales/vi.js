@@ -501,6 +501,8 @@ GB.i18n.define('vi', {
   'health.forks': 'Fork có hoạt động gần đây, push mới nhất trước',
   'health.forksShow': 'Hiện các fork',
   'health.forksByStars': 'Sắp xếp fork theo số sao',
+  'health.stars': 'Sao mới',
+  'health.starsWeek': '{week} tuần này · {prev} tuần trước ({delta})',
   'health.stale': 'Nhánh không hoạt động hơn 30 ngày và không có pull request',
   'health.prs': 'Pull request đang mở, cũ nhất trước',
   'health.prStates': 'Pull request đang mở theo trạng thái',

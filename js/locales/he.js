@@ -558,6 +558,8 @@ GB.i18n.define('he', {
   'health.forks': 'פורקים עם פעילות לאחרונה, ה-push החדש ביותר ראשון',
   'health.forksShow': 'הצגת פורקים',
   'health.forksByStars': 'מיון הפורקים לפי כוכבים',
+  'health.stars': 'כוכבים חדשים',
+  'health.starsWeek': '{week} השבוע · {prev} בשבוע שעבר ({delta})',
   'health.stale': 'ענפים בלי פעילות מעל 30 יום ובלי pull request',
   'health.prs': 'pull requests פתוחים, הישנים קודם',
   'health.prStates': 'בקשות משיכה פתוחות לפי מצב',

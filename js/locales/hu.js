@@ -501,6 +501,8 @@ GB.i18n.define('hu', {
   'health.forks': 'Friss aktivitású forkok, a legújabb push elöl',
   'health.forksShow': 'Forkok megjelenítése',
   'health.forksByStars': 'Forkok rendezése csillagok szerint',
+  'health.stars': 'Új csillagok',
+  'health.starsWeek': '{week} ezen a héten · {prev} az előző héten ({delta})',
   'health.stale': '30 napnál régebben inaktív, pull request nélküli ágak',
   'health.prs': 'Nyitott pull requestek, a legrégebbiek elöl',
   'health.prStates': 'Nyitott pull requestek állapot szerint',

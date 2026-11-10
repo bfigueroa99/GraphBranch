@@ -501,6 +501,8 @@ GB.i18n.define('bn', {
   'health.forks': 'সাম্প্রতিক কার্যকলাপসহ ফর্ক, সবচেয়ে নতুন পুশ আগে',
   'health.forksShow': 'ফর্ক দেখান',
   'health.forksByStars': 'ফর্ক তারকা অনুযায়ী সাজান',
+  'health.stars': 'নতুন তারা',
+  'health.starsWeek': 'এই সপ্তাহে {week} · গত সপ্তাহে {prev} ({delta})',
   'health.stale': '৩০ দিনের বেশি নিষ্ক্রিয় এবং pull request ছাড়া ব্রাঞ্চ',
   'health.prs': 'খোলা pull request, পুরনোগুলো আগে',
   'health.prStates': 'অবস্থা অনুযায়ী খোলা পুল রিকোয়েস্ট',

@@ -517,6 +517,8 @@ GB.i18n.define('ru', {
   'health.forks': 'Форки с недавней активностью, сначала самый свежий push',
   'health.forksShow': 'Показывать форки',
   'health.forksByStars': 'Сортировать форки по звёздам',
+  'health.stars': 'Новые звёзды',
+  'health.starsWeek': '{week} на этой неделе · {prev} на прошлой ({delta})',
   'health.stale': 'Ветки без активности более 30 дней и без pull request',
   'health.prs': 'Открытые pull request, сначала самые старые',
   'health.prStates': 'Открытые pull request по состоянию',

@@ -501,6 +501,8 @@ GB.i18n.define('el', {
   'health.forks': 'Forks με πρόσφατη δραστηριότητα, πρώτο το νεότερο push',
   'health.forksShow': 'Εμφάνιση forks',
   'health.forksByStars': 'Ταξινόμηση των forks κατά αστέρια',
+  'health.stars': 'Νέα αστέρια',
+  'health.starsWeek': '{week} αυτή την εβδομάδα · {prev} την προηγούμενη ({delta})',
   'health.stale': 'Κλάδοι χωρίς δραστηριότητα πάνω από 30 ημέρες και χωρίς pull request',
   'health.prs': 'Ανοιχτά pull request, τα παλαιότερα πρώτα',
   'health.prStates': 'Ανοιχτά pull requests ανά κατάσταση',

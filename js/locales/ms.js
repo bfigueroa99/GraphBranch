@@ -501,6 +501,8 @@ GB.i18n.define('ms', {
   'health.forks': 'Fork dengan aktiviti terkini, push terbaharu dahulu',
   'health.forksShow': 'Tunjukkan fork',
   'health.forksByStars': 'Susun fork mengikut bintang',
+  'health.stars': 'Bintang baharu',
+  'health.starsWeek': '{week} minggu ini · {prev} minggu lepas ({delta})',
   'health.stale': 'Cabang tanpa aktiviti lebih 30 hari dan tanpa pull request',
   'health.prs': 'Pull request terbuka, yang paling lama dahulu',
   'health.prStates': 'Pull request terbuka mengikut status',

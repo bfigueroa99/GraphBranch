@@ -502,6 +502,8 @@ GB.i18n.define('fil', {
   'health.forks': 'Mga fork na may kamakailang aktibidad, pinakabagong push muna',
   'health.forksShow': 'Ipakita ang mga fork',
   'health.forksByStars': 'Ayusin ang mga fork ayon sa bituin',
+  'health.stars': 'Mga bagong star',
+  'health.starsWeek': '{week} ngayong linggo · {prev} noong nakaraang linggo ({delta})',
   'health.stale': 'Mga branch na walang aktibidad nang mahigit 30 araw at walang pull request',
   'health.prs': 'Mga bukas na pull request, pinakaluma muna',
   'health.prStates': 'Mga bukas na pull request ayon sa estado',

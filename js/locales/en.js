@@ -507,6 +507,8 @@ GB.i18n.define('en', {
   'health.forks': 'Forks with recent activity, latest push first',
   'health.forksShow': 'Show forks',
   'health.forksByStars': 'Sort forks by stars',
+  'health.stars': 'New stars',
+  'health.starsWeek': '{week} this week · {prev} last week ({delta})',
   'health.stale': 'Branches idle for 30+ days with no pull request',
   'health.prs': 'Open pull requests, oldest first',
   'health.prStates': 'Open pull requests by state',

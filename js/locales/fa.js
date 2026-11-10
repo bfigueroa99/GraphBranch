@@ -165,6 +165,7 @@ GB.i18n.define('fa', {
   'tv.label': 'حالت تلویزیون',
   'tv.title': 'حالت تلویزیون: برای صفحهٔ مشترک، با دوربین خودکار و صفحه‌ای که همیشه روشن می‌ماند',
   'tv.exit': 'خروج از حالت تلویزیون',
+  'tv.allTitle': 'همهٔ مخزن‌های دنبال‌شده با هم، هر کدام در کارت خودش (R)',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'افتخارات',

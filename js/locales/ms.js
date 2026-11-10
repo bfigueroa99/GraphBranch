@@ -156,6 +156,7 @@ GB.i18n.define('ms', {
   'tv.label': 'Mod TV',
   'tv.title': 'Mod TV: untuk skrin kongsi, dengan kamera automatik dan skrin sentiasa menyala',
   'tv.exit': 'Keluar dari mod TV',
+  'tv.allTitle': 'Semua repositori yang diikuti serentak, setiap satu dalam kadnya (R)',
 
   /* ---------- lapisan permainan: pencapaian repositori, tahap dan misi hari ini ---------- */
   'game.trophies': 'Trofi',

@@ -156,6 +156,7 @@ GB.i18n.define('fi', {
   'tv.label': 'TV-tila',
   'tv.title': 'TV-tila: jaetulle näytölle, automaattisella kameralla ja näyttö aina päällä',
   'tv.exit': 'Poistu TV-tilasta',
+  'tv.allTitle': 'Kaikki seuratut repositoriot kerralla, kukin omassa kortissaan (R)',
 
   /* ---------- pelikerros: repositorion saavutukset, taso ja päivän tehtävä ---------- */
   'game.trophies': 'Pokaalit',

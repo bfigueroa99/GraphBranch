@@ -178,3 +178,23 @@ test('mount: el Launchpad abre con la persona de ?by=, ignora una desconocida y 
   sel.listeners.change();
   assert.deepEqual(x.chosen, ['beto'], 'elegir avisa para escribirlo en la URL');
 });
+
+test('fitGrid: reparte las tarjetas para que entren todas, lo más grandes posible', () => {
+  const g = (n, w, h) => plain(O.fitGrid(n, w, h));
+  assert.deepEqual(g(1, 900, 500), { cols: 1, rows: 1 });
+  assert.deepEqual(g(2, 900, 500), { cols: 2, rows: 1 }, 'dos, lado a lado en un área ancha');
+  assert.deepEqual(g(2, 500, 900), { cols: 1, rows: 2 }, 'y una sobre otra en un área alta');
+  assert.deepEqual(g(4, 900, 500), { cols: 2, rows: 2 });
+  assert.deepEqual(g(6, 900, 500), { cols: 3, rows: 2 });
+  assert.deepEqual(g(20, 1600, 900), { cols: 5, rows: 4 }, 'el tope de 20 repos');
+  for (let n = 1; n <= 20; n++) {
+    const { cols, rows } = O.fitGrid(n, 1200, 640);
+    assert.ok(cols * rows >= n && cols * (rows - 1) < n, `${n} tarjetas en ${cols}×${rows}: sobran filas o faltan celdas`);
+  }
+});
+
+test('fitGrid: sin medidas (el panel todavía no se ve) da una grilla razonable, nunca vacía', () => {
+  assert.deepEqual(plain(O.fitGrid(3, 0, 0)), { cols: 2, rows: 2 });
+  assert.deepEqual(plain(O.fitGrid(1, NaN, 400)), { cols: 1, rows: 1 });
+  assert.deepEqual(plain(O.fitGrid(0, 800, 400)), { cols: 1, rows: 1 });
+});

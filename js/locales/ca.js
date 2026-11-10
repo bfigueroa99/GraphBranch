@@ -156,6 +156,7 @@ GB.i18n.define('ca', {
   'tv.label': 'Mode TV',
   'tv.title': 'Mode TV: per a una pantalla compartida, amb càmera automàtica i la pantalla sempre encesa',
   'tv.exit': 'Surt del mode TV',
+  'tv.allTitle': 'Tots els repositoris seguits alhora, cadascun a la seva targeta (R)',
 
   /* ---------- capa de joc: assoliments del repositori, nivell i missió del dia ---------- */
   'game.trophies': 'Trofeus',

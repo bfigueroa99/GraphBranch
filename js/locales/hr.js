@@ -160,6 +160,7 @@ GB.i18n.define('hr', {
   'tv.label': 'TV način',
   'tv.title': 'TV način: za zajednički zaslon, s automatskom kamerom i uvijek uključenim zaslonom',
   'tv.exit': 'Izađi iz TV načina',
+  'tv.allTitle': 'Svi praćeni repozitoriji odjednom, svaki u svojoj kartici (R)',
 
   /* ---------- sloj igre: postignuća repozitorija, razina i misija dana ---------- */
   'game.trophies': 'Trofeji',

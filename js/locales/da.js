@@ -156,6 +156,7 @@ GB.i18n.define('da', {
   'tv.label': 'TV-tilstand',
   'tv.title': 'TV-tilstand: til en delt skærm, med automatisk kamera og skærmen altid tændt',
   'tv.exit': 'Afslut TV-tilstand',
+  'tv.allTitle': 'Alle fulgte repositorier på én gang, hver på sit kort (R)',
 
   /* ---------- spillag: repositoriets præstationer, niveau og dagens mission ---------- */
   'game.trophies': 'Trofæer',

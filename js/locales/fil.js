@@ -156,6 +156,7 @@ GB.i18n.define('fil', {
   'tv.label': 'TV mode',
   'tv.title': 'TV mode: para sa shared na screen, may awtomatikong kamera at laging nakabukas ang screen',
   'tv.exit': 'Lumabas sa TV mode',
+  'tv.allTitle': 'Lahat ng sinusundang repository nang sabay-sabay, bawat isa sa sariling card (R)',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'Mga tropeo',

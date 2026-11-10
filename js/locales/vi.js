@@ -156,6 +156,7 @@ GB.i18n.define('vi', {
   'tv.label': 'Chế độ TV',
   'tv.title': 'Chế độ TV: dành cho màn hình dùng chung, với máy quay tự động và màn hình luôn bật',
   'tv.exit': 'Thoát chế độ TV',
+  'tv.allTitle': 'Tất cả kho đang theo dõi cùng lúc, mỗi kho trong thẻ riêng (R)',
 
   /* ---------- lớp trò chơi: thành tích của kho lưu trữ, cấp độ và nhiệm vụ trong ngày ---------- */
   'game.trophies': 'Cúp',

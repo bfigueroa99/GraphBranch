@@ -156,6 +156,7 @@ GB.i18n.define('sw', {
   'tv.label': 'Hali ya TV',
   'tv.title': 'Hali ya TV: kwa skrini ya pamoja, yenye kamera ya kiotomatiki na skrini inayobaki ikiwaka',
   'tv.exit': 'Toka kwenye hali ya TV',
+  'tv.allTitle': 'Hazina zote unazofuatilia kwa pamoja, kila moja katika kadi yake (R)',
 
   /* ---------- safu ya mchezo: mafanikio ya hazina, kiwango na jukumu la leo ---------- */
   'game.trophies': 'Vikombe',

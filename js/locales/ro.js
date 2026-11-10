@@ -160,6 +160,7 @@ GB.i18n.define('ro', {
   'tv.label': 'Mod TV',
   'tv.title': 'Mod TV: pentru un ecran comun, cu cameră automată și ecranul mereu aprins',
   'tv.exit': 'Ieșiți din modul TV',
+  'tv.allTitle': 'Toate depozitele urmărite deodată, fiecare în cardul său (R)',
 
   /* ---------- stratul de joc: realizările depozitului, nivelul și misiunea zilei ---------- */
   'game.trophies': 'Trofee',

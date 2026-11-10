@@ -46,6 +46,22 @@
   const HEAVY_BRANCHES = 1500;
   const heavy = (sum) => (sum.branches || 0) > HEAVY_BRANCHES;
 
+  /** Cuántas columnas y filas reparten `n` tarjetas en un área de `w`×`h` píxeles para que entren todas sin desplazarse
+      (el modo TV de la vista conjunta): la grilla en que cada tarjeta puede ser más grande sin dejar de tener la forma
+      `ratio` (ancho/alto). A igual tamaño, la que deja menos huecos. Devuelve { cols, rows }. */
+  function fitGrid(n, w, h, ratio = 1.5) {
+    n = Math.max(1, Math.floor(n) || 1);
+    if (!(w > 0) || !(h > 0)) return { cols: Math.min(n, 2), rows: Math.ceil(n / Math.min(n, 2)) };
+    let best = null;
+    for (let cols = 1; cols <= n; cols++) {
+      const rows = Math.ceil(n / cols);
+      const size = Math.min(w / cols / ratio, h / rows); // el alto de la tarjeta más grande que cabe en cada celda
+      const holes = cols * rows - n;
+      if (!best || size > best.size + 0.5 || (Math.abs(size - best.size) <= 0.5 && holes < best.holes)) best = { cols, rows, size, holes };
+    }
+    return { cols: best.cols, rows: best.rows };
+  }
+
   /** Los grupos del Launchpad, en el orden en que se muestran. */
   const PR_GROUPS = ['draft', 'failing', 'approved', 'waiting'];
 
@@ -315,7 +331,15 @@
       stats,
       /** Los efectos de lo que acaba de llegar, en la tarjeta de su repo. */
       celebrate(key, acts) {
-        cards.get(key)?.graph.celebrate(acts);
+        const card = cards.get(key);
+        if (!card) return;
+        card.graph.celebrate(acts);
+        // la tarjeta se enciende un momento: en una pantalla compartida se ve desde lejos dónde pasó algo
+        card.el.classList.remove('rc-news');
+        void card.el.offsetWidth; // vuelve a arrancar la animación si llega otra novedad mientras dura
+        card.el.classList.add('rc-news');
+        clearTimeout(card.newsTimer);
+        card.newsTimer = setTimeout(() => card.el.classList.remove('rc-news'), 4000);
       },
       /** Lleva la vista a la tarjeta de un repo y, si se dice, a un commit (o una rama) de su grafo. */
       focus(key, { sha = null, branch = null } = {}) {
@@ -346,5 +370,5 @@
     };
   }
 
-  GB.overview = { allParam, personParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, prGroup, groupPulls, prAuthors, pinId, mount };
+  GB.overview = { allParam, personParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, fitGrid, prGroup, groupPulls, prAuthors, pinId, mount };
 })(window.GB);

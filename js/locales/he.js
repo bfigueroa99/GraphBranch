@@ -168,6 +168,7 @@ GB.i18n.define('he', {
   'tv.label': 'מצב טלוויזיה',
   'tv.title': 'מצב טלוויזיה: למסך משותף, עם מצלמה אוטומטית ומסך שנשאר דולק',
   'tv.exit': 'יציאה ממצב טלוויזיה',
+  'tv.allTitle': 'כל המאגרים שבמעקב בבת אחת, כל אחד בכרטיס משלו (R)',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'גביעים',

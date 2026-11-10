@@ -156,6 +156,7 @@ GB.i18n.define('th', {
   'tv.label': 'โหมดทีวี',
   'tv.title': 'โหมดทีวี: สำหรับหน้าจอที่ใช้ร่วมกัน กล้องอัตโนมัติและหน้าจอเปิดค้างไว้',
   'tv.exit': 'ออกจากโหมดทีวี',
+  'tv.allTitle': 'ที่เก็บทั้งหมดที่ติดตามพร้อมกัน แต่ละอันอยู่ในการ์ดของตัวเอง (R)',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'ถ้วยรางวัล',

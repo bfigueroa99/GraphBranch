@@ -161,6 +161,7 @@ GB.i18n.define('en', {
   'tv.label': 'TV mode',
   'tv.title': 'TV mode: for a shared screen, with automatic camera and the screen kept on',
   'tv.exit': 'Exit TV mode',
+  'tv.allTitle': 'Every followed repository at once, each in its card (R)',
 
   /* ---------- game layer: repository achievements, level and mission of the day ---------- */
   'game.trophies': 'Trophies',

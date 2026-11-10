@@ -47,6 +47,8 @@
     tvBtn: $('#tv-btn'),
     tvClock: $('#tv-clock'),
     tvAgents: $('#tv-agents'),
+    tvAll: $('#tv-all'),
+    allTvBtn: $('#all-tv-btn'),
     tvPause: $('#tv-pause'),
     tvSound: $('#tv-sound'),
     tvFs: $('#tv-fs'),
@@ -1058,7 +1060,7 @@
     });
     if (allOn && tabs.length < 2) setAll(false); // con un solo repo no hay nada que juntar
     else if (allOn) syncAll();
-    else if (wantAll && tabs.length > 1 && !tv.on) {
+    else if (wantAll && tabs.length > 1) {
       // ?all=1 (o lo recordado) con repos que llegan después, como los de org:nombre
       wantAll = false;
       setAll(true, { save: false });
@@ -1068,7 +1070,7 @@
 
   /** Un clic en la pestaña de un repo: lo muestra (y deja la vista conjunta, si estaba). */
   function openTab(tab) {
-    if (allOn) setAll(false);
+    if (allOn) setAll(false, { save: !tv.on });
     showTab(tab);
   }
 
@@ -1270,6 +1272,7 @@
     const n = tabs.reduce((sum, x) => sum + (x.unread || 0), 0);
     setText(el.allN, n ? (n > 99 ? '99+' : U.fmtNum(n)) : '');
     setPressed(el.allTab, allOn);
+    el.tvAll.hidden = tabs.length < 2; // en la barra del modo TV: con un solo repo no hay nada que juntar
     const label = [t('all.tabLabel', { n: tabs.length }), n ? t('tabs.unread', { n }) : ''].filter(Boolean).join(', ');
     if (el.allTab.getAttribute('aria-label') !== label) el.allTab.setAttribute('aria-label', label);
   }
@@ -1287,10 +1290,13 @@
     overview.setPulls(tabs.filter((x) => x.source?.data.loaded).map((x) => ({ key: x.key, name: nameOf(x), pulls: x.source.data.pulls.values() })));
   }
 
-  /** Entra o sale de la vista conjunta (se recuerda y viaja en la URL, ?all=1). Con un solo repo no hay. */
+  /** Entra o sale de la vista conjunta (se recuerda y viaja en la URL, ?all=1). Con un solo repo no hay. En modo TV
+      también (la pantalla compartida con todos los repos a la vez), sin guardarse. */
   function setAll(on, { save = true } = {}) {
-    on = !!on && tabs.length > 1 && !EMBED && !tv.on;
+    on = !!on && tabs.length > 1 && !EMBED;
     if (on === allOn) return renderAllTab();
+    if (tv.on) save = false; // lo que se cambia en TV no se guarda: al salir queda la vista de antes
+    if (on && tv.on && agentsOn) setAgentsView(false, { save: false }); // en TV, una pantalla por vez
     diffView.close(); // los cambios abiertos eran del grafo que se deja de ver
     allOn = on;
     el.app.classList.toggle('all-on', on);
@@ -1308,6 +1314,11 @@
     renderTabs();
     if (save) U.store.set('all', on || null);
     setUrlParam('all', on ? '1' : null);
+    setPressed(el.tvAll, on);
+    if (tv.on) {
+      placeTvBar();
+      fitTvGrid();
+    }
   }
   el.allTab.addEventListener('click', () => setAll(!allOn));
   /** El grafo del repo a la vista, a la vista: ir a una rama o a un commit desde la salud, la búsqueda o la vista de
@@ -1497,7 +1508,7 @@
     tab.game.observe(activities, gameCtx(activities, data, null));
     renderTab(tab);
     const now = Date.now();
-    if (!tv.on || paused || now - tv.lastNews < TV_FOLLOW || now - tv.lastSwitch < TV_FOLLOW) return;
+    if (!tv.on || allOn || paused || now - tv.lastNews < TV_FOLLOW || now - tv.lastSwitch < TV_FOLLOW) return;
     tv.lastNews = now;
     showTab(tab);
     graph3d?.celebrate(activities);
@@ -3920,13 +3931,13 @@
 
   const ATTRACT_IDLE = 3 * 60e3; // sin novedades durante este tiempo…
   const ATTRACT_EVERY = 10 * 60e3; // …se reproduce la historia, como mucho una vez cada tanto
-  const tv = { on: false, prevView: null, prevAgents: false, lock: null, locking: false, attract: false, lastNews: 0, lastAttract: 0, lastSwitch: 0, idleTimer: 0 };
+  const tv = { on: false, prevView: null, prevAgents: false, prevAll: false, lock: null, locking: false, attract: false, lastNews: 0, lastAttract: 0, lastSwitch: 0, idleTimer: 0 };
   const tvBarHome = el.tvBar.parentNode; // sobre el grafo; con la vista de agentes va a la cabecera del tablero
 
   /** La barra del modo TV, donde se ve: sobre el grafo o, con la vista de agentes, en la cabecera del tablero (el grafo
       queda escondido y ella con él). Si tenía el foco, lo conserva. */
   function placeTvBar() {
-    const host = agentsOn ? el.agents.querySelector('.ab-head') : tvBarHome;
+    const host = allOn ? el.allPanel.querySelector('.panel-head') : agentsOn ? el.agents.querySelector('.ab-head') : tvBarHome;
     if (!host || el.tvBar.parentNode === host) return;
     const had = el.tvBar.contains(document.activeElement) ? document.activeElement : null;
     host.append(el.tvBar);
@@ -3935,7 +3946,7 @@
 
   /** El foco del modo TV: en lo que se ve (el grafo o, con la vista de agentes, su panel), donde están los atajos del
       modo; no en la barra, que no se escondería mientras lo tenga. */
-  const tvFocus = () => (agentsOn ? el.graphPanel : graph3d ? el.graph3d : el.graph).focus({ preventScroll: true });
+  const tvFocus = () => (allOn ? el.allPanel : agentsOn ? el.graphPanel : graph3d ? el.graph3d : el.graph).focus({ preventScroll: true });
 
   /** En modo TV, la pantalla pasa del grafo (con el director) al tablero de agentes y vuelve. No cambia lo guardado:
       al salir del modo TV queda la vista que había antes de entrar. */
@@ -3944,10 +3955,35 @@
     const before = document.activeElement;
     if (on && tv.attract && replay.active) replay.stop(); // el tablero es el presente: el Replay de ambiente se acaba
     tv.attract = false;
+    if (on && allOn) setAll(false, { save: false }); // una pantalla por vez
     setAgentsView(on, { save: false });
     // el foco no se queda en lo que se escondió (ni en la barra): pasa a lo que ahora se ve
-    if (!before || before === document.body || el.graphPanel.contains(before)) tvFocus();
+    if (!before || before === document.body || el.graphPanel.contains(before) || el.allPanel.contains(before)) tvFocus();
   }
+
+  /** En modo TV, la pantalla pasa del grafo (con el director) a todos los repos seguidos a la vez, cada uno en su
+      tarjeta, y vuelve. Tampoco cambia lo guardado. */
+  function tvShowAll(on) {
+    if (!tv.on || (on && tabs.length < 2)) return;
+    const before = document.activeElement;
+    if (on && tv.attract && replay.active) replay.stop(); // con todos a la vista no hay Replay de ambiente
+    tv.attract = false;
+    setAll(on, { save: false });
+    if (!before || before === document.body || el.graphPanel.contains(before) || el.allPanel.contains(before)) tvFocus();
+  }
+
+  /** En modo TV, las tarjetas de la vista conjunta entran todas en la pantalla: tantas columnas y filas como pide
+      su cantidad en el lugar que hay (--tv-cols, --tv-rows; ver GB.overview.fitGrid). */
+  const allGrid = $('#all-grid');
+  function fitTvGrid() {
+    if (!tv.on || !allOn) return;
+    const n = allGrid.children.length;
+    const r = allGrid.getBoundingClientRect();
+    const { cols, rows } = GB.overview.fitGrid(n, r.width, r.height);
+    allGrid.style.setProperty('--tv-cols', String(cols));
+    allGrid.style.setProperty('--tv-rows', String(rows));
+  }
+  if (typeof ResizeObserver === 'function') new ResizeObserver(() => fitTvGrid()).observe(allGrid);
 
   /** Entra o sale del modo TV. `user`: viene de un clic (solo así se puede pedir pantalla completa). */
   function setTV(on, user = false) {
@@ -3955,22 +3991,26 @@
     tv.on = on;
     const root = document.documentElement;
     // el botón TV (en la barra que el modo esconde) o el de salir (en la barra del modo) tenía el foco
-    const lostFocus = (on ? el.tvBtn : el.tvBar).contains(document.activeElement);
+    const lostFocus = (on ? [el.tvBtn, el.allTvBtn] : [el.tvBar]).some((b) => b.contains(document.activeElement));
     root.classList.toggle('tv', on);
     setPressed(el.tvBtn, on);
+    setPressed(el.allTvBtn, on);
     if (on) {
-      setAll(false, { save: false }); // la pantalla compartida es la del grafo, con el director (pasa sola de un repo a otro)
-      diffView.close(); // la pantalla compartida es del grafo
+      // desde la vista conjunta se queda en ella (todos los repos a la vez); si no, el grafo con el director, que pasa
+      // solo de un repo a otro. La R (o su botón) cambia de una a otra
+      tv.prevAll = allOn;
+      diffView.close(); // la pantalla compartida no es la de los cambios de un commit
       tv.prevView = view;
       tv.prevAgents = agentsOn || initialAgents; // con ?tv=1&agents=1 el tablero llega cuando el repo tiene grafo
       tv.lastNews = tv.lastAttract = Date.now();
       if (graph3d) setView('3d', false); // detrás, el grafo en 3D con el director
-      if (tv.prevAgents && !initialAgents) setAgentsView(true, { save: false }); // desde la vista de agentes, se queda en ella
+      if (tv.prevAgents && !initialAgents && !allOn) setAgentsView(true, { save: false }); // desde la vista de agentes, se queda en ella
       feed.sound = false; // en un espacio compartido el sonido llega a todos: se enciende a mano
       graph3d?.flight?.exit(); // la pantalla compartida la lleva el director, no un piloto
       director?.setTV(true);
       director?.setOn(true);
       if (user && fullscreenOK && !fullscreenEl()) requestFs(root);
+      placeTvBar();
       tvScale();
       lockScreen();
       // el foco pasa al grafo (o al tablero de agentes), donde están los atajos del modo (espacio, F, A, Esc); no a la
@@ -3985,13 +4025,14 @@
       if (fullscreenEl() === root) exitFs();
       setView(tv.prevView || view, false);
       if (tv.prevAgents) setAgentsView(true, { save: false }); // se vuelve a la vista de agentes si se entró desde ella
+      setAll(tv.prevAll, { save: false }); // y a la vista conjunta, si se entró desde ella (o se sale de la que se abrió en TV)
       tv.lock?.release().catch(() => {});
       tv.lock = null;
       root.style.removeProperty('--tvz');
       // también si lo que tenía el foco se escondió (el grafo, al volver a la vista de agentes): el navegador lo suelta
       // recién al dibujar, así que se mira si todavía se ve
       const at = document.activeElement;
-      if (lostFocus || !at || at === document.body || !at.getClientRects().length) el.tvBtn.focus({ preventScroll: true });
+      if (lostFocus || !at || at === document.body || !at.getClientRects().length) (allOn ? el.allTvBtn : el.tvBtn).focus({ preventScroll: true });
     }
     setPressed(el.soundBtn, feed.sound);
     setPressed(el.tvSound, feed.sound);
@@ -4010,6 +4051,7 @@
     document.documentElement.style.setProperty('--tvz', z.toFixed(3));
     graph3d?.restyle();
     markCut(); // con otra letra, en lo último y en el log cabe otra cantidad
+    fitTvGrid();
   }
 
   /** Pantalla siempre encendida (Screen Wake Lock); el navegador la suelta al ocultar la pestaña. */
@@ -4043,7 +4085,7 @@
     const now = Date.now();
     el.tvClock.textContent = i18n.fmtTime(now);
     // con el tablero de agentes a la vista no hay grafo que reproducir: el tablero ya es lo que pasa ahora
-    if (paused || replay.active || agentsOn || !lastRender || lastRender.L.nodes.length < 8) return;
+    if (paused || replay.active || agentsOn || allOn || !lastRender || lastRender.L.nodes.length < 8) return;
     if (now - tv.lastNews < ATTRACT_IDLE || now - tv.lastAttract < ATTRACT_EVERY) return;
     tv.lastAttract = now;
     tv.attract = true;
@@ -4052,7 +4094,9 @@
   }
 
   el.tvBtn.addEventListener('click', () => setTV(!tv.on, true));
+  el.allTvBtn.addEventListener('click', () => setTV(!tv.on, true));
   el.tvAgents.addEventListener('click', () => tvShowAgents(!agentsOn));
+  el.tvAll.addEventListener('click', () => tvShowAll(!allOn));
   el.tvExit.addEventListener('click', () => setTV(false));
   el.tvFs.addEventListener('click', toggleFullscreen);
   el.tvFs.hidden = !fullscreenOK;
@@ -4076,7 +4120,7 @@
   });
   for (const type of ['pointermove', 'pointerdown', 'keydown']) document.addEventListener(type, () => tv.on && wake(), { passive: true });
   // en modo TV: espacio pausa todo, F pone la página entera en pantalla completa, A pasa del grafo al tablero de agentes
-  // (y vuelve) y Esc sale del modo
+  // (y vuelve), R a todos los repos a la vez (y vuelve) y Esc sale del modo
   document.addEventListener('keydown', (ev) => {
     if (!tv.on || ev.defaultPrevented || ev.ctrlKey || ev.metaKey || ev.altKey) return;
     // Esc sirve también con el foco en un botón; si el grafo la usó para cerrar una ficha, ya lo marcó
@@ -4095,6 +4139,9 @@
     } else if (k === 'a') {
       ev.preventDefault();
       tvShowAgents(!agentsOn);
+    } else if (k === 'r' && tabs.length > 1) {
+      ev.preventDefault();
+      tvShowAll(!allOn);
     }
   });
 
@@ -4434,7 +4481,7 @@
 
   /** Sigue los repos guardados y los de la URL; muestra el de la URL, el último que se miraba o el primero. */
   function start() {
-    wantAll = !EMBED && !initialTV && (initialAll ?? U.store.get('all', false) === true);
+    wantAll = !EMBED && (initialAll ?? (!initialTV && U.store.get('all', false) === true)); // con ?tv=1, solo si la URL lo pide
     const saved = U.store.get('repos', null);
     const shown = U.store.get('repo', null);
     const list = EMBED ? [] : Array.isArray(saved) ? saved : typeof shown === 'string' ? [shown] : []; // antes se seguía uno solo

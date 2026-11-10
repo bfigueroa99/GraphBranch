@@ -161,6 +161,7 @@ GB.i18n.define('pl', {
   'tv.label': 'Tryb TV',
   'tv.title': 'Tryb TV: na wspólny ekran, z automatyczną kamerą i stale włączonym ekranem',
   'tv.exit': 'Wyjdź z trybu TV',
+  'tv.allTitle': 'Wszystkie obserwowane repozytoria naraz, każde na swojej karcie (R)',
 
   /* ---------- warstwa gry: osiągnięcia repozytorium, poziom i misja dnia ---------- */
   'game.trophies': 'Trofea',

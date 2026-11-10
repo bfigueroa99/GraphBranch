@@ -156,6 +156,7 @@ GB.i18n.define('it', {
   'tv.label': 'Modalità TV',
   'tv.title': 'Modalità TV: per uno schermo condiviso, con telecamera automatica e schermo sempre acceso',
   'tv.exit': 'Esci dalla modalità TV',
+  'tv.allTitle': 'Tutti i repository seguiti insieme, ognuno nella sua scheda (R)',
 
   /* ---------- gioco: traguardi del repository, livello e missione del giorno ---------- */
   'game.trophies': 'Trofei',

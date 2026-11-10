@@ -7229,6 +7229,84 @@ html.tv .agk-btn {
   }
 }
 
+/* la tarjeta donde acaba de llegar algo se enciende un momento (js/overview.js, celebrate): en la vista conjunta, y
+   sobre todo en una pantalla compartida, se ve desde lejos dónde pasó */
+.rc-card {
+  transition: border-color 0.4s, box-shadow 0.4s;
+}
+.rc-card.rc-news {
+  border-color: color-mix(in srgb, var(--good) 60%, var(--line));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--good) 40%, transparent);
+  animation: rc-news 1.4s ease-out;
+}
+@keyframes rc-news {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 60%, transparent);
+  }
+  55% {
+    box-shadow: 0 0 0 12px color-mix(in srgb, var(--good) 0%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rc-card {
+    transition: none;
+  }
+  .rc-card.rc-news {
+    animation: none;
+  }
+}
+
+/* ---------- modo TV con la vista conjunta: todos los repos a la vez, en una pantalla compartida ----------
+   Las tarjetas entran todas sin desplazarse (app.js calcula columnas y filas con GB.overview.fitGrid: --tv-cols y
+   --tv-rows), sin los controles (fijar un PR, elegir persona, la ayuda) y con la letra que crece con la pantalla
+   (--tvz); los grafos no se agrandan con zoom (se verían borrosos). La barra del modo TV va al final de la cabecera
+   de la vista (app.js la mueve), que ya crece con la pantalla: ella no crece otra vez. */
+html.tv .all-panel .hint,
+html.tv .ap-pin,
+html.tv .ap-person {
+  display: none !important;
+}
+html.tv .all-panel > .panel-head,
+html.tv .all-panel .ap,
+html.tv .rc-head,
+html.tv .rc-stats,
+html.tv .rc-last {
+  zoom: var(--tvz, 1);
+}
+html.tv .all-panel > .panel-head {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+html.tv .all-panel h2 {
+  font-size: 22px;
+}
+html.tv .all-panel .tv-bar {
+  position: static;
+  flex: none;
+  margin-inline-start: auto;
+  zoom: 1;
+}
+html.tv .all-panel .ap {
+  max-height: 26%;
+  overflow: hidden;
+}
+html.tv .rc-card.rc-news {
+  box-shadow: 0 0 0 calc(3px * var(--tvz, 1)) color-mix(in srgb, var(--good) 45%, transparent);
+}
+@media (min-width: 861px) {
+  html.tv .app.all-on .rc-grid {
+    grid-template-columns: repeat(var(--tv-cols, 2), minmax(0, 1fr));
+    grid-template-rows: repeat(var(--tv-rows, 1), minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
+    overflow: hidden;
+    padding-bottom: 8px;
+  }
+  html.tv .app.all-on .rc-stage {
+    min-height: 0;
+    margin: 6px;
+  }
+}
+
 /* ---------- editar un archivo (js/editor.js) ---------- */
 .df-factions {
   display: flex;
@@ -7402,7 +7480,8 @@ html.tv .agk-btn {
   outline-offset: -2px;
 }
 
-.graph-panel:focus {
+.graph-panel:focus,
+.all-panel:focus {
   outline: none;
 }
 

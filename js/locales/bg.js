@@ -39,6 +39,7 @@ GB.i18n.define('bg', {
   'status.error': 'Няма връзка',
   'status.errorNotFound': 'Не е намерено',
   'status.errorRate': 'Квотата е изчерпана',
+  'status.errorAuth': 'Невалиден токен',
   'status.retryIn': 'нов опит след {time}',
   'status.stopped': 'спряно',
   'status.resumeHint': 'възобновете, за да продължите',

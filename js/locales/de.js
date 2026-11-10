@@ -39,6 +39,7 @@ GB.i18n.define('de', {
   'status.error': 'Offline',
   'status.errorNotFound': 'Nicht gefunden',
   'status.errorRate': 'Kontingent erschöpft',
+  'status.errorAuth': 'Token ungültig',
   'status.retryIn': 'neuer Versuch in {time}',
   'status.stopped': 'angehalten',
   'status.resumeHint': 'zum Fortfahren fortsetzen',

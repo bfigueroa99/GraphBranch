@@ -39,6 +39,7 @@ GB.i18n.define('tr', {
   'status.error': 'Çevrimdışı',
   'status.errorNotFound': 'Bulunamadı',
   'status.errorRate': 'Kota doldu',
+  'status.errorAuth': 'Geçersiz token',
   'status.retryIn': '{time} sonra yeniden denenecek',
   'status.stopped': 'durduruldu',
   'status.resumeHint': 'devam etmek için sürdürün',

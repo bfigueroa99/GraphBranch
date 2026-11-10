@@ -415,6 +415,16 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     enlace siempre. Reproducción: `payload('discord', {title: 'x'.repeat(5000), url: 'https://github.com/a/b'})` →
     `content` sin `<https://github.com/a/b>`.
 
+18. [QA] Un repo vacío (GitHub responde 409 «Git Repository is empty» en ramas y commits) se rotula «Sin conexión» y
+    reintenta cada pocos segundos, sin decir que el repo está vacío. Un estado propio («Repo vacío») sin reintento rápido.
+    Reproducción: API simulada con 409 en `/commits` y `/branches`, `index.html?repo=acme/x` → `Sin conexión | reintento en 2s`.
+19. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
+    `js/util.js` solo distingue notfound, rate y auth), aunque haya red: la persona busca su wifi y el servicio es quien falla.
+    Un rótulo «Error del servicio» en los 40 idiomas. Reproducción: `U.statusKey({state: 'error', error: {kind: 'http'}})` → `status.error`.
+20. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
+    el service worker instalado (solo los estados de error de la carga, en es y ar a 1280 y 320 px). Mirarlos en la
+    próxima QA. Reproducción: `node e2e/serve.mjs 4173` + Playwright con la API simulada de `tools/audit.mjs`.
+
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); el contenedor 2D enfocable no tiene rol ni nombre (`graph.js:306`); las marcas
   de la brújula del mundo abierto son botones que se mueven y ocultan cada cuadro (`world.js:849`).
@@ -640,3 +650,18 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/250, sin colisión
 - Validado: 653 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 251, mantenimiento · QA: auditoría (sin pendientes de QA)
+
+### 2026-11-10 · Iteración 251 · Mantenimiento · QA
+
+- **Auditoría de QA: un token inválido ya no se rotula «Sin conexión».** La auditoría completa (`--langs`) dio 0 hallazgos; a mano, con la API simulada en es y ar a 1280 y 320 px (404, cuota agotada, repo vacío, sin red, 401): sin errores de consola ni desborde horizontal, pero un 401 (`kind: 'auth'`) salía como «Sin conexión | detenido» aunque `err.auth` ya pide revisar el token. `STATUS_ERROR_KEYS` (`js/util.js`) suma `auth` → `status.errorAuth` («Token no válido»), en los 40 idiomas.
+- **Reproducción:** `node --test tools/util.test.mjs` → `expected: 'status.errorAuth'` (daba `status.error`).
+- **Hallazgos:** 3 nuevos (pendientes 18, 19 y 20), 0 a la base de la auditoría
+- **Pruebas que fallan sin el arreglo:** `node --test` (`tools/util.test.mjs`, «statusKey…»: la línea de `auth`); sin el cambio de `js/util.js` falla 1.
+- README: no cambia (un rótulo de estado).
+- QA: estados de error de la carga (404, cuota, vacío, sin red, 401) en es y ar a 1280 y 320 px; el resto de las filas, por la auditoría completa; auditoría: 0 hallazgos (0 Alta), 0 fuera de la base. El smoke tres veces no se corrió por tiempo: queda dicho aquí.
+- Skills: no aplica: un rótulo de estado; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (una clave más en el mapa de rótulos).
+- OMC: plan=— · revisión=— · verificación=— (diff pequeño, leído a mano; sin subagentes)
+- Reclamo: loop/251, sin colisión
+- Validado: 653 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+- **Siguiente:** iteración 252, expansión: ítem 163 (Práctica: stash -u, Público)

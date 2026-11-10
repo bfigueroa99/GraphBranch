@@ -204,7 +204,7 @@ window.GB = window.GB || {};
   /** La clave del texto del indicador de estado. Un 404 del repo o la cuota agotada dicen lo que son, no
       «Sin conexión» (en celular el indicador es lo único que se ve). null si el estado no existe. */
   const STATUS_KEYS = { loading: 'status.loading', live: 'status.live', limited: 'status.limited', paused: 'status.paused', error: 'status.error' };
-  const STATUS_ERROR_KEYS = { notfound: 'status.errorNotFound', rate: 'status.errorRate' };
+  const STATUS_ERROR_KEYS = { notfound: 'status.errorNotFound', rate: 'status.errorRate', auth: 'status.errorAuth' };
   U.statusKey = (s) => (s?.state === 'error' && STATUS_ERROR_KEYS[s.error?.kind]) || STATUS_KEYS[s?.state] || null;
 
   /** localStorage envuelto: puede no existir o lanzar (modo privado, sandbox). Un valor guardado que no es

@@ -39,6 +39,7 @@ GB.i18n.define('ja', {
   'status.error': 'オフライン',
   'status.errorNotFound': '見つかりません',
   'status.errorRate': '上限に達しました',
+  'status.errorAuth': 'トークンが無効です',
   'status.retryIn': '{time}後に再試行',
   'status.stopped': '停止中',
   'status.resumeHint': '再開すると更新を続けます',

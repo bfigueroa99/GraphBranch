@@ -39,6 +39,7 @@ GB.i18n.define('ko', {
   'status.error': '오프라인',
   'status.errorNotFound': '찾을 수 없음',
   'status.errorRate': '할당량 소진',
+  'status.errorAuth': '토큰이 유효하지 않음',
   'status.retryIn': '{time} 후 재시도',
   'status.stopped': '중지됨',
   'status.resumeHint': '재개하면 계속 갱신됩니다',

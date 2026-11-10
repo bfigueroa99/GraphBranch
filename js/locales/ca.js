@@ -39,6 +39,7 @@ GB.i18n.define('ca', {
   'status.error': 'Sense connexió',
   'status.errorNotFound': 'No trobat',
   'status.errorRate': 'Quota esgotada',
+  'status.errorAuth': 'Token no vàlid',
   'status.retryIn': 'reintent en {time}',
   'status.stopped': 'aturat',
   'status.resumeHint': 'reprèn per continuar',

@@ -39,6 +39,7 @@ GB.i18n.define('ur', {
   'status.error': 'آف لائن',
   'status.errorNotFound': 'نہیں ملا',
   'status.errorRate': 'کوٹا ختم',
+  'status.errorAuth': 'ٹوکن غلط ہے',
   'status.retryIn': '{time} میں دوبارہ کوشش',
   'status.stopped': 'رک گیا',
   'status.resumeHint': 'آگے بڑھنے کے لیے “جاری رکھیں” دبائیں',

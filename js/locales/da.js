@@ -39,6 +39,7 @@ GB.i18n.define('da', {
   'status.error': 'Offline',
   'status.errorNotFound': 'Ikke fundet',
   'status.errorRate': 'Kvote opbrugt',
+  'status.errorAuth': 'Ugyldigt token',
   'status.retryIn': 'prøver igen om {time}',
   'status.stopped': 'stoppet',
   'status.resumeHint': 'genoptag for at fortsætte',

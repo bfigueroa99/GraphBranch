@@ -39,6 +39,7 @@ GB.i18n.define('id', {
   'status.error': 'Offline',
   'status.errorNotFound': 'Tidak ditemukan',
   'status.errorRate': 'Kuota habis',
+  'status.errorAuth': 'Token tidak valid',
   'status.retryIn': 'mencoba lagi dalam {time}',
   'status.stopped': 'dihentikan',
   'status.resumeHint': 'lanjutkan untuk meneruskan',

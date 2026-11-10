@@ -39,6 +39,7 @@ GB.i18n.define('el', {
   'status.error': 'Εκτός σύνδεσης',
   'status.errorNotFound': 'Δεν βρέθηκε',
   'status.errorRate': 'Εξαντλήθηκε το όριο',
+  'status.errorAuth': 'Μη έγκυρο token',
   'status.retryIn': 'νέα προσπάθεια σε {time}',
   'status.stopped': 'σταματημένο',
   'status.resumeHint': 'πατήστε Συνέχιση για να προχωρήσετε',

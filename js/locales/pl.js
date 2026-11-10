@@ -39,6 +39,7 @@ GB.i18n.define('pl', {
   'status.error': 'Brak połączenia',
   'status.errorNotFound': 'Nie znaleziono',
   'status.errorRate': 'Limit wyczerpany',
+  'status.errorAuth': 'Nieprawidłowy token',
   'status.retryIn': 'ponowna próba za {time}',
   'status.stopped': 'zatrzymano',
   'status.resumeHint': 'wznów, aby kontynuować',

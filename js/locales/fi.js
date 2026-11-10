@@ -39,6 +39,7 @@ GB.i18n.define('fi', {
   'status.error': 'Ei yhteyttä',
   'status.errorNotFound': 'Ei löytynyt',
   'status.errorRate': 'Kiintiö täynnä',
+  'status.errorAuth': 'Virheellinen token',
   'status.retryIn': 'yritetään uudelleen {time} kuluttua',
   'status.stopped': 'pysäytetty',
   'status.resumeHint': 'jatka painamalla Jatka',

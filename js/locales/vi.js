@@ -757,6 +757,8 @@ GB.i18n.define('vi', {
   'all.prs.open': 'PR #{num} của {repo}: {title}. Mở nhánh của nó',
   'all.prs.pin': 'Ghim PR #{num} của {repo} lên đầu',
   'all.prs.unpin': 'Bỏ ghim PR #{num} của {repo}',
+  'all.prs.snooze': 'Tạm hoãn PR #{num} của {repo} một ngày',
+  'all.prs.unsnooze': 'Bỏ tạm hoãn PR #{num} của {repo}',
   'all.prs.person': 'Lọc Launchpad theo người',
   'all.prs.everyone': 'Tất cả mọi người',
   'all.prs.repo': 'Lọc Launchpad theo kho',

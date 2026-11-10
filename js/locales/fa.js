@@ -800,6 +800,8 @@ GB.i18n.define('fa', {
   'all.prs.open': 'PR #{num} در {repo}: {title}. باز کردن شاخه آن',
   'all.prs.pin': 'سنجاق کردن PR #{num} از {repo} در بالا',
   'all.prs.unpin': 'برداشتن سنجاق PR #{num} از {repo}',
+  'all.prs.snooze': 'تعویق PR #{num} از {repo} به مدت یک روز',
+  'all.prs.unsnooze': 'لغو تعویق PR #{num} از {repo}',
   'all.prs.person': 'فیلتر Launchpad بر اساس فرد',
   'all.prs.everyone': 'همه افراد',
   'all.prs.repo': 'فیلتر Launchpad بر اساس مخزن',

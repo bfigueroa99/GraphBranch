@@ -7025,7 +7025,8 @@ html.tv .agk-btn {
 .ap-list li > .ap-row {
   flex: 1;
 }
-.ap-pin {
+.ap-pin,
+.ap-snooze {
   flex: none;
   min-width: 28px;
   border: 0;
@@ -7038,10 +7039,17 @@ html.tv .agk-btn {
 }
 .ap-pin:hover,
 .ap-pin:focus-visible,
-.ap-pin[aria-pressed='true'] {
+.ap-pin[aria-pressed='true'],
+.ap-snooze:hover,
+.ap-snooze:focus-visible,
+.ap-snooze[aria-pressed='true'] {
   opacity: 1;
   filter: none;
   background: var(--surface-2);
+}
+/* un PR pospuesto baja al final de su grupo y se atenúa hasta que pase el día */
+.ap-list li.snoozed .ap-t {
+  color: var(--ink-2);
 }
 .ap-t,
 .ap-m {
@@ -7259,11 +7267,12 @@ html.tv .agk-btn {
 
 /* ---------- modo TV con la vista conjunta: todos los repos a la vez, en una pantalla compartida ----------
    Las tarjetas entran todas sin desplazarse (app.js calcula columnas y filas con GB.overview.fitGrid: --tv-cols y
-   --tv-rows), sin los controles (fijar un PR, elegir persona, la ayuda) y con la letra que crece con la pantalla
+   --tv-rows), sin los controles (fijar o posponer un PR, elegir persona, la ayuda) y con la letra que crece con la pantalla
    (--tvz); los grafos no se agrandan con zoom (se verían borrosos). La barra del modo TV va al final de la cabecera
    de la vista (app.js la mueve), que ya crece con la pantalla: ella no crece otra vez. */
 html.tv .all-panel .hint,
 html.tv .ap-pin,
+html.tv .ap-snooze,
 html.tv .ap-person,
 html.tv .ap-repo {
   display: none !important;

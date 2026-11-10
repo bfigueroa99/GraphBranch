@@ -757,6 +757,8 @@ GB.i18n.define('ja', {
   'all.prs.open': '{repo} の PR #{num}: {title}。そのブランチを開く',
   'all.prs.pin': '{repo} の PR #{num} を先頭に固定',
   'all.prs.unpin': '{repo} の PR #{num} の固定を解除',
+  'all.prs.snooze': '{repo} の PR #{num} を 1 日後回しにする',
+  'all.prs.unsnooze': '{repo} の PR #{num} の後回しを解除',
   'all.prs.person': 'Launchpad を人で絞り込む',
   'all.prs.everyone': '全員',
   'all.prs.repo': 'Launchpad をリポジトリで絞り込む',

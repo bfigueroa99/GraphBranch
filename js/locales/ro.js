@@ -765,6 +765,8 @@ GB.i18n.define('ro', {
   'all.prs.open': 'PR #{num} din {repo}: {title}. Deschide ramura',
   'all.prs.pin': 'Fixează PR #{num} din {repo} sus',
   'all.prs.unpin': 'Desprinde PR #{num} din {repo}',
+  'all.prs.snooze': 'Amână PR #{num} din {repo} cu o zi',
+  'all.prs.unsnooze': 'Anulează amânarea PR #{num} din {repo}',
   'all.prs.person': 'Filtrează Launchpad după persoană',
   'all.prs.everyone': 'Toate persoanele',
   'all.prs.repo': 'Filtrează Launchpad după depozit',

@@ -757,6 +757,8 @@ GB.i18n.define('fi', {
   'all.prs.open': 'PR #{num} repossa {repo}: {title}. Avaa sen haara',
   'all.prs.pin': 'Kiinnitä PR #{num} ({repo}) ylös',
   'all.prs.unpin': 'Irrota PR #{num} ({repo})',
+  'all.prs.snooze': 'Siirrä PR #{num} ({repo}) päivällä myöhemmäksi',
+  'all.prs.unsnooze': 'Peru PR:n #{num} ({repo}) siirto',
   'all.prs.person': 'Suodata Launchpad henkilön mukaan',
   'all.prs.everyone': 'Kaikki henkilöt',
   'all.prs.repo': 'Suodata Launchpad repon mukaan',

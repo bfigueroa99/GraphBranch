@@ -800,6 +800,8 @@ GB.i18n.define('ur', {
   'all.prs.open': '{repo} کی PR #{num}: {title}۔ اس کی شاخ کھولیں',
   'all.prs.pin': '{repo} کا PR #{num} اوپر پن کریں',
   'all.prs.unpin': '{repo} کا PR #{num} ان پن کریں',
+  'all.prs.snooze': '{repo} کا PR #{num} ایک دن کے لیے مؤخر کریں',
+  'all.prs.unsnooze': '{repo} کا PR #{num} مؤخر کرنا بند کریں',
   'all.prs.person': 'Launchpad کو فرد کے لحاظ سے فلٹر کریں',
   'all.prs.everyone': 'سب لوگ',
   'all.prs.repo': 'Launchpad کو ریپو کے لحاظ سے فلٹر کریں',

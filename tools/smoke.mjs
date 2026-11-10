@@ -2165,6 +2165,24 @@ console.log('Varios repos a la vez');
     await page.click(pinSel);
     const unpinned = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), saved: localStorage.getItem('graphbranch:prpins') }), pinSel);
     if (unpinned.pressed !== 'false' || unpinned.saved !== null) throw new Error('soltar un PR del Launchpad: ' + JSON.stringify(unpinned));
+    // posponer un PR un día: baja (atenuado) al final de su grupo, se recuerda por repo y número con su vencimiento, y fijarlo lo deja de posponer
+    const zzSel = '#all-prs .ap-row[data-number="7"] ~ .ap-snooze';
+    await page.click(zzSel);
+    const snoozed = await page.evaluate((sel) => {
+      const b = document.querySelector(sel);
+      const saved = JSON.parse(localStorage.getItem('graphbranch:prsnooze') || 'null');
+      return { pressed: b?.getAttribute('aria-pressed'), label: b?.getAttribute('aria-label'), cls: b?.closest('li')?.classList.contains('snoozed'), ids: Object.keys(saved || {}), hours: saved && (saved['o/b#7'] - Date.now()) / 3.6e6, focus: document.activeElement?.matches(sel) };
+    }, zzSel);
+    if (snoozed.pressed !== 'true' || !snoozed.cls || snoozed.ids.join() !== 'o/b#7' || !(snoozed.hours > 23.9 && snoozed.hours <= 24) || !snoozed.focus || !/7/.test(snoozed.label || '') || /\{|undefined/.test(snoozed.label || '')) throw new Error('posponer un PR del Launchpad: ' + JSON.stringify(snoozed));
+    await page.click(pinSel);
+    const pinWins = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), snooze: localStorage.getItem('graphbranch:prsnooze'), pins: localStorage.getItem('graphbranch:prpins') }), zzSel);
+    if (pinWins.pressed !== 'false' || pinWins.snooze !== null || pinWins.pins !== '["o/b#7"]') throw new Error('fijar un PR pospuesto: ' + JSON.stringify(pinWins));
+    await page.click(zzSel);
+    const snoozeWins = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), pins: localStorage.getItem('graphbranch:prpins') }), zzSel);
+    if (snoozeWins.pressed !== 'true' || snoozeWins.pins !== null) throw new Error('posponer un PR fijado: ' + JSON.stringify(snoozeWins));
+    await page.click(zzSel);
+    const unsnoozed = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), saved: localStorage.getItem('graphbranch:prsnooze') }), zzSel);
+    if (unsnoozed.pressed !== 'false' || unsnoozed.saved !== null) throw new Error('dejar de posponer un PR del Launchpad: ' + JSON.stringify(unsnoozed));
     await page.click('#all-prs .ap-row[data-number="7"]');
     await page.waitForFunction(() => document.querySelector('#all-panel').hidden && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
     await page.click('#all-tab');
@@ -2250,7 +2268,7 @@ console.log('Varios repos a la vez');
             const r = c.getBoundingClientRect();
             return r.height > 120 && r.top >= 0 && r.bottom <= innerHeight + 1;
           }),
-          controls: ['#all-panel .hint', '.ap-pin', '.ap-person'].filter((s) => document.querySelector(s)?.checkVisibility()),
+          controls: ['#all-panel .hint', '.ap-pin', '.ap-snooze', '.ap-person'].filter((s) => document.querySelector(s)?.checkVisibility()),
           focus: document.activeElement?.id || '',
         };
       });

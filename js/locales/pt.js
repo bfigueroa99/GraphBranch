@@ -758,6 +758,8 @@ GB.i18n.define('pt', {
   'all.prs.open': 'PR #{num} de {repo}: {title}. Abrir o branch',
   'all.prs.pin': 'Fixar o PR #{num} de {repo} no topo',
   'all.prs.unpin': 'Soltar o PR #{num} de {repo}',
+  'all.prs.snooze': 'Adiar o PR #{num} de {repo} por um dia',
+  'all.prs.unsnooze': 'Deixar de adiar o PR #{num} de {repo}',
   'all.prs.person': 'Filtrar o Launchpad por pessoa',
   'all.prs.everyone': 'Todas as pessoas',
   'all.prs.repo': 'Filtrar o Launchpad por repositório',

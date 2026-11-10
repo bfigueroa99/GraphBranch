@@ -757,6 +757,8 @@ GB.i18n.define('sw', {
   'all.prs.open': 'PR #{num} ya {repo}: {title}. Fungua tawi lake',
   'all.prs.pin': 'Bandika PR #{num} ya {repo} juu',
   'all.prs.unpin': 'Ondoa PR #{num} ya {repo} juu',
+  'all.prs.snooze': 'Ahirisha PR #{num} ya {repo} kwa siku moja',
+  'all.prs.unsnooze': 'Acha kuahirisha PR #{num} ya {repo}',
   'all.prs.person': 'Chuja Launchpad kwa mtu',
   'all.prs.everyone': 'Watu wote',
   'all.prs.repo': 'Chuja Launchpad kwa hazina',

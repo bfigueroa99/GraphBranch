@@ -814,6 +814,8 @@ GB.i18n.define('he', {
   'all.prs.open': 'PR #{num} ב-{repo}: {title}. פתיחת הענף שלה',
   'all.prs.pin': 'הצמד את PR #{num} של {repo} למעלה',
   'all.prs.unpin': 'בטל הצמדה של PR #{num} של {repo}',
+  'all.prs.snooze': 'דחה את PR #{num} של {repo} ביום',
+  'all.prs.unsnooze': 'בטל את דחיית PR #{num} של {repo}',
   'all.prs.person': 'סינון ה-Launchpad לפי אדם',
   'all.prs.everyone': 'כל האנשים',
   'all.prs.repo': 'סינון ה-Launchpad לפי מאגר',

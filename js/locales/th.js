@@ -758,6 +758,8 @@ GB.i18n.define('th', {
   'all.prs.open': 'PR #{num} ของ {repo}: {title} เปิดสาขาของมัน',
   'all.prs.pin': 'ปักหมุด PR #{num} ของ {repo} ไว้ด้านบน',
   'all.prs.unpin': 'เลิกปักหมุด PR #{num} ของ {repo}',
+  'all.prs.snooze': 'เลื่อน PR #{num} ของ {repo} ออกไปหนึ่งวัน',
+  'all.prs.unsnooze': 'เลิกเลื่อน PR #{num} ของ {repo}',
   'all.prs.person': 'กรอง Launchpad ตามบุคคล',
   'all.prs.everyone': 'ทุกคน',
   'all.prs.repo': 'กรอง Launchpad ตามที่เก็บ',

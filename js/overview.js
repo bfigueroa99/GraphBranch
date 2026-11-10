@@ -70,6 +70,18 @@
   /** La identidad de un PR para fijarlo: repo y número, nunca el título. */
   const pinId = (key, number) => `${key}#${number}`;
 
+  /** Cuánto dura posponer un PR del Launchpad: un día. */
+  const SNOOZE_MS = 24 * 60 * 60 * 1000;
+
+  /** Los PRs pospuestos que siguen vigentes: de { pinId: hasta (ms) } deja solo los que vencen después de `now`
+      (los vencidos, los valores que no son números y lo que no es un objeto se descartan). */
+  function liveSnoozes(snoozed, now = Date.now()) {
+    const out = {};
+    if (!snoozed || typeof snoozed !== 'object' || Array.isArray(snoozed)) return out;
+    for (const [id, until] of Object.entries(snoozed)) if (Number.isFinite(until) && until > now) out[id] = until;
+    return out;
+  }
+
   /** En qué grupo cae un PR abierto: borrador, checks en rojo, aprobado o esperando revisión (en ese orden de prioridad). */
   function prGroup(p) {
     if (p.draft) return 'draft';
@@ -101,9 +113,12 @@
 
   /** Los PRs abiertos de varios repos, agrupados por estado: `entries` es [{ key, name, pulls: iterable de PRs }].
       Devuelve solo los grupos con PRs, [{ id, items }], cada uno del más nuevo al más viejo; los fijados (`pinned`: un Set
-      de `pinId`) van arriba de su grupo, con `pinned: true`. */
-  function groupPulls(entries, pinned, author = '', repoKey = '') {
+      de `pinId`) van arriba de su grupo, con `pinned: true`; los pospuestos (`snoozed`: { pinId: hasta (ms) }) que no
+      vencieron a la hora `now` van al final de su grupo, con `snoozed: true`. Fijar gana a posponer. */
+  function groupPulls(entries, pinned, author = '', repoKey = '', snoozed = null, now = Date.now()) {
     const isPinned = (key, number) => !!pinned?.has?.(pinId(key, number));
+    const live = liveSnoozes(snoozed, now);
+    const isSnoozed = (key, number) => Object.hasOwn(live, pinId(key, number));
     const by = new Map(PR_GROUPS.map((g) => [g, []]));
     for (const e of entries) {
       if (repoKey && e.key !== repoKey) continue;
@@ -118,10 +133,12 @@
           user: p.user?.login || p.user?.name || '',
           createdAt: p.createdAt || 0,
           pinned: isPinned(e.key, p.number),
+          snoozed: !isPinned(e.key, p.number) && isSnoozed(e.key, p.number),
         });
       }
     }
-    for (const items of by.values()) items.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.createdAt - a.createdAt || (a.repo < b.repo ? -1 : a.repo > b.repo ? 1 : a.number - b.number));
+    const rank = (x) => (x.pinned ? 0 : x.snoozed ? 2 : 1);
+    for (const items of by.values()) items.sort((a, b) => rank(a) - rank(b) || b.createdAt - a.createdAt || (a.repo < b.repo ? -1 : a.repo > b.repo ? 1 : a.number - b.number));
     return PR_GROUPS.map((id) => ({ id, items: by.get(id) })).filter((g) => g.items.length);
   }
 
@@ -134,6 +151,7 @@
    *   canDiff(key) → ¿se pueden ver los cambios de los commits de ese repo?
    *   person: la persona con la que abre el Launchpad (`?by=`); onPerson(login): se eligió otra ('' = todas)
    *   getPins(): los PRs fijados (lista de pinId); onPin(id, on): fijar o soltar uno
+   *   getSnoozes(): los PRs pospuestos ({ pinId: hasta (ms) }); onSnooze(id, on): posponer uno un día o dejar de posponerlo
    *   prsRoot, onOpenPr(key, head): el Launchpad (los PRs de todos los repos por estado) y la salida de una fila
    * Devuelve { sync(items), draw(key, data, ctx), stats(), celebrate(key, acts), focus(key, { sha, branch }), select(key, sha),
    *   graphOf(key), layoutOf(key), relocalize(), size }.
@@ -261,6 +279,7 @@
     let lastEntries = [];
     let prPerson = opts.person || ''; // el filtro por persona del Launchpad ('' = todas); viaja en ?by=
     let prRepo = ''; // el filtro por repo ('' = todos); no se recuerda ni viaja en la URL
+    let snoozeTimer = 0; // repinta cuando vence el primer PR pospuesto, para que vuelva a su lugar sin esperar datos nuevos
     function setPulls(entries) {
       lastEntries = entries.map((e) => ({ ...e, pulls: [...(e.pulls || [])] })); // `pulls` puede ser un iterador, de un solo uso
       entries = lastEntries;
@@ -273,7 +292,13 @@
       const who = people.find((u) => u === prPerson) || people.find((u) => u.toLowerCase() === prPerson.toLowerCase()) || '';
       const repos = prRepos(entries);
       const repo = repos.find((r) => r.key === prRepo)?.key || ''; // un repo sin PRs abiertos no filtra
-      const groups = groupPulls(entries, pins, who, repo);
+      const now = Date.now();
+      const snoozes = liveSnoozes(opts.getSnoozes?.(), now);
+      const groups = groupPulls(entries, pins, who, repo, snoozes, now);
+      if (snoozeTimer) clearTimeout(snoozeTimer);
+      snoozeTimer = 0;
+      const next = Math.min(...Object.values(snoozes));
+      if (Number.isFinite(next)) snoozeTimer = setTimeout(() => setPulls(lastEntries), Math.min(next - now + 50, 2 ** 31 - 1));
       const sig = JSON.stringify([groups, people, counts, who, repos, repo]);
       if (sig === prSig) return;
       prSig = sig;
@@ -347,8 +372,22 @@
             // el repintado reemplaza la fila: el foco vuelve a su botón de fijar
             [...box.querySelectorAll('.ap-pin')].find((x) => x.closest('li')?.querySelector('.ap-row')?.dataset.key === it.key && x.closest('li').querySelector('.ap-row').dataset.number === String(it.number))?.focus();
           });
+          const zz = mk('button', 'ap-snooze');
+          zz.type = 'button';
+          zz.textContent = '💤';
+          zz.setAttribute('aria-pressed', String(it.snoozed));
+          const zlabel = t(it.snoozed ? 'all.prs.unsnooze' : 'all.prs.snooze', { num: it.number, repo: it.repo });
+          zz.setAttribute('aria-label', zlabel);
+          zz.title = zlabel;
+          zz.addEventListener('click', () => {
+            opts.onSnooze?.(pinId(it.key, it.number), !it.snoozed);
+            setPulls(lastEntries);
+            // la fila baja (o sube) en su grupo: el foco la sigue a su botón de posponer
+            [...box.querySelectorAll('.ap-snooze')].find((x) => x.closest('li')?.querySelector('.ap-row')?.dataset.key === it.key && x.closest('li').querySelector('.ap-row').dataset.number === String(it.number))?.focus();
+          });
           li.classList.toggle('pinned', it.pinned);
-          li.append(pin);
+          li.classList.toggle('snoozed', it.snoozed);
+          li.append(pin, zz);
           ul.append(li);
         }
         sec.append(ul);
@@ -403,5 +442,5 @@
     };
   }
 
-  GB.overview = { allParam, personParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, fitGrid, prGroup, groupPulls, prAuthors, prRepos, prCounts, pinId, mount };
+  GB.overview = { allParam, personParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, fitGrid, prGroup, groupPulls, prAuthors, prRepos, prCounts, pinId, SNOOZE_MS, liveSnoozes, mount };
 })(window.GB);

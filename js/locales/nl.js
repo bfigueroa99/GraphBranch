@@ -758,6 +758,8 @@ GB.i18n.define('nl', {
   'all.prs.open': 'PR #{num} van {repo}: {title}. Open de branch',
   'all.prs.pin': 'PR #{num} van {repo} bovenaan vastzetten',
   'all.prs.unpin': 'PR #{num} van {repo} losmaken',
+  'all.prs.snooze': 'PR #{num} van {repo} een dag uitstellen',
+  'all.prs.unsnooze': 'Uitstel van PR #{num} van {repo} opheffen',
   'all.prs.person': 'Launchpad filteren op persoon',
   'all.prs.everyone': 'Alle personen',
   'all.prs.repo': 'Launchpad filteren op repo',

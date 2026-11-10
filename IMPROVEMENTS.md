@@ -423,6 +423,10 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 20. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
     el service worker instalado (solo los estados de error de la carga, en es y ar a 1280 y 320 px). Mirarlos en la
     próxima QA. Reproducción: `node e2e/serve.mjs 4173` + Playwright con la API simulada de `tools/audit.mjs`.
+21. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
+    que se pospone o se fija otro: `setPrSnooze` (`js/app.js`) es lo único que limpia. Inocuo (`liveSnoozes` los ignora),
+    pero crece sin tope. Limpiar también al leer. Reproducción: posponer un PR, adelantar el reloj un día y recargar →
+    la entrada sigue en `localStorage`.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); el contenedor 2D enfocable no tiene rol ni nombre (`graph.js:306`); las marcas
@@ -560,7 +564,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: Launchpad con la API simulada en ar a 1280 px, ta a 320 px y es a 390 px, solo con el teclado (Tab hasta 💤 y Enter: la fila baja al final, el foco la sigue y la etiqueta cambia a «dejar de posponer»), sin errores de consola ni desborde horizontal; modo TV y 40 idiomas por el smoke; auditoría: 0 hallazgos nuevos, 0 conocidos.
 - Skills: no aplica: un botón más en una lista que ya existe; lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (copiar el patrón de fijar, con la hora de vencimiento).
-- OMC: plan=— · revisión=REVISION · verificación=—
+- OMC: plan=— · revisión=3 hallazgos LOW (0 arreglados: «al final de su grupo» es a propósito, como lo dice el README; sin sincronía entre pestañas, igual que fijar; la limpieza de lo vencido, pendiente 21) · verificación=PASS
 - Reclamo: loop/254, sin colisión
 - Validado: 657 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 255, mantenimiento · Errores: pendiente 13 (Bitbucket Data Center: `sameRepo` (`js/sources/bitbucket-server.js`) compara el…)

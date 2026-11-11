@@ -729,10 +729,17 @@ test('estado de los despliegues: sin token pregunta menos, un despliegue nuevo s
   assert.equal(asked(), 9);
   assert.equal(src.data.deployStatus.has(1), false);
   assert.equal(src.data.deployStatus.get(9).state, 'queued');
+  // dos aperturas del panel a la vez no repiten las consultas
+  src.data.deploys.set('env-1', { id: 10, sha: 'a1', ref: 'main', at: '' });
+  gh.deployStatuses.set(10, [{ state: 'success' }]);
+  await Promise.all([src.syncDeployStatuses(T0 + 2500), src.syncDeployStatuses(T0 + 2500)]);
+  assert.equal(asked(), 10);
+  assert.equal(src.data.deployStatus.get(10).state, 'success');
   // sin despliegues (o con la carga apagada) no se gasta nada
   src.data.deploys = new Map();
   assert.equal(await src.syncDeployStatuses(T0 + 3000), false);
-  assert.equal(asked(), 9);
+  assert.equal(asked(), 10);
+  assert.equal(src.data.deployStatus.size, 0, 'y se olvida lo que ya no está');
 });
 
 /* GitHub Enterprise Server: la misma fuente contra otra URL base (https://host/api/v3 y /api/graphql). */

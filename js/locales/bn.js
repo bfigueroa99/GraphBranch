@@ -505,6 +505,7 @@ GB.i18n.define('bn', {
   'health.starsWeek': 'এই সপ্তাহে {week} · গত সপ্তাহে {prev} ({delta})',
   'health.stale': '৩০ দিনের বেশি নিষ্ক্রিয় এবং pull request ছাড়া ব্রাঞ্চ',
   'health.prs': 'খোলা pull request, পুরনোগুলো আগে',
+  'health.unreviewed': '৭ দিনের বেশি ধরে কোনো রিভিউ ছাড়া pull request',
   'health.prStates': 'অবস্থা অনুযায়ী খোলা পুল রিকোয়েস্ট',
   'health.prState.draft': 'খসড়া',
   'health.prState.failing': 'চেক ব্যর্থ',

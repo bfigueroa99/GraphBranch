@@ -513,6 +513,7 @@ GB.i18n.define('hr', {
   'health.starsWeek': '{week} ovaj tjedan · {prev} prošli tjedan ({delta})',
   'health.stale': 'Grane bez aktivnosti dulje od 30 dana i bez pull requesta',
   'health.prs': 'Otvoreni pull requestovi, najstariji prvi',
+  'health.unreviewed': 'Pull requestovi bez pregleda dulje od 7 dana',
   'health.prStates': 'Otvoreni pull requestovi po stanju',
   'health.prState.draft': 'Skica',
   'health.prState.failing': 'Neuspjele provjere',

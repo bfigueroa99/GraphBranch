@@ -506,6 +506,7 @@ GB.i18n.define('th', {
   'health.starsWeek': 'สัปดาห์นี้ {week} · สัปดาห์ก่อน {prev} ({delta})',
   'health.stale': 'บรานช์ที่ไม่มีความเคลื่อนไหวเกิน 30 วันและไม่มี pull request',
   'health.prs': 'pull request ที่เปิดอยู่ เก่าสุดก่อน',
+  'health.unreviewed': 'pull request ที่ไม่มีการรีวิวเกิน 7 วัน',
   'health.prStates': 'Pull request ที่เปิดอยู่ตามสถานะ',
   'health.prState.draft': 'ฉบับร่าง',
   'health.prState.failing': 'การตรวจสอบล้มเหลว',

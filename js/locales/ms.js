@@ -505,6 +505,7 @@ GB.i18n.define('ms', {
   'health.starsWeek': '{week} minggu ini · {prev} minggu lepas ({delta})',
   'health.stale': 'Cabang tanpa aktiviti lebih 30 hari dan tanpa pull request',
   'health.prs': 'Pull request terbuka, yang paling lama dahulu',
+  'health.unreviewed': 'Pull request tanpa semakan lebih 7 hari',
   'health.prStates': 'Pull request terbuka mengikut status',
   'health.prState.draft': 'Draf',
   'health.prState.failing': 'Semakan gagal',

@@ -548,6 +548,7 @@ GB.i18n.define('fa', {
   'health.starsWeek': '{week} این هفته · {prev} هفتهٔ قبل ({delta})',
   'health.stale': 'شاخه‌های بدون فعالیت بیش از ۳۰ روز و بدون pull request',
   'health.prs': 'pull requestهای باز، قدیمی‌ترین‌ها اول',
+  'health.unreviewed': 'pull requestهایی که بیش از ۷ روز هیچ بازبینی نداشته‌اند',
   'health.prStates': 'درخواست‌های ادغام باز بر اساس وضعیت',
   'health.prState.draft': 'پیش‌نویس',
   'health.prState.failing': 'بررسی‌های ناموفق',

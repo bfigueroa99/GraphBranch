@@ -505,6 +505,7 @@ GB.i18n.define('nb', {
   'health.starsWeek': '{week} denne uken · {prev} uken før ({delta})',
   'health.stale': 'Grener uten aktivitet på over 30 dager og uten pull request',
   'health.prs': 'Åpne pull requests, eldste først',
+  'health.unreviewed': 'Pull requests uten gjennomgang i over 7 dager',
   'health.prStates': 'Åpne pull requests etter status',
   'health.prState.draft': 'Utkast',
   'health.prState.failing': 'Feilende sjekker',

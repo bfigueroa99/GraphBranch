@@ -516,6 +516,7 @@ GB.i18n.define('sk', {
   'health.starsWeek': '{week} tento týždeň · {prev} minulý týždeň ({delta})',
   'health.stale': 'Vetvy bez aktivity viac ako 30 dní a bez pull requestu',
   'health.prs': 'Otvorené pull requesty, najstaršie prvé',
+  'health.unreviewed': 'Pull requesty bez revízie dlhšie ako 7 dní',
   'health.prStates': 'Otvorené pull requesty podľa stavu',
   'health.prState.draft': 'Koncept',
   'health.prState.failing': 'Zlyhávajúce kontroly',

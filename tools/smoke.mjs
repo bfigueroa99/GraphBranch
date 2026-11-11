@@ -840,6 +840,12 @@ console.log('Escritorio (1280×800)');
       open: document.querySelectorAll('#health .hl-list[data-list="prs"] li').length,
     }));
     if (!states.groups.length || states.inGroups !== states.open || states.groups.some((x) => /undefined|NaN|health\./.test(x))) throw new Error('PRs por estado en la demo: ' + JSON.stringify(states));
+    // PRs sin revisión hace más de 7 días: los de la demo son de hace 3, así que la lista sale vacía y con su total en 0
+    const unrev = await page.evaluate(() => {
+      const box = document.querySelector('#hl-unreviewed');
+      return box && { head: box.querySelector('h3')?.textContent.trim() || '', n: box.querySelector('.hl-n')?.textContent.trim(), rows: box.querySelectorAll('li').length, none: !!box.querySelector('.hl-none') };
+    });
+    if (!unrev || !unrev.head || /undefined|NaN|health\./.test(unrev.head) || unrev.n !== '0' || unrev.rows || !unrev.none) throw new Error('PRs sin revisión en la demo: ' + JSON.stringify(unrev));
     await page.click('#health .hl-list[data-list="prs"] [data-go]');
     await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
   });

@@ -506,6 +506,7 @@ GB.i18n.define('nl', {
   'health.starsWeek': '{week} deze week · {prev} vorige week ({delta})',
   'health.stale': 'Branches zonder activiteit gedurende meer dan 30 dagen en zonder pull request',
   'health.prs': 'Open pull requests, oudste eerst',
+  'health.unreviewed': 'Pull requests al meer dan 7 dagen zonder review',
   'health.prStates': 'Open pull requests per status',
   'health.prState.draft': 'Concept',
   'health.prState.failing': 'Falende checks',

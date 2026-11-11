@@ -1903,6 +1903,7 @@
         .filter((k) => h.prStates[k].total)
         .map((k) => healthList('prs-' + k, t({ draft: 'health.prState.draft', failing: 'health.prState.failing', approved: 'health.prState.approved', waiting: 'health.prState.waiting' }[k]), h.prStates[k], (r) => [`#${r.number} ${r.title}`, span(r.age)], true))
         .join('') || `<p class="hl-none">${U.esc(t('health.none'))}</p>`}</section>` +
+      `<div id="hl-unreviewed">${healthList('unreviewed', t('health.unreviewed'), h.unreviewed, (r) => [`#${r.number} ${r.title}`, span(r.age)])}</div>` +
       `<section class="hl-sec"><h3>${U.esc(t('health.merged'))}</h3>${
         h.merged ? `<p class="hl-line">${U.esc(t('health.mergedStat', { median: span(h.merged.median), max: span(h.merged.max) }))}</p>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }${weeklyLines(h.pace)}</section>` +

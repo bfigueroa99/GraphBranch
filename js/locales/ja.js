@@ -505,6 +505,7 @@ GB.i18n.define('ja', {
   'health.starsWeek': '今週 {week} · 先週 {prev}（{delta}）',
   'health.stale': '30日以上動きがなく、プルリクエストもないブランチ',
   'health.prs': 'オープン中のプルリクエスト（古い順）',
+  'health.unreviewed': '7 日以上レビューのないプルリクエスト',
   'health.prStates': 'オープン中のプルリクエスト（状態別）',
   'health.prState.draft': '下書き',
   'health.prState.failing': 'チェック失敗',

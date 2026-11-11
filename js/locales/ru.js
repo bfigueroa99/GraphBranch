@@ -521,6 +521,7 @@ GB.i18n.define('ru', {
   'health.starsWeek': '{week} на этой неделе · {prev} на прошлой ({delta})',
   'health.stale': 'Ветки без активности более 30 дней и без pull request',
   'health.prs': 'Открытые pull request, сначала самые старые',
+  'health.unreviewed': 'Pull request без ревью дольше 7 дней',
   'health.prStates': 'Открытые pull request по состоянию',
   'health.prState.draft': 'Черновик',
   'health.prState.failing': 'Проверки не пройдены',

@@ -1116,7 +1116,7 @@
         sameRepo: !p.isCrossRepository,
         url: p.url,
         draft: !!p.isDraft,
-        review: p.reviewDecision === 'APPROVED' ? 'approved' : null,
+        review: p.reviewDecision === 'APPROVED' ? 'approved' : p.reviewDecision === 'CHANGES_REQUESTED' ? 'changes' : null, // «changes» solo lo usa la salud: ya tuvo revisión
         user: p.author ? { login: p.author.login, name: p.author.login, avatar: p.author.avatarUrl } : null,
         createdAt: Date.parse(p.createdAt) || Date.now(),
         ci: ciState(p.commits?.nodes?.[0]?.commit?.statusCheckRollup?.state),

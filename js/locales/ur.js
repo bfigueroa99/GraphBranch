@@ -548,6 +548,7 @@ GB.i18n.define('ur', {
   'health.starsWeek': 'اس ہفتے {week} · پچھلے ہفتے {prev} ({delta})',
   'health.stale': '30 دن سے زیادہ غیر فعال اور بغیر pull request والی برانچیں',
   'health.prs': 'کھلے pull request، پرانے پہلے',
+  'health.unreviewed': '7 دن سے زیادہ سے بغیر کسی جائزے کے pull request',
   'health.prStates': 'حالت کے لحاظ سے کھلی پل ریکویسٹس',
   'health.prState.draft': 'مسودہ',
   'health.prState.failing': 'ناکام جانچیں',

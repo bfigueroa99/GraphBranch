@@ -123,6 +123,15 @@ describe('tools/audit.mjs', () => {
     assert.ok(!escenarios().some((x) => x.nombre === 'celular-320-3d'));
   });
 
+  test('la puerta abre la práctica de git a 320 px en es, ar, de y ta (pendiente 5, iteración 267)', () => {
+    const es = escenarios().filter((x) => x.nombre.startsWith('practica-320-'));
+    assert.deepEqual(es.map((x) => x.nombre), ['practica-320-es', 'practica-320-ar', 'practica-320-de', 'practica-320-ta']);
+    for (const e of es) {
+      assert.ok(e.puerta && e.contexto.viewport.width === 320 && /[?&]practice=\d+/.test(e.url), e.nombre);
+      assert.equal(!!e.rtl, e.nombre === 'practica-320-ar');
+    }
+  });
+
   test('la completa mira 1.000 ramas en 3D a 320 px con la API simulada (pendiente 15)', () => {
     const e = escenarios({ completa: true }).find((x) => x.nombre === 'celular-320-3d-mil');
     assert.ok(e && !e.puerta && e.contexto.viewport.width === 320 && e.github === 1000);

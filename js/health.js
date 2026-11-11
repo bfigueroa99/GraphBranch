@@ -75,6 +75,15 @@
     return { state: 'behind', branch: branch.name, behind };
   }
 
+  /** El estado de un despliegue como lo da GitHub (`/deployments/:id/statuses`) en tres: `ok` (salió bien), `failed`
+      (falló o dio error) y `running` (en cola, pendiente o en curso); `null` si no se sabe o ya no está activo. */
+  function deployOutcome(state) {
+    if (state === 'success') return 'ok';
+    if (state === 'failure' || state === 'error') return 'failed';
+    if (state === 'queued' || state === 'pending' || state === 'in_progress') return 'running';
+    return null;
+  }
+
   /** `data`: el estado del repo (ramas, commits, PRs abiertos); `acts`: su actividad ya cargada.
       Devuelve las listas ordenadas (lo peor primero) con su total, y el ritmo. */
   function compute(data, acts = [], now = Date.now(), forkSort = 'recent') {
@@ -223,7 +232,7 @@
       .map(([env, d]) => {
         const time = at(d.at) || at(data.commits.get(d.sha)?.date);
         const st = deployState(data, d);
-        return { env, sha: d.sha, ref: d.ref || '', head: st.branch, state: st.state, behind: st.behind || 0, time, age: time && time <= now ? now - time : null };
+        return { env, sha: d.sha, ref: d.ref || '', head: st.branch, state: st.state, behind: st.behind || 0, status: deployOutcome(data.deployStatus?.get(d.id)?.state ?? d.status), time, age: time && time <= now ? now - time : null };
       })
       .sort((a, b) => b.time - a.time || (a.env < b.env ? -1 : 1));
 

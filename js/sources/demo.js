@@ -66,7 +66,7 @@
         pulls: new Map(),
         ci: new Map(), // rama -> 'success' | 'failure' | 'pending'
         tags: new Map(), // commit -> [tag]
-        deploys: new Map(), // entorno -> { sha, ref }
+        deploys: new Map(), // entorno -> { sha, ref, status }: status como los de GitHub (success, failure, in_progress…)
         forks: [],
         totalBranches: 0,
         loaded: false,
@@ -126,7 +126,7 @@
       };
       this.data.commits.set(c.sha, c);
       b.sha = c.sha;
-      if (branch === 'develop' && this.data.deploys.has('staging')) this.data.deploys.set('staging', { sha: c.sha, ref: 'develop' }); // staging sigue a develop
+      if (branch === 'develop' && this.data.deploys.has('staging')) this.data.deploys.set('staging', { sha: c.sha, ref: 'develop', status: 'in_progress' }); // staging sigue a develop: cada push lo vuelve a desplegar
       b.own = (b.own || 0) + 1;
       b.movedAt = time;
       return c;
@@ -243,7 +243,7 @@
       const rel = merge('develop', 'main', 34, V, false);
       this.data.tags.set(first.sha, ['v1.0.0']);
       this.data.tags.set(rel.sha, ['v1.4.0']);
-      this.data.deploys.set('production', { sha: rel.sha, ref: 'main' });
+      this.data.deploys.set('production', { sha: rel.sha, ref: 'main', status: 'success' });
       this.data.forks = [
         { fullName: 'maya-dev/orbita', url: 'https://github.com/maya-dev/orbita', pushedAt: Date.now() - 6 * 36e5, stars: 4 },
         { fullName: 'lucas-r/orbita', url: 'https://github.com/lucas-r/orbita', pushedAt: Date.now() - 9 * 864e5, stars: 0 },
@@ -269,7 +269,7 @@
       push('claude/search-index', CLAUDE_A, agentMsg(1));
       push('claude/search-index', CLAUDE_B, agentMsg(3));
       const dev = push('develop', D, S.vite);
-      this.data.deploys.set('staging', { sha: dev.sha, ref: 'develop' });
+      this.data.deploys.set('staging', { sha: dev.sha, ref: 'develop', status: 'failure' });
       create('fix/rate-limit', 'main', 'api', M);
       push('fix/rate-limit', M, S.retryAfter);
       push('feature/login', J, S.loginE2e);

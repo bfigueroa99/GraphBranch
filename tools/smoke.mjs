@@ -766,6 +766,8 @@ console.log('Escritorio (1280×800)');
     if (envs !== 'production,staging') throw new Error(`los despliegues por entorno no son los de la demo: ${JSON.stringify(deploys)}`);
     const stg = deploys.find(([e]) => e === 'staging');
     if (!/^\S{7} · al día con develop( · |$)/.test(stg[1]) || !stg[2]) throw new Error(`staging no sale al día con develop ni lleva a su rama: ${stg[1]}`);
+    const prod = deploys.find(([e]) => e === 'production');
+    if (!/ · salió bien( · |$)/.test(prod[1]) || !/ · (falló|en curso)( · |$)/.test(stg[1])) throw new Error(`los despliegues de la demo no dicen si salieron bien, fallaron o siguen en curso: ${JSON.stringify(deploys)}`);
     if (deploys.some(([, a]) => /health\.|\{/.test(a))) throw new Error(`un despliegue sale con una clave cruda: ${JSON.stringify(deploys)}`);
     if (info.stats !== 3) throw new Error(`${info.stats} cifras de ritmo, se esperaban 3`);
     if (!info.rows) throw new Error('la demo tiene PRs abiertos y no salen en la lista');

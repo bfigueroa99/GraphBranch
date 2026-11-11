@@ -1564,21 +1564,31 @@ console.log('Escritorio (1280×800)');
 
 
   await step(page, 'quién tocó un archivo: el botón del diff lista los últimos commits con su autor, y otro clic lo cierra', async () => {
+    // el panel puede seguir cargando el commit que abrió el paso anterior: al llegar, rehace sus archivos (pendiente 1 de
+    // la iteración 259: con un localizador, el segundo clic caía en el botón nuevo, abría su lista y el paso fallaba)
+    await page.waitForFunction(() => !document.querySelector('#diff-panel').classList.contains('loading'), null, { timeout: T(5000) });
     const file = page.locator('#diff-panel .df-file').first();
     await file.evaluate((d) => (d.open = true));
-    const btn = file.locator('.df-blame');
-    await btn.waitFor({ timeout: T(5000) });
+    await file.locator('.df-blame').waitFor({ timeout: T(5000) });
+    // los dos clics, al mismo botón y a su misma lista: si la demo vuelve a dibujar el panel en el medio, el
+    // segundo sigue siendo sobre la lista que abrió el primero
+    const btn = await file.locator('.df-blame').elementHandle();
+    const log = await btn.evaluateHandle((b) => b.closest('.df-file').querySelector('.df-blamelog'));
     if (!/\S/.test((await btn.getAttribute('aria-label')) || '') || /diff\.|undefined/.test(await btn.textContent())) throw new Error('el botón no tiene nombre');
     await btn.click({ timeout: T(5000) });
-    await file.locator('.df-blamelist li').first().waitFor({ timeout: T(5000) }).catch(() => {
-      throw new Error('no apareció ningún commit: ' + ('' + 'sin lista'));
+    await page.waitForFunction((l) => l.querySelector('.df-blamelist li'), log, { timeout: T(5000) }).catch(() => {
+      throw new Error('no apareció ningún commit: sin lista');
     });
     if ((await btn.getAttribute('aria-expanded')) !== 'true') throw new Error('aria-expanded no pasó a true');
-    const row = await file.locator('.df-blamelist li').first().textContent();
+    const row = await log.evaluate((l) => l.querySelector('.df-blamelist li').textContent);
     if (/undefined|diff\./.test(row) || row.trim().length < 5) throw new Error('fila vacía o con claves: ' + row);
-    if (!/\d+\D+\d+/.test(await file.locator('.df-blamelist li .df-blame-lines').first().textContent())) throw new Error('la demo no mostró tramos de líneas');
-    await btn.click();
-    if (await file.locator('.df-blamelog').isVisible()) throw new Error('el segundo clic no cerró la lista');
+    if (!/\d+\D+\d+/.test(await log.evaluate((l) => l.querySelector('.df-blamelist li .df-blame-lines')?.textContent || ''))) throw new Error('la demo no mostró tramos de líneas');
+    const after = await btn.evaluate((b, l) => {
+      b.click();
+      return { hidden: l.hidden, expanded: b.getAttribute('aria-expanded') };
+    }, log);
+    if (!after.hidden) throw new Error('el segundo clic no cerró la lista');
+    if (after.expanded !== 'false') throw new Error('aria-expanded no volvió a false');
   });
   await step(page, 'cambios de un commit: un clic en el grafo cambia de commit, lado a lado con palabras marcadas, filtro y panel ancho', async () => {
     // cada espera dice cuál fue si vence (la corrida larga trae mucha historia de la demo y lo recorta)

@@ -344,22 +344,15 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Media
 
-1. [Deuda] El paso del smoke «quién tocó un archivo: el botón del diff lista los últimos commits con su autor, y otro
-    clic lo cierra» falló 1 de 2 en la puerta de la iteración 233 (2026-11-06; la repetición pasó), en una sección que el
-    cambio no toca: el segundo clic sobre el botón no cerró la lista. Hipótesis: el segundo clic llega mientras la lista
-    todavía carga (o se vuelve a pintar) y la reabre; esperar a que la lista esté completa antes del segundo clic, o atar
-    el cierre a una señal. Reproducción: `node tools/smoke.mjs` repetido → `quién tocó un archivo: …: el segundo clic no
-    cerró la lista`.
-
-2. [Deuda] El paso del smoke «abre la vista de texto con el filtro por ruta y el ?q= aplicados, y lo anuncia en la región
+1. [Deuda] El paso del smoke «abre la vista de texto con el filtro por ruta y el ?q= aplicados, y lo anuncia en la región
     viva» falló 1 de 2 en la puerta de la iteración 236 (2026-11-09, carga 18 en 4 CPU, con otras sesiones en el equipo; la
     repetición pasó), en una sección que el cambio no toca: Chromium no llegó a cargar `js/i18n.js` ni las fuentes
     (`net::ERR_INSUFFICIENT_RESOURCES`) y la página quedó sin `GB`. Hipótesis: el smoke acumula páginas o contextos
     abiertos y con el equipo cargado se agota lo que Chromium tiene para pedir archivos; contar los contextos vivos en
     ese paso y cerrar los que ya no se usan. Reproducción: `node tools/smoke.mjs` con el equipo cargado → `consola: Failed
     to load resource: net::ERR_INSUFFICIENT_RESOURCES (…/js/i18n.js) | excepción: GB is not defined`.
-3. [Deuda] Dos pasos ajenos del smoke fallaron en las puertas de la iteración 244 (2026-11-09; en la tercera pasaron): «editar el código: desde los cambios de un commit se abre su archivo…» (`page.waitForFunction: Timeout 15000ms`, ya cubierto por el pendiente [Deuda] anterior de esa sección) y «la ficha de un commit de agente dice cuál es, con su modelo y su sesión (2D)» (`ninguna ficha de rama dice su agente: ""`). Hipótesis del segundo: el paso mira la ficha antes de que el repintado de las ramas del agente la llene; esperar una señal del DOM en vez de leerla al instante. Reproducción: `node tools/smoke.mjs` repetido → `la ficha de un commit de agente dice cuál es…: ninguna ficha de rama dice su agente: ""`. Iteración 248 (2026-11-10): otro paso ajeno falló una vez y pasó al repetir la puerta: «filtro por autor: el grafo y el árbol de texto muestran solo sus ramas, lo dice y se quita» (`quitar el filtro no deja el grafo como estaba (3 etiquetas, con el filtro 3, antes 6)`: lee las etiquetas antes de que el grafo se repinte). Iteración 256 (2026-11-10): «editar el código…» falló otra vez una vez (`page.waitForFunction: Timeout 15000ms exceeded`) y pasó al repetir la puerta.
-4. [Deuda] Dos pasos ajenos del smoke fallaron en las puertas de la iteración 258 (2026-11-11), cada uno en una corrida
+2. [Deuda] Dos pasos ajenos del smoke fallaron en las puertas de la iteración 244 (2026-11-09; en la tercera pasaron): «editar el código: desde los cambios de un commit se abre su archivo…» (`page.waitForFunction: Timeout 15000ms`, ya cubierto por el pendiente [Deuda] anterior de esa sección) y «la ficha de un commit de agente dice cuál es, con su modelo y su sesión (2D)» (`ninguna ficha de rama dice su agente: ""`). Hipótesis del segundo: el paso mira la ficha antes de que el repintado de las ramas del agente la llene; esperar una señal del DOM en vez de leerla al instante. Reproducción: `node tools/smoke.mjs` repetido → `la ficha de un commit de agente dice cuál es…: ninguna ficha de rama dice su agente: ""`. Iteración 248 (2026-11-10): otro paso ajeno falló una vez y pasó al repetir la puerta: «filtro por autor: el grafo y el árbol de texto muestran solo sus ramas, lo dice y se quita» (`quitar el filtro no deja el grafo como estaba (3 etiquetas, con el filtro 3, antes 6)`: lee las etiquetas antes de que el grafo se repinte). Iteración 256 (2026-11-10): «editar el código…» falló otra vez una vez (`page.waitForFunction: Timeout 15000ms exceeded`) y pasó al repetir la puerta.
+3. [Deuda] Dos pasos ajenos del smoke fallaron en las puertas de la iteración 258 (2026-11-11), cada uno en una corrida
     distinta y en secciones que el cambio no toca: «el interruptor de columnas pone «SHA · autor · fecha» junto a los
     commits del 2D…» (`page.click: Timeout 30000ms exceeded`: un `<dialog open id="search">` tapaba el clic, o sea que un
     paso anterior dejó abierto el diálogo de búsqueda) y «al llegar a una galaxia, el lector de pantalla oye el nombre una
@@ -368,68 +361,68 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     segundo, el reloj relativo que repinta la región viva (fijar el tiempo o medir solo hasta el primer cambio de galaxia).
     Reproducción: `node tools/smoke.mjs` repetido → `el interruptor de columnas…: page.click: Timeout 30000ms exceeded` o
     `al llegar a una galaxia…: lo que se lee cambió 4 veces`.
-5. [Errores] Salud del repo: la tendencia de estrellas (`stars` de `js/health.js`, sección `#hl-stars` de `js/app.js`) compara la semana actual con la anterior aunque la actividad cargada no llegue a 14 días atrás (el feed de GitHub trae pocos eventos y el de la app guarda hasta 1.000): la semana anterior sale 0 y el panel muestra un «(+N)» que no se midió. Arreglo propuesto: que `compute` diga si la actividad cargada cubre los 14 días (la más vieja, de cualquier tipo, es de hace 14 días o más) y, si no, la línea omita la anterior y la diferencia o la marque como parcial (una clave más en los 40 idiomas). Reproducción: `compute` con actividades solo de los últimos 5 días y 3 estrellas → `{ week: 3, prev: 0 }`, que el panel muestra como «3 esta semana · 0 la anterior (+3)». (Revisión OMC de la iteración 256.)
+4. [Errores] Salud del repo: la tendencia de estrellas (`stars` de `js/health.js`, sección `#hl-stars` de `js/app.js`) compara la semana actual con la anterior aunque la actividad cargada no llegue a 14 días atrás (el feed de GitHub trae pocos eventos y el de la app guarda hasta 1.000): la semana anterior sale 0 y el panel muestra un «(+N)» que no se midió. Arreglo propuesto: que `compute` diga si la actividad cargada cubre los 14 días (la más vieja, de cualquier tipo, es de hace 14 días o más) y, si no, la línea omita la anterior y la diferencia o la marque como parcial (una clave más en los 40 idiomas). Reproducción: `compute` con actividades solo de los últimos 5 días y 3 estrellas → `{ week: 3, prev: 0 }`, que el panel muestra como «3 esta semana · 0 la anterior (+3)». (Revisión OMC de la iteración 256.)
 
 ### Baja
 
-6. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+5. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-7. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+6. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-8. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+7. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-9. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+8. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-10. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+9. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-11. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+10. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-12. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+11. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-13. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
+12. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
     `placeLabels`. El cuadro lo domina el render por software (~200 ms por cuadro sin GPU, 10 fps), que con GPU no existe;
     medir con GPU real antes de tocarlo. Reproducción: la misma envoltura sobre `stepScene` → ~1,1 ms por llamada.
-14. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
+13. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
     (895 ms en total, sin GPU); el perfil de CPU de los primeros 6 s no deja ninguna función de la app por encima de 70 ms
     (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
     que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
     Reproducción: `node tools/audit.mjs --repetir 3` → `consultas: 10`, `tareasLargasMs: 895`.
-15. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
+14. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
     prepara de verdad en vez de solo listar, y `add -p` prepara todo. Negarse con el `error: unknown switch` de git (o
     admitir `-n`). Reproducción: `node --test` con `touch a.txt`, `add -n .` → `a.txt` queda preparado.
-16. [Seguridad] Avisos a Slack (`electron/webhooks.js`, `payload`): `slackText` escapa `&`, `<` y `>` (sin menciones ni
+15. [Seguridad] Avisos a Slack (`electron/webhooks.js`, `payload`): `slackText` escapa `&`, `<` y `>` (sin menciones ni
     enlaces), pero no el formato `mrkdwn` (`*`, `_`, `` ` ``, `~`): un título de PR como `*URGENTE*` sale en negrita en el
     canal. Solo formato, sin enlaces ni menciones; escaparlo como se hizo con Discord. Reproducción: `payload('slack',
     {title: '*x*'})` → `*x*` sin escapar.
-17. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
+16. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
     la iteración 239: la sesión no pudo consultar su página de versiones. Comprobarla con `WebFetch` en la próxima
     auditoría de Seguridad y, si hay una estable más nueva con arreglos de seguridad, subirla (cambio de `electron/`: plan
     por consenso). Reproducción: `npm view electron version` frente a `package.json`.
-18. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
+17. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
     largo se lleva la línea `<enlace>` del final (el aviso queda sin enlace). Recortar título y detalle antes y dejar el
     enlace siempre. Reproducción: `payload('discord', {title: 'x'.repeat(5000), url: 'https://github.com/a/b'})` →
     `content` sin `<https://github.com/a/b>`.
 
-19. [QA] Un repo vacío (GitHub responde 409 «Git Repository is empty» en ramas y commits) se rotula «Sin conexión» y
+18. [QA] Un repo vacío (GitHub responde 409 «Git Repository is empty» en ramas y commits) se rotula «Sin conexión» y
     reintenta cada pocos segundos, sin decir que el repo está vacío. Un estado propio («Repo vacío») sin reintento rápido.
     Reproducción: API simulada con 409 en `/commits` y `/branches`, `index.html?repo=acme/x` → `Sin conexión | reintento en 2s`.
-20. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
+19. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
     `js/util.js` solo distingue notfound, rate y auth), aunque haya red: la persona busca su wifi y el servicio es quien falla.
     Un rótulo «Error del servicio» en los 40 idiomas. Reproducción: `U.statusKey({state: 'error', error: {kind: 'http'}})` → `status.error`.
-21. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
+20. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
     el service worker instalado (solo los estados de error de la carga, en es y ar a 1280 y 320 px). Mirarlos en la
     próxima QA. Reproducción: `node e2e/serve.mjs 4173` + Playwright con la API simulada de `tools/audit.mjs`.
-22. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
+21. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
     que se pospone o se fija otro: `setPrSnooze` (`js/app.js`) es lo único que limpia. Inocuo (`liveSnoozes` los ignora),
     pero crece sin tope. Limpiar también al leer. Reproducción: posponer un PR, adelantar el reloj un día y recargar →
     la entrada sigue en `localStorage`.
@@ -627,3 +620,17 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/258, sin colisión
 - Validado: 666 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde. (A la tercera corrida: las dos primeras fallaron cada una en un paso ajeno distinto del smoke, el interruptor de columnas del 2D y el anuncio de las galaxias; van al pendiente 4.)
 - **Siguiente:** iteración 259, mantenimiento · Deuda: pendiente 1 (El paso del smoke «quién tocó un archivo: el botón del diff lista los últimos c…)
+
+### 2026-11-11 · Iteración 259 · Mantenimiento · Deuda
+
+- **Arreglo: el paso intermitente del smoke «quién tocó un archivo»** (pendiente 1). La causa: el panel de cambios rehace sus secciones `.df-file` al terminar de cargar un commit (`show` → `renderFiles` en `js/diff.js`), y el paso usaba un localizador que se volvía a resolver en cada clic; si el redibujo caía entre los dos, el segundo clic iba al botón nuevo, cuya lista estaba cerrada, y la abría. Ahora el paso espera a que el panel deje de cargar y hace los dos clics sobre el mismo botón y su misma lista (el segundo, en el mismo `evaluate` que lee el resultado), y además comprueba que `aria-expanded` vuelva a `false`. La app no cambia.
+- **Reproducción:** un script de Playwright en el scratchpad contra `node e2e/serve.mjs 4173` que corre el paso con un redibujo forzado del panel (← y → dentro de él) entre los dos clics → `FALLA: el segundo clic no cerró la lista` con el paso viejo, 3 de 3; con el arreglo, `PASA` 3 de 3.
+- **Pruebas que fallan sin el arreglo:** el paso del smoke, con el redibujo entre los clics (la reproducción de arriba); en la puerta pasó en su corrida normal.
+- README: sin cambios (no cambia ninguna función ni el modo de probar).
+- QA: el paso «quién tocó un archivo» del smoke, 3 veces con el redibujo forzado y una en la puerta; el mismo patrón (un localizador del primer `.df-file` usado en dos acciones) se buscó en el resto del smoke: el paso del historial ya hace ruta y clic en un solo `evaluate`, y no hay otro; auditoría: no toca la página.
+- Skills: no aplica: un arreglo de una prueba de Playwright del propio repo, sin dominio nuevo; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (atar los dos clics al mismo elemento).
+- OMC: plan=— · revisión=3 hallazgos LOW (0 arreglados: el comentario que nombra la iteración queda como historia; el segundo clic por `evaluate` se salta las comprobaciones de un clic real a cambio de no fallar con un redibujo en el medio, y la lista que se llena tras un redibujo se mide sobre los nodos ya desprendidos, el mismo código) · verificación=PASS
+- Reclamo: loop/259, sin colisión
+- Validado: 666 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 260, expansión: ítem 179 (Resumen de la semana: quién abrió más PRs, Salidas)

@@ -291,7 +291,7 @@
       H.push(this.act('review-changes', { title: MSG('act.prChanges', { num: agentPr }), detail: this.C.comments[1] || this.C.comments[0], branch: 'claude/search-index', actor: this.actor(COPILOT), number: agentPr }, t + 100e3));
       H.push(this.act('comment', { title: MSG('act.commentPr', { num: 38 }), detail: this.C.comments[0], actor: this.actor(V), number: 38, pr: true }, t + 120e3));
       H.push(this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login: 'pgarrido' }), actor: this.actor({ name: 'pgarrido', login: 'pgarrido' }) }, t + 140e3));
-      H.push(this.act('fork', { title: MSG('act.fork'), detail: 'nlagos/orbita' }, t + 160e3)); // un fork de hace unos días: la tendencia de forks del panel de salud
+      H.push(this.act('fork', { title: MSG('act.fork'), detail: 'icortes/orbita' }, t + 160e3)); // un fork de hace uno o dos días (de una cuenta que no hace forks en vivo): la tendencia de forks del panel de salud
       this.data.totalBranches = this.data.branches.size;
     }
 

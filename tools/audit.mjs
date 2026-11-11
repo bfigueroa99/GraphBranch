@@ -121,7 +121,7 @@ export function comparar(hallazgos, base, medidas = {}) {
 
 /** Las medidas de dos informes, con su diferencia en porcentaje (positivo = peor). */
 export function compararMedidas(antes, ahora) {
-  const sube = { cargaMs: true, tareasLargasMs: true, nodosDOM: true, heapMB: true, consultas: true, consultasCarga: true, fps3d: false, fps2d: false };
+  const sube = { cargaMs: true, tareasLargasMs: true, nodosDOM: true, heapMB: true, consultas: true, consultasCarga: true, fps3d: false, fps2d: false, escena3dUs: true, etiquetas3dUs: true };
   return Object.keys(sube)
     .filter((k) => typeof antes?.[k] === 'number' && typeof ahora?.[k] === 'number')
     .map((k) => {
@@ -440,6 +440,46 @@ function githubSimulado(extra = 0) {
   };
 }
 
+/** El JavaScript por cuadro del 3D, en microsegundos: `stepScene` con la escena sucia (lo que corre en cada
+    cuadro de un resaltado, un hover o un commit que llega) y `placeLabels`, la mejor de 7 tandas de 300
+    llamadas seguidas. Corre en la página. Una llamada sola no sirve: `performance.now()` va de 0,1 ms en
+    0,1 ms (sin aislamiento entre orígenes) y los primeros cuadros están fríos; así salía el 1,1 ms del
+    pendiente 12, cuando en tanda son 0,08 ms (iteración 263). */
+function medirEscena() {
+  return new Promise((ok) => {
+    const P = window.GB?.Graph3D?.prototype;
+    if (!P) return ok(null);
+    const orig = P.stepScene;
+    P.stepScene = function (...a) {
+      P.stepScene = orig;
+      const v = orig.apply(this, a);
+      const g = this;
+      const tanda = (f) => {
+        let mejor = Infinity;
+        for (let k = 0; k < 7; k++) {
+          const t = performance.now();
+          for (let i = 0; i < 300; i++) f();
+          mejor = Math.min(mejor, (performance.now() - t) / 300);
+        }
+        return Math.round(mejor * 10000) / 10;
+      };
+      const now = performance.now();
+      ok({
+        escena: tanda(() => {
+          g.dirtyNodes = g.dirtyEdges = true;
+          g.stepScene(now, 0);
+        }),
+        etiquetas: tanda(() => g.placeLabels()),
+        nodos: g.nodes.size,
+      });
+      return v;
+    };
+    setTimeout(() => {
+      if (P.stepScene !== orig) (P.stepScene = orig), ok(null); // la escena no dibujó ningún cuadro
+    }, 5000);
+  });
+}
+
 /* ---------------------------------------------------------- los escenarios */
 
 const ESCRITORIO = { viewport: { width: 1280, height: 800 } };
@@ -637,6 +677,8 @@ export function escenarios({ langs = false, completa = false } = {}) {
         });
         ctx.add(pares.out.map((donde) => ({ tipo: 'etiquetas-pisadas', donde })));
         if (!pares.visibles) ctx.add([{ tipo: 'error', donde: '.g3-head', detalle: 'ninguna etiqueta de rama visible con 1.000 ramas' }]);
+        const m = await ctx.page.evaluate(medirEscena);
+        if (m) (ctx.medidas.escena3dUs = m.escena), (ctx.medidas.etiquetas3dUs = m.etiquetas);
       },
     },
     {

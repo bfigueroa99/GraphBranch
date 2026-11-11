@@ -362,73 +362,67 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     `al llegar a una galaxia…: lo que se lee cambió 4 veces`.
 4. [Errores] Salud del repo: la tendencia de estrellas (`stars` de `js/health.js`, sección `#hl-stars` de `js/app.js`) compara la semana actual con la anterior aunque la actividad cargada no llegue a 14 días atrás (el feed de GitHub trae pocos eventos y el de la app guarda hasta 1.000): la semana anterior sale 0 y el panel muestra un «(+N)» que no se midió. Arreglo propuesto: que `compute` diga si la actividad cargada cubre los 14 días (la más vieja, de cualquier tipo, es de hace 14 días o más) y, si no, la línea omita la anterior y la diferencia o la marque como parcial (una clave más en los 40 idiomas). Reproducción: `compute` con actividades solo de los últimos 5 días y 3 estrellas → `{ week: 3, prev: 0 }`, que el panel muestra como «3 esta semana · 0 la anterior (+3)». (Revisión OMC de la iteración 256.)
 
-5. [QA] Con la práctica de git abierta, a 320 px la página desborda a lo ancho, con cualquier ejercicio: 5 px en es (el
-    panel `.pr-head`, `.pr-goal`, `.pr-log` y `.pr-make` llegan a 325 px) y 66 px en ta (`.app` y la barra de arriba se
-    corren 57 px a la izquierda); ar no desborda, y sin la práctica tampoco. La auditoría no lo ve porque no abre la
-    práctica a 320 px. Reproducción: Playwright contra `node e2e/serve.mjs 4173`, `index.html?lang=ta&practice=12` a 320 px
-    → `document.documentElement.scrollWidth` 386 (es: 325). (QA de la iteración 264.)
-
 ### Baja
 
-6. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+5. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-7. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+6. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-8. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+7. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-9. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+8. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-10. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+9. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-11. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+10. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-12. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+11. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-13. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
+12. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
     (895 ms en total, sin GPU); el perfil de CPU de los primeros 6 s no deja ninguna función de la app por encima de 70 ms
     (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
     que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
     Reproducción: `node tools/audit.mjs --repetir 3` → `consultas: 10`, `tareasLargasMs: 895`.
-14. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
+13. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
     prepara de verdad en vez de solo listar, y `add -p` prepara todo. Negarse con el `error: unknown switch` de git (o
     admitir `-n`). Reproducción: `node --test` con `touch a.txt`, `add -n .` → `a.txt` queda preparado.
-15. [Seguridad] Avisos a Slack (`electron/webhooks.js`, `payload`): `slackText` escapa `&`, `<` y `>` (sin menciones ni
+14. [Seguridad] Avisos a Slack (`electron/webhooks.js`, `payload`): `slackText` escapa `&`, `<` y `>` (sin menciones ni
     enlaces), pero no el formato `mrkdwn` (`*`, `_`, `` ` ``, `~`): un título de PR como `*URGENTE*` sale en negrita en el
     canal. Solo formato, sin enlaces ni menciones; escaparlo como se hizo con Discord. Reproducción: `payload('slack',
     {title: '*x*'})` → `*x*` sin escapar.
-16. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
+15. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
     la iteración 239: la sesión no pudo consultar su página de versiones. Comprobarla con `WebFetch` en la próxima
     auditoría de Seguridad y, si hay una estable más nueva con arreglos de seguridad, subirla (cambio de `electron/`: plan
     por consenso). Reproducción: `npm view electron version` frente a `package.json`.
-17. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
+16. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
     largo se lleva la línea `<enlace>` del final (el aviso queda sin enlace). Recortar título y detalle antes y dejar el
     enlace siempre. Reproducción: `payload('discord', {title: 'x'.repeat(5000), url: 'https://github.com/a/b'})` →
     `content` sin `<https://github.com/a/b>`.
 
-18. [QA] Un repo vacío (GitHub responde 409 «Git Repository is empty» en ramas y commits) se rotula «Sin conexión» y
+17. [QA] Un repo vacío (GitHub responde 409 «Git Repository is empty» en ramas y commits) se rotula «Sin conexión» y
     reintenta cada pocos segundos, sin decir que el repo está vacío. Un estado propio («Repo vacío») sin reintento rápido.
     Reproducción: API simulada con 409 en `/commits` y `/branches`, `index.html?repo=acme/x` → `Sin conexión | reintento en 2s`.
-19. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
+18. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
     `js/util.js` solo distingue notfound, rate y auth), aunque haya red: la persona busca su wifi y el servicio es quien falla.
     Un rótulo «Error del servicio» en los 40 idiomas. Reproducción: `U.statusKey({state: 'error', error: {kind: 'http'}})` → `status.error`.
-20. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
+19. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
     el service worker instalado (solo los estados de error de la carga, en es y ar a 1280 y 320 px). Mirarlos en la
     próxima QA. Reproducción: `node e2e/serve.mjs 4173` + Playwright con la API simulada de `tools/audit.mjs`.
-21. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
+20. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
     que se pospone o se fija otro: `setPrSnooze` (`js/app.js`) es lo único que limpia. Inocuo (`liveSnoozes` los ignora),
     pero crece sin tope. Limpiar también al leer. Reproducción: posponer un PR, adelantar el reloj un día y recargar →
     la entrada sigue en `localStorage`.
-22. [Errores] Práctica de git: `stash pop` y `stash apply` devuelven un archivo nuevo que estaba preparado como «modified»
+21. [Errores] Práctica de git: `stash pop` y `stash apply` devuelven un archivo nuevo que estaba preparado como «modified»
     sin preparar (todo va a `work`), cuando git lo deja preparado como «new file»; `stash show` lo deja ver: tras el pop y
     otro `stash`, el archivo sale con `M` y no con `A`. Devolver `entry.added` a `staged` como `{ file, isNew: true }`.
     Reproducción: `touch --new n.txt`, `add n.txt`, `stash`, `stash pop`, `stash`, `stash show --name-status` → `M\tn.txt`.
@@ -615,3 +609,18 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/266, sin colisión
 - Validado: 678 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 267, mantenimiento · QA: pendiente 5 (Con la práctica de git abierta, a 320 px la página desborda a lo ancho, con cua…)
+
+### 2026-11-11 · Iteración 267 · Mantenimiento · QA
+
+- **Arreglo: la práctica de git ya no ensancha la página a 320 px en ningún idioma** (pendiente 5). El panel `.practice` es una grilla de una columna `auto`, que tomaba el ancho mínimo de su hijo más ancho (la fila de botones con sus textos en ta o de, el `select` en es) y empujaba la página 5 px en es, 57 en de y 66 en ta. Ahora la columna es `minmax(0, 1fr)`: los hijos, que ya tenían `min-width: 0`, `flex-wrap` y `overflow-wrap`, se acomodan al ancho del panel. La auditoría de la puerta abre la práctica a 320 px (`practica-320-es`, `-ar`, `-de` y `-ta`, con `?practice=12`), así que el desborde no vuelve sin que la puerta lo vea.
+- **Reproducción:** `node tools/audit.mjs --puerta` con los escenarios nuevos y el CSS de `dev` → `desborde · practica-320-ta · html — 66 px de más` (también `practica-320-de` 57 px y `practica-320-es` 5 px; `ar` no desborda).
+- **Hallazgos:** 0 nuevos (la iteración cerró el pendiente 5; con la práctica a 320 px, en los cuatro idiomas de la puerta, la auditoría no ve nada más), 0 a la base de la auditoría
+- **Pruebas que fallan sin el arreglo:** `node tools/audit.mjs --puerta` (los tres desbordes de arriba, en dos corridas seguidas) y `node --test tools/audit.test.mjs` («la puerta abre la práctica de git a 320 px en es, ar, de y ta», que falla sin los escenarios).
+- README: sin cambios (no cambia ninguna función ni límite; el desborde no estaba en Límites conocidos).
+- QA: la práctica a 320 px con Playwright contra `node e2e/serve.mjs 4173` en es, ta, ar y de (`scrollWidth` 320 en los cuatro, ningún elemento del panel fuera de la pantalla, ningún control con texto recortado; captura de ta con los botones uno debajo de otro); auditoría: 0 hallazgos nuevos, 0 conocidos.
+- Skills: no aplica: una línea de CSS de grilla y un escenario más de la auditoría propia; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (acotar la pista de la grilla con `minmax(0, 1fr)`).
+- OMC: plan=— · revisión=2 hallazgos (1 arreglado: el LOW de la prueba unitaria del escenario; el otro, la entrada de la bitácora, es este paso) · verificación=PASS
+- Reclamo: loop/267, sin colisión
+- Validado: 679 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+- **Siguiente:** iteración 268, expansión: ítem 187 (Salud del repo: tendencia de forks, Análisis)

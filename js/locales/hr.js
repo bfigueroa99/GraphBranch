@@ -589,6 +589,8 @@ GB.i18n.define('hr', {
   'practice.ex10.goal': 'Slučajno si pokrenuo add .: debug.log je u pripremi, a dvije datoteke koje git ne prati samo stoje. Izvadi debug.log s restore --staged, pogledaj smeće s clean -n i obriši ga s clean -f. Zadrži promjenu u app.js.',
   'practice.ex11.title': 'Commit samo pripremljenog',
   'practice.ex11.goal': 'Promijenio si login.js i debug.js, ali u commit ide samo popravak prijave. Pripremi login.js s add i pokreni commit -m: debug.js mora ostati promijenjen i bez commita. Pazi: commit -a uzeo bi oba.',
+  'practice.ex12.title': 'Obriši nepraćenu mapu pomoću clean -d',
+  'practice.ex12.goal': 'nuevo.js, dvije privremene datoteke (a.tmp i b.tmp) i mapa build/ nisu praćeni. Obriši ih pomoću clean, ali zadrži nuevo.js: još nije spreman za add. Prvo pogledaj pomoću clean -n: bez -d build/ se ne briše, a -e izostavlja ono što ne želiš obrisati.',
   'practice.share': 'Kopiraj poveznicu vježbe',
   'practice.link': 'Poveznica vježbe',
   'practice.copied': 'Poveznica kopirana.',

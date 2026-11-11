@@ -587,6 +587,8 @@ GB.i18n.define('en', {
   'practice.ex10.goal': 'You ran add . by mistake: debug.log is staged and two untracked files are lying around. Take debug.log back out with restore --staged, look at the junk with clean -n, then delete it with clean -f. Keep the change in app.js.',
   'practice.ex11.title': 'Commit only what is staged',
   'practice.ex11.goal': 'You changed login.js and debug.js, but only the login fix belongs in the commit. Stage login.js with add and run commit -m: debug.js must stay changed and uncommitted. Careful: commit -a would take both.',
+  'practice.ex12.title': 'Delete an untracked folder with clean -d',
+  'practice.ex12.goal': 'nuevo.js, two temporary files (a.tmp and b.tmp) and the build/ folder are untracked. Delete them with clean, but keep nuevo.js: it is not ready for add yet. Look first with clean -n: without -d, build/ is not deleted, and -e leaves out what you do not want to delete.',
   'practice.share': 'Copy exercise link',
   'practice.link': 'Exercise link',
   'practice.copied': 'Link copied.',

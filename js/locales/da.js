@@ -581,6 +581,8 @@ GB.i18n.define('da', {
   'practice.ex10.goal': 'Du kørte add . ved en fejl: debug.log er stagelagt, og der ligger to filer, git ikke følger. Tag debug.log ud med restore --staged, se skraldet med clean -n og slet det med clean -f. Behold ændringen i app.js.',
   'practice.ex11.title': 'Commit kun det forberedte',
   'practice.ex11.goal': 'Du har ændret login.js og debug.js, men kun login-rettelsen hører til i committet. Forbered login.js med add og kør commit -m: debug.js skal forblive ændret og uden commit. Pas på: commit -a ville tage begge.',
+  'practice.ex12.title': 'Slet en usporet mappe med clean -d',
+  'practice.ex12.goal': 'nuevo.js, to midlertidige filer (a.tmp og b.tmp) og mappen build/ er ikke sporet. Slet dem med clean, men behold nuevo.js: den er ikke klar til add endnu. Kig først med clean -n: uden -d slettes build/ ikke, og -e udelader det, du ikke vil slette.',
   'practice.share': 'Kopiér opgavens link',
   'practice.link': 'Opgavens link',
   'practice.copied': 'Link kopieret.',

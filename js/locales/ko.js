@@ -581,6 +581,8 @@ GB.i18n.define('ko', {
   'practice.ex10.goal': '실수로 add . 를 실행해 debug.log가 스테이지되고 추적되지 않는 파일 두 개가 남았습니다. restore --staged 로 debug.log를 빼고, clean -n 으로 쓰레기를 확인한 뒤 clean -f 로 지우세요. app.js의 변경은 그대로 두세요.',
   'practice.ex11.title': '스테이징한 것만 커밋',
   'practice.ex11.goal': 'login.js와 debug.js를 바꿨지만 커밋에는 로그인 수정만 들어가야 합니다. add로 login.js를 스테이징하고 commit -m을 실행하세요. debug.js는 바뀐 채로 커밋 없이 남아야 합니다. 주의: commit -a는 둘 다 가져갑니다.',
+  'practice.ex12.title': 'clean -d로 추적하지 않는 폴더 지우기',
+  'practice.ex12.goal': 'nuevo.js, 임시 파일 두 개(a.tmp, b.tmp), build/ 폴더가 추적되지 않고 있습니다. clean으로 지우되 nuevo.js는 남겨 두세요: 아직 add할 준비가 되지 않았습니다. 먼저 clean -n으로 확인하세요: -d가 없으면 build/는 지워지지 않고, -e는 지우고 싶지 않은 것을 제외합니다.',
   'practice.share': '연습 링크 복사',
   'practice.link': '연습 링크',
   'practice.copied': '링크를 복사했습니다.',

@@ -581,6 +581,8 @@ GB.i18n.define('ca', {
   'practice.ex10.goal': 'Has executat add . sense voler: debug.log ha quedat preparat i hi ha dos fitxers sense seguir. Treu debug.log amb restore --staged, mira la brossa amb clean -n i esborra-la amb clean -f. Conserva el canvi d\'app.js.',
   'practice.ex11.title': 'Commit només del que està preparat',
   'practice.ex11.goal': 'Has canviat login.js i debug.js, però només l’arranjament del login va al commit. Prepara login.js amb add i fes commit -m: debug.js ha de quedar canviat i sense commit. Compte: commit -a s’enduria tots dos.',
+  'practice.ex12.title': 'Esborrar una carpeta sense seguiment amb clean -d',
+  'practice.ex12.goal': 'Han quedat sense seguiment nuevo.js, dos temporals (a.tmp i b.tmp) i la carpeta build/. Esborra’ls amb clean, però conserva nuevo.js: encara no està llest per a add. Mira-ho abans amb clean -n: sense -d, build/ no s’esborra, i -e deixa fora el que no vols esborrar.',
   'practice.share': 'Copia l\'enllaç de l\'exercici',
   'practice.link': 'Enllaç de l\'exercici',
   'practice.copied': 'Enllaç copiat.',

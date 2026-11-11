@@ -581,6 +581,8 @@ GB.i18n.define('sv', {
   'practice.ex10.goal': 'Du körde add . av misstag: debug.log är stagead och två filer som git inte följer ligger kvar. Ta ut debug.log med restore --staged, titta på skräpet med clean -n och ta bort det med clean -f. Behåll ändringen i app.js.',
   'practice.ex11.title': 'Committa bara det förberedda',
   'practice.ex11.goal': 'Du har ändrat login.js och debug.js, men bara inloggningsfixen hör hemma i committen. Förbered login.js med add och kör commit -m: debug.js ska förbli ändrad och utan commit. Se upp: commit -a skulle ta med båda.',
+  'practice.ex12.title': 'Ta bort en ospårad mapp med clean -d',
+  'practice.ex12.goal': 'nuevo.js, två temporära filer (a.tmp och b.tmp) och mappen build/ spåras inte. Ta bort dem med clean, men behåll nuevo.js: den är inte redo för add än. Titta först med clean -n: utan -d tas build/ inte bort, och -e utesluter det du inte vill ta bort.',
   'practice.share': 'Kopiera övningens länk',
   'practice.link': 'Övningens länk',
   'practice.copied': 'Länken har kopierats.',

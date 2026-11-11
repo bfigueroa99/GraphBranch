@@ -581,6 +581,8 @@ GB.i18n.define('ms', {
   'practice.ex10.goal': 'Anda tersilap menjalankan add .: debug.log sudah dipentaskan dan ada dua fail yang tidak dijejak. Keluarkan debug.log dengan restore --staged, lihat sampahnya dengan clean -n, kemudian padam dengan clean -f. Kekalkan perubahan dalam app.js.',
   'practice.ex11.title': 'Commit hanya yang disediakan',
   'practice.ex11.goal': 'Anda mengubah login.js dan debug.js, tetapi hanya pembaikan log masuk yang patut masuk commit. Sediakan login.js dengan add dan jalankan commit -m: debug.js mesti kekal berubah dan tanpa commit. Awas: commit -a akan mengambil kedua-duanya.',
+  'practice.ex12.title': 'Padam folder yang tidak dijejak dengan clean -d',
+  'practice.ex12.goal': 'nuevo.js, dua fail sementara (a.tmp dan b.tmp) dan folder build/ tidak dijejak. Padamkannya dengan clean, tetapi simpan nuevo.js: ia belum sedia untuk add. Lihat dahulu dengan clean -n: tanpa -d, build/ tidak dipadam, dan -e mengecualikan apa yang anda tidak mahu padam.',
   'practice.share': 'Salin pautan latihan',
   'practice.link': 'Pautan latihan',
   'practice.copied': 'Pautan disalin.',

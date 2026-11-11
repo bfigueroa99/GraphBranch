@@ -581,6 +581,8 @@ GB.i18n.define('zh-Hans', {
   'practice.ex10.goal': '你误运行了 add .：debug.log 被暂存了，还有两个未跟踪的文件。用 restore --staged 把 debug.log 取出，用 clean -n 查看垃圾文件，再用 clean -f 删除。保留 app.js 的改动。',
   'practice.ex11.title': '只提交已暂存的',
   'practice.ex11.goal': '你改了 login.js 和 debug.js，但只有登录的修复该进提交。用 add 暂存 login.js，再运行 commit -m：debug.js 要保持已修改且未提交。小心：commit -a 会把两个都带走。',
+  'practice.ex12.title': '用 clean -d 删除未跟踪的文件夹',
+  'practice.ex12.goal': 'nuevo.js、两个临时文件（a.tmp 和 b.tmp）和 build/ 文件夹都未被跟踪。用 clean 删除它们，但保留 nuevo.js：它还没准备好 add。先用 clean -n 看看：不加 -d 不会删除 build/，-e 可以排除你不想删除的内容。',
   'practice.share': '复制练习链接',
   'practice.link': '练习链接',
   'practice.copied': '链接已复制。',

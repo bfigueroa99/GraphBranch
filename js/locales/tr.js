@@ -581,6 +581,8 @@ GB.i18n.define('tr', {
   'practice.ex10.goal': 'Yanlışlıkla add . çalıştırdın: debug.log hazırlığa alındı ve izlenmeyen iki dosya ortada duruyor. debug.log\'u restore --staged ile geri çıkar, çöpü clean -n ile gör ve clean -f ile sil. app.js\'deki değişikliği koru.',
   'practice.ex11.title': 'Yalnızca hazırlananı commit et',
   'practice.ex11.goal': 'login.js ve debug.js dosyalarını değiştirdin ama commit’e yalnızca giriş düzeltmesi girmeli. login.js’i add ile hazırla ve commit -m çalıştır: debug.js değişmiş ve commit’siz kalmalı. Dikkat: commit -a ikisini birden alır.',
+  'practice.ex12.title': 'İzlenmeyen bir klasörü clean -d ile sil',
+  'practice.ex12.goal': 'nuevo.js, iki geçici dosya (a.tmp ve b.tmp) ve build/ klasörü izlenmiyor. Bunları clean ile sil ama nuevo.js kalsın: henüz add için hazır değil. Önce clean -n ile bak: -d olmadan build/ silinmez, -e ise silmek istemediğini dışarıda bırakır.',
   'practice.share': 'Alıştırma bağlantısını kopyala',
   'practice.link': 'Alıştırma bağlantısı',
   'practice.copied': 'Bağlantı kopyalandı.',

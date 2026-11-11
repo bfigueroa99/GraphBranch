@@ -428,7 +428,7 @@
         'git rm [--cached] [-f] <file>  delete a tracked file and prepare the deletion (--cached keeps it, untracked)',
         'git mv <old> <new>          rename a tracked file and prepare the rename',
         'rm <file> / mv <old> <new>  without git: delete or move the file by hand (add -A prepares it)',
-        'clean [-n|-f]               delete files git does not track (-n only lists them, -f deletes)',
+        'clean [-n|-f] [-d] [path]   delete files git does not track (-n only lists them, -f deletes; -d also untracked folders, -e <pattern> keeps some)',
         'touch [--new] <file>        change a file (uncommitted work); --new makes an untracked one',
         'cherry-pick <commit>        copy one commit on top of the current branch (-n holds it until commit or --continue)',
         'cherry-pick --abort        cancel a cherry-pick that is waiting for its commit',
@@ -496,7 +496,7 @@
       const kind = (s) => (s.gone ? `deleted:    ${s.file}` : s.from ? `renamed:    ${s.from} -> ${s.file}` : `${s.isNew ? 'new file' : 'modified'}:   ${s.file}`);
       if (this.staged.length) out.push('Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', ...this.staged.map((s) => `\t${kind(s)}`));
       if (this.work.length || this.deleted.length) out.push('Changes not staged for commit:', ...this.unstagedLines());
-      if (this.untracked.length) out.push('Untracked files:', ...this.untracked.map((f) => `\t${f}`));
+      if (this.untracked.length) out.push('Untracked files:', ...[...new Set(this.untracked.map((f) => this.untrackedDir(f) || f))].map((f) => `\t${f}`));
       return out;
     },
 
@@ -909,6 +909,13 @@
   Repo.prototype.commands.add = function (args) {
     // las banderas cortas juntas (-Au, -uA) son dos, como en git
     const { flags, rest } = parse(args.flatMap((a) => (/^-[Au]{2,}$/.test(a) ? [...a.slice(1)].map((c) => `-${c}`) : [a])));
+    // una carpeta (`build/` o `build`, como la muestra status) vale por los archivos de adentro que la práctica conoce
+    const names = [...new Set([...this.work, ...this.untracked, ...this.deleted, ...this.staged.map((x) => x.file)])];
+    rest.splice(0, rest.length, ...rest.flatMap((f) => {
+      const dir = `${f.replace(/\/+$/, '')}/`;
+      const inside = f === '.' || names.includes(f) ? [] : names.filter((n) => n.startsWith(dir));
+      return inside.length ? inside : [f];
+    }));
     const update = !!(flags['-u'] || flags['--update']);
     if (flags['-A'] || flags['--all']) {
       if (update) fail("fatal: options '-A' and '-u' cannot be used together");
@@ -1089,16 +1096,109 @@
     },
   };
 
-  /** `clean -n` lista lo que borraría, `clean -f` lo borra: solo archivos sin seguir; nunca lo preparado ni lo cambiado. */
+  /** Un patrón de git a expresión regular: `*` y `?` (con `slash`, también cruzan carpetas, como en una ruta de git). */
+  function globRe(pat, slash) {
+    const any = slash ? '.*' : '[^/]*';
+    const one = slash ? '.' : '[^/]';
+    return new RegExp(`^${pat.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, any).replace(/\?/g, one)}$`);
+  }
+
+  /** Si una ruta de `clean` (un archivo, una carpeta, `.` o un patrón con `*`) alcanza al archivo. */
+  function pathMatch(pat, f) {
+    const p = pat.replace(/^\.\//, '').replace(/\/+$/, '');
+    if (p === '.' || p === '' || f === p || f.startsWith(`${p}/`)) return true;
+    return /[*?]/.test(p) && globRe(p, true).test(f);
+  }
+
+  /** Si un `-e <patrón>` (como una línea de .gitignore) deja fuera al archivo: sin `/`, vale para cualquier parte de la ruta. */
+  function excluded(pat, f) {
+    const p = pat.replace(/\/+$/, '');
+    if (!p) return false;
+    if (p.replace(/^\//, '').includes('/')) {
+      const full = p.replace(/^\//, '');
+      return globRe(full, false).test(f) || f.startsWith(`${full}/`);
+    }
+    const re = globRe(p, false);
+    return f.split('/').some((part) => re.test(part));
+  }
+
+  /** La carpeta más alta del archivo sin seguir en la que git no sigue nada (`build/`), o null: status la muestra entera y `clean` la pide con `-d`. */
+  Repo.prototype.untrackedDir = function (f) {
+    const known = [...this.inHistory(), ...this.work, ...this.deleted, ...this.staged.map((s) => s.file), ...this.staged.filter((s) => s.from).map((s) => s.from)];
+    const parts = f.split('/');
+    for (let i = 1; i < parts.length; i++) {
+      const dir = `${parts.slice(0, i).join('/')}/`;
+      if (!known.some((k) => k.startsWith(dir))) return dir;
+    }
+    return null;
+  };
+
+  /** `clean -n` lista lo que borraría y `clean -f` lo borra: solo archivos sin seguir, nunca lo preparado ni lo cambiado.
+      Admite rutas y patrones (`clean -f '*.tmp'`), `-d` para las carpetas que git no sigue, `-e <patrón>` para dejar
+      algo fuera, `-q`, `-x` (sin .gitignore en la práctica, no cambia nada) y las banderas juntas (`-fd`, `-nd`). */
   Repo.prototype.commands.clean = function (args) {
-    const { flags } = parse(args);
-    const dry = !!(flags['-n'] || flags['--dry-run']);
-    if (!dry && !flags['-f'] && !flags['--force']) fail('fatal: clean.requireForce defaults to true and neither -i, -n, nor -f given; refusing to clean');
-    if (dry) return this.untracked.map((f) => `Would remove ${f}`);
-    const gone = this.untracked;
-    this.untracked = [];
+    const flags = new Set();
+    const keep = [];
+    const paths = [];
+    for (let i = 0; i < args.length; i++) {
+      const a = args[i];
+      if (a === '--') {
+        paths.push(...args.slice(i + 1));
+        break;
+      }
+      if (a === '-e' || a === '--exclude') {
+        if (i + 1 >= args.length) fail(`error: switch \`${a === '-e' ? 'e' : 'exclude'}' requires a value`);
+        keep.push(args[++i]);
+      } else if (a.startsWith('--exclude=')) keep.push(a.slice(10));
+      else if (a.startsWith('--')) {
+        const long = { '--force': 'f', '--dry-run': 'n', '--quiet': 'q', '--interactive': 'i' }[a];
+        if (!long) fail(`error: unknown option \`${a.slice(2)}'`);
+        flags.add(long);
+      } else if (a.length > 1 && a[0] === '-') {
+        const letters = a.slice(1);
+        for (let k = 0; k < letters.length; k++) {
+          const l = letters[k];
+          if (l === 'e') {
+            // -e pegado a su patrón (`-e*.log`) o al final del grupo (`-fe nuevo.js`)
+            const rest = letters.slice(k + 1);
+            if (rest) keep.push(rest);
+            else if (i + 1 < args.length) keep.push(args[++i]);
+            else fail("error: switch `e' requires a value");
+            break;
+          }
+          if (!'fndqxXi'.includes(l)) fail(`error: unknown switch \`${l}'`);
+          flags.add(l);
+        }
+      } else paths.push(a);
+    }
+    if (flags.has('i')) fail('error: interactive clean (-i) is not available in this practice; use clean -n to see the list and clean -f to remove it');
+    if (flags.has('x') && flags.has('X')) fail('fatal: -x and -X cannot be used together');
+    const dry = flags.has('n');
+    if (!dry && !flags.has('f')) fail('fatal: clean.requireForce defaults to true and neither -i, -n, nor -f given; refusing to clean');
+    // -X borra solo lo ignorado, y en la práctica no hay .gitignore: no queda nada que borrar
+    const pick = flags.has('X') ? [] : this.untracked.filter((f) => (!paths.length || paths.some((p) => pathMatch(p, f))) && !keep.some((p) => excluded(p, f)));
+    // sin rutas, lo que vive en una carpeta que git no sigue necesita -d, y la carpeta se borra entera (si nada suyo queda fuera)
+    const dirs = new Map();
+    const files = [];
+    for (const f of pick) {
+      const dir = this.untrackedDir(f);
+      // sin rutas, la carpeta sin seguir pide -d; con una ruta que la cubre entera (`clean -f build`), se borra como carpeta
+      const covered = dir && paths.some((p) => pathMatch(p, dir.slice(0, -1)));
+      if (!dir || (paths.length && !covered)) files.push(f);
+      else if (paths.length || flags.has('d')) dirs.set(dir, [...(dirs.get(dir) || []), f]);
+    }
+    const lines = [];
+    const gone = [...files];
+    for (const [dir, list] of dirs) {
+      gone.push(...list);
+      const whole = this.untracked.filter((f) => f.startsWith(dir)).length === list.length;
+      lines.push(...(whole ? [dir] : list));
+    }
+    const shown = [...files, ...lines].sort();
+    if (dry) return shown.map((f) => `Would remove ${f}`);
+    this.untracked = this.untracked.filter((f) => !gone.includes(f));
     if (gone.length) this.cleans++;
-    return gone.map((f) => `Removing ${f}`);
+    return flags.has('q') ? [] : shown.map((f) => `Removing ${f}`);
   };
 
   /** `restore <archivo>…` o `restore .` deja los archivos como en HEAD: tira los cambios sin commit de esos archivos. */
@@ -1283,6 +1383,17 @@
         const main = r.branches.get('main');
         // un solo commit nuevo con login.js y nada más, preparado con add; debug.js sigue cambiado sin commit (ni preparado)
         return !!main && r.adds > 0 && r.head.branch === 'main' && r.log(main).length === BASE.length + 1 && r.commits.get(main).files?.join() === 'login.js' && r.work.join() === 'debug.js' && !r.staged.length;
+      },
+    },
+    {
+      id: 'cleandir',
+      setup: (r) => {
+        r.untracked = ['nuevo.js', 'a.tmp', 'b.tmp', 'build/out.js', 'build/map.js'];
+      },
+      done: (r) => {
+        const main = r.branches.get('main');
+        // los temporales y la carpeta build se borraron con clean, y nuevo.js sigue ahí, sin seguir y sin commits de más
+        return !!main && r.cleans > 0 && r.untracked.join() === 'nuevo.js' && !r.staged.length && !r.work.length && r.head.branch === 'main' && r.log(main).length === BASE.length;
       },
     },
   ];

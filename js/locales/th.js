@@ -582,6 +582,8 @@ GB.i18n.define('th', {
   'practice.ex10.goal': 'คุณเผลอรัน add . ทำให้ debug.log ถูกสเตจ และยังมีไฟล์ที่ไม่ได้ติดตามอีกสองไฟล์ นำ debug.log ออกด้วย restore --staged ดูขยะด้วย clean -n แล้วลบด้วย clean -f เก็บการแก้ไขใน app.js ไว้',
   'practice.ex11.title': 'commit เฉพาะที่ stage ไว้',
   'practice.ex11.goal': 'คุณแก้ login.js และ debug.js แต่ใน commit ควรมีแค่การแก้ไขการเข้าสู่ระบบ ให้ stage login.js ด้วย add แล้วรัน commit -m: debug.js ต้องยังถูกแก้อยู่และไม่ถูก commit ระวัง: commit -a จะเอาไปทั้งสองไฟล์',
+  'practice.ex12.title': 'ลบโฟลเดอร์ที่ไม่ได้ติดตามด้วย clean -d',
+  'practice.ex12.goal': 'nuevo.js ไฟล์ชั่วคราวสองไฟล์ (a.tmp และ b.tmp) และโฟลเดอร์ build/ ไม่ได้ถูกติดตาม ลบด้วย clean แต่เก็บ nuevo.js ไว้ เพราะยังไม่พร้อมสำหรับ add ดูก่อนด้วย clean -n: ถ้าไม่มี -d จะไม่ลบ build/ และ -e จะยกเว้นสิ่งที่คุณไม่อยากลบ',
   'practice.share': 'คัดลอกลิงก์แบบฝึกหัด',
   'practice.link': 'ลิงก์แบบฝึกหัด',
   'practice.copied': 'คัดลอกลิงก์แล้ว',

@@ -582,6 +582,8 @@ GB.i18n.define('it', {
   'practice.ex10.goal': 'Hai eseguito add . per errore: debug.log è in staging e ci sono due file non tracciati. Togli debug.log con restore --staged, guarda la spazzatura con clean -n e cancellala con clean -f. Mantieni la modifica di app.js.',
   'practice.ex11.title': 'Commit solo di ciò che è nello stage',
   'practice.ex11.goal': 'Hai modificato login.js e debug.js, ma nel commit va solo la correzione del login. Prepara login.js con add ed esegui commit -m: debug.js deve restare modificato e senza commit. Attenzione: commit -a li prenderebbe entrambi.',
+  'practice.ex12.title': 'Eliminare una cartella non tracciata con clean -d',
+  'practice.ex12.goal': 'nuevo.js, due file temporanei (a.tmp e b.tmp) e la cartella build/ non sono tracciati. Eliminali con clean, ma tieni nuevo.js: non è ancora pronto per add. Guarda prima con clean -n: senza -d, build/ non viene eliminata, e -e lascia fuori ciò che non vuoi eliminare.',
   'practice.share': 'Copia il link dell\'esercizio',
   'practice.link': 'Link dell\'esercizio',
   'practice.copied': 'Link copiato.',

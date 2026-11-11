@@ -592,6 +592,8 @@ GB.i18n.define('pl', {
   'practice.ex10.goal': 'Przez pomyłkę uruchomiono add .: debug.log trafił do poczekalni, a dwa nieśledzone pliki leżą luzem. Wyjmij debug.log przez restore --staged, obejrzyj śmieci przez clean -n i usuń je przez clean -f. Zostaw zmianę w app.js.',
   'practice.ex11.title': 'Commit tylko tego, co przygotowane',
   'practice.ex11.goal': 'Zmieniłeś login.js i debug.js, ale do commita należy tylko poprawka logowania. Przygotuj login.js poleceniem add i uruchom commit -m: debug.js ma zostać zmieniony i bez commita. Uwaga: commit -a zabrałby oba.',
+  'practice.ex12.title': 'Usuń nieśledzony folder poleceniem clean -d',
+  'practice.ex12.goal': 'nuevo.js, dwa pliki tymczasowe (a.tmp i b.tmp) oraz folder build/ nie są śledzone. Usuń je poleceniem clean, ale zachowaj nuevo.js: nie jest jeszcze gotowy do add. Najpierw sprawdź poleceniem clean -n: bez -d folder build/ nie zostanie usunięty, a -e pomija to, czego nie chcesz usuwać.',
   'practice.share': 'Kopiuj link do ćwiczenia',
   'practice.link': 'Link do ćwiczenia',
   'practice.copied': 'Skopiowano link.',

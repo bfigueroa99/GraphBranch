@@ -581,6 +581,8 @@ GB.i18n.define('ja', {
   'practice.ex10.goal': 'うっかり add . を実行してしまい、debug.log がステージされ、追跡されていないファイルが2つ残っています。restore --staged で debug.log を外し、clean -n でごみを確認して、clean -f で削除してください。app.js の変更は残してください。',
   'practice.ex11.title': 'ステージしたものだけをコミット',
   'practice.ex11.goal': 'login.js と debug.js を変更したが、コミットに入れるのはログインの修正だけ。add で login.js をステージして commit -m を実行しよう。debug.js は変更したままコミットせずに残すこと。注意: commit -a だと両方入ってしまう。',
+  'practice.ex12.title': 'clean -d で追跡されていないフォルダーを消す',
+  'practice.ex12.goal': 'nuevo.js、一時ファイル 2 つ (a.tmp と b.tmp)、build/ フォルダーが追跡されていない。clean で消そう。ただし nuevo.js は残すこと: まだ add する準備ができていない。まず clean -n で確認しよう: -d なしでは build/ は消えず、-e で消したくないものを除外できる。',
   'practice.share': '演習のリンクをコピー',
   'practice.link': '演習のリンク',
   'practice.copied': 'リンクをコピーしました。',

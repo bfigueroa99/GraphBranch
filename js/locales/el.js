@@ -581,6 +581,8 @@ GB.i18n.define('el', {
   'practice.ex10.goal': 'Έτρεξες add . κατά λάθος: το debug.log είναι έτοιμο για commit και υπάρχουν δύο αρχεία που το git δεν παρακολουθεί. Βγάλε το debug.log με restore --staged, δες τα σκουπίδια με clean -n και σβήσε τα με clean -f. Κράτα την αλλαγή στο app.js.',
   'practice.ex11.title': 'Commit μόνο όσων είναι έτοιμα',
   'practice.ex11.goal': 'Άλλαξες τα login.js και debug.js, αλλά στο commit ανήκει μόνο η διόρθωση της σύνδεσης. Ετοίμασε το login.js με add και τρέξε commit -m: το debug.js πρέπει να μείνει αλλαγμένο και χωρίς commit. Προσοχή: το commit -a θα έπαιρνε και τα δύο.',
+  'practice.ex12.title': 'Διάγραψε έναν φάκελο χωρίς παρακολούθηση με clean -d',
+  'practice.ex12.goal': 'Τα nuevo.js, δύο προσωρινά αρχεία (a.tmp και b.tmp) και ο φάκελος build/ δεν παρακολουθούνται. Διάγραψέ τα με clean, αλλά κράτησε το nuevo.js: δεν είναι ακόμα έτοιμο για add. Δες πρώτα με clean -n: χωρίς -d ο build/ δεν διαγράφεται, και το -e αφήνει έξω ό,τι δεν θέλεις να διαγράψεις.',
   'practice.share': 'Αντιγραφή συνδέσμου άσκησης',
   'practice.link': 'Σύνδεσμος άσκησης',
   'practice.copied': 'Ο σύνδεσμος αντιγράφηκε.',

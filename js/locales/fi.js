@@ -581,6 +581,8 @@ GB.i18n.define('fi', {
   'practice.ex10.goal': 'Ajoit vahingossa add .: debug.log on lisätty valmisteluun ja kaksi tiedostoa on seurannan ulkopuolella. Ota debug.log pois komennolla restore --staged, katso roskat komennolla clean -n ja poista ne komennolla clean -f. Säilytä app.js:n muutos.',
   'practice.ex11.title': 'Commit vain valmistellusta',
   'practice.ex11.goal': 'Muutit tiedostoja login.js ja debug.js, mutta committiin kuuluu vain kirjautumisen korjaus. Valmistele login.js komennolla add ja aja commit -m: debug.js:n on jäätävä muutetuksi ilman committia. Varo: commit -a veisi molemmat.',
+  'practice.ex12.title': 'Poista seuraamaton kansio komennolla clean -d',
+  'practice.ex12.goal': 'nuevo.js, kaksi väliaikaista tiedostoa (a.tmp ja b.tmp) ja kansio build/ eivät ole seurannassa. Poista ne komennolla clean, mutta säilytä nuevo.js: se ei ole vielä valmis add-komennolle. Katso ensin komennolla clean -n: ilman -d:tä build/ ei poistu, ja -e jättää pois sen, mitä et halua poistaa.',
   'practice.share': 'Kopioi tehtävän linkki',
   'practice.link': 'Tehtävän linkki',
   'practice.copied': 'Linkki kopioitu.',

@@ -597,6 +597,20 @@ export function escenarios({ langs = false, completa = false } = {}) {
         await ctx.revisar();
       },
     })),
+    // la práctica de git a 320 px (pendiente 5 de la iteración 267): su panel no puede ensanchar la página
+    // en ningún idioma; es, uno de derecha a izquierda y dos de textos largos (ta desbordaba 66 px, de 57)
+    ...IDIOMAS_PUERTA.map((lang) => ({
+      nombre: `practica-320-${lang}`,
+      puerta: true,
+      contexto: { ...CELULAR, viewport: { width: 320, height: 640 } },
+      url: `?lang=${lang}&practice=12`,
+      rtl: RTL.includes(lang),
+      async mirar(ctx) {
+        await ctx.page.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: 15000 });
+        await ctx.page.waitForTimeout(500);
+        await ctx.revisar();
+      },
+    })),
     {
       nombre: 'cuota-sin-token',
       puerta: true,

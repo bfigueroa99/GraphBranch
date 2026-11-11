@@ -249,7 +249,7 @@ segunda columna a la primera.
 | Eje | Hoy | Siguiente |
 | --- | --- | --- |
 | Fuentes | GitHub.com y GitHub Enterprise Server (GraphQL, lista y eventos), gitlab.com (proyectos públicos y, con token, privados, con sus eventos), codeberg.org (API de Forgejo, repos públicos y, con token, privados), bitbucket.org (API 2.0 de Bitbucket Cloud, repos públicos y, con token, privados), GitLab propio (`?gitlab=` / `--gitlab-url`, con su CSP), Forgejo/Gitea propio (`?forge=` / `--forge-url`, con su CSP y, con su token aparte y atado al servidor, privados), Bitbucket Data Center propio (`?bitbucket=` / `--bitbucket-url`, con su CSP y, con su token aparte y atado al servidor, privados), dev.azure.com (API REST 7.1 de Azure Repos, proyectos públicos y, con token de acceso personal, privados), repos locales (app de escritorio, con `git`), demo | Una segunda cuenta de GitHub atada a un dueño u organización (su token solo va a los repos de ese dueño). |
-| Datos | ramas, commits, PRs (y las pilas de PRs apilados, y la descripción y los últimos comentarios de un PR de GitHub desde la ficha de su rama o con `?pr=N`), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, por push más reciente o por estrellas, en el panel de salud, con un interruptor y `?forks=0`), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs) y de GitLab (pipeline de la cabeza de la rama por defecto, las fijadas, las de una MR abierta y las 20 más recientes del resto), tags de GitHub y de Azure DevOps y despliegues de GitHub (banderín y placa en el grafo, y el último de cada entorno en el panel de salud: al día con su rama o cuántos commits le faltan), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes, y quién tocó cada archivo en GitHub y la demo), el agente de cada commit (Claude Code, Copilot, Codex, Cursor, Devin, Jules, Gemini, OpenCode, Aider, OpenHands y los bots), con su modelo y su sesión, por su cuenta, su nombre o sus trailers (`Co-Authored-By`, `Claude-Session`) | CI de GitLab en el resto de las ramas, si cada despliegue salió bien o falló |
+| Datos | ramas, commits, PRs (y las pilas de PRs apilados, y la descripción y los últimos comentarios de un PR de GitHub desde la ficha de su rama o con `?pr=N`), revisiones, issues, releases, estrellas, forks (y los forks con actividad reciente, por push más reciente o por estrellas, en el panel de salud, con un interruptor y `?forks=0`), archivos (galaxias), CI de GitHub (checks de la cabeza de las ramas y los PRs) y de GitLab (pipeline de la cabeza de la rama por defecto, las fijadas, las de una MR abierta y las 20 más recientes del resto), tags de GitHub y de Azure DevOps y despliegues de GitHub (banderín y placa en el grafo, y el último de cada entorno en el panel de salud: al día con su rama o cuántos commits le faltan, y si salió bien, falló o sigue en curso), los cambios de cada commit (diff archivo por archivo, de un commit al siguiente, en todas las fuentes, y quién tocó cada archivo en GitHub y la demo), el agente de cada commit (Claude Code, Copilot, Codex, Cursor, Devin, Jules, Gemini, OpenCode, Aider, OpenHands y los bots), con su modelo y su sesión, por su cuenta, su nombre o sus trailers (`Co-Authored-By`, `Claude-Session`) | CI de GitLab en el resto de las ramas |
 | Plataformas | web estática (GitHub Pages pendiente de activar: lo comprueba `node tools/loop.mjs --publicado`), instalable y sin conexión (PWA, que en Android aparece en el menú Compartir y abre el repo del enlace compartido), escritorio (Windows, macOS, Linux), modo TV, widget embebible (`?embed=1`, con `&bg=` transparente o de color, `&hide=` (avisos, combo, leyenda, rótulo y fechas), `&rotate=` entre repos, `&theme=` claro u oscuro y `&title=` con un rótulo propio, `&max=` con el tope de ramas y `&spin=0` que aquieta la vista 3D, `&view=2d|3d` que fija la vista, `&branch=` que deja una sola rama, `&pr=1` que deja solo las ramas con un PR abierto), extensión de VS Code (sigue la sesión de GitHub del editor y recuerda repos, vista e idioma entre sesiones; paquete listo, sin publicar), extensión de Chrome y Firefox (botón «Abrir en GraphBranch» en las páginas de un repo de GitHub, GitLab, Codeberg o Bitbucket; carpeta lista para cargar, sin publicar) | app móvil (más allá de compartir hacia la PWA) |
 | Escala | hasta 20 repos con alias propio en cada pestaña (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia que dice cuánto hace de su último commit cargado y se atenúa si pasó de 30 días, ordenable por pestañas, actividad, último commit, PRs abiertos, issues abiertos, estrellas, forks, ramas nuevas de la semana o nombre, también desde la URL con `?order=activity`, `?order=recent`, `?order=prs`, `?order=issues`, `?order=stars`, `?order=forks`, `?order=new` o `?order=name`, filtrable por nombre con `?constellation=texto` y por actividad con `?recent=30`), miles de ramas por repo, el Launchpad de la vista conjunta (los PRs abiertos de todos los repos seguidos, por estado: borrador, checks en rojo, aprobados y esperando revisión; un PR se puede fijar arriba de su grupo o posponer un día al final, y el Launchpad se filtra por quien abrió el PR y por repo) | una organización entera con más de 20 repos a la vez |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack, Discord y Teams (escritorio), resumen de la semana (Markdown, con quién fusionó los PRs, PRs abiertos, issues cerrados, PRs cerrados sin fusionar, releases, tags, autores nuevos, ramas nuevas y commits por día, de un repo o de una organización seguida, la de la organización con quién fusionó, los PRs abiertos, los issues cerrados, los PRs cerrados sin fusionar y los autores nuevos de cada repo; PNG, de un repo o de una organización), prompt del loop autónomo para cualquier repo (español o inglés, con repo, ramas y objetivo; se copia o se guarda como `.md`) | el resumen de la semana con quién abrió más PRs (de un repo y de la organización) |
@@ -273,7 +273,7 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 166. ~~**Launchpad: posponer un PR**~~ hecho en #318 · Escala · 1×2/2. [replica 2026-10-28] [parte de «Launchpad: fijar y posponer PRs e issues»] Cada PR del Launchpad de la vista conjunta se puede posponer (baja al final de la lista hasta que pase un día) y se recuerda en este navegador. Comprobar: `node --test` del orden con PRs fabricados y un paso del smoke.
 167. ~~**Salud del repo: tendencia de estrellas**~~ hecho en #320 · Análisis · 1×2/2. [inv. 2026-10-13] [parte del mapa: Análisis] El panel de salud compara las estrellas nuevas de la semana con las de la anterior, con lo ya cargado y sin consultas nuevas. Comprobar: `node --test tools/health.test.mjs` con estrellas fabricadas.
 173. ~~**Práctica: rm y mv**~~ hecho en #321 · Público · 1×2/2. [inv. 2026-10-13] [parte del ítem 16] En la práctica de git, `rm <archivo>` borra un archivo que git sigue y deja el borrado preparado (`rm --cached` lo deja sin seguir), `mv vieja nueva` lo renombra preparado, y `add -A` prepara también los borrados hechos a mano. Comprobar: `node --test tools/gitsim.test.mjs` (qué muestra `status` y qué guarda el commit tras `rm`, `rm --cached` y `mv`).
-175. **Estado de los despliegues, segunda entrega** · Datos · 1×2/2. [parte del ítem 153] El panel de salud suma si el último despliegue de cada entorno de GitHub salió bien, falló o sigue en curso (`/deployments/:id/statuses`, una consulta por entorno, solo con el panel abierto y no más de una cada 15 minutos). Comprobar: `tools/github.test.mjs` con la API simulada (cuántas consultas y solo con el panel abierto).
+175. ~~**Estado de los despliegues, segunda entrega**~~ hecho en #322 · Datos · 1×2/2. [parte del ítem 153] El panel de salud suma si el último despliegue de cada entorno de GitHub salió bien, falló o sigue en curso (`/deployments/:id/statuses`, una consulta por entorno, solo con el panel abierto y no más de una cada 15 minutos). Comprobar: `tools/github.test.mjs` con la API simulada (cuántas consultas y solo con el panel abierto).
 179. **Resumen de la semana: quién abrió más PRs** · Salidas · 1×2/2. [parte del ítem 23] El resumen de la semana suma las personas que más PRs abrieron en la semana, con lo ya cargado. Comprobar: `node --test` del conteo con PRs fabricados de dos semanas.
 180. **Salud del repo: PRs sin revisión hace días** · Análisis · 1×2/2. [parte del ítem 12] El panel de salud cuenta los PRs abiertos que llevan más de 7 días sin revisión, con lo ya cargado. Comprobar: `node --test` con PRs de distintas edades, borradores excluidos.
 181. **Práctica: git clean** · Público · 1×2/2. [parte del ítem 16] En la práctica de git, `clean` borra los archivos sin seguir del directorio de trabajo, con su ejercicio y su comprobación. Comprobar: `node --test` del simulador (`js/gitsim.js`) antes y después de `clean`.
@@ -359,68 +359,77 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     ese paso y cerrar los que ya no se usan. Reproducción: `node tools/smoke.mjs` con el equipo cargado → `consola: Failed
     to load resource: net::ERR_INSUFFICIENT_RESOURCES (…/js/i18n.js) | excepción: GB is not defined`.
 3. [Deuda] Dos pasos ajenos del smoke fallaron en las puertas de la iteración 244 (2026-11-09; en la tercera pasaron): «editar el código: desde los cambios de un commit se abre su archivo…» (`page.waitForFunction: Timeout 15000ms`, ya cubierto por el pendiente [Deuda] anterior de esa sección) y «la ficha de un commit de agente dice cuál es, con su modelo y su sesión (2D)» (`ninguna ficha de rama dice su agente: ""`). Hipótesis del segundo: el paso mira la ficha antes de que el repintado de las ramas del agente la llene; esperar una señal del DOM en vez de leerla al instante. Reproducción: `node tools/smoke.mjs` repetido → `la ficha de un commit de agente dice cuál es…: ninguna ficha de rama dice su agente: ""`. Iteración 248 (2026-11-10): otro paso ajeno falló una vez y pasó al repetir la puerta: «filtro por autor: el grafo y el árbol de texto muestran solo sus ramas, lo dice y se quita» (`quitar el filtro no deja el grafo como estaba (3 etiquetas, con el filtro 3, antes 6)`: lee las etiquetas antes de que el grafo se repinte). Iteración 256 (2026-11-10): «editar el código…» falló otra vez una vez (`page.waitForFunction: Timeout 15000ms exceeded`) y pasó al repetir la puerta.
-4. [Errores] Salud del repo: la tendencia de estrellas (`stars` de `js/health.js`, sección `#hl-stars` de `js/app.js`) compara la semana actual con la anterior aunque la actividad cargada no llegue a 14 días atrás (el feed de GitHub trae pocos eventos y el de la app guarda hasta 1.000): la semana anterior sale 0 y el panel muestra un «(+N)» que no se midió. Arreglo propuesto: que `compute` diga si la actividad cargada cubre los 14 días (la más vieja, de cualquier tipo, es de hace 14 días o más) y, si no, la línea omita la anterior y la diferencia o la marque como parcial (una clave más en los 40 idiomas). Reproducción: `compute` con actividades solo de los últimos 5 días y 3 estrellas → `{ week: 3, prev: 0 }`, que el panel muestra como «3 esta semana · 0 la anterior (+3)». (Revisión OMC de la iteración 256.)
+4. [Deuda] Dos pasos ajenos del smoke fallaron en las puertas de la iteración 258 (2026-11-11), cada uno en una corrida
+    distinta y en secciones que el cambio no toca: «el interruptor de columnas pone «SHA · autor · fecha» junto a los
+    commits del 2D…» (`page.click: Timeout 30000ms exceeded`: un `<dialog open id="search">` tapaba el clic, o sea que un
+    paso anterior dejó abierto el diálogo de búsqueda) y «al llegar a una galaxia, el lector de pantalla oye el nombre una
+    vez y sin glifos» (lo que se lee cambió 4 veces: el «hace 5 s» del resumen se actualizó y entró en otra galaxia
+    mientras se medía). Hipótesis: el primero, un diálogo que el paso anterior no cierra (cerrarlo al empezar el paso); el
+    segundo, el reloj relativo que repinta la región viva (fijar el tiempo o medir solo hasta el primer cambio de galaxia).
+    Reproducción: `node tools/smoke.mjs` repetido → `el interruptor de columnas…: page.click: Timeout 30000ms exceeded` o
+    `al llegar a una galaxia…: lo que se lee cambió 4 veces`.
+5. [Errores] Salud del repo: la tendencia de estrellas (`stars` de `js/health.js`, sección `#hl-stars` de `js/app.js`) compara la semana actual con la anterior aunque la actividad cargada no llegue a 14 días atrás (el feed de GitHub trae pocos eventos y el de la app guarda hasta 1.000): la semana anterior sale 0 y el panel muestra un «(+N)» que no se midió. Arreglo propuesto: que `compute` diga si la actividad cargada cubre los 14 días (la más vieja, de cualquier tipo, es de hace 14 días o más) y, si no, la línea omita la anterior y la diferencia o la marque como parcial (una clave más en los 40 idiomas). Reproducción: `compute` con actividades solo de los últimos 5 días y 3 estrellas → `{ week: 3, prev: 0 }`, que el panel muestra como «3 esta semana · 0 la anterior (+3)». (Revisión OMC de la iteración 256.)
 
 ### Baja
 
-5. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+6. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-6. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+7. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-7. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+8. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-8. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+9. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-9. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+10. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-10. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+11. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-11. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+12. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-12. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
+13. [Rendimiento] Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript por cuadro: ~1,1 ms, tres veces
     `placeLabels`. El cuadro lo domina el render por software (~200 ms por cuadro sin GPU, 10 fps), que con GPU no existe;
     medir con GPU real antes de tocarlo. Reproducción: la misma envoltura sobre `stepScene` → ~1,1 ms por llamada.
-13. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
+14. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
     (895 ms en total, sin GPU); el perfil de CPU de los primeros 6 s no deja ninguna función de la app por encima de 70 ms
     (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
     que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
     Reproducción: `node tools/audit.mjs --repetir 3` → `consultas: 10`, `tareasLargasMs: 895`.
-14. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
+15. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
     prepara de verdad en vez de solo listar, y `add -p` prepara todo. Negarse con el `error: unknown switch` de git (o
     admitir `-n`). Reproducción: `node --test` con `touch a.txt`, `add -n .` → `a.txt` queda preparado.
-15. [Seguridad] Avisos a Slack (`electron/webhooks.js`, `payload`): `slackText` escapa `&`, `<` y `>` (sin menciones ni
+16. [Seguridad] Avisos a Slack (`electron/webhooks.js`, `payload`): `slackText` escapa `&`, `<` y `>` (sin menciones ni
     enlaces), pero no el formato `mrkdwn` (`*`, `_`, `` ` ``, `~`): un título de PR como `*URGENTE*` sale en negrita en el
     canal. Solo formato, sin enlaces ni menciones; escaparlo como se hizo con Discord. Reproducción: `payload('slack',
     {title: '*x*'})` → `*x*` sin escapar.
-16. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
+17. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
     la iteración 239: la sesión no pudo consultar su página de versiones. Comprobarla con `WebFetch` en la próxima
     auditoría de Seguridad y, si hay una estable más nueva con arreglos de seguridad, subirla (cambio de `electron/`: plan
     por consenso). Reproducción: `npm view electron version` frente a `package.json`.
-17. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
+18. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
     largo se lleva la línea `<enlace>` del final (el aviso queda sin enlace). Recortar título y detalle antes y dejar el
     enlace siempre. Reproducción: `payload('discord', {title: 'x'.repeat(5000), url: 'https://github.com/a/b'})` →
     `content` sin `<https://github.com/a/b>`.
 
-18. [QA] Un repo vacío (GitHub responde 409 «Git Repository is empty» en ramas y commits) se rotula «Sin conexión» y
+19. [QA] Un repo vacío (GitHub responde 409 «Git Repository is empty» en ramas y commits) se rotula «Sin conexión» y
     reintenta cada pocos segundos, sin decir que el repo está vacío. Un estado propio («Repo vacío») sin reintento rápido.
     Reproducción: API simulada con 409 en `/commits` y `/branches`, `index.html?repo=acme/x` → `Sin conexión | reintento en 2s`.
-19. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
+20. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
     `js/util.js` solo distingue notfound, rate y auth), aunque haya red: la persona busca su wifi y el servicio es quien falla.
     Un rótulo «Error del servicio» en los 40 idiomas. Reproducción: `U.statusKey({state: 'error', error: {kind: 'http'}})` → `status.error`.
-20. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
+21. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
     el service worker instalado (solo los estados de error de la carga, en es y ar a 1280 y 320 px). Mirarlos en la
     próxima QA. Reproducción: `node e2e/serve.mjs 4173` + Playwright con la API simulada de `tools/audit.mjs`.
-21. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
+22. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
     que se pospone o se fija otro: `setPrSnooze` (`js/app.js`) es lo único que limpia. Inocuo (`liveSnoozes` los ignora),
     pero crece sin tope. Limpiar también al leer. Reproducción: posponer un PR, adelantar el reloj un día y recargar →
     la entrada sigue en `localStorage`.
@@ -605,3 +614,16 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/257, sin colisión
 - Validado: 664 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 258, expansión: ítem 175 (Estado de los despliegues, segunda entrega, Datos)
+
+### 2026-11-11 · Iteración 258 · Expansión · Datos
+
+- **Capacidad nueva: si el último despliegue de cada entorno salió bien, falló o sigue en curso** (ítem 175 de la hoja de ruta, segunda entrega del 153). Los «Despliegues por entorno» del panel de salud suman, tras «al día» o los commits que faltan, «salió bien», «falló» (también si dio error) o «en curso» (en cola o pendiente); `inactive` o un estado desconocido no dicen nada. En GitHub sale de `/deployments/:id/statuses?per_page=1` (el id ahora se guarda con la carga de despliegues): una consulta por entorno, solo al abrir el panel, con ETag y no más de una cada 15 minutos por despliegue (5 por vez sin token, 10 con él); un despliegue nuevo se pregunta enseguida y el reemplazado se olvida con su ETag. En la demo, producción salió bien y staging falló y vuelve a quedar en curso con cada push a develop. Tres claves nuevas (`health.deployOk`, `health.deployFailed`, `health.deployRunning`) en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/github.test.mjs`: las 2 nuevas («estado de los despliegues: una consulta por entorno, solo al pedirla…» y «…sin token pregunta menos, un despliegue nuevo se pregunta enseguida…», con la API simulada: cuántas consultas, ninguna sin pedirla, el borde de 15 minutos, el 404 sin estado, dos aperturas a la vez sin repetir) fallan sin el cambio (`syncDeployStatuses is not a function`); `tools/health.test.mjs` suma la traducción de cada estado de GitHub y de la demo; el smoke exige producción «salió bien» y staging «falló» o «en curso».
+- README: Salud del repo (el estado y de dónde sale), Pruebas (tags y despliegues), Límites conocidos (solo con el panel abierto, sin refrescar hasta reabrirlo pasados 15 minutos, sin descripción ni enlace a los registros) y Seguridad (la consulta nueva, a la misma API y con el mismo token; solo se lee una palabra de una lista fija).
+- QA: panel de salud de la demo con `?health=1` en es a 1280 px, ar y ta a 320 px (cada entorno con su estado traducido, sin desborde ni errores de consola), 40 idiomas por el smoke; cuota: ninguna consulta sin abrir el panel ni con la carga apagada (`tools/github.test.mjs`); auditoría: 0 hallazgos nuevos, 0 conocidos.
+- Skills: no aplica: una consulta más a la API de GitHub con el mismo patrón que los forks del panel; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (la consulta perezosa del panel, como `syncForks` y `syncFirstCommits`).
+- OMC: plan=— · revisión=4 hallazgos y seguridad sin hallazgos (3 arreglados: el MEDIUM de las consultas repetidas si el panel se reabre a mitad de la tanda, la limpieza que un corte de cuota salteaba y el comentario que prometía avisar la cuota; queda el LOW de una prueba de la app que cuente las consultas al abrir el panel, cubierto por la de la fuente) · verificación=PASS
+- Reclamo: loop/258, sin colisión
+- Validado: 666 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde. (A la tercera corrida: las dos primeras fallaron cada una en un paso ajeno distinto del smoke, el interruptor de columnas del 2D y el anuncio de las galaxias; van al pendiente 4.)
+- **Siguiente:** iteración 259, mantenimiento · Deuda: pendiente 1 (El paso del smoke «quién tocó un archivo: el botón del diff lista los últimos c…)

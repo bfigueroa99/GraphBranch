@@ -335,6 +335,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Vista de texto: PRs en borrador | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 192 |
 | Columnas de SHA, autor y fecha en el grafo 3D | Análisis | 1×2/2 | 1,0 | Replica (GitKraken) | ítem 193 |
 | Salud del repo: autores nuevos por semana | Análisis | 1×2/2 | 1,0 | DORA | ítem 194 |
+| Salud del repo: forks nuevos por semana | Análisis | 1×2/2 | 1,0 | DORA | ítem 195 |
+| Práctica: branch --merged y --no-merged | Público | 1×2/2 | 1,0 | git-sim | ítem 196 |
+| Vista de texto: PRs aprobados | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 197 |
+| Resumen de la semana: estrellas nuevas | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 198 |
+| Resumen de la semana: forks nuevos | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 199 |
+| Salud del repo: estrellas nuevas por semana | Análisis | 1×2/2 | 1,0 | DORA | ítem 200 |
 
 ## Públicos
 

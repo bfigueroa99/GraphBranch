@@ -589,6 +589,8 @@ GB.i18n.define('ro', {
   'practice.ex10.goal': 'Ai rulat add . din greșeală: debug.log este în staging și două fișiere nesuprevegheate stau în jur. Scoate debug.log cu restore --staged, vezi gunoiul cu clean -n și șterge-l cu clean -f. Păstrează modificarea din app.js.',
   'practice.ex11.title': 'Commit doar cu ce e pregătit',
   'practice.ex11.goal': 'Ai modificat login.js și debug.js, dar în commit intră doar reparația de la autentificare. Pregătește login.js cu add și rulează commit -m: debug.js trebuie să rămână modificat și fără commit. Atenție: commit -a le-ar lua pe amândouă.',
+  'practice.ex12.title': 'Șterge un dosar neurmărit cu clean -d',
+  'practice.ex12.goal': 'nuevo.js, două fișiere temporare (a.tmp și b.tmp) și dosarul build/ nu sunt urmărite. Șterge-le cu clean, dar păstrează nuevo.js: nu e încă gata pentru add. Uită-te întâi cu clean -n: fără -d, build/ nu se șterge, iar -e lasă deoparte ce nu vrei să ștergi.',
   'practice.share': 'Copiază linkul exercițiului',
   'practice.link': 'Linkul exercițiului',
   'practice.copied': 'Link copiat.',

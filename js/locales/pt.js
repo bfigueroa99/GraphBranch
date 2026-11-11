@@ -582,6 +582,8 @@ GB.i18n.define('pt', {
   'practice.ex10.goal': 'Você executou add . sem querer: debug.log ficou preparado e há dois arquivos não rastreados. Tire debug.log com restore --staged, veja o lixo com clean -n e apague-o com clean -f. Mantenha a alteração de app.js.',
   'practice.ex11.title': 'Commit só do que está preparado',
   'practice.ex11.goal': 'Você alterou login.js e debug.js, mas só a correção do login vai no commit. Prepare login.js com add e faça commit -m: debug.js tem que ficar alterado e sem commit. Cuidado: commit -a levaria os dois.',
+  'practice.ex12.title': 'Apagar uma pasta não rastreada com clean -d',
+  'practice.ex12.goal': 'nuevo.js, dois temporários (a.tmp e b.tmp) e a pasta build/ não estão rastreados. Apague-os com clean, mas mantenha nuevo.js: ainda não está pronto para add. Veja antes com clean -n: sem -d, build/ não é apagada, e -e deixa de fora o que você não quer apagar.',
   'practice.share': 'Copiar link do exercício',
   'practice.link': 'Link do exercício',
   'practice.copied': 'Link copiado.',

@@ -592,6 +592,8 @@ GB.i18n.define('sk', {
   'practice.ex10.goal': 'Omylom si spustil add .: debug.log je pripravený a povaľujú sa dva nesledované súbory. Vyber debug.log cez restore --staged, odpad si pozri cez clean -n a zmaž ho cez clean -f. Zmenu v app.js nechaj.',
   'practice.ex11.title': 'Commit len pripraveného',
   'practice.ex11.goal': 'Zmenil si login.js a debug.js, ale do commitu patrí len oprava prihlásenia. Priprav login.js príkazom add a spusti commit -m: debug.js musí zostať zmenený a bez commitu. Pozor: commit -a by vzal oba.',
+  'practice.ex12.title': 'Zmaž nesledovaný priečinok pomocou clean -d',
+  'practice.ex12.goal': 'nuevo.js, dva dočasné súbory (a.tmp a b.tmp) a priečinok build/ nie sú sledované. Zmaž ich pomocou clean, ale nechaj nuevo.js: ešte nie je pripravený na add. Najprv sa pozri pomocou clean -n: bez -d sa build/ nezmaže a -e vynechá, čo zmazať nechceš.',
   'practice.share': 'Kopírovať odkaz na úlohu',
   'practice.link': 'Odkaz na úlohu',
   'practice.copied': 'Odkaz skopírovaný.',

@@ -582,6 +582,8 @@ GB.i18n.define('nl', {
   'practice.ex10.goal': 'Je voerde per ongeluk add . uit: debug.log staat klaar voor de commit en er slingeren twee niet-gevolgde bestanden rond. Haal debug.log eruit met restore --staged, bekijk de rommel met clean -n en verwijder hem met clean -f. Houd de wijziging in app.js.',
   'practice.ex11.title': 'Alleen het klaargezette committen',
   'practice.ex11.goal': 'Je hebt login.js en debug.js gewijzigd, maar alleen de loginfix hoort in de commit. Zet login.js klaar met add en voer commit -m uit: debug.js moet gewijzigd en zonder commit blijven. Let op: commit -a zou ze allebei meenemen.',
+  'practice.ex12.title': 'Een niet-gevolgde map verwijderen met clean -d',
+  'practice.ex12.goal': 'nuevo.js, twee tijdelijke bestanden (a.tmp en b.tmp) en de map build/ worden niet gevolgd. Verwijder ze met clean, maar houd nuevo.js: dat is nog niet klaar voor add. Kijk eerst met clean -n: zonder -d wordt build/ niet verwijderd, en -e laat weg wat je niet wilt verwijderen.',
   'practice.share': 'Link van de oefening kopiëren',
   'practice.link': 'Link van de oefening',
   'practice.copied': 'Link gekopieerd.',

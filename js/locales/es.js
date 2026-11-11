@@ -581,6 +581,8 @@ GB.i18n.define('es', {
   'practice.ex10.goal': 'Ejecutaste add . sin querer: debug.log quedó preparado y hay dos archivos sin seguir. Saca debug.log con restore --staged, mira la basura con clean -n y bórrala con clean -f. Conserva el cambio de app.js.',
   'practice.ex11.title': 'Commit de solo lo preparado',
   'practice.ex11.goal': 'Cambiaste login.js y debug.js, pero solo el arreglo del login va en el commit. Prepara login.js con add y haz commit -m: debug.js tiene que quedar cambiado y sin commit. Ojo: commit -a se llevaría los dos.',
+  'practice.ex12.title': 'Borrar una carpeta sin seguir con clean -d',
+  'practice.ex12.goal': 'Quedaron sin seguir nuevo.js, dos temporales (a.tmp y b.tmp) y la carpeta build/. Bórralos con clean, pero conserva nuevo.js: todavía no está listo para add. Mira antes con clean -n: sin -d, build/ no se borra, y -e deja fuera lo que no quieres borrar.',
   'practice.share': 'Copiar enlace del ejercicio',
   'practice.link': 'Enlace del ejercicio',
   'practice.copied': 'Enlace copiado.',

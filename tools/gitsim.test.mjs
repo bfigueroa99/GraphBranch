@@ -297,6 +297,7 @@ test('cada ejercicio parte sin resolver y se resuelve con sus comandos', () => {
     ['tag -d v2', 'cherry-pick feature --no-commit', 'cherry-pick --abort'],
     ['restore --staged debug.log', 'clean -n', 'clean -f'],
     ['add login.js', 'commit -m "Fix login"'],
+    ['clean -nd', 'clean -fd -e nuevo.js'],
   ];
   assert.equal(solutions.length, EXERCISES.length);
   EXERCISES.forEach((ex, i) => {
@@ -320,6 +321,13 @@ test('un ejercicio no se da por resuelto con el atajo equivocado', () => {
   const z = start(3, NOW);
   z.run('commit -m "Undo"');
   assert.equal(EXERCISES[3].done(z), false);
+  // clean con carpetas: sin -d la carpeta build queda, y -fd a secas se lleva también nuevo.js
+  const c = start(11, NOW);
+  c.run('clean -f');
+  assert.equal(EXERCISES[11].done(c), false, 'sin -d, build/ sigue ahí');
+  const all = start(11, NOW);
+  all.run('clean -fd');
+  assert.equal(EXERCISES[11].done(all), false, 'clean -fd borra también nuevo.js');
 });
 
 test('Repo vacío: commit crea el primero', () => {
@@ -455,8 +463,8 @@ test('la práctica dice «rama renombrada» en el panel, no una borrada y otra c
 
 test('los números de la URL piden un ejercicio de la lista; lo demás se descarta', () => {
   assert.deepEqual(plain(decodeExercise('3')), { index: 2 });
-  assert.deepEqual(plain(decodeExercise('11')), { index: 10 });
-  for (const bad of ['0', '12', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
+  assert.deepEqual(plain(decodeExercise('12')), { index: 11 });
+  for (const bad of ['0', '13', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
 });
 
 test('un ejercicio propio mal hecho no entra: sin meta, condición inventada, comando que falla o demasiados', () => {
@@ -1224,4 +1232,59 @@ test('rm y mv: deshacer con add, ida y vuelta, amend, rebase, cherry-pick y stas
   assert.deepEqual(status(st).slice(1), clean);
   // git rm -r . sin archivos conocidos avisa en vez de no hacer nada
   assert.equal(fresh().run('git rm -r .').ok, false);
+});
+
+test('clean con rutas, patrones, -d, -e, -q y banderas juntas', () => {
+  const r = fresh();
+  run(r, 'touch --new keep.js', 'touch --new a.tmp', 'touch --new docs/b.tmp', 'touch --new build/out.js', 'touch --new build/sub/map.js');
+  // status muestra la carpeta que git no sigue entera, como git
+  const st = plain(r.run('status').lines);
+  assert.deepEqual(st.slice(st.indexOf('Untracked files:') + 1), ['\tkeep.js', '\ta.tmp', '\tdocs/', '\tbuild/']);
+  // sin -d, lo que vive en una carpeta sin seguir no se toca
+  assert.deepEqual(plain(r.run('clean -n').lines), ['Would remove a.tmp', 'Would remove keep.js']);
+  // banderas juntas, y la carpeta se lista una vez
+  assert.deepEqual(plain(r.run('clean -nd').lines), ['Would remove a.tmp', 'Would remove build/', 'Would remove docs/', 'Would remove keep.js']);
+  assert.deepEqual(plain(r.run('clean -dn -e keep.js -e build').lines), ['Would remove a.tmp', 'Would remove docs/']);
+  // -e con un patrón vale en cualquier carpeta; si deja algo de la carpeta, se borran sus archivos uno a uno
+  assert.deepEqual(plain(r.run('clean -nd --exclude=map.js').lines), ['Would remove a.tmp', 'Would remove build/out.js', 'Would remove docs/', 'Would remove keep.js']);
+  assert.deepEqual(plain(r.run('clean -nde*.tmp').lines), ['Would remove build/', 'Would remove keep.js']);
+  // con rutas, -d no hace falta: el patrón cruza carpetas, como una ruta de git
+  assert.deepEqual(plain(r.run(`clean -n '*.tmp'`).lines), ['Would remove a.tmp', 'Would remove docs/b.tmp']);
+  assert.deepEqual(plain(r.run('clean -n build/').lines), ['Would remove build/out.js', 'Would remove build/sub/map.js']);
+  assert.deepEqual(plain(r.run('clean -n -- nada.txt').lines), []);
+  assert.equal(r.untracked.length, 5, '-n no borra nada');
+  // -f con un patrón borra solo eso
+  assert.deepEqual(plain(r.run('clean -f *.tmp').lines), ['Removing a.tmp', 'Removing docs/b.tmp']);
+  assert.equal(r.cleans, 1);
+  // -q no dice nada pero borra
+  assert.deepEqual(plain(r.run('clean -fdq -e keep.js').lines), []);
+  assert.deepEqual(plain(r.untracked), ['keep.js']);
+  assert.equal(r.cleans, 2);
+  // los errores de git, sin tocar nada
+  assert.match(r.run('clean -d').lines[0], /requireForce/);
+  assert.match(r.run('clean -i').lines[0], /interactive/);
+  assert.match(r.run('clean -fz').lines[0], /unknown switch `z'/);
+  assert.match(r.run('clean --everything').lines[0], /unknown option/);
+  assert.match(r.run('clean -f -e').lines[0], /requires a value/);
+  assert.match(r.run('clean -fxX').lines[0], /cannot be used together/);
+  // -x no cambia nada (sin .gitignore) y -X no borra nada (no hay nada ignorado)
+  assert.deepEqual(plain(r.run('clean -nx').lines), ['Would remove keep.js']);
+  assert.deepEqual(plain(r.run('clean -fX').lines), []);
+  assert.equal(r.cleans, 2, 'un clean que no borró nada no cuenta');
+  assert.deepEqual(plain(r.untracked), ['keep.js']);
+});
+
+test('clean -d no toma por carpeta sin seguir una que git sigue', () => {
+  const r = fresh();
+  // src/app.js va en un commit: src/ es una carpeta seguida, y lo nuevo de adentro se borra sin -d
+  run(r, 'touch --new src/app.js', 'add .', 'commit -m "Add app"', 'touch --new src/tmp.js', 'touch --new lib/x.js');
+  const st = plain(r.run('status').lines);
+  assert.deepEqual(st.slice(st.indexOf('Untracked files:') + 1), ['\tsrc/tmp.js', '\tlib/']);
+  assert.deepEqual(plain(r.run('clean -f').lines), ['Removing src/tmp.js']);
+  // lo preparado o cambiado dentro de una carpeta tampoco la vuelve «sin seguir»
+  run(r, 'touch --new web/a.js', 'touch --new web/b.js', 'add web/a.js');
+  assert.deepEqual(plain(r.run('clean -nd').lines), ['Would remove lib/', 'Would remove web/b.js']);
+  assert.ok(r.run('clean -fd').ok);
+  assert.deepEqual(plain(r.untracked), []);
+  assert.equal(r.staged.map((s) => s.file).join(), 'web/a.js', 'lo preparado no se toca');
 });

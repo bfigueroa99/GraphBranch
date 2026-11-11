@@ -581,6 +581,8 @@ GB.i18n.define('hi', {
   'practice.ex10.goal': 'तुमने गलती से add . चला दिया: debug.log स्टेज हो गई है और दो अनट्रैक्ड फ़ाइलें पड़ी हैं। restore --staged से debug.log को बाहर निकालो, clean -n से कचरा देखो और clean -f से मिटा दो। app.js का बदलाव रहने दो।',
   'practice.ex11.title': 'सिर्फ़ तैयार किया हुआ commit करें',
   'practice.ex11.goal': 'तुमने login.js और debug.js बदले, पर commit में सिर्फ़ लॉगिन का सुधार जाना चाहिए। add से login.js तैयार करो और commit -m चलाओ: debug.js बदला हुआ और बिना commit के रहना चाहिए। ध्यान दो: commit -a दोनों ले लेगा।',
+  'practice.ex12.title': 'clean -d से ट्रैक न किया गया फ़ोल्डर मिटाएँ',
+  'practice.ex12.goal': 'nuevo.js, दो अस्थायी फ़ाइलें (a.tmp और b.tmp) और build/ फ़ोल्डर ट्रैक नहीं हो रहे। इन्हें clean से मिटाएँ, लेकिन nuevo.js रखें: वह अभी add के लिए तैयार नहीं है। पहले clean -n से देखें: -d के बिना build/ नहीं मिटता, और -e वह छोड़ देता है जिसे आप मिटाना नहीं चाहते।',
   'practice.share': 'अभ्यास का लिंक कॉपी करें',
   'practice.link': 'अभ्यास का लिंक',
   'practice.copied': 'लिंक कॉपी हो गया।',

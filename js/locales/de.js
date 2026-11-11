@@ -582,6 +582,8 @@ GB.i18n.define('de', {
   'practice.ex10.goal': 'Du hast versehentlich add . ausgeführt: debug.log ist vorgemerkt, und zwei nicht verfolgte Dateien liegen herum. Nimm debug.log mit restore --staged wieder heraus, sieh dir den Müll mit clean -n an und lösche ihn mit clean -f. Behalte die Änderung in app.js.',
   'practice.ex11.title': 'Nur Vorgemerktes committen',
   'practice.ex11.goal': 'Du hast login.js und debug.js geändert, aber nur die Login-Korrektur gehört in den Commit. Merke login.js mit add vor und führe commit -m aus: debug.js muss geändert und ohne Commit bleiben. Vorsicht: commit -a würde beide mitnehmen.',
+  'practice.ex12.title': 'Einen nicht verfolgten Ordner mit clean -d löschen',
+  'practice.ex12.goal': 'nuevo.js, zwei temporäre Dateien (a.tmp und b.tmp) und der Ordner build/ sind nicht verfolgt. Lösche sie mit clean, aber behalte nuevo.js: Die Datei ist noch nicht bereit für add. Schau zuerst mit clean -n: Ohne -d wird build/ nicht gelöscht, und -e lässt aus, was du nicht löschen willst.',
   'practice.share': 'Link zur Übung kopieren',
   'practice.link': 'Link zur Übung',
   'practice.copied': 'Link kopiert.',

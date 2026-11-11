@@ -581,6 +581,8 @@ GB.i18n.define('bg', {
   'practice.ex10.goal': 'Изпълни add . по грешка: debug.log е подготвен и има два неследени файла. Извади debug.log с restore --staged, виж боклука с clean -n и го изтрий с clean -f. Запази промяната в app.js.',
   'practice.ex11.title': 'Commit само на подготвеното',
   'practice.ex11.goal': 'Промени login.js и debug.js, но в commit-а влиза само поправката на входа. Подготви login.js с add и изпълни commit -m: debug.js трябва да остане променен и без commit. Внимание: commit -a би взел и двата.',
+  'practice.ex12.title': 'Изтрий непроследена папка с clean -d',
+  'practice.ex12.goal': 'nuevo.js, два временни файла (a.tmp и b.tmp) и папката build/ не се проследяват. Изтрий ги с clean, но запази nuevo.js: още не е готов за add. Първо виж с clean -n: без -d build/ не се изтрива, а -e изключва това, което не искаш да триеш.',
   'practice.share': 'Копиране на връзката към упражнението',
   'practice.link': 'Връзка към упражнението',
   'practice.copied': 'Връзката е копирана.',

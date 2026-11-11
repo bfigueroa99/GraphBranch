@@ -581,6 +581,8 @@ GB.i18n.define('id', {
   'practice.ex10.goal': 'Kamu tak sengaja menjalankan add .: debug.log ter-stage dan ada dua berkas yang tidak dilacak. Keluarkan debug.log dengan restore --staged, lihat sampahnya dengan clean -n, lalu hapus dengan clean -f. Pertahankan perubahan di app.js.',
   'practice.ex11.title': 'Commit hanya yang di-stage',
   'practice.ex11.goal': 'Kamu mengubah login.js dan debug.js, tetapi hanya perbaikan login yang masuk commit. Stage login.js dengan add lalu jalankan commit -m: debug.js harus tetap berubah dan tanpa commit. Hati-hati: commit -a akan mengambil keduanya.',
+  'practice.ex12.title': 'Hapus folder yang tidak dilacak dengan clean -d',
+  'practice.ex12.goal': 'nuevo.js, dua berkas sementara (a.tmp dan b.tmp), dan folder build/ tidak dilacak. Hapus semuanya dengan clean, tetapi simpan nuevo.js: berkas itu belum siap untuk add. Lihat dulu dengan clean -n: tanpa -d, build/ tidak terhapus, dan -e mengecualikan yang tidak ingin kamu hapus.',
   'practice.share': 'Salin tautan latihan',
   'practice.link': 'Tautan latihan',
   'practice.copied': 'Tautan disalin.',

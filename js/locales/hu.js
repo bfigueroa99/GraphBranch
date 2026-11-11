@@ -581,6 +581,8 @@ GB.i18n.define('hu', {
   'practice.ex10.goal': 'Véletlenül lefuttattad az add . parancsot: a debug.log előkészített állapotba került, és két nem követett fájl hever. Vedd ki a debug.log-ot a restore --staged paranccsal, nézd meg a szemetet a clean -n paranccsal, és töröld a clean -f paranccsal. Az app.js módosítását tartsd meg.',
   'practice.ex11.title': 'Csak az előkészített commitolása',
   'practice.ex11.goal': 'Módosítottad a login.js-t és a debug.js-t, de a commitba csak a bejelentkezés javítása kerül. Készítsd elő a login.js-t az add paranccsal, és futtasd a commit -m-et: a debug.js maradjon módosítva, commit nélkül. Vigyázz: a commit -a mindkettőt vinné.',
+  'practice.ex12.title': 'Követetlen mappa törlése a clean -d paranccsal',
+  'practice.ex12.goal': 'A nuevo.js, két ideiglenes fájl (a.tmp és b.tmp) és a build/ mappa nincs követve. Töröld őket a clean paranccsal, de tartsd meg a nuevo.js fájlt: még nem áll készen az add-ra. Előbb nézd meg a clean -n paranccsal: -d nélkül a build/ nem törlődik, a -e pedig kihagyja, amit nem akarsz törölni.',
   'practice.share': 'Feladat linkjének másolása',
   'practice.link': 'A feladat linkje',
   'practice.copied': 'Link másolva.',

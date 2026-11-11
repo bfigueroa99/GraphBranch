@@ -581,6 +581,8 @@ GB.i18n.define('sw', {
   'practice.ex10.goal': 'Umeendesha add . kwa bahati mbaya: debug.log imewekwa kwenye staging na kuna faili mbili zisizofuatiliwa. Itoe debug.log kwa restore --staged, tazama takataka kwa clean -n, kisha zifute kwa clean -f. Weka mabadiliko ya app.js.',
   'practice.ex11.title': 'Commit kilichoandaliwa tu',
   'practice.ex11.goal': 'Ulibadilisha login.js na debug.js, lakini ni marekebisho ya kuingia pekee yanayopaswa kuingia kwenye commit. Andaa login.js kwa add kisha endesha commit -m: debug.js lazima ibaki imebadilishwa bila commit. Tahadhari: commit -a ingechukua zote mbili.',
+  'practice.ex12.title': 'Futa folda isiyofuatiliwa kwa clean -d',
+  'practice.ex12.goal': 'nuevo.js, faili mbili za muda (a.tmp na b.tmp) na folda build/ hazifuatiliwi. Zifute kwa clean, lakini bakiza nuevo.js: bado haiko tayari kwa add. Angalia kwanza kwa clean -n: bila -d, build/ haifutwi, na -e huacha nje usichotaka kufuta.',
   'practice.share': 'Nakili kiungo cha zoezi',
   'practice.link': 'Kiungo cha zoezi',
   'practice.copied': 'Kiungo kimenakiliwa.',

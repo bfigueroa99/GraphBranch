@@ -581,6 +581,8 @@ GB.i18n.define('bn', {
   'practice.ex10.goal': 'ভুলে add . চালিয়েছ: debug.log স্টেজ হয়ে গেছে আর দুটি ট্র্যাক-না-করা ফাইল পড়ে আছে। restore --staged দিয়ে debug.log বের করো, clean -n দিয়ে জঞ্জাল দেখো, তারপর clean -f দিয়ে মুছে দাও। app.js-এর পরিবর্তন রেখে দাও।',
   'practice.ex11.title': 'শুধু প্রস্তুত করাটুকু commit',
   'practice.ex11.goal': 'তুমি login.js আর debug.js বদলেছ, কিন্তু commit-এ যাবে শুধু লগইনের সমাধান। add দিয়ে login.js প্রস্তুত করো, তারপর commit -m চালাও: debug.js বদলানো অবস্থায় commit ছাড়াই থাকবে। সাবধান: commit -a দুটোই নিয়ে নেবে।',
+  'practice.ex12.title': 'clean -d দিয়ে ট্র্যাক না-করা ফোল্ডার মুছুন',
+  'practice.ex12.goal': 'nuevo.js, দুটি অস্থায়ী ফাইল (a.tmp ও b.tmp) আর build/ ফোল্ডার ট্র্যাক করা হচ্ছে না। clean দিয়ে এগুলো মুছুন, কিন্তু nuevo.js রেখে দিন: এটি এখনও add-এর জন্য তৈরি নয়। আগে clean -n দিয়ে দেখুন: -d ছাড়া build/ মোছে না, আর -e যা মুছতে চান না তা বাদ রাখে।',
   'practice.share': 'অনুশীলনীর লিংক কপি করুন',
   'practice.link': 'অনুশীলনীর লিংক',
   'practice.copied': 'লিংক কপি হয়েছে।',

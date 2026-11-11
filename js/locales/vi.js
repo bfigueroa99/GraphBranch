@@ -581,6 +581,8 @@ GB.i18n.define('vi', {
   'practice.ex10.goal': 'Bạn lỡ chạy add .: debug.log đã vào vùng chuẩn bị và còn hai tệp chưa được theo dõi. Lấy debug.log ra bằng restore --staged, xem đống rác bằng clean -n rồi xóa bằng clean -f. Giữ lại thay đổi ở app.js.',
   'practice.ex11.title': 'Chỉ commit những gì đã stage',
   'practice.ex11.goal': 'Bạn đã sửa login.js và debug.js, nhưng chỉ bản sửa đăng nhập mới được vào commit. Hãy stage login.js bằng add rồi chạy commit -m: debug.js phải vẫn bị sửa và chưa commit. Cẩn thận: commit -a sẽ lấy cả hai.',
+  'practice.ex12.title': 'Xóa thư mục không được theo dõi bằng clean -d',
+  'practice.ex12.goal': 'nuevo.js, hai tệp tạm (a.tmp và b.tmp) và thư mục build/ không được theo dõi. Hãy xóa chúng bằng clean, nhưng giữ lại nuevo.js: tệp này chưa sẵn sàng để add. Xem trước bằng clean -n: không có -d thì build/ không bị xóa, còn -e loại ra những gì bạn không muốn xóa.',
   'practice.share': 'Sao chép liên kết bài tập',
   'practice.link': 'Liên kết bài tập',
   'practice.copied': 'Đã sao chép liên kết.',

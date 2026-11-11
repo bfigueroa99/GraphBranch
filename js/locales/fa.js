@@ -624,6 +624,8 @@ GB.i18n.define('fa', {
   'practice.ex10.goal': 'اشتباهی add . اجرا کردی: debug.log آماده‌ی کامیت شده و دو فایل دنبال‌نشده هم مانده است. debug.log را با restore --staged بیرون بیاور، زباله‌ها را با clean -n ببین و با clean -f پاک کن. تغییر app.js را نگه دار.',
   'practice.ex11.title': 'کامیت فقط آماده‌شده‌ها',
   'practice.ex11.goal': 'login.js و debug.js را تغییر دادی، اما فقط اصلاح ورود باید در کامیت باشد. login.js را با add آماده کن و commit -m را اجرا کن: debug.js باید تغییریافته و بدون کامیت بماند. مراقب باش: commit -a هر دو را می‌برد.',
+  'practice.ex12.title': 'یک پوشهٔ ردیابی‌نشده را با clean -d پاک کن',
+  'practice.ex12.goal': 'nuevo.js، دو فایل موقت (a.tmp و b.tmp) و پوشهٔ build/ ردیابی نمی‌شوند. آن‌ها را با clean پاک کن، اما nuevo.js را نگه دار: هنوز برای add آماده نیست. اول با clean -n نگاه کن: بدون -d پوشهٔ build/ پاک نمی‌شود و -e چیزی را که نمی‌خواهی پاک شود کنار می‌گذارد.',
   'practice.share': 'کپی پیوند تمرین',
   'practice.link': 'پیوند تمرین',
   'practice.copied': 'پیوند کپی شد.',

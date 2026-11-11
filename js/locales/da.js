@@ -583,6 +583,8 @@ GB.i18n.define('da', {
   'practice.ex11.goal': 'Du har ændret login.js og debug.js, men kun login-rettelsen hører til i committet. Forbered login.js med add og kør commit -m: debug.js skal forblive ændret og uden commit. Pas på: commit -a ville tage begge.',
   'practice.ex12.title': 'Slet en usporet mappe med clean -d',
   'practice.ex12.goal': 'nuevo.js, to midlertidige filer (a.tmp og b.tmp) og mappen build/ er ikke sporet. Slet dem med clean, men behold nuevo.js: den er ikke klar til add endnu. Kig først med clean -n: uden -d slettes build/ ikke, og -e udelader det, du ikke vil slette.',
+  'practice.ex13.title': 'Kig i en stash, før du henter den tilbage',
+  'practice.ex13.goal': 'Der er to stashes på main, og stash list viser dem ens: den ene gemmer login.js og login.css, den anden notes.txt. Se, hvad hver gemmer, med stash show (stash show stash@{1} for den anden), og hent kun login-stashen tilbage med stash pop. Den med notes.txt skal blive gemt.',
   'practice.share': 'Kopiér opgavens link',
   'practice.link': 'Opgavens link',
   'practice.copied': 'Link kopieret.',

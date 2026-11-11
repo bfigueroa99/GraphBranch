@@ -583,6 +583,8 @@ GB.i18n.define('ca', {
   'practice.ex11.goal': 'Has canviat login.js i debug.js, però només l’arranjament del login va al commit. Prepara login.js amb add i fes commit -m: debug.js ha de quedar canviat i sense commit. Compte: commit -a s’enduria tots dos.',
   'practice.ex12.title': 'Esborrar una carpeta sense seguiment amb clean -d',
   'practice.ex12.goal': 'Han quedat sense seguiment nuevo.js, dos temporals (a.tmp i b.tmp) i la carpeta build/. Esborra’ls amb clean, però conserva nuevo.js: encara no està llest per a add. Mira-ho abans amb clean -n: sense -d, build/ no s’esborra, i -e deixa fora el que no vols esborrar.',
+  'practice.ex13.title': 'Mira un stash abans de recuperar-lo',
+  'practice.ex13.goal': 'Hi ha dos stash a main i stash list els mostra iguals: un guarda login.js i login.css, l\'altre notes.txt. Mira què guarda cadascun amb stash show (stash show stash@{1} per al segon) i recupera només el del login amb stash pop. El de notes.txt ha de quedar guardat.',
   'practice.share': 'Copia l\'enllaç de l\'exercici',
   'practice.link': 'Enllaç de l\'exercici',
   'practice.copied': 'Enllaç copiat.',

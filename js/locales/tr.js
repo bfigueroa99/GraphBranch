@@ -583,6 +583,8 @@ GB.i18n.define('tr', {
   'practice.ex11.goal': 'login.js ve debug.js dosyalarını değiştirdin ama commit’e yalnızca giriş düzeltmesi girmeli. login.js’i add ile hazırla ve commit -m çalıştır: debug.js değişmiş ve commit’siz kalmalı. Dikkat: commit -a ikisini birden alır.',
   'practice.ex12.title': 'İzlenmeyen bir klasörü clean -d ile sil',
   'practice.ex12.goal': 'nuevo.js, iki geçici dosya (a.tmp ve b.tmp) ve build/ klasörü izlenmiyor. Bunları clean ile sil ama nuevo.js kalsın: henüz add için hazır değil. Önce clean -n ile bak: -d olmadan build/ silinmez, -e ise silmek istemediğini dışarıda bırakır.',
+  'practice.ex13.title': 'Geri getirmeden önce stash\'in içine bak',
+  'practice.ex13.goal': 'main üzerinde iki stash var ve stash list ikisini aynı gösteriyor: biri login.js ile login.css\'i, diğeri notes.txt\'yi saklıyor. Her birinin ne sakladığına stash show ile bak (ikincisi için stash show stash@{1}) ve yalnızca giriş stash\'ini stash pop ile geri getir. notes.txt olanı saklı kalmalı.',
   'practice.share': 'Alıştırma bağlantısını kopyala',
   'practice.link': 'Alıştırma bağlantısı',
   'practice.copied': 'Bağlantı kopyalandı.',

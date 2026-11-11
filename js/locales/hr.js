@@ -591,6 +591,8 @@ GB.i18n.define('hr', {
   'practice.ex11.goal': 'Promijenio si login.js i debug.js, ali u commit ide samo popravak prijave. Pripremi login.js s add i pokreni commit -m: debug.js mora ostati promijenjen i bez commita. Pazi: commit -a uzeo bi oba.',
   'practice.ex12.title': 'Obriši nepraćenu mapu pomoću clean -d',
   'practice.ex12.goal': 'nuevo.js, dvije privremene datoteke (a.tmp i b.tmp) i mapa build/ nisu praćeni. Obriši ih pomoću clean, ali zadrži nuevo.js: još nije spreman za add. Prvo pogledaj pomoću clean -n: bez -d build/ se ne briše, a -e izostavlja ono što ne želiš obrisati.',
+  'practice.ex13.title': 'Pogledaj stash prije nego što ga vratiš',
+  'practice.ex13.goal': 'Na mainu su dva stasha i stash list ih prikazuje jednako: jedan čuva login.js i login.css, drugi notes.txt. Pogledaj što koji čuva sa stash show (stash show stash@{1} za drugi) i vrati samo onaj za prijavu sa stash pop. Onaj s notes.txt mora ostati spremljen.',
   'practice.share': 'Kopiraj poveznicu vježbe',
   'practice.link': 'Poveznica vježbe',
   'practice.copied': 'Poveznica kopirana.',

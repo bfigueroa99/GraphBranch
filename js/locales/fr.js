@@ -584,6 +584,8 @@ GB.i18n.define('fr', {
   'practice.ex11.goal': 'Tu as modifié login.js et debug.js, mais seul le correctif de connexion va dans le commit. Indexe login.js avec add et lance commit -m : debug.js doit rester modifié et sans commit. Attention : commit -a prendrait les deux.',
   'practice.ex12.title': 'Supprimer un dossier non suivi avec clean -d',
   'practice.ex12.goal': 'nuevo.js, deux fichiers temporaires (a.tmp et b.tmp) et le dossier build/ ne sont pas suivis. Supprime-les avec clean, mais garde nuevo.js : il n’est pas encore prêt pour add. Regarde d’abord avec clean -n : sans -d, build/ n’est pas supprimé, et -e laisse de côté ce que tu ne veux pas supprimer.',
+  'practice.ex13.title': 'Regarder un stash avant de le récupérer',
+  'practice.ex13.goal': 'Il y a deux stash sur main et stash list les affiche pareils : l\'un garde login.js et login.css, l\'autre notes.txt. Regarde ce que chacun garde avec stash show (stash show stash@{1} pour le second) et récupère seulement celui du login avec stash pop. Celui de notes.txt doit rester de côté.',
   'practice.share': 'Copier le lien de l\'exercice',
   'practice.link': 'Lien de l\'exercice',
   'practice.copied': 'Lien copié.',

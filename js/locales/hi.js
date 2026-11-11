@@ -583,6 +583,8 @@ GB.i18n.define('hi', {
   'practice.ex11.goal': 'तुमने login.js और debug.js बदले, पर commit में सिर्फ़ लॉगिन का सुधार जाना चाहिए। add से login.js तैयार करो और commit -m चलाओ: debug.js बदला हुआ और बिना commit के रहना चाहिए। ध्यान दो: commit -a दोनों ले लेगा।',
   'practice.ex12.title': 'clean -d से ट्रैक न किया गया फ़ोल्डर मिटाएँ',
   'practice.ex12.goal': 'nuevo.js, दो अस्थायी फ़ाइलें (a.tmp और b.tmp) और build/ फ़ोल्डर ट्रैक नहीं हो रहे। इन्हें clean से मिटाएँ, लेकिन nuevo.js रखें: वह अभी add के लिए तैयार नहीं है। पहले clean -n से देखें: -d के बिना build/ नहीं मिटता, और -e वह छोड़ देता है जिसे आप मिटाना नहीं चाहते।',
+  'practice.ex13.title': 'वापस लाने से पहले stash के अंदर देखें',
+  'practice.ex13.goal': 'main पर दो stash हैं और stash list उन्हें एक जैसा दिखाता है: एक में login.js और login.css हैं, दूसरे में notes.txt। stash show से देखें कि किसमें क्या है (दूसरे के लिए stash show stash@{1}) और stash pop से सिर्फ़ लॉगिन वाला वापस लाएँ। notes.txt वाला सहेजा हुआ रहना चाहिए।',
   'practice.share': 'अभ्यास का लिंक कॉपी करें',
   'practice.link': 'अभ्यास का लिंक',
   'practice.copied': 'लिंक कॉपी हो गया।',

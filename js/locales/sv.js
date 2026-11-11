@@ -583,6 +583,8 @@ GB.i18n.define('sv', {
   'practice.ex11.goal': 'Du har ändrat login.js och debug.js, men bara inloggningsfixen hör hemma i committen. Förbered login.js med add och kör commit -m: debug.js ska förbli ändrad och utan commit. Se upp: commit -a skulle ta med båda.',
   'practice.ex12.title': 'Ta bort en ospårad mapp med clean -d',
   'practice.ex12.goal': 'nuevo.js, två temporära filer (a.tmp och b.tmp) och mappen build/ spåras inte. Ta bort dem med clean, men behåll nuevo.js: den är inte redo för add än. Titta först med clean -n: utan -d tas build/ inte bort, och -e utesluter det du inte vill ta bort.',
+  'practice.ex13.title': 'Titta i en stash innan du hämtar tillbaka den',
+  'practice.ex13.goal': 'Det finns två stashar på main och stash list visar dem likadant: den ena sparar login.js och login.css, den andra notes.txt. Se vad var och en sparar med stash show (stash show stash@{1} för den andra) och hämta bara tillbaka inloggnings-stashen med stash pop. Den med notes.txt ska ligga kvar.',
   'practice.share': 'Kopiera övningens länk',
   'practice.link': 'Övningens länk',
   'practice.copied': 'Länken har kopierats.',

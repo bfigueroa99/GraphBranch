@@ -583,6 +583,8 @@ GB.i18n.define('ms', {
   'practice.ex11.goal': 'Anda mengubah login.js dan debug.js, tetapi hanya pembaikan log masuk yang patut masuk commit. Sediakan login.js dengan add dan jalankan commit -m: debug.js mesti kekal berubah dan tanpa commit. Awas: commit -a akan mengambil kedua-duanya.',
   'practice.ex12.title': 'Padam folder yang tidak dijejak dengan clean -d',
   'practice.ex12.goal': 'nuevo.js, dua fail sementara (a.tmp dan b.tmp) dan folder build/ tidak dijejak. Padamkannya dengan clean, tetapi simpan nuevo.js: ia belum sedia untuk add. Lihat dahulu dengan clean -n: tanpa -d, build/ tidak dipadam, dan -e mengecualikan apa yang anda tidak mahu padam.',
+  'practice.ex13.title': 'Lihat isi stash sebelum memulihkannya',
+  'practice.ex13.goal': 'Ada dua stash di main dan stash list memaparkannya sama: satu menyimpan login.js dan login.css, satu lagi notes.txt. Lihat isi setiap satu dengan stash show (stash show stash@{1} untuk yang kedua) dan pulihkan hanya stash log masuk dengan stash pop. Stash notes.txt mesti kekal tersimpan.',
   'practice.share': 'Salin pautan latihan',
   'practice.link': 'Pautan latihan',
   'practice.copied': 'Pautan disalin.',

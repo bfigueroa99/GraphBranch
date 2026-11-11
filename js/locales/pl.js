@@ -594,6 +594,8 @@ GB.i18n.define('pl', {
   'practice.ex11.goal': 'Zmieniłeś login.js i debug.js, ale do commita należy tylko poprawka logowania. Przygotuj login.js poleceniem add i uruchom commit -m: debug.js ma zostać zmieniony i bez commita. Uwaga: commit -a zabrałby oba.',
   'practice.ex12.title': 'Usuń nieśledzony folder poleceniem clean -d',
   'practice.ex12.goal': 'nuevo.js, dwa pliki tymczasowe (a.tmp i b.tmp) oraz folder build/ nie są śledzone. Usuń je poleceniem clean, ale zachowaj nuevo.js: nie jest jeszcze gotowy do add. Najpierw sprawdź poleceniem clean -n: bez -d folder build/ nie zostanie usunięty, a -e pomija to, czego nie chcesz usuwać.',
+  'practice.ex13.title': 'Zajrzyj do stasha, zanim go przywrócisz',
+  'practice.ex13.goal': 'Na main są dwa stashe, a stash list pokazuje je tak samo: jeden trzyma login.js i login.css, drugi notes.txt. Sprawdź poleceniem stash show, co trzyma każdy (stash show stash@{1} dla drugiego), i przywróć tylko ten z logowaniem przez stash pop. Ten z notes.txt ma zostać zapisany.',
   'practice.share': 'Kopiuj link do ćwiczenia',
   'practice.link': 'Link do ćwiczenia',
   'practice.copied': 'Skopiowano link.',

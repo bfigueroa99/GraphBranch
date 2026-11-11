@@ -583,6 +583,8 @@ GB.i18n.define('sw', {
   'practice.ex11.goal': 'Ulibadilisha login.js na debug.js, lakini ni marekebisho ya kuingia pekee yanayopaswa kuingia kwenye commit. Andaa login.js kwa add kisha endesha commit -m: debug.js lazima ibaki imebadilishwa bila commit. Tahadhari: commit -a ingechukua zote mbili.',
   'practice.ex12.title': 'Futa folda isiyofuatiliwa kwa clean -d',
   'practice.ex12.goal': 'nuevo.js, faili mbili za muda (a.tmp na b.tmp) na folda build/ hazifuatiliwi. Zifute kwa clean, lakini bakiza nuevo.js: bado haiko tayari kwa add. Angalia kwanza kwa clean -n: bila -d, build/ haifutwi, na -e huacha nje usichotaka kufuta.',
+  'practice.ex13.title': 'Tazama ndani ya stash kabla ya kuirudisha',
+  'practice.ex13.goal': 'Kuna stash mbili kwenye main na stash list inazionyesha sawa: moja inahifadhi login.js na login.css, nyingine notes.txt. Tazama kila moja inahifadhi nini kwa stash show (stash show stash@{1} kwa ya pili) kisha rudisha ile ya kuingia tu kwa stash pop. Ile ya notes.txt lazima ibaki imehifadhiwa.',
   'practice.share': 'Nakili kiungo cha zoezi',
   'practice.link': 'Kiungo cha zoezi',
   'practice.copied': 'Kiungo kimenakiliwa.',

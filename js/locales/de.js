@@ -584,6 +584,8 @@ GB.i18n.define('de', {
   'practice.ex11.goal': 'Du hast login.js und debug.js geändert, aber nur die Login-Korrektur gehört in den Commit. Merke login.js mit add vor und führe commit -m aus: debug.js muss geändert und ohne Commit bleiben. Vorsicht: commit -a würde beide mitnehmen.',
   'practice.ex12.title': 'Einen nicht verfolgten Ordner mit clean -d löschen',
   'practice.ex12.goal': 'nuevo.js, zwei temporäre Dateien (a.tmp und b.tmp) und der Ordner build/ sind nicht verfolgt. Lösche sie mit clean, aber behalte nuevo.js: Die Datei ist noch nicht bereit für add. Schau zuerst mit clean -n: Ohne -d wird build/ nicht gelöscht, und -e lässt aus, was du nicht löschen willst.',
+  'practice.ex13.title': 'In einen Stash schauen, bevor man ihn zurückholt',
+  'practice.ex13.goal': 'Auf main liegen zwei Stashes, und stash list zeigt sie gleich: einer hält login.js und login.css, der andere notes.txt. Sieh mit stash show nach, was jeder enthält (stash show stash@{1} für den zweiten), und hol nur den Login-Stash mit stash pop zurück. Der mit notes.txt muss gespeichert bleiben.',
   'practice.share': 'Link zur Übung kopieren',
   'practice.link': 'Link zur Übung',
   'practice.copied': 'Link kopiert.',

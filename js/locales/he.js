@@ -640,6 +640,8 @@ GB.i18n.define('he', {
   'practice.ex11.goal': 'שינית את login.js ואת debug.js, אבל רק תיקון ההתחברות שייך לקומיט. הכן את login.js עם add והרץ commit -m: debug.js צריך להישאר משונה ובלי קומיט. זהירות: commit -a ייקח את שניהם.',
   'practice.ex12.title': 'מחק תיקייה שאינה במעקב עם clean -d',
   'practice.ex12.goal': 'nuevo.js, שני קבצים זמניים (a.tmp ו-b.tmp) והתיקייה build/ אינם במעקב. מחק אותם עם clean, אבל השאר את nuevo.js: הוא עוד לא מוכן ל-add. בדוק קודם עם clean -n: בלי -d התיקייה build/ לא נמחקת, ו-e משאיר בחוץ את מה שאינך רוצה למחוק.',
+  'practice.ex13.title': 'הצץ לתוך stash לפני שמחזירים אותו',
+  'practice.ex13.goal': 'יש שני stash על main ו-stash list מציג אותם זהים: אחד שומר את login.js ו-login.css, והשני את notes.txt. בדוק מה כל אחד שומר עם stash show (stash show stash@{1} לשני) והחזר רק את זה של ההתחברות עם stash pop. זה של notes.txt צריך להישאר שמור.',
   'practice.share': 'העתקת קישור התרגיל',
   'practice.link': 'קישור התרגיל',
   'practice.copied': 'הקישור הועתק.',

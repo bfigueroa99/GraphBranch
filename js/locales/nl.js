@@ -584,6 +584,8 @@ GB.i18n.define('nl', {
   'practice.ex11.goal': 'Je hebt login.js en debug.js gewijzigd, maar alleen de loginfix hoort in de commit. Zet login.js klaar met add en voer commit -m uit: debug.js moet gewijzigd en zonder commit blijven. Let op: commit -a zou ze allebei meenemen.',
   'practice.ex12.title': 'Een niet-gevolgde map verwijderen met clean -d',
   'practice.ex12.goal': 'nuevo.js, twee tijdelijke bestanden (a.tmp en b.tmp) en de map build/ worden niet gevolgd. Verwijder ze met clean, maar houd nuevo.js: dat is nog niet klaar voor add. Kijk eerst met clean -n: zonder -d wordt build/ niet verwijderd, en -e laat weg wat je niet wilt verwijderen.',
+  'practice.ex13.title': 'Kijk in een stash voordat je hem terughaalt',
+  'practice.ex13.goal': 'Er staan twee stashes op main en stash list toont ze hetzelfde: de ene bewaart login.js en login.css, de andere notes.txt. Bekijk met stash show wat elk bewaart (stash show stash@{1} voor de tweede) en haal alleen de login-stash terug met stash pop. Die met notes.txt moet bewaard blijven.',
   'practice.share': 'Link van de oefening kopiëren',
   'practice.link': 'Link van de oefening',
   'practice.copied': 'Link gekopieerd.',

@@ -1889,12 +1889,15 @@
     const forkRows = h.forks.rows
       .map((r) => `<li><a class="hl-row" href="${U.esc(U.safeUrl(r.url))}" target="_blank" rel="noopener noreferrer"><span class="hl-main">${U.esc(r.fullName)}</span><span class="hl-aside">${r.stars ? `★ ${U.fmtNum(r.stars)} · ` : ''}${U.esc(span(r.idle))}</span></a></li>`)
       .join('');
-    const forksBody = !showForks ? '' : forkRows ? `<ul class="hl-list">${forkRows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`;
+    const delta = (w, p) => (w > p ? `+${U.fmtNum(w - p)}` : w < p ? `−${U.fmtNum(p - w)}` : '±0'); // la diferencia de esta semana frente a la anterior
+    // forks nuevos de la semana frente a la anterior, de la actividad ya cargada (sin consultas): solo si alguna de las dos tiene alguno
+    const forkTrend = showForks && (h.forkTrend.week || h.forkTrend.prev) ? `<p class="hl-line" id="hl-forks-trend">${U.esc(t('health.forksNew', { week: U.fmtNum(h.forkTrend.week), prev: U.fmtNum(h.forkTrend.prev), delta: delta(h.forkTrend.week, h.forkTrend.prev) }))}</p>` : '';
+    const forksBody = !showForks ? '' : forkTrend + (forkRows ? `<ul class="hl-list">${forkRows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`);
     el.healthBody.innerHTML =
       `<section class="hl-sec" id="hl-forks"><h3>${U.esc(t('health.forks'))}${showForks ? ` <span class="hl-n">${U.fmtNum(h.forks.total)}</span>` : ''}</h3><label class="hl-switch"><input type="checkbox" id="hl-forks-toggle"${showForks ? ' checked' : ''}> ${U.esc(t('health.forksShow'))}</label>${showForks ? `<label class="hl-switch"><input type="checkbox" id="hl-forks-stars"${forksByStars ? ' checked' : ''}> ${U.esc(t('health.forksByStars'))}</label>` : ''}${forksBody}</section>` +
       `<section class="hl-sec" id="hl-stars"><h3>${U.esc(t('health.stars'))}</h3>${
         h.stars.week || h.stars.prev
-          ? `<p class="hl-line">${U.esc(t('health.starsWeek', { week: U.fmtNum(h.stars.week), prev: U.fmtNum(h.stars.prev), delta: h.stars.week > h.stars.prev ? `+${U.fmtNum(h.stars.week - h.stars.prev)}` : h.stars.week < h.stars.prev ? `−${U.fmtNum(h.stars.prev - h.stars.week)}` : '±0' }))}</p>`
+          ? `<p class="hl-line">${U.esc(t('health.starsWeek', { week: U.fmtNum(h.stars.week), prev: U.fmtNum(h.stars.prev), delta: delta(h.stars.week, h.stars.prev) }))}</p>`
           : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
       healthList('stale', t('health.stale'), h.stale, (r) => [r.name, span(r.idle)]) +

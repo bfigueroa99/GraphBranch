@@ -503,6 +503,7 @@ GB.i18n.define('nb', {
   'health.forksByStars': 'Sorter forks etter stjerner',
   'health.stars': 'Nye stjerner',
   'health.starsWeek': '{week} denne uken · {prev} uken før ({delta})',
+  'health.forksNew': 'Nye forks: {week} denne uken · {prev} uken før ({delta})',
   'health.stale': 'Grener uten aktivitet på over 30 dager og uten pull request',
   'health.prs': 'Åpne pull requests, eldste først',
   'health.unreviewed': 'Pull requests uten gjennomgang i over 7 dager',

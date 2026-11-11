@@ -503,6 +503,7 @@ GB.i18n.define('id', {
   'health.forksByStars': 'Urutkan fork menurut bintang',
   'health.stars': 'Bintang baru',
   'health.starsWeek': '{week} minggu ini · {prev} minggu lalu ({delta})',
+  'health.forksNew': 'Fork baru: {week} minggu ini · {prev} minggu lalu ({delta})',
   'health.stale': 'Cabang tanpa aktivitas lebih dari 30 hari dan tanpa pull request',
   'health.prs': 'Pull request terbuka, yang terlama dulu',
   'health.unreviewed': 'Pull request tanpa tinjauan lebih dari 7 hari',

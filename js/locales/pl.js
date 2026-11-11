@@ -514,6 +514,7 @@ GB.i18n.define('pl', {
   'health.forksByStars': 'Sortuj forki według gwiazdek',
   'health.stars': 'Nowe gwiazdki',
   'health.starsWeek': '{week} w tym tygodniu · {prev} w poprzednim ({delta})',
+  'health.forksNew': 'Nowe forki: {week} w tym tygodniu · {prev} w poprzednim ({delta})',
   'health.stale': 'Gałęzie bez aktywności od ponad 30 dni i bez pull requesta',
   'health.prs': 'Otwarte pull requesty, od najstarszych',
   'health.unreviewed': 'Pull requesty bez recenzji od ponad 7 dni',

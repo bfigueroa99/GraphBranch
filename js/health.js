@@ -178,6 +178,17 @@
       if (!starred.has(k) || a.time < starred.get(k).time) starred.set(k, { time: a.time });
     }
     const starWeeks = weekly([...starred.values()], now);
+    // forks nuevos: cada fork (su nombre completo, sin distinguir mayúsculas) cuenta una vez, con la hora en que se vio
+    // primero; sin nombre, cada actividad cuenta sola. Sale de la actividad ya cargada: no pide la lista de forks
+    const forked = new Map();
+    for (const a of acts) {
+      if (a.kind !== 'fork' || !a.time) continue;
+      const name = String(a.detail || '').trim().toLowerCase();
+      const k = name ? `f:${name}` : a.id;
+      if (k == null) continue;
+      if (!forked.has(k) || a.time < forked.get(k).time) forked.set(k, { time: a.time });
+    }
+    const forkWeeks = weekly([...forked.values()], now);
     // el tiempo de entrega cuenta desde el primer commit del PR si ya se conoce (data.firstCommits), si no desde su apertura
     let fromCommit = 0;
     const lead = merges
@@ -257,6 +268,7 @@
       dora,
       leadSource: { fromCommit, total: lead.length },
       ci,
+      forkTrend: { week: forkWeeks[WEEKS - 1], prev: forkWeeks[WEEKS - 2] }, // forks nuevos en los últimos 7 días y en los 7 anteriores
       stars: { week: starWeeks[WEEKS - 1], prev: starWeeks[WEEKS - 2] }, // estrellas nuevas en los últimos 7 días y en los 7 anteriores
       pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), authorWeeks: authorsWeekly(data.commits.values(), now), tagWeeks: weekly(tagTimes, now), issueWeeks: weekly([...issueOpened.values()], now), prCloseWeeks: weekly([...prClosed.values()], now) }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
     };

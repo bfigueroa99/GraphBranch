@@ -503,6 +503,7 @@ GB.i18n.define('sw', {
   'health.forksByStars': 'Panga fork kwa nyota',
   'health.stars': 'Nyota mpya',
   'health.starsWeek': '{week} wiki hii · {prev} wiki iliyopita ({delta})',
+  'health.forksNew': 'Fork mpya: {week} wiki hii · {prev} wiki iliyopita ({delta})',
   'health.stale': 'Matawi yasiyo na shughuli kwa zaidi ya siku 30 na yasiyo na pull request',
   'health.prs': 'Pull request zilizo wazi, za zamani kwanza',
   'health.unreviewed': 'Pull request zisizo na ukaguzi kwa zaidi ya siku 7',

@@ -503,6 +503,7 @@ GB.i18n.define('el', {
   'health.forksByStars': 'Ταξινόμηση των forks κατά αστέρια',
   'health.stars': 'Νέα αστέρια',
   'health.starsWeek': '{week} αυτή την εβδομάδα · {prev} την προηγούμενη ({delta})',
+  'health.forksNew': 'Νέα forks: {week} αυτή την εβδομάδα · {prev} την προηγούμενη ({delta})',
   'health.stale': 'Κλάδοι χωρίς δραστηριότητα πάνω από 30 ημέρες και χωρίς pull request',
   'health.prs': 'Ανοιχτά pull request, τα παλαιότερα πρώτα',
   'health.unreviewed': 'Pull request χωρίς καμία αξιολόγηση πάνω από 7 ημέρες',

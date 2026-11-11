@@ -576,3 +576,25 @@ test('estrellas nuevas: la semana actual frente a la anterior, cada usuario una 
   assert.deepEqual({ ...again.stars }, { week: 0, prev: 1 });
   assert.deepEqual({ ...compute(repo(), [], NOW).stars }, { week: 0, prev: 0 });
 });
+
+test('forks nuevos: la semana actual frente a la anterior, cada fork una vez y sin consultas', () => {
+  const fork = (id, d, detail) => ({ id, kind: 'fork', time: ago(d), ...(detail != null ? { detail } : {}) });
+  const acts = [
+    fork('f1', 1, 'ana/orbita'),
+    fork('f2', 2, 'beto/orbita'),
+    fork('f3', 6.9, ''), // sin nombre: cuenta sola
+    fork('f4', 3, 'Beto/Orbita'), // el mismo fork (sin distinguir mayúsculas) visto otra vez: no suma
+    fork('f5', 8, 'carla/orbita'),
+    fork('f6', 13, 'dani/orbita'),
+    fork('f7', 15, 'eva/orbita'), // hace más de dos semanas: no entra en ninguna
+    fork('f8', -1, 'futuro/orbita'), // con la hora en el futuro: no cuenta
+    { id: 's1', kind: 'star', time: ago(1), actor: { login: 'ana' } }, // una estrella no es un fork
+    { id: 'f9', kind: 'fork', detail: 'sin/hora' }, // sin hora: no cuenta
+  ];
+  const h = compute(repo(), acts, NOW);
+  assert.deepEqual({ ...h.forkTrend }, { week: 3, prev: 2 });
+  // la primera vez que se vio un fork decide su semana, y la lista de forks activos (data.forks) no cuenta
+  const again = compute({ ...repo(), forks: [{ fullName: 'x/y', url: 'https://github.com/x/y', pushedAt: ago(1), stars: 0 }] }, [fork('a', 10, 'ana/orbita'), fork('b', 1, 'ana/orbita')], NOW);
+  assert.deepEqual({ ...again.forkTrend }, { week: 0, prev: 1 });
+  assert.deepEqual({ ...compute(repo(), [], NOW).forkTrend }, { week: 0, prev: 0 });
+});

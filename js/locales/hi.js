@@ -503,6 +503,7 @@ GB.i18n.define('hi', {
   'health.forksByStars': 'फ़ोर्क को स्टार के अनुसार क्रमबद्ध करें',
   'health.stars': 'नए स्टार',
   'health.starsWeek': 'इस सप्ताह {week} · पिछले सप्ताह {prev} ({delta})',
+  'health.forksNew': 'नए फ़ोर्क: इस सप्ताह {week} · पिछले सप्ताह {prev} ({delta})',
   'health.stale': '30 दिन से अधिक निष्क्रिय और बिना pull request वाली ब्रांच',
   'health.prs': 'खुले pull request, सबसे पुराने पहले',
   'health.unreviewed': '7 दिन से ज़्यादा से बिना किसी समीक्षा के pull request',

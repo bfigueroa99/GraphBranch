@@ -909,6 +909,13 @@
   Repo.prototype.commands.add = function (args) {
     // las banderas cortas juntas (-Au, -uA) son dos, como en git
     const { flags, rest } = parse(args.flatMap((a) => (/^-[Au]{2,}$/.test(a) ? [...a.slice(1)].map((c) => `-${c}`) : [a])));
+    // una carpeta (`build/` o `build`, como la muestra status) vale por los archivos de adentro que la práctica conoce
+    const names = [...new Set([...this.work, ...this.untracked, ...this.deleted, ...this.staged.map((x) => x.file)])];
+    rest.splice(0, rest.length, ...rest.flatMap((f) => {
+      const dir = `${f.replace(/\/+$/, '')}/`;
+      const inside = f === '.' || names.includes(f) ? [] : names.filter((n) => n.startsWith(dir));
+      return inside.length ? inside : [f];
+    }));
     const update = !!(flags['-u'] || flags['--update']);
     if (flags['-A'] || flags['--all']) {
       if (update) fail("fatal: options '-A' and '-u' cannot be used together");
@@ -1174,9 +1181,11 @@
     const dirs = new Map();
     const files = [];
     for (const f of pick) {
-      const dir = paths.length ? null : this.untrackedDir(f);
-      if (!dir) files.push(f);
-      else if (flags.has('d')) dirs.set(dir, [...(dirs.get(dir) || []), f]);
+      const dir = this.untrackedDir(f);
+      // sin rutas, la carpeta sin seguir pide -d; con una ruta que la cubre entera (`clean -f build`), se borra como carpeta
+      const covered = dir && paths.some((p) => pathMatch(p, dir.slice(0, -1)));
+      if (!dir || (paths.length && !covered)) files.push(f);
+      else if (paths.length || flags.has('d')) dirs.set(dir, [...(dirs.get(dir) || []), f]);
     }
     const lines = [];
     const gone = [...files];

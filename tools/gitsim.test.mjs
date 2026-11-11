@@ -1250,7 +1250,10 @@ test('clean con rutas, patrones, -d, -e, -q y banderas juntas', () => {
   assert.deepEqual(plain(r.run('clean -nde*.tmp').lines), ['Would remove build/', 'Would remove keep.js']);
   // con rutas, -d no hace falta: el patrón cruza carpetas, como una ruta de git
   assert.deepEqual(plain(r.run(`clean -n '*.tmp'`).lines), ['Would remove a.tmp', 'Would remove docs/b.tmp']);
-  assert.deepEqual(plain(r.run('clean -n build/').lines), ['Would remove build/out.js', 'Would remove build/sub/map.js']);
+  // una ruta que cubre la carpeta entera la borra como carpeta, con -d o sin él, como git
+  assert.deepEqual(plain(r.run('clean -n build/').lines), ['Would remove build/']);
+  assert.deepEqual(plain(r.run('clean -n build').lines), ['Would remove build/']);
+  assert.deepEqual(plain(r.run('clean -n build/sub').lines), ['Would remove build/sub/map.js']);
   assert.deepEqual(plain(r.run('clean -n -- nada.txt').lines), []);
   assert.equal(r.untracked.length, 5, '-n no borra nada');
   // -f con un patrón borra solo eso
@@ -1287,4 +1290,16 @@ test('clean -d no toma por carpeta sin seguir una que git sigue', () => {
   assert.ok(r.run('clean -fd').ok);
   assert.deepEqual(plain(r.untracked), []);
   assert.equal(r.staged.map((s) => s.file).join(), 'web/a.js', 'lo preparado no se toca');
+});
+
+test('add acepta la carpeta sin seguir tal como la muestra status', () => {
+  const r = fresh();
+  run(r, 'touch --new build/out.js', 'touch --new build/sub/map.js', 'touch --new keep.js');
+  assert.ok(plain(r.run('status').lines).includes('\tbuild/'));
+  assert.ok(r.run('add build/').ok);
+  assert.deepEqual(plain(r.staged.map((s) => s.file).sort()), ['build/out.js', 'build/sub/map.js']);
+  assert.deepEqual(plain(r.untracked), ['keep.js']);
+  assert.ok(r.run('restore --staged build/out.js').ok);
+  assert.ok(r.run('add build').ok, 'sin la barra también');
+  assert.equal(r.run('add nada/').ok, false, 'una carpeta que no existe sigue fallando');
 });

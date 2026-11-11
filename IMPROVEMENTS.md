@@ -643,7 +643,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 
 ### 2026-11-11 · Iteración 260 · Expansión · Salidas
 
-- **Capacidad nueva: quién abrió más PRs en el resumen de la semana** (ítem 179 de la hoja de ruta, parte del ítem 23). Debajo de «Pull requests abiertos», el resumen de la semana de un repo dice quién abrió más (hasta 5 cuentas, por PRs abiertos en la semana), en el Markdown, el `.md` y la imagen `.png`. Cada PR cuenta una vez, para el autor de su primera actividad «PR abierto» de la semana: un PR reabierto o marcado como listo por otra cuenta no suma otra vez, y uno sin autor no cuenta. Sale con lo ya cargado, sin consultas; en la demo, el PR del agente (`claude[bot]`). El de la organización queda para el ítem 186.
+- **Capacidad nueva: quién abrió más PRs en el resumen de la semana** (ítem 179 de la hoja de ruta, parte del ítem 23). Debajo de «Pull requests abiertos», el resumen de la semana de un repo dice quién abrió más (hasta 5 cuentas, por PRs abiertos en la semana), en el Markdown, el `.md` y la imagen `.png`. Cada PR cuenta una vez, para el autor de su actividad «PR abierto» más vieja de la semana: un PR reabierto o marcado como listo por otra cuenta no suma otra vez, y uno sin autor no cuenta. Sale con lo ya cargado, sin consultas; en la demo, el PR del agente (`claude[bot]`). El de la organización queda para el ítem 186.
 - **Pruebas que fallan sin la capacidad:** `tools/digest.test.mjs` («quién abrió más PRs», con PRs de esta semana y de la anterior, repetidos, reabiertos por otra cuenta y sin autor) y un paso del smoke (el resumen de la demo lleva la línea).
 - README: «Resumen de la semana» en la lista de funciones y su límite en Límites conocidos (de dónde sale el autor y que el de la organización todavía no lo tiene); Seguridad sin cambios (no hay consultas ni textos nuevos de afuera sin escapar: los nombres pasan por `md()` y la imagen los dibuja en un canvas).
 - QA: resumen de la semana de la demo en español, con Playwright contra `node e2e/serve.mjs 4173` (la línea sale debajo de los PRs abiertos, sin errores de consola); el Markdown, el `.md` y el `.png` por el smoke; auditoría: la de la puerta.
@@ -651,7 +651,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (el mismo conteo que «quién fusionó», sobre los PRs abiertos).
 - Hoja de ruta repuesta de 9 a 15 con partes de ítems vigentes (ítems 189 a 194, en `docs/investigacion.md`).
 - Replica: paridad, sin pasada nueva: 93,3/100, must hechos 13 de 13; ítem 193.
-- OMC: plan=— · revisión=pendiente · verificación=pendiente
+- OMC: plan=— · revisión=3 hallazgos (1 arreglado: el MEDIUM, el PR se atribuía a la actividad «PR abierto» más nueva, la de quien lo reabrió o lo marcó listo, y ahora va a la más vieja, con su caso en la prueba; los 2 LOW quedan: el de la organización es el ítem 186, y la etiqueta sin «PRs» se lee bajo su sección) · verificación=PASS
 - Reclamo: loop/260, sin colisión
-- Validado: pendiente
+- Validado: 667 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 261, expansión: ítem 180 (Salud del repo: PRs sin revisión hace días, Análisis)

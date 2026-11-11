@@ -640,3 +640,18 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/259, sin colisión
 - Validado: 666 pruebas (`node --test`), smoke, i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
 - **Siguiente:** iteración 260, expansión: ítem 179 (Resumen de la semana: quién abrió más PRs, Salidas)
+
+### 2026-11-11 · Iteración 260 · Expansión · Salidas
+
+- **Capacidad nueva: quién abrió más PRs en el resumen de la semana** (ítem 179 de la hoja de ruta, parte del ítem 23). Debajo de «Pull requests abiertos», el resumen de la semana de un repo dice quién abrió más (hasta 5 cuentas, por PRs abiertos en la semana), en el Markdown, el `.md` y la imagen `.png`. Cada PR cuenta una vez, para el autor de su primera actividad «PR abierto» de la semana: un PR reabierto o marcado como listo por otra cuenta no suma otra vez, y uno sin autor no cuenta. Sale con lo ya cargado, sin consultas; en la demo, el PR del agente (`claude[bot]`). El de la organización queda para el ítem 186.
+- **Pruebas que fallan sin la capacidad:** `tools/digest.test.mjs` («quién abrió más PRs», con PRs de esta semana y de la anterior, repetidos, reabiertos por otra cuenta y sin autor) y un paso del smoke (el resumen de la demo lleva la línea).
+- README: «Resumen de la semana» en la lista de funciones y su límite en Límites conocidos (de dónde sale el autor y que el de la organización todavía no lo tiene); Seguridad sin cambios (no hay consultas ni textos nuevos de afuera sin escapar: los nombres pasan por `md()` y la imagen los dibuja en un canvas).
+- QA: resumen de la semana de la demo en español, con Playwright contra `node e2e/serve.mjs 4173` (la línea sale debajo de los PRs abiertos, sin errores de consola); el Markdown, el `.md` y el `.png` por el smoke; auditoría: la de la puerta.
+- Skills: no aplica: una línea más en un resumen en Markdown y canvas que ya existe, sin dominio nuevo; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (el mismo conteo que «quién fusionó», sobre los PRs abiertos).
+- Hoja de ruta repuesta de 9 a 15 con partes de ítems vigentes (ítems 189 a 194, en `docs/investigacion.md`).
+- Replica: paridad, sin pasada nueva: 93,3/100, must hechos 13 de 13; ítem 193.
+- OMC: plan=— · revisión=pendiente · verificación=pendiente
+- Reclamo: loop/260, sin colisión
+- Validado: pendiente
+- **Siguiente:** iteración 261, expansión: ítem 180 (Salud del repo: PRs sin revisión hace días, Análisis)

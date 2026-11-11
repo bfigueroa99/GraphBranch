@@ -721,6 +721,7 @@ GB.i18n.define('it', {
   'digest.merged': 'Pull request unite',
   'digest.mergers': 'Chi ha unito',
   'digest.opened': 'Pull request aperte',
+  'digest.openers': 'Chi ne ha aperti di più',
   'digest.closed': 'Issue chiuse',
   'digest.dropped': 'Pull request chiuse senza unione',
   'digest.releases': 'Release',

@@ -721,6 +721,7 @@ GB.i18n.define('pt', {
   'digest.merged': 'Pull requests mesclados',
   'digest.mergers': 'Quem fez o merge',
   'digest.opened': 'Pull requests abertos',
+  'digest.openers': 'Quem abriu mais',
   'digest.closed': 'Issues fechadas',
   'digest.dropped': 'Pull requests fechados sem fusão',
   'digest.releases': 'Releases',

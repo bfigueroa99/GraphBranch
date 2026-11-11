@@ -728,6 +728,7 @@ GB.i18n.define('hr', {
   'digest.merged': 'Spojeni pull requestovi',
   'digest.mergers': 'Tko je spojio',
   'digest.opened': 'Otvoreni pull requestovi',
+  'digest.openers': 'Tko je otvorio najviše',
   'digest.closed': 'Zatvoreni issuei',
   'digest.dropped': 'Pull requestovi zatvoreni bez spajanja',
   'digest.releases': 'Izdanja',

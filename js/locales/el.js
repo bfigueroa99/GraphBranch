@@ -720,6 +720,7 @@ GB.i18n.define('el', {
   'digest.merged': 'Συγχωνευμένα pull requests',
   'digest.mergers': 'Ποιος συγχώνευσε',
   'digest.opened': 'Ανοιχτά pull requests',
+  'digest.openers': 'Ποιος άνοιξε τα περισσότερα',
   'digest.closed': 'Κλειστά issues',
   'digest.dropped': 'Pull requests που έκλεισαν χωρίς συγχώνευση',
   'digest.releases': 'Εκδόσεις',

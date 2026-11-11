@@ -450,3 +450,36 @@ test('organización: suma quién fusionó entre los repos seguidos (la misma cue
   assert.doesNotMatch(toMarkdownOrg(sin, 'a', t), /Quién fusionó/);
   assert.doesNotMatch(imageLinesOrg(sin, 'a', t).map((l) => l.text).join('\n'), /Quién fusionó/);
 });
+
+test('quién abrió más PRs: cuenta los PRs abiertos de la semana por su autor, una vez por PR, sin la semana anterior, en Markdown e imagen', () => {
+  const ana = { login: 'ana' };
+  const opens = [
+    // esta semana
+    { id: 'o1', kind: 'pr-open', time: ago(1), number: 1, detail: 'uno', actor: ana },
+    { id: 'o1', kind: 'pr-open', time: ago(1), number: 1, detail: 'uno', actor: ana }, // la misma actividad dos veces
+    { id: 'o1b', kind: 'pr-open', time: ago(1), number: 1, detail: 'uno', actor: { login: 'beto' } }, // el mismo PR reabierto por otra cuenta: no suma
+    { id: 'o2', kind: 'pr-open', time: ago(2), number: 2, detail: 'dos', actor: { login: 'beto' } },
+    { id: 'o3', kind: 'pr-open', time: ago(3), number: 3, detail: 'tres', actor: ana },
+    { id: 'o4', kind: 'pr-open', time: ago(3), number: 4, detail: 'cuatro', actor: { name: 'Ca*rla' } }, // sin usuario: su nombre
+    { id: 'o5', kind: 'pr-open', time: ago(4), number: 5, detail: 'sin actor' },
+    { id: 'o7', kind: 'pr-open', time: ago(5), number: 7, detail: 'siete', actor: ana },
+    // la semana anterior: no cuenta
+    { id: 'o6', kind: 'pr-open', time: ago(9), number: 6, detail: 'vieja', actor: { login: 'dora' } },
+    { id: 'o8', kind: 'pr-open', time: ago(10), number: 8, detail: 'vieja', actor: { login: 'beto' } },
+    { id: 'o9', kind: 'pr-open', time: ago(12), number: 9, detail: 'vieja', actor: { login: 'beto' } },
+  ];
+  const d = compute(repo(), opens, NOW);
+  assert.equal(d.openers.total, 3);
+  assert.deepEqual(JSON.parse(JSON.stringify(d.openers.rows)), [{ name: 'ana', prs: 3 }, { name: 'Ca*rla', prs: 1 }, { name: 'beto', prs: 1 }]);
+  const t = { head: 'Semana de {repo}', commits: 'Commits: {n}', merged: 'Fusionados', opened: 'Abiertos', openers: 'Quién abrió más', releases: 'Releases', people: 'Personas', branch: 'Rama' };
+  const text = toMarkdown(d, 'o/r', t);
+  assert.match(text, /\nQuién abrió más: ana \(3\) · Ca\\\*rla \(1\) · beto \(1\)\n/);
+  // va debajo de la lista de PRs abiertos
+  assert.ok(text.indexOf('## Abiertos') < text.indexOf('Quién abrió más'));
+  assert.ok(imageLines(d, 'o/r', t).some((l) => l.kind === 'row' && l.text === 'Quién abrió más: ana (3) · Ca*rla (1) · beto (1)'));
+  // sin PRs abiertos con autor, la línea no sale
+  const quiet = compute(repo(), [{ id: 'z', kind: 'pr-open', time: ago(1), number: 9 }], NOW);
+  assert.equal(quiet.openers.total, 0);
+  assert.doesNotMatch(toMarkdown(quiet, 'o/r', t), /Quién abrió más/);
+  assert.ok(!imageLines(quiet, 'o/r', t).some((l) => /Quién abrió más/.test(l.text)));
+});

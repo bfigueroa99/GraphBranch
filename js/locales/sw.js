@@ -720,6 +720,7 @@ GB.i18n.define('sw', {
   'digest.merged': 'Pull request zilizounganishwa',
   'digest.mergers': 'Nani aliunganisha',
   'digest.opened': 'Pull request zilizofunguliwa',
+  'digest.openers': 'Nani alifungua mengi zaidi',
   'digest.closed': 'Masuala yaliyofungwa',
   'digest.dropped': 'Pull request zilizofungwa bila kuunganishwa',
   'digest.releases': 'Matoleo',

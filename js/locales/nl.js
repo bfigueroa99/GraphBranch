@@ -721,6 +721,7 @@ GB.i18n.define('nl', {
   'digest.merged': 'Samengevoegde pull requests',
   'digest.mergers': 'Wie samenvoegde',
   'digest.opened': 'Geopende pull requests',
+  'digest.openers': 'Wie de meeste opende',
   'digest.closed': 'Gesloten issues',
   'digest.dropped': 'Zonder merge gesloten pull requests',
   'digest.releases': 'Releases',

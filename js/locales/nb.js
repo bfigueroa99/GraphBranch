@@ -720,6 +720,7 @@ GB.i18n.define('nb', {
   'digest.merged': 'Flettede pull requests',
   'digest.mergers': 'Hvem flettet',
   'digest.opened': 'Åpnede pull requests',
+  'digest.openers': 'Hvem åpnet flest',
   'digest.closed': 'Lukkede issues',
   'digest.dropped': 'Pull requests lukket uten å bli flettet',
   'digest.releases': 'Releaser',

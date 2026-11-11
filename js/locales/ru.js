@@ -736,6 +736,7 @@ GB.i18n.define('ru', {
   'digest.merged': 'Слитые pull request’ы',
   'digest.mergers': 'Кто слил',
   'digest.opened': 'Открытые pull request’ы',
+  'digest.openers': 'Кто открыл больше всех',
   'digest.closed': 'Закрытые задачи',
   'digest.dropped': 'Pull request’ы, закрытые без слияния',
   'digest.releases': 'Релизы',

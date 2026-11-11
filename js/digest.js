@@ -1,5 +1,5 @@
 /* GraphBranch — resumen de la semana: lo que pasó en los últimos 7 días, con lo ya cargado.
-   Commits, autores nuevos, pull requests fusionados (y quién los fusionó) y abiertos, issues cerrados, releases, quién aportó y la rama más activa. No hace ninguna
+   Commits, autores nuevos, pull requests fusionados (y quién los fusionó) y abiertos (y quién abrió más), issues cerrados, releases, quién aportó y la rama más activa. No hace ninguna
    consulta; sale como Markdown para copiar o guardar. Lo que no llegó a cargarse no cuenta: es un
    resumen de lo visible, no del repo entero. */
 (function (GB) {
@@ -87,10 +87,17 @@
     }
     // PRs abiertos en la semana: un PR reabierto o marcado como listo no cuenta dos veces
     const openedNums = new Set();
-    const opened = acts
+    const openedActs = acts
       .filter((a) => inWeek(a, 'pr-open') && (a.number == null || (!openedNums.has(a.number) && openedNums.add(a.number))))
-      .sort((a, b) => b.time - a.time)
-      .map((a) => ({ number: a.number, title: text(a.detail) || text(a.title), url: a.url || null, time: a.time }));
+      .sort((a, b) => b.time - a.time);
+    const opened = openedActs.map((a) => ({ number: a.number, title: text(a.detail) || text(a.title), url: a.url || null, time: a.time }));
+    // quién abrió más PRs: la cuenta (o, sin ella, el nombre) del primero que llegó de cada PR abierto en la
+    // semana; un PR reabierto o marcado como listo por otra persona no suma otra vez, y sin autor no cuenta
+    const openers = new Map();
+    for (const a of openedActs) {
+      const who = a.actor?.login || a.actor?.name;
+      if (who) openers.set(who, (openers.get(who) || 0) + 1);
+    }
     // issues cerrados en la semana: uno cerrado, reabierto y cerrado otra vez cuenta una sola vez
     const closedNums = new Set();
     const closed = acts
@@ -134,6 +141,7 @@
       dropped: { total: dropped.length, rows: dropped.slice(0, LIST) },
       releases: { total: releases.length, rows: releases.slice(0, LIST) },
       tags: { total: tags.length, rows: tags.slice(0, LIST) },
+      openers: { total: openers.size, rows: [...openers].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, prs]) => ({ name, prs })) },
       mergers: { total: mergers.size, all: [...mergers], rows: [...mergers].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, prs]) => ({ name, prs })) },
       people: { total: people.size, rows: [...people].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, commits]) => ({ name, commits })) },
       branch,
@@ -157,6 +165,7 @@
     else out.push(none);
     if (d.mergers?.rows.length && t.mergers) out.push('', `${t.mergers}: ${d.mergers.rows.map((r) => `${md(r.name)} (${r.prs})`).join(' · ')}`);
     if (d.opened?.total) out.push('', `## ${t.opened} (${d.opened.total})`, '', ...d.opened.rows.map((r) => `- ${link(r, `${r.number ? `#${r.number} ` : ''}${md(r.title)}`)}`));
+    if (d.opened?.total && d.openers?.rows.length && t.openers) out.push('', `${t.openers}: ${d.openers.rows.map((r) => `${md(r.name)} (${r.prs})`).join(' · ')}`);
     if (d.closed?.total) out.push('', `## ${t.closed} (${d.closed.total})`, '', ...d.closed.rows.map((r) => `- ${link(r, `${r.number ? `#${r.number} ` : ''}${md(r.title)}`)}`));
     if (d.dropped?.total && t.dropped) out.push('', `## ${t.dropped} (${d.dropped.total})`, '', ...d.dropped.rows.map((r) => `- ${link(r, `${r.number ? `#${r.number} ` : ''}${md(r.title)}`)}`));
     out.push('', `## ${t.releases} (${d.releases.total})`, '');
@@ -243,6 +252,7 @@
     section(t.merged, d.merged.total, d.merged.rows.map((r) => `${r.number ? `#${r.number} ` : ''}${flat(r.title)}`));
     if (d.mergers?.rows.length && t.mergers) L.push({ text: cut(`${t.mergers}: ${d.mergers.rows.map((r) => `${flat(r.name)} (${r.prs})`).join(' · ')}`), kind: 'row' });
     if (d.opened?.total) section(t.opened, d.opened.total, d.opened.rows.map((r) => `${r.number ? `#${r.number} ` : ''}${flat(r.title)}`));
+    if (d.opened?.total && d.openers?.rows.length && t.openers) L.push({ text: cut(`${t.openers}: ${d.openers.rows.map((r) => `${flat(r.name)} (${r.prs})`).join(' · ')}`), kind: 'row' });
     if (d.closed?.total) section(t.closed, d.closed.total, d.closed.rows.map((r) => `${r.number ? `#${r.number} ` : ''}${flat(r.title)}`));
     if (d.dropped?.total && t.dropped) section(t.dropped, d.dropped.total, d.dropped.rows.map((r) => `${r.number ? `#${r.number} ` : ''}${flat(r.title)}`));
     section(t.releases, d.releases.total, d.releases.rows.map((r) => flat(r.title)));

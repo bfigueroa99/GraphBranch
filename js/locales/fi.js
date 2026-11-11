@@ -720,6 +720,7 @@ GB.i18n.define('fi', {
   'digest.merged': 'Yhdistetyt pull requestit',
   'digest.mergers': 'Kuka yhdisti',
   'digest.opened': 'Avatut pull requestit',
+  'digest.openers': 'Kuka avasi eniten',
   'digest.closed': 'Suljetut issuet',
   'digest.dropped': 'Ilman yhdistämistä suljetut pull requestit',
   'digest.releases': 'Julkaisut',

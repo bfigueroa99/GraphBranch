@@ -721,6 +721,7 @@ GB.i18n.define('th', {
   'digest.merged': 'Pull request ที่ผสานแล้ว',
   'digest.mergers': 'ใครเป็นผู้ผสาน',
   'digest.opened': 'Pull request ที่เปิดใหม่',
+  'digest.openers': 'ใครเปิดมากที่สุด',
   'digest.closed': 'issue ที่ปิดแล้ว',
   'digest.dropped': 'pull request ที่ปิดโดยไม่ได้รวม',
   'digest.releases': 'รีลีส',

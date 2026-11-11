@@ -720,6 +720,7 @@ GB.i18n.define('ja', {
   'digest.merged': 'マージされたプルリクエスト',
   'digest.mergers': 'マージした人',
   'digest.opened': 'オープンされたプルリクエスト',
+  'digest.openers': '最も多く作成した人',
   'digest.closed': 'クローズされた issue',
   'digest.dropped': 'マージされずにクローズされたプルリクエスト',
   'digest.releases': 'リリース',

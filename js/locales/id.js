@@ -720,6 +720,7 @@ GB.i18n.define('id', {
   'digest.merged': 'Pull request yang digabung',
   'digest.mergers': 'Siapa yang menggabungkan',
   'digest.opened': 'Pull request yang dibuka',
+  'digest.openers': 'Siapa yang paling banyak membuka',
   'digest.closed': 'Issue yang ditutup',
   'digest.dropped': 'Pull request yang ditutup tanpa digabung',
   'digest.releases': 'Rilis',

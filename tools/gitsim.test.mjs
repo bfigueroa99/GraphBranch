@@ -1189,3 +1189,39 @@ test('rm y mv sin git solo tocan el árbol; add -A (y add ., add -u) preparan lo
   run(tmp, 'touch --new tmp.txt', 'rm tmp.txt');
   assert.deepEqual(status(tmp).slice(1), ['nothing to commit, working tree clean']);
 });
+
+test('rm y mv: deshacer con add, ida y vuelta, amend, rebase, cherry-pick y stash dejan el estado coherente', () => {
+  const clean = ['nothing to commit, working tree clean'];
+  // add tras rm --cached lo vuelve a seguir
+  for (const cmd of ['add a.txt', 'add .', 'add -A']) {
+    const r = fresh();
+    run(r, 'git rm --cached a.txt', cmd);
+    assert.deepEqual(status(r).slice(1), clean, cmd);
+  }
+  // git mv y mv de ida y vuelta: nada que preparar
+  const g = fresh();
+  run(g, 'git mv a.txt b.txt', 'git mv b.txt a.txt');
+  assert.deepEqual(status(g).slice(1), clean);
+  const m = fresh();
+  run(m, 'mv a.txt b.txt', 'mv b.txt a.txt');
+  assert.deepEqual(status(m).slice(1), clean);
+  // amend que borra lo que creó el mismo commit: el commit no lo deja a la vez creado y borrado
+  const a = fresh();
+  run(a, 'touch x', 'add x', 'commit -m c', 'git rm x', 'commit --amend -m c2');
+  assert.equal(last(a).files, undefined);
+  assert.deepEqual(plain(last(a).removed), ['x']);
+  assert.equal(a.exists('x'), false);
+  // rebase y cherry-pick se llevan el borrado: el archivo no revive
+  const rb = fresh();
+  run(rb, 'checkout -b f', 'git rm a.txt', 'commit -m del', 'checkout main', 'touch m', 'commit -am m', 'checkout f', 'rebase main');
+  assert.match(rb.run('git rm a.txt').lines[0], /did not match any files/);
+  const cp = fresh();
+  run(cp, 'checkout -b f', 'git rm a.txt', 'commit -m del', 'checkout main', 'cherry-pick f');
+  assert.match(cp.run('git rm a.txt').lines[0], /did not match any files/);
+  // stash de un rm --cached deja el árbol limpio (el índice vuelve como estaba)
+  const st = fresh();
+  run(st, 'git rm --cached a.txt', 'stash');
+  assert.deepEqual(status(st).slice(1), clean);
+  // git rm -r . sin archivos conocidos avisa en vez de no hacer nada
+  assert.equal(fresh().run('git rm -r .').ok, false);
+});

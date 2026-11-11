@@ -168,6 +168,17 @@
       return sha;
     }
 
+    /** Un commit nuevo que copia otro (rebase, cherry-pick): se lleva lo que ese cambió, borró y renombró. */
+    copy(src, parents, message) {
+      const sha = this.make(message ?? this.commits.get(src).message, parents);
+      const from = this.commits.get(src);
+      const to = this.commits.get(sha);
+      if (from.files) to.files = from.files.slice();
+      if (from.removed) to.removed = from.removed.slice();
+      if (from.renames) to.renames = from.renames;
+      return sha;
+    }
+
     /** Mueve la rama de HEAD (o HEAD, si está desprendido). */
     moveHead(sha) {
       if (this.head.branch) this.branches.set(this.head.branch, sha);
@@ -193,8 +204,16 @@
         this.deleted = [];
       }
       const c = this.commits.get(sha);
-      if (files.length) c.files = [...new Set([...(c.files || []), ...files])];
-      if (removed.length) c.removed = [...new Set([...(c.removed || []), ...removed])];
+      // lo que este commit borra deja de contar como cambiado, y lo que crea deja de contar como borrado (commit --amend)
+      const keep = (list, drop) => (list || []).filter((f) => !drop.includes(f));
+      if (files.length || removed.length) {
+        const nextFiles = [...new Set([...keep(c.files, removed), ...files])];
+        const nextRemoved = [...new Set([...keep(c.removed, files), ...removed])];
+        if (nextFiles.length) c.files = nextFiles;
+        else delete c.files;
+        if (nextRemoved.length) c.removed = nextRemoved;
+        else delete c.removed;
+      }
       const renames = staged.filter((s) => s.from).length;
       if (renames) c.renames = (c.renames || 0) + renames;
       return files;
@@ -520,7 +539,7 @@
         const removed = [...new Set([...this.deleted, ...this.staged.filter((x) => x.gone || x.from).map((x) => x.from ?? x.file)])];
         const files = [...new Set([...this.staged.filter((x) => !x.gone).map((x) => x.file), ...this.work])].filter((f) => !this.deleted.includes(f));
         this.stashes.unshift({ files, removed, untracked: withNew ? this.untracked : [], line });
-        this.clearTree();
+        this.discardTree();
         if (withNew) this.untracked = [];
         return [`Saved working directory and index state ${line}`];
       }
@@ -672,7 +691,7 @@
         if (!this.rebasing) fail('fatal: No rebase in progress?');
         const { branch, rest: left } = this.rebasing;
         let base = this.headSha;
-        for (const s of left) base = this.make(this.commits.get(s).message, [base]);
+        for (const s of left) base = this.copy(s, [base]);
         this.branches.set(branch, base);
         this.head = { branch };
         this.rebasing = null;
@@ -699,12 +718,12 @@
       if (flags['-i'] || flags['--interactive']) {
         // sin editor: el rebase se detiene tras el primer commit, como con «edit», hasta --continue o --abort
         const [first, ...left] = own;
-        base = this.make(this.commits.get(first).message, [onto]);
+        base = this.copy(first, [onto]);
         this.rebasing = { orig: tip, branch: this.head.branch, onto, rest: left };
         this.head = { sha: base };
         return [`Stopped at ${this.short(base)}  ${this.commits.get(first).message}`, "You can amend the commit now, then run 'rebase --continue' (or 'rebase --abort' to cancel)."];
       }
-      for (const s of own) base = this.make(this.commits.get(s).message, [base]);
+      for (const s of own) base = this.copy(s, [base]);
       this.moveHead(base);
       return [`Successfully rebased and updated refs/heads/${this.head.branch}.`];
     },
@@ -725,7 +744,7 @@
         const c = this.commits.get(pick);
         const msg = revert ? `Revert "${c.message}"` : c.message;
         // como commit: lo cambiado después del --no-commit queda sin commit
-        const sha = this.make(msg, [this.headSha]);
+        const sha = revert ? this.make(msg, [this.headSha]) : this.copy(pick, [this.headSha], msg);
         this.moveHead(sha);
         this.take(sha, false);
         return [`[${this.head.branch} ${this.short(sha)}] ${msg}`];
@@ -747,7 +766,8 @@
         if (!pick) fail(`fatal: bad revision '${ref}'`);
         const c = this.commits.get(pick);
         if (c.parents.length > 1) fail(`error: commit ${pick} is a merge but no -m option was given.`);
-        const sha = this.commit(c.message);
+        const sha = this.copy(pick, [this.headSha]);
+        this.moveHead(sha);
         out.push(`[${this.head.branch} ${this.short(sha)}] ${c.message}`);
       }
       return out;
@@ -920,6 +940,14 @@
         this.stageDeletion(f);
         continue;
       }
+      // sacado con rm --cached y todavía en el árbol: add lo vuelve a seguir, como si nada
+      const cachedOut = this.staged.findIndex((s) => s.file === f && s.gone && s.cached);
+      if (cachedOut >= 0 && this.untracked.includes(f)) {
+        this.staged.splice(cachedOut, 1);
+        this.untracked = this.untracked.filter((u) => u !== f);
+        this.adds++;
+        continue;
+      }
       // preparado y cambiado otra vez: add vuelve a prepararlo (sale de lo sin preparar)
       if (this.staged.some((s) => s.file === f)) {
         this.work = this.work.filter((w) => w !== f);
@@ -962,6 +990,7 @@
     if (rest.includes('.') && !flags['-r']) fail("fatal: not removing '.' recursively without -r");
     if (!this.headSha) fail('fatal: could not resolve HEAD');
     const files = rest.includes('.') ? [...new Set([...this.inHistory(), ...this.work, ...this.deleted, ...this.staged.filter((s) => !s.gone).map((s) => s.file)])] : rest;
+    if (!files.length) fail("fatal: pathspec '.' did not match any files (this practice only knows the files you named with touch, add or commit)");
     for (const f of files) if (bad(f) || !this.tracked(f)) fail(`fatal: pathspec '${f}' did not match any files`);
     if (!force) {
       const indexed = (f) => this.staged.some((s) => s.file === f && !s.gone);
@@ -1002,7 +1031,8 @@
     this.work = this.work.filter((w) => w !== to);
     this.staged = this.staged.filter((s) => s.file !== to);
     const s = this.staged.find((x) => x.file === from);
-    if (s?.isNew || s?.from) s.file = to;
+    if (s?.from === to) this.staged = this.staged.filter((x) => x !== s); // de vuelta a su nombre: nada que preparar
+    else if (s?.isNew || s?.from) s.file = to;
     else {
       this.staged = this.staged.filter((x) => x !== s);
       this.staged.push({ file: to, from });
@@ -1039,6 +1069,14 @@
       if (!there) fail(`mv: cannot stat '${from}': No such file or directory`);
       if (from === to) fail(`mv: '${from}' and '${to}' are the same file`);
       if (this.exists(to)) fail(`mv: refusing to overwrite '${to}' in this practice (it already exists)`);
+      if (this.untracked.includes(from) && this.deleted.includes(to)) {
+        // de vuelta a un nombre que git sigue: el archivo vuelve a existir (cambiado, salvo que sea el mismo mv deshecho)
+        this.untracked = this.untracked.filter((u) => u !== from);
+        this.deleted = this.deleted.filter((d) => d !== to);
+        if (this.moved.get(from) !== to && !this.work.includes(to)) this.work.push(to);
+        this.moved.delete(from);
+        return [];
+      }
       if (this.untracked.includes(from)) {
         this.untracked = this.untracked.map((u) => (u === from ? to : u));
         return [];

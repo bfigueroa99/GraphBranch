@@ -149,7 +149,7 @@
       dropped: { total: dropped.length, rows: dropped.slice(0, LIST) },
       releases: { total: releases.length, rows: releases.slice(0, LIST) },
       tags: { total: tags.length, rows: tags.slice(0, LIST) },
-      openers: { total: openers.size, rows: [...openers].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, prs]) => ({ name, prs })) },
+      openers: { total: openers.size, all: [...openers], rows: [...openers].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, prs]) => ({ name, prs })) },
       mergers: { total: mergers.size, all: [...mergers], rows: [...mergers].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, prs]) => ({ name, prs })) },
       people: { total: people.size, rows: [...people].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, commits]) => ({ name, commits })) },
       branch,
@@ -208,7 +208,12 @@
     const byMerger = new Map();
     for (const r of rows) for (const [who, n] of r.d.mergers.all) byMerger.set(who, (byMerger.get(who) || 0) + n);
     const mergers = { total: byMerger.size, rows: [...byMerger].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, prs]) => ({ name, prs })) };
-    return { since, now, days, repos: rows.length, commits: sum((d) => d.commits), newcomers, mergers, merged: sum((d) => d.merged.total), opened: sum((d) => d.opened.total), closed: sum((d) => d.closed.total), dropped: sum((d) => d.dropped.total), releases: sum((d) => d.releases.total), newBranches: sum((d) => d.newBranches), rows: busy.slice(0, ORG_REPOS), hidden: Math.max(0, busy.length - ORG_REPOS) };
+    // quién abrió más PRs en la organización: la misma cuenta suma los PRs que abrió en cada repo seguido
+    // (cada PR ya cuenta una vez en su repo, para quien lo abrió primero en la semana)
+    const byOpener = new Map();
+    for (const r of rows) for (const [who, n] of r.d.openers.all) byOpener.set(who, (byOpener.get(who) || 0) + n);
+    const openers = { total: byOpener.size, rows: [...byOpener].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, TOP).map(([name, prs]) => ({ name, prs })) };
+    return { since, now, days, repos: rows.length, commits: sum((d) => d.commits), newcomers, mergers, openers, merged: sum((d) => d.merged.total), opened: sum((d) => d.opened.total), closed: sum((d) => d.closed.total), dropped: sum((d) => d.dropped.total), releases: sum((d) => d.releases.total), newBranches: sum((d) => d.newBranches), rows: busy.slice(0, ORG_REPOS), hidden: Math.max(0, busy.length - ORG_REPOS) };
   }
 
   /** La lista corta de una sección por repo: sus filas y, si la semana trae más, cuántas faltan. */
@@ -221,6 +226,7 @@
     out.push(`- ${t.merged}: ${o.merged}`);
     if (o.mergers?.rows.length && t.mergers) out.push(`- ${t.mergers}: ${o.mergers.rows.map((r) => `${md(r.name)} (${r.prs})`).join(', ')}`);
     if (o.opened && t.opened) out.push(`- ${t.opened}: ${o.opened}`);
+    if (o.opened && o.openers?.rows.length && t.openers) out.push(`- ${t.openers}: ${o.openers.rows.map((r) => `${md(r.name)} (${r.prs})`).join(', ')}`);
     if (o.closed && t.closed) out.push(`- ${t.closed}: ${o.closed}`);
     if (o.dropped && t.dropped) out.push(`- ${t.dropped}: ${o.dropped}`);
     out.push(`- ${t.releases}: ${o.releases}`);
@@ -280,6 +286,7 @@
     L.push({ text: `${t.merged}: ${o.merged}`, kind: 'row' });
     if (o.mergers?.rows.length && t.mergers) L.push({ text: cut(`${t.mergers}: ${o.mergers.rows.map((r) => `${flat(r.name)} (${r.prs})`).join(' · ')}`), kind: 'row' });
     if (o.opened && t.opened) L.push({ text: cut(`${t.opened}: ${o.opened}`), kind: 'row' });
+    if (o.opened && o.openers?.rows.length && t.openers) L.push({ text: cut(`${t.openers}: ${o.openers.rows.map((r) => `${flat(r.name)} (${r.prs})`).join(' · ')}`), kind: 'row' });
     if (o.closed && t.closed) L.push({ text: cut(`${t.closed}: ${o.closed}`), kind: 'row' });
     if (o.dropped && t.dropped) L.push({ text: cut(`${t.dropped}: ${o.dropped}`), kind: 'row' });
     L.push({ text: `${t.releases}: ${o.releases}`, kind: 'row' });

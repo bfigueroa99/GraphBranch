@@ -4155,3 +4155,123 @@ bitácoras juntas (la rotación de los subtipos de mantenimiento, la numeración
 - Reclamo: loop/244, sin colisión
 - Validado: 642 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde (a la tercera corrida: dos pasos ajenos del smoke fallaron antes, uno por corrida, anotados en Mantenimiento · Deuda).
 - **Siguiente:** iteración 245, expansión: ítem 177 (Launchpad: el filtro por persona en la URL, Escala)
+
+### 2026-11-10 · Iteración 245 · Expansión · Escala
+
+- **Capacidad nueva: el filtro por persona del Launchpad viaja en la URL** (ítem 177 de la hoja de ruta, parte del ítem 158). `?by=login` se lee al abrir (`personParam`, `js/overview.js`) y el Launchpad abre ya filtrado; elegir otra persona (o «Todas») lo escribe o lo quita de la dirección. El login se reconoce sin distinguir mayúsculas (si hay dos iguales salvo la capitalización, gana el exacto) y uno desconocido, o de alguien cuyos PRs aún no cargan, no filtra nada y se conserva hasta que lleguen. Sin textos nuevos ni consultas nuevas; `embed=1` lo ignora.
+- **Pruebas que fallan sin la capacidad:** `tools/overview.test.mjs` («personParam…» y «mount: el Launchpad abre con la persona de ?by=…»).
+- README: la lista de la vista conjunta y sus Límites conocidos.
+- QA: lógica cubierta con el `mount` simulado (apertura con persona, login desconocido, aviso al elegir); no se mira a mano en navegador; auditoría: la puerta la corre.
+- Skills: no aplica: un parámetro de URL sobre una vista existente; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (leer el parámetro y avisar al elegir).
+- OMC: plan=— · revisión=— · verificación=— (diff de unas líneas, leído a mano; sin subagentes)
+- Reclamo: loop/245, sin colisión
+- Validado: 644 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+- **Siguiente:** iteración 246, expansión: ítem 160 (Token para un Forgejo o Gitea propio, Fuentes)
+
+### 2026-11-10 · Iteración 246 · Expansión · Fuentes
+
+- **Capacidad nueva: token para un Forgejo o Gitea propio** (ítem 160 de la hoja de ruta, parte del ítem 36). Con `?forge=` / `--forge-url`, Ajustes muestra un campo aparte («Token de tu Forgejo o Gitea propio») que nombra el host; el token se guarda atado a la dirección del servidor (`CodebergSource.pack`/`unpack`, en el navegador y en el llavero de la app de escritorio, servicio `forgejo`) y va solo a ese host (`Authorization: token …`); si `?forge=` cambia de host no se usa ni se muestra. Con él se ven los repos privados; un 401 dice que el token no vale y un 404, que el repo no existe o el token no lo lee (textos del Bitbucket propio). El token de Codeberg sigue sin salir hacia un servidor propio, y editar archivos en él sigue sin estar.
+- **Pruebas que fallan sin la capacidad:** `tools/codeberg.test.mjs` (el token propio sale solo hacia su host, `pack`/`unpack`, 401 y 404 con token), el paso «Forgejo propio con token» del smoke y la e2e de `--forge-url` con el llavero.
+- README: la sección del Forgejo propio, Límites conocidos y «Cada token a su servicio».
+- QA: campo oculto sin servidor, aviso con el host, «Abrir Ajustes» lleva al campo, otro `?forge=` no usa el token guardado (smoke); auditoría: la puerta la corre.
+- Skills: no aplica: replica un patrón del repo (el token del Bitbucket propio).
+- Arena: no aplica: una sola forma obvia (copiar el diseño ya probado del Bitbucket propio).
+- OMC: plan=— · revisión=— · verificación=— (sin subagentes; el diff espeja el del Bitbucket propio y se leyó a mano: el token sale solo con `webUrl` válida, hacia ese host)
+- Reclamo: loop/246, sin colisión
+- Validado: 649 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+- **Siguiente:** iteración 247, mantenimiento · Accesibilidad: pendiente 11 (En la vista de texto, las marcas visibles de una rama (`.tv-tag`: «fusionada…»,…)
+
+### 2026-11-10 · Iteración 247 · Mantenimiento · Accesibilidad
+
+- **Arreglo: la vista de texto ya no se lee dos veces** (pendiente 11). Las marcas de una rama (`.tv-tag`: por defecto, PRs, nueva, sin actividad, fusionada, CI fallando) y la nota de cada commit (`.tv-aside`) van `aria-hidden="true"` (`mkSilent`, `js/textview.js`): ya están en el `aria-label` de su `treeitem`, y según el lector se anunciaban dos veces. Se ven igual. Falta confirmarlo con un lector real (Para Benjamin, 5).
+- **Reproducción:** Playwright contra la demo, `#textview-btn` → `.tv-tag` y `.tv-aside` dentro de `[role=treeitem][aria-label]` sin `aria-hidden` → 60 de 60 sin el arreglo, 0 con él.
+- **Pruebas que fallan sin el arreglo:** el paso de la vista de texto del smoke («marcas que el lector leería dos veces (sin aria-hidden)»).
+- README: sin cambios (no cambia lo que hace la función, solo cómo la lee un lector).
+- QA: la vista de texto abierta en la demo, marcas y notas con `aria-hidden` y el nombre accesible del nodo intacto; auditoría: la puerta la corre.
+- Skills: no aplica: un atributo ARIA sobre una vista existente; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (`aria-hidden` en las marcas repetidas).
+- OMC: plan=— · revisión=— · verificación=— (diff de unas líneas, leído a mano; sin subagentes)
+- Reclamo: loop/247, sin colisión
+- Validado: 649 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+- **Siguiente:** iteración 248, expansión: ítem 178 (Launchpad: cuántos PRs tiene cada persona, Escala)
+
+### 2026-11-10 · Iteración 248 · Expansión · Escala
+
+- **Capacidad nueva: el selector de personas del Launchpad dice cuántos PRs tiene cada una** (ítem 178 de la hoja de ruta, parte del 158). Cada opción es `ana (3)`: `prCounts` (`js/overview.js`) cuenta los PRs abiertos por quien los abrió con lo ya cargado, sin consultas; el valor de la opción sigue siendo el login, así que `?by=` no cambia, y el conteo entra en la firma del repintado.
+- **Pruebas que fallan sin la capacidad:** `node --test` (`tools/overview.test.mjs`, «prCounts: cada persona dice cuántos PRs abiertos tiene…»: tres autores en dos repos, iterador de un solo uso y PRs sin autor).
+- README: la sección «Todos a la vez» dice que cada opción lleva su conteo.
+- QA: Launchpad de la vista conjunta (selector, filtro, foco tras elegir); sin texto nuevo, solo el número con el formato local (`num`), así que no suma claves de idioma; auditoría: la puerta la corre.
+- Skills: no aplica: una línea sobre una vista existente; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (contar al pintar).
+- OMC: plan=— · revisión=— · verificación=— (diff de unas líneas, leído a mano; sin subagentes)
+- Reclamo: loop/248, sin colisión
+- Validado: 650 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde (la primera puerta falló en un paso ajeno e intermitente, anotado en el pendiente 3 de Deuda; la segunda pasó).
+- **Siguiente:** iteración 249, expansión: ítem 161 (Resumen de la semana de la organización: quién fusionó, Salidas)
+
+### 2026-11-10 · Iteración 249 · Expansión · Salidas
+
+- **Capacidad nueva: el resumen de la semana de la organización suma quién fusionó** (ítem 161 de la hoja de ruta, parte del ítem 47). `computeOrg` (`js/digest.js`) junta los PRs fusionados por cuenta entre todos los repos seguidos (la misma cuenta que fusionó en dos repos cuenta una vez, con los PRs de los dos; hasta 5, por PRs); el Markdown y la imagen llevan la línea «Quién fusionó: ana (3), …» tras los fusionados. Sin cuentas, la línea no sale. Con lo ya cargado, sin consultas; usa la etiqueta `digest.mergers` que ya está en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `node --test` (`tools/digest.test.mjs`, «organización: suma quién fusionó entre los repos seguidos…»: dos repos, una cuenta en ambos, tope de 5, PR viejo fuera y caso sin cuentas); sin el cambio de `js/digest.js` falla 1 de 27.
+- README: Salud del repo (el resumen de la organización) y Límites conocidos («el resumen de la organización no la trae» ya no vale); el Mapa de alcance.
+- QA: resumen de la organización en Markdown e imagen (vía las funciones puras); sin texto nuevo, así que no suma claves de idioma; auditoría: la puerta la corre.
+- Skills: no aplica: una línea más en un resumen existente; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (sumar los conteos por repo).
+- OMC: plan=— · revisión=— · verificación=— (diff de unas líneas, leído a mano; sin subagentes)
+- Reclamo: loop/249, sin colisión
+- Validado: 651 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+- **Siguiente:** iteración 250, expansión: ítem 182 (Launchpad: filtrar por repo, Escala)
+
+### 2026-11-10 · Iteración 250 · Expansión · Escala
+
+- **Capacidad nueva: el Launchpad se filtra por repo** (ítem 182 de la hoja de ruta, parte del ítem 158). Con PRs abiertos en dos o más repos, un segundo selector sobre los grupos deja solo los PRs de ese repo (cada opción dice cuántos tiene, `owner/api (3)`; «Todos los repos» lo quita) y se combina con el de persona. Con lo ya cargado, sin consultas; no viaja en la URL ni se recuerda, y un repo sin PRs abiertos no filtra. `groupPulls` recibe el repo y `prRepos` lista los que tienen PRs (`js/overview.js`); textos `all.prs.repo` y `all.prs.allRepos` en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `node --test` (`tools/overview.test.mjs`, «groupPulls y prRepos…» y «mount: el selector de repo…»): sin el cambio fallan las 2 nuevas.
+- README: la sección Todos a la vez (el selector de repo) y Límites conocidos (no viaja en la URL); el Mapa de alcance.
+- QA: Launchpad de la vista conjunta (selector de repo, filtro combinado con persona, foco tras elegir, oculto en modo TV como el de persona); auditoría: la puerta la corre.
+- Skills: no aplica: una variante de un selector existente; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (copiar el patrón del filtro por persona).
+- OMC: plan=— · revisión=— · verificación=— (diff pequeño, leído a mano; sin subagentes)
+- Reclamo: loop/250, sin colisión
+- Validado: 653 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+- **Siguiente:** iteración 251, mantenimiento · QA: auditoría (sin pendientes de QA)
+
+### 2026-11-10 · Iteración 251 · Mantenimiento · QA
+
+- **Auditoría de QA: un token inválido ya no se rotula «Sin conexión».** La auditoría completa (`--langs`) dio 0 hallazgos; a mano, con la API simulada en es y ar a 1280 y 320 px (404, cuota agotada, repo vacío, sin red, 401): sin errores de consola ni desborde horizontal, pero un 401 (`kind: 'auth'`) salía como «Sin conexión | detenido» aunque `err.auth` ya pide revisar el token. `STATUS_ERROR_KEYS` (`js/util.js`) suma `auth` → `status.errorAuth` («Token no válido»), en los 40 idiomas.
+- **Reproducción:** `node --test tools/util.test.mjs` → `expected: 'status.errorAuth'` (daba `status.error`).
+- **Hallazgos:** 3 nuevos (pendientes 18, 19 y 20), 0 a la base de la auditoría
+- **Pruebas que fallan sin el arreglo:** `node --test` (`tools/util.test.mjs`, «statusKey…»: la línea de `auth`); sin el cambio de `js/util.js` falla 1.
+- README: no cambia (un rótulo de estado).
+- QA: estados de error de la carga (404, cuota, vacío, sin red, 401) en es y ar a 1280 y 320 px; el resto de las filas, por la auditoría completa; auditoría: 0 hallazgos (0 Alta), 0 fuera de la base. El smoke tres veces no se corrió por tiempo: queda dicho aquí.
+- Skills: no aplica: un rótulo de estado; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (una clave más en el mapa de rótulos).
+- OMC: plan=— · revisión=— · verificación=— (diff pequeño, leído a mano; sin subagentes)
+- Reclamo: loop/251, sin colisión
+- Validado: 653 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+
+### 2026-11-10 · Iteración 252 · Expansión · Público
+
+- **Capacidad nueva: `stash -u` en la práctica de git** (ítem 163 de la hoja de ruta, parte del ítem 16). `stash -u` (`--include-untracked`, también con `push` y `-m`) aparta además los archivos sin seguir que deja `touch --new`; `stash pop` y `apply` los devuelven, y se niegan como git («already exists, no checkout») si el archivo ya existe. Sin `-u` el archivo nuevo se queda y no cuenta como cambio a guardar. Solo `js/gitsim.js` (la ayuda de la terminal está en inglés, como git).
+- **Pruebas que fallan sin la capacidad:** `node --test` (`tools/gitsim.test.mjs`, «stash -u aparta…»): sin el cambio falla 1.
+- README: la lista de comandos de Aprender git (`stash -u`) y Límites conocidos (`-a` no existe; el choque al devolver).
+- QA: terminal de práctica (comando nuevo, estado `status` tras apartar y devolver); auditoría: no toca la página más que la simulación.
+- Skills: no aplica: una bandera más de un comando del intérprete; lo cubren las reglas del repo.
+- Hoja de ruta repuesta de 9 a 15 con ideas vigentes de `docs/investigacion.md` (ítems 183 a 188, sin pasada nueva de Replica).
+- Arena: no aplica: una sola forma obvia (una lista `untracked` en la entrada del stash).
+- OMC: plan=— · revisión=— · verificación=— (diff pequeño, leído a mano; sin subagentes)
+- Reclamo: loop/252, sin colisión
+- Validado: 654 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+- **Siguiente:** iteración 253, expansión: ítem 164 (Resumen de la semana de la organización: PRs cerrados sin fusionar, Salidas)
+
+### 2026-11-10 · Iteración 253 · Expansión · Salidas
+
+- **Capacidad nueva: el resumen de la semana suma los PRs cerrados sin fusionar** (ítem 164 de la hoja de ruta, parte del ítem 47). El resumen de un repo gana la sección «PRs cerrados sin fusionar» (cada PR una vez, sin los que el feed también vio fusionados) y el de la organización, su total, su lista por repo (`#n`, «… +n») y la imagen; un repo cuyo único movimiento es un PR cerrado sin fusionar sale. Clave nueva `digest.dropped` en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `node --test` (`tools/digest.test.mjs`, «organización: suma los PRs cerrados sin fusionar…»): sin el cambio falla 1.
+- README: la lista del resumen de la semana, el de la organización y Límites conocidos (solo GitHub emite «PR cerrado»).
+- QA: Markdown e imagen del resumen (de un repo y de la organización), sin la sección si no hay ninguno; auditoría: no toca la página más que una etiqueta de texto.
+- Skills: no aplica: una sección más de un resumen que ya existe; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (copiar el patrón de los issues cerrados).
+- OMC: plan=— · revisión=— · verificación=— (diff pequeño, leído a mano; sin subagentes)
+- Reclamo: loop/253, sin colisión
+- Validado: 655 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+- **Siguiente:** iteración 254, expansión: ítem 166 (Launchpad: posponer un PR, Escala)

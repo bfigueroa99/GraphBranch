@@ -116,12 +116,12 @@
     for (const k in states) prStates[k] = { total: states[k].length, rows: states[k].slice(0, ROWS) };
 
     // sin revisión hace días: abiertos hace más de UNREVIEWED_DAYS, fuera de los borradores, sin decisión de revisión
-    // (aprobado o con cambios pedidos) y sin ninguna revisión en la actividad ya cargada (pedir una no cuenta)
+    // (aprobado o con cambios pedidos), sin un revisor que ya votó y sin ninguna revisión en la actividad ya cargada (pedir una no cuenta)
     const reviewed = new Set();
     for (const a of acts) if (a.number != null && !a.request && (a.kind === 'review' || a.kind === 'review-ok' || a.kind === 'review-changes')) reviewed.add(a.number);
     const unreviewed = prs.filter((r) => {
       const p = data.pulls.get(r.number);
-      return !r.draft && !p.review && !reviewed.has(r.number) && r.age > UNREVIEWED_DAYS * DAY;
+      return !r.draft && !p.review && !p.reviewers?.some((x) => x.vote) && !reviewed.has(r.number) && r.age > UNREVIEWED_DAYS * DAY; // `reviewers` con voto: Azure DevOps
     });
 
     const seen = new Set();

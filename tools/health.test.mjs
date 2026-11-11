@@ -258,18 +258,21 @@ test('PRs sin revisión hace días: más de 7 días abiertos, sin borradores ni 
   add(6, 15); // solo le pidieron revisión: cuenta
   add(7, 3); // de 3 días: todavía no
   add(8, 7.5, { ci: 'failure' }); // en rojo pero sin revisión: cuenta
+  add(9, 11, { reviewers: [{ name: 'Ana', vote: 'yes' }] }); // Azure: un revisor ya votó
+  add(10, 13, { reviewers: [{ name: 'Leo', vote: '' }] }); // Azure: asignado, sin votar: cuenta
   const acts = [
     { kind: 'review', number: 5, time: ago(1) },
     { kind: 'review', number: 6, request: true, time: ago(2) },
     { kind: 'review-ok', number: 99, time: ago(1) }, // de otro PR
   ];
   const u = compute(r, acts, NOW).unreviewed;
-  assert.deepEqual(Array.from(u.rows, (x) => x.number), [1, 6, 8]);
-  assert.equal(u.total, 3);
+  assert.deepEqual(Array.from(u.rows, (x) => x.number), [1, 6, 10, 8]);
+  assert.equal(u.total, 4);
+  assert.equal(u.rows[0].head, 'h1', 'cada fila lleva a su rama');
   assert.equal(u.rows[0].age, 20 * DAY);
   // otra actividad: una revisión con cambios saca al 1, y el 5, sin la suya, vuelve a contar
   const other = compute(r, [{ kind: 'review-changes', number: 1, time: ago(1) }], NOW).unreviewed;
-  assert.deepEqual(Array.from(other.rows, (x) => x.number), [6, 5, 8]);
+  assert.deepEqual(Array.from(other.rows, (x) => x.number), [6, 10, 5, 8]);
 });
 
 test('tasa de fallos de CI: PRs abiertos en rojo entre los que tienen checks, y las veces que la rama por defecto se puso roja en 30 días', () => {

@@ -777,6 +777,7 @@ GB.i18n.define('he', {
   'digest.merged': 'בקשות מיזוג שמוזגו',
   'digest.mergers': 'מי מיזג',
   'digest.opened': 'בקשות מיזוג שנפתחו',
+  'digest.openers': 'מי פתח הכי הרבה',
   'digest.closed': 'תקלות שנסגרו',
   'digest.dropped': 'Pull requests שנסגרו בלי מיזוג',
   'digest.releases': 'גרסאות',

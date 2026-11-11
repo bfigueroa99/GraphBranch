@@ -819,6 +819,7 @@ GB.i18n.define('ar', {
   'digest.merged': 'طلبات السحب المدموجة',
   'digest.mergers': 'من دمج',
   'digest.opened': 'طلبات السحب المفتوحة',
+  'digest.openers': 'من فتح أكثر',
   'digest.closed': 'القضايا المغلقة',
   'digest.dropped': 'طلبات السحب المغلقة دون دمج',
   'digest.releases': 'الإصدارات',

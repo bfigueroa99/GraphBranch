@@ -720,6 +720,7 @@ GB.i18n.define('hi', {
   'digest.merged': 'मर्ज किए गए पुल रिक्वेस्ट',
   'digest.mergers': 'किसने मर्ज किया',
   'digest.opened': 'खोले गए पुल रिक्वेस्ट',
+  'digest.openers': 'किसने सबसे ज़्यादा खोले',
   'digest.closed': 'बंद किए गए इश्यू',
   'digest.dropped': 'बिना मर्ज किए बंद हुए pull request',
   'digest.releases': 'रिलीज़',

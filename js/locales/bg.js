@@ -720,6 +720,7 @@ GB.i18n.define('bg', {
   'digest.merged': 'Слети pull request-и',
   'digest.mergers': 'Кой сля',
   'digest.opened': 'Отворени pull request-и',
+  'digest.openers': 'Кой отвори най-много',
   'digest.closed': 'Затворени проблеми',
   'digest.dropped': 'Pull request-и, затворени без сливане',
   'digest.releases': 'Издания',

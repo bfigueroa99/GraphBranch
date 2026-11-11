@@ -720,6 +720,7 @@ GB.i18n.define('hu', {
   'digest.merged': 'Egyesített pull requestek',
   'digest.mergers': 'Ki olvasztotta be',
   'digest.opened': 'Megnyitott pull requestek',
+  'digest.openers': 'Ki nyitotta a legtöbbet',
   'digest.closed': 'Lezárt issue-k',
   'digest.dropped': 'Összefésülés nélkül lezárt pull requestek',
   'digest.releases': 'Kiadások',

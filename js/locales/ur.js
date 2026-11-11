@@ -763,6 +763,7 @@ GB.i18n.define('ur', {
   'digest.merged': 'ضم شدہ پل ریکویسٹس',
   'digest.mergers': 'کس نے ضم کیا',
   'digest.opened': 'کھولی گئی پل ریکویسٹس',
+  'digest.openers': 'سب سے زیادہ کس نے کھولے',
   'digest.closed': 'بند کیے گئے مسائل',
   'digest.dropped': 'بغیر انضمام کے بند ہونے والے pull request',
   'digest.releases': 'ریلیزز',

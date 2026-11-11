@@ -329,6 +329,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Resumen de la semana de la organización: quién abrió más PRs | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 186 |
 | Salud del repo: tendencia de forks | Análisis | 1×2/2 | 1,0 | DORA | ítem 187 |
 | Vista de texto: PRs con CI fallido | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 188 |
+| Resumen de la semana: quién cerró más issues | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 189 |
+| Práctica: git show | Público | 1×2/2 | 1,0 | git-sim | ítem 190 |
+| Práctica: git diff | Público | 1×2/2 | 1,0 | git-sim | ítem 191 |
+| Vista de texto: PRs en borrador | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 192 |
+| Columnas de SHA, autor y fecha en el grafo 3D | Análisis | 1×2/2 | 1,0 | Replica (GitKraken) | ítem 193 |
+| Salud del repo: autores nuevos por semana | Análisis | 1×2/2 | 1,0 | DORA | ítem 194 |
 
 ## Públicos
 

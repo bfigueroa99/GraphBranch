@@ -720,6 +720,7 @@ GB.i18n.define('vi', {
   'digest.merged': 'Pull request đã hợp nhất',
   'digest.mergers': 'Ai đã hợp nhất',
   'digest.opened': 'Pull request đã mở',
+  'digest.openers': 'Ai mở nhiều nhất',
   'digest.closed': 'Issue đã đóng',
   'digest.dropped': 'Pull request đóng mà không hợp nhất',
   'digest.releases': 'Bản phát hành',

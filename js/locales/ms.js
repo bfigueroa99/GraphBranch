@@ -720,6 +720,7 @@ GB.i18n.define('ms', {
   'digest.merged': 'Pull request yang digabungkan',
   'digest.mergers': 'Siapa yang menggabungkan',
   'digest.opened': 'Pull request yang dibuka',
+  'digest.openers': 'Siapa yang paling banyak membuka',
   'digest.closed': 'Isu yang ditutup',
   'digest.dropped': 'Pull request yang ditutup tanpa digabungkan',
   'digest.releases': 'Keluaran',

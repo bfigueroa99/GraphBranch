@@ -763,6 +763,7 @@ GB.i18n.define('fa', {
   'digest.merged': 'پول‌ریکوئست‌های ادغام‌شده',
   'digest.mergers': 'چه کسی ادغام کرد',
   'digest.opened': 'پول‌ریکوئست‌های بازشده',
+  'digest.openers': 'چه کسی بیشترین را باز کرد',
   'digest.closed': 'ایشوهای بسته‌شده',
   'digest.dropped': 'pull requestهای بسته‌شده بدون ادغام',
   'digest.releases': 'نسخه‌ها',

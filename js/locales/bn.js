@@ -720,6 +720,7 @@ GB.i18n.define('bn', {
   'digest.merged': 'মার্জ হওয়া পুল রিকোয়েস্ট',
   'digest.mergers': 'কে মার্জ করেছে',
   'digest.opened': 'খোলা পুল রিকোয়েস্ট',
+  'digest.openers': 'কে সবচেয়ে বেশি খুলেছে',
   'digest.closed': 'বন্ধ হওয়া ইস্যু',
   'digest.dropped': 'মার্জ ছাড়া বন্ধ হওয়া pull request',
   'digest.releases': 'রিলিজ',

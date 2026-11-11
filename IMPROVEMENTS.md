@@ -539,5 +539,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (filtrar los PRs ya cargados con su decisión de revisión y la actividad, como los PRs por estado).
 - OMC: plan=— · revisión=5 hallazgos (2 arreglados: el MEDIUM de Azure, cuyos PRs aprobados por voto contaban como sin revisión, y el LOW de la prueba, que ahora mira la rama de la fila; el MEDIUM de Bitbucket, que no trae revisiones, va a Límites conocidos; quedan los LOW de los 7 días desde la apertura y no desde «listo para revisión», y del smoke que solo ve la lista vacía) · verificación=PASS
 - Reclamo: loop/261, sin colisión
-- Validado: pendiente
+- Validado: 668 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 262, expansión: ítem 181 (Práctica: git clean, Público)

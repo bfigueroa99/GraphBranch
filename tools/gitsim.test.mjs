@@ -1059,3 +1059,133 @@ test('stash -u aparta también los archivos sin seguir y pop los devuelve; sin -
   assert.match(clash.lines.join('\n'), /tmp\.txt already exists, no checkout/);
   assert.equal(r.stashes.length, 1);
 });
+
+/* rm y mv: git rm prepara el borrado, git mv el renombre, y lo hecho a mano (sin git) lo prepara add -A */
+const status = (r) => plain(r.run('status').lines);
+const last = (r) => r.commits.get(r.headSha);
+
+test('git rm borra un archivo que git sigue, deja el borrado preparado y el commit lo guarda', () => {
+  const r = fresh();
+  run(r, 'touch app.js', 'add app.js', 'commit -m "Add app"');
+  const res = r.run('git rm app.js');
+  assert.ok(res.ok, res.lines.join('\n'));
+  assert.deepEqual(plain(res.lines), ["rm 'app.js'"]);
+  assert.deepEqual(status(r), ['On branch main', 'Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\tdeleted:    app.js']);
+  const c = r.run('commit -m "Drop app"');
+  assert.ok(c.ok);
+  assert.deepEqual(plain(c.lines.slice(1)), [' 1 file changed']);
+  assert.deepEqual(plain(last(r).removed), ['app.js']);
+  assert.equal(last(r).files, undefined, 'un borrado no es un archivo cambiado');
+  assert.deepEqual(status(r).slice(1), ['nothing to commit, working tree clean']);
+  // ya no existe: otro rm (con o sin git) falla, y touch lo crea como archivo nuevo sin seguir
+  assert.match(r.run('git rm app.js').lines[0], /pathspec 'app\.js' did not match any files/);
+  assert.match(r.run('rm app.js').lines[0], /cannot remove 'app\.js'/);
+  run(r, 'touch app.js');
+  assert.deepEqual(plain(r.untracked), ['app.js']);
+});
+
+test('git rm se niega con cambios sin commit (salvo -f) y git rm --cached deja el archivo, sin seguir', () => {
+  const r = fresh();
+  run(r, 'touch a.txt');
+  const local = r.run('git rm a.txt');
+  assert.equal(local.ok, false);
+  assert.match(local.lines.join('\n'), /has local modifications:\n {4}a\.txt\n\(use --cached to keep the file, or -f to force removal\)/);
+  run(r, 'add a.txt');
+  assert.match(r.run('git rm a.txt').lines.join('\n'), /changes staged in the index/);
+  assert.equal(r.staged.length, 1, 'al negarse no toca nada');
+  // --cached: sale del índice, el archivo se queda sin seguir
+  const cached = r.run('git rm --cached a.txt');
+  assert.ok(cached.ok, cached.lines.join('\n'));
+  assert.deepEqual(status(r), ['On branch main', 'Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\tdeleted:    a.txt', 'Untracked files:', '\ta.txt']);
+  run(r, 'commit -m "Stop tracking a"');
+  assert.deepEqual(plain(last(r).removed), ['a.txt']);
+  assert.deepEqual(plain(r.untracked), ['a.txt'], 'tras el commit sigue ahí, sin seguir');
+  // -f borra aunque haya cambios
+  const f = fresh();
+  run(f, 'touch b.txt');
+  assert.ok(f.run('git rm -f b.txt').ok);
+  assert.deepEqual(plain(f.work), []);
+  assert.deepEqual(plain(f.staged), [{ file: 'b.txt', gone: true }]);
+  // un archivo nuevo preparado y borrado con -f desaparece sin dejar borrado que preparar
+  const n = fresh();
+  run(n, 'touch --new n.txt', 'add n.txt', 'git rm -f n.txt');
+  assert.deepEqual(status(n).slice(1), ['nothing to commit, working tree clean']);
+  // restore --staged deshace un rm --cached: el archivo vuelve a seguirse
+  const back = fresh();
+  run(back, 'git rm --cached c.txt', 'restore --staged c.txt');
+  assert.deepEqual(status(back).slice(1), ['nothing to commit, working tree clean']);
+  // un archivo sin seguir no está en el índice
+  const u = fresh();
+  run(u, 'touch --new tmp.txt');
+  assert.match(u.run('git rm tmp.txt').lines[0], /pathspec 'tmp\.txt' did not match any files/);
+});
+
+test('git mv renombra preparado, con los cambios del archivo, y el commit lo guarda como un archivo', () => {
+  const r = fresh();
+  run(r, 'touch old.js', 'add old.js', 'commit -m "Add old"');
+  const res = r.run('git mv old.js new.js');
+  assert.ok(res.ok, res.lines.join('\n'));
+  assert.deepEqual(status(r), ['On branch main', 'Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\trenamed:    old.js -> new.js']);
+  const c = r.run('commit -m "Rename old to new"');
+  assert.deepEqual(plain(c.lines.slice(1)), [' 1 file changed']);
+  assert.deepEqual(plain(last(r).files), ['new.js']);
+  assert.deepEqual(plain(last(r).removed), ['old.js']);
+  // el viejo ya no existe y el nuevo sí: mover otra vez el viejo falla, y sobre el nuevo también
+  assert.match(r.run('git mv old.js x.js').lines[0], /bad source/);
+  run(r, 'touch other.js', 'add other.js', 'commit -m "Add other"');
+  assert.match(r.run('git mv other.js new.js').lines[0], /destination exists, source=other\.js, destination=new\.js/);
+  // un archivo cambiado se lleva sus cambios: queda renombrado y cambiado sin preparar
+  run(r, 'touch other.js', 'git mv other.js renamed.js');
+  assert.deepEqual(status(r).slice(1), ['Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\trenamed:    other.js -> renamed.js', 'Changes not staged for commit:', '\tmodified:   renamed.js']);
+  // un archivo sin seguir no se puede mover con git
+  run(r, 'touch --new tmp.txt');
+  assert.match(r.run('git mv tmp.txt t.txt').lines[0], /not under version control/);
+});
+
+test('rm y mv sin git solo tocan el árbol; add -A (y add ., add -u) preparan los borrados y el renombre', () => {
+  const r = fresh();
+  run(r, 'touch a.js', 'touch b.js', 'add .', 'commit -m "Add a and b"');
+  run(r, 'rm a.js');
+  assert.deepEqual(status(r), ['On branch main', 'Changes not staged for commit:', '\tdeleted:    a.js']);
+  // como en git, un commit sin nada preparado se niega y muestra el borrado
+  const no = r.run('commit -m "x"');
+  assert.equal(no.ok, false);
+  assert.match(no.lines.join('\n'), /deleted: {4}a\.js/);
+  // mv a mano: el viejo borrado y el nuevo sin seguir
+  run(r, 'mv b.js c.js');
+  assert.deepEqual(status(r).slice(1), ['Changes not staged for commit:', '\tdeleted:    a.js', '\tdeleted:    b.js', 'Untracked files:', '\tc.js']);
+  // add -A prepara el borrado y ve el mv como un renombre
+  run(r, 'add -A');
+  assert.deepEqual(status(r).slice(1), ['Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\tdeleted:    a.js', '\trenamed:    b.js -> c.js']);
+  run(r, 'commit -m "Clean up"');
+  assert.deepEqual(plain(last(r).removed.sort()), ['a.js', 'b.js']);
+  assert.deepEqual(plain(last(r).files), ['c.js']);
+  // add -u y add <archivo> también preparan un borrado a mano; commit -a se lo lleva sin add
+  for (const cmd of ['add -u', 'add d.js', 'add .']) {
+    const x = fresh();
+    run(x, 'rm d.js', cmd);
+    assert.deepEqual(plain(x.staged), [{ file: 'd.js', gone: true }], cmd);
+  }
+  const a = fresh();
+  run(a, 'rm d.js', 'commit -am "Drop d"');
+  assert.deepEqual(plain(last(a).removed), ['d.js']);
+  // restore devuelve un archivo borrado a mano; reset --hard tira el borrado preparado
+  const back = fresh();
+  run(back, 'rm d.js', 'restore d.js');
+  assert.deepEqual(status(back).slice(1), ['nothing to commit, working tree clean']);
+  const hard = fresh();
+  run(hard, 'git rm --cached d.js', 'rm e.js', 'reset --hard');
+  assert.deepEqual(status(hard).slice(1), ['nothing to commit, working tree clean']);
+  // un borrado a mano es un cambio sin commit: checkout se niega y stash lo aparta y lo devuelve borrado
+  const st = fresh();
+  run(st, 'checkout -b other', 'commit -m "Other"', 'checkout main', 'rm d.js');
+  assert.equal(st.run('checkout other').ok, false);
+  run(st, 'stash');
+  assert.deepEqual(status(st).slice(1), ['nothing to commit, working tree clean']);
+  run(st, 'stash pop');
+  assert.deepEqual(plain(st.deleted), ['d.js']);
+  // rm a mano de un archivo sin seguir lo borra del todo
+  const tmp = fresh();
+  run(tmp, 'touch --new tmp.txt', 'rm tmp.txt');
+  assert.deepEqual(status(tmp).slice(1), ['nothing to commit, working tree clean']);
+});

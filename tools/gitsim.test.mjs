@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} }, TextEncoder, TextDecoder, btoa, atob, Uint8Array }); // lo que el navegador ya trae
 vm.runInContext(readFileSync(join(root, 'js', 'gitsim.js'), 'utf8'), ctx, { filename: 'gitsim.js' });
-const { Repo, fromData, EXERCISES, start, startCustom, customExercise, encodeExercise, decodeExercise, cleanExercise } = ctx.window.GB.gitsim;
+const { Repo, fromData, tokenize, EXERCISES, start, startCustom, customExercise, encodeExercise, decodeExercise, cleanExercise } = ctx.window.GB.gitsim;
 const NOW = Date.UTC(2026, 9, 13, 12);
 
 /* los arreglos de otro contexto de vm no son «iguales» para deepEqual: se comparan como datos planos */
@@ -599,6 +599,27 @@ test('tag -a: etiqueta anotada con su mensaje, que tag -n lista y el log decora 
   assert.equal(r.notes.has('v1'), false);
   assert.ok(r.run('tag v1').ok, 'con el mismo nombre, ahora ligera');
   assert.equal(r.notes.has('v1'), false);
+});
+
+test('tag -f pisa una etiqueta, tag -d borra todas o ninguna y una comilla suelta no corta la palabra', () => {
+  const r = fresh();
+  r.run('tag -a v1 -m "Vieja"');
+  const obj = r.notes.get('v1').sha;
+  r.run('commit -m "Next"');
+  assert.deepEqual(plain(r.run('tag -f v1').lines), [`Updated tag 'v1' (was ${obj.slice(0, 7)})`]);
+  assert.equal(r.tags.get('v1'), r.headSha);
+  assert.equal(r.notes.has('v1'), false, 'ahora es ligera: el mensaje viejo no queda');
+  assert.ok(r.run('tag -f -a v1 -m "Nueva" HEAD~1').ok);
+  assert.equal(r.notes.get('v1').message, 'Nueva');
+  assert.equal(r.tags.get('v1'), r.resolve('HEAD~1'));
+  assert.equal(r.run('tag -d -f v1').ok, false);
+  r.run('tag v2');
+  const res = r.run('tag -d v2 nope');
+  assert.equal(res.ok, false);
+  assert.deepEqual(plain([...r.tags.keys()]).sort(), ['v1', 'v2'], 'nombre que no existe: no borra ninguna');
+  assert.equal(r.run('tag -d v1 v2').lines.length, 2);
+  assert.deepEqual(plain(tokenize("commit -m it's")), ['commit', '-m', "it's"]);
+  assert.deepEqual(plain(tokenize(`tag --message="a b" -m 'c d' x"y z"`)), ['tag', '--message=a b', '-m', 'c d', 'xy z']);
 });
 
 test('el ejercicio de cherry-pick pide el arreglo copiado y su etiqueta, no una fusión', () => {

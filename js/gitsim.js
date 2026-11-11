@@ -26,7 +26,7 @@
   /** Separa una línea en palabras, con comillas simples o dobles, como la terminal: `--message="a b"` es una palabra, `--message=a b`. */
   function tokenize(line) {
     const out = [];
-    const re = /(?:"[^"]*"|'[^']*'|[^\s"']+)+|["'][^\s]*/g;
+    const re = /(?:"[^"]*"|'[^']*'|[^\s"']+)+(?:["'][^\s]*)?|["'][^\s]*/g; // una comilla sin cerrar queda dentro de su palabra: it's
     let m;
     while ((m = re.exec(line))) out.push(m[0].replace(/"([^"]*)"|'([^']*)'/g, (_, d, q) => d ?? q));
     return out;
@@ -876,7 +876,7 @@
       const flags = {};
       const rest = [];
       let message = null;
-      const usage = 'usage: tag [-a] [-m "msg"] <tagname> [<commit>] | tag -d <tagname>... | tag [-n] [-l [<pattern>...]]';
+      const usage = 'usage: tag [-a] [-f] [-m "msg"] <tagname> [<commit>] | tag -d <tagname>... | tag [-n] [-l [<pattern>...]]';
       for (let i = 0; i < args.length; i++) {
         const a = args[i];
         if (a === '-m' || a === '--message' || a === '-am') {
@@ -888,6 +888,7 @@
         else if (a === '-d' || a === '--delete') flags['-d'] = true;
         else if (/^-n\d*$/.test(a)) flags['-n'] = true;
         else if (a === '-l' || a === '--list') flags['-l'] = true;
+        else if (a === '-f' || a === '--force') flags['-f'] = true;
         else if (a === '--') {
           rest.push(...args.slice(i + 1));
           break;
@@ -897,11 +898,12 @@
       }
       const annotated = flags['-a'] || message !== null;
       if (flags['-d']) {
-        if (annotated || flags['-n'] || flags['-l']) fail(`fatal: -d does not take -a, -m or -n\n${usage}`);
+        if (annotated || flags['-n'] || flags['-l'] || flags['-f']) fail(`fatal: -d does not take -a, -m or -n\n${usage}`);
         if (!rest.length) fail('fatal: tag name required');
-        return rest.map((name) => {
+        // todos antes de borrar ninguno: un nombre que no existe no deja la lista a medias
+        for (const name of rest) if (!this.tags.has(name)) fail(`error: tag '${name}' not found.`);
+        return [...new Set(rest)].map((name) => {
           const tip = this.tags.get(name);
-          if (!tip) fail(`error: tag '${name}' not found.`);
           const was = this.notes.get(name)?.sha ?? tip;
           this.tags.delete(name);
           this.notes.delete(name);
@@ -909,7 +911,7 @@
         });
       }
       const listing = flags['-n'] || flags['-l'];
-      if (listing && annotated) fail(`fatal: -n and -l are only for listing tags\n${usage}`);
+      if (listing && (annotated || flags['-f'])) fail(`fatal: -n and -l are only for listing tags\n${usage}`);
       // tag -l <patrón>…: solo las que coinciden con alguno (`*` y `?`, como git)
       const glob = (p) => new RegExp(`^${p.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.')}$`);
       const names = () => [...this.tags.keys()].sort().filter((n) => !listing || !rest.length || rest.some((p) => glob(p).test(n)));
@@ -925,14 +927,17 @@
       if (rest.length > 2) fail(`fatal: too many arguments\n${usage}`);
       const [name, target] = rest;
       if (!validName(name)) fail(`fatal: '${name}' is not a valid tag name.`);
-      if (this.tags.has(name)) fail(`fatal: tag '${name}' already exists`);
+      if (this.tags.has(name) && !flags['-f']) fail(`fatal: tag '${name}' already exists`);
       // git abre el editor para escribir el mensaje; la práctica no tiene editor
       if (annotated && message === null) fail('fatal: no tag message given: the practice has no editor, so write it with -m "message"');
       const sha = target ? this.resolve(target) : this.headSha;
       if (!sha) fail(target ? `fatal: Failed to resolve '${target}' as a valid ref.` : 'fatal: Failed to resolve HEAD as a valid ref.');
+      // -f pisa la que ya existe, como git, que avisa dónde estaba
+      const old = this.tags.has(name) ? (this.notes.get(name)?.sha ?? this.tags.get(name)) : null;
       this.tags.set(name, sha);
+      this.notes.delete(name);
       if (annotated) this.notes.set(name, { message, sha: hash(`tag|${name}|${sha}|${message}|${this.clock}`) });
-      return [];
+      return old ? [`Updated tag '${name}' (was ${this.short(old)})`] : [];
     },
 
     reset(args) {

@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} }, TextEncoder, TextDecoder, btoa, atob, Uint8Array }); // lo que el navegador ya trae
 vm.runInContext(readFileSync(join(root, 'js', 'gitsim.js'), 'utf8'), ctx, { filename: 'gitsim.js' });
-const { Repo, fromData, EXERCISES, start, startCustom, customExercise, encodeExercise, decodeExercise, cleanExercise } = ctx.window.GB.gitsim;
+const { Repo, fromData, tokenize, EXERCISES, start, startCustom, customExercise, encodeExercise, decodeExercise, cleanExercise } = ctx.window.GB.gitsim;
 const NOW = Date.UTC(2026, 9, 13, 12);
 
 /* los arreglos de otro contexto de vm no son «iguales» para deepEqual: se comparan como datos planos */
@@ -549,6 +549,77 @@ test('tag: crear, listar, borrar, mostrarse en el log y resolverse como referenc
   assert.equal(r.run('tag -d v1').ok, false);
   assert.ok(r.run('tag late HEAD~1').ok);
   assert.equal(r.tags.get('late'), r.resolve('HEAD~1'));
+});
+
+test('tag -a: etiqueta anotada con su mensaje, que tag -n lista y el log decora como tag:', () => {
+  const r = fresh();
+  const first = r.headSha;
+  const res = r.run('tag -a v1 -m "Primera versión"');
+  assert.ok(res.ok && res.changed);
+  assert.equal(r.tags.get('v1'), first);
+  assert.equal(r.notes.get('v1').message, 'Primera versión');
+  assert.notEqual(r.notes.get('v1').sha, first, 'el objeto de la anotada tiene su propio sha');
+  r.run('commit -m "Next"');
+  assert.ok(r.run('tag light').ok, 'una ligera sigue sin mensaje');
+  assert.equal(r.notes.has('light'), false);
+  assert.ok(r.run('git tag -m "Solo -m también anota" v2 HEAD~1').ok, '-m solo implica -a, y con commit');
+  assert.equal(r.tags.get('v2'), first);
+  assert.ok(r.run('tag -am "Pegadas" v3').ok);
+  assert.ok(r.run('tag --annotate --message="Dos palabras" v4').ok);
+  assert.deepEqual(plain(r.run('tag').lines), ['light', 'v1', 'v2', 'v3', 'v4']);
+  assert.deepEqual(plain(r.run('tag -n').lines), [
+    'light           Next',
+    'v1              Primera versión',
+    'v2              Solo -m también anota',
+    'v3              Pegadas',
+    'v4              Dos palabras',
+  ]);
+  assert.deepEqual(plain(r.run('tag -l').lines), ['light', 'v1', 'v2', 'v3', 'v4']);
+  assert.deepEqual(plain(r.run('tag -l "v?" light').lines), ['light', 'v1', 'v2', 'v3', 'v4']);
+  assert.deepEqual(plain(r.run('tag -n -l "v[12]*" "*3"').lines), ['v3              Pegadas'], 'los corchetes son literales; * y ? no');
+  assert.match(r.run('log --oneline').lines.find((l) => l.startsWith(first.slice(0, 7))), /\(tag: v1, tag: v2\)/);
+  assert.match(r.run('log --oneline').lines[0], /tag: v3/);
+  assert.equal(r.resolve('v1'), first, 'se resuelve al commit, no al objeto');
+  // los errores de git, sin tocar nada
+  const before = plain([...r.tags]);
+  assert.match(r.run('tag -a v5').lines[0], /no tag message given/, 'sin editor, sin -m no hay mensaje');
+  assert.equal(r.run('tag -a v1 -m "otra"').ok, false, 'repetida');
+  assert.equal(r.run('tag -a -m "sin nombre"').ok, false);
+  assert.equal(r.run('tag -a v6 -m').ok, false, '-m sin valor');
+  assert.equal(r.run('tag -a v6 -m x nope').ok, false, 'commit que no existe');
+  assert.equal(r.run('tag -a v6 -m x HEAD extra').ok, false);
+  assert.equal(r.run('tag -s v6 -m x').ok, false, 'sin firmas');
+  assert.equal(r.run('tag -n -a v6 -m x').ok, false);
+  assert.equal(r.run('tag -l -m x v6').ok, false);
+  assert.equal(r.run('tag -d -m x v1').ok, false);
+  assert.deepEqual(plain([...r.tags]), before);
+  // borrar una anotada dice el sha de su objeto y se lleva su mensaje
+  const obj = r.notes.get('v1').sha;
+  assert.deepEqual(plain(r.run('tag -d v1').lines), [`Deleted tag 'v1' (was ${obj.slice(0, 7)})`]);
+  assert.equal(r.notes.has('v1'), false);
+  assert.ok(r.run('tag v1').ok, 'con el mismo nombre, ahora ligera');
+  assert.equal(r.notes.has('v1'), false);
+});
+
+test('tag -f pisa una etiqueta, tag -d borra todas o ninguna y una comilla suelta no corta la palabra', () => {
+  const r = fresh();
+  r.run('tag -a v1 -m "Vieja"');
+  const obj = r.notes.get('v1').sha;
+  r.run('commit -m "Next"');
+  assert.deepEqual(plain(r.run('tag -f v1').lines), [`Updated tag 'v1' (was ${obj.slice(0, 7)})`]);
+  assert.equal(r.tags.get('v1'), r.headSha);
+  assert.equal(r.notes.has('v1'), false, 'ahora es ligera: el mensaje viejo no queda');
+  assert.ok(r.run('tag -f -a v1 -m "Nueva" HEAD~1').ok);
+  assert.equal(r.notes.get('v1').message, 'Nueva');
+  assert.equal(r.tags.get('v1'), r.resolve('HEAD~1'));
+  assert.equal(r.run('tag -d -f v1').ok, false);
+  r.run('tag v2');
+  const res = r.run('tag -d v2 nope');
+  assert.equal(res.ok, false);
+  assert.deepEqual(plain([...r.tags.keys()]).sort(), ['v1', 'v2'], 'nombre que no existe: no borra ninguna');
+  assert.equal(r.run('tag -d v1 v2').lines.length, 2);
+  assert.deepEqual(plain(tokenize("commit -m it's")), ['commit', '-m', "it's"]);
+  assert.deepEqual(plain(tokenize(`tag --message="a b" -m 'c d' x"y z"`)), ['tag', '--message=a b', '-m', 'c d', 'xy z']);
 });
 
 test('el ejercicio de cherry-pick pide el arreglo copiado y su etiqueta, no una fusión', () => {

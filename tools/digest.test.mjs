@@ -455,9 +455,10 @@ test('quién abrió más PRs: cuenta los PRs abiertos de la semana por su autor,
   const ana = { login: 'ana' };
   const opens = [
     // esta semana
+    // como llega del feed, del más nuevo al más viejo: beto reabrió el #1 que ana había abierto antes
+    { id: 'o1b', kind: 'pr-open', time: ago(0.5), number: 1, detail: 'uno', actor: { login: 'beto' } }, // el mismo PR reabierto por otra cuenta: cuenta para quien lo abrió
     { id: 'o1', kind: 'pr-open', time: ago(1), number: 1, detail: 'uno', actor: ana },
     { id: 'o1', kind: 'pr-open', time: ago(1), number: 1, detail: 'uno', actor: ana }, // la misma actividad dos veces
-    { id: 'o1b', kind: 'pr-open', time: ago(1), number: 1, detail: 'uno', actor: { login: 'beto' } }, // el mismo PR reabierto por otra cuenta: no suma
     { id: 'o2', kind: 'pr-open', time: ago(2), number: 2, detail: 'dos', actor: { login: 'beto' } },
     { id: 'o3', kind: 'pr-open', time: ago(3), number: 3, detail: 'tres', actor: ana },
     { id: 'o4', kind: 'pr-open', time: ago(3), number: 4, detail: 'cuatro', actor: { name: 'Ca*rla' } }, // sin usuario: su nombre

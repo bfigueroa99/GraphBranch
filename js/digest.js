@@ -87,14 +87,22 @@
     }
     // PRs abiertos en la semana: un PR reabierto o marcado como listo no cuenta dos veces
     const openedNums = new Set();
-    const openedActs = acts
+    const opened = acts
       .filter((a) => inWeek(a, 'pr-open') && (a.number == null || (!openedNums.has(a.number) && openedNums.add(a.number))))
-      .sort((a, b) => b.time - a.time);
-    const opened = openedActs.map((a) => ({ number: a.number, title: text(a.detail) || text(a.title), url: a.url || null, time: a.time }));
-    // quién abrió más PRs: la cuenta (o, sin ella, el nombre) del primero que llegó de cada PR abierto en la
-    // semana; un PR reabierto o marcado como listo por otra persona no suma otra vez, y sin autor no cuenta
+      .sort((a, b) => b.time - a.time)
+      .map((a) => ({ number: a.number, title: text(a.detail) || text(a.title), url: a.url || null, time: a.time }));
+    // quién abrió más PRs: la cuenta (o, sin ella, el nombre) de la actividad «PR abierto» más vieja de la
+    // semana de cada PR (el feed llega del más nuevo al más viejo, y la más nueva puede ser quien lo reabrió
+    // o lo marcó como listo); cada PR suma una vez, y sin autor no cuenta
+    const firstOpen = new Map();
+    for (const a of acts) {
+      if (a.kind !== 'pr-open' || !a.time || !(a.time > since && a.time <= now)) continue;
+      const k = a.number != null ? `n:${a.number}` : `i:${a.id}`;
+      const prev = firstOpen.get(k);
+      if (!prev || a.time < prev.time) firstOpen.set(k, a);
+    }
     const openers = new Map();
-    for (const a of openedActs) {
+    for (const a of firstOpen.values()) {
       const who = a.actor?.login || a.actor?.name;
       if (who) openers.set(who, (openers.get(who) || 0) + 1);
     }

@@ -451,6 +451,32 @@ test('organización: suma quién fusionó entre los repos seguidos (la misma cue
   assert.doesNotMatch(imageLinesOrg(sin, 'a', t).map((l) => l.text).join('\n'), /Quién fusionó/);
 });
 
+test('organización: suma quién abrió más PRs entre los repos seguidos (la misma cuenta una vez, el mismo número en dos repos son dos PRs, hasta 5) en Markdown e imagen', () => {
+  const op = (id, number, days, who) => ({ id, kind: 'pr-open', number, detail: `PR ${number}`, time: NOW - days * 864e5, ...(who ? { actor: { login: who } } : {}) });
+  const o = computeOrg([
+    // en web: beto reabrió el #1 de ana (cuenta para ana), y uno de hace 20 días no entra
+    { repo: 'acme/web', data: repo(), acts: [op('1b', 1, 0.5, 'beto'), op('1', 1, 1, 'ana'), op('2', 2, 1, 'ana'), op('3', 3, 2, 'beto'), op('4', 4, 20, 'vieja')] },
+    // en api: el #1 es otro PR (otro repo), y uno sin autor no cuenta
+    { repo: 'acme/api', data: repo(), acts: [op('5', 1, 1, 'ana'), op('6', 2, 2, 'caro'), op('7', 3, 2, 'd1'), op('8', 4, 2, 'd2'), op('9', 5, 2, 'd3'), op('10', 6, 2, 'd4'), op('11', 7, 2)] },
+  ], NOW);
+  assert.equal(o.opened, 10);
+  assert.equal(o.openers.total, 7); // ana (en los dos repos, una cuenta), beto, caro, d1..d4
+  assert.deepEqual(JSON.parse(JSON.stringify(o.openers.rows)), [{ name: 'ana', prs: 3 }, { name: 'beto', prs: 1 }, { name: 'caro', prs: 1 }, { name: 'd1', prs: 1 }, { name: 'd2', prs: 1 }]);
+  const t = { head: 'S {repo}', commits: 'C {n}', merged: 'M', opened: 'Abiertos', openers: 'Quién abrió más', releases: 'R', people: 'P', branch: 'B' };
+  assert.match(toMarkdownOrg(o, 'acme', t), /\n- Abiertos: 10\n- Quién abrió más: ana \(3\), beto \(1\), caro \(1\), d1 \(1\), d2 \(1\)\n/);
+  assert.ok(imageLinesOrg(o, 'acme', t).some((l) => l.kind === 'row' && l.text === 'Quién abrió más: ana (3) · beto (1) · caro (1) · d1 (1) · d2 (1)'));
+  // los nombres van escapados en el Markdown
+  const raro = computeOrg([{ repo: 'a/b', data: repo(), acts: [{ id: 'r', kind: 'pr-open', number: 1, time: NOW - 864e5, actor: { name: 'Ca*rla' } }] }], NOW);
+  assert.match(toMarkdownOrg(raro, 'a', t), /\n- Quién abrió más: Ca\\\*rla \(1\)\n/);
+  // sin cuentas (o sin la etiqueta), la línea no sale
+  const sin = computeOrg([{ repo: 'a/b', data: repo(), acts: [op('z', 9, 1)] }], NOW);
+  assert.equal(sin.opened, 1);
+  assert.equal(sin.openers.total, 0);
+  assert.doesNotMatch(toMarkdownOrg(sin, 'a', t), /Quién abrió más/);
+  assert.doesNotMatch(imageLinesOrg(sin, 'a', t).map((l) => l.text).join('\n'), /Quién abrió más/);
+  assert.doesNotMatch(toMarkdownOrg(o, 'acme', { ...t, openers: '' }), /Quién abrió más/);
+});
+
 test('quién abrió más PRs: cuenta los PRs abiertos de la semana por su autor, una vez por PR, sin la semana anterior, en Markdown e imagen', () => {
   const ana = { login: 'ana' };
   const opens = [

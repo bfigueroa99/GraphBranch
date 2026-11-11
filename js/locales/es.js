@@ -505,6 +505,7 @@ GB.i18n.define('es', {
   'health.starsWeek': '{week} esta semana · {prev} la anterior ({delta})',
   'health.stale': 'Ramas sin actividad hace más de 30 días y sin pull request',
   'health.prs': 'Pull requests abiertos, los más viejos primero',
+  'health.unreviewed': 'Pull requests sin ninguna revisión hace más de 7 días',
   'health.prStates': 'Pull requests abiertos por estado',
   'health.prState.draft': 'Borrador',
   'health.prState.failing': 'Con los checks en rojo',

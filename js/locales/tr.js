@@ -505,6 +505,7 @@ GB.i18n.define('tr', {
   'health.starsWeek': 'bu hafta {week} · geçen hafta {prev} ({delta})',
   'health.stale': '30 günden uzun süredir hareketsiz ve pull request’i olmayan dallar',
   'health.prs': 'Açık pull request’ler, en eskisi önce',
+  'health.unreviewed': '7 günden uzun süredir incelenmemiş pull request’ler',
   'health.prStates': 'Duruma göre açık pull request\'ler',
   'health.prState.draft': 'Taslak',
   'health.prState.failing': 'Başarısız kontroller',

@@ -1,5 +1,5 @@
 /* GraphBranch — salud del repo: lo que ya está cargado, leído como señales de equipo.
-   Ramas sin actividad hace más de 30 días y sin PR, pull requests abiertos por edad y por estado (borrador, checks en rojo, aprobado, esperando revisión), cuánto tardaron
+   Ramas sin actividad hace más de 30 días y sin PR, pull requests abiertos por edad y por estado (borrador, checks en rojo, aprobado, esperando revisión) y los que llevan más de 7 días sin ninguna revisión, cuánto tardaron
    en fusionarse los últimos, el ritmo de merges y releases y, los PRs fusionados y abiertos, los issues cerrados y las ramas nuevas y los commits y sus autores distintos por semana y, en el idioma de DORA, la frecuencia de
    despliegues (cada release cuenta como uno, también por semana) y el tiempo de entrega (de abierto a fusionado), el estado del último despliegue de cada entorno y las estrellas nuevas de la semana frente a las de la anterior. No hace ninguna consulta: parte del
    estado del grafo y de la actividad que ya llegó, y cuenta lo que pasa en el repo, no a personas. */
@@ -8,6 +8,7 @@
 
   const DAY = 864e5;
   const STALE_DAYS = 30;
+  const UNREVIEWED_DAYS = 7; // un PR abierto que pasa de esto sin ninguna revisión cuenta como «sin revisión»
   const RECENT_MERGES = 20; // cuántos PRs fusionados entran en el tiempo de abierto a fusionado
   const RECENT_RELEASES = 10; // cuántos releases entran en el tiempo entre despliegues
   const WEEKS = 8; // semanas que entran en la frecuencia de despliegue y en las tendencias de merges, de PRs abiertos, de issues cerrados, de ramas nuevas, de commits y de autores
@@ -113,6 +114,15 @@
     }
     const prStates = {};
     for (const k in states) prStates[k] = { total: states[k].length, rows: states[k].slice(0, ROWS) };
+
+    // sin revisión hace días: abiertos hace más de UNREVIEWED_DAYS, fuera de los borradores, sin decisión de revisión
+    // (aprobado o con cambios pedidos) y sin ninguna revisión en la actividad ya cargada (pedir una no cuenta)
+    const reviewed = new Set();
+    for (const a of acts) if (a.number != null && !a.request && (a.kind === 'review' || a.kind === 'review-ok' || a.kind === 'review-changes')) reviewed.add(a.number);
+    const unreviewed = prs.filter((r) => {
+      const p = data.pulls.get(r.number);
+      return !r.draft && !p.review && !reviewed.has(r.number) && r.age > UNREVIEWED_DAYS * DAY;
+    });
 
     const seen = new Set();
     const merges = acts.filter((a) => a.kind === 'pr-merge' && a.time && !seen.has(a.id) && seen.add(a.id));
@@ -242,6 +252,7 @@
       stale: { total: stale.length, rows: stale.slice(0, ROWS) },
       prs: { total: prs.length, rows: prs.slice(0, ROWS) },
       prStates,
+      unreviewed: { total: unreviewed.length, rows: unreviewed.slice(0, ROWS) },
       merged: spans.length ? { n: spans.length, median: median(spans), max: Math.max(...spans) } : null,
       dora,
       leadSource: { fromCommit, total: lead.length },

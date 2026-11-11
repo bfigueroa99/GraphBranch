@@ -505,6 +505,7 @@ GB.i18n.define('el', {
   'health.starsWeek': '{week} αυτή την εβδομάδα · {prev} την προηγούμενη ({delta})',
   'health.stale': 'Κλάδοι χωρίς δραστηριότητα πάνω από 30 ημέρες και χωρίς pull request',
   'health.prs': 'Ανοιχτά pull request, τα παλαιότερα πρώτα',
+  'health.unreviewed': 'Pull request χωρίς καμία αξιολόγηση πάνω από 7 ημέρες',
   'health.prStates': 'Ανοιχτά pull requests ανά κατάσταση',
   'health.prState.draft': 'Πρόχειρο',
   'health.prState.failing': 'Αποτυχημένοι έλεγχοι',

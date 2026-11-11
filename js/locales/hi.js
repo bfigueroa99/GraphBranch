@@ -505,6 +505,7 @@ GB.i18n.define('hi', {
   'health.starsWeek': 'इस सप्ताह {week} · पिछले सप्ताह {prev} ({delta})',
   'health.stale': '30 दिन से अधिक निष्क्रिय और बिना pull request वाली ब्रांच',
   'health.prs': 'खुले pull request, सबसे पुराने पहले',
+  'health.unreviewed': '7 दिन से ज़्यादा से बिना किसी समीक्षा के pull request',
   'health.prStates': 'स्थिति के अनुसार खुले पुल रिक्वेस्ट',
   'health.prState.draft': 'ड्राफ़्ट',
   'health.prState.failing': 'विफल जाँचें',

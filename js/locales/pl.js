@@ -516,6 +516,7 @@ GB.i18n.define('pl', {
   'health.starsWeek': '{week} w tym tygodniu · {prev} w poprzednim ({delta})',
   'health.stale': 'Gałęzie bez aktywności od ponad 30 dni i bez pull requesta',
   'health.prs': 'Otwarte pull requesty, od najstarszych',
+  'health.unreviewed': 'Pull requesty bez recenzji od ponad 7 dni',
   'health.prStates': 'Otwarte pull requesty wg stanu',
   'health.prState.draft': 'Szkic',
   'health.prState.failing': 'Nieudane sprawdzenia',

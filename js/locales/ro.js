@@ -513,6 +513,7 @@ GB.i18n.define('ro', {
   'health.starsWeek': '{week} săptămâna aceasta · {prev} săptămâna trecută ({delta})',
   'health.stale': 'Ramuri fără activitate de peste 30 de zile și fără pull request',
   'health.prs': 'Pull request-uri deschise, cele mai vechi primele',
+  'health.unreviewed': 'Pull request-uri fără nicio recenzie de peste 7 zile',
   'health.prStates': 'Pull request-uri deschise după stare',
   'health.prState.draft': 'Ciornă',
   'health.prState.failing': 'Verificări eșuate',

@@ -505,6 +505,7 @@ GB.i18n.define('hu', {
   'health.starsWeek': '{week} ezen a héten · {prev} az előző héten ({delta})',
   'health.stale': '30 napnál régebben inaktív, pull request nélküli ágak',
   'health.prs': 'Nyitott pull requestek, a legrégebbiek elöl',
+  'health.unreviewed': 'Több mint 7 napja átnézés nélküli pull requestek',
   'health.prStates': 'Nyitott pull requestek állapot szerint',
   'health.prState.draft': 'Piszkozat',
   'health.prState.failing': 'Hibás ellenőrzések',

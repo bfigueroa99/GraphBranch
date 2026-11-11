@@ -505,6 +505,7 @@ GB.i18n.define('ca', {
   'health.starsWeek': '{week} aquesta setmana · {prev} la setmana anterior ({delta})',
   'health.stale': 'Branques sense activitat fa més de 30 dies i sense pull request',
   'health.prs': 'Pull requests oberts, els més vells primer',
+  'health.unreviewed': 'Pull requests sense cap revisió fa més de 7 dies',
   'health.prStates': 'Pull requests oberts per estat',
   'health.prState.draft': 'Esborrany',
   'health.prState.failing': 'Amb les comprovacions en vermell',

@@ -505,6 +505,7 @@ GB.i18n.define('ta', {
   'health.starsWeek': 'இந்த வாரம் {week} · கடந்த வாரம் {prev} ({delta})',
   'health.stale': '30 நாட்களுக்கு மேல் செயல்பாடு இல்லாத, pull request இல்லாத கிளைகள்',
   'health.prs': 'திறந்த pull request, பழையவை முதலில்',
+  'health.unreviewed': '7 நாட்களுக்கு மேல் மதிப்பாய்வு இல்லாத pull request',
   'health.prStates': 'நிலைப்படி திறந்த புல் ரிக்வெஸ்ட்கள்',
   'health.prState.draft': 'வரைவு',
   'health.prState.failing': 'தோல்வியடைந்த சோதனைகள்',

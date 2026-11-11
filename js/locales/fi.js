@@ -505,6 +505,7 @@ GB.i18n.define('fi', {
   'health.starsWeek': '{week} tällä viikolla · {prev} edellisellä viikolla ({delta})',
   'health.stale': 'Haarat, joissa ei ole ollut toimintaa yli 30 päivään ja joilla ei ole pull requestia',
   'health.prs': 'Avoimet pull requestit, vanhimmat ensin',
+  'health.unreviewed': 'Pull requestit ilman katselmointia yli 7 päivää',
   'health.prStates': 'Avoimet pull requestit tilan mukaan',
   'health.prState.draft': 'Luonnos',
   'health.prState.failing': 'Epäonnistuvat tarkistukset',

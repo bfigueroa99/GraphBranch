@@ -562,6 +562,7 @@ GB.i18n.define('he', {
   'health.starsWeek': '{week} השבוע · {prev} בשבוע שעבר ({delta})',
   'health.stale': 'ענפים בלי פעילות מעל 30 יום ובלי pull request',
   'health.prs': 'pull requests פתוחים, הישנים קודם',
+  'health.unreviewed': 'pull requests ללא סקירה כבר יותר מ־7 ימים',
   'health.prStates': 'בקשות משיכה פתוחות לפי מצב',
   'health.prState.draft': 'טיוטה',
   'health.prState.failing': 'בדיקות שנכשלו',

@@ -521,6 +521,7 @@ GB.i18n.define('uk', {
   'health.starsWeek': '{week} цього тижня · {prev} минулого тижня ({delta})',
   'health.stale': 'Гілки без активності понад 30 днів і без pull request',
   'health.prs': 'Відкриті pull request, спочатку найстарші',
+  'health.unreviewed': 'Pull request без рев’ю понад 7 днів',
   'health.prStates': 'Відкриті pull request за станом',
   'health.prState.draft': 'Чернетка',
   'health.prState.failing': 'Перевірки не пройдено',

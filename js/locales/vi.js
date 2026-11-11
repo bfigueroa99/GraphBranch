@@ -505,6 +505,7 @@ GB.i18n.define('vi', {
   'health.starsWeek': '{week} tuần này · {prev} tuần trước ({delta})',
   'health.stale': 'Nhánh không hoạt động hơn 30 ngày và không có pull request',
   'health.prs': 'Pull request đang mở, cũ nhất trước',
+  'health.unreviewed': 'Pull request chưa có review nào hơn 7 ngày',
   'health.prStates': 'Pull request đang mở theo trạng thái',
   'health.prState.draft': 'Bản nháp',
   'health.prState.failing': 'Kiểm tra thất bại',

@@ -505,6 +505,7 @@ GB.i18n.define('zh-Hant', {
   'health.starsWeek': '本週 {week} · 上週 {prev}（{delta}）',
   'health.stale': '超過 30 天沒有動靜且沒有拉取請求的分支',
   'health.prs': '未關閉的拉取請求（最舊的在前）',
+  'health.unreviewed': '超過 7 天無人審查的拉取請求',
   'health.prStates': '依狀態分類的開放拉取請求',
   'health.prState.draft': '草稿',
   'health.prState.failing': '檢查失敗',

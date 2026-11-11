@@ -601,7 +601,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: la terminal de la práctica (`?practice=1`) en es a 1280 px y ar a 320 px con `git mv`, `rm` a mano, `add -A`, `status` y `git rm --cached` (renombre, borrado y archivo sin seguir en la salida; sin errores de consola ni desborde); auditoría: 0 hallazgos nuevos, 0 conocidos.
 - Skills: no aplica: comandos nuevos en un simulador propio, sin dominio externo; lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (sumar el borrado y el renombre a las listas del índice que ya existen).
-- OMC: plan=— · revisión=10 hallazgos (1 HIGH y 5 MEDIUM arreglados: add tras `rm --cached`, `git mv` y `mv` de ida y vuelta, `--amend` que borra lo que creó, `rebase`/`cherry-pick` que perdían el borrado, `stash` de un `rm --cached`; `git rm -r .` sin archivos ahora avisa; los LOW de `restore --staged` con el nombre viejo y `reset --soft` quedan en Límites conocidos, y el costo de recorrer la historia no pesa al tamaño de la práctica) · verificación=—
+- OMC: plan=— · revisión=10 hallazgos (1 HIGH y 5 MEDIUM arreglados: add tras `rm --cached`, `git mv` y `mv` de ida y vuelta, `--amend` que borra lo que creó, `rebase`/`cherry-pick` que perdían el borrado, `stash` de un `rm --cached`; `git rm -r .` sin archivos ahora avisa; los LOW de `restore --staged` con el nombre viejo y `reset --soft` quedan en Límites conocidos, y el costo de recorrer la historia no pesa al tamaño de la práctica) · verificación=PASS
 - Reclamo: loop/257, sin colisión
-- Validado: pendiente
+- Validado: 664 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 258, expansión: ítem 175 (Estado de los despliegues, segunda entrega, Datos)

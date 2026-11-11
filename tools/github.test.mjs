@@ -45,6 +45,7 @@ function load(gh) {
   );
   vm.runInContext(code('agents.js'), ctx, { filename: 'agents.js' });
   vm.runInContext(code('sources/github.js'), ctx, { filename: 'sources/github.js' });
+  vm.runInContext(code('health.js'), ctx, { filename: 'health.js' }); // para ver lo que el panel de salud hace con lo cargado
   return ctx.GB;
 }
 
@@ -63,6 +64,7 @@ function fakeGitHub() {
     forks: null, // forks como los da /forks (si es null, 404)
     prCommits: null, // número de PR -> fecha ISO de su primer commit, como /pulls/:n/commits (si es null, 404)
     deployments: null, // despliegues como los da la API, el más nuevo primero (si es null, 404)
+    deployStatuses: null, // id del despliegue -> estados como los da /statuses, el más nuevo primero (si es null, 404)
     checks: null, // sha -> check-runs del commit (si es null, la API de checks no existe)
     calls: [],
     base: 'https://api.github.com', // la API a la que responde; cualquier otro host falla, como si no llegara
@@ -131,6 +133,8 @@ function fakeGitHub() {
     if (prCommits) return gh.prCommits ? (gh.prCommits.has(Number(prCommits[1])) ? { body: [{ commit: { author: { date: gh.prCommits.get(Number(prCommits[1])) } } }] } : { status: 404, body: { message: 'Not Found' } }) : { status: 404, body: { message: 'Not Found' } };
     if (p === '/repos/o/r/forks') return gh.forks ? { body: gh.forks } : { status: 404, body: { message: 'Not Found' } };
     if (p === '/repos/o/r/deployments') return gh.deployments ? { body: gh.deployments } : { status: 404, body: { message: 'Not Found' } };
+    const dst = p.match(/^\/repos\/o\/r\/deployments\/(\d+)\/statuses$/);
+    if (dst) return gh.deployStatuses?.has(Number(dst[1])) ? { body: gh.deployStatuses.get(Number(dst[1])).slice(0, Number(u.searchParams.get('per_page')) || 30) } : { status: 404, body: { message: 'Not Found' } };
     const runs = p.match(/^\/repos\/o\/r\/commits\/([^/]+)\/check-runs$/);
     if (runs) return gh.checks ? { body: { total_count: 0, check_runs: gh.checks.get(runs[1]) || [] } } : { status: 404, body: { message: 'Not Found' } };
     if (p.startsWith('/repos/o/r/compare/')) return { body: { total_commits: 1, ahead_by: 1, commits: [] } };
@@ -180,7 +184,7 @@ function connect(gh, token = '', apiUrl = '', marks = true) {
     await src.loop();
     clearTimeout(src.timer); // el próximo ciclo lo corre la prueba
   };
-  return { src, updates, errors };
+  return { src, updates, errors, GB };
 }
 
 /** Las actividades que vienen de eventos del repo (en un arreglo de este contexto, no del de la app). */
@@ -664,6 +668,71 @@ test('tags y despliegues: sin la API, o apagados, el grafo sigue y no se gasta c
   await off.src.cycle();
   assert.equal(gh2.calls.filter((c) => c.startsWith('/repos/o/r/tags') || c.startsWith('/repos/o/r/deployments')).length, 0);
   assert.equal(off.src.data.tags.size, 0);
+});
+
+/* Estado de los despliegues: /deployments/:id/statuses, una consulta por entorno, solo con el panel de salud abierto. */
+
+test('estado de los despliegues: una consulta por entorno, solo al pedirla, y no más de una cada 15 minutos', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  gh.push('main', 'a2', 'a1');
+  gh.deployments = [
+    { id: 30, sha: 'a2', ref: 'main', environment: 'production' },
+    { id: 20, sha: 'a1', ref: 'main', environment: 'staging' },
+    { id: 10, sha: 'a1', ref: 'main', environment: 'production' }, // más viejo: no se pregunta
+    { id: 5, sha: 'a1', ref: 'main', environment: 'preview' },
+  ];
+  gh.deployStatuses = new Map([
+    [30, [{ state: 'success' }, { state: 'in_progress' }]],
+    [20, [{ state: 'failure' }]],
+    [10, [{ state: 'success' }]],
+  ]); // el 5 da 404
+  const { src, errors, GB } = connect(gh);
+  await src.cycle();
+  const asked = () => gh.calls.filter((c) => /\/deployments\/\d+\/statuses/.test(c));
+  assert.equal(asked().length, 0, 'sin abrir el panel no se consulta');
+  const T0 = Date.now();
+  assert.equal(await src.syncDeployStatuses(T0), true);
+  assert.equal(errors.length, 0);
+  assert.deepEqual(asked().map((c) => c.match(/deployments\/(\d+)/)[1]).sort(), ['20', '30', '5'], 'uno por entorno, el último de cada uno');
+  assert.ok(asked().every((c) => c.includes('per_page=1')), 'solo el estado más nuevo');
+  assert.equal(src.data.deployStatus.get(30).state, 'success');
+  assert.equal(src.data.deployStatus.get(20).state, 'failure');
+  assert.equal(src.data.deployStatus.get(5).state, null, 'el que falla queda sin estado');
+  // el panel de salud lo muestra: salió bien, falló o nada
+  const h = GB.health.compute(src.data, [], T0);
+  assert.deepEqual(Object.fromEntries(h.deploys.rows.map((r) => [r.env, r.status])), { production: 'ok', staging: 'failed', preview: null });
+  assert.equal(await src.syncDeployStatuses(T0 + 14 * 60000), false);
+  assert.equal(asked().length, 3, 'no se vuelve a preguntar hasta los 15 minutos');
+  gh.deployStatuses.set(30, [{ state: 'in_progress' }]);
+  assert.equal(await src.syncDeployStatuses(T0 + 15 * 60000), true);
+  assert.equal(asked().length, 6, 'a los 15 minutos, otra vez una por entorno');
+  assert.equal(GB.health.compute(src.data, [], T0).deploys.rows.find((r) => r.env === 'production').status, 'running');
+});
+
+test('estado de los despliegues: sin token pregunta menos, un despliegue nuevo se pregunta enseguida y el viejo se olvida', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  gh.deployments = Array.from({ length: 8 }, (_, i) => ({ id: i + 1, sha: 'a1', ref: 'main', environment: `env-${i}` }));
+  gh.deployStatuses = new Map(Array.from({ length: 9 }, (_, i) => [i + 1, [{ state: 'queued' }]]));
+  const { src } = connect(gh);
+  await src.cycle();
+  const asked = () => gh.calls.filter((c) => /\/deployments\/\d+\/statuses/.test(c)).length;
+  const T0 = Date.now();
+  await src.syncDeployStatuses(T0);
+  assert.equal(asked(), 5, 'sin token, a lo sumo 5 por vez');
+  await src.syncDeployStatuses(T0 + 1000);
+  assert.equal(asked(), 8, 'los que faltaban, en la vez siguiente');
+  // un despliegue nuevo en env-0: se pregunta ya, y el que reemplazó se olvida
+  src.data.deploys.set('env-0', { id: 9, sha: 'a1', ref: 'main', at: '' });
+  await src.syncDeployStatuses(T0 + 2000);
+  assert.equal(asked(), 9);
+  assert.equal(src.data.deployStatus.has(1), false);
+  assert.equal(src.data.deployStatus.get(9).state, 'queued');
+  // sin despliegues (o con la carga apagada) no se gasta nada
+  src.data.deploys = new Map();
+  assert.equal(await src.syncDeployStatuses(T0 + 3000), false);
+  assert.equal(asked(), 9);
 });
 
 /* GitHub Enterprise Server: la misma fuente contra otra URL base (https://host/api/v3 y /api/graphql). */

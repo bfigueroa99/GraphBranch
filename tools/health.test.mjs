@@ -498,6 +498,28 @@ test('despliegues por entorno: al día con su rama, commits nuevos detrás o sin
   // un commit desplegado que no está cargado: no se sabe
   data.deploys = new Map([['production', { sha: 'zz', ref: 'main' }]]);
   assert.equal(compute(data, [], NOW).deploys.rows[0].state, 'unknown');
+  // si salió bien, falló o sigue en curso: el estado de GitHub por id (`deployStatus`) o el que trae la demo (`status`)
+  data.deploys = new Map([
+    ['production', { id: 3, sha: 'r3', ref: 'main' }],
+    ['staging', { id: 2, sha: 'd1', ref: 'develop' }],
+    ['preview', { id: 1, sha: 'r1', ref: 'main', status: 'success' }],
+    ['qa', { sha: 'r2', ref: 'main', status: 'queued' }],
+    ['viejo', { id: 7, sha: 'r1', ref: 'main' }],
+    ['raro', { id: 8, sha: 'r1', ref: 'main' }],
+    ['sin-preguntar', { id: 9, sha: 'r1', ref: 'main' }],
+  ]);
+  data.deployStatus = new Map([
+    [3, { state: 'error' }],
+    [2, { state: 'in_progress' }],
+    [1, { state: 'failure' }], // lo consultado manda sobre lo que traiga el despliegue
+    [7, { state: 'inactive' }],
+    [8, { state: 'toString' }],
+    [9, { state: null }],
+  ]);
+  const out = Object.fromEntries(compute(data, [], NOW).deploys.rows.map((r) => [r.env, r.status]));
+  assert.deepEqual(out, { production: 'failed', staging: 'running', preview: 'failed', qa: 'running', viejo: null, raro: null, 'sin-preguntar': null });
+  delete data.deployStatus;
+  assert.equal(compute(data, [], NOW).deploys.rows.find((r) => r.env === 'preview').status, 'ok');
   // sin carga de despliegues (otras fuentes), nada
   delete data.deploys;
   assert.equal(compute(data, [], NOW).deploys.total, 0);

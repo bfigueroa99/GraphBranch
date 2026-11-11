@@ -1911,7 +1911,7 @@
           ? `<p class="hl-line">${U.esc(t('health.doraFreq', { n: h.dora.deploys30, gap: h.dora.gap != null ? span(h.dora.gap) : '—' }))}</p><p class="hl-line" id="hl-weeks">${U.esc(t('health.doraWeeks', { n: h.dora.weeks.length, list: h.dora.weeks.join(' · ') }))}</p><p class="hl-line">${U.esc(h.leadSource.fromCommit ? t('health.doraLeadCommit', { median: span(h.dora.lead), n: h.leadSource.fromCommit, total: h.leadSource.total }) : t('health.doraLead', { median: h.dora.lead != null ? span(h.dora.lead) : '—' }))}</p>`
           : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
-      (data.deploys?.size ? `<div id="hl-deploys">${healthList('deploys', t('health.deploys'), h.deploys, (r) => [r.env, [r.sha.slice(0, 7), r.state === 'current' ? t('health.deployCurrent', { branch: r.head }) : r.state === 'behind' ? t('health.deployBehind', { branch: r.head, n: r.behind }) : t('health.deployUnknown'), r.age != null ? span(r.age) : ''].filter(Boolean).join(' · ')])}</div>` : '') +
+      (data.deploys?.size ? `<div id="hl-deploys">${healthList('deploys', t('health.deploys'), h.deploys, (r) => [r.env, [r.sha.slice(0, 7), r.state === 'current' ? t('health.deployCurrent', { branch: r.head }) : r.state === 'behind' ? t('health.deployBehind', { branch: r.head, n: r.behind }) : t('health.deployUnknown'), r.status === 'ok' ? t('health.deployOk') : r.status === 'failed' ? t('health.deployFailed') : r.status === 'running' ? t('health.deployRunning') : '', r.age != null ? span(r.age) : ''].filter(Boolean).join(' · ')])}</div>` : '') +
       `<section class="hl-sec" id="hl-ci"><h3>${U.esc(t('health.ci'))}</h3>${
         h.ci.prs || h.ci.fails30
           ? (h.ci.prs ? `<p class="hl-line">${U.esc(t('health.ciPrs', { failing: h.ci.prs.failing, total: h.ci.prs.total, pct: Math.round(h.ci.prs.rate * 100) }))}</p>` : '') +
@@ -2172,6 +2172,7 @@
     renderHealth();
     const asked = source;
     syncHealthForks();
+    if (asked.syncDeployStatuses && asked.data.deploys?.size) asked.syncDeployStatuses().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
     if (asked.syncFirstCommits) {
       const merged = feed.items.filter((a) => a.repo === active?.key && a.kind === 'pr-merge' && a.number && a.openedAt).sort((a, b) => b.time - a.time).slice(0, 20);
       asked.syncFirstCommits(merged.map((a) => a.number)).then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});

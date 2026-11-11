@@ -141,6 +141,8 @@ describe('tools/audit.mjs', () => {
     assert.match(cuerpo, /for \(let i = 0; i < 300; i\+\+\) f\(\)/, 'una tanda de 300 llamadas, no una sola');
     assert.match(cuerpo, /g\.dirtyNodes = g\.dirtyEdges = true/, 'la escena sucia: el camino caro de stepScene');
     assert.match(cuerpo, /P\.stepScene = orig/, 'la envoltura se quita al primer cuadro');
+    assert.match(cuerpo, /catch \{\s*ok\(null\)/, 'una excepción en la medida no cuelga la auditoría');
+    assert.match(e.mirar.toString(), /donde: 'medirEscena'/, 'sin medida, un hallazgo: la vigilancia no se apaga en silencio');
     // subir es peor, como la carga
     const d = compararMedidas({ escena3dUs: 80, etiquetas3dUs: 30 }, { escena3dUs: 100, etiquetas3dUs: 27 });
     assert.deepEqual(

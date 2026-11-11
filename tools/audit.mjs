@@ -454,28 +454,34 @@ function medirEscena() {
       P.stepScene = orig;
       const v = orig.apply(this, a);
       const g = this;
-      const tanda = (f) => {
-        let mejor = Infinity;
-        for (let k = 0; k < 7; k++) {
-          const t = performance.now();
-          for (let i = 0; i < 300; i++) f();
-          mejor = Math.min(mejor, (performance.now() - t) / 300);
-        }
-        return Math.round(mejor * 10000) / 10;
-      };
-      const now = performance.now();
-      ok({
-        escena: tanda(() => {
-          g.dirtyNodes = g.dirtyEdges = true;
-          g.stepScene(now, 0);
-        }),
-        etiquetas: tanda(() => g.placeLabels()),
-        nodos: g.nodes.size,
-      });
+      try {
+        const tanda = (f) => {
+          let mejor = Infinity;
+          for (let k = 0; k < 7; k++) {
+            const t = performance.now();
+            for (let i = 0; i < 300; i++) f();
+            mejor = Math.min(mejor, (performance.now() - t) / 300);
+          }
+          return Math.round(mejor * 10000) / 10;
+        };
+        const now = performance.now();
+        ok({
+          escena: tanda(() => {
+            g.dirtyNodes = g.dirtyEdges = true;
+            g.stepScene(now, 0);
+          }),
+          etiquetas: tanda(() => g.placeLabels()), // con la cámara quieta: el JavaScript, sin escrituras al DOM
+          nodos: g.nodes.size,
+        });
+      } catch {
+        ok(null); // una excepción no cuelga la auditoría: la escena queda sin medida y se avisa
+      }
       return v;
     };
+    // la escena no dibujó ningún cuadro en 5 s: sin medida (si ya resolvió, no cambia nada)
     setTimeout(() => {
-      if (P.stepScene !== orig) (P.stepScene = orig), ok(null); // la escena no dibujó ningún cuadro
+      if (P.stepScene !== orig) P.stepScene = orig;
+      ok(null);
     }, 5000);
   });
 }
@@ -678,7 +684,8 @@ export function escenarios({ langs = false, completa = false } = {}) {
         ctx.add(pares.out.map((donde) => ({ tipo: 'etiquetas-pisadas', donde })));
         if (!pares.visibles) ctx.add([{ tipo: 'error', donde: '.g3-head', detalle: 'ninguna etiqueta de rama visible con 1.000 ramas' }]);
         const m = await ctx.page.evaluate(medirEscena);
-        if (m) (ctx.medidas.escena3dUs = m.escena), (ctx.medidas.etiquetas3dUs = m.etiquetas);
+        if (m) (ctx.medidas.escena3dUs = m.escena), (ctx.medidas.etiquetas3dUs = m.etiquetas), (ctx.medidas.escena3dNodos = m.nodos);
+        else ctx.add([{ tipo: 'error', donde: 'medirEscena', detalle: 'el 3D con 1.000 ramas no dibujó un cuadro medible en 5 s' }]);
       },
     },
     {

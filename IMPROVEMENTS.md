@@ -551,3 +551,17 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/262, sin colisión
 - Validado: 671 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 263, mantenimiento · Rendimiento: pendiente 12 (Con 1.000 ramas, `stepScene` (`js/graph3d.js`) es lo más caro del JavaScript po…)
+
+### 2026-11-11 · Iteración 263 · Mantenimiento · Rendimiento
+
+- **Arreglo: el 1,1 ms de `stepScene` era la medida, no el código; la auditoría lo mide ahora en tandas** (pendiente 12). Con 1.000 ramas en 3D, en tandas de 300 llamadas (la mejor de 7), `stepScene` cuesta 0,0007 ms en reposo y 0,08 ms con la escena sucia (28 nodos; casi todo `writeEdges`), y `placeLabels` 0,03 ms; el render por software, 0,07 ms de JavaScript. El 1,1 ms salía de envolver una llamada sola: `performance.now()` va de 0,1 ms en 0,1 ms sin aislamiento entre orígenes, y los primeros cuadros, fríos, dan 1,1 ms en `writeEdges`. Sin trabajo caro que quitar en la app (no cambia). Lo que cambia: la auditoría completa guarda en el escenario de 1.000 ramas `escena3dUs` y `etiquetas3dUs` (en tandas, en microsegundos) y `escena3dNodos`, `--comparar` las vigila (subir es peor), una excepción durante la medida no la cuelga y sin medida sale un hallazgo.
+- **Reproducción:** Playwright desde el scratchpad contra `node e2e/serve.mjs 4173` con la API simulada de 1.000 ramas, envolviendo cada llamada de `stepScene` → «1 × 1.100 ms» en `writeEdges` y máximo de 1,3 ms en `stepScene` (cuadros en pasos de 0,1 ms); la misma escena en tandas → `stepSceneSucio: 0.083`, `stepSceneReposo: 0.0007`, `placeLabels: 0.0283`.
+- **Pruebas que fallan sin el arreglo:** `node --test tools/audit.test.mjs` («el JavaScript por cuadro del 3D con 1.000 ramas se mide en tandas y --comparar lo vigila») falla sin el cambio de `tools/audit.mjs`.
+- README: Pruebas (las medidas nuevas de la auditoría, por qué en tandas y que `--repetir` no las repite).
+- QA: Rendimiento: base `--repetir 3` antes y `--comparar` después: carga 2046 → 1881 ms (−8 %), tareas largas 1165 → 1204 ms (+3 %), 3D 9,9 → 8,9 fps (+10 %, con carga 1,3: la app no cambió), 2D 42 → 43,9 fps, 10 consultas, nodos y memoria iguales; medidas nuevas `escena3dUs` 261 µs con 124 nodos y `etiquetas3dUs` 29 µs (la escena de la auditoría sigue cargando historia); auditoría completa: 0 hallazgos.
+- Skills: no aplica: medir con Playwright una función propia; lo cubren las reglas del repo y el protocolo de Rendimiento.
+- Arena: no aplica: una sola forma obvia (repetir la llamada en tanda para pasar la resolución del reloj).
+- OMC: plan=— · revisión=6 hallazgos (3 arreglados: el MEDIUM de la medida que colgaba la auditoría si algo lanzaba, el LOW de la medida que faltaba sin aviso y el de los nodos sin guardar; quedan los LOW de `etiquetas3dUs` con la cámara quieta, dicho en el comentario, `--repetir`, dicho en el README, y la prueba que mira el fuente) · verificación=PASS
+- Reclamo: loop/263, sin colisión
+- Validado: 672 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) en verde; e2e no corridas (no toca la página ni el escritorio).
+- **Siguiente:** iteración 264, expansión: ítem 183 (Práctica: stash show, Público)

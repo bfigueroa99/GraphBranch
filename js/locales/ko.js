@@ -583,6 +583,8 @@ GB.i18n.define('ko', {
   'practice.ex11.goal': 'login.js와 debug.js를 바꿨지만 커밋에는 로그인 수정만 들어가야 합니다. add로 login.js를 스테이징하고 commit -m을 실행하세요. debug.js는 바뀐 채로 커밋 없이 남아야 합니다. 주의: commit -a는 둘 다 가져갑니다.',
   'practice.ex12.title': 'clean -d로 추적하지 않는 폴더 지우기',
   'practice.ex12.goal': 'nuevo.js, 임시 파일 두 개(a.tmp, b.tmp), build/ 폴더가 추적되지 않고 있습니다. clean으로 지우되 nuevo.js는 남겨 두세요: 아직 add할 준비가 되지 않았습니다. 먼저 clean -n으로 확인하세요: -d가 없으면 build/는 지워지지 않고, -e는 지우고 싶지 않은 것을 제외합니다.',
+  'practice.ex13.title': '되돌리기 전에 stash 안을 보기',
+  'practice.ex13.goal': 'main에 stash가 두 개 있고 stash list에는 똑같이 보입니다. 하나는 login.js와 login.css를, 다른 하나는 notes.txt를 담고 있습니다. stash show로 각각 무엇을 담았는지 보고(두 번째는 stash show stash@{1}) 로그인 쪽만 stash pop으로 되돌리세요. notes.txt 쪽은 그대로 보관되어야 합니다.',
   'practice.share': '연습 링크 복사',
   'practice.link': '연습 링크',
   'practice.copied': '링크를 복사했습니다.',

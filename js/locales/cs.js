@@ -594,6 +594,8 @@ GB.i18n.define('cs', {
   'practice.ex11.goal': 'Změnil jsi login.js a debug.js, ale do commitu patří jen oprava přihlášení. Připrav login.js pomocí add a spusť commit -m: debug.js musí zůstat změněný a bez commitu. Pozor: commit -a by vzal oba.',
   'practice.ex12.title': 'Smaž nesledovanou složku pomocí clean -d',
   'practice.ex12.goal': 'nuevo.js, dva dočasné soubory (a.tmp a b.tmp) a složka build/ nejsou sledované. Smaž je pomocí clean, ale nech nuevo.js: ještě není připravený na add. Nejdřív se podívej pomocí clean -n: bez -d se build/ nesmaže a -e vynechá, co mazat nechceš.',
+  'practice.ex13.title': 'Podívej se do stashe, než ho vrátíš',
+  'practice.ex13.goal': 'Na main jsou dva stashe a stash list je ukazuje stejně: jeden drží login.js a login.css, druhý notes.txt. Podívej se, co který drží, pomocí stash show (stash show stash@{1} pro druhý) a vrať jen ten s přihlášením přes stash pop. Ten s notes.txt musí zůstat uložený.',
   'practice.share': 'Zkopírovat odkaz na úlohu',
   'practice.link': 'Odkaz na úlohu',
   'practice.copied': 'Odkaz zkopírován.',

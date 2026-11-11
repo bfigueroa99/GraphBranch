@@ -298,6 +298,7 @@ test('cada ejercicio parte sin resolver y se resuelve con sus comandos', () => {
     ['restore --staged debug.log', 'clean -n', 'clean -f'],
     ['add login.js', 'commit -m "Fix login"'],
     ['clean -nd', 'clean -fd -e nuevo.js'],
+    ['stash list', 'stash show', 'stash show stash@{1}', 'stash pop stash@{1}'],
   ];
   assert.equal(solutions.length, EXERCISES.length);
   EXERCISES.forEach((ex, i) => {
@@ -464,7 +465,8 @@ test('la práctica dice «rama renombrada» en el panel, no una borrada y otra c
 test('los números de la URL piden un ejercicio de la lista; lo demás se descarta', () => {
   assert.deepEqual(plain(decodeExercise('3')), { index: 2 });
   assert.deepEqual(plain(decodeExercise('12')), { index: 11 });
-  for (const bad of ['0', '13', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
+  assert.deepEqual(plain(decodeExercise('13')), { index: 12 });
+  for (const bad of ['0', '14', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
 });
 
 test('un ejercicio propio mal hecho no entra: sin meta, condición inventada, comando que falla o demasiados', () => {
@@ -1302,4 +1304,95 @@ test('add acepta la carpeta sin seguir tal como la muestra status', () => {
   assert.ok(r.run('restore --staged build/out.js').ok);
   assert.ok(r.run('add build').ok, 'sin la barra también');
   assert.equal(r.run('add nada/').ok, false, 'una carpeta que no existe sigue fallando');
+});
+
+test('stash show lista lo que guarda un stash sin devolverlo, antes y después de un pop', () => {
+  const r = fresh();
+  assert.deepEqual(plain(r.run('stash show').lines), ['error: No stash entries found.']);
+  r.run('touch app.js');
+  r.run('touch --new nuevo.txt');
+  r.run('add nuevo.txt');
+  r.run('git rm README.md');
+  r.run('touch --new tmp.log');
+  run(r, 'stash -u');
+  r.run('touch notes.txt');
+  run(r, 'stash');
+  const before = JSON.stringify([r.stashes, r.work, r.staged, r.untracked]);
+  // la forma de siempre: los nombres con lo que les pasó y cuántos son (sin líneas: la práctica no tiene contenido)
+  assert.deepEqual(plain(r.run('stash show').lines), [' notes.txt | changed', ' 1 file changed']);
+  assert.deepEqual(plain(r.run('stash show --stat stash@{1}').lines), [' README.md | deleted', ' app.js    | changed', ' nuevo.txt | new', ' 3 files changed']);
+  assert.deepEqual(plain(r.run('stash show --name-only 1').lines), ['README.md', 'app.js', 'nuevo.txt']);
+  assert.deepEqual(plain(r.run('git stash show --name-status stash@{1}').lines), ['D\tREADME.md', 'M\tapp.js', 'A\tnuevo.txt']);
+  // lo sin seguir de stash -u solo sale con -u, o solo eso con --only-untracked
+  assert.deepEqual(plain(r.run('stash show -u --name-status stash@{1}').lines), ['D\tREADME.md', 'M\tapp.js', 'A\tnuevo.txt', 'A\ttmp.log']);
+  assert.deepEqual(plain(r.run('stash show --only-untracked --name-only stash@{1}').lines), ['tmp.log']);
+  assert.deepEqual(plain(r.run('stash show --only-untracked stash@{0}').lines), []);
+  // mirar no devuelve nada ni suelta el stash, y no cambia el grafo
+  assert.equal(JSON.stringify([r.stashes, r.work, r.staged, r.untracked]), before);
+  assert.equal(r.run('stash show').changed, false);
+  // los errores de git: una referencia que no existe, dos, una bandera desconocida, -p sin contenido
+  assert.deepEqual(plain(r.run('stash show stash@{2}').lines), ['error: stash@{2} is not a valid reference']);
+  assert.match(r.run('stash show 0 1').lines[0], /^error: Too many revisions specified/);
+  assert.deepEqual(plain(r.run('stash show --name-only -- stash@{0}').lines), ['notes.txt']);
+  // las opciones antes de show no se pierden en silencio
+  assert.equal(r.run('stash -u show').ok, false);
+  assert.match(r.run('stash show --bogus').lines[0], /^error: unknown option 'bogus'/);
+  assert.equal(r.run('stash show -p').ok, false);
+  // después de un pop, stash@{0} es el que quedaba y lo devuelto ya no está guardado
+  assert.ok(r.run('stash pop').ok);
+  assert.deepEqual(plain(r.run('stash show --name-only').lines), ['README.md', 'app.js', 'nuevo.txt']);
+  assert.ok(r.run('stash pop').ok);
+  assert.deepEqual(plain(r.run('stash show').lines), ['error: No stash entries found.']);
+  assert.ok(r.stashShows >= 8);
+});
+
+test('el ejercicio de stash show no se resuelve sin mirar ni con el stash equivocado', () => {
+  const i = EXERCISES.findIndex((e) => e.id === 'stashshow');
+  // las dos líneas de stash list son iguales: hay que mirar qué guarda cada uno
+  const r = start(i, NOW);
+  const list = r.run('stash list').lines;
+  assert.equal(list.length, 2);
+  assert.equal(list[0].replace(/^stash@\{\d\}: /, ''), list[1].replace(/^stash@\{\d\}: /, ''));
+  // pop a secas devuelve notes.txt, el equivocado
+  const a = start(i, NOW);
+  a.run('stash show');
+  a.run('stash pop');
+  assert.equal(EXERCISES[i].done(a), false);
+  // el bueno sin haber mirado tampoco cuenta
+  const b = start(i, NOW);
+  b.run('stash pop stash@{1}');
+  assert.equal(EXERCISES[i].done(b), false);
+  // soltar el del login y tocar sus archivos a mano no es recuperarlo
+  const d = start(i, NOW);
+  run(d, 'stash show 1', 'stash drop 1', 'touch login.js', 'touch login.css');
+  assert.equal(EXERCISES[i].done(d), false);
+  // mirar solo el de notes.txt no cuenta como haber mirado el del login
+  const e = start(i, NOW);
+  run(e, 'stash show', 'stash pop 1');
+  assert.equal(EXERCISES[i].done(e), false);
+  // apply del bueno y drop también lo resuelve, como pop
+  const f = start(i, NOW);
+  run(f, 'stash show 1', 'stash apply 1', 'stash drop 1');
+  assert.equal(EXERCISES[i].done(f), true);
+  // apply deja los dos guardados
+  const c = start(i, NOW);
+  c.run('stash show 1');
+  c.run('stash apply 1');
+  assert.equal(EXERCISES[i].done(c), false);
+});
+
+test('stash show y stash list solo leen: pasan con un rebase a medias; un archivo nuevo borrado a mano no sale como borrado', () => {
+  const r = fresh();
+  run(r, 'checkout -b feature', 'commit -m "a"', 'commit -m "b"', 'checkout main', 'commit -m "c"', 'checkout feature');
+  r.run('touch x.js');
+  r.run('stash');
+  assert.ok(r.run('rebase -i main').ok);
+  assert.ok(r.rebasing);
+  assert.deepEqual(plain(r.run('stash show --name-only').lines), ['x.js']);
+  assert.equal(r.run('stash list').ok, true);
+  assert.equal(r.run('stash pop').ok, false);
+  r.run('rebase --abort');
+  const n = fresh();
+  run(n, 'touch --new n.txt', 'add n.txt', 'rm n.txt', 'touch app.js', 'stash');
+  assert.deepEqual(plain(n.run('stash show --name-status').lines), ['M\tapp.js']);
 });

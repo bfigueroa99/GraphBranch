@@ -584,6 +584,8 @@ GB.i18n.define('pt', {
   'practice.ex11.goal': 'Você alterou login.js e debug.js, mas só a correção do login vai no commit. Prepare login.js com add e faça commit -m: debug.js tem que ficar alterado e sem commit. Cuidado: commit -a levaria os dois.',
   'practice.ex12.title': 'Apagar uma pasta não rastreada com clean -d',
   'practice.ex12.goal': 'nuevo.js, dois temporários (a.tmp e b.tmp) e a pasta build/ não estão rastreados. Apague-os com clean, mas mantenha nuevo.js: ainda não está pronto para add. Veja antes com clean -n: sem -d, build/ não é apagada, e -e deixa de fora o que você não quer apagar.',
+  'practice.ex13.title': 'Olhar um stash antes de recuperá-lo',
+  'practice.ex13.goal': 'Há dois stash em main e stash list os mostra iguais: um guarda login.js e login.css, o outro notes.txt. Veja o que cada um guarda com stash show (stash show stash@{1} para o segundo) e recupere só o do login com stash pop. O de notes.txt tem de ficar guardado.',
   'practice.share': 'Copiar link do exercício',
   'practice.link': 'Link do exercício',
   'practice.copied': 'Link copiado.',

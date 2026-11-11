@@ -599,6 +599,8 @@ GB.i18n.define('ru', {
   'practice.ex11.goal': 'Ты изменил login.js и debug.js, но в коммит должно попасть только исправление входа. Подготовь login.js командой add и выполни commit -m: debug.js должен остаться изменённым и без коммита. Осторожно: commit -a заберёт оба.',
   'practice.ex12.title': 'Удалите неотслеживаемую папку с помощью clean -d',
   'practice.ex12.goal': 'nuevo.js, два временных файла (a.tmp и b.tmp) и папка build/ не отслеживаются. Удалите их с помощью clean, но оставьте nuevo.js: он ещё не готов к add. Сначала посмотрите с clean -n: без -d папка build/ не удаляется, а -e исключает то, что вы не хотите удалять.',
+  'practice.ex13.title': 'Загляните в stash, прежде чем вернуть его',
+  'practice.ex13.goal': 'На main два stash, и stash list показывает их одинаково: один хранит login.js и login.css, другой — notes.txt. Посмотрите, что хранит каждый, с помощью stash show (stash show stash@{1} для второго) и верните только stash со входом через stash pop. Stash с notes.txt должен остаться сохранённым.',
   'practice.share': 'Скопировать ссылку на упражнение',
   'practice.link': 'Ссылка на упражнение',
   'practice.copied': 'Ссылка скопирована.',

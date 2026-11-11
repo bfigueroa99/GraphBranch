@@ -254,7 +254,7 @@ segunda columna a la primera.
 | Escala | hasta 20 repos con alias propio en cada pestaña (también los más activos de una organización o un usuario, con su lista al día) y su constelación (cada repo, una galaxia que dice cuánto hace de su último commit cargado y se atenúa si pasó de 30 días, ordenable por pestañas, actividad, último commit, PRs abiertos, issues abiertos, estrellas, forks, ramas nuevas de la semana o nombre, también desde la URL con `?order=activity`, `?order=recent`, `?order=prs`, `?order=issues`, `?order=stars`, `?order=forks`, `?order=new` o `?order=name`, filtrable por nombre con `?constellation=texto` y por actividad con `?recent=30`), miles de ramas por repo, el Launchpad de la vista conjunta (los PRs abiertos de todos los repos seguidos, por estado: borrador, checks en rojo, aprobados y esperando revisión; un PR se puede fijar arriba de su grupo o posponer un día al final, y el Launchpad se filtra por quien abrió el PR y por repo) | una organización entera con más de 20 repos a la vez |
 | Salidas | panel de actividad, avisos, sonido, notificaciones, URL para compartir, imagen de la vista (PNG), video del Replay (WebM, por tramo de fechas y con título propio, también desde la URL), avisos a Slack, Discord y Teams (escritorio), resumen de la semana (Markdown, con quién fusionó los PRs, PRs abiertos y quién abrió más, issues cerrados, PRs cerrados sin fusionar, releases, tags, autores nuevos, ramas nuevas y commits por día, de un repo o de una organización seguida, la de la organización con quién fusionó, los PRs abiertos, los issues cerrados, los PRs cerrados sin fusionar y los autores nuevos de cada repo; PNG, de un repo o de una organización), prompt del loop autónomo para cualquier repo (español o inglés, con repo, ramas y objetivo; se copia o se guarda como `.md`) | el resumen de la semana con quién abrió más PRs en la organización y quién cerró más issues |
 | Análisis | resumen de cifras, logros, misión del día, salud del repo (ramas olvidadas, PRs por edad, tiempo a fusionar, ritmo, issues cerrados, ramas nuevas, commits, autores distintos, tags, issues abiertos y PRs cerrados sin fusionar por semana, estrellas nuevas de la semana frente a la anterior), choques entre ramas, también desde la URL (`?conflicts=1`), los archivos que cambió un commit de Azure DevOps (sin el diff), comparar dos ramas (por delante, punto de separación, archivos), búsqueda de commits por mensaje, SHA o autor, filtrar el grafo (2D y 3D) por ruta de archivo, también desde la URL (`?path=`) y desde el botón «Historial» de cada archivo del diff, filtrar el grafo por autor ("mis ramas"), también desde la URL (`?author=`), ocultar una rama o dejarla sola desde su ficha (2D y 3D, por repo), el grafo de primer padre (2D, 3D y vista de texto) como `git log --first-parent`, también desde la URL (`?firstparent=1`), búsqueda de commits también desde la URL (`?q=`), búsqueda por fecha (`desde:` y `hasta:`), resaltar en el grafo (2D y 3D) el tramo de cada rama comparada y su punto de separación, PRs fusionados y abiertos por semana en la salud (las últimas 8), vocabulario DORA en la salud (despliegues en 30 días y por semana, mediana entre releases, tiempo de entrega desde el primer commit del PR), PRs por estado en la salud (borrador, checks en rojo, aprobados, esperando revisión), PRs sin revisión hace más de 7 días en la salud, tasa de fallos de CI en la salud (PRs abiertos en rojo y veces que la rama por defecto se puso roja en 30 días), el panel de salud abierto desde la URL (`?health=1`), ramas ocultas o sola una desde la URL (`?ocultar=`, `?solo=`), bitácora en vivo al estilo de Brunell_Node (la quinta cifra del resumen: desde la bitácora anterior, lo grande, commits por día, nota del 1 al 100 de ritmo, publicado y salud con su origen, hallazgos con su gravedad y su seguimiento, cronología y qué sigue; se cierra, se guarda en el navegador y sale en Markdown o `estado.json`), agentes e interacciones (quién continuó, fusionó, revisó o comentó el trabajo de quién, entre personas, entre agentes y entre unos y otros, con cada sesión de un agente aparte, en una red y en listas, «Solo entre agentes», también desde la URL con `?agents=1`, y dibujadas sobre el grafo 2D y 3D: marco o cubo de color en cada commit de agente, arcos con flecha de un commit a otro, insignias sobre la punta del PR y su leyenda bajo el grafo, también con `?interactions=1`) , columnas de SHA corto, autor y fecha junto a cada commit del grafo 2D | ver la hoja de ruta |
-| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal (`add` (con `-u` y `-A`, que también preparan los borrados), `restore --staged` y `clean` (con rutas y patrones, `-d` para las carpetas sin seguir, `-e` y `-q`), `git rm` (con `--cached` y `-f`), `git mv` y `rm`/`mv` a mano, `commit` de solo lo preparado (con `-a`/`-am`), `cherry-pick` (con `--no-commit`/`--abort`), `revert` (con `--no-commit`/`--abort`), `rebase -i` (con `--abort`/`--continue`), `stash` (con `-u`), `tag` (con `-d`), `reset` (`--soft`/`--mixed`/`--hard`, con `HEAD@{n}`), `commit --amend` (con `-m`) y `reflog`, `switch`, `restore`, `branch -m` (con `-M`) y `merge --no-ff` (con `-m`), `--no-commit` y `--abort` incluidos) y ejercicios, también propios compartidos por URL con pistas, solución propuesta que se muestra paso a paso con `solution=1` y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), paleta de comandos con Ctrl+K (acciones de la barra y del grafo, y saltos a una rama o un commit por nombre o SHA, con teclado), quien usa lector de pantalla (vista de texto (también desde la URL con `?vista=texto`): árbol de ramas y commits con teclado, ocultar una rama o dejarla sola con H y S y volver a ver todas con A o su botón, filtro por rama, por autor y por ruta con su aviso, tags dichos en cada commit, forks activos, PRs abiertos por rama ya cargados y las ramas sin PR abierto, ramas sin actividad hace más de 30 días, ramas creadas en los últimos 7 días y el autor de la punta dichos en su nombre y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
+| Público | devs y equipos, 40 idiomas, teclado, quien aprende git (repo de práctica con terminal (`add` (con `-u` y `-A`, que también preparan los borrados), `restore --staged` y `clean` (con rutas y patrones, `-d` para las carpetas sin seguir, `-e` y `-q`), `git rm` (con `--cached` y `-f`), `git mv` y `rm`/`mv` a mano, `commit` de solo lo preparado (con `-a`/`-am`), `cherry-pick` (con `--no-commit`/`--abort`), `revert` (con `--no-commit`/`--abort`), `rebase -i` (con `--abort`/`--continue`), `stash` (con `-u` y `stash show`), `tag` (con `-d`), `reset` (`--soft`/`--mixed`/`--hard`, con `HEAD@{n}`), `commit --amend` (con `-m`) y `reflog`, `switch`, `restore`, `branch -m` (con `-M`) y `merge --no-ff` (con `-m`), `--no-commit` y `--abort` incluidos) y ejercicios, también propios compartidos por URL con pistas, solución propuesta que se muestra paso a paso con `solution=1` y condiciones sobre el mensaje del último commit y las ramas sin fusionar, y ensayo de comandos sobre una copia de un repo real), paleta de comandos con Ctrl+K (acciones de la barra y del grafo, y saltos a una rama o un commit por nombre o SHA, con teclado), quien usa lector de pantalla (vista de texto (también desde la URL con `?vista=texto`): árbol de ramas y commits con teclado, ocultar una rama o dejarla sola con H y S y volver a ver todas con A o su botón, filtro por rama, por autor y por ruta con su aviso, tags dichos en cada commit, forks activos, PRs abiertos por rama ya cargados y las ramas sin PR abierto, ramas sin actividad hace más de 30 días, ramas creadas en los últimos 7 días y el autor de la punta dichos en su nombre y región viva con lo nuevo) | probar con NVDA, JAWS, VoiceOver y Orca |
 
 ## Hoja de ruta
 
@@ -270,7 +270,7 @@ Los ítems hechos están en [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tool
 131. **Issues de Jira y Trello, primera entrega** · Fuentes · 1×2/3. [replica 2026-10-28] [parte de «Issues de Jira y Trello»] Las claves tipo `ABC-123` de los mensajes de commit y de PR se vuelven enlaces a una URL de Jira que el usuario configura (guardada en este navegador), sin consultas nuevas. Comprobar: prueba del reconocimiento de claves y un paso del smoke.
 ~~**Blame de un archivo, segunda entrega**~~ hecho en #236 · Datos.
 181. ~~**Práctica: git clean**~~ hecho en #326 · Público · 1×2/2. [parte del ítem 16] En la práctica de git, `clean` borra los archivos sin seguir del directorio de trabajo, con su ejercicio y su comprobación. Comprobar: `node --test` del simulador (`js/gitsim.js`) antes y después de `clean`.
-183. **Práctica: stash show** · Público · 1×2/2. [parte del ítem 16] En la práctica de git, `stash show [<stash>]` lista los archivos que guarda un stash sin devolverlos, con su ejercicio. Comprobar: `node --test` del simulador (`js/gitsim.js`) con `stash show` antes y después de un `pop`.
+183. ~~**Práctica: stash show**~~ hecho en #328 · Público · 1×2/2. [parte del ítem 16] En la práctica de git, `stash show [<stash>]` lista los archivos que guarda un stash sin devolverlos, con su ejercicio. Comprobar: `node --test` del simulador (`js/gitsim.js`) con `stash show` antes y después de un `pop`.
 184. **Práctica: tag anotado** · Público · 1×2/2. [parte del ítem 16] En la práctica de git, `tag -a <nombre> -m "mensaje"` crea una etiqueta con mensaje y el `log` la sigue mostrando como `tag:`. Comprobar: `node --test` del simulador con `tag -a`.
 185. **Práctica: branch -c** · Público · 1×2/2. [parte del ítem 16] En la práctica de git, `branch -c [vieja] <nueva>` copia una rama con sus commits sin mover HEAD. Comprobar: `node --test` del simulador con `branch -c` y el `reflog`.
 186. **Resumen de la semana de la organización: quién abrió más PRs** · Salidas · 1×2/2. [parte del ítem 179] El resumen de la semana de una organización suma las personas que más PRs abrieron en la semana, con lo ya cargado. Comprobar: `node --test` del resumen con PRs simulados de dos repos.
@@ -362,66 +362,77 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     `al llegar a una galaxia…: lo que se lee cambió 4 veces`.
 4. [Errores] Salud del repo: la tendencia de estrellas (`stars` de `js/health.js`, sección `#hl-stars` de `js/app.js`) compara la semana actual con la anterior aunque la actividad cargada no llegue a 14 días atrás (el feed de GitHub trae pocos eventos y el de la app guarda hasta 1.000): la semana anterior sale 0 y el panel muestra un «(+N)» que no se midió. Arreglo propuesto: que `compute` diga si la actividad cargada cubre los 14 días (la más vieja, de cualquier tipo, es de hace 14 días o más) y, si no, la línea omita la anterior y la diferencia o la marque como parcial (una clave más en los 40 idiomas). Reproducción: `compute` con actividades solo de los últimos 5 días y 3 estrellas → `{ week: 3, prev: 0 }`, que el panel muestra como «3 esta semana · 0 la anterior (+3)». (Revisión OMC de la iteración 256.)
 
+5. [QA] Con la práctica de git abierta, a 320 px la página desborda a lo ancho, con cualquier ejercicio: 5 px en es (el
+    panel `.pr-head`, `.pr-goal`, `.pr-log` y `.pr-make` llegan a 325 px) y 66 px en ta (`.app` y la barra de arriba se
+    corren 57 px a la izquierda); ar no desborda, y sin la práctica tampoco. La auditoría no lo ve porque no abre la
+    práctica a 320 px. Reproducción: Playwright contra `node e2e/serve.mjs 4173`, `index.html?lang=ta&practice=12` a 320 px
+    → `document.documentElement.scrollWidth` 386 (es: 325). (QA de la iteración 264.)
+
 ### Baja
 
-5. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+6. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-6. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+7. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-7. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+8. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-8. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+9. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-9. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+10. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-10. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+11. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-11. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+12. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-12. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
+13. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
     (895 ms en total, sin GPU); el perfil de CPU de los primeros 6 s no deja ninguna función de la app por encima de 70 ms
     (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
     que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
     Reproducción: `node tools/audit.mjs --repetir 3` → `consultas: 10`, `tareasLargasMs: 895`.
-13. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
+14. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
     prepara de verdad en vez de solo listar, y `add -p` prepara todo. Negarse con el `error: unknown switch` de git (o
     admitir `-n`). Reproducción: `node --test` con `touch a.txt`, `add -n .` → `a.txt` queda preparado.
-14. [Seguridad] Avisos a Slack (`electron/webhooks.js`, `payload`): `slackText` escapa `&`, `<` y `>` (sin menciones ni
+15. [Seguridad] Avisos a Slack (`electron/webhooks.js`, `payload`): `slackText` escapa `&`, `<` y `>` (sin menciones ni
     enlaces), pero no el formato `mrkdwn` (`*`, `_`, `` ` ``, `~`): un título de PR como `*URGENTE*` sale en negrita en el
     canal. Solo formato, sin enlaces ni menciones; escaparlo como se hizo con Discord. Reproducción: `payload('slack',
     {title: '*x*'})` → `*x*` sin escapar.
-15. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
+16. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
     la iteración 239: la sesión no pudo consultar su página de versiones. Comprobarla con `WebFetch` en la próxima
     auditoría de Seguridad y, si hay una estable más nueva con arreglos de seguridad, subirla (cambio de `electron/`: plan
     por consenso). Reproducción: `npm view electron version` frente a `package.json`.
-16. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
+17. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
     largo se lleva la línea `<enlace>` del final (el aviso queda sin enlace). Recortar título y detalle antes y dejar el
     enlace siempre. Reproducción: `payload('discord', {title: 'x'.repeat(5000), url: 'https://github.com/a/b'})` →
     `content` sin `<https://github.com/a/b>`.
 
-17. [QA] Un repo vacío (GitHub responde 409 «Git Repository is empty» en ramas y commits) se rotula «Sin conexión» y
+18. [QA] Un repo vacío (GitHub responde 409 «Git Repository is empty» en ramas y commits) se rotula «Sin conexión» y
     reintenta cada pocos segundos, sin decir que el repo está vacío. Un estado propio («Repo vacío») sin reintento rápido.
     Reproducción: API simulada con 409 en `/commits` y `/branches`, `index.html?repo=acme/x` → `Sin conexión | reintento en 2s`.
-18. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
+19. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
     `js/util.js` solo distingue notfound, rate y auth), aunque haya red: la persona busca su wifi y el servicio es quien falla.
     Un rótulo «Error del servicio» en los 40 idiomas. Reproducción: `U.statusKey({state: 'error', error: {kind: 'http'}})` → `status.error`.
-19. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
+20. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
     el service worker instalado (solo los estados de error de la carga, en es y ar a 1280 y 320 px). Mirarlos en la
     próxima QA. Reproducción: `node e2e/serve.mjs 4173` + Playwright con la API simulada de `tools/audit.mjs`.
-20. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
+21. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
     que se pospone o se fija otro: `setPrSnooze` (`js/app.js`) es lo único que limpia. Inocuo (`liveSnoozes` los ignora),
     pero crece sin tope. Limpiar también al leer. Reproducción: posponer un PR, adelantar el reloj un día y recargar →
     la entrada sigue en `localStorage`.
+22. [Errores] Práctica de git: `stash pop` y `stash apply` devuelven un archivo nuevo que estaba preparado como «modified»
+    sin preparar (todo va a `work`), cuando git lo deja preparado como «new file»; `stash show` lo deja ver: tras el pop y
+    otro `stash`, el archivo sale con `M` y no con `A`. Devolver `entry.added` a `staged` como `{ file, isNew: true }`.
+    Reproducción: `touch --new n.txt`, `add n.txt`, `stash`, `stash pop`, `stash`, `stash show --name-status` → `M\tn.txt`.
+    (Revisión OMC de la iteración 264.)
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); el contenedor 2D enfocable no tiene rol ni nombre (`graph.js:306`); las marcas
@@ -565,3 +576,16 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/263, sin colisión
 - Validado: 672 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) en verde; e2e no corridas (no toca la página ni el escritorio).
 - **Siguiente:** iteración 264, expansión: ítem 183 (Práctica: stash show, Público)
+
+### 2026-11-11 · Iteración 264 · Expansión · Público
+
+- **Capacidad nueva: `stash show` en la práctica de git, con su ejercicio** (ítem 183 de la hoja de ruta, parte del ítem 16). `stash show [stash@{n}]` lista los archivos que guarda un stash sin devolverlos ni soltarlo: a secas (o `--stat`), cada nombre con lo que le pasó (nuevo, cambiado, borrado) y cuántos son; `--name-only` y `--name-status` (`A`, `M`, `D`) como git; `-u` suma lo sin seguir que apartó `stash -u` y `--only-untracked` muestra solo eso; `--` antes de la referencia; `-p` se niega (no hay contenido) y los errores de git (sin stash, referencia que no existe, dos referencias, bandera desconocida) no tocan nada. `stash show` y `stash list` pasan con un rebase a medias, porque solo leen. Cada stash recuerda lo nuevo preparado (para la `A`) y un archivo nuevo preparado y borrado a mano ya no se aparta como borrado. Un ejercicio guiado nuevo, el 13 («Mirar un stash antes de recuperarlo»: dos stash iguales en `stash list`; hay que mirar con `stash show` y recuperar solo el del login, y el de `notes.txt` se queda), con su título y su meta en los 40 idiomas.
+- **Pruebas que fallan sin la capacidad:** `node --test tools/gitsim.test.mjs`: sin el cambio de `js/gitsim.js` fallan 5 (cada ejercicio con su solución, `?practice=13`, «stash show lista lo que guarda un stash sin devolverlo, antes y después de un pop» y «el ejercicio de stash show no se resuelve sin mirar ni con el stash equivocado», que también prueba los atajos de `pop` a secas, soltar el bueno y tocar sus archivos, y mirar solo el otro, y una de la revisión, que fija `stash show` y `stash list` con un rebase a medias y el archivo nuevo borrado a mano).
+- README: «Aprender git» (`stash show` y sus formas, trece ejercicios y `?practice=1` a `13`), Pruebas y Límites conocidos (sin líneas contadas ni `-p`, un renombre sale como `A` y `D`, sin `stash.showStat`, las opciones van detrás de `show`, `stash list` y `show` sí pasan con un rebase a medias); Seguridad sin cambios (sin texto de afuera ni red).
+- QA: la terminal de la práctica (`?practice=13`) con Playwright contra `node e2e/serve.mjs 4173` en es a 1280 px y en ar y ta a 320 px: `stash list`, `stash show`, `stash show --name-status stash@{1}`, `stash pop stash@{1}` y el ejercicio se marca resuelto, sin errores de consola; a 320 px la práctica desborda en es (5 px) y ta (66 px) con cualquier ejercicio, también en `dev` (pendiente 5 nuevo); auditoría: 0 hallazgos nuevos, 0 conocidos.
+- Skills: no aplica: un subcomando más en un simulador propio, sin dominio externo; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma obvia (listar lo que ya guarda cada stash, con el formato de git).
+- OMC: plan=— · revisión=8 hallazgos (6 arreglados: el MEDIUM del ejercicio, que se resolvía soltando el stash y tocando sus archivos o mirando el otro; los LOW de las opciones antes de `show`, el `fatal` que en git es `error`, `--`, `show`/`list` bloqueados en un rebase, el nuevo borrado a mano que salía `D` y el registro de ja, ru y uk; el renombre como `A` y `D` va a Límites conocidos y el `pop` que devuelve lo nuevo como cambiado, al pendiente 22) · verificación=PASS
+- Reclamo: loop/264, sin colisión
+- Validado: 675 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+- **Siguiente:** iteración 265, expansión: ítem 186 (Resumen de la semana de la organización: quién abrió más PRs, Salidas)

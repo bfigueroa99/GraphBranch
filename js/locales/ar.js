@@ -682,6 +682,8 @@ GB.i18n.define('ar', {
   'practice.ex11.goal': 'عدّلت login.js وdebug.js، لكن إصلاح تسجيل الدخول وحده يدخل في الإيداع. جهّز login.js بـ add ثم نفّذ commit -m: يجب أن يبقى debug.js معدَّلًا دون إيداع. انتبه: commit -a سيأخذ الملفين معًا.',
   'practice.ex12.title': 'احذف مجلدًا غير متتبع باستخدام clean -d',
   'practice.ex12.goal': 'الملفات nuevo.js وملفان مؤقتان (a.tmp وb.tmp) والمجلد build/ غير متتبعة. احذفها باستخدام clean، لكن احتفظ بـ nuevo.js: فهو ليس جاهزًا لـ add بعد. انظر أولًا باستخدام clean -n: بدون -d لا يُحذف build/، و-e يستثني ما لا تريد حذفه.',
+  'practice.ex13.title': 'انظر داخل stash قبل استعادته',
+  'practice.ex13.goal': 'يوجد stash اثنان على main ويعرضهما stash list متطابقين: أحدهما يحفظ login.js وlogin.css، والآخر notes.txt. انظر ماذا يحفظ كل منهما باستخدام stash show (stash show stash@{1} للثاني) واستعد stash تسجيل الدخول فقط باستخدام stash pop. يجب أن يبقى stash الخاص بـ notes.txt محفوظًا.',
   'practice.share': 'نسخ رابط التمرين',
   'practice.link': 'رابط التمرين',
   'practice.copied': 'تم نسخ الرابط.',

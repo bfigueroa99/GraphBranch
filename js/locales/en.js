@@ -589,6 +589,8 @@ GB.i18n.define('en', {
   'practice.ex11.goal': 'You changed login.js and debug.js, but only the login fix belongs in the commit. Stage login.js with add and run commit -m: debug.js must stay changed and uncommitted. Careful: commit -a would take both.',
   'practice.ex12.title': 'Delete an untracked folder with clean -d',
   'practice.ex12.goal': 'nuevo.js, two temporary files (a.tmp and b.tmp) and the build/ folder are untracked. Delete them with clean, but keep nuevo.js: it is not ready for add yet. Look first with clean -n: without -d, build/ is not deleted, and -e leaves out what you do not want to delete.',
+  'practice.ex13.title': 'Look inside a stash before bringing it back',
+  'practice.ex13.goal': 'There are two stashes on main and stash list shows them the same: one keeps login.js and login.css, the other notes.txt. See what each one keeps with stash show (stash show stash@{1} for the second) and bring back only the login one with stash pop. The notes.txt one has to stay stashed.',
   'practice.share': 'Copy exercise link',
   'practice.link': 'Exercise link',
   'practice.copied': 'Link copied.',

@@ -626,6 +626,8 @@ GB.i18n.define('fa', {
   'practice.ex11.goal': 'login.js و debug.js را تغییر دادی، اما فقط اصلاح ورود باید در کامیت باشد. login.js را با add آماده کن و commit -m را اجرا کن: debug.js باید تغییریافته و بدون کامیت بماند. مراقب باش: commit -a هر دو را می‌برد.',
   'practice.ex12.title': 'یک پوشهٔ ردیابی‌نشده را با clean -d پاک کن',
   'practice.ex12.goal': 'nuevo.js، دو فایل موقت (a.tmp و b.tmp) و پوشهٔ build/ ردیابی نمی‌شوند. آن‌ها را با clean پاک کن، اما nuevo.js را نگه دار: هنوز برای add آماده نیست. اول با clean -n نگاه کن: بدون -d پوشهٔ build/ پاک نمی‌شود و -e چیزی را که نمی‌خواهی پاک شود کنار می‌گذارد.',
+  'practice.ex13.title': 'پیش از برگرداندن stash، درونش را ببینید',
+  'practice.ex13.goal': 'روی main دو stash هست و stash list آن‌ها را یکسان نشان می‌دهد: یکی login.js و login.css را نگه می‌دارد و دیگری notes.txt را. با stash show ببینید هر کدام چه دارد (برای دومی stash show stash@{1}) و فقط stash ورود را با stash pop برگردانید. stash مربوط به notes.txt باید ذخیره بماند.',
   'practice.share': 'کپی پیوند تمرین',
   'practice.link': 'پیوند تمرین',
   'practice.copied': 'پیوند کپی شد.',

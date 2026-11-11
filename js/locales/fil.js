@@ -584,6 +584,8 @@ GB.i18n.define('fil', {
   'practice.ex11.goal': 'Binago mo ang login.js at debug.js, pero ang ayos lang sa login ang dapat nasa commit. I-stage ang login.js gamit ang add at patakbuhin ang commit -m: dapat manatiling binago at walang commit ang debug.js. Ingat: dadalhin ng commit -a ang dalawa.',
   'practice.ex12.title': 'Burahin ang hindi sinusubaybayang folder gamit ang clean -d',
   'practice.ex12.goal': 'Hindi sinusubaybayan ang nuevo.js, dalawang pansamantalang file (a.tmp at b.tmp) at ang folder na build/. Burahin sila gamit ang clean, pero itira ang nuevo.js: hindi pa ito handa para sa add. Tingnan muna gamit ang clean -n: kung walang -d, hindi nabubura ang build/, at iniiwan ng -e ang ayaw mong burahin.',
+  'practice.ex13.title': 'Silipin ang stash bago ito ibalik',
+  'practice.ex13.goal': 'May dalawang stash sa main at pareho ang itsura nila sa stash list: ang isa ay may login.js at login.css, ang isa naman ay notes.txt. Tingnan kung ano ang laman ng bawat isa gamit ang stash show (stash show stash@{1} para sa pangalawa) at ibalik lang ang sa login gamit ang stash pop. Dapat manatiling nakatabi ang sa notes.txt.',
   'practice.share': 'Kopyahin ang link ng ehersisyo',
   'practice.link': 'Link ng ehersisyo',
   'practice.copied': 'Nakopya ang link.',

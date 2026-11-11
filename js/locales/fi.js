@@ -583,6 +583,8 @@ GB.i18n.define('fi', {
   'practice.ex11.goal': 'Muutit tiedostoja login.js ja debug.js, mutta committiin kuuluu vain kirjautumisen korjaus. Valmistele login.js komennolla add ja aja commit -m: debug.js:n on jäätävä muutetuksi ilman committia. Varo: commit -a veisi molemmat.',
   'practice.ex12.title': 'Poista seuraamaton kansio komennolla clean -d',
   'practice.ex12.goal': 'nuevo.js, kaksi väliaikaista tiedostoa (a.tmp ja b.tmp) ja kansio build/ eivät ole seurannassa. Poista ne komennolla clean, mutta säilytä nuevo.js: se ei ole vielä valmis add-komennolle. Katso ensin komennolla clean -n: ilman -d:tä build/ ei poistu, ja -e jättää pois sen, mitä et halua poistaa.',
+  'practice.ex13.title': 'Katso stashin sisältö ennen palauttamista',
+  'practice.ex13.goal': 'Mainissa on kaksi stashia, ja stash list näyttää ne samanlaisina: toisessa on login.js ja login.css, toisessa notes.txt. Katso stash show -komennolla, mitä kumpikin sisältää (toiselle stash show stash@{1}), ja palauta vain kirjautumisen stash komennolla stash pop. notes.txt-stashin on jäätävä talteen.',
   'practice.share': 'Kopioi tehtävän linkki',
   'practice.link': 'Tehtävän linkki',
   'practice.copied': 'Linkki kopioitu.',

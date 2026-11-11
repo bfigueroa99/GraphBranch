@@ -583,6 +583,8 @@ GB.i18n.define('ja', {
   'practice.ex11.goal': 'login.js と debug.js を変更したが、コミットに入れるのはログインの修正だけ。add で login.js をステージして commit -m を実行しよう。debug.js は変更したままコミットせずに残すこと。注意: commit -a だと両方入ってしまう。',
   'practice.ex12.title': 'clean -d で追跡されていないフォルダーを消す',
   'practice.ex12.goal': 'nuevo.js、一時ファイル 2 つ (a.tmp と b.tmp)、build/ フォルダーが追跡されていない。clean で消そう。ただし nuevo.js は残すこと: まだ add する準備ができていない。まず clean -n で確認しよう: -d なしでは build/ は消えず、-e で消したくないものを除外できる。',
+  'practice.ex13.title': '戻す前に stash の中身を見る',
+  'practice.ex13.goal': 'main に stash が 2 つあり、stash list では同じに見える。片方は login.js と login.css、もう片方は notes.txt を保存している。stash show で中身を確かめ (2 つ目は stash show stash@{1})、ログインの方だけを stash pop で戻そう。notes.txt の方は保存したままにすること。',
   'practice.share': '演習のリンクをコピー',
   'practice.link': '演習のリンク',
   'practice.copied': 'リンクをコピーしました。',

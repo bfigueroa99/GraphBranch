@@ -583,6 +583,8 @@ GB.i18n.define('zh-Hans', {
   'practice.ex11.goal': '你改了 login.js 和 debug.js，但只有登录的修复该进提交。用 add 暂存 login.js，再运行 commit -m：debug.js 要保持已修改且未提交。小心：commit -a 会把两个都带走。',
   'practice.ex12.title': '用 clean -d 删除未跟踪的文件夹',
   'practice.ex12.goal': 'nuevo.js、两个临时文件（a.tmp 和 b.tmp）和 build/ 文件夹都未被跟踪。用 clean 删除它们，但保留 nuevo.js：它还没准备好 add。先用 clean -n 看看：不加 -d 不会删除 build/，-e 可以排除你不想删除的内容。',
+  'practice.ex13.title': '取回之前先看看 stash 里有什么',
+  'practice.ex13.goal': 'main 上有两个 stash，stash list 显示得一模一样：一个保存 login.js 和 login.css，另一个保存 notes.txt。用 stash show 看看各自保存了什么（第二个用 stash show stash@{1}），然后只用 stash pop 取回登录那个。notes.txt 那个要继续保存着。',
   'practice.share': '复制练习链接',
   'practice.link': '练习链接',
   'practice.copied': '链接已复制。',

@@ -626,6 +626,8 @@ GB.i18n.define('ur', {
   'practice.ex11.goal': 'آپ نے login.js اور debug.js بدلے، لیکن commit میں صرف لاگ اِن کی درستی جانی چاہیے۔ add سے login.js تیار کریں اور commit -m چلائیں: debug.js بدلا ہوا اور commit کے بغیر رہنا چاہیے۔ خیال رہے: commit -a دونوں لے جائے گا۔',
   'practice.ex12.title': 'clean -d سے غیر ٹریک شدہ فولڈر مٹائیں',
   'practice.ex12.goal': 'nuevo.js، دو عارضی فائلیں (a.tmp اور b.tmp) اور build/ فولڈر ٹریک نہیں ہو رہے۔ انہیں clean سے مٹائیں، مگر nuevo.js رہنے دیں: وہ ابھی add کے لیے تیار نہیں۔ پہلے clean -n سے دیکھیں: -d کے بغیر build/ نہیں مٹتا، اور -e وہ چھوڑ دیتا ہے جو آپ مٹانا نہیں چاہتے۔',
+  'practice.ex13.title': 'واپس لانے سے پہلے stash کے اندر دیکھیں',
+  'practice.ex13.goal': 'main پر دو stash ہیں اور stash list انہیں ایک جیسا دکھاتا ہے: ایک میں login.js اور login.css ہیں، دوسرے میں notes.txt۔ stash show سے دیکھیں کہ ہر ایک میں کیا ہے (دوسرے کے لیے stash show stash@{1}) اور stash pop سے صرف لاگ اِن والا واپس لائیں۔ notes.txt والا محفوظ رہنا چاہیے۔',
   'practice.share': 'مشق کا لنک کاپی کریں',
   'practice.link': 'مشق کا لنک',
   'practice.copied': 'لنک کاپی ہو گیا۔',

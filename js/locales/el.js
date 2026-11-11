@@ -583,6 +583,8 @@ GB.i18n.define('el', {
   'practice.ex11.goal': 'Άλλαξες τα login.js και debug.js, αλλά στο commit ανήκει μόνο η διόρθωση της σύνδεσης. Ετοίμασε το login.js με add και τρέξε commit -m: το debug.js πρέπει να μείνει αλλαγμένο και χωρίς commit. Προσοχή: το commit -a θα έπαιρνε και τα δύο.',
   'practice.ex12.title': 'Διάγραψε έναν φάκελο χωρίς παρακολούθηση με clean -d',
   'practice.ex12.goal': 'Τα nuevo.js, δύο προσωρινά αρχεία (a.tmp και b.tmp) και ο φάκελος build/ δεν παρακολουθούνται. Διάγραψέ τα με clean, αλλά κράτησε το nuevo.js: δεν είναι ακόμα έτοιμο για add. Δες πρώτα με clean -n: χωρίς -d ο build/ δεν διαγράφεται, και το -e αφήνει έξω ό,τι δεν θέλεις να διαγράψεις.',
+  'practice.ex13.title': 'Δες τι έχει ένα stash πριν το επαναφέρεις',
+  'practice.ex13.goal': 'Υπάρχουν δύο stash στο main και το stash list τα δείχνει ίδια: το ένα κρατά τα login.js και login.css, το άλλο το notes.txt. Δες τι κρατά το καθένα με stash show (stash show stash@{1} για το δεύτερο) και επανάφερε μόνο αυτό της σύνδεσης με stash pop. Αυτό με το notes.txt πρέπει να μείνει αποθηκευμένο.',
   'practice.share': 'Αντιγραφή συνδέσμου άσκησης',
   'practice.link': 'Σύνδεσμος άσκησης',
   'practice.copied': 'Ο σύνδεσμος αντιγράφηκε.',

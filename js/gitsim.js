@@ -53,7 +53,11 @@
       this.untracked = []; // archivos nuevos que git no sigue (touch --new): clean los borra
       this.cleans = 0; // cuántas veces clean -f borró archivos sin seguir
       this.adds = 0; // cuántas veces add preparó algo
-      this.stashes = []; // { files, branch, sha }, el más nuevo primero (stash@{0})
+      this.stashes = []; // { files, removed, added, untracked, line }, el más nuevo primero (stash@{0})
+      this.stashShows = 0; // cuántas veces stash show listó lo que guarda un stash
+      this.stashSeq = 0; // id del próximo stash: el ejercicio de stash show sabe cuál se miró y cuál volvió
+      this.stashSeen = new Set(); // ids de los stash que stash show listó
+      this.stashBack = new Set(); // ids de los stash que volvieron con pop o apply
       this.merging = null; // { name, theirs } mientras una fusión (merge --no-commit) espera su commit
       this.aborts = 0; // cuántas fusiones se cancelaron con merge --abort
       this.picking = null; // { sha } mientras un cherry-pick --no-commit espera su commit
@@ -219,6 +223,52 @@
       return files;
     }
 
+    /**
+     * stash show [<stash>]: los archivos que guarda un stash, sin devolverlos ni soltarlo. Sin contenido no hay
+     * líneas que contar: la forma de siempre (--stat) lista los nombres y cuántos son; --name-only y --name-status
+     * como git (A nuevo, M cambiado, D borrado). -u suma lo sin seguir que apartó stash -u, --only-untracked solo eso.
+     */
+    stashShow(args) {
+      const opts = { stat: false, names: false, status: false, untracked: false, only: false };
+      const refs = [];
+      let ends = false;
+      for (const a of args) {
+        if (ends) refs.push(a);
+        else if (a === '--') ends = true;
+        else if (a === '--stat') opts.stat = true;
+        else if (a === '--name-only') opts.names = true;
+        else if (a === '--name-status') opts.status = true;
+        else if (a === '-u' || a === '--include-untracked') opts.untracked = true;
+        else if (a === '--only-untracked') opts.only = true;
+        else if (a === '--no-include-untracked') opts.untracked = opts.only = false;
+        else if (a === '-p' || a === '--patch') fail('fatal: stash show -p needs file contents, and the practice has none: try --name-status');
+        else if (a.length > 1 && a[0] === '-' && !/^-\d/.test(a)) fail(`error: unknown option '${a.replace(/^-+/, '')}'\nusage: stash show [-u | --include-untracked | --only-untracked] [--stat | --name-only | --name-status] [<stash>]`);
+        else refs.push(a);
+      }
+      if (refs.length > 1) fail(`error: Too many revisions specified: ${refs.map((r) => `'${r}'`).join(' ')}`);
+      if (!this.stashes.length) fail('error: No stash entries found.');
+      const ref = refs[0] ?? '0';
+      const m = /^(?:stash@\{(\d+)\}|(\d+))$/.exec(ref);
+      const i = m ? Number(m[1] ?? m[2]) : -1;
+      if (i < 0 || i >= this.stashes.length) fail(`error: ${ref} is not a valid reference`);
+      const entry = this.stashes[i];
+      const rows = [];
+      if (!opts.only) {
+        for (const f of entry.files) rows.push([(entry.added || []).includes(f) ? 'A' : 'M', f]);
+        for (const f of entry.removed || []) rows.push(['D', f]);
+      }
+      if (opts.untracked || opts.only) for (const f of entry.untracked || []) rows.push(['A', f]);
+      rows.sort((a, b) => (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0));
+      this.stashShows++;
+      this.stashSeen.add(entry.id);
+      if (opts.status) return rows.map(([k, f]) => `${k}\t${f}`);
+      if (opts.names) return rows.map(([, f]) => f);
+      if (!rows.length) return [];
+      const width = Math.max(...rows.map(([, f]) => f.length));
+      const note = { A: 'new', M: 'changed', D: 'deleted' };
+      return [...rows.map(([k, f]) => ` ${f.padEnd(width)} | ${note[k]}`), ` ${rows.length} file${rows.length > 1 ? 's' : ''} changed`];
+    }
+
     /** Vacía el árbol de trabajo y lo preparado (commit, reset --hard, stash, merge --abort): lo sin seguir se queda. */
     clearTree() {
       this.work = [];
@@ -369,7 +419,8 @@
         // rm y mv sin «git» delante son los de la terminal: borran o mueven el archivo sin preparar nada
         const handler = !viaGit && SHELL[cmd] ? SHELL[cmd] : this.commands[cmd];
         if (!handler) fail(`git: '${cmd}' is not a git command. Try 'help'.`);
-        if (this.rebasing && REBASE_BLOCKED.has(cmd) && !(cmd === 'rebase' && (args.includes('--abort') || args.includes('--continue')))) {
+        const reading = cmd === 'stash' && (args[0] === 'list' || args[0] === 'show'); // solo leen: git los deja pasar
+        if (this.rebasing && REBASE_BLOCKED.has(cmd) && !reading && !(cmd === 'rebase' && (args.includes('--abort') || args.includes('--continue')))) {
           fail(`fatal: It seems that there is already a rebase-merge directory (a rebase is in progress).\nUse 'rebase --continue' to finish it or 'rebase --abort' to cancel it before you ${cmd}.`);
         }
         const lines = handler.call(this, args) || [];
@@ -421,6 +472,7 @@
         'reset [--soft|--mixed|--hard] <to>  move the branch back (HEAD~1, a sha, HEAD@{1}); --hard drops changes',
         'reflog                      where HEAD has been (HEAD@{n}): find a commit again after a reset --hard',
         'stash [-u] [list|pop|apply|drop] put uncommitted changes aside (-u also the untracked files) and bring them back',
+        'stash show [--name-only|--name-status] [-u] [stash@{n}]  list the files a stash keeps, without bringing them back',
         'add <file|.>                prepare changes (and new files) for the next commit',
         'add -u [file|.]             prepare only changed files git already tracks (new files stay out)',
         'add -A [file|.]             prepare everything: changed files and new ones (like add .)',
@@ -536,14 +588,22 @@
         const branch = this.head.branch || '(no branch)';
         const line = typeof msg === 'string' && msg ? `On ${branch}: ${msg}` : `WIP on ${branch}: ${this.short(this.headSha)} ${this.commits.get(this.headSha).message}`;
         // lo borrado (a mano o con git rm, y el nombre viejo de un renombre) se aparta aparte: vuelve borrado
-        const removed = [...new Set([...this.deleted, ...this.staged.filter((x) => x.gone || x.from).map((x) => x.from ?? x.file)])];
+        // un archivo nuevo preparado y borrado a mano no estaba en HEAD ni queda en el árbol: no se aparta como borrado
+        const removed = [...new Set([...this.deleted.filter((f) => !this.staged.some((x) => x.isNew && x.file === f)), ...this.staged.filter((x) => x.gone || x.from).map((x) => x.from ?? x.file)])];
         const files = [...new Set([...this.staged.filter((x) => !x.gone).map((x) => x.file), ...this.work])].filter((f) => !this.deleted.includes(f));
-        this.stashes.unshift({ files, removed, untracked: withNew ? this.untracked : [], line });
+        // lo nuevo preparado (y el nombre nuevo de un renombre) es un archivo que el commit del stash añade: stash show lo marca con A
+        const added = files.filter((f) => this.staged.some((x) => x.file === f && (x.isNew || x.from)));
+        this.stashes.unshift({ id: ++this.stashSeq, files, removed, added, untracked: withNew ? this.untracked : [], line });
         this.discardTree();
         if (withNew) this.untracked = [];
         return [`Saved working directory and index state ${line}`];
       }
       if (sub === 'list') return this.stashes.map((s, i) => `stash@{${i}}: ${s.line}`);
+      if (sub === 'show') {
+        // en git, `stash -u show` es un push con la ruta show; aquí, que las opciones vayan detrás
+        if (args[0] !== 'show') fail(`error: options go after show here: try 'stash show ${args.filter((a) => a !== 'show').join(' ')}'`);
+        return this.stashShow(args.slice(1));
+      }
       if (sub === 'drop') {
         const i = pick();
         const [gone] = this.stashes.splice(i, 1);
@@ -559,6 +619,7 @@
         this.work = [...this.work, ...entry.files];
         this.deleted = [...this.deleted, ...(entry.removed || [])];
         this.untracked = [...this.untracked, ...entry.untracked];
+        this.stashBack.add(entry.id);
         const out = this.commands.status.call(this);
         if (sub === 'pop') {
           this.stashes.splice(i, 1);
@@ -566,7 +627,7 @@
         }
         return out;
       }
-      fail(`error: unknown subcommand: '${sub}'\nusage: stash [push [-u] | list | pop | apply | drop]`);
+      fail(`error: unknown subcommand: '${sub}'\nusage: stash [push [-u] | list | show | pop | apply | drop]`);
     },
 
     log(args) {
@@ -1394,6 +1455,22 @@
         const main = r.branches.get('main');
         // los temporales y la carpeta build se borraron con clean, y nuevo.js sigue ahí, sin seguir y sin commits de más
         return !!main && r.cleans > 0 && r.untracked.join() === 'nuevo.js' && !r.staged.length && !r.work.length && r.head.branch === 'main' && r.log(main).length === BASE.length;
+      },
+    },
+    {
+      id: 'stashshow',
+      setup: (r) => {
+        // dos stash con la misma línea en list: solo stash show dice cuál guarda el formulario de login
+        r.work = ['login.js', 'login.css'];
+        r.commands.stash.call(r, []);
+        r.work = ['notes.txt'];
+        r.commands.stash.call(r, []);
+      },
+      done: (r) => {
+        const main = r.branches.get('main');
+        // se miró con stash show, volvió el stash del login y el de notes.txt sigue guardado, sin commits de más
+        // los ids del setup: 1 es el del login y 2 el de notes.txt; el del login se miró con stash show y volvió con pop o apply
+        return !!main && r.stashes.length === 1 && r.stashes[0].id === 2 && r.stashSeen.has(1) && r.stashBack.has(1) && r.stashes[0].files.join() === 'notes.txt' && [...r.work].sort().join() === 'login.css,login.js' && r.head.branch === 'main' && r.log(main).length === BASE.length;
       },
     },
   ];

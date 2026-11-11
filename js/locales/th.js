@@ -584,6 +584,8 @@ GB.i18n.define('th', {
   'practice.ex11.goal': 'คุณแก้ login.js และ debug.js แต่ใน commit ควรมีแค่การแก้ไขการเข้าสู่ระบบ ให้ stage login.js ด้วย add แล้วรัน commit -m: debug.js ต้องยังถูกแก้อยู่และไม่ถูก commit ระวัง: commit -a จะเอาไปทั้งสองไฟล์',
   'practice.ex12.title': 'ลบโฟลเดอร์ที่ไม่ได้ติดตามด้วย clean -d',
   'practice.ex12.goal': 'nuevo.js ไฟล์ชั่วคราวสองไฟล์ (a.tmp และ b.tmp) และโฟลเดอร์ build/ ไม่ได้ถูกติดตาม ลบด้วย clean แต่เก็บ nuevo.js ไว้ เพราะยังไม่พร้อมสำหรับ add ดูก่อนด้วย clean -n: ถ้าไม่มี -d จะไม่ลบ build/ และ -e จะยกเว้นสิ่งที่คุณไม่อยากลบ',
+  'practice.ex13.title': 'ดูข้างใน stash ก่อนนำกลับมา',
+  'practice.ex13.goal': 'บน main มี stash สองอัน และ stash list แสดงเหมือนกัน: อันหนึ่งเก็บ login.js และ login.css อีกอันเก็บ notes.txt ดูว่าแต่ละอันเก็บอะไรด้วย stash show (อันที่สองใช้ stash show stash@{1}) แล้วนำกลับมาเฉพาะอันของล็อกอินด้วย stash pop อันของ notes.txt ต้องยังเก็บไว้',
   'practice.share': 'คัดลอกลิงก์แบบฝึกหัด',
   'practice.link': 'ลิงก์แบบฝึกหัด',
   'practice.copied': 'คัดลอกลิงก์แล้ว',

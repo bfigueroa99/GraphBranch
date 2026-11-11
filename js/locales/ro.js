@@ -591,6 +591,8 @@ GB.i18n.define('ro', {
   'practice.ex11.goal': 'Ai modificat login.js și debug.js, dar în commit intră doar reparația de la autentificare. Pregătește login.js cu add și rulează commit -m: debug.js trebuie să rămână modificat și fără commit. Atenție: commit -a le-ar lua pe amândouă.',
   'practice.ex12.title': 'Șterge un dosar neurmărit cu clean -d',
   'practice.ex12.goal': 'nuevo.js, două fișiere temporare (a.tmp și b.tmp) și dosarul build/ nu sunt urmărite. Șterge-le cu clean, dar păstrează nuevo.js: nu e încă gata pentru add. Uită-te întâi cu clean -n: fără -d, build/ nu se șterge, iar -e lasă deoparte ce nu vrei să ștergi.',
+  'practice.ex13.title': 'Uită-te într-un stash înainte să-l readuci',
+  'practice.ex13.goal': 'Pe main sunt două stash-uri, iar stash list le arată la fel: unul păstrează login.js și login.css, celălalt notes.txt. Vezi ce păstrează fiecare cu stash show (stash show stash@{1} pentru al doilea) și readu doar pe cel cu autentificarea cu stash pop. Cel cu notes.txt trebuie să rămână salvat.',
   'practice.share': 'Copiază linkul exercițiului',
   'practice.link': 'Linkul exercițiului',
   'practice.copied': 'Link copiat.',

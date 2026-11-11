@@ -583,6 +583,8 @@ GB.i18n.define('vi', {
   'practice.ex11.goal': 'Bạn đã sửa login.js và debug.js, nhưng chỉ bản sửa đăng nhập mới được vào commit. Hãy stage login.js bằng add rồi chạy commit -m: debug.js phải vẫn bị sửa và chưa commit. Cẩn thận: commit -a sẽ lấy cả hai.',
   'practice.ex12.title': 'Xóa thư mục không được theo dõi bằng clean -d',
   'practice.ex12.goal': 'nuevo.js, hai tệp tạm (a.tmp và b.tmp) và thư mục build/ không được theo dõi. Hãy xóa chúng bằng clean, nhưng giữ lại nuevo.js: tệp này chưa sẵn sàng để add. Xem trước bằng clean -n: không có -d thì build/ không bị xóa, còn -e loại ra những gì bạn không muốn xóa.',
+  'practice.ex13.title': 'Xem bên trong stash trước khi lấy lại',
+  'practice.ex13.goal': 'Trên main có hai stash và stash list hiển thị chúng giống hệt nhau: một cái giữ login.js và login.css, cái kia giữ notes.txt. Xem mỗi cái giữ gì bằng stash show (stash show stash@{1} cho cái thứ hai) rồi chỉ lấy lại stash đăng nhập bằng stash pop. Stash notes.txt phải được giữ lại.',
   'practice.share': 'Sao chép liên kết bài tập',
   'practice.link': 'Liên kết bài tập',
   'practice.copied': 'Đã sao chép liên kết.',

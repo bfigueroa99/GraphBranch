@@ -519,6 +519,7 @@ GB.i18n.define('uk', {
   'health.forksByStars': 'Сортувати форки за зірками',
   'health.stars': 'Нові зірки',
   'health.starsWeek': '{week} цього тижня · {prev} минулого тижня ({delta})',
+  'health.forksNew': 'Нові форки: {week} цього тижня · {prev} минулого тижня ({delta})',
   'health.stale': 'Гілки без активності понад 30 днів і без pull request',
   'health.prs': 'Відкриті pull request, спочатку найстарші',
   'health.unreviewed': 'Pull request без рев’ю понад 7 днів',

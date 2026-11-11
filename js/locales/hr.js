@@ -511,6 +511,7 @@ GB.i18n.define('hr', {
   'health.forksByStars': 'Poredaj forkove po zvjezdicama',
   'health.stars': 'Nove zvjezdice',
   'health.starsWeek': '{week} ovaj tjedan · {prev} prošli tjedan ({delta})',
+  'health.forksNew': 'Novi forkovi: {week} ovaj tjedan · {prev} prošli tjedan ({delta})',
   'health.stale': 'Grane bez aktivnosti dulje od 30 dana i bez pull requesta',
   'health.prs': 'Otvoreni pull requestovi, najstariji prvi',
   'health.unreviewed': 'Pull requestovi bez pregleda dulje od 7 dana',

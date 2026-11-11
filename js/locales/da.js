@@ -503,6 +503,7 @@ GB.i18n.define('da', {
   'health.forksByStars': 'Sortér forks efter stjerner',
   'health.stars': 'Nye stjerner',
   'health.starsWeek': '{week} denne uge · {prev} ugen før ({delta})',
+  'health.forksNew': 'Nye forks: {week} denne uge · {prev} ugen før ({delta})',
   'health.stale': 'Grene uden aktivitet i over 30 dage og uden pull request',
   'health.prs': 'Åbne pull requests, ældste først',
   'health.unreviewed': 'Pull requests uden review i over 7 dage',

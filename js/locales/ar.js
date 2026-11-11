@@ -602,6 +602,7 @@ GB.i18n.define('ar', {
   'health.forksByStars': 'ترتيب الـ forks حسب النجوم',
   'health.stars': 'نجوم جديدة',
   'health.starsWeek': '{week} هذا الأسبوع · {prev} الأسبوع الماضي ({delta})',
+  'health.forksNew': 'فروع جديدة: {week} هذا الأسبوع · {prev} الأسبوع الماضي ({delta})',
   'health.stale': 'فروع بلا نشاط منذ أكثر من 30 يومًا وبلا طلب سحب',
   'health.prs': 'طلبات السحب المفتوحة، الأقدم أولًا',
   'health.unreviewed': 'طلبات سحب بلا أي مراجعة منذ أكثر من 7 أيام',

@@ -503,6 +503,7 @@ GB.i18n.define('bg', {
   'health.forksByStars': 'Подреждане на форковете по звезди',
   'health.stars': 'Нови звезди',
   'health.starsWeek': '{week} тази седмица · {prev} миналата седмица ({delta})',
+  'health.forksNew': 'Нови форкове: {week} тази седмица · {prev} миналата седмица ({delta})',
   'health.stale': 'Клонове без активност над 30 дни и без pull request',
   'health.prs': 'Отворени pull request-и, най-старите първо',
   'health.unreviewed': 'Pull request-и без преглед от над 7 дни',

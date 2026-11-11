@@ -514,6 +514,7 @@ GB.i18n.define('sk', {
   'health.forksByStars': 'Zoradiť forky podľa hviezdičiek',
   'health.stars': 'Nové hviezdičky',
   'health.starsWeek': '{week} tento týždeň · {prev} minulý týždeň ({delta})',
+  'health.forksNew': 'Nové forky: {week} tento týždeň · {prev} minulý týždeň ({delta})',
   'health.stale': 'Vetvy bez aktivity viac ako 30 dní a bez pull requestu',
   'health.prs': 'Otvorené pull requesty, najstaršie prvé',
   'health.unreviewed': 'Pull requesty bez revízie dlhšie ako 7 dní',

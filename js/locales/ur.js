@@ -546,6 +546,7 @@ GB.i18n.define('ur', {
   'health.forksByStars': 'فورکس کو ستاروں کے مطابق ترتیب دیں',
   'health.stars': 'نئے ستارے',
   'health.starsWeek': 'اس ہفتے {week} · پچھلے ہفتے {prev} ({delta})',
+  'health.forksNew': 'نئے فورکس: اس ہفتے {week} · پچھلے ہفتے {prev} ({delta})',
   'health.stale': '30 دن سے زیادہ غیر فعال اور بغیر pull request والی برانچیں',
   'health.prs': 'کھلے pull request، پرانے پہلے',
   'health.unreviewed': '7 دن سے زیادہ سے بغیر کسی جائزے کے pull request',

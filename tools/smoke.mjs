@@ -778,8 +778,13 @@ console.log('Escritorio (1280×800)');
     if (!/^★ 4 · /.test(byStars[0] || '') || /★ 0/.test(byStars.join('|'))) throw new Error(`los forks por estrellas no salen del que más tiene: ${byStars.join(' | ')}`);
     if (!(await page.evaluate(() => document.activeElement?.id === 'hl-forks-stars'))) throw new Error('el foco se pierde al ordenar los forks por estrellas');
     await page.click('#hl-forks-stars');
+    // la demo trae un fork de hace unos días (y suma otros en vivo): los forks nuevos de la semana frente a la anterior
+    const forkTrend = await page.$eval('#hl-forks-trend', (p) => p.textContent).catch(() => '');
+    const fm = /^Forks nuevos: (\d+) esta semana · (\d+) la anterior \(([+−]\d+|±0)\)$/.exec(forkTrend);
+    if (!fm || Number(fm[1]) < 1) throw new Error(`los forks nuevos de la demo no salen en la salud: «${forkTrend}»`);
     await page.click('#hl-forks-toggle');
     const hidden = await page.$$eval('#hl-forks a.hl-row', (as) => as.length);
+    if (await page.$('#hl-forks-trend')) throw new Error('el interruptor «Mostrar forks» apagado deja la tendencia de forks');
     if (hidden || !(await page.evaluate(() => new URL(location.href).searchParams.get('forks') === '0'))) throw new Error('el interruptor «Mostrar forks» apagado no oculta los forks ni deja forks=0 en la URL');
     if (!(await page.evaluate(() => document.activeElement?.id === 'hl-forks-toggle'))) throw new Error('el foco se pierde al apagar el interruptor de forks');
     await page.click('#hl-forks-toggle');

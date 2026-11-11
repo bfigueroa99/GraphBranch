@@ -503,6 +503,7 @@ GB.i18n.define('ko', {
   'health.forksByStars': '포크를 스타 수로 정렬',
   'health.stars': '새 스타',
   'health.starsWeek': '이번 주 {week} · 지난주 {prev} ({delta})',
+  'health.forksNew': '새 포크: 이번 주 {week} · 지난주 {prev} ({delta})',
   'health.stale': '30일 넘게 활동이 없고 풀 리퀘스트도 없는 브랜치',
   'health.prs': '열린 풀 리퀘스트(오래된 순)',
   'health.unreviewed': '7일 넘게 리뷰가 없는 풀 리퀘스트',

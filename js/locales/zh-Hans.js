@@ -503,6 +503,7 @@ GB.i18n.define('zh-Hans', {
   'health.forksByStars': '按星标数排序复刻',
   'health.stars': '新增星标',
   'health.starsWeek': '本周 {week} · 上周 {prev}（{delta}）',
+  'health.forksNew': '新 fork：本周 {week} · 上周 {prev}（{delta}）',
   'health.stale': '超过 30 天没有动静且没有拉取请求的分支',
   'health.prs': '未关闭的拉取请求（最旧的在前）',
   'health.unreviewed': '超过 7 天无人审查的拉取请求',

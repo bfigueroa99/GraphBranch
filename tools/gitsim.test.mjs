@@ -1332,7 +1332,10 @@ test('stash show lista lo que guarda un stash sin devolverlo, antes y después d
   assert.equal(r.run('stash show').changed, false);
   // los errores de git: una referencia que no existe, dos, una bandera desconocida, -p sin contenido
   assert.deepEqual(plain(r.run('stash show stash@{2}').lines), ['error: stash@{2} is not a valid reference']);
-  assert.match(r.run('stash show 0 1').lines[0], /^fatal: Too many revisions specified/);
+  assert.match(r.run('stash show 0 1').lines[0], /^error: Too many revisions specified/);
+  assert.deepEqual(plain(r.run('stash show --name-only -- stash@{0}').lines), ['notes.txt']);
+  // las opciones antes de show no se pierden en silencio
+  assert.equal(r.run('stash -u show').ok, false);
   assert.match(r.run('stash show --bogus').lines[0], /^error: unknown option 'bogus'/);
   assert.equal(r.run('stash show -p').ok, false);
   // después de un pop, stash@{0} es el que quedaba y lo devuelto ya no está guardado
@@ -1359,9 +1362,37 @@ test('el ejercicio de stash show no se resuelve sin mirar ni con el stash equivo
   const b = start(i, NOW);
   b.run('stash pop stash@{1}');
   assert.equal(EXERCISES[i].done(b), false);
+  // soltar el del login y tocar sus archivos a mano no es recuperarlo
+  const d = start(i, NOW);
+  run(d, 'stash show 1', 'stash drop 1', 'touch login.js', 'touch login.css');
+  assert.equal(EXERCISES[i].done(d), false);
+  // mirar solo el de notes.txt no cuenta como haber mirado el del login
+  const e = start(i, NOW);
+  run(e, 'stash show', 'stash pop 1');
+  assert.equal(EXERCISES[i].done(e), false);
+  // apply del bueno y drop también lo resuelve, como pop
+  const f = start(i, NOW);
+  run(f, 'stash show 1', 'stash apply 1', 'stash drop 1');
+  assert.equal(EXERCISES[i].done(f), true);
   // apply deja los dos guardados
   const c = start(i, NOW);
   c.run('stash show 1');
   c.run('stash apply 1');
   assert.equal(EXERCISES[i].done(c), false);
+});
+
+test('stash show y stash list solo leen: pasan con un rebase a medias; un archivo nuevo borrado a mano no sale como borrado', () => {
+  const r = fresh();
+  run(r, 'checkout -b feature', 'commit -m "a"', 'commit -m "b"', 'checkout main', 'commit -m "c"', 'checkout feature');
+  r.run('touch x.js');
+  r.run('stash');
+  assert.ok(r.run('rebase -i main').ok);
+  assert.ok(r.rebasing);
+  assert.deepEqual(plain(r.run('stash show --name-only').lines), ['x.js']);
+  assert.equal(r.run('stash list').ok, true);
+  assert.equal(r.run('stash pop').ok, false);
+  r.run('rebase --abort');
+  const n = fresh();
+  run(n, 'touch --new n.txt', 'add n.txt', 'rm n.txt', 'touch app.js', 'stash');
+  assert.deepEqual(plain(n.run('stash show --name-status').lines), ['M\tapp.js']);
 });

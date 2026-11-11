@@ -622,5 +622,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (acotar la pista de la grilla con `minmax(0, 1fr)`).
 - OMC: plan=— · revisión=2 hallazgos (1 arreglado: el LOW de la prueba unitaria del escenario; el otro, la entrada de la bitácora, es este paso) · verificación=PASS
 - Reclamo: loop/267, sin colisión
-- Validado: 678 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+- Validado: 679 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 268, expansión: ítem 187 (Salud del repo: tendencia de forks, Análisis)

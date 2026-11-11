@@ -23,12 +23,12 @@
     return out.slice(0, 40);
   }
 
-  /** Separa una línea en palabras, con comillas simples o dobles. */
+  /** Separa una línea en palabras, con comillas simples o dobles, como la terminal: `--message="a b"` es una palabra, `--message=a b`. */
   function tokenize(line) {
     const out = [];
-    const re = /"([^"]*)"|'([^']*)'|(\S+)/g;
+    const re = /(?:"[^"]*"|'[^']*'|[^\s"']+)+|["'][^\s]*/g;
     let m;
-    while ((m = re.exec(line))) out.push(m[1] ?? m[2] ?? m[3]);
+    while ((m = re.exec(line))) out.push(m[0].replace(/"([^"]*)"|'([^']*)'/g, (_, d, q) => d ?? q));
     return out;
   }
 
@@ -45,6 +45,7 @@
       this.commits = new Map();
       this.branches = new Map(); // nombre -> sha
       this.tags = new Map(); // nombre -> sha
+      this.notes = new Map(); // nombre -> { message, sha }: las etiquetas anotadas (tag -a), con su mensaje y el sha de su objeto
       this.head = { branch }; // { branch } o { sha } (desprendido)
       this.work = []; // archivos con cambios sin commit y sin preparar, en orden de llegada
       this.staged = []; // { file, isNew }, { file, gone } (git rm) o { file, from } (git mv): lo preparado, a la espera del commit
@@ -487,6 +488,7 @@
         'revert <commit>             undo a commit with a new one, keeping the history (-n holds it until commit or --continue)',
         'revert --abort             cancel a revert that is waiting for its commit',
         'tag [name] [-d name]        list, create or delete tags on a commit',
+        'tag -a <name> -m "msg"      an annotated tag, with its message (tag -n lists the messages, -l "v1*" filters)',
         'log [--oneline]             the history that leads to HEAD',
         'status                      where HEAD is',
       ];
@@ -866,24 +868,70 @@
       return out;
     },
 
+    /**
+     * tag [-n] | tag [-a] [-m "msg"] <nombre> [<commit>] | tag -d <nombre>…: ligera sin -a ni -m; con -a o -m,
+     * anotada: guarda su mensaje (y un objeto con su propio sha), que `tag -n` lista. El log la decora igual.
+     */
     tag(args) {
-      const { flags, rest } = parse(args);
-      if (flags['-d'] || flags['--delete']) {
+      const flags = {};
+      const rest = [];
+      let message = null;
+      const usage = 'usage: tag [-a] [-m "msg"] <tagname> [<commit>] | tag -d <tagname>... | tag [-n] [-l [<pattern>...]]';
+      for (let i = 0; i < args.length; i++) {
+        const a = args[i];
+        if (a === '-m' || a === '--message' || a === '-am') {
+          if (i + 1 >= args.length) fail(`error: switch \`m' requires a value\n${usage}`);
+          message = args[++i];
+          if (a === '-am') flags['-a'] = true;
+        } else if (a.startsWith('--message=')) message = a.slice(10);
+        else if (a === '-a' || a === '--annotate') flags['-a'] = true;
+        else if (a === '-d' || a === '--delete') flags['-d'] = true;
+        else if (/^-n\d*$/.test(a)) flags['-n'] = true;
+        else if (a === '-l' || a === '--list') flags['-l'] = true;
+        else if (a === '--') {
+          rest.push(...args.slice(i + 1));
+          break;
+        }
+        else if (a.length > 1 && a[0] === '-') fail(`error: unknown option '${a.replace(/^-+/, '')}'\n${usage}`);
+        else rest.push(a);
+      }
+      const annotated = flags['-a'] || message !== null;
+      if (flags['-d']) {
+        if (annotated || flags['-n'] || flags['-l']) fail(`fatal: -d does not take -a, -m or -n\n${usage}`);
         if (!rest.length) fail('fatal: tag name required');
         return rest.map((name) => {
           const tip = this.tags.get(name);
           if (!tip) fail(`error: tag '${name}' not found.`);
+          const was = this.notes.get(name)?.sha ?? tip;
           this.tags.delete(name);
-          return `Deleted tag '${name}' (was ${this.short(tip)})`;
+          this.notes.delete(name);
+          return `Deleted tag '${name}' (was ${this.short(was)})`;
         });
       }
-      if (!rest.length) return [...this.tags.keys()].sort();
+      const listing = flags['-n'] || flags['-l'];
+      if (listing && annotated) fail(`fatal: -n and -l are only for listing tags\n${usage}`);
+      // tag -l <patrón>…: solo las que coinciden con alguno (`*` y `?`, como git)
+      const glob = (p) => new RegExp(`^${p.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.')}$`);
+      const names = () => [...this.tags.keys()].sort().filter((n) => !listing || !rest.length || rest.some((p) => glob(p).test(n)));
+      if (flags['-n']) {
+        // como git: la primera línea del mensaje de la anotada; de una ligera, el titular de su commit
+        return names().map((name) => `${name.padEnd(15)} ${(this.notes.get(name)?.message ?? this.commits.get(this.tags.get(name))?.message ?? '').split('\n')[0]}`);
+      }
+      if (listing) return names();
+      if (!rest.length) {
+        if (annotated) fail(`fatal: tag name required\n${usage}`);
+        return names();
+      }
+      if (rest.length > 2) fail(`fatal: too many arguments\n${usage}`);
       const [name, target] = rest;
       if (!validName(name)) fail(`fatal: '${name}' is not a valid tag name.`);
       if (this.tags.has(name)) fail(`fatal: tag '${name}' already exists`);
+      // git abre el editor para escribir el mensaje; la práctica no tiene editor
+      if (annotated && message === null) fail('fatal: no tag message given: the practice has no editor, so write it with -m "message"');
       const sha = target ? this.resolve(target) : this.headSha;
       if (!sha) fail(target ? `fatal: Failed to resolve '${target}' as a valid ref.` : 'fatal: Failed to resolve HEAD as a valid ref.');
       this.tags.set(name, sha);
+      if (annotated) this.notes.set(name, { message, sha: hash(`tag|${name}|${sha}|${message}|${this.clock}`) });
       return [];
     },
 

@@ -261,7 +261,7 @@ GB.i18n.define('tr', {
   'branchview.status': '{total} daldan {n} tanesi görünüyor',
   'branchview.reset': 'Tüm dalları göster',
   'search.firstParent': 'Yalnızca ilk ebeveyn (git log --first-parent gibi)',
-  'search.columns': 'Her commit\'in yanında SHA\'yı, yazarı ve tarihi göster (2B grafik)',
+  'search.columns': 'Her commit\'in yanında SHA\'yı, yazarı ve tarihi göster',
   'author.unknown': 'bilinmiyor',
 
   /* ---------- grafik üstü katman ---------- */

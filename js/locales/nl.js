@@ -261,7 +261,7 @@ GB.i18n.define('nl', {
   'branchview.status': '{n} van {total} branches zichtbaar',
   'branchview.reset': 'Alle branches tonen',
   'search.firstParent': 'Alleen eerste ouder (zoals git log --first-parent)',
-  'search.columns': 'SHA, auteur en datum naast elke commit tonen (2D-graaf)',
+  'search.columns': 'SHA, auteur en datum naast elke commit tonen',
   'author.unknown': 'onbekend',
 
   /* ---------- graph overlay ---------- */

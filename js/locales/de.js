@@ -261,7 +261,7 @@ GB.i18n.define('de', {
   'branchview.status': '{n} von {total} Branches sichtbar',
   'branchview.reset': 'Alle Branches zeigen',
   'search.firstParent': 'Nur erster Elternteil (wie git log --first-parent)',
-  'search.columns': 'SHA, Autor und Datum neben jedem Commit zeigen (2D-Graph)',
+  'search.columns': 'SHA, Autor und Datum neben jedem Commit zeigen',
   'author.unknown': 'unbekannt',
 
   /* ---------- Overlay über dem Graph ---------- */

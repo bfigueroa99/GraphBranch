@@ -265,7 +265,7 @@ GB.i18n.define('hr', {
   'branchview.status': 'Prikazano {n} od {total} grana',
   'branchview.reset': 'Prikaži sve grane',
   'search.firstParent': 'Samo prvi roditelj (kao git log --first-parent)',
-  'search.columns': 'Prikaži SHA, autora i datum uz svaki commit (2D graf)',
+  'search.columns': 'Prikaži SHA, autora i datum uz svaki commit',
   'author.unknown': 'nepoznat',
 
   /* ---------- sloj preko grafa ---------- */

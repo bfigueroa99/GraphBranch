@@ -271,7 +271,7 @@ GB.i18n.define('uk', {
   'branchview.status': 'Видно гілок: {n} із {total}',
   'branchview.reset': 'Показати всі гілки',
   'search.firstParent': 'Лише перший батько (як git log --first-parent)',
-  'search.columns': 'Показувати SHA, автора й дату поруч із кожним комітом (2D-граф)',
+  'search.columns': 'Показувати SHA, автора й дату поруч із кожним комітом',
   'author.unknown': 'невідомий',
 
   /* ---------- шар поверх графа ---------- */

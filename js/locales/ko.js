@@ -261,7 +261,7 @@ GB.i18n.define('ko', {
   'branchview.status': '브랜치 {total}개 중 {n}개 표시 중',
   'branchview.reset': '모든 브랜치 보기',
   'search.firstParent': '첫 번째 부모만 (git log --first-parent처럼)',
-  'search.columns': '각 커밋 옆에 SHA, 작성자와 날짜 표시 (2D 그래프)',
+  'search.columns': '각 커밋 옆에 SHA, 작성자와 날짜 표시',
   'author.unknown': '알 수 없음',
 
   /* ---------- 그래프 위 안내 ---------- */

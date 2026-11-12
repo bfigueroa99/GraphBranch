@@ -266,7 +266,7 @@ GB.i18n.define('pl', {
   'branchview.status': 'Widoczne gałęzie: {n} z {total}',
   'branchview.reset': 'Pokaż wszystkie gałęzie',
   'search.firstParent': 'Tylko pierwszy rodzic (jak git log --first-parent)',
-  'search.columns': 'Pokaż SHA, autora i datę obok każdego commita (graf 2D)',
+  'search.columns': 'Pokaż SHA, autora i datę obok każdego commita',
   'author.unknown': 'nieznany',
 
   /* ---------- nakładka na grafie ---------- */

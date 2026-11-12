@@ -1675,6 +1675,16 @@ kbd {
   white-space: nowrap;
   will-change: transform;
 }
+/* con las columnas encendidas, «SHA · Autor · fecha» bajo el mensaje */
+.g3-note .g3-meta {
+  display: block;
+  color: var(--ink-3);
+  font-size: 10px;
+  line-height: 14px;
+}
+.g3-note .g3-meta[hidden] {
+  display: none;
+}
 @keyframes glow3 {
   0%,
   25% {
@@ -4432,6 +4442,10 @@ html.tv .g3-day,
 html.tv .g3-note {
   padding: calc(1px * var(--tvz, 1)) calc(6px * var(--tvz, 1));
   font-size: calc(11px * var(--tvz, 1));
+}
+html.tv .g3-note .g3-meta {
+  font-size: calc(10px * var(--tvz, 1));
+  line-height: calc(14px * var(--tvz, 1));
 }
 /* sin tocar el ratón un rato: fuera el puntero y los controles (con el teclado vuelven) */
 html.tv-idle,

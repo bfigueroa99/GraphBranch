@@ -266,7 +266,7 @@ GB.i18n.define('cs', {
   'branchview.status': 'Zobrazeno {n} z {total} větví',
   'branchview.reset': 'Zobrazit všechny větve',
   'search.firstParent': 'Jen první rodič (jako git log --first-parent)',
-  'search.columns': 'Zobrazit SHA, autora a datum u každého commitu (2D graf)',
+  'search.columns': 'Zobrazit SHA, autora a datum u každého commitu',
   'author.unknown': 'neznámý',
 
   /* ---------- vrstva nad grafem ---------- */

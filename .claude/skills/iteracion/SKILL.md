@@ -70,8 +70,12 @@ clon sigue superficial, `--check` lo avisa en R3 y `--salud` y `--reclamar` lo c
   (`--reclamar` ya lo elige). Las `loop/K` ya fusionadas salen en una sola línea y no son una Acción: la
   sesión no las borra (en la nube el proxy niega el push `--delete`) ni lo anota; son de Benjamin (Para
   Benjamin). `En cola: loop/K` es una iteración reclamada antes de su turno: no se toca, se reanuda cuando
-  le toque (código 4). Las líneas `Cadencia`, `Hueco` y `Para Benjamin` van al resumen; un hueco nuevo de
-  más de un día va a Para Benjamin.
+  le toque (código 4). Las líneas `Cadencia`, `Hueco`, `Cumplimiento` y `Para Benjamin` van al resumen; un
+  hueco nuevo de más de un día va a Para Benjamin. `Cumplimiento` cuenta, de las últimas iteraciones, cuántas
+  registran el verificador, el plan en los ítems de esfuerzo 3, Skills consultadas y la arena: un «no aplica»
+  que se repite siempre se mira. Una línea `Rebanado` (3 o más de las últimas capacidades nuevas son partes
+  del mismo ítem) va al resumen y, al reponer la hoja de ruta, la próxima parte de ese ítem junta lo que falta
+  o el ítem se da por cubierto.
 - `node --test` en rojo sin haber tocado nada: `dev` está en rojo. Se repite una vez; si sigue, la
   iteración pasa a arreglarlo (como un pendiente Alta, `[Errores]` o `[Deuda]`) y lo dice la bitácora.
 - La Routine: `mcp__claude-code-remote__list_triggers` y `get_trigger` (de lectura) dan su prompt; si no
@@ -356,7 +360,8 @@ node tools/esperar.mjs puerta
 ```
 
 Hasta que la espera salga **0** (124: se vuelve a llamar; ver «Comandos largos»); un verde a medias no es
-verde. Corre `node --check`, `node --test`, las traducciones, `node tools/loop.mjs --check`, el smoke en
+verde. Corre `node --check`, `node --test`, la frontera (`node tools/loop.mjs --frontera`, ver abajo), las
+traducciones, `node tools/loop.mjs --check`, el smoke en
 Chromium, la auditoría (`tools/audit.mjs --puerta`, si el cambio toca la página) y, si el cambio toca la página
 o el escritorio, las e2e (elige Chromium y Electron solo; en Linux sin pantalla usa `xvfb-run`). Su línea
 `Validado: …` (la última de la puerta, antes de la de la espera) va a la bitácora tal cual. Si sale **2** por
@@ -375,11 +380,36 @@ Si sale **1**:
   gastó cinco corridas y un relevo, 4 h, en pasos ajenos distintos). Si tampoco pasa, se registra (paso 4) con
   `- Validado: sin verde: <los pasos que fallaron en cada corrida>`, se empuja, se abre el PR sin fusionarlo
   (paso 5.1) y la sesión termina con eso en el resumen: el disparo siguiente lo reanuda por el código 4.
+- **La frontera** (`FALLA frontera`): no es intermitente y no se repite la puerta por ella. Se arregla el
+  código, no la puerta; si el cambio es legítimo, se declara (abajo).
 - **La auditoría con hallazgos nuevos**: si son del cambio, se arreglan. Si no (aparecen también sin el
   cambio), van a Mantenimiento con su `audit:<tipo>` y a la base con `node tools/audit.mjs --base`.
 - **Lo demás**: se arregla lo que falló (nunca se debilita una prueba). Si tras un intento la causa no
   es obvia, la receta 4 de `.claude/skills/omc/SKILL.md` (`omc-tracer`; `omc-debugger` si hay traza)
   antes del segundo.
+
+### La frontera y la guardia
+
+Dos guardarraíles de máquina (de ECC: lo que el agente puede olvidar va donde no puede olvidarlo):
+
+- **La frontera** (`tools/frontera.py`, vendorizada; lo propio del repo en `tools/frontera.json`) es el paso 3
+  de `npm run check`. Juzga lo que se va a publicar (`origin/dev...HEAD` y lo sin commitear) con las reglas de
+  `origin/dev`, y lo marca si borra un archivo de pruebas, deja menos `test(`/`it(` o pasos del smoke, añade un
+  `skip`/`only`, un silenciador sin regla (`eslint-disable`, `@ts-ignore`…) o toca la puerta y el arnés
+  (`tools/check.mjs`, `tools/loop.mjs`, la base de la auditoría, `package.json`, la propia frontera, la guardia
+  y `.claude/settings.json`). Lo legítimo (un cambio de maquinaria, una prueba que se reescribe) se **declara**
+  con una línea `Frontera: <motivo>` en el cuerpo de un commit de la rama: pasa y queda a la vista en el PR y
+  en el `Validado:`. Un **umbral** que se afloja (la cuota de `tools/audit-base.json`, `MARGEN_CUOTA` de la
+  auditoría) no se declara nunca: lo cambia Benjamin. Sale 2, sin evaluar, sin `python3` u `origin/dev`: se
+  arregla eso y se repite; no se fusiona sin ella.
+- **La guardia** (`.claude/hooks/guardia.py`, vendorizada; las ramas en `.claude/hooks/guardia.json`) es un
+  hook PreToolUse de `.claude/settings.json`: frena el push forzado (salvo `--force-with-lease` a una rama no
+  protegida), el push a `dev`, `master` o `main` (también borrarlas o `--all`), saltarse los hooks de git
+  (`--no-verify`, `commit -n`, `core.hooksPath`), `rm -r` de `/`, `~` o `.git`, y escribir con el MCP de GitHub
+  en esas ramas. Sale 2 con el motivo: no se rodea; lo que pide va a Para Benjamin. Los push de esta skill
+  (`loop/N`) pasan, y los de `--reclamar` y `--limpiar` corren dentro de node, donde no mira. Rige en las
+  sesiones que arrancan con ella en el checkout (la Routine arranca en `master`: desde que Benjamin promueva
+  `dev`), y no en OpenCode, que no lee los hooks de `.claude/settings.json`; la frontera, en las dos.
 
 ### Revisar (OMC)
 

@@ -9,6 +9,18 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|mcp__github__push_files|mcp__github__create_or_update_file|mcp__github__delete_file",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\"$CLAUDE_PROJECT_DIR/.claude/hooks/guardia.py\"; [ -f \"$f\" ] || exit 0; exec python3 \"$f\"",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   },
   "permissions": {

@@ -1,0 +1,36 @@
+{
+  "_que": "Lo propio de GraphBranch para tools/frontera.py (copia vendorizada: el código no se edita aquí). La corre npm run check (tools/check.mjs, paso 3) con node tools/loop.mjs --frontera sobre merge-base(origin/dev, HEAD)..HEAD más lo sin commitear.",
+  "base": "origin/dev",
+  "_pruebas": "node --test toma tools/*.test.mjs; las e2e y su servidor viven en e2e/; el smoke es la prueba de humo de la puerta y cada paso es un step(page, '…').",
+  "pruebas": ["tools/*.test.mjs", "e2e/**", "tools/smoke.mjs"],
+  "definiciones_extra": ["^\\s*(await\\s+)?step\\(\\s*\\w+\\s*,\\s*['\"`]"],
+  "_protegidos": "La puerta (check.mjs, check-i18n.mjs, la config de Playwright, la base de la auditoría), el script check de package.json, loop.mjs (sus reglas son el paso 4 de la puerta y corre esta frontera), esperar.mjs (lleva el código de la puerta a la sesión) y el propio arnés: la frontera, la guardia y donde se registra.",
+  "protegidos": [
+    "tools/check.mjs",
+    "tools/check-i18n.mjs",
+    "playwright.config.mjs",
+    "tools/audit-base.json",
+    "package.json",
+    "tools/loop.mjs",
+    "tools/esperar.mjs",
+    "tools/frontera.py",
+    "tools/frontera.json",
+    ".claude/hooks/guardia.py",
+    ".claude/hooks/guardia.json",
+    ".claude/settings.json"
+  ],
+  "_umbrales": "Más consultas sin token en la base, o más margen sobre ella, afloja la puerta de la auditoría (tools/audit.mjs comparar()). Los baja una persona, nunca una declaración.",
+  "umbrales": [
+    {"archivo": "tools/audit-base.json", "patron": "\"consultas\":\\s*(\\d+)", "nombre": "cuota de consultas sin token", "flojo": "sube"},
+    {"archivo": "tools/audit.mjs", "patron": "^export const MARGEN_CUOTA = (\\d+);", "nombre": "MARGEN_CUOTA", "flojo": "sube"}
+  ],
+  "excluir": [
+    "vendor/**",
+    "package-lock.json",
+    ".claude/agents/omc-*.md",
+    ".claude/skills/omc/**",
+    ".claude/skills/arena/**",
+    ".claude/skills/find-skills/**",
+    ".claude/skills/replica-*/**"
+  ]
+}

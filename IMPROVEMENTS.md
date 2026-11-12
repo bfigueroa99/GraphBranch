@@ -301,6 +301,7 @@ dice «Comandos largos» en la skill; lo mismo el smoke y la auditoría sueltos.
 
 ```sh
 node --test                    # lógica contra una API de GitHub simulada y el service worker (tools/*.test.mjs)
+node tools/loop.mjs --frontera # sin pruebas borradas ni debilitadas ni la puerta tocada sin declarar (tools/frontera.json)
 node tools/check-i18n.mjs      # traducciones contra el inglés
 node tools/smoke.mjs           # la demo en Chromium: 3D, 2D, vuelo, Replay, diálogos, RTL, celular
 node tools/smoke.mjs --langs   # además los 40 idiomas en pantalla de celular

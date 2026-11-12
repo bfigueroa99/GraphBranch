@@ -1,0 +1,4 @@
+{
+  "_que": "Lo propio de GraphBranch para .claude/hooks/guardia.py (copia vendorizada: el código no se edita aquí). master y main van siempre. dev también: la skill nunca pide escribir un push a dev (se llega solo por el PR de loop/N, que fusiona el MCP), y los push de tools/loop.mjs (--reclamar, --limpiar) corren por dentro de node, donde el hook no mira.",
+  "ramas_protegidas": ["dev"]
+}

@@ -3055,7 +3055,10 @@
           }
           // con las columnas encendidas, debajo del mensaje va «SHA · Autor · fecha» (se arma una vez por commit, no por cuadro)
           if (cols && it.meta == null) {
-            it.meta = U.truncate(GB.search.columnText(c, U.fmtDate, tr('author.unknown')), 44); // como en el 2D: el SHA y 34 de autor y fecha
+            const parts = GB.search.columnParts(c, U.fmtDate, tr('author.unknown'));
+            parts[1] = U.truncate(parts[1], 24); // el recorte cae en el autor: el SHA y la fecha se leen enteros
+            it.metaParts = parts;
+            it.meta = parts.filter(Boolean).join(' · ');
             it.metaW = Math.ceil(GB.graphShared.measure(it.meta, GB.graphShared.SMALL_FONT) + 12);
           }
           const meta = cols ? it.meta : '';
@@ -3075,14 +3078,15 @@
           if (note.metaText !== meta) {
             note.metaText = meta;
             note.meta.hidden = !meta;
-            // cada parte en su <bdi>: una fecha en árabe o un autor en hebreo no desordenan el SHA ni a sus vecinas
-            note.meta.replaceChildren(
-              ...meta.split(' · ').flatMap((part, i) => {
-                const b = document.createElement('bdi');
-                b.textContent = part;
-                return i ? [' · ', b] : [b];
-              })
-            );
+            // cada parte en su <bdi> (ya creado: aquí solo cambia el texto) y su « · » delante si hay algo antes
+            let before = false;
+            for (let i = 0; meta && i < 3; i++) {
+              const part = it.metaParts[i];
+              note.parts[i].textContent = part;
+              note.parts[i].hidden = !part;
+              if (i) note.seps[i - 1].hidden = !part || !before;
+              if (part) before = true;
+            }
           }
           // aparece al acercarse; con otra rama resaltada, se apaga como ella
           let op = clamp((NOTE_D - dist) / (NOTE_D * 0.25), 0, 1);
@@ -3102,9 +3106,17 @@
       const msg = el.appendChild(document.createElement('span'));
       const meta = el.appendChild(document.createElement('span'));
       meta.className = 'g3-meta';
+      meta.dir = 'ltr'; // «SHA · Autor · fecha» en ese orden también en árabe o hebreo, como en el 2D
       meta.hidden = true;
+      // las tres partes, cada una en su <bdi> (una fecha en árabe o un autor en hebreo no desordenan a sus vecinas),
+      // se crean una vez: por cuadro solo cambia su texto
+      const parts = [], seps = [];
+      for (let i = 0; i < 3; i++) {
+        if (i) (seps.push(meta.appendChild(document.createElement('span'))), (seps[i - 1].textContent = ' · '));
+        parts.push(meta.appendChild(document.createElement('bdi')));
+      }
       this.labelLayer.appendChild(el);
-      return { el, msg, meta, text: null, metaText: '', st: {} };
+      return { el, msg, meta, parts, seps, text: null, metaText: '', st: {} };
     }
 
     /** Interruptor de las columnas de SHA, autor y fecha (el mismo del 2D): cada commit cercano las lleva bajo su mensaje. */

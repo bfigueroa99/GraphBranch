@@ -4867,17 +4867,20 @@ if (seccion('Columnas de SHA, autor y fecha en el 3D'))
         g.setSpin?.(false);
         g.focusSha([...g.nodes.values()].find((it) => it.data.heads.length)?.sha || [...g.nodes.keys()][0], 9);
       });
+      await page.waitForTimeout(1500); // la cámara llega a su lugar antes de mirar los rótulos
       await page.waitForFunction(() => [...document.querySelectorAll('#graph3d .g3-note')].some((n) => getComputedStyle(n).display !== 'none'), null, { timeout: T(10000) });
     };
     const withMeta = () => page.waitForFunction(() => [...document.querySelectorAll('#graph3d .g3-note')].some((n) => getComputedStyle(n).display !== 'none' && n.querySelector('.g3-meta:not([hidden])')), null, { timeout: T(5000) });
     await near();
     const off = await notes();
+    if (!off.length) throw new Error('de cerca no hay ningún rótulo de commit en el 3D');
     if (off.some((n) => n.meta)) throw new Error('las columnas salen en el 3D sin encender el interruptor');
     await page.click('#search-btn');
     await page.waitForSelector('#search[open]', { timeout: T(3000) });
     await page.check('#graph-columns');
     await withMeta();
     const on = (await notes()).filter((n) => n.meta);
+    if (!on.length) throw new Error('las columnas del 3D se fueron apenas salieron');
     const bad = on.find((n) => !/^[0-9a-f]{7} · .+ · /.test(n.meta));
     if (bad) throw new Error('una columna del 3D no es «SHA · autor · fecha»: ' + JSON.stringify(bad.meta));
     // el SHA corto es el comienzo del SHA de un commit del grafo 3D

@@ -233,9 +233,14 @@ window.GB = window.GB || {};
 
   /** Los tokens de la web. En `<usuario>.github.io` el origen lo comparten todos los proyectos del usuario, y un
       `localStorage` ahí lo lee cualquiera de ellos: el token vive en `sessionStorage` (se pierde al cerrar la
-      pestaña) y el que ya estuviera en `localStorage` pasa a la sesión y se borra. En otro origen sigue en `store`. */
+      pestaña) y el que ya estuviera en `localStorage` pasa a la sesión y se borra. Lo mismo en el panel de la
+      extensión de VS Code (su `vscode-session.js` pone `GBSessionSecrets`): el servidor local cambia de puerto, y
+      con él de origen, en cada sesión, así que un token en `localStorage` se quedaría en el disco, en un origen
+      que nadie vuelve a abrir. En otro origen sigue en `store`. */
   U.secret = {
-    shared: () => /\.github\.io$/i.test((typeof location !== 'undefined' && location.hostname) || ''),
+    shared: () =>
+      (typeof window !== 'undefined' && window.GBSessionSecrets === true) ||
+      /\.github\.io$/i.test((typeof location !== 'undefined' && location.hostname) || ''),
     get(key, fallback) {
       if (!U.secret.shared()) return U.store.get(key, fallback);
       try {

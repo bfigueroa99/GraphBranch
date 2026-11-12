@@ -43,10 +43,17 @@ test('el servidor entrega la página con la sesión solo bajo su clave', async (
 
     const session = await get(new URL('vscode-session.js', s.url));
     assert.match(session.type, /javascript/);
-    // el token queda como texto JSON dentro de localStorage, tal como lo lee U.store
+    // el token queda como texto JSON en sessionStorage, donde lo lee U.secret con la marca GBSessionSecrets, y
+    // nunca en localStorage: el puerto (el origen) cambia en cada sesión del panel, y ahí se quedaría en el disco
+    const local = {};
     const store = {};
-    new Function('localStorage', session.text)({ setItem: (k, v) => (store[k] = v) });
+    const win = {};
+    const almacen = (o) => ({ setItem: (k, v) => (o[k] = v), removeItem: (k) => delete o[k], getItem: (k) => o[k] ?? null });
+    new Function('globalThis', 'localStorage', 'sessionStorage', session.text)(win, almacen(local), almacen(store));
     assert.equal(JSON.parse(store['graphbranch:token']), 'ghp_abc"\\x');
+    assert.equal(win.GBSessionSecrets, true);
+    assert.deepEqual(Object.keys(local), [], 'nada en localStorage');
+    assert.doesNotMatch(session.text, /localStorage\.setItem\('graphbranch:token'/);
 
     assert.equal((await get(new URL('js/app.js', s.url))).status, 200);
     assert.equal((await get(new URL('css/styles.css', s.url))).type, 'text/css; charset=utf-8');
@@ -67,7 +74,9 @@ test('sin sesión de GitHub, el archivo de sesión no guarda nada y la clave es 
   const b = await start({ root });
   try {
     assert.notEqual(a.key, b.key);
-    assert.doesNotMatch((await get(new URL('vscode-session.js', a.url))).text, /token/);
+    const sinSesion = (await get(new URL('vscode-session.js', a.url))).text;
+    assert.doesNotMatch(sinSesion, /token/);
+    assert.match(sinSesion, /GBSessionSecrets=true/, 'un token pegado en Ajustes tampoco va a localStorage');
     assert.doesNotMatch(a.url, /\?repo=/);
   } finally {
     await a.close();
@@ -154,7 +163,7 @@ test('la extensión sigue la sesión de GitHub de VS Code mientras el panel est�
     sesion.token = ''; // cerró sesión: el token guardado en la página se borra
     await oyentes[0]({ provider: { id: 'github' } });
     const js = await sesionJs();
-    assert.match(js, /removeItem\('graphbranch:token'\)/);
+    assert.match(js, /sessionStorage\.removeItem\('graphbranch:token'\)/);
     assert.doesNotMatch(js, /ghs_/);
   } finally {
     panel.dispose();

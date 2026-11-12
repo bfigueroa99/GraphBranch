@@ -659,5 +659,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (otra entrada en el mapa de ramas con el mismo sha, como `renameBranch` sin borrar la vieja).
 - OMC: plan=— · revisión=7 hallazgos (4 arreglados: los MEDIUM de la copia sobre sí misma, que se negaba y en git no hace nada, de la rama de un rebase a medias, que se copiaba y git la niega, y del comentario de la prueba sin aserción, y el LOW del mensaje «too many branches»; quedan los LOW de la línea de uso corta, como la de `-m`, de las banderas pegadas `-cf`, que ya era así, y de la rama llamada `HEAD`, que va al pendiente 22) · verificación=PASS
 - Reclamo: loop/269, sin colisión
-- Validado: pendiente
+- Validado: 682 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde. La segunda corrida falló en `node --test` («IMPROVEMENTS.md real») porque la entrada se escribió mientras corría; la tercera, con el arreglo de la revisión y la entrada terminada, pasó.
 - **Siguiente:** iteración 270, expansión: ítem 189 (Resumen de la semana: quién cerró más issues, Salidas)

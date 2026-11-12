@@ -464,6 +464,7 @@
         'commit --amend [-m "msg"]   redo the last commit (with what is prepared)',
         'branch [name] [-d name]     list, create or delete branches',
         'branch -m [old] <new>       rename a branch (the current one without old; -M replaces an existing one)',
+        'branch -c [old] <new>       copy a branch without moving HEAD (the current one without old; -C replaces an existing one)',
         'checkout [-b] <name|sha>    move to a branch or commit (also: switch [-c|--detach])',
         'restore <file|.>            throw away the uncommitted changes of a file (see touch)',
         'merge <branch>              bring another branch into this one (--no-ff always makes a merge commit, --ff-only, --no-commit, -m "msg")',
@@ -650,8 +651,11 @@
       const { flags, rest } = parse(args);
       const del = flags['-d'] || flags['-D'] || flags['--delete'];
       const move = flags['-m'] || flags['-M'] || flags['--move'];
+      const copy = flags['-c'] || flags['-C'] || flags['--copy'];
       if (del && move) fail('usage: branch (-m | -M) [<old-branch>] <new-branch>');
+      if (copy && (del || move)) fail('usage: branch (-c | -C) [<old-branch>] <new-branch>');
       if (move) return renameBranch.call(this, rest, !!(flags['-M'] || flags['-f'] || flags['--force']));
+      if (copy) return copyBranch.call(this, rest, !!(flags['-C'] || flags['-f'] || flags['--force']));
       if (del) {
         if (!rest.length) fail('fatal: branch name required');
         const out = [];
@@ -988,6 +992,24 @@
     if (this.head.branch === old) this.head = { branch: name };
     if (this.defaultBranch === old) this.defaultBranch = name;
     this.renamed = { from: old, to: name };
+    return [];
+  }
+
+  /** `branch -c [vieja] <nueva>`: otra rama en el mismo commit (la actual si no se dice cuál), sin mover HEAD; `-C` pisa una que no está en uso. */
+  function copyBranch(rest, force) {
+    if (!rest.length) fail('fatal: branch name required');
+    if (rest.length > 2) fail('fatal: too many arguments for a copy operation');
+    if (rest.length === 1 && !this.head.branch) fail('fatal: cannot copy the current branch while not on any');
+    const [old, name] = rest.length === 2 ? rest : [this.head.branch, rest[0]];
+    if (!this.branches.has(old)) fail(`fatal: no branch named '${old}'`);
+    const tip = this.branches.get(old);
+    if (!tip) fail(`fatal: no commit on branch '${old}' yet`);
+    if (!validName(name)) fail(`fatal: '${name}' is not a valid branch name`);
+    if (this.branches.has(name)) {
+      if (!force) fail(`fatal: a branch named '${name}' already exists`);
+      if (this.head.branch === name || this.rebasing?.branch === name) fail(`fatal: cannot force update the branch '${name}' used by worktree`);
+    }
+    this.branches.set(name, tip);
     return [];
   }
 

@@ -32,6 +32,11 @@
     return weeks;
   }
 
+  /** La clave de un autor: su usuario o, sin usuario, su nombre (como en la búsqueda por autor), sin distinguir
+      mayúsculas; vacía si el commit no trae autor. La misma en los autores distintos y en los nuevos, para que
+      nunca salgan más nuevos que distintos en una semana. */
+  const authorKey = (c) => String(c?.author?.login || c?.author?.name || '').trim().toLowerCase();
+
   /** Cuántos autores distintos hicieron commits en cada una de las últimas WEEKS semanas, con los commits
       cargados. Un autor es su usuario o, sin usuario, su nombre (como en la búsqueda por autor); un commit
       sin autor no suma. Cuenta personas distintas, nunca cuánto hizo cada una. */
@@ -39,7 +44,7 @@
     const weeks = Array.from({ length: WEEKS }, () => new Set());
     for (const c of commits) {
       const time = at(c?.date);
-      const key = String(c?.author?.login || c?.author?.name || '').trim().toLowerCase();
+      const key = authorKey(c);
       if (!time || !key || time > now) continue;
       const k = Math.floor((now - time) / (7 * DAY));
       if (k < WEEKS) weeks[WEEKS - 1 - k].add(key);
@@ -55,7 +60,7 @@
     const first = new Map();
     for (const c of commits) {
       const time = at(c?.date);
-      const key = String(c?.author?.login || c?.author?.name || '').trim().toLowerCase();
+      const key = authorKey(c);
       if (!time || !key || time > now) continue;
       if (!first.has(key) || time < first.get(key)) first.set(key, time);
     }

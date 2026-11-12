@@ -45,7 +45,7 @@
       const head = String(p.head || '');
       const ci = p.ci || (p.sameRepo && head && data.ci?.get?.(head)) || null;
       if (ci !== 'failure') continue;
-      all.push({ number: Number(p.number), title: String(p.title || '').split('\n')[0].trim(), head, url: /^https:\/\//.test(String(p.url || '')) ? String(p.url) : '' });
+      all.push({ number: Number(p.number), title: String(p.title || '').split('\n')[0].trim(), head: head || '?', url: /^https:\/\//.test(String(p.url || '')) ? String(p.url) : '' });
     }
     all.sort((a, b) => b.number - a.number);
     return { total: all.length, rows: all.slice(0, max) };
@@ -255,7 +255,7 @@
           row.target = '_blank';
           row.rel = 'noopener noreferrer';
         }
-        row.appendChild(mk('span', 'tv-tag tv-ci-fail', '✗')).setAttribute('aria-hidden', 'true');
+        row.appendChild(mk('span', 'tv-cipull-x', '✗')).setAttribute('aria-hidden', 'true');
         row.appendChild(mk('span', 'tv-name', text('textview.ciPull', { num: r.number, title: r.title, branch: r.head })));
         li.appendChild(row);
         ul.appendChild(li);

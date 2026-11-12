@@ -1105,7 +1105,7 @@ console.log('Escritorio (1280×800)');
       return { role: l.getAttribute('role'), polite: l.getAttribute('aria-live'), text: l.textContent };
     });
     if (live.role !== 'status' || live.polite !== 'polite') throw new Error('la región viva no es role=status polite');
-    if (live.text && !/^Commits con tag: \d+(\. Commits con release: \d+)?(\. Forks activos: \d+)?$/.test(live.text)) throw new Error('al abrir, la región viva ya anuncia algo más que los tags y releases: ' + live.text);
+    if (live.text && !/^Commits con tag: \d+(\. Commits con release: \d+)?(\. PRs abiertos con CI fallando: \d+)?(\. Forks activos: \d+)?$/.test(live.text)) throw new Error('al abrir, la región viva ya anuncia algo más que los tags y releases: ' + live.text);
     // filtro: un nombre que no existe vacía el árbol; el de la primera rama lo deja con esa rama
     const first = await page.evaluate(() => document.querySelector('#textview .tv-branch').dataset.branch);
     await page.fill('#textview-filter', 'zzz-no-existe');

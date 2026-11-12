@@ -6092,9 +6092,9 @@ html.tv .agk-btn {
   flex-wrap: nowrap;
   align-items: baseline;
 }
-.tv-cipull .tv-name {
-  min-width: 0;
-  overflow-wrap: anywhere;
+.tv-cipull-x {
+  color: var(--bad);
+  font-weight: 600;
 }
 .tv-head::before {
   content: '▸';

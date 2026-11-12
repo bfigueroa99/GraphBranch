@@ -1,6 +1,7 @@
 /* GraphBranch — українська. */
 GB.i18n.define('uk', {
   /* ---------- сторінка ---------- */
+  'meta.title': 'Живий граф гілок репозиторію GitHub · GraphBranch',
   'meta.description': 'Живий граф гілок репозиторію GitHub зі сповіщеннями про коміти, pull requests та issues.',
 
   /* ---------- верхня панель ---------- */

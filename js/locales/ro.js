@@ -1,6 +1,7 @@
 /* GraphBranch — română. */
 GB.i18n.define('ro', {
   /* ---------- pagină ---------- */
+  'meta.title': 'Graf în timp real al ramurilor unui depozit GitHub · GraphBranch',
   'meta.description': 'Graf în timp real al ramurilor unui depozit GitHub, cu alerte pentru commit-uri, pull request-uri și issue-uri.',
 
   /* ---------- bara de sus ---------- */

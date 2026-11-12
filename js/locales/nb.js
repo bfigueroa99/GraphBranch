@@ -1,6 +1,7 @@
 /* GraphBranch — norsk bokmål. */
 GB.i18n.define('nb', {
   /* ---------- side ---------- */
+  'meta.title': 'Live graf over branchene i et GitHub-repository · GraphBranch',
   'meta.description': 'Live graf over branchene i et GitHub-repository, med varsler om commits, pull requests og issues.',
 
   /* ---------- toppfelt ---------- */

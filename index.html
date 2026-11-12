@@ -22,8 +22,107 @@
   connect-src https://api.github.com https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com https://api.anthropic.com https://api.openai.com https://openrouter.ai http://localhost:20128 http://127.0.0.1:20128;
   base-uri 'none';
   form-action 'none'">
-<title>GraphBranch</title>
+<title data-i18n="meta.title">Live graph of a GitHub repository's branches · GraphBranch</title>
 <meta name="description" content="Live graph of a GitHub repository's branches, with alerts for commits, pull requests and issues." data-i18n-attr="content:meta.description">
+<!-- Lo que leen sin ejecutar la página los buscadores, las redes (la tarjeta de un enlace compartido) y los
+     asistentes: va en inglés, el idioma base. La web es una sola dirección con los 40 idiomas en el cliente:
+     por eso la canónica es una (?repo=…, ?embed=1 y ?lang= son la misma página) y no hay hreflang. La
+     imagen es docs/social.png (1200 × 630); tools/seo.test.mjs comprueba todo esto contra package.json.
+     El JSON-LD es un bloque de datos: el navegador no lo ejecuta y script-src sigue en 'self'. -->
+<link rel="canonical" href="https://bfigueroa99.github.io/GraphBranch/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GraphBranch">
+<meta property="og:title" content="Live graph of a GitHub repository's branches · GraphBranch">
+<meta property="og:description" content="Live graph of a GitHub repository's branches, with alerts for commits, pull requests and issues.">
+<meta property="og:url" content="https://bfigueroa99.github.io/GraphBranch/">
+<meta property="og:image" content="https://bfigueroa99.github.io/GraphBranch/docs/social.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="GraphBranch drawing the branches, commits and pull requests of a demo repository as a live 3D graph">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Live graph of a GitHub repository's branches · GraphBranch">
+<meta name="twitter:description" content="Live graph of a GitHub repository's branches, with alerts for commits, pull requests and issues.">
+<meta name="twitter:image" content="https://bfigueroa99.github.io/GraphBranch/docs/social.png">
+<meta name="twitter:image:alt" content="GraphBranch drawing the branches, commits and pull requests of a demo repository as a live 3D graph">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "WebApplication",
+ "name": "GraphBranch",
+ "url": "https://bfigueroa99.github.io/GraphBranch/",
+ "description": "Live graph of a GitHub repository's branches, with alerts for commits, pull requests and issues: force-pushes, branches created and deleted, reviews, releases, stars and forks. In 3D or 2D, for repositories on GitHub, GitLab, Codeberg, Bitbucket and Azure DevOps, with a demo that needs no account.",
+ "applicationCategory": "DeveloperApplication",
+ "operatingSystem": "Any (web browser); desktop app for Windows, macOS and Linux",
+ "browserRequirements": "Requires JavaScript",
+ "isAccessibleForFree": true,
+ "offers": {
+  "@type": "Offer",
+  "price": "0",
+  "priceCurrency": "USD"
+ },
+ "license": "https://spdx.org/licenses/MIT.html",
+ "author": {
+  "@type": "Person",
+  "name": "Benjamin Figueroa Guzman"
+ },
+ "sameAs": "https://github.com/bfigueroa99/GraphBranch",
+ "image": "https://bfigueroa99.github.io/GraphBranch/docs/social.png",
+ "screenshot": "https://bfigueroa99.github.io/GraphBranch/docs/social.png",
+ "inLanguage": [
+  "ar",
+  "bg",
+  "bn",
+  "ca",
+  "cs",
+  "da",
+  "de",
+  "el",
+  "en",
+  "es",
+  "fa",
+  "fi",
+  "fil",
+  "fr",
+  "he",
+  "hi",
+  "hr",
+  "hu",
+  "id",
+  "it",
+  "ja",
+  "ko",
+  "ms",
+  "nb",
+  "nl",
+  "pl",
+  "pt",
+  "ro",
+  "ru",
+  "sk",
+  "sv",
+  "sw",
+  "ta",
+  "th",
+  "tr",
+  "uk",
+  "ur",
+  "vi",
+  "zh-Hans",
+  "zh-Hant"
+ ],
+ "featureList": [
+  "Live 3D and 2D graph of branches, commits, merges and pull requests",
+  "Alerts, sound and system notifications for commits, force-pushes, pull requests, reviews, issues, releases, stars and forks",
+  "Replay of the repository history as a time-lapse, recordable as video",
+  "Repository health: stale branches, pull requests by age and state, time to merge, CI failures",
+  "Keyboard-only text view of branches and commits for screen readers",
+  "Works offline once opened and installs as an app (PWA)",
+  "Embeddable widget and TV mode for shared screens",
+  "Practice git with a terminal on a sandbox repository"
+ ]
+}
+</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23121917'/%3E%3Cpath d='M8 24V8M8 15c0-4 4-5 8-5h3M8 19c0 3 3 4 7 4h9' stroke='%233987e5' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='8' cy='8' r='3' fill='%233987e5'/%3E%3Ccircle cx='22' cy='10' r='3' fill='%23d95926'/%3E%3Ccircle cx='24' cy='23' r='3' fill='%23199e70'/%3E%3C/svg%3E">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">

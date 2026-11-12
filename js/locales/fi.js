@@ -1,6 +1,7 @@
 /* GraphBranch — suomi. */
 GB.i18n.define('fi', {
   /* ---------- sivu ---------- */
+  'meta.title': 'Reaaliaikainen kaavio GitHub-repositorion haaroista · GraphBranch',
   'meta.description': 'Reaaliaikainen kaavio GitHub-repositorion haaroista sekä ilmoitukset commiteista, pull requesteista ja issueista.',
 
   /* ---------- yläpalkki ---------- */

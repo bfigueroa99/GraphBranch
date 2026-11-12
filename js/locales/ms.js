@@ -1,6 +1,7 @@
 /* GraphBranch — Bahasa Melayu. */
 GB.i18n.define('ms', {
   /* ---------- halaman ---------- */
+  'meta.title': 'Graf langsung bagi branch sebuah repositori GitHub · GraphBranch',
   'meta.description': 'Graf langsung bagi branch sebuah repositori GitHub, dengan amaran untuk commit, pull request dan issue.',
 
   /* ---------- bar atas ---------- */

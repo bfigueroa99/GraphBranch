@@ -6,6 +6,7 @@
    - <kbd> <em> <strong> <code>  inline HTML in a few messages: keep the tags, translate the text. */
 GB.i18n.define('en', {
   /* ---------- page ---------- */
+  'meta.title': "Live graph of a GitHub repository's branches · GraphBranch",
   'meta.description': "Live graph of a GitHub repository's branches, with alerts for commits, pull requests and issues.",
 
   /* ---------- top bar ---------- */

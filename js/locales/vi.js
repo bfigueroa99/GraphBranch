@@ -1,6 +1,7 @@
 /* GraphBranch — Tiếng Việt. */
 GB.i18n.define('vi', {
   /* ---------- trang ---------- */
+  'meta.title': 'Biểu đồ trực tiếp các nhánh của một kho lưu trữ GitHub · GraphBranch',
   'meta.description': 'Biểu đồ trực tiếp các nhánh của một kho lưu trữ GitHub, kèm cảnh báo về commit, pull request và issue.',
 
   /* ---------- thanh trên cùng ---------- */

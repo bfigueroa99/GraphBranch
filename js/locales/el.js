@@ -1,6 +1,7 @@
 /* GraphBranch — Ελληνικά. */
 GB.i18n.define('el', {
   /* ---------- σελίδα ---------- */
+  'meta.title': 'Ζωντανό γράφημα των branches ενός αποθετηρίου GitHub · GraphBranch',
   'meta.description': 'Ζωντανό γράφημα των branches ενός αποθετηρίου GitHub, με ειδοποιήσεις για commits, pull requests και issues.',
 
   /* ---------- επάνω γραμμή ---------- */

@@ -1,6 +1,7 @@
 /* GraphBranch — Türkçe. */
 GB.i18n.define('tr', {
   /* ---------- sayfa ---------- */
+  'meta.title': 'Bir GitHub deposunun dallarının canlı grafiği · GraphBranch',
   'meta.description': 'Bir GitHub deposunun dallarının canlı grafiği; commit, pull request ve issue uyarılarıyla birlikte.',
 
   /* ---------- üst çubuk ---------- */

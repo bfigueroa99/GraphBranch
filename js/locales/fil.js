@@ -1,6 +1,7 @@
 /* GraphBranch — Filipino. */
 GB.i18n.define('fil', {
   /* ---------- page ---------- */
+  'meta.title': 'Live na graph ng mga branch ng isang GitHub repository · GraphBranch',
   'meta.description': 'Live na graph ng mga branch ng isang GitHub repository, na may mga alerto para sa mga commit, pull request, at issue.',
 
   /* ---------- top bar ---------- */

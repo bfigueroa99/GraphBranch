@@ -13,7 +13,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { ANCHOS_MIN, ARCHIVO_BITACORA, ARCHIVO_HOJA, ARENA_MAX, AUDITABLES, BASE, CADENCIAS, RELEASE, CRON_H, EJES, FLAGS, HOJA_MAX, HOJA_SIN_FUENTE, HUECOS_DIAS, LARGOS, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, PROMPT_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SKILL_MAX, SUBTIPOS, appReferencia, check, diagnostico, disparosEntre, matrizReplica, necesidades, ordenHoja, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, rotarHoja, siguiente, tramos } from './loop.mjs';
+import { createHash } from 'node:crypto';
+import { ANCHOS_MIN, ARCHIVO_BITACORA, ARCHIVO_HOJA, ARENA_MAX, AUDITABLES, BASE, CADENCIAS, CONECTORES, RELEASE, CRON_H, EJES, FLAGS, HOJA_MAX, HOJA_SIN_FUENTE, HUECOS_DIAS, INCORPORADAS, LARGOS, LoopError, MARCA_ARENA, MARCA_GUIAS, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, PROMPT_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SKILL_MAX, SUBTIPOS, appReferencia, check, diagnostico, disparosEntre, matrizReplica, necesidades, ordenHoja, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, rotarHoja, siguiente, tramos } from './loop.mjs';
 import { TIPOS } from './audit.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -546,6 +547,41 @@ describe('check()', () => {
     assert.equal(nivel(check(fixture({ entradas: [...lista, entrada({ titulo: `${MARCA_PROTOCOLO}, rotación y salud` }), it31(''), marca] }), { log: LOG }), 'R5'), 'ok');
   });
 
+  test('R5: las iteraciones después de la marca de las guías llevan «- Guías:» con las skills que leyeron, que existen, o por qué ninguna', () => {
+    const lista = iteraciones(30);
+    const marca = entrada({ titulo: `${MARCA_GUIAS} en el loop`, siguiente: 'iteración 31, mantenimiento · QA: auditoría' });
+    const it31 = (cuerpo) => entrada({ n: 31, tipo: 'Mantenimiento', subtipo: 'QA', cuerpo: `\n- **Hallazgos:** 3 nuevos.${cuerpo}`, siguiente: 'iteración 32, expansión: ítem 6 (algo, Fuentes)' });
+    const con = (cuerpo) => check(fixture({ entradas: [...lista, entrada({ titulo: `${MARCA_PROTOCOLO}, rotación y salud` }), marca, it31(cuerpo)] }), { log: LOG });
+    // una vendorizada del repo y una que viene con Claude Code
+    const leyo = con('\n- Guías: design-critique (los cinco ejes sobre las capturas), dataviz (el color del gráfico)');
+    assert.equal(nivel(leyo, 'R5'), 'ok', leyo.salida);
+    assert.match(texto(leyo, 'R5'), /1 con «- Guías:»/);
+    assert.equal(nivel(con('\n- Guías: ninguna: un arreglo de una línea en el parser, sin paso del mapa.'), 'R5'), 'ok');
+    assert.match(texto(con(''), 'R5'), /iteración 31 sin la viñeta «- Guías:»/);
+    assert.match(texto(con('\n- Guías: ninguna.'), 'R5'), /iteración 31: «- Guías: ninguna» sin el porqué/);
+    assert.match(texto(con('\n- Guías: leí la de accesibilidad.'), 'R5'), /iteración 31: «- Guías:» con algo que no es «<skill> \(<para qué>\)»/);
+    assert.match(texto(con('\n- Guías: .'), 'R5'), /iteración 31: «- Guías:» con algo que no es «<skill> \(<para qué>\)»$/);
+    // el para qué puede llevar paréntesis y nombres de archivo: lo que cuenta es el nombre al empezar cada una
+    const anidado = con('\n- Guías: modern-web-guidance (leí guides/css/anchor-positioning.md (el popover del filtro)), y ux-copy (el error de la cuota).');
+    assert.equal(nivel(anidado, 'R5'), 'ok', anidado.salida);
+    // una skill sin su para qué no se cuela detrás de otra que sí lo tiene
+    assert.match(texto(con('\n- Guías: ux-copy (textos), skill-inventada'), 'R5'), /con algo que no es «<skill> \(<para qué>\)» \(«skill-inventada»\)/);
+    // nada nombra una skill que no está: inventada, mal escrita o con el prefijo del plugin, que en el repo no lleva
+    for (const [malo, que] of [
+      ['accessibility-revision (los criterios)', /nombra accessibility-revision, que no está/],
+      ['superpowers:test-driven-development (la prueba primero)', /nombra superpowers:test-driven-development, que no está/],
+      // existen, pero no son del mapa: arena y find-skills llevan su propia viñeta, y un conector no es una guía
+      ['arena (los enfoques)', /nombra arena, que no está en el mapa \(GUIAS\.md\)/],
+      ['github (el PR)', /nombra github, que no está en el mapa/],
+    ]) {
+      const r = con(`\n- Guías: ${malo}`);
+      assert.equal(nivel(r, 'R5'), 'ERROR', malo);
+      assert.match(texto(r, 'R5'), que);
+    }
+    // antes de la marca no se exige
+    assert.equal(nivel(check(fixture({ entradas: [...lista, entrada({ titulo: `${MARCA_PROTOCOLO}, rotación y salud` }), it31(''), marca] }), { log: LOG }), 'R5'), 'ok');
+  });
+
   test('«Fusión de #15 antes de abrir el PR» y «Cambio de objetivo» no cuentan como iteración', () => {
     const lista = iteraciones(27);
     const doc = fixture({
@@ -798,7 +834,7 @@ node tools/esperar.mjs puerta
     const real = readFileSync(join(carpeta, 'SKILL.md'), 'utf8');
     assert.ok(Buffer.byteLength(real) <= SKILL_MAX, `SKILL.md tiene ${Buffer.byteLength(real)} bytes`);
     const protocolos = readdirSync(carpeta).filter((f) => f.endsWith('.md') && !['SKILL.md', 'PROMPT.md'].includes(f));
-    assert.deepEqual(protocolos.sort(), ['CONSTRUIR.md', 'MANTENIMIENTO.md', 'REANUDAR.md', 'REPONER.md']);
+    assert.deepEqual(protocolos.sort(), ['CONSTRUIR.md', 'GUIAS.md', 'MANTENIMIENTO.md', 'REANUDAR.md', 'REPONER.md']);
     for (const f of protocolos) {
       const txt = readFileSync(join(carpeta, f), 'utf8');
       assert.ok(real.includes(`.claude/skills/iteracion/${f}`), `SKILL.md nombra ${f}`);
@@ -812,6 +848,9 @@ node tools/esperar.mjs puerta
     assert.match(real, /Solo si quedan menos de 10 ítems sin hacer[^]*?REPONER\.md[^]*?al menos 5\s+ítems de alcance 2 o 3/);
     assert.match(readFileSync(join(carpeta, 'REPONER.md'), 'utf8'), new RegExp(`Una reposición deja al menos ${ANCHOS_MIN} ítems pendientes de alcance 2 o 3`));
     assert.match(real, /\*\*4\*\* `Vencida`[^]*?REANUDAR\.md/);
+    // el mapa de las skills del repo se lee con el ítem elegido, antes de las tres preguntas, y lo usado va a la bitácora
+    assert.match(real, /tres preguntas\n\nCon el ítem o el pendiente elegido, `\.claude\/skills\/iteracion\/GUIAS\.md` dice qué skill del repo sirve[^]*?las que se leen van a `- Guías:`/);
+    assert.match(real, /^- Guías: <skill> \(<para qué>\)/m);
     // la Routine: por su id y con el primer mensaje de la sesión, no listando los triggers de la cuenta (43 KB,
     // paginado: de no verla en la primera página salió un «El loop no tiene quién lo dispare» falso)
     assert.match(real, /`trig_[0-9A-Za-z]+`/);
@@ -842,6 +881,135 @@ node tools/esperar.mjs puerta
     for (const p of allow.filter((x) => x.startsWith('Bash(python3 '))) assert.ok(existsSync(join(root, /^Bash\(python3 (\S+):\*\)$/.exec(p)[1])), `${p}: el script existe`);
     // editar o borrar Routines sigue fuera (la skill, «Nunca»)
     assert.ok(!allow.some((x) => /update_trigger|delete_trigger/.test(x)));
+  });
+});
+
+/* ------------------------------------------------- check: R15 (las guías) */
+
+describe('check() R15: el mapa de las skills del repo y el registro de las vendorizadas', () => {
+  const sha = (t) => createHash('sha256').update(t).digest('hex');
+  const SKILL = (nombre, cuerpo = 'Qué hace.') => `---\nname: ${nombre}\ndescription: Una skill de afuera.\ndisable-model-invocation: true\n# copia modificada\n---\n\n# ${nombre}\n\n${cuerpo}\n`;
+  /** Un repo temporal con esas skills en .claude/skills/ (cada una con su LICENSE.txt). */
+  const repo = (skills) => {
+    const dir = mkdtempSync(join(tmpdir(), 'loop-guias-'));
+    for (const [n, t] of Object.entries(skills)) {
+      mkdirSync(join(dir, '.claude', 'skills', n), { recursive: true });
+      writeFileSync(join(dir, '.claude', 'skills', n, 'SKILL.md'), t);
+      writeFileSync(join(dir, '.claude', 'skills', n, 'LICENSE.txt'), 'MIT License\n');
+    }
+    return dir;
+  };
+  const registro = (skills) => ['# Skills vendorizadas', '', '| Skill | Plugin | Versión | Origen público | Licencia | Copia | sha256 del `SKILL.md` |', '|---|---|---|---|---|---|---|', ...Object.entries(skills).map(([n, t]) => `| \`${n}\` | un-plugin | 1.0.0 | https://example.com/x | MIT | 2026-11-12 | ${sha(t)} |`), ''].join('\n');
+  const mapa = (pasos, aMano = []) => ['# Guías', '', 'Parte de la skill `iteracion`.', '', '## El mapa', '', '| Paso | Skill | Cuándo aplica | Cuándo no |', '|---|---|---|---|', ...pasos.map(([p, s]) => `| ${p} \`index.html\` | \`${s}\` | siempre que toca | nunca |`), '', '- Entre las que se parecen, `inventada-en-la-prosa` no cuenta: solo la columna Skill.', '', '## De uso a mano', '', ...aMano.map(([s, m]) => `- \`${s}\`${m == null ? '' : `: ${m}`}`), ''].join('\n');
+  const TDD = SKILL('tdd-de-afuera');
+  const UX = SKILL('ux-de-afuera');
+  const conRepo = (skills, extra, fn) => {
+    const dir = repo(skills);
+    try {
+      return fn(check(fixture(), { log: LOG, dir, vendorizadas: registro(skills), ...extra(dir) }));
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  };
+  const BIEN = mapa([['2 · Expansión', 'tdd-de-afuera'], ['2 · Un gráfico', 'dataviz']], [['ux-de-afuera', 'pide una persona que elija el tono de la marca']]);
+
+  test('un mapa que cita skills que existen (del repo, de Claude Code o conectores) y le da un paso o un motivo a cada vendorizada pasa', () => {
+    conRepo({ 'tdd-de-afuera': TDD, 'ux-de-afuera': UX }, () => ({ guias: BIEN }), (r) => {
+      assert.equal(nivel(r, 'R15'), 'ok', r.salida);
+      assert.match(texto(r, 'R15'), /2 vendorizadas/);
+    });
+    assert.ok(INCORPORADAS.includes('dataviz') && CONECTORES.includes('github'));
+    const conConector = mapa([['2 · Expansión', 'tdd-de-afuera'], ['5 · Publicar', 'github']], [['ux-de-afuera', 'pide una persona que elija el tono']]);
+    conRepo({ 'tdd-de-afuera': TDD, 'ux-de-afuera': UX }, () => ({ guias: conConector }), (r) => assert.equal(nivel(r, 'R15'), 'ok', r.salida));
+  });
+
+  test('una skill que el mapa nombra y no está en .claude/skills/, ni viene con Claude Code, ni es un conector, es un error', () => {
+    for (const [malo, que] of [
+      [mapa([['2 · Expansión', 'tdd-de-afuera'], ['2 · Un arreglo', 'debugging-que-no-existe']], [['ux-de-afuera', 'pide una persona que elija el tono']]), /GUIAS\.md nombra la skill debugging-que-no-existe \(línea \d+\), que no está/],
+      [mapa([['2 · Expansión', 'tdd-de-afuera']], [['ux-de-afuera', 'pide una persona que elija el tono'], ['seo-de-nadie', 'la marca la decide Benjamin']]), /nombra la skill seo-de-nadie/],
+      [mapa([['2 · Expansión', 'superpowers:tdd-de-afuera'], ['2 · Otra', 'tdd-de-afuera']], [['ux-de-afuera', 'pide una persona que elija el tono']]), /nombra la skill superpowers:tdd-de-afuera/],
+    ]) {
+      conRepo({ 'tdd-de-afuera': TDD, 'ux-de-afuera': UX }, () => ({ guias: malo }), (r) => {
+        assert.equal(nivel(r, 'R15'), 'ERROR', r.salida);
+        assert.match(texto(r, 'R15'), que);
+      });
+    }
+  });
+
+  test('una vendorizada que ningún paso cita ni figura de uso a mano con su motivo es un error', () => {
+    const sinUx = mapa([['2 · Expansión', 'tdd-de-afuera']]);
+    conRepo({ 'tdd-de-afuera': TDD, 'ux-de-afuera': UX }, () => ({ guias: sinUx }), (r) => {
+      assert.equal(nivel(r, 'R15'), 'ERROR');
+      assert.match(texto(r, 'R15'), /ux-de-afuera está vendorizada y GUIAS\.md no la cita/);
+    });
+    for (const motivo of [null, 'a mano']) {
+      conRepo({ 'tdd-de-afuera': TDD, 'ux-de-afuera': UX }, () => ({ guias: mapa([['2 · Expansión', 'tdd-de-afuera']], [['ux-de-afuera', motivo]]) }), (r) => {
+        assert.equal(nivel(r, 'R15'), 'ERROR', String(motivo));
+        assert.match(texto(r, 'R15'), /ux-de-afuera «de uso a mano» sin su motivo/);
+      });
+    }
+    // registradas y sin mapa: ningún paso las cita
+    conRepo({ 'tdd-de-afuera': TDD }, () => ({}), (r) => {
+      assert.equal(nivel(r, 'R15'), 'ERROR');
+      assert.match(texto(r, 'R15'), /registra 1 skill y no hay mapa/);
+    });
+  });
+
+  test('el registro dice la verdad de cada copia: el sha256, la licencia, que no se dispara sola, su nombre y una CLI fija y sin telemetría', () => {
+    const casos = [
+      ['editada a mano', (dir) => writeFileSync(join(dir, '.claude', 'skills', 'tdd-de-afuera', 'SKILL.md'), TDD + 'Una línea más.\n'), /tdd-de-afuera\/SKILL\.md no es la copia registrada/],
+      ['sin licencia', (dir) => rmSync(join(dir, '.claude', 'skills', 'tdd-de-afuera', 'LICENSE.txt')), /tdd-de-afuera\/ sin su licencia/],
+      ['borrada', (dir) => rmSync(join(dir, '.claude', 'skills', 'tdd-de-afuera'), { recursive: true }), /registra tdd-de-afuera \(línea \d+\) y no está/],
+    ];
+    for (const [que, romper, re] of casos) {
+      conRepo({ 'tdd-de-afuera': TDD, 'ux-de-afuera': UX }, (dir) => (romper(dir), { guias: BIEN }), (r) => {
+        assert.equal(nivel(r, 'R15'), 'ERROR', que);
+        assert.match(texto(r, 'R15'), re);
+      });
+    }
+    // lo que el registro anota con su sha256 y aun así no cumple las reglas de las skills de afuera
+    for (const [que, t, re] of [
+      ['se dispara sola', TDD.replace('disable-model-invocation: true\n', ''), /sin «disable-model-invocation: true»/],
+      ['otro nombre', TDD.replace('name: tdd-de-afuera', 'name: code-review'), /se llama «code-review»: el name: es el de su carpeta/],
+      ['CLI sin versión', SKILL('tdd-de-afuera', '```sh\nDISABLE_TELEMETRY=1 npx -y una-cli@latest search "x"\n```'), /corre una CLI sin versión fija/],
+      ['CLI con telemetría', SKILL('tdd-de-afuera', '```sh\nnpx -y una-cli@1.2.3 search "x"\n```\n> ```sh\n> npx -y una-cli@1.2.3 list\n> ```'), /corre una CLI sin DISABLE_TELEMETRY=1/],
+    ]) {
+      conRepo({ 'tdd-de-afuera': t, 'ux-de-afuera': UX }, () => ({ guias: BIEN }), (r) => {
+        assert.equal(nivel(r, 'R15'), 'ERROR', que);
+        assert.match(texto(r, 'R15'), re);
+      });
+    }
+    // otros lanzadores de npm, y un @latest dentro de un comando citado en la prosa
+    for (const [que, cuerpo, re] of [
+      ['bunx', '```sh\nbunx una-cli@1.2.3 list\n```', /corre una CLI sin DISABLE_TELEMETRY=1 \(«bunx una-cli@1\.2\.3 list»\)/],
+      ['pnpm dlx', '```sh\npnpm dlx una-cli@1.2.3 list\n```', /sin DISABLE_TELEMETRY=1/],
+      ['@latest en línea', 'Para buscar, `npx -y una-cli@latest search "x"`.', /corre una CLI sin versión fija/],
+    ]) {
+      conRepo({ 'tdd-de-afuera': SKILL('tdd-de-afuera', cuerpo), 'ux-de-afuera': UX }, () => ({ guias: BIEN }), (r) => {
+        assert.equal(nivel(r, 'R15'), 'ERROR', que);
+        assert.match(texto(r, 'R15'), re);
+      });
+    }
+    // fija y sin telemetría, y nombrada en la prosa (también lo que no se hace), vale
+    const fija = SKILL('tdd-de-afuera', 'Corre `una-cli` con `npx`; nunca la fijes en @latest.\n\n```sh\nDISABLE_TELEMETRY=1 npx -y una-cli@1.2.3 search "x"\n```');
+    conRepo({ 'tdd-de-afuera': fija, 'ux-de-afuera': UX }, () => ({ guias: BIEN }), (r) => assert.equal(nivel(r, 'R15'), 'ok', r.salida));
+    // un clon de Windows con core.autocrlf deja la copia en CRLF: sigue siendo la registrada
+    const crlf = (dir) => (writeFileSync(join(dir, '.claude', 'skills', 'tdd-de-afuera', 'SKILL.md'), TDD.replace(/\n/g, '\r\n')), { guias: BIEN });
+    conRepo({ 'tdd-de-afuera': TDD, 'ux-de-afuera': UX }, crlf, (r) => assert.equal(nivel(r, 'R15'), 'ok', r.salida));
+  });
+
+  test('sin skills vendorizadas ni mapa no hay nada que vigilar', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'loop-guias-'));
+    const r = check(fixture(), { log: LOG, dir });
+    rmSync(dir, { recursive: true, force: true });
+    assert.equal(nivel(r, 'R15'), 'ok', r.salida);
+  });
+
+  test('los archivos reales del repo pasan R15: cada vendorizada tiene su paso o su motivo y cada copia es la registrada', () => {
+    const r = check(fixture(), { log: LOG });
+    assert.equal(nivel(r, 'R15'), 'ok', r.salida);
+    const vend = readFileSync(join(root, '.claude', 'skills', 'VENDORIZADAS.md'), 'utf8');
+    assert.ok((vend.match(/^\| `[^`]+` \|/gm) ?? []).length >= 10, 'VENDORIZADAS.md registra las skills copiadas');
   });
 });
 

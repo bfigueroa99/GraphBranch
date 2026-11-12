@@ -1,6 +1,7 @@
 /* GraphBranch — Nederlands. */
 GB.i18n.define('nl', {
   /* ---------- page ---------- */
+  'meta.title': 'Live graaf van de branches van een GitHub-repository · GraphBranch',
   'meta.description': 'Live graaf van de branches van een GitHub-repository, met meldingen voor commits, pull requests en issues.',
 
   /* ---------- top bar ---------- */

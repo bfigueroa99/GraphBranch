@@ -1,6 +1,7 @@
 /* GraphBranch — العربية (Arabic). */
 GB.i18n.define('ar', {
   /* ---------- page ---------- */
+  'meta.title': 'رسم بياني مباشر لفروع مستودع GitHub · GraphBranch',
   'meta.description': 'رسم بياني مباشر لفروع مستودع GitHub، مع تنبيهات بخصوص commits وPull requests وIssues.',
 
   /* ---------- top bar ---------- */

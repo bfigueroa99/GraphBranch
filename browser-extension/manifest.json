@@ -2,8 +2,9 @@
   "manifest_version": 3,
   "name": "GraphBranch",
   "version": "0.1.0",
-  "description": "Botón «Abrir en GraphBranch» en las páginas de un repo de GitHub, GitLab, Codeberg o Bitbucket: abre el grafo de ramas en vivo de ese repo.",
-  "icons": { "192": "icons/icon-192.png", "512": "icons/icon-512.png" },
+  "description": "__MSG_description__",
+  "default_locale": "en",
+  "icons": { "16": "icons/icon-16.png", "32": "icons/icon-32.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" },
   "content_scripts": [
     {
       "matches": ["https://github.com/*", "https://gitlab.com/*", "https://codeberg.org/*", "https://bitbucket.org/*"],

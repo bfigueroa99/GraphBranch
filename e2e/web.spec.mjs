@@ -4,9 +4,14 @@ import { test, expect } from '@playwright/test';
 import { pathToFileURL } from 'node:url';
 import { join } from 'node:path';
 import { root } from './app.mjs';
-import { serve } from './serve.mjs';
+import { serve, e2ePort } from './serve.mjs';
 
 test.use({ locale: 'es-ES' });
+
+/** El servidor de playwright.config.mjs y el que la prueba de sin conexión levanta y apaga (ver e2ePort). */
+const PORT = e2ePort();
+const WEB = `http://127.0.0.1:${PORT}`;
+const OFFLINE = `http://127.0.0.1:${PORT + 1}`;
 
 /** Errores de la página (incluidas las violaciones de CSP) y peticiones a otros sitios. */
 function watch(page) {
@@ -15,7 +20,7 @@ function watch(page) {
   page.on('pageerror', (e) => problems.push('error: ' + e.message));
   page.on('request', (r) => {
     const url = new URL(r.url());
-    if (!['127.0.0.1:4173', ''].includes(url.host) && url.protocol !== 'data:') problems.push('petición a ' + r.url());
+    if (![`127.0.0.1:${PORT}`, ''].includes(url.host) && url.protocol !== 'data:') problems.push('petición a ' + r.url());
   });
   return problems;
 }
@@ -36,7 +41,7 @@ async function expectWorks(page) {
 
 test('por http carga sin errores, sin violaciones de CSP y sin pedir nada a otros sitios', async ({ page }) => {
   const problems = watch(page);
-  await page.goto('http://127.0.0.1:4173/index.html');
+  await page.goto(`${WEB}/index.html`);
   await expectWorks(page);
   expect(problems).toEqual([]);
 });
@@ -51,14 +56,14 @@ test('abierta con doble clic y sin red funciona igual', async ({ page, context }
 
 test('en la web no hay Abrir carpeta, y un repo local guardado avisa que solo la app de escritorio lo lee', async ({ page }) => {
   const problems = watch(page);
-  await page.goto('http://127.0.0.1:4173/index.html?repo=local:0123456789ab/mi-repo');
+  await page.goto(`${WEB}/index.html?repo=local:0123456789ab/mi-repo`);
   await expect(page.locator('#folder-btn')).toBeHidden();
   await expect(page.locator('#overlay')).toContainText('app de escritorio', { timeout: 20_000 });
   expect(problems.filter((p) => !/consola: Failed to load resource/.test(p))).toEqual([]);
 });
 
 test('el token se queda en este navegador y Ajustes lo dice', async ({ page }) => {
-  await page.goto('http://127.0.0.1:4173/index.html');
+  await page.goto(`${WEB}/index.html`);
   await expectWorks(page);
   await page.click('#settings-btn');
   await expect(page.locator('#token-where')).toHaveText('El token se guarda solo en este navegador y se envía únicamente a api.github.com.');
@@ -72,12 +77,12 @@ test('el token se queda en este navegador y Ajustes lo dice', async ({ page }) =
 
 test('se puede instalar y, una vez abierta, vuelve a abrir sin red ni servidor', async ({ page, context }) => {
   // un servidor propio, para apagarlo a mitad de la prueba
-  const server = await serve(4174);
+  const server = await serve(PORT + 1);
   const problems = [];
   page.on('console', (m) => m.type() === 'error' && problems.push('consola: ' + m.text()));
   page.on('pageerror', (e) => problems.push('error: ' + e.message));
   try {
-    await page.goto('http://127.0.0.1:4174/index.html');
+    await page.goto(`${OFFLINE}/index.html`);
     await expectWorks(page);
     // el service worker ya guardó la página y la controla
     await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller), { timeout: 20_000 }).toBe(true);
@@ -96,9 +101,9 @@ test('se puede instalar y, una vez abierta, vuelve a abrir sin red ni servidor',
   await expectWorks(page);
   expect(problems).toEqual([]);
   // un repo de GitHub abre igual, con el aviso de que no hay conexión
-  await page.goto('http://127.0.0.1:4174/index.html?repo=bfigueroa99/GraphBranch');
+  await page.goto(`${OFFLINE}/index.html?repo=bfigueroa99/GraphBranch`);
   await expect(page.locator('#overlay')).toContainText('api.github.com', { timeout: 20_000 });
   // y de la API nunca se guardó nada
   const saved = await page.evaluate(async () => (await (await caches.open('graphbranch')).keys()).map((r) => r.url));
-  expect(saved.filter((url) => !url.startsWith('http://127.0.0.1:4174/'))).toEqual([]);
+  expect(saved.filter((url) => !url.startsWith(`${OFFLINE}/`))).toEqual([]);
 });

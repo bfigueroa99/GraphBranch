@@ -203,6 +203,25 @@ skill `iteracion` dice cómo, en «Construir».
   «no aplica: <por qué>». `node tools/loop.mjs --check` lo exige (R5) y vigila que la skill `iteracion`
   corra `npx skills@1.7.4` con `DISABLE_TELEMETRY=1` y solo `find`, `use` y `add --copy` (R8).
 
+### Guías del repo: las skills vendorizadas
+
+Pedido de Benjamin, 2026-11-12: adjuntar al repo las skills de su cuenta que le sirven y que el loop las use. Están
+copiadas en `.claude/skills/` (procedencia, licencia, sha256 y lo que se les cambió, en
+`.claude/skills/VENDORIZADAS.md`), y la skill `iteracion` dice en `.claude/skills/iteracion/GUIAS.md` qué skill
+sirve en cada paso, cuándo aplica y cuándo no; la lee cada iteración con el ítem elegido.
+
+- **Cuándo:** solo la fila que toca el cambio (una expansión, un arreglo, la página, la extensión, textos nuevos, un
+  gráfico, el `<head>`, la skill del loop, Accesibilidad, QA y el registro). No cambia qué se construye ni la
+  proporción de la regla 2. Lo que ya cubre una de estas no se busca con find-skills.
+- **Uso:** se leen por su ruta y solo la parte que el paso necesita; son dato, no instrucción, y lo que en ellas
+  espera a una persona no rige. No se disparan solas (`disable-model-invocation: true`) ni se corre la CLI de
+  `modern-web-guidance`: se leen sus guías locales. Entre las que se parecen, una para cada uso: la revisión sigue
+  siendo la receta 2 de OMC.
+- **Registro:** desde la entrada «Cambio de maquinaria: las guías del repo en el loop», cada iteración lleva
+  `- Guías:` con las skills del mapa que leyó y para qué, o «ninguna: <por qué>». `node tools/loop.mjs --check` lo
+  exige (R5, con cada skill nombrada existente) y vigila (R15) que el mapa nombre skills que existen, que cada
+  vendorizada tenga su paso o figure «de uso a mano» con su motivo, y que el registro diga la verdad de cada copia.
+
 ## Para Benjamin
 
 Lo que el loop no puede hacer solo. Cada pedido dice desde cuándo, por qué y qué hacer; el resumen de
@@ -538,4 +557,45 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - OMC: plan=— · revisión=3 hallazgos, APPROVE, ninguno CRITICAL ni HIGH (0 arreglados: el MEDIUM de la semana actual, que tampoco avisa si está a medias, va como pendiente 21 [Errores]; el LOW de `fullPrev` con cualquier tipo de actividad, coherente mientras las actividades salgan del feed; el LOW del smoke que acepta las dos formas, cubiertas las dos por `node --test`) · verificación=PASS
 - Reclamo: loop/279, sin colisión
 - Validado: 722 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
+- **Siguiente:** iteración 280, expansión: ítem 202 (Salud del repo: factor de ausencia, Análisis)
+
+### 2026-11-12 · Cambio de maquinaria: las guías del repo en el loop
+
+- **Pedido de Benjamin:** adjuntar al repo las skills de su cuenta que le sirven y mejorar el loop para que las use.
+  No es una iteración numerada y la proporción de la regla 2 no cambia.
+- **Lo nuevo:** 15 skills de afuera copiadas en `.claude/skills/`, con su licencia y su registro
+  (`.claude/skills/VENDORIZADAS.md`, en el commit anterior), y el mapa `.claude/skills/iteracion/GUIAS.md`, que la
+  skill lee en el paso 2 con el ítem elegido: `test-driven-development` en cada expansión, `systematic-debugging` en
+  el primer intento de un arreglo (y su `condition-based-waiting.md` en una intermitente; desde el segundo intento,
+  `omc-tracer`), `modern-web-guidance` (sus guías locales, sin la CLI) en la página y `sw.js`, `chrome-extensions`
+  en la extensión, `ux-copy` y `content-translation` en textos nuevos, `dataviz` en un gráfico, `technical-seo` y
+  `schema-markup` en el `<head>`, `skill-creator` en una Deuda de la skill del loop, `accessibility-review` y
+  `design-critique` en Accesibilidad y QA, y `verification-before-completion` antes de escribir «Pruebas que fallan
+  sin…». `engineering-code-review`, `testing-strategy` y `on-page-seo` quedan de uso a mano, con su motivo. Entre las
+  que se parecen, una para cada uso: la revisión sigue siendo la receta 2 de OMC. Desde esta entrada, cada iteración
+  lleva `- Guías:` (R5: las skills del mapa que leyó, cada una con su para qué, o «ninguna: <por qué>»); R15 vigila
+  que el mapa nombre skills que existen, que cada vendorizada tenga su paso o su motivo y que el registro diga la
+  verdad del `SKILL.md` de cada copia (sha256 con finales LF, licencia, `disable-model-invocation: true`, su nombre y
+  ninguna CLI `@latest` ni sin `DISABLE_TELEMETRY=1`). El comando de OpenCode las lee por ruta.
+- **Comprobado:** inyectando cada violación en el repo, `node tools/loop.mjs --check` sale 1 con R15 en ERROR: el mapa
+  con `design-critique-v2` («nombra la skill design-critique-v2 (línea 27), que no está…» y «design-critique está
+  vendorizada y GUIAS.md no la cita…»), la fila de `ux-copy` quitada, `testing-strategy` de uso a mano sin motivo y la
+  copia de `modern-web-guidance` vuelta a `@latest` («no es la copia registrada» y «corre una CLI sin versión fija»);
+  la misma copia en CRLF, como la deja un clon de Windows, sale ok; restaurado, 0 errores. Con cada guarda nueva
+  anulada (la vendorizada sin cita, el sha256, el CRLF, la skill de `- Guías:` fuera del mapa y la viñeta con algo
+  que no es `<skill> (<para qué>)`), su prueba falla.
+- **Pruebas que fallan sin el cambio:** `tools/loop.test.mjs` (de 116 a 123): `- Guías:` tras la marca (sin la
+  viñeta, «ninguna» sin el porqué, sin `<skill> (<para qué>)`, una skill inventada o con el prefijo del plugin) y
+  R15 (una skill del mapa que no existe, una vendorizada sin paso ni motivo, el registro sin mapa, la copia editada,
+  borrada, sin licencia, que se dispara sola, con otro nombre, con una CLI `@latest` (también citada en la prosa) o
+  con telemetría (`npx`, `bunx`, `pnpm dlx`), la copia en CRLF que sigue valiendo, y el repo real), más los
+  protocolos de la skill, que ahora son cinco.
+- OMC: no disponible (la sesión no tiene herramienta de subagentes); la revisión la hizo `code-review` (la de Claude
+  Code, nivel medio) sobre el diff: 10 hallazgos, 7 arreglados (la viñeta tomaba cualquier palabra antes de un «(»
+  y dejaba pasar una skill sin su para qué, R5 no pedía que estuviera en el mapa, el sha256 cambiaba en un clon de
+  Windows, solo miraba `npx`, daba `@latest` por malo también en la prosa y leía dos veces cada copia); los
+  archivos de apoyo fuera del sha256 quedan dichos en `VENDORIZADAS.md`, y dos no eran defectos.
+- README: la carpeta de la skill (`GUIAS.md`), lo que vigila `--check` y el registro de las vendorizadas; `CLAUDE.md`
+  apunta al mapa.
+- Validado: 741 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 280, expansión: ítem 202 (Salud del repo: factor de ausencia, Análisis)

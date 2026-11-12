@@ -1,6 +1,7 @@
 /* GraphBranch — 简体中文. */
 GB.i18n.define('zh-Hans', {
   /* ---------- 页面 ---------- */
+  'meta.title': '实时展示 GitHub 仓库的分支关系图 · GraphBranch',
   'meta.description': '实时展示 GitHub 仓库的分支关系图，并提醒提交、Pull Request 和 Issue 的动态。',
 
   /* ---------- 顶部栏 ---------- */

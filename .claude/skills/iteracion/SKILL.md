@@ -22,10 +22,10 @@ iteración», «Lo que trae cada expansión» y «Lo que no cambia» (lo de Repl
 está en esta skill y en sus protocolos); el ítem o el pendiente que imprime `--reclamar` (su texto entero está en
 el archivo con ese número); Mantenimiento, si la iteración es de mantenimiento; y las dos últimas entradas de la
 bitácora (el formato). Los ítems hechos (`docs/HOJA.md`) y las entradas viejas (`docs/BITACORA.md`) son historia:
-se buscan con `grep` y no se leen enteros. Del README, solo las secciones que el cambio toca. Cuatro protocolos de
+se buscan con `grep` y no se leen enteros. Del README, solo las secciones que el cambio toca. Cinco protocolos de
 esta skill viven aparte, en su carpeta, y se leen solo cuando el paso que los nombra dice que tocan:
-`CONSTRUIR.md` (skills de afuera, plan por consenso y arena), `MANTENIMIENTO.md` (el de cada subtipo),
-`REANUDAR.md` (una iteración vencida) y `REPONER.md` (reponer la hoja de ruta).
+`GUIAS.md` (la skill del repo de cada paso), `CONSTRUIR.md` (skills de afuera, plan por consenso y arena),
+`MANTENIMIENTO.md` (el de cada subtipo), `REANUDAR.md` (una iteración vencida) y `REPONER.md` (la hoja de ruta).
 
 ### Comandos largos: se esperan en primer plano
 
@@ -112,7 +112,8 @@ siguiente la releve.
 
 ### Antes de escribir el código: tres preguntas
 
-Con el ítem o el pendiente ya elegido, en este orden (en mantenimiento, la arena va después de la
+Con el ítem o el pendiente elegido, `.claude/skills/iteracion/GUIAS.md` dice qué skill del repo sirve en cada paso de
+la iteración y cuándo no; las que se leen van a `- Guías:`. Después, en este orden (en mantenimiento, la arena va después de la
 reproducción). Cada una se responde con su criterio: si aplica, su protocolo se lee entero en
 `.claude/skills/iteracion/CONSTRUIR.md` (la sección con su nombre) antes de usarla; si no, la bitácora dice por
 qué. Ninguna bloquea la iteración.
@@ -240,6 +241,7 @@ Al final de la bitácora de `IMPROVEMENTS.md`, con la plantilla exacta que exige
 - QA: <las filas del Protocolo de QA que tocó el cambio y cómo se miraron>; auditoría: <su resultado o «no toca la página»>
 - Skills: "<consulta>" → <dueño/repo>@<skill>, consultada (<qué se tomó>)     (o `instalada (…)`, `→ descartadas: …`, `no aplica: <por qué>`)
 - Arena: N 4, seed <s>, <r> rondas; ganador <id> (<carta>), <total> a <total>      (o `no aplica: <por qué>`)
+- Guías: <skill> (<para qué>), …     (o `ninguna: <por qué>`)
 - OMC: plan=<APPROVE|ITERATE|REJECT|—> · revisión=<n hallazgos (m arreglados)|—> · verificación=<PASS|FAIL|INCOMPLETE|—>     (o `no disponible (<motivo>)`)
 - Replica: pasada del AAAA-MM-DD, paridad X/100, must hechos a de b; ítems k…     (solo si repuso la hoja de ruta)
 - Reclamo: loop/N, sin colisión                            (o `relevo de loop/N (<sha7>)`)

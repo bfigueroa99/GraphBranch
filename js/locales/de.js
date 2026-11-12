@@ -1,6 +1,7 @@
 /* GraphBranch — Deutsch. */
 GB.i18n.define('de', {
   /* ---------- Seite ---------- */
+  'meta.title': 'Live-Graph der Branches eines GitHub-Repositorys · GraphBranch',
   'meta.description': 'Live-Graph der Branches eines GitHub-Repositorys mit Hinweisen zu Commits, Pull Requests und Issues.',
 
   /* ---------- obere Leiste ---------- */

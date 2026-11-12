@@ -1,6 +1,7 @@
 /* GraphBranch — עברית (Hebrew). */
 GB.i18n.define('he', {
   /* ---------- page ---------- */
+  'meta.title': 'גרף חי של הענפים במאגר GitHub · GraphBranch',
   'meta.description': 'גרף חי של הענפים במאגר GitHub, עם התראות על commits, Pull requests ו-Issues.',
 
   /* ---------- top bar ---------- */

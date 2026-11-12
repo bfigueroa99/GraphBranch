@@ -1,6 +1,7 @@
 /* GraphBranch — 繁體中文（台灣）. */
 GB.i18n.define('zh-Hant', {
   /* ---------- 頁面 ---------- */
+  'meta.title': '即時顯示 GitHub 儲存庫的分支關係圖 · GraphBranch',
   'meta.description': '即時顯示 GitHub 儲存庫的分支關係圖，並針對提交、Pull Request 與 Issue 提供提醒。',
 
   /* ---------- 頂端列 ---------- */

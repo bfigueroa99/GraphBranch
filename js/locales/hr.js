@@ -1,6 +1,7 @@
 /* GraphBranch — hrvatski. */
 GB.i18n.define('hr', {
   /* ---------- stranica ---------- */
+  'meta.title': 'Graf grana GitHub repozitorija uživo · GraphBranch',
   'meta.description': 'Graf grana GitHub repozitorija uživo, s upozorenjima: commitovi, pull requestovi i issues.',
 
   /* ---------- gornja traka ---------- */

@@ -1,6 +1,7 @@
 /* GraphBranch — svenska. */
 GB.i18n.define('sv', {
   /* ---------- sida ---------- */
+  'meta.title': 'Levande graf över brancherna i ett GitHub-repository · GraphBranch',
   'meta.description': 'Levande graf över brancherna i ett GitHub-repository, med aviseringar om commits, pull requests och issues.',
 
   /* ---------- överdel ---------- */

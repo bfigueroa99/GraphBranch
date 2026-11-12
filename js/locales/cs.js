@@ -1,6 +1,7 @@
 /* GraphBranch — čeština. */
 GB.i18n.define('cs', {
   /* ---------- stránka ---------- */
+  'meta.title': 'Živý graf větví repozitáře GitHub · GraphBranch',
   'meta.description': 'Živý graf větví repozitáře GitHub s upozorněními na commity, pull requesty a issue.',
 
   /* ---------- horní lišta ---------- */

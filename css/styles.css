@@ -302,6 +302,10 @@ kbd {
 }
 .repo-field:focus-within {
   border-color: var(--ink-2);
+  /* el campo quita el contorno de su <input>: el foco se ve en la caja, con el mismo anillo que los demás controles
+     (un borde de 1 px que cambia de gris no alcanza, y con colores forzados ni siquiera cambia) */
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 .repo-prefix {
   padding-left: 11px;
@@ -1171,6 +1175,8 @@ kbd {
 }
 .filter-field:focus-within {
   border-color: var(--ink-2);
+  outline: 2px solid var(--ink); /* como .repo-field: el <input> no lleva contorno propio */
+  outline-offset: 2px;
 }
 .filter-field input {
   width: 140px;
@@ -8436,5 +8442,36 @@ html.tv #sw-log .sw-log-list {
   }
   html.tv #sw-log .sw-caret {
     flex: none;
+  }
+}
+
+/* ---------- colores forzados (Contraste alto de Windows, forced-colors) ----------
+   El sistema reemplaza fondos, bordes y sombras por los suyos: lo que se distinguía solo por el fondo o por el
+   color del borde (el botón pulsado, la vista elegida, la pestaña a la vista) queda igual que lo de al lado.
+   Esos estados van con los colores de selección del sistema; lo que ya tiene otro canal (el ícono que cambia,
+   el tachado de los filtros apagados, el contorno de la paleta de comandos) no se toca. */
+@media (forced-colors: active) {
+  .icon-btn[aria-pressed="true"],
+  .view-switch button[aria-pressed="true"],
+  .all-tab[aria-pressed="true"],
+  .sw-tab.on,
+  .sw-tab[aria-pressed="true"] {
+    forced-color-adjust: none;
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+  .all-tab[aria-pressed="true"] .rt-n {
+    background: HighlightText;
+    color: Highlight;
+  }
+  /* la pestaña del repo a la vista y la galaxia actual de la constelación: su borde y su sombra no se distinguen */
+  .rt.on {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+  .cs-gx[aria-current] {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
   }
 }

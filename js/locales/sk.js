@@ -1,6 +1,7 @@
 /* GraphBranch — slovenčina. */
 GB.i18n.define('sk', {
   /* ---------- page ---------- */
+  'meta.title': 'Živý graf vetiev repozitára GitHub · GraphBranch',
   'meta.description': 'Živý graf vetiev repozitára GitHub s upozorneniami na commity, pull requesty a issues.',
 
   /* ---------- top bar ---------- */

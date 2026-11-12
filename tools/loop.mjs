@@ -3,7 +3,8 @@
    de la iteración en origin y mide la web publicada. Solo módulos de Node y git, sin dependencias.
 
      node tools/loop.mjs --siguiente [--json]     qué iteración toca: número, tipo, eje, ítem y por qué
-     node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill, el prompt y la pasada de Replica (sin red)
+     node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill, el prompt, las skills del repo y
+                                                  la pasada de Replica (sin red)
      node tools/loop.mjs --reclamar [--relevo] [--sin-red] [--horas 1.5] [--repo <dir>]
                                                   reclama la rama loop/N en origin: el push es el candado
      node tools/loop.mjs --publicado              compara la web de GitHub Pages con origin/master (el release)
@@ -108,6 +109,18 @@ export const LARGOS = [
 export const SKILL_MAX = 28000;
 /** La carpeta de la skill: SKILL.md, PROMPT.md y los protocolos que SKILL.md manda leer cuando tocan. */
 const DIR_SKILL = ['.claude', 'skills', 'iteracion'];
+/** El mapa de la skill (qué skill del repo sirve en cada paso) y el registro de las skills de afuera copiadas de los
+    plugins de la cuenta (procedencia, licencia y sha256 de cada SKILL.md). R15 los vigila juntos. */
+const ARCHIVO_GUIAS = [...DIR_SKILL, 'GUIAS.md'];
+const ARCHIVO_VENDORIZADAS = ['.claude', 'skills', 'VENDORIZADAS.md'];
+/** Las skills que vienen con Claude Code: el mapa puede citarlas aunque no estén en .claude/skills/ (no se copian;
+    en OpenCode no están). */
+export const INCORPORADAS = ['code-review', 'security-review', 'simplify', 'dataviz', 'claude-api'];
+/** Los conectores (MCP) que el mapa puede citar: no son skills ni se adjuntan al repo. */
+export const CONECTORES = ['github'];
+/** La entrada de la bitácora desde la que cada iteración lleva «- Guías:» (las skills del mapa que leyó, o por qué
+    ninguna). Por posición, como MARCA_SKILLS. */
+export const MARCA_GUIAS = 'Cambio de maquinaria: las guías del repo';
 /** Bytes del prompt de la Routine: solo apunta a la skill y dice lo que la skill no puede decir antes de que la
     sesión la lea (sincronizar con dev y que el turno terminado es la corrida terminada). */
 export const PROMPT_MAX = 750;
@@ -147,7 +160,7 @@ export const ARCHIVO_HOJA = 'docs/HOJA.md';
 export const HOJA_MAX = 10;
 
 const USO = `node tools/loop.mjs --siguiente [--json]     qué iteración toca: número, tipo, eje, ítem y por qué
-node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill, el prompt y la pasada de Replica (sin red)
+node tools/loop.mjs --check                  las reglas de IMPROVEMENTS.md, la skill, el prompt, las skills del repo y la pasada de Replica (sin red)
 node tools/loop.mjs --reclamar [--relevo] [--sin-red] [--horas ${RECLAMO_H}] [--repo <dir>]
                                              reclama la rama loop/N en origin: el push es el candado
 node tools/loop.mjs --publicado              compara la web de GitHub Pages con origin/${RELEASE} (el release)
@@ -180,6 +193,7 @@ const RE_SIGUIENTE = /^- \*\*Siguiente:\*\*\s*/;
 const RE_QA = /^- QA:\s*\S/;
 const RE_ARENA = /^- Arena:\s*\S/;
 const RE_SKILLS = /^- Skills:\s*\S/;
+const RE_GUIAS = /^- Guías:\s*\S/;
 const RE_DECLARADO = new RegExp(`iteración (\\d+), (?:de )?\\*{0,2}(expansión|mantenimiento)\\*{0,2}(?: · (${SUB}))?[:.,]?`, 'i');
 // el ítem declarado: el primer «ítem N», «pendiente N» o «auditoría» tras el tipo (un título copiado
 // puede citar otro número más adelante); las entradas viejas («el primer ítem sin hacer es el 6», «toca
@@ -550,8 +564,73 @@ export function parseInvestigacion(texto) {
     `protocolos` ({nombre: texto} de los demás .md de la carpeta de la skill; sin él y con `skill` inyectada, ninguno),
     `prompt`, `settings`, `investigacion` y `auditBase` (textos) y `hoy` se inyectan en las pruebas; si no, se
     leen del repo y del reloj. `archivo` es docs/BITACORA.md (la bitácora vieja), que pasa quien lee el repo. */
-export function check(texto, { archivo = null, hoja = null, log, superficial, skill, protocolos, prompt, settings, opencode, investigacion, auditBase, recon, features, hoy = new Date(), dir = root } = {}) {
+/** El mapa de la skill (GUIAS.md): las skills de la columna «Skill» de la tabla de «## El mapa» (lo demás de esa
+    sección, la prosa, no cuenta) y las de «## De uso a mano» (`- \`nombre\`: motivo`), con su línea. */
+export function parseGuias(texto) {
+  const mapa = [];
+  const aMano = [];
+  let seccion = null;
+  let col = null;
+  for (const [i, linea] of texto.split('\n').entries()) {
+    const h = /^## (.+?)\s*$/.exec(linea);
+    if (h) {
+      seccion = h[1];
+      col = null;
+      continue;
+    }
+    if (seccion === 'El mapa' && linea.startsWith('|')) {
+      const celdas = linea.split('|').slice(1, -1).map((c) => c.trim());
+      if (col === null) col = celdas.indexOf('Skill');
+      else if (col >= 0 && !celdas.every((c) => /^:?-+:?$/.test(c))) for (const m of (celdas[col] ?? '').matchAll(/`([^`]+)`/g)) mapa.push({ skill: m[1], linea: i + 1 });
+    } else if (seccion === 'De uso a mano') {
+      const m = /^- `([^`]+)`(?::\s*(.*))?$/.exec(linea);
+      if (m) aMano.push({ skill: m[1], motivo: m[2] ?? '', linea: i + 1 });
+    }
+  }
+  return { mapa, aMano, sinColumna: col === -1 };
+}
+
+/** Las skills de la viñeta «- Guías: <skill> (<para qué>), …»: el nombre al empezar cada una (admite «:», para que
+    el prefijo de un plugin, que en el repo no va, se vea como lo que es) y su para qué entero, aunque lleve
+    paréntesis («guides/css/anchor.md (posicionamiento)»); `resto` es lo que no tiene esa forma: una skill sin su
+    para qué, texto suelto. */
+export function guiasLeidas(linea) {
+  const s = linea.replace(/^- Guías:\s*/, '');
+  const nombres = [];
+  let i = 0;
+  for (;;) {
+    const m = /^\s*(?:y\s+)?`?([A-Za-z0-9][\w:.-]*)`?\s*\(/.exec(s.slice(i));
+    if (!m) break;
+    nombres.push(m[1]);
+    i += m[0].length;
+    for (let prof = 1; i < s.length && prof; i++) prof += s[i] === '(' ? 1 : s[i] === ')' ? -1 : 0;
+    i += /^\s*[,;]?\s*/.exec(s.slice(i))[0].length;
+  }
+  return { nombres, resto: s.slice(i).trim().replace(/\.$/, '') };
+}
+
+/** Las filas del registro (VENDORIZADAS.md): la skill, entre comillas invertidas en la primera celda, y el sha256 de
+    su SKILL.md tal como quedó en el repo (con finales de línea LF). */
+export function parseVendorizadas(texto) {
+  const out = [];
+  for (const [i, linea] of texto.split('\n').entries()) {
+    const m = /^\| `([^`]+)` \|/.exec(linea);
+    if (m) out.push({ skill: m[1], sha256: /\b[0-9a-f]{64}\b/.exec(linea)?.[0] ?? null, linea: i + 1 });
+  }
+  return out;
+}
+
+export function check(texto, { archivo = null, hoja = null, log, superficial, skill, protocolos, prompt, settings, opencode, investigacion, auditBase, recon, features, guias, vendorizadas, hoy = new Date(), dir = root } = {}) {
   const doc = parse(texto, { archivo, hoja });
+  // las skills del repo: el mapa de la skill y el registro de las vendorizadas (R15); R5 mira que lo que la bitácora
+  // dice haber leído esté en el mapa. Una skill existe si su carpeta tiene SKILL.md, si viene con Claude Code o si es
+  // un conector
+  const guiasTxt = guias ?? leer(join(dir, ...ARCHIVO_GUIAS));
+  const vendorTxt = vendorizadas ?? leer(join(dir, ...ARCHIVO_VENDORIZADAS));
+  const mapaGuias = guiasTxt == null ? null : parseGuias(guiasTxt);
+  const enMapa = mapaGuias && new Set([...mapaGuias.mapa, ...mapaGuias.aMano].map((x) => x.skill));
+  const carpetaSkill = (n) => join(dir, '.claude', 'skills', n);
+  const existeSkill = (n) => INCORPORADAS.includes(n) || CONECTORES.includes(n) || (/^[\w.-]+$/.test(n) && existsSync(join(carpetaSkill(n), 'SKILL.md')));
   // la pasada de Replica: la leen R10 (los ítems que la citan) y R13
   const reconTxt = recon ?? leer(join(dir, 'replica', 'recon.md'));
   const featuresTxt = features ?? leer(join(dir, 'replica', 'features.csv'));
@@ -644,6 +723,8 @@ export function check(texto, { archivo = null, hoja = null, log, superficial, sk
     const conArena = new Set(marcaArena < 0 ? [] : doc.bitacora.slice(marcaArena + 1).filter((x) => x.n !== null));
     const marcaSkills = doc.bitacora.findIndex((x) => x.n === null && x.titulo.startsWith(MARCA_SKILLS));
     const conSkills = new Set(marcaSkills < 0 ? [] : doc.bitacora.slice(marcaSkills + 1).filter((x) => x.n !== null));
+    const marcaGuias = doc.bitacora.findIndex((x) => x.n === null && x.titulo.startsWith(MARCA_GUIAS));
+    const conGuias = new Set(marcaGuias < 0 ? [] : doc.bitacora.slice(marcaGuias + 1).filter((x) => x.n !== null));
     const vistos = new Set();
     for (const it of its) {
       if (vistos.has(it.n)) e.push(`iteración ${it.n} repetida (línea ${it.linea}${it.origen ? ` de ${it.origen}` : ''})`);
@@ -668,6 +749,19 @@ export function check(texto, { archivo = null, hoja = null, log, superficial, sk
           if (!/^- Skills:\s*no aplica\s*[:,(—–-]\s*\S.{9,}/i.test(skills)) e.push(`iteración ${it.n}: «- Skills: no aplica» sin el porqué`);
         } else if (!/"[^"]+"\s*→/.test(skills) || !(/[\w.-]+\/[\w.-]+@[\w.:-]+.*\b(?:consultada|instalada)\b/.test(skills) || /→\s*descartadas?\b/.test(skills))) e.push(`iteración ${it.n}: «- Skills:» sin la consulta y lo que se hizo («"<consulta>" → dueño/repo@skill, consultada (…)», «…, instalada (…)» o «"<consulta>" → descartadas: …»)`);
       }
+      // las guías: las skills del mapa (GUIAS.md) que leyó, cada una con su para qué, o por qué ninguna; sin mapa, al
+      // menos que existan
+      if (conGuias.has(it)) {
+        const g = it.cuerpo.split('\n').find((l) => RE_GUIAS.test(l));
+        if (!g) e.push(`iteración ${it.n} sin la viñeta «- Guías:» (las skills del repo que leyó, «<skill> (<para qué>)», o «ninguna: <por qué>»)`);
+        else if (/^- Guías:\s*ninguna\b/i.test(g)) {
+          if (!/^- Guías:\s*ninguna\s*[:,(—–-]\s*\S.{9,}/i.test(g)) e.push(`iteración ${it.n}: «- Guías: ninguna» sin el porqué`);
+        } else {
+          const { nombres, resto } = guiasLeidas(g);
+          if (!nombres.length || resto) e.push(`iteración ${it.n}: «- Guías:» con algo que no es «<skill> (<para qué>)»${resto ? ` («${corta(resto, 40)}»)` : ''}`);
+          for (const n of nombres) if (enMapa ? !enMapa.has(n) : !existeSkill(n)) e.push(`iteración ${it.n}: «- Guías:» nombra ${n}, que no está ${enMapa ? 'en el mapa (GUIAS.md)' : 'en .claude/skills/ ni viene con Claude Code'}`);
+        }
+      }
       // el protocolo de QA: cada entrada dice qué se revisó de su propio cambio
       if (!conProtocolo.has(it)) continue;
       if (!it.cuerpo.split('\n').some((l) => RE_QA.test(l))) e.push(`iteración ${it.n} sin la viñeta «- QA:» (Protocolo de QA)`);
@@ -680,7 +774,7 @@ export function check(texto, { archivo = null, hoja = null, log, superficial, sk
     const max = Math.max(0, ...vistos);
     for (let k = 1; k <= max; k++) if (!vistos.has(k)) a.push(`falta la iteración ${k}`);
     if (!its.length) e.push('no hay ninguna «Iteración N» en la bitácora');
-    regla('R5', e, a, `${its.length} iteraciones, 1..${max}, con tipo desde la 20${marca < 0 ? '' : `; ${conProtocolo.size} con el protocolo de QA`}${marcaArena < 0 ? '' : `; ${conArena.size} con «- Arena:»`}${marcaSkills < 0 ? '' : `; ${conSkills.size} con «- Skills:»`}`);
+    regla('R5', e, a, `${its.length} iteraciones, 1..${max}, con tipo desde la 20${marca < 0 ? '' : `; ${conProtocolo.size} con el protocolo de QA`}${marcaArena < 0 ? '' : `; ${conArena.size} con «- Arena:»`}${marcaSkills < 0 ? '' : `; ${conSkills.size} con «- Skills:»`}${marcaGuias < 0 ? '' : `; ${conGuias.size} con «- Guías:»`}`);
   }
   // R6: la última entrada tiene Validado y un Siguiente que coincide con --siguiente
   {
@@ -997,6 +1091,54 @@ export function check(texto, { archivo = null, hoja = null, log, superficial, sk
     const hechosAlla = doc.hoja.filter((x) => x.origen).length;
     if (hechosAqui > HOJA_MAX) a.push(`la hoja de ruta de IMPROVEMENTS.md tiene ${hechosAqui} ítems hechos (más de ${HOJA_MAX}): node tools/loop.mjs --rotar los lleva a ${ARCHIVO_HOJA}`);
     regla('R14', e, a, `bitácora: ${doc.propias} entradas en IMPROVEMENTS.md${doc.bitacora.length > doc.propias ? ` y ${doc.bitacora.length - doc.propias} en ${ARCHIVO_BITACORA}` : ''}; hoja: ${hechosAqui} hechos en IMPROVEMENTS.md${hechosAlla ? ` y ${hechosAlla} en ${ARCHIVO_HOJA}` : ''}`);
+  }
+  // R15: el mapa de la skill (GUIAS.md) nombra skills que existen y le da a cada vendorizada un paso o un motivo para
+  // ir a mano; el registro (VENDORIZADAS.md) dice la verdad del SKILL.md de cada copia (sus archivos de apoyo no
+  // entran en el sha256). Sin eso, una skill copiada que nadie cita es contexto muerto, una citada que no está manda a
+  // la sesión a buscarla, y un SKILL.md editado o vuelto a copiar sin anotarlo trae instrucciones que nadie leyó (una
+  // CLI @latest que cambia sola y manda telemetría, como la de modern-web-guidance en la cuenta)
+  {
+    const e = [];
+    const vend = vendorTxt == null ? [] : parseVendorizadas(vendorTxt);
+    const rel = (p) => p.join('/');
+    let ok = 'sin skills vendorizadas ni mapa de guías';
+    if (mapaGuias == null) {
+      if (vend.length) e.push(`${rel(ARCHIVO_VENDORIZADAS)} registra ${vend.length} skill${vend.length === 1 ? '' : 's'} y no hay mapa (${rel(ARCHIVO_GUIAS)}): ningún paso del loop las cita`);
+    } else {
+      const { mapa, aMano, sinColumna } = mapaGuias;
+      if (sinColumna) e.push('GUIAS.md: la tabla de «## El mapa» no tiene la columna «Skill»');
+      for (const { skill: n, linea } of [...mapa, ...aMano]) if (!existeSkill(n)) e.push(`GUIAS.md nombra la skill ${n} (línea ${linea}), que no está en .claude/skills/ ni viene con Claude Code (${INCORPORADAS.join(', ')}) ni es un conector (${CONECTORES.join(', ')})`);
+      for (const { skill: n, motivo, linea } of aMano) if (motivo.trim().length < 10) e.push(`GUIAS.md: ${n} «de uso a mano» sin su motivo (línea ${linea})`);
+      for (const { skill: n } of vend) if (!enMapa.has(n)) e.push(`${n} está vendorizada y GUIAS.md no la cita en ningún paso ni la pone «de uso a mano» con su motivo`);
+      ok = `el mapa cita ${new Set(mapa.map((x) => x.skill)).size} skills en ${mapa.length} pasos y ${aMano.length} de uso a mano, todas existentes; ${vend.length} vendorizadas, cada una con su paso o su motivo, su licencia, sin dispararse sola y con el sha256 registrado`;
+    }
+    // quien corre una CLI de npm: npx, pnpx, bunx, pnpm dlx, npm exec o yarn dlx, tras variables de entorno o en una cita
+    const CLI = String.raw`(?:p?npx|bunx|pnpm\s+dlx|npm\s+exec|yarn\s+dlx)\s`;
+    const RE_COMANDO = new RegExp(String.raw`^\s*(?:>\s*)?(?:[A-Za-z_]\w*=\S*\s+)*${CLI}`);
+    const RE_LATEST = new RegExp(String.raw`(?:^\s*(?:>\s*)?|\`)(?:[A-Za-z_]\w*=\S*\s+)*${CLI}[^\`]*@latest\b`);
+    for (const { skill: n, sha256, linea } of vend) {
+      const archivo = join(carpetaSkill(n), 'SKILL.md');
+      if (!/^[\w.-]+$/.test(n) || !existsSync(archivo)) {
+        e.push(`${rel(ARCHIVO_VENDORIZADAS)} registra ${n} (línea ${linea}) y no está .claude/skills/${n}/SKILL.md`);
+        continue;
+      }
+      // con finales de línea LF: un clon de Windows con core.autocrlf los cambia y la copia sigue siendo la misma
+      const txt = readFileSync(archivo, 'utf8').replace(/\r\n/g, '\n');
+      const hash = createHash('sha256').update(txt).digest('hex');
+      if (hash !== sha256) e.push(`.claude/skills/${n}/SKILL.md no es la copia registrada (sha256 ${hash.slice(0, 12)}…; ${rel(ARCHIVO_VENDORIZADAS)} dice ${sha256 ? `${sha256.slice(0, 12)}…` : 'nada'}): se editó o se volvió a copiar sin anotarlo`);
+      if (!['LICENSE.txt', 'LICENSE'].some((f) => existsSync(join(carpetaSkill(n), f)))) e.push(`.claude/skills/${n}/ sin su licencia (LICENSE.txt)`);
+      const fm = /^---\r?\n([^]*?)\r?\n---/.exec(txt)?.[1] ?? '';
+      if (!/^disable-model-invocation:\s*true\s*$/m.test(fm)) e.push(`.claude/skills/${n}/SKILL.md sin «disable-model-invocation: true»: una skill de afuera no se dispara sola, se lee en el paso que la cita`);
+      const nombre = /^name:\s*(\S+)\s*$/m.exec(fm)?.[1];
+      if (nombre && nombre !== n) e.push(`.claude/skills/${n}/SKILL.md se llama «${nombre}»: el name: es el de su carpeta`);
+      // una CLI que la skill corre: con versión fija (no @latest, que cambia sola) y sin telemetría; en la prosa se
+      // puede nombrar lo que no se hace
+      for (const l of txt.split('\n')) {
+        if (RE_LATEST.test(l)) e.push(`.claude/skills/${n}/SKILL.md corre una CLI sin versión fija («${corta(l.trim(), 60)}»): va @<versión>`);
+        else if (RE_COMANDO.test(l) && !/\bDISABLE_TELEMETRY=1\b/.test(l)) e.push(`.claude/skills/${n}/SKILL.md corre una CLI sin DISABLE_TELEMETRY=1 («${corta(l.trim(), 60)}»): sin telemetría (CLAUDE.md)`);
+      }
+    }
+    regla('R15', e, [], ok);
   }
 
   const cuenta = (nivel) => lineas.filter((l) => l.nivel === nivel).length;

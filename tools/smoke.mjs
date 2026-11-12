@@ -4374,6 +4374,67 @@ for (const colorScheme of ['light', 'dark']) {
   await page.context().close();
 }
 
+if (seccion('Foco de los campos de texto y colores forzados (Contraste alto)'))
+{
+  /** El fondo que de verdad se ve detrás de un elemento: el suyo o el del primer ancestro que tenga uno. */
+  const fondos = (page, pares) =>
+    page.evaluate((pares) => {
+      const eff = (el) => {
+        for (let n = el; n; n = n.parentElement) {
+          const c = getComputedStyle(n).backgroundColor;
+          const a = (c.match(/rgba?\(([^)]+)\)/)?.[1].split(/[ ,/]+/) || [])[3];
+          if (a === undefined || Number(a) > 0) return c;
+        }
+        return 'lienzo';
+      };
+      return pares.map(([on, off]) => {
+        const visible = (sel) => [...document.querySelectorAll(sel)].find((el) => el.offsetParent);
+        const [a, b] = [visible(on), visible(off)];
+        return { on, off, hay: !!a && !!b, fondoOn: a && eff(a), fondoOff: b && eff(b) };
+      });
+    }, pares);
+  /** El contorno de la caja de un campo cuando su <input> tiene el foco. */
+  const anillo = (page, input, caja) =>
+    page.evaluate(([input, caja]) => {
+      const el = document.querySelector(input);
+      el.focus();
+      const c = getComputedStyle(el.closest(caja));
+      const r = { estilo: c.outlineStyle, ancho: parseFloat(c.outlineWidth) };
+      el.blur();
+      return r;
+    }, [input, caja]);
+  for (const forcedColors of ['none', 'active']) {
+    const page = await openPage({ viewport: { width: 1280, height: 900 }, forcedColors });
+    await step(page, `${forcedColors === 'active' ? 'con colores forzados' : 'sin colores forzados'}: el campo del repo y el filtro de ramas muestran el foco con un contorno`, async () => {
+      await page.goto(`${base}/index.html?lang=es`);
+      await loaded(page);
+      for (const [input, caja] of [['#repo-input', '.repo-field'], ['#branch-filter', '.filter-field']]) {
+        const r = await anillo(page, input, caja);
+        if (r.estilo !== 'solid' || r.ancho < 2) throw new Error(`${input} con el foco: su caja queda con contorno «${r.estilo} ${r.ancho}px»`);
+      }
+    });
+    if (forcedColors === 'active')
+      await step(page, 'con colores forzados: la vista elegida y un botón pulsado se distinguen de los de al lado', async () => {
+        await page.evaluate(() => document.querySelector('#pause-btn').getAttribute('aria-pressed') !== 'true' && document.querySelector('#pause-btn').click());
+        await page.waitForFunction(() => document.querySelector('#pause-btn').getAttribute('aria-pressed') === 'true', null, { timeout: T(3000) });
+        // el fondo del botón cambia con una transición de 0,15 s, y a mitad todavía es transparente: con el equipo cargado,
+        // 600 ms de espera no alcanzaron (en la puerta, el 2026-11-12). Las transiciones se terminan antes de medir.
+        await page.evaluate(() => {
+          for (const a of document.getAnimations()) if (a instanceof CSSTransition) a.finish();
+        });
+        const pares = await fondos(page, [
+          ['.view-switch button[aria-pressed="true"]', '.view-switch button[aria-pressed="false"]'],
+          ['#pause-btn[aria-pressed="true"]', '#settings-btn'],
+        ]);
+        for (const p of pares) {
+          if (!p.hay) throw new Error(`no están a la vista ${p.on} y ${p.off}`);
+          if (p.fondoOn === p.fondoOff) throw new Error(`${p.on} se ve igual que ${p.off}: los dos sobre ${p.fondoOn}`);
+        }
+      });
+    await page.context().close();
+  }
+}
+
 if (seccion('Widget embebido (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
@@ -5010,6 +5071,43 @@ if (seccion('Ramas ocultas o solas desde la URL (?solo=, ?ocultar=)'))
     await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length === n, all, { timeout: T(5000) });
     const after = await page.evaluate(() => location.search);
     if (/solo=|ocultar=/.test(after)) throw new Error('«Ver todas» deja la rama en la URL: ' + after);
+  });
+  await page.context().close();
+}
+
+if (seccion('Título de la pestaña'))
+{
+  // lo que indexa un buscador después de ejecutar la página, y lo que ve quien tiene la pestaña entre otras veinte
+  const gh = fakeGitHub();
+  gh.repo('o/t');
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', gh.handle);
+  const titulo = (code) => page.evaluate((c) => GB.i18n.t('meta.title') && document.documentElement.lang === c && document.title, code);
+  await step(page, 'con la demo, el título dice qué es la página, en el idioma activo, y no «acme/orbita»', async () => {
+    await page.goto(`${base}/index.html?lang=en`);
+    await loaded(page);
+    const en = await titulo('en');
+    if (en !== "Live graph of a GitHub repository's branches · GraphBranch") throw new Error(`en inglés el título es «${en}»`);
+    await page.selectOption('#lang-select', 'es');
+    await page.waitForFunction(() => document.documentElement.lang === 'es', null, { timeout: T(5000) });
+    await loaded(page);
+    const es = await titulo('es');
+    if (es !== 'Grafo en vivo de las ramas de un repositorio de GitHub · GraphBranch') throw new Error(`en español el título es «${es}»`);
+    const ld = await page.evaluate(() => JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent).url);
+    if (ld !== (await page.getAttribute('link[rel=canonical]', 'href'))) throw new Error(`el JSON-LD (${ld}) y la canónica no dicen la misma dirección`);
+  });
+  await step(page, 'con un repo, el título es el del repo, también después de cambiar de idioma', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=o/t`);
+    await loaded(page);
+    await page.waitForFunction(() => document.title === 'o/t · GraphBranch', null, { timeout: T(5000) }).catch(async () => {
+      throw new Error(`el título es «${await page.title()}»`);
+    });
+    await page.selectOption('#lang-select', 'en');
+    await page.waitForFunction(() => document.documentElement.lang === 'en', null, { timeout: T(5000) });
+    await loaded(page);
+    await page.waitForTimeout(300);
+    if ((await page.title()) !== 'o/t · GraphBranch') throw new Error(`tras cambiar de idioma el título es «${await page.title()}»`);
   });
   await page.context().close();
 }

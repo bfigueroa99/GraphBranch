@@ -66,7 +66,10 @@ mantenimiento.
    (`· Datos · 3×3/2.`: alcance × impacto / esfuerzo, de 1 a 3; con él lo ordena la regla 2) y uno
    nuevo cita su fuente (`[inv. AAAA-MM-DD]`, o `[parte del ítem K]` si es otra entrega de uno que ya
    estaba). La hoja de ruta
-   nunca queda vacía: al loop no se le acaba el alcance por ganar.
+   nunca queda vacía: al loop no se le acaba el alcance por ganar. Tampoco se queda solo con nichos: una
+   reposición deja al menos 5 ítems de alcance 2 o 3 (`--check` avisa en R4 si entre los pendientes no queda
+   ninguno, y `--salud` lo cuenta en `Alcance:`). Regla del loop desde el 2026-11-12, que Benjamin puede
+   quitar: de los PR #310 a #335, las 19 expansiones fueron de alcance 1, otra entrega de un ítem ya empezado.
 6. **Registrar:** la entrada de la bitácora dice el tipo y el eje (`Iteración 20 · Expansión ·
    Plataformas`) o el subtipo (`Iteración 31 · Mantenimiento · Deuda`), y lleva la viñeta `- QA:` del
    [Protocolo de QA](#protocolo-de-qa). Una expansión actualiza su fila del Mapa de alcance y marca su
@@ -230,16 +233,6 @@ cada iteración lo repite (`node tools/loop.mjs --salud` lo imprime) y se quita 
    estructura ARIA y el teclado con Playwright. Abre la demo, pulsa el botón de las líneas y recórrela con NVDA,
    VoiceOver u Orca (¿la región viva anuncia sin repetir? ¿el foco se queda al actualizar?); lo que falle va a
    Mantenimiento y lo que salga bien se anota en el README, en «Límites conocidos».
-6. **El loop no tiene quién lo dispare** (desde 2026-10-31). `list_triggers` de la cuenta no lista «GraphBranch:
-   iteración del loop (sesión nueva por disparo)» (cron `3 */2 * * *`; el 2026-11-01 tampoco) y en toda la historia
-   no hay un solo commit de `OpenCode <opencode@localhost>`, así que tampoco corre el cron de `tools/opencode.mjs`.
-   `--salud` da un hueco de 27,4 h (2026-10-30 16:16 → 2026-10-31 19:42 UTC) y otro de 5,5 h desde la fusión de
-   #222 (2026-10-31 22:04 UTC) hasta que otra sesión reanudó la 173 (2026-11-01 03:32). Recrear la Routine en claude.ai/code →
-   Routines con `.claude/skills/iteracion/PROMPT.md` byte a byte (cambió el 2026-11-01: suma que el turno
-   terminado es la corrida terminada y que lo largo se espera con `node tools/esperar.mjs`), o poner el cron de
-   OpenCode del README; si la vía es otra, decirlo en la sección «Routine» de la skill y en el README. El 2026-11-09
-   `list_triggers` tampoco la lista y `--salud` daba 46,7 h sin fusiones (desde el 2026-11-07 04:46 UTC) hasta que una
-   sesión encargada a mano reanudó la 234 y siguió con la 235.
 
 ## Mapa de alcance
 
@@ -298,11 +291,16 @@ node --test                    # lógica contra una API de GitHub simulada y el 
 node tools/check-i18n.mjs      # traducciones contra el inglés
 node tools/smoke.mjs           # la demo en Chromium: 3D, 2D, vuelo, Replay, diálogos, RTL, celular
 node tools/smoke.mjs --langs   # además los 40 idiomas en pantalla de celular
+node tools/smoke.mjs --solo GitLab   # solo las secciones cuyo título lo contiene (--secciones las lista)
 xvfb-run -a npm run test:e2e -- --grep-invert @lento   # app de escritorio y web (tras npm ci)
 ```
 
 Si el Playwright del proyecto no encuentra su Chromium, `PLAYWRIGHT_CHROMIUM_PATH` apunta a otro (lo
 leen el smoke, la auditoría y las e2e).
+
+Un paso del smoke que falla una vez no pone la puerta en rojo: `npm run check` repite su sección sola (hasta 3
+pasos en 2 secciones) y, si pasa, sigue y lo deja dicho en una línea `Intermitente:` y en la `Validado:`; si
+falla otra vez, es rojo. Del ajeno al cambio queda su pendiente `[Deuda]`; el del propio cambio se arregla.
 
 `node tools/audit.mjs --puerta` (la corre `npm run check` cuando el cambio toca la página) busca en
 Chromium errores, violaciones del CSP, peticiones a otros sitios, desbordes, controles sin nombre o

@@ -187,6 +187,7 @@ En las dos:
 - **Pausar** (barra superior): deja de traer novedades y detiene todo lo que se mueve solo (giro, director, fondo).
 - Los chips del panel de actividad filtran la lista y también los avisos emergentes.
 - **Pestañas de repos** (con más de uno seguido): clic para mostrar ese repo, **×** para dejar de seguirlo, doble clic o `F2` para ponerle un alias. **Todos** muestra todos a la vez, cada uno en su tarjeta (con `Tab` se llega a cada tarjeta: su nombre, su último commit y su grafo, que se recorre con las flechas como el principal).
+- **Teclado y Contraste alto**: todo control muestra el foco con el mismo anillo, también el campo del repo y los filtros de ramas y de archivos (su caja lo lleva). Con los colores forzados del sistema (Contraste alto de Windows, `forced-colors`), donde los fondos y los bordes de la página no se ven, la vista elegida (3D, 2D o Agentes), los botones pulsados, la pestaña del repo a la vista y la galaxia actual de la constelación van con los colores de selección del sistema.
 
 ## Idiomas
 

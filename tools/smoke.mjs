@@ -4324,6 +4324,67 @@ for (const colorScheme of ['light', 'dark']) {
   await page.context().close();
 }
 
+if (seccion('Foco de los campos de texto y colores forzados (Contraste alto)'))
+{
+  /** El fondo que de verdad se ve detrás de un elemento: el suyo o el del primer ancestro que tenga uno. */
+  const fondos = (page, pares) =>
+    page.evaluate((pares) => {
+      const eff = (el) => {
+        for (let n = el; n; n = n.parentElement) {
+          const c = getComputedStyle(n).backgroundColor;
+          const a = (c.match(/rgba?\(([^)]+)\)/)?.[1].split(/[ ,/]+/) || [])[3];
+          if (a === undefined || Number(a) > 0) return c;
+        }
+        return 'lienzo';
+      };
+      return pares.map(([on, off]) => {
+        const visible = (sel) => [...document.querySelectorAll(sel)].find((el) => el.offsetParent);
+        const [a, b] = [visible(on), visible(off)];
+        return { on, off, hay: !!a && !!b, fondoOn: a && eff(a), fondoOff: b && eff(b) };
+      });
+    }, pares);
+  /** El contorno de la caja de un campo cuando su <input> tiene el foco. */
+  const anillo = (page, input, caja) =>
+    page.evaluate(([input, caja]) => {
+      const el = document.querySelector(input);
+      el.focus();
+      const c = getComputedStyle(el.closest(caja));
+      const r = { estilo: c.outlineStyle, ancho: parseFloat(c.outlineWidth) };
+      el.blur();
+      return r;
+    }, [input, caja]);
+  for (const forcedColors of ['none', 'active']) {
+    const page = await openPage({ viewport: { width: 1280, height: 900 }, forcedColors });
+    await step(page, `${forcedColors === 'active' ? 'con colores forzados' : 'sin colores forzados'}: el campo del repo y el filtro de ramas muestran el foco con un contorno`, async () => {
+      await page.goto(`${base}/index.html?lang=es`);
+      await loaded(page);
+      for (const [input, caja] of [['#repo-input', '.repo-field'], ['#branch-filter', '.filter-field']]) {
+        const r = await anillo(page, input, caja);
+        if (r.estilo !== 'solid' || r.ancho < 2) throw new Error(`${input} con el foco: su caja queda con contorno «${r.estilo} ${r.ancho}px»`);
+      }
+    });
+    if (forcedColors === 'active')
+      await step(page, 'con colores forzados: la vista elegida y un botón pulsado se distinguen de los de al lado', async () => {
+        await page.evaluate(() => document.querySelector('#pause-btn').getAttribute('aria-pressed') !== 'true' && document.querySelector('#pause-btn').click());
+        await page.waitForFunction(() => document.querySelector('#pause-btn').getAttribute('aria-pressed') === 'true', null, { timeout: T(3000) });
+        // el fondo del botón cambia con una transición de 0,15 s, y a mitad todavía es transparente: con el equipo cargado,
+        // 600 ms de espera no alcanzaron (en la puerta, el 2026-11-12). Las transiciones se terminan antes de medir.
+        await page.evaluate(() => {
+          for (const a of document.getAnimations()) if (a instanceof CSSTransition) a.finish();
+        });
+        const pares = await fondos(page, [
+          ['.view-switch button[aria-pressed="true"]', '.view-switch button[aria-pressed="false"]'],
+          ['#pause-btn[aria-pressed="true"]', '#settings-btn'],
+        ]);
+        for (const p of pares) {
+          if (!p.hay) throw new Error(`no están a la vista ${p.on} y ${p.off}`);
+          if (p.fondoOn === p.fondoOff) throw new Error(`${p.on} se ve igual que ${p.off}: los dos sobre ${p.fondoOn}`);
+        }
+      });
+    await page.context().close();
+  }
+}
+
 if (seccion('Widget embebido (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });

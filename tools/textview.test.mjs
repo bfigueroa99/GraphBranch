@@ -306,6 +306,40 @@ test('cada rama dice si su último CI cargado falló (data.ci)', () => {
   assert.equal(failing().feature, false); // en curso no es fallo
 });
 
+test('lista los PRs abiertos con el último CI en rojo (el del PR o, si no lo trae, el de su rama), sin consultas', () => {
+  const d = repo();
+  const pulls = () => build(d).ciPulls;
+  assert.deepEqual(pulls(), { total: 0, rows: [] }, 'sin PRs no hay lista');
+  d.pulls = new Map([
+    [7, { number: 7, title: 'Arregla el login\ncuerpo', head: 'feature', sameRepo: true, url: 'https://github.com/o/r/pull/7' }],
+    [9, { number: 9, title: 'Rojo propio', head: 'otra', sameRepo: true, ci: 'failure', url: 'javascript:alert(1)' }],
+    [8, { number: 8, title: 'Verde propio', head: 'feature', sameRepo: true, ci: 'success', url: 'https://github.com/o/r/pull/8' }],
+    [5, { number: 5, title: 'De un fork', head: 'feature', sameRepo: false, url: 'https://github.com/o/r/pull/5' }],
+    [4, { number: 4, title: 'Fork en rojo', head: 'feature', sameRepo: false, ci: 'failure', url: 'http://inseguro.example/4' }],
+    [3, { number: 3, title: 'En curso', head: 'main', sameRepo: true, ci: 'pending' }],
+    ['x', { title: 'sin número', head: 'feature', sameRepo: true, ci: 'failure' }],
+    [2, null],
+  ]);
+  assert.deepEqual(pulls().rows.map((r) => r.number), [9, 4], 'sin data.ci solo cuentan los que traen su propio rojo');
+  d.ci = new Map([['feature', 'failure'], ['main', 'success']]);
+  assert.deepEqual(pulls(), {
+    total: 3,
+    rows: [
+      { number: 9, title: 'Rojo propio', head: 'otra', url: '' },
+      { number: 7, title: 'Arregla el login', head: 'feature', url: 'https://github.com/o/r/pull/7' },
+      { number: 4, title: 'Fork en rojo', head: 'feature', url: '' },
+    ],
+  }, 'el más nuevo primero; el verde propio manda sobre su rama, el de un fork no hereda el CI de una rama de este repo, y solo queda una url https');
+  d.ci = new Map([['feature', 'pending']]);
+  assert.deepEqual(pulls().rows.map((r) => r.number), [9, 4], 'en curso no es fallo');
+  const many = { pulls: new Map(Array.from({ length: 25 }, (_, i) => [i + 1, { number: i + 1, title: 't', head: 'h', ci: 'failure' }])) };
+  const f = ctx.window.GB.textview.failingPulls(many);
+  assert.equal(f.total, 25);
+  assert.equal(f.rows.length, ctx.window.GB.textview.MAX_CI_PULLS);
+  assert.equal(f.rows[0].number, 25);
+  assert.equal(ctx.window.GB.textview.failingPulls({}).total, 0);
+});
+
 test('cada rama dice quién hizo el commit de su punta (nombre, o el login si no hay), aunque el filtro por ruta lo deje fuera', () => {
   const d = repo();
   d.commits.get('f2').author = { login: 'beto' };

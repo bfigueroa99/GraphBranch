@@ -66,7 +66,7 @@
         pulls: new Map(),
         ci: new Map(), // rama -> 'success' | 'failure' | 'pending'
         tags: new Map(), // commit -> [tag]
-        deploys: new Map(), // entorno -> { sha }
+        deploys: new Map(), // entorno -> { sha, ref, status }: status como los de GitHub (success, failure, in_progress…)
         forks: [],
         totalBranches: 0,
         loaded: false,
@@ -126,7 +126,7 @@
       };
       this.data.commits.set(c.sha, c);
       b.sha = c.sha;
-      if (branch === 'develop' && this.data.deploys.has('staging')) this.data.deploys.set('staging', { sha: c.sha }); // staging sigue a develop
+      if (branch === 'develop' && this.data.deploys.has('staging')) this.data.deploys.set('staging', { sha: c.sha, ref: 'develop', status: 'in_progress' }); // staging sigue a develop: cada push lo vuelve a desplegar
       b.own = (b.own || 0) + 1;
       b.movedAt = time;
       return c;
@@ -243,7 +243,7 @@
       const rel = merge('develop', 'main', 34, V, false);
       this.data.tags.set(first.sha, ['v1.0.0']);
       this.data.tags.set(rel.sha, ['v1.4.0']);
-      this.data.deploys.set('production', { sha: rel.sha });
+      this.data.deploys.set('production', { sha: rel.sha, ref: 'main', status: 'success' });
       this.data.forks = [
         { fullName: 'maya-dev/orbita', url: 'https://github.com/maya-dev/orbita', pushedAt: Date.now() - 6 * 36e5, stars: 4 },
         { fullName: 'lucas-r/orbita', url: 'https://github.com/lucas-r/orbita', pushedAt: Date.now() - 9 * 864e5, stars: 0 },
@@ -269,7 +269,7 @@
       push('claude/search-index', CLAUDE_A, agentMsg(1));
       push('claude/search-index', CLAUDE_B, agentMsg(3));
       const dev = push('develop', D, S.vite);
-      this.data.deploys.set('staging', { sha: dev.sha });
+      this.data.deploys.set('staging', { sha: dev.sha, ref: 'develop', status: 'failure' });
       create('fix/rate-limit', 'main', 'api', M);
       push('fix/rate-limit', M, S.retryAfter);
       push('feature/login', J, S.loginE2e);
@@ -290,7 +290,8 @@
       H.push(this.act('pr-open', { title: MSG('act.prOpened', { num: agentPr }), detail: this.data.pulls.get(agentPr).title, ref: 'claude/search-index → develop', branch: 'claude/search-index', actor: this.actor(CLAUDE_APP), number: agentPr }, t + 60e3));
       H.push(this.act('review-changes', { title: MSG('act.prChanges', { num: agentPr }), detail: this.C.comments[1] || this.C.comments[0], branch: 'claude/search-index', actor: this.actor(COPILOT), number: agentPr }, t + 100e3));
       H.push(this.act('comment', { title: MSG('act.commentPr', { num: 38 }), detail: this.C.comments[0], actor: this.actor(V), number: 38, pr: true }, t + 120e3));
-      H.push(this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login: 'pgarrido' }) }, t + 140e3));
+      H.push(this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login: 'pgarrido' }), actor: this.actor({ name: 'pgarrido', login: 'pgarrido' }) }, t + 140e3));
+      H.push(this.act('fork', { title: MSG('act.fork'), detail: 'icortes/orbita' }, t + 160e3)); // un fork de hace uno o dos días (de una cuenta que no hace forks en vivo): la tendencia de forks del panel de salud
       this.data.totalBranches = this.data.branches.size;
     }
 
@@ -308,7 +309,7 @@
         [7, prs.length > 0, () => this.doReview()],
         [9, prs.some((p) => !p.draft && this.data.branches.get(p.head)?.own >= 2), () => this.doMerge()],
         [6, true, () => this.doIssue()],
-        [3, true, () => [this.chance(0.7) ? this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login: this.pick(['pgarrido', 'nlagos', 'fvera', 'icortes']) }) }) : this.act('fork', { title: MSG('act.fork'), detail: `${this.pick(['nlagos', 'fvera'])}/orbita` })]],
+        [3, true, () => [this.chance(0.7) ? ((login) => this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login }), actor: this.actor({ name: login, login }) }))(this.pick(['pgarrido', 'nlagos', 'fvera', 'icortes'])) : this.act('fork', { title: MSG('act.fork'), detail: `${this.pick(['nlagos', 'fvera'])}/orbita` })]],
         [2, topics.some((x) => x.own >= 2), () => this.doForcePush()],
         [2, true, () => this.doHotfix()],
         [3, prs.every((p) => p.head !== 'develop') && this.data.branches.get('develop').own >= 3, () => this.doReleasePR()],

@@ -22,24 +22,42 @@ function valid(service, url, testPrefix = '') {
 }
 
 const str = (v, max) => (typeof v === 'string' ? v.slice(0, max) : '');
-const link = (v) => (/^https:\/\/[^\s<>|]+$/.test(str(v, 500)) ? v : '');
+const link = (v) => (typeof v === 'string' && v.length <= 500 && /^https:\/\/[^\s<>|]+$/.test(v) ? v : ''); // entera: un resto sin mirar cerraría el <enlace>
 
 /** El aviso, con los textos que mandó la página (ya en su idioma): { repo, kind, title, detail, url }. */
 function clean(ev = {}) {
-  return { repo: str(ev.repo, 100), kind: str(ev.kind, 60), title: str(ev.title, 200), detail: str(ev.detail, 300), url: link(ev.url) };
+  const t = (v, max) => str(v, max).trim(); // un texto de puros espacios sería un bloque vacío que Slack rechaza
+  return { repo: t(ev.repo, 100), kind: t(ev.kind, 60), title: t(ev.title, 200), detail: t(ev.detail, 300), url: link(ev.url) };
 }
 
 const slackText = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); // sin @canal ni enlaces ajenos
+// mrkdwn no tiene cómo escapar * _ ~ `: lo que viene de GitHub va en bloques plain_text (sin formato ni :emoji:)
+const slackPlain = (s) => ({ type: 'plain_text', text: slackText(s), emoji: false });
+/** `s` recortado para que escapado no pase de `max` (un `&` escapado ocupa 5). */
+const fit = (s, max) => { while (slackText(s).length > max) s = s.slice(0, -1); return s; };
+/** ¿Es un webhook de Workflow Builder? Ese recibe variables de texto, no bloques. */
+const slackWorkflow = (url) => /^https:\/\/hooks\.slack\.com\/(workflows|triggers)\//.test(String(url));
+
+const discordText = (s) => s.replace(/([\\`*_~|>[\]()#-])/g, '\\$1'); // Markdown de Discord: sin enlaces enmascarados [x](url) ni formato de un texto ajeno
 
 const teamsText = (s) => s.replace(/([\\`*_{}[\]()#+!|<>~&@:-])/g, '\\$1'); // Markdown de la tarjeta, sin @menciones ni enlaces ajenos
 
-/** El cuerpo JSON que cada servicio espera. Un texto de GitHub no puede mencionar a nadie. */
-function payload(service, ev) {
+/** El cuerpo JSON que cada servicio espera. Un texto de GitHub no puede mencionar a nadie ni dar formato.
+    En Slack, `blocks: false` deja solo el texto (el webhook de un flujo de Workflow Builder). */
+function payload(service, ev, { blocks = true } = {}) {
   const e = clean(ev);
   if (service === 'slack') {
-    const head = [e.repo && `*${slackText(e.repo)}*`, slackText(e.kind)].filter(Boolean).join(' · ');
-    const lines = [head, slackText(e.title), e.detail && `_${slackText(e.detail)}_`, e.url && `<${e.url}>`].filter(Boolean);
-    return { text: lines.join('\n') };
+    const head = [e.repo, e.kind].filter(Boolean).join(' · ');
+    // el texto de respaldo (notificaciones, flujos): sin menciones ni enlaces ajenos
+    const text = [slackText(head), slackText(e.title), e.detail && slackText(e.detail), e.url && `<${e.url}>`].filter(Boolean).join('\n');
+    if (!blocks) return { text };
+    const list = [
+      head && { type: 'header', text: slackPlain(fit(head, 150)) },
+      e.title && { type: 'section', text: slackPlain(e.title) },
+      e.detail && { type: 'context', elements: [slackPlain(e.detail)] },
+      e.url && { type: 'section', text: { type: 'mrkdwn', text: `<${e.url}>` } },
+    ].filter(Boolean);
+    return list.length ? { text, blocks: list } : { text };
   }
   if (service === 'teams') {
     const text = (t, extra = {}) => ({ type: 'TextBlock', text: t, wrap: true, ...extra });
@@ -55,8 +73,8 @@ function payload(service, ev) {
       attachments: [{ contentType: 'application/vnd.microsoft.card.adaptive', content: { $schema: 'http://adaptivecards.io/schemas/adaptive-card.json', type: 'AdaptiveCard', version: '1.4', body } }],
     };
   }
-  const head = [e.repo && `**${e.repo}**`, e.kind].filter(Boolean).join(' · ');
-  const lines = [head, e.title, e.detail && `> ${e.detail.replace(/\n/g, ' ')}`, e.url && `<${e.url}>`].filter(Boolean);
+  const head = [e.repo && `**${discordText(e.repo)}**`, discordText(e.kind)].filter(Boolean).join(' · ');
+  const lines = [head, discordText(e.title), e.detail && `> ${discordText(e.detail.replace(/\n/g, ' '))}`, e.url && `<${e.url}>`].filter(Boolean);
   return { content: lines.join('\n').slice(0, 2000), allowed_mentions: { parse: [] } };
 }
 
@@ -66,7 +84,7 @@ async function send(service, url, ev, fetchFn, testPrefix = '') {
   const res = await fetchFn(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload(service, ev)),
+    body: JSON.stringify(payload(service, ev, { blocks: !(service === 'slack' && slackWorkflow(url)) })),
     redirect: 'error',
     signal: AbortSignal.timeout(TIMEOUT),
   }).catch(() => null);

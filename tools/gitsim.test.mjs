@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} }, TextEncoder, TextDecoder, btoa, atob, Uint8Array }); // lo que el navegador ya trae
 vm.runInContext(readFileSync(join(root, 'js', 'gitsim.js'), 'utf8'), ctx, { filename: 'gitsim.js' });
-const { Repo, fromData, EXERCISES, start, startCustom, customExercise, encodeExercise, decodeExercise, cleanExercise } = ctx.window.GB.gitsim;
+const { Repo, fromData, tokenize, EXERCISES, start, startCustom, customExercise, encodeExercise, decodeExercise, cleanExercise } = ctx.window.GB.gitsim;
 const NOW = Date.UTC(2026, 9, 13, 12);
 
 /* los arreglos de otro contexto de vm no son «iguales» para deepEqual: se comparan como datos planos */
@@ -168,6 +168,86 @@ test('branch -m no renombra la rama de un rebase a medias, y en un repo vacío r
   assert.equal(e.branches.has('main'), false);
 });
 
+test('branch -c copia una rama (la actual si no se dice cuál) con sus commits, sin mover HEAD ni el reflog', () => {
+  const r = fresh();
+  run(r, 'checkout -b feature', 'commit -m "En feature"', 'checkout main');
+  const tip = r.branches.get('feature');
+  const main = r.headSha;
+  const reflog = plain(r.run('reflog').lines);
+  // otra rama: la copia apunta a su mismo commit y la original sigue ahí
+  let res = r.run('branch -c feature feature/copia');
+  assert.ok(res.ok && res.changed);
+  assert.deepEqual(plain(res.lines), []);
+  assert.equal(r.branches.get('feature/copia'), tip);
+  assert.equal(r.branches.get('feature'), tip);
+  assert.equal(r.head.branch, 'main');
+  assert.equal(r.renamed, null, 'copiar no es renombrar');
+  // la actual, sin decir cuál: HEAD se queda en main
+  res = r.run('git branch --copy respaldo');
+  assert.ok(res.ok && res.changed);
+  assert.equal(r.branches.get('respaldo'), main);
+  assert.equal(r.head.branch, 'main');
+  assert.equal(r.headSha, main);
+  assert.equal(r.defaultBranch, 'main');
+  assert.deepEqual(plain(r.run('reflog').lines), reflog, 'copiar no mueve HEAD: el reflog no cambia');
+  assert.deepEqual(plain(r.run('branch').lines), ['  feature', '  feature/copia', '* main', '  respaldo']);
+  assert.match(r.run('log --oneline').lines[0], /\(HEAD -> main, respaldo\)/);
+  // la copia es una rama independiente: un commit en ella no mueve la original
+  run(r, 'checkout feature/copia', 'commit -m "Solo en la copia"');
+  assert.equal(r.branches.get('feature'), tip);
+  assert.notEqual(r.branches.get('feature/copia'), tip);
+  assert.equal(r.commits.get(r.branches.get('feature/copia')).parents[0], tip);
+  // -C pisa una rama que no está en uso (sus commits quedan sin rama, como en git); la misma con -C no cambia nada
+  assert.ok(r.run('branch -C main feature').ok);
+  assert.equal(r.branches.get('feature'), main);
+  // como git, copiar una rama sobre sí misma no hace nada, también la actual y con -C
+  r.run('checkout main');
+  for (const line of ['branch -C respaldo respaldo', 'branch -c main', 'branch -c main main', 'branch -C main main']) {
+    res = r.run(line);
+    assert.ok(res.ok, line);
+    assert.equal(res.changed, false, line);
+  }
+});
+
+test('branch -c se niega como git sin tocar nada', () => {
+  const r = fresh();
+  run(r, 'branch feature', 'checkout -b otra', 'commit -m x', 'checkout main');
+  const state = () => JSON.stringify([[...r.branches], r.head, r.defaultBranch, r.reflog]);
+  const before = state();
+  for (const [line, re] of [
+    ['branch -c', /^fatal: branch name required$/],
+    ['branch -c a b c', /^fatal: too many branches for a copy operation$/],
+    ['branch -c nope x', /^fatal: no branch named 'nope'$/],
+    ['branch -c feature otra', /^fatal: a branch named 'otra' already exists$/],
+    ['branch -c feature "a..b"', /^fatal: 'a\.\.b' is not a valid branch name$/],
+    ['branch -C feature main', /^fatal: cannot force update the branch 'main' used by worktree$/],
+    ['branch -d -c feature x', /^usage: branch \(-c \| -C\) \[<old-branch>\] <new-branch>$/],
+    ['branch -c -m feature x', /^usage: branch \(-c \| -C\) \[<old-branch>\] <new-branch>$/],
+  ]) {
+    const res = r.run(line);
+    assert.equal(res.ok, false, line);
+    assert.equal(res.changed, false, line);
+    assert.match(res.lines[0], re, line);
+  }
+  assert.equal(state(), before);
+  // desprendido no hay rama actual que copiar, pero sí otra
+  r.run('checkout HEAD~1');
+  assert.match(r.run('branch -c nueva').lines[0], /^fatal: cannot copy the current branch while not on any$/);
+  assert.ok(r.run('branch -c feature nueva').ok);
+  assert.equal(r.branches.get('nueva'), r.branches.get('feature'));
+  // un rebase a medias: como git, no se copia la rama que se rebasa ni -C la pisa
+  const b = start(2, NOW);
+  run(b, 'checkout feature', 'rebase -i main');
+  const rebasing = JSON.stringify([[...b.branches], b.head]);
+  assert.match(b.run('branch -c feature copia').lines[0], /^fatal: branch refs\/heads\/feature is being rebased$/);
+  assert.match(b.run('branch -C main feature').lines[0], /^fatal: cannot force update the branch 'feature' used by worktree$/);
+  assert.equal(JSON.stringify([[...b.branches], b.head]), rebasing);
+  // en un repo vacío la rama no tiene commit que copiar
+  const e = new Repo({ now: NOW });
+  assert.match(e.run('branch -c otra').lines[0], /^fatal: no commit on branch 'main' yet$/);
+  assert.deepEqual([...e.branches.keys()], ['main']);
+});
+
 test('switch y restore: solo ramas, desprender a propósito y tirar cambios sin commit', () => {
   const r = fresh();
   assert.ok(r.run('switch -c arreglo').ok);
@@ -297,6 +377,8 @@ test('cada ejercicio parte sin resolver y se resuelve con sus comandos', () => {
     ['tag -d v2', 'cherry-pick feature --no-commit', 'cherry-pick --abort'],
     ['restore --staged debug.log', 'clean -n', 'clean -f'],
     ['add login.js', 'commit -m "Fix login"'],
+    ['clean -nd', 'clean -fd -e nuevo.js'],
+    ['stash list', 'stash show', 'stash show stash@{1}', 'stash pop stash@{1}'],
   ];
   assert.equal(solutions.length, EXERCISES.length);
   EXERCISES.forEach((ex, i) => {
@@ -320,6 +402,13 @@ test('un ejercicio no se da por resuelto con el atajo equivocado', () => {
   const z = start(3, NOW);
   z.run('commit -m "Undo"');
   assert.equal(EXERCISES[3].done(z), false);
+  // clean con carpetas: sin -d la carpeta build queda, y -fd a secas se lleva también nuevo.js
+  const c = start(11, NOW);
+  c.run('clean -f');
+  assert.equal(EXERCISES[11].done(c), false, 'sin -d, build/ sigue ahí');
+  const all = start(11, NOW);
+  all.run('clean -fd');
+  assert.equal(EXERCISES[11].done(all), false, 'clean -fd borra también nuevo.js');
 });
 
 test('Repo vacío: commit crea el primero', () => {
@@ -455,8 +544,9 @@ test('la práctica dice «rama renombrada» en el panel, no una borrada y otra c
 
 test('los números de la URL piden un ejercicio de la lista; lo demás se descarta', () => {
   assert.deepEqual(plain(decodeExercise('3')), { index: 2 });
-  assert.deepEqual(plain(decodeExercise('11')), { index: 10 });
-  for (const bad of ['0', '12', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
+  assert.deepEqual(plain(decodeExercise('12')), { index: 11 });
+  assert.deepEqual(plain(decodeExercise('13')), { index: 12 });
+  for (const bad of ['0', '14', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
 });
 
 test('un ejercicio propio mal hecho no entra: sin meta, condición inventada, comando que falla o demasiados', () => {
@@ -539,6 +629,77 @@ test('tag: crear, listar, borrar, mostrarse en el log y resolverse como referenc
   assert.equal(r.run('tag -d v1').ok, false);
   assert.ok(r.run('tag late HEAD~1').ok);
   assert.equal(r.tags.get('late'), r.resolve('HEAD~1'));
+});
+
+test('tag -a: etiqueta anotada con su mensaje, que tag -n lista y el log decora como tag:', () => {
+  const r = fresh();
+  const first = r.headSha;
+  const res = r.run('tag -a v1 -m "Primera versión"');
+  assert.ok(res.ok && res.changed);
+  assert.equal(r.tags.get('v1'), first);
+  assert.equal(r.notes.get('v1').message, 'Primera versión');
+  assert.notEqual(r.notes.get('v1').sha, first, 'el objeto de la anotada tiene su propio sha');
+  r.run('commit -m "Next"');
+  assert.ok(r.run('tag light').ok, 'una ligera sigue sin mensaje');
+  assert.equal(r.notes.has('light'), false);
+  assert.ok(r.run('git tag -m "Solo -m también anota" v2 HEAD~1').ok, '-m solo implica -a, y con commit');
+  assert.equal(r.tags.get('v2'), first);
+  assert.ok(r.run('tag -am "Pegadas" v3').ok);
+  assert.ok(r.run('tag --annotate --message="Dos palabras" v4').ok);
+  assert.deepEqual(plain(r.run('tag').lines), ['light', 'v1', 'v2', 'v3', 'v4']);
+  assert.deepEqual(plain(r.run('tag -n').lines), [
+    'light           Next',
+    'v1              Primera versión',
+    'v2              Solo -m también anota',
+    'v3              Pegadas',
+    'v4              Dos palabras',
+  ]);
+  assert.deepEqual(plain(r.run('tag -l').lines), ['light', 'v1', 'v2', 'v3', 'v4']);
+  assert.deepEqual(plain(r.run('tag -l "v?" light').lines), ['light', 'v1', 'v2', 'v3', 'v4']);
+  assert.deepEqual(plain(r.run('tag -n -l "v[12]*" "*3"').lines), ['v3              Pegadas'], 'los corchetes son literales; * y ? no');
+  assert.match(r.run('log --oneline').lines.find((l) => l.startsWith(first.slice(0, 7))), /\(tag: v1, tag: v2\)/);
+  assert.match(r.run('log --oneline').lines[0], /tag: v3/);
+  assert.equal(r.resolve('v1'), first, 'se resuelve al commit, no al objeto');
+  // los errores de git, sin tocar nada
+  const before = plain([...r.tags]);
+  assert.match(r.run('tag -a v5').lines[0], /no tag message given/, 'sin editor, sin -m no hay mensaje');
+  assert.equal(r.run('tag -a v1 -m "otra"').ok, false, 'repetida');
+  assert.equal(r.run('tag -a -m "sin nombre"').ok, false);
+  assert.equal(r.run('tag -a v6 -m').ok, false, '-m sin valor');
+  assert.equal(r.run('tag -a v6 -m x nope').ok, false, 'commit que no existe');
+  assert.equal(r.run('tag -a v6 -m x HEAD extra').ok, false);
+  assert.equal(r.run('tag -s v6 -m x').ok, false, 'sin firmas');
+  assert.equal(r.run('tag -n -a v6 -m x').ok, false);
+  assert.equal(r.run('tag -l -m x v6').ok, false);
+  assert.equal(r.run('tag -d -m x v1').ok, false);
+  assert.deepEqual(plain([...r.tags]), before);
+  // borrar una anotada dice el sha de su objeto y se lleva su mensaje
+  const obj = r.notes.get('v1').sha;
+  assert.deepEqual(plain(r.run('tag -d v1').lines), [`Deleted tag 'v1' (was ${obj.slice(0, 7)})`]);
+  assert.equal(r.notes.has('v1'), false);
+  assert.ok(r.run('tag v1').ok, 'con el mismo nombre, ahora ligera');
+  assert.equal(r.notes.has('v1'), false);
+});
+
+test('tag -f pisa una etiqueta, tag -d borra todas o ninguna y una comilla suelta no corta la palabra', () => {
+  const r = fresh();
+  r.run('tag -a v1 -m "Vieja"');
+  const obj = r.notes.get('v1').sha;
+  r.run('commit -m "Next"');
+  assert.deepEqual(plain(r.run('tag -f v1').lines), [`Updated tag 'v1' (was ${obj.slice(0, 7)})`]);
+  assert.equal(r.tags.get('v1'), r.headSha);
+  assert.equal(r.notes.has('v1'), false, 'ahora es ligera: el mensaje viejo no queda');
+  assert.ok(r.run('tag -f -a v1 -m "Nueva" HEAD~1').ok);
+  assert.equal(r.notes.get('v1').message, 'Nueva');
+  assert.equal(r.tags.get('v1'), r.resolve('HEAD~1'));
+  assert.equal(r.run('tag -d -f v1').ok, false);
+  r.run('tag v2');
+  const res = r.run('tag -d v2 nope');
+  assert.equal(res.ok, false);
+  assert.deepEqual(plain([...r.tags.keys()]).sort(), ['v1', 'v2'], 'nombre que no existe: no borra ninguna');
+  assert.equal(r.run('tag -d v1 v2').lines.length, 2);
+  assert.deepEqual(plain(tokenize("commit -m it's")), ['commit', '-m', "it's"]);
+  assert.deepEqual(plain(tokenize(`tag --message="a b" -m 'c d' x"y z"`)), ['tag', '--message=a b', '-m', 'c d', 'xy z']);
 });
 
 test('el ejercicio de cherry-pick pide el arreglo copiado y su etiqueta, no una fusión', () => {
@@ -976,4 +1137,475 @@ test('add -u prepara solo lo cambiado que git sigue; add . también lo sin segui
   assert.ok(clean.run('add -u').ok);
   assert.equal(clean.staged.length, 0);
   assert.match(plain(clean.run('help').lines).join('\n'), /add -u/);
+});
+
+test('add -A prepara todo: lo cambiado y lo sin seguir, como add . y a diferencia de add -u', () => {
+  const setup = (cmd) => {
+    const r = fresh();
+    run(r, 'touch a.txt', 'touch --new n.txt');
+    assert.ok(r.run(cmd).ok, cmd);
+    return r;
+  };
+  const files = (r) => plain(r.staged.map((s) => s.file).sort());
+  const all = setup('add -A');
+  assert.deepEqual(files(all), ['a.txt', 'n.txt'], '-A prepara los dos');
+  assert.deepEqual(plain(all.staged.find((s) => s.file === 'n.txt')), { file: 'n.txt', isNew: true }, 'n.txt entra como archivo nuevo');
+  assert.equal(all.untracked.length, 0);
+  assert.equal(all.work.length, 0);
+  assert.match(plain(all.run('status').lines).join('\n'), /new file:   n\.txt/);
+  assert.deepEqual(files(setup('add --all')), ['a.txt', 'n.txt'], '--all es lo mismo');
+  assert.deepEqual(files(setup('add .')), files(all), 'igual que add .');
+  const u = setup('add -u');
+  assert.deepEqual(files(u), ['a.txt'], 'add -u deja fuera n.txt');
+  assert.deepEqual(plain(u.untracked), ['n.txt']);
+  // el commit tras -A se lleva los dos
+  run(all, 'commit -m "todo"');
+  assert.equal(all.staged.length + all.untracked.length + all.work.length, 0);
+
+  // con rutas, solo esas; -A y -u juntos se niegan como git
+  const some = fresh();
+  run(some, 'touch a.txt', 'touch b.txt', 'touch --new n.txt');
+  assert.ok(some.run('add -A n.txt').ok);
+  assert.deepEqual(plain(some.staged.map((s) => s.file)), ['n.txt']);
+  assert.deepEqual(plain(some.work.sort()), ['a.txt', 'b.txt']);
+  assert.equal(some.run('add -A nope.txt').ok, false, 'una ruta que no existe es un error');
+  const both = some.run('add -A -u');
+  assert.equal(both.ok, false);
+  assert.match(plain(both.lines).join('\n'), /'-A' and '-u' cannot be used together/);
+  for (const c of ['add -Au', 'add -uA']) assert.match(plain(some.run(c).lines).join('\n'), /cannot be used together/, `${c} son dos banderas`);
+  // preparado y cambiado otra vez: add -A (y add .) prepara también el cambio nuevo
+  const again = fresh();
+  run(again, 'touch a.txt', 'add a.txt', 'touch a.txt', 'add -A');
+  assert.deepEqual(plain(again.work), [], 'el cambio nuevo queda preparado');
+  assert.deepEqual(plain(again.staged.map((s) => s.file)), ['a.txt'], 'sin duplicarlo');
+  const againDot = fresh();
+  run(againDot, 'touch a.txt', 'add a.txt', 'touch a.txt', 'add .');
+  assert.deepEqual(plain(againDot.work), []);
+  // sin nada que preparar, -A no falla
+  const clean = fresh();
+  assert.ok(clean.run('add -A').ok);
+  assert.equal(clean.staged.length, 0);
+  assert.match(plain(clean.run('help').lines).join('\n'), /add -A/);
+});
+
+test('stash -u aparta también los archivos sin seguir y pop los devuelve; sin -u se quedan', () => {
+  const r = fresh();
+  run(r, 'touch --new tmp.txt');
+  assert.match(r.run('stash').lines[0], /No local changes/, 'sin -u un archivo sin seguir no cuenta');
+  assert.match(r.run('stash -u').lines[0], /^Saved working directory/);
+  assert.deepEqual(plain(r.untracked), []);
+  assert.match(r.run('status').lines.join('\n'), /nothing to commit, working tree clean/);
+  run(r, 'stash pop');
+  assert.deepEqual(plain(r.untracked), ['tmp.txt']);
+  assert.equal(r.stashes.length, 0);
+
+  run(r, 'touch app.js');
+  assert.match(r.run('stash').lines[0], /^Saved/);
+  assert.deepEqual(plain(r.untracked), ['tmp.txt'], 'sin -u el archivo nuevo se queda');
+  run(r, 'stash pop');
+  assert.deepEqual(plain(r.work), ['app.js']);
+
+  run(r, 'stash --include-untracked');
+  assert.deepEqual(plain(r.untracked), []);
+  assert.deepEqual(plain(r.work), []);
+  run(r, 'stash pop stash@{0}');
+  assert.deepEqual(plain(r.untracked), ['tmp.txt']);
+  assert.deepEqual(plain(r.work), ['app.js']);
+
+  run(r, 'stash push -u -m "con nuevos"');
+  assert.match(r.run('stash list').lines[0], /^stash@\{0\}: On main: con nuevos$/);
+  run(r, 'touch --new tmp.txt');
+  const clash = r.run('stash apply');
+  assert.equal(clash.ok, false);
+  assert.match(clash.lines.join('\n'), /tmp\.txt already exists, no checkout/);
+  assert.equal(r.stashes.length, 1);
+});
+
+/* rm y mv: git rm prepara el borrado, git mv el renombre, y lo hecho a mano (sin git) lo prepara add -A */
+const status = (r) => plain(r.run('status').lines);
+const last = (r) => r.commits.get(r.headSha);
+
+test('git rm borra un archivo que git sigue, deja el borrado preparado y el commit lo guarda', () => {
+  const r = fresh();
+  run(r, 'touch app.js', 'add app.js', 'commit -m "Add app"');
+  const res = r.run('git rm app.js');
+  assert.ok(res.ok, res.lines.join('\n'));
+  assert.deepEqual(plain(res.lines), ["rm 'app.js'"]);
+  assert.deepEqual(status(r), ['On branch main', 'Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\tdeleted:    app.js']);
+  const c = r.run('commit -m "Drop app"');
+  assert.ok(c.ok);
+  assert.deepEqual(plain(c.lines.slice(1)), [' 1 file changed']);
+  assert.deepEqual(plain(last(r).removed), ['app.js']);
+  assert.equal(last(r).files, undefined, 'un borrado no es un archivo cambiado');
+  assert.deepEqual(status(r).slice(1), ['nothing to commit, working tree clean']);
+  // ya no existe: otro rm (con o sin git) falla, y touch lo crea como archivo nuevo sin seguir
+  assert.match(r.run('git rm app.js').lines[0], /pathspec 'app\.js' did not match any files/);
+  assert.match(r.run('rm app.js').lines[0], /cannot remove 'app\.js'/);
+  run(r, 'touch app.js');
+  assert.deepEqual(plain(r.untracked), ['app.js']);
+});
+
+test('git rm se niega con cambios sin commit (salvo -f) y git rm --cached deja el archivo, sin seguir', () => {
+  const r = fresh();
+  run(r, 'touch a.txt');
+  const local = r.run('git rm a.txt');
+  assert.equal(local.ok, false);
+  assert.match(local.lines.join('\n'), /has local modifications:\n {4}a\.txt\n\(use --cached to keep the file, or -f to force removal\)/);
+  run(r, 'add a.txt');
+  assert.match(r.run('git rm a.txt').lines.join('\n'), /changes staged in the index/);
+  assert.equal(r.staged.length, 1, 'al negarse no toca nada');
+  // --cached: sale del índice, el archivo se queda sin seguir
+  const cached = r.run('git rm --cached a.txt');
+  assert.ok(cached.ok, cached.lines.join('\n'));
+  assert.deepEqual(status(r), ['On branch main', 'Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\tdeleted:    a.txt', 'Untracked files:', '\ta.txt']);
+  run(r, 'commit -m "Stop tracking a"');
+  assert.deepEqual(plain(last(r).removed), ['a.txt']);
+  assert.deepEqual(plain(r.untracked), ['a.txt'], 'tras el commit sigue ahí, sin seguir');
+  // -f borra aunque haya cambios
+  const f = fresh();
+  run(f, 'touch b.txt');
+  assert.ok(f.run('git rm -f b.txt').ok);
+  assert.deepEqual(plain(f.work), []);
+  assert.deepEqual(plain(f.staged), [{ file: 'b.txt', gone: true }]);
+  // un archivo nuevo preparado y borrado con -f desaparece sin dejar borrado que preparar
+  const n = fresh();
+  run(n, 'touch --new n.txt', 'add n.txt', 'git rm -f n.txt');
+  assert.deepEqual(status(n).slice(1), ['nothing to commit, working tree clean']);
+  // restore --staged deshace un rm --cached: el archivo vuelve a seguirse
+  const back = fresh();
+  run(back, 'git rm --cached c.txt', 'restore --staged c.txt');
+  assert.deepEqual(status(back).slice(1), ['nothing to commit, working tree clean']);
+  // un archivo sin seguir no está en el índice
+  const u = fresh();
+  run(u, 'touch --new tmp.txt');
+  assert.match(u.run('git rm tmp.txt').lines[0], /pathspec 'tmp\.txt' did not match any files/);
+});
+
+test('git mv renombra preparado, con los cambios del archivo, y el commit lo guarda como un archivo', () => {
+  const r = fresh();
+  run(r, 'touch old.js', 'add old.js', 'commit -m "Add old"');
+  const res = r.run('git mv old.js new.js');
+  assert.ok(res.ok, res.lines.join('\n'));
+  assert.deepEqual(status(r), ['On branch main', 'Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\trenamed:    old.js -> new.js']);
+  const c = r.run('commit -m "Rename old to new"');
+  assert.deepEqual(plain(c.lines.slice(1)), [' 1 file changed']);
+  assert.deepEqual(plain(last(r).files), ['new.js']);
+  assert.deepEqual(plain(last(r).removed), ['old.js']);
+  // el viejo ya no existe y el nuevo sí: mover otra vez el viejo falla, y sobre el nuevo también
+  assert.match(r.run('git mv old.js x.js').lines[0], /bad source/);
+  run(r, 'touch other.js', 'add other.js', 'commit -m "Add other"');
+  assert.match(r.run('git mv other.js new.js').lines[0], /destination exists, source=other\.js, destination=new\.js/);
+  // un archivo cambiado se lleva sus cambios: queda renombrado y cambiado sin preparar
+  run(r, 'touch other.js', 'git mv other.js renamed.js');
+  assert.deepEqual(status(r).slice(1), ['Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\trenamed:    other.js -> renamed.js', 'Changes not staged for commit:', '\tmodified:   renamed.js']);
+  // un archivo sin seguir no se puede mover con git
+  run(r, 'touch --new tmp.txt');
+  assert.match(r.run('git mv tmp.txt t.txt').lines[0], /not under version control/);
+});
+
+test('rm y mv sin git solo tocan el árbol; add -A (y add ., add -u) preparan los borrados y el renombre', () => {
+  const r = fresh();
+  run(r, 'touch a.js', 'touch b.js', 'add .', 'commit -m "Add a and b"');
+  run(r, 'rm a.js');
+  assert.deepEqual(status(r), ['On branch main', 'Changes not staged for commit:', '\tdeleted:    a.js']);
+  // como en git, un commit sin nada preparado se niega y muestra el borrado
+  const no = r.run('commit -m "x"');
+  assert.equal(no.ok, false);
+  assert.match(no.lines.join('\n'), /deleted: {4}a\.js/);
+  // mv a mano: el viejo borrado y el nuevo sin seguir
+  run(r, 'mv b.js c.js');
+  assert.deepEqual(status(r).slice(1), ['Changes not staged for commit:', '\tdeleted:    a.js', '\tdeleted:    b.js', 'Untracked files:', '\tc.js']);
+  // add -A prepara el borrado y ve el mv como un renombre
+  run(r, 'add -A');
+  assert.deepEqual(status(r).slice(1), ['Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\tdeleted:    a.js', '\trenamed:    b.js -> c.js']);
+  run(r, 'commit -m "Clean up"');
+  assert.deepEqual(plain(last(r).removed.sort()), ['a.js', 'b.js']);
+  assert.deepEqual(plain(last(r).files), ['c.js']);
+  // add -u y add <archivo> también preparan un borrado a mano; commit -a se lo lleva sin add
+  for (const cmd of ['add -u', 'add d.js', 'add .']) {
+    const x = fresh();
+    run(x, 'rm d.js', cmd);
+    assert.deepEqual(plain(x.staged), [{ file: 'd.js', gone: true }], cmd);
+  }
+  const a = fresh();
+  run(a, 'rm d.js', 'commit -am "Drop d"');
+  assert.deepEqual(plain(last(a).removed), ['d.js']);
+  // restore devuelve un archivo borrado a mano; reset --hard tira el borrado preparado
+  const back = fresh();
+  run(back, 'rm d.js', 'restore d.js');
+  assert.deepEqual(status(back).slice(1), ['nothing to commit, working tree clean']);
+  const hard = fresh();
+  run(hard, 'git rm --cached d.js', 'rm e.js', 'reset --hard');
+  assert.deepEqual(status(hard).slice(1), ['nothing to commit, working tree clean']);
+  // un borrado a mano es un cambio sin commit: checkout se niega y stash lo aparta y lo devuelve borrado
+  const st = fresh();
+  run(st, 'checkout -b other', 'commit -m "Other"', 'checkout main', 'rm d.js');
+  assert.equal(st.run('checkout other').ok, false);
+  run(st, 'stash');
+  assert.deepEqual(status(st).slice(1), ['nothing to commit, working tree clean']);
+  run(st, 'stash pop');
+  assert.deepEqual(plain(st.deleted), ['d.js']);
+  // rm a mano de un archivo sin seguir lo borra del todo
+  const tmp = fresh();
+  run(tmp, 'touch --new tmp.txt', 'rm tmp.txt');
+  assert.deepEqual(status(tmp).slice(1), ['nothing to commit, working tree clean']);
+});
+
+test('rm y mv: deshacer con add, ida y vuelta, amend, rebase, cherry-pick y stash dejan el estado coherente', () => {
+  const clean = ['nothing to commit, working tree clean'];
+  // add tras rm --cached lo vuelve a seguir
+  for (const cmd of ['add a.txt', 'add .', 'add -A']) {
+    const r = fresh();
+    run(r, 'git rm --cached a.txt', cmd);
+    assert.deepEqual(status(r).slice(1), clean, cmd);
+  }
+  // git mv y mv de ida y vuelta: nada que preparar
+  const g = fresh();
+  run(g, 'git mv a.txt b.txt', 'git mv b.txt a.txt');
+  assert.deepEqual(status(g).slice(1), clean);
+  const m = fresh();
+  run(m, 'mv a.txt b.txt', 'mv b.txt a.txt');
+  assert.deepEqual(status(m).slice(1), clean);
+  // amend que borra lo que creó el mismo commit: el commit no lo deja a la vez creado y borrado
+  const a = fresh();
+  run(a, 'touch x', 'add x', 'commit -m c', 'git rm x', 'commit --amend -m c2');
+  assert.equal(last(a).files, undefined);
+  assert.deepEqual(plain(last(a).removed), ['x']);
+  assert.equal(a.exists('x'), false);
+  // rebase y cherry-pick se llevan el borrado: el archivo no revive
+  const rb = fresh();
+  run(rb, 'checkout -b f', 'git rm a.txt', 'commit -m del', 'checkout main', 'touch m', 'commit -am m', 'checkout f', 'rebase main');
+  assert.match(rb.run('git rm a.txt').lines[0], /did not match any files/);
+  const cp = fresh();
+  run(cp, 'checkout -b f', 'git rm a.txt', 'commit -m del', 'checkout main', 'cherry-pick f');
+  assert.match(cp.run('git rm a.txt').lines[0], /did not match any files/);
+  // stash de un rm --cached deja el árbol limpio (el índice vuelve como estaba)
+  const st = fresh();
+  run(st, 'git rm --cached a.txt', 'stash');
+  assert.deepEqual(status(st).slice(1), clean);
+  // git rm -r . sin archivos conocidos avisa en vez de no hacer nada
+  assert.equal(fresh().run('git rm -r .').ok, false);
+});
+
+test('clean con rutas, patrones, -d, -e, -q y banderas juntas', () => {
+  const r = fresh();
+  run(r, 'touch --new keep.js', 'touch --new a.tmp', 'touch --new docs/b.tmp', 'touch --new build/out.js', 'touch --new build/sub/map.js');
+  // status muestra la carpeta que git no sigue entera, como git
+  const st = plain(r.run('status').lines);
+  assert.deepEqual(st.slice(st.indexOf('Untracked files:') + 1), ['\tkeep.js', '\ta.tmp', '\tdocs/', '\tbuild/']);
+  // sin -d, lo que vive en una carpeta sin seguir no se toca
+  assert.deepEqual(plain(r.run('clean -n').lines), ['Would remove a.tmp', 'Would remove keep.js']);
+  // banderas juntas, y la carpeta se lista una vez
+  assert.deepEqual(plain(r.run('clean -nd').lines), ['Would remove a.tmp', 'Would remove build/', 'Would remove docs/', 'Would remove keep.js']);
+  assert.deepEqual(plain(r.run('clean -dn -e keep.js -e build').lines), ['Would remove a.tmp', 'Would remove docs/']);
+  // -e con un patrón vale en cualquier carpeta; si deja algo de la carpeta, se borran sus archivos uno a uno
+  assert.deepEqual(plain(r.run('clean -nd --exclude=map.js').lines), ['Would remove a.tmp', 'Would remove build/out.js', 'Would remove docs/', 'Would remove keep.js']);
+  assert.deepEqual(plain(r.run('clean -nde*.tmp').lines), ['Would remove build/', 'Would remove keep.js']);
+  // con rutas, -d no hace falta: el patrón cruza carpetas, como una ruta de git
+  assert.deepEqual(plain(r.run(`clean -n '*.tmp'`).lines), ['Would remove a.tmp', 'Would remove docs/b.tmp']);
+  // una ruta que cubre la carpeta entera la borra como carpeta, con -d o sin él, como git
+  assert.deepEqual(plain(r.run('clean -n build/').lines), ['Would remove build/']);
+  assert.deepEqual(plain(r.run('clean -n build').lines), ['Would remove build/']);
+  assert.deepEqual(plain(r.run('clean -n build/sub').lines), ['Would remove build/sub/map.js']);
+  assert.deepEqual(plain(r.run('clean -n -- nada.txt').lines), []);
+  assert.equal(r.untracked.length, 5, '-n no borra nada');
+  // -f con un patrón borra solo eso
+  assert.deepEqual(plain(r.run('clean -f *.tmp').lines), ['Removing a.tmp', 'Removing docs/b.tmp']);
+  assert.equal(r.cleans, 1);
+  // -q no dice nada pero borra
+  assert.deepEqual(plain(r.run('clean -fdq -e keep.js').lines), []);
+  assert.deepEqual(plain(r.untracked), ['keep.js']);
+  assert.equal(r.cleans, 2);
+  // los errores de git, sin tocar nada
+  assert.match(r.run('clean -d').lines[0], /requireForce/);
+  assert.match(r.run('clean -i').lines[0], /interactive/);
+  assert.match(r.run('clean -fz').lines[0], /unknown switch `z'/);
+  assert.match(r.run('clean --everything').lines[0], /unknown option/);
+  assert.match(r.run('clean -f -e').lines[0], /requires a value/);
+  assert.match(r.run('clean -fxX').lines[0], /cannot be used together/);
+  // -x no cambia nada (sin .gitignore) y -X no borra nada (no hay nada ignorado)
+  assert.deepEqual(plain(r.run('clean -nx').lines), ['Would remove keep.js']);
+  assert.deepEqual(plain(r.run('clean -fX').lines), []);
+  assert.equal(r.cleans, 2, 'un clean que no borró nada no cuenta');
+  assert.deepEqual(plain(r.untracked), ['keep.js']);
+});
+
+test('clean -d no toma por carpeta sin seguir una que git sigue', () => {
+  const r = fresh();
+  // src/app.js va en un commit: src/ es una carpeta seguida, y lo nuevo de adentro se borra sin -d
+  run(r, 'touch --new src/app.js', 'add .', 'commit -m "Add app"', 'touch --new src/tmp.js', 'touch --new lib/x.js');
+  const st = plain(r.run('status').lines);
+  assert.deepEqual(st.slice(st.indexOf('Untracked files:') + 1), ['\tsrc/tmp.js', '\tlib/']);
+  assert.deepEqual(plain(r.run('clean -f').lines), ['Removing src/tmp.js']);
+  // lo preparado o cambiado dentro de una carpeta tampoco la vuelve «sin seguir»
+  run(r, 'touch --new web/a.js', 'touch --new web/b.js', 'add web/a.js');
+  assert.deepEqual(plain(r.run('clean -nd').lines), ['Would remove lib/', 'Would remove web/b.js']);
+  assert.ok(r.run('clean -fd').ok);
+  assert.deepEqual(plain(r.untracked), []);
+  assert.equal(r.staged.map((s) => s.file).join(), 'web/a.js', 'lo preparado no se toca');
+});
+
+test('add acepta la carpeta sin seguir tal como la muestra status', () => {
+  const r = fresh();
+  run(r, 'touch --new build/out.js', 'touch --new build/sub/map.js', 'touch --new keep.js');
+  assert.ok(plain(r.run('status').lines).includes('\tbuild/'));
+  assert.ok(r.run('add build/').ok);
+  assert.deepEqual(plain(r.staged.map((s) => s.file).sort()), ['build/out.js', 'build/sub/map.js']);
+  assert.deepEqual(plain(r.untracked), ['keep.js']);
+  assert.ok(r.run('restore --staged build/out.js').ok);
+  assert.ok(r.run('add build').ok, 'sin la barra también');
+  assert.equal(r.run('add nada/').ok, false, 'una carpeta que no existe sigue fallando');
+});
+
+test('stash show lista lo que guarda un stash sin devolverlo, antes y después de un pop', () => {
+  const r = fresh();
+  assert.deepEqual(plain(r.run('stash show').lines), ['error: No stash entries found.']);
+  r.run('touch app.js');
+  r.run('touch --new nuevo.txt');
+  r.run('add nuevo.txt');
+  r.run('git rm README.md');
+  r.run('touch --new tmp.log');
+  run(r, 'stash -u');
+  r.run('touch notes.txt');
+  run(r, 'stash');
+  const before = JSON.stringify([r.stashes, r.work, r.staged, r.untracked]);
+  // la forma de siempre: los nombres con lo que les pasó y cuántos son (sin líneas: la práctica no tiene contenido)
+  assert.deepEqual(plain(r.run('stash show').lines), [' notes.txt | changed', ' 1 file changed']);
+  assert.deepEqual(plain(r.run('stash show --stat stash@{1}').lines), [' README.md | deleted', ' app.js    | changed', ' nuevo.txt | new', ' 3 files changed']);
+  assert.deepEqual(plain(r.run('stash show --name-only 1').lines), ['README.md', 'app.js', 'nuevo.txt']);
+  assert.deepEqual(plain(r.run('git stash show --name-status stash@{1}').lines), ['D\tREADME.md', 'M\tapp.js', 'A\tnuevo.txt']);
+  // lo sin seguir de stash -u solo sale con -u, o solo eso con --only-untracked
+  assert.deepEqual(plain(r.run('stash show -u --name-status stash@{1}').lines), ['D\tREADME.md', 'M\tapp.js', 'A\tnuevo.txt', 'A\ttmp.log']);
+  assert.deepEqual(plain(r.run('stash show --only-untracked --name-only stash@{1}').lines), ['tmp.log']);
+  assert.deepEqual(plain(r.run('stash show --only-untracked stash@{0}').lines), []);
+  // mirar no devuelve nada ni suelta el stash, y no cambia el grafo
+  assert.equal(JSON.stringify([r.stashes, r.work, r.staged, r.untracked]), before);
+  assert.equal(r.run('stash show').changed, false);
+  // los errores de git: una referencia que no existe, dos, una bandera desconocida, -p sin contenido
+  assert.deepEqual(plain(r.run('stash show stash@{2}').lines), ['error: stash@{2} is not a valid reference']);
+  assert.match(r.run('stash show 0 1').lines[0], /^error: Too many revisions specified/);
+  assert.deepEqual(plain(r.run('stash show --name-only -- stash@{0}').lines), ['notes.txt']);
+  // las opciones antes de show no se pierden en silencio
+  assert.equal(r.run('stash -u show').ok, false);
+  assert.match(r.run('stash show --bogus').lines[0], /^error: unknown option 'bogus'/);
+  assert.equal(r.run('stash show -p').ok, false);
+  // después de un pop, stash@{0} es el que quedaba y lo devuelto ya no está guardado
+  assert.ok(r.run('stash pop').ok);
+  assert.deepEqual(plain(r.run('stash show --name-only').lines), ['README.md', 'app.js', 'nuevo.txt']);
+  assert.ok(r.run('stash pop').ok);
+  assert.deepEqual(plain(r.run('stash show').lines), ['error: No stash entries found.']);
+  assert.ok(r.stashShows >= 8);
+});
+
+test('el ejercicio de stash show no se resuelve sin mirar ni con el stash equivocado', () => {
+  const i = EXERCISES.findIndex((e) => e.id === 'stashshow');
+  // las dos líneas de stash list son iguales: hay que mirar qué guarda cada uno
+  const r = start(i, NOW);
+  const list = r.run('stash list').lines;
+  assert.equal(list.length, 2);
+  assert.equal(list[0].replace(/^stash@\{\d\}: /, ''), list[1].replace(/^stash@\{\d\}: /, ''));
+  // pop a secas devuelve notes.txt, el equivocado
+  const a = start(i, NOW);
+  a.run('stash show');
+  a.run('stash pop');
+  assert.equal(EXERCISES[i].done(a), false);
+  // el bueno sin haber mirado tampoco cuenta
+  const b = start(i, NOW);
+  b.run('stash pop stash@{1}');
+  assert.equal(EXERCISES[i].done(b), false);
+  // soltar el del login y tocar sus archivos a mano no es recuperarlo
+  const d = start(i, NOW);
+  run(d, 'stash show 1', 'stash drop 1', 'touch login.js', 'touch login.css');
+  assert.equal(EXERCISES[i].done(d), false);
+  // mirar solo el de notes.txt no cuenta como haber mirado el del login
+  const e = start(i, NOW);
+  run(e, 'stash show', 'stash pop 1');
+  assert.equal(EXERCISES[i].done(e), false);
+  // apply del bueno y drop también lo resuelve, como pop
+  const f = start(i, NOW);
+  run(f, 'stash show 1', 'stash apply 1', 'stash drop 1');
+  assert.equal(EXERCISES[i].done(f), true);
+  // apply deja los dos guardados
+  const c = start(i, NOW);
+  c.run('stash show 1');
+  c.run('stash apply 1');
+  assert.equal(EXERCISES[i].done(c), false);
+});
+
+test('stash show y stash list solo leen: pasan con un rebase a medias; un archivo nuevo borrado a mano no sale como borrado', () => {
+  const r = fresh();
+  run(r, 'checkout -b feature', 'commit -m "a"', 'commit -m "b"', 'checkout main', 'commit -m "c"', 'checkout feature');
+  r.run('touch x.js');
+  r.run('stash');
+  assert.ok(r.run('rebase -i main').ok);
+  assert.ok(r.rebasing);
+  assert.deepEqual(plain(r.run('stash show --name-only').lines), ['x.js']);
+  assert.equal(r.run('stash list').ok, true);
+  assert.equal(r.run('stash pop').ok, false);
+  r.run('rebase --abort');
+  const n = fresh();
+  run(n, 'touch --new n.txt', 'add n.txt', 'rm n.txt', 'touch app.js', 'stash');
+  assert.deepEqual(plain(n.run('stash show --name-status').lines), ['M\tapp.js']);
+});
+
+test('show imprime el sha, el mensaje y los archivos de un commit (HEAD sin otro) sin mover nada', () => {
+  const r = fresh();
+  const first = r.headSha;
+  r.run('touch app.js');
+  r.run('touch --new nuevo.txt');
+  run(r, 'add .', 'git rm README.md', 'commit -m "Cambios"');
+  const head = r.headSha;
+  const before = JSON.stringify([[...r.branches], r.head, r.reflog, r.work, r.staged, r.untracked]);
+  // HEAD: la cabecera como log, el mensaje y los archivos como --stat (sin contenido, lo que le pasó a cada uno)
+  const res = r.run('git show');
+  assert.ok(res.ok);
+  assert.equal(res.changed, false);
+  assert.deepEqual(plain(res.lines), [`commit ${head} (HEAD -> main)`, 'Author: You', '', '    Cambios', '', ' README.md | deleted', ' app.js    | changed', ' nuevo.txt | new', ' 3 files changed']);
+  // HEAD~1, por sha corto y con --oneline; --name-status y --name-only como git; -s calla los archivos
+  assert.deepEqual(plain(r.run('show HEAD~1 -s').lines), [`commit ${first}`, 'Author: You', '', `    ${r.commits.get(first).message}`]);
+  assert.deepEqual(plain(r.run(`show ${head.slice(0, 7)} --name-status`).lines.slice(5)), ['D\tREADME.md', 'M\tapp.js', 'A\tnuevo.txt']);
+  assert.deepEqual(plain(r.run('show --oneline --name-only').lines), [`${head.slice(0, 7)} (HEAD -> main) Cambios`, 'README.md', 'app.js', 'nuevo.txt']);
+  // varios commits, separados por una línea en blanco
+  assert.deepEqual(plain(r.run('show -s --oneline HEAD HEAD~1').lines), [`${head.slice(0, 7)} (HEAD -> main) Cambios`, '', `${first.slice(0, 7)} ${r.commits.get(first).message}`]);
+  // una etiqueta anotada sale antes con su mensaje; una ligera, solo el commit
+  run(r, 'tag -a v1 -m "Primera versión"', 'tag ligera HEAD~1');
+  assert.deepEqual(plain(r.run('show -s v1').lines.slice(0, 5)), ['tag v1', 'Tagger: You', '', 'Primera versión', '']);
+  // gana el último formato: --name-status tras -s vuelve a mostrar los archivos
+  assert.deepEqual(plain(r.run('show -s --name-status --oneline').lines), [`${r.short(r.headSha)} (HEAD -> main, tag: v1) Cambios`, 'D\tREADME.md', 'M\tapp.js', 'A\tnuevo.txt']);
+  assert.match(r.run('show -s ligera').lines[0], /^commit /);
+  // un renombre (git mv) sale como el borrado del viejo y el nombre nuevo; un archivo nuevo cambiado después ya es M
+  run(r, 'git mv app.js main.js', 'commit -m "Renombra"');
+  assert.deepEqual(plain(r.run('show --name-status').lines.slice(5)), ['D\tapp.js', 'A\tmain.js']);
+  run(r, 'touch nuevo.txt', 'commit -am "Toca nuevo"');
+  assert.deepEqual(plain(r.run('show --name-status').lines.slice(5)), ['M\tnuevo.txt']);
+  // un merge dice sus padres
+  run(r, 'checkout -b f', 'commit -m x', 'checkout main', 'merge --no-ff f -m "Une f"');
+  assert.match(r.run('show -s').lines[1], /^Merge: [0-9a-f]{7} [0-9a-f]{7}$/);
+  // mirar no mueve nada ni anota en el reflog
+  const after = JSON.stringify([[...r.branches], r.head, r.reflog, r.work, r.staged, r.untracked]);
+  run(r, 'show', 'show HEAD~3', 'show v1');
+  assert.equal(JSON.stringify([[...r.branches], r.head, r.reflog, r.work, r.staged, r.untracked]), after);
+  assert.notEqual(before, after);
+});
+
+test('show se niega como git: un sha que no existe, opciones desconocidas, -p sin contenido y un repo vacío', () => {
+  const r = fresh();
+  const shown = r.run('show 0123abcd');
+  assert.equal(shown.ok, false);
+  assert.deepEqual(plain(shown.lines), ["fatal: ambiguous argument '0123abcd': unknown revision or path not in the working tree.", "Use '--' to separate paths from revisions, like this:", "'git <command> [<revision>...] -- [<file>...]'"]);
+  // si una referencia no existe no se imprime ninguna
+  assert.equal(r.run('show HEAD nada').ok, false);
+  assert.equal(r.run('show HEAD~99').ok, false);
+  assert.match(r.run('show --bogus').lines[0], /^fatal: unrecognized argument: --bogus/);
+  assert.equal(r.run('show -p').ok, false);
+  assert.match(r.run('show -3').lines[0], /^fatal: unrecognized argument: -3/);
+  assert.equal(r.run('show -- README.md').ok, false);
+  // un archivo que un commit creó y un --amend borró con git rm no sale como borrado: nunca estuvo
+  run(r, 'touch --new n.txt', 'add n.txt', 'commit -m n', 'git rm n.txt', 'commit --amend -m "sin n"');
+  assert.deepEqual(plain(r.run('show --name-status').lines.slice(5)), []);
+  const empty = new Repo({ now: NOW });
+  assert.deepEqual(plain(empty.run('show').lines), ["fatal: your current branch 'main' does not have any commits yet"]);
+  assert.match(empty.run('show HEAD').lines[0], /^fatal: ambiguous argument 'HEAD'/);
+  // help lo lista
+  assert.ok(r.run('help').lines.some((l) => l.startsWith('show ')));
 });

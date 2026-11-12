@@ -4,6 +4,10 @@
 
      node tools/smoke.mjs            escenarios básicos (unos 30 s)
      node tools/smoke.mjs --langs    además abre la app en los 40 idiomas, en pantalla de celular
+     node tools/smoke.mjs --solo GitLab --solo Celular   solo las secciones cuyo título contiene ese texto
+     node tools/smoke.mjs --seccion Bitbucket            solo la sección con ese título exacto (la puerta)
+     node tools/smoke.mjs --secciones                    los títulos de las secciones (o, con --solo o --seccion, los
+                                                         de las que correrían), sin abrir el navegador
 
    Errores (salida distinta de 0): un error de JavaScript o de consola, una consulta a
    api.github.com durante la demo (no debería hacer ninguna), un paso que no llega a su
@@ -24,6 +28,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const allLangs = process.argv.includes('--langs');
+const listar = process.argv.includes('--secciones');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -72,8 +77,8 @@ const PNG_1PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0l
 
 const server = await serve();
 const base = `http://127.0.0.1:${server.address().port}`;
-const { chromium } = await loadPlaywright();
-const browser = await chromium.launch({
+const { chromium } = listar ? {} : await loadPlaywright();
+const browser = listar ? null : await chromium.launch({
   // como en las pruebas e2e: otro Chromium que el de esta versión de Playwright
   executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
   // WebGL por software, para que la vista 3D también se pruebe sin GPU
@@ -81,10 +86,35 @@ const browser = await chromium.launch({
 });
 
 let failures = 0;
-const fail = (msg) => {
+const fail = (msg, paso = msg) => {
   failures++;
+  if (!conFallos.has(actual)) conFallos.set(actual, []);
+  conFallos.get(actual).push(paso);
   console.log(`  ✗ ${msg}`);
 };
+
+/* Secciones: cada bloque de primer nivel («if (seccion('Título'))») abre su propio contexto y no depende de
+   los demás, así que se puede correr suelto. `--solo <texto>` (se puede repetir) corre solo las secciones cuyo
+   título contiene ese texto, y `--seccion <título>`, la de ese título exacto («Bitbucket» y no también
+   «Bitbucket propio con token»): la puerta (tools/check.mjs) repite así la sección de un paso que falló una vez,
+   en lugar del smoke entero (10 minutos), y quien arregla un paso intermitente lo prueba en segundos. Al
+   terminar con fallos, cada sección que tuvo alguno sale en una línea «§ Título», y debajo, cada paso que
+   falló en ella, en una línea «· nombre del paso» (sin su error, que ya salió en su «✗»). */
+const valores = (flag) => process.argv.flatMap((a, i, v) => (a === flag && v[i + 1] ? [v[i + 1]] : []));
+const solo = valores('--solo');
+const exactas = valores('--seccion');
+const pedidas = solo.length + exactas.length;
+const corridas = [];
+const conFallos = new Map();
+let actual = '';
+function seccion(titulo) {
+  if (pedidas && !solo.some((t) => titulo.includes(t)) && !exactas.includes(titulo)) return false;
+  corridas.push(titulo);
+  console.log(titulo);
+  if (listar) return false; // --secciones solo dice cuáles correrían
+  actual = titulo;
+  return true;
+}
 
 /** Abre una pestaña que anota todo error y aísla la app de lo que no es suyo. */
 async function openPage(contextOptions = {}) {
@@ -152,7 +182,7 @@ async function step(page, name, fn, { allow = null } = {}) {
   // la excepción de la app explica mejor que el timeout
   errs.unshift(...page.errors.slice(before).filter((e) => !allow?.test(e)));
   if (errs.length) {
-    fail(`${name}: ${errs.join(' | ')}`);
+    fail(`${name}: ${errs.join(' | ')}`, name);
     await reset(page);
   } else console.log(`  ✓ ${name}`);
 }
@@ -304,7 +334,7 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
 
 /* ---------- escritorio ---------- */
 
-console.log('Escritorio (1280×800)');
+if (seccion('Escritorio (1280×800)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   let has3d = false;
@@ -760,6 +790,15 @@ console.log('Escritorio (1280×800)');
     if (weekly.lines.length < 6 || largas.length) throw new Error(`las series por semana repiten el periodo en cada línea: ${largas.join(' | ') || weekly.lines.length + ' líneas'}`);
     const ciLines = await page.$$eval('#hl-ci .hl-line', (ps) => ps.map((p) => p.textContent));
     if (!ciLines.length || ciLines.some((l) => !/\d/.test(l))) throw new Error(`la tasa de fallos de CI no sale en la salud: ${ciLines.join(' | ')}`);
+    // el último despliegue de cada entorno de la demo (producción en main y staging, que sigue a develop), con su estado
+    const deploys = await page.$$eval('#hl-deploys .hl-list .hl-row', (rs) => rs.map((r) => [r.querySelector('.hl-main').textContent, r.querySelector('.hl-aside').textContent, r.matches('[data-go]')]));
+    const envs = deploys.map(([e]) => e).sort().join(',');
+    if (envs !== 'production,staging') throw new Error(`los despliegues por entorno no son los de la demo: ${JSON.stringify(deploys)}`);
+    const stg = deploys.find(([e]) => e === 'staging');
+    if (!/^\S{7} · al día con develop( · |$)/.test(stg[1]) || !stg[2]) throw new Error(`staging no sale al día con develop ni lleva a su rama: ${stg[1]}`);
+    const prod = deploys.find(([e]) => e === 'production');
+    if (!/ · salió bien( · |$)/.test(prod[1]) || !/ · (falló|en curso)( · |$)/.test(stg[1])) throw new Error(`los despliegues de la demo no dicen si salieron bien, fallaron o siguen en curso: ${JSON.stringify(deploys)}`);
+    if (deploys.some(([, a]) => /health\.|\{/.test(a))) throw new Error(`un despliegue sale con una clave cruda: ${JSON.stringify(deploys)}`);
     if (info.stats !== 3) throw new Error(`${info.stats} cifras de ritmo, se esperaban 3`);
     if (!info.rows) throw new Error('la demo tiene PRs abiertos y no salen en la lista');
     const forks = await page.$$eval('#hl-forks a.hl-row[href^="https://"][rel~="noopener"]', (as) => as.map((a) => a.textContent));
@@ -769,13 +808,22 @@ console.log('Escritorio (1280×800)');
     if (!/^★ 4 · /.test(byStars[0] || '') || /★ 0/.test(byStars.join('|'))) throw new Error(`los forks por estrellas no salen del que más tiene: ${byStars.join(' | ')}`);
     if (!(await page.evaluate(() => document.activeElement?.id === 'hl-forks-stars'))) throw new Error('el foco se pierde al ordenar los forks por estrellas');
     await page.click('#hl-forks-stars');
+    // la demo trae un fork de hace unos días (y suma otros en vivo): los forks nuevos de la semana frente a la anterior
+    const forkTrend = await page.$eval('#hl-forks-trend', (p) => p.textContent).catch(() => '');
+    const fm = /^Forks nuevos: (\d+) esta semana · (\d+) la anterior \(([+−]\d+|±0)\)$/.exec(forkTrend);
+    if (!fm || Number(fm[1]) < 1) throw new Error(`los forks nuevos de la demo no salen en la salud: «${forkTrend}»`);
     await page.click('#hl-forks-toggle');
     const hidden = await page.$$eval('#hl-forks a.hl-row', (as) => as.length);
+    if (await page.$('#hl-forks-trend')) throw new Error('el interruptor «Mostrar forks» apagado deja la tendencia de forks');
     if (hidden || !(await page.evaluate(() => new URL(location.href).searchParams.get('forks') === '0'))) throw new Error('el interruptor «Mostrar forks» apagado no oculta los forks ni deja forks=0 en la URL');
     if (!(await page.evaluate(() => document.activeElement?.id === 'hl-forks-toggle'))) throw new Error('el foco se pierde al apagar el interruptor de forks');
     await page.click('#hl-forks-toggle');
     if ((await page.$$eval('#hl-forks a.hl-row', (as) => as.length)) !== 2 || (await page.evaluate(() => new URL(location.href).searchParams.has('forks')))) throw new Error('el interruptor «Mostrar forks» encendido no devuelve los 2 forks ni quita forks de la URL');
     if (/undefined|NaN|health\./.test(info.text)) throw new Error('texto sin resolver en el panel: ' + info.text.slice(0, 120));
+    // la demo trae una estrella de hace unos días (y suma otras en vivo): la semana actual frente a la anterior
+    const stars = await page.$eval('#hl-stars', (s) => s.querySelector('.hl-line')?.textContent || '');
+    const sm = /^(\d+) esta semana · (\d+) la anterior \(([+−]\d+|±0)\)$/.exec(stars);
+    if (!sm || Number(sm[1]) < 1) throw new Error(`las estrellas nuevas de la demo no salen en la salud: «${stars}»`);
     if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
     await page.click('#hl-clash-go');
     await page.waitForFunction(() => document.querySelector('#hl-clash-out')?.textContent.trim() && !document.querySelector('#hl-clash-go').disabled, null, { timeout: T(8000) });
@@ -811,6 +859,13 @@ console.log('Escritorio (1280×800)');
     if (!/^# /.test(md) || !/## .*\(\d+\)/.test(md)) throw new Error('resumen de la semana sin formato Markdown: ' + md.slice(0, 120));
     if (!/\d( · \d+){6}\n/.test(md)) throw new Error('resumen de la semana sin los commits de cada día: ' + md.slice(0, 160));
     if (/undefined|NaN|digest\./.test(md)) throw new Error('texto sin resolver en el resumen de la semana: ' + md.slice(0, 120));
+    // la demo abre un PR con autor en la semana (el del agente): el resumen dice quién abrió más
+    const openers = await page.evaluate(() => GB.i18n.t('digest.openers'));
+    if (!new RegExp(`\\n${openers.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}: \\S.* \\(\\d+\\)\\n`).test(md)) throw new Error('resumen de la semana sin «quién abrió más»: ' + md.slice(0, 400));
+    // y cierra el issue #84 con autor en la semana: dice quién cerró más, debajo de los issues cerrados
+    const closers = await page.evaluate(() => GB.i18n.t('digest.closers'));
+    const closersAt = md.search(new RegExp(`\\n${closers.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}: \\S.* \\(\\d+\\)\\n`));
+    if (closersAt < 0 || md.indexOf('#84') < 0 || closersAt < md.indexOf('#84')) throw new Error('resumen de la semana sin «quién cerró más» debajo de los issues cerrados: ' + md.slice(0, 600));
     const [dl] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#digest-save')]);
     if (!/^graphbranch-.*-semana-.*\.md$/.test(dl.suggestedFilename())) throw new Error('nombre del resumen: ' + dl.suggestedFilename());
     const [png] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#digest-png')]);
@@ -824,6 +879,12 @@ console.log('Escritorio (1280×800)');
       open: document.querySelectorAll('#health .hl-list[data-list="prs"] li').length,
     }));
     if (!states.groups.length || states.inGroups !== states.open || states.groups.some((x) => /undefined|NaN|health\./.test(x))) throw new Error('PRs por estado en la demo: ' + JSON.stringify(states));
+    // PRs sin revisión hace más de 7 días: los de la demo son de hace 3, así que la lista sale vacía y con su total en 0
+    const unrev = await page.evaluate(() => {
+      const box = document.querySelector('#hl-unreviewed');
+      return box && { head: box.querySelector('h3')?.textContent.trim() || '', n: box.querySelector('.hl-n')?.textContent.trim(), rows: box.querySelectorAll('li').length, none: !!box.querySelector('.hl-none') };
+    });
+    if (!unrev || !unrev.head || /undefined|NaN|health\./.test(unrev.head) || unrev.n !== '0' || unrev.rows || !unrev.none) throw new Error('PRs sin revisión en la demo: ' + JSON.stringify(unrev));
     await page.click('#health .hl-list[data-list="prs"] [data-go]');
     await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
   });
@@ -930,6 +991,9 @@ console.log('Escritorio (1280×800)');
     // la marca «CI fallando» de una rama (si la demo tiene alguna con el CI en rojo) también está en su nombre accesible
     const ciMarks = await page.evaluate(() => [...document.querySelectorAll('#textview .tv-ci-fail')].map((n) => ({ tag: n.textContent.replace(/^✗\s*/, ''), label: n.closest('[role="treeitem"]').getAttribute('aria-label') })));
     for (const m of ciMarks) if (!m.tag || !m.label.includes(m.tag)) throw new Error('«CI fallando» no está en el nombre accesible: ' + JSON.stringify(m));
+    // las marcas de una rama y la nota de un commit ya van en el nombre accesible de su nodo: no se leen dos veces
+    const loud = await page.evaluate(() => [...document.querySelectorAll('#textview [role="treeitem"][aria-label] :is(.tv-tag, .tv-aside)')].filter((n) => !n.closest('[aria-hidden="true"]')).map((n) => n.className + ': ' + n.textContent));
+    if (loud.length) throw new Error('marcas que el lector leería dos veces (sin aria-hidden): ' + loud.slice(0, 3).join(' | '));
     // los commits con tag lo dicen en su nombre accesible («tag v1.0.0») y la región viva cuenta cuántos hay al abrir
     const marks = await page.evaluate(() => {
       const commits = [...document.querySelectorAll('#textview .tv-commit')];
@@ -942,7 +1006,7 @@ console.log('Escritorio (1280×800)');
     });
     if (marks.marked !== marks.named) throw new Error(`commits con tag sin decirlo en su nombre accesible: ${marks.marked} vs ${marks.named}`);
     // la demo publica v1.4.0 como release sobre un commit con ese tag: se dice «release» en su nombre y la región viva lo cuenta
-    if (!marks.released || !/Commits con release: \d+(\. Forks activos: \d+)?$/.test(marks.live)) throw new Error(`el release de la demo no se dice (${marks.released}): ${marks.live}`);
+    if (!marks.released || !/Commits con release: \d+(\. PRs abiertos con CI fallando: \d+)?(\. Forks activos: \d+)?$/.test(marks.live)) throw new Error(`el release de la demo no se dice (${marks.released}): ${marks.live}`);
     if (marks.marked && !/^Commits con tag: \d+/.test(marks.live)) throw new Error('la región viva no cuenta los commits con tag: ' + marks.live);
     // los 2 forks activos de la demo salen como lista de enlaces aparte del árbol, el más reciente primero, y la región viva los cuenta
     const forks = await page.evaluate(() => ({
@@ -960,10 +1024,12 @@ console.log('Escritorio (1280×800)');
     });
     if (!prs.named || prs.named !== prs.chips || !prs.total) throw new Error('la vista de texto no dice los PRs abiertos de cada rama: ' + JSON.stringify(prs));
     // la demo trae todos sus PRs abiertos: cada rama que no es la por defecto, sin PR abierto y sin fusionar lo dice
-    // («sin PR abierto») en su nombre accesible, y ninguna con PRs abiertos, fusionada o la por defecto lo dice
+    // («sin PR abierto») en su nombre accesible, y ninguna con PRs abiertos, fusionada o la por defecto lo dice. Que haya
+    // alguna así depende de la demo: a esta altura a veces ya abrió PR para todas (con la demo quieta y ninguna mal
+    // marcada, falló 3 veces así); la regla, con datos fijos, está en tools/textview.test.mjs
     const noPr = await page.$$eval('#textview .tv-branch', (bs) => bs.map((n) => n.getAttribute('aria-label')).map((l) => ({ l, says: /, sin PR abierto,/.test(l), should: !/, rama por defecto|, PRs abiertos: \d+|, fusionada/.test(l) })));
     const badNoPr = noPr.filter((r) => r.says !== r.should);
-    if (!noPr.some((r) => r.says) || badNoPr.length) throw new Error('la vista de texto no dice qué ramas no tienen PR abierto: ' + JSON.stringify(badNoPr.slice(0, 3).map((r) => r.l)));
+    if (badNoPr.length) throw new Error('la vista de texto no dice qué ramas no tienen PR abierto: ' + JSON.stringify(badNoPr.slice(0, 3).map((r) => r.l)));
     // cada rama dice en su nombre accesible quién hizo el commit de su punta, el mismo autor que dice su primer commit
     const tips = await page.$$eval('#textview .tv-branch', (bs) => bs.map((n) => ({ branch: n.dataset.branch, label: n.getAttribute('aria-label'), first: n.querySelector('.tv-commit')?.getAttribute('aria-label') || '' })));
     // el autor del primer commit (la punta) sale de su nombre «mensaje, de Autor, hace…» y la rama lo dice entero, seguido de una coma
@@ -984,6 +1050,25 @@ console.log('Escritorio (1280×800)');
     });
     const gotMerged = mergedBr.filter((m) => m.label || m.chip);
     if (gotMerged.length !== 1 || gotMerged[0].b !== 'hecha' || !gotMerged[0].label || !gotMerged[0].chip) throw new Error('la vista de texto no dice la rama fusionada: ' + JSON.stringify(mergedBr));
+    // los PRs abiertos con el CI en rojo salen en una lista aparte del árbol (árbol montado aparte, con PRs fijos): el de
+    // url https es un enlace, el otro solo texto, el título entra como texto y la región viva los cuenta
+    const ciPulls = await page.evaluate(() => {
+      const c = (sha, parents, date) => [sha, { sha, parents, message: sha, date, author: { name: 'Ana' } }];
+      const data = { repo: { defaultBranch: 'main' }, commits: new Map([c('a', [], 1), c('f', ['a'], 2)]), branches: new Map([['main', { name: 'main', sha: 'a', isDefault: true }], ['roja', { name: 'roja', sha: 'f' }]]), ci: new Map([['roja', 'failure']]),
+        pulls: new Map([[12, { number: 12, title: '<img src=x onerror=alert(1)> arregla', head: 'roja', sameRepo: true, url: 'https://github.com/o/r/pull/12' }], [13, { number: 13, title: 'sin enlace', head: 'roja', sameRepo: true, url: null }], [14, { number: 14, title: 'verde', head: 'main', sameRepo: true, ci: 'success' }]]) };
+      const box = document.createElement('div');
+      const live = document.createElement('div');
+      const view = GB.textview.mount(box, { text: (k, p) => GB.i18n.t(k, p), ago: () => "", onGo() {}, live });
+      view.render(GB.textview.build(data, { now: 6 }));
+      const sec = box.querySelector('.tv-cipulls');
+      return { h: sec?.querySelector('h3')?.textContent, labelled: sec?.getAttribute('aria-labelledby') === sec?.querySelector('h3')?.id, rows: [...(sec?.querySelectorAll('li > .tv-cipull') || [])].map((n) => ({ tag: n.tagName, href: n.getAttribute('href'), rel: n.getAttribute('rel'), txt: n.querySelector('.tv-name').textContent })), img: box.querySelectorAll('img').length, inTree: !!box.querySelector('[role="tree"] .tv-cipulls'), live: live.textContent };
+    });
+    if (ciPulls.h !== 'PRs abiertos con CI fallando: 2' || !ciPulls.labelled || ciPulls.inTree || ciPulls.img || ciPulls.rows.length !== 2) throw new Error('la vista de texto no lista los PRs con CI fallido: ' + JSON.stringify(ciPulls));
+    if (ciPulls.rows[0].tag !== 'SPAN' || ciPulls.rows[0].txt !== '#13 sin enlace, rama roja' || ciPulls.rows[1].tag !== 'A' || ciPulls.rows[1].href !== 'https://github.com/o/r/pull/12' || !/noopener/.test(ciPulls.rows[1].rel) || ciPulls.rows[1].txt !== '#12 <img src=x onerror=alert(1)> arregla, rama roja') throw new Error('los PRs con CI fallido no salen como deben: ' + JSON.stringify(ciPulls.rows));
+    if (!/PRs abiertos con CI fallando: 2$/.test(ciPulls.live)) throw new Error('la región viva no cuenta los PRs con CI fallido: ' + ciPulls.live);
+    // y en la demo: si hay algún PR abierto con el CI en rojo, su lista dice cuántos son y trae esas filas, fuera del árbol
+    const demoCi = await page.evaluate(() => ({ rows: document.querySelectorAll('#textview .tv-cipulls .tv-cipull').length, h: document.querySelector('#textview .tv-cipulls h3')?.textContent || '', inTree: !!document.querySelector('#textview [role="tree"] .tv-cipulls') }));
+    if (demoCi.h && (demoCi.inTree || !/^PRs abiertos con CI fallando: \d+$/.test(demoCi.h) || Math.min(Number(demoCi.h.match(/\d+$/)[0]), 20) !== demoCi.rows)) throw new Error('la lista de PRs con CI fallido de la demo no coincide con su título: ' + JSON.stringify(demoCi));
     // la rama por defecto viene abierta: ↓ baja a su primer commit; ← sube a la rama y otra ← la cierra
     await page.keyboard.press('ArrowDown');
     const onCommit = await page.evaluate(() => document.activeElement.classList.contains('tv-commit'));
@@ -1050,7 +1135,7 @@ console.log('Escritorio (1280×800)');
       return { role: l.getAttribute('role'), polite: l.getAttribute('aria-live'), text: l.textContent };
     });
     if (live.role !== 'status' || live.polite !== 'polite') throw new Error('la región viva no es role=status polite');
-    if (live.text && !/^Commits con tag: \d+(\. Commits con release: \d+)?(\. Forks activos: \d+)?$/.test(live.text)) throw new Error('al abrir, la región viva ya anuncia algo más que los tags y releases: ' + live.text);
+    if (live.text && !/^Commits con tag: \d+(\. Commits con release: \d+)?(\. PRs abiertos con CI fallando: \d+)?(\. Forks activos: \d+)?$/.test(live.text)) throw new Error('al abrir, la región viva ya anuncia algo más que los tags y releases: ' + live.text);
     // filtro: un nombre que no existe vacía el árbol; el de la primera rama lo deja con esa rama
     const first = await page.evaluate(() => document.querySelector('#textview .tv-branch').dataset.branch);
     await page.fill('#textview-filter', 'zzz-no-existe');
@@ -1094,6 +1179,95 @@ console.log('Escritorio (1280×800)');
     if (await page.evaluate(() => document.querySelector('#cmdk').open)) throw new Error('la paleta sigue abierta tras accionar');
     await page.keyboard.press('Escape');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
+  });
+
+  await step(page, 'barra superior: tres grupos y un botón que abre la paleta de comandos, con su atajo a la vista', async () => {
+    const bar = await page.evaluate(() => ({
+      seps: document.querySelectorAll('.controls > .ctl-sep').length,
+      kbd: document.querySelector('#cmdk-kbd')?.textContent || '',
+      kbdShown: !!document.querySelector('#cmdk-kbd')?.checkVisibility?.(),
+      name: document.querySelector('#cmdk-btn')?.getAttribute('aria-label') || '',
+    }));
+    if (bar.seps !== 2) throw new Error(`la barra tiene ${bar.seps} separadores (se esperan 2: en vivo · explorar · preferencias)`);
+    if (!bar.kbdShown || !/K$/.test(bar.kbd)) throw new Error(`el atajo no se ve junto al botón: «${bar.kbd}»`);
+    if (!bar.name || /cmdk\./.test(bar.name)) throw new Error(`el botón de la paleta sin nombre traducido: «${bar.name}»`);
+    await page.click('#cmdk-btn');
+    await page.waitForSelector('#cmdk[open]', { timeout: T(3000) });
+    if (!(await page.evaluate(() => document.activeElement?.id === 'cmdk-input'))) throw new Error('al abrir con el botón, el foco no está en el campo');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#cmdk:not([open])', { state: 'attached', timeout: T(3000) });
+    if (!(await page.evaluate(() => document.activeElement?.id === 'cmdk-btn'))) throw new Error('al cerrar, el foco no vuelve al botón de la paleta');
+  });
+
+  await step(page, 'panel de actividad: su borde se mueve con el teclado y el ratón, se pliega a una franja que cuenta lo nuevo y se recuerda', async () => {
+    const width = () => page.evaluate(() => Math.round(document.querySelector('#feed-panel').getBoundingClientRect().width));
+    const stored = (k) => page.evaluate((key) => localStorage.getItem('graphbranch:' + key), k);
+    const w0 = await width();
+    await page.focus('#feed-resize');
+    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('ArrowLeft');
+    const w1 = await width();
+    if (Math.abs(w1 - (w0 + 48)) > 2) throw new Error(`dos flechas a la izquierda: ${w0} → ${w1} px (se esperaban ${w0 + 48})`);
+    const now = await page.evaluate(() => Number(document.querySelector('#feed-resize').getAttribute('aria-valuenow')));
+    if (Math.abs(now - w1) > 2) throw new Error(`aria-valuenow dice ${now} y el panel mide ${w1}`);
+    await page.keyboard.press('Home');
+    if (Math.abs((await width()) - 280) > 2 || (await stored('feedWidth')) !== '280') throw new Error(`Inicio no lo deja en 280 px ni lo recuerda: ${await width()} px, guardado ${await stored('feedWidth')}`);
+    await page.dblclick('#feed-resize');
+    if (Math.abs((await width()) - 370) > 2 || (await stored('feedWidth')) !== null) throw new Error(`doble clic no vuelve al ancho de siempre: ${await width()} px`);
+    // con el ratón: el borde se arrastra 100 px hacia el grafo
+    const r = await page.$eval('#feed-resize', (e) => e.getBoundingClientRect().toJSON());
+    await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(r.x + r.width / 2 - 100, r.y + r.height / 2, { steps: 6 });
+    await page.mouse.up();
+    await page.waitForFunction(() => Math.abs(document.querySelector('#feed-panel').getBoundingClientRect().width - 470) <= 4, null, { timeout: T(3000) });
+    await page.dblclick('#feed-resize');
+    // plegado: una franja angosta, el grafo más ancho y lo que llega en vivo contado en la franja
+    const g0 = await page.evaluate(() => document.querySelector('#graph-panel').getBoundingClientRect().width);
+    await page.click('#feed-fold');
+    const folded = await page.evaluate(() => ({
+      on: document.querySelector('.main').classList.contains('feed-folded'),
+      w: document.querySelector('#feed-panel').getBoundingClientRect().width,
+      list: document.querySelector('#feed').checkVisibility(),
+      expanded: document.querySelector('#feed-fold').getAttribute('aria-expanded'),
+      graph: document.querySelector('#graph-panel').getBoundingClientRect().width,
+    }));
+    if (!folded.on || folded.w > 60 || folded.list || folded.expanded !== 'false') throw new Error(`el panel no se pliega: ${JSON.stringify(folded)}`);
+    if (folded.graph < g0 + 250) throw new Error(`el grafo no gana el ancho del panel: ${Math.round(g0)} → ${Math.round(folded.graph)} px`);
+    if ((await stored('feedFolded')) !== 'true') throw new Error('el panel plegado no se recuerda');
+    await page.waitForFunction(() => /^\+\d+$/.test(document.querySelector('#feed-unseen').textContent) && !document.querySelector('#feed-unseen').hidden, null, { timeout: T(20000) });
+    await page.click('#feed-fold');
+    const back = await page.evaluate(() => ({ list: document.querySelector('#feed').checkVisibility(), unseen: document.querySelector('#feed-unseen').hidden, expanded: document.querySelector('#feed-fold').getAttribute('aria-expanded') }));
+    if (!back.list || !back.unseen || back.expanded !== 'true') throw new Error(`el panel no vuelve entero: ${JSON.stringify(back)}`);
+    if ((await stored('feedFolded')) !== null) throw new Error('desplegado, el panel sigue guardado como plegado');
+  });
+
+  await step(page, 'salud del repo: en pantalla ancha, sus secciones en dos columnas', async () => {
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #health-body .hl-sec', { timeout: T(5000) });
+    const cols = await page.evaluate(() => new Set([...document.querySelectorAll('#health-body > .hl-sec')].map((s) => Math.round(s.getBoundingClientRect().left))).size);
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
+    if (cols < 2) throw new Error(`las secciones de la salud están en ${cols} columna`);
+  });
+
+  await step(page, 'avisos en mazo: el más nuevo entero y los anteriores asomando detrás, desplegados con el puntero', async () => {
+    await page.mouse.move(5, 5);
+    await page.evaluate(() => document.activeElement?.blur());
+    // la demo trae actividad cada 3 a 7 s y un aviso común dura 6: se espera a tener dos a la vez
+    await page.waitForFunction(() => document.querySelectorAll('#toasts .toast:not(.leaving)').length >= 2, null, { timeout: T(45000) });
+    // el aviso de atrás se pliega con una transición de max-height (0,25 s): bajo carga se medía a medio plegar
+    await page.waitForFunction(() => [...document.querySelectorAll('#toasts .toast:not(.leaving)')].every((t) => t.dataset.depth === '0' || t.getBoundingClientRect().height <= 20), null, { timeout: T(2000) }).catch(() => {});
+    const deck = await page.evaluate(() => {
+      const ts = [...document.querySelectorAll('#toasts .toast:not(.leaving)')];
+      return { depths: ts.map((t) => t.dataset.depth), back: ts.filter((t) => t.dataset.depth !== '0').map((t) => Math.round(t.getBoundingClientRect().height)), front: Math.round(ts.find((t) => t.dataset.depth === '0')?.getBoundingClientRect().height || 0) };
+    });
+    if (deck.depths.filter((d) => d === '0').length !== 1) throw new Error(`profundidades: ${deck.depths.join(',')} (se espera un solo aviso al frente)`);
+    if (deck.front < 40 || deck.back.some((h) => h > 20)) throw new Error(`el mazo no se pliega: al frente ${deck.front} px, detrás ${deck.back.join(', ')} px`);
+    await page.hover('#toasts .toast[data-depth="0"]');
+    // desplegado: los de atrás vuelven a su alto (o ya se fueron, que también vale)
+    await page.waitForFunction(() => [...document.querySelectorAll('#toasts .toast:not(.leaving):not([data-depth="0"])')].every((t) => t.getBoundingClientRect().height > 30), null, { timeout: T(3000) });
+    await page.mouse.move(5, 5);
   });
 
   await step(page, 'paleta de comandos: escribir el nombre de una rama o el SHA de un commit ofrece saltar a él, sin consultas', async () => {
@@ -1457,21 +1631,31 @@ console.log('Escritorio (1280×800)');
 
 
   await step(page, 'quién tocó un archivo: el botón del diff lista los últimos commits con su autor, y otro clic lo cierra', async () => {
+    // el panel puede seguir cargando el commit que abrió el paso anterior: al llegar, rehace sus archivos (pendiente 1 de
+    // la iteración 259: con un localizador, el segundo clic caía en el botón nuevo, abría su lista y el paso fallaba)
+    await page.waitForFunction(() => !document.querySelector('#diff-panel').classList.contains('loading'), null, { timeout: T(5000) });
     const file = page.locator('#diff-panel .df-file').first();
     await file.evaluate((d) => (d.open = true));
-    const btn = file.locator('.df-blame');
-    await btn.waitFor({ timeout: T(5000) });
+    await file.locator('.df-blame').waitFor({ timeout: T(5000) });
+    // los dos clics, al mismo botón y a su misma lista: si la demo vuelve a dibujar el panel en el medio, el
+    // segundo sigue siendo sobre la lista que abrió el primero
+    const btn = await file.locator('.df-blame').elementHandle();
+    const log = await btn.evaluateHandle((b) => b.closest('.df-file').querySelector('.df-blamelog'));
     if (!/\S/.test((await btn.getAttribute('aria-label')) || '') || /diff\.|undefined/.test(await btn.textContent())) throw new Error('el botón no tiene nombre');
     await btn.click({ timeout: T(5000) });
-    await file.locator('.df-blamelist li').first().waitFor({ timeout: T(5000) }).catch(() => {
-      throw new Error('no apareció ningún commit: ' + ('' + 'sin lista'));
+    await page.waitForFunction((l) => l.querySelector('.df-blamelist li'), log, { timeout: T(5000) }).catch(() => {
+      throw new Error('no apareció ningún commit: sin lista');
     });
     if ((await btn.getAttribute('aria-expanded')) !== 'true') throw new Error('aria-expanded no pasó a true');
-    const row = await file.locator('.df-blamelist li').first().textContent();
+    const row = await log.evaluate((l) => l.querySelector('.df-blamelist li').textContent);
     if (/undefined|diff\./.test(row) || row.trim().length < 5) throw new Error('fila vacía o con claves: ' + row);
-    if (!/\d+\D+\d+/.test(await file.locator('.df-blamelist li .df-blame-lines').first().textContent())) throw new Error('la demo no mostró tramos de líneas');
-    await btn.click();
-    if (await file.locator('.df-blamelog').isVisible()) throw new Error('el segundo clic no cerró la lista');
+    if (!/\d+\D+\d+/.test(await log.evaluate((l) => l.querySelector('.df-blamelist li .df-blame-lines')?.textContent || ''))) throw new Error('la demo no mostró tramos de líneas');
+    const after = await btn.evaluate((b, l) => {
+      b.click();
+      return { hidden: l.hidden, expanded: b.getAttribute('aria-expanded') };
+    }, log);
+    if (!after.hidden) throw new Error('el segundo clic no cerró la lista');
+    if (after.expanded !== 'false') throw new Error('aria-expanded no volvió a false');
   });
   await step(page, 'cambios de un commit: un clic en el grafo cambia de commit, lado a lado con palabras marcadas, filtro y panel ancho', async () => {
     // cada espera dice cuál fue si vence (la corrida larga trae mucha historia de la demo y lo recorta)
@@ -1638,9 +1822,15 @@ console.log('Escritorio (1280×800)');
     // se avanza hasta él, y sus cambios son los de verdad
     for (let i = 0; i < 6 && (await page.textContent('#diff-panel .df-msg')) !== opened.msg; i++) {
       await page.waitForFunction(() => !document.querySelector('#diff-panel .df-newer').disabled, null, { timeout: T(5000) });
+      const was = await page.textContent('#diff-panel .df-msg');
       await page.focus('#diff-panel .df-newer');
       await page.keyboard.press('Enter');
-      await page.waitForTimeout(200);
+      // una señal y no 200 ms: bajo carga el commit siguiente tarda en cargar, y un segundo Enter sobre el panel a
+      // medio cambiar se pasaba del commit buscado (el panel queda en uno más nuevo y el mensaje nunca coincide)
+      await page.waitForFunction((w) => {
+        const m = document.querySelector('#diff-panel .df-msg')?.textContent;
+        return m && m !== w && !document.querySelector('#diff-panel.loading');
+      }, was, { timeout: T(5000) });
     }
     await page.waitForFunction((m) => document.querySelector('#diff-panel .df-msg')?.textContent === m, opened.msg, { timeout: T(5000) });
     await page.waitForSelector('#diff-panel:not(.loading) .df-file .dl-add', { timeout: T(5000) });
@@ -1878,7 +2068,7 @@ const repoTabs = (page) =>
     })),
   );
 
-console.log('Varios repos a la vez');
+if (seccion('Varios repos a la vez'))
 {
   const gh = fakeGitHub();
   for (const r of ['o/a', 'o/b', 'o/c']) gh.repo(r);
@@ -2050,6 +2240,32 @@ console.log('Varios repos a la vez');
     }));
     const want = [['draft', '#8 Borrador a medias | o/b · main · bea'], ['waiting', '#7 Cambio en revisión | o/b · main · bea']];
     if (!/2/.test(lp.title || '') || lp.groups.length !== 2 || want.some(([id, row], i) => lp.groups[i].id !== id || lp.groups[i].rows.length !== 1 || !lp.groups[i].rows[0].startsWith(row)) || /\{|undefined|NaN/.test(lp.title + lp.groups.map((g) => g.rows.join()).join())) throw new Error('el Launchpad: ' + JSON.stringify(lp));
+    // fijar un PR arriba: se recuerda por repo y número (sin el título) y el mismo botón lo suelta
+    const pinSel = '#all-prs .ap-row[data-number="7"] + .ap-pin';
+    await page.click(pinSel);
+    const pinned = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), label: document.querySelector(sel)?.getAttribute('aria-label'), saved: localStorage.getItem('graphbranch:prpins'), focus: document.activeElement?.matches(sel) }), pinSel);
+    if (pinned.pressed !== 'true' || pinned.saved !== '["o/b#7"]' || !pinned.focus || /\{|undefined/.test(pinned.label || '')) throw new Error('fijar un PR del Launchpad: ' + JSON.stringify(pinned));
+    await page.click(pinSel);
+    const unpinned = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), saved: localStorage.getItem('graphbranch:prpins') }), pinSel);
+    if (unpinned.pressed !== 'false' || unpinned.saved !== null) throw new Error('soltar un PR del Launchpad: ' + JSON.stringify(unpinned));
+    // posponer un PR un día: baja (atenuado) al final de su grupo, se recuerda por repo y número con su vencimiento, y fijarlo lo deja de posponer
+    const zzSel = '#all-prs .ap-row[data-number="7"] ~ .ap-snooze';
+    await page.click(zzSel);
+    const snoozed = await page.evaluate((sel) => {
+      const b = document.querySelector(sel);
+      const saved = JSON.parse(localStorage.getItem('graphbranch:prsnooze') || 'null');
+      return { pressed: b?.getAttribute('aria-pressed'), label: b?.getAttribute('aria-label'), cls: b?.closest('li')?.classList.contains('snoozed'), ids: Object.keys(saved || {}), hours: saved && (saved['o/b#7'] - Date.now()) / 3.6e6, focus: document.activeElement?.matches(sel) };
+    }, zzSel);
+    if (snoozed.pressed !== 'true' || !snoozed.cls || snoozed.ids.join() !== 'o/b#7' || !(snoozed.hours > 23.9 && snoozed.hours <= 24) || !snoozed.focus || !/7/.test(snoozed.label || '') || /\{|undefined/.test(snoozed.label || '')) throw new Error('posponer un PR del Launchpad: ' + JSON.stringify(snoozed));
+    await page.click(pinSel);
+    const pinWins = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), snooze: localStorage.getItem('graphbranch:prsnooze'), pins: localStorage.getItem('graphbranch:prpins') }), zzSel);
+    if (pinWins.pressed !== 'false' || pinWins.snooze !== null || pinWins.pins !== '["o/b#7"]') throw new Error('fijar un PR pospuesto: ' + JSON.stringify(pinWins));
+    await page.click(zzSel);
+    const snoozeWins = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), pins: localStorage.getItem('graphbranch:prpins') }), zzSel);
+    if (snoozeWins.pressed !== 'true' || snoozeWins.pins !== null) throw new Error('posponer un PR fijado: ' + JSON.stringify(snoozeWins));
+    await page.click(zzSel);
+    const unsnoozed = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), saved: localStorage.getItem('graphbranch:prsnooze') }), zzSel);
+    if (unsnoozed.pressed !== 'false' || unsnoozed.saved !== null) throw new Error('dejar de posponer un PR del Launchpad: ' + JSON.stringify(unsnoozed));
     await page.click('#all-prs .ap-row[data-number="7"]');
     await page.waitForFunction(() => document.querySelector('#all-panel').hidden && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
     await page.click('#all-tab');
@@ -2111,6 +2327,77 @@ console.log('Varios repos a la vez');
     await page.click('#settings-cancel');
     await page.click('#all-tab'); // deja la vista conjunta como estaba para los pasos que siguen
     await page.waitForSelector('#all-panel', { state: 'hidden', timeout: T(3000) });
+  });
+
+  await step(page, 'modo TV en la vista conjunta: entra con todos los repos a la vista y sin desplazarse, R pasa al grafo y vuelve, y al salir queda como estaba sin guardar nada', async () => {
+    await page.click('#all-tab');
+    await page.waitForSelector('#all-panel:not([hidden]) .rc-card', { timeout: T(5000) });
+    const saved = await page.evaluate(() => localStorage.getItem('graphbranch:all'));
+    await page.click('#all-tv-btn'); // el botón de la cabecera: el de la barra del grafo no se ve con la vista conjunta
+    await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: T(3000) });
+    const tvState = () =>
+      page.evaluate(() => {
+        const grid = document.querySelector('#all-grid');
+        const bar = document.querySelector('#tv-bar');
+        return {
+          all: document.querySelector('.app').classList.contains('all-on') && !document.querySelector('#all-panel').hidden,
+          graph: document.querySelector('#graph-panel').checkVisibility(),
+          bar: bar.closest('#all-panel') ? 'todos' : bar.closest('#graph-panel') ? 'grafo' : 'otro',
+          barShown: bar.checkVisibility(),
+          pressed: document.querySelector('#tv-all').getAttribute('aria-pressed'),
+          grid: `${grid.style.getPropertyValue('--tv-cols')}x${grid.style.getPropertyValue('--tv-rows')}`,
+          scroll: grid.scrollHeight - grid.clientHeight,
+          inside: [...grid.querySelectorAll('.rc-card')].every((c) => {
+            const r = c.getBoundingClientRect();
+            return r.height > 120 && r.top >= 0 && r.bottom <= innerHeight + 1;
+          }),
+          controls: ['#all-panel .hint', '.ap-pin', '.ap-snooze', '.ap-person'].filter((s) => document.querySelector(s)?.checkVisibility()),
+          focus: document.activeElement?.id || '',
+        };
+      });
+    const on = await tvState();
+    if (!on.all || on.bar !== 'todos' || !on.barShown || on.pressed !== 'true') throw new Error(`al entrar desde la vista conjunta no se queda en ella con su barra: ${JSON.stringify(on)}`);
+    if (on.grid !== '2x1' || on.scroll > 1 || !on.inside) throw new Error(`las tarjetas no entran en la pantalla: ${JSON.stringify(on)}`);
+    if (on.controls.length) throw new Error(`en TV se ven controles: ${on.controls.join(', ')}`);
+    if (on.focus !== 'all-panel') throw new Error(`el foco quedó en ${on.focus || 'el documento'} y no en la vista`);
+    // lo que llega a un repo enciende su tarjeta (en la vista conjunta no se salta de un repo a otro)
+    gh.push('o/b', 'main', 'llega en la TV');
+    await page.waitForSelector('.rc-card[data-key="o/b"].rc-news', { timeout: T(15000) });
+    if (!(await tvState()).all) throw new Error('una novedad sacó la pantalla de la vista conjunta');
+    await page.keyboard.press('r');
+    await page.waitForFunction(() => !document.querySelector('.app').classList.contains('all-on'), null, { timeout: T(3000) });
+    const graph = await tvState();
+    if (!graph.graph || graph.bar !== 'grafo' || graph.pressed !== 'false') throw new Error(`R no pasa al grafo con su barra: ${JSON.stringify(graph)}`);
+    await page.click('#tv-all');
+    await page.waitForFunction(() => document.querySelector('.app').classList.contains('all-on'), null, { timeout: T(3000) });
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: T(3000) });
+    const off = await page.evaluate(() => ({ all: document.querySelector('.app').classList.contains('all-on'), saved: localStorage.getItem('graphbranch:all'), url: new URL(location.href).searchParams.get('tv') }));
+    if (!off.all || off.saved !== saved || off.url) throw new Error(`al salir del modo TV no queda como estaba: ${JSON.stringify(off)} (guardado antes: ${saved})`);
+    // el foco no se pierde: sigue en la vista (como en el grafo al salir con Esc)
+    if (!(await page.evaluate(() => document.activeElement && document.activeElement !== document.body && document.activeElement.getClientRects().length > 0))) throw new Error('al salir del modo TV, el foco se perdió');
+    await page.click('#all-tab'); // deja la vista conjunta como estaba para los pasos que siguen
+    await page.waitForSelector('#all-panel', { state: 'hidden', timeout: T(3000) });
+  });
+
+  await step(page, '?all=1&tv=1 abre el modo TV con todos los repos a la vista; ?tv=1 solo, con el grafo', async () => {
+    for (const [query, want] of [['all=1&tv=1', true], ['tv=1', false]]) {
+      const p = await openPage({ viewport: { width: 1280, height: 800 } });
+      await p.unroute('https://api.github.com/**');
+      await p.route('https://api.github.com/**', gh.handle);
+      await p.addInitScript(quickCycles);
+      try {
+        await p.goto(`${base}/index.html?lang=es&repo=o/a&repo=o/b&${query}`);
+        await p.waitForFunction(() => document.documentElement.classList.contains('tv') && document.querySelectorAll('#repo-tabs .rt').length === 2, null, { timeout: T(15000) });
+        if (want) await p.waitForSelector('#all-panel:not([hidden]) .rc-card', { timeout: T(10000) });
+        else await p.waitForTimeout(1500);
+        const got = await p.evaluate(() => ({ all: document.querySelector('.app').classList.contains('all-on'), btn: !document.querySelector('#tv-all').hidden }));
+        if (got.all !== want || !got.btn) throw new Error(`?${query}: ${JSON.stringify(got)}`);
+        if (p.errors.length) throw new Error(`?${query}: ${p.errors.join(' | ')}`);
+      } finally {
+        await p.context().close();
+      }
+    }
   });
 
   await step(page, 'cerrar la pestaña deja de seguir el repo', async () => {
@@ -2470,6 +2757,8 @@ console.log('Varios repos a la vez');
       const gx = await full.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => ({ label: b.getAttribute('aria-label'), r: b.getBoundingClientRect().toJSON() })));
       if (gx.length !== 20) throw new Error(`la constelación tiene ${gx.length} galaxias`);
       if (gx.some((g) => !g.label || /undefined|NaN|constellation\./.test(g.label))) throw new Error('galaxia sin nombre o con texto sin resolver: ' + JSON.stringify(gx.map((g) => g.label)));
+      // repos que no cargaron ningún commit (dan 404): su galaxia no dice cuánto hace de un commit que no hay
+      if (gx.some((g) => /\bhace\b|\bahora\b/.test(g.label))) throw new Error('una galaxia sin commits dice cuánto hace: ' + JSON.stringify(gx.map((g) => g.label)));
       for (let i = 0; i < gx.length; i++)
         for (let j = i + 1; j < gx.length; j++) {
           const a = gx[i].r, b = gx[j].r;
@@ -2552,6 +2841,48 @@ console.log('Varios repos a la vez');
         const openForks = await iss.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => b.dataset.key).join(' '));
         if (openForks !== 'o/b o/a o/c') throw new Error('?order=forks no abre la constelación ordenada por forks: ' + openForks);
         await iss.click('#constellation-close');
+        // ?order=recent: el commit más reciente ya cargado primero, sin consultas nuevas (repos y página aparte, sin las pestañas de arriba)
+        for (const r of ['rec/dos', 'rec/uno', 'rec/tres']) gh.repo(r); // en ese orden: sus commits, del más viejo al más nuevo
+        gh.push('rec/uno', 'main', 'lo más nuevo');
+        const rec = await openPage({ viewport: { width: 1280, height: 800 } });
+        try {
+          await rec.unroute('https://api.github.com/**');
+          await rec.route('https://api.github.com/**', gh.handle);
+          await rec.goto(`${base}/index.html?lang=es&order=recent&repo=rec/tres&repo=rec/dos&repo=rec/uno`);
+          await rec.waitForFunction(() => { const t = [...document.querySelectorAll('#repo-tabs .rt')]; return t.length === 3 && t.every((x) => x.dataset.state === 'live'); }, null, { timeout: T(15000) });
+          await rec.click('#constellation-btn');
+          await rec.waitForSelector('#constellation[open]', { timeout: T(3000) });
+          if ((await rec.$eval('#constellation-order', (s) => s.value)) !== 'recent') throw new Error('?order=recent no deja el selector en último commit');
+          const byRecent = await rec.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => b.dataset.key).join(' '));
+          if (byRecent !== 'rec/uno rec/tres rec/dos') throw new Error('?order=recent no abre la constelación con el commit más reciente primero: ' + byRecent);
+          // cada galaxia dice cuánto hace de su commit más reciente ya cargado, en su nombre accesible y en su globo
+          const when = await rec.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => [b.getAttribute('aria-label'), b.title]));
+          for (const [label, title] of when)
+            if (!/, (ahora|hace \d+ (s|min))(,|$)/.test(label) || !/ · (ahora|hace \d+ (s|min))$/.test(title)) throw new Error('la galaxia no dice cuánto hace de su último commit: ' + JSON.stringify(when));
+          await rec.selectOption('#constellation-order', 'tabs');
+          await rec.selectOption('#constellation-order', 'recent');
+          const recentSaid = await rec.$eval('#constellation-status', (e) => e.textContent.trim());
+          if (!/Último commit/.test(recentSaid) || /undefined|constellation\./.test(recentSaid)) throw new Error('el orden por último commit no se anuncia: ' + recentSaid);
+        } finally {
+          await rec.context().close();
+        }
+        // una galaxia quieta (su commit más reciente cargado tiene más de 30 días) lo dice en su nombre y su globo; la reciente no
+        const old = Date.now() - 45 * 864e5;
+        for (const c of gh.repo('rec/viejo').commits.values()) c.commit.author.date = c.commit.committer.date = new Date(old).toISOString();
+        const qui = await openPage({ viewport: { width: 1280, height: 800 } });
+        try {
+          await qui.unroute('https://api.github.com/**');
+          await qui.route('https://api.github.com/**', gh.handle);
+          await qui.goto(`${base}/index.html?lang=es&repo=rec/viejo&repo=rec/uno`);
+          await qui.waitForFunction(() => { const t = [...document.querySelectorAll('#repo-tabs .rt')]; return t.length === 2 && t.every((x) => x.dataset.state === 'live'); }, null, { timeout: T(15000) });
+          await qui.click('#constellation-btn');
+          await qui.waitForSelector('#constellation[open]', { timeout: T(3000) });
+          const quiet = await qui.$$eval('#constellation .cs-gx', (bs) => Object.fromEntries(bs.map((b) => [b.dataset.key, { label: b.getAttribute('aria-label'), title: b.title, quiet: b.dataset.quiet === 'true' }])));
+          if (!/sin actividad hace más de 30 días/.test(quiet['rec/viejo'].label) || !/sin actividad hace más de 30 días/.test(quiet['rec/viejo'].title) || !quiet['rec/viejo'].quiet) throw new Error('la galaxia quieta no lo dice: ' + JSON.stringify(quiet['rec/viejo']));
+          if (/sin actividad/.test(quiet['rec/uno'].label) || quiet['rec/uno'].quiet) throw new Error('la galaxia reciente dice que está quieta: ' + JSON.stringify(quiet['rec/uno']));
+        } finally {
+          await qui.context().close();
+        }
       } finally {
         for (const r of ['o/a', 'o/b', 'o/c']) Object.assign(gh.repo(r), { openItems: 0, stars: 0, forks: 0 });
         await iss.context().close();
@@ -2627,7 +2958,7 @@ console.log('Varios repos a la vez');
   await phonePage.context().close();
 }
 
-console.log('Una organización o un usuario entero');
+if (seccion('Una organización o un usuario entero'))
 {
   const gh = fakeGitHub();
   gh.org('acme');
@@ -2924,7 +3255,7 @@ const quickGitLab = () => {
   hook();
 };
 
-console.log('GitLab');
+if (seccion('GitLab'))
 {
   const gl = fakeGitLab();
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
@@ -3092,7 +3423,7 @@ function fakeCodeberg() {
   };
 }
 
-console.log('Codeberg');
+if (seccion('Codeberg'))
 {
   const cb = fakeCodeberg();
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
@@ -3201,7 +3532,7 @@ function fakeBitbucket() {
   };
 }
 
-console.log('Bitbucket');
+if (seccion('Bitbucket'))
 {
   const bb = fakeBitbucket();
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
@@ -3320,7 +3651,7 @@ function fakeAzure() {
   return az;
 }
 
-console.log('Azure DevOps');
+if (seccion('Azure DevOps'))
 {
   const az = fakeAzure();
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
@@ -3425,7 +3756,7 @@ console.log('Azure DevOps');
   await page.context().close();
 }
 
-console.log('Bitbucket propio con token');
+if (seccion('Bitbucket propio con token'))
 {
   // el CSP de la web no nombra hosts propios (eso lo hace la app de escritorio con --bitbucket-url=): aquí se salta para ver qué sale
   const page = await openPage({ viewport: { width: 1280, height: 800 }, bypassCSP: true });
@@ -3479,7 +3810,58 @@ console.log('Bitbucket propio con token');
   await page.context().close();
 }
 
-console.log('Segunda cuenta de GitHub');
+if (seccion('Forgejo propio con token'))
+{
+  // como el de arriba: el CSP de la web no nombra hosts propios, aquí se salta para ver qué sale
+  const page = await openPage({ viewport: { width: 1280, height: 800 }, bypassCSP: true });
+  const auths = [];
+  await page.route(/^https:\/\/(fg|otro)\.example\.com\//, (route) => {
+    auths.push([new URL(route.request().url()).host, route.request().headers().authorization || '']);
+    return route.fulfill({ status: 404, contentType: 'application/json', body: '{"message":"no existe"}' });
+  });
+
+  await step(page, 'sin ?forge= no hay campo de token propio; con él, nombra su host y el token va solo ahí, atado a esa dirección', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    if (await page.isVisible('#forge-token-field')) throw new Error('el campo se ve sin un servidor elegido');
+    await page.goto(`${base}/index.html?lang=es&forge=https://fg.example.com&repo=forgejo:ana/api`);
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: T(15000) });
+    if (auths.some(([, a]) => a)) throw new Error('sin token, una consulta llevó credenciales');
+    await page.click('#overlay [data-ov=settings]');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    if (!(await page.evaluate(() => document.activeElement?.id === 'forge-token-input'))) throw new Error('«Abrir Ajustes» no lleva al campo del token propio');
+    const where = await page.textContent('#forge-token-where');
+    if (!where.includes('fg.example.com')) throw new Error(`el aviso dice ${where}`);
+    await page.fill('#forge-token-input', 'fg-smoke0123');
+    const from = auths.length;
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForFunction(() => document.querySelector('#overlay:not([hidden])')?.textContent.includes('el token no puede leerlo'), null, { timeout: T(15000) });
+    await page.waitForTimeout(500);
+    const sent = auths.slice(from);
+    if (!sent.length) throw new Error('al guardar el token no se reconectó el repo');
+    if (sent.some(([h, a]) => h !== 'fg.example.com' || a !== 'token fg-smoke0123')) throw new Error(`salió ${JSON.stringify(sent)}`);
+    const saved = await page.evaluate(() => [JSON.parse(JSON.parse(localStorage.getItem('graphbranch:forgeToken'))), localStorage.getItem('graphbranch:codebergToken')]);
+    if (saved[0].base !== 'https://fg.example.com' || saved[0].token !== 'fg-smoke0123' || saved[1] !== null) throw new Error(`se guardó ${JSON.stringify(saved)}`);
+  }, { allow: /404/ });
+
+  await step(page, 'con otro ?forge= el token guardado no se usa ni se muestra', async () => {
+    const from = auths.length;
+    await page.evaluate(() => localStorage.removeItem('graphbranch:repos'));
+    await page.goto(`${base}/index.html?lang=es&forge=https://otro.example.com&repo=forgejo:ana/api`);
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: T(15000) });
+    const sent = auths.slice(from);
+    if (!sent.length || sent.some(([h, a]) => h !== 'otro.example.com' || a)) throw new Error(`salió ${JSON.stringify(sent)}`);
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    if ((await page.inputValue('#forge-token-input')) !== '') throw new Error('el campo muestra el token de otro servidor');
+    if (!(await page.textContent('#forge-token-where')).includes('otro.example.com')) throw new Error('el aviso no nombra el servidor elegido');
+  }, { allow: /404/ });
+  await page.context().close();
+}
+
+if (seccion('Segunda cuenta de GitHub'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   const auths = [];
@@ -3511,7 +3893,7 @@ console.log('Segunda cuenta de GitHub');
   await page.context().close();
 }
 
-console.log('Fijar una rama con el teclado');
+if (seccion('Fijar una rama con el teclado'))
 {
   const gh = fakeGitHub();
   gh.repo('o/f');
@@ -3612,7 +3994,7 @@ console.log('Fijar una rama con el teclado');
   await page.context().close();
 }
 
-console.log('Celular angosto: etiquetas 3D pisadas');
+if (seccion('Celular angosto: etiquetas 3D pisadas'))
 {
   const page = await openPage({ viewport: { width: 320, height: 640 }, isMobile: true, hasTouch: true });
   await step(page, 'a 320 px, una etiqueta 3D tapada por otra no recibe el toque (sigue accesible con Tab)', async () => {
@@ -3659,7 +4041,7 @@ console.log('Celular angosto: etiquetas 3D pisadas');
   await page.context().close();
 }
 
-console.log('Galaxias: cortar un salto hiperespacial');
+if (seccion('Galaxias: cortar un salto hiperespacial'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   // la vista 3D no se expone: se toma la instancia del primer cuadro que dibuja
@@ -3763,7 +4145,7 @@ console.log('Galaxias: cortar un salto hiperespacial');
   await page.context().close();
 }
 
-console.log('Efectos 3D con la vista 2D');
+if (seccion('Efectos 3D con la vista 2D'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await page.addInitScript(() => {
@@ -3795,7 +4177,7 @@ console.log('Efectos 3D con la vista 2D');
   await page.context().close();
 }
 
-console.log('Zumbido del espacio');
+if (seccion('Zumbido del espacio'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   // el último volumen que se le pidió al zumbido del espacio
@@ -3890,7 +4272,7 @@ console.log('Zumbido del espacio');
   await page.context().close();
 }
 
-console.log('Movimiento reducido');
+if (seccion('Movimiento reducido'))
 {
   // lo que solo se ve mientras dura su animación (el combo, la ayuda del vuelo y sus avisos) tiene que
   // verse igual, quieto y el mismo tiempo: si la animación se acorta, salta al final, que es invisible
@@ -3929,7 +4311,7 @@ console.log('Movimiento reducido');
   await page.context().close();
 }
 
-console.log('Contraste del texto (WCAG AA)');
+if (seccion('Contraste del texto (WCAG AA)'))
 for (const colorScheme of ['light', 'dark']) {
   const page = await openPage({ viewport: { width: 1280, height: 900 }, colorScheme });
   await step(page, `tema ${colorScheme === 'light' ? 'claro' : 'oscuro'}: todo el texto visible se lee`, async () => {
@@ -3942,7 +4324,7 @@ for (const colorScheme of ['light', 'dark']) {
   await page.context().close();
 }
 
-console.log('Widget embebido (?embed=1)');
+if (seccion('Widget embebido (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, 'solo el grafo y los avisos, sin barras ni desborde', async () => {
@@ -3965,7 +4347,7 @@ console.log('Widget embebido (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: color de fondo y &hide= (?embed=1)');
+if (seccion('Capa para streaming: color de fondo y &hide= (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&bg=00ff00 pinta el fondo de verde y &hide=notices,combo esconde los avisos', async () => {
@@ -4004,7 +4386,7 @@ console.log('Capa para streaming: color de fondo y &hide= (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &rotate= pasa de un repo a otro (?embed=1)');
+if (seccion('Capa para streaming: &rotate= pasa de un repo a otro (?embed=1)'))
 {
   const gh = fakeGitHub();
   for (const r of ['o/a', 'o/b']) gh.repo(r);
@@ -4026,7 +4408,7 @@ console.log('Capa para streaming: &rotate= pasa de un repo a otro (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &theme= fija el tema (?embed=1)');
+if (seccion('Capa para streaming: &theme= fija el tema (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 }, colorScheme: 'light' });
   await step(page, '&theme=dark pinta la capa oscura aunque el sistema sea claro; sin &theme= sigue al sistema', async () => {
@@ -4043,7 +4425,7 @@ console.log('Capa para streaming: &theme= fija el tema (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &spin=0 apaga la rotación 3D (?embed=1)');
+if (seccion('Capa para streaming: &spin=0 apaga la rotación 3D (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&spin=0 deja la vista 3D quieta sin guardarlo; sin &spin= gira como siempre', async () => {
@@ -4059,7 +4441,7 @@ console.log('Capa para streaming: &spin=0 apaga la rotación 3D (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &view= fija la vista (?embed=1)');
+if (seccion('Capa para streaming: &view= fija la vista (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&view=2d y &view=3d fijan la vista sin guardarla; sin &view= manda la guardada', async () => {
@@ -4079,7 +4461,7 @@ console.log('Capa para streaming: &view= fija la vista (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &title= pone un rótulo propio (?embed=1)');
+if (seccion('Capa para streaming: &title= pone un rótulo propio (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&title= muestra el texto escapado sobre la capa; sin &title= no hay rótulo', async () => {
@@ -4097,7 +4479,7 @@ console.log('Capa para streaming: &title= pone un rótulo propio (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &max= limita las ramas (?embed=1)');
+if (seccion('Capa para streaming: &max= limita las ramas (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&max=2 deja 2 ramas en la capa; sin &max= las de la demo; valores inválidos, todas', async () => {
@@ -4114,7 +4496,7 @@ console.log('Capa para streaming: &max= limita las ramas (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &branch= deja una rama (?embed=1)');
+if (seccion('Capa para streaming: &branch= deja una rama (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&branch=develop deja 2 ramas (develop y la por defecto); una que no existe, solo la por defecto; sin &branch= ninguna marca', async () => {
@@ -4132,7 +4514,7 @@ console.log('Capa para streaming: &branch= deja una rama (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &pr=1 deja las ramas con un PR abierto (?embed=1)');
+if (seccion('Capa para streaming: &pr=1 deja las ramas con un PR abierto (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&pr=1 deja la rama por defecto y solo las ramas con PR abierto (2D y 3D); se combina con &max= y &branch=; &pr=0 no filtra', async () => {
@@ -4163,7 +4545,7 @@ console.log('Capa para streaming: &pr=1 deja las ramas con un PR abierto (?embed
   await page.context().close();
 }
 
-console.log('Filtro por ruta desde la URL (?path=)');
+if (seccion('Filtro por ruta desde la URL (?path=)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre ya filtrado, atenúa el grafo, mantiene la ruta en la URL y al quitarlo la suelta', async () => {
@@ -4199,7 +4581,7 @@ console.log('Filtro por ruta desde la URL (?path=)');
   await page.context().close();
 }
 
-console.log('Vista de un PR desde la URL (?pr=N)');
+if (seccion('Vista de un PR desde la URL (?pr=N)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, '?pr=N abre la vista del PR con su descripción y comentarios, y Esc la cierra', async () => {
@@ -4225,7 +4607,7 @@ console.log('Vista de un PR desde la URL (?pr=N)');
   await page.context().close();
 }
 
-console.log('Vista de texto desde la URL (?vista=texto)');
+if (seccion('Vista de texto desde la URL (?vista=texto)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre la vista de texto con el filtro por ruta y el ?q= aplicados, y lo anuncia en la región viva', async () => {
@@ -4266,7 +4648,7 @@ console.log('Vista de texto desde la URL (?vista=texto)');
   await page.context().close();
 }
 
-console.log('Vista de texto: ramas quietas (GitHub simulado)');
+if (seccion('Vista de texto: ramas quietas (GitHub simulado)'))
 {
   const gh = fakeGitHub();
   gh.repo('o/q');
@@ -4294,7 +4676,7 @@ console.log('Vista de texto: ramas quietas (GitHub simulado)');
   await page.context().close();
 }
 
-console.log('Búsqueda desde la URL (?q=)');
+if (seccion('Búsqueda desde la URL (?q=)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre la búsqueda ya escrita, con resultados, y mantiene el texto en la URL', async () => {
@@ -4328,7 +4710,7 @@ console.log('Búsqueda desde la URL (?q=)');
   await page.context().close();
 }
 
-console.log('Choques entre ramas desde la URL (?conflicts=1)');
+if (seccion('Choques entre ramas desde la URL (?conflicts=1)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre la salud con los choques ya buscados, los mantiene en la URL y al cerrar los suelta', async () => {
@@ -4362,7 +4744,7 @@ console.log('Choques entre ramas desde la URL (?conflicts=1)');
   await page.context().close();
 }
 
-console.log('Filtro por autor desde la URL (?author=)');
+if (seccion('Filtro por autor desde la URL (?author=)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre ya filtrado por esa persona, lo mantiene en la URL y al quitarlo la suelta', async () => {
@@ -4391,7 +4773,7 @@ console.log('Filtro por autor desde la URL (?author=)');
   await page.context().close();
 }
 
-console.log('Grafo de primer padre (?firstparent=1)');
+if (seccion('Grafo de primer padre (?firstparent=1)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'deja menos commits que el grafo entero, queda en la URL y el interruptor lo apaga', async () => {
@@ -4417,7 +4799,7 @@ console.log('Grafo de primer padre (?firstparent=1)');
   await page.context().close();
 }
 
-console.log('Columnas de SHA, autor y fecha en el 2D');
+if (seccion('Columnas de SHA, autor y fecha en el 2D'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'el interruptor de columnas pone «SHA · autor · fecha» junto a los commits del 2D, se recuerda y al apagarlo se quitan', async () => {
@@ -4450,7 +4832,77 @@ console.log('Columnas de SHA, autor y fecha en el 2D');
   await page.context().close();
 }
 
-console.log('Grafo de primer padre en el 3D');
+if (seccion('Columnas de SHA, autor y fecha en el 3D'))
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  // la vista 3D no se expone: se toma la instancia del primer cuadro que dibuja
+  await page.addInitScript(() => {
+    const hook = () => {
+      const G3 = window.GB?.Graph3D?.prototype;
+      if (!G3) return setTimeout(hook, 5);
+      const step = G3.stepCamera;
+      G3.stepCamera = function (...args) {
+        window.__g3 = this;
+        return step.apply(this, args);
+      };
+    };
+    hook();
+  });
+  await step(page, 'el interruptor de columnas también pone «SHA · autor · fecha» bajo el mensaje de los commits cercanos del 3D, se recuerda y al apagarlo se quitan', async () => {
+    await page.goto(`${base}/index.html?lang=es&view=3d`);
+    await loaded(page);
+    if (!(await page.locator('#graph3d canvas').count())) return console.log('    (sin WebGL: se salta)');
+    // los rótulos de commit a la vista: su mensaje y, si lo lleva, su columna
+    const notes = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll('#graph3d .g3-note')]
+          .filter((n) => getComputedStyle(n).display !== 'none')
+          .map((n) => ({ meta: n.querySelector('.g3-meta:not([hidden])')?.textContent || '', h: Math.round(n.getBoundingClientRect().height) }))
+      );
+    // de cerca: los mensajes (y las columnas) solo salen junto a los commits cercanos a la cámara
+    const near = async () => {
+      await page.waitForFunction(() => window.__g3?.nodes.size > 0, null, { timeout: T(15000) });
+      await page.evaluate(() => {
+        const g = window.__g3;
+        g.setSpin?.(false);
+        g.focusSha([...g.nodes.values()].find((it) => it.data.heads.length)?.sha || [...g.nodes.keys()][0], 9);
+      });
+      await page.waitForTimeout(1500); // la cámara llega a su lugar antes de mirar los rótulos
+      await page.waitForFunction(() => [...document.querySelectorAll('#graph3d .g3-note')].some((n) => getComputedStyle(n).display !== 'none'), null, { timeout: T(10000) });
+    };
+    const withMeta = () => page.waitForFunction(() => [...document.querySelectorAll('#graph3d .g3-note')].some((n) => getComputedStyle(n).display !== 'none' && n.querySelector('.g3-meta:not([hidden])')), null, { timeout: T(5000) });
+    await near();
+    const off = await notes();
+    if (!off.length) throw new Error('de cerca no hay ningún rótulo de commit en el 3D');
+    if (off.some((n) => n.meta)) throw new Error('las columnas salen en el 3D sin encender el interruptor');
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    await page.check('#graph-columns');
+    await withMeta();
+    const on = (await notes()).filter((n) => n.meta);
+    if (!on.length) throw new Error('las columnas del 3D se fueron apenas salieron');
+    const bad = on.find((n) => !/^[0-9a-f]{7} · .+ · /.test(n.meta));
+    if (bad) throw new Error('una columna del 3D no es «SHA · autor · fecha»: ' + JSON.stringify(bad.meta));
+    // el SHA corto es el comienzo del SHA de un commit del grafo 3D
+    const sha = on[0].meta.slice(0, 7);
+    if (!(await page.evaluate((p) => [...window.__g3.nodes.keys()].some((k) => k.startsWith(p)), sha))) throw new Error(`ningún commit del 3D empieza por el SHA de una columna (${sha})`);
+    // la columna va en su propio renglón, debajo del mensaje: el rótulo crece
+    const tall = Math.max(...on.map((n) => n.h)), flat = Math.max(...off.map((n) => n.h));
+    if (!(tall > flat + 6)) throw new Error(`la columna no suma un renglón al rótulo del commit (${flat} px sin ella, ${tall} px con ella)`);
+    await page.reload();
+    await loaded(page);
+    await near();
+    await withMeta();
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    await page.uncheck('#graph-columns');
+    await page.waitForFunction(() => ![...document.querySelectorAll('#graph3d .g3-note')].some((n) => getComputedStyle(n).display !== 'none' && n.querySelector('.g3-meta:not([hidden])')), null, { timeout: T(5000) });
+    if (!(await notes()).length) throw new Error('al apagar las columnas también se fueron los mensajes de los commits');
+  });
+  await page.context().close();
+}
+
+if (seccion('Grafo de primer padre en el 3D'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'el interruptor de primer padre también deja menos commits en el grafo 3D, y al apagarlo vuelven', async () => {
@@ -4481,7 +4933,7 @@ console.log('Grafo de primer padre en el 3D');
   await page.context().close();
 }
 
-console.log('Ramas ocultas o solas desde la URL (?solo=, ?ocultar=)');
+if (seccion('Ramas ocultas o solas desde la URL (?solo=, ?ocultar=)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, '?ocultar= y ?solo= abren el grafo con menos ramas, la URL las sigue y «Ver todas» las limpia', async () => {
@@ -4512,7 +4964,7 @@ console.log('Ramas ocultas o solas desde la URL (?solo=, ?ocultar=)');
   await page.context().close();
 }
 
-console.log('Modo TV directo (?tv=1)');
+if (seccion('Modo TV directo (?tv=1)'))
 {
   const page = await openPage({ viewport: { width: 1920, height: 1080 } });
   await step(page, 'abre en modo TV y el director toma la cámara', async () => {
@@ -4525,7 +4977,7 @@ console.log('Modo TV directo (?tv=1)');
   await page.context().close();
 }
 
-console.log('Salud del repo directa (?health=1)');
+if (seccion('Salud del repo directa (?health=1)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre la demo con el panel de salud ya desplegado y con sus secciones', async () => {
@@ -4564,50 +5016,70 @@ console.log('Salud del repo directa (?health=1)');
   await page.context().close();
 }
 
-console.log('Agentes e interacciones (?agents=1)');
+if (seccion('Agentes e interacciones, en vivo, en el lugar del grafo (?agents=1)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
-  await step(page, 'abre la demo con el panel de agentes: la red, quién con quién (también entre agentes), las sesiones y lo último', async () => {
+  await step(page, 'abre la demo en la vista de agentes: la red, la línea de tiempo, lo último, quién con quién y el gasto de ejemplo', async () => {
     await page.goto(`${base}/index.html?lang=es&agents=1`);
     await loaded(page);
-    await page.waitForSelector('#agents[open]', { timeout: T(5000) }).catch(() => {
-      throw new Error('?agents=1 no abrió el panel de agentes');
+    await page.waitForSelector('#agents:not([hidden]) .ag-net', { timeout: T(5000) }).catch(() => {
+      throw new Error('?agents=1 no abrió la vista de agentes');
     });
     const info = await page.evaluate(() => {
       const d = document.querySelector('#agents');
-      const w = d.querySelector('.tr-wrap');
-      const texts = (sel) => [...d.querySelectorAll(sel)].map((x) => x.textContent.replace(/[\u2068\u2069]/g, '')); // sin los aislantes de cada nombre
+      const texts = (sel) => [...d.querySelectorAll(sel)].map((x) => x.textContent.replace(/[⁨⁩]/g, '')); // sin los aislantes de cada nombre
       return {
+        pressed: document.querySelector('#view-agents').getAttribute('aria-pressed'),
+        stage: getComputedStyle(document.querySelector('.graph-stage')).display,
         agents: d.querySelectorAll('svg.ag-net .ag-agent').length,
         people: d.querySelectorAll('svg.ag-net .ag-person').length,
         between: d.querySelectorAll('svg.ag-net .ag-edge-agents').length,
+        heads: d.querySelectorAll('svg.ag-net .ag-ehead').length,
+        edges: d.querySelectorAll('svg.ag-net .ag-edge').length,
+        colored: new Set([...d.querySelectorAll('svg.ag-net .ag-agent')].map((x) => getComputedStyle(x).fill)).size,
         aria: d.querySelector('svg.ag-net')?.getAttribute('aria-label') || '',
+        traces: d.querySelectorAll('svg.ag-time .ag-ev').length,
+        lanes: d.querySelectorAll('svg.ag-time .ag-lane').length,
         pairs: texts('#ag-pairs .hl-main'),
         list: texts('#ag-list .hl-main'),
         recent: texts('#ag-recent .hl-main'),
         rows: d.querySelectorAll('#agents-body button.hl-row[data-sha]').length,
         links: d.querySelectorAll('#agents-body a[href]').length,
+        spendBadge: !!d.querySelector('#ag-spend .sp-badge'),
+        spendServices: d.querySelectorAll('#sp-services .sp-row').length,
+        spendAgents: texts('#sp-agents .sp-name'),
         text: d.textContent,
-        overflow: w.scrollWidth - w.clientWidth,
+        overflow: d.scrollWidth - d.clientWidth,
       };
     });
+    if (info.pressed !== 'true' || info.stage !== 'none') throw new Error(`el botón Agentes (${info.pressed}) o el grafo sigue a la vista (${info.stage})`);
     if (info.agents < 3 || !info.people) throw new Error(`la red: ${info.agents} agentes y ${info.people} personas`);
     if (!info.between) throw new Error('la red no distingue ningún vínculo entre dos agentes');
+    if (info.heads !== info.edges) throw new Error(`${info.edges} vínculos y ${info.heads} puntas de flecha`);
+    if (info.colored < 3) throw new Error(`los agentes de la red no llevan su color: ${info.colored} colores`);
     if (!/\d/.test(info.aria)) throw new Error('la red no dice cuántos participantes y vínculos tiene: ' + info.aria);
+    if (info.traces < 3 || info.lanes < 3) throw new Error(`la línea de tiempo: ${info.traces} trazos en ${info.lanes} filas`);
     if (!info.pairs.some((p) => p === 'GitHub Copilot → Claude Code')) throw new Error('falta Copilot → Claude Code (su revisión del PR de la app de Claude): ' + info.pairs.join(' | '));
     if (!info.pairs.some((p) => /^Claude Code · sesión \w{6} → Claude Code · sesión \w{6}$/.test(p))) throw new Error('falta la sesión de Claude que retoma la rama de otra: ' + info.pairs.join(' | '));
     if (!info.list.some((x) => /^Claude Code · sesión \w{6} · Opus 5\.5$/.test(x)) || !info.list.includes('Dependabot')) throw new Error('la lista de agentes: ' + info.list.join(' | '));
     if (!info.recent.length || !info.rows) throw new Error('sin interacciones recientes o sin filas que lleven al grafo');
     if (info.links) throw new Error('la demo enlaza sesiones de Claude Code, que son ficticias');
-    if (/undefined|NaN|agents\.|tip\./.test(info.text)) throw new Error('texto sin resolver en el panel: ' + info.text.slice(0, 160));
-    if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
+    if (!info.spendBadge || info.spendServices !== 4 || !info.spendAgents.some((x) => /^Claude Code/.test(x))) throw new Error(`el gasto de ejemplo: marca ${info.spendBadge}, ${info.spendServices} servicios, agentes ${info.spendAgents.join(' | ')}`);
+    if (/undefined|NaN|agents\.|spend\.|tip\.|swarm\./.test(info.text)) throw new Error('texto sin resolver en la vista: ' + info.text.slice(0, 160));
+    if (info.overflow > 1) throw new Error(`la vista se desborda ${info.overflow}px`);
+  });
+  await step(page, 'en vivo: lo que llega mientras se mira se anima (lo último y la línea de tiempo)', async () => {
+    const fresh = await page
+      .waitForFunction(() => document.querySelectorAll('#agents .is-new').length, null, { timeout: T(45000) })
+      .then((h) => h.jsonValue(), () => 0);
+    if (!fresh) throw new Error('en 45 s de demo no llegó ninguna interacción nueva a la vista');
   });
   await step(page, 'solo entre agentes: la red y las listas dejan fuera a las personas, se recuerda y el foco se queda en el interruptor', async () => {
     await page.click('#agents-only');
     const r = await page.evaluate(() => ({
       people: document.querySelectorAll('#agents svg.ag-net .ag-person').length,
       agents: document.querySelectorAll('#agents svg.ag-net .ag-agent').length,
-      pairs: [...document.querySelectorAll('#ag-pairs .hl-main')].map((x) => x.textContent.replace(/[\u2068\u2069]/g, '')),
+      pairs: [...document.querySelectorAll('#ag-pairs .hl-main')].map((x) => x.textContent.replace(/[⁨⁩]/g, '')),
       focus: document.activeElement?.id,
       stored: localStorage.getItem('graphbranch:agentsOnly'),
     }));
@@ -4618,19 +5090,182 @@ console.log('Agentes e interacciones (?agents=1)');
     await page.click('#agents-only');
     if (await page.evaluate(() => localStorage.getItem('graphbranch:agentsOnly'))) throw new Error('apagado sigue guardado');
   });
-  await step(page, 'una fila lleva a su commit y cierra el panel; Esc lo cierra, el foco vuelve al botón y agents= sale de la URL', async () => {
+  await step(page, 'elegir a alguien en la red centra las listas en él; Enter lo suelta y el foco se queda en su nodo', async () => {
+    await page.click('#pause-btn'); // la demo quieta: lo que se cuenta no cambia a mitad
+    try {
+      const node = page.locator('#agents .ag-net .ag-n[data-key^="a:claude:"]').first();
+      const key = await node.getAttribute('data-key');
+      await node.locator('.ag-node').click(); // en su figura: el centro del grupo cae entre ella y su rótulo
+      const r = await page.evaluate((key) => ({
+        chip: (document.querySelector('#ag-focus .ag-focus-name')?.textContent || '').replace(/[⁨⁩]/g, ''),
+        pressed: document.querySelector(`#agents .ag-n[data-key="${CSS.escape(key)}"]`)?.getAttribute('aria-pressed'),
+        pairs: [...document.querySelectorAll('#ag-pairs .hl-main')].map((x) => x.textContent.replace(/[⁨⁩]/g, '')),
+        focus: document.activeElement?.getAttribute('data-key'),
+      }), key);
+      if (!/^Solo con Claude Code · sesión \w{6}/.test(r.chip) || r.pressed !== 'true') throw new Error(`elegir: «${r.chip}», aria-pressed ${r.pressed}`);
+      if (!r.pairs.length || r.pairs.some((p) => !p.includes('sesión'))) throw new Error('las listas no se centraron en la sesión elegida: ' + r.pairs.join(' | '));
+      if (r.focus !== key) throw new Error(`el foco quedó en ${r.focus}`);
+      await page.keyboard.press('Enter');
+      if (await page.locator('#ag-focus').count()) throw new Error('Enter no soltó al participante elegido');
+    } finally {
+      await page.click('#pause-btn'); // la demo sigue como estaba, también si algo falló
+    }
+  });
+  await step(page, 'el enjambre: los indicadores, la corteza con sus cortes y su ficha, el ingreso de tareas, el hilo, el ritmo, las barras, el log y el reloj', async () => {
+    await page.waitForSelector('#sw-cortex .sw-viz .sw-label', { timeout: T(5000) }).catch(() => {
+      throw new Error('la corteza no llegó al tablero');
+    });
+    const r = await page.evaluate(() => {
+      const d = document.querySelector('#agents');
+      return {
+        kpis: d.querySelectorAll('#sw-kpis .sw-kpi').length,
+        sparks: d.querySelectorAll('#sw-kpis .sw-spark').length,
+        gl: !!d.querySelector('#sw-cortex .sw-canvas'),
+        flat: !!d.querySelector('#sw-cortex .sw-stage.is-flat'),
+        labels: [...d.querySelectorAll('#sw-cortex .sw-label')].map((b) => (b.getAttribute('aria-label') || '').replace(/[⁨⁩]/g, '')),
+        caps: [...d.querySelectorAll('#sw-cortex .sw-slice figcaption')].map((x) => x.textContent),
+        drawn: [...d.querySelectorAll('#sw-cortex .sw-slice canvas')].filter((c) => c.width > 0 && c.height > 0).length,
+        insp: d.querySelector('#sw-insp dl')?.textContent || '',
+        tasks: d.querySelectorAll('#sw-ingest li').length,
+        routed: d.querySelector('#sw-ingest h3 .hl-n')?.textContent || '',
+        tabs: d.querySelectorAll('#sw-thread .sw-tab[data-pick]').length,
+        msgs: d.querySelectorAll('#sw-thread .sw-msg').length,
+        rate: d.querySelectorAll('#sw-rate svg .sw-rate-l, #sw-rate svg .sw-rate-p').length,
+        bars: d.querySelectorAll('#sw-per .sw-bar-fill').length,
+        log: d.querySelectorAll('#sw-log li').length,
+        clock: document.querySelector('#agents-clock').textContent,
+      };
+    });
+    if (r.kpis !== 7 || r.sparks < 2) throw new Error(`los indicadores: ${r.kpis} y ${r.sparks} curvas`);
+    if (!r.gl && !r.flat) throw new Error('la corteza no se dibujó ni en 3D ni como lista');
+    if (r.labels.length < 3 || r.labels.some((x) => !/ · (escribe|integra|revisa|comenta)$/.test(x))) throw new Error('los rótulos de la corteza no dicen quién es y su rol: ' + r.labels.join(' | '));
+    if (r.caps.length !== 3 || !r.caps.every((x) => /^(Axial|Coronal|Sagital) · [xyz] [+−]\d\.\d\d$/.test(x))) throw new Error('los cortes: ' + r.caps.join(' | '));
+    if (r.drawn !== 3) throw new Error(`se dibujaron ${r.drawn} de 3 cortes`);
+    if (!/Rol/.test(r.insp)) throw new Error('la ficha no dice el rol: ' + r.insp);
+    if (!r.tasks || !/^\d+\/\d+ con un agente$/.test(r.routed)) throw new Error(`el ingreso de tareas: ${r.tasks} filas, «${r.routed}»`);
+    if (!r.tabs || !r.msgs) throw new Error(`el hilo: ${r.tabs} pestañas y ${r.msgs} mensajes`);
+    if (r.rate !== 2 || !r.bars || !r.log) throw new Error(`el ritmo (${r.rate} series), las barras (${r.bars}) o el log (${r.log})`);
+    if (!/\d\d:\d\d:\d\d/.test(r.clock)) throw new Error('el reloj del tablero: ' + JSON.stringify(r.clock));
+  });
+  await step(page, 'elegir a alguien en la corteza (o en una pestaña del hilo) lo elige en todo el tablero, el foco se queda ahí y Enter lo suelta', async () => {
+    await page.click('#pause-btn'); // la demo quieta: lo que se cuenta no cambia a mitad
+    try {
+      const label = page.locator('#sw-cortex .sw-label[data-key^="a:claude:"]').first();
+      const key = await label.getAttribute('data-key');
+      await label.focus();
+      await page.keyboard.press('Enter');
+      const r = await page.evaluate((key) => ({
+        chip: (document.querySelector('#ag-focus .ag-focus-name')?.textContent || '').replace(/[⁨⁩]/g, ''),
+        pressed: document.querySelector(`#sw-cortex .sw-label[data-key="${CSS.escape(key)}"]`)?.getAttribute('aria-pressed'),
+        focus: document.activeElement?.dataset?.key,
+        tab: document.querySelector('#sw-thread .sw-tab.on')?.dataset.pick,
+        insp: (document.querySelector('#sw-insp .sw-insp-name')?.textContent || '').replace(/[⁨⁩]/g, ''),
+      }), key);
+      if (!/^Solo con Claude Code · sesión \w{6}/.test(r.chip) || r.pressed !== 'true') throw new Error(`elegir en la corteza: «${r.chip}», aria-pressed ${r.pressed}`);
+      if (r.focus !== key) throw new Error(`el foco quedó en ${r.focus}`);
+      if (r.tab !== key || !/^Claude Code · sesión \w{6}$/.test(r.insp)) throw new Error(`el hilo (${r.tab}) o la ficha («${r.insp}») no siguieron al elegido`);
+      await page.keyboard.press('Enter');
+      if (await page.locator('#ag-focus').count()) throw new Error('Enter no soltó al elegido desde la corteza');
+      const tab = page.locator('#sw-thread .sw-tab[data-pick]').nth(1);
+      const pick = await tab.getAttribute('data-pick');
+      await tab.click();
+      const t = await page.evaluate(() => ({ on: document.querySelector('#sw-thread .sw-tab.on')?.dataset.pick, focus: document.activeElement?.dataset?.pick, chip: !!document.querySelector('#ag-focus') }));
+      if (t.on !== pick || t.focus !== pick || !t.chip) throw new Error(`la pestaña del hilo: ${JSON.stringify(t)} (se esperaba ${pick})`);
+      await page.click('#ag-focus-clear');
+    } finally {
+      await page.click('#pause-btn'); // la demo sigue como estaba, también si algo falló
+    }
+  });
+  await step(page, 'a 320 px el tablero de agentes, con el enjambre, no se desborda hacia el lado (en español y en tamil)', async () => {
+    const back = page.url();
+    await page.setViewportSize({ width: 320, height: 640 });
+    try {
+      for (const lang of ['es', 'ta']) {
+        await page.goto(`${base}/index.html?lang=${lang}&agents=1`);
+        await loaded(page);
+        await page.waitForSelector('#agents:not([hidden]) #sw-kpis', { timeout: T(5000) });
+        const m = await page.evaluate(() => ({ board: document.querySelector('#agents').scrollWidth - document.querySelector('#agents').clientWidth, doc: document.documentElement.scrollWidth - document.documentElement.clientWidth }));
+        if (m.board > 1 || m.doc > 1) throw new Error(`[${lang}] a 320 px se desborda: tablero ${m.board}px, página ${m.doc}px`);
+      }
+    } finally {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(back);
+      await loaded(page);
+      await page.waitForSelector('#agents:not([hidden]) .ag-net', { timeout: T(5000) });
+    }
+  });
+  await step(page, 'en modo TV el tablero de agentes entra entero en la pantalla: entrar desde la vista lo conserva, el robot de la barra y la A pasan al grafo y vuelven, y al salir queda la vista de antes sin guardar nada', async () => {
+    const st = () =>
+      page.evaluate(() => ({
+        tv: document.documentElement.classList.contains('tv'),
+        agents: !document.querySelector('#agents').hidden,
+        bar: document.querySelector('#tv-bar').parentNode.classList.contains('ab-head') ? 'tablero' : document.querySelector('#tv-bar').parentNode.classList.contains('graph-stage') ? 'grafo' : 'otro',
+        pressed: document.querySelector('#tv-agents').getAttribute('aria-pressed'),
+        focus: document.activeElement?.id || document.activeElement?.tagName,
+        stored: localStorage.getItem('graphbranch:agentsView'),
+      }));
+    // cada cambio de pantalla es inmediato (el clic o la tecla lo hacen en el momento)
+    const want = async (what, ok) => {
+      const s = await st();
+      if (!ok(s)) throw new Error(`${what}: ${JSON.stringify(s)}`);
+    };
+    const before = await st();
+    if (!before.agents) throw new Error('la vista de agentes no estaba abierta');
+    try {
+      await page.click('#tv-btn'); // el botón TV se ve también en la vista de agentes
+      await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: T(5000) });
+      await want('al entrar desde la vista de agentes', (s) => s.agents && s.bar === 'tablero' && s.pressed === 'true' && s.focus === 'graph-panel');
+      const fit = await page.evaluate(() => {
+        const shown = (sel) => !!document.querySelector(sel)?.getClientRects().length;
+        const b = document.querySelector('#agents');
+        const stage = document.querySelector('#sw-cortex .sw-stage')?.getBoundingClientRect();
+        const card = document.querySelector('#sw-cortex-card')?.getBoundingClientRect();
+        return {
+          over: b.scrollHeight - b.clientHeight,
+          page: document.documentElement.scrollHeight - document.documentElement.clientHeight,
+          shown: ['#sw-kpis', '#sw-cortex-card', '#ag-recent', '#sw-log', '#tv-agents'].filter((x) => !shown(x)),
+          hidden: ['.ab-switches', '.ab-help', '#ag-net', '#ag-time', '#ag-spend', '#sw-thread'].filter(shown),
+          cortex: stage && card ? Math.round(card.bottom - stage.bottom) : null,
+        };
+      });
+      if (fit.over > 1 || fit.page > 1) throw new Error(`el tablero no entra en la pantalla: se desplaza ${fit.over}px (la página, ${fit.page}px)`);
+      if (fit.shown.length || fit.hidden.length) throw new Error(`en TV faltan ${fit.shown.join(', ') || 'nada'} y sobran ${fit.hidden.join(', ') || 'nada'}`);
+      if (fit.cortex == null || fit.cortex < 0) throw new Error(`la corteza se sale de su tarjeta (${fit.cortex}px)`);
+      await page.click('#tv-agents');
+      await want('el robot de la barra vuelve al grafo', (s) => s.tv && !s.agents && s.bar === 'grafo' && s.pressed === 'false' && s.focus === 'graph3d');
+      await page.keyboard.press('a');
+      await want('la A vuelve al tablero', (s) => s.tv && s.agents && s.bar === 'tablero' && s.pressed === 'true');
+      await page.keyboard.press('a');
+      await want('la A pasa otra vez al grafo', (s) => s.tv && !s.agents && s.bar === 'grafo');
+      await page.keyboard.press('Escape');
+      await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: T(5000) });
+      await want('al salir queda la vista de agentes, como antes de entrar', (s) => s.agents && s.bar === 'tablero' && s.focus === 'tv-btn' && s.stored === before.stored);
+      if (new URL(page.url()).searchParams.has('tv')) throw new Error('la URL sigue con ?tv');
+    } finally {
+      if (await page.evaluate(() => document.documentElement.classList.contains('tv'))) await page.keyboard.press('Escape');
+    }
+  });
+  await step(page, 'el gasto: el diálogo de claves rechaza una dirección de OmniRoute que no es http(s) y se cierra sin guardar', async () => {
+    await page.click('#spend-connect');
+    await page.waitForSelector('#spend-keys[open]', { timeout: T(3000) });
+    await page.fill('#spend-omniroute-url', 'javascript:alert(1)');
+    await page.click('#spend-form button[type=submit]');
+    const r = await page.evaluate(() => ({ open: document.querySelector('#spend-keys').open, valid: document.querySelector('#spend-omniroute-url').checkValidity() }));
+    if (!r.open || r.valid) throw new Error(`una dirección javascript: se aceptó (abierto ${r.open}, válida ${r.valid})`);
+    await page.click('#spend-cancel');
+    const stored = await page.evaluate(() => Object.keys(localStorage).concat(Object.keys(sessionStorage)).filter((k) => k.includes('spend:')));
+    if (stored.length) throw new Error('cancelar dejó claves guardadas: ' + stored.join(', '));
+  });
+  await step(page, 'una fila lleva a su commit y vuelve al grafo; el botón de arriba entra y sale de la vista y agents= sale de la URL', async () => {
     await page.click('#ag-list button.hl-row[data-sha]');
-    // el evento close del diálogo llega en una tarea aparte: la URL se limpia un instante después de cerrarse
-    await page.waitForFunction(() => !document.querySelector('#agents').open && !location.search.includes('agents='), null, { timeout: T(3000) }).catch(() => {});
-    if (await page.evaluate(() => document.querySelector('#agents').open)) throw new Error('la fila no cerró el panel');
-    if ((await page.evaluate(() => location.search)).includes('agents=')) throw new Error('cerrar el panel deja agents= en la URL');
-    await page.focus('#agents-btn');
-    await page.keyboard.press('Enter');
-    await page.waitForSelector('#agents[open]', { timeout: T(3000) });
-    await page.keyboard.press('Escape');
-    await page.waitForSelector('#agents:not([open])', { state: 'attached', timeout: T(3000) });
-    const focus = await page.evaluate(() => document.activeElement?.id);
-    if (focus !== 'agents-btn') throw new Error(`al cerrar, el foco quedó en ${focus}`);
+    await page.waitForFunction(() => document.querySelector('#agents').hidden && !location.search.includes('agents='), null, { timeout: T(3000) }).catch(() => {});
+    const back = await page.evaluate(() => ({ hidden: document.querySelector('#agents').hidden, url: location.search, stage: getComputedStyle(document.querySelector('.graph-stage')).display }));
+    if (!back.hidden || back.stage === 'none') throw new Error('la fila no volvió al grafo');
+    if (back.url.includes('agents=')) throw new Error('volver al grafo deja agents= en la URL');
+    await page.click('#agents-btn');
+    if (await page.evaluate(() => document.querySelector('#agents').hidden || document.querySelector('#agents-btn').getAttribute('aria-pressed') !== 'true')) throw new Error('el botón de arriba no abrió la vista');
+    await page.click('#agents-btn');
+    if (!(await page.evaluate(() => document.querySelector('#agents').hidden))) throw new Error('el botón de arriba no volvió al grafo');
   });
   await step(page, 'la ficha de un commit de agente dice cuál es, con su modelo y su sesión (2D)', async () => {
     await page.click('#pause-btn'); // la demo quieta: las cabezas no cambian mientras se recorren
@@ -4712,11 +5347,20 @@ console.log('Agentes e interacciones (?agents=1)');
     }
     if (!/ (continuó|fusionó|revisó|comentó) /.test(tip)) throw new Error('ninguna ficha de rama dice sus interacciones: ' + JSON.stringify(tip));
   });
+  await step(page, 'pasar por un agente de la leyenda enciende sus interacciones en el grafo y deja tenues las demás', async () => {
+    await page.hover('#ag-key-body .agk-row[data-key]');
+    const r = await page.evaluate(() => ({ dim: document.querySelectorAll('#graph .ag-arc.ag-dim, #graph .ag-pin.ag-dim').length, hot: document.querySelectorAll('#graph .ag-arc.ag-hot, #graph .ag-pin.ag-hot').length }));
+    if (!r.hot || !r.dim) throw new Error(`la leyenda no ilumina: ${r.hot} encendidas y ${r.dim} tenues`);
+    await page.mouse.move(5, 5);
+    await page.waitForFunction(() => !document.querySelector('#graph .ag-dim'), null, { timeout: T(2000) }).catch(() => {
+      throw new Error('al salir de la leyenda las interacciones siguen tenues');
+    });
+  });
   await step(page, 'solo entre agentes vale también en el grafo; × quita las interacciones, el foco no se pierde y se olvida', async () => {
-    await page.click('#agents-btn');
-    await page.waitForSelector('#agents[open]', { timeout: T(3000) });
+    await page.click('#view-agents');
+    await page.waitForSelector('#agents:not([hidden])', { timeout: T(3000) });
     await page.click('#agents-only');
-    await page.keyboard.press('Escape');
+    await page.click('#view-2d');
     const only = await page.evaluate(() => [...document.querySelectorAll('#graph .ag-arc title, #graph .ag-pin title')].map((x) => x.textContent.replace(/[⁨⁩]/g, '')));
     const both = /^(Claude Code|GitHub Copilot|Dependabot)\b.* (continuó|fusionó|revisó|comentó) .*(Claude Code|GitHub Copilot|Dependabot)/;
     if (!only.length || only.some((x) => !both.test(x))) throw new Error('solo entre agentes, en el grafo: ' + only.join(' | '));
@@ -4739,7 +5383,7 @@ console.log('Agentes e interacciones (?agents=1)');
   await page.context().close();
 }
 
-console.log(`Celular (390×844), ${langs.length} idiomas`);
+if (seccion(`Celular (390×844), ${langs.length} idiomas`))
 {
   const page = await openPage(phone);
   for (const lang of langs) {
@@ -4753,11 +5397,20 @@ console.log(`Celular (390×844), ${langs.length} idiomas`);
   await page.context().close();
 }
 
-await browser.close();
+await browser?.close();
 server.close();
 
+if (!corridas.length) {
+  console.log(`\nNinguna sección coincide con ${[...solo, ...exactas].join(', ')} (node tools/smoke.mjs --secciones las lista).`);
+  process.exit(2);
+}
+if (listar) process.exit(0);
 if (failures) {
   console.log(`\n${failures} fallo(s).`);
+  for (const [titulo, pasos] of conFallos) {
+    console.log(`§ ${titulo}`);
+    for (const paso of pasos) console.log(`· ${paso}`);
+  }
   process.exit(1);
 }
-console.log('\nTodo bien.');
+console.log(pedidas ? `\nTodo bien (${corridas.length} de las secciones: ${corridas.join(' · ')}).` : '\nTodo bien.');

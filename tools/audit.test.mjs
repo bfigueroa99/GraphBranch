@@ -123,10 +123,44 @@ describe('tools/audit.mjs', () => {
     assert.ok(!escenarios().some((x) => x.nombre === 'celular-320-3d'));
   });
 
+  test('la puerta abre la práctica de git a 320 px en es, ar, de y ta (pendiente 5, iteración 267)', () => {
+    const es = escenarios().filter((x) => x.nombre.startsWith('practica-320-'));
+    assert.deepEqual(es.map((x) => x.nombre), ['practica-320-es', 'practica-320-ar', 'practica-320-de', 'practica-320-ta']);
+    for (const e of es) {
+      assert.ok(e.puerta && e.contexto.viewport.width === 320 && /[?&]practice=\d+/.test(e.url), e.nombre);
+      assert.equal(!!e.rtl, e.nombre === 'practica-320-ar');
+    }
+  });
+
   test('la completa mira 1.000 ramas en 3D a 320 px con la API simulada (pendiente 15)', () => {
     const e = escenarios({ completa: true }).find((x) => x.nombre === 'celular-320-3d-mil');
     assert.ok(e && !e.puerta && e.contexto.viewport.width === 320 && e.github === 1000);
     assert.ok(!escenarios().some((x) => x.nombre === 'celular-320-3d-mil'));
+  });
+
+  test('el JavaScript por cuadro del 3D con 1.000 ramas se mide en tandas y --comparar lo vigila (pendiente 12, iteración 263)', () => {
+    // el escenario de 1.000 ramas guarda las dos medidas; una llamada sola daba 1,1 ms por la resolución del reloj
+    const e = escenarios({ completa: true }).find((x) => x.nombre === 'celular-320-3d-mil');
+    assert.match(e.mirar.toString(), /medirEscena/);
+    assert.match(e.mirar.toString(), /escena3dUs/);
+    assert.match(e.mirar.toString(), /etiquetas3dUs/);
+    const src = readFileSync(new URL('./audit.mjs', import.meta.url), 'utf8');
+    const ini = src.indexOf('function medirEscena()');
+    const cuerpo = src.slice(ini, src.indexOf('\n}\n', ini));
+    assert.match(cuerpo, /for \(let i = 0; i < 300; i\+\+\) f\(\)/, 'una tanda de 300 llamadas, no una sola');
+    assert.match(cuerpo, /g\.dirtyNodes = g\.dirtyEdges = true/, 'la escena sucia: el camino caro de stepScene');
+    assert.match(cuerpo, /P\.stepScene = orig/, 'la envoltura se quita al primer cuadro');
+    assert.match(cuerpo, /catch \{\s*ok\(null\)/, 'una excepción en la medida no cuelga la auditoría');
+    assert.match(e.mirar.toString(), /donde: 'medirEscena'/, 'sin medida, un hallazgo: la vigilancia no se apaga en silencio');
+    // subir es peor, como la carga
+    const d = compararMedidas({ escena3dUs: 80, etiquetas3dUs: 30 }, { escena3dUs: 100, etiquetas3dUs: 27 });
+    assert.deepEqual(
+      d.map((x) => [x.medida, x.peor]),
+      [
+        ['escena3dUs', 25],
+        ['etiquetas3dUs', -10],
+      ],
+    );
   });
 
   test('la base del repo es válida: tipos conocidos de la puerta, escenarios de la puerta y la cuota', () => {

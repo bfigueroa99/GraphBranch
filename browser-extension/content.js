@@ -1,11 +1,11 @@
-/* Añade «Abrir en GraphBranch» a las páginas de un repo de GitHub. Solo lee la dirección de la pestaña:
+/* Añade «Abrir en GraphBranch» a las páginas de un repo de GitHub, GitLab, Codeberg o Bitbucket. Solo lee la dirección de la pestaña:
    no hace consultas, no toca tokens ni cookies, no guarda nada. GitHub navega sin recargar (Turbo), así que
    el botón se repone cuando cambia la página. */
 (function () {
   'use strict';
   var ID = 'graphbranch-open';
   function sync() {
-    var repo = GBRepo.repoFromUrl(location.href);
+    var repo = GBRepo.targetFromUrl(location.href);
     var old = document.getElementById(ID);
     if (!repo) { if (old) old.remove(); return; }
     var url = GBRepo.appUrl(repo);
@@ -16,7 +16,7 @@
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
     a.textContent = '⑂ Abrir en GraphBranch';
-    a.title = 'Abrir ' + repo + ' en GraphBranch';
+    a.title = 'Abrir ' + repo.replace(/^https:\/\//, '') + ' en GraphBranch';
     a.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:2147483000;padding:8px 14px;border-radius:8px;' +
       'background:#1f6feb;color:#fff;font:600 13px/1.2 system-ui,sans-serif;text-decoration:none;' +
       'box-shadow:0 2px 8px rgba(0,0,0,.35)';

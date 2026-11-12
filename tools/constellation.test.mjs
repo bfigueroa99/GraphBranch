@@ -100,6 +100,12 @@ test('el orden: pestañas tal cual, actividad por commits y nombre sin mayúscul
   assert.deepEqual(C.sortItems(withForks, 'forks').map((i) => i.key), ['o/c', 'o/b', 'o/d', 'o/a'], 'más forks primero; sin dato cuenta como 0; empata por pestaña');
   assert.deepEqual(C.sortItems(items, 'forks').map((i) => i.key), keys('tabs'), 'sin forks cargados queda el orden de las pestañas');
   assert.equal(C.orderParam(new URLSearchParams('order=%20Forks')), 'forks');
+  const withLast = items.map((it, i) => ({ ...it, last: [2e12, null, 3e12, 2e12][i], state: ['live', 'loading', 'live', 'live'][i] }));
+  assert.deepEqual(C.sortItems(withLast, 'recent').map((i) => i.key), ['o/c', 'o/b', 'o/d', 'o/a'], 'el commit más reciente primero; empata por pestaña; sin fecha (cargando o vacío) al final');
+  const someEmpty = items.map((it, i) => ({ ...it, last: [null, 5e11, undefined, 9e11][i] }));
+  assert.deepEqual(C.sortItems(someEmpty, 'recent').map((i) => i.key), ['o/d', 'o/a', 'o/b', 'o/c'], 'los que no tienen commits van al final, en el orden de las pestañas');
+  assert.deepEqual(C.sortItems(items, 'recent').map((i) => i.key), keys('tabs'), 'sin fechas cargadas queda el orden de las pestañas');
+  assert.equal(C.orderParam(new URLSearchParams('order=RECENT')), 'recent');
   assert.deepEqual(items.map((i) => i.key), ['o/b', 'o/a', 'o/c', 'o/d'], 'no toca la lista original');
 });
 
@@ -209,4 +215,44 @@ test('forks con lo ya cargado: el total de la consulta del repo, o null si la fu
   assert.equal(C.forksOf({ repo: { stars: 5 } }), null, 'sin dato (Bitbucket, Azure, un repo local): null; no toma las estrellas');
   assert.equal(C.forksOf({ repo: { forks: null } }), null);
   assert.equal(C.forksOf(null), null);
+});
+
+test('cada galaxia dice, junto a sus commits y ramas, cuánto hace de su commit más reciente ya cargado; nada si carga o está vacía', () => {
+  const NOW = 1_800_000_000_000;
+  const text = (k, p) => (k === 'constellation.stats' ? `commits: ${p.commits} · ramas: ${p.branches}` : k === 'tabs.unread' ? `${p.n} sin ver` : k);
+  const ago = (ms) => `hace ${(NOW - ms) / 3600e3} h`;
+  const fmt = (n) => `#${n}`;
+  const d = C.describe({ name: 'o/a', commits: 12, branches: 3, last: NOW - 3 * 3600e3, unread: 2 }, { text, fmt, ago });
+  // el lector de pantalla lo lee en el nombre de la galaxia; el globo lo muestra junto a las cifras
+  assert.equal(d.label, 'o/a, commits: #12 · ramas: #3, hace 3 h, 2 sin ver');
+  assert.equal(d.title, 'o/a · commits: #12 · ramas: #3 · hace 3 h');
+  // la que carga o está vacía no tiene `last`: no dice nada de tiempo (y ni siquiera se llama al formato)
+  const never = () => assert.fail('sin commit cargado no se formatea ninguna fecha');
+  for (const last of [null, undefined, NaN, 'ayer']) {
+    const e = C.describe({ name: 'o/b', commits: 0, branches: 0, last, state: 'loading' }, { text, ago: never });
+    assert.equal(e.label, 'o/b, commits: 0 · ramas: 0');
+    assert.equal(e.title, 'o/b · commits: 0 · ramas: 0');
+  }
+  // quien monta la constelación sin `ago` sigue viendo nombre y cifras
+  assert.equal(C.describe({ name: 'o/c', commits: 1, branches: 1, last: NOW }, { text }).title, 'o/c · commits: 1 · ramas: 1');
+});
+
+test('una galaxia quieta (su commit más reciente cargado tiene más de 30 días) lo dice en su nombre y su globo; las que cargan o no tienen fecha no', () => {
+  const NOW = 1_800_000_000_000;
+  const DAY = 864e5;
+  const text = (k, p) => (k === 'constellation.stats' ? `c${p.commits}/r${p.branches}` : k === 'textview.quiet' ? 'sin actividad hace más de 30 días' : k);
+  const ago = () => 'hace mucho';
+  assert.equal(C.QUIET_DAYS, 30);
+  assert.equal(C.isQuiet({ last: NOW - 31 * DAY }, NOW), true);
+  assert.equal(C.isQuiet({ last: NOW - 30 * DAY }, NOW), false, 'justo 30 días aún no es quieta');
+  assert.equal(C.isQuiet({ last: NOW - 2 * DAY }, NOW), false);
+  assert.equal(C.isQuiet({ last: NOW - 90 * DAY, state: 'loading' }, NOW), false, 'a medio cargar, con commits viejos todavía, no se marca');
+  for (const last of [null, undefined, NaN, 'ayer']) assert.equal(C.isQuiet({ last, state: 'loading' }, NOW), false, 'sin fecha no hay nada que decir');
+  const q = C.describe({ name: 'o/q', commits: 4, branches: 1, last: NOW - 90 * DAY, unread: 1 }, { text, ago, now: NOW });
+  assert.equal(q.label, 'o/q, c4/r1, hace mucho, sin actividad hace más de 30 días, tabs.unread');
+  assert.equal(q.title, 'o/q · c4/r1 · hace mucho · sin actividad hace más de 30 días');
+  const live = C.describe({ name: 'o/v', commits: 4, branches: 1, last: NOW - DAY }, { text, ago, now: NOW });
+  assert.ok(!/sin actividad/.test(live.label + live.title));
+  const loading = C.describe({ name: 'o/l', commits: 0, branches: 0, state: 'loading' }, { text, ago, now: NOW });
+  assert.ok(!/sin actividad/.test(loading.label));
 });

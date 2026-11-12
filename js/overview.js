@@ -12,6 +12,12 @@
     return !/^(0|false|no|off)$/i.test(q.get('all') || '');
   }
 
+  /** `?by=login`: el filtro por persona del Launchpad (se compara sin tocar mayúsculas contra quienes abrieron PRs, así
+      que un login desconocido no filtra nada). '' si no lo dice o viene vacío. */
+  function personParam(q) {
+    return (q.get('by') || '').trim().slice(0, 100);
+  }
+
   /** El commit más nuevo de lo cargado (por fecha; a igual fecha, el primero que llegó). */
   function lastCommit(data) {
     let best = null;
@@ -40,10 +46,41 @@
   const HEAVY_BRANCHES = 1500;
   const heavy = (sum) => (sum.branches || 0) > HEAVY_BRANCHES;
 
+  /** Cuántas columnas y filas reparten `n` tarjetas en un área de `w`×`h` píxeles para que entren todas sin desplazarse
+      (el modo TV de la vista conjunta): la grilla en que cada tarjeta puede ser más grande sin dejar de tener la forma
+      `ratio` (ancho/alto). A igual tamaño, la que deja menos huecos. Devuelve { cols, rows }. */
+  function fitGrid(n, w, h, ratio = 1.5) {
+    n = Math.max(1, Math.floor(n) || 1);
+    if (!(w > 0) || !(h > 0)) return { cols: Math.min(n, 2), rows: Math.ceil(n / Math.min(n, 2)) };
+    let best = null;
+    for (let cols = 1; cols <= n; cols++) {
+      const rows = Math.ceil(n / cols);
+      const size = Math.min(w / cols / ratio, h / rows); // el alto de la tarjeta más grande que cabe en cada celda
+      const holes = cols * rows - n;
+      if (!best || size > best.size + 0.5 || (Math.abs(size - best.size) <= 0.5 && holes < best.holes)) best = { cols, rows, size, holes };
+    }
+    return { cols: best.cols, rows: best.rows };
+  }
+
   /** Los grupos del Launchpad, en el orden en que se muestran. */
   const PR_GROUPS = ['draft', 'failing', 'approved', 'waiting'];
 
   const PR_GROUP_KEY = { draft: 'all.prs.draft', failing: 'all.prs.failing', approved: 'all.prs.approved', waiting: 'all.prs.waiting' };
+
+  /** La identidad de un PR para fijarlo: repo y número, nunca el título. */
+  const pinId = (key, number) => `${key}#${number}`;
+
+  /** Cuánto dura posponer un PR del Launchpad: un día. */
+  const SNOOZE_MS = 24 * 60 * 60 * 1000;
+
+  /** Los PRs pospuestos que siguen vigentes: de { pinId: hasta (ms) } deja solo los que vencen después de `now`
+      (los vencidos, los valores que no son números y lo que no es un objeto se descartan). */
+  function liveSnoozes(snoozed, now = Date.now()) {
+    const out = {};
+    if (!snoozed || typeof snoozed !== 'object' || Array.isArray(snoozed)) return out;
+    for (const [id, until] of Object.entries(snoozed)) if (Number.isFinite(until) && until > now) out[id] = until;
+    return out;
+  }
 
   /** En qué grupo cae un PR abierto: borrador, checks en rojo, aprobado o esperando revisión (en ese orden de prioridad). */
   function prGroup(p) {
@@ -53,12 +90,40 @@
     return 'waiting';
   }
 
+  /** Las personas que abrieron los PRs de varios repos (los mismos `entries` de `groupPulls`), sin repetir y en orden alfabético. */
+  function prAuthors(entries) {
+    const set = new Set();
+    for (const e of entries) for (const p of e.pulls || []) { const u = p.user?.login || p.user?.name || ''; if (u) set.add(u); }
+    return [...set].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }) || (a < b ? -1 : 1));
+  }
+
+  /** Los repos que tienen PRs abiertos (los mismos `entries`), en orden alfabético: [{ key, name, n }]. */
+  function prRepos(entries) {
+    const out = [];
+    for (const e of entries) { const n = [...(e.pulls || [])].length; if (n) out.push({ key: e.key, name: e.name, n }); }
+    return out.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }) || (a.key < b.key ? -1 : 1));
+  }
+
+  /** Cuántos PRs abiertos tiene cada persona (los mismos `entries`): { login: n }, con lo ya cargado y sin consultar nada. */
+  function prCounts(entries) {
+    const n = {};
+    for (const e of entries) for (const p of e.pulls || []) { const u = p.user?.login || p.user?.name || ''; if (u) n[u] = (n[u] || 0) + 1; }
+    return n;
+  }
+
   /** Los PRs abiertos de varios repos, agrupados por estado: `entries` es [{ key, name, pulls: iterable de PRs }].
-      Devuelve solo los grupos con PRs, [{ id, items }], cada uno del más nuevo al más viejo. */
-  function groupPulls(entries) {
+      Devuelve solo los grupos con PRs, [{ id, items }], cada uno del más nuevo al más viejo; los fijados (`pinned`: un Set
+      de `pinId`) van arriba de su grupo, con `pinned: true`; los pospuestos (`snoozed`: { pinId: hasta (ms) }) que no
+      vencieron a la hora `now` van al final de su grupo, con `snoozed: true`. Fijar gana a posponer. */
+  function groupPulls(entries, pinned, author = '', repoKey = '', snoozed = null, now = Date.now()) {
+    const isPinned = (key, number) => !!pinned?.has?.(pinId(key, number));
+    const live = liveSnoozes(snoozed, now);
+    const isSnoozed = (key, number) => Object.hasOwn(live, pinId(key, number));
     const by = new Map(PR_GROUPS.map((g) => [g, []]));
     for (const e of entries) {
+      if (repoKey && e.key !== repoKey) continue;
       for (const p of e.pulls || []) {
+        if (author && (p.user?.login || p.user?.name || '') !== author) continue;
         by.get(prGroup(p)).push({
           key: e.key,
           repo: e.name,
@@ -67,10 +132,13 @@
           head: p.head || '',
           user: p.user?.login || p.user?.name || '',
           createdAt: p.createdAt || 0,
+          pinned: isPinned(e.key, p.number),
+          snoozed: !isPinned(e.key, p.number) && isSnoozed(e.key, p.number),
         });
       }
     }
-    for (const items of by.values()) items.sort((a, b) => b.createdAt - a.createdAt || (a.repo < b.repo ? -1 : a.repo > b.repo ? 1 : a.number - b.number));
+    const rank = (x) => (x.pinned ? 0 : x.snoozed ? 2 : 1);
+    for (const items of by.values()) items.sort((a, b) => rank(a) - rank(b) || b.createdAt - a.createdAt || (a.repo < b.repo ? -1 : a.repo > b.repo ? 1 : a.number - b.number));
     return PR_GROUPS.map((id) => ({ id, items: by.get(id) })).filter((g) => g.items.length);
   }
 
@@ -81,6 +149,9 @@
    *   diffing() → ¿está abierto el panel de cambios? (entonces un clic en un commit muestra los suyos)
    *   onStats(list): las cifras de todas las tarjetas, para los totales de la cabecera
    *   canDiff(key) → ¿se pueden ver los cambios de los commits de ese repo?
+   *   person: la persona con la que abre el Launchpad (`?by=`); onPerson(login): se eligió otra ('' = todas)
+   *   getPins(): los PRs fijados (lista de pinId); onPin(id, on): fijar o soltar uno
+   *   getSnoozes(): los PRs pospuestos ({ pinId: hasta (ms) }); onSnooze(id, on): posponer uno un día o dejar de posponerlo
    *   prsRoot, onOpenPr(key, head): el Launchpad (los PRs de todos los repos por estado) y la salida de una fila
    * Devuelve { sync(items), draw(key, data, ctx), stats(), celebrate(key, acts), focus(key, { sha, branch }), select(key, sha),
    *   graphOf(key), layoutOf(key), relocalize(), size }.
@@ -205,20 +276,68 @@
 
     /** El Launchpad: los PRs abiertos de todos los repos, por estado. Solo se repinta si cambió algo (así no pierde el foco). */
     let prSig = '';
+    let lastEntries = [];
+    let prPerson = opts.person || ''; // el filtro por persona del Launchpad ('' = todas); viaja en ?by=
+    let prRepo = ''; // el filtro por repo ('' = todos); no se recuerda ni viaja en la URL
+    let snoozeTimer = 0; // repinta cuando vence el primer PR pospuesto, para que vuelva a su lugar sin esperar datos nuevos
     function setPulls(entries) {
+      lastEntries = entries.map((e) => ({ ...e, pulls: [...(e.pulls || [])] })); // `pulls` puede ser un iterador, de un solo uso
+      entries = lastEntries;
       const box = opts.prsRoot;
       if (!box) return;
-      const groups = groupPulls(entries);
-      const sig = JSON.stringify(groups);
+      const pins = new Set(opts.getPins?.() || []);
+      const people = prAuthors(entries);
+      const counts = prCounts(entries);
+      // la persona sin PRs abiertos (o desconocida, o aún sin cargar) no filtra; se recuerda por si sus PRs llegan después
+      const who = people.find((u) => u === prPerson) || people.find((u) => u.toLowerCase() === prPerson.toLowerCase()) || '';
+      const repos = prRepos(entries);
+      const repo = repos.find((r) => r.key === prRepo)?.key || ''; // un repo sin PRs abiertos no filtra
+      const now = Date.now();
+      const snoozes = liveSnoozes(opts.getSnoozes?.(), now);
+      const groups = groupPulls(entries, pins, who, repo, snoozes, now);
+      if (snoozeTimer) clearTimeout(snoozeTimer);
+      snoozeTimer = 0;
+      const next = Math.min(...Object.values(snoozes));
+      if (Number.isFinite(next)) snoozeTimer = setTimeout(() => setPulls(lastEntries), Math.min(next - now + 50, 2 ** 31 - 1));
+      const sig = JSON.stringify([groups, people, counts, who, repos, repo]);
       if (sig === prSig) return;
       prSig = sig;
       const t = opts.text;
       const num = opts.num || String;
       const total = groups.reduce((n, g) => n + g.items.length, 0);
-      box.hidden = !total;
+      box.hidden = !people.length && !total;
       box.replaceChildren();
-      if (!total) return;
+      if (box.hidden) return;
       box.append(mk('h3', 'ap-title', t('all.prs.title', { n: num(total) })));
+      if (people.length > 1) {
+        const sel = mk('select', 'ap-person');
+        sel.setAttribute('aria-label', t('all.prs.person'));
+        sel.title = t('all.prs.person');
+        sel.append(new Option(t('all.prs.everyone'), ''));
+        for (const u of people) sel.append(new Option(`${u} (${num(counts[u])})`, u));
+        sel.value = who;
+        sel.addEventListener('change', () => {
+          prPerson = sel.value;
+          opts.onPerson?.(prPerson);
+          setPulls(lastEntries);
+          box.querySelector('.ap-person')?.focus(); // el repintado reemplaza el selector: el foco vuelve a él
+        });
+        box.append(sel);
+      }
+      if (repos.length > 1) {
+        const sel = mk('select', 'ap-repo');
+        sel.setAttribute('aria-label', t('all.prs.repo'));
+        sel.title = t('all.prs.repo');
+        sel.append(new Option(t('all.prs.allRepos'), ''));
+        for (const r of repos) sel.append(new Option(`${r.name} (${num(r.n)})`, r.key));
+        sel.value = repo;
+        sel.addEventListener('change', () => {
+          prRepo = sel.value;
+          setPulls(lastEntries);
+          box.querySelector('.ap-repo')?.focus();
+        });
+        box.append(sel);
+      }
       const cols = mk('div', 'ap-groups');
       for (const g of groups) {
         const sec = mk('section', 'ap-group');
@@ -240,6 +359,35 @@
           b.title = label;
           b.addEventListener('click', () => opts.onOpenPr?.(it.key, it.head));
           li.append(b);
+          const pin = mk('button', 'ap-pin');
+          pin.type = 'button';
+          pin.textContent = '📌';
+          pin.setAttribute('aria-pressed', String(it.pinned));
+          const plabel = t(it.pinned ? 'all.prs.unpin' : 'all.prs.pin', { num: it.number, repo: it.repo });
+          pin.setAttribute('aria-label', plabel);
+          pin.title = plabel;
+          pin.addEventListener('click', () => {
+            opts.onPin?.(pinId(it.key, it.number), !it.pinned);
+            setPulls(lastEntries);
+            // el repintado reemplaza la fila: el foco vuelve a su botón de fijar
+            [...box.querySelectorAll('.ap-pin')].find((x) => x.closest('li')?.querySelector('.ap-row')?.dataset.key === it.key && x.closest('li').querySelector('.ap-row').dataset.number === String(it.number))?.focus();
+          });
+          const zz = mk('button', 'ap-snooze');
+          zz.type = 'button';
+          zz.textContent = '💤';
+          zz.setAttribute('aria-pressed', String(it.snoozed));
+          const zlabel = t(it.snoozed ? 'all.prs.unsnooze' : 'all.prs.snooze', { num: it.number, repo: it.repo });
+          zz.setAttribute('aria-label', zlabel);
+          zz.title = zlabel;
+          zz.addEventListener('click', () => {
+            opts.onSnooze?.(pinId(it.key, it.number), !it.snoozed);
+            setPulls(lastEntries);
+            // la fila baja (o sube) en su grupo: el foco la sigue a su botón de posponer
+            [...box.querySelectorAll('.ap-snooze')].find((x) => x.closest('li')?.querySelector('.ap-row')?.dataset.key === it.key && x.closest('li').querySelector('.ap-row').dataset.number === String(it.number))?.focus();
+          });
+          li.classList.toggle('pinned', it.pinned);
+          li.classList.toggle('snoozed', it.snoozed);
+          li.append(pin, zz);
           ul.append(li);
         }
         sec.append(ul);
@@ -255,7 +403,15 @@
       stats,
       /** Los efectos de lo que acaba de llegar, en la tarjeta de su repo. */
       celebrate(key, acts) {
-        cards.get(key)?.graph.celebrate(acts);
+        const card = cards.get(key);
+        if (!card) return;
+        card.graph.celebrate(acts);
+        // la tarjeta se enciende un momento: en una pantalla compartida se ve desde lejos dónde pasó algo
+        card.el.classList.remove('rc-news');
+        void card.el.offsetWidth; // vuelve a arrancar la animación si llega otra novedad mientras dura
+        card.el.classList.add('rc-news');
+        clearTimeout(card.newsTimer);
+        card.newsTimer = setTimeout(() => card.el.classList.remove('rc-news'), 4000);
       },
       /** Lleva la vista a la tarjeta de un repo y, si se dice, a un commit (o una rama) de su grafo. */
       focus(key, { sha = null, branch = null } = {}) {
@@ -286,5 +442,5 @@
     };
   }
 
-  GB.overview = { allParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, prGroup, groupPulls, mount };
+  GB.overview = { allParam, personParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, fitGrid, prGroup, groupPulls, prAuthors, prRepos, prCounts, pinId, SNOOZE_MS, liveSnoozes, mount };
 })(window.GB);

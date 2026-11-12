@@ -7,22 +7,23 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
+import vm from 'node:vm';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const dir = join(dirname(fileURLToPath(import.meta.url)), '..', 'browser-extension');
 const manifest = JSON.parse(readFileSync(join(dir, 'manifest.json'), 'utf8'));
-const { repoFromUrl, appUrl, APP } = createRequire(import.meta.url)('../browser-extension/repo.js');
+const { repoFromUrl, targetFromUrl, appUrl, APP } = createRequire(import.meta.url)('../browser-extension/repo.js');
 
-test('el manifiesto: MV3, sin permisos ni host_permissions, solo github.com', () => {
+test('el manifiesto: MV3, sin permisos ni host_permissions, solo github.com, gitlab.com, codeberg.org y bitbucket.org', () => {
   assert.equal(manifest.manifest_version, 3);
   for (const k of ['permissions', 'host_permissions', 'optional_permissions', 'optional_host_permissions',
     'background', 'web_accessible_resources', 'externally_connectable', 'content_security_policy'])
     assert.equal(manifest[k], undefined, `${k} no va`);
   assert.equal(manifest.content_scripts.length, 1);
   const cs = manifest.content_scripts[0];
-  assert.deepEqual(cs.matches, ['https://github.com/*']);
+  assert.deepEqual(cs.matches, ['https://github.com/*', 'https://gitlab.com/*', 'https://codeberg.org/*', 'https://bitbucket.org/*']);
   assert.deepEqual(cs.js, ['repo.js', 'content.js']);
   for (const f of [...cs.js, ...Object.values(manifest.icons)]) assert.ok(existsSync(join(dir, f)), `${f} existe`);
   assert.match(manifest.browser_specific_settings.gecko.id, /@/);
@@ -61,4 +62,38 @@ test('appUrl: va a la web publicada con ?repo= codificado', () => {
   const u = new URL(appUrl('o/r.x-y_z'));
   assert.equal(u.searchParams.get('repo'), 'o/r.x-y_z');
   assert.equal(u.origin, 'https://bfigueroa99.github.io');
+});
+
+test('targetFromUrl: GitHub sigue dando dueño/repo; GitLab, Codeberg y Bitbucket, la URL del proyecto', () => {
+  assert.equal(targetFromUrl('https://github.com/o/r/pull/1'), 'o/r');
+  assert.equal(targetFromUrl('https://gitlab.com/grupo/proyecto'), 'https://gitlab.com/grupo/proyecto');
+  assert.equal(targetFromUrl('https://gitlab.com/g/sub/proyecto/-/merge_requests/3?x=1#y'), 'https://gitlab.com/g/sub/proyecto');
+  assert.equal(targetFromUrl('https://gitlab.com/g/p.git'), 'https://gitlab.com/g/p');
+  assert.equal(targetFromUrl('https://codeberg.org/dueño/repo'), null, 'segmento no ASCII');
+  assert.equal(targetFromUrl('https://codeberg.org/ana/repo/issues/4'), 'https://codeberg.org/ana/repo');
+  assert.equal(targetFromUrl('https://bitbucket.org/espacio/repo/src/main/'), 'https://bitbucket.org/espacio/repo');
+  assert.equal(targetFromUrl('https://bitbucket.org/espacio/repo.git'), 'https://bitbucket.org/espacio/repo');
+  for (const u of ['https://gitlab.com/', 'https://gitlab.com/ana', 'https://gitlab.com/users/ana/projects', 'https://gitlab.com/explore/projects',
+    'https://gitlab.com/groups/g/-/issues', 'https://gitlab.com/-/profile', 'https://codeberg.org/explore/repos', 'https://codeberg.org/user/settings',
+    'https://codeberg.org/ana', 'https://bitbucket.org/account/signin', 'https://bitbucket.org/dashboard/overview', 'https://bitbucket.org/ana',
+    'http://gitlab.com/g/p', 'https://gitlab.com:8443/g/p', 'https://u:p@gitlab.com/g/p', 'https://www.gitlab.com/g/p', 'https://gitlab.com.evil.com/g/p',
+    'https://evil.com/gitlab.com/g/p', 'https://gitlab.com/g/..', 'https://gitlab.com/g/%2e%2e/p', 'https://bitbucket.org/a/b%2fc'])
+    assert.equal(targetFromUrl(u), null, u);
+});
+
+test('lo que arma la extensión lo entiende la web: parseRepo da el mismo proyecto', () => {
+  const ctx = vm.createContext({ window: {}, console, document: { hidden: false, addEventListener() {}, removeEventListener() {} },
+    localStorage: { getItem: () => null, setItem() {}, removeItem() {} }, navigator: { onLine: true }, addEventListener() {}, removeEventListener() {} });
+  ctx.window = ctx;
+  vm.runInContext(readFileSync(join(dir, '..', 'js', 'util.js'), 'utf8'), ctx, { filename: 'util.js' });
+  const parse = (x) => JSON.parse(JSON.stringify(ctx.GB.U.parseRepo(x)));
+  for (const [page, want] of [
+    ['https://gitlab.com/g/sub/p/-/issues', { host: 'gitlab', owner: 'g/sub', name: 'p' }],
+    ['https://codeberg.org/ana/r/src/branch/main', { host: 'codeberg', owner: 'ana', name: 'r' }],
+    ['https://bitbucket.org/ws/r/src/main', { host: 'bitbucket', owner: 'ws', name: 'r' }],
+  ]) {
+    const link = new URL(appUrl(targetFromUrl(page)));
+    assert.equal(link.origin, 'https://bfigueroa99.github.io');
+    assert.deepEqual(parse(link.searchParams.get('repo')), want, page);
+  }
 });

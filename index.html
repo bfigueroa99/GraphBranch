@@ -8,7 +8,8 @@
      Las librerías y las fuentes son copias locales en vendor/ (tools/vendor.mjs), así que
      scripts, estilos y fuentes solo pueden venir del propio sitio. El manifiesto y el service worker
      (sw.js, que la deja abrir sin red) también son del propio sitio. Las conexiones van a las APIs de
-     GitHub, de gitlab.com, de codeberg.org, de api.bitbucket.org y de dev.azure.com, y las imágenes de otro sitio son los avatares de cada uno
+     GitHub, de gitlab.com, de codeberg.org, de api.bitbucket.org y de dev.azure.com (y, con la vista de agentes, al gasto de
+     Anthropic, OpenAI, OpenRouter y un OmniRoute local, solo si se conectan), y las imágenes de otro sitio son los avatares de cada uno
      (los de Bitbucket y los de Azure DevOps no se cargan). -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'none';
@@ -18,7 +19,7 @@
   manifest-src 'self';
   worker-src 'self';
   img-src 'self' data: https://avatars.githubusercontent.com https://gitlab.com https://codeberg.org;
-  connect-src https://api.github.com https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com;
+  connect-src https://api.github.com https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com https://api.anthropic.com https://api.openai.com https://openrouter.ai http://localhost:20128 http://127.0.0.1:20128;
   base-uri 'none';
   form-action 'none'">
 <title>GraphBranch</title>
@@ -80,6 +81,8 @@
       </div>
     </div>
 
+    <!-- tres grupos: lo que está pasando en vivo, explorar los datos (la paleta de comandos primero, con su atajo a la
+         vista) y las preferencias -->
     <div class="controls">
       <button class="icon-btn" type="button" id="pause-btn" aria-pressed="false" title="Pause" aria-label="Pause" data-i18n-attr="title:ctl.pause;aria-label:ctl.pause">
         <svg class="ico when-off" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.5v9M10.5 3.5v9"/></svg>
@@ -94,21 +97,22 @@
       <button class="icon-btn" type="button" id="notify-btn" aria-pressed="false" title="System notifications when the tab is in the background" aria-label="System notifications" data-i18n-attr="title:ctl.notify.title;aria-label:ctl.notify.label">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 11.5V7.2a4 4 0 0 1 8 0v4.3l1.3 1.2H2.7zM6.6 14h2.8"/><path class="when-off" d="M2.5 2.5l11 11"/></svg>
       </button>
-      <label class="icon-btn lang-btn" id="lang-btn" title="Language" data-i18n-attr="title:ctl.language">
-        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c1.8 1.7 2.7 3.7 2.7 6S9.8 12.3 8 14M8 2C6.2 3.7 5.3 5.7 5.3 8S6.2 12.3 8 14"/></svg>
-        <select id="lang-select" aria-label="Language" data-i18n-attr="aria-label:ctl.language"></select>
-      </label>
-      <button class="icon-btn" type="button" id="health-btn" title="Repo health" aria-label="Repo health" data-i18n-attr="title:health.title;aria-label:health.title">
-        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8.5h3l1.7-4.5 3 8 1.8-3.5h3.5"/></svg>
-      </button>
-      <button class="icon-btn" type="button" id="agents-btn" aria-haspopup="dialog" title="Who works with whom: people and agents (Claude Code, Copilot, Codex, bots…)" aria-label="Agents and interactions" data-i18n-attr="title:agents.btnTitle;aria-label:agents.title">
-        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="5.5" width="10" height="7.5" rx="2"/><path d="M8 5.5V3M8 3h.01M6 9.2h.01M10 9.2h.01M1.5 8.5v2M14.5 8.5v2"/></svg>
+      <span class="ctl-sep" aria-hidden="true"></span>
+      <button class="icon-btn cmdk-btn" type="button" id="cmdk-btn" aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K" title="Command palette" aria-label="Command palette" data-i18n-attr="title:cmdk.title;aria-label:cmdk.title">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.8" y="2.8" width="12.4" height="10.4" rx="2.2"/><path d="m4.6 6.3 2 1.7-2 1.7M8.4 10h3"/></svg>
+        <kbd class="cmdk-kbd" id="cmdk-kbd" aria-hidden="true">Ctrl K</kbd>
       </button>
       <button class="icon-btn" type="button" id="search-btn" title="Search commits" aria-label="Search commits" data-i18n-attr="title:search.title;aria-label:search.title">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 2.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM10.3 10.3l3.2 3.2"/></svg>
       </button>
       <button class="icon-btn" type="button" id="textview-btn" title="Text view" aria-label="Text view" data-i18n-attr="title:textview.title;aria-label:textview.title">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3h11M5.5 6.5h8M5.5 10h8M8.5 13.5h5M3 6.5v7"/></svg>
+      </button>
+      <button class="icon-btn" type="button" id="health-btn" title="Repo health" aria-label="Repo health" data-i18n-attr="title:health.title;aria-label:health.title">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8.5h3l1.7-4.5 3 8 1.8-3.5h3.5"/></svg>
+      </button>
+      <button class="icon-btn" type="button" id="agents-btn" aria-pressed="false" title="Who works with whom: people and agents (Claude Code, Copilot, Codex, bots…)" aria-label="Agents and interactions" data-i18n-attr="title:agents.btnTitle;aria-label:agents.title">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="5.5" width="10" height="7.5" rx="2"/><path d="M8 5.5V3M8 3h.01M6 9.2h.01M10 9.2h.01M1.5 8.5v2M14.5 8.5v2"/></svg>
       </button>
       <button class="icon-btn" type="button" id="constellation-btn" title="Constellation" aria-label="Constellation" data-i18n-attr="title:constellation.title;aria-label:constellation.title">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 11.5 6 6l3.5 3 3.5-5.5M3 11.5h.01M6 6h.01M9.5 9h.01M13 3.5h.01"/></svg>
@@ -120,6 +124,11 @@
       <button class="icon-btn" type="button" id="loop-btn" aria-haspopup="dialog" title="Copy a prompt that makes Claude Code develop this project on its own" aria-label="Autonomous loop prompt" data-i18n-attr="title:loopPrompt.btnTitle;aria-label:loopPrompt.title">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 8c-1.4-1.9-2.6-3-4-3a3 3 0 0 0 0 6c1.4 0 2.6-1.1 4-3s2.6-3 4-3a3 3 0 0 1 0 6c-1.4 0-2.6-1.1-4-3z"/></svg>
       </button>
+      <span class="ctl-sep" aria-hidden="true"></span>
+      <label class="icon-btn lang-btn" id="lang-btn" title="Language" data-i18n-attr="title:ctl.language">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c1.8 1.7 2.7 3.7 2.7 6S9.8 12.3 8 14M8 2C6.2 3.7 5.3 5.7 5.3 8S6.2 12.3 8 14"/></svg>
+        <select id="lang-select" aria-label="Language" data-i18n-attr="aria-label:ctl.language"></select>
+      </label>
       <button class="icon-btn" type="button" id="settings-btn" title="Settings and token" aria-label="Settings and token" data-i18n-attr="title:ctl.settings;aria-label:ctl.settings">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.8M8 12.4v1.8M14.2 8h-1.8M3.6 8H1.8M12.4 3.6l-1.3 1.3M4.9 11.1l-1.3 1.3M12.4 12.4l-1.3-1.3M4.9 4.9 3.6 3.6"/></svg>
       </button>
@@ -157,21 +166,6 @@
       <span class="stat-value" id="st-last">–</span>
       <span class="stat-sub" id="st-last-sub"></span>
     </div>
-    <!-- agentes e interacciones (js/agents.js): quién continuó, fusionó o revisó el trabajo de quién, entre personas y agentes -->
-<dialog class="settings trophies health agents" id="agents" aria-labelledby="agents-title" aria-describedby="agents-help">
-  <div class="tr-wrap">
-    <div class="tr-head">
-      <h2 id="agents-title" data-i18n="agents.title">Agents and interactions</h2>
-      <button type="button" class="icon-btn" id="agents-close" title="Close" aria-label="Close" data-i18n-attr="title:toast.close;aria-label:toast.close">
-        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>
-      </button>
-    </div>
-    <p class="help" id="agents-help" data-i18n="agents.help">From what is already loaded, with no extra requests. An agent is recognized by its account (Copilot, dependabot[bot]…) or by what its commits sign (Co-Authored-By, Claude-Session), and each session of an agent counts on its own.</p>
-    <label class="hl-switch"><input type="checkbox" id="agents-only"> <span data-i18n="agents.onlyAgents">Only between agents</span></label>
-    <label class="hl-switch"><input type="checkbox" id="agents-graph"> <span data-i18n="agents.onGraph">Show them on the graph (2D and 3D)</span></label>
-    <div id="agents-body" class="hl-body"></div>
-  </div>
-</dialog>
 
 <!-- la bitácora en vivo (js/bitacora.js): su nota y sus hallazgos, y abre el panel con todo -->
     <button type="button" class="stat stat-bitacora" id="st-bitacora" aria-haspopup="dialog" title="Open the live logbook" data-i18n-attr="title:bitacora.open">
@@ -193,6 +187,7 @@
           <div class="view-switch" role="group" aria-label="View type" data-i18n-attr="aria-label:view.aria">
             <button type="button" id="view-3d" aria-pressed="true">3D</button>
             <button type="button" id="view-2d" aria-pressed="false">2D</button>
+            <button type="button" id="view-agents" aria-pressed="false" title="Who works with whom, live: people and agents" data-i18n="agents.view" data-i18n-attr="title:agents.viewTitle">Agents</button>
           </div>
           <div class="filter-field">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
@@ -260,7 +255,15 @@
         <div class="lower" id="lower" aria-hidden="true"></div>
         <!-- aviso de "imagen guardada": se ve unos segundos y lo lee el lector de pantalla -->
         <p class="snap-note" id="snap-note" role="status"></p>
+        <!-- la barra del modo TV: vive sobre el grafo y, con la vista de agentes, en la cabecera del tablero (app.js la mueve) -->
         <div class="tv-bar" id="tv-bar">
+          <!-- todos los repos seguidos a la vez (la vista conjunta) y de vuelta al grafo con el director; también la R -->
+          <button class="icon-btn" type="button" id="tv-all" aria-pressed="false" aria-keyshortcuts="R" hidden title="Every followed repository at once, each in its card (R)" aria-label="All repositories" data-i18n-attr="title:tv.allTitle;aria-label:all.title">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>
+          </button>
+          <button class="icon-btn" type="button" id="tv-agents" aria-pressed="false" title="Who works with whom: people and agents (Claude Code, Copilot, Codex, bots…)" aria-label="Agents and interactions" data-i18n-attr="title:agents.btnTitle;aria-label:agents.title">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="5.5" width="10" height="7.5" rx="2"/><path d="M8 5.5V3M8 3h.01M6 9.2h.01M10 9.2h.01M1.5 8.5v2M14.5 8.5v2"/></svg>
+          </button>
           <button class="icon-btn" type="button" id="tv-pause" aria-pressed="false" title="Pause" aria-label="Pause" data-i18n-attr="title:ctl.pause;aria-label:ctl.pause">
             <svg class="ico when-off" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.5v9M10.5 3.5v9"/></svg>
             <svg class="ico when-on" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6L12.5 8z"/></svg>
@@ -313,6 +316,20 @@
           </div>
         </div>
       </div>
+      <!-- agentes e interacciones (js/agents.js), en el lugar del grafo: quién continuó, fusionó o revisó el trabajo de
+           quién, entre personas y agentes, en vivo; y lo que gastan los servicios de IA conectados -->
+      <section class="agents-board" id="agents" hidden aria-labelledby="agents-title" aria-describedby="agents-help">
+        <div class="ab-head">
+          <h2 class="ab-title" id="agents-title"><span class="live-dot" aria-hidden="true"></span><span data-i18n="agents.title">Agents and interactions</span></h2>
+          <time class="ab-clock" id="agents-clock" aria-hidden="true"></time>
+          <div class="ab-switches">
+            <label class="hl-switch"><input type="checkbox" id="agents-only"> <span data-i18n="agents.onlyAgents">Only between agents</span></label>
+            <label class="hl-switch"><input type="checkbox" id="agents-graph"> <span data-i18n="agents.onGraph">Show them on the graph (2D and 3D)</span></label>
+          </div>
+        </div>
+        <p class="help ab-help" id="agents-help" data-i18n="agents.help">From what is already loaded, with no extra requests. An agent is recognized by its account (Copilot, dependabot[bot]…) or by what its commits sign (Co-Authored-By, Claude-Session), and each session of an agent counts on its own.</p>
+        <div id="agents-body" class="ab-body"></div>
+      </section>
       <!-- interacciones en el grafo (js/agents.js): de quién es cada color y qué dice cada trazo, bajo el grafo para no
            tapar lo más nuevo; × las quita del grafo -->
       <section class="agk-panel" id="ag-key" hidden aria-labelledby="ag-key-title">
@@ -332,11 +349,18 @@
     </section>
 
     <!-- vista conjunta (js/overview.js): todos los repos seguidos a la vez, en el lugar del grafo de uno solo -->
-    <section class="panel all-panel" id="all-panel" aria-labelledby="all-title" hidden>
+    <section class="panel all-panel" id="all-panel" tabindex="-1" aria-labelledby="all-title" hidden>
       <div class="panel-head">
         <div class="repo-title">
           <h2 id="all-title" data-i18n="all.title">All repositories</h2>
           <p class="repo-desc" id="all-sum"></p>
+        </div>
+        <!-- el modo TV también desde aquí: el botón de la barra del grafo no se ve con la vista conjunta, y en TV se queda
+             con todos los repos a la vista -->
+        <div class="toolbar">
+          <button class="icon-btn" type="button" id="all-tv-btn" aria-pressed="false" title="TV mode" aria-label="TV mode" data-i18n-attr="title:tv.title;aria-label:tv.label">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="9" rx="1.4"/><path d="M5.5 14h5M8 11.5V14"/></svg>
+          </button>
         </div>
       </div>
       <section class="ap" id="all-prs" hidden></section>
@@ -344,10 +368,17 @@
       <p class="hint" data-i18n="all.hint">Each card follows its repository live. Click a commit for its details and its changes; the name opens the repository in its tab.</p>
     </section>
 
-    <aside class="panel feed-panel" aria-labelledby="feed-title">
+    <!-- el panel de actividad se ensancha o se angosta arrastrando su borde (o con las flechas sobre él) y se pliega a una
+         franja con su botón, para dejarle todo el ancho al grafo; los dos se recuerdan en este navegador (js/app.js) -->
+    <aside class="panel feed-panel" id="feed-panel" aria-labelledby="feed-title">
+      <div class="feed-resize" id="feed-resize" role="separator" tabindex="0" aria-orientation="vertical" aria-controls="feed-panel" aria-valuemin="280" aria-valuemax="720" aria-valuenow="370" title="Resize the activity panel (drag it, or use the arrow keys)" aria-label="Resize the activity panel (drag it, or use the arrow keys)" data-i18n-attr="title:feed.resize;aria-label:feed.resize"></div>
       <div class="panel-head">
         <h2 id="feed-title" data-i18n="feed.title">Activity</h2>
         <span class="feed-count" id="feed-count"></span>
+        <span class="feed-unseen" id="feed-unseen" aria-hidden="true" hidden></span>
+        <button type="button" class="icon-btn feed-fold" id="feed-fold" aria-expanded="true" aria-controls="chips feed" title="Hide or show the activity panel" aria-label="Hide or show the activity panel" data-i18n-attr="title:feed.fold;aria-label:feed.fold">
+          <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.8" y="2.5" width="12.4" height="11" rx="2"/><path d="M10 2.5v11M5 6l2 2-2 2"/></svg>
+        </button>
       </div>
       <div class="chips" id="chips" role="group" aria-label="Filter activity by type" data-i18n-attr="aria-label:feed.filterAria"></div>
       <ol class="feed" id="feed" aria-label="Recent activity" data-i18n-attr="aria-label:feed.listAria"></ol>
@@ -399,6 +430,40 @@
 </div>
 
 <div class="toasts" id="toasts" aria-live="polite"></div>
+
+<!-- el gasto en IA (js/spend.js): las claves de cada servicio, cada una solo para el suyo -->
+<dialog class="settings spend-keys" id="spend-keys" aria-labelledby="spend-keys-title">
+  <form id="spend-form">
+    <h2 id="spend-keys-title" data-i18n="spend.keysTitle">AI services</h2>
+    <p class="help" data-i18n="spend.keysHelp">Read-only access to spend. Anthropic and OpenAI need an admin key (Admin API); OpenRouter, the account key; OmniRoute, its address and a key with the manage permission if it asks for one. Each key goes only to its own service.</p>
+    <div class="field">
+      <label for="spend-anthropic"><span data-i18n="spend.keyAnthropic">Anthropic admin key</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <input id="spend-anthropic" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-admin01-…">
+    </div>
+    <div class="field">
+      <label for="spend-openai"><span data-i18n="spend.keyOpenai">OpenAI admin key</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <input id="spend-openai" type="password" autocomplete="off" spellcheck="false" placeholder="sk-admin-…">
+    </div>
+    <div class="field">
+      <label for="spend-openrouter"><span data-i18n="spend.keyOpenrouter">OpenRouter key</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <input id="spend-openrouter" type="password" autocomplete="off" spellcheck="false" placeholder="sk-or-v1-…">
+    </div>
+    <div class="field">
+      <label for="spend-omniroute-url"><span data-i18n="spend.omnirouteUrl">OmniRoute address</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <input id="spend-omniroute-url" type="url" autocomplete="off" spellcheck="false" placeholder="http://localhost:20128">
+      <label for="spend-omniroute" class="spend-sub" data-i18n="spend.keyOmniroute">OmniRoute key (manage permission)</label>
+      <input id="spend-omniroute" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…">
+      <p class="help" id="spend-omniroute-help" data-i18n="spend.omnirouteHelp">Give each agent its own OmniRoute key named after it (for example «Claude Code · loop»): that is how its spend is told apart. On the web, OmniRoute must allow this page in CORS_ALLOWED_ORIGINS; the desktop app does not need it.</p>
+    </div>
+    <p class="help" id="spend-where" data-i18n="spend.whereWeb">On the web the keys stay only in this browser; in the desktop app, encrypted with the system keychain.</p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-ghost" id="spend-clear" data-i18n="spend.clear">Delete keys</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn-ghost" id="spend-cancel" data-i18n="settings.cancel">Cancel</button>
+      <button type="submit" class="btn btn-primary" data-i18n="spend.save">Save</button>
+    </div>
+  </form>
+</dialog>
 
 <dialog class="settings" id="settings" aria-labelledby="settings-title">
   <form id="settings-form">
@@ -467,6 +532,15 @@
       </div>
       <p class="help" data-i18n-html="settings.bbdcTokenHelp">For your own Bitbucket Data Center or Server: a personal or HTTP access token with read permission on the repositories. Most servers don't let anyone read without signing in.</p>
       <p class="help" id="bbdc-token-where"></p>
+    </div>
+    <div class="field" id="forge-token-field" hidden>
+      <label for="forge-token-input"><span data-i18n="settings.forgeToken">Token for your Forgejo or Gitea server</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <div class="field-row">
+        <input id="forge-token-input" type="password" autocomplete="off" spellcheck="false">
+        <button type="button" class="btn btn-ghost" id="forge-token-toggle">Show</button>
+      </div>
+      <p class="help" data-i18n-html="settings.forgeTokenHelp">For your own Forgejo or Gitea: an access token with the <code>read:repository</code> scope, to see private repositories. Public ones don't need one.</p>
+      <p class="help" id="forge-token-where"></p>
     </div>
     <fieldset class="field hooks" id="hooks-box" hidden>
       <legend data-i18n="settings.hooks">Notices to Slack, Discord and Teams</legend>
@@ -694,6 +768,7 @@
       <select id="constellation-order">
         <option value="tabs" data-i18n="constellation.orderTabs">Tabs</option>
         <option value="activity" data-i18n="constellation.orderActivity">Activity</option>
+        <option value="recent" data-i18n="constellation.orderRecent">Last commit</option>
         <option value="prs" data-i18n="stats.prs">Open PRs</option>
         <option value="issues" data-i18n="constellation.orderIssues">Open issues</option>
         <option value="stars" data-i18n="constellation.orderStars">Stars</option>
@@ -736,7 +811,7 @@
     </div>
     <p class="help" id="graph-author-status" role="status"></p>
     <label class="marks-toggle"><input type="checkbox" id="graph-firstparent"> <span data-i18n="search.firstParent">First parent only (like git log --first-parent)</span></label>
-    <label class="marks-toggle"><input type="checkbox" id="graph-columns"> <span data-i18n="search.columns">Show SHA, author and date next to each commit (2D graph)</span></label>
+    <label class="marks-toggle"><input type="checkbox" id="graph-columns"> <span data-i18n="search.columns">Show SHA, author and date next to each commit</span></label>
     <div class="sr-row">
       <p class="help" id="branch-view-status" role="status"></p>
       <button type="button" class="btn" id="branch-view-reset" hidden data-i18n="branchview.reset">Show all branches</button>
@@ -761,6 +836,9 @@
 <script src="js/util.js"></script>
 <script src="js/diff.js"></script>
 <script src="js/agents.js"></script>
+<script src="js/swarm.js"></script>
+<script src="js/cortex.js"></script>
+<script src="js/spend.js"></script>
 <script src="js/sources/github.js"></script>
 <script src="js/sources/gitlab.js"></script>
 <script src="js/sources/codeberg.js"></script>

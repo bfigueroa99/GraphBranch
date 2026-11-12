@@ -246,6 +246,35 @@ test('PRs por estado: borrador, checks en rojo, aprobado y esperando revisión, 
   assert.equal(s.waiting.total, 2);
 });
 
+test('PRs sin revisión hace días: más de 7 días abiertos, sin borradores ni revisiones, ni decisión ni en la actividad', () => {
+  const r = repo();
+  r.pulls.clear();
+  const add = (n, days, extra = {}) => r.pulls.set(n, { number: n, title: 't' + n, head: 'h' + n, sameRepo: true, createdAt: ago(days), ...extra });
+  add(1, 20); // el más viejo, sin nada: cuenta
+  add(2, 10, { draft: true }); // borrador: no
+  add(3, 12, { review: 'approved' }); // aprobado: no
+  add(4, 9, { review: 'changes' }); // con cambios pedidos: ya tuvo revisión
+  add(5, 8); // con una revisión en la actividad: no
+  add(6, 15); // solo le pidieron revisión: cuenta
+  add(7, 3); // de 3 días: todavía no
+  add(8, 7.5, { ci: 'failure' }); // en rojo pero sin revisión: cuenta
+  add(9, 11, { reviewers: [{ name: 'Ana', vote: 'yes' }] }); // Azure: un revisor ya votó
+  add(10, 13, { reviewers: [{ name: 'Leo', vote: '' }] }); // Azure: asignado, sin votar: cuenta
+  const acts = [
+    { kind: 'review', number: 5, time: ago(1) },
+    { kind: 'review', number: 6, request: true, time: ago(2) },
+    { kind: 'review-ok', number: 99, time: ago(1) }, // de otro PR
+  ];
+  const u = compute(r, acts, NOW).unreviewed;
+  assert.deepEqual(Array.from(u.rows, (x) => x.number), [1, 6, 10, 8]);
+  assert.equal(u.total, 4);
+  assert.equal(u.rows[0].head, 'h1', 'cada fila lleva a su rama');
+  assert.equal(u.rows[0].age, 20 * DAY);
+  // otra actividad: una revisión con cambios saca al 1, y el 5, sin la suya, vuelve a contar
+  const other = compute(r, [{ kind: 'review-changes', number: 1, time: ago(1) }], NOW).unreviewed;
+  assert.deepEqual(Array.from(other.rows, (x) => x.number), [6, 10, 5, 8]);
+});
+
 test('tasa de fallos de CI: PRs abiertos en rojo entre los que tienen checks, y las veces que la rama por defecto se puso roja en 30 días', () => {
   const data = repo();
   data.ci = new Map([['hasPr', 'failure']]);
@@ -454,4 +483,118 @@ test('el panel de salud tiene una columna que puede encogerse (a 320 px no se de
   const m = css.match(/#health \.tr-wrap,\s*\.hl-body,\s*\.hl-list \{([^}]*)\}/);
   assert.ok(m, 'falta la regla de columna del panel de salud');
   assert.match(m[1], /grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+});
+
+test('despliegues por entorno: al día con su rama, commits nuevos detrás o sin su rama, el más reciente primero', () => {
+  const commits = new Map([
+    ['r0', { date: ago(5), parents: [] }],
+    ['r1', { date: ago(4), parents: ['r0'] }],
+    ['s1', { date: ago(3), parents: ['r1'] }], // una rama que se fusiona en main
+    ['r2', { date: ago(2), parents: ['r1', 's1'] }],
+    ['r3', { date: ago(1), parents: ['r2'] }],
+    ['d1', { date: ago(0.5), parents: ['r1'] }],
+    ['x1', { date: ago(6), parents: [] }], // fuera de toda rama cargada
+  ]);
+  const br = (name, sha, extra = {}) => [name, { name, sha, ...extra }];
+  const data = {
+    repo: { defaultBranch: 'main' },
+    commits,
+    branches: new Map([br('main', 'r3', { isDefault: true }), br('develop', 'd1')]),
+    pulls: new Map(),
+    deploys: new Map([
+      ['production', { sha: 'r1', ref: 'main', at: new Date(ago(0.2)).toISOString() }], // main lleva r3, r2 y s1 que no tiene
+      ['staging', { sha: 'd1', ref: 'develop' }], // la punta de develop; sin `at`, cuenta la fecha del commit
+      ['preview', { sha: 'x1', ref: 'v1.0.0' }], // ref que no es una rama cargada: se compara con main, que no lo contiene
+      ['vacío', { sha: '' }], // sin commit: no entra
+    ]),
+  };
+  const h = compute(data, [], NOW);
+  assert.equal(h.deploys.total, 3);
+  const rows = JSON.parse(JSON.stringify(h.deploys.rows));
+  assert.deepEqual(rows.map((r) => r.env), ['production', 'staging', 'preview']);
+  assert.deepEqual(rows.map((r) => [r.state, r.head, r.behind]), [['behind', 'main', 3], ['current', 'develop', 0], ['unknown', null, 0]]);
+  assert.equal(rows[0].age, NOW - ago(0.2));
+  assert.equal(rows[1].age, NOW - ago(0.5));
+  // un commit de otra rama (develop) que main no contiene, aunque compartan ancestros: no se sabe, y no lleva a ninguna rama
+  data.deploys = new Map([['preview', { sha: 'd1', ref: 'pr-12' }]]);
+  assert.deepEqual(JSON.parse(JSON.stringify(compute(data, [], NOW).deploys.rows.map((r) => [r.state, r.head]))), [['unknown', null]]);
+  // un sha que no es texto no rompe el panel
+  data.deploys = new Map([['raro', { sha: 1 }]]);
+  assert.equal(compute(data, [], NOW).deploys.total, 0);
+  // el despliegue de la punta de la rama por defecto, sin `ref`, está al día
+  data.deploys = new Map([['production', { sha: 'r3' }]]);
+  assert.equal(compute(data, [], NOW).deploys.rows[0].state, 'current');
+  // un commit desplegado que no está cargado: no se sabe
+  data.deploys = new Map([['production', { sha: 'zz', ref: 'main' }]]);
+  assert.equal(compute(data, [], NOW).deploys.rows[0].state, 'unknown');
+  // si salió bien, falló o sigue en curso: el estado de GitHub por id (`deployStatus`) o el que trae la demo (`status`)
+  data.deploys = new Map([
+    ['production', { id: 3, sha: 'r3', ref: 'main' }],
+    ['staging', { id: 2, sha: 'd1', ref: 'develop' }],
+    ['preview', { id: 1, sha: 'r1', ref: 'main', status: 'success' }],
+    ['qa', { sha: 'r2', ref: 'main', status: 'queued' }],
+    ['viejo', { id: 7, sha: 'r1', ref: 'main' }],
+    ['raro', { id: 8, sha: 'r1', ref: 'main' }],
+    ['sin-preguntar', { id: 9, sha: 'r1', ref: 'main' }],
+  ]);
+  data.deployStatus = new Map([
+    [3, { state: 'error' }],
+    [2, { state: 'in_progress' }],
+    [1, { state: 'failure' }], // lo consultado manda sobre lo que traiga el despliegue
+    [7, { state: 'inactive' }],
+    [8, { state: 'toString' }],
+    [9, { state: null }],
+  ]);
+  const out = Object.fromEntries(compute(data, [], NOW).deploys.rows.map((r) => [r.env, r.status]));
+  assert.deepEqual(out, { production: 'failed', staging: 'running', preview: 'failed', qa: 'running', viejo: null, raro: null, 'sin-preguntar': null });
+  delete data.deployStatus;
+  assert.equal(compute(data, [], NOW).deploys.rows.find((r) => r.env === 'preview').status, 'ok');
+  // sin carga de despliegues (otras fuentes), nada
+  delete data.deploys;
+  assert.equal(compute(data, [], NOW).deploys.total, 0);
+});
+
+test('estrellas nuevas: la semana actual frente a la anterior, cada usuario una vez y sin consultas', () => {
+  const star = (id, d, login) => ({ id, kind: 'star', time: ago(d), ...(login ? { actor: { login } } : {}) });
+  const acts = [
+    star('s1', 1, 'ana'),
+    star('s2', 2, 'Beto'),
+    star('s3', 6.9, null), // sin usuario: cuenta sola
+    star('s4', 3, 'beto'), // el mismo usuario (sin distinguir mayúsculas) que volvió a ponerla: no suma
+    star('s5', 8, 'carla'),
+    star('s6', 13, 'dani'),
+    star('s7', 15, 'eva'), // hace más de dos semanas: no entra en ninguna
+    star('s8', -1, 'futuro'), // con la hora en el futuro: no cuenta
+    { id: 'f1', kind: 'fork', time: ago(1) }, // un fork no es una estrella
+    { id: 's9', kind: 'star' }, // sin hora: no cuenta
+  ];
+  const h = compute(repo(), acts, NOW);
+  assert.equal(h.stars.week, 3);
+  assert.equal(h.stars.prev, 2);
+  // la primera vez que se vio una estrella decide su semana: ana la puso hace 10 días y otra vez ayer
+  const again = compute(repo(), [star('a', 10, 'ana'), star('b', 1, 'ana')], NOW);
+  assert.deepEqual({ ...again.stars }, { week: 0, prev: 1 });
+  assert.deepEqual({ ...compute(repo(), [], NOW).stars }, { week: 0, prev: 0 });
+});
+
+test('forks nuevos: la semana actual frente a la anterior, cada fork una vez y sin consultas', () => {
+  const fork = (id, d, detail) => ({ id, kind: 'fork', time: ago(d), ...(detail != null ? { detail } : {}) });
+  const acts = [
+    fork('f1', 1, 'ana/orbita'),
+    fork('f2', 2, 'beto/orbita'),
+    fork('f3', 6.9, ''), // sin nombre: cuenta sola
+    fork('f4', 3, 'Beto/Orbita'), // el mismo fork (sin distinguir mayúsculas) visto otra vez: no suma
+    fork('f5', 8, 'carla/orbita'),
+    fork('f6', 13, 'dani/orbita'),
+    fork('f7', 15, 'eva/orbita'), // hace más de dos semanas: no entra en ninguna
+    fork('f8', -1, 'futuro/orbita'), // con la hora en el futuro: no cuenta
+    { id: 's1', kind: 'star', time: ago(1), actor: { login: 'ana' } }, // una estrella no es un fork
+    { id: 'f9', kind: 'fork', detail: 'sin/hora' }, // sin hora: no cuenta
+  ];
+  const h = compute(repo(), acts, NOW);
+  assert.deepEqual({ ...h.forkTrend }, { week: 3, prev: 2 });
+  // la primera vez que se vio un fork decide su semana, y la lista de forks activos (data.forks) no cuenta
+  const again = compute({ ...repo(), forks: [{ fullName: 'x/y', url: 'https://github.com/x/y', pushedAt: ago(1), stars: 0 }] }, [fork('a', 10, 'ana/orbita'), fork('b', 1, 'ana/orbita')], NOW);
+  assert.deepEqual({ ...again.forkTrend }, { week: 0, prev: 1 });
+  assert.deepEqual({ ...compute(repo(), [], NOW).forkTrend }, { week: 0, prev: 0 });
 });

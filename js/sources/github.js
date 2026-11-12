@@ -119,7 +119,8 @@
         pulls: new Map(),
         ci: new Map(), // rama -> 'success' | 'failure' | 'pending': el estado de los checks de su cabeza
         tags: new Map(), // commit -> [nombre de tag]
-        deploys: new Map(), // entorno -> { sha, ref }: el último despliegue de cada uno
+        deploys: new Map(), // entorno -> { id, sha, ref, at }: el último despliegue de cada uno (at: cuándo se creó)
+        deployStatus: new Map(), // id del despliegue -> { state, at }: su último estado (`/statuses`) y cuándo se preguntó
         forks: [], // forks con actividad reciente, el push más nuevo primero
         pins: this.pins, // van justo debajo de la rama por defecto (ver layout.js)
         mode: null,
@@ -600,7 +601,7 @@
       const deploys = await get('deployments?per_page=30', 'deploys');
       if (Array.isArray(deploys)) {
         const byEnv = new Map();
-        for (const d of deploys) if (d?.sha && typeof d.environment === 'string' && !byEnv.has(d.environment)) byEnv.set(d.environment, { sha: d.sha, ref: d.ref || '' }); // el más nuevo va primero
+        for (const d of deploys) if (typeof d?.sha === 'string' && typeof d.environment === 'string' && !byEnv.has(d.environment)) byEnv.set(d.environment, { id: Number.isSafeInteger(d.id) ? d.id : null, sha: d.sha, ref: typeof d.ref === 'string' ? d.ref : '', at: typeof d.created_at === 'string' ? d.created_at : '' }); // el más nuevo va primero
         this.data.deploys = byEnv;
       }
     }
@@ -617,6 +618,36 @@
         if (!['http', 'notfound', 'auth'].includes(err.kind)) throw err;
       }
       return true;
+    }
+
+    /** Si salió bien, falló o sigue en curso el último despliegue de cada entorno: una consulta por entorno
+        (`/deployments/:id/statuses`, solo el más nuevo), solo cuando el panel de salud lo pide y no más de una cada
+        15 minutos por despliegue (con ETag). Un despliegue que falla queda sin estado; la cuota agotada o la red caída
+        cortan la tanda (se lanza el error, como en `syncForks`, y lo que faltó se pide al volver a abrir el panel). */
+    async syncDeployStatuses(now = Date.now()) {
+      const known = (this.data.deployStatus ||= new Map());
+      const ids = [...new Set([...(this.data.deploys || new Map()).values()].map((d) => d?.id))].filter((id) => Number.isSafeInteger(id));
+      for (const id of [...known.keys()]) {
+        if (ids.includes(id)) continue;
+        known.delete(id); // los despliegues que ya no son los últimos
+        this.etags.delete(`deploy-status-${id}`);
+      }
+      const todo = ids.filter((id) => !(now - (known.get(id)?.at ?? -Infinity) < 15 * 60000)).slice(0, this.token ? 10 : 5); // sin token, la cuota es de 60 por hora
+      for (const id of todo) known.set(id, { state: known.get(id)?.state ?? null, at: now }); // antes de preguntar: otra apertura del panel a mitad de la tanda no los repite
+      for (const id of todo) {
+        let state = known.get(id).state;
+        try {
+          const { data } = await this.api(`${this.base}/deployments/${id}/statuses?per_page=1`, { cacheKey: `deploy-status-${id}` });
+          state = Array.isArray(data) && typeof data[0]?.state === 'string' ? data[0].state : null;
+        } catch (err) {
+          if (!['http', 'notfound', 'auth'].includes(err.kind)) {
+            for (const rest of todo.slice(todo.indexOf(id))) if (known.get(rest)?.at === now) known.set(rest, { ...known.get(rest), at: -Infinity }); // lo que no se llegó a preguntar
+            throw err;
+          }
+        }
+        if (known.has(id)) known.set(id, { state, at: now });
+      }
+      return todo.length > 0;
     }
 
     /** Fecha del primer commit de cada PR fusionado reciente (`numbers`): una consulta por PR (`/pulls/:n/commits`, solo el
@@ -1085,7 +1116,7 @@
         sameRepo: !p.isCrossRepository,
         url: p.url,
         draft: !!p.isDraft,
-        review: p.reviewDecision === 'APPROVED' ? 'approved' : null,
+        review: p.reviewDecision === 'APPROVED' ? 'approved' : p.reviewDecision === 'CHANGES_REQUESTED' ? 'changes' : null, // «changes» solo lo usa la salud: ya tuvo revisión
         user: p.author ? { login: p.author.login, name: p.author.login, avatar: p.author.avatarUrl } : null,
         createdAt: Date.parse(p.createdAt) || Date.now(),
         ci: ciState(p.commits?.nodes?.[0]?.commit?.statusCheckRollup?.state),

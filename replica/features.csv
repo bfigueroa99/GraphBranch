@@ -2,7 +2,7 @@ feature,area,priority,original,clone,notes
 Grafo de commits con ramas y merges,grafo,must,yes,yes,"README: Vista 3D y Vista 2D tipo metro"
 Ramas y tags rotulados en el grafo,grafo,must,yes,yes,"README: tags y despliegues (banderín en el commit con tag)"
 Detalle de un commit (mensaje autor fecha SHA),grafo,must,yes,yes,"ficha del commit en 2D y 3D"
-Columnas de autor fecha y SHA a la vista en el grafo,grafo,should,yes,partial,"SHA corto, autor y fecha junto a cada commit del grafo 2D con un interruptor (README: Búsqueda de commits); falta el 3D"
+Columnas de autor fecha y SHA a la vista en el grafo,grafo,should,yes,yes,"SHA corto, autor y fecha junto a cada commit del grafo 2D y del 3D con un interruptor (README: Búsqueda de commits)"
 Resaltar los commits de una rama y atenuar el resto,grafo,should,yes,yes,"pasar el puntero o el foco por el nombre de una rama (leyenda y cabezas 2D, etiquetas 3D) o por un commit resalta la rama y atenúa el resto sin tocar filtro ni URL (README, Vista 2D); comparar ramas y los filtros por autor o ruta también atenúan"
 Ocultar una rama o dejarla sola en el grafo,grafo,should,yes,yes,"README: Ocultar una rama o dejarla sola (#210; en 2D y 3D, por repo) y en la URL con ?solo= y ?ocultar= (#218)"
 Filtrar el grafo por autor,grafo,should,yes,yes,"README: «Mostrar solo las ramas de…» y ?author="
@@ -21,7 +21,7 @@ Crear un PR desde la app,pull requests,could,yes,skip,"GraphBranch mira repos: n
 Fusionar un PR desde la app,pull requests,could,yes,skip,"GraphBranch mira repos: no fusiona PRs"
 Sugerir cambios en un PR,pull requests,could,yes,skip,"revisar código es del servicio; GraphBranch no escribe en los PRs"
 Launchpad: PRs de varios repos agrupados por estado,launchpad,must,yes,yes,"README, «Todos a la vez»: el Launchpad de la vista conjunta agrupa por estado los PRs abiertos de todos los repos seguidos (sin token, solo borrador o esperando revisión)"
-Launchpad: fijar y posponer PRs e issues,launchpad,could,yes,no,
+Launchpad: fijar y posponer PRs e issues,launchpad,could,yes,partial,"README, «Todos a la vez»: el 📌 fija un PR arriba de su grupo y el 💤 lo pospone un día; faltan los issues (el Launchpad solo lista PRs)"
 Launchpad: vista de equipo filtrada por colaborador,launchpad,could,yes,no,
 Issues de rastreadores (Jira Trello GitHub Issues),integraciones,should,yes,partial,"issues de GitHub GitLab Codeberg y Bitbucket en el panel de actividad y la salud; sin Jira ni Trello"
 GitHub y GitHub Enterprise Server,integraciones,must,yes,yes,"README: fuentes (?api=)"

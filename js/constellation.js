@@ -1,6 +1,6 @@
 /* GraphBranch — constelación de repos: cada repo seguido es una galaxia, para ver más repos de los que caben
-   en pestañas. Una galaxia es un botón (se recorre con Tab y se abre con Intro) con su nombre, sus cifras y,
-   si hay, las novedades sin ver; el tamaño sale de los commits cargados y el color, del nombre. No hace
+   en pestañas. Una galaxia es un botón (se recorre con Tab y se abre con Intro) con su nombre, sus cifras, cuánto
+   hace de su commit más reciente ya cargado y, si hay, las novedades sin ver; el tamaño sale de los commits cargados y el color, del nombre. No hace
    ninguna consulta: parte del estado ya cargado. Todo texto entra con textContent. */
 (function (GB) {
   'use strict';
@@ -9,7 +9,7 @@
   const R_MIN = 1; // radios relativos: la galaxia más grande mide R_MAX veces la más chica
   const R_MAX = 2.4;
   const PAD = 4; // margen del cuadro, en % del lado
-  const ORDERS = ['activity', 'prs', 'issues', 'stars', 'forks', 'new', 'name']; // los órdenes que no son el de las pestañas (el selector y ?order=)
+  const ORDERS = ['activity', 'recent', 'prs', 'issues', 'stars', 'forks', 'new', 'name']; // los órdenes que no son el de las pestañas (el selector y ?order=)
 
   /** Tamaño relativo de una galaxia según sus commits: crece con la raíz y se queda entre R_MIN y R_MAX. */
   function radiusOf(commits, maxCommits) {
@@ -42,12 +42,15 @@
       .map((p) => ({ key: p.key, x: 50 + p.x * k, y: 50 + p.y * k, r: p.r * k }));
   }
 
-  /** Los repos en el orden pedido: `tabs` (el de las pestañas), `activity` (más commits cargados primero), `prs` (más pull requests abiertos primero), `issues` (más issues abiertos primero), `stars` (más estrellas primero), `forks` (más forks primero), `new` (más ramas nuevas de la semana primero) o
+  /** Los repos en el orden pedido: `tabs` (el de las pestañas), `activity` (más commits cargados primero), `recent` (el commit más reciente ya cargado primero; los que cargan o están vacíos, sin `last`, al final), `prs` (más pull requests abiertos primero), `issues` (más issues abiertos primero), `stars` (más estrellas primero), `forks` (más forks primero), `new` (más ramas nuevas de la semana primero) o
       `name` (alfabético, sin mayúsculas ni acentos). Empata por el orden de las pestañas; no toca `items`. */
   function sortItems(items, mode) {
     const list = items.map((it, idx) => ({ it, idx }));
     if (mode === 'activity') list.sort((a, b) => (b.it.commits || 0) - (a.it.commits || 0) || a.idx - b.idx);
-    else if (mode === 'prs') list.sort((a, b) => (b.it.prs || 0) - (a.it.prs || 0) || a.idx - b.idx);
+    else if (mode === 'recent') {
+      const at = (it) => (Number.isFinite(it.last) ? it.last : -Infinity);
+      list.sort((a, b) => (at(b.it) === at(a.it) ? 0 : at(b.it) > at(a.it) ? 1 : -1) || a.idx - b.idx);
+    } else if (mode === 'prs') list.sort((a, b) => (b.it.prs || 0) - (a.it.prs || 0) || a.idx - b.idx);
     else if (mode === 'issues') list.sort((a, b) => (b.it.issues || 0) - (a.it.issues || 0) || a.idx - b.idx);
     else if (mode === 'stars') list.sort((a, b) => (b.it.stars || 0) - (a.it.stars || 0) || a.idx - b.idx);
     else if (mode === 'forks') list.sort((a, b) => (b.it.forks || 0) - (a.it.forks || 0) || a.idx - b.idx);
@@ -96,7 +99,7 @@
     return names.size;
   }
 
-  /** `?order=activity`, `?order=prs`, `?order=issues`, `?order=stars`, `?order=forks`, `?order=new` o `?order=name`: el orden con que abre la constelación. Lo que no se conoce (o falta) es `null`: queda el de las pestañas. */
+  /** `?order=activity`, `?order=recent`, `?order=prs`, `?order=issues`, `?order=stars`, `?order=forks`, `?order=new` o `?order=name`: el orden con que abre la constelación. Lo que no se conoce (o falta) es `null`: queda el de las pestañas. */
   function orderParam(q) {
     const v = String(q.get('order') || '').trim().toLowerCase();
     return ORDERS.includes(v) ? v : null;
@@ -169,8 +172,29 @@
     return svg;
   }
 
-  /** Monta la constelación en `root`. `text(key, params)`: traductor; `fmt(n)`: número; `onGo(key)`: Intro sobre una galaxia. */
-  function mount(root, { text, fmt = String, onGo, select = null, status = null }) {
+  /** Los mismos 30 días de las ramas quietas de la vista de texto (`GB.textview.QUIET_DAYS`). */
+  const QUIET_DAYS = 30;
+
+  /** Una galaxia quieta: su commit más reciente ya cargado (`it.last`) tiene más de QUIET_DAYS días a `now`. Sin `last`, o mientras la pestaña carga, no es quieta: no hay fecha que lo diga. */
+  function isQuiet(it, now = Date.now()) {
+    return it.state !== 'loading' && Number.isFinite(it.last) && now - it.last > QUIET_DAYS * 864e5;
+  }
+
+  /** Lo que dice una galaxia: `label` (su nombre accesible) y `title` (su globo). Nombre, commits y ramas, cuánto hace de
+      su commit más reciente ya cargado (`it.last`, con `ago(ms)`, el formato relativo de la app: nada si carga o está
+      vacía, sin `last`), si está quieta («sin actividad hace más de 30 días») y, solo en `label`, las novedades sin ver. */
+  function describe(it, { text, fmt = String, ago = null, now = Date.now() }) {
+    const stats = text('constellation.stats', { commits: fmt(it.commits || 0), branches: fmt(it.branches || 0) });
+    const when = ago && Number.isFinite(it.last) ? ago(it.last) : '';
+    const quiet = isQuiet(it, now) ? text('textview.quiet') : '';
+    return {
+      label: [it.name, stats, when, quiet, it.unread ? text('tabs.unread', { n: it.unread }) : ''].filter(Boolean).join(', '),
+      title: [it.name, stats, when, quiet].filter(Boolean).join(' · '),
+    };
+  }
+
+  /** Monta la constelación en `root`. `text(key, params)`: traductor; `fmt(n)`: número; `ago(ms)`: «hace 3 h»; `onGo(key)`: Intro sobre una galaxia. */
+  function mount(root, { text, fmt = String, ago = null, onGo, select = null, status = null }) {
     let items = [];
     let mode = 'tabs';
     let filter = '';
@@ -215,13 +239,14 @@
         b.className = 'cs-gx';
         b.dataset.key = it.key;
         b.dataset.state = it.state || 'live';
+        if (isQuiet(it)) b.dataset.quiet = 'true';
         if (it.active) b.setAttribute('aria-current', 'true');
         b.style.left = `${s.x - s.r}%`;
         b.style.top = `${s.y - s.r}%`;
         b.style.width = b.style.height = `${s.r * 2}%`;
-        const stats = text('constellation.stats', { commits: fmt(it.commits || 0), branches: fmt(it.branches || 0) });
-        b.setAttribute('aria-label', [it.name, stats, it.unread ? text('tabs.unread', { n: it.unread }) : ''].filter(Boolean).join(', '));
-        b.title = `${it.name} · ${stats}`;
+        const said = describe(it, { text, fmt, ago });
+        b.setAttribute('aria-label', said.label);
+        b.title = said.title;
         b.appendChild(disc(hueOf(it.name)));
         const name = document.createElement('span');
         name.className = 'cs-name';
@@ -244,5 +269,5 @@
     return { render, setOrder, setFilter, setRecent };
   }
 
-  GB.constellation = { place, sortItems, openIssues, starsOf, forksOf, newBranches, orderParam, filterParam, filterItems, recentParam, recentItems, radiusOf, hueOf, mount };
+  GB.constellation = { place, sortItems, describe, openIssues, starsOf, forksOf, newBranches, orderParam, filterParam, filterItems, isQuiet, QUIET_DAYS, recentParam, recentItems, radiusOf, hueOf, mount };
 })(window.GB);

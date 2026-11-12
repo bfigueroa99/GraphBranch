@@ -8,12 +8,12 @@
      node tools/loop.test.mjs     solo estas */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { ARCHIVO_BITACORA, ARCHIVO_HOJA, ARENA_MAX, AUDITABLES, BASE, CADENCIAS, RELEASE, CRON_H, EJES, FLAGS, HOJA_MAX, HOJA_SIN_FUENTE, LARGOS, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, PROMPT_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SUBTIPOS, appReferencia, check, diagnostico, disparosEntre, matrizReplica, necesidades, ordenHoja, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, rotarHoja, siguiente, tramos } from './loop.mjs';
+import { ANCHOS_MIN, ARCHIVO_BITACORA, ARCHIVO_HOJA, ARENA_MAX, AUDITABLES, BASE, CADENCIAS, RELEASE, CRON_H, EJES, FLAGS, HOJA_MAX, HOJA_SIN_FUENTE, HUECOS_DIAS, LARGOS, LoopError, MARCA_ARENA, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, PROMPT_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SKILL_MAX, SUBTIPOS, appReferencia, check, diagnostico, disparosEntre, matrizReplica, necesidades, ordenHoja, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, rotarHoja, siguiente, tramos } from './loop.mjs';
 import { TIPOS } from './audit.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -385,6 +385,24 @@ describe('check()', () => {
     assert.equal(nivel(ok(), 'R4'), 'ok');
   });
 
+  test('R4: una hoja sin un solo ítem de alcance 2 o 3 es un aviso, y al reponer (menos de 10) lo dice el error', () => {
+    const nicho = (extra) => check(fixture(extra).replaceAll(' · 2×2/2', ' · 1×2/2'), { log: LOG });
+    const r = nicho();
+    assert.equal(nivel(r, 'R4'), 'aviso');
+    assert.equal(texto(r, 'R4'), `ninguno de los 18 ítems sin hacer amplía el alcance (todos son de alcance 1, un nicho): la reposición, al bajar de 10, deja al menos ${ANCHOS_MIN} de alcance 2 o 3 (.claude/skills/iteracion/REPONER.md)`);
+    // con menos de 10 toca reponer: sigue siendo un error, y dice las dos cosas
+    assert.equal(nivel(nicho({ items: 15 }), 'R4'), 'ERROR');
+    assert.match(texto(nicho({ items: 15 }), 'R4'), new RegExp(`quedan 9: reponer hasta 15.*ninguno de los 9 ítems sin hacer amplía el alcance.*: la reposición deja al menos ${ANCHOS_MIN} de alcance 2 o 3`));
+    // con uno solo de alcance 2 no avisa, y la línea dice cuántos hay
+    const uno = check(fixture().replaceAll(' · 2×2/2', ' · 1×2/2').replace('**Ítem 6** · Fuentes · 1×2/2', '**Ítem 6** · Fuentes · 2×2/3'), { log: LOG });
+    assert.equal(nivel(uno, 'R4'), 'ok', texto(uno, 'R4'));
+    assert.equal(texto(uno, 'R4'), 'hoja de ruta: 18 pendientes, 1 de alcance 2 o 3');
+    assert.equal(texto(ok(), 'R4'), 'hoja de ruta: 18 pendientes, 18 de alcance 2 o 3');
+    // un ítem hecho de alcance 3 no cuenta: lo que importa es lo que queda por hacer
+    const hecho = check(fixture().replaceAll(' · 2×2/2', ' · 1×2/2').replace('hecho en #45 · Plataformas.', 'hecho en #45 · Plataformas · 3×3/2.'), { log: LOG });
+    assert.equal(nivel(hecho, 'R4'), 'aviso');
+  });
+
   test('R5: una iteración repetida es un error y un hueco, un aviso', () => {
     const lista = iteraciones(27);
     const rep = check(fixture({ entradas: [...lista.slice(0, 26), entrada({ n: 26, tipo: 'Expansión', eje: 'Escala' }), lista[26]] }), { log: LOG });
@@ -737,6 +755,72 @@ node tools/esperar.mjs puerta
       assert.equal(nivel(r, 'R8'), 'ERROR', malo);
       assert.match(texto(r, 'R8'), que);
     }
+  });
+
+  test(`la skill entra en una lectura: más de ${SKILL_MAX} bytes en SKILL.md o en un protocolo es un error`, () => {
+    const relleno = `\n${'Texto de relleno que no nombra nada. '.repeat(Math.ceil(SKILL_MAX / 36))}\n`;
+    const gorda = r8({ skill: SKILL + relleno });
+    assert.equal(nivel(gorda, 'R8'), 'ERROR');
+    assert.match(texto(gorda, 'R8'), new RegExp(`SKILL\\.md de la skill tiene \\d+ bytes \\(máximo ${SKILL_MAX}\\)`));
+    assert.match(texto(gorda, 'R8'), /protocolo aparte/);
+    const NOMBRA = '\nSi toca reponer, se lee `.claude/skills/iteracion/REPONER.md`.\n';
+    const parte = r8({ skill: SKILL + NOMBRA, protocolos: { 'REPONER.md': `# Reponer${relleno}` } });
+    assert.equal(nivel(parte, 'R8'), 'ERROR');
+    assert.match(texto(parte, 'R8'), /REPONER\.md de la skill tiene \d+ bytes/);
+    assert.equal(nivel(r8({ skill: SKILL + NOMBRA, protocolos: { 'REPONER.md': '# Reponer\n' } }), 'R8'), 'ok');
+  });
+
+  test('los protocolos aparte son parte de la skill: SKILL.md los nombra con su ruta y cumplen sus mismas reglas', () => {
+    const NOMBRA = '\nEl protocolo de cada subtipo está en `.claude/skills/iteracion/MANTENIMIENTO.md`.\n';
+    const sinSeguridad = SKILL.replace('#### Seguridad\n', '');
+    // el protocolo de un subtipo puede vivir en el protocolo aparte
+    const bien = r8({ skill: sinSeguridad + NOMBRA, protocolos: { 'MANTENIMIENTO.md': '# Mantenimiento\n\n## Seguridad\n\nEl CSP sigue cerrado.\n' } });
+    assert.equal(nivel(bien, 'R8'), 'ok', bien.salida);
+    assert.match(texto(bien, 'R8'), /1 protocolo aparte/);
+    // uno que SKILL.md no nombra no lo lee nadie
+    const huerfano = r8({ protocolos: { 'OLVIDADO.md': '# Nadie me nombra\n' } });
+    assert.equal(nivel(huerfano, 'R8'), 'ERROR');
+    assert.match(texto(huerfano, 'R8'), /OLVIDADO\.md existe y SKILL\.md no lo nombra/);
+    // y lo que dice se vigila igual: un comando largo suelto, un flag que no existe, una ruta que no existe
+    for (const [malo, que] of [
+      ['```sh\nnode tools/smoke.mjs\n```', /corre node tools\/smoke\.mjs suelto/],
+      ['Corré `node tools/loop.mjs --inexistente`.', /--inexistente/],
+      ['Mirá `tools/no-existe.mjs`.', /tools\/no-existe\.mjs, que no existe/],
+    ]) {
+      const r = r8({ skill: SKILL + NOMBRA, protocolos: { 'MANTENIMIENTO.md': `# Mantenimiento\n\n${malo}\n` } });
+      assert.equal(nivel(r, 'R8'), 'ERROR', malo);
+      assert.match(texto(r, 'R8'), que);
+    }
+  });
+
+  test('la skill del repo: entra en una lectura, cada protocolo se lee solo cuando su paso lo dice y la Routine no se busca listando la cuenta', () => {
+    const carpeta = join(root, '.claude', 'skills', 'iteracion');
+    const real = readFileSync(join(carpeta, 'SKILL.md'), 'utf8');
+    assert.ok(Buffer.byteLength(real) <= SKILL_MAX, `SKILL.md tiene ${Buffer.byteLength(real)} bytes`);
+    const protocolos = readdirSync(carpeta).filter((f) => f.endsWith('.md') && !['SKILL.md', 'PROMPT.md'].includes(f));
+    assert.deepEqual(protocolos.sort(), ['CONSTRUIR.md', 'MANTENIMIENTO.md', 'REANUDAR.md', 'REPONER.md']);
+    for (const f of protocolos) {
+      const txt = readFileSync(join(carpeta, f), 'utf8');
+      assert.ok(real.includes(`.claude/skills/iteracion/${f}`), `SKILL.md nombra ${f}`);
+      assert.match(txt, /Parte de la skill `iteracion`/, `${f} dice de qué skill es parte y cuándo se lee`);
+    }
+    // lo que decide si un protocolo toca sigue en la skill: sin eso la sesión tendría que leerlos para saberlo
+    assert.match(real, /\*\*Skills de afuera\*\*[^]*?aplica si/);
+    assert.match(real, /\*\*Plan por consenso\*\*[^]*?expansión grande[^]*?difícil de deshacer/);
+    assert.match(real, /\*\*Arena\*\*[^]*?enfoques genuinamente distintos/);
+    assert.match(real, /MANTENIMIENTO\.md`: se lee la sección del subtipo que imprimió `--reclamar`/);
+    assert.match(real, /Solo si quedan menos de 10 ítems sin hacer[^]*?REPONER\.md[^]*?al menos 5\s+ítems de alcance 2 o 3/);
+    assert.match(readFileSync(join(carpeta, 'REPONER.md'), 'utf8'), new RegExp(`Una reposición deja al menos ${ANCHOS_MIN} ítems pendientes de alcance 2 o 3`));
+    assert.match(real, /\*\*4\*\* `Vencida`[^]*?REANUDAR\.md/);
+    // la Routine: por su id y con el primer mensaje de la sesión, no listando los triggers de la cuenta (43 KB,
+    // paginado: de no verla en la primera página salió un «El loop no tiene quién lo dispare» falso)
+    assert.match(real, /`trig_[0-9A-Za-z]+`/);
+    assert.match(real, /get_trigger` con ese id/);
+    assert.match(real, /nunca `list_triggers`/);
+    assert.doesNotMatch(real, /`mcp__claude-code-remote__list_triggers` y `get_trigger`/);
+    assert.match(real, /el salto de línea final no cuenta/);
+    // el prompt de verdad es PROMPT.md sin su salto final: «byte a byte» daba una diferencia que no lo era
+    assert.doesNotMatch(real, /byte a byte/);
   });
 
   test('sin skill en el repo es solo un aviso', () => {
@@ -1102,6 +1186,31 @@ describe('diagnostico() de --salud', () => {
     assert.ok(lineas.includes('Hueco: 2026-10-11 14:00 → ahora UTC (10,0 h, un disparo sin iteración)'), lineas.join('\n'));
   });
 
+  test(`los huecos que terminaron hace más de ${HUECOS_DIAS} días van contados en una línea; los recientes, uno por uno`, () => {
+    const D = 24 * H;
+    // una fusión cada 2 h durante 20 días, salvo tres tramos: 24 h el primer día (de la hora 10 a la 34), 20 h
+    // hace tres días (de la 388 a la 408) y las últimas 12 h
+    const sin = (h) => (h > 10 && h < 34) || (h > 388 && h < 408) || h > 468;
+    const merges = Array.from({ length: 240 }, (_, i) => 2 + i * 2).filter((h) => !sin(h)).map((h) => ({ fecha: t0 + h * H, titulo: 'x (#1)' }));
+    const { lineas } = diagnostico({ ...base, ahora: t0 + 20 * D, merges, cadencias: [{ desde, horas: 2 }] });
+    const huecos = lineas.filter((l) => l.startsWith('Hueco'));
+    assert.ok(huecos.includes(`Huecos de hace más de ${HUECOS_DIAS} días: 1 (24,0 h en total), ya pasados`), lineas.join('\n'));
+    assert.ok(huecos.some((l) => /^Hueco: 2026-10-26 04:00 → 2026-10-27 00:00 UTC \(20,0 h/.test(l)), lineas.join('\n'));
+    assert.ok(huecos.some((l) => /^Hueco: 2026-10-29 12:00 → ahora UTC \(12,0 h/.test(l)), lineas.join('\n'));
+    assert.ok(!huecos.some((l) => l.startsWith('Hueco: 2026-10-10')), 'el del primer día ya no se repite en cada sesión');
+    assert.equal(huecos.length, 3);
+  });
+
+  test('el alcance de lo hecho y de lo que queda: cuántos de los últimos ítems fueron de nicho y cuántos pendientes amplían', () => {
+    const txt = fixture().replace('hecho en #45 · Plataformas.', 'hecho en #45 · Plataformas · 1×2/1.').replace('hecho en #46 · Salidas.', 'hecho en #46 · Salidas · 2×3/2.');
+    const { lineas } = diagnostico({ ...base, doc: parse(txt), texto: txt });
+    assert.ok(lineas.includes('Alcance: de los últimos 2 ítems hechos, 1 fueron de alcance 1 (un nicho); de los 18 pendientes, 18 son de alcance 2 o 3'), lineas.join('\n'));
+    const nicho = txt.replaceAll(' · 2×2/2', ' · 1×2/2');
+    assert.ok(diagnostico({ ...base, doc: parse(nicho), texto: nicho }).lineas.some((l) => l.endsWith('de los 18 pendientes, 0 son de alcance 2 o 3')));
+    // sin ítems hechos con puntaje no hay de qué hablar
+    assert.ok(!diagnostico({ ...base }).lineas.some((l) => l.startsWith('Alcance:')));
+  });
+
   test('más de un día sin fusionar es una Acción (a Para Benjamin)', () => {
     const r = diagnostico({ ...base, merges: [{ fecha: t0 + 2 * H, titulo: 'x' }] });
     assert.ok(r.lineas.some((l) => /^Acción: el loop no fusiona nada desde hace 46,0 h/.test(l)), r.lineas.join('\n'));
@@ -1221,7 +1330,7 @@ describe('diagnostico() de --salud', () => {
     assert.ok(r.lineas.some((l) => /^Acción: 1 pendiente\(s\) Alta en Mantenimiento: van antes que todo \(1\)$/.test(l)));
     assert.ok(r.lineas.includes('Mantenimiento: 1 Alta, 0 Media, 13 Baja'));
     assert.ok(r.lineas.includes('Para Benjamin (1): 1. Activar Pages (desde 2026-10-12)'), r.lineas.join('\n'));
-    assert.ok(r.lineas.some((l) => /^IMPROVEMENTS\.md: \d+ KB \(bitácora \d+ KB\)/.test(l)));
+    assert.ok(r.lineas.some((l) => /^IMPROVEMENTS\.md: \d+ KB \(bitácora \d+ KB\); se lee por secciones/.test(l)));
     assert.equal(r.lineas.at(-1), '--salud: 1 acción(es)');
   });
 });

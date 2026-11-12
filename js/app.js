@@ -35,6 +35,7 @@
     graph3d: $('#graph3d'),
     view3d: $('#view-3d'),
     view2d: $('#view-2d'),
+    viewAgents: $('#view-agents'),
     spinBtn: $('#spin-btn'),
     fullscreenBtn: $('#fullscreen-btn'),
     replayBtn: $('#replay-btn'),
@@ -45,6 +46,9 @@
     directorBtn: $('#director-btn'),
     tvBtn: $('#tv-btn'),
     tvClock: $('#tv-clock'),
+    tvAgents: $('#tv-agents'),
+    tvAll: $('#tv-all'),
+    allTvBtn: $('#all-tv-btn'),
     tvPause: $('#tv-pause'),
     tvSound: $('#tv-sound'),
     tvFs: $('#tv-fs'),
@@ -59,6 +63,7 @@
     agentsBody: $('#agents-body'),
     agentsOnly: $('#agents-only'),
     agentsGraph: $('#agents-graph'),
+    agentsClock: $('#agents-clock'),
     agKey: $('#ag-key'),
     agKeyBody: $('#ag-key-body'),
     agKeyFold: $('#ag-key-fold'),
@@ -158,6 +163,10 @@
     bbdcTokenInput: $('#bbdc-token-input'),
     bbdcTokenToggle: $('#bbdc-token-toggle'),
     bbdcTokenWhere: $('#bbdc-token-where'),
+    forgeTokenField: $('#forge-token-field'),
+    forgeTokenInput: $('#forge-token-input'),
+    forgeTokenToggle: $('#forge-token-toggle'),
+    forgeTokenWhere: $('#forge-token-where'),
     token2Owner: $('#token2-owner'),
     token2Input: $('#token2-input'),
     token2Toggle: $('#token2-toggle'),
@@ -226,6 +235,8 @@
     azureToken: desktop ? '' : U.secret.get('azureToken', ''),
     // el de un Bitbucket propio, aparte y atado a su dirección: si ?bitbucket= es otro, no se usa (ni se pisa hasta guardar Ajustes)
     bbdcToken: desktop ? '' : GB.BitbucketServerSource.unpack(U.secret.get('bbdcToken', ''), BITBUCKET_URL),
+    // el de un Forgejo/Gitea propio, igual: aparte y atado a su dirección (?forge=)
+    forgeToken: desktop ? '' : GB.CodebergSource.unpack(U.secret.get('forgeToken', ''), FORGE_URL),
     // la segunda cuenta de GitHub: un token atado a un dueño u organización, solo para sus repos
     account2: desktop ? { owner: '', token: '' } : GB.GitHubSource.unpack2(U.secret.get('account2', '')),
     depth: U.store.get('depth', 40),
@@ -302,15 +313,17 @@
   const director = graph3d?.director || null;
 
   let view = '2d';
+  let agentsOn = false; // la vista de agentes, en el lugar del grafo (ver setAgentsView)
 
   function setView(v, save = true) {
     if (v === '3d' && !graph3d) v = '2d';
+    if (agentsOn) setAgentsView(false, { save }); // 3D o 2D vuelven al grafo
     view = v;
     graph = v === '3d' ? graph3d : graph2d;
     el.graph3d.hidden = v !== '3d';
     el.graph.hidden = v !== '2d';
     el.graph.parentElement.dataset.view = v; // el Replay acomoda su fecha según la vista
-    graph3d?.setActive(v === '3d' && !allOn); // con la vista conjunta el grafo no se ve: el 3D no dibuja
+    graph3d?.setActive(v === '3d' && !allOn && !agentsOn); // con la vista conjunta o la de agentes el grafo no se ve: el 3D no dibuja
     setPressed(el.view3d, v === '3d');
     setPressed(el.view2d, v === '2d');
     el.spinBtn.hidden = v !== '3d';
@@ -375,7 +388,106 @@
     },
     // con la vista 3D, cada sonido sale del lado de la pantalla donde está su rama (si es del repo a la vista)
     panOf: (a) => (graph === graph3d && (a.repo == null || a.repo === active?.key) ? graph3d.panOf(a.branch) : 0),
+    onLive: (n) => feedPanel.arrived(n),
   });
+
+  /* ---------- el panel de actividad: su borde se arrastra (o se mueve con las flechas) y se pliega a una franja ----------
+     Los dos se recuerdan en este navegador. Solo en pantallas anchas: en una columna el panel va debajo del grafo. */
+  const feedPanel = (() => {
+    const grip = $('#feed-resize');
+    const fold = $('#feed-fold');
+    const unseenEl = $('#feed-unseen');
+    const MIN = 280;
+    const MAX = 720;
+    const DEF = 370;
+    const GRAPH_MIN = 420; // lo que el grafo conserva siempre a su lado
+    let unseen = 0;
+    const rtl = () => document.documentElement.dir === 'rtl';
+    const maxNow = () => Math.max(MIN, Math.min(MAX, el.main.clientWidth - 12 - GRAPH_MIN));
+    const shownWidth = () => Math.round($('#feed-panel').getBoundingClientRect().width);
+    const folded = () => el.main.classList.contains('feed-folded');
+    /** Ancho pedido, dentro de lo que cabe; `save` lo recuerda (el de siempre no se guarda). */
+    function setWidth(w, save) {
+      const v = Math.round(Math.min(maxNow(), Math.max(MIN, w)));
+      el.main.style.setProperty('--feed-w', v + 'px');
+      grip.setAttribute('aria-valuemax', String(maxNow()));
+      grip.setAttribute('aria-valuenow', String(v));
+      if (save) U.store.set('feedWidth', v === DEF ? null : v);
+    }
+    function setFolded(on, save) {
+      el.main.classList.toggle('feed-folded', on);
+      fold.setAttribute('aria-expanded', String(!on));
+      if (!on) {
+        unseen = 0;
+        unseenEl.hidden = true;
+      }
+      if (save) U.store.set('feedFolded', on || null);
+    }
+    const saved = Number(U.store.get('feedWidth', 0));
+    if (saved >= MIN && saved <= MAX) {
+      el.main.style.setProperty('--feed-w', saved + 'px'); // sin recortar todavía: el CSS ya lo deja en la mitad como mucho
+      grip.setAttribute('aria-valuenow', String(saved));
+    }
+    if (U.store.get('feedFolded', false) === true) setFolded(true, false);
+
+    fold.addEventListener('click', () => setFolded(!folded(), true));
+    grip.addEventListener('dblclick', () => setWidth(DEF, true));
+    grip.addEventListener('pointerdown', (ev) => {
+      if (ev.button !== 0) return;
+      ev.preventDefault();
+      const x0 = ev.clientX;
+      const w0 = shownWidth();
+      let want = w0;
+      let frame = 0;
+      grip.setPointerCapture?.(ev.pointerId);
+      grip.classList.add('dragging');
+      document.documentElement.classList.add('resizing-feed');
+      // un cambio por cuadro: el grafo se redibuja con cada ancho nuevo
+      const move = (e) => {
+        want = w0 + (x0 - e.clientX) * (rtl() ? -1 : 1);
+        frame ||= requestAnimationFrame(() => ((frame = 0), setWidth(want, false)));
+      };
+      const up = () => {
+        cancelAnimationFrame(frame);
+        grip.removeEventListener('pointermove', move);
+        grip.removeEventListener('pointerup', up);
+        grip.removeEventListener('pointercancel', up);
+        grip.classList.remove('dragging');
+        document.documentElement.classList.remove('resizing-feed');
+        setWidth(want, false);
+        setWidth(shownWidth(), true); // lo que de verdad quedó (el CSS lo topa en la mitad)
+      };
+      grip.addEventListener('pointermove', move);
+      grip.addEventListener('pointerup', up);
+      grip.addEventListener('pointercancel', up);
+    });
+    // teclado (patrón de separador de WAI-ARIA): flechas de a 24 px (con Mayús, de a 96), Inicio y Fin a los topes,
+    // Enter pliega el panel
+    grip.addEventListener('keydown', (ev) => {
+      if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+      const step = ev.shiftKey ? 96 : 24;
+      const wider = rtl() ? 'ArrowRight' : 'ArrowLeft';
+      const narrower = rtl() ? 'ArrowLeft' : 'ArrowRight';
+      if (ev.key === wider) setWidth(shownWidth() + step, true);
+      else if (ev.key === narrower) setWidth(shownWidth() - step, true);
+      else if (ev.key === 'Home') setWidth(MIN, true);
+      else if (ev.key === 'End') setWidth(maxNow(), true);
+      else if (ev.key === 'Enter') {
+        setFolded(true, true);
+        fold.focus();
+      } else return;
+      ev.preventDefault();
+    });
+    return {
+      /** Llegó actividad en vivo: con el panel plegado, la franja la cuenta. */
+      arrived(n) {
+        if (!folded() || !n) return;
+        unseen += n;
+        unseenEl.textContent = '+' + U.fmtNum(Math.min(unseen, 999));
+        unseenEl.hidden = false;
+      },
+    };
+  })();
 
   /* ---------- los cambios de cada commit (ver diff.js): un panel junto al grafo para pasar de un commit a otro ---------- */
   const diffView = GB.diff.mount(el.diffPanel, {
@@ -525,7 +637,7 @@
     if (host === 'bitbucketdc') return new GB.BitbucketServerSource({ owner, name, webUrl: BITBUCKET_URL, serverToken: settings.bbdcToken, ...remembered });
     if (host === 'bitbucket') return new GB.BitbucketSource({ owner, name, token: settings.bitbucketToken, ...remembered });
     if (host === 'codeberg') return new GB.CodebergSource({ owner, name, token: settings.codebergToken, ...remembered });
-    if (host === 'forgejo') return new GB.CodebergSource({ owner, name, webUrl: FORGE_URL, avatars: desktop, ...remembered });
+    if (host === 'forgejo') return new GB.CodebergSource({ owner, name, webUrl: FORGE_URL, avatars: desktop, serverToken: settings.forgeToken, ...remembered });
     if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, webUrl: GITLAB_URL, avatars: desktop, ...remembered });
     return new GB.GitHubSource({ owner, name, token: GB.GitHubSource.tokenFor(owner, settings.token, settings.account2), apiUrl: API_URL, ...remembered });
   }
@@ -954,7 +1066,7 @@
     });
     if (allOn && tabs.length < 2) setAll(false); // con un solo repo no hay nada que juntar
     else if (allOn) syncAll();
-    else if (wantAll && tabs.length > 1 && !tv.on) {
+    else if (wantAll && tabs.length > 1) {
       // ?all=1 (o lo recordado) con repos que llegan después, como los de org:nombre
       wantAll = false;
       setAll(true, { save: false });
@@ -964,7 +1076,7 @@
 
   /** Un clic en la pestaña de un repo: lo muestra (y deja la vista conjunta, si estaba). */
   function openTab(tab) {
-    if (allOn) setAll(false);
+    if (allOn) setAll(false, { save: !tv.on });
     showTab(tab);
   }
 
@@ -1091,6 +1203,21 @@
   /* ---------- vista conjunta: todos los repos seguidos a la vez, cada uno en su tarjeta (ver overview.js) ---------- */
 
   let wantAll = false; // ?all=1 o lo recordado: se aplica en cuanto hay más de un repo
+  let initialBy = ''; // ?by=login: la persona con que abre el Launchpad
+  try {
+    initialBy = EMBED ? '' : GB.overview.personParam(new URLSearchParams(location.search));
+  } catch {
+    /* sin query string */
+  }
+  /** Pospone un PR del Launchpad un día (o deja de posponerlo); se guarda por repo y número, sin el título, y lo vencido se
+      limpia al guardar. */
+  function setPrSnooze(id, on) {
+    const m = GB.overview.liveSnoozes(U.store.get('prsnooze', {}));
+    if (on) m[id] = Date.now() + GB.overview.SNOOZE_MS;
+    else delete m[id];
+    U.store.set('prsnooze', Object.keys(m).length ? m : null);
+  }
+
   const overview = GB.overview.mount($('#all-grid'), {
     text: (k, p) => t(k, p),
     num: (n) => U.fmtNum(n),
@@ -1108,6 +1235,25 @@
     diffing: () => diffView.isOpen,
     onStats: (list) => renderAllSum(list),
     prsRoot: $('#all-prs'),
+    person: initialBy,
+    onPerson: (login) => setUrlParam('by', login),
+    getPins: () => U.store.get('prpins', []),
+    onPin: (id, on) => {
+      const set = new Set(U.store.get('prpins', []));
+      if (on) set.add(id);
+      else set.delete(id);
+      U.store.set('prpins', set.size ? [...set] : null);
+      if (on) setPrSnooze(id, false); // fijar gana a posponer
+    },
+    getSnoozes: () => GB.overview.liveSnoozes(U.store.get('prsnooze', {})),
+    onSnooze: (id, on) => {
+      setPrSnooze(id, on);
+      if (on) {
+        // posponer suelta el PR si estaba fijado: no puede ir arriba y abajo a la vez
+        const set = new Set(U.store.get('prpins', []));
+        if (set.delete(id)) U.store.set('prpins', set.size ? [...set] : null);
+      }
+    },
     onOpenPr: (key, head) => {
       const tab = tabs.find((x) => x.key === key);
       if (!tab) return;
@@ -1151,6 +1297,7 @@
     const n = tabs.reduce((sum, x) => sum + (x.unread || 0), 0);
     setText(el.allN, n ? (n > 99 ? '99+' : U.fmtNum(n)) : '');
     setPressed(el.allTab, allOn);
+    el.tvAll.hidden = tabs.length < 2; // en la barra del modo TV: con un solo repo no hay nada que juntar
     const label = [t('all.tabLabel', { n: tabs.length }), n ? t('tabs.unread', { n }) : ''].filter(Boolean).join(', ');
     if (el.allTab.getAttribute('aria-label') !== label) el.allTab.setAttribute('aria-label', label);
   }
@@ -1168,10 +1315,13 @@
     overview.setPulls(tabs.filter((x) => x.source?.data.loaded).map((x) => ({ key: x.key, name: nameOf(x), pulls: x.source.data.pulls.values() })));
   }
 
-  /** Entra o sale de la vista conjunta (se recuerda y viaja en la URL, ?all=1). Con un solo repo no hay. */
+  /** Entra o sale de la vista conjunta (se recuerda y viaja en la URL, ?all=1). Con un solo repo no hay. En modo TV
+      también (la pantalla compartida con todos los repos a la vez), sin guardarse. */
   function setAll(on, { save = true } = {}) {
-    on = !!on && tabs.length > 1 && !EMBED && !tv.on;
+    on = !!on && tabs.length > 1 && !EMBED;
     if (on === allOn) return renderAllTab();
+    if (tv.on) save = false; // lo que se cambia en TV no se guarda: al salir queda la vista de antes
+    if (on && tv.on && agentsOn) setAgentsView(false, { save: false }); // en TV, una pantalla por vez
     diffView.close(); // los cambios abiertos eran del grafo que se deja de ver
     allOn = on;
     el.app.classList.toggle('all-on', on);
@@ -1185,16 +1335,22 @@
       for (const x of tabs) drawCard(x, { initial: true }); // lo que llegó mientras no se veía
       renderAllSum();
     }
-    graph3d?.setActive(view === '3d' && !on);
+    graph3d?.setActive(view === '3d' && !on && !agentsOn);
     renderTabs();
     if (save) U.store.set('all', on || null);
     setUrlParam('all', on ? '1' : null);
+    setPressed(el.tvAll, on);
+    if (tv.on) {
+      placeTvBar();
+      fitTvGrid();
+    }
   }
   el.allTab.addEventListener('click', () => setAll(!allOn));
   /** El grafo del repo a la vista, a la vista: ir a una rama o a un commit desde la salud, la búsqueda o la vista de
       texto deja la vista conjunta. */
   const shownGraph = () => {
     if (allOn) setAll(false);
+    if (agentsOn) setAgentsView(false, { save: !document.documentElement.classList.contains('tv') }); // en TV no se guarda
     return graph;
   };
 
@@ -1336,8 +1492,8 @@
     if (el.bitacora.open) scheduleBitacora();
     if (initialBitacora && L.nodes.length) openBitacora();
     if (initialHealth && tab === active && L.nodes.length) openHealth();
-    if (el.agents.open) scheduleAgents();
-    if (initialAgents && tab === active && L.nodes.length) openAgents();
+    if (agentsOn) scheduleAgents();
+    if (initialAgents && tab === active && L.nodes.length) setAgentsView(true, { save: false });
     if (initialReplay && L.nodes.length) startUrlReplay();
     if (initialText && tab === active && L.nodes.length) startUrlText();
     if (initialPr && tab === active && L.nodes.length) startUrlPr();
@@ -1377,7 +1533,7 @@
     tab.game.observe(activities, gameCtx(activities, data, null));
     renderTab(tab);
     const now = Date.now();
-    if (!tv.on || paused || now - tv.lastNews < TV_FOLLOW || now - tv.lastSwitch < TV_FOLLOW) return;
+    if (!tv.on || allOn || paused || now - tv.lastNews < TV_FOLLOW || now - tv.lastSwitch < TV_FOLLOW) return;
     tv.lastNews = now;
     showTab(tab);
     graph3d?.celebrate(activities);
@@ -1733,15 +1889,24 @@
     const forkRows = h.forks.rows
       .map((r) => `<li><a class="hl-row" href="${U.esc(U.safeUrl(r.url))}" target="_blank" rel="noopener noreferrer"><span class="hl-main">${U.esc(r.fullName)}</span><span class="hl-aside">${r.stars ? `★ ${U.fmtNum(r.stars)} · ` : ''}${U.esc(span(r.idle))}</span></a></li>`)
       .join('');
-    const forksBody = !showForks ? '' : forkRows ? `<ul class="hl-list">${forkRows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`;
+    const delta = (w, p) => (w > p ? `+${U.fmtNum(w - p)}` : w < p ? `−${U.fmtNum(p - w)}` : '±0'); // la diferencia de esta semana frente a la anterior
+    // forks nuevos de la semana frente a la anterior, de la actividad ya cargada (sin consultas): solo si alguna de las dos tiene alguno
+    const forkTrend = showForks && (h.forkTrend.week || h.forkTrend.prev) ? `<p class="hl-line" id="hl-forks-trend">${U.esc(t('health.forksNew', { week: U.fmtNum(h.forkTrend.week), prev: U.fmtNum(h.forkTrend.prev), delta: delta(h.forkTrend.week, h.forkTrend.prev) }))}</p>` : '';
+    const forksBody = !showForks ? '' : forkTrend + (forkRows ? `<ul class="hl-list">${forkRows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`);
     el.healthBody.innerHTML =
       `<section class="hl-sec" id="hl-forks"><h3>${U.esc(t('health.forks'))}${showForks ? ` <span class="hl-n">${U.fmtNum(h.forks.total)}</span>` : ''}</h3><label class="hl-switch"><input type="checkbox" id="hl-forks-toggle"${showForks ? ' checked' : ''}> ${U.esc(t('health.forksShow'))}</label>${showForks ? `<label class="hl-switch"><input type="checkbox" id="hl-forks-stars"${forksByStars ? ' checked' : ''}> ${U.esc(t('health.forksByStars'))}</label>` : ''}${forksBody}</section>` +
+      `<section class="hl-sec" id="hl-stars"><h3>${U.esc(t('health.stars'))}</h3>${
+        h.stars.week || h.stars.prev
+          ? `<p class="hl-line">${U.esc(t('health.starsWeek', { week: U.fmtNum(h.stars.week), prev: U.fmtNum(h.stars.prev), delta: delta(h.stars.week, h.stars.prev) }))}</p>`
+          : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
+      }</section>` +
       healthList('stale', t('health.stale'), h.stale, (r) => [r.name, span(r.idle)]) +
       healthList('prs', t('health.prs'), h.prs, (r) => [`#${r.number} ${r.title}`, span(r.age)]) +
       `<section class="hl-sec" id="hl-prstates"><h3>${U.esc(t('health.prStates'))}</h3>${['draft', 'failing', 'approved', 'waiting']
         .filter((k) => h.prStates[k].total)
         .map((k) => healthList('prs-' + k, t({ draft: 'health.prState.draft', failing: 'health.prState.failing', approved: 'health.prState.approved', waiting: 'health.prState.waiting' }[k]), h.prStates[k], (r) => [`#${r.number} ${r.title}`, span(r.age)], true))
         .join('') || `<p class="hl-none">${U.esc(t('health.none'))}</p>`}</section>` +
+      `<div id="hl-unreviewed">${healthList('unreviewed', t('health.unreviewed'), h.unreviewed, (r) => [`#${r.number} ${r.title}`, span(r.age)])}</div>` +
       `<section class="hl-sec"><h3>${U.esc(t('health.merged'))}</h3>${
         h.merged ? `<p class="hl-line">${U.esc(t('health.mergedStat', { median: span(h.merged.median), max: span(h.merged.max) }))}</p>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }${weeklyLines(h.pace)}</section>` +
@@ -1750,6 +1915,7 @@
           ? `<p class="hl-line">${U.esc(t('health.doraFreq', { n: h.dora.deploys30, gap: h.dora.gap != null ? span(h.dora.gap) : '—' }))}</p><p class="hl-line" id="hl-weeks">${U.esc(t('health.doraWeeks', { n: h.dora.weeks.length, list: h.dora.weeks.join(' · ') }))}</p><p class="hl-line">${U.esc(h.leadSource.fromCommit ? t('health.doraLeadCommit', { median: span(h.dora.lead), n: h.leadSource.fromCommit, total: h.leadSource.total }) : t('health.doraLead', { median: h.dora.lead != null ? span(h.dora.lead) : '—' }))}</p>`
           : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
+      (data.deploys?.size ? `<div id="hl-deploys">${healthList('deploys', t('health.deploys'), h.deploys, (r) => [r.env, [r.sha.slice(0, 7), r.state === 'current' ? t('health.deployCurrent', { branch: r.head }) : r.state === 'behind' ? t('health.deployBehind', { branch: r.head, n: r.behind }) : t('health.deployUnknown'), r.status === 'ok' ? t('health.deployOk') : r.status === 'failed' ? t('health.deployFailed') : r.status === 'running' ? t('health.deployRunning') : '', r.age != null ? span(r.age) : ''].filter(Boolean).join(' · ')])}</div>` : '') +
       `<section class="hl-sec" id="hl-ci"><h3>${U.esc(t('health.ci'))}</h3>${
         h.ci.prs || h.ci.fails30
           ? (h.ci.prs ? `<p class="hl-line">${U.esc(t('health.ciPrs', { failing: h.ci.prs.failing, total: h.ci.prs.total, pct: Math.round(h.ci.prs.rate * 100) }))}</p>` : '') +
@@ -1971,7 +2137,7 @@
   const DIGEST_COLORS = { bg: '#0e1514', fg: '#e6efed', dim: '#93a5a1', accent: '#4ade80' };
   const digestLabels = () => {
     const label = (k) => t('digest.' + k);
-    return { head: label('head'), commits: label('commits'), perday: label('perday'), newcomers: label('newcomers'), newbranches: label('newbranches'), merged: label('merged'), mergers: label('mergers'), opened: label('opened'), closed: label('closed'), releases: label('releases'), tags: label('tags'), people: label('people'), branch: label('branch') };
+    return { head: label('head'), commits: label('commits'), perday: label('perday'), newcomers: label('newcomers'), newbranches: label('newbranches'), merged: label('merged'), mergers: label('mergers'), opened: label('opened'), openers: label('openers'), closed: label('closed'), closers: label('closers'), dropped: label('dropped'), releases: label('releases'), tags: label('tags'), people: label('people'), branch: label('branch') };
   };
 
   /** El resumen de la semana (js/digest.js): se arma con lo ya cargado, se copia o se baja como .md. */
@@ -2010,6 +2176,7 @@
     renderHealth();
     const asked = source;
     syncHealthForks();
+    if (asked.syncDeployStatuses && asked.data.deploys?.size) asked.syncDeployStatuses().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
     if (asked.syncFirstCommits) {
       const merged = feed.items.filter((a) => a.repo === active?.key && a.kind === 'pr-merge' && a.number && a.openedAt).sort((a, b) => b.time - a.time).slice(0, 20);
       asked.syncFirstCommits(merged.map((a) => a.number)).then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
@@ -2051,11 +2218,225 @@
   let agentsOnly = U.store.get('agentsOnly', false) === true; // solo los vínculos entre dos agentes
   let agentsTimer = 0;
   let agentsHtml = ''; // el último HTML: si no cambió, no se toca (ni el foco ni el desplazamiento)
+  let agentsSel = null; // el participante elegido en la red: las listas y la línea de tiempo se centran en él
+  let agentsSeen = null; // lo que ya se mostró ({ ev: Set, edges: Map }): lo que llega después se anima
+  let agentsLit = null; // a quién se ilumina en la red (puntero o foco): sobrevive a que el tablero se rehaga
+  /** El id de una interacción, el mismo en cada vuelta: para saber cuál es nueva. */
+  const agentEventId = (e) => [e.kind, e.from, e.to, e.time, e.sha || '', e.number ?? ''].join('|');
   const agentSession = (a) => (a?.session ? t('agents.session', { id: GB.agents.shortSession(a.session) }) : '');
   /** Cómo se nombra a un participante: una persona, por su nombre; un agente, por su producto y su sesión, si la tiene.
       Va aislado (FSI…PDI): dos nombres latinos en una frase en árabe no dan vuelta la flecha ni el orden. */
   const actorName = (x) => '\u2068' + (!x ? t('author.unknown') : x.agent ? [x.agent.name, agentSession(x.agent)].filter(Boolean).join(' · ') : x.name || x.login || t('author.unknown')) + '\u2069';
   const kindsText = (k) => Object.keys(AG_KIND).filter((x) => k[x]).map((x) => `${t(AG_KIND[x])}: ${U.fmtNum(k[x])}`).join(' · ');
+
+  /** Qué es cada trazo (continuó, fusionó, revisó, comentó): en la leyenda del grafo y en la del panel. */
+  const kindsLegend = () =>
+    `<span class="agk-k"><span class="agk-line" aria-hidden="true"></span>${U.esc(t('agents.kind.continued'))}</span>` +
+    `<span class="agk-k"><span class="agk-line agk-dash" aria-hidden="true"></span>${U.esc(t('agents.kind.merged'))}</span>` +
+    `<span class="agk-k"><span class="agk-glyph" aria-hidden="true">✓</span>${U.esc(t('agents.kind.reviewed'))}</span>` +
+    `<span class="agk-k"><span class="agk-glyph" aria-hidden="true">…</span>${U.esc(t('agents.kind.commented'))}</span>`;
+
+  /* ---------- el enjambre: la vista de agentes como una consola en vivo (ver swarm.js y cortex.js) ---------- */
+  const SWARM_TABS = 6; // pestañas del hilo
+  const SWARM_LINES = 12; // líneas del hilo
+  const SWARM_LOG = 14; // líneas del log
+  const SWARM_PULSES = 16; // interacciones que viajan por la corteza
+  const SWARM_TASKS = 9; // filas del ingreso de tareas
+  const SWARM_BARS = 6; // agentes en las barras
+  const CI_STATES = new Set(['success', 'failure', 'pending']);
+  const SW_ROLE = { writes: 'swarm.role.writes', integrates: 'swarm.role.integrates', reviews: 'swarm.role.reviews', comments: 'swarm.role.comments' };
+  let cortex = null; // la corteza 3D: una sola, sobrevive a que el tablero se rehaga (ver pushCortex)
+  let swarmView = null; // lo último que se armó para ella: { model, text }, o null si no hay a quién mostrar
+  const r2 = (x) => Math.round(x * 100) / 100;
+  const fmtPct = (x) => new Intl.NumberFormat(i18n.locale, { style: 'percent', maximumFractionDigits: 0 }).format(x);
+  const fmtClock = (ms) => new Intl.DateTimeFormat(i18n.locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(ms);
+
+  /** Las partes del enjambre en el tablero: los indicadores, la corteza (con la ficha de quien está elegido), el ingreso
+      de tareas, el hilo de un agente, el ritmo, las barras por agente y el log. Deja en `swarmView` lo que recibe la
+      corteza. `ctx`: lo que agentsMarkup ya tiene a mano. */
+  function swarmParts({ data, r, byKey, net, slot, sw, row, none }) {
+    const S = GB.swarm;
+    const now = Date.now();
+    const k = S.kpis(r, data, { now });
+    const roleMap = S.roles(r, data);
+    const keys = net.nodes.map((n) => n.key);
+    const hubKey = S.hub(roleMap, keys);
+    const pos = S.place(keys, roleMap, hubKey);
+    const roleOf = (key) => t(SW_ROLE[roleMap.get(key)?.role] || SW_ROLE.writes);
+    const topAgent = r.actors.find((a) => a.agent)?.key || null;
+    const pick = agentsSel && byKey.has(agentsSel) ? agentsSel : null;
+    const name = (key) => actorName(byKey.get(key));
+    const plainName = (key) => name(key).replace(/[⁨⁩]/g, '');
+    /** Corto, para las pestañas, las barras y el log: el producto y los últimos 6 de su sesión; una persona, su nombre. */
+    const short = (key) => {
+      const a = byKey.get(key);
+      return a?.agent ? [a.agent.name, a.agent.session ? GB.agents.shortSession(a.agent.session) : ''].filter(Boolean).join(' · ') : plainName(key);
+    };
+    const span = t('swarm.window', { span: i18n.fmtSpan(k.win.span) });
+    const evText = (x) => U.esc(t(AG_EVENT[x.kind], { from: name(x.from), to: name(x.to) })) + (x.number != null ? ` · #${U.esc(x.number)}` : '');
+
+    // los indicadores: lo que es, el número en grande, una línea más y, si tiene, su curva en la ventana (decorativa)
+    const tile = (id, label, value, sub, series = null, cls = '') =>
+      `<div class="sw-kpi${cls}" id="${id}"><span class="sw-kpi-label">${U.esc(label)}</span><b class="sw-kpi-n">${U.esc(value)}</b>${sub ? `<span class="sw-kpi-sub">${U.esc(sub)}</span>` : ''}${series ? S.spark(series) : ''}</div>`;
+    const kpis =
+      `<div class="sw-kpis" id="sw-kpis">` +
+      tile('sw-k-active', t('swarm.kpiActive'), `${U.fmtNum(k.active.n)}/${U.fmtNum(k.active.total)}`, t('agents.people', { n: U.fmtNum(r.actors.length - k.active.total) })) +
+      tile('sw-k-commits', t('swarm.kpiCommits'), U.fmtNum(k.commits.n), k.commits.share == null ? span : `${t('swarm.kpiShare', { pct: fmtPct(k.commits.share) })} · ${span}`, k.commits.series) +
+      tile('sw-k-links', t('agents.statLinks'), U.fmtNum(k.links.n), span, k.links.series) +
+      tile('sw-k-ci', t('swarm.kpiCi'), k.ci ? fmtPct(k.ci.ok / k.ci.known) : '—', k.ci ? `${U.fmtNum(k.ci.ok)}/${U.fmtNum(k.ci.known)}` : '', null, k.ci && k.ci.ok < k.ci.known ? ' is-warn' : '') +
+      tile('sw-k-queue', t('swarm.kpiQueue'), U.fmtNum(k.queue), '') +
+      tile('sw-k-waiting', t('swarm.kpiWaiting'), U.fmtNum(k.waiting), '', null, k.waiting ? ' is-ask' : '') +
+      tile('sw-k-last', t('swarm.kpiLast'), k.last ? U.timeAgo(k.last.time, now) : '—', k.last ? short(k.last.key) : '') +
+      `</div>`;
+
+    // la corteza: cada participante de la red en el lóbulo de su rol; los vínculos y las últimas interacciones, por dentro
+    const maxW = Math.max(1, ...keys.map((x) => net.weight.get(x) || 0));
+    const maxT = Math.max(1, ...net.links.map((l) => l.total));
+    const linked = new Set(net.links.map((l) => l.from + '>' + l.to));
+    const pulses = r.events.filter((e) => linked.has(e.from + '>' + e.to)).slice(0, SWARM_PULSES);
+    const focusKey = pick && pos.has(pick) ? pick : hubKey || keys[0] || null;
+    swarmView = keys.length
+      ? {
+          model: {
+            nodes: net.nodes.map((n) => ({
+              key: n.key,
+              label: n.agent ? n.agent.name : n.name || n.login || t('author.unknown'),
+              sub: [n.agent?.session ? GB.agents.shortSession(n.agent.session) : '', roleOf(n.key)].filter(Boolean).join(' · '),
+              title: `${plainName(n.key)} · ${roleOf(n.key)}`,
+              slot: slot.get(n.key) ?? 0,
+              agent: !!n.agent,
+              w: r2((net.weight.get(n.key) || 0) / maxW),
+              pos: pos.get(n.key),
+            })),
+            links: net.links.map((l) => ({ from: l.from, to: l.to, slot: slot.get(l.from) ?? 0, w: r2(l.total / maxT) })),
+            pulses: pulses.map((e) => ({ id: agentEventId(e), from: e.from, to: e.to, slot: slot.get(e.from) ?? 0 })),
+            sel: pick,
+            focus: focusKey,
+          },
+          text: {
+            aria: t('swarm.cortexAria', { nodes: net.nodes.length, links: net.links.length }),
+            noGl: t('swarm.noGl'),
+            planes: { axial: t('swarm.axial'), coronal: t('swarm.coronal'), sagittal: t('swarm.sagittal') },
+          },
+        }
+      : null;
+    // la ficha: quien está elegido (o el orquestador, o el agente más activo), su rol y en qué anda
+    const inspKey = pick || hubKey || topAgent;
+    const insp = byKey.get(inspKey);
+    let inspHtml = '';
+    if (insp) {
+      const task = U.firstLine(data.commits.get(insp.sha)?.message || '');
+      const rows = [[t('swarm.fRole'), roleOf(inspKey)], task ? [t('swarm.fTask'), task] : null, insp.agent?.model ? [t('swarm.fModel'), insp.agent.model] : null, insp.last ? [t('swarm.fLast'), U.timeAgo(insp.last, now)] : null].filter(Boolean);
+      inspHtml =
+        `<div class="sw-insp" id="sw-insp"><p class="sw-insp-name">${sw(inspKey)}<span>${U.esc(name(inspKey))}</span></p>` +
+        `<dl>${rows.map(([a, b]) => `<div><dt>${U.esc(a)}</dt><dd>${U.esc(b)}</dd></div>`).join('')}</dl>` +
+        `<p class="sw-insp-foot">${U.esc(t('agents.commits', { n: U.fmtNum(insp.commits) }))} · ${U.esc(t('agents.statLinks'))}: ${U.fmtNum(insp.links)}</p></div>`;
+    }
+    const cortexHtml = swarmView
+      ? `<section class="hl-sec ab-card sw-cortex-card" id="sw-cortex-card"><h3>${U.esc(t('swarm.cortex'))} <span class="hl-n">${U.fmtNum(keys.length)}</span></h3>` +
+        `<div class="sw-cortex-wrap"><div class="sw-slot" id="sw-cortex"></div>${inspHtml}</div><p class="hl-line ag-hint">${U.esc(t('swarm.cortexHint'))}</p></section>`
+      : '';
+
+    // el ingreso de tareas: los PRs abiertos y las ramas sin PR, y a quién le tocó cada uno
+    const g = S.ingest(r, data, { max: SWARM_TASKS });
+    const ciMark = (ci) => (CI_STATES.has(ci) ? `<span class="sw-ci sw-ci-${ci}" role="img" aria-label="${U.esc(t('ci.' + ci))}" title="${U.esc(t('ci.' + ci))}"></span>` : '');
+    const taskRows = g.items.map((x) => {
+      const tag = x.kind === 'branch' ? `<span class="sw-tag" aria-hidden="true">⎇</span>` : `<span class="sw-tag">#${U.esc(x.number)}</span>`;
+      const draft = x.kind === 'draft' ? `<span class="sw-chip">${U.esc(t('health.prState.draft'))}</span>` : '';
+      const ask = x.waiting ? `<span class="sw-chip sw-chip-ask">${U.esc(t('swarm.waits'))}</span>` : '';
+      const to = x.who && byKey.has(x.who) ? `<span class="sw-to">→ ${sw(x.who)}${U.esc(short(x.who))}</span>` : '';
+      return row('', `${ciMark(x.ci)}${to}`, x.sha, '', `${tag}<span class="sw-task">${U.esc(x.title || x.branch)}</span>${draft}${ask}`);
+    });
+    const ingestHtml =
+      `<section class="hl-sec ab-card" id="sw-ingest"><h3>${U.esc(t('swarm.ingest'))}${g.total ? ` <span class="hl-n">${U.esc(t('swarm.routed', { n: U.fmtNum(g.routed), m: U.fmtNum(g.total) }))}</span>` : ''}</h3>` +
+      (taskRows.length ? `<ul class="hl-list">${taskRows.join('')}</ul>` : none) +
+      `</section>`;
+
+    // el hilo: lo que escribió un agente (sus commits) y lo que pasó con él (sus interacciones), como una conversación
+    const threadKey = pick || topAgent || hubKey;
+    const tabKeys = r.actors.filter((a) => a.agent).slice(0, SWARM_TABS).map((a) => a.key);
+    if (threadKey && !tabKeys.includes(threadKey)) tabKeys.splice(0, tabKeys.length >= SWARM_TABS ? 1 : 0, threadKey);
+    const tabs = tabKeys.map((key) => `<button type="button" class="sw-tab${key === threadKey ? ' on' : ''}" data-pick="${U.esc(key)}" aria-pressed="${key === pick}">${sw(key)}${U.esc(short(key))}</button>`).join('');
+    const msgs = (threadKey ? S.lines(r, data, threadKey, { max: SWARM_LINES }) : []).map((x) => {
+      const text = x.type === 'commit' ? U.esc(x.text) : evText(x);
+      const body = `<span class="sw-msg-head">${sw(x.key)}<b>${U.esc(short(x.key))}</b><time>${U.esc(U.fmtDateTime(x.time))}</time></span><span class="sw-msg-text">${text}</span>`;
+      const cls = `sw-msg${x.key === threadKey ? ' mine' : ''}${x.type === 'event' ? ' is-ev' : ''}`;
+      return x.sha && data.commits.has(x.sha) ? `<li class="${cls}"><button type="button" class="sw-msg-btn" data-sha="${U.esc(x.sha)}" title="${U.esc(t('feed.locate'))}">${body}</button></li>` : `<li class="${cls}"><div class="sw-msg-btn">${body}</div></li>`;
+    });
+    const threadHtml =
+      `<section class="hl-sec ab-card sw-thread" id="sw-thread"><h3>${U.esc(t('swarm.thread'))}</h3>` +
+      (tabs ? `<div class="sw-tabs" role="group" aria-label="${U.esc(t('swarm.thread'))}">${tabs}</div>` : '') +
+      (msgs.length ? `<ol class="sw-msgs">${msgs.join('')}</ol>` : none) +
+      `</section>`;
+
+    // el ritmo: commits de agentes y de personas por tramo de la ventana
+    const edge = (ms) => (k.win.span <= 7 * 864e5 ? U.fmtDateTime(ms) : U.fmtDate(ms));
+    const rateHtml =
+      `<section class="hl-sec ab-card" id="sw-rate"><h3>${U.esc(t('swarm.throughput'))} <span class="hl-n">${U.esc(span)}</span></h3>` +
+      S.rate(k, { aria: t('swarm.rateAria', { a: U.fmtNum(k.commits.n), p: U.fmtNum(k.people.n), span: i18n.fmtSpan(k.win.span) }), start: edge(k.win.t0), end: edge(k.win.t1) }) +
+      `<p class="sw-legend"><span class="sw-key sw-key-a" aria-hidden="true"></span>${U.esc(t('agents.statAgents'))}<span class="sw-key sw-key-p" aria-hidden="true"></span>${U.esc(t('agents.statPeople'))}</p></section>`;
+
+    // por agente: sus commits, en barras de su color
+    const per = S.perAgent(r, { max: SWARM_BARS });
+    const maxC = Math.max(1, ...per.map((x) => x.commits));
+    const bars = per.map(
+      (x) =>
+        `<li class="sw-bar-row"><span class="sw-bar-name">${sw(x.key)}<span>${U.esc(short(x.key))}</span></span><span class="sw-bar" aria-hidden="true"><span class="sw-bar-fill ag-s${slot.get(x.key) ?? 0}" style="width:${Math.max(2, Math.round((x.commits / maxC) * 100))}%"></span></span><b class="sw-bar-n">${U.fmtNum(x.commits)}</b></li>`,
+    );
+    const perHtml =
+      `<section class="hl-sec ab-card" id="sw-per"><h3>${U.esc(t('swarm.perAgent'))} <span class="hl-n">${U.esc(t('agents.commits', { n: U.fmtNum(per.reduce((n, x) => n + x.commits, 0)) }))}</span></h3>` +
+      (bars.length ? `<ul class="sw-bars">${bars.join('')}</ul>` : none) +
+      `</section>`;
+
+    // el log: todo lo de los agentes, de lo más viejo a lo más nuevo, como un tail -f
+    const logRows = S.lines(r, data, null, { max: SWARM_LOG }).map((x) => {
+      // un commit: su sha corto y su titular; una interacción: qué hizo y con quién (quién la hizo ya va al lado)
+      const what =
+        x.type === 'commit'
+          ? `<span class="sw-log-sha">${U.esc(x.sha.slice(0, 7))}</span> ${U.esc(x.text)}`
+          : `<span class="sw-log-kind">${U.esc(t(AG_KIND[x.kind]))}</span> → ${U.esc(short(x.to))}${x.number != null ? ` · #${U.esc(x.number)}` : ''}`;
+      const when = x.time > now - 864e5 ? fmtClock(x.time) : U.fmtDateTime(x.time);
+      const body = `<time>${U.esc(when)}</time><span class="sw-log-who ag-s${slot.get(x.key) ?? 0}">${U.esc(short(x.key))}</span><span class="sw-log-what">${what}</span>`;
+      const id = x.type === 'commit' ? `log|c|${x.sha}` : `log|${agentEventId(x)}`;
+      return `<li data-ev="${U.esc(id)}">${x.sha && data.commits.has(x.sha) ? `<button type="button" class="sw-log-row" data-sha="${U.esc(x.sha)}" title="${U.esc(t('feed.locate'))}">${body}</button>` : `<span class="sw-log-row">${body}</span>`}</li>`;
+    });
+    const logHtml =
+      `<section class="hl-sec ab-card ab-live sw-log" id="sw-log"><h3><span class="live-dot" aria-hidden="true"></span><code>tail -f ${U.esc(t('swarm.log'))}</code></h3>` +
+      (logRows.length ? `<ol class="sw-log-list">${logRows.join('')}</ol><span class="sw-caret" aria-hidden="true"></span>` : none) +
+      `</section>`;
+
+    return { kpis, cortex: cortexHtml, ingest: ingestHtml, thread: threadHtml, rate: rateHtml, per: perHtml, log: logHtml };
+  }
+
+  /** La corteza en su lugar del tablero recién rehecho, con lo último que se armó para ella. Se crea la primera vez. */
+  function pushCortex() {
+    const slotEl = el.agentsBody.querySelector('#sw-cortex');
+    if (!slotEl || !swarmView || !GB.cortex) return cortex?.setActive(false);
+    if (!cortex) {
+      cortex = GB.cortex.create({ onPick: (key) => selectAgent(key, '.sw-label[data-key]') });
+      U.onThemeChange(() => cortex.retheme());
+    }
+    if (cortex.host.parentNode !== slotEl) slotEl.append(cortex.host);
+    cortex.update(swarmView.model, swarmView.text);
+    cortex.setActive(cortexLive());
+  }
+  /** La corteza se anima mientras se ve, salvo con el modo TV en pausa (ahí la pausa detiene todo lo que se mueve). */
+  const cortexLive = () => agentsOn && !(paused && tv.on);
+
+  /** El reloj del tablero, al segundo, mientras se mira. */
+  let clockTimer = 0;
+  function tickClock() {
+    clearInterval(clockTimer);
+    clockTimer = 0;
+    if (!agentsOn || !el.agentsClock) return;
+    const put = () => {
+      const now = Date.now();
+      el.agentsClock.textContent = `${new Intl.DateTimeFormat(i18n.locale, { weekday: 'short' }).format(now)} ${fmtClock(now)}`;
+      el.agentsClock.dateTime = new Date(now).toISOString();
+    };
+    put();
+    clockTimer = setInterval(put, 1000);
+  }
 
   function agentsMarkup() {
     const data = source.view ? source.view() : source.data;
@@ -2063,48 +2444,101 @@
     const r = GB.agents.compute(data, acts, { max: Infinity });
     const byKey = new Map(r.actors.map((a) => [a.key, a]));
     const both = (x) => !!(byKey.get(x.from)?.agent && byKey.get(x.to)?.agent);
-    const links = agentsOnly ? r.links.filter(both) : r.links;
-    const events = (agentsOnly ? r.events.filter(both) : r.events).slice(0, AGENTS_ROWS);
+    if (agentsSel && !byKey.has(agentsSel)) agentsSel = null; // quien estaba elegido ya no está en lo cargado
+    const mine = (x) => !agentsSel || x.from === agentsSel || x.to === agentsSel;
+    const links = (agentsOnly ? r.links.filter(both) : r.links).filter(mine);
+    const events = (agentsOnly ? r.events.filter(both) : r.events).filter(mine).slice(0, AGENTS_ROWS);
     const agents = r.actors.filter((a) => a.agent);
-    const people = r.actors.filter((a) => !a.agent);
     const net = GB.agents.network(r, { onlyAgents: agentsOnly });
+    const slot = net.slot;
     const none = `<p class="hl-none">${U.esc(t('health.none'))}</p>`;
-    const stat = (label, n) => `<div class="hl-stat"><b>${U.fmtNum(n)}</b><span>${U.esc(label)}</span></div>`;
-    /** Una fila: lleva al commit `sha` en el grafo si lo hay; `extra`, algo más junto a ella (el enlace a la sesión). */
-    const row = (main, aside, sha, extra = '') => {
-      const body = `<span class="hl-main">${U.esc(main)}</span><span class="hl-aside">${U.esc(aside)}</span>`;
+    /** Una fila: lleva al commit `sha` en el grafo si lo hay; `aside`, HTML ya escapado; `extra`, algo más junto a ella (el
+        enlace a la sesión). */
+    const row = (main, aside, sha, extra = '', mainHtml = null) => {
+      const body = `<span class="hl-main">${mainHtml ?? U.esc(main)}</span><span class="hl-aside">${aside}</span>`;
       const item = sha && data.commits.has(sha) ? `<button type="button" class="hl-row" data-sha="${U.esc(sha)}" title="${U.esc(t('feed.locate'))}">${body}</button>` : `<span class="hl-row">${body}</span>`;
       return `<li${extra ? ' class="ag-item"' : ''}>${item}${extra}</li>`;
     };
     const list = (rows) => (rows.length ? `<ul class="hl-list">${rows.join('')}</ul>` : none);
-    const legend = `<p class="ag-legend" aria-hidden="true"><span class="ag-key ag-key-agent"></span>${U.esc(t('agents.legendAgent'))}<span class="ag-key ag-key-person"></span>${U.esc(t('agents.legendPerson'))}</p>`;
+    /** La marca de color de un participante: cuadrada si es un agente, redonda si es una persona. */
+    const sw = (key) => `<span class="agk-sw ag-s${slot.get(key) ?? 0}${byKey.get(key)?.agent ? ' agk-agent' : ''}" aria-hidden="true"></span>`;
+    /** Quién → quién, cada uno con su color: se lee igual (el texto va entero y aislado), y se ve de un vistazo. */
+    const pairHtml = (from, to) => `${sw(from)}${U.esc(t('agents.pair', { from: actorName(byKey.get(from)), to: actorName(byKey.get(to)) }))}${sw(to).replace('agk-sw', 'agk-sw agk-sw-to')}`;
+    const chips = (k) =>
+      Object.keys(AG_KIND)
+        .filter((x) => k[x])
+        .map((x) => `<span class="ag-chip ag-k-${x}"><span class="ag-chip-g" aria-hidden="true"></span>${U.esc(t(AG_KIND[x]))}: ${U.fmtNum(k[x])}</span>`)
+        .join('');
+    const legend = `<p class="ag-legend"><span class="ag-key ag-key-agent" aria-hidden="true"></span>${U.esc(t('agents.legendAgent'))}<span class="ag-key ag-key-person" aria-hidden="true"></span>${U.esc(t('agents.legendPerson'))}<span class="ag-legend-kinds">${kindsLegend()}</span></p>`;
     const netHtml = net.nodes.length
-      ? GB.agents.svg(net, {
-          label: (n) => (n.agent ? n.agent.name : n.name || n.login || t('author.unknown')),
-          sub: (n) => (n.agent ? agentSession(n.agent) : ''),
-          title: (l) => `${t('agents.pair', { from: actorName(byKey.get(l.from)), to: actorName(byKey.get(l.to)) })}: ${kindsText(l.kinds)}`,
-          aria: t('agents.netAria', { nodes: net.nodes.length, links: net.links.length }),
-        }) + legend
+      ? GB.agents.svg(
+          net,
+          {
+            label: (n) => (n.agent ? n.agent.name : n.name || n.login || t('author.unknown')),
+            sub: (n) => (n.agent ? agentSession(n.agent) : ''),
+            title: (l) => `${t('agents.pair', { from: actorName(byKey.get(l.from)), to: actorName(byKey.get(l.to)) })}: ${kindsText(l.kinds)}`,
+            node: (n) => `${actorName(n)} · ${t('agents.statLinks')}: ${U.fmtNum(net.weight.get(n.key) || 0)}`,
+            aria: t('agents.netAria', { nodes: net.nodes.length, links: net.links.length }),
+          },
+          { sel: agentsSel },
+        ) +
+        legend +
+        `<p class="hl-line ag-hint">${U.esc(t('agents.netHint'))}</p>`
       : none;
-    const pairs = links.slice(0, AGENTS_ROWS).map((l) => row(t('agents.pair', { from: actorName(byKey.get(l.from)), to: actorName(byKey.get(l.to)) }), kindsText(l.kinds), l.sha));
+    const tl = GB.agents.timeline(r, { onlyAgents: agentsOnly });
+    const sayEvent = (e) => `${t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) })}${e.number != null ? ` · #${e.number}` : ''} · ${U.fmtDateTime(e.time)}`;
+    const timeHtml = tl
+      ? GB.agents.timelineSvg(
+          tl,
+          {
+            label: (l) => actorName(l).replace(/[⁨⁩]/g, ''),
+            event: sayEvent,
+            id: agentEventId,
+            tick: (ms) => (tl.t1 - tl.t0 < 3 * 864e5 ? U.fmtDateTime(ms) : U.fmtDate(ms)), // en pocos días, la fecha sola se repite
+            aria: t('agents.timelineAria', { n: tl.events.length }),
+          },
+          { sel: agentsSel },
+        )
+      : none;
+    const pairs = links.slice(0, AGENTS_ROWS).map((l) => row('', chips(l.kinds), l.sha, '', pairHtml(l.from, l.to)));
     const demo = !!data.repo?.demo;
     const agentRows = agents.slice(0, AGENTS_ROWS).map((a) => {
       const main = [a.agent.name, agentSession(a.agent), a.agent.model].filter(Boolean).join(' · ');
       const aside = [t('agents.commits', { n: U.fmtNum(a.commits) }), a.last ? U.timeAgo(a.last) : ''].filter(Boolean).join(' · ');
       const url = demo ? null : U.safeUrl(GB.agents.sessionUrl(a.agent));
       const open = url ? `<a class="ag-open" href="${U.esc(U.safeUrl(url))}" target="_blank" rel="noopener noreferrer" title="${U.esc(t('agents.openSession'))}" aria-label="${U.esc(t('agents.openSession') + ': ' + main)}">↗</a>` : '';
-      return row(main, aside, a.sha, open);
+      return row(main, U.esc(aside), a.sha, open, `${sw(a.key)}${U.esc(main)}`);
     });
     const eventRows = events.map((e) =>
-      row(t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) }), [e.number != null ? `#${e.number}` : '', e.time ? U.timeAgo(e.time) : ''].filter(Boolean).join(' · '), e.sha),
+      row(
+        t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) }),
+        U.esc([e.number != null ? `#${e.number}` : '', e.time ? U.timeAgo(e.time) : ''].filter(Boolean).join(' · ')),
+        e.sha,
+        '',
+        `<span class="ag-chip ag-k-${e.kind} ag-chip-dot" aria-hidden="true"><span class="ag-chip-g"></span></span>${U.esc(t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) }))}`,
+      ).replace('<li', `<li data-ev="${U.esc(agentEventId(e))}"`),
     );
+    const focus = agentsSel
+      ? `<p class="ag-focus" id="ag-focus">${sw(agentsSel)}<span class="ag-focus-name">${U.esc(t('agents.focus', { name: actorName(byKey.get(agentsSel)) }))}</span><button type="button" class="btn btn-ghost ag-focus-clear" id="ag-focus-clear">${U.esc(t('agents.focusClear'))}</button></p>`
+      : '';
+    const swarm = swarmParts({ data, r, byKey, net, slot, sw, row, none });
     return (
-      `<div class="hl-stats">${stat(t('agents.statAgents'), agents.length)}${stat(t('agents.statPeople'), people.length)}${stat(t('agents.statLinks'), links.reduce((n, l) => n + l.total, 0))}</div>` +
+      swarm.kpis +
       (agents.length ? '' : `<p class="hl-line" id="ag-noagents">${U.esc(t('agents.noAgents'))}</p>`) +
-      `<section class="hl-sec" id="ag-net"><h3>${U.esc(t('agents.network'))}</h3>${netHtml}</section>` +
-      `<section class="hl-sec" id="ag-pairs"><h3>${U.esc(t('agents.pairs'))} <span class="hl-n">${U.fmtNum(links.length)}</span></h3>${list(pairs)}</section>` +
-      `<section class="hl-sec" id="ag-list"><h3>${U.esc(t('agents.statAgents'))} <span class="hl-n">${U.fmtNum(agents.length)}</span></h3>${list(agentRows)}</section>` +
-      `<section class="hl-sec" id="ag-recent"><h3>${U.esc(t('agents.recent'))}</h3>${list(eventRows)}</section>`
+      focus +
+      swarm.cortex +
+      `<div class="ab-row">${swarm.ingest}${swarm.thread}</div>` +
+      `<div class="ab-row sw-row3">${swarm.rate}${swarm.per}${swarm.log}</div>` +
+      `<div class="ab-row">` +
+      `<section class="hl-sec ab-card" id="ag-net"><h3>${U.esc(t('agents.network'))}</h3>${netHtml.replace(/^(<svg[\s\S]*?<\/svg>)/, '<div class="ab-scroll">$1</div>')}</section>` +
+      `<section class="hl-sec ab-card ab-live" id="ag-recent"><h3><span class="live-dot" aria-hidden="true"></span>${U.esc(t('agents.recent'))}</h3>${list(eventRows)}</section>` +
+      `</div>` +
+      `<section class="hl-sec ab-card" id="ag-time"><h3>${U.esc(t('agents.timeline'))}${tl ? ` <span class="hl-n">${U.fmtNum(tl.events.length)}</span>` : ''}</h3>${tl ? `<div class="ab-scroll">${timeHtml}</div>` : timeHtml}</section>` +
+      `<div class="ab-row ab-row3">` +
+      spendMarkup(data, r, slot) +
+      `<section class="hl-sec ab-card" id="ag-pairs"><h3>${U.esc(t('agents.pairs'))} <span class="hl-n">${U.fmtNum(links.length)}</span></h3>${list(pairs)}</section>` +
+      `<section class="hl-sec ab-card" id="ag-list"><h3>${U.esc(t('agents.statAgents'))} <span class="hl-n">${U.fmtNum(agents.length)}</span></h3>${list(agentRows)}</section>` +
+      `</div>`
     );
   }
 
@@ -2112,36 +2546,126 @@
   function renderAgents() {
     clearTimeout(agentsTimer);
     agentsTimer = 0;
+    if (!source) return;
     const html = agentsMarkup();
-    if (html === agentsHtml) return;
-    const focusables = () => [...el.agentsBody.querySelectorAll('button, a')];
+    if (html === agentsHtml) return pushCortex(); // la corteza igual recibe lo nuevo (un pulso más, por ejemplo)
+    const focusables = () => [...el.agentsBody.querySelectorAll('button, a, select, [tabindex="0"]')];
     const at = el.agentsBody.contains(document.activeElement) ? focusables().indexOf(document.activeElement) : -1;
     agentsHtml = html;
     el.agentsBody.innerHTML = html;
+    pushCortex(); // antes de devolver el foco: sus rótulos cuentan entre los controles
     if (at >= 0) (focusables()[at] || focusables().pop() || el.agentsOnly).focus({ preventScroll: true });
+    // en vivo: lo que no estaba en la vuelta anterior se anima (una interacción nueva, un vínculo que suma una vez)
+    const evs = [...el.agentsBody.querySelectorAll('[data-ev]')];
+    const edges = [...el.agentsBody.querySelectorAll('.ag-net .ag-e')];
+    const edgeKey = (g) => g.dataset.from + '>' + g.dataset.to;
+    // otro repo, «solo entre agentes» o alguien elegido muestran otras cosas, pero no nuevas: no se anima nada
+    const mode = `${active?.key}|${agentsOnly}|${agentsSel}`;
+    if (agentsSeen && agentsSeen.mode !== mode) agentsSeen = null;
+    if (agentsSeen) {
+      for (const n of evs) if (!agentsSeen.ev.has(n.dataset.ev)) n.classList.add('is-new');
+      for (const g of edges) if ((agentsSeen.edges.get(edgeKey(g)) || 0) < Number(g.dataset.n)) g.classList.add('is-new');
+    }
+    agentsSeen = { mode, ev: new Set([...(agentsSeen?.ev || []), ...evs.map((n) => n.dataset.ev)]), edges: new Map(edges.map((g) => [edgeKey(g), Number(g.dataset.n)])) };
+    if (agentsLit) lightAgent([...el.agentsBody.querySelectorAll('.ag-net .ag-n[data-key]')].find((n) => n.dataset.key === agentsLit) || null);
+    markCut();
+  }
+  /** En el modo TV el tablero no se desplaza: lo último y el log muestran lo que cabe y, si algo queda cortado (lo más
+      viejo: abajo en lo último, arriba en el log), lo dicen desvaneciéndose de ese lado. */
+  function markCut() {
+    if (!agentsOn || !document.documentElement.classList.contains('tv')) return; // fuera del modo TV la marca no se usa
+    for (const [sel, top] of [['#ag-recent .hl-list', false], ['#sw-log .sw-log-list', true]]) {
+      const list = el.agentsBody.querySelector(sel);
+      const edge = top ? list?.firstElementChild : list?.lastElementChild;
+      if (!edge) continue;
+      const a = list.getBoundingClientRect();
+      const b = edge.getBoundingClientRect();
+      list.classList.toggle('is-cut', top ? b.top < a.top - 1 : b.bottom > a.bottom + 1);
+    }
   }
   function scheduleAgents() {
-    if (!agentsTimer) agentsTimer = setTimeout(() => el.agents.open && renderAgents(), AGENTS_EVERY);
+    if (Date.now() - spendState.at > SPEND_EVERY) refreshSpend(); // con la vista abierta, el gasto se renueva solo
+    if (!agentsTimer) agentsTimer = setTimeout(() => agentsOn && renderAgents(), AGENTS_EVERY);
   }
-  function openAgents() {
+  /** La vista de agentes, en el lugar del grafo: el tablero en vivo (la red, la línea de tiempo, lo último, quién con
+      quién y el gasto de IA). 3D o 2D, o ir a un commit, vuelven al grafo. Se recuerda como la vista. */
+  function setAgentsView(on, { save = true } = {}) {
+    on = !!on && !EMBED;
     initialAgents = false;
-    if (el.agents.open) return;
-    el.agentsOnly.checked = agentsOnly;
-    agentsHtml = '';
-    renderAgents();
-    if (typeof el.agents.showModal === 'function') el.agents.showModal();
-    else el.agents.setAttribute('open', '');
-  }
-  function closeAgents() {
-    if (typeof el.agents.close === 'function') el.agents.close();
-    else el.agents.removeAttribute('open');
-  }
-  el.agentsBtn.addEventListener('click', openAgents);
-  $('#agents-close').addEventListener('click', closeAgents);
-  el.agents.addEventListener('close', () => {
+    if (on === agentsOn) {
+      if (on && source) renderAgents();
+      return;
+    }
+    agentsOn = on;
+    el.graphPanel.classList.toggle('agents-on', on);
+    el.agents.hidden = !on;
+    setPressed(el.viewAgents, on);
+    setPressed(el.agentsBtn, on);
+    setPressed(el.tvAgents, on);
+    placeTvBar();
+    setPressed(el.view3d, !on && view === '3d');
+    setPressed(el.view2d, !on && view === '2d');
+    graph3d?.setActive(view === '3d' && !allOn && !on);
     clearTimeout(agentsTimer);
     agentsTimer = 0;
-    setUrlParam('agents', null);
+    tickClock();
+    cortex?.setActive(cortexLive());
+    if (on) {
+      graph.unpin?.(); // una ficha fijada quedaría flotando sobre el tablero
+      lowerThird(null);
+      el.agentsOnly.checked = agentsOnly;
+      agentsHtml = '';
+      agentsSeen = null; // lo que ya está no se anima: solo lo que llegue mientras se mira
+      if (source) renderAgents();
+      refreshSpend();
+    } else {
+      agentsSel = null; // la próxima vez se abre con todos
+      lightAgent(null);
+    }
+    if (save) U.store.set('agentsView', on || null);
+    setUrlParam('agents', on ? '1' : null);
+  }
+  el.viewAgents.addEventListener('click', () => setAgentsView(true));
+  el.agentsBtn.addEventListener('click', () => {
+    if (allOn) setAll(false);
+    setAgentsView(!agentsOn);
+    if (agentsOn) el.graphPanel.scrollIntoView?.({ block: 'nearest' });
+  });
+  /** Elige (o suelta, si ya estaba elegido) a un participante de la red: las listas y la línea de tiempo se centran
+      en él. El foco se queda en su nodo (o en el botón de soltarlo). */
+  function selectAgent(key, from = null) {
+    const prev = agentsSel;
+    agentsSel = key && key !== agentsSel ? key : null;
+    renderAgents();
+    const want = agentsSel || prev;
+    // el foco vuelve a donde se eligió (un rótulo de la corteza, una pestaña del hilo) o, si no, a su nodo en la red
+    const find = (sel) => [...el.agentsBody.querySelectorAll(sel)].find((n) => (n.dataset.key ?? n.dataset.pick) === want);
+    const node = (from && find(from)) || find('.ag-net .ag-n[data-key]');
+    (node || el.agentsOnly).focus({ preventScroll: true });
+  }
+  /** Al pasar o enfocar un participante de la red, él y sus vínculos se encienden y lo demás queda tenue. */
+  function lightAgent(g) {
+    const key = g?.dataset.key || null;
+    agentsLit = key;
+    const svg = el.agentsBody.querySelector('.ag-net');
+    if (!svg) return;
+    svg.classList.toggle('ag-hl', !!key);
+    for (const e of svg.querySelectorAll('.ag-e')) e.classList.toggle('hl', !!key && (e.dataset.from === key || e.dataset.to === key));
+    const near = new Set(key ? [key] : []);
+    if (key) for (const e of svg.querySelectorAll('.ag-e.hl')) near.add(e.dataset.from).add(e.dataset.to);
+    for (const n of svg.querySelectorAll('.ag-n')) n.classList.toggle('hl', near.has(n.dataset.key));
+  }
+  el.agentsBody.addEventListener('pointerover', (e) => lightAgent(e.target.closest?.('.ag-net .ag-n')));
+  el.agentsBody.addEventListener('pointerleave', () => lightAgent(null));
+  el.agentsBody.addEventListener('focusin', (e) => lightAgent(e.target.closest?.('.ag-net .ag-n')));
+  el.agentsBody.addEventListener('focusout', (e) => {
+    if (!e.relatedTarget?.closest?.('.ag-net .ag-n')) lightAgent(null);
+  });
+  el.agentsBody.addEventListener('keydown', (e) => {
+    const g = e.target.closest?.('.ag-net .ag-n[data-key]');
+    if (!g || (e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault();
+    selectAgent(g.dataset.key);
   });
   el.agentsOnly.addEventListener('change', () => {
     agentsOnly = el.agentsOnly.checked;
@@ -2190,17 +2714,13 @@
       .filter((a) => a.agent && a.slot < GB.agents.OTHERS)
       .map((a) => {
         const body = `${sw(a.slot, true)}<span class="agk-name">${U.esc(actorName(ov.byKey.get(a.key) || a))}</span>${a.n ? `<span class="agk-n">${U.fmtNum(a.n)}</span>` : ''}`;
-        return `<li>${a.sha ? `<button type="button" class="agk-row" data-sha="${U.esc(a.sha)}" title="${U.esc(t('agents.keyLocate'))}">${body}</button>` : `<span class="agk-row">${body}</span>`}</li>`;
+        return `<li>${a.sha ? `<button type="button" class="agk-row" data-sha="${U.esc(a.sha)}" data-key="${U.esc(a.key)}" title="${U.esc(t('agents.keyLocate'))}">${body}</button>` : `<span class="agk-row" data-key="${U.esc(a.key)}">${body}</span>`}</li>`;
       });
     const others = ov.actors.filter((a) => a.agent && a.slot === GB.agents.OTHERS).length;
     const people = ov.actors.filter((a) => !a.agent).length;
     if (others) rows.push(line(GB.agents.OTHERS, true, t('agents.others', { n: U.fmtNum(others) })));
     if (people) rows.push(line(0, false, t('agents.people', { n: U.fmtNum(people) })));
-    const kinds =
-      `<span class="agk-k"><span class="agk-line" aria-hidden="true"></span>${U.esc(t('agents.kind.continued'))}</span>` +
-      `<span class="agk-k"><span class="agk-line agk-dash" aria-hidden="true"></span>${U.esc(t('agents.kind.merged'))}</span>` +
-      `<span class="agk-k"><span class="agk-glyph" aria-hidden="true">✓</span>${U.esc(t('agents.kind.reviewed'))}</span>` +
-      `<span class="agk-k"><span class="agk-glyph" aria-hidden="true">…</span>${U.esc(t('agents.kind.commented'))}</span>`;
+    const kinds = kindsLegend();
     el.agKeyN.textContent = ov.total ? U.fmtNum(ov.total) : '';
     el.agKeyN.title = ov.total ? t('agents.keyShown', { n: U.fmtNum(ov.total) }) : '';
     const html =
@@ -2247,6 +2767,19 @@
     foldAgentKey(!agKeyOpen);
     U.store.set('agentKeyOpen', agKeyOpen); // también desplegada: en el celular empieza plegada
   });
+  // al pasar o enfocar a un participante de la leyenda, sus interacciones se encienden en el grafo y las demás quedan
+  // tenues (en 2D y en 3D)
+  const keyFocus = (row) => {
+    const key = row?.dataset.key || null;
+    graph2d?.focusAgent?.(key);
+    graph3d?.focusAgent?.(key);
+  };
+  el.agKeyBody.addEventListener('pointerover', (e) => keyFocus(e.target.closest?.('.agk-row[data-key]')));
+  el.agKeyBody.addEventListener('pointerleave', () => keyFocus(null));
+  el.agKeyBody.addEventListener('focusin', (e) => keyFocus(e.target.closest?.('.agk-row[data-key]')));
+  el.agKeyBody.addEventListener('focusout', (e) => {
+    if (!e.relatedTarget?.closest?.('#ag-key-body .agk-row[data-key]')) keyFocus(null);
+  });
   // cada participante de la leyenda lleva a su último commit en el grafo
   el.agKeyBody.addEventListener('click', (e) => {
     const b = e.target.closest('button[data-sha]');
@@ -2254,10 +2787,233 @@
   });
   // cada fila lleva a su commit en el grafo (el enlace a la sesión de Claude Code abre aparte)
   el.agentsBody.addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-sha]');
+    const g = e.target.closest('.ag-net .ag-n[data-key]');
+    if (g) return selectAgent(g.dataset.key);
+    if (e.target.closest('#ag-focus-clear')) return selectAgent(null);
+    const tab = e.target.closest('.sw-tab[data-pick]');
+    if (tab) return selectAgent(tab.dataset.pick, '.sw-tab[data-pick]');
+    const b = e.target.closest('button[data-sha], .ag-time .ag-ev[data-sha]');
     if (!b) return;
-    closeAgents();
-    shownGraph().focusSha?.(b.dataset.sha);
+    shownGraph().focusSha?.(b.dataset.sha); // deja la vista de agentes y va al commit
+  });
+
+  /* ---------- gasto en IA (js/spend.js): lo de cada servicio conectado y, con OmniRoute, lo de cada agente ---------- */
+  const SPEND_EVERY = 5 * 60_000; // con la vista de agentes abierta, el gasto se vuelve a consultar cada 5 minutos
+  let spendDays = U.store.get('spendDays', 30) === 7 ? 7 : 30;
+  /* keys: las claves ({ anthropic, openai, openrouter, omniroute: { url, key } }); results: Map servicio -> lo de
+     collect o { error, status }; at: cuándo se consultó; loaded: si las claves ya se leyeron */
+  const spendState = { keys: {}, results: new Map(), at: 0, busy: false, loaded: false };
+  const spendEl = {
+    dialog: $('#spend-keys'),
+    form: $('#spend-form'),
+    anthropic: $('#spend-anthropic'),
+    openai: $('#spend-openai'),
+    openrouter: $('#spend-openrouter'),
+    omnirouteUrl: $('#spend-omniroute-url'),
+    omniroute: $('#spend-omniroute'),
+    where: $('#spend-where'),
+  };
+  const spendConnected = (s) => (s === 'omniroute' ? !!GB.spend.baseUrl(spendState.keys.omniroute?.url || '') && !!spendState.keys.omniroute?.url : !!spendState.keys[s]);
+  const spendAny = () => GB.spend.SERVICES.some(spendConnected);
+
+  /** Lee las claves guardadas: en la web, de este navegador (U.secret); en escritorio, del llavero. */
+  async function loadSpendKeys() {
+    const k = {};
+    for (const s of GB.spend.SERVICES) {
+      const raw = desktop ? (await desktop.getToken(s).catch(() => ({ token: '' }))).token : U.secret.get('spend:' + s, '');
+      if (s !== 'omniroute') k[s] = String(raw || '');
+      else {
+        let o = raw;
+        if (typeof raw === 'string') {
+          try {
+            o = JSON.parse(raw || '{}');
+          } catch {
+            o = {};
+          }
+        }
+        k.omniroute = { url: String(o?.url || ''), key: String(o?.key || '') };
+      }
+    }
+    spendState.keys = k;
+    spendState.loaded = true;
+  }
+
+  /** Una consulta desde la página (la web): sin cookies ni referer, con un tope de 15 s. */
+  async function spendFetchJson(req) {
+    const r = await fetch(req.url, { headers: req.headers, credentials: 'omit', referrerPolicy: 'no-referrer', cache: 'no-store', signal: AbortSignal.timeout?.(15_000) });
+    let json = null;
+    try {
+      json = await r.json();
+    } catch {
+      /* no era JSON: lo dice collect */
+    }
+    return { status: r.status, json };
+  }
+
+  /** Consulta el gasto de cada servicio conectado (en escritorio, lo hace el proceso principal) y rehace el tablero. */
+  async function refreshSpend({ force = false } = {}) {
+    if (spendState.busy || (!force && Date.now() - spendState.at < SPEND_EVERY)) return;
+    spendState.busy = true;
+    try {
+      if (!spendState.loaded) await loadSpendKeys();
+      spendState.at = Date.now();
+      const results = new Map();
+      await Promise.all(
+        GB.spend.SERVICES.filter(spendConnected).map(async (s) => {
+          let r;
+          if (desktop?.spend) r = await desktop.spend(s, { days: spendDays }).catch(() => ({ error: 'net' }));
+          else {
+            const cfg = s === 'omniroute' ? { ...spendState.keys.omniroute, days: spendDays, browser: true } : { key: spendState.keys[s], days: spendDays, browser: true };
+            r = await GB.spend.collect(s, cfg, spendFetchJson).catch((err) => ({ error: err.kind || 'net', status: err.status || 0 }));
+          }
+          results.set(s, { service: s, ...r });
+        }),
+      );
+      spendState.results = results;
+    } finally {
+      spendState.busy = false;
+    }
+    if (agentsOn) {
+      agentsHtml = '';
+      renderAgents();
+    }
+  }
+
+  /** La tarjeta del gasto en el tablero: el total, las barras por día (un color por servicio), cada servicio con sus
+      modelos y, con OmniRoute, cada agente (su clave), con su color si el agente trabaja en este repo. En la demo, sin
+      servicios conectados, un ejemplo que lo dice. */
+  function spendMarkup(data, r, slot) {
+    const demo = !!data.repo?.demo && !spendAny();
+    const results = demo ? GB.spend.demo({ days: spendDays }) : [...spendState.results.values()];
+    const name = (s) => GB.spend.NAMES[s] || s;
+    const select = `<select id="spend-days" class="sp-days" aria-label="${U.esc(t('spend.title'))}">${GB.spend.PERIODS.map((n) => `<option value="${n}"${n === spendDays ? ' selected' : ''}>${U.esc(t('spend.days', { n }))}</option>`).join('')}</select>`;
+    const connect = `<button type="button" class="btn btn-ghost sp-connect" id="spend-connect">${U.esc(t('spend.connect'))}</button>`;
+    const sum = GB.spend.combine(results, { days: spendDays });
+    const head = `<h3>${U.esc(t('spend.title'))}${results.length ? ` <span class="hl-n">${U.esc(U.fmtUsd(sum.total))}</span>` : ''}${demo ? ` <span class="sp-badge">${U.esc(t('spend.example'))}</span>` : ''}</h3>`;
+    const tools = `<div class="sp-tools">${select}${connect}</div>`;
+    if (!results.length) {
+      const msg = spendState.busy ? t('spend.loading') : t('spend.none');
+      return `<section class="hl-sec ab-card ab-spend" id="ag-spend">${head}${tools}<p class="hl-line">${U.esc(msg)}</p></section>`;
+    }
+    // las barras: un día por columna, cada servicio apilado con su color
+    const W = 600;
+    const H = 120;
+    const max = Math.max(1e-9, ...sum.days.map((_, i) => sum.series.reduce((n, x) => n + x.values[i], 0)));
+    const bw = W / sum.days.length;
+    const bars = sum.days
+      .map((d, i) => {
+        let y = H;
+        const parts = sum.series
+          .map((x) => {
+            const h = (x.values[i] / max) * (H - 4);
+            if (h <= 0) return '';
+            y -= h;
+            return `<rect class="sp-bar sp-${x.service}" x="${(i * bw + 1).toFixed(1)}" y="${y.toFixed(1)}" width="${Math.max(1, bw - 2).toFixed(1)}" height="${h.toFixed(1)}"/>`;
+          })
+          .join('');
+        const tip = `${U.fmtDate(Date.parse(d))}: ${sum.series.filter((x) => x.values[i]).map((x) => `${name(x.service)} ${U.fmtUsd(x.values[i])}`).join(' · ') || U.fmtUsd(0)}`;
+        return `<g>${parts}<rect class="sp-hit" x="${(i * bw).toFixed(1)}" y="0" width="${bw.toFixed(1)}" height="${H}"><title>${U.esc(tip)}</title></rect></g>`;
+      })
+      .join('');
+    const chart = `<svg class="sp-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${U.esc(t('spend.chartAria', { total: U.fmtUsd(sum.total) }))}">${bars}</svg><p class="sp-axis"><span>${U.esc(U.fmtDate(Date.parse(sum.days[0])))}</span><span>${U.esc(U.fmtUsd(max))}</span><span>${U.esc(U.fmtDate(Date.parse(sum.days[sum.days.length - 1])))}</span></p>`;
+    const err = (x) =>
+      x.error === 'auth' ? t('spend.err.auth') : x.error === 'net' ? t('spend.err.net', { service: name(x.service) }) : t('spend.err.http', { service: name(x.service), status: x.status || '' });
+    const services = results
+      .map((x) => {
+        const detail = x.error
+          ? `<span class="sp-err">${U.esc(err(x))}</span>`
+          : `${x.window ? `<span class="sp-win">${U.esc(t(x.window === 'month' ? 'spend.month' : 'spend.week'))}</span>` : ''}${x.models
+              .slice(0, 3)
+              .map(([m, usd]) => `<span class="sp-model">${U.esc(m)} <b>${U.esc(U.fmtUsd(usd))}</b></span>`)
+              .join('')}`;
+        return `<li class="sp-row"><span class="sp-name"><span class="sp-sw sp-${x.service}" aria-hidden="true"></span>${U.esc(name(x.service))}</span><b class="sp-usd">${x.error ? '–' : U.esc(U.fmtUsd(x.total))}</b><span class="sp-detail">${detail}</span></li>`;
+      })
+      .join('');
+    // por agente: las claves de OmniRoute; si nombran un agente que trabaja en este repo, con su color y sus sesiones
+    const firstSlot = new Map();
+    const sessions = new Map();
+    for (const a of r.actors)
+      if (a.agent) {
+        if (!firstSlot.has(a.agent.id)) firstSlot.set(a.agent.id, slot.get(a.key) ?? 0);
+        sessions.set(a.agent.id, (sessions.get(a.agent.id) || 0) + 1);
+      }
+    const agents = results.flatMap((x) => x.agents || []);
+    const agentRows = agents
+      .map((a) => {
+        const sw = a.agent && firstSlot.has(a.agent) ? `<span class="agk-sw agk-agent ag-s${firstSlot.get(a.agent)}" aria-hidden="true"></span>` : `<span class="agk-sw agk-agent ag-s0" aria-hidden="true"></span>`;
+        const sub = [a.requests ? t('spend.requests', { n: U.fmtNum(a.requests) }) : '', a.agent && sessions.get(a.agent) ? t('spend.sessions', { n: U.fmtNum(sessions.get(a.agent)) }) : ''].filter(Boolean).join(' · ');
+        return `<li class="sp-row"><span class="sp-name">${sw}${U.esc(a.name)}</span><b class="sp-usd">${U.esc(U.fmtUsd(a.usd))}</b>${sub ? `<span class="sp-detail">${U.esc(sub)}</span>` : ''}</li>`;
+      })
+      .join('');
+    return (
+      `<section class="hl-sec ab-card ab-spend" id="ag-spend">${head}${tools}${demo ? `<p class="hl-line sp-note">${U.esc(t('spend.exampleNote'))}</p>` : ''}${chart}` +
+      `<ul class="sp-list" id="sp-services">${services}</ul>` +
+      (agentRows ? `<h4 class="sp-h4">${U.esc(t('spend.byAgent'))}</h4><ul class="sp-list" id="sp-agents">${agentRows}</ul>` : '') +
+      `</section>`
+    );
+  }
+
+  /** El diálogo de las claves: abre con lo guardado (escondido) y guarda cada una donde va. */
+  async function openSpendKeys() {
+    if (!spendState.loaded) await loadSpendKeys();
+    const k = spendState.keys;
+    spendEl.anthropic.value = k.anthropic || '';
+    spendEl.openai.value = k.openai || '';
+    spendEl.openrouter.value = k.openrouter || '';
+    spendEl.omnirouteUrl.value = k.omniroute?.url || '';
+    spendEl.omniroute.value = k.omniroute?.key || '';
+    spendEl.where.textContent = t(desktop ? 'spend.whereDesktop' : 'spend.whereWeb');
+    spendEl.omnirouteUrl.setCustomValidity('');
+    if (typeof spendEl.dialog.showModal === 'function') spendEl.dialog.showModal();
+    else spendEl.dialog.setAttribute('open', '');
+  }
+  const closeSpendKeys = () => (typeof spendEl.dialog.close === 'function' ? spendEl.dialog.close() : spendEl.dialog.removeAttribute('open'));
+  spendEl.form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const url = spendEl.omnirouteUrl.value.trim();
+    if (url && !GB.spend.baseUrl(url)) {
+      spendEl.omnirouteUrl.setCustomValidity(t('spend.badUrl'));
+      spendEl.omnirouteUrl.reportValidity();
+      return;
+    }
+    const keys = {
+      anthropic: spendEl.anthropic.value.trim(),
+      openai: spendEl.openai.value.trim(),
+      openrouter: spendEl.openrouter.value.trim(),
+      omniroute: { url, key: spendEl.omniroute.value.trim() },
+    };
+    for (const s of GB.spend.SERVICES) {
+      const v = s === 'omniroute' ? (keys.omniroute.url ? JSON.stringify(keys.omniroute) : '') : keys[s];
+      if (desktop) await desktop.setToken(v, s).catch((err) => console.error('No se pudo guardar la clave:', err));
+      else U.secret.set('spend:' + s, s === 'omniroute' ? (keys.omniroute.url ? keys.omniroute : null) : v || null);
+    }
+    spendState.keys = keys;
+    spendState.loaded = true;
+    spendState.results = new Map();
+    closeSpendKeys();
+    if (agentsOn) {
+      agentsHtml = '';
+      renderAgents();
+    }
+    refreshSpend({ force: true });
+  });
+  spendEl.omnirouteUrl.addEventListener('input', () => spendEl.omnirouteUrl.setCustomValidity(''));
+  $('#spend-cancel').addEventListener('click', closeSpendKeys);
+  $('#spend-clear').addEventListener('click', () => {
+    for (const f of [spendEl.anthropic, spendEl.openai, spendEl.openrouter, spendEl.omnirouteUrl, spendEl.omniroute]) f.value = '';
+    spendEl.anthropic.focus();
+  });
+  // los controles de la tarjeta viven en el tablero, que se rehace: se escuchan desde él
+  el.agentsBody.addEventListener('change', (e) => {
+    if (e.target.id !== 'spend-days') return;
+    spendDays = Number(e.target.value) === 7 ? 7 : 30;
+    U.store.set('spendDays', spendDays === 30 ? null : spendDays);
+    agentsHtml = '';
+    renderAgents();
+    refreshSpend({ force: true });
+  });
+  el.agentsBody.addEventListener('click', (e) => {
+    if (e.target.closest('#spend-connect')) openSpendKeys();
   });
 
   /* ---------- bitácora en vivo: lo que hizo el repo desde la anterior, con su nota y sus hallazgos (ver bitacora.js) ---------- */
@@ -2580,6 +3336,7 @@
   const constellation = GB.constellation.mount($('#constellation-body'), {
     text: t,
     fmt: U.fmtNum,
+    ago: (ms) => U.timeAgo(ms),
     select: $('#constellation-order'),
     status: $('#constellation-status'),
     onGo(key) {
@@ -2668,6 +3425,8 @@
         text: (k, p) => t(k, p),
         available: (a) => {
           const b = cmdBtn(a);
+          // plegar el panel de actividad solo tiene sentido con el panel al lado del grafo (en una columna va debajo)
+          if (a.id === 'feedFold' && !matchMedia('(min-width: 861px)').matches) return false;
           return !!b && !b.disabled && !b.closest('[hidden]');
         },
         run: (a) => cmdBtn(a)?.click(),
@@ -2681,7 +3440,10 @@
       if ($('#cmdk').open) palette.close();
       else if (!document.querySelector('dialog[open]')) palette.open();
     });
-  }
+    // el botón de la barra: la misma paleta, para quien no sabe del atajo (que se ve a su lado: ⌘K en Mac)
+    if (/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '')) $('#cmdk-kbd').textContent = '⌘K';
+    $('#cmdk-btn').addEventListener('click', () => palette.open());
+  } else $('#cmdk-btn').hidden = true;
   $('#search-input').addEventListener('input', () => {
     if (!initialQuery) setUrlParam('q', $('#search-input').value.trim().slice(0, 100)); // la búsqueda se comparte con la URL
   });
@@ -2730,11 +3492,11 @@
     graphAuthor.focus(); // el botón se esconde: el foco no se pierde
   });
   const columnsEl = $('#graph-columns');
-  columnsEl.checked = U.store.get('columns', false) === true; // autor y fecha junto a cada commit del 2D: de quien lo enciende, en todos sus repos
-  graph2d?.setColumns?.(columnsEl.checked);
+  columnsEl.checked = U.store.get('columns', false) === true; // SHA, autor y fecha junto a cada commit del 2D y del 3D: de quien lo enciende, en todos sus repos
+  for (const g of [graph2d, graph3d]) g?.setColumns?.(columnsEl.checked);
   columnsEl.addEventListener('change', () => {
     U.store.set('columns', columnsEl.checked ? true : null);
-    graph2d?.setColumns?.(columnsEl.checked);
+    for (const g of [graph2d, graph3d]) g?.setColumns?.(columnsEl.checked);
   });
   $('#graph-firstparent').addEventListener('change', (e) => {
     firstParentOn = e.target.checked;
@@ -3033,7 +3795,7 @@
       showOverlay('loading', i18n.msg('status.retrying'));
       source.refreshNow();
     } else if (action === 'demo') startDemo();
-    else if (action === 'settings') openSettings({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput, bitbucket: el.bitbucketTokenInput, bitbucketdc: el.bbdcTokenInput, azure: el.azureTokenInput }[source?.host] || el.tokenInput);
+    else if (action === 'settings') openSettings({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput, bitbucket: el.bitbucketTokenInput, bitbucketdc: el.bbdcTokenInput, forgejo: el.forgeTokenInput, azure: el.azureTokenInput }[source?.host] || el.tokenInput);
   });
 
   /* ---------- controles ---------- */
@@ -3077,6 +3839,7 @@
     renderPause();
     for (const x of tabs) x.source.setPaused(v);
     graph3d?.setHold(v);
+    cortex?.setActive(cortexLive());
     if (tv.attract && replay.active) {
       if (v) replay.pause();
       else if (replay.u >= replay.U) replay.stop();
@@ -3203,7 +3966,59 @@
 
   const ATTRACT_IDLE = 3 * 60e3; // sin novedades durante este tiempo…
   const ATTRACT_EVERY = 10 * 60e3; // …se reproduce la historia, como mucho una vez cada tanto
-  const tv = { on: false, prevView: null, lock: null, locking: false, attract: false, lastNews: 0, lastAttract: 0, lastSwitch: 0, idleTimer: 0 };
+  const tv = { on: false, prevView: null, prevAgents: false, prevAll: false, lock: null, locking: false, attract: false, lastNews: 0, lastAttract: 0, lastSwitch: 0, idleTimer: 0 };
+  const tvBarHome = el.tvBar.parentNode; // sobre el grafo; con la vista de agentes va a la cabecera del tablero
+
+  /** La barra del modo TV, donde se ve: sobre el grafo o, con la vista de agentes, en la cabecera del tablero (el grafo
+      queda escondido y ella con él). Si tenía el foco, lo conserva. */
+  function placeTvBar() {
+    const host = allOn ? el.allPanel.querySelector('.panel-head') : agentsOn ? el.agents.querySelector('.ab-head') : tvBarHome;
+    if (!host || el.tvBar.parentNode === host) return;
+    const had = el.tvBar.contains(document.activeElement) ? document.activeElement : null;
+    host.append(el.tvBar);
+    had?.focus({ preventScroll: true });
+  }
+
+  /** El foco del modo TV: en lo que se ve (el grafo o, con la vista de agentes, su panel), donde están los atajos del
+      modo; no en la barra, que no se escondería mientras lo tenga. */
+  const tvFocus = () => (allOn ? el.allPanel : agentsOn ? el.graphPanel : graph3d ? el.graph3d : el.graph).focus({ preventScroll: true });
+
+  /** En modo TV, la pantalla pasa del grafo (con el director) al tablero de agentes y vuelve. No cambia lo guardado:
+      al salir del modo TV queda la vista que había antes de entrar. */
+  function tvShowAgents(on) {
+    if (!tv.on) return;
+    const before = document.activeElement;
+    if (on && tv.attract && replay.active) replay.stop(); // el tablero es el presente: el Replay de ambiente se acaba
+    tv.attract = false;
+    if (on && allOn) setAll(false, { save: false }); // una pantalla por vez
+    setAgentsView(on, { save: false });
+    // el foco no se queda en lo que se escondió (ni en la barra): pasa a lo que ahora se ve
+    if (!before || before === document.body || el.graphPanel.contains(before) || el.allPanel.contains(before)) tvFocus();
+  }
+
+  /** En modo TV, la pantalla pasa del grafo (con el director) a todos los repos seguidos a la vez, cada uno en su
+      tarjeta, y vuelve. Tampoco cambia lo guardado. */
+  function tvShowAll(on) {
+    if (!tv.on || (on && tabs.length < 2)) return;
+    const before = document.activeElement;
+    if (on && tv.attract && replay.active) replay.stop(); // con todos a la vista no hay Replay de ambiente
+    tv.attract = false;
+    setAll(on, { save: false });
+    if (!before || before === document.body || el.graphPanel.contains(before) || el.allPanel.contains(before)) tvFocus();
+  }
+
+  /** En modo TV, las tarjetas de la vista conjunta entran todas en la pantalla: tantas columnas y filas como pide
+      su cantidad en el lugar que hay (--tv-cols, --tv-rows; ver GB.overview.fitGrid). */
+  const allGrid = $('#all-grid');
+  function fitTvGrid() {
+    if (!tv.on || !allOn) return;
+    const n = allGrid.children.length;
+    const r = allGrid.getBoundingClientRect();
+    const { cols, rows } = GB.overview.fitGrid(n, r.width, r.height);
+    allGrid.style.setProperty('--tv-cols', String(cols));
+    allGrid.style.setProperty('--tv-rows', String(rows));
+  }
+  if (typeof ResizeObserver === 'function') new ResizeObserver(() => fitTvGrid()).observe(allGrid);
 
   /** Entra o sale del modo TV. `user`: viene de un clic (solo así se puede pedir pantalla completa). */
   function setTV(on, user = false) {
@@ -3211,25 +4026,31 @@
     tv.on = on;
     const root = document.documentElement;
     // el botón TV (en la barra que el modo esconde) o el de salir (en la barra del modo) tenía el foco
-    const lostFocus = (on ? el.tvBtn : el.tvBar).contains(document.activeElement);
+    const lostFocus = (on ? [el.tvBtn, el.allTvBtn] : [el.tvBar]).some((b) => b.contains(document.activeElement));
     root.classList.toggle('tv', on);
     setPressed(el.tvBtn, on);
+    setPressed(el.allTvBtn, on);
     if (on) {
-      setAll(false, { save: false }); // la pantalla compartida es la del grafo, con el director (pasa sola de un repo a otro)
-      diffView.close(); // la pantalla compartida es del grafo
+      // desde la vista conjunta se queda en ella (todos los repos a la vez); si no, el grafo con el director, que pasa
+      // solo de un repo a otro. La R (o su botón) cambia de una a otra
+      tv.prevAll = allOn;
+      diffView.close(); // la pantalla compartida no es la de los cambios de un commit
       tv.prevView = view;
+      tv.prevAgents = agentsOn || initialAgents; // con ?tv=1&agents=1 el tablero llega cuando el repo tiene grafo
       tv.lastNews = tv.lastAttract = Date.now();
-      if (graph3d) setView('3d', false);
+      if (graph3d) setView('3d', false); // detrás, el grafo en 3D con el director
+      if (tv.prevAgents && !initialAgents && !allOn) setAgentsView(true, { save: false }); // desde la vista de agentes, se queda en ella
       feed.sound = false; // en un espacio compartido el sonido llega a todos: se enciende a mano
       graph3d?.flight?.exit(); // la pantalla compartida la lleva el director, no un piloto
       director?.setTV(true);
       director?.setOn(true);
       if (user && fullscreenOK && !fullscreenEl()) requestFs(root);
+      placeTvBar();
       tvScale();
       lockScreen();
-      // el foco pasa al grafo, donde están los atajos del modo (espacio, F, Esc); no a la barra, que
-      // no se escondería mientras tenga el foco
-      if (lostFocus || document.activeElement === document.body) (graph3d ? el.graph3d : el.graph).focus({ preventScroll: true });
+      // el foco pasa al grafo (o al tablero de agentes), donde están los atajos del modo (espacio, F, A, Esc); no a la
+      // barra, que no se escondería mientras tenga el foco
+      if (lostFocus || document.activeElement === document.body) tvFocus();
     } else {
       if (tv.attract && replay.active) replay.stop();
       tv.attract = false;
@@ -3238,13 +4059,19 @@
       director?.setOn(!!U.store.get('director', false));
       if (fullscreenEl() === root) exitFs();
       setView(tv.prevView || view, false);
+      if (tv.prevAgents) setAgentsView(true, { save: false }); // se vuelve a la vista de agentes si se entró desde ella
+      setAll(tv.prevAll, { save: false }); // y a la vista conjunta, si se entró desde ella (o se sale de la que se abrió en TV)
       tv.lock?.release().catch(() => {});
       tv.lock = null;
       root.style.removeProperty('--tvz');
-      if (lostFocus) el.tvBtn.focus({ preventScroll: true });
+      // también si lo que tenía el foco se escondió (el grafo, al volver a la vista de agentes): el navegador lo suelta
+      // recién al dibujar, así que se mira si todavía se ve
+      const at = document.activeElement;
+      if (lostFocus || !at || at === document.body || !at.getClientRects().length) (allOn ? el.allTvBtn : el.tvBtn).focus({ preventScroll: true });
     }
     setPressed(el.soundBtn, feed.sound);
     setPressed(el.tvSound, feed.sound);
+    cortex?.setActive(cortexLive()); // la pausa del modo TV también detiene la corteza
     graph3d?.gx?.pokeAmbience(); // el zumbido del espacio sigue al sonido, como con sus botones
     setUrlParam('tv', on ? '1' : null);
     graph3d?.restyle();
@@ -3258,6 +4085,8 @@
     const z = Math.min(2.2, Math.max(1, Math.min(innerWidth / 1500, innerHeight / 860)));
     document.documentElement.style.setProperty('--tvz', z.toFixed(3));
     graph3d?.restyle();
+    markCut(); // con otra letra, en lo último y en el log cabe otra cantidad
+    fitTvGrid();
   }
 
   /** Pantalla siempre encendida (Screen Wake Lock); el navegador la suelta al ocultar la pestaña. */
@@ -3290,7 +4119,8 @@
     if (!tv.on) return;
     const now = Date.now();
     el.tvClock.textContent = i18n.fmtTime(now);
-    if (paused || replay.active || !lastRender || lastRender.L.nodes.length < 8) return;
+    // con el tablero de agentes a la vista no hay grafo que reproducir: el tablero ya es lo que pasa ahora
+    if (paused || replay.active || agentsOn || allOn || !lastRender || lastRender.L.nodes.length < 8) return;
     if (now - tv.lastNews < ATTRACT_IDLE || now - tv.lastAttract < ATTRACT_EVERY) return;
     tv.lastAttract = now;
     tv.attract = true;
@@ -3299,6 +4129,9 @@
   }
 
   el.tvBtn.addEventListener('click', () => setTV(!tv.on, true));
+  el.allTvBtn.addEventListener('click', () => setTV(!tv.on, true));
+  el.tvAgents.addEventListener('click', () => tvShowAgents(!agentsOn));
+  el.tvAll.addEventListener('click', () => tvShowAll(!allOn));
   el.tvExit.addEventListener('click', () => setTV(false));
   el.tvFs.addEventListener('click', toggleFullscreen);
   el.tvFs.hidden = !fullscreenOK;
@@ -3321,7 +4154,8 @@
     } else graph3d?.gx?.pokeAmbience();
   });
   for (const type of ['pointermove', 'pointerdown', 'keydown']) document.addEventListener(type, () => tv.on && wake(), { passive: true });
-  // en modo TV: espacio pausa todo, F pone la página entera en pantalla completa y Esc sale del modo
+  // en modo TV: espacio pausa todo, F pone la página entera en pantalla completa, A pasa del grafo al tablero de agentes
+  // (y vuelve), R a todos los repos a la vez (y vuelve) y Esc sale del modo
   document.addEventListener('keydown', (ev) => {
     if (!tv.on || ev.defaultPrevented || ev.ctrlKey || ev.metaKey || ev.altKey) return;
     // Esc sirve también con el foco en un botón; si el grafo la usó para cerrar una ficha, ya lo marcó
@@ -3337,6 +4171,12 @@
     } else if (k === 'f' && fullscreenOK) {
       ev.preventDefault();
       toggleFullscreen();
+    } else if (k === 'a') {
+      ev.preventDefault();
+      tvShowAgents(!agentsOn);
+    } else if (k === 'r' && tabs.length > 1) {
+      ev.preventDefault();
+      tvShowAll(!allOn);
     }
   });
 
@@ -3354,6 +4194,7 @@
   });
   const embedView = EMBED ? GB.embedOptions(location.search)?.view || '' : ''; // &view=2d|3d: la vista de la capa, sin guardarla
   setView(embedView || U.store.get('view', '3d'), !embedView);
+  if (!EMBED && U.store.get('agentsView', false) === true) setAgentsView(true, { save: false }); // se dejó en la vista de agentes
   director?.setOn(!!U.store.get('director', false));
   renderDirector();
   renderPause();
@@ -3369,6 +4210,7 @@
     el.bitbucketTokenInput.value = settings.bitbucketToken;
     el.azureTokenInput.value = settings.azureToken;
     el.bbdcTokenInput.value = settings.bbdcToken;
+    el.forgeTokenInput.value = settings.forgeToken;
     el.token2Owner.value = settings.account2.owner;
     el.token2Input.value = settings.account2.token;
     for (const [input, toggle] of tokenFields) {
@@ -3438,6 +4280,7 @@
     [el.bitbucketTokenInput, el.bitbucketTokenToggle],
     [el.azureTokenInput, el.azureTokenToggle],
     [el.bbdcTokenInput, el.bbdcTokenToggle],
+    [el.forgeTokenInput, el.forgeTokenToggle],
     [el.token2Input, el.token2Toggle],
     ...hookFields.map((f) => [f.input, f.toggle]),
   ];
@@ -3459,6 +4302,7 @@
     el.bitbucketTokenInput.value = '';
     el.azureTokenInput.value = '';
     el.bbdcTokenInput.value = '';
+    el.forgeTokenInput.value = '';
     el.token2Owner.value = '';
     el.token2Input.value = '';
     for (const f of hookFields) f.input.value = '';
@@ -3473,9 +4317,11 @@
     settings.bitbucketToken = el.bitbucketTokenInput.value.trim();
     settings.azureToken = el.azureTokenInput.value.trim();
     if (BITBUCKET_URL) settings.bbdcToken = el.bbdcTokenInput.value.trim(); // sin servidor elegido, el campo no se ve y lo guardado queda como está
+    if (FORGE_URL) settings.forgeToken = el.forgeTokenInput.value.trim();
     const account2Stored = GB.GitHubSource.pack2(el.token2Owner.value, el.token2Input.value); // sin dueño o sin token, no hay segunda cuenta
     settings.account2 = GB.GitHubSource.unpack2(account2Stored);
     const bbdcStored = GB.BitbucketServerSource.pack(settings.bbdcToken, BITBUCKET_URL) || null;
+    const forgeStored = GB.CodebergSource.pack(settings.forgeToken, FORGE_URL) || null;
     settings.depth = Math.max(10, Math.min(100, Number(el.depth.value) || 40));
     settings.marks = el.marks.checked;
     if (desktop) {
@@ -3486,6 +4332,7 @@
       desktop.setToken(settings.bitbucketToken, 'bitbucket').catch(failed);
       desktop.setToken(settings.azureToken, 'azure').catch(failed);
       if (BITBUCKET_URL) desktop.setToken(bbdcStored || '', 'bitbucketdc').catch(failed);
+      if (FORGE_URL) desktop.setToken(forgeStored || '', 'forgejo').catch(failed);
       desktop.setToken(account2Stored, 'github2').catch(failed);
     } else {
       U.secret.set('token', settings.token || null);
@@ -3494,6 +4341,7 @@
       U.secret.set('bitbucketToken', settings.bitbucketToken || null);
       U.secret.set('azureToken', settings.azureToken || null);
       if (BITBUCKET_URL) U.secret.set('bbdcToken', bbdcStored);
+      if (FORGE_URL) U.secret.set('forgeToken', forgeStored);
       U.secret.set('account2', account2Stored || null);
     }
     U.store.set('depth', settings.depth);
@@ -3508,7 +4356,7 @@
     // se reconecta lo que cambió: un token de GitLab nuevo no gasta la cuota de GitHub. Si no cambió
     // nada, todo, como dice el botón
     const changed = (tab) =>
-      settings.depth !== before.depth || settings.marks !== before.marks || ({ gitlab: settings.gitlabToken !== before.gitlabToken, codeberg: settings.codebergToken !== before.codebergToken, bitbucket: settings.bitbucketToken !== before.bitbucketToken, forgejo: false, azure: settings.azureToken !== before.azureToken, bitbucketdc: settings.bbdcToken !== before.bbdcToken }[tab.source.host] ?? (settings.token !== before.token || settings.account2.token !== before.account2.token || settings.account2.owner !== before.account2.owner));
+      settings.depth !== before.depth || settings.marks !== before.marks || ({ gitlab: settings.gitlabToken !== before.gitlabToken, codeberg: settings.codebergToken !== before.codebergToken, bitbucket: settings.bitbucketToken !== before.bitbucketToken, forgejo: settings.forgeToken !== before.forgeToken, azure: settings.azureToken !== before.azureToken, bitbucketdc: settings.bbdcToken !== before.bbdcToken }[tab.source.host] ?? (settings.token !== before.token || settings.account2.token !== before.account2.token || settings.account2.owner !== before.account2.owner));
     if (realTabs().length) reconnectAll(realTabs().some(changed) ? changed : undefined);
     else el.tokenBanner.hidden = true;
   });
@@ -3524,6 +4372,7 @@
     for (const note of [el.tokenWhere, el.gitlabTokenWhere, el.codebergTokenWhere, el.bitbucketTokenWhere, el.azureTokenWhere]) note.textContent = t(note.dataset.i18n);
     bbdcWhere = keychain ? 'settings.bbdcTokenWhereKeychain' : 'settings.bbdcTokenWherePlain';
     renderBbdcField();
+    renderForgeField();
   }
 
   /** El campo del token de un Bitbucket propio: solo con un servidor elegido (?bitbucket=, --bitbucket-url=), y su aviso nombra ese host. */
@@ -3533,6 +4382,13 @@
     el.bbdcTokenWhere.textContent = BITBUCKET_URL ? t(bbdcWhere, { host: new URL(BITBUCKET_URL).host }) : '';
   }
   renderBbdcField();
+
+  /** El campo del token de un Forgejo/Gitea propio: igual, solo con ?forge= / --forge-url=. Usa los avisos del Bitbucket propio (dicen lo mismo). */
+  function renderForgeField() {
+    el.forgeTokenField.hidden = !FORGE_URL;
+    el.forgeTokenWhere.textContent = FORGE_URL ? t(bbdcWhere, { host: new URL(FORGE_URL).host }) : '';
+  }
+  renderForgeField();
 
   /** En la app de escritorio, el ícono de la bandeja y su aviso van en el idioma de la página. */
   function sendDesktopLabels() {
@@ -3553,6 +4409,7 @@
     settings.bitbucketToken = (await desktop.getToken('bitbucket')).token;
     settings.azureToken = (await desktop.getToken('azure')).token;
     if (BITBUCKET_URL) settings.bbdcToken = GB.BitbucketServerSource.unpack((await desktop.getToken('bitbucketdc')).token, BITBUCKET_URL);
+    if (FORGE_URL) settings.forgeToken = GB.CodebergSource.unpack((await desktop.getToken('forgejo')).token, FORGE_URL);
     settings.account2 = GB.GitHubSource.unpack2((await desktop.getToken('github2')).token);
     for (const service of GB.hooks.SERVICES) hookUrls[service] = (await desktop.getToken(service)).token;
     showTokenWhere(where);
@@ -3593,6 +4450,7 @@
     renderWebglNote();
     for (const [input, toggle] of tokenFields) showToggle(input, toggle);
     renderBbdcField();
+    renderForgeField();
     el.repoInput.setCustomValidity('');
     graph2d.relocalize();
     graph3d?.relocalize();
@@ -3607,7 +4465,7 @@
     if (allOn) renderAllSum();
     diffView.relocalize();
     if (lp.dialog.open) lpRender();
-    if (el.agents.open && source) renderAgents();
+    if (agentsOn && source) renderAgents();
     if (!source) return;
     // la demo inventa mensajes, incidencias y comentarios en el idioma activo: se reinicia para no mezclarlos
     if (source.data.repo.practice) practice.render(); // su historia no se inventa: se queda como está
@@ -3675,7 +4533,7 @@
 
   /** Sigue los repos guardados y los de la URL; muestra el de la URL, el último que se miraba o el primero. */
   function start() {
-    wantAll = !EMBED && !initialTV && (initialAll ?? U.store.get('all', false) === true);
+    wantAll = !EMBED && (initialAll ?? (!initialTV && U.store.get('all', false) === true)); // con ?tv=1, solo si la URL lo pide
     const saved = U.store.get('repos', null);
     const shown = U.store.get('repo', null);
     const list = EMBED ? [] : Array.isArray(saved) ? saved : typeof shown === 'string' ? [shown] : []; // antes se seguía uno solo

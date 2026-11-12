@@ -3073,8 +3073,16 @@
           n++;
           if (note.text !== it.note) note.msg.textContent = note.text = it.note;
           if (note.metaText !== meta) {
-            note.meta.textContent = note.metaText = meta;
+            note.metaText = meta;
             note.meta.hidden = !meta;
+            // cada parte en su <bdi>: una fecha en árabe o un autor en hebreo no desordenan el SHA ni a sus vecinas
+            note.meta.replaceChildren(
+              ...meta.split(' · ').flatMap((part, i) => {
+                const b = document.createElement('bdi');
+                b.textContent = part;
+                return i ? [' · ', b] : [b];
+              })
+            );
           }
           // aparece al acercarse; con otra rama resaltada, se apaga como ella
           let op = clamp((NOTE_D - dist) / (NOTE_D * 0.25), 0, 1);

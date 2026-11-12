@@ -1569,7 +1569,9 @@ test('show imprime el sha, el mensaje y los archivos de un commit (HEAD sin otro
   assert.deepEqual(plain(r.run('show -s --oneline HEAD HEAD~1').lines), [`${head.slice(0, 7)} (HEAD -> main) Cambios`, '', `${first.slice(0, 7)} ${r.commits.get(first).message}`]);
   // una etiqueta anotada sale antes con su mensaje; una ligera, solo el commit
   run(r, 'tag -a v1 -m "Primera versión"', 'tag ligera HEAD~1');
-  assert.deepEqual(plain(r.run('show -s v1').lines.slice(0, 5)), ['tag v1', 'Tagger: You', '', '    Primera versión', '']);
+  assert.deepEqual(plain(r.run('show -s v1').lines.slice(0, 5)), ['tag v1', 'Tagger: You', '', 'Primera versión', '']);
+  // gana el último formato: --name-status tras -s vuelve a mostrar los archivos
+  assert.deepEqual(plain(r.run('show -s --name-status --oneline').lines), [`${r.short(r.headSha)} (HEAD -> main, tag: v1) Cambios`, 'D\tREADME.md', 'M\tapp.js', 'A\tnuevo.txt']);
   assert.match(r.run('show -s ligera').lines[0], /^commit /);
   // un renombre (git mv) sale como el borrado del viejo y el nombre nuevo; un archivo nuevo cambiado después ya es M
   run(r, 'git mv app.js main.js', 'commit -m "Renombra"');
@@ -1596,7 +1598,11 @@ test('show se niega como git: un sha que no existe, opciones desconocidas, -p si
   assert.equal(r.run('show HEAD~99').ok, false);
   assert.match(r.run('show --bogus').lines[0], /^fatal: unrecognized argument: --bogus/);
   assert.equal(r.run('show -p').ok, false);
+  assert.match(r.run('show -3').lines[0], /^fatal: unrecognized argument: -3/);
   assert.equal(r.run('show -- README.md').ok, false);
+  // un archivo que un commit creó y un --amend borró con git rm no sale como borrado: nunca estuvo
+  run(r, 'touch --new n.txt', 'add n.txt', 'commit -m n', 'git rm n.txt', 'commit --amend -m "sin n"');
+  assert.deepEqual(plain(r.run('show --name-status').lines.slice(5)), []);
   const empty = new Repo({ now: NOW });
   assert.deepEqual(plain(empty.run('show').lines), ["fatal: your current branch 'main' does not have any commits yet"]);
   assert.match(empty.run('show HEAD').lines[0], /^fatal: ambiguous argument 'HEAD'/);

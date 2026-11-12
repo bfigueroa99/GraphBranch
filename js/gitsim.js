@@ -214,7 +214,9 @@
       const keep = (list, drop) => (list || []).filter((f) => !drop.includes(f));
       if (files.length || removed.length) {
         const nextFiles = [...new Set([...keep(c.files, removed), ...files])];
-        const nextRemoved = [...new Set([...keep(c.removed, files), ...removed])];
+        // con --amend, borrar con git rm un archivo que este mismo commit creó lo deja como si nunca hubiera estado
+        const unmade = staged.filter((s) => s.gone && (c.added || []).includes(s.file)).map((s) => s.file);
+        const nextRemoved = [...new Set([...keep(c.removed, files), ...removed])].filter((f) => !unmade.includes(f));
         if (nextFiles.length) c.files = nextFiles;
         else delete c.files;
         if (nextRemoved.length) c.removed = nextRemoved;
@@ -677,14 +679,15 @@
       const opts = { names: false, status: false, quiet: false, oneline: false };
       const refs = [];
       for (const a of args) {
-        if (a === '--stat') opts.quiet = false;
-        else if (a === '--name-only') opts.names = true;
-        else if (a === '--name-status') opts.status = true;
+        // como en git, gana el último formato: -s calla los archivos y --stat o --name-* los vuelven a mostrar
+        if (a === '--stat') Object.assign(opts, { quiet: false, names: false, status: false });
+        else if (a === '--name-only') Object.assign(opts, { quiet: false, names: true, status: false });
+        else if (a === '--name-status') Object.assign(opts, { quiet: false, names: false, status: true });
         else if (a === '-s' || a === '--no-patch') opts.quiet = true;
         else if (a === '--oneline') opts.oneline = true;
         else if (a === '-p' || a === '--patch') fail('fatal: show -p needs file contents, and the practice has none: try show --name-status');
         else if (a === '--') fail('fatal: show <commit> -- <path> is not in this practice: try show --name-status <commit>');
-        else if (a.length > 1 && a[0] === '-' && !/^-\d/.test(a)) fail(`fatal: unrecognized argument: ${a}\nusage: show [--oneline] [-s | --stat | --name-only | --name-status] [<commit>...]`);
+        else if (a.length > 1 && a[0] === '-') fail(`fatal: unrecognized argument: ${a}\nusage: show [--oneline] [-s | --stat | --name-only | --name-status] [<commit>...]`);
         else refs.push(a);
       }
       if (!refs.length && !this.headSha) fail(`fatal: your current branch '${this.head.branch}' does not have any commits yet`);
@@ -701,7 +704,7 @@
           ? [`${this.short(sha)}${this.decorations(sha)} ${c.message}`]
           : [`commit ${sha}${this.decorations(sha)}`, ...(c.parents.length > 1 ? [`Merge: ${c.parents.map((p) => this.short(p)).join(' ')}`] : []), `Author: ${c.author.name}`, '', `    ${c.message}`];
         const files = opts.quiet ? [] : fileLines(this.commitRows(sha), opts);
-        const block = [...(tag ? [`tag ${tag.name}`, `Tagger: ${AUTHOR.name}`, '', `    ${tag.message}`, ''] : []), ...head, ...(files.length && !opts.oneline ? [''] : []), ...files];
+        const block = [...(tag ? [`tag ${tag.name}`, `Tagger: ${AUTHOR.name}`, '', tag.message, ''] : []), ...head, ...(files.length && !opts.oneline ? [''] : []), ...files];
         return i ? ['', ...block] : block;
       });
     },

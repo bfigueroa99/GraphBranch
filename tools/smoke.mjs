@@ -109,11 +109,25 @@ const conFallos = new Map();
 let actual = '';
 function seccion(titulo) {
   if (pedidas && !solo.some((t) => titulo.includes(t)) && !exactas.includes(titulo)) return false;
+  sinContextos();
   corridas.push(titulo);
   console.log(titulo);
   if (listar) return false; // --secciones solo dice cuáles correrían
   actual = titulo;
   return true;
+}
+
+/* Cada sección cierra los contextos que abrió. Uno que queda vivo, aunque sea sin páginas, mantiene el service
+   worker de la app en un proceso más de Chromium hasta el final del smoke (en la iteración 275, el del paso de
+   group:g de GitLab: 7 de los 11 minutos, ~200 MB), y con el equipo cargado una sección posterior se quedaba sin
+   recursos para pedir sus archivos (`net::ERR_INSUFFICIENT_RESOURCES`, iteración 236). Al entrar
+   en la sección siguiente, y al terminar, lo que siga abierto es un fallo de la sección que lo dejó, y se cierra. */
+function sinContextos() {
+  if (!browser || !actual) return;
+  const vivos = browser.contexts();
+  if (!vivos.length) return;
+  fail(`la sección dejó ${vivos.length} contexto(s) del navegador sin cerrar (${vivos.reduce((n, c) => n + c.pages().length, 0)} página(s))`, 'cierra sus contextos del navegador');
+  for (const c of vivos) c.close().catch(() => {});
 }
 
 /** Abre una pestaña que anota todo error y aísla la app de lo que no es suyo. */
@@ -3278,19 +3292,24 @@ if (seccion('GitLab'))
   });
 
   await step(page, 'group:g sigue los proyectos del grupo de GitLab, sin forks ni archivados, con una consulta', async () => {
+    // su propio contexto, que se cierra entero (también si el paso falla): cerrar solo la página dejaba el
+    // contexto vivo, con el service worker de la app en un proceso más, hasta el final del smoke
     const other = await openPage({ viewport: { width: 1280, height: 800 } });
-    await other.route('https://gitlab.com/**', gl.handle);
-    await other.addInitScript(quickGitLab);
-    await other.goto(`${base}/index.html?lang=es`);
-    await loaded(other);
-    await other.fill('#repo-input', 'group:g');
-    await other.press('#repo-input', 'Enter');
-    await other.waitForSelector('#toasts .toast:has-text("Ahora sigues los repositorios más activos de g")', { timeout: T(15000) });
-    const saved = await other.evaluate(() => localStorage.getItem('graphbranch:repos'));
-    if (saved !== '["gitlab:g/sub/p"]') throw new Error(`se guardó ${saved}`);
-    const lists = gl.calls.filter((c) => c.startsWith('/api/v4/groups/g/projects'));
-    if (lists.length !== 1) throw new Error(`consultas de la lista: ${lists.length}`);
-    await other.close();
+    try {
+      await other.route('https://gitlab.com/**', gl.handle);
+      await other.addInitScript(quickGitLab);
+      await other.goto(`${base}/index.html?lang=es`);
+      await loaded(other);
+      await other.fill('#repo-input', 'group:g');
+      await other.press('#repo-input', 'Enter');
+      await other.waitForSelector('#toasts .toast:has-text("Ahora sigues los repositorios más activos de g")', { timeout: T(15000) });
+      const saved = await other.evaluate(() => localStorage.getItem('graphbranch:repos'));
+      if (saved !== '["gitlab:g/sub/p"]') throw new Error(`se guardó ${saved}`);
+      const lists = gl.calls.filter((c) => c.startsWith('/api/v4/groups/g/projects'));
+      if (lists.length !== 1) throw new Error(`consultas de la lista: ${lists.length}`);
+    } finally {
+      await other.context().close();
+    }
   });
 
   await step(page, 'en 2D, la rama de la MR lleva !5 y su ficha dice MR', async () => {
@@ -5397,6 +5416,7 @@ if (seccion(`Celular (390×844), ${langs.length} idiomas`))
   await page.context().close();
 }
 
+sinContextos();
 await browser?.close();
 server.close();
 

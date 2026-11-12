@@ -560,5 +560,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma documentada (Slack no tiene escape para `mrkdwn`; lo que no se formatea es `plain_text`).
 - OMC: plan=— · revisión=8 hallazgos (2 arreglados: el MEDIUM de seguridad de `link()` con la URL de más de 500 caracteres, que ya estaba antes del cambio, y el LOW de los textos de puros espacios; 2 MEDIUM de confianza baja, las entidades en `plain_text` y el formato en Workflow Builder, al pendiente 22 y a Límites conocidos; quedan los LOW del corte dentro de un emoji, como el de `str()`, del bucle de `fit`, del respaldo sin formato propio y de la detección de Workflow Builder, que no abre nada si se evade) · verificación=PASS
 - Reclamo: loop/271, sin colisión
-- Validado: pendiente
+- Validado: 686 pruebas (`node --test`), smoke, i18n (0 errores) y 29 e2e en verde.
 - **Siguiente:** iteración 272, expansión: ítem 188 (Vista de texto: PRs con CI fallido, Público)

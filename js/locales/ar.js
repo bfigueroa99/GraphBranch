@@ -628,6 +628,7 @@ GB.i18n.define('ar', {
   'health.branchWeeks': 'الفروع الجديدة في الأسبوع: {list}',
   'health.commitWeeks': 'الإيداعات في الأسبوع: {list}',
   'health.authorWeeks': 'المؤلفون المختلفون في الأسبوع: {list}',
+  'health.newAuthorWeeks': 'المؤلفون الجدد في الأسبوع (أول إيداع محمَّل): {list}',
   'health.tagWeeks': 'الوسوم في الأسبوع: {list}',
   'health.issueWeeks': 'المشكلات المفتوحة في الأسبوع: {list}',
   'health.prCloseWeeks': 'طلبات السحب المغلقة دون دمج في الأسبوع: {list}',

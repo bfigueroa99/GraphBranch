@@ -572,6 +572,7 @@ GB.i18n.define('ur', {
   'health.branchWeeks': 'ہفتہ وار نئی برانچیں: {list}',
   'health.commitWeeks': 'ہفتہ وار کمٹس: {list}',
   'health.authorWeeks': 'ہفتہ وار مختلف مصنفین: {list}',
+  'health.newAuthorWeeks': 'ہفتہ وار نئے مصنفین (لوڈ شدہ پہلا کمٹ): {list}',
   'health.tagWeeks': 'ہفتہ وار ٹیگز: {list}',
   'health.issueWeeks': 'ہفتہ وار کھلنے والے issue: {list}',
   'health.prCloseWeeks': 'بغیر انضمام کے بند ہونے والے pull request ہفتہ وار: {list}',

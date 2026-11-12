@@ -529,6 +529,7 @@ GB.i18n.define('zh-Hant', {
   'health.branchWeeks': '每週新建的分支：{list}',
   'health.commitWeeks': '每週提交數：{list}',
   'health.authorWeeks': '每週不同作者數：{list}',
+  'health.newAuthorWeeks': '每週新作者數（已載入的第一個提交）：{list}',
   'health.tagWeeks': '每週標籤數：{list}',
   'health.issueWeeks': '每週開啟的議題：{list}',
   'health.prCloseWeeks': '每週未合併即關閉的拉取請求：{list}',

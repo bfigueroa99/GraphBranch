@@ -1856,7 +1856,7 @@
   // Las series por semana del panel de salud: el periodo («últimas 8 semanas, de la más vieja a la actual») va una sola
   // vez, como encabezado del grupo, y cada línea dice solo qué cuenta y sus cifras (pendiente 12: un lector de pantalla
   // leía la frase larga en cada una). Las que dan cero todas las semanas no salen; sin ninguna, tampoco el encabezado.
-  const WEEKLY_SERIES = [['merge', 'mergeWeeks'], ['opened', 'openedWeeks'], ['closed', 'closedWeeks'], ['branch', 'branchWeeks'], ['commit', 'commitWeeks'], ['author', 'authorWeeks'], ['tag', 'tagWeeks'], ['issue', 'issueWeeks'], ['prclose', 'prCloseWeeks']];
+  const WEEKLY_SERIES = [['merge', 'mergeWeeks'], ['opened', 'openedWeeks'], ['closed', 'closedWeeks'], ['branch', 'branchWeeks'], ['commit', 'commitWeeks'], ['author', 'authorWeeks'], ['newauthor', 'newAuthorWeeks'], ['tag', 'tagWeeks'], ['issue', 'issueWeeks'], ['prclose', 'prCloseWeeks']];
   function weeklyLines(pace) {
     const shown = WEEKLY_SERIES.filter(([, k]) => pace[k].some(Boolean));
     if (!shown.length) return '';

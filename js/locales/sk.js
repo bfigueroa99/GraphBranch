@@ -540,6 +540,7 @@ GB.i18n.define('sk', {
   'health.branchWeeks': 'Nové vetvy za týždeň: {list}',
   'health.commitWeeks': 'Commity za týždeň: {list}',
   'health.authorWeeks': 'Rôzni autori za týždeň: {list}',
+  'health.newAuthorWeeks': 'Noví autori za týždeň (prvý načítaný commit): {list}',
   'health.tagWeeks': 'Tagy za týždeň: {list}',
   'health.issueWeeks': 'Otvorené issues za týždeň: {list}',
   'health.prCloseWeeks': 'Pull requesty zatvorené bez zlúčenia za týždeň: {list}',

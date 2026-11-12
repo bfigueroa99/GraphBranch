@@ -529,6 +529,7 @@ GB.i18n.define('hi', {
   'health.branchWeeks': 'प्रति सप्ताह नई ब्रांच: {list}',
   'health.commitWeeks': 'प्रति सप्ताह कमिट: {list}',
   'health.authorWeeks': 'प्रति सप्ताह अलग-अलग लेखक: {list}',
+  'health.newAuthorWeeks': 'प्रति सप्ताह नए लेखक (लोड किया गया पहला कमिट): {list}',
   'health.tagWeeks': 'प्रति सप्ताह टैग: {list}',
   'health.issueWeeks': 'प्रति सप्ताह खुले हुए issue: {list}',
   'health.prCloseWeeks': 'बिना मर्ज किए बंद हुए pull request प्रति सप्ताह: {list}',

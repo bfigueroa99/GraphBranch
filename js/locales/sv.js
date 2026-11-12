@@ -529,6 +529,7 @@ GB.i18n.define('sv', {
   'health.branchWeeks': 'Nya branches per vecka: {list}',
   'health.commitWeeks': 'Commits per vecka: {list}',
   'health.authorWeeks': 'Olika författare per vecka: {list}',
+  'health.newAuthorWeeks': 'Nya författare per vecka (första inlästa commit): {list}',
   'health.tagWeeks': 'Taggar per vecka: {list}',
   'health.issueWeeks': 'Öppnade issues per vecka: {list}',
   'health.prCloseWeeks': 'Pull requests stängda utan sammanslagning per vecka: {list}',

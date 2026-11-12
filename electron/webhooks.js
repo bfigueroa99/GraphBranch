@@ -30,18 +30,33 @@ function clean(ev = {}) {
 }
 
 const slackText = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); // sin @canal ni enlaces ajenos
+// mrkdwn no tiene cómo escapar * _ ~ `: lo que viene de GitHub va en bloques plain_text (sin formato ni :emoji:)
+const slackPlain = (s) => ({ type: 'plain_text', text: slackText(s), emoji: false });
+/** `s` recortado para que escapado no pase de `max` (un `&` escapado ocupa 5). */
+const fit = (s, max) => { while (slackText(s).length > max) s = s.slice(0, -1); return s; };
+/** ¿Es un webhook de Workflow Builder? Ese recibe variables de texto, no bloques. */
+const slackWorkflow = (url) => /^https:\/\/hooks\.slack\.com\/(workflows|triggers)\//.test(String(url));
 
 const discordText = (s) => s.replace(/([\\`*_~|>[\]()#-])/g, '\\$1'); // Markdown de Discord: sin enlaces enmascarados [x](url) ni formato de un texto ajeno
 
 const teamsText = (s) => s.replace(/([\\`*_{}[\]()#+!|<>~&@:-])/g, '\\$1'); // Markdown de la tarjeta, sin @menciones ni enlaces ajenos
 
-/** El cuerpo JSON que cada servicio espera. Un texto de GitHub no puede mencionar a nadie. */
-function payload(service, ev) {
+/** El cuerpo JSON que cada servicio espera. Un texto de GitHub no puede mencionar a nadie ni dar formato.
+    En Slack, `blocks: false` deja solo el texto (el webhook de un flujo de Workflow Builder). */
+function payload(service, ev, { blocks = true } = {}) {
   const e = clean(ev);
   if (service === 'slack') {
-    const head = [e.repo && `*${slackText(e.repo)}*`, slackText(e.kind)].filter(Boolean).join(' · ');
-    const lines = [head, slackText(e.title), e.detail && `_${slackText(e.detail)}_`, e.url && `<${e.url}>`].filter(Boolean);
-    return { text: lines.join('\n') };
+    const head = [e.repo, e.kind].filter(Boolean).join(' · ');
+    // el texto de respaldo (notificaciones, flujos): sin menciones ni enlaces ajenos
+    const text = [slackText(head), slackText(e.title), e.detail && slackText(e.detail), e.url && `<${e.url}>`].filter(Boolean).join('\n');
+    if (!blocks) return { text };
+    const list = [
+      head && { type: 'header', text: slackPlain(fit(head, 150)) },
+      e.title && { type: 'section', text: slackPlain(e.title) },
+      e.detail && { type: 'context', elements: [slackPlain(e.detail)] },
+      e.url && { type: 'section', text: { type: 'mrkdwn', text: `<${e.url}>` } },
+    ].filter(Boolean);
+    return list.length ? { text, blocks: list } : { text };
   }
   if (service === 'teams') {
     const text = (t, extra = {}) => ({ type: 'TextBlock', text: t, wrap: true, ...extra });
@@ -68,7 +83,7 @@ async function send(service, url, ev, fetchFn, testPrefix = '') {
   const res = await fetchFn(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload(service, ev)),
+    body: JSON.stringify(payload(service, ev, { blocks: !(service === 'slack' && slackWorkflow(url)) })),
     redirect: 'error',
     signal: AbortSignal.timeout(TIMEOUT),
   }).catch(() => null);

@@ -513,6 +513,7 @@
         'tag -a <name> -m "msg"      an annotated tag, with its message (tag -n lists the messages, -l "v1*" filters)',
         'log [--oneline]             the history that leads to HEAD',
         'show [<commit>]             the sha, message and files of a commit (HEAD without one), moving nothing (--name-status, -s)',
+        'diff [--staged] [-- <path>] the changed files not yet prepared (--staged: the prepared ones), moving nothing (--name-status)',
         'status                      where HEAD is',
       ];
     },
@@ -707,6 +708,38 @@
         const block = [...(tag ? [`tag ${tag.name}`, `Tagger: ${AUTHOR.name}`, '', tag.message, ''] : []), ...head, ...(files.length && !opts.oneline ? [''] : []), ...files];
         return i ? ['', ...block] : block;
       });
+    },
+
+    /**
+     * diff [--staged|--cached] [-- <ruta>...]: los archivos cambiados sin preparar (contra lo preparado) o, con
+     * --staged, los preparados (contra HEAD), sin tocar nada. Sin contenido no hay parche: cada archivo va como en
+     * --stat, o con --name-only o --name-status; los sin seguir no salen, como en git.
+     */
+    diff(args) {
+      const opts = { names: false, status: false };
+      let staged = false;
+      const paths = [];
+      let dashes = false;
+      for (const a of args) {
+        if (dashes) paths.push(a);
+        else if (a === '--') dashes = true;
+        else if (a === '--staged' || a === '--cached') staged = true;
+        else if (a === '--stat') Object.assign(opts, { names: false, status: false });
+        else if (a === '--name-only') Object.assign(opts, { names: true, status: false });
+        else if (a === '--name-status') Object.assign(opts, { names: false, status: true });
+        else if (a === '-p' || a === '--patch' || a === '-u') fail('fatal: diff -p needs file contents, and the practice has none: try diff --name-status');
+        else if (a.length > 1 && a[0] === '-') fail(`fatal: unrecognized argument: ${a}\nusage: diff [--staged | --cached] [--stat | --name-only | --name-status] [-- <path>...]`);
+        else if (this.resolve(a) || a.split(/\.{2,3}/).some((x) => x && this.resolve(x))) fail(`fatal: diff <commit> is not in this practice: try diff, or diff --staged to compare what is prepared with HEAD`);
+        else if (this.diffKnown(a)) paths.push(a);
+        else fail(`fatal: ambiguous argument '${a}': unknown revision or path not in the working tree.\nUse '--' to separate paths from revisions, like this:\n'git <command> [<revision>...] -- [<file>...]'`);
+      }
+      // el nombre viejo de un git mv que se vuelve a crear y preparar sigue en HEAD: es un cambio, no un borrado y un nuevo
+      const back = new Set(this.staged.filter((s) => s.from && this.staged.some((x) => x.file === s.from && !x.gone)).map((s) => s.from));
+      const rows = staged
+        ? this.staged.flatMap((s) => (s.gone ? [['D', s.file]] : s.from ? [...(back.has(s.from) ? [] : [['D', s.from]]), ['A', s.file]] : [[s.isNew && !back.has(s.file) ? 'A' : 'M', s.file]]))
+        : [...this.work.map((f) => ['M', f]), ...this.deleted.map((f) => ['D', f])];
+      const picked = rows.filter(([, f]) => !paths.length || paths.some((p) => pathMatch(p, f)));
+      return fileLines(picked.sort((a, b) => (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0)), opts);
     },
 
     branch(args) {
@@ -1322,9 +1355,21 @@
     return f.split('/').some((part) => re.test(part));
   }
 
+  /** Los archivos que la práctica sabe seguidos: en la historia, cambiados, borrados o preparados (con el nombre viejo de un renombre). */
+  Repo.prototype.knownNames = function () {
+    return [...this.inHistory(), ...this.work, ...this.deleted, ...this.staged.map((s) => s.file), ...this.staged.filter((s) => s.from).map((s) => s.from)];
+  };
+
+  /** Si una ruta de `diff` sin `--` delante alcanza un archivo que la práctica conoce (seguido o sin seguir; `.` siempre):
+      si no, git la toma por una revisión que no existe. */
+  Repo.prototype.diffKnown = function (p) {
+    if (pathMatch(p, '')) return true;
+    return [...this.knownNames(), ...this.untracked].some((f) => pathMatch(p, f));
+  };
+
   /** La carpeta más alta del archivo sin seguir en la que git no sigue nada (`build/`), o null: status la muestra entera y `clean` la pide con `-d`. */
   Repo.prototype.untrackedDir = function (f) {
-    const known = [...this.inHistory(), ...this.work, ...this.deleted, ...this.staged.map((s) => s.file), ...this.staged.filter((s) => s.from).map((s) => s.from)];
+    const known = this.knownNames();
     const parts = f.split('/');
     for (let i = 1; i < parts.length; i++) {
       const dir = `${parts.slice(0, i).join('/')}/`;

@@ -426,6 +426,7 @@ e2e/                  pruebas de punta a punta de la app de escritorio y la web 
 .claude/skills/arena/  la arena (MIT): un torneo de subagentes con enfoques distintos para la misma tarea (bracket.py); el loop la usa para elegir cómo implementar, sus corridas quedan en .arena/ (sin versionar)
 .claude/skills/find-skills/  find-skills (MIT, de vercel-labs/skills, commit 65d20cb): busca skills en skills.sh con npx skills@1.7.4; el loop la usa antes de construir, lee entera cada candidata y solo instala en el proyecto, copiada y con su licencia
 .claude/skills/omc/  OMC (MIT, de Yeachan-Heo/oh-my-claudecode, v5.7.23, commit 8260288): las recetas que cita el loop (plan por consenso, revisión en dos ejes, verificación, diagnóstico) y sync.sh, que regenera sus agentes en .claude/agents/omc-*.md; sin el plugin ni sus modos persistentes
+.claude/skills/VENDORIZADAS.md  las skills de afuera copiadas de los plugins de la cuenta (superpowers y searchfit-seo, MIT; engineering, design, modern-web-guidance y skill-creator, Apache-2.0), cada una en su carpeta con su licencia: procedencia, versión, sha256 y lo que se les cambió
 replica/              lo que deja Replica en el loop: el mapa y la matriz de la app de referencia, sus reseñas y la paridad de GraphBranch (sin capturas)
 electron/main.js      app de escritorio: la ventana de Electron que abre index.html
 electron/preload.js   lo único que la página ve de la app de escritorio: los tokens, los repos locales por su id, los textos de la bandeja y traer la ventana

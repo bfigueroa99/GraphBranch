@@ -460,6 +460,12 @@ test('el remoto: push sube la rama, fetch trae lo ajeno y status dice el adelant
   assert.equal(r.resolve('origin/main'), theirs);
   assert.deepEqual(plain(r.run('status').lines.slice(1, 3)), ["Your branch and 'origin/main' have diverged,", 'and have 1 and 1 different commits each, respectively.']);
   assert.deepEqual(plain(r.run('fetch').lines), [], 'un segundo fetch no trae nada');
+  // log origin/main muestra lo traído; --all, las dos puntas; un ref que no existe se niega
+  assert.match(r.run('log --oneline origin/main').lines[0], /^[0-9a-f]{7} \(origin\/main\) Fix typo$/);
+  assert.equal(r.run('log --oneline origin/main').lines.some((l) => l.includes('tres')), false);
+  const all = r.run('log --oneline --all').lines.join('\n');
+  assert.ok(all.includes('Fix typo') && all.includes('tres'));
+  assert.match(r.run('log nope').lines[0], /unknown revision/);
   // conocido pero sin integrar: «non-fast-forward»
   assert.match(r.run('push').lines.join('\n'), /\(non-fast-forward\)[\s\S]*merge origin\/main/);
   // merge origin/main con su mensaje de git, y push sube los dos
@@ -501,10 +507,15 @@ test('push de una rama nueva: pide -u, la sigue después y fetch, checkout y swi
   r.run('branch -D docs');
   assert.ok(r.run('switch docs').ok);
   assert.equal(r.run('switch origin/docs').ok, false);
-  // branch -m lleva la rama de seguimiento con ella; -d la olvida
+  // branch -m lleva la rama de seguimiento con ella; push sin destino se niega si no se llaman igual; -d la olvida
   r.run('branch -m docs manual');
   assert.equal(r.upstream.get('manual'), 'docs');
   assert.equal(r.run('status').lines[1], "Your branch is up to date with 'origin/docs'.");
+  r.run('commit -m nota');
+  const other = r.run('push');
+  assert.equal(other.ok, false);
+  assert.match(other.lines.join('\n'), /does not match[\s\S]*git push origin manual/);
+  assert.equal(r.remote.branches.has('manual'), false);
   run(r, 'checkout main', 'branch -D manual');
   assert.equal(r.upstream.has('manual'), false);
 });

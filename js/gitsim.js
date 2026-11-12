@@ -168,9 +168,10 @@
       return sha;
     }
 
-    /** Commits de la historia de `sha`, del más nuevo al más viejo (los padres siempre después del hijo). */
+    /** Commits de la historia de `sha` (o de varios, juntos), del más nuevo al más viejo (los padres siempre después del hijo). */
     log(sha) {
-      const set = this.ancestors(sha);
+      const set = new Set();
+      for (const tip of Array.isArray(sha) ? sha : [sha]) for (const s of this.ancestors(tip)) set.add(s);
       const out = [];
       const children = new Map([...set].map((s) => [s, 0]));
       for (const s of set) for (const p of this.commits.get(s).parents) children.set(p, children.get(p) + 1);
@@ -696,10 +697,15 @@
     },
 
     log(args) {
-      const { flags } = parse(args);
-      const sha = this.headSha;
-      if (!sha) fail('fatal: your current branch does not have any commits yet');
-      const shas = this.log(sha);
+      const { flags, rest } = parse(args);
+      // log <ref>… desde esos commits (origin/main tras un fetch); --all, desde todas las ramas, las de seguimiento y las etiquetas
+      const tips = rest.map((ref) => this.resolve(ref) ?? fail(`fatal: ambiguous argument '${ref}': unknown revision or path not in the working tree.`));
+      if (flags['--all']) tips.push(...[...this.branches.values(), ...(this.remote ? this.tracking.values() : []), ...this.tags.values()].filter(Boolean));
+      if (!tips.length) {
+        if (!this.headSha) fail('fatal: your current branch does not have any commits yet');
+        tips.push(this.headSha);
+      } else if (flags['--all'] && this.headSha) tips.push(this.headSha);
+      const shas = this.log([...new Set(tips)]);
       if (flags['--oneline'] || flags['--oneline'] === true) {
         return shas.map((s) => `${this.short(s)}${this.decorations(s)} ${this.commits.get(s).message}`);
       }
@@ -1568,7 +1574,9 @@
     const setUp = !!(flags['-u'] || flags['--set-upstream']);
     // sin nombre y sin rama de seguimiento, git (push.default=simple) no adivina a dónde subirla
     if (!remote && !setUp && !this.upstream.has(branch)) fail(`fatal: The current branch ${branch} has no upstream branch.\nTo push the current branch and set the remote as upstream, use\n\n    git push --set-upstream ${this.remote.name} ${branch}`);
-    const dst = !remote && this.upstream.has(branch) ? this.upstream.get(branch) : branch;
+    // como git (push.default=simple): sin decir a dónde, la rama que se sigue tiene que llamarse igual
+    if (!remote && this.upstream.has(branch) && this.upstream.get(branch) !== branch) fail(`fatal: The upstream branch of your current branch does not match\nthe name of your current branch.  To push to the branch of the same name\non the remote, use\n\n    git push ${this.remote.name} ${branch}`);
+    const dst = branch;
     const ours = this.branches.get(branch);
     const theirs = this.remote.branches.get(dst) ?? null;
     const out = [];

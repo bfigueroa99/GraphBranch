@@ -2641,7 +2641,8 @@ if (seccion('Varios repos a la vez'))
     await send('merge origin/main');
     await send('push');
     await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: T(5000) });
-    if (!/Merge remote-tracking branch 'origin\/main'/.test(await lab.textContent('.pr-log'))) throw new Error('merge origin/main no dijo su mensaje de git');
+    await send('log --oneline');
+    await lab.waitForFunction(() => /\(HEAD -> main, origin\/main\) Merge remote-tracking branch 'origin\/main'/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
   });
   await step(lab, 'el ejercicio de revert se abre por su número, deshace un commit con otro nuevo y se marca resuelto', async () => {
     await lab.goto(`${base}/index.html?lang=es&practice=6`);

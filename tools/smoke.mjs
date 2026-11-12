@@ -126,7 +126,7 @@ function sinContextos() {
   if (!browser || !actual) return;
   const vivos = browser.contexts();
   if (!vivos.length) return;
-  fail(`la sección dejó ${vivos.length} contexto(s) del navegador sin cerrar (${vivos.reduce((n, c) => n + c.pages().length, 0)} página(s))`, 'cierra sus contextos del navegador');
+  fail(`la sección «${actual}» dejó ${vivos.length} contexto(s) del navegador sin cerrar (${vivos.reduce((n, c) => n + c.pages().length, 0)} página(s))`, 'cierra sus contextos del navegador');
   for (const c of vivos) c.close().catch(() => {});
 }
 
@@ -2397,10 +2397,10 @@ if (seccion('Varios repos a la vez'))
   await step(page, '?all=1&tv=1 abre el modo TV con todos los repos a la vista; ?tv=1 solo, con el grafo', async () => {
     for (const [query, want] of [['all=1&tv=1', true], ['tv=1', false]]) {
       const p = await openPage({ viewport: { width: 1280, height: 800 } });
-      await p.unroute('https://api.github.com/**');
-      await p.route('https://api.github.com/**', gh.handle);
-      await p.addInitScript(quickCycles);
       try {
+        await p.unroute('https://api.github.com/**');
+        await p.route('https://api.github.com/**', gh.handle);
+        await p.addInitScript(quickCycles);
         await p.goto(`${base}/index.html?lang=es&repo=o/a&repo=o/b&${query}`);
         await p.waitForFunction(() => document.documentElement.classList.contains('tv') && document.querySelectorAll('#repo-tabs .rt').length === 2, null, { timeout: T(15000) });
         if (want) await p.waitForSelector('#all-panel:not([hidden]) .rc-card', { timeout: T(10000) });

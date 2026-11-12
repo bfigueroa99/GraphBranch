@@ -22,11 +22,12 @@ function valid(service, url, testPrefix = '') {
 }
 
 const str = (v, max) => (typeof v === 'string' ? v.slice(0, max) : '');
-const link = (v) => (/^https:\/\/[^\s<>|]+$/.test(str(v, 500)) ? v : '');
+const link = (v) => (typeof v === 'string' && v.length <= 500 && /^https:\/\/[^\s<>|]+$/.test(v) ? v : ''); // entera: un resto sin mirar cerraría el <enlace>
 
 /** El aviso, con los textos que mandó la página (ya en su idioma): { repo, kind, title, detail, url }. */
 function clean(ev = {}) {
-  return { repo: str(ev.repo, 100), kind: str(ev.kind, 60), title: str(ev.title, 200), detail: str(ev.detail, 300), url: link(ev.url) };
+  const t = (v, max) => str(v, max).trim(); // un texto de puros espacios sería un bloque vacío que Slack rechaza
+  return { repo: t(ev.repo, 100), kind: t(ev.kind, 60), title: t(ev.title, 200), detail: t(ev.detail, 300), url: link(ev.url) };
 }
 
 const slackText = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); // sin @canal ni enlaces ajenos

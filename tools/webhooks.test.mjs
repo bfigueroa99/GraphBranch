@@ -191,3 +191,11 @@ test('Slack: send manda bloques a un webhook entrante y solo texto a uno de Work
   assert.ok(Array.isArray(bodies[0].blocks));
   assert.deepEqual(bodies.slice(1).map((b) => Object.keys(b)), [['text'], ['text']]);
 });
+
+test('una URL larga se valida entera: lo que pasa del carácter 500 no cierra el enlace ni menciona', () => {
+  const u = 'https://github.com/' + 'a'.repeat(481) + '> <!channel> *x*';
+  for (const service of ['slack', 'discord']) assert.ok(!JSON.stringify(wh.payload(service, { title: 't', url: u })).includes('<!channel>'), service);
+  assert.equal(wh.payload('slack', { title: 't', url: 'https://github.com/' + 'a'.repeat(600) }).blocks.length, 1); // demasiado larga: sin enlace
+  const blanco = wh.payload('slack', { repo: 'acme/app', title: '   ', detail: ' \n ' });
+  assert.ok(blanco.blocks.every((b) => [b.text, ...(b.elements || [])].filter(Boolean).every((x) => x.text.trim())), JSON.stringify(blanco)); // sin bloques vacíos
+});

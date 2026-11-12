@@ -396,41 +396,42 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 13. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
     prepara de verdad en vez de solo listar, y `add -p` prepara todo. Negarse con el `error: unknown switch` de git (o
     admitir `-n`). Reproducción: `node --test` con `touch a.txt`, `add -n .` → `a.txt` queda preparado.
-14. [Seguridad] Avisos a Slack (`electron/webhooks.js`, `payload`): `slackText` escapa `&`, `<` y `>` (sin menciones ni
-    enlaces), pero no el formato `mrkdwn` (`*`, `_`, `` ` ``, `~`): un título de PR como `*URGENTE*` sale en negrita en el
-    canal. Solo formato, sin enlaces ni menciones; escaparlo como se hizo con Discord. Reproducción: `payload('slack',
-    {title: '*x*'})` → `*x*` sin escapar.
-15. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
+14. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
     la iteración 239: la sesión no pudo consultar su página de versiones. Comprobarla con `WebFetch` en la próxima
     auditoría de Seguridad y, si hay una estable más nueva con arreglos de seguridad, subirla (cambio de `electron/`: plan
     por consenso). Reproducción: `npm view electron version` frente a `package.json`.
-16. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
+15. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
     largo se lleva la línea `<enlace>` del final (el aviso queda sin enlace). Recortar título y detalle antes y dejar el
     enlace siempre. Reproducción: `payload('discord', {title: 'x'.repeat(5000), url: 'https://github.com/a/b'})` →
     `content` sin `<https://github.com/a/b>`.
 
-17. [QA] Un repo vacío (GitHub responde 409 «Git Repository is empty» en ramas y commits) se rotula «Sin conexión» y
+16. [QA] Un repo vacío (GitHub responde 409 «Git Repository is empty» en ramas y commits) se rotula «Sin conexión» y
     reintenta cada pocos segundos, sin decir que el repo está vacío. Un estado propio («Repo vacío») sin reintento rápido.
     Reproducción: API simulada con 409 en `/commits` y `/branches`, `index.html?repo=acme/x` → `Sin conexión | reintento en 2s`.
-18. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
+17. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
     `js/util.js` solo distingue notfound, rate y auth), aunque haya red: la persona busca su wifi y el servicio es quien falla.
     Un rótulo «Error del servicio» en los 40 idiomas. Reproducción: `U.statusKey({state: 'error', error: {kind: 'http'}})` → `status.error`.
-19. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
+18. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
     el service worker instalado (solo los estados de error de la carga, en es y ar a 1280 y 320 px). Mirarlos en la
     próxima QA. Reproducción: `node e2e/serve.mjs 4173` + Playwright con la API simulada de `tools/audit.mjs`.
-20. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
+19. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
     que se pospone o se fija otro: `setPrSnooze` (`js/app.js`) es lo único que limpia. Inocuo (`liveSnoozes` los ignora),
     pero crece sin tope. Limpiar también al leer. Reproducción: posponer un PR, adelantar el reloj un día y recargar →
     la entrada sigue en `localStorage`.
-21. [Errores] Práctica de git: `stash pop` y `stash apply` devuelven un archivo nuevo que estaba preparado como «modified»
+20. [Errores] Práctica de git: `stash pop` y `stash apply` devuelven un archivo nuevo que estaba preparado como «modified»
     sin preparar (todo va a `work`), cuando git lo deja preparado como «new file»; `stash show` lo deja ver: tras el pop y
     otro `stash`, el archivo sale con `M` y no con `A`. Devolver `entry.added` a `staged` como `{ file, isNew: true }`.
     Reproducción: `touch --new n.txt`, `add n.txt`, `stash`, `stash pop`, `stash`, `stash show --name-status` → `M\tn.txt`.
     (Revisión OMC de la iteración 264.)
-22. [Errores] Práctica de git: una rama puede llamarse `HEAD`: `validName` (`js/gitsim.js`) la acepta, así que
+21. [Errores] Práctica de git: una rama puede llamarse `HEAD`: `validName` (`js/gitsim.js`) la acepta, así que
     `branch HEAD`, `branch -m main HEAD` o `branch -c main HEAD` la crean, cuando git dice `fatal: 'HEAD' is not a valid
     branch name`. Rechazarla en `validName`. Reproducción: `branch -c main HEAD` → sale bien y `branch` lista `HEAD`.
     (Revisión OMC de la iteración 269.)
+22. [Seguridad] Avisos a Slack: sin un webhook real no se comprobó (iteración 271) si Slack muestra `&amp;`, `&lt;` y `&gt;`
+    como `&`, `<` y `>` dentro de un bloque `plain_text` (si no, un título con `&` se vería escapado), ni si un flujo de
+    Workflow Builder da formato `mrkdwn` a la variable `text` (le llega sin bloques; un `*` de un título se notaría). Probarlo
+    con un webhook de prueba en la próxima auditoría de Seguridad con red. Reproducción: `payload('slack', {title: 'a & b'})`
+    → `blocks[1].text.text` es `a &amp; b`.
 
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); el contenedor 2D enfocable no tiene rol ni nombre (`graph.js:306`); las marcas
@@ -547,3 +548,17 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/270, sin colisión
 - Validado: 683 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 271, mantenimiento · Seguridad: pendiente 14 (Avisos a Slack (`electron/webhooks.js`, `payload`): `slackText` escapa `&`, `<`…)
+
+### 2026-11-12 · Iteración 271 · Mantenimiento · Seguridad
+
+- **Arreglo: los avisos a Slack ya no dejan que un texto de GitHub dé formato** (pendiente 14). `mrkdwn` no tiene cómo escapar `*`, `_`, `~` ni `` ` `` (la guía de formato de Slack manda a los objetos `plain_text`), así que el aviso a un webhook entrante (`/services/`) va en bloques: el repo y el tipo en un `header`, el título en una `section` y el detalle en un `context`, todos `plain_text` con `emoji: false`; el único `mrkdwn` es `<enlace>`. El `text` sigue, escapado, como respaldo para las notificaciones. Un webhook de Workflow Builder (`/workflows/`, `/triggers/`) recibe solo `{text}`, porque espera variables de texto. De la revisión de seguridad: `link()` validaba solo los primeros 500 caracteres y devolvía la URL entera, así que lo que pasara de ahí (`> <!channel> *x*`) cerraba el `<enlace>` y mencionaba al canal en Slack (y en Discord quedaba en el cuerpo); ahora se valida entera y una más larga no va. Un texto de puros espacios ya no arma un bloque vacío que Slack rechazaría.
+- **Reproducción:** `node --test tools/webhooks.test.mjs` → sin el arreglo, `not ok 9 - Slack: un texto de GitHub sale sin formato mrkdwn (bloques plain_text) y el enlace sigue` (`el aviso lleva bloques`).
+- **Pruebas que fallan sin el arreglo:** `tools/webhooks.test.mjs`: «Slack: un texto de GitHub sale sin formato mrkdwn…», «Slack: send manda bloques a un webhook entrante y solo texto a uno de Workflow Builder» y «una URL larga se valida entera: lo que pasa del carácter 500 no cierra el enlace ni menciona».
+- README: Pruebas (el cuerpo de cada servicio, sin formato de un texto de GitHub), Límites conocidos (al flujo de Workflow Builder solo le llega el texto) y Seguridad (cómo se escapa cada servicio, los bloques `plain_text` de Slack).
+- QA: sin cambios en la página; la e2e de escritorio («Enviar prueba» a un webhook local que hace de Slack) sigue en verde con el cuerpo nuevo; auditoría: no toca la página. Sin un webhook real no se pudo mirar cómo los muestra Slack: va al pendiente 22.
+- Skills: no aplica: un cambio del cuerpo JSON de un webhook, con la guía oficial de formato de Slack consultada directamente; lo cubren las reglas del repo.
+- Arena: no aplica: una sola forma documentada (Slack no tiene escape para `mrkdwn`; lo que no se formatea es `plain_text`).
+- OMC: plan=— · revisión=8 hallazgos (2 arreglados: el MEDIUM de seguridad de `link()` con la URL de más de 500 caracteres, que ya estaba antes del cambio, y el LOW de los textos de puros espacios; 2 MEDIUM de confianza baja, las entidades en `plain_text` y el formato en Workflow Builder, al pendiente 22 y a Límites conocidos; quedan los LOW del corte dentro de un emoji, como el de `str()`, del bucle de `fit`, del respaldo sin formato propio y de la detección de Workflow Builder, que no abre nada si se evade) · verificación=PASS
+- Reclamo: loop/271, sin colisión
+- Validado: pendiente
+- **Siguiente:** iteración 272, expansión: ítem 188 (Vista de texto: PRs con CI fallido, Público)

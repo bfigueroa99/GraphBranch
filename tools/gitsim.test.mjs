@@ -168,6 +168,86 @@ test('branch -m no renombra la rama de un rebase a medias, y en un repo vacío r
   assert.equal(e.branches.has('main'), false);
 });
 
+test('branch -c copia una rama (la actual si no se dice cuál) con sus commits, sin mover HEAD ni el reflog', () => {
+  const r = fresh();
+  run(r, 'checkout -b feature', 'commit -m "En feature"', 'checkout main');
+  const tip = r.branches.get('feature');
+  const main = r.headSha;
+  const reflog = plain(r.run('reflog').lines);
+  // otra rama: la copia apunta a su mismo commit y la original sigue ahí
+  let res = r.run('branch -c feature feature/copia');
+  assert.ok(res.ok && res.changed);
+  assert.deepEqual(plain(res.lines), []);
+  assert.equal(r.branches.get('feature/copia'), tip);
+  assert.equal(r.branches.get('feature'), tip);
+  assert.equal(r.head.branch, 'main');
+  assert.equal(r.renamed, null, 'copiar no es renombrar');
+  // la actual, sin decir cuál: HEAD se queda en main
+  res = r.run('git branch --copy respaldo');
+  assert.ok(res.ok && res.changed);
+  assert.equal(r.branches.get('respaldo'), main);
+  assert.equal(r.head.branch, 'main');
+  assert.equal(r.headSha, main);
+  assert.equal(r.defaultBranch, 'main');
+  assert.deepEqual(plain(r.run('reflog').lines), reflog, 'copiar no mueve HEAD: el reflog no cambia');
+  assert.deepEqual(plain(r.run('branch').lines), ['  feature', '  feature/copia', '* main', '  respaldo']);
+  assert.match(r.run('log --oneline').lines[0], /\(HEAD -> main, respaldo\)/);
+  // la copia es una rama independiente: un commit en ella no mueve la original
+  run(r, 'checkout feature/copia', 'commit -m "Solo en la copia"');
+  assert.equal(r.branches.get('feature'), tip);
+  assert.notEqual(r.branches.get('feature/copia'), tip);
+  assert.equal(r.commits.get(r.branches.get('feature/copia')).parents[0], tip);
+  // -C pisa una rama que no está en uso (sus commits quedan sin rama, como en git); la misma con -C no cambia nada
+  assert.ok(r.run('branch -C main feature').ok);
+  assert.equal(r.branches.get('feature'), main);
+  // como git, copiar una rama sobre sí misma no hace nada, también la actual y con -C
+  r.run('checkout main');
+  for (const line of ['branch -C respaldo respaldo', 'branch -c main', 'branch -c main main', 'branch -C main main']) {
+    res = r.run(line);
+    assert.ok(res.ok, line);
+    assert.equal(res.changed, false, line);
+  }
+});
+
+test('branch -c se niega como git sin tocar nada', () => {
+  const r = fresh();
+  run(r, 'branch feature', 'checkout -b otra', 'commit -m x', 'checkout main');
+  const state = () => JSON.stringify([[...r.branches], r.head, r.defaultBranch, r.reflog]);
+  const before = state();
+  for (const [line, re] of [
+    ['branch -c', /^fatal: branch name required$/],
+    ['branch -c a b c', /^fatal: too many branches for a copy operation$/],
+    ['branch -c nope x', /^fatal: no branch named 'nope'$/],
+    ['branch -c feature otra', /^fatal: a branch named 'otra' already exists$/],
+    ['branch -c feature "a..b"', /^fatal: 'a\.\.b' is not a valid branch name$/],
+    ['branch -C feature main', /^fatal: cannot force update the branch 'main' used by worktree$/],
+    ['branch -d -c feature x', /^usage: branch \(-c \| -C\) \[<old-branch>\] <new-branch>$/],
+    ['branch -c -m feature x', /^usage: branch \(-c \| -C\) \[<old-branch>\] <new-branch>$/],
+  ]) {
+    const res = r.run(line);
+    assert.equal(res.ok, false, line);
+    assert.equal(res.changed, false, line);
+    assert.match(res.lines[0], re, line);
+  }
+  assert.equal(state(), before);
+  // desprendido no hay rama actual que copiar, pero sí otra
+  r.run('checkout HEAD~1');
+  assert.match(r.run('branch -c nueva').lines[0], /^fatal: cannot copy the current branch while not on any$/);
+  assert.ok(r.run('branch -c feature nueva').ok);
+  assert.equal(r.branches.get('nueva'), r.branches.get('feature'));
+  // un rebase a medias: como git, no se copia la rama que se rebasa ni -C la pisa
+  const b = start(2, NOW);
+  run(b, 'checkout feature', 'rebase -i main');
+  const rebasing = JSON.stringify([[...b.branches], b.head]);
+  assert.match(b.run('branch -c feature copia').lines[0], /^fatal: branch refs\/heads\/feature is being rebased$/);
+  assert.match(b.run('branch -C main feature').lines[0], /^fatal: cannot force update the branch 'feature' used by worktree$/);
+  assert.equal(JSON.stringify([[...b.branches], b.head]), rebasing);
+  // en un repo vacío la rama no tiene commit que copiar
+  const e = new Repo({ now: NOW });
+  assert.match(e.run('branch -c otra').lines[0], /^fatal: no commit on branch 'main' yet$/);
+  assert.deepEqual([...e.branches.keys()], ['main']);
+});
+
 test('switch y restore: solo ramas, desprender a propósito y tirar cambios sin commit', () => {
   const r = fresh();
   assert.ok(r.run('switch -c arreglo').ok);

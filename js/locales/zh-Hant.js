@@ -634,6 +634,8 @@ GB.i18n.define('zh-Hant', {
   'textview.quiet': '超過 30 天沒有動靜',
   'textview.merged': '已合併到預設分支',
   'textview.ciFailing': 'CI 失敗中',
+  'textview.ciPulls': 'CI 失敗中的開啟中 PR：{n}',
+  'textview.ciPull': '#{num} {title}，分支 {branch}',
   'textview.hideBranch': '隱藏 {name}',
   'textview.soloBranch': '僅顯示 {name}',
   'textview.hidden': '已隱藏 {name}',

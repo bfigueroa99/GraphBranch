@@ -634,6 +634,8 @@ GB.i18n.define('zh-Hans', {
   'textview.quiet': '超过 30 天没有动静',
   'textview.merged': '已合并到默认分支',
   'textview.ciFailing': 'CI 失败中',
+  'textview.ciPulls': 'CI 失败中的打开的 PR：{n}',
+  'textview.ciPull': '#{num} {title}，分支 {branch}',
   'textview.hideBranch': '隐藏 {name}',
   'textview.soloBranch': '仅显示 {name}',
   'textview.hidden': '已隐藏 {name}',

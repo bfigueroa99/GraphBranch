@@ -634,6 +634,8 @@ GB.i18n.define('bg', {
   'textview.quiet': 'без активност над 30 дни',
   'textview.merged': 'слята в основния клон',
   'textview.ciFailing': 'CI се проваля',
+  'textview.ciPulls': 'Отворени PR с проваляща се CI: {n}',
+  'textview.ciPull': '#{num} {title}, клон {branch}',
   'textview.hideBranch': 'Скриване на {name}',
   'textview.soloBranch': 'Само {name}',
   'textview.hidden': '{name} е скрит',

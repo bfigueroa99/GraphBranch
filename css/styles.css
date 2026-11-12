@@ -6087,6 +6087,15 @@ html.tv .agk-btn {
   border-radius: 6px;
   color: inherit;
 }
+/* un PR con el CI en rojo: la ✗ queda junto a su texto, que es el que se parte en pantalla angosta */
+.tv-cipull {
+  flex-wrap: nowrap;
+  align-items: baseline;
+}
+.tv-cipull .tv-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .tv-head::before {
   content: '▸';
   color: var(--ink-3);

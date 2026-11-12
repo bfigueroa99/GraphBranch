@@ -645,6 +645,8 @@ GB.i18n.define('sk', {
   'textview.quiet': 'bez aktivity viac ako 30 dní',
   'textview.merged': 'zlúčené do predvolenej vetvy',
   'textview.ciFailing': 'CI zlyháva',
+  'textview.ciPulls': 'Otvorené PR so zlyhávajúcou CI: {n}',
+  'textview.ciPull': '#{num} {title}, vetva {branch}',
   'textview.hideBranch': 'Skryť {name}',
   'textview.soloBranch': 'Zobraziť iba {name}',
   'textview.hidden': '{name} je skrytá',

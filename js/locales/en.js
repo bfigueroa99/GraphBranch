@@ -640,6 +640,8 @@ GB.i18n.define('en', {
   'textview.quiet': 'no activity for 30+ days',
   'textview.merged': 'merged into the default branch',
   'textview.ciFailing': 'CI failing',
+  'textview.ciPulls': 'Open PRs with CI failing: {n}',
+  'textview.ciPull': '#{num} {title}, branch {branch}',
   'textview.hideBranch': 'Hide {name}',
   'textview.soloBranch': 'Show only {name}',
   'textview.hidden': '{name} hidden',

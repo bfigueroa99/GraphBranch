@@ -634,6 +634,8 @@ GB.i18n.define('fi', {
   'textview.quiet': 'ei toimintaa yli 30 päivään',
   'textview.merged': 'yhdistetty oletushaaraan',
   'textview.ciFailing': 'CI epäonnistuu',
+  'textview.ciPulls': 'Avoimet PR:t, joiden CI epäonnistuu: {n}',
+  'textview.ciPull': '#{num} {title}, haara {branch}',
   'textview.hideBranch': 'Piilota {name}',
   'textview.soloBranch': 'Näytä vain {name}',
   'textview.hidden': '{name} piilotettu',

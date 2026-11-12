@@ -650,6 +650,8 @@ GB.i18n.define('uk', {
   'textview.quiet': 'без активності понад 30 днів',
   'textview.merged': 'злито в основну гілку',
   'textview.ciFailing': 'CI падає',
+  'textview.ciPulls': 'Відкриті PR, у яких CI падає: {n}',
+  'textview.ciPull': '#{num} {title}, гілка {branch}',
   'textview.hideBranch': 'Приховати {name}',
   'textview.soloBranch': 'Показати лише {name}',
   'textview.hidden': '{name} приховано',

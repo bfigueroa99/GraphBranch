@@ -635,6 +635,8 @@ GB.i18n.define('fil', {
   'textview.quiet': 'walang aktibidad nang mahigit 30 araw',
   'textview.merged': 'na-merge sa default na branch',
   'textview.ciFailing': 'Nabibigo ang CI',
+  'textview.ciPulls': 'Mga bukas na PR na nabibigo ang CI: {n}',
+  'textview.ciPull': '#{num} {title}, branch na {branch}',
   'textview.hideBranch': 'Itago ang {name}',
   'textview.soloBranch': 'Ipakita lang ang {name}',
   'textview.hidden': 'Naitago ang {name}',

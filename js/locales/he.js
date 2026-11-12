@@ -691,6 +691,8 @@ GB.i18n.define('he', {
   'textview.quiet': 'בלי פעילות מעל 30 יום',
   'textview.merged': 'מוזג לענף ברירת המחדל',
   'textview.ciFailing': 'CI נכשל',
+  'textview.ciPulls': 'PRs פתוחים עם CI שנכשל: {n}',
+  'textview.ciPull': '#{num} {title}, ענף {branch}',
   'textview.hideBranch': 'הסתרת {name}',
   'textview.soloBranch': 'הצגת {name} בלבד',
   'textview.hidden': '{name} הוסתר',

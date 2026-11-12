@@ -634,6 +634,8 @@ GB.i18n.define('el', {
   'textview.quiet': 'χωρίς δραστηριότητα πάνω από 30 ημέρες',
   'textview.merged': 'συγχωνευμένο στον κύριο κλάδο',
   'textview.ciFailing': 'Το CI αποτυγχάνει',
+  'textview.ciPulls': 'Ανοιχτά PR με CI που αποτυγχάνει: {n}',
+  'textview.ciPull': '#{num} {title}, κλάδος {branch}',
   'textview.hideBranch': 'Απόκρυψη του {name}',
   'textview.soloBranch': 'Εμφάνιση μόνο του {name}',
   'textview.hidden': 'Το {name} κρύφτηκε',

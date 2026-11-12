@@ -635,6 +635,8 @@ GB.i18n.define('it', {
   'textview.quiet': 'senza attività da oltre 30 giorni',
   'textview.merged': 'unita al ramo predefinito',
   'textview.ciFailing': 'CI in errore',
+  'textview.ciPulls': 'PR aperte con CI in errore: {n}',
+  'textview.ciPull': '#{num} {title}, branch {branch}',
   'textview.hideBranch': 'Nascondi {name}',
   'textview.soloBranch': 'Mostra solo {name}',
   'textview.hidden': '{name} nascosto',

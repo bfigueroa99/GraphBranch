@@ -733,6 +733,8 @@ GB.i18n.define('ar', {
   'textview.quiet': 'بلا نشاط منذ أكثر من 30 يومًا',
   'textview.merged': 'مدموجة في الرئيسية',
   'textview.ciFailing': 'CI فاشل',
+  'textview.ciPulls': 'طلبات PR المفتوحة ذات CI فاشل: {n}',
+  'textview.ciPull': '#{num} {title}، الفرع {branch}',
   'textview.hideBranch': 'إخفاء {name}',
   'textview.soloBranch': 'عرض {name} فقط',
   'textview.hidden': 'تم إخفاء {name}',

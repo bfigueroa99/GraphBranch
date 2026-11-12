@@ -634,6 +634,8 @@ GB.i18n.define('bn', {
   'textview.quiet': '৩০ দিনের বেশি নিষ্ক্রিয়',
   'textview.merged': 'মূল শাখায় মার্জ করা',
   'textview.ciFailing': 'CI ব্যর্থ হচ্ছে',
+  'textview.ciPulls': 'CI ব্যর্থ হচ্ছে এমন খোলা PR: {n}',
+  'textview.ciPull': '#{num} {title}, শাখা {branch}',
   'textview.hideBranch': '{name} লুকান',
   'textview.soloBranch': 'শুধু {name} দেখান',
   'textview.hidden': '{name} লুকানো হয়েছে',

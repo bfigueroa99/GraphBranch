@@ -677,6 +677,8 @@ GB.i18n.define('fa', {
   'textview.quiet': 'بدون فعالیت بیش از ۳۰ روز',
   'textview.merged': 'در شاخهٔ اصلی ادغام شده',
   'textview.ciFailing': 'CI در حال شکست',
+  'textview.ciPulls': 'PRهای باز با CI در حال شکست: {n}',
+  'textview.ciPull': '#{num} {title}، شاخهٔ {branch}',
   'textview.hideBranch': 'پنهان کردن {name}',
   'textview.soloBranch': 'نمایش فقط {name}',
   'textview.hidden': '{name} پنهان شد',

@@ -635,6 +635,8 @@ GB.i18n.define('th', {
   'textview.quiet': 'ไม่มีความเคลื่อนไหวเกิน 30 วัน',
   'textview.merged': 'รวมเข้ากับสาขาหลักแล้ว',
   'textview.ciFailing': 'CI ล้มเหลว',
+  'textview.ciPulls': 'PR ที่เปิดอยู่ซึ่ง CI ล้มเหลว: {n}',
+  'textview.ciPull': '#{num} {title} แบรนช์ {branch}',
   'textview.hideBranch': 'ซ่อน {name}',
   'textview.soloBranch': 'แสดงเฉพาะ {name}',
   'textview.hidden': 'ซ่อน {name} แล้ว',

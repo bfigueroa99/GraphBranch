@@ -634,6 +634,8 @@ GB.i18n.define('id', {
   'textview.quiet': 'tanpa aktivitas lebih dari 30 hari',
   'textview.merged': 'sudah digabung ke cabang bawaan',
   'textview.ciFailing': 'CI gagal',
+  'textview.ciPulls': 'PR terbuka dengan CI gagal: {n}',
+  'textview.ciPull': '#{num} {title}, cabang {branch}',
   'textview.hideBranch': 'Sembunyikan {name}',
   'textview.soloBranch': 'Tampilkan hanya {name}',
   'textview.hidden': '{name} disembunyikan',

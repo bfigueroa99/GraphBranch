@@ -634,6 +634,8 @@ GB.i18n.define('vi', {
   'textview.quiet': 'không hoạt động hơn 30 ngày',
   'textview.merged': 'đã gộp vào nhánh mặc định',
   'textview.ciFailing': 'CI đang lỗi',
+  'textview.ciPulls': 'PR đang mở có CI đang lỗi: {n}',
+  'textview.ciPull': '#{num} {title}, nhánh {branch}',
   'textview.hideBranch': 'Ẩn {name}',
   'textview.soloBranch': 'Chỉ hiện {name}',
   'textview.hidden': 'Đã ẩn {name}',

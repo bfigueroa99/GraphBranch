@@ -634,6 +634,8 @@ GB.i18n.define('sw', {
   'textview.quiet': 'bila shughuli kwa zaidi ya siku 30',
   'textview.merged': 'imeunganishwa na tawi chaguomsingi',
   'textview.ciFailing': 'CI inashindwa',
+  'textview.ciPulls': 'PR zilizo wazi ambazo CI inashindwa: {n}',
+  'textview.ciPull': '#{num} {title}, tawi {branch}',
   'textview.hideBranch': 'Ficha {name}',
   'textview.soloBranch': 'Onyesha {name} pekee',
   'textview.hidden': '{name} imefichwa',

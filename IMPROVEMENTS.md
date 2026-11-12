@@ -634,8 +634,8 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: la salud de la demo con Playwright contra `node e2e/serve.mjs 4173`, en es y ar a 1280 px: la línea nueva bajo «Autores distintos por semana», dentro del grupo con su encabezado, sin errores de consola; 40 idiomas con `node tools/check-i18n.mjs`; auditoría: la de la puerta.
 - Skills: no aplica: una serie más en un panel propio, con la clave de autor que ya existe; lo cubren las reglas del repo y el Protocolo de QA.
 - Arena: no aplica: una sola forma obvia (el primer commit cargado de cada autor, contado con el `weekly` de las demás series).
-- OMC: plan=— · revisión=3 hallazgos LOW, APPROVE (1 arreglado: la clave de autor, repetida en los autores distintos y en los nuevos, sale a `authorKey` para que nunca den más nuevos que distintos; quedan la misma persona con usuario en un commit y solo nombre en otro, que cuenta dos veces como ya decía Límites conocidos, y el paréntesis «primer commit cargado», breve a propósito) · verificación=pendiente
+- OMC: plan=— · revisión=3 hallazgos LOW, APPROVE (1 arreglado: la clave de autor, repetida en los autores distintos y en los nuevos, sale a `authorKey` para que nunca den más nuevos que distintos; quedan la misma persona con usuario en un commit y solo nombre en otro, que cuenta dos veces como ya decía Límites conocidos, y el paréntesis «primer commit cargado», breve a propósito) · verificación=PASS
 - Replica: paridad, sin pasada nueva: 94,5/100, must hechos 13 de 13; la hoja se repuso hasta 15 con los ítems 202 a 207, de una investigación nueva del 2026-11-12 (CHAOSS, Git Truck, Oh My Git!, Insights de GitHub y OSS Insight): cinco de alcance 2 (202 a 206).
 - Reclamo: loop/277, sin colisión
-- Validado: pendiente
+- Validado: 718 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde. La puerta anterior, antes del arreglo de la revisión, también dio verde.
 - **Siguiente:** iteración 278, expansión: ítem 203 (Práctica: un remoto con push y fetch, Público)

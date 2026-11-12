@@ -1656,6 +1656,10 @@ test('diff lista los archivos cambiados sin preparar y diff --staged los prepara
   assert.equal(r.headSha, head);
   assert.equal(JSON.stringify([[...r.branches], r.head, r.reflog, r.work, r.staged]), after);
   assert.ok(r.run('help').lines.some((l) => l.startsWith('diff ')));
+  // el nombre viejo de un git mv, creado y preparado otra vez, es un cambio (M), no un borrado y un nuevo
+  const mv = fresh();
+  run(mv, 'git mv README.md docs.md', 'touch README.md', 'add README.md');
+  assert.deepEqual(plain(mv.run('diff --staged --name-status').lines), ['M\tREADME.md', 'A\tdocs.md']);
 });
 
 test('diff se niega como git: opciones desconocidas, -p sin contenido, un commit y una ruta que no existe', () => {
@@ -1668,11 +1672,15 @@ test('diff se niega como git: opciones desconocidas, -p sin contenido, un commit
   assert.match(r.run('diff HEAD').lines[0], /^fatal: diff <commit> is not in this practice/);
   assert.match(r.run('diff main').lines[0], /^fatal: diff <commit> is not in this practice/);
   assert.match(r.run('diff nada.txt').lines[0], /^fatal: ambiguous argument 'nada.txt'/);
+  // un rango tampoco: se dice que no es de la práctica, no que la rama no existe
+  assert.match(r.run('diff main..HEAD').lines[0], /^fatal: diff <commit> is not in this practice/);
+  assert.match(r.run('diff HEAD~1...main').lines[0], /^fatal: diff <commit> is not in this practice/);
   assert.equal(JSON.stringify(r.work), work);
   // un repo vacío: diff y diff --staged funcionan (lo nuevo preparado es A); HEAD no existe
   const empty = new Repo({ now: NOW });
   empty.run('touch --new a.txt');
   assert.deepEqual(plain(empty.run('diff').lines), []);
+  assert.deepEqual(plain(new Repo({ now: NOW }).run('diff .').lines), []); // . vale siempre, como en git
   empty.run('add a.txt');
   assert.deepEqual(plain(empty.run('diff --staged --name-status').lines), ['A\ta.txt']);
   assert.match(empty.run('diff HEAD').lines[0], /^fatal: ambiguous argument 'HEAD'/);

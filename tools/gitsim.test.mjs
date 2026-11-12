@@ -1547,3 +1547,59 @@ test('stash show y stash list solo leen: pasan con un rebase a medias; un archiv
   run(n, 'touch --new n.txt', 'add n.txt', 'rm n.txt', 'touch app.js', 'stash');
   assert.deepEqual(plain(n.run('stash show --name-status').lines), ['M\tapp.js']);
 });
+
+test('show imprime el sha, el mensaje y los archivos de un commit (HEAD sin otro) sin mover nada', () => {
+  const r = fresh();
+  const first = r.headSha;
+  r.run('touch app.js');
+  r.run('touch --new nuevo.txt');
+  run(r, 'add .', 'git rm README.md', 'commit -m "Cambios"');
+  const head = r.headSha;
+  const before = JSON.stringify([[...r.branches], r.head, r.reflog, r.work, r.staged, r.untracked]);
+  // HEAD: la cabecera como log, el mensaje y los archivos como --stat (sin contenido, lo que le pasó a cada uno)
+  const res = r.run('git show');
+  assert.ok(res.ok);
+  assert.equal(res.changed, false);
+  assert.deepEqual(plain(res.lines), [`commit ${head} (HEAD -> main)`, 'Author: You', '', '    Cambios', '', ' README.md | deleted', ' app.js    | changed', ' nuevo.txt | new', ' 3 files changed']);
+  // HEAD~1, por sha corto y con --oneline; --name-status y --name-only como git; -s calla los archivos
+  assert.deepEqual(plain(r.run('show HEAD~1 -s').lines), [`commit ${first}`, 'Author: You', '', `    ${r.commits.get(first).message}`]);
+  assert.deepEqual(plain(r.run(`show ${head.slice(0, 7)} --name-status`).lines.slice(5)), ['D\tREADME.md', 'M\tapp.js', 'A\tnuevo.txt']);
+  assert.deepEqual(plain(r.run('show --oneline --name-only').lines), [`${head.slice(0, 7)} (HEAD -> main) Cambios`, 'README.md', 'app.js', 'nuevo.txt']);
+  // varios commits, separados por una línea en blanco
+  assert.deepEqual(plain(r.run('show -s --oneline HEAD HEAD~1').lines), [`${head.slice(0, 7)} (HEAD -> main) Cambios`, '', `${first.slice(0, 7)} ${r.commits.get(first).message}`]);
+  // una etiqueta anotada sale antes con su mensaje; una ligera, solo el commit
+  run(r, 'tag -a v1 -m "Primera versión"', 'tag ligera HEAD~1');
+  assert.deepEqual(plain(r.run('show -s v1').lines.slice(0, 5)), ['tag v1', 'Tagger: You', '', '    Primera versión', '']);
+  assert.match(r.run('show -s ligera').lines[0], /^commit /);
+  // un renombre (git mv) sale como el borrado del viejo y el nombre nuevo; un archivo nuevo cambiado después ya es M
+  run(r, 'git mv app.js main.js', 'commit -m "Renombra"');
+  assert.deepEqual(plain(r.run('show --name-status').lines.slice(5)), ['D\tapp.js', 'A\tmain.js']);
+  run(r, 'touch nuevo.txt', 'commit -am "Toca nuevo"');
+  assert.deepEqual(plain(r.run('show --name-status').lines.slice(5)), ['M\tnuevo.txt']);
+  // un merge dice sus padres
+  run(r, 'checkout -b f', 'commit -m x', 'checkout main', 'merge --no-ff f -m "Une f"');
+  assert.match(r.run('show -s').lines[1], /^Merge: [0-9a-f]{7} [0-9a-f]{7}$/);
+  // mirar no mueve nada ni anota en el reflog
+  const after = JSON.stringify([[...r.branches], r.head, r.reflog, r.work, r.staged, r.untracked]);
+  run(r, 'show', 'show HEAD~3', 'show v1');
+  assert.equal(JSON.stringify([[...r.branches], r.head, r.reflog, r.work, r.staged, r.untracked]), after);
+  assert.notEqual(before, after);
+});
+
+test('show se niega como git: un sha que no existe, opciones desconocidas, -p sin contenido y un repo vacío', () => {
+  const r = fresh();
+  const shown = r.run('show 0123abcd');
+  assert.equal(shown.ok, false);
+  assert.deepEqual(plain(shown.lines), ["fatal: ambiguous argument '0123abcd': unknown revision or path not in the working tree.", "Use '--' to separate paths from revisions, like this:", "'git <command> [<revision>...] -- [<file>...]'"]);
+  // si una referencia no existe no se imprime ninguna
+  assert.equal(r.run('show HEAD nada').ok, false);
+  assert.equal(r.run('show HEAD~99').ok, false);
+  assert.match(r.run('show --bogus').lines[0], /^fatal: unrecognized argument: --bogus/);
+  assert.equal(r.run('show -p').ok, false);
+  assert.equal(r.run('show -- README.md').ok, false);
+  const empty = new Repo({ now: NOW });
+  assert.deepEqual(plain(empty.run('show').lines), ["fatal: your current branch 'main' does not have any commits yet"]);
+  assert.match(empty.run('show HEAD').lines[0], /^fatal: ambiguous argument 'HEAD'/);
+  // help lo lista
+  assert.ok(r.run('help').lines.some((l) => l.startsWith('show ')));
+});

@@ -181,6 +181,7 @@
       if (from.files) to.files = from.files.slice();
       if (from.removed) to.removed = from.removed.slice();
       if (from.renames) to.renames = from.renames;
+      if (from.added) to.added = from.added.slice();
       return sha;
     }
 
@@ -218,6 +219,10 @@
         else delete c.files;
         if (nextRemoved.length) c.removed = nextRemoved;
         else delete c.removed;
+        // lo que entra como nuevo (show lo marca con A); lo que el commit borra deja de serlo
+        const nextAdded = [...new Set([...keep(c.added, removed), ...staged.filter((s) => s.isNew || s.from).map((s) => s.file)])].filter((f) => nextFiles.includes(f));
+        if (nextAdded.length) c.added = nextAdded;
+        else delete c.added;
       }
       const renames = staged.filter((s) => s.from).length;
       if (renames) c.renames = (c.renames || 0) + renames;
@@ -262,12 +267,15 @@
       rows.sort((a, b) => (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0));
       this.stashShows++;
       this.stashSeen.add(entry.id);
-      if (opts.status) return rows.map(([k, f]) => `${k}\t${f}`);
-      if (opts.names) return rows.map(([, f]) => f);
-      if (!rows.length) return [];
-      const width = Math.max(...rows.map(([, f]) => f.length));
-      const note = { A: 'new', M: 'changed', D: 'deleted' };
-      return [...rows.map(([k, f]) => ` ${f.padEnd(width)} | ${note[k]}`), ` ${rows.length} file${rows.length > 1 ? 's' : ''} changed`];
+      return fileLines(rows, opts);
+    }
+
+    /** Lo que cambió un commit: [A|M|D, archivo], ordenado por nombre. A es lo que entró preparado como nuevo (add de
+        un archivo sin seguir, o el nombre nuevo de un mv): la práctica no sabe qué archivos traía el escenario. */
+    commitRows(sha) {
+      const c = this.commits.get(sha);
+      const rows = [...(c.files || []).map((f) => [(c.added || []).includes(f) ? 'A' : 'M', f]), ...(c.removed || []).map((f) => ['D', f])];
+      return rows.sort((a, b) => (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0));
     }
 
     /** Vacía el árbol de trabajo y lo preparado (commit, reset --hard, stash, merge --abort): lo sin seguir se queda. */
@@ -438,6 +446,17 @@
     }
   }
 
+  /** Los archivos de stash show y show: --name-status (A nuevo, M cambiado, D borrado), --name-only o, sin contenido
+      que contar, la forma de --stat con lo que le pasó a cada uno y cuántos son. */
+  function fileLines(rows, opts) {
+    if (opts.status) return rows.map(([k, f]) => `${k}\t${f}`);
+    if (opts.names) return rows.map(([, f]) => f);
+    if (!rows.length) return [];
+    const width = Math.max(...rows.map(([, f]) => f.length));
+    const note = { A: 'new', M: 'changed', D: 'deleted' };
+    return [...rows.map(([k, f]) => ` ${f.padEnd(width)} | ${note[k]}`), ` ${rows.length} file${rows.length > 1 ? 's' : ''} changed`];
+  }
+
   /** Lo que se niega con un rebase a medias (git exige terminarlo o cancelarlo antes). */
   const REBASE_BLOCKED = new Set(['checkout', 'switch', 'merge', 'rebase', 'reset', 'cherry-pick', 'revert', 'stash']);
 
@@ -491,6 +510,7 @@
         'tag [name] [-d name]        list, create or delete tags on a commit',
         'tag -a <name> -m "msg"      an annotated tag, with its message (tag -n lists the messages, -l "v1*" filters)',
         'log [--oneline]             the history that leads to HEAD',
+        'show [<commit>]             the sha, message and files of a commit (HEAD without one), moving nothing (--name-status, -s)',
         'status                      where HEAD is',
       ];
     },
@@ -511,6 +531,7 @@
         const sha = this.make(text, old.parents);
         if (old.files) this.commits.get(sha).files = old.files.slice();
         if (old.removed) Object.assign(this.commits.get(sha), { removed: old.removed.slice(), renames: old.renames });
+        if (old.added) this.commits.get(sha).added = old.added.slice();
         this.moveHead(sha);
         this.take(sha, all);
         return [`[${this.head.branch || 'detached HEAD'} ${this.short(sha)}] ${text}`];
@@ -644,6 +665,44 @@
       return shas.flatMap((s) => {
         const c = this.commits.get(s);
         return [`commit ${s}${this.decorations(s)}`, `Author: ${c.author.name}`, '', `    ${c.message}`, ''];
+      });
+    },
+
+    /**
+     * show [<commit>...]: el sha, las ramas, el autor, el mensaje y los archivos de un commit (HEAD si no se da otro),
+     * sin mover nada. Una etiqueta anotada sale antes con su mensaje. Sin contenido no hay diff: los archivos van como
+     * en --stat, o con --name-only o --name-status; -s (--no-patch) los calla y --oneline acorta la cabecera.
+     */
+    show(args) {
+      const opts = { names: false, status: false, quiet: false, oneline: false };
+      const refs = [];
+      for (const a of args) {
+        if (a === '--stat') opts.quiet = false;
+        else if (a === '--name-only') opts.names = true;
+        else if (a === '--name-status') opts.status = true;
+        else if (a === '-s' || a === '--no-patch') opts.quiet = true;
+        else if (a === '--oneline') opts.oneline = true;
+        else if (a === '-p' || a === '--patch') fail('fatal: show -p needs file contents, and the practice has none: try show --name-status');
+        else if (a === '--') fail('fatal: show <commit> -- <path> is not in this practice: try show --name-status <commit>');
+        else if (a.length > 1 && a[0] === '-' && !/^-\d/.test(a)) fail(`fatal: unrecognized argument: ${a}\nusage: show [--oneline] [-s | --stat | --name-only | --name-status] [<commit>...]`);
+        else refs.push(a);
+      }
+      if (!refs.length && !this.headSha) fail(`fatal: your current branch '${this.head.branch}' does not have any commits yet`);
+      const picked = (refs.length ? refs : ['HEAD']).map((ref) => {
+        const sha = this.resolve(ref);
+        if (!sha) fail(`fatal: ambiguous argument '${ref}': unknown revision or path not in the working tree.\nUse '--' to separate paths from revisions, like this:\n'git <command> [<revision>...] -- [<file>...]'`);
+        // una etiqueta anotada (y no una rama con ese nombre, que resolve elige antes) muestra primero su objeto
+        const note = !this.branches.has(ref) && this.notes.get(ref);
+        return { sha, tag: note ? { name: ref, message: note.message } : null };
+      });
+      return picked.flatMap(({ sha, tag }, i) => {
+        const c = this.commits.get(sha);
+        const head = opts.oneline
+          ? [`${this.short(sha)}${this.decorations(sha)} ${c.message}`]
+          : [`commit ${sha}${this.decorations(sha)}`, ...(c.parents.length > 1 ? [`Merge: ${c.parents.map((p) => this.short(p)).join(' ')}`] : []), `Author: ${c.author.name}`, '', `    ${c.message}`];
+        const files = opts.quiet ? [] : fileLines(this.commitRows(sha), opts);
+        const block = [...(tag ? [`tag ${tag.name}`, `Tagger: ${AUTHOR.name}`, '', `    ${tag.message}`, ''] : []), ...head, ...(files.length && !opts.oneline ? [''] : []), ...files];
+        return i ? ['', ...block] : block;
       });
     },
 

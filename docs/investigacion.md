@@ -170,6 +170,56 @@ se consultó y su URL, y dice solo lo que la página dice: lo que no consta, se 
 - **Implica:** el Widget embebible y capa para streaming (ítem 11) llena un hueco sin competencia directa
   encontrada, con poco esfuerzo: la app ya es una página estática que OBS puede cargar.
 
+### 2026-11-12 · Contributor Absence Factor (CHAOSS)
+
+- **Qué es:** métrica de la comunidad CHAOSS (antes «Bus Factor»): el menor número de personas que suman
+  el 50 % de las contribuciones de un tipo (commits, issues, comentarios…). Se ordena de más a menos y se
+  suma hasta pasar la mitad; cuanto más bajo, más depende el proyecto de pocas personas. Responde «¿qué tan
+  alto es el riesgo si se van los más activos?», y sirve mirada en el tiempo y entre varios repos.
+- **Fuente:** https://chaoss.community/kb/metric-bus-factor/ (consultada el 2026-11-12)
+- **Implica:** una cifra del repo, no una lista de personas: entra en la salud sin romper «describe al
+  repositorio, nunca a personas», con los commits ya cargados y sin consultas.
+
+### 2026-11-12 · Git Truck
+
+- **Qué es:** visualización local e interactiva de un repo Git que se abre en el navegador: estructura,
+  tipo de archivo, lo cambiado hace poco, quién cambió más líneas de cada archivo, dónde y cuándo trabajó
+  cada persona e historia. Se instala con npm y corre sin nube ni seguimiento.
+- **Fuente:** https://github.com/git-truck/git-truck (consultada el 2026-11-12)
+- **Implica:** colorear las galaxias por la antigüedad del último cambio de cada archivo es lo que más se
+  le acerca; en la web pide la fecha de cada archivo (una consulta por archivo en GitHub), así que encaja
+  primero en las carpetas locales del escritorio.
+
+### 2026-11-12 · Oh My Git!
+
+- **Qué es:** juego libre para aprender Git: muestra las estructuras internas del repo en tiempo real,
+  presenta los comandos como cartas con una descripción y un ícono (acción y referencia a la vez), tiene
+  una terminal con un Git real y enseña a trabajar con remotos entre varios repos. Para Linux, macOS y
+  Windows (itch.io). No consta su licencia en la portada ni si tiene niveles.
+- **Fuente:** https://ohmygit.org/ (consultada el 2026-11-12)
+- **Implica:** la práctica de git (ítem 16) solo se usa escribiendo: las cartas abren la puerta a quien
+  todavía no sabe qué escribir, y los remotos (`push`, `fetch`) son lo que más falta en el simulador.
+
+### 2026-11-12 · Información del repositorio en GitHub (Commits y Code frequency)
+
+- **Qué es:** las gráficas de «Insights» de GitHub: Commits (los del último año por semana, sin merges, y
+  el promedio por día de la semana) y Code frequency (líneas añadidas y borradas cada semana de toda la
+  historia, como tabla, CSV o PNG); limitadas a repos de menos de 10.000 commits.
+- **Fuente:** https://docs.github.com/en/repositories/viewing-activity-and-data-for-your-repository/analyzing-changes-to-a-repositorys-content (consultada el 2026-11-12)
+- **Implica:** la salud ya cuenta commits por semana; le faltan las líneas añadidas y borradas (una
+  consulta a `/stats/code_frequency`, al abrir el panel) y el reparto por día de la semana.
+
+### 2026-11-12 · OSS Insight
+
+- **Qué es:** plataforma gratuita de análisis sobre más de 10.000 millones de eventos de GitHub:
+  estrellas, PRs, issues, commits, revisiones, contribuidores y salud de la comunidad; repos en tendencia,
+  colecciones y un explorador de datos. Avisa que desde mediados de 2025 el feed de eventos de GitHub
+  capta de menos estrellas, PRs e issues (cambio de paginación); los commits no.
+- **Fuente:** https://ossinsight.io/ (consultada el 2026-11-12)
+- **Implica:** lo que GraphBranch saca del feed de eventos (estrellas, forks, ramas nuevas) queda corto en
+  repos con mucho movimiento, como ya dice Límites conocidos; las cifras que salen de los commits cargados
+  (autores, ausencia) son las más firmes. No consta una comparación entre repos.
+
 ## Ideas puntuadas
 
 Las de la hoja de ruta (su puntaje está también en `IMPROVEMENTS.md`) y las candidatas que salen de esta
@@ -334,13 +384,20 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Práctica: git diff | Público | 1×2/2 | 1,0 | git-sim | ítem 191 |
 | Vista de texto: PRs en borrador | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 192 |
 | Columnas de SHA, autor y fecha en el grafo 3D | Análisis | 1×2/2 | 1,0 | Replica (GitKraken) | ítem 193 |
-| Salud del repo: autores nuevos por semana | Análisis | 1×2/2 | 1,0 | DORA | ítem 194 |
+| Salud del repo: autores nuevos por semana | Análisis | 1×2/2 | 1,0 | DORA | hecho en #342 |
 | Salud del repo: forks nuevos por semana | Análisis | 1×2/2 | 1,0 | DORA | ítem 195 |
 | Práctica: branch --merged y --no-merged | Público | 1×2/2 | 1,0 | git-sim | ítem 196 |
 | Vista de texto: PRs aprobados | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 197 |
 | Resumen de la semana: estrellas nuevas | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 198 |
 | Resumen de la semana: forks nuevos | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 199 |
 | Salud del repo: estrellas nuevas por semana | Análisis | 1×2/2 | 1,0 | DORA | ítem 200 |
+| Salud del repo: factor de ausencia (CHAOSS) | Análisis | 2×2/1 | 4,0 | Contributor Absence Factor (CHAOSS) | ítem 202 |
+| Práctica: un remoto con push y fetch | Público | 2×3/2 | 3,0 | Oh My Git! | ítem 203 |
+| Práctica: cartas de comandos | Público | 2×2/2 | 2,0 | Oh My Git! | ítem 204 |
+| Práctica: el índice y el árbol de trabajo a la vista | Público | 2×2/2 | 2,0 | Oh My Git! | ítem 205 |
+| Salud del repo: líneas añadidas y borradas por semana | Análisis | 2×2/2 | 2,0 | Información del repositorio en GitHub | ítem 206 |
+| Salud del repo: commits por día de la semana | Análisis | 1×2/2 | 1,0 | Información del repositorio en GitHub | ítem 207 |
+| Galaxias por antigüedad del último cambio (carpetas locales) | Análisis | 1×2/2 | 1,0 | Git Truck | candidata |
 
 ## Públicos
 

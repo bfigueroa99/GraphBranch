@@ -87,7 +87,7 @@ test('ritmo: merges en 7 y 30 días y releases en 30, sin repetir una actividad'
     { id: '6', kind: 'push', time: ago(1) },
   ];
   const pace = compute(repo(), acts, NOW).pace;
-  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks], closedWeeks: [...pace.closedWeeks], branchWeeks: [...pace.branchWeeks], commitWeeks: [...pace.commitWeeks], authorWeeks: [...pace.authorWeeks], tagWeeks: [...pace.tagWeeks], issueWeeks: [...pace.issueWeeks], prCloseWeeks: [...pace.prCloseWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], closedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], branchWeeks: [0, 0, 0, 0, 0, 0, 0, 0], commitWeeks: [0, 1, 0, 2, 0, 0, 0, 1], authorWeeks: [0, 0, 0, 0, 0, 0, 0, 0], tagWeeks: [0, 0, 0, 0, 0, 0, 0, 0], issueWeeks: [0, 0, 0, 0, 0, 0, 0, 0], prCloseWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
+  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks], closedWeeks: [...pace.closedWeeks], branchWeeks: [...pace.branchWeeks], commitWeeks: [...pace.commitWeeks], authorWeeks: [...pace.authorWeeks], newAuthorWeeks: [...pace.newAuthorWeeks], tagWeeks: [...pace.tagWeeks], issueWeeks: [...pace.issueWeeks], prCloseWeeks: [...pace.prCloseWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], closedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], branchWeeks: [0, 0, 0, 0, 0, 0, 0, 0], commitWeeks: [0, 1, 0, 2, 0, 0, 0, 1], authorWeeks: [0, 0, 0, 0, 0, 0, 0, 0], newAuthorWeeks: [0, 0, 0, 0, 0, 0, 0, 0], tagWeeks: [0, 0, 0, 0, 0, 0, 0, 0], issueWeeks: [0, 0, 0, 0, 0, 0, 0, 0], prCloseWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
 });
 
 test('DORA: despliegues en 30 días, mediana entre releases y tiempo de entrega', () => {
@@ -435,6 +435,31 @@ test('autores por semana: cuántas personas distintas hicieron commits cada sema
   assert.deepEqual([...compute(data, [], NOW).pace.authorWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
 });
 
+test('autores nuevos por semana: cada persona cuenta una vez, en la semana de su primer commit cargado', () => {
+  const data = repo();
+  data.commits = new Map([
+    ['a', { date: ago(0.1), author: { login: 'ana' } }], // ana ya firmó hace 9 días: no es nueva esta semana
+    ['b', { date: ago(9), author: { login: 'ANA', name: 'Ana P.' } }], // su primer commit cargado: nueva la semana pasada
+    ['c', { date: ago(2), author: { name: 'Bruno' } }], // sin usuario: por su nombre; nuevo esta semana
+    ['d', { date: ago(3), author: { name: 'bruno ' } }], // el mismo nombre: una vez
+    ['e', { date: ago(4), author: { login: 'carla' } }], // nueva esta semana
+    ['f', { date: ago(27), author: { login: 'dani' } }], // nueva hace tres semanas
+    ['g', { date: ago(1), author: { login: 'dani' } }], // ya no es nueva
+    ['h', { date: ago(60), author: { login: 'eva' } }], // su primer commit cargado es de antes de las 8 semanas: no suma
+    ['i', { date: ago(2), author: { login: 'eva' } }],
+    ['j', { date: ago(-1), author: { login: 'fede' } }], // en el futuro: no cuenta
+    ['k', { date: ago(1) }], // sin autor: no suma
+    ['l', { author: { login: 'gabi' } }], // sin fecha: no cuenta
+    ['m', { date: ago(50), author: { login: 'hugo' } }], // nuevo hace 8 semanas (la más vieja)
+  ]);
+  const h = compute(data, [], NOW);
+  assert.deepEqual([...h.pace.newAuthorWeeks], [1, 0, 0, 0, 1, 0, 1, 2], 'esta semana bruno y carla; la pasada ana; hace tres dani; hace siete hugo; eva, fede, gabi y los sin autor no');
+  assert.deepEqual([...h.pace.authorWeeks], [1, 0, 0, 0, 1, 0, 1, 5], 'los distintos siguen contando a todos los de la semana');
+  for (let i = 0; i < 8; i++) assert.ok(h.pace.newAuthorWeeks[i] <= h.pace.authorWeeks[i], `semana ${i}: nunca más nuevos que distintos`);
+  data.commits = new Map();
+  assert.deepEqual([...compute(data, [], NOW).pace.newAuthorWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
+});
+
 test('tendencia de tags: los cargados por semana, de la más vieja a la actual', () => {
   const data = repo();
   data.commits = new Map([
@@ -572,9 +597,30 @@ test('estrellas nuevas: la semana actual frente a la anterior, cada usuario una 
   assert.equal(h.stars.week, 3);
   assert.equal(h.stars.prev, 2);
   // la primera vez que se vio una estrella decide su semana: ana la puso hace 10 días y otra vez ayer
-  const again = compute(repo(), [star('a', 10, 'ana'), star('b', 1, 'ana')], NOW);
+  const old = { id: 'p0', kind: 'push', time: ago(20) }; // algo de hace 20 días: la semana anterior está cargada entera
+  const again = compute(repo(), [old, star('a', 10, 'ana'), star('b', 1, 'ana')], NOW);
   assert.deepEqual({ ...again.stars }, { week: 0, prev: 1 });
-  assert.deepEqual({ ...compute(repo(), [], NOW).stars }, { week: 0, prev: 0 });
+  assert.deepEqual({ ...compute(repo(), [old], NOW).stars }, { week: 0, prev: 0 });
+});
+
+test('estrellas y forks nuevos: sin actividad cargada de hace dos semanas, la semana anterior no se mide (null), no es 0', () => {
+  const star = (id, d, login) => ({ id, kind: 'star', time: ago(d), actor: { login } });
+  const fork = (id, d, detail) => ({ id, kind: 'fork', time: ago(d), detail });
+  // el feed de GitHub trajo solo los últimos 5 días: 3 estrellas y 2 forks
+  const recent = [star('s1', 1, 'ana'), star('s2', 2, 'beto'), star('s3', 4.5, 'carla'), fork('f1', 1, 'ana/x'), fork('f2', 3, 'beto/x'), { id: 'p1', kind: 'push', time: ago(5) }];
+  let h = compute(repo(), recent, NOW);
+  assert.deepEqual({ ...h.stars }, { week: 3, prev: null });
+  assert.deepEqual({ ...h.forkTrend }, { week: 2, prev: null });
+  // con una estrella de hace 10 días la semana anterior sigue a medias (le faltan 4 días): tampoco se mide
+  h = compute(repo(), [...recent, star('s4', 10, 'dani')], NOW);
+  assert.deepEqual({ ...h.stars }, { week: 3, prev: null });
+  // basta una actividad de cualquier tipo de hace 14 días o más para que la anterior cuente, aunque sea 0
+  h = compute(repo(), [...recent, { id: 'c1', kind: 'comment', time: ago(14) }], NOW);
+  assert.deepEqual({ ...h.stars }, { week: 3, prev: 0 });
+  assert.deepEqual({ ...h.forkTrend }, { week: 2, prev: 0 });
+  // una actividad sin hora o con la hora en el futuro no prueba nada
+  h = compute(repo(), [...recent, { id: 'x1', kind: 'push' }, { id: 'x2', kind: 'push', time: ago(-30) }], NOW);
+  assert.equal(h.stars.prev, null);
 });
 
 test('forks nuevos: la semana actual frente a la anterior, cada fork una vez y sin consultas', () => {
@@ -594,7 +640,8 @@ test('forks nuevos: la semana actual frente a la anterior, cada fork una vez y s
   const h = compute(repo(), acts, NOW);
   assert.deepEqual({ ...h.forkTrend }, { week: 3, prev: 2 });
   // la primera vez que se vio un fork decide su semana, y la lista de forks activos (data.forks) no cuenta
-  const again = compute({ ...repo(), forks: [{ fullName: 'x/y', url: 'https://github.com/x/y', pushedAt: ago(1), stars: 0 }] }, [fork('a', 10, 'ana/orbita'), fork('b', 1, 'ana/orbita')], NOW);
+  const old = { id: 'p0', kind: 'push', time: ago(20) }; // algo de hace 20 días: la semana anterior está cargada entera
+  const again = compute({ ...repo(), forks: [{ fullName: 'x/y', url: 'https://github.com/x/y', pushedAt: ago(1), stars: 0 }] }, [old, fork('a', 10, 'ana/orbita'), fork('b', 1, 'ana/orbita')], NOW);
   assert.deepEqual({ ...again.forkTrend }, { week: 0, prev: 1 });
-  assert.deepEqual({ ...compute(repo(), [], NOW).forkTrend }, { week: 0, prev: 0 });
+  assert.deepEqual({ ...compute(repo(), [old], NOW).forkTrend }, { week: 0, prev: 0 });
 });

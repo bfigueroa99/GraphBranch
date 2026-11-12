@@ -9,6 +9,7 @@
   'use strict';
 
   const AUTHOR = { name: 'You', login: 'you', avatar: null };
+  const TEAMMATE = { name: 'Ana', login: 'ana', avatar: null }; // quien sube al remoto en los ejercicios
   const MINUTE = 60e3;
 
   /** Hash determinista de 40 hex: la misma historia da los mismos shas (las pruebas y los ejercicios lo necesitan). */
@@ -68,6 +69,9 @@
       this.rebaseAborts = 0; // cuántos rebase se cancelaron con rebase --abort
       this.reflog = []; // { sha, msg }, el más nuevo al final (HEAD@{0}); cada vez que HEAD se mueve
       this.renamed = null; // { from, to } si el último comando renombró una rama (branch -m): el panel de actividad lo dice así
+      this.remote = null; // { name, branches: Map rama -> sha }: el remoto simulado (origin), lo que tiene «el servidor»
+      this.tracking = new Map(); // rama -> sha: las ramas de seguimiento (origin/<rama>), lo que se supo en el último fetch o push
+      this.upstream = new Map(); // rama local -> rama del remoto que sigue (push -u, o la de partida del escenario)
       this.defaultBranch = branch;
       this.branches.set(branch, null);
     }
@@ -99,6 +103,35 @@
       return this.ancestors(b).has(a);
     }
 
+    /** La rama de seguimiento que nombra `ref` (origin/main, remotes/origin/main o refs/remotes/origin/main): «main», o nulo. */
+    trackingName(ref) {
+      if (!this.remote) return null;
+      const m = /^(?:refs\/)?(?:remotes\/)?([^/]+)\/(.+)$/.exec(ref);
+      return m && m[1] === this.remote.name && this.tracking.has(m[2]) ? m[2] : null;
+    }
+
+    /** Cuántos commits tiene `a` que `b` no: el adelanto (o, al revés, el atraso) de una rama frente a su remoto. */
+    aheadOf(a, b) {
+      const theirs = this.ancestors(b);
+      return [...this.ancestors(a)].filter((s) => !theirs.has(s)).length;
+    }
+
+    /** La línea de status que compara la rama actual con la que sigue en el remoto (vacía si no sigue ninguna). */
+    trackingLines() {
+      const b = this.head.branch;
+      const up = b && this.remote && this.upstream.get(b);
+      if (!up) return [];
+      const name = `${this.remote.name}/${up}`;
+      if (!this.tracking.has(up)) return [`Your branch is based on '${name}', but the upstream is gone.`];
+      const ahead = this.aheadOf(this.headSha, this.tracking.get(up));
+      const behind = this.aheadOf(this.tracking.get(up), this.headSha);
+      const n = (k) => `${k} commit${k > 1 ? 's' : ''}`;
+      if (ahead && behind) return [`Your branch and '${name}' have diverged,`, `and have ${ahead} and ${behind} different commits each, respectively.`, '  (use "git merge" or "git rebase" to bring in the remote changes)'];
+      if (ahead) return [`Your branch is ahead of '${name}' by ${n(ahead)}.`, '  (use "git push" to publish your local commits)'];
+      if (behind) return [`Your branch is behind '${name}' by ${n(behind)}, and can be fast-forwarded.`, '  (use "git merge" to update your local branch)'];
+      return [`Your branch is up to date with '${name}'.`];
+    }
+
     /** Qué commit nombra `ref`: HEAD, rama, sha (o su principio), con ~n y ^ detrás. Nulo si no existe. */
     resolve(ref) {
       const m = /^(.*?)((?:[~^]\d*)*)$/.exec(ref);
@@ -113,6 +146,7 @@
       } else if (base === 'HEAD' || base === '@') sha = this.headSha;
       else if (this.branches.has(base)) sha = this.branches.get(base);
       else if (this.tags.has(base)) sha = this.tags.get(base);
+      else if (this.trackingName(base) != null) sha = this.tracking.get(this.trackingName(base));
       else if (/^[0-9a-f]{4,40}$/i.test(base)) {
         const hits = [...this.commits.keys()].filter((s) => s.startsWith(base.toLowerCase()));
         if (hits.length !== 1) return null;
@@ -134,9 +168,10 @@
       return sha;
     }
 
-    /** Commits de la historia de `sha`, del más nuevo al más viejo (los padres siempre después del hijo). */
+    /** Commits de la historia de `sha` (o de varios, juntos), del más nuevo al más viejo (los padres siempre después del hijo). */
     log(sha) {
-      const set = this.ancestors(sha);
+      const set = new Set();
+      for (const tip of Array.isArray(sha) ? sha : [sha]) for (const s of this.ancestors(tip)) set.add(s);
       const out = [];
       const children = new Map([...set].map((s) => [s, 0]));
       for (const s of set) for (const p of this.commits.get(s).parents) children.set(p, children.get(p) + 1);
@@ -158,6 +193,7 @@
       const names = [...this.branches].filter(([, s]) => s === sha).map(([n]) => n);
       const head = this.head.branch ? this.branches.get(this.head.branch) === sha : this.head.sha === sha;
       const list = names.map((n) => (head && this.head.branch === n ? `HEAD -> ${n}` : n));
+      if (this.remote) for (const [n, s] of this.tracking) if (s === sha) list.push(`${this.remote.name}/${n}`);
       for (const [n, s] of this.tags) if (s === sha) list.push(`tag: ${n}`);
       if (head && !this.head.branch) list.unshift('HEAD');
       return list.length ? ` (${list.join(', ')})` : '';
@@ -425,7 +461,7 @@
       this.renamed = null;
       // la primera línea del reflog es de dónde partió HEAD
       if (!this.reflog.length && shaBefore) this.reflog.push({ sha: shaBefore, msg: `commit: ${this.commits.get(shaBefore).message}` });
-      const before = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
+      const before = JSON.stringify([[...this.branches], [...this.tags], [...this.tracking], this.remote && [...this.remote.branches], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
       try {
         // rm y mv sin «git» delante son los de la terminal: borran o mueven el archivo sin preparar nada
         const handler = !viaGit && SHELL[cmd] ? SHELL[cmd] : this.commands[cmd];
@@ -439,7 +475,7 @@
           this.reflog.push({ sha: this.headSha, msg: this.reflogMessage(cmd, args, headBefore ?? this.short(shaBefore ?? '')) });
           if (this.reflog.length > 100) this.reflog.shift();
         }
-        const after = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
+        const after = JSON.stringify([[...this.branches], [...this.tags], [...this.tracking], this.remote && [...this.remote.branches], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
         return { ok: true, lines, changed: before !== after };
       } catch (e) {
         if (!(e instanceof GitError)) throw e;
@@ -514,7 +550,10 @@
         'log [--oneline]             the history that leads to HEAD',
         'show [<commit>]             the sha, message and files of a commit (HEAD without one), moving nothing (--name-status, -s)',
         'diff [--staged] [-- <path>] the changed files not yet prepared (--staged: the prepared ones), moving nothing (--name-status)',
-        'status                      where HEAD is',
+        'status                      where HEAD is (and how far ahead or behind origin the branch is)',
+        'push [-u] [-f] [origin [<branch>]]  send the current branch to the remote (-u remembers it as upstream)',
+        'fetch [origin]              bring what the remote has into origin/<branch>, without touching your branches',
+        'branch -r | -a              list the remote-tracking branches (origin/<branch>), or every branch',
       ];
     },
 
@@ -563,15 +602,15 @@
     },
 
     status() {
-      const where = this.head.branch ? `On branch ${this.head.branch}` : `HEAD detached at ${this.short(this.head.sha)}`;
-      if (this.merging) return [where, 'All conflicts fixed but you are still merging.', '  (use "git commit" to conclude merge)', '  (use "git merge --abort" to cancel it)'];
-      if (this.rebasing) return [where, `interactive rebase in progress; onto ${this.short(this.rebasing.onto)}`, `Last command done (1 command done), ${this.rebasing.rest.length} remaining.`, '  (use "git rebase --continue" to replay the rest)', '  (use "git rebase --abort" to check out the original branch)'];
+      const where = this.head.branch ? [`On branch ${this.head.branch}`, ...this.trackingLines()] : [`HEAD detached at ${this.short(this.head.sha)}`];
+      if (this.merging) return [...where, 'All conflicts fixed but you are still merging.', '  (use "git commit" to conclude merge)', '  (use "git merge --abort" to cancel it)'];
+      if (this.rebasing) return [...where, `interactive rebase in progress; onto ${this.short(this.rebasing.onto)}`, `Last command done (1 command done), ${this.rebasing.rest.length} remaining.`, '  (use "git rebase --continue" to replay the rest)', '  (use "git rebase --abort" to check out the original branch)'];
       if (this.picking) {
         const verb = this.picking.revert ? 'revert' : 'cherry-pick';
-        return [where, `You are currently ${this.picking.revert ? 'reverting' : 'cherry-picking'} commit ${this.short(this.picking.sha)}.`, `  (use "git ${verb} --continue" to commit it)`, `  (use "git ${verb} --abort" to cancel the ${verb} operation)`];
+        return [...where, `You are currently ${this.picking.revert ? 'reverting' : 'cherry-picking'} commit ${this.short(this.picking.sha)}.`, `  (use "git ${verb} --continue" to commit it)`, `  (use "git ${verb} --abort" to cancel the ${verb} operation)`];
       }
-      if (!this.dirty().length && !this.untracked.length) return [where, 'nothing to commit, working tree clean'];
-      const out = [where];
+      if (!this.dirty().length && !this.untracked.length) return [...where, 'nothing to commit, working tree clean'];
+      const out = [...where];
       const kind = (s) => (s.gone ? `deleted:    ${s.file}` : s.from ? `renamed:    ${s.from} -> ${s.file}` : `${s.isNew ? 'new file' : 'modified'}:   ${s.file}`);
       if (this.staged.length) out.push('Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', ...this.staged.map((s) => `\t${kind(s)}`));
       if (this.work.length || this.deleted.length) out.push('Changes not staged for commit:', ...this.unstagedLines());
@@ -658,10 +697,15 @@
     },
 
     log(args) {
-      const { flags } = parse(args);
-      const sha = this.headSha;
-      if (!sha) fail('fatal: your current branch does not have any commits yet');
-      const shas = this.log(sha);
+      const { flags, rest } = parse(args);
+      // log <ref>… desde esos commits (origin/main tras un fetch); --all, desde todas las ramas, las de seguimiento y las etiquetas
+      const tips = rest.map((ref) => this.resolve(ref) ?? fail(`fatal: ambiguous argument '${ref}': unknown revision or path not in the working tree.`));
+      if (flags['--all']) tips.push(...[...this.branches.values(), ...(this.remote ? this.tracking.values() : []), ...this.tags.values()].filter(Boolean));
+      if (!tips.length) {
+        if (!this.headSha) fail('fatal: your current branch does not have any commits yet');
+        tips.push(this.headSha);
+      } else if (flags['--all'] && this.headSha) tips.push(this.headSha);
+      const shas = this.log([...new Set(tips)]);
       if (flags['--oneline'] || flags['--oneline'] === true) {
         return shas.map((s) => `${this.short(s)}${this.decorations(s)} ${this.commits.get(s).message}`);
       }
@@ -762,13 +806,16 @@
             fail(`error: the branch '${name}' is not fully merged.\nIf you are sure you want to delete it, run 'branch -D ${name}'.`);
           }
           this.branches.delete(name);
+          this.upstream.delete(name);
           out.push(`Deleted branch ${name} (was ${this.short(tip)}).`);
         }
         return out;
       }
-      if (!rest.length) {
-        return [...this.branches.keys()].sort().map((n) => `${this.head.branch === n ? '*' : ' '} ${n}`);
-      }
+      const remotes = () => (this.remote ? [...this.tracking.keys()].sort().map((n) => `${this.remote.name}/${n}`) : []);
+      if (flags['-r'] || flags['--remotes']) return remotes().map((n) => `  ${n}`);
+      const locals = () => [...this.branches.keys()].sort().map((n) => `${this.head.branch === n ? '*' : ' '} ${n}`);
+      if (flags['-a'] || flags['--all']) return [...locals(), ...remotes().map((n) => `  remotes/${n}`)];
+      if (!rest.length) return locals();
       const [name, start] = rest;
       if (!validName(name)) fail(`fatal: '${name}' is not a valid branch name`);
       if (this.branches.has(name)) fail(`fatal: a branch named '${name}' already exists`);
@@ -790,6 +837,15 @@
       }
       const [target] = rest;
       if (!target) fail('fatal: missing branch or commit argument');
+      // como git: checkout de una rama que solo está en el remoto la crea siguiéndolo
+      if (!this.branches.has(target) && this.remote && this.tracking.has(target) && validName(target)) {
+        const sha = this.tracking.get(target);
+        if (sha !== this.headSha) this.needClean('checkout');
+        this.branches.set(target, sha);
+        this.upstream.set(target, target);
+        this.head = { branch: target };
+        return [`branch '${target}' set up to track '${this.remote.name}/${target}'.`, `Switched to a new branch '${target}'`];
+      }
       if (this.branches.has(target)) {
         if (this.head.branch === target) return [`Already on '${target}'`];
         if (this.branches.get(target) !== this.headSha) this.needClean('checkout');
@@ -834,7 +890,7 @@
       }
       const msg = flags['-m'] ?? flags['--message'];
       if (msg === true || msg === '') fail('error: switch `m\' requires a value');
-      const sha = this.make(msg || `Merge branch '${name}'`, [ours, theirs]);
+      const sha = this.make(msg || (this.trackingName(name) != null && !this.branches.has(name) ? `Merge remote-tracking branch '${name}'` : `Merge branch '${name}'`), [ours, theirs]);
       this.moveHead(sha);
       return ["Merge made by the 'ort' strategy."];
     },
@@ -1086,6 +1142,12 @@
     for (const [n, s] of entries) this.branches.set(n, s);
     if (this.head.branch === old) this.head = { branch: name };
     if (this.defaultBranch === old) this.defaultBranch = name;
+    // como git: la rama renombrada sigue al mismo remoto, y la que se pisó con -M pierde el suyo
+    this.upstream.delete(name);
+    if (this.upstream.has(old)) {
+      this.upstream.set(name, this.upstream.get(old));
+      this.upstream.delete(old);
+    }
     this.renamed = { from: old, to: name };
     return [];
   }
@@ -1129,7 +1191,8 @@
     }
     const [target] = rest;
     if (!target) fail('fatal: missing branch or commit argument');
-    if (!this.branches.has(target)) {
+    if (!this.branches.has(target) && !(this.remote && this.tracking.has(target))) {
+      if (this.trackingName(target) != null) fail(`fatal: a branch is expected, got remote branch '${target}'\nhint: use 'switch --detach ${target}' to look at it, or 'switch ${this.trackingName(target)}' to work on it`);
       if (this.resolve(target)) fail(`fatal: a branch is expected, got commit '${target}'\nhint: use 'switch --detach ${target}' to go there without a branch`);
       fail(`fatal: invalid reference: ${target}`);
     }
@@ -1478,12 +1541,118 @@
 
   /* ---------- ejercicios ---------- */
 
+  /* ---------- el remoto simulado ---------- */
+
+  /** Sin remoto (un repo vacío, un ensayo sobre un repo real) push y fetch fallan como git sin `origin`. */
+  Repo.prototype.needRemote = function (name, verb) {
+    if (!this.remote) {
+      fail(verb === 'push'
+        ? 'fatal: No configured push destination.\nThis practice repository has no remote to push to.'
+        : 'fatal: No remote repository specified.  Please, specify either a URL or a\nremote name from which new revisions should be fetched.');
+    }
+    if (name != null && name !== this.remote.name) fail(`fatal: '${name}' does not appear to be a git repository\nfatal: Could not read from remote repository.`);
+  };
+
+  /** Una línea de la tabla de push y fetch: «   a1b2c3d..e4f5a6b  main -> origin/main». */
+  function refLine(from, to, src, dst, short) {
+    if (!from) return ` * [new branch]      ${src} -> ${dst}`;
+    if (to === null) return ` - [deleted]         ${dst}`;
+    return `   ${short(from)}..${short(to)}  ${src} -> ${dst}`;
+  }
+
+  /** `push [-u] [-f] [origin [<rama>]]`: sube la rama (la actual sin nombre) al remoto, si solo avanza o con -f. */
+  Repo.prototype.commands.push = function (args) {
+    const { flags, rest } = parse(args);
+    for (const f of Object.keys(flags)) if (!['-u', '--set-upstream', '-f', '--force'].includes(f)) fail(`error: unknown option '${f.replace(/^-+/, '')}'\nusage: push [-u] [-f] [origin [<branch>]]`);
+    if (rest.length > 2) fail('fatal: this practice pushes one branch at a time: push [origin [<branch>]]');
+    const [remote, ref] = rest;
+    this.needRemote(remote, 'push');
+    if (ref && ref.includes(':')) fail(`fatal: this practice pushes branches by name, without refspecs: push origin <branch>`);
+    const branch = ref ?? this.head.branch;
+    if (!branch) fail('fatal: You are not currently on a branch.\nTo push the history leading to the current (detached HEAD)\nstate now, use\n\n    git push origin HEAD:<name-of-remote-branch>');
+    if (!this.branches.has(branch) || !this.branches.get(branch)) fail(`error: src refspec ${branch} does not match any\nerror: failed to push some refs to '${this.remote.name}'`);
+    const setUp = !!(flags['-u'] || flags['--set-upstream']);
+    // sin nombre y sin rama de seguimiento, git (push.default=simple) no adivina a dónde subirla
+    if (!remote && !setUp && !this.upstream.has(branch)) fail(`fatal: The current branch ${branch} has no upstream branch.\nTo push the current branch and set the remote as upstream, use\n\n    git push --set-upstream ${this.remote.name} ${branch}`);
+    // como git (push.default=simple): sin decir a dónde, la rama que se sigue tiene que llamarse igual
+    if (!remote && this.upstream.has(branch) && this.upstream.get(branch) !== branch) fail(`fatal: The upstream branch of your current branch does not match\nthe name of your current branch.  To push to the branch of the same name\non the remote, use\n\n    git push ${this.remote.name} ${branch}`);
+    const dst = branch;
+    const ours = this.branches.get(branch);
+    const theirs = this.remote.branches.get(dst) ?? null;
+    const out = [];
+    const track = () => {
+      if (!setUp) return;
+      this.upstream.set(branch, dst);
+      out.push(`branch '${branch}' set up to track '${this.remote.name}/${dst}'.`);
+    };
+    if (theirs === ours) {
+      this.tracking.set(dst, ours);
+      track();
+      return ['Everything up-to-date', ...out];
+    }
+    const force = !!(flags['-f'] || flags['--force']);
+    if (theirs && !this.isAncestor(theirs, ours) && !force) {
+      // «fetch first» si el remoto tiene commits que aquí no se conocen; «non-fast-forward» si se conocen pero faltan en la rama
+      const known = this.tracking.get(dst) === theirs;
+      fail([
+        `To ${this.remote.name}`,
+        ` ! [rejected]        ${branch} -> ${dst} (${known ? 'non-fast-forward' : 'fetch first'})`,
+        `error: failed to push some refs to '${this.remote.name}'`,
+        known
+          ? `hint: Updates were rejected because the tip of your current branch is behind\nhint: its remote counterpart. Integrate the remote changes (e.g. 'merge ${this.remote.name}/${dst}')\nhint: before pushing again.`
+          : `hint: Updates were rejected because the remote contains work that you do not\nhint: have locally. Use 'fetch' to bring it, then 'merge' or 'rebase' it,\nhint: before pushing again.`,
+      ].join('\n'));
+    }
+    const forced = theirs && !this.isAncestor(theirs, ours);
+    this.remote.branches.set(dst, ours);
+    this.tracking.set(dst, ours);
+    out.unshift(`To ${this.remote.name}`, forced ? ` + ${this.short(theirs)}...${this.short(ours)} ${branch} -> ${dst} (forced update)` : refLine(theirs, ours, branch, dst, (x) => this.short(x)));
+    track();
+    return out;
+  };
+
+  /** `fetch [origin]`: copia lo que tiene el remoto en las ramas de seguimiento (origin/<rama>); no mueve las propias. */
+  Repo.prototype.commands.fetch = function (args) {
+    const { flags, rest } = parse(args);
+    for (const f of Object.keys(flags)) if (!['--all', '-v', '--verbose'].includes(f)) fail(`error: unknown option '${f.replace(/^-+/, '')}'\nusage: fetch [origin]`);
+    if (rest.length > 1) fail('fatal: this practice fetches whole remotes: fetch [origin]');
+    this.needRemote(rest[0], 'fetch');
+    const lines = [];
+    for (const [name, sha] of [...this.remote.branches].sort(([a], [b]) => (a < b ? -1 : 1))) {
+      const had = this.tracking.get(name) ?? null;
+      if (had === sha) continue;
+      const forced = had && !this.isAncestor(had, sha);
+      lines.push(forced ? ` + ${this.short(had)}...${this.short(sha)} ${name} -> ${this.remote.name}/${name}  (forced update)` : refLine(had, sha, name, `${this.remote.name}/${name}`, (x) => this.short(x)));
+      this.tracking.set(name, sha);
+    }
+    return lines.length ? [`From ${this.remote.name}`, ...lines] : [];
+  };
+
+  /** Lo que un ejercicio deja en el remoto como si lo hubiera subido otra persona: un commit nuevo en esa rama del
+      remoto, que aquí no se conoce hasta el próximo fetch. */
+  Repo.prototype.remoteCommit = function (branch, message, author) {
+    const tip = this.remote.branches.get(branch) ?? null;
+    const sha = this.make(message, tip ? [tip] : []);
+    if (author) this.commits.get(sha).author = author;
+    this.remote.branches.set(branch, sha);
+    return sha;
+  };
+
+  /** Un remoto `origin` con una copia de la rama por defecto, seguida por ella: como un repo recién clonado. */
+  Repo.prototype.addOrigin = function () {
+    const tip = this.branches.get(this.defaultBranch);
+    this.remote = { name: 'origin', branches: new Map(tip ? [[this.defaultBranch, tip]] : []) };
+    if (tip) this.tracking.set(this.defaultBranch, tip);
+    this.upstream.set(this.defaultBranch, this.defaultBranch);
+  };
+
   const BASE = ['Initial commit', 'Add README', 'Add login form'];
 
   /** Un repo con la historia de partida: main con sus commits, y lo que pida cada ejercicio. */
   function scenario(build, now) {
     const r = new Repo({ now: now ?? Date.now() - 6 * 36e5 });
     for (const m of BASE) r.commit(m);
+    r.addOrigin();
     build?.(r);
     return r;
   }
@@ -1657,6 +1826,22 @@
         return !!main && r.stashes.length === 1 && r.stashes[0].id === 2 && r.stashSeen.has(1) && r.stashBack.has(1) && r.stashes[0].files.join() === 'notes.txt' && [...r.work].sort().join() === 'login.css,login.js' && r.head.branch === 'main' && r.log(main).length === BASE.length;
       },
     },
+    {
+      id: 'push',
+      setup: (r) => {
+        // otra persona subió un arreglo a origin/main que aquí todavía no se conoce, y main tiene un commit propio
+        r.remoteCommit('main', 'Fix typo in README', TEAMMATE);
+        r.commit('Add search box');
+      },
+      done: (r) => {
+        const main = r.branches.get('main');
+        const up = r.remote?.branches.get('main');
+        if (!main || up !== main) return false;
+        // el remoto tiene los dos: el arreglo ajeno (nada se pisó con push -f) y el commit propio
+        const msgs = r.log(main).map((s) => r.commits.get(s).message);
+        return msgs.includes('Fix typo in README') && msgs.includes('Add search box');
+      },
+    },
   ];
 
   /** main avanzó un commit mientras feature llevaba dos: las ramas divergieron. */
@@ -1686,6 +1871,8 @@
     [new RegExp(`^tip:(${BRANCH})~(.{1,60})$`), (r, [a, t]) => !!r.branches.get(a) && r.commits.get(r.branches.get(a)).message.toLowerCase().includes(t.toLowerCase())],
     // la rama tiene commits que la otra no (sin fusionar en ella)
     [new RegExp(`^unmerged:(${BRANCH})>(${BRANCH})$`), (r, [a, b]) => !!r.branches.get(a) && !!r.branches.get(b) && !r.isAncestor(r.branches.get(a), r.branches.get(b))],
+    // la rama está en origin tal cual: se subió con push y no quedó nada sin subir
+    [new RegExp(`^pushed:(${BRANCH})$`), (r, [a]) => !!r.branches.get(a) && r.remote?.branches.get(a) === r.branches.get(a)],
   ];
 
   const b64 = {

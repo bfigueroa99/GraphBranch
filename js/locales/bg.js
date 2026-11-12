@@ -504,6 +504,8 @@ GB.i18n.define('bg', {
   'health.stars': 'Нови звезди',
   'health.starsWeek': '{week} тази седмица · {prev} миналата седмица ({delta})',
   'health.forksNew': 'Нови форкове: {week} тази седмица · {prev} миналата седмица ({delta})',
+  'health.starsWeekOnly': '{week} тази седмица (миналата седмица не е заредена изцяло)',
+  'health.forksNewOnly': 'Нови форкове: {week} тази седмица (миналата седмица не е заредена изцяло)',
   'health.stale': 'Клонове без активност над 30 дни и без pull request',
   'health.prs': 'Отворени pull request-и, най-старите първо',
   'health.unreviewed': 'Pull request-и без преглед от над 7 дни',

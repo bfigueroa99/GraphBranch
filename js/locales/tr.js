@@ -504,6 +504,8 @@ GB.i18n.define('tr', {
   'health.stars': 'Yeni yıldızlar',
   'health.starsWeek': 'bu hafta {week} · geçen hafta {prev} ({delta})',
   'health.forksNew': 'Yeni fork\'lar: bu hafta {week} · geçen hafta {prev} ({delta})',
+  'health.starsWeekOnly': 'bu hafta {week} (geçen hafta tamamen yüklenmedi)',
+  'health.forksNewOnly': 'Yeni fork\'lar: bu hafta {week} (geçen hafta tamamen yüklenmedi)',
   'health.stale': '30 günden uzun süredir hareketsiz ve pull request’i olmayan dallar',
   'health.prs': 'Açık pull request’ler, en eskisi önce',
   'health.unreviewed': '7 günden uzun süredir incelenmemiş pull request’ler',

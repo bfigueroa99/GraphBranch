@@ -504,6 +504,8 @@ GB.i18n.define('ja', {
   'health.stars': '新しいスター',
   'health.starsWeek': '今週 {week} · 先週 {prev}（{delta}）',
   'health.forksNew': '新しいフォーク: 今週 {week} · 先週 {prev}（{delta}）',
+  'health.starsWeekOnly': '今週 {week}（先週分は全部読み込まれていません）',
+  'health.forksNewOnly': '新しいフォーク: 今週 {week}（先週分は全部読み込まれていません）',
   'health.stale': '30日以上動きがなく、プルリクエストもないブランチ',
   'health.prs': 'オープン中のプルリクエスト（古い順）',
   'health.unreviewed': '7 日以上レビューのないプルリクエスト',

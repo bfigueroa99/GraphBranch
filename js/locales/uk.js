@@ -520,6 +520,8 @@ GB.i18n.define('uk', {
   'health.stars': 'Нові зірки',
   'health.starsWeek': '{week} цього тижня · {prev} минулого тижня ({delta})',
   'health.forksNew': 'Нові форки: {week} цього тижня · {prev} минулого тижня ({delta})',
+  'health.starsWeekOnly': '{week} цього тижня (минулий тиждень завантажено не повністю)',
+  'health.forksNewOnly': 'Нові форки: {week} цього тижня (минулий тиждень завантажено не повністю)',
   'health.stale': 'Гілки без активності понад 30 днів і без pull request',
   'health.prs': 'Відкриті pull request, спочатку найстарші',
   'health.unreviewed': 'Pull request без рев’ю понад 7 днів',

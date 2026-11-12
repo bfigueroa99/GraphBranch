@@ -535,7 +535,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: la salud de la demo con Playwright contra `node e2e/serve.mjs 4173`, en es a 1280 px: «1 esta semana (la anterior no está cargada entera)» en estrellas y en forks nuevos, sin errores de consola; 40 idiomas con `node tools/check-i18n.mjs`; auditoría: la de la puerta.
 - Skills: no aplica: un arreglo de una regla en un panel propio, sin dominio externo.
 - Arena: no aplica: una sola forma obvia (la actividad más vieja cargada decide si la semana anterior está medida).
-- OMC: plan=— · revisión=3 hallazgos, APPROVE, ninguno CRITICAL ni HIGH (0 arreglados: el MEDIUM de la semana actual, que tampoco avisa si está a medias, va como pendiente 21 [Errores]; el LOW de `fullPrev` con cualquier tipo de actividad, coherente mientras las actividades salgan del feed; el LOW del smoke que acepta las dos formas, cubiertas las dos por `node --test`) · verificación=pendiente
+- OMC: plan=— · revisión=3 hallazgos, APPROVE, ninguno CRITICAL ni HIGH (0 arreglados: el MEDIUM de la semana actual, que tampoco avisa si está a medias, va como pendiente 21 [Errores]; el LOW de `fullPrev` con cualquier tipo de actividad, coherente mientras las actividades salgan del feed; el LOW del smoke que acepta las dos formas, cubiertas las dos por `node --test`) · verificación=PASS
 - Reclamo: loop/279, sin colisión
 - Validado: 722 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 280, expansión: ítem 202 (Salud del repo: factor de ausencia, Análisis)

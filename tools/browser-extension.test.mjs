@@ -141,3 +141,28 @@ test('al pasar a otro repo sin recargar, el botón lleva al nuevo y su título t
   p.navegar('https://github.com/settings/profile');
   assert.equal(p.boton, null, 'fuera de un repo, el botón se va');
 });
+
+/** Ancho y alto de un PNG (su cabecera IHDR). */
+const pngSize = (file) => {
+  const b = readFileSync(file);
+  assert.equal(b.toString('latin1', 1, 4), 'PNG', `${file} no es un PNG`);
+  return [b.readUInt32BE(16), b.readUInt32BE(20)];
+};
+
+test('los íconos: los tamaños que usan Chrome y su tienda (16, 32, 48 y 128), y cada archivo mide lo que dice', () => {
+  assert.deepEqual(Object.keys(manifest.icons), ['16', '32', '48', '128']); // la Chrome Web Store exige el de 128
+  for (const [size, f] of Object.entries(manifest.icons)) assert.deepEqual(pngSize(join(dir, f)), [Number(size), Number(size)], f);
+});
+
+test('la descripción va en inglés y en español, y entra en los 132 caracteres que admite la Chrome Web Store', () => {
+  assert.equal(manifest.default_locale, 'en');
+  assert.equal(manifest.description, '__MSG_description__');
+  for (const code of ['en', 'es']) {
+    const msgs = JSON.parse(readFileSync(join(dir, '_locales', code, 'messages.json'), 'utf8'));
+    assert.deepEqual(Object.keys(msgs), ['description'], code);
+    const text = msgs.description.message;
+    assert.ok([...text].length > 40 && [...text].length <= 132, `${code}: ${[...text].length} caracteres`);
+    assert.match(text, /GraphBranch/);
+    for (const site of ['GitHub', 'GitLab', 'Codeberg', 'Bitbucket']) assert.match(text, new RegExp(site), `${code}: falta ${site}`);
+  }
+});

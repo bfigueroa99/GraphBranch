@@ -597,9 +597,30 @@ test('estrellas nuevas: la semana actual frente a la anterior, cada usuario una 
   assert.equal(h.stars.week, 3);
   assert.equal(h.stars.prev, 2);
   // la primera vez que se vio una estrella decide su semana: ana la puso hace 10 días y otra vez ayer
-  const again = compute(repo(), [star('a', 10, 'ana'), star('b', 1, 'ana')], NOW);
+  const old = { id: 'p0', kind: 'push', time: ago(20) }; // algo de hace 20 días: la semana anterior está cargada entera
+  const again = compute(repo(), [old, star('a', 10, 'ana'), star('b', 1, 'ana')], NOW);
   assert.deepEqual({ ...again.stars }, { week: 0, prev: 1 });
-  assert.deepEqual({ ...compute(repo(), [], NOW).stars }, { week: 0, prev: 0 });
+  assert.deepEqual({ ...compute(repo(), [old], NOW).stars }, { week: 0, prev: 0 });
+});
+
+test('estrellas y forks nuevos: sin actividad cargada de hace dos semanas, la semana anterior no se mide (null), no es 0', () => {
+  const star = (id, d, login) => ({ id, kind: 'star', time: ago(d), actor: { login } });
+  const fork = (id, d, detail) => ({ id, kind: 'fork', time: ago(d), detail });
+  // el feed de GitHub trajo solo los últimos 5 días: 3 estrellas y 2 forks
+  const recent = [star('s1', 1, 'ana'), star('s2', 2, 'beto'), star('s3', 4.5, 'carla'), fork('f1', 1, 'ana/x'), fork('f2', 3, 'beto/x'), { id: 'p1', kind: 'push', time: ago(5) }];
+  let h = compute(repo(), recent, NOW);
+  assert.deepEqual({ ...h.stars }, { week: 3, prev: null });
+  assert.deepEqual({ ...h.forkTrend }, { week: 2, prev: null });
+  // con una estrella de hace 10 días la semana anterior sigue a medias (le faltan 4 días): tampoco se mide
+  h = compute(repo(), [...recent, star('s4', 10, 'dani')], NOW);
+  assert.deepEqual({ ...h.stars }, { week: 3, prev: null });
+  // basta una actividad de cualquier tipo de hace 14 días o más para que la anterior cuente, aunque sea 0
+  h = compute(repo(), [...recent, { id: 'c1', kind: 'comment', time: ago(14) }], NOW);
+  assert.deepEqual({ ...h.stars }, { week: 3, prev: 0 });
+  assert.deepEqual({ ...h.forkTrend }, { week: 2, prev: 0 });
+  // una actividad sin hora o con la hora en el futuro no prueba nada
+  h = compute(repo(), [...recent, { id: 'x1', kind: 'push' }, { id: 'x2', kind: 'push', time: ago(-30) }], NOW);
+  assert.equal(h.stars.prev, null);
 });
 
 test('forks nuevos: la semana actual frente a la anterior, cada fork una vez y sin consultas', () => {
@@ -619,7 +640,8 @@ test('forks nuevos: la semana actual frente a la anterior, cada fork una vez y s
   const h = compute(repo(), acts, NOW);
   assert.deepEqual({ ...h.forkTrend }, { week: 3, prev: 2 });
   // la primera vez que se vio un fork decide su semana, y la lista de forks activos (data.forks) no cuenta
-  const again = compute({ ...repo(), forks: [{ fullName: 'x/y', url: 'https://github.com/x/y', pushedAt: ago(1), stars: 0 }] }, [fork('a', 10, 'ana/orbita'), fork('b', 1, 'ana/orbita')], NOW);
+  const old = { id: 'p0', kind: 'push', time: ago(20) }; // algo de hace 20 días: la semana anterior está cargada entera
+  const again = compute({ ...repo(), forks: [{ fullName: 'x/y', url: 'https://github.com/x/y', pushedAt: ago(1), stars: 0 }] }, [old, fork('a', 10, 'ana/orbita'), fork('b', 1, 'ana/orbita')], NOW);
   assert.deepEqual({ ...again.forkTrend }, { week: 0, prev: 1 });
-  assert.deepEqual({ ...compute(repo(), [], NOW).forkTrend }, { week: 0, prev: 0 });
+  assert.deepEqual({ ...compute(repo(), [old], NOW).forkTrend }, { week: 0, prev: 0 });
 });

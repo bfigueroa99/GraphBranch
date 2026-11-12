@@ -504,6 +504,8 @@ GB.i18n.define('ta', {
   'health.stars': 'புதிய நட்சத்திரங்கள்',
   'health.starsWeek': 'இந்த வாரம் {week} · கடந்த வாரம் {prev} ({delta})',
   'health.forksNew': 'புதிய ஃபோர்க்குகள்: இந்த வாரம் {week} · கடந்த வாரம் {prev} ({delta})',
+  'health.starsWeekOnly': 'இந்த வாரம் {week} (கடந்த வாரம் முழுதாக ஏற்றப்படவில்லை)',
+  'health.forksNewOnly': 'புதிய ஃபோர்க்குகள்: இந்த வாரம் {week} (கடந்த வாரம் முழுதாக ஏற்றப்படவில்லை)',
   'health.stale': '30 நாட்களுக்கு மேல் செயல்பாடு இல்லாத, pull request இல்லாத கிளைகள்',
   'health.prs': 'திறந்த pull request, பழையவை முதலில்',
   'health.unreviewed': '7 நாட்களுக்கு மேல் மதிப்பாய்வு இல்லாத pull request',

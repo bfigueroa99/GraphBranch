@@ -504,6 +504,8 @@ GB.i18n.define('vi', {
   'health.stars': 'Sao mới',
   'health.starsWeek': '{week} tuần này · {prev} tuần trước ({delta})',
   'health.forksNew': 'Fork mới: {week} tuần này · {prev} tuần trước ({delta})',
+  'health.starsWeekOnly': '{week} tuần này (tuần trước chưa tải đủ)',
+  'health.forksNewOnly': 'Fork mới: {week} tuần này (tuần trước chưa tải đủ)',
   'health.stale': 'Nhánh không hoạt động hơn 30 ngày và không có pull request',
   'health.prs': 'Pull request đang mở, cũ nhất trước',
   'health.unreviewed': 'Pull request chưa có review nào hơn 7 ngày',

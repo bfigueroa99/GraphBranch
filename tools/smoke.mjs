@@ -827,7 +827,8 @@ if (seccion('Escritorio (1280×800)'))
     await page.click('#hl-forks-stars');
     // la demo trae un fork de hace unos días (y suma otros en vivo): los forks nuevos de la semana frente a la anterior
     const forkTrend = await page.$eval('#hl-forks-trend', (p) => p.textContent).catch(() => '');
-    const fm = /^Forks nuevos: (\d+) esta semana · (\d+) la anterior \(([+−]\d+|±0)\)$/.exec(forkTrend);
+    // la semana anterior se compara solo si la actividad cargada llega entera a ella; si no, el panel lo dice
+    const fm = /^Forks nuevos: (\d+) esta semana(?: · (\d+) la anterior \(([+−]\d+|±0)\)| \(la anterior no está cargada entera\))$/.exec(forkTrend);
     if (!fm || Number(fm[1]) < 1) throw new Error(`los forks nuevos de la demo no salen en la salud: «${forkTrend}»`);
     await page.click('#hl-forks-toggle');
     const hidden = await page.$$eval('#hl-forks a.hl-row', (as) => as.length);
@@ -839,7 +840,7 @@ if (seccion('Escritorio (1280×800)'))
     if (/undefined|NaN|health\./.test(info.text)) throw new Error('texto sin resolver en el panel: ' + info.text.slice(0, 120));
     // la demo trae una estrella de hace unos días (y suma otras en vivo): la semana actual frente a la anterior
     const stars = await page.$eval('#hl-stars', (s) => s.querySelector('.hl-line')?.textContent || '');
-    const sm = /^(\d+) esta semana · (\d+) la anterior \(([+−]\d+|±0)\)$/.exec(stars);
+    const sm = /^(\d+) esta semana(?: · (\d+) la anterior \(([+−]\d+|±0)\)| \(la anterior no está cargada entera\))$/.exec(stars);
     if (!sm || Number(sm[1]) < 1) throw new Error(`las estrellas nuevas de la demo no salen en la salud: «${stars}»`);
     if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
     await page.click('#hl-clash-go');

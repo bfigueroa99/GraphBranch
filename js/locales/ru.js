@@ -520,6 +520,8 @@ GB.i18n.define('ru', {
   'health.stars': 'Новые звёзды',
   'health.starsWeek': '{week} на этой неделе · {prev} на прошлой ({delta})',
   'health.forksNew': 'Новые форки: {week} на этой неделе · {prev} на прошлой ({delta})',
+  'health.starsWeekOnly': '{week} на этой неделе (прошлая загружена не целиком)',
+  'health.forksNewOnly': 'Новые форки: {week} на этой неделе (прошлая загружена не целиком)',
   'health.stale': 'Ветки без активности более 30 дней и без pull request',
   'health.prs': 'Открытые pull request, сначала самые старые',
   'health.unreviewed': 'Pull request без ревью дольше 7 дней',

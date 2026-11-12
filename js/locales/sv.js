@@ -504,6 +504,8 @@ GB.i18n.define('sv', {
   'health.stars': 'Nya stjärnor',
   'health.starsWeek': '{week} den här veckan · {prev} förra veckan ({delta})',
   'health.forksNew': 'Nya forkar: {week} den här veckan · {prev} förra veckan ({delta})',
+  'health.starsWeekOnly': '{week} den här veckan (förra veckan är inte helt inläst)',
+  'health.forksNewOnly': 'Nya forkar: {week} den här veckan (förra veckan är inte helt inläst)',
   'health.stale': 'Grenar utan aktivitet på över 30 dagar och utan pull request',
   'health.prs': 'Öppna pull requests, äldst först',
   'health.unreviewed': 'Pull requests utan granskning i över 7 dagar',

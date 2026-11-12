@@ -510,6 +510,8 @@ GB.i18n.define('en', {
   'health.stars': 'New stars',
   'health.starsWeek': '{week} this week · {prev} last week ({delta})',
   'health.forksNew': 'New forks: {week} this week · {prev} last week ({delta})',
+  'health.starsWeekOnly': '{week} this week (last week not fully loaded)',
+  'health.forksNewOnly': 'New forks: {week} this week (last week not fully loaded)',
   'health.stale': 'Branches idle for 30+ days with no pull request',
   'health.prs': 'Open pull requests, oldest first',
   'health.unreviewed': 'Pull requests with no review for over 7 days',

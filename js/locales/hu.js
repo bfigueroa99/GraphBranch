@@ -504,6 +504,8 @@ GB.i18n.define('hu', {
   'health.stars': 'Új csillagok',
   'health.starsWeek': '{week} ezen a héten · {prev} az előző héten ({delta})',
   'health.forksNew': 'Új forkok: {week} ezen a héten · {prev} az előző héten ({delta})',
+  'health.starsWeekOnly': '{week} ezen a héten (az előző hét nincs teljesen betöltve)',
+  'health.forksNewOnly': 'Új forkok: {week} ezen a héten (az előző hét nincs teljesen betöltve)',
   'health.stale': '30 napnál régebben inaktív, pull request nélküli ágak',
   'health.prs': 'Nyitott pull requestek, a legrégebbiek elöl',
   'health.unreviewed': 'Több mint 7 napja átnézés nélküli pull requestek',

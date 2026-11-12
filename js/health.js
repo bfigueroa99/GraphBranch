@@ -198,6 +198,9 @@
       if (!starred.has(k) || a.time < starred.get(k).time) starred.set(k, { time: a.time });
     }
     const starWeeks = weekly([...starred.values()], now);
+    // la semana anterior solo se mide si la actividad cargada llega a ella entera: la más vieja (de cualquier tipo) es de
+    // hace dos semanas o más. Si no (el feed de GitHub trae pocos eventos), la anterior es null y el panel no la compara
+    const fullPrev = acts.some((a) => a.time && a.time <= now - 2 * 7 * DAY);
     // forks nuevos: cada fork (su nombre completo, sin distinguir mayúsculas) cuenta una vez, con la hora en que se vio
     // primero; sin nombre, cada actividad cuenta sola. Sale de la actividad ya cargada: no pide la lista de forks
     const forked = new Map();
@@ -288,8 +291,8 @@
       dora,
       leadSource: { fromCommit, total: lead.length },
       ci,
-      forkTrend: { week: forkWeeks[WEEKS - 1], prev: forkWeeks[WEEKS - 2] }, // forks nuevos en los últimos 7 días y en los 7 anteriores
-      stars: { week: starWeeks[WEEKS - 1], prev: starWeeks[WEEKS - 2] }, // estrellas nuevas en los últimos 7 días y en los 7 anteriores
+      forkTrend: { week: forkWeeks[WEEKS - 1], prev: fullPrev ? forkWeeks[WEEKS - 2] : null }, // forks nuevos en los últimos 7 días y en los 7 anteriores (null: sin medir)
+      stars: { week: starWeeks[WEEKS - 1], prev: fullPrev ? starWeeks[WEEKS - 2] : null }, // estrellas nuevas en los últimos 7 días y en los 7 anteriores (null: sin medir)
       pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), authorWeeks: authorsWeekly(data.commits.values(), now), newAuthorWeeks: newAuthorsWeekly(data.commits.values(), now), tagWeeks: weekly(tagTimes, now), issueWeeks: weekly([...issueOpened.values()], now), prCloseWeeks: weekly([...prClosed.values()], now) }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
     };
   }

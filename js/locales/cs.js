@@ -515,6 +515,8 @@ GB.i18n.define('cs', {
   'health.stars': 'Nové hvězdičky',
   'health.starsWeek': '{week} tento týden · {prev} minulý týden ({delta})',
   'health.forksNew': 'Nové forky: {week} tento týden · {prev} minulý týden ({delta})',
+  'health.starsWeekOnly': '{week} tento týden (minulý týden není načten celý)',
+  'health.forksNewOnly': 'Nové forky: {week} tento týden (minulý týden není načten celý)',
   'health.stale': 'Větve bez aktivity přes 30 dní a bez pull requestu',
   'health.prs': 'Otevřené pull requesty, nejstarší první',
   'health.unreviewed': 'Pull requesty bez revize déle než 7 dní',

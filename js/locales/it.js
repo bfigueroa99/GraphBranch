@@ -505,6 +505,8 @@ GB.i18n.define('it', {
   'health.stars': 'Nuove stelle',
   'health.starsWeek': '{week} questa settimana · {prev} la settimana scorsa ({delta})',
   'health.forksNew': 'Nuovi fork: {week} questa settimana · {prev} la settimana scorsa ({delta})',
+  'health.starsWeekOnly': '{week} questa settimana (la settimana scorsa non è caricata per intero)',
+  'health.forksNewOnly': 'Nuovi fork: {week} questa settimana (la settimana scorsa non è caricata per intero)',
   'health.stale': 'Branch senza attività da oltre 30 giorni e senza pull request',
   'health.prs': 'Pull request aperte, le più vecchie prima',
   'health.unreviewed': 'Pull request senza revisione da più di 7 giorni',

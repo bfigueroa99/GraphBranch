@@ -1891,13 +1891,15 @@
       .join('');
     const delta = (w, p) => (w > p ? `+${U.fmtNum(w - p)}` : w < p ? `−${U.fmtNum(p - w)}` : '±0'); // la diferencia de esta semana frente a la anterior
     // forks nuevos de la semana frente a la anterior, de la actividad ya cargada (sin consultas): solo si alguna de las dos tiene alguno
-    const forkTrend = showForks && (h.forkTrend.week || h.forkTrend.prev) ? `<p class="hl-line" id="hl-forks-trend">${U.esc(t('health.forksNew', { week: U.fmtNum(h.forkTrend.week), prev: U.fmtNum(h.forkTrend.prev), delta: delta(h.forkTrend.week, h.forkTrend.prev) }))}</p>` : '';
+    // la semana frente a la anterior; si la actividad cargada no llega entera a la anterior (prev null), solo esta semana
+    const trend = (x, full, only) => (x.prev == null ? t(only, { week: U.fmtNum(x.week) }) : t(full, { week: U.fmtNum(x.week), prev: U.fmtNum(x.prev), delta: delta(x.week, x.prev) }));
+    const forkTrend = showForks && (h.forkTrend.week || h.forkTrend.prev) ? `<p class="hl-line" id="hl-forks-trend">${U.esc(trend(h.forkTrend, 'health.forksNew', 'health.forksNewOnly'))}</p>` : '';
     const forksBody = !showForks ? '' : forkTrend + (forkRows ? `<ul class="hl-list">${forkRows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`);
     el.healthBody.innerHTML =
       `<section class="hl-sec" id="hl-forks"><h3>${U.esc(t('health.forks'))}${showForks ? ` <span class="hl-n">${U.fmtNum(h.forks.total)}</span>` : ''}</h3><label class="hl-switch"><input type="checkbox" id="hl-forks-toggle"${showForks ? ' checked' : ''}> ${U.esc(t('health.forksShow'))}</label>${showForks ? `<label class="hl-switch"><input type="checkbox" id="hl-forks-stars"${forksByStars ? ' checked' : ''}> ${U.esc(t('health.forksByStars'))}</label>` : ''}${forksBody}</section>` +
       `<section class="hl-sec" id="hl-stars"><h3>${U.esc(t('health.stars'))}</h3>${
         h.stars.week || h.stars.prev
-          ? `<p class="hl-line">${U.esc(t('health.starsWeek', { week: U.fmtNum(h.stars.week), prev: U.fmtNum(h.stars.prev), delta: delta(h.stars.week, h.stars.prev) }))}</p>`
+          ? `<p class="hl-line">${U.esc(trend(h.stars, 'health.starsWeek', 'health.starsWeekOnly'))}</p>`
           : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
       healthList('stale', t('health.stale'), h.stale, (r) => [r.name, span(r.idle)]) +

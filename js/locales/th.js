@@ -505,6 +505,8 @@ GB.i18n.define('th', {
   'health.stars': 'ดาวใหม่',
   'health.starsWeek': 'สัปดาห์นี้ {week} · สัปดาห์ก่อน {prev} ({delta})',
   'health.forksNew': 'ฟอร์กใหม่: สัปดาห์นี้ {week} · สัปดาห์ก่อน {prev} ({delta})',
+  'health.starsWeekOnly': 'สัปดาห์นี้ {week} (สัปดาห์ก่อนโหลดมาไม่ครบ)',
+  'health.forksNewOnly': 'ฟอร์กใหม่: สัปดาห์นี้ {week} (สัปดาห์ก่อนโหลดมาไม่ครบ)',
   'health.stale': 'บรานช์ที่ไม่มีความเคลื่อนไหวเกิน 30 วันและไม่มี pull request',
   'health.prs': 'pull request ที่เปิดอยู่ เก่าสุดก่อน',
   'health.unreviewed': 'pull request ที่ไม่มีการรีวิวเกิน 7 วัน',

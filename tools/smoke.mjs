@@ -4964,6 +4964,43 @@ if (seccion('Ramas ocultas o solas desde la URL (?solo=, ?ocultar=)'))
   await page.context().close();
 }
 
+if (seccion('Título de la pestaña'))
+{
+  // lo que indexa un buscador después de ejecutar la página, y lo que ve quien tiene la pestaña entre otras veinte
+  const gh = fakeGitHub();
+  gh.repo('o/t');
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', gh.handle);
+  const titulo = (code) => page.evaluate((c) => GB.i18n.t('meta.title') && document.documentElement.lang === c && document.title, code);
+  await step(page, 'con la demo, el título dice qué es la página, en el idioma activo, y no «acme/orbita»', async () => {
+    await page.goto(`${base}/index.html?lang=en`);
+    await loaded(page);
+    const en = await titulo('en');
+    if (en !== "Live graph of a GitHub repository's branches · GraphBranch") throw new Error(`en inglés el título es «${en}»`);
+    await page.selectOption('#lang-select', 'es');
+    await page.waitForFunction(() => document.documentElement.lang === 'es', null, { timeout: T(5000) });
+    await loaded(page);
+    const es = await titulo('es');
+    if (es !== 'Grafo en vivo de las ramas de un repositorio de GitHub · GraphBranch') throw new Error(`en español el título es «${es}»`);
+    const ld = await page.evaluate(() => JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent).url);
+    if (ld !== (await page.getAttribute('link[rel=canonical]', 'href'))) throw new Error(`el JSON-LD (${ld}) y la canónica no dicen la misma dirección`);
+  });
+  await step(page, 'con un repo, el título es el del repo, también después de cambiar de idioma', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=o/t`);
+    await loaded(page);
+    await page.waitForFunction(() => document.title === 'o/t · GraphBranch', null, { timeout: T(5000) }).catch(async () => {
+      throw new Error(`el título es «${await page.title()}»`);
+    });
+    await page.selectOption('#lang-select', 'en');
+    await page.waitForFunction(() => document.documentElement.lang === 'en', null, { timeout: T(5000) });
+    await loaded(page);
+    await page.waitForTimeout(300);
+    if ((await page.title()) !== 'o/t · GraphBranch') throw new Error(`tras cambiar de idioma el título es «${await page.title()}»`);
+  });
+  await page.context().close();
+}
+
 if (seccion('Modo TV directo (?tv=1)'))
 {
   const page = await openPage({ viewport: { width: 1920, height: 1080 } });

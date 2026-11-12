@@ -1,6 +1,7 @@
 /* GraphBranch — polski. */
 GB.i18n.define('pl', {
   /* ---------- strona ---------- */
+  'meta.title': 'Graf gałęzi repozytorium GitHub na żywo · GraphBranch',
   'meta.description': 'Graf gałęzi repozytorium GitHub na żywo, z alertami o commitach, pull requestach i issue.',
 
   /* ---------- górny pasek ---------- */

@@ -1,6 +1,7 @@
 /* GraphBranch — italiano. */
 GB.i18n.define('it', {
   /* ---------- pagina ---------- */
+  'meta.title': 'Grafo in tempo reale dei branch di un repository GitHub · GraphBranch',
   'meta.description': 'Grafo in tempo reale dei branch di un repository GitHub, con avvisi per commit, pull request e issue.',
 
   /* ---------- barra superiore ---------- */

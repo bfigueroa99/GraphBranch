@@ -1,6 +1,7 @@
 /* GraphBranch — বাংলা. */
 GB.i18n.define('bn', {
   /* ---------- পেজ ---------- */
+  'meta.title': 'GitHub রিপোজিটরির ব্রাঞ্চের লাইভ গ্রাফ · GraphBranch',
   'meta.description': 'GitHub রিপোজিটরির ব্রাঞ্চের লাইভ গ্রাফ, যেখানে কমিট, pull request ও issue-এর অ্যালার্ট পাওয়া যায়।',
 
   /* ---------- উপরের বার ---------- */

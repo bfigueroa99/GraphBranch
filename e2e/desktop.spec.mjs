@@ -401,8 +401,9 @@ test('cerrar la ventana la deja en la bandeja: la página lo sabe, sigue contand
   expect(r.error).toBeUndefined();
   expect(r.closed).toEqual({ visible: false, destroyed: false, hidden: true });
   expect(r.counted).toBe(true); // la demo sigue y el título (también el del ícono) cuenta las novedades
-  expect(r.titleHidden).toMatch(/^\(\d+\) acme\/orbita · GraphBranch$/);
-  expect(r.shown).toEqual({ visible: true, hidden: false, title: 'acme/orbita · GraphBranch' }); // como al hacer clic en una notificación
+  // con la demo, el título dice qué es la página (meta.title, en el idioma de la página) y no el repo inventado
+  expect(r.titleHidden).toMatch(/^\(\d+\) Grafo en vivo de las ramas de un repositorio de GitHub · GraphBranch$/);
+  expect(r.shown).toEqual({ visible: true, hidden: false, title: 'Grafo en vivo de las ramas de un repositorio de GitHub · GraphBranch' }); // como al hacer clic en una notificación
   expect(r.notices).toEqual(['GraphBranch sigue abierto']); // una sola vez, en el idioma de la página
   expect(existsSync(join(r.dir, 'tray-notice-shown'))).toBe(true);
 });

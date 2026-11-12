@@ -1,6 +1,7 @@
 /* GraphBranch — magyar. */
 GB.i18n.define('hu', {
   /* ---------- oldal ---------- */
+  'meta.title': 'Egy GitHub-repozitórium ágainak élő gráfja · GraphBranch',
   'meta.description': 'Egy GitHub-repozitórium ágainak élő gráfja értesítésekkel: commitok, pull requestek és issue-k.',
 
   /* ---------- felső sáv ---------- */

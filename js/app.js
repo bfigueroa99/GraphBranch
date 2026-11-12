@@ -3602,6 +3602,13 @@
 
   /* ---------- encabezado y resumen ---------- */
 
+  /** El título de la pestaña: el repo a la vista. Con la demo (lo que abre quien llega sin `?repo=`, y lo que un
+      buscador indexa después de ejecutar la página) o sin repo, lo que la página es, en el idioma activo: un
+      «acme/orbita · GraphBranch» no le dice a nadie qué encontró. La práctica y el ensayo llevan su nombre. */
+  function pageTitle(repo) {
+    return repo && !(repo.demo && !repo.practice) ? `${repo.owner}/${repo.name} · GraphBranch` : t('meta.title');
+  }
+
   function renderRepo(repo) {
     const full = `${repo.owner}/${repo.name}`;
     el.repoLink.textContent = full;
@@ -3617,7 +3624,7 @@
     el.repoBadge.className = `badge${repo.demo ? ' demo' : ''}`;
     el.repoDesc.textContent = repo.rehearsal ? t('practice.rehearseGoal', { repo: `${repo.owner}/${repo.name}` }) : repo.practice ? t('practice.desc') : repo.demo ? t('repo.demoDesc') : repo.description || '';
     el.repoDesc.hidden = !el.repoDesc.textContent;
-    feed.setBaseTitle(`${full} · GraphBranch`);
+    feed.setBaseTitle(pageTitle(repo));
     renderTokenBanner();
     updateRehearse();
   }
@@ -4442,6 +4449,7 @@
 
   /* al cambiar de idioma se vuelve a dibujar todo lo que tiene texto (lo estático ya lo tradujo i18n.apply) */
   i18n.onChange(() => {
+    feed.setBaseTitle(pageTitle(source?.data.repo)); // i18n.apply acaba de traducir el <title>: vuelve el del repo, con su contador
     setRecUI(!!recorder);
     sendDesktopLabels();
     fillLanguages();

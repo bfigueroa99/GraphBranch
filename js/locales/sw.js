@@ -1,6 +1,7 @@
 /* GraphBranch — Kiswahili. */
 GB.i18n.define('sw', {
   /* ---------- ukurasa ---------- */
+  'meta.title': 'Mchoro wa moja kwa moja wa matawi ya hazina ya GitHub · GraphBranch',
   'meta.description': 'Mchoro wa moja kwa moja wa matawi ya hazina ya GitHub, wenye arifa za commit, pull request na issue.',
 
   /* ---------- upau wa juu ---------- */

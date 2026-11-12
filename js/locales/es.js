@@ -1,6 +1,7 @@
 /* GraphBranch — español. */
 GB.i18n.define('es', {
   /* ---------- página ---------- */
+  'meta.title': 'Grafo en vivo de las ramas de un repositorio de GitHub · GraphBranch',
   'meta.description': 'Grafo en vivo de las ramas de un repositorio de GitHub, con alertas de commits, pull requests e issues.',
 
   /* ---------- barra superior ---------- */

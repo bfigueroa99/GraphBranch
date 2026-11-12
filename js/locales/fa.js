@@ -1,6 +1,7 @@
 /* GraphBranch — فارسی (Persian). */
 GB.i18n.define('fa', {
   /* ---------- page ---------- */
+  'meta.title': 'نمودار زنده شاخه‌های یک مخزن GitHub · GraphBranch',
   'meta.description': 'نمودار زنده شاخه‌های یک مخزن GitHub، همراه با هشدار برای commit‌ها، Pull request‌ها و Issue‌ها.',
 
   /* ---------- top bar ---------- */

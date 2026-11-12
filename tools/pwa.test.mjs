@@ -83,7 +83,10 @@ test('el service worker guarda todo lo que la página puede pedir, y nada más',
   assert.deepEqual(sorted(files), sorted(expected), 'FILES de sw.js tiene que listar cada archivo de icons/, css/, js/ y vendor/');
   // y la página no pide nada fuera de esa lista
   const html = read('index.html').toString();
-  const refs = [...html.matchAll(/<(?:script|link)\b[^>]*?\b(?:src|href)="([^"]+)"/g)].map((m) => m[1]).filter((u) => !u.startsWith('data:'));
+  // <link rel="canonical"> no es un pedido: nombra la dirección de la página y el navegador nunca lo carga
+  const tags = [...html.matchAll(/<(?:script|link)\b[^>]*?\b(?:src|href)="([^"]+)"[^>]*>/g)].filter((m) => !/^<link rel="canonical" href="https:\/\/[^"]+">$/.test(m[0]));
+  const refs = tags.map((m) => m[1]).filter((u) => !u.startsWith('data:'));
+  assert.ok(refs.length > 40, 'la página trae sus scripts y estilos');
   for (const ref of refs) assert.ok(files.includes(ref), `index.html pide ${ref}, que sw.js no guarda`);
 });
 

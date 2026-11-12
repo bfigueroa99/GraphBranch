@@ -1,6 +1,7 @@
 /* GraphBranch — français. */
 GB.i18n.define('fr', {
   /* ---------- page ---------- */
+  'meta.title': 'Graphe en direct des branches d’un dépôt GitHub · GraphBranch',
   'meta.description': 'Graphe en direct des branches d’un dépôt GitHub, avec des alertes pour les commits, les pull requests et les issues.',
 
   /* ---------- barre supérieure ---------- */

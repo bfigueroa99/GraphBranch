@@ -1,6 +1,7 @@
 /* GraphBranch — اردو (Urdu). */
 GB.i18n.define('ur', {
   /* ---------- page ---------- */
+  'meta.title': 'GitHub ریپوزٹری کی برانچز کا لائیو گراف · GraphBranch',
   'meta.description': 'GitHub ریپوزٹری کی برانچز کا لائیو گراف، جس میں commits، Pull requests اور Issues کے الرٹس شامل ہیں۔',
 
   /* ---------- top bar ---------- */

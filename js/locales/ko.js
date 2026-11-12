@@ -1,6 +1,7 @@
 /* GraphBranch — 한국어. */
 GB.i18n.define('ko', {
   /* ---------- 페이지 ---------- */
+  'meta.title': 'GitHub 저장소 브랜치의 실시간 그래프 · GraphBranch',
   'meta.description': 'GitHub 저장소의 브랜치를 실시간 그래프로 보여 주고, 커밋·풀 리퀘스트·이슈 알림을 제공합니다.',
 
   /* ---------- 상단 바 ---------- */

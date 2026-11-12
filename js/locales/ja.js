@@ -1,6 +1,7 @@
 /* GraphBranch — 日本語. */
 GB.i18n.define('ja', {
   /* ---------- ページ ---------- */
+  'meta.title': 'GitHub リポジトリのブランチをリアルタイムでグラフ表示 · GraphBranch',
   'meta.description': 'GitHub リポジトリのブランチをリアルタイムでグラフ表示し、コミット・プルリクエスト・Issue の動きを通知します。',
 
   /* ---------- 上部バー ---------- */

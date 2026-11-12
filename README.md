@@ -213,6 +213,8 @@ Opcional: si quieres que la demo hable tu idioma, agrega un bloque en `js/source
 
 Publicada así, la página se puede instalar y abre sin red: `manifest.webmanifest` la describe como app (nombre, colores e íconos de `icons/`, que salen de `electron/icon.png`) y `sw.js`, un service worker, guarda la página, `css/`, `js/`, `vendor/` y los íconos. Con red, cada archivo se pide a la red como siempre y la copia guardada se pone al día, así que publicar una versión nueva no exige nada más. Si agregas, borras o renombras un archivo en esas carpetas, actualiza la lista `FILES` de `sw.js`: `node --test` avisa si no coincide.
 
+**Buscadores y enlaces compartidos.** Lo que se lee sin ejecutar la página está en el `<head>` de `index.html`, en inglés (el idioma base): el título («Live graph of a GitHub repository's branches · GraphBranch», que la página traduce a los 40 idiomas y deja a la vista con la demo; con un repo es `dueño/repo · GraphBranch`), la descripción, la dirección canónica, Open Graph y la tarjeta de Twitter con `docs/social.png` (la demo en 3D a 1200 × 630) y un bloque JSON-LD (`WebApplication`: gratis, MIT, los 40 idiomas). La web es una sola dirección con los idiomas en el cliente, así que la canónica es una (`?repo=…`, `?embed=1` y `?lang=` son la misma página) y no hay `hreflang`. Tampoco hay `robots.txt` ni `sitemap.xml`: un sitio de proyecto vive bajo `/GraphBranch/` y los rastreadores solo leen el `robots.txt` de la raíz del dominio (`<usuario>.github.io`, que es otro repo), y un sitemap de una sola dirección no agrega nada. Si la web se publica en otra dirección, cambia `homepage` en `package.json` y esas etiquetas: `node --test tools/seo.test.mjs` avisa si no coinciden.
+
 ## Aplicación de escritorio
 
 La misma página corre como aplicación de escritorio con [Electron](https://www.electronjs.org/), en Windows, macOS y Linux, en su propia ventana y con su ícono en la bandeja del sistema.
@@ -412,6 +414,7 @@ tools/check.mjs       la puerta: npm run check (node --check, node --test, i18n,
 tools/esperar.mjs     corre un comando largo (la puerta, el smoke, la auditoría) desprendido y lo espera en primer plano de a tramos de 9 minutos
 tools/opencode.mjs    una iteración del loop en OpenCode con un modelo de OmniRoute: worktree limpio, proveedor y /iteracion
 tools/*.test.mjs      pruebas de la lógica contra APIs de GitHub, GitLab, Codeberg, Bitbucket y Azure DevOps simuladas, del service worker, de los archivos que arma snapshot.js, del loop (y su lanzador de OpenCode) y de la auditoría (`node --test`)
+docs/social.png       la imagen de los enlaces compartidos (og:image de index.html): la demo en 3D, 1200 × 630
 docs/investigacion.md la investigación de mercado, fechada y con fuentes, de la que sale la hoja de ruta
 docs/BITACORA.md      las entradas viejas de la bitácora del loop (IMPROVEMENTS.md guarda las últimas; el loop lee las dos)
 docs/HOJA.md          los ítems hechos de la hoja de ruta (IMPROVEMENTS.md guarda los pendientes; el loop lee las dos)

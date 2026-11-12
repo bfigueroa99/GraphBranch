@@ -1,6 +1,7 @@
 /* GraphBranch — ไทย. */
 GB.i18n.define('th', {
   /* ---------- page ---------- */
+  'meta.title': 'กราฟสดของ branch ใน GitHub repository · GraphBranch',
   'meta.description': 'กราฟสดของ branch ใน GitHub repository พร้อมการแจ้งเตือนเกี่ยวกับ commit, pull request และ issue',
 
   /* ---------- top bar ---------- */

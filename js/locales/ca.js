@@ -1,6 +1,7 @@
 /* GraphBranch — català. */
 GB.i18n.define('ca', {
   /* ---------- pàgina ---------- */
+  'meta.title': "Graf en directe de les branques d'un repositori de GitHub · GraphBranch",
   'meta.description': "Graf en directe de les branques d'un repositori de GitHub, amb alertes de commits, pull requests i issues.",
 
   /* ---------- barra superior ---------- */

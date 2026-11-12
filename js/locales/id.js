@@ -1,6 +1,7 @@
 /* GraphBranch — Bahasa Indonesia. */
 GB.i18n.define('id', {
   /* ---------- halaman ---------- */
+  'meta.title': 'Grafik langsung branch sebuah repositori GitHub · GraphBranch',
   'meta.description': 'Grafik langsung branch sebuah repositori GitHub, dengan peringatan untuk commit, pull request, dan issue.',
 
   /* ---------- bilah atas ---------- */

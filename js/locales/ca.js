@@ -728,6 +728,7 @@ GB.i18n.define('ca', {
   'digest.opened': 'Pull requests oberts',
   'digest.openers': 'Qui n\'ha obert més',
   'digest.closed': 'Issues tancats',
+  'digest.closers': 'Qui n\'ha tancat més',
   'digest.dropped': 'Pull requests tancats sense fusionar',
   'digest.releases': 'Releases',
   'digest.tags': 'Tags',

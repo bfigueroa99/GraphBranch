@@ -739,6 +739,7 @@ GB.i18n.define('pl', {
   'digest.opened': 'Otwarte pull requesty',
   'digest.openers': 'Kto otworzył najwięcej',
   'digest.closed': 'Zamknięte zgłoszenia',
+  'digest.closers': 'Kto zamknął najwięcej',
   'digest.dropped': 'Pull requesty zamknięte bez scalenia',
   'digest.releases': 'Wydania',
   'digest.tags': 'Tagi',

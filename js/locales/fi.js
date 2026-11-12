@@ -728,6 +728,7 @@ GB.i18n.define('fi', {
   'digest.opened': 'Avatut pull requestit',
   'digest.openers': 'Kuka avasi eniten',
   'digest.closed': 'Suljetut issuet',
+  'digest.closers': 'Kuka sulki eniten',
   'digest.dropped': 'Ilman yhdistämistä suljetut pull requestit',
   'digest.releases': 'Julkaisut',
   'digest.tags': 'Tagit',

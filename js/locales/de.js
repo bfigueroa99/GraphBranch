@@ -729,6 +729,7 @@ GB.i18n.define('de', {
   'digest.opened': 'Geöffnete Pull Requests',
   'digest.openers': 'Wer die meisten geöffnet hat',
   'digest.closed': 'Geschlossene Issues',
+  'digest.closers': 'Wer die meisten geschlossen hat',
   'digest.dropped': 'Ohne Merge geschlossene Pull Requests',
   'digest.releases': 'Releases',
   'digest.tags': 'Tags',

@@ -729,6 +729,7 @@ GB.i18n.define('fil', {
   'digest.opened': 'Mga pull request na binuksan',
   'digest.openers': 'Sino ang pinakamaraming nagbukas',
   'digest.closed': 'Mga naisarang issue',
+  'digest.closers': 'Sino ang pinakamaraming nagsara',
   'digest.dropped': 'Mga pull request na isinara nang hindi na-merge',
   'digest.releases': 'Mga release',
   'digest.tags': 'Mga tag',

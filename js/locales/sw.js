@@ -728,6 +728,7 @@ GB.i18n.define('sw', {
   'digest.opened': 'Pull request zilizofunguliwa',
   'digest.openers': 'Nani alifungua mengi zaidi',
   'digest.closed': 'Masuala yaliyofungwa',
+  'digest.closers': 'Nani alifunga mengi zaidi',
   'digest.dropped': 'Pull request zilizofungwa bila kuunganishwa',
   'digest.releases': 'Matoleo',
   'digest.tags': 'Lebo (tags)',

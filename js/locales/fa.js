@@ -771,6 +771,7 @@ GB.i18n.define('fa', {
   'digest.opened': 'پول‌ریکوئست‌های بازشده',
   'digest.openers': 'چه کسی بیشترین را باز کرد',
   'digest.closed': 'ایشوهای بسته‌شده',
+  'digest.closers': 'چه کسی بیشترین را بست',
   'digest.dropped': 'pull requestهای بسته‌شده بدون ادغام',
   'digest.releases': 'نسخه‌ها',
   'digest.tags': 'برچسب‌ها',

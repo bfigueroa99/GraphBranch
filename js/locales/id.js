@@ -728,6 +728,7 @@ GB.i18n.define('id', {
   'digest.opened': 'Pull request yang dibuka',
   'digest.openers': 'Siapa yang paling banyak membuka',
   'digest.closed': 'Issue yang ditutup',
+  'digest.closers': 'Siapa yang paling banyak menutup',
   'digest.dropped': 'Pull request yang ditutup tanpa digabung',
   'digest.releases': 'Rilis',
   'digest.tags': 'Tag',

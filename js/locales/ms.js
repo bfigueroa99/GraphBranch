@@ -728,6 +728,7 @@ GB.i18n.define('ms', {
   'digest.opened': 'Pull request yang dibuka',
   'digest.openers': 'Siapa yang paling banyak membuka',
   'digest.closed': 'Isu yang ditutup',
+  'digest.closers': 'Siapa yang paling banyak menutup',
   'digest.dropped': 'Pull request yang ditutup tanpa digabungkan',
   'digest.releases': 'Keluaran',
   'digest.tags': 'Tag',

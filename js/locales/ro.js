@@ -736,6 +736,7 @@ GB.i18n.define('ro', {
   'digest.opened': 'Pull request-uri deschise',
   'digest.openers': 'Cine a deschis cele mai multe',
   'digest.closed': 'Issue-uri închise',
+  'digest.closers': 'Cine a închis cele mai multe',
   'digest.dropped': 'Pull request-uri închise fără îmbinare',
   'digest.releases': 'Lansări',
   'digest.tags': 'Etichete (tags)',

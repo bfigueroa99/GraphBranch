@@ -728,6 +728,7 @@ GB.i18n.define('el', {
   'digest.opened': 'Ανοιχτά pull requests',
   'digest.openers': 'Ποιος άνοιξε τα περισσότερα',
   'digest.closed': 'Κλειστά issues',
+  'digest.closers': 'Ποιος έκλεισε τα περισσότερα',
   'digest.dropped': 'Pull requests που έκλεισαν χωρίς συγχώνευση',
   'digest.releases': 'Εκδόσεις',
   'digest.tags': 'Ετικέτες (tags)',

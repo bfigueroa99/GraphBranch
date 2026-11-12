@@ -728,6 +728,7 @@ GB.i18n.define('vi', {
   'digest.opened': 'Pull request đã mở',
   'digest.openers': 'Ai mở nhiều nhất',
   'digest.closed': 'Issue đã đóng',
+  'digest.closers': 'Ai đóng nhiều nhất',
   'digest.dropped': 'Pull request đóng mà không hợp nhất',
   'digest.releases': 'Bản phát hành',
   'digest.tags': 'Thẻ (tag)',

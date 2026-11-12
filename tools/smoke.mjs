@@ -4,6 +4,10 @@
 
      node tools/smoke.mjs            escenarios básicos (unos 30 s)
      node tools/smoke.mjs --langs    además abre la app en los 40 idiomas, en pantalla de celular
+     node tools/smoke.mjs --solo GitLab --solo Celular   solo las secciones cuyo título contiene ese texto
+     node tools/smoke.mjs --seccion Bitbucket            solo la sección con ese título exacto (la puerta)
+     node tools/smoke.mjs --secciones                    los títulos de las secciones (o, con --solo o --seccion, los
+                                                         de las que correrían), sin abrir el navegador
 
    Errores (salida distinta de 0): un error de JavaScript o de consola, una consulta a
    api.github.com durante la demo (no debería hacer ninguna), un paso que no llega a su
@@ -24,6 +28,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const allLangs = process.argv.includes('--langs');
+const listar = process.argv.includes('--secciones');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -72,8 +77,8 @@ const PNG_1PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0l
 
 const server = await serve();
 const base = `http://127.0.0.1:${server.address().port}`;
-const { chromium } = await loadPlaywright();
-const browser = await chromium.launch({
+const { chromium } = listar ? {} : await loadPlaywright();
+const browser = listar ? null : await chromium.launch({
   // como en las pruebas e2e: otro Chromium que el de esta versión de Playwright
   executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
   // WebGL por software, para que la vista 3D también se pruebe sin GPU
@@ -81,10 +86,35 @@ const browser = await chromium.launch({
 });
 
 let failures = 0;
-const fail = (msg) => {
+const fail = (msg, paso = msg) => {
   failures++;
+  if (!conFallos.has(actual)) conFallos.set(actual, []);
+  conFallos.get(actual).push(paso);
   console.log(`  ✗ ${msg}`);
 };
+
+/* Secciones: cada bloque de primer nivel («if (seccion('Título'))») abre su propio contexto y no depende de
+   los demás, así que se puede correr suelto. `--solo <texto>` (se puede repetir) corre solo las secciones cuyo
+   título contiene ese texto, y `--seccion <título>`, la de ese título exacto («Bitbucket» y no también
+   «Bitbucket propio con token»): la puerta (tools/check.mjs) repite así la sección de un paso que falló una vez,
+   en lugar del smoke entero (10 minutos), y quien arregla un paso intermitente lo prueba en segundos. Al
+   terminar con fallos, cada sección que tuvo alguno sale en una línea «§ Título», y debajo, cada paso que
+   falló en ella, en una línea «· nombre del paso» (sin su error, que ya salió en su «✗»). */
+const valores = (flag) => process.argv.flatMap((a, i, v) => (a === flag && v[i + 1] ? [v[i + 1]] : []));
+const solo = valores('--solo');
+const exactas = valores('--seccion');
+const pedidas = solo.length + exactas.length;
+const corridas = [];
+const conFallos = new Map();
+let actual = '';
+function seccion(titulo) {
+  if (pedidas && !solo.some((t) => titulo.includes(t)) && !exactas.includes(titulo)) return false;
+  corridas.push(titulo);
+  console.log(titulo);
+  if (listar) return false; // --secciones solo dice cuáles correrían
+  actual = titulo;
+  return true;
+}
 
 /** Abre una pestaña que anota todo error y aísla la app de lo que no es suyo. */
 async function openPage(contextOptions = {}) {
@@ -152,7 +182,7 @@ async function step(page, name, fn, { allow = null } = {}) {
   // la excepción de la app explica mejor que el timeout
   errs.unshift(...page.errors.slice(before).filter((e) => !allow?.test(e)));
   if (errs.length) {
-    fail(`${name}: ${errs.join(' | ')}`);
+    fail(`${name}: ${errs.join(' | ')}`, name);
     await reset(page);
   } else console.log(`  ✓ ${name}`);
 }
@@ -304,7 +334,7 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
 
 /* ---------- escritorio ---------- */
 
-console.log('Escritorio (1280×800)');
+if (seccion('Escritorio (1280×800)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   let has3d = false;
@@ -2038,7 +2068,7 @@ const repoTabs = (page) =>
     })),
   );
 
-console.log('Varios repos a la vez');
+if (seccion('Varios repos a la vez'))
 {
   const gh = fakeGitHub();
   for (const r of ['o/a', 'o/b', 'o/c']) gh.repo(r);
@@ -2928,7 +2958,7 @@ console.log('Varios repos a la vez');
   await phonePage.context().close();
 }
 
-console.log('Una organización o un usuario entero');
+if (seccion('Una organización o un usuario entero'))
 {
   const gh = fakeGitHub();
   gh.org('acme');
@@ -3225,7 +3255,7 @@ const quickGitLab = () => {
   hook();
 };
 
-console.log('GitLab');
+if (seccion('GitLab'))
 {
   const gl = fakeGitLab();
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
@@ -3393,7 +3423,7 @@ function fakeCodeberg() {
   };
 }
 
-console.log('Codeberg');
+if (seccion('Codeberg'))
 {
   const cb = fakeCodeberg();
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
@@ -3502,7 +3532,7 @@ function fakeBitbucket() {
   };
 }
 
-console.log('Bitbucket');
+if (seccion('Bitbucket'))
 {
   const bb = fakeBitbucket();
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
@@ -3621,7 +3651,7 @@ function fakeAzure() {
   return az;
 }
 
-console.log('Azure DevOps');
+if (seccion('Azure DevOps'))
 {
   const az = fakeAzure();
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
@@ -3726,7 +3756,7 @@ console.log('Azure DevOps');
   await page.context().close();
 }
 
-console.log('Bitbucket propio con token');
+if (seccion('Bitbucket propio con token'))
 {
   // el CSP de la web no nombra hosts propios (eso lo hace la app de escritorio con --bitbucket-url=): aquí se salta para ver qué sale
   const page = await openPage({ viewport: { width: 1280, height: 800 }, bypassCSP: true });
@@ -3780,7 +3810,7 @@ console.log('Bitbucket propio con token');
   await page.context().close();
 }
 
-console.log('Forgejo propio con token');
+if (seccion('Forgejo propio con token'))
 {
   // como el de arriba: el CSP de la web no nombra hosts propios, aquí se salta para ver qué sale
   const page = await openPage({ viewport: { width: 1280, height: 800 }, bypassCSP: true });
@@ -3831,7 +3861,7 @@ console.log('Forgejo propio con token');
   await page.context().close();
 }
 
-console.log('Segunda cuenta de GitHub');
+if (seccion('Segunda cuenta de GitHub'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   const auths = [];
@@ -3863,7 +3893,7 @@ console.log('Segunda cuenta de GitHub');
   await page.context().close();
 }
 
-console.log('Fijar una rama con el teclado');
+if (seccion('Fijar una rama con el teclado'))
 {
   const gh = fakeGitHub();
   gh.repo('o/f');
@@ -3964,7 +3994,7 @@ console.log('Fijar una rama con el teclado');
   await page.context().close();
 }
 
-console.log('Celular angosto: etiquetas 3D pisadas');
+if (seccion('Celular angosto: etiquetas 3D pisadas'))
 {
   const page = await openPage({ viewport: { width: 320, height: 640 }, isMobile: true, hasTouch: true });
   await step(page, 'a 320 px, una etiqueta 3D tapada por otra no recibe el toque (sigue accesible con Tab)', async () => {
@@ -4011,7 +4041,7 @@ console.log('Celular angosto: etiquetas 3D pisadas');
   await page.context().close();
 }
 
-console.log('Galaxias: cortar un salto hiperespacial');
+if (seccion('Galaxias: cortar un salto hiperespacial'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   // la vista 3D no se expone: se toma la instancia del primer cuadro que dibuja
@@ -4115,7 +4145,7 @@ console.log('Galaxias: cortar un salto hiperespacial');
   await page.context().close();
 }
 
-console.log('Efectos 3D con la vista 2D');
+if (seccion('Efectos 3D con la vista 2D'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await page.addInitScript(() => {
@@ -4147,7 +4177,7 @@ console.log('Efectos 3D con la vista 2D');
   await page.context().close();
 }
 
-console.log('Zumbido del espacio');
+if (seccion('Zumbido del espacio'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   // el último volumen que se le pidió al zumbido del espacio
@@ -4242,7 +4272,7 @@ console.log('Zumbido del espacio');
   await page.context().close();
 }
 
-console.log('Movimiento reducido');
+if (seccion('Movimiento reducido'))
 {
   // lo que solo se ve mientras dura su animación (el combo, la ayuda del vuelo y sus avisos) tiene que
   // verse igual, quieto y el mismo tiempo: si la animación se acorta, salta al final, que es invisible
@@ -4281,7 +4311,7 @@ console.log('Movimiento reducido');
   await page.context().close();
 }
 
-console.log('Contraste del texto (WCAG AA)');
+if (seccion('Contraste del texto (WCAG AA)'))
 for (const colorScheme of ['light', 'dark']) {
   const page = await openPage({ viewport: { width: 1280, height: 900 }, colorScheme });
   await step(page, `tema ${colorScheme === 'light' ? 'claro' : 'oscuro'}: todo el texto visible se lee`, async () => {
@@ -4294,7 +4324,7 @@ for (const colorScheme of ['light', 'dark']) {
   await page.context().close();
 }
 
-console.log('Widget embebido (?embed=1)');
+if (seccion('Widget embebido (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, 'solo el grafo y los avisos, sin barras ni desborde', async () => {
@@ -4317,7 +4347,7 @@ console.log('Widget embebido (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: color de fondo y &hide= (?embed=1)');
+if (seccion('Capa para streaming: color de fondo y &hide= (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&bg=00ff00 pinta el fondo de verde y &hide=notices,combo esconde los avisos', async () => {
@@ -4356,7 +4386,7 @@ console.log('Capa para streaming: color de fondo y &hide= (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &rotate= pasa de un repo a otro (?embed=1)');
+if (seccion('Capa para streaming: &rotate= pasa de un repo a otro (?embed=1)'))
 {
   const gh = fakeGitHub();
   for (const r of ['o/a', 'o/b']) gh.repo(r);
@@ -4378,7 +4408,7 @@ console.log('Capa para streaming: &rotate= pasa de un repo a otro (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &theme= fija el tema (?embed=1)');
+if (seccion('Capa para streaming: &theme= fija el tema (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 }, colorScheme: 'light' });
   await step(page, '&theme=dark pinta la capa oscura aunque el sistema sea claro; sin &theme= sigue al sistema', async () => {
@@ -4395,7 +4425,7 @@ console.log('Capa para streaming: &theme= fija el tema (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &spin=0 apaga la rotación 3D (?embed=1)');
+if (seccion('Capa para streaming: &spin=0 apaga la rotación 3D (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&spin=0 deja la vista 3D quieta sin guardarlo; sin &spin= gira como siempre', async () => {
@@ -4411,7 +4441,7 @@ console.log('Capa para streaming: &spin=0 apaga la rotación 3D (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &view= fija la vista (?embed=1)');
+if (seccion('Capa para streaming: &view= fija la vista (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&view=2d y &view=3d fijan la vista sin guardarla; sin &view= manda la guardada', async () => {
@@ -4431,7 +4461,7 @@ console.log('Capa para streaming: &view= fija la vista (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &title= pone un rótulo propio (?embed=1)');
+if (seccion('Capa para streaming: &title= pone un rótulo propio (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&title= muestra el texto escapado sobre la capa; sin &title= no hay rótulo', async () => {
@@ -4449,7 +4479,7 @@ console.log('Capa para streaming: &title= pone un rótulo propio (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &max= limita las ramas (?embed=1)');
+if (seccion('Capa para streaming: &max= limita las ramas (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&max=2 deja 2 ramas en la capa; sin &max= las de la demo; valores inválidos, todas', async () => {
@@ -4466,7 +4496,7 @@ console.log('Capa para streaming: &max= limita las ramas (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &branch= deja una rama (?embed=1)');
+if (seccion('Capa para streaming: &branch= deja una rama (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&branch=develop deja 2 ramas (develop y la por defecto); una que no existe, solo la por defecto; sin &branch= ninguna marca', async () => {
@@ -4484,7 +4514,7 @@ console.log('Capa para streaming: &branch= deja una rama (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &pr=1 deja las ramas con un PR abierto (?embed=1)');
+if (seccion('Capa para streaming: &pr=1 deja las ramas con un PR abierto (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&pr=1 deja la rama por defecto y solo las ramas con PR abierto (2D y 3D); se combina con &max= y &branch=; &pr=0 no filtra', async () => {
@@ -4515,7 +4545,7 @@ console.log('Capa para streaming: &pr=1 deja las ramas con un PR abierto (?embed
   await page.context().close();
 }
 
-console.log('Filtro por ruta desde la URL (?path=)');
+if (seccion('Filtro por ruta desde la URL (?path=)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre ya filtrado, atenúa el grafo, mantiene la ruta en la URL y al quitarlo la suelta', async () => {
@@ -4551,7 +4581,7 @@ console.log('Filtro por ruta desde la URL (?path=)');
   await page.context().close();
 }
 
-console.log('Vista de un PR desde la URL (?pr=N)');
+if (seccion('Vista de un PR desde la URL (?pr=N)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, '?pr=N abre la vista del PR con su descripción y comentarios, y Esc la cierra', async () => {
@@ -4577,7 +4607,7 @@ console.log('Vista de un PR desde la URL (?pr=N)');
   await page.context().close();
 }
 
-console.log('Vista de texto desde la URL (?vista=texto)');
+if (seccion('Vista de texto desde la URL (?vista=texto)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre la vista de texto con el filtro por ruta y el ?q= aplicados, y lo anuncia en la región viva', async () => {
@@ -4618,7 +4648,7 @@ console.log('Vista de texto desde la URL (?vista=texto)');
   await page.context().close();
 }
 
-console.log('Vista de texto: ramas quietas (GitHub simulado)');
+if (seccion('Vista de texto: ramas quietas (GitHub simulado)'))
 {
   const gh = fakeGitHub();
   gh.repo('o/q');
@@ -4646,7 +4676,7 @@ console.log('Vista de texto: ramas quietas (GitHub simulado)');
   await page.context().close();
 }
 
-console.log('Búsqueda desde la URL (?q=)');
+if (seccion('Búsqueda desde la URL (?q=)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre la búsqueda ya escrita, con resultados, y mantiene el texto en la URL', async () => {
@@ -4680,7 +4710,7 @@ console.log('Búsqueda desde la URL (?q=)');
   await page.context().close();
 }
 
-console.log('Choques entre ramas desde la URL (?conflicts=1)');
+if (seccion('Choques entre ramas desde la URL (?conflicts=1)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre la salud con los choques ya buscados, los mantiene en la URL y al cerrar los suelta', async () => {
@@ -4714,7 +4744,7 @@ console.log('Choques entre ramas desde la URL (?conflicts=1)');
   await page.context().close();
 }
 
-console.log('Filtro por autor desde la URL (?author=)');
+if (seccion('Filtro por autor desde la URL (?author=)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre ya filtrado por esa persona, lo mantiene en la URL y al quitarlo la suelta', async () => {
@@ -4743,7 +4773,7 @@ console.log('Filtro por autor desde la URL (?author=)');
   await page.context().close();
 }
 
-console.log('Grafo de primer padre (?firstparent=1)');
+if (seccion('Grafo de primer padre (?firstparent=1)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'deja menos commits que el grafo entero, queda en la URL y el interruptor lo apaga', async () => {
@@ -4769,7 +4799,7 @@ console.log('Grafo de primer padre (?firstparent=1)');
   await page.context().close();
 }
 
-console.log('Columnas de SHA, autor y fecha en el 2D');
+if (seccion('Columnas de SHA, autor y fecha en el 2D'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'el interruptor de columnas pone «SHA · autor · fecha» junto a los commits del 2D, se recuerda y al apagarlo se quitan', async () => {
@@ -4802,7 +4832,7 @@ console.log('Columnas de SHA, autor y fecha en el 2D');
   await page.context().close();
 }
 
-console.log('Grafo de primer padre en el 3D');
+if (seccion('Grafo de primer padre en el 3D'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'el interruptor de primer padre también deja menos commits en el grafo 3D, y al apagarlo vuelven', async () => {
@@ -4833,7 +4863,7 @@ console.log('Grafo de primer padre en el 3D');
   await page.context().close();
 }
 
-console.log('Ramas ocultas o solas desde la URL (?solo=, ?ocultar=)');
+if (seccion('Ramas ocultas o solas desde la URL (?solo=, ?ocultar=)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, '?ocultar= y ?solo= abren el grafo con menos ramas, la URL las sigue y «Ver todas» las limpia', async () => {
@@ -4864,7 +4894,7 @@ console.log('Ramas ocultas o solas desde la URL (?solo=, ?ocultar=)');
   await page.context().close();
 }
 
-console.log('Modo TV directo (?tv=1)');
+if (seccion('Modo TV directo (?tv=1)'))
 {
   const page = await openPage({ viewport: { width: 1920, height: 1080 } });
   await step(page, 'abre en modo TV y el director toma la cámara', async () => {
@@ -4877,7 +4907,7 @@ console.log('Modo TV directo (?tv=1)');
   await page.context().close();
 }
 
-console.log('Salud del repo directa (?health=1)');
+if (seccion('Salud del repo directa (?health=1)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre la demo con el panel de salud ya desplegado y con sus secciones', async () => {
@@ -4916,7 +4946,7 @@ console.log('Salud del repo directa (?health=1)');
   await page.context().close();
 }
 
-console.log('Agentes e interacciones, en vivo, en el lugar del grafo (?agents=1)');
+if (seccion('Agentes e interacciones, en vivo, en el lugar del grafo (?agents=1)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre la demo en la vista de agentes: la red, la línea de tiempo, lo último, quién con quién y el gasto de ejemplo', async () => {
@@ -5283,7 +5313,7 @@ console.log('Agentes e interacciones, en vivo, en el lugar del grafo (?agents=1)
   await page.context().close();
 }
 
-console.log(`Celular (390×844), ${langs.length} idiomas`);
+if (seccion(`Celular (390×844), ${langs.length} idiomas`))
 {
   const page = await openPage(phone);
   for (const lang of langs) {
@@ -5297,11 +5327,20 @@ console.log(`Celular (390×844), ${langs.length} idiomas`);
   await page.context().close();
 }
 
-await browser.close();
+await browser?.close();
 server.close();
 
+if (!corridas.length) {
+  console.log(`\nNinguna sección coincide con ${[...solo, ...exactas].join(', ')} (node tools/smoke.mjs --secciones las lista).`);
+  process.exit(2);
+}
+if (listar) process.exit(0);
 if (failures) {
   console.log(`\n${failures} fallo(s).`);
+  for (const [titulo, pasos] of conFallos) {
+    console.log(`§ ${titulo}`);
+    for (const paso of pasos) console.log(`· ${paso}`);
+  }
   process.exit(1);
 }
-console.log('\nTodo bien.');
+console.log(pedidas ? `\nTodo bien (${corridas.length} de las secciones: ${corridas.join(' · ')}).` : '\nTodo bien.');

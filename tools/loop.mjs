@@ -99,9 +99,27 @@ export const LARGOS = [
   [/^node tools\/audit\.mjs\b(?!.*\s--base\b)/, 'node tools/audit.mjs'],
   [/^(?:xvfb-run(?:\s+-a)?\s+)?(?:npm run test:e2e|npx playwright test)\b/, 'las e2e'],
 ];
+/** Bytes de la skill (SKILL.md) y de cada uno de sus protocolos: lo que cabe en una salida de la herramienta de
+    shell (30.000 caracteres), que es como la lee cada sesión (`git show origin/dev:…SKILL.md`, lo dice el prompt
+    de la Routine). Con 42 KB la salida no cabía: la sesión la guardaba en un archivo y la releía con otra
+    herramienta, dos o tres llamadas perdidas en cada arranque, y 10 KB eran de tres protocolos (skills de afuera,
+    plan por consenso y arena) que no corrieron en ninguna de las iteraciones 192 a 271. Lo que no hace falta en
+    cada iteración vive en un protocolo aparte, en la carpeta de la skill, y se lee cuando su paso lo dice. */
+export const SKILL_MAX = 28000;
+/** La carpeta de la skill: SKILL.md, PROMPT.md y los protocolos que SKILL.md manda leer cuando tocan. */
+const DIR_SKILL = ['.claude', 'skills', 'iteracion'];
 /** Bytes del prompt de la Routine: solo apunta a la skill y dice lo que la skill no puede decir antes de que la
     sesión la lea (sincronizar con dev y que el turno terminado es la corrida terminada). */
 export const PROMPT_MAX = 750;
+/** Cuántos ítems de alcance 2 o 3 (la escala de docs/investigacion.md: 1 un nicho, 2 un grupo claro, 3 casi
+    todos o un público nuevo grande) deja una reposición de la hoja de ruta (REPONER.md, en la carpeta de la
+    skill). Sin ninguno entre los pendientes, R4
+    avisa: la directiva pide ampliar el alcance, y la hoja, repuesta una y otra vez con «otra entrega del ítem K»,
+    se había quedado solo con nichos (de los PR #310 a #335, 19 expansiones de 19 fueron de alcance 1, y los 14
+    ítems pendientes el 2026-11-12 también; de los primeros 21 con puntaje, 13 eran de alcance 2). */
+export const ANCHOS_MIN = 5;
+/** Días hacia atrás que --salud detalla los huecos de la cadencia; los anteriores van contados en una línea. */
+export const HUECOS_DIAS = 7;
 /** La cola «Para Benjamin» es corta a propósito: con más ítems, aviso. */
 export const PARA_BENJAMIN_MAX = 8;
 /** Cada cuántas horas dispara la Routine, por tramos: cron `3 *\/4 * * *` desde la fusión de #44 (la directiva)
@@ -529,9 +547,10 @@ export function parseInvestigacion(texto) {
 }
 
 /** Las reglas R1–R14. `log` (títulos de commits), `superficial` (el clon no tiene toda la historia), `skill`,
+    `protocolos` ({nombre: texto} de los demás .md de la carpeta de la skill; sin él y con `skill` inyectada, ninguno),
     `prompt`, `settings`, `investigacion` y `auditBase` (textos) y `hoy` se inyectan en las pruebas; si no, se
     leen del repo y del reloj. `archivo` es docs/BITACORA.md (la bitácora vieja), que pasa quien lee el repo. */
-export function check(texto, { archivo = null, hoja = null, log, superficial, skill, prompt, settings, opencode, investigacion, auditBase, recon, features, hoy = new Date(), dir = root } = {}) {
+export function check(texto, { archivo = null, hoja = null, log, superficial, skill, protocolos, prompt, settings, opencode, investigacion, auditBase, recon, features, hoy = new Date(), dir = root } = {}) {
   const doc = parse(texto, { archivo, hoja });
   // la pasada de Replica: la leen R10 (los ítems que la citan) y R13
   const reconTxt = recon ?? leer(join(dir, 'replica', 'recon.md'));
@@ -601,12 +620,18 @@ export function check(texto, { archivo = null, hoja = null, log, superficial, sk
     }
     regla('R3', e, a, ok);
   }
-  // R4: la hoja de ruta no se vacía
+  // R4: la hoja de ruta no se vacía, ni de ítems ni de alcance
   {
-    const p = doc.hoja.filter((i) => !i.hecho).length;
+    const pend = doc.hoja.filter((i) => !i.hecho);
+    const p = pend.length;
     const e = p < 10 ? [`quedan ${p}: reponer hasta 15, regla 5 de la directiva`] : [];
     const a = p >= 10 && p < 15 ? [`quedan ${p} ítems sin hacer: reponer hasta 15 al cerrar (regla 5)`] : [];
-    regla('R4', e, a, `hoja de ruta: ${p} pendientes`);
+    // sin un solo ítem de alcance 2 o 3, lo que queda son nichos. Es un aviso y no dispara nada por sí solo: la
+    // reposición sigue siendo al bajar de 10 (si no, cada iteración volvería a buscar ideas), y es ella la que
+    // trae las de alcance 2 o 3. Un ítem sin puntaje no cuenta ni a favor ni en contra: R10 ya lo da como error
+    const anchos = pend.filter((i) => i.puntaje?.a >= 2).length;
+    if (p && !anchos && pend.every((i) => i.puntaje)) (p < 10 ? e : a).push(`ninguno de los ${p} ítems sin hacer amplía el alcance (todos son de alcance 1, un nicho): la reposición${p < 10 ? '' : ', al bajar de 10,'} deja al menos ${ANCHOS_MIN} de alcance 2 o 3 (${DIR_SKILL.join('/')}/REPONER.md)`);
+    regla('R4', e, a, `hoja de ruta: ${p} pendientes, ${anchos} de alcance 2 o 3`);
   }
   // R5: iteraciones sin repetir, con tipo desde la 20 y el tipo que toca por N mod 4
   {
@@ -712,8 +737,12 @@ export function check(texto, { archivo = null, hoja = null, log, superficial, sk
   {
     const e = [];
     const a = [];
-    const skillTxt = skill ?? leer(join(dir, '.claude', 'skills', 'iteracion', 'SKILL.md'));
-    const promptTxt = prompt ?? leer(join(dir, '.claude', 'skills', 'iteracion', 'PROMPT.md'));
+    const carpeta = join(dir, ...DIR_SKILL);
+    const skillTxt = skill ?? leer(join(carpeta, 'SKILL.md'));
+    const promptTxt = prompt ?? leer(join(carpeta, 'PROMPT.md'));
+    // los protocolos que la skill manda leer solo cuando tocan (mantenimiento, reponer, arena…) son parte de ella:
+    // se revisan con las mismas reglas
+    const partes = protocolos ?? (skill == null && existsSync(carpeta) ? Object.fromEntries(readdirSync(carpeta).filter((f) => f.endsWith('.md') && !['SKILL.md', 'PROMPT.md'].includes(f)).sort().map((f) => [f, leer(join(carpeta, f)) ?? ''])) : {});
     const settingsTxt = settings ?? leer(join(dir, '.claude', 'settings.json'));
     if (skillTxt == null || promptTxt == null) a.push('sin skill: faltan .claude/skills/iteracion/SKILL.md o PROMPT.md');
     else {
@@ -725,8 +754,16 @@ export function check(texto, { archivo = null, hoja = null, log, superficial, sk
       const arena = [];
       const cliSkills = [];
       const largos = [];
+      // el tamaño: SKILL.md la lee cada sesión de una vez, y cada protocolo, cuando toca
+      for (const [nombre, txt] of [['SKILL.md', skillTxt], ...Object.entries(partes)]) {
+        const peso = Buffer.byteLength(txt);
+        if (peso > SKILL_MAX) e.push(`${nombre} de la skill tiene ${peso} bytes (máximo ${SKILL_MAX}): no cabe en una lectura de la herramienta de shell; lo que no hace falta en cada iteración va a un protocolo aparte en ${DIR_SKILL.join('/')}/, que SKILL.md manda leer cuando toca`);
+      }
+      // un protocolo que SKILL.md no nombra con su ruta no lo lee nadie
+      for (const nombre of Object.keys(partes)) if (!skillTxt.includes(`${DIR_SKILL.join('/')}/${nombre}`)) e.push(`${DIR_SKILL.join('/')}/${nombre} existe y SKILL.md no lo nombra con su ruta: ninguna sesión lo va a leer`);
+      const todo = [skillTxt, ...Object.values(partes)].join('\n');
       let enBloque = false;
-      for (const linea of skillTxt.split('\n')) {
+      for (const linea of todo.split('\n')) {
         // flags que siguen a loop.mjs en la misma línea (hasta el fin del comando)
         let resto = linea;
         for (let i = resto.indexOf('loop.mjs'); i >= 0; i = resto.indexOf('loop.mjs')) {
@@ -786,7 +823,7 @@ export function check(texto, { archivo = null, hoja = null, log, superficial, sk
         if (sub === 'add' && (!/--copy\b/.test(l) || !/(?:-a|--agent) claude-code\b/.test(l))) e.push(`SKILL.md corre «skills add» sin --copy -a claude-code: la skill va copiada a .claude/skills/, no enlazada desde .agents/`);
       }
       // cada subtipo que puede elegir --siguiente tiene su protocolo en la skill
-      for (const st of SUBTIPOS) if (!new RegExp(`^#{3,4} ${st}\\b`, 'm').test(skillTxt)) e.push(`SKILL.md sin el protocolo del subtipo ${st} («#### ${st}»)`);
+      for (const st of SUBTIPOS) if (!new RegExp(`^#{2,4} ${st}\\b`, 'm').test(todo)) e.push(`SKILL.md sin el protocolo del subtipo ${st} («## ${st}» en ${DIR_SKILL.join('/')}/MANTENIMIENTO.md, o «#### ${st}» en la skill)`);
       let allow = [];
       try {
         allow = JSON.parse(settingsTxt ?? '{}').permissions?.allow ?? [];
@@ -827,7 +864,9 @@ export function check(texto, { archivo = null, hoja = null, log, superficial, sk
         }
       }
     }
-    regla('R8', e, a, `la skill nombra flags, rutas y comandos que existen y están permitidos, tiene el protocolo de cada subtipo, corre la arena con su ruta y de 1 a ${ARENA_MAX} competidores y la CLI de skills fija y sin telemetría; el prompt no lleva hechos que se pudren y el comando de OpenCode lo pasa tal cual`);
+    const kb = (t) => (Buffer.byteLength(t ?? '') / 1024).toFixed(1).replace('.', ',');
+    const cuantos = Object.keys(partes).length;
+    regla('R8', e, a, `la skill (${kb(skillTxt)} KB${cuantos ? ` y ${cuantos} protocolo${cuantos === 1 ? '' : 's'} aparte` : ''}) entra en una lectura, nombra flags, rutas y comandos que existen y están permitidos, tiene el protocolo de cada subtipo, corre la arena con su ruta y de 1 a ${ARENA_MAX} competidores y la CLI de skills fija y sin telemetría; el prompt no lleva hechos que se pudren y el comando de OpenCode lo pasa tal cual`);
   }
   // R9: sin flujos de GitHub Actions (CLAUDE.md: no hay CI)
   {
@@ -1196,11 +1235,17 @@ export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], 
   const visible = superficial && fusiones.length ? fusiones[0].fecha : t0;
   if (superficial) lineas.push(`Clon superficial: ${BASE} se ve desde ${fusiones.length ? fechaUTC(visible) : 'ningún merge'} UTC; los huecos anteriores no se miden (git fetch --unshallow origin)`);
   const puntos = [visible, ...fusiones.map((x) => x.fecha).filter((f) => f > visible), ahora];
+  // un hueco que terminó hace más de HUECOS_DIAS ya pasó y nadie puede hacer nada con él: repetirlos todos en cada
+  // sesión (12 líneas el 2026-11-12, el más viejo de un mes) tapaba el único que importa, el de ahora
+  const viejos = [];
   for (let i = 1; i < puntos.length; i++) {
     const d = disparosEntre(puntos[i - 1], puntos[i], cadencias);
     const k = Math.floor(d) - 1;
-    if (d > 2) lineas.push(`Hueco: ${fechaUTC(puntos[i - 1])} → ${i === puntos.length - 1 ? 'ahora' : fechaUTC(puntos[i])} UTC (${horasDe(puntos[i] - puntos[i - 1])} h, ${k === 1 ? 'un disparo' : `unos ${k} disparos`} sin iteración)`);
+    if (d <= 2) continue;
+    if (ahora - puntos[i] > HUECOS_DIAS * 864e5) viejos.push(puntos[i] - puntos[i - 1]);
+    else lineas.push(`Hueco: ${fechaUTC(puntos[i - 1])} → ${i === puntos.length - 1 ? 'ahora' : fechaUTC(puntos[i])} UTC (${horasDe(puntos[i] - puntos[i - 1])} h, ${k === 1 ? 'un disparo' : `unos ${k} disparos`} sin iteración)`);
   }
+  if (viejos.length) lineas.push(`Huecos de hace más de ${HUECOS_DIAS} días: ${viejos.length} (${horasDe(viejos.reduce((x, y) => x + y, 0))} h en total), ya pasados`);
   if (ultima && ahora - ultima > 24 * 3600e3) accion(`el loop no fusiona nada desde hace ${horasDe(ahora - ultima)} h: anotarlo en Para Benjamin (¿la Routine está apagada o sin cuota?)`);
 
   // reclamos: las ramas loop/K
@@ -1245,9 +1290,13 @@ export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], 
   if (altas.length) accion(`${altas.length} pendiente(s) Alta en Mantenimiento: van antes que todo (${altas.map((p) => p.n).join(', ')})`);
   lineas.push(`Mantenimiento: ${PRIORIDADES.map((pr) => `${doc.mantenimiento.filter((p) => p.prioridad === pr).length} ${pr}`).join(', ')}`);
   lineas.push(`Para Benjamin (${doc.benjamin.length}): ${doc.benjamin.map((b) => `${b.n}. ${corta(b.texto.replace(/\*\*/g, '').split('. ')[0], 70)}`).join(' · ') || 'nada'}`);
+  // el alcance de lo que el loop viene haciendo y de lo que le queda: lo que la directiva pide ampliar
+  const recientes = doc.hoja.filter((i) => i.hecho && i.puntaje).sort((x, y) => y.pr - x.pr).slice(0, 20);
+  const pend = doc.hoja.filter((i) => !i.hecho);
+  if (recientes.length) lineas.push(`Alcance: de los últimos ${recientes.length} ítems hechos, ${recientes.filter((i) => i.puntaje.a === 1).length} fueron de alcance 1 (un nicho); de los ${pend.length} pendientes, ${pend.filter((i) => i.puntaje?.a >= 2).length} son de alcance 2 o 3`);
   const kb = (t) => Math.round(Buffer.byteLength(t) / 1024);
   const bit = texto.indexOf('\n## Bitácora');
-  if (texto) lineas.push(`IMPROVEMENTS.md: ${kb(texto)} KB (bitácora ${bit >= 0 ? kb(texto.slice(bit)) : 0} KB), leído entero por cada sesión`);
+  if (texto) lineas.push(`IMPROVEMENTS.md: ${kb(texto)} KB (bitácora ${bit >= 0 ? kb(texto.slice(bit)) : 0} KB); se lee por secciones (la skill dice cuáles), no entero`);
   lineas.push(acciones ? `--salud: ${acciones} acción(es)` : '--salud: sin acciones');
   return { lineas, acciones };
 }

@@ -1769,6 +1769,7 @@
       this.tip.setAttribute('aria-label', tr('tip.aria'));
       this.unpin();
       for (const d of this.days.values()) if (d.data) this.dayText(d);
+      for (const it of this.nodes.values()) it.meta = null; // la fecha y «autor desconocido» de las columnas van en el idioma activo
       for (const it of this.heads.values()) {
         if (!it.data) continue;
         it.html = null;
@@ -3039,6 +3040,7 @@
         }
         near.sort((a, b) => a.d2 - b.d2);
         const z = this.labelScale();
+        const cols = this.columns;
         const px = this.H / (2 * Math.tan((this.camera.fov * Math.PI) / 360)); // píxeles por unidad, a distancia 1
         for (const { it, d2 } of near) {
           if (n >= MAX_NOTES) break;
@@ -3049,12 +3051,22 @@
             it.noteOf = c;
             it.note = U.truncate(U.firstLine(c?.message), 48);
             it.noteW = Math.ceil(GB.graphShared.measure(it.note, GB.graphShared.SMALL_FONT) + 12);
+            it.meta = null;
           }
-          if (!it.note) continue;
+          // con las columnas encendidas, debajo del mensaje va «SHA · Autor · fecha» (se arma una vez por commit, no por cuadro)
+          if (cols && it.meta == null) {
+            const parts = GB.search.columnParts(c, U.fmtDate, tr('author.unknown'));
+            parts[1] = U.truncate(parts[1], 24); // el recorte cae en el autor: el SHA y la fecha se leen enteros
+            it.metaParts = parts;
+            it.meta = parts.filter(Boolean).join(' · ');
+            it.metaW = Math.ceil(GB.graphShared.measure(it.meta, GB.graphShared.SMALL_FONT) + 12);
+          }
+          const meta = cols ? it.meta : '';
+          if (!it.note && !meta) continue;
           const dist = Math.sqrt(d2);
           const r = (NODE_R * (it.data.heads.length ? HEAD_SCALE : 1) * px) / dist; // radio del commit en pantalla
-          const h = Math.ceil(17 * z);
-          const s = this.gridRect(p.x + r + 6, p.y - h / 2, Math.ceil(it.noteW * z), h);
+          const h = Math.ceil((it.note && meta ? 31 : 17) * z);
+          const s = this.gridRect(p.x + r + 6, p.y - h / 2, Math.ceil(Math.max(it.note ? it.noteW : 0, meta ? it.metaW : 0) * z), h);
           if (s.x + s.w > this.W - 4 || this.gridHits(s)) {
             this.nRects--; // no quedó en la grilla: el rectángulo vuelve al pool
             continue;
@@ -3062,7 +3074,20 @@
           this.gridAdd(s);
           const note = this.notes[n] || (this.notes[n] = this.makeNote());
           n++;
-          if (note.text !== it.note) note.el.textContent = note.text = it.note;
+          if (note.text !== it.note) note.msg.textContent = note.text = it.note;
+          if (note.metaText !== meta) {
+            note.metaText = meta;
+            note.meta.hidden = !meta;
+            // cada parte en su <bdi> (ya creado: aquí solo cambia el texto) y su « · » delante si hay algo antes
+            let before = false;
+            for (let i = 0; meta && i < 3; i++) {
+              const part = it.metaParts[i];
+              note.parts[i].textContent = part;
+              note.parts[i].hidden = !part;
+              if (i) note.seps[i - 1].hidden = !part || !before;
+              if (part) before = true;
+            }
+          }
           // aparece al acercarse; con otra rama resaltada, se apaga como ella
           let op = clamp((NOTE_D - dist) / (NOTE_D * 0.25), 0, 1);
           if (hl && it.data.chain !== hl) op *= 1 - 0.8 * this.hlAmt;
@@ -3078,8 +3103,26 @@
       const el = document.createElement('span');
       el.className = 'g3-note';
       el.setAttribute('aria-hidden', 'true'); // la ficha del commit dice lo mismo, y más
+      const msg = el.appendChild(document.createElement('span'));
+      const meta = el.appendChild(document.createElement('span'));
+      meta.className = 'g3-meta';
+      meta.dir = 'ltr'; // «SHA · Autor · fecha» en ese orden también en árabe o hebreo, como en el 2D
+      meta.hidden = true;
+      // las tres partes, cada una en su <bdi> (una fecha en árabe o un autor en hebreo no desordenan a sus vecinas),
+      // se crean una vez: por cuadro solo cambia su texto
+      const parts = [], seps = [];
+      for (let i = 0; i < 3; i++) {
+        if (i) (seps.push(meta.appendChild(document.createElement('span'))), (seps[i - 1].textContent = ' · '));
+        parts.push(meta.appendChild(document.createElement('bdi')));
+      }
       this.labelLayer.appendChild(el);
-      return { el, text: null, st: {} };
+      return { el, msg, meta, parts, seps, text: null, metaText: '', st: {} };
+    }
+
+    /** Interruptor de las columnas de SHA, autor y fecha (el mismo del 2D): cada commit cercano las lleva bajo su mensaje. */
+    setColumns(on) {
+      this.columns = !!on;
+      this.needsRender = true;
     }
 
     /** Escribe un estilo solo si cambió: decenas de etiquetas por cuadro sin trabajo de más. */

@@ -4832,6 +4832,76 @@ if (seccion('Columnas de SHA, autor y fecha en el 2D'))
   await page.context().close();
 }
 
+if (seccion('Columnas de SHA, autor y fecha en el 3D'))
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  // la vista 3D no se expone: se toma la instancia del primer cuadro que dibuja
+  await page.addInitScript(() => {
+    const hook = () => {
+      const G3 = window.GB?.Graph3D?.prototype;
+      if (!G3) return setTimeout(hook, 5);
+      const step = G3.stepCamera;
+      G3.stepCamera = function (...args) {
+        window.__g3 = this;
+        return step.apply(this, args);
+      };
+    };
+    hook();
+  });
+  await step(page, 'el interruptor de columnas también pone «SHA · autor · fecha» bajo el mensaje de los commits cercanos del 3D, se recuerda y al apagarlo se quitan', async () => {
+    await page.goto(`${base}/index.html?lang=es&view=3d`);
+    await loaded(page);
+    if (!(await page.locator('#graph3d canvas').count())) return console.log('    (sin WebGL: se salta)');
+    // los rótulos de commit a la vista: su mensaje y, si lo lleva, su columna
+    const notes = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll('#graph3d .g3-note')]
+          .filter((n) => getComputedStyle(n).display !== 'none')
+          .map((n) => ({ meta: n.querySelector('.g3-meta:not([hidden])')?.textContent || '', h: Math.round(n.getBoundingClientRect().height) }))
+      );
+    // de cerca: los mensajes (y las columnas) solo salen junto a los commits cercanos a la cámara
+    const near = async () => {
+      await page.waitForFunction(() => window.__g3?.nodes.size > 0, null, { timeout: T(15000) });
+      await page.evaluate(() => {
+        const g = window.__g3;
+        g.setSpin?.(false);
+        g.focusSha([...g.nodes.values()].find((it) => it.data.heads.length)?.sha || [...g.nodes.keys()][0], 9);
+      });
+      await page.waitForTimeout(1500); // la cámara llega a su lugar antes de mirar los rótulos
+      await page.waitForFunction(() => [...document.querySelectorAll('#graph3d .g3-note')].some((n) => getComputedStyle(n).display !== 'none'), null, { timeout: T(10000) });
+    };
+    const withMeta = () => page.waitForFunction(() => [...document.querySelectorAll('#graph3d .g3-note')].some((n) => getComputedStyle(n).display !== 'none' && n.querySelector('.g3-meta:not([hidden])')), null, { timeout: T(5000) });
+    await near();
+    const off = await notes();
+    if (!off.length) throw new Error('de cerca no hay ningún rótulo de commit en el 3D');
+    if (off.some((n) => n.meta)) throw new Error('las columnas salen en el 3D sin encender el interruptor');
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    await page.check('#graph-columns');
+    await withMeta();
+    const on = (await notes()).filter((n) => n.meta);
+    if (!on.length) throw new Error('las columnas del 3D se fueron apenas salieron');
+    const bad = on.find((n) => !/^[0-9a-f]{7} · .+ · /.test(n.meta));
+    if (bad) throw new Error('una columna del 3D no es «SHA · autor · fecha»: ' + JSON.stringify(bad.meta));
+    // el SHA corto es el comienzo del SHA de un commit del grafo 3D
+    const sha = on[0].meta.slice(0, 7);
+    if (!(await page.evaluate((p) => [...window.__g3.nodes.keys()].some((k) => k.startsWith(p)), sha))) throw new Error(`ningún commit del 3D empieza por el SHA de una columna (${sha})`);
+    // la columna va en su propio renglón, debajo del mensaje: el rótulo crece
+    const tall = Math.max(...on.map((n) => n.h)), flat = Math.max(...off.map((n) => n.h));
+    if (!(tall > flat + 6)) throw new Error(`la columna no suma un renglón al rótulo del commit (${flat} px sin ella, ${tall} px con ella)`);
+    await page.reload();
+    await loaded(page);
+    await near();
+    await withMeta();
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    await page.uncheck('#graph-columns');
+    await page.waitForFunction(() => ![...document.querySelectorAll('#graph3d .g3-note')].some((n) => getComputedStyle(n).display !== 'none' && n.querySelector('.g3-meta:not([hidden])')), null, { timeout: T(5000) });
+    if (!(await notes()).length) throw new Error('al apagar las columnas también se fueron los mensajes de los commits');
+  });
+  await page.context().close();
+}
+
 if (seccion('Grafo de primer padre en el 3D'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

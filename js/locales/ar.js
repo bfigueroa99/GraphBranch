@@ -331,7 +331,7 @@ GB.i18n.define('ar', {
   'branchview.status': '{n} من {total} فروع قيد العرض',
   'branchview.reset': 'عرض كل الفروع',
   'search.firstParent': 'الأب الأول فقط (مثل git log --first-parent)',
-  'search.columns': 'عرض SHA والمؤلف والتاريخ بجانب كل التزام (الرسم ثنائي الأبعاد)',
+  'search.columns': 'عرض SHA والمؤلف والتاريخ بجانب كل التزام',
   'author.unknown': 'غير معروف',
 
   /* ---------- graph overlay ---------- */

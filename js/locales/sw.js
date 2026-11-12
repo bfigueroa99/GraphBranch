@@ -261,7 +261,7 @@ GB.i18n.define('sw', {
   'branchview.status': 'Matawi {n} kati ya {total} yanaonekana',
   'branchview.reset': 'Onyesha matawi yote',
   'search.firstParent': 'Mzazi wa kwanza tu (kama git log --first-parent)',
-  'search.columns': 'Onyesha SHA, mwandishi na tarehe kando ya kila commit (grafu ya 2D)',
+  'search.columns': 'Onyesha SHA, mwandishi na tarehe kando ya kila commit',
   'author.unknown': 'hajulikani',
 
   /* ---------- safu juu ya mchoro ---------- */

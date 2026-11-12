@@ -281,6 +281,14 @@ test('columnText arma «Autor · fecha» para las columnas del grafo 2D, con lo 
   assert.equal(S.columnText({ author: { name: 'Luis' } }, fmt), 'Luis');
 });
 
+test('columnParts da [SHA corto, autor, fecha] con cada parte en su lugar, vacía si falta', () => {
+  const fmt = (ms) => 'd' + ms;
+  assert.deepEqual([...S.columnParts({ sha: 'a1b2c3d4e5f6', author: { name: 'Ana · Luz' }, date: 5 }, fmt)], ['a1b2c3d', 'Ana · Luz', 'd5']);
+  assert.deepEqual([...S.columnParts({ author: {}, date: 5 }, fmt, 'Desconocido')], ['', 'Desconocido', 'd5']);
+  assert.deepEqual([...S.columnParts({ sha: 'a1b2c3d4e5' }, fmt)], ['a1b2c3d', '', '']);
+  assert.deepEqual([...S.columnParts(null, fmt)], ['', '', '']);
+});
+
 test('columnText antepone el SHA corto (7 caracteres) a «Autor · fecha»', () => {
   const fmt = (ms) => `d${ms}`;
   assert.equal(S.columnText({ sha: 'a1b2c3d4e5f6a7b8c9d0', author: { name: 'Ana' }, date: 5 }, fmt), 'a1b2c3d · Ana · d5');

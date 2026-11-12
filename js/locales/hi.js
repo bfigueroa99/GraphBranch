@@ -261,7 +261,7 @@ GB.i18n.define('hi', {
   'branchview.status': '{total} में से {n} शाखाएँ दिख रही हैं',
   'branchview.reset': 'सभी शाखाएँ दिखाएँ',
   'search.firstParent': 'सिर्फ़ पहला पैरेंट (git log --first-parent की तरह)',
-  'search.columns': 'हर कमिट के पास SHA, लेखक और तारीख दिखाएँ (2D ग्राफ़)',
+  'search.columns': 'हर कमिट के पास SHA, लेखक और तारीख दिखाएँ',
   'author.unknown': 'अज्ञात',
 
   /* ---------- ग्राफ़ के ऊपर की परत ---------- */

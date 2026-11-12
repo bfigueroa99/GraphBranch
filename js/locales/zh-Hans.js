@@ -261,7 +261,7 @@ GB.i18n.define('zh-Hans', {
   'branchview.status': '显示 {total} 个分支中的 {n} 个',
   'branchview.reset': '显示所有分支',
   'search.firstParent': '仅第一父提交（同 git log --first-parent）',
-  'search.columns': '在每个提交旁显示 SHA、作者和日期（2D 图）',
+  'search.columns': '在每个提交旁显示 SHA、作者和日期',
   'author.unknown': '未知',
 
   /* ---------- 图形上层提示 ---------- */

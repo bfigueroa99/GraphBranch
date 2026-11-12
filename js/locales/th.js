@@ -261,7 +261,7 @@ GB.i18n.define('th', {
   'branchview.status': 'แสดง {n} จาก {total} เบรนช์',
   'branchview.reset': 'แสดงเบรนช์ทั้งหมด',
   'search.firstParent': 'เฉพาะพาเรนต์แรก (เหมือน git log --first-parent)',
-  'search.columns': 'แสดง SHA ผู้เขียน และวันที่ข้างแต่ละคอมมิต (กราฟ 2D)',
+  'search.columns': 'แสดง SHA ผู้เขียน และวันที่ข้างแต่ละคอมมิต',
   'author.unknown': 'ไม่ทราบ',
 
   /* ---------- graph overlay ---------- */

@@ -299,11 +299,17 @@
   /** Texto de las columnas junto a un commit: «SHA corto · Autor · fecha» (el SHA, de 7 caracteres, va primero para que el
       recorte del grafo no lo corte). `fmt` da la fecha en el idioma activo. */
   function columnText(c, fmt, unknown = '') {
+    return columnParts(c, fmt, unknown).filter(Boolean).join(' · ');
+  }
+
+  /** Las tres partes de las columnas, siempre en su lugar: [SHA corto, autor, fecha]; la que falta es ''. Para quien
+      las escribe por separado (el 3D, cada una en su `<bdi>`). */
+  function columnParts(c, fmt, unknown = '') {
     const sha = typeof c?.sha === 'string' ? c.sha.trim().slice(0, 7) : '';
     const who = String(c?.author?.name || c?.author?.login || unknown || '').trim();
     const when = c?.date ? fmt(c.date) : '';
-    return [sha, who, when].filter(Boolean).join(' · ');
+    return [sha, who, when];
   }
 
-  GB.search = { columnText, authors, authorParam, branchViewParam, byAuthor, byBranches, firstParent, firstParentParam, limitBranches, find, mount, pathParam, prParam, queryParam, withOpenPr, LIMIT };
+  GB.search = { columnParts, columnText, authors, authorParam, branchViewParam, byAuthor, byBranches, firstParent, firstParentParam, limitBranches, find, mount, pathParam, prParam, queryParam, withOpenPr, LIMIT };
 })((window.GB = window.GB || {}));

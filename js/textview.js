@@ -7,6 +7,7 @@
   const PER_BRANCH = 10; // commits que muestra cada rama (siguiendo el primer padre)
   const MAX_BRANCHES = 200; // con más ramas, las más recientes: el árbol tiene que seguir siendo legible
   const MAX_FORKS = 10; // forks que lista la vista, el push más reciente primero
+  const MAX_CI_PULLS = 20; // PRs abiertos con el CI en rojo que lista la vista, el más nuevo primero
   const DAY = 864e5;
   // una rama quieta: los mismos 30 días de las ramas olvidadas de la salud (js/health.js); los textos de 'textview.quiet' dicen 30
   const QUIET_DAYS = 30;
@@ -31,6 +32,22 @@
       .filter((f) => f && f.fullName && f.pushedAt && /^https:\/\//.test(String(f.url || '')))
       .map((f) => ({ name: String(f.fullName), url: String(f.url), pushedAt: at(f.pushedAt) }))
       .sort((a, b) => b.pushedAt - a.pushedAt || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    return { total: all.length, rows: all.slice(0, max) };
+  }
+
+  /** Los PRs abiertos ya cargados cuyo último CI falló, el de número mayor (el más nuevo) primero. El estado es el del
+      PR (`p.ci`) o, si no lo trae y su rama es de este repo, el de la cabeza de esa rama (`data.ci`): la misma regla que
+      la salud (js/health.js). En curso o sin dato no es fallo. No consulta nada; la url solo queda si es https. */
+  function failingPulls(data, max = MAX_CI_PULLS) {
+    const all = [];
+    for (const p of data?.pulls?.values?.() || []) {
+      if (!p || !(Number(p.number) > 0)) continue;
+      const head = String(p.head || '');
+      const ci = p.ci || (p.sameRepo && head && data.ci?.get?.(head)) || null;
+      if (ci !== 'failure') continue;
+      all.push({ number: Number(p.number), title: String(p.title || '').split('\n')[0].trim(), head: head || '?', url: /^https:\/\//.test(String(p.url || '')) ? String(p.url) : '' });
+    }
+    all.sort((a, b) => b.number - a.number);
     return { total: all.length, rows: all.slice(0, max) };
   }
 
@@ -101,7 +118,7 @@
       const noPr = !!pullsKnown && !isDefault && !merged && !prs;
       return { name: b.name, isDefault, tipAuthor, prs, noPr, quiet, merged, ciFailing: data.ci?.get?.(b.name) === 'failure', fresh: !isDefault && !!fresh?.has(b.name), commits };
     }).filter((b) => !paths || b.commits.length);
-    return { total, branches: rows, forks: withForks ? forks(data) : { total: 0, rows: [] } };
+    return { total, branches: rows, ciPulls: failingPulls(data), forks: withForks ? forks(data) : { total: 0, rows: [] } };
   }
 
   /** Los releases que dicen las actividades del feed (`kind: 'release'`): sus tags y, si traen `sha`, ese commit. */
@@ -216,7 +233,35 @@
       const shown = filter(tree, query);
       if (!shown.length) root.appendChild(mk('p', 'hl-none', text('health.none')));
       else root.appendChild(drawTree(shown));
+      if (tree.ciPulls?.total) root.appendChild(drawCiPulls(tree.ciPulls));
       if (tree.forks?.total) root.appendChild(drawForks(tree.forks));
+    }
+
+    /** Los PRs abiertos con el CI en rojo: una lista fuera del árbol (no son ramas), cada uno con su número, su título y su
+        rama; con dirección https es un enlace al PR, y sin ella (la demo) solo texto. */
+    function drawCiPulls(f) {
+      const sec = mk('section', 'tv-forks tv-cipulls');
+      const h = mk('h3', 'tv-forks-h', text('textview.ciPulls', { n: f.total }));
+      h.id = 'tv-cipulls-h';
+      sec.setAttribute('aria-labelledby', h.id);
+      sec.appendChild(h);
+      const ul = mk('ul', 'tv-forks-list');
+      for (const r of f.rows) {
+        const li = mk('li');
+        const url = GB.U.safeUrl(r.url);
+        const row = mk(url ? 'a' : 'span', 'tv-fork tv-cipull');
+        if (url) {
+          row.href = url;
+          row.target = '_blank';
+          row.rel = 'noopener noreferrer';
+        }
+        row.appendChild(mk('span', 'tv-cipull-x', '✗')).setAttribute('aria-hidden', 'true');
+        row.appendChild(mk('span', 'tv-name', text('textview.ciPull', { num: r.number, title: r.title, branch: r.head })));
+        li.appendChild(row);
+        ul.appendChild(li);
+      }
+      sec.appendChild(ul);
+      return sec;
     }
 
     /** Los forks activos: una lista de enlaces fuera del árbol (no son ramas), con su nombre y cuándo fue su último push. */
@@ -336,7 +381,7 @@
       for (const b of next.branches) if (b.isDefault) open.add(b.name);
       const tagged = taggedCount(next);
       const released = releasedCount(next);
-      say([note, tagged && text('textview.tagged', { n: tagged }), released && text('textview.released', { n: released }), next.forks?.total && text('textview.forks', { n: next.forks.total })].filter(Boolean).join('. '));
+      say([note, tagged && text('textview.tagged', { n: tagged }), released && text('textview.released', { n: released }), next.ciPulls?.total && text('textview.ciPulls', { n: next.ciPulls.total }), next.forks?.total && text('textview.forks', { n: next.forks.total })].filter(Boolean).join('. '));
       draw();
     }
 
@@ -469,5 +514,5 @@
     return is('vista', 'texto') || is('view', 'text');
   }
 
-  GB.textview = { build, pullsComplete, forks, news, taggedCount, releasedCount, releaseMarks, freshBranches, filter, scopeText, viewAction, viewNote, mount, openParam, PER_BRANCH, MAX_BRANCHES, MAX_FORKS, QUIET_DAYS, PULLS_PAGE };
+  GB.textview = { build, pullsComplete, forks, failingPulls, news, taggedCount, releasedCount, releaseMarks, freshBranches, filter, scopeText, viewAction, viewNote, mount, openParam, PER_BRANCH, MAX_BRANCHES, MAX_FORKS, MAX_CI_PULLS, QUIET_DAYS, PULLS_PAGE };
 })((window.GB = window.GB || {}));

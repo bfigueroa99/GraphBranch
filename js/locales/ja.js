@@ -634,6 +634,8 @@ GB.i18n.define('ja', {
   'textview.quiet': '30日以上動きなし',
   'textview.merged': 'デフォルトブランチにマージ済み',
   'textview.ciFailing': 'CI が失敗中',
+  'textview.ciPulls': 'CI が失敗中のオープンな PR: {n}',
+  'textview.ciPull': '#{num} {title}、ブランチ {branch}',
   'textview.hideBranch': '{name} を非表示',
   'textview.soloBranch': '{name} だけを表示',
   'textview.hidden': '{name} を非表示にしました',

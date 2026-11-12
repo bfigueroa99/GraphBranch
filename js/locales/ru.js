@@ -650,6 +650,8 @@ GB.i18n.define('ru', {
   'textview.quiet': 'без активности более 30 дней',
   'textview.merged': 'слита в основную ветку',
   'textview.ciFailing': 'CI падает',
+  'textview.ciPulls': 'Открытые PR с падающим CI: {n}',
+  'textview.ciPull': '#{num} {title}, ветка {branch}',
   'textview.hideBranch': 'Скрыть {name}',
   'textview.soloBranch': 'Показать только {name}',
   'textview.hidden': '{name} скрыта',

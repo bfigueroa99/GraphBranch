@@ -634,6 +634,8 @@ GB.i18n.define('da', {
   'textview.quiet': 'uden aktivitet i over 30 dage',
   'textview.merged': 'flettet ind i hovedgrenen',
   'textview.ciFailing': 'CI fejler',
+  'textview.ciPulls': 'Åbne PR med fejlende CI: {n}',
+  'textview.ciPull': '#{num} {title}, gren {branch}',
   'textview.hideBranch': 'Skjul {name}',
   'textview.soloBranch': 'Vis kun {name}',
   'textview.hidden': '{name} er skjult',

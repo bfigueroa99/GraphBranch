@@ -642,6 +642,8 @@ GB.i18n.define('ro', {
   'textview.quiet': 'fără activitate de peste 30 de zile',
   'textview.merged': 'îmbinată în ramura implicită',
   'textview.ciFailing': 'CI eșuează',
+  'textview.ciPulls': 'PR-uri deschise cu CI care eșuează: {n}',
+  'textview.ciPull': '#{num} {title}, ramura {branch}',
   'textview.hideBranch': 'Ascunde {name}',
   'textview.soloBranch': 'Arată doar {name}',
   'textview.hidden': '{name} ascunsă',

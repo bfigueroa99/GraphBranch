@@ -635,6 +635,8 @@ GB.i18n.define('nl', {
   'textview.quiet': 'geen activiteit in meer dan 30 dagen',
   'textview.merged': 'samengevoegd in de standaardbranch',
   'textview.ciFailing': 'CI faalt',
+  'textview.ciPulls': 'Open PR\'s met falende CI: {n}',
+  'textview.ciPull': '#{num} {title}, branch {branch}',
   'textview.hideBranch': '{name} verbergen',
   'textview.soloBranch': 'Alleen {name} tonen',
   'textview.hidden': '{name} verborgen',

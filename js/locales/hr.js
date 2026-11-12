@@ -642,6 +642,8 @@ GB.i18n.define('hr', {
   'textview.quiet': 'bez aktivnosti dulje od 30 dana',
   'textview.merged': 'spojeno u zadanu granu',
   'textview.ciFailing': 'CI pada',
+  'textview.ciPulls': 'Otvoreni PR-ovi kojima CI pada: {n}',
+  'textview.ciPull': '#{num} {title}, grana {branch}',
   'textview.hideBranch': 'Sakrij {name}',
   'textview.soloBranch': 'Prikaži samo {name}',
   'textview.hidden': '{name} je skrivena',

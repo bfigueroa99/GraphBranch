@@ -976,7 +976,7 @@ console.log('Escritorio (1280×800)');
     });
     if (marks.marked !== marks.named) throw new Error(`commits con tag sin decirlo en su nombre accesible: ${marks.marked} vs ${marks.named}`);
     // la demo publica v1.4.0 como release sobre un commit con ese tag: se dice «release» en su nombre y la región viva lo cuenta
-    if (!marks.released || !/Commits con release: \d+(\. Forks activos: \d+)?$/.test(marks.live)) throw new Error(`el release de la demo no se dice (${marks.released}): ${marks.live}`);
+    if (!marks.released || !/Commits con release: \d+(\. PRs abiertos con CI fallando: \d+)?(\. Forks activos: \d+)?$/.test(marks.live)) throw new Error(`el release de la demo no se dice (${marks.released}): ${marks.live}`);
     if (marks.marked && !/^Commits con tag: \d+/.test(marks.live)) throw new Error('la región viva no cuenta los commits con tag: ' + marks.live);
     // los 2 forks activos de la demo salen como lista de enlaces aparte del árbol, el más reciente primero, y la región viva los cuenta
     const forks = await page.evaluate(() => ({
@@ -1020,6 +1020,25 @@ console.log('Escritorio (1280×800)');
     });
     const gotMerged = mergedBr.filter((m) => m.label || m.chip);
     if (gotMerged.length !== 1 || gotMerged[0].b !== 'hecha' || !gotMerged[0].label || !gotMerged[0].chip) throw new Error('la vista de texto no dice la rama fusionada: ' + JSON.stringify(mergedBr));
+    // los PRs abiertos con el CI en rojo salen en una lista aparte del árbol (árbol montado aparte, con PRs fijos): el de
+    // url https es un enlace, el otro solo texto, el título entra como texto y la región viva los cuenta
+    const ciPulls = await page.evaluate(() => {
+      const c = (sha, parents, date) => [sha, { sha, parents, message: sha, date, author: { name: 'Ana' } }];
+      const data = { repo: { defaultBranch: 'main' }, commits: new Map([c('a', [], 1), c('f', ['a'], 2)]), branches: new Map([['main', { name: 'main', sha: 'a', isDefault: true }], ['roja', { name: 'roja', sha: 'f' }]]), ci: new Map([['roja', 'failure']]),
+        pulls: new Map([[12, { number: 12, title: '<img src=x onerror=alert(1)> arregla', head: 'roja', sameRepo: true, url: 'https://github.com/o/r/pull/12' }], [13, { number: 13, title: 'sin enlace', head: 'roja', sameRepo: true, url: null }], [14, { number: 14, title: 'verde', head: 'main', sameRepo: true, ci: 'success' }]]) };
+      const box = document.createElement('div');
+      const live = document.createElement('div');
+      const view = GB.textview.mount(box, { text: (k, p) => GB.i18n.t(k, p), ago: () => "", onGo() {}, live });
+      view.render(GB.textview.build(data, { now: 6 }));
+      const sec = box.querySelector('.tv-cipulls');
+      return { h: sec?.querySelector('h3')?.textContent, labelled: sec?.getAttribute('aria-labelledby') === sec?.querySelector('h3')?.id, rows: [...(sec?.querySelectorAll('li > .tv-cipull') || [])].map((n) => ({ tag: n.tagName, href: n.getAttribute('href'), rel: n.getAttribute('rel'), txt: n.querySelector('.tv-name').textContent })), img: box.querySelectorAll('img').length, inTree: !!box.querySelector('[role="tree"] .tv-cipulls'), live: live.textContent };
+    });
+    if (ciPulls.h !== 'PRs abiertos con CI fallando: 2' || !ciPulls.labelled || ciPulls.inTree || ciPulls.img || ciPulls.rows.length !== 2) throw new Error('la vista de texto no lista los PRs con CI fallido: ' + JSON.stringify(ciPulls));
+    if (ciPulls.rows[0].tag !== 'SPAN' || ciPulls.rows[0].txt !== '#13 sin enlace, rama roja' || ciPulls.rows[1].tag !== 'A' || ciPulls.rows[1].href !== 'https://github.com/o/r/pull/12' || !/noopener/.test(ciPulls.rows[1].rel) || ciPulls.rows[1].txt !== '#12 <img src=x onerror=alert(1)> arregla, rama roja') throw new Error('los PRs con CI fallido no salen como deben: ' + JSON.stringify(ciPulls.rows));
+    if (!/PRs abiertos con CI fallando: 2$/.test(ciPulls.live)) throw new Error('la región viva no cuenta los PRs con CI fallido: ' + ciPulls.live);
+    // y en la demo: si hay algún PR abierto con el CI en rojo, su lista dice cuántos son y trae esas filas, fuera del árbol
+    const demoCi = await page.evaluate(() => ({ rows: document.querySelectorAll('#textview .tv-cipulls .tv-cipull').length, h: document.querySelector('#textview .tv-cipulls h3')?.textContent || '', inTree: !!document.querySelector('#textview [role="tree"] .tv-cipulls') }));
+    if (demoCi.h && (demoCi.inTree || !/^PRs abiertos con CI fallando: \d+$/.test(demoCi.h) || Math.min(Number(demoCi.h.match(/\d+$/)[0]), 20) !== demoCi.rows)) throw new Error('la lista de PRs con CI fallido de la demo no coincide con su título: ' + JSON.stringify(demoCi));
     // la rama por defecto viene abierta: ↓ baja a su primer commit; ← sube a la rama y otra ← la cierra
     await page.keyboard.press('ArrowDown');
     const onCommit = await page.evaluate(() => document.activeElement.classList.contains('tv-commit'));
@@ -1086,7 +1105,7 @@ console.log('Escritorio (1280×800)');
       return { role: l.getAttribute('role'), polite: l.getAttribute('aria-live'), text: l.textContent };
     });
     if (live.role !== 'status' || live.polite !== 'polite') throw new Error('la región viva no es role=status polite');
-    if (live.text && !/^Commits con tag: \d+(\. Commits con release: \d+)?(\. Forks activos: \d+)?$/.test(live.text)) throw new Error('al abrir, la región viva ya anuncia algo más que los tags y releases: ' + live.text);
+    if (live.text && !/^Commits con tag: \d+(\. Commits con release: \d+)?(\. PRs abiertos con CI fallando: \d+)?(\. Forks activos: \d+)?$/.test(live.text)) throw new Error('al abrir, la región viva ya anuncia algo más que los tags y releases: ' + live.text);
     // filtro: un nombre que no existe vacía el árbol; el de la primera rama lo deja con esa rama
     const first = await page.evaluate(() => document.querySelector('#textview .tv-branch').dataset.branch);
     await page.fill('#textview-filter', 'zzz-no-existe');

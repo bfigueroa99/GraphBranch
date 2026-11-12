@@ -634,6 +634,8 @@ GB.i18n.define('ca', {
   'textview.quiet': 'sense activitat fa més de 30 dies',
   'textview.merged': 'fusionada a la principal',
   'textview.ciFailing': 'CI fallant',
+  'textview.ciPulls': 'PR oberts amb CI fallant: {n}',
+  'textview.ciPull': '#{num} {title}, branca {branch}',
   'textview.hideBranch': 'Amaga {name}',
   'textview.soloBranch': 'Mostra només {name}',
   'textview.hidden': '{name} amagada',

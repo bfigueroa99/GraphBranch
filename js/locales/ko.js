@@ -634,6 +634,8 @@ GB.i18n.define('ko', {
   'textview.quiet': '30일 넘게 활동 없음',
   'textview.merged': '기본 브랜치에 병합됨',
   'textview.ciFailing': 'CI 실패 중',
+  'textview.ciPulls': 'CI 실패 중인 열린 PR: {n}',
+  'textview.ciPull': '#{num} {title}, 브랜치 {branch}',
   'textview.hideBranch': '{name} 숨기기',
   'textview.soloBranch': '{name}만 보기',
   'textview.hidden': '{name} 숨김',

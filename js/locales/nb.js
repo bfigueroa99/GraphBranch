@@ -634,6 +634,8 @@ GB.i18n.define('nb', {
   'textview.quiet': 'uten aktivitet på over 30 dager',
   'textview.merged': 'slått sammen med standardgrenen',
   'textview.ciFailing': 'CI feiler',
+  'textview.ciPulls': 'Åpne PR-er der CI feiler: {n}',
+  'textview.ciPull': '#{num} {title}, gren {branch}',
   'textview.hideBranch': 'Skjul {name}',
   'textview.soloBranch': 'Vis bare {name}',
   'textview.hidden': '{name} skjult',

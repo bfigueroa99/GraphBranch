@@ -634,6 +634,8 @@ GB.i18n.define('hu', {
   'textview.quiet': '30 napnál régebben inaktív',
   'textview.merged': 'beolvasztva az alapértelmezett ágba',
   'textview.ciFailing': 'a CI hibás',
+  'textview.ciPulls': 'Nyitott PR-ek hibás CI-vel: {n}',
+  'textview.ciPull': '#{num} {title}, ág: {branch}',
   'textview.hideBranch': '{name} elrejtése',
   'textview.soloBranch': 'Csak {name} megjelenítése',
   'textview.hidden': '{name} elrejtve',

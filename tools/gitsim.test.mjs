@@ -1609,3 +1609,79 @@ test('show se niega como git: un sha que no existe, opciones desconocidas, -p si
   // help lo lista
   assert.ok(r.run('help').lines.some((l) => l.startsWith('show ')));
 });
+
+test('diff lista los archivos cambiados sin preparar y diff --staged los preparados, sin tocar nada', () => {
+  const r = fresh();
+  // con el árbol limpio no hay nada que listar
+  assert.deepEqual(plain(r.run('diff').lines), []);
+  assert.deepEqual(plain(r.run('diff --staged').lines), []);
+  r.run('touch app.js');
+  r.run('touch --new nuevo.txt');
+  r.run('rm README.md');
+  const state = () => JSON.stringify([[...r.branches], r.head, r.reflog, r.work, r.staged, r.deleted, r.untracked, r.adds]);
+  const before = state();
+  // antes de add: lo cambiado y lo borrado sin preparar; lo sin seguir no sale, como en git
+  const res = r.run('git diff');
+  assert.ok(res.ok);
+  assert.equal(res.changed, false);
+  assert.deepEqual(plain(res.lines), [' README.md | deleted', ' app.js    | changed', ' 2 files changed']);
+  assert.deepEqual(plain(r.run('diff --name-status').lines), ['D\tREADME.md', 'M\tapp.js']);
+  assert.deepEqual(plain(r.run('diff --name-only').lines), ['README.md', 'app.js']);
+  assert.deepEqual(plain(r.run('diff --staged').lines), []);
+  assert.equal(state(), before);
+  // después de add: pasan a --staged (también --cached), con lo nuevo como A, y diff queda vacío
+  r.run('add .');
+  assert.deepEqual(plain(r.run('diff').lines), []);
+  assert.deepEqual(plain(r.run('diff --staged --name-status').lines), ['D\tREADME.md', 'M\tapp.js', 'A\tnuevo.txt']);
+  assert.deepEqual(plain(r.run('diff --cached').lines), [' README.md | deleted', ' app.js    | changed', ' nuevo.txt | new', ' 3 files changed']);
+  // gana el último formato
+  assert.deepEqual(plain(r.run('diff --staged --name-only --stat').lines.at(-1)), ' 3 files changed');
+  // un archivo preparado y cambiado otra vez sale en los dos
+  r.run('touch app.js');
+  assert.deepEqual(plain(r.run('diff --name-status').lines), ['M\tapp.js']);
+  assert.deepEqual(plain(r.run('diff --cached --name-status').lines), ['D\tREADME.md', 'M\tapp.js', 'A\tnuevo.txt']);
+  // con rutas, solo esas (tras -- o a secas, si la práctica conoce el archivo)
+  assert.deepEqual(plain(r.run('diff --staged --name-only -- nuevo.txt').lines), ['nuevo.txt']);
+  assert.deepEqual(plain(r.run('diff --staged --name-only app.js').lines), ['app.js']);
+  assert.deepEqual(plain(r.run('diff -- nada.txt').lines), []);
+  // un git mv preparado sale como el borrado del viejo y el nombre nuevo; el cambio sin preparar de app.js lo sigue
+  run(r, 'commit -m "Cambios"', 'git mv app.js main.js', 'touch lib.js');
+  assert.deepEqual(plain(r.run('diff --staged --name-status').lines), ['D\tapp.js', 'A\tmain.js']);
+  assert.deepEqual(plain(r.run('diff --name-status').lines), ['M\tlib.js', 'M\tmain.js']);
+  run(r, 'git rm --cached nuevo.txt');
+  assert.deepEqual(plain(r.run('diff --staged --name-status').lines), ['D\tapp.js', 'A\tmain.js', 'D\tnuevo.txt']);
+  const head = r.headSha;
+  const after = JSON.stringify([[...r.branches], r.head, r.reflog, r.work, r.staged]);
+  for (const line of ['diff', 'diff --staged', 'diff --cached --name-only']) assert.equal(r.run(line).changed, false);
+  assert.equal(r.headSha, head);
+  assert.equal(JSON.stringify([[...r.branches], r.head, r.reflog, r.work, r.staged]), after);
+  assert.ok(r.run('help').lines.some((l) => l.startsWith('diff ')));
+  // el nombre viejo de un git mv, creado y preparado otra vez, es un cambio (M), no un borrado y un nuevo
+  const mv = fresh();
+  run(mv, 'git mv README.md docs.md', 'touch README.md', 'add README.md');
+  assert.deepEqual(plain(mv.run('diff --staged --name-status').lines), ['M\tREADME.md', 'A\tdocs.md']);
+});
+
+test('diff se niega como git: opciones desconocidas, -p sin contenido, un commit y una ruta que no existe', () => {
+  const r = fresh();
+  r.run('touch app.js');
+  const work = JSON.stringify(r.work);
+  assert.match(r.run('diff -p').lines[0], /^fatal: diff -p needs file contents/);
+  assert.equal(r.run('diff --patch').ok, false);
+  assert.match(r.run('diff --word-diff').lines[0], /^fatal: unrecognized argument: --word-diff/);
+  assert.match(r.run('diff HEAD').lines[0], /^fatal: diff <commit> is not in this practice/);
+  assert.match(r.run('diff main').lines[0], /^fatal: diff <commit> is not in this practice/);
+  assert.match(r.run('diff nada.txt').lines[0], /^fatal: ambiguous argument 'nada.txt'/);
+  // un rango tampoco: se dice que no es de la práctica, no que la rama no existe
+  assert.match(r.run('diff main..HEAD').lines[0], /^fatal: diff <commit> is not in this practice/);
+  assert.match(r.run('diff HEAD~1...main').lines[0], /^fatal: diff <commit> is not in this practice/);
+  assert.equal(JSON.stringify(r.work), work);
+  // un repo vacío: diff y diff --staged funcionan (lo nuevo preparado es A); HEAD no existe
+  const empty = new Repo({ now: NOW });
+  empty.run('touch --new a.txt');
+  assert.deepEqual(plain(empty.run('diff').lines), []);
+  assert.deepEqual(plain(new Repo({ now: NOW }).run('diff .').lines), []); // . vale siempre, como en git
+  empty.run('add a.txt');
+  assert.deepEqual(plain(empty.run('diff --staged --name-status').lines), ['A\ta.txt']);
+  assert.match(empty.run('diff HEAD').lines[0], /^fatal: ambiguous argument 'HEAD'/);
+});

@@ -111,7 +111,7 @@ test('branch -m renombra una rama (la actual si no se dice cuál) y HEAD, la por
   assert.deepEqual([...r.branches.keys()], ['trunk', 'feature/login']);
   assert.match(r.run('reflog').lines[0], /HEAD@\{0\}: Branch: renamed refs\/heads\/main to refs\/heads\/trunk$/);
   assert.deepEqual(plain(r.run('branch').lines), ['  feature/login', '* trunk']);
-  assert.match(r.run('log --oneline').lines[0], /\(HEAD -> trunk, feature\/login\)/);
+  assert.match(r.run('log --oneline').lines[0], /\(HEAD -> trunk, feature\/login, origin\/main\)/);
   assert.equal(r.renamed, null, 'otro comando borra la marca del renombre');
   // --move también; con el mismo nombre no hace nada
   assert.ok(r.run('branch --move feature/login login').ok);
@@ -191,7 +191,7 @@ test('branch -c copia una rama (la actual si no se dice cuál) con sus commits, 
   assert.equal(r.defaultBranch, 'main');
   assert.deepEqual(plain(r.run('reflog').lines), reflog, 'copiar no mueve HEAD: el reflog no cambia');
   assert.deepEqual(plain(r.run('branch').lines), ['  feature', '  feature/copia', '* main', '  respaldo']);
-  assert.match(r.run('log --oneline').lines[0], /\(HEAD -> main, respaldo\)/);
+  assert.match(r.run('log --oneline').lines[0], /\(HEAD -> main, respaldo, origin\/main\)/);
   // la copia es una rama independiente: un commit en ella no mueve la original
   run(r, 'checkout feature/copia', 'commit -m "Solo en la copia"');
   assert.equal(r.branches.get('feature'), tip);
@@ -346,12 +346,12 @@ test('log --oneline dice dónde está HEAD y las ramas', () => {
   run(r, 'branch feature');
   const lines = r.run('log --oneline').lines;
   assert.equal(lines.length, 3);
-  assert.match(lines[0], /^[0-9a-f]{7} \(HEAD -> main, feature\) Add login form$/);
+  assert.match(lines[0], /^[0-9a-f]{7} \(HEAD -> main, feature, origin\/main\) Add login form$/);
 });
 
 test('comandos desconocidos, ayuda y líneas vacías no rompen nada', () => {
   const r = fresh();
-  assert.equal(r.run('push origin main').ok, false);
+  assert.equal(r.run('pull origin main').ok, false);
   assert.ok(r.run('help').lines.length > 5);
   assert.deepEqual(plain(r.run('   ').lines), []);
   assert.equal(r.run('git').changed, false);
@@ -379,6 +379,7 @@ test('cada ejercicio parte sin resolver y se resuelve con sus comandos', () => {
     ['add login.js', 'commit -m "Fix login"'],
     ['clean -nd', 'clean -fd -e nuevo.js'],
     ['stash list', 'stash show', 'stash show stash@{1}', 'stash pop stash@{1}'],
+    ['fetch', 'merge origin/main', 'push'],
   ];
   assert.equal(solutions.length, EXERCISES.length);
   EXERCISES.forEach((ex, i) => {
@@ -409,6 +410,139 @@ test('un ejercicio no se da por resuelto con el atajo equivocado', () => {
   const all = start(11, NOW);
   all.run('clean -fd');
   assert.equal(EXERCISES[11].done(all), false, 'clean -fd borra también nuevo.js');
+  // push: forzar pisa el arreglo de Ana, y reset --hard origin/main tira el commit propio
+  const push = EXERCISES.findIndex((e) => e.id === 'push');
+  const f = start(push, NOW);
+  assert.ok(f.run('push -f').ok);
+  assert.equal(EXERCISES[push].done(f), false, 'push -f pisa lo de Ana');
+  const h = start(push, NOW);
+  run(h, 'fetch', 'reset --hard origin/main', 'push');
+  assert.equal(EXERCISES[push].done(h), false, 'reset --hard origin/main tira el commit propio');
+  const b = start(push, NOW);
+  run(b, 'fetch', 'rebase origin/main', 'push');
+  assert.equal(EXERCISES[push].done(b), true, 'rebase en vez de merge también vale');
+});
+
+test('el remoto: push sube la rama, fetch trae lo ajeno y status dice el adelanto y el atraso', () => {
+  const r = fresh();
+  const tip = r.headSha;
+  assert.deepEqual(plain(r.run('status').lines), ['On branch main', "Your branch is up to date with 'origin/main'.", 'nothing to commit, working tree clean']);
+  assert.equal(r.resolve('origin/main'), tip);
+  assert.equal(r.resolve('remotes/origin/main~1'), r.commits.get(tip).parents[0]);
+  assert.deepEqual(plain(r.run('branch -r').lines), ['  origin/main']);
+  assert.deepEqual(plain(r.run('branch -a').lines), ['* main', '  remotes/origin/main']);
+  assert.deepEqual(plain(r.run('push').lines), ['Everything up-to-date']);
+  // dos commits propios: adelanto, y push los sube moviendo origin/main
+  run(r, 'commit -m uno', 'commit -m dos');
+  assert.equal(r.run('status').lines[1], "Your branch is ahead of 'origin/main' by 2 commits.");
+  const pushed = r.run('push');
+  assert.ok(pushed.ok && pushed.changed);
+  assert.deepEqual(plain(pushed.lines), ['To origin', `   ${tip.slice(0, 7)}..${r.headSha.slice(0, 7)}  main -> main`]);
+  assert.equal(r.remote.branches.get('main'), r.headSha);
+  assert.equal(r.tracking.get('main'), r.headSha);
+  assert.match(r.run('log --oneline').lines[0], /\(HEAD -> main, origin\/main\)/);
+  // otra persona sube un commit: hasta el fetch no se sabe; push se rechaza («fetch first»)
+  const local = r.headSha;
+  const theirs = r.remoteCommit('main', 'Fix typo', { name: 'Ana', login: 'ana', avatar: null });
+  assert.equal(r.run('status').lines[1], "Your branch is up to date with 'origin/main'.", 'sin fetch no se sabe');
+  assert.equal(r.resolve('origin/main'), local);
+  r.run('commit -m tres');
+  const rejected = r.run('push');
+  assert.equal(rejected.ok, false);
+  assert.match(rejected.lines.join('\n'), /! \[rejected\]\s+main -> main \(fetch first\)[\s\S]*failed to push some refs to 'origin'/);
+  assert.equal(r.remote.branches.get('main'), theirs, 'el rechazo no toca el remoto');
+  // fetch: origin/main avanza, main no; status dice que divergieron
+  const head = r.headSha;
+  const fetched = r.run('fetch');
+  assert.ok(fetched.ok && fetched.changed);
+  assert.deepEqual(plain(fetched.lines), ['From origin', `   ${local.slice(0, 7)}..${theirs.slice(0, 7)}  main -> origin/main`]);
+  assert.equal(r.headSha, head, 'fetch no mueve la rama');
+  assert.equal(r.resolve('origin/main'), theirs);
+  assert.deepEqual(plain(r.run('status').lines.slice(1, 3)), ["Your branch and 'origin/main' have diverged,", 'and have 1 and 1 different commits each, respectively.']);
+  assert.deepEqual(plain(r.run('fetch').lines), [], 'un segundo fetch no trae nada');
+  // conocido pero sin integrar: «non-fast-forward»
+  assert.match(r.run('push').lines.join('\n'), /\(non-fast-forward\)[\s\S]*merge origin\/main/);
+  // merge origin/main con su mensaje de git, y push sube los dos
+  assert.ok(r.run('merge origin/main').ok);
+  assert.equal(r.commits.get(r.headSha).message, "Merge remote-tracking branch 'origin/main'");
+  assert.equal(r.run('status').lines[1], "Your branch is ahead of 'origin/main' by 2 commits.");
+  assert.ok(r.run('push').ok);
+  assert.equal(r.remote.branches.get('main'), r.headSha);
+  // atraso: reset atrás, y status lo dice; merge origin/main avanza rápido
+  r.run('reset --hard HEAD~1');
+  assert.match(r.run('status').lines[1], /^Your branch is behind 'origin\/main' by 2 commits, and can be fast-forwarded\.$/);
+  assert.deepEqual(plain(r.run('merge origin/main').lines.slice(1)), ['Fast-forward']);
+});
+
+test('push de una rama nueva: pide -u, la sigue después y fetch, checkout y switch la conocen', () => {
+  const r = fresh();
+  run(r, 'checkout -b feature', 'commit -m uno');
+  const no = r.run('push');
+  assert.equal(no.ok, false);
+  assert.match(no.lines.join('\n'), /has no upstream branch[\s\S]*push --set-upstream origin feature/);
+  const res = r.run('push -u origin feature');
+  assert.deepEqual(plain(res.lines), ['To origin', ' * [new branch]      feature -> feature', "branch 'feature' set up to track 'origin/feature'."]);
+  assert.equal(r.upstream.get('feature'), 'feature');
+  assert.equal(r.run('status').lines[1], "Your branch is up to date with 'origin/feature'.");
+  r.run('commit -m dos');
+  assert.ok(r.run('push').ok, 'con -u ya sabe a dónde');
+  // push origin <rama> sin -u sube sin recordar
+  run(r, 'checkout main', 'branch otra');
+  assert.ok(r.run('push origin otra').ok);
+  assert.equal(r.upstream.has('otra'), false);
+  assert.equal(r.remote.branches.get('otra'), r.branches.get('otra'));
+  // una rama que solo está en el remoto: checkout la crea siguiéndola; switch también; switch origin/x no
+  r.remoteCommit('docs', 'Add docs');
+  assert.deepEqual(plain(r.run('fetch').lines), ['From origin', ' * [new branch]      docs -> origin/docs']);
+  assert.deepEqual(plain(r.run('checkout docs').lines), ["branch 'docs' set up to track 'origin/docs'.", "Switched to a new branch 'docs'"]);
+  assert.equal(r.branches.get('docs'), r.tracking.get('docs'));
+  assert.equal(r.run('status').lines[1], "Your branch is up to date with 'origin/docs'.");
+  r.run('checkout main');
+  r.run('branch -D docs');
+  assert.ok(r.run('switch docs').ok);
+  assert.equal(r.run('switch origin/docs').ok, false);
+  // branch -m lleva la rama de seguimiento con ella; -d la olvida
+  r.run('branch -m docs manual');
+  assert.equal(r.upstream.get('manual'), 'docs');
+  assert.equal(r.run('status').lines[1], "Your branch is up to date with 'origin/docs'.");
+  run(r, 'checkout main', 'branch -D manual');
+  assert.equal(r.upstream.has('manual'), false);
+});
+
+test('push y fetch se niegan como git: sin remoto, otro remoto, desprendido, refspecs, opciones y ramas que no existen', () => {
+  const r = fresh();
+  const state = () => JSON.stringify([[...r.remote.branches], [...r.tracking], [...r.branches]]);
+  const before = state();
+  const no = (line, re) => {
+    const res = r.run(line);
+    assert.equal(res.ok, false, line);
+    assert.match(res.lines.join('\n'), re, line);
+  };
+  no('push upstream main', /'upstream' does not appear to be a git repository/);
+  no('fetch upstream', /'upstream' does not appear to be a git repository/);
+  no('push origin nope', /src refspec nope does not match any/);
+  no('push origin main:other', /without refspecs/);
+  no('push --delete origin main', /unknown option 'delete'/);
+  no('fetch --prune', /unknown option 'prune'/);
+  no('push origin main extra', /one branch at a time/);
+  r.run('checkout HEAD~1');
+  no('push', /not currently on a branch/);
+  assert.equal(state(), before, 'nada cambió');
+  // un repo sin remoto (vacío, o el ensayo de un repo real)
+  const e = new Repo({ now: NOW });
+  e.run('commit -m uno');
+  assert.match(e.run('push').lines[0], /No configured push destination/);
+  assert.match(e.run('fetch').lines[0], /No remote repository specified/);
+  assert.equal(e.resolve('origin/main'), null);
+  assert.deepEqual(plain(e.run('status').lines), ['On branch main', 'nothing to commit, working tree clean']);
+  // un ejercicio propio puede pedir que la rama esté subida
+  const spec = cleanExercise({ title: 'Sube', goal: 'Sube feature.', setup: ['checkout -b feature', 'commit -m uno'], checks: ['pushed:feature'], solution: ['push -u origin feature'] });
+  assert.equal(spec.error, undefined);
+  const ex = customExercise(spec);
+  const c = startCustom(ex, NOW);
+  assert.equal(ex.done(c), false);
+  c.run('push -u origin feature');
+  assert.equal(ex.done(c), true);
 });
 
 test('Repo vacío: commit crea el primero', () => {
@@ -519,6 +653,9 @@ test('la práctica dice «rama renombrada» en el panel, no una borrada y otra c
   const { src, acts } = practiceSource();
   src.run('branch feature');
   assert.equal(src.run('branch -m feature feature/login').ok, true);
+  // la rama de seguimiento sale en el grafo con su nombre de git, marcada como del remoto
+  assert.equal(src.data.branches.get('origin/main').remote, true);
+  assert.equal(src.data.branches.get('origin/main').sha, src.git.branches.get('main'));
   let list = acts();
   assert.equal(list.length, 1);
   assert.equal(list[0].kind, 'branch-rename');
@@ -546,7 +683,8 @@ test('los números de la URL piden un ejercicio de la lista; lo demás se descar
   assert.deepEqual(plain(decodeExercise('3')), { index: 2 });
   assert.deepEqual(plain(decodeExercise('12')), { index: 11 });
   assert.deepEqual(plain(decodeExercise('13')), { index: 12 });
-  for (const bad of ['0', '14', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
+  assert.deepEqual(plain(decodeExercise('14')), { index: 13 });
+  for (const bad of ['0', '15', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
 });
 
 test('un ejercicio propio mal hecho no entra: sin meta, condición inventada, comando que falla o demasiados', () => {
@@ -657,7 +795,7 @@ test('tag -a: etiqueta anotada con su mensaje, que tag -n lista y el log decora 
   assert.deepEqual(plain(r.run('tag -l').lines), ['light', 'v1', 'v2', 'v3', 'v4']);
   assert.deepEqual(plain(r.run('tag -l "v?" light').lines), ['light', 'v1', 'v2', 'v3', 'v4']);
   assert.deepEqual(plain(r.run('tag -n -l "v[12]*" "*3"').lines), ['v3              Pegadas'], 'los corchetes son literales; * y ? no');
-  assert.match(r.run('log --oneline').lines.find((l) => l.startsWith(first.slice(0, 7))), /\(tag: v1, tag: v2\)/);
+  assert.match(r.run('log --oneline').lines.find((l) => l.startsWith(first.slice(0, 7))), /\(origin\/main, tag: v1, tag: v2\)/);
   assert.match(r.run('log --oneline').lines[0], /tag: v3/);
   assert.equal(r.resolve('v1'), first, 'se resuelve al commit, no al objeto');
   // los errores de git, sin tocar nada
@@ -758,7 +896,7 @@ test('stash guarda los cambios a medias, deja cambiar de rama y pop los devuelve
   assert.ok(r.run('checkout main').ok, 'al mismo commit se puede ir con cambios, como en git');
   run(r, 'stash', 'checkout feature', 'commit -m "Feature work"', 'checkout main', 'stash pop', 'touch app.js notes.md');
   assert.deepEqual(plain(r.work), ['app.js', 'notes.md']);
-  assert.deepEqual(plain(r.run('status').lines), ['On branch main', 'Changes not staged for commit:', '\tmodified:   app.js', '\tmodified:   notes.md']);
+  assert.deepEqual(plain(r.run('status').lines), ['On branch main', "Your branch is up to date with 'origin/main'.", 'Changes not staged for commit:', '\tmodified:   app.js', '\tmodified:   notes.md']);
   // con cambios a medias no se cambia de rama, ni se fusiona, rebasa o copia
   const blocked = r.run('checkout feature');
   assert.equal(blocked.ok, false);
@@ -809,7 +947,7 @@ test('reset --hard a un sha tira los cambios a medias; los otros reset los conse
   assert.equal(res.lines[0], `HEAD is now at ${first.slice(0, 7)} Initial commit`);
   assert.equal(r.headSha, first);
   assert.deepEqual(plain(r.work), []);
-  assert.equal(r.run('status').lines[1], 'nothing to commit, working tree clean');
+  assert.equal(r.run('status').lines.at(-1), 'nothing to commit, working tree clean');
 });
 
 test('el ejercicio de stash pide guardar, arreglar main y recuperar los cambios sin commitearlos', () => {
@@ -857,7 +995,7 @@ test('merge --no-commit deja la fusión a medias: status la nombra, commit la ci
   assert.equal(r.run('merge --abort').ok, true);
   assert.equal(r.merging, null);
   assert.equal(r.branches.get('main'), main);
-  assert.equal(r.run('status').lines[1], 'nothing to commit, working tree clean');
+  assert.equal(r.run('status').lines.at(-1), 'nothing to commit, working tree clean');
   r.run('merge feature --no-commit');
   const c = r.run('commit -m "Join feature"');
   assert.ok(c.ok);
@@ -1056,7 +1194,7 @@ test('commit guarda solo lo preparado; con -a, todo lo cambiado (nunca lo sin se
   assert.deepEqual(plain(r.commits.get(r.headSha).files), ['a.txt']);
   assert.deepEqual(plain(r.work), ['b.txt']);
   assert.deepEqual(plain(r.untracked), ['n.txt']);
-  assert.deepEqual(plain(r.run('status').lines), ['On branch main', 'Changes not staged for commit:', '\tmodified:   b.txt', 'Untracked files:', '\tn.txt']);
+  assert.deepEqual(plain(r.run('status').lines), ['On branch main', "Your branch is ahead of 'origin/main' by 1 commit.", '  (use "git push" to publish your local commits)', 'Changes not staged for commit:', '\tmodified:   b.txt', 'Untracked files:', '\tn.txt']);
   // un archivo preparado y cambiado otra vez: entra lo preparado y el cambio nuevo queda sin preparar
   run(r, 'add b.txt', 'touch b.txt', 'commit -m "b preparado"');
   assert.deepEqual(plain(r.work), ['b.txt']);
@@ -1223,6 +1361,8 @@ test('stash -u aparta también los archivos sin seguir y pop los devuelve; sin -
 
 /* rm y mv: git rm prepara el borrado, git mv el renombre, y lo hecho a mano (sin git) lo prepara add -A */
 const status = (r) => plain(r.run('status').lines);
+/* lo de status bajo su cabecera: «On branch …» y, si la rama sigue a origin, su adelanto o atraso */
+const body = (r) => status(r).slice(1 + r.trackingLines().length);
 const last = (r) => r.commits.get(r.headSha);
 
 test('git rm borra un archivo que git sigue, deja el borrado preparado y el commit lo guarda', () => {
@@ -1231,13 +1371,13 @@ test('git rm borra un archivo que git sigue, deja el borrado preparado y el comm
   const res = r.run('git rm app.js');
   assert.ok(res.ok, res.lines.join('\n'));
   assert.deepEqual(plain(res.lines), ["rm 'app.js'"]);
-  assert.deepEqual(status(r), ['On branch main', 'Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\tdeleted:    app.js']);
+  assert.deepEqual(status(r), ['On branch main', "Your branch is ahead of 'origin/main' by 1 commit.", '  (use "git push" to publish your local commits)', 'Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\tdeleted:    app.js']);
   const c = r.run('commit -m "Drop app"');
   assert.ok(c.ok);
   assert.deepEqual(plain(c.lines.slice(1)), [' 1 file changed']);
   assert.deepEqual(plain(last(r).removed), ['app.js']);
   assert.equal(last(r).files, undefined, 'un borrado no es un archivo cambiado');
-  assert.deepEqual(status(r).slice(1), ['nothing to commit, working tree clean']);
+  assert.deepEqual(body(r), ['nothing to commit, working tree clean']);
   // ya no existe: otro rm (con o sin git) falla, y touch lo crea como archivo nuevo sin seguir
   assert.match(r.run('git rm app.js').lines[0], /pathspec 'app\.js' did not match any files/);
   assert.match(r.run('rm app.js').lines[0], /cannot remove 'app\.js'/);
@@ -1257,7 +1397,7 @@ test('git rm se niega con cambios sin commit (salvo -f) y git rm --cached deja e
   // --cached: sale del índice, el archivo se queda sin seguir
   const cached = r.run('git rm --cached a.txt');
   assert.ok(cached.ok, cached.lines.join('\n'));
-  assert.deepEqual(status(r), ['On branch main', 'Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\tdeleted:    a.txt', 'Untracked files:', '\ta.txt']);
+  assert.deepEqual(status(r), ['On branch main', "Your branch is up to date with 'origin/main'.", 'Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\tdeleted:    a.txt', 'Untracked files:', '\ta.txt']);
   run(r, 'commit -m "Stop tracking a"');
   assert.deepEqual(plain(last(r).removed), ['a.txt']);
   assert.deepEqual(plain(r.untracked), ['a.txt'], 'tras el commit sigue ahí, sin seguir');
@@ -1270,11 +1410,11 @@ test('git rm se niega con cambios sin commit (salvo -f) y git rm --cached deja e
   // un archivo nuevo preparado y borrado con -f desaparece sin dejar borrado que preparar
   const n = fresh();
   run(n, 'touch --new n.txt', 'add n.txt', 'git rm -f n.txt');
-  assert.deepEqual(status(n).slice(1), ['nothing to commit, working tree clean']);
+  assert.deepEqual(body(n), ['nothing to commit, working tree clean']);
   // restore --staged deshace un rm --cached: el archivo vuelve a seguirse
   const back = fresh();
   run(back, 'git rm --cached c.txt', 'restore --staged c.txt');
-  assert.deepEqual(status(back).slice(1), ['nothing to commit, working tree clean']);
+  assert.deepEqual(body(back), ['nothing to commit, working tree clean']);
   // un archivo sin seguir no está en el índice
   const u = fresh();
   run(u, 'touch --new tmp.txt');
@@ -1286,7 +1426,7 @@ test('git mv renombra preparado, con los cambios del archivo, y el commit lo gua
   run(r, 'touch old.js', 'add old.js', 'commit -m "Add old"');
   const res = r.run('git mv old.js new.js');
   assert.ok(res.ok, res.lines.join('\n'));
-  assert.deepEqual(status(r), ['On branch main', 'Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\trenamed:    old.js -> new.js']);
+  assert.deepEqual(status(r), ['On branch main', "Your branch is ahead of 'origin/main' by 1 commit.", '  (use "git push" to publish your local commits)', 'Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\trenamed:    old.js -> new.js']);
   const c = r.run('commit -m "Rename old to new"');
   assert.deepEqual(plain(c.lines.slice(1)), [' 1 file changed']);
   assert.deepEqual(plain(last(r).files), ['new.js']);
@@ -1297,7 +1437,7 @@ test('git mv renombra preparado, con los cambios del archivo, y el commit lo gua
   assert.match(r.run('git mv other.js new.js').lines[0], /destination exists, source=other\.js, destination=new\.js/);
   // un archivo cambiado se lleva sus cambios: queda renombrado y cambiado sin preparar
   run(r, 'touch other.js', 'git mv other.js renamed.js');
-  assert.deepEqual(status(r).slice(1), ['Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\trenamed:    other.js -> renamed.js', 'Changes not staged for commit:', '\tmodified:   renamed.js']);
+  assert.deepEqual(body(r), ['Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\trenamed:    other.js -> renamed.js', 'Changes not staged for commit:', '\tmodified:   renamed.js']);
   // un archivo sin seguir no se puede mover con git
   run(r, 'touch --new tmp.txt');
   assert.match(r.run('git mv tmp.txt t.txt').lines[0], /not under version control/);
@@ -1307,17 +1447,17 @@ test('rm y mv sin git solo tocan el árbol; add -A (y add ., add -u) preparan lo
   const r = fresh();
   run(r, 'touch a.js', 'touch b.js', 'add .', 'commit -m "Add a and b"');
   run(r, 'rm a.js');
-  assert.deepEqual(status(r), ['On branch main', 'Changes not staged for commit:', '\tdeleted:    a.js']);
+  assert.deepEqual(status(r), ['On branch main', "Your branch is ahead of 'origin/main' by 1 commit.", '  (use "git push" to publish your local commits)', 'Changes not staged for commit:', '\tdeleted:    a.js']);
   // como en git, un commit sin nada preparado se niega y muestra el borrado
   const no = r.run('commit -m "x"');
   assert.equal(no.ok, false);
   assert.match(no.lines.join('\n'), /deleted: {4}a\.js/);
   // mv a mano: el viejo borrado y el nuevo sin seguir
   run(r, 'mv b.js c.js');
-  assert.deepEqual(status(r).slice(1), ['Changes not staged for commit:', '\tdeleted:    a.js', '\tdeleted:    b.js', 'Untracked files:', '\tc.js']);
+  assert.deepEqual(body(r), ['Changes not staged for commit:', '\tdeleted:    a.js', '\tdeleted:    b.js', 'Untracked files:', '\tc.js']);
   // add -A prepara el borrado y ve el mv como un renombre
   run(r, 'add -A');
-  assert.deepEqual(status(r).slice(1), ['Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\tdeleted:    a.js', '\trenamed:    b.js -> c.js']);
+  assert.deepEqual(body(r), ['Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', '\tdeleted:    a.js', '\trenamed:    b.js -> c.js']);
   run(r, 'commit -m "Clean up"');
   assert.deepEqual(plain(last(r).removed.sort()), ['a.js', 'b.js']);
   assert.deepEqual(plain(last(r).files), ['c.js']);
@@ -1333,22 +1473,22 @@ test('rm y mv sin git solo tocan el árbol; add -A (y add ., add -u) preparan lo
   // restore devuelve un archivo borrado a mano; reset --hard tira el borrado preparado
   const back = fresh();
   run(back, 'rm d.js', 'restore d.js');
-  assert.deepEqual(status(back).slice(1), ['nothing to commit, working tree clean']);
+  assert.deepEqual(body(back), ['nothing to commit, working tree clean']);
   const hard = fresh();
   run(hard, 'git rm --cached d.js', 'rm e.js', 'reset --hard');
-  assert.deepEqual(status(hard).slice(1), ['nothing to commit, working tree clean']);
+  assert.deepEqual(body(hard), ['nothing to commit, working tree clean']);
   // un borrado a mano es un cambio sin commit: checkout se niega y stash lo aparta y lo devuelve borrado
   const st = fresh();
   run(st, 'checkout -b other', 'commit -m "Other"', 'checkout main', 'rm d.js');
   assert.equal(st.run('checkout other').ok, false);
   run(st, 'stash');
-  assert.deepEqual(status(st).slice(1), ['nothing to commit, working tree clean']);
+  assert.deepEqual(body(st), ['nothing to commit, working tree clean']);
   run(st, 'stash pop');
   assert.deepEqual(plain(st.deleted), ['d.js']);
   // rm a mano de un archivo sin seguir lo borra del todo
   const tmp = fresh();
   run(tmp, 'touch --new tmp.txt', 'rm tmp.txt');
-  assert.deepEqual(status(tmp).slice(1), ['nothing to commit, working tree clean']);
+  assert.deepEqual(body(tmp), ['nothing to commit, working tree clean']);
 });
 
 test('rm y mv: deshacer con add, ida y vuelta, amend, rebase, cherry-pick y stash dejan el estado coherente', () => {
@@ -1357,15 +1497,15 @@ test('rm y mv: deshacer con add, ida y vuelta, amend, rebase, cherry-pick y stas
   for (const cmd of ['add a.txt', 'add .', 'add -A']) {
     const r = fresh();
     run(r, 'git rm --cached a.txt', cmd);
-    assert.deepEqual(status(r).slice(1), clean, cmd);
+    assert.deepEqual(body(r), clean, cmd);
   }
   // git mv y mv de ida y vuelta: nada que preparar
   const g = fresh();
   run(g, 'git mv a.txt b.txt', 'git mv b.txt a.txt');
-  assert.deepEqual(status(g).slice(1), clean);
+  assert.deepEqual(body(g), clean);
   const m = fresh();
   run(m, 'mv a.txt b.txt', 'mv b.txt a.txt');
-  assert.deepEqual(status(m).slice(1), clean);
+  assert.deepEqual(body(m), clean);
   // amend que borra lo que creó el mismo commit: el commit no lo deja a la vez creado y borrado
   const a = fresh();
   run(a, 'touch x', 'add x', 'commit -m c', 'git rm x', 'commit --amend -m c2');
@@ -1382,7 +1522,7 @@ test('rm y mv: deshacer con add, ida y vuelta, amend, rebase, cherry-pick y stas
   // stash de un rm --cached deja el árbol limpio (el índice vuelve como estaba)
   const st = fresh();
   run(st, 'git rm --cached a.txt', 'stash');
-  assert.deepEqual(status(st).slice(1), clean);
+  assert.deepEqual(body(st), clean);
   // git rm -r . sin archivos conocidos avisa en vez de no hacer nada
   assert.equal(fresh().run('git rm -r .').ok, false);
 });
@@ -1562,11 +1702,11 @@ test('show imprime el sha, el mensaje y los archivos de un commit (HEAD sin otro
   assert.equal(res.changed, false);
   assert.deepEqual(plain(res.lines), [`commit ${head} (HEAD -> main)`, 'Author: You', '', '    Cambios', '', ' README.md | deleted', ' app.js    | changed', ' nuevo.txt | new', ' 3 files changed']);
   // HEAD~1, por sha corto y con --oneline; --name-status y --name-only como git; -s calla los archivos
-  assert.deepEqual(plain(r.run('show HEAD~1 -s').lines), [`commit ${first}`, 'Author: You', '', `    ${r.commits.get(first).message}`]);
+  assert.deepEqual(plain(r.run('show HEAD~1 -s').lines), [`commit ${first} (origin/main)`, 'Author: You', '', `    ${r.commits.get(first).message}`]);
   assert.deepEqual(plain(r.run(`show ${head.slice(0, 7)} --name-status`).lines.slice(5)), ['D\tREADME.md', 'M\tapp.js', 'A\tnuevo.txt']);
   assert.deepEqual(plain(r.run('show --oneline --name-only').lines), [`${head.slice(0, 7)} (HEAD -> main) Cambios`, 'README.md', 'app.js', 'nuevo.txt']);
   // varios commits, separados por una línea en blanco
-  assert.deepEqual(plain(r.run('show -s --oneline HEAD HEAD~1').lines), [`${head.slice(0, 7)} (HEAD -> main) Cambios`, '', `${first.slice(0, 7)} ${r.commits.get(first).message}`]);
+  assert.deepEqual(plain(r.run('show -s --oneline HEAD HEAD~1').lines), [`${head.slice(0, 7)} (HEAD -> main) Cambios`, '', `${first.slice(0, 7)} (origin/main) ${r.commits.get(first).message}`]);
   // una etiqueta anotada sale antes con su mensaje; una ligera, solo el commit
   run(r, 'tag -a v1 -m "Primera versión"', 'tag ligera HEAD~1');
   assert.deepEqual(plain(r.run('show -s v1').lines.slice(0, 5)), ['tag v1', 'Tagger: You', '', 'Primera versión', '']);

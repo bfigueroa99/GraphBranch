@@ -2467,7 +2467,7 @@ if (seccion('Varios repos a la vez'))
     if ((await lab.evaluate(() => document.activeElement?.className)) !== 'pr-input') throw new Error('el foco no quedó en la línea de comandos');
     const nodes = () => lab.locator('#graph svg .node').count();
     const before = await nodes();
-    for (const c of ['checkout -b feature', 'commit -m uno', 'git commit -m "dos <img src=x onerror=alert(1)>"', 'push origin main']) {
+    for (const c of ['checkout -b feature', 'commit -m uno', 'git commit -m "dos <img src=x onerror=alert(1)>"', 'pull origin main']) {
       await lab.fill('.pr-input', c);
       await lab.press('.pr-input', 'Enter');
     }
@@ -2616,6 +2616,32 @@ if (seccion('Varios repos a la vez'))
     await lab.fill('.pr-input', 'tag v1.0.1');
     await lab.press('.pr-input', 'Enter');
     await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: T(5000) });
+  });
+  await step(lab, 'el ejercicio de push y fetch: el remoto rechaza el push, fetch trae origin/main al grafo y se resuelve', async () => {
+    await lab.goto(`${base}/index.html?lang=es&practice=14`);
+    await lab.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: T(15000) });
+    await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent.includes('fetch'), null, { timeout: T(5000) });
+    await lab.waitForSelector('#graph svg .node', { state: 'attached', timeout: T(10000) });
+    const heads = () => lab.evaluate(() => [...document.querySelectorAll('#graph svg .head .h-name')].map((n) => n.textContent.trim()));
+    if (!(await heads()).includes('origin/main')) throw new Error('el grafo no muestra origin/main');
+    if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('el ejercicio parte resuelto');
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await send('push');
+    await lab.waitForFunction(() => /\[rejected\][\s\S]*fetch first/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    const nodes = await lab.locator('#graph svg .node').count();
+    await send('fetch');
+    // el commit de Ana llega al grafo por origin/main, sin mover main
+    await lab.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length === n + 1, nodes, { timeout: T(5000) });
+    await send('status');
+    await lab.waitForFunction(() => /have diverged/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('se resolvió sin subir');
+    await send('merge origin/main');
+    await send('push');
+    await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: T(5000) });
+    if (!/Merge remote-tracking branch 'origin\/main'/.test(await lab.textContent('.pr-log'))) throw new Error('merge origin/main no dijo su mensaje de git');
   });
   await step(lab, 'el ejercicio de revert se abre por su número, deshace un commit con otro nuevo y se marca resuelto', async () => {
     await lab.goto(`${base}/index.html?lang=es&practice=6`);

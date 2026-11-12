@@ -71,6 +71,16 @@
         });
         for (const s of g.ancestors(sha)) commits.set(s, g.commits.get(s));
       }
+      // las ramas de seguimiento (origin/main…): lo que se supo del remoto en el último fetch o push, con su nombre de git
+      if (g.remote) {
+        for (const [name, sha] of g.tracking) {
+          const full = `${g.remote.name}/${name}`;
+          if (!sha || branches.has(full)) continue;
+          const prev = old.get(full);
+          branches.set(full, { name: full, sha, isDefault: false, protected: false, remote: true, movedAt: prev && prev.sha === sha ? prev.movedAt : g.commits.get(sha).date, own: 0 });
+          for (const s of g.ancestors(sha)) commits.set(s, g.commits.get(s));
+        }
+      }
       this.data.totalBranches = branches.size;
     }
 

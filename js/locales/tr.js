@@ -728,6 +728,7 @@ GB.i18n.define('tr', {
   'digest.opened': 'Açılan pull request\'ler',
   'digest.openers': 'En çok kim açtı',
   'digest.closed': 'Kapatılan issue\'lar',
+  'digest.closers': 'En çok kim kapattı',
   'digest.dropped': 'Birleştirilmeden kapatılan pull request’ler',
   'digest.releases': 'Sürümler',
   'digest.tags': 'Etiketler',

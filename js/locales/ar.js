@@ -827,6 +827,7 @@ GB.i18n.define('ar', {
   'digest.opened': 'طلبات السحب المفتوحة',
   'digest.openers': 'من فتح أكثر',
   'digest.closed': 'القضايا المغلقة',
+  'digest.closers': 'من أغلق أكثر',
   'digest.dropped': 'طلبات السحب المغلقة دون دمج',
   'digest.releases': 'الإصدارات',
   'digest.tags': 'الوسوم',

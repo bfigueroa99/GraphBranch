@@ -736,6 +736,7 @@ GB.i18n.define('hr', {
   'digest.opened': 'Otvoreni pull requestovi',
   'digest.openers': 'Tko je otvorio najviše',
   'digest.closed': 'Zatvoreni issuei',
+  'digest.closers': 'Tko je zatvorio najviše',
   'digest.dropped': 'Pull requestovi zatvoreni bez spajanja',
   'digest.releases': 'Izdanja',
   'digest.tags': 'Tagovi',

@@ -728,6 +728,7 @@ GB.i18n.define('hu', {
   'digest.opened': 'Megnyitott pull requestek',
   'digest.openers': 'Ki nyitotta a legtöbbet',
   'digest.closed': 'Lezárt issue-k',
+  'digest.closers': 'Ki zárta le a legtöbbet',
   'digest.dropped': 'Összefésülés nélkül lezárt pull requestek',
   'digest.releases': 'Kiadások',
   'digest.tags': 'Címkék',

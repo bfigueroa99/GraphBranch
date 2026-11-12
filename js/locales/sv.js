@@ -728,6 +728,7 @@ GB.i18n.define('sv', {
   'digest.opened': 'Öppnade pull requests',
   'digest.openers': 'Vem som öppnade flest',
   'digest.closed': 'Stängda ärenden',
+  'digest.closers': 'Vem som stängde flest',
   'digest.dropped': 'Pull requests stängda utan sammanslagning',
   'digest.releases': 'Releaser',
   'digest.tags': 'Tags',

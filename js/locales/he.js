@@ -785,6 +785,7 @@ GB.i18n.define('he', {
   'digest.opened': 'בקשות מיזוג שנפתחו',
   'digest.openers': 'מי פתח הכי הרבה',
   'digest.closed': 'תקלות שנסגרו',
+  'digest.closers': 'מי סגר הכי הרבה',
   'digest.dropped': 'Pull requests שנסגרו בלי מיזוג',
   'digest.releases': 'גרסאות',
   'digest.tags': 'תגיות',

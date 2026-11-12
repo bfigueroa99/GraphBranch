@@ -510,3 +510,42 @@ test('quién abrió más PRs: cuenta los PRs abiertos de la semana por su autor,
   assert.doesNotMatch(toMarkdown(quiet, 'o/r', t), /Quién abrió más/);
   assert.ok(!imageLines(quiet, 'o/r', t).some((l) => /Quién abrió más/.test(l.text)));
 });
+
+test('quién cerró más issues: cuenta los issues cerrados de la semana por quien los cerró, una vez por issue, sin la semana anterior, en Markdown e imagen', () => {
+  const ana = { login: 'ana' };
+  const closes = [
+    // como llega del feed, del más nuevo al más viejo: el #1 lo cerró ana, beto lo reabrió y ana lo cerró otra vez
+    { id: 'k1b', kind: 'issue-close', time: ago(0.5), number: 1, detail: 'uno', actor: ana },
+    { id: 'k1', kind: 'issue-close', time: ago(1), number: 1, detail: 'uno', actor: { login: 'beto' } }, // el mismo issue: cuenta una vez, para quien lo cerró al final
+    { id: 'k1b', kind: 'issue-close', time: ago(0.5), number: 1, detail: 'uno', actor: ana }, // la misma actividad dos veces
+    { id: 'k2', kind: 'issue-close', time: ago(2), number: 2, detail: 'dos', actor: { login: 'beto' } },
+    { id: 'k3', kind: 'issue-close', time: ago(3), number: 3, detail: 'tres', actor: ana },
+    { id: 'k4', kind: 'issue-close', time: ago(3), number: 4, detail: 'cuatro', actor: { name: 'Ca*rla' } }, // sin usuario: su nombre
+    { id: 'k5', kind: 'issue-close', time: ago(4), number: 5, detail: 'sin actor' }, // sin autor no suma
+    { id: 'k7', kind: 'issue-close', time: ago(5), number: 7, detail: 'siete', actor: ana },
+    { id: 'k9', kind: 'issue-open', time: ago(1), number: 9, detail: 'abierto', actor: { login: 'dora' } }, // abrir no es cerrar
+    { id: 'p1', kind: 'pr-close', time: ago(1), number: 10, detail: 'un PR', actor: { login: 'dora' } }, // un PR cerrado no es un issue
+    // la semana anterior: no cuenta
+    { id: 'k6', kind: 'issue-close', time: ago(9), number: 6, detail: 'vieja', actor: { login: 'dora' } },
+    { id: 'k8', kind: 'issue-close', time: ago(10), number: 8, detail: 'vieja', actor: { login: 'beto' } },
+    { id: 'k10', kind: 'issue-close', time: ago(12), number: 11, detail: 'vieja', actor: { login: 'beto' } },
+  ];
+  const d = compute(repo(), closes, NOW);
+  assert.equal(d.closed.total, 6);
+  assert.equal(d.closers.total, 3);
+  assert.deepEqual(JSON.parse(JSON.stringify(d.closers.rows)), [{ name: 'ana', issues: 3 }, { name: 'Ca*rla', issues: 1 }, { name: 'beto', issues: 1 }]);
+  const t = { head: 'Semana de {repo}', commits: 'Commits: {n}', merged: 'Fusionados', closed: 'Cerrados', closers: 'Quién cerró más', releases: 'Releases', people: 'Personas', branch: 'Rama' };
+  const text = toMarkdown(d, 'o/r', t);
+  assert.match(text, /\nQuién cerró más: ana \(3\) · Ca\\\*rla \(1\) · beto \(1\)\n/);
+  // va debajo de la lista de issues cerrados
+  assert.ok(text.indexOf('## Cerrados') < text.indexOf('Quién cerró más'));
+  assert.ok(text.indexOf('Quién cerró más') < text.indexOf('## Releases'));
+  assert.ok(imageLines(d, 'o/r', t).some((l) => l.kind === 'row' && l.text === 'Quién cerró más: ana (3) · Ca*rla (1) · beto (1)'));
+  // sin la etiqueta, la línea no sale
+  assert.doesNotMatch(toMarkdown(d, 'o/r', { ...t, closers: '' }), /Quién cerró más/);
+  // sin issues cerrados con autor, la línea no sale
+  const quiet = compute(repo(), [{ id: 'z', kind: 'issue-close', time: ago(1), number: 9 }], NOW);
+  assert.equal(quiet.closers.total, 0);
+  assert.doesNotMatch(toMarkdown(quiet, 'o/r', t), /Quién cerró más/);
+  assert.ok(!imageLines(quiet, 'o/r', t).some((l) => /Quién cerró más/.test(l.text)));
+});

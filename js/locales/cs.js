@@ -739,6 +739,7 @@ GB.i18n.define('cs', {
   'digest.opened': 'Otevřené pull requesty',
   'digest.openers': 'Kdo jich otevřel nejvíc',
   'digest.closed': 'Uzavřené issues',
+  'digest.closers': 'Kdo jich zavřel nejvíc',
   'digest.dropped': 'Pull requesty zavřené bez sloučení',
   'digest.releases': 'Vydání',
   'digest.tags': 'Tagy',

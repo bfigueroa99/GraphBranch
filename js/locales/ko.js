@@ -728,6 +728,7 @@ GB.i18n.define('ko', {
   'digest.opened': '열린 풀 리퀘스트',
   'digest.openers': '가장 많이 연 사람',
   'digest.closed': '닫힌 이슈',
+  'digest.closers': '가장 많이 닫은 사람',
   'digest.dropped': '병합 없이 닫힌 풀 리퀘스트',
   'digest.releases': '릴리스',
   'digest.tags': '태그',

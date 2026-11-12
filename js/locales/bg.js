@@ -728,6 +728,7 @@ GB.i18n.define('bg', {
   'digest.opened': 'Отворени pull request-и',
   'digest.openers': 'Кой отвори най-много',
   'digest.closed': 'Затворени проблеми',
+  'digest.closers': 'Кой затвори най-много',
   'digest.dropped': 'Pull request-и, затворени без сливане',
   'digest.releases': 'Издания',
   'digest.tags': 'Тагове',

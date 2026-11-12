@@ -832,6 +832,10 @@ console.log('Escritorio (1280×800)');
     // la demo abre un PR con autor en la semana (el del agente): el resumen dice quién abrió más
     const openers = await page.evaluate(() => GB.i18n.t('digest.openers'));
     if (!new RegExp(`\\n${openers.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}: \\S.* \\(\\d+\\)\\n`).test(md)) throw new Error('resumen de la semana sin «quién abrió más»: ' + md.slice(0, 400));
+    // y cierra el issue #84 con autor en la semana: dice quién cerró más, debajo de los issues cerrados
+    const closers = await page.evaluate(() => GB.i18n.t('digest.closers'));
+    const closersAt = md.search(new RegExp(`\\n${closers.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}: \\S.* \\(\\d+\\)\\n`));
+    if (closersAt < 0 || md.indexOf('#84') < 0 || closersAt < md.indexOf('#84')) throw new Error('resumen de la semana sin «quién cerró más» debajo de los issues cerrados: ' + md.slice(0, 600));
     const [dl] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#digest-save')]);
     if (!/^graphbranch-.*-semana-.*\.md$/.test(dl.suggestedFilename())) throw new Error('nombre del resumen: ' + dl.suggestedFilename());
     const [png] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#digest-png')]);

@@ -744,6 +744,7 @@ GB.i18n.define('uk', {
   'digest.opened': 'Відкриті pull request’и',
   'digest.openers': 'Хто відкрив найбільше',
   'digest.closed': 'Закриті задачі',
+  'digest.closers': 'Хто закрив найбільше',
   'digest.dropped': 'Pull request’и, закриті без злиття',
   'digest.releases': 'Релізи',
   'digest.tags': 'Теги',

@@ -728,6 +728,7 @@ GB.i18n.define('bn', {
   'digest.opened': 'খোলা পুল রিকোয়েস্ট',
   'digest.openers': 'কে সবচেয়ে বেশি খুলেছে',
   'digest.closed': 'বন্ধ হওয়া ইস্যু',
+  'digest.closers': 'কে সবচেয়ে বেশি বন্ধ করেছে',
   'digest.dropped': 'মার্জ ছাড়া বন্ধ হওয়া pull request',
   'digest.releases': 'রিলিজ',
   'digest.tags': 'ট্যাগ',

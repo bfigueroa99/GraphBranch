@@ -728,6 +728,7 @@ GB.i18n.define('nb', {
   'digest.opened': 'Åpnede pull requests',
   'digest.openers': 'Hvem åpnet flest',
   'digest.closed': 'Lukkede issues',
+  'digest.closers': 'Hvem lukket flest',
   'digest.dropped': 'Pull requests lukket uten å bli flettet',
   'digest.releases': 'Releaser',
   'digest.tags': 'Tags',

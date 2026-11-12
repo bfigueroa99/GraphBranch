@@ -728,6 +728,7 @@ GB.i18n.define('ja', {
   'digest.opened': 'オープンされたプルリクエスト',
   'digest.openers': '最も多く作成した人',
   'digest.closed': 'クローズされた issue',
+  'digest.closers': '最も多くクローズした人',
   'digest.dropped': 'マージされずにクローズされたプルリクエスト',
   'digest.releases': 'リリース',
   'digest.tags': 'タグ',

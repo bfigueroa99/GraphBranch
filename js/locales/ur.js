@@ -771,6 +771,7 @@ GB.i18n.define('ur', {
   'digest.opened': 'کھولی گئی پل ریکویسٹس',
   'digest.openers': 'سب سے زیادہ کس نے کھولے',
   'digest.closed': 'بند کیے گئے مسائل',
+  'digest.closers': 'سب سے زیادہ کس نے بند کیے',
   'digest.dropped': 'بغیر انضمام کے بند ہونے والے pull request',
   'digest.releases': 'ریلیزز',
   'digest.tags': 'ٹیگز',

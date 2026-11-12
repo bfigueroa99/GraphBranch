@@ -728,6 +728,7 @@ GB.i18n.define('ta', {
   'digest.opened': 'திறக்கப்பட்ட புல் ரிக்வெஸ்ட்கள்',
   'digest.openers': 'அதிகம் திறந்தவர்',
   'digest.closed': 'மூடப்பட்ட சிக்கல்கள்',
+  'digest.closers': 'அதிகம் மூடியவர்',
   'digest.dropped': 'இணைக்கப்படாமல் மூடப்பட்ட pull request',
   'digest.releases': 'வெளியீடுகள்',
   'digest.tags': 'குறிச்சொற்கள்',

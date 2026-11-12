@@ -729,6 +729,7 @@ GB.i18n.define('th', {
   'digest.opened': 'Pull request ที่เปิดใหม่',
   'digest.openers': 'ใครเปิดมากที่สุด',
   'digest.closed': 'issue ที่ปิดแล้ว',
+  'digest.closers': 'ใครปิดมากที่สุด',
   'digest.dropped': 'pull request ที่ปิดโดยไม่ได้รวม',
   'digest.releases': 'รีลีส',
   'digest.tags': 'แท็ก',

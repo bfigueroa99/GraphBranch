@@ -728,6 +728,7 @@ GB.i18n.define('zh-Hant', {
   'digest.opened': '已開啟的拉取請求',
   'digest.openers': '開啟最多的人',
   'digest.closed': '已關閉的 issue',
+  'digest.closers': '關閉最多的人',
   'digest.dropped': '未合併即關閉的拉取請求',
   'digest.releases': '發布',
   'digest.tags': '標籤',

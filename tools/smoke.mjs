@@ -786,6 +786,9 @@ if (seccion('Escritorio (1280×800)'))
     const aweeks = await page.$eval('#hl-authorweeks', (p) => p.textContent).catch(() => '');
     if (!/(\d+ · ){7}\d+$/.test(aweeks) || /^(0 · ){7}0$/.test(aweeks.split(': ').pop())) throw new Error(`los autores por semana no traen 8 cifras con algún autor: ${aweeks}`);
     if (aweeks.split(': ').pop().split(' · ').some((n, i) => Number(n) > Number(kweeks.split(': ').pop().split(' · ')[i]))) throw new Error(`alguna semana tiene más autores que commits: ${aweeks} frente a ${kweeks}`);
+    const nweeks = await page.$eval('#hl-newauthorweeks', (p) => p.textContent).catch(() => '');
+    if (!/(\d+ · ){7}\d+$/.test(nweeks) || /^(0 · ){7}0$/.test(nweeks.split(': ').pop())) throw new Error(`los autores nuevos por semana no traen 8 cifras con algún autor nuevo: ${nweeks}`);
+    if (nweeks.split(': ').pop().split(' · ').some((n, i) => Number(n) > Number(aweeks.split(': ').pop().split(' · ')[i]))) throw new Error(`alguna semana tiene más autores nuevos que autores distintos: ${nweeks} frente a ${aweeks}`);
     const tweeks = await page.$eval('#hl-tagweeks', (p) => p.textContent).catch(() => '');
     if (tweeks && (!/(\d+ · ){7}\d+$/.test(tweeks) || /^(0 · ){7}0$/.test(tweeks.split(': ').pop()))) throw new Error(`la tendencia de tags por semana no trae 8 cifras con algún tag: ${tweeks}`);
     const iweeks = await page.$eval('#hl-issueweeks', (p) => p.textContent).catch(() => '');

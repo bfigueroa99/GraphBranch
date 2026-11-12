@@ -529,6 +529,7 @@ GB.i18n.define('ko', {
   'health.branchWeeks': '주별 새 브랜치: {list}',
   'health.commitWeeks': '주별 커밋: {list}',
   'health.authorWeeks': '주별 서로 다른 작성자 수: {list}',
+  'health.newAuthorWeeks': '주별 새 작성자 수(불러온 첫 커밋 기준): {list}',
   'health.tagWeeks': '주별 태그: {list}',
   'health.issueWeeks': '주별 열린 이슈: {list}',
   'health.prCloseWeeks': '병합 없이 닫힌 풀 리퀘스트(주별): {list}',

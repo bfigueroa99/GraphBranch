@@ -529,6 +529,7 @@ GB.i18n.define('bg', {
   'health.branchWeeks': 'Нови клонове седмично: {list}',
   'health.commitWeeks': 'Комити седмично: {list}',
   'health.authorWeeks': 'Различни автори седмично: {list}',
+  'health.newAuthorWeeks': 'Нови автори седмично (първи зареден commit): {list}',
   'health.tagWeeks': 'Тагове седмично: {list}',
   'health.issueWeeks': 'Отворени issue-та седмично: {list}',
   'health.prCloseWeeks': 'Затворени без сливане pull request-и седмично: {list}',

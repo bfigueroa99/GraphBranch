@@ -572,6 +572,7 @@ GB.i18n.define('fa', {
   'health.branchWeeks': 'شاخه‌های جدید در هفته: {list}',
   'health.commitWeeks': 'کامیت‌ها در هفته: {list}',
   'health.authorWeeks': 'نویسندگان متمایز در هفته: {list}',
+  'health.newAuthorWeeks': 'نویسندگان تازه در هفته (نخستین کامیت بارشده): {list}',
   'health.tagWeeks': 'برچسب‌ها در هفته: {list}',
   'health.issueWeeks': 'issueهای بازشده در هفته: {list}',
   'health.prCloseWeeks': 'pull requestهای بسته‌شده بدون ادغام در هفته: {list}',

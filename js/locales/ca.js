@@ -529,6 +529,7 @@ GB.i18n.define('ca', {
   'health.branchWeeks': 'Branques noves per setmana: {list}',
   'health.commitWeeks': 'Commits per setmana: {list}',
   'health.authorWeeks': 'Autors diferents per setmana: {list}',
+  'health.newAuthorWeeks': 'Autors nous per setmana (primer commit carregat): {list}',
   'health.tagWeeks': 'Etiquetes per setmana: {list}',
   'health.issueWeeks': 'Issues oberts per setmana: {list}',
   'health.prCloseWeeks': 'Pull requests tancats sense fusionar per setmana: {list}',

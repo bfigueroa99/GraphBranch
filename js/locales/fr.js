@@ -530,6 +530,7 @@ GB.i18n.define('fr', {
   'health.branchWeeks': 'Nouvelles branches par semaine : {list}',
   'health.commitWeeks': 'Commits par semaine : {list}',
   'health.authorWeeks': 'Auteurs distincts par semaine : {list}',
+  'health.newAuthorWeeks': 'Nouveaux auteurs par semaine (premier commit chargé) : {list}',
   'health.tagWeeks': 'Tags par semaine : {list}',
   'health.issueWeeks': 'Issues ouvertes par semaine : {list}',
   'health.prCloseWeeks': 'Pull requests fermées sans fusion par semaine : {list}',

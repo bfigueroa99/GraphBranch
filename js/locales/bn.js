@@ -529,6 +529,7 @@ GB.i18n.define('bn', {
   'health.branchWeeks': 'প্রতি সপ্তাহে নতুন ব্রাঞ্চ: {list}',
   'health.commitWeeks': 'প্রতি সপ্তাহে কমিট: {list}',
   'health.authorWeeks': 'প্রতি সপ্তাহে ভিন্ন লেখক: {list}',
+  'health.newAuthorWeeks': 'প্রতি সপ্তাহে নতুন লেখক (লোড হওয়া প্রথম কমিট): {list}',
   'health.tagWeeks': 'প্রতি সপ্তাহে ট্যাগ: {list}',
   'health.issueWeeks': 'প্রতি সপ্তাহে খোলা issue: {list}',
   'health.prCloseWeeks': 'প্রতি সপ্তাহে মার্জ ছাড়া বন্ধ হওয়া pull request: {list}',

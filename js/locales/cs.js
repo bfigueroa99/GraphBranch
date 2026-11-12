@@ -540,6 +540,7 @@ GB.i18n.define('cs', {
   'health.branchWeeks': 'Nové větve za týden: {list}',
   'health.commitWeeks': 'Commity za týden: {list}',
   'health.authorWeeks': 'Různí autoři za týden: {list}',
+  'health.newAuthorWeeks': 'Noví autoři za týden (první načtený commit): {list}',
   'health.tagWeeks': 'Tagy za týden: {list}',
   'health.issueWeeks': 'Otevřené issues za týden: {list}',
   'health.prCloseWeeks': 'Pull requesty zavřené bez sloučení za týden: {list}',

@@ -586,6 +586,7 @@ GB.i18n.define('he', {
   'health.branchWeeks': 'ענפים חדשים בשבוע: {list}',
   'health.commitWeeks': 'קומיטים בשבוע: {list}',
   'health.authorWeeks': 'מחברים שונים בשבוע: {list}',
+  'health.newAuthorWeeks': 'מחברים חדשים בשבוע (הקומיט הטעון הראשון): {list}',
   'health.tagWeeks': 'תגיות בשבוע: {list}',
   'health.issueWeeks': 'Issues שנפתחו בשבוע: {list}',
   'health.prCloseWeeks': 'Pull requests שנסגרו בלי מיזוג בשבוע: {list}',

@@ -998,13 +998,15 @@
   /** `branch -c [vieja] <nueva>`: otra rama en el mismo commit (la actual si no se dice cuál), sin mover HEAD; `-C` pisa una que no está en uso. */
   function copyBranch(rest, force) {
     if (!rest.length) fail('fatal: branch name required');
-    if (rest.length > 2) fail('fatal: too many arguments for a copy operation');
+    if (rest.length > 2) fail('fatal: too many branches for a copy operation');
     if (rest.length === 1 && !this.head.branch) fail('fatal: cannot copy the current branch while not on any');
     const [old, name] = rest.length === 2 ? rest : [this.head.branch, rest[0]];
     if (!this.branches.has(old)) fail(`fatal: no branch named '${old}'`);
+    if (this.rebasing?.branch === old) fail(`fatal: branch refs/heads/${old} is being rebased`);
     const tip = this.branches.get(old);
     if (!tip) fail(`fatal: no commit on branch '${old}' yet`);
     if (!validName(name)) fail(`fatal: '${name}' is not a valid branch name`);
+    if (old === name) return []; // como git: copiar una rama sobre sí misma no hace nada, con -c o con -C
     if (this.branches.has(name)) {
       if (!force) fail(`fatal: a branch named '${name}' already exists`);
       if (this.head.branch === name || this.rebasing?.branch === name) fail(`fatal: cannot force update the branch '${name}' used by worktree`);

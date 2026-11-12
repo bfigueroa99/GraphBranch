@@ -97,3 +97,47 @@ test('lo que arma la extensión lo entiende la web: parseRepo da el mismo proyec
     assert.deepEqual(parse(link.searchParams.get('repo')), want, page);
   }
 });
+
+/** Corre content.js en una página falsa: `boton` es el enlace que agregó (o null) y `navegar` cambia la dirección
+    como lo hace una página que no recarga (GitHub con Turbo) y avisa con `turbo:load`. */
+function pagina(href) {
+  const added = [];
+  const oyentes = {};
+  const location = { href };
+  const ctx = vm.createContext({
+    URL,
+    encodeURIComponent,
+    location,
+    document: {
+      getElementById: (id) => added.find((a) => a.id === id && !a.quitado) || null,
+      createElement: () => ({ style: {}, remove() { this.quitado = true; } }),
+      documentElement: { appendChild: (a) => added.push(a) },
+      addEventListener: (tipo, fn) => (oyentes[tipo] = fn),
+    },
+    addEventListener() {},
+    setInterval() {},
+  });
+  ctx.window = ctx;
+  ctx.self = ctx;
+  for (const f of manifest.content_scripts[0].js) vm.runInContext(readFileSync(join(dir, f), 'utf8'), ctx, { filename: f });
+  return {
+    get boton() { return added.find((a) => !a.quitado) || null; },
+    navegar(a) { location.href = a; oyentes['turbo:load'](); },
+  };
+}
+
+test('al pasar a otro repo sin recargar, el botón lleva al nuevo y su título también lo dice', () => {
+  const p = pagina('https://github.com/o/uno');
+  const a = p.boton;
+  assert.equal(a.title, 'Abrir o/uno en GraphBranch');
+  assert.equal(a.target, '_blank');
+  assert.equal(a.rel, 'noopener noreferrer');
+  p.navegar('https://github.com/o/dos/issues');
+  assert.equal(p.boton, a, 'es el mismo botón');
+  assert.equal(new URL(a.href).searchParams.get('repo'), 'o/dos');
+  assert.equal(a.title, 'Abrir o/dos en GraphBranch'); // antes seguía diciendo o/uno
+  p.navegar('https://gitlab.com/g/sub/p/-/issues');
+  assert.equal(a.title, 'Abrir gitlab.com/g/sub/p en GraphBranch');
+  p.navegar('https://github.com/settings/profile');
+  assert.equal(p.boton, null, 'fuera de un repo, el botón se va');
+});

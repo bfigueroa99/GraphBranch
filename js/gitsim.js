@@ -449,7 +449,13 @@
 
     /* ---------- los comandos ---------- */
 
-    /** Corre una línea («git commit -m "x"» o «commit -m x»). Devuelve { ok, lines } y, si cambió el repo, changed. */
+    /** Lo que mira run() para saber si un comando cambió el repo. */
+    snapshot() {
+      return JSON.stringify([[...this.branches], [...this.tags], [...this.tracking], this.remote && [...this.remote.branches], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
+    }
+
+    /** Corre una línea («git commit -m "x"» o «commit -m x»). Devuelve { ok, lines } y changed si cambió el repo,
+        también cuando el comando falla después de cambiar algo (el fetch de un pull que se niega). */
     run(line) {
       const words = tokenize(line.trim());
       const viaGit = words[0] === 'git';
@@ -461,7 +467,7 @@
       this.renamed = null;
       // la primera línea del reflog es de dónde partió HEAD
       if (!this.reflog.length && shaBefore) this.reflog.push({ sha: shaBefore, msg: `commit: ${this.commits.get(shaBefore).message}` });
-      const before = JSON.stringify([[...this.branches], [...this.tags], [...this.tracking], this.remote && [...this.remote.branches], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
+      const before = this.snapshot();
       try {
         // rm y mv sin «git» delante son los de la terminal: borran o mueven el archivo sin preparar nada
         const handler = !viaGit && SHELL[cmd] ? SHELL[cmd] : this.commands[cmd];
@@ -475,13 +481,12 @@
           this.reflog.push({ sha: this.headSha, msg: this.reflogMessage(cmd, args, headBefore ?? this.short(shaBefore ?? '')) });
           if (this.reflog.length > 100) this.reflog.shift();
         }
-        const after = JSON.stringify([[...this.branches], [...this.tags], [...this.tracking], this.remote && [...this.remote.branches], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
+        const after = this.snapshot();
         return { ok: true, lines, changed: before !== after };
       } catch (e) {
         if (!(e instanceof GitError)) throw e;
-        // pull trae primero (fetch) y después puede negarse: lo traído queda, como en git
-        const after = JSON.stringify([[...this.branches], [...this.tags], [...this.tracking], this.remote && [...this.remote.branches], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
-        return { ok: false, lines: e.message.split('\n'), changed: before !== after };
+        // un comando que se niega a medias (pull trae con fetch y después se niega) deja lo hecho, como git: el grafo lo dibuja
+        return { ok: false, lines: e.message.split('\n'), changed: before !== this.snapshot() };
       }
     }
   }
@@ -514,7 +519,7 @@
     return { flags, rest };
   }
 
-  const validName = (n) => /^[\w][\w./-]*$/.test(n) && !n.endsWith('/') && !n.includes('..') && !n.endsWith('.lock');
+  const validName = (n) => /^[\w][\w./-]*$/.test(n) && n !== 'HEAD' && !n.endsWith('/') && !n.includes('..') && !n.endsWith('.lock');
 
   Repo.prototype.commands = {
     help() {
@@ -556,7 +561,7 @@
         'push [-u] [-f] [origin [<branch>]]  send the current branch to the remote (-u remembers it as upstream)',
         'push origin --delete <branch>  delete a branch on the remote (and its origin/<branch>)',
         'fetch [origin] [--prune]    bring what the remote has into origin/<branch>, without touching your branches (--prune drops the ones deleted there)',
-        'pull [--rebase|--no-rebase|--ff-only]  fetch, then bring the branch it follows into the current one',
+        'pull [--rebase|--no-rebase|--ff-only] [origin [<branch>]]  fetch, then bring the branch it follows into the current one',
         'branch -r | -a              list the remote-tracking branches (origin/<branch>), or every branch',
       ];
     },
@@ -1567,7 +1572,7 @@
   /** `push [-u] [-f] [origin [<rama>]]`: sube la rama (la actual sin nombre) al remoto, si solo avanza o con -f. */
   Repo.prototype.commands.push = function (args) {
     const { flags, rest } = parse(args);
-    for (const f of Object.keys(flags)) if (!['-u', '--set-upstream', '-f', '--force', '-d', '--delete'].includes(f)) fail(`error: unknown option '${f.replace(/^-+/, '')}'\nusage: push [-u] [-f] [origin [<branch>]]`);
+    for (const f of Object.keys(flags)) if (!['-u', '--set-upstream', '-f', '--force', '-d', '--delete'].includes(f)) fail(`error: unknown option '${f.replace(/^-+/, '')}'\nusage: push [-u] [-f] [-d] [origin [<branch>]]`);
     if (rest.length > 2) fail('fatal: this practice pushes one branch at a time: push [origin [<branch>]]');
     const [remote, ref] = rest;
     this.needRemote(remote, 'push');
@@ -1635,7 +1640,7 @@
   Repo.prototype.commands.fetch = function (args) {
     const { flags, rest } = parse(args);
     for (const f of Object.keys(flags)) if (!['--all', '-v', '--verbose', '-p', '--prune'].includes(f)) fail(`error: unknown option '${f.replace(/^-+/, '')}'\nusage: fetch [origin] [--prune]`);
-    if (rest.length > 1) fail('fatal: this practice fetches whole remotes: fetch [origin]');
+    if (rest.length > 1) fail('fatal: this practice fetches whole remotes: fetch [origin] [--prune]');
     this.needRemote(rest[0], 'fetch');
     const lines = [];
     if (flags['-p'] || flags['--prune']) {
@@ -1669,6 +1674,10 @@
     if (!branch) fail('You are not currently on a branch.\nPlease specify which branch you want to merge with.\n\n    git pull origin <branch>');
     const target = ref ?? this.upstream.get(branch);
     if (!target) fail(`There is no tracking information for the current branch.\nPlease specify which branch you want to merge with.\n\n    git pull origin <branch>\n\nTo make this branch follow one on the remote, push it with -u:\n\n    git push -u ${this.remote.name} ${branch}`);
+    // entre --rebase y --no-rebase gana la última, como en git
+    const rebase = args.reduce((on, a) => (a === '--rebase' || a === '-r' ? true : a === '--no-rebase' ? false : on), false);
+    // como git: con --rebase y cambios sin commit se niega antes de traer nada
+    if (rebase && this.dirty().length) fail('error: cannot pull with rebase: You have unstaged changes.\nerror: Please commit or stash them.');
     const fetched = this.commands.fetch.call(this, []);
     const out = (lines) => [...fetched, ...lines];
     const failWith = (msg) => fail([...fetched, msg].join('\n'));
@@ -1677,7 +1686,6 @@
     }
     const theirs = this.tracking.get(target);
     const ours = this.headSha;
-    const rebase = !!(flags['--rebase'] || flags['-r']);
     const name = `${this.remote.name}/${target}`;
     const step = (fn) => {
       try {
@@ -1720,7 +1728,7 @@
     if (!this.remote) fail('origin: this repository has no remote');
     if (verb === 'commit') {
       const message = words.join(' ').trim();
-      if (!branch || !validName(branch) || !message || words.length > 1) fail('usage: origin commit <branch> "<message>"');
+      if (!branch || !validName(branch) || !message) fail('usage: origin commit <branch> "<message>"');
       this.remoteCommit(branch, message, TEAMMATE);
       return [];
     }
@@ -2041,7 +2049,8 @@
     const r = scenario();
     for (const c of setup) {
       const res = runSetup(r, c);
-      if (!res.ok) return { error: 'command', detail: c, message: res.lines[0] };
+      // el error y no lo de antes (un pull que se niega imprime primero la tabla de su fetch)
+      if (!res.ok) return { error: 'command', detail: c, message: res.lines.find((l) => /^(fatal|error):/.test(l)) ?? res.lines[0] };
     }
     // la solución propuesta tiene que resolver el ejercicio: si no, mostrarla enseñaría algo falso
     if (solution.length) {

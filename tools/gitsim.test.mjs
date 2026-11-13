@@ -630,6 +630,31 @@ test('pull: avanza rápido, fusiona con --no-rebase, rebasa con --rebase y, si d
   e.run('commit -m uno');
   assert.match(e.run('pull').lines[0], /No remote repository specified/);
   assert.match(fresh().run('pull --squash').lines[0], /unknown option 'squash'/);
+  // pull --rebase con cambios sin commit se niega antes de traer nada, como git
+  const dr = fresh();
+  dr.remoteCommit('main', 'Fix typo');
+  dr.run('touch README.md');
+  const known = dr.tracking.get('main');
+  const dirty = dr.run('pull --rebase');
+  assert.equal(dirty.ok, false);
+  assert.equal(dirty.changed, false);
+  assert.match(dirty.lines[0], /^error: cannot pull with rebase: You have unstaged changes\.$/);
+  assert.equal(dr.tracking.get('main'), known, 'no trajo nada');
+  // entre --rebase y --no-rebase gana la última, como en git
+  const last = fresh();
+  last.remoteCommit('main', 'Fix typo');
+  last.run('commit -m propio');
+  assert.ok(last.run('pull --rebase --no-rebase').ok);
+  assert.equal(last.commits.get(last.headSha).parents.length, 2, 'fusionó');
+  // un ejercicio propio cuyo pull de partida falla dice el error, no la tabla del fetch
+  const why = cleanExercise({ title: 'x', goal: 'y', setup: ['origin commit main "Fix"', 'commit -m propio', 'pull'], checks: ['exists:main'] });
+  assert.equal(why.error, 'command');
+  assert.match(why.message, /^fatal: Need to specify how to reconcile divergent branches\.$/);
+  // el mensaje de origin commit puede ir sin comillas; HEAD no es un nombre de rama
+  const words = customExercise(cleanExercise({ title: 'x', goal: 'y', setup: ['origin commit main Fix the footer'], checks: ['exists:main'] }));
+  assert.equal(startCustom(words, NOW).commits.get(startCustom(words, NOW).remote.branches.get('main')).message, 'Fix the footer');
+  assert.equal(cleanExercise({ title: 'x', goal: 'y', setup: ['origin commit HEAD "x"'], checks: ['exists:main'] }).error, 'command');
+  assert.equal(fresh().run('branch HEAD').ok, false);
 });
 
 test('push --delete y fetch --prune: el borrado sube, la poda quita origin/<rama> y status dice que se fue', () => {

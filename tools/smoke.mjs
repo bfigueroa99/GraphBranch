@@ -2545,6 +2545,30 @@ if (seccion('Varios repos a la vez'))
     await lab.click('#practice-btn');
     await lab.waitForFunction(() => !document.querySelector('#practice').hidden, null, { timeout: T(15000) });
   });
+  await step(lab, 'el árbol de trabajo, el índice y HEAD se ven al momento con touch, add y commit', async () => {
+    const col = (k) => lab.evaluate((key) => {
+      const box = document.querySelector(`.pr-areas[role="group"] .pr-area[data-area="${key}"]`);
+      return { head: box?.querySelector('.pr-area-h')?.textContent || '', label: box?.querySelector('ul')?.getAttribute('aria-labelledby') || '', items: [...(box?.querySelectorAll('li:not(.pr-area-empty)') || [])].map((li) => li.textContent.trim()) };
+    }, k);
+    if (!(await lab.getAttribute('.pr-areas', 'aria-label'))) throw new Error('las áreas no tienen nombre');
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await send('touch --new areas.md');
+    let work = await col('work');
+    if (!work.items.some((t) => t.startsWith('areas.md') && t.includes('sin seguir'))) throw new Error(`touch no llevó el archivo al árbol de trabajo: ${JSON.stringify(work)}`);
+    if (!/^Árbol de trabajo \(\d+\)$/.test(work.head) || !work.label) throw new Error(`la columna del árbol no tiene título: ${JSON.stringify(work)}`);
+    await send('add areas.md');
+    const index = await col('index');
+    if (!index.items.some((t) => t.startsWith('areas.md') && t.includes('nuevo'))) throw new Error(`add no llevó el archivo al índice: ${JSON.stringify(index)}`);
+    if ((await col('work')).items.some((t) => t.startsWith('areas.md'))) throw new Error('el archivo preparado sigue en el árbol de trabajo');
+    if ((await col('head')).items.includes('areas.md')) throw new Error('el archivo preparado ya está en HEAD');
+    await send('commit -m "areas"');
+    if ((await col('index')).items.length) throw new Error('el índice no quedó vacío tras el commit');
+    if (!(await col('head')).items.includes('areas.md')) throw new Error(`el commit no llevó el archivo a HEAD: ${JSON.stringify(await col('head'))}`);
+    if ((await lab.locator('.pr-area ul[tabindex="0"]').count()) !== 3) throw new Error('las listas de las áreas, que se desplazan, no se alcanzan con el teclado');
+  });
   await step(lab, 'la práctica entiende switch y restore', async () => {
     const send = async (c) => {
       await lab.fill('.pr-input', c);

@@ -1,13 +1,13 @@
-## Parity: 93.3 / 100
+## Parity: 94.5 / 100
 
-features 93.3  (38 counted, must-haves 13 of 13 done)
+features 94.5  (38 counted, must-haves 13 of 13 done)
 
 ## By area, weakest first
 - cuentas                       50.0  (1 features)
 - launchpad                     70.0  (3 features)
-- grafo                         91.7  (8 features)
 - varios repos                  91.7  (3 features)
 - integraciones                 94.7  (7 features)
+- grafo                         97.2  (8 features)
 - búsqueda                     100.0  (1 features)
 - navegación                   100.0  (1 features)
 - diffs                        100.0  (5 features)
@@ -20,7 +20,6 @@ features 93.3  (38 counted, must-haves 13 of 13 done)
 
 ## Missing, in build order
 - [should] cuentas: Varios perfiles o cuentas, partial  (un token por servicio y una segunda cuenta de GitHub atada a un dueño (README, Token); faltan perfiles completos y más de dos cuentas)
-- [should] grafo: Columnas de autor fecha y SHA a la vista en el grafo, partial  (SHA corto, autor y fecha junto a cada commit del grafo 2D con un interruptor (README: Búsqueda de commits); falta el 3D)
 - [should] integraciones: Issues de rastreadores (Jira Trello GitHub Issues), partial  (issues de GitHub GitLab Codeberg y Bitbucket en el panel de actividad y la salud; sin Jira ni Trello)
 - [could] launchpad: Launchpad: vista de equipo filtrada por colaborador, no
 - [could] grafo: Cargar más historia (límite de commits configurable), partial  (README: Repositorios con miles de ramas; el tope de commits por rama no se elige desde la interfaz)

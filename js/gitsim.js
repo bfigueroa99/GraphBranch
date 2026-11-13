@@ -440,6 +440,20 @@
       return [...new Set([...this.staged.map((s) => s.file), ...this.work, ...this.deleted])];
     }
 
+    /** Las tres áreas de git a la vista, en orden alfabético: `work` (el árbol de trabajo: M cambiado, D borrado a
+        mano, U sin seguir), `index` (lo preparado: M, A nuevo, D borrado, R renombrado, con `from`) y `head` (los
+        archivos del commit de HEAD: los que la historia creó o cambió y los que un cambio sin commit da por
+        existentes, porque sin contenido real solo se conoce lo que se nombró). Sin DOM: la dibuja la práctica. */
+    areas() {
+      const by = (a, b) => (a.file < b.file ? -1 : a.file > b.file ? 1 : 0);
+      const work = [...this.work.map((file) => ({ file, state: 'M' })), ...this.deleted.map((file) => ({ file, state: 'D' })), ...this.untracked.map((file) => ({ file, state: 'U' }))].sort(by);
+      const index = this.staged.map((s) => (s.gone ? { file: s.file, state: 'D' } : s.from ? { file: s.file, state: 'R', from: s.from } : { file: s.file, state: s.isNew ? 'A' : 'M' })).sort(by);
+      const head = new Set(this.inHistory());
+      for (const f of [...this.work, ...this.deleted]) head.add(f);
+      for (const s of this.staged) if (!s.isNew) head.add(s.from ?? s.file);
+      return { work, index, head: [...head].sort() };
+    }
+
     /** Falla como git si hay cambios sin commit: en esta simulación, ir a otro commit siempre pisa los archivos cambiados. */
     needClean(verb) {
       if (this.picking) fail(`error: You have not concluded your ${this.picking.revert ? 'revert' : 'cherry-pick'} (${this.picking.revert ? 'REVERT_HEAD' : 'CHERRY_PICK_HEAD'} exists).\nPlease, commit your changes or use '${this.picking.revert ? 'revert' : 'cherry-pick'} --abort' before you ${verb === 'checkout' ? 'switch branches' : verb}.`);

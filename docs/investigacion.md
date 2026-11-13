@@ -397,6 +397,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Práctica: el índice y el árbol de trabajo a la vista | Público | 2×2/2 | 2,0 | Oh My Git! | ítem 205 |
 | Salud del repo: líneas añadidas y borradas por semana | Análisis | 2×2/2 | 2,0 | Información del repositorio en GitHub | ítem 206 |
 | Salud del repo: commits por día de la semana | Análisis | 1×2/2 | 1,0 | Información del repositorio en GitHub | ítem 207 |
+| Práctica: conflictos de merge | Público | 2×3/2 | 3,0 | Fork, Learn Git Branching | ítem 209 |
+| Launchpad: filtrar por persona | Análisis | 2×2/2 | 2,0 | Replica (GitKraken) | ítem 210 |
+| Launchpad: también los issues | Análisis | 2×2/2 | 2,0 | Replica (GitKraken) | ítem 211 |
+| Más de dos cuentas de GitHub | Fuentes | 2×2/2 | 2,0 | Replica (GitKraken) | ítem 212 |
+| Cargar más historia de una rama | Escala | 2×2/2 | 2,0 | Replica (GitKraken) | ítem 213 |
+| Constelación de una organización entera | Escala | 2×2/3 | 1,3 | GitKraken, Mapa de alcance | ítem 214 |
 | Galaxias por antigüedad del último cambio (carpetas locales) | Análisis | 1×2/2 | 1,0 | Git Truck | candidata |
 
 ## Públicos

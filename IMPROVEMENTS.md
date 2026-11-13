@@ -372,84 +372,91 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     Reproducción: `node tools/smoke.mjs` repetido → `el interruptor de columnas…: page.click: Timeout 30000ms exceeded` o
     `al llegar a una galaxia…: lo que se lee cambió 4 veces`.
 
+3. [Deuda] «la práctica de git responde a los comandos en el grafo» (sección «Varios repos a la vez») falló en las dos
+    corridas de la iteración 288 (2026-11-13) que la incluyeron, la suelta y la de la puerta, y pasó al repetir su sección:
+    `page.waitForFunction: Timeout 30000ms exceeded`, el primer `waitForFunction` del paso (`#repo-link` en
+    `practice/git` y `#practice` visible, con `T(15000)`), en una sección que el cambio no toca. Hipótesis: tras los pasos
+    de la demo y del ensayo, el botón de la práctica no llega a cambiar de repo a tiempo en la primera carga de `lab`.
+    Reproducción: `node tools/smoke.mjs --solo "Varios repos a la vez"` → `la práctica de git responde…: Timeout 30000ms`.
+
 ### Baja
 
-3. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+4. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-4. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+5. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-5. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+6. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-6. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+7. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-7. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+8. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-8. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+9. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-9. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+10. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-10. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
+11. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
     (895 ms en total, sin GPU); el perfil de CPU de los primeros 6 s no deja ninguna función de la app por encima de 70 ms
     (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
     que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
     Reproducción: `node tools/audit.mjs --repetir 3` → `consultas: 10`, `tareasLargasMs: 895`.
-11. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
+12. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
     prepara de verdad en vez de solo listar, y `add -p` prepara todo. Negarse con el `error: unknown switch` de git (o
     admitir `-n`). Reproducción: `node --test` con `touch a.txt`, `add -n .` → `a.txt` queda preparado.
-12. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
+13. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
     la iteración 239: la sesión no pudo consultar su página de versiones. Comprobarla con `WebFetch` en la próxima
     auditoría de Seguridad y, si hay una estable más nueva con arreglos de seguridad, subirla (cambio de `electron/`: plan
     por consenso). Reproducción: `npm view electron version` frente a `package.json`.
-13. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
+14. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
     largo se lleva la línea `<enlace>` del final (el aviso queda sin enlace). Recortar título y detalle antes y dejar el
     enlace siempre. Reproducción: `payload('discord', {title: 'x'.repeat(5000), url: 'https://github.com/a/b'})` →
     `content` sin `<https://github.com/a/b>`.
 
-14. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
+15. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
     `js/util.js` solo distingue notfound, rate y auth), aunque haya red: la persona busca su wifi y el servicio es quien falla.
     Un rótulo «Error del servicio» en los 40 idiomas. Reproducción: `U.statusKey({state: 'error', error: {kind: 'http'}})` → `status.error`.
-15. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
+16. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
     el service worker instalado (solo los estados de error de la carga, en es y ar a 1280 y 320 px). Mirarlos en la
     próxima QA. Reproducción: `node e2e/serve.mjs 4173` + Playwright con la API simulada de `tools/audit.mjs`.
-16. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
+17. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
     que se pospone o se fija otro: `setPrSnooze` (`js/app.js`) es lo único que limpia. Inocuo (`liveSnoozes` los ignora),
     pero crece sin tope. Limpiar también al leer. Reproducción: posponer un PR, adelantar el reloj un día y recargar →
     la entrada sigue en `localStorage`.
-17. [Errores] Práctica de git: `stash pop` y `stash apply` devuelven un archivo nuevo que estaba preparado como «modified»
+18. [Errores] Práctica de git: `stash pop` y `stash apply` devuelven un archivo nuevo que estaba preparado como «modified»
     sin preparar (todo va a `work`), cuando git lo deja preparado como «new file»; `stash show` lo deja ver: tras el pop y
     otro `stash`, el archivo sale con `M` y no con `A`. Devolver `entry.added` a `staged` como `{ file, isNew: true }`.
     Reproducción: `touch --new n.txt`, `add n.txt`, `stash`, `stash pop`, `stash`, `stash show --name-status` → `M\tn.txt`.
     (Revisión OMC de la iteración 264.)
-18. [Errores] Práctica de git: una rama puede llamarse `HEAD`: `validName` (`js/gitsim.js`) la acepta, así que
+19. [Errores] Práctica de git: una rama puede llamarse `HEAD`: `validName` (`js/gitsim.js`) la acepta, así que
     `branch HEAD`, `branch -m main HEAD` o `branch -c main HEAD` la crean, cuando git dice `fatal: 'HEAD' is not a valid
     branch name`. Rechazarla en `validName`. Reproducción: `branch -c main HEAD` → sale bien y `branch` lista `HEAD`.
     (Revisión OMC de la iteración 269.)
-19. [Seguridad] Avisos a Slack: sin un webhook real no se comprobó (iteración 271) si Slack muestra `&amp;`, `&lt;` y `&gt;`
+20. [Seguridad] Avisos a Slack: sin un webhook real no se comprobó (iteración 271) si Slack muestra `&amp;`, `&lt;` y `&gt;`
     como `&`, `<` y `>` dentro de un bloque `plain_text` (si no, un título con `&` se vería escapado), ni si un flujo de
     Workflow Builder da formato `mrkdwn` a la variable `text` (le llega sin bloques; un `*` de un título se notaría). Probarlo
     con un webhook de prueba en la próxima auditoría de Seguridad con red. Reproducción: `payload('slack', {title: 'a & b'})`
     → `blocks[1].text.text` es `a &amp; b`.
-20. [Errores] Salud del repo: las estrellas y los forks nuevos de «esta semana» no avisan si la actividad cargada tampoco cubre los últimos 7 días enteros (un repo muy activo cuyo feed de 300 eventos cabe en 2 días): la línea dice «3 esta semana (la anterior no está cargada entera)» y da a entender que la actual sí lo está. Arreglo propuesto: un `fullWeek` (alguna actividad de hace 7 días o más) y, sin él, una variante «al menos {week} esta semana» (40 idiomas). Reproducción: `compute` con actividades solo de las últimas 48 h → `stars: { week: 3, prev: null }`, sin nada que diga que la semana actual está a medias. (Revisión OMC de la iteración 279.)
+21. [Errores] Salud del repo: las estrellas y los forks nuevos de «esta semana» no avisan si la actividad cargada tampoco cubre los últimos 7 días enteros (un repo muy activo cuyo feed de 300 eventos cabe en 2 días): la línea dice «3 esta semana (la anterior no está cargada entera)» y da a entender que la actual sí lo está. Arreglo propuesto: un `fullWeek` (alguna actividad de hace 7 días o más) y, sin él, una variante «al menos {week} esta semana» (40 idiomas). Reproducción: `compute` con actividades solo de las últimas 48 h → `stars: { week: 3, prev: null }`, sin nada que diga que la semana actual está a medias. (Revisión OMC de la iteración 279.)
 
-21. [Deuda] Smoke de la salud: el paso del factor de ausencia (`tools/smoke.mjs`, `#hl-absence`) lee las cifras con `\d+`, así que con un separador de miles («12.345 commits») tomaría 12 y daría un falso rojo (personas ≤ autores ≤ commits); la demo es chica y hoy no pasa (revisión de la iteración 280). Reproducción: en el paso, el texto «3 de 8 autores, en 12.345 commits cargados» falla. Arreglo: quitar los separadores antes de comparar o leer `compute(...).absence` por la página.
+22. [Deuda] Smoke de la salud: el paso del factor de ausencia (`tools/smoke.mjs`, `#hl-absence`) lee las cifras con `\d+`, así que con un separador de miles («12.345 commits») tomaría 12 y daría un falso rojo (personas ≤ autores ≤ commits); la demo es chica y hoy no pasa (revisión de la iteración 280). Reproducción: en el paso, el texto «3 de 8 autores, en 12.345 commits cargados» falla. Arreglo: quitar los separadores antes de comparar o leer `compute(...).absence` por la página.
 
-22. [Errores] Salud del repo: al llegar después de abrir el panel los forks, las líneas por semana, los despliegues o el primer commit de los PRs, `renderHealth` (`js/app.js`) rehace el panel entero y borra lo que la persona ya pidió en él: el resultado de «Comparar ramas» (`#cmp-out`), el de los choques (`#hl-clash-out`) y las ramas elegidas en los dos selectores (el foco ya se conserva desde la iteración 283). Rehacer solo las secciones de datos, o volver a poner lo pedido. Reproducción: API simulada que tarda 3 s en `/stats/code_frequency`, `index.html?repo=o/r&health=1`, comparar dos ramas antes de que llegue → `#cmp-out` vacío.
+23. [Errores] Salud del repo: al llegar después de abrir el panel los forks, las líneas por semana, los despliegues o el primer commit de los PRs, `renderHealth` (`js/app.js`) rehace el panel entero y borra lo que la persona ya pidió en él: el resultado de «Comparar ramas» (`#cmp-out`), el de los choques (`#hl-clash-out`) y las ramas elegidas en los dos selectores (el foco ya se conserva desde la iteración 283). Rehacer solo las secciones de datos, o volver a poner lo pedido. Reproducción: API simulada que tarda 3 s en `/stats/code_frequency`, `index.html?repo=o/r&health=1`, comparar dos ramas antes de que llegue → `#cmp-out` vacío.
 
-23. [Accesibilidad] Salud del repo: las series por semana («Commits por semana: 3 · 0 · 5 · …») se leen como una tira de cifras separadas por «·», que según el lector se anuncia como «punto medio» en cada una y sin decir a qué semana va cada cifra (WCAG 1.3.1, menor). Una lista o un `aria-label` con las semanas separadas por comas. Reproducción: `?health=1` en la demo → `#hl-commitweeks` con `textContent` «… 3 · 0 · 5 …» y sin nombre accesible propio.
+24. [Accesibilidad] Salud del repo: las series por semana («Commits por semana: 3 · 0 · 5 · …») se leen como una tira de cifras separadas por «·», que según el lector se anuncia como «punto medio» en cada una y sin decir a qué semana va cada cifra (WCAG 1.3.1, menor). Una lista o un `aria-label` con las semanas separadas por comas. Reproducción: `?health=1` en la demo → `#hl-commitweeks` con `textContent` «… 3 · 0 · 5 …» y sin nombre accesible propio.
 
-24. [Accesibilidad] Salud del repo: la línea «GitHub todavía está calculando las líneas por semana» (`#hl-codepending`) aparece después de abrir el panel, cuando responde el 202, sin región viva: quien usa lector de pantalla no se entera de que hay que volver a abrir el panel (WCAG 4.1.3, menor). Anunciarla con un `role="status"` que exista desde la apertura. Reproducción: API simulada con 202 en `/stats/code_frequency`, `?repo=o/r&health=1` → `#hl-codepending` sin `role`/`aria-live` ni ancestro vivo.
+25. [Accesibilidad] Salud del repo: la línea «GitHub todavía está calculando las líneas por semana» (`#hl-codepending`) aparece después de abrir el panel, cuando responde el 202, sin región viva: quien usa lector de pantalla no se entera de que hay que volver a abrir el panel (WCAG 4.1.3, menor). Anunciarla con un `role="status"` que exista desde la apertura. Reproducción: API simulada con 202 en `/stats/code_frequency`, `?repo=o/r&health=1` → `#hl-codepending` sin `role`/`aria-live` ni ancestro vivo.
 
-25. [QA] Un repo vacío con token: la carga va por GraphQL, que responde 200 con `defaultBranchRef: null` y sin refs (no el 409
+26. [QA] Un repo vacío con token: la carga va por GraphQL, que responde 200 con `defaultBranchRef: null` y sin refs (no el 409
     de REST), así que no sale el rótulo «Repo vacío» de la iteración 287. Fijar qué muestra ese caso y darle el mismo estado.
     Reproducción: `connect(gh, 'tok')` en `tools/github.test.mjs` con `/graphql` devolviendo el repo sin ramas → sin error `empty`.
 
@@ -580,9 +587,9 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 
 ### 2026-11-13 · Iteración 288 · Expansión · Análisis
 
-- **Capacidad nueva: el Launchpad por persona también muestra lo que le toca revisar y lo asignado** (ítem 210 de la hoja de ruta, fila de Replica «Launchpad: vista de equipo filtrada por colaborador»). El ítem pedía filtrar por autor con `?who=`, pero eso ya estaba desde #307 y #308 (`?by=`): la entrega es lo que faltaba de la fila, la vista de equipo. Elegir una persona en el selector del Launchpad deja los PRs que abrió, aquellos en que **se le pidió revisión** y aquellos en que **está asignada**, de todos los repos seguidos, con lo ya cargado y sin consultas nuevas; los que no abrió llevan una marca («Revisión pedida a ana», «Asignado a ana») que el lector de pantalla oye en el nombre de la fila, y cada opción del selector cuenta los PRs en que está la persona (cada uno una vez). Los datos salen de la misma lista de PRs que ya se pedía: `requested_reviewers` y `assignees` en la API REST de GitHub y de Codeberg (Forgejo, Gitea), `reviewRequests` y `assignees` en la consulta GraphQL de GitHub (dos campos más, sin consultas nuevas) y `reviewers` y `assignees` en las MR de GitLab; los equipos no cuentan. `?by=` no cambia. La demo pide revisiones y asigna PRs (sin tocar lo que sortea). Textos nuevos (`all.prs.role.review`, `all.prs.role.assignee`) en los 40 idiomas.
+- **Capacidad nueva: el Launchpad por persona también muestra lo que le toca revisar y lo asignado** (ítem 210 de la hoja de ruta, fila de Replica «Launchpad: vista de equipo filtrada por colaborador»). El ítem pedía filtrar por autor con `?who=`, pero eso ya estaba desde #307 y #308 (`?by=`): la entrega es lo que faltaba de la fila, la vista de equipo. Elegir una persona en el selector del Launchpad deja los PRs que abrió, aquellos en que **se le pidió revisión** y aquellos en que **está asignada**, de todos los repos seguidos, con lo ya cargado y sin consultas nuevas; los que no abrió llevan una marca («Revisión pedida a ana», «Asignado a ana») que el lector de pantalla oye en el nombre de la fila, y cada opción del selector cuenta los PRs en que está la persona (cada uno una vez). Los datos salen de la misma lista de PRs que ya se pedía: `requested_reviewers` y `assignees` en la API REST de GitHub y de Codeberg (Forgejo, Gitea), `reviewRequests` y `assignees` en la consulta GraphQL de GitHub (dos campos más, sin consultas nuevas, aunque con alrededor de un punto más de cuota GraphQL por ciclo, dicho en Límites conocidos) y `reviewers` y `assignees` en las MR de GitLab; los equipos no cuentan, y en GitHub tampoco los bots (GraphQL solo los trae como usuarios: con token y sin token salen las mismas personas). `?by=` no cambia. La demo pide revisiones y asigna PRs (sin tocar lo que sortea). Textos nuevos (`all.prs.role.review`, `all.prs.role.assignee`) en los 40 idiomas.
 - **Pruebas que fallan sin la capacidad:** `node --test tools/overview.test.mjs`: «el Launchpad por persona: también los PRs en que se le pidió revisión o está asignada, con su papel» (personas, cuentas y papeles con PRs fabricados, listas raras incluidas) y «mount: con una persona elegida, cada fila dice si se le pidió revisión o está asignada»; `node --test tools/github.test.mjs`: «los PRs dicen a quiénes se les pidió revisión y quiénes están asignados (REST y GraphQL)»; vistas fallar sin el cambio de `js/overview.js` y de `js/sources/github.js` y pasar con él. Más las de `mapPull` en `tools/codeberg.test.mjs` y `tools/gitlab.test.mjs`. El paso del smoke «vista conjunta: «Todos»…» (sección «Varios repos a la vez») elige a «ana», que no abrió ningún PR pero tiene una revisión pedida en el #7: queda solo ese, con su marca, en la URL `?by=ana` y con el foco en el selector; con «bea», sus dos PRs sin marca; con «Todas las personas», todo otra vez y sin `?by=`.
-- README: «Todos a la vez» (el filtro por persona con revisiones pedidas y asignaciones, y su marca) y Límites conocidos (de qué servicios salen; los equipos no cuentan; GitHub deja de listar a quien ya revisó, GitLab no); Seguridad sin cambios (los logins entran con `textContent`, sin consultas nuevas).
+- README: «Todos a la vez» (el filtro por persona con revisiones pedidas y asignaciones, y su marca) y Límites conocidos (de qué servicios salen; los equipos y los bots no cuentan; GitHub deja de listar a quien ya revisó, GitLab no; el costo de cuota GraphQL); Seguridad sin cambios (los logins entran con `textContent`, sin consultas nuevas).
 - QA: el Launchpad de la vista conjunta con la API simulada en el smoke (es, 1280 px: filtro, marca, nombre accesible, URL y foco); el resto lo mira la puerta (40 idiomas con `node tools/check-i18n.mjs`, contraste del panel en claro y oscuro en el mismo paso); auditoría: la de la puerta.
 - Skills: no aplica: un filtro más sobre datos que ya llegan de fuentes propias; nada de un dominio que el repo no cubra.
 - Arena: no aplica: una sola forma obvia (sumar las listas al PR donde cada fuente ya lo arma y ampliar la comparación del filtro que existe).

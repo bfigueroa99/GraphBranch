@@ -380,7 +380,11 @@
           b.append(title, meta);
           // con una persona elegida, el PR que no abrió ella dice por qué está: se le pidió revisión o está asignada
           const role = it.role === 'review' || it.role === 'assignee' ? t(`all.prs.role.${it.role}`, { who: who }) : '';
-          if (role) b.append(mk('span', 'ap-role', role));
+          if (role) {
+            const chip = mk('span', 'ap-role', role);
+            chip.dir = 'auto'; // lleva un login: en derecha a izquierda no se desordena
+            b.append(chip);
+          }
           const label = [t('all.prs.open', { num: it.number, repo: it.repo, title: GB.U.truncate(it.title, 80) }), role].filter(Boolean).join('. ');
           b.setAttribute('aria-label', label);
           b.title = label;

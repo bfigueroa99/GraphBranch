@@ -46,8 +46,9 @@
     'oid url committedDate messageHeadline messageBody author { name email user { login avatarUrl } } parents(first: 4) { nodes { oid } }';
   const GQL_TARGET = 'target { oid ... on Commit { committedDate } }';
   const GQL_TARGET_CI = 'target { oid ... on Commit { committedDate statusCheckRollup { state } } }'; // con el estado de los checks
-  /** Los logins de una lista de personas de GitHub (REST o GraphQL), sin lo que no es un login (un equipo, un null). */
-  const logins = (list) => (Array.isArray(list) ? list.map((u) => u?.login).filter((u) => typeof u === 'string' && u) : []);
+  /** Los logins de una lista de personas de GitHub (REST o GraphQL), sin lo que no es un login (un equipo, un null) ni los
+      bots: la consulta GraphQL solo trae usuarios, y así con token y sin token salen las mismas personas. */
+  const logins = (list) => (Array.isArray(list) ? list.filter((u) => u?.type !== 'Bot').map((u) => u?.login).filter((u) => typeof u === 'string' && u) : []);
   /** Estado de los checks de GitHub (rollup o check-runs) en uno de tres: 'success', 'failure' o 'pending'. */
   const ciState = (s) => {
     s = String(s || '').toUpperCase();

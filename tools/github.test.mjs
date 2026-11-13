@@ -562,11 +562,11 @@ test('los PRs dicen a quiénes se les pidió revisión y quiénes están asignad
   gh.pulls.push({
     number: 3, state: 'open', title: 'PR 3', head: { ref: 'feat', repo: { full_name: 'o/r' } }, base: { ref: 'main' }, user: { login: 'ana' },
     html_url: 'https://github.com/o/r/pull/3', created_at: '2026-10-01T00:00:00Z', updated_at: '2026-10-01T00:00:00Z',
-    requested_reviewers: [{ login: 'beto' }, null, { login: '' }], requested_teams: [{ slug: 'core' }], assignees: [{ login: 'carla' }],
+    requested_reviewers: [{ login: 'beto', type: 'User' }, null, { login: '' }, { login: 'Copilot', type: 'Bot' }], requested_teams: [{ slug: 'core' }], assignees: [{ login: 'carla' }],
   });
   const rest = connect(gh).src;
   await rest.cycle();
-  assert.deepEqual(plain(rest.data.pulls.get(3).requested), ['beto'], 'sin los vacíos; los equipos van aparte y no cuentan');
+  assert.deepEqual(plain(rest.data.pulls.get(3).requested), ['beto'], 'sin los vacíos ni los bots; los equipos van aparte y no cuentan');
   assert.deepEqual(plain(rest.data.pulls.get(3).assignees), ['carla']);
 
   const g2 = fakeGitHub();

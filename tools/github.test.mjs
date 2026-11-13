@@ -1327,6 +1327,17 @@ test('cargar más (REST): una consulta desde donde se cortó main, tantos commit
   // el ciclo siguiente no los vuelve a borrar al recortar
   await src.cycle();
   for (let i = 21; i <= 30; i++) assert.ok(commits.has('m' + i), 'm' + i + ' sigue tras el ciclo');
+  // y aunque lleguen muchos commits nuevos y haya que recortar, lo traído (lo más viejo) no es lo que se va
+  let head = 'm40';
+  for (let i = 1; i <= 900; i++) {
+    const sha = 'n' + i;
+    commits.set(sha, { sha, parents: [head], message: 'n', author: { name: 'ana' }, date: Date.UTC(2027, 0, 1) + i * 1000, url: '' });
+    head = sha;
+  }
+  src.data.branches.get('main').sha = head;
+  src.gc();
+  assert.ok(commits.size < 900 + 30 + 3, 'gc recortó');
+  for (let i = 21; i <= 30; i++) assert.ok(commits.has('m' + i), 'm' + i + ' sigue tras recortar');
 });
 
 test('cargar más (GraphQL): una consulta de la historia de esa rama desde su corte, con el tope del repo', async () => {

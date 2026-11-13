@@ -125,7 +125,10 @@ test('cargar más: la historia de main de antes de la semilla llega de a 6, sin 
   assert.equal(cut(), null, 'con 12, main llega a su raíz');
   assert.equal(await src.loadMore('main'), 0);
   assert.equal(JSON.stringify([...branches.values()].map((b) => [b.name, b.sha])), heads, 'ninguna rama se movió');
-  // mucha actividad después: lo cargado no se vuelve a sacar al recortar (trim suma lo traído a su tope)
-  for (let i = 0; i < 400; i++) src.publish(src.actions() || []);
-  assert.ok(commits.size >= 252, 'el tope creció con lo traído');
+  assert.equal(src.hasMore('main'), false, 'sin historia guardada, la ficha no ofrece más');
+  // mucha actividad después: lo traído es lo más viejo, y recortar por fecha no lo vuelve a sacar
+  const loaded = [...src.kept];
+  assert.equal(loaded.length, 12);
+  for (let i = 0; i < 1500; i++) src.publish(src.actions() || []);
+  assert.ok(loaded.every((sha) => commits.has(sha)), 'lo traído con «Cargar más» sigue cargado tras 1500 publicaciones');
 });

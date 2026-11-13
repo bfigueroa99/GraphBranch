@@ -164,7 +164,7 @@
       this.seenEvents = new Set();
       this.prInfo = new Map(); // número -> { title, draft } de PRs que solo conocemos por eventos (o null)
       this.prHeads = new Set();
-      this.extra = 0; // commits traídos con «Cargar más»: gc() los suma a su tope para no volver a borrarlos
+      this.kept = new Set(); // commits traídos con «Cargar más»: gc() no los recorta por viejos (solo si ninguna rama los alcanza)
       this.kids = null; // commit -> hijos, para saber qué ramas contienen un commit (se rehace al cambiar los commits)
       this.etags = new Map();
       this.lastPoll = {};
@@ -1593,15 +1593,18 @@
       const b = this.data.branches.get(name);
       const from = b && U.historyCut(this.data.commits, b.sha);
       if (!from) return 0;
-      const before = this.data.commits.size;
-      if (this.mode === 'graphql') await this.historyQuery([{ head: b.sha, from, n: this.depth }], new Set(), 0);
-      else await this.fetchBranch(from);
-      const n = this.data.commits.size - before;
+      // se cuentan los que agregó esta consulta (no la diferencia de tamaño: el ciclo de sondeo puede sumar o recortar a la vez)
+      const added = new Set();
+      if (this.mode === 'graphql') await this.historyQuery([{ head: b.sha, from, n: this.depth }], added, 0);
+      else {
+        const { data } = await this.api(`${this.base}/commits?sha=${encodeURIComponent(from)}&per_page=${this.depth}`, { allow: [404, 409, 422] });
+        for (const c of data || []) if (this.addCommit(c)) added.add(c.sha);
+      }
       // el padre que falta existe en GitHub: no traer nada es un fallo (la consulta pesada que se rindió, un 404…)
-      if (!n) throw new Error('No se pudo traer la historia desde ' + from);
-      this.extra += n;
-      if (n && this.running) this.emit('update', { activities: [], initial: false, calm: true });
-      return n;
+      if (!added.size) throw new Error('No se pudo traer la historia desde ' + from);
+      for (const sha of added) this.kept.add(sha);
+      if (this.running) this.emit('update', { activities: [], initial: false, calm: true });
+      return added.size;
     }
 
     /** Historia de varias ramas, en consultas de unos cientos de commits. */
@@ -1684,10 +1687,12 @@
       const keep = U.reachable(commits, heads).set;
       const before = commits.size;
       for (const sha of [...commits.keys()]) if (!keep.has(sha)) commits.delete(sha);
-      const cap = Math.max(600, this.depth * (branches.size + 10) * 2) + this.extra;
+      for (const sha of this.kept) if (!commits.has(sha)) this.kept.delete(sha); // ya ninguna rama los alcanza
+      const cap = Math.max(600, this.depth * (branches.size + 10) * 2) + this.kept.size;
       if (commits.size > cap) {
         const headSet = new Set(heads);
-        const old = [...commits.values()].filter((c) => !headSet.has(c.sha)).sort((a, b) => a.date - b.date);
+        // lo traído con «Cargar más» es lo más viejo: recortar por fecha lo borraría primero
+        const old = [...commits.values()].filter((c) => !headSet.has(c.sha) && !this.kept.has(c.sha)).sort((a, b) => a.date - b.date);
         for (const c of old.slice(0, commits.size - cap)) commits.delete(c.sha);
       }
       if (commits.size !== before) this.kids = null;

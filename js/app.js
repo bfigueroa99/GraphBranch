@@ -1421,14 +1421,23 @@
     setBranchView({ hidden, solo: '' });
   }
 
-  /** ¿La historia cargada de la rama `name` se corta antes de su raíz? (la ficha ofrece «Cargar más») */
-  const historyCut = (src, name) => !!U.historyCut(src.data.commits, src.data.branches.get(name)?.sha);
+  /** ¿La historia cargada de la rama `name` se corta antes de su raíz y se puede traer más? (la ficha ofrece «Cargar
+      más»; la demo dice si aún guarda esa historia) */
+  const historyCut = (src, name) => (src.hasMore ? src.hasMore(name) : !!U.historyCut(src.data.commits, src.data.branches.get(name)?.sha));
+  const loadingMore = new WeakMap(); // fuente -> rama -> la carga en curso: volver a abrir la ficha y pulsar otra vez no pide dos veces
   /** «Cargar más» de la ficha de una rama: otra tanda de su historia, solo de esa rama (ver loadMore de la fuente);
       el grafo la dibuja con el `update` que avisa la fuente. Da cuántos commits sumó y si queda más por traer. */
-  async function loadMore(name) {
+  function loadMore(name) {
     const src = active.source;
-    const n = await src.loadMore(name);
-    return { n, more: historyCut(src, name) };
+    let byName = loadingMore.get(src);
+    if (!byName) loadingMore.set(src, (byName = new Map()));
+    if (byName.has(name)) return byName.get(name);
+    const p = src
+      .loadMore(name)
+      .then((n) => ({ n, more: historyCut(src, name) }))
+      .finally(() => byName.delete(name));
+    byName.set(name, p);
+    return p;
   }
 
   /* `calm`: llegan ramas que esperaban su historia (la carga de a poco de un repo grande): se

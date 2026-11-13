@@ -171,6 +171,7 @@ describe('tools/audit.mjs', () => {
     const gl2 = proto();
     const win = { WebGLRenderingContext: { prototype: gl1 }, WebGL2RenderingContext: { prototype: gl2 } };
     const doc = { addEventListener() {} };
+    // sombrea los tres globales del navegador que usa instrumentar; sin PerformanceObserver, su try lo salta
     const corre = new Function('window', 'document', 'PerformanceObserver', `(${instrumentar.toString()})([])`);
     corre(win, doc, undefined);
     gl1.linkProgram('a');
@@ -179,8 +180,8 @@ describe('tools/audit.mjs', () => {
     assert.equal(win.__audit.programas, 3, 'cada linkProgram, de WebGL 1 o 2, cuenta uno');
     assert.deepEqual([...gl1.vistos, ...gl2.vistos], ['a', 'b', 'c'], 'el enlace de verdad sigue ocurriendo');
     corre({ ...win, WebGLRenderingContext: undefined, WebGL2RenderingContext: undefined, __audit: undefined }, doc, undefined); // sin WebGL, no lanza
-    const e = escenarios().find((x) => x.nombre === 'escritorio-3d');
-    assert.ok(e.puerta);
+    // el escenario de la puerta mide el 3D, y medir('3d') guarda la cuenta
+    assert.match(escenarios().find((x) => x.nombre === 'escritorio-3d').mirar.toString(), /medir\('3d'\)/);
     const src = readFileSync(new URL('./audit.mjs', import.meta.url), 'utf8');
     assert.match(src, /medidas\.programas3d = m\.programas/, 'medir("3d") guarda la cuenta');
     // subir es peor

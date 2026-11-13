@@ -707,7 +707,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Skills: no aplica: perfilar la carga con el Profiler de CDP y una medida más en una herramienta del repo; lo cubren el protocolo de Rendimiento y `systematic-debugging`.
 - Arena: no aplica: una sola forma obvia (contar `linkProgram` donde la auditoría ya instrumenta la página).
 - Guías: systematic-debugging (medir el código viejo en el mismo equipo antes de suponer una regresión), test-driven-development (la prueba nueva vista fallar antes del cambio)
-- OMC: plan=— · revisión=— · verificación=—
+- OMC: plan=— · revisión=4 hallazgos (3 arreglados) · verificación=pendiente. La revisión (omc-code-reviewer) dio solo LOW: la cuenta va desde que carga la página hasta el fin de la medida, no solo el primer cuadro (dicho así en el README), una aserción de la prueba no probaba nada del cambio (ahora mira que el escenario de la puerta mida el 3D) y la prueba sombrea solo tres globales (dicho en un comentario). Queda la aserción que lee el fuente (`medidas.programas3d = m.programas`), como en la prueba de la iteración 263: lo demás lo mide la auditoría en Chromium.
 - Reclamo: loop/295, sin colisión
 - Validado: pendiente
 - **Siguiente:** iteración 296, expansión: ítem 214 (Constelación de una organización entera, Escala)

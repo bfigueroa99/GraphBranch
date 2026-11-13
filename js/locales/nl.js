@@ -534,6 +534,7 @@ GB.i18n.define('nl', {
   'health.commitWeeks': 'Commits per week: {list}',
   'health.authorWeeks': 'Verschillende auteurs per week: {list}',
   'health.newAuthorWeeks': 'Nieuwe auteurs per week (eerste geladen commit): {list}',
+  'health.absence': 'Personen die samen de helft van de commits maken (afwezigheidsfactor): {n} van {authors} auteurs, in {commits} geladen commits',
   'health.tagWeeks': 'Tags per week: {list}',
   'health.issueWeeks': 'Geopende issues per week: {list}',
   'health.prCloseWeeks': 'Zonder merge gesloten pull requests per week: {list}',

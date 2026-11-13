@@ -544,6 +544,7 @@ GB.i18n.define('sk', {
   'health.commitWeeks': 'Commity za týždeň: {list}',
   'health.authorWeeks': 'Rôzni autori za týždeň: {list}',
   'health.newAuthorWeeks': 'Noví autori za týždeň (prvý načítaný commit): {list}',
+  'health.absence': 'Ľudia, ktorí tvoria polovicu commitov (faktor absencie): {n} z {authors} autorov, v {commits} načítaných commitoch',
   'health.tagWeeks': 'Tagy za týždeň: {list}',
   'health.issueWeeks': 'Otvorené issues za týždeň: {list}',
   'health.prCloseWeeks': 'Pull requesty zatvorené bez zlúčenia za týždeň: {list}',

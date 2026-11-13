@@ -533,6 +533,7 @@ GB.i18n.define('el', {
   'health.commitWeeks': 'Commits ανά εβδομάδα: {list}',
   'health.authorWeeks': 'Διαφορετικοί συγγραφείς ανά εβδομάδα: {list}',
   'health.newAuthorWeeks': 'Νέοι συγγραφείς ανά εβδομάδα (πρώτο φορτωμένο commit): {list}',
+  'health.absence': 'Άτομα που κάνουν τα μισά commits (συντελεστής απουσίας): {n} από {authors} συντάκτες, σε {commits} φορτωμένα commits',
   'health.tagWeeks': 'Tags ανά εβδομάδα: {list}',
   'health.issueWeeks': 'Issues που άνοιξαν ανά εβδομάδα: {list}',
   'health.prCloseWeeks': 'Pull requests που έκλεισαν χωρίς συγχώνευση ανά εβδομάδα: {list}',

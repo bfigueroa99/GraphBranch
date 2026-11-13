@@ -576,6 +576,7 @@ GB.i18n.define('ur', {
   'health.commitWeeks': 'ہفتہ وار کمٹس: {list}',
   'health.authorWeeks': 'ہفتہ وار مختلف مصنفین: {list}',
   'health.newAuthorWeeks': 'ہفتہ وار نئے مصنفین (لوڈ شدہ پہلا کمٹ): {list}',
+  'health.absence': 'وہ لوگ جو آدھے کمٹس کرتے ہیں (غیر حاضری کا عنصر): {authors} مصنفین میں سے {n}، {commits} لوڈ شدہ کمٹس میں',
   'health.tagWeeks': 'ہفتہ وار ٹیگز: {list}',
   'health.issueWeeks': 'ہفتہ وار کھلنے والے issue: {list}',
   'health.prCloseWeeks': 'بغیر انضمام کے بند ہونے والے pull request ہفتہ وار: {list}',

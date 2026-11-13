@@ -533,6 +533,7 @@ GB.i18n.define('zh-Hant', {
   'health.commitWeeks': '每週提交數：{list}',
   'health.authorWeeks': '每週不同作者數：{list}',
   'health.newAuthorWeeks': '每週新作者數（已載入的第一個提交）：{list}',
+  'health.absence': '貢獻一半提交的人數（缺席係數）：{authors} 位作者中的 {n} 位，基於已載入的 {commits} 個提交',
   'health.tagWeeks': '每週標籤數：{list}',
   'health.issueWeeks': '每週開啟的議題：{list}',
   'health.prCloseWeeks': '每週未合併即關閉的拉取請求：{list}',

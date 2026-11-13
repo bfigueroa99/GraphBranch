@@ -541,6 +541,7 @@ GB.i18n.define('ro', {
   'health.commitWeeks': 'Commituri pe săptămână: {list}',
   'health.authorWeeks': 'Autori diferiți pe săptămână: {list}',
   'health.newAuthorWeeks': 'Autori noi pe săptămână (primul commit încărcat): {list}',
+  'health.absence': 'Persoane care fac jumătate din commituri (factor de absență): {n} din {authors} autori, în {commits} commituri încărcate',
   'health.tagWeeks': 'Taguri pe săptămână: {list}',
   'health.issueWeeks': 'Issue-uri deschise pe săptămână: {list}',
   'health.prCloseWeeks': 'Pull request-uri închise fără îmbinare pe săptămână: {list}',

@@ -534,6 +534,7 @@ GB.i18n.define('fil', {
   'health.commitWeeks': 'Mga commit kada linggo: {list}',
   'health.authorWeeks': 'Magkakaibang may-akda kada linggo: {list}',
   'health.newAuthorWeeks': 'Bagong may-akda kada linggo (unang na-load na commit): {list}',
+  'health.absence': 'Mga taong bumubuo sa kalahati ng mga commit (absence factor): {n} sa {authors} na may-akda, sa {commits} na na-load na commit',
   'health.tagWeeks': 'Mga tag kada linggo: {list}',
   'health.issueWeeks': 'Mga issue na binuksan kada linggo: {list}',
   'health.prCloseWeeks': 'Mga pull request na isinara nang hindi na-merge kada linggo: {list}',

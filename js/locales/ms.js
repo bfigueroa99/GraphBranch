@@ -533,6 +533,7 @@ GB.i18n.define('ms', {
   'health.commitWeeks': 'Commit setiap minggu: {list}',
   'health.authorWeeks': 'Pengarang berbeza setiap minggu: {list}',
   'health.newAuthorWeeks': 'Pengarang baharu setiap minggu (komit pertama yang dimuatkan): {list}',
+  'health.absence': 'Orang yang menyumbang separuh commit (faktor ketiadaan): {n} daripada {authors} pengarang, dalam {commits} commit yang dimuatkan',
   'health.tagWeeks': 'Tag setiap minggu: {list}',
   'health.issueWeeks': 'Isu yang dibuka setiap minggu: {list}',
   'health.prCloseWeeks': 'Pull request yang ditutup tanpa digabungkan setiap minggu: {list}',

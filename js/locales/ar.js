@@ -632,6 +632,7 @@ GB.i18n.define('ar', {
   'health.commitWeeks': 'الإيداعات في الأسبوع: {list}',
   'health.authorWeeks': 'المؤلفون المختلفون في الأسبوع: {list}',
   'health.newAuthorWeeks': 'المؤلفون الجدد في الأسبوع (أول إيداع محمَّل): {list}',
+  'health.absence': 'الأشخاص الذين يشكّلون نصف الإيداعات (عامل الغياب): {n} من {authors} مؤلفين، في {commits} إيداعًا محمَّلًا',
   'health.tagWeeks': 'الوسوم في الأسبوع: {list}',
   'health.issueWeeks': 'المشكلات المفتوحة في الأسبوع: {list}',
   'health.prCloseWeeks': 'طلبات السحب المغلقة دون دمج في الأسبوع: {list}',

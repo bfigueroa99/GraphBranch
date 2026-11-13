@@ -533,6 +533,7 @@ GB.i18n.define('nb', {
   'health.commitWeeks': 'Commits per uke: {list}',
   'health.authorWeeks': 'Ulike forfattere per uke: {list}',
   'health.newAuthorWeeks': 'Nye forfattere per uke (første innlastede commit): {list}',
+  'health.absence': 'Personer som står for halvparten av commitene (fraværsfaktor): {n} av {authors} forfattere, i {commits} innlastede commiter',
   'health.tagWeeks': 'Tagger per uke: {list}',
   'health.issueWeeks': 'Åpnede issues per uke: {list}',
   'health.prCloseWeeks': 'Pull requests lukket uten å bli flettet per uke: {list}',

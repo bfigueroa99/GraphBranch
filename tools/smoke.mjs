@@ -3083,6 +3083,32 @@ if (seccion('Una organización o un usuario entero'))
     if (saved !== '["acme/api","acme/web","acme/viejo"]') throw new Error(`se guardó ${saved}`);
   });
 
+  await step(page, 'la salud se rehace al llegar las líneas por semana y el foco sigue donde estaba', async () => {
+    // GitHub tarda en responder /stats/code_frequency: se retiene hasta que el foco ya está dentro del panel
+    let release;
+    const held = new Promise((r) => (release = r));
+    const pattern = 'https://api.github.com/repos/acme/api/stats/code_frequency';
+    await page.route(pattern, async (r) => {
+      await held;
+      await gh.handle(r);
+    });
+    try {
+      await page.click('#health-btn');
+      await page.waitForSelector('#health[open] #digest-org-md', { timeout: T(5000) });
+      await page.focus('#digest-org-md');
+      await page.evaluate(() => document.querySelector('#health-body .hl-sec').setAttribute('data-viejo', '')); // desaparece al rehacerse
+      release();
+      await page.waitForFunction(() => !document.querySelector('#health-body [data-viejo]'), null, { timeout: T(8000) });
+      const at = await page.evaluate(() => document.activeElement?.id || document.activeElement?.tagName);
+      if (at !== 'digest-org-md') throw new Error(`al rehacerse el panel el foco cayó en ${at}`);
+    } finally {
+      release();
+      await page.unroute(pattern);
+    }
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
+  });
+
   await step(page, 'el resumen de la semana de la organización junta sus repos abiertos', async () => {
     await page.click('#health-btn');
     await page.waitForSelector('#digest-org-md', { timeout: T(5000) });

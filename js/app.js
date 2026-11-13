@@ -1881,7 +1881,18 @@
     return `<${box}><${head}>${U.esc(title)} <span class="hl-n">${U.fmtNum(block.total)}</span></${head}>${rows ? `<ul class="hl-list" data-list="${id}">${rows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`}</${sub ? 'div' : 'section'}>`;
   }
 
+  /** Cómo volver a encontrar el control enfocado del panel después de rehacerlo: su id o, si es una fila, su lista y su
+      número. Sin esto, lo que llega después de abrir (forks, líneas por semana, despliegues) tiraba el foco a `<body>`. */
+  function healthFocusKey() {
+    const a = document.activeElement;
+    if (!a || a === el.healthBody || !el.healthBody.contains(a)) return null;
+    if (a.id) return '#' + CSS.escape(a.id);
+    const ul = a.closest('.hl-list[data-list]');
+    return ul && a.dataset.go != null ? `.hl-list[data-list="${CSS.escape(ul.dataset.list)}"] [data-go="${CSS.escape(a.dataset.go)}"]` : null;
+  }
+
   function renderHealth() {
+    const had = healthFocusKey();
     const data = source.view ? source.view() : source.data;
     const acts = feed.items.filter((a) => a.repo === active?.key);
     const h = GB.health.compute(data, acts, Date.now(), forksByStars ? 'stars' : 'recent');
@@ -1958,6 +1969,7 @@
         }),
       ),
     );
+    if (had) (el.healthBody.querySelector(had) || $('#health-close')).focus(); // la fila que ya no está: el foco queda en el panel
   }
 
   /** Comparar dos ramas: commits por delante y punto de separación con lo ya cargado; los archivos

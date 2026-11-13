@@ -677,6 +677,8 @@ GB.i18n.define('fil', {
   'textview.forks': 'Mga aktibong fork: {n}',
   'textview.fork': '{name}, huling push {when}',
   'textview.prs': 'bukas na PR: {n}',
+  'textview.drafts': 'draft na PR: {n}',
+  'textview.draft': 'draft',
   'textview.noPr': 'walang bukas na PR',
   'textview.fresh': 'ginawa sa nakaraang 7 araw',
   'textview.quiet': 'walang aktibidad nang mahigit 30 araw',

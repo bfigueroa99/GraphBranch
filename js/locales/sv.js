@@ -676,6 +676,8 @@ GB.i18n.define('sv', {
   'textview.forks': 'Aktiva forkar: {n}',
   'textview.fork': '{name}, senaste push {when}',
   'textview.prs': 'öppna PR: {n}',
+  'textview.drafts': 'PR som utkast: {n}',
+  'textview.draft': 'utkast',
   'textview.noPr': 'ingen öppen PR',
   'textview.fresh': 'skapad de senaste 7 dagarna',
   'textview.quiet': 'utan aktivitet på över 30 dagar',

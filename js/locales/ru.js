@@ -692,6 +692,8 @@ GB.i18n.define('ru', {
   'textview.forks': 'Активные форки: {n}',
   'textview.fork': '{name}, последний push {when}',
   'textview.prs': 'открытые PR: {n}',
+  'textview.drafts': 'PR-черновики: {n}',
+  'textview.draft': 'черновик',
   'textview.noPr': 'нет открытых PR',
   'textview.fresh': 'создана за последние 7 дней',
   'textview.quiet': 'без активности более 30 дней',

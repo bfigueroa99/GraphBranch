@@ -1087,6 +1087,23 @@ if (seccion('Escritorio (1280×800)'))
     });
     const gotMerged = mergedBr.filter((m) => m.label || m.chip);
     if (gotMerged.length !== 1 || gotMerged[0].b !== 'hecha' || !gotMerged[0].label || !gotMerged[0].chip) throw new Error('la vista de texto no dice la rama fusionada: ' + JSON.stringify(mergedBr));
+    // los PRs en borrador: su rama lo dice en su nombre accesible y con una marca («PRs en borrador: n»), y la lista del CI
+    // en rojo lo dice tras el PR (árbol montado aparte, con PRs fijos: en la demo un borrador puede pasar a listo)
+    const drafts = await page.evaluate(() => {
+      const c = (sha, parents, date) => [sha, { sha, parents, message: sha, date, author: { name: 'Ana' } }];
+      const data = { repo: { defaultBranch: 'main' }, commits: new Map([c('a', [], 1), c('f', ['a'], 2), c('g', ['a'], 3)]), branches: new Map([['main', { name: 'main', sha: 'a', isDefault: true }], ['wip', { name: 'wip', sha: 'f' }], ['lista', { name: 'lista', sha: 'g' }]]),
+        pulls: new Map([[21, { number: 21, title: 'a medias', head: 'wip', sameRepo: true, draft: true, ci: 'failure' }], [22, { number: 22, title: 'lista', head: 'lista', sameRepo: true, draft: false, ci: 'failure' }]]) };
+      const box = document.createElement('div');
+      const view = GB.textview.mount(box, { text: (k, p) => GB.i18n.t(k, p), ago: () => "", onGo() {} });
+      view.render(GB.textview.build(data, { now: 6 }));
+      return {
+        branches: [...box.querySelectorAll('.tv-branch')].map((n) => ({ b: n.dataset.branch, label: /, PRs en borrador: 1,/.test(n.getAttribute('aria-label')), chip: /PRs en borrador: 1/.test(n.querySelector('.tv-head').textContent) })),
+        ci: [...box.querySelectorAll('.tv-cipulls .tv-name')].map((n) => n.textContent),
+      };
+    });
+    const gotDrafts = drafts.branches.filter((m) => m.label || m.chip);
+    if (gotDrafts.length !== 1 || gotDrafts[0].b !== 'wip' || !gotDrafts[0].label || !gotDrafts[0].chip) throw new Error('la vista de texto no dice la rama con un PR en borrador: ' + JSON.stringify(drafts));
+    if (drafts.ci.length !== 2 || !/^#22 lista, rama lista$/.test(drafts.ci[0]) || !/^#21 a medias, rama wip, en borrador$/.test(drafts.ci[1])) throw new Error('la lista del CI en rojo no marca el PR en borrador: ' + JSON.stringify(drafts.ci));
     // los PRs abiertos con el CI en rojo salen en una lista aparte del árbol (árbol montado aparte, con PRs fijos): el de
     // url https es un enlace, el otro solo texto, el título entra como texto y la región viva los cuenta
     const ciPulls = await page.evaluate(() => {

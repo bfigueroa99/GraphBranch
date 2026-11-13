@@ -676,6 +676,8 @@ GB.i18n.define('bn', {
   'textview.forks': 'সক্রিয় ফর্ক: {n}',
   'textview.fork': '{name}, সর্বশেষ push {when}',
   'textview.prs': 'খোলা PR: {n}',
+  'textview.drafts': 'খসড়া PR: {n}',
+  'textview.draft': 'খসড়া',
   'textview.noPr': 'কোনো খোলা PR নেই',
   'textview.fresh': 'গত ৭ দিনে তৈরি',
   'textview.quiet': '৩০ দিনের বেশি নিষ্ক্রিয়',

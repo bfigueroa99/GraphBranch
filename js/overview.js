@@ -438,10 +438,10 @@
           const li = mk('li');
           li.dataset.pin = it.id;
           // un issue con su enlace es un enlace (se abre en el sitio del repo); un PR, o un issue sin enlace, un botón
-          const link = !!(it.issue && it.url);
+          const link = it.issue ? GB.U.safeUrl(it.url) : '';
           const b = mk(link ? 'a' : 'button', 'ap-row');
           if (link) {
-            b.href = it.url;
+            b.href = link;
             b.target = '_blank';
             b.rel = 'noopener';
           } else b.type = 'button';
@@ -462,7 +462,7 @@
           b.setAttribute('aria-label', label);
           b.title = label;
           if (it.issue) {
-            if (!it.url) b.addEventListener('click', () => opts.onOpenIssue?.(it.key));
+            if (!link) b.addEventListener('click', () => opts.onOpenIssue?.(it.key));
           } else b.addEventListener('click', () => opts.onOpenPr?.(it.key, it.head));
           const kind = it.issue ? 'all.issues' : 'all.prs';
           const refocus = (cls) => [...box.querySelectorAll(cls)].find((x) => x.closest('li')?.dataset.pin === it.id)?.focus();

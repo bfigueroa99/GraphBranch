@@ -376,7 +376,7 @@ test('mount: un issue con enlace es un enlace a su página, uno sin enlace abre 
     els.push(el);
     return el;
   };
-  const c2 = vm.createContext({ window: { GB: { U: { truncate: (x) => x } }, matchMedia: null }, document: { createElement: mkEl } });
+  const c2 = vm.createContext({ window: { GB: { U: { truncate: (x) => x, safeUrl: (u) => (/^https?:\/\//i.test(u) ? u : '') } }, matchMedia: null }, document: { createElement: mkEl } });
   vm.runInContext(readFileSync(join(root, 'js', 'overview.js'), 'utf8'), c2, { filename: 'overview.js' });
   const pins = [];
   const opened = [];

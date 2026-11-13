@@ -21,7 +21,7 @@
     return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
   };
 
-  /** Cuenta los eventos (releases, PRs fusionados, PRs abiertos, issues cerrados o ramas creadas) de cada una de las últimas WEEKS semanas (bloques de 7 días hacia atrás desde `now`). */
+  /** Cuenta los eventos (releases, PRs fusionados, PRs abiertos, issues cerrados, ramas creadas, forks nuevos…) de cada una de las últimas WEEKS semanas (bloques de 7 días hacia atrás desde `now`). */
   function weekly(list, now) {
     const weeks = new Array(WEEKS).fill(0);
     for (const a of list) {

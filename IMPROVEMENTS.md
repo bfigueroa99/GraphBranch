@@ -688,7 +688,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Skills: no aplica: una serie más en un panel propio, con la misma cuenta que una tendencia que ya existe; nada de un dominio que el repo no cubra.
 - Arena: no aplica: una sola forma obvia (exponer la serie semanal que `compute` ya calculaba y sumarla a la lista de series del panel).
 - Guías: test-driven-development (la prueba primero, vista fallar), content-translation (el sentido en cada idioma, «fork» como lo dice ya cada locale), verification-before-completion (el ciclo rojo-verde de la prueba nueva)
-- OMC: plan=— · revisión=pendiente · verificación=pendiente
+- OMC: plan=— · revisión=APPROVE, 3 LOW, ninguno CRITICAL, HIGH ni MEDIUM (2 arreglados: el smoke ahora también exige que la serie vuelva al encender otra vez «Mostrar forks», y el comentario de `weekly()` en `js/health.js`, que no nombraba todas sus series; el tercero, el «hecho en #351» provisional, quedó confirmado con el número del PR) · verificación=PASS
 - Reclamo: loop/285, sin colisión
-- Validado: pendiente
+- Validado: 754 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 286, expansión: ítem 205 (Práctica: el índice y el árbol de trabajo a la vista, Público)

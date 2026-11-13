@@ -855,6 +855,7 @@ if (seccion('Escritorio (1280×800)'))
     if (!(await page.evaluate(() => document.activeElement?.id === 'hl-forks-toggle'))) throw new Error('el foco se pierde al apagar el interruptor de forks');
     await page.click('#hl-forks-toggle');
     if ((await page.$$eval('#hl-forks a.hl-row', (as) => as.length)) !== 2 || (await page.evaluate(() => new URL(location.href).searchParams.has('forks')))) throw new Error('el interruptor «Mostrar forks» encendido no devuelve los 2 forks ni quita forks de la URL');
+    if (!(await page.$('#hl-forkweeks'))) throw new Error('el interruptor «Mostrar forks» encendido otra vez no devuelve los forks nuevos por semana');
     if (/undefined|NaN|health\./.test(info.text)) throw new Error('texto sin resolver en el panel: ' + info.text.slice(0, 120));
     // la demo trae una estrella de hace unos días (y suma otras en vivo): la semana actual frente a la anterior
     const stars = await page.$eval('#hl-stars', (s) => s.querySelector('.hl-line')?.textContent || '');

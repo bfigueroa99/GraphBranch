@@ -444,6 +444,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     → `blocks[1].text.text` es `a &amp; b`.
 21. [Errores] Salud del repo: las estrellas y los forks nuevos de «esta semana» no avisan si la actividad cargada tampoco cubre los últimos 7 días enteros (un repo muy activo cuyo feed de 300 eventos cabe en 2 días): la línea dice «3 esta semana (la anterior no está cargada entera)» y da a entender que la actual sí lo está. Arreglo propuesto: un `fullWeek` (alguna actividad de hace 7 días o más) y, sin él, una variante «al menos {week} esta semana» (40 idiomas). Reproducción: `compute` con actividades solo de las últimas 48 h → `stars: { week: 3, prev: null }`, sin nada que diga que la semana actual está a medias. (Revisión OMC de la iteración 279.)
 
+22. [Deuda] Smoke de la salud: el paso del factor de ausencia (`tools/smoke.mjs`, `#hl-absence`) lee las cifras con `\d+`, así que con un separador de miles («12.345 commits») tomaría 12 y daría un falso rojo (personas ≤ autores ≤ commits); la demo es chica y hoy no pasa (revisión de la iteración 280). Reproducción: en el paso, el texto «3 de 8 autores, en 12.345 commits cargados» falla. Arreglo: quitar los separadores antes de comparar o leer `compute(...).absence` por la página.
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); el contenedor 2D enfocable no tiene rol ni nombre (`graph.js:306`); las marcas
   de la brújula del mundo abierto son botones que se mueven y ocultan cada cuadro (`world.js:849`).
@@ -609,7 +610,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Skills: no aplica: una cuenta más sobre los commits ya cargados en un panel propio; la métrica es de CHAOSS, citada en el ítem, y lo demás lo cubren las reglas del repo.
 - Arena: no aplica: una sola forma obvia (ordenar las cuentas por autor y sumar hasta la mitad).
 - Guías: test-driven-development (la prueba primero, vista fallar), ux-copy (lo que mide primero y el nombre de CHAOSS entre paréntesis), content-translation (el sentido en cada idioma, sin plurales), verification-before-completion (el ciclo rojo-verde de la prueba nueva)
-- OMC: plan=— · revisión=pendiente · verificación=pendiente
+- OMC: plan=— · revisión=4 hallazgos, APPROVE, ninguno CRITICAL, HIGH ni MEDIUM (0 arreglados: el LOW de `authorKey` sin `?.` no lo es, la clave ya usa `c?.author`; el LOW del regex del smoke con separador de miles, pendiente 22 [Deuda]; el LOW del paso que no comprueba que falten nombres, cubierto por la prueba de `node --test`, que solo devuelve cifras; el LOW del lugar de la línea, debajo de las series por semana como dice el README) · verificación=PASS
 - Reclamo: loop/280, sin colisión
-- Validado: pendiente
+- Validado: 747 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 29 e2e en verde.
 - **Siguiente:** iteración 281, expansión: ítem 208 (Práctica: pull y borrar ramas del remoto, Público)

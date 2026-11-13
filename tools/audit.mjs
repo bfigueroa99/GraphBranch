@@ -333,7 +333,9 @@ function revisar({ ambito, rtl }) {
       .map((n) => n.data)
       .join(' ')
       .trim();
-    if (/\{[a-zA-Z_]+\}|\bundefined\b|\bNaN\b|\[object Object\]|^[a-z]+(\.[a-zA-Z0-9]+){1,3}$/.test(t)) out.push({ tipo: 'sin-traducir', donde: firma(el), detalle: t.slice(0, 60) });
+    // un dato marcado translate="no" (un nombre de archivo como `a.tmp`) puede parecer una clave: solo ahí no cuenta esa forma
+    const clave = /^[a-z]+(\.[a-zA-Z0-9]+){1,3}$/.test(t) && !el.closest('[translate="no"]');
+    if (/\{[a-zA-Z_]+\}|\bundefined\b|\bNaN\b|\[object Object\]/.test(t) || clave) out.push({ tipo: 'sin-traducir', donde: firma(el), detalle: t.slice(0, 60) });
   }
   return out;
 }

@@ -2066,4 +2066,11 @@ test('areas: el árbol de trabajo, el índice y HEAD cambian con touch, add, com
   run(r, 'touch app.js', 'add app.js', 'reset');
   assert.deepEqual(areas().index, [], 'reset a secas saca lo preparado');
   assert.deepEqual(areas().work, [{ file: 'app.js', state: 'M' }]);
+  run(r, 'stash');
+  assert.deepEqual(areas().work, [], 'stash aparta lo cambiado');
+  run(r, 'stash pop', 'reset --hard');
+  assert.deepEqual([areas().work, areas().index], [[], []], 'reset --hard tira lo cambiado');
+  run(r, 'git rm --cached app.js');
+  assert.deepEqual(areas().index, [{ file: 'app.js', state: 'D' }], 'rm --cached prepara el borrado');
+  assert.deepEqual(areas().work, [{ file: 'app.js', state: 'U' }], 'y deja el archivo sin seguir');
 });

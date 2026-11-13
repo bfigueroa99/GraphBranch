@@ -2567,7 +2567,7 @@ if (seccion('Varios repos a la vez'))
     await send('commit -m "areas"');
     if ((await col('index')).items.length) throw new Error('el índice no quedó vacío tras el commit');
     if (!(await col('head')).items.includes('areas.md')) throw new Error(`el commit no llevó el archivo a HEAD: ${JSON.stringify(await col('head'))}`);
-    if (await lab.locator('.pr-areas li[data-state] img, .pr-areas script').count()) throw new Error('las áreas interpretaron HTML');
+    if ((await lab.locator('.pr-area ul[tabindex="0"]').count()) !== 3) throw new Error('las listas de las áreas, que se desplazan, no se alcanzan con el teclado');
   });
   await step(lab, 'la práctica entiende switch y restore', async () => {
     const send = async (c) => {

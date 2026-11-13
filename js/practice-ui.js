@@ -50,9 +50,9 @@
         </div>
         <div class="pr-cards" role="toolbar"></div>
         <div class="pr-areas" role="group">
-          <div class="pr-area" data-area="work"><p class="pr-area-h" id="pr-area-work"></p><ul aria-labelledby="pr-area-work"></ul></div>
-          <div class="pr-area" data-area="index"><p class="pr-area-h" id="pr-area-index"></p><ul aria-labelledby="pr-area-index"></ul></div>
-          <div class="pr-area" data-area="head"><p class="pr-area-h" id="pr-area-head"></p><ul aria-labelledby="pr-area-head"></ul></div>
+          <div class="pr-area" data-area="work"><p class="pr-area-h" id="pr-area-work"></p><ul aria-labelledby="pr-area-work" tabindex="0"></ul></div>
+          <div class="pr-area" data-area="index"><p class="pr-area-h" id="pr-area-index"></p><ul aria-labelledby="pr-area-index" tabindex="0"></ul></div>
+          <div class="pr-area" data-area="head"><p class="pr-area-h" id="pr-area-head"></p><ul aria-labelledby="pr-area-head" tabindex="0"></ul></div>
         </div>`;
       this.sel = root.querySelector('.pr-ex');
       this.restart = root.querySelector('.pr-restart');
@@ -230,6 +230,7 @@
           li.dataset.state = row.state || 'C';
           const code = document.createElement('code');
           code.dir = 'ltr';
+          code.translate = false; // un nombre de archivo es un dato: ni el traductor del navegador ni la auditoría lo tratan como texto
           code.textContent = row.file;
           li.append(code);
           if (row.state) {

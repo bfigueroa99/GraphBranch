@@ -822,6 +822,8 @@ GB.i18n.define('ro', {
   'all.prs.everyone': 'Toate persoanele',
   'all.prs.repo': 'Filtrează Launchpad după depozit',
   'all.prs.allRepos': 'Toate depozitele',
+  'all.prs.role.review': 'Revizuire cerută de la {who}',
+  'all.prs.role.assignee': 'Atribuit lui {who}',
   'all.lastCommit': 'Ultimul commit: {msg} · {who} · {when}. Vezi modificările',
   'editor.edit': 'Editează',
   'editor.editFile': 'Editează {path}',

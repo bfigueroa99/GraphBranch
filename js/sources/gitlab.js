@@ -407,6 +407,8 @@
         url: m.web_url,
         draft: !!(m.draft ?? m.work_in_progress),
         user: this.person(m.author),
+        requested: (Array.isArray(m.reviewers) ? m.reviewers : []).map((u) => u?.username).filter((u) => typeof u === 'string' && u), // el filtro por persona del Launchpad
+        assignees: (Array.isArray(m.assignees) ? m.assignees : []).map((u) => u?.username).filter((u) => typeof u === 'string' && u),
         createdAt: Date.parse(m.created_at) || Date.now(),
         mr: true,
       };

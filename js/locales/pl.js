@@ -825,6 +825,8 @@ GB.i18n.define('pl', {
   'all.prs.everyone': 'Wszystkie osoby',
   'all.prs.repo': 'Filtruj Launchpad według repozytorium',
   'all.prs.allRepos': 'Wszystkie repozytoria',
+  'all.prs.role.review': 'Prośba o recenzję: {who}',
+  'all.prs.role.assignee': 'Przypisany: {who}',
   'all.lastCommit': 'Ostatni commit: {msg} · {who} · {when}. Zobacz zmiany',
   'editor.edit': 'Edytuj',
   'editor.editFile': 'Edytuj {path}',

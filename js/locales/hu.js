@@ -814,6 +814,8 @@ GB.i18n.define('hu', {
   'all.prs.everyone': 'Mindenki',
   'all.prs.repo': 'A Launchpad szűrése tárolóra',
   'all.prs.allRepos': 'Minden tároló',
+  'all.prs.role.review': 'Áttekintés kérve tőle: {who}',
+  'all.prs.role.assignee': 'Hozzárendelve: {who}',
   'all.lastCommit': 'Utolsó commit: {msg} · {who} · {when}. Változások megtekintése',
   'editor.edit': 'Szerkesztés',
   'editor.editFile': '{path} szerkesztése',

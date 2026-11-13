@@ -814,6 +814,8 @@ GB.i18n.define('hi', {
   'all.prs.everyone': 'सभी लोग',
   'all.prs.repo': 'Launchpad को रेपो के अनुसार फ़िल्टर करें',
   'all.prs.allRepos': 'सभी रेपो',
+  'all.prs.role.review': '{who} से समीक्षा माँगी गई',
+  'all.prs.role.assignee': '{who} को सौंपा गया',
   'all.lastCommit': 'आख़िरी कमिट: {msg} · {who} · {when}। इसके बदलाव देखें',
   'editor.edit': 'संपादित करें',
   'editor.editFile': '{path} संपादित करें',

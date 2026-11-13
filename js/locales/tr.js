@@ -814,6 +814,8 @@ GB.i18n.define('tr', {
   'all.prs.everyone': 'Herkes',
   'all.prs.repo': 'Launchpad’i depoya göre filtrele',
   'all.prs.allRepos': 'Tüm depolar',
+  'all.prs.role.review': '{who} kişisinden inceleme istendi',
+  'all.prs.role.assignee': '{who} kişisine atandı',
   'all.lastCommit': 'Son commit: {msg} · {who} · {when}. Değişikliklerini gör',
   'editor.edit': 'Düzenle',
   'editor.editFile': '{path} düzenle',

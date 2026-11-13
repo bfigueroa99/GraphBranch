@@ -825,6 +825,8 @@ GB.i18n.define('sk', {
   'all.prs.everyone': 'Všetci',
   'all.prs.repo': 'Filtrovať Launchpad podľa repozitára',
   'all.prs.allRepos': 'Všetky repozitáre',
+  'all.prs.role.review': 'Žiadosť o kontrolu: {who}',
+  'all.prs.role.assignee': 'Priradené: {who}',
   'all.lastCommit': 'Posledný commit: {msg} · {who} · {when}. Zobraziť zmeny',
   'editor.edit': 'Upraviť',
   'editor.editFile': 'Upraviť {path}',

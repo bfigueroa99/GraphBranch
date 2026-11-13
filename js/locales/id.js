@@ -814,6 +814,8 @@ GB.i18n.define('id', {
   'all.prs.everyone': 'Semua orang',
   'all.prs.repo': 'Filter Launchpad menurut repo',
   'all.prs.allRepos': 'Semua repo',
+  'all.prs.role.review': 'Tinjauan diminta dari {who}',
+  'all.prs.role.assignee': 'Ditugaskan ke {who}',
   'all.lastCommit': 'Commit terakhir: {msg} · {who} · {when}. Lihat perubahannya',
   'editor.edit': 'Edit',
   'editor.editFile': 'Edit {path}',

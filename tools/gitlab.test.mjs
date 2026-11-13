@@ -637,6 +637,15 @@ test('un GitLab propio no muestra avatares (su host no está en img-src); gitlab
   assert.equal(new GB.GitLabSource({ path: 'g/p' }).person({ username: 'a', avatar_url: 'https://gitlab.com/uploads/a.png' }).avatar, 'https://gitlab.com/uploads/a.png');
 });
 
+test('mapPull: los revisores y los asignados de un MR, para el filtro por persona del Launchpad', () => {
+  const GB = load(fakeGitLab());
+  const src = new GB.GitLabSource({ path: 'g/p' });
+  const m = src.mapPull({ iid: 4, title: 't', source_branch: 'f', target_branch: 'main', author: { username: 'ana' }, created_at: '2026-10-01T00:00:00Z', reviewers: [{ username: 'beto' }, {}], assignees: [{ username: 'carla' }] });
+  assert.deepEqual([...m.requested], ['beto']);
+  assert.deepEqual([...m.assignees], ['carla']);
+  assert.deepEqual([...src.mapPull({ iid: 5, title: 't' }).requested], [], 'sin listas, vacías');
+});
+
 test('el filtro por autor funciona sobre los datos de esta fuente: deja la rama de quien escribió y quita la de nadie', async () => {
   const gl = project();
   gl.mr(5, 'feature', 'main');

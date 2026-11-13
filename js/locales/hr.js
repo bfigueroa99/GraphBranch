@@ -822,6 +822,8 @@ GB.i18n.define('hr', {
   'all.prs.everyone': 'Sve osobe',
   'all.prs.repo': 'Filtriraj Launchpad po repozitoriju',
   'all.prs.allRepos': 'Svi repozitoriji',
+  'all.prs.role.review': 'Zatražen pregled od {who}',
+  'all.prs.role.assignee': 'Dodijeljeno: {who}',
   'all.lastCommit': 'Zadnji commit: {msg} · {who} · {when}. Pogledaj promjene',
   'editor.edit': 'Uredi',
   'editor.editFile': 'Uredi {path}',

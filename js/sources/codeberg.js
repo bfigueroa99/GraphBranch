@@ -303,6 +303,8 @@
         url: typeof p.html_url === 'string' && p.html_url.startsWith(this.ep.web + '/') ? p.html_url : `${this.data.repo.url}/pulls/${p.number}`,
         draft: !!p.draft || DRAFT.test(p.title || ''),
         user: this.person(p.user),
+        requested: (Array.isArray(p.requested_reviewers) ? p.requested_reviewers : []).map((u) => u?.login).filter((u) => typeof u === 'string' && u), // el filtro por persona del Launchpad
+        assignees: (Array.isArray(p.assignees) ? p.assignees : []).map((u) => u?.login).filter((u) => typeof u === 'string' && u),
         createdAt: Date.parse(p.created_at) || Date.now(),
       };
     }

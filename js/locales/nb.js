@@ -814,6 +814,8 @@ GB.i18n.define('nb', {
   'all.prs.everyone': 'Alle personer',
   'all.prs.repo': 'Filtrer Launchpad etter repo',
   'all.prs.allRepos': 'Alle repoer',
+  'all.prs.role.review': 'Gjennomgang bedt om fra {who}',
+  'all.prs.role.assignee': 'Tildelt {who}',
   'all.lastCommit': 'Siste commit: {msg} · {who} · {when}. Se endringene',
   'editor.edit': 'Rediger',
   'editor.editFile': 'Rediger {path}',

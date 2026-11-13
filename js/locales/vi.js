@@ -814,6 +814,8 @@ GB.i18n.define('vi', {
   'all.prs.everyone': 'Tất cả mọi người',
   'all.prs.repo': 'Lọc Launchpad theo kho',
   'all.prs.allRepos': 'Tất cả kho',
+  'all.prs.role.review': 'Đã nhờ {who} xem xét',
+  'all.prs.role.assignee': 'Giao cho {who}',
   'all.lastCommit': 'Commit mới nhất: {msg} · {who} · {when}. Xem thay đổi',
   'editor.edit': 'Sửa',
   'editor.editFile': 'Sửa {path}',

@@ -576,6 +576,15 @@ test('mapPull: un repo renombrado sigue marcando sus PRs de la misma repo', () =
   assert.equal(src.mapPull(pr({ full_name: 'ana/nombre' })).sameRepo, false);
 });
 
+test('mapPull: a quiénes se les pidió revisión y quiénes están asignados, para el filtro por persona del Launchpad', () => {
+  const { src } = connect(fakeCodeberg());
+  const p = src.mapPull({ number: 1, title: 't', head: { ref: 'f' }, base: { ref: 'main' }, user: { login: 'ana' }, created_at: '2026-10-01T00:00:00Z', requested_reviewers: [{ login: 'beto' }, null], assignees: [{ login: 'carla' }, { login: '' }] });
+  assert.deepEqual([...p.requested], ['beto']);
+  assert.deepEqual([...p.assignees], ['carla']);
+  const none = src.mapPull({ number: 2, title: 't', head: { ref: 'f' }, base: { ref: 'main' }, user: { login: 'ana' }, requested_reviewers: null });
+  assert.deepEqual([...none.requested, ...none.assignees], [], 'sin listas, vacías');
+});
+
 test('un servidor propio con un tope menor que 50: el total sale de X-Total-Count y la lista recortada no dice «sin PR abierto»', async () => {
   const cb = repo();
   for (let i = 1; i <= 40; i++) cb.pull(i, `r${i}`, 'main');

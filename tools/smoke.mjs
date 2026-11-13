@@ -2058,8 +2058,8 @@ function fakeGitHub() {
     if (!rest) return { body: { name, owner: { login: owner }, default_branch: 'main', html_url: `https://github.com/${m[1]}`, private: false, description: '', open_issues_count: r.openItems ?? 0, stargazers_count: r.stars ?? 0, forks_count: r.forks ?? 0 } }; // GitHub cuenta issues y PRs juntos
     if (rest === '/branches') return { body: [...r.branches].map(([b, s]) => ({ name: b, commit: { sha: s }, protected: false })) };
     if (rest === '/pulls' && m[1] === 'o/b') {
-      const pr = (number, title, draft) => ({ number, title, html_url: `https://github.com/o/b/pull/${number}`, state: 'open', draft, head: { ref: 'main', repo: { full_name: 'o/b' } }, base: { ref: 'main' }, user: { login: 'bea', avatar_url: null }, created_at: new Date(Date.now() - number * 60000).toISOString() });
-      return { body: [pr(7, 'Cambio en revisión', false), pr(8, 'Borrador a medias', true)] };
+      const pr = (number, title, draft, extra = {}) => ({ number, title, html_url: `https://github.com/o/b/pull/${number}`, state: 'open', draft, head: { ref: 'main', repo: { full_name: 'o/b' } }, base: { ref: 'main' }, user: { login: 'bea', avatar_url: null }, created_at: new Date(Date.now() - number * 60000).toISOString(), ...extra });
+      return { body: [pr(7, 'Cambio en revisión', false, { requested_reviewers: [{ login: 'ana' }] }), pr(8, 'Borrador a medias', true)] };
     }
     if (rest === '/events' || rest === '/pulls' || rest === '/tags' || rest === '/deployments' || rest === '/forks' || rest === '/activity' || rest === '/stats/code_frequency') return { body: [] }; // /activity: solo con token
     if (rest === '/commits') {
@@ -2304,6 +2304,20 @@ if (seccion('Varios repos a la vez'))
     }));
     const want = [['draft', '#8 Borrador a medias | o/b · main · bea'], ['waiting', '#7 Cambio en revisión | o/b · main · bea']];
     if (!/2/.test(lp.title || '') || lp.groups.length !== 2 || want.some(([id, row], i) => lp.groups[i].id !== id || lp.groups[i].rows.length !== 1 || !lp.groups[i].rows[0].startsWith(row)) || /\{|undefined|NaN/.test(lp.title + lp.groups.map((g) => g.rows.join()).join())) throw new Error('el Launchpad: ' + JSON.stringify(lp));
+    // la persona incluye los PRs en que se le pidió revisión: «ana» no abrió ninguno, pero el #7 le pide revisión; viaja en ?by=
+    await page.selectOption('#all-prs .ap-person', 'ana');
+    const who = await page.evaluate(() => ({
+      opts: [...document.querySelectorAll('#all-prs .ap-person option')].map((o) => o.textContent),
+      rows: [...document.querySelectorAll('#all-prs .ap-row')].map((r) => ({ n: r.dataset.number, role: r.querySelector('.ap-role')?.textContent || '', label: r.getAttribute('aria-label') })),
+      by: new URL(location.href).searchParams.get('by'),
+      focus: document.activeElement?.matches('.ap-person'),
+    }));
+    if (who.opts.join('|') !== 'Todas las personas|ana (1)|bea (2)' || who.rows.length !== 1 || who.rows[0].n !== '7' || who.rows[0].role !== 'Revisión pedida a ana' || !who.rows[0].label.endsWith('Revisión pedida a ana') || who.by !== 'ana' || !who.focus) throw new Error('el Launchpad por persona, con la revisión pedida: ' + JSON.stringify(who));
+    await page.selectOption('#all-prs .ap-person', 'bea');
+    const bea = await page.evaluate(() => [...document.querySelectorAll('#all-prs .ap-row')].map((r) => r.dataset.number + (r.querySelector('.ap-role') ? '+' : '')).sort().join());
+    if (bea !== '7,8') throw new Error('lo que abrió la persona no lleva marca: ' + bea);
+    await page.selectOption('#all-prs .ap-person', '');
+    if (await page.evaluate(() => new URL(location.href).searchParams.has('by') || document.querySelectorAll('#all-prs .ap-row').length !== 2)) throw new Error('«Todas las personas» no volvió a mostrar todo ni quitó ?by=');
     // fijar un PR arriba: se recuerda por repo y número (sin el título) y el mismo botón lo suelta
     const pinSel = '#all-prs .ap-row[data-number="7"] + .ap-pin';
     await page.click(pinSel);

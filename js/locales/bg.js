@@ -814,6 +814,8 @@ GB.i18n.define('bg', {
   'all.prs.everyone': 'Всички хора',
   'all.prs.repo': 'Филтриране на Launchpad по хранилище',
   'all.prs.allRepos': 'Всички хранилища',
+  'all.prs.role.review': 'Поискан преглед от {who}',
+  'all.prs.role.assignee': 'Възложен на {who}',
   'all.lastCommit': 'Последен комит: {msg} · {who} · {when}. Вижте промените му',
   'editor.edit': 'Редактиране',
   'editor.editFile': 'Редактиране на {path}',

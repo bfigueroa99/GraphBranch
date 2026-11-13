@@ -857,6 +857,8 @@ GB.i18n.define('ur', {
   'all.prs.everyone': 'سب لوگ',
   'all.prs.repo': 'Launchpad کو ریپو کے لحاظ سے فلٹر کریں',
   'all.prs.allRepos': 'تمام ریپوز',
+  'all.prs.role.review': '{who} سے جائزہ مانگا گیا',
+  'all.prs.role.assignee': '{who} کو تفویض کیا گیا',
   'all.lastCommit': 'آخری کمٹ: {msg} · {who} · {when}۔ اس کی تبدیلیاں دیکھیں',
   'editor.edit': 'ترمیم',
   'editor.editFile': '{path} میں ترمیم',

@@ -52,9 +52,12 @@
       const a = i * GOLDEN;
       let d = i ? Math.sqrt(i) * R_MIN : 0;
       const at = (dist) => ({ x: Math.cos(a) * dist, y: Math.sin(a) * dist });
-      // se aleja del centro hasta que cabe sin tocar a las ya puestas (con un poco de aire)
-      while (put.some((p) => Math.hypot(p.x - at(d).x, p.y - at(d).y) < p.r + o.r + 0.3)) d += 0.1;
-      put.push({ key: o.it.key, ...at(d), r: o.r, idx: o.idx });
+      // se aleja del centro hasta que cabe sin tocar a las ya puestas (con un poco de aire); el punto se calcula una vez
+      // por paso, no una por galaxia ya puesta: con los repos de una organización son 120 y el cuadrático pesaba
+      const fits = (q) => !put.some((p) => Math.hypot(p.x - q.x, p.y - q.y) < p.r + o.r + 0.3);
+      let q = at(d);
+      while (!fits(q)) q = at((d += 0.1));
+      put.push({ key: o.it.key, ...q, r: o.r, idx: o.idx });
     });
     if (!put.length) return [];
     // todo cabe en el cuadro: una sola escala para posiciones y radios (así nada se toca)

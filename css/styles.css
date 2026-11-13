@@ -1070,6 +1070,45 @@ kbd {
   color: var(--ink);
   font: inherit;
 }
+/* las cartas de comandos: una fila que se desplaza de lado dentro del panel, sin ensanchar la página */
+.pr-cards {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 2px 4px;
+  scroll-snap-type: x proximity;
+}
+.pr-card {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 2px;
+  width: 10.5rem;
+  min-height: 40px;
+  padding: 4px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  scroll-snap-align: start;
+}
+.pr-card:hover {
+  border-color: var(--s1);
+}
+.pr-card:focus-visible {
+  outline: 2px solid var(--s1);
+  outline-offset: 1px;
+}
+.pr-card code {
+  font: 600 12px/1.3 var(--font-mono);
+}
+.pr-card-desc {
+  color: var(--ink-2);
+  font-size: 11.5px;
+  line-height: 1.25;
+}
 
 /* pantalla completa (botón o tecla F): el panel del grafo ocupa toda la pantalla.
    Reglas separadas: un selector que el navegador no conoce anularía la lista entera. */
@@ -5084,6 +5123,15 @@ html.embed .diff-panel {
   }
   .agk-panel {
     max-height: none;
+  }
+  /* con la práctica abierta pasa lo mismo: la terminal y sus cartas crecen con la página y el grafo guarda su alto
+     (no en el modo TV, que esconde la práctica con CSS y deja el grafo entero) */
+  html:not(.tv) .graph-panel:has(> .practice:not([hidden])) {
+    height: auto;
+  }
+  html:not(.tv) .graph-panel:has(> .practice:not([hidden])) .graph-stage {
+    flex: none;
+    height: max(280px, 42vh);
   }
   /* la vista de agentes en el celular: el tablero se lee con la página, sin un desplazamiento dentro de otro */
   .graph-panel.agents-on {

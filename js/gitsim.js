@@ -2137,10 +2137,26 @@
     return r;
   }
 
+  /** Las cartas de comandos bajo la terminal de la práctica: pulsar una escribe `line` en la línea, sin ejecutarla,
+      con el cursor en `caret` (o al final). Su descripción es `practice.card.<id>`; `id` es el comando, sin traducir. */
+  const CARDS = [
+    { id: 'status', line: 'status' },
+    { id: 'add', line: 'add .' },
+    { id: 'commit', line: 'commit -m ""', caret: 11 },
+    { id: 'branch', line: 'branch ' },
+    { id: 'switch', line: 'switch ' },
+    { id: 'merge', line: 'merge ' },
+    { id: 'rebase', line: 'rebase ' },
+    { id: 'reset', line: 'reset HEAD~1' },
+    { id: 'log', line: 'log --oneline' },
+    { id: 'stash', line: 'stash' },
+  ];
+
   GB.gitsim = {
     Repo,
     fromData,
     EXERCISES,
+    CARDS,
     LIMITS,
     hash,
     tokenize,

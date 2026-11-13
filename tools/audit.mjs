@@ -121,7 +121,7 @@ export function comparar(hallazgos, base, medidas = {}) {
 
 /** Las medidas de dos informes, con su diferencia en porcentaje (positivo = peor). */
 export function compararMedidas(antes, ahora) {
-  const sube = { cargaMs: true, tareasLargasMs: true, nodosDOM: true, heapMB: true, consultas: true, consultasCarga: true, fps3d: false, fps2d: false, escena3dUs: true, etiquetas3dUs: true };
+  const sube = { cargaMs: true, tareasLargasMs: true, nodosDOM: true, heapMB: true, consultas: true, consultasCarga: true, fps3d: false, fps2d: false, escena3dUs: true, etiquetas3dUs: true, programas3d: true };
   return Object.keys(sube)
     .filter((k) => typeof antes?.[k] === 'number' && typeof ahora?.[k] === 'number')
     .map((k) => {
@@ -202,13 +202,14 @@ export function clasesDeEstado(dir = join(root, 'js')) {
   return [...out].sort();
 }
 
-/** Se instala en cada página antes de que cargue: violaciones del CSP, tareas largas y la firma estable
-    de un elemento (la usan revisar() y el recorrido con Tab). */
-function instrumentar(estado) {
+/** Se instala en cada página antes de que cargue: violaciones del CSP, tareas largas, los programas de WebGL que
+    se enlazan y la firma estable de un elemento (la usan revisar() y el recorrido con Tab). */
+export function instrumentar(estado) {
   const ESTADO = new Set(estado);
   window.__audit = {
     csp: [],
     tareas: { n: 0, ms: 0 },
+    programas: 0,
     firma(el) {
       const partes = [];
       for (let e = el; e && e !== document.body && e !== document.documentElement && partes.length < 4; e = e.parentElement) {
@@ -224,6 +225,17 @@ function instrumentar(estado) {
     },
   };
   document.addEventListener('securitypolicyviolation', (e) => window.__audit.csp.push(`${e.violatedDirective} ${e.blockedURI || ''}`.trim()));
+  // cada programa de shaders que se enlaza: su compilación en el primer cuadro 3D es casi todo el tiempo de las tareas
+  // largas de la carga (pendiente 11), y ese tiempo depende del equipo; la cuenta, no
+  for (const C of [window.WebGLRenderingContext, window.WebGL2RenderingContext]) {
+    const P = C?.prototype;
+    if (!P?.linkProgram) continue;
+    const link = P.linkProgram;
+    P.linkProgram = function (p) {
+      window.__audit.programas++;
+      return link.call(this, p);
+    };
+  }
   try {
     new PerformanceObserver((l) => {
       for (const e of l.getEntries()) {
@@ -793,7 +805,7 @@ async function auditar({ browser, base, estado, soloPuerta, langs, completa, dec
               const f = () => {
                 n++;
                 if (performance.now() - t0 < 3000) return requestAnimationFrame(f);
-                ok({ fps: (n * 1000) / (performance.now() - t0), nodos: document.getElementsByTagName('*').length, heap: performance.memory ? performance.memory.usedJSHeapSize / 1048576 : null, tareas: window.__audit.tareas });
+                ok({ fps: (n * 1000) / (performance.now() - t0), nodos: document.getElementsByTagName('*').length, heap: performance.memory ? performance.memory.usedJSHeapSize / 1048576 : null, tareas: window.__audit.tareas, programas: window.__audit.programas });
               };
               requestAnimationFrame(f);
             }),
@@ -804,6 +816,7 @@ async function auditar({ browser, base, estado, soloPuerta, langs, completa, dec
         if (m.heap) medidas.heapMB = Math.round(m.heap);
         medidas.tareasLargasMs = Math.round(m.tareas.ms);
         medidas.tareasLargas = m.tareas.n;
+        medidas.programas3d = m.programas;
       },
     };
     try {

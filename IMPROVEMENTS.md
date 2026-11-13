@@ -407,63 +407,69 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 10. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-11. [Rendimiento] La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por rama) y 2 tareas largas
-    (895 ms en total, sin GPU); el perfil de CPU de los primeros 6 s no deja ninguna función de la app por encima de 70 ms
-    (`drawFx` de `js/graph.js`, los fuegos de la carga, 69 ms; lo demás es three.js y el navegador). Sin trabajo evidente
-    que quitar: solo reabrir si la cuota por hora (1 de 60 por consulta) o las tareas largas empeoran en `--comparar`.
-    Reproducción: `node tools/audit.mjs --repetir 3` → `consultas: 10`, `tareasLargasMs: 895`.
-12. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
+11. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
     prepara de verdad en vez de solo listar, y `add -p` prepara todo. Negarse con el `error: unknown switch` de git (o
     admitir `-n`). Reproducción: `node --test` con `touch a.txt`, `add -n .` → `a.txt` queda preparado.
-13. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
+12. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
     la iteración 239: la sesión no pudo consultar su página de versiones. Comprobarla con `WebFetch` en la próxima
     auditoría de Seguridad y, si hay una estable más nueva con arreglos de seguridad, subirla (cambio de `electron/`: plan
     por consenso). Reproducción: `npm view electron version` frente a `package.json`.
-14. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
+13. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
     largo se lleva la línea `<enlace>` del final (el aviso queda sin enlace). Recortar título y detalle antes y dejar el
     enlace siempre. Reproducción: `payload('discord', {title: 'x'.repeat(5000), url: 'https://github.com/a/b'})` →
     `content` sin `<https://github.com/a/b>`.
 
-15. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
+14. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
     `js/util.js` solo distingue notfound, rate y auth), aunque haya red: la persona busca su wifi y el servicio es quien falla.
     Un rótulo «Error del servicio» en los 40 idiomas. Reproducción: `U.statusKey({state: 'error', error: {kind: 'http'}})` → `status.error`.
-16. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
+15. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
     el service worker instalado (solo los estados de error de la carga, en es y ar a 1280 y 320 px). Mirarlos en la
     próxima QA. Reproducción: `node e2e/serve.mjs 4173` + Playwright con la API simulada de `tools/audit.mjs`.
-17. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
+16. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
     que se pospone o se fija otro: `setPrSnooze` (`js/app.js`) es lo único que limpia. Inocuo (`liveSnoozes` los ignora),
     pero crece sin tope. Limpiar también al leer. Reproducción: posponer un PR, adelantar el reloj un día y recargar →
     la entrada sigue en `localStorage`.
-18. [Errores] Práctica de git: `stash pop` y `stash apply` devuelven un archivo nuevo que estaba preparado como «modified»
+17. [Errores] Práctica de git: `stash pop` y `stash apply` devuelven un archivo nuevo que estaba preparado como «modified»
     sin preparar (todo va a `work`), cuando git lo deja preparado como «new file»; `stash show` lo deja ver: tras el pop y
     otro `stash`, el archivo sale con `M` y no con `A`. Devolver `entry.added` a `staged` como `{ file, isNew: true }`.
     Reproducción: `touch --new n.txt`, `add n.txt`, `stash`, `stash pop`, `stash`, `stash show --name-status` → `M\tn.txt`.
     (Revisión OMC de la iteración 264.)
-19. [Errores] Práctica de git: una rama puede llamarse `HEAD`: `validName` (`js/gitsim.js`) la acepta, así que
+18. [Errores] Práctica de git: una rama puede llamarse `HEAD`: `validName` (`js/gitsim.js`) la acepta, así que
     `branch HEAD`, `branch -m main HEAD` o `branch -c main HEAD` la crean, cuando git dice `fatal: 'HEAD' is not a valid
     branch name`. Rechazarla en `validName`. Reproducción: `branch -c main HEAD` → sale bien y `branch` lista `HEAD`.
     (Revisión OMC de la iteración 269.)
-20. [Seguridad] Avisos a Slack: sin un webhook real no se comprobó (iteración 271) si Slack muestra `&amp;`, `&lt;` y `&gt;`
+19. [Seguridad] Avisos a Slack: sin un webhook real no se comprobó (iteración 271) si Slack muestra `&amp;`, `&lt;` y `&gt;`
     como `&`, `<` y `>` dentro de un bloque `plain_text` (si no, un título con `&` se vería escapado), ni si un flujo de
     Workflow Builder da formato `mrkdwn` a la variable `text` (le llega sin bloques; un `*` de un título se notaría). Probarlo
     con un webhook de prueba en la próxima auditoría de Seguridad con red. Reproducción: `payload('slack', {title: 'a & b'})`
     → `blocks[1].text.text` es `a &amp; b`.
-21. [Errores] Salud del repo: las estrellas y los forks nuevos de «esta semana» no avisan si la actividad cargada tampoco cubre los últimos 7 días enteros (un repo muy activo cuyo feed de 300 eventos cabe en 2 días): la línea dice «3 esta semana (la anterior no está cargada entera)» y da a entender que la actual sí lo está. Arreglo propuesto: un `fullWeek` (alguna actividad de hace 7 días o más) y, sin él, una variante «al menos {week} esta semana» (40 idiomas). Reproducción: `compute` con actividades solo de las últimas 48 h → `stars: { week: 3, prev: null }`, sin nada que diga que la semana actual está a medias. (Revisión OMC de la iteración 279.)
+20. [Errores] Salud del repo: las estrellas y los forks nuevos de «esta semana» no avisan si la actividad cargada tampoco cubre los últimos 7 días enteros (un repo muy activo cuyo feed de 300 eventos cabe en 2 días): la línea dice «3 esta semana (la anterior no está cargada entera)» y da a entender que la actual sí lo está. Arreglo propuesto: un `fullWeek` (alguna actividad de hace 7 días o más) y, sin él, una variante «al menos {week} esta semana» (40 idiomas). Reproducción: `compute` con actividades solo de las últimas 48 h → `stars: { week: 3, prev: null }`, sin nada que diga que la semana actual está a medias. (Revisión OMC de la iteración 279.)
 
-22. [Deuda] Smoke de la salud: el paso del factor de ausencia (`tools/smoke.mjs`, `#hl-absence`) lee las cifras con `\d+`, así que con un separador de miles («12.345 commits») tomaría 12 y daría un falso rojo (personas ≤ autores ≤ commits); la demo es chica y hoy no pasa (revisión de la iteración 280). Reproducción: en el paso, el texto «3 de 8 autores, en 12.345 commits cargados» falla. Arreglo: quitar los separadores antes de comparar o leer `compute(...).absence` por la página.
+21. [Deuda] Smoke de la salud: el paso del factor de ausencia (`tools/smoke.mjs`, `#hl-absence`) lee las cifras con `\d+`, así que con un separador de miles («12.345 commits») tomaría 12 y daría un falso rojo (personas ≤ autores ≤ commits); la demo es chica y hoy no pasa (revisión de la iteración 280). Reproducción: en el paso, el texto «3 de 8 autores, en 12.345 commits cargados» falla. Arreglo: quitar los separadores antes de comparar o leer `compute(...).absence` por la página.
 
-23. [Errores] Salud del repo: al llegar después de abrir el panel los forks, las líneas por semana, los despliegues o el primer commit de los PRs, `renderHealth` (`js/app.js`) rehace el panel entero y borra lo que la persona ya pidió en él: el resultado de «Comparar ramas» (`#cmp-out`), el de los choques (`#hl-clash-out`) y las ramas elegidas en los dos selectores (el foco ya se conserva desde la iteración 283). Rehacer solo las secciones de datos, o volver a poner lo pedido. Reproducción: API simulada que tarda 3 s en `/stats/code_frequency`, `index.html?repo=o/r&health=1`, comparar dos ramas antes de que llegue → `#cmp-out` vacío.
+22. [Errores] Salud del repo: al llegar después de abrir el panel los forks, las líneas por semana, los despliegues o el primer commit de los PRs, `renderHealth` (`js/app.js`) rehace el panel entero y borra lo que la persona ya pidió en él: el resultado de «Comparar ramas» (`#cmp-out`), el de los choques (`#hl-clash-out`) y las ramas elegidas en los dos selectores (el foco ya se conserva desde la iteración 283). Rehacer solo las secciones de datos, o volver a poner lo pedido. Reproducción: API simulada que tarda 3 s en `/stats/code_frequency`, `index.html?repo=o/r&health=1`, comparar dos ramas antes de que llegue → `#cmp-out` vacío.
 
-24. [Accesibilidad] Salud del repo: las series por semana («Commits por semana: 3 · 0 · 5 · …») se leen como una tira de cifras separadas por «·», que según el lector se anuncia como «punto medio» en cada una y sin decir a qué semana va cada cifra (WCAG 1.3.1, menor). Una lista o un `aria-label` con las semanas separadas por comas. Reproducción: `?health=1` en la demo → `#hl-commitweeks` con `textContent` «… 3 · 0 · 5 …» y sin nombre accesible propio.
+23. [Accesibilidad] Salud del repo: las series por semana («Commits por semana: 3 · 0 · 5 · …») se leen como una tira de cifras separadas por «·», que según el lector se anuncia como «punto medio» en cada una y sin decir a qué semana va cada cifra (WCAG 1.3.1, menor). Una lista o un `aria-label` con las semanas separadas por comas. Reproducción: `?health=1` en la demo → `#hl-commitweeks` con `textContent` «… 3 · 0 · 5 …» y sin nombre accesible propio.
 
-25. [Accesibilidad] Salud del repo: la línea «GitHub todavía está calculando las líneas por semana» (`#hl-codepending`) aparece después de abrir el panel, cuando responde el 202, sin región viva: quien usa lector de pantalla no se entera de que hay que volver a abrir el panel (WCAG 4.1.3, menor). Anunciarla con un `role="status"` que exista desde la apertura. Reproducción: API simulada con 202 en `/stats/code_frequency`, `?repo=o/r&health=1` → `#hl-codepending` sin `role`/`aria-live` ni ancestro vivo.
+24. [Accesibilidad] Salud del repo: la línea «GitHub todavía está calculando las líneas por semana» (`#hl-codepending`) aparece después de abrir el panel, cuando responde el 202, sin región viva: quien usa lector de pantalla no se entera de que hay que volver a abrir el panel (WCAG 4.1.3, menor). Anunciarla con un `role="status"` que exista desde la apertura. Reproducción: API simulada con 202 en `/stats/code_frequency`, `?repo=o/r&health=1` → `#hl-codepending` sin `role`/`aria-live` ni ancestro vivo.
 
-26. [QA] Un repo vacío con token: la carga va por GraphQL, que responde 200 con `defaultBranchRef: null` y sin refs (no el 409
-27. [QA] La práctica a mitad de un conflicto de merge (iteración 289, revisión): `restore login.js` y `restore .` salen bien sin hacer nada y `restore --staged login.js` da «pathspec did not match» (git: `error: path 'login.js' is unmerged`); `reset --soft` funciona y vacía la fusión (git: `fatal: Cannot do a soft reset in the middle of a merge.`, igual que ya pasaba con `merge --no-commit`); `pull` hace el fetch y después dice «Already up to date.» o «You have not concluded your merge» (git: `error: Pulling is not possible because you have unmerged files.` sin traer nada); `stash` a secas da el error de `checkout` y no el «Cannot save the current index state» de git. Reproducción: `?practice=16`, `merge feature` y cada comando.
+25. [QA] Un repo vacío con token: la carga va por GraphQL, que responde 200 con `defaultBranchRef: null` y sin refs (no el 409
+26. [QA] La práctica a mitad de un conflicto de merge (iteración 289, revisión): `restore login.js` y `restore .` salen bien sin hacer nada y `restore --staged login.js` da «pathspec did not match» (git: `error: path 'login.js' is unmerged`); `reset --soft` funciona y vacía la fusión (git: `fatal: Cannot do a soft reset in the middle of a merge.`, igual que ya pasaba con `merge --no-commit`); `pull` hace el fetch y después dice «Already up to date.» o «You have not concluded your merge» (git: `error: Pulling is not possible because you have unmerged files.` sin traer nada); `stash` a secas da el error de `checkout` y no el «Cannot save the current index state» de git. Reproducción: `?practice=16`, `merge feature` y cada comando.
     de REST), así que no sale el rótulo «Repo vacío» de la iteración 287. Fijar qué muestra ese caso y darle el mismo estado.
     Reproducción: `connect(gh, 'tok')` en `tools/github.test.mjs` con `/graphql` devolviendo el repo sin ramas → sin error `empty`.
 
-28. [Seguridad] El sha de un padre entra literal en la consulta GraphQL de historia (`object(oid: "…")` de `historyQuery` en `js/sources/github.js`, de antes y que ahora usa también «Cargar más»; iteración 293, revisión de seguridad): una API hostil (un `?api=` de GitHub Enterprise comprometido) podría cambiar la consulta, aunque solo hacia su propio host, con el mismo token y sin mutaciones. Reproducción: un commit falso con `parents: [{ oid: 'x") { __typename } } #' }]` en una prueba de `tools/github.test.mjs` y mirar la consulta enviada. Arreglo: pasar los oid como variables `GitObjectID!` (o validarlos como hex de 40).
+27. [Seguridad] El sha de un padre entra literal en la consulta GraphQL de historia (`object(oid: "…")` de `historyQuery` en `js/sources/github.js`, de antes y que ahora usa también «Cargar más»; iteración 293, revisión de seguridad): una API hostil (un `?api=` de GitHub Enterprise comprometido) podría cambiar la consulta, aunque solo hacia su propio host, con el mismo token y sin mutaciones. Reproducción: un commit falso con `parents: [{ oid: 'x") { __typename } } #' }]` en una prueba de `tools/github.test.mjs` y mirar la consulta enviada. Arreglo: pasar los oid como variables `GitObjectID!` (o validarlos como hex de 40).
+28. [Errores] La práctica a 320 px: las cartas de comandos bajo la terminal (`#practice .pr-cards`, `button.pr-card` con
+    su `code` y su `span.pr-card-desc`) se salen del borde en es, ar, de y ta (12 hallazgos `borde` de la auditoría
+    completa en la iteración 295, fuera de la base; la de la puerta no corre ese escenario). Reproducción:
+    `node tools/audit.mjs` → `Baja [Errores] borde · practica-320-es · #practice > div.pr-cards[role=toolbar] > button.pr-card`.
+29. [Rendimiento] La tarea larga de la carga (unos 600 ms sin GPU, de 2 que suman unos 1.150) es la compilación de los 13
+    programas de shaders en el primer cuadro 3D (`acquireProgram` de three.js y trabajo nativo, medido con el perfil de
+    CPU en la iteración 295), no código de la app. three.js r128 no tiene `compileAsync` (con
+    `KHR_parallel_shader_compile`, desde la r158): sacarla del hilo principal pide subir la versión vendorizada de
+    three.js (plan por consenso: toca todo el 3D) o juntar materiales (los nodos usan `MeshStandardMaterial`, el
+    más caro, y cambia cómo se ven). La auditoría ahora cuenta los programas (`programas3d`) y `--comparar` los vigila.
+    Reproducción: `node tools/audit.mjs --repetir 3` → `programas3d: 13`, `tareasLargasMs` de unos 1.150 en la nube.
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); el contenedor 2D enfocable no tiene rol ni nombre (`graph.js:306`); las marcas
   de la brújula del mundo abierto son botones que se mueven y ocultan cada cuadro (`world.js:849`).
@@ -690,3 +696,18 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/294, sin colisión (`--reclamar` salió 3 mientras la 288 a la 293 estaban vivas; se reclamó al fusionarse la 293)
 - Validado: 777 pruebas (`node --test`), smoke (40 idiomas; intermitente, en verde al repetir su sección: «la práctica de git responde a los comandos en el grafo»), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 30 e2e en verde. El intermitente es ajeno (pendiente 3 [Deuda]); la primera puerta, antes de los arreglos de la revisión, dio verde sin intermitentes.
 - **Siguiente:** iteración 295, mantenimiento · Rendimiento: pendiente 11 (La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por…)
+
+### 2026-11-13 · Iteración 295 · Mantenimiento · Rendimiento
+
+- **Arreglo: las tareas largas de la carga son la compilación de shaders, y la auditoría ahora cuenta los programas** (pendiente 11). La base de esta sesión dio `tareasLargasMs: 1187`, contra los 895 que anotaba el pendiente: la condición para reabrirlo. Pero el mismo equipo, con el código del commit en que se escribió (`26c71beb`, 2026-11-04), dio 1.153: la diferencia es la máquina, no el código. El perfil de CPU de la carga (un script con el Profiler de CDP en el scratchpad, con los relojes de la página y del perfil alineados) muestra que la tarea mayor, de unos 600 ms, es en un 80 % trabajo nativo (`(program)`) y `acquireProgram` de three.js: la compilación de los 13 programas de shaders (cielo, terreno, nodos con `MeshStandardMaterial`, ramas con Lambert, puntos, globos…) en el primer cuadro 3D. Ninguna función de la app pasa de 15 ms dentro de ella. three.js r128 no tiene `compileAsync`, y juntar materiales cambia cómo se ven, así que eso queda como pendiente 29. Lo que cambia: `tools/audit.mjs` cuenta cada `linkProgram` (WebGL 1 y 2) desde que carga la página, guarda `programas3d` en el escenario `escritorio-3d` y `--comparar` lo vigila (subir es peor). Es una medida que no depende del equipo, a diferencia de los milisegundos. Los 12 hallazgos `borde` de las cartas de la práctica a 320 px, que la auditoría completa vio fuera de la base y que no son de este cambio, quedan como pendiente 28.
+- **Reproducción:** `node tools/audit.mjs --repetir 3` en `origin/dev` → `tareasLargasMs: 1187`, `tareasLargas: 2`; en `26c71beb`, en el mismo equipo → `tareasLargasMs: 1153`. El perfil de la carga → `la tarea larga mayor 576+637`, con `466.4 ms (program)` y `113.3 ms Jr three.min.js` (dentro de `acquireProgram`), 13 programas en `renderer.info.programs`.
+- **Pruebas que fallan sin el arreglo:** `node --test tools/audit.test.mjs` («la carga cuenta los programas de WebGL que enlaza y --comparar lo vigila (pendiente 11, iteración 295)»): corre `instrumentar` con contextos WebGL 1 y 2 falsos, cuenta 3 enlaces sin impedirlos, no lanza sin WebGL y `--comparar` marca 13 → 15 como peor. Falla sin el cambio de `tools/audit.mjs`.
+- README: Pruebas (la medida nueva `programas3d`, y por qué la cuenta y no el tiempo).
+- QA: Rendimiento: base `--repetir 3` antes y `--comparar` después: carga 2131 → 2084 ms (−2 %), tareas largas 1187 → 1146 ms (−3 %), 3D 9,1 → 10,3 fps, 2D 47,9 → 45,5 fps (+5 %), `escena3dUs` 206 → 232 µs (+12 %, con carga 1,1: el código del 3D no cambió, solo la instrumentación de la auditoría, que actúa al enlazar), `etiquetas3dUs` 30 → 25,7 µs, 10 consultas, nodos y memoria iguales; `programas3d: 13`; auditoría completa: 12 hallazgos fuera de la base, los de la práctica a 320 px (pendiente 28).
+- Skills: no aplica: perfilar la carga con el Profiler de CDP y una medida más en una herramienta del repo; lo cubren el protocolo de Rendimiento y `systematic-debugging`.
+- Arena: no aplica: una sola forma obvia (contar `linkProgram` donde la auditoría ya instrumenta la página).
+- Guías: systematic-debugging (medir el código viejo en el mismo equipo antes de suponer una regresión), test-driven-development (la prueba nueva vista fallar antes del cambio)
+- OMC: plan=— · revisión=— · verificación=—
+- Reclamo: loop/295, sin colisión
+- Validado: pendiente
+- **Siguiente:** iteración 296, expansión: ítem 214 (Constelación de una organización entera, Escala)

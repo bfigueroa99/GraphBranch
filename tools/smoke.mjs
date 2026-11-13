@@ -5675,15 +5675,27 @@ if (seccion('Agentes e interacciones, en vivo, en el lugar del grafo (?agents=1)
     // el commit sale de la lista de agentes (el último de una sesión de Claude Code), no de las etiquetas de rama: con la
     // demo viva, la rama de las sesiones se fusiona y se borra, y en 3 de 8 corridas ninguna etiqueta a la vista quedaba
     // en un commit de agente (iteración 291)
-    await page.click('#agents-btn');
-    const row = page.locator('#ag-list button.hl-row[data-sha]', { hasText: 'Claude Code' }).first();
-    await row.waitFor({ timeout: T(5000) });
-    const sha = await row.getAttribute('data-sha');
-    await row.click(); // vuelve al grafo 2D y lo lleva a ese commit
-    const node = await page
-      .waitForFunction((s) => [...document.querySelectorAll('#graph svg .node:not(.exit)')].find((n) => n.__sha === s && n.getClientRects().length), sha, { timeout: T(5000) })
-      .catch(() => null);
-    if (!node) throw new Error(`el grafo 2D no dibuja el commit ${sha.slice(0, 7)} de la lista de agentes`);
+    const openAgents = async () => (await page.evaluate(() => document.querySelector('#agents').hidden)) && page.click('#agents-btn');
+    await openAgents();
+    const rows = page.locator('#ag-list button.hl-row[data-sha]', { hasText: 'Claude Code' });
+    await rows.first().waitFor({ timeout: T(5000) });
+    const shas = await rows.evaluateAll((bs) => bs.map((b) => b.dataset.sha));
+    // el último commit de una sesión puede haber quedado fuera de toda rama (la demo también hace force push) y el grafo
+    // no lo dibuja: se prueba con la sesión siguiente
+    let sha = '';
+    let node = null;
+    for (const s of shas) {
+      await openAgents();
+      await page.locator(`#ag-list button.hl-row[data-sha="${s}"]`).first().click(); // vuelve al grafo 2D y lo lleva a ese commit
+      node = await page
+        .waitForFunction((x) => [...document.querySelectorAll('#graph svg .node:not(.exit)')].find((n) => n.__sha === x && n.getClientRects().length), s, { timeout: T(3000) })
+        .catch(() => null);
+      if (node) {
+        sha = s;
+        break;
+      }
+    }
+    if (!node) throw new Error(`el grafo 2D no dibuja ningún commit de Claude Code de la lista de agentes (${shas.map((s) => s.slice(0, 7)).join(', ')})`);
     await node.evaluate((n) => n.dispatchEvent(new MouseEvent('click', { bubbles: true })));
     const tip = await page.waitForSelector('#graph .tip:not([hidden]) .tip-agent', { timeout: T(3000) }).then((x) => x.textContent(), () => '');
     await page.focus('#graph');

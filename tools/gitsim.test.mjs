@@ -381,6 +381,7 @@ test('cada ejercicio parte sin resolver y se resuelve con sus comandos', () => {
     ['stash list', 'stash show', 'stash show stash@{1}', 'stash pop stash@{1}'],
     ['fetch', 'merge origin/main', 'push'],
     ['pull', 'fetch --prune', 'branch -d feature', 'push origin --delete experiment'],
+    ['merge feature', 'status', 'add login.js', 'commit'],
   ];
   assert.equal(solutions.length, EXERCISES.length);
   EXERCISES.forEach((ex, i) => {
@@ -874,7 +875,8 @@ test('los números de la URL piden un ejercicio de la lista; lo demás se descar
   assert.deepEqual(plain(decodeExercise('13')), { index: 12 });
   assert.deepEqual(plain(decodeExercise('14')), { index: 13 });
   assert.deepEqual(plain(decodeExercise('15')), { index: 14 });
-  for (const bad of ['0', '16', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
+  assert.deepEqual(plain(decodeExercise('16')), { index: 15 });
+  for (const bad of ['0', '17', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
 });
 
 test('un ejercicio propio mal hecho no entra: sin meta, condición inventada, comando que falla o demasiados', () => {
@@ -2073,4 +2075,106 @@ test('areas: el árbol de trabajo, el índice y HEAD cambian con touch, add, com
   run(r, 'git rm --cached app.js');
   assert.deepEqual(areas().index, [{ file: 'app.js', state: 'D' }], 'rm --cached prepara el borrado');
   assert.deepEqual(areas().work, [{ file: 'app.js', state: 'U' }], 'y deja el archivo sin seguir');
+});
+
+/** Dos ramas que tocaron login.js desde su base (y cada una un archivo propio): la fusión choca en login.js. */
+function clash() {
+  const r = fresh();
+  run(r, 'checkout -b feature', 'touch login.js', 'touch profile.js', 'add .', 'commit -m "Validate the login email"', 'checkout main', 'touch login.js', 'add login.js', 'commit -m "Trim the login input"');
+  return r;
+}
+
+test('merge con un archivo tocado en las dos ramas se detiene en conflicto: status, add y commit lo cierran', () => {
+  const r = clash();
+  const main = r.branches.get('main');
+  const res = r.run('merge feature');
+  assert.equal(res.ok, true, 'como git, el merge deja el repo en conflicto sin dar error de la terminal');
+  assert.deepEqual(plain(res.lines), ['Auto-merging login.js', 'CONFLICT (content): Merge conflict in login.js', 'Automatic merge failed; fix conflicts and then commit the result.']);
+  assert.equal(r.branches.get('main'), main, 'main no se movió');
+  assert.deepEqual(plain(r.conflicts), ['login.js']);
+  const st = r.run('status').lines;
+  assert.ok(st.includes('You have unmerged paths.'));
+  assert.ok(st.includes('\tboth modified:   login.js'));
+  assert.ok(st.includes('\tmodified:   profile.js'), 'lo que llega sin chocar ya está preparado');
+  // el índice lo muestra en conflicto, y HEAD lo tiene
+  const areas = plain(r.areas());
+  assert.deepEqual(areas.index.find((x) => x.file === 'login.js'), { file: 'login.js', state: 'C' });
+  assert.ok(areas.head.includes('login.js'));
+  // sin resolver, ni commit ni irse a otra rama
+  const early = r.run('commit -m "Merge"');
+  assert.equal(early.ok, false);
+  assert.match(early.lines[0], /Committing is not possible because you have unmerged files/);
+  assert.equal(r.run('commit -a -m "Merge"').ok, false, 'commit -a tampoco');
+  const away = r.run('checkout feature');
+  assert.equal(away.ok, false);
+  assert.match(away.lines.join('\n'), /resolve your current index first[\s\S]*login\.js: needs merge/);
+  assert.equal(r.run('stash').ok, false);
+  assert.equal(r.run('merge feature').ok, false, 'otra fusión tampoco');
+  // add lo marca resuelto y commit (sin -m, con el mensaje de la fusión) la cierra
+  assert.ok(r.run('add login.js').ok);
+  assert.deepEqual(plain(r.conflicts), []);
+  assert.ok(r.run('status').lines.includes('All conflicts fixed but you are still merging.'));
+  assert.deepEqual(plain(r.areas()).index.map((x) => [x.file, x.state]), [['login.js', 'M'], ['profile.js', 'M']]);
+  const done = r.run('commit');
+  assert.ok(done.ok, done.lines.join('\n'));
+  const tip = r.commits.get(r.branches.get('main'));
+  assert.deepEqual(plain(tip.parents), [main, r.branches.get('feature')]);
+  assert.equal(tip.message, "Merge branch 'feature'");
+  assert.equal(r.merging, null);
+  assert.equal(r.run('status').lines.at(-1), 'nothing to commit, working tree clean');
+});
+
+test('merge --abort cancela un conflicto, y add . o reset --hard también lo dejan atrás', () => {
+  const r = clash();
+  const main = r.branches.get('main');
+  run(r, 'merge feature');
+  assert.ok(r.run('merge --abort').ok);
+  assert.deepEqual(plain(r.conflicts), []);
+  assert.equal(r.merging, null);
+  assert.equal(r.branches.get('main'), main);
+  assert.equal(r.run('status').lines.at(-1), 'nothing to commit, working tree clean');
+  assert.equal(r.aborts, 1);
+  // add . resuelve todos; -m pone el mensaje
+  run(r, 'merge feature', 'add .');
+  assert.deepEqual(plain(r.conflicts), []);
+  assert.ok(r.run('commit -m "Join feature"').ok);
+  assert.equal(r.commits.get(r.branches.get('main')).message, 'Join feature');
+  // reset --hard también sale del conflicto
+  const h = clash();
+  run(h, 'merge feature --no-commit');
+  assert.deepEqual(plain(h.conflicts), ['login.js'], '--no-commit también se detiene en el conflicto');
+  assert.ok(h.run('reset --hard').ok);
+  assert.deepEqual(plain(h.conflicts), []);
+  assert.equal(h.merging, null);
+  assert.equal(h.run('status').lines.at(-1), 'nothing to commit, working tree clean');
+});
+
+test('una fusión sin archivos en común sigue sin conflicto', () => {
+  const r = fresh();
+  run(r, 'checkout -b feature', 'touch profile.js', 'add .', 'commit -m "Add profile"', 'checkout main', 'touch login.js', 'add .', 'commit -m "Fix login"');
+  const res = r.run('merge feature');
+  assert.deepEqual(plain(res.lines), ["Merge made by the 'ort' strategy."]);
+  assert.deepEqual(plain(r.conflicts), []);
+  assert.equal(r.commits.get(r.branches.get('main')).parents.length, 2);
+  // y el mismo archivo tocado solo en una rama, tampoco
+  const f = fresh();
+  run(f, 'checkout -b feature', 'touch login.js', 'add .', 'commit -m "a"', 'checkout main', 'commit -m "b"');
+  assert.deepEqual(plain(f.run('merge feature').lines), ["Merge made by the 'ort' strategy."]);
+});
+
+test('el ejercicio de conflictos no se resuelve sin el add ni esquivando el conflicto', () => {
+  const i = EXERCISES.findIndex((e) => e.id === 'conflict');
+  assert.ok(i >= 0);
+  const r = start(i, NOW);
+  run(r, 'merge feature');
+  assert.equal(r.run('commit -m "x"').ok, false, 'sin add no hay commit');
+  assert.equal(EXERCISES[i].done(r), false, 'a medias no cuenta');
+  // rebasar feature sobre main y fusionar sin conflicto no enseña a resolverlo
+  const b = start(i, NOW);
+  run(b, 'checkout feature', 'rebase main', 'checkout main', 'merge --no-ff feature');
+  assert.equal(EXERCISES[i].done(b), false);
+  // abortar tampoco
+  const a = start(i, NOW);
+  run(a, 'merge feature', 'merge --abort');
+  assert.equal(EXERCISES[i].done(a), false);
 });

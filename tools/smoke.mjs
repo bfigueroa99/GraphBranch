@@ -2610,6 +2610,24 @@ if (seccion('Varios repos a la vez'))
     if (!(await col('head')).items.includes('areas.md')) throw new Error(`el commit no llevó el archivo a HEAD: ${JSON.stringify(await col('head'))}`);
     if ((await lab.locator('.pr-area ul[tabindex="0"]').count()) !== 3) throw new Error('las listas de las áreas, que se desplazan, no se alcanzan con el teclado');
   });
+  await step(lab, 'un conflicto de merge se ve en el índice y se resuelve con add y commit', async () => {
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    const index = () => lab.evaluate(() => [...document.querySelectorAll('.pr-area[data-area="index"] li:not(.pr-area-empty)')].map((li) => li.textContent.trim()));
+    await lab.selectOption('.pr-ex', '15');
+    await send('merge feature');
+    await lab.waitForFunction(() => /CONFLICT \(content\): Merge conflict in login\.js/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    if (!(await index()).some((t) => t.startsWith('login.js') && t.includes('en conflicto'))) throw new Error(`el índice no muestra el conflicto: ${JSON.stringify(await index())}`);
+    await send('commit -m "antes de tiempo"');
+    await lab.waitForFunction(() => /unmerged files/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    if (await lab.textContent('.pr-status')) throw new Error('el ejercicio se dio por resuelto sin resolver el conflicto');
+    await send('add login.js');
+    if ((await index()).some((t) => t.includes('en conflicto'))) throw new Error('add no marcó resuelto el conflicto');
+    await send('commit');
+    await lab.waitForFunction(() => /Resuelto/.test(document.querySelector('.pr-status')?.textContent || ''), null, { timeout: T(5000) });
+  });
   await step(lab, 'la práctica entiende switch y restore', async () => {
     const send = async (c) => {
       await lab.fill('.pr-input', c);

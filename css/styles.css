@@ -1082,9 +1082,9 @@ kbd {
   flex: 0 0 auto;
   display: grid;
   gap: 2px;
-  width: 9.5rem;
-  min-height: 44px;
-  padding: 5px 8px;
+  width: 10.5rem;
+  min-height: 40px;
+  padding: 4px 8px;
   border: 1px solid var(--line-strong);
   border-radius: 7px;
   background: var(--surface);
@@ -1107,7 +1107,7 @@ kbd {
 .pr-card-desc {
   color: var(--ink-2);
   font-size: 11.5px;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
 /* pantalla completa (botón o tecla F): el panel del grafo ocupa toda la pantalla.
@@ -5123,6 +5123,14 @@ html.embed .diff-panel {
   }
   .agk-panel {
     max-height: none;
+  }
+  /* con la práctica abierta pasa lo mismo: la terminal y sus cartas crecen con la página y el grafo guarda su alto */
+  .graph-panel:has(> .practice:not([hidden])) {
+    height: auto;
+  }
+  .graph-panel:has(> .practice:not([hidden])) .graph-stage {
+    flex: none;
+    height: max(280px, 42vh);
   }
   /* la vista de agentes en el celular: el tablero se lee con la página, sin un desplazamiento dentro de otro */
   .graph-panel.agents-on {

@@ -316,7 +316,7 @@
         info.appendChild(mk('span', 'tv-name', b.name));
         if (b.isDefault) info.appendChild(mkSilent('tv-tag', text('textview.default')));
         if (b.prs) info.appendChild(mkSilent('tv-tag', text('textview.prs', { n: b.prs })));
-        if (b.drafts) info.appendChild(mkSilent('tv-tag tv-draft', text('textview.drafts', { n: b.drafts })));
+        if (b.drafts) info.appendChild(mkSilent('tv-tag', text('textview.drafts', { n: b.drafts })));
         if (b.fresh) info.appendChild(mkSilent('tv-tag', text('textview.fresh')));
         if (b.quiet) info.appendChild(mkSilent('tv-tag', text('textview.quiet')));
         if (b.merged) info.appendChild(mkSilent('tv-tag', text('textview.merged')));

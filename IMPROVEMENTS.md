@@ -684,8 +684,8 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - QA: la vista de texto con la demo en Chromium (el smoke, en es; la marca es una `tv-tag` silenciada como las demás, y la región viva no cambia); 40 idiomas con `node tools/check-i18n.mjs`; ninguna consulta nueva; auditoría: la de la puerta.
 - Skills: no aplica: una marca más en una vista que ya existe, con un dato ya cargado; la accesibilidad la cubre `modern-web-guidance`, del repo.
 - Arena: no aplica: una sola forma obvia (contar el `draft` donde ya se cuentan los PRs por rama).
-- Guías: test-driven-development (la prueba nueva vista fallar antes del cambio), content-translation (el «borrador» de cada idioma, el mismo de `act.prOpenedDraft`)
-- OMC: plan=— · revisión=pendiente · verificación=pendiente
+- Guías: test-driven-development (la prueba nueva vista fallar antes del cambio), content-translation (el «borrador» de cada idioma, el mismo de `act.prOpenedDraft` o de `health.prState.draft`)
+- OMC: plan=— · revisión=4 hallazgos (3 arreglados) · verificación=pendiente. La revisión (omc-code-reviewer) dio solo LOW: en ro, th y hr «borrador» no era el término que el idioma ya usa en `health.prState.draft` (ahora «ciornă», «ฉบับร่าง», «skica»), el orden de la frase en árabe («مسودات PR»), y una clase `tv-draft` sin estilo ni uso (quitada). El cuarto (el texto «, en borrador» de la lista lo prueba solo el smoke, no `node --test`) queda así: el ítem pedía la prueba con los datos, y el DOM lo mira el smoke.
 - Reclamo: loop/294, sin colisión (`--reclamar` salió 3 mientras la 288 a la 293 estaban vivas; se reclamó al fusionarse la 293)
 - Validado: pendiente
 - **Siguiente:** iteración 295, mantenimiento · Rendimiento: pendiente 11 (La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por…)

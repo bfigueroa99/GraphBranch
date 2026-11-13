@@ -45,6 +45,9 @@
     ['claude/a11y-audit', 'a11y'],
   ];
 
+  const PREHISTORY = 12; // commits de main de antes de la semilla, sin cargar (ver prehistory)
+  const MORE_BATCH = 6; // los que trae cada «Cargar más» en la demo
+
   function mulberry32(seed) {
     return function () {
       seed |= 0;
@@ -77,6 +80,8 @@
       this.issueSeq = 85;
       this.release = [1, 4, 0];
       this.openIssues = [];
+      this.older = new Map(); // historia que no está cargada (la de antes de la semilla y lo que trim() saca): «Cargar más» la trae
+      this.kept = new Set(); // lo traído con «Cargar más»: trim() no lo vuelve a sacar por viejo
       this.timers = new Set();
       this.running = false;
       this.paused = false;
@@ -220,7 +225,7 @@
         return c;
       };
 
-      this.data.branches.set('main', { name: 'main', sha: null, isDefault: true, protected: true, movedAt: t, scope: 'core', own: 0 });
+      this.data.branches.set('main', { name: 'main', sha: this.prehistory(t), isDefault: true, protected: true, movedAt: t, scope: 'core', own: 0 });
       const first = push('main', V, S.initial);
       push('main', M, S.health);
       push('main', V, S.install);
@@ -488,12 +493,63 @@
     }
 
     /** Mantiene acotada la historia en memoria. */
+    /** La historia de main de antes de la semilla, sin cargar: `PREHISTORY` commits de un prototipo, del más viejo al
+        más nuevo, que «Cargar más» trae de a `MORE_BATCH` (como el tope de Commits por rama de un repo real). Con su
+        propio azar fijo: no cambia lo que la demo sortea después. Devuelve el sha del más nuevo. */
+    prehistory(t) {
+      const rnd = mulberry32(4242);
+      const pool = this.C.feature;
+      let parent = null;
+      for (let i = 0; i < PREHISTORY; i++) {
+        let sha = '';
+        for (let k = 0; k < 40; k++) sha += Math.floor(rnd() * 16).toString(16);
+        const author = AUTHORS[i % 2];
+        const msg = pool[i % pool.length].replace('{s}', 'prototype');
+        this.older.set(sha, { sha, parents: parent ? [parent] : [], message: msg, author: this.actor(author), date: t - (PREHISTORY - i) * (5 + rnd() * 7) * 36e5, url: null });
+        parent = sha;
+      }
+      return parent;
+    }
+
+    /** ¿Queda historia guardada para «Cargar más» desde donde se corta la de `name`? (lo que el tope de `older` ya
+        soltó no vuelve: entonces el botón no se ofrece) */
+    hasMore(name) {
+      const from = U.historyCut(this.data.commits, this.data.branches.get(name)?.sha);
+      return !!from && this.older.has(from);
+    }
+
+    /** «Cargar más» de la ficha de una rama: hasta `MORE_BATCH` commits más de su historia, desde donde se cortó lo
+        cargado, sin tocar las demás. Devuelve cuántos (0: no había más). */
+    async loadMore(name) {
+      const b = this.data.branches.get(name);
+      const from = b && U.historyCut(this.data.commits, b.sha);
+      const queue = from ? [from] : [];
+      let n = 0;
+      while (queue.length && n < MORE_BATCH) {
+        const c = this.older.get(queue.shift());
+        if (!c || this.data.commits.has(c.sha)) continue;
+        this.older.delete(c.sha);
+        this.data.commits.set(c.sha, c);
+        this.kept.add(c.sha);
+        queue.push(...c.parents);
+        n++;
+      }
+      if (n && this.running) this.emit('update', { activities: [], initial: false, calm: true });
+      return n;
+    }
+
     trim() {
       const { commits, branches } = this.data;
-      if (commits.size <= 260) return;
+      for (const sha of this.kept) if (!commits.has(sha)) this.kept.delete(sha);
+      if (commits.size <= 260 + this.kept.size) return;
       const heads = new Set([...branches.values()].map((b) => b.sha));
-      const old = [...commits.values()].filter((c) => !heads.has(c.sha)).sort((a, b) => a.date - b.date);
-      for (const c of old.slice(0, commits.size - 240)) commits.delete(c.sha);
+      // lo traído con «Cargar más» es lo más viejo: recortar por fecha lo sacaría primero
+      const old = [...commits.values()].filter((c) => !heads.has(c.sha) && !this.kept.has(c.sha)).sort((a, b) => a.date - b.date);
+      for (const c of old.slice(0, commits.size - 240 - this.kept.size)) {
+        commits.delete(c.sha);
+        this.older.set(c.sha, c); // lo que sale queda para «Cargar más», como la historia de un repo real
+      }
+      for (const sha of [...this.older.keys()].slice(0, Math.max(0, this.older.size - 400))) this.older.delete(sha);
     }
 
     /* ---------- ciclo de vida ---------- */

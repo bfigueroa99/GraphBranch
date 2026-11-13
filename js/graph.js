@@ -166,12 +166,13 @@
       <p class="tip-msg">${U.esc(U.firstLine(c.message))}</p>
       <p class="tip-meta"><code>${U.shortSha(c.sha)}</code>${parents > 1 ? ` · ${U.esc(tr('tip.mergeOf', { n: parents }))}` : ''}</p>
       ${rows.length ? `<p class="tip-extra">${rows.join('')}</p>` : ''}
-      ${pin && (c.url || ctx.canDiff || (branch && (ctx.canPin || ctx.canHide || ctx.canPrView))) ? `<div class="tip-actions">
+      ${pin && (c.url || ctx.canDiff || (branch && (ctx.canPin || ctx.canHide || ctx.canPrView || ctx.hasMore?.(branch)))) ? `<div class="tip-actions">
         ${ctx.canDiff ? `<button type="button" class="tip-diff" data-sha="${U.esc(c.sha)}">${U.esc(tr('diff.show'))}</button>` : ''}
         ${U.safeUrl(c.url) ? `<a class="tip-link" href="${U.esc(U.safeUrl(c.url))}" target="_blank" rel="noopener">${U.esc(tr('tip.openCommit'))} ↗</a>` : ''}
         ${branch && ctx.canPrView && ctx.prs?.get(branch) && !ctx.prs.get(branch).mr ? `<button type="button" class="tip-prview" data-pr="${Number(ctx.prs.get(branch).number)}" aria-expanded="false">${U.esc(tr('prview.show'))}</button>` : ''}
         ${branch && ctx.canPin ? pinButtonHTML(branch, !!ctx.pins?.has(branch)) : ''}
         ${branch && ctx.canHide ? viewButtonsHTML(branch) : ''}
+        ${branch && ctx.hasMore?.(branch) ? `<button type="button" class="tip-more" data-branch="${U.esc(branch)}">${i18n.html('tip.more', { branch: U.truncate(branch, 28) })}</button><span class="tip-more-note" role="status"></span>` : ''}
       </div>` : ''}`;
   }
 
@@ -284,6 +285,40 @@
       // se actualiza en su lugar (no con outerHTML): el botón conserva el foco de quien lo pulsó con el teclado
       b.dataset.on = String(on);
       b.innerHTML = pinLabel(b.dataset.branch, on);
+    });
+  }
+
+  /** Conecta «Cargar más» de la ficha de una rama: `load(nombre)` trae otra tanda de su historia y da cuántos commits
+      sumó (0: no había más; el grafo se redibuja solo con el `update` de la fuente). Mientras carga, el botón queda
+      ocupado; después la nota dice qué pasó y el botón se va si ya no queda historia por traer. */
+  function wireMoreButton(tip, load) {
+    tip.addEventListener('click', async (ev) => {
+      const b = ev.target.closest('.tip-more');
+      if (!b || !load || b.getAttribute('aria-disabled') === 'true') return;
+      const note = b.nextElementSibling?.classList.contains('tip-more-note') ? b.nextElementSibling : null;
+      b.setAttribute('aria-disabled', 'true');
+      b.setAttribute('aria-busy', 'true');
+      if (note) note.textContent = '';
+      let key = 'tip.moreFail';
+      let more = true;
+      try {
+        const r = (await load(b.dataset.branch)) || { n: 0, more: false };
+        key = r.n ? 'tip.moreDone' : 'tip.moreEnd';
+        more = r.more;
+      } catch (e) {
+        console.warn('No se pudo cargar más historia:', e?.message || e);
+      }
+      b.removeAttribute('aria-busy');
+      b.removeAttribute('aria-disabled');
+      if (note) note.textContent = tr(key);
+      // sin más historia que traer, el botón sobra; el foco (si lo tenía) pasa a la nota, que dice por qué
+      if (!more) {
+        if (b === document.activeElement && note) {
+          note.tabIndex = -1;
+          note.focus({ preventScroll: true });
+        }
+        b.remove();
+      }
     });
   }
 
@@ -420,6 +455,14 @@
       });
       wirePinButton(this.tip, (name) => this.opts.onTogglePin?.(name));
       wireViewButtons(this.tip, (name, how) => this.opts.onBranchView?.(name, how));
+      // la nota de «Cargar más» cambia el tamaño de la ficha: se vuelve a medir para ubicarla
+      wireMoreButton(this.tip, async (name) => {
+        try {
+          return await this.opts.onMore?.(name);
+        } finally {
+          this.tipBox = null;
+        }
+      });
       wireDiffButton(this.tip, (sha) => this.opts.onDiff?.(sha));
       wirePrButton(this.tip, (n) => this.opts.onPrView?.(n));
       this.bindGroups();
@@ -2210,5 +2253,5 @@
   }
 
   GB.Graph = Graph;
-  GB.graphShared = { tipHTML, wirePinButton, wireViewButtons, wireDiffButton, wirePrButton, prBodyHTML, focusTip, returnFocus, measure, fitText, prRef, prKey, CI_MARK, ciText, LABEL_FONT, SMALL_FONT };
+  GB.graphShared = { tipHTML, wirePinButton, wireViewButtons, wireMoreButton, wireDiffButton, wirePrButton, prBodyHTML, focusTip, returnFocus, measure, fitText, prRef, prKey, CI_MARK, ciText, LABEL_FONT, SMALL_FONT };
 })(window.GB);

@@ -1,12 +1,12 @@
-## Parity: 96.3 / 100
+## Parity: 97.0 / 100
 
-features 96.3  (38 counted, must-haves 13 of 13 done)
+features 97.0  (38 counted, must-haves 13 of 13 done)
 
 ## By area, weakest first
 - cuentas                       50.0  (1 features)
 - varios repos                  91.7  (3 features)
 - integraciones                 94.7  (7 features)
-- grafo                         97.2  (8 features)
+- grafo                        100.0  (8 features)
 - búsqueda                     100.0  (1 features)
 - navegación                   100.0  (1 features)
 - diffs                        100.0  (5 features)
@@ -21,7 +21,6 @@ features 96.3  (38 counted, must-haves 13 of 13 done)
 ## Missing, in build order
 - [should] cuentas: Varios perfiles o cuentas, partial  (un token por servicio y hasta 5 cuentas más de GitHub, cada una atada a un dueño (README, Token); faltan perfiles completos (cada cuenta con sus repos seguidos))
 - [should] integraciones: Issues de rastreadores (Jira Trello GitHub Issues), partial  (issues de GitHub GitLab Codeberg y Bitbucket en el panel de actividad y la salud; sin Jira ni Trello)
-- [could] grafo: Cargar más historia (límite de commits configurable), partial  (README: Repositorios con miles de ramas; el tope de commits por rama no se elige desde la interfaz)
 - [could] varios repos: Workspaces compartidos con el equipo, partial  (se comparten por URL con sus repos; sin cuentas ni nube (lo que no cambia))
 
 ## Left out on purpose (not scored)

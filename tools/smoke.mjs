@@ -1908,6 +1908,33 @@ if (seccion('Escritorio (1280×800)'))
     { allow: /status of 404/ },
   );
 
+  await step(
+    page,
+    'un repo vacío (409 «Git Repository is empty») se rotula «Repo vacío» y no reintenta cada pocos segundos',
+    async () => {
+      await page.unroute('https://api.github.com/**');
+      await page.route('https://api.github.com/**', (r) => {
+        const path = new URL(r.request().url()).pathname;
+        if (/^\/repos\/acme\/vacio\/(commits|branches)/.test(path)) return r.fulfill({ status: 409, json: { message: 'Git Repository is empty.' } });
+        if (path === '/repos/acme/vacio') return r.fulfill({ json: { name: 'vacio', owner: { login: 'acme' }, default_branch: 'main', html_url: 'https://github.com/acme/vacio' } });
+        if (path.endsWith('/events')) return r.fulfill({ json: [] });
+        return r.fulfill({ status: 404, json: { message: 'Not Found' } });
+      });
+      await page.fill('#repo-input', 'acme/vacio');
+      await page.press('#repo-input', 'Enter');
+      await page.waitForFunction(() => document.querySelector('#status-text')?.textContent === 'Repo vacío', null, { timeout: T(10000) });
+      const { sub, title } = await page.$eval('#status', (el) => ({ sub: el.querySelector('#status-sub').textContent, title: el.title }));
+      if (!/vacío/.test(title)) throw new Error(`el detalle no dice que está vacío: «${title}»`);
+      // sin token, el reintento es de 5 minutos (unos 300 s), no los 5 s del primer fallo de red
+      const secs = Number((sub.match(/(\d+)\s*s/) || [])[1]);
+      if (!/min/.test(sub) && !(secs > 120)) throw new Error(`reintenta demasiado pronto: «${sub}»`);
+      // el aviso de repo vacío, no la tarjeta de error con «Reintentar»
+      const ov = await page.$eval('#overlay', (o) => ({ kind: o.dataset.kind, text: o.textContent }));
+      if (ov.kind !== 'empty' || !/todavía no tiene commits/.test(ov.text)) throw new Error(`el overlay no dice que el repo está vacío: ${ov.kind} «${ov.text.trim()}»`);
+    },
+    { allow: /status of (404|409)/ },
+  );
+
   await page.context().close();
 }
 

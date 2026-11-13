@@ -92,6 +92,7 @@ GraphBranch consulta GitHub en ciclos: cada 10 segundos con token y cada minuto 
 
 - Si una consulta no llega entera en 30 segundos se corta y se reintenta, así una conexión colgada no deja la vista congelada.
 - Tras un error los reintentos se espacian (5 s, 10 s, 20 s… hasta 5 minutos, con algo de azar para que muchas pantallas no reintenten a la vez). Si GitHub pide esperar (cuota agotada, o límite secundario: lo que diga `Retry-After`, o un minuto si no lo dice), espera justo eso y no lo cuenta como fallo.
+- Un repo de GitHub sin ningún commit (la API responde 409 «Git Repository is empty») no se toma por un corte: el indicador dice «Repo vacío», la vista avisa que el repositorio todavía no tiene commits y se vuelve a mirar cada 5 minutos sin token (cada intento gasta unas 3 consultas de las 60 por hora) o cada minuto con token, sin contarlo como fallo. Con token, la carga va por GraphQL, que no responde 409 a un repo vacío: ese caso sigue sin su rótulo.
 - Sin red no insiste: espera a que el navegador avise que volvió la conexión ("esperando la conexión") y consulta enseguida.
 - Al volver a la pestaña, o cuando el navegador la descongela, si ya tocaba consultar lo hace al momento (en segundo plano los navegadores frenan los temporizadores; igual sigue consultando, para poder avisar).
 - **Actualizar ahora**, cambiar el filtro o fijar una rama adelantan el ciclo del repo a la vista (si hay uno en curso, el siguiente va enseguida); **Pausar** detiene los de todos los repos seguidos, y al dejar de seguir uno se cortan sus consultas en curso.

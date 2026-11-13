@@ -578,6 +578,7 @@
       wrap.appendChild(this.tip);
       GB.graphShared.wirePinButton(this.tip, (name) => this.opts.onTogglePin?.(name));
       GB.graphShared.wireViewButtons(this.tip, (name, how) => this.opts.onBranchView?.(name, how));
+      GB.graphShared.wireMoreButton(this.tip, this.opts.onMore);
       GB.graphShared.wireDiffButton(this.tip, (sha) => this.opts.onDiff?.(sha));
       GB.graphShared.wirePrButton(this.tip, (n) => this.opts.onPrView?.(n));
 

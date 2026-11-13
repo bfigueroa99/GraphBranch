@@ -1284,3 +1284,87 @@ test('otras cuentas: con tres dueños, cada repo manda solo su token a la API, y
   }
   assert.ok(sent.every(([u]) => u.startsWith('https://api.github.com/')), 'ninguno sale a otro host');
 });
+
+/* «Cargar más» de la ficha de una rama: otra tanda de su historia (tantos commits como el tope), desde donde se cortó,
+   con una sola consulta y ninguna para las demás ramas. */
+
+/** Un repo con main de `n` commits (m1…mn) y una rama feat de 3 que sale de su cabeza; la fuente, con tope `depth`. */
+function longRepo(n, depth, token = '') {
+  const gh = fakeGitHub();
+  for (let i = 1; i <= n; i++) gh.commit('m' + i, i > 1 ? 'm' + (i - 1) : null);
+  gh.branches.set('main', 'm' + n);
+  gh.commit('f1', 'm' + n);
+  gh.commit('f2', 'f1');
+  gh.commit('f3', 'f2');
+  gh.branches.set('feat', 'f3');
+  const GB = load(gh);
+  const src = new GB.GitHubSource({ owner: 'o', name: 'r', token, depth });
+  const updates = [];
+  src.on('update', (u) => updates.push(u));
+  src.running = true;
+  src.cycle = async () => {
+    await src.loop();
+    clearTimeout(src.timer);
+  };
+  return { gh, src, updates, GB };
+}
+
+test('cargar más (REST): una consulta desde donde se cortó main, tantos commits como el tope, y nada para feat', async () => {
+  const { gh, src, updates, GB } = longRepo(40, 10);
+  await src.cycle();
+  const { commits } = src.data;
+  assert.equal(GB.U.historyCut(commits, gh.branches.get('main')), 'm30', 'main cargada hasta m31');
+  gh.calls.length = 0;
+  updates.length = 0;
+  assert.equal(await src.loadMore('main'), 10);
+  assert.deepEqual(gh.calls, ['/repos/o/r/commits?sha=m30&per_page=10'], 'una sola consulta, la de main desde su corte');
+  for (let i = 21; i <= 30; i++) assert.ok(commits.has('m' + i), 'm' + i + ' cargado');
+  assert.equal(commits.has('m20'), false, 'ni uno más que el tope');
+  assert.equal(GB.U.historyCut(commits, 'm40'), 'm20');
+  assert.equal(updates.length, 1, 'avisa para que el grafo los dibuje');
+  assert.equal(updates[0].calm, true, 'sin efectos de llegada: no es actividad nueva');
+  assert.equal(updates[0].activities.length, 0);
+  // el ciclo siguiente no los vuelve a borrar al recortar
+  await src.cycle();
+  for (let i = 21; i <= 30; i++) assert.ok(commits.has('m' + i), 'm' + i + ' sigue tras el ciclo');
+});
+
+test('cargar más (GraphQL): una consulta de la historia de esa rama desde su corte, con el tope del repo', async () => {
+  const { gh, src } = longRepo(40, 10);
+  await src.cycle();
+  src.mode = 'graphql';
+  src.token = 'tok';
+  const sent = [];
+  gh.override = (path, opts) => {
+    if (path !== '/graphql') return null;
+    const { query } = JSON.parse(opts.body);
+    sent.push(query);
+    const m = query.match(/h0: object\(oid: "([^"]+)"\) \{ \.\.\. on Commit \{ history\(first: (\d+)\)/);
+    const nodes = [];
+    for (let i = Number(m[1].slice(1)), k = 0; i >= 1 && k < Number(m[2]); i--, k++) {
+      nodes.push({ oid: 'm' + i, url: 'u', committedDate: '2026-01-01T00:00:00Z', messageHeadline: 'c', author: null, parents: { nodes: i > 1 ? [{ oid: 'm' + (i - 1) }] : [] } });
+    }
+    return { body: { data: { rateLimit: { cost: 1, remaining: 4000, limit: 5000, resetAt: '2030-01-01T00:00:00Z' }, repository: { h0: { history: { nodes } } } } } };
+  };
+  gh.calls.length = 0;
+  assert.equal(await src.loadMore('feat'), 10, 'la ficha de feat trae lo que sigue de su historia (que baja por main)');
+  assert.equal(sent.length, 1);
+  assert.match(sent[0], /h0: object\(oid: "m30"\)/);
+  assert.match(sent[0], /history\(first: 10\)/);
+  assert.equal(/h1:/.test(sent[0]), false, 'solo esa rama');
+  assert.deepEqual(gh.calls, ['/graphql']);
+  assert.ok(src.data.commits.has('m21') && !src.data.commits.has('m20'));
+});
+
+test('cargar más: sin corte no consulta nada, y un corte que GitHub no devuelve es un error, no «no hay más»', async () => {
+  const { gh, src } = longRepo(5, 10);
+  await src.cycle();
+  gh.calls.length = 0;
+  assert.equal(await src.loadMore('main'), 0, 'main llega a su raíz');
+  assert.equal(await src.loadMore('no-existe'), 0);
+  assert.deepEqual(gh.calls, []);
+  const big = longRepo(30, 10);
+  await big.src.cycle();
+  big.gh.override = (path) => (path.startsWith('/repos/o/r/commits?') ? { status: 404, body: { message: 'No commit found' } } : null);
+  await assert.rejects(() => big.src.loadMore('main'));
+});

@@ -1521,6 +1521,49 @@ if (seccion('Escritorio (1280×800)'))
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
+  await step(page, 'cargar más: la ficha de main trae su historia de a 6 commits, el grafo los dibuja y al llegar a la raíz el botón se va', async () => {
+    await page.keyboard.press('Escape');
+    await page.click('#view-2d');
+    // en pausa: lo que cuenta el paso (los commits dibujados) no puede cambiar porque la demo publique a mitad
+    await quieta(page, async () => {
+      const count = () => page.evaluate(() => Number(document.querySelector('#st-commits').textContent.replace(/\D/g, '')));
+      const openMain = async () => {
+        await page.keyboard.press('Escape');
+        const head = await page.evaluateHandle(() => [...document.querySelectorAll('#graph svg .head[role=button]:not(.exit)')].find((h) => h.__name === 'main'));
+        if (!head.asElement()) throw new Error('la etiqueta de main no está en el grafo');
+        await head.asElement().focus();
+        await page.keyboard.press('Enter');
+        await page.waitForSelector('#graph .tip:not([hidden]) .tip-actions', { timeout: T(3000) });
+        return page.$('#graph .tip:not([hidden]) .tip-more');
+      };
+      for (let round = 1; round <= 2; round++) {
+        const before = await count();
+        const btn = await openMain();
+        if (!btn) throw new Error(`vuelta ${round}: la ficha de main no ofrece «Cargar más» con su historia cortada`);
+        if ((await btn.getAttribute('data-branch')) !== 'main') throw new Error('«Cargar más» no es de main');
+        await btn.focus();
+        await page.keyboard.press('Enter');
+        await page.waitForFunction((b) => Number(document.querySelector('#st-commits').textContent.replace(/\D/g, '')) >= b + 6, before, { timeout: T(5000) }).catch(async () => {
+          throw new Error(`vuelta ${round}: el grafo no dibujó los 6 commits nuevos (antes ${before}, ahora ${await count()})`);
+        });
+        const after = await count();
+        if (after !== before + 6) throw new Error(`vuelta ${round}: se dibujaron ${after - before} commits más, no 6`);
+        const r = await page.evaluate(() => ({
+          note: document.querySelector('#graph .tip .tip-more-note')?.textContent || '',
+          role: document.querySelector('#graph .tip .tip-more-note')?.getAttribute('role'),
+          btn: !!document.querySelector('#graph .tip .tip-more'),
+          focus: document.activeElement?.className || '',
+        }));
+        if (!r.note || /undefined|NaN|tip\./.test(r.note) || r.role !== 'status') throw new Error(`vuelta ${round}: la nota no dice qué pasó: ` + JSON.stringify(r));
+        // los 12 commits de antes de la semilla: tras la segunda tanda main llega a su raíz y el botón se va, con el foco en la nota
+        if (round === 1 && !r.btn) throw new Error('el botón se fue con historia por traer');
+        if (round === 2 && (r.btn || !/tip-more-note/.test(r.focus))) throw new Error('al llegar a la raíz, el botón sigue o el foco se perdió: ' + JSON.stringify(r));
+      }
+      if (await openMain()) throw new Error('con toda la historia cargada, la ficha de main sigue ofreciendo «Cargar más»');
+      await page.keyboard.press('Escape');
+    });
+  });
+
   await step(page, 'vista de un PR: la ficha de una rama con PR muestra su descripción y comentarios al pulsar, sin consultar api.github.com', async () => {
     await page.keyboard.press('Escape');
     await page.click('#view-2d');

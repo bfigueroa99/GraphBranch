@@ -269,6 +269,7 @@
     onFollowChange: (v) => graph === graph2d && followUI(v),
     onTogglePin: (name) => togglePin(name),
     onBranchView: (name, how) => onBranchView(name, how),
+    onMore: (name) => loadMore(name),
     onDiff: (sha) => openDiff(sha),
     onPrView: (n) => active.source.prDetail(n),
     diffing: () => diffView.isOpen,
@@ -280,6 +281,7 @@
         onFollowChange: (v) => graph === graph3d && followUI(v),
         onTogglePin: (name) => togglePin(name),
         onBranchView: (name, how) => onBranchView(name, how),
+        onMore: (name) => loadMore(name),
         onDiff: (sha) => openDiff(sha),
         onPrView: (n) => active.source.prDetail(n),
         diffing: () => diffView.isOpen,
@@ -1419,6 +1421,16 @@
     setBranchView({ hidden, solo: '' });
   }
 
+  /** ¿La historia cargada de la rama `name` se corta antes de su raíz? (la ficha ofrece «Cargar más») */
+  const historyCut = (src, name) => !!U.historyCut(src.data.commits, src.data.branches.get(name)?.sha);
+  /** «Cargar más» de la ficha de una rama: otra tanda de su historia, solo de esa rama (ver loadMore de la fuente);
+      el grafo la dibuja con el `update` que avisa la fuente. Da cuántos commits sumó y si queda más por traer. */
+  async function loadMore(name) {
+    const src = active.source;
+    const n = await src.loadMore(name);
+    return { n, more: historyCut(src, name) };
+  }
+
   /* `calm`: llegan ramas que esperaban su historia (la carga de a poco de un repo grande): se
      suman sin efectos de llegada, que son para lo nuevo */
   const liveCtx = (data, initial, calm = false, tab = active) => ({
@@ -1433,6 +1445,8 @@
     canHide: tab === active && !allOn, // y ocultarla o dejarla sola, también en la demo
     canDiff: canDiffTab(tab),
     canPrView: !!tab.source.prDetail && !EMBED && tab === active && !allOn, // la vista del PR pide su descripción al pulsarla
+    // «Cargar más» en la ficha de una rama cuya historia quedó cortada (una consulta, solo al pulsarlo)
+    hasMore: tab.source.loadMore && tab === active && !allOn ? (name) => historyCut(tab.source, name) : null,
   });
 
   /** Lo que miran los logros: el estado del repo de ahora (`L`, su layout, si está a la vista). */

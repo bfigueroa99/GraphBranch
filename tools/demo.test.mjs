@@ -103,3 +103,29 @@ test('los commits de agente de la demo llevan sus trailers, y el filtro por ruta
   const auth = await src.commitsByPath('src/auth');
   for (const c of signed) if (!/auth/i.test(c.message.split('\n')[0])) assert.equal(auth.has(c.sha), false, c.message.split('\n')[0]);
 });
+
+test('cargar más: la historia de main de antes de la semilla llega de a 6, sin tocar otras ramas, y después no hay más', async () => {
+  const { src } = demo(7);
+  const { commits, branches } = src.data;
+  const cut = () => {
+    let c = commits.get(branches.get('main').sha);
+    while (c && c.parents[0] && commits.has(c.parents[0])) c = commits.get(c.parents[0]);
+    return c?.parents[0] || null;
+  };
+  assert.ok(cut(), 'la historia cargada de main se corta antes de su raíz');
+  const heads = JSON.stringify([...branches.values()].map((b) => [b.name, b.sha]));
+  const updates = [];
+  src.on('update', (u) => updates.push(u));
+  const before = commits.size;
+  assert.equal(await src.loadMore('main'), 6);
+  assert.equal(commits.size, before + 6);
+  assert.equal(updates.length, 1);
+  assert.equal(updates[0].calm, true);
+  assert.equal(await src.loadMore('develop'), 6, 'develop sale de main: su ficha trae lo que sigue');
+  assert.equal(cut(), null, 'con 12, main llega a su raíz');
+  assert.equal(await src.loadMore('main'), 0);
+  assert.equal(JSON.stringify([...branches.values()].map((b) => [b.name, b.sha])), heads, 'ninguna rama se movió');
+  // mucha actividad después: lo cargado no se vuelve a sacar al recortar (trim suma lo traído a su tope)
+  for (let i = 0; i < 400; i++) src.publish(src.actions() || []);
+  assert.ok(commits.size >= 252, 'el tope creció con lo traído');
+});

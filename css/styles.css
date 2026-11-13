@@ -3598,7 +3598,8 @@ kbd {
 }
 .tip-prview,
 .tip-pin,
-.tip-view {
+.tip-view,
+.tip-more {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -3613,8 +3614,18 @@ kbd {
 }
 .tip-prview:hover,
 .tip-pin:hover,
-.tip-view:hover {
+.tip-view:hover,
+.tip-more:hover {
   background: var(--surface-2);
+}
+/* «Cargar más» mientras trae la historia, y la nota que dice qué pasó (siempre en la página: es una región viva) */
+.tip-more[aria-busy="true"] {
+  cursor: progress;
+  opacity: 0.6;
+}
+.tip-more-note {
+  font-size: 12px;
+  color: var(--ink-2);
 }
 .tip-pin[data-on="true"] {
   background: var(--surface-2);

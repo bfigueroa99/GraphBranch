@@ -164,6 +164,7 @@
       this.seenEvents = new Set();
       this.prInfo = new Map(); // número -> { title, draft } de PRs que solo conocemos por eventos (o null)
       this.prHeads = new Set();
+      this.extra = 0; // commits traídos con «Cargar más»: gc() los suma a su tope para no volver a borrarlos
       this.kids = null; // commit -> hijos, para saber qué ramas contienen un commit (se rehace al cambiar los commits)
       this.etags = new Map();
       this.lastPoll = {};
@@ -1583,6 +1584,26 @@
       }
     }
 
+    /**
+     * «Cargar más» de la ficha de una rama: otra tanda de su historia (tantos commits como el tope de Commits por
+     * rama), desde donde se cortó lo cargado. Una consulta, solo para esa rama: las demás no cambian. Devuelve
+     * cuántos commits se sumaron (0: la historia ya estaba entera) y avisa con un `update` tranquilo para que el grafo los dibuje.
+     */
+    async loadMore(name) {
+      const b = this.data.branches.get(name);
+      const from = b && U.historyCut(this.data.commits, b.sha);
+      if (!from) return 0;
+      const before = this.data.commits.size;
+      if (this.mode === 'graphql') await this.historyQuery([{ head: b.sha, from, n: this.depth }], new Set(), 0);
+      else await this.fetchBranch(from);
+      const n = this.data.commits.size - before;
+      // el padre que falta existe en GitHub: no traer nada es un fallo (la consulta pesada que se rindió, un 404…)
+      if (!n) throw new Error('No se pudo traer la historia desde ' + from);
+      this.extra += n;
+      if (n && this.running) this.emit('update', { activities: [], initial: false, calm: true });
+      return n;
+    }
+
     /** Historia de varias ramas, en consultas de unos cientos de commits. */
     async fetchHistories(jobs, added) {
       for (let i = 0; i < jobs.length; ) {
@@ -1663,7 +1684,7 @@
       const keep = U.reachable(commits, heads).set;
       const before = commits.size;
       for (const sha of [...commits.keys()]) if (!keep.has(sha)) commits.delete(sha);
-      const cap = Math.max(600, this.depth * (branches.size + 10) * 2);
+      const cap = Math.max(600, this.depth * (branches.size + 10) * 2) + this.extra;
       if (commits.size > cap) {
         const headSet = new Set(heads);
         const old = [...commits.values()].filter((c) => !headSet.has(c.sha)).sort((a, b) => a.date - b.date);

@@ -344,6 +344,21 @@ window.GB = window.GB || {};
 
   U.ancestors = (commits, start) => U.reachable(commits, [start]);
 
+  /** Dónde se corta la historia cargada de una rama: bajando por el primer padre desde su cabeza `sha`, el
+      primer padre que no está cargado (de ahí sigue «Cargar más»). null si la cabeza no está o se llega a la
+      raíz del repo: no hay más que traer. */
+  U.historyCut = (commits, sha) => {
+    let c = sha ? commits.get(sha) : null;
+    for (let i = 0; c && i <= commits.size; i++) {
+      const p = c.parents[0];
+      if (!p) return null;
+      const next = commits.get(p);
+      if (!next) return p;
+      c = next;
+    }
+    return null;
+  };
+
   U.matches = (name, filter) => !filter || name.toLowerCase().includes(filter.toLowerCase());
 
   /** Clases de <html> que no cambian colores: tv-idle solo esconde el puntero y la barra del modo TV. */

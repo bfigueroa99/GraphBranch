@@ -4159,6 +4159,39 @@ button.act-main:hover {
   font-weight: 600;
   font-size: 13px;
 }
+.accounts {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.accounts > legend {
+  margin-bottom: 6px;
+  padding: 0;
+  font-weight: 600;
+  font-size: 13px;
+}
+.accounts-list {
+  display: grid;
+  gap: 12px;
+}
+/* cada cuenta, un grupo con su número a la vista: el lector de pantalla lo dice al entrar, y su «Quitar» lo nombra */
+.account {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.account > legend {
+  margin-bottom: 4px;
+  padding: 0;
+  color: var(--ink-3);
+  font-size: 12.5px;
+}
+.accounts-add {
+  justify-self: start;
+}
 .hooks-list {
   display: grid;
   gap: 12px;

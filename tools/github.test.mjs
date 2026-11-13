@@ -1205,22 +1205,65 @@ test('mapPull: un repo renombrado sigue marcando sus PRs de la misma repo (compa
   assert.equal(src.mapPull(pr({ full_name: 'o/r' }, undefined)).sameRepo, true, 'sin base.repo se cae al nombre escrito');
 });
 
-test('segunda cuenta: tokenFor da el token de la segunda solo a los repos de su dueño', () => {
+test('otras cuentas: tokenFor da a cada dueño su token, y a cualquier otro el principal', () => {
   const GB = load(fakeGitHub());
-  const second = GB.GitHubSource.unpack2(GB.GitHubSource.pack2('@Acme-Corp', ' tok-b '));
-  assert.deepEqual({ ...second }, { owner: 'Acme-Corp', token: 'tok-b' });
-  assert.equal(GB.GitHubSource.tokenFor('acme-corp', 'tok-a', second), 'tok-b', 'el dueño no distingue mayúsculas');
-  assert.equal(GB.GitHubSource.tokenFor('o', 'tok-a', second), 'tok-a', 'otro dueño usa el principal');
-  assert.equal(GB.GitHubSource.tokenFor('o', '', second), '', 'sin principal, otro dueño va sin token (nunca con el de la segunda)');
-  assert.equal(GB.GitHubSource.tokenFor('acme-corp', 'tok-a', { owner: '', token: '' }), 'tok-a');
-  // sin dueño, sin token o con un dueño que no vale, no hay segunda cuenta
-  for (const [o, t] of [['', 'x'], ['acme', ''], ['../x', 'x'], ['a b', 'x']]) assert.equal(GB.GitHubSource.pack2(o, t), '', `${o}|${t}`);
-  for (const bad of ['', 'basura', '{"owner":"a"}', '{"owner":"a/b","token":"x"}']) assert.deepEqual({ ...GB.GitHubSource.unpack2(bad) }, { owner: '', token: '' }, bad);
+  const S = GB.GitHubSource;
+  const accounts = S.unpackAccounts(S.packAccounts([
+    { owner: '@Acme-Corp', token: ' tok-b ' },
+    { owner: 'beta', token: 'tok-c' },
+    { owner: 'Gamma', token: 'tok-d' },
+  ]));
+  assert.deepEqual(JSON.parse(JSON.stringify(accounts)), [
+    { owner: 'Acme-Corp', token: 'tok-b' },
+    { owner: 'beta', token: 'tok-c' },
+    { owner: 'Gamma', token: 'tok-d' },
+  ]);
+  assert.equal(S.tokenFor('acme-corp', 'tok-a', accounts), 'tok-b', 'el dueño no distingue mayúsculas');
+  assert.equal(S.tokenFor('BETA', 'tok-a', accounts), 'tok-c');
+  assert.equal(S.tokenFor('gamma', 'tok-a', accounts), 'tok-d');
+  assert.equal(S.tokenFor('o', 'tok-a', accounts), 'tok-a', 'un tercero usa el principal');
+  assert.equal(S.tokenFor('o', '', accounts), '', 'sin principal, un tercero va sin token (nunca con el de otra cuenta)');
+  assert.equal(S.tokenFor('', 'tok-a', accounts), 'tok-a', 'sin dueño, el principal');
+  assert.equal(S.tokenFor('acme-corp', 'tok-a', []), 'tok-a');
+  // sin dueño, sin token o con un dueño que no vale, esa cuenta no está; las demás sí
+  for (const [o, t] of [['', 'x'], ['acme', ''], ['../x', 'x'], ['a b', 'x'], ['acme', '   ']]) {
+    assert.equal(S.packAccounts([{ owner: o, token: t }]), '', `${o}|${t}`);
+    assert.deepEqual(JSON.parse(JSON.stringify(S.unpackAccounts(S.packAccounts([{ owner: o, token: t }, { owner: 'ok', token: 'y' }])))), [{ owner: 'ok', token: 'y' }], `${o}|${t} entre otras`);
+  }
+  for (const bad of ['', 'basura', '{"owner":"a"}', '{"owner":"a/b","token":"x"}', '[{"owner":"a","token":7}]', '7', 'null', '[null,"x"]']) assert.deepEqual([...S.unpackAccounts(bad)], [], bad);
 });
 
-test('segunda cuenta: cada repo manda solo su token a la API', async () => {
+test('otras cuentas: la segunda cuenta guardada pasa a ser la primera de la lista, y una sola se guarda como antes', () => {
   const GB = load(fakeGitHub());
-  const second = GB.GitHubSource.unpack2(GB.GitHubSource.pack2('o', 'tok-b'));
+  const S = GB.GitHubSource;
+  // lo que guardaba la segunda cuenta de antes: un objeto con su dueño y su token
+  const legacy = JSON.stringify({ owner: 'Acme', token: 'tok-b' });
+  assert.deepEqual(JSON.parse(JSON.stringify(S.unpackAccounts(legacy))), [{ owner: 'Acme', token: 'tok-b' }]);
+  assert.equal(S.tokenFor('acme', 'tok-a', S.unpackAccounts(legacy)), 'tok-b');
+  // una sola cuenta se guarda igual que antes: volver a una versión anterior no la pierde
+  assert.equal(S.packAccounts(S.unpackAccounts(legacy)), legacy);
+  // con más, la lista; la de antes sigue primera
+  const more = S.packAccounts([...S.unpackAccounts(legacy), { owner: 'beta', token: 'tok-c' }]);
+  assert.deepEqual(JSON.parse(more), [{ owner: 'Acme', token: 'tok-b' }, { owner: 'beta', token: 'tok-c' }]);
+});
+
+test('otras cuentas: hasta cinco, y un dueño repetido se queda con su primer token', () => {
+  const GB = load(fakeGitHub());
+  const S = GB.GitHubSource;
+  assert.equal(S.MAX_ACCOUNTS, 5);
+  const seven = Array.from({ length: 7 }, (_, i) => ({ owner: `o${i}`, token: `t${i}` }));
+  const kept = S.unpackAccounts(S.packAccounts(seven));
+  assert.deepEqual([...kept.map((a) => a.owner)], ['o0', 'o1', 'o2', 'o3', 'o4']);
+  assert.equal(S.tokenFor('o5', 'tok-a', kept), 'tok-a', 'la sexta no entra: su dueño va con el principal');
+  assert.equal(S.unpackAccounts(JSON.stringify(seven)).length, 5, 'lo guardado de más tampoco entra');
+  const dup = S.unpackAccounts(S.packAccounts([{ owner: 'Acme', token: 't1' }, { owner: 'acme', token: 't2' }, { owner: 'b', token: 't3' }]));
+  assert.deepEqual(JSON.parse(JSON.stringify(dup)), [{ owner: 'Acme', token: 't1' }, { owner: 'b', token: 't3' }]);
+  assert.equal(S.tokenFor('ACME', 'tok-a', dup), 't1');
+});
+
+test('otras cuentas: con tres dueños, cada repo manda solo su token a la API, y uno de un tercero el principal', async () => {
+  const S = load(fakeGitHub()).GitHubSource;
+  const accounts = S.unpackAccounts(S.packAccounts([{ owner: 'o', token: 'tok-b' }, { owner: 'p', token: 'tok-c' }, { owner: 'q', token: 'tok-d' }]));
   const gh = fakeGitHub();
   gh.push('main', 'a1');
   const sent = [];
@@ -1228,14 +1271,16 @@ test('segunda cuenta: cada repo manda solo su token a la API', async () => {
   gh.fetch = (url, opts = {}) => (sent.push([url, opts.headers?.Authorization]), fetch(url, opts));
   const GB2 = load(gh);
   const run = async (owner) => {
-    const src = new GB2.GitHubSource({ owner, name: 'r', token: GB2.GitHubSource.tokenFor(owner, 'tok-a', second) });
+    const src = new GB2.GitHubSource({ owner, name: 'r', token: GB2.GitHubSource.tokenFor(owner, 'tok-a', accounts) });
     src.running = true;
     await src.loop();
     clearTimeout(src.timer);
   };
-  await run('o');
-  await run('x');
-  assert.ok(sent.filter(([u]) => u.includes('/repos/o/')).every(([, a]) => a === 'Bearer tok-b'), 'el repo del dueño de la segunda va con la segunda');
-  assert.ok(sent.filter(([u]) => u.includes('/repos/x/')).length && sent.filter(([u]) => u.includes('/repos/x/')).every(([, a]) => a === 'Bearer tok-a'), 'el de otro dueño, con la principal');
+  for (const owner of ['o', 'p', 'q', 'x']) await run(owner);
+  const of = (owner) => sent.filter(([u]) => u.includes(`/repos/${owner}/`));
+  for (const [owner, tok] of [['o', 'tok-b'], ['p', 'tok-c'], ['q', 'tok-d'], ['x', 'tok-a']]) {
+    assert.ok(of(owner).length, `se consultó ${owner}`);
+    assert.ok(of(owner).every(([, a]) => a === `Bearer ${tok}`), `${owner} va solo con ${tok}: ${JSON.stringify(of(owner))}`);
+  }
   assert.ok(sent.every(([u]) => u.startsWith('https://api.github.com/')), 'ninguno sale a otro host');
 });

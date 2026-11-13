@@ -167,9 +167,8 @@
     forgeTokenInput: $('#forge-token-input'),
     forgeTokenToggle: $('#forge-token-toggle'),
     forgeTokenWhere: $('#forge-token-where'),
-    token2Owner: $('#token2-owner'),
-    token2Input: $('#token2-input'),
-    token2Toggle: $('#token2-toggle'),
+    accountsList: $('#accounts-list'),
+    accountAdd: $('#account-add'),
     hooksBox: $('#hooks-box'),
     hooksList: $('#hooks-list'),
     depth: $('#depth'),
@@ -237,8 +236,9 @@
     bbdcToken: desktop ? '' : GB.BitbucketServerSource.unpack(U.secret.get('bbdcToken', ''), BITBUCKET_URL),
     // el de un Forgejo/Gitea propio, igual: aparte y atado a su dirección (?forge=)
     forgeToken: desktop ? '' : GB.CodebergSource.unpack(U.secret.get('forgeToken', ''), FORGE_URL),
-    // la segunda cuenta de GitHub: un token atado a un dueño u organización, solo para sus repos
-    account2: desktop ? { owner: '', token: '' } : GB.GitHubSource.unpack2(U.secret.get('account2', '')),
+    // las otras cuentas de GitHub: cada token atado a un dueño u organización, solo para sus repos ('account2' es
+    // donde se guardaba la segunda cuenta de antes, que pasa a ser la primera de la lista)
+    accounts: desktop ? [] : GB.GitHubSource.unpackAccounts(U.secret.get('account2', '')),
     depth: U.store.get('depth', 40),
     marks: U.store.get('marks', true) !== false, // tags y entornos de despliegue (2 consultas más por repo de GitHub)
   };
@@ -639,7 +639,7 @@
     if (host === 'codeberg') return new GB.CodebergSource({ owner, name, token: settings.codebergToken, ...remembered });
     if (host === 'forgejo') return new GB.CodebergSource({ owner, name, webUrl: FORGE_URL, avatars: desktop, serverToken: settings.forgeToken, ...remembered });
     if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, webUrl: GITLAB_URL, avatars: desktop, ...remembered });
-    return new GB.GitHubSource({ owner, name, token: GB.GitHubSource.tokenFor(owner, settings.token, settings.account2), apiUrl: API_URL, ...remembered });
+    return new GB.GitHubSource({ owner, name, token: GB.GitHubSource.tokenFor(owner, settings.token, settings.accounts), apiUrl: API_URL, ...remembered });
   }
 
   /** Suma una pestaña al final, con su fuente, sin mostrarla ni arrancarla. */
@@ -841,7 +841,7 @@
     if (!refresh) el.repoForm.setAttribute('aria-busy', 'true');
     let list;
     try {
-      list = await GB.GitHubSource.ownerRepos(owner, { token: GB.GitHubSource.tokenFor(owner, settings.token, settings.account2), apiUrl: API_URL });
+      list = await GB.GitHubSource.ownerRepos(owner, { token: GB.GitHubSource.tokenFor(owner, settings.token, settings.accounts), apiUrl: API_URL });
     } catch (err) {
       return refresh ? undefined : repoNote(i18n.text(err.msg || err.message));
     } finally {
@@ -925,7 +925,7 @@
     if (paused || document.hidden || EMBED) return;
     for (const owner of Object.keys(followedOwners)) {
       let entry = orgFeeds.get(owner);
-      const tk = GB.GitHubSource.tokenFor(owner, settings.token, settings.account2);
+      const tk = GB.GitHubSource.tokenFor(owner, settings.token, settings.accounts);
       if (!entry || entry.token !== tk) {
         entry = { token: tk, feed: GB.GitHubSource.orgFeed(owner, { token: tk, apiUrl: API_URL }), first: true };
         orgFeeds.set(owner, entry);
@@ -4248,8 +4248,7 @@
     el.azureTokenInput.value = settings.azureToken;
     el.bbdcTokenInput.value = settings.bbdcToken;
     el.forgeTokenInput.value = settings.forgeToken;
-    el.token2Owner.value = settings.account2.owner;
-    el.token2Input.value = settings.account2.token;
+    renderAccountRows(settings.accounts);
     for (const [input, toggle] of tokenFields) {
       input.type = 'password';
       toggle.textContent = t('settings.show');
@@ -4271,6 +4270,68 @@
     if (typeof el.dialog.close === 'function') el.dialog.close();
     else el.dialog.removeAttribute('open');
   }
+
+  /* Las otras cuentas de GitHub en Ajustes: una fila por cuenta (y una vacía si no hay ninguna), cada una con su
+     dueño, su token, mostrar y quitar, y «Agregar una cuenta» hasta GitHubSource.MAX_ACCOUNTS. Las filas se rehacen
+     desde sus valores al agregar o quitar, así su número y sus nombres accesibles siguen el orden. */
+  /** Lo escrito en las filas, en orden ({ owner, token } de cada una, aunque esté vacía). */
+  const readAccountRows = () =>
+    [...el.accountsList.querySelectorAll('.account')].map((row) => ({ owner: row.querySelector('.account-owner').value, token: row.querySelector('.account-token').value }));
+
+  /** Dibuja las filas de `list` (al menos una) y, si se pide, deja el foco en el dueño de la fila `focusAt`. */
+  function renderAccountRows(list, focusAt = -1) {
+    const rows = (list.length ? list : [{ owner: '', token: '' }]).slice(0, GB.GitHubSource.MAX_ACCOUNTS);
+    el.accountsList.replaceChildren(
+      ...rows.map(({ owner, token }, i) => {
+        const row = document.createElement('fieldset');
+        row.className = 'account';
+        row.innerHTML = `
+          <legend id="account-legend-${i + 1}"></legend>
+          <div class="field-row">
+            <input class="account-owner" id="account-owner-${i + 1}" type="text" autocomplete="off" spellcheck="false" maxlength="39" placeholder="org">
+            <button type="button" class="btn btn-ghost account-remove" id="account-remove-${i + 1}" aria-labelledby="account-remove-${i + 1} account-legend-${i + 1}"></button>
+          </div>
+          <div class="field-row">
+            <input class="account-token" id="account-token-${i + 1}" type="password" autocomplete="off" spellcheck="false">
+            <button type="button" class="btn btn-ghost account-toggle"></button>
+          </div>`;
+        const ownerIn = row.querySelector('.account-owner');
+        const tokenIn = row.querySelector('.account-token');
+        const toggle = row.querySelector('.account-toggle');
+        ownerIn.value = owner;
+        tokenIn.value = token;
+        toggle.addEventListener('click', () => {
+          tokenIn.type = tokenIn.type === 'password' ? 'text' : 'password';
+          showToggle(tokenIn, toggle);
+        });
+        row.querySelector('.account-remove').addEventListener('click', () => {
+          const left = readAccountRows();
+          left.splice(i, 1);
+          renderAccountRows(left, Math.min(i, Math.max(0, left.length - 1)));
+        });
+        return row;
+      }),
+    );
+    labelAccountRows();
+    if (focusAt >= 0) el.accountsList.querySelectorAll('.account-owner')[focusAt]?.focus();
+  }
+
+  /** Los textos de las filas, en el idioma activo: el número de cada cuenta, los nombres de sus campos y sus botones. */
+  function labelAccountRows() {
+    el.accountsList.querySelectorAll('.account').forEach((row, i) => {
+      row.querySelector('legend').textContent = t('settings.account', { n: i + 1 });
+      row.querySelector('.account-owner').setAttribute('aria-label', t('settings.accountOwner'));
+      row.querySelector('.account-token').setAttribute('aria-label', t('settings.accountToken'));
+      row.querySelector('.account-remove').textContent = t('settings.accountRemove');
+      showToggle(row.querySelector('.account-token'), row.querySelector('.account-toggle'));
+    });
+    el.accountAdd.hidden = el.accountsList.children.length >= GB.GitHubSource.MAX_ACCOUNTS;
+  }
+
+  el.accountAdd.addEventListener('click', () => {
+    const rows = readAccountRows();
+    renderAccountRows([...rows, { owner: '', token: '' }], rows.length);
+  });
 
   /** Los avisos de Ajustes (solo escritorio): por servicio, su URL, los eventos que recibe y una prueba. */
   const hookFields = !desktop
@@ -4318,7 +4379,6 @@
     [el.azureTokenInput, el.azureTokenToggle],
     [el.bbdcTokenInput, el.bbdcTokenToggle],
     [el.forgeTokenInput, el.forgeTokenToggle],
-    [el.token2Input, el.token2Toggle],
     ...hookFields.map((f) => [f.input, f.toggle]),
   ];
   const showToggle = (input, toggle) => (toggle.textContent = input.type === 'password' ? t('settings.show') : t('settings.hide'));
@@ -4340,8 +4400,7 @@
     el.azureTokenInput.value = '';
     el.bbdcTokenInput.value = '';
     el.forgeTokenInput.value = '';
-    el.token2Owner.value = '';
-    el.token2Input.value = '';
+    renderAccountRows([]);
     for (const f of hookFields) f.input.value = '';
     el.tokenInput.focus();
   });
@@ -4355,8 +4414,8 @@
     settings.azureToken = el.azureTokenInput.value.trim();
     if (BITBUCKET_URL) settings.bbdcToken = el.bbdcTokenInput.value.trim(); // sin servidor elegido, el campo no se ve y lo guardado queda como está
     if (FORGE_URL) settings.forgeToken = el.forgeTokenInput.value.trim();
-    const account2Stored = GB.GitHubSource.pack2(el.token2Owner.value, el.token2Input.value); // sin dueño o sin token, no hay segunda cuenta
-    settings.account2 = GB.GitHubSource.unpack2(account2Stored);
+    const accountsStored = GB.GitHubSource.packAccounts(readAccountRows()); // una fila sin dueño o sin token no es una cuenta
+    settings.accounts = GB.GitHubSource.unpackAccounts(accountsStored);
     const bbdcStored = GB.BitbucketServerSource.pack(settings.bbdcToken, BITBUCKET_URL) || null;
     const forgeStored = GB.CodebergSource.pack(settings.forgeToken, FORGE_URL) || null;
     settings.depth = Math.max(10, Math.min(100, Number(el.depth.value) || 40));
@@ -4370,7 +4429,7 @@
       desktop.setToken(settings.azureToken, 'azure').catch(failed);
       if (BITBUCKET_URL) desktop.setToken(bbdcStored || '', 'bitbucketdc').catch(failed);
       if (FORGE_URL) desktop.setToken(forgeStored || '', 'forgejo').catch(failed);
-      desktop.setToken(account2Stored, 'github2').catch(failed);
+      desktop.setToken(accountsStored, 'github2').catch(failed);
     } else {
       U.secret.set('token', settings.token || null);
       U.secret.set('gitlabToken', settings.gitlabToken || null);
@@ -4379,7 +4438,7 @@
       U.secret.set('azureToken', settings.azureToken || null);
       if (BITBUCKET_URL) U.secret.set('bbdcToken', bbdcStored);
       if (FORGE_URL) U.secret.set('forgeToken', forgeStored);
-      U.secret.set('account2', account2Stored || null);
+      U.secret.set('account2', accountsStored || null);
     }
     U.store.set('depth', settings.depth);
     U.store.set('marks', settings.marks ? null : false);
@@ -4393,7 +4452,7 @@
     // se reconecta lo que cambió: un token de GitLab nuevo no gasta la cuota de GitHub. Si no cambió
     // nada, todo, como dice el botón
     const changed = (tab) =>
-      settings.depth !== before.depth || settings.marks !== before.marks || ({ gitlab: settings.gitlabToken !== before.gitlabToken, codeberg: settings.codebergToken !== before.codebergToken, bitbucket: settings.bitbucketToken !== before.bitbucketToken, forgejo: settings.forgeToken !== before.forgeToken, azure: settings.azureToken !== before.azureToken, bitbucketdc: settings.bbdcToken !== before.bbdcToken }[tab.source.host] ?? (settings.token !== before.token || settings.account2.token !== before.account2.token || settings.account2.owner !== before.account2.owner));
+      settings.depth !== before.depth || settings.marks !== before.marks || ({ gitlab: settings.gitlabToken !== before.gitlabToken, codeberg: settings.codebergToken !== before.codebergToken, bitbucket: settings.bitbucketToken !== before.bitbucketToken, forgejo: settings.forgeToken !== before.forgeToken, azure: settings.azureToken !== before.azureToken, bitbucketdc: settings.bbdcToken !== before.bbdcToken }[tab.source.host] ?? (settings.token !== before.token || accountsStored !== GB.GitHubSource.packAccounts(before.accounts)));
     if (realTabs().length) reconnectAll(realTabs().some(changed) ? changed : undefined);
     else el.tokenBanner.hidden = true;
   });
@@ -4447,7 +4506,7 @@
     settings.azureToken = (await desktop.getToken('azure')).token;
     if (BITBUCKET_URL) settings.bbdcToken = GB.BitbucketServerSource.unpack((await desktop.getToken('bitbucketdc')).token, BITBUCKET_URL);
     if (FORGE_URL) settings.forgeToken = GB.CodebergSource.unpack((await desktop.getToken('forgejo')).token, FORGE_URL);
-    settings.account2 = GB.GitHubSource.unpack2((await desktop.getToken('github2')).token);
+    settings.accounts = GB.GitHubSource.unpackAccounts((await desktop.getToken('github2')).token);
     for (const service of GB.hooks.SERVICES) hookUrls[service] = (await desktop.getToken(service)).token;
     showTokenWhere(where);
   }
@@ -4487,6 +4546,7 @@
     renderPause();
     renderWebglNote();
     for (const [input, toggle] of tokenFields) showToggle(input, toggle);
+    labelAccountRows();
     renderBbdcField();
     renderForgeField();
     el.repoInput.setCustomValidity('');

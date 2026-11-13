@@ -305,7 +305,9 @@ if (!app.requestSingleInstanceLock()) {
     });
     ipcMain.handle('token:set', async (ev, value, service = 'github') => {
       fromApp(ev, service);
-      if (typeof value !== 'string' || value.length > 1000) throw new Error('token inválido');
+      // 'github2' guarda las otras cuentas de GitHub juntas: hasta 5 dueños con su token, que GitHub dice que puede
+      // llegar a 255 caracteres (unos 1.600 en total)
+      if (typeof value !== 'string' || value.length > (service === 'github2' ? 2000 : 1000)) throw new Error('token inválido');
       await token.write(value.trim(), service);
       return token.where();
     });

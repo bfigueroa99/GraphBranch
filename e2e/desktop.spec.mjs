@@ -278,6 +278,42 @@ test('el token de GitLab se guarda cifrado, aparte del de GitHub, y vuelve al re
   await app.close();
 });
 
+test('las otras cuentas de GitHub: cinco, con tokens largos, quedan cifradas juntas y vuelven al reabrir', async ({}, testInfo) => {
+  // GitHub dice que un token puede llegar a 255 caracteres: cinco así pasan de los 1.000 que acepta un token solo
+  const accounts = ['acme', 'beta', 'gamma', 'delta', 'epsilon'].map((owner, i) => ({ owner, token: `github_pat_${i}`.padEnd(255, 'x') }));
+  let { app, page, dir } = await launch(testInfo, { args: ['--lang=es'] });
+  const services = () => Object.keys(tokenFiles(dir)).map((f) => f.replace(/\.(enc|txt)$/, '')).sort();
+  await loaded(page);
+  await page.click('#settings-btn');
+  for (const [i, { owner, token }] of accounts.entries()) {
+    if (i) await page.click('#account-add');
+    await page.fill(`#account-owner-${i + 1}`, owner);
+    await page.fill(`#account-token-${i + 1}`, token);
+  }
+  await expect(page.locator('#account-add')).toBeHidden();
+  await page.click('#settings-form button[type=submit]');
+  await expect.poll(services).toEqual(['github2-token']);
+  for (const [name, content] of Object.entries(tokenFiles(dir))) {
+    if (name.endsWith('.enc')) expect(accounts.some(({ token }) => content.includes(token.slice(0, 40)))).toBe(false);
+  }
+  expect(await page.evaluate(() => localStorage.getItem('graphbranch:account2'))).toBeNull();
+  await app.close();
+
+  ({ app, page } = await launch(testInfo, { dir, args: ['--lang=es'] }));
+  await loaded(page);
+  await page.click('#settings-btn');
+  for (const [i, { owner, token }] of accounts.entries()) {
+    await expect(page.locator(`#account-owner-${i + 1}`)).toHaveValue(owner);
+    await expect(page.locator(`#account-token-${i + 1}`)).toHaveValue(token);
+  }
+  // quitar las cinco deja una fila vacía y nada guardado
+  for (let n = 5; n >= 1; n--) await page.click(`#account-remove-${n}`);
+  await expect(page.locator('#accounts-list .account')).toHaveCount(1);
+  await page.click('#settings-form button[type=submit]');
+  await expect.poll(services).toEqual([]);
+  await app.close();
+});
+
 test('el gasto en IA: la clave de OmniRoute queda en el llavero y la consulta la hace el proceso principal', async ({}, testInfo) => {
   const got = [];
   const server = createServer((req, res) => {

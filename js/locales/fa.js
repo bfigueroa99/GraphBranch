@@ -857,6 +857,8 @@ GB.i18n.define('fa', {
   'all.prs.everyone': 'همه افراد',
   'all.prs.repo': 'فیلتر Launchpad بر اساس مخزن',
   'all.prs.allRepos': 'همه مخزن‌ها',
+  'all.prs.role.review': 'بازبینی از {who} درخواست شده',
+  'all.prs.role.assignee': 'واگذارشده به {who}',
   'all.lastCommit': 'آخرین کامیت: {msg} · {who} · {when}. دیدن تغییراتش',
   'editor.edit': 'ویرایش',
   'editor.editFile': 'ویرایش {path}',

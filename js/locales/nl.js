@@ -815,6 +815,8 @@ GB.i18n.define('nl', {
   'all.prs.everyone': 'Alle personen',
   'all.prs.repo': 'Launchpad filteren op repo',
   'all.prs.allRepos': 'Alle repo’s',
+  'all.prs.role.review': 'Review gevraagd aan {who}',
+  'all.prs.role.assignee': 'Toegewezen aan {who}',
   'all.lastCommit': 'Laatste commit: {msg} · {who} · {when}. Wijzigingen bekijken',
   'editor.edit': 'Bewerken',
   'editor.editFile': '{path} bewerken',

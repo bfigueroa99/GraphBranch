@@ -7195,6 +7195,19 @@ html.tv .agk-btn {
   font-size: 11px;
   color: var(--ink-2);
 }
+/* con una persona elegida: por qué está un PR que no abrió ella (se le pidió revisión o está asignada) */
+.ap-role {
+  align-self: flex-start;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+}
 .rc-grid {
   flex: 1;
   min-height: 0;

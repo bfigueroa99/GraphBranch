@@ -171,6 +171,8 @@ function fakeGitHub() {
   return gh;
 }
 
+const plain = (x) => JSON.parse(JSON.stringify(x));
+
 /** Fuente conectada a la API falsa (sin token, salvo que se pida); `cycle()` corre un ciclo de sondeo completo. */
 function connect(gh, token = '', apiUrl = '', marks = true) {
   const GB = load(gh);
@@ -513,7 +515,7 @@ function fakeGraphQL(gh, ci, commit = {}) {
         all: { totalCount: 1 },
         pullRequests: ci.noPulls ? null : { // null: el token no puede leer PRs
           totalCount: 1,
-          nodes: [{ number: 7, title: 'x', isDraft: false, url: 'u', headRefName: 'feat', baseRefName: 'main', isCrossRepository: false, createdAt: '2020-01-01T00:00:00Z', author: null, commits: { nodes: [{ commit: { statusCheckRollup: { state: ci.pr } } }] } }],
+          nodes: [{ number: 7, title: 'x', isDraft: false, url: 'u', headRefName: 'feat', baseRefName: 'main', isCrossRepository: false, createdAt: '2020-01-01T00:00:00Z', author: null, commits: { nodes: [{ commit: { statusCheckRollup: { state: ci.pr } } }] }, ...ci.prNode }],
         },
       });
     }
@@ -552,6 +554,29 @@ test('CI con GraphQL: estado en la rama por defecto y en los PRs, y un aviso al 
   ci.main = null; // sin checks: sin estado
   await src.cycle();
   assert.equal(src.data.ci.has('main'), false);
+});
+
+test('los PRs dicen a quiénes se les pidió revisión y quiénes están asignados (REST y GraphQL), para el Launchpad', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  gh.pulls.push({
+    number: 3, state: 'open', title: 'PR 3', head: { ref: 'feat', repo: { full_name: 'o/r' } }, base: { ref: 'main' }, user: { login: 'ana' },
+    html_url: 'https://github.com/o/r/pull/3', created_at: '2026-10-01T00:00:00Z', updated_at: '2026-10-01T00:00:00Z',
+    requested_reviewers: [{ login: 'beto' }, null, { login: '' }], requested_teams: [{ slug: 'core' }], assignees: [{ login: 'carla' }],
+  });
+  const rest = connect(gh).src;
+  await rest.cycle();
+  assert.deepEqual(plain(rest.data.pulls.get(3).requested), ['beto'], 'sin los vacíos; los equipos van aparte y no cuentan');
+  assert.deepEqual(plain(rest.data.pulls.get(3).assignees), ['carla']);
+
+  const g2 = fakeGitHub();
+  g2.push('main', 'a1');
+  fakeGraphQL(g2, { main: 'SUCCESS', pr: 'SUCCESS', prNode: { reviewRequests: { nodes: [{ requestedReviewer: { login: 'dani' } }, { requestedReviewer: {} }, { requestedReviewer: null }] }, assignees: { nodes: [{ login: 'eva' }] } } });
+  const gql = connect(g2, 'tok').src;
+  await gql.cycle();
+  assert.equal(gql.mode, 'graphql');
+  assert.deepEqual(plain(gql.data.pulls.get(7).requested), ['dani'], 'un equipo (sin login) no cuenta');
+  assert.deepEqual(plain(gql.data.pulls.get(7).assignees), ['eva']);
 });
 
 test('GraphQL: un token sin permiso de PRs deja la lista de PRs como desconocida, no como vacía', async () => {

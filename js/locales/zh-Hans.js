@@ -814,6 +814,8 @@ GB.i18n.define('zh-Hans', {
   'all.prs.everyone': '所有人',
   'all.prs.repo': '按仓库筛选 Launchpad',
   'all.prs.allRepos': '所有仓库',
+  'all.prs.role.review': '已请求 {who} 审查',
+  'all.prs.role.assignee': '已指派给 {who}',
   'all.lastCommit': '最新提交：{msg} · {who} · {when}。查看其变更',
   'editor.edit': '编辑',
   'editor.editFile': '编辑 {path}',

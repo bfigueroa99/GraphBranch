@@ -815,6 +815,8 @@ GB.i18n.define('fil', {
   'all.prs.everyone': 'Lahat ng tao',
   'all.prs.repo': 'I-filter ang Launchpad ayon sa repo',
   'all.prs.allRepos': 'Lahat ng repo',
+  'all.prs.role.review': 'Hiniling ang review kay {who}',
+  'all.prs.role.assignee': 'Naka-assign kay {who}',
   'all.lastCommit': 'Huling commit: {msg} · {who} · {when}. Tingnan ang mga pagbabago nito',
   'editor.edit': 'I-edit',
   'editor.editFile': 'I-edit ang {path}',

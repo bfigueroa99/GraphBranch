@@ -830,6 +830,8 @@ GB.i18n.define('uk', {
   'all.prs.everyone': 'Усі люди',
   'all.prs.repo': 'Фільтрувати Launchpad за репозиторієм',
   'all.prs.allRepos': 'Усі репозиторії',
+  'all.prs.role.review': 'Запит на рев’ю до {who}',
+  'all.prs.role.assignee': 'Призначено: {who}',
   'all.lastCommit': 'Останній коміт: {msg} · {who} · {when}. Переглянути зміни',
   'editor.edit': 'Змінити',
   'editor.editFile': 'Змінити {path}',

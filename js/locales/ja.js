@@ -814,6 +814,8 @@ GB.i18n.define('ja', {
   'all.prs.everyone': '全員',
   'all.prs.repo': 'Launchpad をリポジトリで絞り込む',
   'all.prs.allRepos': 'すべてのリポジトリ',
+  'all.prs.role.review': '{who} にレビュー依頼',
+  'all.prs.role.assignee': '{who} に割り当て',
   'all.lastCommit': '最新のコミット: {msg} · {who} · {when}。変更を表示',
   'editor.edit': '編集',
   'editor.editFile': '{path} を編集',

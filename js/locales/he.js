@@ -871,6 +871,8 @@ GB.i18n.define('he', {
   'all.prs.everyone': 'כל האנשים',
   'all.prs.repo': 'סינון ה-Launchpad לפי מאגר',
   'all.prs.allRepos': 'כל המאגרים',
+  'all.prs.role.review': 'התבקשה סקירה מ־{who}',
+  'all.prs.role.assignee': 'מוקצה ל־{who}',
   'all.lastCommit': 'קומיט אחרון: {msg} · {who} · {when}. הצגת השינויים שלו',
   'editor.edit': 'עריכה',
   'editor.editFile': 'עריכת {path}',

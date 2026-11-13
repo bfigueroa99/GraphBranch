@@ -814,6 +814,8 @@ GB.i18n.define('sv', {
   'all.prs.everyone': 'Alla personer',
   'all.prs.repo': 'Filtrera Launchpad efter repo',
   'all.prs.allRepos': 'Alla repon',
+  'all.prs.role.review': 'Granskning begärd av {who}',
+  'all.prs.role.assignee': 'Tilldelad {who}',
   'all.lastCommit': 'Senaste commit: {msg} · {who} · {when}. Visa ändringarna',
   'editor.edit': 'Redigera',
   'editor.editFile': 'Redigera {path}',

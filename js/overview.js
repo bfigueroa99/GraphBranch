@@ -12,7 +12,7 @@
     return !/^(0|false|no|off)$/i.test(q.get('all') || '');
   }
 
-  /** `?by=login`: el filtro por persona del Launchpad (se compara sin tocar mayúsculas contra quienes abrieron PRs, así
+  /** `?by=login`: el filtro por persona del Launchpad (se compara sin tocar mayúsculas contra las personas de los PRs, así
       que un login desconocido no filtra nada). '' si no lo dice o viene vacío. */
   function personParam(q) {
     return (q.get('by') || '').trim().slice(0, 100);
@@ -90,10 +90,30 @@
     return 'waiting';
   }
 
-  /** Las personas que abrieron los PRs de varios repos (los mismos `entries` de `groupPulls`), sin repetir y en orden alfabético. */
+  /** Quién abrió un PR ('' si no se sabe). */
+  const prAuthor = (p) => p.user?.login || p.user?.name || '';
+
+  /** Los nombres de una lista de personas de un PR (`requested`, `assignees`): solo textos no vacíos; lo demás no cuenta. */
+  const names = (list) => (Array.isArray(list) ? list.filter((u) => typeof u === 'string' && u) : []);
+
+  /** Todas las personas de un PR, sin repetir: quien lo abrió, a quienes se les pidió revisión y quienes están asignados. */
+  const prPeople = (p) => [...new Set([prAuthor(p), ...names(p.requested), ...names(p.assignees)].filter(Boolean))];
+
+  /** Qué tiene que ver `who` con un PR: 'author' si lo abrió, 'review' si se le pidió revisión, 'assignee' si está
+      asignado (en ese orden, si es más de una cosa); '' si nada. Como el filtro, distingue mayúsculas. */
+  function prRole(p, who) {
+    if (!who) return '';
+    if (prAuthor(p) === who) return 'author';
+    if (names(p.requested).includes(who)) return 'review';
+    if (names(p.assignees).includes(who)) return 'assignee';
+    return '';
+  }
+
+  /** Las personas de los PRs de varios repos (los mismos `entries` de `groupPulls`): quienes los abrieron, a quienes se
+      les pidió revisión y quienes están asignados, sin repetir y en orden alfabético. */
   function prAuthors(entries) {
     const set = new Set();
-    for (const e of entries) for (const p of e.pulls || []) { const u = p.user?.login || p.user?.name || ''; if (u) set.add(u); }
+    for (const e of entries) for (const p of e.pulls || []) for (const u of prPeople(p)) set.add(u);
     return [...set].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }) || (a < b ? -1 : 1));
   }
 
@@ -104,17 +124,19 @@
     return out.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }) || (a.key < b.key ? -1 : 1));
   }
 
-  /** Cuántos PRs abiertos tiene cada persona (los mismos `entries`): { login: n }, con lo ya cargado y sin consultar nada. */
+  /** En cuántos PRs abiertos está cada persona (los mismos `entries`), como autora, revisora pedida o asignada; cada PR
+      cuenta una vez por persona: { login: n }, con lo ya cargado y sin consultar nada. */
   function prCounts(entries) {
     const n = {};
-    for (const e of entries) for (const p of e.pulls || []) { const u = p.user?.login || p.user?.name || ''; if (u) n[u] = (n[u] || 0) + 1; }
+    for (const e of entries) for (const p of e.pulls || []) for (const u of prPeople(p)) n[u] = (n[u] || 0) + 1;
     return n;
   }
 
   /** Los PRs abiertos de varios repos, agrupados por estado: `entries` es [{ key, name, pulls: iterable de PRs }].
       Devuelve solo los grupos con PRs, [{ id, items }], cada uno del más nuevo al más viejo; los fijados (`pinned`: un Set
       de `pinId`) van arriba de su grupo, con `pinned: true`; los pospuestos (`snoozed`: { pinId: hasta (ms) }) que no
-      vencieron a la hora `now` van al final de su grupo, con `snoozed: true`. Fijar gana a posponer. */
+      vencieron a la hora `now` van al final de su grupo, con `snoozed: true`. Fijar gana a posponer. Con `author`, solo
+      los PRs en que esa persona está (los abrió, se le pidió revisión o está asignada), cada uno con su `role`. */
   function groupPulls(entries, pinned, author = '', repoKey = '', snoozed = null, now = Date.now()) {
     const isPinned = (key, number) => !!pinned?.has?.(pinId(key, number));
     const live = liveSnoozes(snoozed, now);
@@ -123,14 +145,16 @@
     for (const e of entries) {
       if (repoKey && e.key !== repoKey) continue;
       for (const p of e.pulls || []) {
-        if (author && (p.user?.login || p.user?.name || '') !== author) continue;
+        const role = prRole(p, author);
+        if (author && !role) continue;
         by.get(prGroup(p)).push({
           key: e.key,
           repo: e.name,
           number: p.number,
           title: p.title || '',
           head: p.head || '',
-          user: p.user?.login || p.user?.name || '',
+          user: prAuthor(p),
+          role, // con una persona elegida: por qué está su PR ('author', 'review' o 'assignee'); sin ella, ''
           createdAt: p.createdAt || 0,
           pinned: isPinned(e.key, p.number),
           snoozed: !isPinned(e.key, p.number) && isSnoozed(e.key, p.number),
@@ -277,7 +301,7 @@
     /** El Launchpad: los PRs abiertos de todos los repos, por estado. Solo se repinta si cambió algo (así no pierde el foco). */
     let prSig = '';
     let lastEntries = [];
-    let prPerson = opts.person || ''; // el filtro por persona del Launchpad ('' = todas); viaja en ?by=
+    let prPerson = opts.person || ''; // el filtro por persona del Launchpad ('' = todas; autora, revisora pedida o asignada); viaja en ?by=
     let prRepo = ''; // el filtro por repo ('' = todos); no se recuerda ni viaja en la URL
     let snoozeTimer = 0; // repinta cuando vence el primer PR pospuesto, para que vuelva a su lugar sin esperar datos nuevos
     function setPulls(entries) {
@@ -354,7 +378,10 @@
           const meta = mk('span', 'ap-m', [it.repo, it.head, it.user].filter(Boolean).join(' · '));
           title.dir = meta.dir = 'auto';
           b.append(title, meta);
-          const label = t('all.prs.open', { num: it.number, repo: it.repo, title: GB.U.truncate(it.title, 80) });
+          // con una persona elegida, el PR que no abrió ella dice por qué está: se le pidió revisión o está asignada
+          const role = it.role === 'review' || it.role === 'assignee' ? t(`all.prs.role.${it.role}`, { who: who }) : '';
+          if (role) b.append(mk('span', 'ap-role', role));
+          const label = [t('all.prs.open', { num: it.number, repo: it.repo, title: GB.U.truncate(it.title, 80) }), role].filter(Boolean).join('. ');
           b.setAttribute('aria-label', label);
           b.title = label;
           b.addEventListener('click', () => opts.onOpenPr?.(it.key, it.head));
@@ -442,5 +469,5 @@
     };
   }
 
-  GB.overview = { allParam, personParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, fitGrid, prGroup, groupPulls, prAuthors, prRepos, prCounts, pinId, SNOOZE_MS, liveSnoozes, mount };
+  GB.overview = { allParam, personParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, fitGrid, prGroup, prRole, groupPulls, prAuthors, prRepos, prCounts, pinId, SNOOZE_MS, liveSnoozes, mount };
 })(window.GB);

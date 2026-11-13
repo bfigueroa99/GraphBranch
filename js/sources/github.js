@@ -46,6 +46,8 @@
     'oid url committedDate messageHeadline messageBody author { name email user { login avatarUrl } } parents(first: 4) { nodes { oid } }';
   const GQL_TARGET = 'target { oid ... on Commit { committedDate } }';
   const GQL_TARGET_CI = 'target { oid ... on Commit { committedDate statusCheckRollup { state } } }'; // con el estado de los checks
+  /** Los logins de una lista de personas de GitHub (REST o GraphQL), sin lo que no es un login (un equipo, un null). */
+  const logins = (list) => (Array.isArray(list) ? list.map((u) => u?.login).filter((u) => typeof u === 'string' && u) : []);
   /** Estado de los checks de GitHub (rollup o check-runs) en uno de tres: 'success', 'failure' o 'pending'. */
   const ciState = (s) => {
     s = String(s || '').toUpperCase();
@@ -1046,7 +1048,7 @@
           ${listing ? `page: ${this.refsPage()}` : ''}
           pullRequests(states: OPEN, first: 50, orderBy: {field: UPDATED_AT, direction: DESC}) {
             totalCount
-            nodes { number title isDraft reviewDecision url headRefName baseRefName isCrossRepository createdAt author { login avatarUrl } commits(last: 1) { nodes { commit { statusCheckRollup { state } } } } }
+            nodes { number title isDraft reviewDecision url headRefName baseRefName isCrossRepository createdAt author { login avatarUrl } reviewRequests(first: 10) { nodes { requestedReviewer { ... on User { login } } } } assignees(first: 10) { nodes { login } } commits(last: 1) { nodes { commit { statusCheckRollup { state } } } } }
           }
           ${aliases(first)}
         }
@@ -1166,6 +1168,8 @@
         draft: !!p.isDraft,
         review: p.reviewDecision === 'APPROVED' ? 'approved' : p.reviewDecision === 'CHANGES_REQUESTED' ? 'changes' : null, // «changes» solo lo usa la salud: ya tuvo revisión
         user: p.author ? { login: p.author.login, name: p.author.login, avatar: p.author.avatarUrl } : null,
+        requested: logins(p.reviewRequests?.nodes?.map((r) => r?.requestedReviewer)),
+        assignees: logins(p.assignees?.nodes),
         createdAt: Date.parse(p.createdAt) || Date.now(),
         ci: ciState(p.commits?.nodes?.[0]?.commit?.statusCheckRollup?.state),
       }));
@@ -1805,6 +1809,8 @@
         url: p.html_url,
         draft: !!p.draft,
         user: { login: p.user?.login, name: p.user?.login, avatar: p.user?.avatar_url },
+        requested: logins(p.requested_reviewers), // a quiénes se les pidió revisión (sin los equipos) y quiénes están asignados:
+        assignees: logins(p.assignees), //            el filtro por persona del Launchpad
         createdAt: Date.parse(p.created_at) || Date.now(),
       };
     }

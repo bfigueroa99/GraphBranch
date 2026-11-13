@@ -108,6 +108,23 @@ test('groupPulls y prAuthors: el Launchpad se filtra por la persona que abrió e
   assert.deepEqual(plain(O.prAuthors([])), []);
 });
 
+
+test('el Launchpad por persona: también los PRs en que se le pidió revisión o está asignada, con su papel', () => {
+  const pr = (number, login, extra = {}) => ({ number, title: `PR ${number}`, head: `r${number}`, user: login ? { login } : null, createdAt: number, ...extra });
+  const entries = [
+    { key: 'a', name: 'o/a', pulls: [pr(1, 'ana'), pr(2, 'beto', { requested: ['ana', 'carla'] }), pr(3, 'beto', { assignees: ['ana'] })] },
+    { key: 'b', name: 'o/b', pulls: new Set([pr(4, 'carla', { requested: ['Ana'], assignees: ['dani'] }), pr(5, null, { requested: ['ana'] }), pr(6, 'ana', { requested: ['ana'], assignees: ['ana'] })]) },
+  ];
+  assert.deepEqual(plain(O.prAuthors(entries)), ['Ana', 'ana', 'beto', 'carla', 'dani'], 'autores, revisores pedidos y asignados, sin repetir');
+  assert.deepEqual(plain(O.prCounts(entries)), { ana: 5, beto: 2, carla: 2, Ana: 1, dani: 1 }, 'cada PR cuenta una vez por persona, aunque tenga varios papeles en él');
+  const rows = (who) => plain(O.groupPulls(entries, null, who)).flatMap((g) => g.items).map((i) => `${i.number}:${i.role}`).sort();
+  assert.deepEqual(rows('ana'), ['1:author', '2:review', '3:assignee', '5:review', '6:author'], 'el papel dice por qué está: abrirlo gana a la revisión, y la revisión a la asignación');
+  assert.deepEqual(rows('dani'), ['4:assignee']);
+  assert.deepEqual(rows(''), ['1:', '2:', '3:', '4:', '5:', '6:'], 'sin filtro, todos y sin papel');
+  assert.deepEqual(plain(O.groupPulls([{ key: 'c', name: 'o/c', pulls: [pr(7, 'eva', { requested: [null, 3, ''], assignees: 'eva' })] }], null, '')).flatMap((g) => g.items).map((i) => i.number), [7], 'listas raras no rompen nada');
+  assert.deepEqual(plain(O.prAuthors([{ key: 'c', name: 'o/c', pulls: [pr(7, 'eva', { requested: [null, 3, ''], assignees: 'eva' })] }])), ['eva'], 'solo nombres de verdad');
+});
+
 test('prCounts: cada persona dice cuántos PRs abiertos tiene, de todos los repos y sin contar los PRs sin autor', () => {
   const pr = (number, login) => ({ number, title: `PR ${number}`, user: login ? { login } : undefined });
   const entries = [
@@ -210,6 +227,32 @@ test('mount: el Launchpad abre con la persona de ?by=, ignora una desconocida y 
   sel.value = 'beto';
   sel.listeners.change();
   assert.deepEqual(x.chosen, ['beto'], 'elegir avisa para escribirlo en la URL');
+});
+
+test('mount: con una persona elegida, cada fila dice si se le pidió revisión o está asignada', () => {
+  const els = [];
+  const mkEl = (tag) => {
+    const el = { tag, children: [], dataset: {}, attrs: {}, classList: { toggle() {} }, hidden: false, listeners: {}, value: '', append(...c) { this.children.push(...c); }, replaceChildren(...c) { this.children = c; }, setAttribute(k, v) { this.attrs[k] = v; }, addEventListener(t, f) { this.listeners[t] = f; }, querySelectorAll: () => [], querySelector: () => null, focus() {}, closest: () => null };
+    els.push(el);
+    return el;
+  };
+  const c2 = vm.createContext({ window: { GB: { U: { truncate: (x) => x } }, matchMedia: null }, document: { createElement: mkEl }, Option: function (t, v) { this.text = t; this.value = v; } });
+  vm.runInContext(readFileSync(join(root, 'js', 'overview.js'), 'utf8'), c2, { filename: 'overview.js' });
+  const ov = c2.window.GB.overview.mount(mkEl('div'), { prsRoot: mkEl('div'), text: (k) => k, num: String, person: 'beto' });
+  const pr = (n, login, extra) => ({ number: n, title: `PR ${n}`, createdAt: n, user: { login }, ...extra });
+  ov.setPulls([{ key: 'a', name: 'o/a', pulls: [pr(1, 'ana', { requested: ['beto'] }), pr(2, 'ana', { assignees: ['beto'] }), pr(3, 'beto'), pr(4, 'ana')] }]);
+  const rows = els.filter((e) => e.className === 'ap-row');
+  const role = (b) => b.children.find((c) => c.className === 'ap-role')?.textContent || '';
+  assert.deepEqual(rows.map((b) => `${b.dataset.number}:${role(b)}`).sort(), ['1:all.prs.role.review', '2:all.prs.role.assignee', '3:'], 'lo que abrió no lleva marca; el PR de otra persona no sale');
+  assert.match(rows.find((b) => b.dataset.number === '1').attrs['aria-label'], /all\.prs\.role\.review/, 'el lector de pantalla también lo dice');
+  const sel = els.find((e) => e.className === 'ap-person');
+  assert.equal(sel.value, 'beto');
+  const before = els.length;
+  sel.value = '';
+  sel.listeners.change();
+  const after = els.slice(before);
+  assert.equal(after.filter((e) => e.className === 'ap-row').length, 4, 'con «Todas las personas», los cuatro');
+  assert.equal(after.filter((e) => e.className === 'ap-role').length, 0, 'y sin marcas');
 });
 
 test('groupPulls y prRepos: el Launchpad se filtra por repo, con lo ya cargado y combinado con la persona', () => {

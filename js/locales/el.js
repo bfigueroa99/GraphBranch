@@ -814,6 +814,8 @@ GB.i18n.define('el', {
   'all.prs.everyone': 'Όλα τα άτομα',
   'all.prs.repo': 'Φιλτράρισμα του Launchpad ανά αποθετήριο',
   'all.prs.allRepos': 'Όλα τα αποθετήρια',
+  'all.prs.role.review': 'Ζητήθηκε αναθεώρηση από {who}',
+  'all.prs.role.assignee': 'Ανατέθηκε σε {who}',
   'all.lastCommit': 'Τελευταίο commit: {msg} · {who} · {when}. Δείτε τις αλλαγές του',
   'editor.edit': 'Επεξεργασία',
   'editor.editFile': 'Επεξεργασία {path}',

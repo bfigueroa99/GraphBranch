@@ -814,6 +814,8 @@ GB.i18n.define('ko', {
   'all.prs.everyone': '모든 사람',
   'all.prs.repo': 'Launchpad를 저장소별로 필터링',
   'all.prs.allRepos': '모든 저장소',
+  'all.prs.role.review': '{who}에게 리뷰 요청됨',
+  'all.prs.role.assignee': '{who}에게 할당됨',
   'all.lastCommit': '마지막 커밋: {msg} · {who} · {when}. 변경 사항 보기',
   'editor.edit': '편집',
   'editor.editFile': '{path} 편집',

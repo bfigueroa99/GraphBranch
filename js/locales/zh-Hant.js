@@ -814,6 +814,8 @@ GB.i18n.define('zh-Hant', {
   'all.prs.everyone': '所有人',
   'all.prs.repo': '依儲存庫篩選 Launchpad',
   'all.prs.allRepos': '所有儲存庫',
+  'all.prs.role.review': '已請求 {who} 審查',
+  'all.prs.role.assignee': '已指派給 {who}',
   'all.lastCommit': '最新提交：{msg} · {who} · {when}。查看其變更',
   'editor.edit': '編輯',
   'editor.editFile': '編輯 {path}',

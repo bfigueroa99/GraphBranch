@@ -814,6 +814,8 @@ GB.i18n.define('bn', {
   'all.prs.everyone': 'সবাই',
   'all.prs.repo': 'Launchpad রেপো অনুযায়ী ফিল্টার করুন',
   'all.prs.allRepos': 'সব রেপো',
+  'all.prs.role.review': '{who}-এর কাছে রিভিউ চাওয়া হয়েছে',
+  'all.prs.role.assignee': '{who}-কে অ্যাসাইন করা',
   'all.lastCommit': 'শেষ কমিট: {msg} · {who} · {when}। এর পরিবর্তন দেখুন',
   'editor.edit': 'সম্পাদনা',
   'editor.editFile': '{path} সম্পাদনা',

@@ -276,17 +276,18 @@
       push('fix/rate-limit', M, S.retryAfter);
       push('feature/login', J, S.loginE2e);
 
-      const openPR = (head, base, title, user, draft = false) => {
+      // a quiénes se les pidió revisión y quiénes están asignados (logins): el filtro por persona del Launchpad los cuenta
+      const openPR = (head, base, title, user, draft = false, requested = [], assignees = []) => {
         const n = ++this.prSeq;
         this.data.branches.get(head).pr = n;
-        this.data.pulls.set(n, { number: n, title, head, base, sameRepo: true, url: null, draft, user: this.actor(user), createdAt: t });
+        this.data.pulls.set(n, { number: n, title, head, base, sameRepo: true, url: null, draft, user: this.actor(user), requested: requested.map((a) => a.login), assignees: assignees.map((a) => a.login), createdAt: t });
       };
       this.prSeq = 35;
-      openPR('feature/login', 'develop', S.prLogin, J);
+      openPR('feature/login', 'develop', S.prLogin, J, false, [], [J]);
       this.data.pulls.get(this.prSeq).review = 'approved';
-      openPR('feature/dark-mode', 'feature/login', S.prDark, T, true);
-      openPR('fix/rate-limit', 'main', S.prRetry, M);
-      openPR('claude/search-index', 'develop', this.prTitleOf(agentBranch), CLAUDE_APP);
+      openPR('feature/dark-mode', 'feature/login', S.prDark, T, true, [], [T]);
+      openPR('fix/rate-limit', 'main', S.prRetry, M, false, [V, J]);
+      openPR('claude/search-index', 'develop', this.prTitleOf(agentBranch), CLAUDE_APP, false, [M], [V]);
       const agentPr = this.prSeq;
       for (const [name, st] of [['main', 'success'], ['develop', 'success'], ['feature/login', 'success'], ['feature/dark-mode', 'pending'], ['fix/rate-limit', 'failure'], ['claude/search-index', 'success']]) this.setCi(name, st);
       H.push(this.act('pr-open', { title: MSG('act.prOpened', { num: agentPr }), detail: this.data.pulls.get(agentPr).title, ref: 'claude/search-index → develop', branch: 'claude/search-index', actor: this.actor(CLAUDE_APP), number: agentPr }, t + 60e3));
@@ -387,7 +388,10 @@
       const draft = this.chance(0.2);
       const user = b.name.startsWith('claude/') ? CLAUDE_APP : this.pick(AUTHORS);
       b.pr = n;
-      this.data.pulls.set(n, { number: n, title, head: b.name, base: b.base, sameRepo: true, url: null, draft, user: this.actor(user), createdAt: Date.now(), ci: this.data.ci.get(b.name) });
+      // un borrador todavía no pide revisión; el revisor sale del número (no del azar: así no cambia lo que la demo sortea después)
+      const others = AUTHORS.filter((a) => a.login !== user.login);
+      const reviewer = draft ? null : others[n % others.length];
+      this.data.pulls.set(n, { number: n, title, head: b.name, base: b.base, sameRepo: true, url: null, draft, user: this.actor(user), requested: reviewer ? [reviewer.login] : [], assignees: [], createdAt: Date.now(), ci: this.data.ci.get(b.name) });
       return [this.act('pr-open', { title: MSG(draft ? 'act.prOpenedDraft' : 'act.prOpened', { num: n }), detail: this.data.pulls.get(n).title, ref: `${b.name} → ${b.base}`, branch: b.name, sha: b.sha, actor: this.actor(user), number: n })];
     }
 

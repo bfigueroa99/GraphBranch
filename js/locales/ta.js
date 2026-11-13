@@ -814,6 +814,8 @@ GB.i18n.define('ta', {
   'all.prs.everyone': 'அனைவரும்',
   'all.prs.repo': 'Launchpad-ஐ ரெப்போவின்படி வடிகட்டு',
   'all.prs.allRepos': 'அனைத்து ரெப்போக்கள்',
+  'all.prs.role.review': '{who} இடம் மதிப்பாய்வு கோரப்பட்டது',
+  'all.prs.role.assignee': '{who} க்கு ஒதுக்கப்பட்டது',
   'all.lastCommit': 'கடைசி கமிட்: {msg} · {who} · {when}. அதன் மாற்றங்களைப் பார்',
   'editor.edit': 'திருத்து',
   'editor.editFile': '{path} திருத்து',

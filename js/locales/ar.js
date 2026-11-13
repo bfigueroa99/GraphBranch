@@ -913,6 +913,8 @@ GB.i18n.define('ar', {
   'all.prs.everyone': 'كل الأشخاص',
   'all.prs.repo': 'تصفية Launchpad حسب المستودع',
   'all.prs.allRepos': 'كل المستودعات',
+  'all.prs.role.review': 'طُلبت مراجعة من {who}',
+  'all.prs.role.assignee': 'مُسند إلى {who}',
   'all.lastCommit': 'آخر commit: {msg} · {who} · {when}. اعرض تغييراته',
   'editor.edit': 'تحرير',
   'editor.editFile': 'تحرير {path}',

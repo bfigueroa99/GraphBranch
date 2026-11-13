@@ -814,6 +814,8 @@ GB.i18n.define('ms', {
   'all.prs.everyone': 'Semua orang',
   'all.prs.repo': 'Tapis Launchpad mengikut repo',
   'all.prs.allRepos': 'Semua repo',
+  'all.prs.role.review': 'Semakan diminta daripada {who}',
+  'all.prs.role.assignee': 'Ditugaskan kepada {who}',
   'all.lastCommit': 'Commit terakhir: {msg} · {who} · {when}. Lihat perubahannya',
   'editor.edit': 'Sunting',
   'editor.editFile': 'Sunting {path}',

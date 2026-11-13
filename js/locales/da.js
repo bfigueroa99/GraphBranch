@@ -814,6 +814,8 @@ GB.i18n.define('da', {
   'all.prs.everyone': 'Alle personer',
   'all.prs.repo': 'Filtrer Launchpad efter repo',
   'all.prs.allRepos': 'Alle repos',
+  'all.prs.role.review': 'Gennemsyn anmodet fra {who}',
+  'all.prs.role.assignee': 'Tildelt {who}',
   'all.lastCommit': 'Seneste commit: {msg} · {who} · {when}. Se ændringerne',
   'editor.edit': 'Redigér',
   'editor.editFile': 'Redigér {path}',

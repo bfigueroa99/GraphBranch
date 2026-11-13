@@ -814,6 +814,8 @@ GB.i18n.define('fi', {
   'all.prs.everyone': 'Kaikki henkilöt',
   'all.prs.repo': 'Suodata Launchpad repon mukaan',
   'all.prs.allRepos': 'Kaikki repot',
+  'all.prs.role.review': 'Katselmointia pyydetty: {who}',
+  'all.prs.role.assignee': 'Osoitettu: {who}',
   'all.lastCommit': 'Viimeisin commit: {msg} · {who} · {when}. Näytä muutokset',
   'editor.edit': 'Muokkaa',
   'editor.editFile': 'Muokkaa: {path}',

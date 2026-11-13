@@ -537,6 +537,7 @@ GB.i18n.define('bn', {
   'health.tagWeeks': 'প্রতি সপ্তাহে ট্যাগ: {list}',
   'health.issueWeeks': 'প্রতি সপ্তাহে খোলা issue: {list}',
   'health.prCloseWeeks': 'প্রতি সপ্তাহে মার্জ ছাড়া বন্ধ হওয়া pull request: {list}',
+  'health.forkWeeks': 'প্রতি সপ্তাহে নতুন ফর্ক: {list}',
   'health.addedWeeks': 'প্রতি সপ্তাহে যোগ করা লাইন: {list}',
   'health.deletedWeeks': 'প্রতি সপ্তাহে মোছা লাইন: {list}',
   'health.codePending': 'GitHub এখনও প্রতি সপ্তাহে যোগ করা ও মোছা লাইন হিসাব করছে: একটু পরে প্যানেলটি আবার খুলুন।',

@@ -543,6 +543,7 @@ GB.i18n.define('en', {
   'health.tagWeeks': 'Tags per week: {list}',
   'health.issueWeeks': 'Opened issues per week: {list}',
   'health.prCloseWeeks': 'Pull requests closed without merging per week: {list}',
+  'health.forkWeeks': 'New forks per week: {list}',
   'health.addedWeeks': 'Lines added per week: {list}',
   'health.deletedWeeks': 'Lines deleted per week: {list}',
   'health.codePending': 'GitHub is still calculating lines added and deleted per week: reopen the panel in a moment.',

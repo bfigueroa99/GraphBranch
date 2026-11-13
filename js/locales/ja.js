@@ -537,6 +537,7 @@ GB.i18n.define('ja', {
   'health.tagWeeks': '週ごとのタグ数：{list}',
   'health.issueWeeks': '週ごとにオープンされたイシュー：{list}',
   'health.prCloseWeeks': 'マージされずにクローズされたプルリクエスト（週ごと）：{list}',
+  'health.forkWeeks': '新しいフォーク（週ごと）：{list}',
   'health.addedWeeks': '週ごとの追加行数: {list}',
   'health.deletedWeeks': '週ごとの削除行数: {list}',
   'health.codePending': 'GitHub は週ごとの追加・削除行数をまだ計算中です。少ししてからパネルを開き直してください。',

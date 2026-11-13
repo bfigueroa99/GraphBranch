@@ -537,6 +537,7 @@ GB.i18n.define('tr', {
   'health.tagWeeks': 'Haftalık etiket sayısı: {list}',
   'health.issueWeeks': 'Haftalık açılan issue’lar: {list}',
   'health.prCloseWeeks': 'Birleştirilmeden kapatılan pull request’ler (haftalık): {list}',
+  'health.forkWeeks': 'Yeni fork\'lar (haftalık): {list}',
   'health.addedWeeks': 'Haftalık eklenen satırlar: {list}',
   'health.deletedWeeks': 'Haftalık silinen satırlar: {list}',
   'health.codePending': 'GitHub haftalık eklenen ve silinen satırları hâlâ hesaplıyor: paneli birazdan yeniden açın.',

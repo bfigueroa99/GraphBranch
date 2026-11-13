@@ -537,6 +537,7 @@ GB.i18n.define('hi', {
   'health.tagWeeks': 'प्रति सप्ताह टैग: {list}',
   'health.issueWeeks': 'प्रति सप्ताह खुले हुए issue: {list}',
   'health.prCloseWeeks': 'बिना मर्ज किए बंद हुए pull request प्रति सप्ताह: {list}',
+  'health.forkWeeks': 'प्रति सप्ताह नए फ़ोर्क: {list}',
   'health.addedWeeks': 'प्रति सप्ताह जोड़ी गई पंक्तियाँ: {list}',
   'health.deletedWeeks': 'प्रति सप्ताह हटाई गई पंक्तियाँ: {list}',
   'health.codePending': 'GitHub अभी भी प्रति सप्ताह जोड़ी और हटाई गई पंक्तियों की गणना कर रहा है: थोड़ी देर में पैनल फिर से खोलें।',

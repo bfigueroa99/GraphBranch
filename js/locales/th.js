@@ -538,6 +538,7 @@ GB.i18n.define('th', {
   'health.tagWeeks': 'แท็กต่อสัปดาห์: {list}',
   'health.issueWeeks': 'issue ที่เปิดต่อสัปดาห์: {list}',
   'health.prCloseWeeks': 'pull request ที่ปิดโดยไม่ได้รวมต่อสัปดาห์: {list}',
+  'health.forkWeeks': 'ฟอร์กใหม่ต่อสัปดาห์: {list}',
   'health.addedWeeks': 'บรรทัดที่เพิ่มต่อสัปดาห์: {list}',
   'health.deletedWeeks': 'บรรทัดที่ลบต่อสัปดาห์: {list}',
   'health.codePending': 'GitHub ยังคำนวณบรรทัดที่เพิ่มและลบต่อสัปดาห์อยู่: เปิดแผงอีกครั้งในอีกสักครู่',

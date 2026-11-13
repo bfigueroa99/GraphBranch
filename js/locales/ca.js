@@ -537,6 +537,7 @@ GB.i18n.define('ca', {
   'health.tagWeeks': 'Etiquetes per setmana: {list}',
   'health.issueWeeks': 'Issues oberts per setmana: {list}',
   'health.prCloseWeeks': 'Pull requests tancats sense fusionar per setmana: {list}',
+  'health.forkWeeks': 'Forks nous per setmana: {list}',
   'health.addedWeeks': 'Línies afegides per setmana: {list}',
   'health.deletedWeeks': 'Línies esborrades per setmana: {list}',
   'health.codePending': 'GitHub encara està calculant les línies afegides i esborrades per setmana: torna a obrir el tauler d’aquí a un moment.',

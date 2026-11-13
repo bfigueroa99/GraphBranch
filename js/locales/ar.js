@@ -636,6 +636,7 @@ GB.i18n.define('ar', {
   'health.tagWeeks': 'الوسوم في الأسبوع: {list}',
   'health.issueWeeks': 'المشكلات المفتوحة في الأسبوع: {list}',
   'health.prCloseWeeks': 'طلبات السحب المغلقة دون دمج في الأسبوع: {list}',
+  'health.forkWeeks': 'الفروع الجديدة في الأسبوع: {list}',
   'health.addedWeeks': 'الأسطر المضافة أسبوعيًا: {list}',
   'health.deletedWeeks': 'الأسطر المحذوفة أسبوعيًا: {list}',
   'health.codePending': 'لا يزال GitHub يحسب الأسطر المضافة والمحذوفة أسبوعيًا: أعد فتح اللوحة بعد قليل.',

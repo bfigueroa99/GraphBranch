@@ -545,6 +545,7 @@ GB.i18n.define('ro', {
   'health.tagWeeks': 'Taguri pe săptămână: {list}',
   'health.issueWeeks': 'Issue-uri deschise pe săptămână: {list}',
   'health.prCloseWeeks': 'Pull request-uri închise fără îmbinare pe săptămână: {list}',
+  'health.forkWeeks': 'Fork-uri noi pe săptămână: {list}',
   'health.addedWeeks': 'Linii adăugate pe săptămână: {list}',
   'health.deletedWeeks': 'Linii șterse pe săptămână: {list}',
   'health.codePending': 'GitHub încă calculează liniile adăugate și șterse pe săptămână: redeschide panoul peste câteva momente.',

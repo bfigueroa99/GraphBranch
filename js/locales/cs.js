@@ -548,6 +548,7 @@ GB.i18n.define('cs', {
   'health.tagWeeks': 'Tagy za týden: {list}',
   'health.issueWeeks': 'Otevřené issues za týden: {list}',
   'health.prCloseWeeks': 'Pull requesty zavřené bez sloučení za týden: {list}',
+  'health.forkWeeks': 'Nové forky za týden: {list}',
   'health.addedWeeks': 'Přidané řádky za týden: {list}',
   'health.deletedWeeks': 'Smazané řádky za týden: {list}',
   'health.codePending': 'GitHub ještě počítá přidané a smazané řádky za týden: za chvíli panel otevřete znovu.',

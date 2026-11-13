@@ -537,6 +537,7 @@ GB.i18n.define('nb', {
   'health.tagWeeks': 'Tagger per uke: {list}',
   'health.issueWeeks': 'Åpnede issues per uke: {list}',
   'health.prCloseWeeks': 'Pull requests lukket uten å bli flettet per uke: {list}',
+  'health.forkWeeks': 'Nye forks per uke: {list}',
   'health.addedWeeks': 'Linjer lagt til per uke: {list}',
   'health.deletedWeeks': 'Linjer slettet per uke: {list}',
   'health.codePending': 'GitHub beregner fortsatt linjer lagt til og slettet per uke: åpne panelet igjen om et øyeblikk.',

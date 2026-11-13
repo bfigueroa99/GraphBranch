@@ -11,7 +11,7 @@
   const UNREVIEWED_DAYS = 7; // un PR abierto que pasa de esto sin ninguna revisión cuenta como «sin revisión»
   const RECENT_MERGES = 20; // cuántos PRs fusionados entran en el tiempo de abierto a fusionado
   const RECENT_RELEASES = 10; // cuántos releases entran en el tiempo entre despliegues
-  const WEEKS = 8; // semanas que entran en la frecuencia de despliegue y en las tendencias de merges, de PRs abiertos, de issues cerrados, de ramas nuevas, de commits, de autores, de autores nuevos y de líneas añadidas y borradas
+  const WEEKS = 8; // semanas que entran en la frecuencia de despliegue y en las tendencias de merges, de PRs abiertos, de issues cerrados, de ramas nuevas, de commits, de autores, de autores nuevos, de forks nuevos y de líneas añadidas y borradas
   const ROWS = 8; // filas que muestra cada lista
 
   const at = (x) => (typeof x === 'number' ? x : Date.parse(x) || 0);
@@ -21,7 +21,7 @@
     return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
   };
 
-  /** Cuenta los eventos (releases, PRs fusionados, PRs abiertos, issues cerrados o ramas creadas) de cada una de las últimas WEEKS semanas (bloques de 7 días hacia atrás desde `now`). */
+  /** Cuenta los eventos (releases, PRs fusionados, PRs abiertos, issues cerrados, ramas creadas, forks nuevos…) de cada una de las últimas WEEKS semanas (bloques de 7 días hacia atrás desde `now`). */
   function weekly(list, now) {
     const weeks = new Array(WEEKS).fill(0);
     for (const a of list) {
@@ -332,7 +332,7 @@
       stars: { week: starWeeks[WEEKS - 1], prev: fullPrev ? starWeeks[WEEKS - 2] : null }, // estrellas nuevas en los últimos 7 días y en los 7 anteriores (null: sin medir)
       code: data.codeFreq ? { pending: data.codeFreq.state === 'pending' } : null, // las líneas por semana: null sin consulta; pending si GitHub todavía las calcula (202)
       absence: absenceFactor(data.commits.values()), // cuántas personas suman la mitad de los commits cargados (null: ninguno con autor)
-      pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), authorWeeks: authorsWeekly(data.commits.values(), now), newAuthorWeeks: newAuthorsWeekly(data.commits.values(), now), tagWeeks: weekly(tagTimes, now), issueWeeks: weekly([...issueOpened.values()], now), prCloseWeeks: weekly([...prClosed.values()], now), addedWeeks: code.added, deletedWeeks: code.deleted }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
+      pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), authorWeeks: authorsWeekly(data.commits.values(), now), newAuthorWeeks: newAuthorsWeekly(data.commits.values(), now), tagWeeks: weekly(tagTimes, now), issueWeeks: weekly([...issueOpened.values()], now), prCloseWeeks: weekly([...prClosed.values()], now), forkWeeks, addedWeeks: code.added, deletedWeeks: code.deleted }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
     };
   }
 

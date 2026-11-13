@@ -537,6 +537,7 @@ GB.i18n.define('sv', {
   'health.tagWeeks': 'Taggar per vecka: {list}',
   'health.issueWeeks': 'Öppnade issues per vecka: {list}',
   'health.prCloseWeeks': 'Pull requests stängda utan sammanslagning per vecka: {list}',
+  'health.forkWeeks': 'Nya forkar per vecka: {list}',
   'health.addedWeeks': 'Tillagda rader per vecka: {list}',
   'health.deletedWeeks': 'Borttagna rader per vecka: {list}',
   'health.codePending': 'GitHub beräknar fortfarande tillagda och borttagna rader per vecka: öppna panelen igen om en stund.',

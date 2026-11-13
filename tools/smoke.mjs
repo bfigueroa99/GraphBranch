@@ -809,6 +809,9 @@ if (seccion('Escritorio (1280×800)'))
     if (iweeks && (!/(\d+ · ){7}\d+$/.test(iweeks) || /^(0 · ){7}0$/.test(iweeks.split(': ').pop()))) throw new Error(`la tendencia de issues abiertos por semana no trae 8 cifras con algún issue: ${iweeks}`);
     const pcweeks = await page.$eval('#hl-prcloseweeks', (p) => p.textContent).catch(() => '');
     if (pcweeks && (!/(\d+ · ){7}\d+$/.test(pcweeks) || /^(0 · ){7}0$/.test(pcweeks.split(': ').pop()))) throw new Error(`la tendencia de PRs cerrados sin fusionar por semana no trae 8 cifras con algún PR: ${pcweeks}`);
+    // los forks nuevos por semana (ítem 195): la demo trae un fork de hace unos días, así que la serie sale con 8 cifras y alguna distinta de cero
+    const fkweeks = await page.$eval('#hl-forkweeks', (p) => p.textContent).catch(() => '');
+    if (!/^Forks nuevos por semana: (\d+ · ){7}\d+$/.test(fkweeks) || /^(0 · ){7}0$/.test(fkweeks.split(': ').pop())) throw new Error(`los forks nuevos por semana no traen 8 cifras con algún fork: «${fkweeks}»`);
     // El periodo de las series por semana se dice una vez, como encabezado del grupo, y no en cada línea (pendiente 12).
     const weekly = await page.evaluate(() => {
       const g = document.querySelector('#hl-weekly[role="group"]');
@@ -847,10 +850,12 @@ if (seccion('Escritorio (1280×800)'))
     await page.click('#hl-forks-toggle');
     const hidden = await page.$$eval('#hl-forks a.hl-row', (as) => as.length);
     if (await page.$('#hl-forks-trend')) throw new Error('el interruptor «Mostrar forks» apagado deja la tendencia de forks');
+    if (await page.$('#hl-forkweeks')) throw new Error('el interruptor «Mostrar forks» apagado deja los forks nuevos por semana');
     if (hidden || !(await page.evaluate(() => new URL(location.href).searchParams.get('forks') === '0'))) throw new Error('el interruptor «Mostrar forks» apagado no oculta los forks ni deja forks=0 en la URL');
     if (!(await page.evaluate(() => document.activeElement?.id === 'hl-forks-toggle'))) throw new Error('el foco se pierde al apagar el interruptor de forks');
     await page.click('#hl-forks-toggle');
     if ((await page.$$eval('#hl-forks a.hl-row', (as) => as.length)) !== 2 || (await page.evaluate(() => new URL(location.href).searchParams.has('forks')))) throw new Error('el interruptor «Mostrar forks» encendido no devuelve los 2 forks ni quita forks de la URL');
+    if (!(await page.$('#hl-forkweeks'))) throw new Error('el interruptor «Mostrar forks» encendido otra vez no devuelve los forks nuevos por semana');
     if (/undefined|NaN|health\./.test(info.text)) throw new Error('texto sin resolver en el panel: ' + info.text.slice(0, 120));
     // la demo trae una estrella de hace unos días (y suma otras en vivo): la semana actual frente a la anterior
     const stars = await page.$eval('#hl-stars', (s) => s.querySelector('.hl-line')?.textContent || '');

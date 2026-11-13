@@ -537,6 +537,7 @@ GB.i18n.define('hu', {
   'health.tagWeeks': 'Címkék hetente: {list}',
   'health.issueWeeks': 'Megnyitott issue-k hetente: {list}',
   'health.prCloseWeeks': 'Összefésülés nélkül lezárt pull requestek hetente: {list}',
+  'health.forkWeeks': 'Új forkok hetente: {list}',
   'health.addedWeeks': 'Hozzáadott sorok hetente: {list}',
   'health.deletedWeeks': 'Törölt sorok hetente: {list}',
   'health.codePending': 'A GitHub még számolja a hetente hozzáadott és törölt sorokat: nyisd meg újra a panelt egy pillanat múlva.',

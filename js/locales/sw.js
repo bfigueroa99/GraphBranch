@@ -537,6 +537,7 @@ GB.i18n.define('sw', {
   'health.tagWeeks': 'Lebo kwa wiki: {list}',
   'health.issueWeeks': 'Issue zilizofunguliwa kwa wiki: {list}',
   'health.prCloseWeeks': 'Pull request zilizofungwa bila kuunganishwa kwa wiki: {list}',
+  'health.forkWeeks': 'Fork mpya kwa wiki: {list}',
   'health.addedWeeks': 'Mistari iliyoongezwa kwa wiki: {list}',
   'health.deletedWeeks': 'Mistari iliyofutwa kwa wiki: {list}',
   'health.codePending': 'GitHub bado inahesabu mistari iliyoongezwa na kufutwa kwa wiki: fungua paneli tena baada ya muda mfupi.',

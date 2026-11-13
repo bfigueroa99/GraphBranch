@@ -87,7 +87,7 @@ test('ritmo: merges en 7 y 30 días y releases en 30, sin repetir una actividad'
     { id: '6', kind: 'push', time: ago(1) },
   ];
   const pace = compute(repo(), acts, NOW).pace;
-  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks], closedWeeks: [...pace.closedWeeks], branchWeeks: [...pace.branchWeeks], commitWeeks: [...pace.commitWeeks], authorWeeks: [...pace.authorWeeks], newAuthorWeeks: [...pace.newAuthorWeeks], tagWeeks: [...pace.tagWeeks], issueWeeks: [...pace.issueWeeks], prCloseWeeks: [...pace.prCloseWeeks], addedWeeks: [...pace.addedWeeks], deletedWeeks: [...pace.deletedWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], closedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], branchWeeks: [0, 0, 0, 0, 0, 0, 0, 0], commitWeeks: [0, 1, 0, 2, 0, 0, 0, 1], authorWeeks: [0, 0, 0, 0, 0, 0, 0, 0], newAuthorWeeks: [0, 0, 0, 0, 0, 0, 0, 0], tagWeeks: [0, 0, 0, 0, 0, 0, 0, 0], issueWeeks: [0, 0, 0, 0, 0, 0, 0, 0], prCloseWeeks: [0, 0, 0, 0, 0, 0, 0, 0], addedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], deletedWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
+  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks], closedWeeks: [...pace.closedWeeks], branchWeeks: [...pace.branchWeeks], commitWeeks: [...pace.commitWeeks], authorWeeks: [...pace.authorWeeks], newAuthorWeeks: [...pace.newAuthorWeeks], tagWeeks: [...pace.tagWeeks], issueWeeks: [...pace.issueWeeks], prCloseWeeks: [...pace.prCloseWeeks], forkWeeks: [...pace.forkWeeks], addedWeeks: [...pace.addedWeeks], deletedWeeks: [...pace.deletedWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], closedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], branchWeeks: [0, 0, 0, 0, 0, 0, 0, 0], commitWeeks: [0, 1, 0, 2, 0, 0, 0, 1], authorWeeks: [0, 0, 0, 0, 0, 0, 0, 0], newAuthorWeeks: [0, 0, 0, 0, 0, 0, 0, 0], tagWeeks: [0, 0, 0, 0, 0, 0, 0, 0], issueWeeks: [0, 0, 0, 0, 0, 0, 0, 0], prCloseWeeks: [0, 0, 0, 0, 0, 0, 0, 0], forkWeeks: [0, 0, 0, 0, 0, 0, 0, 0], addedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], deletedWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
 });
 
 test('DORA: despliegues en 30 días, mediana entre releases y tiempo de entrega', () => {
@@ -644,6 +644,28 @@ test('forks nuevos: la semana actual frente a la anterior, cada fork una vez y s
   const again = compute({ ...repo(), forks: [{ fullName: 'x/y', url: 'https://github.com/x/y', pushedAt: ago(1), stars: 0 }] }, [old, fork('a', 10, 'ana/orbita'), fork('b', 1, 'ana/orbita')], NOW);
   assert.deepEqual({ ...again.forkTrend }, { week: 0, prev: 1 });
   assert.deepEqual({ ...compute(repo(), [old], NOW).forkTrend }, { week: 0, prev: 0 });
+});
+
+test('forks nuevos por semana: las últimas 8, cada fork una vez en la semana en que se vio primero', () => {
+  const fork = (id, d, detail) => ({ id, kind: 'fork', time: ago(d), ...(detail != null ? { detail } : {}) });
+  const acts = [
+    fork('f1', 1, 'ana/orbita'),
+    fork('f2', 2, 'beto/orbita'),
+    fork('f3', 4, 'Beto/Orbita'), // el mismo fork (sin distinguir mayúsculas), visto antes: cuenta en esta semana igual, una vez
+    fork('f4', 9, 'carla/orbita'),
+    fork('f5', 23, ''), // sin nombre: cuenta sola
+    fork('f6', 23, ''),
+    fork('f7', 52, 'dani/orbita'), // la semana más vieja de las 8
+    fork('f8', 57, 'eva/orbita'), // fuera de las 8 semanas
+    fork('f9', -1, 'futuro/orbita'), // con la hora en el futuro: no cuenta
+    fork('f10', 30, 'ana/orbita'), // ana/orbita se vio primero hace 30 días: cuenta ahí y no esta semana
+    { id: 's1', kind: 'star', time: ago(1), actor: { login: 'ana' } }, // una estrella no es un fork
+    { id: 'f11', kind: 'fork', detail: 'sin/hora' }, // sin hora: no cuenta
+  ];
+  const h = compute(repo(), acts, NOW);
+  assert.deepEqual([...h.pace.forkWeeks], [1, 0, 0, 1, 2, 0, 1, 1], 'beto esta semana; carla la pasada; los dos sin nombre hace tres; ana hace cuatro; dani hace siete');
+  assert.equal(h.pace.forkWeeks[7], h.forkTrend.week, 'la semana actual de la serie es la de la tendencia');
+  assert.deepEqual([...compute(repo(), [], NOW).pace.forkWeeks], [0, 0, 0, 0, 0, 0, 0, 0]);
 });
 
 test('factor de ausencia: cuántas personas suman la mitad de los commits cargados (CHAOSS), sin nombres', () => {

@@ -537,6 +537,7 @@ GB.i18n.define('fi', {
   'health.tagWeeks': 'Tagit viikossa: {list}',
   'health.issueWeeks': 'Avatut issuet viikossa: {list}',
   'health.prCloseWeeks': 'Ilman yhdistämistä suljetut pull requestit viikossa: {list}',
+  'health.forkWeeks': 'Uudet forkit viikossa: {list}',
   'health.addedWeeks': 'Lisätyt rivit viikossa: {list}',
   'health.deletedWeeks': 'Poistetut rivit viikossa: {list}',
   'health.codePending': 'GitHub laskee vielä viikoittain lisättyjä ja poistettuja rivejä: avaa paneeli uudelleen hetken päästä.',

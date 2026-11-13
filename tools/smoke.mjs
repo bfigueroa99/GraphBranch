@@ -2381,7 +2381,7 @@ if (seccion('Varios repos a la vez'))
           who: [...document.querySelectorAll('#all-prs .ap-person option')].map((o) => o.textContent).join('|'),
         };
       }, issueSel);
-      if (iss.rows !== 1 || iss.tag !== 'A' || iss.href !== 'https://github.com/o/b/issues/9' || iss.target !== '_blank' || iss.rel !== 'noopener' || iss.t !== '#9 Falla el login' || iss.m !== 'o/b · carla' || iss.group !== 'Issues abiertos · 1' || iss.last !== 'issues' || !/: 2$/.test(iss.title) || !iss.who.includes('carla (1)') || !/^Issue #9 de o\/b: Falla el login/.test(iss.label || '') || /\{|undefined|NaN/.test(JSON.stringify(iss))) throw new Error('los issues en el Launchpad: ' + JSON.stringify(iss));
+      if (iss.rows !== 1 || iss.tag !== 'A' || iss.href !== 'https://github.com/o/b/issues/9' || iss.target !== '_blank' || iss.rel !== 'noopener' || iss.t !== '#9 Falla el login' || iss.m !== 'o/b · carla' || iss.group !== 'Issues abiertos · 1' || iss.last !== 'issues' || !/: 2$/.test(iss.title) || !iss.who.includes('carla (1)') || !/^Issue #9 de o\/b: Falla el login/.test(iss.label || '') || /\{|undefined|NaN/.test(Object.values(iss).join())) throw new Error('los issues en el Launchpad: ' + JSON.stringify(iss));
       const ipin = '#all-prs .ap-group[data-group="issues"] .ap-pin';
       await page.click(ipin);
       const ipinned = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), label: document.querySelector(sel)?.getAttribute('aria-label'), saved: localStorage.getItem('graphbranch:prpins'), focus: document.activeElement?.matches(sel) }), ipin);

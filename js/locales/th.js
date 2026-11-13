@@ -804,6 +804,8 @@ GB.i18n.define('th', {
   'constellation.orderRecent': 'คอมมิตล่าสุด',
   'constellation.ordered': 'เรียงตาม{order}',
   'constellation.filtered': 'กรองด้วย «{filter}»: {shown} จาก {total}',
+  'constellation.pushed': 'พุชล่าสุด {ago}',
+  'constellation.ghost': 'ยังไม่มีแท็บ: เลือกเพื่อเปิด',
   'all.tab': 'ทั้งหมด',
   'all.tabTitle': 'ดู repository ที่ติดตามทั้งหมดพร้อมกัน โดยไม่ต้องสลับแท็บ',
   'all.tabLabel': 'ทั้งหมด: repository ที่ติดตาม ({n})',

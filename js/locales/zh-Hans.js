@@ -803,6 +803,8 @@ GB.i18n.define('zh-Hans', {
   'constellation.orderRecent': '最近提交',
   'constellation.ordered': '已按{order}排序',
   'constellation.filtered': '按“{filter}”筛选：{total} 个中的 {shown} 个',
+  'constellation.pushed': '最近推送：{ago}',
+  'constellation.ghost': '没有标签页：选择即可打开',
   'all.tab': '全部',
   'all.tabTitle': '无需切换标签页，同时查看所有已关注的仓库',
   'all.tabLabel': '全部仓库（{n}）',

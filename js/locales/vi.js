@@ -803,6 +803,8 @@ GB.i18n.define('vi', {
   'constellation.orderRecent': 'Commit gần nhất',
   'constellation.ordered': 'Đã sắp xếp theo {order}',
   'constellation.filtered': 'Lọc theo «{filter}»: {shown} trên {total}',
+  'constellation.pushed': 'push gần nhất {ago}',
+  'constellation.ghost': 'chưa có tab: chọn để mở',
   'all.tab': 'Tất cả',
   'all.tabTitle': 'Xem cùng lúc mọi kho đang theo dõi, không cần đổi tab',
   'all.tabLabel': 'Tất cả các kho ({n})',

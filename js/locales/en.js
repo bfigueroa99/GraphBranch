@@ -809,6 +809,8 @@ GB.i18n.define('en', {
   'constellation.orderRecent': 'Last commit',
   'constellation.ordered': 'Sorted by {order}',
   'constellation.filtered': 'Filtered by “{filter}”: {shown} of {total}',
+  'constellation.pushed': 'last push {ago}',
+  'constellation.ghost': 'no tab: choose it to open one',
   'all.tab': 'All',
   'all.tabTitle': 'See every followed repository at once, without switching tabs',
   'all.tabLabel': 'All repositories ({n})',

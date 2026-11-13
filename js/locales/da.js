@@ -803,6 +803,8 @@ GB.i18n.define('da', {
   'constellation.orderRecent': 'Seneste commit',
   'constellation.ordered': 'Sorteret efter {order}',
   'constellation.filtered': 'Filtreret på «{filter}»: {shown} af {total}',
+  'constellation.pushed': 'seneste push {ago}',
+  'constellation.ghost': 'ingen fane: vælg den for at åbne den',
   'all.tab': 'Alle',
   'all.tabTitle': 'Se alle repositories, du følger, på én gang uden at skifte faneblad',
   'all.tabLabel': 'Alle repositories ({n})',

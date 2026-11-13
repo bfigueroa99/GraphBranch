@@ -804,6 +804,8 @@ GB.i18n.define('fil', {
   'constellation.orderRecent': 'Huling commit',
   'constellation.ordered': 'Inayos ayon sa {order}',
   'constellation.filtered': 'Naka-filter sa «{filter}»: {shown} sa {total}',
+  'constellation.pushed': 'huling push {ago}',
+  'constellation.ghost': 'walang tab: piliin ito para buksan',
   'all.tab': 'Lahat',
   'all.tabTitle': 'Tingnan nang sabay ang lahat ng sinusundang repository, nang hindi nagpapalit ng tab',
   'all.tabLabel': 'Lahat ng repository ({n})',

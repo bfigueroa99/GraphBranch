@@ -803,6 +803,8 @@ GB.i18n.define('hi', {
   'constellation.orderRecent': 'आख़िरी कमिट',
   'constellation.ordered': 'क्रम: {order}',
   'constellation.filtered': '«{filter}» से फ़िल्टर: {total} में से {shown}',
+  'constellation.pushed': 'आख़िरी पुश {ago}',
+  'constellation.ghost': 'कोई टैब नहीं: खोलने के लिए इसे चुनें',
   'all.tab': 'सभी',
   'all.tabTitle': 'टैब बदले बिना सभी फ़ॉलो की गई रिपॉज़िटरी एक साथ देखें',
   'all.tabLabel': 'सभी रिपॉज़िटरी ({n})',

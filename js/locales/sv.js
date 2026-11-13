@@ -803,6 +803,8 @@ GB.i18n.define('sv', {
   'constellation.orderRecent': 'Senaste commit',
   'constellation.ordered': 'Sorterat efter {order}',
   'constellation.filtered': 'Filtrerat på «{filter}»: {shown} av {total}',
+  'constellation.pushed': 'senaste push {ago}',
+  'constellation.ghost': 'ingen flik: välj den för att öppna den',
   'all.tab': 'Alla',
   'all.tabTitle': 'Se alla repon du följer på en gång, utan att byta flik',
   'all.tabLabel': 'Alla repon ({n})',

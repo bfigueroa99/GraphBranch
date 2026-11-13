@@ -6442,6 +6442,17 @@ html.tv .agk-btn {
 .cs-gx[data-quiet='true'] svg {
   opacity: 0.4;
 }
+/* un repo de una organización seguida sin pestaña: galaxia tenue, sin color, con un borde punteado; su nombre se lee igual */
+.cs-gx[data-state='ghost'] {
+  border: 1px dashed color-mix(in srgb, var(--ink) 35%, transparent);
+}
+.cs-gx[data-state='ghost'] svg {
+  opacity: 0.3;
+  filter: grayscale(1);
+}
+.cs-gx[data-state='ghost'] .cs-name {
+  color: var(--ink-2);
+}
 .cs-gx:hover svg,
 .cs-gx:focus-visible svg {
   filter: brightness(1.25);

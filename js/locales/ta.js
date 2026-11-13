@@ -803,6 +803,8 @@ GB.i18n.define('ta', {
   'constellation.orderRecent': 'கடைசி கமிட்',
   'constellation.ordered': '{order} படி வரிசைப்படுத்தப்பட்டது',
   'constellation.filtered': '«{filter}» மூலம் வடிகட்டியது: {total}-ல் {shown}',
+  'constellation.pushed': 'கடைசி புஷ் {ago}',
+  'constellation.ghost': 'தாவல் இல்லை: திறக்க இதைத் தேர்ந்தெடுக்கவும்',
   'all.tab': 'அனைத்தும்',
   'all.tabTitle': 'தாவலை மாற்றாமல் பின்தொடரும் எல்லாக் களஞ்சியங்களையும் ஒரே நேரத்தில் பார்க்கவும்',
   'all.tabLabel': 'அனைத்தும்: களஞ்சியங்கள் ({n})',

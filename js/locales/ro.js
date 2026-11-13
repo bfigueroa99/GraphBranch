@@ -811,6 +811,8 @@ GB.i18n.define('ro', {
   'constellation.orderRecent': 'Ultimul commit',
   'constellation.ordered': 'Sortate după {order}',
   'constellation.filtered': 'Filtrate după «{filter}»: {shown} din {total}',
+  'constellation.pushed': 'ultimul push {ago}',
+  'constellation.ghost': 'fără filă: alege-o ca s-o deschizi',
   'all.tab': 'Toate',
   'all.tabTitle': 'Vezi toate depozitele urmărite deodată, fără să schimbi fila',
   'all.tabLabel': 'Toate depozitele ({n})',

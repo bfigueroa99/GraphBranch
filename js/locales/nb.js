@@ -803,6 +803,8 @@ GB.i18n.define('nb', {
   'constellation.orderRecent': 'Siste commit',
   'constellation.ordered': 'Sortert etter {order}',
   'constellation.filtered': 'Filtrert på «{filter}»: {shown} av {total}',
+  'constellation.pushed': 'siste push {ago}',
+  'constellation.ghost': 'ingen fane: velg den for å åpne den',
   'all.tab': 'Alle',
   'all.tabTitle': 'Se alle repoer du følger samtidig, uten å bytte fane',
   'all.tabLabel': 'Alle repoer ({n})',

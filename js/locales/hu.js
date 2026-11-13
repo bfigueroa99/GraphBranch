@@ -803,6 +803,8 @@ GB.i18n.define('hu', {
   'constellation.orderRecent': 'Utolsó commit',
   'constellation.ordered': 'Rendezés: {order}',
   'constellation.filtered': 'Szűrés: «{filter}», {shown} / {total}',
+  'constellation.pushed': 'utolsó push {ago}',
+  'constellation.ghost': 'nincs lapja: a megnyitáshoz válassza ki',
   'all.tab': 'Mind',
   'all.tabTitle': 'Az összes követett repozitórium egyszerre, lapváltás nélkül',
   'all.tabLabel': 'Mind – repozitóriumok ({n})',

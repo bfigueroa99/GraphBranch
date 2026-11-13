@@ -846,6 +846,8 @@ GB.i18n.define('ur', {
   'constellation.orderRecent': 'آخری کمٹ',
   'constellation.ordered': '{order} کے مطابق ترتیب',
   'constellation.filtered': '«{filter}» سے فلٹر: {total} میں سے {shown}',
+  'constellation.pushed': 'آخری پش {ago}',
+  'constellation.ghost': 'کوئی ٹیب نہیں: کھولنے کے لیے اسے چنیں',
   'all.tab': 'سب',
   'all.tabTitle': 'ٹیب بدلے بغیر سب فالو کی گئی ریپوزٹریز ایک ساتھ دیکھیں',
   'all.tabLabel': 'سب ریپوزٹریز ({n})',

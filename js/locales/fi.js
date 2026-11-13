@@ -803,6 +803,8 @@ GB.i18n.define('fi', {
   'constellation.orderRecent': 'Viimeisin commit',
   'constellation.ordered': 'Lajiteltu: {order}',
   'constellation.filtered': 'Suodatus «{filter}»: {shown} / {total}',
+  'constellation.pushed': 'viimeisin push {ago}',
+  'constellation.ghost': 'ei välilehteä: avaa se valitsemalla',
   'all.tab': 'Kaikki',
   'all.tabTitle': 'Näytä kaikki seuratut repositoriot kerralla vaihtamatta välilehteä',
   'all.tabLabel': 'Kaikki repositoriot ({n})',

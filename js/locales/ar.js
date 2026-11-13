@@ -902,6 +902,8 @@ GB.i18n.define('ar', {
   'constellation.orderRecent': 'آخر commit',
   'constellation.ordered': 'مرتبة حسب {order}',
   'constellation.filtered': 'مصفاة بـ «{filter}»: {shown} من {total}',
+  'constellation.pushed': 'آخر push {ago}',
+  'constellation.ghost': 'بلا تبويب: اخترها لفتحها',
   'all.tab': 'الكل',
   'all.tabTitle': 'اعرض كل المستودعات المتابَعة معًا دون التنقل بين الألسنة',
   'all.tabLabel': 'الكل: المستودعات المتابَعة ({n})',

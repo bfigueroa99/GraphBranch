@@ -803,6 +803,8 @@ GB.i18n.define('ja', {
   'constellation.orderRecent': '最新のコミット',
   'constellation.ordered': '{order}順に並べました',
   'constellation.filtered': '「{filter}」で絞り込み：{total} 件中 {shown} 件',
+  'constellation.pushed': '最終プッシュ: {ago}',
+  'constellation.ghost': 'タブなし: 選ぶと開きます',
   'all.tab': 'すべて',
   'all.tabTitle': 'タブを切り替えずに、フォロー中のすべてのリポジトリを一度に表示',
   'all.tabLabel': 'すべてのリポジトリ（{n}）',

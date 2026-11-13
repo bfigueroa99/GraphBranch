@@ -860,6 +860,8 @@ GB.i18n.define('he', {
   'constellation.orderRecent': 'הקומיט האחרון',
   'constellation.ordered': 'ממוין לפי {order}',
   'constellation.filtered': 'מסונן לפי «{filter}»: {shown} מתוך {total}',
+  'constellation.pushed': 'push אחרון {ago}',
+  'constellation.ghost': 'בלי לשונית: בחרו כדי לפתוח',
   'all.tab': 'הכול',
   'all.tabTitle': 'הצגת כל המאגרים במעקב יחד, בלי לעבור בין לשוניות',
   'all.tabLabel': 'הכול: מאגרים במעקב ({n})',

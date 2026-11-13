@@ -814,6 +814,8 @@ GB.i18n.define('pl', {
   'constellation.orderRecent': 'Ostatni commit',
   'constellation.ordered': 'Posortowano według: {order}',
   'constellation.filtered': 'Filtr «{filter}»: {shown} z {total}',
+  'constellation.pushed': 'ostatni push {ago}',
+  'constellation.ghost': 'bez karty: wybierz, aby otworzyć',
   'all.tab': 'Wszystkie',
   'all.tabTitle': 'Zobacz wszystkie obserwowane repozytoria naraz, bez przełączania kart',
   'all.tabLabel': 'Wszystkie repozytoria ({n})',

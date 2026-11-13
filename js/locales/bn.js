@@ -803,6 +803,8 @@ GB.i18n.define('bn', {
   'constellation.orderRecent': 'সর্বশেষ কমিট',
   'constellation.ordered': 'সাজানো: {order}',
   'constellation.filtered': '«{filter}» দিয়ে ছাঁকা: {total}-এর মধ্যে {shown}',
+  'constellation.pushed': 'শেষ পুশ {ago}',
+  'constellation.ghost': 'কোনো ট্যাব নেই: খুলতে এটি বেছে নিন',
   'all.tab': 'সব',
   'all.tabTitle': 'ট্যাব না বদলে সব অনুসরণ করা রিপোজিটরি একসাথে দেখুন',
   'all.tabLabel': 'সব রিপোজিটরি ({n})',

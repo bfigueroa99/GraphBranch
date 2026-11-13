@@ -803,6 +803,8 @@ GB.i18n.define('sw', {
   'constellation.orderRecent': 'Commit ya mwisho',
   'constellation.ordered': 'Imepangwa kwa {order}',
   'constellation.filtered': 'Imechujwa kwa «{filter}»: {shown} kati ya {total}',
+  'constellation.pushed': 'push ya mwisho {ago}',
+  'constellation.ghost': 'haina kichupo: ichague ili kuifungua',
   'all.tab': 'Zote',
   'all.tabTitle': 'Tazama hazina zote zinazofuatiliwa kwa pamoja, bila kubadili kichupo',
   'all.tabLabel': 'Hazina zote ({n})',

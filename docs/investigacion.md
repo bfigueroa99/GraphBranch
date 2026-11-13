@@ -220,6 +220,88 @@ se consultó y su URL, y dice solo lo que la página dice: lo que no consta, se 
   repos con mucho movimiento, como ya dice Límites conocidos; las cifras que salen de los commits cargados
   (autores, ausencia) son las más firmes. No consta una comparación entre repos.
 
+### 2026-11-13 · OpenSSF Scorecard
+
+- **Qué es:** la herramienta de la Open Source Security Foundation que evalúa los riesgos de seguridad de un
+  proyecto de código abierto con 18 comprobaciones automáticas (vulnerabilidades, herramienta de
+  actualización de dependencias, mantenido, política de seguridad, licencia, protección de ramas, revisión de
+  código, flujos peligrosos, dependencias fijadas, permisos de tokens, versiones firmadas…), cada una con un
+  puntaje sobre 10. La portada le habla a quien mantiene un proyecto, a las organizaciones y a quien consume
+  dependencias; el README enlaza una API REST con los puntajes ya calculados (escanea más de 1,3 millones de
+  repos cada semana) y la insignia `https://api.scorecard.dev/projects/github.com/{owner}/{repo}/badge`.
+- **Fuente:** https://scorecard.dev/ y https://github.com/ossf/scorecard (consultadas el 2026-11-13). Medido
+  el 2026-11-13: `GET https://api.scorecard.dev/projects/github.com/ossf/scorecard` responde 200, sin token,
+  con `access-control-allow-origin: *`, la fecha del análisis, el puntaje total y cada comprobación con su
+  puntaje y su motivo.
+- **Implica:** el panel de salud podría dar el puntaje de Scorecard y sus comprobaciones más bajas con una
+  consulta por repo al abrirse, sin token; es un servidor nuevo en la CSP (`connect-src`), así que va con plan
+  por consenso deliberado. Solo los repos de GitHub que Scorecard analizó tienen puntaje.
+
+### 2026-11-13 · Swarmia (tiempo de ciclo de un PR)
+
+- **Qué es:** plataforma de métricas de ingeniería para equipos. Define el tiempo de ciclo de un PR como la
+  suma de tres etapas: en curso (del primer commit o de la apertura del PR, lo que pase antes, al primer
+  pedido de revisión), en revisión (del primer pedido de revisión, o de la apertura si no hubo, a la
+  aprobación final) y hasta fusionar (de la aprobación final a la fusión).
+- **Fuente:** https://help.swarmia.com/features/metrics/pull-request-cycle-time (consultada el 2026-11-13)
+- **Implica:** la salud ya da el tiempo a fusionar y el tiempo de entrega desde el primer commit; le falta
+  partirlo en etapas para ver dónde espera un PR, con lo que ya traen los PRs fusionados.
+
+### 2026-11-13 · GitHub Classroom
+
+- **Qué es:** el servicio de GitHub para cursos. Cada tarea individual crea un repo por estudiante en la
+  organización del curso, con el prefijo de la tarea y el usuario del estudiante (`assignment-1-octocat`; el
+  prefijo es por defecto el título de la tarea y se puede cambiar). La visibilidad la elige quien crea la
+  tarea.
+- **Fuente:** https://docs.github.com/en/education/manage-coursework-with-github-classroom/teach-with-github-classroom/create-an-individual-assignment (consultada el 2026-11-13)
+- **Implica:** las entregas de una tarea son los repos de una organización con un mismo prefijo: seguir la
+  organización y quedarse con los de ese prefijo deja ver a la clase entera, cada entrega una galaxia (la
+  constelación ya dibuja hasta 100 repos de una organización). Las privadas piden un token de la
+  organización.
+
+### 2026-11-13 · Dueños del código en GitHub (CODEOWNERS)
+
+- **Qué es:** el archivo `CODEOWNERS` (en `.github/`, en la raíz o en `docs/`; GitHub usa el primero que
+  encuentra, en ese orden) asigna patrones de archivo, con la sintaxis de gitignore, a personas o equipos, y
+  el último patrón que coincide manda. GitHub pide revisión a los dueños cuando un PR toca sus archivos (no en
+  los borradores) y usa el archivo de la rama base del PR.
+- **Fuente:** https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners (consultada el 2026-11-13)
+- **Implica:** GraphBranch podría decir de quién es cada archivo del diff de un commit, con una consulta al
+  archivo de la rama por defecto y la coincidencia hecha en el navegador: a un equipo le dice a quién
+  preguntar.
+
+### 2026-11-13 · Notas de la versión generadas por GitHub
+
+- **Qué es:** al publicar una versión, GitHub arma unas notas con la lista de PRs fusionados, la de quienes
+  contribuyeron y un enlace al registro completo de cambios, desde la versión anterior que se elija;
+  `.github/release.yml` las agrupa en categorías por etiqueta y excluye etiquetas o autores.
+- **Fuente:** https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes (consultada el 2026-11-13)
+- **Implica:** con lo ya cargado (los tags y los PRs fusionados con su autor), GraphBranch podría sacar un
+  borrador de notas en Markdown de lo fusionado desde el último tag, sin publicar nada (la app no escribe en
+  el repo); las categorías por etiqueta, en otra entrega.
+
+### 2026-11-13 · Star History
+
+- **Qué es:** sitio que se presenta como «The de facto GitHub star history graph»: la curva de estrellas de
+  un repo de GitHub en el tiempo, la comparación entre repos y los que más crecieron en la semana. La portada
+  no dice de dónde saca los datos.
+- **Fuente:** https://www.star-history.com/ y, para los datos, https://docs.github.com/en/rest/activity/starring (consultadas el 2026-11-13)
+- **Implica:** no entra a la hoja de ruta: la curva necesita la lista de stargazers con su fecha
+  (`application/vnd.github.star+json`), y la documentación de la API dice que el acceso a esa lista se limita
+  a administradores y colaboradores (desde julio de 2026). La salud sigue contando las estrellas del feed de
+  eventos.
+
+### 2026-11-13 · API de Gitea: estado combinado de un commit
+
+- **Qué es:** la API de Gitea (la base de Forgejo y de Codeberg) da el estado combinado del CI de una rama, un
+  tag o un commit: `GET /repos/{owner}/{repo}/commits/{ref}/status`, con `state` (pending, success, error,
+  failure, warning o skipped), cada estado aparte y su total.
+- **Fuente:** https://docs.gitea.com/api/next/operations/repo-get-combined-status-by-ref/ (consultada el 2026-11-13)
+- **Implica:** el CI en el grafo, que hoy es de GitHub y de GitLab, podría llegar a Codeberg y a un Forgejo
+  propio con una consulta por rama movida, como el de GitLab. La página de Forgejo Actions
+  (https://forgejo.org/docs/latest/user/actions/overview/) no dice cómo informa sus resultados. Queda como
+  candidata: la usaría un nicho.
+
 ## Ideas puntuadas
 
 Las de la hoja de ruta (su puntaje está también en `IMPROVEMENTS.md`) y las candidatas que salen de esta
@@ -404,11 +486,21 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Cargar más historia de una rama | Escala | 2×2/2 | 2,0 | Replica (GitKraken) | ítem 213 |
 | Constelación de una organización entera | Escala | 2×2/3 | 1,3 | GitKraken, Mapa de alcance | ítem 214 |
 | Galaxias por antigüedad del último cambio (carpetas locales) | Análisis | 1×2/2 | 1,0 | Git Truck | candidata |
+| Una tarea de GitHub Classroom: los repos de un prefijo | Público | 2×3/2 | 3,0 | GitHub Classroom | ítem 216 |
+| Salud del repo: el tiempo de ciclo de un PR por etapas | Análisis | 2×2/2 | 2,0 | Swarmia | ítem 217 |
+| Puntaje de OpenSSF Scorecard en la salud | Datos | 2×2/2 | 2,0 | OpenSSF Scorecard | ítem 218 |
+| Dueños del código en el diff | Datos | 2×2/2 | 2,0 | Dueños del código en GitHub (CODEOWNERS) | ítem 219 |
+| Borrador de notas de la versión | Salidas | 2×2/2 | 2,0 | Notas de la versión generadas por GitHub | ítem 220 |
+| Constelación: organizaciones de más de 100 repos | Escala | 1×2/2 | 1,0 | (ítem 214) | ítem 221 |
+| CI de Codeberg y Forgejo en el grafo | Datos | 1×2/2 | 1,0 | API de Gitea | candidata |
+| Curva de estrellas en el tiempo | Análisis | 2×2/2 | 2,0 | Star History | descartada: la lista de stargazers con su fecha queda para administradores y colaboradores |
 
 ## Públicos
 
 - **Quien enseña o aprende Git:** Learn Git Branching y git-sim muestran que la demanda existe y que
   funciona en el navegador; nadie lo hace sobre un grafo en vivo y en 40 idiomas (ítems 16 y 18).
+  Quien enseña con GitHub Classroom tiene cada entrega de una tarea como un repo de la organización del curso,
+  con el prefijo de la tarea (ítem 216).
 - **Quien transmite mientras programa:** no hay una capa de OBS lista para la actividad de GitHub
   (ítem 11).
 - **Equipos:** miden con DORA y miran Pulse; los clientes de escritorio cobran los choques entre ramas y

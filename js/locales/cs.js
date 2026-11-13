@@ -814,6 +814,8 @@ GB.i18n.define('cs', {
   'constellation.orderRecent': 'Poslední commit',
   'constellation.ordered': 'Seřazeno podle: {order}',
   'constellation.filtered': 'Filtr „{filter}“: {shown} z {total}',
+  'constellation.pushed': 'poslední push {ago}',
+  'constellation.ghost': 'bez karty: vyberte ji a otevře se',
   'all.tab': 'Vše',
   'all.tabTitle': 'Zobrazit všechny sledované repozitáře najednou, bez přepínání karet',
   'all.tabLabel': 'Vše – repozitáře ({n})',

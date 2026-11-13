@@ -1,7 +1,9 @@
 /* GraphBranch — constelación de repos: cada repo seguido es una galaxia, para ver más repos de los que caben
    en pestañas. Una galaxia es un botón (se recorre con Tab y se abre con Intro) con su nombre, sus cifras, cuánto
    hace de su commit más reciente ya cargado y, si hay, las novedades sin ver; el tamaño sale de los commits cargados y el color, del nombre. No hace
-   ninguna consulta: parte del estado ya cargado. Todo texto entra con textContent. */
+   ninguna consulta: parte del estado ya cargado. Los repos de una organización (o un usuario) seguida que no tienen
+   pestaña son galaxias tenues, con la fecha de su último push de la lista que ya se pidió (`ghostItems`). Todo texto
+   entra con textContent. */
 (function (GB) {
   'use strict';
 
@@ -10,6 +12,27 @@
   const R_MAX = 2.4;
   const PAD = 4; // margen del cuadro, en % del lado
   const ORDERS = ['activity', 'recent', 'prs', 'issues', 'stars', 'forks', 'new', 'name']; // los órdenes que no son el de las pestañas (el selector y ?order=)
+  const ORG_MAX = 100; // los repos de una organización seguida que caben en la constelación: una página de su lista
+
+  /** Los repos de las organizaciones (o usuarios) seguidas que no tienen pestaña, cada uno una galaxia tenue: `lists`
+      ({ dueño: [{ owner, name, pushedAt }] }, la lista de push más reciente que ya se pidió al seguirla), `open` (las
+      claves con pestaña) y `keyOf({ owner, name })`. Hasta ORG_MAX por dueño, en el orden de su lista y sin repetir;
+      `last` es su último push (ms, o `null`). No hace ninguna consulta. */
+  function ghostItems(lists, open, keyOf) {
+    const seen = new Set(open);
+    const out = [];
+    for (const list of Object.values(lists || {})) {
+      for (const p of (Array.isArray(list) ? list : []).slice(0, ORG_MAX)) {
+        if (!p || !p.owner || !p.name) continue;
+        const key = keyOf({ owner: p.owner, name: p.name });
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const at = Date.parse(p.pushedAt);
+        out.push({ key, name: `${p.owner}/${p.name}`, owner: p.owner, repo: p.name, ghost: true, state: 'ghost', commits: 0, branches: 0, last: Number.isFinite(at) ? at : null });
+      }
+    }
+    return out;
+  }
 
   /** Tamaño relativo de una galaxia según sus commits: crece con la raíz y se queda entre R_MIN y R_MAX. */
   function radiusOf(commits, maxCommits) {
@@ -182,8 +205,15 @@
 
   /** Lo que dice una galaxia: `label` (su nombre accesible) y `title` (su globo). Nombre, commits y ramas, cuánto hace de
       su commit más reciente ya cargado (`it.last`, con `ago(ms)`, el formato relativo de la app: nada si carga o está
-      vacía, sin `last`), si está quieta («sin actividad hace más de 30 días») y, solo en `label`, las novedades sin ver. */
+      vacía, sin `last`), si está quieta («sin actividad hace más de 30 días») y, solo en `label`, las novedades sin ver.
+      Una galaxia sin pestaña (`it.ghost`) dice su nombre, su último push, si está quieta y que no tiene pestaña. */
   function describe(it, { text, fmt = String, ago = null, now = Date.now() }) {
+    if (it.ghost) {
+      // sin pestaña no hay nada cargado: ni commits ni ramas que contar, solo su último push (de la lista de su dueño)
+      const pushed = ago && Number.isFinite(it.last) ? text('constellation.pushed', { ago: ago(it.last) }) : '';
+      const parts = [it.name, pushed, isQuiet(it, now) ? text('textview.quiet') : '', text('constellation.ghost')].filter(Boolean);
+      return { label: parts.join(', '), title: parts.join(' · ') };
+    }
     const stats = text('constellation.stats', { commits: fmt(it.commits || 0), branches: fmt(it.branches || 0) });
     const when = ago && Number.isFinite(it.last) ? ago(it.last) : '';
     const quiet = isQuiet(it, now) ? text('textview.quiet') : '';
@@ -269,5 +299,5 @@
     return { render, setOrder, setFilter, setRecent };
   }
 
-  GB.constellation = { place, sortItems, describe, openIssues, starsOf, forksOf, newBranches, orderParam, filterParam, filterItems, isQuiet, QUIET_DAYS, recentParam, recentItems, radiusOf, hueOf, mount };
+  GB.constellation = { place, sortItems, describe, ghostItems, ORG_MAX, openIssues, starsOf, forksOf, newBranches, orderParam, filterParam, filterItems, isQuiet, QUIET_DAYS, recentParam, recentItems, radiusOf, hueOf, mount };
 })(window.GB);

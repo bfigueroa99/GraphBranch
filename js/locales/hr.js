@@ -811,6 +811,8 @@ GB.i18n.define('hr', {
   'constellation.orderRecent': 'Zadnji commit',
   'constellation.ordered': 'Poredano po: {order}',
   'constellation.filtered': 'Filtrirano po «{filter}»: {shown} od {total}',
+  'constellation.pushed': 'zadnji push {ago}',
+  'constellation.ghost': 'bez kartice: odaberite je da se otvori',
   'all.tab': 'Sve',
   'all.tabTitle': 'Pogledajte sve praćene repozitorije odjednom, bez mijenjanja kartica',
   'all.tabLabel': 'Sve – repozitoriji ({n})',

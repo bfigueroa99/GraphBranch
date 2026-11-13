@@ -611,6 +611,9 @@
     if (v && typeof v === 'object') for (const [k, names] of Object.entries(v)) if (U.parseOwner('@' + k) && Array.isArray(names)) out[k] = names.filter((n) => typeof n === 'string');
     return out;
   })();
+  /* La última lista de cada organización seguida, con el último push de cada repo: la constelación dibuja los que no
+     tienen pestaña como galaxias tenues. Solo en memoria: llega al seguirla y en cada renovación (OWNER_REFRESH). */
+  const ownerLists = {};
   const STAGGER = 700; // los repos que arrancan juntos, escalonados: GitHub no recibe todo a la vez
   /** Clave de un repo (de su fuente o de { owner, name }): con ella se guarda lo suyo (fijadas, filtro, logros). */
   /** Los proyectos de GitLab llevan "gitlab:" delante (en la clave, en lo que se guarda y en la URL). */
@@ -856,6 +859,7 @@
     const seen = new Set(followedOwners[owner]);
     followedOwners[owner] = list.map((p) => p.name).concat([...seen]).filter((n, i, a) => a.indexOf(n) === i).slice(0, OWNER_SEEN_MAX);
     U.store.set('owners', followedOwners);
+    ownerLists[owner] = list.slice(0, GB.constellation.ORG_MAX);
     const fresh = list.filter((p) => !tabs.some((x) => x.key === keyOf(p)) && (!refresh || !seen.has(p.name)));
     if (refresh) {
       const room = fresh.slice(0, Math.max(0, MAX_REPOS - realTabs().length));
@@ -957,6 +961,7 @@
       const has = realTabs().some((x) => !['gitlab', 'codeberg', 'forgejo', 'bitbucket', 'bitbucketdc', 'azure', 'local'].includes(x.source.host) && String(x.source.owner).toLowerCase() === owner.toLowerCase());
       if (!has) {
         delete followedOwners[owner];
+        delete ownerLists[owner];
         orgFeeds.delete(owner);
         feed.drop('org:' + owner.toLowerCase());
         changed = true;
@@ -3392,11 +3397,26 @@
     status: $('#constellation-status'),
     onGo(key) {
       const tab = tabs.find((x) => x.key === key);
+      const ghost = !tab && constellationGhosts.get(key);
       if (typeof el.constellation.close === 'function') el.constellation.close();
       else el.constellation.removeAttribute('open');
       if (tab) showTab(tab);
+      else if (ghost) openGhost(ghost);
     },
   });
+  /** Las galaxias tenues de la última vez que se abrió la constelación (clave -> repo), para abrir la elegida. */
+  let constellationGhosts = new Map();
+  /** Un repo de una organización seguida que no tenía pestaña: se abre en una, si queda lugar (como al escribirlo). */
+  function openGhost(ghost) {
+    const open = tabs.find((x) => x.key === ghost.key); // se abrió por otro lado mientras la constelación estaba abierta
+    if (open) return showTab(open);
+    if (realTabs().length >= MAX_REPOS) return repoNote(t('repo.limit'));
+    resume();
+    const tab = addTab(sourceFor({ owner: ghost.owner, name: ghost.repo }));
+    startTab(tab);
+    repoNote('');
+    showTab(tab);
+  }
   el.constellation = $('#constellation');
   try {
     // ?order=activity|prs|issues|stars|forks|new|name: la constelación abre ya ordenada (sin anunciarlo: no la pidió nadie con el selector)
@@ -3416,6 +3436,9 @@
     return last;
   }
   $('#constellation-btn').addEventListener('click', () => {
+    // los repos sin pestaña de las organizaciones seguidas, de su lista ya pedida: ninguna consulta nueva
+    const ghosts = GB.constellation.ghostItems(ownerLists, tabs.filter((x) => x.source).map((x) => x.key), keyOf);
+    constellationGhosts = new Map(ghosts.map((g) => [g.key, g]));
     constellation.render(
       tabs
         .filter((x) => x.source)
@@ -3433,7 +3456,8 @@
           state: x.status?.state || 'loading',
           unread: x.unread,
           active: x === active,
-        })),
+        }))
+        .concat(ghosts),
     );
     if (typeof el.constellation.showModal === 'function') el.constellation.showModal();
     else el.constellation.setAttribute('open', '');

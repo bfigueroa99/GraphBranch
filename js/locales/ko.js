@@ -803,6 +803,8 @@ GB.i18n.define('ko', {
   'constellation.orderRecent': '최근 커밋',
   'constellation.ordered': '{order} 순으로 정렬됨',
   'constellation.filtered': '«{filter}» 필터: {total}개 중 {shown}개',
+  'constellation.pushed': '마지막 푸시 {ago}',
+  'constellation.ghost': '탭 없음: 선택하면 열립니다',
   'all.tab': '전체',
   'all.tabTitle': '탭을 바꾸지 않고 팔로우 중인 모든 저장소를 한 번에 보기',
   'all.tabLabel': '전체 저장소 ({n})',

@@ -803,6 +803,8 @@ GB.i18n.define('id', {
   'constellation.orderRecent': 'Commit terakhir',
   'constellation.ordered': 'Diurutkan menurut {order}',
   'constellation.filtered': 'Disaring dengan «{filter}»: {shown} dari {total}',
+  'constellation.pushed': 'push terakhir {ago}',
+  'constellation.ghost': 'tanpa tab: pilih untuk membukanya',
   'all.tab': 'Semua',
   'all.tabTitle': 'Lihat semua repositori yang diikuti sekaligus, tanpa berganti tab',
   'all.tabLabel': 'Semua repositori ({n})',

@@ -803,6 +803,8 @@ GB.i18n.define('bg', {
   'constellation.orderRecent': 'Последен commit',
   'constellation.ordered': 'Подредено по: {order}',
   'constellation.filtered': 'Филтър «{filter}»: {shown} от {total}',
+  'constellation.pushed': 'последен push {ago}',
+  'constellation.ghost': 'без таб: изберете я, за да я отворите',
   'all.tab': 'Всички',
   'all.tabTitle': 'Вижте всички следвани хранилища наведнъж, без да сменяте разделите',
   'all.tabLabel': 'Всички хранилища ({n})',

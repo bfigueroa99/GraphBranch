@@ -846,6 +846,8 @@ GB.i18n.define('fa', {
   'constellation.orderRecent': 'آخرین کامیت',
   'constellation.ordered': 'مرتب‌شده بر اساس {order}',
   'constellation.filtered': 'فیلتر «{filter}»: {shown} از {total}',
+  'constellation.pushed': 'آخرین پوش {ago}',
+  'constellation.ghost': 'بدون زبانه: برای باز کردن انتخابش کنید',
   'all.tab': 'همه',
   'all.tabTitle': 'دیدن همهٔ مخزن‌های دنبال‌شده با هم، بدون عوض کردن زبانه',
   'all.tabLabel': 'همهٔ مخزن‌ها ({n})',

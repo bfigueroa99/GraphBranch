@@ -256,3 +256,54 @@ test('una galaxia quieta (su commit más reciente cargado tiene más de 30 días
   const loading = C.describe({ name: 'o/l', commits: 0, branches: 0, state: 'loading' }, { text, ago, now: NOW });
   assert.ok(!/sin actividad/.test(loading.label));
 });
+
+test('una organización seguida: sus repos sin pestaña son galaxias tenues con su último push, hasta 100 por dueño y sin repetir', () => {
+  const keyOf = ({ owner, name }) => `${owner}/${name}`.toLowerCase();
+  const push = (i) => new Date(Date.UTC(2026, 9, 1) - i * 3600e3).toISOString();
+  const acme = Array.from({ length: 130 }, (_, i) => ({ owner: 'acme', name: `r${i}`, pushedAt: push(i), private: false }));
+  acme[3].pushedAt = null; // sin fecha: la galaxia no la inventa
+  const lists = { acme, ana: [{ owner: 'Ana', name: 'Notas', pushedAt: push(0) }, { owner: 'acme', name: 'r5', pushedAt: push(5) }] };
+  const open = new Set(['acme/r0', 'acme/r2']); // las que tienen pestaña no se repiten como galaxia tenue
+  const ghosts = JSON.parse(JSON.stringify(C.ghostItems(lists, open, keyOf)));
+  assert.equal(C.ORG_MAX, 100);
+  // de acme, los 100 primeros de su lista (la de push más reciente) menos los 2 con pestaña; de ana, el suyo (r5 ya estaba)
+  assert.equal(ghosts.length, 98 + 1);
+  assert.deepEqual(ghosts.slice(0, 3).map((g) => g.key), ['acme/r1', 'acme/r3', 'acme/r4']);
+  assert.ok(!ghosts.some((g) => g.key === 'acme/r100'), 'pasado el tope de la lista no entra');
+  assert.equal(ghosts.filter((g) => g.key === 'acme/r5').length, 1, 'un repo en dos listas, una sola galaxia');
+  const notas = ghosts.find((g) => g.key === 'ana/notas');
+  assert.deepEqual(notas, { key: 'ana/notas', name: 'Ana/Notas', owner: 'Ana', repo: 'Notas', ghost: true, state: 'ghost', commits: 0, branches: 0, last: Date.parse(push(0)) });
+  assert.equal(ghosts.find((g) => g.key === 'acme/r3').last, null);
+  // sin listas (ninguna organización seguida, o su lista no llegó) no hay galaxias tenues
+  assert.deepEqual(JSON.parse(JSON.stringify(C.ghostItems({}, open, keyOf))), []);
+  assert.deepEqual(JSON.parse(JSON.stringify(C.ghostItems(null, open, keyOf))), []);
+  assert.deepEqual(JSON.parse(JSON.stringify(C.ghostItems({ x: 'no es una lista', y: [null, { owner: 'y' }] }, open, keyOf))), []);
+});
+
+test('una galaxia sin pestaña dice su último push y que no tiene pestaña, sin commits ni ramas que no se cargaron', () => {
+  const NOW = 1_800_000_000_000;
+  const DAY = 864e5;
+  const text = (k, p) => (k === 'constellation.pushed' ? `último push ${p.ago}` : k === 'constellation.ghost' ? 'sin pestaña: elígela para abrirla' : k === 'textview.quiet' ? 'sin actividad hace más de 30 días' : k);
+  const ago = (ms) => `hace ${(NOW - ms) / DAY} d`;
+  const g = { key: 'acme/web', name: 'acme/web', ghost: true, state: 'ghost', commits: 0, branches: 0, last: NOW - 2 * DAY };
+  const d = C.describe(g, { text, ago, now: NOW });
+  assert.equal(d.label, 'acme/web, último push hace 2 d, sin pestaña: elígela para abrirla');
+  assert.equal(d.title, 'acme/web · último push hace 2 d · sin pestaña: elígela para abrirla');
+  const old = C.describe({ ...g, last: NOW - 90 * DAY }, { text, ago, now: NOW });
+  assert.equal(old.label, 'acme/web, último push hace 90 d, sin actividad hace más de 30 días, sin pestaña: elígela para abrirla');
+  const never = C.describe({ ...g, last: null }, { text, ago: () => assert.fail('sin fecha no se formatea nada'), now: NOW });
+  assert.equal(never.label, 'acme/web, sin pestaña: elígela para abrirla');
+});
+
+test('20 pestañas y 100 repos más de su organización: las 120 galaxias caben en el cuadro sin tocarse, las tenues afuera', () => {
+  const items = [...repos(20), ...Array.from({ length: 100 }, (_, i) => ({ key: `acme/g${i}`, commits: 0, ghost: true }))];
+  const spots = place(items);
+  assert.equal(spots.length, 120);
+  for (const s of spots) assert.ok(s.r > 0 && s.x - s.r >= 0 && s.x + s.r <= 100 && s.y - s.r >= 0 && s.y + s.r <= 100, JSON.stringify(s));
+  for (let i = 0; i < spots.length; i++)
+    for (let j = i + 1; j < spots.length; j++)
+      assert.ok(Math.hypot(spots[i].x - spots[j].x, spots[i].y - spots[j].y) >= spots[i].r + spots[j].r, `${i} toca a ${j}`);
+  // la espiral pone primero las de más commits: las tenues (sin commits cargados) quedan, en promedio, más afuera
+  const far = (list) => list.reduce((sum, s) => sum + Math.hypot(s.x - 50, s.y - 50), 0) / list.length;
+  assert.ok(far(spots.slice(20)) > far(spots.slice(0, 20)), 'las sin commits cargados van hacia afuera');
+});

@@ -819,6 +819,8 @@ GB.i18n.define('ru', {
   'constellation.orderRecent': 'Последний коммит',
   'constellation.ordered': 'Отсортировано: {order}',
   'constellation.filtered': 'Фильтр «{filter}»: {shown} из {total}',
+  'constellation.pushed': 'последний push {ago}',
+  'constellation.ghost': 'без вкладки: выберите, чтобы открыть',
   'all.tab': 'Все',
   'all.tabTitle': 'Все отслеживаемые репозитории сразу, без переключения вкладок',
   'all.tabLabel': 'Все репозитории ({n})',

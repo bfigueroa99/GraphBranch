@@ -803,6 +803,8 @@ GB.i18n.define('ms', {
   'constellation.orderRecent': 'Commit terakhir',
   'constellation.ordered': 'Disusun mengikut {order}',
   'constellation.filtered': 'Ditapis mengikut «{filter}»: {shown} daripada {total}',
+  'constellation.pushed': 'push terakhir {ago}',
+  'constellation.ghost': 'tiada tab: pilih untuk membukanya',
   'all.tab': 'Semua',
   'all.tabTitle': 'Lihat semua repositori yang diikuti serentak, tanpa menukar tab',
   'all.tabLabel': 'Semua repositori ({n})',

@@ -803,6 +803,8 @@ GB.i18n.define('ca', {
   'constellation.orderRecent': 'Últim commit',
   'constellation.ordered': 'Ordenat per {order}',
   'constellation.filtered': 'Filtrades per «{filter}»: {shown} de {total}',
+  'constellation.pushed': 'últim push {ago}',
+  'constellation.ghost': 'sense pestanya: tria-la per obrir-la',
   'all.tab': 'Tots',
   'all.tabTitle': 'Mostra tots els repositoris seguits alhora, sense canviar de pestanya',
   'all.tabLabel': 'Tots els repositoris ({n})',

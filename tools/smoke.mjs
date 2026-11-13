@@ -3402,6 +3402,30 @@ if (seccion('Una organización o un usuario entero'))
     if ((await names()).includes('acme/viejo')) throw new Error(`volvió el cerrado: ${await names()}`);
   });
 
+  await step(page, 'la constelación dibuja tenue el repo de la organización sin pestaña, con su último push y sin consultarlo, y elegirlo lo abre', async () => {
+    const viejo = () => gh.calls.filter((c) => c.startsWith('/repos/acme/viejo')).length;
+    const before = viejo();
+    await page.click('#constellation-btn');
+    await page.waitForSelector('#constellation[open] .cs-gx[data-state="ghost"]', { timeout: T(3000) });
+    const gx = await page.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => ({ key: b.dataset.key, ghost: b.dataset.state === 'ghost', label: b.getAttribute('aria-label') })));
+    const ghosts = gx.filter((g) => g.ghost);
+    // la lista de acme trae api, web, nuevo y viejo (sin el fork ni el archivado): solo viejo no tiene pestaña
+    if (ghosts.map((g) => g.key).join() !== 'acme/viejo') throw new Error('galaxias tenues: ' + JSON.stringify(gx));
+    if (gx.filter((g) => !g.ghost).map((g) => g.key).sort().join() !== 'acme/api,acme/nuevo,acme/web') throw new Error('galaxias de las pestañas: ' + JSON.stringify(gx));
+    if (!/^acme\/viejo, último push hace .+, sin pestaña: elígela para abrirla$/.test(ghosts[0].label)) throw new Error('la galaxia tenue dice: ' + ghosts[0].label);
+    await page.waitForTimeout(1600); // una renovación de la lista de por medio: dibujarla no consulta el repo
+    if (viejo() !== before) throw new Error('la galaxia tenue consultó su repo: ' + gh.calls.filter((c) => c.startsWith('/repos/acme/viejo')).slice(before).join(', '));
+    await page.focus('#constellation .cs-gx[data-state="ghost"]');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#constellation:not([open])', { state: 'attached', timeout: T(3000) });
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'acme/viejo', null, { timeout: T(10000) });
+    if (!(await names()).includes('acme/viejo*')) throw new Error(`elegir la galaxia tenue no abrió su pestaña: ${await names()}`);
+    if (viejo() === before) throw new Error('la pestaña abierta no cargó su repo');
+    // se cierra otra vez: los pasos que siguen cuentan las pestañas de acme sin ella
+    await page.locator('.rt', { hasText: 'acme/viejo' }).locator('.rt-close').click();
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 3, null, { timeout: T(5000) });
+  });
+
   await step(page, 'al cerrar el último repo de la organización deja de seguirse', async () => {
     // con otro repo de por medio: con una sola pestaña la barra se esconde
     await page.fill('#repo-input', 'ana/notas');

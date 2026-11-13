@@ -819,6 +819,8 @@ GB.i18n.define('uk', {
   'constellation.orderRecent': 'Останній коміт',
   'constellation.ordered': 'Відсортовано: {order}',
   'constellation.filtered': 'Фільтр «{filter}»: {shown} з {total}',
+  'constellation.pushed': 'останній push {ago}',
+  'constellation.ghost': 'без вкладки: виберіть, щоб відкрити',
   'all.tab': 'Усі',
   'all.tabTitle': 'Усі відстежувані репозиторії разом, без перемикання вкладок',
   'all.tabLabel': 'Усі репозиторії ({n})',

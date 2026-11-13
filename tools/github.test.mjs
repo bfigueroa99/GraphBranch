@@ -452,6 +452,22 @@ test('org:nombre: los repos de push más reciente, sin forks ni archivados, en u
   assert.equal(q.get('direction'), 'desc');
 });
 
+test('org:nombre con dos páginas de repos: la constelación se arma con la primera (hasta 100), sin pedir la segunda ni las ramas de nadie', async () => {
+  const gh = fakeGitHub();
+  const page = (from, n) => Array.from({ length: n }, (_, i) => listed(`r${from + i}`, { pushed_at: new Date(Date.UTC(2026, 9, 1) - (from + i) * 3600e3).toISOString() }));
+  gh.override = (path) => {
+    if (!path.startsWith('/orgs/acme/repos?')) return null;
+    const second = new URL('https://api.github.com' + path).searchParams.get('page') === '2';
+    return second ? { body: page(100, 30) } : { body: page(0, 100), headers: { Link: '<https://api.github.com/orgs/acme/repos?sort=pushed&direction=desc&per_page=100&type=all&page=2>; rel="next"' } };
+  };
+  const GB = load(gh);
+  const list = await GB.GitHubSource.ownerRepos('acme');
+  assert.equal(list.length, 100);
+  assert.equal(list[0].pushedAt, '2026-10-01T00:00:00.000Z', 'cada repo trae su último push, para su galaxia');
+  assert.deepEqual(gh.calls.map((c) => c.split('?')[0]), ['/orgs/acme/repos'], 'una consulta: ni la segunda página ni las ramas de los repos sin pestaña');
+  assert.equal(new URL('https://api.github.com' + gh.calls[0]).searchParams.get('per_page'), '100');
+});
+
 test('@usuario: si no es una organización, sus repos; si no existe, lo dice', async () => {
   const gh = fakeGitHub();
   gh.override = (path) => (path.startsWith('/users/ana/repos?') ? { body: [listed('notas', { owner: { login: 'ana' } })] } : null);

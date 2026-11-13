@@ -804,6 +804,8 @@ GB.i18n.define('fr', {
   'constellation.orderRecent': 'Dernier commit',
   'constellation.ordered': 'Triées par {order}',
   'constellation.filtered': 'Filtrées par « {filter} » : {shown} sur {total}',
+  'constellation.pushed': 'dernier push {ago}',
+  'constellation.ghost': 'sans onglet : sélectionnez-le pour l\'ouvrir',
   'all.tab': 'Tous',
   'all.tabTitle': 'Voir tous les dépôts suivis à la fois, sans changer d’onglet',
   'all.tabLabel': 'Tous les dépôts ({n})',

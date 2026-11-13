@@ -87,7 +87,7 @@ test('ritmo: merges en 7 y 30 días y releases en 30, sin repetir una actividad'
     { id: '6', kind: 'push', time: ago(1) },
   ];
   const pace = compute(repo(), acts, NOW).pace;
-  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks], closedWeeks: [...pace.closedWeeks], branchWeeks: [...pace.branchWeeks], commitWeeks: [...pace.commitWeeks], authorWeeks: [...pace.authorWeeks], newAuthorWeeks: [...pace.newAuthorWeeks], tagWeeks: [...pace.tagWeeks], issueWeeks: [...pace.issueWeeks], prCloseWeeks: [...pace.prCloseWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], closedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], branchWeeks: [0, 0, 0, 0, 0, 0, 0, 0], commitWeeks: [0, 1, 0, 2, 0, 0, 0, 1], authorWeeks: [0, 0, 0, 0, 0, 0, 0, 0], newAuthorWeeks: [0, 0, 0, 0, 0, 0, 0, 0], tagWeeks: [0, 0, 0, 0, 0, 0, 0, 0], issueWeeks: [0, 0, 0, 0, 0, 0, 0, 0], prCloseWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
+  assert.deepEqual({ ...pace, mergeWeeks: [...pace.mergeWeeks], openedWeeks: [...pace.openedWeeks], closedWeeks: [...pace.closedWeeks], branchWeeks: [...pace.branchWeeks], commitWeeks: [...pace.commitWeeks], authorWeeks: [...pace.authorWeeks], newAuthorWeeks: [...pace.newAuthorWeeks], tagWeeks: [...pace.tagWeeks], issueWeeks: [...pace.issueWeeks], prCloseWeeks: [...pace.prCloseWeeks], addedWeeks: [...pace.addedWeeks], deletedWeeks: [...pace.deletedWeeks] }, { merges7: 1, merges30: 2, releases30: 1, mergeWeeks: [0, 0, 1, 0, 0, 1, 0, 1], openedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], closedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], branchWeeks: [0, 0, 0, 0, 0, 0, 0, 0], commitWeeks: [0, 1, 0, 2, 0, 0, 0, 1], authorWeeks: [0, 0, 0, 0, 0, 0, 0, 0], newAuthorWeeks: [0, 0, 0, 0, 0, 0, 0, 0], tagWeeks: [0, 0, 0, 0, 0, 0, 0, 0], issueWeeks: [0, 0, 0, 0, 0, 0, 0, 0], prCloseWeeks: [0, 0, 0, 0, 0, 0, 0, 0], addedWeeks: [0, 0, 0, 0, 0, 0, 0, 0], deletedWeeks: [0, 0, 0, 0, 0, 0, 0, 0] });
 });
 
 test('DORA: despliegues en 30 días, mediana entre releases y tiempo de entrega', () => {
@@ -663,4 +663,31 @@ test('factor de ausencia: cuántas personas suman la mitad de los commits cargad
   assert.equal(compute(data, [], NOW).absence, null);
   data.commits = new Map();
   assert.equal(compute(data, [], NOW).absence, null);
+});
+
+test('líneas añadidas y borradas por semana: las de /stats/code_frequency en las mismas 8 semanas, y «calculando» con el 202', () => {
+  const data = repo();
+  const none = compute(data, [], NOW);
+  assert.deepEqual(Array.from(none.pace.addedWeeks), [0, 0, 0, 0, 0, 0, 0, 0], 'sin la consulta, todo en cero (la línea no sale)');
+  assert.deepEqual(Array.from(none.pace.deletedWeeks), [0, 0, 0, 0, 0, 0, 0, 0]);
+  assert.equal(none.code, null);
+  data.codeFreq = {
+    state: 'ok',
+    weeks: [
+      { time: ago(200), added: 999, deleted: 999 }, // de antes de las 8 semanas: no entra
+      { time: ago(50), added: 120, deleted: 30 }, // la más vieja de las 8
+      { time: ago(20), added: 15, deleted: 4 },
+      { time: ago(3), added: 7, deleted: 1 }, // la actual
+      { time: ago(-2), added: 5, deleted: 5 }, // del futuro (reloj adelantado): no entra
+      { time: ago(2), added: Number.NaN, deleted: -3 }, // cifras raras: no suman
+    ],
+  };
+  const h = compute(data, [], NOW);
+  assert.deepEqual(Array.from(h.pace.addedWeeks), [120, 0, 0, 0, 0, 15, 0, 7]);
+  assert.deepEqual(Array.from(h.pace.deletedWeeks), [30, 0, 0, 0, 0, 4, 0, 1]);
+  assert.deepEqual({ ...h.code }, { pending: false });
+  data.codeFreq = { state: 'pending', weeks: [] };
+  const p = compute(data, [], NOW);
+  assert.deepEqual({ ...p.code }, { pending: true }, 'GitHub dijo 202: la línea pide volver a abrir el panel');
+  assert.deepEqual(Array.from(p.pace.addedWeeks), [0, 0, 0, 0, 0, 0, 0, 0]);
 });

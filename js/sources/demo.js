@@ -244,6 +244,8 @@
       this.data.tags.set(first.sha, ['v1.0.0']);
       this.data.tags.set(rel.sha, ['v1.4.0']);
       this.data.deploys.set('production', { sha: rel.sha, ref: 'main', status: 'success' });
+      // líneas añadidas y borradas por semana, como las daría /stats/code_frequency: cifras propias de las últimas 8 semanas (la actual, a medias)
+      this.data.codeFreq = { state: 'ok', weeks: [[1840, 420], [960, 310], [2310, 1205], [640, 180], [1475, 890], [3120, 1460], [880, 240], [415, 95]].map(([added, deleted], i) => ({ time: Date.now() - ((7 - i) * 7 + 2) * 864e5, added, deleted })) };
       this.data.forks = [
         { fullName: 'maya-dev/orbita', url: 'https://github.com/maya-dev/orbita', pushedAt: Date.now() - 6 * 36e5, stars: 4 },
         { fullName: 'lucas-r/orbita', url: 'https://github.com/lucas-r/orbita', pushedAt: Date.now() - 9 * 864e5, stars: 0 },

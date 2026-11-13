@@ -793,6 +793,16 @@ if (seccion('Escritorio (1280×800)'))
     const absence = await page.$eval('#hl-absence', (p) => p.textContent).catch(() => '');
     const absN = absence.match(/:\s*(\d+)\D+(\d+)\D+(\d+)/);
     if (!absN || Number(absN[1]) < 1 || Number(absN[1]) > Number(absN[2]) || Number(absN[2]) > Number(absN[3])) throw new Error(`el factor de ausencia no sale o no cuadra (personas ≤ autores ≤ commits): ${absence}`);
+    // las líneas añadidas y borradas por semana (ítem 206): 8 cifras con el separador del idioma, alguna distinta de cero, y sin «calculando» en la demo
+    const lines = {};
+    for (const k of ['added', 'deleted']) {
+      const txt = await page.$eval(`#hl-${k}weeks`, (p) => p.textContent).catch(() => '');
+      const nums = txt.split(': ').pop().split(' · ').map((x) => Number(x.replace(/\D/g, '')));
+      if (nums.length !== 8 || nums.some((n) => !Number.isFinite(n)) || !nums.some(Boolean) || /undefined|NaN|health\./.test(txt)) throw new Error(`las líneas ${k === 'added' ? 'añadidas' : 'borradas'} por semana no traen 8 cifras con alguna distinta de cero: ${txt}`);
+      lines[k] = nums;
+    }
+    if (lines.added.reduce((a, b) => a + b) <= lines.deleted.reduce((a, b) => a + b)) throw new Error(`la demo borra más líneas de las que añade: ${JSON.stringify(lines)}`);
+    if (await page.$('#hl-codepending')) throw new Error('la demo dice que GitHub todavía calcula las líneas por semana');
     const tweeks = await page.$eval('#hl-tagweeks', (p) => p.textContent).catch(() => '');
     if (tweeks && (!/(\d+ · ){7}\d+$/.test(tweeks) || /^(0 · ){7}0$/.test(tweeks.split(': ').pop()))) throw new Error(`la tendencia de tags por semana no trae 8 cifras con algún tag: ${tweeks}`);
     const iweeks = await page.$eval('#hl-issueweeks', (p) => p.textContent).catch(() => '');

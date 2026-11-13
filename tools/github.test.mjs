@@ -945,6 +945,52 @@ test('forks: sin la API el grafo sigue y la lista queda vacía', async () => {
   assert.equal(on.src.data.forks.length, 0);
 });
 
+/* Líneas añadidas y borradas por semana: /stats/code_frequency, solo al abrir la salud, con ETag. */
+
+test('líneas por semana: una consulta al pedirlas (con ETag), el 202 queda «calculando» y se reintenta, el 204 queda vacío', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const wk = (d) => Math.floor((Date.now() - d * 864e5) / 1000);
+  let reply = { status: 202, body: {} };
+  gh.override = (path) => (path === '/repos/o/r/stats/code_frequency' ? reply : null);
+  const { src, errors } = connect(gh, 'tok');
+  await src.cycle();
+  const asked = () => gh.calls.filter((c) => c === '/repos/o/r/stats/code_frequency').length;
+  assert.equal(asked(), 0, 'sin abrir el panel no se consulta');
+  assert.equal(await src.syncCodeFrequency(), true);
+  assert.equal(errors.length, 0);
+  assert.equal(src.data.codeFreq.state, 'pending', 'GitHub lo está calculando');
+  reply = { status: 202, body: null }; // un 202 sin cuerpo tampoco es un fallo de red
+  assert.equal(await src.syncCodeFrequency(), true, 'con el 202 se vuelve a preguntar al abrir otra vez');
+  assert.equal(src.data.codeFreq.state, 'pending');
+  reply = { body: [[wk(10), 40, -12], [wk(2), 3, 0], ['x', 1, 1], [wk(1), 'mucho', -1]] };
+  assert.equal(await src.syncCodeFrequency(), true);
+  assert.equal(asked(), 3);
+  assert.equal(src.data.codeFreq.state, 'ok');
+  assert.deepEqual(JSON.parse(JSON.stringify(src.data.codeFreq.weeks.map((w) => [w.added, w.deleted]))), [[40, 12], [3, 0], [0, 1]], 'las borradas en positivo; una semana sin fecha no entra y una cifra rara cuenta 0');
+  assert.equal(src.data.codeFreq.weeks[0].time, wk(10) * 1000);
+  assert.equal(await src.syncCodeFrequency(), false, 'con la respuesta ya llegada, no se vuelve a preguntar hasta los 15 minutos');
+  assert.equal(asked(), 3);
+  src.lastPoll.codeFreq = Date.now() - 16 * 60000;
+  assert.equal(await src.syncCodeFrequency(), true);
+  assert.equal(asked(), 4);
+  assert.equal(src.data.codeFreq.weeks.length, 3, 'el 304 deja las mismas semanas');
+  const urls = gh.urls.filter((u) => u.endsWith('/stats/code_frequency'));
+  assert.equal(urls.length, 4);
+  // 204: el repo está vacío; 422 (más de 10 000 commits) o 404: sin la línea y sin error
+  for (const r of [{ status: 204, body: null }, { status: 422, body: { message: 'too many' } }, { status: 404, body: { message: 'Not Found' } }]) {
+    const other = fakeGitHub();
+    other.push('main', 'a1');
+    other.override = (path) => (path === '/repos/o/r/stats/code_frequency' ? r : null);
+    const c = connect(other, 'tok');
+    await c.src.cycle();
+    await c.src.syncCodeFrequency();
+    assert.equal(c.errors.length, 0);
+    assert.equal((c.src.data.codeFreq?.weeks || []).length, 0, `con ${r.status} no hay semanas`);
+    assert.notEqual(c.src.data.codeFreq?.state, 'pending');
+  }
+});
+
 /* Tiempo de entrega desde el primer commit: una consulta de /pulls/:n/commits por PR, solo al pedirla. */
 
 test('primer commit de cada PR fusionado: una consulta por PR, una sola vez, y un PR que falla no corta a los demás', async () => {

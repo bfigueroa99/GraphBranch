@@ -1856,13 +1856,14 @@
   // Las series por semana del panel de salud: el periodo («últimas 8 semanas, de la más vieja a la actual») va una sola
   // vez, como encabezado del grupo, y cada línea dice solo qué cuenta y sus cifras (pendiente 12: un lector de pantalla
   // leía la frase larga en cada una). Las que dan cero todas las semanas no salen; sin ninguna, tampoco el encabezado.
-  const WEEKLY_SERIES = [['merge', 'mergeWeeks'], ['opened', 'openedWeeks'], ['closed', 'closedWeeks'], ['branch', 'branchWeeks'], ['commit', 'commitWeeks'], ['author', 'authorWeeks'], ['newauthor', 'newAuthorWeeks'], ['tag', 'tagWeeks'], ['issue', 'issueWeeks'], ['prclose', 'prCloseWeeks']];
+  const WEEKLY_SERIES = [['merge', 'mergeWeeks'], ['opened', 'openedWeeks'], ['closed', 'closedWeeks'], ['branch', 'branchWeeks'], ['commit', 'commitWeeks'], ['author', 'authorWeeks'], ['newauthor', 'newAuthorWeeks'], ['tag', 'tagWeeks'], ['issue', 'issueWeeks'], ['prclose', 'prCloseWeeks'], ['added', 'addedWeeks'], ['deleted', 'deletedWeeks']];
+  const BIG_SERIES = new Set(['addedWeeks', 'deletedWeeks']); // cifras que pueden pasar de mil: con el separador del idioma
   function weeklyLines(pace) {
     const shown = WEEKLY_SERIES.filter(([, k]) => pace[k].some(Boolean));
     if (!shown.length) return '';
     const n = pace[shown[0][1]].length;
     return `<div class="hl-weekly" id="hl-weekly" role="group" aria-labelledby="hl-weekly-head"><p class="hl-line hl-weekly-head" id="hl-weekly-head">${U.esc(t('health.weeksHead', { n }))}</p>${shown
-      .map(([id, k]) => `<p class="hl-line" id="hl-${id}weeks">${U.esc(t('health.' + k, { list: pace[k].join(' · ') }))}</p>`)
+      .map(([id, k]) => `<p class="hl-line" id="hl-${id}weeks">${U.esc(t('health.' + k, { list: (BIG_SERIES.has(k) ? pace[k].map(U.fmtNum) : pace[k]).join(' · ') }))}</p>`)
       .join('')}</div>`;
   }
 
@@ -1911,7 +1912,7 @@
       `<div id="hl-unreviewed">${healthList('unreviewed', t('health.unreviewed'), h.unreviewed, (r) => [`#${r.number} ${r.title}`, span(r.age)])}</div>` +
       `<section class="hl-sec"><h3>${U.esc(t('health.merged'))}</h3>${
         h.merged ? `<p class="hl-line">${U.esc(t('health.mergedStat', { median: span(h.merged.median), max: span(h.merged.max) }))}</p>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
-      }${weeklyLines(h.pace)}${h.absence ? `<p class="hl-line" id="hl-absence">${U.esc(t('health.absence', { n: h.absence.n, authors: U.fmtNum(h.absence.authors), commits: U.fmtNum(h.absence.commits) }))}</p>` : ''}</section>` +
+      }${weeklyLines(h.pace)}${h.code?.pending ? `<p class="hl-none" id="hl-codepending">${U.esc(t('health.codePending'))}</p>` : ''}${h.absence ? `<p class="hl-line" id="hl-absence">${U.esc(t('health.absence', { n: h.absence.n, authors: U.fmtNum(h.absence.authors), commits: U.fmtNum(h.absence.commits) }))}</p>` : ''}</section>` +
       `<section class="hl-sec" id="hl-dora"><h3>${U.esc(t('health.dora'))}</h3>${
         h.dora.deploys30 || h.dora.gap != null || h.dora.lead != null || h.dora.weeks.some(Boolean)
           ? `<p class="hl-line">${U.esc(t('health.doraFreq', { n: h.dora.deploys30, gap: h.dora.gap != null ? span(h.dora.gap) : '—' }))}</p><p class="hl-line" id="hl-weeks">${U.esc(t('health.doraWeeks', { n: h.dora.weeks.length, list: h.dora.weeks.join(' · ') }))}</p><p class="hl-line">${U.esc(h.leadSource.fromCommit ? t('health.doraLeadCommit', { median: span(h.dora.lead), n: h.leadSource.fromCommit, total: h.leadSource.total }) : t('health.doraLead', { median: h.dora.lead != null ? span(h.dora.lead) : '—' }))}</p>`
@@ -2178,6 +2179,7 @@
     renderHealth();
     const asked = source;
     syncHealthForks();
+    if (asked.syncCodeFrequency) asked.syncCodeFrequency().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {}); // líneas añadidas y borradas: solo con el panel abierto
     if (asked.syncDeployStatuses && asked.data.deploys?.size) asked.syncDeployStatuses().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
     if (asked.syncFirstCommits) {
       const merged = feed.items.filter((a) => a.repo === active?.key && a.kind === 'pr-merge' && a.number && a.openedAt).sort((a, b) => b.time - a.time).slice(0, 20);

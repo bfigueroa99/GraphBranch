@@ -374,7 +374,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 3. [Deuda] «la práctica de git responde a los comandos en el grafo» (sección «Varios repos a la vez») falló en las dos
     corridas de la iteración 288 (2026-11-13) que la incluyeron, la suelta y la de la puerta, y pasó al repetir su sección
-    (otra vez en las dos puertas de la iteración 294, la segunda cortada en las e2e por un reinicio de la sesión):
+    (otra vez en las dos puertas de la iteración 294, la segunda cortada en las e2e por un reinicio de la sesión, y en la
+    de la 297):
     `page.waitForFunction: Timeout 30000ms exceeded`, el primer `waitForFunction` del paso (`#repo-link` en
     `practice/git` y `#practice` visible, con `T(15000)`), en una sección que el cambio no toca. Hipótesis: tras los pasos
     de la demo y del ensayo, el botón de la práctica no llega a cambiar de repo a tiempo en la primera carga de `lab`.
@@ -605,5 +606,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Guías: systematic-debugging (fase 1: reproducir y ubicar con un detector qué elemento estiraba la página antes de tocar nada), modern-web-guidance (`accessibility/accessibility.md`, «Visually Hidden Utility»: el texto oculto sigue en el árbol de accesibilidad), verification-before-completion (el ciclo rojo-verde de la sección nueva del smoke, deshaciendo el CSS con `git stash`)
 - OMC: no disponible (esta sesión no tiene la herramienta de subagentes): la receta 4 fue propia (la prueba que falla, vista fallar antes del arreglo); la revisión, una relectura adversarial del diff (que `position: relative` sin `z-index` no abre un contexto de apilamiento, que dentro de las dos cajas el único absoluto con el bloque contenedor afuera era el `.sr-only`, así que nada más cambia de lugar, el celular, donde «Todos» apila las tarjetas sin scroll propio, y que el paso no dependa del orden de carga de las pestañas); la verificación, contra la reproducción del pendiente.
 - Reclamo: loop/297, sin colisión
-- Validado: pendiente
+- Validado: 782 pruebas (`node --test`), smoke (40 idiomas; intermitente, en verde al repetir su sección: «la práctica de git responde a los comandos en el grafo»), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 30 e2e en verde. El intermitente es ajeno (sección «Varios repos a la vez», que el cambio no toca): anotado en su pendiente 3.
 - **Siguiente:** iteración 298, expansión: ítem 216 (Una tarea de GitHub Classroom: los repos de un prefijo, Público)

@@ -15,7 +15,7 @@ estas no se busca con find-skills (en `CONSTRUIR.md`, no aplica a lo que ya cubr
 |---|---|---|---|
 | 2 · Expansión | `test-driven-development` | La prueba que falla sin la capacidad se escribe primero y se ve fallar por la razón esperada; al escribirla, su `writing-good-tests.md` | Solo textos, README o documentos |
 | 2 · Un arreglo | `systematic-debugging` | Su fase 1 antes del primer intento: el error entero, la reproducción y el diff; si el intento falla, sigue `omc-tracer` (receta 4 de omc). Una intermitente (Deuda): su `condition-based-waiting.md`, esperar la condición y no un tiempo | La reproducción ya muestra la causa |
-| 2 · `index.html`, `css/`, `js/` o `sw.js` | `modern-web-guidance` | Antes de escribir, `grep -ril "<tema en inglés>"` en `.claude/skills/modern-web-guidance/guides` y se leen las guías que salgan (un `retrieve "<id>"` citado dentro es `guides/*/<id>.md`). Su CLI no se corre: baja código de npm | Lógica sin DOM ni CSS (el simulador de git, una fuente nueva) |
+| 2 · `index.html`, `css/`, `js/` o `sw.js` | `modern-web-guidance` | Antes de escribir, `grep -ril "<tema en inglés>"` en `.claude/skills/modern-web-guidance/guides`, un tema por búsqueda y nombrado por la pieza de la interfaz (`dialog`, `live region`, `container query`, no la tarea entera), y se leen las guías que salgan (un `retrieve "<id>"` citado dentro es `guides/*/<id>.md`). Su CLI no se corre: baja código de npm | Lógica sin DOM ni CSS (el simulador de git, una fuente nueva) |
 | 2 · `browser-extension/` | `chrome-extensions` | Su parte 1: las reglas obligatorias y la lista del final, sobre `manifest.json`, `content.js` y `repo.js` | Su parte 2 (`CHROMEWEBSTORE.md`): publicar es de Benjamin y lo de la tienda va al README |
 | 2 · Textos nuevos de la interfaz | `ux-copy` | El texto en inglés y en español: la acción con su verbo, el error con qué pasó y cómo seguir, el estado vacío con cómo empezar | Salida que imita a git u otra herramienta: va como ella |
 | 2 · Esos textos en los 40 idiomas | `content-translation` | Su paso 3: el sentido y no palabra por palabra, los nombres propios sin traducir, derecha a izquierda | URL, `hreflang` y palabras clave por mercado: la app tiene una sola URL |
@@ -55,3 +55,9 @@ no cita normas.
 La entrada de la bitácora lleva `- Guías: <skill> (<para qué>), …`, una por cada skill de este mapa que se leyó, o
 `- Guías: ninguna: <por qué>`. R5 la exige desde la entrada «Cambio de maquinaria: las guías del repo en el loop», con cada
 skill que nombra en este mapa (sus pasos o «de uso a mano»).
+
+Las filas que se deciden por la ruta no dependen de acordarse: si la rama toca `index.html`, `css/` o `sw.js`, la
+entrada en curso nombra `modern-web-guidance`, y si toca `browser-extension/`, `chrome-extensions`, cada una con su
+para qué o con por qué no hizo falta (`modern-web-guidance (no hizo falta: <por qué>)`). R5 lo mira con lo que la rama
+cambia frente a `dev` (`GUIAS_POR_RUTA` en `tools/loop.mjs`): de las 6 iteraciones que tocaron `css/` entre la 280 y la
+293, 3 no la habían leído. `js/` queda a juicio, por su «cuándo no».

@@ -82,7 +82,7 @@ export const ARENA_MAX = 8;
 export const MARCA_ARENA = 'Cambio de maquinaria: la arena';
 /** La CLI de find-skills (.claude/skills/find-skills/, de vercel-labs/skills), con la versión fija: si la CLI
     cambia en npm, no cambia bajo el loop. */
-export const SKILLS_CLI = 'skills@1.7.4';
+export const SKILLS_CLI = 'skills@1.8.1';
 /** La entrada de la bitácora desde la que cada iteración lleva «- Skills:» (qué buscó en el ecosistema de
     skills y qué hizo con lo que encontró, o por qué no aplica). Por posición, como MARCA_ARENA. */
 export const MARCA_SKILLS = 'Cambio de maquinaria: find-skills';
@@ -121,6 +121,15 @@ export const CONECTORES = ['github'];
 /** La entrada de la bitácora desde la que cada iteración lleva «- Guías:» (las skills del mapa que leyó, o por qué
     ninguna). Por posición, como MARCA_SKILLS. */
 export const MARCA_GUIAS = 'Cambio de maquinaria: las guías del repo';
+/** Las filas del mapa (GUIAS.md) que se deciden por la ruta, sin un «cuándo no» de juicio: si la rama toca una de
+    estas rutas, la entrada en curso nombra esa skill en «- Guías:», con su para qué o con por qué no hizo falta.
+    Medido en las iteraciones 280 a 293, las 14 desde el mapa: de las 6 que tocaron css/, 3 no leyeron
+    modern-web-guidance (286, 288 y 290), y la tabla solo se consultaba si la sesión se acordaba. js/ no entra:
+    su «cuándo no» (lógica sin DOM ni CSS, como el simulador de git) es de juicio. */
+export const GUIAS_POR_RUTA = [
+  [/^(?:index\.html|sw\.js)$|^css\//, 'modern-web-guidance'],
+  [/^browser-extension\//, 'chrome-extensions'],
+];
 /** Bytes del prompt de la Routine: solo apunta a la skill y dice lo que la skill no puede decir antes de que la
     sesión la lea (sincronizar con dev y que el turno terminado es la corrida terminada). */
 export const PROMPT_MAX = 750;
@@ -620,7 +629,21 @@ export function parseVendorizadas(texto) {
   return out;
 }
 
-export function check(texto, { archivo = null, hoja = null, log, superficial, skill, protocolos, prompt, settings, opencode, investigacion, auditBase, recon, features, guias, vendorizadas, hoy = new Date(), dir = root } = {}) {
+/** Lo que la rama cambia frente a origin/dev, desde donde se separó (lo commiteado, lo que no y lo nuevo sin
+    versionar: --check corre antes del commit del paso 5), y las iteraciones de la bitácora que ya están en dev.
+    R5 lo usa para GUIAS_POR_RUTA. null sin origin/dev. */
+export function ramaFrenteADev(dir = root) {
+  const base = git(dir, ['merge-base', `origin/${BASE}`, 'HEAD']);
+  if (base.status !== 0) return null;
+  const d = git(dir, ['diff', '--name-only', base.stdout.trim()]);
+  if (d.status !== 0) return null;
+  const nuevos = git(dir, ['ls-files', '--others', '--exclude-standard']).stdout;
+  const enDev = deRef(dir, `origin/${BASE}`);
+  const its = enDev.status === 0 ? parse(enDev.texto, { archivo: enDev.archivo }).bitacora.filter((x) => x.n !== null) : [];
+  return { archivos: [...new Set([...d.stdout.split('\n'), ...nuevos.split('\n')].filter(Boolean))], enDev: new Set(its.map((x) => x.n)) };
+}
+
+export function check(texto, { archivo = null, hoja = null, log, superficial, skill, protocolos, prompt, settings, opencode, investigacion, auditBase, recon, features, guias, vendorizadas, rama = null, hoy = new Date(), dir = root } = {}) {
   const doc = parse(texto, { archivo, hoja });
   // las skills del repo: el mapa de la skill y el registro de las vendorizadas (R15); R5 mira que lo que la bitácora
   // dice haber leído esté en el mapa. Una skill existe si su carpeta tiene SKILL.md, si viene con Claude Code o si es
@@ -760,6 +783,16 @@ export function check(texto, { archivo = null, hoja = null, log, superficial, sk
           const { nombres, resto } = guiasLeidas(g);
           if (!nombres.length || resto) e.push(`iteración ${it.n}: «- Guías:» con algo que no es «<skill> (<para qué>)»${resto ? ` («${corta(resto, 40)}»)` : ''}`);
           for (const n of nombres) if (enMapa ? !enMapa.has(n) : !existeSkill(n)) e.push(`iteración ${it.n}: «- Guías:» nombra ${n}, que no está ${enMapa ? 'en el mapa (GUIAS.md)' : 'en .claude/skills/ ni viene con Claude Code'}`);
+        }
+      }
+      // la entrada en curso (la última, si su iteración todavía no está en dev) frente a lo que toca la rama: la guía
+      // de cada ruta de GUIAS_POR_RUTA va nombrada, con su para qué o con por qué no hizo falta
+      if (rama && conGuias.has(it) && it === its.at(-1) && !rama.enDev.has(it.n)) {
+        const g = it.cuerpo.split('\n').find((l) => RE_GUIAS.test(l));
+        const leidas = g && !/^- Guías:\s*ninguna\b/i.test(g) ? guiasLeidas(g).nombres : [];
+        for (const [re, guia] of GUIAS_POR_RUTA) {
+          const tocadas = rama.archivos.filter((f) => re.test(f));
+          if (tocadas.length && !leidas.includes(guia)) e.push(`iteración ${it.n} toca ${tocadas.slice(0, 3).join(', ')}${tocadas.length > 3 ? ` y ${tocadas.length - 3} más` : ''} y «- Guías:» no nombra ${guia}: GUIAS.md la pide antes de escribir ahí («${guia} (<para qué>)», o «${guia} (no hizo falta: <por qué>)»)`);
         }
       }
       // el protocolo de QA: cada entrada dice qué se revisó de su propio cambio
@@ -1737,7 +1770,8 @@ async function main(argv) {
   }
   if (o.modo === 'check') {
     const { texto, archivo, hoja } = textoDe(o);
-    const r = check(texto, { archivo, hoja });
+    // la rama solo cuenta con el IMPROVEMENTS.md del checkout: con --archivo o --ref no hay una entrada en curso
+    const r = check(texto, { archivo, hoja, rama: o.archivo || o.ref ? null : ramaFrenteADev(root) });
     console.log(r.salida);
     return r.errores ? 1 : 0;
   }

@@ -19,8 +19,8 @@ La CLI va con la versión fija y la telemetría apagada (que apaga también su c
 skills.sh); `--check` (R8) lo vigila:
 
 ```sh
-DISABLE_TELEMETRY=1 npx skills@1.7.4 find <consulta>
-DISABLE_TELEMETRY=1 npx skills@1.7.4 use <dueño/repo>@<skill>
+DISABLE_TELEMETRY=1 npx skills@1.8.1 find <consulta>
+DISABLE_TELEMETRY=1 npx skills@1.8.1 use <dueño/repo>@<skill>
 ```
 
 - **Buscar:** hasta 3 consultas de 1 a 3 palabras, en inglés (el índice está en inglés).
@@ -43,7 +43,7 @@ DISABLE_TELEMETRY=1 npx skills@1.7.4 use <dueño/repo>@<skill>
   servir a las siguientes. Una como máximo por iteración, en su propio commit del mismo PR:
 
   ```sh
-  DISABLE_TELEMETRY=1 npx skills@1.7.4 add <dueño/repo> --skill <nombre> -a claude-code --copy -y
+  DISABLE_TELEMETRY=1 npx skills@1.8.1 add <dueño/repo> --skill <nombre> -a claude-code --copy -y
   git ls-remote https://github.com/<dueño>/<repo> HEAD
   ```
 

@@ -14,7 +14,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { ANCHOS_MIN, ARCHIVO_BITACORA, ARCHIVO_HOJA, ARENA_MAX, AUDITABLES, BASE, CADENCIAS, CONECTORES, RELEASE, CRON_H, EJES, FLAGS, HOJA_MAX, HOJA_SIN_FUENTE, HUECOS_DIAS, INCORPORADAS, LARGOS, LoopError, MARCA_ARENA, MARCA_GUIAS, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, PROMPT_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SKILL_MAX, SUBTIPOS, appReferencia, check, diagnostico, disparosEntre, matrizReplica, necesidades, ordenHoja, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, rotarHoja, siguiente, tramos } from './loop.mjs';
+import { ANCHOS_MIN, ARCHIVO_BITACORA, ARCHIVO_HOJA, ARENA_MAX, AUDITABLES, BASE, CADENCIAS, CONECTORES, RELEASE, CRON_H, EJES, FLAGS, HOJA_MAX, HOJA_SIN_FUENTE, HUECOS_DIAS, INCORPORADAS, LARGOS, GUIAS_POR_RUTA, LoopError, MARCA_ARENA, MARCA_GUIAS, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, PROMPT_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SKILL_MAX, SUBTIPOS, appReferencia, check, diagnostico, disparosEntre, matrizReplica, necesidades, ordenHoja, parse, parseCsv, parseInvestigacion, publicado, ramaFrenteADev, reclamar as reclamarEnProceso, rotar, rotarHoja, siguiente, tramos } from './loop.mjs';
 import { TIPOS } from './audit.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -580,6 +580,73 @@ describe('check()', () => {
     }
     // antes de la marca no se exige
     assert.equal(nivel(check(fixture({ entradas: [...lista, entrada({ titulo: `${MARCA_PROTOCOLO}, rotación y salud` }), it31(''), marca] }), { log: LOG }), 'R5'), 'ok');
+  });
+
+  test('R5: la entrada en curso nombra en «- Guías:» la guía de cada ruta que toca la rama (GUIAS_POR_RUTA)', () => {
+    const lista = iteraciones(30);
+    const marca = entrada({ titulo: `${MARCA_GUIAS} en el loop`, siguiente: 'iteración 31, mantenimiento · QA: auditoría' });
+    const it31 = (guias) => entrada({ n: 31, tipo: 'Mantenimiento', subtipo: 'QA', cuerpo: `\n- **Hallazgos:** 3 nuevos.\n- Guías: ${guias}`, siguiente: 'iteración 32, expansión: ítem 6 (algo, Fuentes)' });
+    const doc = (guias) => fixture({ entradas: [...lista, entrada({ titulo: `${MARCA_PROTOCOLO}, rotación y salud` }), marca, it31(guias)] });
+    const con = (guias, archivos, enDev = []) => check(doc(guias), { log: LOG, rama: { archivos, enDev: new Set(enDev) } });
+    // tocar css/ sin nombrar modern-web-guidance: la tabla dice que se lee antes de escribir ahí
+    const sin = con('ux-copy (el botón con su verbo)', ['js/app.js', 'css/styles.css']);
+    assert.equal(nivel(sin, 'R5'), 'ERROR');
+    assert.match(texto(sin, 'R5'), /iteración 31 toca css\/styles\.css y «- Guías:» no nombra modern-web-guidance/);
+    assert.match(texto(con('ninguna: un arreglo de una línea en el parser.', ['index.html']), 'R5'), /toca index\.html y «- Guías:» no nombra modern-web-guidance/);
+    assert.match(texto(con('ux-copy (textos)', ['sw.js', 'css/a.css', 'css/b.css', 'css/c.css', 'css/d.css']), 'R5'), /toca sw\.js, css\/a\.css, css\/b\.css y 2 más/);
+    assert.match(texto(con('ux-copy (textos)', ['browser-extension/manifest.json']), 'R5'), /no nombra chrome-extensions/);
+    // nombrada, con su para qué o con por qué no hizo falta, pasa
+    assert.equal(nivel(con('modern-web-guidance (`guides/css/anchor-positioning.md`: el popover)', ['css/styles.css']), 'R5'), 'ok');
+    assert.equal(nivel(con('modern-web-guidance (no hizo falta: solo se renombró una clase)', ['css/styles.css']), 'R5'), 'ok');
+    // js/ no entra (su «cuándo no» es de juicio), y una iteración que ya está en dev no es la entrada en curso
+    assert.equal(nivel(con('ux-copy (textos)', ['js/app.js', 'js/gitsim.js']), 'R5'), 'ok');
+    assert.equal(nivel(con('ux-copy (textos)', ['css/styles.css'], [31]), 'R5'), 'ok');
+    // sin rama (--archivo, --ref o las pruebas de siempre) no se mira
+    assert.equal(nivel(check(doc('ux-copy (textos)'), { log: LOG }), 'R5'), 'ok');
+    assert.deepEqual(GUIAS_POR_RUTA.map(([, g]) => g), ['modern-web-guidance', 'chrome-extensions']);
+  });
+
+  test('ramaFrenteADev(): lo commiteado, lo que no y lo nuevo desde la separación, y las iteraciones que ya están en dev', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'loop-rama-'));
+    const ENV = { ...process.env, GIT_AUTHOR_NAME: 'prueba', GIT_AUTHOR_EMAIL: 'p@p', GIT_COMMITTER_NAME: 'prueba', GIT_COMMITTER_EMAIL: 'p@p' };
+    const g = (cwd, ...args) => {
+      const r = spawnSync('git', args, { cwd, encoding: 'utf8', env: ENV });
+      assert.equal(r.status, 0, `git ${args.join(' ')}: ${r.stderr}`);
+    };
+    try {
+      const bare = join(dir, 'bare.git');
+      const repo = join(dir, 'repo');
+      g(dir, 'init', '-q', '--bare', '--initial-branch=dev', bare);
+      g(dir, 'clone', '-q', bare, repo);
+      g(repo, 'checkout', '-q', '-b', 'dev');
+      writeFileSync(join(repo, 'IMPROVEMENTS.md'), fixture({ entradas: iteraciones(27) }));
+      mkdirSync(join(repo, 'css'));
+      writeFileSync(join(repo, 'css', 'base.css'), 'a{}\n');
+      g(repo, 'add', '-A');
+      g(repo, 'commit', '-q', '-m', 'dev');
+      g(repo, 'push', '-q', 'origin', 'dev');
+      // en dev mismo, sin cambios: nada
+      assert.deepEqual(ramaFrenteADev(repo).archivos, []);
+      g(repo, 'checkout', '-q', '-b', 'loop/28');
+      writeFileSync(join(repo, 'index.html'), '<p>\n');
+      g(repo, 'add', '-A');
+      g(repo, 'commit', '-q', '-m', 'commiteado');
+      writeFileSync(join(repo, 'css', 'base.css'), 'b{}\n');
+      writeFileSync(join(repo, 'css', 'nuevo.css'), 'c{}\n');
+      // dev se mueve después de la separación: lo suyo no es de la rama
+      const otro = join(dir, 'otro');
+      g(dir, 'clone', '-q', '--branch', 'dev', bare, otro);
+      writeFileSync(join(otro, 'sw.js'), '//\n');
+      g(otro, 'add', '-A');
+      g(otro, 'commit', '-q', '-m', 'en dev');
+      g(otro, 'push', '-q', 'origin', 'dev');
+      g(repo, 'fetch', '-q', 'origin');
+      const r = ramaFrenteADev(repo);
+      assert.deepEqual(r.archivos.sort(), ['css/base.css', 'css/nuevo.css', 'index.html']);
+      assert.deepEqual([...r.enDev].sort((a, b) => a - b), Array.from({ length: 27 }, (_, i) => i + 1));
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   test('«Fusión de #15 antes de abrir el PR» y «Cambio de objetivo» no cuentan como iteración', () => {

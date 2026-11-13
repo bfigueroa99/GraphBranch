@@ -4,7 +4,7 @@ description: Evidence-driven causal tracing with competing hypotheses, evidence 
 model: sonnet
 ---
 
-<!-- Vendorizado de oh-my-claudecode v5.7.23 (agents/tracer.md, commit 82602887b71a), licencia MIT: ver .claude/skills/omc/LICENSE. No se edita a mano: lo regenera .claude/skills/omc/sync.sh. -->
+<!-- Vendorizado de oh-my-claudecode v5.8.6 (agents/tracer.md, commit 453d3dedf3e1), licencia MIT: ver .claude/skills/omc/LICENSE. No se edita a mano: lo regenera .claude/skills/omc/sync.sh. -->
 
 <Adaptacion_Loop>
   Corres como subagente dentro del loop autónomo de este repositorio, sin el plugin oh-my-claudecode cargado. Este bloque manda sobre lo que diga el resto del prompt:

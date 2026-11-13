@@ -33,7 +33,7 @@
       "Bash(npm ci)",
       "Bash(npm run:*)",
       "Bash(npx playwright:*)",
-      "Bash(npx skills@1.7.4:*)",
+      "Bash(npx skills@1.8.1:*)",
       "Bash(xvfb-run:*)",
       "Bash(python3 .claude/skills/replica-diff/parity.py:*)",
       "Bash(python3 .claude/skills/replica-entrepreneur/reviews.py:*)",

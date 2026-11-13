@@ -201,7 +201,7 @@ skill `iteracion` dice cómo, en «Construir».
 - **Registro:** desde la entrada «Cambio de maquinaria: find-skills en el loop», cada iteración lleva
   `- Skills:` con la consulta y lo que se hizo (consultada, instalada o descartadas, con el motivo), o
   «no aplica: <por qué>». `node tools/loop.mjs --check` lo exige (R5) y vigila que la skill `iteracion`
-  corra `npx skills@1.7.4` con `DISABLE_TELEMETRY=1` y solo `find`, `use` y `add --copy` (R8).
+  corra `npx skills@1.8.1` con `DISABLE_TELEMETRY=1` y solo `find`, `use` y `add --copy` (R8).
 
 ### Guías del repo: las skills vendorizadas
 
@@ -221,6 +221,9 @@ sirve en cada paso, cuándo aplica y cuándo no; la lee cada iteración con el �
   `- Guías:` con las skills del mapa que leyó y para qué, o «ninguna: <por qué>». `node tools/loop.mjs --check` lo
   exige (R5, con cada skill nombrada existente) y vigila (R15) que el mapa nombre skills que existen, que cada
   vendorizada tenga su paso o figure «de uso a mano» con su motivo, y que el registro diga la verdad de cada copia.
+  Desde el 2026-11-13, R5 también pide en la entrada en curso la guía de cada ruta que toca la rama:
+  `modern-web-guidance` si toca `index.html`, `css/` o `sw.js`, y `chrome-extensions` si toca `browser-extension/`,
+  con su para qué o con por qué no hizo falta.
 
 ## Para Benjamin
 
@@ -380,6 +383,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     `practice/git` y `#practice` visible, con `T(15000)`), en una sección que el cambio no toca. Hipótesis: tras los pasos
     de la demo y del ensayo, el botón de la práctica no llega a cambiar de repo a tiempo en la primera carga de `lab`.
     Reproducción: `node tools/smoke.mjs --solo "Varios repos a la vez"` → `la práctica de git responde…: Timeout 30000ms`.
+    Igual en la puerta del cambio de maquinaria del 2026-11-13 (las skills de afuera al día), que no toca la página.
 
 ### Baja
 
@@ -710,4 +714,31 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - OMC: plan=— · revisión=4 hallazgos (3 arreglados) · verificación=PASS (omc-verifier: los cinco criterios del protocolo, con dos reservas que la entrada ahora dice: la carga no se acortó y el +12 % de `escena3dUs` es una sola muestra). La revisión (omc-code-reviewer) dio solo LOW: la cuenta va desde que carga la página hasta el fin de la medida, no solo el primer cuadro (dicho así en el README), una aserción de la prueba no probaba nada del cambio (ahora mira que el escenario de la puerta mida el 3D) y la prueba sombrea solo tres globales (dicho en un comentario). Queda la aserción que lee el fuente (`medidas.programas3d = m.programas`), como en la prueba de la iteración 263: lo demás lo mide la auditoría en Chromium.
 - Reclamo: loop/295, sin colisión
 - Validado: 778 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) en verde; e2e no corridas (no toca la página ni el escritorio). Dos puertas en verde, la segunda tras los arreglos de la revisión.
+- **Siguiente:** iteración 296, expansión: ítem 214 (Constelación de una organización entera, Escala)
+
+### 2026-11-13 · Cambio de maquinaria: las skills de afuera al día y la guía de cada ruta
+
+- **Pedido de Benjamin:** poner al día las skills del repo y mejorar el loop con ellas. No es una iteración numerada
+  y la proporción de la regla 2 no cambia.
+- **Skills al día** (`.claude/skills/VENDORIZADAS.md`, «Revisión del 2026-11-13», cada copia contra su tag):
+  superpowers 7.0.2 (`systematic-debugging` ya no imprime el valor de un secreto en su ejemplo de la capa 1 y deja
+  fuera los prompts de prueba de presión que traía junto a la skill), modern-web-guidance 1.0.0 (su CLI fija en
+  `@1.0.0` con `DISABLE_TELEMETRY=1`; 28 guías nuevas, y las 99 que se citan entre sí están en la copia), la CLI de
+  find-skills en `skills@1.8.1` (también su permiso en `.claude/settings.json`) y OMC v5.8.6 con `sync.sh` (los nueve
+  agentes, iguales). Lo demás (knowledge-work-plugins, searchfit-seo, `skill-creator`, la arena y Replica), comparado
+  y sin versión nueva.
+- **La guía de cada ruta:** de las 14 iteraciones desde el mapa (280 a 293), las 6 que tocaron `css/` tenían que leer
+  `modern-web-guidance` y 3 no lo hicieron (286, 288 y 290): la tabla solo rendía si la sesión se acordaba. Ahora R5
+  lo mira en la entrada en curso con lo que la rama cambia frente a `dev` (`GUIAS_POR_RUTA` y `ramaFrenteADev` en
+  `tools/loop.mjs`): `index.html`, `css/` o `sw.js` piden `modern-web-guidance`, y `browser-extension/`,
+  `chrome-extensions`, cada una con su para qué o con por qué no hizo falta. `js/` queda a juicio, por su «cuándo no».
+  `GUIAS.md` lo dice y su fila de `modern-web-guidance` pide un tema por búsqueda, nombrado por la pieza de la
+  interfaz, como la versión 1.0.0.
+- **Tras una compactación:** la sesión lee la skill con la shell, así que Claude Code no la vuelve a adjuntar como a
+  una skill invocada; `CLAUDE.md`, que sí sobrevive, pide releer la skill de `dev` y el protocolo del paso en curso.
+- **Pruebas que fallan sin el cambio:** `tools/loop.test.mjs`: «R5: la entrada en curso nombra en «- Guías:» la guía
+  de cada ruta…» (vista fallar con la guarda anulada) y «ramaFrenteADev()…», contra un repositorio bare con `dev`
+  movido después de la separación.
+- OMC: no disponible (el encargo corre sin subagentes); revisión propia del diff en los dos ejes.
+- Validado: 778 pruebas (`node --test`), smoke (intermitente, en verde al repetir su sección: «la práctica de git responde a los comandos en el grafo»), i18n (0 errores) en verde; e2e no corridas (no toca la página ni el escritorio).
 - **Siguiente:** iteración 296, expansión: ítem 214 (Constelación de una organización entera, Escala)

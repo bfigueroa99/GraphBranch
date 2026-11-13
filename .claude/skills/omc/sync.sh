@@ -2,7 +2,7 @@
 # Vendoriza los agentes de oh-my-claudecode (OMC) que usa el loop, fijados a un tag.
 #
 #   bash .claude/skills/omc/sync.sh            # el tag de UPSTREAM (o el de abajo si no existe)
-#   bash .claude/skills/omc/sync.sh v5.7.24    # sube de versión
+#   bash .claude/skills/omc/sync.sh v5.8.7     # sube de versión
 #
 # Por qué copiar y no declarar el plugin: una sesión cloud (las Routines del loop) no
 # instala los plugins que el repo declara en .claude/settings.json, pero sí carga
@@ -15,7 +15,7 @@
 set -euo pipefail
 
 REPO_URL="https://github.com/Yeachan-Heo/oh-my-claudecode.git"
-TAG_POR_DEFECTO="v5.7.23"
+TAG_POR_DEFECTO="v5.8.6"
 AGENTES=(planner architect critic code-reviewer security-reviewer verifier tracer debugger test-engineer)
 
 DIR_SKILL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

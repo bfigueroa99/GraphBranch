@@ -590,6 +590,7 @@ GB.i18n.define('he', {
   'health.commitWeeks': 'קומיטים בשבוע: {list}',
   'health.authorWeeks': 'מחברים שונים בשבוע: {list}',
   'health.newAuthorWeeks': 'מחברים חדשים בשבוע (הקומיט הטעון הראשון): {list}',
+  'health.absence': 'אנשים שמהווים מחצית מהקומיטים (מקדם היעדרות): {n} מתוך {authors} מחברים, ב־{commits} קומיטים טעונים',
   'health.tagWeeks': 'תגיות בשבוע: {list}',
   'health.issueWeeks': 'Issues שנפתחו בשבוע: {list}',
   'health.prCloseWeeks': 'Pull requests שנסגרו בלי מיזוג בשבוע: {list}',

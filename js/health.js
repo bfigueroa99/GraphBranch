@@ -67,6 +67,26 @@
     return weekly([...first.values()].map((time) => ({ time })), now);
   }
 
+  /** El factor de ausencia de CHAOSS («Contributor Absence Factor»): cuántas personas, de las que más commits firmaron
+      a las que menos, hacen falta para llegar a la mitad de los commits cargados. Con la misma clave que los autores
+      por semana; un commit sin autor no cuenta ni para la mitad ni para el total. Devuelve solo cifras del conjunto
+      (`n`, cuántos autores y cuántos commits), nunca quién ni cuánto hizo cada uno; `null` sin commits con autor. */
+  function absenceFactor(commits) {
+    const by = new Map();
+    let total = 0;
+    for (const c of commits) {
+      const key = authorKey(c);
+      if (!key) continue;
+      by.set(key, (by.get(key) || 0) + 1);
+      total++;
+    }
+    if (!total) return null;
+    const counts = [...by.values()].sort((a, b) => b - a);
+    let n = 0;
+    for (let sum = 0; sum * 2 < total; n++) sum += counts[n];
+    return { n, authors: counts.length, commits: total };
+  }
+
   /** El estado del último despliegue de un entorno con lo ya cargado: `current` si su commit es la punta de su rama
       (la de `ref` si está cargada, si no la rama por defecto), `behind` con cuántos commits lleva la rama que el
       despliegue no tiene (como `git rev-list desplegado..rama`), y `unknown` si la rama no está cargada o su historia
@@ -293,6 +313,7 @@
       ci,
       forkTrend: { week: forkWeeks[WEEKS - 1], prev: fullPrev ? forkWeeks[WEEKS - 2] : null }, // forks nuevos en los últimos 7 días y en los 7 anteriores (null: sin medir)
       stars: { week: starWeeks[WEEKS - 1], prev: fullPrev ? starWeeks[WEEKS - 2] : null }, // estrellas nuevas en los últimos 7 días y en los 7 anteriores (null: sin medir)
+      absence: absenceFactor(data.commits.values()), // cuántas personas suman la mitad de los commits cargados (null: ninguno con autor)
       pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), authorWeeks: authorsWeekly(data.commits.values(), now), newAuthorWeeks: newAuthorsWeekly(data.commits.values(), now), tagWeeks: weekly(tagTimes, now), issueWeeks: weekly([...issueOpened.values()], now), prCloseWeeks: weekly([...prClosed.values()], now) }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
     };
   }

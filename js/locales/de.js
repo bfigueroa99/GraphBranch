@@ -534,6 +534,7 @@ GB.i18n.define('de', {
   'health.commitWeeks': 'Commits pro Woche: {list}',
   'health.authorWeeks': 'Verschiedene Autoren pro Woche: {list}',
   'health.newAuthorWeeks': 'Neue Autoren pro Woche (erster geladener Commit): {list}',
+  'health.absence': 'Personen, die die Hälfte der Commits ausmachen (Abwesenheitsfaktor): {n} von {authors} Autoren, bei {commits} geladenen Commits',
   'health.tagWeeks': 'Tags pro Woche: {list}',
   'health.issueWeeks': 'Geöffnete Issues pro Woche: {list}',
   'health.prCloseWeeks': 'Ohne Merge geschlossene Pull Requests pro Woche: {list}',

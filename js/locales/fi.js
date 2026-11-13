@@ -533,6 +533,7 @@ GB.i18n.define('fi', {
   'health.commitWeeks': 'Commitit viikossa: {list}',
   'health.authorWeeks': 'Eri tekijöitä viikossa: {list}',
   'health.newAuthorWeeks': 'Uusia tekijöitä viikossa (ensimmäinen ladattu commit): {list}',
+  'health.absence': 'Henkilöt, jotka tekevät puolet commiteista (poissaolokerroin): {n}/{authors} tekijää, {commits} ladatussa commitissa',
   'health.tagWeeks': 'Tagit viikossa: {list}',
   'health.issueWeeks': 'Avatut issuet viikossa: {list}',
   'health.prCloseWeeks': 'Ilman yhdistämistä suljetut pull requestit viikossa: {list}',

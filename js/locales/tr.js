@@ -533,6 +533,7 @@ GB.i18n.define('tr', {
   'health.commitWeeks': 'Haftalık commit sayısı: {list}',
   'health.authorWeeks': 'Haftalık farklı yazar sayısı: {list}',
   'health.newAuthorWeeks': 'Haftalık yeni yazar sayısı (yüklenen ilk commit): {list}',
+  'health.absence': 'Commitlerin yarısını oluşturan kişiler (yokluk faktörü): {authors} yazardan {n} kişi, yüklenen {commits} committe',
   'health.tagWeeks': 'Haftalık etiket sayısı: {list}',
   'health.issueWeeks': 'Haftalık açılan issue’lar: {list}',
   'health.prCloseWeeks': 'Birleştirilmeden kapatılan pull request’ler (haftalık): {list}',

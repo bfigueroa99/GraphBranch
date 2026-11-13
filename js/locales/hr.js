@@ -541,6 +541,7 @@ GB.i18n.define('hr', {
   'health.commitWeeks': 'Commitovi tjedno: {list}',
   'health.authorWeeks': 'Različiti autori tjedno: {list}',
   'health.newAuthorWeeks': 'Novi autori tjedno (prvi učitani commit): {list}',
+  'health.absence': 'Osobe koje čine polovicu commitova (faktor odsutnosti): {n} od {authors} autora, u {commits} učitanih commitova',
   'health.tagWeeks': 'Tagovi tjedno: {list}',
   'health.issueWeeks': 'Otvoreni issuei tjedno: {list}',
   'health.prCloseWeeks': 'Pull requestovi zatvoreni bez spajanja tjedno: {list}',

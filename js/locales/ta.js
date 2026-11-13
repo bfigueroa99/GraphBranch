@@ -533,6 +533,7 @@ GB.i18n.define('ta', {
   'health.commitWeeks': 'வாரத்திற்கு கமிட்கள்: {list}',
   'health.authorWeeks': 'வாரத்திற்கு வெவ்வேறு ஆசிரியர்கள்: {list}',
   'health.newAuthorWeeks': 'வாரத்திற்குப் புதிய ஆசிரியர்கள் (ஏற்றப்பட்ட முதல் கமிட்): {list}',
+  'health.absence': 'பாதி கமிட்டுகளைச் செய்தவர்கள் (இல்லாமை காரணி): {authors} ஆசிரியர்களில் {n} பேர், ஏற்றிய {commits} கமிட்டுகளில்',
   'health.tagWeeks': 'வாரத்திற்கு குறிச்சொற்கள்: {list}',
   'health.issueWeeks': 'வாரத்திற்கு திறக்கப்பட்ட issue: {list}',
   'health.prCloseWeeks': 'இணைக்கப்படாமல் மூடப்பட்ட pull request வாரத்திற்கு: {list}',

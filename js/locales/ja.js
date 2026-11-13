@@ -533,6 +533,7 @@ GB.i18n.define('ja', {
   'health.commitWeeks': '週ごとのコミット数：{list}',
   'health.authorWeeks': '週ごとの異なる作成者数：{list}',
   'health.newAuthorWeeks': '週ごとの新しい作成者数（読み込んだ最初のコミット）：{list}',
+  'health.absence': 'コミットの半分を占める人数（不在係数）：{authors} 人の作成者のうち {n} 人、読み込んだ {commits} 件のコミット',
   'health.tagWeeks': '週ごとのタグ数：{list}',
   'health.issueWeeks': '週ごとにオープンされたイシュー：{list}',
   'health.prCloseWeeks': 'マージされずにクローズされたプルリクエスト（週ごと）：{list}',

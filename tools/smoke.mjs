@@ -789,6 +789,10 @@ if (seccion('Escritorio (1280×800)'))
     const nweeks = await page.$eval('#hl-newauthorweeks', (p) => p.textContent).catch(() => '');
     if (!/(\d+ · ){7}\d+$/.test(nweeks) || /^(0 · ){7}0$/.test(nweeks.split(': ').pop())) throw new Error(`los autores nuevos por semana no traen 8 cifras con algún autor nuevo: ${nweeks}`);
     if (nweeks.split(': ').pop().split(' · ').some((n, i) => Number(n) > Number(aweeks.split(': ').pop().split(' · ')[i]))) throw new Error(`alguna semana tiene más autores nuevos que autores distintos: ${nweeks} frente a ${aweeks}`);
+    // el factor de ausencia (ítem 202): una sola cifra, al menos 1 y no más que los autores, sin nombres de la demo
+    const absence = await page.$eval('#hl-absence', (p) => p.textContent).catch(() => '');
+    const absN = absence.match(/:\s*(\d+)\D+(\d+)\D+(\d+)/);
+    if (!absN || Number(absN[1]) < 1 || Number(absN[1]) > Number(absN[2]) || Number(absN[2]) > Number(absN[3])) throw new Error(`el factor de ausencia no sale o no cuadra (personas ≤ autores ≤ commits): ${absence}`);
     const tweeks = await page.$eval('#hl-tagweeks', (p) => p.textContent).catch(() => '');
     if (tweeks && (!/(\d+ · ){7}\d+$/.test(tweeks) || /^(0 · ){7}0$/.test(tweeks.split(': ').pop()))) throw new Error(`la tendencia de tags por semana no trae 8 cifras con algún tag: ${tweeks}`);
     const iweeks = await page.$eval('#hl-issueweeks', (p) => p.textContent).catch(() => '');

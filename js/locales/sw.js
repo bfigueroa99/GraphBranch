@@ -533,6 +533,7 @@ GB.i18n.define('sw', {
   'health.commitWeeks': 'Commit kwa wiki: {list}',
   'health.authorWeeks': 'Waandishi tofauti kwa wiki: {list}',
   'health.newAuthorWeeks': 'Waandishi wapya kwa wiki (commit ya kwanza iliyopakiwa): {list}',
+  'health.absence': 'Watu wanaofanya nusu ya commit (kipengele cha kutokuwepo): {n} kati ya waandishi {authors}, katika commit {commits} zilizopakiwa',
   'health.tagWeeks': 'Lebo kwa wiki: {list}',
   'health.issueWeeks': 'Issue zilizofunguliwa kwa wiki: {list}',
   'health.prCloseWeeks': 'Pull request zilizofungwa bila kuunganishwa kwa wiki: {list}',

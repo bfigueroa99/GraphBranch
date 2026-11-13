@@ -533,6 +533,7 @@ GB.i18n.define('bg', {
   'health.commitWeeks': 'Комити седмично: {list}',
   'health.authorWeeks': 'Различни автори седмично: {list}',
   'health.newAuthorWeeks': 'Нови автори седмично (първи зареден commit): {list}',
+  'health.absence': 'Хора, които правят половината от къмитите (фактор на отсъствие): {n} от {authors} автори, в {commits} заредени къмита',
   'health.tagWeeks': 'Тагове седмично: {list}',
   'health.issueWeeks': 'Отворени issue-та седмично: {list}',
   'health.prCloseWeeks': 'Затворени без сливане pull request-и седмично: {list}',

@@ -645,3 +645,22 @@ test('forks nuevos: la semana actual frente a la anterior, cada fork una vez y s
   assert.deepEqual({ ...again.forkTrend }, { week: 0, prev: 1 });
   assert.deepEqual({ ...compute(repo(), [old], NOW).forkTrend }, { week: 0, prev: 0 });
 });
+
+test('factor de ausencia: cuántas personas suman la mitad de los commits cargados (CHAOSS), sin nombres', () => {
+  const data = repo();
+  const set = (authors) => (data.commits = new Map(authors.map((a, i) => [`c${i}`, { date: ago(i % 40), author: a }])));
+  // una persona con más de la mitad: 1
+  set([{ login: 'ana' }, { login: 'ana' }, { login: 'ANA', name: 'Ana P.' }, { login: 'bruno' }, { name: 'Carla' }]);
+  assert.deepEqual({ ...compute(data, [], NOW).absence }, { n: 1, authors: 3, commits: 5 }, 'ana firma 3 de 5 (con la misma clave que los autores por semana)');
+  // cuatro iguales: 2 (la mitad justa alcanza)
+  set([{ login: 'a' }, { login: 'b' }, { login: 'c' }, { login: 'd' }, { login: 'a' }, { login: 'b' }, { login: 'c' }, { login: 'd' }]);
+  assert.deepEqual({ ...compute(data, [], NOW).absence }, { n: 2, authors: 4, commits: 8 });
+  // los commits sin autor no cuentan, ni para la mitad ni para el total
+  set([{ login: 'a' }, { login: 'b' }, { login: 'c' }, undefined, { name: '  ' }, null]);
+  assert.deepEqual({ ...compute(data, [], NOW).absence }, { n: 2, authors: 3, commits: 3 }, '1 de 3 no llega a la mitad: hacen falta 2');
+  // sin commits con autor: null, no 0
+  set([undefined]);
+  assert.equal(compute(data, [], NOW).absence, null);
+  data.commits = new Map();
+  assert.equal(compute(data, [], NOW).absence, null);
+});

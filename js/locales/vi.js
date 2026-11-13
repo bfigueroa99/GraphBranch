@@ -533,6 +533,7 @@ GB.i18n.define('vi', {
   'health.commitWeeks': 'Commit mỗi tuần: {list}',
   'health.authorWeeks': 'Số tác giả khác nhau mỗi tuần: {list}',
   'health.newAuthorWeeks': 'Số tác giả mới mỗi tuần (commit đầu tiên đã tải): {list}',
+  'health.absence': 'Số người tạo ra một nửa số commit (hệ số vắng mặt): {n} trên {authors} tác giả, trong {commits} commit đã tải',
   'health.tagWeeks': 'Thẻ mỗi tuần: {list}',
   'health.issueWeeks': 'Issue đã mở mỗi tuần: {list}',
   'health.prCloseWeeks': 'Pull request đóng mà không hợp nhất mỗi tuần: {list}',

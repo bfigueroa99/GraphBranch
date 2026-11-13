@@ -534,6 +534,7 @@ GB.i18n.define('th', {
   'health.commitWeeks': 'คอมมิตต่อสัปดาห์: {list}',
   'health.authorWeeks': 'ผู้เขียนที่ไม่ซ้ำกันต่อสัปดาห์: {list}',
   'health.newAuthorWeeks': 'ผู้เขียนใหม่ต่อสัปดาห์ (คอมมิตแรกที่โหลด): {list}',
+  'health.absence': 'จำนวนคนที่รวมกันได้ครึ่งหนึ่งของคอมมิต (ปัจจัยการขาดหาย): {n} จาก {authors} ผู้เขียน ในคอมมิตที่โหลด {commits} รายการ',
   'health.tagWeeks': 'แท็กต่อสัปดาห์: {list}',
   'health.issueWeeks': 'issue ที่เปิดต่อสัปดาห์: {list}',
   'health.prCloseWeeks': 'pull request ที่ปิดโดยไม่ได้รวมต่อสัปดาห์: {list}',

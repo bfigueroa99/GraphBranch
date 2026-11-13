@@ -549,6 +549,7 @@ GB.i18n.define('uk', {
   'health.commitWeeks': 'Коміти за тиждень: {list}',
   'health.authorWeeks': 'Різні автори за тиждень: {list}',
   'health.newAuthorWeeks': 'Нові автори за тиждень (перший завантажений коміт): {list}',
+  'health.absence': 'Люди, на яких припадає половина комітів (фактор відсутності): {n} з {authors} авторів, у {commits} завантажених комітах',
   'health.tagWeeks': 'Теги за тиждень: {list}',
   'health.issueWeeks': 'Відкриті issue за тиждень: {list}',
   'health.prCloseWeeks': 'Pull request’и, закриті без злиття, за тиждень: {list}',

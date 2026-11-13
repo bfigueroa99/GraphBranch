@@ -676,6 +676,8 @@ GB.i18n.define('ms', {
   'textview.forks': 'Fork aktif: {n}',
   'textview.fork': '{name}, push terakhir {when}',
   'textview.prs': 'PR terbuka: {n}',
+  'textview.drafts': 'PR draf: {n}',
+  'textview.draft': 'draf',
   'textview.noPr': 'tiada PR terbuka',
   'textview.fresh': 'dicipta dalam 7 hari lalu',
   'textview.quiet': 'tanpa aktiviti lebih 30 hari',

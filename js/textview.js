@@ -37,7 +37,8 @@
 
   /** Los PRs abiertos ya cargados cuyo último CI falló, el de número mayor (el más nuevo) primero. El estado es el del
       PR (`p.ci`) o, si no lo trae y su rama es de este repo, el de la cabeza de esa rama (`data.ci`): la misma regla que
-      la salud (js/health.js). En curso o sin dato no es fallo. No consulta nada; la url solo queda si es https. */
+      la salud (js/health.js). En curso o sin dato no es fallo. No consulta nada; la url solo queda si es https.
+      `draft`: el PR está en borrador (lo marcan todas las fuentes que traen PRs; Codeberg, también por el título). */
   function failingPulls(data, max = MAX_CI_PULLS) {
     const all = [];
     for (const p of data?.pulls?.values?.() || []) {
@@ -45,7 +46,7 @@
       const head = String(p.head || '');
       const ci = p.ci || (p.sameRepo && head && data.ci?.get?.(head)) || null;
       if (ci !== 'failure') continue;
-      all.push({ number: Number(p.number), title: String(p.title || '').split('\n')[0].trim(), head: head || '?', url: /^https:\/\//.test(String(p.url || '')) ? String(p.url) : '' });
+      all.push({ number: Number(p.number), title: String(p.title || '').split('\n')[0].trim(), head: head || '?', url: /^https:\/\//.test(String(p.url || '')) ? String(p.url) : '', draft: !!p.draft });
     }
     all.sort((a, b) => b.number - a.number);
     return { total: all.length, rows: all.slice(0, max) };
@@ -74,9 +75,14 @@
       inDef.add(sha);
       for (const p of data.commits.get(sha).parents || []) stack.push(p);
     }
-    // PRs abiertos ya cargados por rama (los de forks no cuentan: su rama no es de este repo)
+    // PRs abiertos ya cargados por rama, y cuántos de ellos en borrador (los de forks no cuentan: su rama no es de este repo)
     const open = new Map();
-    for (const p of data.pulls?.values?.() || []) if (p && p.sameRepo && p.head) open.set(p.head, (open.get(p.head) || 0) + 1);
+    const drafts = new Map();
+    for (const p of data.pulls?.values?.() || []) {
+      if (!p || !p.sameRepo || !p.head) continue;
+      open.set(p.head, (open.get(p.head) || 0) + 1);
+      if (p.draft) drafts.set(p.head, (drafts.get(p.head) || 0) + 1);
+    }
     // `paths` (Set de shas, el filtro por ruta): solo cuentan los commits que tocaron esa ruta; sin ninguno, la rama no entra
     const keep = (sha) => !paths || paths.has(sha);
     const rows = list.slice(0, maxBranches).map((b) => {
@@ -116,7 +122,7 @@
       const tipAuthor = String(tip?.name || tip?.login || '');
       const prs = open.get(b.name) || 0;
       const noPr = !!pullsKnown && !isDefault && !merged && !prs;
-      return { name: b.name, isDefault, tipAuthor, prs, noPr, quiet, merged, ciFailing: data.ci?.get?.(b.name) === 'failure', fresh: !isDefault && !!fresh?.has(b.name), commits };
+      return { name: b.name, isDefault, tipAuthor, prs, drafts: drafts.get(b.name) || 0, noPr, quiet, merged, ciFailing: data.ci?.get?.(b.name) === 'failure', fresh: !isDefault && !!fresh?.has(b.name), commits };
     }).filter((b) => !paths || b.commits.length);
     return { total, branches: rows, ciPulls: failingPulls(data), forks: withForks ? forks(data) : { total: 0, rows: [] } };
   }
@@ -256,7 +262,8 @@
           row.rel = 'noopener noreferrer';
         }
         row.appendChild(mk('span', 'tv-cipull-x', '✗')).setAttribute('aria-hidden', 'true');
-        row.appendChild(mk('span', 'tv-name', text('textview.ciPull', { num: r.number, title: r.title, branch: r.head })));
+        // en borrador, dentro del mismo texto: el nombre del enlace lo lee de corrido, sin otro nodo que el lector separe
+        row.appendChild(mk('span', 'tv-name', text('textview.ciPull', { num: r.number, title: r.title, branch: r.head }) + (r.draft ? ', ' + text('textview.draft') : '')));
         li.appendChild(row);
         ul.appendChild(li);
       }
@@ -298,7 +305,7 @@
         const li = mk('li', 'tv-branch');
         li.setAttribute('role', 'treeitem');
         li.setAttribute('aria-expanded', open.has(b.name) ? 'true' : 'false');
-        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}${b.noPr ? ', ' + text('textview.noPr') : ''}${b.fresh ? ', ' + text('textview.fresh') : ''}${b.quiet ? ', ' + text('textview.quiet') : ''}${b.merged ? ', ' + text('textview.merged') : ''}${b.ciFailing ? ', ' + text('textview.ciFailing') : ''}${b.tipAuthor ? ', ' + text('textview.tipBy', { author: b.tipAuthor }) : ''}, ${text('textview.shown', { n: b.commits.length })}`);
+        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}${b.drafts ? ', ' + text('textview.drafts', { n: b.drafts }) : ''}${b.noPr ? ', ' + text('textview.noPr') : ''}${b.fresh ? ', ' + text('textview.fresh') : ''}${b.quiet ? ', ' + text('textview.quiet') : ''}${b.merged ? ', ' + text('textview.merged') : ''}${b.ciFailing ? ', ' + text('textview.ciFailing') : ''}${b.tipAuthor ? ', ' + text('textview.tipBy', { author: b.tipAuthor }) : ''}, ${text('textview.shown', { n: b.commits.length })}`);
         li.tabIndex = i === 0 ? 0 : -1;
         li.dataset.branch = b.name;
         // el nombre y sus marcas se acomodan en una o más líneas; los botones de ocultar y de dejarla sola, siempre juntos
@@ -309,6 +316,7 @@
         info.appendChild(mk('span', 'tv-name', b.name));
         if (b.isDefault) info.appendChild(mkSilent('tv-tag', text('textview.default')));
         if (b.prs) info.appendChild(mkSilent('tv-tag', text('textview.prs', { n: b.prs })));
+        if (b.drafts) info.appendChild(mkSilent('tv-tag tv-draft', text('textview.drafts', { n: b.drafts })));
         if (b.fresh) info.appendChild(mkSilent('tv-tag', text('textview.fresh')));
         if (b.quiet) info.appendChild(mkSilent('tv-tag', text('textview.quiet')));
         if (b.merged) info.appendChild(mkSilent('tv-tag', text('textview.merged')));

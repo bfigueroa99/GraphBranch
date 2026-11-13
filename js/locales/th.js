@@ -677,6 +677,8 @@ GB.i18n.define('th', {
   'textview.forks': 'ฟอร์กที่ยังใช้งาน: {n}',
   'textview.fork': '{name}, push ล่าสุด {when}',
   'textview.prs': 'PR ที่เปิดอยู่: {n}',
+  'textview.drafts': 'PR ที่เป็น draft: {n}',
+  'textview.draft': 'draft',
   'textview.noPr': 'ไม่มี PR ที่เปิดอยู่',
   'textview.fresh': 'สร้างในช่วง 7 วันที่ผ่านมา',
   'textview.quiet': 'ไม่มีความเคลื่อนไหวเกิน 30 วัน',

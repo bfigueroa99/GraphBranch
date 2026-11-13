@@ -676,6 +676,8 @@ GB.i18n.define('ca', {
   'textview.forks': 'Forks actius: {n}',
   'textview.fork': '{name}, darrer push {when}',
   'textview.prs': 'PR oberts: {n}',
+  'textview.drafts': 'PR en esborrany: {n}',
+  'textview.draft': 'esborrany',
   'textview.noPr': 'sense cap PR obert',
   'textview.fresh': 'creada en els últims 7 dies',
   'textview.quiet': 'sense activitat fa més de 30 dies',

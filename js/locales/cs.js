@@ -687,6 +687,8 @@ GB.i18n.define('cs', {
   'textview.forks': 'Aktivní forky: {n}',
   'textview.fork': '{name}, poslední push {when}',
   'textview.prs': 'otevřené PR: {n}',
+  'textview.drafts': 'PR jako koncept: {n}',
+  'textview.draft': 'koncept',
   'textview.noPr': 'bez otevřeného PR',
   'textview.fresh': 'vytvořena za posledních 7 dní',
   'textview.quiet': 'bez aktivity přes 30 dní',

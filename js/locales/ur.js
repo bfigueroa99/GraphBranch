@@ -719,6 +719,8 @@ GB.i18n.define('ur', {
   'textview.forks': 'فعال فورکس: {n}',
   'textview.fork': '{name}، آخری push {when}',
   'textview.prs': 'کھلے PR: {n}',
+  'textview.drafts': 'مسودہ PR: {n}',
+  'textview.draft': 'مسودہ',
   'textview.noPr': 'کوئی کھلا PR نہیں',
   'textview.fresh': 'پچھلے 7 دنوں میں بنائی گئی',
   'textview.quiet': '30 دن سے زیادہ غیر فعال',

@@ -177,6 +177,22 @@ test('cada rama cuenta los PRs abiertos ya cargados que salen de ella, sin los d
   assert.equal(build(repo()).branches[0].prs, 0); // sin PRs cargados, ninguno
 });
 
+test('cada rama dice cuántos de sus PRs abiertos están en borrador, y la lista del CI en rojo marca el borrador', () => {
+  const d = repo();
+  d.pulls = new Map([
+    [1, { number: 1, head: 'feature', sameRepo: true, draft: true }],
+    [2, { number: 2, head: 'feature', sameRepo: true, draft: false }], // listo para revisar
+    [3, { number: 3, head: 'feature', sameRepo: true, draft: true, ci: 'failure', title: 'WIP' }],
+    [4, { number: 4, head: 'main', sameRepo: false, draft: true }], // de un fork: su rama no es de este repo
+    [5, { number: 5, head: 'main', sameRepo: true }], // sin el campo: no es borrador
+  ]);
+  const t = build(d);
+  const by = Object.fromEntries(t.branches.map((b) => [b.name, [b.prs, b.drafts]]));
+  assert.deepEqual(by, { main: [1, 0], feature: [3, 2] });
+  assert.deepEqual(t.ciPulls.rows.map((r) => [r.number, r.draft]), [[3, true]]);
+  assert.equal(build(repo()).branches[1].drafts, 0); // sin PRs cargados, ninguno
+});
+
 test('con la lista de PRs completa, una rama sin PR abierto propio lo dice; la por defecto y las fusionadas no', () => {
   const d = repo(); // feature ya está en la historia de main: fusionada, no «sin PR»
   const c = (sha, date) => d.commits.set(sha, { sha, parents: ['m3'], message: sha, date, author: { name: 'Ana' } });
@@ -325,9 +341,9 @@ test('lista los PRs abiertos con el último CI en rojo (el del PR o, si no lo tr
   assert.deepEqual(pulls(), {
     total: 3,
     rows: [
-      { number: 9, title: 'Rojo propio', head: 'otra', url: '' },
-      { number: 7, title: 'Arregla el login', head: 'feature', url: 'https://github.com/o/r/pull/7' },
-      { number: 4, title: 'Fork en rojo', head: 'feature', url: '' },
+      { number: 9, title: 'Rojo propio', head: 'otra', url: '', draft: false },
+      { number: 7, title: 'Arregla el login', head: 'feature', url: 'https://github.com/o/r/pull/7', draft: false },
+      { number: 4, title: 'Fork en rojo', head: 'feature', url: '', draft: false },
     ],
   }, 'el más nuevo primero; el verde propio manda sobre su rama, el de un fork no hereda el CI de una rama de este repo, y solo queda una url https');
   d.ci = new Map([['feature', 'pending']]);

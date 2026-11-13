@@ -676,6 +676,8 @@ GB.i18n.define('ko', {
   'textview.forks': '활성 포크: {n}',
   'textview.fork': '{name}, 마지막 push {when}',
   'textview.prs': '열린 PR: {n}',
+  'textview.drafts': '초안 PR: {n}',
+  'textview.draft': '초안',
   'textview.noPr': '열린 PR 없음',
   'textview.fresh': '최근 7일 안에 생성됨',
   'textview.quiet': '30일 넘게 활동 없음',

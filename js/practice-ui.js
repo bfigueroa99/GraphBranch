@@ -47,7 +47,8 @@
         <div class="pr-line">
           <span class="pr-prompt" aria-hidden="true">$ git</span>
           <input class="pr-input" type="text" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off">
-        </div>`;
+        </div>
+        <div class="pr-cards" role="toolbar"></div>`;
       this.sel = root.querySelector('.pr-ex');
       this.restart = root.querySelector('.pr-restart');
       this.share = root.querySelector('.pr-share');
@@ -63,6 +64,8 @@
       this.log = root.querySelector('.pr-log');
       this.status = root.querySelector('.pr-status');
       this.input = root.querySelector('.pr-input');
+      this.cards = root.querySelector('.pr-cards');
+      this.buildCards();
       root.addEventListener('submit', (ev) => {
         ev.preventDefault();
         this.submit();
@@ -91,6 +94,48 @@
         this.cursor = Math.max(0, Math.min(this.history.length, this.cursor + (ev.key === 'ArrowUp' ? -1 : 1)));
         this.input.value = this.history[this.cursor] || '';
       });
+    }
+
+    /** Las cartas de comandos (GB.gitsim.CARDS): una barra de botones con un solo punto de tabulación; las flechas,
+        Inicio y Fin se mueven entre ellas y pulsar una escribe su comando en la línea, sin ejecutarlo. */
+    buildCards() {
+      for (const [i, card] of GB.gitsim.CARDS.entries()) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'pr-card';
+        b.dataset.cmd = card.id;
+        b.tabIndex = i ? -1 : 0;
+        const code = document.createElement('code');
+        code.dir = 'ltr';
+        code.textContent = card.id;
+        const desc = document.createElement('span');
+        desc.className = 'pr-card-desc';
+        b.append(code, desc);
+        b.addEventListener('click', () => this.useCard(card));
+        this.cards.append(b);
+      }
+      this.cards.addEventListener('keydown', (ev) => {
+        const all = [...this.cards.querySelectorAll('.pr-card')];
+        const at = all.indexOf(document.activeElement);
+        if (at < 0) return;
+        const rtl = getComputedStyle(this.cards).direction === 'rtl';
+        const step = { ArrowRight: rtl ? -1 : 1, ArrowLeft: rtl ? 1 : -1, ArrowDown: 1, ArrowUp: -1 }[ev.key];
+        const to = step ? (at + step + all.length) % all.length : ev.key === 'Home' ? 0 : ev.key === 'End' ? all.length - 1 : -1;
+        if (to < 0) return;
+        ev.preventDefault();
+        all[at].tabIndex = -1;
+        all[to].tabIndex = 0;
+        all[to].focus();
+      });
+    }
+
+    /** Escribe el comando de la carta en la línea (en lugar de lo que hubiera) y deja el cursor donde va lo que falta. */
+    useCard(card) {
+      const at = card.caret ?? card.line.length;
+      this.input.value = card.line;
+      this.input.focus();
+      this.input.setSelectionRange(at, at);
+      for (const b of this.cards.querySelectorAll('.pr-card')) b.tabIndex = b.dataset.cmd === card.id ? 0 : -1;
     }
 
     /** Muestra el panel para esta fuente (o lo esconde si no es de práctica). */
@@ -146,6 +191,8 @@
       this.make.querySelector('.pr-m-help').textContent = t('practice.make.help');
       this.make.querySelector('.pr-m-go').textContent = t('practice.make.go');
       this.input.setAttribute('aria-label', t('practice.input'));
+      this.cards.setAttribute('aria-label', t('practice.cards'));
+      for (const b of this.cards.querySelectorAll('.pr-card')) b.querySelector('.pr-card-desc').textContent = t(`practice.card.${b.dataset.cmd}`);
       this.status.textContent = src.exercise.done(src.git) ? t('practice.solved') : '';
       const note = this.log.querySelector('.pr-note');
       if (note) note.textContent = t('practice.hello');

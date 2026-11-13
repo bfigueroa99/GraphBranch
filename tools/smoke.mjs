@@ -2495,6 +2495,40 @@ if (seccion('Varios repos a la vez'))
     await lab.selectOption('.pr-ex', '3');
     await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent.includes('reset'), null, { timeout: T(5000) });
   });
+  await step(lab, 'las cartas de comandos escriben su comando en la línea sin ejecutarlo, y se recorren con el teclado', async () => {
+    const cards = lab.locator('.pr-cards[role="toolbar"] .pr-card');
+    if ((await cards.count()) < 8) throw new Error(`solo ${await cards.count()} cartas`);
+    if (!(await lab.getAttribute('.pr-cards', 'aria-label'))) throw new Error('la barra de cartas no tiene nombre');
+    const desc = (await lab.textContent('.pr-card[data-cmd="commit"] .pr-card-desc')).trim();
+    if (!desc || desc === 'practice.card.commit') throw new Error(`la carta de commit no tiene descripción: «${desc}»`);
+    const rows = await lab.locator('.pr-log .pr-row').count();
+    await lab.click('.pr-card[data-cmd="commit"]');
+    const state = await lab.evaluate(() => {
+      const i = document.querySelector('.pr-input');
+      return { value: i.value, focus: document.activeElement === i, caret: i.selectionStart };
+    });
+    if (state.value !== 'commit -m ""' || !state.focus || state.caret !== 11) throw new Error(`la carta escribió ${JSON.stringify(state)}`);
+    if ((await lab.locator('.pr-log .pr-row').count()) !== rows) throw new Error('la carta ejecutó el comando');
+    await lab.keyboard.type('desde la carta');
+    await lab.press('.pr-input', 'Enter');
+    await lab.waitForFunction(() => document.querySelector('.pr-log')?.textContent.includes('$ git commit -m "desde la carta"'), null, { timeout: T(5000) });
+    // un solo punto de tabulación: las flechas, Inicio y Fin se mueven entre las cartas, y Enter escribe la enfocada
+    if ((await lab.locator('.pr-card[tabindex="0"]').count()) !== 1) throw new Error('la barra no tiene un único punto de tabulación');
+    await lab.focus('.pr-card[tabindex="0"]');
+    await lab.keyboard.press('Home');
+    await lab.keyboard.press('ArrowRight');
+    const second = await lab.evaluate(() => document.activeElement?.dataset.cmd);
+    const first = await lab.getAttribute('.pr-card:nth-child(1)', 'data-cmd');
+    const secondId = await lab.getAttribute('.pr-card:nth-child(2)', 'data-cmd');
+    if (second !== secondId) throw new Error(`ArrowRight desde ${first} fue a ${second}`);
+    await lab.keyboard.press('End');
+    await lab.keyboard.press('ArrowRight'); // da la vuelta
+    if ((await lab.evaluate(() => document.activeElement?.dataset.cmd)) !== first) throw new Error('ArrowRight desde la última no volvió a la primera');
+    await lab.keyboard.press('Enter');
+    const line = await lab.evaluate(() => [document.querySelector('.pr-input').value, document.activeElement?.className]);
+    if (line[1] !== 'pr-input' || !line[0].startsWith(first)) throw new Error(`Enter en la carta dejó ${JSON.stringify(line)}`);
+    await lab.fill('.pr-input', '');
+  });
   await step(lab, 'la práctica entiende switch y restore', async () => {
     const send = async (c) => {
       await lab.fill('.pr-input', c);

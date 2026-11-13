@@ -2015,3 +2015,24 @@ test('diff se niega como git: opciones desconocidas, -p sin contenido, un commit
   assert.deepEqual(plain(empty.run('diff --staged --name-status').lines), ['A\ta.txt']);
   assert.match(empty.run('diff HEAD').lines[0], /^fatal: ambiguous argument 'HEAD'/);
 });
+
+test('las cartas de comandos escriben comandos que el simulador entiende, con el cursor donde va lo que falta', () => {
+  const { CARDS } = ctx.window.GB.gitsim;
+  assert.ok(CARDS.length >= 8, 'menos de 8 cartas');
+  assert.equal(new Set(CARDS.map((c) => c.id)).size, CARDS.length, 'cartas repetidas');
+  for (const c of ['commit', 'branch', 'switch', 'merge', 'rebase', 'reset']) assert.ok(CARDS.some((k) => k.id === c), `falta la carta ${c}`);
+  for (const card of CARDS) {
+    assert.equal(tokenize(card.line)[0], card.id, `${card.id}: la línea no empieza por su comando`);
+    assert.equal(typeof Repo.prototype.commands[card.id], 'function', `${card.id}: el simulador no lo conoce`);
+    const caret = card.caret ?? card.line.length;
+    assert.ok(caret >= 0 && caret <= card.line.length, `${card.id}: cursor fuera de la línea`);
+    // lo que la persona completa: un mensaje en el cursor o una rama al final (nueva para crearla)
+    const filled = card.line.slice(0, caret) + (card.line.endsWith(' ') ? (card.id === 'branch' ? 'nueva' : 'feature') : card.caret != null ? 'x' : '') + card.line.slice(caret);
+    const r = start(1, NOW); // main y feature divergen
+    run(r, 'touch app.js'); // algo que preparar o guardar aparte
+    if (card.id === 'commit') run(r, 'add .');
+    if (card.id === 'switch' || card.id === 'merge' || card.id === 'rebase') run(r, 'stash');
+    const res = r.run(filled);
+    assert.ok(res.ok, `${card.id}: «${filled}» falló: ${res.lines.join(' / ')}`);
+  }
+});

@@ -2107,7 +2107,7 @@ test('merge con un archivo tocado en las dos ramas se detiene en conflicto: stat
   assert.equal(r.run('commit -a -m "Merge"').ok, false, 'commit -a tampoco');
   const away = r.run('checkout feature');
   assert.equal(away.ok, false);
-  assert.match(away.lines.join('\n'), /resolve your current index first[\s\S]*login\.js: needs merge/);
+  assert.match(away.lines.join('\n'), /login\.js: needs merge\nerror: you need to resolve your current index first/);
   assert.equal(r.run('stash').ok, false);
   assert.equal(r.run('merge feature').ok, false, 'otra fusión tampoco');
   // add lo marca resuelto y commit (sin -m, con el mensaje de la fusión) la cierra
@@ -2177,4 +2177,48 @@ test('el ejercicio de conflictos no se resuelve sin el add ni esquivando el conf
   const a = start(i, NOW);
   run(a, 'merge feature', 'merge --abort');
   assert.equal(EXERCISES[i].done(a), false);
+});
+
+test('un conflicto: lo que llega sin chocar se prepara como llegó, y git rm, rm con add, stash pop y commit -m "" se portan como git', () => {
+  const r = fresh();
+  run(r, 'touch old.js', 'add .', 'commit -m base', 'checkout -b feature', 'git rm old.js', 'touch login.js', 'touch --new brand.js', 'add .', 'commit -m f', 'checkout main', 'touch login.js', 'add .', 'commit -m m');
+  run(r, 'merge feature');
+  assert.deepEqual(plain(r.conflicts), ['login.js']);
+  const st = r.run('status').lines;
+  assert.ok(st.includes('\tdeleted:    old.js'), 'el borrado de la otra rama llega borrado');
+  assert.ok(st.includes('\tnew file:   brand.js'), 'el archivo nuevo de la otra rama llega nuevo');
+  assert.deepEqual(plain(r.areas()).index.map((x) => [x.file, x.state]), [['brand.js', 'A'], ['login.js', 'C'], ['old.js', 'D']]);
+  assert.equal(r.run('commit -m ""').ok, false, 'un mensaje vacío aborta, como en git');
+  assert.equal(r.run('branch foo').ok, true);
+  assert.equal(r.run('checkout foo').ok, false, 'ni a una rama en el mismo commit');
+  assert.equal(r.run('stash pop').ok, false);
+  // git rm lo resuelve como borrado
+  assert.ok(r.run('git rm login.js').ok);
+  assert.deepEqual(plain(r.conflicts), []);
+  assert.ok(r.run('commit').ok);
+  assert.ok(!r.areas().head.includes('old.js'), 'el borrado no revive al cerrar la fusión');
+  assert.ok(!r.areas().head.includes('login.js'));
+  // rm a mano y add: el borrado queda preparado y nada queda colgado en el árbol
+  const h = clash();
+  run(h, 'merge feature', 'rm login.js', 'add login.js');
+  assert.deepEqual(plain(h.conflicts), []);
+  assert.deepEqual(plain(h.deleted), []);
+  assert.ok(h.run('commit').ok);
+  assert.equal(h.run('status').lines.at(-1), 'nothing to commit, working tree clean');
+  // si las dos ramas borraron el mismo archivo, no hay nada que elegir
+  const d = fresh();
+  run(d, 'touch x.js', 'add .', 'commit -m base', 'checkout -b feature', 'git rm x.js', 'commit -m a', 'checkout main', 'git rm x.js', 'commit -m b');
+  assert.deepEqual(plain(d.run('merge feature').lines), ["Merge made by the 'ort' strategy."]);
+});
+
+test('las partidas de un ejercicio propio fusionan sin conflicto: los enlaces de antes siguen valiendo', () => {
+  const setup = ['checkout -b f', 'touch a.js', 'commit -am x', 'checkout main', 'touch a.js', 'commit -am y', 'merge f', 'checkout f'];
+  const spec = cleanExercise({ title: 'x', goal: 'y', setup, checks: ['on:f'] });
+  assert.equal(spec.error, undefined);
+  const r = startCustom(customExercise(spec), NOW);
+  assert.deepEqual(plain(r.conflicts), []);
+  assert.equal(r.head.branch, 'f');
+  // en la terminal, en cambio, sí choca
+  const t = startCustom(customExercise(cleanExercise({ title: 'x', goal: 'y', setup: setup.slice(0, 6), checks: ['on:main'] })), NOW);
+  assert.deepEqual(plain(t.run('merge f').lines).slice(-1), ['Automatic merge failed; fix conflicts and then commit the result.']);
 });

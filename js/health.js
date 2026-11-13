@@ -1,7 +1,7 @@
 /* GraphBranch — salud del repo: lo que ya está cargado, leído como señales de equipo.
    Ramas sin actividad hace más de 30 días y sin PR, pull requests abiertos por edad y por estado (borrador, checks en rojo, aprobado, esperando revisión) y los que llevan más de 7 días sin ninguna revisión, cuánto tardaron
    en fusionarse los últimos, el ritmo de merges y releases y, los PRs fusionados y abiertos, los issues cerrados y las ramas nuevas y los commits, sus autores distintos y los autores nuevos por semana y, en el idioma de DORA, la frecuencia de
-   despliegues (cada release cuenta como uno, también por semana) y el tiempo de entrega (de abierto a fusionado), el estado del último despliegue de cada entorno y las estrellas nuevas de la semana frente a las de la anterior. No hace ninguna consulta: parte del
+   despliegues (cada release cuenta como uno, también por semana) y el tiempo de entrega (de abierto a fusionado), el estado del último despliegue de cada entorno y las estrellas nuevas de la semana frente a las de la anterior y, con lo que trajo la fuente al abrir el panel, las líneas añadidas y borradas por semana. No hace ninguna consulta: parte del
    estado del grafo y de la actividad que ya llegó, y cuenta lo que pasa en el repo, no a personas. */
 (function (GB) {
   'use strict';
@@ -11,7 +11,7 @@
   const UNREVIEWED_DAYS = 7; // un PR abierto que pasa de esto sin ninguna revisión cuenta como «sin revisión»
   const RECENT_MERGES = 20; // cuántos PRs fusionados entran en el tiempo de abierto a fusionado
   const RECENT_RELEASES = 10; // cuántos releases entran en el tiempo entre despliegues
-  const WEEKS = 8; // semanas que entran en la frecuencia de despliegue y en las tendencias de merges, de PRs abiertos, de issues cerrados, de ramas nuevas, de commits, de autores y de autores nuevos
+  const WEEKS = 8; // semanas que entran en la frecuencia de despliegue y en las tendencias de merges, de PRs abiertos, de issues cerrados, de ramas nuevas, de commits, de autores, de autores nuevos y de líneas añadidas y borradas
   const ROWS = 8; // filas que muestra cada lista
 
   const at = (x) => (typeof x === 'number' ? x : Date.parse(x) || 0);
@@ -36,6 +36,22 @@
       mayúsculas; vacía si el commit no trae autor. La misma en los autores distintos y en los nuevos, para que
       nunca salgan más nuevos que distintos en una semana. */
   const authorKey = (c) => String(c?.author?.login || c?.author?.name || '').trim().toLowerCase();
+
+  /** Líneas añadidas y borradas en cada una de las últimas WEEKS semanas, con las semanas de `/stats/code_frequency`
+      (`data.codeFreq.weeks`: `[{ time, added, deleted }]`, la que empieza en `time`). Cada semana de GitHub va al bloque de
+      7 días donde empieza, como un evento más; una cifra que no es un número no suma. */
+  function codeWeekly(code, now) {
+    const added = new Array(WEEKS).fill(0);
+    const deleted = new Array(WEEKS).fill(0);
+    for (const w of code?.weeks || []) {
+      if (!(w?.time > 0) || w.time > now) continue;
+      const k = Math.floor((now - w.time) / (7 * DAY));
+      if (k >= WEEKS) continue;
+      if (Number.isFinite(w.added) && w.added > 0) added[WEEKS - 1 - k] += w.added;
+      if (Number.isFinite(w.deleted) && w.deleted > 0) deleted[WEEKS - 1 - k] += w.deleted;
+    }
+    return { added, deleted };
+  }
 
   /** Cuántos autores distintos hicieron commits en cada una de las últimas WEEKS semanas, con los commits
       cargados. Un autor es su usuario o, sin usuario, su nombre (como en la búsqueda por autor); un commit
@@ -300,6 +316,7 @@
       })
       .sort((a, b) => b.time - a.time || (a.env < b.env ? -1 : 1));
 
+    const code = codeWeekly(data.codeFreq, now);
     return {
       deploys: { total: deploys.length, rows: deploys.slice(0, ROWS) },
       forks: { total: forks.length, rows: forks.slice(0, ROWS) },
@@ -313,8 +330,9 @@
       ci,
       forkTrend: { week: forkWeeks[WEEKS - 1], prev: fullPrev ? forkWeeks[WEEKS - 2] : null }, // forks nuevos en los últimos 7 días y en los 7 anteriores (null: sin medir)
       stars: { week: starWeeks[WEEKS - 1], prev: fullPrev ? starWeeks[WEEKS - 2] : null }, // estrellas nuevas en los últimos 7 días y en los 7 anteriores (null: sin medir)
+      code: data.codeFreq ? { pending: data.codeFreq.state === 'pending' } : null, // las líneas por semana: null sin consulta; pending si GitHub todavía las calcula (202)
       absence: absenceFactor(data.commits.values()), // cuántas personas suman la mitad de los commits cargados (null: ninguno con autor)
-      pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), authorWeeks: authorsWeekly(data.commits.values(), now), newAuthorWeeks: newAuthorsWeekly(data.commits.values(), now), tagWeeks: weekly(tagTimes, now), issueWeeks: weekly([...issueOpened.values()], now), prCloseWeeks: weekly([...prClosed.values()], now) }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
+      pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), authorWeeks: authorsWeekly(data.commits.values(), now), newAuthorWeeks: newAuthorsWeekly(data.commits.values(), now), tagWeeks: weekly(tagTimes, now), issueWeeks: weekly([...issueOpened.values()], now), prCloseWeeks: weekly([...prClosed.values()], now), addedWeeks: code.added, deletedWeeks: code.deleted }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
     };
   }
 

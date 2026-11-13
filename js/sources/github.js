@@ -67,6 +67,14 @@
       .sort((a, b) => b.pushedAt - a.pushedAt)
       .slice(0, FORK_MAX)
       .map(({ fullName, url, pushedAt, stars }) => ({ fullName, url, pushedAt, stars }));
+  /** Las semanas de `/stats/code_frequency` (`[[inicio en segundos, añadidas, -borradas], …]`, de la más vieja a la
+      actual) como `[{ time, added, deleted }]`, las borradas en positivo; solo las últimas 12, que el panel mira 8. Una
+      fila sin fecha no entra y una cifra que no es un número cuenta 0. */
+  const codeWeeks = (list) =>
+    (Array.isArray(list) ? list : [])
+      .filter((w) => Array.isArray(w) && Number.isFinite(w[0]) && w[0] > 0)
+      .map(([t, add, del]) => ({ time: t * 1000, added: Number.isFinite(add) ? Math.abs(add) : 0, deleted: Number.isFinite(del) ? Math.abs(del) : 0 }))
+      .slice(-12);
   const PAGE = 100; // ramas por consulta al listarlas (el máximo de GitHub)
   const FIRST = 10; // commits que pide primero cada rama nueva; casi siempre bastan para tocar lo ya cargado
   const BATCH_MS = 4000; // tiempo por ciclo para listar ramas y traer historia; el resto, en el ciclo siguiente
@@ -399,7 +407,7 @@
       const cached = cacheKey ? this.etags.get(cacheKey) : null;
       if (cached) headers['If-None-Match'] = cached.etag;
 
-      const { res, body } = await this.request(this.ep.api + path, { headers, cache: 'no-store' });
+      const { res, body } = await this.request(this.ep.api + path, { headers, cache: 'no-store', emptyOk: allow.includes(202) });
       this.readRate(res);
       if (res.status === 304 && cached) {
         if (!this.token) this.cost++; // sin token, los 304 sí cuentan
@@ -443,7 +451,7 @@
      * cuenta como fallo de red (se reintenta); si la fuente se detuvo mientras tanto, se corta y no
      * cuenta como nada. Con `raw`, el cuerpo queda como texto (un diff), sin leerlo como JSON.
      */
-    async request(url, { raw = false, ...opts } = {}) {
+    async request(url, { raw = false, emptyOk = false, ...opts } = {}) {
       const halt = this.halt || (this.halt = new AbortController());
       const stopped = () => new ApiError(M(this.term('err.network')), { kind: 'aborted' });
       if (halt.signal.aborted) throw stopped();
@@ -466,7 +474,7 @@
           } catch {
             body = undefined;
           }
-          if (res.ok && !body) throw new ApiError(M(this.term('err.network')), { kind: 'network' }); // llegó vacía o cortada
+          if (res.ok && !(emptyOk && res.status === 202) && !body) throw new ApiError(M(this.term('err.network')), { kind: 'network' }); // llegó vacía o cortada (salvo el 202, «todavía calculando», de quien lo admite: puede venir sin cuerpo)
         }
         return { res, body };
       } catch (err) {
@@ -648,6 +656,35 @@
         if (known.has(id)) known.set(id, { state, at: now });
       }
       return todo.length > 0;
+    }
+
+    /** Líneas añadidas y borradas por semana (`/stats/code_frequency`): una consulta, solo cuando el panel de salud la
+        pide y no más de una cada 15 minutos (con ETag). GitHub responde 202 mientras la calcula: queda «calculando» y
+        se vuelve a preguntar en la próxima apertura; un 204 (repo vacío), un 422 (más de 10 000 commits) o sin permisos,
+        sin semanas. Mientras GitHub calcula, una apertura vuelve a preguntar pasado un minuto; nunca dos consultas a la vez.
+        La cuota agotada o la red caída cortan la consulta (lanza, como `syncForks`) y se vuelve a pedir pasado el tope.
+        Devuelve si preguntó. */
+    syncCodeFrequency() {
+      if (this.codeFreqAsk) return this.codeFreqAsk.then(() => false);
+      const wait = this.data.codeFreq?.state === 'pending' ? 60000 : 15 * 60000;
+      if (this.lastPoll.codeFreq && Date.now() - this.lastPoll.codeFreq < wait) return Promise.resolve(false);
+      this.lastPoll.codeFreq = Date.now();
+      const ask = this.askCodeFrequency().finally(() => (this.codeFreqAsk = null));
+      this.codeFreqAsk = ask.catch(() => {});
+      return ask;
+    }
+
+    async askCodeFrequency() {
+      const prev = this.data.codeFreq;
+      try {
+        const { data, status } = await this.api(`${this.base}/stats/code_frequency`, { cacheKey: 'code-freq', allow: [202, 204] });
+        if (status === 202) this.data.codeFreq = { state: 'pending', weeks: prev?.weeks || [] };
+        else this.data.codeFreq = { state: 'ok', weeks: codeWeeks(data) };
+      } catch (err) {
+        if (!['http', 'notfound', 'auth'].includes(err.kind)) throw err;
+        this.data.codeFreq = { state: 'none', weeks: [] };
+      }
+      return true;
     }
 
     /** Fecha del primer commit de cada PR fusionado reciente (`numbers`): una consulta por PR (`/pulls/:n/commits`, solo el

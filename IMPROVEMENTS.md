@@ -374,7 +374,8 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     `al llegar a una galaxia…: lo que se lee cambió 4 veces`.
 
 3. [Deuda] «la práctica de git responde a los comandos en el grafo» (sección «Varios repos a la vez») falló en las dos
-    corridas de la iteración 288 (2026-11-13) que la incluyeron, la suelta y la de la puerta, y pasó al repetir su sección:
+    corridas de la iteración 288 (2026-11-13) que la incluyeron, la suelta y la de la puerta, y pasó al repetir su sección
+    (otra vez en las dos puertas de la iteración 294, la segunda cortada en las e2e por un reinicio de la sesión):
     `page.waitForFunction: Timeout 30000ms exceeded`, el primer `waitForFunction` del paso (`#repo-link` en
     `practice/git` y `#practice` visible, con `T(15000)`), en una sección que el cambio no toca. Hipótesis: tras los pasos
     de la demo y del ensayo, el botón de la práctica no llega a cambiar de repo a tiempo en la primera carga de `lab`.
@@ -685,7 +686,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Skills: no aplica: una marca más en una vista que ya existe, con un dato ya cargado; la accesibilidad la cubre `modern-web-guidance`, del repo.
 - Arena: no aplica: una sola forma obvia (contar el `draft` donde ya se cuentan los PRs por rama).
 - Guías: test-driven-development (la prueba nueva vista fallar antes del cambio), content-translation (el «borrador» de cada idioma, el mismo de `act.prOpenedDraft` o de `health.prState.draft`)
-- OMC: plan=— · revisión=4 hallazgos (3 arreglados) · verificación=pendiente. La revisión (omc-code-reviewer) dio solo LOW: en ro, th y hr «borrador» no era el término que el idioma ya usa en `health.prState.draft` (ahora «ciornă», «ฉบับร่าง», «skica»), el orden de la frase en árabe («مسودات PR»), y una clase `tv-draft` sin estilo ni uso (quitada). El cuarto (el texto «, en borrador» de la lista lo prueba solo el smoke, no `node --test`) queda así: el ítem pedía la prueba con los datos, y el DOM lo mira el smoke.
+- OMC: plan=— · revisión=4 hallazgos (3 arreglados) · verificación=PASS (omc-verifier: los cinco criterios verificados, con `node --test tools/textview.test.mjs` y `node tools/check-i18n.mjs` corridos por él). La revisión (omc-code-reviewer) dio solo LOW: en ro, th y hr «borrador» no era el término que el idioma ya usa en `health.prState.draft` (ahora «ciornă», «ฉบับร่าง», «skica»), el orden de la frase en árabe («مسودات PR»), y una clase `tv-draft` sin estilo ni uso (quitada). El cuarto (el texto «, en borrador» de la lista lo prueba solo el smoke, no `node --test`) queda así: el ítem pedía la prueba con los datos, y el DOM lo mira el smoke.
 - Reclamo: loop/294, sin colisión (`--reclamar` salió 3 mientras la 288 a la 293 estaban vivas; se reclamó al fusionarse la 293)
-- Validado: pendiente
+- Validado: 777 pruebas (`node --test`), smoke (40 idiomas; intermitente, en verde al repetir su sección: «la práctica de git responde a los comandos en el grafo»), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 30 e2e en verde. El intermitente es ajeno (pendiente 3 [Deuda]); la primera puerta, antes de los arreglos de la revisión, dio verde sin intermitentes.
 - **Siguiente:** iteración 295, mantenimiento · Rendimiento: pendiente 11 (La carga de la demo sin token hace 10 consultas (3 de ellas `/commits`, una por…)

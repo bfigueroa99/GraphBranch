@@ -7148,6 +7148,9 @@ html.tv .agk-btn {
 .ap-row:hover {
   background: var(--surface-2);
 }
+a.ap-row {
+  text-decoration: none;
+}
 .ap-list li {
   display: flex;
   align-items: stretch;

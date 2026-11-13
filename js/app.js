@@ -1254,6 +1254,13 @@
         if (set.delete(id)) U.store.set('prpins', set.size ? [...set] : null);
       }
     },
+    onOpenIssue: (key) => {
+      // un issue sin enlace (la demo): se abre su repo, donde el panel de actividad lo tiene
+      const tab = tabs.find((x) => x.key === key);
+      if (!tab) return;
+      openTab(tab);
+      tab.el?.querySelector('.rt-main')?.focus({ preventScroll: true });
+    },
     onOpenPr: (key, head) => {
       const tab = tabs.find((x) => x.key === key);
       if (!tab) return;
@@ -1288,6 +1295,8 @@
   function drawCard(tab, { initial = false, calm = false, activities = [] } = {}) {
     if (!allOn || !tab.source?.data.loaded) return;
     const data = tab.source.view ? tab.source.view() : tab.source.data;
+    // un issue que se abre o se cierra no cambia el grafo: el Launchpad se pone al día igual
+    if (activities.some((a) => a.kind === 'issue-open' || a.kind === 'issue-close')) renderAllPrs();
     if (!overview.draw(tab.key, data, liveCtx(data, initial, calm, tab))) return;
     if (!initial && activities.length) overview.celebrate(tab.key, activities);
   }
@@ -1310,9 +1319,10 @@
     renderAllPrs();
   }
 
-  /** El Launchpad de la vista conjunta: los PRs abiertos de lo ya cargado en cada pestaña, por estado. */
+  /** El Launchpad de la vista conjunta: los PRs abiertos de lo ya cargado en cada pestaña, por estado, y los issues
+      abiertos que vio su actividad. */
   function renderAllPrs() {
-    overview.setPulls(tabs.filter((x) => x.source?.data.loaded).map((x) => ({ key: x.key, name: nameOf(x), pulls: x.source.data.pulls.values() })));
+    overview.setPulls(tabs.filter((x) => x.source?.data.loaded).map((x) => ({ key: x.key, name: nameOf(x), pulls: x.source.data.pulls.values(), issues: GB.overview.openIssues(feed.itemsOf(x.key)) })));
   }
 
   /** Entra o sale de la vista conjunta (se recuerda y viaja en la URL, ?all=1). Con un solo repo no hay. En modo TV

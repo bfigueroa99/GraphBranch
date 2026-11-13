@@ -253,7 +253,7 @@
       H.push(this.act('release', { title: MSG('act.release', { tag: 'v1.4.0' }), detail: S.releaseNotes, actor: this.actor(V) }, t + 60e3));
       push('feature/login', J, S.loginA11y);
       push('feature/dark-mode', T, S.darkToggle);
-      H.push(this.act('issue-open', { title: MSG('act.issueOpened', { num: ++this.issueSeq }), detail: this.C.issues[0], actor: this.actor(C) }, step(5, 20)));
+      H.push(this.act('issue-open', { title: MSG('act.issueOpened', { num: ++this.issueSeq }), detail: this.C.issues[0], actor: this.actor(C), number: this.issueSeq }, step(5, 20)));
       this.openIssues.push(this.issueSeq);
       H.push(this.act('issue-close', { title: MSG('act.issueClosed', { num: 84 }), detail: S.resolved, actor: this.actor(M), number: 84 }, step(5, 20)));
       // agentes: Dependabot sube una dependencia y Matías la fusiona; una sesión de Claude Code empieza una rama y

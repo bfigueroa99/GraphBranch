@@ -321,3 +321,84 @@ test('fitGrid: sin medidas (el panel todavía no se ve) da una grilla razonable,
   assert.deepEqual(plain(O.fitGrid(1, NaN, 400)), { cols: 1, rows: 1 });
   assert.deepEqual(plain(O.fitGrid(0, 800, 400)), { cols: 1, rows: 1 });
 });
+
+test('openIssues: los issues abiertos según la actividad, cada número una vez, con lo cerrado y lo reabierto', () => {
+  const ev = (kind, number, time, extra = {}) => ({ kind, number, time, detail: `Issue ${number}`, actor: { login: `u${number}` }, url: `https://github.com/o/a/issues/${number}`, ...extra });
+  // en el orden del panel (lo más nuevo primero), como llegan de feed.itemsOf
+  const acts = [
+    ev('issue-open', 3, 60, { actor: { login: 'beto' } }), // reabierto: sigue abierto, con quien lo abrió primero
+    ev('issue-close', 2, 50),
+    ev('issue-close', 3, 40),
+    ev('issue-open', 2, 30),
+    ev('issue-open', 3, 20, { actor: { login: 'ana' } }),
+    ev('issue-open', 1, 10, { url: 'javascript:alert(1)' }),
+    ev('issue-open', 4, 70), ev('issue-close', 4, 70), // a la misma hora gana el cierre
+    { kind: 'issue-open', time: 80, detail: 'sin número' },
+    { kind: 'pr-open', number: 5, time: 90 },
+    ev('issue-open', 6, Number.NaN),
+  ];
+  const got = plain(O.openIssues(acts));
+  assert.deepEqual(got.map((i) => i.number), [3, 1], 'abiertos: el 3 (reabierto) y el 1; el 2 y el 4 se cerraron');
+  assert.deepEqual(got[0], { number: 3, title: 'Issue 3', url: 'https://github.com/o/a/issues/3', user: 'ana', createdAt: 20 });
+  assert.equal(got[1].url, '', 'un enlace que no es http(s) no se usa');
+  assert.deepEqual(plain(O.openIssues([...acts].reverse())).map((i) => i.number), [3, 1], 'el orden de llegada no importa');
+  assert.deepEqual(plain(O.openIssues(null)), []);
+});
+
+test('groupPulls: los issues abiertos de dos repos van en su grupo, al final, y se fijan y se posponen aparte de los PRs', () => {
+  const issue = (number, user, createdAt) => ({ number, title: `Issue ${number}`, url: `https://x/${number}`, user, createdAt });
+  const entries = [
+    { key: 'a', name: 'o/a', pulls: [{ number: 1, title: 'PR 1', user: { login: 'ana' }, createdAt: 5 }], issues: [issue(1, 'beto', 3), issue(2, 'ana', 9)] },
+    { key: 'b', name: 'o/b', pulls: [], issues: [issue(7, 'ana', 4)] },
+  ];
+  const ids = (g) => plain(g).map((x) => [x.id, x.items.map((i) => `${i.id}${i.pinned ? '*' : ''}${i.snoozed ? 'z' : ''}`)]);
+  assert.deepEqual(ids(O.groupPulls(entries)), [['waiting', ['a#1']], ['issues', ['a#issue-2', 'b#issue-7', 'a#issue-1']]], 'el PR #1 y el issue #1 del mismo repo no se confunden');
+  const now = 1000;
+  assert.deepEqual(ids(O.groupPulls(entries, new Set(['a#issue-1']), '', '', { 'b#issue-7': now + 10, 'a#1': now + 10 }, now)),
+    [['waiting', ['a#1z']], ['issues', ['a#issue-1*', 'a#issue-2', 'b#issue-7z']]], 'fijado arriba, pospuesto al final');
+  assert.deepEqual(ids(O.groupPulls(entries, new Set(['a#1']))), [['waiting', ['a#1*']], ['issues', ['a#issue-2', 'b#issue-7', 'a#issue-1']]], 'fijar el PR no fija el issue del mismo número');
+  assert.deepEqual(ids(O.groupPulls(entries, null, 'beto')), [['issues', ['a#issue-1']]], 'con una persona, los issues que abrió');
+  assert.deepEqual(ids(O.groupPulls(entries, null, '', 'b')), [['issues', ['b#issue-7']]], 'con un repo, los suyos');
+  const it = plain(O.groupPulls(entries, null, 'ana', 'b'))[0].items[0];
+  assert.equal(it.issue, true);
+  assert.equal(it.role, 'author');
+  assert.equal(it.url, 'https://x/7');
+  assert.deepEqual(plain(O.prAuthors(entries)), ['ana', 'beto'], 'quienes abrieron issues también se eligen');
+  assert.deepEqual(plain(O.prCounts(entries)), { ana: 3, beto: 1 });
+  assert.deepEqual(plain(O.prRepos(entries)), [{ key: 'a', name: 'o/a', n: 3 }, { key: 'b', name: 'o/b', n: 1 }], 'un repo solo con issues también se filtra');
+  assert.equal(O.issuePinId('o/a', 3), 'o/a#issue-3');
+});
+
+test('mount: un issue con enlace es un enlace a su página, uno sin enlace abre su repo, y el título cuenta solo los PRs', () => {
+  const els = [];
+  const mkEl = (tag) => {
+    const el = { tag, children: [], dataset: {}, attrs: {}, classList: { toggle() {} }, hidden: false, listeners: {}, append(...c) { this.children.push(...c); }, replaceChildren(...c) { this.children = c; }, setAttribute(k, v) { this.attrs[k] = v; }, addEventListener(t, f) { this.listeners[t] = f; }, querySelectorAll: () => [], querySelector: () => null, focus() {}, closest: () => null };
+    els.push(el);
+    return el;
+  };
+  const c2 = vm.createContext({ window: { GB: { U: { truncate: (x) => x } }, matchMedia: null }, document: { createElement: mkEl } });
+  vm.runInContext(readFileSync(join(root, 'js', 'overview.js'), 'utf8'), c2, { filename: 'overview.js' });
+  const pins = [];
+  const opened = [];
+  const box = mkEl('div');
+  const ov = c2.window.GB.overview.mount(mkEl('div'), { prsRoot: box, text: (k, p) => `${k}${p?.n != null ? `:${p.n}` : ''}`, num: String, getPins: () => [], onPin: (id, on) => pins.push([id, on]), onOpenIssue: (key) => opened.push(key) });
+  const issue = (number, url) => ({ number, title: `Issue ${number}`, url, user: 'ana', createdAt: number });
+  ov.setPulls([{ key: 'a', name: 'o/a', pulls: [], issues: [issue(1, 'https://github.com/o/a/issues/1'), issue(2, '')] }]);
+  assert.equal(box.hidden, false, 'con issues y sin PRs, el Launchpad se ve');
+  assert.equal(box.children.find((c) => c.className === 'ap-title').textContent, 'all.prs.title:0', 'el título cuenta los PRs');
+  const rows = els.filter((e) => e.className === 'ap-row');
+  const link = rows.find((r) => r.dataset.number === '1');
+  assert.equal(link.tag, 'a');
+  assert.equal(link.href, 'https://github.com/o/a/issues/1');
+  assert.equal(link.rel, 'noopener');
+  assert.equal(link.target, '_blank');
+  assert.match(link.attrs['aria-label'], /^all\.issues\.open/);
+  const btn = rows.find((r) => r.dataset.number === '2');
+  assert.equal(btn.tag, 'button');
+  btn.listeners.click();
+  assert.deepEqual(opened, ['a']);
+  const pin = els.filter((e) => e.className === 'ap-pin')[0];
+  assert.match(pin.attrs['aria-label'], /^all\.issues\.pin/);
+  pin.listeners.click();
+  assert.deepEqual(pins, [['a#issue-2', true]], 'se fija con su identidad de issue (el más nuevo va primero)');
+});

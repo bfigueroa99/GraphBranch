@@ -2042,6 +2042,7 @@ function fakeGitHub() {
       .sort((a, b) => b.pushed - a.pushed)
       .map((r) => ({ name: r.full.split('/')[1], owner: { login: owner }, fork: !!r.fork, archived: !!r.archived, private: false, pushed_at: new Date(Date.now() - 1e6 + r.pushed).toISOString() }));
   const orgEvents = []; // /orgs/acme/events: el más reciente primero
+  const repoEvents = new Map(); // /repos/{full}/events: el más reciente primero
   const route = (path, q) => {
     const own = path.match(/^\/(orgs|users)\/([^/]+)\/repos$/);
     if (own) {
@@ -2061,6 +2062,7 @@ function fakeGitHub() {
       const pr = (number, title, draft, extra = {}) => ({ number, title, html_url: `https://github.com/o/b/pull/${number}`, state: 'open', draft, head: { ref: 'main', repo: { full_name: 'o/b' } }, base: { ref: 'main' }, user: { login: 'bea', avatar_url: null }, created_at: new Date(Date.now() - number * 60000).toISOString(), ...extra });
       return { body: [pr(7, 'Cambio en revisión', false, { requested_reviewers: [{ login: 'ana' }] }), pr(8, 'Borrador a medias', true)] };
     }
+    if (rest === '/events' && repoEvents.has(m[1])) return { body: repoEvents.get(m[1]) };
     if (rest === '/events' || rest === '/pulls' || rest === '/tags' || rest === '/deployments' || rest === '/forks' || rest === '/activity' || rest === '/stats/code_frequency') return { body: [] }; // /activity: solo con token
     if (rest === '/commits') {
       let s = r.branches.get(q.get('sha')) || q.get('sha');
@@ -2083,6 +2085,11 @@ function fakeGitHub() {
     writes,
     repo,
     org: (name) => orgs.add(name),
+    repoEvent: (full, ev) => {
+      if (!repoEvents.has(full)) repoEvents.set(full, []);
+      const list = repoEvents.get(full);
+      list.unshift({ id: `${full}:${list.length + 1}`, actor: { login: 'ana' }, created_at: new Date().toISOString(), payload: {}, ...ev });
+    },
     orgEvent: (ev) => orgEvents.unshift({ id: String(orgEvents.length + 1), actor: { login: 'ana' }, created_at: new Date().toISOString(), payload: {}, ...ev }),
     push: (full, branch, message, at) => commit(repo(full), branch, message, at),
     handle: (r) => {
@@ -2344,6 +2351,52 @@ if (seccion('Varios repos a la vez'))
     await page.click(zzSel);
     const unsnoozed = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), saved: localStorage.getItem('graphbranch:prsnooze') }), zzSel);
     if (unsnoozed.pressed !== 'false' || unsnoozed.saved !== null) throw new Error('dejar de posponer un PR del Launchpad: ' + JSON.stringify(unsnoozed));
+    // los issues abiertos que vio la actividad de cada repo, en su grupo: un enlace a su página, se fijan como un PR y un
+    // cierre los saca. Sin token los eventos se leen cada 2 minutos: mientras tanto se leen en cada ciclo
+    await page.evaluate(() => {
+      const P = window.GB.GitHubSource.prototype;
+      P.dueBefore = P.due;
+      P.due = function (name) {
+        return name === 'events' || this.dueBefore(name);
+      };
+    });
+    const issueSel = '#all-prs .ap-group[data-group="issues"] .ap-row';
+    try {
+      gh.repoEvent('o/b', { type: 'IssuesEvent', actor: { login: 'carla' }, payload: { action: 'opened', issue: { number: 9, title: 'Falla el login', html_url: 'https://github.com/o/b/issues/9' } } });
+      await page.waitForSelector(issueSel, { timeout: T(15000) });
+      const iss = await page.evaluate((sel) => {
+        const r = document.querySelector(sel);
+        return {
+          rows: document.querySelectorAll(sel).length,
+          tag: r.tagName,
+          href: r.getAttribute('href'),
+          target: r.getAttribute('target'),
+          rel: r.getAttribute('rel'),
+          t: r.querySelector('.ap-t').textContent,
+          m: r.querySelector('.ap-m').textContent,
+          label: r.getAttribute('aria-label'),
+          group: r.closest('.ap-group').querySelector('.ap-gname').textContent,
+          last: document.querySelector('#all-prs .ap-group:last-child')?.dataset.group,
+          title: document.querySelector('#all-prs .ap-title').textContent,
+          who: [...document.querySelectorAll('#all-prs .ap-person option')].map((o) => o.textContent).join('|'),
+        };
+      }, issueSel);
+      if (iss.rows !== 1 || iss.tag !== 'A' || iss.href !== 'https://github.com/o/b/issues/9' || iss.target !== '_blank' || iss.rel !== 'noopener' || iss.t !== '#9 Falla el login' || iss.m !== 'o/b · carla' || iss.group !== 'Issues abiertos · 1' || iss.last !== 'issues' || !/: 2$/.test(iss.title) || !iss.who.includes('carla (1)') || !/^Issue #9 de o\/b: Falla el login/.test(iss.label || '') || /\{|undefined|NaN/.test(JSON.stringify(iss))) throw new Error('los issues en el Launchpad: ' + JSON.stringify(iss));
+      const ipin = '#all-prs .ap-group[data-group="issues"] .ap-pin';
+      await page.click(ipin);
+      const ipinned = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), label: document.querySelector(sel)?.getAttribute('aria-label'), saved: localStorage.getItem('graphbranch:prpins'), focus: document.activeElement?.matches(sel) }), ipin);
+      if (ipinned.pressed !== 'true' || ipinned.saved !== '["o/b#issue-9"]' || !ipinned.focus || !/issue #9/i.test(ipinned.label || '')) throw new Error('fijar un issue del Launchpad: ' + JSON.stringify(ipinned));
+      await page.click(ipin);
+      if ((await page.evaluate(() => localStorage.getItem('graphbranch:prpins'))) !== null) throw new Error('soltar un issue del Launchpad no lo olvidó');
+      gh.repoEvent('o/b', { type: 'IssuesEvent', actor: { login: 'ana' }, payload: { action: 'closed', issue: { number: 9, title: 'Falla el login', html_url: 'https://github.com/o/b/issues/9' } } });
+      await page.waitForFunction(() => !document.querySelector('#all-prs .ap-group[data-group="issues"]'), null, { timeout: T(15000) });
+    } finally {
+      await page.evaluate(() => {
+        const P = window.GB.GitHubSource.prototype;
+        P.due = P.dueBefore;
+        delete P.dueBefore;
+      });
+    }
     await page.click('#all-prs .ap-row[data-number="7"]');
     await page.waitForFunction(() => document.querySelector('#all-panel').hidden && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
     await page.click('#all-tab');

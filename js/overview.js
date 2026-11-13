@@ -65,10 +65,47 @@
   /** Los grupos del Launchpad, en el orden en que se muestran. */
   const PR_GROUPS = ['draft', 'failing', 'approved', 'waiting'];
 
-  const PR_GROUP_KEY = { draft: 'all.prs.draft', failing: 'all.prs.failing', approved: 'all.prs.approved', waiting: 'all.prs.waiting' };
+  const PR_GROUP_KEY = { draft: 'all.prs.draft', failing: 'all.prs.failing', approved: 'all.prs.approved', waiting: 'all.prs.waiting', issues: 'all.issues.title' };
+
+  /** El grupo de los issues abiertos, después de los de PRs. */
+  const ISSUE_GROUP = 'issues';
 
   /** La identidad de un PR para fijarlo: repo y número, nunca el título. */
   const pinId = (key, number) => `${key}#${number}`;
+
+  /** La identidad de un issue para fijarlo o posponerlo: repo y número, distinta de la de un PR (en GitLab, Bitbucket o
+      Azure los issues y los PRs se numeran aparte y el mismo número puede ser de los dos). */
+  const issuePinId = (key, number) => `${key}#issue-${number}`;
+
+  /** Los issues abiertos de un repo según su actividad ya cargada (los `issue-open` e `issue-close`, en cualquier orden y
+      sin consultar nada): cada número una vez, abierto si su último evento lo abrió (o lo reabrió). Del más nuevo al más
+      viejo: [{ number, title, url, user, createdAt }], con quien lo abrió y la hora de la primera apertura que se vio.
+      Lo que no trae número no cuenta: no se puede fijar ni saber si se cerró. */
+  function openIssues(acts) {
+    const last = new Map(); // número -> su último evento
+    const first = new Map(); // número -> su primera apertura
+    for (const a of acts || []) {
+      if (!a || (a.kind !== 'issue-open' && a.kind !== 'issue-close') || a.number == null || !Number.isFinite(a.time)) continue;
+      const n = String(a.number);
+      const prev = last.get(n);
+      // a la misma hora, el cierre gana: mejor esconder un issue abierto que mostrar uno ya cerrado
+      if (!prev || a.time > prev.time || (a.time === prev.time && a.kind === 'issue-close')) last.set(n, a);
+      if (a.kind === 'issue-open' && (!first.has(n) || a.time < first.get(n).time)) first.set(n, a);
+    }
+    const out = [];
+    for (const [n, a] of last) {
+      if (a.kind !== 'issue-open') continue;
+      const o = first.get(n) || a;
+      out.push({
+        number: a.number,
+        title: (a.detail || o.detail || '').toString(),
+        url: typeof a.url === 'string' && /^https?:\/\//i.test(a.url) ? a.url : '',
+        user: o.actor?.login || o.actor?.name || '',
+        createdAt: o.time,
+      });
+    }
+    return out.sort((x, y) => y.createdAt - x.createdAt || (Number(y.number) || 0) - (Number(x.number) || 0));
+  }
 
   /** Cuánto dura posponer un PR del Launchpad: un día. */
   const SNOOZE_MS = 24 * 60 * 60 * 1000;
@@ -110,25 +147,29 @@
   }
 
   /** Las personas de los PRs de varios repos (los mismos `entries` de `groupPulls`): quienes los abrieron, a quienes se
-      les pidió revisión y quienes están asignados, sin repetir y en orden alfabético. */
+      les pidió revisión y quienes están asignados, más quienes abrieron sus issues abiertos, sin repetir y en orden
+      alfabético. */
   function prAuthors(entries) {
     const set = new Set();
     for (const e of entries) for (const p of e.pulls || []) for (const u of prPeople(p)) set.add(u);
+    for (const e of entries) for (const i of e.issues || []) if (i.user) set.add(i.user);
     return [...set].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }) || (a < b ? -1 : 1));
   }
 
-  /** Los repos que tienen PRs abiertos (los mismos `entries`), en orden alfabético: [{ key, name, n }]. */
+  /** Los repos que tienen PRs o issues abiertos (los mismos `entries`), en orden alfabético: [{ key, name, n }], con `n`
+      los PRs más los issues. */
   function prRepos(entries) {
     const out = [];
-    for (const e of entries) { const n = [...(e.pulls || [])].length; if (n) out.push({ key: e.key, name: e.name, n }); }
+    for (const e of entries) { const n = [...(e.pulls || [])].length + [...(e.issues || [])].length; if (n) out.push({ key: e.key, name: e.name, n }); }
     return out.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }) || (a.key < b.key ? -1 : 1));
   }
 
-  /** En cuántos PRs abiertos está cada persona (los mismos `entries`), como autora, revisora pedida o asignada; cada PR
-      cuenta una vez por persona: { login: n }, con lo ya cargado y sin consultar nada. */
+  /** En cuántos PRs abiertos está cada persona (los mismos `entries`), como autora, revisora pedida o asignada, más los
+      issues abiertos que abrió; cada uno cuenta una vez por persona: { login: n }, con lo ya cargado y sin consultar nada. */
   function prCounts(entries) {
     const n = {};
     for (const e of entries) for (const p of e.pulls || []) for (const u of prPeople(p)) n[u] = (n[u] || 0) + 1;
+    for (const e of entries) for (const i of e.issues || []) if (i.user) n[i.user] = (n[i.user] || 0) + 1;
     return n;
   }
 
@@ -136,18 +177,23 @@
       Devuelve solo los grupos con PRs, [{ id, items }], cada uno del más nuevo al más viejo; los fijados (`pinned`: un Set
       de `pinId`) van arriba de su grupo, con `pinned: true`; los pospuestos (`snoozed`: { pinId: hasta (ms) }) que no
       vencieron a la hora `now` van al final de su grupo, con `snoozed: true`. Fijar gana a posponer. Con `author`, solo
-      los PRs en que esa persona está (los abrió, se le pidió revisión o está asignada), cada uno con su `role`. */
+      los PRs en que esa persona está (los abrió, se le pidió revisión o está asignada), cada uno con su `role`.
+      Los issues abiertos de cada entrada (`issues`, los de `openIssues`) van en un último grupo, `issues`, con
+      `issue: true` y su `url`; se fijan y se posponen igual (con `issuePinId`), y con `author` quedan los que abrió. Cada
+      fila lleva su `id` (el de fijarla). */
   function groupPulls(entries, pinned, author = '', repoKey = '', snoozed = null, now = Date.now()) {
-    const isPinned = (key, number) => !!pinned?.has?.(pinId(key, number));
     const live = liveSnoozes(snoozed, now);
-    const isSnoozed = (key, number) => Object.hasOwn(live, pinId(key, number));
-    const by = new Map(PR_GROUPS.map((g) => [g, []]));
+    const isPinned = (id) => !!pinned?.has?.(id);
+    const isSnoozed = (id) => Object.hasOwn(live, id);
+    const by = new Map([...PR_GROUPS, ISSUE_GROUP].map((g) => [g, []]));
     for (const e of entries) {
       if (repoKey && e.key !== repoKey) continue;
       for (const p of e.pulls || []) {
         const role = prRole(p, author);
         if (author && !role) continue;
+        const id = pinId(e.key, p.number);
         by.get(prGroup(p)).push({
+          id,
           key: e.key,
           repo: e.name,
           number: p.number,
@@ -156,14 +202,33 @@
           user: prAuthor(p),
           role, // con una persona elegida: por qué está su PR ('author', 'review' o 'assignee'); sin ella, ''
           createdAt: p.createdAt || 0,
-          pinned: isPinned(e.key, p.number),
-          snoozed: !isPinned(e.key, p.number) && isSnoozed(e.key, p.number),
+          pinned: isPinned(id),
+          snoozed: !isPinned(id) && isSnoozed(id),
+        });
+      }
+      for (const i of e.issues || []) {
+        if (author && i.user !== author) continue;
+        const id = issuePinId(e.key, i.number);
+        by.get(ISSUE_GROUP).push({
+          id,
+          issue: true,
+          key: e.key,
+          repo: e.name,
+          number: i.number,
+          title: i.title || '',
+          head: '',
+          url: i.url || '',
+          user: i.user || '',
+          role: author ? 'author' : '',
+          createdAt: i.createdAt || 0,
+          pinned: isPinned(id),
+          snoozed: !isPinned(id) && isSnoozed(id),
         });
       }
     }
     const rank = (x) => (x.pinned ? 0 : x.snoozed ? 2 : 1);
     for (const items of by.values()) items.sort((a, b) => rank(a) - rank(b) || b.createdAt - a.createdAt || (a.repo < b.repo ? -1 : a.repo > b.repo ? 1 : a.number - b.number));
-    return PR_GROUPS.map((id) => ({ id, items: by.get(id) })).filter((g) => g.items.length);
+    return [...PR_GROUPS, ISSUE_GROUP].map((id) => ({ id, items: by.get(id) })).filter((g) => g.items.length);
   }
 
   /**
@@ -177,6 +242,7 @@
    *   getPins(): los PRs fijados (lista de pinId); onPin(id, on): fijar o soltar uno
    *   getSnoozes(): los PRs pospuestos ({ pinId: hasta (ms) }); onSnooze(id, on): posponer uno un día o dejar de posponerlo
    *   prsRoot, onOpenPr(key, head): el Launchpad (los PRs de todos los repos por estado) y la salida de una fila
+   *   onOpenIssue(key): la salida de un issue sin enlace (el que tiene `url` se abre en una pestaña nueva, como un enlace)
    * Devuelve { sync(items), draw(key, data, ctx), stats(), celebrate(key, acts), focus(key, { sha, branch }), select(key, sha),
    *   graphOf(key), layoutOf(key), relocalize(), size }.
    */
@@ -305,7 +371,7 @@
     let prRepo = ''; // el filtro por repo ('' = todos); no se recuerda ni viaja en la URL
     let snoozeTimer = 0; // repinta cuando vence el primer PR pospuesto, para que vuelva a su lugar sin esperar datos nuevos
     function setPulls(entries) {
-      lastEntries = entries.map((e) => ({ ...e, pulls: [...(e.pulls || [])] })); // `pulls` puede ser un iterador, de un solo uso
+      lastEntries = entries.map((e) => ({ ...e, pulls: [...(e.pulls || [])], issues: [...(e.issues || [])] })); // `pulls` puede ser un iterador, de un solo uso
       entries = lastEntries;
       const box = opts.prsRoot;
       if (!box) return;
@@ -328,8 +394,8 @@
       prSig = sig;
       const t = opts.text;
       const num = opts.num || String;
-      const total = groups.reduce((n, g) => n + g.items.length, 0);
-      box.hidden = !people.length && !total;
+      const total = groups.reduce((n, g) => n + (g.id === ISSUE_GROUP ? 0 : g.items.length), 0); // el título cuenta los PRs
+      box.hidden = !people.length && !groups.length;
       box.replaceChildren();
       if (box.hidden) return;
       box.append(mk('h3', 'ap-title', t('all.prs.title', { n: num(total) })));
@@ -370,8 +436,15 @@
         const ul = mk('ul', 'ap-list');
         for (const it of g.items) {
           const li = mk('li');
-          const b = mk('button', 'ap-row');
-          b.type = 'button';
+          li.dataset.pin = it.id;
+          // un issue con su enlace es un enlace (se abre en el sitio del repo); un PR, o un issue sin enlace, un botón
+          const link = !!(it.issue && it.url);
+          const b = mk(link ? 'a' : 'button', 'ap-row');
+          if (link) {
+            b.href = it.url;
+            b.target = '_blank';
+            b.rel = 'noopener';
+          } else b.type = 'button';
           b.dataset.key = it.key;
           b.dataset.number = String(it.number);
           const title = mk('span', 'ap-t', `#${it.number} ${it.title}`);
@@ -385,36 +458,38 @@
             chip.dir = 'auto'; // lleva un login: en derecha a izquierda no se desordena
             b.append(chip);
           }
-          const label = [t('all.prs.open', { num: it.number, repo: it.repo, title: GB.U.truncate(it.title, 80) }), role].filter(Boolean).join('. ');
+          const label = [t(it.issue ? 'all.issues.open' : 'all.prs.open', { num: it.number, repo: it.repo, title: GB.U.truncate(it.title, 80) }), role].filter(Boolean).join('. ');
           b.setAttribute('aria-label', label);
           b.title = label;
-          b.addEventListener('click', () => opts.onOpenPr?.(it.key, it.head));
+          if (it.issue) {
+            if (!it.url) b.addEventListener('click', () => opts.onOpenIssue?.(it.key));
+          } else b.addEventListener('click', () => opts.onOpenPr?.(it.key, it.head));
+          const kind = it.issue ? 'all.issues' : 'all.prs';
+          const refocus = (cls) => [...box.querySelectorAll(cls)].find((x) => x.closest('li')?.dataset.pin === it.id)?.focus();
           li.append(b);
           const pin = mk('button', 'ap-pin');
           pin.type = 'button';
           pin.textContent = '📌';
           pin.setAttribute('aria-pressed', String(it.pinned));
-          const plabel = t(it.pinned ? 'all.prs.unpin' : 'all.prs.pin', { num: it.number, repo: it.repo });
+          const plabel = t(`${kind}.${it.pinned ? 'unpin' : 'pin'}`, { num: it.number, repo: it.repo });
           pin.setAttribute('aria-label', plabel);
           pin.title = plabel;
           pin.addEventListener('click', () => {
-            opts.onPin?.(pinId(it.key, it.number), !it.pinned);
+            opts.onPin?.(it.id, !it.pinned);
             setPulls(lastEntries);
-            // el repintado reemplaza la fila: el foco vuelve a su botón de fijar
-            [...box.querySelectorAll('.ap-pin')].find((x) => x.closest('li')?.querySelector('.ap-row')?.dataset.key === it.key && x.closest('li').querySelector('.ap-row').dataset.number === String(it.number))?.focus();
+            refocus('.ap-pin'); // el repintado reemplaza la fila: el foco vuelve a su botón de fijar
           });
           const zz = mk('button', 'ap-snooze');
           zz.type = 'button';
           zz.textContent = '💤';
           zz.setAttribute('aria-pressed', String(it.snoozed));
-          const zlabel = t(it.snoozed ? 'all.prs.unsnooze' : 'all.prs.snooze', { num: it.number, repo: it.repo });
+          const zlabel = t(`${kind}.${it.snoozed ? 'unsnooze' : 'snooze'}`, { num: it.number, repo: it.repo });
           zz.setAttribute('aria-label', zlabel);
           zz.title = zlabel;
           zz.addEventListener('click', () => {
-            opts.onSnooze?.(pinId(it.key, it.number), !it.snoozed);
+            opts.onSnooze?.(it.id, !it.snoozed);
             setPulls(lastEntries);
-            // la fila baja (o sube) en su grupo: el foco la sigue a su botón de posponer
-            [...box.querySelectorAll('.ap-snooze')].find((x) => x.closest('li')?.querySelector('.ap-row')?.dataset.key === it.key && x.closest('li').querySelector('.ap-row').dataset.number === String(it.number))?.focus();
+            refocus('.ap-snooze'); // la fila baja (o sube) en su grupo: el foco la sigue a su botón de posponer
           });
           li.classList.toggle('pinned', it.pinned);
           li.classList.toggle('snoozed', it.snoozed);
@@ -473,5 +548,5 @@
     };
   }
 
-  GB.overview = { allParam, personParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, fitGrid, prGroup, prRole, groupPulls, prAuthors, prRepos, prCounts, pinId, SNOOZE_MS, liveSnoozes, mount };
+  GB.overview = { allParam, personParam, lastCommit, summary, totals, heavy, HEAVY_BRANCHES, fitGrid, prGroup, prRole, groupPulls, prAuthors, prRepos, prCounts, pinId, issuePinId, openIssues, SNOOZE_MS, liveSnoozes, mount };
 })(window.GB);

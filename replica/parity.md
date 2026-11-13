@@ -1,10 +1,9 @@
-## Parity: 94.5 / 100
+## Parity: 96.3 / 100
 
-features 94.5  (38 counted, must-haves 13 of 13 done)
+features 96.3  (38 counted, must-haves 13 of 13 done)
 
 ## By area, weakest first
 - cuentas                       50.0  (1 features)
-- launchpad                     70.0  (3 features)
 - varios repos                  91.7  (3 features)
 - integraciones                 94.7  (7 features)
 - grafo                         97.2  (8 features)
@@ -12,6 +11,7 @@ features 94.5  (38 counted, must-haves 13 of 13 done)
 - navegación                   100.0  (1 features)
 - diffs                        100.0  (5 features)
 - pull requests                100.0  (3 features)
+- launchpad                    100.0  (3 features)
 - ci                           100.0  (1 features)
 - análisis                     100.0  (1 features)
 - conflictos                   100.0  (1 features)
@@ -19,11 +19,9 @@ features 94.5  (38 counted, must-haves 13 of 13 done)
 - compartir                    100.0  (1 features)
 
 ## Missing, in build order
-- [should] cuentas: Varios perfiles o cuentas, partial  (un token por servicio y una segunda cuenta de GitHub atada a un dueño (README, Token); faltan perfiles completos y más de dos cuentas)
+- [should] cuentas: Varios perfiles o cuentas, partial  (un token por servicio y hasta 5 cuentas más de GitHub, cada una atada a un dueño (README, Token); faltan perfiles completos (cada cuenta con sus repos seguidos))
 - [should] integraciones: Issues de rastreadores (Jira Trello GitHub Issues), partial  (issues de GitHub GitLab Codeberg y Bitbucket en el panel de actividad y la salud; sin Jira ni Trello)
-- [could] launchpad: Launchpad: vista de equipo filtrada por colaborador, no
 - [could] grafo: Cargar más historia (límite de commits configurable), partial  (README: Repositorios con miles de ramas; el tope de commits por rama no se elige desde la interfaz)
-- [could] launchpad: Launchpad: fijar y posponer PRs e issues, partial  (README, «Todos a la vez»: el 📌 fija un PR arriba de su grupo y el 💤 lo pospone un día; faltan los issues (el Launchpad solo lista PRs))
 - [could] varios repos: Workspaces compartidos con el equipo, partial  (se comparten por URL con sus repos; sin cuentas ni nube (lo que no cambia))
 
 ## Left out on purpose (not scored)

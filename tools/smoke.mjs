@@ -4165,7 +4165,7 @@ if (seccion('Forgejo propio con token'))
   await page.context().close();
 }
 
-if (seccion('Segunda cuenta de GitHub'))
+if (seccion('Otras cuentas de GitHub'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   const auths = [];
@@ -4175,24 +4175,49 @@ if (seccion('Segunda cuenta de GitHub'))
     auths.push([u.pathname, route.request().headers().authorization || '']);
     return route.fulfill({ status: 404, contentType: 'application/json', body: '{"message":"Not Found"}' });
   });
-  await step(page, 'el token de la segunda cuenta va solo a los repos de su dueño y el principal a los demás', async () => {
+  await step(page, 'tres cuentas más: cada token va solo a los repos de su dueño y el principal a los demás', async () => {
     await page.goto(`${base}/index.html?lang=es`);
     await loaded(page);
     await page.click('#settings-btn');
     await page.waitForSelector('#settings[open]', { timeout: T(3000) });
     await page.fill('#token-input', 'tok-principal0123');
-    await page.fill('#token2-owner', 'Acme');
-    await page.fill('#token2-input', 'tok-segunda0123');
+    const focused = () => page.evaluate(() => document.activeElement?.id || document.activeElement?.tagName);
+    await page.fill('#account-owner-1', 'Acme');
+    await page.fill('#account-token-1', 'tok-acme0123');
+    // «Agregar una cuenta» suma una fila y deja el foco en su dueño
+    for (const [n, owner] of [[2, 'beta'], [3, 'Gamma']]) {
+      await page.click('#account-add');
+      if ((await focused()) !== `account-owner-${n}`) throw new Error(`al agregar la cuenta ${n}, el foco quedó en ${await focused()}`);
+      await page.keyboard.type(owner);
+      await page.fill(`#account-token-${n}`, `tok-${owner.toLowerCase()}0123`);
+    }
+    // hasta cinco: con la quinta, el botón se va; «Quitar» la saca y deja el foco en una fila
+    await page.click('#account-add');
+    await page.click('#account-add');
+    if (await page.isVisible('#account-add')) throw new Error('con cinco cuentas todavía se puede agregar otra');
+    await page.getByRole('button', { name: 'Quitar Cuenta 5' }).click();
+    if (!/^account-owner-[1-4]$/.test(await focused())) throw new Error(`al quitar, el foco quedó en ${await focused()}`);
+    await page.click('#account-remove-4');
+    if ((await page.locator('#accounts-list .account').count()) !== 3) throw new Error('no quedaron tres cuentas');
+    if (!(await page.isVisible('#account-add'))) throw new Error('con tres cuentas no se puede agregar otra');
+    if ((await page.inputValue('#account-owner-3')) !== 'Gamma') throw new Error('quitar una fila movió lo escrito en otra');
     await page.click('#settings-form button[type=submit]');
     await page.waitForFunction(() => !document.querySelector('#settings').open, null, { timeout: T(3000) });
     const saved = await page.evaluate(() => JSON.parse(JSON.parse(localStorage.getItem('graphbranch:account2'))));
-    if (saved.owner !== 'Acme' || saved.token !== 'tok-segunda0123') throw new Error(`se guardó ${JSON.stringify(saved)}`);
-    await page.goto(`${base}/index.html?lang=es&repo=acme/web&repo=otro/api`);
+    const want = [['Acme', 'tok-acme0123'], ['beta', 'tok-beta0123'], ['Gamma', 'tok-gamma0123']];
+    if (JSON.stringify(saved) !== JSON.stringify(want.map(([owner, token]) => ({ owner, token })))) throw new Error(`se guardó ${JSON.stringify(saved)}`);
+    await page.goto(`${base}/index.html?lang=es&repo=acme/web&repo=beta/api&repo=gamma/app&repo=otro/api`);
     await page.waitForTimeout(3000);
     const of = (owner) => auths.filter(([path]) => path.startsWith(`/repos/${owner}/`));
-    if (!of('acme').length || !of('otro').length) throw new Error(`no se consultaron los dos repos: ${JSON.stringify(auths)}`);
-    if (of('acme').some(([, a]) => a !== 'Bearer tok-segunda0123')) throw new Error(`acme salió con ${JSON.stringify(of('acme'))}`);
-    if (of('otro').some(([, a]) => a !== 'Bearer tok-principal0123')) throw new Error(`otro salió con ${JSON.stringify(of('otro'))}`);
+    for (const [owner, tok] of [['acme', 'tok-acme0123'], ['beta', 'tok-beta0123'], ['gamma', 'tok-gamma0123'], ['otro', 'tok-principal0123']]) {
+      if (!of(owner).length) throw new Error(`no se consultó ${owner}: ${JSON.stringify(auths)}`);
+      if (of(owner).some(([, a]) => a !== `Bearer ${tok}`)) throw new Error(`${owner} salió con ${JSON.stringify(of(owner))}`);
+    }
+    // al volver a Ajustes, las tres están en su orden
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    const owners = await page.$$eval('#accounts-list .account-owner', (els) => els.map((e) => e.value));
+    if (owners.join() !== 'Acme,beta,Gamma') throw new Error(`Ajustes muestra ${owners.join()}`);
   }, { allow: /404/ });
   await page.context().close();
 }

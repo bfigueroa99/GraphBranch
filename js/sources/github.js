@@ -2205,24 +2205,50 @@
     };
   };
 
-  /** La segunda cuenta de GitHub, como se guarda: el token atado a su dueño u organización ('' si falta uno o el dueño no vale). */
+  /* Las otras cuentas de GitHub: hasta MAX_ACCOUNTS tokens más, cada uno atado a un dueño u organización y usado
+     solo con sus repos. Se guardan en el mismo lugar que la segunda cuenta de antes ('account2' en el navegador,
+     'github2' en el llavero): con una sola, con la misma forma que entonces ({ owner, token }), así que volver a una
+     versión anterior no la pierde; con más, la lista. */
   const OWNER_RE = /^[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,38})$/;
-  GitHubSource.pack2 = (owner, token) => {
-    owner = String(owner || '').trim().replace(/^@/, '');
-    return owner && OWNER_RE.test(owner) && token ? JSON.stringify({ owner, token: String(token).trim() }) : '';
+  GitHubSource.MAX_ACCOUNTS = 5;
+  /** Las cuentas que valen de `list`, limpias: con dueño válido y token, cada dueño una vez (gana la primera, sin
+      distinguir mayúsculas: con dos tokens para el mismo dueño no se sabría cuál usar) y hasta MAX_ACCOUNTS. */
+  const cleanAccounts = (list) => {
+    const out = [];
+    const seen = new Set();
+    for (const a of list) {
+      if (!a || typeof a.owner !== 'string' || typeof a.token !== 'string') continue;
+      const owner = a.owner.trim().replace(/^@/, '');
+      const token = a.token.trim();
+      if (!owner || !OWNER_RE.test(owner) || !token || seen.has(owner.toLowerCase())) continue;
+      seen.add(owner.toLowerCase());
+      out.push({ owner, token });
+      if (out.length === GitHubSource.MAX_ACCOUNTS) break;
+    }
+    return out;
   };
-  /** Lo guardado de la segunda cuenta → { owner, token } (vacíos si no hay o está roto). */
-  GitHubSource.unpack2 = (stored) => {
+  /** Las cuentas como se guardan: '' sin ninguna, el objeto de la cuenta con una sola y la lista con más. */
+  GitHubSource.packAccounts = (list) => {
+    const clean = cleanAccounts(Array.isArray(list) ? list : []);
+    return clean.length ? JSON.stringify(clean.length === 1 ? clean[0] : clean) : '';
+  };
+  /** Lo guardado → la lista de cuentas (vacía si no hay o está roto). La segunda cuenta de antes, un objeto, pasa a
+      ser la primera de la lista. */
+  GitHubSource.unpackAccounts = (stored) => {
     try {
       const v = JSON.parse(String(stored || ''));
-      return v && OWNER_RE.test(v.owner) && typeof v.token === 'string' && v.token ? { owner: v.owner, token: v.token } : { owner: '', token: '' };
+      return cleanAccounts(Array.isArray(v) ? v : [v]);
     } catch {
-      return { owner: '', token: '' };
+      return [];
     }
   };
-  /** El token que corresponde a los repos de `owner`: el de la segunda cuenta solo si es su dueño; para todo lo demás, el principal. */
-  GitHubSource.tokenFor = (owner, main, second) =>
-    second?.token && second.owner && String(owner || '').toLowerCase() === second.owner.toLowerCase() ? second.token : main || '';
+  /** El token que corresponde a los repos de `owner`: el de la cuenta de ese dueño, si hay una; para todo lo demás, el
+      principal. Nunca el de otra cuenta. */
+  GitHubSource.tokenFor = (owner, main, accounts) => {
+    const o = String(owner || '').toLowerCase();
+    const hit = o && (Array.isArray(accounts) ? accounts : []).find((a) => a?.token && a.owner && a.owner.toLowerCase() === o);
+    return hit ? hit.token : main || '';
+  };
 
   GitHubSource.endpoints = endpoints;
   GitHubSource.ApiError = ApiError;

@@ -553,6 +553,7 @@ GB.i18n.define('uk', {
   'health.tagWeeks': 'Теги за тиждень: {list}',
   'health.issueWeeks': 'Відкриті issue за тиждень: {list}',
   'health.prCloseWeeks': 'Pull request’и, закриті без злиття, за тиждень: {list}',
+  'health.forkWeeks': 'Нові форки за тиждень: {list}',
   'health.addedWeeks': 'Додані рядки за тиждень: {list}',
   'health.deletedWeeks': 'Видалені рядки за тиждень: {list}',
   'health.codePending': 'GitHub ще підраховує додані й видалені рядки за тиждень: відкрийте панель знову за мить.',

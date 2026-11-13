@@ -580,6 +580,7 @@ GB.i18n.define('ur', {
   'health.tagWeeks': 'ہفتہ وار ٹیگز: {list}',
   'health.issueWeeks': 'ہفتہ وار کھلنے والے issue: {list}',
   'health.prCloseWeeks': 'بغیر انضمام کے بند ہونے والے pull request ہفتہ وار: {list}',
+  'health.forkWeeks': 'نئے فورکس ہفتہ وار: {list}',
   'health.addedWeeks': 'ہر ہفتے شامل کی گئی سطریں: {list}',
   'health.deletedWeeks': 'ہر ہفتے حذف کی گئی سطریں: {list}',
   'health.codePending': 'GitHub ابھی ہر ہفتے شامل اور حذف کی گئی سطروں کا حساب لگا رہا ہے: تھوڑی دیر میں پینل دوبارہ کھولیں۔',

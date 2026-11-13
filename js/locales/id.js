@@ -537,6 +537,7 @@ GB.i18n.define('id', {
   'health.tagWeeks': 'Tag per minggu: {list}',
   'health.issueWeeks': 'Issue yang dibuka per minggu: {list}',
   'health.prCloseWeeks': 'Pull request yang ditutup tanpa digabung per minggu: {list}',
+  'health.forkWeeks': 'Fork baru per minggu: {list}',
   'health.addedWeeks': 'Baris yang ditambahkan per minggu: {list}',
   'health.deletedWeeks': 'Baris yang dihapus per minggu: {list}',
   'health.codePending': 'GitHub masih menghitung baris yang ditambahkan dan dihapus per minggu: buka lagi panelnya sebentar lagi.',

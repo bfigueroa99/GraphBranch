@@ -537,6 +537,7 @@ GB.i18n.define('zh-Hant', {
   'health.tagWeeks': '每週標籤數：{list}',
   'health.issueWeeks': '每週開啟的議題：{list}',
   'health.prCloseWeeks': '每週未合併即關閉的拉取請求：{list}',
+  'health.forkWeeks': '每週新 fork：{list}',
   'health.addedWeeks': '每週新增行數：{list}',
   'health.deletedWeeks': '每週刪除行數：{list}',
   'health.codePending': 'GitHub 仍在計算每週新增和刪除的行數：請稍後重新開啟面板。',

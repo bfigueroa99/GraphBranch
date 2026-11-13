@@ -538,6 +538,7 @@ GB.i18n.define('nl', {
   'health.tagWeeks': 'Tags per week: {list}',
   'health.issueWeeks': 'Geopende issues per week: {list}',
   'health.prCloseWeeks': 'Zonder merge gesloten pull requests per week: {list}',
+  'health.forkWeeks': 'Nieuwe forks per week: {list}',
   'health.addedWeeks': 'Toegevoegde regels per week: {list}',
   'health.deletedWeeks': 'Verwijderde regels per week: {list}',
   'health.codePending': 'GitHub berekent de toegevoegde en verwijderde regels per week nog: open het paneel zo meteen opnieuw.',

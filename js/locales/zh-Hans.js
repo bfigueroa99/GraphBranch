@@ -537,6 +537,7 @@ GB.i18n.define('zh-Hans', {
   'health.tagWeeks': '每周标签数：{list}',
   'health.issueWeeks': '每周开启的议题：{list}',
   'health.prCloseWeeks': '每周未合并即关闭的拉取请求：{list}',
+  'health.forkWeeks': '每周新 fork：{list}',
   'health.addedWeeks': '每周新增行数：{list}',
   'health.deletedWeeks': '每周删除行数：{list}',
   'health.codePending': 'GitHub 仍在计算每周新增和删除的行数：请稍后重新打开面板。',

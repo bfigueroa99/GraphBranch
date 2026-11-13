@@ -537,6 +537,7 @@ GB.i18n.define('bg', {
   'health.tagWeeks': 'Тагове седмично: {list}',
   'health.issueWeeks': 'Отворени issue-та седмично: {list}',
   'health.prCloseWeeks': 'Затворени без сливане pull request-и седмично: {list}',
+  'health.forkWeeks': 'Нови форкове седмично: {list}',
   'health.addedWeeks': 'Добавени редове на седмица: {list}',
   'health.deletedWeeks': 'Изтрити редове на седмица: {list}',
   'health.codePending': 'GitHub все още изчислява добавените и изтритите редове на седмица: отворете панела отново след малко.',

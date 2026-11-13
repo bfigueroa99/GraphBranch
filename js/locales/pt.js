@@ -538,6 +538,7 @@ GB.i18n.define('pt', {
   'health.tagWeeks': 'Tags por semana: {list}',
   'health.issueWeeks': 'Issues abertos por semana: {list}',
   'health.prCloseWeeks': 'Pull requests fechados sem fusão por semana: {list}',
+  'health.forkWeeks': 'Forks novos por semana: {list}',
   'health.addedWeeks': 'Linhas adicionadas por semana: {list}',
   'health.deletedWeeks': 'Linhas apagadas por semana: {list}',
   'health.codePending': 'O GitHub ainda está calculando as linhas adicionadas e apagadas por semana: abra o painel de novo daqui a pouco.',

@@ -580,6 +580,7 @@ GB.i18n.define('fa', {
   'health.tagWeeks': 'برچسب‌ها در هفته: {list}',
   'health.issueWeeks': 'issueهای بازشده در هفته: {list}',
   'health.prCloseWeeks': 'pull requestهای بسته‌شده بدون ادغام در هفته: {list}',
+  'health.forkWeeks': 'فورک‌های تازه در هفته: {list}',
   'health.addedWeeks': 'خط‌های افزوده‌شده در هفته: {list}',
   'health.deletedWeeks': 'خط‌های حذف‌شده در هفته: {list}',
   'health.codePending': 'GitHub هنوز خط‌های افزوده و حذف‌شده در هفته را محاسبه می‌کند: کمی بعد پنل را دوباره باز کنید.',

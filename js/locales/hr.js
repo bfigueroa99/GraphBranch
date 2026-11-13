@@ -545,6 +545,7 @@ GB.i18n.define('hr', {
   'health.tagWeeks': 'Tagovi tjedno: {list}',
   'health.issueWeeks': 'Otvoreni issuei tjedno: {list}',
   'health.prCloseWeeks': 'Pull requestovi zatvoreni bez spajanja tjedno: {list}',
+  'health.forkWeeks': 'Novi forkovi tjedno: {list}',
   'health.addedWeeks': 'Dodani redci po tjednu: {list}',
   'health.deletedWeeks': 'Obrisani redci po tjednu: {list}',
   'health.codePending': 'GitHub još računa dodane i obrisane retke po tjednu: ponovno otvorite ploču za trenutak.',

@@ -537,6 +537,7 @@ GB.i18n.define('ta', {
   'health.tagWeeks': 'வாரத்திற்கு குறிச்சொற்கள்: {list}',
   'health.issueWeeks': 'வாரத்திற்கு திறக்கப்பட்ட issue: {list}',
   'health.prCloseWeeks': 'இணைக்கப்படாமல் மூடப்பட்ட pull request வாரத்திற்கு: {list}',
+  'health.forkWeeks': 'வாரத்திற்கு புதிய ஃபோர்க்குகள்: {list}',
   'health.addedWeeks': 'வாரத்துக்குச் சேர்க்கப்பட்ட வரிகள்: {list}',
   'health.deletedWeeks': 'வாரத்துக்கு நீக்கப்பட்ட வரிகள்: {list}',
   'health.codePending': 'வாரந்தோறும் சேர்க்கப்பட்ட, நீக்கப்பட்ட வரிகளை GitHub இன்னும் கணக்கிடுகிறது: சிறிது நேரத்தில் பலகத்தை மீண்டும் திறக்கவும்.',

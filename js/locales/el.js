@@ -537,6 +537,7 @@ GB.i18n.define('el', {
   'health.tagWeeks': 'Tags ανά εβδομάδα: {list}',
   'health.issueWeeks': 'Issues που άνοιξαν ανά εβδομάδα: {list}',
   'health.prCloseWeeks': 'Pull requests που έκλεισαν χωρίς συγχώνευση ανά εβδομάδα: {list}',
+  'health.forkWeeks': 'Νέα forks ανά εβδομάδα: {list}',
   'health.addedWeeks': 'Γραμμές που προστέθηκαν ανά εβδομάδα: {list}',
   'health.deletedWeeks': 'Γραμμές που διαγράφηκαν ανά εβδομάδα: {list}',
   'health.codePending': 'Το GitHub υπολογίζει ακόμη τις γραμμές που προστέθηκαν και διαγράφηκαν ανά εβδομάδα: ανοίξτε ξανά τον πίνακα σε λίγο.',

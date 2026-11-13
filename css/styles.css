@@ -196,6 +196,9 @@ kbd {
     text-decoration: underline;
   }
 }
+/* absoluto y sin coordenadas: queda donde estaría en el flujo. Dentro de un contenedor con scroll, ese contenedor
+   tiene que ser su bloque contenedor (position: relative); si no, el scroll no lo recorta y estira la página
+   (.repo-tabs y .rc-grid, iteración 297) */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -567,7 +570,11 @@ kbd {
 .tabs-row[hidden] {
   display: none;
 }
+/* position: relative la hace el bloque contenedor de lo absoluto de adentro (el .sr-only de cada pestaña): sin eso,
+   su bloque contenedor queda fuera de la fila, la fila no lo recorta y cada pestaña que no cabe estira la página hacia
+   el costado, que en árabe la deja corrida o en blanco (pendiente 1, iteración 297) */
 .repo-tabs {
+  position: relative;
   flex: 1 1 auto;
   display: flex;
   gap: 6px;
@@ -7266,7 +7273,10 @@ a.ap-row {
   border-radius: 999px;
   color: var(--ink);
 }
+/* bloque contenedor del .sr-only de cada tarjeta, como .repo-tabs: sin él, con más tarjetas de las que caben, la
+   página crecía hacia abajo en blanco (20 repos en 1280×800: 3.273 px de alto) */
 .rc-grid {
+  position: relative;
   flex: 1;
   min-height: 0;
   overflow-y: auto;

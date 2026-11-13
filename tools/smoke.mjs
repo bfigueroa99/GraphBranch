@@ -3480,6 +3480,57 @@ if (seccion('Una organización o un usuario entero'))
   await page.context().close();
 }
 
+/* Más pestañas de las que caben: la fila se desliza sola y la página no se estira. El texto para el lector de pantalla
+   de cada pestaña (y de cada tarjeta de «Todos») es absoluto; mientras su bloque contenedor quedó fuera de la fila, la
+   fila no lo recortaba y cada pestaña que no cabía ensanchaba la página: en árabe quedaba corrida o en blanco
+   (pendiente 1, iteración 297: 2.422 px de ancho en 1280 con 20 pestañas). */
+if (seccion('Pestañas que no caben en su fila'))
+{
+  const gh = fakeGitHub();
+  gh.org('acme');
+  for (let i = 1; i <= 24; i++) gh.repo(`acme/servicio-${String(i).padStart(2, '0')}`);
+  /** El ancho y el alto de la página contra la pantalla, si está corrida, y cuánto se desliza la fila. */
+  const medir = (page) =>
+    page.evaluate(() => {
+      const de = document.documentElement;
+      const tabs = document.querySelector('#repo-tabs');
+      const brand = document.querySelector('.brand').getBoundingClientRect();
+      return {
+        ancho: de.scrollWidth - de.clientWidth,
+        alto: de.scrollHeight - de.clientHeight,
+        corrida: document.scrollingElement.scrollLeft,
+        fila: tabs.scrollWidth - tabs.clientWidth,
+        marca: brand.left >= 0 && brand.right <= de.clientWidth,
+      };
+    });
+  for (const [lang, opts] of [['ar', { viewport: { width: 1280, height: 800 } }], ['ar', { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }], ['es', { viewport: { width: 1280, height: 800 } }]]) {
+    const page = await openPage(opts);
+    await page.unroute('https://api.github.com/**');
+    await page.route('https://api.github.com/**', gh.handle);
+    const w = opts.viewport.width;
+    await step(page, `[${lang}, ${w} px] con 20 pestañas la fila se desliza y la página no se ensancha ni queda corrida`, async () => {
+      await page.goto(`${base}/index.html?lang=${lang}&repo=org:acme`);
+      await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 20 && document.querySelector('#repo-tabs .rt.on')?.dataset.state === 'live', null, { timeout: T(15000) });
+      const m = await medir(page);
+      if (m.fila < 200) throw new Error(`la fila no llega a deslizarse (${m.fila} px de más): la prueba no prueba nada`);
+      if (m.ancho > 1 || m.corrida !== 0 || !m.marca) throw new Error(`la página es ${m.ancho} px más ancha que la pantalla, corrida ${m.corrida} px, la marca ${m.marca ? 'a la vista' : 'fuera de la vista'}`);
+    });
+    if (w < 860) {
+      await page.context().close();
+      continue; // en el celular «Todos» apila las tarjetas y la página crece hacia abajo a propósito
+    }
+    await step(page, `[${lang}, ${w} px] «Todos» con 20 tarjetas: se desliza la cuadrícula y la página no crece hacia abajo`, async () => {
+      await page.click('#all-tab');
+      await page.waitForFunction(() => document.querySelectorAll('#all-grid .rc-card').length === 20, null, { timeout: T(10000) });
+      const m = await medir(page);
+      const grid = await page.$eval('#all-grid', (g) => g.scrollHeight - g.clientHeight);
+      if (grid < 200) throw new Error(`la cuadrícula no llega a deslizarse (${grid} px de más): la prueba no prueba nada`);
+      if (m.alto > 1 || m.ancho > 1) throw new Error(`la página es ${m.alto} px más alta y ${m.ancho} px más ancha que la pantalla`);
+    });
+    await page.context().close();
+  }
+}
+
 /* ---------- celular ---------- */
 
 const phone = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 };

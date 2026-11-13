@@ -359,23 +359,10 @@ impacto, con su reproducción. Los hallazgos de `node tools/audit.mjs` que se ac
 auditorías del código (iteraciones 1 y 6), de la auditoría con `tools/audit.mjs` (2026-10-13) y de lo
 que falla al validar; los números de línea son de cuando se miró y pueden haberse movido.
 
-### Alta
-
-1. [Errores] En árabe (y en los demás idiomas de derecha a izquierda), cuando las pestañas de los repos no caben en su
-    fila, la página entera desborda hacia los lados y la vista queda corrida, y con muchas pestañas en blanco (hallado en
-    la QA de la iteración 296, 2026-11-13, y ajeno a su cambio: pasa antes de abrir la constelación). Con `org:acme` y
-    sus repos simulados (todos 404), `document.scrollingElement.scrollWidth` da 2.422 en 1280 px con 20 pestañas (con 3 u
-    8, 1.280) y 454 en 390 px con 4 (con 2, 390); la captura en árabe con 20 pestañas sale vacía salvo el borde derecho
-    (en 390 px, entera en negro), y con 4 en 390 px corta 64 px del lado derecho. En español también desborda (2.434 con
-    20) pero la vista queda en su lugar: se ve solo como una barra de desplazamiento horizontal. La fila
-    (`.repo-tabs`, `overflow-x: auto`) no contiene a sus pestañas dentro de `.tabs-row`. Reproducción: Playwright contra
-    `node e2e/serve.mjs 4173`, con `https://api.github.com/orgs/acme/repos` simulado con 20 repos y lo demás en 404,
-    `index.html?lang=ar&repo=org:acme` en 1280 px → `scrollWidth` 2.422 (tiene que ser 1.280) y la captura vacía.
-
 ### Media
 
-2. [Deuda] Pasos ajenos del smoke que fallan una vez y pasan al repetir su sección: «editar el código: desde los cambios de un commit se abre su archivo…» (iteraciones 244, 256 y 284: `page.waitForFunction: Timeout 15000ms exceeded`), «filtro por autor: el grafo y el árbol de texto muestran solo sus ramas, lo dice y se quita» (248 y 284: `quitar el filtro no deja el grafo como estaba (3 etiquetas, con el filtro 3, antes 6)`; hipótesis: lee las etiquetas antes de que el grafo se repinte), «vista de un PR: la ficha de una rama con PR muestra su descripción…» (284) y, en una corrida suelta de su sección, «el ejercicio de push y fetch…» (284, `page.waitForFunction: Timeout 15000ms exceeded`). El que más fallaba de esta lista, «la ficha de un commit de agente…», se arregló en la iteración 291, y su hipótesis (el repintado) era falsa: la demo viva fusionaba y borraba la rama de los agentes. Antes de suponer, medir el paso solo, repetido y con la demo corriendo lo que corre en su sección (un script en el scratchpad con la lógica del paso). Reproducción: `node tools/smoke.mjs` repetido → una de esas líneas.
-3. [Deuda] Dos pasos ajenos del smoke fallaron en las puertas de la iteración 258 (2026-11-11), cada uno en una corrida
+1. [Deuda] Pasos ajenos del smoke que fallan una vez y pasan al repetir su sección: «editar el código: desde los cambios de un commit se abre su archivo…» (iteraciones 244, 256 y 284: `page.waitForFunction: Timeout 15000ms exceeded`), «filtro por autor: el grafo y el árbol de texto muestran solo sus ramas, lo dice y se quita» (248 y 284: `quitar el filtro no deja el grafo como estaba (3 etiquetas, con el filtro 3, antes 6)`; hipótesis: lee las etiquetas antes de que el grafo se repinte), «vista de un PR: la ficha de una rama con PR muestra su descripción…» (284) y, en una corrida suelta de su sección, «el ejercicio de push y fetch…» (284, `page.waitForFunction: Timeout 15000ms exceeded`). El que más fallaba de esta lista, «la ficha de un commit de agente…», se arregló en la iteración 291, y su hipótesis (el repintado) era falsa: la demo viva fusionaba y borraba la rama de los agentes. Antes de suponer, medir el paso solo, repetido y con la demo corriendo lo que corre en su sección (un script en el scratchpad con la lógica del paso). Reproducción: `node tools/smoke.mjs` repetido → una de esas líneas.
+2. [Deuda] Dos pasos ajenos del smoke fallaron en las puertas de la iteración 258 (2026-11-11), cada uno en una corrida
     distinta y en secciones que el cambio no toca: «el interruptor de columnas pone «SHA · autor · fecha» junto a los
     commits del 2D…» (`page.click: Timeout 30000ms exceeded`: un `<dialog open id="search">` tapaba el clic, o sea que un
     paso anterior dejó abierto el diálogo de búsqueda) y «al llegar a una galaxia, el lector de pantalla oye el nombre una
@@ -385,7 +372,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     Reproducción: `node tools/smoke.mjs` repetido → `el interruptor de columnas…: page.click: Timeout 30000ms exceeded` o
     `al llegar a una galaxia…: lo que se lee cambió 4 veces`.
 
-4. [Deuda] «la práctica de git responde a los comandos en el grafo» (sección «Varios repos a la vez») falló en las dos
+3. [Deuda] «la práctica de git responde a los comandos en el grafo» (sección «Varios repos a la vez») falló en las dos
     corridas de la iteración 288 (2026-11-13) que la incluyeron, la suelta y la de la puerta, y pasó al repetir su sección
     (otra vez en las dos puertas de la iteración 294, la segunda cortada en las e2e por un reinicio de la sesión):
     `page.waitForFunction: Timeout 30000ms exceeded`, el primer `waitForFunction` del paso (`#repo-link` en
@@ -395,87 +382,87 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 ### Baja
 
-5. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
+4. [Deuda] `tools/i18n-add.mjs`: los textos nuevos entran a los 40 idiomas desde un JSON
     `{clave: {en, es, …}}` (plurales como objeto) en un solo paso, tras `--despues=clave` o reemplazando,
     todo o nada (valida los 40 códigos de `LOCALES` y el ancla antes de escribir), escapa comillas y
     corre `check-i18n` al final; `--verificar` solo informa. Pruebas sobre una copia temporal de
     `js/locales`. Motivo: #51 tocó los 40 archivos y cada uno se leyó entero antes de editarlo.
-6. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
+5. [Deuda] Más pruebas: modo GraphQL y mapeo de eventos (`mapEvent`) con la API simulada; separar
     `github.js` (1.200 líneas) en HTTP/cuota, los tres modos y el mapeo.
-7. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
+6. [Deuda] `CHANGELOG.md` desde los títulos de PR (`git log --format=%s`, los que terminan en `(#N)`) y
     versión en `package.json` en cada iteración de mantenimiento; el tag y el Release con instaladores
     los hace Benjamin (sin credencial para crearlo ni instaladores en este entorno). Sin regla
     bloqueante en `--check`.
-8. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
+7. [Deuda] Guarda de las cifras de «Validado:»: comparar `(\d+) pruebas` y `(\d+) e2e` de la última
     entrada con `node --test` y `npx playwright test --list --grep-invert @lento`, como aviso y con un
     flag `--sin-suites` que pasen `loop.test.mjs` y `npm run check` (evita la recursión).
-9. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
+8. [Deuda] `node tools/smoke.mjs` solo no encuentra Chromium en la sesión cloud (Playwright pide
     `chromium_headless_shell-1243` y hay `1194`) y sale 1; con `PLAYWRIGHT_CHROMIUM_PATH` pasa, y
     `tools/audit.mjs` ya lo resuelve con `chromiumPath()`. Que el smoke use la misma búsqueda.
     Reproducción: `node tools/smoke.mjs` → `browserType.launch: Executable doesn't exist at …1243…`.
-10. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
+9. [Deuda] `node tools/audit.mjs` no admite correr un solo escenario: probar uno nuevo cuesta ~75 s de la
     completa. Añadir `--escenario <nombre>`.
     Reproducción: `node tools/audit.mjs --escenario celular-320-3d-mil` → `opción desconocida: --escenario`.
-11. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
+10. [Deuda] `tools/audit.mjs --langs` repite un mismo hallazgo en cada idioma (84 fuera de la base por una sola
     regla CSS a ≤560 px): agrupar por firma y mostrar «× N idiomas» para que la causa se lea de una vez.
     Reproducción: una regla que desborde `#st-prs` a ≤560 px → `node tools/audit.mjs --langs` → 84 hallazgos `borde`.
-12. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
+11. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
     prepara de verdad en vez de solo listar, y `add -p` prepara todo. Negarse con el `error: unknown switch` de git (o
     admitir `-n`). Reproducción: `node --test` con `touch a.txt`, `add -n .` → `a.txt` queda preparado.
-13. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
+12. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
     la iteración 239: la sesión no pudo consultar su página de versiones. Comprobarla con `WebFetch` en la próxima
     auditoría de Seguridad y, si hay una estable más nueva con arreglos de seguridad, subirla (cambio de `electron/`: plan
     por consenso). Reproducción: `npm view electron version` frente a `package.json`.
-14. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
+13. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
     largo se lleva la línea `<enlace>` del final (el aviso queda sin enlace). Recortar título y detalle antes y dejar el
     enlace siempre. Reproducción: `payload('discord', {title: 'x'.repeat(5000), url: 'https://github.com/a/b'})` →
     `content` sin `<https://github.com/a/b>`.
 
-15. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
+14. [QA] Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexión» (`STATUS_ERROR_KEYS` de
     `js/util.js` solo distingue notfound, rate y auth), aunque haya red: la persona busca su wifi y el servicio es quien falla.
     Un rótulo «Error del servicio» en los 40 idiomas. Reproducción: `U.statusKey({state: 'error', error: {kind: 'http'}})` → `status.error`.
-16. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
+15. [QA] La pasada de la iteración 251 no miró los bordes de 1.000 ramas, derecha a izquierda en 3D, modo TV ni sin red con
     el service worker instalado (solo los estados de error de la carga, en es y ar a 1280 y 320 px). Mirarlos en la
     próxima QA. Reproducción: `node e2e/serve.mjs 4173` + Playwright con la API simulada de `tools/audit.mjs`.
-17. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
+16. [Deuda] Los PRs pospuestos del Launchpad vencidos (y los de PRs ya cerrados) quedan en `graphbranch:prsnooze` hasta
     que se pospone o se fija otro: `setPrSnooze` (`js/app.js`) es lo único que limpia. Inocuo (`liveSnoozes` los ignora),
     pero crece sin tope. Limpiar también al leer. Reproducción: posponer un PR, adelantar el reloj un día y recargar →
     la entrada sigue en `localStorage`.
-18. [Errores] Práctica de git: `stash pop` y `stash apply` devuelven un archivo nuevo que estaba preparado como «modified»
+17. [Errores] Práctica de git: `stash pop` y `stash apply` devuelven un archivo nuevo que estaba preparado como «modified»
     sin preparar (todo va a `work`), cuando git lo deja preparado como «new file»; `stash show` lo deja ver: tras el pop y
     otro `stash`, el archivo sale con `M` y no con `A`. Devolver `entry.added` a `staged` como `{ file, isNew: true }`.
     Reproducción: `touch --new n.txt`, `add n.txt`, `stash`, `stash pop`, `stash`, `stash show --name-status` → `M\tn.txt`.
     (Revisión OMC de la iteración 264.)
-19. [Errores] Práctica de git: una rama puede llamarse `HEAD`: `validName` (`js/gitsim.js`) la acepta, así que
+18. [Errores] Práctica de git: una rama puede llamarse `HEAD`: `validName` (`js/gitsim.js`) la acepta, así que
     `branch HEAD`, `branch -m main HEAD` o `branch -c main HEAD` la crean, cuando git dice `fatal: 'HEAD' is not a valid
     branch name`. Rechazarla en `validName`. Reproducción: `branch -c main HEAD` → sale bien y `branch` lista `HEAD`.
     (Revisión OMC de la iteración 269.)
-20. [Seguridad] Avisos a Slack: sin un webhook real no se comprobó (iteración 271) si Slack muestra `&amp;`, `&lt;` y `&gt;`
+19. [Seguridad] Avisos a Slack: sin un webhook real no se comprobó (iteración 271) si Slack muestra `&amp;`, `&lt;` y `&gt;`
     como `&`, `<` y `>` dentro de un bloque `plain_text` (si no, un título con `&` se vería escapado), ni si un flujo de
     Workflow Builder da formato `mrkdwn` a la variable `text` (le llega sin bloques; un `*` de un título se notaría). Probarlo
     con un webhook de prueba en la próxima auditoría de Seguridad con red. Reproducción: `payload('slack', {title: 'a & b'})`
     → `blocks[1].text.text` es `a &amp; b`.
-21. [Errores] Salud del repo: las estrellas y los forks nuevos de «esta semana» no avisan si la actividad cargada tampoco cubre los últimos 7 días enteros (un repo muy activo cuyo feed de 300 eventos cabe en 2 días): la línea dice «3 esta semana (la anterior no está cargada entera)» y da a entender que la actual sí lo está. Arreglo propuesto: un `fullWeek` (alguna actividad de hace 7 días o más) y, sin él, una variante «al menos {week} esta semana» (40 idiomas). Reproducción: `compute` con actividades solo de las últimas 48 h → `stars: { week: 3, prev: null }`, sin nada que diga que la semana actual está a medias. (Revisión OMC de la iteración 279.)
+20. [Errores] Salud del repo: las estrellas y los forks nuevos de «esta semana» no avisan si la actividad cargada tampoco cubre los últimos 7 días enteros (un repo muy activo cuyo feed de 300 eventos cabe en 2 días): la línea dice «3 esta semana (la anterior no está cargada entera)» y da a entender que la actual sí lo está. Arreglo propuesto: un `fullWeek` (alguna actividad de hace 7 días o más) y, sin él, una variante «al menos {week} esta semana» (40 idiomas). Reproducción: `compute` con actividades solo de las últimas 48 h → `stars: { week: 3, prev: null }`, sin nada que diga que la semana actual está a medias. (Revisión OMC de la iteración 279.)
 
-22. [Deuda] Smoke de la salud: el paso del factor de ausencia (`tools/smoke.mjs`, `#hl-absence`) lee las cifras con `\d+`, así que con un separador de miles («12.345 commits») tomaría 12 y daría un falso rojo (personas ≤ autores ≤ commits); la demo es chica y hoy no pasa (revisión de la iteración 280). Reproducción: en el paso, el texto «3 de 8 autores, en 12.345 commits cargados» falla. Arreglo: quitar los separadores antes de comparar o leer `compute(...).absence` por la página.
+21. [Deuda] Smoke de la salud: el paso del factor de ausencia (`tools/smoke.mjs`, `#hl-absence`) lee las cifras con `\d+`, así que con un separador de miles («12.345 commits») tomaría 12 y daría un falso rojo (personas ≤ autores ≤ commits); la demo es chica y hoy no pasa (revisión de la iteración 280). Reproducción: en el paso, el texto «3 de 8 autores, en 12.345 commits cargados» falla. Arreglo: quitar los separadores antes de comparar o leer `compute(...).absence` por la página.
 
-23. [Errores] Salud del repo: al llegar después de abrir el panel los forks, las líneas por semana, los despliegues o el primer commit de los PRs, `renderHealth` (`js/app.js`) rehace el panel entero y borra lo que la persona ya pidió en él: el resultado de «Comparar ramas» (`#cmp-out`), el de los choques (`#hl-clash-out`) y las ramas elegidas en los dos selectores (el foco ya se conserva desde la iteración 283). Rehacer solo las secciones de datos, o volver a poner lo pedido. Reproducción: API simulada que tarda 3 s en `/stats/code_frequency`, `index.html?repo=o/r&health=1`, comparar dos ramas antes de que llegue → `#cmp-out` vacío.
+22. [Errores] Salud del repo: al llegar después de abrir el panel los forks, las líneas por semana, los despliegues o el primer commit de los PRs, `renderHealth` (`js/app.js`) rehace el panel entero y borra lo que la persona ya pidió en él: el resultado de «Comparar ramas» (`#cmp-out`), el de los choques (`#hl-clash-out`) y las ramas elegidas en los dos selectores (el foco ya se conserva desde la iteración 283). Rehacer solo las secciones de datos, o volver a poner lo pedido. Reproducción: API simulada que tarda 3 s en `/stats/code_frequency`, `index.html?repo=o/r&health=1`, comparar dos ramas antes de que llegue → `#cmp-out` vacío.
 
-24. [Accesibilidad] Salud del repo: las series por semana («Commits por semana: 3 · 0 · 5 · …») se leen como una tira de cifras separadas por «·», que según el lector se anuncia como «punto medio» en cada una y sin decir a qué semana va cada cifra (WCAG 1.3.1, menor). Una lista o un `aria-label` con las semanas separadas por comas. Reproducción: `?health=1` en la demo → `#hl-commitweeks` con `textContent` «… 3 · 0 · 5 …» y sin nombre accesible propio.
+23. [Accesibilidad] Salud del repo: las series por semana («Commits por semana: 3 · 0 · 5 · …») se leen como una tira de cifras separadas por «·», que según el lector se anuncia como «punto medio» en cada una y sin decir a qué semana va cada cifra (WCAG 1.3.1, menor). Una lista o un `aria-label` con las semanas separadas por comas. Reproducción: `?health=1` en la demo → `#hl-commitweeks` con `textContent` «… 3 · 0 · 5 …» y sin nombre accesible propio.
 
-25. [Accesibilidad] Salud del repo: la línea «GitHub todavía está calculando las líneas por semana» (`#hl-codepending`) aparece después de abrir el panel, cuando responde el 202, sin región viva: quien usa lector de pantalla no se entera de que hay que volver a abrir el panel (WCAG 4.1.3, menor). Anunciarla con un `role="status"` que exista desde la apertura. Reproducción: API simulada con 202 en `/stats/code_frequency`, `?repo=o/r&health=1` → `#hl-codepending` sin `role`/`aria-live` ni ancestro vivo.
+24. [Accesibilidad] Salud del repo: la línea «GitHub todavía está calculando las líneas por semana» (`#hl-codepending`) aparece después de abrir el panel, cuando responde el 202, sin región viva: quien usa lector de pantalla no se entera de que hay que volver a abrir el panel (WCAG 4.1.3, menor). Anunciarla con un `role="status"` que exista desde la apertura. Reproducción: API simulada con 202 en `/stats/code_frequency`, `?repo=o/r&health=1` → `#hl-codepending` sin `role`/`aria-live` ni ancestro vivo.
 
-26. [QA] Un repo vacío con token: la carga va por GraphQL, que responde 200 con `defaultBranchRef: null` y sin refs (no el 409
-27. [QA] La práctica a mitad de un conflicto de merge (iteración 289, revisión): `restore login.js` y `restore .` salen bien sin hacer nada y `restore --staged login.js` da «pathspec did not match» (git: `error: path 'login.js' is unmerged`); `reset --soft` funciona y vacía la fusión (git: `fatal: Cannot do a soft reset in the middle of a merge.`, igual que ya pasaba con `merge --no-commit`); `pull` hace el fetch y después dice «Already up to date.» o «You have not concluded your merge» (git: `error: Pulling is not possible because you have unmerged files.` sin traer nada); `stash` a secas da el error de `checkout` y no el «Cannot save the current index state» de git. Reproducción: `?practice=16`, `merge feature` y cada comando.
+25. [QA] Un repo vacío con token: la carga va por GraphQL, que responde 200 con `defaultBranchRef: null` y sin refs (no el 409
+26. [QA] La práctica a mitad de un conflicto de merge (iteración 289, revisión): `restore login.js` y `restore .` salen bien sin hacer nada y `restore --staged login.js` da «pathspec did not match» (git: `error: path 'login.js' is unmerged`); `reset --soft` funciona y vacía la fusión (git: `fatal: Cannot do a soft reset in the middle of a merge.`, igual que ya pasaba con `merge --no-commit`); `pull` hace el fetch y después dice «Already up to date.» o «You have not concluded your merge» (git: `error: Pulling is not possible because you have unmerged files.` sin traer nada); `stash` a secas da el error de `checkout` y no el «Cannot save the current index state» de git. Reproducción: `?practice=16`, `merge feature` y cada comando.
     de REST), así que no sale el rótulo «Repo vacío» de la iteración 287. Fijar qué muestra ese caso y darle el mismo estado.
     Reproducción: `connect(gh, 'tok')` en `tools/github.test.mjs` con `/graphql` devolviendo el repo sin ramas → sin error `empty`.
 
-28. [Seguridad] El sha de un padre entra literal en la consulta GraphQL de historia (`object(oid: "…")` de `historyQuery` en `js/sources/github.js`, de antes y que ahora usa también «Cargar más»; iteración 293, revisión de seguridad): una API hostil (un `?api=` de GitHub Enterprise comprometido) podría cambiar la consulta, aunque solo hacia su propio host, con el mismo token y sin mutaciones. Reproducción: un commit falso con `parents: [{ oid: 'x") { __typename } } #' }]` en una prueba de `tools/github.test.mjs` y mirar la consulta enviada. Arreglo: pasar los oid como variables `GitObjectID!` (o validarlos como hex de 40).
-29. [Errores] La práctica a 320 px: las cartas de comandos bajo la terminal (`#practice .pr-cards`, `button.pr-card` con
+27. [Seguridad] El sha de un padre entra literal en la consulta GraphQL de historia (`object(oid: "…")` de `historyQuery` en `js/sources/github.js`, de antes y que ahora usa también «Cargar más»; iteración 293, revisión de seguridad): una API hostil (un `?api=` de GitHub Enterprise comprometido) podría cambiar la consulta, aunque solo hacia su propio host, con el mismo token y sin mutaciones. Reproducción: un commit falso con `parents: [{ oid: 'x") { __typename } } #' }]` en una prueba de `tools/github.test.mjs` y mirar la consulta enviada. Arreglo: pasar los oid como variables `GitObjectID!` (o validarlos como hex de 40).
+28. [Errores] La práctica a 320 px: las cartas de comandos bajo la terminal (`#practice .pr-cards`, `button.pr-card` con
     su `code` y su `span.pr-card-desc`) se salen del borde en es, ar, de y ta (12 hallazgos `borde` de la auditoría
     completa en la iteración 295, fuera de la base; la de la puerta no corre ese escenario). Reproducción:
     `node tools/audit.mjs` → `Baja [Errores] borde · practica-320-es · #practice > div.pr-cards[role=toolbar] > button.pr-card`.
-30. [Rendimiento] La tarea larga de la carga (unos 600 ms sin GPU, de 2 que suman unos 1.150) es la compilación de los 13
+29. [Rendimiento] La tarea larga de la carga (unos 600 ms sin GPU, de 2 que suman unos 1.150) es la compilación de los 13
     programas de shaders en el primer cuadro 3D (`acquireProgram` de three.js y trabajo nativo, medido con el perfil de
     CPU en la iteración 295), no código de la app. three.js r128 no tiene `compileAsync` (con
     `KHR_parallel_shader_compile`, desde la r158): sacarla del hilo principal pide subir la versión vendorizada de
@@ -605,3 +592,18 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/296, sin colisión (`--reclamar` salió 3 mientras la 294 y la 295 estaban vivas; se reclamó al fusionarse la 295)
 - Validado: 782 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 30 e2e en verde.
 - **Siguiente:** iteración 297, mantenimiento · Errores: pendiente 1 (En árabe (y en los demás idiomas de derecha a izquierda), cuando las pestañas d…)
+
+### 2026-11-13 · Iteración 297 · Mantenimiento · Errores
+
+- **Arreglo: las pestañas que no caben ya no ensanchan la página, ni las tarjetas de «Todos» la alargan** (pendiente 1, **Alta**). La causa no era el ancho de la fila: el texto para el lector de pantalla de cada pestaña (`.sr-only.rt-sr`) es absoluto y sin coordenadas, así que queda donde estaría en el flujo, y su bloque contenedor era la página, fuera de `.repo-tabs`. Una fila con scroll no recorta lo absoluto cuyo bloque contenedor está afuera: cada pestaña que no cabía empujaba la página hacia el costado, y en árabe, con la página desbordada hacia la izquierda, la vista quedaba corrida (en 390 px, 1.169 px) o en blanco. Ahora `.repo-tabs` lleva `position: relative` y es su bloque contenedor. Buscado el mismo patrón con un detector en el navegador (cada absoluto con un contenedor con scroll entre él y su bloque contenedor, en la demo, en una organización de 20 repos, en la práctica y con cada diálogo de la barra abierto, en español a 1280 px y en árabe a 390 px): estaba también en «Todos», donde el `.rc-sr` de cada tarjeta escapaba de `.rc-grid` y con 20 repos la página medía 3.273 px de alto en 1280×800, con 2.473 px en blanco abajo; arreglado igual. Los otros tres (`#textview-live`, `#constellation-status`, `#cmdk-title`, dentro del `.tr-wrap` de su diálogo) quedan al principio de su diálogo y no estiran nada; el de las galaxias (`.gx-arrive-say`) no está dentro de un contenedor con scroll. El comentario de `.sr-only` dice la regla.
+- **Reproducción:** Playwright contra `node e2e/serve.mjs` con `/orgs/acme/repos` simulado (20 repos, lo demás 404), `index.html?lang=ar&repo=org:acme` → en 1280 px `scrollWidth` 4.064 (con 8 pestañas, 1.562; con 3, 1.280) y la captura vacía; en 390 px con 4, 724. También en hebreo, persa, urdu y español (4.077 en 1280 px).
+- **Pruebas que fallan sin el arreglo:** la sección nueva del smoke «Pestañas que no caben en su fila» (`node tools/smoke.mjs --seccion "Pestañas que no caben en su fila"`): con 20 repos de una organización simulada, en árabe a 1280 px y a 390 px y en español a 1280 px, la fila se desliza (y lo comprueba, para no probar nada en vano), la página no es más ancha que la pantalla ni queda corrida y la marca se ve; y a 1280 px, «Todos» con 20 tarjetas desliza su cuadrícula sin alargar la página. Sin el cambio de `css/styles.css` (con `git stash`), los 5 pasos en rojo: «la página es 2357 px más ancha que la pantalla», «2473 px más alta», y en el celular «3243 px más ancha que la pantalla, corrida -1169 px, la marca fuera de la vista»; con él, los 5 en verde. El paso viejo «en el celular, tres pestañas no desbordan la página» no lo veía: tres pestañas caben.
+- README: sin cambios (no cambia lo que hace ninguna función: solo que la página ya no se desborda).
+- QA: derecha a izquierda (árabe, hebreo, persa y urdu, con la reproducción) y tamil a 1280 px; celular angosto (390 px, en el smoke); teclado y lector de pantalla: con Tab de la pestaña activa hasta la cruz de la última, la fila se desliza sola, la página no se mueve (`scrollLeft` 0) y el anillo de foco se ve entero (captura en árabe, en oscuro); el nombre accesible de cada pestaña sigue con su estado («acme/servicio-01 , غير موجود»); consola limpia; el detector del patrón, con los dos arreglos, ya no ve nada que escape de su contenedor; auditoría: la de la puerta.
+- Skills: no aplica: una propiedad de CSS en dos contenedores; lo cubre `modern-web-guidance`, del repo.
+- Arena: no aplica: una sola forma obvia (hacer del contenedor con scroll el bloque contenedor), y esta sesión no tiene la herramienta de subagentes (Agent o Task).
+- Guías: systematic-debugging (fase 1: reproducir y ubicar con un detector qué elemento estiraba la página antes de tocar nada), modern-web-guidance (`accessibility/accessibility.md`, «Visually Hidden Utility»: el texto oculto sigue en el árbol de accesibilidad), verification-before-completion (el ciclo rojo-verde de la sección nueva del smoke, deshaciendo el CSS con `git stash`)
+- OMC: no disponible (esta sesión no tiene la herramienta de subagentes): la receta 4 fue propia (la prueba que falla, vista fallar antes del arreglo); la revisión, una relectura adversarial del diff (que `position: relative` sin `z-index` no abre un contexto de apilamiento, que dentro de las dos cajas el único absoluto con el bloque contenedor afuera era el `.sr-only`, así que nada más cambia de lugar, el celular, donde «Todos» apila las tarjetas sin scroll propio, y que el paso no dependa del orden de carga de las pestañas); la verificación, contra la reproducción del pendiente.
+- Reclamo: loop/297, sin colisión
+- Validado: pendiente
+- **Siguiente:** iteración 298, expansión: ítem 216 (Una tarea de GitHub Classroom: los repos de un prefijo, Público)

@@ -227,7 +227,7 @@
         }
         for (const row of rows) {
           const li = document.createElement('li');
-          li.dataset.state = row.state || 'C';
+          li.dataset.state = row.state || 'H'; // H: un archivo de HEAD (C es uno en conflicto)
           const code = document.createElement('code');
           code.dir = 'ltr';
           code.translate = false; // un nombre de archivo es un dato: ni el traductor del navegador ni la auditoría lo tratan como texto

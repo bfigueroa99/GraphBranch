@@ -60,8 +60,11 @@
       this.stashSeq = 0; // id del próximo stash: el ejercicio de stash show sabe cuál se miró y cuál volvió
       this.stashSeen = new Set(); // ids de los stash que stash show listó
       this.stashBack = new Set(); // ids de los stash que volvieron con pop o apply
+      this.lenient = false; // las partidas de un ejercicio propio fusionan sin conflictos (los enlaces de antes siguen valiendo)
       this.merging = null; // { name, theirs } mientras una fusión (merge --no-commit) espera su commit
       this.aborts = 0; // cuántas fusiones se cancelaron con merge --abort
+      this.conflicts = []; // los archivos en conflicto de una fusión a medias («both modified»), hasta que add los marca resueltos
+      this.conflictMerges = 0; // cuántas fusiones con conflicto se cerraron con commit tras resolverlos
       this.picking = null; // { sha } mientras un cherry-pick --no-commit espera su commit
       this.pickAborts = 0; // cuántos cherry-pick se cancelaron con cherry-pick --abort
       this.revertAborts = 0; // cuántos revert --no-commit se cancelaron con revert --abort
@@ -219,6 +222,32 @@
       if (from.renames) to.renames = from.renames;
       if (from.added) to.added = from.added.slice();
       return sha;
+    }
+
+    /** Cómo dejaron los commits de `sha` que `other` no tiene cada archivo que tocaron: 'A' creado, 'D' borrado, 'M' cambiado. */
+    sideStates(sha, other) {
+      const theirs = this.ancestors(other);
+      const states = new Map();
+      for (const s of this.log(sha).reverse()) {
+        if (theirs.has(s)) continue;
+        const c = this.commits.get(s);
+        for (const f of c.removed || []) states.set(f, 'D');
+        for (const f of c.files || []) states.set(f, (c.added || []).includes(f) || states.get(f) === 'A' ? 'A' : 'M');
+      }
+      return states;
+    }
+
+    /** Marca resuelto un archivo en conflicto (add): sale de la lista y queda preparado como cambiado, o como borrado si
+        se borró a mano. */
+    resolveConflict(f) {
+      this.conflicts = this.conflicts.filter((x) => x !== f);
+      if (this.deleted.includes(f)) {
+        this.stageDeletion(f);
+        return;
+      }
+      this.work = this.work.filter((w) => w !== f);
+      if (!this.staged.some((s) => s.file === f)) this.staged.push({ file: f, isNew: false });
+      this.adds++;
     }
 
     /** Mueve la rama de HEAD (o HEAD, si está desprendido). */
@@ -441,21 +470,30 @@
     }
 
     /** Las tres áreas de git a la vista, en orden alfabético: `work` (el árbol de trabajo: M cambiado, D borrado a
-        mano, U sin seguir), `index` (lo preparado: M, A nuevo, D borrado, R renombrado, con `from`) y `head` (los
+        mano, U sin seguir), `index` (lo preparado: M, A nuevo, D borrado, R renombrado, con `from`, y C en conflicto) y `head` (los
         archivos del commit de HEAD: los que la historia creó o cambió y los que un cambio sin commit da por
         existentes, porque sin contenido real solo se conoce lo que se nombró). Sin DOM: la dibuja la práctica. */
     areas() {
       const by = (a, b) => (a.file < b.file ? -1 : a.file > b.file ? 1 : 0);
       const work = [...this.work.map((file) => ({ file, state: 'M' })), ...this.deleted.map((file) => ({ file, state: 'D' })), ...this.untracked.map((file) => ({ file, state: 'U' }))].sort(by);
       const index = this.staged.map((s) => (s.gone ? { file: s.file, state: 'D' } : s.from ? { file: s.file, state: 'R', from: s.from } : { file: s.file, state: s.isNew ? 'A' : 'M' })).sort(by);
+      // un archivo en conflicto va en el índice como C («both modified»): add lo pasa a M
+      index.push(...this.conflicts.map((file) => ({ file, state: 'C' })));
+      index.sort(by);
       const head = new Set(this.inHistory());
-      for (const f of [...this.work, ...this.deleted]) head.add(f);
+      for (const f of [...this.work, ...this.deleted, ...this.conflicts]) head.add(f);
       for (const s of this.staged) if (!s.isNew) head.add(s.from ?? s.file);
       return { work, index, head: [...head].sort() };
     }
 
+    /** Falla como git si una fusión dejó archivos en conflicto sin resolver (checkout, rebase, stash…). */
+    needResolved() {
+      if (this.conflicts.length) fail(`${this.conflicts.map((f) => `${f}: needs merge`).join('\n')}\nerror: you need to resolve your current index first`);
+    }
+
     /** Falla como git si hay cambios sin commit: en esta simulación, ir a otro commit siempre pisa los archivos cambiados. */
     needClean(verb) {
+      this.needResolved();
       if (this.picking) fail(`error: You have not concluded your ${this.picking.revert ? 'revert' : 'cherry-pick'} (${this.picking.revert ? 'REVERT_HEAD' : 'CHERRY_PICK_HEAD'} exists).\nPlease, commit your changes or use '${this.picking.revert ? 'revert' : 'cherry-pick'} --abort' before you ${verb === 'checkout' ? 'switch branches' : verb}.`);
       if (!this.dirty().length) return;
       fail(`error: Your local changes to the following files would be overwritten by ${verb}:\n${this.dirty().map((f) => `\t${f}`).join('\n')}\nPlease commit your changes or stash them before you ${verb === 'checkout' ? 'switch branches' : verb}.\nAborting`);
@@ -465,7 +503,7 @@
 
     /** Lo que mira run() para saber si un comando cambió el repo. */
     snapshot() {
-      return JSON.stringify([[...this.branches], [...this.tags], [...this.tracking], this.remote && [...this.remote.branches], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
+      return JSON.stringify([[...this.branches], [...this.tags], [...this.tracking], this.remote && [...this.remote.branches], this.head, this.commits.size, this.merging, this.conflicts, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
     }
 
     /** Corre una línea («git commit -m "x"» o «commit -m x»). Devuelve { ok, lines } y changed si cambió el repo,
@@ -546,14 +584,14 @@
         'checkout [-b] <name|sha>    move to a branch or commit (also: switch [-c|--detach])',
         'restore <file|.>            throw away the uncommitted changes of a file (see touch)',
         'merge <branch>              bring another branch into this one (--no-ff always makes a merge commit, --ff-only, --no-commit, -m "msg")',
-        'merge --abort              cancel a merge that is waiting for its commit',
+        'merge --abort              cancel a merge that is waiting for its commit or stopped on a conflict',
         'rebase [-i] <branch>        replay this branch on top of another (-i stops after the first commit)',
         'rebase --abort|--continue  cancel a stopped rebase, or replay the rest of it',
         'reset [--soft|--mixed|--hard] <to>  move the branch back (HEAD~1, a sha, HEAD@{1}); --hard drops changes',
         'reflog                      where HEAD has been (HEAD@{n}): find a commit again after a reset --hard',
         'stash [-u] [list|pop|apply|drop] put uncommitted changes aside (-u also the untracked files) and bring them back',
         'stash show [--name-only|--name-status] [-u] [stash@{n}]  list the files a stash keeps, without bringing them back',
-        'add <file|.>                prepare changes (and new files) for the next commit',
+        'add <file|.>                prepare changes (and new files) for the next commit; after a merge conflict, mark the file resolved',
         'add -u [file|.]             prepare only changed files git already tracks (new files stay out)',
         'add -A [file|.]             prepare everything: changed files and new ones (like add .)',
         'restore --staged <file|.>   take a file back out of what is prepared',
@@ -601,15 +639,21 @@
         this.take(sha, all);
         return [`[${this.head.branch || 'detached HEAD'} ${this.short(sha)}] ${text}`];
       }
-      if (!msg || msg === true) fail('Aborting commit due to empty commit message.\n(use: commit -m "message")');
+      if (this.conflicts.length) fail('error: Committing is not possible because you have unmerged files.\nhint: Fix them up in the work tree, and then use \'git add <file>\'\nhint: as appropriate to mark resolution and make a commit.\nfatal: Exiting because of an unresolved conflict.');
       if (this.merging) {
+        // sin -m, el mensaje que git deja preparado para la fusión (MERGE_MSG)
+        if (msg === true) fail('error: switch `m\' requires a value');
+        if (msg === '') fail('Aborting commit due to empty commit message.');
         const { theirs } = this.merging;
-        const merged = this.make(msg, [this.headSha, theirs]);
+        const text = msg || this.merging.msg || `Merge branch '${this.merging.name}'`;
+        const merged = this.make(text, [this.headSha, theirs]);
         this.moveHead(merged);
         this.take(merged, all);
+        if (this.merging.conflicted) this.conflictMerges++;
         this.merging = null;
-        return [`[${this.head.branch} ${this.short(merged)}] ${msg}`];
+        return [`[${this.head.branch} ${this.short(merged)}] ${text}`];
       }
+      if (!msg || msg === true) fail('Aborting commit due to empty commit message.\n(use: commit -m "message")');
       // los commits de esta práctica pueden ir vacíos («una foto» de la rama); pero con cambios sin preparar
       // y nada preparado, git no hace el commit: hay que elegir qué entra con add, o llevarse todo con -a
       if (!this.picking && !all && !this.staged.length && (this.work.length || this.deleted.length)) {
@@ -626,7 +670,12 @@
 
     status() {
       const where = this.head.branch ? [`On branch ${this.head.branch}`, ...this.trackingLines()] : [`HEAD detached at ${this.short(this.head.sha)}`];
-      if (this.merging) return [...where, 'All conflicts fixed but you are still merging.', '  (use "git commit" to conclude merge)', '  (use "git merge --abort" to cancel it)'];
+      const kind = (s) => (s.gone ? `deleted:    ${s.file}` : s.from ? `renamed:    ${s.from} -> ${s.file}` : `${s.isNew ? 'new file' : 'modified'}:   ${s.file}`);
+      if (this.merging) {
+        const ready = this.staged.length ? ['', 'Changes to be committed:', ...this.staged.map((s) => `\t${kind(s)}`)] : [];
+        if (!this.conflicts.length) return [...where, 'All conflicts fixed but you are still merging.', '  (use "git commit" to conclude merge)', '  (use "git merge --abort" to cancel it)', ...ready];
+        return [...where, 'You have unmerged paths.', '  (fix conflicts and run "git commit")', '  (use "git merge --abort" to abort the merge)', ...ready, '', 'Unmerged paths:', '  (use "git add <file>..." to mark resolution)', ...this.conflicts.map((f) => `\tboth modified:   ${f}`)];
+      }
       if (this.rebasing) return [...where, `interactive rebase in progress; onto ${this.short(this.rebasing.onto)}`, `Last command done (1 command done), ${this.rebasing.rest.length} remaining.`, '  (use "git rebase --continue" to replay the rest)', '  (use "git rebase --abort" to check out the original branch)'];
       if (this.picking) {
         const verb = this.picking.revert ? 'revert' : 'cherry-pick';
@@ -634,7 +683,6 @@
       }
       if (!this.dirty().length && !this.untracked.length) return [...where, 'nothing to commit, working tree clean'];
       const out = [...where];
-      const kind = (s) => (s.gone ? `deleted:    ${s.file}` : s.from ? `renamed:    ${s.from} -> ${s.file}` : `${s.isNew ? 'new file' : 'modified'}:   ${s.file}`);
       if (this.staged.length) out.push('Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', ...this.staged.map((s) => `\t${kind(s)}`));
       if (this.work.length || this.deleted.length) out.push('Changes not staged for commit:', ...this.unstagedLines());
       if (this.untracked.length) out.push('Untracked files:', ...[...new Set(this.untracked.map((f) => this.untrackedDir(f) || f))].map((f) => `\t${f}`));
@@ -672,6 +720,7 @@
         return i;
       };
       if (sub === 'push' || sub === 'save') {
+        this.needResolved();
         if (!this.dirty().length && !(withNew && this.untracked.length)) return ['No local changes to save'];
         if (!this.headSha) fail('You do not have the initial commit yet');
         const branch = this.head.branch || '(no branch)';
@@ -699,6 +748,7 @@
         return [`Dropped stash@{${i}} (${hash(gone.line)})`];
       }
       if (sub === 'pop' || sub === 'apply') {
+        this.needResolved();
         const i = pick();
         const entry = this.stashes[i];
         const clash = [...entry.files, ...(entry.removed || [])].filter((f) => this.dirty().includes(f));
@@ -849,6 +899,7 @@
     },
 
     checkout(args) {
+      this.needResolved();
       const { flags, rest } = parse(args);
       const create = flags['-b'] || flags['-c'];
       if (create) {
@@ -888,6 +939,7 @@
       if (flags['--abort']) {
         if (!this.merging) fail('fatal: There is no merge to abort (MERGE_HEAD missing).');
         this.merging = null;
+        this.conflicts = [];
         this.discardTree();
         this.aborts++;
         return [];
@@ -907,13 +959,29 @@
         return [`Updating ${this.short(ours)}..${this.short(theirs)}`, 'Fast-forward'];
       }
       if (flags['--ff-only']) fail('fatal: Not possible to fast-forward, aborting.');
-      if (flags['--no-commit']) {
-        this.merging = { name, theirs };
-        return ['Automatic merge went well; stopped before committing as requested'];
-      }
       const msg = flags['-m'] ?? flags['--message'];
       if (msg === true || msg === '') fail('error: switch `m\' requires a value');
-      const sha = this.make(msg || (this.trackingName(name) != null && !this.branches.has(name) ? `Merge remote-tracking branch '${name}'` : `Merge branch '${name}'`), [ours, theirs]);
+      const text = msg || (this.trackingName(name) != null && !this.branches.has(name) ? `Merge remote-tracking branch '${name}'` : `Merge branch '${name}'`);
+      // los archivos que las dos ramas tocaron desde su base chocan (sin contenido, no se sabe si en las mismas líneas)
+      // (si las dos lo borraron, no hay nada que elegir; las partidas de un ejercicio propio fusionan sin conflictos)
+      const mine = this.sideStates(ours, theirs);
+      const incoming = this.sideStates(theirs, ours);
+      const clash = this.lenient ? [] : [...incoming.keys()].filter((f) => mine.has(f) && !(mine.get(f) === 'D' && incoming.get(f) === 'D')).sort();
+      if (clash.length) {
+        this.merging = { name, theirs, msg: text, conflicted: true };
+        this.conflicts = clash;
+        // lo que llega de la otra rama sin chocar ya queda preparado como llegó (nuevo, cambiado o borrado), como en git
+        for (const f of [...incoming.keys()].filter((x) => !mine.has(x)).sort()) {
+          const st = incoming.get(f);
+          this.staged.push(st === 'D' ? { file: f, gone: true } : { file: f, isNew: st === 'A' });
+        }
+        return [...clash.flatMap((f) => [`Auto-merging ${f}`, `CONFLICT (content): Merge conflict in ${f}`]), 'Automatic merge failed; fix conflicts and then commit the result.'];
+      }
+      if (flags['--no-commit']) {
+        this.merging = { name, theirs, msg: text };
+        return ['Automatic merge went well; stopped before committing as requested'];
+      }
+      const sha = this.make(text, [ours, theirs]);
       this.moveHead(sha);
       return ["Merge made by the 'ort' strategy."];
     },
@@ -944,6 +1012,7 @@
       const onto = this.resolve(name);
       if (!onto) fail(`fatal: invalid upstream '${name}'`);
       const tip = this.headSha;
+      this.needResolved();
       if (this.dirty().length) fail('error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.');
       if (this.isAncestor(onto, tip)) return [`Current branch ${this.head.branch} is up to date.`];
       if (this.isAncestor(tip, onto)) {
@@ -1126,6 +1195,9 @@
       const sha = this.resolve(to);
       if (!sha) fail(`fatal: ambiguous argument '${to}': unknown revision`);
       this.moveHead(sha);
+      // lo que quedó en conflicto sigue cambiado en el árbol (con --hard, se tira)
+      for (const f of this.conflicts) if (!this.work.includes(f)) this.work.push(f);
+      this.conflicts = [];
       if (flags['--hard']) this.discardTree();
       else if (!flags['--soft']) this.unstage(this.staged.map((s) => s.file));
       this.merging = null;
@@ -1197,6 +1269,7 @@
 
   /** `switch` solo mueve entre ramas: `-c` crea, `--detach` va a un commit; un commit a secas no vale. */
   Repo.prototype.commands.switch = function (args) {
+    this.needResolved();
     const { flags, rest } = parse(args);
     if (flags['--detach'] || flags['-d']) {
       const [target] = rest;
@@ -1239,6 +1312,16 @@
     if (flags['-A'] || flags['--all']) {
       if (update) fail("fatal: options '-A' and '-u' cannot be used together");
       if (!rest.length) rest.push('.');
+    }
+    // add marca resuelto un archivo en conflicto (con su nombre, con . o con -A y -u sin rutas)
+    if (this.conflicts.length) {
+      const every = rest.includes('.') || (update && !rest.length);
+      const fix = every ? [...this.conflicts] : this.conflicts.filter((f) => rest.includes(f));
+      for (const f of fix) this.resolveConflict(f);
+      if (!every && fix.length) {
+        rest.splice(0, rest.length, ...rest.filter((f) => !fix.includes(f)));
+        if (!rest.length) return [];
+      }
     }
     if (update) {
       // sin rutas, -u toma todo el árbol; con rutas, solo las que git sigue y están cambiadas
@@ -1313,6 +1396,8 @@
     const cached = !!flags['--cached'];
     const force = !!(flags['-f'] || flags['--force']);
     if (!rest.length) fail('usage: git rm [-f | --force] [--cached] <file>...');
+    // git rm de un archivo en conflicto lo da por resuelto: borrado
+    this.conflicts = this.conflicts.filter((f) => !rest.includes(f));
     if (rest.includes('.') && !flags['-r']) fail("fatal: not removing '.' recursively without -r");
     if (!this.headSha) fail('fatal: could not resolve HEAD');
     const files = rest.includes('.') ? [...new Set([...this.inHistory(), ...this.work, ...this.deleted, ...this.staged.filter((s) => !s.gone).map((s) => s.file)])] : rest;
@@ -1994,6 +2079,26 @@
         return !!main && main === up && r.commits.get(main).parents.length === 2 && !r.branches.has('feature') && !r.tracking.has('feature') && !r.remote.branches.has('experiment') && !r.tracking.has('experiment');
       },
     },
+    {
+      id: 'conflict',
+      setup: (r) => {
+        // feature y main cambiaron login.js desde su base (y feature, además, profile.js): la fusión choca en login.js
+        r.commands.checkout.call(r, ['-b', 'feature']);
+        r.commands.touch.call(r, ['login.js', 'profile.js']);
+        r.commands.add.call(r, ['login.js', 'profile.js']);
+        r.commands.commit.call(r, ['-m', 'Validate the login email']);
+        r.commands.checkout.call(r, ['main']);
+        r.commands.touch.call(r, ['login.js']);
+        r.commands.add.call(r, ['login.js']);
+        r.commands.commit.call(r, ['-m', 'Trim the login input']);
+      },
+      done: (r) => {
+        const feature = r.branches.get('feature');
+        const main = r.branches.get('main');
+        // la fusión chocó, el conflicto se resolvió con add y commit la cerró: main es un commit de fusión con feature dentro
+        return !!feature && r.conflictMerges > 0 && !r.merging && !r.conflicts.length && r.head.branch === 'main' && r.commits.get(main).parents.length === 2 && r.isAncestor(feature, main);
+      },
+    },
   ];
 
   /** main avanzó un commit mientras feature llevaba dos: las ramas divergieron. */
@@ -2061,11 +2166,13 @@
     if (solution.length > LIMITS.solution || solution.some((c) => c.length > LIMITS.command)) return { error: 'solution' };
     const spec = { title, goal, setup, checks, hints, ...(solution.length && { solution }) };
     const r = scenario();
+    r.lenient = true;
     for (const c of setup) {
       const res = runSetup(r, c);
       // el error y no lo de antes (un pull que se niega imprime primero la tabla de su fetch)
       if (!res.ok) return { error: 'command', detail: c, message: res.lines.find((l) => /^(fatal|error):/.test(l)) ?? res.lines[0] };
     }
+    r.lenient = false;
     // la solución propuesta tiene que resolver el ejercicio: si no, mostrarla enseñaría algo falso
     if (solution.length) {
       for (const c of solution) {
@@ -2100,7 +2207,10 @@
       hints: spec.hints,
       solution: spec.solution || [],
       setup: (r) => {
+        // como los enlaces de antes de los conflictos: las partidas fusionan sin chocar; la terminal, después, sí choca
+        r.lenient = true;
         for (const c of spec.setup) runSetup(r, c);
+        r.lenient = false;
       },
       done: (r) => tests.every((t) => t(r)),
     };

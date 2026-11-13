@@ -2029,7 +2029,7 @@ function fakeGitHub() {
       const pr = (number, title, draft) => ({ number, title, html_url: `https://github.com/o/b/pull/${number}`, state: 'open', draft, head: { ref: 'main', repo: { full_name: 'o/b' } }, base: { ref: 'main' }, user: { login: 'bea', avatar_url: null }, created_at: new Date(Date.now() - number * 60000).toISOString() });
       return { body: [pr(7, 'Cambio en revisión', false), pr(8, 'Borrador a medias', true)] };
     }
-    if (rest === '/events' || rest === '/pulls' || rest === '/tags' || rest === '/deployments' || rest === '/forks' || rest === '/activity') return { body: [] }; // /activity: solo con token
+    if (rest === '/events' || rest === '/pulls' || rest === '/tags' || rest === '/deployments' || rest === '/forks' || rest === '/activity' || rest === '/stats/code_frequency') return { body: [] }; // /activity: solo con token
     if (rest === '/commits') {
       let s = r.branches.get(q.get('sha')) || q.get('sha');
       const out = [];

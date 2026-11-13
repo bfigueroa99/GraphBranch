@@ -952,7 +952,12 @@ test('líneas por semana: una consulta al pedirlas (con ETag), el 202 queda «ca
   gh.push('main', 'a1');
   const wk = (d) => Math.floor((Date.now() - d * 864e5) / 1000);
   let reply = { status: 202, body: {} };
-  gh.override = (path) => (path === '/repos/o/r/stats/code_frequency' ? reply : null);
+  const inm = [];
+  gh.override = (path, opts) => {
+    if (path !== '/repos/o/r/stats/code_frequency') return null;
+    inm.push(opts.headers?.['If-None-Match'] || null);
+    return reply;
+  };
   const { src, errors } = connect(gh, 'tok');
   await src.cycle();
   const asked = () => gh.calls.filter((c) => c === '/repos/o/r/stats/code_frequency').length;
@@ -960,11 +965,16 @@ test('líneas por semana: una consulta al pedirlas (con ETag), el 202 queda «ca
   assert.equal(await src.syncCodeFrequency(), true);
   assert.equal(errors.length, 0);
   assert.equal(src.data.codeFreq.state, 'pending', 'GitHub lo está calculando');
+  assert.equal(await src.syncCodeFrequency(), false, 'calculando: no se vuelve a preguntar antes del minuto');
+  assert.equal(asked(), 1);
+  src.lastPoll.codeFreq = Date.now() - 61000;
   reply = { status: 202, body: null }; // un 202 sin cuerpo tampoco es un fallo de red
-  assert.equal(await src.syncCodeFrequency(), true, 'con el 202 se vuelve a preguntar al abrir otra vez');
+  assert.equal(await src.syncCodeFrequency(), true, 'con el 202, pasado el minuto se vuelve a preguntar al abrir otra vez');
   assert.equal(src.data.codeFreq.state, 'pending');
+  src.lastPoll.codeFreq = Date.now() - 61000;
   reply = { body: [[wk(10), 40, -12], [wk(2), 3, 0], ['x', 1, 1], [wk(1), 'mucho', -1]] };
-  assert.equal(await src.syncCodeFrequency(), true);
+  const [a, b] = await Promise.all([src.syncCodeFrequency(), src.syncCodeFrequency()]);
+  assert.deepEqual([a, b], [true, false], 'dos aperturas seguidas: una sola consulta en vuelo');
   assert.equal(asked(), 3);
   assert.equal(src.data.codeFreq.state, 'ok');
   assert.deepEqual(JSON.parse(JSON.stringify(src.data.codeFreq.weeks.map((w) => [w.added, w.deleted]))), [[40, 12], [3, 0], [0, 1]], 'las borradas en positivo; una semana sin fecha no entra y una cifra rara cuenta 0');
@@ -975,6 +985,8 @@ test('líneas por semana: una consulta al pedirlas (con ETag), el 202 queda «ca
   assert.equal(await src.syncCodeFrequency(), true);
   assert.equal(asked(), 4);
   assert.equal(src.data.codeFreq.weeks.length, 3, 'el 304 deja las mismas semanas');
+  assert.ok(inm.at(-1), 'la última consulta llevó el ETag (y la respuesta fue un 304)');
+  assert.ok(!inm[0], 'la primera no tenía ETag');
   const urls = gh.urls.filter((u) => u.endsWith('/stats/code_frequency'));
   assert.equal(urls.length, 4);
   // 204: el repo está vacío; 422 (más de 10 000 commits) o 404: sin la línea y sin error

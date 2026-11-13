@@ -407,7 +407,7 @@
       const cached = cacheKey ? this.etags.get(cacheKey) : null;
       if (cached) headers['If-None-Match'] = cached.etag;
 
-      const { res, body } = await this.request(this.ep.api + path, { headers, cache: 'no-store' });
+      const { res, body } = await this.request(this.ep.api + path, { headers, cache: 'no-store', emptyOk: allow.includes(202) });
       this.readRate(res);
       if (res.status === 304 && cached) {
         if (!this.token) this.cost++; // sin token, los 304 sí cuentan
@@ -451,7 +451,7 @@
      * cuenta como fallo de red (se reintenta); si la fuente se detuvo mientras tanto, se corta y no
      * cuenta como nada. Con `raw`, el cuerpo queda como texto (un diff), sin leerlo como JSON.
      */
-    async request(url, { raw = false, ...opts } = {}) {
+    async request(url, { raw = false, emptyOk = false, ...opts } = {}) {
       const halt = this.halt || (this.halt = new AbortController());
       const stopped = () => new ApiError(M(this.term('err.network')), { kind: 'aborted' });
       if (halt.signal.aborted) throw stopped();
@@ -474,7 +474,7 @@
           } catch {
             body = undefined;
           }
-          if (res.ok && res.status !== 202 && !body) throw new ApiError(M(this.term('err.network')), { kind: 'network' }); // llegó vacía o cortada (un 202, «todavía calculando», puede venir sin cuerpo)
+          if (res.ok && !(emptyOk && res.status === 202) && !body) throw new ApiError(M(this.term('err.network')), { kind: 'network' }); // llegó vacía o cortada (salvo el 202, «todavía calculando», de quien lo admite: puede venir sin cuerpo)
         }
         return { res, body };
       } catch (err) {
@@ -661,11 +661,21 @@
     /** Líneas añadidas y borradas por semana (`/stats/code_frequency`): una consulta, solo cuando el panel de salud la
         pide y no más de una cada 15 minutos (con ETag). GitHub responde 202 mientras la calcula: queda «calculando» y
         se vuelve a preguntar en la próxima apertura; un 204 (repo vacío), un 422 (más de 10 000 commits) o sin permisos,
-        sin semanas. La cuota agotada o la red caída se avisan igual. Devuelve si preguntó. */
-    async syncCodeFrequency() {
-      const prev = this.data.codeFreq;
-      if (prev?.state !== 'pending' && this.lastPoll.codeFreq && Date.now() - this.lastPoll.codeFreq < 15 * 60000) return false;
+        sin semanas. Mientras GitHub calcula, una apertura vuelve a preguntar pasado un minuto; nunca dos consultas a la vez.
+        La cuota agotada o la red caída cortan la consulta (lanza, como `syncForks`) y se vuelve a pedir pasado el tope.
+        Devuelve si preguntó. */
+    syncCodeFrequency() {
+      if (this.codeFreqAsk) return this.codeFreqAsk.then(() => false);
+      const wait = this.data.codeFreq?.state === 'pending' ? 60000 : 15 * 60000;
+      if (this.lastPoll.codeFreq && Date.now() - this.lastPoll.codeFreq < wait) return Promise.resolve(false);
       this.lastPoll.codeFreq = Date.now();
+      const ask = this.askCodeFrequency().finally(() => (this.codeFreqAsk = null));
+      this.codeFreqAsk = ask.catch(() => {});
+      return ask;
+    }
+
+    async askCodeFrequency() {
+      const prev = this.data.codeFreq;
       try {
         const { data, status } = await this.api(`${this.base}/stats/code_frequency`, { cacheKey: 'code-freq', allow: [202, 204] });
         if (status === 202) this.data.codeFreq = { state: 'pending', weeks: prev?.weeks || [] };

@@ -1925,9 +1925,12 @@ if (seccion('Escritorio (1280×800)'))
       await page.waitForFunction(() => document.querySelector('#status-text')?.textContent === 'Repo vacío', null, { timeout: T(10000) });
       const { sub, title } = await page.$eval('#status', (el) => ({ sub: el.querySelector('#status-sub').textContent, title: el.title }));
       if (!/vacío/.test(title)) throw new Error(`el detalle no dice que está vacío: «${title}»`);
-      // el reintento es de un minuto, no los 5 s del primer fallo de red
+      // sin token, el reintento es de 5 minutos (unos 300 s), no los 5 s del primer fallo de red
       const secs = Number((sub.match(/(\d+)\s*s/) || [])[1]);
-      if (!/min/.test(sub) && !(secs > 30)) throw new Error(`reintenta demasiado pronto: «${sub}»`);
+      if (!/min/.test(sub) && !(secs > 120)) throw new Error(`reintenta demasiado pronto: «${sub}»`);
+      // el aviso de repo vacío, no la tarjeta de error con «Reintentar»
+      const ov = await page.$eval('#overlay', (o) => ({ kind: o.dataset.kind, text: o.textContent }));
+      if (ov.kind !== 'empty' || !/todavía no tiene commits/.test(ov.text)) throw new Error(`el overlay no dice que el repo está vacío: ${ov.kind} «${ov.text.trim()}»`);
     },
     { allow: /status of (404|409)/ },
   );

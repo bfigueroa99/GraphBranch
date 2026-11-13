@@ -390,7 +390,7 @@ GB.i18n.define('hu', {
   'err.network': 'Nem érhető el az api.github.com. Ellenőrizd a kapcsolatot; ha a GraphBranch-et olyan megjelenítőben nyitottad meg, amely blokkolja a hálózatot, használd a GitHub Pages verziót vagy a helyi fájlt.',
   'err.timeout': 'A GitHub túl sokáig nem válaszolt. A GraphBranch magától újrapróbálja.',
   'err.notFound': 'Nem található a repozitórium: {repo}. Ha privát, adj hozzá a Beállításokban olvasási jogosultságú tokent.',
-  'err.empty': 'A(z) {repo} üres: még nincs benne commit. A gráf az első pushsal jelenik meg; percenként újra ellenőrizzük.',
+  'err.empty': 'A(z) {repo} üres: még nincs benne commit. A gráf az első pushsal jelenik meg.',
   'err.ownerNotFound': 'Nem található {owner} nevű szervezet vagy felhasználó a GitHubon.',
   'err.auth': 'A token érvénytelen vagy lejárt. Ellenőrizd a Beállításokban.',
   'err.rateAnon': 'Elfogyott az a 60 kérés óránként, amelyet a GitHub token nélkül engedélyez. Adj hozzá tokent a Beállításokban, hogy valós időben folytathasd.',

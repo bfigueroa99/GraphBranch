@@ -81,7 +81,10 @@
   const FIRST_MS = 1500; // el primer ciclo es corto: que el grafo aparezca rápido
   const REQUEST_MS = 30000; // tope por consulta: una conexión colgada no deja el ciclo trabado para siempre
   const OFFLINE_MS = 30000; // sin red se espera al aviso del navegador; esto es por si no llega
-  const EMPTY_MS = 60000; // un repo vacío no se llena solo en segundos: se mira una vez por minuto, hasta su primer push
+  // un repo vacío no se llena solo en segundos: se mira cada minuto hasta su primer push (sin token, cada 5: cada
+  // intento gasta unas 3 consultas de las 60 por hora, y la cuota se comparte con los demás repos seguidos)
+  const EMPTY_MS = 60000;
+  const EMPTY_ANON_MS = 300000;
   /** Errores de una consulta secundaria (tags, forks, despliegues…) que se dejan pasar: la función queda vacía y el ciclo sigue. */
   const SOFT = new Set(['http', 'notfound', 'auth', 'empty']);
   /** Errores que cortan el ciclo entero: una consulta secundaria que falla así no los tapa. */
@@ -336,7 +339,7 @@
             this.limitedUntil = err.resetAt;
             delay = Math.max(5000, err.resetAt - Date.now() + 2000);
           } else if (offline) delay = OFFLINE_MS; // sin red no se insiste: el aviso del navegador adelanta el reintento
-          else if (err.kind === 'empty') delay = EMPTY_MS; // nada falla: el repo todavía no tiene commits
+          else if (err.kind === 'empty') delay = this.token ? EMPTY_MS : EMPTY_ANON_MS; // nada falla: el repo todavía no tiene commits
           else {
             // cada fallo seguido espera el doble (5 s, 10 s… hasta 5 min), con algo de azar: que no reintenten todos a la vez
             this.failures++;

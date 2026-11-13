@@ -401,7 +401,7 @@ GB.i18n.define('pl', {
   'err.network': 'Nie udało się połączyć z api.github.com. Sprawdź połączenie; jeśli GraphBranch został otwarty w podglądzie blokującym sieć, użyj wersji z GitHub Pages lub pliku lokalnego.',
   'err.timeout': 'GitHub zbyt długo nie odpowiadał. GraphBranch spróbuje ponownie sam.',
   'err.notFound': 'Nie znaleziono repozytorium {repo}. Jeśli jest prywatne, dodaj w Ustawieniach token z uprawnieniem do odczytu.',
-  'err.empty': '{repo} jest puste: nie ma jeszcze commitów. Graf pojawi się po pierwszym pushu; sprawdzamy ponownie co minutę.',
+  'err.empty': '{repo} jest puste: nie ma jeszcze commitów. Graf pojawi się po pierwszym pushu.',
   'err.ownerNotFound': 'Nie znaleziono w serwisie GitHub organizacji ani użytkownika o nazwie {owner}.',
   'err.auth': 'Token jest nieprawidłowy lub wygasł. Sprawdź go w Ustawieniach.',
   'err.rateAnon': 'Wykorzystano 60 zapytań na godzinę, na które GitHub zezwala bez tokena. Dodaj token w Ustawieniach, aby dalej działać w czasie rzeczywistym.',

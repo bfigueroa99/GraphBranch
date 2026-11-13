@@ -391,7 +391,7 @@ GB.i18n.define('pt', {
   'err.network': 'Não foi possível acessar api.github.com. Verifique sua conexão; se você abriu o GraphBranch dentro de um visualizador que bloqueia a rede, use a versão do GitHub Pages ou o arquivo local.',
   'err.timeout': 'O GitHub demorou demais para responder. O GraphBranch tentará de novo sozinho.',
   'err.notFound': '{repo} não foi encontrado. Se o repositório for privado, adicione um token com permissão de leitura em Configurações.',
-  'err.empty': '{repo} está vazio: ainda não tem commits. O grafo aparece com o primeiro push; é verificado de novo a cada minuto.',
+  'err.empty': '{repo} está vazio: ainda não tem commits. O grafo aparece com o primeiro push.',
   'err.ownerNotFound': 'Nenhuma organização ou usuário chamado {owner} foi encontrado no GitHub.',
   'err.auth': 'O token não é válido ou expirou. Verifique-o em Configurações.',
   'err.rateAnon': 'As 60 requisições por hora que o GitHub permite sem token foram esgotadas. Adicione um token em Configurações para continuar em tempo real.',

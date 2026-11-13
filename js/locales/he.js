@@ -447,7 +447,7 @@ GB.i18n.define('he', {
   'err.network': 'לא ניתן להגיע אל api.github.com. בדוק את החיבור; אם פתחת את GraphBranch בתוך מציג שחוסם את הרשת, השתמש בגרסת GitHub Pages או בקובץ המקומי.',
   'err.timeout': 'GitHub לא הגיב בזמן. GraphBranch ינסה שוב בעצמו.',
   'err.notFound': 'לא נמצא {repo}. אם המאגר פרטי, הוסף בהגדרות token עם הרשאת קריאה.',
-  'err.empty': '{repo} ריק: עדיין אין בו commits. הגרף יופיע עם ה-push הראשון; הוא נבדק שוב בכל דקה.',
+  'err.empty': '{repo} ריק: עדיין אין בו commits. הגרף יופיע עם ה-push הראשון.',
   'err.ownerNotFound': 'לא נמצאו ב-GitHub ארגון או משתמש בשם {owner}.',
   'err.auth': 'ה-token אינו תקין או שפג תוקפו. בדוק אותו בהגדרות.',
   'err.rateAnon': '60 הבקשות לשעה ש-GitHub מאפשר ללא token אזלו. הוסף token בהגדרות כדי להמשיך בזמן אמת.',

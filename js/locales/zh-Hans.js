@@ -390,7 +390,7 @@ GB.i18n.define('zh-Hans', {
   'err.network': '无法连接 api.github.com。请检查网络连接；如果是在会屏蔽网络的查看器中打开 GraphBranch，请改用 GitHub Pages 版本或本地文件。',
   'err.timeout': 'GitHub 响应超时。GraphBranch 会自动重试。',
   'err.notFound': '未找到 {repo}。如果该仓库是私有的，请在“设置”中添加具有读取权限的令牌。',
-  'err.empty': '{repo} 是空的：还没有任何 commit。第一次 push 后会出现图；每分钟重新检查一次。',
+  'err.empty': '{repo} 是空的：还没有任何 commit。第一次 push 后会出现图。',
   'err.ownerNotFound': '在 GitHub 上找不到名为 {owner} 的组织或用户。',
   'err.auth': '令牌无效或已过期。请在“设置”中检查。',
   'err.rateAnon': 'GitHub 在没有令牌时每小时允许的 60 次请求已用完。请在“设置”中添加令牌，以便继续实时更新。',

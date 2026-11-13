@@ -390,7 +390,7 @@ GB.i18n.define('tr', {
   'err.network': 'api.github.com adresine ulaşılamadı. Bağlantınızı kontrol edin; GraphBranch’i ağı engelleyen bir görüntüleyicide açtıysanız GitHub Pages sürümünü veya yerel dosyayı kullanın.',
   'err.timeout': 'GitHub yanıt vermekte çok gecikti. GraphBranch kendiliğinden yeniden deneyecek.',
   'err.notFound': '{repo} bulunamadı. Depo özelse Ayarlar’dan okuma erişimi olan bir token ekleyin.',
-  'err.empty': '{repo} boş: henüz hiç commit yok. Grafik ilk push ile görünür; her dakika yeniden kontrol edilir.',
+  'err.empty': '{repo} boş: henüz hiç commit yok. Grafik ilk push ile görünür.',
   'err.ownerNotFound': 'GitHub’da {owner} adında bir kuruluş veya kullanıcı bulunamadı.',
   'err.auth': 'Token geçerli değil veya süresi dolmuş. Ayarlar’dan kontrol edin.',
   'err.rateAnon': 'GitHub’ın token olmadan izin verdiği saatte 60 istek doldu. Gerçek zamanlı devam etmek için Ayarlar’dan bir token ekleyin.',

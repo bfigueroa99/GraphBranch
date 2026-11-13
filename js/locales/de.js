@@ -391,7 +391,7 @@ GB.i18n.define('de', {
   'err.network': 'api.github.com ist nicht erreichbar. Prüfe deine Verbindung; falls du GraphBranch in einem Viewer geöffnet hast, der das Netzwerk blockiert, nutze die GitHub-Pages-Version oder die lokale Datei.',
   'err.timeout': 'GitHub hat zu lange nicht geantwortet. GraphBranch versucht es von selbst erneut.',
   'err.notFound': '{repo} wurde nicht gefunden. Wenn das Repository privat ist, füge in den Einstellungen einen Token mit Lesezugriff hinzu.',
-  'err.empty': '{repo} ist leer: Es hat noch keine Commits. Der Graph erscheint mit dem ersten Push; es wird jede Minute erneut geprüft.',
+  'err.empty': '{repo} ist leer: Es hat noch keine Commits. Der Graph erscheint mit dem ersten Push.',
   'err.ownerNotFound': 'Auf GitHub wurde keine Organisation und kein Benutzer namens {owner} gefunden.',
   'err.auth': 'Der Token ist ungültig oder abgelaufen. Prüfe ihn in den Einstellungen.',
   'err.rateAnon': 'Die 60 Anfragen pro Stunde, die GitHub ohne Token erlaubt, sind aufgebraucht. Füge in den Einstellungen einen Token hinzu, um in Echtzeit weiterzumachen.',

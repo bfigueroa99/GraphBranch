@@ -396,7 +396,7 @@ GB.i18n.define('en', {
   'err.network': 'Could not reach api.github.com. Check your connection; if you opened GraphBranch inside a viewer that blocks the network, use the GitHub Pages version or the local file.',
   'err.timeout': 'GitHub took too long to respond. GraphBranch will try again on its own.',
   'err.notFound': '{repo} was not found. If the repository is private, add a token with read access in Settings.',
-  'err.empty': '{repo} is empty: it has no commits yet. The graph appears with the first push; it is checked again every minute.',
+  'err.empty': '{repo} is empty: it has no commits yet. The graph appears with the first push.',
   'err.ownerNotFound': 'No organization or user named {owner} was found on GitHub.',
   'err.auth': 'The token is not valid or has expired. Check it in Settings.',
   'err.rateAnon': 'The 60 requests per hour that GitHub allows without a token are used up. Add a token in Settings to keep going in real time.',

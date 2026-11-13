@@ -391,7 +391,7 @@ GB.i18n.define('nl', {
   'err.network': 'Kan api.github.com niet bereiken. Controleer je verbinding; als je GraphBranch hebt geopend in een viewer die het netwerk blokkeert, gebruik dan de GitHub Pages-versie of het lokale bestand.',
   'err.timeout': 'GitHub deed er te lang over om te antwoorden. GraphBranch probeert het vanzelf opnieuw.',
   'err.notFound': '{repo} is niet gevonden. Als de repository privé is, voeg dan in Instellingen een token met leestoegang toe.',
-  'err.empty': '{repo} is leeg: er zijn nog geen commits. De graaf verschijnt bij de eerste push; er wordt elke minuut opnieuw gekeken.',
+  'err.empty': '{repo} is leeg: er zijn nog geen commits. De graaf verschijnt bij de eerste push.',
   'err.ownerNotFound': 'Er is op GitHub geen organisatie of gebruiker met de naam {owner} gevonden.',
   'err.auth': 'Het token is ongeldig of verlopen. Controleer het in Instellingen.',
   'err.rateAnon': 'De 60 verzoeken per uur die GitHub zonder token toestaat zijn op. Voeg een token toe in Instellingen om in realtime door te gaan.',

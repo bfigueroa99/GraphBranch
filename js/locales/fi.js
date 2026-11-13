@@ -390,7 +390,7 @@ GB.i18n.define('fi', {
   'err.network': 'Osoitteeseen api.github.com ei saatu yhteyttä. Tarkista verkkoyhteytesi; jos avasit GraphBranchin katselimessa, joka estää verkon, käytä GitHub Pages -versiota tai paikallista tiedostoa.',
   'err.timeout': 'GitHub vastasi liian hitaasti. GraphBranch yrittää uudelleen itsestään.',
   'err.notFound': 'Repositoriota {repo} ei löytynyt. Jos repositorio on yksityinen, lisää Asetuksissa token, jolla on lukuoikeus.',
-  'err.empty': '{repo} on tyhjä: siinä ei ole vielä committeja. Graafi ilmestyy ensimmäisen pushin myötä; se tarkistetaan uudelleen joka minuutti.',
+  'err.empty': '{repo} on tyhjä: siinä ei ole vielä committeja. Graafi ilmestyy ensimmäisen pushin myötä.',
   'err.ownerNotFound': 'GitHubista ei löytynyt organisaatiota tai käyttäjää nimeltä {owner}.',
   'err.auth': 'Token ei kelpaa tai se on vanhentunut. Tarkista se Asetuksissa.',
   'err.rateAnon': 'GitHubin ilman tokenia sallimat 60 pyyntöä tunnissa on käytetty. Lisää token Asetuksissa, niin päivitys jatkuu reaaliaikaisena.',

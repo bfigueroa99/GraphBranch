@@ -3730,7 +3730,9 @@
     status = s;
     if (s.state === 'error' && !source.data.loaded) {
       const fatal = s.nextAt == null;
-      showOverlay('error', s.message, fatal);
+      // un repo sin commits no es un fallo: el aviso de repo vacío, no la tarjeta de error con «Reintentar»
+      if (s.error?.kind === 'empty') showOverlay('empty');
+      else showOverlay('error', s.message, fatal);
     }
     renderStatus();
   }

@@ -398,7 +398,7 @@ GB.i18n.define('hr', {
   'err.network': 'Nije moguće doći do api.github.com. Provjerite vezu; ako ste GraphBranch otvorili u pregledniku sadržaja koji blokira mrežu, upotrijebite verziju na GitHub Pages ili lokalnu datoteku.',
   'err.timeout': 'GitHub je predugo odgovarao. GraphBranch će sam pokušati ponovno.',
   'err.notFound': 'Repozitorij {repo} nije pronađen. Ako je privatan, dodajte u Postavkama token s pravom čitanja.',
-  'err.empty': '{repo} je prazan: još nema commitova. Graf se pojavljuje s prvim pushem; ponovno se provjerava svake minute.',
+  'err.empty': '{repo} je prazan: još nema commitova. Graf se pojavljuje s prvim pushem.',
   'err.ownerNotFound': 'Na GitHubu nije pronađena organizacija ni korisnik {owner}.',
   'err.auth': 'Token nije valjan ili je istekao. Provjerite ga u Postavkama.',
   'err.rateAnon': 'Potrošeno je 60 zahtjeva na sat koje GitHub dopušta bez tokena. Dodajte token u Postavkama za nastavak u stvarnom vremenu.',

@@ -390,7 +390,7 @@ GB.i18n.define('id', {
   'err.network': 'Tidak dapat menjangkau api.github.com. Periksa koneksi Anda; jika Anda membuka GraphBranch di dalam penampil yang memblokir jaringan, gunakan versi GitHub Pages atau file lokal.',
   'err.timeout': 'GitHub terlalu lama merespons. GraphBranch akan mencoba lagi sendiri.',
   'err.notFound': '{repo} tidak ditemukan. Jika repositori bersifat privat, tambahkan token dengan akses baca di Pengaturan.',
-  'err.empty': '{repo} kosong: belum ada commit. Grafik muncul dengan push pertama; diperiksa lagi setiap menit.',
+  'err.empty': '{repo} kosong: belum ada commit. Grafik muncul dengan push pertama.',
   'err.ownerNotFound': 'Organisasi atau pengguna bernama {owner} tidak ditemukan di GitHub.',
   'err.auth': 'Token tidak valid atau sudah kedaluwarsa. Periksa di Pengaturan.',
   'err.rateAnon': '60 permintaan per jam yang diizinkan GitHub tanpa token sudah habis. Tambahkan token di Pengaturan untuk terus berjalan secara real time.',

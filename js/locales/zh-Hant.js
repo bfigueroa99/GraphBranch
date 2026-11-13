@@ -390,7 +390,7 @@ GB.i18n.define('zh-Hant', {
   'err.network': '無法連線至 api.github.com。請檢查網路連線；如果是在會封鎖網路的檢視器中開啟 GraphBranch，請改用 GitHub Pages 版本或本機檔案。',
   'err.timeout': 'GitHub 回應逾時。GraphBranch 會自動重試。',
   'err.notFound': '找不到 {repo}。如果該儲存庫是私人的，請在「設定」中新增具有讀取權限的權杖。',
-  'err.empty': '{repo} 是空的：還沒有任何 commit。第一次 push 後會出現圖；每分鐘重新檢查一次。',
+  'err.empty': '{repo} 是空的：還沒有任何 commit。第一次 push 後會出現圖。',
   'err.ownerNotFound': '在 GitHub 上找不到名為 {owner} 的組織或使用者。',
   'err.auth': '權杖無效或已過期。請在「設定」中檢查。',
   'err.rateAnon': '沒有權杖時 GitHub 每小時允許的 60 次請求已用完。請在「設定」中新增權杖，以便繼續即時更新。',

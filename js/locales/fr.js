@@ -391,7 +391,7 @@ GB.i18n.define('fr', {
   'err.network': 'Impossible de joindre api.github.com. Vérifiez votre connexion ; si vous avez ouvert GraphBranch dans un lecteur qui bloque le réseau, utilisez la version GitHub Pages ou le fichier local.',
   'err.timeout': 'GitHub a mis trop de temps à répondre. GraphBranch réessaiera tout seul.',
   'err.notFound': '{repo} est introuvable. Si le dépôt est privé, ajoutez un jeton avec accès en lecture dans les Paramètres.',
-  'err.empty': '{repo} est vide : il n’a encore aucun commit. Le graphe apparaît au premier push ; il est revérifié chaque minute.',
+  'err.empty': '{repo} est vide : il n’a encore aucun commit. Le graphe apparaît au premier push.',
   'err.ownerNotFound': 'Aucune organisation ni aucun utilisateur nommé {owner} n’a été trouvé sur GitHub.',
   'err.auth': 'Le jeton n’est pas valide ou a expiré. Vérifiez-le dans les Paramètres.',
   'err.rateAnon': 'Les 60 requêtes par heure autorisées par GitHub sans jeton sont épuisées. Ajoutez un jeton dans les Paramètres pour continuer en temps réel.',

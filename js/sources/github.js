@@ -81,6 +81,9 @@
   const FIRST_MS = 1500; // el primer ciclo es corto: que el grafo aparezca rápido
   const REQUEST_MS = 30000; // tope por consulta: una conexión colgada no deja el ciclo trabado para siempre
   const OFFLINE_MS = 30000; // sin red se espera al aviso del navegador; esto es por si no llega
+  const EMPTY_MS = 60000; // un repo vacío no se llena solo en segundos: se mira una vez por minuto, hasta su primer push
+  /** Errores de una consulta secundaria (tags, forks, despliegues…) que se dejan pasar: la función queda vacía y el ciclo sigue. */
+  const SOFT = new Set(['http', 'notfound', 'auth', 'empty']);
   /** Errores que cortan el ciclo entero: una consulta secundaria que falla así no los tapa. */
   const HARD = new Set(['rate', 'network', 'auth', 'aborted']);
   const hard = (err) => HARD.has(err?.kind);
@@ -333,6 +336,7 @@
             this.limitedUntil = err.resetAt;
             delay = Math.max(5000, err.resetAt - Date.now() + 2000);
           } else if (offline) delay = OFFLINE_MS; // sin red no se insiste: el aviso del navegador adelanta el reintento
+          else if (err.kind === 'empty') delay = EMPTY_MS; // nada falla: el repo todavía no tiene commits
           else {
             // cada fallo seguido espera el doble (5 s, 10 s… hasta 5 min), con algo de azar: que no reintenten todos a la vez
             this.failures++;
@@ -516,6 +520,10 @@
         return new ApiError(M(this.token ? 'err.rate' : 'err.rateAnon'), { status: res.status, kind: 'rate', resetAt });
       }
       if (res.status === 404) return this.notFound();
+      // GitHub responde 409 «Git Repository is empty» a las ramas y los commits de un repo sin ningún commit
+      if (res.status === 409 && /repository is empty/i.test(msg)) {
+        return new ApiError(M('err.empty', { repo: `${this.owner}/${this.name}` }), { status: 409, kind: 'empty' });
+      }
       return new ApiError(msg ? M('err.http', { status: res.status, message: msg }) : M('err.httpNoMessage', { status: res.status }), {
         status: res.status,
         kind: 'http',
@@ -592,7 +600,7 @@
         try {
           return (await this.api(`${this.base}/${path}`, { cacheKey })).data;
         } catch (err) {
-          if (!['http', 'notfound', 'auth'].includes(err.kind)) throw err; // cuota, red o corte: el ciclo lo maneja
+          if (!SOFT.has(err.kind)) throw err; // cuota, red o corte: el ciclo lo maneja
           return null;
         }
       };
@@ -623,7 +631,7 @@
         const { data } = await this.api(`${this.base}/forks?sort=newest&per_page=100`, { cacheKey: 'forks' });
         if (Array.isArray(data)) this.data.forks = recentForks(data);
       } catch (err) {
-        if (!['http', 'notfound', 'auth'].includes(err.kind)) throw err;
+        if (!SOFT.has(err.kind)) throw err;
       }
       return true;
     }
@@ -648,7 +656,7 @@
           const { data } = await this.api(`${this.base}/deployments/${id}/statuses?per_page=1`, { cacheKey: `deploy-status-${id}` });
           state = Array.isArray(data) && typeof data[0]?.state === 'string' ? data[0].state : null;
         } catch (err) {
-          if (!['http', 'notfound', 'auth'].includes(err.kind)) {
+          if (!SOFT.has(err.kind)) {
             for (const rest of todo.slice(todo.indexOf(id))) if (known.get(rest)?.at === now) known.set(rest, { ...known.get(rest), at: -Infinity }); // lo que no se llegó a preguntar
             throw err;
           }
@@ -681,7 +689,7 @@
         if (status === 202) this.data.codeFreq = { state: 'pending', weeks: prev?.weeks || [] };
         else this.data.codeFreq = { state: 'ok', weeks: codeWeeks(data) };
       } catch (err) {
-        if (!['http', 'notfound', 'auth'].includes(err.kind)) throw err;
+        if (!SOFT.has(err.kind)) throw err;
         this.data.codeFreq = { state: 'none', weeks: [] };
       }
       return true;
@@ -698,7 +706,7 @@
           const c = Array.isArray(data) ? data[0]?.commit : null;
           known.set(n, Date.parse(c?.author?.date || c?.committer?.date) || null);
         } catch (err) {
-          if (!['http', 'notfound', 'auth'].includes(err.kind)) throw err;
+          if (!SOFT.has(err.kind)) throw err;
           known.set(n, null);
         }
       }

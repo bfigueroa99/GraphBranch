@@ -349,6 +349,30 @@ test('la API de actividad sigue en uso tras un 502 suelto, y se deja con un 403'
   assert.equal(src.activityOk, false, 'un 403 sí: el token no puede leerla');
 });
 
+test('un repo vacío (409 «Git Repository is empty») se dice vacío y no se reintenta cada pocos segundos', async () => {
+  const gh = fakeGitHub();
+  const empty = { status: 409, body: { message: 'Git Repository is empty.' } };
+  gh.override = (path) => (path.startsWith('/repos/o/r/commits') || path.startsWith('/repos/o/r/branches') ? empty : null);
+  for (const token of ['', 'tok']) {
+    if (token) gh.override = (path) => (path === '/graphql' || path.startsWith('/repos/o/r/commits') || path.startsWith('/repos/o/r/branches') ? empty : null);
+    const { src, errors, GB } = connect(gh, token);
+    await src.cycle();
+    await src.cycle();
+    assert.equal(errors.length, 2, token ? 'con token' : 'sin token');
+    assert.equal(errors[1].kind, 'empty');
+    assert.equal(errors[1].msg.key, 'err.empty');
+    assert.equal(GB.U.statusKey(src.status), 'status.errorEmpty');
+    assert.equal(src.running, true, 'sigue mirando: el primer push lo llena');
+    assert.ok(src.status.nextAt - Date.now() >= 55000, `reintenta en ${src.status.nextAt - Date.now()} ms`);
+    assert.equal(src.failures, 0, 'no cuenta como fallo de red');
+  }
+  // un 409 cualquiera sigue siendo un error del servicio
+  gh.override = (path) => (path.startsWith('/repos/o/r/commits') || path.startsWith('/repos/o/r/branches') ? { status: 409, body: { message: 'Conflict' } } : null);
+  const { src, errors } = connect(gh);
+  await src.cycle();
+  assert.equal(errors[0].kind, 'http');
+});
+
 test('un 5xx de GraphQL en la carga inicial no pasa a REST para siempre', async () => {
   const gh = fakeGitHub();
   gh.push('main', 'a1');

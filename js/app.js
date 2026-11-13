@@ -1874,28 +1874,41 @@
         const [main, aside] = rowOf(r);
         const go = r.name || r.head;
         const body = `<span class="hl-main">${U.esc(main)}</span><span class="hl-aside">${U.esc(aside)}</span>`;
-        return `<li>${go ? `<button type="button" class="hl-row" data-go="${i}" title="${U.esc(t('feed.locate'))}">${body}</button>` : `<span class="hl-row">${body}</span>`}</li>`;
+        return `<li>${go ? `<button type="button" class="hl-row" data-go="${i}" data-key="${U.esc(go)}" title="${U.esc(t('feed.locate'))}">${body}</button>` : `<span class="hl-row">${body}</span>`}</li>`;
       })
       .join('');
     const [box, head] = sub ? ['div class="hl-sub"', 'h4'] : ['section class="hl-sec"', 'h3'];
     return `<${box}><${head}>${U.esc(title)} <span class="hl-n">${U.fmtNum(block.total)}</span></${head}>${rows ? `<ul class="hl-list" data-list="${id}">${rows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`}</${sub ? 'div' : 'section'}>`;
   }
 
+  /** Cómo volver a encontrar el control enfocado del panel después de rehacerlo: su id o, si es una fila, su lista y su
+      número. Sin esto, lo que llega después de abrir (forks, líneas por semana, despliegues) tiraba el foco a `<body>`. */
+  function healthFocusKey() {
+    const a = document.activeElement;
+    if (!a || a === el.healthBody || !el.healthBody.contains(a)) return null;
+    if (a.id) return '#' + CSS.escape(a.id);
+    const ul = a.closest('.hl-list[data-list]');
+    // la fila por su rama, PR o fork y no por su lugar: si la lista se reordena, el foco no cae en otra
+    if (ul && a.dataset.key != null) return `.hl-list[data-list="${CSS.escape(ul.dataset.list)}"] [data-key="${CSS.escape(a.dataset.key)}"]`;
+    return '#health-close'; // un control sin forma de volver a encontrarlo: el foco queda en el panel, no en <body>
+  }
+
   function renderHealth() {
+    const had = healthFocusKey();
     const data = source.view ? source.view() : source.data;
     const acts = feed.items.filter((a) => a.repo === active?.key);
     const h = GB.health.compute(data, acts, Date.now(), forksByStars ? 'stars' : 'recent');
     const span = (ms) => GB.i18n.fmtSpan(ms);
     const stat = (label, n) => `<div class="hl-stat"><b>${U.fmtNum(n)}</b><span>${U.esc(label)}</span></div>`;
     const forkRows = h.forks.rows
-      .map((r) => `<li><a class="hl-row" href="${U.esc(U.safeUrl(r.url))}" target="_blank" rel="noopener noreferrer"><span class="hl-main">${U.esc(r.fullName)}</span><span class="hl-aside">${r.stars ? `★ ${U.fmtNum(r.stars)} · ` : ''}${U.esc(span(r.idle))}</span></a></li>`)
+      .map((r) => `<li><a class="hl-row" data-key="${U.esc(r.fullName)}" href="${U.esc(U.safeUrl(r.url))}" target="_blank" rel="noopener noreferrer"><span class="hl-main">${U.esc(r.fullName)}</span><span class="hl-aside">${r.stars ? `★ ${U.fmtNum(r.stars)} · ` : ''}${U.esc(span(r.idle))}</span></a></li>`)
       .join('');
     const delta = (w, p) => (w > p ? `+${U.fmtNum(w - p)}` : w < p ? `−${U.fmtNum(p - w)}` : '±0'); // la diferencia de esta semana frente a la anterior
     // forks nuevos de la semana frente a la anterior, de la actividad ya cargada (sin consultas): solo si alguna de las dos tiene alguno
     // la semana frente a la anterior; si la actividad cargada no llega entera a la anterior (prev null), solo esta semana
     const trend = (x, full, only) => (x.prev == null ? t(only, { week: U.fmtNum(x.week) }) : t(full, { week: U.fmtNum(x.week), prev: U.fmtNum(x.prev), delta: delta(x.week, x.prev) }));
     const forkTrend = showForks && (h.forkTrend.week || h.forkTrend.prev) ? `<p class="hl-line" id="hl-forks-trend">${U.esc(trend(h.forkTrend, 'health.forksNew', 'health.forksNewOnly'))}</p>` : '';
-    const forksBody = !showForks ? '' : forkTrend + (forkRows ? `<ul class="hl-list">${forkRows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`);
+    const forksBody = !showForks ? '' : forkTrend + (forkRows ? `<ul class="hl-list" data-list="forks">${forkRows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`);
     el.healthBody.innerHTML =
       `<section class="hl-sec" id="hl-forks"><h3>${U.esc(t('health.forks'))}${showForks ? ` <span class="hl-n">${U.fmtNum(h.forks.total)}</span>` : ''}</h3><label class="hl-switch"><input type="checkbox" id="hl-forks-toggle"${showForks ? ' checked' : ''}> ${U.esc(t('health.forksShow'))}</label>${showForks ? `<label class="hl-switch"><input type="checkbox" id="hl-forks-stars"${forksByStars ? ' checked' : ''}> ${U.esc(t('health.forksByStars'))}</label>` : ''}${forksBody}</section>` +
       `<section class="hl-sec" id="hl-stars"><h3>${U.esc(t('health.stars'))}</h3>${
@@ -1958,6 +1971,7 @@
         }),
       ),
     );
+    if (had) (el.healthBody.querySelector(had) || $('#health-close')).focus(); // la fila que ya no está: el foco queda en el panel
   }
 
   /** Comparar dos ramas: commits por delante y punto de separación con lo ya cargado; los archivos

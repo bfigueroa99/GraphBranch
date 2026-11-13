@@ -5670,21 +5670,25 @@ if (seccion('Agentes e interacciones, en vivo, en el lugar del grafo (?agents=1)
     if (!(await page.evaluate(() => document.querySelector('#agents').hidden))) throw new Error('el botón de arriba no volvió al grafo');
   });
   await step(page, 'la ficha de un commit de agente dice cuál es, con su modelo y su sesión (2D)', async () => {
-    await page.click('#pause-btn'); // la demo quieta: las cabezas no cambian mientras se recorren
+    await page.click('#pause-btn'); // la demo quieta: el commit elegido no se mueve mientras se lo busca
     await page.click('#view-2d');
+    // el commit sale de la lista de agentes (el último de una sesión de Claude Code), no de las etiquetas de rama: con la
+    // demo viva, la rama de las sesiones se fusiona y se borra, y en 3 de 8 corridas ninguna etiqueta a la vista quedaba
+    // en un commit de agente (iteración 291)
+    await page.click('#agents-btn');
+    const row = page.locator('#ag-list button.hl-row[data-sha]', { hasText: 'Claude Code' }).first();
+    await row.waitFor({ timeout: T(5000) });
+    const sha = await row.getAttribute('data-sha');
+    await row.click(); // vuelve al grafo 2D y lo lleva a ese commit
+    const node = await page
+      .waitForFunction((s) => [...document.querySelectorAll('#graph svg .node:not(.exit)')].find((n) => n.__sha === s && n.getClientRects().length), sha, { timeout: T(5000) })
+      .catch(() => null);
+    if (!node) throw new Error(`el grafo 2D no dibuja el commit ${sha.slice(0, 7)} de la lista de agentes`);
+    await node.evaluate((n) => n.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    const tip = await page.waitForSelector('#graph .tip:not([hidden]) .tip-agent', { timeout: T(3000) }).then((x) => x.textContent(), () => '');
     await page.focus('#graph');
-    await page.keyboard.press('End');
-    await page.waitForTimeout(800);
-    let tip = '';
-    for (const h of await page.$$('#graph svg .head[role=button]:not(.exit)')) {
-      if (!(await h.isVisible())) continue;
-      await h.focus();
-      await page.keyboard.press('Enter');
-      tip = await page.waitForSelector('#graph .tip:not([hidden]) .tip-agent', { timeout: T(800) }).then((x) => x.textContent(), () => '');
-      await page.keyboard.press('Escape');
-      if (tip) break;
-    }
-    if (!/^Agente: (Claude Code · Opus 5\.5 · sesión \w{6}|GitHub Copilot|Dependabot)$/.test(tip)) throw new Error('ninguna ficha de rama dice su agente: ' + JSON.stringify(tip));
+    await page.keyboard.press('Escape');
+    if (!/^Agente: Claude Code · Opus 5\.5 · sesión \w{6}$/.test(tip)) throw new Error(`la ficha del commit ${sha.slice(0, 7)} de Claude Code no dice su agente: ${JSON.stringify(tip)}`);
     await page.click('#pause-btn');
   });
   await step(page, 'interacciones en el grafo (?interactions=1): en 2D, el marco de cada commit de agente, los arcos y las insignias, con su leyenda', async () => {

@@ -351,7 +351,7 @@ test('log --oneline dice dónde está HEAD y las ramas', () => {
 
 test('comandos desconocidos, ayuda y líneas vacías no rompen nada', () => {
   const r = fresh();
-  assert.equal(r.run('pull origin main').ok, false);
+  assert.equal(r.run('push2 origin main').ok, false);
   assert.ok(r.run('help').lines.length > 5);
   assert.deepEqual(plain(r.run('   ').lines), []);
   assert.equal(r.run('git').changed, false);
@@ -380,6 +380,7 @@ test('cada ejercicio parte sin resolver y se resuelve con sus comandos', () => {
     ['clean -nd', 'clean -fd -e nuevo.js'],
     ['stash list', 'stash show', 'stash show stash@{1}', 'stash pop stash@{1}'],
     ['fetch', 'merge origin/main', 'push'],
+    ['pull', 'fetch --prune', 'branch -d feature', 'push origin --delete experiment'],
   ];
   assert.equal(solutions.length, EXERCISES.length);
   EXERCISES.forEach((ex, i) => {
@@ -421,6 +422,18 @@ test('un ejercicio no se da por resuelto con el atajo equivocado', () => {
   const b = start(push, NOW);
   run(b, 'fetch', 'rebase origin/main', 'push');
   assert.equal(EXERCISES[push].done(b), true, 'rebase en vez de merge también vale');
+  // limpiar: sin --prune origin/feature sigue, y borrar experiment solo aquí no la borra del remoto
+  const tidy = EXERCISES.findIndex((e) => e.id === 'prune');
+  const t = start(tidy, NOW);
+  run(t, 'pull', 'fetch', 'branch -d feature', 'push origin --delete experiment');
+  assert.equal(EXERCISES[tidy].done(t), false, 'sin --prune queda origin/feature');
+  const l = start(tidy, NOW);
+  run(l, 'pull', 'fetch --prune', 'branch -d feature', 'branch -D experiment');
+  assert.equal(EXERCISES[tidy].done(l), false, 'experiment sigue en el remoto');
+  const k = start(tidy, NOW);
+  run(k, 'fetch --prune', 'branch -d feature', 'push origin --delete experiment');
+  assert.equal(EXERCISES[tidy].done(k), false, 'sin pull main sigue atrás');
+  assert.equal(k.run('branch -d feature').ok, false);
 });
 
 test('el remoto: push sube la rama, fetch trae lo ajeno y status dice el adelanto y el atraso', () => {
@@ -533,8 +546,8 @@ test('push y fetch se niegan como git: sin remoto, otro remoto, desprendido, ref
   no('fetch upstream', /'upstream' does not appear to be a git repository/);
   no('push origin nope', /src refspec nope does not match any/);
   no('push origin main:other', /without refspecs/);
-  no('push --delete origin main', /unknown option 'delete'/);
-  no('fetch --prune', /unknown option 'prune'/);
+  no('push --mirror origin main', /unknown option 'mirror'/);
+  no('fetch --unshallow', /unknown option 'unshallow'/);
   no('push origin main extra', /one branch at a time/);
   r.run('checkout HEAD~1');
   no('push', /not currently on a branch/);
@@ -554,6 +567,171 @@ test('push y fetch se niegan como git: sin remoto, otro remoto, desprendido, ref
   assert.equal(ex.done(c), false);
   c.run('push -u origin feature');
   assert.equal(ex.done(c), true);
+});
+
+test('pull: avanza rápido, fusiona con --no-rebase, rebasa con --rebase y, si divergieron, pide cómo', () => {
+  const r = fresh();
+  const tip = r.headSha;
+  assert.deepEqual(plain(r.run('pull').lines), ['Already up to date.']);
+  // avanza rápido: trae lo de Ana y mueve main, con la tabla de fetch delante
+  const ana = r.remoteCommit('main', 'Fix typo', { name: 'Ana', login: 'ana', avatar: null });
+  const ff = r.run('pull');
+  assert.ok(ff.ok && ff.changed);
+  assert.deepEqual(plain(ff.lines), ['From origin', `   ${tip.slice(0, 7)}..${ana.slice(0, 7)}  main -> origin/main`, `Updating ${tip.slice(0, 7)}..${ana.slice(0, 7)}`, 'Fast-forward']);
+  assert.equal(r.headSha, ana);
+  assert.equal(r.run('status').lines[1], "Your branch is up to date with 'origin/main'.");
+  // divergieron: sin decir cómo, git se niega, pero el fetch ya quedó hecho
+  const ana2 = r.remoteCommit('main', 'Fix typo again');
+  r.run('commit -m propio');
+  const mine = r.headSha;
+  const ask = r.run('pull');
+  assert.equal(ask.ok, false);
+  assert.ok(ask.changed, 'el fetch del pull cambió origin/main');
+  assert.match(ask.lines.join('\n'), /divergent branches[\s\S]*pull --no-rebase[\s\S]*pull --rebase[\s\S]*fatal: Need to specify how to reconcile divergent branches\./);
+  assert.equal(r.headSha, mine, 'main no se movió');
+  assert.equal(r.tracking.get('main'), ana2);
+  assert.match(r.run('pull --ff-only').lines.join('\n'), /Not possible to fast-forward/);
+  // --no-rebase: un commit de fusión con el mensaje de git pull
+  const m = r.run('pull --no-rebase');
+  assert.ok(m.ok, m.lines.join('\n'));
+  const merge = r.commits.get(r.headSha);
+  assert.equal(merge.message, "Merge branch 'main' of origin");
+  assert.deepEqual(plain(merge.parents), [mine, ana2]);
+  // --rebase: el commit propio encima de lo de Ana, sin fusión
+  const b = fresh();
+  const theirs = b.remoteCommit('main', 'Fix typo');
+  b.run('commit -m propio');
+  const rb = b.run('pull --rebase');
+  assert.ok(rb.ok, rb.lines.join('\n'));
+  assert.equal(rb.lines.at(-1), 'Successfully rebased and updated refs/heads/main.');
+  assert.deepEqual(plain(b.commits.get(b.headSha).parents), [theirs]);
+  assert.equal(b.commits.get(b.headSha).message, 'propio');
+  assert.equal(b.run('status').lines[1], "Your branch is ahead of 'origin/main' by 1 commit.");
+  // pull origin <rama> trae otra rama a la actual; sin rama que seguir pide cuál
+  b.remoteCommit('docs', 'Add docs');
+  run(b, 'checkout -b solo');
+  const none = b.run('pull');
+  assert.equal(none.ok, false);
+  assert.match(none.lines.join('\n'), /There is no tracking information for the current branch[\s\S]*git pull origin <branch>/);
+  const docs = b.run('pull --no-rebase origin docs');
+  assert.ok(docs.ok, docs.lines.join('\n'));
+  assert.equal(b.commits.get(b.headSha).message, "Merge branch 'docs' of origin");
+  assert.match(b.run('pull origin nope').lines.join('\n'), /couldn't find remote ref nope/);
+  // desprendido, cambios sin commit y sin remoto: como git
+  const d = fresh();
+  d.remoteCommit('main', 'Fix typo');
+  d.run('checkout HEAD~1');
+  assert.match(d.run('pull').lines.join('\n'), /You are not currently on a branch/);
+  const w = fresh();
+  w.remoteCommit('main', 'Fix typo');
+  w.run('touch README.md');
+  assert.match(w.run('pull').lines.join('\n'), /Your local changes to the following files would be overwritten by merge/);
+  const e = new Repo({ now: NOW });
+  e.run('commit -m uno');
+  assert.match(e.run('pull').lines[0], /No remote repository specified/);
+  assert.match(fresh().run('pull --squash').lines[0], /unknown option 'squash'/);
+  // pull --rebase con cambios sin commit se niega antes de traer nada, como git
+  const dr = fresh();
+  dr.remoteCommit('main', 'Fix typo');
+  dr.run('touch README.md');
+  const known = dr.tracking.get('main');
+  const dirty = dr.run('pull --rebase');
+  assert.equal(dirty.ok, false);
+  assert.equal(dirty.changed, false);
+  assert.match(dirty.lines[0], /^error: cannot pull with rebase: You have unstaged changes\.$/);
+  assert.equal(dr.tracking.get('main'), known, 'no trajo nada');
+  // entre --rebase y --no-rebase gana la última, como en git
+  const last = fresh();
+  last.remoteCommit('main', 'Fix typo');
+  last.run('commit -m propio');
+  assert.ok(last.run('pull --rebase --no-rebase').ok);
+  assert.equal(last.commits.get(last.headSha).parents.length, 2, 'fusionó');
+  // un ejercicio propio cuyo pull de partida falla dice el error, no la tabla del fetch
+  const why = cleanExercise({ title: 'x', goal: 'y', setup: ['origin commit main "Fix"', 'commit -m propio', 'pull'], checks: ['exists:main'] });
+  assert.equal(why.error, 'command');
+  assert.match(why.message, /^fatal: Need to specify how to reconcile divergent branches\.$/);
+  // el mensaje de origin commit puede ir sin comillas; HEAD no es un nombre de rama
+  const words = customExercise(cleanExercise({ title: 'x', goal: 'y', setup: ['origin commit main Fix the footer'], checks: ['exists:main'] }));
+  assert.equal(startCustom(words, NOW).commits.get(startCustom(words, NOW).remote.branches.get('main')).message, 'Fix the footer');
+  assert.equal(cleanExercise({ title: 'x', goal: 'y', setup: ['origin commit HEAD "x"'], checks: ['exists:main'] }).error, 'command');
+  assert.equal(fresh().run('branch HEAD').ok, false);
+});
+
+test('push --delete y fetch --prune: el borrado sube, la poda quita origin/<rama> y status dice que se fue', () => {
+  const r = fresh();
+  run(r, 'checkout -b feature', 'commit -m uno', 'push -u origin feature');
+  // push --delete (o -d, o origin :rama) borra la rama del remoto y su origin/<rama>; la local sigue
+  const del = r.run('push origin --delete feature');
+  assert.ok(del.ok && del.changed);
+  assert.deepEqual(plain(del.lines), ['To origin', ' - [deleted]         feature']);
+  assert.equal(r.remote.branches.has('feature'), false);
+  assert.equal(r.tracking.has('feature'), false);
+  assert.ok(r.branches.get('feature'), 'la rama propia queda');
+  assert.equal(r.run('status').lines[1], "Your branch is based on 'origin/feature', but the upstream is gone.");
+  assert.match(r.run('push origin --delete feature').lines.join('\n'), /unable to delete 'feature': remote ref does not exist/);
+  assert.match(r.run('push -d origin main').lines.join('\n'), /\[remote rejected\] main \(refusing to delete the current branch: refs\/heads\/main\)/);
+  assert.ok(r.remote.branches.has('main'));
+  run(r, 'push origin feature');
+  assert.ok(r.run('push origin :feature').ok, 'push origin :rama también borra');
+  assert.equal(r.remote.branches.has('feature'), false);
+  assert.match(r.run('push origin feature:otra').lines.join('\n'), /without refspecs/);
+  assert.match(r.run('push --delete origin').lines.join('\n'), /--delete doesn't make sense without any refs/);
+  // otra persona borra una rama en el remoto: fetch a secas deja origin/<rama>; fetch --prune la quita
+  run(r, 'checkout main', 'checkout -b docs', 'commit -m doc', 'push -u origin docs', 'checkout main');
+  r.remote.branches.delete('docs');
+  assert.deepEqual(plain(r.run('fetch').lines), [], 'sin --prune nada cambia');
+  assert.ok(r.tracking.has('docs'));
+  const pruned = r.run('fetch --prune');
+  assert.ok(pruned.ok && pruned.changed);
+  assert.deepEqual(plain(pruned.lines), ['From origin', ' - [deleted]         (none)     -> origin/docs']);
+  assert.equal(r.tracking.has('docs'), false);
+  assert.equal(r.resolve('origin/docs'), null);
+  assert.deepEqual(plain(r.run('branch -r').lines), ['  origin/main']);
+  run(r, 'checkout docs');
+  assert.equal(r.run('status').lines[1], "Your branch is based on 'origin/docs', but the upstream is gone.");
+  assert.match(r.run('pull').lines.join('\n'), /no such ref was fetched/);
+  assert.deepEqual(plain(r.run('fetch -p').lines), [], '-p es --prune');
+});
+
+test('un ejercicio propio puede dejar commits ajenos en el remoto (origin commit), borrar ramas de allá (origin delete) y pedir gone:', () => {
+  const spec = cleanExercise({
+    title: 'Al día',
+    goal: 'Trae lo de Ana y limpia la rama que borró.',
+    setup: ['checkout -b spike', 'commit -m "Try idea"', 'push -u origin spike', 'checkout main', 'origin commit main "Fix footer"', 'origin delete spike'],
+    checks: ['tip:main~footer', 'gone:spike', 'missing:spike'],
+    solution: ['pull', 'fetch --prune', 'branch -D spike'],
+  });
+  assert.equal(spec.error, undefined, JSON.stringify(spec));
+  const ex = customExercise(spec);
+  const r = startCustom(ex, NOW);
+  assert.equal(ex.done(r), false);
+  const ana = r.remote.branches.get('main');
+  assert.equal(r.commits.get(ana).message, 'Fix footer');
+  assert.equal(r.commits.get(ana).author.name, 'Ana', 'el commit es de otra persona');
+  assert.equal(r.resolve('origin/main'), r.headSha, 'hasta el fetch no se sabe');
+  assert.ok(r.tracking.has('spike'), 'origin/spike sigue hasta la poda');
+  run(r, 'pull', 'branch -D spike');
+  assert.equal(ex.done(r), false, 'sin --prune origin/spike sigue');
+  r.run('fetch --prune');
+  assert.equal(ex.done(r), true);
+  // gone: también se cumple borrando con push --delete
+  const own = cleanExercise({ title: 'Borra', goal: 'Borra old del remoto.', setup: ['branch old', 'push origin old'], checks: ['gone:old', 'exists:old'], solution: ['push -d origin old'] });
+  assert.equal(own.error, undefined, JSON.stringify(own));
+  // origin solo vale al partir, y bien escrito
+  const bad = (setup) => cleanExercise({ title: 'x', goal: 'y', setup, checks: ['exists:main'] });
+  assert.equal(bad(['origin commit main']).error, 'command');
+  assert.equal(bad(['origin commit ../x "m"']).error, 'command');
+  assert.equal(bad(['origin delete nope']).error, 'command');
+  assert.equal(bad(['origin delete main']).error, 'command');
+  assert.equal(bad(['origin push main']).error, 'command');
+  assert.equal(bad(['git origin commit main "m"']).error, 'command');
+  assert.match(fresh().run('origin commit main "m"').lines[0], /'origin' is not a git command/);
+  // una rama nueva en el remoto, que fetch trae como [new branch]
+  const nb = customExercise(cleanExercise({ title: 'x', goal: 'y', setup: ['origin commit docs "Add docs"'], checks: ['exists:docs'] }));
+  const n = startCustom(nb, NOW);
+  assert.deepEqual(plain(n.run('fetch').lines), ['From origin', ' * [new branch]      docs -> origin/docs']);
+  assert.ok(n.run('checkout docs').ok);
+  assert.equal(nb.done(n), true);
 });
 
 test('Repo vacío: commit crea el primero', () => {
@@ -695,7 +873,8 @@ test('los números de la URL piden un ejercicio de la lista; lo demás se descar
   assert.deepEqual(plain(decodeExercise('12')), { index: 11 });
   assert.deepEqual(plain(decodeExercise('13')), { index: 12 });
   assert.deepEqual(plain(decodeExercise('14')), { index: 13 });
-  for (const bad of ['0', '15', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
+  assert.deepEqual(plain(decodeExercise('15')), { index: 14 });
+  for (const bad of ['0', '16', '', 'no es base64!', 'eyJ2IjoyfQ', 'x'.repeat(2000), null, undefined, 7]) assert.equal(decodeExercise(bad), null, String(bad));
 });
 
 test('un ejercicio propio mal hecho no entra: sin meta, condición inventada, comando que falla o demasiados', () => {

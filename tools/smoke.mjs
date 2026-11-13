@@ -2472,7 +2472,7 @@ if (seccion('Varios repos a la vez'))
     if ((await lab.evaluate(() => document.activeElement?.className)) !== 'pr-input') throw new Error('el foco no quedó en la línea de comandos');
     const nodes = () => lab.locator('#graph svg .node').count();
     const before = await nodes();
-    for (const c of ['checkout -b feature', 'commit -m uno', 'git commit -m "dos <img src=x onerror=alert(1)>"', 'pull origin main']) {
+    for (const c of ['checkout -b feature', 'commit -m uno', 'git commit -m "dos <img src=x onerror=alert(1)>"', 'bisect start']) {
       await lab.fill('.pr-input', c);
       await lab.press('.pr-input', 'Enter');
     }
@@ -2648,6 +2648,34 @@ if (seccion('Varios repos a la vez'))
     await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: T(5000) });
     await send('log --oneline');
     await lab.waitForFunction(() => /\(HEAD -> main, origin\/main\) Merge remote-tracking branch 'origin\/main'/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+  });
+  await step(lab, 'el ejercicio de pull y poda: pull trae la fusión de Ana, fetch --prune quita origin/feature del grafo y push --delete borra experiment', async () => {
+    await lab.goto(`${base}/index.html?lang=es&practice=15`);
+    await lab.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: T(15000) });
+    await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent.includes('--prune'), null, { timeout: T(5000) });
+    await lab.waitForSelector('#graph svg .node', { state: 'attached', timeout: T(10000) });
+    const heads = () => lab.evaluate(() => [...document.querySelectorAll('#graph svg .head .h-name')].map((n) => n.textContent.trim()));
+    const start = await heads();
+    if (!start.includes('origin/feature') || !start.includes('origin/experiment')) throw new Error('el grafo no muestra las ramas subidas: ' + JSON.stringify(start));
+    if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('el ejercicio parte resuelto');
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    const nodes = await lab.locator('#graph svg .node').count();
+    await send('pull');
+    // la fusión de Ana llega al grafo y main avanza rápido hasta ella
+    await lab.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length === n + 1, nodes, { timeout: T(5000) });
+    await lab.waitForFunction(() => /Fast-forward/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    if (!(await heads()).includes('origin/feature')) throw new Error('pull sin --prune quitó origin/feature');
+    await send('fetch --prune');
+    await lab.waitForFunction(() => /\[deleted\]\s+\(none\)\s+-> origin\/feature/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    await lab.waitForFunction(() => ![...document.querySelectorAll('#graph svg .head .h-name')].some((n) => n.textContent.trim() === 'origin/feature'), null, { timeout: T(5000) });
+    await send('branch -d feature');
+    await send('push origin --delete experiment');
+    await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: T(5000) });
+    // la etiqueta borrada se deshace en polvo: se espera a que se vaya, no un tiempo
+    await lab.waitForFunction(() => ![...document.querySelectorAll('#graph svg .head .h-name')].some((n) => n.textContent.trim() === 'origin/experiment'), null, { timeout: T(5000) });
   });
   await step(lab, 'el ejercicio de revert se abre por su número, deshace un commit con otro nuevo y se marca resuelto', async () => {
     await lab.goto(`${base}/index.html?lang=es&practice=6`);

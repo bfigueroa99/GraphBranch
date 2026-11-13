@@ -449,7 +449,13 @@
 
     /* ---------- los comandos ---------- */
 
-    /** Corre una línea («git commit -m "x"» o «commit -m x»). Devuelve { ok, lines } y, si cambió el repo, changed. */
+    /** Lo que mira run() para saber si un comando cambió el repo. */
+    snapshot() {
+      return JSON.stringify([[...this.branches], [...this.tags], [...this.tracking], this.remote && [...this.remote.branches], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
+    }
+
+    /** Corre una línea («git commit -m "x"» o «commit -m x»). Devuelve { ok, lines } y changed si cambió el repo,
+        también cuando el comando falla después de cambiar algo (el fetch de un pull que se niega). */
     run(line) {
       const words = tokenize(line.trim());
       const viaGit = words[0] === 'git';
@@ -461,7 +467,7 @@
       this.renamed = null;
       // la primera línea del reflog es de dónde partió HEAD
       if (!this.reflog.length && shaBefore) this.reflog.push({ sha: shaBefore, msg: `commit: ${this.commits.get(shaBefore).message}` });
-      const before = JSON.stringify([[...this.branches], [...this.tags], [...this.tracking], this.remote && [...this.remote.branches], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
+      const before = this.snapshot();
       try {
         // rm y mv sin «git» delante son los de la terminal: borran o mueven el archivo sin preparar nada
         const handler = !viaGit && SHELL[cmd] ? SHELL[cmd] : this.commands[cmd];
@@ -475,11 +481,12 @@
           this.reflog.push({ sha: this.headSha, msg: this.reflogMessage(cmd, args, headBefore ?? this.short(shaBefore ?? '')) });
           if (this.reflog.length > 100) this.reflog.shift();
         }
-        const after = JSON.stringify([[...this.branches], [...this.tags], [...this.tracking], this.remote && [...this.remote.branches], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
+        const after = this.snapshot();
         return { ok: true, lines, changed: before !== after };
       } catch (e) {
         if (!(e instanceof GitError)) throw e;
-        return { ok: false, lines: e.message.split('\n'), changed: false };
+        // un comando que se niega a medias (pull trae con fetch y después se niega) deja lo hecho, como git: el grafo lo dibuja
+        return { ok: false, lines: e.message.split('\n'), changed: before !== this.snapshot() };
       }
     }
   }
@@ -512,7 +519,7 @@
     return { flags, rest };
   }
 
-  const validName = (n) => /^[\w][\w./-]*$/.test(n) && !n.endsWith('/') && !n.includes('..') && !n.endsWith('.lock');
+  const validName = (n) => /^[\w][\w./-]*$/.test(n) && n !== 'HEAD' && !n.endsWith('/') && !n.includes('..') && !n.endsWith('.lock');
 
   Repo.prototype.commands = {
     help() {
@@ -552,7 +559,9 @@
         'diff [--staged] [-- <path>] the changed files not yet prepared (--staged: the prepared ones), moving nothing (--name-status)',
         'status                      where HEAD is (and how far ahead or behind origin the branch is)',
         'push [-u] [-f] [origin [<branch>]]  send the current branch to the remote (-u remembers it as upstream)',
-        'fetch [origin]              bring what the remote has into origin/<branch>, without touching your branches',
+        'push origin --delete <branch>  delete a branch on the remote (and its origin/<branch>)',
+        'fetch [origin] [--prune]    bring what the remote has into origin/<branch>, without touching your branches (--prune drops the ones deleted there)',
+        'pull [--rebase|--no-rebase|--ff-only] [origin [<branch>]]  fetch, then bring the branch it follows into the current one',
         'branch -r | -a              list the remote-tracking branches (origin/<branch>), or every branch',
       ];
     },
@@ -1563,10 +1572,15 @@
   /** `push [-u] [-f] [origin [<rama>]]`: sube la rama (la actual sin nombre) al remoto, si solo avanza o con -f. */
   Repo.prototype.commands.push = function (args) {
     const { flags, rest } = parse(args);
-    for (const f of Object.keys(flags)) if (!['-u', '--set-upstream', '-f', '--force'].includes(f)) fail(`error: unknown option '${f.replace(/^-+/, '')}'\nusage: push [-u] [-f] [origin [<branch>]]`);
+    for (const f of Object.keys(flags)) if (!['-u', '--set-upstream', '-f', '--force', '-d', '--delete'].includes(f)) fail(`error: unknown option '${f.replace(/^-+/, '')}'\nusage: push [-u] [-f] [-d] [origin [<branch>]]`);
     if (rest.length > 2) fail('fatal: this practice pushes one branch at a time: push [origin [<branch>]]');
     const [remote, ref] = rest;
     this.needRemote(remote, 'push');
+    if (flags['-d'] || flags['--delete']) {
+      if (!ref) fail('fatal: --delete doesn\'t make sense without any refs');
+      return this.deleteRemote(ref);
+    }
+    if (ref && /^:[^:]+$/.test(ref)) return this.deleteRemote(ref.slice(1));
     if (ref && ref.includes(':')) fail(`fatal: this practice pushes branches by name, without refspecs: push origin <branch>`);
     const branch = ref ?? this.head.branch;
     if (!branch) fail('fatal: You are not currently on a branch.\nTo push the history leading to the current (detached HEAD)\nstate now, use\n\n    git push origin HEAD:<name-of-remote-branch>');
@@ -1611,13 +1625,31 @@
     return out;
   };
 
-  /** `fetch [origin]`: copia lo que tiene el remoto en las ramas de seguimiento (origin/<rama>); no mueve las propias. */
+  /** `push origin --delete <rama>` (o `-d`, o `origin :<rama>`): la borra del remoto y olvida su origin/<rama>;
+      la rama propia y lo que sigue quedan («the upstream is gone»). La rama por defecto no se borra, como en GitHub. */
+  Repo.prototype.deleteRemote = function (name) {
+    if (!this.remote.branches.has(name)) fail(`error: unable to delete '${name}': remote ref does not exist\nerror: failed to push some refs to '${this.remote.name}'`);
+    if (name === this.defaultBranch) fail(`To ${this.remote.name}\n ! [remote rejected] ${name} (refusing to delete the current branch: refs/heads/${name})\nerror: failed to push some refs to '${this.remote.name}'`);
+    this.remote.branches.delete(name);
+    this.tracking.delete(name);
+    return [`To ${this.remote.name}`, refLine('x', null, name, name, (x) => x)];
+  };
+
+  /** `fetch [origin] [--prune]`: copia lo que tiene el remoto en las ramas de seguimiento (origin/<rama>); no mueve
+      las propias. Con --prune (-p) quita las origin/<rama> de las ramas que ya no están en el remoto. */
   Repo.prototype.commands.fetch = function (args) {
     const { flags, rest } = parse(args);
-    for (const f of Object.keys(flags)) if (!['--all', '-v', '--verbose'].includes(f)) fail(`error: unknown option '${f.replace(/^-+/, '')}'\nusage: fetch [origin]`);
-    if (rest.length > 1) fail('fatal: this practice fetches whole remotes: fetch [origin]');
+    for (const f of Object.keys(flags)) if (!['--all', '-v', '--verbose', '-p', '--prune'].includes(f)) fail(`error: unknown option '${f.replace(/^-+/, '')}'\nusage: fetch [origin] [--prune]`);
+    if (rest.length > 1) fail('fatal: this practice fetches whole remotes: fetch [origin] [--prune]');
     this.needRemote(rest[0], 'fetch');
     const lines = [];
+    if (flags['-p'] || flags['--prune']) {
+      for (const name of [...this.tracking.keys()].sort()) {
+        if (this.remote.branches.has(name)) continue;
+        lines.push(` - [deleted]         (none)     -> ${this.remote.name}/${name}`);
+        this.tracking.delete(name);
+      }
+    }
     for (const [name, sha] of [...this.remote.branches].sort(([a], [b]) => (a < b ? -1 : 1))) {
       const had = this.tracking.get(name) ?? null;
       if (had === sha) continue;
@@ -1626,6 +1658,56 @@
       this.tracking.set(name, sha);
     }
     return lines.length ? [`From ${this.remote.name}`, ...lines] : [];
+  };
+
+  /** `pull [--rebase|--no-rebase|--ff-only] [origin [<rama>]]`: fetch y después trae a la rama actual la que sigue
+      (o la que se nombra): avanza rápido si puede; si divergieron, como git desde 2.33, pide merge o rebase. */
+  Repo.prototype.commands.pull = function (args) {
+    const { flags, rest } = parse(args);
+    const known = ['--rebase', '-r', '--no-rebase', '--ff-only', '--ff', '--no-ff'];
+    for (const f of Object.keys(flags)) if (!known.includes(f)) fail(`error: unknown option '${f.replace(/^-+/, '')}'\nusage: pull [--rebase | --no-rebase | --ff-only] [origin [<branch>]]`);
+    if (rest.length > 2) fail('fatal: this practice pulls one branch at a time: pull [origin [<branch>]]');
+    const [remote, ref] = rest;
+    this.needRemote(remote, 'fetch');
+    if (ref && ref.includes(':')) fail('fatal: this practice pulls branches by name, without refspecs: pull origin <branch>');
+    const branch = this.head.branch;
+    if (!branch) fail('You are not currently on a branch.\nPlease specify which branch you want to merge with.\n\n    git pull origin <branch>');
+    const target = ref ?? this.upstream.get(branch);
+    if (!target) fail(`There is no tracking information for the current branch.\nPlease specify which branch you want to merge with.\n\n    git pull origin <branch>\n\nTo make this branch follow one on the remote, push it with -u:\n\n    git push -u ${this.remote.name} ${branch}`);
+    // entre --rebase y --no-rebase gana la última, como en git
+    const rebase = args.reduce((on, a) => (a === '--rebase' || a === '-r' ? true : a === '--no-rebase' ? false : on), false);
+    // como git: con --rebase y cambios sin commit se niega antes de traer nada
+    if (rebase && this.dirty().length) fail('error: cannot pull with rebase: You have unstaged changes.\nerror: Please commit or stash them.');
+    const fetched = this.commands.fetch.call(this, []);
+    const out = (lines) => [...fetched, ...lines];
+    const failWith = (msg) => fail([...fetched, msg].join('\n'));
+    if (!this.remote.branches.has(target)) {
+      failWith(ref ? `fatal: couldn't find remote ref ${target}` : `Your configuration specifies to merge with the ref 'refs/heads/${target}'\nfrom the remote, but no such ref was fetched.`);
+    }
+    const theirs = this.tracking.get(target);
+    const ours = this.headSha;
+    const name = `${this.remote.name}/${target}`;
+    const step = (fn) => {
+      try {
+        return out(fn());
+      } catch (e) {
+        if (e instanceof GitError) failWith(e.message);
+        throw e;
+      }
+    };
+    if (rebase) return step(() => this.commands.rebase.call(this, [name]));
+    if (ours && this.isAncestor(theirs, ours)) return out(['Already up to date.']);
+    const ff = !ours || this.isAncestor(ours, theirs);
+    if (!ff && flags['--ff-only']) failWith('fatal: Not possible to fast-forward, aborting.');
+    if (!ff && !flags['--no-rebase'] && !flags['--ff'] && !flags['--no-ff']) {
+      failWith([
+        'hint: You have divergent branches and need to specify how to reconcile them.',
+        "hint: Use 'pull --no-rebase' to merge them, or 'pull --rebase' to put your",
+        'hint: commits on top of the remote ones.',
+        'fatal: Need to specify how to reconcile divergent branches.',
+      ].join('\n'));
+    }
+    return step(() => this.commands.merge.call(this, ['-m', `Merge branch '${target}' of ${this.remote.name}`, ...(flags['--no-ff'] ? ['--no-ff'] : []), name]));
   };
 
   /** Lo que un ejercicio deja en el remoto como si lo hubiera subido otra persona: un commit nuevo en esa rama del
@@ -1637,6 +1719,40 @@
     this.remote.branches.set(branch, sha);
     return sha;
   };
+
+  /** Los comandos de partida de un ejercicio propio que hacen «otra persona» en el remoto, sin pasar por aquí:
+      `origin commit <rama> "<mensaje>"` deja un commit ajeno en esa rama del remoto (o la crea) y `origin delete
+      <rama>` la borra allá. Solo valen al partir; en la terminal, `origin` no es un comando de git. */
+  Repo.prototype.setupOrigin = function (args) {
+    const [verb, branch, ...words] = args;
+    if (!this.remote) fail('origin: this repository has no remote');
+    if (verb === 'commit') {
+      const message = words.join(' ').trim();
+      if (!branch || !validName(branch) || !message) fail('usage: origin commit <branch> "<message>"');
+      this.remoteCommit(branch, message, TEAMMATE);
+      return [];
+    }
+    if (verb === 'delete') {
+      if (!branch || words.length) fail('usage: origin delete <branch>');
+      if (!this.remote.branches.has(branch)) fail(`origin: the remote has no branch '${branch}'`);
+      if (branch === this.defaultBranch) fail(`origin: the remote keeps its default branch '${branch}'`);
+      this.remote.branches.delete(branch);
+      return [];
+    }
+    fail('usage: origin commit <branch> "<message>" | origin delete <branch>');
+  };
+
+  /** Un comando de partida de un ejercicio propio: los de la terminal, más `origin …` (ver setupOrigin). */
+  function runSetup(r, line) {
+    const words = tokenize(line.trim());
+    if (words[0] !== 'origin') return r.run(line);
+    try {
+      return { ok: true, lines: r.setupOrigin(words.slice(1)) };
+    } catch (e) {
+      if (!(e instanceof GitError)) throw e;
+      return { ok: false, lines: e.message.split('\n') };
+    }
+  }
 
   /** Un remoto `origin` con una copia de la rama por defecto, seguida por ella: como un repo recién clonado. */
   Repo.prototype.addOrigin = function () {
@@ -1842,6 +1958,28 @@
         return msgs.includes('Fix typo in README') && msgs.includes('Add search box');
       },
     },
+    {
+      id: 'prune',
+      setup: (r) => {
+        // feature y experiment están subidas; Ana fusionó feature en origin/main y borró origin/feature allá
+        for (const [name, msg] of [['feature', 'Add profile page'], ['experiment', 'Try dark mode']]) {
+          r.commands.checkout.call(r, ['-b', name, 'main']);
+          r.commit(msg);
+          r.commands.push.call(r, ['-u', 'origin', name]);
+        }
+        r.commands.checkout.call(r, ['main']);
+        const merge = r.make("Merge branch 'feature'", [r.remote.branches.get('main'), r.branches.get('feature')]);
+        r.commits.get(merge).author = TEAMMATE;
+        r.remote.branches.set('main', merge);
+        r.remote.branches.delete('feature');
+      },
+      done: (r) => {
+        const main = r.branches.get('main');
+        const up = r.remote?.branches.get('main');
+        // main al día con la fusión de Ana; ni rastro de feature (ni local ni origin/feature) y experiment fuera del remoto
+        return !!main && main === up && r.commits.get(main).parents.length === 2 && !r.branches.has('feature') && !r.tracking.has('feature') && !r.remote.branches.has('experiment') && !r.tracking.has('experiment');
+      },
+    },
   ];
 
   /** main avanzó un commit mientras feature llevaba dos: las ramas divergieron. */
@@ -1873,6 +2011,8 @@
     [new RegExp(`^unmerged:(${BRANCH})>(${BRANCH})$`), (r, [a, b]) => !!r.branches.get(a) && !!r.branches.get(b) && !r.isAncestor(r.branches.get(a), r.branches.get(b))],
     // la rama está en origin tal cual: se subió con push y no quedó nada sin subir
     [new RegExp(`^pushed:(${BRANCH})$`), (r, [a]) => !!r.branches.get(a) && r.remote?.branches.get(a) === r.branches.get(a)],
+    // la rama no está en origin ni queda su origin/<rama> aquí: se borró con push --delete, o allá y se podó con fetch --prune
+    [new RegExp(`^gone:(${BRANCH})$`), (r, [a]) => !!r.remote && !r.remote.branches.has(a) && !r.tracking.has(a)],
   ];
 
   const b64 = {
@@ -1908,8 +2048,9 @@
     const spec = { title, goal, setup, checks, hints, ...(solution.length && { solution }) };
     const r = scenario();
     for (const c of setup) {
-      const res = r.run(c);
-      if (!res.ok) return { error: 'command', detail: c, message: res.lines[0] };
+      const res = runSetup(r, c);
+      // el error y no lo de antes (un pull que se niega imprime primero la tabla de su fetch)
+      if (!res.ok) return { error: 'command', detail: c, message: res.lines.find((l) => /^(fatal|error):/.test(l)) ?? res.lines[0] };
     }
     // la solución propuesta tiene que resolver el ejercicio: si no, mostrarla enseñaría algo falso
     if (solution.length) {
@@ -1945,7 +2086,7 @@
       hints: spec.hints,
       solution: spec.solution || [],
       setup: (r) => {
-        for (const c of spec.setup) r.run(c);
+        for (const c of spec.setup) runSetup(r, c);
       },
       done: (r) => tests.every((t) => t(r)),
     };

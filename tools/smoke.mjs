@@ -1529,10 +1529,16 @@ if (seccion('Escritorio (1280×800)'))
       const count = () => page.evaluate(() => Number(document.querySelector('#st-commits').textContent.replace(/\D/g, '')));
       const openMain = async () => {
         await page.keyboard.press('Escape');
-        const head = await page.evaluateHandle(() => [...document.querySelectorAll('#graph svg .head[role=button]:not(.exit)')].find((h) => h.__name === 'main'));
-        if (!head.asElement()) throw new Error('la etiqueta de main no está en el grafo');
-        await head.asElement().focus();
-        await page.keyboard.press('Enter');
+        // Enter sobre la etiqueta de main, despachado en ella: con el foco en el SVG, el teclado de Playwright puede
+        // caer en otro lado si la etiqueta está fuera de la vista (la ficha sería la de otra rama)
+        const ok = await page.evaluate(() => {
+          const h = [...document.querySelectorAll('#graph svg .head[role=button]:not(.exit)')].find((n) => n.__name === 'main');
+          if (!h) return false;
+          h.focus();
+          h.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+          return true;
+        });
+        if (!ok) throw new Error('la etiqueta de main no está en el grafo');
         await page.waitForSelector('#graph .tip:not([hidden]) .tip-actions', { timeout: T(3000) });
         return page.$('#graph .tip:not([hidden]) .tip-more');
       };
@@ -1540,7 +1546,8 @@ if (seccion('Escritorio (1280×800)'))
         const before = await count();
         const btn = await openMain();
         if (!btn) throw new Error(`vuelta ${round}: la ficha de main no ofrece «Cargar más» con su historia cortada`);
-        if ((await btn.getAttribute('data-branch')) !== 'main') throw new Error('«Cargar más» no es de main');
+        const of = await btn.getAttribute('data-branch');
+        if (of !== 'main') throw new Error(`vuelta ${round}: «Cargar más» es de ${of}, no de main (foco en ${await page.evaluate(() => document.activeElement?.__name || document.activeElement?.className?.baseVal || document.activeElement?.className)}; etiquetas ${await page.evaluate(() => [...document.querySelectorAll('#graph svg .head')].map((h) => h.__name + (h.classList.contains('exit') ? '(exit)' : '')).join(','))})`);
         await btn.focus();
         await page.keyboard.press('Enter');
         await page.waitForFunction((b) => Number(document.querySelector('#st-commits').textContent.replace(/\D/g, '')) >= b + 6, before, { timeout: T(5000) }).catch(async () => {

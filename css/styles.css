@@ -5124,11 +5124,12 @@ html.embed .diff-panel {
   .agk-panel {
     max-height: none;
   }
-  /* con la práctica abierta pasa lo mismo: la terminal y sus cartas crecen con la página y el grafo guarda su alto */
-  .graph-panel:has(> .practice:not([hidden])) {
+  /* con la práctica abierta pasa lo mismo: la terminal y sus cartas crecen con la página y el grafo guarda su alto
+     (no en el modo TV, que esconde la práctica con CSS y deja el grafo entero) */
+  html:not(.tv) .graph-panel:has(> .practice:not([hidden])) {
     height: auto;
   }
-  .graph-panel:has(> .practice:not([hidden])) .graph-stage {
+  html:not(.tv) .graph-panel:has(> .practice:not([hidden])) .graph-stage {
     flex: none;
     height: max(280px, 42vh);
   }

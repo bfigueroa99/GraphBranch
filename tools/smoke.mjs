@@ -2528,6 +2528,17 @@ if (seccion('Varios repos a la vez'))
     const line = await lab.evaluate(() => [document.querySelector('.pr-input').value, document.activeElement?.className]);
     if (line[1] !== 'pr-input' || !line[0].startsWith(first)) throw new Error(`Enter en la carta dejó ${JSON.stringify(line)}`);
     await lab.fill('.pr-input', '');
+    // de derecha a izquierda, ArrowLeft avanza a la carta siguiente
+    await lab.goto(`${base}/index.html?lang=ar&practice=1`);
+    await lab.waitForSelector('#practice:not([hidden]) .pr-card', { timeout: T(15000) });
+    await lab.focus('.pr-card[tabindex="0"]');
+    await lab.keyboard.press('Home');
+    await lab.keyboard.press('ArrowLeft');
+    if ((await lab.evaluate(() => document.activeElement?.dataset.cmd)) !== secondId) throw new Error('en árabe ArrowLeft no fue a la carta siguiente');
+    await lab.goto(`${base}/index.html?lang=es`);
+    await loaded(lab);
+    await lab.click('#practice-btn');
+    await lab.waitForFunction(() => !document.querySelector('#practice').hidden, null, { timeout: T(15000) });
   });
   await step(lab, 'la práctica entiende switch y restore', async () => {
     const send = async (c) => {

@@ -48,7 +48,12 @@
           <span class="pr-prompt" aria-hidden="true">$ git</span>
           <input class="pr-input" type="text" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off">
         </div>
-        <div class="pr-cards" role="toolbar"></div>`;
+        <div class="pr-cards" role="toolbar"></div>
+        <div class="pr-areas" role="group">
+          <div class="pr-area" data-area="work"><p class="pr-area-h" id="pr-area-work"></p><ul aria-labelledby="pr-area-work"></ul></div>
+          <div class="pr-area" data-area="index"><p class="pr-area-h" id="pr-area-index"></p><ul aria-labelledby="pr-area-index"></ul></div>
+          <div class="pr-area" data-area="head"><p class="pr-area-h" id="pr-area-head"></p><ul aria-labelledby="pr-area-head"></ul></div>
+        </div>`;
       this.sel = root.querySelector('.pr-ex');
       this.restart = root.querySelector('.pr-restart');
       this.share = root.querySelector('.pr-share');
@@ -65,6 +70,7 @@
       this.status = root.querySelector('.pr-status');
       this.input = root.querySelector('.pr-input');
       this.cards = root.querySelector('.pr-cards');
+      this.areas = root.querySelector('.pr-areas');
       this.buildCards();
       root.addEventListener('submit', (ev) => {
         ev.preventDefault();
@@ -193,9 +199,48 @@
       this.input.setAttribute('aria-label', t('practice.input'));
       this.cards.setAttribute('aria-label', t('practice.cards'));
       for (const b of this.cards.querySelectorAll('.pr-card')) b.querySelector('.pr-card-desc').textContent = t(`practice.card.${b.dataset.cmd}`);
+      this.renderAreas();
       this.status.textContent = src.exercise.done(src.git) ? t('practice.solved') : '';
       const note = this.log.querySelector('.pr-note');
       if (note) note.textContent = t('practice.hello');
+    }
+
+    /** Las tres áreas de git (árbol de trabajo, índice y HEAD) con sus archivos y el estado de cada uno, de
+        GB.gitsim (`areas()`); se rehacen tras cada comando y al cambiar de idioma. Como listas con su título, un
+        lector de pantalla las lee como el mismo texto que se ve. */
+    renderAreas() {
+      const t = i18n.t;
+      const git = this.source?.git;
+      const data = git?.areas ? git.areas() : { work: [], index: [], head: [] };
+      this.areas.setAttribute('aria-label', t('practice.areas'));
+      for (const box of this.areas.querySelectorAll('.pr-area')) {
+        const key = box.dataset.area;
+        const rows = key === 'head' ? data.head.map((file) => ({ file })) : data[key];
+        box.querySelector('.pr-area-h').textContent = `${t(`practice.area.${key}`)} (${rows.length})`;
+        const ul = box.querySelector('ul');
+        ul.textContent = '';
+        if (!rows.length) {
+          const li = document.createElement('li');
+          li.className = 'pr-area-empty';
+          li.textContent = t('practice.area.empty');
+          ul.append(li);
+        }
+        for (const row of rows) {
+          const li = document.createElement('li');
+          li.dataset.state = row.state || 'C';
+          const code = document.createElement('code');
+          code.dir = 'ltr';
+          code.textContent = row.file;
+          li.append(code);
+          if (row.state) {
+            const st = document.createElement('span');
+            st.className = 'pr-area-state';
+            st.textContent = t(`practice.state.${row.state}`, { from: row.from || '' });
+            li.append(' ', st);
+          }
+          ul.append(li);
+        }
+      }
     }
 
     /** El botón «Pista» (solo si el ejercicio propio trae pistas) y las pistas ya pedidas, una por una. */

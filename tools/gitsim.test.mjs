@@ -2036,3 +2036,34 @@ test('las cartas de comandos escriben comandos que el simulador entiende, con el
     assert.ok(res.ok, `${card.id}: «${filled}» falló: ${res.lines.join(' / ')}`);
   }
 });
+
+test('areas: el árbol de trabajo, el índice y HEAD cambian con touch, add, commit, restore y reset', () => {
+  const r = fresh();
+  const areas = () => plain(r.areas());
+  assert.deepEqual(areas(), { work: [], index: [], head: [] }, 'el repo de partida no tiene archivos a la vista');
+  run(r, 'touch app.js', 'touch --new notes.md');
+  assert.deepEqual(areas().work, [{ file: 'app.js', state: 'M' }, { file: 'notes.md', state: 'U' }]);
+  assert.deepEqual(areas().index, []);
+  assert.deepEqual(areas().head, ['app.js'], 'un archivo cambiado ya estaba en HEAD');
+  run(r, 'add .');
+  assert.deepEqual(areas().work, []);
+  assert.deepEqual(areas().index, [{ file: 'app.js', state: 'M' }, { file: 'notes.md', state: 'A' }]);
+  assert.deepEqual(areas().head, ['app.js'], 'lo preparado nuevo todavía no está en HEAD');
+  run(r, 'commit -m "Add notes"');
+  assert.deepEqual(areas(), { work: [], index: [], head: ['app.js', 'notes.md'] });
+  run(r, 'touch notes.md', 'add notes.md', 'restore --staged notes.md');
+  assert.deepEqual(areas().work, [{ file: 'notes.md', state: 'M' }], 'restore --staged lo devuelve al árbol');
+  assert.deepEqual(areas().index, []);
+  run(r, 'restore notes.md');
+  assert.deepEqual(areas().work, [], 'restore tira el cambio');
+  run(r, 'rm app.js', 'mv notes.md docs.md', 'add -A');
+  assert.deepEqual(areas().index, [{ file: 'app.js', state: 'D' }, { file: 'docs.md', state: 'R', from: 'notes.md' }].sort((a, b) => a.file.localeCompare(b.file)));
+  assert.deepEqual(areas().head, ['app.js', 'notes.md'], 'HEAD no cambia hasta el commit');
+  run(r, 'commit -m "Move"');
+  assert.deepEqual(areas().head, ['docs.md']);
+  run(r, 'reset --soft HEAD~1');
+  assert.deepEqual(areas().head, ['app.js', 'notes.md'], 'reset --soft vuelve HEAD atrás');
+  run(r, 'touch app.js', 'add app.js', 'reset');
+  assert.deepEqual(areas().index, [], 'reset a secas saca lo preparado');
+  assert.deepEqual(areas().work, [{ file: 'app.js', state: 'M' }]);
+});

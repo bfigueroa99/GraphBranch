@@ -1109,6 +1109,56 @@ kbd {
   font-size: 11.5px;
   line-height: 1.25;
 }
+/* las tres áreas de git (árbol de trabajo, índice y HEAD): tres columnas que bajan a una en el celular */
+.pr-areas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.pr-area {
+  min-width: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+}
+.pr-area-h {
+  margin: 0 0 2px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+.pr-area ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 6.5em;
+  overflow-y: auto;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.pr-area li {
+  overflow-wrap: anywhere;
+}
+.pr-area code {
+  font: 400 12px/1.45 var(--font-mono);
+}
+.pr-area-state,
+.pr-area-empty {
+  color: var(--ink-3);
+}
+.pr-area li[data-state='A'] .pr-area-state,
+.pr-area li[data-state='U'] .pr-area-state {
+  color: color-mix(in srgb, var(--good, #2e7d32) 75%, var(--ink));
+}
+.pr-area li[data-state='D'] .pr-area-state {
+  color: color-mix(in srgb, var(--bad, #c0392b) 70%, var(--ink));
+}
+@media (max-width: 560px) {
+  .pr-areas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 
 /* pantalla completa (botón o tecla F): el panel del grafo ocupa toda la pantalla.
    Reglas separadas: un selector que el navegador no conoce anularía la lista entera. */

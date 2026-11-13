@@ -1132,6 +1132,7 @@ kbd {
   margin: 0;
   padding: 0;
   list-style: none;
+  min-height: 24px; /* enfocable (se desplaza): un objetivo de al menos 24 px aunque tenga una sola línea */
   max-height: 6.5em;
   overflow-y: auto;
   font-size: 12px;

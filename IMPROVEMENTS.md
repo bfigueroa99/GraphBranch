@@ -376,7 +376,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 3. [Deuda] «la práctica de git responde a los comandos en el grafo» (sección «Varios repos a la vez») falló en las dos
     corridas de la iteración 288 (2026-11-13) que la incluyeron, la suelta y la de la puerta, y pasó al repetir su sección
     (otra vez en las dos puertas de la iteración 294, la segunda cortada en las e2e por un reinicio de la sesión, y en la
-    de la 297):
+    de la 297 y en la tercera de la 299):
     `page.waitForFunction: Timeout 30000ms exceeded`, el primer `waitForFunction` del paso (`#repo-link` en
     `practice/git` y `#practice` visible, con `T(15000)`), en una sección que el cambio no toca. Hipótesis: tras los pasos
     de la demo y del ensayo, el botón de la práctica no llega a cambiar de repo a tiempo en la primera carga de `lab`.
@@ -641,5 +641,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - OMC: no disponible (esta sesión no tiene la herramienta de subagentes): el plan que pedía el pendiente fue propio, con dos opciones descartadas (quedarse en 45.2.3 hasta la mayor 46, sin los 72 arreglos de Chromium, y pasar a la 46, que está en alpha); la revisión, una relectura adversarial del diff (el lock sin otras entradas cambiadas, su integridad frente a `npm view electron@45.3.2 dist.integrity`, que el binario lo baja `@electron/get` comparando su SHA-256 con el `checksums.json` del paquete, que la e2e lea la versión del proceso principal y no la de la página, y que la prueba nueva no use red); la verificación, contra la reproducción del pendiente.
 - Reclamo: loop/299, sin colisión
 - Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
-- Validado: 787 pruebas (`node --test`), smoke, i18n (0 errores) y 30 e2e en verde.
+- Validado: 787 pruebas (`node --test`), smoke (intermitente, en verde al repetir su sección: «la práctica de git responde a los comandos en el grafo»), i18n (0 errores) y 30 e2e en verde. Es la tercera puerta: la primera, sobre el mismo cambio salvo un ajuste de la prueba nueva (el final de la URL del paquete y no la URL entera), salió entera, y la segunda la cortó un reinicio del contenedor. El intermitente es ajeno (sección «Varios repos a la vez», que el cambio no toca): anotado en su pendiente 3.
 - **Siguiente:** iteración 300, expansión: ítem 217 (Salud del repo: el tiempo de ciclo de un PR por etapas, Análisis)

@@ -47,7 +47,8 @@ estas no se busca con find-skills (en `CONSTRUIR.md`, no aplica a lo que ya cubr
 
 ## Conectores
 
-El MCP de GitHub abre y fusiona el PR (paso 5) y lee los issues; en OpenCode, `gh`. Plazacivica no aplica: el repo
+El MCP de GitHub abre y fusiona el PR (paso 5) y lee, comenta, etiqueta, abre y cierra los issues (`ISSUES.md`); en
+OpenCode, `gh`. Plazacivica no aplica: el repo
 no cita normas.
 
 ## Registro

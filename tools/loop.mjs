@@ -1718,7 +1718,7 @@ export async function salud({ sinRed = false, repo = root, fetchFn = globalThis.
   let issues = '--sin-red';
   if (!sinRed) {
     // los mismos grupos que --issues y --reclamar, de gh: nunca lanza
-    const e = issuesFn({ repo, doc });
+    const e = issuesFn({ repo, doc, ahora });
     issues = e.motivo ?? e;
     const or = ownerRepo(git(repo, ['remote', 'get-url', 'origin']).stdout.trim());
     const api = async (ruta) => {

@@ -3510,7 +3510,8 @@ if (seccion('Una tarea de GitHub Classroom'))
     await page.press('#repo-input', 'Enter');
     await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 3, null, { timeout: T(15000) });
     if ((await names()) !== 'curso/tarea-1-ana* curso/tarea-1-beto curso/tarea-1-caro') throw new Error(`pestañas: ${await names()}`);
-    const toast = await page.waitForSelector('#toasts .toast:has-text("Ahora sigues los repositorios más activos de curso/tarea-1-*")', { timeout: T(5000) });
+    // la tarea va aislada (FSI…PDI), para que en árabe no se le dé vuelta el «-*» del final
+    const toast = await page.waitForSelector('#toasts .toast:has-text("Ahora sigues los repositorios más activos de \u2068curso/tarea-1-*\u2069")', { timeout: T(5000) });
     const detail = await toast.$eval('.toast-detail', (d) => d.textContent);
     if (detail !== 'tarea-1-ana, tarea-1-beto, tarea-1-caro') throw new Error(`el aviso dice ${detail}`);
     const lists = gh.calls.filter((c) => /^\/(orgs|users)\/[^/]+\/repos$/.test(c));
@@ -3578,7 +3579,7 @@ if (seccion('Una tarea de GitHub Classroom'))
     await page.press('#repo-input', 'Enter');
     await page.waitForFunction(() => document.querySelector('#repo-input').validationMessage.includes('examen-'), null, { timeout: T(10000) });
     const empty = await page.$eval('#repo-input', (i) => i.validationMessage);
-    if (empty !== 'Ningún repositorio de curso empieza con “examen-” (entre los 100 de push más reciente, sin contar forks ni archivados). Revisa el prefijo de la tarea.') throw new Error(`el campo dice ${empty}`);
+    if (empty !== 'Ningún repositorio de curso empieza con “\u2068examen-\u2069” (entre los 100 de push más reciente, sin contar forks ni archivados). Revisa el prefijo de la tarea.') throw new Error(`el campo dice ${JSON.stringify(empty)}`);
     await page.fill('#repo-input', 'org:curso/tarea-1-');
     await page.press('#repo-input', 'Enter');
     await page.waitForFunction(() => document.querySelector('#repo-input').validationMessage.includes('prefijo*'), null, { timeout: T(5000) });
@@ -3592,6 +3593,19 @@ if (seccion('Una tarea de GitHub Classroom'))
     if ((await names()) !== 'curso/tarea-2-beto* curso/tarea-2-ana') throw new Error(`pestañas: ${await names()}`);
     const owners = await page.evaluate(() => localStorage.getItem('graphbranch:owners'));
     if (owners !== '{"curso/tarea-2-*":["tarea-2-beto","tarea-2-ana"]}') throw new Error(`se guardó ${owners}`);
+  });
+
+  await step(page, 'la organización entera se sigue aparte de su tarea, también con su repo más reciente ya a la vista', async () => {
+    gh.push('curso/tarea-2-beto', 'main', 'otra entrega'); // el de push más reciente de curso es el que ya se ve
+    await page.fill('#repo-input', 'org:curso');
+    await page.press('#repo-input', 'Enter');
+    // sin dibujarlas aquí, las pestañas nuevas no aparecían: mostrar el que ya estaba a la vista no hace nada
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 7, null, { timeout: T(15000) });
+    if ((await names()) !== 'curso/tarea-2-beto* curso/tarea-2-ana curso/tarea-1-dani curso/tarea-1-ana curso/tarea-1-beto curso/proyecto curso/tarea-1-caro') throw new Error(`pestañas: ${await names()}`);
+    const saved = JSON.parse(await page.evaluate(() => localStorage.getItem('graphbranch:repos')));
+    if (saved.length !== 7) throw new Error(`se guardaron ${saved.length} repos`);
+    const owners = Object.keys(JSON.parse(await page.evaluate(() => localStorage.getItem('graphbranch:owners')))).join();
+    if (owners !== 'curso/tarea-2-*,curso') throw new Error(`se siguen ${owners}`);
   });
   await page.context().close();
 }

@@ -853,6 +853,9 @@
   async function connectOwner(who, { refresh = false } = {}) {
     const { owner, prefix = '' } = who;
     const key = U.ownerKey(who);
+    // en los avisos, la tarea aislada (FSI…PDI): en árabe, el «-*» del final saltaba al otro lado («*-curso/tarea-1»)
+    const iso = (x) => '\u2068' + x + '\u2069';
+    const label = prefix ? iso(key) : owner;
     if (realTabs().length >= MAX_REPOS) return refresh ? undefined : repoNote(t('repo.limit'));
     if (!refresh) el.repoForm.setAttribute('aria-busy', 'true');
     let list;
@@ -863,7 +866,7 @@
     } finally {
       if (!refresh) el.repoForm.removeAttribute('aria-busy');
     }
-    if (!list.length) return refresh ? undefined : repoNote(prefix ? t('owner.emptyPrefix', { owner, prefix }) : t('owner.empty', { owner }));
+    if (!list.length) return refresh ? undefined : repoNote(prefix ? t('owner.emptyPrefix', { owner, prefix: iso(prefix) }) : t('owner.empty', { owner }));
     // se dejó de seguir mientras llegaba la lista (se cerró su último repo): no se guarda de nuevo ni reabre nada
     if (refresh && !followedOwners[key]) return;
     // la organización queda seguida: lo que ya se vio de su lista no vuelve a avisar como nuevo
@@ -879,7 +882,7 @@
       room.forEach((p, i) => startTab(addTab(sourceFor(p)), i * STAGGER));
       saveTabs();
       renderTabs();
-      feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner: key }), detail: room.map((p) => p.name).join(', '), time: Date.now() });
+      feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner: label }), detail: room.map((p) => p.name).join(', '), time: Date.now() });
       return;
     }
     // el tope se mira otra vez: mientras llegaba la lista pudieron sumarse otros repos
@@ -891,9 +894,13 @@
     // a la vista, el de push más reciente (ya seguido o recién sumado)
     showTab(list.map((p) => tabs.find((x) => x.key === keyOf(p))).find(Boolean));
     if (!add.length) return; // ya se seguían todos
-    const more = fresh.length > add.length ? t('owner.limited', { owner: key, max: MAX_REPOS }) : '';
+    // si ese ya estaba a la vista, showTab no hizo nada: las pestañas nuevas se dibujan y se guardan aquí (pasaba al
+    // seguir la organización entera con una tarea suya ya abierta, o al volver a escribir org:nombre)
+    saveTabs();
+    renderTabs();
+    const more = fresh.length > add.length ? t('owner.limited', { owner: label, max: MAX_REPOS }) : '';
     const detail = [add.map((p) => p.name).join(', '), more].filter(Boolean).join(' · ');
-    feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner: key }), detail, time: Date.now() });
+    feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner: label }), detail, time: Date.now() });
   }
 
   /**

@@ -839,6 +839,14 @@
       return !this.host || this.host === 'github';
     }
 
+    /** ¿La actividad de este servicio trae las revisiones de sus PRs, con su hora? GitHub sí (el feed de eventos); las
+        fuentes que heredan de esta lo dicen por su cuenta (GitLab, sus aprobaciones; Codeberg, Bitbucket, Azure DevOps
+        y las carpetas locales, no). Sin ellas, el panel de salud no parte el tiempo de ciclo en etapas y lo dice, en vez
+        de contar cada PR como fusionado sin revisión. */
+    givesReviews() {
+      return !this.host || this.host === 'github';
+    }
+
     /** null si se puede intentar un commit; si no, la clave del texto que dice por qué (sin token, nada que escribir). */
     canWrite() {
       return this.token ? null : 'editor.noToken';

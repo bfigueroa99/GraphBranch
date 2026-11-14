@@ -492,6 +492,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Dueños del código en el diff | Datos | 2×2/2 | 2,0 | Dueños del código en GitHub (CODEOWNERS) | ítem 219 |
 | Borrador de notas de la versión | Salidas | 2×2/2 | 2,0 | Notas de la versión generadas por GitHub | ítem 220 |
 | Constelación: organizaciones de más de 100 repos | Escala | 1×2/2 | 1,0 | (ítem 214) | ítem 221 |
+| Tiempo de ciclo por etapas: las revisiones que el feed no trajo | Análisis | 2×2/2 | 2,0 | (ítem 217) | ítem 223 |
 | CI de Codeberg y Forgejo en el grafo | Datos | 1×2/2 | 1,0 | API de Gitea | candidata |
 | Curva de estrellas en el tiempo | Análisis | 2×2/2 | 2,0 | Star History | descartada: la lista de stargazers con su fecha queda para administradores y colaboradores |
 

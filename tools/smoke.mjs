@@ -922,6 +922,21 @@ if (seccion('Escritorio (1280×800)'))
       return box && { head: box.querySelector('h3')?.textContent.trim() || '', n: box.querySelector('.hl-n')?.textContent.trim(), rows: box.querySelectorAll('li').length, none: !!box.querySelector('.hl-none') };
     });
     if (!unrev || !unrev.head || /undefined|NaN|health\./.test(unrev.head) || unrev.n !== '0' || unrev.rows || !unrev.none) throw new Error('PRs sin revisión en la demo: ' + JSON.stringify(unrev));
+    // el tiempo de ciclo por etapas (ítem 217): la historia de la demo trae dos PRs fusionados con revisión y aprobación y el de
+    // Dependabot sin revisión, todos abiertos después de la actividad más vieja cargada
+    const cycle = await page.evaluate(() => ({
+      head: document.querySelector('#hl-cycle h3')?.textContent || '',
+      stages: ['open', 'review', 'merge'].map((k) => document.querySelector(`#hl-cycle-${k}`)?.textContent || ''),
+      skipped: document.querySelector('#hl-cycle-skipped')?.textContent || '',
+      early: !!document.querySelector('#hl-cycle-early'),
+      noReviews: !!document.querySelector('#hl-cycle-noreviews'),
+    }));
+    if (!/últimas 4 semanas/.test(cycle.head)) throw new Error(`el tiempo de ciclo no dice su periodo: «${cycle.head}»`);
+    const stageRe = [/^De abierto a la primera revisión: mediana \d+\s\S+ · PRs medidos: (\d+)$/, /^De la primera revisión a la aprobación: mediana \d+\s\S+ · PRs medidos: (\d+)$/, /^De la aprobación a la fusión: mediana \d+\s\S+ · PRs medidos: (\d+)$/];
+    const bad = cycle.stages.filter((l, i) => !(stageRe[i].exec(l)?.[1] >= 2));
+    if (bad.length) throw new Error(`las etapas del tiempo de ciclo de la demo no salen con su mediana y al menos 2 PRs: ${cycle.stages.join(' | ')}`);
+    if (!(/^Fusionados sin revisión: (\d+) · revisados y fusionados sin aprobación: \d+$/.exec(cycle.skipped)?.[1] >= 1)) throw new Error(`el PR de Dependabot, fusionado sin revisión, no se cuenta aparte: «${cycle.skipped}»`);
+    if (cycle.early || cycle.noReviews) throw new Error(`la demo dice que le faltan revisiones: ${JSON.stringify(cycle)}`);
     await page.click('#health .hl-list[data-list="prs"] [data-go]');
     await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
   });
@@ -4028,6 +4043,17 @@ if (seccion('Codeberg'))
     const names = await page.$$eval('#graph .head', (hs) => hs.map((h) => h.getAttribute('aria-label')).join(' | '));
     if (!names.includes('feature/x') || !names.includes('main')) throw new Error(`ramas: ${names}`);
   });
+
+  // ítem 217: Codeberg no da las revisiones de sus PRs, así que la salud no parte el tiempo de ciclo en etapas y lo dice
+  // (los 404 son los forks y las líneas por semana, que el GitHub simulado de Codeberg no sirve)
+  await step(page, 'la salud dice que Codeberg no da revisiones para partir el tiempo de ciclo', async () => {
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-cycle', { timeout: T(5000) });
+    const cycle = await page.evaluate(() => ({ text: document.querySelector('#hl-cycle-noreviews')?.textContent || '', stages: document.querySelectorAll('#hl-cycle .hl-line').length }));
+    if (!/^Esta fuente no da las revisiones de sus pull requests/.test(cycle.text) || cycle.stages) throw new Error(`el tiempo de ciclo de Codeberg: ${JSON.stringify(cycle)}`);
+    await page.click('#health-close');
+    await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
+  }, { allow: /404/ });
 
   await step(page, 'un repo que no existe lo dice con el texto de Codeberg', async () => {
     await page.fill('#repo-input', 'https://codeberg.org/ana/nada');

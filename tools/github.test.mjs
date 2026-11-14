@@ -434,6 +434,39 @@ test('parseOwner reconoce org:, user:, @ y la URL de un perfil, y nada más', ()
   }
 });
 
+/* Una tarea de GitHub Classroom: un repo por estudiante en la organización del curso, con el prefijo de la tarea
+   (`tarea-1-ana`). org:curso/tarea-1-* sigue solo los de ese prefijo. */
+
+test('parseOwner reconoce una tarea: org:curso/prefijo*, también con @ y user:, y su clave guardada', () => {
+  const { U } = load(fakeGitHub());
+  const ok = [
+    ['org:curso/tarea-1-*', 'curso', 'tarea-1-'],
+    ['@curso/Tarea_1.b*', 'curso', 'Tarea_1.b'],
+    ['user:ana/practica-*', 'ana', 'practica-'],
+    [' org:curso/tarea-1-* ', 'curso', 'tarea-1-'],
+    ['org:curso/*', 'curso', ''], // sin prefijo: la organización entera
+  ];
+  for (const [input, owner, prefix] of ok) {
+    const who = U.parseOwner(input);
+    assert.equal(who?.owner, owner, input);
+    assert.equal(who?.prefix || '', prefix, input);
+  }
+  // la estrella es la que dice «empieza con»: sin ella, org:a/b no es nada (podría ser el repo a/b mal escrito)
+  for (const input of ['org:curso/tarea-1-', 'org:curso/tarea*1', 'org:curso/tarea 1*', 'org:curso/a/b*', 'org:curso/**', 'org:-curso/tarea*', 'org:curso/' + 'a'.repeat(101) + '*', 'github.com/curso/tarea-*']) {
+    assert.equal(U.parseOwner(input), null, input);
+  }
+  // la clave con que se guarda la organización seguida: la de siempre sin prefijo, dueño/prefijo* con él
+  assert.equal(U.ownerKey({ owner: 'acme' }), 'acme');
+  assert.equal(U.ownerKey({ owner: 'curso', prefix: 'tarea-1-' }), 'curso/tarea-1-*');
+  for (const key of ['acme', 'curso/tarea-1-*']) assert.equal(U.ownerKey(U.parseOwner('@' + key)), key, key);
+  // un repo es de la tarea si su nombre empieza con el prefijo, sin distinguir mayúsculas
+  const tarea = U.parseOwner('org:curso/Tarea-1-*');
+  assert.equal(U.ownerMatch(tarea, 'tarea-1-Ana'), true);
+  assert.equal(U.ownerMatch(tarea, 'tarea-10-ana'), false);
+  assert.equal(U.ownerMatch(tarea, 'tarea-2-ana'), false);
+  assert.equal(U.ownerMatch(U.parseOwner('org:curso'), 'lo-que-sea'), true, 'sin prefijo, todos');
+});
+
 /** Un repo como lo da /orgs/{org}/repos o /users/{u}/repos. */
 const listed = (name, more = {}) => ({ name, owner: { login: 'acme' }, fork: false, archived: false, disabled: false, private: false, pushed_at: '2026-10-01T00:00:00Z', ...more });
 
@@ -466,6 +499,24 @@ test('org:nombre con dos páginas de repos: la constelación se arma con la prim
   assert.equal(list[0].pushedAt, '2026-10-01T00:00:00.000Z', 'cada repo trae su último push, para su galaxia');
   assert.deepEqual(gh.calls.map((c) => c.split('?')[0]), ['/orgs/acme/repos'], 'una consulta: ni la segunda página ni las ramas de los repos sin pestaña');
   assert.equal(new URL('https://api.github.com' + gh.calls[0]).searchParams.get('per_page'), '100');
+});
+
+test('org:curso/tarea-1-*: de una organización con dos tareas, solo los repos del prefijo pedido, con la misma consulta', async () => {
+  const gh = fakeGitHub();
+  const curso = (name, more = {}) => listed(name, { owner: { login: 'curso' }, ...more });
+  gh.override = (path) =>
+    path.startsWith('/orgs/curso/repos?')
+      ? { body: [curso('tarea-2-ana'), curso('tarea-1-ana'), curso('Tarea-1-Beto'), curso('tarea-10-caro'), curso('tarea-2-beto'), curso('proyecto'), curso('tarea-1-copia', { fork: true }), curso('tarea-1-vieja', { archived: true })] }
+      : null;
+  const GB = load(gh);
+  const list = await GB.GitHubSource.ownerRepos('curso', { prefix: 'tarea-1-' });
+  assert.deepEqual(Array.from(list, (r) => `${r.owner}/${r.name}`), ['curso/tarea-1-ana', 'curso/Tarea-1-Beto'], 'los de la tarea 1, en el orden de la lista, sin la 10 ni la 2');
+  assert.deepEqual(gh.calls.map((c) => c.split('?')[0]), ['/orgs/curso/repos'], 'una consulta, la de seguir la organización');
+  const all = await GB.GitHubSource.ownerRepos('curso');
+  assert.equal(all.length, 6, 'sin prefijo, la organización entera (sin el fork ni el archivado)');
+  const otra = await GB.GitHubSource.ownerRepos('curso', { prefix: 'tarea-2-' });
+  assert.deepEqual(Array.from(otra, (r) => r.name), ['tarea-2-ana', 'tarea-2-beto']);
+  assert.equal((await GB.GitHubSource.ownerRepos('curso', { prefix: 'examen-' })).length, 0, 'un prefijo sin repos: la lista vacía, sin error');
 });
 
 test('@usuario: si no es una organización, sus repos; si no existe, lo dice', async () => {

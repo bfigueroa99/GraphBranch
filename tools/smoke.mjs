@@ -2108,7 +2108,7 @@ function fakeGitHub() {
       .filter((r) => r.full.split('/')[0] === owner)
       .sort((a, b) => b.pushed - a.pushed)
       .map((r) => ({ name: r.full.split('/')[1], owner: { login: owner }, fork: !!r.fork, archived: !!r.archived, private: false, pushed_at: new Date(Date.now() - 1e6 + r.pushed).toISOString() }));
-  const orgEvents = []; // /orgs/acme/events: el más reciente primero
+  const orgEvents = []; // /orgs/{org}/events de cada organización: el más reciente primero
   const repoEvents = new Map(); // /repos/{full}/events: el más reciente primero
   const route = (path, q) => {
     const own = path.match(/^\/(orgs|users)\/([^/]+)\/repos$/);
@@ -2117,7 +2117,8 @@ function fakeGitHub() {
       const found = kind === 'orgs' ? orgs.has(who) : !orgs.has(who) && listed(who).length > 0;
       return found ? { body: listed(who) } : { status: 404, body: { message: 'Not Found' } };
     }
-    if (path === '/orgs/acme/events') return { body: orgEvents };
+    const evs = path.match(/^\/orgs\/([^/]+)\/events$/);
+    if (evs && orgs.has(evs[1])) return { body: orgEvents };
     const m = path.match(/^\/repos\/([^/]+\/[^/]+)(\/.*)?$/);
     if (!m || !repos.has(m[1])) return { status: 404, body: { message: 'Not Found' } };
     const r = repos.get(m[1]);
@@ -3477,6 +3478,121 @@ if (seccion('Una organización o un usuario entero'))
     const left = await page.evaluate(() => [...new URLSearchParams(location.search).keys()].filter((k) => k.startsWith('shared_')));
     if (left.length) throw new Error(`la dirección sigue con ${left}`);
   }, { allow: /404/ });
+  await page.context().close();
+}
+
+/* Una tarea de GitHub Classroom (ítem 216): un repo por estudiante en la organización del curso, con el prefijo de la
+   tarea. org:curso/tarea-1-* sigue solo los de ese prefijo, con la lista de la organización entera (la misma
+   consulta); su renovación, sus eventos y sus galaxias sin pestaña son solo los de la tarea. */
+if (seccion('Una tarea de GitHub Classroom'))
+{
+  const gh = fakeGitHub();
+  gh.org('curso');
+  // el de push más reciente al final: la lista dice tarea-1-ana, tarea-1-beto, proyecto, tarea-2-ana, tarea-1-caro
+  for (const r of ['curso/tarea-1-caro', 'curso/tarea-2-ana', 'curso/proyecto', 'curso/tarea-1-beto', 'curso/tarea-1-ana']) gh.repo(r);
+  gh.repo('curso/tarea-1-copia', { fork: true });
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', gh.handle);
+  await page.addInitScript(quickCycles);
+  // la renovación de la lista y los eventos de la organización, que son de 30 y 5 minutos, aquí cada 1,5 s
+  await page.addInitScript(() => {
+    const real = window.setInterval;
+    window.setInterval = (fn, ms, ...a) => real(fn, ms === 30 * 60 * 1000 || ms === 5 * 60 * 1000 ? 1500 : ms, ...a);
+  });
+  const names = async () => (await repoTabs(page)).map((t) => `${t.name}${t.on ? '*' : ''}`).join(' ');
+  const asked = (full) => gh.calls.filter((c) => c.startsWith(`/repos/${full}`)).length;
+
+  await step(page, 'org:curso/tarea-1-* sigue solo las entregas de la tarea, con la lista de la organización', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    await page.fill('#repo-input', 'org:curso/tarea-1-*');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 3, null, { timeout: T(15000) });
+    if ((await names()) !== 'curso/tarea-1-ana* curso/tarea-1-beto curso/tarea-1-caro') throw new Error(`pestañas: ${await names()}`);
+    const toast = await page.waitForSelector('#toasts .toast:has-text("Ahora sigues los repositorios más activos de curso/tarea-1-*")', { timeout: T(5000) });
+    const detail = await toast.$eval('.toast-detail', (d) => d.textContent);
+    if (detail !== 'tarea-1-ana, tarea-1-beto, tarea-1-caro') throw new Error(`el aviso dice ${detail}`);
+    const lists = gh.calls.filter((c) => /^\/(orgs|users)\/[^/]+\/repos$/.test(c));
+    if (!lists.length || lists.some((c) => c !== '/orgs/curso/repos')) throw new Error(`consultas de la lista: ${lists.join(', ')}`);
+    for (const other of ['curso/tarea-2-ana', 'curso/proyecto']) if (asked(other)) throw new Error(`se consultó ${other}, que no es de la tarea`);
+    const owners = await page.evaluate(() => localStorage.getItem('graphbranch:owners'));
+    if (owners !== '{"curso/tarea-1-*":["tarea-1-ana","tarea-1-beto","tarea-1-caro"]}') throw new Error(`se guardó ${owners}`);
+  });
+
+  await step(page, 'la tarea queda seguida: una entrega nueva se suma sola y la de otra tarea no', async () => {
+    gh.repo('curso/tarea-2-beto');
+    gh.push('curso/tarea-2-beto', 'main', 'otra tarea');
+    gh.repo('curso/tarea-1-dani');
+    gh.push('curso/tarea-1-dani', 'main', 'primera entrega');
+    await page.waitForFunction(() => [...document.querySelectorAll('#repo-tabs .rt-name')].some((n) => n.textContent === 'curso/tarea-1-dani'), null, { timeout: T(15000) });
+    await page.waitForSelector('#toasts .toast:has-text("curso/tarea-1-*"):has(.toast-detail:text-is("tarea-1-dani"))', { timeout: T(5000) });
+    await page.waitForTimeout(3500); // dos renovaciones más: la de la tarea 2 no entra
+    if ((await names()).includes('tarea-2')) throw new Error(`se sumó otra tarea: ${await names()}`);
+    if (asked('curso/tarea-2-beto')) throw new Error('se consultó la entrega de otra tarea');
+  });
+
+  await step(page, 'los eventos de la organización llegan al panel solo de las entregas de la tarea sin pestaña', async () => {
+    gh.orgEvent({ type: 'WatchEvent', repo: { name: 'curso/tarea-2-ana' } }); // de otra tarea: no
+    gh.orgEvent({ type: 'WatchEvent', repo: { name: 'curso/tarea-1-eva' } }); // de la tarea y sin pestaña: sí
+    gh.orgEvent({ type: 'WatchEvent', repo: { name: 'curso/tarea-1-ana' } }); // con pestaña: ya lo trae la suya
+    await page.waitForFunction(() => [...document.querySelectorAll('#feed .act')].some((a) => a.textContent.includes('curso/tarea-1-eva')), null, { timeout: T(15000) });
+    const shown = await page.$$eval('#feed .act', (els) => els.map((a) => a.textContent));
+    if (shown.some((x) => x.includes('curso/tarea-2-ana'))) throw new Error('llegó el evento de otra tarea');
+    if (shown.filter((x) => x.includes('curso/tarea-1-eva')).length !== 1) throw new Error('el evento de la entrega sin pestaña no salió una vez');
+  });
+
+  await step(page, 'la constelación dibuja tenue la entrega sin pestaña, no las de otra tarea, y elegirla la abre', async () => {
+    await page.locator('.rt', { hasText: 'curso/tarea-1-caro' }).locator('.rt-close').click();
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 3, null, { timeout: T(5000) });
+    await page.waitForTimeout(1000); // lo que la pestaña cerrada ya había pedido termina de llegar
+    const before = asked('curso/tarea-1-caro');
+    await page.click('#constellation-btn');
+    await page.waitForSelector('#constellation[open] .cs-gx[data-state="ghost"]', { timeout: T(3000) });
+    const gx = await page.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => ({ key: b.dataset.key, ghost: b.dataset.state === 'ghost', label: b.getAttribute('aria-label') })));
+    const ghosts = gx.filter((g) => g.ghost);
+    // la lista de la tarea trae dani, ana, beto y caro: solo caro no tiene pestaña; proyecto y la tarea 2 no son de ella
+    if (ghosts.map((g) => g.key).join() !== 'curso/tarea-1-caro') throw new Error('galaxias tenues: ' + JSON.stringify(gx));
+    if (gx.filter((g) => !g.ghost).map((g) => g.key).sort().join() !== 'curso/tarea-1-ana,curso/tarea-1-beto,curso/tarea-1-dani') throw new Error('galaxias de las pestañas: ' + JSON.stringify(gx));
+    if (!/^curso\/tarea-1-caro, último push hace .+, sin pestaña: elígela para abrirla$/.test(ghosts[0].label)) throw new Error('la galaxia tenue dice: ' + ghosts[0].label);
+    if (asked('curso/tarea-1-caro') !== before) throw new Error('la galaxia tenue consultó su repo');
+    await page.focus('#constellation .cs-gx[data-state="ghost"]');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#constellation:not([open])', { state: 'attached', timeout: T(3000) });
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'curso/tarea-1-caro', null, { timeout: T(10000) });
+    if (!(await names()).includes('curso/tarea-1-caro*')) throw new Error(`elegir la galaxia tenue no abrió su pestaña: ${await names()}`);
+    if (asked('curso/tarea-1-caro') === before) throw new Error('la pestaña abierta no cargó su repo');
+  });
+
+  await step(page, 'al cerrar la última entrega deja de seguirse; un prefijo sin repos y uno sin estrella lo dicen en el campo', async () => {
+    // con otro repo de por medio: con una sola pestaña la barra se esconde
+    await page.fill('#repo-input', 'curso/proyecto');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 5, null, { timeout: T(15000) });
+    for (const n of ['curso/tarea-1-ana', 'curso/tarea-1-beto', 'curso/tarea-1-caro', 'curso/tarea-1-dani']) await page.locator('.rt', { hasText: n }).locator('.rt-close').click();
+    await page.waitForTimeout(2000); // una renovación de por medio: no vuelve a guardarla ni reabre nada
+    const owners = await page.evaluate(() => localStorage.getItem('graphbranch:owners'));
+    if (owners !== null) throw new Error(`sigue guardada: ${owners}`);
+    if ((await names()) !== 'curso/proyecto*') throw new Error(`volvieron entregas de la tarea dejada: ${await names()}`);
+    await page.fill('#repo-input', 'org:curso/examen-*');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForFunction(() => document.querySelector('#repo-input').validationMessage.includes('examen-'), null, { timeout: T(10000) });
+    const empty = await page.$eval('#repo-input', (i) => i.validationMessage);
+    if (empty !== 'Ningún repositorio de curso empieza con “examen-” (entre los 100 de push más reciente, sin contar forks ni archivados). Revisa el prefijo de la tarea.') throw new Error(`el campo dice ${empty}`);
+    await page.fill('#repo-input', 'org:curso/tarea-1-');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForFunction(() => document.querySelector('#repo-input').validationMessage.includes('prefijo*'), null, { timeout: T(5000) });
+    if ((await repoTabs(page)).length !== 1) throw new Error('cambiaron las pestañas');
+  });
+
+  await step(page, 'con ?repo=org:curso/tarea-2-* en la URL se sigue esa tarea', async () => {
+    await page.evaluate(() => localStorage.clear());
+    await page.goto(`${base}/index.html?lang=es&repo=org:curso/tarea-2-*`);
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 2, null, { timeout: T(15000) });
+    if ((await names()) !== 'curso/tarea-2-beto* curso/tarea-2-ana') throw new Error(`pestañas: ${await names()}`);
+    const owners = await page.evaluate(() => localStorage.getItem('graphbranch:owners'));
+    if (owners !== '{"curso/tarea-2-*":["tarea-2-beto","tarea-2-ana"]}') throw new Error(`se guardó ${owners}`);
+  });
   await page.context().close();
 }
 

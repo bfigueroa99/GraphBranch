@@ -606,9 +606,15 @@
   const OWNER_REFRESH = 30 * 60 * 1000; // cada cuánto se renueva la lista de una organización seguida
   const OWNER_SEEN_MAX = 300;
   const followedOwners = (() => {
-    const v = U.store.get('owners', null); // organización -> nombres de repos ya vistos en su lista
+    // organización (o tarea, «curso/tarea-1-*», U.ownerKey) -> nombres de repos ya vistos en su lista. Una versión
+    // anterior a las tareas no reconoce esas claves y las salta: sigue leyendo las de las organizaciones
+    const v = U.store.get('owners', null);
     const out = {};
-    if (v && typeof v === 'object') for (const [k, names] of Object.entries(v)) if (U.parseOwner('@' + k) && Array.isArray(names)) out[k] = names.filter((n) => typeof n === 'string');
+    if (v && typeof v === 'object')
+      for (const [k, names] of Object.entries(v)) {
+        const who = U.parseOwner('@' + k);
+        if (who && U.ownerKey(who) === k && Array.isArray(names)) out[k] = names.filter((n) => typeof n === 'string');
+      }
     return out;
   })();
   /* La última lista de cada organización seguida, con el último push de cada repo: la constelación dibuja los que no
@@ -819,7 +825,7 @@
       const grp = U.parseGroup(input);
       if (grp) return connectGroup(grp.group);
       const who = U.parseOwner(input);
-      if (who) return connectOwner(who.owner);
+      if (who) return connectOwner(who);
       return repoNote(t('repo.invalid'));
     }
     let tab = tabs.find((x) => x.key === keyOf(parsed));
@@ -840,26 +846,31 @@
    * org:nombre o @usuario: sigue sus repos de push más reciente (sin forks ni archivados), cada uno en
    * su pestaña, hasta el tope, y muestra el más reciente. La lista se arma al conectar (una o dos
    * consultas a GitHub); lo que se guarda y comparte son los repos, como si se hubieran escrito uno a uno.
+   * `who` es lo que da U.parseOwner: con `prefix` (org:curso/tarea-1-*, una tarea de GitHub Classroom), solo
+   * los de esa lista cuyo nombre empieza así, seguidos aparte de la organización entera (con la clave de
+   * U.ownerKey): su renovación, sus eventos y sus galaxias sin pestaña son solo los de la tarea.
    */
-  async function connectOwner(owner, { refresh = false } = {}) {
+  async function connectOwner(who, { refresh = false } = {}) {
+    const { owner, prefix = '' } = who;
+    const key = U.ownerKey(who);
     if (realTabs().length >= MAX_REPOS) return refresh ? undefined : repoNote(t('repo.limit'));
     if (!refresh) el.repoForm.setAttribute('aria-busy', 'true');
     let list;
     try {
-      list = await GB.GitHubSource.ownerRepos(owner, { token: GB.GitHubSource.tokenFor(owner, settings.token, settings.accounts), apiUrl: API_URL });
+      list = await GB.GitHubSource.ownerRepos(owner, { token: GB.GitHubSource.tokenFor(owner, settings.token, settings.accounts), apiUrl: API_URL, prefix });
     } catch (err) {
       return refresh ? undefined : repoNote(i18n.text(err.msg || err.message));
     } finally {
       if (!refresh) el.repoForm.removeAttribute('aria-busy');
     }
-    if (!list.length) return refresh ? undefined : repoNote(t('owner.empty', { owner }));
+    if (!list.length) return refresh ? undefined : repoNote(prefix ? t('owner.emptyPrefix', { owner, prefix }) : t('owner.empty', { owner }));
     // se dejó de seguir mientras llegaba la lista (se cerró su último repo): no se guarda de nuevo ni reabre nada
-    if (refresh && !followedOwners[owner]) return;
+    if (refresh && !followedOwners[key]) return;
     // la organización queda seguida: lo que ya se vio de su lista no vuelve a avisar como nuevo
-    const seen = new Set(followedOwners[owner]);
-    followedOwners[owner] = list.map((p) => p.name).concat([...seen]).filter((n, i, a) => a.indexOf(n) === i).slice(0, OWNER_SEEN_MAX);
+    const seen = new Set(followedOwners[key]);
+    followedOwners[key] = list.map((p) => p.name).concat([...seen]).filter((n, i, a) => a.indexOf(n) === i).slice(0, OWNER_SEEN_MAX);
     U.store.set('owners', followedOwners);
-    ownerLists[owner] = list.slice(0, GB.constellation.ORG_MAX);
+    ownerLists[key] = list.slice(0, GB.constellation.ORG_MAX);
     const fresh = list.filter((p) => !tabs.some((x) => x.key === keyOf(p)) && (!refresh || !seen.has(p.name)));
     if (refresh) {
       const room = fresh.slice(0, Math.max(0, MAX_REPOS - realTabs().length));
@@ -868,7 +879,7 @@
       room.forEach((p, i) => startTab(addTab(sourceFor(p)), i * STAGGER));
       saveTabs();
       renderTabs();
-      feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner }), detail: room.map((p) => p.name).join(', '), time: Date.now() });
+      feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner: key }), detail: room.map((p) => p.name).join(', '), time: Date.now() });
       return;
     }
     // el tope se mira otra vez: mientras llegaba la lista pudieron sumarse otros repos
@@ -880,9 +891,9 @@
     // a la vista, el de push más reciente (ya seguido o recién sumado)
     showTab(list.map((p) => tabs.find((x) => x.key === keyOf(p))).find(Boolean));
     if (!add.length) return; // ya se seguían todos
-    const more = fresh.length > add.length ? t('owner.limited', { owner, max: MAX_REPOS }) : '';
+    const more = fresh.length > add.length ? t('owner.limited', { owner: key, max: MAX_REPOS }) : '';
     const detail = [add.map((p) => p.name).join(', '), more].filter(Boolean).join(' · ');
-    feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner }), detail, time: Date.now() });
+    feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner: key }), detail, time: Date.now() });
   }
 
   /**
@@ -919,22 +930,34 @@
   /** Vuelve a mirar la lista de cada organización seguida: los repos nuevos se suman solos. */
   function refreshOwners() {
     if (paused || document.hidden) return;
-    Object.keys(followedOwners).forEach((owner, i) => setTimeout(() => connectOwner(owner, { refresh: true }), i * STAGGER));
+    Object.keys(followedOwners).forEach((key, i) => setTimeout(() => connectOwner(U.parseOwner('@' + key), { refresh: true }), i * STAGGER));
+  }
+
+  /** Lo seguido, por dueño (en minúsculas): org:curso y org:curso/tarea-1-* son del mismo, que tiene un solo feed de eventos. */
+  function ownerFollows() {
+    const by = new Map();
+    for (const key of Object.keys(followedOwners)) {
+      const who = U.parseOwner('@' + key);
+      const low = who.owner.toLowerCase();
+      by.set(low, (by.get(low) || []).concat(who));
+    }
+    return by;
   }
 
   /* Los eventos de cada organización seguida: una consulta (con ETag) para todos sus repos. Solo se
-     muestran los de repos sin pestaña propia (los demás ya los trae su pestaña); si la organización no
-     existe como tal (un usuario) o no hay eventos visibles, no se muestra nada. */
+     muestran los de repos sin pestaña propia (los demás ya los trae su pestaña) y, de una tarea, los de sus
+     repos; si la organización no existe como tal (un usuario) o no hay eventos visibles, no se muestra nada. */
   const ORG_EVENTS_EVERY = 5 * 60 * 1000;
-  const orgFeeds = new Map(); // organización -> { token, feed }
+  const orgFeeds = new Map(); // organización (en minúsculas) -> { token, feed }
   async function pollOrgEvents() {
     if (paused || document.hidden || EMBED) return;
-    for (const owner of Object.keys(followedOwners)) {
-      let entry = orgFeeds.get(owner);
+    for (const [low, follows] of ownerFollows()) {
+      const owner = follows[0].owner;
+      let entry = orgFeeds.get(low);
       const tk = GB.GitHubSource.tokenFor(owner, settings.token, settings.accounts);
       if (!entry || entry.token !== tk) {
         entry = { token: tk, feed: GB.GitHubSource.orgFeed(owner, { token: tk, apiUrl: API_URL }), first: true };
-        orgFeeds.set(owner, entry);
+        orgFeeds.set(low, entry);
       }
       let acts;
       try {
@@ -942,9 +965,9 @@
       } catch {
         continue; // sin red o sin cuota: se intenta en el próximo ciclo
       }
-      const key = 'org:' + owner.toLowerCase();
+      const key = 'org:' + low;
       const open = new Set(realTabs().map((x) => x.key));
-      acts = acts.filter((a) => !open.has(a.repoFull.toLowerCase()));
+      acts = acts.filter((a) => !open.has(a.repoFull.toLowerCase()) && follows.some((who) => U.ownerMatch(who, a.repoFull.split('/')[1])));
       for (const a of acts) {
         a.repo = key;
         a.repoName = a.repoFull;
@@ -954,16 +977,21 @@
     }
   }
 
-  /** Una organización deja de seguirse cuando se cierra el último de sus repos. */
+  /** Una organización (o una tarea) deja de seguirse cuando se cierra el último de sus repos. */
   function pruneOwners() {
     let changed = false;
-    for (const owner of Object.keys(followedOwners)) {
-      const has = realTabs().some((x) => !['gitlab', 'codeberg', 'forgejo', 'bitbucket', 'bitbucketdc', 'azure', 'local'].includes(x.source.host) && String(x.source.owner).toLowerCase() === owner.toLowerCase());
+    for (const key of Object.keys(followedOwners)) {
+      const who = U.parseOwner('@' + key);
+      const low = who.owner.toLowerCase();
+      const has = realTabs().some((x) => !['gitlab', 'codeberg', 'forgejo', 'bitbucket', 'bitbucketdc', 'azure', 'local'].includes(x.source.host) && String(x.source.owner).toLowerCase() === low && U.ownerMatch(who, x.source.name));
       if (!has) {
-        delete followedOwners[owner];
-        delete ownerLists[owner];
-        orgFeeds.delete(owner);
-        feed.drop('org:' + owner.toLowerCase());
+        delete followedOwners[key];
+        delete ownerLists[key];
+        // sus eventos, solo si no queda nada más seguido de ese dueño: el feed es uno por organización
+        if (!ownerFollows().has(low)) {
+          orgFeeds.delete(low);
+          feed.drop('org:' + low);
+        }
         changed = true;
       }
     }
@@ -2148,10 +2176,11 @@
   const isGitHub = (x) => !x.source.host || x.source.host === 'github';
   function orgTabs() {
     const owner = !active || active.demo || !isGitHub(active) ? '' : String(active.source.owner || '').toLowerCase();
-    const key = owner && Object.keys(followedOwners).find((k) => k.toLowerCase() === owner);
-    if (!key) return null;
+    // también con una tarea suya seguida (org:curso/tarea-1-*): el resumen es de la organización
+    const who = owner && Object.keys(followedOwners).map((k) => U.parseOwner('@' + k)).find((w) => w.owner.toLowerCase() === owner);
+    if (!who) return null;
     const mine = realTabs().filter((x) => isGitHub(x) && String(x.source.owner || '').toLowerCase() === owner);
-    return mine.length > 1 ? { owner: key, tabs: mine } : null;
+    return mine.length > 1 ? { owner: who.owner, tabs: mine } : null;
   }
 
   /** La sección del resumen de la organización (solo con 2 o más de sus repos abiertos). */
@@ -4703,7 +4732,7 @@
       const grp = U.parseGroup(input);
       const who = !grp && U.parseOwner(input);
       if (grp) connectGroup(grp.group);
-      else if (who) connectOwner(who.owner);
+      else if (who) connectOwner(who);
     }
     const embedTitle = EMBED ? GB.embedOptions(location.search)?.title || '' : ''; // &title=: rótulo propio sobre la capa
     if (embedTitle) {

@@ -376,7 +376,7 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 3. [Deuda] «la práctica de git responde a los comandos en el grafo» (sección «Varios repos a la vez») falló en las dos
     corridas de la iteración 288 (2026-11-13) que la incluyeron, la suelta y la de la puerta, y pasó al repetir su sección
     (otra vez en las dos puertas de la iteración 294, la segunda cortada en las e2e por un reinicio de la sesión, y en la
-    de la 297):
+    de la 297 y en la tercera de la 299):
     `page.waitForFunction: Timeout 30000ms exceeded`, el primer `waitForFunction` del paso (`#repo-link` en
     `practice/git` y `#practice` visible, con `T(15000)`), en una sección que el cambio no toca. Hipótesis: tras los pasos
     de la demo y del ensayo, el botón de la práctica no llega a cambiar de repo a tiempo en la primera carga de `lab`.
@@ -411,10 +411,13 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 11. [Errores] Práctica de git: `add` ignora sin avisar las banderas que no conoce, así que `add -n .` (o `--dry-run`)
     prepara de verdad en vez de solo listar, y `add -p` prepara todo. Negarse con el `error: unknown switch` de git (o
     admitir `-n`). Reproducción: `node --test` con `touch a.txt`, `add -n .` → `a.txt` queda preparado.
-12. [Seguridad] La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última estable en la auditoría de
-    la iteración 239: la sesión no pudo consultar su página de versiones. Comprobarla con `WebFetch` en la próxima
-    auditoría de Seguridad y, si hay una estable más nueva con arreglos de seguridad, subirla (cambio de `electron/`: plan
-    por consenso). Reproducción: `npm view electron version` frente a `package.json`.
+12. [Seguridad] `npm audit` da 8 avisos (1 alto, 7 moderados) en dependencias de desarrollo, ninguna dentro de la app
+    (iteración 299): `undici` 6.29.0 (de `node-gyp`, por `electron-builder`) y 7.30.0 (de `@electron/get`, el que baja
+    Electron al instalar, que igual compara el SHA-256 con su `checksums.json`), `fast-uri` 3.1.8 (de `ajv`) y `minimatch`
+    (de `@electron/universal`, cuyo `npm audit fix --force` bajaría `electron-builder` a 24). `npm audit fix` sin `--force`
+    sube `undici` y `fast-uri` dentro de sus rangos; `electron-builder` va en 26.15.3 y la última es 26.18.0. Subir lo que
+    no rompe, mirar que `npm run dist` siga armando el AppImage y dejar el resto anotado. Reproducción: `npm audit` →
+    `8 vulnerabilities (7 moderate, 1 high)`.
 13. [Errores] Avisos a Discord (`payload`): el cuerpo se corta a 2.000 caracteres después de armarlo, así que un detalle
     largo se lleva la línea `<enlace>` del final (el aviso queda sin enlace). Recortar título y detalle antes y dejar el
     enlace siempre. Reproducción: `payload('discord', {title: 'x'.repeat(5000), url: 'https://github.com/a/b'})` →
@@ -623,3 +626,20 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/298, sin colisión
 - Validado: 784 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 30 e2e en verde.
 - **Siguiente:** iteración 299, mantenimiento · Seguridad: pendiente 12 (La versión de Electron (`package.json`, 45.2.3) no se contrastó con la última e…)
+
+### 2026-11-14 · Iteración 299 · Mantenimiento · Seguridad
+
+- **Arreglo: Electron sube de 45.2.3 a 45.3.2, la última estable, y ya no puede bajar sin que lo diga `node --test`** (pendiente 12). `npm view electron version` da 45.3.2 (`dist-tags.latest`; la mayor 46 sigue en alpha), y sus notas en releases.electronjs.org (45.3.0, 45.3.1 y 45.3.2) cambian Chromium 156.0.8078.80 por 156.0.8078.100, el Extended Stable de Chrome del 2026-11-11, con 72 arreglos de seguridad (4 críticos: CVE-2026-126879, -126885, -126895 y -126911); la 45.3.1 deja además de confiar en los intermedios RSA revocados de eMudhra. Las dependencias de Electron son las mismas, así que `package-lock.json` solo cambia su entrada. `tools/electron.test.mjs`, nuevo: Electron fijado exacto (sin `^` ni `~`), el mismo en `package.json` y en las dos entradas de `package-lock.json`, y nunca por debajo de `PISO` (45.3.2, con su motivo), para que un conflicto del lock resuelto hacia el lado viejo no la baje en silencio. Y la primera e2e de escritorio mira que corre el Electron de `package.json`: con un binario viejo en `node_modules`, ni el hook de la sesión ni la puerta lo reinstalan (solo miran que exista), y las e2e habrían probado otro. Sin cambios en `electron/`.
+- **Reproducción:** `npm view electron version` → `45.3.2`, con `package.json` en `45.2.3`.
+- **Hallazgos:** 1 nuevo (el pendiente 12, en el lugar del cerrado): `npm audit` → `8 vulnerabilities (7 moderate, 1 high)`, todas en dependencias de desarrollo que no van dentro de la app.
+- **Pruebas que fallan sin el arreglo:** `node --test tools/electron.test.mjs`: «Electron no baja del piso de seguridad (45.3.2)», en rojo con el `package.json` y el `package-lock.json` de `dev` (`git stash`: `package.json fija Electron 45.2.3, por debajo del piso 45.3.2`) y verde con los nuevos; «va fijado exacto y es el mismo en package.json y en package-lock.json», validada inyectando la violación (la raíz del lock en 45.2.3, y `^45.3.2`): en rojo las dos veces. La e2e «arranca sin red…» con `package.json` en 45.2.3 y el binario 45.3.2: `Expected: "45.2.3"`, `Received: "45.3.2"`; con los dos iguales, verde.
+- README: el paso 1 de los instaladores sube también Electron al último parche estable (y su `PISO`), Pruebas dice que la e2e de escritorio corre el Electron de `package.json` y la lista de `tools/*.test.mjs` nombra la prueba de la versión.
+- QA: Web y escritorio: las e2e web y de escritorio de la puerta, con el binario 45.3.2 (Chromium 156.0.8078.100 y Node 24.22.2, leídos con `ELECTRON_RUN_AS_NODE=1`); el resto del protocolo de Seguridad no se tocó (solo cambia una dependencia de desarrollo); auditoría: no toca la página.
+- Skills: no aplica: subida de un parche de una dependencia que ya existe.
+- Arena: no aplica: una sola forma obvia, y esta sesión no tiene la herramienta de subagentes (Agent o Task).
+- Guías: verification-before-completion (el ciclo rojo-verde de las pruebas nuevas y de la e2e, deshaciendo con `git stash` e inyectando la violación)
+- OMC: no disponible (esta sesión no tiene la herramienta de subagentes): el plan que pedía el pendiente fue propio, con dos opciones descartadas (quedarse en 45.2.3 hasta la mayor 46, sin los 72 arreglos de Chromium, y pasar a la 46, que está en alpha); la revisión, una relectura adversarial del diff (el lock sin otras entradas cambiadas, su integridad frente a `npm view electron@45.3.2 dist.integrity`, que el binario lo baja `@electron/get` comparando su SHA-256 con el `checksums.json` del paquete, que la e2e lea la versión del proceso principal y no la de la página, y que la prueba nueva no use red); la verificación, contra la reproducción del pendiente.
+- Reclamo: loop/299, sin colisión
+- Web publicada: sin publicar (404, has_pages=false; está en Para Benjamin)
+- Validado: 787 pruebas (`node --test`), smoke (intermitente, en verde al repetir su sección: «la práctica de git responde a los comandos en el grafo»), i18n (0 errores) y 30 e2e en verde. Es la tercera puerta: la primera, sobre el mismo cambio salvo un ajuste de la prueba nueva (el final de la URL del paquete y no la URL entera), salió entera, y la segunda la cortó un reinicio del contenedor. El intermitente es ajeno (sección «Varios repos a la vez», que el cambio no toca): anotado en su pendiente 3.
+- **Siguiente:** iteración 300, expansión: ítem 217 (Salud del repo: el tiempo de ciclo de un PR por etapas, Análisis)

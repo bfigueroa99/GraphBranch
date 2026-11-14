@@ -25,6 +25,9 @@ test('arranca sin red: la demo, las librerías y las fuentes van dentro de la ap
   expect(info.node).toEqual(['undefined', 'undefined']); // la página no ve Node
   expect(info.bridge).toEqual(['getToken', 'git', 'setLabels', 'setToken', 'show', 'spend', 'webhook']);
   expect(info.fonts).toEqual(['Bricolage Grotesque', 'Instrument Sans', 'JetBrains Mono']);
+  // corre el Electron que fija package.json: con un node_modules viejo (sin npm ci tras subirlo) se probaría otro
+  const fijada = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).devDependencies.electron;
+  expect(await app.evaluate(() => process.versions.electron), 'Electron instalado frente al de package.json: npm ci').toBe(fijada);
   await app.close();
 });
 

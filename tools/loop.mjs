@@ -121,6 +121,12 @@ export const CONECTORES = ['github'];
 /** La entrada de la bitácora desde la que cada iteración lleva «- Guías:» (las skills del mapa que leyó, o por qué
     ninguna). Por posición, como MARCA_SKILLS. */
 export const MARCA_GUIAS = 'Cambio de maquinaria: las guías del repo';
+/** La entrada de la bitácora desde la que cada iteración de Errores o de QA lleva «- Sentry:»: lo que Sentry vio en 24 h
+    (el lector de sentry-debug-issue o el MCP), «sin acceso» o el error que dio. Sin la viñeta, «sin acceso» y «no
+    miré» se ven igual, y el día que GraphBranch reporte nadie notaría que el loop sigue sin leerlo. Por posición. */
+export const MARCA_SENTRY = 'Cambio de maquinaria: Sentry';
+/** Los subtipos de mantenimiento que buscan defectos: miran Sentry antes de buscar a mano (MANTENIMIENTO.md). */
+export const CON_SENTRY = ['Errores', 'QA'];
 /** Bytes del prompt de la Routine: solo apunta a la skill y dice lo que la skill no puede decir antes de que la
     sesión la lea (sincronizar con dev y que el turno terminado es la corrida terminada). */
 export const PROMPT_MAX = 750;
@@ -194,6 +200,7 @@ const RE_QA = /^- QA:\s*\S/;
 const RE_ARENA = /^- Arena:\s*\S/;
 const RE_SKILLS = /^- Skills:\s*\S/;
 const RE_GUIAS = /^- Guías:\s*\S/;
+const RE_SENTRY = /^- Sentry:\s*\S/;
 const RE_DECLARADO = new RegExp(`iteración (\\d+), (?:de )?\\*{0,2}(expansión|mantenimiento)\\*{0,2}(?: · (${SUB}))?[:.,]?`, 'i');
 // el ítem declarado: el primer «ítem N», «pendiente N» o «auditoría» tras el tipo (un título copiado
 // puede citar otro número más adelante); las entradas viejas («el primer ítem sin hacer es el 6», «toca
@@ -725,6 +732,8 @@ export function check(texto, { archivo = null, hoja = null, log, superficial, sk
     const conSkills = new Set(marcaSkills < 0 ? [] : doc.bitacora.slice(marcaSkills + 1).filter((x) => x.n !== null));
     const marcaGuias = doc.bitacora.findIndex((x) => x.n === null && x.titulo.startsWith(MARCA_GUIAS));
     const conGuias = new Set(marcaGuias < 0 ? [] : doc.bitacora.slice(marcaGuias + 1).filter((x) => x.n !== null));
+    const marcaSentry = doc.bitacora.findIndex((x) => x.n === null && x.titulo.startsWith(MARCA_SENTRY));
+    const conSentry = new Set(marcaSentry < 0 ? [] : doc.bitacora.slice(marcaSentry + 1).filter((x) => x.n !== null && x.tipo === 'Mantenimiento' && CON_SENTRY.includes(x.subtipo)));
     const vistos = new Set();
     for (const it of its) {
       if (vistos.has(it.n)) e.push(`iteración ${it.n} repetida (línea ${it.linea}${it.origen ? ` de ${it.origen}` : ''})`);
@@ -762,6 +771,12 @@ export function check(texto, { archivo = null, hoja = null, log, superficial, sk
           for (const n of nombres) if (enMapa ? !enMapa.has(n) : !existeSkill(n)) e.push(`iteración ${it.n}: «- Guías:» nombra ${n}, que no está ${enMapa ? 'en el mapa (GUIAS.md)' : 'en .claude/skills/ ni viene con Claude Code'}`);
         }
       }
+      // Sentry: en Errores y QA, lo que vio en 24 h, que no hubo acceso o el error que dio (MANTENIMIENTO.md)
+      if (conSentry.has(it)) {
+        const s = it.cuerpo.split('\n').find((l) => RE_SENTRY.test(l));
+        if (!s) e.push(`iteración ${it.n} (${it.subtipo}) sin la viñeta «- Sentry:» («sin acceso», «error (<qué dijo>)» o «n issues en 24 h; …»)`);
+        else if (!/^- Sentry:\s*(?:sin acceso\b|error\s*[:,(—–-]\s*\S.{4,}|\d+ issues?\b)/i.test(s)) e.push(`iteración ${it.n}: «- Sentry:» no dice «sin acceso», «error (<qué dijo>)» ni «n issues en 24 h; …»`);
+      }
       // el protocolo de QA: cada entrada dice qué se revisó de su propio cambio
       if (!conProtocolo.has(it)) continue;
       if (!it.cuerpo.split('\n').some((l) => RE_QA.test(l))) e.push(`iteración ${it.n} sin la viñeta «- QA:» (Protocolo de QA)`);
@@ -774,7 +789,7 @@ export function check(texto, { archivo = null, hoja = null, log, superficial, sk
     const max = Math.max(0, ...vistos);
     for (let k = 1; k <= max; k++) if (!vistos.has(k)) a.push(`falta la iteración ${k}`);
     if (!its.length) e.push('no hay ninguna «Iteración N» en la bitácora');
-    regla('R5', e, a, `${its.length} iteraciones, 1..${max}, con tipo desde la 20${marca < 0 ? '' : `; ${conProtocolo.size} con el protocolo de QA`}${marcaArena < 0 ? '' : `; ${conArena.size} con «- Arena:»`}${marcaSkills < 0 ? '' : `; ${conSkills.size} con «- Skills:»`}${marcaGuias < 0 ? '' : `; ${conGuias.size} con «- Guías:»`}`);
+    regla('R5', e, a, `${its.length} iteraciones, 1..${max}, con tipo desde la 20${marca < 0 ? '' : `; ${conProtocolo.size} con el protocolo de QA`}${marcaArena < 0 ? '' : `; ${conArena.size} con «- Arena:»`}${marcaSkills < 0 ? '' : `; ${conSkills.size} con «- Skills:»`}${marcaGuias < 0 ? '' : `; ${conGuias.size} con «- Guías:»`}${marcaSentry < 0 ? '' : `; ${conSentry.size} de Errores o QA con «- Sentry:»`}`);
   }
   // R6: la última entrada tiene Validado y un Siguiente que coincide con --siguiente
   {

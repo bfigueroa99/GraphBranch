@@ -302,6 +302,29 @@ se consultó y su URL, y dice solo lo que la página dice: lo que no consta, se 
   (https://forgejo.org/docs/latest/user/actions/overview/) no dice cómo informa sus resultados. Queda como
   candidata: la usaría un nicho.
 
+### 2026-11-14 · Sentry (reporte de errores)
+
+- **Qué es:** plataforma de monitoreo de aplicaciones: agrupa los errores en issues, cada uno con la traza de la pila,
+  las migas (lo que pasó antes) y la versión y el entorno. Sus SDK limpian en el origen: `beforeSend` cambia o descarta
+  cada evento antes de que salga y `beforeBreadcrumb` cada miga; en el SDK de JavaScript 10, `dataCollection` decide
+  qué datos junta solo (el antiguo `sendDefaultPii` queda de respaldo), y el servidor limpia otra vez al recibir. Para
+  una página sin compilación ofrece el Loader Script, que se actualiza solo, o los bundles de su CDN con la versión en
+  la URL e `integrity`. En una extensión de navegador pide no usar `Sentry.init` (ensucia el estado global y puede
+  mandar eventos al proyecto equivocado), sino un `BrowserClient` con su `Scope`, sin las integraciones globales y
+  capturando a mano. El SDK de Electron (`@sentry/electron`, desde Electron 35) se inicia en el proceso principal, los
+  eventos del renderizador pasan por él, y por defecto manda la IP y el id del usuario.
+- **Fuente:** https://docs.sentry.io/platforms/javascript/configuration/options/,
+  https://docs.sentry.io/platforms/javascript/install/loader/,
+  https://docs.sentry.io/platforms/javascript/best-practices/shared-environments/ y
+  https://docs.sentry.io/platforms/javascript/guides/electron/ (consultadas el 2026-11-14), y las guías del plugin
+  `sentry` (https://github.com/getsentry/sentry-for-ai, commit c198c98: `references/concepts/data-scrubbing.md` y
+  `errors.md`). Pedido de Benjamin del 2026-11-14.
+- **Implica:** GraphBranch puede reportar sus fallos sin romper «sin CDN» ni «sin dependencias nuevas»: un emisor propio
+  o el SDK fijado en `vendor/`, cargado solo si quien usa la app lo prende; el Loader queda fuera porque cambia solo.
+  Sus reglas (sin tokens, cabeceras, URLs de las APIs, repos, ramas ni usuarios) caben en `beforeSend` y
+  `beforeBreadcrumb`; en Electron hay que apagar lo que manda por defecto, y en la extensión va un cliente propio. Cada
+  error que llegue es evidencia para Errores y QA del loop.
+
 ## Ideas puntuadas
 
 Las de la hoja de ruta (su puntaje está también en `IMPROVEMENTS.md`) y las candidatas que salen de esta
@@ -493,6 +516,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Borrador de notas de la versión | Salidas | 2×2/2 | 2,0 | Notas de la versión generadas por GitHub | ítem 220 |
 | Constelación: organizaciones de más de 100 repos | Escala | 1×2/2 | 1,0 | (ítem 214) | ítem 221 |
 | Tiempo de ciclo por etapas: las revisiones que el feed no trajo | Análisis | 2×2/2 | 2,0 | (ítem 217) | ítem 223 |
+| Reporte de errores opcional con Sentry | Salidas | 2×2/3 | 1,3 | Sentry (reporte de errores) | ítem 224 |
 | CI de Codeberg y Forgejo en el grafo | Datos | 1×2/2 | 1,0 | API de Gitea | candidata |
 | Curva de estrellas en el tiempo | Análisis | 2×2/2 | 2,0 | Star History | descartada: la lista de stargazers con su fecha queda para administradores y colaboradores |
 

@@ -14,7 +14,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { ANCHOS_MIN, ARCHIVO_BITACORA, ARCHIVO_HOJA, ARENA_MAX, AUDITABLES, BASE, CADENCIAS, CONECTORES, RELEASE, CRON_H, EJES, FLAGS, HOJA_MAX, HOJA_SIN_FUENTE, HUECOS_DIAS, INCORPORADAS, LARGOS, LoopError, MARCA_ARENA, MARCA_GUIAS, MARCA_PROTOCOLO, MARCA_SKILLS, PARA_BENJAMIN_MAX, PROMPT_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SKILL_MAX, SUBTIPOS, appReferencia, check, diagnostico, disparosEntre, matrizReplica, necesidades, ordenHoja, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, rotarHoja, siguiente, tramos } from './loop.mjs';
+import { ANCHOS_MIN, ARCHIVO_BITACORA, ARCHIVO_HOJA, ARENA_MAX, AUDITABLES, BASE, CADENCIAS, CONECTORES, RELEASE, CRON_H, EJES, FLAGS, HOJA_MAX, HOJA_SIN_FUENTE, HUECOS_DIAS, INCORPORADAS, LARGOS, LoopError, MARCA_ARENA, MARCA_GUIAS, MARCA_PROTOCOLO, MARCA_SENTRY, MARCA_SKILLS, PARA_BENJAMIN_MAX, PROMPT_MAX, RECLAMO_H, REPLICA_DIAS, ROTAR_DEJA, ROTAR_MAX, SKILLS_CLI, SKILL_MAX, SUBTIPOS, appReferencia, check, diagnostico, disparosEntre, matrizReplica, necesidades, ordenHoja, parse, parseCsv, parseInvestigacion, publicado, reclamar as reclamarEnProceso, rotar, rotarHoja, siguiente, tramos } from './loop.mjs';
 import { TIPOS } from './audit.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -580,6 +580,29 @@ describe('check()', () => {
     }
     // antes de la marca no se exige
     assert.equal(nivel(check(fixture({ entradas: [...lista, entrada({ titulo: `${MARCA_PROTOCOLO}, rotación y salud` }), it31(''), marca] }), { log: LOG }), 'R5'), 'ok');
+  });
+
+  test('R5: después de la marca de Sentry, Errores y QA llevan «- Sentry:» (sin acceso, el error o los issues); las demás, no', () => {
+    const lista = iteraciones(30);
+    const marca = entrada({ titulo: `${MARCA_SENTRY}: los errores reales en el loop`, siguiente: 'iteración 31, mantenimiento · Errores: pendiente 1' });
+    const it31 = (subtipo, cuerpo) => entrada({ n: 31, tipo: 'Mantenimiento', subtipo, cuerpo: `\n${subtipo === 'QA' ? '- **Hallazgos:** 3 nuevos.' : '- **Reproducción:** node --test → falla.'}${cuerpo}`, siguiente: 'iteración 32, expansión: ítem 6 (algo, Fuentes)' });
+    const con = (...ents) => check(fixture({ entradas: [...lista, entrada({ titulo: `${MARCA_PROTOCOLO}, rotación y salud` }), ...ents] }), { log: LOG });
+    for (const subtipo of ['Errores', 'QA']) {
+      const sin = con(marca, it31(subtipo, '\n- Sentry: sin acceso'));
+      assert.equal(nivel(sin, 'R5'), 'ok', sin.salida);
+      assert.match(texto(sin, 'R5'), /1 de Errores o QA con «- Sentry:»/);
+      assert.equal(nivel(con(marca, it31(subtipo, '\n- Sentry: 2 issues en 24 h; GRAPHBRANCH-1A (3 usuarios, 40 eventos) → pendiente 1')), 'R5'), 'ok');
+      assert.equal(nivel(con(marca, it31(subtipo, '\n- Sentry: 0 issues en 24 h')), 'R5'), 'ok');
+      assert.equal(nivel(con(marca, it31(subtipo, '\n- Sentry: error (401 de sentry.io: token rechazado)')), 'R5'), 'ok');
+      assert.match(texto(con(marca, it31(subtipo, '')), 'R5'), new RegExp(`iteración 31 \\(${subtipo}\\) sin la viñeta «- Sentry:»`));
+      // «no miré» no es un resultado, y «error» sin qué dijo tampoco
+      for (const malo of ['no lo miré.', 'error', 'todo bien']) assert.match(texto(con(marca, it31(subtipo, `\n- Sentry: ${malo}`)), 'R5'), /iteración 31: «- Sentry:» no dice «sin acceso»/, malo);
+      // antes de la marca no se exige
+      assert.equal(nivel(con(it31(subtipo, ''), marca), 'R5'), 'ok');
+    }
+    // los demás subtipos y las expansiones no miran Sentry
+    const deuda = entrada({ n: 31, tipo: 'Mantenimiento', subtipo: 'Deuda', cuerpo: '\n- **Reproducción:** node --test → falla.', siguiente: 'iteración 32, expansión: ítem 6 (algo, Fuentes)' });
+    assert.equal(nivel(con(marca, deuda, entrada({ n: 32, tipo: 'Expansión', eje: 'Fuentes', siguiente: 'iteración 33, expansión: ítem 6 (algo, Fuentes)' })), 'R5'), 'ok');
   });
 
   test('«Fusión de #15 antes de abrir el PR» y «Cambio de objetivo» no cuentan como iteración', () => {

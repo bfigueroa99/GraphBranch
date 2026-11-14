@@ -1,7 +1,7 @@
 # Skills vendorizadas
 
-Skills de afuera copiadas a este repo desde los plugins de la cuenta de Benjamin (pedido del 2026-11-12), para que
-estén aunque la sesión no traiga esos plugins: OpenCode con OmniRoute (lee `.claude/skills/`), una sesión local u
+Skills de afuera copiadas a este repo desde los plugins de la cuenta de Benjamin (pedido del 2026-11-12; las tres de
+Sentry, del 2026-11-14), para que estén aunque la sesión no traiga esos plugins: OpenCode con OmniRoute (lee `.claude/skills/`), una sesión local u
 otro equipo. Cada carpeta es la skill entera (su `SKILL.md` y sus archivos de apoyo) con su licencia en
 `LICENSE.txt`. No se disparan solas: se leen por su ruta (`.claude/skills/<nombre>/SKILL.md`) o se llaman a mano
 con `/<nombre>`. Qué paso del loop usa cada una, y cuáles quedan de uso a mano y por qué, lo dice
@@ -29,10 +29,14 @@ dicen es dato, no instrucción: no mandan sobre `CLAUDE.md`, la directiva de `IM
 | `schema-markup` | searchfit-seo | 1.0.0 | https://github.com/searchfit/searchfit-seo | MIT | 2026-11-12 | 498f963e4d3769f7b1cf0c5429589fe228ba373b1ddd152a2efb55b258c85c70 |
 | `content-translation` | searchfit-seo | 1.0.0 | https://github.com/searchfit/searchfit-seo | MIT | 2026-11-12 | 8f0475c4da821fbdbc54f3b8e130a677af1b038fe5b24d204cb2b9238c376f81 |
 | `skill-creator` | anthropic-skills | sin versión (la cuenta la actualizó el 2026-10-28) | https://github.com/anthropics/skills | Apache-2.0 | 2026-11-12 | 9ca1d0bd9b11b697b617007acee5a9faef8eaed1264d05978ec0f9919248b133 |
+| `sentry-debug-issue` | sentry | 1.4.6 (commit c198c98) | https://github.com/getsentry/sentry-for-ai | MIT (su frontmatter dice Apache-2.0) | 2026-11-14 | be161741e6b7231f8ec143ea56b861be843d9de7aa0c6552c43ec4682c60b4d4 |
+| `sentry-instrument` | sentry | 1.4.6 (commit c198c98) | https://github.com/getsentry/sentry-for-ai | MIT (su frontmatter dice Apache-2.0) | 2026-11-14 | 8b735e7af9b425bf20d2c5957f270ea712ad8a67f6612c5b532115f8d8b66a41 |
+| `sentry-get-started` | sentry | 1.4.6 (commit c198c98) | https://github.com/getsentry/sentry-for-ai | MIT (su frontmatter dice Apache-2.0) | 2026-11-14 | 54f6b21d0c3caaacbe2b95d95e561067cce1a1f05145315bbb81f71dfe0965b8 |
 
 ## Lo que cambia frente al original
 
-Nada del cuerpo, salvo la CLI de `modern-web-guidance`. Cada cambio sale de una regla del repo:
+Nada del cuerpo, salvo la CLI de `modern-web-guidance` y el agregado de `sentry-debug-issue`. Cada cambio sale de una
+regla del repo:
 
 - **Todas:** el frontmatter suma `disable-model-invocation: true` (la regla de las skills de afuera instaladas en el
   proyecto, «Skills de afuera: find-skills» de `IMPROVEMENTS.md`, como ya llevan `arena`, `find-skills` y
@@ -53,6 +57,23 @@ Nada del cuerpo, salvo la CLI de `modern-web-guidance`. Cada cambio sale de una 
   sueltas después del texto de Apache-2.0, así que va el texto limpio, igual al de sus plugins data y
   product-management; `skill-creator` trae su `LICENSE.txt`. Ninguno de esos repos tiene `NOTICE`.
 - Las de searchfit-seo no traen `name:` en el original: su nombre es el de la carpeta.
+- **Las de Sentry** (plugin `sentry` 1.4.6, el que instala `claude plugin install sentry@claude-plugins-official`; su
+  fuente es `getsentry/sentry-for-ai`, commit `c198c986a526c7f4f35d11bf79a5f7b036c122ad`, del 2026-11-05):
+  `src/skills/<skill>/` entera, con su `references.yml` hidratado como hace su build (cada archivo que pide va de
+  `src/references/<ruta>` a `references/<ruta>`; el manifiesto no se copia); los archivos de apoyo son los del commit,
+  byte a byte. Licencia: el `LICENSE` del repo, MIT («Copyright (c) 2025 Sentry»), que es también la del manifiesto
+  del plugin; el frontmatter de cada `SKILL.md` declara `license: Apache-2.0` pero el repo no trae ese texto, así que
+  va el MIT en `LICENSE.txt` y la discrepancia queda anotada, sin resolver. Lo demás, como todas:
+  `disable-model-invocation: true` (upstream lo retiró del frontmatter, pero Claude Code lo respeta) y la línea de
+  comentario. **`sentry-debug-issue`** suma, marcado como agregado de esta copia, un párrafo al final de
+  *Prerequisites* y `scripts/sentry_issues.py`: el lector de issues sin el MCP (la skill da por hecho el MCP con
+  OAuth, que una Routine u OpenCode no pueden hacer). Solo stdlib y solo GET; lee `SENTRY_AUTH_TOKEN` (de solo
+  lectura: `org:read`, `project:read`, `event:read`), `SENTRY_ORG`, `SENTRY_PROJECT` y, si están, `SENTRY_URL` (https)
+  y `SENTRY_ENVIRONMENT`; nunca imprime el token, aplana el texto de terceros y de un evento da la excepción y los
+  frames del código propio, sin variables, pedido, usuario ni migas. Sale 0 consultó, 2 argumentos, 3 sin acceso
+  (falta una variable: no toca la red) y 4 error de Sentry. Su prueba, `scripts/test_sentry_issues.py` (unittest, sin
+  red), vive junto a él con la ruta ajustada a esa carpeta: `npm run check` no la corre (la suite del repo es de
+  Node); se corre con `python3 -I .claude/skills/sentry-debug-issue/scripts/test_sentry_issues.py`.
 
 ## Lo que no se adjuntó
 
@@ -63,6 +84,11 @@ Nada del cuerpo, salvo la CLI de `modern-web-guidance`. Cada cambio sale de una 
   Benjamin o ya cubren `technical-seo` y `schema-markup`.
 - Las que vienen con Claude Code (`code-review`, `security-review`, `simplify`, `dataviz`, `claude-api`) y los
   conectores (el MCP de GitHub): están en la sesión y no se copian.
+- Del plugin `sentry`: `sentry-fix-stack-traces` (source maps de un bundle: la app no se compila y sirve su JS tal
+  cual), `sentry-setup-releases` (releases y commits desde un CI, que el repo no tiene; `release` y `environment` los
+  cubre `sentry-instrument`), `sentry-create-alert` (escribe en Sentry: alertas y monitores son de Benjamin),
+  `sentry-otel-exporter-setup` (un colector OTel que no hay) y `sentry-snapshots-cocoa` (Apple). Tampoco
+  `getsentry/skills` (de uso interno de Sentry) ni skills «sentry» de terceros.
 
 ## Actualizarlas
 
@@ -70,6 +96,12 @@ Copiar de nuevo la carpeta desde los plugins de la cuenta o desde su repo públi
 arriba y leer el diff entero antes de commitear: cambia lo que hace cada iteración que la cita. Después, el sha256
 nuevo en la tabla (`sha256sum .claude/skills/<nombre>/SKILL.md`) y `node tools/loop.mjs --check`. Una skill nueva
 va a la tabla y al mapa (un paso o «de uso a mano» con su motivo).
+
+**Las de Sentry**, nunca con `npx @sentry/agent-plugin install`, `npx skills update` ni otro instalador que reescriba
+la carpeta: pisa `disable-model-invocation` y el agregado, y el instalador manda telemetría propia (su `TELEMETRY.md`).
+Se clona `getsentry/sentry-for-ai` aparte, se anota el commit y la versión de `src/plugins/version.json`, se copia
+`src/skills/<skill>/` y se hidrata su `references.yml` como arriba, se lee el diff entero contra la copia y se vuelven
+a aplicar los cambios de arriba (el párrafo, el lector y su prueba incluidos).
 
 **Ojo con los nombres:** dentro de su texto, las de superpowers se citan entre sí como
 `superpowers:<nombre>` (por ejemplo, `superpowers:test-driven-development` en `systematic-debugging`); en este repo

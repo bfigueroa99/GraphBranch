@@ -33,7 +33,8 @@ test('Electron va fijado exacto y es el mismo en package.json y en package-lock.
   const lock = json('package-lock.json');
   assert.equal(lock.packages[''].devDependencies.electron, fijada, 'la raíz de package-lock.json');
   assert.equal(lock.packages['node_modules/electron'].version, fijada, 'lo que instala npm ci');
-  assert.equal(lock.packages['node_modules/electron'].resolved, `https://registry.npmjs.org/electron/-/electron-${fijada}.tgz`);
+  // el final y no la URL entera: con un registro espejo, npm escribe el suyo
+  assert.ok(lock.packages['node_modules/electron'].resolved.endsWith(`/electron-${fijada}.tgz`), 'el paquete que baja npm ci');
 });
 
 test(`Electron no baja del piso de seguridad (${PISO})`, () => {

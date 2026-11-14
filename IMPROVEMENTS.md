@@ -475,6 +475,14 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     three.js (plan por consenso: toca todo el 3D) o juntar materiales (los nodos usan `MeshStandardMaterial`, el
     más caro, y cambia cómo se ven). La auditoría ahora cuenta los programas (`programas3d`) y `--comparar` los vigila.
     Reproducción: `node tools/audit.mjs --repetir 3` → `programas3d: 13`, `tareasLargasMs` de unos 1.150 en la nube.
+30. [Errores] «Pull requests sin ninguna revisión hace más de 7 días» (`unreviewed` de `js/health.js`) cuenta en
+    Codeberg, Forgejo, Bitbucket y Bitbucket Data Center cada PR abierto de más de 7 días que no es borrador, aunque esas
+    fuentes no digan si se revisó: su `mapPull` no trae `review` ni votos y su actividad no trae revisiones
+    (`givesReviews()` en false, iteración 300). Encontrado en la revisión de la iteración 300: el tiempo de ciclo por
+    etapas ya lo dice para esas fuentes; esta lista, no. Arreglo posible: con `givesReviews()` en false, la lista dice que
+    la fuente no da revisiones, como el tiempo de ciclo (o se lee el estado de revisión de su API, si lo tiene).
+    Reproducción: `node --test` con `compute()` sobre un PR de 10 días sin `review` y sin actividad → `unreviewed.total`
+    1; en la app, `?repo=codeberg:…` con un PR de más de 7 días → sale en la lista.
 - Ideas menores de la auditoría de la iteración 6: la caché de archivos de las galaxias limita
   entradas y no tamaño (`galaxy.js:1987`); el contenedor 2D enfocable no tiene rol ni nombre (`graph.js:306`); las marcas
   de la brújula del mundo abierto son botones que se mueven y ocultan cada cuadro (`world.js:849`).
@@ -654,7 +662,7 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Skills: no aplica: un cálculo sobre la actividad ya cargada y unas líneas de texto en un panel que ya existe; lo de la interfaz y los textos lo cubren las skills del repo.
 - Arena: no aplica: esta sesión no tiene la herramienta de subagentes (Agent o Task).
 - Guías: test-driven-development (las pruebas de `tools/health.test.mjs`, de cada fuente y de la demo antes del código, vistas fallar por la razón esperada), modern-web-guidance (`accessibility/accessibility.md`, «Headings»: la sección con su `h3`, en el orden de las demás), ux-copy (el texto de una fuente sin revisiones: qué pasa, por qué, y qué sí se mide), content-translation (paso 3: los 7 textos en los 40 idiomas por su sentido, con la mediana y los términos que ya usa cada idioma en la salud), verification-before-completion (el ciclo rojo-verde de las pruebas y del paso de Codeberg, con el `js/` de `dev`)
-- OMC: pendiente
+- OMC: no disponible (esta sesión no tiene la herramienta de subagentes): plan=— (esfuerzo 2, un solo frente, nada difícil de deshacer: ni CSP, ni token, ni lo guardado, ni la URL); la revisión, una relectura adversarial del diff (que `openedAt` y las horas sean números en todas las fuentes, el merge visto dos veces por el feed y por la comparación, que solo la actividad del arranque marca hasta dónde llega lo cargado, que una revisión de otro PR, un pedido o una revisión después de fusionar no cuenten, que la historia de la demo con número no sume interacciones de agentes, que nada de afuera entre al DOM sin `U.esc`), con 3 hallazgos: dos bajos que quedan dichos en Límites conocidos (un comentario de revisión de quien abrió el PR cuenta como revisión, y una aprobación descartada después sigue contando) y uno fuera del alcance, a Mantenimiento (pendiente 30: la lista de PRs sin revisión en las fuentes que no dan revisiones); la verificación, propia, contra los criterios del ítem y «Lo que trae cada expansión».
 - Reclamo: relevo de loop/300 (e7de39c)
-- Validado: pendiente
+- Validado: 790 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 30 e2e en verde. Con la máquina a carga 15 en 4 CPU (otras sesiones corrían sus puertas a la vez), el smoke tardó 18 min; una corrida suelta de «Escritorio (1280×800)» antes de la puerta, a carga 10, falló en 7 pasos ajenos y la siguiente pasó entera (anotado en el pendiente 1).
 - **Siguiente:** iteración 301, expansión: ítem 218 (Puntaje de OpenSSF Scorecard en la salud, Datos)

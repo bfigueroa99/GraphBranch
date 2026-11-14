@@ -173,13 +173,22 @@ window.GB = window.GB || {};
 
   /** Una organización o un usuario de GitHub entero: org:nombre, user:nombre, @nombre o la URL de su
       perfil (github.com/nombre, github.com/orgs/nombre). null si no es eso: un nombre suelto no
-      cuenta, para no confundirlo con un repo mal escrito. */
+      cuenta, para no confundirlo con un repo mal escrito. Con /prefijo* detrás (org:curso/tarea-1-*),
+      solo sus repos cuyo nombre empieza así: una tarea de GitHub Classroom, que crea un repo por
+      estudiante con el prefijo de la tarea. La estrella es obligatoria: org:a/b no dice si es el repo
+      a/b o los que empiezan con b. */
   U.parseOwner = (input) => {
     const s = String(input || '').trim().replace(/[?#].*$/, '').replace(/\/+$/, '');
-    const m = s.match(/^(?:org:|user:|@)(.+)$/i) || s.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/(?:orgs\/)?([^/]+)$/i);
+    const m = s.match(/^(?:org:|user:|@)([^/]+)(?:\/([\w.-]{0,100})\*)?$/i) || s.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/(?:orgs\/)?([^/]+)$/i);
     // como GitHub: letras, números y guiones sueltos, sin guion al principio ni al final, hasta 39
-    return m && /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/.test(m[1]) ? { owner: m[1] } : null;
+    if (!m || !/^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/.test(m[1])) return null;
+    return m[2] ? { owner: m[1], prefix: m[2] } : { owner: m[1] };
   };
+  /** La clave con que se guarda una organización seguida (y su lista): su nombre, o nombre/prefijo* si es una tarea. */
+  U.ownerKey = (who) => (who.prefix ? `${who.owner}/${who.prefix}*` : who.owner);
+  /** ¿El repo `name` del dueño de `who` entra en lo que sigue? Sin prefijo, todos; con él, los que empiezan así (sin
+      distinguir mayúsculas, como los nombres de GitHub). */
+  U.ownerMatch = (who, name) => !who.prefix || String(name || '').toLowerCase().startsWith(who.prefix.toLowerCase());
 
   /** Un grupo de GitLab entero: group:ruta (con subgrupos, `group:gitlab-org/ci-cd`) o la URL de su página
       (`gitlab.com/groups/ruta`, o la de un GitLab propio con `?gitlab=`). null si no es eso. */

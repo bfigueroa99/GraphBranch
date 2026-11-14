@@ -11,6 +11,7 @@
   const UNREVIEWED_DAYS = 7; // un PR abierto que pasa de esto sin ninguna revisión cuenta como «sin revisión»
   const RECENT_MERGES = 20; // cuántos PRs fusionados entran en el tiempo de abierto a fusionado
   const RECENT_RELEASES = 10; // cuántos releases entran en el tiempo entre despliegues
+  const CYCLE_DAYS = 28; // los PRs fusionados de las últimas 4 semanas entran en el tiempo de ciclo por etapas
   const WEEKS = 8; // semanas que entran en la frecuencia de despliegue y en las tendencias de merges, de PRs abiertos, de issues cerrados, de ramas nuevas, de commits, de autores, de autores nuevos, de forks nuevos y de líneas añadidas y borradas
   const ROWS = 8; // filas que muestra cada lista
 
@@ -141,9 +142,64 @@
     return null;
   }
 
-  /** `data`: el estado del repo (ramas, commits, PRs abiertos); `acts`: su actividad ya cargada.
+  /** El tiempo de ciclo de los PRs fusionados en las últimas CYCLE_DAYS, partido en tres etapas como lo hace Swarmia: de
+      abierto a la primera revisión, de ahí a la aprobación (la última antes de fusionar) y de la aprobación a la fusión,
+      cada una con su mediana y cuántos PRs la midieron. Todo sale de la actividad ya cargada: el merge (con su número y su
+      `openedAt`) y las revisiones de ese número entre la apertura y la fusión (pedir una no cuenta; en GitLab solo llegan
+      las aprobaciones). Sin revisión, ninguna etapa se mide y el PR va a `noReview`; con revisión y sin aprobación, solo
+      la primera, y va a `noApproval`. Un PR abierto antes de la actividad más vieja cargada no entra en las etapas (sus
+      revisiones de entonces pueden faltar) y va a `early`. Con `reviews` en false (la fuente no da revisiones) no se
+      mide nada: solo cuántos se fusionaron. `null` si la fuente da revisiones y no hay PRs fusionados que mirar. */
+  function cycleTime(acts, now, reviews = true) {
+    const merges = new Map(); // cada número una vez: su primer merge visto y su apertura más temprana
+    for (const a of acts) {
+      if (a.kind !== 'pr-merge' || a.number == null || !(a.openedAt > 0) || !(a.time > a.openedAt) || a.time > now || now - a.time > CYCLE_DAYS * DAY) continue;
+      const m = merges.get(a.number);
+      if (!m) merges.set(a.number, { time: a.time, openedAt: a.openedAt });
+      else merges.set(a.number, { time: Math.min(m.time, a.time), openedAt: Math.min(m.openedAt, a.openedAt) });
+    }
+    if (!reviews) return { reviews: false, merged: merges.size };
+    if (!merges.size) return null;
+    let since = Infinity; // hasta dónde llega la actividad cargada: antes de eso, no se sabe si hubo revisiones
+    for (const a of acts) if (a.time > 0 && a.time < since) since = a.time;
+    const byPr = new Map();
+    for (const a of acts) {
+      if (a.number == null || a.request || !a.time || (a.kind !== 'review' && a.kind !== 'review-ok' && a.kind !== 'review-changes')) continue;
+      (byPr.get(a.number) || byPr.set(a.number, []).get(a.number)).push(a);
+    }
+    const stage = { open: [], review: [], merge: [] };
+    let noReview = 0;
+    let noApproval = 0;
+    let early = 0;
+    for (const [number, m] of merges) {
+      if (m.openedAt < since) {
+        early++;
+        continue;
+      }
+      const revs = (byPr.get(number) || []).filter((a) => a.time >= m.openedAt && a.time <= m.time);
+      if (!revs.length) {
+        noReview++;
+        continue;
+      }
+      const first = Math.min(...revs.map((a) => a.time));
+      stage.open.push(first - m.openedAt);
+      const oks = revs.filter((a) => a.kind === 'review-ok').map((a) => a.time);
+      if (!oks.length) {
+        noApproval++;
+        continue;
+      }
+      const ok = Math.max(...oks);
+      stage.review.push(ok - first);
+      stage.merge.push(m.time - ok);
+    }
+    const of = (xs) => ({ median: xs.length ? median(xs) : null, n: xs.length });
+    return { reviews: true, merged: merges.size, open: of(stage.open), review: of(stage.review), merge: of(stage.merge), noReview, noApproval, early };
+  }
+
+  /** `data`: el estado del repo (ramas, commits, PRs abiertos); `acts`: su actividad ya cargada; `opts.reviews` en false,
+      una fuente que no da las revisiones de sus PRs (el tiempo de ciclo no se parte en etapas).
       Devuelve las listas ordenadas (lo peor primero) con su total, y el ritmo. */
-  function compute(data, acts = [], now = Date.now(), forkSort = 'recent') {
+  function compute(data, acts = [], now = Date.now(), forkSort = 'recent', opts = {}) {
     const withPr = new Set();
     for (const p of data.pulls.values()) if (p.sameRepo && p.head) withPr.add(p.head);
 
@@ -325,6 +381,7 @@
       prStates,
       unreviewed: { total: unreviewed.length, rows: unreviewed.slice(0, ROWS) },
       merged: spans.length ? { n: spans.length, median: median(spans), max: Math.max(...spans) } : null,
+      cycle: cycleTime(acts, now, opts.reviews !== false), // el tiempo de ciclo de los PRs fusionados de las 4 semanas, por etapas
       dora,
       leadSource: { fromCommit, total: lead.length },
       ci,
@@ -421,5 +478,5 @@
     return !(q && typeof q.has === 'function' && q.has('forks') && /^(0|false|no|off)$/i.test(String(q.get('forks')).trim()));
   }
 
-  GB.health = { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, forksParam, splitFiles, STALE_DAYS };
+  GB.health = { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, forksParam, splitFiles, STALE_DAYS, CYCLE_DAYS };
 })(window.GB);

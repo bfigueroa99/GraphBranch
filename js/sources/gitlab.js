@@ -578,6 +578,12 @@
       return true;
     }
 
+    /** Sus eventos traen las aprobaciones de cada MR con su hora (`approved`), no las demás revisiones: el panel de salud
+        parte el tiempo de ciclo con ellas, y la primera revisión de una MR es su primera aprobación. */
+    givesReviews() {
+      return true;
+    }
+
     /* ---------- editar un archivo (js/editor.js): la API de archivos del repositorio ---------- */
 
     canEdit() {

@@ -230,6 +230,7 @@ test('carga el repo: solo habla con el servidor propio, sin credenciales, y los 
   assert.deepEqual(errors, []);
   const { repo: r, branches, commits, pulls } = src.data;
   assert.equal(src.host, 'bitbucketdc');
+  assert.equal(src.givesReviews(), false, 'su actividad no trae revisiones: la salud no parte el tiempo de ciclo');
   assert.equal(r.host, 'bitbucketdc');
   assert.equal(r.url, WEB);
   assert.equal(r.defaultBranch, 'main');

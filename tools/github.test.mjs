@@ -1173,6 +1173,7 @@ test('readFile: el archivo de la rama (texto UTF-8 y su sha), y uno que no exist
   assert.equal((await src.readFile({ path: 'big.bin', ref: 'main' })).tooLarge, true);
   assert.equal((await src.readFile({ path: 'logo.png', ref: 'dev' })).binary, true);
   assert.equal(src.canEdit(), true);
+  assert.equal(src.givesReviews(), true, 'el feed de eventos trae las revisiones: la salud parte el tiempo de ciclo');
 });
 
 test('writeFile: un PUT a contents con el texto en base64, la rama y el sha; sin token ni lo intenta', async () => {

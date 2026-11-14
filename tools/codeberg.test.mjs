@@ -540,6 +540,7 @@ test('editar: lee el archivo de la rama y escribe con el token de Codeberg (PUT 
   };
   const { src } = connect(cb, { token: 'cb-w' });
   assert.equal(src.canEdit(), true);
+  assert.equal(src.givesReviews(), false, 'su actividad no trae revisiones: la salud no parte el tiempo de ciclo');
   assert.equal(src.canWrite(), null);
   const f = await src.readFile({ path: 'src/app.js', ref: 'feature' });
   assert.deepEqual([f.text, f.sha], ['const a = 1;\n', 'blob1']);

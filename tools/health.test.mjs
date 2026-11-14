@@ -713,3 +713,49 @@ test('líneas añadidas y borradas por semana: las de /stats/code_frequency en l
   assert.deepEqual({ ...p.code }, { pending: true }, 'GitHub dijo 202: la línea pide volver a abrir el panel');
   assert.deepEqual(Array.from(p.pace.addedWeeks), [0, 0, 0, 0, 0, 0, 0, 0]);
 });
+
+test('tiempo de ciclo por etapas: la mediana de cada etapa de los PRs fusionados de las últimas 4 semanas, y aparte los que no tuvieron revisión o aprobación', () => {
+  const mg = (id, number, mergedDays, openedDays) => ({ kind: 'pr-merge', id, number, time: ago(mergedDays), openedAt: openedDays == null ? null : ago(openedDays) });
+  const rv = (kind, number, days, extra = {}) => ({ kind, id: `${kind}:${number}:${days}`, number, time: ago(days), ...extra });
+  const acts = [
+    // el 1: revisión de comentario, aprobación y fusión, un día cada etapa salvo la última (medio día); su merge repetido cuenta una vez
+    mg('1', 1, 7.5, 10), mg('1b', 1, 7.4, 10), rv('review', 1, 9), rv('review-ok', 1, 8),
+    // el 2: cambios pedidos, dos aprobaciones (manda la última) y una aprobación y un comentario después de fusionar, que no cuentan
+    mg('2', 2, 2, 6), rv('review-changes', 2, 5.5), rv('review-ok', 2, 4), rv('review-ok', 2, 3), rv('review-ok', 2, 1.5), rv('review', 2, 1),
+    // el 3: la aprobación es la primera revisión (la etapa del medio dura 0); una revisión anterior a su apertura no vale
+    mg('3', 3, 4.5, 5), rv('review-ok', 3, 4.75), rv('review', 3, 5.2),
+    // el 4: solo le pidieron revisión: fusionado sin revisión
+    mg('4', 4, 3.5, 4), rv('review', 4, 3.9, { request: true }),
+    // el 5: con cambios pedidos y fusionado sin aprobación: solo cuenta su primera etapa
+    mg('5', 5, 5, 8), rv('review-changes', 5, 6),
+    // el 6: fusionado hace más de 4 semanas: no entra
+    mg('6', 6, 30, 33), rv('review-ok', 6, 31),
+    // el 7: abierto antes de la actividad más vieja cargada (la del 6): sus revisiones de entonces pueden faltar
+    mg('7', 7, 2.5, 35), rv('review-ok', 7, 3),
+    // sin número, sin apertura o del futuro: no entran; una revisión de otro PR no se mezcla
+    { kind: 'pr-merge', id: 'x', time: ago(1), openedAt: ago(2) }, mg('8', 8, 1, null), mg('9', 9, -1, 1), rv('review-ok', 99, 9.5),
+  ];
+  const c = JSON.parse(JSON.stringify(compute(repo(), acts, NOW).cycle));
+  assert.deepEqual(c, {
+    reviews: true,
+    merged: 6, // del 1 al 5 y el 7
+    open: { median: 0.75 * DAY, n: 4 }, // 1, 0,5, 0,25 y 2 días
+    review: { median: DAY, n: 3 }, // 1, 2,5 y 0 días
+    merge: { median: 0.5 * DAY, n: 3 }, // 0,5, 1 y 0,25 días
+    noReview: 1,
+    noApproval: 1,
+    early: 1,
+  });
+  assert.equal(compute(repo(), [], NOW).cycle, null, 'sin PRs fusionados en las 4 semanas no hay nada que partir');
+  const none = JSON.parse(JSON.stringify(compute(repo(), [mg('4', 4, 3.5, 4), { kind: 'push', id: 'p', time: ago(10) }], NOW).cycle));
+  assert.deepEqual(none, { reviews: true, merged: 1, open: { median: null, n: 0 }, review: { median: null, n: 0 }, merge: { median: null, n: 0 }, noReview: 1, noApproval: 0, early: 0 }, 'sin revisiones, las etapas no tienen mediana');
+  const alone = JSON.parse(JSON.stringify(compute(repo(), [mg('4', 4, 3.5, 4)], NOW).cycle));
+  assert.equal(alone.early, 1, 'con solo su merge cargado, la actividad no llega a su apertura: no se sabe si tuvo revisión');
+  assert.equal(alone.noReview, 0);
+});
+
+test('tiempo de ciclo: una fuente que no da revisiones lo dice, y no cuenta sus PRs como fusionados sin revisión', () => {
+  const acts = [{ kind: 'pr-merge', id: 'a', number: 1, time: ago(2), openedAt: ago(3) }, { kind: 'pr-merge', id: 'b', number: 2, time: ago(40), openedAt: ago(41) }];
+  assert.deepEqual(JSON.parse(JSON.stringify(compute(repo(), acts, NOW, 'recent', { reviews: false }).cycle)), { reviews: false, merged: 1 });
+  assert.deepEqual(JSON.parse(JSON.stringify(compute(repo(), [], NOW, 'recent', { reviews: false }).cycle)), { reviews: false, merged: 0 }, 'aunque no haya nada fusionado, la fuente dice que no da revisiones');
+});

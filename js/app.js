@@ -1966,11 +1966,26 @@
     return '#health-close'; // un control sin forma de volver a encontrarlo: el foco queda en el panel, no en <body>
   }
 
+  /** El tiempo de ciclo por etapas (ítem 217): la mediana de cada etapa de los PRs fusionados de las últimas 4 semanas,
+      con cuántos la midieron, y aparte los fusionados sin revisión o sin aprobación y los abiertos antes de la actividad
+      cargada. Una fuente que no da revisiones lo dice; sin PRs fusionados, nada que mostrar. */
+  function cycleHtml(c, span) {
+    const line = (id, text) => `<p class="hl-line" id="${id}">${U.esc(text)}</p>`;
+    const body = !c
+      ? `<p class="hl-none">${U.esc(t('health.none'))}</p>`
+      : !c.reviews
+        ? `<p class="hl-none" id="hl-cycle-noreviews">${U.esc(t('health.cycleNoReviews'))}</p>`
+        : [['open', 'health.cycleOpen'], ['review', 'health.cycleReview'], ['merge', 'health.cycleMerge']].map(([k, key]) => line('hl-cycle-' + k, t(key, { median: c[k].median != null ? span(c[k].median) : '—', count: U.fmtNum(c[k].n) }))).join('') +
+          (c.noReview || c.noApproval ? line('hl-cycle-skipped', t('health.cycleSkipped', { none: U.fmtNum(c.noReview), unapproved: U.fmtNum(c.noApproval) })) : '') +
+          (c.early ? line('hl-cycle-early', t('health.cycleEarly', { count: U.fmtNum(c.early) })) : '');
+    return `<section class="hl-sec" id="hl-cycle"><h3>${U.esc(t('health.cycle', { weeks: GB.health.CYCLE_DAYS / 7 }))}</h3>${body}</section>`;
+  }
+
   function renderHealth() {
     const had = healthFocusKey();
     const data = source.view ? source.view() : source.data;
     const acts = feed.items.filter((a) => a.repo === active?.key);
-    const h = GB.health.compute(data, acts, Date.now(), forksByStars ? 'stars' : 'recent');
+    const h = GB.health.compute(data, acts, Date.now(), forksByStars ? 'stars' : 'recent', { reviews: source.givesReviews?.() !== false });
     const span = (ms) => GB.i18n.fmtSpan(ms);
     const stat = (label, n) => `<div class="hl-stat"><b>${U.fmtNum(n)}</b><span>${U.esc(label)}</span></div>`;
     const forkRows = h.forks.rows
@@ -1999,6 +2014,7 @@
       `<section class="hl-sec"><h3>${U.esc(t('health.merged'))}</h3>${
         h.merged ? `<p class="hl-line">${U.esc(t('health.mergedStat', { median: span(h.merged.median), max: span(h.merged.max) }))}</p>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }${weeklyLines(h.pace, showForks)}${h.code?.pending ? `<p class="hl-none" id="hl-codepending">${U.esc(t('health.codePending'))}</p>` : ''}${h.absence ? `<p class="hl-line" id="hl-absence">${U.esc(t('health.absence', { n: h.absence.n, authors: U.fmtNum(h.absence.authors), commits: U.fmtNum(h.absence.commits) }))}</p>` : ''}</section>` +
+      cycleHtml(h.cycle, span) +
       `<section class="hl-sec" id="hl-dora"><h3>${U.esc(t('health.dora'))}</h3>${
         h.dora.deploys30 || h.dora.gap != null || h.dora.lead != null || h.dora.weeks.some(Boolean)
           ? `<p class="hl-line">${U.esc(t('health.doraFreq', { n: h.dora.deploys30, gap: h.dora.gap != null ? span(h.dora.gap) : '—' }))}</p><p class="hl-line" id="hl-weeks">${U.esc(t('health.doraWeeks', { n: h.dora.weeks.length, list: h.dora.weeks.join(' · ') }))}</p><p class="hl-line">${U.esc(h.leadSource.fromCommit ? t('health.doraLeadCommit', { median: span(h.dora.lead), n: h.leadSource.fromCommit, total: h.leadSource.total }) : t('health.doraLead', { median: h.dora.lead != null ? span(h.dora.lead) : '—' }))}</p>`

@@ -132,3 +132,21 @@ test('cargar más: la historia de main de antes de la semilla llega de a 6, sin 
   for (let i = 0; i < 1500; i++) src.publish(src.actions() || []);
   assert.ok(loaded.every((sha) => commits.has(sha)), 'lo traído con «Cargar más» sigue cargado tras 1500 publicaciones');
 });
+
+test('la historia de la demo trae PRs fusionados con su número y sus revisiones: la salud parte su tiempo de ciclo en etapas', () => {
+  for (const seed of [1, 7, 42, 2026, 31337]) {
+    const { src } = demo(seed);
+    assert.equal(src.givesReviews(), true);
+    const ctx = vm.createContext({ window: { GB: {} } });
+    vm.runInContext(code('health.js'), ctx, { filename: 'health.js' });
+    const acts = src.history.map((a) => ({ ...a }));
+    const merges = acts.filter((a) => a.kind === 'pr-merge');
+    assert.ok(merges.length >= 3 && merges.every((a) => Number.isInteger(a.number) && a.openedAt < a.time), `semilla ${seed}: los merges de la historia llevan su número y su apertura`);
+    const since = Math.min(...acts.map((a) => a.time));
+    assert.ok(merges.every((a) => a.openedAt >= since), `semilla ${seed}: ningún PR de la historia se abre antes de la actividad cargada`);
+    const c = ctx.window.GB.health.compute(src.data, acts, Math.max(...acts.map((a) => a.time)) + 60e3).cycle;
+    assert.equal(c.early, 0, `semilla ${seed}`);
+    assert.ok(c.open.n >= 2 && c.review.n >= 2 && c.merge.n >= 2, `semilla ${seed}: las tres etapas con al menos dos PRs: ${JSON.stringify(c)}`);
+    assert.ok(c.noReview >= 1, `semilla ${seed}: el de Dependabot se fusionó sin revisión`);
+  }
+});

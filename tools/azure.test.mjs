@@ -411,6 +411,7 @@ test('todavía sin árbol de archivos y sin edición; los cambios de commit sí'
   assert.equal(src.files, null);
   assert.equal(typeof src.commitDiff, 'function');
   assert.equal(src.canEdit(), false);
+  assert.equal(src.givesReviews(), false, 'sus revisores votan sin hora en la actividad: la salud no parte el tiempo de ciclo');
 });
 
 test('con token, un proyecto privado se lee y cada consulta lleva Authorization: Basic solo a dev.azure.com', async () => {

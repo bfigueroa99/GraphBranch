@@ -749,6 +749,7 @@ test('editar: lee el archivo de la rama (su huella es el último commit que lo t
   };
   const { src } = connect(gl, { token: 'glpat-w' });
   assert.equal(src.canEdit(), true);
+  assert.equal(src.givesReviews(), true, 'sus eventos traen las aprobaciones: la salud parte el tiempo de ciclo');
   assert.equal(src.canWrite(), null);
   const f = await src.readFile({ path: 'src/app.js', ref: 'feature' });
   assert.deepEqual([f.text, f.sha, f.binary], ['const a = 1;\n', 'f2', false]);

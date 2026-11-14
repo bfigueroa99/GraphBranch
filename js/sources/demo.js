@@ -213,11 +213,18 @@
         this.createBranch(name, from, scope, step(10, 30));
         H.push(this.act('branch-create', { title: MSG('act.branchCreated', { name }), detail: MSG('act.branchFromOnly', { from }), branch: name, actor: this.actor(author) }, t));
       };
-      const merge = (head, base, num, author, del) => {
+      // `reviews`: las revisiones del PR antes de fusionarlo, cada una [tipo, quién, en qué fracción del tiempo que estuvo
+      // abierto]; con ellas el panel de salud parte su tiempo de ciclo en etapas (el que no trae ninguna, sin revisión)
+      const merge = (head, base, num, author, del, reviews = []) => {
         const hb = this.data.branches.get(head);
         const msg = `Merge pull request #${num} from acme/${head}`;
         const c = this.commit(base, msg, author, step(), [hb.sha]);
-        H.push(this.act('pr-merge', { title: MSG('act.prMergedInto', { num, base }), detail: hb.prTitle || msg, ref: `${head} → ${base}`, branch: base, sha: c.sha, actor: this.actor(author), openedAt: c.date - (4 + this.rnd() * 44) * 36e5 }, c.date));
+        const openedAt = Math.max(hb.createdAt || 0, c.date - (4 + this.rnd() * 44) * 36e5); // nunca antes de que existiera su rama
+        for (const [kind, who, f] of reviews) {
+          const title = MSG(kind === 'review-ok' ? 'act.prApproved' : kind === 'review-changes' ? 'act.prChanges' : 'act.prReview', { num });
+          H.push(this.act(kind, { title, detail: kind === 'review-ok' ? hb.prTitle || msg : this.C.comments[0], branch: head, actor: this.actor(who), number: num }, openedAt + f * (c.date - openedAt)));
+        }
+        H.push(this.act('pr-merge', { title: MSG('act.prMergedInto', { num, base }), detail: hb.prTitle || msg, ref: `${head} → ${base}`, branch: base, sha: c.sha, actor: this.actor(author), number: num, openedAt }, c.date));
         if (del) {
           this.data.branches.delete(head);
           H.push(this.act('branch-delete', { title: MSG('act.branchDeleted', { name: head }), detail: MSG('act.branchDeletedMerged', { into: base }), branch: head }, t + 20e3));
@@ -236,7 +243,7 @@
       create('fix/empty-payload', 'main', 'api', M);
       push('fix/empty-payload', M, S.emptyPayload);
       this.data.branches.get('fix/empty-payload').prTitle = S.emptyPayloadPr;
-      merge('fix/empty-payload', 'main', 31, V, true);
+      merge('fix/empty-payload', 'main', 31, V, true, [['review-ok', V, 0.6]]);
       push('develop', D, S.sessionTests);
       create('feature/login', 'develop', 'login', J);
       push('feature/login', J, S.loginForm);
@@ -245,7 +252,7 @@
       push('feature/login', J, S.oauth);
       push('feature/dark-mode', T, S.darkVars);
       this.data.branches.get('develop').prTitle = 'Release 1.4';
-      const rel = merge('develop', 'main', 34, V, false);
+      const rel = merge('develop', 'main', 34, V, false, [['review-changes', M, 0.3], ['review-ok', M, 0.8]]);
       this.data.tags.set(first.sha, ['v1.0.0']);
       this.data.tags.set(rel.sha, ['v1.4.0']);
       this.data.deploys.set('production', { sha: rel.sha, ref: 'main', status: 'success' });
@@ -757,6 +764,12 @@
     }
 
     diffCheap() {
+      return true;
+    }
+
+    /** La demo trae revisiones con su hora (las de su historia y las que llegan en vivo): su panel de salud parte el
+        tiempo de ciclo en etapas. */
+    givesReviews() {
       return true;
     }
 

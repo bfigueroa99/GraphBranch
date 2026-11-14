@@ -214,6 +214,7 @@ test('carga un repo: ramas, historia y PRs, sin token y solo contra api.bitbucke
   assert.equal(r.host, 'bitbucket');
   assert.equal(r.defaultBranch, 'main');
   assert.equal(src.host, 'bitbucket');
+  assert.equal(src.givesReviews(), false, 'su actividad no trae revisiones: la salud no parte el tiempo de ciclo');
   assert.deepEqual([...branches.keys()].sort(), ['feature', 'main']);
   for (const sha of ['m1', 'm2', 'm3', 'f1', 'f2']) assert.ok(commits.has(sha), `falta ${sha}`);
   const c = commits.get('f2');

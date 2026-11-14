@@ -22,10 +22,11 @@ iteración», «Lo que trae cada expansión» y «Lo que no cambia» (lo de Repl
 está en esta skill y en sus protocolos); el ítem o el pendiente que imprime `--reclamar` (su texto entero está en
 el archivo con ese número); Mantenimiento, si la iteración es de mantenimiento; y las dos últimas entradas de la
 bitácora (el formato). Los ítems hechos (`docs/HOJA.md`) y las entradas viejas (`docs/BITACORA.md`) son historia:
-se buscan con `grep` y no se leen enteros. Del README, solo las secciones que el cambio toca. Cinco protocolos de
+se buscan con `grep` y no se leen enteros. Del README, solo las secciones que el cambio toca. Seis protocolos de
 esta skill viven aparte, en su carpeta, y se leen solo cuando el paso que los nombra dice que tocan:
 `GUIAS.md` (la skill del repo de cada paso), `CONSTRUIR.md` (skills de afuera, plan por consenso y arena),
-`MANTENIMIENTO.md` (el de cada subtipo), `REANUDAR.md` (una iteración vencida) y `REPONER.md` (la hoja de ruta).
+`MANTENIMIENTO.md` (el de cada subtipo), `REANUDAR.md` (una iteración vencida), `REPONER.md` (la hoja de ruta) e
+`ISSUES.md` (los issues de GitHub).
 
 ### Comandos largos: se esperan en primer plano
 
@@ -67,7 +68,7 @@ clon sigue superficial, `--check` lo avisa en R3 y `--salud` y `--reclamar` lo c
 
 - `--check` con algún `ERROR`: se arregla primero, en el mismo PR: no se amplía sobre algo roto.
 - `--salud` (sale 3 si hay algo que atender): cada línea `Acción:` se atiende en esta iteración, antes
-  de construir: triar cada issue sin triar (ver «Fallos e issues»); un pendiente Alta va primero
+  de construir (las de un issue, con `.claude/skills/iteracion/ISSUES.md`); un pendiente Alta va primero
   (`--reclamar` ya lo elige). Las `loop/K` ya fusionadas salen en una sola línea y no son una Acción: la
   sesión no las borra (en la nube el proxy niega el push `--delete`) ni lo anota; son de Benjamin (Para
   Benjamin). `En cola: loop/K` es una iteración reclamada antes de su turno: no se toca, se reanuda cuando
@@ -90,7 +91,8 @@ Imprime qué iteración toca (número, tipo, eje o subtipo, ítem, por qué y la
 código de salida:
 
 - **0** `Reclamada la iteración N`: el checkout quedó en `loop/N`, con un commit vacío ya publicado en
-  origin. Se sigue con el ítem que imprimió.
+  origin. Se sigue con el ítem que imprimió o, si imprimió `Pedido:`, con ese issue de Benjamin:
+  `.claude/skills/iteracion/ISSUES.md`, entero.
 - **3** `Ocupada`: otra sesión la está haciendo. Esa línea va al resumen de 3 líneas y la sesión termina,
   sin PR.
 - **4** `Vencida` (sin commits desde hace más de `RECLAMO_H` horas, menos que el intervalo de la Routine:
@@ -160,13 +162,11 @@ El protocolo de cada subtipo (Errores, QA, Accesibilidad, Seguridad, Rendimiento
 `.claude/skills/iteracion/MANTENIMIENTO.md`: se lee la sección del subtipo que imprimió `--reclamar`, y solo
 esa, antes de tocar nada.
 
-### Fallos e issues
+### Issues
 
-`--salud` marca cada issue abierto que `IMPROVEMENTS.md` no nombra como `issue #k`. Se tría así: un
-fallo se reproduce (si se puede) y va a Mantenimiento con su subtipo y prioridad, con `(issue #k)`; Alta
-si deja la app en blanco, pierde datos o es de seguridad (entonces va antes que todo); una idea va a la
-hoja de ruta o a `docs/investigacion.md` como candidata, con su puntaje. El PR que lo arregla dice
-`Cierra #k`. Sin el MCP de GitHub, lo que dice `--salud` alcanza: no se comenta en el issue.
+Un issue es un pedido solo si lo abrió Benjamin o un colaborador: `--reclamar` toma el primero y `--salud` da
+como `Acción:` lo que hay que cerrar o abrir; los demás no se abren, no se comentan ni se toman. Cómo se
+reclama, se enlaza (`Refs`, nunca `Cierra`) y se cierra al fusionar: `ISSUES.md`.
 
 ## 3. Validar
 
@@ -245,6 +245,7 @@ Al final de la bitácora de `IMPROVEMENTS.md`, con la plantilla exacta que exige
 - OMC: plan=<APPROVE|ITERATE|REJECT|—> · revisión=<n hallazgos (m arreglados)|—> · verificación=<PASS|FAIL|INCOMPLETE|—>     (o `no disponible (<motivo>)`)
 - Replica: pasada del AAAA-MM-DD, paridad X/100, must hechos a de b; ítems k…     (solo si repuso la hoja de ruta)
 - Reclamo: loop/N, sin colisión                            (o `relevo de loop/N (<sha7>)`)
+- Issues: pedido <dueño/repo>#k (<cómo quedó>)              (o `sin pedidos`, `en espera …` o `no se pudieron leer (…)`)
 - Web publicada: <línea de --publicado>                    (solo si no dio 0)
 - Validado: <línea que imprimió npm run check>
 - **Siguiente:** <la línea `Siguiente:` de --siguiente>
@@ -314,7 +315,8 @@ git push -u origin loop/N
    `node tools/loop.mjs --check` antes del push: la puerta entera ya corrió sobre ese mismo código.
 3. `mcp__github__merge_pull_request` con `merge_method: merge` (nunca squash: el commit de merge es lo
    que muestra en el grafo la rama uniéndose a `dev`) y `commit_title: "<título> (#P)"`, solo sin
-   hilos de revisión pendientes. No hace falta esperar aprobación (`CLAUDE.md`). Si el merge falla
+   hilos de revisión pendientes. No hace falta esperar aprobación (`CLAUDE.md`). Con un pedido, se cierra su
+   issue (`ISSUES.md`, punto 5). Si el merge falla
    (conflicto, API), se repite 5.2; si sigue fallando, el PR queda abierto, el resumen lo dice con el
    error y la sesión termina: la siguiente lo retoma por el código 4 (Vencida con PR abierto).
 4. La rama `loop/N` queda en origin, contenida en `dev` por el commit de merge: en la nube no se

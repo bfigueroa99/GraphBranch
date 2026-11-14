@@ -8,7 +8,8 @@ y lo que sigue decide:
 - `PR abierto: <url>`: `git fetch origin loop/N && git checkout loop/N`, `git merge origin/dev` (los
   conflictos esperables, como en 5.2), la puerta (paso 3) y, si su entrada dice `Validado: pendiente` o
   `sin verde`, la línea nueva. En verde, se fusiona ese PR con commit de merge como la iteración N (paso 5) y
-  se vuelve a `--reclamar` (la N+1): una reanudación no es la iteración del disparo, y se sigue reanudando o
+  se vuelve a `--reclamar` (la N+1). Si el commit del reclamo de `loop/N` nombra un `pedido <dueño/repo>#k`, al
+  fusionar se cierra ese issue (`.claude/skills/iteracion/ISSUES.md`, punto 5). Una reanudación no es la iteración del disparo, y se sigue reanudando o
   construyendo hasta tener una propia fusionada, un 3 o el tiempo agotado (la 172, reanudada el 2026-10-31,
   se fusionó sola y dejó la 173 y la 174 con su PR abierto). Si solo fallan pasos ajenos e intermitentes,
   rige el paso 3 (la puerta repite sola su sección; si aun así no hay verde, una puerta más y, si tampoco,

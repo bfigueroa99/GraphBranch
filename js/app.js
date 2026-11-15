@@ -1981,6 +1981,27 @@
     return `<section class="hl-sec" id="hl-cycle"><h3>${U.esc(t('health.cycle', { weeks: GB.health.CYCLE_DAYS / 7 }))}</h3>${body}</section>`;
   }
 
+  /** El puntaje de OpenSSF Scorecard (ítem 218): de 0 a 10, la fecha del análisis y las tres comprobaciones más bajas con
+      su motivo, como texto (el nombre y el motivo vienen de api.scorecard.dev: van escapados, nunca como HTML). Sin
+      análisis o con un fallo, lo dice; sin consulta (otra fuente, un repo privado o de GitHub Enterprise), no sale. */
+  function scorecardHtml(sc) {
+    if (!sc) return '';
+    const body =
+      sc.state === 'none'
+        ? `<p class="hl-none" id="hl-scorecard-none">${U.esc(t('health.scorecardNone'))}</p>`
+        : sc.state !== 'ok'
+          ? `<p class="hl-none" id="hl-scorecard-error">${U.esc(t('health.scorecardError'))}</p>`
+          : `<p class="hl-line" id="hl-scorecard-score">${U.esc(t('health.scorecardScore', { score: U.fmtNum(sc.score), date: sc.date ? GB.i18n.fmtDate(sc.date) : '—' }))}</p>` +
+            (sc.lowest.length
+              ? `<div class="hl-sub"><h4 id="hl-scorecard-low">${U.esc(t('health.scorecardLowest'))}</h4><ul class="hl-list hl-checks" aria-labelledby="hl-scorecard-low">${sc.lowest
+                  // el nombre y el motivo van aislados (FSI…PDI): son texto en inglés de la API y, en árabe o hebreo, sin
+                  // aislarlos la puntuación del motivo saltaba al otro lado de la frase
+                  .map((c) => `<li class="hl-line">${U.esc(t('health.scorecardCheck', { name: '\u2068' + c.name + '\u2069', score: U.fmtNum(c.score), reason: '\u2068' + (c.reason || '—') + '\u2069' }))}</li>`)
+                  .join('')}</ul></div>`
+              : '');
+    return `<section class="hl-sec" id="hl-scorecard"><h3>${U.esc(t('health.scorecard'))}</h3>${body}</section>`;
+  }
+
   function renderHealth() {
     const had = healthFocusKey();
     const data = source.view ? source.view() : source.data;
@@ -2027,6 +2048,7 @@
             `<p class="hl-line">${U.esc(t('health.ciFeed', { n: h.ci.fails30 }))}</p>`
           : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
+      scorecardHtml(h.scorecard) +
       `<section class="hl-sec" id="hl-clash"><h3>${U.esc(t('health.clash'))}</h3><p class="hl-none">${U.esc(t('health.clashHelp'))}</p><button type="button" class="btn btn-ghost" id="hl-clash-go">${U.esc(t('health.clashGo'))}</button><div id="hl-clash-out" role="status" aria-live="polite"></div></section>` +
       `<section class="hl-sec" id="hl-cmp"><h3>${U.esc(t('cmp.title'))}</h3><p class="hl-none">${U.esc(t('cmp.help'))}</p><div class="sr-row"><select id="cmp-a" aria-label="${U.esc(t('cmp.a'))}"></select><select id="cmp-b" aria-label="${U.esc(t('cmp.b'))}"></select></div><button type="button" class="btn btn-ghost" id="cmp-go">${U.esc(t('cmp.go'))}</button><div id="cmp-out" role="status" aria-live="polite"></div></section>` +
       `<section class="hl-sec" id="hl-digest"><h3>${U.esc(t('digest.title'))}</h3><p class="hl-none">${U.esc(t('digest.help'))}</p><pre class="hl-digest" id="digest-md" tabindex="0" aria-label="${U.esc(t('digest.title'))}"></pre><div class="sr-row"><button type="button" class="btn btn-ghost" id="digest-copy">${U.esc(t('digest.copy'))}</button><button type="button" class="btn btn-ghost" id="digest-save">${U.esc(t('digest.save'))}</button><button type="button" class="btn btn-ghost" id="digest-png">${U.esc(t('digest.png'))}</button></div><div id="digest-out" role="status" aria-live="polite"></div></section>` +
@@ -2285,6 +2307,7 @@
     syncHealthForks();
     if (asked.syncCodeFrequency) asked.syncCodeFrequency().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {}); // líneas añadidas y borradas: solo con el panel abierto
     if (asked.syncDeployStatuses && asked.data.deploys?.size) asked.syncDeployStatuses().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
+    if (asked.syncScorecard) asked.syncScorecard().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {}); // OpenSSF Scorecard: solo con el panel abierto y de un repo público de github.com
     if (asked.syncFirstCommits) {
       const merged = feed.items.filter((a) => a.repo === active?.key && a.kind === 'pr-merge' && a.number && a.openedAt).sort((a, b) => b.time - a.time).slice(0, 20);
       asked.syncFirstCommits(merged.map((a) => a.number)).then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});

@@ -941,6 +941,18 @@ kbd {
 .practice[hidden] {
   display: none;
 }
+/* con la práctica abierta el grafo guarda su alto: la terminal, sus cartas y las tres columnas del árbol de trabajo, el
+   índice y HEAD pasan de 400 px en un panel de 610 (1280×800) y, con unos comandos en la terminal, el grafo quedaba en
+   0 px y no dibujaba los commits nuevos (`dev` en rojo en la iteración 301: «la práctica de git responde a los comandos
+   en el grafo»). Lo que no cabe se desplaza dentro de la práctica; en el celular la página crece y esto no cambia nada */
+.graph-panel:has(> .practice:not([hidden])) .graph-stage {
+  min-height: 200px;
+}
+.practice {
+  min-height: 0;
+  overflow-y: auto;
+  grid-auto-rows: max-content; /* cada fila con su alto entero: sin esto las cartas (con su desplazamiento de lado) se aplastaban a 6 px */
+}
 .pr-head {
   display: flex;
   flex-wrap: wrap;
@@ -5481,6 +5493,12 @@ a.hl-row:focus-visible {
   flex: 0 1 auto;
   min-width: 0;
   text-align: end;
+  overflow-wrap: anywhere;
+}
+/* las comprobaciones de OpenSSF Scorecard: el motivo es una frase de la API (a veces con una URL entera), así que se
+   parte en vez de recortarse o desbordar el panel a 320 px */
+.hl-checks li {
+  padding: 2px 8px;
   overflow-wrap: anywhere;
 }
 .hl-switch {

@@ -759,3 +759,30 @@ test('tiempo de ciclo: una fuente que no da revisiones lo dice, y no cuenta sus 
   assert.deepEqual(JSON.parse(JSON.stringify(compute(repo(), acts, NOW, 'recent', { reviews: false }).cycle)), { reviews: false, merged: 1 });
   assert.deepEqual(JSON.parse(JSON.stringify(compute(repo(), [], NOW, 'recent', { reviews: false }).cycle)), { reviews: false, merged: 0 }, 'aunque no haya nada fusionado, la fuente dice que no da revisiones');
 });
+
+test('OpenSSF Scorecard: el puntaje, la fecha del análisis y las tres comprobaciones más bajas, sin las no concluyentes', () => {
+  const data = repo();
+  assert.equal(compute(data, [], NOW).scorecard, null, 'sin consulta (otra fuente, un repo privado), la sección no sale');
+  const ck = (name, score, reason = `motivo de ${name}`) => ({ name, score, reason });
+  data.scorecard = {
+    state: 'ok',
+    score: 6.4,
+    date: ago(3),
+    checks: [ck('Maintained', 10), ck('Signed-Releases', -1, 'no releases found'), ck('Fuzzing', 0), ck('Pinned-Dependencies', 6), ck('CII-Best-Practices', 0), ck('Code-Review', 2), ck('License', 10)],
+  };
+  const h = compute(data, [], NOW);
+  assert.equal(h.scorecard.state, 'ok');
+  assert.equal(h.scorecard.score, 6.4);
+  assert.equal(h.scorecard.date, ago(3));
+  assert.deepEqual(Array.from(h.scorecard.lowest, (c) => `${c.name} ${c.score}`), ['CII-Best-Practices 0', 'Fuzzing 0', 'Code-Review 2'], 'de la más baja a la más alta, a igual puntaje por nombre; la de -1 (no concluyente) no cuenta como baja');
+  assert.equal(h.scorecard.lowest[0].reason, 'motivo de CII-Best-Practices');
+  assert.equal(h.scorecard.checks, 6, 'las comprobaciones con puntaje, sin la no concluyente');
+  data.scorecard = { state: 'ok', score: 9, date: null, checks: [ck('License', 10), ck('Signed-Releases', -1)] };
+  assert.deepEqual(Array.from(compute(data, [], NOW).scorecard.lowest, (c) => c.name), ['License'], 'con menos de tres, las que haya');
+  for (const state of ['none', 'error']) {
+    data.scorecard = { state, at: NOW };
+    assert.deepEqual({ ...compute(data, [], NOW).scorecard }, { state }, `${state}: la sección lo dice`);
+  }
+  data.scorecard = { state: 'raro' };
+  assert.deepEqual({ ...compute(data, [], NOW).scorecard }, { state: 'error' }, 'un estado que no se conoce se dice como un fallo');
+});

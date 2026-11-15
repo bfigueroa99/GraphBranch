@@ -9,7 +9,8 @@
      scripts, estilos y fuentes solo pueden venir del propio sitio. El manifiesto y el service worker
      (sw.js, que la deja abrir sin red) también son del propio sitio. Las conexiones van a las APIs de
      GitHub, de gitlab.com, de codeberg.org, de api.bitbucket.org y de dev.azure.com (y, con la vista de agentes, al gasto de
-     Anthropic, OpenAI, OpenRouter y un OmniRoute local, solo si se conectan), y las imágenes de otro sitio son los avatares de cada uno
+     Anthropic, OpenAI, OpenRouter y un OmniRoute local, solo si se conectan, y, al abrir la salud de un repo público de
+     github.com, al puntaje de OpenSSF Scorecard), y las imágenes de otro sitio son los avatares de cada uno
      (los de Bitbucket y los de Azure DevOps no se cargan). -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'none';
@@ -19,7 +20,7 @@
   manifest-src 'self';
   worker-src 'self';
   img-src 'self' data: https://avatars.githubusercontent.com https://gitlab.com https://codeberg.org;
-  connect-src https://api.github.com https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com https://api.anthropic.com https://api.openai.com https://openrouter.ai http://localhost:20128 http://127.0.0.1:20128;
+  connect-src https://api.github.com https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com https://api.anthropic.com https://api.openai.com https://openrouter.ai http://localhost:20128 http://127.0.0.1:20128 https://api.scorecard.dev;
   base-uri 'none';
   form-action 'none'">
 <title data-i18n="meta.title">Live graph of a GitHub repository's branches · GraphBranch</title>

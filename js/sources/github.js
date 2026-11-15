@@ -78,6 +78,29 @@
       .filter((w) => Array.isArray(w) && Number.isFinite(w[0]) && w[0] > 0)
       .map(([t, add, del]) => ({ time: t * 1000, added: Number.isFinite(add) ? Math.abs(add) : 0, deleted: Number.isFinite(del) ? Math.abs(del) : 0 }))
       .slice(-12);
+  /** La API de OpenSSF Scorecard (ítem 218): el puntaje ya calculado de un repo público de github.com, sin token y con
+      CORS abierto. Es el único servidor que no es de GitHub al que habla esta fuente (y está en el CSP por eso). */
+  const SCORECARD = 'https://api.scorecard.dev/projects/github.com/';
+  const SCORECARD_CHECKS = 40; // Scorecard da 18: un tope por si una respuesta trae una lista enorme
+  const SCORECARD_REASON = 200; // caracteres del motivo de cada comprobación: los de Scorecard son una frase
+  /** La respuesta de api.scorecard.dev como `{ state: 'ok', score, date, checks: [{ name, score, reason }] }`, o null si no
+      es un análisis: el puntaje del repo de 0 a 10, la fecha en ms (null si no es una fecha) y cada comprobación con su
+      puntaje de -1 (no concluyente) a 10. Una comprobación con un nombre que no es de Scorecard o un puntaje fuera de
+      escala no entra, y el motivo queda en una línea, sin caracteres de control y corto: viene de afuera y se muestra
+      como texto. */
+  const scorecardOf = (body) => {
+    const score = body && !Array.isArray(body) ? body.score : null;
+    if (typeof score !== 'number' || !(score >= 0 && score <= 10)) return null;
+    const reasonOf = (r) => {
+      const s = String(r ?? '').replace(/[\u0000-\u001f\u007f-\u009f\s]+/g, ' ').trim();
+      return s.length > SCORECARD_REASON ? s.slice(0, SCORECARD_REASON - 1).trimEnd() + '…' : s;
+    };
+    const checks = (Array.isArray(body.checks) ? body.checks : [])
+      .filter((c) => c && typeof c.name === 'string' && /^[A-Za-z][A-Za-z0-9-]{0,39}$/.test(c.name) && Number.isInteger(c.score) && c.score >= -1 && c.score <= 10)
+      .slice(0, SCORECARD_CHECKS)
+      .map((c) => ({ name: c.name, score: c.score, reason: reasonOf(c.reason) }));
+    return { state: 'ok', score, date: Date.parse(body.date) || null, checks };
+  };
   const PAGE = 100; // ramas por consulta al listarlas (el máximo de GitHub)
   const FIRST = 10; // commits que pide primero cada rama nueva; casi siempre bastan para tocar lo ya cargado
   const BATCH_MS = 4000; // tiempo por ciclo para listar ramas y traer historia; el resto, en el ciclo siguiente
@@ -699,6 +722,36 @@
         if (!SOFT.has(err.kind)) throw err;
         this.data.codeFreq = { state: 'none', weeks: [] };
       }
+      return true;
+    }
+
+    /** El puntaje de OpenSSF Scorecard del repo (ítem 218, `data.scorecard`): una consulta a api.scorecard.dev, solo cuando
+        el panel de salud lo pide y una sola vez por pestaña (Scorecard analiza cada semana). Solo de un repo de github.com
+        que GitHub dice público: Scorecard no analiza otros, y el nombre de un repo privado no sale a un tercero. La
+        consulta va sin el token de GitHub, sin cookies y sin referer (la URL de la página lleva `?repo=`), y no gasta cuota
+        de GitHub. Un 404 es «sin análisis» y queda como el puntaje; un fallo (red, 5xx, una respuesta que no es un
+        análisis) queda como fallo y la próxima apertura vuelve a preguntar. Nunca dos consultas a la vez, y nada de esto
+        corta el ciclo del grafo. Devuelve si preguntó. */
+    syncScorecard() {
+      if (this.ep.api !== API || this.data.repo.private !== false) return Promise.resolve(false);
+      if (this.scorecardAsk) return this.scorecardAsk.then(() => false);
+      if (this.data.scorecard && this.data.scorecard.state !== 'error') return Promise.resolve(false);
+      const ask = this.askScorecard().finally(() => (this.scorecardAsk = null));
+      this.scorecardAsk = ask.catch(() => {});
+      return ask;
+    }
+
+    async askScorecard() {
+      const { owner, name } = this.data.repo; // como lo escribe GitHub: Scorecard distingue mayúsculas
+      const url = SCORECARD + encodeURIComponent(owner) + '/' + encodeURIComponent(name);
+      let next;
+      try {
+        const { res, body } = await this.request(url, { headers: { Accept: 'application/json' }, credentials: 'omit', referrerPolicy: 'no-referrer' });
+        next = res.status === 404 ? { state: 'none' } : (res.ok && scorecardOf(body)) || null;
+      } catch (err) {
+        if (err?.kind === 'aborted') return false; // la fuente se detuvo: nadie va a mirar la respuesta
+      }
+      this.data.scorecard = next || { state: 'error', at: Date.now() };
       return true;
     }
 
@@ -2286,6 +2339,7 @@
   };
 
   GitHubSource.endpoints = endpoints;
+  GitHubSource.scorecardOf = scorecardOf;
   GitHubSource.ApiError = ApiError;
   GitHubSource.editError = editError; // para las fuentes que heredan de esta (GitLab, Codeberg)
   GitHubSource.editKey = editKey;

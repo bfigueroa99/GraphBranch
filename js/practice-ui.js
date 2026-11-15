@@ -320,6 +320,9 @@
       const res = this.source.run(text);
       for (const l of res.lines) this.print(l, res.ok ? '' : 'pr-err');
       this.render();
+      // la práctica se desplaza por dentro cuando no cabe junto al grafo (`.practice` en styles.css): lo que sumaron el
+      // registro y el estado no deja la línea de comandos fuera de la vista mientras se escribe en ella
+      if (document.activeElement === this.input) this.input.scrollIntoView?.({ block: 'nearest' });
     }
 
     focus() {

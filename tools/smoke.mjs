@@ -144,6 +144,13 @@ async function openPage(contextOptions = {}) {
   });
   await page.route('https://fonts.googleapis.com/**', (r) => r.fulfill({ contentType: 'text/css', body: '' }));
   await page.route('https://avatars.githubusercontent.com/**', (r) => r.fulfill({ contentType: 'image/png', body: PNG_1PX }));
+  // OpenSSF Scorecard (ítem 218): abrir la salud de un repo público de GitHub simulado lo consulta; se responde un
+  // análisis sin comprobaciones para no salir a la red, y cada consulta queda anotada (la demo no debe hacer ninguna)
+  page.scorecard = [];
+  await page.route('https://api.scorecard.dev/**', (r) => {
+    page.scorecard.push({ url: r.request().url(), auth: r.request().headers().authorization || '', referer: r.request().headers().referer || '' });
+    return r.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ date: new Date().toISOString(), score: 7, checks: [] }) });
+  });
   return page;
 }
 
@@ -2139,7 +2146,7 @@ function fakeGitHub() {
     const r = repos.get(m[1]);
     const [owner, name] = m[1].split('/');
     const rest = m[2] || '';
-    if (!rest) return { body: { name, owner: { login: owner }, default_branch: 'main', html_url: `https://github.com/${m[1]}`, private: false, description: '', open_issues_count: r.openItems ?? 0, stargazers_count: r.stars ?? 0, forks_count: r.forks ?? 0 } }; // GitHub cuenta issues y PRs juntos
+    if (!rest) return { body: { name, owner: { login: owner }, default_branch: 'main', html_url: `https://github.com/${m[1]}`, private: !!r.private, description: '', open_issues_count: r.openItems ?? 0, stargazers_count: r.stars ?? 0, forks_count: r.forks ?? 0 } }; // GitHub cuenta issues y PRs juntos
     if (rest === '/branches') return { body: [...r.branches].map(([b, s]) => ({ name: b, commit: { sha: s }, protected: false })) };
     if (rest === '/pulls' && m[1] === 'o/b') {
       const pr = (number, title, draft, extra = {}) => ({ number, title, html_url: `https://github.com/o/b/pull/${number}`, state: 'open', draft, head: { ref: 'main', repo: { full_name: 'o/b' } }, base: { ref: 'main' }, user: { login: 'bea', avatar_url: null }, created_at: new Date(Date.now() - number * 60000).toISOString(), ...extra });
@@ -2668,6 +2675,16 @@ if (seccion('Varios repos a la vez'))
       await lab.fill('.pr-input', c);
       await lab.press('.pr-input', 'Enter');
     }
+    // a 1280×800 la terminal, sus cartas y las tres columnas no caben junto al grafo: el grafo guarda su alto y la
+    // práctica se desplaza por dentro, con la línea de comandos a la vista (en la 301 el grafo quedaba en 0 px)
+    const fit = await lab.evaluate(() => {
+      const box = (s) => document.querySelector(s).getBoundingClientRect();
+      const p = box('#practice');
+      const i = box('.pr-input');
+      return { graph: Math.round(box('#graph').height), input: i.top >= p.top - 1 && i.bottom <= p.bottom + 1 };
+    });
+    if (fit.graph < 150) throw new Error(`con la práctica abierta el grafo quedó en ${fit.graph} px de alto`);
+    if (!fit.input) throw new Error('la línea de comandos quedó fuera de la vista de la práctica');
     await lab.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length >= n, before + 2, { timeout: T(10000) });
     const log = await lab.textContent('.pr-log');
     if (!log.includes('<img src=x onerror=alert(1)>')) throw new Error('el mensaje no se ve tal cual');
@@ -5738,6 +5755,112 @@ if (seccion('Salud del repo directa (?health=1)'))
     await page.waitForTimeout(500);
     if (await page.evaluate(() => document.querySelector('#health').open)) throw new Error('health=0 abrió el panel');
   });
+  await page.context().close();
+}
+
+if (seccion('OpenSSF Scorecard en la salud'))
+{
+  // ítem 218: el puntaje ya calculado de un repo público de github.com, de api.scorecard.dev, al abrir la salud
+  const gh = fakeGitHub();
+  gh.repo('o/s');
+  gh.repo('o/n');
+  gh.repo('o/p', { private: true });
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  const ghAuth = new Set(); // con qué token salieron las consultas a GitHub: el de la prueba tiene que estar puesto
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', (r) => (ghAuth.add(r.request().headers().authorization || ''), gh.handle(r)));
+  const asked = [];
+  const SC = {
+    date: '2026-11-12T01:38:24Z',
+    score: 5.2,
+    checks: [
+      { name: 'Maintained', score: 10, reason: '30 commit(s) and 18 issue activity found in the last 90 days -- score normalized to 10' },
+      { name: 'Vulnerabilities', score: 3, reason: '<img src=x onerror="document.body.dataset.pwned=1"> 7 existing vulnerabilities detected' },
+      { name: 'Code-Review', score: 1, reason: 'Found 3/16 approved changesets -- score normalized to 1' },
+      { name: 'Signed-Releases', score: -1, reason: 'no releases found' },
+      { name: 'Pinned-Dependencies', score: 3, reason: 'https://github.com/ossf/scorecard/blob/main/docs/checks.md#pinned-dependencies' + 'x'.repeat(300) },
+    ],
+  };
+  await page.unroute('https://api.scorecard.dev/**');
+  await page.route('https://api.scorecard.dev/**', (r) => {
+    const u = new URL(r.request().url());
+    asked.push({ path: u.pathname, auth: r.request().headers().authorization || '', referer: r.request().headers().referer || '', cookie: r.request().headers().cookie || '' });
+    const headers = { 'access-control-allow-origin': '*' };
+    if (u.pathname === '/projects/github.com/o/s') return r.fulfill({ contentType: 'application/json', headers, body: JSON.stringify(SC) });
+    return r.fulfill({ status: 404, headers, body: '' }); // sin análisis: como la API, 404 sin cuerpo
+  });
+  const lines = () => page.$$eval('#hl-scorecard .hl-checks li', (ls) => ls.map((l) => l.textContent.replace(/[⁨⁩]/g, '')));
+  await step(page, 'la demo muestra el puntaje de OpenSSF Scorecard y sus tres comprobaciones más bajas, sin consultarlo', async () => {
+    await page.goto(`${base}/index.html?lang=es&health=1`);
+    await loaded(page);
+    const score = await page.waitForSelector('#health[open] #hl-scorecard-score', { timeout: T(5000) }).catch(() => {
+      throw new Error('la salud de la demo no muestra el puntaje de Scorecard');
+    });
+    const text = await score.textContent();
+    if (!/^Puntaje: 6,2 de 10, analizado el .+\d{4}$/.test(text)) throw new Error(`el puntaje dice ${JSON.stringify(text)}`);
+    const got = await lines();
+    const want = ['Security-Policy: 0 de 10 — security policy file not detected', 'Branch-Protection: 3 de 10 — branch protection is not maximal on development and all release branches', 'Code-Review: 4 de 10 — Found 6/15 approved changesets -- score normalized to 4'];
+    if (JSON.stringify(got) !== JSON.stringify(want)) throw new Error(`las comprobaciones más bajas: ${JSON.stringify(got)}`);
+    if (page.scorecard.length || asked.length) throw new Error(`la demo consultó Scorecard: ${JSON.stringify([...page.scorecard, ...asked])}`);
+    await page.keyboard.press('Escape');
+  });
+  await step(page, 'un repo público de GitHub: una consulta al abrir la salud y una sola por pestaña, sin el token ni el referer, con el puntaje y los motivos como texto', async () => {
+    await page.evaluate(() => localStorage.setItem('graphbranch:token', JSON.stringify('ghp_scorecard0123')));
+    await page.goto(`${base}/index.html?lang=es&repo=o/s`);
+    await loaded(page);
+    await page.waitForSelector('#status:not([data-state=loading])', { timeout: T(20000) });
+    await page.waitForTimeout(1500);
+    if (asked.length) throw new Error(`se consultó Scorecard sin abrir la salud: ${JSON.stringify(asked)}`);
+    if (!gh.calls.some((c) => c === '/repos/o/s')) throw new Error('no se cargó el repo simulado');
+    await page.click('#health-btn');
+    const score = await page.waitForSelector('#health[open] #hl-scorecard-score', { timeout: T(8000) });
+    if (!/^Puntaje: 5,2 de 10, analizado el /.test(await score.textContent())) throw new Error(`el puntaje dice ${await score.textContent()}`);
+    const got = await lines();
+    if (got.length !== 3 || !got[0].startsWith('Code-Review: 1 de 10 — Found 3/16') || !got[1].startsWith('Pinned-Dependencies: 3 de 10 — https://github.com/') || !got[2].startsWith('Vulnerabilities: 3 de 10 — <img src=x onerror=')) throw new Error(`las comprobaciones más bajas: ${JSON.stringify(got)}`);
+    if (got.some((l) => l.includes('Signed-Releases'))) throw new Error('una comprobación no concluyente (-1) salió entre las más bajas');
+    if (await page.$('#hl-scorecard img')) throw new Error('el motivo de la API entró como HTML');
+    if (await page.evaluate(() => document.body.dataset.pwned)) throw new Error('el motivo de la API corrió código');
+    if (asked.length !== 1 || asked[0].path !== '/projects/github.com/o/s') throw new Error(`consultas a Scorecard: ${JSON.stringify(asked)}`);
+    if (asked[0].auth || asked[0].cookie) throw new Error(`la consulta a Scorecard llevó credenciales: ${JSON.stringify(asked[0])}`);
+    if (asked[0].referer) throw new Error(`la consulta a Scorecard llevó la URL de la página: ${asked[0].referer}`);
+    if (!ghAuth.has('Bearer ghp_scorecard0123')) throw new Error(`GitHub no recibió el token de la prueba (${[...ghAuth].join(', ')}): la prueba no prueba nada`);
+    await page.keyboard.press('Escape');
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-scorecard-score', { timeout: T(5000) });
+    await page.waitForTimeout(500);
+    if (asked.length !== 1) throw new Error(`al volver a abrir la salud se consultó otra vez: ${asked.length}`);
+    await page.keyboard.press('Escape');
+  }, { allow: /404/ });
+  await step(page, 'a 320 px y en árabe, la sección de Scorecard no desborda el panel', async () => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto(`${base}/index.html?lang=ar&repo=o/s&health=1`);
+    await loaded(page);
+    await page.waitForSelector('#health[open] #hl-scorecard-score', { timeout: T(10000) });
+    const m = await page.evaluate(() => {
+      const w = document.querySelector('#health .tr-wrap');
+      return { sw: w.scrollWidth, cw: w.clientWidth, dir: getComputedStyle(document.querySelector('#hl-scorecard')).direction };
+    });
+    if (m.sw > m.cw) throw new Error(`la sección desborda el panel: scrollWidth ${m.sw} > clientWidth ${m.cw}`);
+    if (m.dir !== 'rtl') throw new Error(`la sección no va de derecha a izquierda en árabe: ${m.dir}`);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.keyboard.press('Escape');
+  }, { allow: /404/ });
+  await step(page, 'un repo sin análisis lo dice, y uno privado no consulta Scorecard ni muestra la sección', async () => {
+    const before = asked.length;
+    await page.goto(`${base}/index.html?lang=es&repo=o/n&health=1`);
+    await loaded(page);
+    const none = await page.waitForSelector('#health[open] #hl-scorecard-none', { timeout: T(10000) });
+    if (!/todavía no analizó este repositorio/.test(await none.textContent())) throw new Error(`sin análisis dice ${await none.textContent()}`);
+    if (asked.length !== before + 1 || asked.at(-1).path !== '/projects/github.com/o/n') throw new Error(`consultas: ${JSON.stringify(asked.slice(before))}`);
+    await page.keyboard.press('Escape');
+    const mid = asked.length;
+    await page.goto(`${base}/index.html?lang=es&repo=o/p&health=1`);
+    await loaded(page);
+    await page.waitForSelector('#health[open] #hl-dora', { timeout: T(10000) });
+    await page.waitForTimeout(1500);
+    if (await page.$('#hl-scorecard')) throw new Error('un repo privado muestra la sección de Scorecard');
+    if (asked.length !== mid) throw new Error(`el nombre de un repo privado salió a Scorecard: ${JSON.stringify(asked.slice(mid))}`);
+  }, { allow: /404/ });
   await page.context().close();
 }
 

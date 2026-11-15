@@ -1,7 +1,7 @@
 /* GraphBranch — salud del repo: lo que ya está cargado, leído como señales de equipo.
    Ramas sin actividad hace más de 30 días y sin PR, pull requests abiertos por edad y por estado (borrador, checks en rojo, aprobado, esperando revisión) y los que llevan más de 7 días sin ninguna revisión, cuánto tardaron
    en fusionarse los últimos, el ritmo de merges y releases y, los PRs fusionados y abiertos, los issues cerrados y las ramas nuevas y los commits, sus autores distintos y los autores nuevos por semana y, en el idioma de DORA, la frecuencia de
-   despliegues (cada release cuenta como uno, también por semana) y el tiempo de entrega (de abierto a fusionado), el estado del último despliegue de cada entorno y las estrellas nuevas de la semana frente a las de la anterior y, con lo que trajo la fuente al abrir el panel, las líneas añadidas y borradas por semana. No hace ninguna consulta: parte del
+   despliegues (cada release cuenta como uno, también por semana) y el tiempo de entrega (de abierto a fusionado), el estado del último despliegue de cada entorno y las estrellas nuevas de la semana frente a las de la anterior y, con lo que trajo la fuente al abrir el panel, las líneas añadidas y borradas por semana y el puntaje de OpenSSF Scorecard con sus comprobaciones más bajas. No hace ninguna consulta: parte del
    estado del grafo y de la actividad que ya llegó, y cuenta lo que pasa en el repo, no a personas. */
 (function (GB) {
   'use strict';
@@ -21,6 +21,22 @@
     const m = s.length >> 1;
     return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
   };
+
+  const SCORECARD_LOWEST = 3; // comprobaciones de OpenSSF Scorecard que muestra la salud: las más bajas
+
+  /** El puntaje de OpenSSF Scorecard que trajo la fuente al abrir el panel (`data.scorecard`, ítem 218) listo para
+      mostrar: null sin consulta (otra fuente, un repo privado o de GitHub Enterprise: la sección no sale); `{ state }`
+      sin análisis (`none`) o con un fallo (`error`, también un estado que no se conoce); y con análisis, el puntaje, la
+      fecha y las SCORECARD_LOWEST comprobaciones más bajas, de la más baja a la más alta y a igual puntaje por nombre.
+      Las de -1 (Scorecard no pudo concluir) no son bajas: no entran, ni en la cuenta de comprobaciones. */
+  function scorecardView(sc) {
+    if (!sc) return null;
+    if (sc.state === 'none') return { state: 'none' };
+    if (sc.state !== 'ok') return { state: 'error' };
+    const rated = (sc.checks || []).filter((c) => c && Number.isInteger(c.score) && c.score >= 0 && c.score <= 10);
+    const lowest = [...rated].sort((a, b) => a.score - b.score || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)).slice(0, SCORECARD_LOWEST);
+    return { state: 'ok', score: sc.score, date: sc.date || null, lowest: lowest.map((c) => ({ name: c.name, score: c.score, reason: c.reason || '' })), checks: rated.length };
+  }
 
   /** Cuenta los eventos (releases, PRs fusionados, PRs abiertos, issues cerrados, ramas creadas, forks nuevos…) de cada una de las últimas WEEKS semanas (bloques de 7 días hacia atrás desde `now`). */
   function weekly(list, now) {
@@ -388,6 +404,7 @@
       forkTrend: { week: forkWeeks[WEEKS - 1], prev: fullPrev ? forkWeeks[WEEKS - 2] : null }, // forks nuevos en los últimos 7 días y en los 7 anteriores (null: sin medir)
       stars: { week: starWeeks[WEEKS - 1], prev: fullPrev ? starWeeks[WEEKS - 2] : null }, // estrellas nuevas en los últimos 7 días y en los 7 anteriores (null: sin medir)
       code: data.codeFreq ? { pending: data.codeFreq.state === 'pending' } : null, // las líneas por semana: null sin consulta; pending si GitHub todavía las calcula (202)
+      scorecard: scorecardView(data.scorecard), // OpenSSF Scorecard: null sin consulta; sin análisis, un fallo, o el puntaje con las comprobaciones más bajas
       absence: absenceFactor(data.commits.values()), // cuántas personas suman la mitad de los commits cargados (null: ninguno con autor)
       pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), authorWeeks: authorsWeekly(data.commits.values(), now), newAuthorWeeks: newAuthorsWeekly(data.commits.values(), now), tagWeeks: weekly(tagTimes, now), issueWeeks: weekly([...issueOpened.values()], now), prCloseWeeks: weekly([...prClosed.values()], now), forkWeeks, addedWeeks: code.added, deletedWeeks: code.deleted }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
     };

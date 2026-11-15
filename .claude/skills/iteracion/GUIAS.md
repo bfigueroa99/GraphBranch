@@ -54,9 +54,9 @@ estas no se busca con find-skills (en `CONSTRUIR.md`, no aplica a lo que ya cubr
 
 ## Conectores
 
-El MCP de GitHub abre y fusiona el PR (paso 5) y lee los issues; en OpenCode, `gh`. El MCP de Sentry, si la sesión lo
-trae, solo para leer (`search_issues`, `get_sentry_resource`); sin él, el lector de `sentry-debug-issue`. Plazacivica no
-aplica: el repo no cita normas.
+El MCP de GitHub abre y fusiona el PR (paso 5) y lee, comenta, etiqueta, abre y cierra los issues (`ISSUES.md`); en
+OpenCode, `gh`. El MCP de Sentry, si la sesión lo trae, solo para leer (`search_issues`, `get_sentry_resource`); sin
+él, el lector de `sentry-debug-issue`. Plazacivica no aplica: el repo no cita normas.
 
 ## Registro
 

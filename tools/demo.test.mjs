@@ -150,3 +150,15 @@ test('la historia de la demo trae PRs fusionados con su número y sus revisiones
     assert.ok(c.noReview >= 1, `semilla ${seed}: el de Dependabot se fusionó sin revisión`);
   }
 });
+
+test('la demo trae un puntaje de OpenSSF Scorecard sin consultar nada: con fecha, y con al menos tres comprobaciones con puntaje', () => {
+  const { src } = demo(7);
+  const sc = src.data.scorecard;
+  assert.equal(sc?.state, 'ok', 'la salud de la demo muestra la sección de Scorecard');
+  assert.ok(sc.score >= 0 && sc.score <= 10);
+  assert.ok(sc.date > 0 && sc.date <= Date.now(), 'el análisis es de antes de ahora');
+  const rated = sc.checks.filter((c) => Number.isInteger(c.score) && c.score >= 0 && c.score <= 10);
+  assert.ok(rated.length >= 3, 'hay tres comprobaciones que mostrar');
+  assert.ok(sc.checks.every((c) => /^[A-Za-z][A-Za-z0-9-]{0,39}$/.test(c.name) && typeof c.reason === 'string' && c.reason), 'nombres como los de Scorecard y un motivo cada una');
+  assert.ok(sc.checks.some((c) => c.score === -1), 'y una no concluyente, que la salud no cuenta como baja');
+});

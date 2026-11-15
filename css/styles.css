@@ -5483,6 +5483,12 @@ a.hl-row:focus-visible {
   text-align: end;
   overflow-wrap: anywhere;
 }
+/* las comprobaciones de OpenSSF Scorecard: el motivo es una frase de la API (a veces con una URL entera), así que se
+   parte en vez de recortarse o desbordar el panel a 320 px */
+.hl-checks li {
+  padding: 2px 8px;
+  overflow-wrap: anywhere;
+}
 .hl-switch {
   display: flex;
   align-items: center;

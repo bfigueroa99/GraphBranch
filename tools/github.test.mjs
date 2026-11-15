@@ -1447,3 +1447,131 @@ test('cargar más: sin corte no consulta nada, y un corte que GitHub no devuelve
   big.gh.override = (path) => (path.startsWith('/repos/o/r/commits?') ? { status: 404, body: { message: 'No commit found' } } : null);
   await assert.rejects(() => big.src.loadMore('main'));
 });
+
+/* OpenSSF Scorecard (ítem 218): el puntaje ya calculado de un repo público de github.com, de api.scorecard.dev, solo al
+   abrir la salud y una vez por pestaña, sin el token de GitHub, sin cookies y sin referer. */
+
+/** Una respuesta como la de api.scorecard.dev (recortada de la de ossf/scorecard del 2026-11-14), con lo raro que la
+    fuente no debe dejar pasar: una comprobación sin nombre válido, una de -1 (no concluyente), un motivo con saltos de
+    línea y caracteres de control, uno larguísimo y HTML en un motivo. */
+const SCORECARD = {
+  date: '2026-11-14T01:38:24Z',
+  repo: { name: 'github.com/Org/R-Repo', commit: '34496c8af50df71ce3d78b7380c27ddf83e012b9' },
+  scorecard: { version: 'v5.6.0', commit: '61e84743356275f6ffca23b1b2f2cb945e19eb96' },
+  score: 8.3,
+  checks: [
+    { name: 'Maintained', score: 10, reason: '30 commit(s) and 18 issue activity found in the last 90 days -- score normalized to 10', details: null, documentation: { url: 'https://github.com/ossf/scorecard/blob/x/docs/checks.md#maintained', short: 'Determines if the project is "actively maintained".' } },
+    { name: 'Code-Review', score: 1, reason: 'Found 3/16 approved changesets\n-- score\u0000 normalized to 1', details: null },
+    { name: 'Vulnerabilities', score: 3, reason: '<img src=x onerror=alert(1)> 7 existing vulnerabilities detected', details: ['Warn: …'] },
+    { name: 'Signed-Releases', score: -1, reason: 'no releases found' },
+    { name: 'Branch-Protection', score: 5, reason: 'x'.repeat(500) },
+    { name: '<b>malo</b>', score: 0, reason: 'un nombre que no es de Scorecard' },
+    { name: 'Fuzzing', score: 'diez', reason: 'puntaje que no es un número' },
+    { name: 'SAST', score: 11, reason: 'fuera de escala' },
+    null,
+  ],
+};
+
+/** api.scorecard.dev simulada sobre la API falsa de GitHub: `reply(url)` (o un objeto fijo) da `{ status, body }` o un
+    Error (la red caída). Devuelve las consultas que recibió, con sus opciones. Va antes de `connect`. */
+function withScorecard(gh, reply) {
+  const asked = [];
+  const github = gh.fetch;
+  gh.fetch = async (url, opts = {}) => {
+    if (!String(url).startsWith('https://api.scorecard.dev/')) return github(url, opts);
+    asked.push({ url, opts });
+    const r = typeof reply === 'function' ? reply(url) : reply;
+    if (r instanceof Error) throw r;
+    const status = r.status ?? 200;
+    const body = typeof r.body === 'string' ? r.body : r.body == null ? '' : JSON.stringify(r.body);
+    return { status, ok: status >= 200 && status < 300, headers: { get: () => null }, text: async () => body };
+  };
+  return asked;
+}
+
+test('Scorecard: una consulta al pedirla, con el nombre que da GitHub, sin token, cookies ni referer, y una sola vez por pestaña', async () => {
+  const gh = fakeGitHub();
+  gh.repo = { ...gh.repo, name: 'R-Repo', owner: { login: 'Org' }, private: false }; // Scorecard distingue mayúsculas: va el nombre de GitHub, no el escrito
+  gh.push('main', 'a1');
+  const asked = withScorecard(gh, { body: SCORECARD });
+  const { src, errors } = connect(gh, 'tok');
+  await src.cycle();
+  assert.equal(asked.length, 0, 'sin abrir el panel no se consulta');
+  const [a, b] = await Promise.all([src.syncScorecard(), src.syncScorecard()]);
+  assert.deepEqual([a, b], [true, false], 'dos aperturas seguidas: una sola consulta en vuelo');
+  assert.equal(errors.length, 0);
+  assert.equal(asked.length, 1);
+  assert.equal(asked[0].url, 'https://api.scorecard.dev/projects/github.com/Org/R-Repo');
+  assert.equal(asked[0].opts.headers?.Authorization, undefined, 'el token de GitHub no sale a otro servicio');
+  assert.deepEqual(Object.keys(asked[0].opts.headers || {}), ['Accept']);
+  assert.equal(asked[0].opts.credentials, 'omit', 'sin cookies');
+  assert.equal(asked[0].opts.referrerPolicy, 'no-referrer', 'sin la URL de la página, que lleva ?repo=');
+  assert.equal(asked[0].opts.method, undefined, 'un GET');
+  const sc = plain(src.data.scorecard);
+  assert.equal(sc.state, 'ok');
+  assert.equal(sc.score, 8.3);
+  assert.equal(sc.date, Date.parse('2026-11-14T01:38:24Z'));
+  assert.deepEqual(sc.checks.map((c) => [c.name, c.score]), [['Maintained', 10], ['Code-Review', 1], ['Vulnerabilities', 3], ['Signed-Releases', -1], ['Branch-Protection', 5]], 'sin el nombre que no es de Scorecard ni los puntajes fuera de escala');
+  assert.equal(sc.checks[1].reason, 'Found 3/16 approved changesets -- score normalized to 1', 'el motivo en una línea, sin caracteres de control');
+  assert.equal(sc.checks[2].reason, '<img src=x onerror=alert(1)> 7 existing vulnerabilities detected', 'el motivo queda como texto: lo escapa quien lo muestra');
+  assert.ok(sc.checks[4].reason.length <= 200 && sc.checks[4].reason.endsWith('…'), 'un motivo larguísimo se corta');
+  assert.equal(await src.syncScorecard(), false, 'con la respuesta ya llegada, no se vuelve a preguntar');
+  assert.equal(asked.length, 1);
+  assert.ok(!gh.calls.some((c) => c.includes('scorecard')), 'nada de esto pasa por la API de GitHub ni gasta su cuota');
+});
+
+test('Scorecard: sin análisis (404) lo dice; un fallo lo dice y se reintenta al pedirlo otra vez; un repo privado o de GitHub Enterprise no se consulta', async () => {
+  const run = async (reply, { token = '', apiUrl = '', priv = false } = {}) => {
+    const gh = fakeGitHub();
+    if (apiUrl) gh.base = apiUrl;
+    gh.repo = { ...gh.repo, private: priv };
+    gh.push('main', 'a1');
+    const asked = withScorecard(gh, reply);
+    const c = connect(gh, token, apiUrl);
+    await c.src.cycle();
+    return { ...c, asked, ran: await c.src.syncScorecard() };
+  };
+  const none = await run({ status: 404, body: '' });
+  assert.equal(none.ran, true);
+  assert.deepEqual(plain(none.src.data.scorecard), { state: 'none' });
+  assert.equal(await none.src.syncScorecard(), false, 'sin análisis: tampoco se vuelve a preguntar en la misma pestaña');
+  assert.equal(none.errors.length, 0, 'un repo sin análisis no es un error del grafo');
+
+  for (const [what, reply] of [['un 500', { status: 500, body: '' }], ['la red caída', new TypeError('Failed to fetch')], ['un JSON roto', { body: '{"score": 8.3' }], ['un JSON sin puntaje', { body: { date: '2026-11-14T01:38:24Z', checks: [] } }], ['un puntaje fuera de escala', { body: { ...SCORECARD, score: 42 } }]]) {
+    const bad = await run(reply);
+    assert.equal(bad.ran, true, what);
+    assert.equal(bad.src.data.scorecard?.state, 'error', what);
+    assert.equal(bad.errors.length, 0, `${what}: el grafo sigue como si nada`);
+    assert.equal(bad.src.status?.state !== 'error', true, `${what}: el estado de la fuente no pasa a error`);
+  }
+  let first = true;
+  const retry = await run(() => (first ? ((first = false), new TypeError('Failed to fetch')) : { body: SCORECARD }));
+  assert.equal(retry.src.data.scorecard.state, 'error');
+  assert.equal(await retry.src.syncScorecard(), true, 'tras un fallo, la próxima apertura vuelve a preguntar');
+  assert.equal(retry.src.data.scorecard.state, 'ok');
+  assert.equal(retry.asked.length, 2);
+
+  const priv = await run({ body: SCORECARD }, { token: 'tok', priv: true });
+  assert.equal(priv.ran, false);
+  assert.equal(priv.asked.length, 0, 'el nombre de un repo privado no sale a un tercero');
+  assert.equal(priv.src.data.scorecard, undefined, 'y la salud no muestra la sección');
+  const ghe = await run({ body: SCORECARD }, { apiUrl: GHE });
+  assert.equal(ghe.ran, false);
+  assert.equal(ghe.asked.length, 0, 'Scorecard solo analiza github.com');
+  const early = fakeGitHub();
+  early.push('main', 'a1');
+  const askedEarly = withScorecard(early, { body: SCORECARD });
+  const before = connect(early);
+  assert.equal(await before.src.syncScorecard(), false, 'antes de cargar el repo no se sabe si es público: no se pregunta');
+  assert.equal(askedEarly.length, 0);
+});
+
+test('Scorecard: scorecardOf lee la respuesta y descarta lo que no es de Scorecard', () => {
+  const { GitHubSource } = load(fakeGitHub());
+  assert.equal(GitHubSource.scorecardOf(null), null);
+  assert.equal(GitHubSource.scorecardOf([]), null);
+  assert.equal(GitHubSource.scorecardOf({ score: -1, checks: [] }), null, 'un puntaje de -1 no es un análisis');
+  assert.deepEqual(plain(GitHubSource.scorecardOf({ score: 0, date: 'ayer', checks: 'muchas' })), { state: 'ok', score: 0, date: null, checks: [] }, 'sin fecha válida ni lista, el puntaje igual');
+  const many = { score: 5, date: '2026-11-14T01:38:24Z', checks: Array.from({ length: 60 }, (_, i) => ({ name: `Check-${i}`, score: i % 11, reason: 'r' })) };
+  assert.equal(GitHubSource.scorecardOf(many).checks.length, 40, 'a lo sumo 40 comprobaciones (Scorecard da 18)');
+});

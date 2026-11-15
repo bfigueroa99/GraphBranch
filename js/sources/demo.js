@@ -258,6 +258,23 @@
       this.data.deploys.set('production', { sha: rel.sha, ref: 'main', status: 'success' });
       // líneas añadidas y borradas por semana, como las daría /stats/code_frequency: cifras propias de las últimas 8 semanas (la actual, a medias)
       this.data.codeFreq = { state: 'ok', weeks: [[1840, 420], [960, 310], [2310, 1205], [640, 180], [1475, 890], [3120, 1460], [880, 240], [415, 95]].map(([added, deleted], i) => ({ time: Date.now() - ((7 - i) * 7 + 2) * 864e5, added, deleted })) };
+      // el puntaje de OpenSSF Scorecard, como lo daría api.scorecard.dev (sus motivos van en inglés, como los de la API):
+      // un análisis de hace 3 días, con las comprobaciones de un proyecto chico y una no concluyente (-1)
+      this.data.scorecard = {
+        state: 'ok',
+        score: 6.2,
+        date: Date.now() - 3 * 864e5,
+        checks: [
+          ['Maintained', 10, '30 commit(s) and 12 issue activity found in the last 90 days -- score normalized to 10'],
+          ['Code-Review', 4, 'Found 6/15 approved changesets -- score normalized to 4'],
+          ['Branch-Protection', 3, 'branch protection is not maximal on development and all release branches'],
+          ['Pinned-Dependencies', 7, 'dependency not pinned by hash detected -- score normalized to 7'],
+          ['Security-Policy', 0, 'security policy file not detected'],
+          ['Packaging', -1, 'packaging workflow not detected'],
+          ['License', 10, 'license file detected'],
+          ['Dependency-Update-Tool', 10, 'update tool detected'],
+        ].map(([name, score, reason]) => ({ name, score, reason })),
+      };
       this.data.forks = [
         { fullName: 'maya-dev/orbita', url: 'https://github.com/maya-dev/orbita', pushedAt: Date.now() - 6 * 36e5, stars: 4 },
         { fullName: 'lucas-r/orbita', url: 'https://github.com/lucas-r/orbita', pushedAt: Date.now() - 9 * 864e5, stars: 0 },

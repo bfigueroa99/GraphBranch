@@ -2675,6 +2675,16 @@ if (seccion('Varios repos a la vez'))
       await lab.fill('.pr-input', c);
       await lab.press('.pr-input', 'Enter');
     }
+    // a 1280×800 la terminal, sus cartas y las tres columnas no caben junto al grafo: el grafo guarda su alto y la
+    // práctica se desplaza por dentro, con la línea de comandos a la vista (en la 301 el grafo quedaba en 0 px)
+    const fit = await lab.evaluate(() => {
+      const box = (s) => document.querySelector(s).getBoundingClientRect();
+      const p = box('#practice');
+      const i = box('.pr-input');
+      return { graph: Math.round(box('#graph').height), input: i.top >= p.top - 1 && i.bottom <= p.bottom + 1 };
+    });
+    if (fit.graph < 150) throw new Error(`con la práctica abierta el grafo quedó en ${fit.graph} px de alto`);
+    if (!fit.input) throw new Error('la línea de comandos quedó fuera de la vista de la práctica');
     await lab.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length >= n, before + 2, { timeout: T(10000) });
     const log = await lab.textContent('.pr-log');
     if (!log.includes('<img src=x onerror=alert(1)>')) throw new Error('el mensaje no se ve tal cual');
